@@ -154,23 +154,23 @@ export async function processFile(app: any, ai: AIService, file: any): Promise<v
     h = notify(`正在为《${startName}》生成摘要…`, { type: 'progress', dedupeKey: key });
     const aiResult = await aiProcess(ai, bodyText, missing, { summaryLength, tagsEnabled, tagCount });
     if (!aiResult) {
-      // 失败：人话原因 + action「重试」（点按重跑当前文件；原技术错误详情在 console）
+      // 失败：人话原因 + action「重试」（点按重跑当前文件；原技术错误详情在 console）。
+      // 失败通知常驻（duration<=0 不自动消失）：progress 句柄 setType(error) 会按类型默认 5s 重排计时，
+      // 「重试」窗口太短——改为隐藏 progress、新发常驻 error 承载重试按钮。
       const reason = await humanizeFailReason();
-      if (h) {
-        h.setMessage(reason);
-        h.setType('error');
-        const retryBtn = document.createElement('span');
-        retryBtn.className = 'bz-notice-action';
-        retryBtn.setAttribute('role', 'button');
-        retryBtn.textContent = '重试';
-        retryBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          retryBtn.remove();
-          if (h) h.hide();
-          void processFile(app, ai, file);
-        });
-        h.el.appendChild(retryBtn);
-      }
+      if (h) h.hide();
+      const errHandle = notify(reason, { type: 'error', duration: 0 });
+      const retryBtn = document.createElement('span');
+      retryBtn.className = 'bz-notice-action';
+      retryBtn.setAttribute('role', 'button');
+      retryBtn.textContent = '重试';
+      retryBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        retryBtn.remove();
+        errHandle.hide();
+        void processFile(app, ai, file);
+      });
+      errHandle.el.appendChild(retryBtn);
       return;
     }
 
@@ -198,7 +198,8 @@ export async function processFile(app: any, ai: AIService, file: any): Promise<v
       mergedFm.tags = aiResult.tags;
     }
 
-    const newContent = buildFrontmatter(mergedFm) + '\n\n' + latestParsed.body;
+    // 重建时原样拼回未识别原文行（注释/嵌套等），防外来剪藏 frontmatter 被重建丢行（审计修复）
+    const newContent = buildFrontmatter(mergedFm, latestParsed.extraLines) + '\n\n' + latestParsed.body;
     await app.vault.modify(targetFile, newContent);
     if (renameFailed) {
       // B5：标题已在上面真实写入 frontmatter，此刻的「已写入」文案才站得住
