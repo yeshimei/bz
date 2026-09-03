@@ -79,7 +79,6 @@ describe('main.ts onunload 清理分支', () => {
     await plugin.onload();
     // 开启常驻域后卸载
     plugin.settings.autoSummaryEnabled = true;
-    plugin.settings.aiAgentEnabled = true;
     plugin.settings.secondBrainEnabled = true;
     await plugin.onunload();
     expect(plugin.registeredCommandIds.length).toBeGreaterThan(0);
