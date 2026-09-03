@@ -5538,1680 +5538,6 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
         }
     }
 
-/* ==================== 保险库域样式（src/password-vault/styles.css） ==================== */
-/* ==================== 保险库（password-vault，原型 v1 一比一） ==================== */
-/* 铁律 8：视觉样式写域源头，构建时聚合进根 styles.css；类名 bz- 前缀。
- * reset 隔离：所有规则以 .bz-password-vault 为根，杜绝 Obsidian 全局样式渗透。 */
-
-/* ---------- 设计变量（token 化跟随 Obsidian 主题亮暗；金色为品牌强调色） ---------- */
-.bz-password-vault {
-  --pwv-bg: var(--background-primary);
-  --pwv-surface: var(--background-secondary);
-  --pwv-surface2: var(--background-modifier-hover);
-  --pwv-ink: var(--text-normal);
-  --pwv-muted: var(--text-muted);
-  --pwv-faint: var(--text-faint);
-  --pwv-line: var(--background-modifier-border);
-  --pwv-gold: var(--interactive-accent);
-  --pwv-gold-soft: linear-gradient(135deg, color-mix(in srgb, var(--interactive-accent) 70%, white), var(--interactive-accent));
-  --pwv-gold-ink: var(--interactive-accent);
-  --pwv-ok: var(--color-green);
-  --pwv-bad: var(--text-error);
-  --pwv-warn: var(--color-orange);
-  --pwv-shadow: 0 10px 30px rgba(0, 0, 0, 0.10);
-  --pwv-mono: var(--font-monospace);
-  --pwv-radius: 12px;
-  /* 根容器：桌面=居中卡遮罩；移动=全屏（≤768px） */
-  background: var(--background-modifier-cover);
-  color: var(--pwv-ink);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  box-sizing: border-box;
-}
-/* 桌面实例：居中工作台卡（非全屏） */
-.bz-password-vault-desk {
-  display: flex;
-  width: 1060px;
-  max-width: 100%;
-  height: 680px;
-  max-height: calc(100vh - 48px);
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  background: var(--pwv-bg);
-  position: relative;
-  flex-shrink: 0;
-}
-/* 移动实例：桌面隐藏 */
-.bz-password-vault-mob {
-  display: none;
-  height: 100%;
-  width: 100%;
-  flex-direction: column;
-  background: var(--pwv-bg);
-}
-.bz-password-vault *,
-.bz-password-vault *::before,
-.bz-password-vault *::after {
-  box-sizing: border-box;
-}
-.bz-password-vault ::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-.bz-password-vault {
-  scrollbar-width: none;
-}
-.bz-password-vault button {
-  font: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-  color: inherit;
-}
-.bz-password-vault input {
-  font: inherit;
-  border: 1px solid var(--pwv-line);
-  background: var(--pwv-surface);
-  color: var(--pwv-ink);
-  border-radius: 10px;
-  padding: 10px 12px;
-  outline: none;
-}
-.bz-password-vault ::selection {
-  background: color-mix(in srgb, var(--pwv-gold) 25%, transparent);
-}
-
-/* 平台头像：字母底 + favicon 真实图标盖层（真实图标加载成功盖住字母，失败隐藏露出字母） */
-.bz-password-vault .bz-pwv-avatar,
-.bz-password-vault-desk .bz-pwv-avatar,
-.bz-password-vault-mob .bz-pwv-avatar {
-  position: relative;
-  overflow: hidden;
-}
-.bz-password-vault .bz-pwv-avatar span {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  color: #fff;
-  font-weight: 600;
-}
-.bz-password-vault .bz-pwv-avatar img.bz-pwv-favicon {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain; /* 完整显示图标，不裁剪（favicon 多为方形，contain 自适应） */
-  border-radius: inherit;
-  padding: 8%; /* 图标内缩 8%（高清图标自身留白充足，缩进小更清晰） */
-  background: var(--background-primary); /* 真实图标底色（favicon 透明背景时保证可见） */
-}
-
-/* ============ 桌面三栏（布局在根容器节已定：居中工作台卡） ============ */
-.bz-password-vault-nav {
-  width: 200px;
-  flex-shrink: 0;
-  background: var(--pwv-surface);
-  border-right: 1px solid var(--pwv-line);
-  display: flex;
-  flex-direction: column;
-  padding: 20px 12px;
-}
-.bz-password-vault-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 10px 22px;
-}
-.bz-password-vault-logo .seal {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: var(--pwv-gold-soft);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--interactive-accent) 40%, transparent);
-}
-.bz-password-vault-logo .seal svg {
-  width: 19px;
-  height: 19px;
-}
-.bz-password-vault-logo .name {
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-.bz-password-vault-logo .name small {
-  display: block;
-  font-size: 10px;
-  font-weight: 400;
-  color: var(--pwv-muted);
-  letter-spacing: 0.08em;
-}
-.bz-password-vault-navitem {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  border-radius: 10px;
-  font-size: 13.5px;
-  color: var(--pwv-muted);
-  transition: background 0.15s, color 0.15s;
-  width: 100%;
-  text-align: left;
-}
-.bz-password-vault-navitem svg {
-  width: 16px;
-  height: 16px;
-  opacity: 0.8;
-}
-.bz-password-vault-navitem:hover {
-  background: var(--pwv-surface2);
-}
-.bz-password-vault-navitem.on {
-  background: color-mix(in srgb, var(--interactive-accent) 14%, transparent);
-  color: var(--pwv-gold-ink);
-  font-weight: 600;
-}
-.bz-password-vault-navitem.on svg {
-  color: var(--pwv-gold);
-}
-.bz-password-vault-navitem .cnt {
-  margin-left: auto;
-  font-size: 11px;
-  color: var(--pwv-faint);
-}
-.bz-password-vault-nav .spacer {
-  flex: 1;
-}
-.bz-password-vault-lockstate {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  font-size: 12px;
-  color: var(--pwv-muted);
-  border-top: 1px solid var(--pwv-line);
-}
-.bz-password-vault-lockstate .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--pwv-ok);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-green) 18%, transparent);
-}
-.bz-password-vault-lockstate.locked .dot {
-  background: var(--pwv-faint);
-  box-shadow: none;
-}
-.bz-password-vault-lockstate button {
-  margin-left: auto;
-  font-size: 11px;
-  color: var(--pwv-gold-ink);
-  padding: 3px 8px;
-  border-radius: 6px;
-}
-.bz-password-vault-lockstate button:hover {
-  background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
-}
-/* 中间列表 */
-.bz-password-vault-list {
-  width: 380px;
-  flex-shrink: 0;
-  border-right: 1px solid var(--pwv-line);
-  display: flex;
-  flex-direction: column;
-  background: var(--pwv-bg);
-}
-.bz-password-vault-listhead {
-  padding: 22px 22px 14px;
-}
-.bz-password-vault-listhead h1 {
-  font-size: 20px;
-  font-weight: 700;
-  margin: 0 0 2px;
-  color: var(--pwv-ink);
-}
-.bz-password-vault-listhead .sub {
-  font-size: 12px;
-  color: var(--pwv-muted);
-}
-.bz-password-vault-search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 14px;
-  background: var(--pwv-surface);
-  border: 1px solid var(--pwv-line);
-  border-radius: 12px;
-  padding: 0 12px;
-}
-.bz-password-vault-search svg {
-  width: 15px;
-  height: 15px;
-  color: var(--pwv-faint);
-  flex-shrink: 0;
-}
-.bz-password-vault-search input {
-  border: none;
-  background: none;
-  flex: 1;
-  padding: 10px 0;
-  font-size: 13.5px;
-}
-.bz-password-vault-search input:focus {
-  outline: none;
-  border-color: transparent;
-}
-.bz-password-vault-count {
-  font-size: 11px;
-  color: var(--pwv-faint);
-  padding: 0 22px 10px;
-}
-.bz-password-vault-rows {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 10px 16px;
-}
-.bz-password-vault-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 12px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background 0.15s;
-  border: 1px solid transparent;
-  position: relative;
-}
-.bz-password-vault-row:hover {
-  background: var(--pwv-surface);
-}
-.bz-password-vault-row.on {
-  background: var(--pwv-surface);
-  border-color: var(--pwv-line);
-  box-shadow: var(--pwv-shadow);
-}
-.bz-password-vault-av {
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  color: #fff;
-  box-shadow: inset 0 -2px 6px rgba(0, 0, 0, 0.18);
-}
-.bz-password-vault-row .mid {
-  flex: 1;
-  min-width: 0;
-}
-.bz-password-vault-row .pl {
-  font-size: 13.5px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.bz-password-vault-row .pl .star {
-  color: var(--pwv-warn);
-  font-size: 11px;
-}
-.bz-password-vault-row .ac {
-  font-size: 11.5px;
-  color: var(--pwv-muted);
-  font-family: var(--pwv-mono);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.bz-password-vault-row .tm {
-  font-size: 11px;
-  color: var(--pwv-faint);
-  flex-shrink: 0;
-}
-.bz-password-vault-row .more {
-  display: none;
-}
-.bz-password-vault-row:hover .tm {
-  opacity: 1;
-  transition: opacity 0.12s;
-}
-/* 平台聚合行 */
-.bz-password-vault-plrow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 12px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background 0.15s;
-  border: 1px solid transparent;
-  position: relative;
-}
-.bz-password-vault-plrow:hover {
-  background: var(--pwv-surface);
-}
-.bz-password-vault-plrow.on {
-  background: var(--pwv-surface);
-  border-color: var(--pwv-line);
-  box-shadow: var(--pwv-shadow);
-}
-.bz-password-vault-plrow .mid {
-  flex: 1;
-  min-width: 0;
-}
-.bz-password-vault-plrow .pl {
-  font-size: 13.5px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.bz-password-vault-plrow .pl .star {
-  color: var(--pwv-warn);
-  font-size: 11px;
-}
-.bz-password-vault-plcount {
-  flex-shrink: 0;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--pwv-gold-ink);
-  background: color-mix(in srgb, var(--interactive-accent) 16%, transparent);
-  border-radius: 999px;
-  padding: 2px 8px;
-  min-width: 22px;
-  text-align: center;
-}
-.bz-password-vault-plrow .ac {
-  font-size: 11.5px;
-  color: var(--pwv-muted);
-  font-family: var(--pwv-mono);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.bz-password-vault-plrow .tm {
-  font-size: 11px;
-  color: var(--pwv-faint);
-  flex-shrink: 0;
-}
-.bz-password-vault-plrow .more {
-  display: none;
-}
-.bz-password-vault-plrow:hover .tm {
-  opacity: 1;
-  transition: opacity 0.12s;
-}
-/* 平台视图：账号卡列表 */
-.bz-password-vault-accts {
-  padding: 8px 26px 24px;
-  overflow-y: auto;
-  flex: 1;
-}
-.bz-password-vault-accthead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 26px 8px;
-  border-bottom: 1px solid var(--pwv-line);
-}
-.bz-password-vault-accthead .t {
-  font-size: 12px;
-  color: var(--pwv-muted);
-  letter-spacing: 0.06em;
-}
-.bz-password-vault-accthead .add {
-  padding: 7px 14px;
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--interactive-accent) 14%, transparent);
-  color: var(--pwv-gold-ink);
-  font-size: 12.5px;
-  font-weight: 600;
-}
-.bz-password-vault-accthead .add:hover {
-  background: color-mix(in srgb, var(--interactive-accent) 24%, transparent);
-}
-.bz-password-vault-acctcard {
-  background: var(--pwv-surface);
-  border: 1px solid var(--pwv-line);
-  border-radius: 14px;
-  margin-bottom: 10px;
-  padding: 14px 16px;
-  transition: border-color 0.15s;
-}
-.bz-password-vault-acctcard:hover {
-  border-color: var(--pwv-gold);
-}
-.bz-password-vault-acctcard .accrow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-.bz-password-vault-acctcard .name {
-  flex: 1;
-  min-width: 0;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: var(--pwv-mono);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.bz-password-vault-acctcard .name .star {
-  color: var(--pwv-warn);
-  font-size: 12px;
-  margin-left: 4px;
-}
-.bz-password-vault-acctcard .copyac {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--pwv-muted);
-  border: 1px solid var(--pwv-line);
-  background: var(--pwv-bg);
-  border-radius: 8px;
-  padding: 5px 10px;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.15s;
-}
-.bz-password-vault-acctcard .copyac:hover {
-  background: var(--pwv-gold-soft);
-  color: #fff;
-  border-color: transparent;
-}
-.bz-password-vault-acctcard .copyac svg {
-  width: 13px;
-  height: 13px;
-}
-.bz-password-vault-acctcard .pwrow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--pwv-bg);
-  border: 1px solid var(--pwv-line);
-  border-radius: 11px;
-  padding: 9px 12px;
-}
-.bz-password-vault-acctcard .pw {
-  flex: 1;
-  min-width: 0;
-  font-size: 13px;
-  font-family: var(--pwv-mono);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.bz-password-vault-acctcard .pw.mask {
-  letter-spacing: 0.12em;
-  color: var(--pwv-muted);
-}
-.bz-password-vault-acctcard .mini {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--pwv-muted);
-  transition: background 0.15s, color 0.15s;
-  flex-shrink: 0;
-}
-.bz-password-vault-acctcard .mini:hover {
-  background: var(--pwv-gold-soft);
-  color: #fff;
-}
-.bz-password-vault-acctcard .mini svg {
-  width: 15px;
-  height: 15px;
-}
-.bz-password-vault-acctcard .note {
-  margin-top: 10px;
-  padding: 10px 12px;
-  background: color-mix(in srgb, var(--interactive-accent) 7%, transparent);
-  border-radius: 10px;
-  font-size: 12.5px;
-  color: var(--pwv-muted);
-  line-height: 1.55;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-.bz-password-vault-acctcard .meta {
-  margin-top: 8px;
-  font-size: 11px;
-  color: var(--pwv-faint);
-}
-.bz-password-vault-acctcard .meta a {
-  color: var(--pwv-gold-ink);
-  text-decoration: none;
-}
-/* 移动端账号分段（永不折叠） */
-.bz-password-vault-seg {
-  margin-bottom: 10px;
-  background: var(--pwv-surface);
-  border: 1px solid var(--pwv-line);
-  border-radius: 12px;
-  padding: 13px 14px;
-}
-.bz-password-vault-seg .seghead {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.bz-password-vault-seg .seghead .acc {
-  flex: 1;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: var(--pwv-mono);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.bz-password-vault-seg .seghead .acc .star {
-  color: var(--pwv-warn);
-  font-size: 11px;
-  margin-left: 4px;
-}
-.bz-password-vault-seg .seghead .copyac {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--pwv-muted);
-  border: 1px solid var(--pwv-line);
-  background: var(--pwv-bg);
-  border-radius: 8px;
-  padding: 5px 10px;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.15s;
-}
-.bz-password-vault-seg .seghead .copyac:hover {
-  background: var(--pwv-gold-soft);
-  color: #fff;
-  border-color: transparent;
-}
-.bz-password-vault-seg .seghead .copyac svg {
-  width: 13px;
-  height: 13px;
-}
-.bz-password-vault-seg .pwdline {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--pwv-bg);
-  border: 1px solid var(--pwv-line);
-  border-radius: 10px;
-  padding: 9px 11px;
-}
-.bz-password-vault-seg .pw {
-  flex: 1;
-  min-width: 0;
-  font-family: var(--pwv-mono);
-  font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.bz-password-vault-seg .pw.mask {
-  letter-spacing: 0.12em;
-  color: var(--pwv-muted);
-}
-.bz-password-vault-seg .mini {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--pwv-muted);
-  flex-shrink: 0;
-}
-.bz-password-vault-seg .mini:hover {
-  background: var(--pwv-gold-soft);
-  color: #fff;
-}
-.bz-password-vault-seg .mini svg {
-  width: 15px;
-  height: 15px;
-}
-.bz-password-vault-seg .note {
-  margin-top: 10px;
-  padding: 10px 12px;
-  background: color-mix(in srgb, var(--interactive-accent) 7%, transparent);
-  border-radius: 10px;
-  font-size: 12.5px;
-  color: var(--pwv-muted);
-  line-height: 1.55;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-.bz-password-vault-seg .segmeta {
-  margin-top: 8px;
-  font-size: 11px;
-  color: var(--pwv-faint);
-}
-/* 移动端平台详情页头 */
-.bz-password-vault-mobplathead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-.bz-password-vault-mobplathead > div {
-  min-width: 0;
-}
-.bz-password-vault-mobplathead .bz-password-vault-btn {
-  flex-shrink: 0;
-  padding: 8px 14px;
-  font-size: 12.5px;
-}
-/* 平台编辑弹窗 */
-.bz-password-vault-platedit label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--pwv-muted);
-  margin: 12px 0 6px;
-}
-.bz-password-vault-platedit input {
-  width: 100%;
-  padding: 11px 12px;
-  border-radius: 11px;
-  font-size: 13.5px;
-}
-.bz-password-vault-platedit .warn {
-  margin-top: 10px;
-  font-size: 11.5px;
-  color: var(--pwv-faint);
-  line-height: 1.5;
-}
-/* 移动端平台卡片徽标 */
-.bz-password-vault-mobcard .pl .cnt {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--pwv-gold-ink);
-  background: color-mix(in srgb, var(--interactive-accent) 16%, transparent);
-  border-radius: 999px;
-  padding: 1px 7px;
-  margin-left: 4px;
-}
-/* 右侧详情 */
-.bz-password-vault-detail {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: var(--pwv-surface);
-  min-width: 0;
-}
-.bz-password-vault-detailhead {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 22px 26px;
-  border-bottom: 1px solid var(--pwv-line);
-}
-.bz-password-vault-detailhead .ttl {
-  flex: 1;
-  min-width: 0;
-}
-.bz-password-vault-detailhead .ttl h2 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--pwv-ink);
-}
-.bz-password-vault-detailhead .ttl .url {
-  font-size: 12px;
-  color: var(--pwv-gold-ink);
-  text-decoration: none;
-  cursor: pointer;
-}
-.bz-password-vault-detailhead .ttl .url:hover {
-  text-decoration: underline;
-}
-.bz-password-vault-detailhead .star {
-  width: 36px;
-  height: 36px;
-  border-radius: 11px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--pwv-faint);
-  flex-shrink: 0;
-  font-size: 17px;
-}
-.bz-password-vault-detailhead .star:hover {
-  background: var(--pwv-surface2);
-}
-.bz-password-vault-detailhead .star.on {
-  color: var(--pwv-warn);
-}
-.bz-password-vault-mobpage .head .ic.on {
-  color: var(--pwv-warn);
-}
-.bz-password-vault-body {
-  padding: 24px 26px;
-  overflow-y: auto;
-  flex: 1;
-}
-.bz-password-vault-field {
-  margin-bottom: 20px;
-}
-.bz-password-vault-field .lab {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--pwv-faint);
-  margin-bottom: 7px;
-}
-.bz-password-vault-field .lab .hint {
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--pwv-faint);
-}
-.bz-password-vault-field .valrow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--pwv-bg);
-  border: 1px solid var(--pwv-line);
-  border-radius: 12px;
-  padding: 11px 14px;
-}
-.bz-password-vault-field .val {
-  flex: 1;
-  min-width: 0;
-  font-size: 14px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-family: var(--pwv-mono);
-}
-.bz-password-vault-field .val.mask {
-  letter-spacing: 0.12em;
-  color: var(--pwv-muted);
-}
-.bz-password-vault-mini {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--pwv-muted);
-  transition: background 0.15s, color 0.15s;
-  flex-shrink: 0;
-}
-.bz-password-vault-mini:hover {
-  background: var(--pwv-surface2);
-  color: var(--pwv-ink);
-}
-.bz-password-vault-mini svg {
-  width: 15px;
-  height: 15px;
-}
-.bz-password-vault-note {
-  background: var(--pwv-bg);
-  border: 1px solid var(--pwv-line);
-  border-radius: 12px;
-  padding: 12px 14px;
-  font-size: 13px;
-  color: var(--pwv-muted);
-  line-height: 1.6;
-  white-space: pre-wrap;
-}
-.bz-password-vault-meta {
-  font-size: 11.5px;
-  color: var(--pwv-faint);
-  margin-top: 2px;
-}
-.bz-password-vault-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 26px;
-  padding-top: 20px;
-  border-top: 1px solid var(--pwv-line);
-}
-.bz-password-vault-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border-radius: 11px;
-  font-size: 13.5px;
-  font-weight: 600;
-  background: var(--pwv-surface2);
-  color: var(--pwv-ink);
-  transition: opacity 0.15s;
-}
-.bz-password-vault-btn svg {
-  width: 15px;
-  height: 15px;
-}
-.bz-password-vault-btn:hover {
-  opacity: 0.82;
-}
-.bz-password-vault-btn.gold {
-  background: var(--pwv-gold-soft);
-  color: #fff;
-  box-shadow: 0 5px 14px color-mix(in srgb, var(--interactive-accent) 35%, transparent);
-}
-.bz-password-vault-btn.danger {
-  color: var(--pwv-bad);
-}
-.bz-password-vault-empty {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  color: var(--pwv-faint);
-  padding: 40px;
-  text-align: center;
-}
-.bz-password-vault-empty svg {
-  width: 38px;
-  height: 38px;
-  opacity: 0.5;
-}
-.bz-password-vault-empty .t {
-  font-size: 14px;
-  color: var(--pwv-muted);
-  font-weight: 600;
-}
-.bz-password-vault-empty .d {
-  font-size: 12px;
-}
-.bz-password-vault-empty .act {
-  margin-top: 8px;
-  padding: 9px 18px;
-  border-radius: 10px;
-  background: var(--pwv-gold-soft);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-}
-/* 生成器视图 */
-.bz-password-vault-gen {
-  padding: 24px 26px;
-  overflow-y: auto;
-  flex: 1;
-}
-.bz-password-vault-gen .row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
-  flex-wrap: wrap;
-}
-.bz-password-vault-gen .lab {
-  font-size: 12px;
-  color: var(--pwv-muted);
-  min-width: 56px;
-}
-.bz-password-vault-gen input[type="range"] {
-  flex: 1;
-  min-width: 140px;
-  accent-color: var(--pwv-gold);
-}
-.bz-password-vault-gen .val {
-  font-family: var(--pwv-mono);
-  font-size: 13px;
-  color: var(--pwv-gold-ink);
-  min-width: 36px;
-}
-.bz-password-vault-gen .chips {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.bz-password-vault-gen .chip {
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: var(--pwv-surface2);
-  font-size: 12px;
-  color: var(--pwv-muted);
-}
-.bz-password-vault-gen .chip.on {
-  background: color-mix(in srgb, var(--interactive-accent) 18%, transparent);
-  color: var(--pwv-gold-ink);
-  font-weight: 600;
-}
-.bz-password-vault-gen input[type="text"].charset {
-  flex: 1;
-  min-width: 200px;
-}
-.bz-password-vault-gen .result {
-  margin-top: 8px;
-  background: var(--pwv-bg);
-  border: 1px solid var(--pwv-line);
-  border-radius: 14px;
-  padding: 22px 24px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-.bz-password-vault-gen .result .pwd {
-  flex: 1;
-  min-width: 200px;
-  font-family: var(--pwv-mono);
-  font-size: 20px;
-  letter-spacing: 0.06em;
-  word-break: break-all;
-}
-.bz-password-vault-gen .strength {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  width: 100%;
-}
-.bz-password-vault-gen .strength i {
-  flex: 1;
-  height: 5px;
-  border-radius: 3px;
-  background: var(--pwv-line);
-}
-.bz-password-vault-gen .strength i.on1 {
-  background: var(--pwv-bad);
-}
-.bz-password-vault-gen .strength i.on2 {
-  background: var(--pwv-warn);
-}
-.bz-password-vault-gen .strength i.on3 {
-  background: var(--pwv-ok);
-}
-.bz-password-vault-gen .strlabel {
-  font-size: 11px;
-  color: var(--pwv-muted);
-  margin-top: 6px;
-}
-/* ============ 移动端 ============ */
-/* ≤768px：移动实例全屏接管（root 去 padding、desk 隐藏、mob 显示） */
-@media (max-width: 768px) {
-  .bz-password-vault {
-    padding: 0;
-    align-items: stretch;
-  }
-  .bz-password-vault-desk {
-    display: none;
-  }
-  .bz-password-vault-mob {
-    display: flex;
-  }
-}
-.bz-password-vault-mobbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: calc(44px + env(safe-area-inset-top, 0px)) 16px 10px;
-  background: var(--pwv-surface);
-  border-bottom: 1px solid var(--pwv-line);
-}
-.bz-password-vault-mobbar .seal {
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  background: var(--pwv-gold-soft);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.bz-password-vault-mobbar .seal svg {
-  width: 16px;
-  height: 16px;
-}
-.bz-password-vault-mobbar .t {
-  font-size: 16px;
-  font-weight: 700;
-  flex: 1;
-}
-.bz-password-vault-mobbar .bz-password-vault-mobclose {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--pwv-muted);
-  background: var(--pwv-surface2);
-  flex-shrink: 0;
-  cursor: pointer;
-}
-.bz-password-vault-mobbar .bz-password-vault-mobclose:hover {
-  background: color-mix(in srgb, var(--pwv-muted) 15%, transparent);
-}
-.bz-password-vault-mobbar .bz-password-vault-mobclose svg {
-  width: 17px;
-  height: 17px;
-}
-.bz-password-vault-mobbar .st {
-  font-size: 11px;
-  color: var(--pwv-ok);
-  font-weight: 600;
-  background: color-mix(in srgb, var(--color-green) 12%, transparent);
-  padding: 4px 9px;
-  border-radius: 999px;
-}
-.bz-password-vault-mobbar .st.locked {
-  color: var(--pwv-faint);
-  background: var(--pwv-surface2);
-}
-.bz-password-vault-mobbar .ic {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--pwv-muted);
-}
-.bz-password-vault-mobbar .ic:hover {
-  background: var(--pwv-surface2);
-  color: var(--pwv-ink);
-}
-.bz-password-vault-mobbar .ic svg {
-  width: 17px;
-  height: 17px;
-}
-.bz-password-vault-mobsearch {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 12px 16px 4px;
-  background: var(--pwv-surface);
-  border: 1px solid var(--pwv-line);
-  border-radius: 12px;
-  padding: 0 12px;
-}
-.bz-password-vault-mobsearch svg {
-  width: 14px;
-  height: 14px;
-  color: var(--pwv-faint);
-  flex-shrink: 0;
-}
-.bz-password-vault-mobsearch input {
-  border: none;
-  background: none;
-  flex: 1;
-  padding: 10px 0;
-  font-size: 14px;
-}
-.bz-password-vault-mobsearch input:focus {
-  outline: none;
-  border-color: transparent;
-}
-.bz-password-vault-moblist {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px 16px 96px;
-}
-.bz-password-vault-mobcard {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: var(--pwv-surface);
-  border: 1px solid var(--pwv-line);
-  border-radius: 16px;
-  padding: 14px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(90, 70, 20, 0.05);
-  position: relative;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.bz-password-vault-mobcard .av {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 17px;
-  color: #fff;
-  flex-shrink: 0;
-}
-.bz-password-vault-mobcard .mid {
-  flex: 1;
-  min-width: 0;
-}
-.bz-password-vault-mobcard .pl {
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.bz-password-vault-mobcard .pl .star {
-  color: var(--pwv-warn);
-  font-size: 11px;
-}
-.bz-password-vault-mobcard .ac {
-  font-size: 12px;
-  color: var(--pwv-muted);
-  font-family: var(--pwv-mono);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.bz-password-vault-mobcard .go {
-  color: var(--pwv-faint);
-}
-.bz-password-vault-fab {
-  position: absolute;
-  right: 20px;
-  bottom: 24px;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: var(--pwv-gold-soft);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--interactive-accent) 45%, transparent);
-  transition: transform 0.15s;
-  z-index: 6;
-}
-.bz-password-vault-fab:hover {
-  transform: translateY(-2px);
-}
-.bz-password-vault-fab svg {
-  width: 24px;
-  height: 24px;
-}
-.bz-password-vault-mobempty {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  color: var(--pwv-faint);
-  padding: 40px;
-  text-align: center;
-}
-.bz-password-vault-mobempty .t {
-  font-size: 14px;
-  color: var(--pwv-muted);
-  font-weight: 600;
-}
-.bz-password-vault-mobempty .act {
-  margin-top: 8px;
-  padding: 10px 20px;
-  border-radius: 12px;
-  background: var(--pwv-gold-soft);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-}
-/* 移动详情页（次级页面）：遮罩 + 底部弹出面板（非全屏，遮罩点击关闭） */
-.bz-password-vault-mobpage {
-  position: absolute;
-  inset: 0;
-  background: rgba(20, 18, 12, 0.45);
-  backdrop-filter: blur(3px);
-  display: none;
-  align-items: flex-end;
-  justify-content: center;
-  z-index: 8;
-}
-.bz-password-vault-mobpage.open {
-  display: flex;
-}
-.bz-password-vault-mobpage .bz-password-vault-mobsheet {
-  background: var(--pwv-bg);
-  width: 100%;
-  max-height: 88%;
-  border-radius: 18px 18px 0 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: bz-pwv-sheetup 0.25s ease-out;
-}
-@keyframes bz-pwv-sheetup {
-  from {
-    transform: translateY(40px);
-    opacity: 0;
-  }
-  to {
-    transform: none;
-    opacity: 1;
-  }
-}
-.bz-password-vault-mobpage .head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: var(--pwv-surface);
-  border-bottom: 1px solid var(--pwv-line);
-}
-.bz-password-vault-back {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--pwv-muted);
-  background: var(--pwv-surface2);
-  flex-shrink: 0;
-}
-.bz-password-vault-back svg {
-  width: 17px;
-  height: 17px;
-}
-.bz-password-vault-mobpage .head .t {
-  font-size: 16px;
-  font-weight: 700;
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.bz-password-vault-mobpage .head .ic {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--pwv-muted);
-}
-.bz-password-vault-mobpage .head .ic:hover {
-  background: var(--pwv-surface2);
-}
-.bz-password-vault-mobpage .head .ic svg {
-  width: 17px;
-  height: 17px;
-}
-.bz-password-vault-mobbody {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px 16px 40px;
-}
-.bz-password-vault-mf {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--pwv-surface);
-  border: 1px solid var(--pwv-line);
-  border-radius: 14px;
-  padding: 13px 14px;
-  margin-bottom: 12px;
-}
-.bz-password-vault-mf .lab {
-  font-size: 11px;
-  color: var(--pwv-faint);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  width: 52px;
-  flex-shrink: 0;
-}
-.bz-password-vault-mf .val {
-  flex: 1;
-  min-width: 0;
-  font-size: 14px;
-  font-family: var(--pwv-mono);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.bz-password-vault-mf .val.mask {
-  letter-spacing: 0.12em;
-  color: var(--pwv-muted);
-}
-.bz-password-vault-mf .mini {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--pwv-muted);
-}
-.bz-password-vault-mf .mini:hover {
-  background: var(--pwv-surface2);
-  color: var(--pwv-ink);
-}
-.bz-password-vault-mf .mini svg {
-  width: 15px;
-  height: 15px;
-}
-.bz-password-vault-mobpage .actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 22px;
-}
-.bz-password-vault-mobpage .actions .full {
-  grid-column: 1 / -1;
-}
-.bz-password-vault-mobnote {
-  background: var(--pwv-surface);
-  border: 1px solid var(--pwv-line);
-  border-radius: 14px;
-  padding: 12px 14px;
-  font-size: 13px;
-  color: var(--pwv-muted);
-  line-height: 1.6;
-  white-space: pre-wrap;
-}
-.bz-password-vault-mobmeta {
-  font-size: 11.5px;
-  color: var(--pwv-faint);
-  margin: 10px 2px 0;
-}
-/* 移动端全屏（恒真全屏：不设开关，域内恒挂 .bz-password-vault-mfs） */
-.bz-password-vault-mfs {
-  border-radius: 0;
-  max-height: none;
-  height: 100%;
-}
-/* ============ 解锁屏 ============ */
-.bz-password-vault-lock {
-  position: absolute;
-  inset: 0;
-  z-index: 20;
-  background: var(--pwv-bg);
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 40px;
-  text-align: center;
-}
-.bz-password-vault-lock.open {
-  display: flex;
-}
-.bz-password-vault-lock .seal {
-  width: 72px;
-  height: 72px;
-  border-radius: 22px;
-  background: var(--pwv-gold-soft);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 10px 30px color-mix(in srgb, var(--interactive-accent) 40%, transparent);
-  margin-bottom: 8px;
-}
-.bz-password-vault-lock .seal svg {
-  width: 36px;
-  height: 36px;
-}
-.bz-password-vault-lock h2 {
-  font-size: 22px;
-  margin: 0;
-  font-weight: 700;
-  color: var(--pwv-ink);
-}
-.bz-password-vault-lock p {
-  font-size: 12.5px;
-  color: var(--pwv-muted);
-  margin: 0 0 6px;
-}
-.bz-password-vault-lock input {
-  width: min(280px, 80%);
-  text-align: center;
-  font-size: 15px;
-  padding: 12px;
-  margin-top: 8px;
-}
-.bz-password-vault-lock .err {
-  font-size: 12px;
-  color: var(--pwv-bad);
-  min-height: 16px;
-  margin-top: 8px;
-}
-.bz-password-vault-lock .go {
-  margin-top: 14px;
-  background: var(--pwv-gold-soft);
-  color: #fff;
-  font-weight: 600;
-  padding: 12px 34px;
-  border-radius: 12px;
-  box-shadow: 0 6px 18px color-mix(in srgb, var(--interactive-accent) 40%, transparent);
-}
-.bz-password-vault-lock .sec {
-  margin-top: 26px;
-  font-size: 11px;
-  color: var(--pwv-faint);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.bz-password-vault-lock .sec .dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--pwv-ok);
-}
-.bz-password-vault-lock .sec.on .dot {
-  background: var(--pwv-bad);
-}
-.bz-password-vault-lock .hint {
-  margin-top: 10px;
-  font-size: 11.5px;
-  color: var(--pwv-faint);
-}
-/* ============ 添加/编辑弹窗 ============ */
-.bz-password-vault-modal {
-  position: absolute;
-  inset: 0;
-  z-index: 30;
-  background: rgba(20, 18, 12, 0.45);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(3px);
-}
-.bz-password-vault-modal.open {
-  display: flex;
-}
-.bz-password-vault-dialog {
-  background: var(--pwv-surface);
-  border-radius: 18px;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
-  width: min(420px, 90%);
-  max-width: 420px; /* 与确认/平台编辑弹窗 .pop2 .card 完全一致 */
-  padding: 24px;
-  max-height: 88%;
-  overflow-y: auto;
-}
-.bz-password-vault-dialog h3 {
-  margin: 0 0 4px;
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--pwv-ink);
-}
-.bz-password-vault-dialog .sub {
-  font-size: 12px;
-  color: var(--pwv-muted);
-  margin-bottom: 18px;
-}
-.bz-password-vault-dialog label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--pwv-muted);
-  margin: 12px 0 6px;
-}
-.bz-password-vault-dialog input {
-  width: 100%;
-  padding: 11px 12px;
-  border-radius: 11px;
-  font-size: 13.5px;
-}
-.bz-password-vault-dialog .pwdrow {
-  margin-bottom: 2px;
-}
-.bz-password-vault-dialog .pwdrow input {
-  width: 100%;
-  padding: 11px 12px;
-  border-radius: 11px;
-  font-size: 13.5px;
-}
-.bz-password-vault-dialog .gen {
-  display: block;
-  width: 100%;
-  text-align: center;
-  padding: 6px 0;
-  border: none;
-  border-radius: 0 0 11px 11px;
-  background: var(--pwv-surface2);
-  color: var(--pwv-gold-ink);
-  font-size: 12.5px;
-  font-weight: 600;
-  border: 1px solid var(--pwv-line);
-  border-top: none;
-}
-.bz-password-vault-dialog .gen:hover {
-  background: color-mix(in srgb, var(--interactive-accent) 14%, transparent);
-}
-.bz-password-vault-dialog .btns {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 22px;
-}
-.bz-password-vault-dialog .btns button {
-  padding: 10px 20px;
-  border-radius: 11px;
-  font-size: 13.5px;
-  font-weight: 600;
-}
-.bz-password-vault-dialog .cancel {
-  background: var(--pwv-surface2);
-  color: var(--pwv-ink);
-}
-.bz-password-vault-dialog .save {
-  background: var(--pwv-gold-soft);
-  color: #fff;
-  box-shadow: 0 5px 14px color-mix(in srgb, var(--interactive-accent) 35%, transparent);
-}
-.bz-password-vault-dialog .err {
-  font-size: 12px;
-  color: var(--pwv-bad);
-  min-height: 16px;
-  margin-top: 8px;
-}
-/* ============ 通用弹窗（确认容器） ============ */
-.bz-password-vault-pop2 {
-  position: absolute;
-  inset: 0;
-  z-index: 55;
-  background: rgba(20, 18, 12, 0.45);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(3px);
-}
-.bz-password-vault-pop2.open {
-  display: flex;
-}
-.bz-password-vault-pop2 .card {
-  background: var(--pwv-surface);
-  border-radius: 18px;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
-  width: min(420px, 90%);
-  max-width: 420px; /* 与创建弹窗 .bz-password-vault-dialog 完全一致，防 100% 撑满 */
-  padding: 24px;
-  max-height: 88%;
-  overflow-y: auto;
-}
-.bz-password-vault-pop2 .card h3 {
-  margin: 0 0 8px;
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--pwv-ink);
-}
-.bz-password-vault-pop2 .card .msg {
-  font-size: 13.5px;
-  color: var(--pwv-muted);
-  line-height: 1.6;
-  margin-bottom: 18px;
-}
-.bz-password-vault-pop2 .btns {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-.bz-password-vault-pop2 .btns button {
-  padding: 10px 20px;
-  border-radius: 11px;
-  font-size: 13.5px;
-  font-weight: 600;
-}
-.bz-password-vault-pop2 .cancel {
-  background: var(--pwv-surface2);
-  color: var(--pwv-ink);
-}
-.bz-password-vault-pop2 .ok {
-  background: var(--pwv-gold-soft);
-  color: #fff;
-  box-shadow: 0 5px 14px color-mix(in srgb, var(--interactive-accent) 35%, transparent);
-}
-.bz-password-vault-pop2 .ok.danger {
-  background: var(--pwv-bad);
-  box-shadow: 0 5px 14px color-mix(in srgb, var(--text-error) 35%, transparent);
-}
-/* ============ toast ============ */
-.bz-password-vault-toast {
-  position: absolute;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--pwv-ink);
-  color: var(--pwv-bg);
-  padding: 9px 18px;
-  border-radius: 999px;
-  font-size: 12.5px;
-  font-weight: 600;
-  z-index: 70;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-}
-.bz-password-vault-toast.show {
-  opacity: 1;
-}
-.bz-password-vault-toast.err {
-  background: var(--pwv-bad);
-  color: #fff;
-}
 /* ==================== 收藏本域样式（src/favorites/styles.css，ticket 177 重写） ====================
  * 基线（按钮/图标钮/chip/输入/弹窗/空态/标签多选）全部消费组件库（src/core/ui/ 的 .bz-* 类
  * 与 --bz-* token）；本文件只保留收藏本独有布局（主面板骨架/左标签栏/卡片/表单 LLM 区）。
@@ -8116,6 +6442,280 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 .bz-encrypt-statusbar { cursor: pointer; }
 .bz-encrypt-statusbar:hover { opacity: 0.8; }
 
+
+/* ============================================================
+ * 统一保险库工作台（encrypt，ADR-0085 三栏三资产；P1 资产档案库视觉）
+ * 变量 --bz-vault-* 随 Obsidian 亮/暗主题翻色；分类色固定（密码金/笔记松石/日记靛蓝）。
+ * 全部规则以 #bz-encrypt-popup 作用域收拢（不泄漏到其它弹窗）。
+ * ============================================================ */
+#bz-encrypt-popup {
+  --bz-vault-bg: var(--background-primary);
+  --bz-vault-surface: var(--background-secondary);
+  --bz-vault-surface2: var(--background-modifier-hover);
+  --bz-vault-ink: var(--text-normal);
+  --bz-vault-muted: var(--text-muted);
+  --bz-vault-faint: var(--text-faint);
+  --bz-vault-line: var(--background-modifier-border);
+  --bz-vault-gold: #b98d3e;
+  --bz-vault-gold-deep: #96701f;
+  --bz-vault-gold-soft: linear-gradient(135deg, #e9d194, #b98d3e);
+  --bz-vault-gold-ink: #7c5c15;
+  --bz-vault-teal: #2e7d68;
+  --bz-vault-teal-ink: #23604f;
+  --bz-vault-indigo: #5a63a8;
+  --bz-vault-indigo-ink: #474e8a;
+  --bz-vault-ok: #3e8e5a;
+  --bz-vault-bad: #c05555;
+  --bz-vault-warn: #c98a1e;
+  --bz-vault-shadow: 0 10px 30px rgba(90, 70, 20, 0.08);
+}
+.theme-dark #bz-encrypt-popup {
+  --bz-vault-bg: #15161a;
+  --bz-vault-surface: #1c1e24;
+  --bz-vault-surface2: #262933;
+  --bz-vault-ink: #ece9e0;
+  --bz-vault-muted: #9b968a;
+  --bz-vault-faint: #6b6759;
+  --bz-vault-line: #32353f;
+  --bz-vault-gold: #d3ab5c;
+  --bz-vault-gold-ink: #f0dcae;
+  --bz-vault-gold-soft: linear-gradient(135deg, #b98d3e, #e9d194);
+  --bz-vault-teal: #3da383;
+  --bz-vault-teal-ink: #9fd8c6;
+  --bz-vault-indigo: #7a83cc;
+  --bz-vault-indigo-ink: #c2c6f2;
+  --bz-vault-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+#bz-encrypt-popup { width: 92vw; max-width: 1200px; height: 84vh; max-height: 840px; padding: 0; overflow: hidden; background: var(--bz-vault-bg); }
+#bz-encrypt-popup .bz-vault-desk { display: flex; height: 100%; width: 100%; color: var(--bz-vault-ink); font-size: 14px; }
+#bz-encrypt-popup button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+#bz-encrypt-popup input { font: inherit; border: 1px solid var(--bz-vault-line); background: var(--bz-vault-surface); color: var(--bz-vault-ink); border-radius: 10px; padding: 8px 10px; outline: none; }
+#bz-encrypt-popup .bz-vault-ic { width: 30px; height: 30px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; color: var(--bz-vault-muted); flex-shrink: 0; }
+#bz-encrypt-popup .bz-vault-ic:hover { background: var(--bz-vault-surface2); color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-vault-ic svg { width: 15px; height: 15px; }
+/* 左导航 */
+#bz-encrypt-popup .bz-vault-nav { width: 210px; flex-shrink: 0; background: var(--bz-vault-surface); border-right: 1px solid var(--bz-vault-line); display: flex; flex-direction: column; padding: 16px 12px 12px; }
+#bz-encrypt-popup .bz-vault-brand { display: flex; align-items: center; gap: 10px; padding: 0 10px 16px; }
+#bz-encrypt-popup .bz-vault-brand .seal { width: 34px; height: 34px; border-radius: 11px; background: var(--bz-vault-gold-soft); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(150, 112, 31, 0.35); flex-shrink: 0; color: #fff; }
+#bz-encrypt-popup .bz-vault-brand .seal svg { width: 18px; height: 18px; stroke: #fff; }
+#bz-encrypt-popup .bz-vault-brand .nm { font-size: 16px; font-weight: 800; line-height: 1.15; color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-vault-brand .nm small { display: block; font-size: 10px; font-weight: 400; color: var(--bz-vault-muted); letter-spacing: 0.14em; margin-top: 2px; }
+#bz-encrypt-popup .bz-vault-sec { font-size: 10px; letter-spacing: 0.16em; color: var(--bz-vault-faint); padding: 12px 12px 6px; text-transform: uppercase; }
+#bz-encrypt-popup .bz-vault-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; font-size: 13.5px; color: var(--bz-vault-muted); cursor: pointer; border: 1px solid transparent; margin-bottom: 2px; }
+#bz-encrypt-popup .bz-vault-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+#bz-encrypt-popup .bz-vault-item:hover { background: var(--bz-vault-surface2); }
+#bz-encrypt-popup .bz-vault-item .cnt { margin-left: auto; font-size: 10.5px; color: var(--bz-vault-faint); background: var(--bz-vault-surface2); border-radius: 999px; padding: 1px 7px; font-variant-numeric: tabular-nums; }
+#bz-encrypt-popup .bz-vault-item.on { background: rgba(185, 141, 62, 0.13); color: var(--bz-vault-gold-ink); font-weight: 600; border-color: rgba(185, 141, 62, 0.25); }
+#bz-encrypt-popup .bz-vault-item.on .cnt { background: rgba(185, 141, 62, 0.2); color: var(--bz-vault-gold-ink); }
+#bz-encrypt-popup .bz-vault-item.k-note.on { background: rgba(46, 125, 104, 0.12); color: var(--bz-vault-teal-ink); border-color: rgba(46, 125, 104, 0.3); }
+#bz-encrypt-popup .bz-vault-item.k-note.on .cnt { background: rgba(46, 125, 104, 0.18); color: var(--bz-vault-teal-ink); }
+#bz-encrypt-popup .bz-vault-item.k-diary.on { background: rgba(90, 99, 168, 0.12); color: var(--bz-vault-indigo-ink); border-color: rgba(90, 99, 168, 0.3); }
+#bz-encrypt-popup .bz-vault-item.k-diary.on .cnt { background: rgba(90, 99, 168, 0.18); color: var(--bz-vault-indigo-ink); }
+#bz-encrypt-popup .bz-vault-nav .grow { flex: 1; }
+#bz-encrypt-popup .bz-vault-health { margin: 8px 4px 6px; background: var(--bz-vault-bg); border: 1px solid var(--bz-vault-line); border-radius: 12px; padding: 10px 12px; }
+#bz-encrypt-popup .bz-vault-health .ht { font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-vault-health .ht .okdot { width: 7px; height: 7px; border-radius: 50%; background: var(--bz-vault-ok); box-shadow: 0 0 0 3px rgba(62, 142, 90, 0.15); flex-shrink: 0; }
+#bz-encrypt-popup .bz-vault-health .hd { font-size: 11px; color: var(--bz-vault-muted); margin-top: 3px; line-height: 1.5; }
+#bz-encrypt-popup .bz-vault-lockbtn { display: flex; align-items: center; gap: 8px; padding: 9px 12px; font-size: 12.5px; color: var(--bz-vault-muted); border-top: 1px solid var(--bz-vault-line); cursor: pointer; }
+#bz-encrypt-popup .bz-vault-lockbtn:hover { color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-vault-lockbtn svg { width: 14px; height: 14px; }
+#bz-encrypt-popup .bz-vault-lockbtn .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bz-vault-ok); box-shadow: 0 0 0 3px rgba(62, 142, 90, 0.18); margin-left: auto; }
+/* 主区 */
+#bz-encrypt-popup .bz-vault-main { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bz-vault-bg); }
+#bz-encrypt-popup .bz-vault-bar { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--bz-vault-line); }
+#bz-encrypt-popup .bz-vault-bar h1 { font-size: 18px; font-weight: 800; margin: 0; color: var(--bz-vault-ink); white-space: nowrap; }
+#bz-encrypt-popup .bz-vault-bar .sub { font-size: 12px; color: var(--bz-vault-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#bz-encrypt-popup .bz-vault-search { flex: 1; max-width: 260px; display: flex; align-items: center; gap: 8px; background: var(--bz-vault-surface); border: 1px solid var(--bz-vault-line); border-radius: 11px; padding: 0 12px; margin-left: auto; }
+#bz-encrypt-popup .bz-vault-search svg { width: 14px; height: 14px; color: var(--bz-vault-faint); flex-shrink: 0; }
+#bz-encrypt-popup .bz-vault-search input { border: none; background: none; flex: 1; padding: 7px 0; font-size: 13px; }
+#bz-encrypt-popup .bz-vault-search input:focus { outline: none; }
+#bz-encrypt-popup .bz-vault-pane { flex: 1; min-height: 0; display: flex; gap: 14px; padding: 16px 18px; }
+#bz-encrypt-popup .bz-vault-listcol { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; border: 1px solid var(--bz-vault-line); background: var(--bz-vault-surface); border-radius: 16px; overflow: hidden; }
+#bz-encrypt-popup .bz-vault-lc-head { display: flex; align-items: center; gap: 8px; padding: 13px 16px 8px; color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-vault-lc-head .t { font-size: 13.5px; font-weight: 700; flex: 1; }
+#bz-encrypt-popup .bz-vault-lc-head .lc-count, #bz-encrypt-popup .bz-vault-lc-head .badge { font-size: 11px; color: var(--bz-vault-faint); }
+#bz-encrypt-popup .bz-vault-lc-head .badge.gold { color: var(--bz-vault-gold-ink); background: rgba(185, 141, 62, 0.16); border-radius: 999px; padding: 1px 7px; font-weight: 700; }
+#bz-encrypt-popup .bz-vault-row { display: flex; align-items: center; gap: 11px; padding: 10px; border-radius: 12px; cursor: pointer; border: 1px solid transparent; transition: background 0.15s, border-color 0.15s; color: var(--bz-vault-ink); margin: 0 8px; }
+#bz-encrypt-popup .bz-vault-row:hover { background: var(--bz-vault-bg); }
+#bz-encrypt-popup .bz-vault-row.on { background: var(--bz-vault-bg); border-color: var(--bz-vault-line); box-shadow: var(--bz-vault-shadow); }
+#bz-encrypt-popup .bz-vault-row .av { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; }
+#bz-encrypt-popup .bz-vault-row .av svg { width: 16px; height: 16px; }
+#bz-encrypt-popup .bz-vault-row .mid { flex: 1; min-width: 0; }
+#bz-encrypt-popup .bz-vault-row .t1 { font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-vault-row .t2 { font-size: 11.5px; color: var(--bz-vault-muted); font-family: var(--font-monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+#bz-encrypt-popup .bz-vault-row .tm { font-size: 10.5px; color: var(--bz-vault-faint); flex-shrink: 0; }
+#bz-encrypt-popup .bz-vault-row .star { color: var(--bz-vault-warn); font-size: 10px; }
+/* 详情列 */
+#bz-encrypt-popup .bz-vault-detail { flex: 1; min-width: 0; border: 1px solid var(--bz-vault-line); background: var(--bz-vault-surface); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-vault-detail > .bz-vault-area { overflow-y: auto; padding: 18px 20px; }
+#bz-encrypt-popup .bz-vault-dhead { display: flex; align-items: center; gap: 13px; padding: 16px 20px; border-bottom: 1px solid var(--bz-vault-line); }
+#bz-encrypt-popup .bz-vault-dhead .big { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+#bz-encrypt-popup .bz-vault-dhead .big svg { width: 21px; height: 21px; }
+#bz-encrypt-popup .bz-vault-dhead .ttl { flex: 1; min-width: 0; }
+#bz-encrypt-popup .bz-vault-dhead .ttl h2 { margin: 0; font-size: 16.5px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-vault-dhead .ttl .url { font-size: 11.5px; color: var(--bz-vault-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+#bz-encrypt-popup .bz-vault-dhead .acts { display: flex; gap: 6px; }
+#bz-encrypt-popup .bz-vault-dcontent { flex: 1; overflow-y: auto; padding: 16px 20px 20px; }
+#bz-encrypt-popup .field { margin-bottom: 14px; }
+#bz-encrypt-popup .field .lab { display: flex; justify-content: space-between; font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--bz-vault-faint); margin-bottom: 6px; }
+#bz-encrypt-popup .field .valrow { display: flex; align-items: center; gap: 9px; background: var(--bz-vault-bg); border: 1px solid var(--bz-vault-line); border-radius: 11px; padding: 9px 12px; }
+#bz-encrypt-popup .field .valrow .val { flex: 1; min-width: 0; font-size: 13.5px; font-family: var(--font-monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--bz-vault-ink); }
+#bz-encrypt-popup .field .valrow.chips { flex-wrap: wrap; background: none; border: none; padding: 0; gap: 6px; }
+#bz-encrypt-popup .chip { font-size: 11px; padding: 3px 10px; border-radius: 999px; background: var(--bz-vault-bg); border: 1px solid var(--bz-vault-line); color: var(--bz-vault-muted); white-space: nowrap; }
+#bz-encrypt-popup .chip.att { color: var(--bz-vault-teal-ink); background: rgba(46, 125, 104, 0.1); border-color: rgba(46, 125, 104, 0.3); }
+#bz-encrypt-popup .note { background: var(--bz-vault-bg); border: 1px solid var(--bz-vault-line); border-radius: 11px; padding: 11px 13px; font-size: 12.5px; color: var(--bz-vault-muted); line-height: 1.6; }
+#bz-encrypt-popup .note.hint { color: var(--bz-vault-faint); font-size: 12px; }
+#bz-encrypt-popup .note.pre { white-space: normal; word-break: break-word; }
+#bz-encrypt-popup .bigbtns { display: flex; gap: 10px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--bz-vault-line); flex-wrap: wrap; }
+#bz-encrypt-popup .bbtn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; background: var(--bz-vault-surface2); color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bbtn svg { width: 14px; height: 14px; }
+#bz-encrypt-popup .bbtn.gold { background: var(--bz-vault-gold-soft); color: #fff; box-shadow: 0 4px 12px rgba(150, 112, 31, 0.3); }
+#bz-encrypt-popup .bbtn.teal { background: var(--bz-vault-teal); color: #fff; }
+#bz-encrypt-popup .bbtn.danger { color: var(--bz-vault-bad); }
+#bz-encrypt-popup .bbtn.danger:hover { background: rgba(192, 85, 85, 0.12); }
+/* 概览 */
+#bz-encrypt-popup .bz-vault-hero { position: relative; border-radius: 18px; padding: 22px 26px; color: #fff; background: linear-gradient(120deg, #b98d3e, #8a6a1f); overflow: hidden; margin-bottom: 16px; }
+#bz-encrypt-popup .bz-vault-hero::after { content: ''; position: absolute; right: -40px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); }
+#bz-encrypt-popup .bz-vault-hero .ht { font-size: 12px; letter-spacing: 0.14em; opacity: 0.85; display: flex; align-items: center; gap: 8px; }
+#bz-encrypt-popup .bz-vault-hero .ht svg { width: 14px; height: 14px; }
+#bz-encrypt-popup .bz-vault-hero .hn { font-size: 24px; font-weight: 800; margin: 8px 0 2px; }
+#bz-encrypt-popup .bz-vault-hero .hd { font-size: 12.5px; opacity: 0.9; }
+#bz-encrypt-popup .bz-vault-hero .hbtns { display: flex; gap: 10px; margin-top: 16px; position: relative; z-index: 2; flex-wrap: wrap; }
+#bz-encrypt-popup .bz-vault-hero .hbtn { display: inline-flex; align-items: center; gap: 7px; background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.35); color: #fff; padding: 8px 15px; border-radius: 11px; font-size: 13px; font-weight: 600; }
+#bz-encrypt-popup .bz-vault-hero .hbtn svg { width: 14px; height: 14px; }
+#bz-encrypt-popup .bz-vault-hero .hbtn:hover { background: rgba(255, 255, 255, 0.28); }
+#bz-encrypt-popup .bz-vault-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px; }
+#bz-encrypt-popup .bz-vault-cards .card { border: 1px solid var(--bz-vault-line); background: var(--bz-vault-surface); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: border-color 0.15s; color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-vault-cards .card:hover { border-color: var(--bz-vault-gold); }
+#bz-encrypt-popup .bz-vault-cards .card .ct { display: flex; align-items: center; gap: 9px; font-size: 12px; color: var(--bz-vault-muted); font-weight: 600; }
+#bz-encrypt-popup .bz-vault-cards .card .ct .k { width: 24px; height: 24px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; }
+#bz-encrypt-popup .bz-vault-cards .card .ct .k svg { width: 13px; height: 13px; }
+#bz-encrypt-popup .bz-vault-cards .card .num { font-size: 28px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+#bz-encrypt-popup .bz-vault-cards .card .num small { font-size: 12px; color: var(--bz-vault-muted); font-weight: 400; margin-left: 4px; }
+#bz-encrypt-popup .bz-vault-cards .card .cd { font-size: 11.5px; color: var(--bz-vault-faint); line-height: 1.5; }
+#bz-encrypt-popup .bz-vault-two { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; }
+#bz-encrypt-popup .bz-vault-two .panel { border: 1px solid var(--bz-vault-line); background: var(--bz-vault-surface); border-radius: 16px; padding: 14px 16px; min-width: 0; }
+#bz-encrypt-popup .bz-vault-two .panel .pt { font-size: 13px; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-vault-two .panel .pt .more { font-size: 11px; color: var(--bz-vault-gold-ink); cursor: pointer; font-weight: 400; }
+#bz-encrypt-popup .bz-vault-panel-empty { font-size: 12px; color: var(--bz-vault-faint); padding: 12px 6px; }
+#bz-encrypt-popup .bz-vault-minirow { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 10px; cursor: pointer; }
+#bz-encrypt-popup .bz-vault-minirow:hover { background: var(--bz-vault-bg); }
+#bz-encrypt-popup .bz-vault-minirow .av { width: 30px; height: 30px; border-radius: 9px; color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+#bz-encrypt-popup .bz-vault-minirow .av svg { width: 14px; height: 14px; }
+#bz-encrypt-popup .bz-vault-minirow .mid { flex: 1; min-width: 0; }
+#bz-encrypt-popup .bz-vault-minirow .a { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-vault-minirow .b { font-size: 11px; color: var(--bz-vault-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#bz-encrypt-popup .bz-vault-minirow .tm { font-size: 10.5px; color: var(--bz-vault-faint); flex-shrink: 0; }
+#bz-encrypt-popup .bz-vault-hrow { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px dashed var(--bz-vault-line); font-size: 12.5px; color: var(--bz-vault-muted); }
+#bz-encrypt-popup .bz-vault-hrow:last-child { border-bottom: none; }
+#bz-encrypt-popup .bz-vault-hrow .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+#bz-encrypt-popup .bz-vault-hrow .lbl { flex: 1; }
+#bz-encrypt-popup .bz-vault-hrow .n { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--bz-vault-ink); }
+/* 空态 */
+#bz-encrypt-popup .bz-pwv-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--bz-vault-faint); padding: 36px; text-align: center; }
+#bz-encrypt-popup .bz-pwv-empty .t { font-size: 14px; color: var(--bz-vault-muted); font-weight: 600; }
+#bz-encrypt-popup .bz-pwv-empty .d { font-size: 12px; }
+/* 密码平台行 */
+#bz-encrypt-popup .bz-pwv-row, #bz-encrypt-popup .bz-pwv-plrow { display: flex; align-items: center; gap: 11px; padding: 10px; border-radius: 12px; cursor: pointer; border: 1px solid transparent; transition: background 0.15s, border-color 0.15s; color: var(--bz-vault-ink); margin: 0 8px; }
+#bz-encrypt-popup .bz-pwv-row:hover, #bz-encrypt-popup .bz-pwv-plrow:hover { background: var(--bz-vault-bg); }
+#bz-encrypt-popup .bz-pwv-row.on, #bz-encrypt-popup .bz-pwv-plrow.on { background: var(--bz-vault-bg); border-color: var(--bz-vault-line); box-shadow: var(--bz-vault-shadow); }
+#bz-encrypt-popup .bz-pwv-row .mid, #bz-encrypt-popup .bz-pwv-plrow .mid { flex: 1; min-width: 0; }
+#bz-encrypt-popup .bz-pwv-row .pl, #bz-encrypt-popup .bz-pwv-plrow .pl { font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 5px; color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-pwv-row .ac, #bz-encrypt-popup .bz-pwv-plrow .ac { font-size: 11.5px; color: var(--bz-vault-muted); font-family: var(--font-monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+#bz-encrypt-popup .bz-pwv-row .tm, #bz-encrypt-popup .bz-pwv-plrow .tm { font-size: 10.5px; color: var(--bz-vault-faint); flex-shrink: 0; }
+#bz-encrypt-popup .bz-pwv-row .star, #bz-encrypt-popup .bz-pwv-plrow .star { color: var(--bz-vault-warn); font-size: 10px; }
+#bz-encrypt-popup .bz-pwv-cnt { font-size: 10.5px; color: var(--bz-vault-gold-ink); background: rgba(185, 141, 62, 0.16); border-radius: 999px; padding: 0 7px; font-variant-numeric: tabular-nums; }
+/* 平台头像 */
+#bz-encrypt-popup .bz-pwv-avatar { position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; color: #fff; flex-shrink: 0; }
+#bz-encrypt-popup .bz-pwv-avatar.big { width: 46px; height: 46px; border-radius: 13px; font-size: 18px; }
+#bz-encrypt-popup .bz-pwv-avatar.av { width: 36px; height: 36px; border-radius: 10px; font-size: 14px; }
+#bz-encrypt-popup .bz-pwv-avatar .bz-pwv-favicon { width: 60%; height: 60%; object-fit: contain; position: relative; z-index: 1; }
+/* 密码详情 */
+#bz-encrypt-popup .bz-pwv-dhead { display: flex; align-items: center; gap: 13px; padding: 16px 20px; border-bottom: 1px solid var(--bz-vault-line); }
+#bz-encrypt-popup .bz-pwv-dhead .ttl { flex: 1; min-width: 0; }
+#bz-encrypt-popup .bz-pwv-dhead .ttl h2 { margin: 0; font-size: 16.5px; font-weight: 800; color: var(--bz-vault-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#bz-encrypt-popup .bz-pwv-dhead .ttl .url { font-size: 11.5px; color: var(--bz-vault-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; cursor: pointer; }
+#bz-encrypt-popup .bz-pwv-dhead .ttl .url:hover { color: var(--bz-vault-gold-ink); }
+#bz-encrypt-popup .bz-pwv-accthead { display: flex; align-items: center; gap: 8px; padding: 12px 20px 4px; }
+#bz-encrypt-popup .bz-pwv-accthead .t { font-size: 12.5px; font-weight: 700; color: var(--bz-vault-muted); flex: 1; }
+#bz-encrypt-popup .bz-pwv-addacct { font-size: 12px; color: var(--bz-vault-gold-ink); background: rgba(185, 141, 62, 0.12); padding: 5px 12px; border-radius: 999px; font-weight: 600; }
+#bz-encrypt-popup .bz-pwv-addacct:hover { background: rgba(185, 141, 62, 0.22); }
+#bz-encrypt-popup .bz-pwv-accts { padding: 8px 20px 20px; }
+#bz-encrypt-popup .bz-pwv-acctcard { border: 1px solid var(--bz-vault-line); background: var(--bz-vault-bg); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; }
+#bz-encrypt-popup .bz-pwv-acctcard .accrow { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+#bz-encrypt-popup .bz-pwv-acctcard .accrow .name { flex: 1; min-width: 0; font-size: 14px; font-weight: 700; color: var(--bz-vault-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#bz-encrypt-popup .bz-pwv-acctcard .accrow .name .star { color: var(--bz-vault-warn); font-size: 11px; margin-left: 4px; }
+#bz-encrypt-popup .bz-pwv-acctcard .copyac { font-size: 12px; color: var(--bz-vault-muted); background: var(--bz-vault-surface2); padding: 5px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+#bz-encrypt-popup .bz-pwv-acctcard .copyac svg { width: 13px; height: 13px; }
+#bz-encrypt-popup .bz-pwv-acctcard .pwrow { display: flex; align-items: center; gap: 8px; }
+#bz-encrypt-popup .bz-pwv-acctcard .pw { flex: 1; min-width: 0; font-size: 13.5px; font-family: var(--font-monospace); padding: 9px 12px; background: var(--bz-vault-surface); border: 1px solid var(--bz-vault-line); border-radius: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-pwv-acctcard .pw.mask { letter-spacing: 0.14em; color: var(--bz-vault-muted); }
+#bz-encrypt-popup .bz-pwv-acctcard .mini { width: 30px; height: 30px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; color: var(--bz-vault-muted); flex-shrink: 0; }
+#bz-encrypt-popup .bz-pwv-acctcard .mini:hover { background: var(--bz-vault-surface2); color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-pwv-acctcard .mini svg { width: 14px; height: 14px; }
+#bz-encrypt-popup .bz-pwv-acctcard .note { margin-top: 10px; }
+#bz-encrypt-popup .bz-pwv-acctcard .meta { margin-top: 8px; font-size: 11px; color: var(--bz-vault-faint); }
+#bz-encrypt-popup .bz-pwv-acctcard .meta a { color: var(--bz-vault-gold-ink); }
+/* 密码移动卡 */
+#bz-encrypt-popup .bz-pwv-mobcard { display: flex; align-items: center; gap: 12px; background: var(--bz-vault-surface); border: 1px solid var(--bz-vault-line); border-radius: 16px; padding: 12px 14px; margin-bottom: 10px; cursor: pointer; color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-pwv-mobcard .mid { flex: 1; min-width: 0; }
+#bz-encrypt-popup .bz-pwv-mobcard .a { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#bz-encrypt-popup .bz-pwv-mobcard .a .star { color: var(--bz-vault-warn); font-size: 11px; margin-left: 3px; }
+#bz-encrypt-popup .bz-pwv-mobcard .b { font-size: 11.5px; color: var(--bz-vault-muted); font-family: var(--font-monospace); margin-top: 1px; }
+#bz-encrypt-popup .bz-pwv-mobcard .cnt { font-size: 10.5px; color: var(--bz-vault-gold-ink); background: rgba(185, 141, 62, 0.16); border-radius: 999px; padding: 0 7px; margin-left: 4px; }
+#bz-encrypt-popup .bz-pwv-mobcard .go { color: var(--bz-vault-faint); display: flex; }
+#bz-encrypt-popup .bz-pwv-mobcard .go svg { width: 15px; height: 15px; }
+/* 移动端恒真全屏（mob 默认隐藏，<768px 显示） */
+#bz-encrypt-popup .bz-vault-mob { display: none; }
+#bz-encrypt-popup .bz-vault-dlg-mask { position: fixed; inset: 0; z-index: 2200; background: rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; }
+#bz-encrypt-popup .bz-vault-dlg { background: var(--background-primary); border-radius: 16px; padding: 22px 24px; width: min(92vw, 440px); max-height: 86vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); }
+#bz-encrypt-popup .bz-vault-dlg h3 { margin: 0 0 4px; font-size: 17px; font-weight: 700; color: var(--text-normal); }
+#bz-encrypt-popup .bz-vault-dlg .sub { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+#bz-encrypt-popup .bz-vault-dlg label { display: block; font-size: 12.5px; color: var(--text-muted); margin: 10px 0 5px; }
+#bz-encrypt-popup .bz-vault-dlg input { width: 100%; box-sizing: border-box; }
+#bz-encrypt-popup .bz-vault-dlg .pwdrow { display: flex; gap: 8px; }
+#bz-encrypt-popup .bz-vault-dlg .pwdrow input { flex: 1; }
+#bz-encrypt-popup .bz-vault-dlg .pwdrow .gen { background: var(--background-modifier-hover); padding: 8px 14px; border-radius: 10px; font-weight: 600; color: var(--text-normal); }
+#bz-encrypt-popup .bz-vault-dlg .err { color: var(--text-error); font-size: 12.5px; margin: 8px 0 0; min-height: 16px; }
+#bz-encrypt-popup .bz-vault-dlg .btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+#bz-encrypt-popup .bz-vault-dlg .btns button { padding: 8px 18px; border-radius: 10px; font-weight: 600; }
+#bz-encrypt-popup .bz-vault-dlg .btns .cancel { background: var(--background-modifier-hover); color: var(--text-normal); }
+#bz-encrypt-popup .bz-vault-dlg .btns .save { background: var(--interactive-accent); color: var(--text-on-accent); }
+@media (max-width: 768px) {
+  #bz-encrypt-popup { width: 100vw; height: 100vh; max-width: none; max-height: none; border-radius: 0; }
+  #bz-encrypt-popup .bz-vault-desk { display: none; }
+  #bz-encrypt-popup .bz-vault-mob { display: flex; flex-direction: column; height: 100%; width: 100%; position: relative; background: var(--bz-vault-bg); color: var(--bz-vault-ink); }
+  #bz-encrypt-popup .bz-vault-mbar { display: flex; align-items: center; gap: 10px; padding: 14px 14px 8px; }
+  #bz-encrypt-popup .bz-vault-mbar .seal { width: 30px; height: 30px; border-radius: 9px; background: var(--bz-vault-gold-soft); display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+  #bz-encrypt-popup .bz-vault-mbar .seal svg { width: 15px; height: 15px; stroke: #fff; }
+  #bz-encrypt-popup .bz-vault-mbar .t { font-size: 16px; font-weight: 800; flex: 1; color: var(--bz-vault-ink); }
+  #bz-encrypt-popup .bz-vault-mbar .st { font-size: 10.5px; color: var(--bz-vault-ok); font-weight: 700; background: rgba(62, 142, 90, 0.12); padding: 3px 9px; border-radius: 999px; }
+  #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose { color: var(--bz-vault-muted); display: flex; }
+  #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose svg { width: 18px; height: 18px; }
+  #bz-encrypt-popup .bz-vault-msearch { display: flex; align-items: center; gap: 8px; margin: 4px 14px 8px; background: var(--bz-vault-surface); border: 1px solid var(--bz-vault-line); border-radius: 12px; padding: 0 12px; }
+  #bz-encrypt-popup .bz-vault-msearch svg { width: 13px; height: 13px; color: var(--bz-vault-faint); }
+  #bz-encrypt-popup .bz-vault-msearch input { border: none; background: none; flex: 1; padding: 9px 0; font-size: 13.5px; }
+  #bz-encrypt-popup .bz-vault-msearch input:focus { outline: none; }
+  #bz-encrypt-popup .bz-vault-mseg { display: flex; gap: 6px; margin: 2px 14px 10px; padding: 4px; background: var(--bz-vault-surface); border: 1px solid var(--bz-vault-line); border-radius: 12px; }
+  #bz-encrypt-popup .bz-vault-mseg .sg { flex: 1; text-align: center; padding: 7px 0; border-radius: 9px; font-size: 12.5px; font-weight: 600; color: var(--bz-vault-muted); cursor: pointer; }
+  #bz-encrypt-popup .bz-vault-mseg .sg.on { background: var(--bz-vault-gold-soft); color: #fff; }
+  #bz-encrypt-popup .bz-vault-mbody { flex: 1; overflow-y: auto; padding: 2px 14px 24px; position: relative; }
+  #bz-encrypt-popup .bz-vault-mob-overview .bz-vault-cards { grid-template-columns: 1fr; }
+  #bz-encrypt-popup .bz-vault-mob-overview .bz-vault-two { grid-template-columns: 1fr; }
+  #bz-encrypt-popup .bz-vault-mob-overview .bz-vault-hero { padding: 18px 20px; }
+  #bz-encrypt-popup .bz-vault-mobpage { position: absolute; inset: 0; background: var(--bz-vault-bg); z-index: 5; display: flex; flex-direction: column; }
+  #bz-encrypt-popup .bz-vault-mobpage .head { display: flex; align-items: center; gap: 8px; padding: 12px 14px 8px; border-bottom: 1px solid var(--bz-vault-line); }
+  #bz-encrypt-popup .bz-vault-mobpage .head .back { color: var(--bz-vault-muted); display: flex; }
+  #bz-encrypt-popup .bz-vault-mobpage .head .back svg { width: 18px; height: 18px; }
+  #bz-encrypt-popup .bz-vault-mobpage .head .t { flex: 1; font-size: 15px; font-weight: 700; color: var(--bz-vault-ink); }
+  #bz-encrypt-popup .bz-vault-mobpage .body { flex: 1; overflow-y: auto; padding: 12px 14px 24px; }
+  #bz-encrypt-popup .bz-vault-mobpage .bz-vault-dhead { padding: 0 0 12px; border-bottom: 1px solid var(--bz-vault-line); }
+  #bz-encrypt-popup .bz-vault-mobpage .bz-vault-dcontent { padding: 14px 0 0; }
+  #bz-encrypt-popup .bz-pwv-mobplathead { display: flex; align-items: center; gap: 10px; padding: 4px 0 12px; border-bottom: 1px solid var(--bz-vault-line); margin-bottom: 12px; }
+  #bz-encrypt-popup .bz-pwv-mobplathead .nm { font-size: 15px; font-weight: 700; color: var(--bz-vault-ink); }
+  #bz-encrypt-popup .bz-pwv-mobplathead .url { font-size: 11px; color: var(--bz-vault-muted); }
+  #bz-encrypt-popup .bz-pwv-mobplathead .bz-pwv-btn.gold { margin-left: auto; background: var(--bz-vault-gold-soft); color: #fff; padding: 8px 14px; border-radius: 10px; font-weight: 600; }
+}
 /* ==================== 设置面板域样式（src/settings-panel/styles.css，ADR-0080） ==================== */
 /* 收编新体系（铁律 6）：控件（按钮/输入/开关/下拉/滑条/chip/徽标/空态）全部消费组件库
    src/core/ui（components.css + tokens.css）；本文件只保留域内特有布局与行内尺寸修饰：
