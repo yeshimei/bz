@@ -70,8 +70,9 @@ describe('calculateReadingStats', () => {
     expect(s.monthlyStats['2025-06'].booksRead).toBe(1);
     expect(s.monthlyStats['2025-07'].booksCompleted).toBe(1);
     expect(s.yearlyStats['2025'].booksRead).toBe(1);
-    // 源码行为：completed 书在阅读月+完成月各计一次 booksCompleted
-    expect(s.yearlyStats['2025'].booksCompleted).toBe(2);
+    // audit H：completed 只在完成日期桶记一次（阅读月不再按 progress>=100 重复计数）
+    expect(s.yearlyStats['2025'].booksCompleted).toBe(1);
+    expect(s.monthlyStats['2025-06'].booksCompleted).toBe(0);
   });
 
   it('作者统计', () => {
