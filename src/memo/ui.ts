@@ -1020,9 +1020,15 @@ export const Renderer = {
           completeTimer = null;
           // 二次校验：防抖窗口内已取消勾选 → 不误发完成通知
           if (!checkbox.checked) return;
-          await DataManager.completeItem(item.id);
-          // ticket 075（域事件派发）：完成观察（防抖到点且仍勾选才发；重复由 smartcat 订阅侧防重拦截）
-          emitDomainEvent('memo', { kind: 'completed', title: item.title });
+          // 写盘失败不再成为未处理 rejection：提示并回读真实状态
+          try {
+            await DataManager.completeItem(item.id);
+            // ticket 075（域事件派发）：完成观察（防抖到点且仍勾选才发；重复由 smartcat 订阅侧防重拦截）
+            emitDomainEvent('memo', { kind: 'completed', title: item.title });
+          } catch (e) {
+            notice('标记完成失败', 'error');
+            console.error(e);
+          }
           App.refresh();
         }, 300);
       };
@@ -1088,10 +1094,16 @@ export const Renderer = {
         title: '标记完成',
         sub: item.due ? formatDueText(item.due) : undefined, // 到期状态：剩 N 天/今天/已过期
         onClick: async () => {
-          await DataManager.completeItem(item.id);
-          // ticket 075（域事件派发）：完成观察
-          emitDomainEvent('memo', { kind: 'completed', title: item.title });
-          notice('已标记完成', 'success');
+          // 写盘失败提示而非未处理 rejection（对照 todo completeItem 同款）
+          try {
+            await DataManager.completeItem(item.id);
+            // ticket 075（域事件派发）：完成观察
+            emitDomainEvent('memo', { kind: 'completed', title: item.title });
+            notice('已标记完成', 'success');
+          } catch (e) {
+            notice('标记完成失败', 'error');
+            console.error(e);
+          }
           App.refresh();
         },
       });
