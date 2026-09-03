@@ -7,6 +7,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { SafeManager, type SafeAttachment } from '../../src/encrypt/data';
 import { EncryptAppController, UIManager, collectMediaSlots, truncateName, mimeOf, collectNoteAttachments, collectNoteAttachmentPaths } from '../../src/encrypt/ui';
+import { PasswordVaultDataManager } from '../../src/encrypt/vault-data';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices, mockMarkdownRenderer } from '../mock-obsidian-entry';
 
@@ -163,7 +164,7 @@ describe('UIManager 解锁弹窗', () => {
   });
 });
 
-describe('UIManager 主面板', () => {
+describe('UIManager 统一保险库工作台', () => {
   let vault: MockVault;
   let dm: SafeManager;
   let ui: UIManager;
@@ -188,45 +189,52 @@ describe('UIManager 主面板', () => {
     document.body.innerHTML = '';
   });
 
-  it('show 渲染笔记卡片（标题/附件数），无预览/还原按钮，双击开预览（单击不再触发）', async () => {
+  it('show 默认进入笔记资产（nav 计数 + 笔记行），行内无预览/还原按钮，双击行开预览', async () => {
     ui.show();
-    const list = document.getElementById('bz-encrypt-list')!;
-    expect(list.querySelectorAll('.bz-encrypt-card').length).toBe(1);
+    await waitFor(() => !!document.querySelector('.bz-vault-nav'));
+    // 默认资产 = 加密笔记（show 后保持 asset 初始 overview？——统一面板初始为概览；此处切到笔记视图断言）
+    const noteItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'note') as HTMLElement;
+    noteItem.click();
+    await new Promise((r) => setTimeout(r, 20));
+    const list = document.querySelector('.bz-vault-listcol')!;
     expect(list.textContent).toContain('2025-06-01');
     expect(list.textContent).toContain('1 个附件');
-    // 卡片内无「预览」/「还原」按钮（动作在抽屉）
+    // 行内无「预览」/「还原」按钮（动作在抽屉/详情）
     expect([...list.querySelectorAll('button')].some((b) => b.textContent === '预览')).toBe(false);
     expect([...list.querySelectorAll('button')].some((b) => b.textContent === '还原')).toBe(false);
-    const card = list.querySelector('.bz-encrypt-card') as HTMLElement;
-    // 单击不触发
-    card.click();
+    const row = list.querySelector('.bz-vault-row') as HTMLElement;
+    // 单击 → 详情（不弹预览）
+    row.click();
     await new Promise((r) => setTimeout(r, 30));
     expect(document.getElementById('bz-encrypt-preview-popup')!.style.display).toBe('none');
     // 双击 → 打开预览窗
-    card.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    row.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     await waitFor(() => document.getElementById('bz-encrypt-preview-popup')!.style.display === 'flex');
     expect(document.getElementById('bz-encrypt-preview-popup')!.textContent).toContain('2025-06-01');
   });
 
-  it('触屏短按卡片 → 不再打开预览（单击收敛，防误触）', async () => {
+  it('触屏短按行 → 不打开预览（单击收敛）', async () => {
     ui.show();
-    const card = document.querySelector('.bz-encrypt-card') as HTMLElement;
+    await new Promise((r) => setTimeout(r, 20));
+    const noteItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'note') as HTMLElement;
+    noteItem.click();
+    await new Promise((r) => setTimeout(r, 20));
+    const row = document.querySelector('.bz-vault-row') as HTMLElement;
     const ts = new TouchEvent('touchstart', { bubbles: true, cancelable: true });
     Object.defineProperty(ts, 'touches', { value: [{ clientX: 30, clientY: 30 }] });
-    card.dispatchEvent(ts);
+    row.dispatchEvent(ts);
     await new Promise((r) => setTimeout(r, 60));
-    card.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
-    card.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    row.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+    row.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     await new Promise((r) => setTimeout(r, 60));
     expect(document.getElementById('bz-encrypt-preview-popup')!.style.display).toBe('none');
   });
 
-  it('单击卡片 → 先同步弹出预览窗骨架，再异步填充正文（标题 + 图片）', async () => {
+  it('预览窗（openPreview 直调）：骨架先显 + 异步填充正文与图片', async () => {
     ui.show();
+    await new Promise((r) => setTimeout(r, 20));
     ui.openPreview(dm.manifest.notes[0]);
-    // 骨架先显示（同步）：弹窗立即可见，内容随后异步填充
     await waitFor(() => document.getElementById('bz-encrypt-preview-popup')!.style.display === 'flex');
-    // 异步填充到达后再断言正文内容
     await waitFor(() => !!document.querySelector('.bz-encrypt-preview-md'));
     const popup = document.getElementById('bz-encrypt-preview-popup')!;
     expect(popup.textContent).toContain('2025-06-01');
@@ -235,10 +243,14 @@ describe('UIManager 主面板', () => {
     expect(popup.style.display).toBe('none');
   });
 
-  it('右键卡片 → 抽屉动作「还原」→ 确认后取出即删（正文写回、条目移除）', async () => {
+  it('笔记行右键抽屉「还原」→ 确认后取出即删（正文写回、条目移除）', async () => {
     ui.show();
-    const card = document.querySelector('.bz-encrypt-card') as HTMLElement;
-    card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
+    await new Promise((r) => setTimeout(r, 20));
+    const noteItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'note') as HTMLElement;
+    noteItem.click();
+    await new Promise((r) => setTimeout(r, 20));
+    const row = document.querySelector('.bz-vault-row') as HTMLElement;
+    row.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
     const restoreItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
       (b) => b.textContent!.includes('还原')
     ) as HTMLElement;
@@ -250,7 +262,6 @@ describe('UIManager 主面板', () => {
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     await waitFor(() => dm.manifest.notes.length === 0);
     expect(vault.files.get('我的/日记/2025-06-01.md')).toContain('# 日记');
-    // 取出即删：清单空
     expect(dm.manifest.notes.length).toBe(0);
   });
 
@@ -264,18 +275,23 @@ describe('UIManager 主面板', () => {
     ui2.hide();
     expect(dm2.unlocked).toBe(false);
     expect(hasNotice('安全模式：已自动上锁')).toBe(true);
+    ui2.popup?.remove();
+    ui2.mask?.remove();
   });
 
-  it('面板只显示普通加密笔记：过滤 diary-entry 与 password-vault', async () => {
-    // 既有 beforeEach 已加锁 1 篇普通笔记；再补日记条目与密码本整表
+  it('三资产分组计数：nav 上密码/笔记/日记各自计数正确（不互滤）', async () => {
+    // beforeEach 已加 1 篇普通笔记；补日记条目 + 密码整表 → 应显示在各自资产计数
     await dm.lockNote({ path: '我的/日记/d.md', title: '日记d', kind: 'diary-entry', content: '# x', attachments: [] });
-    await dm.lockNote({ path: 'CONFIG/.ENCRYPT/passwords', title: '密码本', kind: 'password-vault', content: '[]', attachments: [] });
+    // 密码整表经 pwDataManager 建立（kind=password-vault 一条镜像）
+    const pwDm = new PasswordVaultDataManager(dm);
+    await pwDm.addItem({ platform: 'GitHub', account: 'me', password: 'x' });
     ui.show();
-    const list = document.getElementById('bz-encrypt-list')!;
-    expect(list.querySelectorAll('.bz-encrypt-card').length).toBe(1);
-    expect(list.textContent).toContain('2025-06-01');
-    expect(list.textContent).not.toContain('密码本');
-    expect(list.textContent).not.toContain('日记d');
+    await new Promise((r) => setTimeout(r, 40));
+    expect(document.querySelector('[data-cnt="note"]')!.textContent).toBe('1');
+    expect(document.querySelector('[data-cnt="diary"]')!.textContent).toBe('1');
+    expect(document.querySelector('[data-cnt="pw"]')!.textContent).toBe('1');
+    // 概览计数 = 3
+    expect(document.querySelector('[data-cnt="overview"]')!.textContent).toBe('3');
   });
 });
 
@@ -403,7 +419,12 @@ describe('预览窗混排与还原打开', () => {
       attachments: [],
     });
     ui.show();
-    const card = document.querySelector('.bz-encrypt-card') as HTMLElement;
+    await new Promise((r) => setTimeout(r, 20));
+    // 切到笔记资产再找行
+    const noteItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'note') as HTMLElement;
+    noteItem.click();
+    await new Promise((r) => setTimeout(r, 20));
+    const card = document.querySelector('.bz-vault-row') as HTMLElement;
     card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
     const restoreItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
       (b) => b.textContent!.includes('还原')
@@ -467,7 +488,7 @@ describe('EncryptAppController', () => {
     const p = c.lockCurrentNote();
     // 二次确认框出现，未确认前不加密
     await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
-    expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('加密到保险箱');
+    expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('加密到保险库');
     expect(vault.files.has('笔记/主题.md')).toBe(true); // 还在，未加密
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     await p;
@@ -514,18 +535,17 @@ describe('EncryptAppController', () => {
     await c.init();
     await c.dataManager.unlock('pw');
     c.uiManager.show();
-    // 顶部按钮：加密当前笔记 在 设置 之前，关闭在最后
-    const headBtns = [...document.querySelectorAll('.bz-encrypt-head-btns button')].map((b) => b.textContent);
-    expect(headBtns.indexOf('🔒')).toBeGreaterThanOrEqual(0);
-    expect(headBtns.indexOf('⚙️')).toBeGreaterThanOrEqual(0);
-    expect(headBtns.indexOf('❌')).toBeGreaterThanOrEqual(0);
-    expect(headBtns.indexOf('🔒')).toBeLessThan(headBtns.indexOf('⚙️'));
-    expect(headBtns.indexOf('⚙️')).toBeLessThan(headBtns.indexOf('❌'));
-    // 点击 → 弹加密确认
-    const lockBtn = [...document.querySelectorAll('.bz-encrypt-head-btns button')].find((b) => b.textContent === '🔒') as HTMLButtonElement;
-    lockBtn.click();
+    // 顶栏动作：加密当前笔记(lock-note)/体检(health)/设置(settings)/关闭(close) 均在；lock-note 在 settings 前
+    const barBtns = [...document.querySelectorAll('.bz-vault-bar [data-act]')].map((b) => b.getAttribute('data-act'));
+    expect(barBtns.indexOf('lock-note')).toBeGreaterThanOrEqual(0);
+    expect(barBtns.indexOf('settings')).toBeGreaterThanOrEqual(0);
+    expect(barBtns.indexOf('close')).toBeGreaterThanOrEqual(0);
+    expect(barBtns.indexOf('lock-note')).toBeLessThan(barBtns.indexOf('settings'));
+    expect(barBtns.indexOf('settings')).toBeLessThan(barBtns.indexOf('close'));
+    // 点击 → 弹加密确认（文案「加密到保险库」）
+    (document.querySelector('.bz-vault-bar [data-act="lock-note"]') as HTMLButtonElement).click();
     await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
-    expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('加密到保险箱');
+    expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('加密到保险库');
     (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
   });
 
@@ -535,16 +555,22 @@ describe('EncryptAppController', () => {
     await c.init();
     await c.dataManager.unlock('pw');
     c.uiManager.show();
+    await new Promise((r) => setTimeout(r, 20));
+    // 切到加密笔记资产（默认概览）
+    const noteItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'note') as HTMLElement;
+    noteItem.click();
+    await new Promise((r) => setTimeout(r, 20));
     // 预置无引用密文孤儿 + 正文镜像丢失的失效条目
     vault.files.set('CONFIG/.ENCRYPT/.junk.enc', 'junk');
     const dead = await c.dataManager.lockNote({
       path: '笔记/没了.md', title: '失效笔记', content: '# x', attachments: [],
     });
     vault.files.delete('CONFIG/.ENCRYPT/' + dead.contentRef); // 正文镜像丢失
-    const headBtns = [...document.querySelectorAll('.bz-encrypt-head-btns button')].map((b) => b.textContent);
-    expect(headBtns.indexOf('🩺')).toBeGreaterThanOrEqual(0);
-    expect(headBtns.indexOf('🧹')).toBe(-1); // 原扫把已被体检替换
-    const healthBtn = [...document.querySelectorAll('.bz-encrypt-head-btns button')].find((b) => b.textContent === '🩺') as HTMLButtonElement;
+    // 顶栏 data-act 动作：health 存在、无旧扫把
+    const barActs = [...document.querySelectorAll('.bz-vault-bar [data-act]')].map((b) => b.getAttribute('data-act'));
+    expect(barActs.indexOf('health')).toBeGreaterThanOrEqual(0);
+    expect(barActs.indexOf('🧹')).toBe(-1);
+    const healthBtn = document.querySelector('.bz-vault-bar [data-act="health"]') as HTMLButtonElement;
     healthBtn.click();
     await waitFor(() => !!document.getElementById('bz-encrypt-health-popup') && document.getElementById('bz-encrypt-health-popup')!.style.display === 'flex');
     // 回归：弹窗卡片必须是遮罩的子元素（脱离 flex 容器会沉入文档流，出现「只有遮罩没有内容」）
@@ -577,7 +603,7 @@ describe('EncryptAppController', () => {
     expect(vault.files.get('CONFIG/.ENCRYPT/.junk.enc')).toBeUndefined();
     expect(c.dataManager.manifest.notes.some((n) => n.id === dead.id)).toBe(false);
     // 列表同步刷新（失效条目不再显示；beforeEach 的完好日记条目仍在）
-    await waitFor(() => !document.getElementById('bz-encrypt-list')!.textContent.includes('失效笔记'));
+    await waitFor(() => !(document.querySelector('.bz-vault-listcol') as HTMLElement)!.textContent.includes('失效笔记'));
     await waitFor(() => (document.getElementById('bz-encrypt-health-clean') as HTMLButtonElement).textContent === '清理勾选项 (0)');
     c.uiManager.hide();
   });
@@ -1258,7 +1284,12 @@ describe('幽灵进度条收尾（ticket 5）', () => {
       path: '我的/日记/x.md', title: 'x', content: '# x', attachments: [],
     });
     ui.show();
-    const card = document.querySelector('.bz-encrypt-card') as HTMLElement;
+    await new Promise((r) => setTimeout(r, 20));
+    // 切到笔记资产再找行
+    const noteItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'note') as HTMLElement;
+    noteItem.click();
+    await new Promise((r) => setTimeout(r, 20));
+    const card = document.querySelector('.bz-vault-row') as HTMLElement;
     card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
     const restoreItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
       (b) => b.textContent!.includes('还原')
@@ -1374,13 +1405,13 @@ describe('保险箱状态栏（补丁：锁状态提示）', () => {
     const el = document.createElement('span');
     document.body.appendChild(el);
     c.attachStatusBar(el);
-    expect(el.textContent).toBe('🔒 保险箱');
+    expect(el.textContent).toBe('🔒 保险库');
     await c.dataManager.unlock('pw');
-    expect(el.textContent).toBe('🔓 保险箱');
+    expect(el.textContent).toBe('🔓 保险库');
     c.dataManager.lock();
-    expect(el.textContent).toBe('🔒 保险箱');
+    expect(el.textContent).toBe('🔒 保险库');
     // 二次解锁（已存在清单）同样刷新
     await c.dataManager.unlock('pw');
-    expect(el.textContent).toBe('🔓 保险箱');
+    expect(el.textContent).toBe('🔓 保险库');
   });
 });

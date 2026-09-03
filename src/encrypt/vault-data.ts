@@ -1,19 +1,17 @@
 /**
- * 保险库（password-vault）数据管理器
- * 独立域实现原型「v1 保险库」：与旧密码本域并存、互不影响（UI/代码层面）。
- * 数据源与旧密码本共享保险箱 SafeNote（kind='password-vault'，同一主密码/解锁态）：
+ * 保险库·密码资产数据管理器（encrypt 域子模块；ADR-0085 自 password-vault/data.ts 迁入）
+ * 密码条目数据源 = 保险库清单内 kind='password-vault' 的 SafeNote（同一主密码/解锁态）：
  *  - 增删改 = 整表重加密覆盖同一镜像（updateNotePayload / lockNote 首建）；
  *  - fav 字段为新增（旧 7 字段数据缺失时默认 false，兼容性冻结不破坏）。
- * 域事件（ADR-XXXX）：本域写操作后广播 'password-vault:changed'；
- * 外部（保险箱面板/旧密码本）改动由保险箱侧补发 'encrypt:changed' 后本域订阅重载。
+ * 域事件：本模块写操作后广播 'password-vault:changed'（source=password-vault 跳过自重载）；
+ * 外部（日记/其他消费者）写保险库清单由 SafeManager 广播 'encrypt:changed' 后本模块订阅重载。
  */
 import { emitDomainEvent, onDomainEvent } from '../core/domain-bus';
-import { getSafeManager } from '../encrypt';
-import { type SafeManager } from '../encrypt/data';
+import { type SafeManager } from './data';
 
-/** 保险库域事件通道（自己广播；source=password-vault 跳过自重载） */
+/** 密码资产域事件通道（自己广播；source=password-vault 跳过自重载） */
 export const PASSWORD_VAULT_CHANNEL = 'password-vault:changed' as const;
-/** 保险箱数据变更通道（外部：保险箱面板/旧密码本写 password-vault SafeNote 时广播） */
+/** 保险库数据变更通道（外部消费者写 password-vault SafeNote 时广播） */
 export const ENCRYPT_CHANGED_CHANNEL = 'encrypt:changed' as const;
 
 export interface PasswordVaultEntry {
@@ -28,7 +26,7 @@ export interface PasswordVaultEntry {
   fav: boolean;
 }
 
-/** 保险箱清单条目约定：kind 值 + 虚拟路径/标题（与旧密码本域完全一致，共享同一数据） */
+/** 保险库清单条目约定：kind 值 + 虚拟路径/标题（与旧密码本域完全一致，共享同一数据） */
 const VAULT_KIND = 'password-vault' as const;
 const VAULT_PATH = 'CONFIG/.ENCRYPT/passwords';
 const VAULT_TITLE = '密码本';
@@ -52,23 +50,24 @@ export class PasswordVaultDataManager {
   /** 外部变更回调（UI 订阅；外部改动 → 重载后回调） */
   onExternalChange: (() => void) | null = null;
 
-  constructor(safe?: SafeManager) {
-    this.safe = safe || getSafeManager();
-    // - 本通道（password-vault:changed）：其他保险库实例/自己写后广播，source=password-vault 跳过
-    // - 保险箱通道（encrypt:changed）：保险箱面板/旧密码本改同一 SafeNote → 重载 + 通知 UI
+  /** 显式注入 SafeManager（ADR-0085：encrypt Controller 装配同一单例，避免域内循环依赖默认取单例） */
+  constructor(safe: SafeManager) {
+    this.safe = safe;
+    // - 本通道（password-vault:changed）：其他实例/自己写后广播，source=password-vault 跳过
+    // - 保险库通道（encrypt:changed）：外部改同一 SafeNote → 重载 + 通知 UI
     this.offChanged = onDomainEvent<{ source?: string }>(PASSWORD_VAULT_CHANNEL, (evt) => {
       if (evt?.source === 'password-vault') return; // 自己发的，不重复重载
       void this.reloadFromExternal();
     });
     this.offEncryptChanged = onDomainEvent<{ noteId?: string }>(ENCRYPT_CHANGED_CHANNEL, (evt) => {
-      // 只关心 password-vault 条目（保险箱可能改其他笔记）
+      // 只关心 password-vault 条目（保险库可能改其他笔记）
       const note = this.vaultNote;
       if (!note || (evt?.noteId && evt.noteId !== note.id)) return;
       void this.reloadFromExternal();
     });
   }
 
-  /** 解锁态 = 保险箱解锁态（同一把主密码） */
+  /** 解锁态 = 保险库解锁态（同一把主密码） */
   get unlocked(): boolean {
     return this.safe.unlocked;
   }

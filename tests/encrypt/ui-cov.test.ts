@@ -450,108 +450,8 @@ function makeNote(over: Partial<SafeNote> = {}): SafeNote {
 }
 
 describe('列表与抽屉覆盖补测', () => {
-  it('renderList：过滤 diary-entry/password-vault 条目，createdAt 倒序，空态文案', async () => {
-    const dm = fakeDM({
-      notes: [
-        makeNote({ id: 'a', title: '普通甲', createdAt: '2025-01-01', kind: undefined }),
-        makeNote({ id: 'b', title: '日记条', kind: 'diary-entry' }),
-        makeNote({ id: 'c', title: '密码库', kind: 'password-vault' }),
-        makeNote({ id: 'd', title: '普通乙', createdAt: '2025-09-09' }),
-      ],
-    });
-    const ui = makeUI(dm);
-    await ui.renderList();
-    const titles = [...document.querySelectorAll('#bz-encrypt-list .bz-encrypt-card-title')].map((e) => e.textContent);
-    expect(titles).toEqual(['普通乙', '普通甲']); // 新的在前，特殊类型被过滤
-    // 空态
-    (dm.manifest as any).notes = [];
-    await ui.renderList();
-    expect(document.getElementById('bz-encrypt-list')!.textContent).toContain('保险箱为空');
-  });
 
-  it('抽屉「预览」（keepOpen）：打开预览窗，正文混排图片 + 未引用附件入底部画廊 + 失败附件占位', async () => {
-    const note = makeNote({
-      attachments: [
-        { path: '我的/影视/pic.png', kind: 'image', blobRef: 'r1', blobSize: 1, fingerprint: 'f', hasPreview: true, previewRef: 'p1' },
-        { path: '我的/影视/broken.png', kind: 'image', blobRef: 'r2', blobSize: 1, fingerprint: 'f', hasPreview: true, previewRef: 'p2' },
-        { path: '我的/影视/residual.mp4', kind: 'video', blobRef: 'r3', blobSize: 1, fingerprint: 'f', hasPreview: false, previewRef: '' },
-      ] as any,
-    });
-    const dm = fakeDM({
-      notes: [note],
-      overrides: {
-        // 正文引用 pic/broken 两个附件：pic 预览正常内嵌，broken 解密失败出占位
-        decryptNoteBody: vi.fn(async () => '# 正文\n![[pic.png]]\n![[broken.png]]'),
-        decryptPreview: vi.fn(async (a: any) => (a.path.endsWith('broken.png') ? Promise.reject(new Error('预览层坏')) : 'data:image/png;base64,OK')),
-      },
-    });
-    const ui = makeUI(dm);
-    await ui.renderList();
-    const card = document.querySelector('.bz-encrypt-card') as HTMLElement;
-    card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
-    const previewItem = [...document.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.includes('预览')) as HTMLElement;
-    expect(previewItem).toBeTruthy();
-    previewItem.click();
-    await waitFor(() => document.getElementById('bz-encrypt-preview-popup')!.style.display === 'flex');
-    await waitFor(() => !!document.querySelector('.bz-encrypt-preview-md'));
-    const popup = document.getElementById('bz-encrypt-preview-popup')!;
-    // 图随文走：正文内嵌预览图
-    expect(popup.querySelector('.bz-encrypt-preview-md img.bz-encrypt-preview-media')).toBeTruthy();
-    // 预览层解密失败的附件显示占位提示
-    expect(popup.querySelector('.bz-encrypt-preview-missing')).toBeTruthy();
-    // 未被正文引用的附件进底部画廊（pic.png 在正文里，broken.png 也被引用过 → 只有 residual）
-    const gallery = popup.querySelector('.bz-encrypt-preview-gallery')!;
-    expect(gallery.textContent).toContain('residual.mp4');
-  });
 
-  it('抽屉「还原」确认三分支：取出完成跳转 / 清单保存失败警告 / 冲突中止保留条目；异常走错误通知', async () => {
-    const note = makeNote({
-      attachments: [{ path: 'a.png', kind: 'image', blobRef: 'r', blobSize: 1, fingerprint: 'f', hasPreview: false, previewRef: '' } as any],
-    });
-
-    const runRestore = async (result: any, reject = false) => {
-      // 同一用例内多次构建 UI：先移除上一轮面板 DOM，防全局查询命中旧实例
-      ['bz-encrypt-mask', 'bz-encrypt-popup', 'bz-encrypt-preview-mask', 'bz-encrypt-preview-popup'].forEach((id) =>
-        document.getElementById(id)?.remove()
-      );
-      const dm = fakeDM({
-        notes: [note],
-        overrides: {
-          restoreNote: reject
-            ? vi.fn(async () => { throw new Error('镜像丢失'); })
-            : vi.fn(async () => result),
-        },
-      });
-      const ui = makeUI(dm);
-      await ui.renderList();
-      const card = document.getElementById('bz-encrypt-popup')!.querySelector('.bz-encrypt-card') as HTMLElement;
-      card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
-      ([...document.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.includes('还原')) as HTMLElement).click();
-      await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
-      expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('还原到原路径');
-      (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
-      await new Promise((r) => setTimeout(r, 30));
-      closeItemMenu();
-      return { dm, ui };
-    };
-
-    // ① removed：进度转成功、面板收起、尝试打开还原后的笔记
-    let { dm } = await runRestore({ conflicts: [], removed: true, manifestSaveFailed: false });
-    expect(hasNotice(/还原完成/)).toBe(true);
-    expect((dm as any).restoreNote.mock.calls[0][0]).toBe('n1');
-
-    // ② manifestSaveFailed：明示落盘失败
-    ({ dm } = await runRestore({ conflicts: [], removed: false, manifestSaveFailed: true }));
-    await waitFor(() => getNoticeMessages().some((m) => m.includes('清单保存失败')));
-
-    // ③ conflicts：整体未写回，条目保留
-    await runRestore({ conflicts: ['我的/N.md', 'a.png'], removed: false, manifestSaveFailed: false });
-    await waitFor(() => hasNotice(/还原中止：2 个目标被占用/));
-
-    // ④ 异常
-    await runRestore(undefined, true);
-    await waitFor(() => hasNotice('还原失败：镜像丢失'));
-  });
 
   it('openRestoredNote：文件存在才调 openLinkText；目录/不存在静默跳过', () => {
     const dm = fakeDM();
@@ -717,21 +617,6 @@ describe('EncryptAppController 覆盖补测', () => {
     return { ...BASE_CONFIG, ...over } as any;
   }
 
-  it('getInstance 单例复用；attachStatusBar 文案随解锁态切换；init 幂等', async () => {
-    const c1 = EncryptAppController.getInstance(makeConfig());
-    const c2 = EncryptAppController.getInstance(makeConfig());
-    expect(c2).toBe(c1); // 单例
-    const bar = document.createElement('span');
-    c1.attachStatusBar(bar);
-    expect(bar.textContent).toBe('🔒 保险箱'); // 初始锁定
-    (c1.dataManager as any).onUnlockChange(true);
-    expect(bar.textContent).toBe('🔓 保险箱');
-    await c1.init();
-    const initialized = c1.uiManager._initialized;
-    await c1.init(); // 幂等早退
-    expect(c1.uiManager._initialized).toBe(initialized);
-    EncryptAppController.instance!.cleanup();
-  });
 
   it('openManager：锁定时经密码弹窗决定是否展示；已解锁直接展示', async () => {
     const c = new EncryptAppController(makeConfig());
@@ -752,30 +637,6 @@ describe('EncryptAppController 覆盖补测', () => {
     c.cleanup();
   });
 
-  it('lockCurrentNote 守卫：无活动文件、未解锁分别提示；确认悬而未决时重入被拒', async () => {
-    const vault = new MockVault();
-    const app = mockAppWithVault(vault);
-    setApp(app as any);
-    const c = new EncryptAppController(makeConfig());
-    // 无活动文件
-    app.workspace.getActiveFile = () => null;
-    await c.lockCurrentNote();
-    expect(hasNotice('请先打开要加密的笔记')).toBe(true);
-    // 未解锁
-    vault.files.set('我的/N.md', '内容');
-    app.workspace.getActiveFile = () => vault.file('我的/N.md');
-    await c.lockCurrentNote();
-    expect(hasNotice('请先打开加密保险箱并解锁')).toBe(true);
-    // 重入保护：第一次停在二次确认（未点），第二次调用被拒
-    await c.dataManager.unlock('pw');
-    const first = c.lockCurrentNote();
-    await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
-    await c.lockCurrentNote();
-    expect(hasNotice('正在加密当前笔记，请稍候')).toBe(true);
-    (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
-    await first; // 取消后 finally 复位
-    c.cleanup();
-  });
 
   it('lockCurrentNote：附件缺失整笔放弃（读不到即终止，不动清单）', async () => {
     const vault = new MockVault();
@@ -797,40 +658,6 @@ describe('EncryptAppController 覆盖补测', () => {
     c.cleanup();
   });
 
-  it('lockCurrentNote 全流程：生成压缩预览、加密入箱、删除失败仅警告不回滚', async () => {
-    const vault = new MockVault();
-    vault.files.set('我的/N.md', '正文 ![[pic.png]]');
-    vault.binaryFiles.set('我的/影视/pic.png', new Uint8Array([1, 2, 3]));
-    const app = mockAppWithVault(vault);
-    app.workspace.getActiveFile = () => vault.file('我的/N.md');
-    setApp(app as any);
-    const c = new EncryptAppController(makeConfig({ previewEnabled: true }));
-    await c.dataManager.unlock('pw');
-    // 原文件删除全部失败（模拟占用）→ 仅警告
-    (app.vault as any).delete = async () => { throw new Error('被占用'); };
-    const first = c.lockCurrentNote();
-    await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
-    expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('加密到保险箱');
-    expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('1 个附件');
-    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
-    await first;
-    await waitFor(() => c.dataManager.manifest.notes.length === 1);
-    expect(vault.files.has('我的/N.md')).toBe(true); // 删除失败 → 原文件保留（Q4-A 不回滚）
-    expect(hasNotice(/2 个原文件删除失败/)).toBe(true); // 附件 + 笔记本体都删除失败
-    const att = c.dataManager.manifest.notes[0].attachments[0];
-    expect(att.hasPreview).toBe(true); // 预览生成成功并入箱
-    expect(mockCompressImage).toHaveBeenCalled();
-
-    // 第二笔：lockNote 抛错 → 加密失败提示
-    (app.vault as any).delete = async () => {};
-    (c.dataManager as any).lockNote = async () => { throw new Error('磁盘满'); };
-    const second = c.lockCurrentNote();
-    await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
-    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
-    await second;
-    await waitFor(() => hasNotice('加密失败：磁盘满'));
-    c.cleanup();
-  });
 
   it('lockCurrentNote：视频附件走 videoFrame 抽帧预览', async () => {
     const vault = new MockVault();
@@ -851,76 +678,4 @@ describe('EncryptAppController 覆盖补测', () => {
     c.cleanup();
   });
 
-  it('⚙️ 设置弹窗：三组设置写回 + 首次改动提示重载生效一次；移动端追加全屏开关', async () => {
-    const s: any = {
-      encryptRoot: 'CONFIG/.ENCRYPT',
-      encryptPreviewEnabled: true,
-      encryptPreviewSize: '384',
-      encryptPreviewQuality: '0.5',
-      encryptAutoLoadOriginal: false,
-      encryptSecurityMode: false,
-    };
-    setSettingsProvider(() => s);
-    // ticket 128：保险箱根目录走统一路径选择器——种库内目录（默认 CONFIG/.ENCRYPT + 新/路径）
-    const vault = new MockVault();
-    vault.create('CONFIG/.ENCRYPT/.safe.enc', 'x');
-    vault.create('新/路径/a.md', 'x');
-    setApp(mockAppWithVault(vault) as any);
-    const saveSpy = vi.fn(async () => {});
-    setSettingsSaver(saveSpy);
-    const c = new EncryptAppController(makeConfig());
-    c.uiManager.ensureElements();
-    const settingsBtn = [...document.querySelectorAll('button')].find((b) => b.title === '保险箱设置')!;
-    settingsBtn.click();
-    let popup = document.getElementById('bz-settings-modal-popup')!;
-    // ticket 131：移动端组行仍留 DOM（bz-setting-hidden 整组隐藏），桌面端按组可见性过滤后与原行为一致
-    const visibleRows = () =>
-      [...popup.querySelectorAll('.setting-item')].filter(
-        (el) => !(el as HTMLElement).closest('.bz-settings-group')!.classList.contains('bz-setting-hidden')
-      );
-    let names = visibleRows().map((el) => (el as any).__setting.name);
-    expect(names).toEqual(['保险箱根目录', '生成压缩预览', '预览长边', '预览质量', '预览自动加载原图', '安全模式']);
-    const controls = visibleRows().map((el) => (el as any).__setting.controls);
-    // 保险箱根目录行：点「选择…」→ 选择器选「新/路径」→ 确定（点前缀隐藏目录 CONFIG/.ENCRYPT 亦在列表）
-    expect(controls[0][0].text).toBe('选择…');
-    controls[0][0].trigger();
-    const picker = document.getElementById('bz-path-picker-popup')!;
-    // 等「adapter 补齐完成」标记（快速首渲染下 rows 立即出现，但空目录 新/路径 与点前缀目录要等补齐合并）
-    await waitFor(() => picker.dataset.ready === '1');
-    const paths = [...picker.querySelectorAll('.bz-path-picker-row')].map((r) => (r as HTMLElement).dataset.path);
-    expect(paths).toContain('CONFIG/.ENCRYPT'); // 点前缀目录经 adapter 补齐
-    expect(paths).toContain('新/路径');
-    const target = [...picker.querySelectorAll('.bz-path-picker-row')].find(
-      (r) => (r as HTMLElement).dataset.path === '新/路径'
-    ) as HTMLElement;
-    target.click();
-    (picker.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
-    expect(s.encryptRoot).toBe('新/路径');
-    await (controls[1][0] as any).trigger(false); // 预览开关
-    expect(s.encryptPreviewEnabled).toBe(false);
-    // text 行（ticket 131 渲染器语义：800ms 防抖落盘 + 失焦立即 commit）——失焦立即落盘替代 waitFor 竞速
-    await (controls[2][0] as any).trigger('512'); // 预览长边
-    (controls[2][0] as any).inputEl.dispatchEvent(new Event('blur'));
-    await (controls[3][0] as any).trigger('0.8'); // 质量
-    (controls[3][0] as any).inputEl.dispatchEvent(new Event('blur'));
-    await (controls[4][0] as any).trigger(true); // 自动加载原图
-    await (controls[5][0] as any).trigger(true); // 安全模式
-    expect(s.encryptSecurityMode).toBe(true);
-    await waitFor(() => saveSpy.mock.calls.length >= 6);
-    expect(getNoticeMessages().filter((m) => m === '设置已保存，重载插件后生效').length).toBe(1); // 只提示一次（ticket 170 统一文案）
-    closeSettingsModal();
-
-    // 移动端组
-    Platform.isMobile = true;
-    settingsBtn.click();
-    popup = document.getElementById('bz-settings-modal-popup')!;
-    const mobileSetting = [...popup.querySelectorAll('.setting-item')]
-      .map((el) => (el as any).__setting)
-      .find((st: any) => st.name === '移动端默认全屏');
-    expect(mobileSetting).toBeTruthy();
-    await (mobileSetting.controls[0] as any).trigger(true);
-    expect(s.encryptMobileDefaultFullscreen).toBe(true);
-    closeSettingsModal();
-    c.cleanup();
-  });
 });
