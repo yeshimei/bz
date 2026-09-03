@@ -602,28 +602,22 @@ export function generateMonthHeatmap(monthData: any, monthKey: string): string {
   `;
 }
 
-/** 生成热力图单元格 */
+/** 生成热力图单元格（audit H：尺寸/圆角/hover/@media 移入域样式 .bz-rr-hm-cell——
+ *  内联 style 无法承载 @media 与 &:hover，原写法在移动端与 hover 态全部失效；
+ *  颜色为数据驱动值仍按等级内联） */
 export function generateHeatmapCell(cell: any): string {
-  const baseSize = '20px';
-  const mobileSize = '15px';
-
   if (cell.type === 'empty') {
-    return `<div style="width: ${baseSize}; height: ${baseSize};
-    @media (max-width: 768px) { width: ${mobileSize}; height: ${mobileSize}; }"></div>`;
+    return '<div class="bz-rr-hm-cell"></div>';
   }
 
   if (cell.type === 'future') {
-    return `<div style="width: ${baseSize}; height: ${baseSize};
-    background: var(--background-secondary); border-radius: 2px;
-    @media (max-width: 768px) { width: ${mobileSize}; height: ${mobileSize}; }"
+    return `<div class="bz-rr-hm-cell" style="background: var(--background-secondary);"
     title="${cell.date} - 未来日期"></div>`;
   }
 
   if (cell.type === 'nodata') {
     // 历史月份无阅读记录的空白格（非未来日期）
-    return `<div style="width: ${baseSize}; height: ${baseSize};
-    background: var(--background-secondary); border-radius: 2px;
-    @media (max-width: 768px) { width: ${mobileSize}; height: ${mobileSize}; }"
+    return `<div class="bz-rr-hm-cell" style="background: var(--background-secondary);"
     title="${cell.date} - 无阅读记录"></div>`;
   }
 
@@ -633,17 +627,7 @@ export function generateHeatmapCell(cell: any): string {
   const tooltip = `${cell.date}\n阅读时长: ${(cell.data.duration / 3600).toFixed(1)}小时\n会话次数: ${cell.data.sessions}次`;
 
   return `
-  <div style="width: ${baseSize}; height: ${baseSize};
-  background: ${color}; border-radius: 2px; cursor: pointer;
-  transition: all 0.2s ease; border: 1px solid rgba(255,255,255,0.1);
-  @media (max-width: 768px) {
-  width: ${mobileSize};
-  height: ${mobileSize};
-  }
-  &:hover {
-  transform: scale(1.2);
-  z-index: 10;
-  }"
+  <div class="bz-rr-hm-cell bz-rr-hm-cell--data" style="background: ${color};"
   title="${tooltip}">
   </div>
   `;
