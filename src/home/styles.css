@@ -52,6 +52,9 @@
   font-family: inherit; outline: none; height: 100%;
 }
 .bz-home-q::placeholder { color: var(--bz-text-3); }
+/* CM4：编辑钉选模式禁用搜索，视觉同步降级 */
+.bz-home-q:disabled { opacity: .45; }
+.bz-home-search:has(.bz-home-q:disabled) { border-color: transparent; box-shadow: none; }
 
 /* 搜索面板（hero 下绝对定位下拉） */
 .bz-home-pal {
