@@ -23,6 +23,9 @@ export interface CinemaItem {
   synopsis: string | null;
 }
 
+/** 排序模式：date=最近观看（默认）/ created=按创建 / rating=按评分 */
+export type CinemaSortMode = 'date' | 'created' | 'rating';
+
 export interface CinemaState {
   currentOverlay: HTMLElement | null;
   items: CinemaItem[];
@@ -32,6 +35,8 @@ export interface CinemaState {
   statusFilter: string | null;
   /** 左栏展开的二级分组（组名 → 是否展开） */
   expanded: Record<string, boolean>;
+  /** 排序模式 */
+  sortMode: CinemaSortMode;
   /** 当前视图：list / ai / stat */
   view: 'list' | 'ai' | 'stat';
   searchKeyword: string;
@@ -41,6 +46,11 @@ export interface CinemaState {
   renderFn: (() => void) | null;
   aiOverlay: HTMLElement | null;
   statOverlay: HTMLElement | null;
+  /** AI 页内状态（不弹窗）：是否运行中 / 等待消息 / 结果列表 / 错误信息 */
+  aiRunning: boolean;
+  aiWaitMsg: string;
+  aiResult: any[] | null;
+  aiError: string | null;
 }
 
 export const M: CinemaState = {
@@ -50,6 +60,7 @@ export const M: CinemaState = {
   subFilter: null,
   statusFilter: null,
   expanded: {},
+  sortMode: 'date',
   view: 'list',
   searchKeyword: '',
   searchDebounceTimer: null,
@@ -58,6 +69,10 @@ export const M: CinemaState = {
   renderFn: null,
   aiOverlay: null,
   statOverlay: null,
+  aiRunning: false,
+  aiWaitMsg: '',
+  aiResult: null,
+  aiError: null,
 };
 
 /** 测试/重建用：整体重置模块状态 */
@@ -68,6 +83,7 @@ export function resetCinemaState(): void {
   M.subFilter = null;
   M.statusFilter = null;
   M.expanded = {};
+  M.sortMode = 'date';
   M.view = 'list';
   M.searchKeyword = '';
   M.searchDebounceTimer = null;
@@ -76,4 +92,8 @@ export function resetCinemaState(): void {
   M.renderFn = null;
   M.aiOverlay = null;
   M.statOverlay = null;
+  M.aiRunning = false;
+  M.aiWaitMsg = '';
+  M.aiResult = null;
+  M.aiError = null;
 }

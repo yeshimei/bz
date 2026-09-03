@@ -65,11 +65,24 @@ describe('cinema overlay', () => {
     const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
     expect(overlay).toBeTruthy();
     expect(overlay.querySelector('.bz-cinema-title')?.textContent).toBe('影视');
-    // 左栏：类型/状态/工具
+    // 主头行：标题=全部（默认）+ 计数 + 添加按钮
+    const mainHead = overlay.querySelector('.bz-cinema-main-head') as HTMLElement;
+    expect(mainHead).toBeTruthy();
+    expect(overlay.querySelector('[data-cinema-main-title]')?.textContent).toBe('全部');
+    expect(overlay.querySelector('[data-cinema-main-count]')?.textContent).toBe('· 4 部');
+    expect(overlay.querySelector('[data-cinema-add]')).toBeTruthy();
+    // 左栏：类型区「全部」+ 组；状态区「全部」+ 想看/在看/已看
     const nav = overlay.querySelector('.bz-cinema-nav') as HTMLElement;
-    expect(nav.querySelectorAll('[data-cinema-type]').length).toBeGreaterThanOrEqual(2);
-    expect(nav.querySelectorAll('[data-cinema-status]').length).toBe(3);
+    expect(nav.querySelector('[data-cinema-type="all"]')?.textContent).toContain('全部');
+    expect(nav.querySelectorAll('[data-cinema-type]').length).toBeGreaterThanOrEqual(3);
+    expect(nav.querySelector('[data-cinema-status="all"]')?.textContent).toContain('全部');
+    expect(nav.querySelectorAll('[data-cinema-status]').length).toBe(4);
     expect(nav.querySelectorAll('[data-cinema-tool]').length).toBe(2);
+    // 搜索框后排序 segmented（最近观看/按创建/按评分）
+    const sortEl = overlay.querySelector('.bz-cinema-sort') as HTMLElement;
+    expect(sortEl).toBeTruthy();
+    expect(sortEl.querySelectorAll('.bz-segmented-btn').length).toBe(3);
+    expect(sortEl.querySelector('.bz-segmented-btn.is-on')?.textContent).toBe('最近观看');
     // 海报网格：4 张卡片（含 1 想看 + 1 在看）
     const cards = overlay.querySelectorAll('[data-cinema-idx]');
     expect(cards.length).toBe(4);
@@ -88,7 +101,7 @@ describe('cinema overlay', () => {
     expect(M.currentOverlay).toBeNull();
   });
 
-  it('点分类筛选 + 再点取消', () => {
+  it('点分类筛选 + 点「全部」取消；主头行标题/计数跟随', () => {
     const { app } = seedVault();
     createOverlay(app);
     const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
@@ -96,14 +109,20 @@ describe('cinema overlay', () => {
     expect(M.typeFilter).toBe('电影');
     let cards = overlay.querySelectorAll('[data-cinema-idx]');
     expect(cards.length).toBe(2); // 星际穿越 + 想看片
-    // 再点取消（重渲染后重新取 DOM）
+    expect(overlay.querySelector('[data-cinema-main-title]')?.textContent).toBe('电影');
+    expect(overlay.querySelector('[data-cinema-main-count]')?.textContent).toBe('· 2 部');
+    // 再点已选组不取消（组保持选中）
     (overlay.querySelector('[data-cinema-type="电影"]') as HTMLElement).click();
+    expect(M.typeFilter).toBe('电影');
+    // 点「全部」回全部
+    (overlay.querySelector('[data-cinema-type="all"]') as HTMLElement).click();
     expect(M.typeFilter).toBeNull();
     cards = overlay.querySelectorAll('[data-cinema-idx]');
     expect(cards.length).toBe(4);
+    expect(overlay.querySelector('[data-cinema-main-title]')?.textContent).toBe('全部');
   });
 
-  it('点状态筛选 + 取消', () => {
+  it('点状态筛选 + 点「全部」取消', () => {
     const { app } = seedVault();
     createOverlay(app);
     const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
@@ -112,28 +131,37 @@ describe('cinema overlay', () => {
     let cards = overlay.querySelectorAll('[data-cinema-idx]');
     expect(cards.length).toBe(1);
     expect(cards[0].textContent).toContain('想看片');
-    (overlay.querySelector('[data-cinema-status="想看"]') as HTMLElement).click();
+    (overlay.querySelector('[data-cinema-status="all"]') as HTMLElement).click();
     expect(M.statusFilter).toBeNull();
     cards = overlay.querySelectorAll('[data-cinema-idx]');
     expect(cards.length).toBe(4);
   });
 
-  it('剧集点击展开二级，点二级筛选', () => {
+  it('剧集点击筛组+展开二级；点二级筛选；再点同二级回该组全部', () => {
     const { app } = seedVault();
     createOverlay(app);
     const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
     const tvBtn = overlay.querySelector('[data-cinema-type="剧集"]') as HTMLElement;
     tvBtn.click();
-    // 展开二级
+    expect(M.typeFilter).toBe('剧集');
+    expect(M.subFilter).toBeNull();
+    // 展开二级（美剧）
     let subs = overlay.querySelectorAll('[data-cinema-sub]');
     expect(subs.length).toBeGreaterThan(0);
     // 点二级美剧
     const usBtn = overlay.querySelector('[data-cinema-sub="美剧"]') as HTMLElement;
     usBtn.click();
     expect(M.subFilter).toBe('美剧');
-    const cards = overlay.querySelectorAll('[data-cinema-idx]');
+    expect(overlay.querySelector('[data-cinema-main-title]')?.textContent).toBe('美剧');
+    let cards = overlay.querySelectorAll('[data-cinema-idx]');
     expect(cards.length).toBe(1);
     expect(cards[0].textContent).toContain('绝命毒师');
+    // 再点同二级 → 回该组全部（清二级，保持剧集组）
+    const usBtn2 = overlay.querySelector('[data-cinema-sub="美剧"]') as HTMLElement;
+    usBtn2.click();
+    expect(M.subFilter).toBeNull();
+    expect(M.typeFilter).toBe('剧集');
+    expect(overlay.querySelector('[data-cinema-main-title]')?.textContent).toBe('剧集');
   });
 
   it('搜索过滤', () => {
@@ -241,15 +269,35 @@ describe('cinema overlay', () => {
     expect(document.querySelector('.bz-cinema-overlay')).toBeNull();
   });
 
-  it('AI 荐片 / 分析页切换', async () => {
+  it('排序切换：按评分 → 高分在前', () => {
     const { app } = seedVault();
     createOverlay(app);
     const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
-    // AI 页：引导页（画像预览 + 开始按钮）；runAIRecommend 真实调用在 recommend.test 覆盖
+    const sortBtns = overlay.querySelectorAll('.bz-cinema-sort .bz-segmented-btn');
+    // 找「按评分」按钮（组件库 segmented 按钮文案）
+    const ratingBtn = Array.from(sortBtns).find((b) => b.textContent === '按评分') as HTMLElement;
+    ratingBtn.click();
+    expect(M.sortMode).toBe('rating');
+    // 列表按评分降序：星际穿越 9.6 > 绝命毒师 9.4 > 想看/在看片（未看靠后）
+    const names = Array.from(overlay.querySelectorAll('.bz-cinema-p-name')).map((n) => n.textContent);
+    expect(names[0]).toBe('星际穿越');
+    expect(names[1]).toBe('绝命毒师 第一季');
+  });
+
+  it('AI 荐片（点击后页内等待态）/ 分析页切换', async () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    // 点 AI 工具 → 立即切 AI 页，等待消息就地在页内显示（不弹窗）
     (overlay.querySelector('[data-cinema-tool="ai"]') as HTMLElement).click();
     expect(M.view).toBe('ai');
-    expect(overlay.querySelector('.bz-cinema-ai-guide-title')?.textContent).toContain('AI 正在分析');
-    expect(overlay.querySelector('[data-cinema-ai-start]')).toBeTruthy();
+    expect(M.aiRunning).toBe(true);
+    // 无任何弹窗
+    expect(document.querySelector('.bz-overlay-mask')).toBeNull();
+    // 等 runAIRecommend 结束（无 provider → aiError 置位，仍在页内）
+    await new Promise((r) => setTimeout(r, 0));
+    expect(M.aiRunning).toBe(false);
+    expect(document.querySelector('.bz-overlay-mask')).toBeNull();
     // 分析页：完整版（15 板块）
     (overlay.querySelector('[data-cinema-tool="stat"]') as HTMLElement).click();
     expect(M.view).toBe('stat');
