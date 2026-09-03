@@ -216,7 +216,10 @@ describe('todo 面板', () => {
       expect(settings.todoPanelWidth).toBe(901);
     });
     expect(settings.todoPanelHeight).toBe(580);
-    expect(saveSpy).toHaveBeenCalled();
+    // T2：resize 落盘走 150ms trailing 防抖——等待防抖窗口后 save 被调用
+    await vi.waitFor(() => {
+      expect(saveSpy).toHaveBeenCalled();
+    });
   });
 });
 

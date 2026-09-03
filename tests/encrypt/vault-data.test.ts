@@ -114,6 +114,28 @@ describe('PasswordVaultDataManager', () => {
     expect(dm.pwData.length).toBe(0);
   });
 
+  it('E1 写事务回滚：save 失败后内存恢复快照（无幽灵条目/半改态）', async () => {
+    const dm = await unlockedDM();
+    await dm.addItem({ platform: 'GitHub', account: 'a', password: '1' });
+    const orig = dm.pwData.slice();
+    // 令 save 失败：破坏锁定态（save 前 locked 判定会抛「未解锁」）
+    const unlockSpy = vi.spyOn(dm as any, 'unlocked', 'get').mockReturnValue(false);
+    try {
+      // addItem：unshift 后 save 抛 → 回滚（新条目不残留）
+      await expect(dm.addItem({ platform: 'X', account: 'b', password: '2' })).rejects.toThrow('未解锁');
+      expect(dm.pwData.length).toBe(orig.length);
+      // 就地改对象（toggleFav）：save 抛 → fav 恢复原值（逐条拷贝快照回滚）
+      const target = dm.pwData[0];
+      const beforeFav = target.fav;
+      await expect(dm.toggleFav(target.id)).rejects.toThrow('未解锁');
+      expect(dm.pwData[0].fav).toBe(beforeFav);
+      // 原始条目对象引用不串改（回滚后仍是同一批条目）
+      expect(dm.pwData.map((d) => d.id)).toEqual(orig.map((d) => d.id));
+    } finally {
+      unlockSpy.mockRestore();
+    }
+  });
+
   it('destroy：退订域事件', async () => {
     const dm = await unlockedDM();
     await dm.addItem({ platform: 'x', account: 'a', password: 'p' });

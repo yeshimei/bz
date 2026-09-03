@@ -199,29 +199,49 @@ export class PasswordVaultDataManager {
   }
 
   // ---------- 条目操作 ----------
+
+  /** 内存快照（E1）：逐条浅拷贝——就地改对象的 mutator（toggleFav/updatePlatform）可回滚 */
+  private snapshot(): PasswordVaultEntry[] {
+    return this.pwData.map((d) => ({ ...d }));
+  }
+
+  /** 写事务（E1）：save 失败回滚内存到快照再 rethrow——磁盘/加密/清单写任一环节失败
+   *  不残留幽灵条目/半改态（改盘前先恢复内存，交由 UI 层兜底提示 + 重渲染） */
+  private async saveWithRollback(snap: PasswordVaultEntry[]): Promise<void> {
+    try {
+      await this.save();
+    } catch (e) {
+      this.pwData = snap;
+      throw e;
+    }
+  }
+
   async addItem(item: Partial<PasswordVaultEntry>) {
     if (!this.unlocked) throw new Error('未解锁');
+    const snap = this.snapshot();
     (item as any).id = `pw-${Date.now()}-${Math.random()}`;
     (item as any).createdAt = new Date().toISOString();
     if ((item as any).fav === undefined) (item as any).fav = false;
     this.pwData.unshift(item as PasswordVaultEntry);
-    await this.save();
+    await this.saveWithRollback(snap);
   }
 
   async updateItem(id: string, newData: Partial<PasswordVaultEntry>) {
     if (!this.unlocked) throw new Error('未解锁');
     const index = this.pwData.findIndex((d) => d.id === id);
     if (index === -1) throw new Error('条目不存在');
+    const snap = this.snapshot();
     this.pwData[index] = { ...this.pwData[index], ...newData };
-    await this.save();
+    await this.saveWithRollback(snap);
   }
 
   async deleteItem(id: string) {
     if (!this.unlocked) throw new Error('未解锁');
     const index = this.pwData.findIndex((d) => d.id === id);
     if (index === -1) throw new Error('条目不存在');
+    const snap = this.snapshot();
     this.pwData.splice(index, 1);
-    await this.save();
+    await this.saveWithRollback(snap);
   }
 
   /** 删除整个平台（返回删除的账号数） */
@@ -229,8 +249,9 @@ export class PasswordVaultDataManager {
     if (!this.unlocked) throw new Error('未解锁');
     const key = platform || '(无平台)';
     const n = this.accountsOf(key).length;
+    const snap = this.snapshot();
     this.pwData = this.pwData.filter((d) => (d.platform || '(无平台)') !== key);
-    await this.save();
+    await this.saveWithRollback(snap);
     return n;
   }
 
@@ -239,27 +260,30 @@ export class PasswordVaultDataManager {
     if (!this.unlocked) throw new Error('未解锁');
     const key = platform || '(无平台)';
     const target = (patch.platform || '').trim() || key;
+    const snap = this.snapshot();
     for (const d of this.pwData) {
       if ((d.platform || '(无平台)') === key) {
         d.platform = target;
         if (patch.url !== undefined) d.url = patch.url.trim();
       }
     }
-    await this.save();
+    await this.saveWithRollback(snap);
   }
 
   async toggleFav(id: string) {
     if (!this.unlocked) throw new Error('未解锁');
     const d = this.pwData.find((x) => x.id === id);
     if (!d) throw new Error('条目不存在');
+    const snap = this.snapshot();
     d.fav = !d.fav;
-    await this.save();
+    await this.saveWithRollback(snap);
   }
 
   async clearAll() {
     if (!this.unlocked) throw new Error('未解锁');
+    const snap = this.snapshot();
     this.pwData = [];
-    await this.save();
+    await this.saveWithRollback(snap);
   }
 
   /** 搜索：平台/账号/备注（与旧密码本同口径） */

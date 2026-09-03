@@ -406,6 +406,8 @@ export class UIManager {
   asset: VaultAsset = 'overview';
   /** 加密日记详情临时明文缓存（渲染详情时惰性解密） */
   private _diaryPlain: Record<string, string> = {};
+  /** 最近一次体检结果缓存（E5：概览健康卡随 scanHealth 更新，未体检为 null） */
+  private lastHealth: { issues: number; lastChecked: string } | null = null;
 
   constructor(dataManager: SafeManager, config: EncryptUIConfig, pwDataManager?: PasswordVaultDataManager) {
     this.dataManager = dataManager;
@@ -754,8 +756,11 @@ export class UIManager {
           live.appendChild(row);
         }
       });
-      // 扫描完成：全量重渲染（分类规整 + 勾选框 + 底部按钮计数）
+      // 扫描完成：缓存问题数供概览健康卡（E5）+ 全量重渲染（分类规整 + 勾选框 + 底部按钮计数）
+      this.lastHealth = { issues: report.items.length, lastChecked: new Date().toLocaleString() };
       this.renderHealthReport(report, body);
+      // 概览健康卡即时跟随（若正停在概览视图）
+      this.renderNav();
     } catch (e: any) {
       body.innerHTML = '';
       const err = document.createElement('div');
@@ -1172,7 +1177,7 @@ export class UIManager {
       pwFavPlatforms: pwPlats.filter((p) => this.pwDataManager.hasFav(p.platform)).length,
       attachments,
       recent: recent.slice(0, 6),
-      health: null,
+      health: this.lastHealth, // E5：随最近一次体检结果更新（未体检 null → 显示「未体检」）
     };
   }
 
@@ -1629,6 +1634,13 @@ export class UIManager {
     this.pwState = { ...DEFAULT_PW_STATE };
     this._selNoteId = null;
     this._diaryPlain = {};
+    // E4：编辑态复位（关闭中的密码弹窗残留 id 不带到下次解锁）
+    this._pwEditingId = null;
+    // E3：收敛回概览 + 锁态文案——避免停在「密码/笔记」视图显示"保险库还没有密码"空态，
+    // 视觉像"清空"而非"上锁"
+    this.asset = 'overview';
+    // E5：上锁后体检结果无意义，复位未体检态
+    this.lastHealth = null;
     this.notifyUnlockUi();
     if (this.config.securityMode) {
       this.hide();
