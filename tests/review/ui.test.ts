@@ -11,6 +11,8 @@ import { closeSettingsModal } from '../../src/core/settings-modal';
 import { closeItemMenu } from '../../src/core/item-actions';
 import { ReviewDataManager, REVIEW_FILE_PATH } from '../../src/review/data';
 import { UIManager, isPlayable, isDueToday } from '../../src/review/ui';
+import { SprintSession } from '../../src/review/sprint';
+import { reviewApp } from '../../src/review/app';
 
 function makeApp(vault: MockVault) {
   return mockAppWithVault(vault);
@@ -69,6 +71,7 @@ describe('UIManager 三区队列', () => {
   afterEach(() => {
     closeSettingsModal();
     closeItemMenu();
+    vi.restoreAllMocks(); // spy 跨用例/重试累积清零
   });
 
   it('构造即建常驻 DOM（display none）+ zIndex 发号', () => {
@@ -258,6 +261,96 @@ describe('UIManager 三区队列', () => {
     await ui.refreshPanel();
     expect(document.querySelector('.bz-q-view')).not.toBeNull();
     (ui as any).sprint = null;
+    ui.destroy();
+  });
+
+  it('P2 互斥：startSprint 进入新会话前销毁旧会话（无孤儿冲刺）', async () => {
+    const vault = new MockVault();
+    const { ui } = await makeUI(vault);
+    const destroySpy = vi.spyOn(SprintSession.prototype, 'destroy');
+    const pendingFetch = () => new Promise<null>(() => {});
+    const opts = {
+      queue: [] as any[],
+      mode: 'round' as const,
+      quiz: null,
+      fetchQuestions: pendingFetch,
+      onPassed: async () => {},
+      onFailed: async () => {},
+    };
+    ui.startSprint({ ...opts });
+    const first = (ui as any).sprint as SprintSession;
+    expect(first).toBeTruthy();
+    ui.startSprint({ ...opts });
+    const second = (ui as any).sprint as SprintSession;
+    expect(second).not.toBe(first);
+    expect(destroySpy).toHaveBeenCalledTimes(1); // 旧会话被销毁（无僵尸 ESC 层）
+    ui.destroy();
+    expect(destroySpy).toHaveBeenCalledTimes(2); // destroy() 收尾销毁当前会话
+  });
+
+  it('P2 互斥：showQueue 遇活动会话先销毁再回队列', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const { ui } = await makeUI(vault);
+    await ui.showMain();
+    const destroySpy = vi.spyOn(SprintSession.prototype, 'destroy');
+    ui.startSprint({
+      queue: [],
+      mode: 'round',
+      quiz: null,
+      fetchQuestions: () => new Promise<null>(() => {}),
+      onPassed: async () => {},
+      onFailed: async () => {},
+    });
+    expect((ui as any).sprint).toBeTruthy();
+    await ui.showQueue();
+    expect(destroySpy).toHaveBeenCalledTimes(1);
+    expect((ui as any).sprint).toBeNull();
+    expect(document.querySelector('.bz-q-view')).not.toBeNull(); // 队列视图回归
+    ui.destroy();
+  });
+
+  it('P2 防抖：beginRound 并发双击只放行一次；结束后可再次触发', async () => {
+    const vault = new MockVault(); // 空 vault：即便意外走到真实流程也无逾期队列
+    const { ui } = await makeUI(vault);
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const jumpSpy = vi.spyOn(reviewApp, 'autoJumpOverdue').mockImplementation(() => gate as any);
+    const p1 = (ui as any).beginRound();
+    const p2 = (ui as any).beginRound(); // 进行中并发 → 防抖
+    try {
+      await new Promise((r) => setTimeout(r, 0)); // 等动态 import('./app') 解析
+      expect(jumpSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      release(); // 无论断言成败都放行，防泄漏的 pending 流程在 mock 还原后跑真实逻辑
+      await Promise.all([p1, p2]).catch(() => {});
+    }
+    expect(jumpSpy).toHaveBeenCalledTimes(1);
+    // 结束后可再次触发
+    vi.spyOn(reviewApp, 'autoJumpOverdue').mockResolvedValue(undefined);
+    await (ui as any).beginRound();
+    expect(jumpSpy).toHaveBeenCalledTimes(2);
+    ui.destroy();
+  });
+
+  it('P2 防抖：beginSingle 并发只放行一次', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const { dm, ui } = await makeUI(vault);
+    const items = await dm.loadItems();
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const spy = vi.spyOn(reviewApp, 'startSingleSprint').mockImplementation(() => gate as any);
+    const p1 = (ui as any).beginSingle(items[0]);
+    const p2 = (ui as any).beginSingle(items[0]);
+    try {
+      await new Promise((r) => setTimeout(r, 0)); // 等动态 import('./app') 解析
+      expect(spy).toHaveBeenCalledTimes(1);
+    } finally {
+      release();
+      await Promise.all([p1, p2]).catch(() => {});
+    }
+    expect(spy).toHaveBeenCalledTimes(1);
     ui.destroy();
   });
 });

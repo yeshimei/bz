@@ -727,8 +727,11 @@ describe('sprint 编排（2026-09-04 形态：startRoundSprint / startSingleSpri
     const dm = new ReviewDataManager(app);
     (reviewApp as any).dataManager = dm;
     const items = await dm.loadItems();
-    // 无 AI：显式清 quizUI.ai（模块级 initialized 跨用例污染 → 需手动置 null 模拟未初始化）
+    // 无 AI：显式清 quizUI.ai（模块级 initialized 跨用例污染 → 需手动置 null 模拟未初始化）。
+    // 先幂等跑一次 ensureQuiz（吃掉 initialized 首跑标志），否则 startSingleSprint 内部
+    // ensureQuiz 会重建 AI → 首运必失败、仅 retry 通过（稳定性修复）
     const quizMod = await import('../../src/review/quiz-core');
+    quizMod.ensureQuiz(app);
     quizMod.quizUI.ai = null;
     quizMod.QuizMasterUI.ai = null;
     const loopSpy = vi.spyOn(reviewApp, 'reviewLoop').mockResolvedValue(undefined);
