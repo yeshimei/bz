@@ -259,13 +259,13 @@ export function calculateReadingStats(books: BookNoteEntry[]): ReadingStats {
           stats.monthlyStats[monthKey].booksRead++;
           stats.monthlyStats[monthKey].totalReadingTime += readingTime;
           stats.monthlyStats[monthKey].totalHighlights += parseInt(fm.highlights) || 0;
-          if (readingProgress >= 100) stats.monthlyStats[monthKey].booksCompleted++;
+          // audit H：booksCompleted 只在 completionDate 桶记一次（下方完成日期统计），
+          // 不再在阅读月按 progress>=100 重复计数
 
           if (!stats.yearlyStats[yearKey]) stats.yearlyStats[yearKey] = emptyYearlyStats();
           stats.yearlyStats[yearKey].booksRead++;
           stats.yearlyStats[yearKey].totalReadingTime += readingTime;
           stats.yearlyStats[yearKey].totalHighlights += parseInt(fm.highlights) || 0;
-          if (readingProgress >= 100) stats.yearlyStats[yearKey].booksCompleted++;
         } catch (dateError) {
           console.warn(`日期解析错误: ${fm.readingDate}`, dateError);
         }
