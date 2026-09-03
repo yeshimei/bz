@@ -15,13 +15,14 @@ import { getApp } from '../core/app';
 import { notice } from '../core/notice';
 import { emitDomainEvent } from '../core/domain-bus';
 import { tryGetSettings } from '../core/settings-provider';
-import { readNewsData, writeNewsData, normalizeRetentionDays, type BilibiliUpInfo } from './news-data';
+import { readNewsData, writeNewsDataMerged } from './news-data';
 import { localDayKey } from './constants';
 import type { NewsReadEvent } from '../smartcat/news-source';
 import { writeClipNote } from './save';
 import { articleKeyOf } from './constants';
 import { readClipbookData, writeClipbookData } from './data';
 import { readNewsAndSidecar } from './loader';
+import { enqueueNewsWrite } from './write-queue';
 
 // ---------- 阅读会话计时（对齐 ticket 076：当前显示条目 + 累计可视毫秒） ----------
 let curKey = '';
@@ -64,32 +65,17 @@ export function __readingSessionStateForTests(): { curKey: string; accumMs: numb
 }
 
 // ---------- news.json 统计/落盘串行队列 ----------
-let writeChain: Promise<void> = Promise.resolve();
-function enqueue(fn: () => Promise<void>): void {
-  writeChain = writeChain.then(fn).catch(() => { /* 写回失败静默 */ });
-}
+// 队列本体在 write-queue.ts（loader / news-source-settings / store 写回共用同一条链，
+// 防「插件多写方互相覆盖 + 对守护进程无合并」——P1 审查项）；此处只封装本域动作。
 
-/** 统计段 +1（对齐 news reader recordStat：totalRead++ / saved|skipped / byPlatform / byDate 本地日） */
-function bumpStats(action: 'saved' | 'skipped', article: any): void {
-  const platform = article.platform || '未知';
-  const today = localDayKey();
-  enqueue(async () => {
-    const res = await readNewsData();
-    if (!res.ok || res.missing) return;
-    const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-    s.totalRead = (Number(s.totalRead) || 0) + 1;
-    if (action === 'saved') s.totalSaved = (Number(s.totalSaved) || 0) + 1;
-    else s.totalSkipped = (Number(s.totalSkipped) || 0) + 1;
-    s.byPlatform[platform] = (s.byPlatform[platform] || 0) + 1;
-    s.byDate[today] = (s.byDate[today] || 0) + 1;
-    await writeNewsData({ ...res.data, stats: s });
-  });
-}
-
-/** 写单篇已处理（read + state + 删 body；整段读改写保留其它段；串行队列防并发覆盖） */
-function markHandled(raw: any, action: 'saved' | 'skipped'): void {
+/** 写单篇已处理 + 统计 +1（合并为一次读改写，旧实现拆两次放大与 daemon 的竞态窗口）：
+ *  read + state + 删 body；统计段与 articles 段在同一队列步内声明改动，写盘经
+ *  writeNewsDataMerged 与磁盘做段级合并（daemon 新增文章不丢） */
+function markHandledAndBump(raw: any, action: 'saved' | 'skipped'): void {
   const key = articleKeyOf(raw);
-  enqueue(async () => {
+  const platform = raw.platform || '未知';
+  const today = localDayKey();
+  void enqueueNewsWrite(async () => {
     const res = await readNewsData();
     if (!res.ok || res.missing) return;
     const list = (res.data.articles || []).map((a: any) => {
@@ -98,18 +84,24 @@ function markHandled(raw: any, action: 'saved' | 'skipped'): void {
       delete next.body; // 已处理 → 清正文（防 news.json 膨胀；保留策略骨架语义）
       return next;
     });
-    await writeNewsData({ ...res.data, articles: list });
+    const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+    s.totalRead = (Number(s.totalRead) || 0) + 1;
+    if (action === 'saved') s.totalSaved = (Number(s.totalSaved) || 0) + 1;
+    else s.totalSkipped = (Number(s.totalSkipped) || 0) + 1;
+    s.byPlatform[platform] = (s.byPlatform[platform] || 0) + 1;
+    s.byDate[today] = (s.byDate[today] || 0) + 1;
+    await writeNewsDataMerged({ set: { articles: list, stats: s } });
   });
 }
 
-/** 删单篇（news.json 移除该文章） */
+/** 删单篇（news.json 移除该文章；removeArticleKeys 防磁盘并集复活） */
 function removeArticle(raw: any): void {
   const key = articleKeyOf(raw);
-  enqueue(async () => {
+  void enqueueNewsWrite(async () => {
     const res = await readNewsData();
     if (!res.ok || res.missing) return;
     const list = (res.data.articles || []).filter((a: any) => articleKeyOf(a) !== key);
-    await writeNewsData({ ...res.data, articles: list });
+    await writeNewsDataMerged({ set: { articles: list }, removeArticleKeys: [key] });
   });
 }
 
@@ -137,9 +129,8 @@ export async function flowSave(article: any): Promise<boolean> {
   try {
     const ok = await writeClipNote(raw); // 内部 notice 成功/失败；false = 空标题/取消覆盖/写盘异常
     if (!ok) return false; // 未写盘 → 不标已处理、不进行为流（防文章被静默消费）
-    // 写成功 → 标已处理（读盘重取 raw 最新态后写；writeClipNote 用传入 raw，标记同样适用）
-    markHandled(raw, 'saved');
-    bumpStats('saved', raw);
+    // 写成功 → 标已处理 + 统计（单次读改写；writeClipNote 用传入 raw，标记同样适用）
+    markHandledAndBump(raw, 'saved');
     const evt = emitReadEvt(raw, 'saved');
     // 保存联动 auto-summary：登记待补全（smartcat 订阅该剪藏 modify 补全 / 2 分钟降级）
     emitDomainEvent('news', { kind: 'saved', evt, clipPath: `${dirOf()}/${String(raw.title || '').replace(/[\\/:*?"<>|]/g, '').trim()}.md` });
@@ -155,8 +146,7 @@ export async function flowMarkRead(article: any): Promise<void> {
   const raw = article && article.raw;
   if (!raw) return;
   pauseReadingSession();
-  markHandled(raw, 'skipped');
-  bumpStats('skipped', raw);
+  markHandledAndBump(raw, 'skipped');
   emitReadEvt(raw, 'skipped');
 }
 

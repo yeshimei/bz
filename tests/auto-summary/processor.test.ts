@@ -244,12 +244,28 @@ describe('processFile', () => {
     vault.files.set('归档/网页剪藏/h.md', `---\nurl: "https://x.com/h"\n---\n\n${LONG_BODY}`);
     await processFile(makeApp(vault), makeAI(null), vault.file('归档/网页剪藏/h.md'));
     expect(vault.modifiedPaths).toHaveLength(0);
-    // 动态链路：progress → error（ticket 25）+ 人话原因（测试环境未配置 AI）
+    // 动态链路（ticket 25）：progress 隐藏 → 常驻 error 承载（审计修复：不再 5s 自动消失）
+    await new Promise((r) => setTimeout(r, 250)); // 等 progress 通知退出动画移除
     expect(getNoticeMessages()).toHaveLength(1);
     expect(getNoticeMessages()[0]).toBe('AI 服务未配置或不可用，请到设置页配置');
     const retryBtn = document.querySelector('.bz-notice .bz-notice-action') as HTMLButtonElement;
     expect(retryBtn).not.toBeNull();
     expect(retryBtn.textContent).toBe('重试');
+  });
+
+  it('失败通知常驻（duration<=0）：6 秒后仍在 DOM（旧实现 error 默认 5s 即消失，「重试」窗口过短）', async () => {
+    vi.useFakeTimers();
+    try {
+      vault.files.set('归档/网页剪藏/persist.md', `---\nurl: "https://x.com/p"\n---\n\n${LONG_BODY}`);
+      const running = processFile(makeApp(vault), makeAI(null), vault.file('归档/网页剪藏/persist.md'));
+      await vi.advanceTimersByTimeAsync(50);
+      await running;
+      await vi.advanceTimersByTimeAsync(6000); // 超过 error 默认 5s
+      expect(getNoticeMessages()).toContain('AI 服务未配置或不可用，请到设置页配置');
+      expect(document.querySelector('.bz-notice .bz-notice-action')).not.toBeNull(); // 重试入口仍在
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('AI 已配置但请求失败 → 通用人话文案（不误报「未配置」）', async () => {
@@ -258,6 +274,7 @@ describe('processFile', () => {
     vault.files.set('归档/网页剪藏/k.md', `---\nurl: "https://x.com/k"\n---\n\n${LONG_BODY}`);
     await processFile(makeApp(vault), makeAI(null, true), vault.file('归档/网页剪藏/k.md'));
     expect(vault.modifiedPaths).toHaveLength(0);
+    await new Promise((r) => setTimeout(r, 250)); // 等 progress 通知退出动画移除
     expect(getNoticeMessages()[0]).toBe('摘要生成失败，请重试');
   });
 
@@ -345,5 +362,38 @@ describe('processFile', () => {
     expect(out).toContain('用户新增段落'); // 正文取磁盘最新
     expect(getNoticeMessages()).toHaveLength(1);
     expect(getNoticeMessages()[0]).toBe('《已有标题》\n\n新摘要');
+  });
+
+  it('外来剪藏 frontmatter 不丢行（审计修复）：中文键/注释/无缩进 tags 原样保留，tags 不被 AI 覆盖', async () => {
+    const src = [
+      '---',
+      'title: "已有标题"',
+      '来源: 少数派',
+      'published-at: 2024-01-01',
+      'tags:',
+      '- 阅读',
+      '- AI',
+      '# 剪藏备注',
+      '---',
+      '',
+      LONG_BODY,
+    ].join('\n');
+    vault.files.set('归档/网页剪藏/ext.md', src);
+    // tags 已存在（无缩进列表）→ 只缺 summary：AI 仅被请求 summary，不生成 tags
+    const ai = makeAI('{"summary":"AI 摘要"}');
+    await processFile(makeApp(vault), ai, vault.file('归档/网页剪藏/ext.md'));
+
+    const prompt = ai.prompt.mock.calls[0][0] as string;
+    expect(prompt).toContain('150-250字'); // 只请求 summary
+    expect(prompt).not.toContain('tags 规则'); // tags 不缺 → 不生成（防覆盖用户标签）
+
+    const out = vault.files.get('归档/网页剪藏/ext.md')!;
+    expect(out).toContain('summary: "AI 摘要"'); // 新字段写入
+    expect(out).toContain('少数派'); // 中文键值保留（旧实现被整行丢弃）
+    expect(out).toContain('2024-01-01'); // 连字符键保留
+    expect(out).toContain('  - "阅读"'); // 原有 tags 保留（未被 AI 标签替换）
+    expect(out).toContain('  - "AI"');
+    expect(out).toContain('# 剪藏备注'); // 注释行原样拼回（旧实现被删除）
+    expect(out).toContain(LONG_BODY); // 正文不动
   });
 });

@@ -16,7 +16,7 @@ import type { SettingsSchema } from '../../core/settings-schema';
 import { applyDirectories, getPrimaryTagsConfig, getPrimaryTagsInDisplayOrder, getTagEmoji } from '../config';
 import { applyUiSettings, getDefaultDateFilterSetting, getDefaultSelectedTagSetting } from './ui-settings';
 import { state } from '../state';
-import { loadAll, onFullRefresh, onLightRefresh, onProgress, onLoadingChange, onFileChange, clearEncryptedEntries, reloadWithEncrypted } from '../store';
+import { loadAll, onFullRefresh, onLightRefresh, onProgress, onLoadingChange, onFileChange, onFileDeleted, onFileRenamed, clearEncryptedEntries, reloadWithEncrypted } from '../store';
 import { isUnlocked, onUnlockChange } from '../encrypt';
 import { applyFilter, cancelEdit, updateSticky, initScroll } from './entries';
 import { createTag, rebuildTags, refreshSubTagsBar } from './filter-shared';
@@ -349,6 +349,12 @@ function attachFileChangeListeners(): void {
     onDomainEvent('diary:file-modified', onFileChange),
     onDomainEvent('movie:file-modified', onFileChange),
     onDomainEvent('letter:file-modified', onFileChange),
+    // P2 审查修复：补订新建/删除/重命名三通道——只订 modified 时外部新建的日记不进面板、
+    // 外部删除的文件条目残留（此后删任一条会触发 writeFile 重建已删文件，内容假性复活）。
+    // 新建复用 onFileChange（refreshFile upsert）；删除/重命名走 store 专用入口。
+    onDomainEvent('diary:file-created', onFileChange),
+    onDomainEvent('diary:file-deleted', onFileDeleted),
+    onDomainEvent('diary:file-renamed', onFileRenamed),
   ];
 }
 

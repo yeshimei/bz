@@ -169,4 +169,45 @@ describe('clipbook UI 桌面三栏', () => {
     await vi.waitFor(() => expect((M.clipNotes || []).length).toBe(2));
     closePanel();
   });
+
+  it('G：UP 行 data-src 过 esc + 正确携带 B站/up——UP 主名含单引号可点且列表过滤生效', async () => {
+    boot();
+    const app = getApp();
+    const raw = JSON.parse((app.vault as any).files.get('CONFIG/STORAGE/news.json'));
+    raw.articles = [
+      { platform: 'B站', title: '带引号UP的视频', url: 'https://b23.tv/q1', author: '9823496', date: '2026-09-01 08:00:00', body: 'b1' },
+      { platform: '果壳科学人', title: '果壳另一篇', url: 'https://guokr.com/9', author: '果壳', date: '2026-09-01 08:00:00', body: 'b2' },
+    ];
+    raw.bilibiliUpInfo = { '9823496': { name: "O'Prime 圈圈" } };
+    (app.vault as any).files.set('CONFIG/STORAGE/news.json', JSON.stringify(raw));
+    openClipbook(getApp());
+    await vi.waitFor(() => expect(M.open).toBe(true));
+    await vi.waitFor(() => expect(M.articles.length).toBe(2));
+    // UP 行显示回填名（含单引号）
+    const upRow = [...document.querySelectorAll('.bz-clip-rail-row')].find((r) => r.textContent!.includes("O'Prime 圈圈")) as HTMLElement;
+    expect(upRow).toBeTruthy();
+    // 旧实现：单引号截断 data-src 属性 + platform=展示名过滤 → 点击抛错/恒空列表
+    expect(() => upRow.click()).not.toThrow();
+    await vi.waitFor(() => expect(M.sel).toMatchObject({ kind: 'inbox', platform: 'B站', up: '9823496' }));
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-clip-item').length).toBe(1));
+    expect(document.querySelector('.bz-clip-list')!.textContent).toContain('带引号UP的视频');
+    // 高亮命中（active 判定与选择口径一致；rail 重渲染后须重查行节点）
+    await vi.waitFor(() => {
+      const activeRow = [...document.querySelectorAll('.bz-clip-rail-row')].find((r) => r.textContent!.includes("O'Prime 圈圈")) as HTMLElement;
+      expect(activeRow.classList.contains('on')).toBe(true);
+    });
+    closePanel();
+  });
+
+  it('G：切到空源清 M.cur——reader 空态，不残留上一源文章', async () => {
+    await openDesktop();
+    expect(M.cur).toBeTruthy();
+    // 知乎日报在 seed 里唯一一条已 read → 空源
+    const zhihuRow = [...document.querySelectorAll('.bz-clip-rail-row')].find((r) => r.textContent!.includes('知乎日报')) as HTMLElement;
+    zhihuRow.click();
+    await vi.waitFor(() => expect(M.cur).toBeNull());
+    const reader = document.querySelector('[data-clip-reader]') as HTMLElement;
+    expect(reader.textContent).toContain('从列表选择一篇文章开始阅读');
+    closePanel();
+  });
 });

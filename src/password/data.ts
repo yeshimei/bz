@@ -1,4 +1,14 @@
 /**
+ * @deprecated 旧密码本域已退役（ADR-0085 合并至 encrypt 统一保险库，入口已从 main.ts /
+ * settings-panel 断开，仅测试引用），待整体删除。
+ *
+ * ⚠ 复活地雷（审查确认，勿在此域上重启功能）：本 DataManager 与 encrypt 的
+ * PasswordVaultDataManager（src/encrypt/vault-data.ts）是**同一篇 SafeNote
+ * （kind='password-vault'）的两个独立内存副本**——本域无域事件订阅、save 整表盲覆盖，
+ * 两面板并存时后写者会用陈旧快照覆盖先写者的数据（静默丢密）。密码功能的唯一正入口
+ * 是 encrypt 统一面板；若需复用逻辑，改引 src/encrypt/vault-data.ts，不要启用本文件。
+ *
+ * ---
  * 密码本数据管理器（合并至保险箱：路线 B 硬合并）
  * 数据不再独立落盘（无 passwords.enc）——整表作为保险箱清单里的一篇 SafeNote：
  *   kind='password-vault'，正文镜像（contentRef）存整表密文，与保险箱共享主密码/解锁态。

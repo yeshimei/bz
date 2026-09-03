@@ -7,6 +7,7 @@
 import { TFile } from 'obsidian';
 import { getApp } from '../core/app';
 import { jsonFileStore, storageFile } from '../core/storage';
+import { articleKeyOf } from './constants';
 
 export const NEWS_JSON_PATH = 'CONFIG/STORAGE/news.json';
 export const STATS_JSON_PATH = 'CONFIG/STORAGE/news-stats.json';
@@ -167,6 +168,57 @@ export async function writeNewsData(data: NewsData): Promise<void> {
   try {
     await jsonFileStore<NewsData>(getNewsFilePath()).write(data);
   } catch (e) { /* 静默 */ }
+}
+
+/** 合并写回意图：只声明本次真正改动的段；未声明段一律取磁盘现值 */
+export interface NewsWriteIntent {
+  /** 本次写声明的改动段（articles 段与磁盘按 articleKeyOf 并集，声明条目胜出） */
+  set: Partial<NewsData>;
+  /** articles 删除意图（articleKeyOf 列表）：并集合并时从磁盘侧一并剔除，防删除条目被磁盘旧值复活 */
+  removeArticleKeys?: string[];
+}
+
+/**
+ * 合并写回（P1 审查项）：写前重读磁盘，做段级合并——news.json 是插件与后台抓取
+ * 守护进程的双写者文件，旧「读快照 → 盲覆盖」会把 daemon 在读-写窗口内追加的文章/
+ * 更新的配置段覆盖丢失。规则：
+ * - articles：磁盘 ∪ 声明列表按 articleKeyOf 并集（磁盘顺序保留，声明条目同 key 胜出，
+ *   removeArticleKeys 从两侧剔除）；
+ * - 其余段：声明改动（intent.set 含该段）→ 用声明值；未声明 → 取磁盘现值。
+ * 须在 write-queue 串行队列内调用（见 write-queue.ts）。
+ */
+export async function writeNewsDataMerged(intent: NewsWriteIntent): Promise<void> {
+  const res = await readNewsData();
+  const base = res.ok ? res.data : emptyData();
+  const next: NewsData = { ...base };
+  if (intent.set.articles || intent.removeArticleKeys?.length) {
+    const patchList = intent.set.articles || [];
+    const removeKeys = new Set(intent.removeArticleKeys || []);
+    const patchByKey = new Map<string, any>();
+    for (const a of patchList) patchByKey.set(articleKeyOf(a), a);
+    const merged: any[] = [];
+    const seen = new Set<string>();
+    for (const a of base.articles || []) {
+      const k = articleKeyOf(a);
+      if (removeKeys.has(k)) continue;
+      seen.add(k);
+      merged.push(patchByKey.has(k) ? patchByKey.get(k) : a);
+    }
+    for (const a of patchList) {
+      const k = articleKeyOf(a);
+      if (!seen.has(k)) {
+        merged.push(a);
+        seen.add(k);
+      }
+    }
+    next.articles = merged;
+  }
+  for (const seg of ['stats', 'bilibiliUps', 'bilibiliUpInfo', 'bilibiliMaxItems', 'bilibiliCookie', 'sources'] as const) {
+    if (intent.set[seg] !== undefined) {
+      (next as any)[seg] = intent.set[seg];
+    }
+  }
+  await writeNewsData(next);
 }
 
 /**

@@ -29,6 +29,7 @@ import { openClipbook, unloadClipbook } from './clipbook';
 // 统一保险库（encrypt 域，ADR-0085）：密码管理已并入 encrypt，旧 password-vault 域已删除
 // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图；复用 diary parser 读取，不改写旧数据
 import { openDiaryWall, unloadDiaryWall } from './diary-wall';
+import { applyDirectories as applyWallDirectories } from './diary-wall/config';
 import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
 import { openLibrary, openBookNotes, unloadLibrary } from './library';
 import { showReadingReport, unloadReadingReport } from './reading-report';
@@ -155,9 +156,12 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
 ];
 
 /** 应用日记本设置到运行时常量（diary-notebook 原 applySettingsToRuntime） */
-function applyDiarySettingsToRuntime(s: BzSettings) {
+export function applyDiarySettingsToRuntime(s: BzSettings) {
   applyDirectories(s);
   applyUiSettings(s);
+  // P2 审查修复：回忆墙目录常量同步应用——此前无任何调用点，改日记/影视/信目录后
+  // 回忆墙仍读硬编码默认值（书库目录无设置键，回落默认 '书库'）
+  applyWallDirectories(s);
 }
 
 export default class BzPlugin extends Plugin {

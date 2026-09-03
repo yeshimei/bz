@@ -138,6 +138,23 @@ describe('loadAll', () => {
     expect(state.data.originalDiaryEntries).toEqual([]);
   });
 
+  it('目录缺失早退时清空 diaryDataMap（P3 审查修复）', async () => {
+    // 目录真缺失（getAbstractFileByPath 返回 null，递归兜底也找不到）
+    setApp({
+      vault: {
+        getAbstractFileByPath: () => null,
+        getRoot: () => null,
+        read: async () => '',
+      },
+      metadataCache: { getFileCache: () => null },
+      workspace: {},
+    } as any);
+    setDiaryDataMap(new Map([['2024-01-01', []]]));
+    await loadAll();
+    expect(state.data.originalDiaryEntries).toEqual([]);
+    expect(diaryDataMap).toBeNull();
+  });
+
   it('进度与加载状态回调触发', async () => {
     makeVault({ '我的/日记/2024-01-01.md': '# 📖 08:00\nx\n' });
     const progress = vi.fn();
@@ -303,6 +320,118 @@ describe('refreshFile（P0-4 回归）', () => {
     expect(state.data.originalDiaryEntries.some((e) => e.id!.startsWith('letter-'))).toBe(true);
     expect(state.data.originalDiaryEntries.some((e) => e.content === 'y')).toBe(true);
     expect(state.data.originalDiaryEntries.some((e) => e.content === 'x')).toBe(false);
+  });
+});
+
+describe('writeFile 写前守卫（P0 审查修复）', () => {
+  it('条目内「空行 + # 标题」截断的未解析行：拒写，磁盘不被覆盖', async () => {
+    const raw = '# 📖 08:00\n第一条\n\n# 游记标题\n这段会丢\n';
+    makeVault({ '我的/日记/2024-01-01.md': raw });
+    await loadAll();
+    // 未解析行不进数据：只有 1 条，且内容不含被截断的行
+    expect(state.data.originalDiaryEntries).toHaveLength(1);
+    expect(state.data.originalDiaryEntries[0].content).toBe('第一条');
+    // 修改该日期内容后写回：命中守卫拒写
+    const entries = diaryDataMap!.get('2024-01-01')!;
+    entries[0].content = '改过的正文';
+    const { writeFile } = await import('../../src/diary/store');
+    await writeFile('2024-01-01');
+    expect(vault.files.get('我的/日记/2024-01-01.md')).toBe(raw);
+  });
+
+  it('文件开头游离行：拒写，磁盘不被覆盖', async () => {
+    const raw = '开头的游离笔记\n\n# 📖 08:00\n正文\n';
+    makeVault({ '我的/日记/2024-01-01.md': raw });
+    await loadAll();
+    expect(state.data.originalDiaryEntries).toHaveLength(1);
+    const entries = diaryDataMap!.get('2024-01-01')!;
+    entries.push({
+      date: '2024-01-01', time: '09:00', timeValue: 900, tags: ['日记'], emoji: '📖',
+      content: '新增', filename: '2024-01-01', lineNumber: 0,
+    });
+    const { writeFile } = await import('../../src/diary/store');
+    await writeFile('2024-01-01');
+    expect(vault.files.get('我的/日记/2024-01-01.md')).toBe(raw);
+  });
+
+  it('删除最后一条触发整文件删除时，磁盘有未解析行则保留文件', async () => {
+    const raw = '# 📖 08:00\n第一条\n\n# 游记标题\n这段会丢\n';
+    makeVault({ '我的/日记/2024-01-01.md': raw });
+    await loadAll();
+    const flat = state.data.originalDiaryEntries;
+    await deleteEntry(flat[0].id!);
+    expect(vault.files.get('我的/日记/2024-01-01.md')).toBe(raw);
+  });
+
+  it('干净文件不受守卫影响，照常写回', async () => {
+    makeVault({ '我的/日记/2024-01-01.md': '# 📖 08:00\n旧正文\n' });
+    await loadAll();
+    const entries = diaryDataMap!.get('2024-01-01')!;
+    entries[0].content = '新正文';
+    const { writeFile } = await import('../../src/diary/store');
+    await writeFile('2024-01-01');
+    expect(vault.files.get('我的/日记/2024-01-01.md')).toBe('# 📖 08:00\n\n新正文');
+  });
+});
+
+describe('onFileDeleted / onFileRenamed（P2 审查修复：三通道补订）', () => {
+  it('外部删除：剔除该日期的 map 项与列表普通条目，保留同日影视条目', async () => {
+    makeVault({});
+    setDiaryDataMap(
+      new Map([
+        ['2024-01-01', [{ date: '2024-01-01', time: '08:00', timeValue: 800, tags: ['日记'], emoji: '📖', content: 'x', filename: '2024-01-01', lineNumber: 1, id: 'a' }]],
+      ])
+    );
+    state.data.originalDiaryEntries = [
+      { date: '2024-01-01', time: '08:00', timeValue: 800, tags: ['日记'], emoji: '📖', content: 'x', filename: '2024-01-01', lineNumber: 1, id: 'a' },
+      { date: '2024-01-01', time: '12:00', timeValue: 1200, tags: ['电影'], emoji: '📽', content: 'film', filename: '我的/影视/film.md', lineNumber: 0, id: 'movie-x' },
+      { date: '2024-01-02', time: '09:00', timeValue: 900, tags: ['日记'], emoji: '📖', content: 'y', filename: '2024-01-02', lineNumber: 1, id: 'b' },
+    ];
+    state.data.currentFilteredEntries = [...state.data.originalDiaryEntries];
+    const full = vi.fn();
+    onFullRefresh(full);
+    const { onFileDeleted } = await import('../../src/diary/store');
+    await onFileDeleted({ path: '我的/日记/2024-01-01.md' });
+    // 该日期普通条目剔除；影视条目与其它日期不受影响
+    expect(state.data.originalDiaryEntries.map((e) => e.id)).toEqual(['movie-x', 'b']);
+    expect(state.data.currentFilteredEntries.map((e) => e.id)).toEqual(['movie-x', 'b']);
+    expect(diaryDataMap!.has('2024-01-01')).toBe(false);
+    expect(full).toHaveBeenCalled();
+  });
+
+  it('外部重命名：旧路径条目剔除，新路径条目刷新进来', async () => {
+    makeVault({
+      '我的/日记/2024-01-02.md': '# ✍️ 09:00\n换名后的条目\n',
+    });
+    await loadAll();
+    expect(state.data.originalDiaryEntries).toHaveLength(1);
+    // 模拟改名前的内存残留（旧文件 2024-01-01 的条目）+ 磁盘新文件 2024-01-02
+    setDiaryDataMap(
+      new Map([
+        ['2024-01-01', [{ date: '2024-01-01', time: '08:00', timeValue: 800, tags: ['日记'], emoji: '📖', content: '旧名', filename: '2024-01-01', lineNumber: 1, id: 'old' }]],
+        ...(diaryDataMap ?? new Map()),
+      ])
+    );
+    state.data.originalDiaryEntries.push({
+      date: '2024-01-01', time: '08:00', timeValue: 800, tags: ['日记'], emoji: '📖', content: '旧名', filename: '2024-01-01', lineNumber: 1, id: 'old',
+    });
+    const { onFileRenamed } = await import('../../src/diary/store');
+    await onFileRenamed({ oldPath: '我的/日记/2024-01-01.md', newPath: '我的/日记/2024-01-02.md' });
+    expect(state.data.originalDiaryEntries.some((e) => e.id === 'old')).toBe(false);
+    expect(state.data.originalDiaryEntries.some((e) => e.date === '2024-01-02')).toBe(true);
+    expect(diaryDataMap!.has('2024-01-01')).toBe(false);
+  });
+
+  it('内部更新期间不触发（回环抑制）', async () => {
+    makeVault({});
+    state.data.originalDiaryEntries = [
+      { date: '2024-01-01', time: '08:00', timeValue: 800, tags: ['日记'], emoji: '📖', content: 'x', filename: '2024-01-01', lineNumber: 1, id: 'a' },
+    ];
+    state.events.isInternalUpdate = true;
+    const { onFileDeleted } = await import('../../src/diary/store');
+    await onFileDeleted({ path: '我的/日记/2024-01-01.md' });
+    expect(state.data.originalDiaryEntries).toHaveLength(1);
+    state.events.isInternalUpdate = false;
   });
 });
 

@@ -490,6 +490,44 @@ describe('回忆墙 UI', () => {
     expect(heads).toEqual(['2026-08-19']);
   });
 
+  it('E6 审查修复：点年份只切换浏览年份，关闭弹窗不提交筛选', async () => {
+    const c = await openAndWait();
+    const brand = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-brand') as HTMLElement;
+    brand.click();
+    let popup = document.querySelector('.bz-diary-wall-datefilter') as HTMLElement;
+    // 点 2026 年 → 只重建浏览网格，不写筛选
+    popup.querySelector<HTMLElement>('.bz-diary-wall-datefilter-year[data-year="2026"]')!.click();
+    popup = document.querySelector('.bz-diary-wall-datefilter') as HTMLElement;
+    expect(popup.querySelectorAll('.bz-diary-wall-datefilter-month').length).toBe(12);
+    expect(c.selDateFilter).toBeNull(); // 年份只是浏览临时值
+    // ✕ 关闭：筛选仍未生效，列表未被过滤
+    (popup.querySelector('.bz-diary-wall-datefilter-close') as HTMLElement)!.click();
+    expect(document.querySelector('.bz-diary-wall-datefilter')).toBeNull();
+    expect(c.selDateFilter).toBeNull();
+    expect(document.querySelectorAll('.bz-diary-wall-desk .bz-diary-wall-day-head').length).toBe(3);
+  });
+
+  it('E6：点年份后点月份提交筛选；「全部」清除', async () => {
+    const c = await openAndWait();
+    const brand = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-brand') as HTMLElement;
+    brand.click();
+    let popup = document.querySelector('.bz-diary-wall-datefilter') as HTMLElement;
+    popup.querySelector<HTMLElement>('.bz-diary-wall-datefilter-year[data-year="2026"]')!.click();
+    popup = document.querySelector('.bz-diary-wall-datefilter') as HTMLElement;
+    const aug = Array.from(popup.querySelectorAll<HTMLElement>('.bz-diary-wall-datefilter-month')).find(
+      (m) => m.textContent!.includes('8月')
+    )!;
+    aug.click();
+    expect(c.selDateFilter).toEqual({ year: '2026', month: '08' });
+    expect(document.querySelectorAll('.bz-diary-wall-desk .bz-diary-wall-day-head').length).toBe(1);
+    // 再开 → 「全部」清除
+    brand.click();
+    popup = document.querySelector('.bz-diary-wall-datefilter') as HTMLElement;
+    (popup.querySelector('.bz-diary-wall-datefilter-reset') as HTMLElement)!.click();
+    expect(c.selDateFilter).toBeNull();
+    expect(document.querySelectorAll('.bz-diary-wall-desk .bz-diary-wall-day-head').length).toBe(3);
+  });
+
   it('桌面单击条目 → 不开底部抽屉（动作入口为右键/双击）', async () => {
     await openAndWait();
     const desk = document.querySelector('.bz-diary-wall-desk')!;
@@ -652,5 +690,57 @@ describe('回忆墙 UI', () => {
     video.dispatchEvent(new Event('loadedmetadata'));
     const dur = video.parentElement!.querySelector('.bz-diary-wall-dur') as HTMLElement;
     expect(dur.textContent).toBe('2:05');
+  });
+
+  it('G1 审查修复：点击已滚过月份按流式位置推算目标（吸顶头 rect 不再污染）', async () => {
+    await openAndWait();
+    const wall = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-wall') as HTMLElement;
+    const head = wall.querySelector<HTMLElement>('.bz-diary-wall-day-head[data-date^="2026-08"]')!;
+    const masonry = head.nextElementSibling as HTMLElement;
+    expect(masonry.classList.contains('bz-diary-wall-masonry')).toBe(true);
+    // 模拟已滚过该月：节头是 sticky（rect 恒贴墙顶，不可用），其 masonry（非 sticky）
+    // rect 为流式真实位置——已在视口上方 860px，墙顶位于视口 100px 处
+    wall.getBoundingClientRect = () => ({ top: 100 } as any);
+    masonry.getBoundingClientRect = () => ({ top: -860 } as any);
+    Object.defineProperty(head, 'offsetHeight', { value: 40, configurable: true });
+    wall.scrollTop = 2000;
+    const scrollSpy = vi.fn();
+    wall.scrollTo = scrollSpy as any;
+    const monthItem = document.querySelector<HTMLElement>(
+      '.bz-diary-wall-desk .bz-diary-wall-month[data-month="2026-08"]'
+    )!;
+    monthItem.click();
+    // 目标 = scrollTop + (masonry顶 − wall顶 − 节头高 − 6) = 2000 + (−860 − 100 − 40 − 6) = 994
+    // （旧实现用吸顶头 rect：head.top(0) − wall.top(100) → 1894，回跳错误位置）
+    expect(scrollSpy).toHaveBeenCalledWith({ top: 994, behavior: 'smooth' });
+  });
+
+  it('E4 审查确认：章节栏胶卷缩略图直挂 src，不依赖 wall 内懒加载观察', async () => {
+    await openAndWait();
+    const rail = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-rail') as HTMLElement;
+    const img = rail.querySelector('.bz-diary-wall-month-thumb img') as HTMLImageElement;
+    expect(img).toBeTruthy();
+    expect(img.getAttribute('src')).toContain('https://example.com/vault/');
+  });
+
+  it('F 审查修复：灯箱只填充当前端实例（另一实例 lbMedia 保持为空，无双份加载）', async () => {
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    const mob = document.querySelector('.bz-diary-wall-mob')!;
+    const media = desk.querySelector('.bz-diary-wall-media') as HTMLElement;
+    media.click();
+    // jsdom 桌面宽度 → 仅 desk 实例填充真实媒体元素
+    expect(desk.querySelectorAll('.bz-diary-wall-lb-media').length).toBe(1);
+    expect(mob.querySelector('.bz-diary-wall-lb-media')).toBeNull();
+    expect(desk.querySelector('.bz-diary-wall-lb--show')).toBeTruthy();
+  });
+
+  it('F 审查修复：hide() 收起右键菜单（面板关闭后菜单不再残留 body）', async () => {
+    const c = await openAndWait();
+    const item = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-item') as HTMLElement;
+    item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 10, clientY: 10 }));
+    expect(document.querySelector('.bz-diary-wall-menu')).toBeTruthy();
+    c.hide();
+    expect(document.querySelector('.bz-diary-wall-menu')).toBeNull();
   });
 });

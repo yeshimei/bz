@@ -158,7 +158,9 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     set('account', 'me@douban');
     set('password', 'pw123456');
     (dlg.querySelector('[data-pwv-dlg="save"]') as HTMLButtonElement).click();
-    await new Promise((r) => setTimeout(r, 40));
+    // 回归：保存回调要等完整加密落盘链（PBKDF2 派生 + 清单原子写）走完才 renderAll()，
+    // 固定 40ms 等待会断言到保存前的空态渲染——改为 waitFor 列表出现新平台（≥3s）
+    await waitFor(() => (document.querySelector('.bz-vault-listcol')!.textContent || '').includes('豆瓣'));
     expect(dm.pwData.length).toBe(1);
     expect(dm.pwData[0].platform).toBe('豆瓣');
     expect(document.querySelector('.bz-vault-listcol')!.textContent).toContain('豆瓣');
@@ -225,5 +227,88 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     // 清理：移除 DOM（UIManager 无 cleanup——统一由 Controller.cleanup 收口）
     ui2.popup?.remove();
     ui2.mask?.remove();
+  });
+
+  it('E6：移动端日记详情 ⋮ 直接开底部抽屉（旧 tmp.click() 触发不了长按/右键手势致按钮失效）', async () => {
+    await sm.lockNote({
+      path: '我的/日记/2025-06-01.md',
+      title: '2025-06-01 · 09:00 日记',
+      kind: 'diary-entry',
+      content: '# 📖🔐 09:00\n正文',
+      attachments: [],
+    });
+    ui.show();
+    await new Promise((r) => setTimeout(r, 30));
+    const diaryItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'diary') as HTMLElement;
+    diaryItem.click();
+    await new Promise((r) => setTimeout(r, 30));
+    // 移动端列表行 → 详情二级页
+    const mobRow = document.querySelector('[data-mob-body] .bz-vault-row') as HTMLElement;
+    expect(mobRow).toBeTruthy();
+    mobRow.click();
+    const page = document.querySelector('.bz-vault-mobpage') as HTMLElement;
+    expect(page).toBeTruthy();
+    // ⋮ → 底部抽屉（预览/还原/销毁全入口可达）
+    (page.querySelector('[data-mob-menu]') as HTMLElement).click();
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet).toBeTruthy();
+    expect(sheet.textContent).toContain('预览正文');
+    expect(sheet.textContent).toContain('还原回日记');
+    expect(sheet.textContent).toContain('彻底销毁');
+  });
+
+  it('E6：移动端密码平台详情页 ⋮ 直接开底部抽屉（旧 [data-mob-menu] 未绑事件点击无反应）', async () => {
+    await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x' });
+    ui.show();
+    await new Promise((r) => setTimeout(r, 30));
+    const pwItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'pw') as HTMLElement;
+    pwItem.click();
+    await new Promise((r) => setTimeout(r, 30));
+    const card = document.querySelector('[data-mob-body] .bz-pwv-mobcard') as HTMLElement;
+    expect(card).toBeTruthy();
+    card.click();
+    const page = document.querySelector('.bz-vault-mobpage') as HTMLElement;
+    expect(page).toBeTruthy();
+    (page.querySelector('[data-mob-menu]') as HTMLElement).click();
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet).toBeTruthy();
+    expect(sheet.textContent).toContain('在该平台新增账号');
+    expect(sheet.textContent).toContain('编辑平台信息');
+    expect(sheet.textContent).toContain('删除整个平台');
+  });
+
+  it('E7：密码添加弹窗注册独立 ESC 层——ESC 只关弹窗，主面板不被穿透关闭', async () => {
+    ui.show();
+    await new Promise((r) => setTimeout(r, 30));
+    const pwItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'pw') as HTMLElement;
+    pwItem.click();
+    await new Promise((r) => setTimeout(r, 30));
+    (document.querySelector('.bz-vault-lc-head [data-lc-add="pw"]') as HTMLElement).click();
+    const mask = document.querySelector('.bz-vault-dlg-mask') as HTMLElement;
+    expect(mask.style.display).toBe('flex');
+    // ESC：弹窗层命中（后注册在上）→ 只关弹窗
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(mask.style.display).toBe('none');
+    expect(ui.popup!.style.display).toBe('flex');
+    // 再按 ESC：弹窗层已注销 → 主面板关闭（既有语义不回归）
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(ui.popup!.style.display).toBe('none');
+  });
+
+  it('E7：平台编辑弹窗注册独立 ESC 层——ESC 只关弹窗，主面板不被穿透关闭', async () => {
+    await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x' });
+    ui.show();
+    await new Promise((r) => setTimeout(r, 30));
+    const pwItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'pw') as HTMLElement;
+    pwItem.click();
+    await new Promise((r) => setTimeout(r, 30));
+    (document.querySelector('.bz-vault-listcol .bz-pwv-plrow') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 20));
+    (document.querySelector('[data-pwv="plat-edit"]') as HTMLElement).click();
+    const mask = document.querySelector('.bz-vault-dlg-mask') as HTMLElement;
+    expect(mask).toBeTruthy();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(document.querySelector('.bz-vault-dlg-mask')).toBeNull();
+    expect(ui.popup!.style.display).toBe('flex');
   });
 });

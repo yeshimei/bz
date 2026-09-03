@@ -68,8 +68,10 @@ function coverBlock(it: BookshelfItem, app: App, cls: string): string {
 }
 
 /** B4：坏图回退占位块（capture 阶段接 error 不冒泡事件；img 原位替换为占位）。
- *  container 级一次挂载，innerHTML 重渲染不失效。 */
+ *  container 级一次挂载，innerHTML 重渲染不失效；audit H：重复渲染不再叠加 error 监听。 */
 function bindCoverFallback(container: HTMLElement): void {
+  if (container.dataset.bsCoverFallbackBound === '1') return;
+  container.dataset.bsCoverFallbackBound = '1';
   container.addEventListener('error', (e) => {
     const img = e.target as HTMLElement;
     if (!img || img.tagName !== 'IMG') return;
@@ -264,6 +266,16 @@ function closeDrawer(): void {
 
 // ---------- 详情弹窗（改状态/进度/书评；EPUB 只读） ----------
 
+/** 本域 uiModal 关闭句柄（audit H：toggle 关面板时顺带关闭，不留孤儿详情/确认弹窗） */
+let detailModalClose: (() => void) | null = null;
+let confirmModalClose: (() => void) | null = null;
+
+/** 关闭本域浮层弹窗（详情 + 删除确认；closeOverlay 调用） */
+function closeDomainModals(): void {
+  if (confirmModalClose) { confirmModalClose(); confirmModalClose = null; }
+  if (detailModalClose) { detailModalClose(); detailModalClose = null; }
+}
+
 function todayStr(): string {
   const d = new Date();
   const p = (n: number) => String(n).padStart(2, '0');
@@ -313,7 +325,9 @@ function openBookDetail(it: BookshelfItem, app: App): void {
     head: true,
     title: '书籍详情',
     className: 'bz-bs-d-popup',
+    onClose: () => { detailModalClose = null; },
   });
+  detailModalClose = close;
 
   // 只读区之上组装编辑控件（组件库工厂；EPUB 禁用）
   const statusChoice = uiChoice({
@@ -357,7 +371,8 @@ function openBookDetail(it: BookshelfItem, app: App): void {
           <button class="bz-btn bz-btn--ghost" data-bs-c="0">取消</button>
           <button class="bz-btn bz-btn--danger" data-bs-c="1">删除</button>
         </div></div>`;
-      const conf = uiModal({ content: confHtml, maxWidth: 320, className: 'bz-bs-confirm-pop' });
+      const conf = uiModal({ content: confHtml, maxWidth: 320, className: 'bz-bs-confirm-pop', onClose: () => { confirmModalClose = null; } });
+      confirmModalClose = conf.close;
       mountIcons(conf.popup);
       conf.popup.querySelector('[data-bs-c="1"]')?.addEventListener('click', () => {
         void (async () => {
@@ -575,6 +590,14 @@ export function createOverlay(app: App): void {
   }
   bindSearch(overlay.querySelector('#bz-bs-dsearch') as HTMLInputElement);
   bindSearch(overlay.querySelector('#bz-bs-msearch') as HTMLInputElement);
+  // 重开残留回写：M.searchKeyword 只在插件卸载时清空，重挂面板把它回填输入框，
+  // 避免「网格被不可见关键字过滤但输入框为空」的排查黑洞
+  if (M.searchKeyword) {
+    for (const id of ['bz-bs-dsearch', 'bz-bs-msearch']) {
+      const input = overlay.querySelector(`#${id}`) as HTMLInputElement | null;
+      if (input) input.value = M.searchKeyword;
+    }
+  }
 
   mountIcons(overlay);
   // B8：首扫加载态——rebuild 完成前 shelves 显示占位，防异步读 weave-data 时空白闪烁
@@ -599,6 +622,7 @@ function toggleMobileSearch(): void {
 export function closeOverlay(): void {
   if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
   closeDrawer();
+  closeDomainModals(); // audit H：toggle 语义关面板时不留孤儿详情/确认弹窗
   if (M.currentOverlay) {
     M.currentOverlay.remove();
     M.currentOverlay = null;

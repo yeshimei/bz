@@ -94,11 +94,11 @@ export function sortByDateDesc(list: CinemaItem[]): CinemaItem[] {
   return [...list].sort((a, b) => dateVal(b) - dateVal(a));
 }
 
-/** 按创建时间（笔记文件 mtime）倒序；文件无 mtime 时按名称兜底保持稳定 */
+/** 按创建时间（笔记文件 ctime）倒序；编辑（mtime）不改变排序，文件无 ctime 时按名称兜底保持稳定 */
 export function sortByCreatedDesc(list: CinemaItem[]): CinemaItem[] {
   return [...list].sort((a, b) => {
-    const ta = a.file ? a.file.stat.mtime : 0;
-    const tb = b.file ? b.file.stat.mtime : 0;
+    const ta = a.file ? a.file.stat.ctime : 0;
+    const tb = b.file ? b.file.stat.ctime : 0;
     if (ta !== tb) return tb - ta;
     return (b.name || '').localeCompare(a.name || '');
   });

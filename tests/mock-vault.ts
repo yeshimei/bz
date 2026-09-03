@@ -165,6 +165,15 @@ export class MockVault {
     this.modifiedPaths.push(file.path);
   }
 
+  /** Obsidian vault.process 语义：原子读改写（读-改-写单步完成，防并发窗口互吞） */
+  async process(file: any, fn: (content: string) => string): Promise<string> {
+    const content = this.files.get(file.path) ?? '';
+    const next = fn(content);
+    this.files.set(file.path, next);
+    this.modifiedPaths.push(file.path);
+    return next;
+  }
+
   async createFolder(path: string): Promise<void> {
     this.dirs.add(path);
   }
@@ -301,6 +310,10 @@ export function mockAppWithVault(vault: MockVault) {
         }
         lines.push('---');
         vault.files.set(path, lines.join('\n') + (body ? '\n' + body : ''));
+      },
+      /** renameFile：Obsidian 内建改名（真实环境还会更新全库双链，mock 只移动文件） */
+      renameFile: async (file: any, newPath: string) => {
+        await vault.rename(file, newPath);
       },
     },
     commands: (() => {

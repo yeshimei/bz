@@ -7,13 +7,14 @@
  * - clipbook.json 侧写读取；
  * - 剪藏目录扫描（目录不存在 → null 区分空态）。
  */
-import { readNewsData, writeNewsData, migrateLegacyStats, applyRetention, normalizeRetentionDays, statsHasData } from './news-data';
+import { readNewsData, writeNewsDataMerged, migrateLegacyStats, applyRetention, normalizeRetentionDays, statsHasData, type NewsWriteIntent } from './news-data';
 import { readClipbookData } from './data';
 import { scanClipDirectory, type ClipNote } from './scan';
 import { clipUrlSet } from './store';
 import { tryGetSettings } from '../core/settings-provider';
 import { getApp } from '../core/app';
 import { M } from './state';
+import { enqueueNewsWrite } from './write-queue';
 
 export interface PanelData {
   /** news.json 读取结果分类：ok / missing（首用）/ corrupt（损坏） */
@@ -58,17 +59,25 @@ export async function readNewsAndSidecar(): Promise<PanelData> {
   const skippedDays = normalizeRetentionDays(s?.newsRetentionSkippedDays) ?? 7;
   let data = res.data;
   const cleaned = applyRetention(data.articles, savedDays, skippedDays);
-  let changed = cleaned.length !== data.articles.length;
-  if (changed) data = { ...data, articles: cleaned };
+  const retentionChanged = cleaned.length !== data.articles.length;
+  if (retentionChanged) data = { ...data, articles: cleaned };
   // 旧 stats 迁移（stats 段无真实数据时并入旧 news-stats.json 一次）
+  let statsChanged = false;
   if (!statsHasData(data.stats)) {
     const migrated = await migrateLegacyStats(data);
     if (statsHasData(migrated.stats)) {
       data = migrated;
-      changed = true;
+      statsChanged = true;
     }
   }
-  if (changed) await writeNewsData(data);
+  // F：清理/迁移写回走共享串行队列 + 段级合并（只声明实际改动的段，daemon 在
+  // 读-写窗口内追加的文章不被旧快照覆盖）
+  if (retentionChanged || statsChanged) {
+    const set: NewsWriteIntent['set'] = {};
+    if (retentionChanged) set.articles = data.articles;
+    if (statsChanged) set.stats = data.stats;
+    await enqueueNewsWrite(() => writeNewsDataMerged({ set }));
+  }
 
   // 侧写
   const sidecar = await readClipbookData();
