@@ -402,7 +402,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   white-space: nowrap;
 }
 .bz-select-item > span {
-  flex: 1;
+  /* 不 grow：菜单按最长选项撑宽后，flex:1 会把对勾推到行尾、与短选项名称间拉出大空隙 */
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
