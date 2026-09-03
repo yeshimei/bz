@@ -4,7 +4,10 @@
  * 移动：右上角 AI/分析/关闭 ＋ 搜索/添加 ＋ 分类横滑 ＋ 海报网格（3 列）
  * 交互：点海报 → 详情弹窗（无关闭按钮，编辑/删除在弹窗内）
  *       想看/在看 灰色小字 → 快速状态窗（升级+评分滑杆+影评）
- *       再点已选分类 → 取消筛选
+ *       左栏分类对齐待办：类型/状态顶部均有「全部」；点组=筛组并展开其二级（手风琴互斥）；
+ *       再点同组不取消（回全部靠「全部」）；点二级=筛该二级；再点同二级=回该组全部；点其他组/全部=收起二级
+ *       搜索框上方主头行（标题=当前筛选名 + · N 部 + 添加按钮）；搜索框后排序 segmented（最近观看/按创建/按评分）
+ *       AI 荐片：点入口切 AI 页，等待消息与结果列表都就地渲染在页内（不弹窗）
  * 基线：按钮/图标钮/输入/空态/弹窗骨架走组件库（src/core/ui）；域内只留影院特有布局。
  * 图标：一律 lucide（emoji 已全换，字符串模板用 data-lucide 占位 → mountIcons 统一 setIcon）。
  */
@@ -14,14 +17,14 @@ import { notice } from '../core/notice';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
-import { uiModal, uiIcon } from '../core/ui';
+import { uiModal, uiIcon, uiSegmented } from '../core/ui';
 import {
   STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, RATING_MAX, DEFAULT_RATING,
   GROUP_ORDER, GROUP_SUBS, TYPE_COLORS, STATUS_COLORS, ALL_TAGS, getGroupForTag,
 } from './constants';
-import { M, resetCinemaState, type CinemaItem } from './state';
-import { rebuildItems, getDisplayItems, refreshDataAndView } from './data';
-import { runAIRecommend, buildTasteProfile } from './recommend';
+import { M, resetCinemaState, type CinemaItem, type CinemaState } from './state';
+import { rebuildItems, getDisplayItems } from './data';
+import { runAIRecommend, buildTasteProfile, quickAddWant } from './recommend';
 import { buildAnalysisHTML } from './analysis';
 
 // ---------- 小工具 ----------
@@ -37,6 +40,7 @@ const ICON = {
   del: 'trash-2',
   empty: 'clapperboard',
   confirm: 'alert-circle',
+  sort: 'arrow-up-down',
 };
 
 /** lucide 占位 HTML（innerHTML 拼接用；渲染后 mountIcons 统一 setIcon） */
@@ -135,6 +139,13 @@ function countBy(list: CinemaItem[], key: (it: CinemaItem) => string): Record<st
   return acc;
 }
 
+/** 当前标题名：全部 / 组名 / 二级名（主头行 + 头部一致性） */
+export function currentTitle(): string {
+  if (M.subFilter) return M.subFilter;
+  if (M.typeFilter) return M.typeFilter;
+  return '全部';
+}
+
 function renderNavHtml(app: App): string {
   const groupCounts = countBy(M.items, (it) => it.group);
   const subCounts = countBy(M.items, (it) => it.typeTag);
@@ -142,22 +153,31 @@ function renderNavHtml(app: App): string {
   M.items.forEach((it) => { statusCounts[statusText(it.status)]++; });
 
   let html = '<div class="bz-cinema-nav-label">类型</div>';
+  html += `<button class="bz-cinema-nav-item${!M.typeFilter && !M.subFilter ? ' bz-cinema-nav-active' : ''}" data-cinema-type="all">
+    <span class="bz-cinema-nav-cnt" style="margin-left:0;margin-right:auto">全部</span><span class="bz-cinema-nav-cnt">${M.items.length}</span></button>`;
   for (const g of GROUP_ORDER) {
     if (!groupCounts[g]) continue;
     const isOpen = !!M.expanded[g];
-    const active = M.typeFilter === g && !M.subFilter;
-    html += `<button class="bz-cinema-nav-item${active ? ' bz-cinema-nav-active' : ''}" data-cinema-type="${g}">
+    // 组选中 = 筛该组；若正筛着该组某个二级，组名仍高亮（联动）
+    const active = M.typeFilter === g;
+    const groupActive = active && !M.subFilter;
+    html += `<button class="bz-cinema-nav-item${groupActive ? ' bz-cinema-nav-active' : ''}" data-cinema-type="${g}">
       <span class="bz-cinema-nav-dot" style="background:${groupColor(g)}"></span>${g}<span class="bz-cinema-nav-cnt">${groupCounts[g]}</span></button>`;
-    const subs = (GROUP_SUBS[g] || []).filter((s) => subCounts[s]);
-    if (subs.length) {
-      html += `<div class="bz-cinema-nav-sub${isOpen ? ' bz-cinema-nav-sub-open' : ''}">`;
-      for (const s of subs) {
+    const hasSub = (GROUP_SUBS[g] || []).some((s) => subCounts[s]);
+    if (hasSub) {
+      // 展开态 = 当前组被选中（typeFilter 指向该组）或有子项被选中
+      const expanded = active;
+      html += `<div class="bz-cinema-nav-sub${expanded ? ' bz-cinema-nav-sub-open' : ''}">`;
+      for (const s of GROUP_SUBS[g]) {
+        if (!subCounts[s]) continue;
         html += `<button class="bz-cinema-nav-sub-item${M.subFilter === s ? ' bz-cinema-nav-active' : ''}" data-cinema-sub="${s}">${s}<span class="bz-cinema-nav-cnt">${subCounts[s]}</span></button>`;
       }
       html += '</div>';
     }
   }
   html += '<div class="bz-cinema-nav-label">状态</div>';
+  html += `<button class="bz-cinema-nav-item${!M.statusFilter ? ' bz-cinema-nav-active' : ''}" data-cinema-status="all">
+    <span class="bz-cinema-nav-cnt" style="margin-left:0;margin-right:auto">全部</span><span class="bz-cinema-nav-cnt">${M.items.length}</span></button>`;
   (['想看', '在看', '已看'] as const).forEach((s) => {
     const active = M.statusFilter === s;
     html += `<button class="bz-cinema-nav-item${active ? ' bz-cinema-nav-active' : ''}" data-cinema-status="${s}">
@@ -168,6 +188,17 @@ function renderNavHtml(app: App): string {
   html += `<button class="bz-cinema-nav-tool${M.view === 'stat' ? ' bz-cinema-nav-active' : ''}" data-cinema-tool="stat"><span class="bz-cinema-tool-ic">${iconSpan(ICON.stat)}</span>影视分析</button>`;
   html += '</div>';
   return html;
+}
+
+/** 主头行：当前筛选名 + “· N 部” + 右侧添加按钮（对齐待办主头行） */
+function renderMainHeadHtml(app: App): string {
+  const visible = getDisplayItems();
+  return `<div class="bz-cinema-main-head">
+    <div class="bz-cinema-main-title" data-cinema-main-title>${esc(currentTitle())}</div>
+    <div class="bz-cinema-main-count" data-cinema-main-count>· ${visible.length} 部</div>
+    <div class="bz-cinema-main-spacer"></div>
+    <button class="bz-btn bz-btn--primary bz-cinema-add" data-cinema-add>${iconSpan(ICON.add, 'bz-ic--sm')} 添加影视</button>
+  </div>`;
 }
 
 // ---------- 渲染：海报网格 ----------
@@ -213,7 +244,32 @@ function renderListHtml(app: App): string {
 
 // ---------- 渲染：AI 荐片 / 分析页 ----------
 
+/**
+ * AI 页内渲染：待机 = 引导；运行中 = 等待消息；完成/失败 = 结果列表或错误。
+ * 全程不弹窗（用户拍板：等待消息与结果都在页面内显示）。
+ */
 function renderAiPageHtml(app: App): string {
+  if (M.aiRunning) {
+    return `<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title">${iconSpan(ICON.ai)}AI 荐片</span></div>
+      <div class="bz-cinema-ai-wait">
+        <span class="bz-cinema-ai-guide-ic">${iconSpan(ICON.ai)}</span>
+        <div class="bz-cinema-ai-guide-title">${esc(M.aiWaitMsg || 'AI 正在分析你的观影口味…')}</div>
+        <div class="bz-cinema-ai-guide-sub">正在生成推荐，请稍候</div>
+      </div></div>`;
+  }
+  if (M.aiError) {
+    return `<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title">${iconSpan(ICON.ai)}AI 荐片</span></div>
+      <div class="bz-cinema-ai-wait">
+        <span class="bz-cinema-ai-guide-ic bz-cinema-ai-err">${iconSpan(ICON.ai)}</span>
+        <div class="bz-cinema-ai-guide-title">AI 分析失败</div>
+        <div class="bz-cinema-ai-guide-sub">${esc(M.aiError)}</div>
+        <button class="bz-btn bz-btn--primary bz-cinema-ai-start" data-cinema-ai-start style="margin-top:16px;">重试</button>
+      </div></div>`;
+  }
+  if (M.aiResult && M.aiResult.length > 0) {
+    return renderAIResultList(app);
+  }
+  // 待机：引导页
   const profile = buildTasteProfile();
   let html = `<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title">${iconSpan(ICON.ai)}AI 荐片</span><span class="bz-cinema-page-sub">基于 ${profile.total} 部已看影视的口味画像</span></div>`;
   html += '<div class="bz-cinema-page-sub" style="margin-bottom:12px;">偏好：' + (profile.groups[0] || '暂无') + ' · ' + (profile.genres[0] || '—') + ' · ' + (profile.directors[0] || '—') + ' · ' + (profile.actors[0] || '—') + '</div>';
@@ -224,6 +280,26 @@ function renderAiPageHtml(app: App): string {
   html += '<button class="bz-btn bz-btn--primary bz-cinema-ai-start" data-cinema-ai-start>开始 AI 荐片</button>';
   html += '</div></div>';
   return html;
+}
+
+/** AI 结果页内列表（卡片+加入想看），替代原 showResultWindow 弹窗 */
+function renderAIResultList(app: App): string {
+  const head = `<div class="bz-cinema-page-head"><span class="bz-cinema-page-title">${iconSpan(ICON.ai)}AI 荐片</span><span class="bz-cinema-page-sub">为你推荐</span></div>`;
+  const cards = (M.aiResult || []).map((rec, i) => {
+    const name = rec?.title || rec?.name || '未命名';
+    const year = rec?.year ? `（${rec.year}）` : '';
+    const meta = [rec?.type, rec?.director].filter(Boolean).join(' · ');
+    const reason = rec?.reason || '';
+    return `<div class="bz-cinema-rec-card" data-rec-idx="${i}">
+      <div class="bz-cinema-rec-main">
+        <div class="bz-cinema-rec-name">《${esc(name)}》${esc(year)}</div>
+        ${meta ? `<div class="bz-cinema-rec-meta">${esc(meta)}</div>` : ''}
+        ${reason ? `<div class="bz-cinema-rec-reason">${esc(reason)}</div>` : ''}
+      </div>
+      <button class="bz-icon-btn bz-cinema-rec-add" data-rec-add="${i}" title="加入想看">${iconSpan(ICON.add)}</button>
+    </div>`;
+  }).join('');
+  return `<div class="bz-cinema-page">${head}<div class="bz-cinema-rec-list">${cards}</div></div>`;
 }
 
 function renderStatPageHtml(): string {
@@ -247,19 +323,28 @@ export function renderAll(app: App): void {
   }
   const mobNav = M.currentOverlay?.querySelector('.bz-cinema-mob-nav') as HTMLElement | null;
   if (mobNav) mobNav.innerHTML = renderMobNavHtml();
+  const mainHead = M.currentOverlay?.querySelector('.bz-cinema-main-head') as HTMLElement | null;
+  if (mainHead) {
+    mainHead.outerHTML = renderMainHeadHtml(app);
+    const freshHead = M.currentOverlay?.querySelector('.bz-cinema-main-head') as HTMLElement | null;
+    if (freshHead) mountIcons(freshHead);
+  }
   renderContent(app);
 }
 
-/** 移动端分类横滑条（类型 + 状态，点击筛选/再点取消） */
+/** 移动端分类横滑条（类型 + 状态，顶部「全部」chip；点击筛选单选切换） */
 function renderMobNavHtml(): string {
   const groupCounts = countBy(M.items, (it) => it.group);
   const statusCounts = { 想看: 0, 在看: 0, 已看: 0 };
   M.items.forEach((it) => { statusCounts[statusText(it.status)]++; });
   let html = '';
+  html += `<span class="bz-cinema-mob-chip${!M.typeFilter && !M.subFilter ? ' bz-cinema-mob-chip-active' : ''}" data-cinema-mob data-cinema-type="all">全部</span>`;
   for (const g of GROUP_ORDER) {
     if (!groupCounts[g]) continue;
-    html += `<span class="bz-cinema-mob-chip${M.typeFilter === g && !M.subFilter ? ' bz-cinema-mob-chip-active' : ''}" data-cinema-mob data-cinema-type="${g}">${g}</span>`;
+    // 类型 chip 选中 = 筛该组（或组内二级）
+    html += `<span class="bz-cinema-mob-chip${M.typeFilter === g ? ' bz-cinema-mob-chip-active' : ''}" data-cinema-mob data-cinema-type="${g}">${g}</span>`;
   }
+  html += `<span class="bz-cinema-mob-chip${!M.statusFilter ? ' bz-cinema-mob-chip-active' : ''}" data-cinema-mob data-cinema-status="all">状态全部</span>`;
   (['想看', '在看', '已看'] as const).forEach((s) => {
     html += `<span class="bz-cinema-mob-chip${M.statusFilter === s ? ' bz-cinema-mob-chip-active' : ''}" data-cinema-mob data-cinema-status="${s}">${s}</span>`;
   });
@@ -528,9 +613,10 @@ export function createOverlay(app: App): void {
       <div class="bz-cinema-body">
         <div class="bz-cinema-nav"></div>
         <div class="bz-cinema-main">
+          <div class="bz-cinema-main-head" data-cinema-main-head></div>
           <div class="bz-cinema-top">
             <div class="bz-cinema-search"><i class="bz-ic" data-lucide="${ICON.search}"></i><input class="bz-input" type="text" data-cinema-search placeholder="搜索影视（名称、类型、影评）..."></div>
-            <button class="bz-btn bz-btn--primary bz-cinema-add" data-cinema-add>${iconSpan(ICON.add, 'bz-ic--sm')} 添加影视</button>
+            <div class="bz-cinema-sort" data-cinema-sort></div>
           </div>
           <div class="bz-cinema-mob-nav"></div>
           <div class="bz-cinema-content"></div>
@@ -544,6 +630,25 @@ export function createOverlay(app: App): void {
   applyMobileWindowFullscreen(overlay.querySelector('.bz-cinema-panel') as HTMLElement, fullscreen);
   mountIcons(overlay);
 
+  // 排序 segmented（组件库；桌面工具行；移动不显示——同待办）
+  const sortEl = overlay.querySelector('[data-cinema-sort]') as HTMLElement | null;
+  if (sortEl) {
+    const seg = uiSegmented<string>({
+      options: [
+        { value: 'date', label: '最近观看' },
+        { value: 'created', label: '按创建' },
+        { value: 'rating', label: '按评分' },
+      ],
+      value: M.sortMode,
+      onChange: (v) => {
+        M.sortMode = v as CinemaState['sortMode'];
+        if (M.view === 'list') renderAll(app);
+      },
+    });
+    seg.el.classList.add('bz-segmented--sm');
+    sortEl.appendChild(seg.el);
+  }
+
   // 事件
   overlay.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
@@ -552,19 +657,25 @@ export function createOverlay(app: App): void {
       closeOverlay();
       return;
     }
-    // 分类（含二级展开/再点取消）
+    // 类型：全部/组。点组=筛组+展开其二级（互斥收起其他组）；点「全部」=清空类型与二级；
+    // 点已选组不取消（回全部靠「全部」）；点组内二级=筛二级（组跟随选中）
     const navItem = t.closest('[data-cinema-type]') as HTMLElement | null;
     if (navItem) {
       const g = navItem.dataset.cinemaType as string;
       const isMob = navItem.hasAttribute('data-cinema-mob');
-      if (M.typeFilter === g && !M.subFilter) {
+      if (g === 'all') {
         M.typeFilter = null;
+        M.subFilter = null;
+      } else if (M.typeFilter === g && !M.subFilter) {
+        // 再点已选组：不取消（对齐待办全部模型），保持筛选
       } else {
         M.typeFilter = g;
         M.subFilter = null;
-        // 桌面左栏才触发展开二级；移动端 chip 只做筛选
-        const subs = (GROUP_SUBS[g] || []).filter((s) => M.items.some((i) => i.typeTag === s));
-        if (subs.length && !isMob) M.expanded[g] = !M.expanded[g];
+        // 展开态 = 本组选中；其他组自动收起（手风琴）
+        if (!isMob) {
+          const subs = (GROUP_SUBS[g] || []).filter((s) => M.items.some((i) => i.typeTag === s));
+          if (subs.length) M.expanded[g] = true;
+        }
       }
       M.view = 'list';
       renderAll(app);
@@ -573,10 +684,14 @@ export function createOverlay(app: App): void {
     const subItem = t.closest('[data-cinema-sub]') as HTMLElement | null;
     if (subItem) {
       const s = subItem.dataset.cinemaSub as string;
-      if (M.subFilter === s) M.subFilter = null;
-      else {
+      const grp = getGroupForTag(s);
+      if (M.subFilter === s) {
+        // 再点同二级 → 回到该组全部（清二级，保持组）
+        M.subFilter = null;
+        M.typeFilter = grp;
+      } else {
         M.subFilter = s;
-        M.typeFilter = getGroupForTag(s);
+        M.typeFilter = grp;
       }
       M.view = 'list';
       renderAll(app);
@@ -585,7 +700,8 @@ export function createOverlay(app: App): void {
     const statusItem = t.closest('[data-cinema-status]') as HTMLElement | null;
     if (statusItem) {
       const s = statusItem.dataset.cinemaStatus as string;
-      M.statusFilter = M.statusFilter === s ? null : s;
+      if (s === 'all') M.statusFilter = null;
+      else M.statusFilter = M.statusFilter === s ? null : s; // 再点已选状态可取消回全部
       M.view = 'list';
       renderAll(app);
       return;
@@ -593,7 +709,7 @@ export function createOverlay(app: App): void {
     const tool = t.closest('[data-cinema-tool]') as HTMLElement | null;
     if (tool) {
       if (tool.dataset.cinemaTool === 'ai') {
-        // AI 荐片：真实 AI 调用（进度通知 → 结果窗），内容区显示引导页
+        // AI 荐片：内容区切 AI 页，等待与结果都就地渲染在页内（不弹窗）
         M.view = 'ai';
         renderAll(app);
         void runAIRecommend(app);
@@ -605,10 +721,20 @@ export function createOverlay(app: App): void {
       }
       return;
     }
-    // AI 引导页「开始 AI 荐片」
+    // AI 引导页「开始 AI 荐片」（点选按钮同 AI 工具）
     const aiStart = t.closest('[data-cinema-ai-start]') as HTMLElement | null;
     if (aiStart) {
       void runAIRecommend(app);
+      return;
+    }
+    // AI 结果页内「加入想看」
+    const recAdd = t.closest('[data-rec-add]') as HTMLElement | null;
+    if (recAdd) {
+      const idx = Number(recAdd.dataset.recAdd);
+      const rec = M.aiResult?.[idx];
+      if (rec) {
+        void quickAddWant(app, rec.title || rec.name || '', rec.type || '');
+      }
       return;
     }
     // 快速状态升级（想看/在看 灰色小字）
