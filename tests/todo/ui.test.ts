@@ -269,6 +269,22 @@ describe('todo 面板', () => {
     // 已完成折叠区默认收起：3 张未完成卡
     expect(document.querySelectorAll('.bz-todo-card').length).toBe(3);
   });
+
+  it('搜索防抖 180ms：防抖窗口内不重渲，窗口后过滤生效（修复前每键全量重渲且注释称 250ms）', async () => {
+    const { app } = seedVault();
+    openTodoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('.bz-todo-card').length).toBe(3);
+    });
+    const inp = document.querySelector('[data-todo-search]') as HTMLInputElement;
+    inp.value = 'ffmpeg';
+    inp.dispatchEvent(new Event('input'));
+    // 防抖窗口内：列表未过滤（仍 3 张未完成卡）
+    expect(document.querySelectorAll('.bz-todo-card').length).toBe(3);
+    await new Promise((r) => setTimeout(r, 250));
+    expect(document.querySelectorAll('.bz-todo-card').length).toBe(1);
+    expect(document.querySelectorAll('.bz-todo-card')[0].textContent).toContain('ffmpeg 转写参数整理');
+  });
 });
 
 describe('todo 编辑器', () => {
