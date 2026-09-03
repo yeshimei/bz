@@ -185,6 +185,53 @@ describe('ReviewDataManager', () => {
     const items = await dm.loadItems();
     expect(dm.getOverdueCount(items)).toBe(1);
   });
+
+  it('P3 数据卫生：运行时字段不落盘（isCompleted/isOverdue/isMissing/currentStage/totalStages）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      { id: '1', filePath: 'A.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+    ]));
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    // loadItems 注入全部运行时字段
+    const items = await dm.loadItems();
+    expect(items[0].isOverdue).toBe(true);
+    expect(items[0].isCompleted).toBe(false);
+    expect(items[0].currentStage).toBe(1);
+    expect(items[0].totalStages).toBe(10);
+    // updateItem → saveItems 整体重写
+    await dm.updateItem('A.md', (it) => { it.stage = 3; });
+    const raw = JSON.parse(vault.files.get(REVIEW_FILE_PATH)!);
+    expect(raw[0].stage).toBe(3);
+    for (const k of ['file', 'isCompleted', 'isOverdue', 'isMissing', 'currentStage', 'totalStages']) {
+      expect(raw[0]).not.toHaveProperty(k);
+    }
+  });
+
+  it('P3 数据卫生：restoreItem 快照同样剥离运行时字段', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      { id: '1', filePath: 'A.md', name: 'A', reviewStart: now.toISOString(), stage: 5, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 6, averageConfidence: 0.8, nextReviewDate: new Date(now.getTime() + 86400000).toISOString(), lastReviewed: now.toISOString(), lastDifficulty: 'good', completed: false },
+    ]));
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const removed = (await dm.loadItems()).find((i) => i.filePath === 'A.md')!;
+    expect(removed.isOverdue).toBe(false); // 快照带运行时字段
+    await dm.removeItem('A.md');
+    await dm.restoreItem(removed);
+    const raw = JSON.parse(vault.files.get(REVIEW_FILE_PATH)!);
+    expect(raw.length).toBe(1);
+    expect(raw[0].stage).toBe(5);
+    for (const k of ['file', 'isCompleted', 'isOverdue', 'isMissing', 'currentStage', 'totalStages']) {
+      expect(raw[0]).not.toHaveProperty(k);
+    }
+  });
 });
 
 describe('数据文件路径设置', () => {

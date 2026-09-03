@@ -34,6 +34,14 @@ export const reviewApp = {
   _fittedW: null as number[] | null,
   /** ADR-0077：拟合运行防重入 */
   _fitRunning: false,
+  /** P3：reviewLoop 活动轮询句柄（卸载统一清理；插件禁用后不得继续读盘翻篇弹通知） */
+  _reviewLoops: new Set<ReturnType<typeof setInterval>>(),
+
+  /** P3：终止全部 reviewLoop 轮询（unloadReview 调用；幂等） */
+  stopReviewLoops(): void {
+    for (const t of this._reviewLoops) clearInterval(t);
+    this._reviewLoops.clear();
+  },
 
   async getQuiz(): Promise<any> {
     if (this._quizOverride) return this._quizOverride;
@@ -133,10 +141,20 @@ export const reviewApp = {
     const now = new Date();
     const nextReview = item.nextReviewDate ? new Date(item.nextReviewDate) : new Date(0);
     if (now < nextReview) {
-      const diff = nextReview.getTime() - now.getTime();
-      const mins = Math.ceil(diff / 60000);
-      notice(`还未到复习时间（${mins}分钟后）`);
-      return;
+      // dueItems 的 R 阈值「提前逾期」口径放行（同款条件：fsrs 相位 + R < 阈值）——
+      // 否则开始本轮纳入的条目评级会被此处整体拒掉（通过不刷新排期、答错不挂待重做）
+      const rThreshold = Number((getSettings() as any).reviewRThreshold) || 0.9;
+      let earlyOverdue = false;
+      if (item.phase === 'fsrs' && item.stability && item.lastReviewed) {
+        const t = (now.getTime() - new Date(item.lastReviewed).getTime()) / 86400000;
+        if (t > 0) earlyOverdue = new FSRS(this.currentW()).R(t, item.stability) < rThreshold;
+      }
+      if (!earlyOverdue) {
+        const diff = nextReview.getTime() - now.getTime();
+        const mins = Math.ceil(diff / 60000);
+        notice(`还未到复习时间（${mins}分钟后）`);
+        return;
+      }
     }
 
     const rating = selectedDifficulty;
@@ -165,8 +183,12 @@ export const reviewApp = {
         it.reviewHistory.push({ timestamp: now.toISOString(), stage: targetStage + 1, rating });
         // 进入 FSRS 阶段时，用对应评分初始化 S
         if (enteringFsrs) {
-          it.stability = fsrs.initS(rating);
+          const initStability = fsrs.initS(rating);
+          it.stability = initStability;
           it.difficulty = rating === 'again' ? fsrs.w[4] : 0.3;
+          // ADR-0077：进入 FSRS 即把 S/D 记入历史（下游拟合配对依赖上一条含 stability/difficulty）
+          it.reviewHistory[it.reviewHistory.length - 1].stability = Math.round(initStability * 100) / 100;
+          it.reviewHistory[it.reviewHistory.length - 1].difficulty = Math.round(it.difficulty * 100) / 100;
         }
         it.nextReviewDate = nextDate.toISOString();
         if (enteringFsrs) it.completed = false; // 进入 FSRS 不算完成
@@ -176,8 +198,9 @@ export const reviewApp = {
         else if (rating === 'good' || rating === 'easy') it.pendingRedo = false;
       });
       notice(enteringFsrs ? `进入深度复习，${FSRS_FIRST_TEXTS[targetStage]}后复习` : `${FSRS_FIRST_TEXTS[targetStage]}后复习`, 'success');
-      // ADR-0077：评级也累计拟合计数（含阶梯阶段；样本过滤在 fit.ts 内做）
-      await this.maybeRunFit(getApp());
+      // ADR-0077：评级也累计拟合计数（含阶梯阶段；样本过滤在 fit.ts 内做）。
+      // fire-and-forget：计数在入口同步累加，拟合自防重入；不 await 避免大历史时卡评级路径
+      void this.maybeRunFit(getApp());
       return;
     }
 
@@ -199,7 +222,8 @@ export const reviewApp = {
       it.lastDifficulty = rating;
       it.totalReviews = (it.totalReviews || 0) + 1;
       if (!it.reviewHistory) it.reviewHistory = [];
-      it.reviewHistory.push({ timestamp: now.toISOString(), stage: currentStage + 1, rating, stability: Math.round(result.S * 100) / 100, R: Math.round(R * 100) });
+      // ADR-0077：difficulty 随历史落盘（拟合样本配对依赖上一条 difficulty；缺失时拟合层回退条目级值）
+      it.reviewHistory.push({ timestamp: now.toISOString(), stage: currentStage + 1, rating, stability: Math.round(result.S * 100) / 100, difficulty: Math.round(result.D * 100) / 100, R: Math.round(R * 100) });
       it.nextReviewDate = nextDate.toISOString();
 
       // ticket 098：做题会话自动评级未通过/通过联动待重做标记；其余路径 good/easy 清（ADR-0044）
@@ -210,8 +234,10 @@ export const reviewApp = {
     const days = Math.round(scaledDays);
     const rPct = Math.round(R * 100);
     notice(`R=${rPct}% → 下次复习：${days > 0 ? days + '天' : '1天'}后`, 'success');
-    // ADR-0077：每次评级后累计计数，达阈值触发拟合重算（异步后台）
-    await this.maybeRunFit(getApp());
+    // ADR-0077：每次评级后累计计数，达阈值后台触发拟合重算。
+    // fire-and-forget（不 await）：拟合计数在 maybeRunFit 入口同步累加且自带 _fitRunning
+    // 防重入，完成后自行 notice——大历史时不再阻塞评级写盘路径
+    void this.maybeRunFit(getApp());
   },
 
   /** 跳转逾期（做题决定难度：开启 → 做题复习；关闭 → 普通复习跳转笔记） */
@@ -504,7 +530,7 @@ export const reviewApp = {
       checkCount++;
       const activeFile = app.workspace.getActiveFile();
       if (!activeFile || activeFile.path !== item.filePath) {
-        clearInterval(interval);
+        clearLoop();
         // P1-2：活动文件切走 = 本轮连续复习中断，与超时分支同样收尾常驻通知
         if (this._reviewNotice) {
           this._reviewNotice.setMessage('已切换到其他笔记，本轮复习中断');
@@ -518,13 +544,13 @@ export const reviewApp = {
       if (updated && updated.lastReviewed) {
         const last = new Date(updated.lastReviewed);
         if (Date.now() - last.getTime() < 30000) {
-          clearInterval(interval);
+          clearLoop();
           await this.reviewLoop(overdueNotes, index + 1);
           return;
         }
       }
       if (checkCount >= maxChecks) {
-        clearInterval(interval);
+        clearLoop();
         if (this._reviewNotice) {
           this._reviewNotice.setMessage('复习超时，请手动继续');
           this._reviewNotice.setType('warning');
@@ -534,6 +560,12 @@ export const reviewApp = {
         }
       }
     }, 1000);
+    // P3：句柄入账（stopReviewLoops 统一清理），防插件禁用后轮询残留
+    this._reviewLoops.add(interval);
+    const clearLoop = (): void => {
+      clearInterval(interval);
+      this._reviewLoops.delete(interval);
+    };
   },
 
   /** 加入当前笔记到复习计划 */

@@ -188,4 +188,36 @@ describe('sprint 答题时序（bug2 回归）', () => {
     expect(ratingEl!.textContent).toContain('3 天后');
     expect(ratingEl!.textContent).not.toContain('1 天后');
   });
+
+  it('P3 回归：redo 通过 → 结果卡「已解除待重做」，不回退快照旧排期', async () => {
+    vi.useFakeTimers();
+    const host = document.createElement('div');
+    const events: string[] = [];
+    const passedSpy = vi.fn(async () => undefined); // redo onPassed 不返回排期（仅清标记）
+    const session = new SprintSession({
+      app: { vault: {} } as any,
+      host,
+      queue: [mkItem('重做篇', 'r.md')],
+      mode: 'redo',
+      quiz: null,
+      fetchQuestions: async () => [mkQ('唯一题？', [0])],
+      onPassed: passedSpy,
+      onFailed: async () => {
+        events.push('failed');
+      },
+      onExit: () => {
+        events.push('exit');
+      },
+    } as any);
+    const done = session.start();
+    await vi.advanceTimersByTimeAsync(30);
+    host.querySelector<HTMLElement>('.bz-sprint-opt[data-i="0"]')!.click(); // 答对
+    await vi.advanceTimersByTimeAsync(CORRECT_JUMP_DELAY_MS + 60);
+    expect(passedSpy).toHaveBeenCalledTimes(1); // 通过回调执行（清 pendingRedo）
+    const ratingEl = host.querySelector('.bz-result-rating')!;
+    expect(ratingEl.textContent).toContain('已解除待重做');
+    // 快照 nextReviewDate 为过去时点，回退旧值会展示「1 天后」——不得出现
+    expect(ratingEl.textContent).not.toContain('天后');
+    expect(ratingEl.textContent).not.toContain('下次');
+  });
 });

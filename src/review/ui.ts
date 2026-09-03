@@ -26,7 +26,7 @@ import { unregisterSheetCompanion } from '../core/item-actions';
 import { FSRS, LADDER_MAX, TOTAL_STAGES } from './fsrs';
 import type { ReviewItem } from './data';
 import { ReviewDataManager } from './data';
-import { computeStats } from './stats';
+import { computeStats, dateKey, flattenHistory } from './stats';
 import { SprintSession } from './sprint';
 import type { SprintMode } from './sprint';
 import type { QuizQuestion } from './quiz-core/manager';
@@ -57,6 +57,13 @@ export function isPlayable(item: ReviewItem): boolean {
   return new Date(item.nextReviewDate).getTime() <= Date.now();
 }
 
+/** 是否今日到期（nextReviewDate 落在今日本地日内；与 isOverdue 正交的日历口径）。
+ *  原「今天到期」列复用 isPlayable（与 isOverdue 只差毫秒级相等）→ 中列恒空死区。 */
+export function isDueToday(item: ReviewItem): boolean {
+  if (!item.nextReviewDate) return false;
+  return dateKey(new Date(item.nextReviewDate)) === dateKey(new Date());
+}
+
 export class UIManager {
   app: App;
   dataManager: ReviewDataManager;
@@ -66,6 +73,8 @@ export class UIManager {
   entriesContainer: HTMLElement | null = null;
   /** 当前冲刺会话（内容区被占用时队列交互禁用） */
   private sprint: SprintSession | null = null;
+  /** 冲刺入口 in-flight 防抖（双击/并发触发只放行一次，防双开会话双倍 AI 调用） */
+  private sprintStarting = false;
   showArchived = false;
   private searchTimer: number | null = null;
   searchText = '';
@@ -134,8 +143,10 @@ export class UIManager {
   }
 
   destroy(): void {
-    this.sprint?.destroy();
+    // 先置空再销毁：destroy → finish → onExit → showQueue 不再对同一会话二次 destroy
+    const sprint = this.sprint;
     this.sprint = null;
+    sprint?.destroy();
     this.hideMain();
     if (this.searchTimer !== null) {
       window.clearTimeout(this.searchTimer);
@@ -172,10 +183,12 @@ export class UIManager {
     this.bindQueueEvents(container, items);
   }
 
-  /** 切回队列视图（冲刺结束回调） */
+  /** 切回队列视图（冲刺结束回调）；遇仍活动的会话先销毁再置空（防孤儿 ESC 层） */
   async showQueue(): Promise<void> {
     if (!this.entriesContainer) return;
+    const active = this.sprint;
     this.sprint = null;
+    active?.destroy();
     await this.refreshPanel();
   }
 
@@ -184,16 +197,20 @@ export class UIManager {
   private queueViewHtml(items: ReviewItem[], searchText: string): string {
     const kw = searchText.trim().toLowerCase();
     const vis = kw ? items.filter((i) => i.name.toLowerCase().includes(kw)) : items;
-    const over = vis.filter((i) => !i.isCompleted && !i.isMissing && i.isOverdue);
-    const today = vis.filter((i) => !i.isCompleted && !i.isMissing && !i.isOverdue && isPlayable(i));
-    const future = vis.filter((i) => !i.isCompleted && !i.isMissing && !isPlayable(i) && !i.isOverdue);
+    const active = (i: ReviewItem) => !i.isCompleted && !i.isMissing;
+    // 三区互斥分区：逾期优先（含今日早间已过期）→ 今日到期（日历日口径）→ 未来
+    const over = vis.filter((i) => active(i) && i.isOverdue);
+    const today = vis.filter((i) => active(i) && !i.isOverdue && isDueToday(i));
+    const future = vis.filter((i) => active(i) && !i.isOverdue && !isDueToday(i));
     const done = vis.filter((i) => i.isCompleted || i.completed);
 
     const overCount = items.filter((i) => i.isOverdue && !i.isCompleted).length;
-    const todayCount = items.filter((i) => isPlayable(i) && !i.isOverdue).length;
+    const todayCount = items.filter((i) => !i.isCompleted && !i.isMissing && !i.isOverdue && isDueToday(i)).length;
     const doneCount = items.filter((i) => i.isCompleted || i.completed).length;
     // 底部统计真实数字（同步渲染，占位 … 时期已过）
     const stats = computeStats(items);
+    // P3：「累计复习 N 次」用真实评级次数（flattenHistory 长度），非 stats.totalReviews 的去重同日天数
+    const totalReviewCount = flattenHistory(items).length;
 
     const head = `
       <div class="bz-q-head">
@@ -231,7 +248,7 @@ export class UIManager {
         </span>
         <i class="sep"></i>
         <span class="bz-q-fitem" data-act="stats" title="查看复习统计分布">
-          ${this.icon('chart')}<span class="lbl">累计复习 <b>${stats.totalReviews}</b> 次 · 连续 <b>${stats.streak}</b> 天</span>
+          ${this.icon('chart')}<span class="lbl">累计复习 <b>${totalReviewCount}</b> 次 · 连续 <b>${stats.streak}</b> 天</span>
         </span>
       </div>`;
 
@@ -345,16 +362,29 @@ export class UIManager {
   // ================= 冲刺入口（连接 app 编排） =================
 
   private async beginRound(): Promise<void> {
-    const { reviewApp } = await import('./app');
-    await reviewApp.autoJumpOverdue();
+    if (this.sprintStarting) return; // 双击/并发防抖：只放行一次
+    this.sprintStarting = true;
+    try {
+      const { reviewApp } = await import('./app');
+      await reviewApp.autoJumpOverdue();
+    } finally {
+      this.sprintStarting = false;
+    }
   }
 
   private async beginSingle(item: ReviewItem): Promise<void> {
-    const { reviewApp } = await import('./app');
-    await reviewApp.startSingleSprint(item);
+    if (this.sprintStarting) return; // 双击/并发防抖：只放行一次
+    this.sprintStarting = true;
+    try {
+      const { reviewApp } = await import('./app');
+      await reviewApp.startSingleSprint(item);
+    } finally {
+      this.sprintStarting = false;
+    }
   }
 
-  /** 供 app 编排：进入做题冲刺会话（宿主接管内容区） */
+  /** 供 app 编排：进入做题冲刺会话（宿主接管内容区）。
+   *  互斥：进入前强制销毁旧会话（防孤儿冲刺 ESC 层 + 旧题面覆盖队列视图）。 */
   startSprint(opts: {
     queue: ReviewItem[];
     mode: SprintMode;
@@ -365,6 +395,9 @@ export class UIManager {
   }): Promise<'done' | 'quit' | 'fail'> {
     const container = this.entriesContainer;
     if (!container) return Promise.resolve('quit');
+    const old = this.sprint;
+    this.sprint = null;
+    old?.destroy();
     this.sprint = new SprintSession({
       app: this.app,
       host: container,
