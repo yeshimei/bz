@@ -252,6 +252,29 @@ describe('UIManager 三区队列', () => {
     ui.destroy();
   });
 
+  it('P3 回归：底部「累计复习 N 次」为真实评级次数（非去重同日天数）', async () => {
+    const vault = new MockVault();
+    const now = new Date();
+    vault.files.set('A.md', '正文');
+    const sameDay1 = new Date(now.getTime() - 2 * 3600e3).toISOString();
+    const sameDay2 = new Date(now.getTime() - 1 * 3600e3).toISOString();
+    const otherDay = new Date(now.getTime() - 86400e3).toISOString();
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      // 同日 2 次 + 昨日 1 次 = 3 次真实评级；去重同日天数只有 2
+      { id: '1', filePath: 'A.md', name: 'A', reviewStart: now.toISOString(), stage: 1, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [
+        { timestamp: sameDay1, stage: 1, rating: 'good' },
+        { timestamp: sameDay2, stage: 2, rating: 'easy' },
+        { timestamp: otherDay, stage: 3, rating: 'good' },
+      ], totalReviews: 3, averageConfidence: 0, nextReviewDate: new Date(now.getTime() + 86400e3).toISOString(), lastReviewed: sameDay2, lastDifficulty: 'easy', completed: false },
+    ]));
+    const { ui } = await makeUI(vault);
+    await ui.showMain();
+    const footer = document.querySelector('.bz-q-footer')!;
+    expect(footer.textContent).toContain('累计复习 3 次'); // 真实次数 3（原 stats.totalReviews 去重同日 = 2）
+    expect(footer.innerHTML).toContain('>3</b> 次');
+    ui.destroy();
+  });
+
   it('冲刺中 refreshPanel 不覆盖队列（宿主被会话占用）', async () => {
     const vault = new MockVault();
     seed(vault);

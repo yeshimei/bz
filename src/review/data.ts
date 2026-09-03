@@ -95,9 +95,17 @@ export class ReviewDataManager {
     return valid;
   }
 
-  /** 保存（剥离运行时 file 字段；走模块级 getApp——见 loadItems 注释） */
+  /** 保存（白名单剥离运行时字段：file/isCompleted/isOverdue/isMissing/currentStage/totalStages
+   *  均为 loadItems 派生或运行时态，不落盘（数据卫生）；走模块级 getApp——见 loadItems 注释） */
   async saveItems(items: ReviewItem[]): Promise<void> {
-    const data = items.map(({ file, ...rest }) => rest);
+    const data = items.map((i) => {
+      const {
+        file: _file, isCompleted: _isCompleted, isOverdue: _isOverdue, isMissing: _isMissing,
+        currentStage: _currentStage, totalStages: _totalStages,
+        ...rest
+      } = i;
+      return rest;
+    });
     await jsonFileStore<any[]>(getReviewFilePath()).write(data);
   }
 
@@ -144,11 +152,16 @@ export class ReviewDataManager {
     await this.saveItems(items);
   }
 
-  /** 撤销移出（ticket 141 通病 1）：原条目（含阶段/排期/历史）原样插回，不走 addItem 重置进度 */
+  /** 撤销移出（ticket 141 通病 1）：原条目（含阶段/排期/历史）原样插回，不走 addItem 重置进度。
+   *  运行时字段与 saveItems 同口径剥离（file/isCompleted/isOverdue/isMissing/currentStage/totalStages 不落盘） */
   async restoreItem(item: ReviewItem): Promise<void> {
     const items = await this.loadItems();
     if (items.some((i) => i.filePath === item.filePath)) return;
-    const { file: _file, ...rest } = item; // 运行时 TFile 不落盘（saveItems 同口径）
+    const {
+      file: _file, isCompleted: _isCompleted, isOverdue: _isOverdue, isMissing: _isMissing,
+      currentStage: _currentStage, totalStages: _totalStages,
+      ...rest
+    } = item;
     items.push(rest as ReviewItem);
     await this.saveItems(items);
   }

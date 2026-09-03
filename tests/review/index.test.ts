@@ -215,6 +215,33 @@ describe('unloadReview', () => {
     expect(uiManager).toBeNull();
   }, 10000);
 
+  it('P3 回归：2s 内卸载 → 首查被取消，checkOverdueAndNotify 不再补发', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const app = makeApp(vault);
+    const spy = vi.spyOn(reviewApp, 'checkOverdueAndNotify').mockResolvedValue(undefined);
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
+    try {
+      ensureReview(app);
+      unloadReview(); // 2s 内卸载
+      spy.mockClear(); // 清先前用例在共享 spy 上的累计计数
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(spy).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers(); // 失败也恢复，防 fake 时钟泄漏拖垮后续用例
+    }
+  });
+
+  it('P3 回归：unload 释放 reviewApp.dataManager（防持旧 app 引用跨期写盘）', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const app = makeApp(vault);
+    ensureReview(app);
+    expect((reviewApp as any).dataManager).not.toBeNull();
+    unloadReview();
+    expect((reviewApp as any).dataManager).toBeNull();
+  });
+
   it('P2 回归：unload 全量退订（原生 ref + 总线订阅）；再 ensure 无旧监听残留（事件不双触发）', async () => {
     const vault = new MockVault();
     seed(vault);

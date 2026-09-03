@@ -26,7 +26,7 @@ import { unregisterSheetCompanion } from '../core/item-actions';
 import { FSRS, LADDER_MAX, TOTAL_STAGES } from './fsrs';
 import type { ReviewItem } from './data';
 import { ReviewDataManager } from './data';
-import { computeStats, dateKey } from './stats';
+import { computeStats, dateKey, flattenHistory } from './stats';
 import { SprintSession } from './sprint';
 import type { SprintMode } from './sprint';
 import type { QuizQuestion } from './quiz-core/manager';
@@ -209,6 +209,8 @@ export class UIManager {
     const doneCount = items.filter((i) => i.isCompleted || i.completed).length;
     // 底部统计真实数字（同步渲染，占位 … 时期已过）
     const stats = computeStats(items);
+    // P3：「累计复习 N 次」用真实评级次数（flattenHistory 长度），非 stats.totalReviews 的去重同日天数
+    const totalReviewCount = flattenHistory(items).length;
 
     const head = `
       <div class="bz-q-head">
@@ -246,7 +248,7 @@ export class UIManager {
         </span>
         <i class="sep"></i>
         <span class="bz-q-fitem" data-act="stats" title="查看复习统计分布">
-          ${this.icon('chart')}<span class="lbl">累计复习 <b>${stats.totalReviews}</b> 次 · 连续 <b>${stats.streak}</b> 天</span>
+          ${this.icon('chart')}<span class="lbl">累计复习 <b>${totalReviewCount}</b> 次 · 连续 <b>${stats.streak}</b> 天</span>
         </span>
       </div>`;
 
