@@ -6,6 +6,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
+import { escManager } from '../../src/core/esc-manager';
 import { __resetNoticeForTests } from '../../src/core/notice';
 import { showReportInPopup, showReadingReport, unloadReadingReport } from '../../src/reading-report/index';
 import { MockVault, parseFrontmatter } from '../mock-vault';
@@ -88,6 +89,28 @@ describe('报告弹窗', () => {
     const modal = findModal();
     modal!.click();
     expect(findModal()).toBeNull();
+  });
+
+  it('audit E：ESC 走 escManager 层——报告开着时，下层可见面板不再被同一次 ESC 越级抢关', () => {
+    const closed: string[] = [];
+    // 模拟报告之下的他域可见 ESC 层（注册序更早、优先级更低）
+    const lower = escManager.register('bz-test-report-lower', {
+      isVisible: () => true,
+      close: () => closed.push('lower'),
+    });
+    try {
+      showReportInPopup('x', false);
+      expect(findModal()).not.toBeNull();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      // 报告层（后注册、栈顶）被关闭；stopImmediatePropagation 保住下层
+      expect(findModal()).toBeNull();
+      expect(closed).toEqual([]);
+      // 报告已关：层不可见，下一次 ESC 落到下层
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      expect(closed).toEqual(['lower']);
+    } finally {
+      lower.unregister();
+    }
   });
 });
 

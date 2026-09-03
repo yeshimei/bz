@@ -12,6 +12,7 @@ import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { notify } from '../core/notice';
 import { allocZ } from '../core/z-order';
+import { escManager } from '../core/esc-manager';
 import { getAllBookNotes, calculateReadingStats, getEpubBookNotes } from './stats';
 import { buildReportSections } from './report';
 
@@ -20,8 +21,8 @@ let initialized = false;
 /** 当前报告弹窗 overlay（openReportPopup 置位；closeReportPopup/unloadReadingReport 清理） */
 let reportOverlay: HTMLElement | null = null;
 
-/** 弹窗 ESC 关闭监听（closeReportPopup 移除用） */
-let reportKeydownHandler: ((e: KeyboardEvent) => void) | null = null;
+/** 报告 ESC 层句柄（audit E：走 escManager 立约，不再私挂 document keydown） */
+let reportEscHandle: { unregister: () => void } | null = null;
 
 /** progress toast 序号：dedupeKey 每次调用唯一化——避免 notice.ts 30s 抑制窗口吞掉快速重开/连点两轮的新 toast */
 let progressToastSeq = 0;
@@ -69,9 +70,9 @@ function closeReportPopup(): void {
     reportOverlay.remove();
     reportOverlay = null;
   }
-  if (reportKeydownHandler) {
-    document.removeEventListener('keydown', reportKeydownHandler);
-    reportKeydownHandler = null;
+  if (reportEscHandle) {
+    reportEscHandle.unregister();
+    reportEscHandle = null;
   }
 }
 
@@ -149,10 +150,13 @@ function openReportPopup(): { overlay: HTMLElement; body: HTMLElement } {
     if (e.target === overlay) closeReportPopup();
   });
 
-  reportKeydownHandler = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') closeReportPopup();
-  };
-  document.addEventListener('keydown', reportKeydownHandler);
+  // audit E：ESC 收编 escManager 层级（core/esc-manager 立约）——报告开着时按 ESC，
+  // 命中最上可见层；不再私挂 document keydown 越过下层可见面板抢关
+  reportEscHandle?.unregister();
+  reportEscHandle = escManager.register('bz-reading-report', {
+    isVisible: () => !!reportOverlay && reportOverlay.isConnected,
+    close: () => closeReportPopup(),
+  });
 
   return { overlay, body: scrollable };
 }
