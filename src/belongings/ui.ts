@@ -8,9 +8,9 @@
  * 移动 ≤768：真全屏；头行右上 ＋记一笔 → 🔍搜索(展开) → ✕关闭；状态 chips 横滑；
  *   统计两卡；时间轴同构；点行弹底部详情抽屉。全 icon lucide（分类 emoji 属数据保留）。
  *
- * 计算口径（原型 + 旧域等价）：总资产 = 在用+闲置原价合计；日均成本 =（总购入 - 转卖回本）
- *   / 累计持有天数；在册件数 = 全部件数；单件已用天数：转卖/丢弃截至购买日期、其余截至今天；
- *   单件日均成本 = 价格 / 已用天数（当天/无效日期 = 全价）。data.ts calculateDailyCost/
+ * 计算口径（原型 + 旧域等价，统一到今天）：总资产 = 在用+闲置原价合计；日均成本 =（总购入 - 转卖回本）
+ *   / 累计持有天数；在册件数 = 全部件数；单件已用天数：一律截至今天（本地日历日；当天/无效日期 = 0 天）；
+ *   单件日均成本 = 价格 / 已用天数（0 天 = 全价）。data.ts calculateDailyCost/
  *   calculateDaysUsed 语义保留（转卖无售价字段，8 字段零迁移——无回本数据，净支出/回本不显示）。
  *
  * 契约保留：belongings.json 零迁移；smartcat 事件（add/edit/status/delete + belongingsEditChanges）；
@@ -514,8 +514,11 @@ function renderYears(): void {
   if (!overlay) return;
   const sel = overlay.querySelector('[data-bel-year]') as HTMLSelectElement;
   const ys = yearsAvailable();
+  // 外部数据变化后选中年份可能悬空（列表恒空但 UI 显示「全部年份」）——重置回全部
+  if (M.year && !ys.includes(M.year)) M.year = '';
   const cur = M.year;
   sel.innerHTML = '<option value="">全部年份</option>' + ys.map((y) => `<option value="${y}"${cur === y ? ' selected' : ''}>${y}</option>`).join('');
+  sel.value = cur;
 }
 
 function renderStats(): void {

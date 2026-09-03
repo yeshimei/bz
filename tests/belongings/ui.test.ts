@@ -500,6 +500,29 @@ describe('归物本筛选（状态 / 年份 / 搜索 / 年节折叠）', () => {
     expect(content()!.querySelector('.bz-empty-title')!.textContent).toBe('没有符合条件的物品');
   });
 
+  it('年份筛选悬空重置：外部 modify 后选中年份消失 → 自动回全部年份（修复前列表恒空）', async () => {
+    seed(vault, {
+      item_1: makeItem({ id: 'item_1', name: '甲', purchase_date: '2024-06-01T12:00:00' }),
+      item_2: makeItem({ id: 'item_2', name: '乙', purchase_date: '2023-05-01T12:00:00' }),
+    });
+    await open(vault);
+    const sel = yearSel()!;
+    sel.value = '2024';
+    sel.dispatchEvent(new Event('change'));
+    expect(rows()).toHaveLength(1);
+    // 外部清掉 2024 年条目 → modify 自动刷新
+    const db = JSON.parse(vault.files.get(DATA_PATH)!);
+    delete db.items.item_1;
+    vault.files.set(DATA_PATH, JSON.stringify(db));
+    vault.emit('modify', { path: DATA_PATH });
+    await flush();
+    await tick(20);
+    // 修复：悬空年份重置回全部（列表不恒空、下拉显示与筛选状态一致）
+    expect(rows()).toHaveLength(1);
+    expect(rows()[0].textContent).toContain('乙');
+    expect(yearSel()!.value).toBe('');
+  });
+
   it('搜索防抖 180ms：标题/分类/描述命中；无匹配文案；清空恢复', async () => {
     seed(vault, {
       item_1: makeItem({ id: 'item_1', name: '机械键盘', description: '红轴' }),
