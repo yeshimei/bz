@@ -203,7 +203,7 @@ export function makePathRowCtrl(opts: {
 
 /* ==================== 行渲染 ==================== */
 
-/** 渲染单行（返回行元素；子行挂 child 缩进） */
+/** 渲染单行（返回行元素；isChild 仅挂 child 语义类，样式不缩进——issue 186 全部行左缘对齐） */
 function renderRow(
   row: SettingsRow,
   refresh: () => void,
@@ -542,7 +542,7 @@ function renderGroup(
 /**
  * 渲染 schema 到容器（与 ⚙️ 同数据源）。
  * visibleWhen 求值：false 的行/组挂 display none（含组级 visibleWhen，如移动端组桌面隐藏）；
- * isChild 行缩进。
+ * isChild 行只参与显隐联动，不缩进（issue 186）。
  * 显隐条件用 WeakMap 存函数引用（不可序列化，避免 new Function 脆弱方案）。
  * 返回 { refresh }（重求值显隐）。
  */

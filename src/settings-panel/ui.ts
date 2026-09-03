@@ -9,8 +9,8 @@
  *   视觉 = 渲染器 renderPanelSchema（组件库控件），绑定逻辑与 ⚙️ 弹窗同一套
  *   （键直绑 getSettings/saveSettings / 三函数 / visibleWhen / onChange）；
  *   路径行走 uiChip 路径胶囊 + openPathPicker（ADR-0061 选择器）。
- * - 桌面导航徽标静态预填（deep 域=组数 / 无设置=— / 其余=·）。
- * - 全局域 → mainSettingsSchema()（AI 服务商 + 数据存储路径）。
+ * - 桌面导航徽标动态计算（无设置=— / 其余初始=·，schema 加载后回填设置项总数）。
+ * - 通用域/AI 域 → generalSettingsSchema()/aiSettingsSchema()（issue 186：AI 自全局拆出独立成域）。
  */
 import type { App } from 'obsidian';
 import { setIcon } from 'obsidian';
@@ -40,7 +40,8 @@ interface DomainDef {
 
 /** 惰性 schema 加载器（与各域 ⚙️ 弹窗同源） */
 const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
-  global: async () => (await import('../core/settings-main-schema')).mainSettingsSchema(),
+  general: async () => (await import('../core/settings-main-schema')).generalSettingsSchema(),
+  ai: async () => (await import('../core/settings-main-schema')).aiSettingsSchema(),
   diary: async () => (await import('../diary/ui/panel')).diarySettingsSchema(),
   memo: async () => (await import('../memo/ui')).memoSettingsSchema(),
   todo: async () => (await import('../todo/settings')).todoSettingsSchema(),
@@ -88,7 +89,8 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
 
 /** 域清单（lucide 图标名；徽标运行时动态计算，见 badgeOf） */
 const DOMAINS: DomainDef[] = [
-  { id: 'global', name: '全局', icon: 'settings', desc: 'AI、存储路径、移动端全屏与入口偏好', schemaLoader: schemaLoaders.global },
+  { id: 'global', name: '通用', icon: 'settings', desc: '存储路径等跨域基础偏好', schemaLoader: schemaLoaders.general },
+  { id: 'ai', name: 'AI', icon: 'sparkles', desc: 'AI 服务商与模型配置', schemaLoader: schemaLoaders.ai },
   { id: 'diary', name: '日记本', icon: 'book-open', desc: '日记目录、显示与默认视图', schemaLoader: schemaLoaders.diary },
   { id: 'memo', name: '备忘录', icon: 'sticky-note', desc: '提醒与到期行为', schemaLoader: schemaLoaders.memo },
   { id: 'todo', name: '待办', icon: 'check-square', desc: '备忘工作台（新域）', schemaLoader: schemaLoaders.todo },
@@ -120,13 +122,43 @@ const visibleDomains = (): DomainDef[] => DOMAINS.filter((d) => !d.noSettings);
 /** 已加载域的 schema 行缓存（移动端搜索「设置项」段用：域名 → 行名/描述列表） */
 const schemaRowCache = new Map<string, Array<{ name: string; desc: string }>>();
 
-/** 导航徽标运行时值（域 id → 徽标文案）：初始 ·；noSettings 域 —；schema 加载后回填可见组数。
- *  动态计算：设置项/分组随 schema 增删或 visibleWhen 门控变化后，徽标自动跟随。 */
+/** 导航徽标运行时值（域 id → 徽标文案）：初始 ·；noSettings 域 —；schema 加载后回填设置项总数。
+ *  动态计算：设置项随 schema 增删或 visibleWhen 门控变化后，徽标自动跟随。 */
 const navBadges = new Map<string, string>();
 
 function badgeOf(d: DomainDef): string {
   if (d.noSettings || !d.schemaLoader) return '—';
   return navBadges.get(d.id) ?? '·';
+}
+
+/** 可见设置项总数（issue 186 徽标口径 = 设置项数，非分组数）：
+ *  组级/行级 visibleWhen 求值 false 的不计（求值异常保守视为可见）；
+ *  button 操作行不计——与分组卡「N 项」徽标同口径。 */
+function visibleItemCount(schema: SettingsSchema): number {
+  let n = 0;
+  for (const g of schema.groups) {
+    const gvw = (g as { visibleWhen?: (s: unknown) => boolean }).visibleWhen;
+    if (gvw) {
+      try {
+        if (!gvw(tryGetSettings() as unknown as never)) continue;
+      } catch {
+        /* 求值异常视为可见 */
+      }
+    }
+    for (const r of g.rows) {
+      if (r.type === 'button') continue;
+      const rvw = (r as { visibleWhen?: (s: unknown) => boolean }).visibleWhen;
+      if (rvw) {
+        try {
+          if (!rvw(tryGetSettings() as unknown as never)) continue;
+        } catch {
+          /* 求值异常视为可见 */
+        }
+      }
+      n++;
+    }
+  }
+  return n;
 }
 
 /* ==================== 面板 UI（桌面 B + 移动 M1） ==================== */
@@ -230,7 +262,7 @@ export class SettingsPanelUI {
         nm.className = 'bz-sp-nav-name';
         nm.textContent = d.name;
         b.append(ic, nm);
-        // 动态徽标（·/—/可见组数，随 schema 加载与显隐门控回填）
+        // 动态徽标（·/—/设置项总数，随 schema 加载与显隐门控回填）
         const ct = document.createElement('span');
         ct.className = 'bz-sp-nav-count';
         ct.textContent = badgeOf(d);
@@ -252,26 +284,17 @@ export class SettingsPanelUI {
   }
 
   /**
-   * 预加载全部有 schema 的域，回填左侧导航徽标（可见分组数）。
-   * 面板打开即算全量徽标（用户拍板：日记本 4 个/备忘录 N 个/购物本无等，无需先点击各域）。
-   * 只调用 schemaLoader 取 groups 结构，不渲染 UI；副作用与点击加载一致（review.ensure 幂等）。
-   * 组级 visibleWhen 门控（如移动端组）按当前端环境过滤：桌面端不计移动端组。
+   * 预加载全部有 schema 的域，回填左侧导航徽标（设置项总数）。
+   * 面板打开即算全量徽标（用户拍板：无需先点击各域）。
+   * 只调用 schemaLoader 取结构，不渲染 UI；副作用与点击加载一致（review.ensure 幂等）。
+   * 组级/行级 visibleWhen 门控（如移动端组）按当前端环境过滤。
    */
   private async preloadAllBadges(): Promise<void> {
     const tasks = DOMAINS.filter((d) => d.schemaLoader).map(async (d) => {
       try {
         const schema = await d.schemaLoader!();
-        // 组级门控过滤：visibleWhen 求值（isMobileEnv 等）为 false 的组不计入徽标
-        const visibleCount = schema.groups.filter((g) => {
-          const vw = (g as { visibleWhen?: (s: unknown) => boolean }).visibleWhen;
-          if (!vw) return true;
-          try {
-            return vw(tryGetSettings() as unknown as never);
-          } catch {
-            return true; // 求值异常视为可见（保守）
-          }
-        }).length;
-        navBadges.set(d.id, visibleCount > 0 ? String(visibleCount) : '·');
+        const count = visibleItemCount(schema);
+        navBadges.set(d.id, count > 0 ? String(count) : '·');
         // 顺带填充移动端搜索「设置项」缓存
         const rowsOf = schema.groups.flatMap((g) =>
           g.rows.map((r) => ({ name: (r as { name?: string }).name ?? '', desc: (r as { desc?: string }).desc ?? '' }))
@@ -348,11 +371,12 @@ export class SettingsPanelUI {
         g.rows.map((r) => ({ name: (r as { name?: string }).name ?? '', desc: (r as { desc?: string }).desc ?? '' }))
       );
       schemaRowCache.set(domain.id, rowsOf);
-      // 回填导航徽标：可见分组数（组级 visibleWhen 门控隐藏的组不计，如移动端组桌面不计）——
-      // 动态计算，随 schema 与当前端环境（桌面/移动）变化；0 组显示 ·（有 schema 但全被门控隐藏）
+      // 回填导航徽标：设置项总数（visibleWhen 门控隐藏的不计、button 操作行不计，与 preload 同口径）；
+      // 0 项显示 ·（有 schema 但全被门控隐藏）
       const groupEls = body.querySelectorAll<HTMLElement>('.bz-sp-group');
       const visibleGroups = [...groupEls].filter((g) => g.style.display !== 'none').length;
-      navBadges.set(domain.id, visibleGroups > 0 ? String(visibleGroups) : '·');
+      const count = visibleItemCount(schema);
+      navBadges.set(domain.id, count > 0 ? String(count) : '·');
       this.refreshNavBadges();
       // 全部组被门控隐藏（如归物本仅移动端组，桌面无可配置项）→ 空态引导
       if (visibleGroups === 0 && groupEls.length > 0) {
@@ -560,10 +584,9 @@ export class SettingsPanelUI {
         g.rows.map((r) => ({ name: (r as { name?: string }).name ?? '', desc: (r as { desc?: string }).desc ?? '' }))
       );
       schemaRowCache.set(domain.id, rowsOf);
-      // 回填导航徽标（移动端列表无徽标展示，但保持与桌面一致的状态缓存）
-      const groupEls = body.querySelectorAll<HTMLElement>('.bz-sp-group');
-      const visibleGroups = [...groupEls].filter((g) => g.style.display !== 'none').length;
-      navBadges.set(domain.id, visibleGroups > 0 ? String(visibleGroups) : '·');
+      // 回填导航徽标（移动端列表无徽标展示，但保持与桌面一致的设置项总数口径）
+      const count = visibleItemCount(schema);
+      navBadges.set(domain.id, count > 0 ? String(count) : '·');
     } catch (e) {
       body.innerHTML = '';
       body.appendChild(this.emptyEl(
