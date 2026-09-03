@@ -187,7 +187,12 @@
 .bz-cinema-page-title { font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); display: inline-flex; align-items: center; gap: 8px; }
 .bz-cinema-page-sub { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
 .bz-cinema-ai-guide { text-align: center; padding: 48px 16px; }
-.bz-cinema-ai-guide-ic { width: 36px; height: 36px; color: var(--bz-text-3); }
+/* AI 荐片机器人图标（需求 4）：span 默认 inline，宽高不会生效、svg 100% 会撑满父宽铺满页面——
+   设 display:inline-flex 使 36px 尺寸真正生效，图标回到引导位小图标 */
+.bz-cinema-ai-guide-ic {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; color: var(--bz-text-3);
+}
 .bz-cinema-ai-guide-title { margin-top: 14px; font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
 .bz-cinema-ai-guide-sub { margin-top: 6px; font-size: var(--bz-font-meta); color: var(--bz-text-3); line-height: 1.6; }
 

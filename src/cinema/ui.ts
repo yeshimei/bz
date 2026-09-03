@@ -463,18 +463,15 @@ function choiceGroupHtml(opts: { values: string[]; initial: string; attr: string
 function openEditForm(item: CinemaItem | null, app: App): void {
   const editing = !!item;
   const ratingVal = item && item.rating && item.rating > 0 ? item.rating : DEFAULT_RATING;
-  // 平铺单选：类型带组色点（数据语义色，域内直给）；状态带状态色点
-  const tagDots = Object.fromEntries(ALL_TAGS.map((t) => [t, groupColor(getGroupForTag(t) ?? '其他')]));
   const initTag = item ? item.typeTag : ALL_TAGS[0];
   const initStatus = item ? statusText(item.status) : '已看';
   const html = `<div class="bz-cinema-form-title">${editing ? '编辑影视' : '添加影视'}</div>
     <div class="bz-cinema-form">
       <div class="bz-field"><span class="bz-field-label">名称</span><input class="bz-input" id="bz-cinema-f-name" value="${item ? esc(item.name) : ''}" placeholder="影视名称"></div>
-      <div class="bz-field"><span class="bz-field-label">类型</span><span class="bz-choice">${choiceGroupHtml({ values: ALL_TAGS, initial: initTag, attr: 'cinema-f-tag', dots: tagDots })}</span></div>
-      <div class="bz-field"><span class="bz-field-label">状态</span><span class="bz-choice">${choiceGroupHtml({ values: ['想看', '在看', '已看'], initial: initStatus, attr: 'cinema-f-status', dots: STATUS_COLORS })}</span></div>
-      <div class="bz-field"><span class="bz-field-label">观影日期</span><input class="bz-input" type="date" id="bz-cinema-f-date" value="${item && item.watchDate ? String(item.watchDate).slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
-      <div class="bz-field"><span class="bz-field-label">评分（已看）</span><span class="bz-cinema-rating-row"><input type="range" class="bz-range" id="bz-cinema-f-rating" min="1" max="${RATING_MAX}" step="0.1" value="${ratingVal}"><span class="bz-cinema-rating-val" id="bz-cinema-f-rating-val">${Number(ratingVal).toFixed(1)}</span></span></div>
-      <div class="bz-field"><span class="bz-field-label">影评</span><textarea class="bz-input" id="bz-cinema-f-review" placeholder="写点什么…">${item ? esc(item.review ?? '') : ''}</textarea></div>
+      <div class="bz-field"><span class="bz-field-label">类型</span><span class="bz-choice">${choiceGroupHtml({ values: ALL_TAGS, initial: initTag, attr: 'cinema-f-tag' })}</span></div>
+      <div class="bz-field"><span class="bz-field-label">状态</span><span class="bz-choice">${choiceGroupHtml({ values: ['想看', '在看', '已看'], initial: initStatus, attr: 'cinema-f-status' })}</span></div>
+      <div class="bz-field" id="bz-cinema-f-rating-field"><span class="bz-field-label">评分（已看）</span><span class="bz-cinema-rating-row"><input type="range" class="bz-range" id="bz-cinema-f-rating" min="1" max="${RATING_MAX}" step="0.1" value="${ratingVal}"><span class="bz-cinema-rating-val" id="bz-cinema-f-rating-val">${Number(ratingVal).toFixed(1)}</span></span></div>
+      <div class="bz-field" id="bz-cinema-f-review-field"><span class="bz-field-label">影评</span><textarea class="bz-input" id="bz-cinema-f-review" placeholder="写点什么…">${item ? esc(item.review ?? '') : ''}</textarea></div>
     </div>
     <div class="bz-cinema-form-actions"><button class="bz-btn bz-btn--primary" id="bz-cinema-f-save">${editing ? '保存' : '添加'}</button></div>`;
   const { popup, close } = uiModal({ content: html, maxWidth: 400, className: 'bz-cinema-dm' });
@@ -483,14 +480,28 @@ function openEditForm(item: CinemaItem | null, app: App): void {
   const ratingInput = popup.querySelector('#bz-cinema-f-rating') as HTMLInputElement;
   const ratingValEl = popup.querySelector('#bz-cinema-f-rating-val') as HTMLElement;
   ratingInput.addEventListener('input', () => { ratingValEl.textContent = Number(ratingInput.value).toFixed(1); });
+  // 需求：想看/在看 不显示评分与影评（仅「已看」显示）
+  const ratingField = popup.querySelector('#bz-cinema-f-rating-field') as HTMLElement;
+  const reviewField = popup.querySelector('#bz-cinema-f-review-field') as HTMLElement;
+  const syncFieldsByStatus = (status: string): void => {
+    const show = status === '已看';
+    ratingField.style.display = show ? '' : 'none';
+    reviewField.style.display = show ? '' : 'none';
+  };
+  popup.querySelectorAll('[data-cinema-f-status]').forEach((b) => {
+    b.addEventListener('click', () => syncFieldsByStatus((b as HTMLElement).dataset.value ?? '已看'));
+  });
+  syncFieldsByStatus(initStatus);
   popup.querySelector('#bz-cinema-f-save')?.addEventListener('click', () => {
     const name = (popup.querySelector('#bz-cinema-f-name') as HTMLInputElement).value.trim();
     if (!name) { notice('请输入名称'); return; }
     const tag = getTag() || ALL_TAGS[0];
     const status = getStatus() || '已看';
     const rating = parseFloat(ratingInput.value);
-    const date = (popup.querySelector('#bz-cinema-f-date') as HTMLInputElement).value;
-    const review = (popup.querySelector('#bz-cinema-f-review') as HTMLTextAreaElement).value.trim();
+    // 需求：无日期输入——新增以当前日期为准；编辑保留原日期（无则当前日期）
+    const date = editing && item ? (item.watchDate || localNow()) : localNow();
+    // 需求：非已看状态不保存影评
+    const review = status === '已看' ? (popup.querySelector('#bz-cinema-f-review') as HTMLTextAreaElement).value.trim() : '';
     const group = getGroupForTag(tag) ?? '其他';
     const mapped = status === '已看' ? rating : status === '想看' ? -1 : 0;
     const st = status === '想看' ? STATUS_WANT : status === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
