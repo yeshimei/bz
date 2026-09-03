@@ -5,8 +5,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
-import { M, resetCinemaState } from '../../src/cinema/state';
-import { rebuildItems, getDisplayItems, sortByDateDesc, dateVal } from '../../src/cinema/data';
+import { M, resetCinemaState, type CinemaItem } from '../../src/cinema/state';
+import { rebuildItems, getDisplayItems, sortByDateDesc, sortByCreatedDesc, dateVal } from '../../src/cinema/data';
 import { getStarString, getGroupForTag, getGroupSafe } from '../../src/cinema/constants';
 import { relDate } from '../../src/cinema/ui';
 
@@ -146,6 +146,22 @@ describe('cinema 排序与筛选', () => {
     expect(getDisplayItems().map((i) => i.name)).toEqual(['想看']);
     M.statusFilter = '在看';
     expect(getDisplayItems().map((i) => i.name)).toEqual(['在看']);
+  });
+
+  it('按创建排序用 ctime：后编辑（mtime 新）不改排名', () => {
+    // 旧片先创建但最近被编辑过（mtime 最新）；新片后创建未编辑——按创建应新片在前
+    const mk = (name: string, ctime: number, mtime: number): CinemaItem => ({
+      file: { path: `我的/影视/《${name}》.md`, stat: { ctime, mtime } } as any,
+      name, typeTag: '电影', group: '电影',
+      watchDate: null, rating: null, status: 2, poster: null, review: null,
+      genre: null, director: null, actors: null, region: null, year: null,
+      doubanRating: null, doubanUrl: null, synopsis: null,
+    });
+    const t0 = 1000;
+    const old = mk('旧片', t0, 9000); // 先创建，后被编辑 → mtime 最大
+    const newer = mk('新片', t0 + 1000, t0 + 1000); // 后创建，未编辑
+    const list = sortByCreatedDesc([old, newer]);
+    expect(list.map((i) => i.name)).toEqual(['新片', '旧片']); // 按 ctime 倒序，mtime 不参与
   });
 
   it('搜索：名称/影评/导演命中', () => {

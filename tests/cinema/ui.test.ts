@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
 import { M, resetCinemaState } from '../../src/cinema/state';
 import { rebuildItems } from '../../src/cinema/data';
 import { createOverlay, closeOverlay, openAddModalDirect } from '../../src/cinema/ui';
@@ -456,5 +456,129 @@ describe('cinema overlay', () => {
     await new Promise((r) => setTimeout(r, 0)); // 等异步落盘
     const content = vault.files.get('我的/影视/《星际穿越》.md');
     expect(content).toContain('评分: 0');
+  });
+
+  it('编辑改名 → 文件真实重命名落盘（旧路径消失、frontmatter 字段保留、内存指向新文件）', async () => {
+    const { vault, app } = seedVault();
+    createOverlay(app);
+    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement; // 星际穿越
+    card.click();
+    let mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
+    (mask.querySelector('[data-cinema-dm-edit]') as HTMLElement).click();
+    const modal = (document.querySelector('.bz-overlay-mask') as HTMLElement).querySelector('.bz-overlay-popup') as HTMLElement;
+    (modal.querySelector('#bz-cinema-f-name') as HTMLInputElement).value = '星际穿越2';
+    (modal.querySelector('#bz-cinema-f-save') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 0)); // 等异步落盘
+    // 旧文件已重命名，新文件落盘且原字段保留
+    expect(vault.files.has('我的/影视/《星际穿越》.md')).toBe(false);
+    const content = vault.files.get('我的/影视/《星际穿越2》.md');
+    expect(content).toBeTruthy();
+    expect(content).toContain('评分: 9.6');
+    expect(content).toContain('导演: 诺兰'); // 未动海报/豆瓣等字段
+    expect(content).toContain('电影'); // tags 保留
+    // 内存条目同步指向新文件（300ms 重建后不会弹回旧名）
+    const item = M.items.find((i) => i.name === '星际穿越2');
+    expect(item).toBeTruthy();
+    expect(item!.file?.path).toBe('我的/影视/《星际穿越2》.md');
+    expect(hasNotice('已保存')).toBe(true);
+  });
+
+  it('编辑改类型 → frontmatter tags 落盘（替换类型 tag、字段保留）', async () => {
+    const { vault, app } = seedVault();
+    createOverlay(app);
+    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement; // 星际穿越（电影）
+    card.click();
+    const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
+    (mask.querySelector('[data-cinema-dm-edit]') as HTMLElement).click();
+    const modal = (document.querySelector('.bz-overlay-mask') as HTMLElement).querySelector('.bz-overlay-popup') as HTMLElement;
+    (modal.querySelector('[data-cinema-f-tag][data-value="日漫"]') as HTMLElement).click();
+    (modal.querySelector('#bz-cinema-f-save') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 0));
+    const content = vault.files.get('我的/影视/《星际穿越》.md');
+    expect(content).toContain('日漫');
+    expect(content).not.toContain('- 电影');
+    expect(content).toContain('评分: 9.6'); // 其余字段不动
+    const item = M.items.find((i) => i.name === '星际穿越');
+    expect(item?.typeTag).toBe('日漫');
+  });
+
+  it('编辑改名为已存在名称 → 拦截（不重命名、弹窗留在原地可改后重试）', async () => {
+    const { vault, app } = seedVault();
+    createOverlay(app);
+    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement; // 星际穿越
+    card.click();
+    const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
+    (mask.querySelector('[data-cinema-dm-edit]') as HTMLElement).click();
+    const modal = (document.querySelector('.bz-overlay-mask') as HTMLElement).querySelector('.bz-overlay-popup') as HTMLElement;
+    (modal.querySelector('#bz-cinema-f-name') as HTMLInputElement).value = '绝命毒师 第一季';
+    (modal.querySelector('#bz-cinema-f-save') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 0));
+    // 未重命名，原文件原值不动；弹窗未关（可改名重试）；无「已保存」假提示
+    expect(vault.files.has('我的/影视/《星际穿越》.md')).toBe(true);
+    expect(vault.files.get('我的/影视/《星际穿越》.md')).toContain('评分: 9.6');
+    expect(vault.files.has('我的/影视/《绝命毒师 第一季》.md')).toBe(true); // 同名文件未被覆盖
+    expect(modal.textContent).toContain('编辑影视');
+    expect(hasNotice('已保存')).toBe(false);
+  });
+
+  it('编辑改名为非法字符 → 拦截（不重命名）', async () => {
+    const { vault, app } = seedVault();
+    createOverlay(app);
+    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement;
+    card.click();
+    const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
+    (mask.querySelector('[data-cinema-dm-edit]') as HTMLElement).click();
+    const modal = (document.querySelector('.bz-overlay-mask') as HTMLElement).querySelector('.bz-overlay-popup') as HTMLElement;
+    (modal.querySelector('#bz-cinema-f-name') as HTMLInputElement).value = '非法/名称';
+    (modal.querySelector('#bz-cinema-f-save') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(vault.files.has('我的/影视/《星际穿越》.md')).toBe(true);
+    expect(hasNotice(/非法字符/)).toBe(true);
+    expect(hasNotice('已保存')).toBe(false);
+  });
+
+  it('删除失败 → 报错并保留条目（不摘列表、不假报成功）', async () => {
+    const { vault, app } = seedVault();
+    // Windows 文件被占用场景：vault.delete 抛错
+    (vault as any).delete = async () => { throw new Error('EBUSY: resource busy'); };
+    createOverlay(app);
+    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement;
+    card.click();
+    const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
+    (mask.querySelector('[data-cinema-dm-del]') as HTMLElement).click();
+    const confirmMask = document.querySelector('.bz-overlay-mask') as HTMLElement;
+    (confirmMask.querySelector('#bz-cinema-d-del') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 0));
+    // 条目仍在列表，文件未删；报错而非「影视已删除」
+    expect(overlay.querySelectorAll('[data-cinema-idx]').length).toBe(4);
+    expect(vault.files.has('我的/影视/《星际穿越》.md')).toBe(true);
+    expect(hasNotice(/删除失败/)).toBe(true);
+    expect(hasNotice('影视已删除')).toBe(false);
+  });
+
+  it('主面板动态发号（topifyZ）：overlay 持有高于静态档的 z-index', () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const z = Number(overlay.style.zIndex);
+    expect(Number.isFinite(z)).toBe(true);
+    expect(z).toBeGreaterThanOrEqual(100000); // ADR-0067 动态分配器起点
+  });
+
+  it('关闭面板复位视图：重开回落列表页（AI 页不跨开合残留）', () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    M.view = 'stat';
+    closeOverlay();
+    expect(M.view).toBe('list');
+    createOverlay(app);
+    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    expect(M.view).toBe('list');
+    expect(overlay.querySelector('[data-cinema-idx]')).toBeTruthy(); // 列表页（海报网格）
   });
 });
