@@ -858,3 +858,13 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **记忆来源分布（dashboard 记忆页）**：`buildSourceDistribution(stream, dirs?)` 口径升级——① 洞察（type=insight，含周报洞察）按「洞察」单列一行计入（此前完全不计）；② source=note 的引用条目按「记忆目录」配置的追查目录分行（`resolveTrackedDirLabel`：ref 路径/description 路径段前缀匹配首个配置目录 → 标签为该目录字符串；未传目录/未命中回退「记忆目录」旧标签）；③ 行为小结（source=digest）行保留。最近记忆列表 note 行标签同口径（`我的/信` 而非统称「记忆目录」）。
 - **称呼替换**：新增设置 `smartcatUserName`（默认「包仔」，⚙️ 小橘设置「互动」组「小橘对我的称呼」text 行）；`replaceUserReference(text)` 把记忆流/行为流内容里的「你/你们/用户」替换为称呼（单趟正则 `你们|你|用户`，替代回调保证「你们」先匹配；存储格式冻结不写盘，只作用于喂 AI 的 prompt 文本）。应用点：formatMemoriesForPrompt / formatMemoriesForPromptWithRefs（聊天/主动关心/懂你上下文）、反思证据编号行 + 原文摘录、行为小结行为文案行、情绪追标编号行、周报洞察清单行、特质归因洞察行、懂你上下文块生成行（「你通常在…」「你和小橘的关系」）。模板/人物设定句（「你是小橘」、候选块头「你既有的相关洞察」——此处「你」指小橘）不做替换。
 - **测试**：memory.test（getConsolidationConfig maxInsights/getUserNickname/replaceUserReference/证据行替换/5→3 截断+prompt 声明+设置可调）；dashboard.test（洞察单列、note 按追查目录分行、未命中回退、UI 卡与列表标签）；report.test（洞察清单称呼替换）；companion-context.test（作息行包仔）；settings.test（互动 4 项/记忆巩固 3 项徽标）；trait-attribution/adr0069-core 断言同步为称呼文案。全量绿 + tsc 0 错 + 构建部署。
+
+### 影院添加影视表单精简 + AI 页图标尺寸（ticket 181，ADR 无）
+
+> 用户诉：「添加影视界面，1. 不显示观影日期，观影日期都以当前的日期为准。2. 选择「想看」和「在看」时，不显示评分和影评。3. 「类型和状态」前面不添加彩色圆。4. AI 荐片机器人图标铺满整个页面，调整它的尺寸。」
+
+- **去观影日期输入**：cinema `openEditForm` 移除「观影日期」字段行（原 #bz-cinema-f-date）；保存时新增默认当前日期（localNow），编辑保留原日期（无则当前日期）。persistItem 既有 `item.watchDate || localNow()` 兜底。
+- **状态联动隐藏评分/影评**：add/edit 表单给评分行（#bz-cinema-f-rating-field）与影评行（#bz-cinema-f-review-field）加 id 钩子，状态单选点击时 `syncFieldsByStatus` 切换显隐——仅「已看」显示，想看/在看隐藏；非已看保存时影评置空不写。初始按 initStatus 联动。
+- **去掉类型/状态彩色圆**：`choiceGroupHtml` 调用不再传 `dots`（删 tagDots 定义；状态 STATUS_COLORS 仍被左栏导航圆点使用，保留）。
+- **AI 荐片机器人图标**：`.bz-cinema-ai-guide-ic` 改为 `display:inline-flex; align-items:center; justify-content:center` + 36px，使宽高真正生效（原 span inline 时 36px 无效、svg 100% 撑满父宽铺满页面）。
+- **测试**：tests/cinema/ui.test.ts 同步——字段 6→5 + 无 date 输入断言、类型/状态无彩色圆、选「想看」隐藏评分影评、新增落盘观影日期=当前日期、想看不保存影评。无 ADR（纯 UI 反馈，不改数据语义）。
