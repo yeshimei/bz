@@ -43,7 +43,7 @@ import { parseMovieFile } from '../cinema/data';
 import { STATUS_WANT, STATUS_WATCHING } from '../cinema/constants';
 
 /** 首页无需统计的域（纯工具/无持久化数据） */
-export const NO_STAT_DOMAINS: ReadonlySet<string> = new Set(['attach', 'encrypt', 'smartcat', 'settings', 'wall', 'vault']);
+export const NO_STAT_DOMAINS: ReadonlySet<string> = new Set(['attach', 'encrypt', 'smartcat', 'settings', 'wall']);
 
 export interface DomainStat {
   /** 徽标主文案（如「3 条待办」；无数字统计为 ''） */

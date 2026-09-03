@@ -75,9 +75,9 @@ describe('设置面板（settings-panel）', () => {
     expect(head.querySelectorAll('.bz-sp-head-tools *').length).toBe(0);
     expect(popup.querySelector('.bz-sp-brand-name')).toBeNull();
     expect(popup.querySelector('.bz-sp-logo')).toBeNull();
-    // 无设置项的域不在左侧列表显示（用户拍板）：22 域中 8 个无 schema（聚合讯/阅读报告/做题家/
-    // 自动摘要/入口页/附件搬移/B站下载/小橘陪伴猫）→ 可见 15 个（+影院 cinema +书架墙 bookshelf）
-    expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(17);
+    // 无设置项的域不在左侧列表显示（用户拍板）：21 域中 8 个无 schema（聚合讯/阅读报告/做题家/
+    // 自动摘要/入口页/附件搬移/B站下载/小橘陪伴猫）→ 可见 16 个（密码本已并入保险库 ADR-0085）
+    expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(16); // ADR-0085：密码本域并入保险库，少 1 域
     // 无底部快捷键提示 / 无右侧导航条 / 无面包屑
     expect(popup.querySelector('.bz-sp-foot')).toBeNull();
     expect(popup.querySelector('.bz-sp-crumb')).toBeNull();
@@ -94,10 +94,10 @@ describe('设置面板（settings-panel）', () => {
     expect(badges[4]).toBe('·'); // 归物本（schema 加载后桌面端无可见组）
     // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）
     const navIcons = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-ic')];
-    expect(navIcons.length).toBe(17);
+    expect(navIcons.length).toBe(16);
     expect(navIcons[0].getAttribute('data-icon')).toBe('settings'); // 全局
     expect(navIcons[3].getAttribute('data-icon')).toBe('check-square'); // 待办（todo，过滤后 index 3）
-    expect(navIcons[6].getAttribute('data-icon')).toBe('lock'); // 密码本（todo 插入后 index 6）
+    expect(navIcons[6].getAttribute('data-icon')).toBe('star'); // 收藏本（密码本域已并入保险库 ADR-0085）
     // 无 emoji 图标残留（头行/列表/徽标全文本或 lucide）
     expect(popup.textContent).not.toMatch(EMOJI_RE);
     ui.cleanup();
@@ -341,7 +341,7 @@ describe('设置面板（settings-panel）', () => {
     const popup = document.getElementById('bz-settings-panel-popup')!;
     // 只看域名（nav-name），避免描述包含（如剪藏本「网页剪藏与聚合讯」）误判
     const names = [...popup.querySelectorAll('.bz-sp-nav-name')].map((b) => b.textContent);
-    expect(names).toHaveLength(17);
+    expect(names).toHaveLength(16); // ADR-0085 密码本并入保险库
     // 8 个无设置域（聚合讯/阅读报告/做题家/自动摘要/入口页/附件搬移/B站下载/小橘陪伴猫）一律不出现
     for (const n of ['聚合讯', '阅读报告', '做题家', '自动摘要', '入口页', '附件搬移', 'B站下载', '小橘陪伴猫']) {
       expect(names).not.toContain(n);
@@ -353,7 +353,7 @@ describe('设置面板（settings-panel）', () => {
     const hitNames = [...popup.querySelectorAll('.bz-sp-nav-name')].map((b) => b.textContent);
     expect(hitNames).not.toContain('聚合讯');
     // 但可见域搜索正常
-    search.value = '密码本';
+    search.value = '影院';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(1);
     ui.cleanup();
@@ -366,7 +366,7 @@ describe('设置面板（settings-panel）', () => {
     const popup = document.getElementById('bz-settings-panel-popup')!;
     // 只看域名（mob-name），避免描述包含误判
     const names = [...popup.querySelectorAll('.bz-sp-mob-name')].map((b) => b.textContent);
-    expect(names).toHaveLength(17);
+    expect(names).toHaveLength(16); // ADR-0085 密码本并入保险库
     expect(names).not.toContain('聚合讯');
     expect(names).not.toContain('小橘陪伴猫');
     // 搜索也搜不到该无设置域
@@ -376,7 +376,7 @@ describe('设置面板（settings-panel）', () => {
     const hitNames = [...popup.querySelectorAll('.bz-sp-mob-name')].map((b) => b.textContent);
     expect(hitNames).not.toContain('聚合讯');
     // 但可见域搜索正常
-    search.value = '密码本';
+    search.value = '影院';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(1);
     ui.cleanup();
@@ -413,7 +413,7 @@ describe('设置面板（settings-panel）', () => {
     expect(closeBtn.querySelector('.bz-ic[data-icon="x"]')).toBeTruthy();
     expect(popup.textContent).not.toMatch(EMOJI_RE);
     // 无设置项的域不在列表显示（用户拍板）：22 域 → 可见 15 个（+影院 cinema +书架墙 bookshelf）
-    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(17);
+    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(16); // ADR-0085 密码本并入保险库
     // 移动列表图标为 lucide（tile 内 svg 容器）
     const firstIc = popup.querySelector('.bz-sp-mob-item .bz-sp-mob-ic .bz-ic');
     expect(firstIc).toBeTruthy();

@@ -26,8 +26,7 @@ import { openBzPanel, createMemoItem } from './memo';
 import { addBelongingsItem, openBelongings, unloadBelongings } from './belongings';
 // 剪藏本融合域（clipbook，ADR-0082/issue 177）：聚合讯+剪藏本合一；旧 news/clipping 入口命令断开
 import { openClipbook, unloadClipbook } from './clipbook';
-// 保险库（password-vault 域，ADR-0078）：密码本新 UI；旧密码本域入口已断开（bz-pw-* 命令不再注册）
-import { openPasswordVault, unloadPasswordVault } from './password-vault';
+// 统一保险库（encrypt 域，ADR-0085）：密码管理已并入 encrypt，旧 password-vault 域已删除
 // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图；复用 diary parser 读取，不改写旧数据
 import { openDiaryWall, unloadDiaryWall } from './diary-wall';
 import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
@@ -55,7 +54,7 @@ import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/sta
 import { openLiteraturePanel, openTermNote, unloadLiterature } from './literature';
 // 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 入口页磁贴播种）
 import { openAttachMove, ensureAttachSeed, ATTACH_COMMAND_ID } from './attach';
-// 保险箱（encrypt 域：移出式清单容器加密，正文+图片/视频附件；原名「加密保险箱」，ticket 68 更名仅文案）
+// 统一保险库（encrypt 域，ADR-0085：密码/加密笔记/加密日记三资产单一面板；旧 password-vault 命令已删）
 import { openEncrypt, encryptCurrentNote, unloadEncrypt, mountEncryptStatusBar, unmountEncryptStatusBar } from './encrypt';
 import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setLauncherGestureSetter, LauncherModal } from './launcher';
 import { registerGestureListeners } from './launcher/gestures';
@@ -93,8 +92,7 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-belongings-open', name: '归物本', icon: 'package', callback: () => openBelongings(getApp()) },
   // 剪藏本（clipbook 融合域，ADR-0082：聚合讯未读流 + 剪藏笔记一体化工作台）
   { id: 'bz-clipbook-open', name: '剪藏本', icon: 'scissors', callback: () => openClipbook(getApp()) },
-  // 保险库（password-vault 域，ADR-0078）：密码本新 UI，替换旧密码本入口（bz-pw-* 已断开）
-  { id: 'bz-password-vault-open', name: '保险库', icon: 'key', callback: () => openPasswordVault(getApp()) },
+
   // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图（真实图片/视频/音频瀑布流）
   // icon 用 images（lucide 相册/媒体图标，与入口页磁贴媒体语义一致；未与其他命令重复）
   { id: 'bz-diary-wall-open', name: '回忆墙', icon: 'images', callback: () => openDiaryWall(getApp()) },
@@ -147,7 +145,7 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 附件搬移（ticket 65 新域：移动当前笔记附件到指定文件夹，fileManager 自动更新内部链接）
   { id: ATTACH_COMMAND_ID, name: '移动附件', icon: 'folder-down', callback: () => openAttachMove(getApp()) },
   // 保险箱（encrypt 域：移出式清单容器加密；原名「加密保险箱」，ticket 68 更名仅文案）
-  { id: 'bz-encrypt-open', name: '保险箱', icon: 'lock', callback: () => openEncrypt(getApp()) },
+  { id: 'bz-encrypt-open', name: '保险库', icon: 'lock', callback: () => openEncrypt(getApp()) },
   { id: 'bz-encrypt-lock', name: '加密当前笔记', icon: 'lock-keyhole', callback: () => encryptCurrentNote(getApp()) },
   // 小橘陪伴猫（smartcat 域）
   { id: 'bz-smartcat-open', name: '小橘', icon: 'cat', callback: () => openSmartCat(getApp()) },
@@ -249,7 +247,7 @@ export default class BzPlugin extends Plugin {
     // 番茄钟状态栏（ticket 29：常驻倒计时，点击打开弹窗）
     mountPomodoroStatusBar(this.addStatusBarItem(), this.app);
 
-    // 保险箱状态栏（补丁2：锁状态提示，点击打开面板；解锁态由 encrypt Controller 接管刷新）
+    // 保险库状态栏（补丁2：锁状态提示，点击打开面板；解锁态由 encrypt Controller 接管刷新）
     mountEncryptStatusBar(this.addStatusBarItem());
 
     // 日记本面板命令（统一 bz- 前缀；bz-diary-write 由 quote.ts init 内注册）
@@ -314,7 +312,6 @@ export default class BzPlugin extends Plugin {
     unloadSecondBrain();
     // 各域卸载清理补全（fix(main)：unload 函数均不内部触发 ensure，可无条件调用；
     // 未初始化域调用为幂等空清理，不引起无谓装载）
-    unloadPasswordVault();
     // 回忆墙（diary-wall 域，ADR-0081）：面板 DOM 清理 + 模块单例复位
     unloadDiaryWall();
     unloadBelongings();
