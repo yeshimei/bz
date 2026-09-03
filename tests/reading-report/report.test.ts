@@ -4,6 +4,8 @@
  * 覆盖空数据分支与有数据分支。
  */
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   generateFullStatsReport, buildReportSections, generateStatsReport, generateYearlyStats, generateAuthorStats,
   generateReadingSpeedAnalysis, generateTimeDistributionChart, generateReadingHabitsDeepAnalysis2,
@@ -140,13 +142,33 @@ describe('report 生成函数', () => {
   });
 
   it('generateHeatmapCell：empty/future/data/高时长四级色', () => {
-    expect(generateHeatmapCell({ type: 'empty' })).toContain('width: 20px');
+    // audit H：尺寸/圆角/hover/@media 移入域样式 .bz-rr-hm-cell（内联 @media/&:hover 本就无效）
+    expect(generateHeatmapCell({ type: 'empty' })).toContain('bz-rr-hm-cell');
     expect(generateHeatmapCell({ type: 'future', date: '2025-06-30' })).toContain('未来日期');
     const cell1 = generateHeatmapCell({ type: 'data', date: '2025-06-01', data: { duration: 1800, sessions: 1 } });
     expect(cell1).toContain('#9be9a8');
+    expect(cell1).toContain('bz-rr-hm-cell--data');
     const cell4 = generateHeatmapCell({ type: 'data', date: '2025-06-01', data: { duration: 18000, sessions: 3 } });
     expect(cell4).toContain('#216e39');
     expect(cell4).toContain('阅读时长: 5.0小时');
+  });
+
+  it('audit H：单元格不再输出无效的内联 @media / &:hover（迁入域样式类）', () => {
+    for (const cell of [
+      generateHeatmapCell({ type: 'empty' }),
+      generateHeatmapCell({ type: 'future', date: '2025-06-30' }),
+      generateHeatmapCell({ type: 'nodata', date: '2000-01-15' }),
+      generateHeatmapCell({ type: 'data', date: '2025-06-01', data: { duration: 1800, sessions: 1 } }),
+    ]) {
+      expect(cell).not.toContain('@media');
+      expect(cell).not.toContain('&:hover');
+      expect(cell).not.toContain('mobileSize');
+    }
+    // 域样式文件承载尺寸/媒体查询/hover（构建聚合进根 styles.css）
+    const css = readFileSync(resolve(process.cwd(), 'src/reading-report/styles.css'), 'utf8');
+    expect(css).toContain('.bz-rr-hm-cell');
+    expect(css).toContain('@media');
+    expect(css).toContain('.bz-rr-hm-cell--data:hover');
   });
 
   it('generateMonthHeatmap：历史月份空白格不再是未来日期（P2）', () => {
