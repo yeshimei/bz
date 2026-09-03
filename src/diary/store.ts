@@ -4,7 +4,7 @@
  * refreshFile（1724）、refreshSpecialFile（1764）、addEntry（3481）、deleteEntry（2526）。
  * UI 刷新通过回调解耦（避免循环依赖）。
  */
-import { notice } from '../core/notice';
+import { notice, notify } from '../core/notice';
 import { emitDomainEvent } from '../core/domain-bus';
 import { getApp } from './app';
 import { BATCH_SIZE, DIARY_DIRECTORY, LETTER_DIRECTORY, MOVIE_DIRECTORY, getTagEmoji } from './config';
@@ -139,13 +139,17 @@ export async function loadAll() {
 
     const BATCH_CONCURRENCY = 10;
     const results: { date: string; entries: DiaryEntry[] }[] = [];
+    // UX-9 警告接线：记录存在未解析行的文件数，加载完成后一次性提示
+    let unparsedFiles = 0;
     if (totalDiaryFiles > 0) {
       for (let i = 0; i < mdFiles.length; i += BATCH_CONCURRENCY) {
         const batch = mdFiles.slice(i, i + BATCH_CONCURRENCY);
         const batchResults = await Promise.all(
           batch.map(async (file: any, idx: number) => {
             const content = await app.vault.read(file);
-            const entries = parseFile(content, file.basename);
+            const entries = parseFile(content, file.basename, (n) => {
+              if (n > 0) unparsedFiles++;
+            });
             emitProgress(i + idx + 1, totalDiaryFiles);
             return { date: file.basename, entries };
           })
@@ -213,6 +217,14 @@ export async function loadAll() {
     // 确保每个条目都有 id
     assignIds(state.data.originalDiaryEntries);
 
+    // UX-9 警告接线：有文件存在未解析行时汇总提示（这些行未进列表，重写会丢）
+    if (unparsedFiles > 0) {
+      warnUnparsed(
+        `${unparsedFiles} 个日记文件存在无法解析的行，这些行没有加载。可在日记本设置中运行「检测日记解析」定位修复。`,
+        'diary-loadall-unparsed'
+      );
+    }
+
     // 修复点：使用 full refresh 正确应用筛选条件
     state.data.currentDisplayCount = 0;
     emitFullRefresh();
@@ -230,9 +242,49 @@ export async function loadAll() {
 
 // ===== 写回 =====
 
+/** 「无法解析行」警告 toast（无 DOM 环境/通知容器缺失时静默；dedupeKey 防外部编辑反复触发刷屏） */
+function warnUnparsed(msg: string, dedupeKey?: string) {
+  try {
+    notify(msg, { type: 'warning', dedupeKey });
+  } catch (e) {
+    /* 无 DOM 环境（node 测试）降级为静默 */
+  }
+}
+
+/**
+ * 写/删前守卫（P0 审查修复）：目标文件在磁盘上存在「无法解析的行」时拒处理并提示。
+ * writeFile 用内存 map 全量重写整份文件（空条目时整文件删除），磁盘上任何未被解析的行
+ * （文件开头游离行、条目内「空行 + # 形似标题」截断后的孤行等）都不在内存 map 里——
+ * 直接处理会把它们从磁盘永久抹掉。此处在写/删前用 parseFile 的 onUnparsed 口径
+ * （与丢失口径严格一致）复读磁盘文件计量，命中即拒并以人话通知引导先用修复工具。
+ * 返回 true 表示已拒处理。
+ */
+async function refuseIfDiskUnparsed(dateStr: string, action: 'write' | 'delete'): Promise<boolean> {
+  const filePath = `${DIARY_DIRECTORY}/${dateStr}.md`;
+  const file = getApp().vault.getAbstractFileByPath(filePath) as any;
+  if (!file) return false; // 新文件：无旧内容可丢
+  let unparsed = 0;
+  try {
+    const content = await getApp().vault.read(file);
+    parseFile(content, dateStr, (n) => (unparsed = n));
+  } catch (e) {
+    return false; // 读失败不拦截写：写路径自身有失败兜底
+  }
+  if (unparsed <= 0) return false;
+  warnUnparsed(
+    `「${dateStr}」有 ${unparsed} 行内容无法解析，${
+      action === 'delete' ? '已保留原文件未删除' : '本次修改没有写入文件'
+    }（直接处理会丢失这些行）。请先在日记本设置中运行「检测日记解析」修复后再试。`,
+    `diary-write-refused-${dateStr}`
+  );
+  return true;
+}
+
 /** 写入日记文件（按时间序，原 writeFile） */
 export async function writeFile(dateStr: string) {
   if (!diaryDataMap || !diaryDataMap.has(dateStr)) return;
+  // P0 写前守卫：磁盘存在未解析行时拒写，引导先用「检测日记解析」修复工具
+  if (await refuseIfDiskUnparsed(dateStr, 'write')) return;
   state.events.isInternalUpdate = true;
   const entries = diaryDataMap.get(dateStr)!;
 
@@ -361,7 +413,8 @@ export async function deleteEntry(entryId: string) {
   if (entries.length === 0) {
     const filePath = `${DIARY_DIRECTORY}/${dateStr}.md`;
     const file = getApp().vault.getAbstractFileByPath(filePath) as any;
-    if (file) {
+    // P0 守卫：整文件删除同样会丢磁盘上的未解析行——命中时保留文件（同拒写口径）
+    if (file && !(await refuseIfDiskUnparsed(dateStr, 'delete'))) {
       state.events.isInternalUpdate = true;
       try {
         await getApp().vault.delete(file);
@@ -387,7 +440,15 @@ export async function refreshFile(filePath: string) {
   if (!file) return;
   const dateStr = file.basename;
   const content = await getApp().vault.read(file);
-  const newEntries = parseFile(content, dateStr);
+  // UX-9 警告接线：外部改动的文件带未解析行时提示（这些行不在刷新结果里，写回会被丢弃）
+  let unparsed = 0;
+  const newEntries = parseFile(content, dateStr, (n) => (unparsed = n));
+  if (unparsed > 0) {
+    warnUnparsed(
+      `「${dateStr}」有 ${unparsed} 行内容无法解析，这些行没有加载。可在日记本设置中运行「检测日记解析」定位修复。`,
+      `diary-refresh-unparsed-${dateStr}`
+    );
+  }
 
   if (!diaryDataMap) setDiaryDataMap(new Map());
   if (newEntries.length === 0) {
