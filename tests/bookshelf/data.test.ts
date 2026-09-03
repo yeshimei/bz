@@ -228,6 +228,20 @@ describe('bookshelf 数据层', () => {
     expect(kwFilter(items, '未分类').length).toBe(0);
   });
 
+  it('audit H：EPUB 日期本地时区切片（UTC+8 早 8 点前读完不再归前一天）', async () => {
+    const vault = new MockVault();
+    const ts = new Date(2024, 11, 24, 7, 30).getTime(); // UTC+8 下对应 2024-12-23T23:30Z
+    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
+      books: { a: { meta: { title: '时区书' }, file: { vaultPath: 'books/tz.epub' }, reading: { position: { percent: 0.5 }, stats: { lastReadTime: ts } } } },
+    }));
+    const app = makeApp(vault);
+    const [it] = await loadEpubItems(app);
+    const d = new Date(ts);
+    const p = (n: number) => String(n).padStart(2, '0');
+    expect(it.readingDate).toBe(`${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`);
+    expect(it.readingDate).toBe('2024-12-24'); // 本地日期（旧 UTC 切片会给 2024-12-23）
+  });
+
   it('B10：书库目录对象存在走 TFolder 直取；目录缺失回落全量过滤（含目录自身单文件）', () => {
     const { vault, app } = seedVault();
     // 目录对象路径：嵌套子目录（书库/小说/围城.md）也被递归收进
