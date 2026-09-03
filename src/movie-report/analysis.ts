@@ -527,12 +527,13 @@ export function openAnalysisModal(app: App): void {
 
   const overlay = document.createElement('div');
   overlay.className = 'bz-movie-report-overlay--1200'; // 标识钩子（层级已动态发号 ADR-0067）
-  overlay.style.zIndex = String(allocZ()); // 新建即显示即发号
   overlay.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.5);
         display: flex; align-items: center; justify-content: center;
     `;
+  // cssText 赋值会整体替换内联样式，z-index 必须写在 cssText 之后（否则发号被清掉、层叠失效）
+  overlay.style.zIndex = String(allocZ());
   const modal = document.createElement('div');
   modal.style.cssText = `
         background: var(--background-primary); color: var(--text-normal);

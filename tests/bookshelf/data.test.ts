@@ -9,7 +9,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { M, resetBookshelfState } from '../../src/bookshelf/state';
 import {
   scanMarkdownBooks, loadEpubItems, sortItems, kwFilter, currentSideItems, computeStats,
-  resolveFolderPath, formatReadingTime,
+  resolveFolderPath, formatReadingTime, rebuildItems,
 } from '../../src/bookshelf/data';
 
 function makeApp(vault: MockVault) {
@@ -142,10 +142,29 @@ describe('bookshelf 数据层', () => {
     expect(s.doneThisYear.length).toBe(1);
     // 3小时20分 → 3 小时（向下取整小时）
     expect(s.totalHours).toBe(3);
-    // 围城 2026-08 读完 → 8 月柱 count=1（bars[0] 是本月，向左排到 11 个月前）
+    // 围城 2026-08 读完 → 8 月柱 count=1（bars[0] 是 11 个月前，向右排到 bars[11]=本月）
     const aug = s.bars.find((b) => b.label === '8月')!;
     expect(aug.count).toBe(1);
-    expect(s.bars[0].label).toBe('本月');
+    expect(aug.isThis).toBe(false);
+    expect(s.bars[0].label).toBe('10月'); // 11 个月前 = 2025-10
+    expect(s.bars[11].label).toBe('本月');
+    expect(s.bars[11].isThis).toBe(true);
+    expect(s.bars[11].count).toBe(0); // 当前月（2026-09）无读完数据
+  });
+
+  it('computeStats：近 12 月柱数据↔标签映射（bars[11]=本月承载当月数据，bars[0] 承载 11 个月前）', () => {
+    // 回归：旧实现 t = nowM - i 使 bars[0]（本月标签）承载 11 个月前数据，映射整体反转
+    const vault = new MockVault();
+    vault.files.set('书库/当月书.md', '---\ntags: [book]\nreadingDate: 2026-09-01\ncompletionDate: 2026-09-10\n---');
+    vault.files.set('书库/去年书.md', '---\ntags: [book]\nreadingDate: 2025-10-01\ncompletionDate: 2025-10-20\n---');
+    const app = makeApp(vault);
+    M.items = [...scanMarkdownBooks(app)];
+    const s = computeStats(new Date(2026, 8, 3)); // 2026-09（11 个月前 = 2025-10）
+    expect(s.bars[11].label).toBe('本月');
+    expect(s.bars[11].count).toBe(1); // 当月读完的「当月书」落在「本月」柱
+    expect(s.bars[11].isThis).toBe(true);
+    expect(s.bars[0].count).toBe(1); // 2025-10 读完的「去年书」落在首柱
+    expect(s.bars[0].label).toBe('10月');
   });
 
   it('排序：date 主日期倒序/无日期排后；title/author/progress', () => {
@@ -209,6 +228,20 @@ describe('bookshelf 数据层', () => {
     expect(kwFilter(items, '未分类').length).toBe(0);
   });
 
+  it('audit H：EPUB 日期本地时区切片（UTC+8 早 8 点前读完不再归前一天）', async () => {
+    const vault = new MockVault();
+    const ts = new Date(2024, 11, 24, 7, 30).getTime(); // UTC+8 下对应 2024-12-23T23:30Z
+    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
+      books: { a: { meta: { title: '时区书' }, file: { vaultPath: 'books/tz.epub' }, reading: { position: { percent: 0.5 }, stats: { lastReadTime: ts } } } },
+    }));
+    const app = makeApp(vault);
+    const [it] = await loadEpubItems(app);
+    const d = new Date(ts);
+    const p = (n: number) => String(n).padStart(2, '0');
+    expect(it.readingDate).toBe(`${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`);
+    expect(it.readingDate).toBe('2024-12-24'); // 本地日期（旧 UTC 切片会给 2024-12-23）
+  });
+
   it('B10：书库目录对象存在走 TFolder 直取；目录缺失回落全量过滤（含目录自身单文件）', () => {
     const { vault, app } = seedVault();
     // 目录对象路径：嵌套子目录（书库/小说/围城.md）也被递归收进
@@ -230,5 +263,31 @@ describe('bookshelf 数据层', () => {
     expect(currentSideItems(items, 'reading').length).toBe(1);
     expect(currentSideItems(items, 'unread').length).toBe(1);
     expect(currentSideItems(items, 'done').length).toBe(1);
+  });
+
+  it('audit I：rebuildItems 并发交错——旧重建晚到不回写覆盖新数据（序号守卫）', async () => {
+    // 场景：重建 1 的 EPUB 读取在途时新增书目并触发重建 2；重建 2 先完成，重建 1 的
+    // 陈旧 md 快照（无 B 书）后到——旧实现会把 B 书从 M.items 挤掉
+    const vault = new MockVault();
+    vault.files.set('书库/A.md', '---\ntags: [book]\n---');
+    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
+      books: { e: { meta: { title: 'E书' }, file: { vaultPath: 'books/e.epub' } } },
+    }));
+    const app = makeApp(vault);
+    const weaveJson = vault.files.get('CONFIG/STORAGE/weave-data.json')!;
+    let calls = 0;
+    let release!: (v: string) => void;
+    (vault.adapter as any).read = (path: string) => {
+      calls++;
+      if (calls === 1) return new Promise<string>((r) => { release = r; });
+      return Promise.resolve(weaveJson);
+    };
+    const p1 = rebuildItems(app); // 旧重建：扫描只有 A，EPUB 读取挂起
+    vault.files.set('书库/B.md', '---\ntags: [book]\n---');
+    const p2 = rebuildItems(app); // 新重建：扫描 A+B，先完成
+    await p2;
+    release(weaveJson);
+    await p1;
+    expect(M.items.map((i) => i.title).sort()).toEqual(['A', 'B', 'E书']);
   });
 });

@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { notify } from '../../src/core/notice';
-import { watchPosterFetch, POSTER_POLL_MS, POSTER_POLL_MAX } from '../../src/cinema/poster-watch';
+import { watchPosterFetch, stopAllPosterWatch, POSTER_POLL_MS, POSTER_POLL_MAX } from '../../src/cinema/poster-watch';
 
 function visibleNotices(): HTMLElement[] {
   return Array.from(document.querySelectorAll('.bz-notice')) as HTMLElement[];
@@ -80,5 +80,24 @@ describe('cinema watchPosterFetch', () => {
     await vi.advanceTimersByTimeAsync(POSTER_POLL_MS * 2);
     expect(el.isConnected).toBe(false); // 失败通知已自动消失
     expect(visibleNotices()).toHaveLength(0);
+  });
+
+  it('stopAllPosterWatch：卸载清理 → 轮询停止（不再读文件、不再更新通知）', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《片》.md', '---\ntags: [电影]\n评分: 4\n海报: \n---\n');
+    const readSpy = vi.spyOn(vault, 'read');
+    const app = mockAppWithVault(vault);
+    const file = vault.file('我的/影视/《片》.md');
+    const h = notify('正在获取海报和豆瓣信息…', { type: 'progress' });
+    watchPosterFetch(app, file, h);
+    await vi.advanceTimersByTimeAsync(POSTER_POLL_MS); // 至少轮询过一次
+    expect(readSpy.mock.calls.length).toBeGreaterThanOrEqual(1);
+
+    stopAllPosterWatch(); // 插件卸载（unloadCinema）调用
+    const callsAtStop = readSpy.mock.calls.length;
+    // 之后再推进时间：不再轮询、通知停留在「正在获取」（由调用方决定收尾）
+    await vi.advanceTimersByTimeAsync(POSTER_POLL_MS * 3);
+    expect(readSpy.mock.calls.length).toBe(callsAtStop);
+    expect(visibleNotices()[0].textContent).toContain('正在获取海报和豆瓣信息');
   });
 });

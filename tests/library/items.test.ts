@@ -103,6 +103,16 @@ describe('getBookItems', () => {
     const items = getBookItems(makeApp(vault));
     expect(items[0].cover).toBe('附件/c.png');
   });
+
+  it('audit H：readingProgress 非法值 → 兜底 0（不再 NaN 污染进度条与排序）', () => {
+    vault.files.set('书库/坏进度.md', '---\ntags: ["book"]\nreadingDate: 2025-06-01\nreadingProgress: abc\n---\n正文');
+    vault.files.set('书库/零进度.md', '---\ntags: ["book"]\n---\n正文');
+    const items = getBookItems(makeApp(vault));
+    const byTitle = Object.fromEntries(items.map((i) => [i.title, i.readingProgress]));
+    expect(byTitle['坏进度']).toBe(0);
+    expect(byTitle['零进度']).toBe(0);
+    expect(Number.isNaN(byTitle['坏进度'] as number)).toBe(false);
+  });
 });
 
 describe('sortItemList', () => {
@@ -218,5 +228,23 @@ describe('loadEpubBookItems（ADR-0013，读 Weave 数据文件）', () => {
     vault.files.set('CONFIG/STORAGE/weave-data.json', 'not json{{{');
     const items = await loadEpubBookItems(makeApp(vault));
     expect(items).toEqual([]);
+  });
+
+  it('audit H：EPUB 日期本地时区切片（UTC+8 早 8 点前读完不再归前一天）', async () => {
+    const ts = new Date(2024, 11, 24, 7, 30).getTime(); // UTC+8 下对应 2024-12-23T23:30Z
+    seedWeaveData({
+      bk_tz: {
+        id: 'bk_tz',
+        file: { vaultPath: '书库/时区.epub' },
+        meta: { title: '时区' },
+        reading: { position: { percent: 0.5 }, stats: { lastReadTime: ts } },
+        notes: { bookmarks: [], highlights: [], excerpts: [] },
+      },
+    });
+    const items = await loadEpubBookItems(makeApp(vault));
+    const d = new Date(ts);
+    const p = (n: number) => String(n).padStart(2, '0');
+    expect(items[0].readingDate).toBe(`${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`);
+    expect(items[0].readingDate).toBe('2024-12-24'); // 本地日期（旧 UTC 切片会给 2024-12-23）
   });
 });

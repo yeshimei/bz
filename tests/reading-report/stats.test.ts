@@ -30,7 +30,7 @@ function localIsoDate(ts: number): string {
 describe('calculateReadingStats', () => {
   it('状态计数 + 汇总 + 进度分布', () => {
     const books = [
-      book({ completionDate: '2025-07-01', readingProgress: 100, readingTime: 3600000, highlights: 10, thinks: 2, dialogue: 1, outlinks: 3, pages: 300, wordCount: 80000 }),
+      book({ readingDate: '2025-05-01', completionDate: '2025-07-01', readingProgress: 100, readingTime: 3600000, highlights: 10, thinks: 2, dialogue: 1, outlinks: 3, pages: 300, wordCount: 80000 }),
       book({ readingDate: '2025-06-01', readingProgress: 50 }),
       book({ readingProgress: 0 }),
     ];
@@ -49,6 +49,14 @@ describe('calculateReadingStats', () => {
     expect(s.progressDistribution.unread).toBe(1);
   });
 
+  it('audit G：状态口径与 bookshelf/library 双日期统一——只补 completionDate 不算已读', () => {
+    // 回归：旧实现「有 completionDate 即已读」，与两面板（双日期口径）状态分叉
+    const s = calculateReadingStats([book({ completionDate: '2025-07-01', readingProgress: 100 })]);
+    expect(s.readBooks).toBe(0);
+    expect(s.readingBooks).toBe(0);
+    expect(s.unreadBooks).toBe(1);
+  });
+
   it('阅读速度均值（totalReadingTime>0）', () => {
     const books = [book({ completionDate: '2025-07-01', readingTime: 3600000, pages: 60, wordCount: 12000 })];
     const s = calculateReadingStats(books);
@@ -62,8 +70,9 @@ describe('calculateReadingStats', () => {
     expect(s.monthlyStats['2025-06'].booksRead).toBe(1);
     expect(s.monthlyStats['2025-07'].booksCompleted).toBe(1);
     expect(s.yearlyStats['2025'].booksRead).toBe(1);
-    // 源码行为：completed 书在阅读月+完成月各计一次 booksCompleted
-    expect(s.yearlyStats['2025'].booksCompleted).toBe(2);
+    // audit H：completed 只在完成日期桶记一次（阅读月不再按 progress>=100 重复计数）
+    expect(s.yearlyStats['2025'].booksCompleted).toBe(1);
+    expect(s.monthlyStats['2025-06'].booksCompleted).toBe(0);
   });
 
   it('作者统计', () => {
@@ -284,7 +293,7 @@ describe('analyzeReadingTrends 趋势修复（P1-17）', () => {
   }
 
   it('升序 [1,1,1,2,2,9]：本月=9、季均≈4.33、方向 ↑；recentMonths 反转仅供图表', () => {
-    const t = analyzeReadingTrends(makeStats([1, 1, 1, 2, 2, 9]), []);
+    const t = analyzeReadingTrends(makeStats([1, 1, 1, 2, 2, 9]), [], new Date(2025, 5, 15)); // now=2025-06
     expect(t.currentMonth.books).toBe(9);
     expect(t.quarterlyAvg).toBe('4.3'); // (2+2+9)/3 ≈ 4.33
     expect(t.monthlyAvg).toBe('2.7');   // 16/6 ≈ 2.67
@@ -297,9 +306,25 @@ describe('analyzeReadingTrends 趋势修复（P1-17）', () => {
   });
 
   it('反向样例 [9,2,2,1,1,1]：本月=1、方向 ↓（旧实现会给出全反结论）', () => {
-    const t = analyzeReadingTrends(makeStats([9, 2, 2, 1, 1, 1]), []);
+    const t = analyzeReadingTrends(makeStats([9, 2, 2, 1, 1, 1]), [], new Date(2025, 5, 15)); // now=2025-06
     expect(t.currentMonth.books).toBe(1);
     expect(t.trendDirection).toBe('↓');
+  });
+
+  it('audit F：当月无数据 → 本月阅读显示 0，不再取「升序末位」旧月份数据', () => {
+    // 数据止于 2025-06，「现在」是 2026-09：旧实现把 2025-06 的 9 本当「本月」
+    const t = analyzeReadingTrends(makeStats([1, 1, 1, 2, 2, 9]), [], new Date(2026, 8, 4));
+    expect(t.currentMonth.books).toBe(0);
+    expect(t.currentMonth.completed).toBe(0);
+    // 其余统计口径不受影响
+    expect(t.quarterlyAvg).toBe('4.3');
+    expect(t.trendDirection).toBe('↑');
+  });
+
+  it('audit F：当月有数据 → 按当前年月键直查对应桶', () => {
+    const t = analyzeReadingTrends(makeStats([1, 1, 1, 2, 2, 9]), [], new Date(2025, 5, 30));
+    expect(t.currentMonth.books).toBe(9);
+    expect(t.currentMonth.completed).toBe(0);
   });
 });
 

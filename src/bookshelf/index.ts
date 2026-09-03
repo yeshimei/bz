@@ -26,9 +26,9 @@ export function ensureBookshelf(app: App): void {
   registerAutoRefresh(app);
 }
 
-/** 域事件自动刷新（bookshelf/library/vault 多通道，防抖 300ms，仅 overlay 打开时刷新）。
- *  数据与旧 library 域同源：library 域写 frontmatter 后本域同样需要刷新，故并听 library 通道。
- *  B2：目录过滤每次用 resolveFolderPath() 动态取（设置改目录后监听跟着新目录走，不一次定格）。 */
+/** 域事件自动刷新（vault 通道 + EPUB json，防抖 300ms，仅 overlay 打开时刷新）。
+ *  audit H：bookshelf:file-* / library:file-* 六个订阅已删除——FileDomainKind 不含这两域，
+ *  `<域>:file-*` 通道对它们从不发布（白挂 8 个监听）；vault:md-* + vault modify 已覆盖刷新面。 */
 function registerAutoRefresh(app: App): void {
   if (autoRefreshRegistered) return;
   autoRefreshRegistered = true;
@@ -42,11 +42,6 @@ function registerAutoRefresh(app: App): void {
       void rebuildItems(app).then(() => renderAll(app));
     }, 300);
   };
-  for (const kind of ['bookshelf', 'library']) {
-    autoRefreshOffs.push(onDomainEvent<{ path: string }>(`${kind}:file-created`, (evt) => schedule({ path: evt.path })));
-    autoRefreshOffs.push(onDomainEvent<{ path: string }>(`${kind}:file-deleted`, (evt) => schedule({ path: evt.path })));
-    autoRefreshOffs.push(onDomainEvent<{ path: string }>(`${kind}:file-modified`, (evt) => schedule({ path: evt.path })));
-  }
   for (const ch of ['vault:md-created', 'vault:md-deleted', 'vault:md-modified']) {
     autoRefreshOffs.push(onDomainEvent<{ path: string }>(ch, (evt) => schedule({ path: evt.path })));
   }

@@ -122,6 +122,17 @@ describe('buildAnalysisData 数据采集', () => {
 });
 
 describe('openAnalysisModal 弹窗', () => {
+  it('动态发号生效：z-index 写在 cssText 之后，不被整体替换清掉（审计修复）', () => {
+    const vault = new MockVault();
+    openAnalysisModal(makeApp(vault));
+    const overlay = document.body.querySelector('.bz-movie-report-overlay--1200') as HTMLElement;
+    expect(overlay).not.toBeNull();
+    const z = Number(overlay.style.zIndex);
+    expect(Number.isFinite(z)).toBe(true);
+    expect(z).toBeGreaterThanOrEqual(100000); // ADR-0067 动态分配器起点（失效时 z-index 为空串）
+    closeAnalysis();
+  });
+
   it('打开：遮罩 + 标题；❌ 关闭；移动端+开关开 → 分析窗挂 bz-win-mfs（ticket 68，基样式不再自带 34px 防双重垫顶）', () => {
     const vault = new MockVault();
     vault.files.set('我的/影视/《A》.md', movieMd({ tags: ['电影'], '观影日期': '2025-06-01T20:00:00', 评分: 5 }));

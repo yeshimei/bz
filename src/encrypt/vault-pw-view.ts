@@ -8,7 +8,7 @@
  */
 import { escManager } from '../core/esc-manager';
 import { createSiteIcon } from '../core/dom';
-import { attachItemActions, type ItemAction } from '../core/item-actions';
+import { attachItemActions, openItemSheet, type ItemAction, type ItemActionsOptions } from '../core/item-actions';
 import { PasswordVaultDataManager, type PasswordVaultEntry, type PlatformGroup } from './vault-data';
 
 /** 相对时间（密码条目创建/更新展示） */
@@ -306,8 +306,9 @@ export class VaultPwView {
     this.host.onPwChanged?.();
   }
 
-  private attachAccountActions(el: HTMLElement, d: PasswordVaultEntry): void {
-    const actions: ItemAction[] = [
+  /** 账号动作集（行卡右键/长按与移动账号详情页 ⋮ 共用） */
+  private accountActions(d: PasswordVaultEntry): ItemAction[] {
+    return [
       {
         icon: 'copy',
         label: '复制账号',
@@ -342,10 +343,19 @@ export class VaultPwView {
           }),
       },
     ];
-    attachItemActions(el, actions, { sheetHead: this.buildSheetHead(d) });
   }
 
-  private attachPlatformActions(el: HTMLElement, platform: string): void {
+  private attachAccountActions(el: HTMLElement, d: PasswordVaultEntry): void {
+    attachItemActions(el, this.accountActions(d), { sheetHead: this.buildSheetHead(d) });
+  }
+
+  /** 移动端账号详情页 ⋮：直接开底部抽屉（抽屉手势挂行卡上，详情页按钮触达不了——E6） */
+  openAccountSheet(d: PasswordVaultEntry): void {
+    openItemSheet(this.accountActions(d), { sheetHead: this.buildSheetHead(d) });
+  }
+
+  /** 平台动作集（行卡右键/长按与移动平台详情页 ⋮ 共用） */
+  private platformActions(platform: string): ItemAction[] {
     const accs = this.dm.accountsOf(platform);
     const recent = accs[0];
     const count = accs.length;
@@ -381,9 +391,21 @@ export class VaultPwView {
           }).catch((e) => this.failToast(e));
         }),
     });
-    attachItemActions(el, actions, {
-      sheetHead: this.buildSheetHead(recent ?? { account: platform, platform, createdAt: '' }),
-    });
+    return actions;
+  }
+
+  private platformSheetOpts(platform: string): ItemActionsOptions {
+    const recent = this.dm.accountsOf(platform)[0];
+    return { sheetHead: this.buildSheetHead(recent ?? { account: platform, platform, createdAt: '' }) };
+  }
+
+  private attachPlatformActions(el: HTMLElement, platform: string): void {
+    attachItemActions(el, this.platformActions(platform), this.platformSheetOpts(platform));
+  }
+
+  /** 移动端平台详情页 ⋮：直接开底部抽屉（E6 同款） */
+  openPlatformSheet(platform: string): void {
+    openItemSheet(this.platformActions(platform), this.platformSheetOpts(platform));
   }
 
   // ---------- 移动端卡流 ----------
