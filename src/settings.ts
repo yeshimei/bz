@@ -180,24 +180,11 @@ export default interface BzSettings {
   /** 书架墙：移动端默认全屏（默认开——与书库同控） */
   bookshelfMobileDefaultFullscreen: boolean;
 
-  // ===== 🎬 影院（cinema 域，新域与影视并存；后续影视删除后承接）=====
-  /** 📁 影视文件夹（影院域） */
+  // ===== 🎬 影院（cinema 域；ADR-0087 起接管旧影视域）=====
+  /** 📁 影视文件夹（影院域；缺省回落「我的/影视」） */
   cinemaFolderPath: string;
   /** 📄 每页加载数量（影院域，字符串存储冻结） */
   cinemaPageSize: string;
-  // ===== 🎬 影视（5 项）=====
-  /** 📁 影视文件夹 */
-  movieFolderPath: string;
-  /** 📄 每页加载数量（列表初始加载及每次滚动加载的条数） */
-  moviePageSize: string;
-  /** 🔀 默认排序：date-desc / date-asc / rating-desc / rating-asc / name-asc / name-desc */
-  movieDefaultSort: string;
-  /** 🏷️ 默认类型筛选（空=全部；填 ALL_TAGS 中类型名则打开即筛选） */
-  movieDefaultTypeFilter: string;
-  /** 📊 默认状态筛选：全部 / 想看 / 在看 / 已看 */
-  movieDefaultStatusFilter: string;
-  /** ⭐ 已看卡片评分显示：stars（星星串）/ number（⭐数字） */
-  movieRatingDisplay: string;
 
 
   // ===== 🧠 做题家（4 项，含 shuffleQuestions；设置并入复习计划 tab）=====
@@ -373,13 +360,11 @@ export default interface BzSettings {
    *  ADR-0083 重设计去 domain 键——循环仅 created/title 两档；旧 domain 值兼容回落 created。
    *  排序选择持久化于 data.json 而非 favorites.json——favorites.json 顶层是纯条目数组，
    *  顶层加字段需改根结构，会破坏仍在用的外部统计脚本 主页.js（读 favorites.length），
-   *  且违背「既有结构不改」铁律；排序键落设置与 memoSortMode/movieDefaultSort 同惯例） */
+   *  且违背「既有结构不改」铁律；排序键落设置与 memoSortMode 同惯例） */
   favoritesSortKey: string;
   /** 书库：移动端默认全屏（默认开——原 CSS ≤768 全屏主面板与读书笔记；阅读报告跟随此键） */
   libraryMobileDefaultFullscreen: boolean;
-  /** 影视：移动端默认全屏（默认开——主面板/影视分析/影视报告同控，原 JS 内联强制全屏） */
-  movieMobileDefaultFullscreen: boolean;
-  /** 影院：移动端默认全屏（默认开——原 JS 内联强制全屏） */
+  /** 影院：移动端默认全屏（默认开——原 JS 内联强制全屏；ADR-0087 起影视报告同控此键） */
   cinemaMobileDefaultFullscreen: boolean;
   /** 复习计划：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   reviewMobileDefaultFullscreen: boolean;
@@ -574,16 +559,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   bookshelfFolderPath: '',
   bookshelfMobileDefaultFullscreen: true,
 
-  // 影视
-  movieFolderPath: '我的/影视',
-  // 影院（cinema）
-  cinemaFolderPath: '', // 空 = 未配置（不抢占 movie 默认目录）；设置面板配置后生效
+  // 影院（cinema；ADR-0087 起接管影视；缺省回落默认目录，旧 movieFolderPath 键已退役）
+  cinemaFolderPath: '我的/影视',
   cinemaPageSize: '20',
-  moviePageSize: '20',
-  movieDefaultSort: 'date-desc',
-  movieDefaultTypeFilter: '',
-  movieDefaultStatusFilter: '全部',
-  movieRatingDisplay: 'stars',
 
 
   // 做题家（设置并入复习计划 tab）
@@ -678,7 +656,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
   favoritesMobileDefaultFullscreen: true,
   favoritesSortKey: 'created',
   libraryMobileDefaultFullscreen: true,
-  movieMobileDefaultFullscreen: true,
   cinemaMobileDefaultFullscreen: true,
   reviewMobileDefaultFullscreen: true,
   pomodoroMobileDefaultFullscreen: false,

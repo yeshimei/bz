@@ -141,9 +141,9 @@ describe('openAnalysisModal 弹窗', () => {
     closeBtn.click();
     expect(overlay.isConnected).toBe(false);
 
-    // 移动端 + 开关开 → 真全屏类（与影视主面板同一键控制）
+    // 移动端 + 开关开 → 真全屏类（与影院主面板同一键控制；ADR-0087）
     MockPlatform.isMobile = true;
-    setSettingsProvider(() => ({ movieMobileDefaultFullscreen: true } as any));
+    setSettingsProvider(() => ({ cinemaMobileDefaultFullscreen: true } as any));
     openAnalysisModal(makeApp(vault));
     const overlay2 = document.body.querySelector('.bz-movie-report-overlay--1200') as HTMLElement;
     expect(overlay2).not.toBeNull();

@@ -1,25 +1,17 @@
 /**
- * 影视数据分析补充覆盖测试（src/movie-report/analysis.ts 未触达函数分支 + src/movie/constants.ts）：
+ * 影视数据分析补充覆盖测试（src/movie-report/analysis.ts 未触达函数分支）：
  * 评分全桶、宝藏/失望双榜、想看质量、片龄边界（当年/≥10年/负差值）、系列基名剥离
  * （含纯数字书名）、季集缺失回退、影评关键词多命中、年度趋势、无日期条目、
- * 字符串标签容错；空库/富库两套弹窗渲染路径；常量工具浅暗主题。
- * （ADR-0048：原 tests/movie/analysis-cov.test.ts 随报告独立域迁入）
+ * 字符串标签容错；空库/富库两套弹窗渲染路径。
+ * （ADR-0048：原 tests/movie/analysis-cov.test.ts 随报告独立域迁入；
+ *  ADR-0087：movie 域退役，constants 相关断言删除——movie-report 只用 cinema constants 的
+ *  ALL_TAGS/getGroupForTag/STATUS，其结构稳定由 cinema 域测试覆盖）
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { resetMovieReportState, setReportFolderPath } from '../../src/movie-report/state';
 import { buildAnalysisData, openAnalysisModal, closeAnalysis } from '../../src/movie-report/analysis';
-import {
-  STATUS_WANT,
-  STATUS_WATCHING,
-  STATUS_WATCHED,
-  TYPE_GROUPS,
-  ALL_TAGS,
-  getTypeColor,
-  getGroupForTag,
-  getStarRating,
-} from '../../src/movie/constants';
 
 function makeApp(vault: MockVault) {
   return mockAppWithVault(vault);
@@ -44,43 +36,6 @@ beforeEach(() => {
   resetObsidianMocks();
   resetMovieReportState();
   setReportFolderPath('我的/影视');
-});
-
-describe('constants 常量与工具', () => {
-  it('状态常量与类型分组结构稳定（外部依赖的数据约定）', () => {
-    expect(STATUS_WANT).toBe(0);
-    expect(STATUS_WATCHING).toBe(1);
-    expect(STATUS_WATCHED).toBe(2);
-    expect(Object.keys(TYPE_GROUPS)).toEqual(['电影', '剧集', '动漫', '纪录片', '公开课']);
-    // ALL_TAGS 为所有分组的扁平并集
-    expect(ALL_TAGS).toContain('电影');
-    expect(ALL_TAGS).toContain('TED');
-    expect(ALL_TAGS.length).toBe(Object.values(TYPE_GROUPS).flat().length);
-  });
-
-  it('getTypeColor：浅色取 light、暗色取 dark、未知分组回退灰', () => {
-    document.body.classList.remove('theme-dark');
-    expect(getTypeColor('电影')).toBe('#FF9800');
-    document.body.classList.add('theme-dark');
-    expect(getTypeColor('电影')).toBe('#FFA726');
-    document.body.classList.remove('theme-dark');
-    expect(getTypeColor('不存在的组')).toBe('#95a5a6');
-  });
-
-  it('getGroupForTag：命中返回分组名，未命中返回 null', () => {
-    expect(getGroupForTag('美剧')).toBe('剧集');
-    expect(getGroupForTag('国漫')).toBe('动漫');
-    expect(getGroupForTag('杂七杂八')).toBeNull();
-  });
-
-  it('getStarRating（10 分制 → 5 星刻度，ticket 170）：整星四舍五入，0 分空串', () => {
-    expect(getStarRating(10)).toBe('⭐⭐⭐⭐⭐');
-    expect(getStarRating(8)).toBe('⭐⭐⭐⭐');
-    expect(getStarRating(9)).toBe('⭐⭐⭐⭐⭐'); // 9 → 4.5 星 → 四舍五入 5 星
-    expect(getStarRating(8.5)).toBe('⭐⭐⭐⭐'); // 8.5 → 4.25 星 → 四舍五入 4 星
-    expect(getStarRating(8.4)).toBe('⭐⭐⭐⭐'); // 8.4 → 4.2 星 → 4 星
-    expect(getStarRating(0)).toBe('');
-  });
 });
 
 /** 富库：覆盖全部评分桶 / 双榜 / 片龄边界 / 系列 / 季集 / 关键词（评分均为 10 分制，ticket 170） */

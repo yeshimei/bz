@@ -1,12 +1,13 @@
 /**
  * 影视分析报告模块级状态（ADR-0048 独立域）
- * 与 movie 域解耦：仅持本域所需的目录解析结果；
+ * 与 movie/cinema 域解耦：仅持本域所需的目录解析结果；
  * TS 对 `export let` 的导入绑定只读，故收敛为函数式访问。
+ * ADR-0087：目录解析随 cinemaFolderPath（缺省回落 '我的/影视'）。
  */
 
 let folderPath = '我的/影视';
 
-/** 分析数据根目录（ensure 时自设置 movieFolderPath 解析一次） */
+/** 分析数据根目录（ensure 时自设置 cinemaFolderPath 解析一次） */
 export function getReportFolderPath(): string {
   return folderPath;
 }

@@ -1,11 +1,11 @@
 /**
  * 影院（cinema）域入口：懒加载初始化 + 打开/关闭 + 卸载
- * 新域与 movie 域并存；用户后续会删除旧 movie 域，本域独立不复用其代码
+ * 自 ADR-0087 起接管原 movie 域（旧 src/movie 已退役）；目录回落 cinemaFolderPath → 默认。
  */
 import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
-import { M, resetCinemaState } from './state';
+import { M, resetCinemaState, DEFAULT_FOLDER } from './state';
 import { rebuildItems } from './data';
 import { createOverlay, closeOverlay, registerEscapeHandler, renderAll, openAddModalDirect } from './ui';
 
@@ -18,16 +18,15 @@ export function ensureCinema(app: App): void {
   initialized = true;
   M.appRef = app;
   const s = tryGetSettings() as Record<string, unknown>;
-  if (typeof s.cinemaFolderPath === 'string' && s.cinemaFolderPath) {
-    M.folderPath = s.cinemaFolderPath;
-  }
+  // 目录：cinemaFolderPath 显式配置优先，缺省回落默认（旧 movieFolderPath 键已随 movie 域退役删除）
+  M.folderPath =
+    typeof s.cinemaFolderPath === 'string' && s.cinemaFolderPath.trim() ? s.cinemaFolderPath : DEFAULT_FOLDER;
   registerEscapeHandler();
   registerAutoRefresh(app);
 }
 
-/** 域事件自动刷新（cinema/movie/vault 多通道，防抖 300ms，仅 overlay 打开时刷新）。
- *  cinema 语义通道需 path-classify 命中 cinema 才派发；未配置 cinemaFolderPath 时
- *  同目录事件走 movie:file-* 或 vault:md-* 兜底——一律按 M.folderPath 前缀过滤，保证只刷本目录 */
+/** 域事件自动刷新（cinema/vault 多通道，防抖 300ms，仅 overlay 打开时刷新）。
+ *  订阅 cinema:file-* 与 vault:md-*（movie:file-* 通道已随旧域退役）——按 M.folderPath 前缀过滤 */
 function registerAutoRefresh(app: App): void {
   if (autoRefreshRegistered) return;
   autoRefreshRegistered = true;
@@ -41,7 +40,7 @@ function registerAutoRefresh(app: App): void {
       renderAll(app);
     }, 300);
   };
-  for (const kind of ['cinema', 'movie']) {
+  for (const kind of ['cinema']) {
     onDomainEvent<{ path: string }>(`${kind}:file-created`, (evt) => schedule({ path: evt.path }));
     onDomainEvent<{ path: string }>(`${kind}:file-deleted`, (evt) => schedule({ path: evt.path }));
     onDomainEvent<{ path: string }>(`${kind}:file-modified`, (evt) => schedule({ path: evt.path }));

@@ -1,7 +1,7 @@
 /**
- * 入口/工具补测（单文件 80% 目标）：favorites/movie index 分支、
+ * 入口/工具补测（单文件 80% 目标）：favorites index 分支、
  * core/dom createSiteIcon 加载分支、main.ts onunload 清理分支。
- * ADR-0085：news/clipping 入口已随旧域退役，对应 describe 删除。
+ * ADR-0085/0087：news/clipping/movie 入口已随旧域退役，对应 describe 删除。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from './mock-vault';
@@ -10,8 +10,6 @@ import { setApp } from '../src/core/app';
 import { setSettingsProvider } from '../src/core/settings-provider';
 import { emitDomainEvent } from '../src/core/domain-bus';
 import { ensureFavorites, openFavoritesPanel, addFavoriteItem, unloadFavorites } from '../src/favorites/index';
-import { ensureMovie, openMovieManager, addMovieItem, unloadMovie } from '../src/movie/index';
-import { M as MovieM } from '../src/movie/state';
 import { createSiteIcon } from '../src/core/dom';
 import BzPlugin from '../src/main';
 
@@ -24,8 +22,6 @@ function setup() {
   app.workspace.onLayoutReady = (cb: () => void) => cb();
   setApp(app);
   setSettingsProvider(() => ({
-    movieFolderPath: '我的/影视',
-    moviePageSize: '20',
     favoritesStoragePath: 'CONFIG/STORAGE',
   } as any));
   resetObsidianMocks();
@@ -51,51 +47,6 @@ describe('favorites 入口', () => {
   it('unloadFavorites 清理（无 UI 实例安全）', () => {
     unloadFavorites();
     expect(() => unloadFavorites()).not.toThrow();
-  });
-});
-
-describe('movie 入口', () => {
-  beforeEach(() => {
-    setup();
-    unloadMovie();
-  });
-
-  it('openMovieManager：首次打开 overlay，再次调用 toggle 关闭', () => {
-    ensureMovie(app);
-    openMovieManager(app);
-    expect(MovieM.currentOverlay).toBeTruthy();
-    openMovieManager(app);
-    expect(MovieM.currentOverlay).toBeNull();
-  });
-
-  it('addMovieItem 打开添加弹窗', () => {
-    ensureMovie(app);
-    addMovieItem(app);
-    expect(MovieM.addOverlay).toBeTruthy();
-  });
-
-  it('域事件触发防抖刷新（overlay 打开时 rebuild）', async () => {
-    ensureMovie(app);
-    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
-    openMovieManager(app);
-    await vi.advanceTimersByTimeAsync(50); // rebuildItems 完成
-    const before = ((MovieM as any).entries || []).length;
-    emitDomainEvent('movie:file-modified', { path: '我的/影视/《新片》.md' });
-    await vi.advanceTimersByTimeAsync(400);
-    vi.useRealTimers();
-    expect(((MovieM as any).entries || []).length).toBeGreaterThanOrEqual(before);
-  });
-
-  it('域事件：非影视目录文件不触发（M.folderPath 前缀守卫双保险）', async () => {
-    ensureMovie(app);
-    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
-    openMovieManager(app);
-    await vi.advanceTimersByTimeAsync(50);
-    const before = ((MovieM as any).entries || []).length;
-    emitDomainEvent('movie:file-created', { path: '其他/x.md' });
-    await vi.advanceTimersByTimeAsync(400);
-    vi.useRealTimers();
-    expect(((MovieM as any).entries || []).length).toBe(before);
   });
 });
 

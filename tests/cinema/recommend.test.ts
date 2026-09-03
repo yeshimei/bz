@@ -8,6 +8,7 @@ import { M, resetCinemaState } from '../../src/cinema/state';
 import { rebuildItems } from '../../src/cinema/data';
 import {
   buildTasteProfile, buildRecommendPrompt, quickAddWant, parseRecommendJson, runAIRecommend,
+  runSimilarRecommend, buildSimilarPrompt,
 } from '../../src/cinema/recommend';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { setApp } from '../../src/core/app';
@@ -131,5 +132,67 @@ describe('cinema runAIRecommend（页内化：等待 → 结果列表 / 失败�
     expect(M.aiResult).toBeNull();
     expect(M.aiError).toContain('AI 分析失败');
     expect(document.querySelector('.bz-overlay-mask')).toBeNull();
+  });
+});
+
+describe('cinema 找同类（ADR-0087 迁入 runSimilarRecommend/buildSimilarPrompt）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetCinemaState();
+    document.body.innerHTML = '';
+    M.folderPath = '我的/影视';
+    const vault = new MockVault();
+    seedProfile(vault);
+    M.appRef = mockAppWithVault(vault);
+    M.renderFn = vi.fn();
+    rebuildItems(M.appRef as any);
+  });
+
+  it('提示词：以基准影片 + 已看清单为输入，要求 JSON 输出', () => {
+    const base = M.items.find((i) => i.name === 'A')!;
+    const watched = M.items.filter((i) => i.status === 2 && i.name !== 'A'); // B 已看
+    const prompt = buildSimilarPrompt(base, watched);
+    expect(prompt).toContain('基准影片');
+    expect(prompt).toContain('《A》');
+    expect(prompt).toContain('B');
+    expect(prompt).toContain('"recommendations"');
+    expect(prompt).toContain('资深影视推荐官');
+  });
+
+  it('AI 成功 → 页内 aiResult 就绪，标题为「找同类 ·《A》」（不弹窗）', async () => {
+    const base = M.items.find((i) => i.name === 'A')!;
+    const raw = '{"recommendations":[{"title":"禁闭岛","year":"2010","director":"马丁","type":"电影","reason":"同导演悬疑风格"}]}';
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'test-key' }));
+    resetAIProviderCache();
+    setApp(M.appRef as any);
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('no net')));
+    const { requestUrl } = await import('obsidian');
+    (requestUrl as any).mockResolvedValue({ status: 200, text: JSON.stringify({ choices: [{ message: { content: raw } }] }) });
+
+    const promise = runSimilarRecommend(base, M.appRef as any);
+    expect(M.aiRunning).toBe(true);
+    expect(M.aiTitle).toContain('找同类');
+    expect(M.aiTitle).toContain('A');
+    expect(M.view).toBe('ai');
+    await promise;
+    expect(M.aiRunning).toBe(false);
+    expect(M.aiResult?.length).toBe(1);
+    expect(M.aiResult?.[0].title).toBe('禁闭岛');
+    expect(M.aiError).toBeNull();
+    expect(document.querySelector('.bz-overlay-mask')).toBeNull();
+  });
+
+  it('AI 失败 → aiError（无结果）', async () => {
+    const base = M.items.find((i) => i.name === 'A')!;
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'test-key' }));
+    resetAIProviderCache();
+    setApp(M.appRef as any);
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('no net')));
+    const { requestUrl } = await import('obsidian');
+    (requestUrl as any).mockResolvedValue({ status: 200, text: JSON.stringify({ choices: [{ message: { content: 'nope' } }] }) });
+    await runSimilarRecommend(base, M.appRef as any);
+    expect(M.aiRunning).toBe(false);
+    expect(M.aiResult).toBeNull();
+    expect(M.aiError).toContain('AI 分析失败');
   });
 });

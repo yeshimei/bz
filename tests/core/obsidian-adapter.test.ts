@@ -74,7 +74,7 @@ describe('obsidian-adapter', () => {
       'vault:md-modified',
       'flash:file-modified',
       'vault:md-deleted',
-      'movie:file-deleted',
+      'cinema:file-deleted',
       'vault:md-created',
       'diary:file-created'
     );
@@ -86,7 +86,8 @@ describe('obsidian-adapter', () => {
 
     vault.fire('delete', { path: '我的/影视/《a》观后感.md' }); // delete 失效对象：无 extension，只用 path
     expect(rec.payloadsOf('vault:md-deleted')).toEqual([{ path: '我的/影视/《a》观后感.md' }]);
-    expect(rec.payloadsOf('movie:file-deleted')).toEqual([{ path: '我的/影视/《a》观后感.md' }]);
+    // ADR-0087：影视目录归 cinema（旧 movie:file-* 通道退役）
+    expect(rec.payloadsOf('cinema:file-deleted')).toEqual([{ path: '我的/影视/《a》观后感.md' }]);
 
     vault.fire('create', { path: '我的/日记/随笔.md', extension: 'md' }); // 日记但非日期命名 → date 字段整个省略
     expect(rec.payloadsOf('diary:file-created')).toEqual([{ path: '我的/日记/随笔.md' }]);
@@ -147,7 +148,7 @@ describe('obsidian-adapter', () => {
       'diary:file-renamed',
       'poem:file-renamed',
       'letter:file-renamed',
-      'movie:file-renamed',
+      'cinema:file-renamed',
       'clipping:file-renamed',
     ];
     const rec = record('vault:md-renamed', ...semanticNames);
