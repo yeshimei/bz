@@ -8,6 +8,7 @@ import { onDomainEvent } from '../core/domain-bus';
 import { M, resetCinemaState, DEFAULT_FOLDER } from './state';
 import { rebuildItems } from './data';
 import { createOverlay, closeOverlay, registerEscapeHandler, renderAll, openAddModalDirect } from './ui';
+import { stopAllPosterWatch } from './poster-watch';
 
 let initialized = false;
 let autoRefreshRegistered = false;
@@ -70,6 +71,7 @@ export function addCinemaItem(app: App): void {
 export function unloadCinema(): void {
   initialized = false;
   autoRefreshRegistered = false;
+  stopAllPosterWatch(); // 摘除海报轮询 interval（卸载后不再读文件/写通知）
   if (M.currentOverlay) {
     M.currentOverlay.remove();
     M.currentOverlay = null;
