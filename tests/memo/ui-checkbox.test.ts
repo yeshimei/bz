@@ -8,9 +8,10 @@ import { setApp } from '../../src/core/app';
 import { setBzSettingsProvider } from '../../src/memo';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { App } from '../../src/memo/app';
-import { UIManager } from '../../src/memo/ui';
+import { UIManager, Renderer } from '../../src/memo/ui';
+import { DataManager } from '../../src/memo/data';
 import { MockVault } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, hasNotice, clearNotices } from '../mock-obsidian-entry';
 import { onDomainEvent } from '../../src/core/domain-bus';
 
 // 观测点换线（域事件派发）：真实总线 + onDomainEvent('memo', spy) 挂间谍，断言 UI 发出的载荷
@@ -109,5 +110,53 @@ describe('checkbox 完成防抖（ticket 084a A1）', () => {
     expect(mockedNotify).toHaveBeenCalledTimes(1);
     const items = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
     expect(items[0].completed).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+  });
+});
+// ==================== 完成路径写盘失败兜底（try/catch + 通知，不再未处理 rejection） ====================
+
+describe('完成写盘失败兜底', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+    localStorage.clear();
+    vi.useFakeTimers();
+    mockedNotify.mockClear();
+    offNotifySpy = onDomainEvent('memo', mockedNotify);
+  });
+
+  afterEach(() => {
+    offNotifySpy();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it('勾选完成写盘失败 → 通知「标记完成失败」，不发完成域事件（P3：定时回调无 try/catch）', async () => {
+    const vault = new MockVault();
+    await initApp(vault);
+    const checkbox = await seedOne(vault);
+    vi.spyOn(DataManager, 'completeItem').mockRejectedValue(new Error('disk full'));
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    clearNotices();
+    checkbox.click();
+    await vi.advanceTimersByTimeAsync(350);
+    expect(hasNotice('标记完成失败')).toBe(true);
+    expect(mockedNotify).not.toHaveBeenCalled(); // 失败不发 completed 域事件
+    consoleSpy.mockRestore();
+  });
+
+  it('抽屉/菜单「标记完成」写盘失败 → 通知「标记完成失败」（P3：动作无 try/catch）', async () => {
+    const vault = new MockVault();
+    await initApp(vault);
+    await seedOne(vault);
+    vi.spyOn(DataManager, 'completeItem').mockRejectedValue(new Error('disk full'));
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    clearNotices();
+    const actions = Renderer.buildCardActions(App.state.todoItems[0]);
+    const markDone = actions.find((a) => a.label === '标记完成');
+    expect(markDone).toBeTruthy();
+    await markDone!.onClick();
+    expect(hasNotice('标记完成失败')).toBe(true);
+    expect(mockedNotify).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
   });
 });
