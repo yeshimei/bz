@@ -304,4 +304,24 @@ describe('auto-summary 入口', () => {
     await vi.advanceTimersByTimeAsync(1600);
     expect(fetchSpy).toHaveBeenCalled();
   });
+
+  it('stopAutoSummary 撤销已排队任务：停用后 clearTimeout，延迟窗内的文件不再触发 AI（审计修复）', async () => {
+    setSettingsProvider(() => ({}) as any); // 重置残留 articleDirectory
+    const fetchSpy = mockAIResponse('{"summary":"S","tags":["a"]}');
+    ensureAutoSummary(makeApp(vault, workspace));
+    await vi.advanceTimersByTimeAsync(2000);
+    vault.files.set('归档/网页剪藏/queued.md', `---\ntitle: "T"\n---\n\n${LONG_BODY}`);
+    workspace.emit('file-open', vault.file('归档/网页剪藏/queued.md'));
+    await vi.advanceTimersByTimeAsync(1000); // 已入队，尚未到 1500ms
+    stopAutoSummary(); // 停用：排队任务应被 clearTimeout 撤销
+    await vi.advanceTimersByTimeAsync(4000);
+    expect(fetchSpy).not.toHaveBeenCalled(); // 停用后不再触发 AI
+    expect(vault.modifiedPaths).toHaveLength(0); // 文件未被改写
+    // 再开启：恢复正常处理
+    ensureAutoSummary(makeApp(vault, workspace));
+    await vi.advanceTimersByTimeAsync(2000);
+    workspace.emit('file-open', vault.file('归档/网页剪藏/queued.md'));
+    await vi.advanceTimersByTimeAsync(1600);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
 });

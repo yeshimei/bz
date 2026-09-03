@@ -14,9 +14,18 @@ export const POSTER_POLL_MS = 2000;
 /** 最大轮询次数（2s × 150 = 5 分钟）；超时停止轮询并把通知收尾为失败 */
 export const POSTER_POLL_MAX = 150;
 
+/** 活跃轮询的停止函数登记表（插件卸载时统一 clearInterval，防卸载后仍读文件/写通知） */
+const activeStops = new Set<() => void>();
+
+/** 停止全部海报轮询（cinema 域 unload 时调用；幂等） */
+export function stopAllPosterWatch(): void {
+  for (const stop of [...activeStops]) stop();
+  activeStops.clear();
+}
+
 /**
  * 监听影视笔记海报字段：轮询检测 frontmatter「海报」非空 → 通知原地更新为「海报和豆瓣信息获取完成」；
- * 轮询到上限 → 原地更新为「海报获取超时：请确认海报守护进程已运行」（error，不再挂「获取中」）。
+ * 轮询到上限 → 原地更新为「海报获取超时：请确认海报守护进程已运行」（error，不再永久挂「获取中」）。
  * @param handle 创建时返回的 progress 通知句柄（progress 类型默认常驻，不自动消失）
  */
 export function watchPosterFetch(app: App, file: TFile, handle: NoticeHandle): void {
@@ -27,7 +36,9 @@ export function watchPosterFetch(app: App, file: TFile, handle: NoticeHandle): v
   const stop = (): void => {
     stopped = true;
     window.clearInterval(timer);
+    activeStops.delete(stop);
   };
+  activeStops.add(stop);
 
   /** 获取完成：收尾句柄为 success */
   const finish = (): void => {

@@ -18,8 +18,8 @@ let workspaceRef: any = null;
 let fileListenerRef: any = null;
 let openListenerRef: any = null;
 let registerTimer: ReturnType<typeof setTimeout> | null = null;
-/** 延迟窗口内同一文件只排队一次（create+open 双触发去重） */
-const pendingPaths = new Set<string>();
+/** 延迟窗口内同一文件只排队一次（create+open 双触发去重）；存 timer id，stop 时统一取消 */
+const pendingPaths = new Map<string, ReturnType<typeof setTimeout>>();
 /** 处理中集合：processFile 开始加入、finally 移除；完成前重复触发直接忽略（替代固定去重窗） */
 const processingPaths = new Set<string>();
 
@@ -38,12 +38,12 @@ function queueProcess(app: any, ai: any, file: any): void {
   if (!file.path.startsWith(getWatchDir() + '/')) return;
   if (processingPaths.has(file.path)) return; // 处理中：重复触发直接忽略
   if (pendingPaths.has(file.path)) return;
-  pendingPaths.add(file.path);
-  // 延迟处理，等 frontmatter 写入完成
-  setTimeout(() => {
+  // 延迟处理，等 frontmatter 写入完成；timer id 入表（stop/unload 统一 clearTimeout，防停用后仍触发 AI）
+  const timer = setTimeout(() => {
     pendingPaths.delete(file.path);
     void processOnce(app, ai, file);
   }, 1500);
+  pendingPaths.set(file.path, timer);
 }
 
 /** 延迟 2000ms 注册 create + file-open 监听（原脚本防冲突语义）。
@@ -97,6 +97,8 @@ export function stopAutoSummary(): void {
     try { workspaceRef.offref(openListenerRef); } catch { /* 忽略 */ }
     openListenerRef = null;
   }
+  // 撤销已排队任务（clearTimeout）：停用后不再触发 AI 调用改写文件
+  for (const timer of pendingPaths.values()) clearTimeout(timer);
   pendingPaths.clear();
   processingPaths.clear();
 }

@@ -17,6 +17,7 @@ import { notice, notify } from '../core/notice';
 import { emitDomainEvent } from '../core/domain-bus';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen } from '../core/mobile';
+import { topifyZ } from '../core/dom';
 import { tryGetSettings } from '../core/settings-provider';
 import { uiModal, uiIcon, uiSegmented } from '../core/ui';
 import {
@@ -434,8 +435,16 @@ function localNow(): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
-/** 把条目落盘：新增建笔记（movie 域同格式），编辑/快速状态写 frontmatter（保留海报/豆瓣字段） */
-async function persistItem(item: CinemaItem, app: App): Promise<void> {
+/** 文件名非法字符（Windows 保留集；名称源自文件名《X》，改名前拦截） */
+const ILLEGAL_NAME_RE = /[\\/:*?"<>|]/;
+
+/**
+ * 把条目落盘：新增建笔记（movie 域同格式），编辑/快速状态写 frontmatter（保留海报/豆瓣字段）。
+ * 编辑分支（P1 修复）：名称源自文件名《X》→ 改名走 fileManager.renameFile（Obsidian 内建，
+ * 自动更新全库双链）；类型写入 frontmatter tags（替换旧类型 tag 项、保留其他 tag）。
+ * @param edit 编辑态信息（prevName=改名前的名称 / prevTag=改类型前的 tag；快速状态窗不传）
+ */
+async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string; prevTag: string }): Promise<void> {
   if (!item.file) {
     // 新增：创建《名称》.md（与 movie 域文件格式一致；海报/豆瓣字段由外部工具补）
     const folder = M.folderPath;
@@ -448,12 +457,32 @@ async function persistItem(item: CinemaItem, app: App): Promise<void> {
     item.file = f;
     return;
   }
+  // 编辑改名：文件重命名（重名/非法字符已在保存入口前置拦截；此处失败走统一「保存失败」）
+  if (edit && item.name !== edit.prevName) {
+    const newPath = `${M.folderPath}/《${item.name}》.md`;
+    if (newPath !== item.file.path) {
+      await app.fileManager.renameFile(item.file, newPath);
+      item.file = (app.vault.getAbstractFileByPath(newPath) as CinemaItem['file']) || item.file;
+    }
+  }
   // 编辑/快速状态：写 frontmatter（不动海报/豆瓣等字段）
   await app.fileManager.processFrontMatter(item.file, (fm: Record<string, unknown>) => {
     fm['评分'] = item.rating ?? 0;
     fm['观影日期'] = item.watchDate || localNow();
     if (item.review) fm['影评'] = item.review;
     else delete fm['影评'];
+    // 类型 → tags：编辑态替换旧类型 tag 项（保留其他 tag）；无 tags 键则新建
+    if (edit) {
+      const tags = Array.isArray(fm['tags'])
+        ? (fm['tags'] as unknown[]).map((t) => String(t))
+        : typeof fm['tags'] === 'string' && fm['tags']
+          ? [fm['tags'] as string]
+          : [];
+      const at = tags.indexOf(edit.prevTag);
+      if (at >= 0) tags[at] = item.typeTag;
+      else if (!tags.includes(item.typeTag)) tags.unshift(item.typeTag);
+      fm['tags'] = tags;
+    }
   });
 }
 
@@ -520,11 +549,23 @@ function openEditForm(item: CinemaItem | null, app: App): void {
     const st = status === '想看' ? STATUS_WANT : status === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
     void (async () => {
       let newItem: CinemaItem | null = null; // CM2：新增落盘失败时回退用
+      // 编辑改名前置校验（重名/非法字符拦截；名称源自文件名《X》）
+      if (editing && item && name !== item.name) {
+        if (ILLEGAL_NAME_RE.test(name)) {
+          notice('名称含非法字符（\\ / : * ? " < > |），请修改', 'error');
+          return;
+        }
+        if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${name}》.md`)) {
+          notice('已存在同名影视，请换个名称');
+          return;
+        }
+      }
+      const prev = editing && item ? { name: item.name, typeTag: item.typeTag, group: item.group, status: item.status, rating: item.rating, watchDate: item.watchDate, review: item.review } : null;
       try {
         if (editing && item) {
           item.name = name; item.typeTag = tag; item.group = group;
           item.status = st; item.rating = mapped; item.watchDate = date; item.review = review;
-          await persistItem(item, app);
+          await persistItem(item, app, { prevName: prev!.name, prevTag: prev!.typeTag });
           // 编辑表单对齐旧 movie 语义：不发域事件（smartcat 观察只覆盖新增/快速状态/删除）
         } else {
           // CM2：同笔记名已存在时 vault.create 会抛错，提前拦截提示
@@ -554,11 +595,13 @@ function openEditForm(item: CinemaItem | null, app: App): void {
         notice(editing ? '已保存' : '已添加', 'success');
         renderAll(app);
       } catch (e) {
-        // CM2：新增落盘失败回退内存条目，避免 file:null 幽灵卡
+        // CM2：新增落盘失败回退内存条目，避免 file:null 幽灵卡；编辑失败回滚内存（磁盘未动，300ms 重建不会弹回）
         if (newItem && !newItem.file) {
           const i = M.items.indexOf(newItem);
           if (i >= 0) M.items.splice(i, 1);
           renderAll(app);
+        } else if (editing && item && prev) {
+          Object.assign(item, prev);
         }
         notice('保存失败', 'error');
         console.error(e);
@@ -586,7 +629,10 @@ function openDeleteConfirm(item: CinemaItem, app: App): void {
       try {
         await app.vault.delete(item.file);
       } catch (e) {
+        // 删除失败（如 Windows 文件被占用）：报错并保留条目，不摘列表不报成功（下次 rebuild 会「复活」）
         console.error('删除影视笔记失败:', e);
+        notice('删除失败：文件可能被占用，请重试', 'error');
+        return;
       }
     }
     const idx = M.items.indexOf(item);
@@ -692,6 +738,7 @@ export function createOverlay(app: App): void {
     </div>`;
 
   document.body.appendChild(overlay);
+  topifyZ(overlay); // ADR-0067：显示即发号——home 等静态档面板先开时影院仍置顶（谁后显示谁在上）
   M.currentOverlay = overlay;
   M.renderFn = () => renderAll(app);
   applyMobileWindowFullscreen(overlay.querySelector('.bz-cinema-panel') as HTMLElement, fullscreen);
@@ -844,6 +891,7 @@ export function closeOverlay(): void {
     M.currentOverlay = null;
   }
   M.renderFn = null;
+  M.view = 'list'; // 复位视图：重开回落列表页（AI 页/分析页不跨开合残留）
 }
 
 // ---------- ESC（主面板） ----------
