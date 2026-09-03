@@ -94,7 +94,34 @@ export function sortByDateDesc(list: CinemaItem[]): CinemaItem[] {
   return [...list].sort((a, b) => dateVal(b) - dateVal(a));
 }
 
-/** 当前筛选（类型/二级/状态/搜索） */
+/** 按创建时间（笔记文件 mtime）倒序；文件无 mtime 时按名称兜底保持稳定 */
+export function sortByCreatedDesc(list: CinemaItem[]): CinemaItem[] {
+  return [...list].sort((a, b) => {
+    const ta = a.file ? a.file.stat.mtime : 0;
+    const tb = b.file ? b.file.stat.mtime : 0;
+    if (ta !== tb) return tb - ta;
+    return (b.name || '').localeCompare(a.name || '');
+  });
+}
+
+/** 按评分倒序：已看（评分>0）降序；未看（-1/0/无评分）排最后（其内部按日期倒序） */
+export function sortByRatingDesc(list: CinemaItem[]): CinemaItem[] {
+  return [...list].sort((a, b) => {
+    const ar = a.rating && a.rating > 0 ? a.rating : -1;
+    const br = b.rating && b.rating > 0 ? b.rating : -1;
+    if (ar !== br) return br - ar;
+    return dateVal(b) - dateVal(a);
+  });
+}
+
+/** 按当前排序模式排序（date/created/rating）；未识别模式回退观影日期倒序 */
+export function applySortMode(list: CinemaItem[], mode: string): CinemaItem[] {
+  if (mode === 'created') return sortByCreatedDesc(list);
+  if (mode === 'rating') return sortByRatingDesc(list);
+  return sortByDateDesc(list);
+}
+
+/** 当前筛选（类型/二级/状态/搜索）+ 当前排序模式（先筛选后排序，保证列表正确） */
 export function getDisplayItems(): CinemaItem[] {
   let list = [...M.items];
   if (M.typeFilter) list = list.filter((it) => it.group === M.typeFilter);
@@ -112,7 +139,7 @@ export function getDisplayItems(): CinemaItem[] {
       );
     });
   }
-  return sortByDateDesc(list);
+  return applySortMode(list, M.sortMode);
 }
 
 /** 重建数据 + 重渲染 */
