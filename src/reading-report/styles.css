@@ -1,0 +1,29 @@
+/* ============================================================
+ * 阅读数据分析报告（reading-report）域样式
+ * audit H：热力图单元格的尺寸/@media/:hover 从内联 style 迁入——
+ * 内联 style 无法承载 @media 与 &:hover，原写法移动端尺寸与 hover 放大全部失效
+ * ============================================================ */
+
+.bz-rr-hm-cell {
+  width: 20px;
+  height: 20px;
+  border-radius: 2px;
+}
+
+.bz-rr-hm-cell--data {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.bz-rr-hm-cell--data:hover {
+  transform: scale(1.2);
+  z-index: 10;
+}
+
+@media (max-width: 768px) {
+  .bz-rr-hm-cell {
+    width: 15px;
+    height: 15px;
+  }
+}

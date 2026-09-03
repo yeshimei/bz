@@ -166,7 +166,10 @@ export function formatReadingTime(totalReadTimeMs: number | undefined): string |
 
 function toDateString(timestamp: number | undefined): string | null {
   if (!Number.isFinite(timestamp) || !timestamp) return null;
-  return new Date(timestamp).toISOString().slice(0, 10);
+  // 本地时区 YYYY-MM-DD（原 UTC 切片会在时区边界偏移一天，audit H；口径同 reading-report/stats.ts）
+  const d = new Date(timestamp);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
 /** 单本 EPUB 聚合 → 书架条目（缺 title/vaultPath 跳过） */
@@ -243,10 +246,16 @@ export async function loadEpubItems(app: App): Promise<BookshelfItem[]> {
   return items;
 }
 
+/** 重建在途序号（audit I）：并发 rebuild 只有最新一次落袋——旧快照（同步扫描结果）晚到时
+ *  不得回写覆盖新数据；参照 library ui 的 bookNotesLoadSeq 先例 */
+let rebuildSeq = 0;
+
 /** 重建条目列表（md 同步 + EPUB 异步并入；返回 promise 供 UI 层完成后统一渲染） */
 export async function rebuildItems(app: App): Promise<BookshelfItem[]> {
+  const seq = ++rebuildSeq;
   const mdItems = scanMarkdownBooks(app);
   const epubItems = await loadEpubItems(app);
+  if (seq !== rebuildSeq) return M.items; // 过期在途重建：已被更新一次的重建取代
   const merged = [...mdItems, ...epubItems];
   M.items.length = 0;
   M.items.push(...merged);
@@ -335,15 +344,16 @@ export function computeStats(now: Date = new Date()): ShelfStats {
   }
   const totalHighlights = M.items.reduce((s, x) => s + (x.highlights || 0), 0);
 
-  // 近 12 个月读完（按 completionDate）
+  // 近 12 个月读完（按 completionDate）：bars[0] = 11 个月前，bars[11] = 本月（标签与数据同柱）
   const bars: { count: number; label: string; isThis: boolean }[] = [];
   const nowM = now.getFullYear() * 12 + now.getMonth();
-  for (let i = 11; i >= 0; i--) {
-    const t = nowM - i;
+  for (let i = 0; i < 12; i++) {
+    const t = nowM - (11 - i);
     const y = Math.floor(t / 12);
     const m = t % 12;
     const count = done.filter((x) => x.completionDate && +x.completionDate.slice(0, 4) === y && +x.completionDate.slice(5, 7) === m + 1).length;
-    bars.push({ count, label: i === 11 ? '本月' : `${m + 1}月`, isThis: i === 11 });  }
+    bars.push({ count, label: i === 11 ? '本月' : `${m + 1}月`, isThis: i === 11 });
+  }
   return {
     reading, unread, done, doneThisYear,
     totalHours: Math.round(totalMs / 3600000),

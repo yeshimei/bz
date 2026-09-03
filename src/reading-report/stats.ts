@@ -203,10 +203,11 @@ export function calculateReadingStats(books: BookNoteEntry[]): ReadingStats {
         stats.readingSessions = stats.readingSessions.concat(fm.readingSessions).filter((d) => d.duration > 60);
       }
 
-      // 统计阅读状态
-      if (fm.completionDate) {
+      // 统计阅读状态（audit G：与 bookshelf/library 双日期口径统一——
+      // readingDate && completionDate 才算已读；只补完成日期的书在两面板不再状态分叉）
+      if (fm.readingDate && fm.completionDate) {
         stats.readBooks++;
-      } else if (fm.readingDate && !fm.completionDate) {
+      } else if (fm.readingDate) {
         stats.readingBooks++;
       } else {
         stats.unreadBooks++;
@@ -258,13 +259,13 @@ export function calculateReadingStats(books: BookNoteEntry[]): ReadingStats {
           stats.monthlyStats[monthKey].booksRead++;
           stats.monthlyStats[monthKey].totalReadingTime += readingTime;
           stats.monthlyStats[monthKey].totalHighlights += parseInt(fm.highlights) || 0;
-          if (readingProgress >= 100) stats.monthlyStats[monthKey].booksCompleted++;
+          // audit H：booksCompleted 只在 completionDate 桶记一次（下方完成日期统计），
+          // 不再在阅读月按 progress>=100 重复计数
 
           if (!stats.yearlyStats[yearKey]) stats.yearlyStats[yearKey] = emptyYearlyStats();
           stats.yearlyStats[yearKey].booksRead++;
           stats.yearlyStats[yearKey].totalReadingTime += readingTime;
           stats.yearlyStats[yearKey].totalHighlights += parseInt(fm.highlights) || 0;
-          if (readingProgress >= 100) stats.yearlyStats[yearKey].booksCompleted++;
         } catch (dateError) {
           console.warn(`日期解析错误: ${fm.readingDate}`, dateError);
         }
@@ -453,13 +454,13 @@ function calculateMonthlyAverage(monthlyData: any[]): string {
   return (total / monthlyData.length).toFixed(1);
 }
 
-/** 获取当前月统计 */
-function getCurrentMonthStats(monthlyData: any[]) {
-  if (monthlyData.length === 0) return { books: 0, completed: 0 };
-  const current = monthlyData[monthlyData.length - 1];
+/** 获取当前月统计（audit F：按当前年月键直查；当月无数据 → 0，不再取「升序末位」的旧月份数据） */
+function getCurrentMonthStats(monthlyData: any[], now: Date = new Date()) {
+  const key = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}`;
+  const current = monthlyData.find((m) => m.month === key);
   return {
-    books: current.booksRead,
-    completed: current.booksCompleted,
+    books: current?.booksRead ?? 0,
+    completed: current?.booksCompleted ?? 0,
   };
 }
 
@@ -490,8 +491,8 @@ export function analyzeTrendDirection(monthlyData: any[]): string {
   return diff > 0 ? '↑' : '↓';
 }
 
-/** 分析阅读趋势（完整） */
-export function analyzeReadingTrends(stats: ReadingStats, bookNotes: BookNoteEntry[]) {
+/** 分析阅读趋势（完整）；now 供测试固定「本月」 */
+export function analyzeReadingTrends(stats: ReadingStats, bookNotes: BookNoteEntry[], now: Date = new Date()) {
   const monthlyData = getMonthlyTrendData(stats); // 升序（旧→新）
   const ascendingRecent = monthlyData.slice(-6); // 统计口径：反转前的升序切片
   const recentMonths = [...ascendingRecent].reverse(); // 最近6个月，仅供图表高亮展示（新→旧）
@@ -499,7 +500,7 @@ export function analyzeReadingTrends(stats: ReadingStats, bookNotes: BookNoteEnt
   return {
     recentMonths,
     monthlyAvg: calculateMonthlyAverage(ascendingRecent),
-    currentMonth: getCurrentMonthStats(ascendingRecent),
+    currentMonth: getCurrentMonthStats(ascendingRecent, now),
     quarterlyAvg: calculateQuarterlyAverage(ascendingRecent),
     completionRate: calculateCompletionRate(stats),
     trendDirection: analyzeTrendDirection(ascendingRecent),

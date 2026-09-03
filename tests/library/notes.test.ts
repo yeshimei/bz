@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
-import { parseBookNotes, updateComment, deleteHighlight } from '../../src/library/notes';
+import { parseBookNotes, updateComment, deleteHighlight, jumpToHighlight } from '../../src/library/notes';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 
@@ -157,5 +157,96 @@ describe('updateComment / deleteHighlight', () => {
     expect(done).toBe(true);
     expect(hasNotice('批注已更新')).toBe(true);
     expect(hasNotice('未找到对应高亮（原文不匹配），编辑失败')).toBe(false);
+  });
+
+  it('audit D：写盘走 vault.process 原子读改写，不再用 vault.modify 全文替换', async () => {
+    const app = makeApp(vault);
+    const modifySpy = vi.spyOn(app.vault, 'modify');
+    const processSpy = vi.spyOn(app.vault, 'process');
+    const ok = await updateComment(app, '书库/活着.md', 'h1', '原文一', '原子写批注');
+    expect(ok).toBe(true);
+    expect(processSpy).toHaveBeenCalledTimes(1);
+    expect(modifySpy).not.toHaveBeenCalled();
+    expect(vault.files.get('书库/活着.md')).toContain('data-comment="原子写批注"');
+  });
+
+  it('audit D：读后他域并发改 frontmatter，process 对最新盘上内容重放替换（并发写不回滚）', async () => {
+    const app = makeApp(vault);
+    // 模拟「读之后、写之前」bookshelf 落盘追加了 frontmatter 行
+    const realProcess = app.vault.process.bind(app.vault);
+    app.vault.process = async (file: any, fn: (c: string) => string) => {
+      vault.files.set('书库/活着.md', vault.files.get('书库/活着.md') + '\nbookReview: 他域并发写入');
+      return realProcess(file, fn);
+    };
+    const ok = await updateComment(app, '书库/活着.md', 'h1', '原文一', '并发共存');
+    expect(ok).toBe(true);
+    const out = vault.files.get('书库/活着.md')!;
+    expect(out).toContain('data-comment="并发共存"');
+    expect(out).toContain('他域并发写入'); // 并发落盘未被旧快照回滚
+  });
+
+  it('audit H：文件缺失 → notice + resolve(false)（不再静默 return 悬挂弹窗）', async () => {
+    const ok = await updateComment(makeApp(vault), '书库/不存在.md', 'h1', '原文一', 'x');
+    expect(ok).toBe(false);
+    expect(hasNotice('文件不存在，编辑批注失败')).toBe(true);
+  });
+
+  it('audit H：IO 失败（read/process reject）→ notice + false，不抛未处理 rejection', async () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const app = makeApp(vault);
+    app.vault.process = vi.fn().mockRejectedValue(new Error('disk io')) as any;
+    const ok = await updateComment(app, '书库/活着.md', 'h1', '原文一', 'x');
+    expect(ok).toBe(false);
+    expect(hasNotice('编辑批注失败，请重试')).toBe(true);
+    errSpy.mockRestore();
+  });
+
+  it('audit H：deleteHighlight IO 失败 → notice + false + onDone 仍回调（B2 重开壳）', async () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const done = vi.fn();
+    const app = makeApp(vault);
+    app.vault.read = vi.fn().mockRejectedValue(new Error('disk io')) as any;
+    const ok = await deleteHighlight(app, '书库/活着.md', 'h1', '原文一', done);
+    expect(ok).toBe(false);
+    expect(done).toHaveBeenCalled();
+    expect(hasNotice('删除高亮失败，请重试')).toBe(true);
+    errSpy.mockRestore();
+  });
+
+  it('audit I：jumpToHighlight 跳转 + 150ms 后经 getMostRecentLeaf 聚焦编辑器（不再用废弃 activeLeaf）', () => {
+    vi.useFakeTimers();
+    try {
+      const focus = vi.fn();
+      const app = {
+        vault,
+        workspace: {
+          openLinkText: vi.fn(),
+          getMostRecentLeaf: vi.fn(() => ({ view: { editor: { focus } } })),
+        },
+      } as any;
+      jumpToHighlight(app, '书库/活着.md', 'h1');
+      expect(app.workspace.openLinkText).toHaveBeenCalledWith('书库/活着.md#^h1', '', false);
+      vi.advanceTimersByTime(150);
+      expect(app.workspace.getMostRecentLeaf).toHaveBeenCalledTimes(1);
+      expect(focus).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('audit I：getMostRecentLeaf 缺失/无编辑器时静默跳过（不影响跳转）', () => {
+    vi.useFakeTimers();
+    try {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const app = { vault, workspace: { openLinkText: vi.fn() } } as any;
+      expect(() => {
+        jumpToHighlight(app, '书库/活着.md', 'h1');
+        vi.advanceTimersByTime(150);
+      }).not.toThrow();
+      expect(app.workspace.openLinkText).toHaveBeenCalledTimes(1);
+      warnSpy.mockRestore();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
