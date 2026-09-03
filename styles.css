@@ -368,9 +368,7 @@ template {
    （仍是兜底 unset），但任何单类按钮规则（.bz-btn/.bz-choice-btn 等 0,1,0）
    即可覆盖——共享组件库的单类组件成立的前提。 */
 button:not(.clickable-icon) {
-    color: unset;
-    background-color: unset;
-    box-shadow: unset;
+  box-shadow: none !important;
 }
 
 /* ===== 设置页顶部分页（参考 obsidian-linter 设置页） ===== */
