@@ -22,7 +22,7 @@ import { openSettingsModal } from '../core/settings-modal';
 import type { SettingsSchema } from '../core/settings-schema';
 import { tryGetSettings } from '../core/settings-provider';
 import { ensureAutoSummary, stopAutoSummary } from '../auto-summary';
-import { buildNewsSourcesGroup } from '../clipping/news-sources-group';
+import { buildNewsSourcesGroup } from './news-sources-group';
 import { batchSizeRow, mobileFullscreenGroup } from '../core/settings-common';
 import type { ClipArticle } from './types';
 import { esc } from './constants';

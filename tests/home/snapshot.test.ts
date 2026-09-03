@@ -145,25 +145,13 @@ describe('home 快照', () => {
     expect(snap.byDomain.pomodoro.sub).toContain('15:00');
   });
 
-  it('favorites/news/quiz/clipping/belongings 统计', async () => {
+  it('favorites/quiz/clipping/belongings 统计', async () => {
     vault.files.set(
       'CONFIG/STORAGE/favorites.json',
       JSON.stringify([
         { id: 'f1', tags: ['网站'], title: 'a', created: '2026-01-01 00:00:00' },
         { id: 'f2', tags: ['网站'], title: 'b', created: '2026-01-01 00:00:00', archived: true },
       ])
-    );
-    vault.files.set(
-      'CONFIG/STORAGE/news.json',
-      JSON.stringify({
-        articles: [{ id: 'n1' }],
-        stats: { totalRead: 5, totalSaved: 1, totalSkipped: 2, byPlatform: {}, byDate: {} },
-        bilibiliUps: [],
-        bilibiliUpInfo: {},
-        bilibiliMaxItems: 10,
-        bilibiliCookie: '',
-        sources: { zhihu: true, guokr: true, bilibili: true },
-      })
     );
     vault.files.set(
       'CONFIG/STORAGE/quiz.json',
@@ -178,7 +166,6 @@ describe('home 快照', () => {
     vault.files.set('归档/网页剪藏/2.md', '# 剪藏\n');
     const snap = await collectHomeSnapshot(mockAppWithVault(vault) as any);
     expect(snap.byDomain.favorites.text).toBe('1 条收藏');
-    expect(snap.byDomain.news.text).toBe('已读 5');
     expect(snap.byDomain.quiz.text).toBe('3 题');
     expect(snap.byDomain.clipping.text).toBe('2 篇');
     expect(snap.byDomain.belongings.text).toBe('2 件');

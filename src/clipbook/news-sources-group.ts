@@ -1,7 +1,7 @@
 /**
- * 剪藏本设置「数据源」组（ticket 124，ADR-0060）：
+ * 剪藏本设置「数据源」组（ticket 124，ADR-0060；自旧 clipping 域迁入 clipbook，ADR-0085）：
  * news.json 存在 → 三源开关 + UP 主名单 + 保留天数 + 状态行；缺失 → 安装引导块。
- * UI 层（jsdom 可测）；数据操作走 ../news/source-settings。
+ * UI 层（jsdom 可测）；数据操作走 ./news-source-settings。
  *
  * ticket 131（ADR-0064）声明式迁移：组壳（createSettingsGroup 卡片形态）由 schema 渲染器承担，
  * 本模块只负责组内内容（经 custom 插槽渲染进组体）。news.json 是外部数据（非 data.json），且
@@ -20,8 +20,8 @@ import type { SettingsRowContext, SettingsSchema } from '../core/settings-schema
 import {
   readDataSourceState, writeSources, addBilibiliUp, removeBilibiliUp,
   writeBilibiliMaxItems, writeBilibiliCookie, type DataSourceState,
-} from '../news/source-settings';
-import { resolveUidFromInput, type BilibiliUpInfo } from '../news/data';
+} from './news-source-settings';
+import { resolveUidFromInput, type BilibiliUpInfo } from './news-data';
 
 /**
  * 数据源组构建（custom 插槽内容）：检测 news.json → 两条路径；groupBody 为 schema 渲染器

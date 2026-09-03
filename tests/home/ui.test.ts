@@ -175,7 +175,7 @@ describe('home UI', () => {
     const mini = [...overlay.querySelectorAll('[data-home-mini]')].find((m) => (m as HTMLElement).dataset.homeMini === 'clipping') as HTMLElement;
     expect(mini).toBeTruthy();
     mini.click();
-    expect(executedOf(app)).toEqual(['bz-clipping-open']);
+    expect(executedOf(app)).toEqual(['bz-clipbook-open']); // ADR-0085：剪藏本磁贴改指融合域命令
   });
 
   it('搜索：过滤命令/域、键盘选中、回车执行', async () => {
