@@ -174,6 +174,21 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     expect(panel()).toBeNull();
   });
 
+  it('openPanel 重入保护：loadDatabase await 窗口内并发二次触发不产生双遮罩（僵尸遮罩修复）', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1' }) });
+    setApp({ vault } as any);
+    setSettingsProvider(() => ({ belongingsDataFolder: 'CONFIG/STORAGE' }) as any);
+    resetObsidianMocks();
+    const p1 = openPanel();
+    const p2 = openPanel(); // 首次 await loadDatabase 期间同步重入
+    await Promise.all([p1, p2]);
+    expect(document.querySelectorAll('.bz-bel-overlay')).toHaveLength(1);
+    expect(panelOf()).not.toBeNull();
+    // 重入被忽略后 toggle 语义不受影响：再开一次仍能正常关闭
+    await openPanel();
+    expect(panel()).toBeNull();
+  });
+
   it('主按钮开表单；表单取消钮关闭；表单遮罩 mousedown 关闭；面板不受影响', async () => {
     await openPanel();
     (panel()!.querySelector('.bz-bel-main-head [data-bel-add]') as HTMLElement).click();
