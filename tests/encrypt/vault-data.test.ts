@@ -6,7 +6,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { SafeManager } from '../../src/encrypt/data';
-import { PasswordVaultDataManager, PASSWORD_VAULT_CHANNEL } from '../../src/password-vault/data';
+import { PasswordVaultDataManager, PASSWORD_VAULT_CHANNEL } from '../../src/encrypt/vault-data';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
 import { onDomainEvent } from '../../src/core/domain-bus';
