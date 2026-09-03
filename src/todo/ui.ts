@@ -995,7 +995,7 @@ export function openEditor(item: TodoItem | null): void {
   // 建议（从已有条目收集脚本名/课程名 + 公开课笔记）
   const knownScripts = [...new Set(M.items.map((i) => i.scriptName).filter((n): n is string => !!n))].sort();
   const knownCourses = [...new Set(M.items.map((i) => i.courseName).filter((n): n is string => !!n))].sort();
-  function bindSug(input: HTMLInputElement, sug: HTMLElement, list: () => string[]) {
+  function bindSug(input: HTMLInputElement, sug: HTMLElement, list: () => string[], onPick?: (val: string) => void) {
     const render = () => {
       const v = input.value.trim().toLowerCase();
       const all = list()
@@ -1005,16 +1005,27 @@ export function openEditor(item: TodoItem | null): void {
       sug.innerHTML = all.map((s) => `<button class="bz-todo-sug-item" type="button">${esc(s)}</button>`).join('');
       sug.style.display = 'block';
       sug.querySelectorAll('.bz-todo-sug-item').forEach((b) => {
-        b.addEventListener('click', () => { input.value = (b as HTMLElement).textContent || ''; sug.style.display = 'none'; });
+        b.addEventListener('click', () => {
+          input.value = (b as HTMLElement).textContent || '';
+          sug.style.display = 'none';
+          onPick?.(input.value);
+        });
       });
     };
     input.addEventListener('input', render);
     input.addEventListener('focus', render);
     render();
   }
+  // 公开课课程路径（对照 memo：点建议记 path；手改名按名匹配兜底——课程标签跳转依赖 coursePath）
+  let courseNotes: { name: string; path: string }[] = [];
+  let pickedCourse: { name: string; path: string } | null =
+    editing?.courseName && editing.coursePath ? { name: editing.courseName, path: editing.coursePath } : null;
   bindSug(scriptInput, scriptSug, () => knownScripts);
-  bindSug(courseInput, courseSug, () => knownCourses);
+  bindSug(courseInput, courseSug, () => knownCourses, (val) => {
+    pickedCourse = courseNotes.find((n) => n.name === val) || null;
+  });
   void TodoData.getCourseNotes().then((notes) => {
+    courseNotes = notes;
     const extra = notes.map((n) => n.name);
     knownCourses.push(...extra.filter((n) => !knownCourses.includes(n)));
     if (courseBox.classList.contains('bz-todo-extra-on')) courseInput.dispatchEvent(new Event('focus'));
@@ -1114,7 +1125,21 @@ export function openEditor(item: TodoItem | null): void {
     const due = dueVal ? dueVal.replace('T', ' ') : null;
     const titleVal = titleInput.value.trim();
     const scriptName = scene === '代码' ? (scriptInput.value.trim() || null) : null;
-    const courseName = scene === '公开课' ? (courseInput.value.trim() || null) : null;
+    let courseName: string | null = null;
+    let coursePath: string | null = null;
+    if (scene === '公开课') {
+      const cv = courseInput.value.trim();
+      if (cv) {
+        courseName = cv;
+        // 课程路径（对照 memo 语义）：建议点选记录的 path 仅在名字一致时采用；
+        // 手改名字按名匹配建议列表兜底；匹配不到置 null（旧 path 必须清，防指向旧文件）
+        if (pickedCourse && pickedCourse.name === cv) coursePath = pickedCourse.path;
+        else {
+          const matched = courseNotes.find((n) => n.name.toLowerCase() === cv.toLowerCase());
+          if (matched) coursePath = matched.path;
+        }
+      }
+    }
     // 剪藏：标题可选（未填则用内容）
     const finalTitle = scene === '剪藏' && titleVal ? titleVal : content;
     const { url } = extractUrlAndDisplay(content);
@@ -1130,6 +1155,7 @@ export function openEditor(item: TodoItem | null): void {
             notePosition: posState.notePosition,
             scriptName,
             courseName,
+            coursePath,
             url: url ?? editing.url,
           } as any);
           emitDomainEvent('memo', { kind: 'edited', old: { title: editing.title }, next: { title: finalTitle, scene, priority, due } });
@@ -1147,7 +1173,7 @@ export function openEditor(item: TodoItem | null): void {
             notePosition: posState.notePosition,
             scriptName,
             courseName,
-            coursePath: null,
+            coursePath,
             linkedNote: null,
             url,
           };

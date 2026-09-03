@@ -7,7 +7,7 @@ import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-p
 import { resetObsidianMocks, Platform as MockPlatform } from '../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { M, resetTodoState } from '../../src/todo/state';
-import { openTodoPanel, closeTodoPanel, addTodo } from '../../src/todo/ui';
+import { openTodoPanel, closeTodoPanel, addTodo, openEditor } from '../../src/todo/ui';
 import { TodoData } from '../../src/todo/data';
 
 const SETTINGS = {
@@ -345,6 +345,86 @@ describe('todo 编辑器', () => {
     expect(raw[0].title).toBe('测试脚本任务');
     expect(raw[0].scene).toBe('代码');
     expect(raw[0].scriptName).toBe('test.py');
+  });
+
+  it('公开课新建：点课程建议 → 保存写入 courseName + coursePath（memo 面板课程标签可跳转）', async () => {
+    const { app, vault } = seedVault();
+    // 公开课笔记（影视目录 + 公开课标签）→ getCourseNotes 数据源
+    vault.files.set('我的/影视/动手学深度学习.md', '---\ntags: [公开课]\n---\n\n课程笔记');
+    addTodo(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-todo-editor')).toBeTruthy();
+    });
+    const editor = document.querySelector('.bz-todo-editor') as HTMLElement;
+    const contentInput = editor.querySelector('textarea') as HTMLTextAreaElement;
+    contentInput.value = '看完第三课';
+    // 切公开课
+    const courseBtn0 = [...editor.querySelectorAll('.bz-choice-btn')].find((b) => b.textContent === '公开课') as HTMLElement;
+    courseBtn0.click();
+    const courseInput = editor.querySelectorAll('.bz-todo-extra')[2].querySelector('input') as HTMLInputElement;
+    // 等异步课程建议装载后输入过滤
+    courseInput.value = '动手学';
+    courseInput.dispatchEvent(new Event('input'));
+    await vi.waitFor(() => {
+      expect(courseInput.parentElement!.querySelector('.bz-todo-sug-item')).toBeTruthy();
+    });
+    const sug = [...editor.querySelectorAll('.bz-todo-sug-item')].find((b) => b.textContent === '动手学深度学习') as HTMLElement;
+    sug.click();
+    expect(courseInput.value).toBe('动手学深度学习');
+    const saveBtn = [...editor.querySelectorAll('.bz-btn')].find((b) => b.textContent?.includes('添加')) as HTMLElement;
+    saveBtn.click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-todo-editor')).toBeNull();
+    });
+    const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(raw[0].scene).toBe('公开课');
+    expect(raw[0].courseName).toBe('动手学深度学习');
+    expect(raw[0].coursePath).toBe('我的/影视/动手学深度学习.md');
+  });
+
+  it('公开课编辑：点建议回填 coursePath 落盘；清空课程名后 coursePath 一并清空', async () => {
+    const { app, vault } = seedVault();
+    vault.files.set('我的/影视/动手学深度学习.md', '---\ntags: [公开课]\n---\n\n课程笔记');
+    openTodoPanel(app);
+    await vi.waitFor(() => {
+      expect(M.items.length).toBeGreaterThan(0);
+    });
+    // 编辑既有公开课条目 d（courseName《动手学深度学习》，无 coursePath）
+    openEditor(M.items.find((i) => i.id === 'd')!);
+    let editor = document.querySelector('.bz-todo-editor') as HTMLElement;
+    expect(editor).toBeTruthy();
+    const courseInput = editor.querySelectorAll('.bz-todo-extra')[2].querySelector('input') as HTMLInputElement;
+    // 触发建议（异步课程建议装载后可见）→ 点笔记名建议（覆盖原书名号名）
+    courseInput.value = '动手学';
+    courseInput.dispatchEvent(new Event('input'));
+    await vi.waitFor(() => {
+      return [...editor.querySelectorAll('.bz-todo-sug-item')].some((b) => b.textContent === '动手学深度学习');
+    });
+    const sug = [...editor.querySelectorAll('.bz-todo-sug-item')].find((b) => b.textContent === '动手学深度学习') as HTMLElement;
+    sug.click();
+    expect(courseInput.value).toBe('动手学深度学习');
+    const saveBtn = [...editor.querySelectorAll('.bz-btn')].find((b) => b.textContent?.includes('保存')) as HTMLElement;
+    saveBtn.click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-todo-editor')).toBeNull();
+    });
+    let raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(raw.find((r: any) => r.id === 'd').coursePath).toBe('我的/影视/动手学深度学习.md');
+    // 再编辑：清掉课程名 → coursePath 一并清空（不残留旧 path）
+    M.items = await TodoData.loadItems();
+    openEditor(M.items.find((i) => i.id === 'd')!);
+    editor = document.querySelector('.bz-todo-editor') as HTMLElement;
+    const courseInput2 = editor.querySelectorAll('.bz-todo-extra')[2].querySelector('input') as HTMLInputElement;
+    courseInput2.value = '';
+    const saveBtn2 = [...editor.querySelectorAll('.bz-btn')].find((b) => b.textContent?.includes('保存')) as HTMLElement;
+    saveBtn2.click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-todo-editor')).toBeNull();
+    });
+    raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    const dAfter = raw.find((r: any) => r.id === 'd');
+    expect(dAfter.courseName).toBeNull();
+    expect(dAfter.coursePath).toBeNull();
   });
 });
 
