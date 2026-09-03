@@ -1113,17 +1113,16 @@ export class DiaryWallAppController {
   // ---------- 滚动 → 章节自动高亮 ----------
   /**
    * 章节点击：平滑滚动定位到该月的第一个 day-head（不重渲染、不切过滤）。
-   * 定位用 getBoundingClientRect 差值（wall 顶 + 目标 head 顶 − 容器视口顶），
-   * 不依赖 offsetTop——content-visibility:auto 的屏外条目 offsetTop 是未渲染占位值，
-   * 且不同月份 head 在稀疏/网格布局下可能算出相同/错误的偏移（用户反馈：点 12 月能跳、
-   * 点前面的月份不跳）。rect 差值以当前真实渲染位置为准，任何月份都准确。
+   * P2/G 审查修复：day-head 是 sticky 吸顶头，月份滚过后 rect 恒贴墙顶，rect 差值
+   * 推不出目标位置（点已滚过的月份 no-op）——改用 flowTopOf 流式位置推算（见下），
+   * 定位仍不依赖 offsetTop（content-visibility 的屏外占位高度不可靠），smooth 滚动
+   * 途中条目陆续真渲染导致文档流漂移，落定后按最终几何校正一次（DW6 保留）。
    */
   private scrollToMonth(mk: string, wall: HTMLElement) {
     const head = wall.querySelector<HTMLElement>(`.bz-diary-wall-day-head[data-date^="${mk}"]`);
     if (!head) return;
     const wallRect = wall.getBoundingClientRect();
-    const headRect = head.getBoundingClientRect();
-    const top = wall.scrollTop + (headRect.top - wallRect.top) - 6;
+    const top = wall.scrollTop + (this.flowTopOf(head, wallRect) - 6);
     wall.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
     // DW6：smooth 滚动途中 content-visibility 条目陆续真渲染（占位 240px → 真实高度），
     // 文档流漂移导致停偏；落定后按最终几何校正一次
@@ -1133,9 +1132,22 @@ export class DiaryWallAppController {
       if (this.root?.style.display !== 'flex') return;
       const h = wall.querySelector<HTMLElement>(`.bz-diary-wall-day-head[data-date^="${mk}"]`);
       if (!h) return;
-      const t2 = wall.scrollTop + (h.getBoundingClientRect().top - wall.getBoundingClientRect().top) - 6;
+      const t2 = wall.scrollTop + (this.flowTopOf(h, wall.getBoundingClientRect()) - 6);
       if (Math.abs(t2 - wall.scrollTop) > 2) wall.scrollTo({ top: Math.max(0, t2) });
     }, 480);
+  }
+
+  /**
+   * 节头的流式相对位置（相对墙体顶）：节头是 sticky，滚过后自身 rect 不再反映流式位置；
+   * 其后的 masonry 容器不是 sticky，rect 即流式真实位置——用 masonry 顶 − 节头高反推。
+   * 无后续块（防御）时回退节头自身 rect 差值。
+   */
+  private flowTopOf(head: HTMLElement, wallRect: DOMRect): number {
+    const next = head.nextElementSibling as HTMLElement | null;
+    if (next && !next.classList.contains('bz-diary-wall-day-head')) {
+      return next.getBoundingClientRect().top - wallRect.top - head.offsetHeight;
+    }
+    return head.getBoundingClientRect().top - wallRect.top;
   }
 
   /** 滚动高亮：rAF 节流，当前月份在章节栏高亮并滚到可见。

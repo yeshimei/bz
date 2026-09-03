@@ -653,4 +653,35 @@ describe('回忆墙 UI', () => {
     const dur = video.parentElement!.querySelector('.bz-diary-wall-dur') as HTMLElement;
     expect(dur.textContent).toBe('2:05');
   });
+
+  it('G1 审查修复：点击已滚过月份按流式位置推算目标（吸顶头 rect 不再污染）', async () => {
+    await openAndWait();
+    const wall = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-wall') as HTMLElement;
+    const head = wall.querySelector<HTMLElement>('.bz-diary-wall-day-head[data-date^="2026-08"]')!;
+    const masonry = head.nextElementSibling as HTMLElement;
+    expect(masonry.classList.contains('bz-diary-wall-masonry')).toBe(true);
+    // 模拟已滚过该月：节头是 sticky（rect 恒贴墙顶，不可用），其 masonry（非 sticky）
+    // rect 为流式真实位置——已在视口上方 860px，墙顶位于视口 100px 处
+    wall.getBoundingClientRect = () => ({ top: 100 } as any);
+    masonry.getBoundingClientRect = () => ({ top: -860 } as any);
+    Object.defineProperty(head, 'offsetHeight', { value: 40, configurable: true });
+    wall.scrollTop = 2000;
+    const scrollSpy = vi.fn();
+    wall.scrollTo = scrollSpy as any;
+    const monthItem = document.querySelector<HTMLElement>(
+      '.bz-diary-wall-desk .bz-diary-wall-month[data-month="2026-08"]'
+    )!;
+    monthItem.click();
+    // 目标 = scrollTop + (masonry顶 − wall顶 − 节头高 − 6) = 2000 + (−860 − 100 − 40 − 6) = 994
+    // （旧实现用吸顶头 rect：head.top(0) − wall.top(100) → 1894，回跳错误位置）
+    expect(scrollSpy).toHaveBeenCalledWith({ top: 994, behavior: 'smooth' });
+  });
+
+  it('E4 审查确认：章节栏胶卷缩略图直挂 src，不依赖 wall 内懒加载观察', async () => {
+    await openAndWait();
+    const rail = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-rail') as HTMLElement;
+    const img = rail.querySelector('.bz-diary-wall-month-thumb img') as HTMLImageElement;
+    expect(img).toBeTruthy();
+    expect(img.getAttribute('src')).toContain('https://example.com/vault/');
+  });
 });
