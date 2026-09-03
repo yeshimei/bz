@@ -444,7 +444,7 @@ describe('备忘录面板 ⚙️ 设置弹窗', () => {
     todoFilePath: 'CONFIG/STORAGE',
     showFileName: true,
     autoPopupOnStart: false,
-    movieFolderPath: '我的/影视',
+    cinemaFolderPath: '我的/影视',
   };
 
   beforeEach(async () => {

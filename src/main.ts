@@ -32,12 +32,11 @@ import { openDiaryWall, unloadDiaryWall } from './diary-wall';
 import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
 import { openLibrary, openBookNotes, unloadLibrary } from './library';
 import { showReadingReport, unloadReadingReport } from './reading-report';
-import { openMovieManager, addMovieItem, unloadMovie } from './movie';
-// 影院（cinema 域，新域与影视并存；不修改旧影视代码）
+// 影院（cinema 域，ADR-0087 起接管影视；旧 movie 域已退役）
 import { openCinema, addCinemaItem, unloadCinema } from './cinema';
 // 书架墙（bookshelf 域，新域与书库并存；不修改旧书库代码）
 import { openBookshelf, unloadBookshelf } from './bookshelf';
-// 影视分析报告（独立域，ADR-0048）
+// 影视分析报告（独立域，ADR-0048；目录随 cinema 统一回落）
 import { openMovieReport, unloadMovieReport } from './movie-report';
 import { openReviewPanel, openReviewReport, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview, unloadReview } from './review';
 import {
@@ -104,12 +103,10 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-book-notes-open', name: '读书笔记', icon: 'book-open', callback: () => openBookNotes(getApp()) },
   // 阅读数据分析报告（t2：阅读分析报告 → 阅读数据分析报告，术语随 CONTEXT.md）
   { id: 'bz-reading-report-open', name: '阅读数据分析报告', icon: 'bar-chart-3', callback: () => showReadingReport(getApp()) },
-  // 影视
-  { id: 'bz-movie-open', name: '影视', icon: 'film', callback: () => openMovieManager(getApp()) },
-  { id: 'bz-movie-add', name: '加影视', icon: 'clapperboard', callback: () => addMovieItem(getApp()) },
-  // 影视分析报告（独立域，ADR-0048；f7 解冻：去 clapperboard 重复 → pie-chart，id/名称契约不动）
+  // 影视分析报告（独立域，ADR-0048；f7 解冻：去 clapperboard 重复 → pie-chart，id/名称契约不动；
+  // ADR-0087 旧 movie 命令退役后仍是独立报告入口）
   { id: 'bz-movie-report', name: '影视分析报告', icon: 'pie-chart', callback: () => openMovieReport(getApp()) },
-  // 影院（cinema 新域）
+  // 影院（cinema 域，ADR-0087 接管影视——旧 bz-movie-open/bz-movie-add 已退役）
   { id: 'bz-cinema-open', name: '影院', icon: 'film', callback: () => openCinema(getApp()) },
   { id: 'bz-cinema-add', name: '加影视（影院）', icon: 'plus-circle', callback: () => addCinemaItem(getApp()) },
   // 书架墙（bookshelf 新域）
@@ -320,7 +317,6 @@ export default class BzPlugin extends Plugin {
     unloadCinema();
     // 书架墙（bookshelf 域：面板 DOM + 模块单例复位）
     unloadBookshelf();
-    unloadMovie();
     unloadMovieReport();
     unloadReadingReport();
     unloadLibrary();

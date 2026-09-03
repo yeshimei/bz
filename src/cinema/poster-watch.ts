@@ -1,5 +1,5 @@
 /**
- * 影视海报抓取状态监听（2025-08 用户需求）：
+ * 影视海报抓取状态监听（2025-08 用户需求；ADR-0087 自旧 src/movie/poster-watch.ts 迁入）：
  * 创建影视笔记后，外部 @jwbz/obsidian-douban-poster watcher 会扫描缺海报笔记，
  * 抓取海报与豆瓣信息写入 frontmatter「海报」字段。
  * 本模块轮询笔记「海报」字段：非空即视为获取完成 → 原地更新 progress 通知为「已完成」

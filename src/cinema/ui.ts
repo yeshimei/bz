@@ -13,7 +13,8 @@
  */
 import type { App } from 'obsidian';
 import { TFile } from 'obsidian';
-import { notice } from '../core/notice';
+import { notice, notify } from '../core/notice';
+import { emitDomainEvent } from '../core/domain-bus';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
@@ -24,8 +25,9 @@ import {
 } from './constants';
 import { M, resetCinemaState, type CinemaItem, type CinemaState } from './state';
 import { rebuildItems, getDisplayItems } from './data';
-import { runAIRecommend, buildTasteProfile, quickAddWant } from './recommend';
+import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } from './recommend';
 import { buildAnalysisHTML } from './analysis';
+import { watchPosterFetch } from './poster-watch';
 
 // ---------- 小工具 ----------
 
@@ -250,7 +252,7 @@ function renderListHtml(app: App): string {
  */
 function renderAiPageHtml(app: App): string {
   if (M.aiRunning) {
-    return `<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title">${iconSpan(ICON.ai)}AI 荐片</span></div>
+    return `<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title">${iconSpan(ICON.ai)}${esc(M.aiTitle)}</span></div>
       <div class="bz-cinema-ai-wait">
         <span class="bz-cinema-ai-guide-ic">${iconSpan(ICON.ai)}</span>
         <div class="bz-cinema-ai-guide-title">${esc(M.aiWaitMsg || 'AI 正在分析你的观影口味…')}</div>
@@ -258,7 +260,7 @@ function renderAiPageHtml(app: App): string {
       </div></div>`;
   }
   if (M.aiError) {
-    return `<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title">${iconSpan(ICON.ai)}AI 荐片</span></div>
+    return `<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title">${iconSpan(ICON.ai)}${esc(M.aiTitle)}</span></div>
       <div class="bz-cinema-ai-wait">
         <span class="bz-cinema-ai-guide-ic bz-cinema-ai-err">${iconSpan(ICON.ai)}</span>
         <div class="bz-cinema-ai-guide-title">AI 分析失败</div>
@@ -271,7 +273,7 @@ function renderAiPageHtml(app: App): string {
   }
   // 待机：引导页
   const profile = buildTasteProfile();
-  let html = `<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title">${iconSpan(ICON.ai)}AI 荐片</span><span class="bz-cinema-page-sub">基于 ${profile.total} 部已看影视的口味画像</span></div>`;
+  let html = `<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title">${iconSpan(ICON.ai)}${esc(M.aiTitle)}</span><span class="bz-cinema-page-sub">基于 ${profile.total} 部已看影视的口味画像</span></div>`;
   html += '<div class="bz-cinema-page-sub" style="margin-bottom:12px;">偏好：' + (profile.groups[0] || '暂无') + ' · ' + (profile.genres[0] || '—') + ' · ' + (profile.directors[0] || '—') + ' · ' + (profile.actors[0] || '—') + '</div>';
   html += '<div class="bz-cinema-ai-guide">';
   html += `<span class="bz-cinema-ai-guide-ic">${iconSpan(ICON.ai)}</span>`;
@@ -284,7 +286,7 @@ function renderAiPageHtml(app: App): string {
 
 /** AI 结果页内列表（卡片+加入想看），替代原 showResultWindow 弹窗 */
 function renderAIResultList(app: App): string {
-  const head = `<div class="bz-cinema-page-head"><span class="bz-cinema-page-title">${iconSpan(ICON.ai)}AI 荐片</span><span class="bz-cinema-page-sub">为你推荐</span></div>`;
+  const head = `<div class="bz-cinema-page-head"><span class="bz-cinema-page-title">${iconSpan(ICON.ai)}${esc(M.aiTitle)}</span><span class="bz-cinema-page-sub">为你推荐</span></div>`;
   const cards = (M.aiResult || []).map((rec, i) => {
     const name = rec?.title || rec?.name || '未命名';
     const year = rec?.year ? `（${rec.year}）` : '';
@@ -399,9 +401,13 @@ function openDetail(item: CinemaItem, app: App): void {
   }
   if (item.doubanUrl) body += `<div class="bz-cinema-kv"><span class="bz-cinema-kv-k">豆瓣链接</span><span class="bz-cinema-kv-v"><a href="${esc(item.doubanUrl)}" target="_blank" rel="noopener">${esc(item.doubanUrl)}</a></span></div>`;
   if (item.synopsis) body += `<div class="bz-cinema-sec-title">简介</div><div class="bz-cinema-synopsis">${esc(item.synopsis)}</div>`;
-  body += `<div class="bz-cinema-form-actions"><button class="bz-btn bz-btn--ghost" data-cinema-dm-edit>${iconSpan(ICON.edit, 'bz-ic--sm')}编辑</button><button class="bz-btn bz-btn--danger" data-cinema-dm-del>${iconSpan(ICON.del, 'bz-ic--sm')}删除</button></div>`;
+  body += `<div class="bz-cinema-form-actions"><button class="bz-btn bz-btn--ghost" data-cinema-dm-similar>${iconSpan(ICON.ai, 'bz-ic--sm')}找同类</button><button class="bz-btn bz-btn--ghost" data-cinema-dm-edit>${iconSpan(ICON.edit, 'bz-ic--sm')}编辑</button><button class="bz-btn bz-btn--danger" data-cinema-dm-del>${iconSpan(ICON.del, 'bz-ic--sm')}删除</button></div>`;
   const { popup, close } = uiModal({ content: body, maxWidth: 400, className: 'bz-cinema-dm' });
   mountIcons(popup);
+  popup.querySelector('[data-cinema-dm-similar]')?.addEventListener('click', () => {
+    close();
+    void runSimilarRecommend(item, app);
+  });
   popup.querySelector('[data-cinema-dm-edit]')?.addEventListener('click', () => {
     close();
     openEditForm(item, app);
@@ -511,10 +517,24 @@ function openEditForm(item: CinemaItem | null, app: App): void {
           item.name = name; item.typeTag = tag; item.group = group;
           item.status = st; item.rating = mapped; item.watchDate = date; item.review = review;
           await persistItem(item, app);
+          // 编辑表单对齐旧 movie 语义：不发域事件（smartcat 观察只覆盖新增/快速状态/删除）
         } else {
           const it: CinemaItem = { file: null, name, typeTag: tag, group, status: st, rating: mapped, watchDate: date, review, poster: null, genre: null, director: null, actors: null, region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null };
           M.items.unshift(it);
           await persistItem(it, app);
+          // 新增：发 movie 域事件（smartcat 行为流观察；ADR-0087 cinema 接管）
+          emitDomainEvent('movie', {
+            kind: 'created',
+            name,
+            status: st === STATUS_WANT ? 'want' : st === STATUS_WATCHING ? 'watching' : 'watched',
+            rating: mapped,
+            review: review || null,
+          });
+          // 新增：poster 占位 → progress 通知轮询等外部 watcher 写入海报后收尾（vault modify 自动刷新链会替换占位图）
+          if (it.file) {
+            const handle = notify('正在获取海报和豆瓣信息…', { type: 'progress' });
+            watchPosterFetch(app, it.file, handle);
+          }
         }
         close();
         notice(editing ? '已保存' : '已添加', 'success');
@@ -551,6 +571,8 @@ function openDeleteConfirm(item: CinemaItem, app: App): void {
     }
     const idx = M.items.indexOf(item);
     if (idx > -1) M.items.splice(idx, 1);
+    // 事件补发（smartcat 行为流观察；ADR-0087 cinema 接管）
+    emitDomainEvent('movie', { kind: 'deleted', name: item.name });
     close();
     notice('影视已删除', 'success');
     renderAll(app);
@@ -582,14 +604,26 @@ function openQuickStatus(item: CinemaItem, app: App): void {
     const review = (popup.querySelector('#bz-cinema-qs-review') as HTMLTextAreaElement).value.trim();
     const selected = getSelected() || targets[0];
     const mapped = selected === '已看' ? ratingVal : selected === '在看' ? 0 : -1;
+    // from 快照（事件载荷用；对齐旧 movie 语义，见 ADR-0087）
+    const fromSt = item.status === STATUS_WANT ? 'want' : item.status === STATUS_WATCHING ? 'watching' : 'watched';
+    const fromRating = item.rating && item.rating > 0 ? item.rating : null;
+    const fromReview = item.review || null;
     item.status = selected === '已看' ? STATUS_WATCHED : selected === '在看' ? STATUS_WATCHING : STATUS_WANT;
     item.rating = mapped;
     if (review) item.review = review;
+    else item.review = null;
     void (async () => {
       try {
         await persistItem(item, app);
         close();
         notice(`已标记${selected}`, 'success');
+        // 事件补发（smartcat 行为流观察）：状态流转 + 条件评分/影评（对齐旧 movie 快速状态窗）
+        const toSt = item.status === STATUS_WANT ? 'want' : item.status === STATUS_WATCHING ? 'watching' : 'watched';
+        if (toSt !== fromSt) emitDomainEvent('movie', { kind: 'status', name: item.name, from: fromSt, to: toSt });
+        const toRating = item.rating && item.rating > 0 ? item.rating : null;
+        if (toRating !== null && toRating !== fromRating) emitDomainEvent('movie', { kind: 'rated', name: item.name, fromRating, toRating });
+        const toReview = item.review || null;
+        if (toReview !== fromReview) emitDomainEvent('movie', { kind: 'review', name: item.name, fromReview, toReview: toReview });
         renderAll(app);
       } catch (e) {
         notice('保存失败', 'error');

@@ -1,6 +1,6 @@
 /**
  * 动态目录分类测试：默认目录六域命中/未命中/边界（我的/日记.md 不算）、反斜杠归一、
- * settings 注入自定义目录生效与实时切换、movie 双键任一命中、日期解析正反例。
+ * settings 注入自定义目录生效与实时切换、cinema 接管影视目录 + movieDirectory 语义、日期解析正反例。
  * settings 注入方式对齐 tests/smartcat/context-source.test.ts（setSettingsProvider + afterEach 还原）。
  */
 import { describe, it, expect, afterEach } from 'vitest';
@@ -12,11 +12,11 @@ afterEach(() => {
 });
 
 describe('classifyFilePath（默认目录）', () => {
-  it('默认目录命中六域', () => {
+  it('默认目录命中六域（ADR-0087：影视目录归 cinema）', () => {
     expect(classifyFilePath('我的/日记/2026-08-23.md')).toBe('diary');
     expect(classifyFilePath('卡片盒/TDD.md')).toBe('flash');
     expect(classifyFilePath('归档/网页剪藏/某文章.md')).toBe('clipping');
-    expect(classifyFilePath('我的/影视/《楚门的世界》观后感.md')).toBe('movie');
+    expect(classifyFilePath('我的/影视/《楚门的世界》观后感.md')).toBe('cinema');
     expect(classifyFilePath('我的/现代诗/夜航.md')).toBe('poem');
     expect(classifyFilePath('我的/信/给未来的自己.md')).toBe('letter');
   });
@@ -63,12 +63,12 @@ describe('classifyFilePath（settings 注入自定义目录）', () => {
       diaryDirectory: 'Journal',
       letterDirectory: 'Letters',
       articleDirectory: 'Clips',
-      movieFolderPath: 'Films',
+      cinemaFolderPath: 'Films',
     } as any));
     expect(classifyFilePath('Journal/2026-08-23.md')).toBe('diary');
     expect(classifyFilePath('Letters/a.md')).toBe('letter');
     expect(classifyFilePath('Clips/a.md')).toBe('clipping');
-    expect(classifyFilePath('Films/a.md')).toBe('movie');
+    expect(classifyFilePath('Films/a.md')).toBe('cinema');
     // 旧默认目录不再命中
     expect(classifyFilePath('我的/日记/x.md')).toBeNull();
     expect(classifyFilePath('我的/信/x.md')).toBeNull();
@@ -82,30 +82,32 @@ describe('classifyFilePath（settings 注入自定义目录）', () => {
     expect(classifyFilePath('我的/日记/a.md')).toBe('diary');
   });
 
-  it('movie 双键（movieFolderPath / movieDirectory）任一命中即算影视域', () => {
+  it('movie 语义仅靠 movieDirectory（日记本键）命中；ADR-0087 movieFolderPath 退役', () => {
+    // movieFolderPath 键已退役：设置里不再识别（缺省影视目录归 cinema）
     setSettingsProvider(() => ({ movieFolderPath: 'F1' } as any));
-    expect(classifyFilePath('F1/a.md')).toBe('movie');
+    expect(classifyFilePath('F1/a.md')).toBeNull();
+    // movieDirectory（日记本用）仍归 movie 语义
     setSettingsProvider(() => ({ movieDirectory: 'F2' } as any));
     expect(classifyFilePath('F2/b.md')).toBe('movie');
-    // 两键都缺 → 回退默认 '我的/影视'
+    // 两键都缺 → 影视目录归 cinema（cinemaFolderPath 缺省回落 '我的/影视'）
     setSettingsProvider(() => ({}) as any);
-    expect(classifyFilePath('我的/影视/c.md')).toBe('movie');
+    expect(classifyFilePath('我的/影视/c.md')).toBe('cinema');
   });
 
-  it('cinema 分支：仅显式配置 cinemaFolderPath 才生效（缺省不抢占 movie 默认目录）', () => {
-    // 缺省：我的/影视 仍归 movie（cinema 不抢占）
+  it('cinema 分支：显式配置生效且优先；缺省回落影视目录归 cinema（ADR-0087）', () => {
+    // 缺省：我的/影视 归 cinema（cinema 接管影视；movieDirectory 未配时不再回落 movie）
     setSettingsProvider(() => ({} as any));
-    expect(classifyFilePath('我的/影视/c.md')).toBe('movie');
-    // 显式配置 cinemaFolderPath → 该目录归 cinema（在 movie 之前判定）
+    expect(classifyFilePath('我的/影视/c.md')).toBe('cinema');
+    // 显式配置 cinemaFolderPath → 该目录归 cinema
     setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' } as any));
     expect(classifyFilePath('我的/影视/c.md')).toBe('cinema');
-    // 配置到别处 → 两域独立
-    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影院', movieFolderPath: '我的/影视' } as any));
+    // 配置到别处 → 我的/影视 因缺省回落仍归 cinema；自定义目录归 movie（movieDirectory 场景）
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影院', movieDirectory: '我的/影视' } as any));
     expect(classifyFilePath('我的/影院/c.md')).toBe('cinema');
     expect(classifyFilePath('我的/影视/c.md')).toBe('movie');
-    // 空白值 → 不生效（回退 movie）
+    // 空白值 → 回落默认影视目录 → cinema
     setSettingsProvider(() => ({ cinemaFolderPath: '   ' } as any));
-    expect(classifyFilePath('我的/影视/c.md')).toBe('movie');
+    expect(classifyFilePath('我的/影视/c.md')).toBe('cinema');
   });
 
   it('settings 值为空白字符串时回退默认目录（对齐现有 || 兜底习惯）', () => {
