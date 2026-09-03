@@ -112,12 +112,15 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | `uiSwitch` | `{checked?, onChange?}` | `{el, setChecked}` |
 | `uiSelect` | `<T>({options, value, placeholder?, className?, onOpenChange?, onChange})` | `{el, setValue}` |
 | `uiIcon` | `(name, extraClass?)` | `HTMLElement` |
+| `uiResizable` | `(el, {edge?, minW?, minH?, maxW?, maxH?, onChange?})` | `{detach}` |
 | `openLightbox` | `{src, type?, title?, caption?}` | `{close}`；`closeLightbox()` |
 
 **约定**：
 - 工厂名带 `ui` 前缀，避免与旧 `createIconBtn`（dom.ts，文本式）冲突；旧工厂新 UI 不要用。
 - 文案一律 `textContent` 传入（防注入），图标名传 lucide 名由工厂生成 `<i data-lucide>`。
 - 回调风格：按钮 `onClick`、输入 `onInput`、分段 `onChange`、chip `onRemove`（内部已 stopPropagation）。
+
+**窗口缩放（uiResizable，ADR-0084）**：给桌面主面板加「右缘/底缘/右下角」拖动缩放——`el` 无需定位上下文（命中/光标挂自身，不注入覆盖层），改宽高内联。宿主若是 flex 居中（`.bz-*-overlay` center），宽高变化即双向对称扩缩不越视口。钳制下限 `minW×minH`、上限逐帧取 `min(maxW×maxH, 视口92%)`；`onChange(w,h)` 供调方持久化尺寸。零视觉提示（纯 hover 光标）；仅 mouse 事件，移动端勿挂。尺寸记忆无共享键——由调用域写自己的 settings 键（先例 `todoPanelWidth/Height`）。
 
 ---
 
@@ -127,6 +130,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 2. **域独有布局**（主窗口骨架、瀑布流、特殊排版）写 `src/<域>/styles.css`——只做布局与域内结构，不复刻按钮/输入等基线；值从 token 取。
 3. **移动端**：真全屏 `.bz-win-mfs` 环境类 + 触控尺寸（`--lg` 档图标钮 / 行高 ≥44px / 底部安全区 `env(safe-area-inset-bottom)`），对齐设计手册 §8。
 4. **图标**：一律 lucide；禁止 emoji 图标、禁止文本符号（✕/★）当图标。
+5. **窗口缩放/尺寸记忆**：桌面主面板要可拖动缩放 → 用 §4 `uiResizable`（不自造手柄/热区/8 向 fixed 逻辑）；尺寸持久化写本域 settings 键（`<域>PanelWidth/Height` 风格），打开时读回、`onChange` 写回；移动端不挂。
 
 ---
 

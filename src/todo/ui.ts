@@ -1,6 +1,8 @@
 /**
  * 待办（todo）域 UI：场景工作台（原型 1 定稿形态）
- * 桌面：遮罩 + 720×580 面板：左场景栏（全部/今日/场景 + 添加场景）+ 右侧列表
+ * 桌面：遮罩 + 720×580 面板（ADR-0084：右缘/底缘/右下角拖动缩放，
+ *       钳制 720×520 ~ min(1280×880, 视口92%)；尺寸记忆 settings.todoPanelWidth/Height）：
+ *       左场景栏（全部/今日/场景 + 添加场景）+ 右侧列表
  *       （工具栏：搜索 + 排序 segmented；条目卡 meta 对齐源码 buildMeta 顺序）
  * 移动：真全屏 + 顶部横滑场景 chips + 右上关闭（仅全屏显示）
  * 交互：
@@ -18,9 +20,9 @@ import type { App } from 'obsidian';
 import moment from 'moment';
 import { notice } from '../core/notice';
 import { escManager } from '../core/esc-manager';
-import { applyMobileWindowFullscreen } from '../core/mobile';
+import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { uiModal, uiIcon, uiSegmented, uiChoice, uiBtn, uiBtnRow } from '../core/ui';
+import { uiModal, uiIcon, uiSegmented, uiChoice, uiBtn, uiBtnRow, uiResizable } from '../core/ui';
 import { openFlowDialog } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
@@ -32,6 +34,9 @@ import { TodoData } from './data';
 import { getDueStatus, formatDueText } from './due';
 import type { TodoItem } from './types';
 import { M } from './state';
+
+/** 待办主面板尺寸（ADR-0084：默认/最小/硬上限；实际上限另受视口 92% 约束） */
+const PANEL = { DEF_W: 720, DEF_H: 580, MIN_W: 720, MIN_H: 520, MAX_W: 1280, MAX_H: 880 };
 
 // ---------- 小工具 ----------
 
@@ -222,7 +227,12 @@ export function openTodoPanel(app: App): void {
   M.appRef = app;
   M.renderFn = () => renderAll();
 
-  applyMobileWindowFullscreen(overlay.querySelector('.bz-todo-panel') as HTMLElement, fullscreen);
+  const panelEl = overlay.querySelector('.bz-todo-panel') as HTMLElement;
+  // 桌面尺寸记忆（ADR-0084）：flex 居中容器内改宽高即双向对称扩缩，越界值回落默认
+  const saved = savedPanelSize();
+  panelEl.style.width = `${saved.w}px`;
+  panelEl.style.height = `${saved.h}px`;
+  applyMobileWindowFullscreen(panelEl, fullscreen);
   mountIcons(overlay);
 
   // 排序 segmented（组件库；桌面工具行；移动不显示）
@@ -245,6 +255,15 @@ export function openTodoPanel(app: App): void {
   });
   seg.el.classList.add('bz-segmented--sm');
   sortEl.appendChild(seg.el);
+
+  // 桌面拖动缩放（ADR-0084；移动端真全屏/常规卡都由 CSS 撑满视口，不挂）
+  if (!isMobileEnv()) {
+    panelResizeDetach = uiResizable(panelEl, {
+      minW: PANEL.MIN_W, minH: PANEL.MIN_H,
+      maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
+      onChange: (w, h) => rememberPanelSize(w, h),
+    });
+  }
 
   // 事件委托
   overlay.addEventListener('click', (e) => {
@@ -331,6 +350,11 @@ export function closeTodoPanel(): void {
     M.overlay.remove();
     M.overlay = null;
   }
+  // 卸载拖动缩放（detach 幂等；无会话内 handler 残留）
+  if (panelResizeDetach) {
+    panelResizeDetach.detach();
+    panelResizeDetach = null;
+  }
   M.renderFn = null;
   M.completeTimers.forEach((t) => clearTimeout(t));
   M.completeTimers.clear();
@@ -344,6 +368,32 @@ export function registerEscapeHandler(): void {
     isVisible: () => !!M.overlay,
     close: () => closeTodoPanel(),
   });
+}
+
+// ---------- 面板尺寸记忆（ADR-0084：uiResizable 松手落 settings；重开沿用） ----------
+
+/** 面板当前 resize detach（打开期间非空，关闭清空） */
+let panelResizeDetach: { detach: () => void } | null = null;
+
+/** 记忆尺寸安全读取（settings 兜底默认值；越界——旧值/手改——回落默认或钳到上限） */
+function savedPanelSize(): { w: number; h: number } {
+  const s = tryGetSettings() as any;
+  const w = Number(s?.todoPanelWidth) || 0;
+  const h = Number(s?.todoPanelHeight) || 0;
+  if (w < PANEL.MIN_W || h < PANEL.MIN_H) return { w: PANEL.DEF_W, h: PANEL.DEF_H };
+  // 上限：硬上限 + 视口 92% 双限（与 uiResizable cap 同口径，防手改超大值打开即超屏）
+  const capW = Math.min(PANEL.MAX_W, Math.floor(window.innerWidth * 0.92));
+  const capH = Math.min(PANEL.MAX_H, Math.floor(window.innerHeight * 0.92));
+  return { w: Math.min(w, capW), h: Math.min(h, capH) };
+}
+
+/** 面板拖动缩放记忆：尺寸写入 settings 内存并持久化（无保存通道时静默安全） */
+function rememberPanelSize(w: number, h: number): void {
+  const s = tryGetSettings() as any;
+  if (!s) return;
+  s.todoPanelWidth = w;
+  s.todoPanelHeight = h;
+  void saveSettings();
 }
 
 // ---------- 渲染 ----------

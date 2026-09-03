@@ -11,6 +11,7 @@ import {
 } from '../../src/core/ui';
 import { openLightbox, closeLightbox } from '../../src/core/ui';
 import { uiModal } from '../../src/core/ui';
+import { uiResizable } from '../../src/core/ui';
 
 describe('bz ui 组件库', () => {
   beforeEach(() => {
@@ -401,6 +402,124 @@ describe('bz ui 组件库', () => {
     it('未匹配值显示 placeholder', () => {
       const { el } = uiSelect({ options: selOpts, value: 'z', placeholder: '请选择', onChange: () => {} });
       expect(el.querySelector('.bz-select-val')!.textContent).toBe('请选择');
+    });
+  });
+
+  describe('uiResizable 边缘拖动缩放', () => {
+    // jsdom 无几何布局：mock getBoundingClientRect 动态读 style（拖拽改 style 后即反映）
+    function makeBox(w = 720, h = 580): { el: HTMLElement } {
+      const el = document.createElement('div');
+      el.style.width = w + 'px';
+      el.style.height = h + 'px';
+      document.body.appendChild(el);
+      el.getBoundingClientRect = () => {
+        const rw = parseInt(el.style.width) || w;
+        const rh = parseInt(el.style.height) || h;
+        return {
+          left: 0, top: 0, right: rw, bottom: rh, x: 0, y: 0,
+          width: rw, height: rh, toJSON: () => ({}),
+        } as DOMRect;
+      };
+      return { el };
+    }
+    function fire(el: Element | Document, type: string, x: number, y: number) {
+      el.dispatchEvent(new MouseEvent(type, { clientX: x, clientY: y, bubbles: true }));
+    }
+
+    it('hover 右缘/底缘/右下角分别给 ew/ns/nwse 光标；内部区不给', () => {
+      const { el } = makeBox();
+      const det = uiResizable(el, {});
+      fire(el, 'mousemove', 719, 300); // 右缘 8px 内
+      expect(el.style.cursor).toBe('ew-resize');
+      fire(el, 'mousemove', 360, 579); // 底缘
+      expect(el.style.cursor).toBe('ns-resize');
+      fire(el, 'mousemove', 719, 579); // 右下角
+      expect(el.style.cursor).toBe('nwse-resize');
+      fire(el, 'mousemove', 300, 300); // 内部
+      expect(el.style.cursor).toBe('');
+      det.detach();
+    });
+
+    it('拖右缘放大并钳制到 min/max；onChange 收到钳制后尺寸', () => {
+      // 大视口：92% > 硬上限 1280，硬上限生效
+      vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(2000);
+      vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(1500);
+      const { el } = makeBox(720, 580);
+      const onCh = vi.fn();
+      const det = uiResizable(el, { minW: 720, minH: 520, maxW: 1280, maxH: 880, onChange: onCh });
+      fire(el, 'mousedown', 719, 300); // 右缘按下（右缘在 720，内偏 1px）
+      fire(document, 'mousemove', 900, 300); // 拖到 900 → 宽 901（保持 1px 内偏）
+      fire(document, 'mousemove', 2000, 300); // 超出硬上限 → 钳制 1280
+      fire(document, 'mouseup', 2000, 300);
+      expect(el.style.width).toBe('1280px');
+      expect(el.style.height).toBe('580px'); // 纯右缘不动高
+      expect(onCh).toHaveBeenLastCalledWith(1280, 580);
+      fire(el, 'mousedown', 1279, 300);
+      fire(document, 'mousemove', 100, 300); // 左拖 → 缩到 minW
+      fire(document, 'mouseup', 100, 300);
+      expect(el.style.width).toBe('720px');
+      det.detach();
+      vi.restoreAllMocks();
+    });
+
+    it('拖右下角同变宽高；下限钳制', () => {
+      vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(2000);
+      vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(1500);
+      const { el } = makeBox(720, 580);
+      const onCh = vi.fn();
+      const det = uiResizable(el, { minW: 720, minH: 520, maxW: 1280, maxH: 880, onChange: onCh });
+      fire(el, 'mousedown', 719, 579); // 右下角内侧 1px 按下（右缘在 720，底缘在 580）
+      fire(document, 'mousemove', 900, 700);
+      fire(document, 'mouseup', 900, 700);
+      // 右缘/底缘跟随鼠标并保持按下点的 1px 内偏 → 901×701
+      expect(el.style.width).toBe('901px');
+      expect(el.style.height).toBe('701px');
+      expect(onCh).toHaveBeenLastCalledWith(901, 701);
+      fire(el, 'mousedown', 899, 699); // 从新边缘内侧按下
+      fire(document, 'mousemove', 100, 100);
+      fire(document, 'mouseup', 100, 100);
+      expect(el.style.width).toBe('720px');
+      expect(el.style.height).toBe('520px');
+      det.detach();
+      vi.restoreAllMocks();
+    });
+
+    it('视口 92% 上限：窗口窄时以视口为限', () => {
+      const { el } = makeBox(720, 580);
+      vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1000);
+      vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(700);
+      const det = uiResizable(el, { minW: 720, minH: 520, maxW: 1280, maxH: 880 });
+      fire(el, 'mousedown', 719, 579);
+      fire(document, 'mousemove', 5000, 5000); // 远超硬上限，视口 92% = 920×644
+      fire(document, 'mouseup', 5000, 5000);
+      expect(el.style.width).toBe('920px');
+      expect(el.style.height).toBe('644px');
+      det.detach();
+      vi.restoreAllMocks();
+    });
+
+    it('热区外 mousedown 不启动拖拽（内容区点击不受影响）', () => {
+      const { el } = makeBox();
+      const onCh = vi.fn();
+      const det = uiResizable(el, { onChange: onCh });
+      fire(el, 'mousedown', 300, 300); // 内部
+      fire(document, 'mousemove', 900, 900);
+      fire(document, 'mouseup', 900, 900);
+      expect(el.style.width).toBe('720px');
+      expect(onCh).not.toHaveBeenCalled();
+      det.detach();
+    });
+
+    it('detach 后不再响应拖拽/光标', () => {
+      const { el } = makeBox();
+      const det = uiResizable(el, {});
+      det.detach();
+      fire(el, 'mousemove', 719, 300);
+      expect(el.style.cursor).toBe('');
+      fire(el, 'mousedown', 719, 300);
+      fire(document, 'mousemove', 900, 300);
+      fire(document, 'mouseup', 900, 300);
+      expect(el.style.width).toBe('720px');
     });
   });
 });
