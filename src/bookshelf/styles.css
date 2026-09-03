@@ -173,6 +173,8 @@
 /* 进度细条（封面底部；非已读且有进度时） */
 .bz-bs-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(0, 0, 0, 0.14); }
 .bz-bs-prog i { display: block; height: 100%; background: var(--bz-brand); }
+/* B6：有书评渐变浮层时进度条上移到浮层上方（quote 高 = 14pt + 1 行 16.5 + 6pt ≈ 37px），否则被渐变遮住 */
+.bz-bs-cover-wrap:has(.bz-bs-quote) .bz-bs-prog { bottom: 37px; }
 /* 书评一句（封面底部渐变浮层，1 行截断） */
 .bz-bs-quote {
   position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 8px 6px;

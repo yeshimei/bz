@@ -170,6 +170,59 @@ describe('bookshelf 数据层', () => {
     expect(kwFilter(items, '不存在').length).toBe(0);
   });
 
+  it('B6：EPUB progress 归一按 Weave 契约单口径（0-1 小数；1.0=100；>1 旧口径直取钳 100）', async () => {
+    const vault = new MockVault();
+    const mk = (id: string, title: string, percent: number) => [id, {
+      meta: { title },
+      file: { vaultPath: `books/${title}.epub` },
+      reading: { position: { percent } },
+    }] as const;
+    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
+      books: Object.fromEntries([
+        mk('a', '半程', 0.5),
+        mk('b', '读完', 1.0),
+        mk('c', '旧口径', 45),
+        mk('d', '越界', 150),
+        mk('e', '零', 0),
+      ]),
+    }));
+    const app = makeApp(vault);
+    const items = await loadEpubItems(app);
+    const byTitle = Object.fromEntries(items.map((i) => [i.title, i]));
+    expect(byTitle['半程'].progress).toBe(50);
+    expect(byTitle['读完'].progress).toBe(100);
+    expect(byTitle['读完'].status).toBe('在读'); // percent 有值 → 在读（completionTime 缺失）
+    expect(byTitle['旧口径'].progress).toBe(45);
+    expect(byTitle['越界'].progress).toBe(100);
+    expect(byTitle['零'].progress).toBe(0);
+    expect(byTitle['零'].status).toBe('未读');
+  });
+
+  it('B11：EPUB 无分类置 null，搜「未分类」不误命中 EPUB', async () => {
+    const vault = new MockVault();
+    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
+      books: { a: { meta: { title: '百年孤独' }, file: { vaultPath: 'books/x.epub' } } },
+    }));
+    const app = makeApp(vault);
+    const items = await loadEpubItems(app);
+    expect(items[0].category).toBeNull();
+    expect(kwFilter(items, '未分类').length).toBe(0);
+  });
+
+  it('B10：书库目录对象存在走 TFolder 直取；目录缺失回落全量过滤（含目录自身单文件）', () => {
+    const { vault, app } = seedVault();
+    // 目录对象路径：嵌套子目录（书库/小说/围城.md）也被递归收进
+    const items = scanMarkdownBooks(app);
+    expect(items.map((i) => i.title)).toContain('围城');
+    // 回落路径：书库目录不存在，书库.md 单文件本身是书
+    const vault2 = new MockVault();
+    vault2.files.set('书库.md', '---\ntags: [book]\nauthor: 单文件\n---');
+    vault2.files.set('别处/别的.md', '---\ntags: [book]\n---');
+    const items2 = scanMarkdownBooks(makeApp(vault2));
+    expect(items2.length).toBe(1);
+    expect(items2[0].title).toBe('书库');
+  });
+
   it('currentSideItems：在读/未读/已读/全部', () => {
     const { app } = seedVault();
     const items = scanMarkdownBooks(app);

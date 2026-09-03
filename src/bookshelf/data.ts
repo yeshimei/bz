@@ -11,7 +11,9 @@ import { tryGetSettings } from '../core/settings-provider';
 import type { BookshelfItem } from './state';
 import { M } from './state';
 const WEAVE_PLUGIN_ID = 'weave-epub-reader';
-const DEFAULT_WEAVE_DATA_FILE = 'weave-data.json';
+/** Weave 阅读数据文件名（EPUB 自动刷新按此后缀识别 json 通道；index.ts 引用） */
+export const WEAVE_DATA_FILE = 'weave-data.json';
+const DEFAULT_WEAVE_DATA_FILE = WEAVE_DATA_FILE;
 const COVER_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
 
 /** 书库文件夹：新设置键优先，回落旧 libraryFolderPath，最终回落「书库」 */
@@ -89,14 +91,26 @@ export function parseBookFile(file: TFile, app: App, folderPath: string, bookTag
   };
 }
 
-/** 扫描书库目录，构建 md 书目列表（不落 M；调用方负责装载） */
+/** 扫描书库目录，构建 md 书目列表（不落 M；调用方负责装载）。
+ *  B10：目录对象存在时 TFolder 递归直取（大 vault 免全量遍历），否则回落全量过滤。 */
 export function scanMarkdownBooks(app: App): BookshelfItem[] {
   const folderPath = resolveFolderPath();
   const bookTag = resolveBookTag();
-  const allFiles = app.vault.getMarkdownFiles();
+  const folder = app.vault.getAbstractFileByPath(folderPath) as { children?: any[] } | null;
+  const files: any[] = [];
+  if (folder && Array.isArray(folder.children)) {
+    const stack = [...folder.children];
+    while (stack.length) {
+      const cur = stack.pop() as any;
+      if (Array.isArray(cur?.children)) stack.push(...cur.children);
+      else if (cur?.extension === 'md') files.push(cur);
+    }
+  } else {
+    // 回落：目录对象缺失（目录不存在/目录本身是单个 md 笔记）时全量过滤
+    files.push(...app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folderPath + '/') || f.path === folderPath + '.md'));
+  }
   const items: BookshelfItem[] = [];
-  for (const file of allFiles) {
-    if (!file.path.startsWith(folderPath + '/') && file.path !== folderPath + '.md') continue;
+  for (const file of files) {
     try {
       const item = parseBookFile(file, app, folderPath, bookTag);
       if (item) items.push(item);
@@ -166,6 +180,8 @@ function buildEpubItem(app: App, aggregate: any): BookshelfItem | null {
   const title = typeof meta?.title === 'string' ? meta.title.trim() : '';
   if (!vaultPath || !title) return null;
 
+  // B6：progress 归一按 CONTEXT 契约（ticket 081/ADR-0034，与 smartcat libraryWeaveDiff 同口径）：
+  // Weave 上报 0-1 小数（1.0=读完 → 100）；>1 为旧版 0-100 口径直接取整（钳 100）
   const rawPercent = typeof reading?.position?.percent === 'number' ? reading.position.percent : 0;
   const progress = rawPercent > 1
     ? Math.min(100, Math.round(rawPercent))
@@ -182,7 +198,8 @@ function buildEpubItem(app: App, aggregate: any): BookshelfItem | null {
     file: vaultFile instanceof TFile ? vaultFile : null,
     title,
     author: typeof meta?.author === 'string' && meta.author.trim() ? meta.author.trim() : '未知作者',
-    category: '未分类',
+    // B11：EPUB 无分类元数据，置 null（不再硬编码「未分类」——kwFilter 搜「未分类」曾误命中全部 EPUB）
+    category: null,
     cover: resolveEpubCoverPath(app, meta),
     bookReview: null,
     readingDate,

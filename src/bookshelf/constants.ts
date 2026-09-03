@@ -57,3 +57,5 @@ export const REPORT_COMMAND_ID = 'bz-reading-report-open';
 /** 空态/搜索空态图标（lucide） */
 export const EMPTY_BOOKS_ICON = 'library-big';
 export const EMPTY_SEARCH_ICON = 'search-x';
+/** B9：状态筛空态（区别于搜索空态的图标语义） */
+export const EMPTY_FILTER_ICON = 'funnel';
