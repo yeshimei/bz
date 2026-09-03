@@ -1,11 +1,11 @@
 /**
  * 书架墙（bookshelf）UI 层测试：主面板渲染/筛选/搜索/详情改状态进度书评/删除/报告深链/EPUB 只读
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, clearNotices } from '../mock-obsidian-entry';
 import { M, resetBookshelfState } from '../../src/bookshelf/state';
-import { ensureBookshelf, unloadBookshelf } from '../../src/bookshelf';
+import { ensureBookshelf, unloadBookshelf, openBookshelf } from '../../src/bookshelf';
 import { createOverlay, closeOverlay } from '../../src/bookshelf/ui';
 
 function makeApp(vault: MockVault) {
@@ -365,5 +365,43 @@ describe('bookshelf overlay', () => {
     await new Promise((r) => setTimeout(r, 420));
     expect(gridCards(overlay).length).toBe(3); // 未刷新（新书未出现）
     closeOverlay();
+  });
+
+  it('audit H：bindCoverFallback 容器 error 监听只挂一次（重复渲染不叠加）', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const shelves = overlay.querySelector('.bz-bs-shelves') as HTMLElement;
+    const spy = vi.spyOn(shelves, 'addEventListener');
+    const { renderAll } = await import('../../src/bookshelf/ui');
+    renderAll(app);
+    renderAll(app);
+    expect(spy.mock.calls.filter(([type]) => type === 'error').length).toBe(0); // 首次渲染已挂，重复渲染不再叠加
+    spy.mockRestore();
+    closeOverlay();
+  });
+
+  it('audit H：toggle 关面板顺带关闭详情/删除确认弹窗（不留孤儿浮层）', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const card = Array.from(gridCards(overlay)).find((b) => b.textContent?.includes('认知觉醒')) as HTMLElement;
+    card.click();
+    expect(document.querySelector('.bz-bs-d-popup')).toBeTruthy(); // 详情弹窗开着
+    // 再触发一次命令（toggle 语义 → closeOverlay）
+    openBookshelf(app);
+    expect(document.querySelector('.bz-bs-overlay')).toBeFalsy(); // 主面板已关
+    expect(document.querySelector('.bz-bs-d-popup')).toBeFalsy(); // 详情弹窗不留孤儿
+    // 删除确认弹窗同样收口
+    createOverlay(app);
+    await new Promise((r) => setTimeout(r, 20));
+    const overlay2 = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const card2 = Array.from(gridCards(overlay2)).find((b) => b.textContent?.includes('算法导论')) as HTMLElement;
+    card2.click();
+    (document.querySelector('.bz-bs-d-popup .bz-bs-d-danger') as HTMLElement).click();
+    expect(document.querySelector('.bz-bs-confirm-pop')).toBeTruthy();
+    openBookshelf(app);
+    expect(document.querySelector('.bz-bs-confirm-pop')).toBeFalsy();
+    expect(document.querySelector('.bz-bs-d-popup')).toBeFalsy();
   });
 });
