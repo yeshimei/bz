@@ -22,7 +22,7 @@ const BASE_SETTINGS = {
   todoFilePath: 'CONFIG/STORAGE',
   showFileName: true,
   autoPopupOnStart: true,
-  movieFolderPath: '我的/影视',
+  cinemaFolderPath: '我的/影视',
 };
 
 describe('DataManager 构建', () => {

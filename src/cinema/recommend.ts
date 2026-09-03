@@ -3,14 +3,17 @@
  * - 口味画像 buildTasteProfile（加权统计类型/题材/导演/主演/地区 + 最近观影）
  * - 提示词 buildRecommendPrompt（要求真实存在、引用画像偏好）
  * - AI 页内化（用户拍板）：点入口切 AI 页 → 等待消息就地在页内显示 → 完成后结果列表就地渲染（不弹窗）
+ * - ADR-0087：自旧 movie 迁入 runSimilarRecommend/buildSimilarPrompt（找同类）
  */
 import type { App } from 'obsidian';
-import { notice } from '../core/notice';
+import { notice, notify } from '../core/notice';
 import { createAI } from '../core/ai';
+import { emitDomainEvent } from '../core/domain-bus';
 import { STATUS_WANT, STATUS_WATCHED } from './constants';
 import type { CinemaItem } from './state';
 import { M } from './state';
 import { refreshDataAndView } from './data';
+import { watchPosterFetch } from './poster-watch';
 
 /** 类型 → 默认 tag（加入想看用） */
 const GROUP_DEFAULT_TAG: Record<string, string> = {
@@ -126,8 +129,13 @@ tags:
 ---
 `;
   try {
-    await app.vault.create(filePath, content);
+    const f = await app.vault.create(filePath, content);
     notice(`已加入想看：${trimmedName}`, 'success');
+    // 事件补发（smartcat 行为流观察；ADR-0087 cinema 接管）：created want
+    emitDomainEvent('movie', { kind: 'created', name: trimmedName, status: 'want', rating: null, review: null });
+    // poster 占位 → progress 通知轮询等外部 watcher 写入海报
+    const handle = notify('正在获取海报和豆瓣信息…', { type: 'progress' });
+    watchPosterFetch(app, f, handle);
     refreshDataAndView(app);
   } catch (e) {
     notice('创建笔记失败', 'error');
@@ -145,6 +153,7 @@ export async function runAIRecommend(app: App): Promise<void> {
   M.aiWaitMsg = 'AI 正在分析你的观影口味…';
   M.aiResult = null;
   M.aiError = null;
+  M.aiTitle = 'AI 荐片';
   M.view = 'ai';
   M.renderFn?.();
 
@@ -171,4 +180,54 @@ export async function runAIRecommend(app: App): Promise<void> {
     M.aiError = 'AI 分析失败：' + (e.message || e);
     M.renderFn?.();
   }
+}
+
+/**
+ * 找同类（ADR-0087 自旧 movie/recommend.ts runSimilarRecommend 迁入）：
+ * 以基准影片 + 已看库为输入，推荐同类佳作。结果走页内渲染（AI 页状态机，不弹窗）。
+ * @param item 当前详情/基准影片
+ */
+export async function runSimilarRecommend(item: CinemaItem, app: App): Promise<void> {
+  // 页内等待态（复用 AI 页状态机；标题区分「找同类 ·《X》」）
+  M.aiRunning = true;
+  M.aiWaitMsg = 'AI 正在分析同类影片…';
+  M.aiResult = null;
+  M.aiError = null;
+  M.aiTitle = `找同类 ·《${item.name}》`;
+  M.view = 'ai';
+  M.renderFn?.();
+  try {
+    const watched = M.items.filter((i) => i.status === STATUS_WATCHED && i.name !== item.name);
+    M.aiWaitMsg = `已分析 ${M.items.length} 部影视，正在生成同类推荐…`;
+    M.renderFn?.();
+    const ai = createAI();
+    const raw = await ai.json(buildSimilarPrompt(item, watched), {});
+    const parsed = parseRecommendJson(raw);
+    if (!parsed || parsed.length === 0) {
+      M.aiRunning = false;
+      M.aiError = 'AI 分析失败：返回格式无法解析';
+      M.renderFn?.();
+      return;
+    }
+    M.aiRunning = false;
+    M.aiResult = parsed;
+    M.renderFn?.();
+  } catch (e: any) {
+    M.aiRunning = false;
+    M.aiError = 'AI 分析失败：' + (e.message || e);
+    M.renderFn?.();
+  }
+}
+
+/** 找同类提示词：以基准影片 + 已看库为输入，要求推荐未看过的同类佳作（输出结构与其他 AI 保持一致） */
+export function buildSimilarPrompt(item: CinemaItem, watched: CinemaItem[]): string {
+  const self = `片名《${item.name}》（${item.typeTag || '未知类型'}${item.rating !== null && item.rating > 0 ? `，我的评分 ${item.rating}` : ''}${item.review ? `，我的影评「${item.review.slice(0, 80)}」` : ''}${item.director ? `，导演 ${item.director}` : ''}）`;
+  const list = watched
+    .map((i) => `${i.name}（${i.typeTag || ''}${i.rating !== null && i.rating > 0 ? `，评分${i.rating}` : ''}）`)
+    .join('、');
+  return `你是资深影视推荐官。以下是我的影视库里的「基准影片」和我「已看过的影片清单」。
+基准影片：${self}
+我已看过：${list || '（暂无）'}
+请推荐 3~5 部与基准影片气质相近、但我还没看过的同类佳作（可从真实世界影视中挑选），结合我的观影口味说明理由。
+严格输出 JSON（不要输出其他内容）：{"recommendations":[{"title":"片名","year":"年份","type":"类型","director":"导演","reason":"为何与基准影片同类、为何适合我"}]}`;
 }

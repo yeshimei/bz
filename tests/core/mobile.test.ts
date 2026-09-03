@@ -49,8 +49,8 @@ describe('isMobileEnv / applyMobileWindowFullscreen（ticket 68）', () => {
 });
 
 describe('DEFAULT_SETTINGS 移动端默认全屏默认值（行为保持映射，ticket 68）', () => {
-  it('11 键存在且默认值 = 原移动端行为（9 开 2 关）；聚合讯/阅读报告不设独立键', () => {
-    const ON = ['diary', 'belongings', 'clipping', 'password', 'favorites', 'library', 'movie', 'review', 'encrypt'];
+  it('11 键存在且默认值 = 原移动端行为（9 开 2 关）；聚合讯/阅读报告不设独立键（ADR-0087 movie 键由 cinema 取代）', () => {
+    const ON = ['diary', 'belongings', 'clipping', 'password', 'favorites', 'library', 'cinema', 'review', 'encrypt'];
     const OFF = ['memo', 'pomodoro'];
     for (const k of ON) {
       expect(DEFAULT_SETTINGS[`${k}MobileDefaultFullscreen`]).toBe(true);

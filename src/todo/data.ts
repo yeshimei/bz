@@ -18,8 +18,8 @@ export interface TodoSettingsLike {
   todoFilePath?: string;
   /** 场景列表（逗号分隔，空则内置默认；与旧 memo 共用 memoScenarios 键） */
   memoScenarios?: string;
-  /** 公开课笔记目录（与 memo 共用 movieFolderPath） */
-  movieFolderPath?: string;
+  /** 公开课笔记目录（与 memo 共用 cinemaFolderPath） */
+  cinemaFolderPath?: string;
 }
 
 /** 默认场景（与旧 memo 完全一致，保证同数据文件语义不漂移） */
@@ -66,7 +66,7 @@ export const TodoData = {
   todoFilePath: '',
   scenarios: [] as string[],
   _store: null as ReturnType<typeof jsonStore> | null,
-  movieFolderPath: '我的/影视',
+  cinemaFolderPath: '我的/影视',
 
   init(settings: TodoSettingsLike) {
     // ADR-0009：storagePath 优先，旧 todoFilePath 兼容兜底（memo.json 与旧 memo 共用）
@@ -74,7 +74,7 @@ export const TodoData = {
     this._store = jsonStore(this.todoFilePath);
     // 场景：设置可编辑（逗号分隔），空则内置默认（与旧 memo 共用 memoScenarios 键）
     this.scenarios = parseScenarios(settings.memoScenarios);
-    this.movieFolderPath = settings.movieFolderPath || '我的/影视';
+    this.cinemaFolderPath = settings.cinemaFolderPath || '我的/影视';
   },
 
   async read() {
@@ -144,7 +144,7 @@ export const TodoData = {
     const app = getApp();
     const result: { name: string; path: string }[] = [];
     for (const file of app.vault.getFiles()) {
-      if (!file.path.startsWith(this.movieFolderPath) || file.extension !== 'md') continue;
+      if (!file.path.startsWith(this.cinemaFolderPath) || file.extension !== 'md') continue;
       const cache = app.metadataCache.getFileCache(file);
       if (!cache) continue;
       if (hasCourseTag(cache)) result.push({ name: file.basename, path: file.path });

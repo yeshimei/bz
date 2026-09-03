@@ -18,7 +18,7 @@ function makeApp(vault: MockVault) {
 
 const BASE_SETTINGS = {
   todoFilePath: 'CONFIG/STORAGE',
-  movieFolderPath: '我的/影视',
+  cinemaFolderPath: '我的/影视',
 };
 
 describe('TodoData 构建', () => {

@@ -19,7 +19,7 @@ const SETTINGS = {
   memoDefaultScene: '',
   memoDueFormat: 'relative',
   memoAutoArchive: true,
-  movieFolderPath: '我的/影视',
+  cinemaFolderPath: '我的/影视',
   todoMobileDefaultFullscreen: false,
 };
 

@@ -93,9 +93,11 @@ _Avoid_: 与 markdown 读书笔记（读 `我的/读书笔记` 笔记文件建�
 **EPUB 想法编辑**: 修改/删除 EPUB 划线想法时 bz **直接改 weave-data.json**（ADR-0013 的唯一写例外，不动其他结构；写前重读最新文档）。用户决策：不走 Weave 命令桥。
 _Avoid_: 把「想法编辑」当成 bz 直写的一般能力——只此两处写入口，其余仍只读
 
-**影视 (Movies)**: `我的/影视` 目录管理，frontmatter 处理（fileManager.processFrontMatter），状态常量（想看/在看/已看等）。
+**影视 (Movies, 旧域，已退役删除 ADR-0087)**: 原 `src/movie/` 域——`我的/影视` 目录管理，frontmatter 处理（fileManager.processFrontMatter），状态常量（想看/在看/已看等）。能力已由影院（cinema）域接管；旧 bz-movie-open/bz-movie-add 命令已删。
 
-**影视分析报告域 (movie-report)**: 观影数据分析独立域（ADR-0048，自 `src/movie/analysis.ts` 迁出为 `src/movie-report/`）——index（ensure/open/unload）+ analysis（统计与渲染）+ state（本域目录态）；命令 `bz-movie-report`（名称「影视分析报告」，id 契约不变）；数据只读 `我的/影视/*.md` frontmatter（metadataCache）；跨域显式引用无环：本域 → movie/constants（纯数据）、movie/ui 📊 按钮 → 本域 openAnalysisModal；移动端默认全屏沿用 movie 键（用户拍板：跟随窗口不设独立开关）；ESC 键名 `movie-analysis` 不变。窗口标题「📊 观影数据分析」为既有文案。
+**影院 (Cinema, ADR-0087 接管影视)**: `src/cinema/` 域，命令 `bz-cinema-open`/`bz-cinema-add`。目录 = cinemaFolderPath（显式配置）→ 回落「我的/影视」；frontmatter 契约（tags 类型 / 评分 -1 想看 0 在看 >0 已看 / 观影日期 / 影评 / 海报 / 豆瓣字段）与旧 movie 域及外部 douban-poster watcher 完全一致。**ADR-0087 承接**：poster 抓取轮询（src/cinema/poster-watch.ts，添加后 progress「正在获取海报和豆瓣信息…」→ 外部 watcher 写入 frontmatter → vault modify 自动刷新链替换占位）、找同类 AI（详情弹窗按钮 → 页内结果）、补发 `movie:` 域事件（created/status/rated/review/deleted，smartcat 行为流观察依赖，载荷对齐 MovieActionEvent 契约）。AI 页标题由 M.aiTitle 区分「AI 荐片」与「找同类 ·《X》」。设置收敛设置面板「影院」tab。
+
+**影视分析报告域 (movie-report)**: 观影数据分析独立域（ADR-0048，自 `src/movie/analysis.ts` 迁出为 `src/movie-report/`）——index（ensure/open/unload）+ analysis（统计与渲染）+ state（本域目录态）；命令 `bz-movie-report`（名称「影视分析报告」，id 契约不变）；数据只读 `我的/影视/*.md` frontmatter（metadataCache）；跨域显式引用无环：本域 → cinema/constants（纯数据，ADR-0087 改引）；移动端默认全屏沿用 cinema 键（用户拍板：跟随窗口不设独立开关）；ESC 键名 `movie-analysis` 不变。窗口标题「📊 观影数据分析」为既有文案。
 _Avoid_: 影视数据分析弹窗（旧词条口径——指本域窗口时用「影视分析报告」）；由影视.js 调用 / 共享 __MOVIE_FOLDER_PATH（已随独立域解除）
 
 **海报抓取 (Poster Fetch)**: 由独立守护进程（PM2 托管 `douban-poster watch`，ADR-0007）完成：监听影视文件夹新建/改动（10s 防抖）→ 全目录遍历缺「海报」字段的笔记 → 按创建时间倒序入队 → 每 15s 串行抓取「豆瓣搜索 → 高清海报下载 → 13 个 frontmatter 字段补全 → 正文海报 embed」。与 bz 插件完全分离：插件不含抓取逻辑，设置页仅提供安装与运行指引；脚本源码在 `tools/obsidian-douban-poster/`（npm 包 `@jwbz/obsidian-douban-poster`）。

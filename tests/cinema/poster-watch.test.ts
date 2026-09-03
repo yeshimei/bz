@@ -1,18 +1,18 @@
 /**
- * 影视海报抓取状态监听（poster-watch）测试：
+ * 影院（cinema）海报抓取状态监听（poster-watch）测试（ADR-0087 自旧 movie/poster-watch 迁入）：
  * 创建笔记后轮询「海报」frontmatter 字段，非空 → 原地更新 progress 通知为已完成（不弹第二条）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { notify } from '../../src/core/notice';
-import { watchPosterFetch, POSTER_POLL_MS, POSTER_POLL_MAX } from '../../src/movie/poster-watch';
+import { watchPosterFetch, POSTER_POLL_MS, POSTER_POLL_MAX } from '../../src/cinema/poster-watch';
 
 function visibleNotices(): HTMLElement[] {
   return Array.from(document.querySelectorAll('.bz-notice')) as HTMLElement[];
 }
 
-describe('watchPosterFetch', () => {
+describe('cinema watchPosterFetch', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     resetObsidianMocks();
