@@ -35,8 +35,9 @@ export interface BzChipOpts {
   label: string;
   icon?: BzIconName;
   count?: number;          // 徽标计数
-  selected?: boolean;      // --on
-  removable?: boolean;     // 带删除钮
+  selected?: boolean;      // 选中实底 --on
+  selectedSoft?: boolean;  // 选中软底 --sel（品牌软底，区别于实底）
+  removable?: boolean;     // 带删除钮（不暗示选中态；选中与否由 selected/selectedSoft 显式声明）
   locked?: boolean;        // 锁定虚线
   title?: string;
   disabled?: boolean;
@@ -84,6 +85,7 @@ export interface BzSegOpts<T extends string = string> {
   value: T;
   onChange: (value: T) => void;
   className?: string;
+  label?: string;          // radiogroup aria-label（可访问性）
 }
 
 /** 平铺单选组（.bz-choice）：选项胶囊可换行，单选带 is-on 态 */
@@ -92,11 +94,13 @@ export interface BzChoiceOpts<T extends string = string> {
   value: T;
   onChange: (value: T) => void;
   className?: string;
+  label?: string;          // radiogroup aria-label（可访问性）
 }
 
 /** 开关（.bz-sw）：40×22 滑块，开 = 品牌实底 */
 export interface BzSwitchOpts {
   checked?: boolean;
+  disabled?: boolean;      // 禁用（置灰 + 不响应交互）
   onChange?: (checked: boolean) => void;
 }
 

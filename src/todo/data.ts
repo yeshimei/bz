@@ -84,13 +84,15 @@ export const TodoData = {
     return this._store!.write(data);
   },
 
-  /** 加载条目：读 + 缺 id 生成 + 字段归一（与旧 memo 一致：有缺 id 整写回补） */
+  /** 加载条目：读 + 缺 id 生成 + 字段归一（与旧 memo 一致：有缺 id 整写回补）。
+ *  id 前缀用 generateId() 默认 'item'——与旧 memo 域同写 memo.json，保证两域对同文件
+ *  的 id 形态完全一致（T5）。 */
   async loadItems(): Promise<TodoItem[]> {
     const raw = await this.read();
     let needWrite = false;
     const items = raw.map((item: any) => {
       if (!item.id) {
-        item.id = generateId('todo');
+        item.id = generateId();
         needWrite = true;
       }
       // 统一字段形状（缺省补默认值，旧数据零迁移）

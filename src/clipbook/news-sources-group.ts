@@ -367,8 +367,19 @@ function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, Bilibi
   handle = handleReg;
 }
 
-/** 已跳过文章保留天数（ticket 170：与「已保存保留天数」同义去重；改为数字框，空值回退 7） */
+/** 文章保留天数（ticket 170 + C4 补 saved 行：saved 默认 3 / skipped 默认 7；数字框，空值回退默认） */
 function renderRetention(groupBody: HTMLElement, refreshVisibility: () => void): void {
+  const savedBinding = numStrBinding('newsRetentionSavedDays', 3);
+  new Setting(groupBody)
+    .setName('已保存文章保留天数')
+    .setDesc('清理 news.json 里已保存文章的骨架数据')
+    .addText((text) =>
+      text.setValue(String(savedBinding.get())).onChange(async (v) => {
+        const n = Number(v);
+        if (Number.isFinite(n) && n > 0) savedBinding.set(n);
+        await saveSettings();
+      })
+    );
   const binding = numStrBinding('newsRetentionSkippedDays', 7);
   new Setting(groupBody)
     .setName('已跳过文章保留天数')

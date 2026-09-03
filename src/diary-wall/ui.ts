@@ -28,12 +28,13 @@
  * - 🔍搜索：原型 alert 占位。
  * - 底部抽屉动作（打开/复制双链/复制正文/改标签/加密/删除）：原型 alert 占位，后续接 bz 统一右键/长按抽屉。
  */
+import type { EventRef } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
 import { notice } from '../core/notice';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { getApp } from '../core/app';
-import { DIARY_DIRECTORY, getSubTagsOfPrimary, getPrimaryTagsInDisplayOrder, getTagEmoji } from './config';
+import { DIARY_DIRECTORY, MOVIE_DIRECTORY, LETTER_DIRECTORY, BOOK_DIRECTORY, getSubTagsOfPrimary, getPrimaryTagsInDisplayOrder, getTagEmoji } from './config';
 import { loadWallEntries, mediaSrc, groupByMonth, extractMedia, stripMediaLinks, type WallEntry, type WallMedia } from './data';
 // TODO(自包含)：以下 diary 域入口在「删除日记本域」时改为回忆墙自己的实现
 import { openAddDialog } from '../diary/ui/dialogs';
@@ -129,10 +130,13 @@ export class DiaryWallAppController {
   selSubTag: string | null = null;
   /** 加密条目是否可见（原型 S.locked：默认锁定隐藏） */
   lockedVisible = false;
-  /** 移动端媒体 seed（原型 mediaSeed：比例轮换用） */
-  private mediaSeed = 0;
   private escUnregister: { unregister: () => void } | null = null;
   private _initialized = false;
+  /** DW3：vault modify 自动刷新订阅（show 挂 / hide+cleanup 摘）+ 防抖计时 */
+  private _modifyRef: EventRef | null = null;
+  private _modifyTimer: ReturnType<typeof setTimeout> | null = null;
+  /** DW6：章节跳转落定校正计时 */
+  private _scrollFixTimer: ReturnType<typeof setTimeout> | null = null;
   /** 媒体懒加载 observer + 章节滚动高亮 cleanup：按 desk/mob 实例分存（双实例各自独立，互不覆盖） */
   private observers: Record<'desk' | 'mob', IntersectionObserver | null> = { desk: null, mob: null };
   private rafCleanups: Record<'desk' | 'mob', (() => void) | null> = { desk: null, mob: null };
@@ -301,19 +305,12 @@ export class DiaryWallAppController {
     ui.head.querySelector('[data-act="add"]')?.addEventListener('click', () => this.openAddEntry());
     // 搜索：toggle 真搜索框
     ui.head.querySelector('[data-act="search"]')?.addEventListener('click', () => this.toggleSearch(ui));
-    // 灯箱关闭按钮（双实例）
+    // 灯箱关闭按钮（双实例各自一份）
     ui.lb.querySelector('[data-act="lb-close"]')?.addEventListener('click', (e) => {
       e.stopPropagation();
       this.closeLightbox();
     });
-    // 遮罩点击关闭（点击灯箱背景本身）
-    ui.lb.addEventListener('click', (e) => {
-      if (e.target === ui.lb) this.closeLightbox();
-    });
-    // 根遮罩点击关闭（点击面板外）
-    this.root!.addEventListener('click', (e) => {
-      if (e.target === this.root && this.root!.style.display === 'flex') this.hide();
-    });
+    // DW10：灯箱背景关闭由 bindLightbox 统一绑定、根遮罩关闭移 ensureElements 单次绑定（此处原重复绑 2~3 次）
     // 章节栏（仅桌面有）事件委托：月份点击 → 平滑滚动定位
     ui.rail.addEventListener('click', (e) => {
       const item = (e.target as HTMLElement).closest<HTMLElement>('.bz-diary-wall-month');
@@ -349,6 +346,10 @@ export class DiaryWallAppController {
       ui.lb.addEventListener('click', (e) => {
         if (e.target === ui.lb) this.closeLightbox();
       });
+    });
+    // DW10：根遮罩点击关闭——单次绑定（原在 bindPanel 内随双实例重复绑 2 次）
+    this.root!.addEventListener('click', (e) => {
+      if (e.target === this.root && this.root!.style.display === 'flex') this.hide();
     });
   }
 
@@ -581,7 +582,7 @@ export class DiaryWallAppController {
             strip.appendChild(this.thumbEl(m, e));
           });
         it.appendChild(strip);
-        it.addEventListener('click', () => this.scrollToMonth(mk, ui.wall));
+        // DW8：点击滚动由 bindPanel 的 rail 委托统一处理（此处原逐月再绑一次 → 双触发 smooth 滚动）
         ui.rail.appendChild(it);
       });
     }
@@ -623,7 +624,7 @@ export class DiaryWallAppController {
           const item = document.createElement('div');
           item.className = 'bz-diary-wall-item bz-diary-wall-media-wrap';
           item.dataset.widx = String(widx);
-          item.appendChild(this.mediaEl(k, e));
+          item.appendChild(this.mediaEl(k, e, mobile));
           if (e.text) {
             const tx = document.createElement('div');
             tx.className = 'bz-diary-wall-tx bz-diary-wall-md';
@@ -890,11 +891,11 @@ export class DiaryWallAppController {
   }
 
   /** 媒体块（图片/视频/音频 + 渐变占位 + 描述；无 emoji 角标——用户要求去掉） */
-  private mediaEl(k: WallMedia, entry: WallEntry): HTMLElement {
-    const wrap = document.createElement('div');
+  private mediaEl(k: WallMedia, entry: WallEntry, mobile: boolean): HTMLElement {    const wrap = document.createElement('div');
     wrap.className = 'bz-diary-wall-media';
-    // 功能性内联（动态计算）：宽高比——视频 16/9，图片/音频按 seed 轮换 1/1 与 4/3
-    wrap.style.aspectRatio = k.kind === 'video' ? '16 / 9' : this.mediaSeed++ % 3 === 0 ? '1 / 1' : '4 / 3';
+    // 功能性内联（动态计算）：宽高比——视频 16/9，图片/音频按条目+媒体名稳定散列轮换 1/1 与 4/3
+    // （DW7：原全局 mediaSeed++ 递增——双实例各渲染一次 + 重渲染漂移，同条目宽高比不稳定致瀑布重排抖动）
+    wrap.style.aspectRatio = k.kind === 'video' ? '16 / 9' : this.mediaAspect(entry, k.name);
     const ph = document.createElement('div');
     ph.className = 'bz-diary-wall-ph';
     // 占位只保留渐变背景（视频/图片不显示 emoji 大字；音频保留 🎵 图标——无封面可显示）
@@ -949,9 +950,20 @@ export class DiaryWallAppController {
     }
     wrap.addEventListener('click', (e) => {
       e.stopPropagation();
-      this.openLightbox(k, entry);
+      // DW4：移动端媒体单击改开条目抽屉（原直进灯箱 → 纯媒体条目的改标签/加密/删除等条目级动作不可达；
+      // 抽屉内媒体缩略图仍可进灯箱）。桌面保持单击进灯箱。
+      if (mobile) this.openSheet(entry);
+      else this.openLightbox(k, entry);
     });
     return wrap;
+  }
+
+  /** 媒体宽高比稳定散列：按条目日期+媒体名派生（DW7——全局递增 seed 双实例/重渲染下漂移） */
+  private mediaAspect(entry: WallEntry, name: string): string {
+    let h = 0;
+    const s = `${entry.date}|${name}`;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return h % 3 === 0 ? '1 / 1' : '4 / 3';
   }
 
   /** 章节栏缩略图（胶卷小图：图片显示真实图、视频 ▶ 渐变、音频 🎵、无媒体 emoji） */
@@ -972,7 +984,9 @@ export class DiaryWallAppController {
       if (src) {
         const img = document.createElement('img');
         img.loading = 'lazy';
-        img.dataset.lazy = src;
+        // 直接设 src（勿用 dataset.lazy：章节栏不在 setupLazy 观察范围内，
+        // 只挂 dataset 永不渲染 → 胶卷缩略图空白）
+        img.src = src;
         img.onerror = () => {
           t.textContent = '🖼';
         };
@@ -985,6 +999,17 @@ export class DiaryWallAppController {
   }
 
   // ---------- 视口懒加载控制器 ----------
+  /** DW9：视频元数据就绪后把时长角标从 ▶ 换成真实 mm:ss（preload=metadata 读首帧元数据时触发） */
+  private bindVideoDuration(v: HTMLVideoElement): void {
+    v.addEventListener('loadedmetadata', () => {
+      const dur = v.parentElement?.querySelector<HTMLElement>('.bz-diary-wall-dur');
+      if (!dur || !Number.isFinite(v.duration) || v.duration <= 0) return;
+      const m = Math.floor(v.duration / 60);
+      const s = Math.round(v.duration % 60);
+      dur.textContent = `${m}:${String(s).padStart(2, '0')}`;
+    }, { once: true });
+  }
+
   private setupLazy(wall: HTMLElement, key: 'desk' | 'mob') {
     if (this.observers[key]) this.observers[key]!.disconnect();
     if (typeof IntersectionObserver === 'undefined') {
@@ -999,7 +1024,9 @@ export class DiaryWallAppController {
         if (el.tagName === 'VIDEO' && vidSrc && el.getAttribute('src') === null) {
           el.setAttribute('src', vidSrc);
           delete el.dataset.src;
-          (el as HTMLVideoElement).preload = 'metadata';
+          const v = el as HTMLVideoElement;
+          v.preload = 'metadata';
+          this.bindVideoDuration(v);
         }
       });
       return;
@@ -1018,7 +1045,9 @@ export class DiaryWallAppController {
             if (el.tagName === 'VIDEO' && vidSrc && el.getAttribute('src') === null) {
               el.setAttribute('src', vidSrc);
               delete el.dataset.src;
-              (el as HTMLVideoElement).preload = 'metadata';
+              const v = el as HTMLVideoElement;
+              v.preload = 'metadata';
+              this.bindVideoDuration(v);
             }
           } else {
             // 离开视口的视频暂停（释放解码资源）
@@ -1048,6 +1077,17 @@ export class DiaryWallAppController {
     const headRect = head.getBoundingClientRect();
     const top = wall.scrollTop + (headRect.top - wallRect.top) - 6;
     wall.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    // DW6：smooth 滚动途中 content-visibility 条目陆续真渲染（占位 240px → 真实高度），
+    // 文档流漂移导致停偏；落定后按最终几何校正一次
+    if (this._scrollFixTimer !== null) clearTimeout(this._scrollFixTimer);
+    this._scrollFixTimer = setTimeout(() => {
+      this._scrollFixTimer = null;
+      if (this.root?.style.display !== 'flex') return;
+      const h = wall.querySelector<HTMLElement>(`.bz-diary-wall-day-head[data-date^="${mk}"]`);
+      if (!h) return;
+      const t2 = wall.scrollTop + (h.getBoundingClientRect().top - wall.getBoundingClientRect().top) - 6;
+      if (Math.abs(t2 - wall.scrollTop) > 2) wall.scrollTo({ top: Math.max(0, t2) });
+    }, 480);
   }
 
   /** 滚动高亮：rAF 节流，当前月份在章节栏高亮并滚到可见。
@@ -1102,14 +1142,17 @@ export class DiaryWallAppController {
   // ---------- 灯箱 ----------
   /** 打开灯箱：图片/视频/音频 controls 播放（真实 src = mediaSrc） */
   private openLightbox(k: WallMedia, entry: WallEntry) {
-    const box = this.desk.lbMedia;
-    box.innerHTML = '';
     const src = this.mediaSrcFor(entry, k.name);
     const errHtml = `<div class="bz-diary-wall-lberr">${KIND_ICON[k.kind]} 无法加载</div>`;
-    if (k.kind === 'img') {
+    // 媒体构建工厂：desk/mob 各构建真实元素（勿用 innerHTML 复制——img/video/audio 无子节点，
+    // 复制结果为空串，移动端灯箱媒体会空白）
+    const build = (box: HTMLElement) => {
+      box.innerHTML = '';
       if (!src) {
         box.innerHTML = errHtml;
-      } else {
+        return;
+      }
+      if (k.kind === 'img') {
         const img = document.createElement('img');
         img.src = src;
         img.alt = k.name;
@@ -1118,11 +1161,7 @@ export class DiaryWallAppController {
           box.innerHTML = errHtml;
         };
         box.appendChild(img);
-      }
-    } else if (k.kind === 'video') {
-      if (!src) {
-        box.innerHTML = errHtml;
-      } else {
+      } else if (k.kind === 'video') {
         const v = document.createElement('video');
         v.src = src;
         v.controls = true;
@@ -1132,10 +1171,6 @@ export class DiaryWallAppController {
           box.innerHTML = errHtml;
         };
         box.appendChild(v);
-      }
-    } else {
-      if (!src) {
-        box.innerHTML = errHtml;
       } else {
         const a = document.createElement('audio');
         a.src = src;
@@ -1147,16 +1182,21 @@ export class DiaryWallAppController {
         };
         box.appendChild(a);
       }
-    }
+    };
+    build(this.desk.lbMedia);
+    build(this.mob.lbMedia);
     // 灯箱下方信息：标题行 = 文件名（或日期·时间·标签）；副行 = 日记正文文字（去掉媒体引用），
     // 不再显示资源路径（用户要求：放大后下面显示日记的文字而不是图片/视频路径）
-    this.desk.lbCap.textContent = k.name || `${entry.date} ${entry.time} · ${entry.tags.join(' ')}`;
-    this.desk.lbSub.textContent = entry.text || entry.content || '';
-    this.desk.lb.classList.add('bz-diary-wall-lb--show');
-    this.mob.lbMedia.innerHTML = box.innerHTML;
-    this.mob.lbCap.textContent = this.desk.lbCap.textContent;
-    this.mob.lbSub.textContent = this.desk.lbSub.textContent;
-    this.mob.lb.classList.add('bz-diary-wall-lb--show');
+    const cap = k.name || `${entry.date} ${entry.time} · ${entry.tags.join(' ')}`;
+    const sub = entry.text || entry.content || '';
+    this.desk.lbCap.textContent = cap;
+    this.desk.lbSub.textContent = sub;
+    this.mob.lbCap.textContent = cap;
+    this.mob.lbSub.textContent = sub;
+    // 仅当前可见实例加 --show（≤768px 桌面实例 display:none；避免双实例重复 autoplay/冗余节点）
+    const mobileNow = typeof matchMedia === 'function' && matchMedia('(max-width: 768px)').matches;
+    if (mobileNow) this.mob.lb.classList.add('bz-diary-wall-lb--show');
+    else this.desk.lb.classList.add('bz-diary-wall-lb--show');
   }
 
   private closeLightbox() {
@@ -1476,6 +1516,7 @@ export class DiaryWallAppController {
     applyMobileWindowFullscreen(this.root!.querySelector('.bz-diary-wall-mob') as HTMLElement, this.config.mobileDefaultFullscreen);
     this.root!.style.display = 'flex';
     topifyZ(this.root!); // ADR-0067
+    this.subscribeVaultModify();
     void this.loadAndRender();
   }
 
@@ -1485,6 +1526,40 @@ export class DiaryWallAppController {
     this.closeLightbox();
     this.closeSheet();
     this.root.style.display = 'none';
+    this.unsubscribeVaultModify();
+  }
+
+  /** DW3：vault modify 自动刷新（clipbook 同款模式）——墙开着时日记/影视/信/书被编辑 → 防抖重读重渲染；
+   *  只关心四个数据源目录（config 常量）；隐藏期不订阅不刷新。 */
+  private subscribeVaultModify(): void {
+    if (this._modifyRef) return;
+    const dirs = [DIARY_DIRECTORY, MOVIE_DIRECTORY, LETTER_DIRECTORY, BOOK_DIRECTORY];
+    this._modifyRef = this.app().vault.on('modify', (file: { path?: string }) => {
+      const p = (file as { path?: string } | null)?.path;
+      if (!p || this.root?.style.display !== 'flex') return;
+      if (!dirs.some((d) => p.startsWith(d + '/') || p === d + '.md')) return;
+      if (this._modifyTimer !== null) clearTimeout(this._modifyTimer);
+      this._modifyTimer = setTimeout(() => {
+        this._modifyTimer = null;
+        if (this.root?.style.display !== 'flex') return;
+        void this.loadAndRender();
+      }, 400);
+    });
+  }
+
+  private unsubscribeVaultModify(): void {
+    if (this._modifyRef) {
+      try {
+        this.app().vault.offref(this._modifyRef);
+      } catch {
+        // mock/异常环境兜底：忽略 offref 失败
+      }
+      this._modifyRef = null;
+    }
+    if (this._modifyTimer !== null) {
+      clearTimeout(this._modifyTimer);
+      this._modifyTimer = null;
+    }
   }
 
   /** 加载数据并渲染（openManager 主路径） */
@@ -1626,8 +1701,11 @@ export class DiaryWallAppController {
     const box = ui.searchBox;
     const btn = ui.head.querySelector<HTMLElement>('[data-act="search"]');
     if (!row || !box) return;
+    // DW11：双实例搜索框共享同一 searchKeyword，开/收时互相同步值（防显示与状态不一致）
+    const other = ui === this.desk ? this.mob : this.desk;
     if (row.style.display === 'none') {
       row.style.display = 'block';
+      box.value = this.searchKeyword;
       box.focus();
       box.select();
       btn?.classList.add('bz-diary-wall-icon-btn--on');
@@ -1635,6 +1713,7 @@ export class DiaryWallAppController {
       row.style.display = 'none';
       box.value = '';
       this.searchKeyword = '';
+      if (other?.searchBox) other.searchBox.value = '';
       this.renderAll();
       btn?.classList.remove('bz-diary-wall-icon-btn--on');
     }
@@ -1651,6 +1730,11 @@ export class DiaryWallAppController {
     this.closeContextMenu();
     this.teardownScrollers('desk');
     this.teardownScrollers('mob');
+    this.unsubscribeVaultModify(); // DW3：摘 modify 订阅
+    if (this._scrollFixTimer !== null) {
+      clearTimeout(this._scrollFixTimer);
+      this._scrollFixTimer = null;
+    }
     this.escUnregister?.unregister();
     this.escUnregister = null;
     this._ctxBound = { desk: false, mob: false };

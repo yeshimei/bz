@@ -50,6 +50,7 @@ let escHandle: { unregister(): void } | null = null;
 let escRegistered = false;
 let loading = false;
 let dirty = false; // 数据变化待刷标志（目录事件回调期）
+let loaded = false; // C5：本次会话是否已成功装载过（false = 首开必须装载）
 
 // ================= 图标（lucide，禁 emoji） =================
 const ICO = {
@@ -94,7 +95,10 @@ export function showPanel(): void {
   }
   overlayEl!.style.display = 'flex';
   M.open = true;
-  void loadIfNeeded();
+  // C5/ADR-0063：已装载且无目录事件（!dirty）直接用内存缓存渲染——零扫描瞬时显示；
+  // 首开未装载或有变更才异步重读
+  if (dirty || !loaded) void loadIfNeeded();
+  else renderAll();
 }
 
 /** 装载（防重入 + 首载后保留内存面，目录事件增量走 reloadIfOpen） */
@@ -104,16 +108,16 @@ function loadIfNeeded(): Promise<void> {
   if (!M.open && overlayEl) return Promise.resolve();
   loading = true;
   loadPromise = readNewsAndSidecar()
-    .then(() => { renderAll(); })
+    .then(() => { dirty = false; loaded = true; renderAll(); })
     .catch((e) => { console.error('[剪藏本] 装载失败', e); notice('剪藏本数据读取失败', 'error'); })
     .finally(() => { loading = false; loadPromise = null; });
   return loadPromise;
 }
 
-/** 目录文件事件触发的重载（仅面板打开时；防抖在 index 层） */
+/** 目录文件事件触发的重载（面板隐藏期记脏不丢——C5：重开时按需重读而非丢弃事件后全量重扫） */
 export function reloadIfOpen(): void {
-  if (!M.open) return;
   dirty = true;
+  if (!M.open) return;
   void loadIfNeeded();
 }
 
@@ -139,6 +143,7 @@ export function unloadPanel(): void {
   loading = false;
   loadPromise = null;
   dirty = false;
+  loaded = false;
   if (overlayEl) overlayEl.remove();
   overlayEl = null;
   resetClipbookState();
@@ -318,11 +323,6 @@ function renderAll(): void {
   }
 }
 
-/** 数据面刷新（目录事件/动作后调用；保留选中与阅读态） */
-function refreshData(): void {
-  renderAll();
-}
-
 // ================= 视图派生 =================
 function srcList(): { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' } {
   const s = M.sel;
@@ -332,7 +332,7 @@ function srcList(): { kind: 'all' } | { kind: 'inbox'; platform: string; up?: st
 }
 
 function currentList(): ClipArticle[] {
-  return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], srcList());
+  return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], srcList(), M.upInfo);
 }
 
 function listWithSearch(): ClipArticle[] {
@@ -384,12 +384,18 @@ function renderRail(): void {
     html += railItemHtml('inbox', pfx, cnt, cnt, 'feed', color, active, '');
   }
 
-  // B站 UP 展开（upInfo 回填名字）
-  const biliUps = new Map<string, string>();
-  for (const a of arts) if (!a.read && a.platform === 'B站' && a.author) biliUps.set(String(a.author), String(a.author));
-  for (const [name] of biliUps) {
-    const cnt = arts.filter((a) => !a.read && a.platform === 'B站' && String(a.author || '') === name).length;
-    const active = M.sel.kind === 'inbox' && M.sel.platform === 'B站' && M.sel.up === name;
+  // B站 UP 展开（C2：Map 按 author/uid 去重；C6：upInfo 回填名字显示）
+  const biliUps = new Map<string, string>(); // key=author 原始值（uid），value=展示名（回填回退）
+  for (const a of arts) {
+    if (!a.read && a.platform === 'B站' && a.author) {
+      const uid = String(a.author);
+      const backfilled = M.upInfo?.[uid]?.name;
+      if (!biliUps.has(uid)) biliUps.set(uid, backfilled ? String(backfilled) : uid);
+    }
+  }
+  for (const [uid, name] of biliUps) {
+    const cnt = arts.filter((a) => !a.read && a.platform === 'B站' && String(a.author || '') === uid).length;
+    const active = M.sel.kind === 'inbox' && M.sel.platform === 'B站' && M.sel.up === uid;
     html += railItemHtml('inbox', name, cnt, cnt, 'bili', '#8b7cf6', active, name.slice(0, 1));
   }
 
@@ -487,11 +493,10 @@ function buildItemActions(a: ClipArticle): ItemAction[] {
     }
     return out;
   }
-  // news 条目
+  // news 条目（C3：原「移出剪藏本」分支已删——收件流 filter 剔除 saved 后该动作永不可达；
+  // 剪藏本视图对已存条目提供「删除」，语义空间已覆盖）
   if (a.st !== 'saved') {
     out.push({ icon: 'download', label: '保存到剪藏本', title: '保存为正式剪藏', onClick: () => void doSave(a) });
-  } else {
-    out.push({ icon: 'rotate-ccw', label: '移出剪藏本', title: '取消保存标记', onClick: () => void doUnsave(a) });
   }
   out.push({ icon: 'check', label: '标记为已读', title: '不再出现在收件流', onClick: () => void doMarkRead(a) });
   if (a.st === 'reading') {
@@ -568,21 +573,6 @@ async function doSave(a: ClipArticle | null): Promise<void> {
   const ok = await flowSave(a);
   if (!ok) return;
   await refreshAfterAction();
-}
-
-async function doUnsave(a: ClipArticle | null): Promise<void> {
-  if (!a || a.origin !== 'news') return;
-  pauseReadingSession();
-  // 移出 = 还原为未读（仅清 news 侧 state；目录文件保留——保底 saved 判定仍命中）
-  await import('./store').then(async (st) => {
-    const sidecar = { ...M.sidecar };
-    const key = a.id;
-    delete sidecar.articleOverrides[key];
-    sidecar.savedArchive = (sidecar.savedArchive || []).filter((s) => s.url !== a.url);
-    await st.writeSidecar(sidecar);
-    M.sidecar = sidecar;
-    await refreshAfterAction();
-  });
 }
 
 async function doMarkRead(a: ClipArticle | null): Promise<void> {
@@ -691,12 +681,18 @@ function renderMobSources(): void {
     const cnt = arts.filter((a) => !a.read && (a.platform === pfx || (pfx === '果壳科学人' && a.platform === '果壳') || (pfx === '知乎日报' && a.platform === '知乎'))).length;
     html += mobSrcChipHtml('inbox', pfx, cnt, M.sel.kind === 'inbox' && M.sel.platform === pfx, 'feed', pfx.slice(0, 1));
   }
+  // B站 UP chip（C2：Map 按 author/uid 去重——原同 UP N 条未读渲染 N 个同名 chip；C6：upInfo 回填名）
+  const mobUps = new Map<string, string>();
   for (const a of arts) {
     if (a.read || a.platform !== 'B站' || !a.author) continue;
-    const name = String(a.author);
-    const cnt = arts.filter((x) => !x.read && x.platform === 'B站' && String(x.author || '') === name).length;
+    const uid = String(a.author);
+    const backfilled = M.upInfo?.[uid]?.name;
+    if (!mobUps.has(uid)) mobUps.set(uid, backfilled ? String(backfilled) : uid);
+  }
+  for (const [uid, name] of mobUps) {
+    const cnt = arts.filter((x) => !x.read && x.platform === 'B站' && String(x.author || '') === uid).length;
     if (cnt === 0) continue;
-    html += mobSrcChipHtml('inbox', name, cnt, M.sel.kind === 'inbox' && M.sel.platform === 'B站' && M.sel.up === name, 'bili', name.slice(0, 1));
+    html += mobSrcChipHtml('inbox', name, cnt, M.sel.kind === 'inbox' && M.sel.platform === 'B站' && M.sel.up === uid, 'bili', name.slice(0, 1));
   }
   html += mobSrcChipHtml('clip', '剪藏本', 0, M.sel.kind === 'clip', 'clip');
   mobSourcesEl.innerHTML = html;
@@ -734,6 +730,8 @@ function renderMobDetail(): void {
   // 保存钮态
   if (mobSaveBtnEl) {
     const saved = a.st === 'saved';
+    // C9：剪藏来源条目不显示保存钮（doSave 对 origin!=='news' 静默 return——原为点了无反馈的假按钮）
+    mobSaveBtnEl.style.display = a.origin !== 'news' ? 'none' : '';
     mobSaveBtnEl.classList.toggle('saved', saved);
     mobSaveBtnEl.title = saved ? '已保存到剪藏本' : '保存到剪藏本';
     mobSaveBtnEl.innerHTML = iconSpan(saved ? 'check' : 'download', 'bz-ic--sm');

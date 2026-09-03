@@ -140,9 +140,16 @@ export function jsonFileStore<T>(filePath: string, opts: JsonFileStoreOptions<T>
       }
       const created = await createIfMissing(app, c);
       if (created) return;
-      // 并发降级（P1-31）：read 首建空文件抢先 → 对最新句柄 modify，数据不丢
-      const cur = app.vault.getAbstractFileByPath(filePath);
-      if (!cur) throw new Error('storage: create 竞态降级失败（' + filePath + '）');
+      // 并发降级（P1-31）：read 首建空文件抢先 → 对最新句柄 modify，数据不丢。
+      // 极低概率下文件仍不存在（目录权限/瞬时消失）→ 重试 create 一次；仍失败抛出，
+      // 由调用方捕获提示（避免静默丢写入——P2-3）
+      let cur = app.vault.getAbstractFileByPath(filePath);
+      if (!cur) {
+        const retried = await createIfMissing(app, c);
+        if (retried) return;
+        cur = app.vault.getAbstractFileByPath(filePath);
+        if (!cur) throw new Error('storage: create 竞态降级失败（' + filePath + '）');
+      }
       await app.vault.modify(cur as any, c);
     },
   };

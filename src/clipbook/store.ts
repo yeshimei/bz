@@ -79,7 +79,8 @@ export function clipArticle(
   const title = String(a.title || '(无标题)');
   const body = cleanBody(a.body);
   const isBili = platform === 'B站';
-  const feedUp = isBili ? String(a.author || '') : '';
+  // C6：UP 主名用 upInfo 回填（后台抓到名字则显名，回退 author/uid——ticket 126 展示契约）
+  const feedUp = isBili ? upName(a, upInfo[String(a.author || '')]) : '';
   const srcName = feedUp || platform;
   const typeLabel = feedUp ? 'UP主' : platform;
   let timeText = String(a.fetchedAt || a.date || '');
@@ -158,9 +159,9 @@ export function queryBySource(
   sidecar: ClipbookData,
   clipByUrl: Set<string>,
   clipNotes: any[],
-  source: { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' }
+  source: { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' },
+  upInfoMap: Record<string, any> = {}
 ): ClipArticle[] {
-  const upInfo = {};
   if (source.kind === 'clip') {
     return (clipNotes || []).map((n) => clipFromNote(n));
   }
@@ -169,7 +170,7 @@ export function queryBySource(
   const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
   let out: ClipArticle[] = [];
   if (source.kind === 'all') {
-    out = pool.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys }));
+    out = pool.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
   } else {
     const isBili = source.platform === 'B站';
     const list = pool.filter((a) => {
@@ -178,7 +179,7 @@ export function queryBySource(
       if (isBili && source.up && String(a.author || '') !== source.up) return false;
       return true;
     });
-    out = list.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys }));
+    out = list.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
   }
   // saved（含 url 命中剪藏）在收件流里隐藏（保留在「剪藏本」源）
   return out.filter((a) => a.st !== 'saved');

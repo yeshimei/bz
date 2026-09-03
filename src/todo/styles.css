@@ -10,7 +10,7 @@
   background: var(--bz-overlay);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--bz-font-ui);
-  z-index: 100000;
+  /* z-index 由 openTodoPanel 经 topifyZ 动态分配（ADR-0067），此处不设静态档 */
 }
 .bz-todo-panel {
   background: var(--bz-surface-2); color: var(--bz-text-1);
