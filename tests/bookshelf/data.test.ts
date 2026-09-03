@@ -142,10 +142,29 @@ describe('bookshelf 数据层', () => {
     expect(s.doneThisYear.length).toBe(1);
     // 3小时20分 → 3 小时（向下取整小时）
     expect(s.totalHours).toBe(3);
-    // 围城 2026-08 读完 → 8 月柱 count=1（bars[0] 是本月，向左排到 11 个月前）
+    // 围城 2026-08 读完 → 8 月柱 count=1（bars[0] 是 11 个月前，向右排到 bars[11]=本月）
     const aug = s.bars.find((b) => b.label === '8月')!;
     expect(aug.count).toBe(1);
-    expect(s.bars[0].label).toBe('本月');
+    expect(aug.isThis).toBe(false);
+    expect(s.bars[0].label).toBe('10月'); // 11 个月前 = 2025-10
+    expect(s.bars[11].label).toBe('本月');
+    expect(s.bars[11].isThis).toBe(true);
+    expect(s.bars[11].count).toBe(0); // 当前月（2026-09）无读完数据
+  });
+
+  it('computeStats：近 12 月柱数据↔标签映射（bars[11]=本月承载当月数据，bars[0] 承载 11 个月前）', () => {
+    // 回归：旧实现 t = nowM - i 使 bars[0]（本月标签）承载 11 个月前数据，映射整体反转
+    const vault = new MockVault();
+    vault.files.set('书库/当月书.md', '---\ntags: [book]\nreadingDate: 2026-09-01\ncompletionDate: 2026-09-10\n---');
+    vault.files.set('书库/去年书.md', '---\ntags: [book]\nreadingDate: 2025-10-01\ncompletionDate: 2025-10-20\n---');
+    const app = makeApp(vault);
+    M.items = [...scanMarkdownBooks(app)];
+    const s = computeStats(new Date(2026, 8, 3)); // 2026-09（11 个月前 = 2025-10）
+    expect(s.bars[11].label).toBe('本月');
+    expect(s.bars[11].count).toBe(1); // 当月读完的「当月书」落在「本月」柱
+    expect(s.bars[11].isThis).toBe(true);
+    expect(s.bars[0].count).toBe(1); // 2025-10 读完的「去年书」落在首柱
+    expect(s.bars[0].label).toBe('10月');
   });
 
   it('排序：date 主日期倒序/无日期排后；title/author/progress', () => {

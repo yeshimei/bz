@@ -335,15 +335,16 @@ export function computeStats(now: Date = new Date()): ShelfStats {
   }
   const totalHighlights = M.items.reduce((s, x) => s + (x.highlights || 0), 0);
 
-  // 近 12 个月读完（按 completionDate）
+  // 近 12 个月读完（按 completionDate）：bars[0] = 11 个月前，bars[11] = 本月（标签与数据同柱）
   const bars: { count: number; label: string; isThis: boolean }[] = [];
   const nowM = now.getFullYear() * 12 + now.getMonth();
-  for (let i = 11; i >= 0; i--) {
-    const t = nowM - i;
+  for (let i = 0; i < 12; i++) {
+    const t = nowM - (11 - i);
     const y = Math.floor(t / 12);
     const m = t % 12;
     const count = done.filter((x) => x.completionDate && +x.completionDate.slice(0, 4) === y && +x.completionDate.slice(5, 7) === m + 1).length;
-    bars.push({ count, label: i === 11 ? '本月' : `${m + 1}月`, isThis: i === 11 });  }
+    bars.push({ count, label: i === 11 ? '本月' : `${m + 1}月`, isThis: i === 11 });
+  }
   return {
     reading, unread, done, doneThisYear,
     totalHours: Math.round(totalMs / 3600000),
