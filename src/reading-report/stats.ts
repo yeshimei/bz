@@ -203,10 +203,11 @@ export function calculateReadingStats(books: BookNoteEntry[]): ReadingStats {
         stats.readingSessions = stats.readingSessions.concat(fm.readingSessions).filter((d) => d.duration > 60);
       }
 
-      // 统计阅读状态
-      if (fm.completionDate) {
+      // 统计阅读状态（audit G：与 bookshelf/library 双日期口径统一——
+      // readingDate && completionDate 才算已读；只补完成日期的书在两面板不再状态分叉）
+      if (fm.readingDate && fm.completionDate) {
         stats.readBooks++;
-      } else if (fm.readingDate && !fm.completionDate) {
+      } else if (fm.readingDate) {
         stats.readingBooks++;
       } else {
         stats.unreadBooks++;

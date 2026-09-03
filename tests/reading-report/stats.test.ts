@@ -30,7 +30,7 @@ function localIsoDate(ts: number): string {
 describe('calculateReadingStats', () => {
   it('状态计数 + 汇总 + 进度分布', () => {
     const books = [
-      book({ completionDate: '2025-07-01', readingProgress: 100, readingTime: 3600000, highlights: 10, thinks: 2, dialogue: 1, outlinks: 3, pages: 300, wordCount: 80000 }),
+      book({ readingDate: '2025-05-01', completionDate: '2025-07-01', readingProgress: 100, readingTime: 3600000, highlights: 10, thinks: 2, dialogue: 1, outlinks: 3, pages: 300, wordCount: 80000 }),
       book({ readingDate: '2025-06-01', readingProgress: 50 }),
       book({ readingProgress: 0 }),
     ];
@@ -47,6 +47,14 @@ describe('calculateReadingStats', () => {
     expect(s.progressDistribution.completed).toBe(1);
     expect(s.progressDistribution.inProgress).toBe(1);
     expect(s.progressDistribution.unread).toBe(1);
+  });
+
+  it('audit G：状态口径与 bookshelf/library 双日期统一——只补 completionDate 不算已读', () => {
+    // 回归：旧实现「有 completionDate 即已读」，与两面板（双日期口径）状态分叉
+    const s = calculateReadingStats([book({ completionDate: '2025-07-01', readingProgress: 100 })]);
+    expect(s.readBooks).toBe(0);
+    expect(s.readingBooks).toBe(0);
+    expect(s.unreadBooks).toBe(1);
   });
 
   it('阅读速度均值（totalReadingTime>0）', () => {
