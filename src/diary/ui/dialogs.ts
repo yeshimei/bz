@@ -23,7 +23,7 @@ import { diaryDataMap, state } from '../state';
 import { getJumpToEditAfterSaveSetting, getTagShowEmojiSetting, getUseFileDateTimeSetting } from './ui-settings';
 import { rebuildTags, updateTitleSuffix } from './filter-shared';
 import { applyFilter as applyFilterFromDialogs, insertCard, jumpToEntry, removeCard, showConfirm as showConfirmFromDialogs } from './entries';
-import { createDateTimeControl, syncDateTime } from './datetime-picker';
+import { createDateTimeControl, resetDateTimeControl } from './datetime-picker';
 
 // ===== 类型选择按钮（类型选择器与写日记弹窗共用） =====
 
@@ -416,10 +416,6 @@ export async function updateTags(entryId: string, newTags: string[]) {
     return;
   }
 
-  entry.tags = newTags;
-  // 使用 getTagEmoji 生成 emoji 序列
-  entry.emoji = newTags.map((tag) => getTagEmoji(tag)).join('');
-
   const dateStr = entry.date;
   const entries = diaryDataMap?.get(dateStr) ?? null;
   // 稳定定位（P1-12）：行号优先，同 time 多条不再改错位置；旧行号失配时回退「该时间仅一条」
@@ -427,10 +423,18 @@ export async function updateTags(entryId: string, newTags: string[]) {
   const targetEntry =
     entries?.find((e) => e.time === entry.time && e.lineNumber === entry.lineNumber) ??
     (sameTime.length === 1 ? sameTime[0] : undefined);
-  if (targetEntry) {
-    targetEntry.tags = newTags;
-    targetEntry.emoji = entry.emoji;
+  // P2 审查修复：定位失败（map 中无对应块，如数据未加载/被加密链路换血）时告警并中止，
+  // 不再盲写旧数据——旧行为 UI 显示新标签、磁盘还是旧标签
+  if (!targetEntry) {
+    notice('未能在日记数据中定位该条目，标签没有修改', 'error');
+    return;
   }
+
+  entry.tags = newTags;
+  // 使用 getTagEmoji 生成 emoji 序列
+  entry.emoji = newTags.map((tag) => getTagEmoji(tag)).join('');
+  targetEntry.tags = newTags;
+  targetEntry.emoji = entry.emoji;
 
   await writeFile(dateStr);
 
@@ -466,6 +470,9 @@ export async function updateTags(entryId: string, newTags: string[]) {
           return dateCmp !== 0 ? dateCmp : b.timeValue - a.timeValue;
         });
         insertCard(entry);
+        // P2 审查修复：插卡后前移显示计数——新卡片已渲染进 DOM，滚动加载下一批
+        // 从其后开始，否则滚到底时尾部条目重复渲染
+        state.data.currentDisplayCount += 1;
       }
     }
   }
@@ -582,10 +589,13 @@ export function openAddDialog() {
   // 否则保持当前时间
 
   const defaultDateTime = `${defaultDateStr} ${defaultTimeStr}`;
+  // P1 审查修复：打开时同步重置控件内部 currentMoment（显示与滚轮起点一致）。
+  // 旧路径只改 hiddenInput 显示值——控件内部时刻停在创建那天，隔天打开直接点
+  // 「确定」会把日记写回旧时刻
+  resetDateTimeControl(moment(defaultDateTime, 'YYYY-MM-DD HH:mm', true));
   const datetimeInput = document.getElementById('add-diary-datetime') as HTMLInputElement | null;
   if (datetimeInput) {
     datetimeInput.value = defaultDateTime;
-    syncDateTime();
   }
 
   topifyZ(mask, popup); // ADR-0067：显示即发号
@@ -677,6 +687,9 @@ export async function saveNewEntry() {
         return dateCmp !== 0 ? dateCmp : b.timeValue - a.timeValue;
       });
       insertCard(newEntry);
+      // P2 审查修复：插卡后前移显示计数——新卡片已渲染进 DOM，滚动加载下一批
+      // 从其后开始，否则滚到底时尾部条目重复渲染
+      state.data.currentDisplayCount += 1;
     }
   } catch (error: any) {
     console.error('保存日记失败:', error);

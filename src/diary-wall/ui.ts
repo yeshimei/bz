@@ -56,6 +56,21 @@ const KIND_ICON: Record<WallMedia['kind'], string> = {
 const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
 
 /**
+ * 滚动高亮的当前月份选取（纯函数，可单测）：
+ * 取最后一个 relTop ≤ 8 的节头所属月份（relTop 为相对墙体的视口相对量，与滚动距离无关——
+ * P1 审查修复：旧实现把 relTop 与 scrollTop+8 比较，坐标系混用导致滚过半程后全部命中、
+ * 章节栏恒高亮最后月份）。全部未过线时返回 null（调用方回退首节头）。
+ */
+export function pickCurrentMonth(heads: { date: string; relTop: number }[]): string | null {
+  let current: string | null = null;
+  for (const h of heads) {
+    if (h.relTop <= 8) current = h.date.slice(0, 7);
+    else break;
+  }
+  return current;
+}
+
+/**
  * 回忆墙 AppController（照搬 password-vault AppController 模式）：
  * 单例 getInstance(config) / init() / openManager() / cleanup()。
  * 根容器 position:fixed;inset:0;z-index:var(--bz-z-overlay,1000);display:none; 挂 body。
@@ -815,6 +830,33 @@ export class DiaryWallAppController {
     };
   }
 
+  /** 特殊条目（影视/信/书）：整文件即条目，无日记 md 块语义（对齐 diary 面板 !special 语义） */
+  private isSpecialWallEntry(e: WallEntry): boolean {
+    return e.kind === 'movie' || e.kind === 'letter' || e.kind === 'book';
+  }
+
+  /**
+   * 按 filename+lineNumber 反查 diary state 条目（P1 审查修复：id 断层——wall 侧
+   * 普通日记条目没有 id，直接拿空 id 走 diary 动作会静默失败甚至误删）。
+   * wall 与 diary 同源解析、行号一致；找不到时全量加载一次后重试（同 editTags 旧策略）。
+   */
+  private async findDiaryEntry(e: WallEntry, afterLoad = false): Promise<any | null> {
+    try {
+      const diaryState = (await import('../diary/state')).state;
+      const entry = diaryState.data.originalDiaryEntries.find(
+        (x: any) => x.filename === e.filename && x.lineNumber === e.lineNumber
+      );
+      if (entry) return entry;
+    } catch (err) {
+      /* diary 未初始化：走 loadAll 兜底 */
+    }
+    if (!afterLoad) {
+      await this.ensureDiaryLoaded();
+      return this.findDiaryEntry(e, true);
+    }
+    return null;
+  }
+
   /** 右键上下文菜单（自绘，跟手；动作与抽屉同源） */
   private openContextMenu(x: number, y: number, e: WallEntry) {
     this.closeContextMenu();
@@ -835,13 +877,19 @@ export class DiaryWallAppController {
     mk('↗', '打开原文', null, () => void this.jumpTo(e));
     mk('⧉', '复制双链', null, () => this.copyLink(e));
     mk('▤', '复制正文', null, () => this.copyContent(e));
+    // P1 审查修复：特殊条目（影视/信/书）不给「加密/删除」（对齐 diary 面板 !special 语义）
+    const special = this.isSpecialWallEntry(e);
     if (!e.encrypted && !e.tags.includes('加密')) {
       mk('⌘', '改标签', null, () => this.editTags(e));
-      mk('🔒', '加密', 'bz-diary-wall-menu-item--accent', () => void this.encryptEntryAction(e));
+      if (!special) {
+        mk('🔒', '加密', 'bz-diary-wall-menu-item--accent', () => void this.encryptEntryAction(e));
+      }
     } else {
       mk('🔓', '解密', 'bz-diary-wall-menu-item--accent', () => void this.decryptEntryAction(e));
     }
-    mk('🗑', '删除', 'bz-diary-wall-menu-item--danger', () => void this.deleteEntryAction(e));
+    if (!special) {
+      mk('🗑', '删除', 'bz-diary-wall-menu-item--danger', () => void this.deleteEntryAction(e));
+    }
     document.body.appendChild(menu);
     this._contextMenu = menu;
     // 点击别处 / ESC 关闭
@@ -1065,17 +1113,16 @@ export class DiaryWallAppController {
   // ---------- 滚动 → 章节自动高亮 ----------
   /**
    * 章节点击：平滑滚动定位到该月的第一个 day-head（不重渲染、不切过滤）。
-   * 定位用 getBoundingClientRect 差值（wall 顶 + 目标 head 顶 − 容器视口顶），
-   * 不依赖 offsetTop——content-visibility:auto 的屏外条目 offsetTop 是未渲染占位值，
-   * 且不同月份 head 在稀疏/网格布局下可能算出相同/错误的偏移（用户反馈：点 12 月能跳、
-   * 点前面的月份不跳）。rect 差值以当前真实渲染位置为准，任何月份都准确。
+   * P2/G 审查修复：day-head 是 sticky 吸顶头，月份滚过后 rect 恒贴墙顶，rect 差值
+   * 推不出目标位置（点已滚过的月份 no-op）——改用 flowTopOf 流式位置推算（见下），
+   * 定位仍不依赖 offsetTop（content-visibility 的屏外占位高度不可靠），smooth 滚动
+   * 途中条目陆续真渲染导致文档流漂移，落定后按最终几何校正一次（DW6 保留）。
    */
   private scrollToMonth(mk: string, wall: HTMLElement) {
     const head = wall.querySelector<HTMLElement>(`.bz-diary-wall-day-head[data-date^="${mk}"]`);
     if (!head) return;
     const wallRect = wall.getBoundingClientRect();
-    const headRect = head.getBoundingClientRect();
-    const top = wall.scrollTop + (headRect.top - wallRect.top) - 6;
+    const top = wall.scrollTop + (this.flowTopOf(head, wallRect) - 6);
     wall.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
     // DW6：smooth 滚动途中 content-visibility 条目陆续真渲染（占位 240px → 真实高度），
     // 文档流漂移导致停偏；落定后按最终几何校正一次
@@ -1085,32 +1132,43 @@ export class DiaryWallAppController {
       if (this.root?.style.display !== 'flex') return;
       const h = wall.querySelector<HTMLElement>(`.bz-diary-wall-day-head[data-date^="${mk}"]`);
       if (!h) return;
-      const t2 = wall.scrollTop + (h.getBoundingClientRect().top - wall.getBoundingClientRect().top) - 6;
+      const t2 = wall.scrollTop + (this.flowTopOf(h, wall.getBoundingClientRect()) - 6);
       if (Math.abs(t2 - wall.scrollTop) > 2) wall.scrollTo({ top: Math.max(0, t2) });
     }, 480);
   }
 
+  /**
+   * 节头的流式相对位置（相对墙体顶）：节头是 sticky，滚过后自身 rect 不再反映流式位置；
+   * 其后的 masonry 容器不是 sticky，rect 即流式真实位置——用 masonry 顶 − 节头高反推。
+   * 无后续块（防御）时回退节头自身 rect 差值。
+   */
+  private flowTopOf(head: HTMLElement, wallRect: DOMRect): number {
+    const next = head.nextElementSibling as HTMLElement | null;
+    if (next && !next.classList.contains('bz-diary-wall-day-head')) {
+      return next.getBoundingClientRect().top - wallRect.top - head.offsetHeight;
+    }
+    return head.getBoundingClientRect().top - wallRect.top;
+  }
+
   /** 滚动高亮：rAF 节流，当前月份在章节栏高亮并滚到可见。
-      与 scrollToMonth 同口径用 getBoundingClientRect 差值（content-visibility 下 offsetTop 不可靠，P2-1 审查修复） */
+   *  与 scrollToMonth 同口径用 getBoundingClientRect 差值（content-visibility 下 offsetTop 不可靠，P2-1 审查修复）。 */
   private setupRailHighlight(wall: HTMLElement, rail: HTMLElement, key: 'desk' | 'mob') {
     let raf: number | null = null;
     const onScroll = () => {
       if (raf !== null) return;
       raf = requestAnimationFrame(() => {
         raf = null;
-        const heads = wall.querySelectorAll<HTMLElement>('.bz-diary-wall-day-head');
-        if (!heads.length) return;
+        const headEls = wall.querySelectorAll<HTMLElement>('.bz-diary-wall-day-head');
+        if (!headEls.length) return;
         const wallRect = wall.getBoundingClientRect();
-        let currentMonth: string | null = null;
-        const scrollTop = wall.scrollTop;
-        for (let i = 0; i < heads.length; i++) {
-          const h = heads[i];
-          const relTop = h.getBoundingClientRect().top - wallRect.top;
-          if (relTop <= scrollTop + 8) {
-            currentMonth = h.dataset.date!.slice(0, 7);
-          } else break;
-        }
-        if (!currentMonth) currentMonth = heads[0].dataset.date!.slice(0, 7);
+        // relTop 是「节头顶 − 墙体顶」的视口相对量（P1 审查修复：旧实现误与
+        // scrollTop+8 比较——坐标系混用导致滚过一半后所有节头全部命中，章节栏恒高亮最后月份）
+        const items = Array.from(headEls, (h) => ({
+          date: h.dataset.date!,
+          relTop: h.getBoundingClientRect().top - wallRect.top,
+        }));
+        let currentMonth = pickCurrentMonth(items);
+        if (!currentMonth) currentMonth = items[0].date.slice(0, 7);
         rail.querySelectorAll('.bz-diary-wall-month').forEach((it) => {
           it.classList.toggle('bz-diary-wall-month--on', it.getAttribute('data-month') === currentMonth);
         });
@@ -1144,7 +1202,7 @@ export class DiaryWallAppController {
   private openLightbox(k: WallMedia, entry: WallEntry) {
     const src = this.mediaSrcFor(entry, k.name);
     const errHtml = `<div class="bz-diary-wall-lberr">${KIND_ICON[k.kind]} 无法加载</div>`;
-    // 媒体构建工厂：desk/mob 各构建真实元素（勿用 innerHTML 复制——img/video/audio 无子节点，
+    // 媒体构建工厂：构建真实元素（勿用 innerHTML 复制——img/video/audio 无子节点，
     // 复制结果为空串，移动端灯箱媒体会空白）
     const build = (box: HTMLElement) => {
       box.innerHTML = '';
@@ -1183,8 +1241,10 @@ export class DiaryWallAppController {
         box.appendChild(a);
       }
     };
-    build(this.desk.lbMedia);
-    build(this.mob.lbMedia);
+    // P3 审查修复：只填充当前端实例——旧实现双实例都 build，<video autoplay> 两份
+    // 同时加载播放；当前端按视口宽度判定
+    const mobileNow = typeof matchMedia === 'function' && matchMedia('(max-width: 768px)').matches;
+    build(mobileNow ? this.mob.lbMedia : this.desk.lbMedia);
     // 灯箱下方信息：标题行 = 文件名（或日期·时间·标签）；副行 = 日记正文文字（去掉媒体引用），
     // 不再显示资源路径（用户要求：放大后下面显示日记的文字而不是图片/视频路径）
     const cap = k.name || `${entry.date} ${entry.time} · ${entry.tags.join(' ')}`;
@@ -1194,7 +1254,6 @@ export class DiaryWallAppController {
     this.mob.lbCap.textContent = cap;
     this.mob.lbSub.textContent = sub;
     // 仅当前可见实例加 --show（≤768px 桌面实例 display:none；避免双实例重复 autoplay/冗余节点）
-    const mobileNow = typeof matchMedia === 'function' && matchMedia('(max-width: 768px)').matches;
     if (mobileNow) this.mob.lb.classList.add('bz-diary-wall-lb--show');
     else this.desk.lb.classList.add('bz-diary-wall-lb--show');
   }
@@ -1215,9 +1274,25 @@ export class DiaryWallAppController {
         notice('已复制加密日记正文', 'success');
         return;
       }
+      // 特殊条目（影视/信/书）：整文件即条目，无日记标题锚点——按文件路径本地拼双链
+      if (this.isSpecialWallEntry(e)) {
+        if (!e.filename) {
+          notice('找不到原文，无法复制双链', 'error');
+          return;
+        }
+        await navigator.clipboard.writeText(`[[${e.filename.replace(/\.md$/, '')}]]`);
+        notice('已复制双链引用', 'success');
+        return;
+      }
+      // 普通日记条目（P1 审查修复）：wall 侧条目没有 id，传空 id 会让 diary 侧静默失败——
+      // 按 filename+lineNumber 反查 diary 条目后走 diary 既有 copyLink
+      const entry = await this.findDiaryEntry(e);
+      if (!entry || !entry.id) {
+        notice('找不到原文条目，无法复制双链', 'error');
+        return;
+      }
       const { copyLink } = await import('../diary/ui/entries') as typeof import('../diary/ui/entries');
-      const entry = this.toDiaryEntry(e);
-      await copyLink(entry.id || '');
+      await copyLink(entry.id);
     } catch (err) {
       notice('复制双链失败', 'error');
     }
@@ -1244,19 +1319,11 @@ export class DiaryWallAppController {
 
   private async openTagPicker(e: WallEntry, afterLoad: boolean) {
     try {
-      const diaryState = (await import('../diary/state')).state;
-      const entry = diaryState.data.originalDiaryEntries.find(
-        (x: any) => x.filename === e.filename && x.lineNumber === e.lineNumber
-      );
+      // P1 审查修复：反查收口到 findDiaryEntry（filename+lineNumber，必要时全量加载一次后重试）
+      const entry = await this.findDiaryEntry(e, afterLoad);
       if (entry && entry.id) {
         const { showTagPicker } = await import('../diary/ui/dialogs') as typeof import('../diary/ui/dialogs');
         showTagPicker(entry.id);
-        return;
-      }
-      if (!afterLoad) {
-        // state 里没有（diary 未加载或条目特殊）→ 全量加载一次后重试
-        await this.ensureDiaryLoaded();
-        await this.openTagPicker(e, true);
         return;
       }
       notice('改标签暂不可用（找不到原文条目）', 'error');
@@ -1268,14 +1335,20 @@ export class DiaryWallAppController {
   /** 加密：接 diary encryptEntry（需保险箱解锁，diary 流程处理） */
   private async encryptEntryAction(e: WallEntry) {
     try {
+      // P1 审查修复：影视/信/书特殊条目不提供加密（入库语义错位）——菜单已屏蔽，此处兜底
+      if (this.isSpecialWallEntry(e)) return;
       const { ensureSafeUnlocked } = await import('../encrypt') as typeof import('../encrypt');
       const unlocked = await ensureSafeUnlocked();
       if (!unlocked) return;
-      const diary = await import('../diary/ui/entries') as typeof import('../diary/ui/entries');
-      // 复用 diary 抽屉里的加密流程（encryptFromSheet 未导出，走完整 encryptEntry + deleteEntry）
+      // P1 审查修复：反查 diary 真实条目再加密——wall 条目没有 id，旧实现删除被跳过，
+      // 原文留在 md、密文又进保险箱，解锁后同一条出现两次
+      const entry = await this.findDiaryEntry(e);
+      if (!entry || !entry.id) {
+        notice('找不到原文条目，无法加密', 'error');
+        return;
+      }
       const { encryptEntry } = await import('../diary/encrypt') as typeof import('../diary/encrypt');
       const { deleteEntry } = await import('../diary/store') as typeof import('../diary/store');
-      const entry = this.toDiaryEntry(e);
       const enc = await encryptEntry(entry);
       if (enc && entry.id) {
         await deleteEntry(entry.id);
@@ -1332,8 +1405,20 @@ export class DiaryWallAppController {
         return;
       }
       const { showConfirm } = await import('../diary/ui/entries') as typeof import('../diary/ui/entries');
-      const entry = this.toDiaryEntry(e);
-      showConfirm(entry.id || '');
+      // P1 审查修复：影视/信/书特殊条目不给删除——lineNumber=0 与 md 全部失配，
+      // diary deleteEntry 的「该时间仅一条」兜底可能误删同刻真实日记。菜单已屏蔽，此处兜底。
+      if (this.isSpecialWallEntry(e)) {
+        notice('影视、信、书条目请在对应面板中管理', 'info');
+        return;
+      }
+      // 普通日记条目：按 filename+lineNumber 反查后走 diary 确认删除（传空 id 会
+      // 抛「未找到日记条目」且无提示，用户确认后什么都没发生）
+      const entry = await this.findDiaryEntry(e);
+      if (!entry || !entry.id) {
+        notice('找不到原文条目，无法删除', 'error');
+        return;
+      }
+      showConfirm(entry.id);
     } catch (err) {
       notice('删除暂不可用', 'error');
     }
@@ -1400,25 +1485,31 @@ export class DiaryWallAppController {
           notice(`附件：${e.media.map((m) => m.name).join('、')}`);
         });
       }
+      // P1 审查修复：特殊条目（影视/信/书）不给「加密/删除」，与右键菜单同口径
+      const special = this.isSpecialWallEntry(e);
       if (!e.encrypted && !e.tags.includes('加密')) {
         mk('⌘', '改标签', null, '', () => {
           this.closeSheet();
           this.editTags(e);
         });
-        mk('🔒', '加密', null, 'bz-diary-wall-sheet-act--accent', () => {
-          this.closeSheet();
-          void this.encryptEntryAction(e);
-        });
+        if (!special) {
+          mk('🔒', '加密', null, 'bz-diary-wall-sheet-act--accent', () => {
+            this.closeSheet();
+            void this.encryptEntryAction(e);
+          });
+        }
       } else {
         mk('🔓', '解密', null, 'bz-diary-wall-sheet-act--accent', () => {
           this.closeSheet();
           void this.decryptEntryAction(e);
         });
       }
-      mk('🗑', '删除', null, 'bz-diary-wall-sheet-act--danger', () => {
-        this.closeSheet();
-        void this.deleteEntryAction(e);
-      });
+      if (!special) {
+        mk('🗑', '删除', null, 'bz-diary-wall-sheet-act--danger', () => {
+          this.closeSheet();
+          void this.deleteEntryAction(e);
+        });
+      }
       ui.sheet.classList.add('bz-diary-wall-sheet--show');
     });
   }
@@ -1525,6 +1616,9 @@ export class DiaryWallAppController {
     this.closeDateFilter();
     this.closeLightbox();
     this.closeSheet();
+    // P3 审查修复：右键菜单挂 body（不在 root 内），不收起会在面板关闭后残留、
+    // 菜单动作仍可点击
+    this.closeContextMenu();
     this.root.style.display = 'none';
     this.unsubscribeVaultModify();
   }
@@ -1587,20 +1681,30 @@ export class DiaryWallAppController {
 
   /** 标题点击 → 回忆墙自包含日期选择器（按年份/月份过滤本域数据；不再调 diary showDatePicker——那是 diary 面板的 filter） */
   private openDatePicker() {
-    this._dateFilterEl = this.mkDateFilter();
+    this.showDateFilter(this.selDateFilter?.year ?? null);
+  }
+
+  /** 显示日期筛选弹窗：viewYear 只是「正在浏览的年份」临时值（P2 审查修复：
+   *  旧实现点年份即写入 selDateFilter，ESC 关闭后筛选已悄悄生效）。
+   *  只有点月份或「全部」才提交筛选。 */
+  private showDateFilter(viewYear: string | null) {
+    this.closeDateFilter();
+    this._dateFilterEl = this.mkDateFilter(viewYear);
     document.body.appendChild(this._dateFilterEl);
     topifyZ(this._dateFilterEl); // ADR-0067：后显示在上
     this._dateFilterEl.style.display = 'flex';
   }
 
-  /** 自绘日期筛选弹窗（年份行 + 月份网格 + 全部/关闭） */
-  private mkDateFilter(): HTMLElement {
+  /** 自绘日期筛选弹窗（年份行 + 月份网格 + 全部/关闭）；viewYear 为正在浏览的年份临时值 */
+  private mkDateFilter(viewYear: string | null): HTMLElement {
     const wrap = document.createElement('div');
     wrap.className = 'bz-diary-wall-datefilter';
     const card = document.createElement('div');
     card.className = 'bz-diary-wall-datefilter-card';
     const years = Array.from(new Set(this.entries.map((e) => e.date.slice(0, 4)))).sort((a, b) => b.localeCompare(a));
     const cur = this.selDateFilter;
+    // 年份高亮：浏览中的年份优先，未浏览时回落已生效筛选的年份
+    const activeYear = viewYear ?? cur?.year ?? null;
 
     // 头部：标题 + 全部按钮 + 关闭
     const head = document.createElement('div');
@@ -1628,29 +1732,25 @@ export class DiaryWallAppController {
     yearRow.className = 'bz-diary-wall-datefilter-years';
     years.forEach((y) => {
       const b = document.createElement('button');
-      b.className = 'bz-diary-wall-datefilter-year' + (cur?.year === y ? ' bz-diary-wall-datefilter-year--on' : '');
+      b.className = 'bz-diary-wall-datefilter-year' + (activeYear === y ? ' bz-diary-wall-datefilter-year--on' : '');
       b.dataset.year = y;
       b.textContent = y;
       b.addEventListener('click', () => {
-        // 两段式：点年份 → 选中该年并（重）渲染月份网格（弹窗保持打开）；点月份才应用过滤并关闭
-        this.selDateFilter = { year: y };
-        this.closeDateFilter();
-        this._dateFilterEl = this.mkDateFilter();
-        document.body.appendChild(this._dateFilterEl);
-        topifyZ(this._dateFilterEl);
-        this._dateFilterEl.style.display = 'flex';
+        // 两段式：点年份 → 只切换到该年的月份网格（临时值，不提交筛选）；
+        // 点月份才应用过滤并关闭
+        this.showDateFilter(y);
       });
       yearRow.appendChild(b);
     });
     card.appendChild(yearRow);
 
-    // 当前年份的月份网格（若已选年份）
-    if (cur?.year && years.includes(cur.year)) {
+    // 正在浏览年份的月份网格
+    if (viewYear && years.includes(viewYear)) {
       const monthRow = document.createElement('div');
       monthRow.className = 'bz-diary-wall-datefilter-months';
       const monthCounts = new Map<string, number>();
       this.entries
-        .filter((e) => e.date.startsWith(cur.year))
+        .filter((e) => e.date.startsWith(viewYear))
         .forEach((e) => {
           const m = e.date.slice(5, 7);
           monthCounts.set(m, (monthCounts.get(m) || 0) + 1);
@@ -1658,15 +1758,17 @@ export class DiaryWallAppController {
       for (let i = 1; i <= 12; i++) {
         const ms = String(i).padStart(2, '0');
         const cnt = monthCounts.get(ms) || 0;
+        const isOn = cur?.year === viewYear && cur.month === ms;
         const cardEl = document.createElement('button');
         cardEl.className =
           'bz-diary-wall-datefilter-month' +
           (cnt === 0 ? ' bz-diary-wall-datefilter-month--empty' : '') +
-          (cur.month === ms ? ' bz-diary-wall-datefilter-month--on' : '');
+          (isOn ? ' bz-diary-wall-datefilter-month--on' : '');
         cardEl.innerHTML = `<span class="bz-diary-wall-datefilter-month-name">${i}月</span><span class="bz-diary-wall-datefilter-month-cnt">${cnt} 条</span>`;
         cardEl.addEventListener('click', () => {
           if (cnt === 0) return;
-          this.selDateFilter = { year: cur.year, month: ms };
+          // 点月份才提交筛选（年份本身只是浏览临时值）
+          this.selDateFilter = { year: viewYear, month: ms };
           this.closeDateFilter();
           this.renderAll();
         });
