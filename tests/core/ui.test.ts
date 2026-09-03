@@ -396,6 +396,27 @@ describe('bz ui 组件库', () => {
       document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       expect(el.querySelector('.bz-select-menu')).toBeNull();
     });
+    it('宽度兜底：选项文本溢出时撑开 minWidth，无溢出则不写（宿主钳宽时保选项完整）', () => {
+      // jsdom 无布局：只 mock scrollWidth（clientWidth 走真实 0），
+      // 断言行为不变量——溢出即撑开为正值，无溢出不写；具体像素由 headless 几何实测背书
+      const proto = HTMLElement.prototype as unknown as Record<string, PropertyDescriptor>;
+      const orig = Object.getOwnPropertyDescriptor(proto, 'scrollWidth');
+      Object.defineProperty(proto, 'scrollWidth', { value: 139, configurable: true });
+      try {
+        const { el } = uiSelect({ options: selOpts, value: 'a', onChange: () => {} });
+        el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        const menu = el.querySelector('.bz-select-menu') as HTMLElement;
+        expect(parseFloat(menu.style.minWidth)).toBeGreaterThan(0);
+        el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        // 文本无溢出（scrollWidth 0 ≤ clientWidth）时不写 minWidth
+        Object.defineProperty(proto, 'scrollWidth', { value: 0, configurable: true });
+        el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        const menu2 = el.querySelector('.bz-select-menu') as HTMLElement;
+        expect(menu2.style.minWidth).toBe('');
+      } finally {
+        if (orig) Object.defineProperty(proto, 'scrollWidth', orig); else delete (proto as any).scrollWidth;
+      }
+    });
     it('onOpenChange 开合回调', () => {
       const fn = vi.fn();
       const { el } = uiSelect({ options: selOpts, value: 'a', onChange: () => {}, onOpenChange: fn });
