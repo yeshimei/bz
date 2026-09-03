@@ -722,4 +722,25 @@ describe('回忆墙 UI', () => {
     expect(img).toBeTruthy();
     expect(img.getAttribute('src')).toContain('https://example.com/vault/');
   });
+
+  it('F 审查修复：灯箱只填充当前端实例（另一实例 lbMedia 保持为空，无双份加载）', async () => {
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    const mob = document.querySelector('.bz-diary-wall-mob')!;
+    const media = desk.querySelector('.bz-diary-wall-media') as HTMLElement;
+    media.click();
+    // jsdom 桌面宽度 → 仅 desk 实例填充真实媒体元素
+    expect(desk.querySelectorAll('.bz-diary-wall-lb-media').length).toBe(1);
+    expect(mob.querySelector('.bz-diary-wall-lb-media')).toBeNull();
+    expect(desk.querySelector('.bz-diary-wall-lb--show')).toBeTruthy();
+  });
+
+  it('F 审查修复：hide() 收起右键菜单（面板关闭后菜单不再残留 body）', async () => {
+    const c = await openAndWait();
+    const item = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-item') as HTMLElement;
+    item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 10, clientY: 10 }));
+    expect(document.querySelector('.bz-diary-wall-menu')).toBeTruthy();
+    c.hide();
+    expect(document.querySelector('.bz-diary-wall-menu')).toBeNull();
+  });
 });
