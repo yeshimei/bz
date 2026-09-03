@@ -471,6 +471,18 @@ export function showDateTimePicker(initialMoment: any, onConfirm: (m: any) => vo
 
 // ===== 日期时间控件（原 3036-3213） =====
 
+/** 当前控件实例的外部同步入口（createDateTimeControl 注册；控件唯一，重建时覆盖） */
+let activeMomentReset: ((m: any) => void) | null = null;
+
+/**
+ * 同步写日记弹窗日期控件的内部时刻（P1 审查修复：弹窗日期脱同步）。
+ * openAddDialog 每次打开时调用——控件内部 currentMoment 只在创建时初始化一次，
+ * 隔天复用弹窗时显示已更新而滚轮起点还是旧时刻，直接确认会写错日期。
+ */
+export function resetDateTimeControl(m: any) {
+  if (activeMomentReset) activeMomentReset(m);
+}
+
 export function createDateTimeControl() {
   const container = document.createElement('div');
   container.style.cssText = 'margin-bottom:16px;';
@@ -562,6 +574,16 @@ export function createDateTimeControl() {
   let currentMoment = moment();
   let isManualMode = false;
   let clickTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /** 外部同步入口（P1 审查修复）：openAddDialog 每次打开时重置控件内部时刻，
+   *  使滚轮起点与显示值一致——否则弹窗显示「现在」，滚轮内部还是控件创建日的时刻，
+   *  直接点「确定」会把日记写回旧时刻 */
+  const setMoment = (m: any) => {
+    if (!m || typeof m.isValid !== 'function' || !m.isValid()) return;
+    currentMoment = m.clone();
+    updateDisplay(currentMoment);
+  };
+  activeMomentReset = setMoment;
 
   function updateDisplay(momentObj: any) {
     if (!momentObj || !momentObj.isValid()) {
