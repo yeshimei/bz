@@ -294,6 +294,22 @@ describe('书库面板', () => {
     expect(app.workspace.openLinkText).toHaveBeenCalledWith('书库/活着.md#^h1', '', false);
   });
 
+  it('audit H：跳转后 200ms 定时器只关当次弹窗，不误关 200ms 内重开的新弹窗', async () => {
+    vault.files.set('书库/活着.md', NOTE_MD);
+    const app = makeApp(vault);
+    showBookNotes(app, '书库/活着.md');
+    await new Promise((r) => setTimeout(r, 20));
+    const quote = [...document.querySelectorAll<HTMLElement>('.bz-lib-quote')].find((d) => d.textContent === '❝ 原文一')!;
+    const block = quote.parentElement!.parentElement!;
+    block.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })); // 挂 200ms 定时器
+    // 立刻重开（新弹窗替换旧弹窗）
+    showBookNotes(app, '书库/活着.md');
+    await new Promise((r) => setTimeout(r, 300)); // 越过 200ms 定时器
+    const shells = [...document.querySelectorAll('.bz-lib-overlay--11100')];
+    expect(shells.length).toBe(1);
+    expect(shells[0].textContent).toContain('❝ 原文一'); // 重开的弹窗未被旧定时器误关
+  });
+
   it('EPUB 条目并入列表（读 weave-data.json）；双击封面跳 Weave 打开', async () => {
     vault.files.set('书库/活着.md', BOOK_MD);
     vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
