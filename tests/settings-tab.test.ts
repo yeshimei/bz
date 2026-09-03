@@ -73,12 +73,12 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     if (plugin && plugin.unregisterGestures) plugin.unregisterGestures();
   });
 
-  it('单页平铺：无 tab；ticket 170：两区块升级为分组卡片（带 icon，标题不带 emoji 前缀）', () => {
+  it('单页平铺：无 tab；分组卡片（带 icon）：AI + 采样参数（issue 187）+ 数据存储路径', () => {
     expect(tab.containerEl.querySelectorAll('.bz-tab').length).toBe(0);
     const groupNames = [...tab.containerEl.querySelectorAll('.bz-settings-group-name')].map((t) => t.textContent);
-    expect(groupNames).toEqual(['AI', '数据存储路径']);
+    expect(groupNames).toEqual(['AI', '采样参数', '数据存储路径']);
     const groupIcons = [...tab.containerEl.querySelectorAll('.bz-settings-group-icon')].map((i) => i.getAttribute('data-icon'));
-    expect(groupIcons).toEqual(['sparkles', 'folder-open']);
+    expect(groupIcons).toEqual(['sparkles', 'sliders-horizontal', 'folder-open']);
   });
 
   it('AI 区块：服务商下拉 + 密钥行；数据存储路径区块：路径选择行（已选态 chip + ✕，无按钮/手输框）', () => {
@@ -118,7 +118,6 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     expect(hiddenOf('DeepSeek 密钥')).toBe(true);
     expect(hiddenOf('OpenCode 密钥')).toBe(true);
     expect(hiddenOf('自定义 API 地址')).toBe(false);
-    expect(hiddenOf('自定义模型')).toBe(false);
     expect(hiddenOf('自定义 API 密钥')).toBe(false);
     // 切回 opencode-go：再次反转
     dd.trigger('opencode-go');

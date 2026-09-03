@@ -95,6 +95,8 @@ export interface TextRow extends RowBase, TextualCommit {
   placeholder?: string | ((snapshot: SettingsSnapshot) => string);
   /** 每键触发（写内存后；落盘走防抖/失焦/回车 commit） */
   onChange?: (value: string, ctx: SettingsRowContext) => void;
+  /** 数字型文本行修饰（issue 187 采样参数）：右对齐窄框（设置面板渲染器消费；core 渲染器忽略） */
+  num?: boolean;
 }
 
 export interface TextAreaRow extends RowBase, TextualCommit {

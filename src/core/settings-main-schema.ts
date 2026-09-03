@@ -5,12 +5,15 @@
  *
  * 行为零变化锚点：
  * - AI 服务商切换 → 密钥行显隐由 visibleWhen 声明（deepseek 显示 DeepSeek 行，其余显示 OpenCode 行，
- *   与原 refreshKeys 的 toggleClass 口径等价）；ticket 170 起 custom 显示自定义端点/模型/密钥行；
- *   ticket 171 起全部注册表提供商各生成一行密钥（apiKeyLabel 标题、apiKeyDesc 描述），custom 额外
- *   显示端点/模型两行——行列表由 AI_PROVIDER_REGISTRY 驱动，新增提供商零 schema 改动；
+ *   与原 refreshKeys 的 toggleClass 口径等价）；ticket 170 起 custom 显示自定义端点行；issue 187 起
+ *   「自定义模型」行退役（模型统一走「模型名称」行，setProviderValue 特判 custom → aiCustomModel）；
+ *   ticket 171 起全部注册表提供商各生成一行密钥（apiKeyLabel 标题、apiKeyDesc 描述）——行列表由
+ *   AI_PROVIDER_REGISTRY 驱动，新增提供商零 schema 改动；
  * - ticket 172 per-provider 配置三行（模型/上下文/max token）：模型行 custom（内嵌「获取模型名」
  *   按钮，行级联动 onRefresh）；上下文/最大输出 token 为标准 number 行（三函数 binding +
  *   refreshKey 随「AI 服务商」切换联动刷新，不再走 custom 套原生 Setting——统一两渲染器视觉）；
+ * - issue 187 新增「采样参数」组（温度/top_p/频率惩罚/存在惩罚，string 键数字项，'' = 不发字段），
+ *   同期删除全局 aiMaxTokens 孤儿键（请求链不再读）；
  * - 存储路径行 onCommit 的 warning 提示文案逐字保留（f1 防错提示，正文不带 emoji，铁律 7）；
  * - 区块标题 DOM 契约 .bz-setting-section-title 不破（无 icon 分组 = 区块标题平铺形态）。
  * - ticket 100 文案修正（键名/行为不动）：两个 API Key 行标题收短为「DeepSeek 密钥」「OpenCode 密钥」，
@@ -50,13 +53,21 @@ function providerValue(kind: 'model' | 'context' | 'maxTokens'): string {
   return String(kind === 'context' ? d.defaultContextWindow : d.defaultMaxTokens);
 }
 
-/** 写当前 provider 的覆盖值（空 = 清除覆盖，回落注册表默认） */
+/** 写当前 provider 的覆盖值（空 = 清除覆盖，回落注册表默认）。
+ *  issue 187 特判：custom 的模型覆盖不写 aiModelOverrides[custom]（providerValue custom
+ *  分支只读 aiCustomModel，写覆盖表是读不到的死值——原「模型名称」手输在 custom 下不生效的根因），
+ *  统一落到 aiCustomModel。 */
 function setProviderValue(mapKey: OverrideMapKey, raw: string): void {
   const id = currentProviderId();
   const s = tryGetSettings() as any;
+  const v = raw.trim();
+  if (mapKey === 'aiModelOverrides' && id === 'custom') {
+    s.aiCustomModel = v === '0' ? '' : v;
+    void saveSettings();
+    return;
+  }
   if (!s[mapKey] || typeof s[mapKey] !== 'object') s[mapKey] = {};
   const map = s[mapKey] as Record<string, any>;
-  const v = raw.trim();
   if (v === '' || v === '0') {
     delete map[id];
   } else {
@@ -108,15 +119,8 @@ function providerModelCustomRow(): SettingsRow {
                 current: providerValue('model'),
                 models,
                 onPick: (m) => {
-                  // 与输入框 onChange 同口径：写当前 provider 覆盖（custom 语义走 aiCustomModel）并落盘
-                  const p = String((tryGetSettings() as any).aiProvider || 'opencode-go');
-                  if (providerDescriptorOf(p).id === 'custom') {
-                    const s = tryGetSettings() as any;
-                    s.aiCustomModel = m.id;
-                    void saveSettings();
-                  } else {
-                    setProviderValue('aiModelOverrides', m.id);
-                  }
+                  // 与输入框 onChange 同口径（issue 187：setProviderValue 已统一 custom → aiCustomModel）
+                  setProviderValue('aiModelOverrides', m.id);
                   ctx.refreshVisibility();
                   if (input) input.setValue(m.id);
                   notice(`模型已设为 ${m.id}`, 'success');
@@ -191,7 +195,7 @@ function aiGroupRows(): SettingsRow[] {
       options: AI_PROVIDER_REGISTRY.map((p) => ({ value: p.id, label: p.label })),
     },
   ];
-  // 每家注册表提供商一行密钥（custom 的密钥行排在自定义端点/模型之后，故先跳过）
+  // 每家注册表提供商一行密钥（custom 的密钥行排在自定义端点之后，故先跳过）
   for (const p of AI_PROVIDER_REGISTRY) {
     if (p.id === 'custom') continue;
     rows.push({
@@ -202,7 +206,8 @@ function aiGroupRows(): SettingsRow[] {
       visibleWhen: (snapshot) => snapshot.aiProvider === p.id,
     });
   }
-  // custom：端点 / 模型 / 密钥三行（ticket 170 顺序契约：地址 → 模型 → 密钥）
+  // custom：端点 / 密钥两行（issue 187 起「自定义模型」行退役——模型统一走「模型名称」行，
+  // 手输经 setProviderValue 特判落 aiCustomModel，带「获取模型名」按钮）
   rows.push(
     {
       type: 'text',
@@ -210,14 +215,6 @@ function aiGroupRows(): SettingsRow[] {
       desc: 'OpenAI 兼容服务的完整接口地址',
       binding: { key: 'aiCustomEndpoint' },
       placeholder: 'https://api.example.com/v1',
-      visibleWhen: (snapshot) => snapshot.aiProvider === 'custom',
-    },
-    {
-      type: 'text',
-      name: '自定义模型',
-      desc: '该服务使用的模型名称',
-      binding: { key: 'aiCustomModel' },
-      placeholder: 'taste-1',
       visibleWhen: (snapshot) => snapshot.aiProvider === 'custom',
     },
     {
@@ -236,6 +233,48 @@ function aiGroupRows(): SettingsRow[] {
   return rows;
 }
 
+/** 采样参数组（issue 187）：四键 string 键数字项，'' = 不发该字段（API 默认） */
+export function samplingGroup(): SettingsSchema['groups'][number] {
+  return {
+    icon: 'sliders-horizontal',
+    name: '采样参数',
+    rows: [
+      {
+        type: 'text',
+        name: '采样温度',
+        desc: '采样温度，留空用 API 默认',
+        binding: { key: 'aiTemperature' as never },
+        num: true,
+        placeholder: 'API 默认',
+      },
+      {
+        type: 'text',
+        name: '核采样上限',
+        desc: '核采样概率上限，留空用 API 默认',
+        binding: { key: 'aiTopP' as never },
+        num: true,
+        placeholder: 'API 默认',
+      },
+      {
+        type: 'text',
+        name: '频率惩罚',
+        desc: '降低重复内容的倾向，留空用 API 默认',
+        binding: { key: 'aiFrequencyPenalty' as never },
+        num: true,
+        placeholder: 'API 默认',
+      },
+      {
+        type: 'text',
+        name: '存在惩罚',
+        desc: '鼓励引入新内容的倾向，留空用 API 默认',
+        binding: { key: 'aiPresencePenalty' as never },
+        num: true,
+        placeholder: 'API 默认',
+      },
+    ],
+  };
+}
+
 /** AI 设置组（issue 186：设置面板拆独立域；⚙️ 主设置页与本域共用同一组定义） */
 export function aiSettingsSchema(): SettingsSchema {
   return {
@@ -245,6 +284,7 @@ export function aiSettingsSchema(): SettingsSchema {
         name: 'AI',
         rows: aiGroupRows(),
       },
+      samplingGroup(),
     ],
   };
 }

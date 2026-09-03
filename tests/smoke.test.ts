@@ -249,18 +249,17 @@ describe('bz 骨架冒烟', () => {
 ${failures.join('\n')}`).toEqual([]);
     expect(registeredCommands.length).toBeGreaterThanOrEqual(31);
   }, 15000);
-  it('事件常驻域开关开启时 onload 注册（autoSummary/aiAgent→memo+favorites 文件同步/secondBrain 懒加载分支；旧 flashEnabled 键随 ticket 103 迁移）', async () => {
+  it('事件常驻域 onload 注册（autoSummary 开关 / 引用同步无条件常驻 issue 187 / secondBrain 懒加载分支；旧 flashEnabled 键随 ticket 103 迁移）', async () => {
     delete diskData['bz'];
     // 故意种旧键：验证 onload 迁移把 flashEnabled 平移为 secondBrainEnabled
-    diskData['bz'] = { autoSummaryEnabled: true, aiAgentEnabled: true, flashEnabled: true };
+    diskData['bz'] = { autoSummaryEnabled: true, flashEnabled: true };
     syncSpies.ensureMemoFileSync.mockClear();
     syncSpies.ensureFavoritesFileSync.mockClear();
     const app = makeMockApp();
     const plugin = await createPlugin(app);
-    // aiAgent 键名不变（旧 data.json 兼容）：开启后 onLayoutReady 触发新注册点——
+    // 引用同步无条件常驻（issue 187：aiAgentEnabled 开关退役）——
     // memo/favorites 两路文件同步 ensure 各恰好一次，均不抛错
     expect(plugin.settings.autoSummaryEnabled).toBe(true);
-    expect(plugin.settings.aiAgentEnabled).toBe(true);
     expect(plugin.settings.secondBrainEnabled).toBe(true);
     expect(plugin.settings.flashEnabled).toBeUndefined();
     expect(syncSpies.ensureMemoFileSync).toHaveBeenCalledTimes(1);

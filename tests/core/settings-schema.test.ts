@@ -24,23 +24,23 @@ describe('mainSettingsSchema：主设置页两区块', () => {
   const schema = mainSettingsSchema();
 
   it('ticket 170：两区块升级为分组卡片（带 icon），标题不带 emoji 前缀（emoji 由分组卡图标呈现，防两遍）', () => {
-    expect(schema.groups.map((g) => g.name)).toEqual(['AI', '数据存储路径']);
-    expect(schema.groups.map((g) => g.icon)).toEqual(['sparkles', 'folder-open']);
+    expect(schema.groups.map((g) => g.name)).toEqual(['AI', '采样参数', '数据存储路径']);
+    expect(schema.groups.map((g) => g.icon)).toEqual(['sparkles', 'sliders-horizontal', 'folder-open']);
   });
 
-  it('AI 区块：服务商下拉 + 每家注册表提供商密钥行 + 自定义三行 + per-provider 配置三行（ticket 171/172）', () => {
+  it('AI 区块：服务商下拉 + 每家注册表提供商密钥行 + 自定义两行 + per-provider 配置三行（ticket 171/172；issue 187 删自定义模型行）', () => {
     const rows = schema.groups[0].rows;
-    // 行序 = 服务商下拉 + 注册表非 custom 提供商密钥行（每行 text）+ 自定义端点/模型/密钥（text×3）
+    // 行序 = 服务商下拉 + 注册表非 custom 提供商密钥行（每行 text）+ 自定义端点/密钥（text×2）
     //         + per-provider 配置三行（模型 custom；上下文/最大输出 token 标准 number）
     const nonCustom = AI_PROVIDER_REGISTRY.filter((p) => p.id !== 'custom');
-    const types = ['select', ...nonCustom.map(() => 'text'), 'text', 'text', 'text', 'custom', 'number', 'number'];
+    const types = ['select', ...nonCustom.map(() => 'text'), 'text', 'text', 'custom', 'number', 'number'];
     expect(rows.map((r) => r.type)).toEqual(types);
     // 密钥行标题来自注册表 apiKeyLabel（含 deepseek/opencode-go，顺序与注册表一致）
     const names = rows.map((r) => (r as { name: string }).name);
     const keyNames = nonCustom.map((p) => p.apiKeyLabel);
     expect(names).toEqual([
       'AI 服务商', ...keyNames,
-      '自定义 API 地址', '自定义模型', '自定义 API 密钥',
+      '自定义 API 地址', '自定义 API 密钥',
       '模型名称', '上下文窗口', '最大输出 token',
     ]);
     const [provider, ...rest] = rows as Array<{
@@ -54,16 +54,15 @@ describe('mainSettingsSchema：主设置页两区块', () => {
       expect(rest[i].visibleWhen!(snapOf({ aiProvider: p.id }))).toBe(true);
       expect(rest[i].visibleWhen!(snapOf({ aiProvider: 'custom' }))).toBe(false);
     });
-    // 自定义三行（端点/模型/密钥）
-    const [customEndpoint, customModel, customKey] = rest.slice(nonCustom.length) as Array<{
+    // 自定义两行（端点/密钥；issue 187 起模型统一走「模型名称」行）
+    const [customEndpoint, customKey] = rest.slice(nonCustom.length) as Array<{
       binding?: { key: string };
       visibleWhen?: (s: SettingsSnapshot) => boolean;
     }>;
     expect(customEndpoint.binding).toEqual({ key: 'aiCustomEndpoint' });
-    expect(customModel.binding).toEqual({ key: 'aiCustomModel' });
     expect(customKey.binding).toEqual({ key: 'aiCustomApiKey' });
     // per-provider 配置三行：模型行 custom（无 key 直绑，常显）；上下文/最大输出 token 标准 number 行
-    const [modelRow, ctxRow, maxTokensRow] = rest.slice(nonCustom.length + 3) as Array<{
+    const [modelRow, ctxRow, maxTokensRow] = rest.slice(nonCustom.length + 2) as Array<{
       name: string;
       type: string;
       binding?: { key: string } | { get: () => unknown; set: (v: unknown) => void; save: () => unknown };
@@ -76,7 +75,7 @@ describe('mainSettingsSchema：主设置页两区块', () => {
     expect('key' in ctxRow.binding!).toBe(false);
     expect('get' in ctxRow.binding!).toBe(true);
     expect(ctxRow.visibleWhen).toBeUndefined();
-    // 显隐（ticket 170/171）：deepseek 显示 DeepSeek 行；opencode-go 显示 OpenCode 行；custom 显示自定义三行
+    // 显隐（ticket 170/171）：deepseek 显示 DeepSeek 行；opencode-go 显示 OpenCode 行；custom 显示自定义两行
     const findKey = (key: string) => {
       const idx = nonCustom.findIndex((p) => p.apiKeyKey === key);
       return rest[idx].visibleWhen!;
@@ -100,7 +99,7 @@ describe('mainSettingsSchema：主设置页两区块', () => {
   });
 
   it('数据存储路径区块：path 单选行（键直绑）+ onCommit 提示文案逐字冻结', () => {
-    const row = schema.groups[1].rows[0] as {
+    const row = schema.groups[2].rows[0] as {
       type: string;
       mode: string;
       name: string;

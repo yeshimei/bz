@@ -878,3 +878,13 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **分组卡浅灰**：`.bz-sp-group` 背景 `--bz-surface-2`（亮色白）→ `--bz-surface-0`（亮色 #f2f2f4，暗色更深区块）。
 - **全部行左缘对齐**：删 `.bz-sp-set-row.child` 26px 缩进（isChild 仅显隐联动，child 类保留为语义标记）；custom 插槽内 `.setting-item` 横向 padding 归 0（`9px 10px`→`9px 0`，消外层行+内层原生行双重 10px 缩进），hover 改透明统一由外层自绘行上色（矩形恢复满行宽）。
 - **测试**：settings-panel.test.ts 徽标口径（通用 1/AI 4/待办 9/归物本 ·）、nav 16 项与索引移位、默认域=通用、AI 域用例先切域、移动端设置项搜索点 AI 域。无 ADR（设置面板信息架构与视觉打磨，数据契约零变化）。
+
+### AI 设置补全 + 旧 AIAgent 残留退役（ticket 187，ADR-0088）
+
+> grill 会话（2026-09-04）：用户问「AI 设置界面是不是缺少一些选项」。事实核查：界面行与 schema 一致，但设置键全集有缺口——旧 AIAgent 残留（clip-archive + 四键无 UI）、全局 aiMaxTokens 孤儿键（优先级高于 per-provider 却改不了）、custom 双模型行 + 手输写键 bug、采样参数从未存在。用户拍板五项（见 issues/187）。
+
+- **旧 AIAgent 退役收尾**：删 clip-archive（剪藏落盘 AI/URL 匹配归档到备忘录）+ 批准弹窗 + aiAgentEnabled/aiAgentWatchedFolders/aiAgentModel/enableAIClipMatch 四键；memo/favorites 的 file-sync 引用同步（非 AI 数据完整性功能）脱离开关无条件常驻，监听范围固定 SYNC_WATCHED_FOLDERS 常量（= 原默认值）。
+- **aiMaxTokens 删键**：请求链 max_tokens = modelOptions ?? provider 解析（per-provider 覆盖 > 注册表默认）；全局分支删除（存量值 0 未生效，零迁移）。
+- **custom 模型行统一**：「自定义模型」行退役，「模型名称」行（带获取模型名按钮）为全服务商唯一模型入口；setProviderValue 特判 (custom, aiModelOverrides) → 直写 aiCustomModel，修手输无效 bug；onPick 与手输同路径。
+- **采样参数组**：aiTemperature/aiTopP/aiFrequencyPenalty/aiPresencePenalty（string 键数字项，'' = 不发字段），AI 域第二组「采样参数」（采样温度/核采样上限/频率惩罚/存在惩罚），⚙️ 主设置页同步三区块；请求链 modelOptions 同名字段优先、非法数字跳过、温度 0 合法。
+- **测试**：全量 3678 绿；ai-cov 采样透传 2 用例；文案 lint 过（标题 ≥4 字无符号、描述自然句）。无新 ADR 编号外决策（见 ADR-0088）。
