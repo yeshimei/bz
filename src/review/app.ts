@@ -34,6 +34,14 @@ export const reviewApp = {
   _fittedW: null as number[] | null,
   /** ADR-0077：拟合运行防重入 */
   _fitRunning: false,
+  /** P3：reviewLoop 活动轮询句柄（卸载统一清理；插件禁用后不得继续读盘翻篇弹通知） */
+  _reviewLoops: new Set<ReturnType<typeof setInterval>>(),
+
+  /** P3：终止全部 reviewLoop 轮询（unloadReview 调用；幂等） */
+  stopReviewLoops(): void {
+    for (const t of this._reviewLoops) clearInterval(t);
+    this._reviewLoops.clear();
+  },
 
   async getQuiz(): Promise<any> {
     if (this._quizOverride) return this._quizOverride;
@@ -522,7 +530,7 @@ export const reviewApp = {
       checkCount++;
       const activeFile = app.workspace.getActiveFile();
       if (!activeFile || activeFile.path !== item.filePath) {
-        clearInterval(interval);
+        clearLoop();
         // P1-2：活动文件切走 = 本轮连续复习中断，与超时分支同样收尾常驻通知
         if (this._reviewNotice) {
           this._reviewNotice.setMessage('已切换到其他笔记，本轮复习中断');
@@ -536,13 +544,13 @@ export const reviewApp = {
       if (updated && updated.lastReviewed) {
         const last = new Date(updated.lastReviewed);
         if (Date.now() - last.getTime() < 30000) {
-          clearInterval(interval);
+          clearLoop();
           await this.reviewLoop(overdueNotes, index + 1);
           return;
         }
       }
       if (checkCount >= maxChecks) {
-        clearInterval(interval);
+        clearLoop();
         if (this._reviewNotice) {
           this._reviewNotice.setMessage('复习超时，请手动继续');
           this._reviewNotice.setType('warning');
@@ -552,6 +560,12 @@ export const reviewApp = {
         }
       }
     }, 1000);
+    // P3：句柄入账（stopReviewLoops 统一清理），防插件禁用后轮询残留
+    this._reviewLoops.add(interval);
+    const clearLoop = (): void => {
+      clearInterval(interval);
+      this._reviewLoops.delete(interval);
+    };
   },
 
   /** 加入当前笔记到复习计划 */

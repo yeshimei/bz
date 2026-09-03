@@ -585,6 +585,35 @@ describe('P1-2 回归：reviewLoop 活动文件切走收尾', () => {
     expect((reviewApp as any)._reviewNotice).not.toBeNull();
     (reviewApp as any)._reviewNotice = null;
   });
+
+  it('P3 回归：stopReviewLoops 终止 1s 轮询（卸载后不再读盘）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    const item = {
+      id: '1', filePath: 'A.md', name: 'A', reviewStart: now.toISOString(), stage: 0, phase: 'ladder',
+      stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0,
+      nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false,
+    } as any;
+    const app = makeApp(vault);
+    (app.workspace as any).getLeaf = () => ({ openFile: vi.fn().mockResolvedValue(undefined) });
+    (app.workspace as any).getActiveFile = () => ({ path: 'A.md' }); // 停留在目标笔记：轮询保持活动
+    setApp(app);
+    const handle = { setType: vi.fn(), setMessage: vi.fn(), hide: vi.fn() };
+    vi.spyOn(await import('../../src/core/notice'), 'notify').mockReturnValue(handle as any);
+    (reviewApp as any)._reviewNotice = null;
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
+    await reviewApp.reviewLoop([item], 0);
+    const loadSpy = vi.spyOn((reviewApp as any).dataManager, 'loadItems');
+    await vi.advanceTimersByTimeAsync(2100);
+    const pollsBefore = loadSpy.mock.calls.length;
+    expect(pollsBefore).toBeGreaterThan(0); // 轮询进行中
+    reviewApp.stopReviewLoops();
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(loadSpy.mock.calls.length).toBe(pollsBefore); // 终止后不再读盘
+    vi.useRealTimers();
+    (reviewApp as any)._reviewNotice = null;
+  });
 });
 
 describe('ADR-0077：置顶排序 + R 优先级 + 抽查 + 拟合触发', () => {

@@ -516,12 +516,18 @@ export class SprintSession {
           ? `下一篇 · ${this.nextPendingName()}`
           : '完成本轮 · 结算';
 
+    // P3：redo 通过只清待重做标记（ADR-0044 不写 FSRS）——展示解除文案，
+    // 不回退快照旧排期（entry.item.nextReviewDate 为会话前快照，展示会误导）
+    const ratingLine =
+      this.mode === 'redo'
+        ? `${RATING_NAMES[rating]} · 已解除待重做`
+        : `${RATING_NAMES[rating]} · 下次 ${escapeHtml(entry.passNote || '已排期')}`;
     const inner = passed
       ? `
         <div class="bz-result-ic">${this.mark('ok', 'lg')}</div>
         <div class="bz-result-name">${name}</div>
         <div class="bz-result-score">${entry.acc}<span class="sl">/${total}</span></div>
-        <span class="bz-result-rating pass">${RATING_NAMES[rating]} · 下次 ${escapeHtml(entry.passNote || '已排期')}</span>
+        <span class="bz-result-rating pass">${ratingLine}</span>
         <button class="bz-btn bz-btn--primary bz-btn--block" data-action="next">${nextLabel}</button>
         ${remain > 0 ? `<button class="bz-btn bz-btn--ghost bz-btn--block" data-action="end">结束这次复习</button>` : ''}`
       : `
