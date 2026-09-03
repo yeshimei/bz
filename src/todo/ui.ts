@@ -16,10 +16,11 @@
  * 图标：一律 lucide。
  * 数据：与旧 memo 域读写同一 memo.json；后台任务由旧 memo 域执行。
  */
-import type { App } from 'obsidian';
+import type { App, EventRef } from 'obsidian';
 import moment from 'moment';
 import { notice } from '../core/notice';
 import { escManager } from '../core/esc-manager';
+import { topifyZ } from '../core/dom';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { uiModal, uiIcon, uiSegmented, uiChoice, uiBtn, uiBtnRow, uiResizable } from '../core/ui';
@@ -122,6 +123,56 @@ async function refresh(): Promise<void> {
   M.renderFn?.();
 }
 
+// ---------- T1：同源 memo.json 跨域同步（旧 memo 面板/后台任务改动 → 已开 todo 面板重读） ----------
+let vaultSyncRef: EventRef | null = null;
+let vaultSyncTimer: ReturnType<typeof setTimeout> | null = null;
+let syncing = false; // 自己写盘引发的 modify 不重复刷新（写路径已自 refresh）
+let origTodoWrite: ((data: any) => Promise<unknown>) | null = null; // 包装前原始 write（卸载还原）
+
+/** 订阅 vault modify：memo.json 文件变更（任意来源——memo 面板/后台任务/外部）→ 面板开着时防抖重读 */
+function subscribeMemoSync(app: App): void {
+  if (vaultSyncRef) return;
+  // 包装 TodoData.write：todo 自己的写盘置 syncing，modify 事件不再重复刷新（写路径已自 refresh）
+  if (!origTodoWrite) {
+    origTodoWrite = TodoData.write.bind(TodoData);
+    TodoData.write = async (data: any) => {
+      syncing = true;
+      try {
+        return await origTodoWrite!(data);
+      } finally {
+        syncing = false;
+      }
+    };
+  }
+  vaultSyncRef = app.vault.on('modify', (file) => {
+    if (syncing) return; // 自己写盘
+    if (!M.overlay) return; // 面板没开不刷
+    if (file && file.path !== TodoData.todoFilePath) return; // 只关心 memo.json
+    if (vaultSyncTimer !== null) clearTimeout(vaultSyncTimer);
+    vaultSyncTimer = setTimeout(() => {
+      vaultSyncTimer = null;
+      void refresh();
+    }, 150);
+  });
+}
+function unsubscribeMemoSync(): void {
+  if (vaultSyncRef) {
+    // vault.on 返回 EventRef，注销走 offref（M.appRef 在 unloadTodo 里于本函数之后才置空）
+    M.appRef?.vault.offref(vaultSyncRef);
+    vaultSyncRef = null;
+  }
+  if (vaultSyncTimer !== null) {
+    clearTimeout(vaultSyncTimer);
+    vaultSyncTimer = null;
+  }
+  syncing = false;
+  // 还原 write 包装（卸载后不再拦截，避免引用的 UI 闭包残留）
+  if (origTodoWrite) {
+    TodoData.write = origTodoWrite;
+    origTodoWrite = null;
+  }
+}
+
 // ---------- 视图判定（过滤 + 排序） ----------
 
 function dueStatusOf(it: TodoItem): string | null {
@@ -139,8 +190,11 @@ function getVisibleItems(): TodoItem[] {
   let list = M.items.filter((it) => {
     // 场景筛选
     if (M.activeScene === '今日') {
-      const st = it.completed ? null : getDueStatus(it.due);
-      if (!(st === 'overdue' || st === 'today')) return false;
+      // T3：已完成项放行（进 done 折叠区可恢复）；未完成项需今日/逾期才进列表
+      if (!it.completed) {
+        const st = getDueStatus(it.due);
+        if (st !== 'overdue' && st !== 'today') return false;
+      }
     } else if (M.activeScene !== '全部' && it.scene !== M.activeScene) return false;
     // 搜索（内容/场景/笔记名）
     if (kw) {
@@ -223,6 +277,7 @@ export function openTodoPanel(app: App): void {
     </div>`;
 
   document.body.appendChild(overlay);
+  topifyZ(overlay); // T6：ADR-0067 动态发号——后开恒压先开的动态 overlay；不再占死静态 100000
   M.overlay = overlay;
   M.appRef = app;
   M.renderFn = () => renderAll();
@@ -355,6 +410,7 @@ export function closeTodoPanel(): void {
     panelResizeDetach.detach();
     panelResizeDetach = null;
   }
+  flushPendingSize(); // T2：面板关闭时立即落盘尺寸（防防抖窗口内丢失）
   M.renderFn = null;
   M.completeTimers.forEach((t) => clearTimeout(t));
   M.completeTimers.clear();
@@ -387,13 +443,29 @@ function savedPanelSize(): { w: number; h: number } {
   return { w: Math.min(w, capW), h: Math.min(h, capH) };
 }
 
-/** 面板拖动缩放记忆：尺寸写入 settings 内存并持久化（无保存通道时静默安全） */
+/**
+ * 面板拖动缩放记忆（T2）：拖动期间每帧回调 → trailing 防抖 150ms 落盘一次，
+ * 避免拖一次面板边界 = 几十上百次 settings 写盘（ADR-0084 意图：松手沿用，非逐帧持久化）。
+ * 关闭面板时 flushPendingSize() 立即落盘防丢。
+ */
+let pendingSizeTimer: ReturnType<typeof setTimeout> | null = null;
 function rememberPanelSize(w: number, h: number): void {
   const s = tryGetSettings() as any;
   if (!s) return;
   s.todoPanelWidth = w;
   s.todoPanelHeight = h;
-  void saveSettings();
+  if (pendingSizeTimer !== null) clearTimeout(pendingSizeTimer);
+  pendingSizeTimer = setTimeout(() => {
+    pendingSizeTimer = null;
+    void saveSettings();
+  }, 150);
+}
+function flushPendingSize(): void {
+  if (pendingSizeTimer !== null) {
+    clearTimeout(pendingSizeTimer);
+    pendingSizeTimer = null;
+    void saveSettings();
+  }
 }
 
 // ---------- 渲染 ----------
@@ -771,8 +843,10 @@ function addFromComposer(): void {
     ? scenes[0]
     : scenes.includes(M.activeScene) ? M.activeScene : scenes[0];
   void (async () => {
+    // T4：composer 快速录入与编辑器同口径提取 URL（标题含链接 → url 可点）
+    const { url } = extractUrlAndDisplay(txt);
     const it: TodoItem = {
-      id: generateId('todo'),
+      id: generateId(), // T5：与旧 memo 同前缀 'item'（同源 memo.json）
       title: txt,
       scene,
       priority: 'minor',
@@ -785,7 +859,7 @@ function addFromComposer(): void {
       courseName: null,
       coursePath: null,
       linkedNote: null,
-      url: null,
+      url,
     };
     try {
       await TodoData.addItem(it);
@@ -1053,7 +1127,7 @@ export function openEditor(item: TodoItem | null): void {
           notice('已保存', 'success');
         } else {
           const it: TodoItem = {
-            id: generateId('todo'),
+            id: generateId(), // T5：与旧 memo 同前缀 'item'（同源 memo.json）
             title: finalTitle,
             scene,
             priority,
@@ -1145,6 +1219,7 @@ export function ensureTodo(app: App): void {
   if (M.appRef) return;
   M.appRef = app;
   registerEscapeHandler();
+  subscribeMemoSync(app); // T1：同源 memo.json 跨域同步
   void loadData();
 }
 
@@ -1164,6 +1239,7 @@ export function addTodo(app: App): void {
 
 export function unloadTodo(): void {
   closeTodoPanel();
+  unsubscribeMemoSync(); // T1：退订 vault modify + 还原 TodoData.write 包装
   M.completeTimers.forEach((t) => clearTimeout(t));
   M.completeTimers.clear();
   M.appRef = null;
