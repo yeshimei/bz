@@ -10,7 +10,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { closeSettingsModal } from '../../src/core/settings-modal';
 import { closeItemMenu } from '../../src/core/item-actions';
 import { ReviewDataManager, REVIEW_FILE_PATH } from '../../src/review/data';
-import { UIManager, isPlayable } from '../../src/review/ui';
+import { UIManager, isPlayable, isDueToday } from '../../src/review/ui';
 
 function makeApp(vault: MockVault) {
   return mockAppWithVault(vault);
@@ -199,6 +199,54 @@ describe('UIManager 三区队列', () => {
     expect(isPlayable({ ...base, nextReviewDate: new Date(now.getTime() + 86400e3).toISOString() })).toBe(false);
     expect(isPlayable({ ...base, nextReviewDate: new Date(now.getTime() - 1000).toISOString(), isMissing: true })).toBe(false);
     expect(isPlayable({ ...base, nextReviewDate: new Date(now.getTime() - 1000).toISOString(), completed: true })).toBe(false);
+  });
+
+  it('isDueToday：nextReviewDate 落今日本地日内；与 isOverdue 正交（P2 中列死区回归）', () => {
+    const now = new Date();
+    const base = {
+      id: 'x', filePath: 'X.md', name: 'X', reviewStart: now.toISOString(), stage: 1, phase: 'ladder',
+      stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0,
+      lastReviewed: null, lastDifficulty: null, completed: false,
+    } as any;
+    // 今天 23:59（未来时点）→ 今日到期但非逾期
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 0);
+    expect(isDueToday({ ...base, nextReviewDate: endOfDay.toISOString() })).toBe(true);
+    expect(isPlayable({ ...base, nextReviewDate: endOfDay.toISOString() })).toBe(false); // 时点未到不可做
+    // 明天 → 非今日
+    expect(isDueToday({ ...base, nextReviewDate: new Date(now.getTime() + 86400e3).toISOString() })).toBe(false);
+    expect(isDueToday({ ...base, nextReviewDate: null })).toBe(false);
+  });
+
+  it('P2 回归：中列「今天到期」日历口径——今日稍晚到期条目入中列（原恒空死区）', async () => {
+    const vault = new MockVault();
+    const now = new Date();
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 0);
+    vault.files.set('A.md', '正文');
+    vault.files.set('B.md', '正文');
+    vault.files.set('C.md', '正文');
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      // A：昨日逾期 → 红列
+      { id: '1', filePath: 'A.md', name: 'A', reviewStart: now.toISOString(), stage: 1, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() - 86400e3).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+      // B：今日 23:59（未到时点）→ 中列（原口径 isPlayable=false 且非逾期 → 落未来列、中列恒空）
+      { id: '2', filePath: 'B.md', name: 'B', reviewStart: now.toISOString(), stage: 1, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: endOfDay.toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+      // C：5 天后 → 未来列
+      { id: '3', filePath: 'C.md', name: 'C', reviewStart: now.toISOString(), stage: 1, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() + 5 * 86400e3).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+    ]));
+    const { ui } = await makeUI(vault);
+    await ui.showMain();
+    const cols = [...document.querySelectorAll('.bz-q-col')];
+    const cardsOf = (name: string) => {
+      const col = cols.find((c) => c.querySelector('.bz-q-col-head .name')?.textContent === name)!;
+      return [...col.querySelectorAll('.bz-q-card')].map((c) => c.textContent);
+    };
+    expect(cardsOf('已逾期').length).toBe(1); // A
+    expect(cardsOf('今天到期').length).toBe(1); // B（中列有内容）
+    expect(cardsOf('未来').length).toBe(1); // C
+    // 顶部条计同口径
+    expect(document.querySelector('.bz-q-strip-txt')!.textContent).toContain('今日 1 篇到期');
+    ui.destroy();
   });
 
   it('冲刺中 refreshPanel 不覆盖队列（宿主被会话占用）', async () => {

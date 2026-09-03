@@ -26,7 +26,7 @@ import { unregisterSheetCompanion } from '../core/item-actions';
 import { FSRS, LADDER_MAX, TOTAL_STAGES } from './fsrs';
 import type { ReviewItem } from './data';
 import { ReviewDataManager } from './data';
-import { computeStats } from './stats';
+import { computeStats, dateKey } from './stats';
 import { SprintSession } from './sprint';
 import type { SprintMode } from './sprint';
 import type { QuizQuestion } from './quiz-core/manager';
@@ -55,6 +55,13 @@ export function isPlayable(item: ReviewItem): boolean {
   if (item.isMissing || item.isCompleted || item.completed) return false;
   if (!item.nextReviewDate) return false;
   return new Date(item.nextReviewDate).getTime() <= Date.now();
+}
+
+/** 是否今日到期（nextReviewDate 落在今日本地日内；与 isOverdue 正交的日历口径）。
+ *  原「今天到期」列复用 isPlayable（与 isOverdue 只差毫秒级相等）→ 中列恒空死区。 */
+export function isDueToday(item: ReviewItem): boolean {
+  if (!item.nextReviewDate) return false;
+  return dateKey(new Date(item.nextReviewDate)) === dateKey(new Date());
 }
 
 export class UIManager {
@@ -184,13 +191,15 @@ export class UIManager {
   private queueViewHtml(items: ReviewItem[], searchText: string): string {
     const kw = searchText.trim().toLowerCase();
     const vis = kw ? items.filter((i) => i.name.toLowerCase().includes(kw)) : items;
-    const over = vis.filter((i) => !i.isCompleted && !i.isMissing && i.isOverdue);
-    const today = vis.filter((i) => !i.isCompleted && !i.isMissing && !i.isOverdue && isPlayable(i));
-    const future = vis.filter((i) => !i.isCompleted && !i.isMissing && !isPlayable(i) && !i.isOverdue);
+    const active = (i: ReviewItem) => !i.isCompleted && !i.isMissing;
+    // 三区互斥分区：逾期优先（含今日早间已过期）→ 今日到期（日历日口径）→ 未来
+    const over = vis.filter((i) => active(i) && i.isOverdue);
+    const today = vis.filter((i) => active(i) && !i.isOverdue && isDueToday(i));
+    const future = vis.filter((i) => active(i) && !i.isOverdue && !isDueToday(i));
     const done = vis.filter((i) => i.isCompleted || i.completed);
 
     const overCount = items.filter((i) => i.isOverdue && !i.isCompleted).length;
-    const todayCount = items.filter((i) => isPlayable(i) && !i.isOverdue).length;
+    const todayCount = items.filter((i) => !i.isCompleted && !i.isMissing && !i.isOverdue && isDueToday(i)).length;
     const doneCount = items.filter((i) => i.isCompleted || i.completed).length;
     // 底部统计真实数字（同步渲染，占位 … 时期已过）
     const stats = computeStats(items);
