@@ -627,8 +627,10 @@ function renderHighlightBlock(hl: any, app: any, filePath: string): HTMLElement 
   // 1. 双击整个块 => 跳转
   block.addEventListener('dblclick', () => {
     jumpToHighlight(app, filePath, hl.id);
+    // audit H：捕获当次弹窗引用——200ms 内重开的弹窗不被旧定时器误关
+    const openedAt = bookNotesOverlay;
     setTimeout(() => {
-      if (bookNotesOverlay) {
+      if (bookNotesOverlay && bookNotesOverlay === openedAt) {
         bookNotesOverlay.remove();
         bookNotesOverlay = null;
       }
