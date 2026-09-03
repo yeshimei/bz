@@ -592,6 +592,47 @@ describe('ADR-0077：置顶排序 + R 优先级 + 抽查 + 拟合触发', () => 
     const ladder = { phase: 'ladder' } as any;
     expect(reviewApp.currentR(ladder)).toBeNull();
   });
+
+  it('拟合链路源头：markReview 历史补 difficulty，生产旧数据（无 difficulty 历史）可积累样本', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    // 生产旧数据形态：FSRS 相位历史只含 stability/R，无 difficulty（旧版 markReview 不写）
+    await seedOverdue(vault, {
+      stage: 12, phase: 'fsrs', stability: 5, difficulty: 0.3,
+      lastReviewed: new Date(now.getTime() - 3 * 86400e3).toISOString(),
+      reviewHistory: [
+        { timestamp: new Date(now.getTime() - 30 * 86400e3).toISOString(), stage: 12, rating: 'good', stability: 5, R: 62 },
+      ],
+    });
+    const app = makeApp(vault);
+    setApp(app);
+    await reviewApp.markReview('A.md', 'good');
+    const items = await new ReviewDataManager(app).loadItems();
+    const history = items[0].reviewHistory;
+    // 新写入的记录带 difficulty（good 不变难度 → 0.3）与 stability
+    expect(history[1].difficulty).toBe(0.3);
+    expect(history[1].stability).toEqual(expect.any(Number));
+    // 走拟合层真实入口：旧记录缺 difficulty 回退条目级值 → 旧→新配对产出可拟合样本
+    const { buildFitSamples } = await import('../../src/review/fit');
+    const samples = buildFitSamples(history, { fallbackDifficulty: items[0].difficulty });
+    expect(samples.length).toBeGreaterThanOrEqual(1);
+    expect(samples[0].S).toBe(5);
+  });
+
+  it('拟合链路源头：进入 FSRS（阶梯→fsrs）的历史记录同样带 stability/difficulty', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    await seedOverdue(vault, { stage: 8 });
+    const app = makeApp(vault);
+    setApp(app);
+    await reviewApp.markReview('A.md', 'easy'); // 8 → 9 进入 fsrs
+    const items = await new ReviewDataManager(app).loadItems();
+    const entry = items[0].reviewHistory[0];
+    expect(items[0].phase).toBe('fsrs');
+    expect(typeof entry.stability).toBe('number');
+    expect(typeof entry.difficulty).toBe('number');
+  });
 });
 describe('sprint 编排（2026-09-04 形态：startRoundSprint / startSingleSprint / runSprintSession）', () => {
   beforeEach(() => {

@@ -99,14 +99,18 @@ export function isFittableSample(sample: FitSample): boolean {
  * 逐条配对：上一条的 (stability, difficulty) 作为 S/D，本条 timestamp - 上条 timestamp = t，本条 rating 为标签。
  */
 export function buildFitSamples(
-  history: Array<{ timestamp: string; stage: number; rating: string; stability?: number; difficulty?: number }>
+  history: Array<{ timestamp: string; stage: number; rating: string; stability?: number; difficulty?: number }>,
+  opts?: { /** 上一条缺 difficulty 时回退条目级 item.difficulty（生产旧数据 history 无 difficulty） */
+    fallbackDifficulty?: number }
 ): FitSample[] {
   const out: FitSample[] = [];
   for (let i = 1; i < history.length; i++) {
     const prev = history[i - 1];
     const cur = history[i];
-    // 需要上一条的 stability/difficulty（FSRS 相位才记录）
-    if (prev.stability === undefined || prev.difficulty === undefined) continue;
+    // 需要上一条的 stability（FSRS 相位才记录）；difficulty 缺失回退条目级值
+    if (prev.stability === undefined) continue;
+    const prevD = prev.difficulty !== undefined ? prev.difficulty : opts?.fallbackDifficulty;
+    if (prevD === undefined) continue;
     const t = (new Date(cur.timestamp).getTime() - new Date(prev.timestamp).getTime()) / 86400000;
     if (!(t > 0)) continue;
     const ratingIdx = RATING_INDEX[cur.rating];
@@ -114,7 +118,7 @@ export function buildFitSamples(
     out.push({
       t,
       S: prev.stability,
-      D: prev.difficulty,
+      D: prevD,
       rating: ratingIdx,
       stage: cur.stage,
     });
@@ -228,11 +232,15 @@ export function fitFSRSParams(
  * 返回 null 表示样本不足/无可拟合样本（调用方回退默认参数）。
  */
 export function fitFromItems(
-  items: Array<{ reviewHistory?: Array<{ timestamp: string; stage: number; rating: string; stability?: number; difficulty?: number }> }>,
+  items: Array<{
+    difficulty?: number;
+    reviewHistory?: Array<{ timestamp: string; stage: number; rating: string; stability?: number; difficulty?: number }>;
+  }>,
   opts?: { full?: boolean }
 ): { fit: FitResult; count: number } | null {
-  const history = items.flatMap((i) => i.reviewHistory || []);
-  const samples = buildFitSamples(history as any);
+  // 按条目分别构样再拍平：配对不跨条目（不同笔记的历史串联会产生假样本）；
+  // 上一条缺 difficulty 时回退条目级 item.difficulty（生产旧数据 history 无 difficulty）
+  const samples = items.flatMap((i) => buildFitSamples((i.reviewHistory || []) as any, { fallbackDifficulty: i.difficulty }));
   const fittable = samples.filter(isFittableSample);
   const count = fittable.length;
   // 样本门槛（ADR-0077）：≥300 全参、100~300 子集、<100 跳过

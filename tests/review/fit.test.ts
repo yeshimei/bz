@@ -48,6 +48,21 @@ describe('buildFitSamples', () => {
       expect(samples[0].t).toBeCloseTo(2, 5);
     }
   });
+
+  it('上一条缺 difficulty → 回退条目级 fallbackDifficulty（生产旧数据形态可积累样本）', () => {
+    // 生产旧数据：FSRS 相位记录只含 stability（无 difficulty）
+    const history = [
+      { timestamp: '2026-08-01T10:00:00.000Z', stage: 10, rating: 'good', stability: 5 },
+      { timestamp: '2026-08-11T10:00:00.000Z', stage: 10, rating: 'easy', stability: 10 },
+    ];
+    // 无回退 → 恒 0 样本（原 bug）
+    expect(buildFitSamples(history)).toHaveLength(0);
+    // 回退条目级 difficulty → 样本产生
+    const samples = buildFitSamples(history, { fallbackDifficulty: 0.3 });
+    expect(samples).toHaveLength(1);
+    expect(samples[0].D).toBe(0.3);
+    expect(samples[0].S).toBe(5);
+  });
 });
 
 describe('computeSampleLogLikelihood', () => {
@@ -133,6 +148,19 @@ describe('fitFromItems', () => {
     expect(subset.fit.w.length).toBe(DEFAULT_W.length);
     const full = fitFromItems(mkItems(350))!;
     expect(full.count).toBeGreaterThanOrEqual(300);
+  });
+
+  it('按条目分别构样：不同笔记的历史不跨条目配对（假样本回归）', () => {
+    // 150 条独立条目、各含 1 条 FSRS 记录且时间戳递增：
+    // 跨条目拍平配对会产生 149 个假样本（≥100 → 会错误触发拟合）；
+    // 按条目构样则恒 0 样本 → 返回 null。
+    const items = Array.from({ length: 150 }, (_, i) => ({
+      difficulty: 0.3,
+      reviewHistory: [
+        { timestamp: new Date(2026, 0, 1 + i).toISOString(), stage: 10, rating: i % 2 ? 'good' : 'easy', stability: 5, difficulty: 0.3 },
+      ],
+    }));
+    expect(fitFromItems(items)).toBeNull();
   });
 });
 
