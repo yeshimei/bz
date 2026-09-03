@@ -74,6 +74,5 @@ export function unloadCinema(): void {
     M.currentOverlay.remove();
     M.currentOverlay = null;
   }
-  document.querySelectorAll('.bz-cinema-mask').forEach((el) => el.remove());
   resetCinemaState();
 }
