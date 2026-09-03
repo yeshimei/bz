@@ -434,6 +434,44 @@ export async function deleteEntry(entryId: string) {
 
 // ===== 刷新（文件变更） =====
 
+/** 判断某条目是否属于该日记文件的普通条目（refreshFile / onFileDeleted 共用剔除口径） */
+function isPlainEntryOfThisFile(e: DiaryEntry, dateStr: string): boolean {
+  return (
+    !e.encrypted &&
+    !(e.id && (e.id.startsWith('movie-') || e.id.startsWith('letter-'))) &&
+    !e.filename.includes('/') &&
+    (e.date === dateStr || e.filename === dateStr)
+  );
+}
+
+/** 文件删除后的内存剔除：map 日期项与列表普通条目（P2 审查修复：外部删除不再残留） */
+function removeFileEntries(filePath: string) {
+  const dateStr = filePath.split('/').pop()!.replace(/\.md$/, '');
+  if (diaryDataMap) diaryDataMap.delete(dateStr);
+  const before = state.data.originalDiaryEntries.length;
+  state.data.originalDiaryEntries = state.data.originalDiaryEntries.filter((e) => !isPlainEntryOfThisFile(e, dateStr));
+  state.data.currentFilteredEntries = state.data.currentFilteredEntries.filter((e) => !isPlainEntryOfThisFile(e, dateStr));
+  if (state.data.originalDiaryEntries.length !== before) emitFullRefresh();
+}
+
+/**
+ * 文件删除事件入口（diary:file-deleted 订阅端）：外部删除日记文件后剔除内存条目。
+ * 不触碰磁盘；影视/信特殊条目与加密条目不在此剔除。isInternalUpdate 回环抑制同 onFileChange。
+ */
+export async function onFileDeleted(evt: { path: string }) {
+  if (state.events.isInternalUpdate) return;
+  removeFileEntries(evt.path);
+}
+
+/**
+ * 文件重命名/移动事件入口（diary:file-renamed 订阅端）：剔除旧路径条目后按新路径刷新。
+ */
+export async function onFileRenamed(evt: { oldPath: string; newPath: string }) {
+  if (state.events.isInternalUpdate) return;
+  removeFileEntries(evt.oldPath);
+  await refreshFile(evt.newPath);
+}
+
 /** 根据文件路径刷新对应日期的所有条目（原 refreshFile；导出供解密/外部改动后主动重读，不依赖文件事件） */
 export async function refreshFile(filePath: string) {
   const file = getApp().vault.getAbstractFileByPath(filePath) as any;
@@ -457,15 +495,9 @@ export async function refreshFile(filePath: string) {
     diaryDataMap!.set(dateStr, newEntries);
   }
 
-  // P0-4：仅移除属于该日记文件的普通条目；影视/信等特殊条目（id 前缀 movie-/letter-
-  // 或 filename 含目录分隔符）即使 date 与该日记同日也不得被剔除。加密条目由
-  // mergeEncryptedEntries 统一重并，不在此保留。
-  const isPlainEntryOfThisFile = (e: DiaryEntry) =>
-    !e.encrypted &&
-    !(e.id && (e.id.startsWith('movie-') || e.id.startsWith('letter-'))) &&
-    !e.filename.includes('/') &&
-    (e.date === dateStr || e.filename === dateStr);
-  const otherEntries = state.data.originalDiaryEntries.filter((e) => !isPlainEntryOfThisFile(e));
+  // P0-4：仅移除属于该日记文件的普通条目（isPlainEntryOfThisFile 口径，影视/信等特殊条目
+  // 即使 date 与该日记同日也不得被剔除）。加密条目由 mergeEncryptedEntries 统一重并。
+  const otherEntries = state.data.originalDiaryEntries.filter((e) => !isPlainEntryOfThisFile(e, dateStr));
   newEntries.forEach((entry) => {
     entry.filename = dateStr;
   });

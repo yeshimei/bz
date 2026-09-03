@@ -357,6 +357,67 @@ describe('writeFile 写前守卫（P0 审查修复）', () => {
   });
 });
 
+describe('onFileDeleted / onFileRenamed（P2 审查修复：三通道补订）', () => {
+  it('外部删除：剔除该日期的 map 项与列表普通条目，保留同日影视条目', async () => {
+    makeVault({});
+    setDiaryDataMap(
+      new Map([
+        ['2024-01-01', [{ date: '2024-01-01', time: '08:00', timeValue: 800, tags: ['日记'], emoji: '📖', content: 'x', filename: '2024-01-01', lineNumber: 1, id: 'a' }]],
+      ])
+    );
+    state.data.originalDiaryEntries = [
+      { date: '2024-01-01', time: '08:00', timeValue: 800, tags: ['日记'], emoji: '📖', content: 'x', filename: '2024-01-01', lineNumber: 1, id: 'a' },
+      { date: '2024-01-01', time: '12:00', timeValue: 1200, tags: ['电影'], emoji: '📽', content: 'film', filename: '我的/影视/film.md', lineNumber: 0, id: 'movie-x' },
+      { date: '2024-01-02', time: '09:00', timeValue: 900, tags: ['日记'], emoji: '📖', content: 'y', filename: '2024-01-02', lineNumber: 1, id: 'b' },
+    ];
+    state.data.currentFilteredEntries = [...state.data.originalDiaryEntries];
+    const full = vi.fn();
+    onFullRefresh(full);
+    const { onFileDeleted } = await import('../../src/diary/store');
+    await onFileDeleted({ path: '我的/日记/2024-01-01.md' });
+    // 该日期普通条目剔除；影视条目与其它日期不受影响
+    expect(state.data.originalDiaryEntries.map((e) => e.id)).toEqual(['movie-x', 'b']);
+    expect(state.data.currentFilteredEntries.map((e) => e.id)).toEqual(['movie-x', 'b']);
+    expect(diaryDataMap!.has('2024-01-01')).toBe(false);
+    expect(full).toHaveBeenCalled();
+  });
+
+  it('外部重命名：旧路径条目剔除，新路径条目刷新进来', async () => {
+    makeVault({
+      '我的/日记/2024-01-02.md': '# ✍️ 09:00\n换名后的条目\n',
+    });
+    await loadAll();
+    expect(state.data.originalDiaryEntries).toHaveLength(1);
+    // 模拟改名前的内存残留（旧文件 2024-01-01 的条目）+ 磁盘新文件 2024-01-02
+    setDiaryDataMap(
+      new Map([
+        ['2024-01-01', [{ date: '2024-01-01', time: '08:00', timeValue: 800, tags: ['日记'], emoji: '📖', content: '旧名', filename: '2024-01-01', lineNumber: 1, id: 'old' }]],
+        ...(diaryDataMap ?? new Map()),
+      ])
+    );
+    state.data.originalDiaryEntries.push({
+      date: '2024-01-01', time: '08:00', timeValue: 800, tags: ['日记'], emoji: '📖', content: '旧名', filename: '2024-01-01', lineNumber: 1, id: 'old',
+    });
+    const { onFileRenamed } = await import('../../src/diary/store');
+    await onFileRenamed({ oldPath: '我的/日记/2024-01-01.md', newPath: '我的/日记/2024-01-02.md' });
+    expect(state.data.originalDiaryEntries.some((e) => e.id === 'old')).toBe(false);
+    expect(state.data.originalDiaryEntries.some((e) => e.date === '2024-01-02')).toBe(true);
+    expect(diaryDataMap!.has('2024-01-01')).toBe(false);
+  });
+
+  it('内部更新期间不触发（回环抑制）', async () => {
+    makeVault({});
+    state.data.originalDiaryEntries = [
+      { date: '2024-01-01', time: '08:00', timeValue: 800, tags: ['日记'], emoji: '📖', content: 'x', filename: '2024-01-01', lineNumber: 1, id: 'a' },
+    ];
+    state.events.isInternalUpdate = true;
+    const { onFileDeleted } = await import('../../src/diary/store');
+    await onFileDeleted({ path: '我的/日记/2024-01-01.md' });
+    expect(state.data.originalDiaryEntries).toHaveLength(1);
+    state.events.isInternalUpdate = false;
+  });
+});
+
 describe('onFileChange', () => {
   it('日记文件变更后刷新（节流合并）', async () => {
     makeVault({ '我的/日记/2024-01-01.md': '# 📖 08:00\nx\n' });
