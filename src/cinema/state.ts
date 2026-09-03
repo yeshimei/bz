@@ -1,7 +1,11 @@
 /**
- * 影院（cinema）域状态：模块级可变对象 M（与 movie 域同构但独立）
+ * 影院（cinema）域状态：模块级可变对象 M
+ * 自 ADR-0087 起接管原 movie 域（旧 src/movie 已退役），数据仍是 `我的/影视/*.md`。
  */
 import type { App, TFile } from 'obsidian';
+
+/** 影视目录默认值（cinemaFolderPath 未配置时回落；旧 movieFolderPath 键已退役） */
+export const DEFAULT_FOLDER = '我的/影视';
 
 export interface CinemaItem {
   file: TFile | null;
@@ -46,11 +50,12 @@ export interface CinemaState {
   renderFn: (() => void) | null;
   aiOverlay: HTMLElement | null;
   statOverlay: HTMLElement | null;
-  /** AI 页内状态（不弹窗）：是否运行中 / 等待消息 / 结果列表 / 错误信息 */
+  /** AI 页内状态（不弹窗）：是否运行中 / 等待消息 / 结果列表 / 错误信息 / 页标题（找同类区分） */
   aiRunning: boolean;
   aiWaitMsg: string;
   aiResult: any[] | null;
   aiError: string | null;
+  aiTitle: string;
 }
 
 export const M: CinemaState = {
@@ -65,7 +70,7 @@ export const M: CinemaState = {
   searchKeyword: '',
   searchDebounceTimer: null,
   appRef: null,
-  folderPath: '我的/影视',
+  folderPath: DEFAULT_FOLDER,
   renderFn: null,
   aiOverlay: null,
   statOverlay: null,
@@ -73,6 +78,7 @@ export const M: CinemaState = {
   aiWaitMsg: '',
   aiResult: null,
   aiError: null,
+  aiTitle: 'AI 荐片',
 };
 
 /** 测试/重建用：整体重置模块状态 */
@@ -88,7 +94,7 @@ export function resetCinemaState(): void {
   M.searchKeyword = '';
   M.searchDebounceTimer = null;
   M.appRef = null;
-  M.folderPath = '我的/影视';
+  M.folderPath = DEFAULT_FOLDER;
   M.renderFn = null;
   M.aiOverlay = null;
   M.statOverlay = null;
@@ -96,4 +102,5 @@ export function resetCinemaState(): void {
   M.aiWaitMsg = '';
   M.aiResult = null;
   M.aiError = null;
+  M.aiTitle = 'AI 荐片';
 }

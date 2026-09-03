@@ -68,7 +68,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-favorites-open', 'bz-favorites-add',
   'bz-library-open', 'bz-book-notes-open',
   'bz-reading-report-open',
-  'bz-movie-open', 'bz-movie-add', 'bz-movie-report',
+  'bz-movie-report', // ADR-0087：旧 bz-movie-open/bz-movie-add 退役，报告命令保留
   'bz-cinema-open', 'bz-cinema-add',
   // 书架墙（bookshelf 域，新域与书库并存）
   'bz-bookshelf-open',
@@ -135,9 +135,8 @@ describe('bz 骨架冒烟', () => {
     const byId = (id: string) => registeredCommands.find((c: any) => c.id === id)!;
     // t1：主页 → 入口页（术语随 CONTEXT.md；id bz-home 不变）
     expect(byId('bz-home').name).toBe('入口页');
-    // f3：新建类动词统一（写备忘/写影视 → 加备忘/加影视，与加物品/加密码/加收藏一致）
+    // f3：新建类动词统一（写备忘 → 加备忘，与加物品/加收藏一致；ADR-0087 旧 movie-add 已退役）
     expect(byId('bz-memo-add').name).toBe('加备忘');
-    expect(byId('bz-movie-add').name).toBe('加影视');
     expect(byId('bz-cinema-open').name).toBe('影院');
     expect(byId('bz-cinema-add').name).toBe('加影视（影院）');
     // 书架墙（bookshelf 新域）
@@ -157,9 +156,8 @@ describe('bz 骨架冒烟', () => {
     // f7：第二大脑面板与第二大脑参考区分（不再与功能名歧义）
     expect(byId('bz-secondbrain-panel').name).toBe('第二大脑面板');
     expect(byId('bz-secondbrain-open').name).toBe('第二大脑参考');
-    // f7：重复图标去重——clapperboard / message-circle 各只出现一次
+    // f7：重复图标去重——message-circle 各只出现一次（clapperboard 随 movie-add 退役已无）
     const icons = registeredCommands.map((c: any) => c.icon);
-    expect(icons.filter((i: string) => i === 'clapperboard')).toHaveLength(1);
     expect(icons.filter((i: string) => i === 'message-circle')).toHaveLength(1);
     expect(byId('bz-movie-report').icon).toBe('pie-chart');
     expect(byId('bz-smartcat-chat').icon).toBe('messages-square');
@@ -211,8 +209,7 @@ describe('bz 骨架冒烟', () => {
     const s = plugin.settings;
     expect(s.todoFilePath).toBe('CONFIG/STORAGE');
     expect(s.articleDirectory).toBe('归档/网页剪藏');
-    expect(s.movieFolderPath).toBe('我的/影视');
-    expect(s.cinemaFolderPath).toBe(''); // 空 = 未配置（不抢占 movie 默认目录）
+    expect(s.cinemaFolderPath).toBe('我的/影视'); // ADR-0087：接管影视目录（旧 movieFolderPath 键退役）
     expect(s.bookshelfFolderPath).toBe(''); // 空 = 未配置（回落 libraryFolderPath 同显）
     expect(s.libraryFolderPath).toBe('书库');
     expect(s.favoritesStoragePath).toBe('CONFIG/STORAGE');
@@ -290,6 +287,6 @@ ${failures.join('\n')}`).toEqual([]);
     // 重新加载时合并默认值
     const plugin2 = await createPlugin(makeMockApp());
     expect(plugin2.settings.todoFilePath).toBe('自定义/路径');
-    expect(plugin2.settings.movieFolderPath).toBe('我的/影视');
+    expect(plugin2.settings.cinemaFolderPath).toBe('我的/影视');
   });
 });

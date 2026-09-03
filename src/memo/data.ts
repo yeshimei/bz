@@ -16,7 +16,7 @@ export interface BzSettingsLike {
   todoFilePath?: string;
   showFileName?: boolean;
   autoPopupOnStart?: boolean;
-  movieFolderPath?: string;
+  cinemaFolderPath?: string;
   /** 场景列表（逗号分隔，空则内置默认） */
   memoScenarios?: string;
   /** 打开笔记自动提醒 */
@@ -59,7 +59,7 @@ export const DataManager = {
   todoFilePath: '',
   scenarios: [] as string[],
   _store: null as ReturnType<typeof jsonStore> | null,
-  movieFolderPath: '我的/影视',
+  cinemaFolderPath: '我的/影视',
 
   init(settings: BzSettingsLike) {
     // ADR-0009：storagePath 优先，旧 todoFilePath 兼容兜底
@@ -67,7 +67,7 @@ export const DataManager = {
     this._store = jsonStore(this.todoFilePath);
     // 场景：设置可编辑（逗号分隔），空则内置默认
     this.scenarios = parseScenarios(settings.memoScenarios);
-    this.movieFolderPath = settings.movieFolderPath || '我的/影视';
+    this.cinemaFolderPath = settings.cinemaFolderPath || '我的/影视';
   },
 
 
@@ -153,7 +153,7 @@ export const DataManager = {
     const app = getApp();
     const result: { name: string; path: string }[] = [];
     for (const file of app.vault.getFiles()) {
-      if (!file.path.startsWith(this.movieFolderPath) || file.extension !== 'md') continue;
+      if (!file.path.startsWith(this.cinemaFolderPath) || file.extension !== 'md') continue;
       const cache = app.metadataCache.getFileCache(file);
       if (!cache) continue;
       if (hasCourseTag(cache)) result.push({ name: file.basename, path: file.path });

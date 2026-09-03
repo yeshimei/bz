@@ -19,10 +19,6 @@ vi.mock('../../src/review', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   unloadReview: vi.fn(),
 }));
-vi.mock('../../src/movie', async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  unloadMovie: vi.fn(),
-}));
 vi.mock('../../src/library', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   unloadLibrary: vi.fn(),
@@ -46,7 +42,6 @@ import { closeItemMenu } from '../../src/core/item-actions';
 import { unloadBelongings } from '../../src/belongings';
 import { unloadFavorites } from '../../src/favorites';
 import { unloadReview } from '../../src/review';
-import { unloadMovie } from '../../src/movie';
 import { unloadLibrary } from '../../src/library';
 import { unloadClipbook } from '../../src/clipbook';
 import { unloadAutoSummary } from '../../src/auto-summary';
@@ -96,7 +91,6 @@ function clearSpies(): void {
     unloadBelongings,
     unloadFavorites,
     unloadReview,
-    unloadMovie,
     unloadLibrary,
     unloadClipbook,
     unloadAutoSummary,
@@ -121,7 +115,6 @@ describe('onunload 卸载接线补全（fix(main)）', () => {
     expect(unloadBelongings).toHaveBeenCalledTimes(1);
     expect(unloadFavorites).toHaveBeenCalledTimes(1);
     expect(unloadReview).toHaveBeenCalledTimes(1);
-    expect(unloadMovie).toHaveBeenCalledTimes(1);
     expect(unloadLibrary).toHaveBeenCalledTimes(1);
     // clipbook 融合域（ADR-0082）：旧 news/clipping unload 由本域接管
     expect(unloadClipbook).toHaveBeenCalledTimes(1);

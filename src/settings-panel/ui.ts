@@ -48,7 +48,6 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   clipping: async () => (await import('../clipbook/ui')).clipbookSettingsSchema(),
   favorites: async () => (await import('../favorites/ui')).favoritesSettingsSchema(),
   library: async () => (await import('../library/ui')).librarySettingsSchema(),
-  movie: async () => (await import('../movie/ui')).movieSettingsSchema(),
   cinema: async () => (await import('../cinema/settings')).cinemaSettingsSchema(),
   bookshelf: async () => (await import('../bookshelf/settings')).bookshelfSettingsSchema(),
   review: async () => {
@@ -98,9 +97,8 @@ const DOMAINS: DomainDef[] = [
   { id: 'favorites', name: '收藏本', icon: 'star', desc: '收藏条目', schemaLoader: schemaLoaders.favorites },
   { id: 'library', name: '书库', icon: 'library', desc: '藏书与读书笔记', schemaLoader: schemaLoaders.library },
   { id: 'reading-report', name: '阅读报告', icon: 'bar-chart-3', desc: '阅读统计', noSettings: true },
-  { id: 'movie', name: '影视', icon: 'film', desc: '影视目录与海报', schemaLoader: schemaLoaders.movie },
 
-  { id: 'cinema', name: '影院', icon: 'clapperboard', desc: '影视海报墙（新域）', schemaLoader: schemaLoaders.cinema },
+  { id: 'cinema', name: '影院', icon: 'clapperboard', desc: '影视目录与海报（ADR-0087 接管影视）', schemaLoader: schemaLoaders.cinema },
   { id: 'bookshelf', name: '书架墙', icon: 'book-open', desc: '藏书封面墙（新域）', schemaLoader: schemaLoaders.bookshelf },
   { id: 'review', name: '复习计划', icon: 'repeat-2', desc: '间隔重复与做题', schemaLoader: schemaLoaders.review },
   { id: 'secondbrain', name: '第二大脑', icon: 'network', desc: '嵌入检索与对话', schemaLoader: schemaLoaders.secondbrain },
