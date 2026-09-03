@@ -170,6 +170,54 @@ describe('todo 面板', () => {
       expect(document.querySelectorAll('.bz-todo-card').length).toBe(2);
     });
   });
+
+  it('桌面尺寸记忆（ADR-0084）：有记忆值时打开即套用记忆宽高', async () => {
+    const { app, settings } = seedVault();
+    settings.todoPanelWidth = 900;
+    settings.todoPanelHeight = 650;
+    openTodoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-todo-panel')).toBeTruthy();
+    });
+    const panel = document.querySelector('.bz-todo-panel') as HTMLElement;
+    expect(panel.style.width).toBe('900px');
+    expect(panel.style.height).toBe('650px');
+  });
+
+  it('桌面尺寸记忆（ADR-0084）：记忆值超视口 92% 时打开即钳到上限', async () => {
+    const { app, settings } = seedVault();
+    settings.todoPanelWidth = 5000;
+    settings.todoPanelHeight = 5000;
+    openTodoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-todo-panel')).toBeTruthy();
+    });
+    const panel = document.querySelector('.bz-todo-panel') as HTMLElement;
+    // jsdom 视口 1024×768 → 92% = 942×706
+    expect(panel.style.width).toBe('942px');
+    expect(panel.style.height).toBe('706px');
+  });
+
+  it('桌面尺寸记忆（ADR-0084）：拖动右缘 → 写回 settings 并保存', async () => {
+    const { app, settings, saveSpy } = seedVault();
+    openTodoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-todo-panel')).toBeTruthy();
+    });
+    const panel = document.querySelector('.bz-todo-panel') as HTMLElement;
+    // jsdom 无布局：mock rect 给面板真实尺寸（右缘在 x=720）
+    const rect = { width: 720, height: 580, left: 0, top: 0 };
+    panel.getBoundingClientRect = () => rect as DOMRect;
+    // 右缘（内偏 1px）按下 + 拖宽到 900
+    panel.dispatchEvent(new MouseEvent('mousedown', { clientX: 719, clientY: 300, bubbles: true }));
+    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 900, clientY: 300, bubbles: true }));
+    document.dispatchEvent(new MouseEvent('mouseup', { clientX: 900, clientY: 300, bubbles: true }));
+    await vi.waitFor(() => {
+      expect(settings.todoPanelWidth).toBe(901);
+    });
+    expect(settings.todoPanelHeight).toBe(580);
+    expect(saveSpy).toHaveBeenCalled();
+  });
 });
 
 describe('todo 编辑器', () => {
