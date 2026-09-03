@@ -596,6 +596,9 @@ describe('ADR-0077：置顶排序 + R 优先级 + 抽查 + 拟合触发', () => 
     (reviewApp as any)._reviewCountSinceFit = 0;
     (reviewApp as any)._fitRunning = false;
   });
+  afterEach(() => {
+    vi.restoreAllMocks(); // spy 跨用例累积清零
+  });
 
   it('sortOverdue：R 升序（遗忘风险最高优先）→ 到期时间；每日上限截断', async () => {
     const now = new Date();
@@ -637,6 +640,38 @@ describe('ADR-0077：置顶排序 + R 优先级 + 抽查 + 拟合触发', () => 
     await reviewApp.maybeRunFit(app); // 达阈值 3
     const fitFile = vault.files.get('CONFIG/STORAGE/review-fit.json');
     expect(fitFile).toBeUndefined(); // 样本不足未落盘
+  });
+
+  it('P2 回归：拟合重算 fire-and-forget——不 await（挂起的拟合不阻塞评级写盘）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    await seedOverdue(vault, {
+      stage: 12, phase: 'fsrs', stability: 5, difficulty: 0.3,
+      lastReviewed: new Date(now.getTime() - 3 * 86400e3).toISOString(),
+    });
+    const app = makeApp(vault);
+    setApp(app);
+    const never = new Promise<void>(() => {}); // 永不 resolve：若 markReview 仍 await 则本用例超时红
+    const fitSpy = vi.spyOn(reviewApp, 'maybeRunFit').mockReturnValue(never);
+    await reviewApp.markReview('A.md', 'good');
+    const items = await new ReviewDataManager(app).loadItems();
+    expect(items[0].totalReviews).toBe(1); // 评级已写盘
+    expect(fitSpy).toHaveBeenCalledTimes(1); // 拟合已入队后台执行
+  });
+
+  it('P2 回归：阶梯评级路径同样 fire-and-forget 拟合', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    await seedOverdue(vault, { stage: 3 });
+    const app = makeApp(vault);
+    setApp(app);
+    const never = new Promise<void>(() => {});
+    const fitSpy = vi.spyOn(reviewApp, 'maybeRunFit').mockReturnValue(never);
+    await reviewApp.markReview('A.md', 'good');
+    const items = await new ReviewDataManager(app).loadItems();
+    expect(items[0].stage).toBe(4); // 评级已写盘
+    expect(fitSpy).toHaveBeenCalledTimes(1);
   });
 
   it('currentR：FSRS 相位且有 lastReviewed 可算；否则 null', () => {
