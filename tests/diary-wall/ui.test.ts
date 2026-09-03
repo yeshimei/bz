@@ -164,10 +164,10 @@ describe('回忆墙 UI', () => {
     const media = desk.querySelector('.bz-diary-wall-media') as HTMLElement;
     expect(media).toBeTruthy();
     media.click();
-    // 桌面 + 移动实例同步开灯箱（双 DOM 共享状态）
+    // 灯箱已打开（DW5：仅可见实例加 --show，桌面端 1 个）
     const lb = desk.querySelector('.bz-diary-wall-lb--show') as HTMLElement;
     expect(lb).toBeTruthy();
-    expect(document.querySelectorAll('.bz-diary-wall-lb--show').length).toBe(2);
+    expect(document.querySelectorAll('.bz-diary-wall-lb--show').length).toBe(1);
     // 灯箱内已注入 img（mediaSrc 返回 URL）
     const img = lb.querySelector('.bz-diary-wall-lb-media') as HTMLImageElement;
     expect(img).toBeTruthy();
@@ -595,5 +595,62 @@ describe('回忆墙 UI', () => {
     // 双击 = 300ms 内两次点击
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
+  });
+
+  it('DW4：移动端媒体单击开条目抽屉（不直进灯箱）；DW7：重渲染宽高比稳定', async () => {
+    await openAndWait();
+    const mob = document.querySelector('.bz-diary-wall-mob')!;
+    const media = mob.querySelector('.bz-diary-wall-media') as HTMLElement;
+    expect(media).toBeTruthy();
+    media.click();
+    // 抽屉打开（媒体条目的条目级动作可达），灯箱未开
+    expect(mob.querySelector('.bz-diary-wall-sheet--show')).toBeTruthy();
+    expect(mob.querySelector('.bz-diary-wall-lb--show')).toBeNull();
+    // 抽屉内媒体缩略图仍可进灯箱（openLightbox 按可见实例亮——jsdom 桌面宽度 → desk 实例）
+    const thumb = mob.querySelector('.bz-diary-wall-sheet-thumb') as HTMLElement;
+    expect(thumb).toBeTruthy();
+    thumb.click();
+    expect(document.querySelector('.bz-diary-wall-lb--show')).toBeTruthy();
+    // DW7：重渲染后同条目媒体宽高比不变（稳定散列，非全局递增 seed）
+    const c = DiaryWallAppController.instance!;
+    const before = Array.from(document.querySelectorAll('.bz-diary-wall-desk .bz-diary-wall-media')).map(
+      (m) => (m as HTMLElement).style.aspectRatio
+    );
+    c.renderAll();
+    const after = Array.from(document.querySelectorAll('.bz-diary-wall-desk .bz-diary-wall-media')).map(
+      (m) => (m as HTMLElement).style.aspectRatio
+    );
+    expect(after).toEqual(before);
+  });
+
+  it('DW3：墙开着时日记文件 modify → 防抖重读刷新', async () => {
+    await openAndWait();
+    const app = (await import('../../src/core/app')).getApp();
+    // 新增一天日记 → modify 事件（真实场景：外部编辑既有文件，此处新增文件内容验证重读链路）
+    vault.files.set('我的/日记/2026-09-01.md', '# 📝 08:00\n新日记条目。\n');
+    const file = (app.vault as any).file('我的/日记/2026-09-01.md');
+    (app.vault as any).emit('modify', file);
+    await waitFor(() => {
+      const heads = document.querySelectorAll('.bz-diary-wall-desk .bz-diary-wall-day-head');
+      return heads.length === 4;
+    }, 2000);
+  });
+
+  it('DW8：月份点击 smooth 滚动只触发一次；DW9：视频时长角标显示真实时长', async () => {
+    await openAndWait();
+    const wall = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-wall') as HTMLElement;
+    const scrollSpy = vi.fn();
+    wall.scrollTo = scrollSpy as any;
+    const monthItem = document.querySelector<HTMLElement>('.bz-diary-wall-desk .bz-diary-wall-month[data-month="2026-08"]');
+    monthItem!.click();
+    // DW8：委托单次绑定（原 bindPanel 委托 + renderWall 逐月绑定双触发）
+    expect(scrollSpy).toHaveBeenCalledTimes(1);
+    // DW9：视频 metadata 就绪 → 角标从 ▶ 变真实时长
+    const video = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-media video') as HTMLVideoElement;
+    expect(video).toBeTruthy();
+    Object.defineProperty(video, 'duration', { value: 125, configurable: true });
+    video.dispatchEvent(new Event('loadedmetadata'));
+    const dur = video.parentElement!.querySelector('.bz-diary-wall-dur') as HTMLElement;
+    expect(dur.textContent).toBe('2:05');
   });
 });
