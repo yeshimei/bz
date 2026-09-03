@@ -238,4 +238,48 @@ describe('home UI', () => {
     expect(H.pinned).toEqual([]);
     expect(H.editing).toBe(false);
   });
+
+  it('动态发号（topifyZ）：overlay 持有高于静态档的 z-index（不再占死 400）', async () => {
+    seedHome(vault);
+    openHome(homeApp(vault));
+    await new Promise((r) => setTimeout(r, 0));
+    const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
+    const z = Number(overlay.style.zIndex);
+    expect(Number.isFinite(z)).toBe(true);
+    expect(z).toBeGreaterThanOrEqual(100000); // ADR-0067 动态分配器起点
+  });
+
+  it('execPal 面板隐藏守卫：pal 未弹出时 Enter 不执行残留选中（输入框值保留）', async () => {
+    seedHome(vault);
+    const app = homeApp(vault);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 0));
+    const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
+    const q = overlay.querySelector('[data-home-q]') as HTMLInputElement;
+    // 未输入（pal 仍隐藏）时直接回车：不执行、不清输入、不关面板
+    q.value = '随便打的词';
+    q.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect((overlay.querySelector('[data-home-pal]') as HTMLElement).hidden).toBe(true);
+    expect(q.value).toBe('随便打的词'); // 守卫生效：输入未被 execPal 清空
+    expect(document.querySelector('.bz-home-overlay')).toBeTruthy();
+  });
+
+  it('加域 pick 右缘定位按实际宽度 232px 夹紧（不再被裁 8px）', async () => {
+    seedHome(vault);
+    const app = homeApp(vault);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 0));
+    const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
+    (overlay.querySelector('[data-home-edit]') as HTMLElement).click();
+    const addBtn = overlay.querySelector('[data-home-addcard]') as HTMLElement;
+    // stub 真实几何：面板宽 500，锚点左缘 350（350 + 232 < 500 → 不必夹紧；换 240 会裁）
+    addBtn.getBoundingClientRect = () => ({ left: 350, right: 350, top: 100, bottom: 130, width: 0, height: 30, x: 350, y: 100, toJSON: () => ({}) } as DOMRect);
+    (overlay.querySelector('.bz-home-panel') as HTMLElement).getBoundingClientRect = () =>
+      ({ left: 0, right: 500, top: 0, bottom: 600, width: 500, height: 600, x: 0, y: 0, toJSON: () => ({}) } as DOMRect);
+    addBtn.click();
+    const pick = overlay.querySelector('.bz-home-pick') as HTMLElement;
+    expect(pick).toBeTruthy();
+    // 右缘夹紧：min(350, 500-232=268) → 268（旧值 240 时会得到 260，多裁 8px）
+    expect(pick.style.left).toBe('268px');
+  });
 });
