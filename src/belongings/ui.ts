@@ -260,7 +260,24 @@ function panelHtml(): string {
 
 // ==================== 主面板生命周期 ====================
 
+/** ESC 层（bz-bel）：主面板 || 表单——表单悬浮时 ESC 先关表单，不穿透关掉身后的主面板（对照 favorites bz-fav） */
 let mainEscRegistered = false;
+function ensureBelongingsEsc(): void {
+  if (mainEscRegistered) return;
+  mainEscRegistered = true;
+  escManager.register('bz-bel', {
+    isVisible: () => !!M.overlay || !!document.querySelector('.bz-bel-form-mask'),
+    close: () => {
+      const form = document.querySelector('.bz-bel-form-mask') as HTMLElement | null;
+      if (form) {
+        unregisterSheetCompanion(form);
+        form.remove();
+      } else {
+        closePanel();
+      }
+    },
+  });
+}
 /** 数据文件 modify 自动刷新（打开期间注册，关闭注销——用户拍板实时刷新） */
 let autoRefreshOff: (() => void) | null = null;
 /** 本会话写盘标记（自写短路：modify 事件不回读重渲） */
@@ -298,14 +315,8 @@ async function openPanelInner(): Promise<void> {
   );
   mountIcons(overlay);
 
-  // ESC（主面板）
-  if (!mainEscRegistered) {
-    mainEscRegistered = true;
-    escManager.register('bz-bel', {
-      isVisible: () => !!M.overlay,
-      close: () => closePanel(),
-    });
-  }
+  // ESC（主面板 + 表单双窗口径；表单也可能先于面板打开——命令路径）
+  ensureBelongingsEsc();
 
   // ---- 事件委托 ----
   overlay.addEventListener('click', (e) => {
@@ -645,11 +656,18 @@ function buildActions(it: BelongingsItem, rebuild: () => void): ItemAction[] {
       keepOpen: true,
       onClick: () => {
         void (async () => {
-          it.current_status = s;
-          it.last_updated = new Date().toISOString();
+          // 外部 modify 自动刷新会把 M.db 整体换新——按 id 从当前库重取再改，防旧引用改动静默丢失
+          const cur = itemById(it.id);
+          if (!cur) {
+            notice('该物品已被外部变更删除，列表已刷新', 'warning');
+            rebuild();
+            return;
+          }
+          cur.current_status = s;
+          cur.last_updated = new Date().toISOString();
           await saveAndRender();
-          emitDomainEvent('belongings', { kind: 'status', title: it.name, status: s });
-          notice(`「${it.name}」已标记为${s}`, 'success');
+          emitDomainEvent('belongings', { kind: 'status', title: cur.name, status: s });
+          notice(`「${cur.name}」已标记为${s}`, 'success');
           rebuild();
         })();
       },
@@ -705,6 +723,12 @@ async function deleteItem(it: BelongingsItem): Promise<void> {
     ],
   });
   if (v !== 'del' || !M.db) return;
+  // 外部 modify 自动刷新会把 M.db 整体换新——确认后仍按 id 校验当前库中存在
+  if (!M.db.items[it.id]) {
+    notice('该物品已被外部变更删除，列表已刷新', 'warning');
+    M.renderFn?.();
+    return;
+  }
   delete M.db.items[it.id];
   await saveAndRender();
   emitDomainEvent('belongings', { kind: 'delete', title: it.name });
@@ -772,7 +796,6 @@ export function openForm(it: BelongingsItem | null): void {
     return;
   }
   const editing = !!it;
-  const db = M.db;
   const mask = document.createElement('div');
   mask.className = 'bz-overlay-mask bz-bel-form-mask';
   const priceVal = it ? String(it.purchase_price ?? '') : '';
@@ -801,6 +824,7 @@ export function openForm(it: BelongingsItem | null): void {
   </div>`;
   document.body.appendChild(mask);
   mountIcons(mask);
+  ensureBelongingsEsc(); // 表单可在面板未开时打开（命令路径）——ESC 层在此保证已注册
   const popup = mask.querySelector('.bz-bel-form') as HTMLElement;
   // 编辑自抽屉：companion 防误关
   const sheetOpen = !!document.querySelector('.bz-item-sheet-mask');
@@ -850,18 +874,28 @@ export function openForm(it: BelongingsItem | null): void {
     void (async () => {
       try {
         if (it) {
-          const snapshot = { ...it };
-          it.name = name;
-          it.category = category;
-          it.purchase_price = Math.round(price * 100) / 100;
-          it.purchase_date = date;
-          it.current_status = curStatus;
-          it.description = desc;
-          it.last_updated = new Date().toISOString();
+          // 外部 modify 自动刷新会把 M.db 整体换新——保存前按 id 从当前库重取，防旧引用改动静默丢失
+          const cur = itemById(it.id);
+          if (!cur) {
+            notice('该物品已被外部变更删除，本次保存未写入', 'warning');
+            unregisterSheetCompanion(mask);
+            closeItemMenu();
+            mask.remove();
+            return;
+          }
+          const snapshot = { ...cur };
+          cur.name = name;
+          cur.category = category;
+          cur.purchase_price = Math.round(price * 100) / 100;
+          cur.purchase_date = date;
+          cur.current_status = curStatus;
+          cur.description = desc;
+          cur.last_updated = new Date().toISOString();
           await saveAndRender();
-          emitDomainEvent('belongings', { kind: 'edit', title: name, changes: belongingsEditChanges(snapshot, it) });
+          emitDomainEvent('belongings', { kind: 'edit', title: name, changes: belongingsEditChanges(snapshot, cur) });
           notice(`物品「${name}」已更新`, 'success');
         } else {
+          if (!M.db) throw new Error('数据库未加载');
           const newItem: BelongingsItem = {
             id: 'item_' + Date.now(),
             name,
@@ -873,7 +907,7 @@ export function openForm(it: BelongingsItem | null): void {
             created_date: new Date().toISOString(),
             last_updated: new Date().toISOString(),
           };
-          db.items[newItem.id] = newItem;
+          M.db.items[newItem.id] = newItem; // 用当前库（外部 modify 换新后旧 db 引用会丢写）
           await saveAndRender();
           emitDomainEvent('belongings', { kind: 'add', item: newItem });
           notice(`物品「${name}」已添加`, 'success');
