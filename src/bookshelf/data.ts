@@ -166,7 +166,10 @@ export function formatReadingTime(totalReadTimeMs: number | undefined): string |
 
 function toDateString(timestamp: number | undefined): string | null {
   if (!Number.isFinite(timestamp) || !timestamp) return null;
-  return new Date(timestamp).toISOString().slice(0, 10);
+  // 本地时区 YYYY-MM-DD（原 UTC 切片会在时区边界偏移一天，audit H；口径同 reading-report/stats.ts）
+  const d = new Date(timestamp);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
 /** 单本 EPUB 聚合 → 书架条目（缺 title/vaultPath 跳过） */

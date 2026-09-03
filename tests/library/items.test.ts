@@ -219,4 +219,22 @@ describe('loadEpubBookItems（ADR-0013，读 Weave 数据文件）', () => {
     const items = await loadEpubBookItems(makeApp(vault));
     expect(items).toEqual([]);
   });
+
+  it('audit H：EPUB 日期本地时区切片（UTC+8 早 8 点前读完不再归前一天）', async () => {
+    const ts = new Date(2024, 11, 24, 7, 30).getTime(); // UTC+8 下对应 2024-12-23T23:30Z
+    seedWeaveData({
+      bk_tz: {
+        id: 'bk_tz',
+        file: { vaultPath: '书库/时区.epub' },
+        meta: { title: '时区' },
+        reading: { position: { percent: 0.5 }, stats: { lastReadTime: ts } },
+        notes: { bookmarks: [], highlights: [], excerpts: [] },
+      },
+    });
+    const items = await loadEpubBookItems(makeApp(vault));
+    const d = new Date(ts);
+    const p = (n: number) => String(n).padStart(2, '0');
+    expect(items[0].readingDate).toBe(`${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`);
+    expect(items[0].readingDate).toBe('2024-12-24'); // 本地日期（旧 UTC 切片会给 2024-12-23）
+  });
 });
