@@ -52,6 +52,16 @@ export function calcCellSize(width: number, cols: number, gap = GAP, pad = GRID_
   return Math.max(MIN_CELL, Math.min(MAX_CELL, cell));
 }
 
+/**
+ * 拖拽目标行钳制（P3）：y ∈ [0, 拖拽前布局最底行 + 1]——
+ * 允许放到现有磁贴末尾的下一行，禁止丢到极远处（挖出大空洞/布局无界增长）。
+ * 锚定拖拽前快照（original）：钳制值全手势恒定，move 预览与松手落位口径一致。
+ */
+function clampDropRow(topPx: number, step: number, dragStartTiles: LauncherTile[]): number {
+  const maxBottom = dragStartTiles.reduce((m, t) => Math.max(m, t.y + t.h), 0);
+  return Math.max(0, Math.min(maxBottom + 1, Math.floor(topPx / step)));
+}
+
 interface CommandMeta {
   id: string;
   name: string;
@@ -173,6 +183,9 @@ export class LauncherModal {
     this.commands = listCommands();
     this.validIds = new Set(this.commands.map((c) => c.id));
     this.data = await loadLauncherData(this.app);
+
+    // P3：异步加载期间已被关闭/替换（close/unload 竞态）→ 放弃构建，防孤儿弹窗
+    if (LauncherModal.instance !== this) return;
 
     // 遮罩 + 弹窗骨架（移动端：底部滑入贴底；桌面端：正常居中）
     const isMobile = LauncherModal.isMobileEnv();
@@ -781,7 +794,8 @@ export class LauncherModal {
       const left = lastX - offX - gridRect.left;
       const top = lastY - offY - gridRect.top;
       const cx = Math.max(0, Math.min(cols - tile.w, Math.floor(left / step)));
-      const cy = Math.max(0, Math.floor(top / step));
+      // P3：cy 钳制到拖拽前布局最底行 +1——允许放到末尾下一行，禁止丢到极远处挖出大空洞
+      const cy = clampDropRow(top, step, original);
       if (cx !== cellX || cy !== cellY) {
         const result = pushMove(work, tile.id, cx, cy, cols);
         if (result) {
@@ -804,7 +818,8 @@ export class LauncherModal {
       const left = ev.clientX - offX - gridRect.left;
       const top = ev.clientY - offY - gridRect.top;
       const cx = Math.max(0, Math.min(cols - tile.w, Math.floor(left / step)));
-      const cy = Math.max(0, Math.floor(top / step));
+      // P3：与 move 同口径钳制（锚定拖拽前布局），松手落位不产生极远行
+      const cy = clampDropRow(top, step, original);
       const result = pushMove(work, tile.id, cx, cy, cols);
       if (result && (cx !== tile.x || cy !== tile.y)) {
         this.setTiles(result);
