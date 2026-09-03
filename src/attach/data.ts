@@ -80,12 +80,31 @@ function matchPath(allFiles: string[], p: string): string | null {
 /**
  * 链接目标解析（收集阶段用）：linktext/路径 → vault 文件路径（解析失败/含糊返回 null）。
  * 顺序：库根绝对 → 相对源笔记目录（md 链接语义）→ 库内唯一 basename；多同名时优先当前笔记同目录。
+ * P2 审查修复：md 链接目标可能被百分号编码（Obsidian 对含空格文件名生成 `My%20Image.png`），
+ * 先解码再解析；解码失败（含裸 % 的非编码串）或解码后无命中时回退原串。
  */
 export function resolveTarget(allFiles: string[], target: string, sourcePath: string, kind: 'wiki' | 'md'): string | null {
   const t = target.trim();
   if (!t) return null;
   if (OUTER_RE.test(t)) return null; // 外链 / 编码数据不处理
 
+  if (kind === 'md' && t.includes('%')) {
+    let decoded = t;
+    try {
+      decoded = decodeURIComponent(t);
+    } catch (e) {
+      decoded = t; // 非法编码序列（如 `100%.png`）：保留原串
+    }
+    if (decoded !== t) {
+      const hit = resolveEncodedTarget(allFiles, decoded, sourcePath, kind);
+      if (hit) return hit;
+    }
+  }
+  return resolveEncodedTarget(allFiles, t, sourcePath, kind);
+}
+
+/** resolveTarget 的解码后主体（不含百分号解码逻辑，wiki/md 同一套路径解析） */
+function resolveEncodedTarget(allFiles: string[], t: string, sourcePath: string, kind: 'wiki' | 'md'): string | null {
   const abs = matchPath(allFiles, t);
   if (abs) return abs;
 
