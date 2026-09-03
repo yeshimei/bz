@@ -190,8 +190,9 @@ export const reviewApp = {
         else if (rating === 'good' || rating === 'easy') it.pendingRedo = false;
       });
       notice(enteringFsrs ? `进入深度复习，${FSRS_FIRST_TEXTS[targetStage]}后复习` : `${FSRS_FIRST_TEXTS[targetStage]}后复习`, 'success');
-      // ADR-0077：评级也累计拟合计数（含阶梯阶段；样本过滤在 fit.ts 内做）
-      await this.maybeRunFit(getApp());
+      // ADR-0077：评级也累计拟合计数（含阶梯阶段；样本过滤在 fit.ts 内做）。
+      // fire-and-forget：计数在入口同步累加，拟合自防重入；不 await 避免大历史时卡评级路径
+      void this.maybeRunFit(getApp());
       return;
     }
 
@@ -225,8 +226,10 @@ export const reviewApp = {
     const days = Math.round(scaledDays);
     const rPct = Math.round(R * 100);
     notice(`R=${rPct}% → 下次复习：${days > 0 ? days + '天' : '1天'}后`, 'success');
-    // ADR-0077：每次评级后累计计数，达阈值触发拟合重算（异步后台）
-    await this.maybeRunFit(getApp());
+    // ADR-0077：每次评级后累计计数，达阈值后台触发拟合重算。
+    // fire-and-forget（不 await）：拟合计数在 maybeRunFit 入口同步累加且自带 _fitRunning
+    // 防重入，完成后自行 notice——大历史时不再阻塞评级写盘路径
+    void this.maybeRunFit(getApp());
   },
 
   /** 跳转逾期（做题决定难度：开启 → 做题复习；关闭 → 普通复习跳转笔记） */
