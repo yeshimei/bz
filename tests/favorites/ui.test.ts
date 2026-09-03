@@ -152,6 +152,19 @@ type FavoritesItem = {
 // ==================== 1. 主面板开合 / 空态 / 结构 ====================
 
 describe('主面板开合与空态', () => {
+  it('loadItems 失败 → 空列表 + 错误通知（不再静默显示「暂无收藏」误导数据丢失）', async () => {
+    const ctx = await setup();
+    vi.spyOn(ctx.dm, 'getAll').mockRejectedValue(new Error('disk error'));
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    const overlay = document.querySelector('.bz-fav-overlay') as HTMLElement;
+    expect(overlay).not.toBeNull();
+    expect(overlay.querySelector('.bz-fav-content .bz-empty')).not.toBeNull();
+    expect(hasNotice('收藏数据读取失败，已显示为空列表')).toBe(true);
+    consoleSpy.mockRestore();
+  });
+
   it('openPanel 建 DOM：标题「收藏本」+ 左栏 10 项（全部+9 标签）+ 空态文案', async () => {
     const ctx = await setup();
     openPanel(getApp(), ctx.dm, ctx.ai);

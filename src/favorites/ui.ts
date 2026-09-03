@@ -394,6 +394,9 @@ async function loadItems(): Promise<void> {
     M.items = await dataManagerOf().getAll();
   } catch (e) {
     M.items = [];
+    // 读取失败不再静默显示「暂无收藏」（用户会误以为数据丢了）
+    notice('收藏数据读取失败，已显示为空列表', 'error');
+    console.error('[favorites-load]', e);
   }
 }
 

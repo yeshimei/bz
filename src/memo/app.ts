@@ -9,6 +9,59 @@ import { DataManager, type BzSettingsLike } from './data';
 import { getDueStatus } from './due';
 import type { MemoItem } from './types';
 
+// ---------- 同源 memo.json 跨域同步（对照 todo T1：todo 面板/后台任务改动 → 已开 memo 面板防抖重读） ----------
+let vaultSyncRef: any = null;
+let vaultSyncApp: any = null;
+let vaultSyncTimer: ReturnType<typeof setTimeout> | null = null;
+let syncing = false; // 自己写盘引发的 modify 不重复刷新（写路径已自 refresh）
+let origMemoWrite: ((data: any) => Promise<unknown>) | null = null; // 包装前原始 write（卸载还原）
+
+/** 订阅 vault modify：memo.json 变更（todo 面板/后台任务/外部）→ memo 面板开着时防抖重读 */
+function subscribeVaultSync(app: any): void {
+  if (vaultSyncRef) return;
+  // 包装 DataManager.write：memo 自己的写盘置 syncing，modify 事件不再重复刷新（写路径已自 refresh）
+  if (!origMemoWrite) {
+    origMemoWrite = DataManager.write.bind(DataManager);
+    DataManager.write = async (data: any) => {
+      syncing = true;
+      try {
+        return await origMemoWrite!(data);
+      } finally {
+        syncing = false;
+      }
+    };
+  }
+  vaultSyncApp = app;
+  vaultSyncRef = app.vault.on('modify', (file: any) => {
+    if (syncing) return; // 自己写盘
+    // 面板没开不刷（口径同 registerEscape：主面板 display === 'block' 才算开着）
+    if (!(UIManager.mask && UIManager.mask.style.display === 'block')) return;
+    if (file && file.path !== DataManager.todoFilePath) return; // 只关心 memo.json
+    if (vaultSyncTimer !== null) clearTimeout(vaultSyncTimer);
+    vaultSyncTimer = setTimeout(() => {
+      vaultSyncTimer = null;
+      void App.refresh();
+    }, 150);
+  });
+}
+function unsubscribeVaultSync(): void {
+  if (vaultSyncRef) {
+    vaultSyncApp?.vault?.offref?.(vaultSyncRef);
+    vaultSyncRef = null;
+    vaultSyncApp = null;
+  }
+  if (vaultSyncTimer !== null) {
+    clearTimeout(vaultSyncTimer);
+    vaultSyncTimer = null;
+  }
+  syncing = false;
+  // 还原 write 包装（卸载后不再拦截，避免引用的闭包残留）
+  if (origMemoWrite) {
+    DataManager.write = origMemoWrite;
+    origMemoWrite = null;
+  }
+}
+
 /** 是否存在未完成的重要或到期备忘录（启动弹窗 / file-open 提醒共用） */
 function hasPendingUrgent(items: MemoItem[], path?: string | null): boolean {
   return items.some(
@@ -46,6 +99,7 @@ export const App = {
     UIManager.registerEscape();
 
     this.ensureFileOpenListener(settings.openNoteReminder !== false);
+    subscribeVaultSync(app); // 同源 memo.json 跨域同步（todo 面板/后台任务改动 → 面板开着时重读）
 
     await this.loadData();
     this.initialized = true;
@@ -95,6 +149,7 @@ export const App = {
   /** 插件卸载时清理监听 */
   unload() {
     this.ensureFileOpenListener(false);
+    unsubscribeVaultSync(); // 退订 vault modify + 还原 DataManager.write 包装
     // 移除注入 DOM
     const ids = ['todo-mask', 'todo-popup', 'add-todo-mask', 'add-todo-popup'];
     for (const id of ids) {

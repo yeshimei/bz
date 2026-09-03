@@ -15,7 +15,7 @@
  * 天数口径用带 T12:00:00 的种子日期 + setSystemTime 中午，跨时区确定（对齐 data.test.ts 手法）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { openPanel, closePanel, cleanupBelongings, belongingSettingsSchema } from '../../src/belongings/ui';
+import { openPanel, openForm, closePanel, cleanupBelongings, belongingSettingsSchema } from '../../src/belongings/ui';
 import { addBelongingsItem, openBelongings, unloadBelongings } from '../../src/belongings/index';
 import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -174,6 +174,21 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     expect(panel()).toBeNull();
   });
 
+  it('openPanel 重入保护：loadDatabase await 窗口内并发二次触发不产生双遮罩（僵尸遮罩修复）', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1' }) });
+    setApp({ vault } as any);
+    setSettingsProvider(() => ({ belongingsDataFolder: 'CONFIG/STORAGE' }) as any);
+    resetObsidianMocks();
+    const p1 = openPanel();
+    const p2 = openPanel(); // 首次 await loadDatabase 期间同步重入
+    await Promise.all([p1, p2]);
+    expect(document.querySelectorAll('.bz-bel-overlay')).toHaveLength(1);
+    expect(panelOf()).not.toBeNull();
+    // 重入被忽略后 toggle 语义不受影响：再开一次仍能正常关闭
+    await openPanel();
+    expect(panel()).toBeNull();
+  });
+
   it('主按钮开表单；表单取消钮关闭；表单遮罩 mousedown 关闭；面板不受影响', async () => {
     await openPanel();
     (panel()!.querySelector('.bz-bel-main-head [data-bel-add]') as HTMLElement).click();
@@ -198,6 +213,30 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '外部新增' }) });
     vault.emit('modify', { path: DATA_PATH });
     await flush();
+    expect(panel()).toBeNull();
+  });
+
+  it('ESC 分层（对照 favorites）：表单悬浮时 ESC 只关表单，主面板保留；再 ESC 才关主面板', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1' }) });
+    await openPanel();
+    openAddForm(panel()!);
+    expect(document.querySelector('.bz-bel-form-mask')).not.toBeNull();
+    // 第一次 ESC：只关表单
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
+    expect(panel()).not.toBeNull();
+    // 第二次 ESC：关主面板
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(panel()).toBeNull();
+  });
+
+  it('ESC 分层：面板未开时命令路径开表单，ESC 可关表单（注册随表单补挂）', async () => {
+    openForm(null); // 命令路径：内部异步 loadDatabase 后再开
+    await flush();
+    expect(document.querySelector('.bz-bel-form-mask')).not.toBeNull();
+    expect(panel()).toBeNull();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
     expect(panel()).toBeNull();
   });
 
@@ -461,6 +500,29 @@ describe('归物本筛选（状态 / 年份 / 搜索 / 年节折叠）', () => {
     expect(content()!.querySelector('.bz-empty-title')!.textContent).toBe('没有符合条件的物品');
   });
 
+  it('年份筛选悬空重置：外部 modify 后选中年份消失 → 自动回全部年份（修复前列表恒空）', async () => {
+    seed(vault, {
+      item_1: makeItem({ id: 'item_1', name: '甲', purchase_date: '2024-06-01T12:00:00' }),
+      item_2: makeItem({ id: 'item_2', name: '乙', purchase_date: '2023-05-01T12:00:00' }),
+    });
+    await open(vault);
+    const sel = yearSel()!;
+    sel.value = '2024';
+    sel.dispatchEvent(new Event('change'));
+    expect(rows()).toHaveLength(1);
+    // 外部清掉 2024 年条目 → modify 自动刷新
+    const db = JSON.parse(vault.files.get(DATA_PATH)!);
+    delete db.items.item_1;
+    vault.files.set(DATA_PATH, JSON.stringify(db));
+    vault.emit('modify', { path: DATA_PATH });
+    await flush();
+    await tick(20);
+    // 修复：悬空年份重置回全部（列表不恒空、下拉显示与筛选状态一致）
+    expect(rows()).toHaveLength(1);
+    expect(rows()[0].textContent).toContain('乙');
+    expect(yearSel()!.value).toBe('');
+  });
+
   it('搜索防抖 180ms：标题/分类/描述命中；无匹配文案；清空恢复', async () => {
     seed(vault, {
       item_1: makeItem({ id: 'item_1', name: '机械键盘', description: '红轴' }),
@@ -721,6 +783,47 @@ describe('归物本动作（状态流转 / 删除确认流）', () => {
     expect(events).toEqual([{ kind: 'delete', title: '旧手机' }]);
     expect(hasNotice('已删除「旧手机」')).toBe(true);
   });
+
+  it('外部 modify 换库后菜单状态流转：按 id 从当前库重取再改，改动照常落盘（修复前写旧引用静默丢失）', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘', current_status: '使用中' }) });
+    await open(vault);
+    rightClick(rows()[0]); // 菜单开着（捕获打开时的条目引用）
+    // 外部改写数据文件 → modify → 面板内部 loadDatabase 把 M.db 整体换新
+    const db = JSON.parse(vault.files.get(DATA_PATH)!);
+    db.items.item_1.name = '外部改名';
+    vault.files.set(DATA_PATH, JSON.stringify(db));
+    vault.emit('modify', { path: DATA_PATH });
+    await flush();
+    await tick(20);
+    clickAction('标记为闲置');
+    await flush();
+    const saved = JSON.parse(vault.files.get(DATA_PATH)!);
+    expect(saved.items.item_1.current_status).toBe('闲置');
+    expect(saved.items.item_1.name).toBe('外部改名'); // 基于新库条目（外部改动不回退）
+    expect(events).toEqual([{ kind: 'status', title: '外部改名', status: '闲置' }]);
+    expect(hasNotice('「外部改名」已标记为闲置')).toBe(true);
+  });
+
+  it('外部 modify 删除条目后：删除确认按 id 校验，不产生幽灵删除通知', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘' }) });
+    await open(vault);
+    rightClick(rows()[0]);
+    clickAction('删除');
+    await flush();
+    // 确认框开着期间外部已删除该条目 → modify 换库
+    const db = JSON.parse(vault.files.get(DATA_PATH)!);
+    delete db.items.item_1;
+    vault.files.set(DATA_PATH, JSON.stringify(db));
+    vault.emit('modify', { path: DATA_PATH });
+    await flush();
+    await tick(20);
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await flush();
+    const saved = JSON.parse(vault.files.get(DATA_PATH)!);
+    expect(saved.items.item_1).toBeUndefined();
+    expect(events).toHaveLength(0); // 无 delete 事件（当前库已无此条目）
+    expect(hasNotice('该物品已被外部变更删除，列表已刷新')).toBe(true);
+  });
 });
 
 // ==================== 记一笔 / 编辑表单 ====================
@@ -938,6 +1041,30 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     expect(events).toHaveLength(0);
     expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
     expect(rows()[0].textContent).toContain('键盘');
+  });
+
+  it('外部 modify 换库后表单保存：按 id 重取写入当前库（修复前弹已更新但改动落不进新库）', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘', description: '红轴', purchase_date: '2024-06-01' }) });
+    await open(vault);
+    rightClick(rows()[0]);
+    clickAction('编辑');
+    await flush();
+    // 外部改写 → modify → M.db 整体换新；表单仍悬浮（表单字段 = 打开时快照，保存按表单值全量覆盖）
+    const db = JSON.parse(vault.files.get(DATA_PATH)!);
+    db.items.item_1.name = '外部同名改';
+    vault.files.set(DATA_PATH, JSON.stringify(db));
+    vault.emit('modify', { path: DATA_PATH });
+    await flush();
+    await tick(20);
+    // 本地表单保存 → 改动必须写进当前库并落盘（修复前：改在旧对象上，落盘文件无变化）
+    nameInp().value = '本地改名';
+    saveBtn().click();
+    await flush();
+    const saved = JSON.parse(vault.files.get(DATA_PATH)!);
+    expect(saved.items.item_1.name).toBe('本地改名');
+    expect(saved.items.item_1.created_date).toBe('2024-06-01T10:00:00.000Z'); // 当前库对象字段保留（非新建）
+    expect(events).toEqual([{ kind: 'edit', title: '本地改名', changes: ['改了名称'] }]);
+    expect(hasNotice('物品「本地改名」已更新')).toBe(true);
   });
 });
 
