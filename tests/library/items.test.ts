@@ -103,6 +103,16 @@ describe('getBookItems', () => {
     const items = getBookItems(makeApp(vault));
     expect(items[0].cover).toBe('附件/c.png');
   });
+
+  it('audit H：readingProgress 非法值 → 兜底 0（不再 NaN 污染进度条与排序）', () => {
+    vault.files.set('书库/坏进度.md', '---\ntags: ["book"]\nreadingDate: 2025-06-01\nreadingProgress: abc\n---\n正文');
+    vault.files.set('书库/零进度.md', '---\ntags: ["book"]\n---\n正文');
+    const items = getBookItems(makeApp(vault));
+    const byTitle = Object.fromEntries(items.map((i) => [i.title, i.readingProgress]));
+    expect(byTitle['坏进度']).toBe(0);
+    expect(byTitle['零进度']).toBe(0);
+    expect(Number.isNaN(byTitle['坏进度'] as number)).toBe(false);
+  });
 });
 
 describe('sortItemList', () => {
