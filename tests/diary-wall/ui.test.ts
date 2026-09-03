@@ -490,6 +490,44 @@ describe('回忆墙 UI', () => {
     expect(heads).toEqual(['2026-08-19']);
   });
 
+  it('E6 审查修复：点年份只切换浏览年份，关闭弹窗不提交筛选', async () => {
+    const c = await openAndWait();
+    const brand = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-brand') as HTMLElement;
+    brand.click();
+    let popup = document.querySelector('.bz-diary-wall-datefilter') as HTMLElement;
+    // 点 2026 年 → 只重建浏览网格，不写筛选
+    popup.querySelector<HTMLElement>('.bz-diary-wall-datefilter-year[data-year="2026"]')!.click();
+    popup = document.querySelector('.bz-diary-wall-datefilter') as HTMLElement;
+    expect(popup.querySelectorAll('.bz-diary-wall-datefilter-month').length).toBe(12);
+    expect(c.selDateFilter).toBeNull(); // 年份只是浏览临时值
+    // ✕ 关闭：筛选仍未生效，列表未被过滤
+    (popup.querySelector('.bz-diary-wall-datefilter-close') as HTMLElement)!.click();
+    expect(document.querySelector('.bz-diary-wall-datefilter')).toBeNull();
+    expect(c.selDateFilter).toBeNull();
+    expect(document.querySelectorAll('.bz-diary-wall-desk .bz-diary-wall-day-head').length).toBe(3);
+  });
+
+  it('E6：点年份后点月份提交筛选；「全部」清除', async () => {
+    const c = await openAndWait();
+    const brand = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-brand') as HTMLElement;
+    brand.click();
+    let popup = document.querySelector('.bz-diary-wall-datefilter') as HTMLElement;
+    popup.querySelector<HTMLElement>('.bz-diary-wall-datefilter-year[data-year="2026"]')!.click();
+    popup = document.querySelector('.bz-diary-wall-datefilter') as HTMLElement;
+    const aug = Array.from(popup.querySelectorAll<HTMLElement>('.bz-diary-wall-datefilter-month')).find(
+      (m) => m.textContent!.includes('8月')
+    )!;
+    aug.click();
+    expect(c.selDateFilter).toEqual({ year: '2026', month: '08' });
+    expect(document.querySelectorAll('.bz-diary-wall-desk .bz-diary-wall-day-head').length).toBe(1);
+    // 再开 → 「全部」清除
+    brand.click();
+    popup = document.querySelector('.bz-diary-wall-datefilter') as HTMLElement;
+    (popup.querySelector('.bz-diary-wall-datefilter-reset') as HTMLElement)!.click();
+    expect(c.selDateFilter).toBeNull();
+    expect(document.querySelectorAll('.bz-diary-wall-desk .bz-diary-wall-day-head').length).toBe(3);
+  });
+
   it('桌面单击条目 → 不开底部抽屉（动作入口为右键/双击）', async () => {
     await openAndWait();
     const desk = document.querySelector('.bz-diary-wall-desk')!;

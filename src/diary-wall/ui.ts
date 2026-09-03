@@ -1677,20 +1677,30 @@ export class DiaryWallAppController {
 
   /** 标题点击 → 回忆墙自包含日期选择器（按年份/月份过滤本域数据；不再调 diary showDatePicker——那是 diary 面板的 filter） */
   private openDatePicker() {
-    this._dateFilterEl = this.mkDateFilter();
+    this.showDateFilter(this.selDateFilter?.year ?? null);
+  }
+
+  /** 显示日期筛选弹窗：viewYear 只是「正在浏览的年份」临时值（P2 审查修复：
+   *  旧实现点年份即写入 selDateFilter，ESC 关闭后筛选已悄悄生效）。
+   *  只有点月份或「全部」才提交筛选。 */
+  private showDateFilter(viewYear: string | null) {
+    this.closeDateFilter();
+    this._dateFilterEl = this.mkDateFilter(viewYear);
     document.body.appendChild(this._dateFilterEl);
     topifyZ(this._dateFilterEl); // ADR-0067：后显示在上
     this._dateFilterEl.style.display = 'flex';
   }
 
-  /** 自绘日期筛选弹窗（年份行 + 月份网格 + 全部/关闭） */
-  private mkDateFilter(): HTMLElement {
+  /** 自绘日期筛选弹窗（年份行 + 月份网格 + 全部/关闭）；viewYear 为正在浏览的年份临时值 */
+  private mkDateFilter(viewYear: string | null): HTMLElement {
     const wrap = document.createElement('div');
     wrap.className = 'bz-diary-wall-datefilter';
     const card = document.createElement('div');
     card.className = 'bz-diary-wall-datefilter-card';
     const years = Array.from(new Set(this.entries.map((e) => e.date.slice(0, 4)))).sort((a, b) => b.localeCompare(a));
     const cur = this.selDateFilter;
+    // 年份高亮：浏览中的年份优先，未浏览时回落已生效筛选的年份
+    const activeYear = viewYear ?? cur?.year ?? null;
 
     // 头部：标题 + 全部按钮 + 关闭
     const head = document.createElement('div');
@@ -1718,29 +1728,25 @@ export class DiaryWallAppController {
     yearRow.className = 'bz-diary-wall-datefilter-years';
     years.forEach((y) => {
       const b = document.createElement('button');
-      b.className = 'bz-diary-wall-datefilter-year' + (cur?.year === y ? ' bz-diary-wall-datefilter-year--on' : '');
+      b.className = 'bz-diary-wall-datefilter-year' + (activeYear === y ? ' bz-diary-wall-datefilter-year--on' : '');
       b.dataset.year = y;
       b.textContent = y;
       b.addEventListener('click', () => {
-        // 两段式：点年份 → 选中该年并（重）渲染月份网格（弹窗保持打开）；点月份才应用过滤并关闭
-        this.selDateFilter = { year: y };
-        this.closeDateFilter();
-        this._dateFilterEl = this.mkDateFilter();
-        document.body.appendChild(this._dateFilterEl);
-        topifyZ(this._dateFilterEl);
-        this._dateFilterEl.style.display = 'flex';
+        // 两段式：点年份 → 只切换到该年的月份网格（临时值，不提交筛选）；
+        // 点月份才应用过滤并关闭
+        this.showDateFilter(y);
       });
       yearRow.appendChild(b);
     });
     card.appendChild(yearRow);
 
-    // 当前年份的月份网格（若已选年份）
-    if (cur?.year && years.includes(cur.year)) {
+    // 正在浏览年份的月份网格
+    if (viewYear && years.includes(viewYear)) {
       const monthRow = document.createElement('div');
       monthRow.className = 'bz-diary-wall-datefilter-months';
       const monthCounts = new Map<string, number>();
       this.entries
-        .filter((e) => e.date.startsWith(cur.year))
+        .filter((e) => e.date.startsWith(viewYear))
         .forEach((e) => {
           const m = e.date.slice(5, 7);
           monthCounts.set(m, (monthCounts.get(m) || 0) + 1);
@@ -1748,15 +1754,17 @@ export class DiaryWallAppController {
       for (let i = 1; i <= 12; i++) {
         const ms = String(i).padStart(2, '0');
         const cnt = monthCounts.get(ms) || 0;
+        const isOn = cur?.year === viewYear && cur.month === ms;
         const cardEl = document.createElement('button');
         cardEl.className =
           'bz-diary-wall-datefilter-month' +
           (cnt === 0 ? ' bz-diary-wall-datefilter-month--empty' : '') +
-          (cur.month === ms ? ' bz-diary-wall-datefilter-month--on' : '');
+          (isOn ? ' bz-diary-wall-datefilter-month--on' : '');
         cardEl.innerHTML = `<span class="bz-diary-wall-datefilter-month-name">${i}月</span><span class="bz-diary-wall-datefilter-month-cnt">${cnt} 条</span>`;
         cardEl.addEventListener('click', () => {
           if (cnt === 0) return;
-          this.selDateFilter = { year: cur.year, month: ms };
+          // 点月份才提交筛选（年份本身只是浏览临时值）
+          this.selDateFilter = { year: viewYear, month: ms };
           this.closeDateFilter();
           this.renderAll();
         });
