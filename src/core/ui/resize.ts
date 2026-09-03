@@ -39,8 +39,14 @@ export interface BzResizableOpts {
   onChange?: (w: number, h: number) => void;
 }
 
-/** 使元素支持「右缘/底缘/右下角」拖动缩放，返回 detach() */
+/** 使元素支持「右缘/底缘/右下角」拖动缩放，返回 detach()。
+ *  触屏设备（coarse pointer）不挂载：本实现仅处理 mouse 事件，返回空 detach 空转（L7） */
 export function uiResizable(el: HTMLElement, opts: BzResizableOpts = {}): { detach: () => void } {
+  const isCoarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+  if (isCoarse) {
+    // 移动端无需缩放热区（面板自适配全屏）；空操作避免在触屏上误挂鼠标拖拽
+    return { detach: () => {} };
+  }
   const edge = opts.edge ?? 8;
   const minW = opts.minW ?? 320;
   const minH = opts.minH ?? 240;

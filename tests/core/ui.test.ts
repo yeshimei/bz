@@ -102,15 +102,20 @@ describe('bz ui 组件库', () => {
       expect(c.classList.contains('bz-chip--on')).toBe(true);
       expect(c.querySelector('.bz-chip-cnt')!.textContent).toBe('12');
     });
-    it('removable → 内嵌 ✕，点击 onRemove 且不冒泡触发 onClick', () => {
+    it('removable → 内嵌 ✕，点击 onRemove 且不冒泡触发 onClick（removable 不暗示选中态）', () => {
       const rm = vi.fn(), clk = vi.fn();
       const c = uiChip({ label: '小说', removable: true, onRemove: rm, onClick: clk });
-      expect(c.classList.contains('bz-chip--sel')).toBe(true);
+      expect(c.classList.contains('bz-chip--sel')).toBe(false); // L3：可删 ≠ 选中
       const x = c.querySelector('.bz-chip-x');
       expect(x).not.toBeNull();
+      expect(x!.getAttribute('role')).toBe('button'); // L11：span[role=button]，非嵌套 button
       x!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       expect(rm).toHaveBeenCalledTimes(1);
       expect(clk).not.toHaveBeenCalled();
+    });
+    it('selectedSoft → 软底选中态 --sel', () => {
+      const c = uiChip({ label: '路径', selectedSoft: true, removable: true });
+      expect(c.classList.contains('bz-chip--sel')).toBe(true);
     });
     it('locked 禁止点击（--locked + 无 onClick）', () => {
       const c = uiChip({ label: '加密', locked: true });

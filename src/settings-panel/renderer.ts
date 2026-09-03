@@ -183,6 +183,7 @@ export function makePathRowCtrl(opts: {
       const chip = uiChip({
         label,
         title: label,
+        selectedSoft: true, // 路径多选：已选项软底（removable 不再自动暗示选中——L3）
         removable: true,
         onClick: openPicker, // 文本点击重开选择器（✕ 已由组件内部 stopPropagation）
         onRemove: () => {
