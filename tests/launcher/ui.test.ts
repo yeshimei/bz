@@ -7,7 +7,7 @@ import { MockVault } from '../mock-vault';
 import { resetObsidianMocks,  Platform as MockPlatform, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { openLauncher, unloadLauncher, calcCellSize, setLauncherShowTextSetter, setLauncherGestureSetter } from '../../src/launcher/ui';
+import { openLauncher, unloadLauncher, calcCellSize, setLauncherShowTextSetter, setLauncherGestureSetter, LauncherModal } from '../../src/launcher/ui';
 import { LAUNCHER_PATH } from '../../src/launcher/data';
 
 /**
@@ -591,6 +591,38 @@ describe('入口页 UI', () => {
     firePointer(document, 'pointermove', 5 * STEP, 5 * STEP);
     expect(document.querySelector('.launcher-placeholder')).toBeNull();
     expect(gridTiles()[0].classList.contains('dragging')).toBe(false);
+  });
+
+  it('P3：拖拽目标行钳制——cy 不超过 maxBottom+1，不产生极远空洞', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 }] })
+    );
+    await openOnce(vault);
+    longPressEnterEdit(gridTiles()[0], 50, 50);
+    const t1 = gridTiles()[0];
+    firePointer(t1, 'pointerdown', STEP / 2, STEP / 2);
+    // 拖向第 50 行（极远）
+    firePointer(document, 'pointermove', STEP / 2, 50 * STEP);
+    firePointer(document, 'pointerup', STEP / 2, 50 * STEP);
+    await new Promise((r) => setTimeout(r, 0));
+    const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
+    // 布局最底行 = 1 → 钳到 2（+1），而非 50
+    expect(saved.desktop.tiles.find((t: any) => t.id === 't1')).toMatchObject({ x: 0, y: 2 });
+  });
+
+  it('P3 竞态：open 异步加载期间被 close → 放弃构建，无孤儿弹窗', async () => {
+    const vault = new MockVault();
+    const { app } = makeMockApp(vault);
+    setApp(app);
+    setSettingsProvider(() => ({}) as any);
+    openLauncher(app); // 同步返回：open() 挂在 await loadLauncherData
+    LauncherModal.instance?.close(); // 加载窗口期内关闭（unload/遮罩点击语义）
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.getElementById('launcher-overlay')).toBeNull(); // 未构建孤儿弹窗
+    expect(LauncherModal.instance).toBeNull();
   });
 
   it('拖拽进行中关闭面板（ESC/unload）→ document 级监听解除，残留指针事件不影响数据（P2）', async () => {

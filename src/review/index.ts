@@ -17,6 +17,8 @@ export let dataManager: ReviewDataManager | null = null;
 export let uiManager: UIManager | null = null;
 export let reviewWatcher: ReviewWatcher | null = null;
 let checkInterval: ReturnType<typeof setInterval> | null = null;
+/** P3：2s 首查句柄（卸载时取消，防卸载后仍触发逾期检查） */
+let firstCheckTimer: ReturnType<typeof setTimeout> | null = null;
 /** P2：ensureReview 注册的全部退订函数（unload 统一调用，防卸载后监听残留双触发） */
 let unsubscribers: (() => void)[] = [];
 
@@ -49,7 +51,9 @@ export function ensureReview(app: App): void {
   // ADR-0077：启动加载拟合参数（个人化记忆曲线优先，回退默认）
   void reviewApp.loadFitParams(app).catch(() => {});
 
-  setTimeout(() => {
+  // P3：首查句柄入账，卸载时取消（2s 内禁用插件不再触发逾期检查/周期注册）
+  firstCheckTimer = setTimeout(() => {
+    firstCheckTimer = null;
     reviewApp.checkOverdueAndNotify();
     checkInterval = setInterval(() => reviewApp.checkOverdueAndNotify(), 60000);
   }, 2000);
@@ -204,10 +208,17 @@ export async function reviewMarkRating(app: App, rating: Rating): Promise<void> 
 /** 卸载清理 */
 export function unloadReview(): void {
   initialized = false;
+  if (firstCheckTimer) {
+    clearTimeout(firstCheckTimer);
+    firstCheckTimer = null;
+  }
   if (checkInterval) {
     clearInterval(checkInterval);
     checkInterval = null;
   }
+  // P3：终止 reviewLoop 1s 轮询 + 释放单例 dataManager（插件禁用后不得继续读盘/持旧 app 引用）
+  reviewApp.stopReviewLoops();
+  reviewApp.dataManager = null;
   // P2：全部退订函数统一调用（原生 offref + 总线退订），防卸载后旧监听残留（再 ensure 后事件双触发）
   for (const off of unsubscribers) {
     try {

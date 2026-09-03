@@ -277,17 +277,17 @@ function pauseOnHidden(): void {
   }
 }
 
-/** 窗口恢复 visible：仅自动恢复由本机制冻结的会话 */
+/** 窗口恢复 visible：仅自动恢复由本机制冻结的会话；仅解冻（状态实际变化）时落盘 */
 function resumeOnVisible(): void {
   const now = Date.now();
   if (autoPauseMain && state.paused) {
     state = unfreezeRunning(state, now);
     autoPauseMain = false;
-  }
-  if (!autoPauseMain) {
-    void save();
+    void save(); // 仅解冻路径 save：无变化恢复（手动暂停/空闲）不写盘
     render();
+    return;
   }
+  render();
 }
 
 /** 注册/注销 visibilitychange 监听（ensurePomodoro 时注册，unload 时注销）——幂等 */
@@ -526,15 +526,25 @@ function buildDOM(): void {
   render();
 }
 
+/** 共享初始化 in-flight（P3）：ensurePomodoro 与 openPomodoro 并发调用只跑一次 initData */
+let initInflight: Promise<void> | null = null;
+function initDataOnce(): Promise<void> {
+  if (loaded) return Promise.resolve();
+  initInflight ??= initData().finally(() => {
+    initInflight = null;
+  });
+  return initInflight;
+}
+
 /** 打开弹窗（幂等：已存在则仅确保显示；未加载先 load+recover）。
- *  初始化窗口内并发调用复用同一 in-flight Promise，杜绝双遮罩（P2）。 */
+ *  初始化窗口内并发调用复用同一 in-flight Promise，杜绝双遮罩（P2）与双读盘（P3）。 */
 let openInflight: Promise<void> | null = null;
 export async function openPomodoro(app: App): Promise<void> {
   appRef = app;
   if (!dataManager) dataManager = new PomodoroDataManager(app);
   if (!maskEl) {
     openInflight ??= (async () => {
-      if (!loaded) await initData();
+      await initDataOnce(); // 与 ensurePomodoro 共享 in-flight（并发只跑一次 load+recover）
       buildDOM();
       ensureTick(); // 恢复/首次打开时若在倒计时，启动轮询继续走（修复：恢复后不 tick 的 bug）
     })();
@@ -557,7 +567,7 @@ export async function ensurePomodoro(app: App): Promise<void> {
   if (!dataManager) dataManager = new PomodoroDataManager(app);
   registerVisibilityListener(); // ticket 62：后台自动暂停（幂等）
   if (!loaded) {
-    await initData();
+    await initDataOnce(); // 与 openPomodoro 共享 in-flight（并发只跑一次 load+recover）
     if (state.endTime !== null) {
       ensureTick(); // 后台继续（无弹窗时 render 只同步状态栏）
       render();
@@ -591,6 +601,7 @@ export function unloadPomodoro(): void {
   unregisterVisibilityListener(); // ticket 62
   autoPauseMain = false;
   openInflight = null; // 丢弃未完成的初始化（下次 openPomodoro 重新走 init）
+  initInflight = null; // P3：共享初始化 in-flight 一并丢弃
   closePomodoro();
   state = createInitialState();
   history = [];

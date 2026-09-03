@@ -104,6 +104,65 @@ describe('markReview 阶梯分支', () => {
     expect(items[0].stage).toBe(2); // 未变
   });
 
+  it('P1 回归：R 阈值提前逾期（未到 nextReviewDate 但 R<阈值）→ 放行评级写盘刷新排期', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    // R(t=10, S=1) ≈ 0.106 < 0.9：dueItems 判提前逾期；但 nextReviewDate 在 5 天后（未到期守卫原会拦截）
+    const futureNext = new Date(now.getTime() + 5 * 86400e3).toISOString();
+    await seedOverdue(vault, {
+      stage: 12, phase: 'fsrs', stability: 1, difficulty: 0.3,
+      lastReviewed: new Date(now.getTime() - 10 * 86400e3).toISOString(),
+      nextReviewDate: futureNext,
+    });
+    const app = makeApp(vault);
+    setApp(app);
+    expect(reviewApp.dueItems(await new ReviewDataManager(app).loadItems()).map((i) => i.filePath)).toContain('A.md');
+    await reviewApp.markReview('A.md', 'good');
+    const items = await new ReviewDataManager(app).loadItems();
+    expect(items[0].totalReviews).toBe(1); // 写盘成功
+    expect(items[0].nextReviewDate).not.toBe(futureNext); // 排期刷新
+    expect(items[0].reviewHistory).toHaveLength(1);
+    // 通过（good）+ autoPending → 不挂待重做
+    expect(items[0].pendingRedo).toBeFalsy();
+  });
+
+  it('P1 回归：R 阈值提前逾期 + 答错（again）+ autoPending → 挂待重做', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    await seedOverdue(vault, {
+      stage: 12, phase: 'fsrs', stability: 1, difficulty: 0.3,
+      lastReviewed: new Date(now.getTime() - 10 * 86400e3).toISOString(),
+      nextReviewDate: new Date(now.getTime() + 5 * 86400e3).toISOString(),
+    });
+    const app = makeApp(vault);
+    setApp(app);
+    await reviewApp.markReview('A.md', 'again', { autoPending: true });
+    const items = await new ReviewDataManager(app).loadItems();
+    expect(items[0].pendingRedo).toBe(true); // 未通过 → 待重做（原被守卫整体拒掉）
+    expect(items[0].totalReviews).toBe(1);
+  });
+
+  it('P1 回归：未提前逾期（R≥阈值）→ 未到期拦截维持，不写盘', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    // R(t=1, S=100) ≈ 0.99 ≥ 0.9：不满足放行 → 拦截
+    const futureNext = new Date(now.getTime() + 5 * 86400e3).toISOString();
+    await seedOverdue(vault, {
+      stage: 12, phase: 'fsrs', stability: 100, difficulty: 0.3,
+      lastReviewed: new Date(now.getTime() - 1 * 86400e3).toISOString(),
+      nextReviewDate: futureNext,
+    });
+    const app = makeApp(vault);
+    setApp(app);
+    await reviewApp.markReview('A.md', 'good');
+    const items = await new ReviewDataManager(app).loadItems();
+    expect(items[0].totalReviews).toBe(0); // 未写盘
+    expect(items[0].nextReviewDate).toBe(futureNext);
+  });
+
   it('completed 条目 → 该笔记已完成全部复习', async () => {
     const vault = new MockVault();
     vault.files.set('A.md', '正文');
@@ -526,6 +585,35 @@ describe('P1-2 回归：reviewLoop 活动文件切走收尾', () => {
     expect((reviewApp as any)._reviewNotice).not.toBeNull();
     (reviewApp as any)._reviewNotice = null;
   });
+
+  it('P3 回归：stopReviewLoops 终止 1s 轮询（卸载后不再读盘）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    const item = {
+      id: '1', filePath: 'A.md', name: 'A', reviewStart: now.toISOString(), stage: 0, phase: 'ladder',
+      stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0,
+      nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false,
+    } as any;
+    const app = makeApp(vault);
+    (app.workspace as any).getLeaf = () => ({ openFile: vi.fn().mockResolvedValue(undefined) });
+    (app.workspace as any).getActiveFile = () => ({ path: 'A.md' }); // 停留在目标笔记：轮询保持活动
+    setApp(app);
+    const handle = { setType: vi.fn(), setMessage: vi.fn(), hide: vi.fn() };
+    vi.spyOn(await import('../../src/core/notice'), 'notify').mockReturnValue(handle as any);
+    (reviewApp as any)._reviewNotice = null;
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
+    await reviewApp.reviewLoop([item], 0);
+    const loadSpy = vi.spyOn((reviewApp as any).dataManager, 'loadItems');
+    await vi.advanceTimersByTimeAsync(2100);
+    const pollsBefore = loadSpy.mock.calls.length;
+    expect(pollsBefore).toBeGreaterThan(0); // 轮询进行中
+    reviewApp.stopReviewLoops();
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(loadSpy.mock.calls.length).toBe(pollsBefore); // 终止后不再读盘
+    vi.useRealTimers();
+    (reviewApp as any)._reviewNotice = null;
+  });
 });
 
 describe('ADR-0077：置顶排序 + R 优先级 + 抽查 + 拟合触发', () => {
@@ -536,6 +624,9 @@ describe('ADR-0077：置顶排序 + R 优先级 + 抽查 + 拟合触发', () => 
     (reviewApp as any)._fittedW = null;
     (reviewApp as any)._reviewCountSinceFit = 0;
     (reviewApp as any)._fitRunning = false;
+  });
+  afterEach(() => {
+    vi.restoreAllMocks(); // spy 跨用例累积清零
   });
 
   it('sortOverdue：R 升序（遗忘风险最高优先）→ 到期时间；每日上限截断', async () => {
@@ -580,6 +671,38 @@ describe('ADR-0077：置顶排序 + R 优先级 + 抽查 + 拟合触发', () => 
     expect(fitFile).toBeUndefined(); // 样本不足未落盘
   });
 
+  it('P2 回归：拟合重算 fire-and-forget——不 await（挂起的拟合不阻塞评级写盘）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    await seedOverdue(vault, {
+      stage: 12, phase: 'fsrs', stability: 5, difficulty: 0.3,
+      lastReviewed: new Date(now.getTime() - 3 * 86400e3).toISOString(),
+    });
+    const app = makeApp(vault);
+    setApp(app);
+    const never = new Promise<void>(() => {}); // 永不 resolve：若 markReview 仍 await 则本用例超时红
+    const fitSpy = vi.spyOn(reviewApp, 'maybeRunFit').mockReturnValue(never);
+    await reviewApp.markReview('A.md', 'good');
+    const items = await new ReviewDataManager(app).loadItems();
+    expect(items[0].totalReviews).toBe(1); // 评级已写盘
+    expect(fitSpy).toHaveBeenCalledTimes(1); // 拟合已入队后台执行
+  });
+
+  it('P2 回归：阶梯评级路径同样 fire-and-forget 拟合', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    await seedOverdue(vault, { stage: 3 });
+    const app = makeApp(vault);
+    setApp(app);
+    const never = new Promise<void>(() => {});
+    const fitSpy = vi.spyOn(reviewApp, 'maybeRunFit').mockReturnValue(never);
+    await reviewApp.markReview('A.md', 'good');
+    const items = await new ReviewDataManager(app).loadItems();
+    expect(items[0].stage).toBe(4); // 评级已写盘
+    expect(fitSpy).toHaveBeenCalledTimes(1);
+  });
+
   it('currentR：FSRS 相位且有 lastReviewed 可算；否则 null', () => {
     const now = new Date();
     const item = {
@@ -591,6 +714,47 @@ describe('ADR-0077：置顶排序 + R 优先级 + 抽查 + 拟合触发', () => 
     expect(r!).toBeLessThan(1);
     const ladder = { phase: 'ladder' } as any;
     expect(reviewApp.currentR(ladder)).toBeNull();
+  });
+
+  it('拟合链路源头：markReview 历史补 difficulty，生产旧数据（无 difficulty 历史）可积累样本', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    // 生产旧数据形态：FSRS 相位历史只含 stability/R，无 difficulty（旧版 markReview 不写）
+    await seedOverdue(vault, {
+      stage: 12, phase: 'fsrs', stability: 5, difficulty: 0.3,
+      lastReviewed: new Date(now.getTime() - 3 * 86400e3).toISOString(),
+      reviewHistory: [
+        { timestamp: new Date(now.getTime() - 30 * 86400e3).toISOString(), stage: 12, rating: 'good', stability: 5, R: 62 },
+      ],
+    });
+    const app = makeApp(vault);
+    setApp(app);
+    await reviewApp.markReview('A.md', 'good');
+    const items = await new ReviewDataManager(app).loadItems();
+    const history = items[0].reviewHistory;
+    // 新写入的记录带 difficulty（good 不变难度 → 0.3）与 stability
+    expect(history[1].difficulty).toBe(0.3);
+    expect(history[1].stability).toEqual(expect.any(Number));
+    // 走拟合层真实入口：旧记录缺 difficulty 回退条目级值 → 旧→新配对产出可拟合样本
+    const { buildFitSamples } = await import('../../src/review/fit');
+    const samples = buildFitSamples(history, { fallbackDifficulty: items[0].difficulty });
+    expect(samples.length).toBeGreaterThanOrEqual(1);
+    expect(samples[0].S).toBe(5);
+  });
+
+  it('拟合链路源头：进入 FSRS（阶梯→fsrs）的历史记录同样带 stability/difficulty', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    await seedOverdue(vault, { stage: 8 });
+    const app = makeApp(vault);
+    setApp(app);
+    await reviewApp.markReview('A.md', 'easy'); // 8 → 9 进入 fsrs
+    const items = await new ReviewDataManager(app).loadItems();
+    const entry = items[0].reviewHistory[0];
+    expect(items[0].phase).toBe('fsrs');
+    expect(typeof entry.stability).toBe('number');
+    expect(typeof entry.difficulty).toBe('number');
   });
 });
 describe('sprint 编排（2026-09-04 形态：startRoundSprint / startSingleSprint / runSprintSession）', () => {
@@ -627,8 +791,11 @@ describe('sprint 编排（2026-09-04 形态：startRoundSprint / startSingleSpri
     const dm = new ReviewDataManager(app);
     (reviewApp as any).dataManager = dm;
     const items = await dm.loadItems();
-    // 无 AI：显式清 quizUI.ai（模块级 initialized 跨用例污染 → 需手动置 null 模拟未初始化）
+    // 无 AI：显式清 quizUI.ai（模块级 initialized 跨用例污染 → 需手动置 null 模拟未初始化）。
+    // 先幂等跑一次 ensureQuiz（吃掉 initialized 首跑标志），否则 startSingleSprint 内部
+    // ensureQuiz 会重建 AI → 首运必失败、仅 retry 通过（稳定性修复）
     const quizMod = await import('../../src/review/quiz-core');
+    quizMod.ensureQuiz(app);
     quizMod.quizUI.ai = null;
     quizMod.QuizMasterUI.ai = null;
     const loopSpy = vi.spyOn(reviewApp, 'reviewLoop').mockResolvedValue(undefined);
