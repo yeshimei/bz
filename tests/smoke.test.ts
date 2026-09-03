@@ -62,8 +62,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-belongings-add', 'bz-belongings-open',
   // 剪藏本（clipbook 融合域，ADR-0082）：聚合讯未读流+剪藏笔记一体化；旧 bz-clipping-open/bz-news-open 断开
   'bz-clipbook-open',
-  // 保险库（password-vault 域，ADR-0078）：密码本新 UI；旧密码本入口 bz-pw-* 已断开
-  'bz-password-vault-open',
+  // 统一保险库（encrypt 域，ADR-0085）：密码/笔记/日记合一；旧 bz-password-vault-open 已删
   // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图
   'bz-diary-wall-open',
   'bz-favorites-open', 'bz-favorites-add',
@@ -79,6 +78,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-pomodoro-open',
   'bz-literature-open', 'bz-literature-note-term',
   'bz-attach-move',
+  // 统一保险库（ADR-0085）：密码/加密笔记/加密日记 + 加密当前笔记
   'bz-encrypt-open', 'bz-encrypt-lock',
   'bz-smartcat-open', 'bz-smartcat-chat', 'bz-smartcat-hide', 'bz-smartcat-dashboard',
   // 设置面板（ADR-0080）

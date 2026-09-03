@@ -21,6 +21,10 @@ function getController(): EncryptAppController {
       previewQuality: parseFloat(s.encryptPreviewQuality) || 0.5,
       autoLoadOriginal: !!s.encryptAutoLoadOriginal,
       securityMode: !!s.encryptSecurityMode,
+      // ADR-0085：密码资产并入保险库；生成器沿用全局键（旧密码本同源）
+      pwCharset:
+        s.passwordCharset || '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+',
+      pwLength: String(parseInt(s.passwordLength) || 16),
     };
     controller = EncryptAppController.getInstance(config);
   }
@@ -37,15 +41,15 @@ export async function ensureEncrypt(app: App): Promise<void> {
 let statusBarEl: HTMLElement | null = null;
 
 /**
- * 挂载保险箱状态栏（main.ts onload 调用，与番茄钟同范式）：
- * 初始显示锁定态，点击打开保险箱面板；ensureEncrypt 后由 Controller 接管解锁态刷新。
+ * 统一保险库状态栏（main.ts onload 调用，与番茄钟同范式）：
+ * 初始显示锁定态，点击打开保险库面板；ensureEncrypt 后由 Controller 接管解锁态刷新。
  */
 export function mountEncryptStatusBar(container: HTMLElement): void {
   if (statusBarEl) return;
   const el = document.createElement('span');
   el.className = 'bz-encrypt-statusbar';
-  el.title = '保险箱：点击打开';
-  el.textContent = '🔒 保险箱';
+  el.title = '保险库：点击打开';
+  el.textContent = '🔒 保险库';
   el.addEventListener('click', () => openEncrypt(getApp()));
   container.appendChild(el);
   statusBarEl = el;

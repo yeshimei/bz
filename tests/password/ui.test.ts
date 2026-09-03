@@ -109,7 +109,7 @@ describe('UIManager 主密码流程（统一走保险箱弹窗）', () => {
     await waitFor(() => !!findPasswordDialog());
     const dialog = findPasswordDialog()!;
     expect(dialog.textContent).toContain('输入主密码');
-    expect(dialog.textContent).toContain('请输入您设置的主密码以解锁保险箱');
+    expect(dialog.textContent).toContain('请输入您设置的主密码以解锁保险库');
     // 解锁模式：再次输入框隐藏
     const inputs = dialog.querySelectorAll('input[type="password"]');
     expect(inputs.length).toBe(2); // 元素仍在 DOM
