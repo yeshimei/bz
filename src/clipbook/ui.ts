@@ -352,17 +352,20 @@ function listWithSearch(): ClipArticle[] {
 }
 
 // ================= 渲染：左 rail =================
-function railItemHtml(kind: string, label: string, count: number, unread: number, icon: string | null, color: string | null, active: boolean, sub?: string): string {
-  const sel = { kind, platform: kind === 'inbox' ? label : '', up: null };
+/** data-src JSON 序列化选择器（UP 行携带 platform=B站 + up=uid） */
+type SrcSelJson = { kind: 'all' } | { kind: 'inbox'; platform: string; up: string | null } | { kind: 'clip' };
+
+function railItemHtml(sel: SrcSelJson, label: string, count: number, unread: number, icon: string | null, color: string | null, active: boolean, sub?: string): string {
+  // G：JSON 过 esc 再进单引号属性——UP 主名含单引号时原实现提前闭合属性，点击 JSON.parse 抛错该源失效
   return `
-    <div class="bz-clip-rail-row${active ? ' on' : ''}" data-src='${JSON.stringify(sel)}' title="${esc(label)}">
+    <div class="bz-clip-rail-row${active ? ' on' : ''}" data-src='${esc(JSON.stringify(sel))}' title="${esc(label)}">
       ${icon === 'feed'
         ? `<span class="bz-clip-rail-badge" style="--rail-c:${color || '#58a6ff'}">${esc(sub || label.slice(0, 1))}</span>`
         : icon === 'bili'
           ? `<span class="bz-clip-rail-badge bili" style="--rail-c:${color || '#58a6ff'}">${esc(sub || label.slice(0, 1))}</span>`
           : icon === 'clip'
             ? `<span class="bz-clip-rail-ic">${iconSpan('scissors')}</span>`
-            : `<span class="bz-clip-rail-ic ${kind === 'all' ? 'accent' : ''}">${icon ? iconSpan(icon) : ''}</span>`}
+            : `<span class="bz-clip-rail-ic ${sel.kind === 'all' ? 'accent' : ''}">${icon ? iconSpan(icon) : ''}</span>`}
       <span class="bz-clip-rail-name">${esc(label)}</span>
       ${unread > 0 ? `<span class="bz-clip-rail-unread">${unread}</span>` : `<span class="bz-clip-rail-count">${count}</span>`}
     </div>`;
@@ -374,14 +377,14 @@ function renderRail(): void {
   const unread = arts.filter((a) => !a.read).length;
   const clipNotes = M.clipNotes || [];
   const clips = clipNotes.length;
-  let html = railItemHtml('all', '全部未读', unread, 0, 'inbox', '#58a6ff', M.sel.kind === 'all', '');
+  let html = railItemHtml({ kind: 'all' }, '全部未读', unread, 0, 'inbox', '#58a6ff', M.sel.kind === 'all', '');
 
   // 平台段
   const platformLabels: Array<[string, string]> = [['B站', '#e8669a'], ['果壳科学人', '#2fae8c'], ['知乎日报', '#58a6ff']];
   for (const [pfx, color] of platformLabels) {
     const cnt = arts.filter((a) => !a.read && (a.platform === pfx || (pfx === '果壳科学人' && a.platform === '果壳') || (pfx === '知乎日报' && a.platform === '知乎'))).length;
     const active = M.sel.kind === 'inbox' && M.sel.platform === pfx;
-    html += railItemHtml('inbox', pfx, cnt, cnt, 'feed', color, active, '');
+    html += railItemHtml({ kind: 'inbox', platform: pfx, up: null }, pfx, cnt, cnt, 'feed', color, active, '');
   }
 
   // B站 UP 展开（C2：Map 按 author/uid 去重；C6：upInfo 回填名字显示）
@@ -396,12 +399,14 @@ function renderRail(): void {
   for (const [uid, name] of biliUps) {
     const cnt = arts.filter((a) => !a.read && a.platform === 'B站' && String(a.author || '') === uid).length;
     const active = M.sel.kind === 'inbox' && M.sel.platform === 'B站' && M.sel.up === uid;
-    html += railItemHtml('inbox', name, cnt, cnt, 'bili', '#8b7cf6', active, name.slice(0, 1));
+    // G：UP 行 data-src 携带 platform=B站 + up=uid（旧实现 platform=展示名、up=null，
+    // 点击后按平台名过滤恒空——UP 源点开是空列表且高亮不复位）
+    html += railItemHtml({ kind: 'inbox', platform: 'B站', up: uid }, name, cnt, cnt, 'bili', '#8b7cf6', active, name.slice(0, 1));
   }
 
   // 剪藏本（聚合，saved 语义）
   const clipActive = M.sel.kind === 'clip';
-  html += railItemHtml('clip', '剪藏本', clips, 0, 'clip', '', clipActive, '');
+  html += railItemHtml({ kind: 'clip' }, '剪藏本', clips, 0, 'clip', '', clipActive, '');
 
   railListEl.innerHTML = html;
 }
@@ -416,7 +421,9 @@ function renderList(): void {
   const list = listWithSearch();
   if (list.length === 0) {
     listEl.innerHTML = `<div class="bz-clip-empty">${iconSpan('inbox')}<span>这个源暂无内容</span></div>`;
-    if (readerEl) readerEl.innerHTML = '';
+    // G：切到空源清当前阅读——M.cur 残留上一源文章会被 renderReader/mob 详情再渲染
+    M.cur = null;
+    if (readerEl) renderReader();
     return;
   }
   // 保持阅读项在列表内（不在则取第一条）
@@ -662,10 +669,9 @@ async function refreshAfterAction(): Promise<void> {
 }
 
 // ================= 渲染：移动 =================
-function mobSrcChipHtml(kind: string, label: string, unread: number, active: boolean, icon: string | null, sub?: string): string {
-  const sel = { kind, platform: kind === 'inbox' ? label : '', up: null };
+function mobSrcChipHtml(sel: SrcSelJson, label: string, unread: number, active: boolean, icon: string | null, sub?: string): string {
   return `
-    <div class="bz-clip-mob-src${active ? ' on' : ''}" data-src='${JSON.stringify(sel)}'>
+    <div class="bz-clip-mob-src${active ? ' on' : ''}" data-src='${esc(JSON.stringify(sel))}'>
       ${icon === 'feed' ? `<span class="bz-clip-favchip sm">${esc(sub || label.slice(0, 1))}</span>` : ''}
       <span>${esc(label)}</span>
       ${unread ? `<span class="bz-clip-mob-ub">${unread}</span>` : ''}
@@ -675,11 +681,11 @@ function mobSrcChipHtml(kind: string, label: string, unread: number, active: boo
 function renderMobSources(): void {
   if (!mobSourcesEl) return;
   const arts = M.articles;
-  let html = mobSrcChipHtml('all', '全部未读', arts.filter((a) => !a.read).length, M.sel.kind === 'all', 'radio');
+  let html = mobSrcChipHtml({ kind: 'all' }, '全部未读', arts.filter((a) => !a.read).length, M.sel.kind === 'all', 'radio');
   // 平台三 chip + B站 UP chip
   for (const pfx of ['B站', '果壳科学人', '知乎日报']) {
     const cnt = arts.filter((a) => !a.read && (a.platform === pfx || (pfx === '果壳科学人' && a.platform === '果壳') || (pfx === '知乎日报' && a.platform === '知乎'))).length;
-    html += mobSrcChipHtml('inbox', pfx, cnt, M.sel.kind === 'inbox' && M.sel.platform === pfx, 'feed', pfx.slice(0, 1));
+    html += mobSrcChipHtml({ kind: 'inbox', platform: pfx, up: null }, pfx, cnt, M.sel.kind === 'inbox' && M.sel.platform === pfx, 'feed', pfx.slice(0, 1));
   }
   // B站 UP chip（C2：Map 按 author/uid 去重——原同 UP N 条未读渲染 N 个同名 chip；C6：upInfo 回填名）
   const mobUps = new Map<string, string>();
@@ -692,9 +698,9 @@ function renderMobSources(): void {
   for (const [uid, name] of mobUps) {
     const cnt = arts.filter((x) => !x.read && x.platform === 'B站' && String(x.author || '') === uid).length;
     if (cnt === 0) continue;
-    html += mobSrcChipHtml('inbox', name, cnt, M.sel.kind === 'inbox' && M.sel.platform === 'B站' && M.sel.up === uid, 'bili', name.slice(0, 1));
+    html += mobSrcChipHtml({ kind: 'inbox', platform: 'B站', up: uid }, name, cnt, M.sel.kind === 'inbox' && M.sel.platform === 'B站' && M.sel.up === uid, 'bili', name.slice(0, 1));
   }
-  html += mobSrcChipHtml('clip', '剪藏本', 0, M.sel.kind === 'clip', 'clip');
+  html += mobSrcChipHtml({ kind: 'clip' }, '剪藏本', 0, M.sel.kind === 'clip', 'clip');
   mobSourcesEl.innerHTML = html;
 }
 

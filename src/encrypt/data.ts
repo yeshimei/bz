@@ -1279,10 +1279,6 @@ export class SafeManager {
     }
     const existingLines = existingText ? existingText.replace(/\r\n/g, '\n').split('\n') : [];
 
-    // 幂等：目标文件已含相同标题行（上次「块已 merge 但清单没保存」的中断残留/重试）
-    // → 视为已完成，跳过防重复插入（标题行 = 块唯一标识：emoji 序列 + HH:mm）
-    if (existingLines.some((l) => l.trim() === lines[0].trim())) return true;
-
     // 组装块行：标题行原样保留（`# emoji HH:mm`，不再拼接时间），标题与正文间补空行
     // （与 writeFile 生成格式一致：# emoji HH:mm → 空行 → 正文）
     const blockRows: string[] = [lines[0].trim()];
@@ -1295,8 +1291,28 @@ export class SafeManager {
       blockRows.push(...blockLines);
     }
 
-    // 按时间序 merge：找到第一个 timeValue >= 本条的标题行，在其前插入；否则追加到末尾
+    // 幂等：目标文件已含「标题行 + 正文」一致的块（上次「块已 merge 但清单没保存」的中断残留/重试）
+    // → 视为已完成，跳过防重复插入。
+    // 判重不能只比标题行（P0 回归）：同分钟同标签的两条日记标题行完全相同，仅凭标题跳过
+    // 会把另一条的内容误判为「已还原」——还原块被静默吞掉且照常删镜像删清单，内容永久丢失。
+    // 因此对每个命中标题行，取到下一个标题行为止，与还原块的非空行序列逐行比对：
+    // 正文一致才算已 merge；不一致（同刻另一条）照常按时间序插入。
     const headingRe = /^#\s+\S+\s+(\d{2}:\d{2})$/;
+    const sigLines = (ls: string[]) => ls.map((l) => l.trim()).filter((l) => l !== '');
+    const blockSig = sigLines(blockRows);
+    let alreadyMerged = false;
+    for (let i = 0; i < existingLines.length; i++) {
+      if (existingLines[i].trim() !== lines[0].trim()) continue;
+      const seg: string[] = [];
+      for (let k = i + 1; k < existingLines.length && !headingRe.test(existingLines[k]); k++) seg.push(existingLines[k]);
+      if (sigLines(seg).join('\n') === blockSig.slice(1).join('\n')) {
+        alreadyMerged = true;
+        break;
+      }
+    }
+    if (alreadyMerged) return true;
+
+    // 按时间序 merge：找到第一个 timeValue >= 本条的标题行，在其前插入；否则追加到末尾
     let insertIdx = existingLines.length;
     for (let i = 0; i < existingLines.length; i++) {
       const m = existingLines[i].match(headingRe);

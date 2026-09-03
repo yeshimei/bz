@@ -9,14 +9,15 @@
  *   侧 state==='saved' ∨ 侧写 savedArchive 命中 ∨ url 命中剪藏目录（保底「保存过
  *   就是剪藏」）；st=reading 落侧写 articleOverrides。
  * - 动作（save/unsave/read/skip/delete/clear-unread 等）写 news.json（read/state/
- *   body 清空/stats 计数，串行队列 + mergeWithDisk 双写者合并——迁移 news/reader.ts
- *   语义）与 clipbook.json 侧写。
+ *   body 清空/stats 计数，串行队列 + 写前段级合并——write-queue.ts / news-data
+ *   writeNewsDataMerged，对 daemon 双写者不丢段）与 clipbook.json 侧写。
  * - saveToClip 写剪藏笔记 + 发 news:read/saved 域事件（smartcat 行为流三跳依赖）。
  */
-import { applyRetention, readNewsData, writeNewsData } from './news-data';
+import { applyRetention, readNewsData, writeNewsDataMerged } from './news-data';
 import type { ClipArticle, ClipOrigin, ClipState } from './types';
 import { articleKeyOf, excerpt } from './constants';
 import { readClipbookData, writeClipbookData, type ClipbookData } from './data';
+import { enqueueNewsWrite } from './write-queue';
 
 /** B站视频条目判定（ADR-0068：保存分流文献盒；url 异常缺失回退剪藏按钮） */
 export const isBiliVideo = (a: any): boolean => a?.platform === 'B站' && !!String(a?.url || '').trim();
@@ -264,21 +265,24 @@ export async function runAction(
   return { rerender: false };
 }
 
-/** 写回 news.json 单篇状态（read=true + state + 删 body；整段读写保留其它段 + 串行队列防覆盖） */
+/** 写回 news.json 单篇状态（read=true + state + 删 body；串行队列 + 段级合并——与 loader/
+ *  news-source-settings/flow 共用同一条写链，daemon 并发追加的文章不被覆盖） */
 export async function writeNewsState(raw: any, action: 'save' | 'read' | 'skip'): Promise<void> {
   const key = articleKeyOf(raw);
-  const res = await readNewsData();
-  if (!res.ok || res.missing) return;
-  const list = (res.data.articles || []).map((a: any) => {
-    if (articleKeyOf(a) !== key) return a;
-    return {
-      ...a,
-      read: true,
-      state: action === 'save' ? 'saved' : action === 'skip' ? 'skipped' : a.state === 'saved' ? 'saved' : 'skipped',
-      body: action === 'read' && a.state === 'saved' ? a.body : undefined,
-    };
+  await enqueueNewsWrite(async () => {
+    const res = await readNewsData();
+    if (!res.ok || res.missing) return;
+    const list = (res.data.articles || []).map((a: any) => {
+      if (articleKeyOf(a) !== key) return a;
+      return {
+        ...a,
+        read: true,
+        state: action === 'save' ? 'saved' : action === 'skip' ? 'skipped' : a.state === 'saved' ? 'saved' : 'skipped',
+        body: action === 'read' && a.state === 'saved' ? a.body : undefined,
+      };
+    });
+    await writeNewsDataMerged({ set: { articles: list } });
   });
-  await writeNewsData({ ...res.data, articles: list });
 }
 
 /** 侧写整段写回（幂等去抖由调用方做） */
