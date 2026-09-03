@@ -4,7 +4,7 @@
 //   src/core/styles.css   共享层/跨域样式（设置页分页、主窗口头部行统一规范、
 //                         core 层 notice/settings-modal/confirm/dom、移动端全屏、
 //                         统一右键菜单/长按抽屉）
-//   src/<域>/styles.css   各域样式（diary/launcher/memo/news/clipping/password/
+//   src/<域>/styles.css   各域样式（diary/launcher/memo/todo/clipbook/password/
 //                         favorites/review/quiz/pomodoro/library/attach/encrypt/movie）
 //
 // 根 styles.css 是构建聚合产物（Obsidian 每插件只加载这一个 styles.css），
@@ -36,8 +36,6 @@ const SOURCES = [
   "src/home/styles.css",
   "src/memo/styles.css",
   "src/todo/styles.css",
-  "src/news/styles.css",
-  "src/clipping/styles.css",
   "src/clipbook/styles.css",
   "src/password/styles.css",
   "src/favorites/styles.css",

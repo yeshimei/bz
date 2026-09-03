@@ -13,10 +13,9 @@
  *   语义）与 clipbook.json 侧写。
  * - saveToClip 写剪藏笔记 + 发 news:read/saved 域事件（smartcat 行为流三跳依赖）。
  */
-import { applyRetention } from '../news/data';
+import { applyRetention, readNewsData, writeNewsData } from './news-data';
 import type { ClipArticle, ClipOrigin, ClipState } from './types';
 import { articleKeyOf, excerpt } from './constants';
-import { readNewsData, writeNewsData } from '../news/data';
 import { readClipbookData, writeClipbookData, type ClipbookData } from './data';
 
 /** B站视频条目判定（ADR-0068：保存分流文献盒；url 异常缺失回退剪藏按钮） */

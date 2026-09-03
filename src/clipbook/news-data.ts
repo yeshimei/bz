@@ -1,6 +1,6 @@
 /**
- * 聚合讯数据层（ticket 124，ADR-0060）：news.json 四段对象结构
- * { articles, stats, bilibiliUps, sources } 的读/写/迁移，UP 主名单 uid 解析，
+ * 聚合讯数据层（ticket 124，ADR-0060；自旧 news 域迁入 clipbook，ADR-0085）：news.json
+ * 四段对象结构 { articles, stats, bilibiliUps, sources } 的读/写/迁移，UP 主名单 uid 解析，
  * 保留策略清理（未读不处理 / 已保存 N 天 / 已跳过 M 天）。
  * 纯数据层（无 DOM、无事件），node 环境可测。
  */

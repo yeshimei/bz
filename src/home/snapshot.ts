@@ -35,9 +35,8 @@ import { PomodoroDataManager } from '../pomodoro/data';
 import { todayCount } from '../pomodoro/stats';
 import { DataManager as FavoritesDataManager } from '../favorites/data';
 import { getStoragePath as favoritesStoragePath } from '../favorites/config';
-import { readNewsData } from '../news/data';
-import { QuizManager } from '../review/quiz-core/manager';
 import { getBookItems } from '../library/items';
+import { QuizManager } from '../review/quiz-core/manager';
 import { loadDatabase as loadBelongings } from '../belongings/data';
 import { parseMovieFile } from '../cinema/data';
 import { STATUS_WANT, STATUS_WATCHING } from '../cinema/constants';
@@ -260,20 +259,6 @@ export async function collectHomeSnapshot(app?: App): Promise<HomeSnapshot> {
     }
   } catch {
     out.favorites = EMPTY;
-  }
-
-  // ---- news：已读计数（先探测文件；readNewsData 缺失会建空文件，只读不得触发） ----
-  try {
-    const filePath = storageFile('news.json');
-    if (!fileExists(a, filePath)) {
-      out.news = EMPTY;
-    } else {
-      const r = await readNewsData();
-      const read = Number(r.data?.stats?.totalRead ?? 0);
-      out.news = read > 0 ? { text: `已读 ${read}`, hl: false, sub: '' } : EMPTY;
-    }
-  } catch {
-    out.news = EMPTY;
   }
 
   // ---- quiz：题目总数（文件缺失回落空，不建文件） ----
