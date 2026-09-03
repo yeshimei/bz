@@ -306,6 +306,57 @@ describe('refreshFile（P0-4 回归）', () => {
   });
 });
 
+describe('writeFile 写前守卫（P0 审查修复）', () => {
+  it('条目内「空行 + # 标题」截断的未解析行：拒写，磁盘不被覆盖', async () => {
+    const raw = '# 📖 08:00\n第一条\n\n# 游记标题\n这段会丢\n';
+    makeVault({ '我的/日记/2024-01-01.md': raw });
+    await loadAll();
+    // 未解析行不进数据：只有 1 条，且内容不含被截断的行
+    expect(state.data.originalDiaryEntries).toHaveLength(1);
+    expect(state.data.originalDiaryEntries[0].content).toBe('第一条');
+    // 修改该日期内容后写回：命中守卫拒写
+    const entries = diaryDataMap!.get('2024-01-01')!;
+    entries[0].content = '改过的正文';
+    const { writeFile } = await import('../../src/diary/store');
+    await writeFile('2024-01-01');
+    expect(vault.files.get('我的/日记/2024-01-01.md')).toBe(raw);
+  });
+
+  it('文件开头游离行：拒写，磁盘不被覆盖', async () => {
+    const raw = '开头的游离笔记\n\n# 📖 08:00\n正文\n';
+    makeVault({ '我的/日记/2024-01-01.md': raw });
+    await loadAll();
+    expect(state.data.originalDiaryEntries).toHaveLength(1);
+    const entries = diaryDataMap!.get('2024-01-01')!;
+    entries.push({
+      date: '2024-01-01', time: '09:00', timeValue: 900, tags: ['日记'], emoji: '📖',
+      content: '新增', filename: '2024-01-01', lineNumber: 0,
+    });
+    const { writeFile } = await import('../../src/diary/store');
+    await writeFile('2024-01-01');
+    expect(vault.files.get('我的/日记/2024-01-01.md')).toBe(raw);
+  });
+
+  it('删除最后一条触发整文件删除时，磁盘有未解析行则保留文件', async () => {
+    const raw = '# 📖 08:00\n第一条\n\n# 游记标题\n这段会丢\n';
+    makeVault({ '我的/日记/2024-01-01.md': raw });
+    await loadAll();
+    const flat = state.data.originalDiaryEntries;
+    await deleteEntry(flat[0].id!);
+    expect(vault.files.get('我的/日记/2024-01-01.md')).toBe(raw);
+  });
+
+  it('干净文件不受守卫影响，照常写回', async () => {
+    makeVault({ '我的/日记/2024-01-01.md': '# 📖 08:00\n旧正文\n' });
+    await loadAll();
+    const entries = diaryDataMap!.get('2024-01-01')!;
+    entries[0].content = '新正文';
+    const { writeFile } = await import('../../src/diary/store');
+    await writeFile('2024-01-01');
+    expect(vault.files.get('我的/日记/2024-01-01.md')).toBe('# 📖 08:00\n\n新正文');
+  });
+});
+
 describe('onFileChange', () => {
   it('日记文件变更后刷新（节流合并）', async () => {
     makeVault({ '我的/日记/2024-01-01.md': '# 📖 08:00\nx\n' });
