@@ -265,6 +265,9 @@
 #bz-encrypt-popup .bz-vault-lc-head { display: flex; align-items: center; gap: 8px; padding: 13px 16px 8px; color: var(--bz-vault-ink); }
 #bz-encrypt-popup .bz-vault-lc-head .t { font-size: 13.5px; font-weight: 700; flex: 1; }
 #bz-encrypt-popup .bz-vault-lc-head .lc-count, #bz-encrypt-popup .bz-vault-lc-head .badge { font-size: 11px; color: var(--bz-vault-faint); }
+#bz-encrypt-popup .bz-vault-lc-head .lc-add { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--bz-vault-gold-ink); background: rgba(185, 141, 62, 0.14); border: 1px solid rgba(185, 141, 62, 0.3); border-radius: 999px; padding: 3px 11px; cursor: pointer; }
+#bz-encrypt-popup .bz-vault-lc-head .lc-add:hover { background: rgba(185, 141, 62, 0.22); }
+#bz-encrypt-popup .bz-vault-lc-head .lc-add svg { width: 13px; height: 13px; }
 #bz-encrypt-popup .bz-vault-lc-head .badge.gold { color: var(--bz-vault-gold-ink); background: rgba(185, 141, 62, 0.16); border-radius: 999px; padding: 1px 7px; font-weight: 700; }
 #bz-encrypt-popup .bz-vault-row { display: flex; align-items: center; gap: 11px; padding: 10px; border-radius: 12px; cursor: pointer; border: 1px solid transparent; transition: background 0.15s, border-color 0.15s; color: var(--bz-vault-ink); margin: 0 8px; }
 #bz-encrypt-popup .bz-vault-row:hover { background: var(--bz-vault-bg); }
@@ -276,9 +279,16 @@
 #bz-encrypt-popup .bz-vault-row .t2 { font-size: 11.5px; color: var(--bz-vault-muted); font-family: var(--font-monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
 #bz-encrypt-popup .bz-vault-row .tm { font-size: 10.5px; color: var(--bz-vault-faint); flex-shrink: 0; }
 #bz-encrypt-popup .bz-vault-row .star { color: var(--bz-vault-warn); font-size: 10px; }
-/* 详情列 */
-#bz-encrypt-popup .bz-vault-detail { flex: 1; min-width: 0; border: 1px solid var(--bz-vault-line); background: var(--bz-vault-surface); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; color: var(--bz-vault-ink); }
+/* 滚动修复（ADR-0085 回归）：pw/笔记/日记资产 = 列头(不滚) + .bz-vault-lc-body 滚动区；
+   列头与滚动区分离，行渲染/空态都写 body，避免行渲染把列头（含新增入口）整列清掉。 */
+#bz-encrypt-popup .bz-vault-listcol { overflow: hidden; }
+#bz-encrypt-popup .bz-vault-lc-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; padding: 2px 0 10px; }
+#bz-encrypt-popup .bz-vault-detail { flex: 1; min-width: 0; border: 1px solid var(--bz-vault-line); background: var(--bz-vault-surface); border-radius: 16px; display: flex; flex-direction: column; overflow-y: auto; color: var(--bz-vault-ink); }
 #bz-encrypt-popup .bz-vault-detail > .bz-vault-area { overflow-y: auto; padding: 18px 20px; }
+/* 详情列头：列内滚动时 sticky 保持可见 */
+#bz-encrypt-popup .bz-vault-dhead,
+#bz-encrypt-popup .bz-pwv-dhead,
+#bz-encrypt-popup .bz-pwv-accthead { position: sticky; top: 0; background: var(--bz-vault-surface); z-index: 1; }
 #bz-encrypt-popup .bz-vault-dhead { display: flex; align-items: center; gap: 13px; padding: 16px 20px; border-bottom: 1px solid var(--bz-vault-line); }
 #bz-encrypt-popup .bz-vault-dhead .big { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
 #bz-encrypt-popup .bz-vault-dhead .big svg { width: 21px; height: 21px; }
@@ -346,6 +356,9 @@
 #bz-encrypt-popup .bz-pwv-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--bz-vault-faint); padding: 36px; text-align: center; }
 #bz-encrypt-popup .bz-pwv-empty .t { font-size: 14px; color: var(--bz-vault-muted); font-weight: 600; }
 #bz-encrypt-popup .bz-pwv-empty .d { font-size: 12px; }
+#bz-encrypt-popup .bz-pwv-empty .bz-pwv-empty-add { display: inline-flex; align-items: center; gap: 5px; margin-top: 12px; font-size: 12.5px; font-weight: 600; color: var(--bz-vault-gold-ink); background: rgba(185, 141, 62, 0.14); border: 1px solid rgba(185, 141, 62, 0.3); border-radius: 999px; padding: 6px 15px; cursor: pointer; }
+#bz-encrypt-popup .bz-pwv-empty .bz-pwv-empty-add:hover { background: rgba(185, 141, 62, 0.24); }
+#bz-encrypt-popup .bz-pwv-empty .bz-pwv-empty-add svg { width: 13px; height: 13px; }
 /* 密码平台行 */
 #bz-encrypt-popup .bz-pwv-row, #bz-encrypt-popup .bz-pwv-plrow { display: flex; align-items: center; gap: 11px; padding: 10px; border-radius: 12px; cursor: pointer; border: 1px solid transparent; transition: background 0.15s, border-color 0.15s; color: var(--bz-vault-ink); margin: 0 8px; }
 #bz-encrypt-popup .bz-pwv-row:hover, #bz-encrypt-popup .bz-pwv-plrow:hover { background: var(--bz-vault-bg); }
@@ -398,20 +411,24 @@
 #bz-encrypt-popup .bz-pwv-mobcard .go svg { width: 15px; height: 15px; }
 /* 移动端恒真全屏（mob 默认隐藏，<768px 显示） */
 #bz-encrypt-popup .bz-vault-mob { display: none; }
-#bz-encrypt-popup .bz-vault-dlg-mask { position: fixed; inset: 0; z-index: 2200; background: rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; }
-#bz-encrypt-popup .bz-vault-dlg { background: var(--background-primary); border-radius: 16px; padding: 22px 24px; width: min(92vw, 440px); max-height: 86vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); }
-#bz-encrypt-popup .bz-vault-dlg h3 { margin: 0 0 4px; font-size: 17px; font-weight: 700; color: var(--text-normal); }
-#bz-encrypt-popup .bz-vault-dlg .sub { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
-#bz-encrypt-popup .bz-vault-dlg label { display: block; font-size: 12.5px; color: var(--text-muted); margin: 10px 0 5px; }
-#bz-encrypt-popup .bz-vault-dlg input { width: 100%; box-sizing: border-box; }
-#bz-encrypt-popup .bz-vault-dlg .pwdrow { display: flex; gap: 8px; }
-#bz-encrypt-popup .bz-vault-dlg .pwdrow input { flex: 1; }
-#bz-encrypt-popup .bz-vault-dlg .pwdrow .gen { background: var(--background-modifier-hover); padding: 8px 14px; border-radius: 10px; font-weight: 600; color: var(--text-normal); }
-#bz-encrypt-popup .bz-vault-dlg .err { color: var(--text-error); font-size: 12.5px; margin: 8px 0 0; min-height: 16px; }
-#bz-encrypt-popup .bz-vault-dlg .btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
-#bz-encrypt-popup .bz-vault-dlg .btns button { padding: 8px 18px; border-radius: 10px; font-weight: 600; }
-#bz-encrypt-popup .bz-vault-dlg .btns .cancel { background: var(--background-modifier-hover); color: var(--text-normal); }
-#bz-encrypt-popup .bz-vault-dlg .btns .save { background: var(--interactive-accent); color: var(--text-on-accent); }
+/* 密码添加/编辑/平台编辑弹窗：脱离 #bz-encrypt-popup 挂 body（ADR-0085 合并版），
+   样式必须无 popup 前缀；token 用全局 CSS 变量保证两主题可用。 */
+.bz-vault-dlg-mask { position: fixed; inset: 0; z-index: 2200; background: rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; }
+.bz-vault-dlg { background: var(--background-primary); border-radius: 16px; padding: 22px 24px; width: min(92vw, 440px); max-height: 86vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); }
+.bz-vault-dlg h3 { margin: 0 0 4px; font-size: 17px; font-weight: 700; color: var(--text-normal); }
+.bz-vault-dlg .sub { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+.bz-vault-dlg label { display: block; font-size: 12.5px; color: var(--text-muted); margin: 10px 0 5px; }
+.bz-vault-dlg button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+.bz-vault-dlg input { width: 100%; box-sizing: border-box; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); border-radius: 10px; padding: 8px 10px; outline: none; }
+.bz-vault-dlg input:focus { border-color: var(--interactive-accent); }
+.bz-vault-dlg .pwdrow { display: flex; gap: 8px; }
+.bz-vault-dlg .pwdrow input { flex: 1; }
+.bz-vault-dlg .pwdrow .gen { background: var(--background-modifier-hover); padding: 8px 14px; border-radius: 10px; font-weight: 600; color: var(--text-normal); }
+.bz-vault-dlg .err { color: var(--text-error); font-size: 12.5px; margin: 8px 0 0; min-height: 16px; }
+.bz-vault-dlg .btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+.bz-vault-dlg .btns button { padding: 8px 18px; border-radius: 10px; font-weight: 600; }
+.bz-vault-dlg .btns .cancel { background: var(--background-modifier-hover); color: var(--text-normal); }
+.bz-vault-dlg .btns .save { background: var(--interactive-accent); color: var(--text-on-accent); }
 @media (max-width: 768px) {
   #bz-encrypt-popup { width: 100vw; height: 100vh; max-width: none; max-height: none; border-radius: 0; }
   #bz-encrypt-popup .bz-vault-desk { display: none; }

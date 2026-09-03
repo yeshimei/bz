@@ -172,10 +172,12 @@ export class VaultPwView {
     let plats = this.dm.platforms();
     if (st.view === 'fav') plats = plats.filter((p) => this.dm.hasFav(p.platform));
     if (!plats.length) {
-      container.innerHTML =
-        st.view === 'fav'
-          ? '<div class="bz-pwv-empty"><div class="t">还没有收藏</div><div class="d">点条目里的 ★ 收藏常用账号</div></div>'
-          : `<div class="bz-pwv-empty"><div class="t">保险库还没有密码</div><div class="d">点击「新增密码」收录第一条账号</div></div>`;
+      if (st.view === 'fav') {
+        container.innerHTML = '<div class="bz-pwv-empty"><div class="t">还没有收藏</div><div class="d">点条目里的 ★ 收藏常用账号</div></div>';
+      } else {
+        container.innerHTML = `<div class="bz-pwv-empty"><div class="t">保险库还没有密码</div><div class="d">收录第一条账号开始使用</div><button class="bz-pwv-empty-add" data-pwv="empty-add">${this.ic('plus')} 新增密码</button></div>`;
+        container.querySelector('[data-pwv="empty-add"]')?.addEventListener('click', () => this.host.openPwEntryDialog());
+      }
       return;
     }
     for (const p of plats) {
@@ -407,10 +409,12 @@ export class VaultPwView {
     let plats = this.dm.platforms();
     if (st.view === 'fav') plats = plats.filter((p) => this.dm.hasFav(p.platform));
     if (!plats.length) {
-      container.innerHTML =
-        st.view === 'fav'
-          ? '<div class="bz-pwv-empty"><div class="t">还没有收藏</div><div class="d">点条目里的 ★ 收藏常用账号</div></div>'
-          : `<div class="bz-pwv-empty"><div class="t">保险库还没有密码</div><div class="d">点底部 ＋ 新增第一条密码</div></div>`;
+      if (st.view === 'fav') {
+        container.innerHTML = '<div class="bz-pwv-empty"><div class="t">还没有收藏</div><div class="d">点条目里的 ★ 收藏常用账号</div></div>';
+      } else {
+        container.innerHTML = `<div class="bz-pwv-empty"><div class="t">保险库还没有密码</div><div class="d">收录第一条账号开始使用</div><button class="bz-pwv-empty-add" data-pwv="empty-add">${this.ic('plus')} 新增密码</button></div>`;
+        container.querySelector('[data-pwv="empty-add"]')?.addEventListener('click', () => this.host.openPwEntryDialog());
+      }
       return;
     }
     for (const p of plats) {

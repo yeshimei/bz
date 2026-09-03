@@ -1235,11 +1235,16 @@ export class UIManager {
         b.title = this.pwState.view === 'fav' ? '全部平台' : '只看收藏';
         b.innerHTML = vIc(this.pwState.view === 'fav' ? 'star' : 'star-outline', 15);
       }
+      // 列头（含新增入口）与滚动 body 分离：行渲染/空态写 body，避免整列清空丢掉入口
       const listHead = document.createElement('div');
       listHead.className = 'bz-vault-lc-head';
-      listHead.innerHTML = `<div class="t">平台</div><span class="badge gold">${this.pwDataManager.hasFav('') || this.pwState.view === 'fav' ? '' : ''}</span>`;
+      listHead.innerHTML = `<div class="t">平台</div><button class="lc-add" data-lc-add="pw" title="新增密码">${vIc('plus', 13)} 新增密码</button>`;
+      listHead.querySelector('[data-lc-add="pw"]')?.addEventListener('click', () => this.openPwEntryDialog());
+      const listBody = document.createElement('div');
+      listBody.className = 'bz-vault-lc-body';
       list.appendChild(listHead);
-      this.pwView.renderDeskList(list, this.pwState, (p, a) => {
+      list.appendChild(listBody);
+      this.pwView.renderDeskList(listBody, this.pwState, (p, a) => {
         this.pwState.selPlatform = p;
         this.pwState.selAccount = a;
         this.renderDesktop();
@@ -1258,18 +1263,21 @@ export class UIManager {
       const lower = kw.toLowerCase();
       notes = notes.filter((n) => (n.title || '').toLowerCase().includes(lower) || (n.path || '').toLowerCase().includes(lower));
     }
+    const listHead = document.createElement('div');
+    listHead.className = 'bz-vault-lc-head';
+    listHead.innerHTML = `<div class="t">${kind === 'note' ? '全部加密笔记' : '加密日记条目'}</div><span class="lc-count">${notes.length} 项</span>`;
+    const listBody = document.createElement('div');
+    listBody.className = 'bz-vault-lc-body';
+    list.appendChild(listHead);
+    list.appendChild(listBody);
     if (!notes.length) {
-      list.innerHTML =
+      listBody.innerHTML =
         kind === 'note'
           ? '<div class="bz-pwv-empty"><div class="t">还没有加密笔记</div><div class="d">用「加密当前笔记」把整篇笔记移入保险库</div></div>'
           : '<div class="bz-pwv-empty"><div class="t">还没有加密日记</div><div class="d">日记面板把条目改分类为「加密」后移入这里</div></div>';
       return;
     }
     const selId = this._selNoteId && notes.some((n) => n.id === this._selNoteId) ? this._selNoteId : notes[0].id;
-    const listHead = document.createElement('div');
-    listHead.className = 'bz-vault-lc-head';
-    listHead.innerHTML = `<div class="t">${kind === 'note' ? '全部加密笔记' : '加密日记条目'}</div><span class="lc-count">${notes.length} 项</span>`;
-    list.appendChild(listHead);
     for (const n of notes) {
       const row = document.createElement('div');
       row.innerHTML = noteRowHTML(n, kind, n.id === selId);
@@ -1283,7 +1291,7 @@ export class UIManager {
         void this.openPreview(n);
       });
       this.attachNoteDrawer(el, n, kind);
-      list.appendChild(el);
+      listBody.appendChild(el);
     }
     this.renderNoteDetail(detail, notes.find((n) => n.id === selId) || notes[0], kind);
   }
@@ -1491,6 +1499,7 @@ export class UIManager {
 
   private openPwDialogOverlay(open: boolean) {
     if (!this.pwDlg) return;
+    if (open) topifyZ(this.pwDlg); // ADR-0067：密码弹窗挂 body，显示即发号保证盖过 vault 面板
     this.pwDlg.style.display = open ? 'flex' : 'none';
   }
 
@@ -1500,6 +1509,7 @@ export class UIManager {
     const d = accs[0];
     const mask = document.createElement('div');
     mask.className = 'bz-vault-dlg-mask';
+    topifyZ(mask); // ADR-0067：一次性弹窗，创建即显示即发号（挂 body，盖过 vault 面板）
     mask.style.display = 'flex';
     mask.innerHTML = `
       <div class="bz-vault-dlg">

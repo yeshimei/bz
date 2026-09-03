@@ -65,6 +65,8 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     expect(items.map((i) => i.getAttribute('data-asset'))).toEqual(['overview', 'pw', 'note', 'diary']);
     expect(document.querySelector('.bz-vault-listcol')).toBeTruthy();
     expect(document.querySelector('.bz-vault-detail')).toBeTruthy();
+    // 滚动修复回归：pw/笔记/日记资产均有独立滚动区容器 .bz-vault-lc-body（CSS 决定滚动）
+    // （jsdom 不算样式，computed overflow 恒 visible；结构上滚动区与列头分离即可）
     // 顶栏动作
     expect(document.querySelector('[data-act="health"]')).toBeTruthy();
     expect(document.querySelector('[data-act="settings"]')).toBeTruthy();
@@ -140,9 +142,15 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     const pwItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'pw') as HTMLElement;
     pwItem.click();
     await new Promise((r) => setTimeout(r, 30));
-    ui.openPwEntryDialog();
+    // 列表头「新增密码」入口存在且可点（回归：pw 资产此前缺失新增入口）
+    const lcAdd = document.querySelector('.bz-vault-lc-head [data-lc-add="pw"]') as HTMLElement;
+    expect(lcAdd).toBeTruthy();
+    (lcAdd as HTMLButtonElement).click();
     const dlg = document.querySelector('.bz-vault-dlg') as HTMLElement;
     expect(dlg).toBeTruthy();
+    // 回归：弹窗挂 body（不在 popup 内），样式选择器无 #bz-encrypt-popup 前缀限制
+    expect(dlg.closest('#bz-encrypt-popup')).toBeNull();
+    expect(dlg.parentElement!.classList.contains('bz-vault-dlg-mask')).toBe(true);
     const set = (f: string, v: string) => {
       (dlg.querySelector(`[data-f="${f}"]`) as HTMLInputElement).value = v;
     };
@@ -154,6 +162,19 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     expect(dm.pwData.length).toBe(1);
     expect(dm.pwData[0].platform).toBe('豆瓣');
     expect(document.querySelector('.bz-vault-listcol')!.textContent).toContain('豆瓣');
+  });
+
+  it('pw 空库：中栏空态直接提供「新增密码」按钮 → 点击开添加弹窗', async () => {
+    ui.show();
+    await new Promise((r) => setTimeout(r, 30));
+    const pwItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'pw') as HTMLElement;
+    pwItem.click();
+    await new Promise((r) => setTimeout(r, 30));
+    const emptyBtn = document.querySelector('.bz-vault-listcol [data-pwv="empty-add"]') as HTMLElement;
+    expect(emptyBtn).toBeTruthy();
+    emptyBtn.click();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(document.querySelector('.bz-vault-dlg')).toBeTruthy();
   });
 
   it('收藏切换（fav）：UI 点账号动作 → toggleFav 落盘 + 列表 ★', async () => {
