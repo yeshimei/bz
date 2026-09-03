@@ -120,6 +120,9 @@ export async function loadAll() {
     if (!diaryDir || !diaryDir.children) {
       state.data.originalDiaryEntries = [];
       state.data.currentFilteredEntries = [];
+      // P3 审查修复：目录缺失早退时同步清 map——残留旧 map 会让后续 addEntry
+      // 仍对着已消失目录写文件，且内存 map 与空列表口径不一致
+      setDiaryDataMap(null);
       // 渲染空态（避免静默空白）
       state.data.currentDisplayCount = 0;
       emitFullRefresh();

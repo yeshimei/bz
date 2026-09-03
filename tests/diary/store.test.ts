@@ -138,6 +138,23 @@ describe('loadAll', () => {
     expect(state.data.originalDiaryEntries).toEqual([]);
   });
 
+  it('目录缺失早退时清空 diaryDataMap（P3 审查修复）', async () => {
+    // 目录真缺失（getAbstractFileByPath 返回 null，递归兜底也找不到）
+    setApp({
+      vault: {
+        getAbstractFileByPath: () => null,
+        getRoot: () => null,
+        read: async () => '',
+      },
+      metadataCache: { getFileCache: () => null },
+      workspace: {},
+    } as any);
+    setDiaryDataMap(new Map([['2024-01-01', []]]));
+    await loadAll();
+    expect(state.data.originalDiaryEntries).toEqual([]);
+    expect(diaryDataMap).toBeNull();
+  });
+
   it('进度与加载状态回调触发', async () => {
     makeVault({ '我的/日记/2024-01-01.md': '# 📖 08:00\nx\n' });
     const progress = vi.fn();
