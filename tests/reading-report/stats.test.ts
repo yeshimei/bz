@@ -284,7 +284,7 @@ describe('analyzeReadingTrends 趋势修复（P1-17）', () => {
   }
 
   it('升序 [1,1,1,2,2,9]：本月=9、季均≈4.33、方向 ↑；recentMonths 反转仅供图表', () => {
-    const t = analyzeReadingTrends(makeStats([1, 1, 1, 2, 2, 9]), []);
+    const t = analyzeReadingTrends(makeStats([1, 1, 1, 2, 2, 9]), [], new Date(2025, 5, 15)); // now=2025-06
     expect(t.currentMonth.books).toBe(9);
     expect(t.quarterlyAvg).toBe('4.3'); // (2+2+9)/3 ≈ 4.33
     expect(t.monthlyAvg).toBe('2.7');   // 16/6 ≈ 2.67
@@ -297,9 +297,25 @@ describe('analyzeReadingTrends 趋势修复（P1-17）', () => {
   });
 
   it('反向样例 [9,2,2,1,1,1]：本月=1、方向 ↓（旧实现会给出全反结论）', () => {
-    const t = analyzeReadingTrends(makeStats([9, 2, 2, 1, 1, 1]), []);
+    const t = analyzeReadingTrends(makeStats([9, 2, 2, 1, 1, 1]), [], new Date(2025, 5, 15)); // now=2025-06
     expect(t.currentMonth.books).toBe(1);
     expect(t.trendDirection).toBe('↓');
+  });
+
+  it('audit F：当月无数据 → 本月阅读显示 0，不再取「升序末位」旧月份数据', () => {
+    // 数据止于 2025-06，「现在」是 2026-09：旧实现把 2025-06 的 9 本当「本月」
+    const t = analyzeReadingTrends(makeStats([1, 1, 1, 2, 2, 9]), [], new Date(2026, 8, 4));
+    expect(t.currentMonth.books).toBe(0);
+    expect(t.currentMonth.completed).toBe(0);
+    // 其余统计口径不受影响
+    expect(t.quarterlyAvg).toBe('4.3');
+    expect(t.trendDirection).toBe('↑');
+  });
+
+  it('audit F：当月有数据 → 按当前年月键直查对应桶', () => {
+    const t = analyzeReadingTrends(makeStats([1, 1, 1, 2, 2, 9]), [], new Date(2025, 5, 30));
+    expect(t.currentMonth.books).toBe(9);
+    expect(t.currentMonth.completed).toBe(0);
   });
 });
 

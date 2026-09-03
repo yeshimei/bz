@@ -453,13 +453,13 @@ function calculateMonthlyAverage(monthlyData: any[]): string {
   return (total / monthlyData.length).toFixed(1);
 }
 
-/** 获取当前月统计 */
-function getCurrentMonthStats(monthlyData: any[]) {
-  if (monthlyData.length === 0) return { books: 0, completed: 0 };
-  const current = monthlyData[monthlyData.length - 1];
+/** 获取当前月统计（audit F：按当前年月键直查；当月无数据 → 0，不再取「升序末位」的旧月份数据） */
+function getCurrentMonthStats(monthlyData: any[], now: Date = new Date()) {
+  const key = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}`;
+  const current = monthlyData.find((m) => m.month === key);
   return {
-    books: current.booksRead,
-    completed: current.booksCompleted,
+    books: current?.booksRead ?? 0,
+    completed: current?.booksCompleted ?? 0,
   };
 }
 
@@ -490,8 +490,8 @@ export function analyzeTrendDirection(monthlyData: any[]): string {
   return diff > 0 ? '↑' : '↓';
 }
 
-/** 分析阅读趋势（完整） */
-export function analyzeReadingTrends(stats: ReadingStats, bookNotes: BookNoteEntry[]) {
+/** 分析阅读趋势（完整）；now 供测试固定「本月」 */
+export function analyzeReadingTrends(stats: ReadingStats, bookNotes: BookNoteEntry[], now: Date = new Date()) {
   const monthlyData = getMonthlyTrendData(stats); // 升序（旧→新）
   const ascendingRecent = monthlyData.slice(-6); // 统计口径：反转前的升序切片
   const recentMonths = [...ascendingRecent].reverse(); // 最近6个月，仅供图表高亮展示（新→旧）
@@ -499,7 +499,7 @@ export function analyzeReadingTrends(stats: ReadingStats, bookNotes: BookNoteEnt
   return {
     recentMonths,
     monthlyAvg: calculateMonthlyAverage(ascendingRecent),
-    currentMonth: getCurrentMonthStats(ascendingRecent),
+    currentMonth: getCurrentMonthStats(ascendingRecent, now),
     quarterlyAvg: calculateQuarterlyAverage(ascendingRecent),
     completionRate: calculateCompletionRate(stats),
     trendDirection: analyzeTrendDirection(ascendingRecent),
