@@ -11,7 +11,6 @@ import {
   ensureMemoFileSync as ensureFileSyncAgent,
   unloadMemoFileSync as unloadFileSyncAgent,
 } from './file-sync';
-import { ensureClipArchive, unloadClipArchive } from './clip-archive';
 
 let settingsProvider: (() => BzSettingsLike) | null = null;
 
@@ -46,11 +45,10 @@ export function unloadBz(): void {
   MemoApp.unload();
 }
 
-// ---------- 自 ai-agent 拆入：引用同步 + 剪藏 AI 匹配归档（main 只调这一对入口） ----------
+// ---------- 自 ai-agent 拆入：引用同步（issue 187 起 AI 匹配归档已退役，引用同步无条件常驻） ----------
 
 /**
- * 引用同步总装入口：备忘录实例（DataManager，归档写路径依赖，原 ensureAIAgent 的
- * ensureBz 语义）+ memo.json rename/delete 引用同步 + 剪藏 AI 匹配归档订阅一并安装。
+ * 引用同步总装入口：备忘录实例 + memo.json rename/delete 引用同步。
  * 幂等；DOM 缺失环境（如纯 node 数据层测试）下 ensureBz 失败被静默跳过，
  * 不影响纯 JSON 读写的引用同步。
  */
@@ -59,11 +57,9 @@ export async function ensureMemoFileSync(app: App): Promise<void> {
     await ensureBz(app);
   } catch (e) { /* DOM 缺失环境：跳过面板初始化 */ }
   ensureFileSyncAgent(app);
-  ensureClipArchive(app);
 }
 
-/** 总卸载入口：退订引用同步与剪藏归档监听并重置各自模块状态（各自幂等） */
+/** 总卸载入口：退订引用同步并重置模块状态（幂等） */
 export function unloadMemoFileSync(): void {
   unloadFileSyncAgent();
-  unloadClipArchive();
 }

@@ -87,7 +87,6 @@ describe('全量 schema 文案 lint（注册表：LINT_TARGETS）', () => {
     expect(names).toContain('OpenAI 密钥');
     expect(names).toContain('Gemini 密钥');
     expect(names).toContain('自定义 API 地址');
-    expect(names).toContain('自定义模型');
     expect(names).toContain('自定义 API 密钥');
     expect(names).toContain('模型名称');
     expect(names).toContain('上下文窗口');
@@ -102,7 +101,7 @@ describe('全量 schema 文案 lint（注册表：LINT_TARGETS）', () => {
     expect(customEndpoint.desc).toBe('OpenAI 兼容服务的完整接口地址');
     expect(modelRow.desc).toBe('留空用该服务商默认模型');
     expect(ctxRow.desc).toBe('留空用该服务商默认窗口');
-    const storageRow = schema.groups[1].rows[0] as { name: string; desc?: string };
+    const storageRow = schema.groups[2].rows[0] as { name: string; desc?: string };
     expect(storageRow.name).toBe('数据存储路径');
     expect(storageRow.desc).toBe('全部 JSON 数据文件统一存放的目录');
   });

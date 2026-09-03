@@ -14,6 +14,7 @@ import { notify } from '../core/notice';
 import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
 import { jsonFileStore } from '../core/storage';
+import { SYNC_WATCHED_FOLDERS } from '../core/settings-common';
 import { getStoragePath } from './config';
 
 // ---------- 同步纯函数（ai-agent/sync.ts 私有副本） ----------
@@ -83,11 +84,9 @@ function getFavoritesPath(): string {
   return getStoragePath(s && (s.storagePath || s.favoritesStoragePath));
 }
 
-/** 监听文件夹列表（设置 aiAgentWatchedFolders 可配，逗号分隔；默认 卡片盒,归档/网页剪藏） */
+/** 监听文件夹列表（issue 187：原 aiAgentWatchedFolders 键退役，固定默认范围） */
 function getWatchedFolders(): string[] {
-  const s = tryGetSettings() as any;
-  const raw = (s && s.aiAgentWatchedFolders) || '卡片盒,归档/网页剪藏';
-  return raw.split(',').map((x: string) => x.trim()).filter(Boolean);
+  return SYNC_WATCHED_FOLDERS.split(',').map((x) => x.trim()).filter(Boolean);
 }
 
 // ---------- 队列 / 去抖（ai-agent/index.ts 逐行等价移植） ----------

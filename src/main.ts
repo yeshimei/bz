@@ -261,10 +261,10 @@ export default class BzPlugin extends Plugin {
       // 日记本：启动即初始化（diary-notebook 原行为：onLayoutReady → init）
       void diaryInit(this);
       if (this.settings.autoSummaryEnabled) ensureAutoSummary(this.app);
-      if (this.settings.aiAgentEnabled) {
-        ensureMemoFileSync(this.app);
-        ensureFavoritesFileSync(this.app);
-      }
+      // 引用同步无条件常驻（issue 187：原 aiAgentEnabled 开关随旧 AIAgent 退役——
+      // 备忘录/收藏本笔记 rename/delete 引用同步是数据完整性功能，不设开关）
+      ensureMemoFileSync(this.app);
+      ensureFavoritesFileSync(this.app);
       if (this.settings.secondBrainEnabled) ensureSecondBrainOnReady(this.app);
       // 复习计划：到期提醒开启时常驻（ticket 100——监听/染色/轮询统一启动；否则懒加载）；enableAutoNotify 缺省视为开
       if (this.settings.enableAutoNotify !== false) void ensureReview(this.app);

@@ -133,20 +133,6 @@ describe('favorites 文件同步', () => {
     expect(favWrites(vault)).toBe(0); // 从未写回
   });
 
-  it('aiAgentWatchedFolders 设置生效：监听范围随设置收窄', async () => {
-    const { vault } = await setup();
-    setSettingsProvider(() => ({ ...SETTINGS, aiAgentWatchedFolders: '我的/其他' } as any));
-    vault.files.set('CONFIG/STORAGE/favorites.json', JSON.stringify([
-      { id: 'f1', title: '新文章', linkedNote: null },
-    ], null, 2));
-
-    emitDomainEvent('vault:md-created', { path: '卡片盒/新文章.md' }); // 默认目录，但已被设置排除
-    await flushQueue();
-
-    const fav = JSON.parse(vault.files.get('CONFIG/STORAGE/favorites.json')!);
-    expect(fav[0].linkedNote).toBeNull();
-    expect(favWrites(vault)).toBe(0);
-  });
 
   it('卸载静默：去抖窗口内卸载积压事件不再回放、不落盘，卸载后新事件不受理', async () => {
     const { vault } = await setup();
