@@ -7,7 +7,7 @@
  * - clipbook.json 侧写读取；
  * - 剪藏目录扫描（目录不存在 → null 区分空态）。
  */
-import { readNewsData, writeNewsData, migrateLegacyStats, applyRetention, normalizeRetentionDays, statsHasData } from '../news/data';
+import { readNewsData, writeNewsData, migrateLegacyStats, applyRetention, normalizeRetentionDays, statsHasData } from './news-data';
 import { readClipbookData } from './data';
 import { scanClipDirectory, type ClipNote } from './scan';
 import { clipUrlSet } from './store';

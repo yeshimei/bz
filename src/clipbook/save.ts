@@ -19,7 +19,7 @@ import { tryGetSettings } from '../core/settings-provider';
 import { notice } from '../core/notice';
 import { openLiteratureAddTask } from '../literature';
 import type { ClipArticle } from './types';
-import { localDatetime, toDatetime } from '../news/reader';
+import { localDatetime, toDatetime } from './constants';
 
 const yamlEscape = (v: any): string =>
   String(v ?? '').replace(/"/g, '\\"').replace(/[\r\n]+/g, ' ');
