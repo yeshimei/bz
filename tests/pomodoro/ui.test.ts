@@ -11,7 +11,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { openPomodoro, unloadPomodoro, ensurePomodoro } from '../../src/pomodoro';
 import { mountPomodoroStatusBar } from '../../src/pomodoro/statusbar';
-import { getPomodoroFilePath } from '../../src/pomodoro/data';
+import { getPomodoroFilePath, PomodoroDataManager } from '../../src/pomodoro/data';
 
 const T0 = new Date('2026-08-10T10:00:00').getTime();
 
@@ -131,6 +131,30 @@ describe('ensurePomodoro（插件启动恢复）', () => {
     await ensurePomodoro(app);
     await ensurePomodoro(app);
     expect(document.getElementById('pomodoro-mask')).toBeNull();
+  });
+
+  it('P3：ensurePomodoro 与 openPomodoro 并发 → 共享初始化 in-flight，只 load 一次', async () => {
+    const vault = new MockVault();
+    vault.files.set(getPomodoroFilePath(), runningData());
+    const app = makeApp(vault);
+    setApp(app);
+    const loadSpy = vi.spyOn(PomodoroDataManager.prototype, 'load');
+    await Promise.all([ensurePomodoro(app), openPomodoro(app)]);
+    expect(loadSpy).toHaveBeenCalledTimes(1); // 原两路各自 initData → 双读盘
+    expect(document.getElementById('pomodoro-mask')).not.toBeNull(); // openPomodoro 照常出弹窗
+  });
+
+  it('P3：恢复可见但无可解冻状态（未冻结/空闲）→ 仅渲染不落盘', async () => {
+    const vault = new MockVault();
+    vault.files.set(getPomodoroFilePath(), runningData());
+    const app = makeApp(vault);
+    setApp(app);
+    await ensurePomodoro(app); // 运行中、未冻结
+    const saveSpy = vi.spyOn(PomodoroDataManager.prototype, 'save');
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(saveSpy).not.toHaveBeenCalled(); // 无状态变化不写盘（原无条件 save）
   });
 
   it('后台自动暂停：hidden → 主番茄钟冻结（paused/endTime null），visible → 自动恢复（ticket 62）', async () => {
