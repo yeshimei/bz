@@ -555,4 +555,45 @@ describe('书库修复回归（fx-library）', () => {
     expect(notesShells[0].textContent).toContain('📚 《乙》的读书笔记');
     expect(notesShells[0].textContent).toContain('第二章');
   });
+
+  it('audit C：快速重开书库，过期在途 EPUB 合并整批作废，条目不成对重复', async () => {
+    vault.files.set('书库/活着.md', BOOK_MD);
+    const weaveJson = JSON.stringify({
+      books: {
+        bk_001: {
+          id: 'bk_001',
+          file: { vaultPath: 'Books/悉达多.epub' },
+          meta: { title: '悉达多', author: '赫尔曼·黑塞' },
+          reading: { position: { percent: 0 }, stats: {} },
+          notes: { bookmarks: [], highlights: [], excerpts: [] },
+        },
+      },
+    });
+    vault.files.set('CONFIG/STORAGE/weave-data.json', weaveJson);
+    const app = makeApp(vault);
+    // 第一次 EPUB 读取挂起；之后的读取立即返回
+    let calls = 0;
+    let release!: (v: string) => void;
+    const realRead = vault.adapter.read.bind(vault);
+    (vault.adapter as any).read = (path: string) => {
+      calls++;
+      if (calls === 1) return new Promise<string>((r) => { release = r; });
+      return realRead(path);
+    };
+    showLibrary(app); // 首开：合并 1 在途（挂起）
+    await new Promise((r) => setTimeout(r, 20));
+    showLibrary(app); // 复用重开：合并 2 接管
+    await new Promise((r) => setTimeout(r, 30));
+    const overlay = document.getElementById('__book_library__')!;
+    expect((overlay.textContent!.match(/悉达多/g) || []).length).toBe(1); // 重开即只挂一份 EPUB
+
+    // 旧合并此刻才 resolve：必须被序号守卫丢弃，不得再叠加一份
+    release(weaveJson);
+    await new Promise((r) => setTimeout(r, 30));
+    expect((overlay.textContent!.match(/悉达多/g) || []).length).toBe(1);
+    // md 书目也只一份（合并以 md 基准整体重建；标题元素精确计数，书评含「活着」不算）
+    const mdTitles = [...overlay.querySelectorAll('.bz-lib-title')].filter((e) => e.textContent === '活着');
+    expect(mdTitles.length).toBe(1);
+    expect(overlay.querySelectorAll('.bz-lib-card').length).toBe(2); // 1 md + 1 epub
+  });
 });

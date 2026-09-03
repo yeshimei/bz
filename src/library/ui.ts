@@ -46,13 +46,8 @@ export function showLibrary(app: any) {
     topifyZ(libraryOverlay); // ADR-0067：显示即发号，谁后显示谁在上
     libraryOverlay.style.visibility = 'visible';
     // P1-19：复用打开前重扫数据（md 书目 + EPUB 条目），外部增删书目后重开即可见
-    currentItems = getBookItems(app);
-    void loadEpubBookItems(app).then((epubItems) => {
-      if (epubItems && epubItems.length > 0) {
-        currentItems = [...currentItems, ...epubItems];
-      }
-      renderAfterEpubMerge(app);
-    });
+    // C（audit）：md 基准 + 序号守卫汇合，防两次在途 EPUB 合并先后落袋造成条目成对重复
+    mergeEpubAndRender(app, getBookItems(app));
     return;
   }
 
@@ -120,19 +115,32 @@ export function showLibrary(app: any) {
 
   // 先同步渲染 markdown 书目；EPUB 条目（ADR-0013）异步并入后重渲染。
   // 空态判定放到 EPUB 合并之后：纯 EPUB 书库（无 markdown 书目）不被提前 return 吞掉。
-  currentItems = getBookItems(app);
-  void loadEpubBookItems(app).then((epubItems) => {
-    if (epubItems && epubItems.length > 0) {
-      currentItems = [...currentItems, ...epubItems];
-    }
-    renderAfterEpubMerge(app);
-  });
-
+  const mdItems = getBookItems(app);
+  currentItems = [...mdItems];
   if (currentItems.length === 0 && libraryListContainer) {
     listContainer.innerHTML = '<p class="bz-lib-empty">正在加载书库…</p>';
   } else {
     renderLibraryList(app);
   }
+  mergeEpubAndRender(app, mdItems);
+}
+
+/** EPUB 合并序号：快速重开时过期在途合并整批作废（参照 bookNotesLoadSeq 先例，audit C） */
+let epubMergeSeq = 0;
+
+/**
+ * md 基准 + EPUB 异步汇合（audit C）：以同步重扫的 md 书目为基准整体重建，
+ * 合并序号守卫丢弃过期在途请求——旧实现 `currentItems = [...currentItems, ...epubItems]`
+ * 在上一次合并未 resolve 时再次打开会把 EPUB 卡片成对累加。
+ */
+function mergeEpubAndRender(app: any, mdItems: BookItem[]): void {
+  const seq = ++epubMergeSeq;
+  currentItems = [...mdItems];
+  void loadEpubBookItems(app).then((epubItems) => {
+    if (seq !== epubMergeSeq) return; // 过期在途合并：已被更新一次的打开取代
+    currentItems = [...mdItems, ...(epubItems || [])];
+    renderAfterEpubMerge(app);
+  });
 }
 
 /** EPUB 合并后统一渲染：空库内嵌空态（l4），否则渲染列表 */
@@ -1060,4 +1068,5 @@ export function _testResetLibrary() {
   bookNotesOverlay = null;
   bookNotesLoadSeq = 0;
   epubBookNotesOverlay = null;
+  epubMergeSeq = 0;
 }
