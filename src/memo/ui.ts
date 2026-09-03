@@ -545,7 +545,9 @@ export const UIManager = {
           scriptName,
           courseName,
           coursePath,
-          url: finalUrl,
+          // 编辑保留原 url（对齐 todo 语义 `url ?? old.url`）：回填显示文本不含 URL，
+          // 提取不到 ≠ 用户清空；内容里带新链接时才覆盖
+          url: finalUrl ?? (oldItem ? oldItem.url ?? null : null),
         } as any);
         // ticket 075（域事件派发）：编辑动作观察（α 合并一条；无变化 memo-source 返回 null 不产出）
         // ticket 084a B7：兜底后仍无旧值（极窄竞态，此时 updateItem 应已抛错）→ 明确跳过编辑观察
