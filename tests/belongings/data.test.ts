@@ -64,13 +64,15 @@ describe('loadDatabase', () => {
     warnSpy.mockRestore();
   });
 
-  it('P2 形状容错：内容为空对象 {} → 警告 Notice + 重置空库（不再产出残缺 db）', async () => {
+  it('合法空对象 {} → 视为空库不告警（修复前每次打开都弹解析失败警告）', async () => {
     setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
     vault.files.set('CONFIG/STORAGE/belongings.json', '{}');
     const warnSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    clearNotices();
     const db = await loadDatabase();
     expect(db.items).toEqual({});
-    expect(hasNotice(/数据文件解析失败/)).toBe(true);
+    expect(db.categories.length).toBeGreaterThan(1000); // 仍补齐默认分类
+    expect(hasNotice(/数据文件解析失败/)).toBe(false);
     warnSpy.mockRestore();
   });
 
@@ -179,6 +181,18 @@ describe('纯函数', () => {
     vi.setSystemTime(new Date('2025-06-15T12:00:00'));
     expect(calculateDailyCost(300, '')).toBe('300.00');
     expect(calculateDaysUsed('')).toBe(0);
+    vi.useRealTimers();
+  });
+
+  it('已用天数本地日历日口径：当天买 = 0 天（UTC 口径会多算一天——UTC+8 早 8 点前即触发）', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2025-06-15T12:00:00'));
+    expect(calculateDaysUsed('2025-06-15')).toBe(0);
+    expect(calculateDaysUsed('2025-06-15T00:30:00')).toBe(0);
+    expect(calculateDaysUsed('2025-06-14')).toBe(1);
+    // 跨时区确定：本地同一自然日内任意时刻都算 0 天
+    vi.setSystemTime(new Date('2025-06-15T23:59:00'));
+    expect(calculateDaysUsed('2025-06-15')).toBe(0);
     vi.useRealTimers();
   });
 });
