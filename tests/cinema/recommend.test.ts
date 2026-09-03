@@ -133,6 +133,39 @@ describe('cinema runAIRecommend（页内化：等待 → 结果列表 / 失败�
     expect(M.aiError).toContain('AI 分析失败');
     expect(document.querySelector('.bz-overlay-mask')).toBeNull();
   });
+
+  it('重入防护：运行中再次触发 runAIRecommend → 直接 return（AI 只调一次，结果不被并发覆盖）', async () => {
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'test-key' }));
+    resetAIProviderCache();
+    setApp(M.appRef as any);
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('no net')));
+    const { requestUrl } = await import('obsidian');
+    (requestUrl as any).mockClear(); // 前面用例的调用计数清零
+    let release!: (v: any) => void;
+    const gate = new Promise<any>((r) => { release = r; }); // 第一轮 AI 挂起
+    (requestUrl as any).mockReturnValue(gate);
+
+    const p1 = runAIRecommend(M.appRef as any);
+    expect(M.aiRunning).toBe(true);
+    // 运行中重复点击（工具钮/开始按钮）→ 重入直接 return，不发第二发 AI 请求
+    await runAIRecommend(M.appRef as any);
+    expect(M.aiRunning).toBe(true); // 仍由第一轮占用
+    release({ status: 200, text: JSON.stringify({ choices: [{ message: { content: '{"recommendations":[{"title":"星际穿越"}]}' } }] }) });
+    await p1;
+    expect(requestUrl).toHaveBeenCalledTimes(1);
+    expect(M.aiRunning).toBe(false);
+    expect(M.aiResult?.length).toBe(1);
+  });
+
+  it('重入防护：AI 运行中触发找同类 → 直接 return（共用 aiRunning 状态机，不发请求）', async () => {
+    const { requestUrl } = await import('obsidian');
+    (requestUrl as any).mockClear();
+    M.aiRunning = true; // 模拟荐片进行中
+    const base = M.items.find((i) => i.name === 'A')!;
+    await runSimilarRecommend(base, M.appRef as any);
+    expect(requestUrl).not.toHaveBeenCalled();
+    expect(M.aiTitle).toBe('AI 荐片'); // 未被找同类改写
+  });
 });
 
 describe('cinema 找同类（ADR-0087 迁入 runSimilarRecommend/buildSimilarPrompt）', () => {

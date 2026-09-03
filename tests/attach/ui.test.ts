@@ -106,13 +106,15 @@ describe('runMove 执行编排（fileManager.renameFile）', () => {
     expect(hasNotice('资源已全部在目标文件夹')).toBe(true);
   });
 
-  it('无 fileManager（异常环境）→ 回退 vault.rename，通知链接未自动更新', async () => {
+  it('无 fileManager.renameFile（异常环境）→ 回退 vault.rename，通知链接未自动更新', async () => {
     const vault = new MockVault();
     vault.create('笔记/章.md', '![[a.png]]');
     vault.create('笔记/a.png', '');
     const settings: Record<string, any> = { attachLastFolder: '' };
     setSettingsProvider(() => settings as any);
     const app = makeApp(vault, '笔记/章.md');
+    // mock app 已补齐内建 renameFile；显式摘除以模拟异常环境（回退路径）
+    delete (app as any).fileManager.renameFile;
     setApp(app as any);
 
     const summary = await runMove(app, vault.getAbstractFileByPath('笔记/章.md'), '附件');

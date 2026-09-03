@@ -148,6 +148,8 @@ tags:
  * 触发方确保 M.view 已切到 'ai' 且 renderAll 已渲染（工具钮/开始按钮统一走 runAIRecommend）。
  */
 export async function runAIRecommend(app: App): Promise<void> {
+  // 重入防护：AI 运行中再点入口/开始按钮直接忽略（防双倍 token 消耗与并发写 M.aiResult 互相覆盖）
+  if (M.aiRunning) return;
   // 若从非 AI 页触发（如左栏工具钮），先切页让等待态可见
   M.aiRunning = true;
   M.aiWaitMsg = 'AI 正在分析你的观影口味…';
@@ -188,6 +190,8 @@ export async function runAIRecommend(app: App): Promise<void> {
  * @param item 当前详情/基准影片
  */
 export async function runSimilarRecommend(item: CinemaItem, app: App): Promise<void> {
+  // 重入防护：与 AI 荐片共用 aiRunning 状态机，运行中再触发直接忽略
+  if (M.aiRunning) return;
   // 页内等待态（复用 AI 页状态机；标题区分「找同类 ·《X》」）
   M.aiRunning = true;
   M.aiWaitMsg = 'AI 正在分析同类影片…';

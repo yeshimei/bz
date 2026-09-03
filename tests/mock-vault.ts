@@ -302,6 +302,10 @@ export function mockAppWithVault(vault: MockVault) {
         lines.push('---');
         vault.files.set(path, lines.join('\n') + (body ? '\n' + body : ''));
       },
+      /** renameFile：Obsidian 内建改名（真实环境还会更新全库双链，mock 只移动文件） */
+      renameFile: async (file: any, newPath: string) => {
+        await vault.rename(file, newPath);
+      },
     },
     commands: (() => {
       const registered: any[] = [];
