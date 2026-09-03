@@ -61,7 +61,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | 分段 | `.bz-segmented` | 内 `.bz-segmented-btn.is-on` | 单选多段（等宽条） |
 | 平铺单选组 | `.bz-choice` | 内 `.bz-choice-btn.is-on`（可选 `.bz-choice-dot` 色点） | 表单替代下拉的胶囊选项组，可换行；选项多/文案长/需色点时用 |
 | 开关 | `.bz-sw` | `.on`（role=switch，键盘 Space/Enter） | 40×22 滑块，开 = 品牌实底 |
-| 下拉 | `.bz-select` | `.open`；内 `.bz-select-val`/`.bz-select-car`；弹层 `.bz-select-menu` 内 `.bz-select-item.is-on` + `.bz-select-item-ck` | 单行单选下拉；短选项组优先 `.bz-choice` 平铺 |
+| 下拉 | `.bz-select` | `.open`；内 `.bz-select-val`/`.bz-select-car`；弹层 `.bz-select-menu` 内 `.bz-select-item.is-on` + `.bz-select-item-ck` | 单行单选下拉；菜单随最长选项加宽不截断；短选项组优先 `.bz-choice` 平铺 |
 | 灯箱 | `.bz-lightbox` | 内 `.bz-lightbox-head/media/foot/-close` | 全屏看图/视频 |
 | 弹窗 | `.bz-overlay-mask` / `.bz-overlay-popup` | 内 `.bz-dialog-head/-title/-body`；底 `.bz-btn-row` | 居中模态（遮罩点关） |
 | 滑条 | `.bz-range` | `--lg` | 自绘轨道+滑块；抗 Obsidian 默认 range 外观重置 |

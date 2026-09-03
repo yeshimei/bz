@@ -370,6 +370,9 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   top: calc(100% + 4px);
   right: 0;
   z-index: 60;
+  /* max-content 随最长选项加宽（否则绝对定位收缩宽度被触发器钳住，长文案截断）；
+     min-width: 100% 兜底短选项组仍与触发器同宽 */
+  width: max-content;
   min-width: 100%;
   max-height: 220px;
   overflow-y: auto;
