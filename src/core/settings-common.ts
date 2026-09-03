@@ -107,3 +107,10 @@ export function makeReloadWarnOnce(): () => void {
     notice(RELOAD_SETTINGS_NOTICE, 'info');
   };
 }
+
+/**
+ * 引用同步监听范围（issue 187）：备忘录/收藏本 file-sync 的 rename/delete 事件
+ * 只处理该范围内的 md。原 aiAgentWatchedFolders 设置键随旧 AIAgent 退役后固定为此默认值
+ * （用户存量值即默认值，行为不变）。
+ */
+export const SYNC_WATCHED_FOLDERS = '卡片盒,归档/网页剪藏';

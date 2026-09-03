@@ -53,8 +53,14 @@ export default interface BzSettings {
   aiContextOverrides: Record<string, number>;
   /** 📏 每提供商最大输出 token 覆盖（键 = provider id）：未填用注册表 defaultMaxTokens（=模型最大输出） */
   aiMaxTokensOverrides: Record<string, number>;
-  /** 📏 每次请求最大输出 token（0 = 用 API 默认；缺省取提供商默认） */
-  aiMaxTokens: number;
+  /** 🌡️ 采样温度（string 键数字项，'' = 不发该字段用 API 默认；issue 187） */
+  aiTemperature: string;
+  /** 🎯 top_p 采样（string 键数字项，'' = 不发该字段用 API 默认；issue 187） */
+  aiTopP: string;
+  /** 🎯 频率惩罚（string 键数字项，'' = 不发该字段用 API 默认；issue 187） */
+  aiFrequencyPenalty: string;
+  /** 🎯 存在惩罚（string 键数字项，'' = 不发该字段用 API 默认；issue 187） */
+  aiPresencePenalty: string;
 
   // ===== 📂 数据存储路径（ADR-0009 共享数据路径）=====
   /** 共享 JSON 数据目录（memo/belongings/passwords/favorites/review/quiz/闪念 meta+vec 统一存放） */
@@ -286,15 +292,6 @@ export default interface BzSettings {
   linkAgentRespectRelated: boolean;
 
   // ===== 常驻监听开关（懒加载架构，ADR-0003）=====
-  // AI Agent 4 项（ADR-0009）：设置不暴露 UI，运行时读字段（默认值兜底，尊重旧 data.json 值）
-  /** AI Agent：笔记 rename/delete/create 同步 */
-  aiAgentEnabled: boolean;
-  /** 🤖 AI 剪藏匹配：开启后剪藏未命中时用 AI 判断并弹窗批准 */
-  enableAIClipMatch: boolean;
-  /** 📂 AI Agent 监听文件夹（逗号分隔） */
-  aiAgentWatchedFolders: string;
-  /** 🧠 AI Agent 剪藏匹配模型 */
-  aiAgentModel: string;
   /** 第二大脑启用开关（l7A）：仅控制启动时自动加载（常驻监听/面板初始化），关闭后仍可从命令面板手动打开；原 flashEnabled，ticket 103 更名迁移 */
   secondBrainEnabled: boolean;
 
@@ -482,7 +479,10 @@ export const DEFAULT_SETTINGS: BzSettings = {
   aiModelOverrides: {},
   aiContextOverrides: {},
   aiMaxTokensOverrides: {},
-  aiMaxTokens: 0, // 0 = 用 API 默认（模型最大值）
+  aiTemperature: '', // '' = 不发该字段（API 默认）
+  aiTopP: '',
+  aiFrequencyPenalty: '',
+  aiPresencePenalty: '',
 
   // 共享数据路径（ADR-0009）
   storagePath: 'CONFIG/STORAGE',
@@ -616,11 +616,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   linkAgentAutoClean: true,
   linkAgentRespectRelated: true, // v1.7/ticket 167：默认尊重「已有 related 不再自动建链」
 
-  // 常驻监听
-  aiAgentEnabled: true,
-  enableAIClipMatch: true,
-  aiAgentWatchedFolders: '卡片盒,归档/网页剪藏',
-  aiAgentModel: 'deepseek-v4-flash',
+  // 常驻监听（issue 187：旧 aiAgent 4 键退役，引用同步无条件常驻，不设开关）
   secondBrainEnabled: true,
 
   // 番茄钟（9 项，ticket 31）

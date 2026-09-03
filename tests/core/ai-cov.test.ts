@@ -141,22 +141,32 @@ describe('getAIProvider 解析与缓存', () => {
     await expect(getAIProvider()).rejects.toThrow('未配置自定义 AI 服务');
   });
 
-  it('aiMaxTokens 设置生效：>0 时作为请求 max_tokens（ticket 170 默认用模型最大值）', async () => {
-    setupAI({ aiProvider: 'deepseek', deepseekApiKey: 'sk-deepseek-test', aiMaxTokens: 16000 });
+  it('采样参数：设置非空才透传，modelOptions 同名字段优先（issue 187）', async () => {
+    setupAI({
+      aiProvider: 'deepseek',
+      deepseekApiKey: 'sk-deepseek-test',
+      aiTemperature: '0.3',
+      aiTopP: '',
+      aiFrequencyPenalty: '0.5',
+      aiPresencePenalty: 'abc', // 非法数字静默跳过
+    });
     (global as any).fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       body: sseBody(['data: {"choices":[{"delta":{"content":"hi"}}]}\n', 'data: [DONE]\n']),
     });
     const ai = new AIService({}, 'deepseek-v4-flash');
-    await ai.prompt('q');
+    await ai.prompt('q', undefined, { modelOptions: { temperature: 0.9 } });
     const body = JSON.parse((global as any).fetch.mock.calls[0][1].body);
-    expect(body.max_tokens).toBe(16000);
+    expect(body.temperature).toBe(0.9); // modelOptions 显式优先
+    expect(body.top_p).toBeUndefined(); // 留空不发
+    expect(body.frequency_penalty).toBe(0.5);
+    expect(body.presence_penalty).toBeUndefined(); // 非法数字不发
     delete (global as any).fetch;
   });
 
-  it('aiMaxTokens=0 时回落注册表默认（ticket 172：deepseek 8192）', async () => {
-    setupAI({ aiProvider: 'deepseek', deepseekApiKey: 'sk-deepseek-test', aiMaxTokens: 0 });
+  it('采样参数温度 0 合法发送；全空时请求体不含采样字段（issue 187）', async () => {
+    setupAI({ aiProvider: 'deepseek', deepseekApiKey: 'sk-deepseek-test', aiTemperature: '0' });
     (global as any).fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -165,9 +175,13 @@ describe('getAIProvider 解析与缓存', () => {
     const ai = new AIService({}, 'deepseek-v4-flash');
     await ai.prompt('q');
     const body = JSON.parse((global as any).fetch.mock.calls[0][1].body);
-    expect(body.max_tokens).toBe(8192);
+    expect(body.temperature).toBe(0);
+    expect(body.top_p).toBeUndefined();
+    expect(body.frequency_penalty).toBeUndefined();
+    expect(body.presence_penalty).toBeUndefined();
     delete (global as any).fetch;
   });
+
 
   it('provider.model 存在但显式指定模型 → 显式值优先', async () => {
     setupAI({ aiProvider: 'opencode-go', opencodeGoApiKey: 'sk-oc' });

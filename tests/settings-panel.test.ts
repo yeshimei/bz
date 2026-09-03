@@ -89,7 +89,7 @@ describe('设置面板（settings-panel）', () => {
       badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
     }
     expect(badges[0]).toBe('1'); // 通用：数据存储路径 1 项
-    expect(badges[1]).toBe('4'); // AI：服务商 + 模型名称 + 上下文窗口 + 最大输出（aiProvider 未设 → 各家密钥行门控隐藏）
+    expect(badges[1]).toBe('8'); // AI：服务商+模型名称+上下文+最大输出+采样 4 项（aiProvider 未设 → 密钥行门控隐藏）
     expect(badges[4]).toBe('9'); // 待办（index 4，AI 插入后）：4 组 9 项
     expect(badges[5]).toBe('·'); // 归物本（schema 仅移动端组，桌面门控全隐藏 → 0 项）
     // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）
@@ -119,10 +119,11 @@ describe('设置面板（settings-panel）', () => {
     ) as HTMLElement;
     expect(aiItem).toBeTruthy();
     aiItem.click();
-    await waitGroups(popup, 1);
+    await waitGroups(popup, 2);
     groups = popup.querySelectorAll('.bz-sp-group');
-    expect(groups.length).toBe(1);
+    expect(groups.length).toBe(2); // AI + 采样参数（issue 187）
     expect(groups[0].querySelector('.bz-sp-group-name')!.textContent).toBe('AI');
+    expect(groups[1].querySelector('.bz-sp-group-name')!.textContent).toBe('采样参数');
     expect(popup.querySelectorAll('.bz-sp-set-row').length).toBeGreaterThan(0);
     ui.cleanup();
   });
@@ -200,7 +201,7 @@ describe('设置面板（settings-panel）', () => {
     aiItem.click();
     await waitGroups(popup, 1);
     icons = [...popup.querySelectorAll('.bz-sp-group-icon')].map((i) => i.getAttribute('data-icon'));
-    expect(icons).toEqual(['sparkles']);
+    expect(icons).toEqual(['sparkles', 'sliders-horizontal']);
     ui.cleanup();
   });
 

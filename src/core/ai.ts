@@ -38,8 +38,14 @@ export interface AISettingsLike {
   aiContextOverrides?: Record<string, number>;
   /** 每提供商最大输出 token 覆盖（键 = provider id；未填用注册表 defaultMaxTokens） */
   aiMaxTokensOverrides?: Record<string, number>;
-  /** 全局 max_tokens 兜底（>0 时覆盖 per-provider 未配置项） */
-  aiMaxTokens?: number;
+  /** 采样温度（string 键数字项，'' = 不发该字段用 API 默认；issue 187） */
+  aiTemperature?: string;
+  /** top_p 采样（string 键数字项，'' = 不发该字段用 API 默认） */
+  aiTopP?: string;
+  /** 频率惩罚（string 键数字项，'' = 不发该字段用 API 默认） */
+  aiFrequencyPenalty?: string;
+  /** 存在惩罚（string 键数字项，'' = 不发该字段用 API 默认） */
+  aiPresencePenalty?: string;
 }
 
 let _settingsProvider: (() => AISettingsLike) | null = null;
@@ -481,10 +487,9 @@ export class AIService {
     const isExplicit = model !== this.defaultModel;
     const effModel = isExplicit ? model : (provider.model || model);
     const mo = mergedOptions.modelOptions || {};
-    // max_tokens（ticket 172 默认最大值）：显式 modelOptions > 全局 aiMaxTokens（>0 时）>
-    // provider 解析结果（per-provider 覆盖 > 注册表 defaultMaxTokens = 模型最大输出）
-    const settingsTokens = Number(s.aiMaxTokens) || 0;
-    const effMaxTokens = mo.max_tokens ?? (settingsTokens > 0 ? settingsTokens : (provider.defaultMaxTokens || 4096));
+    // max_tokens（issue 187 删全局 aiMaxTokens 孤儿分支）：显式 modelOptions > provider 解析结果
+    // （per-provider 覆盖 > 注册表 defaultMaxTokens = 模型最大输出）
+    const effMaxTokens = mo.max_tokens ?? (provider.defaultMaxTokens || 4096);
     const body: Record<string, any> = {
       model: effModel,
       messages: [{ role: 'user', content: promptText }],
@@ -495,6 +500,20 @@ export class AIService {
     for (const k of Object.keys(mo)) {
       if (k === 'max_tokens') continue;
       body[k] = mo[k];
+    }
+    // 采样参数（issue 187）：设置非空才发（'' = API 默认）；非法数字静默跳过；
+    // modelOptions 显式指定的同名字段优先（上方已透传，此处跳过已存在键）
+    for (const [key, settingsKey] of [
+      ['temperature', 'aiTemperature'],
+      ['top_p', 'aiTopP'],
+      ['frequency_penalty', 'aiFrequencyPenalty'],
+      ['presence_penalty', 'aiPresencePenalty'],
+    ] as const) {
+      if (body[key] !== undefined) continue;
+      const raw = String((s as Record<string, unknown>)[settingsKey] ?? '').trim();
+      if (raw === '') continue;
+      const n = Number(raw);
+      if (Number.isFinite(n)) body[key] = n;
     }
     const signal = mergedOptions.signal instanceof AbortSignal ? (mergedOptions.signal as AbortSignal) : undefined;
     const onDelta = typeof mergedOptions.onDelta === 'function' ? (mergedOptions.onDelta as (delta: string) => void) : undefined;
