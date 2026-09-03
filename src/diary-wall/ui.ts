@@ -56,6 +56,21 @@ const KIND_ICON: Record<WallMedia['kind'], string> = {
 const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
 
 /**
+ * 滚动高亮的当前月份选取（纯函数，可单测）：
+ * 取最后一个 relTop ≤ 8 的节头所属月份（relTop 为相对墙体的视口相对量，与滚动距离无关——
+ * P1 审查修复：旧实现把 relTop 与 scrollTop+8 比较，坐标系混用导致滚过半程后全部命中、
+ * 章节栏恒高亮最后月份）。全部未过线时返回 null（调用方回退首节头）。
+ */
+export function pickCurrentMonth(heads: { date: string; relTop: number }[]): string | null {
+  let current: string | null = null;
+  for (const h of heads) {
+    if (h.relTop <= 8) current = h.date.slice(0, 7);
+    else break;
+  }
+  return current;
+}
+
+/**
  * 回忆墙 AppController（照搬 password-vault AppController 模式）：
  * 单例 getInstance(config) / init() / openManager() / cleanup()。
  * 根容器 position:fixed;inset:0;z-index:var(--bz-z-overlay,1000);display:none; 挂 body。
@@ -1124,26 +1139,24 @@ export class DiaryWallAppController {
   }
 
   /** 滚动高亮：rAF 节流，当前月份在章节栏高亮并滚到可见。
-      与 scrollToMonth 同口径用 getBoundingClientRect 差值（content-visibility 下 offsetTop 不可靠，P2-1 审查修复） */
+   *  与 scrollToMonth 同口径用 getBoundingClientRect 差值（content-visibility 下 offsetTop 不可靠，P2-1 审查修复）。 */
   private setupRailHighlight(wall: HTMLElement, rail: HTMLElement, key: 'desk' | 'mob') {
     let raf: number | null = null;
     const onScroll = () => {
       if (raf !== null) return;
       raf = requestAnimationFrame(() => {
         raf = null;
-        const heads = wall.querySelectorAll<HTMLElement>('.bz-diary-wall-day-head');
-        if (!heads.length) return;
+        const headEls = wall.querySelectorAll<HTMLElement>('.bz-diary-wall-day-head');
+        if (!headEls.length) return;
         const wallRect = wall.getBoundingClientRect();
-        let currentMonth: string | null = null;
-        const scrollTop = wall.scrollTop;
-        for (let i = 0; i < heads.length; i++) {
-          const h = heads[i];
-          const relTop = h.getBoundingClientRect().top - wallRect.top;
-          if (relTop <= scrollTop + 8) {
-            currentMonth = h.dataset.date!.slice(0, 7);
-          } else break;
-        }
-        if (!currentMonth) currentMonth = heads[0].dataset.date!.slice(0, 7);
+        // relTop 是「节头顶 − 墙体顶」的视口相对量（P1 审查修复：旧实现误与
+        // scrollTop+8 比较——坐标系混用导致滚过一半后所有节头全部命中，章节栏恒高亮最后月份）
+        const items = Array.from(headEls, (h) => ({
+          date: h.dataset.date!,
+          relTop: h.getBoundingClientRect().top - wallRect.top,
+        }));
+        let currentMonth = pickCurrentMonth(items);
+        if (!currentMonth) currentMonth = items[0].date.slice(0, 7);
         rail.querySelectorAll('.bz-diary-wall-month').forEach((it) => {
           it.classList.toggle('bz-diary-wall-month--on', it.getAttribute('data-month') === currentMonth);
         });
