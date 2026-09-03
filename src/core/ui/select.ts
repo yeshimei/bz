@@ -77,6 +77,20 @@ export function uiSelect<T extends string>(opts: BzSelectOpts<T>): {
       m.appendChild(b);
     });
     el.appendChild(m);
+    // 宽度兜底：部分宿主环境（旧 WebView2 内核）把绝对定位菜单收缩宽钳回触发器宽，
+    // 溢出被选项内 ellipsis 吸收（菜单级 scrollWidth 察觉不到），须逐项比对 span 完整
+    // 文本宽取最大差，把菜单 min-width 撑过需求宽（选项 width:100% 链等量传导，菜单
+    // 加宽多少 span 就分到多少）。ellipsis 下 scrollWidth 首测可能低估，迭代至收敛
+    for (let round = 0; round < 3; round++) {
+      let delta = 0;
+      m.querySelectorAll<HTMLElement>('.bz-select-item > span').forEach((sp) => {
+        delta = Math.max(delta, sp.scrollWidth - sp.clientWidth);
+      });
+      if (delta <= 0) break;
+      const cs = getComputedStyle(m);
+      const border = (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.borderRightWidth) || 0);
+      m.style.minWidth = `${m.clientWidth + delta - border}px`;
+    }
   };
   const setValue = (v: T) => {
     current = v;
