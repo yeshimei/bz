@@ -319,7 +319,9 @@ export function showTimeline(app: App, dm: ReviewDataManager, item: ReviewItem):
     const isLast = i === history.length - 1;
     const ratingName = RATING_NAMES[h.rating] || h.rating;
     const color = RATING_COLORS[h.rating] || '#888';
-    const rText = h.R !== undefined ? `R=${Math.round(h.R * 100)}%` : '';
+    // app.ts 落盘 R 已是 0-100（Math.round(R*100)），直接取整展示；
+    // 老数据若存过 0-1 小数 → <=1 分支兼容放大
+    const rText = h.R !== undefined ? `R=${h.R <= 1 ? Math.round(h.R * 100) : Math.round(h.R)}%` : '';
     const sText = h.stability !== undefined ? `S=${h.stability}` : '';
     const meta = [rText, sText].filter(Boolean).join(' · ');
     const line = isLast ? '' : '<div style="position:absolute;left:5px;top:14px;bottom:-4px;width:2px;background:var(--background-modifier-border);"></div>';
