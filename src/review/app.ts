@@ -165,8 +165,12 @@ export const reviewApp = {
         it.reviewHistory.push({ timestamp: now.toISOString(), stage: targetStage + 1, rating });
         // 进入 FSRS 阶段时，用对应评分初始化 S
         if (enteringFsrs) {
-          it.stability = fsrs.initS(rating);
+          const initStability = fsrs.initS(rating);
+          it.stability = initStability;
           it.difficulty = rating === 'again' ? fsrs.w[4] : 0.3;
+          // ADR-0077：进入 FSRS 即把 S/D 记入历史（下游拟合配对依赖上一条含 stability/difficulty）
+          it.reviewHistory[it.reviewHistory.length - 1].stability = Math.round(initStability * 100) / 100;
+          it.reviewHistory[it.reviewHistory.length - 1].difficulty = Math.round(it.difficulty * 100) / 100;
         }
         it.nextReviewDate = nextDate.toISOString();
         if (enteringFsrs) it.completed = false; // 进入 FSRS 不算完成
@@ -199,7 +203,8 @@ export const reviewApp = {
       it.lastDifficulty = rating;
       it.totalReviews = (it.totalReviews || 0) + 1;
       if (!it.reviewHistory) it.reviewHistory = [];
-      it.reviewHistory.push({ timestamp: now.toISOString(), stage: currentStage + 1, rating, stability: Math.round(result.S * 100) / 100, R: Math.round(R * 100) });
+      // ADR-0077：difficulty 随历史落盘（拟合样本配对依赖上一条 difficulty；缺失时拟合层回退条目级值）
+      it.reviewHistory.push({ timestamp: now.toISOString(), stage: currentStage + 1, rating, stability: Math.round(result.S * 100) / 100, difficulty: Math.round(result.D * 100) / 100, R: Math.round(R * 100) });
       it.nextReviewDate = nextDate.toISOString();
 
       // ticket 098：做题会话自动评级未通过/通过联动待重做标记；其余路径 good/easy 清（ADR-0044）
