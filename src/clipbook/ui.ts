@@ -783,7 +783,12 @@ export function clipbookSettingsSchema(): SettingsSchema {
           { type: 'select', name: '摘要时机', desc: '保存后立刻生成，或仅打开文件时才补全', binding: { key: 'autoSummaryTiming' }, options: [
             { value: 'immediate', label: '保存后立刻' },
             { value: 'lazy', label: '懒触发（打开时）' },
-          ], visibleWhen: (s: any) => s.autoSummaryEnabled === true, isChild: true },
+          ], visibleWhen: (s: any) => s.autoSummaryEnabled === true, isChild: true,
+          // 时机变更即时生效：重注册监听（lazy↔immediate 切换无需重启；对齐上方自动摘要开关）
+          onChange: () => {
+            stopAutoSummary();
+            ensureAutoSummary(getApp());
+          } },
         ],
       },
       {
