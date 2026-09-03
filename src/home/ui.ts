@@ -14,6 +14,7 @@
 import { escManager } from '../core/esc-manager';
 import { notice } from '../core/notice';
 import { uiIcon } from '../core/ui';
+import { topifyZ } from '../core/dom';
 import { H } from './state';
 import { DOMAINS, DOMAIN_MAP, DOMAIN_DOT, ALL_DOMAIN_IDS } from './domains';
 import { DEFAULT_PINNED, loadHomeData, saveHomeData } from './data';
@@ -126,6 +127,7 @@ export function createOverlay(app: any): void {
       </div>
     </div>`;
   document.body.appendChild(overlay);
+  topifyZ(overlay); // ADR-0067：显示即发号（不再占死静态 400， cinema 等后开面板可压过首页）
   H.currentOverlay = overlay;
   mountIcons(overlay);
   bindEvents(overlay, app);
@@ -299,7 +301,7 @@ function openAddPick(anchor: HTMLElement): void {
   mountIcons(pick);
   const r = anchor.getBoundingClientRect();
   const pr = overlay.querySelector('.bz-home-panel')!.getBoundingClientRect();
-  pick.style.left = `${Math.max(8, Math.min(r.left - pr.left, pr.width - 240))}px`;
+  pick.style.left = `${Math.max(8, Math.min(r.left - pr.left, pr.width - 232))}px`; // 232 = .bz-home-pick 实际宽度（styles.css）
   pick.style.top = `${r.bottom - pr.top + 6}px`;
 }
 
@@ -480,6 +482,8 @@ function hidePal(): void {
 }
 
 function execPal(app: any): void {
+  const pal = H.currentOverlay?.querySelector('[data-home-pal]') as HTMLElement | null;
+  if (!pal || pal.hidden) return; // 面板隐藏时不执行残留选中（Enter/点击误触发空结果）
   const it = palItems[palSel];
   const q = H.currentOverlay?.querySelector('[data-home-q]') as HTMLInputElement | null;
   hidePal();
