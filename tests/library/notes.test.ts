@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
-import { parseBookNotes, updateComment, deleteHighlight } from '../../src/library/notes';
+import { parseBookNotes, updateComment, deleteHighlight, jumpToHighlight } from '../../src/library/notes';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 
@@ -211,5 +211,42 @@ describe('updateComment / deleteHighlight', () => {
     expect(done).toHaveBeenCalled();
     expect(hasNotice('删除高亮失败，请重试')).toBe(true);
     errSpy.mockRestore();
+  });
+
+  it('audit I：jumpToHighlight 跳转 + 150ms 后经 getMostRecentLeaf 聚焦编辑器（不再用废弃 activeLeaf）', () => {
+    vi.useFakeTimers();
+    try {
+      const focus = vi.fn();
+      const app = {
+        vault,
+        workspace: {
+          openLinkText: vi.fn(),
+          getMostRecentLeaf: vi.fn(() => ({ view: { editor: { focus } } })),
+        },
+      } as any;
+      jumpToHighlight(app, '书库/活着.md', 'h1');
+      expect(app.workspace.openLinkText).toHaveBeenCalledWith('书库/活着.md#^h1', '', false);
+      vi.advanceTimersByTime(150);
+      expect(app.workspace.getMostRecentLeaf).toHaveBeenCalledTimes(1);
+      expect(focus).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('audit I：getMostRecentLeaf 缺失/无编辑器时静默跳过（不影响跳转）', () => {
+    vi.useFakeTimers();
+    try {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const app = { vault, workspace: { openLinkText: vi.fn() } } as any;
+      expect(() => {
+        jumpToHighlight(app, '书库/活着.md', 'h1');
+        vi.advanceTimersByTime(150);
+      }).not.toThrow();
+      expect(app.workspace.openLinkText).toHaveBeenCalledTimes(1);
+      warnSpy.mockRestore();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

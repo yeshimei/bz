@@ -128,10 +128,15 @@ export function parseBookNotes(content: string, bookTitle: string): ParsedBookNo
 export function jumpToHighlight(app: any, filePath: string, highlightId: string) {
   const linkText = `${filePath}#^${highlightId}`;
   app.workspace.openLinkText(linkText, '', false);
+  // audit I：activeLeaf 已被 API 弃用（obsidian.d.ts @deprecated），改用 getMostRecentLeaf
+  // 取最近叶子；聚焦失败只告警，不影响跳转本身
   setTimeout(() => {
-    const leaf = app.workspace.activeLeaf;
-    if (leaf && leaf.view && leaf.view.editor) {
-      leaf.view.editor.focus();
+    try {
+      const leaf = app.workspace.getMostRecentLeaf?.();
+      const editor = (leaf?.view as any)?.editor;
+      if (editor && typeof editor.focus === 'function') editor.focus();
+    } catch (e) {
+      console.warn('聚焦编辑器失败:', e);
     }
   }, 150);
 }
