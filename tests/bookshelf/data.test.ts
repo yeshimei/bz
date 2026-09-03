@@ -9,7 +9,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { M, resetBookshelfState } from '../../src/bookshelf/state';
 import {
   scanMarkdownBooks, loadEpubItems, sortItems, kwFilter, currentSideItems, computeStats,
-  resolveFolderPath, formatReadingTime,
+  resolveFolderPath, formatReadingTime, rebuildItems,
 } from '../../src/bookshelf/data';
 
 function makeApp(vault: MockVault) {
@@ -263,5 +263,31 @@ describe('bookshelf 数据层', () => {
     expect(currentSideItems(items, 'reading').length).toBe(1);
     expect(currentSideItems(items, 'unread').length).toBe(1);
     expect(currentSideItems(items, 'done').length).toBe(1);
+  });
+
+  it('audit I：rebuildItems 并发交错——旧重建晚到不回写覆盖新数据（序号守卫）', async () => {
+    // 场景：重建 1 的 EPUB 读取在途时新增书目并触发重建 2；重建 2 先完成，重建 1 的
+    // 陈旧 md 快照（无 B 书）后到——旧实现会把 B 书从 M.items 挤掉
+    const vault = new MockVault();
+    vault.files.set('书库/A.md', '---\ntags: [book]\n---');
+    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
+      books: { e: { meta: { title: 'E书' }, file: { vaultPath: 'books/e.epub' } } },
+    }));
+    const app = makeApp(vault);
+    const weaveJson = vault.files.get('CONFIG/STORAGE/weave-data.json')!;
+    let calls = 0;
+    let release!: (v: string) => void;
+    (vault.adapter as any).read = (path: string) => {
+      calls++;
+      if (calls === 1) return new Promise<string>((r) => { release = r; });
+      return Promise.resolve(weaveJson);
+    };
+    const p1 = rebuildItems(app); // 旧重建：扫描只有 A，EPUB 读取挂起
+    vault.files.set('书库/B.md', '---\ntags: [book]\n---');
+    const p2 = rebuildItems(app); // 新重建：扫描 A+B，先完成
+    await p2;
+    release(weaveJson);
+    await p1;
+    expect(M.items.map((i) => i.title).sort()).toEqual(['A', 'B', 'E书']);
   });
 });

@@ -246,10 +246,16 @@ export async function loadEpubItems(app: App): Promise<BookshelfItem[]> {
   return items;
 }
 
+/** 重建在途序号（audit I）：并发 rebuild 只有最新一次落袋——旧快照（同步扫描结果）晚到时
+ *  不得回写覆盖新数据；参照 library ui 的 bookNotesLoadSeq 先例 */
+let rebuildSeq = 0;
+
 /** 重建条目列表（md 同步 + EPUB 异步并入；返回 promise 供 UI 层完成后统一渲染） */
 export async function rebuildItems(app: App): Promise<BookshelfItem[]> {
+  const seq = ++rebuildSeq;
   const mdItems = scanMarkdownBooks(app);
   const epubItems = await loadEpubItems(app);
+  if (seq !== rebuildSeq) return M.items; // 过期在途重建：已被更新一次的重建取代
   const merged = [...mdItems, ...epubItems];
   M.items.length = 0;
   M.items.push(...merged);
