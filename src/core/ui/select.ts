@@ -10,12 +10,15 @@
 import type { BzSelectOpts } from './types';
 import { uiIcon } from './icon';
 
-/** 下拉（.bz-select），返回容器 + setValue 句柄 */
-export function uiSelect<T extends string>(opts: BzSelectOpts<T>): { el: HTMLDivElement; setValue: (v: T) => void } {
+/** 下拉（.bz-select），返回容器 + setValue + detach 句柄 */
+export function uiSelect<T extends string>(opts: BzSelectOpts<T>): {
+  el: HTMLDivElement;
+  setValue: (v: T) => void;
+  detach: () => void;
+} {
   const el = document.createElement('div');
   el.className = 'bz-select' + (opts.className ? ' ' + opts.className : '');
-  el.setAttribute('role', 'button');
-  el.setAttribute('aria-haspopup', 'listbox');
+  el.setAttribute('role', 'listbox');
   el.setAttribute('aria-expanded', 'false');
   el.tabIndex = 0;
 
@@ -54,12 +57,13 @@ export function uiSelect<T extends string>(opts: BzSelectOpts<T>): { el: HTMLDiv
     m.className = 'bz-select-menu';
     m.setAttribute('role', 'listbox');
     menu = m;
-    opts.options.forEach((o) => {
+    opts.options.forEach((o, i) => {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'bz-select-item' + (o.value === current ? ' is-on' : '');
       b.setAttribute('role', 'option');
       b.setAttribute('aria-selected', String(o.value === current));
+      b.dataset.index = String(i);
       const span = document.createElement('span');
       span.textContent = o.label;
       b.appendChild(span);
@@ -89,6 +93,21 @@ export function uiSelect<T extends string>(opts: BzSelectOpts<T>): { el: HTMLDiv
     }
   };
 
+  /** 方向键导航：在当前菜单内移动 is-on 高亮 + aria-selected，Enter 确认（焦点保持在 el 上，高亮仅视觉指示） */
+  const moveFocus = (delta: number) => {
+    if (!menu) return;
+    const curIdx = opts.options.findIndex((o) => o.value === current);
+    const nextIdx = Math.min(opts.options.length - 1, Math.max(0, (curIdx < 0 ? 0 : curIdx) + delta));
+    // 仅移动高亮（不落值）；Enter/Space 才提交
+    opts.options.forEach((o, i) => {
+      const item = menu?.querySelectorAll('.bz-select-item')[i] as HTMLElement | undefined;
+      if (!item) return;
+      const on = i === nextIdx;
+      item.classList.toggle('is-on', on);
+      item.setAttribute('aria-selected', String(on));
+    });
+  };
+
   el.addEventListener('click', () => {
     if (menu) close();
     else open();
@@ -96,13 +115,43 @@ export function uiSelect<T extends string>(opts: BzSelectOpts<T>): { el: HTMLDiv
   el.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      if (menu) close();
-      else open();
+      if (menu) {
+        // 菜单开着：提交当前高亮项
+        const on = menu?.querySelector<HTMLElement>('.bz-select-item.is-on');
+        if (on && on !== el) {
+          const v = opts.options[Number(on.dataset.index)];
+          if (v) {
+            setValue(v.value);
+            opts.onChange(v.value);
+          }
+        }
+        close();
+      } else open();
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!menu) open();
+      moveFocus(e.key === 'ArrowDown' ? 1 : -1);
+    } else if (e.key === 'Escape') {
+      close();
     }
   });
-  // 点外部关闭（点 el 自身已由上方开合处理，这里只关不误开）
-  document.addEventListener('click', (e) => {
+  // 点外部关闭（点 el 自身已由上方开合处理，这里只关不误开）。
+  // 句柄持有供 detach 移除，避免每次实例永久泄漏全局监听（L5）
+  const onDocClick = (e: MouseEvent) => {
     if (menu && !el.contains(e.target as Node)) close();
-  });
-  return { el, setValue };
+  };
+  const onDocKey = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && menu) close();
+  };
+  document.addEventListener('click', onDocClick);
+  document.addEventListener('keydown', onDocKey);
+  return {
+    el,
+    setValue,
+    detach: () => {
+      document.removeEventListener('click', onDocClick);
+      document.removeEventListener('keydown', onDocKey);
+      close(false);
+    },
+  };
 }

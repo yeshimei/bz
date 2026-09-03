@@ -330,6 +330,8 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
     const initial = String(acc.read() ?? '');
     let pending: ReturnType<typeof setTimeout> | null = null;
     let last = initial;
+    /** 用户是否实际编辑过（P2-2：refreshKey 程序化改写显示值不置脏，防 blur 假写覆盖换 provider 的值） */
+    let dirty = false;
     const warn = new CommitWarn(initial, row.onCommit);
     /** 有意的落盘点：防抖到期 / 失焦 / 回车（textarea 无回车提交）——统一落盘 */
     const commit = (): void => {
@@ -337,6 +339,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
         clearTimeout(pending);
         pending = null;
       }
+      if (!dirty) return; // 未编辑（仅程序化刷新显示值）不落盘、不提示、不求值
       void acc.persist();
       warn.fire(last);
       reevaluate(); // 有意变更点重求值显隐（逐键重排会闪烁，文本类行只在 commit 点联动）
@@ -369,6 +372,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
       };
       applyPlaceholder();
       t.onChange((v: string) => {
+        dirty = true; // 用户真实输入（程序化 setValue 不经过 onChange → 不置脏）
         if (isNumber) {
           const n = parseClampedNumber(v, (row as NumberRow).min, (row as NumberRow).max);
           if (n === null) return; // 空串/非数字不写入（防脏值落盘），已有计时照常走完
@@ -405,14 +409,18 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
           origReevaluate();
         };
       }
-      // refreshKey 联动刷新：任意行变更（含 aiProvider 切换）后重读显示值写回输入框（不落盘）
+      // refreshKey 联动刷新：任意行变更（含 aiProvider 切换）后重读显示值写回输入框（不落盘）。
+      // 程序化改写须清 dirty（P2-2）：否则后续 blur 触发 commit 会把刷新后的显示值误写落盘
       if (row.refreshKey !== undefined) {
         const ref = row.refreshKey;
         customRefreshes.push(() => {
           if (currentText) {
             const snap = currentSnapshot();
             const fresh = typeof ref === 'function' ? ref(snap) : String((snap as any)[ref]);
-            if (currentText.setValue) currentText.setValue(String(fresh ?? ''));
+            if (currentText.setValue) {
+              dirty = false;
+              currentText.setValue(String(fresh ?? ''));
+            }
           }
         });
       }

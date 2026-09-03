@@ -331,6 +331,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-sw.on:hover { background: var(--bz-brand-hover); }
 .bz-sw.on::after { transform: translateX(18px); }
 .bz-sw:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 2px; }
+.bz-sw.is-disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+.bz-sw.is-disabled::after { opacity: 0.6; }
 
 /* ═══════════ 下拉 .bz-select（select.ts） ═══════════
    单行单选下拉（设置行等控件区）：触发元素 + 绝对定位选项菜单
@@ -412,7 +414,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   position: fixed;
   inset: 0;
   background: var(--bz-scrim, rgba(0, 0, 0, 0.92));
-  z-index: 900;
+  /* z-index 由 lightbox.ts 经 allocZ() 动态分配（ADR-0067），此处不设固定档 */
   display: flex;
   flex-direction: column;
   align-items: center;

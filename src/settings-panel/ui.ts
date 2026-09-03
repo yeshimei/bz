@@ -141,6 +141,8 @@ export class SettingsPanelUI {
   private navEl: HTMLElement | null = null;
   /** 保存渲染句柄，域切换时 dispose（防旧句柄 refresh 干扰） */
   private renderHandles: Array<{ refresh: () => void }> = [];
+  /** 域渲染竞态序号（P2-4：每次 renderDomain 自增，await 后校验丢弃过期渲染） */
+  private renderSeq = 0;
 
   open(): void {
     if (this.mask && this.popup) {
@@ -318,6 +320,9 @@ export class SettingsPanelUI {
    * 无 schema 的域显示空态。
    */
   private async renderDomain(pane: HTMLElement, domain: DomainDef): Promise<void> {
+    // 竞态 token（P2-4）：用户快速切换域时，前一个 schemaLoader await 完成后若已非当前域，
+    // 丢弃渲染（避免往 detached body 写、旧句柄推入新渲染任务）
+    const runId = ++this.renderSeq;
     // 清理旧渲染句柄
     this.renderHandles = [];
     pane.innerHTML = '';
@@ -340,6 +345,7 @@ export class SettingsPanelUI {
 
     try {
       const schema = await domain.schemaLoader();
+      if (runId !== this.renderSeq) return; // 已有更新的渲染任务，放弃本次结果
       body.innerHTML = '';
       const handle = renderPanelSchema(body, schema);
       this.renderHandles.push(handle);
@@ -530,6 +536,7 @@ export class SettingsPanelUI {
     popup.appendChild(body);
 
     const close = () => {
+      escHandle?.unregister();
       mask.remove();
       popup.remove();
     };
@@ -541,6 +548,15 @@ export class SettingsPanelUI {
     document.body.appendChild(mask);
     document.body.appendChild(popup);
 
+    // 子弹窗单独立层（P2-1）：后注册 → escManager 从栈顶先命中；isVisible 以 popup.isConnected
+    // 为准——子弹窗开着时 ESC 先关子弹窗，而非误关底层面板（底层 escHandle 的 isVisible
+    // 只查 mask.display，子弹窗期间底层 mask 仍 block）
+    let escHandle: ReturnType<typeof escManager.register> | null = null;
+    escHandle = escManager.register('bz-settings-panel-domain', {
+      isVisible: () => popup.isConnected,
+      close,
+    });
+
     if (domain.noSettings || !domain.schemaLoader) {
       body.appendChild(this.emptyEl(
         'settings',
@@ -551,8 +567,10 @@ export class SettingsPanelUI {
     }
 
     body.appendChild(this.loadingEl());
+    const openSeq = ++this.renderSeq; // 与 renderDomain 共用竞态序号：最新一次打开/切换生效
     try {
       const schema = await domain.schemaLoader();
+      if (openSeq !== this.renderSeq) { close(); return; } // 已被更新的打开/切换取代
       body.innerHTML = '';
       renderPanelSchema(body, schema);
       // 记录本域 schema 行（移动端搜索「设置项」段用；与桌面 renderDomain 同口径）
