@@ -251,6 +251,12 @@ describe('cinema overlay', () => {
     const item = M.items.find((i) => i.name === '想看片');
     expect(item?.status).toBe(2); // 已看
     expect(item?.rating).toBe(9.5);
+    // CM1：流转已看时观影日期刷新为当前时间（统计口径按看完时间，非加入时间）
+    const d = new Date();
+    const p = (n: number) => String(n).padStart(2, '0');
+    const today = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    expect(item?.watchDate).not.toBe('2026-05-01');
+    expect(item?.watchDate).toContain(today);
   });
 
   it('ESC 关闭：先弹窗后主面板', () => {
@@ -343,6 +349,35 @@ describe('cinema overlay', () => {
     expect(content).toContain('评分: 5');
     expect(content).toContain('影评: 好看');
     expect(content).toContain(`观影日期: ${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`);
+  });
+
+  it('CM2：新增重名影视被拦截（不落盘不留幽灵条目）', async () => {
+    const { vault, app } = seedVault();
+    openAddModalDirect(app);
+    const modal = (document.querySelector('.bz-overlay-mask') as HTMLElement).querySelector('.bz-overlay-popup') as HTMLElement;
+    const before = M.items.length;
+    (modal.querySelector('#bz-cinema-f-name') as HTMLInputElement).value = '星际穿越';
+    (modal.querySelector('#bz-cinema-f-save') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 0));
+    // 未新增条目、未新建文件（同名笔记保持原内容）
+    expect(M.items.length).toBe(before);
+    expect(vault.files.get('我的/影视/《星际穿越》.md')).toContain('评分: 9.6');
+    expect(modal.textContent).toContain('添加影视'); // 弹窗未关，可改名重试
+  });
+
+  it('CM3：卡片 data-cinema-idx 为稳定路径键，异步重排后点击仍指对条目', () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement;
+    // 键 = file.path（非数组下标）
+    expect(card.getAttribute('data-cinema-idx')).toBe('我的/影视/《星际穿越》.md');
+    // 模拟异步刷新重排（M.items 反转，旧 DOM 顺序已失效）
+    M.items.reverse();
+    card.click();
+    // 点击仍打开星际穿越详情（稳定键回查），而非重排后的其它条目
+    const modal = (document.querySelector('.bz-overlay-mask') as HTMLElement).querySelector('.bz-overlay-popup') as HTMLElement;
+    expect(modal.querySelector('.bz-cinema-dm-title')?.textContent).toBe('星际穿越');
   });
 
   it('添加弹窗：类型/状态平铺点选生效（无彩色圆 + 想看隐藏评分影评）', async () => {

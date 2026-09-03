@@ -279,25 +279,31 @@ export class VaultPwView {
   private dispatchAccountAction(d: PasswordVaultEntry, act: PwAccountAct, st: PwViewState): void {
     const t = (m: string, err = false) => this.host.toast(m, err);
     if (act === 'copy-ac') {
-      void this.host.copySensitive(d.account || '').then((ok) => (ok ? t('账号已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true)));
+      void this.host.copySensitive(d.account || '').then((ok) => (ok ? t('账号已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true)), () => t('复制失败，请手动复制', true));
     } else if (act === 'copy-pw') {
-      void this.host.copySensitive(d.password || '').then((ok) => (ok ? t('密码已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true)));
+      void this.host.copySensitive(d.password || '').then((ok) => (ok ? t('密码已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true)), () => t('复制失败，请手动复制', true));
     } else if (act === 'eye') {
       st.shownIds[d.id] = !st.shownIds[d.id];
       this.host.onPwChanged?.();
     } else if (act === 'edit') {
       this.host.openPwEntryDialog(d);
     } else if (act === 'fav') {
-      void this.dm.toggleFav(d.id).then(() => this.host.onPwChanged?.());
+      void this.dm.toggleFav(d.id).then(() => this.host.onPwChanged?.()).catch((e) => this.failToast(e));
     } else if (act === 'del') {
       this.host.askConfirm('删除密码条目', `确定删除账号「${d.account}」吗？此操作不可撤销。`, true, () => {
         void this.dm.deleteItem(d.id).then(() => {
           if (st.selAccount === d.id) st.selAccount = null;
           this.host.onPwChanged?.();
           t('已删除');
-        });
+        }).catch((e) => this.failToast(e));
       });
     }
+  }
+
+  /** E2：写动作失败统一提示 + 重渲染（数据层已回滚内存，按真实状态收敛） */
+  private failToast(e: unknown): void {
+    this.host.toast(`保存失败：${(e as Error)?.message || e}`, true);
+    this.host.onPwChanged?.();
   }
 
   private attachAccountActions(el: HTMLElement, d: PasswordVaultEntry): void {
@@ -305,17 +311,17 @@ export class VaultPwView {
       {
         icon: 'copy',
         label: '复制账号',
-        onClick: () => void this.host.copySensitive(d.account || '').then((ok) => this.host.toast(ok ? '账号已复制（60 秒后自动清空）' : '复制失败', !ok)),
+        onClick: () => void this.host.copySensitive(d.account || '').then((ok) => this.host.toast(ok ? '账号已复制（60 秒后自动清空）' : '复制失败', !ok), () => this.host.toast('复制失败', true)),
       },
       {
         icon: 'key',
         label: '复制密码',
-        onClick: () => void this.host.copySensitive(d.password || '').then((ok) => this.host.toast(ok ? '密码已复制（60 秒后自动清空）' : '复制失败', !ok)),
+        onClick: () => void this.host.copySensitive(d.password || '').then((ok) => this.host.toast(ok ? '密码已复制（60 秒后自动清空）' : '复制失败', !ok), () => this.host.toast('复制失败', true)),
       },
       {
         icon: 'star',
         label: d.fav ? '取消收藏' : '收藏',
-        onClick: () => void this.dm.toggleFav(d.id).then(() => this.host.onPwChanged?.()),
+        onClick: () => void this.dm.toggleFav(d.id).then(() => this.host.onPwChanged?.()).catch((e) => this.failToast(e)),
       },
       {
         icon: 'external-link',
@@ -332,7 +338,7 @@ export class VaultPwView {
             void this.dm.deleteItem(d.id).then(() => {
               this.host.onPwChanged?.();
               this.host.toast('已删除');
-            });
+            }).catch((e) => this.failToast(e));
           }),
       },
     ];
@@ -354,12 +360,12 @@ export class VaultPwView {
       actions.push({
         icon: 'copy',
         label: '复制最近账号',
-        onClick: () => void this.host.copySensitive(recent.account || '').then((ok) => this.host.toast(ok ? '最近账号已复制' : '复制失败', !ok)),
+        onClick: () => void this.host.copySensitive(recent.account || '').then((ok) => this.host.toast(ok ? '最近账号已复制' : '复制失败', !ok), () => this.host.toast('复制失败', true)),
       });
       actions.push({
         icon: 'key',
         label: '复制最近密码',
-        onClick: () => void this.host.copySensitive(recent.password || '').then((ok) => this.host.toast(ok ? '最近密码已复制' : '复制失败', !ok)),
+        onClick: () => void this.host.copySensitive(recent.password || '').then((ok) => this.host.toast(ok ? '最近密码已复制' : '复制失败', !ok), () => this.host.toast('复制失败', true)),
       });
     }
     actions.push({ icon: 'pencil', label: '编辑平台信息', onClick: () => this.host.openPwPlatformEdit(platform) });
@@ -372,7 +378,7 @@ export class VaultPwView {
           void this.dm.removePlatform(platform).then(() => {
             this.host.onPwChanged?.();
             this.host.toast(`已删除平台与 ${count} 个账号`);
-          });
+          }).catch((e) => this.failToast(e));
         }),
     });
     attachItemActions(el, actions, {

@@ -77,9 +77,9 @@ describe('bookshelf overlay', () => {
     expect(overlay.querySelector('.bz-bs-stat-num')?.textContent).toBe('1 本');
     // 左栏 4 项
     expect(overlay.querySelectorAll('.bz-bs-side-item').length).toBe(4);
-    // 网格 3 卡（桌面容器；移动容器同数据）
+    // 网格 3 卡：B7 单端渲染——桌面模式只渲染桌面容器，移动容器留空（免双份 DOM/图片）
     expect(gridCards(overlay).length).toBe(3);
-    expect(mGridCards(overlay).length).toBe(3);
+    expect(mGridCards(overlay).length).toBe(0);
     expect(overlay.querySelector('.bz-bs-report')?.textContent).toContain('阅读分析报告');
     closeOverlay();
   });
@@ -254,6 +254,98 @@ describe('bookshelf overlay', () => {
     const drawer2 = document.querySelector('.bz-bs-drawer-mask') as HTMLElement;
     (Array.from(drawer2.querySelectorAll('.bz-bs-drawer-opt')).find((o) => o.textContent?.includes('全部')) as HTMLElement).click();
     expect(gridCards(overlay).length).toBe(3);
+    closeOverlay();
+  });
+
+  it('B7：移动端模式（Platform.isMobile）只渲染移动容器', async () => {
+    const MockPlatform = (await import('../mock-obsidian-entry')).Platform;
+    const { vault, app } = seedVault();
+    MockPlatform.isMobile = true;
+    try {
+      await openPanel(vault, app);
+      const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+      expect(mGridCards(overlay).length).toBe(3);
+      expect(gridCards(overlay).length).toBe(0);
+    } finally {
+      MockPlatform.isMobile = false;
+    }
+    closeOverlay();
+  });
+
+  it('B8：首开加载态（rebuild 完成前显示「正在整理书架…」占位）', async () => {
+    const { vault, app } = seedVault();
+    createOverlay(app);
+    // rebuild 未完成：shelves 是加载占位而非空态文案
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    expect(overlay.querySelector('.bz-bs-shelves')?.textContent).toContain('正在整理书架');
+    await new Promise((r) => setTimeout(r, 20));
+    expect(overlay.querySelector('.bz-bs-shelves')?.textContent).not.toContain('正在整理书架');
+    expect(gridCards(overlay).length).toBe(3);
+    closeOverlay();
+  });
+
+  it('B9：空态三态区分——搜索无命中 search-x、状态筛空 funnel', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    // 搜索无命中 → search-x（mock setIcon 记录图标名到 data-icon）
+    const input = document.querySelector('#bz-bs-dsearch') as HTMLInputElement;
+    input.value = '不存在的书名';
+    input.dispatchEvent(new Event('input'));
+    await new Promise((r) => setTimeout(r, 250));
+    expect(overlay.querySelector('.bz-bs-shelves [data-icon="search-x"]')).toBeTruthy();
+    // 状态筛空（库非空、无搜索、「在读」下无书）→ funnel + 专属文案
+    input.value = '';
+    input.dispatchEvent(new Event('input'));
+    await new Promise((r) => setTimeout(r, 250));
+    M.items = M.items.filter((x) => x.title === '围城'); // 只剩已读
+    M.side = 'reading';
+    const { renderAll } = await import('../../src/bookshelf/ui');
+    renderAll(app);
+    expect(overlay.querySelector('.bz-bs-shelves')?.textContent).toContain('这个状态下还没有书');
+    expect(overlay.querySelector('.bz-bs-shelves [data-icon="funnel"]')).toBeTruthy();
+    closeOverlay();
+  });
+
+  it('B4：weave-data.json vault modify → 防抖后自动刷新（EPUB 进度联动）', async () => {
+    const { vault, app } = seedVault();
+    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
+      books: { a: { meta: { title: '百年孤独' }, file: { vaultPath: 'books/x.epub' }, reading: { position: { percent: 0.1 } } } },
+    }));
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    expect(gridCards(overlay).some((b) => b.textContent?.includes('百年孤独'))).toBe(true);
+    // Weave 外部落盘新进度 → vault modify
+    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
+      books: {
+        a: { meta: { title: '百年孤独' }, file: { vaultPath: 'books/x.epub' }, reading: { position: { percent: 0.9 } } },
+        b: { meta: { title: '新加的书' }, file: { vaultPath: 'books/y.epub' } },
+      },
+    }));
+    vault.emit('modify', vault.file('CONFIG/STORAGE/weave-data.json'));
+    await new Promise((r) => setTimeout(r, 420)); // 防抖 300ms + rebuild
+    expect(gridCards(overlay).length).toBe(5); // 3 md + 2 epub
+    const epub = gridCards(overlay).find((b) => b.textContent?.includes('百年孤独')) as HTMLElement;
+    const bar = epub.querySelector('.bz-bs-prog i') as HTMLElement;
+    expect(bar?.style.width).toBe('90%'); // 0.9 → 90（进度是条宽，非文本）
+    closeOverlay();
+  });
+
+  it('B1/B5：unloadBookshelf 注销 ESC 层 + 退订事件（面板重开后 ESC 不误关、modify 不再刷新）', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    closeOverlay();
+    unloadBookshelf(); // 注销 ESC 层 + 退订 vault modify
+    // 重新开面板（不经 ensureBookshelf：模拟卸载后层未注销的对照场景）
+    createOverlay(app);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(document.querySelector('.bz-bs-overlay')).toBeTruthy(); // ESC 层已注销：不关
+    // vault modify 不再触发刷新（退订生效）
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    vault.files.set('书库/新书.md', '---\ntags: [book]\n---');
+    vault.emit('modify', vault.file('书库/新书.md'));
+    await new Promise((r) => setTimeout(r, 420));
+    expect(gridCards(overlay).length).toBe(3); // 未刷新（新书未出现）
     closeOverlay();
   });
 });

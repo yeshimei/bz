@@ -9,10 +9,14 @@ import { escManager } from '../core/esc-manager';
 import { allocZ } from '../core/z-order';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
+import { onDomainEvent } from '../core/domain-bus';
 import { ALL_TAGS, getGroupForTag, STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED } from '../cinema/constants';
 import { getReportFolderPath } from './state';
 
 let analysisOverlay: HTMLElement | null = null;
+// MR1：vault 变更自动刷新订阅（关闭即退订）+ 防抖计时
+let analysisOffs: (() => void)[] = [];
+let analysisTimer: ReturnType<typeof setTimeout> | null = null;
 
 // 类型颜色（浅色，环形图/图例用）
 const TYPE_COLORS: Record<string, string> = {
@@ -493,8 +497,20 @@ function buildAnalysisHTML(data: any): string {
 }
 
 // ======================= 打开/关闭分析页 =======================
+
+/** MR1：退订 vault 变更自动刷新（关闭/重开前调用） */
+function unsubAnalysisRefresh(): void {
+  analysisOffs.forEach((off) => off());
+  analysisOffs = [];
+  if (analysisTimer) {
+    clearTimeout(analysisTimer);
+    analysisTimer = null;
+  }
+}
+
 /** 关闭分析窗口（ESC 与 ❌ 共用） */
 export function closeAnalysis(): void {
+  unsubAnalysisRefresh();
   if (analysisOverlay) {
     analysisOverlay.remove();
     analysisOverlay = null;
@@ -550,6 +566,7 @@ export function openAnalysisModal(app: App): void {
   header.appendChild(closeBtn);
 
   const content = document.createElement('div');
+  content.className = 'bz-movie-report-content';
   content.style.cssText = 'flex: 1; overflow-y: auto; padding: 8px 16px 16px;';
   content.innerHTML = buildAnalysisHTML(data);
 
@@ -565,4 +582,20 @@ export function openAnalysisModal(app: App): void {
 
   // ESC 层级关闭（bz esc-manager 注册，可重复覆盖）
   escManager.register('movie-analysis', { isVisible: () => !!analysisOverlay, close: () => closeAnalysis() });
+
+  // MR1：vault 变更自动刷新（对齐 cinema：300ms 防抖，仅报告目录内文件；关闭即退订）
+  unsubAnalysisRefresh();
+  const schedule = (evt: { path: string }) => {
+    if (!evt?.path || !evt.path.startsWith(getReportFolderPath() + '/')) return;
+    if (analysisTimer) clearTimeout(analysisTimer);
+    analysisTimer = setTimeout(() => {
+      analysisTimer = null;
+      if (!analysisOverlay) return;
+      const content = analysisOverlay.querySelector('.bz-movie-report-content');
+      if (content) content.innerHTML = buildAnalysisHTML(buildAnalysisData(app));
+    }, 300);
+  };
+  for (const ch of ['vault:md-created', 'vault:md-deleted', 'vault:md-modified']) {
+    analysisOffs.push(onDomainEvent<{ path: string }>(ch, (evt) => schedule(evt)));
+  }
 }

@@ -205,19 +205,26 @@ function renderMainHeadHtml(app: App): string {
 
 // ---------- 渲染：海报网格 ----------
 
+/** CM3：按稳定键回查条目（与 pcardHtml 的 data 属性一致：file.path，未落盘用 new:name） */
+function cinemaItemByKey(key: string | undefined): CinemaItem | undefined {
+  if (!key) return undefined;
+  return M.items.find((it) => (it.file?.path ?? `new:${it.name}`) === key);
+}
+
 function pcardHtml(item: CinemaItem, app: App): string {
   const badge = item.status !== STATUS_WATCHED
     ? `<span class="bz-cinema-p-badge" style="background:${statusColor(item.status)}">${statusText(item.status)}</span>` : '';
   const upgradeable = item.status !== STATUS_WATCHED;
-  const idx = M.items.indexOf(item);
+  // CM3：卡片用稳定键（file.path；未落盘新增用 name）而非数组下标——异步刷新重排后下标会指错条目
+  const key = esc(item.file?.path ?? `new:${item.name}`);
   // 灰色小字：想看/在看 = 可点状态 + 相对日期；已看 = 星星（无数字）+ 相对日期
   let metaInner = esc(relDate(item.watchDate));
   if (item.status === STATUS_WANT || item.status === STATUS_WATCHING) {
-    metaInner = `<span class="bz-cinema-st-label" data-cinema-upgrade="${idx}">${statusText(item.status)}</span> · ${metaInner}`;
+    metaInner = `<span class="bz-cinema-st-label" data-cinema-upgrade="${key}">${statusText(item.status)}</span> · ${metaInner}`;
   } else if (item.rating && item.rating > 0) {
     metaInner = `<span class="bz-cinema-p-stars">${stars(item.rating)}</span> · ${metaInner}`;
   }
-  return `<div class="bz-cinema-pcard" data-cinema-idx="${idx}">
+  return `<div class="bz-cinema-pcard" data-cinema-idx="${key}">
     ${posterBlock(item, app, 'bz-cinema-poster-wrap')}${badge}
     <div class="bz-cinema-p-name">${esc(item.name)}</div>
     <div class="bz-cinema-p-meta${upgradeable ? ' bz-cinema-p-meta-up' : ''}">${metaInner}</div></div>`;
@@ -512,6 +519,7 @@ function openEditForm(item: CinemaItem | null, app: App): void {
     const mapped = status === '已看' ? rating : status === '想看' ? -1 : 0;
     const st = status === '想看' ? STATUS_WANT : status === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
     void (async () => {
+      let newItem: CinemaItem | null = null; // CM2：新增落盘失败时回退用
       try {
         if (editing && item) {
           item.name = name; item.typeTag = tag; item.group = group;
@@ -519,7 +527,13 @@ function openEditForm(item: CinemaItem | null, app: App): void {
           await persistItem(item, app);
           // 编辑表单对齐旧 movie 语义：不发域事件（smartcat 观察只覆盖新增/快速状态/删除）
         } else {
+          // CM2：同笔记名已存在时 vault.create 会抛错，提前拦截提示
+          if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${name}》.md`)) {
+            notice('已存在同名影视，请换个名称');
+            return;
+          }
           const it: CinemaItem = { file: null, name, typeTag: tag, group, status: st, rating: mapped, watchDate: date, review, poster: null, genre: null, director: null, actors: null, region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null };
+          newItem = it;
           M.items.unshift(it);
           await persistItem(it, app);
           // 新增：发 movie 域事件（smartcat 行为流观察；ADR-0087 cinema 接管）
@@ -540,6 +554,12 @@ function openEditForm(item: CinemaItem | null, app: App): void {
         notice(editing ? '已保存' : '已添加', 'success');
         renderAll(app);
       } catch (e) {
+        // CM2：新增落盘失败回退内存条目，避免 file:null 幽灵卡
+        if (newItem && !newItem.file) {
+          const i = M.items.indexOf(newItem);
+          if (i >= 0) M.items.splice(i, 1);
+          renderAll(app);
+        }
         notice('保存失败', 'error');
         console.error(e);
       }
@@ -612,6 +632,8 @@ function openQuickStatus(item: CinemaItem, app: App): void {
     item.rating = mapped;
     if (review) item.review = review;
     else item.review = null;
+    // CM1：流转为「已看」时刷新观影日期（统计口径按看完时间，非加入时间）
+    if (item.status === STATUS_WATCHED && fromSt !== 'watched') item.watchDate = localNow();
     void (async () => {
       try {
         await persistItem(item, app);
@@ -785,15 +807,14 @@ export function createOverlay(app: App): void {
     // 快速状态升级（想看/在看 灰色小字）
     const up = t.closest('[data-cinema-upgrade]') as HTMLElement | null;
     if (up) {
-      const idx = Number(up.dataset.cinemaUpgrade);
-      const item = M.items[idx];
+      const item = cinemaItemByKey(up.dataset.cinemaUpgrade);
       if (item) openQuickStatus(item, app);
       return;
     }
     // 海报卡片 → 详情
     const pcard = t.closest('[data-cinema-idx]') as HTMLElement | null;
     if (pcard) {
-      const item = M.items[Number(pcard.dataset.cinemaIdx)];
+      const item = cinemaItemByKey(pcard.dataset.cinemaIdx);
       if (item) openDetail(item, app);
       return;
     }
@@ -832,11 +853,7 @@ export function registerEscapeHandler(): void {
   if (mainEscRegistered) return;
   mainEscRegistered = true;
   escManager.register('bz-cinema', {
-    isVisible: () => !!M.currentOverlay || !!document.querySelector('.bz-cinema-mask'),
-    close: () => {
-      const mask = document.querySelector('.bz-cinema-mask');
-      if (mask) mask.remove();
-      else closeOverlay();
-    },
+    isVisible: () => !!M.currentOverlay,
+    close: () => closeOverlay(),
   });
 }

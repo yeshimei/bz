@@ -4,7 +4,7 @@
  * articleKeyOf、excerpt、emptySidecar 容错。
  */
 // @vitest-environment node
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
@@ -132,5 +132,41 @@ describe('clipbook/store 派生', () => {
     expect(excerpt('短文本')).toBe('短文本');
     expect(excerpt('')).toBe('');
     expect(excerpt('*强调* **粗** `码`')).toBe('强调 粗 码');
+  });
+
+  it('C7：同 key 重入不丢可视时长；切换目标才归零', async () => {
+    const { setReadingSession, pauseReadingSession, __readingSessionStateForTests } = await import('../../src/clipbook/flow');
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(1_000_000);
+      setReadingSession('a');
+      vi.setSystemTime(1_000_000 + 60_000); // 可视 60s
+      setReadingSession('a'); // renderReader 重渲染重入（旧行为重置起点 → 丢 60s）
+      vi.setSystemTime(1_000_000 + 90_000);
+      pauseReadingSession();
+      // 90s 全部计入（旧实现只余 30s）
+      expect(__readingSessionStateForTests().accumMs).toBe(90_000);
+      // 同篇再进入：恢复计时并继续累计
+      setReadingSession('a');
+      expect(__readingSessionStateForTests().opened).toBe(true);
+      vi.setSystemTime(1_000_000 + 120_000);
+      pauseReadingSession();
+      expect(__readingSessionStateForTests().accumMs).toBe(120_000);
+      // 切换目标：归零重开
+      setReadingSession('b');
+      expect(__readingSessionStateForTests()).toMatchObject({ curKey: 'b', accumMs: 0, opened: true });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('C6：B站 UP 名 upInfo 回填（缺省回退 author/uid）', async () => {
+    const arts = [
+      { platform: 'B站', title: '视频', url: 'https://b23.tv/1', author: '9823496', body: 'b' },
+    ];
+    const withInfo = clipArticle(arts[0], { upInfo: { '9823496': { name: '影视飓风' } } });
+    expect(withInfo.srcName).toBe('影视飓风');
+    const noInfo = clipArticle(arts[0], { upInfo: {} });
+    expect(noInfo.srcName).toBe('9823496');
   });
 });

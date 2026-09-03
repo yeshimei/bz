@@ -95,7 +95,6 @@ function persistPinned(): void {
 /* ---------- 面板骨架 ---------- */
 
 export function createOverlay(app: any): void {
-  void ensurePinned().then(() => renderAll());
   const overlay = document.createElement('div');
   overlay.className = 'bz-home-overlay';
   overlay.innerHTML = `
@@ -130,8 +129,12 @@ export function createOverlay(app: any): void {
   H.currentOverlay = overlay;
   mountIcons(overlay);
   bindEvents(overlay, app);
-  renderAll();
-  void refreshSnapshotAndRender();
+  // HM2：先载入钉选再首次渲染，避免「还没有钉选域」空态闪现后收敛
+  void ensurePinned().then(() => {
+    if (!H.currentOverlay) return; // 载入期间已关闭
+    renderAll();
+    void refreshSnapshotAndRender();
+  });
 }
 
 /** 重新拉取跨域统计快照并重绘（面板打开时调用） */
@@ -206,6 +209,7 @@ function bindEvents(overlay: HTMLElement, app: any): void {
     // 迷你 chip
     const mini = t.closest('[data-home-mini]') as HTMLElement | null;
     if (mini) {
+      if (H.editing) return; // CM4：编辑模式禁跳，防丢编辑态
       const id = mini.dataset.homeMini || '';
       if (id) openDomain(id, app);
       return;
@@ -218,6 +222,7 @@ function bindEvents(overlay: HTMLElement, app: any): void {
     // 侧栏行
     const side = t.closest('[data-home-side]') as HTMLElement | null;
     if (side) {
+      if (H.editing) return; // CM4：编辑模式禁跳，防丢编辑态
       const id = side.dataset.homeSide || '';
       if (id) openDomain(id, app);
       return;
@@ -227,7 +232,9 @@ function bindEvents(overlay: HTMLElement, app: any): void {
   const q = overlay.querySelector('[data-home-q]') as HTMLInputElement;
   q.addEventListener('input', () => updatePal(app, q.value));
   q.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { hidePal(); q.blur(); }
+    // HM1：搜索框内 ESC 只收搜索面板（stopPropagation 截断冒泡，escManager 挂在 document 上），
+    // 再按一次才关整个首页
+    if (e.key === 'Escape') { e.stopPropagation(); hidePal(); q.blur(); }
     if (e.key === 'ArrowDown') { e.preventDefault(); movePal(1); }
     if (e.key === 'ArrowUp') { e.preventDefault(); movePal(-1); }
     if (e.key === 'Enter') { e.preventDefault(); execPal(app); }
@@ -348,6 +355,13 @@ function renderAll(): void {
   // 加域卡
   const addBtn = overlay.querySelector('[data-home-addcard]') as HTMLElement;
   addBtn.hidden = !H.editing;
+
+  // CM4：编辑模式禁用搜索入口（防跳域丢编辑态）
+  const q = overlay.querySelector('[data-home-q]') as HTMLInputElement | null;
+  if (q) {
+    q.disabled = H.editing;
+    if (H.editing) hidePal();
+  }
 
   // 迷你 chips（未钉域）
   const minis = overlay.querySelector('[data-home-minis]') as HTMLElement;

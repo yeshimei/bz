@@ -20,8 +20,10 @@ import { allocZ } from '../core/z-order';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { uiModal, uiIcon, uiChoice, uiRange, uiSelect, uiEmpty } from '../core/ui';
+import { isMobileEnv } from '../core/mobile';
 import {
   STATUS_COLORS, SIDE_DEFS, SORT_LABEL, ICON, REPORT_COMMAND_ID,
+  EMPTY_BOOKS_ICON, EMPTY_SEARCH_ICON, EMPTY_FILTER_ICON,
 } from './constants';
 import { M, resetBookshelfState, type BookshelfItem, type SideId, type SortKey } from './state';
 import { rebuildItems, getDisplayItems, computeStats, resolveFolderPath, resolveBookTag } from './data';
@@ -58,11 +60,25 @@ function coverUrl(it: BookshelfItem, app: App): string | null {
   return null;
 }
 
-/** 封面区块：有图出图（onerror 兜底隐藏），无图出占位（books 图标） */
+/** 封面区块：有图出图，无图出占位（books 图标）；坏图由 bindCoverFallback 回退占位 */
 function coverBlock(it: BookshelfItem, app: App, cls: string): string {
   const url = coverUrl(it, app);
   if (!url) return `<div class="bz-bs-cover-ph ${cls}">${iconSpan('library')}</div>`;
-  return `<div class="bz-bs-cover ${cls}"><img src="${esc(url)}" alt="" loading="lazy" onerror="this.remove()"></div>`;
+  return `<div class="bz-bs-cover ${cls}"><img src="${esc(url)}" alt="" loading="lazy"></div>`;
+}
+
+/** B4：坏图回退占位块（capture 阶段接 error 不冒泡事件；img 原位替换为占位）。
+ *  container 级一次挂载，innerHTML 重渲染不失效。 */
+function bindCoverFallback(container: HTMLElement): void {
+  container.addEventListener('error', (e) => {
+    const img = e.target as HTMLElement;
+    if (!img || img.tagName !== 'IMG') return;
+    const ph = document.createElement('div');
+    ph.className = 'bz-bs-cover-ph';
+    ph.innerHTML = iconSpan('library');
+    mountIcons(ph);
+    img.replaceWith(ph);
+  }, true);
 }
 
 /** 状态徽章色（token 引用；数据语义色） */
@@ -139,7 +155,8 @@ function bookCardHTML(it: BookshelfItem, app: App): string {
     ? `<div class="bz-bs-prog"><i style="width:${Math.min(100, it.progress)}%"></i></div>` : '';
   const quote = it.bookReview
     ? `<div class="bz-bs-quote">${esc(it.bookReview.replace(/\[\[.*?\]\]/g, '').slice(0, 48))}</div>` : '';
-  return `<div class="bz-bs-book" data-bs-id="${it.file?.path ?? it.epubVaultPath ?? ''}" data-bs-epub="${it.isEpub ? '1' : ''}">
+  // B5：路径含引号会截断 HTML 属性 → esc() 转义；回查时浏览器已解码为原值
+  return `<div class="bz-bs-book" data-bs-id="${esc(it.file?.path ?? it.epubVaultPath ?? '')}" data-bs-epub="${it.isEpub ? '1' : ''}">
     <div class="bz-bs-cover-wrap">${coverBlock(it, app, '')}${prog}
       <span class="bz-bs-statusdot" style="background:${statusColor(it.status)}"></span>${quote}
     </div>
@@ -150,18 +167,30 @@ function bookCardHTML(it: BookshelfItem, app: App): string {
 
 function renderShelves(app: App): void {
   const list = getDisplayItems();
+  // B9：空态三态区分——库空 / 搜索无命中 / 状态筛无书（图标语义各自匹配）
   const emptyCfg = !M.items.length
-    ? { icon: 'library-big', title: '书架墙还是空的', desc: `把书籍笔记放进「${resolveFolderPath()}」文件夹，并在 frontmatter 添加 tags: ${resolveBookTag()} 标签` }
-    : { icon: 'search-x', title: '没有找到相关的书', desc: '试试其他关键词，或换一个筛选' };
+    ? { icon: EMPTY_BOOKS_ICON, title: '书架墙还是空的', desc: `把书籍笔记放进「${resolveFolderPath()}」文件夹，并在 frontmatter 添加 tags: ${resolveBookTag()} 标签` }
+    : M.searchKeyword
+      ? { icon: EMPTY_SEARCH_ICON, title: '没有找到相关的书', desc: '试试其他关键词，或换一个筛选' }
+      : { icon: EMPTY_FILTER_ICON, title: '这个状态下还没有书', desc: '换一个状态筛选，或用搜索找找' };
   const gridOrEmpty = list.length
     ? `<div class="bz-bs-grid">${list.map((it) => bookCardHTML(it, app)).join('')}</div>`
     : `<div class="bz-bs-none">${uiEmpty({ icon: emptyCfg.icon, title: emptyCfg.title, desc: emptyCfg.desc }).outerHTML}</div>`;
   const dEl = M.currentOverlay?.querySelector('.bz-bs-shelves') as HTMLElement | null;
   const mEl = M.currentOverlay?.querySelector('.bz-bs-shelves-m') as HTMLElement | null;
-  if (dEl) dEl.innerHTML = gridOrEmpty;
-  if (mEl) mEl.innerHTML = gridOrEmpty;
-  if (dEl) mountIcons(dEl);
-  if (mEl) mountIcons(mEl);
+  // B7：按运行端只渲染一份网格（Platform.isMobile 静态判定；桌面/移动容器由 CSS 媒体查询切换显示），
+  // 大书库免双份 DOM/图片请求
+  const isMobile = isMobileEnv();
+  if (!isMobile && dEl) {
+    dEl.innerHTML = gridOrEmpty;
+    mountIcons(dEl);
+    bindCoverFallback(dEl);
+  }
+  if (isMobile && mEl) {
+    mEl.innerHTML = gridOrEmpty;
+    mountIcons(mEl);
+    bindCoverFallback(mEl);
+  }
 }
 
 function renderAll(app: App): void {
@@ -244,8 +273,9 @@ function todayStr(): string {
 /** 时长展示「N小时M分」解析为小时文本（直接展示 readingTimeFormat 原文即可） */
 function openBookDetail(it: BookshelfItem, app: App): void {
   const readonly = it.isEpub;
+  // B4：封面坏图由 bindCoverFallback 回退占位（src 失效触发 error）
   const cover = it.cover
-    ? `<img src="${esc(coverUrl(it, app) || '')}" alt="" onerror="this.remove()">`
+    ? `<img src="${esc(coverUrl(it, app) || '')}" alt="">`
     : `<div class="bz-bs-d-hero-ph">${iconSpan('library')}</div>`;
   const dateMeta = it.readingDate
     ? `<div class="bz-bs-d-meta"><b>阅读</b>：始于 ${esc(it.readingDate)}${it.completionDate ? ` · 读完 ${esc(it.completionDate)}` : ''}</div>`
@@ -383,6 +413,7 @@ function openBookDetail(it: BookshelfItem, app: App): void {
   }
   popup.appendChild(actions);
   mountIcons(popup);
+  bindCoverFallback(popup);
 }
 
 /** 落盘语义（md 书）：状态/进度/书评 → frontmatter（已读补 completionDate+readingDate、在读补 readingDate 清 completionDate、未读清两日期归零；书评空删键） */
@@ -546,6 +577,12 @@ export function createOverlay(app: App): void {
   bindSearch(overlay.querySelector('#bz-bs-msearch') as HTMLInputElement);
 
   mountIcons(overlay);
+  // B8：首扫加载态——rebuild 完成前 shelves 显示占位，防异步读 weave-data 时空白闪烁
+  const loadingHtml = `<div class="bz-bs-none">${uiEmpty({ icon: 'loader', title: '正在整理书架…', desc: '' }).outerHTML}</div>`;
+  const dEl0 = overlay.querySelector('.bz-bs-shelves') as HTMLElement | null;
+  const mEl0 = overlay.querySelector('.bz-bs-shelves-m') as HTMLElement | null;
+  if (dEl0) { dEl0.innerHTML = loadingHtml; mountIcons(dEl0); }
+  if (mEl0) { mEl0.innerHTML = loadingHtml; mountIcons(mEl0); }
   void rebuildItems(app).then(() => renderAll(app));
 }
 
@@ -572,14 +609,24 @@ export function closeOverlay(): void {
 // ---------- ESC（主面板） ----------
 
 let mainEscRegistered = false;
+let mainEscHandle: { unregister: () => void } | null = null;
 export function registerEscapeHandler(): void {
   if (mainEscRegistered) return;
   mainEscRegistered = true;
-  escManager.register('bz-bookshelf', {
+  // B1：句柄存模块级，unloadBookshelf 时 unregister（卸载清理闭环）
+  mainEscHandle = escManager.register('bz-bookshelf', {
     isVisible: () => !!M.currentOverlay || !!M.drawerEl,
     close: () => {
       if (M.drawerEl) closeDrawer();
       else closeOverlay();
     },
   });
+}
+
+/** 注销 ESC 层（卸载时调用；escManager 层不随插件卸载自动清理） */
+export function unregisterEscapeHandler(): void {
+  if (!mainEscRegistered) return;
+  mainEscRegistered = false;
+  mainEscHandle?.unregister();
+  mainEscHandle = null;
 }

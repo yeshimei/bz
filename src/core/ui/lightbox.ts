@@ -1,10 +1,12 @@
 /* ============================================================
  * bz 媒体灯箱（src/core/ui/lightbox.ts）
- * 在样式 .bz-lightbox（components.css 后续扩展）上提供全屏看图/视频。
+ * 在样式 .bz-lightbox（components.css）上提供全屏看图/视频。
  * 单例：同一时刻只开一个；Esc / 点背景 / ✕ 关闭。
  * 对齐 core 既有：escManager + z-order（详见下方 import）。
  * ============================================================ */
 import { uiIcon } from './icon';
+import { escManager } from '../esc-manager';
+import { allocZ } from '../z-order';
 
 export interface BzLightboxOpts {
   src: string;              // 媒体地址（img / video / audio）
@@ -15,12 +17,25 @@ export interface BzLightboxOpts {
 
 let current: HTMLDivElement | null = null;
 
+/** 灯箱打开期间锁定 body 滚动（背景内容随滚轮/触摸穿透防护）；关闭时还原 */
+function lockBodyScroll(lock: boolean): void {
+  const body = document.body;
+  if (lock) {
+    body.dataset.bzLightboxScroll = body.style.overflow || '';
+    body.style.overflow = 'hidden';
+  } else if (body.dataset.bzLightboxScroll !== undefined) {
+    body.style.overflow = body.dataset.bzLightboxScroll === '' ? '' : body.dataset.bzLightboxScroll;
+    delete body.dataset.bzLightboxScroll;
+  }
+}
+
 export function openLightbox(opts: BzLightboxOpts): { close: () => void } {
   closeLightbox(); // 单例，先关旧的
 
   const mask = document.createElement('div');
   mask.className = 'bz-lightbox';
-  mask.style.zIndex = '900';
+  // 动态发号（ADR-0067）：与 modal/overlay 共用分配器，避免固定 900 被弹窗压住的层级问题
+  mask.style.zIndex = String(allocZ());
 
   // 头部（标题 + 关闭）
   const head = document.createElement('div');
@@ -68,22 +83,27 @@ export function openLightbox(opts: BzLightboxOpts): { close: () => void } {
   mask.appendChild(media);
   mask.appendChild(foot);
   document.body.appendChild(mask);
+  lockBodyScroll(true);
 
+  let escHandle: ReturnType<typeof escManager.register> | null = null;
   function close() {
     if (current !== mask) return;
     mask.remove();
+    escHandle?.unregister();
     current = null;
-    document.removeEventListener('keydown', onKey);
+    lockBodyScroll(false);
   }
-  function onKey(e: KeyboardEvent) {
-    if (e.key === 'Escape') close();
-  }
+  // ESC 经 escManager 登记统一栈序（与 uiModal 同栈，后开先关；私挂 document 监听会被
+  // escManager 的 stopImmediatePropagation 抢先短路 → 改走 register）
+  escHandle = escManager.register('bz-lightbox', {
+    isVisible: () => mask.isConnected,
+    close,
+  });
   // 点背景（非媒体/头部/底部）关闭
   mask.addEventListener('click', (e) => {
     if (!(e.target as HTMLElement).closest('.bz-lightbox-media, .bz-lightbox-head, .bz-lightbox-foot')) close();
   });
   closeBtn.addEventListener('click', close);
-  document.addEventListener('keydown', onKey);
 
   current = mask;
   return { close };
@@ -94,5 +114,6 @@ export function closeLightbox(): void {
   if (current) {
     current.remove();
     current = null;
+    lockBodyScroll(false);
   }
 }

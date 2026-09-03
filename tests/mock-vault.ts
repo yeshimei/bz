@@ -78,12 +78,20 @@ export class MockVault {
 
   getAbstractFileByPath(path: string): any {
     if (this.files.has(path) || this.binaryFiles.has(path)) return this.file(path);
-    // 目录：收集以 path/ 开头的直接子文件
+    // 目录：收集以 path/ 开头的直接子文件 + 子文件夹对象（递归构造；对齐真实 TFolder.children）
     const prefix = path.endsWith('/') ? path : path + '/';
-    const children = [
-      ...[...this.files.keys(), ...this.binaryFiles.keys()]
-        .filter((p) => p.startsWith(prefix) && !p.slice(prefix.length).includes('/')),
-    ].map((p) => this.file(p));
+    const all = [...this.files.keys(), ...this.binaryFiles.keys()];
+    const children = all
+      .filter((p) => p.startsWith(prefix) && !p.slice(prefix.length).includes('/'))
+      .map((p) => this.file(p));
+    const subDirs = new Set(
+      all.filter((p) => p.startsWith(prefix) && p.slice(prefix.length).includes('/'))
+        .map((p) => prefix + p.slice(prefix.length).split('/')[0]),
+    );
+    for (const d of subDirs) {
+      const sub = this.getAbstractFileByPath(d);
+      if (sub) children.push(sub);
+    }
     if (children.length || this.dirs.has(path)) {
       return { path, children, isFolder: true };
     }
