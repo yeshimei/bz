@@ -1,5 +1,5 @@
 /**
- * 剪藏本设置「数据源」组（ticket 124，ADR-0060；自旧 clipping 域迁入 clipbook，ADR-0085）：
+ * 剪藏本设置「数据源」组（ticket 124，ADR-0060；自旧 clipping 域迁入 clipbook，ADR-0086）：
  * news.json 存在 → 三源开关 + UP 主名单 + 保留天数 + 状态行；缺失 → 安装引导块。
  * UI 层（jsdom 可测）；数据操作走 ./news-source-settings。
  *

@@ -1,4 +1,4 @@
-# 183 — 退役旧 news + clipping 域（并入 clipbook，ADR-0085）
+# 184 — 退役旧 news + clipping 域（并入 clipbook，ADR-0086）
 
 ## 背景
 clipbook（剪藏本融合域，ADR-0082 / issue 177）已是「剪藏本」唯一入口，旧 `src/news/`（聚合讯）与 `src/clipping/`（旧剪藏本面板）的 UI/入口早已断开（main.ts 只注册 bz-clipbook-open）。两旧域仅剩内部代码与其测试，且 home 首页磁贴仍指向已断开的 `bz-clipping-open` / `bz-news-open`（点了静默无反应）。
