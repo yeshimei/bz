@@ -1,5 +1,5 @@
 /**
- * 影院（cinema）AI 荐片测试：画像/提示词/解析/加入想看/真实调用链路/结果窗
+ * 影院（cinema）AI 荐片测试：画像/提示词/解析/加入想看/页内化真实调用链路（不弹窗）
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -7,7 +7,7 @@ import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { M, resetCinemaState } from '../../src/cinema/state';
 import { rebuildItems } from '../../src/cinema/data';
 import {
-  buildTasteProfile, buildRecommendPrompt, quickAddWant, parseRecommendJson, runAIRecommend, showResultWindow,
+  buildTasteProfile, buildRecommendPrompt, quickAddWant, parseRecommendJson, runAIRecommend,
 } from '../../src/cinema/recommend';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { setApp } from '../../src/core/app';
@@ -56,7 +56,7 @@ describe('cinema buildTasteProfile / prompt / parse', () => {
   });
 });
 
-describe('cinema quickAddWant / showResultWindow', () => {
+describe('cinema quickAddWant', () => {
   beforeEach(() => {
     resetObsidianMocks();
     resetCinemaState();
@@ -79,25 +79,9 @@ describe('cinema quickAddWant / showResultWindow', () => {
     await quickAddWant(app, '新片', '电影');
     expect((app.vault as any).files.size).toBe(before);
   });
-
-  it('结果窗：渲染推荐卡片 + 加入想看按钮 + 遮罩关闭', async () => {
-    const app = M.appRef as any;
-    showResultWindow(app, 'AI 荐片', [{ title: '星际穿越', year: '2014', director: '诺兰', type: '电影', reason: '你偏爱诺兰' }]);
-    const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
-    expect(mask).toBeTruthy();
-    expect(mask.textContent).toContain('星际穿越');
-    expect(mask.textContent).toContain('诺兰');
-    // 点加入想看
-    (mask.querySelector('.bz-cinema-rec-add') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 0));
-    expect((app.vault as any).files.get('我的/影视/《星际穿越》.md')).toContain('评分: -1');
-    // 遮罩关闭
-    mask.click();
-    expect(document.querySelector('.bz-overlay-mask')).toBeNull();
-  });
 });
 
-describe('cinema runAIRecommend（动态通知模式）', () => {
+describe('cinema runAIRecommend（页内化：等待 → 结果列表 / 失败，不弹窗）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     resetCinemaState();
@@ -106,10 +90,11 @@ describe('cinema runAIRecommend（动态通知模式）', () => {
     const vault = new MockVault();
     seedProfile(vault);
     M.appRef = mockAppWithVault(vault);
+    M.renderFn = vi.fn();
     rebuildItems(M.appRef as any);
   });
 
-  it('AI 成功 → 进度通知 → 成功 + 结果窗弹出', async () => {
+  it('AI 成功 → 页内运行态 → aiResult 就绪（不弹窗/无通知）', async () => {
     const raw = '{"recommendations":[{"title":"星际穿越","year":"2014","director":"诺兰","type":"电影","reason":"你偏爱诺兰导演的科幻风格"}]}';
     setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'test-key' }));
     resetAIProviderCache();
@@ -118,18 +103,23 @@ describe('cinema runAIRecommend（动态通知模式）', () => {
     const { requestUrl } = await import('obsidian');
     (requestUrl as any).mockResolvedValue({ status: 200, text: JSON.stringify({ choices: [{ message: { content: raw } }] }) });
 
+    // 触发后同步应处于运行中且切到 ai 视图
     const promise = runAIRecommend(M.appRef as any);
-    const progressEl = document.querySelector('.bz-notice--progress') as HTMLElement;
-    expect(progressEl).not.toBeNull();
+    expect(M.aiRunning).toBe(true);
+    expect(M.view).toBe('ai');
+    expect(M.aiWaitMsg).toContain('已分析 2 部观影历史');
+    expect(M.renderFn).toHaveBeenCalled();
     await promise;
+    expect(M.aiRunning).toBe(false);
+    expect(M.aiResult?.length).toBe(1);
+    expect(M.aiResult?.[0].title).toBe('星际穿越');
+    expect(M.aiError).toBeNull();
+    // 无任何弹窗/通知
+    expect(document.querySelector('.bz-overlay-mask')).toBeNull();
     expect(document.querySelector('.bz-notice--progress')).toBeNull();
-    expect((document.querySelector('.bz-notice--success') as HTMLElement).textContent).toContain('AI 分析完成');
-    const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
-    expect(mask.textContent).toContain('AI 荐片');
-    expect(mask.textContent).toContain('星际穿越');
   });
 
-  it('AI 失败 → 通知错误，不弹结果窗', async () => {
+  it('AI 失败 → aiError 就绪（无结果、无弹窗）', async () => {
     setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'test-key' }));
     resetAIProviderCache();
     setApp(M.appRef as any);
@@ -137,7 +127,9 @@ describe('cinema runAIRecommend（动态通知模式）', () => {
     const { requestUrl } = await import('obsidian');
     (requestUrl as any).mockResolvedValue({ status: 200, text: JSON.stringify({ choices: [{ message: { content: 'not json' } }] }) });
     await runAIRecommend(M.appRef as any);
-    expect((document.querySelector('.bz-notice--error') as HTMLElement).textContent).toContain('AI 分析失败');
+    expect(M.aiRunning).toBe(false);
+    expect(M.aiResult).toBeNull();
+    expect(M.aiError).toContain('AI 分析失败');
     expect(document.querySelector('.bz-overlay-mask')).toBeNull();
   });
 });

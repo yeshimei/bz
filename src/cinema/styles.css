@@ -84,13 +84,25 @@
 
 /* ---- 右栏 ---- */
 .bz-cinema-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-.bz-cinema-top {
-  display: flex; align-items: center; gap: var(--bz-space-sm); padding: 10px var(--bz-space-lg);
-  border-bottom: 1px solid var(--bz-border); flex-shrink: 0;
+/* 主头行（对齐待办主头行）：当前筛选名 + · N 部 + 右侧添加按钮 */
+.bz-cinema-main-head {
+  display: flex; align-items: center; gap: var(--bz-space-sm);
+  padding: 12px var(--bz-space-lg) 2px; flex-shrink: 0;
 }
-.bz-cinema-search { flex: 1; position: relative; }
+.bz-cinema-main-title { font-size: 16px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
+.bz-cinema-main-count { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
+.bz-cinema-main-spacer { flex: 1; }
+.bz-cinema-main-head .bz-btn { height: 30px; padding: 0 14px; font-size: var(--bz-font-meta); }
+.bz-cinema-top {
+  display: flex; align-items: center; gap: var(--bz-space-sm); padding: 8px var(--bz-space-lg) 4px;
+  flex-shrink: 0;
+}
+.bz-cinema-search { flex: 1; position: relative; min-width: 0; }
 .bz-cinema-search .bz-ic { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--bz-text-3); pointer-events: none; }
 .bz-cinema-search .bz-input { width: 100%; padding-left: 30px; }
+/* 排序：组件库 segmented 三档（桌面工具行；移动端隐藏——同待办） */
+.bz-cinema-sort { flex-shrink: 0; }
+.bz-cinema-sort .bz-segmented-btn { padding: 0 10px; font-size: var(--bz-font-caption); }
 .bz-cinema-content { flex: 1; overflow-y: auto; padding: var(--bz-space-md) var(--bz-space-lg) var(--bz-space-lg); display: flex; flex-direction: column; min-height: 0; }
 
 /* ---- 海报网格 ---- */
@@ -179,8 +191,13 @@
 .bz-cinema-ai-guide-title { margin-top: 14px; font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
 .bz-cinema-ai-guide-sub { margin-top: 6px; font-size: var(--bz-font-meta); color: var(--bz-text-3); line-height: 1.6; }
 
-/* 推荐结果卡（AI 结果窗内容） */
-.bz-cinema-rec-list { max-height: 60vh; overflow-y: auto; }
+/* AI 等待 / 失败（页内，不弹窗） */
+.bz-cinema-ai-wait { text-align: center; padding: 48px 16px; }
+.bz-cinema-ai-wait .bz-cinema-ai-guide-title { margin-top: 14px; }
+.bz-cinema-ai-err { color: var(--bz-danger); }
+
+/* 推荐结果卡（AI 页内列表） */
+.bz-cinema-rec-list { overflow-y: auto; }
 .bz-cinema-rec-card { display: flex; gap: var(--bz-space-md); align-items: flex-start; padding: var(--bz-space-md); border-radius: 10px; margin-bottom: 10px; background: var(--bz-surface-3); border: 1px solid var(--bz-border); }
 .bz-cinema-rec-main { flex: 1; min-width: 0; }
 .bz-cinema-rec-name { font-size: var(--bz-font-body); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
@@ -199,6 +216,8 @@
   }
   .bz-cinema-mob-only { display: inline-flex; }
   .bz-cinema-head { padding-top: max(12px, env(safe-area-inset-top)); }
+  /* 排序 segmented 桌面专属（同待办）；搜索独占一行 */
+  .bz-cinema-sort { display: none; }
   .bz-cinema-nav { display: none; } /* 移动端分类在顶部横滑条 */
   .bz-cinema-mob-nav {
     display: flex; gap: var(--bz-space-sm); padding: 10px var(--bz-space-lg); overflow-x: auto; flex-shrink: 0;

@@ -1,14 +1,12 @@
 /**
- * 影院（cinema）AI 荐片：复刻 movie/recommend.ts（真实 AI 调用 + 动态通知 + 结果窗 + 加入想看）
+ * 影院（cinema）AI 荐片：复刻 movie/recommend.ts（真实 AI 调用 + 页内等待/结果 + 加入想看）
  * - 口味画像 buildTasteProfile（加权统计类型/题材/导演/主演/地区 + 最近观影）
  * - 提示词 buildRecommendPrompt（要求真实存在、引用画像偏好）
- * - 进度通知（不弹窗不阻塞）→ 完成原地更新 → 自动弹结果窗
- * - 结果窗：遮罩点击/ESC 关闭；每条可「加入想看」建笔记
+ * - AI 页内化（用户拍板）：点入口切 AI 页 → 等待消息就地在页内显示 → 完成后结果列表就地渲染（不弹窗）
  */
 import type { App } from 'obsidian';
-import { notice, notify } from '../core/notice';
+import { notice } from '../core/notice';
 import { createAI } from '../core/ai';
-import { uiModal, uiIconBtn } from '../core/ui';
 import { STATUS_WANT, STATUS_WATCHED } from './constants';
 import type { CinemaItem } from './state';
 import { M } from './state';
@@ -137,84 +135,40 @@ tags:
   }
 }
 
-/** 结果窗（AI 荐片用）：居中卡片 + 头部 ✕（移动端；桌面遮罩/ESC）+ 内容滚动；每条可加入想看 */
-export function showResultWindow(app: App, title: string, list: any[]): void {
-  // 头部（标题 + 移动端 ✕；桌面靠遮罩/ESC——与详情弹窗约定一致）
-  const head = document.createElement('div');
-  head.className = 'bz-dialog-head';
-  const titleEl = document.createElement('span');
-  titleEl.className = 'bz-dialog-title';
-  titleEl.textContent = title;
-  const xBtn = uiIconBtn({ icon: 'x', title: '关闭' });
-  xBtn.classList.add('bz-cinema-mob-only');
-  head.appendChild(titleEl);
-  head.appendChild(xBtn);
-
-  const body = document.createElement('div');
-  body.className = 'bz-cinema-rec-list';
-
-  list.forEach((rec) => {
-    const card = document.createElement('div');
-    card.className = 'bz-cinema-rec-card';
-    const main = document.createElement('div');
-    main.className = 'bz-cinema-rec-main';
-    const name = document.createElement('div');
-    name.className = 'bz-cinema-rec-name';
-    name.textContent = `《${rec.title || rec.name || '未命名'}》${rec.year ? `（${rec.year}）` : ''}`;
-    const meta = document.createElement('div');
-    meta.className = 'bz-cinema-rec-meta';
-    meta.textContent = `${rec.type || ''}${rec.director ? ` · ${rec.director}` : ''}`;
-    const reason = document.createElement('div');
-    reason.className = 'bz-cinema-rec-reason';
-    reason.textContent = rec.reason || '';
-    main.appendChild(name);
-    main.appendChild(meta);
-    main.appendChild(reason);
-    // 加入想看按钮（组件库）
-    const addBtn = uiIconBtn({ icon: 'plus', title: '加入想看' });
-    addBtn.classList.add('bz-cinema-rec-add');
-    addBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      void quickAddWant(app, rec.title || rec.name || '', rec.type || '');
-    });
-    card.appendChild(main);
-    card.appendChild(addBtn);
-    body.appendChild(card);
-  });
-
-  const content = document.createElement('div');
-  content.appendChild(head);
-  content.appendChild(body);
-  // 弹窗骨架/ESC/遮罩由 uiModal 统一管理
-  const modal = uiModal({
-    content,
-    maxWidth: 560,
-    className: 'bz-cinema-rec-modal',
-  });
-  xBtn.addEventListener('click', () => modal.close());
-}
-
-/** AI 荐片（动态通知模式，复刻 movie runAIRecommend） */
+/**
+ * AI 荐片（页内化）：等待消息与结果都就地渲染在 AI 页内，不弹窗。
+ * 触发方确保 M.view 已切到 'ai' 且 renderAll 已渲染（工具钮/开始按钮统一走 runAIRecommend）。
+ */
 export async function runAIRecommend(app: App): Promise<void> {
-  const handle = notify('AI 分析中…', { type: 'progress' });
+  // 若从非 AI 页触发（如左栏工具钮），先切页让等待态可见
+  M.aiRunning = true;
+  M.aiWaitMsg = 'AI 正在分析你的观影口味…';
+  M.aiResult = null;
+  M.aiError = null;
+  M.view = 'ai';
+  M.renderFn?.();
+
   try {
     const profile = buildTasteProfile();
     const allNames = M.items.map((i) => i.name);
     const prompt = buildRecommendPrompt(profile, profile.recent, allNames);
-    handle.setMessage(`已分析 ${profile.total} 部观影历史，正在生成推荐…`);
+    M.aiWaitMsg = `已分析 ${profile.total} 部观影历史，正在生成推荐…`;
+    M.renderFn?.();
     const ai = createAI();
     const raw = await ai.json(prompt, {});
     const parsed = parseRecommendJson(raw);
     if (!parsed || parsed.length === 0) {
-      handle.setType('error');
-      handle.setMessage('AI 分析失败：返回格式无法解析');
+      M.aiRunning = false;
+      M.aiError = 'AI 分析失败：返回格式无法解析';
+      M.renderFn?.();
       return;
     }
-    handle.setType('success');
-    handle.setMessage(`AI 分析完成，共推荐 ${parsed.length} 部`);
-    showResultWindow(app, 'AI 荐片', parsed);
+    M.aiRunning = false;
+    M.aiResult = parsed;
+    M.renderFn?.();
   } catch (e: any) {
-    handle.setType('error');
-    handle.setMessage('AI 分析失败：' + (e.message || e));
+    M.aiRunning = false;
+    M.aiError = 'AI 分析失败：' + (e.message || e);
+    M.renderFn?.();
   }
 }
