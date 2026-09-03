@@ -221,6 +221,54 @@ describe('todo 面板', () => {
       expect(saveSpy).toHaveBeenCalled();
     });
   });
+
+  it('移动端：不写内联宽高（满屏规则由 CSS 媒体查询接管，内联样式不再压成小卡）', async () => {
+    const { app, settings } = seedVault();
+    settings.todoPanelWidth = 900;
+    settings.todoPanelHeight = 650;
+    MockPlatform.isMobile = true;
+    try {
+      openTodoPanel(app);
+      await vi.waitFor(() => {
+        expect(document.querySelector('.bz-todo-panel')).toBeTruthy();
+      });
+      const panel = document.querySelector('.bz-todo-panel') as HTMLElement;
+      expect(panel.style.width).toBe('');
+      expect(panel.style.height).toBe('');
+    } finally {
+      MockPlatform.isMobile = false;
+    }
+  });
+
+  it('设置播种：memoSortMode/memoShowArchivedByDefault 打开面板时初始化排序与已完成折叠区', async () => {
+    const { app, settings } = seedVault();
+    settings.memoSortMode = 'created';
+    settings.memoShowArchivedByDefault = true;
+    openTodoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-todo-card')).toBeTruthy();
+    });
+    expect(M.sortMode).toBe('created');
+    expect(M.showDone).toBe(true);
+    // 按创建排序生效（created 降序：最新的「给影评加封面」在前）+ 已完成折叠区展开（4 卡全显）
+    const cards = document.querySelectorAll('.bz-todo-card');
+    expect(cards.length).toBe(4);
+    expect(cards[0].textContent).toContain('给影评加封面');
+  });
+
+  it('设置播种：非法 memoSortMode 回退紧急优先；memoShowArchivedByDefault 缺省折叠', async () => {
+    const { app, settings } = seedVault();
+    settings.memoSortMode = 'bogus';
+    delete (settings as any).memoShowArchivedByDefault;
+    openTodoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-todo-card')).toBeTruthy();
+    });
+    expect(M.sortMode).toBe('priority');
+    expect(M.showDone).toBe(false);
+    // 已完成折叠区默认收起：3 张未完成卡
+    expect(document.querySelectorAll('.bz-todo-card').length).toBe(3);
+  });
 });
 
 describe('todo 编辑器', () => {

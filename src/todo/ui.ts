@@ -241,6 +241,11 @@ export function openTodoPanel(app: App): void {
   }
   TodoData.init(tryGetSettings() as any);
   const fullscreen = (tryGetSettings() as any).todoMobileDefaultFullscreen === true;
+  // 设置播种（P2）：「默认排序方式」（与 memo 共用 memoSortMode 键）与「默认显示归档」
+  // 在面板打开时初始化——此前恒「紧急优先」+ 折叠，两项设置对 todo 面板不生效
+  const sortSetting = (tryGetSettings() as any).memoSortMode;
+  M.sortMode = sortSetting === 'priority' || sortSetting === 'due' || sortSetting === 'created' ? sortSetting : 'priority';
+  M.showDone = (tryGetSettings() as any).memoShowArchivedByDefault === true;
 
   const overlay = document.createElement('div');
   overlay.className = 'bz-todo-overlay';
@@ -283,10 +288,14 @@ export function openTodoPanel(app: App): void {
   M.renderFn = () => renderAll();
 
   const panelEl = overlay.querySelector('.bz-todo-panel') as HTMLElement;
-  // 桌面尺寸记忆（ADR-0084）：flex 居中容器内改宽高即双向对称扩缩，越界值回落默认
-  const saved = savedPanelSize();
-  panelEl.style.width = `${saved.w}px`;
-  panelEl.style.height = `${saved.h}px`;
+  // 桌面尺寸记忆（ADR-0084）：flex 居中容器内改宽高即双向对称扩缩，越界值回落默认。
+  // 仅桌面写内联宽高——内联样式优先级高于移动端媒体查询的满屏规则，写了会把移动端
+  // 面板压成视口 92% 小卡（移动端尺寸交给 CSS）
+  if (!isMobileEnv()) {
+    const saved = savedPanelSize();
+    panelEl.style.width = `${saved.w}px`;
+    panelEl.style.height = `${saved.h}px`;
+  }
   applyMobileWindowFullscreen(panelEl, fullscreen);
   mountIcons(overlay);
 
