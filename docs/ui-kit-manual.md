@@ -163,7 +163,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | `uiMobStrip` | `{items: [{id, label, dot?}], value, onChange?}` | `{el, setValue}` |
 | `uiStat` | `{label, num, icon?, hint?, tone?: 'main'\|'ok'\|'warn'\|'danger'\|'text', click?, onClick?}` | `HTMLDivElement` |
 | `uiProgress` | `{value?, tone?: 'ok'\|'warn'\|'danger', thin?}` — value 0-100 钳制 | `{el, setValue}` |
-| `uiPopover` | `{anchor, options: [{id, label, icon?}], value?, emptyText?, onPick?}` — anchor 须在 position:relative 容器内，浮层挂其父元素 | `{open, close, setValue, setOptions}` |
+| `uiPopover` | `{anchor, options: [{id, label, icon?}], value?, emptyText?, onPick?}` — anchor 须在 position:relative 容器内，浮层挂其父元素 | `{open, close, setValue, setOptions, detach}` |
 | `uiIcon` | `(name, extraClass?)` | `HTMLElement` |
 | `uiResizable` | `(el, {edge?, minW?, minH?, maxW?, maxH?, onChange?, persist?: {load?, save?}})` | `{detach}` |
 | `openLightbox` | `{src, type?, title?, caption?}` | `{close}`；`closeLightbox()` |

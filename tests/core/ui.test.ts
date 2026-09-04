@@ -962,6 +962,26 @@ describe('bz ui 组件库', () => {
       pop.open();
       expect(wrap.querySelector('.bz-popover-empty')!.textContent).toBe('无候选');
     });
+
+    it('detach：关浮层并移除 document 监听（外点/Esc 不再触发关浮层逻辑）', () => {
+      const pick = vi.fn();
+      const { wrap, pop } = build(pick);
+      const rmSpy = vi.spyOn(document, 'removeEventListener');
+      pop.open();
+      expect(wrap.querySelector('.bz-popover')).not.toBeNull();
+      pop.detach(); // 开着时 detach：关层 + 摘监听
+      expect(wrap.querySelector('.bz-popover')).toBeNull();
+      expect(rmSpy).toHaveBeenCalledWith('click', expect.any(Function));
+      expect(rmSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
+      rmSpy.mockRestore();
+      // 监听已移除：外点 / Esc 后无关浮层副作用（层保持关闭、onPick 不误触）
+      document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      expect(wrap.querySelector('.bz-popover')).toBeNull();
+      expect(pick).not.toHaveBeenCalled();
+      // 关着时 detach 幂等（无层可关，不抛错）
+      expect(() => pop.detach()).not.toThrow();
+    });
   });
 
   describe('uiResizable persist 尺寸记忆（ADR-0094）', () => {

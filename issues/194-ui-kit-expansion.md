@@ -17,7 +17,7 @@
 ### ② 组件库（本票主体）
 - 新工厂 8 文件 9 导出：`icons.ts`（uiIconSpan + mountIcons）、`search.ts`、`mainhead.ts`、`rail.ts`、`mobstrip.ts`、`stat.ts`、`progress.ts`、`popover.ts`
 - `resize.ts`：`uiResizable` 增可选 `persist: { load?, save? }`——挂载 load 恢复（钳 min/max + 视口 92%）、onChange 防抖 300ms save、detach flush 尾值；不传行为不变
-- `types.ts` +9 类型；`index.ts` 转发桶同步
+- `types.ts` +8、`resize.ts` +1（BzResizablePersist）；`index.ts` 转发桶同步
 
 ### ③ 文档
 - `docs/ui-kit-manual.md`：§3.1 token 表、§3.2 组件类表（+40 行）、§4 工厂表（+9 行 + uiResizable persist）、§5 域接入规范补「新域主面板一律 .bz-panel-overlay/.bz-panel-frame + .bz-panel-head」
@@ -27,7 +27,7 @@
 - 不动存量域（全域替换另票）；不动 `select.ts`/`.bz-select-menu`（A4 合并延后）；不新增工厂范围外的空壳工厂（skip 理由见 ADR-0094）
 
 ## 验收
-- [x] `pnpm vitest run tests/core/ui.test.ts` 单文件绿（89 用例，净增 31：结构/类名/事件回调/setValue/persist 防抖）
+- [x] `pnpm vitest run tests/core/ui.test.ts` 单文件绿（89 用例，净增 37（52→89）：结构/类名/事件回调/setValue/persist 防抖）
 - [x] `pnpm exec tsc --noEmit` 干净
 - [x] `pnpm test` 全量绿
 - [x] 手册三处回写 + ADR-0094 + CONTEXT.md 共享层同步

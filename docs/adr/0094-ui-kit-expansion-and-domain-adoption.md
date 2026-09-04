@@ -26,7 +26,7 @@
 
 ## 后果
 
-- `src/core/ui/index.ts` 导出面扩大（+9 工厂 +9 类型）；测试 `tests/core/ui.test.ts` +31 用例（结构/类名/事件/句柄/persist 防抖）。
+- `src/core/ui/index.ts` 导出面扩大（+9 工厂 +9 类型）；测试 `tests/core/ui.test.ts` 净增 37 用例（52→89：结构/类名/事件/句柄/persist 防抖）。
 - 存量域样式零变化（本批未替换任何域）；根 `styles.css` 需构建聚合后才见新类。
 - 全域替换批次遗留：8 域面板壳/头行、6 域搜索、6-8 域侧栏等的替换与域内旧类删除；`.bz-select` 与 `.bz-popover` 的合并（A4）延后。
 - 手册已同步：ui-kit-manual §3.1/§3.2/§4/§5、ui-design-manual §6.4。
