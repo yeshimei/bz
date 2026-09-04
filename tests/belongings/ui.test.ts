@@ -4,7 +4,7 @@
  * 旧 ui.test.ts / extra.test.ts / ui-cov.test.ts 引用已删除 API（openBelongingsPanel /
  * addBelongingsItemCommand / showSortModal）编译失败——三文件合并重写于此，覆盖新模块契约：
  *   src/belongings/ui.ts：openPanel（toggle）/ openForm / cleanupBelongings / belongingSettingsSchema；
- *   DOM：.bz-bel-overlay > .bz-bel-panel → 左状态栏 + 移动 chips → 搜索/年份 → 统计卡 →
+ *   DOM：.bz-panel-overlay > .bz-bel-panel → 左状态栏 + 移动 chips → 搜索/年份 → 统计卡 →
  *   年→月时间轴行（行 = 名称/状态徽章/分类名·日期/天数/价格/日均副行）；
  *   行操作桌面右键/单击跟手菜单、移动底部抽屉（core/item-actions）；删除走 core/flow-dialog
  *   （#__shared_confirm_*）；动作发域事件（onDomainEvent('belongings') spy 断言载荷）；
@@ -50,7 +50,7 @@ function seed(vault: MockVault, items: Record<string, any>, extra: Record<string
   vault.files.set(DATA_PATH, JSON.stringify({ version: '1.0', last_updated: '2025-01-01T00:00:00.000Z', items, ...extra }));
 }
 
-const panel = () => document.querySelector('.bz-bel-overlay') as HTMLElement | null;
+const panel = () => document.querySelector('.bz-panel-overlay') as HTMLElement | null;
 const panelOf = () => document.querySelector('.bz-bel-panel') as HTMLElement | null;
 const content = () => document.querySelector('[data-bel-content]') as HTMLElement | null;
 const stats = () => document.querySelector('[data-bel-stats]') as HTMLElement | null;
@@ -114,7 +114,7 @@ const saveBtn = () => formMask().querySelector('#bm-save') as HTMLButtonElement;
 const formTitle = () => formMask().querySelector('.bz-bel-form-title')!.textContent!;
 /** 从面板主头行点「记一笔」开表单 */
 function openAddForm(overlayEl: HTMLElement) {
-  (overlayEl.querySelector('.bz-bel-main-head [data-bel-add]') as HTMLElement).click();
+  (overlayEl.querySelector('.bz-main-head [data-bel-add]') as HTMLElement).click();
 }
 
 /** 每用例前戏（清 DOM/通知/浮层/mock 计数） */
@@ -149,7 +149,7 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
   it('openPanel：加载空库 → 面板骨架齐全 + 空态文案（这里还没有物品）+ 首建数据文件', async () => {
     await openPanel();
     expect(panelOf()).not.toBeNull();
-    expect(panelOf()!.querySelector('.bz-bel-title')!.textContent).toBe('归物本');
+    expect(panelOf()!.querySelector('.bz-panel-title')!.textContent).toBe('归物本');
     // 骨架：左状态栏 / 移动 chips / 移动搜索行 / 统计 / 计数 / 年份下拉
     expect(panel()!.querySelector('[data-bel-status]')).not.toBeNull();
     expect(panel()!.querySelector('[data-bel-mobstatus]')).not.toBeNull();
@@ -160,7 +160,7 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     // 空态
     expect(content()!.textContent).toContain('这里还没有物品');
     // 左栏计数：全部 0 + 四态 0
-    const cnts = [...document.querySelectorAll('[data-bel-status] .bz-bel-nav-cnt')].map((e) => e.textContent);
+    const cnts = [...document.querySelectorAll('[data-bel-status] .bz-rail-count')].map((e) => e.textContent);
     expect(cnts).toEqual(['0', '0', '0', '0', '0']);
     // 空库首建（统一读写语义：缺失建文件）
     expect(vault.files.has(DATA_PATH)).toBe(true);
@@ -169,11 +169,11 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
   it('左栏含全部 + 四态（key 语义 __all/using/idle/sold/discard），默认选中全部', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1' }) });
     await openPanel();
-    const sts = [...document.querySelectorAll('[data-bel-status] [data-bel-st]')].map((e) => (e as HTMLElement).dataset.belSt);
+    const sts = [...document.querySelectorAll('[data-bel-status] [data-id]')].map((e) => (e as HTMLElement).dataset.id);
     expect(sts).toEqual(['__all', 'using', 'idle', 'sold', 'discard']);
-    const names = [...document.querySelectorAll('[data-bel-status] .bz-bel-side-name')].map((e) => e.textContent);
+    const names = [...document.querySelectorAll('[data-bel-status] .bz-rail-name')].map((e) => e.textContent);
     expect(names).toEqual(['全部', '使用中', '闲置', '已转卖', '已丢弃']);
-    expect(document.querySelector('[data-bel-status] .bz-bel-nav-active')!.getAttribute('data-bel-st')).toBe('__all');
+    expect(document.querySelector('[data-bel-status] .bz-rail-item.on')!.getAttribute('data-id')).toBe('__all');
   });
 
   it('toggle：已开再 openPanel 关闭（overlay 移除）；重复关闭安全（幂等）', async () => {
@@ -193,7 +193,7 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     const p1 = openPanel();
     const p2 = openPanel(); // 首次 await loadDatabase 期间同步重入
     await Promise.all([p1, p2]);
-    expect(document.querySelectorAll('.bz-bel-overlay')).toHaveLength(1);
+    expect(document.querySelectorAll('.bz-panel-overlay')).toHaveLength(1);
     expect(panelOf()).not.toBeNull();
     // 重入被忽略后 toggle 语义不受影响：再开一次仍能正常关闭
     await openPanel();
@@ -202,14 +202,14 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
 
   it('主按钮开表单；表单取消钮关闭；表单遮罩 mousedown 关闭；面板不受影响', async () => {
     await openPanel();
-    (panel()!.querySelector('.bz-bel-main-head [data-bel-add]') as HTMLElement).click();
+    (panel()!.querySelector('.bz-main-head [data-bel-add]') as HTMLElement).click();
     expect(document.querySelector('.bz-bel-form-mask')).not.toBeNull();
     // 取消钮关闭
     (document.querySelector('[data-bm-cancel]') as HTMLElement).click();
     expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
     expect(panel()).not.toBeNull();
     // 遮罩 mousedown 关闭（表单关走 mask/取消钮，无独立 esc 注册）
-    (panel()!.querySelector('.bz-bel-main-head [data-bel-add]') as HTMLElement).click();
+    (panel()!.querySelector('.bz-main-head [data-bel-add]') as HTMLElement).click();
     (document.querySelector('.bz-bel-form-mask') as HTMLElement).dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
     expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
     expect(panel()).not.toBeNull();
@@ -312,10 +312,10 @@ describe('归物本渲染（统计卡 / 时间轴 / 行字段 / 脏数据容错�
         item_3: makeItem({ id: 'item_3', name: '已卖耳机', purchase_price: 500, current_status: '已转卖' }),
       });
       await open(vault);
-      const cards = [...stats()!.querySelectorAll('.bz-bel-stat-main, .bz-bel-stat')] as HTMLElement[];
-      const labelOf = (el: HTMLElement) => el.querySelector('.bz-bel-stat-label')!.textContent || '';
-      const valueOf = (el: HTMLElement) => el.querySelector('.bz-bel-stat-value')!.textContent || '';
-      const main = cards.find((c) => c.classList.contains('bz-bel-stat-main'))!;
+      const cards = [...stats()!.querySelectorAll('.bz-stat--main, .bz-stat')] as HTMLElement[];
+      const labelOf = (el: HTMLElement) => el.querySelector('.bz-stat-label')!.textContent || '';
+      const valueOf = (el: HTMLElement) => el.querySelector('.bz-stat-num')!.textContent || '';
+      const main = cards.find((c) => c.classList.contains('bz-stat--main'))!;
       expect(labelOf(main)).toContain('总资产');
       expect(valueOf(main)).toBe('￥500'); // 300+200（转卖/丢弃不计）
       expect(labelOf(cards[1])).toContain('日均成本');
@@ -432,7 +432,7 @@ describe('归物本渲染（统计卡 / 时间轴 / 行字段 / 脏数据容错�
     });
     await open(vault);
     expect(countEl()!.textContent).toBe('2 件 · 总投入 ￥300');
-    (document.querySelector('[data-bel-status] [data-bel-st="using"]') as HTMLElement).click();
+    (document.querySelector('[data-bel-status] [data-id="using"]') as HTMLElement).click();
     expect(countEl()!.textContent).toBe('1 件');
   });
 });
@@ -458,15 +458,15 @@ describe('归物本筛选（状态 / 年份 / 搜索 / 年节折叠）', () => {
     });
     await open(vault);
     expect(rows()).toHaveLength(2);
-    const usingBtn = document.querySelector('[data-bel-status] [data-bel-st="using"]') as HTMLElement;
+    const usingBtn = document.querySelector('[data-bel-status] [data-id="using"]') as HTMLElement;
     usingBtn.click();
     expect(rows()).toHaveLength(1);
     expect(rows()[0].textContent).toContain('用着的');
-    expect(document.querySelector('[data-bel-status] [data-bel-st="using"]')!.classList.contains('bz-bel-nav-active')).toBe(true);
-    expect(document.querySelector('[data-bel-status] .bz-bel-nav-active')!.getAttribute('data-bel-st')).toBe('using');
-    (document.querySelector('[data-bel-status] [data-bel-st="using"]') as HTMLElement).click();
+    expect(document.querySelector('[data-bel-status] [data-id="using"]')!.classList.contains('on')).toBe(true);
+    expect(document.querySelector('[data-bel-status] .bz-rail-item.on')!.getAttribute('data-id')).toBe('using');
+    (document.querySelector('[data-bel-status] [data-id="using"]') as HTMLElement).click();
     expect(rows()).toHaveLength(2);
-    expect(document.querySelector('[data-bel-status] .bz-bel-nav-active')!.getAttribute('data-bel-st')).toBe('__all');
+    expect(document.querySelector('[data-bel-status] .bz-rail-item.on')!.getAttribute('data-id')).toBe('__all');
   });
 
   it('筛选计数：状态栏 + 移动 chips 同源计数正确', async () => {
@@ -476,16 +476,16 @@ describe('归物本筛选（状态 / 年份 / 搜索 / 年节折叠）', () => {
       item_3: makeItem({ id: 'item_3', name: '丙', current_status: '已丢弃' }),
     });
     await open(vault);
-    const cnts = [...document.querySelectorAll('[data-bel-status] .bz-bel-nav-cnt')].map((e) => e.textContent);
+    const cnts = [...document.querySelectorAll('[data-bel-status] .bz-rail-count')].map((e) => e.textContent);
     expect(cnts).toEqual(['3', '1', '1', '0', '1']);
-    const chipCnts = [...document.querySelectorAll('[data-bel-mobstatus] .bz-bel-chip-cnt')].map((e) => e.textContent);
+    const chipCnts = [...document.querySelectorAll('[data-bel-mobstatus] .bz-chip-cnt')].map((e) => e.textContent);
     expect(chipCnts).toEqual(['3', '1', '1', '0', '1']);
   });
 
   it('筛选无匹配 → 空态（没有符合条件的物品）', async () => {
     seed(vault, { item_u: makeItem({ id: 'item_u', name: '用着的' }) });
     await open(vault);
-    (document.querySelector('[data-bel-status] [data-bel-st="sold"]') as HTMLElement).click();
+    (document.querySelector('[data-bel-status] [data-id="sold"]') as HTMLElement).click();
     expect(rows()).toHaveLength(0);
     expect(content()!.querySelector('.bz-empty-title')!.textContent).toBe('没有符合条件的物品');
   });
@@ -502,7 +502,7 @@ describe('归物本筛选（状态 / 年份 / 搜索 / 年节折叠）', () => {
       chipUsing.click();
       expect(rows()).toHaveLength(1);
       expect(rows()[0].textContent).toContain('用着的');
-      expect(document.querySelector('[data-bel-mobstatus] [data-bel-st="using"]')!.classList.contains('bz-bel-mobchip-active')).toBe(true);
+      expect(document.querySelector('[data-bel-mobstatus] [data-bel-st="using"]')!.classList.contains('is-on')).toBe(true);
       (document.querySelector('[data-bel-mobstatus] [data-bel-st="using"]') as HTMLElement).click();
       expect(rows()).toHaveLength(2);
     } finally {
@@ -525,7 +525,7 @@ describe('归物本筛选（状态 / 年份 / 搜索 / 年节折叠）', () => {
     expect(rows()).toHaveLength(1);
     expect(rows()[0].textContent).toContain('甲');
     // 年份×状态组合 → 无匹配空态（筛选/搜索语境文案）
-    (document.querySelector('[data-bel-status] [data-bel-st="idle"]') as HTMLElement).click();
+    (document.querySelector('[data-bel-status] [data-id="idle"]') as HTMLElement).click();
     expect(rows()).toHaveLength(0);
     expect(content()!.querySelector('.bz-empty-title')!.textContent).toBe('没有符合条件的物品');
   });
@@ -595,13 +595,13 @@ describe('归物本筛选（状态 / 年份 / 搜索 / 年节折叠）', () => {
       item_2: makeItem({ id: 'item_2', name: '乙' }),
     });
     await open(vault);
-    const navCnt = document.querySelector('[data-bel-status] .bz-bel-nav-cnt')!.textContent;
+    const navCnt = document.querySelector('[data-bel-status] .bz-rail-count')!.textContent;
     const inp = searchInp()!;
     inp.value = '甲';
     inp.dispatchEvent(new Event('input'));
     await tick(250);
     expect(rows()).toHaveLength(1);
-    expect(document.querySelector('[data-bel-status] .bz-bel-nav-cnt')!.textContent).toBe(navCnt);
+    expect(document.querySelector('[data-bel-status] .bz-rail-count')!.textContent).toBe(navCnt);
   });
 
   it('年节折叠/展开：点头部折叠出展开条；点展开条恢复', async () => {
@@ -924,15 +924,15 @@ describe('归物本表单（记一笔 / 编辑）', () => {
 
   it('分类下拉：输入过滤 + 选项点击回填（弹层收起）', async () => {
     await open(vault);
-    (panel()!.querySelector('.bz-bel-main-head [data-bel-add]') as HTMLElement).click();
+    (panel()!.querySelector('.bz-main-head [data-bel-add]') as HTMLElement).click();
     catInp().value = '手机';
     catInp().dispatchEvent(new Event('input'));
-    const filtered = [...formMask().querySelectorAll('.bz-bel-catopt')] as HTMLElement[];
+    const filtered = [...formMask().querySelectorAll('.bz-popover-item')] as HTMLElement[];
     expect(filtered.length).toBeGreaterThan(0);
     expect(filtered.every((o) => o.textContent!.includes('手机'))).toBe(true);
     filtered[0].click();
     expect(catInp().value).toBe(filtered[0].dataset.cat);
-    expect(formMask().querySelector('.bz-bel-catpop')).toBeNull();
+    expect(formMask().querySelector('.bz-popover')).toBeNull();
   });
 
   it('状态单选平铺：点选切换 is-on；保存按所选状态落盘', async () => {
@@ -955,7 +955,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
 
   it('正常保存：8 字段 items 落盘（保存结构零冗余）+ add 事件载荷 + notice + 表单关 + 列表出现', async () => {
     await open(vault);
-    (panel()!.querySelector('.bz-bel-main-head [data-bel-add]') as HTMLElement).click();
+    (panel()!.querySelector('.bz-main-head [data-bel-add]') as HTMLElement).click();
     nameInp().value = '新显示器';
     catInp().value = '🖥 显示器';
     priceInp().value = '1299';
@@ -1161,7 +1161,7 @@ describe('归物本自动刷新 / 事件载荷 / schema / XSS', () => {
   it('自写同路径 modify 不丢内存新值（saveAndRender 后模拟外部事件：回读数据一致，列表仍在）', async () => {
     seed(vault, {});
     await open(vault);
-    (panel()!.querySelector('.bz-bel-main-head [data-bel-add]') as HTMLElement).click();
+    (panel()!.querySelector('.bz-main-head [data-bel-add]') as HTMLElement).click();
     nameInp().value = '新物品';
     priceInp().value = '10';
     saveBtn().click();
@@ -1188,7 +1188,7 @@ describe('归物本自动刷新 / 事件载荷 / schema / XSS', () => {
     await flush();
     expect(events[0]).toMatchObject({ kind: 'status', title: '键盘', status: '闲置' });
     // add（载荷 = 落盘 item）
-    (panel()!.querySelector('.bz-bel-main-head [data-bel-add]') as HTMLElement).click();
+    (panel()!.querySelector('.bz-main-head [data-bel-add]') as HTMLElement).click();
     nameInp().value = '鼠标';
     catInp().value = '🖱 鼠标';
     priceInp().value = '99';
@@ -1345,7 +1345,7 @@ describe('统计卡可点筛选（ticket 189）', () => {
     expect(rows().map((r) => r.textContent).join('|')).toContain('用着');
     expect(rows().map((r) => r.textContent).join('|')).toContain('闲置');
     // 合成筛选下左栏无四态高亮（asset 非四态之一，「全部」也不亮）
-    expect(document.querySelector('[data-bel-status] .bz-bel-nav-active')).toBeNull();
+    expect(document.querySelector('[data-bel-status] .bz-rail-item.on')).toBeNull();
     // 再点取消
     (document.querySelector('[data-bel-statclick="asset"]') as HTMLElement).click();
     expect(rows()).toHaveLength(4);
@@ -1358,7 +1358,7 @@ describe('统计卡可点筛选（ticket 189）', () => {
     });
     await open(vault);
     // 预设三层筛选
-    (document.querySelector('[data-bel-status] [data-bel-st="using"]') as HTMLElement).click();
+    (document.querySelector('[data-bel-status] [data-id="using"]') as HTMLElement).click();
     expect(rows()).toHaveLength(1);
     const sel = yearSel()!;
     sel.value = '2024';
@@ -1373,7 +1373,7 @@ describe('统计卡可点筛选（ticket 189）', () => {
     expect(rows()).toHaveLength(2);
     expect(yearSel()!.value).toBe('');
     expect(searchInp()!.value).toBe('');
-    expect(document.querySelector('[data-bel-status] .bz-bel-nav-active')!.getAttribute('data-bel-st')).toBe('__all');
+    expect(document.querySelector('[data-bel-status] .bz-rail-item.on')!.getAttribute('data-id')).toBe('__all');
   });
 });
 
@@ -1488,9 +1488,9 @@ describe('出离闭环：售价回本 + 表单出离字段（ticket 189 ADR-0089
       });
       await open(vault);
       // 回本 =（300 + 500 − 200）/（379 + 214）= 600 / 593 ≈ 1.01
-      const cards = [...document.querySelectorAll('[data-bel-stats] .bz-bel-stat, [data-bel-stats] .bz-bel-stat-main')] as HTMLElement[];
+      const cards = [...document.querySelectorAll('[data-bel-stats] .bz-stat, [data-bel-stats] .bz-stat--main')] as HTMLElement[];
       const avgCard = cards.find((c) => c.textContent!.includes('日均成本'))!;
-      expect(avgCard.querySelector('.bz-bel-stat-value')!.textContent).toBe('￥1.01');
+      expect(avgCard.querySelector('.bz-stat-num')!.textContent).toBe('￥1.01');
       // 转卖行副行：陪伴封口 214 天 + 售出 ￥200
       const rowS = rows().find((r) => r.dataset.belId === 'is')!;
       expect(rowS.querySelector('.bz-bel-daily')!.textContent).toBe('陪伴 214 天 · 售出 ￥200');
@@ -1586,7 +1586,7 @@ describe('默认状态筛选接线（issue 194）', () => {
     });
     const overlay = await open(vault, { belongingsDefaultStatus: 'idle' });
     // 侧栏激活项 = 闲置
-    const active = overlay.querySelector('.bz-bel-side-item.bz-bel-nav-active');
+    const active = overlay.querySelector('.bz-rail-item.on');
     expect(active?.textContent).toContain('闲置');
     // 内容只渲染闲置件
     const text = content()!.textContent || '';
@@ -1602,7 +1602,7 @@ describe('默认状态筛选接线（issue 194）', () => {
       b: makeItem({ id: 'b', name: '旧相机', current_status: '闲置' }),
     });
     const overlay = await open(vault, { belongingsDefaultStatus: 'bogus' });
-    const active = overlay.querySelector('.bz-bel-side-item.bz-bel-nav-active');
+    const active = overlay.querySelector('.bz-rail-item.on');
     expect(active?.textContent).toContain('全部');
     const text = content()!.textContent || '';
     expect(text).toContain('机械键盘');
