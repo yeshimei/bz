@@ -369,15 +369,16 @@ describe('cinema overlay', () => {
     openCinemaAnalysis(app);
     const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
     expect(overlay.querySelector('.bz-cinema-page-sub')?.textContent).toBe('4 部 · 已看 2 · 2026');
-    // 外部落盘新条目 → vault:md-created 域事件 → 300ms 防抖后自动重算分析页
+    // 外部落盘新条目 → vault:md-created 域事件 → 300ms 防抖后自动重算分析页（轮询等防抖落地，不钉时长）
     vault.files.set('我的/影视/《新片》.md', md(`---
 tags: [电影]
 评分: 8
 观影日期: 2026-08-02
 ---`));
     emitDomainEvent('vault:md-created', { path: '我的/影视/《新片》.md' });
-    await new Promise((r) => setTimeout(r, 420));
-    expect(overlay.querySelector('.bz-cinema-page-sub')?.textContent).toBe('5 部 · 已看 3 · 2026');
+    await vi.waitFor(() => {
+      expect(overlay.querySelector('.bz-cinema-page-sub')?.textContent).toBe('5 部 · 已看 3 · 2026');
+    });
   });
 
   it('AI 结果页反馈闭环：上次结果先展示 + 换一批 + 已在库中禁用 + 豆瓣外链 + 等待页大 spinner', () => {
