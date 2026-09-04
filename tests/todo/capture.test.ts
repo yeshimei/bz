@@ -341,20 +341,25 @@ describe('composer 剪藏场景剪贴板预填', () => {
     void app;
   });
 
-  it('剪贴板读取失败（权限拒绝）：静默不抛错', async () => {
+  it('剪贴板读取失败（权限拒绝）：聚焦触发预填链路但走静默分支（不预填、不弹提示）', async () => {
     const { app } = seed([], { memoDefaultScene: '剪藏' });
+    const readText = vi.fn(() => Promise.reject(new Error('denied')));
     Object.defineProperty(navigator, 'clipboard', {
-      value: { readText: vi.fn(() => Promise.reject(new Error('denied'))) },
-      configurable: true,
+      value: { readText, configurable: true },
     });
     openTodoPanel(app);
     await vi.waitFor(() => {
       expect(document.querySelector('[data-todo-composer-input]')).toBeTruthy();
     });
     const input = document.querySelector('[data-todo-composer-input]') as HTMLInputElement;
-    expect(() => input.focus()).not.toThrow();
-    await new Promise((r) => setTimeout(r, 80));
+    input.focus();
+    // 聚焦确实触发了读取链路（防止 focus 未绑定导致的假绿）
+    await vi.waitFor(() => {
+      expect(readText).toHaveBeenCalled();
+    });
+    // 权限拒绝走静默分支：输入不被预填、也无任何通知（含错误提示）
     expect(input.value).toBe('');
+    expect(document.querySelectorAll('.bz-notice-msg').length).toBe(0);
     void app;
   });
 

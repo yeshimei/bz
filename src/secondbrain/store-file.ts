@@ -4,8 +4,8 @@
  * - 单文件 secondbrain.json 承载 JSON 段：meta（索引元数据）/ panel（AI 概括缓存，ticket 141 起
  *   仅存量保留不再消费）/ link（双链队列+基准哈希）/ chatHistory（AI 对话历史，ticket 141 加法扩展）；
  *   向量二进制独立 secondbrain.vec（原 secondbrain_vectors.vec 改名，ticket 120）。
- * - loadStore：读整文件 → parse → 段结构校验；损坏 → 留档 .corrupt- 重建空结构（jsonStore 同款容错）；
- *   首次调用触发一次性迁移（四旧 JSON + 旧 vec → 组装/改名 → 删旧；幂等：新文件存在即跳过）；
+ * - loadStore：读整文件 → parse → 段结构校验；损坏 → 原样留档 CONFIG/.CORRUPT（core 留档契约，D3 对齐）
+ *   后清位重建空结构；首次调用触发一次性迁移（四旧 JSON + 旧 vec → 组装/改名 → 删旧；幂等：新文件存在即跳过）；
  *   新文件不存在且无旧文件 → 返回空结构**不落盘**（保持原「空库不产生文件」语义，refresh 才首建）。
  * - 串行写链：所有读写（含迁移）经模块级 promise 链排队，杜绝并发交错覆盖——
  *   loadStore/mutateStore 对外，内部共用 readStoreRaw（迁移也在此保护内），写经 saveStoreRaw 直接落盘。
@@ -16,7 +16,7 @@
  * - 纯数据层（无 DOM / 无 notice 依赖），node 环境可测；依赖 getApp()（同 data.ts/jsonStore 模式）。
  */
 import { getApp } from '../core/app';
-import { storageDir, storageFile } from '../core/storage';
+import { backupOriginal, storageDir, storageFile } from '../core/storage';
 import { bytesEqual } from '../core/utils';
 
 /** 单文件结构版本（ticket 120 首版） */
@@ -563,7 +563,18 @@ async function readStoreRawInner(app?: any): Promise<SecondBrainStore> {
   try {
     return normalizeStore(JSON.parse(text));
   } catch {
-    // 损坏：改名留档后重建空结构（jsonStore 同款容错）
+    // 损坏：留档对齐 D1/core 冲突留档契约（D3 收编）——原样复制到 CONFIG/.CORRUPT/<名>.<时间戳>.bak
+    //（同秒撞名 core 自动加 -N 序号），随后清掉原路径损坏文件（对齐旧 rename 移走语义：原路径不残留，
+    // 空库不落盘语义不变）。core 留档不可用（轻量 vault mock 无 create 能力等）→ 旧 .corrupt- 改名兜底。
+    const backupPath = await backupOriginal(a, storePath, text);
+    if (backupPath) {
+      try {
+        if (hasFn(adapter, 'remove')) await adapter.remove(storePath);
+      } catch {
+        /* 删除失败不阻断：损坏文件残留时下次读会再走留档（-N 序号防撞名），仍按空库兜底 */
+      }
+      return emptyStore();
+    }
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
     try {
       if (hasFn(adapter, 'rename')) await adapter.rename(storePath, storePath + '.corrupt-' + stamp);
