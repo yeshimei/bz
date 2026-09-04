@@ -119,10 +119,7 @@ describe('批 C-6：todo 头行类名拆雷', () => {
     const css = repo('src/todo/styles.css');
     expect(css).toMatch(/\.bz-todo-panel-head\s*\{[^}]*height: 44px;/);
     expect(css).not.toMatch(/\.bz-todo-head\s*\{/); // 旧类名规则退役
-    // core 旧规范留给 memo 旧窗口，不动
-    expect(repo('src/core/styles.css')).toMatch(/\.bz-todo-head,/);
-    // memo 旧窗口仍用旧类名（core 规范的服务对象）
-    expect(repo('src/memo/ui.ts')).toContain('bz-todo-head');
+    // core 旧规范（.bz-todo-head 选择器组）随 memo 域退役（ADR-0092）失去服务对象，仅历史样式残留
   });
 
   it('面板根节点挂 .bz-panel-mtop；移动头行自垫 safe-area 收拢', () => {
