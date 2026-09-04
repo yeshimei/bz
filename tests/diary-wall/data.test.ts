@@ -7,6 +7,7 @@ import {
   groupByMonth,
   loadWallEntries,
   mediaSrc,
+  pickOnThisDay,
   stripMediaLinks,
   type WallEntry,
 } from '../../src/diary-wall/data';
@@ -538,5 +539,42 @@ describe('自包含：data.ts 不依赖 ../diary', () => {
       const s = fs.readFileSync(path.resolve(process.cwd(), `src/diary-wall/${f}`), 'utf8');
       expect(s).not.toMatch(/from\s+['"]\.\.\/diary/);
     }
+  });
+});
+
+describe('pickOnThisDay（那年今天，增强 #5 数据口径）', () => {
+  const mk = (date: string): WallEntry => ({
+    date,
+    time: '08:00',
+    tags: ['日记'],
+    emoji: '📖',
+    content: '内容',
+    filename: date,
+    lineNumber: 0,
+    kind: 'diary',
+    media: [],
+    text: '内容',
+  });
+
+  it('mmdd 命中：往年同月日条目全部命中（跨多年）', () => {
+    const entries = [mk('2023-09-04'), mk('2024-09-04'), mk('2025-09-04'), mk('2025-12-01'), mk('2026-01-09')];
+    const hit = pickOnThisDay(entries, '2026-09-04');
+    expect(hit.map((e) => e.date)).toEqual(['2023-09-04', '2024-09-04', '2025-09-04']);
+  });
+
+  it('排除当年：today 当年的条目不算「那年」（避免与今日内容重复）', () => {
+    const entries = [mk('2026-09-04'), mk('2025-09-04')];
+    const hit = pickOnThisDay(entries, '2026-09-04');
+    expect(hit.map((e) => e.date)).toEqual(['2025-09-04']);
+  });
+
+  it('today 非 YYYY-MM-DD 形状（空串/残缺）返回空数组', () => {
+    const entries = [mk('2025-09-04')];
+    expect(pickOnThisDay(entries, '')).toEqual([]);
+    expect(pickOnThisDay(entries, '2026-9')).toEqual([]);
+  });
+
+  it('空条目集返回空数组', () => {
+    expect(pickOnThisDay([], '2026-09-04')).toEqual([]);
   });
 });

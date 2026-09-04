@@ -1,6 +1,7 @@
 /**
- * 阅读数据分析报告错误路径测试（m1b）：统计失败 → 人话错误（弹窗占位 + toast），详情留 console。
+ * 阅读数据分析报告错误路径测试（m1b）：统计失败 → 人话错误（容器占位 + toast），详情留 console。
  * getAllBookNotes 经 vi.mock 抛错，验证 index 的 catch 路径不把技术异常暴露给用户面。
+ * （读书报告内嵌化：原独立弹窗容器换成书架墙面板内容区容器。）
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -17,7 +18,7 @@ vi.mock('../../src/reading-report/stats', async (importOriginal) => {
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { __resetNoticeForTests } from '../../src/core/notice';
-import { showReadingReport } from '../../src/reading-report/index';
+import { renderReadingReport } from '../../src/reading-report/index';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 
@@ -39,20 +40,21 @@ describe('统计失败（m1b 人话化）', () => {
     setSettingsProvider(() => ({}) as any);
   });
 
-  it('getAllBookNotes 抛错 → 弹窗显示人话错误、toast 提示、技术详情留 console', async () => {
+  it('getAllBookNotes 抛错 → 容器显示人话错误、toast 提示、技术详情留 console', async () => {
     const vault = new MockVault();
     setApp(makeApp(vault));
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     try {
-      await showReadingReport(makeApp(vault) as any);
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      renderReadingReport(container, makeApp(vault) as any);
+      await new Promise((r) => setTimeout(r, 60));
 
-      // 弹窗占位 → 人话错误（不展示原始异常字符串）
-      const modal = document.querySelector('.bz-reading-report-overlay') as HTMLElement;
-      expect(modal).not.toBeNull();
-      expect(modal.textContent).toContain('统计失败');
-      expect(modal.textContent).toContain('请查看控制台');
-      expect(modal.textContent).not.toContain('模拟书库读取失败');
+      // 容器占位 → 人话错误（不展示原始异常字符串）
+      expect(container.textContent).toContain('统计失败');
+      expect(container.textContent).toContain('请查看控制台');
+      expect(container.textContent).not.toContain('模拟书库读取失败');
 
       // progress toast 转 error，同样人话
       const toast = document.querySelector('#bz-notice-container .bz-notice') as HTMLElement;

@@ -1,15 +1,26 @@
 /**
- * 书架墙（bookshelf）UI 层测试：主面板渲染/筛选/搜索/详情改状态进度书评/删除/报告深链/EPUB 只读
+ * 书架墙（bookshelf）UI 层测试：主面板渲染/筛选/搜索/详情改状态进度书评/删除/EPUB 只读
+ * 读书报告内嵌化：面板内报告视图（切换/返回/同面板筛选/自动刷新/渲染中止）
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, clearNotices } from '../mock-obsidian-entry';
 import { M, resetBookshelfState } from '../../src/bookshelf/state';
-import { ensureBookshelf, unloadBookshelf, openBookshelf } from '../../src/bookshelf';
+import { ensureBookshelf, unloadBookshelf, openBookshelf, openBookshelfReport } from '../../src/bookshelf';
 import { createOverlay, closeOverlay } from '../../src/bookshelf/ui';
 
 function makeApp(vault: MockVault) {
   return mockAppWithVault(vault);
+}
+
+/** 轮询等待报告分片渲染完成（成功反馈 toast = finishDone 标记；防并行负载钉死时长） */
+async function waitReport(content: HTMLElement, timeout = 6000): Promise<void> {
+  const start = Date.now();
+  while (!document.querySelector('#bz-notice-container')?.textContent?.includes('阅读统计完成')) {
+    if (Date.now() - start > timeout) throw new Error('waitReport: 报告渲染超时');
+    await new Promise((r) => setTimeout(r, 15));
+  }
+  void content;
 }
 
 /** 本地时区日期串（YYYY-MM-DD） */
@@ -259,15 +270,142 @@ describe('bookshelf overlay', () => {
     closeOverlay();
   });
 
-  it('阅读分析报告入口：执行 bz-reading-report-open 命令', async () => {
+  it('读书报告内嵌化：左栏报告入口 → 面板内切报告视图（不再执行独立弹窗命令）', async () => {
     const { vault, app } = seedVault();
     let executed = '';
     (app as any).commands.executeCommandById = (id: string) => { executed = id; };
     await openPanel(vault, app);
     const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
     (overlay.querySelector('.bz-bs-report') as HTMLElement).click();
-    expect(executed).toBe('bz-reading-report-open');
+    // 原深链作废：不再执行命令（面板内切换）
+    expect(executed).toBe('');
+    // 报告视图激活：容器显隐 + 左栏入口变「‹ 返回书架」
+    expect(M.view).toBe('report');
+    expect(overlay.querySelector('.bz-bs-view-shelf')?.classList.contains('active')).toBe(false);
+    expect(overlay.querySelector('.bz-bs-view-report')?.classList.contains('active')).toBe(true);
+    const entry = overlay.querySelector('.bz-bs-report') as HTMLElement;
+    expect(entry.textContent).toContain('返回书架');
+    expect(entry.querySelector('[data-icon="arrow-left"]')).toBeTruthy();
+    // 报告内容异步分片渲染进面板内容区
+    const content = overlay.querySelector('.bz-rr-content') as HTMLElement;
+    await waitReport(content);
+    expect(content.textContent).toContain('已读');
+    // 头行报告钮激活态（移动端主入口）
+    expect(overlay.querySelector('[data-bs-tool="report"]')?.classList.contains('on')).toBe(true);
     closeOverlay();
+  });
+
+  it('读书报告内嵌化：报告视图返回书架（左栏「返回书架」+ 视图内关闭钮 data-rr-goto-shelf）', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    (overlay.querySelector('.bz-bs-report') as HTMLElement).click();
+    // 左栏「返回书架」→ 回书架视图（桌面返回路径）
+    (overlay.querySelector('.bz-bs-report') as HTMLElement).click();
+    expect(M.view).toBe('shelf');
+    expect(overlay.querySelector('.bz-bs-view-shelf')?.classList.contains('active')).toBe(true);
+    expect((overlay.querySelector('.bz-bs-report') as HTMLElement).textContent).toContain('阅读分析报告');
+    // 视图内关闭钮（仅移动端显示，桌面 CSS 隐藏但委托可达）同样返回书架
+    (overlay.querySelector('[data-bs-tool="report"]') as HTMLElement).click();
+    expect(M.view).toBe('report');
+    (overlay.querySelector('[data-rr-goto-shelf]') as HTMLElement).click();
+    expect(M.view).toBe('shelf');
+    closeOverlay();
+  });
+
+  it('命令路径：openBookshelfReport 冷开面板直落报告视图；已开则只切视图', async () => {
+    const { vault, app } = seedVault();
+    // 面板未开：冷开 → 报告视图（rebuild 完成回调进入）
+    openBookshelfReport(app);
+    await new Promise((r) => setTimeout(r, 40));
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    expect(M.view).toBe('report');
+    expect(overlay.querySelector('.bz-bs-view-report')?.classList.contains('active')).toBe(true);
+    closeOverlay();
+    // 面板已开（书架视图）：只切视图
+    await openPanel(vault, app);
+    openBookshelfReport(app);
+    expect(M.view).toBe('report');
+    closeOverlay();
+  });
+
+  it('报告内同面板筛选：作者行点击 → 回书架列表 + 作者名预填搜索（原深链作废）', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    (overlay.querySelector('.bz-bs-report') as HTMLElement).click();
+    const content = overlay.querySelector('.bz-rr-content') as HTMLElement;
+    await waitReport(content);
+    // 作者 Top5 卡（周岭）→ 点击
+    const authorCard = content.querySelector('[data-rr-author="周岭"]') as HTMLElement;
+    expect(authorCard).toBeTruthy();
+    authorCard.click();
+    expect(M.view).toBe('shelf');
+    expect(M.searchKeyword).toBe('周岭');
+    // 搜索输入框回显（两个输入框一致，防不可见过滤）
+    expect((overlay.querySelector('#bz-bs-dsearch') as HTMLInputElement).value).toBe('周岭');
+    expect((overlay.querySelector('#bz-bs-msearch') as HTMLInputElement).value).toBe('周岭');
+    // 网格只剩该作者的书
+    const cards = Array.from(overlay.querySelectorAll('.bz-bs-shelves .bz-bs-book'));
+    expect(cards.length).toBe(1);
+    expect(cards[0].textContent).toContain('认知觉醒');
+    closeOverlay();
+  });
+
+  it('报告内同面板筛选：分类行点击 → 回书架列表 + 分类筛选预填（左栏分类组同步高亮）', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    (overlay.querySelector('.bz-bs-report') as HTMLElement).click();
+    const content = overlay.querySelector('.bz-rr-content') as HTMLElement;
+    await waitReport(content);
+    const catRow = content.querySelector('[data-rr-cat="成长"]') as HTMLElement;
+    expect(catRow).toBeTruthy();
+    catRow.click();
+    expect(M.view).toBe('shelf');
+    expect(M.catFilter).toBe('成长');
+    expect(M.searchKeyword).toBe('');
+    const cards = Array.from(overlay.querySelectorAll('.bz-bs-shelves .bz-bs-book'));
+    expect(cards.length).toBe(1);
+    expect(cards[0].textContent).toContain('认知觉醒');
+    // 左栏分类组同步高亮
+    const onCat = overlay.querySelector('.bz-bs-side-catlist .bz-bs-side-item.on') as HTMLElement;
+    expect(onCat.textContent).toContain('成长');
+    closeOverlay();
+  });
+
+  it('报告视图自动刷新：报告存续期间书库变化 → 自动重算只更新报告内容区', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    (overlay.querySelector('.bz-bs-report') as HTMLElement).click();
+    const content = overlay.querySelector('.bz-rr-content') as HTMLElement;
+    await waitReport(content);
+    expect(content.textContent).not.toContain('东野圭吾');
+    // 书库落新文件 + vault modify（EPUB json 同通道）→ 防抖后报告内容区出现新作者
+    vault.files.set('书库/新曲.md', '---\ntags: [book]\nauthor: 东野圭吾\ncategory: 小说\n---');
+    vault.emit('modify', vault.file('书库/新曲.md'));
+    // 防抖 300ms + 分片渲染：轮询等待（并行负载下不钉死时长）
+    const start = Date.now();
+    while (!content.textContent!.includes('东野圭吾') && Date.now() - start < 6000) {
+      await new Promise((r) => setTimeout(r, 30));
+    }
+    expect(content.textContent).toContain('东野圭吾');
+    closeOverlay();
+  });
+
+  it('报告渲染中止：报告视图中关面板（closeOverlay）→ 在途渲染作废不报错、toast 收起', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    (overlay.querySelector('.bz-bs-report') as HTMLElement).click();
+    // 分片渲染未完成即关面板
+    closeOverlay();
+    // 等 toast 离场动画（hide 200ms）结束再断言容器清空
+    await new Promise((r) => setTimeout(r, 450));
+    expect(document.querySelector('.bz-bs-overlay')).toBeNull();
+    // progress toast 已收起（不留常驻残留）
+    expect(document.querySelectorAll('#bz-notice-container .bz-notice').length).toBe(0);
   });
 
   it('移动端视图：抽屉筛选可用（桌面模式同样能开抽屉）；选未读 → 只剩未读卡', async () => {
