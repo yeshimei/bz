@@ -783,10 +783,7 @@ button.news-close-btn {
     }
 }
 
-/* 通用确认弹窗（core/flow-dialog 流程框，承继旧 core/confirm.ts 的 Q3.js 移植结构；id 保持外部约定；popup 为 mask 子节点，层级由 mask 承载）
-   z 档位 10250：确认类弹窗应永远最顶层——压过全部域弹窗（域模态旧档 10001-10060 / encrypt unlock 10070·
-   体检 10080 / launcher 10100·10101·10200），原 10060 被 encrypt 10070/10080 盖住属倒挂（encrypt-pw 审查发现，
-   点确认需两次）已修；同时低于统一抽屉 10999/11000、companion 11100+、movie 小窗 12000、toast 100000 */
+/* 通用确认弹窗（core/flow-dialog 流程框，承继旧 core/confirm.ts 的 Q3.js 移植结构；id 保持外部约定；popup 为 mask 子节点，层级由 mask 承载——动态发号见 core/z-order，旧静态档位家族已废除） */
 #__shared_confirm_mask__ {
   position: fixed;
   top: 0;
