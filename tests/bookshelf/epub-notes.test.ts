@@ -1,5 +1,7 @@
 /**
- * 书库 EPUB 读书笔记测试（ADR-0013 扩展）：loadEpubBookNotes / buildEpubJumpLink / 直改 weave-data。
+ * 书架墙 EPUB 读书笔记测试（迁移自旧 tests/library/epub-notes.test.ts，旧 library 域退役）：
+ * loadEpubBookNotes / buildEpubJumpLink / 直改 weave-data。
+ * 注：beforeEach 清理 document，需要 jsdom 环境（不加 node 头）。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { setApp } from '../../src/core/app';
@@ -11,7 +13,7 @@ import {
   deleteEpubNote,
   findWeaveBookByPath,
   encodeCfiForWikilink,
-} from '../../src/library/epub-notes';
+} from '../../src/bookshelf/epub-notes';
 import { MockVault, parseFrontmatter } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 
@@ -49,7 +51,7 @@ const HIGH_BOOK = {
   },
 };
 
-describe('epub-notes', () => {
+describe('epub-notes（bookshelf）', () => {
   let vault: MockVault;
 
   beforeEach(() => {
