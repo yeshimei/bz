@@ -125,12 +125,12 @@ describe('今日回顾面板（recap 域）', () => {
     const ai = overlay().querySelector('[data-recap-ai]') as HTMLButtonElement;
     expect(ai.disabled).toBe(false);
     expect(ai.textContent).toBe('生成今日总结');
-    // 摘要行五格：日记 2 条 / 影视 1 / 读书 1 / 待办完成 1 / 番茄 1 个 25 分钟
-    const stats = [...overlay().querySelectorAll('.bz-recap-stat')];
-    expect(stats.map((s) => s.querySelector('.bz-recap-stat-k')!.textContent)).toEqual(
+    // 摘要行五格（uiStat 统计卡基线 .bz-stat）：日记 2 条 / 影视 1 / 读书 1 / 待办完成 1 / 番茄 1 个 25 分钟
+    const stats = [...overlay().querySelectorAll('.bz-recap-stat.bz-stat')];
+    expect(stats.map((s) => s.querySelector('.bz-stat-label')!.textContent)).toEqual(
       ['日记', '影视', '读书', '待办完成', '番茄']
     );
-    expect(stats.map((s) => s.querySelector('.bz-recap-stat-v')!.textContent)).toEqual(
+    expect(stats.map((s) => s.querySelector('.bz-stat-num')!.textContent)).toEqual(
       ['2 条', '1', '1', '1', '1 个 · 25 分钟']
     );
     // 时间轴：时间正序，行=时刻+域图标+域名前缀+一句话
@@ -166,8 +166,8 @@ describe('今日回顾面板（recap 域）', () => {
     vault.files.set('CONFIG/STORAGE/memo.json', '{{{bad json');
     openRecap(recApp(vault));
     await new Promise((r) => setTimeout(r, 0));
-    const stats = [...overlay().querySelectorAll('.bz-recap-stat')];
-    const values = stats.map((s) => s.querySelector('.bz-recap-stat-v')!.textContent);
+    const stats = [...overlay().querySelectorAll('.bz-recap-stat.bz-stat')];
+    const values = stats.map((s) => s.querySelector('.bz-stat-num')!.textContent);
     expect(values[3]).toBe('N/A'); // 待办完成
     expect(values[0]).toBe('2 条'); // 日记不受牵连
     expect(overlay().querySelectorAll('.bz-recap-row').length).toBe(4); // 待办痕迹缺席

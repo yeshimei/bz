@@ -87,18 +87,9 @@
   white-space: nowrap;
 }
 
+/* 条形行轨道基线走样式库 .bz-progress（--lg 8px 档，填充 i 内联宽/数据语义色）；域内只留行内撑满 */
 .bz-rr-bar-track {
   flex: 1;
-  height: 8px;
-  background: var(--background-modifier-border);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.bz-rr-bar-fill {
-  height: 100%;
-  border-radius: 4px;
-  min-width: 0;
 }
 
 .bz-rr-bar-val {

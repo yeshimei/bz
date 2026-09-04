@@ -54,21 +54,7 @@
   color: var(--bz-text-2);
 }
 
-.bz-checkup-bar {
-  height: 6px;
-  border-radius: var(--bz-radius-full);
-  background: var(--bz-track);
-  overflow: hidden;
-}
-
-.bz-checkup-bar i {
-  display: block;
-  height: 100%;
-  width: 0;
-  border-radius: var(--bz-radius-full);
-  background: var(--bz-brand);
-  transition: width var(--bz-dur-base) var(--bz-ease-out);
-}
+/* 体检进度条基线走样式库 .bz-progress（uiProgress 工厂，品牌档；与清单的间距由 body gap 承担） */
 
 .bz-checkup-steps {
   display: flex;

@@ -10,7 +10,7 @@
  */
 import type { App } from 'obsidian';
 import { notify } from '../core/notice';
-import { uiIcon, uiEmpty, uiBtn, uiBtnRow } from '../core/ui';
+import { mountIcons, uiEmpty, uiBtn, uiBtnRow } from '../core/ui';
 import { resolveFolderPath } from '../bookshelf/data';
 import {
   getAllBookNotes,
@@ -49,17 +49,6 @@ export interface ReportRenderOptions {
   onFilter?: (kind: 'author' | 'category', value: string) => void;
   /** 空态主按钮 → 切回书架视图收录 */
   onBack?: () => void;
-}
-
-/** 容器内 data-lucide 占位替换为 setIcon 渲染的真图标（保持 class 修饰） */
-function mountIcons(container: HTMLElement): void {
-  container.querySelectorAll('i[data-lucide]').forEach((el) => {
-    const name = el.getAttribute('data-lucide') || '';
-    const cls = el.className;
-    const fresh = uiIcon(name, '');
-    if (cls && cls !== 'bz-ic') fresh.className = cls;
-    el.replaceWith(fresh);
-  });
 }
 
 /**
