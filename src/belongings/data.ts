@@ -28,26 +28,23 @@ function emptyDatabase(): BelongingsDatabase {
   };
 }
 
-/** 加载数据库（统一数据读写层语义：缺失建空库文件、损坏改名留档重建；notice 文案逐字保留——铁律 1） */
+/** 加载数据库（统一数据读写层语义：缺失建空库文件、损坏改名留档重建；解析失败走 core 默认通知——含留档路径与「数据不会丢」承诺） */
 export async function loadDatabase(): Promise<BelongingsDatabase> {
   const filePath = getDataFilePath();
   const raw = await jsonFileStore<any>(filePath, {
     defaultValue: () => emptyDatabase(),
-    onCorrupt: () => {
-      notice('数据文件解析失败，已重置为空', 'warning', 5000);
-    },
   }).read();
   let db: BelongingsDatabase;
   try {
-    // P2 形状容错：非对象/数组 → 走既有失败 notice 路径（不再 TypeError 白屏）；
+    // P2 形状容错：非对象/数组 → 结构异常提示（不再 TypeError 白屏）；
     // 合法空对象 {}（文件被手动清空等）视为空库，不告警
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
       throw new Error('数据文件结构异常（非对象）');
     }
     db = raw as BelongingsDatabase;
   } catch (error) {
-    notice('数据文件解析失败，已重置为空', 'warning', 5000);
-    console.error('数据文件解析错误:', error);
+    notice('数据文件结构异常，已按空库继续，原文件未改动', 'warning', 5000);
+    console.error('数据文件结构异常:', error);
     db = emptyDatabase();
   }
 
