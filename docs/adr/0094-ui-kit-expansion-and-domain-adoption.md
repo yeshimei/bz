@@ -1,11 +1,11 @@
 # ADR-0094：组件库扩充批次——新域重复样式收编共享库 + 带功能工厂 9 件
 
 - 状态：已接受（2026-09-05）
-- 关联：issue 194、`docs/ui-kit-manual.md`（§3/§4/§5 回写）、`docs/ui-design-manual.md` §6.4（控件高度中档与头行高度）、提案原稿 `.zcode/ui-prototypes/ui-extract/extract.css`（画廊原型定稿）
+- 关联：issue 195、`docs/ui-kit-manual.md`（§3/§4/§5 回写）、`docs/ui-design-manual.md` §6.4（控件高度中档与头行高度）、提案原稿 `.zcode/ui-prototypes/ui-extract/extract.css`（画廊原型定稿）
 
 ## 背景
 
-新体系（`src/core/ui/`）落地后，todo/clipbook/cinema/bookshelf/favorites/belongings/recap/home 等域各自手写了大量同形制的面板骨架与控件：面板壳 8 份逐字重复、影院式整宽头行 4 份（+clipbook 50px 变体）、主头行 4 份、工具行 4 份、搜索框 6 份、左栏侧栏 6-8 套（clipbook 最全）、移动横滑 chips 5 份、统计卡 2 份近似拷贝 + 4 份简版、候选浮层 4 域自绘、进度条 4 份。同时社区对标（shadcn/ui · Ant Design）的常用控件（alert/kbd/skeleton/tabs/menu/sheet/taginput/rating/ring/checkbox 等）在画廊原型（`.zcode/ui-prototypes/bz-ui-gallery/`）中已定稿但未入主仓。为「全域替换」批次（issue 194 后续）备好共享层，先落库、后替换。
+新体系（`src/core/ui/`）落地后，todo/clipbook/cinema/bookshelf/favorites/belongings/recap/home 等域各自手写了大量同形制的面板骨架与控件：面板壳 8 份逐字重复、影院式整宽头行 4 份（+clipbook 50px 变体）、主头行 4 份、工具行 4 份、搜索框 6 份、左栏侧栏 6-8 套（clipbook 最全）、移动横滑 chips 5 份、统计卡 2 份近似拷贝 + 4 份简版、候选浮层 4 域自绘、进度条 4 份。同时社区对标（shadcn/ui · Ant Design）的常用控件（alert/kbd/skeleton/tabs/menu/sheet/taginput/rating/ring/checkbox 等）在画廊原型（`.zcode/ui-prototypes/bz-ui-gallery/`）中已定稿但未入主仓。为「全域替换」批次（issue 195 后续）备好共享层，先落库、后替换。
 
 ## 决策
 
