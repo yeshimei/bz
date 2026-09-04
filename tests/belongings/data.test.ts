@@ -45,14 +45,15 @@ describe('loadDatabase', () => {
     expect(db.categories.filter((c) => c === '📱 智能手机').length).toBe(1);
   });
 
-  it('解析失败 → 原样留档 CONFIG/.CORRUPT 重建 + 警告 Notice + 重置为空库', async () => {
+  it('解析失败 → 走 core 默认通知（含留档路径）+ 原样留档 CONFIG/.CORRUPT 重建 + 重置为空库', async () => {
     setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
     const broken = '{broken';
     vault.files.set('CONFIG/STORAGE/belongings.json', broken);
     const warnSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const db = await loadDatabase();
     expect(db.items).toEqual({});
-    expect(hasNotice(/数据文件解析失败/)).toBe(true);
+    // 走查批 D：删自定义 onCorrupt → core 默认文案（含留档路径与「数据不会丢」承诺）
+    expect(hasNotice(/解析失败，原内容已留档到 .+，数据不会丢/)).toBe(true);
     // D1 留档契约：原内容原样留档（不再直接覆盖丢失）
     const backups = [...vault.files.keys()].filter((p) => p.startsWith('CONFIG/.CORRUPT/belongings.json.'));
     expect(backups).toHaveLength(1);
@@ -72,24 +73,24 @@ describe('loadDatabase', () => {
     const db = await loadDatabase();
     expect(db.items).toEqual({});
     expect(db.categories.length).toBeGreaterThan(1000); // 仍补齐默认分类
-    expect(hasNotice(/数据文件解析失败/)).toBe(false);
+    expect(hasNotice(/解析失败|结构异常/)).toBe(false);
     warnSpy.mockRestore();
   });
 
-  it('P2 形状容错：内容为数组/null 字面量 → 警告 Notice + 重置空库（非对象白屏防护）', async () => {
+  it('P2 形状容错：内容为数组/null 字面量 → 「结构异常」警告 + 重置空库（非对象白屏防护）', async () => {
     setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
     const warnSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     // 数组
     vault.files.set('CONFIG/STORAGE/belongings.json', '[{"id":"x"}]');
     let db = await loadDatabase();
     expect(db.items).toEqual({});
-    expect(hasNotice(/数据文件解析失败/)).toBe(true);
+    expect(hasNotice('数据文件结构异常，已按空库继续，原文件未改动')).toBe(true);
     // null
     clearNotices();
     vault.files.set('CONFIG/STORAGE/belongings.json', 'null');
     db = await loadDatabase();
     expect(db.items).toEqual({});
-    expect(hasNotice(/数据文件解析失败/)).toBe(true);
+    expect(hasNotice('数据文件结构异常，已按空库继续，原文件未改动')).toBe(true);
     warnSpy.mockRestore();
   });
 
