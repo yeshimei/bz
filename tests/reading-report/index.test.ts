@@ -1,16 +1,18 @@
 /**
- * 阅读数据分析报告 index 测试（ticket 13）：报告弹窗 + 完整链路。
- * UX 整改补测：l3 打开先建窗（骨架占位）、ticket 40 分片渲染时序（计算中关闭不报错）、
- * l1 unloadReadingReport 清理。
+ * 阅读数据分析报告 index 测试（读书报告内嵌化）：面板内容区渲染 + 完整链路。
+ * 保留机制补测：l3 骨架占位先行、ticket 40 分片渲染时序（容器移除/取消不报错不残留）、
+ * 热力图 ‹ › 翻月、年卡展开、空库空态带动作、l1 unloadReadingReport 清理。
+ * （原独立弹窗用例随独立窗退役删除；报告容器由 bookshelf 面板提供，此处直接传容器。）
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { escManager } from '../../src/core/esc-manager';
 import { __resetNoticeForTests } from '../../src/core/notice';
-import { showReportInPopup, showReadingReport, unloadReadingReport } from '../../src/reading-report/index';
+import {
+  renderReadingReport, cancelReadingReport, handleReportInteraction, unloadReadingReport,
+} from '../../src/reading-report/index';
 import { MockVault, parseFrontmatter } from '../mock-vault';
-import { resetObsidianMocks, Platform as MockPlatform } from '../mock-obsidian-entry';
+import { resetObsidianMocks } from '../mock-obsidian-entry';
 
 function makeApp(vault: MockVault) {
   return {
@@ -24,11 +26,6 @@ function makeApp(vault: MockVault) {
     },
     workspace: {},
   } as any;
-}
-
-/** 报告弹窗选择器（bz-reading-report-overlay 遮罩） */
-function findModal(): HTMLElement | null {
-  return document.querySelector('.bz-reading-report-overlay') as HTMLElement | null;
 }
 
 /** 带一本已完成书的最小书库（完整链路/占位/卸载共用） */
@@ -52,208 +49,197 @@ wordCount: 80000
   return vault;
 }
 
-describe('报告弹窗', () => {
+function newContainer(): HTMLElement {
+  const el = document.createElement('div');
+  document.body.appendChild(el);
+  return el;
+}
+
+/** 条件轮询（局部 DOM 标记；防并行负载钉死时长） */
+async function until(cond: () => boolean, timeout = 6000): Promise<void> {
+  const start = Date.now();
+  while (!cond()) {
+    if (Date.now() - start > timeout) throw new Error('until: 条件超时');
+    await new Promise((r) => setTimeout(r, 10));
+  }
+}
+
+/** 轮询等待分片渲染完成（成功反馈 toast = finishDone 标记；防并行负载钉死时长） */
+async function waitReportDone(timeout = 6000): Promise<void> {
+  const start = Date.now();
+  while (!document.querySelector('#bz-notice-container')?.textContent?.includes('阅读统计完成')) {
+    if (Date.now() - start > timeout) throw new Error('waitReportDone: 报告渲染超时');
+    await new Promise((r) => setTimeout(r, 15));
+  }
+}
+
+describe('报告视图渲染（面板内容区）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     document.body.innerHTML = '';
     document.body.classList.remove('theme-dark');
     __resetNoticeForTests();
-  });
-
-  it('showReportInPopup：DOM 结构 + 内容 + 关闭', () => {
-    showReportInPopup('<div id="test-section">测试内容</div>', false);
-    const modal = findModal();
-    expect(modal).not.toBeNull();
-    expect(modal!.textContent).toContain('🧮 阅读数据分析报告');
-    expect(modal!.textContent).toContain('测试内容');
-    // 背景色 light
-    expect(modal!.style.background).toContain('0.5');
-
-    // ESC 关闭
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    expect(findModal()).toBeNull();
-  });
-
-  it('dark 模式背景色', () => {
-    document.body.classList.add('theme-dark');
-    showReportInPopup('x', true);
-    const modal = findModal();
-    expect(modal!.style.background).toContain('0.7');
-    // p1 主题适配：面板底色用主题变量（暗色主题可读）
-    const content = document.querySelector('div[style*="max-width: 600px"]') as HTMLElement;
-    expect(content.style.background).toContain('var(--background-primary)');
-  });
-
-  it('点击遮罩关闭（e.target === modal）', () => {
-    showReportInPopup('x', false);
-    const modal = findModal();
-    modal!.click();
-    expect(findModal()).toBeNull();
-  });
-
-  it('audit E：ESC 走 escManager 层——报告开着时，下层可见面板不再被同一次 ESC 越级抢关', () => {
-    const closed: string[] = [];
-    // 模拟报告之下的他域可见 ESC 层（注册序更早、优先级更低）
-    const lower = escManager.register('bz-test-report-lower', {
-      isVisible: () => true,
-      close: () => closed.push('lower'),
-    });
-    try {
-      showReportInPopup('x', false);
-      expect(findModal()).not.toBeNull();
-      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-      // 报告层（后注册、栈顶）被关闭；stopImmediatePropagation 保住下层
-      expect(findModal()).toBeNull();
-      expect(closed).toEqual([]);
-      // 报告已关：层不可见，下一次 ESC 落到下层
-      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-      expect(closed).toEqual(['lower']);
-    } finally {
-      lower.unregister();
-    }
-  });
-});
-
-describe('完整链路', () => {
-  beforeEach(() => {
-    resetObsidianMocks();
-    document.body.innerHTML = '';
-    __resetNoticeForTests();
     setSettingsProvider(() => ({}) as any);
-  });
-
-  it('移动端默认全屏键切换（旧 library 域退役）：跟随 bookshelfMobileDefaultFullscreen，旧键不再生效', async () => {
-    const vault = seedVault();
-    setApp(makeApp(vault));
-    MockPlatform.isMobile = true;
-    try {
-      // 新键开 → 报告窗挂 bz-win-mfs
-      setSettingsProvider(() => ({ bookshelfMobileDefaultFullscreen: true }) as any);
-      await showReadingReport(makeApp(vault) as any);
-      expect(document.querySelector('.bz-reading-report-overlay .bz-win-mfs')).not.toBeNull();
-      unloadReadingReport();
-      document.body.innerHTML = '';
-
-      // 新键关 → 不挂
-      setSettingsProvider(() => ({ bookshelfMobileDefaultFullscreen: false }) as any);
-      await showReadingReport(makeApp(vault) as any);
-      expect(document.querySelector('.bz-reading-report-overlay .bz-win-mfs')).toBeNull();
-      unloadReadingReport();
-      document.body.innerHTML = '';
-
-      // 旧 library 键已退役：即使残留也不再驱动报告全屏
-      setSettingsProvider(() => ({ libraryMobileDefaultFullscreen: true }) as any);
-      await showReadingReport(makeApp(vault) as any);
-      expect(document.querySelector('.bz-reading-report-overlay .bz-win-mfs')).toBeNull();
-    } finally {
-      MockPlatform.isMobile = false;
-      unloadReadingReport();
-    }
-  });
-
-  it('showReadingReport：book 笔记 → 报告包含核心章节', async () => {
-    const vault = seedVault();
-    setApp(makeApp(vault));
-    // getAllBookNotes 经 deriveBookSettings 读取 bookTag 设置（P2 精确等值修复后）
-    await showReadingReport(makeApp(vault) as any);
-
-    const modal = findModal();
-    expect(modal).not.toBeNull();
-    // 核心指标卡
-    expect(modal!.textContent).toContain('书库');
-    expect(modal!.textContent).toContain('已读');
-    expect(modal!.textContent).toContain('总互动');
-    expect(modal!.textContent).toContain('平均每本划线');
-    // 年度卡（2025年）
-    expect(modal!.textContent).toContain('2025年');
-    expect(modal!.textContent).toContain('阅读数量');
-    // 类别卡
-    expect(modal!.textContent).toContain('阅读分类');
-    expect(modal!.textContent).toContain('最常阅读');
-    // 速度（有 pages → 速度模块）
-    expect(modal!.textContent).toContain('页/小时');
-  });
-
-  it('l3 打开先建窗：计算完成前弹窗即有「统计中…」占位 + progress toast 先弹', async () => {
-    const vault = seedVault();
-    setApp(makeApp(vault));
-    const pending = showReadingReport(makeApp(vault) as any);
-
-    // 同步返回后（首个让出点前）弹窗已存在且为骨架占位
-    const modal = findModal();
-    expect(modal).not.toBeNull();
-    expect(modal!.textContent).toContain('统计中');
-    // progress toast 已先弹（常驻帧，阶段消息）
-    const toast = document.querySelector('#bz-notice-container .bz-notice') as HTMLElement;
-    expect(toast).not.toBeNull();
-    expect(toast.textContent).toContain('正在读取书库');
-
-    await pending;
-    // 完成后占位被报告内容替换
-    expect(findModal()!.textContent).toContain('已读');
-    expect(findModal()!.textContent).not.toContain('统计中');
-  });
-
-  it('ticket 40 分片渲染时序：计算中关闭弹窗不报错、不残留 DOM', async () => {
-    const vault = seedVault();
-    setApp(makeApp(vault));
-    const pending = showReadingReport(makeApp(vault) as any);
-
-    // 同步 ESC 关闭（分片渲染尚未开始）
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    expect(findModal()).toBeNull();
-
-    // 完成后不抛错、不再写回已移除的弹窗
-    await pending;
-    expect(findModal()).toBeNull();
-  });
-
-  it('l1 unloadReadingReport：关闭已开弹窗并清 DOM；再次打开正常', async () => {
-    const vault = seedVault();
-    setApp(makeApp(vault));
-    await showReadingReport(makeApp(vault) as any);
-    expect(findModal()).not.toBeNull();
-
     unloadReadingReport();
-    expect(findModal()).toBeNull();
-
-    // 卸载后重新打开正常（幂等）
-    await showReadingReport(makeApp(vault) as any);
-    expect(findModal()).not.toBeNull();
-    expect(findModal()!.textContent).toContain('已读');
   });
 
-  it('快速重开（30s 内）：第二轮 progress toast 不静默（dedupeKey 唯一化）', async () => {
+  it('renderReadingReport：骨架占位先行 + progress toast 先弹 + 完成后报告内容替换占位', async () => {
     const vault = seedVault();
-    setApp(makeApp(vault));
-    // 第一轮：打开后立刻 ESC 关闭（首轮中止并在离场动画后移除 toast）
-    const p1 = showReadingReport(makeApp(vault) as any);
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    await p1;
-    expect(findModal()).toBeNull();
-    // 等首轮 toast 离场动画结束（hide 200ms，留足余量）→ 容器清空
-    await new Promise((r) => setTimeout(r, 400));
-    expect(document.querySelectorAll('#bz-notice-container .bz-notice').length).toBe(0);
+    const app = makeApp(vault);
+    const container = newContainer();
+    renderReadingReport(container, app);
 
-    // 第二轮：仍在 notice 30s 去重抑制窗口内，但必须有全新 progress toast（不被 noopHandle 吞掉）
-    const p2 = showReadingReport(makeApp(vault) as any);
+    // 同步返回后（首个让出点前）骨架占位已在容器内，progress toast 已先弹
+    expect(container.textContent).toContain('统计中');
     const toast = document.querySelector('#bz-notice-container .bz-notice') as HTMLElement;
     expect(toast).not.toBeNull();
     expect(toast.textContent).toContain('正在读取书库');
-    await p2;
+
+    // 分片逐段渲染：等完成反馈再断言全部段落（首段落地早于末段，不能只等骨架消失）
+    await waitReportDone();
+    expect(container.textContent).toContain('已读');
+    expect(container.textContent).toContain('阅读分类');
+    expect(container.textContent).toContain('页/小时');
+    // 完成反馈 toast（success）
+    expect((document.querySelector('#bz-notice-container .bz-notice') as HTMLElement).textContent)
+      .toContain('阅读统计完成');
   });
 
-  it('连点两次：第二轮完成反馈不静默（独立 toast 转 success）', async () => {
+  it('lucide 化：报告输出无 emoji（🧮 标题/❌ 关闭/🏆 排名均换 lucide 占位）', async () => {
     const vault = seedVault();
-    setApp(makeApp(vault));
-    // 第一轮完整跑完（success toast 存活中，3s 自动消失）
-    await showReadingReport(makeApp(vault) as any);
-    // 立刻第二轮（第一轮 toast 仍在存活窗口内）
-    await showReadingReport(makeApp(vault) as any);
+    vault.files.set('书库/B.md', '---\ntags: [book]\nauthor: 刘慈欣\ncategory: 科幻\n---');
+    const container = newContainer();
+    renderReadingReport(container, makeApp(vault));
+    await until(() => container.querySelectorAll('.bz-rr-bar-row').length > 0);
+    const html = container.innerHTML;
+    expect(html).not.toContain('🧮');
+    expect(html).not.toContain('❌');
+    expect(html).not.toContain('🏆');
+    expect(html).not.toContain('📈');
+  });
 
-    const toasts = Array.from(document.querySelectorAll('#bz-notice-container .bz-notice'));
-    // 两轮各自独立 toast（未被 30s 抑制合并吞掉），且有完成反馈
-    expect(toasts.length).toBeGreaterThanOrEqual(2);
-    expect(toasts.some((t) => (t.textContent || '').includes('阅读统计完成'))).toBe(true);
+  it('空库空态带动作：无任何书目 → 空态 + 主按钮（点击回调 onBack），不渲染空报告', async () => {
+    const vault = new MockVault();
+    let back = 0;
+    const container = newContainer();
+    renderReadingReport(container, makeApp(vault), { onBack: () => back++ });
+    await until(() => container.querySelector('.bz-empty') !== null);
+    expect(container.textContent).toContain('书库还没有可统计的书');
+    // 收录说明（目录名在场）
+    expect(container.textContent).toContain('书库');
+    // 主按钮 → onBack 回书架
+    const btn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.includes('去书架墙添加')) as HTMLElement;
+    expect(btn).toBeTruthy();
+    btn.click();
+    expect(back).toBe(1);
+  });
+
+  it('ticket 40 分片渲染时序：渲染中途取消不报错、不再写容器', async () => {
+    const vault = seedVault();
+    const container = newContainer();
+    renderReadingReport(container, makeApp(vault));
+    // 同步取消（分片渲染尚未开始）
+    cancelReadingReport();
+    container.remove();
+    // 等 toast 离场动画（hide 200ms）结束再断言容器清空
+    await new Promise((r) => setTimeout(r, 450));
+    expect(document.querySelector('#bz-notice-container .bz-notice')).toBeNull(); // toast 收起
+  });
+
+  it('ticket 40 分片渲染时序：容器渲染中途被移除（面板关闭）→ 中止且不抛错', async () => {
+    const vault = seedVault();
+    const container = newContainer();
+    renderReadingReport(container, makeApp(vault));
+    container.remove(); // 模拟 closeOverlay 摘除面板
+    await new Promise((r) => setTimeout(r, 120));
+    // 不抛错即通过（分片循环逐段检查 container.isConnected）
+    expect(container.isConnected).toBe(false);
+  });
+
+  it('重入：渲染中再触发 → 旧渲染作废、新渲染完成（序号守卫，不双写）', async () => {
+    const vault = seedVault();
+    const container = newContainer();
+    renderReadingReport(container, makeApp(vault));
+    renderReadingReport(container, makeApp(vault)); // 重入取消第一轮
+    await waitReportDone();
+    expect(container.textContent).toContain('已读');
+    expect(container.textContent).toContain('阅读分类');
+    // 只有 single 报告体（骨架/旧渲染不残留双份）
+    expect(container.querySelectorAll('.bz-empty').length).toBe(0);
+  });
+
+  it('l1 unloadReadingReport：渲染中卸载 → toast 收起、再渲染正常', async () => {
+    const vault = seedVault();
+    const container = newContainer();
+    renderReadingReport(container, makeApp(vault));
+    unloadReadingReport();
+    // 等 toast 离场动画结束再断言容器清空
+    await new Promise((r) => setTimeout(r, 450));
+    expect(document.querySelector('#bz-notice-container .bz-notice')).toBeNull();
+    renderReadingReport(container, makeApp(vault));
+    await waitReportDone();
+    expect(container.textContent).toContain('已读');
+  });
+
+  it('热力图翻月：段头 ‹ › 与月份标题在场；点击 ‹ 切上一月（标题/网格联动，域内交互）', async () => {
+    const vault = seedVault();
+    // 会话经 weave-data.json（EPUB 聚合 reading.sessions）注入，覆盖 2025-05 / 2025-06 两个月
+    const ms = (y: number, m: number, d: number, h: number) => new Date(y, m - 1, d, h).getTime();
+    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
+      books: {
+        a: {
+          meta: { title: '会话之书', author: '村上春树' },
+          file: { vaultPath: 'books/s.epub' },
+          reading: {
+            position: { percent: 0.5 },
+            stats: { totalReadTime: 7200000, lastReadTime: ms(2025, 6, 2, 14) },
+            sessions: [
+              { start: ms(2025, 5, 10, 8), end: ms(2025, 5, 10, 9), durationSeconds: 1200 },
+              { start: ms(2025, 5, 11, 9), end: ms(2025, 5, 11, 10), durationSeconds: 2400 },
+              { start: ms(2025, 5, 12, 21), end: ms(2025, 5, 12, 22), durationSeconds: 1800 },
+              { start: ms(2025, 5, 13, 3), end: ms(2025, 5, 13, 4), durationSeconds: 900 },
+              { start: ms(2025, 6, 1, 8), end: ms(2025, 6, 1, 9), durationSeconds: 3000 },
+              { start: ms(2025, 6, 2, 14), end: ms(2025, 6, 2, 15), durationSeconds: 1500 },
+            ],
+          },
+        },
+      },
+    }));
+    const container = newContainer();
+    renderReadingReport(container, makeApp(vault));
+    await until(() => !!container.querySelector('[data-rr-hm-body]'));
+
+    // 段头：‹ › 按钮 + 月份标题（缺省游标 = 最近有阅读的月份 2025-06）
+    expect(container.querySelector('[data-rr-hm-prev]')).toBeTruthy();
+    expect(container.querySelector('[data-rr-hm-next]')).toBeTruthy();
+    const title = container.querySelector('[data-rr-hm-title]') as HTMLElement;
+    expect(title.textContent).toBe('2025年六月');
+    // 下一月按钮在最新月应禁用（边界）
+    expect((container.querySelector('[data-rr-hm-next]') as HTMLButtonElement).disabled).toBe(true);
+
+    // 点 ‹ → 上一月（2025-05），标题与网格联动（reading-report 域内交互，面板委托转调）
+    const handled = handleReportInteraction(container, container.querySelector('[data-rr-hm-prev]') as HTMLElement);
+    expect(handled).toBe(true);
+    expect((container.querySelector('[data-rr-hm-title]') as HTMLElement).textContent).toBe('2025年五月');
+    // 再 ‹ 越界（最早月）→ 空操作
+    handleReportInteraction(container, container.querySelector('[data-rr-hm-prev]') as HTMLElement);
+    expect((container.querySelector('[data-rr-hm-title]') as HTMLElement).textContent).toBe('2025年五月');
+  });
+
+  it('年卡展开：年卡点击切换该年 12 月柱展开体（.open 类翻转）', async () => {
+    const vault = seedVault();
+    const container = newContainer();
+    renderReadingReport(container, makeApp(vault));
+    await until(() => !!container.querySelector('[data-rr-year="2025"]'));
+
+    const card = container.querySelector('[data-rr-year="2025"]') as HTMLElement;
+    const body = container.querySelector('[data-rr-year-body="2025"]') as HTMLElement;
+    expect(body.classList.contains('open')).toBe(false);
+    expect(body.querySelectorAll('.bz-rr-mcol').length).toBe(12); // 固定 12 月柱
+    handleReportInteraction(container, card);
+    expect(body.classList.contains('open')).toBe(true);
+    expect(card.classList.contains('open')).toBe(true);
+    handleReportInteraction(container, card);
+    expect(body.classList.contains('open')).toBe(false);
   });
 });

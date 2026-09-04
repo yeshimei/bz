@@ -14,7 +14,9 @@
  *       保存后 notifyUndo 一键回滚快照旧值（防手滑改状态丢数据）。
  * 基线：按钮/图标钮/输入/单选/滑条/空态/弹窗骨架走组件库（src/core/ui）；域内只留书架特有布局。
  * 图标：一律 lucide（字符串模板 data-lucide 占位 → mountIcons 统一 setIcon）。
- * 报告入口：执行现有命令 bz-reading-report-open（reading-report 域），本域不自建报告。
+ * 报告视图（读书报告内嵌化拍板）：阅读分析报告是面板内视图（不再独立弹窗、原深链作废）——
+ *       左栏报告入口/移动头行报告钮切到报告视图，报告内点作者/分类行切回书架列表并预填筛选；
+ *       桌面靠左栏返回，报告视图关闭钮仅移动端；报告视图存续期间书库数据变化自动重算内容区。
  */
 import type { App } from 'obsidian';
 import { TFile } from 'obsidian';
@@ -25,11 +27,12 @@ import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { uiModal, uiIcon, uiChoice, uiRange, uiSelect, uiEmpty, uiChip, uiSegmented } from '../core/ui';
 import { isMobileEnv } from '../core/mobile';
+import { renderReadingReport, cancelReadingReport, handleReportInteraction } from '../reading-report';
 import {
-  STATUS_COLORS, SIDE_DEFS, SORT_LABEL, ICON, REPORT_COMMAND_ID,
+  STATUS_COLORS, SIDE_DEFS, SORT_LABEL, ICON,
   EMPTY_BOOKS_ICON, EMPTY_SEARCH_ICON, EMPTY_FILTER_ICON,
 } from './constants';
-import { M, resetBookshelfState, type BookshelfItem, type SideId, type SortKey } from './state';
+import { M, resetBookshelfState, type BookshelfItem, type BookshelfView, type SideId, type SortKey } from './state';
 import {
   rebuildItems, getDisplayItems, computeStats, resolveFolderPath, resolveBookTag,
   categoryList, findAnniversary,
@@ -274,6 +277,115 @@ function renderAll(app: App): void {
   paintFilterBtn();
 }
 export { renderAll };
+
+// ---------- 面板内视图（读书报告内嵌化：书架列表 / 阅读分析报告） ----------
+
+/** 左栏底部报告入口：书架视图 = 「阅读分析报告 ›」；报告视图 = 「‹ 返回书架」（桌面返回路径） */
+function paintReportEntry(): void {
+  const btn = M.currentOverlay?.querySelector('.bz-bs-report') as HTMLElement | null;
+  if (!btn) return;
+  const active = M.view === 'report';
+  btn.classList.toggle('on', active);
+  btn.innerHTML = active
+    ? `${iconSpan('arrow-left')}<span>返回书架</span>${iconSpan('chevron-right', 'bz-bs-report-chev')}`
+    : `${iconSpan(ICON.report)}<span>阅读分析报告</span>${iconSpan('chevron-right', 'bz-bs-report-chev')}`;
+  mountIcons(btn);
+}
+
+/** 头行报告图标钮（移动端主入口）：报告视图激活态，点击切回书架 */
+function paintHeadReportBtn(): void {
+  const btn = M.currentOverlay?.querySelector('[data-bs-tool="report"]') as HTMLElement | null;
+  btn?.classList.toggle('on', M.view === 'report');
+}
+
+/** 视图容器显隐（书架列表 / 报告内容区互斥） */
+function paintViewContainers(): void {
+  const overlay = M.currentOverlay;
+  if (!overlay) return;
+  const shelfEl = overlay.querySelector('.bz-bs-view-shelf') as HTMLElement | null;
+  const reportEl = overlay.querySelector('.bz-bs-view-report') as HTMLElement | null;
+  if (shelfEl) shelfEl.classList.toggle('active', M.view === 'shelf');
+  if (reportEl) reportEl.classList.toggle('active', M.view === 'report');
+  // 报告视图不显移动搜索栏（搜索属书架列表视图；回书架重新展开即可）
+  if (M.view === 'report') {
+    (overlay.querySelector('#bz-bs-searchbar') as HTMLElement | null)?.classList.remove('show');
+    overlay.querySelector('[data-bs-tool="search"]')?.classList.remove('on');
+  }
+}
+
+function paintView(): void {
+  paintViewContainers();
+  paintReportEntry();
+  paintHeadReportBtn();
+}
+
+/** 搜索关键字回写两个输入框（报告筛选回书架预填/清除后保持输入框一致，防「不可见过滤」黑洞） */
+function syncSearchInputs(): void {
+  const overlay = M.currentOverlay;
+  if (!overlay) return;
+  for (const id of ['bz-bs-dsearch', 'bz-bs-msearch']) {
+    const input = overlay.querySelector(`#${id}`) as HTMLInputElement | null;
+    if (input) input.value = M.searchKeyword;
+  }
+}
+
+/** 渲染报告视图内容区（挂载点 .bz-rr-content；onFilter/onBack 回本域同面板切换） */
+function startReportRender(app: App): void {
+  const container = M.currentOverlay?.querySelector('.bz-rr-content') as HTMLElement | null;
+  if (!container) return;
+  renderReadingReport(container, app, {
+    onFilter: (kind, value) => applyReportFilter(app, kind, value),
+    onBack: () => showView(app, 'shelf'),
+  });
+}
+
+/** 同面板筛选（原深链作废拍板）：报告点作者/分类行 → 切回书架列表并预填对应筛选 */
+function applyReportFilter(app: App, kind: 'author' | 'category', value: string): void {
+  if (!value) return;
+  if (kind === 'author') {
+    // 作者名进搜索（书名/作者/分类关键字过滤天然覆盖作者维）
+    M.searchKeyword = value;
+    M.catFilter = 'all';
+  } else {
+    // 分类走正交分类筛（与左栏分类组同键，命中即高亮）
+    M.catFilter = value;
+    M.searchKeyword = '';
+  }
+  syncSearchInputs();
+  showView(app, 'shelf');
+  renderSide();
+  renderShelves(app);
+  paintFilterBtn();
+}
+
+/** 面板内切换视图（报告视图启动分片渲染；离开视图作废在途渲染） */
+function showView(app: App, view: BookshelfView): void {
+  const changed = M.view !== view;
+  M.view = view;
+  paintView();
+  if (view === 'report') {
+    // 重入（命令连点/自动刷新）也重算，保证报告拿最新数据
+    startReportRender(app);
+  } else if (changed) {
+    cancelReadingReport();
+  }
+}
+
+/** 打开报告视图（命令 bz-reading-report-open 与书架视图入口共用；面板未开先开面板） */
+export function openReportView(app: App): void {
+  if (!M.currentOverlay) {
+    // 冷开：先落视图状态，createOverlay 的 rebuild 完成回调自动进报告视图（免双渲染）
+    M.view = 'report';
+    createOverlay(app);
+  } else {
+    showView(app, 'report');
+  }
+}
+
+/** 报告视图存续期间书库数据变化 → 自动重算只更新报告内容区（域事件自动刷新分流，参考影院先例） */
+export function refreshReportView(app: App): void {
+  if (M.view === 'report' && M.currentOverlay) startReportRender(app);
+}
 
 // ---------- 移动端：筛选按钮 + 底部抽屉 ----------
 
@@ -661,10 +773,6 @@ async function rollbackBook(
 
 // ---------- 主面板创建 ----------
 
-function openReadingReport(app: App): void {
-  (app as any).commands?.executeCommandById?.(REPORT_COMMAND_ID);
-}
-
 function iconBtnHTML(icon: string, title: string, toolAttr: string, extraCls = ''): string {
   return `<button class="bz-icon-btn${extraCls ? ' ' + extraCls : ''}" data-bs-tool="${toolAttr}" title="${title}">${iconSpan(icon)}</button>`;
 }
@@ -697,21 +805,28 @@ export function createOverlay(app: App): void {
           <div class="bz-bs-side-label bz-bs-side-catlabel">分类</div>
           <div class="bz-bs-side-catlist"></div>
           <div class="bz-bs-side-foot">
-            <button class="bz-bs-report" data-bs-tool="report" title="阅读分析报告">
-              ${iconSpan('bar-chart-3')}<span>阅读分析报告</span>${iconSpan('chevron-right', 'bz-bs-report-chev')}
-            </button>
+            <button class="bz-bs-report" data-bs-tool="report" title="阅读分析报告"></button>
           </div>
         </aside>
         <div class="bz-bs-main">
-          <div class="bz-bs-toolbar">
-            <span class="bz-bs-search">${iconSpan('search')}<input class="bz-input" type="text" id="bz-bs-dsearch" placeholder="搜索书名 / 作者 / 分类…" autocomplete="off"></span>
-            <span class="bz-bs-spacer"></span>
-            <span class="bz-bs-sort-slot"></span>
+          <div class="bz-bs-view bz-bs-view-shelf active">
+            <div class="bz-bs-toolbar">
+              <span class="bz-bs-search">${iconSpan('search')}<input class="bz-input" type="text" id="bz-bs-dsearch" placeholder="搜索书名 / 作者 / 分类…" autocomplete="off"></span>
+              <span class="bz-bs-spacer"></span>
+              <span class="bz-bs-sort-slot"></span>
+            </div>
+            <div class="bz-bs-dash"></div>
+            <div class="bz-bs-mcards"></div>
+            <div class="bz-bs-shelves"></div>
+            <div class="bz-bs-shelves-m"></div>
           </div>
-          <div class="bz-bs-dash"></div>
-          <div class="bz-bs-mcards"></div>
-          <div class="bz-bs-shelves"></div>
-          <div class="bz-bs-shelves-m"></div>
+          <div class="bz-bs-view bz-bs-view-report">
+            <div class="bz-rr-head">
+              <span class="bz-rr-title">${iconSpan(ICON.report, 'bz-ic--sm')}阅读数据分析报告</span>
+              <button class="bz-icon-btn bz-rr-close" data-rr-goto-shelf title="返回书架">${iconSpan(ICON.close)}</button>
+            </div>
+            <div class="bz-rr-content"></div>
+          </div>
         </div>
       </div>
     </div>`;
@@ -755,11 +870,23 @@ export function createOverlay(app: App): void {
       renderSide(); renderShelves(app); paintFilterBtn();
       return;
     }
-    // 报告入口（左栏底 + 移动头部图标）；排序/筛选/搜索/关闭
+    // 报告视图内交互（reading-report 域：热力图 ‹ › 翻月 / 年卡展开收起）
+    if (M.view === 'report') {
+      const rrContent = overlay.querySelector('.bz-rr-content') as HTMLElement | null;
+      if (rrContent && handleReportInteraction(rrContent, t)) return;
+      // 报告视图关闭钮（仅移动端显示，桌面靠左栏返回）/ 空态主按钮 → 返回书架
+      if (t.closest('[data-rr-goto-shelf]')) { showView(app, 'shelf'); return; }
+      // 作者/分类行 → 同面板切回书架列表并预填筛选（原深链作废）
+      const rrAuthor = t.closest('[data-rr-author]') as HTMLElement | null;
+      if (rrAuthor) { applyReportFilter(app, 'author', rrAuthor.getAttribute('data-rr-author') || ''); return; }
+      const rrCat = t.closest('[data-rr-cat]') as HTMLElement | null;
+      if (rrCat) { applyReportFilter(app, 'category', rrCat.getAttribute('data-rr-cat') || ''); return; }
+    }
+    // 报告入口（左栏底 + 移动头部图标，面板内互切）；排序/筛选/搜索/关闭
     const tool = t.closest('[data-bs-tool]') as HTMLElement | null;
     if (tool) {
       const kind = tool.dataset.bsTool;
-      if (kind === 'report') { openReadingReport(app); return; }
+      if (kind === 'report') { showView(app, M.view === 'report' ? 'shelf' : 'report'); return; }
       if (kind === 'search') { toggleMobileSearch(); return; }
       if (kind === 'sort') { openFilterDrawer(app); return; }
       if (kind === 'filter') { openFilterDrawer(app); return; }
@@ -814,13 +941,19 @@ export function createOverlay(app: App): void {
   }
 
   mountIcons(overlay);
+  // 报告入口按当前视图绘制（重开面板保持报告视图状态）
+  paintView();
   // B8：首扫加载态——rebuild 完成前 shelves 显示占位，防异步读 weave-data 时空白闪烁
   const loadingHtml = `<div class="bz-bs-none">${uiEmpty({ icon: 'loader', title: '正在整理书架…', desc: '' }).outerHTML}</div>`;
   const dEl0 = overlay.querySelector('.bz-bs-shelves') as HTMLElement | null;
   const mEl0 = overlay.querySelector('.bz-bs-shelves-m') as HTMLElement | null;
   if (dEl0) { dEl0.innerHTML = loadingHtml; mountIcons(dEl0); }
   if (mEl0) { mEl0.innerHTML = loadingHtml; mountIcons(mEl0); }
-  void rebuildItems(app).then(() => renderAll(app));
+  void rebuildItems(app).then(() => {
+    // 重开面板保持报告视图：数据就绪后直接进报告视图重算（报告视图存续期间自动重算的同一入口）
+    if (M.view === 'report') showView(app, 'report');
+    else renderAll(app);
+  });
 }
 
 function toggleMobileSearch(): void {
@@ -837,6 +970,7 @@ export function closeOverlay(): void {
   if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
   closeDrawer();
   closeDomainModals(); // audit H：toggle 语义关面板时不留孤儿详情/确认弹窗
+  cancelReadingReport(); // 报告视图在途分片渲染作废 + progress toast 收起（不留常驻残留）
   if (M.currentOverlay) {
     M.currentOverlay.remove();
     M.currentOverlay = null;
