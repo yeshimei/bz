@@ -172,12 +172,12 @@ describe('settings-common：移动端默认全屏预设', () => {
 
   it('SettingsKeyOfType 收窄：布尔行接受布尔键（类型层样例，运行时核对键名）', () => {
     const boolKey: SettingsKeyOfType<boolean> = 'encryptMobileDefaultFullscreen';
-    const strKey: SettingsKeyOfType<string> = 'bookTag';
+    const strKey: SettingsKeyOfType<string> = 'bookshelfFolderPath';
     const numKey: SettingsKeyOfType<number> = 'reviewDailyLimit';
     const listKey: SettingsKeyOfType<string[]> = 'reviewWatchedFolders';
     expect([boolKey, strKey, numKey, listKey]).toEqual([
       'encryptMobileDefaultFullscreen',
-      'bookTag',
+      'bookshelfFolderPath',
       'reviewDailyLimit',
       'reviewWatchedFolders',
     ]);
