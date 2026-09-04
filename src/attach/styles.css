@@ -1,3 +1,40 @@
 /* ==================== 附件搬移域样式（src/attach/styles.css） ==================== */
 /* 原文件夹选择弹窗样式（bz-attach-*，ticket 65）随 FolderSelectModal 退役（ticket 128，
-   ADR-0061）删除：路径录入统一走 core/path-picker（bz-path-picker-*，样式在 src/core/styles.css）。 */
+   ADR-0061）删除：路径录入统一走 core/path-picker（bz-path-picker-*，样式在 src/core/styles.css）。
+   增强包（2026-09）：可勾选移动清单预览——弹窗壳/按钮走组件库（uiModal → .bz-overlay-*、
+   uiDialogActions → .bz-btn*），此处只做清单行布局，取值一律取 tokens.css 的 --bz-* token。 */
+
+/* 清单汇总行 + 提示 */
+.bz-attach-preview-sum { font-size: var(--bz-font-meta); color: var(--bz-text-2); }
+.bz-attach-preview-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-top: 2px; }
+
+/* 可勾选清单：纵向滚动列表（弹窗内不撑爆，功能性几何限高内联于此——仅 max-height 布局值） */
+.bz-attach-preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bz-space-xs);
+  margin: var(--bz-space-sm) 0;
+  max-height: 42vh;
+  overflow-y: auto;
+}
+
+/* 清单行：复选框 + from → to（label 整行可点切换勾选） */
+.bz-attach-preview-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--bz-space-sm);
+  padding: var(--bz-space-xs) var(--bz-space-sm);
+  border-radius: var(--bz-radius-sm);
+  cursor: pointer;
+  font-size: var(--bz-font-meta);
+  line-height: var(--bz-leading-normal);
+  min-width: 0;
+}
+.bz-attach-preview-row:hover { background: var(--bz-surface-hover); }
+.bz-attach-preview-row input[type='checkbox'] { flex-shrink: 0; align-self: center; margin: 0; }
+.bz-attach-preview-from { color: var(--bz-text-2); word-break: break-all; }
+.bz-attach-preview-arrow { color: var(--bz-text-3); flex-shrink: 0; }
+.bz-attach-preview-to { color: var(--bz-text-1); font-weight: var(--bz-weight-medium); word-break: break-all; min-width: 0; }
+/* 同名冲突将改名的目标路径用警告色提示（数据语义状态色） */
+.bz-attach-preview-to--renamed { color: var(--bz-warning); }
+.bz-attach-preview-badge { flex-shrink: 0; align-self: center; }
