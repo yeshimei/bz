@@ -822,7 +822,7 @@ export function createOverlay(app: App): void {
           </div>
           <div class="bz-bs-view bz-bs-view-report">
             <div class="bz-rr-head">
-              <span class="bz-rr-title">${iconSpan(ICON.report, 'bz-ic--sm')}阅读数据分析报告</span>
+              <span class="bz-rr-title">${iconSpan(ICON.report, 'bz-ic--sm')}阅读分析报告</span>
               <button class="bz-icon-btn bz-rr-close" data-rr-goto-shelf title="返回书架">${iconSpan(ICON.close)}</button>
             </div>
             <div class="bz-rr-content"></div>
