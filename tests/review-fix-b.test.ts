@@ -3,7 +3,7 @@
  * 覆盖：
  *  1) 样式库共享修饰符：.bz-btn--danger-ghost / .bz-btn--hover-accent / .bz-chip--hover-accent（项 1）；
  *  3) 触控热区收编：core .bz-touch-target（--sm/--lg/--xl 档）+ 各域挂类、域内不再复制 ::after 外扩（项 3；
- *     cinema 域 ui 冻结、attach 为 padding 抬档形态，两者维持域内块不收编）；
+ *     attach 为 padding 抬档形态维持域内块；cinema 域 ui 冻结已在走查批 C 解除并收编）；
  *  4) z-index 静态大数收口：launcher/literature/secondbrain/smartcat（项 4）；
  *  5) 图标单一事实源：DOMAIN_ICONS 补 diary-wall/settings-panel，home 磁贴/命令/写日记命令全量引用（项 5）；
  *  6) .bz-panel-mtop 补接：memo 随 mfs 开关同挂摘（项 6）。
@@ -90,8 +90,10 @@ describe('批 B-3：触控热区收编 core .bz-touch-target', () => {
     expect(repo('src/favorites/ui.ts')).toContain('bz-icon-btn--lg');
   });
 
-  it('跳过项守护：cinema（ui 冻结）与 attach（padding 抬档形态）维持域内 pointer:coarse 块', () => {
-    expect(repo('src/cinema/styles.css')).toMatch(/@media \(pointer: coarse\)/);
+  it('跳过项守护：attach（padding 抬档形态）维持域内 pointer:coarse 块；cinema 已在批 C 收编 .bz-touch-target', () => {
+    // cinema ui 冻结解除（走查批 C-8）：域内 ::after 外扩块撤除，改挂 core 共享类
+    expect(repo('src/cinema/styles.css')).not.toMatch(/@media \(pointer: coarse\)/);
+    expect(repo('src/cinema/ui.ts')).toMatch(/bz-icon-btn bz-touch-target/);
     expect(repo('src/attach/styles.css')).toMatch(/@media \(pointer: coarse\)/);
     expect(repo('src/attach/styles.css')).not.toMatch(/\w::after\s*\{/); // attach 刻意外扩（防误触邻行，仅注释提及）
   });
