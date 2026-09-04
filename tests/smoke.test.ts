@@ -151,7 +151,7 @@ describe('bz 骨架冒烟', () => {
     // f3：新建类动词统一（写备忘 → 加备忘，与加物品/加收藏一致；ADR-0087 旧 movie-add 已退役）
     expect(byId('bz-memo-add').name).toBe('加备忘');
     expect(byId('bz-cinema-open').name).toBe('影院');
-    expect(byId('bz-cinema-add').name).toBe('加影视（影院）');
+    expect(byId('bz-cinema-add').name).toBe('加影视');
     // 书架墙（bookshelf 新域）
     expect(byId('bz-bookshelf-open').name).toBe('书架墙');
     // todo 新域：待办 / 加待办（enh-sweep-a 去冗余括号后缀）
@@ -159,8 +159,8 @@ describe('bz 骨架冒烟', () => {
     // clipbook 融合域（ADR-0082）：剪藏本 = 聚合讯+剪藏本合一入口
     expect(byId('bz-clipbook-open').name).toBe('剪藏本');
     expect(byId('bz-todo-add').name).toBe('加待办');
-    // t2：阅读分析报告 → 阅读数据分析报告
-    expect(byId('bz-reading-report-open').name).toBe('阅读数据分析报告');
+    // t2：四套叫法统一「阅读分析报告」（走查批 D；home 磁贴保留短名「阅读报告」）
+    expect(byId('bz-reading-report-open').name).toBe('阅读分析报告');
     // f3：评级四命令去英文后缀、统一「复习（X）」标点
     expect(byId('bz-review-again').name).toBe('复习（忘了）');
     expect(byId('bz-review-hard').name).toBe('复习（困难）');

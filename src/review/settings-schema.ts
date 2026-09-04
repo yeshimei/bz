@@ -120,7 +120,6 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
             },
             pickerTitle: '选择监听文件夹',
             pickerDesc: '文件夹里的新笔记自动加入复习计划，包括子文件夹',
-            okText: '确定',
             onChange: (list) => {
               const prev = [...(((getSettings() as any).reviewWatchedFolders as string[]) || [])];
               return (async (): Promise<string[]> => {
