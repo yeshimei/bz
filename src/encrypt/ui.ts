@@ -33,6 +33,7 @@ import { SafeManager, base64ToBytes, bytesToBase64, type SafeNote, type SafeAtta
 import { compressImage, videoFrame } from './preview';
 import { PasswordVaultDataManager, type PasswordVaultEntry, type PlatformGroup } from './vault-data';
 import { VaultPwView, relTime as pwRelTime, DEFAULT_PW_STATE, type PwViewState, type PwViewHost } from './vault-pw-view';
+import { openPasswordQuickPicker } from './pw-picker';
 import { ASSET_COLOR, overviewHTML, noteRowHTML, noteDetailHTML, type VaultAsset, type OverviewStats, vIc } from './vault-assets-view';
 
 export interface EncryptUIConfig {
@@ -96,6 +97,32 @@ export function copySensitiveText(text: string): Promise<void> {
     return Promise.reject(e);
   }
 }
+
+/** 密码强度档（表单强度提示）：弱 / 中 / 强 */
+export type PwStrength = 'weak' | 'mid' | 'strong';
+
+/**
+ * 密码强度（纯本地计算，不联网、不落盘）：长度 + 字符多样性计分。
+ * len≥8 / len≥12 / 大小写并存 / 含数字 / 含符号 各 1 分：≤2 弱、3-4 中、5 强。
+ */
+export function passwordStrength(pw: string): PwStrength {
+  if (!pw) return 'weak';
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
+  if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
+  if (/\d/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  return score <= 2 ? 'weak' : score <= 4 ? 'mid' : 'strong';
+}
+
+/** 密码强度提示文案（UI 与测试共用） */
+export function pwStrengthLabel(s: PwStrength): string {
+  return s === 'weak' ? '弱' : s === 'mid' ? '中' : '强';
+}
+
+/** 上次停留资产（会话级记忆）：下次打开面板/快速取密直落该资产，不回概览 */
+let lastVisitedAsset: VaultAsset = 'pw';
 
 /**
  * 收集笔记引用的图片/视频附件路径（纯函数，只读，便于单测）。
@@ -415,8 +442,14 @@ export class UIManager {
   asset: VaultAsset = 'overview';
   /** 加密日记详情临时明文缓存（渲染详情时惰性解密） */
   private _diaryPlain: Record<string, string> = {};
-  /** 最近一次体检结果缓存（E5：概览健康卡随 scanHealth 更新，未体检为 null） */
-  private lastHealth: { issues: number; lastChecked: string } | null = null;
+  /** 最近一次体检结果缓存（E5：概览健康卡随 scanHealth 更新，未体检为 null；上锁清空） */
+  lastHealth: { issues: number; lastChecked: string } | null = null;
+  /** 本次解锁会话起点（ms；notifyUnlockUi 同步，上锁清空）——左栏「已解锁时长」计时用 */
+  private unlockedAt: number | null = null;
+  /** 已解锁时长刷新计时器（面板可见时每秒跳一次） */
+  private sessionTimer: ReturnType<typeof setInterval> | null = null;
+  /** 安全模式无交互自动上锁计时器（15 分钟；面板内交互重置） */
+  private idleLockTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(dataManager: SafeManager, config: EncryptUIConfig, pwDataManager?: PasswordVaultDataManager) {
     this.dataManager = dataManager;
@@ -489,11 +522,11 @@ export class UIManager {
           <div class="bz-vault-item k-note" data-asset="note">${vIc('file-lock', 16)}加密笔记<span class="cnt" data-cnt="note"></span></div>
           <div class="bz-vault-item k-diary" data-asset="diary">${vIc('book-lock', 16)}加密日记<span class="cnt" data-cnt="diary"></span></div>
           <div class="grow"></div>
-          <div class="bz-vault-health">
+          <div class="bz-vault-health" data-act="health-card" title="打开保险库体检">
             <div class="ht"><span class="okdot"></span><span data-health-t>保险库健康</span></div>
-            <div class="hd" data-health-d>体检中…</div>
+            <div class="hd" data-health-d>未体检</div>
           </div>
-          <div class="bz-vault-lockbtn" data-act="lock"><span class="lbl">${vIc('lock', 14)} 立即上锁</span><span class="dot"></span></div>
+          <div class="bz-vault-lockbtn" data-act="lock"><span class="lbl">${vIc('lock', 14)} 立即上锁</span><span class="dur" data-unlock-dur></span><span class="dot"></span></div>
         </div>
         <div class="bz-vault-main">
           <div class="bz-vault-bar">
@@ -565,6 +598,7 @@ export class UIManager {
   private bindVaultShell(): void {
     const setAsset = (a: VaultAsset) => {
       this.asset = a;
+      lastVisitedAsset = a; // 记住停留资产：下次打开直落
       this.pwState.searchKw = '';
       this.desk.search.value = '';
       this.mob.search.value = '';
@@ -582,12 +616,18 @@ export class UIManager {
     this.popup!.querySelector('[data-act="mob-close"]')?.addEventListener('click', () => this.hide());
     this.popup!.querySelector('[data-act="settings"]')?.addEventListener('click', () => this.openSettings());
     this.popup!.querySelector('[data-act="health"]')?.addEventListener('click', () => void this.openHealthDialog());
+    // 左栏健康卡：读真实体检状态 + 点击直达体检
+    this.popup!.querySelector('[data-act="health-card"]')?.addEventListener('click', () => void this.openHealthDialog());
     this.popup!.querySelector('[data-act="lock-note"]')?.addEventListener('click', () => this.onLockCurrentNote?.());
     this.popup!.querySelector('[data-act="gen"]')?.addEventListener('click', () => this.genAndToast());
-    // 搜索防抖（资产内过滤）
+    // 搜索防抖（资产内过滤）；概览页输入 → 自动切到密码结果（资产切换保留关键词）
     const bindSearch = (input: HTMLInputElement, isMob: boolean) => {
       input.addEventListener('input', () => {
         const v = input.value.trim();
+        if (this.asset === 'overview' && v) {
+          this.asset = 'pw';
+          lastVisitedAsset = 'pw';
+        }
         this.pwState.searchKw = v;
         this.desk.search.value = isMob ? v : this.desk.search.value;
         this.mob.search.value = isMob ? this.mob.search.value : v;
@@ -601,6 +641,10 @@ export class UIManager {
     this.mask!.addEventListener('click', () => {
       if (this.mask!.style.display === 'block') this.hide();
     });
+    // 安全模式防偷看自动上锁：面板内任何交互重置 15 分钟倒计时（捕获阶段兜底输入框事件）
+    const bump = () => this.bumpIdleLock();
+    this.popup!.addEventListener('pointerdown', bump, true);
+    this.popup!.addEventListener('keydown', bump, true);
   }
 
   createMask(id: string): HTMLDivElement {
@@ -629,18 +673,83 @@ export class UIManager {
     this.popup!.style.display = 'flex';
     this.notifyUnlockUi();
     void this.renderList();
+    this.startSessionTimers();
   }
 
   hide() {
     if (this.mask) this.mask.style.display = 'none';
     if (this.popup) this.popup.style.display = 'none';
-    if (this.config.securityMode || (tryGetSettings() as any)?.securityMode) {
+    this.stopSessionTimers();
+    if (this.isSecurityMode()) {
       this.dataManager.lock();
       this.pwDataManager.lock();
       this.pwState = { ...DEFAULT_PW_STATE };
       this._selNoteId = null;
       this._diaryPlain = {}; // G：明文缓存随上锁一并清出内存（与 lockNow 同口径）
       this.noticeAutoLock();
+    }
+  }
+
+  /** 安全模式双口径（config 快照可能落后于设置实时值：单读 config 会漏，历史双键 OR） */
+  private isSecurityMode(): boolean {
+    return !!this.config.securityMode || !!(tryGetSettings() as any)?.securityMode;
+  }
+
+  // ---------- 解锁会话可见性（已解锁时长 + 安全模式无交互自动上锁） ----------
+  /** 面板可见期间：每秒刷新「已解锁时长」+ 布防无交互自动上锁 */
+  private startSessionTimers(): void {
+    this.stopSessionTimers();
+    if (!this.dataManager.unlocked) return;
+    if (this.unlockedAt === null) this.unlockedAt = Date.now();
+    this.updateUnlockDuration();
+    this.sessionTimer = setInterval(() => this.updateUnlockDuration(), 1000);
+    this.bumpIdleLock();
+  }
+
+  /** 停会话计时（时长刷新 + 无交互自动上锁；hide/上锁/卸载共用） */
+  stopSessionTimers(): void {
+    if (this.sessionTimer !== null) {
+      clearInterval(this.sessionTimer);
+      this.sessionTimer = null;
+    }
+    this.clearIdleLock();
+  }
+
+  /** 左栏「立即上锁」旁的已解锁时长（mm:ss，超 1 小时 h:mm:ss） */
+  private updateUnlockDuration(): void {
+    const el = this.popup?.querySelector('[data-unlock-dur]');
+    if (!el) return;
+    if (!this.dataManager.unlocked || this.unlockedAt === null) {
+      el.textContent = '';
+      return;
+    }
+    const s = Math.max(0, Math.floor((Date.now() - this.unlockedAt) / 1000));
+    const mm = String(Math.floor(s / 60) % 60).padStart(2, '0');
+    const ss = String(s % 60).padStart(2, '0');
+    const h = Math.floor(s / 3600);
+    el.textContent = h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+    (el as HTMLElement).title = '已解锁时长';
+  }
+
+  /** 安全模式：15 分钟无面板交互自动上锁（交互即重置；非安全模式/未解锁不布防） */
+  static readonly IDLE_LOCK_MS = 15 * 60 * 1000;
+
+  private bumpIdleLock(): void {
+    this.clearIdleLock();
+    if (!this.isSecurityMode() || !this.dataManager.unlocked) return;
+    if (!this.rootVisible()) return;
+    this.idleLockTimer = setTimeout(() => {
+      this.idleLockTimer = null;
+      if (!this.isSecurityMode() || !this.dataManager.unlocked || !this.rootVisible()) return;
+      notice('安全模式：15 分钟无操作，已自动上锁');
+      this.lockNow();
+    }, UIManager.IDLE_LOCK_MS);
+  }
+
+  private clearIdleLock(): void {
+    if (this.idleLockTimer !== null) {
+      clearTimeout(this.idleLockTimer);
+      this.idleLockTimer = null;
     }
   }
 
@@ -944,7 +1053,7 @@ export class UIManager {
       const warning = document.createElement('div');
       warning.className = 'bz-encrypt-dialog-warning';
       warning.style.display = 'none'; // 功能性显隐
-      warning.innerHTML = '<strong>⚠️ 重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，加密笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。';
+      warning.innerHTML = `${vIc('triangle-alert', 14)} <strong>重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，加密笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。`;
       // 硬警告确认：首设必须勾选「已了解风险」才能完成设置（用户拍板：遗忘=数据永久丢失，须显式确认）
       const ack = document.createElement('label');
       ack.className = 'bz-encrypt-dialog-ack';
@@ -1154,11 +1263,26 @@ export class UIManager {
     this.mob.seg.querySelectorAll('.sg').forEach((el) => {
       el.classList.toggle('on', el.getAttribute('data-masset') === this.asset);
     });
-    // 健康卡
+    // 健康卡（真实体检状态：未体检/健康/N 个待处理；点击直达体检——绑定见 bindVaultShell）
     const ht = this.popup!.querySelector('[data-health-t]');
     const hd = this.popup!.querySelector('[data-health-d]');
+    const dot = this.popup!.querySelector<HTMLElement>('.bz-vault-health .okdot');
     if (ht) ht.textContent = c.pw + c.note + c.diary ? '保险库健康' : '保险库为空';
-    if (hd) hd.textContent = '健康 · 三类资产集中管理';
+    if (hd) {
+      if (!this.lastHealth) hd.textContent = '未体检 · 点此体检';
+      else if (this.lastHealth.issues === 0) hd.textContent = `体检通过 · ${this.lastHealth.lastChecked}`;
+      else hd.textContent = `${this.lastHealth.issues} 个待处理 · 点此查看`;
+    }
+    if (dot) {
+      // 状态不只靠颜色（WCAG 1.4.1）：文案已随状态变化，色点仅作辅助佐证
+      const color = !this.lastHealth
+        ? 'var(--bz-vault-faint)'
+        : this.lastHealth.issues > 0
+          ? 'var(--bz-vault-warn)'
+          : 'var(--bz-vault-ok)';
+      dot.style.background = color;
+      dot.style.boxShadow = 'none';
+    }
   }
 
   /** 概览统计（供 overviewHTML） */
@@ -1220,7 +1344,10 @@ export class UIManager {
       );
       area.querySelector('[data-hero="lock-note"]')?.addEventListener('click', () => this.onLockCurrentNote?.());
       area.querySelector('[data-hero="add-pw"]')?.addEventListener('click', () => this.openPwEntryDialog());
-      area.querySelector('[data-hero="health"]')?.addEventListener('click', () => void this.openHealthDialog());
+      // hero「体检」按钮 + 概览体检卡（整卡可点）都直达体检
+      area.querySelectorAll('[data-hero="health"]').forEach((el) =>
+        el.addEventListener('click', () => void this.openHealthDialog())
+      );
       area.querySelector('[data-hero="recent-all"]')?.addEventListener('click', () => this.setAssetFromNav('pw'));
       area.querySelectorAll('.bz-vault-minirow[data-recent]').forEach((el) =>
         el.addEventListener('click', () => this.setAssetFromNav((el.getAttribute('data-recent') as 'pw' | 'note' | 'diary')))
@@ -1439,6 +1566,7 @@ export class UIManager {
       return;
     }
     this._pwEditingId = edit ? edit.id : null;
+    this._pwDupConfirmed = false; // 查重放行标志随弹窗打开复位：每次保存都要重新确认
     const dlg = this.ensurePwDialog();
     const title = dlg.querySelector('.bz-vault-dlg h3')!;
     title.textContent = edit ? '编辑密码条目' : '添加密码条目';
@@ -1448,8 +1576,17 @@ export class UIManager {
       input.value = edit ? edit[f] || '' : prefill && f !== 'password' ? prefill[f as 'platform' | 'url'] || '' : '';
     });
     const pw = edit ? edit.password : this.generatePassword();
-    (dlg.querySelector('[data-f="password"]') as HTMLInputElement).value = pw;
+    const pwInput = dlg.querySelector('[data-f="password"]') as HTMLInputElement;
+    pwInput.value = pw;
+    // 防偷看：每次打开默认掩码态，eye 手动切换明文
+    pwInput.type = 'password';
+    const eyeBtn = dlg.querySelector('[data-pwv-dlg="eye"]') as HTMLElement | null;
+    if (eyeBtn) {
+      eyeBtn.title = '显示密码';
+      eyeBtn.innerHTML = vIc('eye', 14);
+    }
     (dlg.querySelector('[data-f-err]') as HTMLElement).textContent = '';
+    this.pwDlgSyncUi?.();
     this.openPwDialogOverlay(true);
     // 焦点移到平台输入
     const first = dlg.querySelector('[data-f="platform"]') as HTMLInputElement | null;
@@ -1457,6 +1594,10 @@ export class UIManager {
   }
 
   private _pwEditingId: string | null = null;
+  /** 同平台+账号查重命中后的放行标志（同一弹窗会话内再点一次保存即放行） */
+  private _pwDupConfirmed = false;
+  /** 弹窗内联动刷新（强度提示等）；ensurePwDialog 首建时注入 */
+  private pwDlgSyncUi: (() => void) | null = null;
   private pwDlg: HTMLElement | null = null;
   /** 密码添加/编辑弹窗的 ESC 层（E7：弹窗可见时 ESC 只关弹窗，不穿透关掉主面板） */
   private pwDlgEsc: { unregister: () => void } | null = null;
@@ -1473,19 +1614,62 @@ export class UIManager {
         <label>链接（可选）</label><input data-f="url" placeholder="https://…">
         <label>账号 *</label><input data-f="account" placeholder="登录账号 / 邮箱 / 手机号">
         <label>密码 *</label>
-        <div class="pwdrow"><input data-f="password" placeholder="密码"><button class="gen" data-pwv-dlg="gen">生成</button></div>
+        <div class="pwdrow"><input data-f="password" type="password" placeholder="密码" autocomplete="new-password"><button class="gen" data-pwv-dlg="gen">生成</button><button class="mini" data-pwv-dlg="eye" type="button" title="显示密码">${vIc('eye', 14)}</button></div>
+        <div class="pwstrength" data-pw-strength></div>
         <label>备注（可选）</label><input data-f="note" placeholder="备用信息…">
         <div class="err" data-f-err></div>
         <div class="btns"><button class="cancel" data-pwv-dlg="cancel">取消</button><button class="save" data-pwv-dlg="save">保存</button></div>
       </div>`;
     const errEl = dlg.querySelector('[data-f-err]') as HTMLElement;
     const get = (f: string) => (dlg.querySelector(`[data-f="${f}"]`) as HTMLInputElement).value.trim();
+    // 防偷看：eye 切换密码明文/掩码（默认掩码）
+    dlg.querySelector('[data-pwv-dlg="eye"]')?.addEventListener('click', () => {
+      const input = dlg.querySelector('[data-f="password"]') as HTMLInputElement;
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      const eye = dlg.querySelector('[data-pwv-dlg="eye"]') as HTMLElement;
+      eye.title = show ? '隐藏密码' : '显示密码';
+      eye.innerHTML = vIc(show ? 'eye-off' : 'eye', 14);
+      input.focus();
+    });
+    // 强度提示（纯本地计算）：密码框输入/生成/打开弹窗时联动刷新
+    const strengthEl = dlg.querySelector('[data-pw-strength]') as HTMLElement;
+    const syncStrength = () => {
+      const v = (dlg.querySelector('[data-f="password"]') as HTMLInputElement).value;
+      if (!v) {
+        strengthEl.textContent = '';
+        delete strengthEl.dataset.level;
+        return;
+      }
+      const s = passwordStrength(v);
+      strengthEl.textContent = '强度：' + pwStrengthLabel(s);
+      strengthEl.dataset.level = s;
+    };
+    this.pwDlgSyncUi = syncStrength;
+    (dlg.querySelector('[data-f="password"]') as HTMLInputElement).addEventListener('input', syncStrength);
+    // Enter 流转：平台→链接→账号→密码→备注→保存（末字段 Enter=保存）
+    const flow: Array<[string, string | null]> = [
+      ['platform', 'url'],
+      ['url', 'account'],
+      ['account', 'password'],
+      ['password', 'note'],
+      ['note', null],
+    ];
+    for (const [f, next] of flow) {
+      dlg.querySelector(`[data-f="${f}"]`)?.addEventListener('keydown', (e) => {
+        if ((e as KeyboardEvent).key !== 'Enter') return;
+        e.preventDefault();
+        if (next) (dlg.querySelector(`[data-f="${next}"]`) as HTMLInputElement | null)?.focus();
+        else (dlg.querySelector('[data-pwv-dlg="save"]') as HTMLButtonElement | null)?.click();
+      });
+    }
     // 遮罩点击（内容区外）关闭
     dlg.addEventListener('click', (e) => {
       if (e.target === dlg) this.openPwDialogOverlay(false);
     });
     dlg.querySelector('[data-pwv-dlg="gen"]')?.addEventListener('click', () => {
       (dlg.querySelector('[data-f="password"]') as HTMLInputElement).value = this.generatePassword();
+      syncStrength();
       this.toast('已生成新密码');
     });
     dlg.querySelector('[data-pwv-dlg="cancel"]')?.addEventListener('click', () => this.openPwDialogOverlay(false));
@@ -1499,7 +1683,17 @@ export class UIManager {
         errEl.textContent = '账号和密码不能为空';
         return;
       }
-      const item = { platform, url: get('url'), account: get('account'), password: get('password'), note: get('note') };
+      // 同平台+账号查重（防重复收录）：首次命中只提示，再点一次保存放行（用户拍板）
+      const account = get('account');
+      const dup = this.pwDataManager.pwData.find(
+        (d) => d.id !== this._pwEditingId && (d.platform || '').trim() === platform && (d.account || '').trim() === account
+      );
+      if (dup && !this._pwDupConfirmed) {
+        this._pwDupConfirmed = true;
+        errEl.textContent = `该平台已有同名账号（${dup.account || account}），再次点击保存将放行`;
+        return;
+      }
+      const item = { platform, url: get('url'), account, password: get('password'), note: get('note') };
       try {
         if (this._pwEditingId) {
           await this.pwDataManager.updateItem(this._pwEditingId, item);
@@ -1671,10 +1865,35 @@ export class UIManager {
 
   private setAssetFromNav(a: VaultAsset): void {
     this.asset = a;
+    lastVisitedAsset = a; // 记住停留资产：下次打开直落
     this.desk.nav.querySelectorAll('.bz-vault-item').forEach((el) =>
       el.classList.toggle('on', el.getAttribute('data-asset') === a)
     );
+    this.mob.seg.querySelectorAll('.sg').forEach((el) =>
+      el.classList.toggle('on', el.getAttribute('data-masset') === a)
+    );
     this.renderAll();
+  }
+
+  /**
+   * 快速取密落点（解锁成功后调用）：直接切到密码资产并聚焦搜索框——
+   * 打开面板就是为了取密/管密，不再停留在概览多点一步。
+   */
+  enterPwQuickAccess(): void {
+    if (!this._initialized) return;
+    this.setAssetFromNav('pw');
+    this.desk.search.value = '';
+    try {
+      this.desk.search.focus({ preventScroll: true } as any);
+    } catch (e) {
+      this.desk.search.focus();
+    }
+  }
+
+  /** 直落上次停留资产（已解锁直接打开面板时；无记忆回落密码资产） */
+  restoreLastAsset(): void {
+    if (!this._initialized) return;
+    this.setAssetFromNav(lastVisitedAsset);
   }
 
   /** 立即上锁（锁屏接管） */
@@ -1691,8 +1910,11 @@ export class UIManager {
     this.asset = 'overview';
     // E5：上锁后体检结果无意义，复位未体检态
     this.lastHealth = null;
+    // 解锁会话计时终止（已解锁时长/无交互自动上锁）
+    this.unlockedAt = null;
+    this.stopSessionTimers();
     this.notifyUnlockUi();
-    if (this.config.securityMode || (tryGetSettings() as any)?.securityMode) {
+    if (this.isSecurityMode()) {
       // G：与 hide() 同双口径（securityMode 可能只写在旧全局键上——单读 config 会漏上锁）
       this.hide();
     }
@@ -1703,6 +1925,13 @@ export class UIManager {
     if (!this.popup || !this._initialized) return;
     const st = this.popup.querySelector('[data-mob-unlock]');
     if (st) st.textContent = this.dataManager.unlocked ? '已解锁' : '已锁定';
+    // 解锁会话起点（供左栏「已解锁时长」计时；上锁清零）
+    if (this.dataManager.unlocked) {
+      if (this.unlockedAt === null) this.unlockedAt = Date.now();
+    } else {
+      this.unlockedAt = null;
+    }
+    this.updateUnlockDuration();
     this.renderAll();
   }
 
@@ -1948,8 +2177,11 @@ export class UIManager {
           } else {
             // 原子还原（优化五）：任一冲突/失败 → 整体未写回，条目保留在保险箱
             finishProgress(h, total, '还原未完成（' + conflicts.length + ' 个目标有冲突）');
+            // 列出具体冲突路径（保留目录信息让用户知道是哪个目标被占用；超长截断防通知栏过高）
+            const cap = (p: string) => (p.length > 48 ? p.slice(0, 48) + '…' : p);
+            const paths = conflicts.map(cap).join('、');
             notice(
-              '还原中止：' + conflicts.length + ' 个目标被占用或不可用，未写入任何文件，条目保留在保险库',
+              `还原中止：${conflicts.length} 个目标被占用或不可用（${paths}），未写入任何文件，条目保留在保险库`,
               'warning'
             );
           }
@@ -1995,8 +2227,10 @@ export class UIManager {
     const title = document.createElement('h4');
     title.textContent = note.title;
     const closeBtn = document.createElement('button');
-    closeBtn.textContent = '❌';
+    closeBtn.innerHTML = vIc('x', 14); // 预览关闭（原 ❌ emoji 改 lucide 内联，铁律通知/图标去 emoji）
     closeBtn.className = 'bz-encrypt-btn bz-win-close';
+    closeBtn.title = '关闭';
+    closeBtn.setAttribute('aria-label', '关闭');
     closeBtn.onclick = () => this.closePreview();
     header.appendChild(title);
     header.appendChild(closeBtn);
@@ -2269,14 +2503,48 @@ export class EncryptAppController {
     this._initialized = true;
   }
 
-  /** 打开保险箱主面板 */
+  /** 打开保险箱主面板：解锁成功直落密码资产并聚焦搜索（快速取密路径）；
+   *  已解锁直接打开则恢复上次停留资产（会话级记忆）。 */
   async openManager() {
     if (!this.dataManager.unlocked) {
       const ok = await this.uiManager.showPasswordDialog();
-      if (ok) this.uiManager.show();
+      if (ok) {
+        this.uiManager.show();
+        this.uiManager.enterPwQuickAccess();
+      }
     } else {
       this.uiManager.show();
+      this.uiManager.restoreLastAsset();
     }
+  }
+
+  /**
+   * 快速复制密码（命令 bz-encrypt-copy-password；不打开主面板）：
+   * 未解锁先弹主密码 → 轻量 fuzzy 选择器选条目 → 复制到剪贴板（60s 自动清空）。
+   */
+  async quickCopyPassword(): Promise<void> {
+    if (!this.dataManager.unlocked) {
+      const ok = await this.uiManager.showPasswordDialog();
+      if (!ok) return;
+    }
+    try {
+      await this.uiManager.pwDataManager.load();
+    } catch (e) {
+      /* 载荷损坏等：按空态处理，由下方「还没有密码」兜底提示 */
+    }
+    const entries = this.uiManager.pwDataManager.pwData;
+    if (!entries.length) {
+      notice('保险库还没有密码，打开面板后可新增');
+      return;
+    }
+    void openPasswordQuickPicker(entries, (d) => {
+      void this.uiManager.copySensitive(d.password).then((ok) => {
+        notice(
+          ok ? `已复制「${d.platform}」${d.account ? `（${d.account}）` : ''}的密码，60 秒后自动清空` : '复制失败，请手动复制',
+          ok ? 'success' : 'error'
+        );
+      });
+    });
   }
 
   /** 二次确认：正文与附件将移入保险箱（原路径消失），点确认才开始 */
@@ -2344,9 +2612,13 @@ export class EncryptAppController {
         notice('请先打开要加密的笔记');
         return;
       }
+      // 锁定状态点「加密当前笔记」：先弹解锁，成功后继续原操作（不再只提示让用户自己绕路）
       if (!this.dataManager.unlocked || !this.dataManager.password) {
-        notice('请先打开保险库并解锁');
-        return;
+        const ok = await this.uiManager.showPasswordDialog();
+        if (!ok) {
+          notice('未解锁，已取消加密');
+          return;
+        }
       }
       const content = await app.vault.read(file);
       // 附件引用：metadataCache.embeds（Obsidian 自带链接信息）为主 + 正则兜底（collectNoteAttachmentPaths）
@@ -2394,6 +2666,9 @@ export class EncryptAppController {
     // G：密码弹窗（含平台编辑遮罩，无 id 挂 body）、剪贴板自动清空计时器、密码资产域事件订阅
     this.uiManager.closeAllDialogs();
     cancelClipboardClear();
+    // 解锁会话计时（时长刷新/无交互自动上锁）+ 账号卡明文自动回遮计时
+    this.uiManager.stopSessionTimers();
+    this.uiManager.pwView.disposeRevealTimers();
     this.uiManager.pwDataManager.destroy();
     this.uiManager.mask = null;
     this.uiManager.popup = null;
