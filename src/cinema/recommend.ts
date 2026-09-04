@@ -6,7 +6,7 @@
  * - ADR-0087：自旧 movie 迁入 runSimilarRecommend/buildSimilarPrompt（找同类）
  */
 import type { App } from 'obsidian';
-import { notice, notify } from '../core/notice';
+import { notice, notify, notifySaveError } from '../core/notice';
 import { createAI } from '../core/ai';
 import { emitDomainEvent } from '../core/domain-bus';
 import { STATUS_WANT, STATUS_WATCHED } from './constants';
@@ -138,24 +138,26 @@ tags:
     watchPosterFetch(app, f, handle);
     refreshDataAndView(app);
   } catch (e) {
-    notice('创建笔记失败', 'error');
+    notifySaveError(e, '加入想看');
     console.error(e);
   }
 }
 
 /**
  * AI 荐片（页内化）：等待消息与结果都就地渲染在 AI 页内，不弹窗。
- * 触发方确保 M.view 已切到 'ai' 且 renderAll 已渲染（工具钮/开始按钮统一走 runAIRecommend）。
+ * 触发方确保 M.view 已切到 'ai' 且 renderAll 已渲染（页内「开始/重试/换一批」按钮统一走 runAIRecommend；
+ * 左栏工具钮只切页不发请求——增强包需求 4 按需触发）。
  */
 export async function runAIRecommend(app: App): Promise<void> {
   // 重入防护：AI 运行中再点入口/开始按钮直接忽略（防双倍 token 消耗与并发写 M.aiResult 互相覆盖）
   if (M.aiRunning) return;
-  // 若从非 AI 页触发（如左栏工具钮），先切页让等待态可见
+  // 若从非 AI 页触发（如详情「找同类」外的按钮），先切页让等待态可见
   M.aiRunning = true;
   M.aiWaitMsg = 'AI 正在分析你的观影口味…';
   M.aiResult = null;
   M.aiError = null;
   M.aiTitle = 'AI 荐片';
+  M.aiBase = null; // 荐片模式（「换一批」重跑荐片而非找同类）
   M.view = 'ai';
   M.renderFn?.();
 
@@ -192,12 +194,13 @@ export async function runAIRecommend(app: App): Promise<void> {
 export async function runSimilarRecommend(item: CinemaItem, app: App): Promise<void> {
   // 重入防护：与 AI 荐片共用 aiRunning 状态机，运行中再触发直接忽略
   if (M.aiRunning) return;
-  // 页内等待态（复用 AI 页状态机；标题区分「找同类 ·《X》」）
+  // 页内等待态（复用 AI 页状态机；标题区分「找同类 ·《X》」）；记录基准影片供「换一批」重跑
   M.aiRunning = true;
   M.aiWaitMsg = 'AI 正在分析同类影片…';
   M.aiResult = null;
   M.aiError = null;
   M.aiTitle = `找同类 ·《${item.name}》`;
+  M.aiBase = item;
   M.view = 'ai';
   M.renderFn?.();
   try {
