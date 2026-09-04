@@ -5,7 +5,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SafeManager, fingerprintOf, flatName, mapLimit, type HealthProgress, type SafeNote } from '../../src/encrypt/data';
-import { CryptoService, clearCryptoKeyCache } from '../../src/password/crypto';
+import { CryptoService, clearCryptoKeyCache } from '../../src/core/crypto';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
 
