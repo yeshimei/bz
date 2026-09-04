@@ -10,7 +10,7 @@ import { escManager } from '../../src/core/esc-manager';
 import { __resetNoticeForTests } from '../../src/core/notice';
 import { showReportInPopup, showReadingReport, unloadReadingReport } from '../../src/reading-report/index';
 import { MockVault, parseFrontmatter } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, Platform as MockPlatform } from '../mock-obsidian-entry';
 
 function makeApp(vault: MockVault) {
   return {
@@ -120,6 +120,35 @@ describe('完整链路', () => {
     document.body.innerHTML = '';
     __resetNoticeForTests();
     setSettingsProvider(() => ({}) as any);
+  });
+
+  it('移动端默认全屏键切换（旧 library 域退役）：跟随 bookshelfMobileDefaultFullscreen，旧键不再生效', async () => {
+    const vault = seedVault();
+    setApp(makeApp(vault));
+    MockPlatform.isMobile = true;
+    try {
+      // 新键开 → 报告窗挂 bz-win-mfs
+      setSettingsProvider(() => ({ bookshelfMobileDefaultFullscreen: true }) as any);
+      await showReadingReport(makeApp(vault) as any);
+      expect(document.querySelector('.bz-reading-report-overlay .bz-win-mfs')).not.toBeNull();
+      unloadReadingReport();
+      document.body.innerHTML = '';
+
+      // 新键关 → 不挂
+      setSettingsProvider(() => ({ bookshelfMobileDefaultFullscreen: false }) as any);
+      await showReadingReport(makeApp(vault) as any);
+      expect(document.querySelector('.bz-reading-report-overlay .bz-win-mfs')).toBeNull();
+      unloadReadingReport();
+      document.body.innerHTML = '';
+
+      // 旧 library 键已退役：即使残留也不再驱动报告全屏
+      setSettingsProvider(() => ({ libraryMobileDefaultFullscreen: true }) as any);
+      await showReadingReport(makeApp(vault) as any);
+      expect(document.querySelector('.bz-reading-report-overlay .bz-win-mfs')).toBeNull();
+    } finally {
+      MockPlatform.isMobile = false;
+      unloadReadingReport();
+    }
   });
 
   it('showReadingReport：book 笔记 → 报告包含核心章节', async () => {
