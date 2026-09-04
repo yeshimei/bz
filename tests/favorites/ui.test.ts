@@ -165,7 +165,7 @@ describe('主面板开合与空态', () => {
     consoleSpy.mockRestore();
   });
 
-  it('openPanel 建 DOM：标题「收藏本」+ 左栏 10 项（全部+9 标签）+ 空态文案', async () => {
+  it('openPanel 建 DOM：标题「收藏本」+ 左栏 11 项（全部+已归档+9 标签）+ 空态文案', async () => {
     const ctx = await setup();
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
@@ -173,14 +173,15 @@ describe('主面板开合与空态', () => {
     expect(overlay).not.toBeNull();
     expect(overlay.querySelector('.bz-fav-panel')).not.toBeNull();
     expect(overlay.querySelector('.bz-fav-head .bz-fav-title')!.textContent).toBe('收藏本');
-    // 左栏：全部 + 9 类
+    // 左栏：全部 + 已归档 + 9 类（ticket 188 加已归档入口）
     const sideBtns = overlay.querySelectorAll('[data-fav-tags] .bz-fav-side-item');
-    expect(sideBtns.length).toBe(10);
+    expect(sideBtns.length).toBe(11);
     const labels = [...sideBtns].map((b) => (b as HTMLElement).dataset.favTag);
     expect(labels[0]).toBe('__all');
+    expect(labels[1]).toBe('__archived');
     expect(labels).toContain('GitHub');
     expect(labels).toContain('DeepSeek Harness');
-    expect(labels).toHaveLength(10);
+    expect(labels).toHaveLength(11);
     // 头行右上移动图标组
     expect(overlay.querySelectorAll('.bz-fav-head-btns .bz-fav-mob-only').length).toBe(4);
     // 主按钮文案含「添加收藏」
@@ -316,7 +317,7 @@ describe('标签栏', () => {
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
     const chips = [...document.querySelectorAll('[data-fav-mobtags] .bz-fav-mobchip')] as HTMLElement[];
-    expect(chips.length).toBe(10);
+    expect(chips.length).toBe(11);
     const ghChip = chips.find((b) => b.dataset.favTag === 'GitHub')!;
     ghChip.click();
     await tick(10);
@@ -780,12 +781,37 @@ describe('桌面行动作浮层', () => {
     const saved = (await ctx.dm.getAll())[0];
     expect(saved.archived).toBe(true);
     expect(saved.archivedAt).toBeTruthy();
-    // 卡片消失
+    // 卡片消失；归档带撤销 toast（ticket 188：文案带标题）
     expect(cards().length).toBe(0);
     expect(overlayText()).toContain('暂无收藏');
-    expect(hasNotice('已归档收藏')).toBe(true);
+    expect(hasNotice('已归档收藏「归档项」')).toBe(true);
+    expect([...document.querySelectorAll('.bz-notice-action')].some((b) => b.textContent === '撤销')).toBe(true);
     // 事件
     expect(events.calls).toEqual([{ kind: 'archive', title: '归档项' }]);
+    events.off();
+  });
+
+  it('归档撤销：点撤销 → archived 回 false + 卡片回主列表 + unarchive 事件（ticket 188）', async () => {
+    const ctx = await setup();
+    const events = eventCollector();
+    seedVault(ctx.vault, [seedItem({ id: '1', title: '归档项', url: '', desc: 'x' })]);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    clickCard(cards()[0]);
+    await tick(10);
+    clickAction('归档');
+    await tick(10);
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await tick(30);
+    expect((await ctx.dm.getAll())[0].archived).toBe(true);
+    events.calls.length = 0;
+    const undoBtn = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '撤销') as HTMLElement;
+    undoBtn.click();
+    await tick(30);
+    const saved = (await ctx.dm.getAll())[0];
+    expect(saved.archived).toBe(false);
+    expect(cards().length).toBe(1);
+    expect(events.calls).toEqual([{ kind: 'unarchive', title: '归档项' }]);
     events.off();
   });
 
@@ -1765,5 +1791,345 @@ describe('移动端搜索行与排序钮', () => {
     await tick(20);
     expect(cardTitles()).toEqual(['A', 'B']);
     expect(ctx.state.favoritesSortKey).toBe('title');
+  });
+});
+
+// ==================== ticket 188 增强包回归 ====================
+
+describe('已归档视图（ticket 188）', () => {
+  it('点「已归档」入口：只显示归档条目 + 标题/计数/高亮切换；点「全部」返回', async () => {
+    const ctx = await setup();
+    seedVault(ctx.vault, [
+      seedItem({ id: '1', title: '活条目', created: '2025-01-01 00:00:00' }),
+      seedItem({ id: '2', title: '冷一条', archived: true }),
+      seedItem({ id: '3', title: '冷二条', archived: true }),
+    ]);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    expect(cardTitles()).toEqual(['活条目']);
+    // 左栏已归档计数 = 2
+    const side = [...document.querySelectorAll('[data-fav-tags] .bz-fav-side-item')] as HTMLElement[];
+    expect(cntOf(side, '__archived')).toBe('2');
+    clickTag('__archived');
+    await tick(10);
+    expect(cardTitles()).toEqual(['冷二条', '冷一条']); // created 倒序
+    expect(document.querySelector('[data-fav-title]')!.textContent).toBe('已归档');
+    expect(document.querySelector('[data-fav-count]')!.textContent).toBe('2 条已归档');
+    // 渲染重建节点，重查左栏
+    const side2 = [...document.querySelectorAll('[data-fav-tags] .bz-fav-side-item')] as HTMLElement[];
+    expect(side2.find((b) => b.dataset.favTag === '__archived')!.classList.contains('bz-fav-nav-active')).toBe(true);
+    // 回全部
+    clickTag('__all');
+    await tick(10);
+    expect(cardTitles()).toEqual(['活条目']);
+    expect(document.querySelector('[data-fav-title]')!.textContent).toBe('全部');
+    expect(document.querySelector('[data-fav-count]')!.textContent).toBe('1 条收藏');
+  });
+
+  it('已归档视图动作翻转「取消归档」：点击直接恢复（无确认弹窗）+ unarchive 事件 + 卡片消失', async () => {
+    const ctx = await setup();
+    const events = eventCollector();
+    seedVault(ctx.vault, [seedItem({ id: '1', title: '冷存条目', archived: true })]);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    clickTag('__archived');
+    await tick(10);
+    clickCard(cards()[0]);
+    await tick(10);
+    expect(menuLabels()).toContain('取消归档');
+    expect(menuLabels()).not.toContain('归档');
+    clickAction('取消归档');
+    await tick(30);
+    const saved = (await ctx.dm.getAll())[0];
+    expect(saved.archived).toBe(false);
+    // 已归档视图中恢复后卡片消失（数据回到主列表）
+    expect(cards().length).toBe(0);
+    expect(events.calls).toEqual([{ kind: 'unarchive', title: '冷存条目' }]);
+    events.off();
+    // 回全部可见
+    clickTag('__all');
+    await tick(10);
+    expect(cardTitles()).toEqual(['冷存条目']);
+  });
+
+  it('搜索无结果 + 归档池有命中 → 空态提示「归档中有 N 条匹配」', async () => {
+    const ctx = await setup();
+    seedVault(ctx.vault, [
+      seedItem({ id: '1', title: '活条目', created: '2025-01-01 00:00:00' }),
+      seedItem({ id: '2', title: '深藏在归档的 DeepSeek 笔记', archived: true }),
+    ]);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    const input = document.querySelector('[data-fav-search]') as HTMLInputElement;
+    input.value = 'DeepSeek';
+    input.dispatchEvent(new Event('input'));
+    await tick(250);
+    const empty = document.querySelector('.bz-fav-content .bz-empty') as HTMLElement;
+    expect(empty.querySelector('.bz-empty-desc')!.textContent).toContain('归档中有 1 条匹配');
+    // 无归档命中 → 常规提示
+    input.value = '不存在的词';
+    input.dispatchEvent(new Event('input'));
+    await tick(250);
+    const empty2 = document.querySelector('.bz-fav-content .bz-empty') as HTMLElement;
+    expect(empty2.querySelector('.bz-empty-desc')!.textContent).toBe('试试其他关键词，或清除搜索');
+  });
+});
+
+describe('搜索覆盖 URL + 域名徽章（ticket 188）', () => {
+  it('搜索命中 url（标题不含关键词）', async () => {
+    const ctx = await setup();
+    seedVault(ctx.vault, [
+      seedItem({ id: '1', title: '某好文', url: 'https://rustlang.org/learn', created: '2025-01-01 00:00:00' }),
+      seedItem({ id: '2', title: '另一篇', url: 'https://example.com', created: '2025-01-02 00:00:00' }),
+    ]);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    const input = document.querySelector('[data-fav-search]') as HTMLInputElement;
+    input.value = 'rustlang';
+    input.dispatchEvent(new Event('input'));
+    await tick(250);
+    expect(cardTitles()).toEqual(['某好文']);
+  });
+
+  it('卡片 meta 行尾弱化域名徽章（去 www.）；无 url 无徽章', async () => {
+    const ctx = await setup();
+    seedVault(ctx.vault, [
+      seedItem({ id: '1', title: '有链接', url: 'https://www.github.com/a/b', created: '2025-01-01 00:00:00' }),
+      seedItem({ id: '2', title: '无链接', url: '', created: '2025-01-02 00:00:00' }),
+    ]);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    const withUrl = cards().find((c) => c.dataset.favId === '1')!;
+    const badge = withUrl.querySelector('.bz-fav-host-badge') as HTMLElement;
+    expect(badge).not.toBeNull();
+    expect(badge.textContent).toContain('github.com');
+    expect(badge.textContent).not.toContain('www.');
+    const noUrl = cards().find((c) => c.dataset.favId === '2')!;
+    expect(noUrl.querySelector('.bz-fav-host-badge')).toBeNull();
+  });
+});
+
+describe('贴链自动搬家（ticket 188）', () => {
+  function openAddForm() {
+    const btn = [...document.querySelectorAll('[data-fav-add]')].find(
+      (b) => (b as HTMLElement).classList.contains('bz-btn--primary')
+    ) as HTMLElement;
+    btn.click();
+  }
+  /** 构造带 clipboardData 的 paste 事件（jsdom 无 DataTransfer，手挂属性） */
+  function pasteEvent(text: string): ClipboardEvent {
+    const ev = new Event('paste', { bubbles: true, cancelable: true }) as any;
+    ev.clipboardData = { getData: (t: string) => (t === 'text' ? text : '') };
+    return ev as ClipboardEvent;
+  }
+
+  it('标题框粘贴 https URL → 搬入链接框（补协议）+ 回焦标题', async () => {
+    const ctx = await setup();
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    openAddForm();
+    const title = document.querySelector('#fz-title') as HTMLInputElement;
+    const url = document.querySelector('#fz-url') as HTMLInputElement;
+    title.dispatchEvent(pasteEvent('https://github.com/x/y'));
+    await tick(10);
+    expect(url.value).toBe('https://github.com/x/y');
+    expect(document.activeElement).toBe(title);
+  });
+
+  it('www. 形态自动补 https://；非 URL 粘贴不搬家；链接框已有值不覆盖', async () => {
+    const ctx = await setup();
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    openAddForm();
+    const title = document.querySelector('#fz-title') as HTMLInputElement;
+    const url = document.querySelector('#fz-url') as HTMLInputElement;
+    // www. 形态
+    title.dispatchEvent(pasteEvent('www.example.com/a'));
+    await tick(10);
+    expect(url.value).toBe('https://www.example.com/a');
+    // 非 URL 粘贴：不搬家不拦截
+    const plain = pasteEvent('一篇好文章');
+    title.dispatchEvent(plain);
+    await tick(10);
+    expect(plain.defaultPrevented).toBe(false);
+    // 链接框已有值：不覆盖
+    url.value = 'https://keep.me';
+    title.dispatchEvent(pasteEvent('https://github.com/new'));
+    await tick(10);
+    expect(url.value).toBe('https://keep.me');
+    expect(document.activeElement).toBe(title);
+  });
+});
+
+describe('表单防丢检查补全（ticket 188：标签/置顶/关联笔记）', () => {
+  function openAddForm() {
+    const btn = [...document.querySelectorAll('[data-fav-add]')].find(
+      (b) => (b as HTMLElement).classList.contains('bz-btn--primary')
+    ) as HTMLElement;
+    btn.click();
+  }
+  const maskEl = () => document.querySelector('.bz-fav-form-mask') as HTMLElement;
+
+  it('只点置顶钮（无文本输入）→ 点遮罩弹 confirm', async () => {
+    const ctx = await setup();
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    openAddForm();
+    (document.querySelector('#fz-pin') as HTMLElement).click();
+    maskEl().dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    await tick(10);
+    expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
+    expect(document.querySelector('.bz-fav-form')).not.toBeNull();
+    // 继续编辑 = __shared_confirm_ok__
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await tick(10);
+    expect(document.querySelector('.bz-fav-form')).not.toBeNull(); // 继续编辑
+  });
+
+  it('只改标签选择 → 点取消弹 confirm；放弃后关闭', async () => {
+    const ctx = await setup();
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    openAddForm();
+    (document.querySelector('#fz-tags [data-tag="GitHub"]') as HTMLElement).click();
+    (document.querySelector('[data-fz-cancel]') as HTMLElement).click();
+    await tick(10);
+    expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
+    // 放弃 = __shared_confirm_cancel__
+    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
+    await tick(10);
+    expect(document.querySelector('.bz-fav-form')).toBeNull();
+  });
+
+  it('只改关联笔记 → ESC 关表单弹 confirm', async () => {
+    const ctx = await setup();
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    openAddForm();
+    (document.querySelector('#fz-note') as HTMLInputElement).value = '我的/笔记.md';
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    await tick(10);
+    expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await tick(10);
+    expect(document.querySelector('.bz-fav-form')).not.toBeNull();
+  });
+
+  it('编辑模式：关联笔记保持回填值不误拦（基线=回填值）', async () => {
+    const ctx = await setup();
+    seedVault(ctx.vault, [seedItem({ id: '7', title: '原标题', url: '', desc: '', linkedNote: '我的/笔记.md' })]);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    clickCard(cards()[0]);
+    await tick(10);
+    clickAction('编辑');
+    await tick(10);
+    maskEl().dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    await tick(10);
+    expect(document.querySelector('.bz-fav-form')).toBeNull();
+    expect(document.getElementById('__shared_confirm_mask__')).toBeNull();
+  });
+});
+
+describe('保存不被余额查询阻塞（ticket 188）', () => {
+  function openAddForm() {
+    const btn = [...document.querySelectorAll('[data-fav-add]')].find(
+      (b) => (b as HTMLElement).classList.contains('bz-btn--primary')
+    ) as HTMLElement;
+    btn.click();
+  }
+
+  it('保存先落盘关表单：fetch 未决时 favorites.json 已有数据；resolve 后余额写回', async () => {
+    const ctx = await setup();
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    openAddForm();
+    (document.querySelector('#fz-title') as HTMLInputElement).value = 'LLM 收藏';
+    (document.querySelector('#fz-tags [data-tag="大模型"]') as HTMLElement).click();
+    (document.querySelector('#fz-keys') as HTMLTextAreaElement).value = 'sk-abc';
+    (document.querySelector('#fz-balurl') as HTMLInputElement).value = 'https://api.example.com/balance';
+    // 手动 deferred fetch：resolve 时机由测试控制
+    let resolveFetch!: (v: any) => void;
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise((res) => { resolveFetch = res; })));
+    (document.querySelector('#fz-save') as HTMLButtonElement).click();
+    await tick(30);
+    // 落盘先行（余额查询仍挂起）：数据已在 favorites.json + 表单已关
+    const saved = await ctx.dm.getAll();
+    expect(saved.length).toBe(1);
+    expect(saved[0].title).toBe('LLM 收藏');
+    expect(saved[0].balance).toBeNull();
+    expect(document.querySelector('.bz-fav-form')).toBeNull();
+    expect(hasNotice('收藏已添加')).toBe(true);
+    // fetch 放行 → 余额后台写回 + 列表刷新
+    resolveFetch({ ok: true, json: async () => ({ balance: 77.7 }) });
+    await tick(40);
+    const after = (await ctx.dm.getAll())[0];
+    expect(after.balance).toBe('77.7');
+    expect(after.balanceError).toBeNull();
+    expect(cards()[0].querySelector('.bz-fav-balance')!.textContent).toBe('77.7');
+    vi.unstubAllGlobals();
+  });
+
+  it('后台余额查询失败：balanceError 写盘 + warning toast，不影响已保存数据', async () => {
+    const ctx = await setup();
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    openAddForm();
+    (document.querySelector('#fz-title') as HTMLInputElement).value = 'LLM 收藏';
+    (document.querySelector('#fz-tags [data-tag="大模型"]') as HTMLElement).click();
+    (document.querySelector('#fz-keys') as HTMLTextAreaElement).value = 'sk-abc';
+    (document.querySelector('#fz-balurl') as HTMLInputElement).value = 'https://api.example.com/balance';
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('网络不可达')));
+    (document.querySelector('#fz-save') as HTMLButtonElement).click();
+    await tick(40);
+    const saved = (await ctx.dm.getAll())[0];
+    expect(saved.title).toBe('LLM 收藏'); // 保存不受影响
+    expect(saved.balance).toBeNull();
+    expect(saved.balanceError).toBe('网络不可达');
+    expect(hasNotice('余额查询失败')).toBe(true);
+    vi.unstubAllGlobals();
+  });
+});
+
+describe('关联笔记候选补全（ticket 188）', () => {
+  function openAddForm() {
+    const btn = [...document.querySelectorAll('[data-fav-add]')].find(
+      (b) => (b as HTMLElement).classList.contains('bz-btn--primary')
+    ) as HTMLElement;
+    btn.click();
+  }
+
+  it('输入过滤 vault 笔记候选：点选回填；Escape 只收下拉不关表单；无匹配不弹层', async () => {
+    const ctx = await setup();
+    ctx.vault.files.set('我的/仓库/A 笔记.md', '# A');
+    ctx.vault.files.set('我的/仓库/B 笔记.md', '# B');
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    openAddForm();
+    const note = document.querySelector('#fz-note') as HTMLInputElement;
+    note.value = 'A';
+    note.dispatchEvent(new Event('input', { bubbles: true }));
+    const pop = document.querySelector('.bz-fav-notepop') as HTMLElement;
+    expect(pop).not.toBeNull();
+    const opts = [...pop.querySelectorAll('.bz-fav-noteopt')] as HTMLElement[];
+    expect(opts.length).toBe(1);
+    expect(opts[0].textContent).toBe('我的/仓库/A 笔记.md');
+    // 点选回填 + 弹层收起（回焦/同值 input 不复弹自身——候选排除当前值）
+    opts[0].click();
+    expect(note.value).toBe('我的/仓库/A 笔记.md');
+    note.dispatchEvent(new Event('focus', { bubbles: true }));
+    note.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(document.querySelector('.bz-fav-notepop')).toBeNull();
+    // 再输关键词 → 候选重新拉起 → Escape 只收下拉（表单保留）
+    note.value = 'A';
+    note.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(document.querySelector('.bz-fav-notepop')).not.toBeNull();
+    note.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    expect(document.querySelector('.bz-fav-notepop')).toBeNull();
+    expect(document.querySelector('.bz-fav-form')).not.toBeNull();
+    // 无匹配不弹层
+    note.value = '不存在词';
+    note.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(document.querySelector('.bz-fav-notepop')).toBeNull();
   });
 });

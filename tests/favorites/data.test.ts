@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { DataManager } from '../../src/favorites/data';
-import { getStorageDir, getStoragePath } from '../../src/favorites/config';
+import { getStorageDir, getStoragePath, isUrlLike } from '../../src/favorites/config';
 import { MockVault } from '../mock-vault';
 
 function makeApp(vault: MockVault) {
@@ -126,3 +126,21 @@ describe('存储路径解析（文件名固定 favorites.json）', () => {
     expect(dir).toBe('我的/数据');
   });
 });
+
+describe('isUrlLike（ticket 188 贴链自动搬家判定）', () => {
+  it('http(s):// 与 www. 开头 = URL 形态', () => {
+    expect(isUrlLike('https://github.com/a/b')).toBe(true);
+    expect(isUrlLike('http://example.com')).toBe(true);
+    expect(isUrlLike('https://example.com')).toBe(true);
+    expect(isUrlLike('www.example.com')).toBe(true);
+    expect(isUrlLike('WWW.Example.COM/path')).toBe(true);
+  });
+  it('普通文本 / 带空白 / 空串 = 非 URL 形态', () => {
+    expect(isUrlLike('一篇好文章')).toBe(false);
+    expect(isUrlLike('see https://a.com and b.com')).toBe(false);
+    expect(isUrlLike('')).toBe(false);
+    expect(isUrlLike('   ')).toBe(false);
+    expect(isUrlLike('github.com/a/b')).toBe(false); // 无协议头且非 www.：不搬家（保存校验会补）
+  });
+});
+
