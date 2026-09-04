@@ -294,7 +294,7 @@ function getVisibleItems(): TodoItem[] {
   return list;
 }
 
-/** 场景计数（当前场景下满足搜索的条目数；伪场景与列表口径一致——今日 = 今日/逾期未完成 + 今天完成） */
+/** 场景计数（当前场景条目总数，不随搜索过滤，与其他域 nav 计数=场景总数的范式一致；伪场景与列表口径一致——今日 = 今日/逾期未完成 + 今天完成） */
 function sceneCount(scene: string): number {
   if (scene === '今日') {
     return M.items.filter((it) => {

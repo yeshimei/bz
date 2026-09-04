@@ -149,13 +149,17 @@ describe('store-file 段校验与损坏容错', () => {
     expect(store.link.state).toEqual({});
   });
 
-  it('整文件损坏 → 改名留档 .corrupt- 重建空结构（jsonStore 同款容错）', async () => {
+  it('整文件损坏 → 原样留档 CONFIG/.CORRUPT + 原路径清位 + 空结构兜底（D3 对齐 core 留档契约）', async () => {
     const { vault } = makeEnv();
-    vault.files.set(getSecondBrainStorePath(), 'not-json{{{');
+    const broken = 'not-json{{{';
+    vault.files.set(getSecondBrainStorePath(), broken);
     const store = await loadStore();
     expect(store.link.queue).toEqual([]);
-    const corrupt = [...vault.files.keys()].find((p) => p.startsWith(getSecondBrainStorePath() + '.corrupt-'));
-    expect(corrupt).toBeTruthy(); // 原文件留档
+    const backups = [...vault.files.keys()].filter((p) => p.startsWith('CONFIG/.CORRUPT/secondbrain.json.'));
+    expect(backups).toHaveLength(1);
+    expect(backups[0]).toMatch(/^CONFIG\/\.CORRUPT\/secondbrain\.json\.\d{8}-\d{6}\.bak$/);
+    expect(vault.files.get(backups[0])).toBe(broken); // 原文原样留档
+    expect(vault.files.has(getSecondBrainStorePath())).toBe(false); // 原路径不残留（空库不落盘语义）
   });
 });
 
