@@ -12,7 +12,7 @@
  *  - 右栏「本轮队列」：排队/做题中/已通过/未通过 实时更新
  *  - 一篇答完自动评级（accuracyToRating）→ 结果卡：通过 → 下一篇/结束；未通过 → 复习此笔记
  *  - 队列耗尽 → 结算屏（评级分布 + 连续 N 天 + 完成回面板）
- *  - 图标全 lucide（uiIcon 工厂替换 data-lucide 占位），正文无 emoji
+ *  - 图标全 lucide（占位渲染后组件库 mountIcons 统一替换），正文无 emoji
  *
  * 本模块只做「会话编排 + 视图构建」，题目获取/评级写盘/笔记打开由调用方（app 编排）
  * 注入——保持与 data/fsrs/题库解耦，可独立测试。
@@ -20,7 +20,7 @@
 import type { App, TFile } from 'obsidian';
 import { notice } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
-import { uiIcon } from '../core/ui';
+import { mountIcons } from '../core/ui';
 import { escManager } from '../core/esc-manager';
 import { escapeHtml } from '../core/utils';
 import type { ReviewItem } from './data';
@@ -564,7 +564,7 @@ export class SprintSession {
       </div>`;
     this.view = 'question';
     this.opts.host.innerHTML = html;
-    this.mountIcons(this.opts.host);
+    mountIcons(this.opts.host);
     this.bindTop();
     this.opts.host.querySelector('[data-action="submit"]')?.addEventListener('click', () => this.submitMulti());
     this.opts.host.querySelector('[data-action="next"]')?.addEventListener('click', () => this.nextQuestion());
@@ -596,7 +596,7 @@ export class SprintSession {
       .join('');
     return `
       <div class="bz-sq-head"><b>本轮队列</b></div>
-      <div class="bz-sq-list">${rows || '<div class="bz-sq-empty">— 队列完毕 —</div>'}</div>`;
+      <div class="bz-sq-list">${rows || '<div class="bz-empty"><div class="bz-empty-title">队列完毕</div></div>'}</div>`;
   }
 
   private renderResult(entry: SprintEntry): void {
@@ -642,7 +642,7 @@ export class SprintSession {
         <aside class="bz-sprint-queue">${this.queueHtml()}</aside>
       </div>`;
     this.opts.host.innerHTML = html;
-    this.mountIcons(this.opts.host);
+    mountIcons(this.opts.host);
     this.bindTop();
     this.opts.host.querySelector('[data-action="next"]')?.addEventListener('click', () => void this.handleResult('next'));
     this.opts.host.querySelector('[data-action="end"]')?.addEventListener('click', () => void this.handleResult('end'));
@@ -675,7 +675,7 @@ export class SprintSession {
         <button class="bz-btn bz-btn--primary bz-btn--block" data-action="done">完成 · 回到复习计划</button>
       </div>`;
     this.opts.host.innerHTML = html;
-    this.mountIcons(this.opts.host);
+    mountIcons(this.opts.host);
     this.bindTop();
     this.opts.host.querySelector('[data-action="done"]')?.addEventListener('click', () => this.finish('done'));
   }
@@ -689,23 +689,13 @@ export class SprintSession {
   // ================= 图标/工具 =================
 
   private icon(name: string): string {
-    return `<span class="bz-sprint-ic" data-lucide="${name}"></span>`;
+    return `<span class="bz-ic bz-sprint-ic" data-lucide="${name}"></span>`;
   }
 
   private mark(kind: 'ok' | 'bad', size: 'lg' | '' = ''): string {
     // 对错标记：lucide check/x（收尾扫尾：✓/✕ 文本符号退役，渲染后 mountIcons 替换；尺寸随 .bz-mark 字号档）
     if (kind === 'ok') return `<span class="bz-mark ok ${size}"><i data-lucide="check"></i></span>`;
     return `<span class="bz-mark bad ${size}"><i data-lucide="x"></i></span>`;
-  }
-
-  /** innerHTML 渲染后把 [data-lucide] 占位替换为真实 lucide 图标（uiIcon 工厂） */
-  private mountIcons(host: HTMLElement): void {
-    host.querySelectorAll<HTMLElement>('[data-lucide]').forEach((el) => {
-      const name = el.dataset.lucide || '';
-      const ic = uiIcon(name);
-      ic.classList.add('bz-sprint-ic');
-      el.replaceWith(ic);
-    });
   }
 }
 

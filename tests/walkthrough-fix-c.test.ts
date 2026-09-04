@@ -11,6 +11,7 @@ const repo = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8');
 const bsCss = () => repo('src/bookshelf/styles.css');
 const clipCss = () => repo('src/clipbook/styles.css');
 const cineCss = () => repo('src/cinema/styles.css');
+const coreUiCss = () => repo('src/core/ui/components.css');
 const rule = (css: string, sel: string) =>
   css.match(new RegExp(`${sel.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\s*\\{([^}]*)\\}`));
 
@@ -110,20 +111,20 @@ describe('批 C-5：bookshelf 面板 44px 补接 .bz-panel-mtop', () => {
   });
 });
 
-// ═══════════ todo（项 6） ═══════════
+// ═══════════ todo（项 6；ADR-0094 头行/壳接组件库后复检） ═══════════
 
 describe('批 C-6：todo 头行类名拆雷', () => {
-  it('头行改独有类 .bz-todo-panel-head，不再撞 core 对 .bz-todo-head 的 !important 旧规范', () => {
+  it('头行接共享 .bz-panel-head（新体系），不撞 core 对 .bz-todo-head 的 !important 旧规范', () => {
     const ui = repo('src/todo/ui.ts');
-    expect(ui).toContain('class="bz-todo-panel-head"');
+    expect(ui).toContain('class="bz-panel-head"');
     const css = repo('src/todo/styles.css');
-    expect(css).toMatch(/\.bz-todo-panel-head\s*\{[^}]*height: 44px;/);
+    expect(css).not.toMatch(/\.bz-todo-panel-head\s*\{/); // 域内头行规则退役（共享类接管）
     expect(css).not.toMatch(/\.bz-todo-head\s*\{/); // 旧类名规则退役
     // core 旧规范（.bz-todo-head 选择器组）随 memo 域退役（ADR-0092）失去服务对象，仅历史样式残留
   });
 
   it('面板根节点挂 .bz-panel-mtop；移动头行自垫 safe-area 收拢', () => {
-    expect(repo('src/todo/ui.ts')).toMatch(/class="bz-todo-panel bz-panel-mtop"/);
+    expect(repo('src/todo/ui.ts')).toMatch(/class="bz-panel-frame bz-todo-panel bz-panel-mtop"/);
     const css = repo('src/todo/styles.css');
     expect(css).not.toMatch(/\.bz-todo-head\s*\{[^}]*safe-area-inset-top/);
     expect(css).not.toMatch(/safe-area-inset-top\)\);?\s*\}/);
@@ -184,9 +185,10 @@ describe('批 C-10：review 评级条贴底安全区', () => {
 });
 
 describe('批 C-11：clipbook 死色收编 color-mix 语义变量', () => {
-  it('三处 rgba 手写透明底改 color-mix(var 语义色)', () => {
+  it('三处 rgba 手写透明底改 color-mix(var 语义色)（ADR-0094：rail 图标 accent 档收编组件库）', () => {
     const css = clipCss();
-    expect(css).toMatch(/\.bz-clip-rail-ic\.accent\s*\{[^}]*background: color-mix\(in srgb, var\(--bz-info\) 14%, transparent\)/);
+    // rail 图标底座 accent 档已收编组件库（.bz-rail-item 形制接入后域内规则退役）
+    expect(coreUiCss()).toMatch(/\.bz-rail-ic--accent\s*\{[^}]*background: color-mix\(in srgb, var\(--bz-info\) 14%, transparent\)/);
     expect(css).toMatch(/\.bz-clip-art-flag\.info\s*\{[^}]*color-mix\(in srgb, var\(--bz-info\) 13%, transparent\)/);
     expect(css).toMatch(/\.bz-clip-art-flag\.warn\s*\{[^}]*color-mix\(in srgb, var\(--bz-warning\) 13%, transparent\)/);
     expect(css).toMatch(/\.bz-clip-art-flag\.ok\s*\{[^}]*color-mix\(in srgb, var\(--bz-success\) 12%, transparent\)/);
@@ -194,21 +196,22 @@ describe('批 C-11：clipbook 死色收编 color-mix 语义变量', () => {
     expect(css).not.toMatch(/rgba\(88,166,255|rgba\(217,161,60|rgba\(63,185,106/);
   });
 
-  it('.bili 徽标紫单一事实源收敛到样式侧（ui 不再内联传 #8b7cf6）', () => {
-    expect(clipCss()).toMatch(/\.bz-clip-rail-badge\.bili\s*\{\s*--rail-c: #8b7cf6;\s*\}/);
+  it('.bili 徽标紫单一事实源收敛到样式侧（ui 不再内联传 #8b7cf6；ADR-0094 起 tint 变量注入 .bz-rail-badge）', () => {
+    expect(clipCss()).toMatch(/\.bz-clip-rail \.bz-rail-badge\.bili\s*\{\s*--bz-rail-tint: #8b7cf6;\s*\}/);
     const ui = repo('src/clipbook/ui.ts');
     expect(ui).not.toMatch(/'bili', '#8b7cf6'/);
-    expect(ui).toMatch(/bz-clip-rail-badge bili">\$/); // 挂载点不再带内联 --rail-c
+    expect(ui).toMatch(/bz-rail-badge bili">\$/); // 挂载点不再带内联 tint
   });
 });
 
-describe('批 C-12：clipbook 左栏选中态对齐五域实底档', () => {
-  it('.on 品牌实底 + on-brand 字 + medium 字重；行内次级文字随 on-brand', () => {
-    const css = clipCss();
-    expect(css).toMatch(/\.bz-clip-rail-row\.on\s*\{\s*background: var\(--bz-brand\);\s*color: var\(--bz-on-brand\);\s*font-weight: var\(--bz-weight-medium\);\s*\}/);
-    expect(css).toMatch(/\.bz-clip-rail-row\.on \.bz-clip-rail-name\s*\{\s*color: inherit;\s*\}/);
-    expect(css).toMatch(/\.bz-clip-rail-row\.on \.bz-clip-rail-count\s*\{\s*color: inherit;\s*opacity: 0\.72;\s*\}/);
-    expect(css).not.toMatch(/\.bz-clip-rail-row\.on\s*\{[^}]*brand-soft/);
+describe('批 C-12：clipbook 左栏选中态对齐五域实底档（ADR-0094 收编 .bz-rail 族后由组件库承担）', () => {
+  it('.on 品牌实底 + on-brand 字 + medium 字重；行内次级文字随 on-brand；域内不再复制规则', () => {
+    const shared = coreUiCss();
+    expect(shared).toMatch(/\.bz-rail-item\.on\s*\{\s*background: var\(--bz-brand\);\s*color: var\(--bz-on-brand\);\s*font-weight: var\(--bz-weight-medium\);\s*\}/);
+    expect(shared).toMatch(/\.bz-rail-item\.on \.bz-rail-count\s*\{\s*color: inherit;\s*opacity: 0\.72;\s*\}/);
+    expect(shared).not.toMatch(/\.bz-rail-item\.on\s*\{[^}]*brand-soft/);
+    // 域内旧 .bz-clip-rail-* 形制整族退役（改挂共享类）
+    expect(clipCss()).not.toMatch(/bz-clip-rail-row|bz-clip-rail-count|bz-clip-rail-unread/);
   });
 });
 
@@ -220,10 +223,9 @@ describe('批 C-13：clipbook 阅读右栏间距归档', () => {
   });
 });
 
-describe('批 C-14：clipbook rail 徽标白字对比（底色加深一档）', () => {
-  it('徽标底色经 color-mix 混黑加深（--rail-c 70% + 30% 黑）', () => {
-    const css = clipCss();
-    expect(css).toMatch(/\.bz-clip-rail-badge\s*\{[^}]*background: color-mix\(in srgb, var\(--rail-c, #58a6ff\) 70%, #000\);/);
+describe('批 C-14：clipbook rail 徽标白字对比（底色加深一档；ADR-0094 收编组件库）', () => {
+  it('徽标底色经 color-mix 混黑加深（--bz-rail-tint 70% + 30% 黑）', () => {
+    expect(coreUiCss()).toMatch(/\.bz-rail-badge\s*\{[^}]*background: color-mix\(in srgb, var\(--bz-rail-tint, var\(--bz-info\)\) 70%, #000\);/);
   });
 });
 

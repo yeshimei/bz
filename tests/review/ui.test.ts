@@ -392,7 +392,8 @@ describe('UIManager 三区队列', () => {
     seed(vault);
     const { ui } = await makeUI(vault);
     await ui.showMain();
-    expect(document.querySelector('.bz-q-search .kbd')).toBeNull();
+    expect(document.querySelector('.bz-search .bz-kbd')).toBeNull();
+    expect(document.querySelector('.bz-search .bz-input')).not.toBeNull();
     expect(document.getElementById('bz-q-search')).not.toBeNull();
     ui.destroy();
   });
