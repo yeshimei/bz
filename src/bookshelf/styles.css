@@ -52,7 +52,10 @@
   overflow-y: auto; flex-shrink: 0; display: flex; flex-direction: column;
 }
 .bz-bs-side-label { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin: 0 var(--bz-space-xs) var(--bz-space-xs); }
+.bz-bs-side-catlabel { margin-top: var(--bz-space-md); }
 .bz-bs-side-list { display: flex; flex-direction: column; gap: 1px; }
+/* 分类第二组：沿用状态组条目样式 */
+.bz-bs-side-catlist { display: flex; flex-direction: column; gap: 1px; }
 .bz-bs-side-item {
   display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
   padding: 7px 10px; border-radius: 6px;
@@ -111,6 +114,21 @@
 .bz-bs-stat-num { font-size: 24px; font-weight: var(--bz-weight-bold); color: var(--bz-text-1); margin-top: 2px; line-height: 1.15; }
 .bz-bs-statcard.accent .bz-bs-stat-num { color: var(--bz-brand); }
 .bz-bs-stat-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 可点统计卡（在读 accent 一键回书 / 读完纪念日回看）：整卡手型 + hover 轻抬（阴影 token，无裸色值） */
+.bz-bs-statcard[data-bs-resume], .bz-bs-statcard[data-bs-anniv], .bz-bs-mcard[data-bs-resume], .bz-bs-mcard[data-bs-anniv] {
+  cursor: pointer;
+  transition: transform var(--bz-dur-base) var(--bz-ease-out), box-shadow var(--bz-dur-base) var(--bz-ease-out);
+}
+.bz-bs-statcard[data-bs-resume]:hover, .bz-bs-statcard[data-bs-anniv]:hover,
+.bz-bs-mcard[data-bs-resume]:hover, .bz-bs-mcard[data-bs-anniv]:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--bz-shadow-sm);
+}
+/* 纪念日卡书名行：24px 大数字档收缩为标题档（一行截断） */
+.bz-bs-anniv .bz-bs-stat-num, .bz-bs-anniv .bz-bs-mnum {
+  font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold);
+  line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .bz-bs-chart {
   flex: 1 1 320px; min-width: 0;
   background: var(--bz-surface-3); border: 1px solid var(--bz-border);
@@ -236,6 +254,11 @@
 .bz-bs-drawer-opt.on .bz-bs-drawer-cnt { background: var(--bz-brand); color: var(--bz-on-brand); }
 .bz-bs-drawer-check { display: inline-flex; color: var(--bz-brand); }
 .bz-bs-drawer-check .bz-ic { width: 15px; height: 15px; }
+/* 抽屉内第二/三组（分类 chips + 排序分段）：组标题沿用左栏小标样式，chips 换行排布 */
+.bz-bs-drawer-group-label { margin: var(--bz-space-md) 2px var(--bz-space-xs); }
+.bz-bs-drawer-chips { display: flex; flex-wrap: wrap; gap: var(--bz-space-sm); padding: 0 2px 2px; }
+.bz-bs-drawer-sortseg { width: 100%; }
+.bz-bs-drawer-sortseg .bz-segmented-btn { flex: 1; }
 
 /* ---- 详情弹窗（骨架组件库 modal；这里只排 hero/编辑区） ---- */
 .bz-bs-d-popup.bz-overlay-popup { max-width: min(560px, calc(100vw - 32px)); padding-bottom: 0; }
@@ -263,6 +286,12 @@
 }
 .bz-bs-label:first-child { margin-top: 0; }
 .bz-bs-d-status { margin-bottom: 2px; }
+/* 徽章行内直达按钮（打开笔记/继续读/打开原文）：与状态 chip 同行，紧凑档 */
+.bz-bs-d-badges { align-items: center; }
+.bz-bs-d-open { height: 26px; padding: 0 10px; font-size: var(--bz-font-meta); }
+/* 读完日期（已读可改，默认今天；补录不污染统计口径） */
+.bz-bs-d-cdate-label { margin-top: var(--bz-space-sm); }
+.bz-bs-d-cdate { width: 180px; }
 .bz-bs-d-progrow { display: flex; align-items: center; gap: var(--bz-space-md); }
 .bz-bs-d-prog { flex: 1; display: flex; }
 .bz-bs-d-prog .bz-range { flex: 1; align-self: center; }
