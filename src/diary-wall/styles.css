@@ -317,19 +317,24 @@
   min-width: 0;
 }
 
-/* ---- 章节栏（固定不随瀑布滚动；自身超高时内部滚动；滚动自动高亮当前月份） ---- */
+/* ---- 章节栏（固定不随瀑布滚动；自身超高时内部滚动；滚动自动高亮当前月份） ----
+   壳 = 组件库 .bz-rail 族（ADR-0094）：.bz-rail（钩子类 .bz-diary-wall-rail 锁 168px 档）
+   + .bz-rail-scroll + .bz-rail-item(.on)/.bz-rail-name/.bz-rail-count。
+   域内只留：宽度档/滚动内边距/月份行补垫（域 reset 通配会清 padding，需 ≥(0,2,0) 恢复）/
+   sticky 标题/年份分组/胶卷缩略图条（月份行域内特有形态）。 */
 .bz-diary-wall-rail {
-  width: 168px;
-  flex-shrink: 0;
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  border-right: 1px solid var(--dw-line);
-  padding: 12px 10px 16px;
-  position: relative;
+  --bz-rail-w: 168px;
 }
 .bz-diary-wall-mob .bz-diary-wall-rail {
   display: none;
+}
+.bz-diary-wall-rail .bz-rail-scroll {
+  padding: 12px 10px 16px;
+}
+.bz-diary-wall-rail .bz-diary-wall-month {
+  padding: 10px;
+  /* 胶卷缩略图条换行到名称/计数第二行（.bz-rail-item 是 flex row） */
+  flex-wrap: wrap;
 }
 .bz-diary-wall-rail-title {
   font-size: 11px;
@@ -353,36 +358,8 @@
 .bz-diary-wall-rail-year:first-of-type {
   padding-top: 4px;
 }
-.bz-diary-wall-month {
-  padding: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.15s;
-  position: relative;
-  border-left: 2px solid transparent;
-}
-.bz-diary-wall-month:hover {
-  background: var(--dw-hover);
-}
-.bz-diary-wall-month--on {
-  background: var(--dw-active-hover);
-  border-left-color: var(--dw-accent);
-}
-.bz-diary-wall-month-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.bz-diary-wall-month-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--dw-ink);
-}
-.bz-diary-wall-month-count {
-  font-size: 11px;
-  color: var(--dw-faint);
-}
 .bz-diary-wall-month-strip {
+  width: 100%;
   display: flex;
   gap: 3px;
   margin-top: 8px;

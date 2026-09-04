@@ -26,15 +26,6 @@ export function excerpt(body: string, max = 90): string {
   return s.length > max ? s.slice(0, max) + '…' : s;
 }
 
-/** HTML 转义（渲染文本统一入口） */
-export function esc(s: any): string {
-  return String(s ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
 // ===== 日期工具（自旧 news/reader.ts 迁入，ADR-0086；flow.ts / save.ts 消费）=====
 /** 本地日期键 YYYY-MM-DD（对齐 src/pomodoro/stats.ts dayKey 本地日口径：UTC+8 凌晨 0-8 点不落昨日） */
 export function localDayKey(ts: number = Date.now()): string {
