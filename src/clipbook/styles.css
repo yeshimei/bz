@@ -42,6 +42,14 @@
 .bz-clip-head-sub { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
 .bz-clip-head-sp { flex: 1; }
 
+/* 桌面搜索框（enh 包 1）：结构对齐 todo/favorites（前缀 search 图标 + .bz-input），无 / kbd 提示 */
+.bz-clip-search { position: relative; width: 220px; min-width: 130px; flex-shrink: 1; }
+.bz-clip-search .bz-ic {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  width: 13px; height: 13px; color: var(--bz-text-3); pointer-events: none;
+}
+.bz-clip-search .bz-input { width: 100%; padding-left: 30px; }
+
 /* ---- 三栏 ---- */
 .bz-clip-desk-body { flex: 1; display: flex; min-height: 0; }
 
@@ -69,7 +77,7 @@
 .bz-clip-rail-badge {
   width: 20px; height: 20px; border-radius: var(--bz-radius-xs); flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 10px; font-weight: var(--bz-weight-bold); color: #fff;
+  font-size: 11px; font-weight: var(--bz-weight-bold); color: #fff;
   background: var(--rail-c, #58a6ff);
 }
 .bz-clip-rail-badge.bili { background: #8b7cf6; }
@@ -80,7 +88,7 @@
 .bz-clip-rail-row.on .bz-clip-rail-name { color: var(--bz-text-1); }
 .bz-clip-rail-count { font-size: var(--bz-font-caption); color: var(--bz-text-3); font-variant-numeric: tabular-nums; }
 .bz-clip-rail-unread {
-  font-size: 10px; font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
+  font-size: 11px; font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
   background: var(--bz-brand); border-radius: var(--bz-radius-full);
   min-width: 17px; height: 17px; padding: 0 4px;
   display: inline-flex; align-items: center; justify-content: center;
@@ -96,7 +104,7 @@
 }
 .bz-clip-analy .bz-ic { width: 14px; height: 14px; color: var(--bz-brand); }
 .bz-clip-analy:hover { background: var(--bz-brand-soft); color: var(--bz-text-1); }
-.bz-clip-analy:hover .bz-clip-analy .bz-ic, .bz-clip-analy:hover .bz-ic { color: var(--bz-brand); }
+.bz-clip-analy:hover .bz-ic { color: var(--bz-brand); }
 
 /* 中栏：条目列表 */
 .bz-clip-mid { width: 336px; flex-shrink: 0; border-right: 1px solid var(--bz-border); display: flex; flex-direction: column; min-height: 0; }
@@ -117,7 +125,6 @@
 .bz-clip-dot { flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; margin-top: 7px; }
 .bz-clip-dot.unread { background: var(--bz-info); }
 .bz-clip-dot.reading { background: var(--bz-warning); }
-.bz-clip-dot.read { background: transparent; border: 1px solid var(--bz-border-strong); }
 .bz-clip-dot.saved { background: var(--bz-success); }
 .bz-clip-item-sum {
   font-size: var(--bz-font-meta); color: var(--bz-text-2); line-height: var(--bz-leading-normal);
@@ -173,6 +180,13 @@
 .bz-clip-art-md p { margin: 0 0 var(--bz-space-md); }
 .bz-clip-art-md blockquote { border-left: 3px solid var(--bz-brand); background: var(--bz-surface-1); border-radius: 0 var(--bz-radius-sm) var(--bz-radius-sm) 0; padding: 8px var(--bz-space-md); margin: var(--bz-space-sm) 0; color: var(--bz-text-2); font-size: var(--bz-font-label); }
 .bz-clip-art-md p.dim { color: var(--bz-text-3); }
+/* 阅读字号三档（enh 包 7）：小/中/大 = meta/body（默认）/emphasis 档 */
+.bz-clip-read-body.fs-sm .bz-clip-art-md { font-size: var(--bz-font-meta); }
+.bz-clip-read-body.fs-lg .bz-clip-art-md { font-size: var(--bz-font-emphasis); }
+/* 字号分段行（右栏 meta 下方右对齐；消费组件库 .bz-segmented 基线） */
+.bz-clip-art-fs { display: flex; justify-content: flex-end; margin-bottom: var(--bz-space-md); }
+/* 「打开笔记」主按钮行（enh 包 3；消费组件库 .bz-btn--primary 基线） */
+.bz-clip-art-actions { display: flex; margin-bottom: var(--bz-space-md); }
 .bz-clip-art-origin { display: inline-flex; align-items: center; gap: 4px; margin-top: var(--bz-space-md); font-size: var(--bz-font-meta); color: var(--bz-brand); text-decoration: none; }
 .bz-clip-art-origin:hover { text-decoration: underline; }
 .bz-clip-art-origin .bz-ic { width: 12px; height: 12px; }
@@ -213,7 +227,6 @@
 }
 .bz-clip-mob-item:hover { background: var(--bz-surface-hover); }
 .bz-clip-mob-item .bz-clip-item-t { -webkit-line-clamp: 2; }
-.bz-clip-mob-item.on { background: var(--bz-brand-soft); }
 
 /* 移动详情（屏2 overlay） */
 .bz-clip-mob-detail {
@@ -251,4 +264,14 @@
   .bz-clip-desk { display: none; }
   .bz-clip-frame { position: relative; }
   .bz-clip-mob { display: flex; }
+  /* 刘海屏安全区（enh 包 9）：顶栏避让顶部刘海，列表/详情避让底部指示条 */
+  .bz-clip-mob-top { padding-top: max(var(--bz-space-sm), env(safe-area-inset-top)); }
+  .bz-clip-mob-detail-top { padding-top: max(var(--bz-space-sm), env(safe-area-inset-top)); }
+  .bz-clip-mob-list { padding-bottom: max(var(--bz-space-lg), env(safe-area-inset-bottom, 0px)); }
+  .bz-clip-mob-detail-body { padding-bottom: calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
+  /* 触控热区（enh 包 10）：来源条/保存钮等可点小元素抬到 ≥44px 档（设计手册 §8.2） */
+  .bz-clip-mob-src { min-height: 44px; padding: 8px 16px; }
+  .bz-clip-mob-ub { min-width: 17px; height: 17px; font-size: 11px; }
+  .bz-clip-mob-save { width: 44px; height: 44px; }
+  .bz-clip-mob-top .bz-icon-btn--lg { width: 44px; height: 44px; }
 }
