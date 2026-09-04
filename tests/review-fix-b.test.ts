@@ -12,6 +12,8 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { DOMAIN_ICONS } from '../src/core/domain-icons';
+import { DOMAINS } from '../src/home/domains';
 
 const repo = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8');
 const componentsCss = () => repo('src/core/ui/components.css');
@@ -131,5 +133,32 @@ describe('批 B-4：z-index 静态大数收口（ADR-0067）', () => {
     expect(css).toMatch(/\.cat-bubble\s*\{[^}]*z-index: 1;/);
     // 恒顶层注册仍在挂载路径上
     expect(repo('src/smartcat/ui.ts')).toContain('registerAlwaysOnTop(container)');
+  });
+});
+
+describe('批 B-5：图标单一事实源尾差', () => {
+  it('DOMAIN_ICONS 补缺：diary-wall=images、settings-panel=settings-2（值与原字面量一致）', () => {
+    expect(DOMAIN_ICONS['diary-wall']).toBe('images');
+    expect(DOMAIN_ICONS['settings-panel']).toBe('settings-2');
+  });
+
+  it('home 磁贴 17 条 icon 全量迁移：iconOf() 引 DOMAIN_ICONS，无残留字面量', () => {
+    const src = repo('src/home/domains.ts');
+    expect((src.match(/icon: iconOf\(/g) ?? []).length).toBe(17);
+    expect(src).not.toMatch(/icon: '/);
+    // 异名映射：wall→diary-wall、settings→settings-panel
+    for (const d of DOMAINS) {
+      const key = d.id === 'wall' ? 'diary-wall' : d.id === 'settings' ? 'settings-panel' : d.id;
+      expect(d.icon, `磁贴 ${d.id}`).toBe(DOMAIN_ICONS[key]);
+    }
+  });
+
+  it('命令侧迁移：main.ts 两处字面量与 quote.ts bz-diary-write 引 DOMAIN_ICONS', () => {
+    const main = repo('src/main.ts');
+    expect(main).toContain("icon: DOMAIN_ICONS['diary-wall']");
+    expect(main).toContain("icon: DOMAIN_ICONS['settings-panel']");
+    const quote = repo('src/diary/ui/quote.ts');
+    expect(quote).toContain('icon: DOMAIN_ICONS.diary');
+    expect(quote).not.toMatch(/icon: '/);
   });
 });
