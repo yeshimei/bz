@@ -4545,6 +4545,121 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   .bz-home-mv { width: 32px; height: 32px; }
   .bz-home-mv::after { content: ''; position: absolute; inset: -6px; }
 }
+/* ==================== 今日回顾域样式（src/recap/styles.css，方向一 R2） ====================
+   组件库纪律（铁律 6）：基线按钮/图标钮/空态/spinner 走 src/core/ui components.css 的
+   .bz-* 类；本文件只保留今日回顾独有布局（overlay 面板/头行/摘要行/痕迹时间轴），
+   取值一律取自 tokens.css（间距/字号/圆角/控件高全部对档，无档外裸值）。 */
+
+/* ---- 遮罩 + 主面板骨架（桌面居中面板；≤768px 真全屏） ---- */
+.bz-recap-overlay {
+  position: fixed; inset: 0;
+  background: var(--bz-overlay);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--bz-font-ui);
+  /* z-index 由 createOverlay 经 topifyZ 动态分配（ADR-0067），不设静态档 */
+}
+.bz-recap-panel {
+  background: var(--bz-surface-2); color: var(--bz-text-1);
+  border-radius: var(--bz-radius-lg); border: 1px solid var(--bz-border);
+  box-shadow: var(--bz-shadow-lg);
+  display: flex; flex-direction: column;
+  width: 640px; max-width: calc(100vw - 32px); height: 560px; max-height: 90vh;
+  overflow: hidden; position: relative;
+}
+.bz-recap-overlay, .bz-recap-overlay * { scrollbar-width: none; -ms-overflow-style: none; }
+.bz-recap-overlay *::-webkit-scrollbar { display: none; }
+
+/* ---- 头行：标题 + 日期 + R3 占位钮 + 关闭钮（移动端显示） ---- */
+.bz-recap-head {
+  display: flex; align-items: center; gap: var(--bz-space-md);
+  padding: var(--bz-space-lg) var(--bz-space-xl);
+  border-bottom: 1px solid var(--bz-border);
+  flex-shrink: 0;
+}
+.bz-recap-head-l { display: flex; align-items: baseline; gap: var(--bz-space-md); min-width: 0; flex: 1; }
+.bz-recap-title { font-size: var(--bz-font-title); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); white-space: nowrap; }
+.bz-recap-date { font-size: var(--bz-font-meta); color: var(--bz-text-3); white-space: nowrap; }
+.bz-recap-head-r { display: flex; align-items: center; gap: var(--bz-space-sm); flex-shrink: 0; }
+/* R3 占位（「生成今日总结」禁用态：内容/容器透明度走 state token，语义见设计手册 §6.4） */
+.bz-recap-ai:disabled { opacity: var(--bz-state-disabled-content); cursor: default; }
+/* 桌面隐藏关闭钮（遮罩/ESC 关闭），移动端显示 */
+.bz-recap-close { display: none; }
+
+/* ---- 主体（滚动区） ---- */
+.bz-recap-body {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: var(--bz-space-lg) var(--bz-space-xl) calc(var(--bz-space-xl) + env(safe-area-inset-bottom, 0px));
+}
+.bz-recap-loading {
+  height: 100%; display: flex; align-items: center; justify-content: center;
+  color: var(--bz-text-3);
+}
+
+/* ---- 顶部摘要行：五格数字（日记 N 条 · 影视 N · 书 N · 待办完成 N · 番茄 N 个 M 分钟） ---- */
+.bz-recap-summary {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--bz-space-sm);
+  margin-bottom: var(--bz-space-lg);
+}
+.bz-recap-stat {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: var(--bz-surface-1); border-radius: var(--bz-radius-sm);
+  padding: var(--bz-space-md) var(--bz-space-xs);
+  min-width: 0;
+}
+.bz-recap-stat-v {
+  font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1);
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.bz-recap-stat-k { font-size: var(--bz-font-caption); color: var(--bz-text-3); white-space: nowrap; }
+
+/* ---- 痕迹时间轴：时刻 + 域图标 + 一句话（时间正序） ---- */
+.bz-recap-timeline { display: flex; flex-direction: column; }
+.bz-recap-row {
+  display: flex; align-items: center; gap: var(--bz-space-md);
+  padding: var(--bz-space-sm) var(--bz-space-sm);
+  border-radius: var(--bz-radius-sm);
+  min-height: 36px;
+}
+.bz-recap-row:hover { background: var(--bz-surface-hover); }
+.bz-recap-time {
+  font-size: var(--bz-font-caption); color: var(--bz-text-3);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0; min-width: 72px; text-align: right;
+}
+.bz-recap-row-ic {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; flex-shrink: 0;
+  color: var(--bz-text-2);
+  background: var(--bz-surface-3); border-radius: var(--bz-radius-xs);
+}
+.bz-recap-row-ic .bz-ic { width: 13px; height: 13px; }
+.bz-recap-text {
+  font-size: var(--bz-font-body); color: var(--bz-text-1); line-height: 1.4;
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* 域名前缀（弱化：区分归属靠图标+前缀，正文保持主角） */
+.bz-recap-dom {
+  font-style: normal; font-size: var(--bz-font-meta); color: var(--bz-text-3);
+  margin-right: var(--bz-space-sm);
+}
+.bz-recap-empty { padding: var(--bz-space-2xl) 0; }
+
+/* ---- 移动端（≤768px）：真全屏 + 显示关闭钮 + 摘要两行换行 ---- */
+@media (max-width: 768px) {
+  .bz-recap-overlay { align-items: flex-end; }
+  .bz-recap-panel {
+    width: 100vw; height: 100%; max-width: none; max-height: none;
+    border-radius: 0; border: none;
+  }
+  .bz-recap-head {
+    padding: max(var(--bz-space-lg), env(safe-area-inset-top)) var(--bz-space-lg) var(--bz-space-md);
+  }
+  .bz-recap-title { font-size: var(--bz-font-emphasis); }
+  .bz-recap-close { display: inline-flex; }
+  .bz-recap-body { padding-left: var(--bz-space-lg); padding-right: var(--bz-space-lg); }
+  .bz-recap-summary { grid-template-columns: repeat(3, 1fr); }
+  .bz-recap-time { min-width: 60px; }
+}
 /* ==================== 备忘录域样式（src/memo/styles.css） ==================== */
 /* ==================== 备忘录（memo，ticket 57 样式收敛：原 TODOCSS 注入 + 内联样式提取，视觉逐字等价） ==================== */
 #todo-mask { backdrop-filter: blur(2px); }
