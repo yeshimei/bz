@@ -22,7 +22,31 @@ import {
 } from './stats';
 import type { ReadingStats, BookNoteEntry } from './stats';
 import { escapeHtml, pad2 } from '../core/utils';
-import { CHART_PASTEL_SERIES, CHART_INK, CHART_HIGHLIGHT } from '../core/chart-palette';
+import {
+  CHART_PASTEL_SERIES,
+  CHART_INK,
+  CHART_HIGHLIGHT,
+  CHART_FALLBACK,
+  CHART_GRADIENT_VIOLET,
+  CHART_GRADIENT_PINK,
+  CHART_GRADIENT_AQUA,
+  CHART_GRADIENT_MINT,
+  CHART_GRADIENT_CORAL,
+  CHART_SPEED_BAR_GRADIENT,
+  CHART_AUTHOR_RANK_COLORS,
+  CHART_RANK_FALLBACK_DEEP,
+  CHART_FOCUS_SERIES,
+  CHART_METRIC_VIOLET,
+  CHART_METRIC_AQUA,
+  CHART_METRIC_MINT,
+  CHART_METRIC_CORAL,
+  CHART_METRIC_RED,
+  CHART_METRIC_BLUE,
+  CHART_METRIC_PURPLE,
+  CHART_METRIC_GREEN,
+  CHART_METRIC_ORANGE,
+  CHART_METRIC_SKY,
+} from '../core/chart-palette';
 
 // ---------- 共享图元（条形行 / 月柱列） ----------
 
@@ -140,22 +164,22 @@ export function generateStatsReport(stats: ReadingStats): string {
   return `
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;">
 
-  <div style="background: linear-gradient(135deg, #667eea, #764ba2); padding: 20px; border-radius: 10px; color: white; text-align: center;">
+  <div style="background: ${CHART_GRADIENT_VIOLET}; padding: 20px; border-radius: 10px; color: white; text-align: center;">
   <div style="font-size: 2em; font-weight: bold;">${stats.totalBooks}</div>
   <div>书库</div>
   </div>
    
-  <div style="background: linear-gradient(135deg, #f093fb, #f5576c); padding: 20px; border-radius: 10px; color: white; text-align: center;">
+  <div style="background: ${CHART_GRADIENT_PINK}; padding: 20px; border-radius: 10px; color: white; text-align: center;">
   <div style="font-size: 2em; font-weight: bold;">${stats.readBooks}</div>
   <div>已读</div>
   </div>
 
-  <div style="background: linear-gradient(135deg, #4facfe, #00f2fe); padding: 20px; border-radius: 10px; color: white; text-align: center;">
+  <div style="background: ${CHART_GRADIENT_AQUA}; padding: 20px; border-radius: 10px; color: white; text-align: center;">
   <div style="font-size: 2em; font-weight: bold;">${stats.readingBooks}</div>
   <div>在读</div>
   </div>
 
-  <div style="background: linear-gradient(135deg, #43e97b, #38f9d7); padding: 20px; border-radius: 10px; color: white; text-align: center;">
+  <div style="background: ${CHART_GRADIENT_MINT}; padding: 20px; border-radius: 10px; color: white; text-align: center;">
   <div style="font-size: 2em; font-weight: bold;">${stats.unreadBooks}</div>
   <div>未读</div>
   </div>
@@ -168,23 +192,23 @@ export function generateStatsReport(stats: ReadingStats): string {
 
   <div style="display: flex; justify-content: space-around; text-align: center; margin-top: 30px;">
   <div>
-  <div style="font-size: 1.5em; font-weight: bold; color: #e74c3c;">${stats.totalHighlights}</div>
+  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_RED};">${stats.totalHighlights}</div>
   <div>划线</div>
   </div>
   <div>
-  <div style="font-size: 1.5em; font-weight: bold; color: #3498db;">${stats.totalThinks}</div>
+  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_BLUE};">${stats.totalThinks}</div>
   <div>想法</div>
   </div>
   <div>
-  <div style="font-size: 1.5em; font-weight: bold; color: #9b59b6;">${stats.totalDialogue}</div>
+  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_PURPLE};">${stats.totalDialogue}</div>
   <div>讨论</div>
   </div>
   <div>
-  <div style="font-size: 1.5em; font-weight: bold; color: #9b59b6;">${stats.totalOutlinks}</div>
+  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_PURPLE};">${stats.totalOutlinks}</div>
   <div>出链</div>
   </div>
   <div>
-  <div style="font-size: 1.5em; font-weight: bold; color: #27ae60;">${avgReadingTime}</div>
+  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_GREEN};">${avgReadingTime}</div>
   <div>平均每本</div>
   </div>
   </div>
@@ -254,11 +278,12 @@ export function generateAuthorStats(stats: ReadingStats): string {
   ${topAuthors
     .map(([author, data]: [string, any], index) => {
       const completionRate = data.totalBooks > 0 ? ((data.completedBooks / data.totalBooks) * 100).toFixed(1) : 0;
-      const rankColors = ['#ffd700', '#c0c0c0', '#cd7f32', '#3498db', '#9b59b6'];
+      // 排名卡渐变底：金/银/铜/蓝/紫按名次取色（色板收编 core/chart-palette）
+      const rankColors = CHART_AUTHOR_RANK_COLORS;
 
       return `
     <div class="bz-rr-author-card" data-rr-author="${escapeHtml(author)}" title="在书架中搜索该作者" role="button"
-    style="background: linear-gradient(135deg, ${rankColors[index] || '#95a5a6'}, ${rankColors[index] ? rankColors[index] + 'cc' : '#7f8c8d'});
+    style="background: linear-gradient(135deg, ${rankColors[index] || CHART_FALLBACK}, ${rankColors[index] ? rankColors[index] + 'cc' : CHART_RANK_FALLBACK_DEEP});
     padding: 15px; border-radius: 8px; color: white; position: relative;">
     <div style="font-size: 2em; position: absolute; top: 10px; right: 15px; opacity: 0.3;">${index + 1}</div>
     <div style="font-weight: bold; font-size: 1.1em;">${escapeHtml(author)}</div>
@@ -293,28 +318,28 @@ export function generateReadingSpeedAnalysis(stats: ReadingStats): string {
 
   <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
 
-  <div style="background: linear-gradient(135deg, #667eea, #764ba2); padding: 16px; border-radius: 8px; color: white; text-align: center;">
+  <div style="background: ${CHART_GRADIENT_VIOLET}; padding: 16px; border-radius: 8px; color: white; text-align: center;">
   <div style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">总阅读量</div>
   <div style="font-size: 20px; font-weight: 600;">${(stats.readingSpeed.totalPages / 1000).toFixed(1)}k</div>
   <div style="font-size: 12px; opacity: 0.8;">页数</div>
   </div>
 
 
-  <div style="background: linear-gradient(135deg, #4facfe, #00f2fe); padding: 16px; border-radius: 8px; color: white; text-align: center;">
+  <div style="background: ${CHART_GRADIENT_AQUA}; padding: 16px; border-radius: 8px; color: white; text-align: center;">
   <div style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">阅读速度</div>
   <div style="font-size: 20px; font-weight: 600;">${stats.readingSpeed.averagePagesPerHour.toFixed(0)}</div>
   <div style="font-size: 12px; opacity: 0.8;">页/小时</div>
   </div>
 
 
-  <div style="background: linear-gradient(135deg, #43e97b, #38f9d7); padding: 16px; border-radius: 8px; color: white; text-align: center;">
+  <div style="background: ${CHART_GRADIENT_MINT}; padding: 16px; border-radius: 8px; color: white; text-align: center;">
   <div style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">总字数</div>
   <div style="font-size: 20px; font-weight: 600;">${(stats.readingSpeed.totalWords / 10000).toFixed(1)}w</div>
   <div style="font-size: 12px; opacity: 0.8;">万字</div>
   </div>
 
 
-  <div style="background: linear-gradient(135deg, #ff6b6b, #ff8e8e); padding: 16px; border-radius: 8px; color: white; text-align: center;">
+  <div style="background: ${CHART_GRADIENT_CORAL}; padding: 16px; border-radius: 8px; color: white; text-align: center;">
   <div style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">字速</div>
   <div style="font-size: 20px; font-weight: 600;">${(stats.readingSpeed.averageWordsPerHour / 1000).toFixed(1)}k</div>
   <div style="font-size: 12px; opacity: 0.8;">字/小时</div>
@@ -330,7 +355,7 @@ export function generateReadingSpeedAnalysis(stats: ReadingStats): string {
 
 
   <div style="width: 100%; height: 8px; background: var(--background-modifier-border); border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
-  <div style="width: ${speedAnalysis.speedPercentage}%; height: 100%; background: linear-gradient(90deg, #4CAF50, #45a049); border-radius: 4px;"></div>
+  <div style="width: ${speedAnalysis.speedPercentage}%; height: 100%; background: ${CHART_SPEED_BAR_GRADIENT}; border-radius: 4px;"></div>
   </div>
 
   <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted);">
@@ -345,23 +370,23 @@ export function generateReadingSpeedAnalysis(stats: ReadingStats): string {
 
   <div style="background: var(--background-primary); padding: 12px; border-radius: 6px; border: 1px solid var(--background-modifier-border); text-align: center;">
   <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">效率评分</div>
-  <div style="font-size: 18px; font-weight: 600; color: #ff6b6b;">${speedAnalysis.efficiencyScore}/10</div>
+  <div style="font-size: 18px; font-weight: 600; color: ${CHART_METRIC_CORAL};">${speedAnalysis.efficiencyScore}/10</div>
   </div>
 
 
   <div style="background: var(--background-primary); padding: 12px; border-radius: 6px; border: 1px solid var(--background-modifier-border); text-align: center;">
   <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">阅读类型</div>
-  <div style="font-size: 14px; font-weight: 500; color: #667eea;">${speedAnalysis.readingType}</div>
+  <div style="font-size: 14px; font-weight: 500; color: ${CHART_METRIC_VIOLET};">${speedAnalysis.readingType}</div>
   </div>
 
   <div style="background: var(--background-primary); padding: 12px; border-radius: 6px; border: 1px solid var(--background-modifier-border); text-align: center;">
   <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">最佳速度</div>
-  <div style="font-size: 18px; font-weight: 600; color: #64d6f3;">${speedAnalysis.bestSpeed}页/小时</div>
+  <div style="font-size: 18px; font-weight: 600; color: ${CHART_METRIC_SKY};">${speedAnalysis.bestSpeed}页/小时</div>
   </div>
 
   <div style="background: var(--background-primary); padding: 12px; border-radius: 6px; border: 1px solid var(--background-modifier-border); text-align: center;">
   <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">平均时长</div>
-  <div style="font-size: 18px; font-weight: 600; color: #ff6b6b;">${speedAnalysis.avgSessionTime}</div>
+  <div style="font-size: 18px; font-weight: 600; color: ${CHART_METRIC_CORAL};">${speedAnalysis.avgSessionTime}</div>
   </div>
   </div>
   </div>
@@ -415,19 +440,19 @@ export function generateReadingTrendsAnalysis(stats: ReadingStats, bookNotes: Bo
   <!-- 核心指标概览 -->
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 20px 0;">
   <div style="text-align: center; padding: 15px; background: var(--background-secondary); border-radius: 8px;">
-  <div style="font-size: 1.8em; font-weight: bold; color: #667eea;">${trends.currentMonth.books}</div>
+  <div style="font-size: 1.8em; font-weight: bold; color: ${CHART_METRIC_VIOLET};">${trends.currentMonth.books}</div>
   <div style="font-size: 0.9em; color: var(--text-muted);">本月阅读</div>
   </div>
   <div style="text-align: center; padding: 15px; background: var(--background-secondary); border-radius: 8px;">
-  <div style="font-size: 1.8em; font-weight: bold; color: #4facfe;">${trends.quarterlyAvg}</div>
+  <div style="font-size: 1.8em; font-weight: bold; color: ${CHART_METRIC_AQUA};">${trends.quarterlyAvg}</div>
   <div style="font-size: 0.9em; color: var(--text-muted);">季度平均</div>
   </div>
   <div style="text-align: center; padding: 15px; background: var(--background-secondary); border-radius: 8px;">
-  <div style="font-size: 1.8em; font-weight: bold; color: #43e97b;">${trends.completionRate}</div>
+  <div style="font-size: 1.8em; font-weight: bold; color: ${CHART_METRIC_MINT};">${trends.completionRate}</div>
   <div style="font-size: 0.9em; color: var(--text-muted);">完成率</div>
   </div>
   <div style="text-align: center; padding: 15px; background: var(--background-secondary); border-radius: 8px;">
-  <div style="font-size: 1.8em; font-weight: bold; color: #ff6b6b;">${trends.trendDirection}</div>
+  <div style="font-size: 1.8em; font-weight: bold; color: ${CHART_METRIC_CORAL};">${trends.trendDirection}</div>
   <div style="font-size: 0.9em; color: var(--text-muted);">趋势方向</div>
   </div>
   </div>
@@ -491,12 +516,12 @@ export function generateReadingHeatmap(readingSessions: any[], cursorMonth?: str
   <!-- 热力图统计概览 -->
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 20px 0;">
   <div style="text-align: center; padding: 12px; background: var(--background-secondary); border-radius: 8px;">
-  <div style="font-size: 1.5em; font-weight: bold; color: #667eea;">${heatmapData.totalDays}</div>
+  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_VIOLET};">${heatmapData.totalDays}</div>
   <div style="font-size: 0.8em; color: var(--text-muted);">有阅读天数</div>
   </div>
 
   <div style="text-align: center; padding: 12px; background: var(--background-secondary); border-radius: 8px;">
-  <div style="font-size: 1.5em; font-weight: bold; color: #ff6b6b;">${heatmapData.longestStreak}</div>
+  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_CORAL};">${heatmapData.longestStreak}</div>
   <div style="font-size: 0.8em; color: var(--text-muted);">最长连续天数</div>
   </div>
   </div>
@@ -642,36 +667,36 @@ export function generateReadingFocusAnalysis(stats: ReadingStats, bookNotes: Boo
     <!-- 核心指标卡片 -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 20px 0;">
       
-        <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; border-radius: 8px;">
+        <div style="text-align: center; padding: 15px; background: ${CHART_GRADIENT_AQUA}; color: white; border-radius: 8px;">
             <div style="font-size: 1.8em; font-weight: bold;">${focusData.deepSessions}</div>
             <div style="font-size: 0.8em; opacity: 0.9;">深度会话</div>
         </div>
         
-        <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; border-radius: 8px;">
+        <div style="text-align: center; padding: 15px; background: ${CHART_GRADIENT_MINT}; color: white; border-radius: 8px;">
             <div style="font-size: 1.8em; font-weight: bold;">${focusData.trendDescription}</div>
             <div style="font-size: 0.8em; opacity: 0.9;">专注趋势</div>
         </div>
         
-        <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #ff6b6b, #ff8e8e); color: white; border-radius: 8px;">
+        <div style="text-align: center; padding: 15px; background: ${CHART_GRADIENT_CORAL}; color: white; border-radius: 8px;">
             <div style="font-size: 1.8em; font-weight: bold;">${focusData.bestTimeSlot}</div>
             <div style="font-size: 0.8em; opacity: 0.9;">最佳时段</div>
             
             
         </div>
         
-          <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 8px;">
+          <div style="text-align: center; padding: 15px; background: ${CHART_GRADIENT_VIOLET}; color: white; border-radius: 8px;">
             <div style="font-size: 1.8em; font-weight: bold;">${focusData.focusScore}/100</div>
             <div style="font-size: 0.8em; opacity: 0.9;">专注度评分</div>
         </div>
         
         
         <div style="padding: 15px; background: var(--background-secondary); border-radius: 8px; text-align: center;">
-                <div style="font-size: 2em; font-weight: bold; color: #27ae60;">${focusData.consistencyScore}/10</div>
+                <div style="font-size: 2em; font-weight: bold; color: ${CHART_METRIC_GREEN};">${focusData.consistencyScore}/10</div>
                 <div style="font-size: 0.85em; color: var(--text-normal);">连续性评分</div>
             </div>
             
             <div style="padding: 15px; background: var(--background-secondary); border-radius: 8px; text-align: center;">
-                <div style="font-size: 2em; font-weight: bold; color: #e67e22;">${focusData.efficiencyScore}/10</div>
+                <div style="font-size: 2em; font-weight: bold; color: ${CHART_METRIC_ORANGE};">${focusData.efficiencyScore}/10</div>
                 <div style="font-size: 0.85em; color: var(--text-normal);">效率评分</div>
             </div>
     </div>
@@ -683,7 +708,8 @@ export function generateReadingFocusAnalysis(stats: ReadingStats, bookNotes: Boo
         <div style="display: flex; flex-direction: column; gap: 12px;">
             ${focusData.sessionDistribution
               .map((item: any, index: number) => {
-                const colors = ['#ff6b6b', '#ff9ff3', '#feca57', '#48dbfb', '#1dd1a1'];
+                // 专注档位条形色：碎片化→高度专注（色板收编 core/chart-palette）
+                const colors = CHART_FOCUS_SERIES;
                 const labels = ['碎片化 (<10分钟)', '轻度专注 (10-30分钟)', '中等专注 (30-60分钟)', '深度专注 (1-2小时)', '高度专注 (>2小时)'];
 
                 return `
@@ -734,22 +760,22 @@ export function generateReadingCategoryAnalysis(bookNotes: BookNoteEntry[]): str
   <div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
 
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 20px 0;">
-  <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 8px; min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
+  <div style="text-align: center; padding: 15px; background: ${CHART_GRADIENT_VIOLET}; color: white; border-radius: 8px; min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
   <div style="font-size: 1.8em; font-weight: bold; line-height: 1.2;">${categoryAnalysis.totalCategories}</div>
   <div style="font-size: 0.8em; opacity: 0.9; margin-top: 5px;">阅读分类</div>
   </div>
 
-  <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; border-radius: 8px; min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
+  <div style="text-align: center; padding: 15px; background: ${CHART_GRADIENT_MINT}; color: white; border-radius: 8px; min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
   <div style="font-size: 1.5em; font-weight: bold; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(categoryAnalysis.topCategory.name)}</div>
   <div style="font-size: 0.8em; opacity: 0.9; margin-top: 5px;">最常阅读</div>
   </div>
 
-  <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; border-radius: 8px; min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
+  <div style="text-align: center; padding: 15px; background: ${CHART_GRADIENT_AQUA}; color: white; border-radius: 8px; min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
   <div style="font-size: 1.8em; font-weight: bold; line-height: 1.2;">${categoryAnalysis.diversityScore}%</div>
   <div style="font-size: 0.8em; opacity: 0.9; margin-top: 5px;">多样性</div>
   </div>
 
-  <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #ff6b6b, #ff8e8e); color: white; border-radius: 8px; min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
+  <div style="text-align: center; padding: 15px; background: ${CHART_GRADIENT_CORAL}; color: white; border-radius: 8px; min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
   <div style="font-size: 1.8em; font-weight: bold; line-height: 1.2;">${categoryAnalysis.balanceScore}%</div>
   <div style="font-size: 0.8em; opacity: 0.9; margin-top: 5px;">平衡度</div>
   </div>
@@ -813,32 +839,32 @@ export function generateReadingNotesInteractionAnalysis(bookNotes: BookNoteEntry
 
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;">
   <div style="padding: 15px; background: var(--background-secondary); border-radius: 8px; text-align: center;">
-  <div style="font-size: 1.5em; font-weight: bold; color: #667eea;">${interactionAnalysis.avgHighlightsPerBook}</div>
+  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_VIOLET};">${interactionAnalysis.avgHighlightsPerBook}</div>
   <div style="font-size: 0.9em; color: var(--text-muted);">平均每本划线</div>
   </div>
 
   <div style="padding: 15px; background: var(--background-secondary); border-radius: 8px; text-align: center;">
-  <div style="font-size: 1.5em; font-weight: bold; color: #4facfe;">${interactionAnalysis.thinkRatio}%</div>
+  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_AQUA};">${interactionAnalysis.thinkRatio}%</div>
   <div style="font-size: 0.9em; color: var(--text-muted);">想法比例</div>
   </div>
 
   <div style="padding: 15px; background: var(--background-secondary); border-radius: 8px; text-align: center;">
-  <div style="font-size: 1.5em; font-weight: bold; color: #43e97b;">${interactionAnalysis.interactionScore}/100</div>
+  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_MINT};">${interactionAnalysis.interactionScore}/100</div>
   <div style="font-size: 0.9em; color: var(--text-muted);">互动评分</div>
   </div>
 
    <div style="padding: 15px; background: var(--background-secondary); border-radius: 8px; text-align: center;">
-  <div style="font-size: 1.5em; font-weight: bold; color: #3498db;">${interactionAnalysis.interactionPattern}</div>
+  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_BLUE};">${interactionAnalysis.interactionPattern}</div>
   <div style="font-size: 0.9em; color: var(--text-muted);">${interactionAnalysis.patternDescription}</div>
   </div>
 
    <div style="padding: 15px; background: var(--background-secondary); border-radius: 8px; text-align: center;">
-  <div style="font-size: 1.5em; font-weight: bold; color: #9b59b6;">${interactionAnalysis.thinkingDepth}</div>
+  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_PURPLE};">${interactionAnalysis.thinkingDepth}</div>
   <div style="font-size: 0.9em; color: var(--text-muted);">${interactionAnalysis.thinkingDescription}</div>
   </div>
 
    <div style="padding: 15px; background: var(--background-secondary); border-radius: 8px; text-align: center;">
-  <div style="font-size: 1.5em; font-weight: bold; color: #ff6b6b;">${interactionAnalysis.connectionLevel}</div>
+  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_CORAL};">${interactionAnalysis.connectionLevel}</div>
   <div style="font-size: 0.9em; color: var(--text-muted);">${interactionAnalysis.connectionDescription}</div>
   </div>
   </div>
@@ -852,19 +878,19 @@ export function generateInteractionTrendChart(interactionAnalysis: any): string 
   <div style="background: var(--background-secondary); padding: 15px; border-radius: 8px;">
   <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center;">
   <div>
-  <div style="font-size: 1.2em; font-weight: bold; color: #667eea;">${interactionAnalysis.totalHighlights}</div>
+  <div style="font-size: 1.2em; font-weight: bold; color: ${CHART_METRIC_VIOLET};">${interactionAnalysis.totalHighlights}</div>
   <div style="font-size: 0.8em; color: var(--text-muted);">划线</div>
   </div>
   <div>
-  <div style="font-size: 1.2em; font-weight: bold; color: #4facfe;">${interactionAnalysis.totalThinks}</div>
+  <div style="font-size: 1.2em; font-weight: bold; color: ${CHART_METRIC_AQUA};">${interactionAnalysis.totalThinks}</div>
   <div style="font-size: 0.8em; color: var(--text-muted);">想法</div>
   </div>
   <div>
-  <div style="font-size: 1.2em; font-weight: bold; color: #43e97b;">${interactionAnalysis.totalDialogue}</div>
+  <div style="font-size: 1.2em; font-weight: bold; color: ${CHART_METRIC_MINT};">${interactionAnalysis.totalDialogue}</div>
   <div style="font-size: 0.8em; color: var(--text-muted);">讨论</div>
   </div>
   <div>
-  <div style="font-size: 1.2em; font-weight: bold; color: #ff6b6b;">${interactionAnalysis.totalOutlinks}</div>
+  <div style="font-size: 1.2em; font-weight: bold; color: ${CHART_METRIC_CORAL};">${interactionAnalysis.totalOutlinks}</div>
   <div style="font-size: 0.8em; color: var(--text-muted);">链接</div>
   </div>
   </div>
