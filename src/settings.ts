@@ -164,11 +164,23 @@ export default interface BzSettings {
    * 报告随面板同控（独立报告弹窗已退役，不再单独消费）。
    */
   bookshelfMobileDefaultFullscreen: boolean;
+  /** 📚 书架墙：默认筛选（all=全部/reading=在读/unread=未读/done=已读；打开面板时侧栏选中态，
+   *  非法值回落 all。issue 194） */
+  bookshelfDefaultSide: string;
+  /** 📚 书架墙：默认排序（date=最近阅读/title=书名/author=作者/progress=进度；非法值回落 date） */
+  bookshelfSortMode: string;
 
   // ===== 🎬 影院（cinema 域；ADR-0087 起接管旧影视域）=====
   /** 📁 影视文件夹（影院域数据源；缺省回落「我的/影视」。与日记本设置的「影视目录」
    *  movieDirectory 相互独立——后者仅日记/回忆墙归类用，同指「我的/影视」也不联动） */
   cinemaFolderPath: string;
+  /** 🎬 影院：默认排序（date=最近观看/created=按创建/rating=按评分；打开面板时选中态，
+   *  非法值回落 date。issue 194） */
+  cinemaSortMode: string;
+  /** 🎬 影院：默认状态筛选（空串=全部，其余为想看/在看/已看；非法值回落全部。issue 194） */
+  cinemaStatusFilter: string;
+  /** 📦 归物本：默认状态筛选（空串=全部，其余 using/idle/sold/discard；非法值回落全部。issue 194） */
+  belongingsDefaultStatus: string;
   // 旧 cinemaPageSize（每批加载数量）已删除：全仓无消费点（列表一次全量渲染），死配置随审计清理
 
 
@@ -503,9 +515,13 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 书架墙（bookshelf；空 = 未配置，运行时回落旧 libraryFolderPath 存量值——零感知迁移）
   bookshelfFolderPath: '',
   bookshelfMobileDefaultFullscreen: true,
+  bookshelfDefaultSide: 'all',
+  bookshelfSortMode: 'date',
 
   // 影院（cinema；ADR-0087 起接管影视；缺省回落默认目录，旧 movieFolderPath 键已退役）
   cinemaFolderPath: '我的/影视',
+  cinemaSortMode: 'date',
+  cinemaStatusFilter: '',
 
   // 做题家（设置并入复习计划 tab）
   enableMultipleChoice: true,
@@ -582,6 +598,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   diaryMobileDefaultFullscreen: true,
   todoMobileDefaultFullscreen: false,
   belongingsMobileDefaultFullscreen: true,
+  belongingsDefaultStatus: '',
   favoritesMobileDefaultFullscreen: true,
   favoritesSortKey: 'created',
   cinemaMobileDefaultFullscreen: true,

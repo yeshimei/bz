@@ -24,6 +24,36 @@ export function bookshelfSettingsSchema(): SettingsSchema {
           },
         ],
       },
+      {
+        icon: 'eye',
+        name: '显示',
+        rows: [
+          {
+            type: 'select',
+            name: '默认筛选',
+            desc: '打开面板时侧栏选中的状态',
+            binding: { key: 'bookshelfDefaultSide' },
+            options: [
+              { value: 'all', label: '全部' },
+              { value: 'reading', label: '在读' },
+              { value: 'unread', label: '未读' },
+              { value: 'done', label: '已读' },
+            ],
+          },
+          {
+            type: 'select',
+            name: '默认排序',
+            desc: '打开面板时列表按所选规则排序',
+            binding: { key: 'bookshelfSortMode' },
+            options: [
+              { value: 'date', label: '最近阅读' },
+              { value: 'title', label: '书名' },
+              { value: 'author', label: '作者' },
+              { value: 'progress', label: '进度' },
+            ],
+          },
+        ],
+      },
       mobileFullscreenGroup('bookshelfMobileDefaultFullscreen'),
     ],
   };

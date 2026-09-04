@@ -927,3 +927,11 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **只读纪律**：体检绝不走 jsonFileStore.read()（触发损坏留档+重建毁现场）；孤儿修复只动插件自有 json，用户笔记 frontmatter 不动。
 - **面板**：overlay 范式（createOverlay + escManager bz-checkup 层）；开始体检 → 逐项分片跑（requestIdleCallback 让出主线程，reading-report 先例）→ 绿/黄/红三态分组结果；体检中可取消（runSeq 作废令牌）；再跑覆盖上次；重开面板显示上次结果 + 可重跑提示；可修复项逐条/整组「一键修复」（openFlowDialog 确认 → enqueueFileTask 串行写 → notifyUndo 撤销链 → 自动重新体检收敛）。
 - **测试**：tests/checkup/data.test.ts（28 用例：四检查全绿/坏样本/双视角不一致样本 + 修复撤销链 + 编排缓存/取消/单检查降级）；tests/checkup/ui.test.ts（7 用例：开合空态/全绿缓存回放/三态渲染与详情展开/取消/修复撤销链/确认取消/设置面板入口直达）；smoke 命令表同步 bz-data-checkup-open。
+
+### 设置面板：空设置域补齐 + 零设置项域按端隐藏（issue 194，2026-09-05）
+
+> 用户拍板：影院/书架设置太空要补充；全域扫一遍补暴露既有键；某端没有可见设置项的域该端列表隐藏。
+
+- **默认视图键**：cinemaSortMode/cinemaStatusFilter、bookshelfDefaultSide/bookshelfSortMode、belongingsDefaultStatus 落 settings（同 favoritesSortKey/memoSortMode 惯例）；favoritesSortKey 已存在补暴露。
+- **接线语义**：每次打开面板读设置（收藏本 openPanel 先例），面板内改选为会话临时态。
+- **按端隐藏**：settings-panel preload 记录当前端可见项数，列表过滤零项域（加载完成前先展示、解析后剔除）；小橘转可见（有 schema 误标 noSettings）；阅读报告/内容首页/附件搬移/自动摘要维持隐藏。

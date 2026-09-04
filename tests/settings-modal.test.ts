@@ -437,7 +437,8 @@ describe('分组卡片（2026-08 用户拍板方案 A：先落日记本）', () 
 
 describe('归物本设置 schema（⚙️ 收敛设置面板，ticket 177）', () => {
   // 旧 ⚙️/🔀 头行按钮已随重设计移除：设置全收敛进设置面板（settings-panel schemaLoader）。
-  // 此处直测 schema 契约：桌面空态域 + 移动端「移动端默认全屏」组（与设置面板内嵌渲染同源）。
+  // 此处直测 schema 契约：显示组（issue 194 补默认状态筛选）+ 移动端「移动端默认全屏」组
+  // （与设置面板内嵌渲染同源）。
   let settings: Record<string, unknown>;
   beforeEach(() => {
     resetObsidianMocks();
@@ -447,11 +448,15 @@ describe('归物本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     setSettingsSaver(async () => {});
   });
 
-  it('桌面端：schema 为空态域（仅移动端组，组级门控隐藏 → 无可渲染项）', () => {
+  it('桌面端：显示组暴露「默认状态筛选」select（五态，直绑 belongingsDefaultStatus）', () => {
     const schema = belongingSettingsSchema();
-    expect(schema.groups).toHaveLength(1);
-    expect(schema.groups[0].name).toBe('移动端');
-    expect(schema.groups[0].visibleWhen!(settings as any)).toBe(false); // 桌面整组隐藏
+    expect(schema.groups).toHaveLength(2);
+    expect(schema.groups[0].name).toBe('显示');
+    const row = schema.groups[0].rows[0] as any;
+    expect(row.type).toBe('select');
+    expect(row.name).toBe('默认状态筛选');
+    expect(row.binding).toMatchObject({ key: 'belongingsDefaultStatus' });
+    expect(row.options.map((o: any) => o.value)).toEqual(['', 'using', 'idle', 'sold', 'discard']);
   });
 
   it('移动端：schema 暴露「移动端默认全屏」toggle，直绑 belongingsMobileDefaultFullscreen', () => {
@@ -459,8 +464,8 @@ describe('归物本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     try {
       MockPlatform.isMobile = true;
       const schema = belongingSettingsSchema();
-      expect(schema.groups[0].visibleWhen!(settings as any)).toBe(true);
-      const row = schema.groups[0].rows[0] as any;
+      expect(schema.groups[1].visibleWhen!(settings as any)).toBe(true);
+      const row = schema.groups[1].rows[0] as any;
       expect(row.name).toBe('移动端默认全屏');
       expect(row.binding).toMatchObject({ key: 'belongingsMobileDefaultFullscreen' });
     } finally {
@@ -479,11 +484,15 @@ describe('收藏本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     setSettingsSaver(async () => {});
   });
 
-  it('桌面端：schema 为空态域（仅移动端组，组级门控隐藏）', () => {
+  it('桌面端：显示组暴露「默认排序」select（直绑 favoritesSortKey，issue 194 补暴露）', () => {
     const schema = favoritesSettingsSchema();
-    expect(schema.groups).toHaveLength(1);
-    expect(schema.groups[0].name).toBe('移动端');
-    expect(schema.groups[0].visibleWhen!(settings as any)).toBe(false);
+    expect(schema.groups).toHaveLength(2);
+    expect(schema.groups[0].name).toBe('显示');
+    const row = schema.groups[0].rows[0] as any;
+    expect(row.type).toBe('select');
+    expect(row.name).toBe('默认排序');
+    expect(row.binding).toMatchObject({ key: 'favoritesSortKey' });
+    expect(row.options.map((o: any) => o.value)).toEqual(['created', 'title']);
   });
 
   it('移动端：schema 暴露「移动端默认全屏」toggle，直绑 favoritesMobileDefaultFullscreen', () => {
@@ -491,8 +500,8 @@ describe('收藏本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     try {
       MockPlatform.isMobile = true;
       const schema = favoritesSettingsSchema();
-      expect(schema.groups[0].visibleWhen!(settings as any)).toBe(true);
-      const row = schema.groups[0].rows[0] as any;
+      expect(schema.groups[1].visibleWhen!(settings as any)).toBe(true);
+      const row = schema.groups[1].rows[0] as any;
       expect(row.name).toBe('移动端默认全屏');
       expect(row.binding).toMatchObject({ key: 'favoritesMobileDefaultFullscreen' });
     } finally {
