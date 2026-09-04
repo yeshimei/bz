@@ -221,3 +221,235 @@ describe('sprint 答题时序（bug2 回归）', () => {
     expect(ratingEl.textContent).not.toContain('下次');
   });
 });
+
+describe('sprint 键盘答题（item 2）', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const press = (key: string): void => {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+  };
+
+  it('1-4 / a-d 答题（与点击同语义）', async () => {
+    vi.useFakeTimers();
+    const { host, events } = setup({
+      queue: [mkItem('笔记', 'n.md')],
+      questionsOf: () => [mkQ('唯一题？', [0])],
+    });
+    await vi.advanceTimersByTimeAsync(30);
+    press('2'); // 乙（错）
+    await vi.advanceTimersByTimeAsync(30);
+    expect(host.querySelector('.bz-sprint-opt.is-wrong')).toBeTruthy(); // 键盘选择生效
+    expect(host.querySelector('[data-action="note"]')).toBeTruthy(); // 唯一题答错 → 「结束并结算」出口
+    press('Enter'); // 答错唯一题 → Enter=结束并结算
+    await vi.advanceTimersByTimeAsync(60);
+    expect(events.some((e) => e.startsWith('failed:笔记'))).toBe(true);
+  });
+
+  it('a-d 字母键答题；答对自动跳后 Enter 不抢跑', async () => {
+    vi.useFakeTimers();
+    const { host, events } = setup({
+      queue: [mkItem('笔记', 'n.md')],
+      questionsOf: () => [mkQ('唯一题？', [3])],
+    });
+    await vi.advanceTimersByTimeAsync(30);
+    press('d'); // 丁（对）
+    await vi.advanceTimersByTimeAsync(30);
+    expect(host.querySelector('.bz-sprint-opt.is-correct')).toBeTruthy();
+    press('Enter'); // 答对自动跳在途 → Enter 无效
+    await vi.advanceTimersByTimeAsync(20);
+    expect(host.querySelector('.bz-result')).toBeFalsy(); // 还没到结果卡
+    await vi.advanceTimersByTimeAsync(CORRECT_JUMP_DELAY_MS + 60); // 0.8s 自动进结果卡
+    expect(host.querySelector('.bz-result')).toBeTruthy();
+    expect(events.some((e) => e.startsWith('passed:笔记'))).toBe(true);
+  });
+
+  it('输入框聚焦时按键跳过（不劫持打字）', async () => {
+    vi.useFakeTimers();
+    const { host } = setup({
+      queue: [mkItem('笔记', 'n.md')],
+      questionsOf: () => [mkQ('唯一题？', [0])],
+    });
+    await vi.advanceTimersByTimeAsync(30);
+    const input = document.createElement('input');
+    document.body.appendChild(input);
+    input.focus();
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: '1', bubbles: true })); // 目标=输入框
+    await vi.advanceTimersByTimeAsync(30);
+    expect(host.querySelector('.bz-sprint-opt.is-correct')).toBeFalsy(); // 未答题
+    expect(host.querySelector('.bz-sprint-opt.is-sel')).toBeFalsy();
+  });
+
+  it('多选：数字键勾选/取消，Enter 提交判定', async () => {
+    vi.useFakeTimers();
+    const { host, events, done } = setup({
+      queue: [mkItem('笔记', 'n.md')],
+      questionsOf: () => [mkQ('多选题？', [0, 2])],
+    });
+    await vi.advanceTimersByTimeAsync(30);
+    press('1');
+    press('3'); // 勾 0、2（全对组合）
+    await vi.advanceTimersByTimeAsync(30);
+    expect(host.querySelectorAll('.bz-sprint-opt.is-sel').length).toBe(2);
+    press('3'); // 再按取消勾
+    await vi.advanceTimersByTimeAsync(30);
+    expect(host.querySelectorAll('.bz-sprint-opt.is-sel').length).toBe(1);
+    press('3'); // 重新勾上
+    press('Enter'); // 提交
+    await vi.advanceTimersByTimeAsync(CORRECT_JUMP_DELAY_MS + 60);
+    expect(host.querySelector('.bz-result')).toBeTruthy(); // 全对 → 结果卡
+    expect(events.some((e) => e.startsWith('passed:笔记'))).toBe(true);
+    press('Enter'); // 结果卡 Enter = 下一篇/结算
+    await vi.advanceTimersByTimeAsync(60);
+    expect(host.querySelector('.bz-summary')).toBeTruthy();
+    press('Enter'); // 结算屏 Enter = 完成
+    expect(await settled(done)).toBe('done');
+  });
+
+  it('会话 finish 后注销监听：再按 Enter/数字键无效果', async () => {
+    vi.useFakeTimers();
+    const { events, done } = setup({
+      queue: [mkItem('笔记', 'n.md')],
+      questionsOf: () => [mkQ('唯一题？', [0])],
+    });
+    await vi.advanceTimersByTimeAsync(30);
+    press('1'); // 答对
+    await vi.advanceTimersByTimeAsync(CORRECT_JUMP_DELAY_MS + 60);
+    press('Enter'); // 结果卡 → 结算
+    await vi.advanceTimersByTimeAsync(60);
+    press('Enter'); // 结算 → finish
+    expect(await settled(done)).toBe('done');
+    const calls = events.length;
+    press('Enter');
+    press('1');
+    await vi.advanceTimersByTimeAsync(60);
+    expect(events.length).toBe(calls); // 注销后无新事件
+  });
+});
+
+describe('sprint 跳过此篇（item 7）', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('头行 skip 钮：该篇回 pending 移到队尾，不评级不写盘，继续下一篇', async () => {
+    vi.useFakeTimers();
+    const { host, events } = setup({
+      queue: [mkItem('甲', 'a.md'), mkItem('乙', 'b.md')],
+      questionsOf: () => [mkQ('唯一题？', [0])],
+    });
+    await vi.advanceTimersByTimeAsync(30);
+    // 头行有跳过钮（skip-forward 图标占位已被 uiIcon 替换为 data-icon）
+    const skipBtn = host.querySelector<HTMLElement>('[data-action="skip"]')!;
+    expect(skipBtn).toBeTruthy();
+    skipBtn.click();
+    await vi.advanceTimersByTimeAsync(60);
+    // 甲未被评级（无 passed/failed），乙接续开做
+    expect(events.filter((e) => e.startsWith('passed') || e.startsWith('failed'))).toHaveLength(0);
+    expect(host.querySelector('.bz-sprint-qtext')!.textContent).toBe('唯一题？'); // 乙的题面
+    // 队列顺序：乙 doing，甲回队尾 pending
+    const names = [...host.querySelectorAll('.bz-sq-item .nm')].map((e) => e.textContent);
+    expect(names[0]).toContain('乙');
+    expect(names[1]).toContain('甲');
+  });
+
+  it('仅剩被跳篇自身 pending → 跳过直接结算（防自环），且不评级', async () => {
+    vi.useFakeTimers();
+    const { host, events, done } = setup({
+      queue: [mkItem('单篇', 'a.md'), mkItem('乙', 'b.md')],
+      questionsOf: () => [mkQ('唯一题？', [0])],
+    });
+    await vi.advanceTimersByTimeAsync(30);
+    host.querySelector<HTMLElement>('[data-action="skip"]')!.click(); // 甲 → 队尾
+    await vi.advanceTimersByTimeAsync(60);
+    host.querySelector<HTMLElement>('.bz-sprint-opt[data-i="0"]')!.click(); // 乙答对
+    await vi.advanceTimersByTimeAsync(CORRECT_JUMP_DELAY_MS + 60);
+    host.querySelector<HTMLElement>('[data-action="next"]')!.click(); // 下一篇 = 甲（回跳）
+    await vi.advanceTimersByTimeAsync(60);
+    host.querySelector<HTMLElement>('[data-action="skip"]')!.click(); // 再跳（仅剩自己）→ 结算
+    await vi.advanceTimersByTimeAsync(60);
+    expect(host.querySelector('.bz-summary')).toBeTruthy();
+    expect(events.some((e) => e.startsWith('passed:单篇') || e.startsWith('failed:单篇'))).toBe(false);
+    host.querySelector<HTMLElement>('[data-action="done"]')!.click();
+    expect(await settled(done)).toBe('done');
+  });
+});
+
+describe('sprint 答错一行解析（item 3）与结算 streak（item 8）', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('答错渲染 explain 一行；答对/无 explain 不渲染', async () => {
+    vi.useFakeTimers();
+    const withExplain = { ...mkQ('第一题？', [0]), explain: '原文第二节：甲为正确表述' };
+    const { host } = setup({
+      queue: [mkItem('笔记', 'n.md')],
+      questionsOf: () => [withExplain, mkQ('第二题？', [1])],
+    });
+    await vi.advanceTimersByTimeAsync(30);
+    expect(host.querySelector('.bz-sprint-explain')).toBeFalsy(); // 未答不显示
+    host.querySelector<HTMLElement>('.bz-sprint-opt[data-i="1"]')!.click(); // 答错
+    await vi.advanceTimersByTimeAsync(30);
+    const ex = host.querySelector('.bz-sprint-explain');
+    expect(ex).toBeTruthy();
+    expect(ex!.textContent).toContain('原文第二节');
+    // 下一题答对 → 无解析行
+    host.querySelector<HTMLElement>('[data-action="next"]')!.click();
+    await vi.advanceTimersByTimeAsync(30);
+    host.querySelector<HTMLElement>('.bz-sprint-opt[data-i="1"]')!.click(); // 对
+    await vi.advanceTimersByTimeAsync(CORRECT_JUMP_DELAY_MS + 60);
+    expect(host.querySelector('.bz-sprint-explain')).toBeFalsy();
+  });
+
+  it('存量题无 explain 字段 → 答错静默不显示（零迁移）', async () => {
+    vi.useFakeTimers();
+    const { host } = setup({
+      queue: [mkItem('笔记', 'n.md')],
+      questionsOf: () => [mkQ('唯一题？', [0])],
+    });
+    await vi.advanceTimersByTimeAsync(30);
+    host.querySelector<HTMLElement>('.bz-sprint-opt[data-i="1"]')!.click();
+    await vi.advanceTimersByTimeAsync(30);
+    expect(host.querySelector('.bz-sprint-explain')).toBeFalsy();
+  });
+
+  it('结算屏追加「连续 N 天」（streakDays>0）；0/缺省不显示', async () => {
+    vi.useFakeTimers();
+    const host = document.createElement('div');
+    const session = new SprintSession({
+      app: { vault: {} } as any,
+      host,
+      queue: [mkItem('笔记', 'n.md')],
+      mode: 'round',
+      quiz: null,
+      streakDays: 3,
+      fetchQuestions: async () => [mkQ('唯一题？', [0])],
+      onPassed: async () => undefined,
+      onFailed: async () => {},
+      onExit: () => {},
+    } as any);
+    const done = session.start();
+    await vi.advanceTimersByTimeAsync(30);
+    host.querySelector<HTMLElement>('.bz-sprint-opt[data-i="0"]')!.click();
+    await vi.advanceTimersByTimeAsync(CORRECT_JUMP_DELAY_MS + 60);
+    host.querySelector<HTMLElement>('[data-action="next"]')!.click();
+    await vi.advanceTimersByTimeAsync(60);
+    const streak = host.querySelector('.bz-summary-streak');
+    expect(streak).toBeTruthy();
+    expect(streak!.textContent).toContain('连续复习');
+    expect(streak!.textContent).toContain('3');
+    host.querySelector<HTMLElement>('[data-action="done"]')!.click();
+    expect(await settled(done)).toBe('done');
+  });
+});
