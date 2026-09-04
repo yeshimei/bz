@@ -42,6 +42,7 @@ export function unmountPomodoroStatusBar(): void {
  * ui.ts render 每 1s 调用：
  * 主番茄钟运行中：mm:ss；暂停（含后台自动暂停）：显示「已暂停」标签（.pomodoro-statusbar-paused 醒目标识）；
  * 空闲：空文本灰态（.pomodoro-statusbar-idle）。自动暂停/恢复只在此处体现，不加 toast（x6）。
+ * 增强包：hover 反馈走 styles.css（对齐组件库交互基线）；专注归属任务名挂 title 悬停展示（状态栏空间宝贵，文本位留给倒计时）。
  */
 export function syncPomodoroStatusBar(state: PomodoroState, remainSec: number): void {
   if (!statusEl) return;
@@ -49,6 +50,7 @@ export function syncPomodoroStatusBar(state: PomodoroState, remainSec: number): 
   const paused = !running && state.paused;
   statusEl.classList.toggle('pomodoro-statusbar-idle', !running && !paused);
   statusEl.classList.toggle('pomodoro-statusbar-paused', paused);
+  statusEl.title = state.task ? `番茄钟：${state.task}` : '番茄钟';
   if (textSpan) {
     if (running) {
       const m = Math.floor(remainSec / 60);
