@@ -888,3 +888,16 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **custom 模型行统一**：「自定义模型」行退役，「模型名称」行（带获取模型名按钮）为全服务商唯一模型入口；setProviderValue 特判 (custom, aiModelOverrides) → 直写 aiCustomModel，修手输无效 bug；onPick 与手输同路径。
 - **采样参数组**：aiTemperature/aiTopP/aiFrequencyPenalty/aiPresencePenalty（string 键数字项，'' = 不发字段），AI 域第二组「采样参数」（采样温度/核采样上限/频率惩罚/存在惩罚），⚙️ 主设置页同步三区块；请求链 modelOptions 同名字段优先、非法数字跳过、温度 0 合法。
 - **测试**：全量 3678 绿；ai-cov 采样透传 2 用例；文案 lint 过（标题 ≥4 字无符号、描述自然句）。无新 ADR 编号外决策（见 ADR-0088）。
+
+### 影视分析报告内嵌化：独立窗退役、并入影院面板（ticket 190，ADR-0090）
+
+> 用户拍板（2026-09-04，全域体验审查）：「不用弹窗了，写进面板中」——影视分析报告不再独立弹窗，独立窗内容并入影院内嵌分析页，命令入口改直达内嵌页。
+
+- **独立窗退役删域**：删 `src/movie-report/`（analysis/index/state）与 `tests/movie-report/`；onunload 挂钩与 ESC 层 `movie-analysis` 随域删除。
+- **命令改直达**：`bz-movie-report` 退役换 `bz-cinema-analysis`（名称「影视分析报告」、icon pie-chart 保留用户习惯）→ `openCinemaAnalysis`：ensure + `M.view='stat'`，面板未开则开并落分析页、已开就地切换（复用影院面板，不新造第二套面板）。
+- **能力并入（19 板块不丢能力）**：独立版独有「片长画像」「追剧深度」两板块并入内嵌页；CinemaItem 增 `duration`（片长）/`seasonText`（季集）解析；页头行加小计「N 部 · 已看 N · YYYY–YYYY」。
+- **lucide 化**：19 板块标题图标参数补齐（hourglass/timer/tv/heart/scale 等），emoji 全清；独立窗关闭钮/窗口标题随窗消亡不迁移。
+- **空态带动作**：分析页空库空态加「添加影视」主按钮（内嵌后已在影院面板内，直达添加表单；bz-cinema-open toggle 语义会误关面板故不直执行）。
+- **自动刷新**：复用影院 registerAutoRefresh（vault 变更 300ms 防抖重算，仅更新内容区），零新增订阅。
+- **图表升级**：类型分布 SVG 环形图改水平条形行（「圆形统计被否」拍板；softBarHTML 支持逐条目类型色）；拍板项中热力图翻月/年卡下钻经核实属 reading-report 图表升级包，归读书报告内嵌化任务（书架墙）。
+- **测试**：smoke 命令表同步；cinema 数据层 +7 用例（片长/季集/19 板块对照断言/条形行/小计/空态/整页）、UI 层 +3 用例（直达/空态动作/自动刷新）。
