@@ -2136,7 +2136,7 @@ export class UIManager {
   confirmDestroyDiary(note: SafeNote) {
     void openFlowDialog({
       title: '彻底销毁日记',
-      message: `将永久销毁「${note.title}」的密文（含附件），此操作不可撤销。确定？`,
+      message: `将永久销毁「${note.title}」的密文（含附件）。此操作不可撤销，确定继续吗？`,
       actions: [
         { label: '取消', value: 'cancel' },
         { label: '永久销毁', value: 'ok', cta: true },

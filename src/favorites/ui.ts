@@ -1113,7 +1113,7 @@ async function runAiFill(
     const known = TAGS.map((t) => t.label);
     const valid = rawTags.filter((t) => known.includes(t));
     const unknown = rawTags.filter((t) => !known.includes(t));
-    if (unknown.length) notice(`AI 整理的标签 "${unknown.join('、')}" 不在列表中，已忽略`, 'warning');
+    if (unknown.length) notice(`AI 整理的标签「${unknown.join('、')}」不在列表中，已忽略`, 'warning');
     if (ghInfo && !valid.includes('GitHub')) valid.unshift('GitHub');
     sel.clear();
     valid.forEach((t) => sel.add(t));

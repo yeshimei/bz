@@ -59,6 +59,9 @@ describe('home 快照', () => {
   it('新增内容域曝光：literature/reading-report 在域清单且有命令，空库徽标为空', async () => {
     expect(DOMAINS.find((d) => d.id === 'literature')!.commandId).toBe('bz-literature-open');
     expect(DOMAINS.find((d) => d.id === 'reading-report')!.commandId).toBe('bz-reading-report-open');
+    // 走查批 D：attach 磁贴与命令同名「移动附件」；剪藏本副题不再出现旧称「聚合讯」
+    expect(DOMAINS.find((d) => d.id === 'attach')!.name).toBe('移动附件');
+    expect(DOMAINS.find((d) => d.id === 'clipping')!.sub).toBe('未读流与剪藏');
     const snap = await collectHomeSnapshot(mockAppWithVault(vault) as any);
     expect(snap.byDomain.literature.text).toBe('');
     expect(snap.byDomain['reading-report'].text).toBe('');

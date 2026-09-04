@@ -110,7 +110,7 @@ export const DOMAINS: DomainDef[] = [
   { id: 'memo', name: '备忘录', icon: DOMAIN_ICONS.memo, desc: '场景与显示行为（提醒已并入待办）', schemaLoader: schemaLoaders.memo },
   { id: 'todo', name: '待办', icon: DOMAIN_ICONS.todo, desc: '待办工作台与提醒（捕获入口落点）', schemaLoader: schemaLoaders.todo },
   { id: 'belongings', name: '归物本', icon: DOMAIN_ICONS.belongings, desc: '物品登记与查找', schemaLoader: schemaLoaders.belongings },
-  { id: 'clipping', name: '剪藏本', icon: DOMAIN_ICONS.clipping, desc: '聚合讯未读流与剪藏笔记', schemaLoader: schemaLoaders.clipping },
+  { id: 'clipping', name: '剪藏本', icon: DOMAIN_ICONS.clipping, desc: '未读流与剪藏笔记', schemaLoader: schemaLoaders.clipping },
   { id: 'favorites', name: '收藏本', icon: DOMAIN_ICONS.favorites, desc: '收藏条目', schemaLoader: schemaLoaders.favorites },
   // 旧书库（library）域退役：其设置组删除，书库配置并入书架墙（bookshelf）组
   { id: 'reading-report', name: '阅读报告', icon: DOMAIN_ICONS['reading-report'], desc: '阅读统计', noSettings: true },
