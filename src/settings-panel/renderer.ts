@@ -133,6 +133,8 @@ export function makePathRowCtrl(opts: {
   pickerDesc?: string;
   buttonText?: string;
   okText?: string;
+  /** 绑定值为空时的回落展示 chip（锁定态，仅显示实际生效目录不落盘；点击重开选择器可改显式值） */
+  fallbackChip?: string;
   onChange: (list: string[]) => void | string[] | Promise<void | string[]>;
 }): HTMLElement {
   const readValue = (): string[] => {
@@ -178,6 +180,15 @@ export function makePathRowCtrl(opts: {
 
   const renderChips = () => {
     ctrl.querySelectorAll('.bz-chip').forEach((c) => c.remove());
+    // 回落 chip（可选）：绑定值为空时展示「实际生效目录」锁定态 chip（不可移除；点击重开选择器改显式值）
+    if (!current.length && opts.fallbackChip) {
+      ctrl.appendChild(uiChip({
+        label: opts.fallbackChip,
+        title: '未单独设置时的实际生效目录（点击可改为显式设置）',
+        locked: true,
+        onClick: openPicker,
+      }));
+    }
     for (const path of current) {
       const label = path === '' ? '（库根目录）' : path;
       const chip = uiChip({
@@ -405,6 +416,7 @@ function renderRow(
     case 'path': {
       const acc = bindValue<string | string[]>(row.binding as unknown as AnyBinding);
       const multi = row.mode === 'multi';
+      const fallbackFn = (row as { fallbackValue?: () => string }).fallbackValue;
       ctrlEl.appendChild(makePathRowCtrl({
         name: row.name,
         mode: row.mode,
@@ -417,6 +429,7 @@ function renderRow(
         pickerDesc: row.pickerDesc,
         buttonText: row.buttonText,
         okText: row.okText,
+        fallbackChip: typeof fallbackFn === 'function' ? fallbackFn() : '',
         onChange: (list) => {
           const v = multi ? list : (list[0] || '').trim().replace(/^\/+|\/+$/g, '');
           acc.write(v as string | string[]);
