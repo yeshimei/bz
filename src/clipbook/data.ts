@@ -10,7 +10,7 @@
  *   ——保留策略删除后若无此段，目录里的旧剪藏会回落到「未读」错态。
  * - order: 「全部未读」排序（本票不做拖拽，段预留）
  */
-import { jsonFileStore, storageFile } from '../core/storage';
+import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
 
 export interface ClipbookData {
   articleOverrides: Record<string, { reading?: boolean }>;
@@ -48,6 +48,21 @@ export async function writeClipbookData(data: ClipbookData): Promise<void> {
   try {
     await jsonFileStore<ClipbookData>(clipbookFilePath(), { defaultValue: () => emptySidecar() }).write(data);
   } catch (e) { /* 静默 */ }
+}
+
+/**
+ * 读改写事务（D2 可靠写契约原语 1 收编）：侧写「读→改→写」整体入 core per-path 串行队列，
+ * mutator 基于磁盘现值产出新侧写。并发动作（在读切换 × N、删除清理与在读切换交错）
+ * 不再基于过期快照互相覆盖；坏文件由 jsonFileStore 留档降级（原语 3）。
+ * 注意：队列不可重入——mutate 内勿对 clipbook.json 再调本函数/enqueueFileTask。
+ */
+export function updateClipbookData(mutate: (cur: ClipbookData) => ClipbookData): Promise<ClipbookData> {
+  return enqueueFileTask(clipbookFilePath(), async () => {
+    const cur = await readClipbookData();
+    const next = mutate(cur);
+    await writeClipbookData(next);
+    return next;
+  });
 }
 
 export function emptySidecar(): ClipbookData {
