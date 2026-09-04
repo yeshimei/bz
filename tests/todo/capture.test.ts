@@ -123,17 +123,17 @@ describe('启动弹出改道（落点=待办面板）', () => {
     const { app } = seed([item({ id: 'a', priority: 'important' })]);
     ensureTodoReminders(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-overlay')).toBeTruthy();
+      expect(document.querySelector('.bz-panel-overlay')).toBeTruthy();
     }, { timeout: 1500 });
     // 落点核对：待办工作台标题
-    expect((document.querySelector('.bz-todo-title') as HTMLElement).textContent).toBe('待办');
+    expect((document.querySelector('.bz-panel-title') as HTMLElement).textContent).toBe('待办');
   }, 5000);
 
   it('到期未完成同样触发（today 状态）', async () => {
     const { app } = seed([item({ id: 'a', due: at(0, '09:00') })]);
     ensureTodoReminders(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-overlay')).toBeTruthy();
+      expect(document.querySelector('.bz-panel-overlay')).toBeTruthy();
     }, { timeout: 1500 });
   }, 5000);
 
@@ -141,14 +141,14 @@ describe('启动弹出改道（落点=待办面板）', () => {
     const { app } = seed([item({ id: 'a', priority: 'important' })], { autoPopupOnStart: false });
     ensureTodoReminders(app);
     await new Promise((r) => setTimeout(r, 450));
-    expect(document.querySelector('.bz-todo-overlay')).toBeNull();
+    expect(document.querySelector('.bz-panel-overlay')).toBeNull();
   });
 
   it('无重要/到期条目（minor 无截止）→ 不弹', async () => {
     const { app } = seed([item({ id: 'a' })]);
     ensureTodoReminders(app);
     await new Promise((r) => setTimeout(r, 450));
-    expect(document.querySelector('.bz-todo-overlay')).toBeNull();
+    expect(document.querySelector('.bz-panel-overlay')).toBeNull();
   });
 });
 
@@ -167,7 +167,7 @@ describe('打开笔记提醒改道（落点=待办面板 + 定位）', () => {
     ensureTodoReminders(app); // 幂等重挂（file-open 监听仍在）
     (app as any).workspace.emit('file-open', { path: '笔记/A.md' });
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-overlay')).toBeTruthy();
+      expect(document.querySelector('.bz-panel-overlay')).toBeTruthy();
     });
     const search = document.querySelector('[data-todo-search]') as HTMLInputElement;
     expect(search.value).toBe('笔记/A.md');
@@ -183,7 +183,7 @@ describe('打开笔记提醒改道（落点=待办面板 + 定位）', () => {
     ensureTodoReminders(app);
     emitFileOpen('笔记/B.md');
     await new Promise((r) => setTimeout(r, 100));
-    expect(document.querySelector('.bz-todo-overlay')).toBeNull();
+    expect(document.querySelector('.bz-panel-overlay')).toBeNull();
   });
 
   it('openNoteReminder=false → 不提醒', async () => {
@@ -194,7 +194,7 @@ describe('打开笔记提醒改道（落点=待办面板 + 定位）', () => {
     ensureTodoReminders(app);
     emitFileOpen('笔记/A.md');
     await new Promise((r) => setTimeout(r, 100));
-    expect(document.querySelector('.bz-todo-overlay')).toBeNull();
+    expect(document.querySelector('.bz-panel-overlay')).toBeNull();
   });
 
   it('同一笔记只提醒一次：关面板后再次打开不重弹', async () => {
@@ -205,12 +205,12 @@ describe('打开笔记提醒改道（落点=待办面板 + 定位）', () => {
     ensureTodoReminders(app);
     emitFileOpen('笔记/A.md');
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-overlay')).toBeTruthy();
+      expect(document.querySelector('.bz-panel-overlay')).toBeTruthy();
     });
     closeTodoPanel();
     emitFileOpen('笔记/A.md');
     await new Promise((r) => setTimeout(r, 100));
-    expect(document.querySelector('.bz-todo-overlay')).toBeNull(); // 已提醒笔记跳过
+    expect(document.querySelector('.bz-panel-overlay')).toBeNull(); // 已提醒笔记跳过
   });
 
   it('面板已开时再触发提醒 → 不闪关，只更新定位条件', async () => {
@@ -227,7 +227,7 @@ describe('打开笔记提醒改道（落点=待办面板 + 定位）', () => {
     await vi.waitFor(() => {
       expect((document.querySelector('[data-todo-search]') as HTMLInputElement).value).toBe('笔记/A.md');
     });
-    expect(document.querySelector('.bz-todo-overlay')).toBeTruthy(); // 面板未被关闭重开
+    expect(document.querySelector('.bz-panel-overlay')).toBeTruthy(); // 面板未被关闭重开
   });
 
 });

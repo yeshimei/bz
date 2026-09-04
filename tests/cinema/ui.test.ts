@@ -72,17 +72,17 @@ describe('cinema overlay', () => {
   it('打开主面板：头行 + 左栏分类 + 海报网格', () => {
     const { app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(overlay).toBeTruthy();
-    expect(overlay.querySelector('.bz-cinema-title')?.textContent).toBe('影视');
+    expect(overlay.querySelector('.bz-panel-title')?.textContent).toBe('影视');
     // 主头行：标题=全部（默认）+ 计数 + 添加按钮
-    const mainHead = overlay.querySelector('.bz-cinema-main-head') as HTMLElement;
+    const mainHead = overlay.querySelector('.bz-main-head') as HTMLElement;
     expect(mainHead).toBeTruthy();
-    expect(overlay.querySelector('[data-cinema-main-title]')?.textContent).toBe('全部');
-    expect(overlay.querySelector('[data-cinema-main-count]')?.textContent).toBe('· 4 部');
+    expect(overlay.querySelector('.bz-main-title')?.textContent).toBe('全部');
+    expect(overlay.querySelector('.bz-main-count')?.textContent).toBe('· 4 部');
     expect(overlay.querySelector('[data-cinema-add]')).toBeTruthy();
     // 左栏：类型区「全部」+ 组；状态区「全部」+ 想看/在看/已看
-    const nav = overlay.querySelector('.bz-cinema-nav') as HTMLElement;
+    const nav = overlay.querySelector('.bz-rail') as HTMLElement;
     expect(nav.querySelector('[data-cinema-type="all"]')?.textContent).toContain('全部');
     expect(nav.querySelectorAll('[data-cinema-type]').length).toBeGreaterThanOrEqual(3);
     expect(nav.querySelector('[data-cinema-status="all"]')?.textContent).toContain('全部');
@@ -105,22 +105,22 @@ describe('cinema overlay', () => {
   it('点遮罩关闭主面板（桌面端无关闭按钮，靠遮罩/ESC）', () => {
     const { app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     overlay.click();
-    expect(document.querySelector('.bz-cinema-overlay')).toBeNull();
+    expect(document.querySelector('.bz-panel-overlay')).toBeNull();
     expect(M.currentOverlay).toBeNull();
   });
 
   it('点分类筛选 + 点「全部」取消；主头行标题/计数跟随', () => {
     const { app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     (overlay.querySelector('[data-cinema-type="电影"]') as HTMLElement).click();
     expect(M.typeFilter).toBe('电影');
     let cards = overlay.querySelectorAll('[data-cinema-idx]');
     expect(cards.length).toBe(2); // 星际穿越 + 想看片
-    expect(overlay.querySelector('[data-cinema-main-title]')?.textContent).toBe('电影');
-    expect(overlay.querySelector('[data-cinema-main-count]')?.textContent).toBe('· 2 部');
+    expect(overlay.querySelector('.bz-main-title')?.textContent).toBe('电影');
+    expect(overlay.querySelector('.bz-main-count')?.textContent).toBe('· 2 部');
     // 再点已选组不取消（组保持选中）
     (overlay.querySelector('[data-cinema-type="电影"]') as HTMLElement).click();
     expect(M.typeFilter).toBe('电影');
@@ -129,13 +129,13 @@ describe('cinema overlay', () => {
     expect(M.typeFilter).toBeNull();
     cards = overlay.querySelectorAll('[data-cinema-idx]');
     expect(cards.length).toBe(4);
-    expect(overlay.querySelector('[data-cinema-main-title]')?.textContent).toBe('全部');
+    expect(overlay.querySelector('.bz-main-title')?.textContent).toBe('全部');
   });
 
   it('点状态筛选 + 点「全部」取消', () => {
     const { app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     (overlay.querySelector('[data-cinema-status="想看"]') as HTMLElement).click();
     expect(M.statusFilter).toBe('想看');
     let cards = overlay.querySelectorAll('[data-cinema-idx]');
@@ -150,7 +150,7 @@ describe('cinema overlay', () => {
   it('剧集点击筛组+展开二级；点二级筛选；再点同二级回该组全部', () => {
     const { app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const tvBtn = overlay.querySelector('[data-cinema-type="剧集"]') as HTMLElement;
     tvBtn.click();
     expect(M.typeFilter).toBe('剧集');
@@ -162,7 +162,7 @@ describe('cinema overlay', () => {
     const usBtn = overlay.querySelector('[data-cinema-sub="美剧"]') as HTMLElement;
     usBtn.click();
     expect(M.subFilter).toBe('美剧');
-    expect(overlay.querySelector('[data-cinema-main-title]')?.textContent).toBe('美剧');
+    expect(overlay.querySelector('.bz-main-title')?.textContent).toBe('美剧');
     let cards = overlay.querySelectorAll('[data-cinema-idx]');
     expect(cards.length).toBe(1);
     expect(cards[0].textContent).toContain('绝命毒师');
@@ -171,13 +171,13 @@ describe('cinema overlay', () => {
     usBtn2.click();
     expect(M.subFilter).toBeNull();
     expect(M.typeFilter).toBe('剧集');
-    expect(overlay.querySelector('[data-cinema-main-title]')?.textContent).toBe('剧集');
+    expect(overlay.querySelector('.bz-main-title')?.textContent).toBe('剧集');
   });
 
   it('搜索过滤', () => {
     const { app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const input = overlay.querySelector('[data-cinema-search]') as HTMLInputElement;
     input.value = '星际';
     input.dispatchEvent(new Event('input'));
@@ -195,7 +195,7 @@ describe('cinema overlay', () => {
   it('点海报卡片 → 详情弹窗（含影评/编辑/删除按钮，无关闭按钮）', () => {
     const { app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement;
     card.click();
     const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
@@ -212,7 +212,7 @@ describe('cinema overlay', () => {
   it('详情弹窗内删除 → 确认框三段式 + 移入回收站（列表减少）', async () => {
     const { vault, app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement;
     card.click();
     const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
@@ -237,7 +237,7 @@ describe('cinema overlay', () => {
   it('想看灰色小字 → 快速状态窗（升级在看/已看 + 滑杆 + 影评）', () => {
     const { app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     // 先筛「想看」状态，保证只有想看片可升级
     (overlay.querySelector('[data-cinema-status="想看"]') as HTMLElement).click();
     const up = overlay.querySelector('[data-cinema-upgrade]') as HTMLElement;
@@ -279,23 +279,23 @@ describe('cinema overlay', () => {
   it('ESC 关闭：先弹窗后主面板', () => {
     const { app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement;
     card.click();
     expect(document.querySelector('.bz-overlay-mask')).toBeTruthy();
     // ESC 关弹窗
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(document.querySelector('.bz-overlay-mask')).toBeNull();
-    expect(document.querySelector('.bz-cinema-overlay')).toBeTruthy();
+    expect(document.querySelector('.bz-panel-overlay')).toBeTruthy();
     // ESC 关主面板
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    expect(document.querySelector('.bz-cinema-overlay')).toBeNull();
+    expect(document.querySelector('.bz-panel-overlay')).toBeNull();
   });
 
   it('排序切换：按评分 → 高分在前', () => {
     const { app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const sortBtns = overlay.querySelectorAll('.bz-cinema-sort .bz-segmented-btn');
     // 找「按评分」按钮（组件库 segmented 按钮文案）
     const ratingBtn = Array.from(sortBtns).find((b) => b.textContent === '按评分') as HTMLElement;
@@ -310,7 +310,7 @@ describe('cinema overlay', () => {
   it('AI 页按需触发：切页不发请求、引导页出「开始 AI 荐片」；分析页切换保留', async () => {
     const { app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     // 点 AI 工具 → 只切页（增强包需求 4：按需触发，不自动发请求）
     (overlay.querySelector('[data-cinema-tool="ai"]') as HTMLElement).click();
     expect(M.view).toBe('ai');
@@ -335,7 +335,7 @@ describe('cinema overlay', () => {
     ensureCinema(app);
     rebuildItems(app);
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     (overlay.querySelector('[data-cinema-tool="stat"]') as HTMLElement).click();
     const content = overlay.querySelector('.bz-cinema-content') as HTMLElement;
     expect(content.textContent).toContain('还没有可统计的影视记录');
@@ -349,25 +349,25 @@ describe('cinema overlay', () => {
   it('openCinemaAnalysis（bz-cinema-analysis 直达，ADR-0090）：未开面板 → 开并落分析页；已开列表 → 就地切分析页', () => {
     const { app } = seedVault();
     openCinemaAnalysis(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(overlay).not.toBeNull();
     expect(M.view).toBe('stat');
     expect(overlay.querySelector('.bz-cinema-page')?.textContent).toContain('影视分析');
     // 已开面板（切回列表）→ 再执行命令：同一 overlay 就地切分析页，不关闭重开
     (overlay.querySelector('[data-cinema-type="all"]') as HTMLElement).click();
     expect(M.view).toBe('list');
-    const same = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const same = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(same).toBe(overlay);
     openCinemaAnalysis(app);
     expect(M.view).toBe('stat');
-    expect((document.querySelector('.bz-cinema-overlay') as HTMLElement)).toBe(overlay);
+    expect((document.querySelector('.bz-panel-overlay') as HTMLElement)).toBe(overlay);
     expect(overlay.querySelector('.bz-cinema-page')?.textContent).toContain('类型分布');
   });
 
   it('分析页打开期间 vault 变更自动刷新（ADR-0090 需求 6：只重算内容区）', async () => {
     const { vault, app } = seedVault();
     openCinemaAnalysis(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(overlay.querySelector('.bz-cinema-page-sub')?.textContent).toBe('4 部 · 已看 2 · 2026');
     // 外部落盘新条目 → vault:md-created 域事件 → 300ms 防抖后自动重算分析页（轮询等防抖落地，不钉时长）
     vault.files.set('我的/影视/《新片》.md', md(`---
@@ -384,7 +384,7 @@ tags: [电影]
   it('AI 结果页反馈闭环：上次结果先展示 + 换一批 + 已在库中禁用 + 豆瓣外链 + 等待页大 spinner', () => {
     const { app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     (overlay.querySelector('[data-cinema-tool="ai"]') as HTMLElement).click();
     // 种上次结果（含一条已在库中的「星际穿越」）：切页应先展示
     M.aiResult = [
@@ -420,7 +420,7 @@ tags: [电影]
   it('错误页「重试」按基准分流：找同类失败后重试重跑找同类（不退化成全库荐片）；荐片失败重试仍是荐片', async () => {
     const { app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     // AI 返回非法 JSON → 两轮都失败落错误页
     setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'test-key' }));
     resetAIProviderCache();
@@ -510,7 +510,7 @@ tags: [电影]
   it('CM3：卡片 data-cinema-idx 为稳定路径键，异步重排后点击仍指对条目', () => {
     const { app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement;
     // 键 = file.path（非数组下标）
     expect(card.getAttribute('data-cinema-idx')).toBe('我的/影视/《星际穿越》.md');
@@ -557,7 +557,7 @@ tags: [电影]
   it('快速状态窗升级 → 写 frontmatter 落盘', async () => {
     const { vault, app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     (overlay.querySelector('[data-cinema-status="想看"]') as HTMLElement).click();
     const up = overlay.querySelector('[data-cinema-upgrade]') as HTMLElement;
     up.click();
@@ -580,7 +580,7 @@ tags: [电影]
   it('详情 → 编辑弹窗：字段预选当前值，保存写回 frontmatter', async () => {
     const { vault, app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement;
     card.click();
     const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
@@ -604,7 +604,7 @@ tags: [电影]
   it('编辑改名 → 文件真实重命名落盘（旧路径消失、frontmatter 字段保留、内存指向新文件）', async () => {
     const { vault, app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement; // 星际穿越
     card.click();
     let mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
@@ -630,7 +630,7 @@ tags: [电影]
   it('编辑改类型 → frontmatter tags 落盘（替换类型 tag、字段保留）', async () => {
     const { vault, app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement; // 星际穿越（电影）
     card.click();
     const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
@@ -650,7 +650,7 @@ tags: [电影]
   it('编辑改名为已存在名称 → 拦截（不重命名、弹窗留在原地可改后重试）', async () => {
     const { vault, app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement; // 星际穿越
     card.click();
     const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
@@ -670,7 +670,7 @@ tags: [电影]
   it('编辑改名为非法字符 → 拦截（不重命名）', async () => {
     const { vault, app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement;
     card.click();
     const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
@@ -689,7 +689,7 @@ tags: [电影]
     // Windows 文件被占用场景：vault.trash 抛错
     (vault as any).trash = async () => { throw new Error('EBUSY: resource busy'); };
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement;
     card.click();
     const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
@@ -707,7 +707,7 @@ tags: [电影]
   it('主面板动态发号（topifyZ）：overlay 持有高于静态档的 z-index', () => {
     const { app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const z = Number(overlay.style.zIndex);
     expect(Number.isFinite(z)).toBe(true);
     expect(z).toBeGreaterThanOrEqual(100000); // ADR-0067 动态分配器起点
@@ -720,7 +720,7 @@ tags: [电影]
     closeOverlay();
     expect(M.view).toBe('list');
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(M.view).toBe('list');
     expect(overlay.querySelector('[data-cinema-idx]')).toBeTruthy(); // 列表页（海报网格）
   });
@@ -730,7 +730,7 @@ tags: [电影]
   it('海报卡右键菜单（桌面）：想看卡含标记在看/已看；点「标记已看」生效并通知', async () => {
     const { app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = overlay.querySelector('[data-cinema-idx="我的/影视/《想看片》.md"]') as HTMLElement;
     card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
     const menu = document.querySelector('.bz-item-menu') as HTMLElement;
@@ -760,7 +760,7 @@ tags: [电影]
     const { app } = seedVault();
     Platform.isMobile = true; // isMobileEnv 口径（Platform.isMobile）
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = overlay.querySelector('[data-cinema-idx="我的/影视/《想看片》.md"]') as HTMLElement;
     // 模拟触屏长按：touchstart（带 touches）→ 500ms 计时 → 触发
     const ts = new Event('touchstart', { bubbles: true }) as any;
@@ -784,7 +784,7 @@ tags: [电影]
   it('空态两种：筛选无结果 → 「清空筛选」一键回全部；库为空 → 引导添加', async () => {
     const { app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     // 筛选无结果（搜索关键词无命中）
     const input = overlay.querySelector('[data-cinema-search]') as HTMLInputElement;
     input.value = '绝不存在的片名';
@@ -808,7 +808,7 @@ tags: [电影]
     ensureCinema(emptyApp);
     M.folderPath = '我的/影视';
     createOverlay(emptyApp);
-    const overlay2 = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay2 = document.querySelector('.bz-panel-overlay') as HTMLElement;
     content = overlay2.querySelector('.bz-cinema-content') as HTMLElement;
     expect(content.querySelector('.bz-empty-title')?.textContent).toBe('还没有添加的影视');
     const addBtn = content.querySelector('.bz-cinema-empty-add') as HTMLElement;
@@ -825,7 +825,7 @@ tags: [电影]
     vault.files.set('我的/影视/《豆瓣片》.md', '---\ntags: [电影]\n评分: 8\n观影日期: 2026-08-02\n豆瓣链接: https://movie.douban.com/subject/123/\n---');
     rebuildItems(app);
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = overlay.querySelector('[data-cinema-idx="我的/影视/《豆瓣片》.md"]') as HTMLElement;
     card.click();
     const modal = (document.querySelector('.bz-overlay-mask') as HTMLElement).querySelector('.bz-overlay-popup') as HTMLElement;
@@ -845,7 +845,7 @@ tags: [电影]
   it('编辑表单：观影日期回填原值；改日期保存写回 frontmatter（统计按指定日期）', async () => {
     const { vault, app } = seedVault();
     createOverlay(app);
-    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = overlay.querySelector('[data-cinema-idx="我的/影视/《星际穿越》.md"]') as HTMLElement;
     card.click();
     const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;

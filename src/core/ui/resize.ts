@@ -12,8 +12,9 @@
  *   视口 92%)——任何屏幕不越出遮罩可视区，大屏也不会拉出无边面板。
  * 尺寸记忆：可选 persist（ADR-0094）——挂载时 load() 有值即恢复
  *   （钳到与拖拽同口径的 min/max + 视口 92%）；onChange 防抖 300ms 调
- *   save() 落盘（仿 todo 域 rememberPanelSize trailing 防抖），detach 时
- *   未落盘的尾值立即 flush 防丢。不传 persist 行为不变（向后兼容）。
+ *   save() 落盘（仿 todo 域 rememberPanelSize trailing 防抖），句柄另有
+ *   flush()（立即落盘待存尾值，无待存 no-op；域内「关面板即落盘」用），
+ *   detach 时未落盘的尾值也立即 flush 防丢。不传 persist 行为不变（向后兼容）。
  * 注意：移动端（触屏）请勿挂载——本工厂只处理 mouse 指针事件。
  * ============================================================ */
 
@@ -52,13 +53,17 @@ export interface BzResizableOpts {
   persist?: BzResizablePersist;
 }
 
-/** 使元素支持「右缘/底缘/右下角」拖动缩放，返回 detach()。
+/** 使元素支持「右缘/底缘/右下角」拖动缩放，返回 detach() + flush()。
  *  触屏设备（coarse pointer）不挂载：本实现仅处理 mouse 事件，返回空 detach 空转（L7） */
-export function uiResizable(el: HTMLElement, opts: BzResizableOpts = {}): { detach: () => void } {
+export function uiResizable(el: HTMLElement, opts: BzResizableOpts = {}): {
+  detach: () => void;
+  /** 立即落盘待存的防抖尾值（清除计时器；无待存值 no-op；调用后不重复落盘） */
+  flush: () => void;
+} {
   const isCoarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
   if (isCoarse) {
     // 移动端无需缩放热区（面板自适配全屏）；空操作避免在触屏上误挂鼠标拖拽
-    return { detach: () => {} };
+    return { flush: () => {}, detach: () => {} };
   }
   const edge = opts.edge ?? 8;
   const minW = opts.minW ?? 320;
@@ -169,14 +174,19 @@ export function uiResizable(el: HTMLElement, opts: BzResizableOpts = {}): { deta
   document.addEventListener('mousemove', onDragMove);
   document.addEventListener('mouseup', onMouseUp);
 
+  /** 立即落盘待存的防抖尾值（flush 句柄与 detach 收尾共用；无待存值 no-op） */
+  const flush = () => {
+    if (persistTimer === null) return;
+    clearTimeout(persistTimer);
+    persistTimer = null;
+    if (persist?.save && lastW > 0 && lastH > 0) persist.save(lastW, lastH);
+  };
+
   return {
+    flush,
     detach: () => {
       // 未落的防抖尾值立即补存防丢（仿 todo flushPendingSize）
-      if (persistTimer !== null) {
-        clearTimeout(persistTimer);
-        persistTimer = null;
-        if (persist?.save && lastW > 0 && lastH > 0) persist.save(lastW, lastH);
-      }
+      flush();
       el.removeEventListener('mousemove', onHover);
       el.removeEventListener('mouseleave', onMouseLeave);
       el.removeEventListener('mousedown', onMouseDown);

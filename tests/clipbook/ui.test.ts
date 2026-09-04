@@ -51,10 +51,10 @@ async function openDesktop(): Promise<void> {
 describe('clipbook UI 桌面三栏', () => {
   it('构建 overlay + 三栏骨架（rail/中栏/右栏）', async () => {
     await openDesktop();
-    const overlay = document.querySelector('.bz-clip-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(overlay).toBeTruthy();
     expect(overlay.querySelector('.bz-clip-desk')).toBeTruthy();
-    expect(overlay.querySelector('.bz-clip-rail-list')).toBeTruthy();
+    expect(overlay.querySelector('.bz-rail-scroll')).toBeTruthy();
     expect(overlay.querySelector('.bz-clip-list')).toBeTruthy();
     expect(overlay.querySelector('[data-clip-reader]')).toBeTruthy();
     // 无 emoji 图标（图标全 lucide data-lucide）
@@ -63,7 +63,7 @@ describe('clipbook UI 桌面三栏', () => {
 
   it('rail：全部未读徽标 = 未读 2；B站 UP 展开影视飓风；剪藏本计数 = 1', async () => {
     await openDesktop();
-    const rows = [...document.querySelectorAll('.bz-clip-rail-row')] as HTMLElement[];
+    const rows = [...document.querySelectorAll('.bz-rail-item')] as HTMLElement[];
     const allRow = rows.find((r) => r.textContent!.includes('全部未读'))!;
     expect(allRow.textContent).toContain('2');
     const upRow = rows.find((r) => r.textContent!.includes('影视飓风'))!;
@@ -85,7 +85,7 @@ describe('clipbook UI 桌面三栏', () => {
   it('右键菜单：news 条目含「保存到剪藏本」；剪藏源条目含「打开笔记」', async () => {
     await openDesktop();
     // 切到剪藏本源
-    const clipRow = [...document.querySelectorAll('.bz-clip-rail-row')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
+    const clipRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
     clipRow.click();
     await vi.waitFor(() => expect(document.querySelectorAll('.bz-clip-item').length).toBe(1));
     const ctx = document.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
@@ -106,7 +106,7 @@ describe('clipbook UI 桌面三栏', () => {
     await vi.waitFor(() => expect(document.querySelector('.bz-item-menu')).toBeTruthy());
     expect((document.querySelector('.bz-item-menu') as HTMLElement).textContent).not.toContain('重新生成摘要');
     // 切剪藏本源：剪藏条目含重新生成摘要（openItemMenu 自带关旧开新，无需先收浮层）
-    const clipRow = [...document.querySelectorAll('.bz-clip-rail-row')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
+    const clipRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
     clipRow.click();
     await vi.waitFor(() => expect(document.querySelectorAll('.bz-clip-item').length).toBe(1));
     const clipItem = document.querySelector('.bz-clip-item') as HTMLElement;
@@ -137,9 +137,9 @@ describe('clipbook UI 桌面三栏', () => {
 
   it('卸载清理（unloadPanel 移除 overlay + 状态复位）', async () => {
     await openDesktop();
-    expect(document.querySelector('.bz-clip-overlay')).toBeTruthy();
+    expect(document.querySelector('.bz-panel-overlay')).toBeTruthy();
     unloadPanel();
-    expect(document.querySelector('.bz-clip-overlay')).toBeNull();
+    expect(document.querySelector('.bz-panel-overlay')).toBeNull();
     expect(M.overlay).toBeNull();
   });
 
@@ -159,12 +159,12 @@ describe('clipbook UI 桌面三栏', () => {
     await vi.waitFor(() => expect(M.open).toBe(true));
     await vi.waitFor(() => expect(M.articles.length).toBe(3));
     // rail：同 UP 去重后只有一行，显示回填名「影视飓风」而非 uid
-    const upRows = [...document.querySelectorAll('.bz-clip-rail-row')].filter((r) =>
+    const upRows = [...document.querySelectorAll('.bz-rail-item')].filter((r) =>
       (r as HTMLElement).textContent!.includes('影视飓风')
     );
     expect(upRows.length).toBe(1);
     // uid 原文不再作为行名出现
-    const uidRows = [...document.querySelectorAll('.bz-clip-rail-row')].filter((r) =>
+    const uidRows = [...document.querySelectorAll('.bz-rail-item')].filter((r) =>
       (r as HTMLElement).textContent!.includes('9823496')
     );
     expect(uidRows.length).toBe(0);
@@ -204,7 +204,7 @@ describe('clipbook UI 桌面三栏', () => {
     await vi.waitFor(() => expect(M.open).toBe(true));
     await vi.waitFor(() => expect(M.articles.length).toBe(2));
     // UP 行显示回填名（含单引号）
-    const upRow = [...document.querySelectorAll('.bz-clip-rail-row')].find((r) => r.textContent!.includes("O'Prime 圈圈")) as HTMLElement;
+    const upRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes("O'Prime 圈圈")) as HTMLElement;
     expect(upRow).toBeTruthy();
     // 旧实现：单引号截断 data-src 属性 + platform=展示名过滤 → 点击抛错/恒空列表
     expect(() => upRow.click()).not.toThrow();
@@ -213,7 +213,7 @@ describe('clipbook UI 桌面三栏', () => {
     expect(document.querySelector('.bz-clip-list')!.textContent).toContain('带引号UP的视频');
     // 高亮命中（active 判定与选择口径一致；rail 重渲染后须重查行节点）
     await vi.waitFor(() => {
-      const activeRow = [...document.querySelectorAll('.bz-clip-rail-row')].find((r) => r.textContent!.includes("O'Prime 圈圈")) as HTMLElement;
+      const activeRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes("O'Prime 圈圈")) as HTMLElement;
       expect(activeRow.classList.contains('on')).toBe(true);
     });
     closePanel();
@@ -223,7 +223,7 @@ describe('clipbook UI 桌面三栏', () => {
     await openDesktop();
     expect(M.cur).toBeTruthy();
     // 知乎日报在 seed 里唯一一条已 read → 空源
-    const zhihuRow = [...document.querySelectorAll('.bz-clip-rail-row')].find((r) => r.textContent!.includes('知乎日报')) as HTMLElement;
+    const zhihuRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('知乎日报')) as HTMLElement;
     zhihuRow.click();
     await vi.waitFor(() => expect(M.cur).toBeNull());
     const reader = document.querySelector('[data-clip-reader]') as HTMLElement;

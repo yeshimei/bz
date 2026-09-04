@@ -130,8 +130,8 @@ describe('保险库增强包（UIManager / Controller）', () => {
       const search = document.querySelector('.bz-encrypt-pwqp-search') as HTMLInputElement;
       search.value = 'gt';
       search.dispatchEvent(new Event('input'));
-      await waitFor(() => document.querySelectorAll('.bz-encrypt-pwqp-row').length === 1);
-      expect(document.querySelector('.bz-encrypt-pwqp-row .pl')!.textContent).toBe('GitHub');
+      await waitFor(() => document.querySelectorAll('.bz-popover-item').length === 1);
+      expect(document.querySelector('.bz-popover-item .pl')!.textContent).toBe('GitHub');
       // Enter 复制（60s 自动清空由 armClipboardClear 承担）
       search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
       await run;

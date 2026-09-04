@@ -14,7 +14,8 @@
  */
 import { escManager } from '../core/esc-manager';
 import { notice } from '../core/notice';
-import { uiIcon } from '../core/ui';
+import { escapeHtml } from '../core/utils';
+import { mountIcons, uiEmpty, uiStat } from '../core/ui';
 import { topifyZ } from '../core/dom';
 import { isMobileEnv } from '../core/mobile';
 import { H } from './state';
@@ -26,22 +27,13 @@ import type { WeeklyStat } from './weekly';
 
 /* ---------- lucide 占位 + 挂载 ---------- */
 
+/** 手写 HTML 模板里的 <i data-lucide> 占位（渲染后由组件库 mountIcons 统一 setIcon） */
 function iconSpan(name: string, extra = ''): string {
   return `<i data-lucide="${name}" class="bz-ic${extra ? ' ' + extra : ''}"></i>`;
 }
 
-function mountIcons(container: HTMLElement): void {
-  container.querySelectorAll('i[data-lucide]').forEach((el) => {
-    const fresh = uiIcon(el.getAttribute('data-lucide') || '', '');
-    const cls = el.className;
-    if (cls && cls !== 'bz-ic') fresh.className = cls;
-    el.replaceWith(fresh);
-  });
-}
-
 function esc(s: unknown): string {
-  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) =>
-    (({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }) as Record<string, string>)[c]);
+  return escapeHtml(String(s ?? ''));
 }
 
 /* ---------- 小工具 ---------- */
@@ -101,10 +93,11 @@ function persistPinned(): void {
 /* ---------- 面板骨架 ---------- */
 
 export function createOverlay(app: any): void {
+  // 面板壳走样式库 .bz-panel-overlay/.bz-panel-frame（components.css A 段）；.bz-home-* 只留尺寸/移动端变体
   const overlay = document.createElement('div');
-  overlay.className = 'bz-home-overlay';
+  overlay.className = 'bz-panel-overlay bz-home-overlay';
   overlay.innerHTML = `
-    <div class="bz-home-panel bz-panel-mtop">
+    <div class="bz-panel-frame bz-home-panel bz-panel-mtop">
       <div class="bz-home-hero">
         <div class="bz-home-hero-top">
           <div class="bz-home-hero-l">
@@ -351,15 +344,16 @@ function openAddPick(anchor: HTMLElement): void {
   const overlay = H.currentOverlay;
   if (!overlay) return;
   const avail = DOMAINS.filter((d) => !H.pinned.includes(d.id));
+  // 弹层基线（浮层/选项/空态）走样式库 .bz-popover 族；域内 .bz-home-pick 只留宽度与标题
   const pick = document.createElement('div');
-  pick.className = 'bz-home-pick';
+  pick.className = 'bz-popover bz-home-pick';
   pick.innerHTML =
     '<div class="bz-home-pick-t">钉到首页</div>' +
     (avail.length
       ? avail
-          .map((d) => `<button type="button" class="bz-home-pickopt" data-home-pickopt="${d.id}">${iconSpan(d.icon)}<span>${esc(d.name)}</span></button>`)
+          .map((d) => `<button type="button" class="bz-popover-item" data-home-pickopt="${d.id}">${iconSpan(d.icon)}<span>${esc(d.name)}</span></button>`)
           .join('')
-      : '<div class="bz-home-pick-empty">都钉上了</div>');
+      : '<div class="bz-popover-empty">都钉上了</div>');
   overlay.appendChild(pick);
   mountIcons(pick);
   const r = anchor.getBoundingClientRect();
@@ -424,25 +418,35 @@ function renderAll(): void {
   if (date) date.textContent = todayText();
   syncEditBtnClass();
 
-  // 统计条（移动端：三格；data-home-side 复用侧栏点击路径——移动端侧栏隐藏，统计条即第二入口）
+  // 统计条（移动端：三格；data-home-side 复用侧栏点击路径——移动端侧栏隐藏，统计条即第二入口）。
+  // 统计卡基线走组件库 uiStat（.bz-stat）；点击仍由 data-home-side 事件委托承接
   const mstats = overlay.querySelector('[data-home-mstats]') as HTMLElement | null;
   if (mstats) {
     const memo = statOf('memo').text || '—';
     const rev = statOf('review').text || '—';
     const pom = statOf('pomodoro').text || '—';
-    const mstatCell = (id: string, v: string, k: string) =>
-      `<button type="button" class="bz-home-mstat" data-home-side="${id}" aria-label="${k}：${esc(v)}，点按打开"><span class="bz-home-mstat-v">${esc(v)}</span><span class="bz-home-mstat-k">${k}</span></button>`;
-    mstats.innerHTML = mstatCell('memo', memo, '备忘') + mstatCell('review', rev, '复习到期') + mstatCell('pomodoro', pom, '今日专注');
+    const mstatCell = (id: string, v: string, k: string) => {
+      const el = uiStat({ label: k, num: v, tone: 'text', click: true });
+      el.dataset.homeSide = id;
+      el.setAttribute('role', 'button');
+      el.setAttribute('aria-label', `${k}：${v}，点按打开`);
+      return el;
+    };
+    mstats.replaceChildren(mstatCell('memo', memo, '备忘'), mstatCell('review', rev, '复习到期'), mstatCell('pomodoro', pom, '今日专注'));
   }
 
-  // 卡片网格
+  // 卡片网格（空钉选态 = uiEmpty 整块可点进编辑，设计手册 §8.3 空态要有动作）
   const cards = overlay.querySelector('[data-home-cards]') as HTMLElement;
   const pinned = H.pinned.filter((id) => DOMAIN_MAP.has(id));
-  cards.innerHTML = pinned.length
-    ? pinned.map((id, i) => cardHtml(id, i, pinned.length)).join('')
-    : `<button type="button" class="bz-home-cards-empty" data-home-empty>${iconSpan(ICO.add)}<span>还没有钉选域，点这里进入编辑添加</span></button>`;
+  cards.innerHTML = pinned.length ? pinned.map((id, i) => cardHtml(id, i, pinned.length)).join('') : '';
+  if (!pinned.length) {
+    const empty = uiEmpty({ icon: ICO.add, title: '还没有钉选域', desc: '点这里进入编辑添加' });
+    empty.classList.add('bz-home-cards-empty');
+    empty.setAttribute('data-home-empty', '');
+    cards.appendChild(empty);
+  }
   overlay.querySelector('[data-home-cnt]')!.textContent = `${pinned.length} 个`;
-  mountIcons(cards);
+  if (pinned.length) mountIcons(cards);
 
   // 本周轻卡（R1 生活周报）：快照未到/失败整卡隐藏（避免 0 值闪现）；
   // 显示后各格 0 也常驻（格子稳定不跳变）；随 30s 快照刷新自动重算重绘
@@ -557,7 +561,7 @@ function updatePal(app: any, q: string): void {
   palItems = uniq.slice(0, 12);
   palSel = 0;
   if (!palItems.length) {
-    pal.innerHTML = '<div class="bz-home-pal-empty">没有匹配的命令或域</div>';
+    pal.innerHTML = '<div class="bz-popover-empty">没有匹配的命令或域</div>';
   } else {
     pal.innerHTML =
       '<div class="bz-home-pal-res">' +

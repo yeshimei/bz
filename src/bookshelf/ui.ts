@@ -13,6 +13,9 @@
  *       completionDate；未读→清两日期归零进度；书评空删键。落盘走 app.fileManager.processFrontMatter；
  *       保存后 notifyUndo 一键回滚快照旧值（防手滑改状态丢数据）。
  * 基线：按钮/图标钮/输入/单选/滑条/空态/弹窗骨架走组件库（src/core/ui）；域内只留书架特有布局。
+ * 面板壳/头行/侧栏/统计卡/进度细条/工具行/搜索接入共享组件批次（ADR-0094）：
+ *       .bz-panel-overlay/.bz-panel-frame/.bz-panel-head/.bz-rail 族/.bz-stat 族/
+ *       .bz-progress--thin/.bz-toolrow/.bz-search。
  * 图标：一律 lucide（字符串模板 data-lucide 占位 → mountIcons 统一 setIcon）。
  * 报告视图（读书报告内嵌化拍板）：阅读分析报告是面板内视图（不再独立弹窗、原深链作废）——
  *       左栏报告入口/移动头行报告钮切到报告视图，报告内点作者/分类行切回书架列表并预填筛选；
@@ -25,7 +28,8 @@ import { escManager } from '../core/esc-manager';
 import { allocZ } from '../core/z-order';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
-import { uiModal, uiIcon, uiChoice, uiRange, uiSelect, uiEmpty, uiChip, uiSegmented } from '../core/ui';
+import { uiModal, uiChoice, uiRange, uiSelect, uiEmpty, uiChip, uiSegmented, mountIcons } from '../core/ui';
+import { escapeHtml } from '../core/utils';
 import { isMobileEnv } from '../core/mobile';
 import { renderReadingReport, cancelReadingReport, handleReportInteraction } from '../reading-report';
 import {
@@ -47,19 +51,9 @@ function iconSpan(name: string, extra = ''): string {
   return `<i data-lucide="${name}" class="bz-ic${extra ? ' ' + extra : ''}"></i>`;
 }
 
+/** HTML 转义（core escapeHtml 的 unknown 容错壳；收藏本先例） */
 function esc(s: unknown): string {
-  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => (({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]));
-}
-
-/** 容器内所有 data-lucide 占位替换为 setIcon 渲染的真图标（保持 class 修饰） */
-function mountIcons(container: HTMLElement): void {
-  container.querySelectorAll('i[data-lucide]').forEach((el) => {
-    const name = el.getAttribute('data-lucide') || '';
-    const cls = el.className;
-    const fresh = uiIcon(name, '');
-    if (cls && cls !== 'bz-ic') fresh.className = cls;
-    el.replaceWith(fresh);
-  });
+  return escapeHtml(String(s ?? ''));
 }
 
 /** 封面资源 URL（vault 路径 → resource URL）；无文件/非图返回 null */
@@ -151,8 +145,8 @@ function renderSide(): void {
   const sideEl = M.currentOverlay?.querySelector('.bz-bs-side-list') as HTMLElement | null;
   if (sideEl) {
     sideEl.innerHTML = statusDefs().map((s) => `
-      <button class="bz-bs-side-item${s.id === M.side ? ' on' : ''}" data-bs-side="${s.id}">
-        <span class="bz-bs-side-ic">${iconSpan(s.icon)}</span>${s.label}<span class="bz-bs-side-cnt">${s.count}</span>
+      <button class="bz-rail-item${s.id === M.side ? ' on' : ''}" data-bs-side="${s.id}">
+        ${iconSpan(s.icon)}<span class="bz-rail-name">${s.label}</span><span class="bz-rail-count">${s.count}</span>
       </button>`).join('');
     mountIcons(sideEl);
   }
@@ -165,32 +159,33 @@ function renderSide(): void {
       ...cats.map((c) => ({ name: c.name, label: c.name, icon: ICON.tag, count: c.count })),
     ];
     catEl.innerHTML = catDefs.map((c) => `
-      <button class="bz-bs-side-item${c.name === M.catFilter ? ' on' : ''}" data-bs-cat="${esc(c.name)}">
-        <span class="bz-bs-side-ic">${iconSpan(c.icon)}</span>${esc(c.label)}<span class="bz-bs-side-cnt">${c.count}</span>
+      <button class="bz-rail-item${c.name === M.catFilter ? ' on' : ''}" data-bs-cat="${esc(c.name)}">
+        ${iconSpan(c.icon)}<span class="bz-rail-name">${esc(c.label)}</span><span class="bz-rail-count">${c.count}</span>
       </button>`).join('');
     mountIcons(catEl);
   }
 }
 
-/** 统计行（桌面 3 卡 + 月柱；移动 2 卡，无柱）。
- *  命中「那年今天」时 accent 卡位临时替换为读完纪念日卡（可点回看；无命中零空态不渲染）。 */
+/** 统计行（桌面 3 卡 + 月柱；移动 2 卡，无柱）——共享 .bz-stat 族
+ *  （--main 强调 / --click 可点 / --text 纪念日标题档）。
+ *  命中「那年今天」时强调卡位临时替换为读完纪念日卡（可点回看；无命中零空态不渲染）。 */
 function dashHTML(s: ReturnType<typeof computeStats>, now: Date): { desktop: string; mobile: string } {
   const firstReading = s.reading[0];
   const accentHint = firstReading ? `《${firstReading.title.slice(0, 12)}${firstReading.title.length > 12 ? '…' : ''}》` : '';
   const anniv = findAnniversary(M.items, now);
-  // 在读 accent 卡整卡可点（一键回书；id 回查用）
+  // 在读强调卡整卡可点（一键回书；data-bs-resume 供点击委托回查）
   const resumeAttr = firstReading ? ` data-bs-resume="${esc(itemId(firstReading))}"` : '';
-  const statCard = (icon: string, label: string, num: string, hint: string, accent: boolean, extraAttr = ''): string => `
-    <div class="bz-bs-statcard${accent ? ' accent' : ''}"${extraAttr}>
-      <div class="bz-bs-stat-label">${iconSpan(icon, 'bz-ic--sm')}${label}</div>
-      <div class="bz-bs-stat-num">${num}</div>
-      ${hint ? `<div class="bz-bs-stat-hint">${hint}</div>` : ''}
+  const statCard = (icon: string, label: string, num: string, hint: string, main: boolean, extraAttr = ''): string => `
+    <div class="bz-stat${main ? ' bz-stat--main' : ''}${extraAttr ? ' bz-stat--click' : ''}"${extraAttr}>
+      <div class="bz-stat-label">${iconSpan(icon)}${label}</div>
+      <div class="bz-stat-num">${num}</div>
+      ${hint ? `<div class="bz-stat-hint">${hint}</div>` : ''}
     </div>`;
   const annivCard = anniv
-    ? `<div class="bz-bs-statcard accent bz-bs-anniv" data-bs-anniv="${esc(itemId(anniv.item))}" role="button" title="点击回看这本书">
-        <div class="bz-bs-stat-label">${iconSpan(ICON.calendarHeart, 'bz-ic--sm')}${anniv.years} 年前的今天</div>
-        <div class="bz-bs-stat-num bz-bs-anniv-num">《${esc(anniv.item.title.slice(0, 14))}${anniv.item.title.length > 14 ? '…' : ''}》</div>
-        <div class="bz-bs-stat-hint">你读完了这本书 · 读完于 ${esc(anniv.item.completionDate || '')}</div>
+    ? `<div class="bz-stat bz-stat--main bz-stat--text bz-stat--click" data-bs-anniv="${esc(itemId(anniv.item))}" role="button" title="点击回看这本书">
+        <div class="bz-stat-label">${iconSpan(ICON.calendarHeart)}${anniv.years} 年前的今天</div>
+        <div class="bz-stat-num">《${esc(anniv.item.title.slice(0, 14))}${anniv.item.title.length > 14 ? '…' : ''}》</div>
+        <div class="bz-stat-hint">你读完了这本书 · 读完于 ${esc(anniv.item.completionDate || '')}</div>
       </div>`
     : '';
   const bars = s.bars.map((b) => `
@@ -207,9 +202,9 @@ function dashHTML(s: ReturnType<typeof computeStats>, now: Date): { desktop: str
     </div>`;
   const mobile = `
     ${anniv
-      ? `<div class="bz-bs-mcard accent bz-bs-anniv" data-bs-anniv="${esc(itemId(anniv.item))}"><div class="bz-bs-mlabel">${anniv.years} 年前的今天</div><div class="bz-bs-mnum">《${esc(anniv.item.title.slice(0, 10))}${anniv.item.title.length > 10 ? '…' : ''}》</div></div>`
-      : `<div class="bz-bs-mcard accent"${resumeAttr}><div class="bz-bs-mlabel">正在读</div><div class="bz-bs-mnum">${s.reading.length} 本</div></div>`}
-    <div class="bz-bs-mcard"><div class="bz-bs-mlabel">今年读完</div><div class="bz-bs-mnum">${s.doneThisYear.length} 本</div></div>`;
+      ? `<div class="bz-stat bz-stat--main bz-stat--text bz-stat--click" data-bs-anniv="${esc(itemId(anniv.item))}"><div class="bz-stat-label">${anniv.years} 年前的今天</div><div class="bz-stat-num">《${esc(anniv.item.title.slice(0, 10))}${anniv.item.title.length > 10 ? '…' : ''}》</div></div>`
+      : `<div class="bz-stat bz-stat--main bz-stat--click"${resumeAttr}><div class="bz-stat-label">正在读</div><div class="bz-stat-num">${s.reading.length} 本</div></div>`}
+    <div class="bz-stat"><div class="bz-stat-label">今年读完</div><div class="bz-stat-num">${s.doneThisYear.length} 本</div></div>`;
   return { desktop, mobile };
 }
 
@@ -221,15 +216,15 @@ function renderDash(app: App): void {
   if (dEl) { dEl.innerHTML = htmls.desktop; mountIcons(dEl); }
   const mEl = M.currentOverlay?.querySelector('.bz-bs-mcards') as HTMLElement | null;
   if (mEl) { mEl.innerHTML = htmls.mobile; mountIcons(mEl); }
-  const totalEl = M.currentOverlay?.querySelector('.bz-bs-total') as HTMLElement | null;
+  const totalEl = M.currentOverlay?.querySelector('.bz-panel-head-sub') as HTMLElement | null;
   if (totalEl) totalEl.textContent = `${M.items.length} 本`;
   void app;
 }
 
-/** 封面卡（桌面/移动同结构，尺寸靠 CSS 列数/比例） */
+/** 封面卡（桌面/移动同结构，尺寸靠 CSS 列数/比例）；进度细条 = 共享 .bz-progress--thin（绝对定位由 .bz-bs-prog 给） */
 function bookCardHTML(it: BookshelfItem, app: App): string {
   const prog = it.status !== '已读' && it.progress > 0
-    ? `<div class="bz-bs-prog"><i style="width:${Math.min(100, it.progress)}%"></i></div>` : '';
+    ? `<div class="bz-progress bz-progress--thin bz-bs-prog"><i style="width:${Math.min(100, it.progress)}%"></i></div>` : '';
   const quote = it.bookReview
     ? `<div class="bz-bs-quote">${esc(it.bookReview.replace(/\[\[.*?\]\]/g, '').slice(0, 48))}</div>` : '';
   // B5：路径含引号会截断 HTML 属性 → esc() 转义；回查时浏览器已解码为原值
@@ -428,9 +423,9 @@ function openFilterDrawer(app: App): void {
           <span class="bz-bs-drawer-cnt">${statusCount(d.id)}</span>
           ${d.id === M.side ? `<span class="bz-bs-drawer-check">${iconSpan('check')}</span>` : ''}
         </button>`).join('')}
-      <div class="bz-bs-side-label bz-bs-drawer-group-label">分类</div>
+      <div class="bz-rail-label bz-bs-drawer-group-label">分类</div>
       <div class="bz-bs-drawer-chips" data-bs-drawer-cats></div>
-      <div class="bz-bs-side-label bz-bs-drawer-group-label">排序</div>
+      <div class="bz-rail-label bz-bs-drawer-group-label">排序</div>
       <div class="bz-bs-drawer-sort" data-bs-drawer-sort></div>
     </div>
   </div>`;
@@ -780,15 +775,16 @@ function iconBtnHTML(icon: string, title: string, toolAttr: string, extraCls = '
 
 export function createOverlay(app: App): void {
   const overlay = document.createElement('div');
-  overlay.className = 'bz-bs-overlay';
+  overlay.className = 'bz-panel-overlay';
   overlay.style.zIndex = String(allocZ());
   const fullscreen = (tryGetSettings() as Record<string, unknown>).bookshelfMobileDefaultFullscreen === true;
 
   overlay.innerHTML = `
-    <div class="bz-bs-panel bz-panel-mtop">
-      <div class="bz-bs-head">
-        <div class="bz-bs-title">书架墙<span class="bz-bs-total"></span></div>
-        <div class="bz-bs-head-btns">
+    <div class="bz-panel-frame bz-bs-panel bz-panel-mtop">
+      <div class="bz-panel-head">
+        <div class="bz-panel-title">书架墙<span class="bz-panel-head-sub"></span></div>
+        <span class="bz-panel-head-sp"></span>
+        <div class="bz-panel-head-btns">
           ${iconBtnHTML(ICON.report, '阅读分析报告', 'report')}
           ${iconBtnHTML(ICON.sort, '排序', 'sort')}
           ${iconBtnHTML(ICON.search, '搜索', 'search')}
@@ -800,20 +796,22 @@ export function createOverlay(app: App): void {
         ${iconSpan('search', 'bz-bs-searchbar-ic')}<input class="bz-input" type="text" id="bz-bs-msearch" placeholder="搜索书名 / 作者 / 分类…" autocomplete="off">
       </div>
       <div class="bz-bs-body">
-        <aside class="bz-bs-side">
-          <div class="bz-bs-side-label">状态</div>
-          <div class="bz-bs-side-list"></div>
-          <div class="bz-bs-side-label bz-bs-side-catlabel">分类</div>
-          <div class="bz-bs-side-catlist"></div>
-          <div class="bz-bs-side-foot">
-            <button class="bz-bs-report" data-bs-tool="report" title="阅读分析报告"></button>
+        <aside class="bz-rail">
+          <div class="bz-rail-scroll">
+            <div class="bz-rail-label">状态</div>
+            <div class="bz-bs-side-list"></div>
+            <div class="bz-rail-label">分类</div>
+            <div class="bz-bs-side-catlist"></div>
+          </div>
+          <div class="bz-rail-foot">
+            <button class="bz-rail-item bz-bs-report" data-bs-tool="report" title="阅读分析报告"></button>
           </div>
         </aside>
         <div class="bz-bs-main">
           <div class="bz-bs-view bz-bs-view-shelf active">
-            <div class="bz-bs-toolbar">
-              <span class="bz-bs-search">${iconSpan('search')}<input class="bz-input" type="text" id="bz-bs-dsearch" placeholder="搜索书名 / 作者 / 分类…" autocomplete="off"></span>
-              <span class="bz-bs-spacer"></span>
+            <div class="bz-toolrow">
+              <span class="bz-search bz-bs-search">${iconSpan('search')}<input class="bz-input" type="text" id="bz-bs-dsearch" placeholder="搜索书名 / 作者 / 分类…" autocomplete="off"></span>
+              <span class="bz-main-spacer"></span>
               <span class="bz-bs-sort-slot"></span>
             </div>
             <div class="bz-bs-dash"></div>
