@@ -466,6 +466,15 @@ describe('processFile force 与「查看」/quiet（enh-autosum 包）', () => {
     expect(out).toContain('title: "自定义"');
   });
 
+  it('完成通知挂「查看」action（enh 包 3）', async () => {
+    vault.files.set('归档/网页剪藏/view.md', `---\ntitle: "T"\n---\n\n${LONG_BODY}`);
+    const ai = makeAI('{"summary":"S","tags":["a"]}');
+    await processFile(makeApp(vault), ai, vault.file('归档/网页剪藏/view.md'));
+    const btn = document.querySelector('.bz-notice .bz-notice-action') as HTMLElement;
+    expect(btn).not.toBeNull();
+    expect(btn.textContent).toBe('查看');
+  });
+
   it('quiet（批量队列驱动）：不发单文件 progress 通知，完成通知照常', async () => {
     vault.files.set('归档/网页剪藏/quiet.md', `---\ntitle: "T"\n---\n\n${LONG_BODY}`);
     const ai = makeAI('{"summary":"安静摘要","tags":["a"]}');
