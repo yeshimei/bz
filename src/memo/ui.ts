@@ -115,7 +115,7 @@ function attachSuggestion<T>(
   document.addEventListener('click', onDocClick);
 }
 
-// ---------- 设置弹窗（ADR-0009 域设置弹窗；ticket 131 声明式 schema，5 组 10 项形态保持） ----------
+// ---------- 设置弹窗（ADR-0009 域设置弹窗；ticket 131 声明式 schema，4 组 8 项形态保持） ----------
 
 /** 场景/平台映射变更后即时生效：重建 DataManager 与添加弹窗场景按钮 */
 function memoReloadScenes() {
@@ -129,14 +129,12 @@ function memoReloadScenes() {
   }
 }
 
-/** 备忘录设置 schema（ticket 131 声明式；openNoteReminder/memoAutoArchive「非 false 即开」走外部绑定） */
+/** 备忘录设置 schema（ticket 131 声明式；memoAutoArchive「非 false 即开」走外部绑定）。
+ *  入口改道：提醒组（启动自动弹出/打开笔记自动提醒）随被动弹窗入口一并移出本域——
+ *  行为由待办域承担、设置在待办 schema（同键 autoPopupOnStart/openNoteReminder）。 */
 export function memoSettingsSchema(): SettingsSchema {
   return {
     groups: [
-      { icon: 'bell', name: '提醒', rows: [
-        { type: 'toggle', name: '启动时自动弹出', desc: '启动时若有重要或到期未完成的备忘录，自动打开面板提醒', binding: { key: 'autoPopupOnStart' } },
-        { type: 'toggle', name: '打开笔记自动提醒', desc: '打开笔记时若笔记有重要或到期的未完成备忘录，自动弹出面板', binding: { get: () => getSettings().openNoteReminder !== false, set: (v) => { (getSettings() as any).openNoteReminder = v; }, save: () => saveSettings() } },
-      ]},
       { icon: 'eye', name: '显示', rows: [
         { type: 'select', name: '默认排序方式', desc: '面板条目按所选规则排序', binding: { key: 'memoSortMode' }, options: [{ value: 'priority', label: '紧急优先' }, { value: 'due', label: '仅按到期时间' }, { value: 'created', label: '按创建时间' }] },
         { type: 'toggle', name: '默认显示归档', desc: '打开面板时同时显示已归档条目', binding: { key: 'memoShowArchivedByDefault' } },

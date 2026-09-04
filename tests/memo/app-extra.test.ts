@@ -1,6 +1,8 @@
 /**
- * bz app 补测（单文件 80% 目标）：file-open 提醒、autoPopupOnStart、unload 清理。
- * ticket 59：剪贴板监听与到期轮询已删除（到期合并入启动自动弹窗）。
+ * bz app 补测：被动捕获入口改道（memo→todo 接管迁移第 3 项提前实施）。
+ * 启动自动弹出与 file-open 提醒的弹窗触发已自 memo 域移除（落点=待办面板，
+ * 见 src/todo/reminder.ts 与 tests/todo/capture.test.ts）——本文件断言 memo 侧旧弹窗
+ * 不再出现，并保留 unload 清理回归。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
@@ -73,41 +75,27 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('file-open 提醒', () => {
-  it('匹配重要未完成任务 → 打开面板并标记提醒；重复打开跳过', async () => {
+describe('file-open 提醒改道（memo 侧不再弹窗）', () => {
+  it('打开有关联重要条目的笔记 → 不注册监听、不弹备忘录旧面板', async () => {
     await initApp(SETTINGS, [pendingItem({ priority: 'important', notePath: 'A.md' })]);
+    expect(app.workspace.on).not.toHaveBeenCalled(); // file-open 提醒监听已迁出本域
     app.workspace.emit('file-open', { path: 'A.md' });
     await new Promise((r) => setTimeout(r, 20));
-    expect(App.state.remindedFiles.has('A.md')).toBe(true);
     const mask = document.getElementById('todo-mask') as HTMLElement;
-    expect(mask.style.display).toBe('block');
-    app.workspace.emit('file-open', { path: 'A.md' });
-    await new Promise((r) => setTimeout(r, 10));
-    expect(App.state.remindedFiles.has('A.md')).toBe(true);
+    expect(mask.style.display).not.toBe('block');
+    expect(App.state.remindedFiles.has('A.md')).toBe(false);
   });
 
-  it('file 为空 → 直接返回；非重要任务不提醒', async () => {
-    await initApp(SETTINGS, [pendingItem({ priority: 'minor', notePath: 'B.md' })]);
-    app.workspace.emit('file-open', null);
-    app.workspace.emit('file-open', { path: 'B.md' });
-    await new Promise((r) => setTimeout(r, 20));
-    expect(App.state.remindedFiles.has('B.md')).toBe(false);
+  it('file 为空 → 无副作用', async () => {
+    await initApp(SETTINGS, [pendingItem({ priority: 'important', notePath: 'A.md' })]);
+    expect(() => app.workspace.emit('file-open', null)).not.toThrow();
   });
 });
 
-describe('autoPopupOnStart', () => {
-  it('开启且有待办重要条目 → 300ms 后自动弹窗', async () => {
+describe('autoPopupOnStart 改道（memo 侧不再弹窗）', () => {
+  it('开关开启且存在重要条目 → 不再自动弹备忘录面板（落点=待办面板，todo/reminder.ts）', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     await initApp({ ...SETTINGS, autoPopupOnStart: true }, [pendingItem({ priority: 'important' })]);
-    await vi.advanceTimersByTimeAsync(400);
-    vi.useRealTimers();
-    const mask = document.getElementById('todo-mask') as HTMLElement;
-    expect(mask.style.display).toBe('block');
-  });
-
-  it('开启但无重要条目 → 不弹窗', async () => {
-    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
-    await initApp({ ...SETTINGS, autoPopupOnStart: true }, [pendingItem({ priority: 'minor' })]);
     await vi.advanceTimersByTimeAsync(400);
     vi.useRealTimers();
     const mask = document.getElementById('todo-mask') as HTMLElement;
@@ -116,31 +104,19 @@ describe('autoPopupOnStart', () => {
 });
 
 describe('unload 清理', () => {
-  it('移除监听并清理 DOM', async () => {
+  it('移除注入 DOM 与同源同步监听', async () => {
     await initApp(SETTINGS, []);
-    expect(App.fileOpenRegistered).toBe(true);
+    UIManager.showMain(null, false); // 面板在屏 → unload 应清 DOM
     App.unload();
-    expect(App.fileOpenRegistered).toBe(false);
     expect(document.getElementById('todo-mask')).toBeNull();
     expect(document.getElementById('add-todo-mask')).toBeNull();
-    expect(app.workspace.offref).toHaveBeenCalled();
+    expect(vault.listeners['modify']?.length ?? 0).toBe(0); // vault modify 同源同步退订
   });
 });
 
 describe('设置开关（第 9 轮设置扩展）', () => {
-  it('openNoteReminder=false → 不注册 file-open 提醒监听', async () => {
-    await initApp({ ...SETTINGS, openNoteReminder: false }, [pendingItem({ priority: 'important', notePath: 'A.md' })]);
-    expect(App.fileOpenRegistered).toBe(false);
-    // 即使手动触发事件也不弹面板
-    app.workspace.emit('file-open', { path: 'A.md' });
-    await new Promise((r) => setTimeout(r, 20));
-    const mask = document.getElementById('todo-mask') as HTMLElement;
-    expect(mask.style.display).not.toBe('block');
-  });
-
   it('memoShowArchivedByDefault=true → 面板初始显示归档', async () => {
     await initApp({ ...SETTINGS, memoShowArchivedByDefault: true }, []);
     expect(App.state.showArchived).toBe(true);
   });
 });
-
