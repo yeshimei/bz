@@ -175,17 +175,24 @@ export class SettingsPanelUI {
   /** 域渲染竞态序号（P2-4：每次 renderDomain 自增，await 后校验丢弃过期渲染） */
   private renderSeq = 0;
 
-  open(): void {
+  /**
+   * 打开面板；domainId 可选（增强包：待办场景菜单「在设置中编辑」直达）——
+   * 桌面定位左栏选中域；移动端打开后直接进域设置弹窗。未知 id 忽略（回退通用）。
+   */
+  open(domainId?: string): void {
+    const deep = domainId ? DOMAINS.find((x) => x.id === domainId) : undefined;
+    if (deep) this.activeDomainId = deep.id;
     if (this.mask && this.popup) {
       topifyZ(this.mask, this.popup);
       this.mask.style.display = 'block';
       this.popup.style.display = 'flex';
+      if (deep && isMobileEnv()) void this.openMobileDomain(deep);
       return;
     }
-    this.build();
+    this.build(deep);
   }
 
-  private build(): void {
+  private build(deep?: DomainDef): void {
     const { mask, popup } = createOverlay({
       maskId: 'bz-settings-panel-mask',
       popupId: 'bz-settings-panel-popup',
@@ -198,6 +205,8 @@ export class SettingsPanelUI {
 
     if (isMobileEnv()) {
       this.buildMobile(popup);
+      // 直达域（移动端）：跳过命令面板，直接进该域设置弹窗
+      if (deep) void this.openMobileDomain(deep);
     } else {
       this.buildDesktop(popup);
     }

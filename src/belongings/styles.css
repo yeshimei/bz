@@ -30,7 +30,8 @@
   border-bottom: 1px solid var(--bz-border); flex-shrink: 0;
 }
 .bz-bel-title { font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
-.bz-bel-head-btns { display: flex; align-items: center; gap: 2px; }
+/* 头行图标钮间距 ≥8px（ticket 189 防误触，同 favorites 档） */
+.bz-bel-head-btns { display: flex; align-items: center; gap: var(--bz-space-sm); }
 .bz-bel-mob-only { display: none; }
 
 .bz-bel-body { display: flex; flex: 1; min-height: 0; }
@@ -114,6 +115,10 @@
 .bz-bel-stat-main .bz-bel-stat-label { color: var(--bz-brand); }
 .bz-bel-stat-main .bz-bel-stat-value { color: var(--bz-brand); }
 .bz-bel-stat-value { font-size: 20px; font-weight: 700; color: var(--bz-text-1); font-variant-numeric: tabular-nums; line-height: 1.2; }
+/* 可点统计卡（ticket 189：总资产=合成筛选 / 在册件数=回全部）——hover 只轻提背景 */
+.bz-bel-stat--click { cursor: pointer; }
+.bz-bel-stat--click:hover { background: var(--bz-surface-hover); }
+.bz-bel-stat-main.bz-bel-stat--click:hover { background: color-mix(in srgb, var(--bz-brand) 12%, transparent); }
 
 /* ---- 时间轴 ---- */
 .bz-bel-content { flex: 1; overflow-y: auto; padding: 2px var(--bz-space-lg) var(--bz-space-md) calc(var(--bz-space-lg) + 8px); min-height: 0; }
@@ -219,6 +224,9 @@
   }
   .bz-bel-head { padding-top: max(12px, env(safe-area-inset-top)); padding-right: var(--bz-space-sm); }
   .bz-bel-mob-only { display: inline-flex; }
+  /* 头行图标钮触屏换大按钮档（ticket 189，同 favorites 档） */
+  .bz-bel-head-btns .bz-icon-btn { width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg); }
+  .bz-bel-head-btns .bz-icon-btn .bz-ic { width: 16px; height: 16px; }
   .bz-bel-side { display: none; }
   .bz-bel-main-head { display: none; }
   .bz-bel-toolbar { display: none; }
