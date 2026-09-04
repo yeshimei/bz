@@ -229,6 +229,27 @@ describe('主面板开合与空态', () => {
     expect(cards().length).toBe(1);
     expect(overlayText()).toContain('甲');
   });
+
+  it('收尾扫尾：面板/表单遮罩 topifyZ 动态发号（表单恒压主面板）+ 根节点挂 bz-panel-mtop', async () => {
+    const ctx = await setup();
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    const overlay = document.querySelector('.bz-fav-overlay') as HTMLElement;
+    // 根节点接线移动全屏顶距工具类
+    expect(overlay.querySelector('.bz-fav-panel')!.classList.contains('bz-panel-mtop')).toBe(true);
+    // 静态 z 档退役：显示即发号（ADR-0067）
+    const zOverlay = Number(overlay.style.zIndex);
+    expect(Number.isFinite(zOverlay) && zOverlay > 0).toBe(true);
+    openForm(null);
+    const mask = document.querySelector('.bz-fav-form-mask') as HTMLElement;
+    expect(mask).not.toBeNull();
+    const zMask = Number(mask.style.zIndex);
+    expect(Number.isFinite(zMask) && zMask > zOverlay).toBe(true);
+    // 收尾：取消关表单
+    (mask.querySelector('[data-fz-cancel]') as HTMLElement).click();
+    expect(document.querySelector('.bz-fav-form-mask')).toBeNull();
+    closePanel();
+  });
 });
 
 function overlayText(): string {
