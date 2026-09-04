@@ -1619,7 +1619,7 @@ export class UIManager {
   private noticeTermError(e: unknown): void {
     const msg = String((e && (e as any).message) || e || '未知错误');
     if (/API Key|AI 配置|未配置/.test(msg)) {
-      notice('未配置 AI：请在插件设置 → AI 配置里填 API Key 后再生成', 'error');
+      notice('未配置 AI：请到插件设置「AI 配置」页填 API Key 后再生成', 'error');
     } else {
       notice('生成失败：' + msg, 'error');
     }

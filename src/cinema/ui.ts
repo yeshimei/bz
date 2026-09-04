@@ -982,10 +982,12 @@ export function createOverlay(app: App): void {
       }
       return;
     }
-    // AI 引导页「开始 AI 荐片」（点选按钮同 AI 工具）
+    // AI 引导页「开始 AI 荐片」/错误页「重试」（点选按钮同 AI 工具）：与「换一批」同分流——
+    // 有基准影片（找同类失败后的重试）重跑找同类，无基准重跑全库荐片
     const aiStart = t.closest('[data-cinema-ai-start]') as HTMLElement | null;
     if (aiStart) {
-      void runAIRecommend(app);
+      if (M.aiBase) void runSimilarRecommend(M.aiBase, app);
+      else void runAIRecommend(app);
       return;
     }
     // AI 结果页「换一批」（增强包需求 3）：荐片重跑；找同类按基准影片重跑
