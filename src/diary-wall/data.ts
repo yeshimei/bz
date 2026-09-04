@@ -264,6 +264,20 @@ export function groupByMonth(entries: WallEntry[]): Map<string, WallEntry[]> {
 }
 
 /**
+ * 「那年今天」派生（回忆墙自包含口径，不依赖 diary 域）：取 mmdd 与 today 相同的历史条目。
+ * - 口径：`entry.date.slice(5) === today.slice(5)`（月-日逐字比较，跨年命中）；
+ * - 排除当年（今天写的日记不属于「那年」，避免首屏与今日内容重复）；
+ * - 不做加密过滤——入参传已过滤后的可见条目集（未解锁加密条目本就不在墙上）；
+ * - today 非 YYYY-MM-DD 形状（slice(5) 为空）返回空数组（无命中不渲染由调用方保证）。
+ */
+export function pickOnThisDay(entries: WallEntry[], today: string): WallEntry[] {
+  const mmdd = (today || '').slice(5);
+  const thisYear = (today || '').slice(0, 4);
+  if (!mmdd || mmdd.length !== 5) return [];
+  return entries.filter((e) => e.date.slice(5) === mmdd && e.date.slice(0, 4) !== thisYear);
+}
+
+/**
  * 媒体 URL 解析：返回 vault 内文件的可访问资源 URL（媒体可播放的关键，原型硬编码 file:// 不可用）。
  * - 优先 Obsidian 链接解析（getFirstLinkpathDest）：传 sourcePath（来源文件路径，如 '我的/影视/xx.md'）
  *   时以该文件为基准解析（Obsidian 链接解析先找同目录/相对路径，修复纯文件名全局解析失败问题）；

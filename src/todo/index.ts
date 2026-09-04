@@ -5,18 +5,18 @@
  *
  * 与旧 memo 域并存（数据同源 memo.json）：
  *   - UI/交互/写盘：本域负责；
- *   - 后台任务（memo.json 引用同步 file-sync、剪藏 AI 匹配归档 clip-archive、
- *     启动自动弹出与 file-open 提醒）：仍由旧 memo 域执行（main.ts ensureMemoFileSync）。
- *   ★ 旧 memo 域删除时迁移清单：
+ *   - 被动捕获入口（启动自动弹出 / file-open 提醒）：本域提醒后台承担
+ *     （src/todo/reminder.ts，落点=待办面板；memo→todo 接管迁移第 3 项提前实施）；
+ *   - 其余后台任务（memo.json 引用同步 file-sync）：仍由旧 memo 域执行（main.ts ensureMemoFileSync）。
+ *   ★ 旧 memo 域删除时迁移清单（剩余项）：
  *     1. main.ts：删 './memo' 相关 import/命令/ensureMemoFileSync 调用，把 openBzPanel/
  *        createMemoItem 接线换成 './todo'（openTodoPanel/addTodoItem），unload 换 unloadTodo；
- *     2. 把 src/memo/file-sync.ts 与 src/memo/clip-archive.ts 迁入本域并接线
- *        （订阅 vault:md-renamed/deleted + clipping:file-created，写 memo.json 语义不变）；
- *     3. 把 memo/app.ts 的 autoPopupOnStart / file-open 提醒逻辑迁入本域
- *        （todoSettingsSchema「提醒」组已就位，设置键 autoPopupOnStart/openNoteReminder 共享）。
+ *     2. 把 src/memo/file-sync.ts 迁入本域并接线
+ *        （订阅 vault:md-renamed/deleted，写 memo.json 语义不变）。
  */
 import type { App } from 'obsidian';
 import { openTodoPanel as uiOpenPanel, addTodo, ensureTodo, unloadTodo as uiUnload } from './ui';
+import { ensureTodoReminders as remindersEnsure, unloadTodoReminders as remindersUnload } from './reminder';
 import { TodoData } from './data';
 import { tryGetSettings } from '../core/settings-provider';
 
@@ -34,7 +34,15 @@ export function addTodoItem(app: App): void {
   addTodo(app);
 }
 
+/** main.ts onLayoutReady：待办提醒后台（启动自动弹出 + 打开笔记提醒；落点=待办面板） */
+export function ensureTodoReminders(app: App): void {
+  TodoData.init(tryGetSettings() as any);
+  ensureTodo(app);
+  remindersEnsure(app);
+}
+
 /** 卸载清理（main.ts onunload 调用） */
 export function unloadTodo(): void {
   uiUnload();
+  remindersUnload();
 }

@@ -3,7 +3,7 @@
  * 源码：阅读数据分析报告.js（重复函数只保留最终版）
  */
 import { pad2 } from '../core/utils';
-import { readWeaveAggregates, resolveBookTag } from '../bookshelf/data';
+import { readWeaveAggregates, resolveBookTag, resolveFolderPath } from '../bookshelf/data';
 
 // ---------- 数据采集 ----------
 
@@ -86,15 +86,23 @@ export async function getEpubBookNotes(app: any): Promise<BookNoteEntry[]> {
   return entries;
 }
 
-/** 获取所有带 book 标签的笔记 */
+/**
+ * 获取书库目录内所有带 book 标签的笔记。
+ * 口径（读书报告内嵌化拍板）：只统计书库目录内的书，与书架墙 scanMarkdownBooks 同规则——
+ * 路径在书库目录（bookshelfFolderPath 回落链）之下，或目录本身是单个 md 笔记；
+ * 库外 book 标签笔记不再混入报告（书架墙看不到的书，报告也不统计）。
+ */
 export function getAllBookNotes(app: any): BookNoteEntry[] {
   // 旧 library 域退役：book 标签改经 bookshelf 域解析（bookshelfFolderPath/bookTag 同键同源）
   const bookTag = resolveBookTag();
+  const folderPath = resolveFolderPath();
   const files = app.vault.getMarkdownFiles();
   const bookNotes: BookNoteEntry[] = [];
 
   for (const file of files) {
     try {
+      // 口径：书库目录内才统计（目录前缀 / 目录本身单文件，与 bookshelf scanMarkdownBooks 回落分支一致）
+      if (file.path !== `${folderPath}.md` && !file.path.startsWith(`${folderPath}/`)) continue;
       const cache = app.metadataCache.getFileCache(file);
       if (!cache || !cache.frontmatter) continue;
 
@@ -688,6 +696,33 @@ function groupByMonth(dailyData: Record<string, any>) {
   return monthlyData;
 }
 
+/** 热力图月键全集（升序）：翻月导航 ‹ › 的可切换范围（processHeatmapData 已算全部月度数据） */
+export function getHeatmapMonthKeys(heatmapData: { monthlyData: Record<string, any> }): string[] {
+  return Object.keys(heatmapData?.monthlyData || {}).sort();
+}
+
+/**
+ * 某年 12 个月柱数据（固定 1..12 月，缺月补零）：年卡展开的月柱数据源。
+ * 月桶口径与热力图翻月同源（都按 YYYY-MM 键聚合；本函数读 calculateReadingStats.monthlyStats）。
+ */
+export function getYearMonthBars(
+  monthlyStats: Record<string, any>,
+  year: string,
+): { month: string; label: string; booksRead: number; booksCompleted: number }[] {
+  const bars: { month: string; label: string; booksRead: number; booksCompleted: number }[] = [];
+  for (let m = 1; m <= 12; m++) {
+    const key = `${year}-${pad2(m)}`;
+    const bucket = monthlyStats?.[key];
+    bars.push({
+      month: key,
+      label: `${m}月`,
+      booksRead: bucket?.booksRead || 0,
+      booksCompleted: bucket?.booksCompleted || 0,
+    });
+  }
+  return bars;
+}
+
 /** 计算强度等级 */
 export function calculateIntensityLevel(durationHours: number): number {
   if (durationHours >= 4) return 4;
@@ -828,7 +863,7 @@ function analyzeFocusTimePatterns(sessions: any[]) {
 /** 分析专注度趋势 */
 function analyzeFocusTrend(sessions: any[]) {
   if (sessions.length < 5) {
-    return { trend: '数据不足', description: '需要更多会话数据进行趋势分析', icon: '➖' };
+    return { trend: '数据不足', description: '需要更多会话数据进行趋势分析', icon: 'minus' };
   }
 
   const sortedSessions = [...sessions].sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
@@ -842,13 +877,13 @@ function analyzeFocusTrend(sessions: any[]) {
   const trendPercentage = ((recentAvg - earlyAvg) / earlyAvg) * 100;
 
   if (trendPercentage > 20) {
-    return { trend: '显著提升', description: `+${Math.round(trendPercentage)}%`, icon: '📈' };
+    return { trend: '显著提升', description: `+${Math.round(trendPercentage)}%`, icon: 'trending-up' };
   } else if (trendPercentage > 5) {
-    return { trend: '稳步提升', description: `+${Math.round(trendPercentage)}%`, icon: '↗️' };
+    return { trend: '稳步提升', description: `+${Math.round(trendPercentage)}%`, icon: 'arrow-up-right' };
   } else if (trendPercentage < -10) {
-    return { trend: '需要关注', description: `-${Math.round(Math.abs(trendPercentage))}%`, icon: '📉' };
+    return { trend: '需要关注', description: `-${Math.round(Math.abs(trendPercentage))}%`, icon: 'trending-down' };
   } else {
-    return { trend: '保持稳定', description: '0%', icon: '➡️' };
+    return { trend: '保持稳定', description: '0%', icon: 'arrow-right' };
   }
 }
 
@@ -978,7 +1013,7 @@ function getDefaultFocusData() {
     completionRate: 0,
     trend: '暂无趋势',
     trendDescription: '需要更多阅读数据',
-    trendIcon: '➖',
+    trendIcon: 'minus',
     recommendations: '开始记录阅读会话以获得专注度分析',
     consistencyScore: 0,
     efficiencyScore: 0,

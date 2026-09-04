@@ -1,33 +1,39 @@
 /**
- * 阅读数据分析报告入口（ticket 13）
- * 命令（show-reading-report）由 main.ts 裸注册；此处提供回调 + 幂等初始化。
+ * 阅读数据分析报告（reading-report 域）：嵌入书架墙面板的视图渲染器。
+ * 独立弹窗退役（用户拍板「读书报告内嵌化」：书的报告与影视报告一样写进面板）——
+ * 本模块只负责报告内容区的产出：分片渲染（ticket 40 不卡死）+ progress toast + 错误人话化（m1b）
+ * + 视图内交互（热力图 ‹ › 翻月、年卡展开收起）；挂载点、返回导航、同面板筛选由 bookshelf 面板提供
+ * （书架墙左栏「阅读分析报告」入口与命令 bz-reading-report-open 都指向面板内报告视图）。
  *
- * UX 整改（ux-reading）：ticket 40 统计不卡死（先建窗占位 + progress toast + 分片渲染让出主线程）、
- * l3 打开先建窗（不再「像没点」）、l1 unload 支持（unloadReadingReport，需 main.ts onunload 接线）、
- * s1 用户字段转义（report.ts 生成点转义，index.ts innerHTML 均静态模板/已转义内容）、
- * m1b 错误人话化（用户面人话模板，技术详情留 console）。
+ * 保留的既有机制：l3 先渲染骨架占位、s1 用户字段生成点转义（innerHTML 均静态模板/已转义内容）、
+ * 渲染中途取消不写已摘除 DOM（容器卸载/视图切走/面板关闭经 cancelReadingReport 作废在途渲染）。
  */
 import type { App } from 'obsidian';
-import { applyMobileWindowFullscreen } from '../core/mobile';
-import { tryGetSettings } from '../core/settings-provider';
 import { notify } from '../core/notice';
-import { allocZ } from '../core/z-order';
-import { escManager } from '../core/esc-manager';
-import { getAllBookNotes, calculateReadingStats, getEpubBookNotes } from './stats';
-import { buildReportSections } from './report';
+import { uiIcon, uiEmpty, uiBtn, uiBtnRow } from '../core/ui';
+import { resolveFolderPath } from '../bookshelf/data';
+import {
+  getAllBookNotes,
+  calculateReadingStats,
+  getEpubBookNotes,
+  getHeatmapMonthKeys,
+  processHeatmapData,
+} from './stats';
+import { buildReportSections, generateHeatmapGrid, heatmapMonthTitle } from './report';
 
-let initialized = false;
+/** 在途渲染序号：cancelReadingReport/新渲染使旧渲染全部作废（分片循环逐段检查） */
+let renderSeq = 0;
 
-/** 当前报告弹窗 overlay（openReportPopup 置位；closeReportPopup/unloadReadingReport 清理） */
-let reportOverlay: HTMLElement | null = null;
-
-/** 报告 ESC 层句柄（audit E：走 escManager 立约，不再私挂 document keydown） */
-let reportEscHandle: { unregister: () => void } | null = null;
-
-/** progress toast 序号：dedupeKey 每次调用唯一化——避免 notice.ts 30s 抑制窗口吞掉快速重开/连点两轮的新 toast */
+/** progress toast 序号：dedupeKey 每次调用唯一化——避免 notice.ts 30s 抑制窗口吞掉快速重开的新 toast */
 let progressToastSeq = 0;
 
-/** 骨架占位（l3：计算完成前先见「统计中…」；新增文案无 emoji） */
+/** 在途 progress toast 句柄（cancel 时收起，不留常驻残留） */
+let activeProgress: ReturnType<typeof notify> | null = null;
+
+/** 热力图翻月状态（每次渲染重置；‹ › 在全部月份间移动，只重渲染热力图主体） */
+let lastHeatmap: { data: any; keys: string[]; cursor: string } | null = null;
+
+/** 骨架占位（l3：计算完成前先见「统计中…」；文案无 emoji） */
 const SKELETON_HTML =
   '<div style="text-align: center; padding: 48px 0; color: var(--text-muted);">统计中…</div>';
 
@@ -37,16 +43,23 @@ const ERROR_HTML = `<div style="padding: 24px 0; text-align: center; color: var(
   <div>读取书库时出错，请查看控制台获取详情</div>
 </div>`;
 
-/** 幂等初始化（懒加载） */
-export function ensureReadingReport(app: App): void {
-  if (initialized) return;
-  initialized = true;
+/** 报告渲染选项：同面板筛选与返回书架的回调（bookshelf 面板注入） */
+export interface ReportRenderOptions {
+  /** 报告作者/分类行点击 → 同面板切回书架列表并预填筛选（原深链作废） */
+  onFilter?: (kind: 'author' | 'category', value: string) => void;
+  /** 空态主按钮 → 切回书架视图收录 */
+  onBack?: () => void;
 }
 
-/** 生成完整报告并弹窗展示（show-reading-report 命令回调；返回 Promise 便于测试等待完成） */
-export function showReadingReport(app: App): Promise<void> {
-  ensureReadingReport(app);
-  return generateEnhancedReadingReport(app);
+/** 容器内 data-lucide 占位替换为 setIcon 渲染的真图标（保持 class 修饰） */
+function mountIcons(container: HTMLElement): void {
+  container.querySelectorAll('i[data-lucide]').forEach((el) => {
+    const name = el.getAttribute('data-lucide') || '';
+    const cls = el.className;
+    const fresh = uiIcon(name, '');
+    if (cls && cls !== 'bz-ic') fresh.className = cls;
+    el.replaceWith(fresh);
+  });
 }
 
 /**
@@ -64,181 +77,187 @@ function yieldToMainThread(): Promise<void> {
   });
 }
 
-/** 关闭报告弹窗（幂等；ESC/遮罩/关闭按钮/unload 共用） */
-function closeReportPopup(): void {
-  if (reportOverlay) {
-    reportOverlay.remove();
-    reportOverlay = null;
-  }
-  if (reportEscHandle) {
-    reportEscHandle.unregister();
-    reportEscHandle = null;
+/** 作废在途渲染 + 收起在途 progress toast（视图切走/面板关闭/卸载共用；幂等） */
+export function cancelReadingReport(): void {
+  renderSeq++;
+  if (activeProgress) {
+    activeProgress.hide();
+    activeProgress = null;
   }
 }
 
-/** 打开报告弹窗（已开则先关——幂等；返回句柄供分片渲染与中止检查） */
-function openReportPopup(): { overlay: HTMLElement; body: HTMLElement } {
-  closeReportPopup();
-  const isDarkMode = document.body.classList.contains('theme-dark');
-
-  const overlay = document.createElement('div');
-  overlay.className = 'bz-reading-report-overlay'; // 标识钩子（层级已动态发号 ADR-0067）
-  overlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: ${isDarkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.5)'};
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  `;
-  overlay.style.zIndex = String(allocZ()); // ADR-0067：一次性报告浮层，创建即显示即发号（content 为子节点随动）
-
-  const content = document.createElement('div');
-  // p1 主题适配：面板/文字用主题变量，暗色主题可读（不再硬编码 white/#1e1e1e）
-  content.style.cssText = `
-    background: var(--background-primary);
-    color: var(--text-normal);
-    border-radius: 12px;
-    width: 100%;
-    max-width: 600px;
-    height: 90vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-    position: relative;
-  `;
-
-  const header = document.createElement('div');
-  header.className = 'bz-win-head';
-
-  const titleSpan = document.createElement('span');
-  titleSpan.textContent = '🧮 阅读数据分析报告';
-  titleSpan.style.cssText = 'font-size: 1.1rem; font-weight: 600;';
-
-  const closeButton = document.createElement('button');
-  closeButton.innerHTML = '❌';
-  closeButton.title = '关闭';
-  closeButton.className = 'bz-win-close';
-
-  const scrollable = document.createElement('div');
-  scrollable.style.cssText = `
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px 20px;
-  `;
-
-  closeButton.addEventListener('click', closeReportPopup);
-
-  header.appendChild(titleSpan);
-  header.appendChild(closeButton);
-
-  content.appendChild(header);
-  content.appendChild(scrollable);
-  overlay.appendChild(content);
-
-  // 移动端默认全屏跟随书架墙（用户拍板：阅读报告不设独立开关；旧 library 域退役后同键切换
-  // libraryMobileDefaultFullscreen → bookshelfMobileDefaultFullscreen）；
-  // 窗口内容根元素挂类（每次重建天然重挂）
-  applyMobileWindowFullscreen(content, tryGetSettings().bookshelfMobileDefaultFullscreen === true);
-  document.body.appendChild(overlay);
-  reportOverlay = overlay;
-
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) closeReportPopup();
-  });
-
-  // audit E：ESC 收编 escManager 层级（core/esc-manager 立约）——报告开着时按 ESC，
-  // 命中最上可见层；不再私挂 document keydown 越过下层可见面板抢关
-  reportEscHandle?.unregister();
-  reportEscHandle = escManager.register('bz-reading-report', {
-    isVisible: () => !!reportOverlay && reportOverlay.isConnected,
-    close: () => closeReportPopup(),
-  });
-
-  return { overlay, body: scrollable };
-}
-
-/** 卸载清理（l1：需 main.ts onunload 调用接线——由 ux-core 组统一收尾；此处仅提供能力） */
+/** 卸载清理（main.ts onunload 调用）：作废在途渲染 + 复位模块状态 */
 export function unloadReadingReport(): void {
-  initialized = false;
-  closeReportPopup();
+  cancelReadingReport();
+  lastHeatmap = null;
 }
 
-/** 兼容入口：整段 HTML 一次渲染（测试/旧调用面；isDarkMode 仅决定遮罩深浅） */
-export function showReportInPopup(htmlContent: string, isDarkMode: boolean): void {
-  void isDarkMode;
-  const popup = openReportPopup();
-  // s1：htmlContent 产自 report.ts（用户字段已在生成点 escapeHtml 转义），无未转义用户数据
-  popup.body.innerHTML = htmlContent;
+/** 空库空态（空态带动作拍板）：主按钮引导回书架收录（面板 onBack 切回书架列表） */
+function buildEmptyState(opts: ReportRenderOptions, folderPath: string): HTMLElement {
+  const actions = uiBtnRow(
+    [
+      uiBtn({
+        label: '去书架墙添加',
+        icon: 'book-open',
+        tone: 'primary',
+        onClick: () => opts.onBack?.(),
+      }),
+    ],
+    { center: true },
+  );
+  const empty = uiEmpty({
+    icon: 'library-big',
+    title: '书库还没有可统计的书',
+    desc: `把书籍笔记放进「${folderPath}」文件夹并在 frontmatter 加 book 标签，收录后这里自动生成阅读报告`,
+    actions,
+  });
+  return empty;
 }
 
-/** 生成完整的统计报告（l3 先建窗 → 分片计算渲染，全程不阻塞主线程超出单段窗口） */
-async function generateEnhancedReadingReport(app: any): Promise<void> {
-  // l3：先建窗占位（计算完成前即可见「统计中…」骨架，不再「像没点」）
-  const popup = openReportPopup();
-  popup.body.innerHTML = SKELETON_HTML;
+/**
+ * 渲染报告到书架墙面板的内容区（视图挂载点由 bookshelf 提供）。
+ * 流程：作废在途渲染 → 骨架占位 → progress toast → 分片计算渲染（逐段让出主线程）→ 图标挂载。
+ * 渲染期间容器被移除/视图切走/面板关闭 → 立即中止，不写已摘除的 DOM。
+ */
+export function renderReadingReport(container: HTMLElement, app: App, opts: ReportRenderOptions = {}): void {
+  cancelReadingReport();
+  const seq = renderSeq;
+  const alive = () => seq === renderSeq && container.isConnected;
+
+  // l3：先渲染骨架占位（计算完成前即可见「统计中…」，不再「像没点」）
+  container.innerHTML = SKELETON_HTML;
 
   // ticket 40：progress toast 先弹（常驻帧随阶段更新；完成转 success，失败转 error）
-  // dedupeKey 唯一化：30s 内快速重开/连点两次时第二轮各有独立 toast，不被去重抑制窗口静默
+  // dedupeKey 唯一化：30s 内快速重开时新一轮有独立 toast，不被去重抑制窗口静默
   const progress = notify('正在统计阅读数据…', {
     type: 'progress',
     duration: 0,
     dedupeKey: `bz-reading-report-progress-${++progressToastSeq}`,
   });
+  activeProgress = progress;
 
-  try {
+  /** 渲染被中止：收起 toast，不写 DOM */
+  const finishAbort = (): void => {
+    progress.hide();
+    if (activeProgress === progress) activeProgress = null;
+  };
+
+  /** 渲染完成：空库静默收尾（无统计可报），否则转 success 反馈 */
+  const finishDone = (isEmpty: boolean): void => {
+    if (activeProgress === progress) activeProgress = null;
+    if (isEmpty) {
+      progress.hide();
+    } else {
+      progress.setType('success');
+      progress.setMessage('阅读统计完成');
+    }
+  };
+
+  const step = async (): Promise<void> => {
     progress.setMessage('正在读取书库…');
     await yieldToMainThread();
+    if (!alive()) return finishAbort();
     const bookNotes = getAllBookNotes(app);
 
     progress.setMessage('正在读取 EPUB 书目…');
     await yieldToMainThread();
+    if (!alive()) return finishAbort();
     const epubEntries = await getEpubBookNotes(app);
+    if (!alive()) return finishAbort();
     const allNotes = epubEntries.length > 0 ? [...bookNotes, ...epubEntries] : bookNotes;
+
+    // 空库空态（空态带动作拍板）：无任何书目 → 引导回书架收录，不渲染空报告
+    if (allNotes.length === 0) {
+      container.innerHTML = '';
+      container.appendChild(buildEmptyState(opts, resolveFolderPath()));
+      mountIcons(container);
+      return finishDone(true);
+    }
 
     progress.setMessage('正在计算统计数据…');
     await yieldToMainThread();
+    if (!alive()) return finishAbort();
     const stats = calculateReadingStats(allNotes);
+
+    // 热力图翻月状态：段生成前初始化（游标 = 最近有阅读的月份；‹ › 经 handleReportInteraction 移动）
+    const hmData = processHeatmapData(stats.readingSessions);
+    const hmKeys = getHeatmapMonthKeys(hmData);
+    lastHeatmap = { data: hmData, keys: hmKeys, cursor: hmKeys[hmKeys.length - 1] || '' };
 
     // HTML 分片渲染：每段一个宏任务（requestIdleCallback/setTimeout），让出主线程并可逐步绘制
     const sections = buildReportSections(stats, allNotes);
-    popup.body.innerHTML = ''; // 骨架占位 → 报告区（分片渐进填充）
+    container.innerHTML = ''; // 骨架占位 → 报告区（分片渐进填充）
     for (const section of sections) {
-      // 弹窗已被关闭/重建 → 中止本段渲染（分片渲染时序：不写已移除的 DOM）
-      if (reportOverlay !== popup.overlay || !reportOverlay.isConnected) {
-        progress.hide();
-        return;
-      }
+      if (!alive()) return finishAbort();
       await yieldToMainThread();
-      // 二次校验：await 让出期间用户已关闭/重建 → 不把本段写进已摘除的 DOM
-      if (reportOverlay !== popup.overlay || !reportOverlay.isConnected) {
-        progress.hide();
-        return;
-      }
-      popup.body.insertAdjacentHTML('beforeend', section.generate());
+      // 二次校验：await 让出期间容器可能已被摘除 → 不把本段写进已移除的 DOM
+      if (!alive()) return finishAbort();
+      container.insertAdjacentHTML('beforeend', section.generate());
       progress.setMessage(`正在生成${section.label}…`);
     }
 
-    if (reportOverlay === popup.overlay && reportOverlay.isConnected) {
-      progress.setType('success');
-      progress.setMessage('阅读统计完成');
+    if (alive()) {
+      mountIcons(container);
+      finishDone(false);
     } else {
-      // 渲染期间用户已关闭/重建弹窗 → 收起 progress toast，不留常驻残留
-      progress.hide();
+      finishAbort();
     }
-  } catch (error) {
+  };
+
+  void step().catch((error) => {
     // m1b：用户面人话模板，技术详情留 console
     console.error('读取阅读统计报告失败:', error);
-    if (reportOverlay === popup.overlay) {
+    if (activeProgress === progress) activeProgress = null;
+    if (alive()) {
       progress.setType('error');
       progress.setMessage('统计失败：读取书库时出错，请查看控制台');
-      popup.body.innerHTML = ERROR_HTML;
-    } else if (progress.el.isConnected) {
+      container.innerHTML = ERROR_HTML;
+    } else {
       progress.hide();
     }
+  });
+}
+
+/**
+ * 报告视图内交互（bookshelf 面板事件委托转调；返回是否命中报告交互）：
+ * - 热力图段头 ‹ ›：移动翻月游标，只重渲染热力图主体与段头标题；
+ * - 年卡：切换该年 12 月柱展开体（.open 类，纯 CSS 显隐）。
+ */
+export function handleReportInteraction(container: HTMLElement, target: HTMLElement): boolean {
+  const prevBtn = target.closest('[data-rr-hm-prev]') as HTMLElement | null;
+  const nextBtn = target.closest('[data-rr-hm-next]') as HTMLElement | null;
+  if (prevBtn || nextBtn) {
+    navHeatmap(container, nextBtn ? 1 : -1);
+    return true;
   }
+
+  const yearCard = target.closest('[data-rr-year]') as HTMLElement | null;
+  if (yearCard) {
+    const year = yearCard.getAttribute('data-rr-year') || '';
+    const body = container.querySelector(`[data-rr-year-body="${year}"]`);
+    if (body) {
+      body.classList.toggle('open');
+      yearCard.classList.toggle('open');
+    }
+    return true;
+  }
+
+  return false;
+}
+
+/** 热力图翻月（‹ 上一月 / › 下一月；边界月按钮 disabled，越界为空操作） */
+function navHeatmap(container: HTMLElement, dir: number): void {
+  if (!lastHeatmap || lastHeatmap.keys.length === 0) return;
+  const idx = lastHeatmap.keys.indexOf(lastHeatmap.cursor);
+  const nextIdx = Math.min(lastHeatmap.keys.length - 1, Math.max(0, idx + dir));
+  if (nextIdx === idx) return;
+  lastHeatmap.cursor = lastHeatmap.keys[nextIdx];
+
+  const body = container.querySelector('[data-rr-hm-body]') as HTMLElement | null;
+  if (body) {
+    body.innerHTML = generateHeatmapGrid(lastHeatmap.data, lastHeatmap.cursor);
+    mountIcons(body);
+  }
+  const title = container.querySelector('[data-rr-hm-title]') as HTMLElement | null;
+  if (title) title.textContent = heatmapMonthTitle(lastHeatmap.cursor);
 }

@@ -39,6 +39,9 @@ export type SideId = 'all' | 'reading' | 'unread' | 'done';
 /** 排序键（对应 SORT_LABEL） */
 export type SortKey = 'date' | 'title' | 'author' | 'progress';
 
+/** 面板内视图（读书报告内嵌化拍板：报告不再是独立弹窗，而是面板内的一个视图） */
+export type BookshelfView = 'shelf' | 'report';
+
 export interface BookshelfState {
   currentOverlay: HTMLElement | null;
   items: BookshelfItem[];
@@ -56,6 +59,8 @@ export interface BookshelfState {
   renderFn: (() => void) | null;
   /** 移动端筛选抽屉元素（互斥单例） */
   drawerEl: HTMLElement | null;
+  /** 面板内当前视图：书架列表 / 阅读分析报告（重开面板保持；unload 复位） */
+  view: BookshelfView;
 }
 
 export const M: BookshelfState = {
@@ -70,6 +75,7 @@ export const M: BookshelfState = {
   folderPath: '书库',
   renderFn: null,
   drawerEl: null,
+  view: 'shelf',
 };
 
 /** 测试/重建用：整体重置模块状态 */
@@ -85,4 +91,5 @@ export function resetBookshelfState(): void {
   M.folderPath = '书库';
   M.renderFn = null;
   M.drawerEl = null;
+  M.view = 'shelf';
 }

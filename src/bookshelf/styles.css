@@ -82,9 +82,34 @@
 .bz-bs-report .bz-ic { width: 14px; height: 14px; flex-shrink: 0; color: var(--bz-text-3); }
 .bz-bs-report:hover .bz-ic { color: var(--bz-brand); }
 .bz-bs-report-chev { margin-left: auto; }
+/* 报告视图激活态（左栏入口变「‹ 返回书架」，桌面返回路径） */
+.bz-bs-report.on { background: var(--bz-brand); color: var(--bz-on-brand); font-weight: var(--bz-weight-medium); }
+.bz-bs-report.on .bz-ic { color: inherit; }
+.bz-bs-report.on:hover .bz-ic { color: inherit; }
 
-/* ---- 右内容区：工具栏 + 统计行 + 书架 ---- */
+/* ---- 报告视图（reading-report 域内容区挂载点；域内样式归 reading-report/styles.css） ---- */
+.bz-bs-view-report { min-height: 0; }
+.bz-rr-head {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--bz-space-sm);
+  padding: 10px var(--bz-space-lg) 8px; flex-shrink: 0;
+  border-bottom: 1px solid var(--bz-border);
+}
+.bz-rr-title {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1);
+}
+/* 报告视图关闭钮仅移动端（拍板：桌面靠左栏「‹ 返回书架」导航返回，对齐面板范式） */
+.bz-rr-close { display: none; }
+.bz-rr-content {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: 4px var(--bz-space-lg) var(--bz-space-lg);
+}
+
+/* ---- 右内容区：视图容器（书架列表 / 阅读分析报告互斥）+ 工具栏 + 统计行 + 书架 ---- */
 .bz-bs-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+/* 面板内视图（读书报告内嵌化拍板）：报告不再是独立弹窗，而是面板内的一个视图 */
+.bz-bs-view { display: none; flex: 1; flex-direction: column; min-height: 0; }
+.bz-bs-view.active { display: flex; }
 .bz-bs-toolbar {
   display: flex; align-items: center; gap: var(--bz-space-sm);
   padding: 10px var(--bz-space-lg) 6px; flex-shrink: 0;
@@ -323,6 +348,9 @@
   /* 头行图标钮：报告/搜索/筛选/关闭（桌面隐藏的这批在此显示） */
   .bz-bs-head-btns [data-bs-tool] { display: inline-flex; }
   .bz-bs-filterbtn.on { color: var(--bz-brand); background: var(--bz-brand-soft); }
+  /* 头行报告钮激活态（报告视图中点击切回书架）+ 报告视图关闭钮仅移动端显示 */
+  .bz-bs-head-btns [data-bs-tool="report"].on { color: var(--bz-brand); background: var(--bz-brand-soft); }
+  .bz-rr-close { display: inline-flex; }
   /* 桌面块隐藏：左栏/工具栏/桌面统计行/桌面书架；移动块显示 */
   .bz-bs-side, .bz-bs-toolbar, .bz-bs-dash, .bz-bs-shelves { display: none; }
   .bz-bs-mcards { display: grid; }
