@@ -10,22 +10,23 @@ function mkGen() {
 }
 
 describe('buildPrompt', () => {
-  it('单选：完整模板逐字', () => {
+  it('单选：完整模板逐字（item 3：含 explain 字段与规则）', () => {
     const g = mkGen();
     const p = g.buildPrompt('内容内容', false, 5, 'random');
     expect(p).toContain('根据以下笔记内容，生成若干道四选一的选择题（每题一个正确答案），数量适中，以便复习。请仅返回一个合法的 JSON 对象');
     expect(p).toContain('"questions"');
     expect(p).toContain('注意：题目类型为 单选题（四选一），请生成恰好 5 道题目。');
-    expect(p).toContain('"correctIndices": [0] }');
+    expect(p).toContain('"correctIndices": [0], "explain": "一句话解析+原文依据" }');
+    expect(p).toContain('每题必须带 explain 字段：用一句话解析正确答案，并附原文依据（简短引用或出处）。');
     expect(p).toContain('笔记内容：\n内容内容');
   });
 
-  it('多选：typeHint/structure 变化', () => {
+  it('多选：typeHint/structure 变化（含 explain）', () => {
     const g = mkGen();
     const p = g.buildPrompt('x', true, 0, 'random');
     expect(p).toContain('可以是单选题或多选题（正确选项数量不限）');
     expect(p).toContain('生成若干道题目（数量适中，建议 3~6 道）。');
-    expect(p).toContain('"correctIndices": [0, 2] }（数组内为正确选项的索引）');
+    expect(p).toContain('"correctIndices": [0, 2], "explain": "一句话解析+原文依据" }（数组内为正确选项的索引）');
   });
 
   it('三难度提示逐字', () => {

@@ -5,14 +5,14 @@ import type { AIService } from '../../core/ai';
 import type { QuizQuestion } from './manager';
 
 export class QuestionGenerator {
-  /** 构建提示词（源码 L92-128 逐字） */
+  /** 构建提示词（源码 L92-128 逐字；item 3 增 explain 字段：一句话解析+原文依据） */
   buildPrompt(content: string, enableMultipleChoice: boolean, questionsPerNote: number, difficulty: string): string {
     const truncated = content.slice(0, 3000);
     let typeHint = '单选题（四选一）';
-    let structure = `{ "question": "题目文本", "options": ["A选项","B选项","C选项","D选项"], "correctIndices": [0] }`;
+    let structure = `{ "question": "题目文本", "options": ["A选项","B选项","C选项","D选项"], "correctIndices": [0], "explain": "一句话解析+原文依据" }`;
     if (enableMultipleChoice) {
       typeHint = '可以是单选题或多选题（正确选项数量不限）';
-      structure = `{ "question": "题目文本", "options": ["A选项","B选项","C选项","D选项"], "correctIndices": [0, 2] }（数组内为正确选项的索引）`;
+      structure = `{ "question": "题目文本", "options": ["A选项","B选项","C选项","D选项"], "correctIndices": [0, 2], "explain": "一句话解析+原文依据" }（数组内为正确选项的索引）`;
     }
     let countHint = '';
     if (questionsPerNote > 0) {
@@ -39,6 +39,7 @@ export class QuestionGenerator {
 }
 注意：题目类型为 ${typeHint}，${countHint}
 ${difficultyHint}
+每题必须带 explain 字段：用一句话解析正确答案，并附原文依据（简短引用或出处）。
 笔记内容：
 ${truncated}`;
   }
@@ -93,13 +94,13 @@ ${truncated}`;
     return parsed.questions;
   }
 
-  /** 批量提示词（源码 L162-191 逐字） */
+  /** 批量提示词（源码 L162-191 逐字；item 3 增 explain 规则） */
   buildBatchPrompt(notes: { id: string; content: string }[], enableMultipleChoice: boolean, questionsPerNote: number, difficulty: string): string {
     let typeHint = '单选题（四选一）';
-    let structure = `{ "question": "题目文本", "options": ["A选项","B选项","C选项","D选项"], "correctIndices": [0] }`;
+    let structure = `{ "question": "题目文本", "options": ["A选项","B选项","C选项","D选项"], "correctIndices": [0], "explain": "一句话解析+原文依据" }`;
     if (enableMultipleChoice) {
       typeHint = '可以是单选题或多选题';
-      structure = `{ "question": "题目文本", "options": ["A选项","B选项","C选项","D选项"], "correctIndices": [0, 2] }`;
+      structure = `{ "question": "题目文本", "options": ["A选项","B选项","C选项","D选项"], "correctIndices": [0, 2], "explain": "一句话解析+原文依据" }`;
     }
     const countHint = questionsPerNote > 0 ? `每篇生成恰好 ${questionsPerNote} 道。` : '每篇生成 3~6 道。';
     let difficultyHint = '';
@@ -114,12 +115,13 @@ ${truncated}`;
 
     return `根据以下多篇笔记内容，为每篇笔记生成选择题。请仅返回一个合法的 JSON 对象：
 {
-  "noteId1": [ { "question": "...", "options": ["A","B","C","D"], "correctIndices": [0] }, ... ],
+  "noteId1": [ { "question": "...", "options": ["A","B","C","D"], "correctIndices": [0], "explain": "..." }, ... ],
   "noteId2": [ ... ]
 }
 规则：
 - 类型：${typeHint}，${countHint}
 - ${difficultyHint}
+- 每题必须带 explain 字段：一句话解析正确答案并附原文依据
 - 键名为笔记ID（即 "笔记ID:xxx" 中的 xxx），值为该笔记的题目数组
 - 每题4个选项，correctIndices 为正确选项索引数组
 笔记内容：${notesBlock}`;

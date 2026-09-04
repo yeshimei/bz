@@ -29,6 +29,8 @@ export interface QuizQuestion {
   question: string;
   options: string[];
   correctIndices: number[];
+  /** 一句话解析+原文依据（item 3：答错时选项下方渲染；存量题无此字段静默不显示，零迁移） */
+  explain?: string;
   notePath?: string;
   _index?: number;
 }
