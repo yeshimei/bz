@@ -73,6 +73,14 @@ export function encryptCurrentNote(app: App): void {
 }
 
 /**
+ * 快速复制密码（命令 bz-encrypt-copy-password）：轻量 fuzzy 选择器选中即复制
+ * （60s 自动清空剪贴板），未解锁先弹主密码；全程不打开保险库主面板。
+ */
+export function copyVaultPassword(app: App): void {
+  void ensureEncrypt(app).then(() => getController().quickCopyPassword());
+}
+
+/**
  * 获取保险箱 SafeManager 单例（与保险箱面板同一实例，共享同一主密码与解锁态）。
  * 供日记域复用（ADR-0017：加密日记=保险箱 SafeNote）。惰性读取设置。
  */
