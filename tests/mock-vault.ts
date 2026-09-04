@@ -165,6 +165,20 @@ export class MockVault {
     this.modifiedPaths.push(file.path);
   }
 
+  /** Obsidian vault.trash 语义：移入回收站（system=true = 系统回收站）；记录路径供测试断言 */
+  trashed: Array<{ path: string; system: boolean }> = [];
+  async trash(file: any, system: boolean = true): Promise<void> {
+    this.trashed.push({ path: file.path, system });
+    this.files.delete(file.path);
+    this.binaryFiles.delete(file.path);
+    this.modifiedPaths.push(file.path);
+  }
+
+  /** Obsidian vault.cachedRead 语义（内存 mock 缓存读取等价直读） */
+  async cachedRead(file: any): Promise<string> {
+    return this.files.get(file.path) ?? '';
+  }
+
   /** Obsidian vault.process 语义：原子读改写（读-改-写单步完成，防并发窗口互吞） */
   async process(file: any, fn: (content: string) => string): Promise<string> {
     const content = this.files.get(file.path) ?? '';
