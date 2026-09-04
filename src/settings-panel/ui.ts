@@ -48,7 +48,6 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   belongings: async () => (await import('../belongings/ui')).belongingSettingsSchema(),
   clipping: async () => (await import('../clipbook/ui')).clipbookSettingsSchema(),
   favorites: async () => (await import('../favorites/ui')).favoritesSettingsSchema(),
-  library: async () => (await import('../library/ui')).librarySettingsSchema(),
   cinema: async () => (await import('../cinema/settings')).cinemaSettingsSchema(),
   bookshelf: async () => (await import('../bookshelf/settings')).bookshelfSettingsSchema(),
   review: async () => {
@@ -97,7 +96,7 @@ const DOMAINS: DomainDef[] = [
   { id: 'belongings', name: '归物本', icon: 'package', desc: '物品登记与查找', schemaLoader: schemaLoaders.belongings },
   { id: 'clipping', name: '剪藏本', icon: 'scissors', desc: '聚合讯未读流与剪藏笔记（融合域 ADR-0082）', schemaLoader: schemaLoaders.clipping },
   { id: 'favorites', name: '收藏本', icon: 'star', desc: '收藏条目', schemaLoader: schemaLoaders.favorites },
-  { id: 'library', name: '书库', icon: 'library', desc: '藏书与读书笔记', schemaLoader: schemaLoaders.library },
+  // 旧书库（library）域退役：其设置组删除，书库配置并入书架墙（bookshelf）组
   { id: 'reading-report', name: '阅读报告', icon: 'bar-chart-3', desc: '阅读统计', noSettings: true },
 
   { id: 'cinema', name: '影院', icon: 'clapperboard', desc: '影视目录与海报（ADR-0087 接管影视）', schemaLoader: schemaLoaders.cinema },

@@ -1625,12 +1625,14 @@ export class MemorySystem {
 /**
  * 观察可信度基准分（ADR-0036，ticket 085）：来源档位表 + 负向词降档，纯函数。
  * 档位：高 0.9 亲笔心迹（diary/reflection/flash/letter/poem）；中高 0.75 明确 UI 意图
- * （memo/favorites/belongings）；中 0.6 行为动作（movie/pomodoro/library 书架/时长/done）；
- * 中低 0.45 停留/标记可误触（news、library 移出）；低 0.3 负向/移除信号
+ * （memo/favorites/belongings）；中 0.6 行为动作（movie/pomodoro/书架墙阅读事件——source=library 的书架/时长/done）；
+ * 中低 0.45 停留/标记可误触（news、移出书架）；低 0.3 负向/移除信号
  * （news 跳过、移出书架——由 0.45 中低档 −0.15 降档得出）；未知来源缺省 0.5 中性（对齐旧数据无字段兜底）。
  * P2a：library 事件 source 已从 domain:library 改为 library；routing 规则自带 credibility
  * （library:highlight=0.70, library:thought=0.75, 其余=0.60），新签名走 routing 值不经本函数；
  * 旧 domain:library 分支保留作 legacy 兼容（旧数据/旧签名路径仍可能触发）。
+ * 旧书库域（src/library）退役后，source=library 的阅读事件由书架墙（bookshelf）域 Weave 通道延续产生，
+ * source 值与 routing 键不变（存量数据/规则零迁移）。
  * 描述含「跳过/移出/移除/删除/删掉/取消」等负向词 → 来源档基础 −0.15（下限 0.25）。
  */
 export const CREDIBILITY_TIERS: Record<string, number> = {
@@ -1674,7 +1676,7 @@ export function ruleCredibility(source: string | undefined, description: string)
 export const SOURCE_LABELS: Record<string, string> = {
   chat: '聊天', diary: '日记', flash: '闪念', clipping: '剪藏', movie: '影视', memo: '备忘录',
   reading: '书库', poem: '现代诗', letter: '信', reflection: '反省',
-  library: '书库', // P2a：library 事件 source 统一为 'library'（兼容旧 'domain:library'）
+  library: '书库', // P2a：library 事件 source 统一为 'library'（兼容旧 'domain:library'）；旧书库域退役后由书架墙（bookshelf）域阅读通道延续产生
   'literature': '文献盒', // ADR-0066/0072：文献盒域事件（literature:tasks 通道）
   'bili-downloader': '文献盒', // 遗留：旧 bili-downloader 来源存量条目标签（ADR-0072 迁出后保留渲染兼容）
   'domain:memo': '备忘录', 'domain:pomodoro': '番茄钟', 'domain:news': '聚合讯',
