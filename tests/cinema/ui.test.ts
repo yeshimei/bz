@@ -801,7 +801,7 @@ tags: [电影]
     expect(M.searchKeyword).toBe('');
     expect((overlay.querySelector('[data-cinema-search]') as HTMLInputElement).value).toBe('');
     expect(overlay.querySelectorAll('[data-cinema-idx]').length).toBe(4);
-    // 库为空 → 「还没有收藏的影视」+「添加第一部影视」
+    // 库为空 → 「还没有添加的影视」+「添加第一部影视」（走查批 D：与收藏本去撞词）
     closeOverlay();
     const emptyVault = new MockVault();
     const emptyApp = mockAppWithVault(emptyVault);
@@ -810,7 +810,7 @@ tags: [电影]
     createOverlay(emptyApp);
     const overlay2 = document.querySelector('.bz-cinema-overlay') as HTMLElement;
     content = overlay2.querySelector('.bz-cinema-content') as HTMLElement;
-    expect(content.querySelector('.bz-empty-title')?.textContent).toBe('还没有收藏的影视');
+    expect(content.querySelector('.bz-empty-title')?.textContent).toBe('还没有添加的影视');
     const addBtn = content.querySelector('.bz-cinema-empty-add') as HTMLElement;
     expect(addBtn.textContent).toBe('添加第一部影视');
     addBtn.click();

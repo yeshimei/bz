@@ -242,9 +242,9 @@ describe('lazyAttachment 读侧惰性视图（纯函数）', () => {
 describe('formatSelfEventTime 相对时间', () => {
   it('刚刚/分钟/小时/天 分档', () => {
     expect(formatSelfEventTime(NOW - 30 * 1000, NOW)).toBe('刚刚');
-    expect(formatSelfEventTime(NOW - 5 * 60 * 1000, NOW)).toBe('5 分钟前');
-    expect(formatSelfEventTime(NOW - 3 * 60 * 60 * 1000, NOW)).toBe('3 小时前');
-    expect(formatSelfEventTime(NOW - 2 * DAY_MS, NOW)).toBe('2 天前');
+    expect(formatSelfEventTime(NOW - 5 * 60 * 1000, NOW)).toBe('5分钟前');
+    expect(formatSelfEventTime(NOW - 3 * 60 * 60 * 1000, NOW)).toBe('3小时前');
+    expect(formatSelfEventTime(NOW - 2 * DAY_MS, NOW)).toBe('2天前');
   });
 });
 
@@ -385,7 +385,7 @@ describe('dashboard 缺席状态卡 + 读侧依恋视图', () => {
     expect(text).toContain('缺席状态');
     expect(text).toContain('牵挂中');
     expect(text).toContain('距上次在场 5 天');
-    expect(text).toContain('开始牵挂你 · 2 天前'); // 事件直接呈现（表达先于数值）
+    expect(text).toContain('开始牵挂你 · 2天前'); // 事件直接呈现（表达先于数值）
     expect(text.indexOf('你回来了')).toBeGreaterThan(-1);
 
     const empty = buildAbsenceCard(defaultSmartCatData(), now);
@@ -406,7 +406,7 @@ describe('dashboard 缺席状态卡 + 读侧依恋视图', () => {
     const body = document.body.textContent || '';
     expect(body).toContain('缺席状态');
     expect(body).toContain('牵挂中 · 距上次在场 5 天');
-    expect(body).toContain('开始牵挂你 · 2 天前');
+    expect(body).toContain('开始牵挂你 · 2天前');
   }, 20000);
 
   it('computeDashboardStats 依恋走惰性视图：分离 28 天（两个半衰期）0.61→≈0.15，只影响读取不改存储', () => {

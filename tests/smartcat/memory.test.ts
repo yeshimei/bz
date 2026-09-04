@@ -801,9 +801,9 @@ describe('RAG 增强（2026-08：来源标签/相对时间/情绪时段 query）
   it('formatRelativeTime：分钟/小时/天/月日分级', () => {
     const now = Date.now();
     expect(formatRelativeTime(new Date(now - 30 * 1000).toISOString(), now)).toBe('刚刚');
-    expect(formatRelativeTime(new Date(now - 5 * 60000).toISOString(), now)).toBe('5 分钟前');
-    expect(formatRelativeTime(new Date(now - 3 * 3600 * 1000).toISOString(), now)).toBe('3 小时前');
-    expect(formatRelativeTime(new Date(now - 2 * 86400000).toISOString(), now)).toBe('2 天前');
+    expect(formatRelativeTime(new Date(now - 5 * 60000).toISOString(), now)).toBe('5分钟前');
+    expect(formatRelativeTime(new Date(now - 3 * 3600 * 1000).toISOString(), now)).toBe('3小时前');
+    expect(formatRelativeTime(new Date(now - 2 * 86400000).toISOString(), now)).toBe('2天前');
     const monthAgo = new Date(now - 40 * 86400000).toISOString();
     expect(formatRelativeTime(monthAgo, now)).toMatch(/^\d+ 月 \d+ 日$/);
   });
@@ -819,7 +819,7 @@ describe('RAG 增强（2026-08：来源标签/相对时间/情绪时段 query）
     const text = m.formatMemoriesForPrompt([
       { id: 'x', created: new Date(Date.now() - 86400000 * 2).toISOString(), lastAccessed: '', description: '用户说：记得买牛奶', importance: 0.6, type: 'observation', source: 'chat' } as any,
     ]);
-    expect(text).toContain('[observation（聊天·2 天前）]');
+    expect(text).toContain('[observation（聊天·2天前）]');
     expect(text).toContain('记得买牛奶');
   });
 });

@@ -506,7 +506,7 @@ function execDomain(id: string, app: any): void {
   try {
     void app.commands.executeCommandById(d.commandId);
   } catch {
-    notice(`命令 ${d.commandId} 不可用`, 'warning');
+    notice(`「${d.name}」暂时不可用`, 'warning');
   }
 }
 
@@ -601,7 +601,7 @@ function execPal(app: any): void {
     try {
       void app.commands.executeCommandById(it.cmdId);
     } catch {
-      notice(`命令 ${it.cmdId} 不可用`, 'warning');
+      notice(`「${it.name}」暂时不可用`, 'warning');
     }
   }
 }
