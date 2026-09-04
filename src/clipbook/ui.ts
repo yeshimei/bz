@@ -73,7 +73,7 @@ const PANEL_MAX_H = 1000;
 const clipBodyCache = new Map<string, string>();
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let autoReadingTimer: ReturnType<typeof setTimeout> | null = null;
-let panelResizeDetach: { detach: () => void } | null = null;
+let panelResizeDetach: { detach: () => void; flush: () => void } | null = null;
 
 /** 测试钩子：缩短自动落「在读」的停留阈值（真机恒 10s） */
 export function __autoReadingDelayForTests(ms: number): void {
@@ -174,6 +174,7 @@ export async function revealClipArticle(notePath: string): Promise<void> {
 export function closePanel(): void {
   pauseReadingSession();
   disarmAutoReading();
+  panelResizeDetach?.flush(); // 关面板即落盘面板尺寸（review P2：恢复旧 flushPendingSize 语义）
   M.open = false;
   M.mobDetailOpen = false;
   if (overlayEl) overlayEl.style.display = 'none';
@@ -507,7 +508,7 @@ function renderRail(): void {
     const active = M.sel.kind === 'inbox' && M.sel.platform === 'B站' && M.sel.up === uid;
     // G：UP 行 data-src 携带 platform=B站 + up=uid（旧实现 platform=展示名、up=null，
     // 点击后按平台名过滤恒空——UP 源点开是空列表且高亮不复位）
-    // B站徽标色由 .bz-clip-rail-badge.bili 样式侧单源承担（不再内联传 #8b7cf6）
+    // B站徽标色由 .bz-clip-rail .bz-rail-badge.bili 样式侧单源承担（不再内联传 #8b7cf6）
     html += railItemHtml({ kind: 'inbox', platform: 'B站', up: uid }, name, cnt, cnt, 'bili', '', active, name.slice(0, 1));
   }
 
