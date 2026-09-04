@@ -14,8 +14,6 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { M, resetTodoState } from '../../src/todo/state';
 import { openTodoPanel, closeTodoPanel, addTodo, openEditor } from '../../src/todo/ui';
 import { ensureTodoReminders, unloadTodo } from '../../src/todo';
-import { App as MemoApp } from '../../src/memo/app';
-import { setBzSettingsProvider } from '../../src/memo';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { TodoData } from '../../src/todo/data';
 
@@ -117,22 +115,18 @@ beforeEach(() => {
 
 afterEach(() => {
   unloadTodo();
-  try {
-    MemoApp.unload();
-  } catch (e) { /* 未初始化忽略 */ }
   document.body.innerHTML = '';
 });
 
 describe('启动弹出改道（落点=待办面板）', () => {
-  it('autoPopupOnStart 开且有重要未完成待办 → 300ms 后自动打开待办面板；memo 旧弹窗不出现', async () => {
+  it('autoPopupOnStart 开且有重要未完成待办 → 300ms 后自动打开待办面板', async () => {
     const { app } = seed([item({ id: 'a', priority: 'important' })]);
     ensureTodoReminders(app);
     await vi.waitFor(() => {
       expect(document.querySelector('.bz-todo-overlay')).toBeTruthy();
     }, { timeout: 1500 });
-    // 落点核对：待办工作台在，备忘录旧弹窗（#todo-popup）不在
+    // 落点核对：待办工作台标题
     expect((document.querySelector('.bz-todo-title') as HTMLElement).textContent).toBe('待办');
-    expect(document.getElementById('todo-popup')).toBeNull();
   }, 5000);
 
   it('到期未完成同样触发（today 状态）', async () => {
@@ -236,32 +230,6 @@ describe('打开笔记提醒改道（落点=待办面板 + 定位）', () => {
     expect(document.querySelector('.bz-todo-overlay')).toBeTruthy(); // 面板未被关闭重开
   });
 
-  it('memo 侧改道核对：App.init 后 file-open 不再弹备忘录旧面板', async () => {
-    const { app, emitFileOpen } = seed(
-      [item({ id: 'a', priority: 'important', notePath: '笔记/A.md' })],
-      { autoPopupOnStart: false }
-    );
-    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'sk-test' }));
-    resetAIProviderCache();
-    setBzSettingsProvider(() => ({ ...BASE_SETTINGS }));
-    await MemoApp.init({ ...BASE_SETTINGS, autoPopupOnStart: false });
-    emitFileOpen('笔记/A.md');
-    await new Promise((r) => setTimeout(r, 50));
-    const mask = document.getElementById('todo-mask') as HTMLElement | null;
-    expect(mask?.style.display ?? 'none').not.toBe('block'); // 旧弹窗不再出现
-    void app;
-  });
-
-  it('memo 侧改道核对：autoPopupOnStart 开 + 重要条目 → 不再弹备忘录旧面板', async () => {
-    seed([item({ id: 'a', priority: 'important' })]);
-    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'sk-test' }));
-    resetAIProviderCache();
-    setBzSettingsProvider(() => ({ ...BASE_SETTINGS }));
-    await MemoApp.init({ ...BASE_SETTINGS });
-    await new Promise((r) => setTimeout(r, 450));
-    const mask = document.getElementById('todo-mask') as HTMLElement | null;
-    expect(mask?.style.display ?? 'none').not.toBe('block');
-  });
 });
 
 describe('composer 剪藏场景剪贴板预填', () => {
@@ -482,15 +450,5 @@ describe('设置 schema 文案核对（提醒组归待办）', () => {
     const descs = bell!.rows.map((r) => (r as any).desc).join('\n');
     expect(descs).toContain('待办面板');
     expect(descs).not.toContain('备忘录');
-  });
-
-  it('memo schema：不再含提醒组（入口改道后行为归待办域）', async () => {
-    seed([]);
-    const { memoSettingsSchema } = await import('../../src/memo/ui');
-    const schema = memoSettingsSchema();
-    expect(schema.groups.find((g) => g.name === '提醒')).toBeUndefined();
-    const names = schema.groups.flatMap((g) => g.rows.map((r) => (r as any).name));
-    expect(names).not.toContain('启动时自动弹出');
-    expect(names).not.toContain('打开笔记自动提醒');
   });
 });

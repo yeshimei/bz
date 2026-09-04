@@ -127,7 +127,7 @@ describe('settings-common：移动端默认全屏预设', () => {
   });
 
   it('visibleWhen：桌面端隐藏、移动端显示（Platform.isMobile 口径）', () => {
-    const row = mobileFullscreenRow('memoMobileDefaultFullscreen') as {
+    const row = mobileFullscreenRow('todoMobileDefaultFullscreen') as {
       visibleWhen: (s: SettingsSnapshot) => boolean;
     };
     const prev = Platform.isMobile;
@@ -148,7 +148,7 @@ describe('settings-common：移动端默认全屏预设', () => {
     expect(overridden.desc).toBe('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）');
     const empty = mobileFullscreenRow('secondBrainMobileDefaultFullscreen', { desc: '' }) as { desc?: string };
     expect(empty.desc).toBeUndefined();
-    const none = mobileFullscreenRow('memoMobileDefaultFullscreen') as { desc?: string };
+    const none = mobileFullscreenRow('todoMobileDefaultFullscreen') as { desc?: string };
     expect(none.desc).toBeUndefined();
   });
 

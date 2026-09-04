@@ -1,6 +1,6 @@
 /**
  * 内容首页（home 域）入口：懒加载初始化 + 打开/关闭 + 卸载。
- * 新域与 launcher 并存；不修改旧入口页任何代码（cinema/movie 同款先例）。
+ * ADR-0093：旧入口页 launcher 已退役删除，本域为唯一入口首页。
  */
 import type { App } from 'obsidian';
 import { H, resetHomeState } from './state';

@@ -3,7 +3,7 @@
  *
  * memo.json 是备忘录（memo）与待办（todo）的同源数据文件，两域各自加载同一条目集，
  * 口径必须一致。本检查对磁盘原文做双视角核对：
- * - memo 视角：memo/data.ts loadItems 的归一口径快照（completed: item.completed || null）；
+ * - memo 视角：todo/data.ts loadItems 的归一口径快照（completed: item.completed || null）；
  * - todo 视角：todo/data.ts 的 normalizeItem 实际归一（同一约定字段集）；
  * 两视角对同一份磁盘数据各自归一后比对条数/完成数——两条归一链任何一侧改字段语义
  * （或磁盘数据让两链产出分叉）都会在这里报红。另抓结构问题：非对象条目（红）、
@@ -15,7 +15,7 @@ import { readRawJson, jsonScanTargets } from './files';
 import { normalizeItem } from '../todo/data';
 
 /**
- * memo 视角归一（memo/data.ts DataManager.loadItems 的映射快照——只取归一、不带其补 id 写回副作用）。
+ * memo 视角归一（todo/data.ts DataManager.loadItems 的映射快照——只取归一、不带其补 id 写回副作用）。
  * 注意：这是「口径快照」不是复用调用——体检禁止走域写路径（loadItems 缺 id 时会写盘）；
  * 快照与 todo normalizeItem 漂移时双视角计数分叉，本检查报红（这正是检查目的）。
  */

@@ -80,7 +80,7 @@ export async function saveDatabase(database: BelongingsDatabase): Promise<void> 
 
 // ----- 工具函数（复用） -----
 
-/** 已用天数（本地日历日口径，对照 memo/due 的 moment 用法）：
+/** 已用天数（本地日历日口径，对照 todo/due 的 moment 用法）：
  *  购买日与今天按本地时区取自然日相减；当天/无效日期 = 0 天（全价）。
  *  原 new Date('YYYY-MM-DD') 按 UTC 解析，UTC+8 早 8 点前会多算一天。 */
 export function calculateDaysUsed(purchaseDate: string): number {

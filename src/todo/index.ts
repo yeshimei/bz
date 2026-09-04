@@ -3,22 +3,20 @@
  * 命令（bz-todo-open / bz-todo-add）由 main.ts 裸注册，此处提供回调。
  * 懒加载：ensureTodo 幂等初始化（ADR-0003）。
  *
- * 与旧 memo 域并存（数据同源 memo.json）：
+ * memo.json 唯一属主（ADR-0092：旧 memo 域已退役删除，todo 全面接管）：
  *   - UI/交互/写盘：本域负责；
- *   - 被动捕获入口（启动自动弹出 / file-open 提醒）：本域提醒后台承担
- *     （src/todo/reminder.ts，落点=待办面板；memo→todo 接管迁移第 3 项提前实施）；
- *   - 其余后台任务（memo.json 引用同步 file-sync）：仍由旧 memo 域执行（main.ts ensureMemoFileSync）。
- *   ★ 旧 memo 域删除时迁移清单（剩余项）：
- *     1. main.ts：删 './memo' 相关 import/命令/ensureMemoFileSync 调用，把 openBzPanel/
- *        createMemoItem 接线换成 './todo'（openTodoPanel/addTodoItem），unload 换 unloadTodo；
- *     2. 把 src/memo/file-sync.ts 迁入本域并接线
- *        （订阅 vault:md-renamed/deleted，写 memo.json 语义不变）。
+ *   - 被动捕获入口（启动自动弹出 / file-open 提醒 / ribbon）：本域提醒后台承担
+ *     （src/todo/reminder.ts，落点=待办面板）；
+ *   - memo.json 引用同步（file-sync）：本域后台承担（src/todo/file-sync.ts，
+ *     订阅 vault:md-renamed/deleted，写 memo.json 语义不变）。
  */
 import type { App } from 'obsidian';
 import { openTodoPanel as uiOpenPanel, addTodo, ensureTodo, unloadTodo as uiUnload } from './ui';
 import { ensureTodoReminders as remindersEnsure, unloadTodoReminders as remindersUnload } from './reminder';
 import { TodoData } from './data';
 import { tryGetSettings } from '../core/settings-provider';
+
+export { ensureFileSync, unloadFileSync } from './file-sync';
 
 /** main.ts 命令回调：打开待办面板（toggle：开着再点关闭） */
 export function openTodoPanel(app: App): void {
