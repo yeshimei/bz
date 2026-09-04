@@ -1,13 +1,15 @@
 // @vitest-environment node
 /**
  * 影院（cinema）影视分析完整版测试：数据采集（9 类统计）+ 渲染板块
+ * ADR-0090：原独立观影报告（独立域已删，ADR-0090）能力并入内嵌页——
+ * 片长/季集统计、19 板块对照断言、类型分布条形行、空态动作、头行小计。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { M, resetCinemaState } from '../../src/cinema/state';
 import { rebuildItems } from '../../src/cinema/data';
-import { buildAnalysisData, buildAnalysisHTML } from '../../src/cinema/analysis';
+import { buildAnalysisData, buildAnalysisHTML, buildStatPageHtml, analysisHeadSub } from '../../src/cinema/analysis';
 
 function seed(vault: MockVault) {
   vault.files.set('我的/影视/《星际穿越》.md', `---
@@ -131,7 +133,7 @@ describe('cinema buildAnalysisHTML', () => {
     rebuildItems(mockAppWithVault(vault));
   });
 
-  it('渲染 15 板块（含空态/数据态）', () => {
+  it('渲染 19 板块（原独立报告全量板块，ADR-0090）', () => {
     const html = buildAnalysisHTML();
     expect(html).toContain('收录总数');
     expect(html).toContain('类型分布');
@@ -153,5 +155,165 @@ describe('cinema buildAnalysisHTML', () => {
     M.folderPath = '我的/影视';
     const html = buildAnalysisHTML();
     expect(html).toContain('还没有可统计的影视记录');
+  });
+});
+
+// ======================= ADR-0090 独立报告能力并入 =======================
+
+/** 原独立观影报告（已退役）19 板块标题全清单——内嵌页不丢能力的对照基线 */
+const REPORT_19_SECTIONS = [
+  '类型分布', '年度观影趋势', '片龄画像', '片长画像', '月度观影分布', '观影节奏',
+  '个人评分分布', '评分趋势（个人10分制）', '打分习惯（个人−豆瓣）', '题材偏好 TOP10',
+  '制片国家/地区 TOP10', '最爱导演 TOP10', '最爱主演 TOP10', '真爱重复', '影评关键词',
+  '我的高分 TOP10', '系列追踪', '追剧深度', '想看清单',
+];
+
+describe('ADR-0090 片长/季集统计并入（原独立报告能力）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetCinemaState();
+    M.folderPath = '我的/影视';
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《A》.md', `---
+tags: [电影]
+评分: 5
+观影日期: 2025-06-01
+上映日期: 2024-01-01
+片长: 118分钟
+---`);
+    vault.files.set('我的/影视/《A2》.md', `---
+tags: [电影]
+评分: 4
+观影日期: 2025-06-02
+上映日期: 2025-01-01
+片长: 45分钟
+---`);
+    vault.files.set('我的/影视/《剧》.md', `---
+tags: [美剧]
+评分: 2
+观影日期: 2024-12-01
+上映日期: 2020-01-01
+片长: 200分钟
+季集: 2季
+---`);
+    rebuildItems(mockAppWithVault(vault));
+  });
+
+  it('片长分桶 + 平均片长 + 分组均长（90-120 / <90 / >120）', () => {
+    const d = buildAnalysisData();
+    expect(d.durBuckets['<90']).toBe(1);
+    expect(d.durBuckets['90-120']).toBe(1);
+    expect(d.durBuckets['>120']).toBe(1);
+    // (118+45+200)/3 = 121
+    expect(d.avgDur).toBe('121');
+    expect(d.groupDurEntries).toEqual([{ label: '剧集', value: 200 }, { label: '电影', value: 82 }]);
+  });
+
+  it('季集统计：首个数字入平均 + 追剧深度榜', () => {
+    const d = buildAnalysisData();
+    expect(d.seasonCount).toBe(1);
+    expect(d.avgSeason).toBe('2.0');
+    expect(d.seasons).toEqual([{ name: '剧', seasons: 2 }]);
+  });
+
+  it('无片长/季集字段不误入统计（缺省回落「—」）', () => {
+    resetCinemaState();
+    M.folderPath = '我的/影视';
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《裸条》.md', '---\ntags: [电影]\n评分: 7\n观影日期: 2025-01-01\n---');
+    rebuildItems(mockAppWithVault(vault));
+    const d = buildAnalysisData();
+    expect(d.durCount).toBe(0);
+    expect(d.avgDur).toBe('—');
+    expect(d.seasonCount).toBe(0);
+    expect(d.avgSeason).toBe('—');
+  });
+});
+
+describe('ADR-0090 内嵌页板块对照（19 板块不丢能力）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetCinemaState();
+    M.folderPath = '我的/影视';
+    const vault = new MockVault();
+    seed(vault);
+    rebuildItems(mockAppWithVault(vault));
+  });
+
+  it('19 板块标题全部存在', () => {
+    const html = buildAnalysisHTML();
+    for (const t of REPORT_19_SECTIONS) expect(html).toContain(t);
+  });
+
+  it('19 板块标题全部 lucide 化（无 emoji 残留，icon 参数齐）', () => {
+    const html = buildAnalysisHTML();
+    // 19 板块 sectionHTML 均带 data-lucide 占位（另有页头 1 个，≥19 即齐）
+    const icons = html.match(/data-lucide="/g) || [];
+    expect(icons.length).toBeGreaterThanOrEqual(19);
+    expect(html).toContain('data-lucide="hourglass"'); // 片龄画像（原 🕰️）
+    expect(html).toContain('data-lucide="timer"'); // 片长画像（原 ⏱️）
+    expect(html).toContain('data-lucide="tv"'); // 追剧深度（原 📺）
+    expect(html).toContain('data-lucide="heart"'); // 真爱重复（原 ❤️）
+    expect(html).toContain('data-lucide="scale"'); // 打分习惯（原 ⚖️）
+    // 原 19 板块标题 emoji 全无残留
+    for (const emoji of ['🎬', '📅', '🕰', '⏱', '🗓', '📆', '⭐', '📈', '⚖', '🎭', '🌍', '🎥', '👥', '❤', '💬', '🏆', '🔗', '📺', '📌']) {
+      expect(html).not.toContain(emoji);
+    }
+  });
+
+  it('类型分布改水平条形行（圆形统计被否）：无 svg 环形，条形行带类型色', () => {
+    const html = buildAnalysisHTML();
+    expect(html).not.toContain('<svg');
+    expect(html).not.toContain('donut');
+    expect(html).not.toContain('stroke-dasharray'); // 环形图虚线描边不应再有
+    // 类型组名以条形行标签出现（seed 有 电影/剧集 两组）
+    expect(html).toContain('类型分布');
+    expect(html).toContain('剧集');
+  });
+});
+
+describe('ADR-0090 头行小计 + 空态动作 + 整页组装', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetCinemaState();
+    M.folderPath = '我的/影视';
+  });
+
+  it('analysisHeadSub：「N 部 · 已看 N · YYYY–YYYY」（单年只出一年）', () => {
+    const vault = new MockVault();
+    seed(vault);
+    rebuildItems(mockAppWithVault(vault));
+    // seed 4 条全部 2026 年观影 → 单年
+    expect(analysisHeadSub()).toBe('4 部 · 已看 3 · 2026');
+  });
+
+  it('analysisHeadSub：跨年区间 + 无记录时无年份段', () => {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《A》.md', '---\ntags: [电影]\n评分: 7\n观影日期: 2024-03-01\n---');
+    vault.files.set('我的/影视/《B》.md', '---\ntags: [电影]\n评分: 8\n观影日期: 2026-03-01\n---');
+    rebuildItems(mockAppWithVault(vault));
+    expect(analysisHeadSub()).toBe('2 部 · 已看 2 · 2024–2026');
+    resetCinemaState();
+    M.folderPath = '我的/影视';
+    expect(analysisHeadSub()).toBe('0 部 · 已看 0');
+  });
+
+  it('空库整页：引导文案 + 「添加影视」动作按钮（data-cinema-analysis-add）', () => {
+    const html = buildStatPageHtml();
+    expect(html).toContain('还没有可统计的影视记录');
+    expect(html).toContain('data-cinema-analysis-add');
+    expect(html).toContain('添加影视');
+  });
+
+  it('整页 = 页头（bar-chart-3 + 头行小计） + 板块流', () => {
+    const vault = new MockVault();
+    seed(vault);
+    rebuildItems(mockAppWithVault(vault));
+    const html = buildStatPageHtml();
+    expect(html).toContain('bz-cinema-page-head');
+    expect(html).toContain('data-lucide="bar-chart-3"');
+    expect(html).toContain('4 部 · 已看 3 · 2026');
+    expect(html).toContain('类型分布');
+    expect(html).toContain('想看清单');
   });
 });

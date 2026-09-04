@@ -9,7 +9,8 @@ import { resetObsidianMocks, hasNotice, Platform } from '../mock-obsidian-entry'
 import { M, resetCinemaState } from '../../src/cinema/state';
 import { rebuildItems } from '../../src/cinema/data';
 import { createOverlay, closeOverlay, openAddModalDirect } from '../../src/cinema/ui';
-import { ensureCinema, unloadCinema } from '../../src/cinema';
+import { ensureCinema, unloadCinema, openCinemaAnalysis } from '../../src/cinema';
+import { emitDomainEvent, clearDomainEvents } from '../../src/core/domain-bus';
 import { closeItemMenu } from '../../src/core/item-actions';
 
 function makeApp(vault: MockVault) {
@@ -54,6 +55,7 @@ describe('cinema overlay', () => {
   beforeEach(() => {
     resetObsidianMocks();
     resetCinemaState();
+    clearDomainEvents(); // 域事件订阅隔离：ensureCinema 的自动刷新订阅不跨用例残留
     M.folderPath = '我的/影视';
     document.body.innerHTML = '';
   });
@@ -313,12 +315,66 @@ describe('cinema overlay', () => {
     let content = overlay.querySelector('.bz-cinema-content') as HTMLElement;
     expect(content.querySelector('[data-cinema-ai-start]')?.textContent).toContain('开始 AI 荐片');
     expect(document.querySelector('.bz-overlay-mask')).toBeNull(); // 不弹窗
-    // 分析页：完整版（15 板块）
+    // 分析页：完整版（ADR-0090 后 19 板块 + 头行小计）
     (overlay.querySelector('[data-cinema-tool="stat"]') as HTMLElement).click();
     expect(M.view).toBe('stat');
     expect(overlay.querySelector('.bz-cinema-page')?.textContent).toContain('影视分析');
     expect(overlay.querySelector('.bz-cinema-page')?.textContent).toContain('类型分布');
     expect(overlay.querySelector('.bz-cinema-page')?.textContent).toContain('年度观影趋势');
+    expect(overlay.querySelector('.bz-cinema-page')?.textContent).toContain('追剧深度');
+    // 头行小计（4 部 · 已看 2 · 2026）
+    expect(overlay.querySelector('.bz-cinema-page-sub')?.textContent).toBe('4 部 · 已看 2 · 2026');
+  });
+
+  it('分析页空态带动作：点「添加影视」直达添加表单（ADR-0090）', () => {
+    const vault = new MockVault(); // 空库
+    const app = makeApp(vault);
+    ensureCinema(app);
+    rebuildItems(app);
+    createOverlay(app);
+    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    (overlay.querySelector('[data-cinema-tool="stat"]') as HTMLElement).click();
+    const content = overlay.querySelector('.bz-cinema-content') as HTMLElement;
+    expect(content.textContent).toContain('还没有可统计的影视记录');
+    // 点空态动作按钮 → 添加表单弹窗（名称输入出现）
+    (content.querySelector('[data-cinema-analysis-add]') as HTMLElement).click();
+    expect(document.querySelector('.bz-overlay-mask')).not.toBeNull();
+    expect(document.querySelector('#bz-cinema-f-name')).not.toBeNull();
+    closeOverlay();
+  });
+
+  it('openCinemaAnalysis（bz-cinema-analysis 直达，ADR-0090）：未开面板 → 开并落分析页；已开列表 → 就地切分析页', () => {
+    const { app } = seedVault();
+    openCinemaAnalysis(app);
+    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    expect(overlay).not.toBeNull();
+    expect(M.view).toBe('stat');
+    expect(overlay.querySelector('.bz-cinema-page')?.textContent).toContain('影视分析');
+    // 已开面板（切回列表）→ 再执行命令：同一 overlay 就地切分析页，不关闭重开
+    (overlay.querySelector('[data-cinema-type="all"]') as HTMLElement).click();
+    expect(M.view).toBe('list');
+    const same = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    expect(same).toBe(overlay);
+    openCinemaAnalysis(app);
+    expect(M.view).toBe('stat');
+    expect((document.querySelector('.bz-cinema-overlay') as HTMLElement)).toBe(overlay);
+    expect(overlay.querySelector('.bz-cinema-page')?.textContent).toContain('类型分布');
+  });
+
+  it('分析页打开期间 vault 变更自动刷新（ADR-0090 需求 6：只重算内容区）', async () => {
+    const { vault, app } = seedVault();
+    openCinemaAnalysis(app);
+    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    expect(overlay.querySelector('.bz-cinema-page-sub')?.textContent).toBe('4 部 · 已看 2 · 2026');
+    // 外部落盘新条目 → vault:md-created 域事件 → 300ms 防抖后自动重算分析页
+    vault.files.set('我的/影视/《新片》.md', md(`---
+tags: [电影]
+评分: 8
+观影日期: 2026-08-02
+---`));
+    emitDomainEvent('vault:md-created', { path: '我的/影视/《新片》.md' });
+    await new Promise((r) => setTimeout(r, 420));
+    expect(overlay.querySelector('.bz-cinema-page-sub')?.textContent).toBe('5 部 · 已看 3 · 2026');
   });
 
   it('AI 结果页反馈闭环：上次结果先展示 + 换一批 + 已在库中禁用 + 豆瓣外链 + 等待页大 spinner', () => {
