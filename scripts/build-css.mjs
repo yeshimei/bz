@@ -5,7 +5,7 @@
 //                         core 层 notice/settings-modal/confirm/dom、移动端全屏、
 //                         统一右键菜单/长按抽屉）
 //   src/<域>/styles.css   各域样式（diary/launcher/memo/todo/clipbook/
-//                         favorites/review/quiz/pomodoro/library/attach/encrypt/cinema）
+//                         favorites/review/quiz/pomodoro/attach/encrypt/cinema）
 //
 // 根 styles.css 是构建聚合产物（Obsidian 每插件只加载这一个 styles.css），
 // 请勿手改；改对应的源文件后 npm run dev / npm run build 重新生成。
@@ -40,7 +40,6 @@ const SOURCES = [
   "src/favorites/styles.css",
   "src/review/styles.css",
   "src/pomodoro/styles.css",
-  "src/library/styles.css",
   "src/attach/styles.css",
   "src/encrypt/styles.css",
   "src/settings-panel/styles.css",
