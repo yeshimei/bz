@@ -35,7 +35,7 @@ describe('PasswordVaultDataManager', () => {
     const oldData = JSON.stringify([
       { id: 'old-1', platform: 'GitHub', url: '', account: 'me', password: 'x', note: '', createdAt: '2026-01-01T00:00:00.000Z' },
     ]);
-    vault.files.set('CONFIG/.ENCRYPT/' + note.contentRef, await (await import('../../src/password/crypto')).CryptoService.encrypt(oldData, 'pw'));
+    vault.files.set('CONFIG/.ENCRYPT/' + note.contentRef, await (await import('../../src/core/crypto')).CryptoService.encrypt(oldData, 'pw'));
     await dm.load();
     expect(dm.pwData[0].fav).toBe(false);
     expect(dm.pwData[0].id).toBe('old-1');
