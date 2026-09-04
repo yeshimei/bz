@@ -127,7 +127,8 @@ export function todoSettingsSchema(): SettingsSchema {
           },
         ],
       },
-      mobileFullscreenGroup('todoMobileDefaultFullscreen', { desc: '待办面板在移动端默认全屏打开' }),
+      // ticket 170 铁律：移动端组不写描述（对齐其余 14 域）
+      mobileFullscreenGroup('todoMobileDefaultFullscreen'),
     ],
   };
 }

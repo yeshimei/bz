@@ -9,7 +9,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { M, resetBookshelfState } from '../../src/bookshelf/state';
 import {
   scanMarkdownBooks, loadEpubItems, sortItems, kwFilter, currentSideItems, computeStats,
-  resolveFolderPath, formatReadingTime, rebuildItems,
+  resolveFolderPath, resolveBookTag, formatReadingTime, rebuildItems,
 } from '../../src/bookshelf/data';
 
 function makeApp(vault: MockVault) {
@@ -94,6 +94,25 @@ describe('bookshelf 数据层', () => {
     expect(resolveFolderPath()).toBe('旧书库');
     setSettingsProvider(() => ({ bookshelfFolderPath: '我的书', libraryFolderPath: '旧书库' } as any));
     expect(resolveFolderPath()).toBe('我的书');
+  });
+
+  it('bookTag 旧键存量值运行时回落（library 域退役删键，零感知迁移）', () => {
+    // 键已从 BzSettings 接口删除，但用户 data.json 可能仍存旧值——运行时读存量值
+    expect(resolveBookTag()).toBe('book');
+    setSettingsProvider(() => ({ bookTag: '读书' } as any));
+    expect(resolveBookTag()).toBe('读书');
+    setSettingsProvider(() => ({ bookTag: '   ' } as any));
+    expect(resolveBookTag()).toBe('book'); // 空白脏值回落缺省
+  });
+
+  it('旧 bookTag 存量值仍驱动书目筛选（自定义标签的书可识别）', () => {
+    const vault = new MockVault();
+    vault.files.set('书库/三体.md', '---\ntags: [读书]\nauthor: 刘慈欣\n---');
+    vault.files.set('书库/不匹配.md', '---\ntags: [novel]\n---');
+    setSettingsProvider(() => ({ bookTag: '读书' } as any));
+    const items = scanMarkdownBooks(makeApp(vault));
+    expect(items.length).toBe(1);
+    expect(items[0].title).toBe('三体');
   });
 
   it('EPUB 聚合条目：从 weave-data.json 构建（ADR-0013 口径）', async () => {

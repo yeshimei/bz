@@ -1,9 +1,11 @@
 /**
- * 书库 notes 测试（ticket 12）：parseBookNotes / updateComment / deleteHighlight。
+ * 书架墙 notes 测试（迁移自旧 tests/library/notes.test.ts，旧 library 域退役）：
+ * parseBookNotes / updateComment / deleteHighlight / jumpToHighlight。
+ * 注：通知/notice 走 DOM 容器，需要 jsdom 环境（不加 node 头）。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
-import { parseBookNotes, updateComment, deleteHighlight, jumpToHighlight } from '../../src/library/notes';
+import { parseBookNotes, updateComment, deleteHighlight, jumpToHighlight } from '../../src/bookshelf/notes';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 
@@ -105,7 +107,7 @@ describe('updateComment / deleteHighlight', () => {
     expect(vault.modifiedPaths).toHaveLength(0);
   });
 
-  it('deleteHighlight：直接删除 span + 「已删除」（确认弹窗已统一到 UI 层，ticket 52）', async () => {
+  it('deleteHighlight：直接删除 span + 「已删除」（确认弹窗统一在 UI 层）', async () => {
     deleteHighlight(makeApp(vault), '书库/活着.md', 'h1', '原文一', () => {});
     await new Promise((r) => setTimeout(r, 20));
     const out = vault.files.get('书库/活着.md')!;
@@ -172,7 +174,7 @@ describe('updateComment / deleteHighlight', () => {
 
   it('audit D：读后他域并发改 frontmatter，process 对最新盘上内容重放替换（并发写不回滚）', async () => {
     const app = makeApp(vault);
-    // 模拟「读之后、写之前」bookshelf 落盘追加了 frontmatter 行
+    // 模拟「读之后、写之前」他域落盘追加了 frontmatter 行
     const realProcess = app.vault.process.bind(app.vault);
     app.vault.process = async (file: any, fn: (c: string) => string) => {
       vault.files.set('书库/活着.md', vault.files.get('书库/活着.md') + '\nbookReview: 他域并发写入');

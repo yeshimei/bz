@@ -140,9 +140,10 @@ function openReportPopup(): { overlay: HTMLElement; body: HTMLElement } {
   content.appendChild(scrollable);
   overlay.appendChild(content);
 
-  // 移动端默认全屏跟随书库（用户拍板：阅读报告不设独立开关，与书库同键 libraryMobileDefaultFullscreen）；
+  // 移动端默认全屏跟随书架墙（用户拍板：阅读报告不设独立开关；旧 library 域退役后同键切换
+  // libraryMobileDefaultFullscreen → bookshelfMobileDefaultFullscreen）；
   // 窗口内容根元素挂类（每次重建天然重挂）
-  applyMobileWindowFullscreen(content, tryGetSettings().libraryMobileDefaultFullscreen === true);
+  applyMobileWindowFullscreen(content, tryGetSettings().bookshelfMobileDefaultFullscreen === true);
   document.body.appendChild(overlay);
   reportOverlay = overlay;
 
