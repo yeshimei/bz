@@ -6,8 +6,8 @@
  *          + 未钉迷你 chips + 右侧「各域一览」；点遮罩/ESC 关闭（无关闭钮）
  *  - 移动：hero 渐变 + 搜索 + 三格统计条 + 两列域卡（徽标行内）+ 迷你 chips
  * 交互：卡片点按 → 执行对应 bz-* 命令（真实接线，关闭首页后开域）；
- *       编辑模式 → 点卡移除（勾选框视觉）、「＋ 加域卡」pick 钉选；点别处收起。
- *       命令搜索：app.commands.listCommands() 真实过滤 + 执行。
+ *       编辑模式 → 点卡移除（勾选框视觉）、「＋ 加域卡」pick 钉选、卡上 ←/→ 调序；
+ *       点别处收起。命令搜索：app.commands.listCommands() 真实过滤 + 执行。
  * 组件库纪律（铁律 6）：基线按钮/图标钮/输入/chip 走 src/core/ui 与 --bz-* token；
  * 图标一律 lucide（data-lucide 占位 → mountIcons 统一 setIcon）。
  */
@@ -15,9 +15,10 @@ import { escManager } from '../core/esc-manager';
 import { notice } from '../core/notice';
 import { uiIcon } from '../core/ui';
 import { topifyZ } from '../core/dom';
+import { isMobileEnv } from '../core/mobile';
 import { H } from './state';
 import { DOMAINS, DOMAIN_MAP, DOMAIN_DOT, ALL_DOMAIN_IDS } from './domains';
-import { DEFAULT_PINNED, loadHomeData, saveHomeData } from './data';
+import { DEFAULT_PINNED, loadHomeData, saveHomeData, movePinnedInList } from './data';
 import { collectHomeSnapshot } from './snapshot';
 import type { DomainStat } from './snapshot';
 
@@ -71,6 +72,8 @@ const ICO = {
   cmd: 'command',
   folder: 'folder',
   chevronRight: 'chevron-right',
+  moveLeft: 'arrow-left',
+  moveRight: 'arrow-right',
 };
 
 /* ---------- 状态辅助 ---------- */
@@ -106,8 +109,8 @@ export function createOverlay(app: any): void {
             <span class="bz-home-hello" data-home-hello></span>
             <span class="bz-home-date" data-home-date></span>
           </div>
-          <button class="bz-icon-btn bz-home-edit" data-home-edit title="编辑钉选" aria-label="编辑钉选">${iconSpan(ICO.edit)}</button>
-          <button class="bz-icon-btn bz-home-close" data-home-close title="关闭" aria-label="关闭">${iconSpan(ICO.close)}</button>
+          <button class="bz-icon-btn bz-icon-btn--boxed bz-home-edit" data-home-edit title="编辑钉选" aria-label="编辑钉选">${iconSpan(ICO.edit)}</button>
+          <button class="bz-icon-btn bz-icon-btn--boxed bz-home-close" data-home-close title="关闭" aria-label="关闭">${iconSpan(ICO.close)}</button>
         </div>
         <div class="bz-home-search">
           <span class="bz-home-search-ic">${iconSpan(ICO.search)}</span>
@@ -136,7 +139,10 @@ export function createOverlay(app: any): void {
     if (!H.currentOverlay) return; // 载入期间已关闭
     renderAll();
     void refreshSnapshotAndRender();
+    startSnapshotTimer(); // 30s 轻刷新：番茄剩余等「运行中」统计不冻结（closeOverlay 清理）
   });
+  // 新标签页语义：桌面打开即聚焦搜索，敲字即搜命令；移动端跳过（防弹软键盘）
+  if (!isMobileEnv()) (overlay.querySelector('[data-home-q]') as HTMLInputElement | null)?.focus();
 }
 
 /** 重新拉取跨域统计快照并重绘（面板打开时调用） */
@@ -150,6 +156,30 @@ export async function refreshSnapshotAndRender(): Promise<void> {
   renderAll();
 }
 
+/* ---------- 快照轻刷新计时器（overlay 存续期间 30s 重拉，不做秒级跳动） ---------- */
+
+const SNAPSHOT_REFRESH_MS = 30000;
+let snapTimer: ReturnType<typeof setInterval> | null = null;
+
+function startSnapshotTimer(): void {
+  stopSnapshotTimer();
+  snapTimer = setInterval(() => {
+    if (!H.currentOverlay) {
+      stopSnapshotTimer();
+      return;
+    }
+    void refreshSnapshotAndRender();
+  }, SNAPSHOT_REFRESH_MS);
+}
+
+/** 停快照刷新计时器（closeOverlay/unloadHome 调用；幂等） */
+export function stopSnapshotTimer(): void {
+  if (snapTimer !== null) {
+    clearInterval(snapTimer);
+    snapTimer = null;
+  }
+}
+
 export function closeOverlay(): void {
   if (!H.currentOverlay) return;
   H.currentOverlay.remove();
@@ -157,6 +187,7 @@ export function closeOverlay(): void {
   H.editing = false;
   releaseDocClick();
   palItems = [];
+  stopSnapshotTimer();
 }
 
 /* ---------- 事件 ---------- */
@@ -197,7 +228,13 @@ function bindEvents(overlay: HTMLElement, app: any): void {
       execPal(app);
       return;
     }
-    // 卡片（编辑态 = 移除；普通态 = 开域）
+    // 卡片（编辑态 = 移除；普通态 = 开域）；排序小钮在卡内，须先于卡片分支分流
+    const mv = t.closest('[data-home-move]') as HTMLElement | null;
+    if (mv) {
+      const card = mv.closest('[data-home-card]') as HTMLElement | null;
+      if (card && H.editing) movePinned(card.dataset.homeCard || '', Number(mv.dataset.homeMove));
+      return;
+    }
     const card = t.closest('[data-home-card]') as HTMLElement | null;
     if (card) {
       const id = card.dataset.homeCard || '';
@@ -206,6 +243,11 @@ function bindEvents(overlay: HTMLElement, app: any): void {
       } else if (id) {
         openDomain(id, app);
       }
+      return;
+    }
+    // 空钉选态按钮 → 进编辑模式
+    if (t.closest('[data-home-empty]')) {
+      setEditing(true);
       return;
     }
     // 迷你 chip
@@ -271,10 +313,25 @@ function removePinned(id: string): void {
   toast(`已把「${DOMAIN_MAP.get(id)?.name ?? id}」移出首页`, 'info');
 }
 
+/** 编辑模式 ←/→ 调序：合法域视图内换位（越界原样），变化才落盘重绘 */
+function movePinned(id: string, delta: number): void {
+  if (!id) return;
+  const next = movePinnedInList(H.pinned, id, delta, (x) => DOMAIN_MAP.has(x));
+  if (next === H.pinned) return;
+  H.pinned = next;
+  persistPinned();
+  renderAll();
+}
+
 function setEditing(on: boolean): void {
   H.editing = on;
-  H.currentOverlay?.querySelector('[data-home-edit]')?.classList.toggle('on', on);
+  syncEditBtnClass();
   renderAll();
+}
+
+/** 编辑开关钮视觉走样式库修饰符（bz-icon-btn--active），域内不再覆盖基线 */
+function syncEditBtnClass(): void {
+  H.currentOverlay?.querySelector('[data-home-edit]')?.classList.toggle('bz-icon-btn--active', H.editing);
 }
 
 /* ---------- 加域 pick ---------- */
@@ -307,14 +364,18 @@ function openAddPick(anchor: HTMLElement): void {
 
 /* ---------- 渲染：桌面 + 移动（同一 DOM，CSS 断点差异） ---------- */
 
-function cardHtml(id: string): string {
+function cardHtml(id: string, index: number, total: number): string {
   const d = DOMAIN_MAP.get(id)!;
   const st = statOf(id);
   const dot = DOMAIN_DOT[id] ?? '#8a8f99';
   const badge = H.editing
     ? `<span class="bz-home-chk">${iconSpan(ICO.check)}</span>`
+      + `<span class="bz-home-mvs">`
+      + `<span class="bz-home-mv${index <= 0 ? ' is-edge' : ''}" data-home-move="-1" role="button" aria-label="左移「${esc(d.name)}」" title="左移">${iconSpan(ICO.moveLeft)}</span>`
+      + `<span class="bz-home-mv${index >= total - 1 ? ' is-edge' : ''}" data-home-move="1" role="button" aria-label="右移「${esc(d.name)}」" title="右移">${iconSpan(ICO.moveRight)}</span>`
+      + `</span>`
     : st.text
-      ? `<span class="bz-home-badge${st.hl ? ' bz-home-badge--hl' : ''}"><i style="background:${dot}"></i>${esc(st.text)}${st.sub ? `<em>${esc(st.sub)}</em>` : ''}</span>`
+      ? `<span class="bz-home-badge${st.hl ? ' bz-home-badge--hl' : ''}"><i style="background:${dot}"></i><span class="bz-home-badge-t">${esc(st.text)}${st.sub ? `<em>${esc(st.sub)}</em>` : ''}</span></span>`
       : '';
   return `<button type="button" class="bz-home-card${H.editing ? ' bz-home-card--edit' : ''}" data-home-card="${id}">
     <span class="bz-home-ce">${iconSpan(d.icon)}</span>
@@ -331,26 +392,25 @@ function renderAll(): void {
   if (hello) hello.textContent = `${helloText()}，包仔`;
   const date = overlay.querySelector('[data-home-date]');
   if (date) date.textContent = todayText();
-  overlay.querySelector('[data-home-edit]')?.classList.toggle('on', H.editing);
+  syncEditBtnClass();
 
-  // 统计条（移动端：三格）
+  // 统计条（移动端：三格；data-home-side 复用侧栏点击路径——移动端侧栏隐藏，统计条即第二入口）
   const mstats = overlay.querySelector('[data-home-mstats]') as HTMLElement | null;
   if (mstats) {
     const memo = statOf('memo').text || '—';
     const rev = statOf('review').text || '—';
     const pom = statOf('pomodoro').text || '—';
-    mstats.innerHTML = `
-      <div class="bz-home-mstat"><span class="bz-home-mstat-v">${esc(memo)}</span><span class="bz-home-mstat-k">待办</span></div>
-      <div class="bz-home-mstat"><span class="bz-home-mstat-v">${esc(rev)}</span><span class="bz-home-mstat-k">复习到期</span></div>
-      <div class="bz-home-mstat"><span class="bz-home-mstat-v">${esc(pom)}</span><span class="bz-home-mstat-k">今日专注</span></div>`;
+    const mstatCell = (id: string, v: string, k: string) =>
+      `<button type="button" class="bz-home-mstat" data-home-side="${id}" aria-label="${k}：${esc(v)}，点按打开"><span class="bz-home-mstat-v">${esc(v)}</span><span class="bz-home-mstat-k">${k}</span></button>`;
+    mstats.innerHTML = mstatCell('memo', memo, '待办') + mstatCell('review', rev, '复习到期') + mstatCell('pomodoro', pom, '今日专注');
   }
 
   // 卡片网格
   const cards = overlay.querySelector('[data-home-cards]') as HTMLElement;
   const pinned = H.pinned.filter((id) => DOMAIN_MAP.has(id));
   cards.innerHTML = pinned.length
-    ? pinned.map((id) => cardHtml(id)).join('')
-    : '<div class="bz-home-cards-empty">还没有钉选域 — 点右上角编辑添加</div>';
+    ? pinned.map((id, i) => cardHtml(id, i, pinned.length)).join('')
+    : `<button type="button" class="bz-home-cards-empty" data-home-empty>${iconSpan(ICO.add)}<span>还没有钉选域，点这里进入编辑添加</span></button>`;
   overlay.querySelector('[data-home-cnt]')!.textContent = `${pinned.length} 个`;
   mountIcons(cards);
 

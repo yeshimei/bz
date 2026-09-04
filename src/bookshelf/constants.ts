@@ -49,6 +49,9 @@ export const ICON = {
   trash: 'trash-2',
   empty: 'library-big',
   sort: 'arrow-up-down',
+  tag: 'tag',
+  grid: 'layout-grid',
+  calendarHeart: 'calendar-heart',
 } as const;
 
 /** 报告命令 id（阅读数据分析报告，reading-report 域；点报告入口执行该命令） */
