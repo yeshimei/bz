@@ -114,3 +114,73 @@ export interface BzSelectOpts<T extends string = string> {
   onOpenChange?: (open: boolean) => void; // 弹层开合回调（上层上下文处理：z 提层等）
   onChange: (value: T) => void;
 }
+
+/** 搜索框（.bz-search：前缀搜索图标 + 输入） */
+export interface BzSearchOpts {
+  placeholder?: string;
+  value?: string;
+  onInput?: (v: string) => void;
+}
+
+/** 主头行（.bz-main-head：分组标题 + 计数 + spacer + 主按钮） */
+export interface BzMainHeadOpts {
+  title: string;
+  count?: string;          // 计数文案（无则隐藏计数位）
+  action?: { label: string; icon?: BzIconName; onClick?: () => void }; // 右侧主按钮（30px 中档）
+}
+
+/** 状态侧栏（.bz-rail）行项：前缀槽四选一（icon / boxedIcon / badge / dot） */
+export interface BzRailItem {
+  id: string;
+  name: string;
+  icon?: BzIconName;       // 前缀 lucide 图标（.bz-ic）
+  boxedIcon?: BzIconName;  // 前缀图标底座（.bz-rail-ic 20px 小方块）
+  badge?: { t: string; label: string; tint?: string }; // 字母/字徽标（t=文本，label=aria 名，tint=底色注入 --bz-rail-tint）
+  dot?: string;            // 状态色点（色值 → --bz-rail-tint）
+  count?: string | number; // 计数
+  pill?: boolean;          // 计数胶囊档（.bz-rail-count--pill）
+  unread?: string | number; // 未读气泡（真值渲染，文本入 .bz-rail-unread）
+  children?: BzRailItem[]; // 二级子列表（父项点击 = 展开收起，不触发 onSelect）
+}
+
+/** 状态侧栏（.bz-rail）：左栏分组导航 */
+export interface BzRailOpts {
+  groups: Array<{ label?: string; items: BzRailItem[] }>;
+  activeId: string;                  // 初始选中行
+  onSelect?: (id: string) => void;   // 叶子项点击（组内单选后回调）
+  foot?: HTMLElement;                // 底部固定区内容
+}
+
+/** 移动筛选横滑条（.bz-mobstrip，≤768px 替代 rail） */
+export interface BzMobStripOpts {
+  items: Array<{ id: string; label: string; dot?: string }>; // dot = 前置色点（色值 → --bz-rail-tint）
+  value: string;
+  onChange?: (id: string) => void;
+}
+
+/** 统计卡（.bz-stat：数字 + 标签） */
+export interface BzStatOpts {
+  label: string;
+  num: string | number;
+  icon?: BzIconName;       // 标签前缀图标
+  hint?: string;           // 补充说明
+  tone?: 'main' | 'ok' | 'warn' | 'danger' | 'text';
+  click?: boolean;         // 可点筛选（--click 指针暗示；onClick 存在即绑事件）
+  onClick?: () => void;
+}
+
+/** 进度条（.bz-progress：track + i 填充） */
+export interface BzProgressOpts {
+  value?: number;          // 0-100（钳制）
+  tone?: 'ok' | 'warn' | 'danger';
+  thin?: boolean;          // 3px 媒体封面档
+}
+
+/** 候选浮层（.bz-popover：input 锚定的候选列表） */
+export interface BzPopoverOpts {
+  anchor: HTMLElement;     // 锚点（须位于 position:relative 容器内；浮层挂其父元素）
+  options: Array<{ id: string; label: string; icon?: BzIconName }>;
+  value?: string;          // 当前选中
+  emptyText?: string;      // 空态文案
+  onPick?: (id: string) => void;
+}

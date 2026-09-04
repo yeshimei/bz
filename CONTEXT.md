@@ -326,6 +326,9 @@ _Avoid_: 整文件覆盖还原（日记条目是日期文件里的一个块，�
 **样式按域拆分 (Domain-split Styles)**: bz 的样式组织方式（ticket 70，ADR-0020，取代 ticket 60「全收敛根 styles.css」）——视觉样式源文件按域拆分：各域样式写 `src/<域>/styles.css`（diary/todo/belongings/clipbook/favorites/cinema/bookshelf/review/secondbrain/pomodoro/literature/attach/encrypt/smartcat/home 等），共享层/跨域样式（设置页分页、主窗口头部行统一规范、core 层、移动端主窗口默认全屏、统一右键菜单/长按抽屉）写 `src/core/styles.css`；构建由 `scripts/build-css.mjs` 按 SOURCES 清单顺序聚合生成根 `styles.css`（Obsidian 每插件只加载一个 styles.css；**聚合产物勿手改**），`npm run dev` 监听 src/**/*.css 自动重新聚合。类名仍守 `bz-` 前缀；运行时注入 `<style>` 与内联视觉样式依旧禁止。
 _Avoid_: 手改根 styles.css、往根 styles.css 直接追加样式、styles/&lt;域&gt;.css 注入模式
 
+**组件库 (bz UI Kit, ADR-0094)**: 新体系样式库 + 组件库（`src/core/ui/`，tokens.css + components.css + 每组件一文件工厂，转发桶 index.ts 唯一入口；分层与用法见 `docs/ui-kit-manual.md`）。**ADR-0094（2026-09-05）扩充批次**：收编 8 域逐字重复的面板骨架——面板壳 `.bz-panel-overlay/.bz-panel-frame`、影院式整宽头行 `.bz-panel-head` 族（`--bz-head-h` 44px/`--head-h-lg` 50px）、主头行 `.bz-main-head`、工具行 `.bz-toolrow`、搜索 `.bz-search`、状态侧栏 `.bz-rail` 族、移动横滑条 `.bz-mobstrip`、统计卡 `.bz-stat` 族、候选浮层 `.bz-popover`、进度条 `.bz-progress` + 社区对标扩充（alert/menu/sheet/tabs/kbd/skeleton/table/card 等约 40 类族，命名归一 alert/menu/sheet）；带功能工厂 9 件（uiIconSpan/mountIcons/uiSearch/uiMainHead/uiRail/uiMobStrip/uiStat/uiProgress/uiPopover）+ `uiResizable` 可选 `persist` 尺寸记忆（防抖 300ms）。分两批落地：库批次先落（本批），存量域全域替换随后另票；**新域主面板一律 .bz-panel-overlay/.bz-panel-frame + .bz-panel-head**，不再自绘面板骨架。
+_Avoid_: 域内复制组件库类族、新域自绘面板壳/头行、域内另起按钮/输入基线、手写 emoji 图标（一律 lucide 经 setIcon）
+
 **统一行操作 (Unified Item Actions)**: 跨域列表卡片统一手势组件（`src/core/item-actions.ts`）——列表**不注入任何常驻或 hover 图标排**；桌面端=**右键**弹跟手菜单（preventDefault 拦原生菜单，鼠标长按不触发），移动/触屏端=**长按**弹底部抽屉（遮罩+顶部条目信息+动作逐行）。能力：keepOpen（动作后抽屉保持+refreshItemSheet 原地重建动作与头部）、附属浮层（companion，抽屉之上的域内弹窗点击不误关抽屉）、危险项红色、强调色整行。动作项布局统一：图标左对齐 → 文案 → 小字右对齐。已接入域：待办、日记本、剪藏本（clipbook）、收藏本、归物本（含 4 状态流转+数据文件监听自动刷新）、书架墙（保留双击转跳书籍，md/EPUB 通用）、复习计划（保留双击打开笔记；开始复习难度弹窗为 companion）、保险库（双击预览保留）。
 _Avoid_: hover 操作条、行内图标排、行内按钮组（指列表卡片时）
 
