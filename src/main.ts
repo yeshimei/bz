@@ -62,6 +62,8 @@ import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setL
 import { registerGestureListeners } from './launcher/gestures';
 // 内容首页（home 域，ticket 177：入口页「新标签页」升级；与旧入口页并存，不改 launcher）
 import { openHome, unloadHome } from './home';
+// 今日回顾（recap 域，方向一 R2）：当天五域痕迹聚合只读面板
+import { openRecap, unloadRecap } from './recap';
 import { ensureAutoSummary, unloadAutoSummary, redoSummaryForActiveFile } from './auto-summary';
 // ai-agent 域解散：文件同步拆入 memo/favorites 域（原 ensureAIAgent/unloadAIAgent 换线）
 import { ensureMemoFileSync, unloadMemoFileSync } from './memo';
@@ -85,6 +87,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-home', name: '入口页', icon: DOMAIN_ICONS.launcher, callback: () => openLauncherPanel(getApp()) },
   // 内容首页（home 域，ticket 177：与旧入口页并存）
   { id: 'bz-home-open', name: '内容首页', icon: DOMAIN_ICONS.home, callback: () => openHome(getApp()) },
+  // 今日回顾（recap 域，方向一 R2：当天日记/影视/读书/待办/番茄痕迹聚合面板）
+  { id: 'bz-recap-today', name: '今日回顾', icon: DOMAIN_ICONS.recap, callback: () => openRecap(getApp()) },
   // 备忘录
   { id: 'bz-memo-open', name: '备忘录', icon: DOMAIN_ICONS.memo, callback: () => openBzPanel(getApp()) },
   { id: 'bz-memo-add', name: '加备忘', icon: 'pencil', callback: () => createMemoItem(getApp()) },
@@ -316,6 +320,7 @@ export default class BzPlugin extends Plugin {
     unloadFavoritesFileSync();
     unloadLauncherPanel();
     unloadHome();
+    unloadRecap();
     unloadEncrypt();
     unloadSmartCat();
     // 设置面板（ADR-0080：DOM 清理 + esc 注销）

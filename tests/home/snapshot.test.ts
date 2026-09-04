@@ -49,8 +49,8 @@ describe('home 快照', () => {
     expect(created).toEqual([]);
   });
 
-  it('NO_STAT_DOMAINS 覆盖无统计域：纯工具域（attach/encrypt/smartcat/settings/wall）+ 暂未接口径的内容域（literature/reading-report）', () => {
-    expect(NO_STAT_DOMAINS.size).toBe(7);
+  it('NO_STAT_DOMAINS 覆盖无统计域：纯工具域（attach/encrypt/smartcat/settings/wall）+ 暂未接口径的内容域（literature/reading-report/recap）', () => {
+    expect(NO_STAT_DOMAINS.size).toBe(8);
     for (const id of NO_STAT_DOMAINS) {
       expect(DOMAINS.some((d) => d.id === id)).toBe(true);
     }
