@@ -6,7 +6,7 @@
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { getSettings } from '../core/settings-provider';
-import { jsonFileStore, storageFile } from '../core/storage';
+import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
 import moment from 'moment';
 import { DEFAULT_CATEGORIES } from './default-categories.gen';
 import type { BelongingsDatabase } from './types';
@@ -67,14 +67,18 @@ export async function loadDatabase(): Promise<BelongingsDatabase> {
   return db as BelongingsDatabase;
 }
 
-/** 保存数据库 */
+/**
+ * 保存数据库（D2 可靠写契约原语 1 收编）：写盘入 core per-path 串行队列（键 =
+ * belongings.json 路径）——并发保存按序落盘，杜绝交错写导致的半截/覆盖竞态；
+ * 坏文件由 jsonFileStore 留档降级（原语 3）。数据形状与 API 不变。
+ */
 export async function saveDatabase(database: BelongingsDatabase): Promise<void> {
   const saveData = {
     version: database.version,
     last_updated: new Date().toISOString(),
     items: database.items,
   };
-  await jsonFileStore<any>(getDataFilePath()).write(saveData);
+  await enqueueFileTask(getDataFilePath(), () => jsonFileStore<any>(getDataFilePath()).write(saveData));
 }
 
 // ----- 工具函数（复用） -----

@@ -20,7 +20,7 @@ import { localDayKey } from './constants';
 import type { NewsReadEvent } from '../smartcat/news-source';
 import { writeClipNote } from './save';
 import { articleKeyOf } from './constants';
-import { readClipbookData, writeClipbookData } from './data';
+import { updateClipbookData } from './data';
 import { readNewsAndSidecar } from './loader';
 import { enqueueNewsWrite } from './write-queue';
 
@@ -156,22 +156,24 @@ export async function flowMarkRead(article: any): Promise<void> {
   emitReadEvt(raw, 'skipped');
 }
 
-/** 在读切换（仅侧写；返回新状态 'reading' | 'unread'） */
+/** 在读切换（仅侧写；返回新状态 'reading' | 'unread'）。
+ *  D2 收编：读改写入 per-path 串行队列（updateClipbookData），并发切换不同条目不互踩 */
 export async function flowToggleReading(article: any): Promise<'reading' | 'unread'> {
   const raw = article && article.raw;
   if (!raw) return 'unread';
   const key = articleKeyOf(raw);
-  const sidecar = await readClipbookData();
-  const cur = sidecar.articleOverrides[key];
-  const next: Record<string, { reading?: boolean }> = { ...sidecar.articleOverrides };
   let st: 'reading' | 'unread' = 'reading';
-  if (cur && cur.reading === true) {
-    delete next[key];
-    st = 'unread';
-  } else {
-    next[key] = { reading: true };
-  }
-  await writeClipbookData({ ...sidecar, articleOverrides: next });
+  await updateClipbookData((sidecar) => {
+    const cur = sidecar.articleOverrides[key];
+    const next: Record<string, { reading?: boolean }> = { ...sidecar.articleOverrides };
+    if (cur && cur.reading === true) {
+      delete next[key];
+      st = 'unread';
+    } else {
+      next[key] = { reading: true };
+    }
+    return { ...sidecar, articleOverrides: next };
+  });
   return st;
 }
 
@@ -181,10 +183,11 @@ export async function flowDeleteNews(article: any): Promise<void> {
   if (!raw) return;
   await removeArticle(raw);
   try {
-    const sidecar = await readClipbookData();
-    const overrides = { ...sidecar.articleOverrides };
-    delete overrides[articleKeyOf(raw)];
-    await writeClipbookData({ ...sidecar, articleOverrides: overrides });
+    await updateClipbookData((sidecar) => {
+      const overrides = { ...sidecar.articleOverrides };
+      delete overrides[articleKeyOf(raw)];
+      return { ...sidecar, articleOverrides: overrides };
+    });
   } catch (e) { /* 忽略 */ }
 }
 
