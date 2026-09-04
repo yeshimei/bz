@@ -51,8 +51,8 @@ import { openPomodoro, unloadPomodoro, ensurePomodoro } from './pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // 文献盒（literature 域，ADR-0072 自 bili-downloader 迁出；网页版已移除，见 tools/bili-downloader）
 import { openLiteraturePanel, openTermNote, unloadLiterature } from './literature';
-// 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 入口页磁贴播种）
-import { openAttachMove, ensureAttachSeed, ATTACH_COMMAND_ID } from './attach';
+// 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 入口页磁贴播种 + 右键菜单）
+import { openAttachMove, ensureAttachSeed, ensureAttachFileMenu, ATTACH_COMMAND_ID } from './attach';
 // 统一保险库（encrypt 域，ADR-0085：密码/加密笔记/加密日记三资产单一面板；旧 password-vault 命令已删）
 import { openEncrypt, encryptCurrentNote, copyVaultPassword, unloadEncrypt, mountEncryptStatusBar, unmountEncryptStatusBar } from './encrypt';
 import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setLauncherGestureSetter, LauncherModal } from './launcher';
@@ -241,6 +241,8 @@ export default class BzPlugin extends Plugin {
 
     // 附件搬移：入口页磁贴自动播种（desktop+mobile 末尾，幂等）
     void ensureAttachSeed(this.app);
+    // 附件搬移：文件右键菜单入口（md 笔记 →「搬移此笔记附件」，与命令同链路）
+    ensureAttachFileMenu(this);
 
     // ribbon 主入口：备忘录面板 + 日记本
     this.addRibbonIcon('check-square', '备忘录', () => openBzPanel(this.app));

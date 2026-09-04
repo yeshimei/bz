@@ -41,8 +41,13 @@ import { loadDatabase as loadBelongings } from '../belongings/data';
 import { parseMovieFile } from '../cinema/data';
 import { STATUS_WANT, STATUS_WATCHING } from '../cinema/constants';
 
-/** 首页无需统计的域（纯工具/无持久化数据） */
-export const NO_STAT_DOMAINS: ReadonlySet<string> = new Set(['attach', 'encrypt', 'smartcat', 'settings', 'wall']);
+/** 首页不出统计徽标的域：纯工具/无持久化数据（attach/encrypt/smartcat/settings/wall）
+ *  + 有数据但暂未接快照口径的内容域（literature 文献盒 / reading-report 阅读报告，
+ *    本轮只补曝光位，徽标留空不挡「各域一览」副题文案） */
+export const NO_STAT_DOMAINS: ReadonlySet<string> = new Set([
+  'attach', 'encrypt', 'smartcat', 'settings', 'wall',
+  'literature', 'reading-report',
+]);
 
 export interface DomainStat {
   /** 徽标主文案（如「3 条待办」；无数字统计为 ''） */
