@@ -1,4 +1,4 @@
-// scripts/build-css.mjs — 铁律 9：样式按域拆分，构建时聚合成根 styles.css
+// scripts/build-css.mjs — 铁律 4：样式按域拆分，构建时聚合成根 styles.css
 //
 // 源文件布局：
 //   src/core/styles.css   共享层/跨域样式（设置页分页、主窗口头部行统一规范、
@@ -58,7 +58,7 @@ const SOURCES = [
 const HEADER = [
   "/* ============================================================",
   " * bz（包仔）— 由 QuickAdd 脚本独立化而来",
-  " * 样式按域拆分（铁律 9）：本文件是构建聚合产物，请勿手改——",
+  " * 样式按域拆分（铁律 4）：本文件是构建聚合产物，请勿手改——",
   " *   共享样式 → src/core/styles.css；各域样式 → src/<域>/styles.css",
   " * 重新生成：npm run dev / npm run build（scripts/build-css.mjs）",
   " * ============================================================ */",
