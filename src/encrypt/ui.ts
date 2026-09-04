@@ -36,6 +36,11 @@ import { VaultPwView, relTime as pwRelTime, DEFAULT_PW_STATE, type PwViewState, 
 import { openPasswordQuickPicker } from './pw-picker';
 import { ASSET_COLOR, overviewHTML, noteRowHTML, noteDetailHTML, type VaultAsset, type OverviewStats, vIc } from './vault-assets-view';
 
+/** 状态栏内容：lucide 锁图标（解锁态开锁）+ 文案（与 index.ts mountEncryptStatusBar 同源，铁律：图标不用 emoji） */
+function statusbarHtml(unlocked: boolean): string {
+  return `${vIc(unlocked ? 'lock-open' : 'lock', 12)} 保险库`;
+}
+
 export interface EncryptUIConfig {
   root: string;
   previewEnabled: boolean;
@@ -508,6 +513,8 @@ export class UIManager {
     if (this._initialized) return;
     this.mask = this.createMask('bz-encrypt-mask');
     this.popup = this.createPopup('bz-encrypt-popup');
+    // ≤768px 恒真全屏：挂顶距工具类（44px 避让 Obsidian 移动端头，components.css 统一档）
+    this.popup.classList.add('bz-panel-mtop');
     // 统一骨架：nav（三栏左）+ main（顶栏 + area：中列表 / 右详情）
     this.popup.innerHTML = `
       <div class="bz-vault-desk">
@@ -1541,7 +1548,8 @@ export class UIManager {
     body.style.cssText = 'display:flex; align-items:flex-start; gap:10px;';
     const emoji = document.createElement('span');
     emoji.className = 'bz-item-sheet-emoji';
-    emoji.textContent = isDiary ? '🔐' : '🔒';
+    // 抽屉头资产图标：lucide 锁系（笔记=文件锁 / 日记=本子锁，对齐保险库资产图标语言），不用 emoji
+    emoji.innerHTML = vIc(isDiary ? 'book-lock' : 'file-lock', 16);
     body.appendChild(emoji);
     const info = document.createElement('div');
     info.style.cssText = 'flex:1; min-width:0;';
@@ -2490,7 +2498,7 @@ export class EncryptAppController {
   attachStatusBar(el: HTMLElement) {
     this.statusBarEl = el;
     this.dataManager.onUnlockChange = (unlocked) => {
-      if (this.statusBarEl) this.statusBarEl.textContent = unlocked ? '🔓 保险库' : '🔒 保险库';
+      if (this.statusBarEl) this.statusBarEl.innerHTML = statusbarHtml(unlocked);
       // 解锁/上锁后 UI 同步（密码数据加载/锁屏态）
       this.uiManager.notifyUnlockUi?.();
     };
