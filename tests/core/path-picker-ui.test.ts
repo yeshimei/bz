@@ -78,6 +78,15 @@ describe('openPathPicker 弹窗结构与层级', () => {
     expect(names).toContain('我的/日记');
     expect(names).toContain('归档');
   });
+
+  it('确认键默认文案「下一步」（两段式：选目录 → 下一步确认清单）；显式 okText 可覆盖', async () => {
+    makeAppAndSeed(['卡片盒/A.md']);
+    const popup = await openAndWait({ mode: 'single', selected: [], onConfirm: () => {} });
+    expect((popup.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).textContent).toBe('下一步');
+    closePathPicker();
+    const popup2 = await openAndWait({ mode: 'single', selected: [], okText: '就这个', onConfirm: () => {} });
+    expect((popup2.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).textContent).toBe('就这个');
+  });
 });
 
 describe('单选：点选高亮 + 确定提交；初始已选高亮', () => {
