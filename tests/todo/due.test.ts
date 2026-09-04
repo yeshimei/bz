@@ -2,11 +2,20 @@
 /**
  * 待办（todo）截止日期工具测试（自 memo/due.ts 迁移，语义逐字保留）
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { getDueStatus, formatDueText } from '../../src/todo/due';
 import moment from 'moment';
 
 const fmt = (d: Date) => moment(d).format('YYYY-MM-DD HH:mm');
+
+// 冻结到午间固定时刻：±1 小时相对运算不跨天，避免 23 点后运行误判「明天」
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2025-06-15T12:00:00'));
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('getDueStatus', () => {
   it('无截止 → null', () => {
