@@ -61,6 +61,18 @@ export function openCinema(app: App): void {
   createOverlay(app);
 }
 
+/**
+ * 打开影院并切到影视分析页（命令 bz-cinema-analysis，ADR-0090 报告内嵌化）：
+ * 原独立报告窗退役，命令直达影院面板分析页（不新造第二套面板）。
+ * 幂等语义：面板未开则开并落分析页；已开则就地切分析页重渲染（不再 toggle 关闭）。
+ */
+export function openCinemaAnalysis(app: App): void {
+  ensureCinema(app);
+  M.view = 'stat';
+  if (M.currentOverlay) renderAll(app);
+  else createOverlay(app);
+}
+
 /** 添加影视（命令 bz-cinema-add） */
 export function addCinemaItem(app: App): void {
   ensureCinema(app);
