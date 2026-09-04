@@ -12,6 +12,17 @@ function makeApp(vault: MockVault) {
   return mockAppWithVault(vault);
 }
 
+/** 本地时区日期串（YYYY-MM-DD） */
+function dateStr(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+/** N 年前的今天（纪念日卡种子用） */
+function yearsAgoDate(n: number): string {
+  const d = new Date();
+  return dateStr(new Date(d.getFullYear() - n, d.getMonth(), d.getDate()));
+}
+
 function seedVault(): { vault: MockVault; app: ReturnType<typeof mockAppWithVault> } {
   const vault = new MockVault();
   vault.files.set('书库/认知觉醒.md', `---
@@ -75,8 +86,13 @@ describe('bookshelf overlay', () => {
     // 统计卡：正在读 1 / 今年读完 1
     expect(overlay.textContent).toContain('正在读');
     expect(overlay.querySelector('.bz-bs-stat-num')?.textContent).toBe('1 本');
-    // 左栏 4 项
-    expect(overlay.querySelectorAll('.bz-bs-side-item').length).toBe(4);
+    // 左栏 4 项（状态组）+ 分类组（全部 + 成长 + 未分类）
+    expect(overlay.querySelectorAll('.bz-bs-side-list .bz-bs-side-item').length).toBe(4);
+    const catItems = Array.from(overlay.querySelectorAll('.bz-bs-side-catlist .bz-bs-side-item')).map((b) => b.textContent);
+    expect(catItems.length).toBe(3);
+    expect(catItems[0]).toContain('全部');
+    expect(catItems.some((t) => t?.includes('成长'))).toBe(true);
+    expect(catItems.some((t) => t?.includes('未分类'))).toBe(true);
     // 网格 3 卡：B7 单端渲染——桌面模式只渲染桌面容器，移动容器留空（免双份 DOM/图片）
     expect(gridCards(overlay).length).toBe(3);
     expect(mGridCards(overlay).length).toBe(0);
@@ -144,7 +160,7 @@ describe('bookshelf overlay', () => {
     const doneBtn = Array.from(popup.querySelectorAll('.bz-choice-btn')).find((b) => b.textContent?.trim() === '已读') as HTMLElement;
     doneBtn.click();
     // 保存
-    (popup.querySelector('.bz-btn--primary') as HTMLElement).click();
+    (popup.querySelector('.bz-bs-d-save') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 30)); // 异步 processFrontMatter + rebuild
     // frontmatter 落盘：readingProgress 100 + completionDate
     const content = vault.files.get('书库/认知觉醒.md') as string;
@@ -177,7 +193,7 @@ describe('bookshelf overlay', () => {
     const review = popup.querySelector('.bz-bs-d-review') as HTMLTextAreaElement;
     review.value = '';
     // 保存
-    (popup.querySelector('.bz-btn--primary') as HTMLElement).click();
+    (popup.querySelector('.bz-bs-d-save') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 30));
     const content = vault.files.get('书库/围城.md') as string;
     expect(content).toContain('readingProgress: 45');
@@ -230,7 +246,11 @@ describe('bookshelf overlay', () => {
     expect(popup.textContent).toContain('百年孤独');
     expect(popup.textContent).toContain('EPUB 书目由 Weave 阅读器记录');
     expect(popup.querySelector('.bz-bs-d-danger')).toBeFalsy();
-    expect(popup.querySelector('.bz-btn--primary')).toBeFalsy();
+    expect(popup.querySelector('.bz-bs-d-save')).toBeFalsy(); // 只读无保存钮
+    // 直达原文按钮存在（该书在读中 → 文案「继续读」；EPUB 走 Weave 深链）
+    const openBtn = popup.querySelector('.bz-bs-d-open') as HTMLElement;
+    expect(openBtn).toBeTruthy();
+    expect(openBtn.textContent).toContain('继续读');
     // 状态单选禁用
     const btn = popup.querySelector('.bz-choice-btn') as HTMLButtonElement;
     expect(btn.disabled).toBe(true);
@@ -320,7 +340,7 @@ describe('bookshelf overlay', () => {
     M.side = 'reading';
     const { renderAll } = await import('../../src/bookshelf/ui');
     renderAll(app);
-    expect(overlay.querySelector('.bz-bs-shelves')?.textContent).toContain('这个状态下还没有书');
+    expect(overlay.querySelector('.bz-bs-shelves')?.textContent).toContain('这个筛选下还没有书');
     expect(overlay.querySelector('.bz-bs-shelves [data-icon="funnel"]')).toBeTruthy();
     closeOverlay();
   });
@@ -404,4 +424,266 @@ describe('bookshelf overlay', () => {
     expect(document.querySelector('.bz-bs-confirm-pop')).toBeFalsy();
     expect(document.querySelector('.bz-bs-d-popup')).toBeFalsy();
   });
+
+  // ==================== 增强包：直达 / accent 卡 / 排序入口 / 撤销 / 分类 / 纪念日 / 读完日期 ====================
+
+  it('详情直达：在读 md 书按钮「继续读」→ 点击瞬间 progress 通知 + openLinkText 打开笔记 + 弹窗收起', async () => {
+    const { vault, app } = seedVault();
+    const openLink = vi.fn(async () => {});
+    (app as any).workspace.openLinkText = openLink;
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const card = Array.from(gridCards(overlay)).find((b) => b.textContent?.includes('认知觉醒')) as HTMLElement;
+    card.click();
+    const popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
+    const openBtn = popup.querySelector('.bz-bs-d-open') as HTMLElement;
+    expect(openBtn.textContent).toContain('继续读'); // 在读状态文案
+    openBtn.click();
+    expect(getNoticeMessages().some((m) => m.includes('正在打开…'))).toBe(true); // progress 反馈
+    expect(openLink).toHaveBeenCalledWith('书库/认知觉醒.md', '', false); // md 书 = 打开对应笔记
+    expect(document.querySelector('.bz-bs-d-popup')).toBeFalsy(); // 弹窗收起
+    closeOverlay();
+  });
+
+  it('详情直达：非在读 md 书按钮「打开笔记」；EPUB 无阅读数据回落直接打开 epub 路径', async () => {
+    const { vault, app } = seedVault();
+    const openLink = vi.fn(async () => {});
+    (app as any).workspace.openLinkText = openLink;
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    // 围城（已读）→ 打开笔记
+    const card = Array.from(gridCards(overlay)).find((b) => b.textContent?.includes('围城')) as HTMLElement;
+    card.click();
+    let popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
+    expect((popup.querySelector('.bz-bs-d-open') as HTMLElement).textContent).toContain('打开笔记');
+    (popup.querySelector('.bz-bs-d-open') as HTMLElement).click();
+    expect(openLink).toHaveBeenLastCalledWith('书库/围城.md', '', false);
+    closeOverlay();
+
+    // EPUB：weave-data 无 cfi → 回落直接打开 vaultPath（Weave 自行恢复上次位置）
+    const vault2 = new MockVault();
+    vault2.files.set('书库/一.md', '---\ntags: [book]\n---');
+    vault2.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
+      books: { a: { meta: { title: '百年孤独' }, file: { vaultPath: 'books/x.epub', sourceId: 's1' }, reading: { position: { percent: 0.5 } } } },
+    }));
+    const app2 = makeApp(vault2);
+    const openLink2 = vi.fn(async () => {});
+    (app2 as any).workspace.openLinkText = openLink2;
+    ensureBookshelf(app2);
+    createOverlay(app2);
+    await new Promise((r) => setTimeout(r, 20));
+    const overlay2 = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const epubCard = Array.from(gridCards(overlay2)).find((b) => b.textContent?.includes('百年孤独')) as HTMLElement;
+    epubCard.click();
+    const popup2 = document.querySelector('.bz-bs-d-popup') as HTMLElement;
+    (popup2.querySelector('.bz-bs-d-open') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 10)); // EPUB 链路异步（读 weave 聚合 → 深链/回落）
+    expect(openLink2).toHaveBeenLastCalledWith('books/x.epub', '', false);
+    closeOverlay();
+  });
+
+  it('详情直达：EPUB 在读 → weave-cfi 深链跳当前位置', async () => {
+    const vault = new MockVault();
+    vault.files.set('书库/一.md', '---\ntags: [book]\n---');
+    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
+      books: { a: { meta: { title: '百年孤独' }, file: { vaultPath: 'books/x.epub', sourceId: 's1' }, reading: { position: { chapterIndex: 2, cfi: 'epubcfi(/6/6[ch2]!/4)', percent: 0.5 } } } },
+    }));
+    const app = makeApp(vault);
+    const openLink = vi.fn(async () => {});
+    (app as any).workspace.openLinkText = openLink;
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const epubCard = Array.from(gridCards(overlay)).find((b) => b.textContent?.includes('百年孤独')) as HTMLElement;
+    epubCard.click();
+    const popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
+    (popup.querySelector('.bz-bs-d-open') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 10)); // EPUB 链路异步（读 weave 聚合 → 深链）
+    expect(openLink).toHaveBeenLastCalledWith(
+      'books/x.epub#weave-cfi=epubcfi(/6/6%5Bch2%5D!/4)&chapter=2&sid=s1', '', false,
+    );
+    closeOverlay();
+  });
+
+  it('在读 accent 卡整卡可点：一键回书直达原文（与详情「继续读」同语义）', async () => {
+    const { vault, app } = seedVault();
+    const openLink = vi.fn(async () => {});
+    (app as any).workspace.openLinkText = openLink;
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const accentCard = overlay.querySelector('.bz-bs-dash .bz-bs-statcard[data-bs-resume]') as HTMLElement;
+    expect(accentCard).toBeTruthy();
+    expect(accentCard.textContent).toContain('正在读');
+    accentCard.click();
+    expect(getNoticeMessages().some((m) => m.includes('正在打开…'))).toBe(true);
+    expect(openLink).toHaveBeenCalledWith('书库/认知觉醒.md', '', false);
+    closeOverlay();
+  });
+
+  it('移动端排序入口：头行 ⇅ 钮开筛选抽屉（同入口）；uiSegmented 切排序键即时生效且抽屉不关', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const sortBtn = overlay.querySelector('[data-bs-tool="sort"]') as HTMLElement;
+    expect(sortBtn).toBeTruthy();
+    expect(sortBtn.querySelector('[data-icon="arrow-up-down"]')).toBeTruthy(); // lucide ⇅
+    sortBtn.click();
+    const drawer = document.querySelector('.bz-bs-drawer-mask') as HTMLElement;
+    expect(drawer).toBeTruthy();
+    // 排序分段（组件库 uiSegmented，4 键）
+    const seg = drawer.querySelector('[data-bs-drawer-sort] .bz-segmented') as HTMLElement;
+    expect(seg).toBeTruthy();
+    const segBtns = Array.from(seg.querySelectorAll('.bz-segmented-btn')) as HTMLElement[];
+    expect(segBtns.map((b) => b.textContent)).toEqual(['最近阅读', '书名', '作者', '进度']);
+    // 切「书名」→ 网格即时重排，抽屉保持打开（可连选）
+    segBtns[1].click();
+    expect(M.sortMode).toBe('title');
+    expect((document.querySelector('.bz-bs-drawer-mask') as HTMLElement).isConnected).toBe(true);
+    const titles = gridCards(overlay).map((c) => c.querySelector('.bz-bs-bname')?.textContent);
+    expect(titles).toEqual([...(titles as string[])].sort((a, b) => (a || '').localeCompare(b || '', 'zh')));
+    closeDrawerHelper();
+    closeOverlay();
+  });
+
+  it('分类筛选：侧栏第二组正交过滤（状态 × 分类叠加）；抽屉 chips 同步', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    // 点分类「成长」→ 只剩认知觉醒
+    const catBtn = Array.from(overlay.querySelectorAll('.bz-bs-side-catlist .bz-bs-side-item')).find((b) => b.textContent?.includes('成长')) as HTMLElement;
+    catBtn.click();
+    expect(gridCards(overlay).length).toBe(1);
+    expect(gridCards(overlay)[0].textContent).toContain('认知觉醒');
+    // 正交：切状态「已读」→ 已读 ∩ 成长 = 空（空态文案）
+    const doneBtn = Array.from(overlay.querySelectorAll('.bz-bs-side-list .bz-bs-side-item')).find((b) => b.textContent?.includes('已读')) as HTMLElement;
+    doneBtn.click();
+    expect(gridCards(overlay).length).toBe(0);
+    expect(overlay.querySelector('.bz-bs-shelves')?.textContent).toContain('这个筛选下还没有书');
+    // 分类「全部」复位 → 已读 1 本
+    const allBtn = Array.from(overlay.querySelectorAll('.bz-bs-side-catlist .bz-bs-side-item')).find((b) => b.textContent?.includes('全部')) as HTMLElement;
+    allBtn.click();
+    expect(gridCards(overlay).length).toBe(1);
+    // 移动抽屉：分类 chips 组存在，点「未分类」生效（状态已读仍叠加 → 已读 ∩ 未分类 = 围城）
+    (overlay.querySelector('#bz-bs-filterbtn') as HTMLElement).click();
+    const drawer = document.querySelector('.bz-bs-drawer-mask') as HTMLElement;
+    const chips = Array.from(drawer.querySelectorAll('[data-bs-drawer-cats] .bz-chip')) as HTMLElement[];
+    expect(chips.map((c) => c.textContent?.replace(/\d+/g, ''))).toContain('全部');
+    const uncat = chips.find((c) => c.textContent?.includes('未分类')) as HTMLElement;
+    uncat.click();
+    expect(M.catFilter).toBe('未分类');
+    expect(gridCards(overlay).length).toBe(1);
+    expect(gridCards(overlay)[0].textContent).toContain('围城');
+    closeDrawerHelper();
+    closeOverlay();
+  });
+
+  it('状态保存撤销：改已读保存后 notifyUndo 一键回滚 frontmatter 与条目', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const card = Array.from(gridCards(overlay)).find((b) => b.textContent?.includes('认知觉醒')) as HTMLElement;
+    card.click();
+    const popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
+    (Array.from(popup.querySelectorAll('.bz-choice-btn')).find((b) => b.textContent?.trim() === '已读') as HTMLElement).click();
+    (popup.querySelector('.bz-bs-d-save') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 30));
+    // 落盘：已读（手滑前状态）
+    let content = vault.files.get('书库/认知觉醒.md') as string;
+    expect(content).toMatch(/completionDate: \d{4}-\d{2}-\d{2}/);
+    expect(content).toContain('readingProgress: 100');
+    // 撤销 toast（restore 语义 + 撤销按钮）
+    const undoBtn = Array.from(document.querySelectorAll('.bz-notice-action')).find((b) => b.textContent === '撤销') as HTMLElement;
+    expect(undoBtn).toBeTruthy();
+    undoBtn.click();
+    await new Promise((r) => setTimeout(r, 30));
+    // frontmatter 还原快照旧值：进度 60、无 completionDate
+    content = vault.files.get('书库/认知觉醒.md') as string;
+    expect(content).toContain('readingProgress: 60');
+    expect(content).not.toContain('completionDate');
+    // 本地条目回滚 + 渲染联动：仍在读
+    const it = M.items.find((x) => x.title === '认知觉醒');
+    expect(it?.status).toBe('在读');
+    expect(gridCards(overlay).some((c) => c.textContent?.includes('认知觉醒'))).toBe(true);
+    closeOverlay();
+  });
+
+  it('读完日期可改：已读书详情展示日期输入；改日期保存 → frontmatter 与年度统计按新日期', async () => {
+    const { vault, app } = seedVault();
+    const y = new Date().getFullYear();
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    // 基线：今年读完 1 本（围城 2026-08-15）
+    expect((overlay.querySelector('.bz-bs-dash') as HTMLElement).textContent).toContain(`${y} 读完`);
+    const card = Array.from(gridCards(overlay)).find((b) => b.textContent?.includes('围城')) as HTMLElement;
+    card.click();
+    const popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
+    // 已读 → 读完日期行可见，预填现有值
+    const cdateWrap = popup.querySelector('.bz-bs-d-cdatewrap') as HTMLElement;
+    expect(cdateWrap.style.display).not.toBe('none');
+    const cdate = popup.querySelector('.bz-bs-d-cdate') as HTMLInputElement;
+    expect(cdate.value).toBe('2026-08-15');
+    // 补录去年日期 → 保存
+    cdate.value = `${y - 1}-08-15`;
+    (popup.querySelector('.bz-bs-d-save') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 30));
+    const content = vault.files.get('书库/围城.md') as string;
+    expect(content).toContain(`completionDate: ${y - 1}-08-15`);
+    // 年度统计跟随补录日期：今年读完归零（统计按补录日期算，不被保存当天污染）
+    const dashText = (overlay.querySelector('.bz-bs-dash') as HTMLElement).textContent || '';
+    expect(dashText).not.toContain(`${y} 读完1 本`);
+    closeOverlay();
+  });
+
+  it('读完日期可改：在读转已读时日期行出现并默认今天；切回在读/未读隐藏', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const card = Array.from(gridCards(overlay)).find((b) => b.textContent?.includes('认知觉醒')) as HTMLElement;
+    card.click();
+    const popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
+    const cdateWrap = popup.querySelector('.bz-bs-d-cdatewrap') as HTMLElement;
+    const cdate = popup.querySelector('.bz-bs-d-cdate') as HTMLInputElement;
+    expect(cdateWrap.style.display).toBe('none'); // 在读：隐藏
+    (Array.from(popup.querySelectorAll('.bz-choice-btn')).find((b) => b.textContent?.trim() === '已读') as HTMLElement).click();
+    expect(cdateWrap.style.display).not.toBe('none');
+    expect(cdate.value).toBe(dateStr(new Date())); // 默认今天
+    (Array.from(popup.querySelectorAll('.bz-choice-btn')).find((b) => b.textContent?.trim() === '在读') as HTMLElement).click();
+    expect(cdateWrap.style.display).toBe('none');
+    closeOverlay();
+  });
+
+  it('读完纪念日卡：那年今天命中时 accent 卡位替换纪念卡（可点回看详情）；无命中不渲染', async () => {
+    const vault = new MockVault();
+    vault.files.set('书库/纪念书.md', `---\ntags: [book]\nauthor: 纪念作者\nreadingDate: ${yearsAgoDate(3)}\ncompletionDate: ${yearsAgoDate(3)}\nreadingProgress: 100\n---`);
+    const app = makeApp(vault);
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    // 命中：accent 卡位 = 纪念卡（无命中零空态的反向断言在下方）
+    const anniv = overlay.querySelector('.bz-bs-dash [data-bs-anniv]') as HTMLElement;
+    expect(anniv).toBeTruthy();
+    expect(anniv.textContent).toContain('3 年前的今天');
+    expect(anniv.textContent).toContain('纪念书');
+    expect(anniv.querySelector('[data-icon="calendar-heart"]')).toBeTruthy();
+    // 点击 → 回看该书详情
+    anniv.click();
+    const popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
+    expect(popup).toBeTruthy();
+    expect(popup.textContent).toContain('纪念书');
+    closeOverlay();
+  });
+
+  it('读完纪念日卡：无命中（今天没读完纪念日）不渲染、无空态', async () => {
+    const { vault, app } = seedVault(); // 围城读完 2026-08-15，非今天
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    expect(overlay.querySelector('[data-bs-anniv]')).toBeFalsy();
+    // 在读 accent 卡占位（一键回书语义在位）
+    expect(overlay.querySelector('.bz-bs-dash [data-bs-resume]')).toBeTruthy();
+    closeOverlay();
+  });
 });
+
+/** 关闭书架墙筛选抽屉（测试辅助） */
+function closeDrawerHelper(): void {
+  const drawer = document.querySelector('.bz-bs-drawer-mask') as HTMLElement | null;
+  if (drawer) (drawer.querySelector('[data-bs-drawer-close]') as HTMLElement)?.click();
+}
