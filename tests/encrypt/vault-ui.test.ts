@@ -339,10 +339,10 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     expect(popup.textContent).toContain('确定删除账号「me@example」吗？此操作不可撤销。');
     expect((document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).textContent).toBe('删除');
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
-    await new Promise((r) => setTimeout(r, 30));
-    // 成功 toast 带对象名（不再是孤零零「已删除」）
-    const msgs = [...document.querySelectorAll('.bz-notice-msg')].map((el) => el.textContent);
-    expect(msgs).toContain('已删除账号「me@example」');
+    // 成功 toast 带对象名（不再是孤零零「已删除」）；轮询等待写队列落盘（全量并发下固定 sleep 会抖）
+    await waitFor(() =>
+      [...document.querySelectorAll('.bz-notice-msg')].some((el) => el.textContent === '已删除账号「me@example」')
+    );
     await dm.load();
     expect(dm.pwData.length).toBe(0);
   });
