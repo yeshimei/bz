@@ -1,6 +1,6 @@
 /**
  * 统一路径选择器（ticket 128，ADR-0061）：设置面板所有路径类输入的统一样式组件。
- * - 卡片弹窗：标题头 + 搜索框 + vault 全部文件夹列表（滚动）+ 底部（selinfo / 清空(多选) / 确定）；
+ * - 卡片弹窗：标题头 + 搜索框 + vault 全部文件夹列表（滚动）+ 底部（selinfo / 清空(多选) / 下一步）；
  *   遮罩 + ESC 关闭（esc-manager 层级），无关闭按钮（主窗口规范：弹窗不放关闭按钮，靠遮罩 + ESC）。
  * - 数据源 = 全部 vault 文件夹：vault.getFiles() 聚合所有父目录 + 库根（''，显示「（库根目录）」）
  *   + vault.adapter.list() 递归补齐空目录与点前缀隐藏目录（如 CONFIG/.ENCRYPT——vault.getFiles
@@ -28,7 +28,7 @@ export interface PathPickerOptions {
   desc?: string;
   /** 当前已选目录（初始高亮/勾选） */
   selected?: string[];
-  /** 确定按钮文案（缺省「确定」） */
+  /** 确定按钮文案（缺省「下一步」——两段式语义：先选目录，再进入下一步确认清单） */
   okText?: string;
   /** 确定回调（list = 清洗后的目录清单；单选长度 0 或 1；'' = 库根目录） */
   onConfirm: (list: string[]) => void;
@@ -398,7 +398,7 @@ export function openPathPicker(opts: PathPickerOptions): void {
     return b;
   };
   if (mode === 'multi') mkBtn('清空', false, () => { selected.clear(); renderList(); updateSel(); });
-  mkBtn(opts.okText || '确定', true, () => {
+  mkBtn(opts.okText || '下一步', true, () => {
     const list = normalizePicked([...selected]);
     closePathPicker();
     opts.onConfirm(list);
