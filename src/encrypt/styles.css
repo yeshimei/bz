@@ -46,26 +46,10 @@
 }
 #bz-encrypt-popup { width: 90%; max-width: 700px; max-height: 80vh; }
 #bz-encrypt-preview-popup { max-height: 86vh; overflow: hidden; }
-.bz-encrypt-head {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 16px 24px 8px 24px;
-}
-.bz-encrypt-head h3 { margin: 0; font-size: 18px; font-weight: 600; color: var(--text-normal); }
-.bz-encrypt-head-btns { display: flex; gap: 8px; }
 #bz-encrypt-list { flex: 1; overflow-y: auto; padding: 0 20px 16px; min-height: 200px; }
 #bz-encrypt-list::-webkit-scrollbar { width: 6px; }
 #bz-encrypt-list::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
-.bz-encrypt-empty { padding: 40px; text-align: center; color: var(--text-faint); font-size: 15px; }
-.bz-encrypt-card {
-  background: var(--background-secondary); border-radius: 10px;
-  padding: 12px 16px; margin-bottom: 10px;
-  cursor: pointer;
-}
-.bz-encrypt-card:hover { background: var(--background-modifier-hover); }
-.bz-encrypt-card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.bz-encrypt-card-titlebox { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.bz-encrypt-card-title { font-size: 15px; font-weight: 600; color: var(--text-normal); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bz-encrypt-card-meta { margin-top: 4px; font-size: 12px; color: var(--text-faint); }
+/* 旧清单卡视图规则已随 ADR-0085 统一保险库工作台退役（死规则删除） */
 .bz-encrypt-preview-head {
   display: flex; justify-content: space-between; align-items: center;
   padding: 14px 20px 8px; border-bottom: 1px solid var(--background-modifier-border);
@@ -174,9 +158,10 @@
   color: var(--text-muted); cursor: pointer; user-select: none;
 }
 .bz-encrypt-dialog-ack input { margin-right: 6px; vertical-align: -1px; }
-/* 保险箱状态栏（补丁2：锁状态提示，点击打开面板） */
+/* 保险箱状态栏（补丁2：锁状态提示，点击打开面板；lucide 锁图标随解锁态开合切换） */
 .bz-encrypt-statusbar { cursor: pointer; }
 .bz-encrypt-statusbar:hover { opacity: 0.8; }
+.bz-encrypt-statusbar svg { vertical-align: -2px; margin-right: 4px; }
 
 
 /* ============================================================
@@ -236,8 +221,8 @@
 #bz-encrypt-popup .bz-vault-brand .seal { width: 34px; height: 34px; border-radius: 11px; background: var(--bz-vault-gold-soft); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(150, 112, 31, 0.35); flex-shrink: 0; color: #fff; }
 #bz-encrypt-popup .bz-vault-brand .seal svg { width: 18px; height: 18px; stroke: #fff; }
 #bz-encrypt-popup .bz-vault-brand .nm { font-size: 16px; font-weight: 700; line-height: 1.15; color: var(--bz-vault-ink); }
-#bz-encrypt-popup .bz-vault-brand .nm small { display: block; font-size: 10px; font-weight: 400; color: var(--bz-vault-muted); letter-spacing: 0.14em; margin-top: 2px; }
-#bz-encrypt-popup .bz-vault-sec { font-size: 10px; letter-spacing: 0.16em; color: var(--bz-vault-faint); padding: 12px 12px 6px; text-transform: uppercase; }
+#bz-encrypt-popup .bz-vault-brand .nm small { display: block; font-size: 11px; font-weight: 400; color: var(--bz-vault-muted); letter-spacing: 0.14em; margin-top: 2px; }
+#bz-encrypt-popup .bz-vault-sec { font-size: 11px; letter-spacing: 0.16em; color: var(--bz-vault-faint); padding: 12px 12px 6px; text-transform: uppercase; }
 #bz-encrypt-popup .bz-vault-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; font-size: 13px; color: var(--bz-vault-muted); cursor: pointer; border: 1px solid transparent; margin-bottom: 2px; }
 #bz-encrypt-popup .bz-vault-item svg { width: 16px; height: 16px; flex-shrink: 0; }
 #bz-encrypt-popup .bz-vault-item:hover { background: var(--bz-vault-surface2); }
@@ -289,7 +274,7 @@
 #bz-encrypt-popup .bz-vault-row .t1 { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; color: var(--bz-vault-ink); }
 #bz-encrypt-popup .bz-vault-row .t2 { font-size: 11px; color: var(--bz-vault-muted); font-family: var(--font-monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
 #bz-encrypt-popup .bz-vault-row .tm { font-size: 11px; color: var(--bz-vault-faint); flex-shrink: 0; }
-#bz-encrypt-popup .bz-vault-row .star { color: var(--bz-vault-warn); font-size: 10px; }
+#bz-encrypt-popup .bz-vault-row .star { color: var(--bz-vault-warn); } /* 收藏星为内联 svg（尺寸随属性），无文本字号 */
 /* 滚动修复（ADR-0085 回归）：pw/笔记/日记资产 = 列头(不滚) + .bz-vault-lc-body 滚动区；
    列头与滚动区分离，行渲染/空态都写 body，避免行渲染把列头（含新增入口）整列清掉。 */
 #bz-encrypt-popup .bz-vault-listcol { overflow: hidden; }
@@ -386,7 +371,7 @@
 #bz-encrypt-popup .bz-pwv-row .pl, #bz-encrypt-popup .bz-pwv-plrow .pl { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 5px; color: var(--bz-vault-ink); }
 #bz-encrypt-popup .bz-pwv-row .ac, #bz-encrypt-popup .bz-pwv-plrow .ac { font-size: 11px; color: var(--bz-vault-muted); font-family: var(--font-monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
 #bz-encrypt-popup .bz-pwv-row .tm, #bz-encrypt-popup .bz-pwv-plrow .tm { font-size: 11px; color: var(--bz-vault-faint); flex-shrink: 0; }
-#bz-encrypt-popup .bz-pwv-row .star, #bz-encrypt-popup .bz-pwv-plrow .star { color: var(--bz-vault-warn); font-size: 10px; }
+#bz-encrypt-popup .bz-pwv-row .star, #bz-encrypt-popup .bz-pwv-plrow .star { color: var(--bz-vault-warn); } /* 同上：内联 svg 收藏星 */
 #bz-encrypt-popup .bz-pwv-cnt { font-size: 11px; color: var(--bz-vault-gold-ink); background: rgba(185, 141, 62, 0.16); border-radius: 999px; padding: 0 7px; font-variant-numeric: tabular-nums; }
 /* 平台头像 */
 #bz-encrypt-popup .bz-pwv-avatar { position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; color: #fff; flex-shrink: 0; }
@@ -482,12 +467,12 @@
   #bz-encrypt-popup .bz-vault-mbar .st { font-size: 11px; color: var(--bz-vault-ok); font-weight: 700; background: rgba(62, 142, 90, 0.12); padding: 3px 9px; border-radius: 999px; }
   #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose { color: var(--bz-vault-muted); display: flex; }
   #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose svg { width: 18px; height: 18px; }
-  #bz-encrypt-popup .bz-vault-msearch { display: flex; align-items: center; gap: 8px; margin: 4px 14px 8px; background: var(--bz-vault-surface); border: 1px solid var(--bz-vault-line); border-radius: 12px; padding: 0 12px; }
+  #bz-encrypt-popup .bz-vault-msearch { display: flex; align-items: center; gap: 8px; margin: 4px 14px 8px; min-height: 44px; background: var(--bz-vault-surface); border: 1px solid var(--bz-vault-line); border-radius: 12px; padding: 0 12px; }
   #bz-encrypt-popup .bz-vault-msearch svg { width: 13px; height: 13px; color: var(--bz-vault-faint); }
   #bz-encrypt-popup .bz-vault-msearch input { border: none; background: none; flex: 1; padding: 9px 0; font-size: 13px; }
   #bz-encrypt-popup .bz-vault-msearch input:focus { outline: none; }
   #bz-encrypt-popup .bz-vault-mseg { display: flex; gap: 6px; margin: 2px 14px 10px; padding: 4px; background: var(--bz-vault-surface); border: 1px solid var(--bz-vault-line); border-radius: 12px; }
-  #bz-encrypt-popup .bz-vault-mseg .sg { flex: 1; text-align: center; padding: 7px 0; border-radius: 9px; font-size: 12px; font-weight: 600; color: var(--bz-vault-muted); cursor: pointer; }
+  #bz-encrypt-popup .bz-vault-mseg .sg { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 44px; text-align: center; padding: 7px 0; border-radius: 9px; font-size: 12px; font-weight: 600; color: var(--bz-vault-muted); cursor: pointer; }
   #bz-encrypt-popup .bz-vault-mseg .sg.on { background: var(--bz-vault-gold-soft); color: #fff; }
   #bz-encrypt-popup .bz-vault-mbody { flex: 1; overflow-y: auto; padding: 2px 14px 24px; position: relative; }
   #bz-encrypt-popup .bz-vault-mob-overview .bz-vault-cards { grid-template-columns: 1fr; }
@@ -505,4 +490,16 @@
   #bz-encrypt-popup .bz-pwv-mobplathead .nm { font-size: 15px; font-weight: 700; color: var(--bz-vault-ink); }
   #bz-encrypt-popup .bz-pwv-mobplathead .url { font-size: 11px; color: var(--bz-vault-muted); }
   #bz-encrypt-popup .bz-pwv-mobplathead .bz-pwv-btn.gold { margin-left: auto; background: var(--bz-vault-gold-soft); color: #fff; padding: 8px 14px; border-radius: 10px; font-weight: 600; }
+}
+
+/* ---- 触控热区（设计手册 §8.2）：移动端关闭/返回钮与账户卡小钮 ::after 外扩 ---- */
+@media (pointer: coarse) {
+  #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose,
+  #bz-encrypt-popup .bz-vault-mobpage .head .back,
+  #bz-encrypt-popup .bz-pwv-empty .bz-pwv-empty-add,
+  #bz-encrypt-popup .bz-pwv-acctcard .copyac { position: relative; }
+  #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose::after,
+  #bz-encrypt-popup .bz-vault-mobpage .head .back::after { content: ''; position: absolute; inset: -12px; }
+  #bz-encrypt-popup .bz-pwv-empty .bz-pwv-empty-add::after { content: ''; position: absolute; inset: -8px; }
+  #bz-encrypt-popup .bz-pwv-acctcard .copyac::after { content: ''; position: absolute; inset: -8px; }
 }

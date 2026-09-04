@@ -6,15 +6,19 @@
  */
 
 /* ==================== 面板容器（既有契约） ==================== */
-#review-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--background-modifier-cover); backdrop-filter: blur(2px); }
+#review-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--background-modifier-cover); } /* 毛玻璃明确不采用（设计手册 §5.2），遮罩统一主题 cover 色 */
 #review-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--background-primary); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 94%; max-width: 900px; max-height: 84vh; flex-direction: column; animation: slideUp 0.3s ease-out; }
 @media (max-width: 768px) {
   #review-popup { animation: none !important; width: 100%; max-width: 100%; max-height: 100%; }
 }
-/* 内容区：队列视图与冲刺视图共用宿主；冲刺时宿主滚动由内部接管 */
+/* 内容区：队列视图与冲刺视图共用宿主（overflow:hidden 由视图内部接管滚动，
+   原死的 ::webkit-scrollbar 规则已删——队列/冲刺滚动条隐藏见 .bz-q-view） */
 #review-entries-container { flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
-#review-entries-container::-webkit-scrollbar { width: 6px; }
-#review-entries-container::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
+
+/* 队列/冲刺滚动区隐藏滚动条（滚动功能保留；对齐全站「弹窗无滚动条」。
+   冲刺视图与队列视图共用宿主 #review-entries-container，覆盖两者） */
+#review-entries-container, #review-entries-container * { scrollbar-width: none; -ms-overflow-style: none; }
+#review-entries-container *::-webkit-scrollbar, #review-entries-container::-webkit-scrollbar { display: none; }
 
 /* 队列视图整体（滚动区 = 三区列；头/工具/底部行固定） */
 .bz-q-view { display: flex; flex-direction: column; height: 100%; min-height: 0; }
@@ -70,7 +74,7 @@
 .bz-q-card-meta { display: flex; align-items: center; gap: 4px; margin-top: 5px; flex-wrap: wrap; min-width: 0; }
 
 /* 标签 */
-.bz-q-tag { font-size: 10px; line-height: 1; padding: 2px 7px; border-radius: 10px; background: var(--background-modifier-border); color: var(--text-muted); white-space: nowrap; }
+.bz-q-tag { font-size: 11px; line-height: 1; padding: 2px 7px; border-radius: 10px; background: var(--background-modifier-border); color: var(--text-muted); white-space: nowrap; }
 .bz-q-tag.is-overdue { background: color-mix(in srgb, var(--color-red, #ff4757) 18%, transparent); color: var(--color-red, #ff4757); font-weight: 600; }
 .bz-q-tag.is-done { background: color-mix(in srgb, var(--color-green, #52c41a) 18%, transparent); color: var(--color-green, #52c41a); }
 .bz-q-tag.is-missing { color: var(--text-faint); text-decoration: line-through; }
@@ -161,7 +165,6 @@
 .bz-sq-empty { font-size: 11px; color: var(--text-faint); text-align: center; padding: 12px 0; }
 
 /* 结果卡 */
-.bz-sprint-block { width: 100%; }
 .bz-result { max-width: 420px; margin: 0 auto; text-align: center; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .bz-result-ic { font-size: 30px; line-height: 1; }
 .bz-result-name { font-size: 15px; font-weight: 600; color: var(--text-normal); }
@@ -223,12 +226,7 @@
 .difficulty-dialog .diff-btn[data-diff='easy'] { border-left: 3px solid #7bed9f; }
 .difficulty-dialog .diff-btn.diff-btn-cancel { margin-top: 12px; color: var(--text-muted); }
 
-/* 监听文件夹 chip */
-#review-watch-folders { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 4px 0; }
-.bz-review-watch-chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 12px; background: var(--background-secondary); border: 1px solid var(--background-modifier-border); max-width: 100%; }
-.bz-review-watch-name { font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bz-review-watch-close { background: none; border: none; cursor: pointer; color: var(--text-faint); font-size: 11px; line-height: 1; padding: 2px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: none !important; }
-.bz-review-watch-close:hover { color: var(--text-error, #ff4757); background: var(--background-modifier-hover); }
+/* 监听文件夹旧 chip 渲染已退役（死规则删除；监听文件夹设置走 settings-schema） */
 
 /* 排除名单 chip */
 #review-excluded-list { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 4px 0; }
@@ -239,13 +237,13 @@
 .bz-review-exclude-remove:hover { color: var(--text-error, #ff4757); background: var(--background-modifier-hover); }
 
 /* 统计弹窗 / 复习历史弹窗（既有实现，容器保留） */
-#review-stats-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--background-modifier-cover); backdrop-filter: blur(2px); }
+#review-stats-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--background-modifier-cover); }
 #review-stats-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--background-primary); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 92%; max-width: 600px; max-height: 88vh; flex-direction: column; animation: slideUp 0.3s ease-out; }
 #review-stats-body { flex: 1; overflow-y: auto; }
 .bz-review-stats-head { padding: 8px 18px 6px !important; }
 .bz-review-stats-head .bz-review-title { font-size: .92rem !important; font-weight: 600 !important; margin: 0 !important; }
 .bz-review-stats-tl-row:hover { background: var(--background-modifier-hover); }
-#review-history-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--background-modifier-cover); backdrop-filter: blur(2px); }
+#review-history-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--background-modifier-cover); }
 #review-history-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--background-primary); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 92%; max-width: 480px; max-height: 80vh; flex-direction: column; overflow: hidden; animation: slideUp 0.3s ease-out; }
 #review-history-body { flex: 1; overflow-y: auto; position: relative; }
 .bz-review-history-close { position: absolute; top: 10px; right: 10px; z-index: 2; background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px; box-shadow: none !important; }
@@ -257,3 +255,17 @@
 #review-stats-close .bz-ic svg, .bz-review-history-close .bz-ic svg { width: 100%; height: 100%; }
 .review-stage-badge .bz-ic { display: inline-flex; width: 1em; height: 1em; vertical-align: -0.12em; }
 .review-stage-badge .bz-ic svg { width: 100%; height: 100%; }
+
+/* ==================== 触控热区（设计手册 §8.2，触屏 pointer:coarse） ====================
+   底部信息行 / 迷你评级条 / 设置 chip 关闭钮 / 历史·统计关闭钮等小元素：padding 抬档
+   + ::after 外扩（视觉不变、热区 ≥44px；间距紧张处取 40px 下限档） */
+@media (pointer: coarse) {
+  .bz-q-fitem, .bz-review-bar-btn,
+  .bz-review-exclude-remove, .bz-review-history-close, #review-stats-close { position: relative; }
+  .bz-q-fitem { padding: 4px 0; }
+  .bz-q-fitem::after { content: ''; position: absolute; inset: -8px; }
+  .bz-review-bar-btn { padding: 10px 12px; }
+  .bz-review-bar-btn::after { content: ''; position: absolute; inset: -4px; }
+  .bz-review-exclude-remove::after,
+  .bz-review-history-close::after, #review-stats-close::after { content: ''; position: absolute; inset: -12px; }
+}
