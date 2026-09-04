@@ -126,11 +126,17 @@ describe('bz 骨架冒烟', () => {
     }
   });
 
-  it('ribbon 主入口指向备忘录面板', async () => {
+  it('ribbon 主入口指向待办面板（捕获入口改道：点击落点=待办工作台）', async () => {
     const plugin = await createPlugin(makeMockApp());
 
     expect(plugin.ribbonIcons.length).toBeGreaterThanOrEqual(1);
-    expect(plugin.ribbonIcons[0].title).toBe('备忘录');
+    expect(plugin.ribbonIcons[0].title).toBe('待办');
+    // 点击落点核对：打开待办面板，备忘录旧弹窗（#todo-popup）不出现
+    plugin.ribbonIcons[0].callback();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-todo-overlay')).toBeTruthy();
+    });
+    expect(document.getElementById('todo-popup')).toBeNull();
   });
 
   it('命令名统一（f3/f7/t1/t2，id 不动）与重复图标去重（f7）', async () => {

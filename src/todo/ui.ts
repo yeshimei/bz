@@ -34,7 +34,7 @@ import { emitDomainEvent } from '../core/domain-bus';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import {
   formatRelativeTime, getCurrentNoteInfo, getCurrentCursorPosition,
-  generateId, extractUrlAndDisplay, escapeHtml,
+  generateId, extractUrlAndDisplay, escapeHtml, fetchPageTitle,
 } from '../core/utils';
 import { TodoData } from './data';
 import { getDueStatus, formatDueText } from './due';
@@ -132,6 +132,41 @@ function fallbackScene(): string {
   const scenes = TodoData.getScenarios();
   const s = (tryGetSettings() as any).memoDefaultScene;
   return s && scenes.includes(s) ? s : scenes[0];
+}
+
+/** composer 当前生效场景：具体场景直用；伪场景（全部/今日/重要）兜底设置默认（addFromComposer 同口径） */
+function composerScene(): string {
+  const scenes = TodoData.getScenarios();
+  const specific =
+    M.activeScene !== '全部' && M.activeScene !== '今日' && M.activeScene !== '重要' && scenes.includes(M.activeScene);
+  return specific ? M.activeScene : fallbackScene();
+}
+
+// ---------- 剪藏场景剪贴板预填（复用 core 同款 extractUrlAndDisplay + fetchPageTitle，与 memo 域一致） ----------
+
+/** composer 预填标题候选（URL 预填时抓到；保存时仅当内容仍是该 URL 才采用，用户改动即弃） */
+let clipTitleHint: { url: string; title: string } | null = null;
+
+/** 读剪贴板做剪藏分流：URL 形态 → {url, 标题候选}；空/非 URL/读取失败 → null（非 URL 不打扰）。
+ *  标题候选 = markdown 链接文本；裸 URL 时在线抓页面标题（memo 同款 fetchPageTitle，失败回退空） */
+async function readClipUrl(): Promise<{ url: string; title: string } | null> {
+  let text = '';
+  try {
+    text = await navigator.clipboard.readText();
+  } catch (e) {
+    return null; // 剪贴板不可用（权限/环境）静默
+  }
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  const { url, display } = extractUrlAndDisplay(trimmed);
+  if (!url) return null;
+  const title = display && display !== url ? display : (await fetchPageTitle(url)) || '';
+  return { url, title };
+}
+
+/** 预填成功轻提示（正文无 emoji；同键去重防连续聚焦刷屏） */
+function notifyClipPrefill(): void {
+  notify('已从剪贴板预填链接', { type: 'info', dedupeKey: 'todo-clip-prefill' });
 }
 
 // ---------- 数据操作 ----------
@@ -275,7 +310,12 @@ function sceneCount(scene: string): number {
 
 // ---------- 主面板（打开/关闭/ESC） ----------
 
-export function openTodoPanel(app: App): void {
+/**
+ * 打开主面板（toggle：开着再调关闭）。
+ * opts.notePath：提醒改道定位（file-open 接管）——面板打开后搜索框预设为该笔记路径，
+ * 列表即只显该笔记的关联待办；不传则普通打开。
+ */
+export function openTodoPanel(app: App, opts?: { notePath?: string }): void {
   if (M.overlay) {
     closeTodoPanel();
     return;
@@ -447,6 +487,21 @@ export function openTodoPanel(app: App): void {
     if (e.key === 'Enter') addFromComposer();
   });
 
+  // 剪藏场景剪贴板预填（memo 同款逻辑）：聚焦时读剪贴板，URL 形态自动填入并抓标题；
+  // 非 URL 内容不打扰（不填、不提示）；已有输入不覆盖
+  composerInput.addEventListener('focus', () => {
+    void (async () => {
+      if (composerScene() !== '剪藏') return;
+      if (composerInput.value.trim()) return;
+      const hit = await readClipUrl();
+      if (!hit) return;
+      if (composerInput.value.trim()) return; // await 期间用户已输入
+      composerInput.value = hit.url;
+      if (hit.title) clipTitleHint = { url: hit.url, title: hit.title };
+      notifyClipPrefill();
+    })();
+  });
+
   // 搜索（防抖 180ms，对齐 favorites/belongings——修复前每键全量重渲且注释与实现不符）
   const searchInput = overlay.querySelector('[data-todo-search]') as HTMLInputElement;
   searchInput.addEventListener('input', () => {
@@ -460,6 +515,12 @@ export function openTodoPanel(app: App): void {
 
   void (async () => {
     await loadData();
+    // 提醒定位（file-open 改道接管）：搜索预设关联笔记路径（hay 含 notePath，直接命中）
+    if (opts?.notePath) {
+      M.search = opts.notePath;
+      const presetInput = overlay.querySelector('[data-todo-search]') as HTMLInputElement | null;
+      if (presetInput) presetInput.value = opts.notePath;
+    }
     renderAll();
   })();
 }
@@ -482,6 +543,7 @@ export function closeTodoPanel(): void {
   flushPendingSize(); // T2：面板关闭时立即落盘尺寸（防防抖窗口内丢失）
   M.renderFn = null;
   M.pinnedNewId = null;
+  clipTitleHint = null; // 剪贴板预填候选随面板生命周期清空
   M.completeTimers.forEach((t) => clearTimeout(t));
   M.completeTimers.clear();
 }
@@ -960,18 +1022,17 @@ function addFromComposer(): void {
   const input = overlay.querySelector('[data-todo-composer-input]') as HTMLInputElement;
   const txt = (input.value || '').trim();
   if (!txt) { notice('请输入内容'); return; }
-  const scenes = TodoData.getScenarios();
-  // 场景缺省兜底：memoDefaultScene（设置里「新条目默认场景」），未设或不合法回退第一个
-  const def = fallbackScene();
-  const scene = M.activeScene === '全部' || M.activeScene === '今日' || M.activeScene === '重要'
-    ? def
-    : scenes.includes(M.activeScene) ? M.activeScene : def;
+  // 场景缺省兜底：具体场景直用，伪场景回退 memoDefaultScene/第一个（composerScene 同口径）
+  const scene = composerScene();
   void (async () => {
     // T4：composer 快速录入与编辑器同口径提取 URL（标题含链接 → url 可点）
     const { url } = extractUrlAndDisplay(txt);
+    // 剪贴板预填标题候选：内容仍是预填的原始 URL 才采用（用户改动即弃）
+    const hint = clipTitleHint && clipTitleHint.title && txt === clipTitleHint.url ? clipTitleHint : null;
+    clipTitleHint = null;
     const it: TodoItem = {
       id: generateId(), // T5：与旧 memo 同前缀 'item'（同源 memo.json）
-      title: txt,
+      title: hint ? hint.title : txt,
       scene,
       priority: 'minor',
       created: moment().format('YYYY-MM-DD HH:mm:ss'),
@@ -1074,6 +1135,21 @@ export function openEditor(item: TodoItem | null): void {
   courseBox.append(courseInput, courseSug);
   form.appendChild(courseBox);
 
+  // 剪藏场景剪贴板预填（memo 弹窗同款交互：占位符预填 + 抓标题；编辑模式不预填——
+  // 编辑回填先于异步读取，预填占位符会误导）
+  function tryEditorClipPrefill(): void {
+    void (async () => {
+      if (isEdit) return;
+      if (contentInput.value.trim()) return;
+      const hit = await readClipUrl();
+      if (!hit) return; // 非 URL 不打扰
+      if (contentInput.value.trim()) return;
+      contentInput.placeholder = hit.url;
+      if (hit.title) titleInput.placeholder = hit.title;
+      notifyClipPrefill();
+    })();
+  }
+
   // 场景平铺单选（uiChoice：无彩色圆点，选中 = 品牌色非黑底）
   const sceneField = document.createElement('div');
   sceneField.className = 'bz-field';
@@ -1089,6 +1165,8 @@ export function openEditor(item: TodoItem | null): void {
       titleBox.classList.toggle('bz-todo-extra-on', v === '剪藏');
       scriptBox.classList.toggle('bz-todo-extra-on', v === '代码');
       courseBox.classList.toggle('bz-todo-extra-on', v === '公开课');
+      // 切入剪藏：尝试剪贴板预填（memo 同款「剪藏场景触达即读剪贴板」）
+      if (v === '剪藏') tryEditorClipPrefill();
     },
   });
   sceneField.appendChild(choice.el);
@@ -1234,7 +1312,12 @@ export function openEditor(item: TodoItem | null): void {
 
   // 保存
   saveBtn.addEventListener('click', () => {
-    const content = contentInput.value.trim();
+    let content = contentInput.value.trim();
+    if (!content) {
+      // 剪藏预填兜底（memo 同款）：内容空但占位符已预填 URL → 采用占位符
+      const ph = contentInput.placeholder;
+      if (ph && ph !== '输入待办内容...') content = ph;
+    }
     if (!content) { notice('请输入内容'); return; }
     let scene: string = defaultScene;
     const sceneBtnOn = choice.el.querySelector('.is-on');
@@ -1243,7 +1326,12 @@ export function openEditor(item: TodoItem | null): void {
     const priority: string = prioBtnOn ? (prioBtnOn as HTMLElement).dataset.value || 'minor' : 'minor';
     const dueVal = dueInput.value;
     const due = dueVal ? dueVal.replace('T', ' ') : null;
-    const titleVal = titleInput.value.trim();
+    let titleVal = titleInput.value.trim();
+    if (!titleVal && scene === '剪藏') {
+      // 剪藏标题占位符兜底（memo 同款）：未手填时采用预填的展示文本/抓取标题
+      const ph = titleInput.placeholder;
+      if (ph && ph !== '标题（可选）') titleVal = ph;
+    }
     const scriptName = scene === '代码' ? (scriptInput.value.trim() || null) : null;
     let courseName: string | null = null;
     let coursePath: string | null = null;
@@ -1314,6 +1402,8 @@ export function openEditor(item: TodoItem | null): void {
   const { close } = uiModal({ content: modalBox, maxWidth: 420 });
   closeModal = close;
   contentInput.focus();
+  // 剪藏默认场景：打开即尝试剪贴板预填（新建限定；与切场景入口共用 tryEditorClipPrefill）
+  if (!isEdit && defaultScene === '剪藏') tryEditorClipPrefill();
 }
 
 function uiIconBtnClear(): HTMLButtonElement {

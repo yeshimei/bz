@@ -19,8 +19,9 @@ import { setBzSettingsProvider, unloadBz, ensureBz } from './memo';
 
 import BzSettings, { DEFAULT_SETTINGS, migrateSecondBrainSettings } from './settings';
 
-// 待办（todo 域，与旧备忘录并存：同源 memo.json，UI/交互归本域；后台任务仍由 memo 执行）
-import { openTodoPanel, addTodoItem, unloadTodo } from './todo';
+// 待办（todo 域，与旧备忘录并存：同源 memo.json，UI/交互归本域；
+// 被动捕获入口——启动自动弹出/file-open 提醒/侧栏图标——落点=待办面板，本域提醒后台承担）
+import { openTodoPanel, addTodoItem, unloadTodo, ensureTodoReminders } from './todo';
 // 15 域（懒加载：首次命令/事件触发时 ensureXxx 幂等初始化）
 import { openBzPanel, createMemoItem } from './memo';
 import { addBelongingsItem, openBelongings, unloadBelongings } from './belongings';
@@ -245,8 +246,8 @@ export default class BzPlugin extends Plugin {
     // 附件搬移：文件右键菜单入口（md 笔记 →「搬移此笔记附件」，与命令同链路）
     ensureAttachFileMenu(this);
 
-    // ribbon 主入口：备忘录面板 + 日记本
-    this.addRibbonIcon('check-square', '备忘录', () => openBzPanel(this.app));
+    // ribbon 主入口：待办（捕获入口改道：点击落点=待办面板，不再进备忘录弹窗）+ 日记本
+    this.addRibbonIcon('check-square', '待办', () => openTodoPanel(this.app));
     this.addRibbonIcon('notebook-pen', '日记本', () => showDiaryPanel(this));
 
     // 番茄钟状态栏（ticket 29：常驻倒计时，点击打开弹窗）
@@ -264,8 +265,10 @@ export default class BzPlugin extends Plugin {
 
     // 事件常驻域按设置开关注册（懒加载架构）
     this.app.workspace.onLayoutReady(() => {
-      // 备忘录：启动即初始化（对齐源码 App.init：file-open 提醒 + 剪贴板监听 + autoPopupOnStart）
+      // 备忘录：启动即初始化（面板 UI + 同源同步；启动弹出/file-open 提醒已改道待办域，不再弹备忘录窗）
       void ensureBz(this.app);
+      // 待办提醒后台：启动自动弹出 + 打开笔记提醒（落点=待办面板；设置键 autoPopupOnStart/openNoteReminder 与备忘录共享）
+      ensureTodoReminders(this.app);
       // 日记本：启动即初始化（diary-notebook 原行为：onLayoutReady → init）
       void diaryInit(this);
       if (this.settings.autoSummaryEnabled) ensureAutoSummary(this.app);
