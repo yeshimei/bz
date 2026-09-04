@@ -32,7 +32,7 @@ import {
   STATUS_COLORS, SIDE_DEFS, SORT_LABEL, ICON,
   EMPTY_BOOKS_ICON, EMPTY_SEARCH_ICON, EMPTY_FILTER_ICON,
 } from './constants';
-import { M, resetBookshelfState, type BookshelfItem, type BookshelfView, type SideId, type SortKey } from './state';
+import { M, resetBookshelfState, applyDefaultView, type BookshelfItem, type BookshelfView, type SideId, type SortKey } from './state';
 import {
   rebuildItems, getDisplayItems, computeStats, resolveFolderPath, resolveBookTag,
   categoryList, findAnniversary,
@@ -376,6 +376,7 @@ export function openReportView(app: App): void {
   if (!M.currentOverlay) {
     // 冷开：先落视图状态，createOverlay 的 rebuild 完成回调自动进报告视图（免双渲染）
     M.view = 'report';
+    applyDefaultView();
     createOverlay(app);
   } else {
     showView(app, 'report');

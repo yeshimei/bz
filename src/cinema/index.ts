@@ -13,6 +13,17 @@ import { stopAllPosterWatch } from './poster-watch';
 let initialized = false;
 let autoRefreshRegistered = false;
 
+/** 打开面板时的默认视图接线（issue 194）：每次打开读设置，非法值回落
+ *  （排序 date/created/rating 之外回落 date；状态筛选仅认想看/在看/已看，其余回全部）。
+ *  与收藏本 openPanel 同语义：设置是「下次打开的初始值」，面板内改选为会话内临时态。 */
+export function applyDefaultView(): void {
+  const s = tryGetSettings() as Record<string, unknown>;
+  const sort = s.cinemaSortMode;
+  M.sortMode = sort === 'created' || sort === 'rating' ? sort : 'date';
+  const st = s.cinemaStatusFilter;
+  M.statusFilter = st === '想看' || st === '在看' || st === '已看' ? st : null;
+}
+
 /** 幂等初始化（懒加载）：设置注入 + ESC + 自动刷新 */
 export function ensureCinema(app: App): void {
   if (initialized) return;
@@ -58,6 +69,7 @@ export function openCinema(app: App): void {
     closeOverlay();
     return;
   }
+  applyDefaultView();
   createOverlay(app);
 }
 
@@ -70,7 +82,10 @@ export function openCinemaAnalysis(app: App): void {
   ensureCinema(app);
   M.view = 'stat';
   if (M.currentOverlay) renderAll(app);
-  else createOverlay(app);
+  else {
+    applyDefaultView();
+    createOverlay(app);
+  }
 }
 
 /** 添加影视（命令 bz-cinema-add） */

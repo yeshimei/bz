@@ -11,7 +11,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { onDomainEvent, clearDomainEvents } from '../../src/core/domain-bus';
 import { M, resetCinemaState } from '../../src/cinema/state';
-import { ensureCinema, unloadCinema } from '../../src/cinema';
+import { ensureCinema, unloadCinema, applyDefaultView } from '../../src/cinema';
 import { quickAddWant } from '../../src/cinema/recommend';
 
 function makeApp(vault: MockVault) {
@@ -50,6 +50,39 @@ describe('cinema ensureCinema 目录回落（ADR-0087）', () => {
     const vault = new MockVault();
     ensureCinema(makeApp(vault));
     expect(M.folderPath).toBe('我的/影视');
+  });
+});
+
+describe('cinema 默认视图接线（issue 194）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetCinemaState();
+    document.body.innerHTML = '';
+  });
+  afterEach(() => {
+    unloadCinema();
+    setSettingsProvider(() => ({} as any));
+  });
+
+  it('未配置 → 默认最近观看排序 + 状态全部', () => {
+    setSettingsProvider(() => ({} as any));
+    applyDefaultView();
+    expect(M.sortMode).toBe('date');
+    expect(M.statusFilter).toBeNull();
+  });
+
+  it('合法配置生效（rating 排序 + 已看筛选）', () => {
+    setSettingsProvider(() => ({ cinemaSortMode: 'rating', cinemaStatusFilter: '已看' } as any));
+    applyDefaultView();
+    expect(M.sortMode).toBe('rating');
+    expect(M.statusFilter).toBe('已看');
+  });
+
+  it('非法值回落（未知排序回 date、未知状态回全部）', () => {
+    setSettingsProvider(() => ({ cinemaSortMode: 'xxx', cinemaStatusFilter: '想' } as any));
+    applyDefaultView();
+    expect(M.sortMode).toBe('date');
+    expect(M.statusFilter).toBeNull();
   });
 });
 

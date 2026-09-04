@@ -8,7 +8,7 @@
 import type { App, EventRef } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
-import { M, resetBookshelfState } from './state';
+import { M, resetBookshelfState, applyDefaultView } from './state';
 import { resolveFolderPath, rebuildItems, WEAVE_DATA_FILE } from './data';
 import {
   createOverlay, closeOverlay, registerEscapeHandler, unregisterEscapeHandler,
@@ -70,6 +70,7 @@ export function openBookshelf(app: App): void {
     closeOverlay();
     return;
   }
+  applyDefaultView();
   createOverlay(app);
 }
 

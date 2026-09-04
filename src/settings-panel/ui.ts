@@ -121,16 +121,25 @@ export const DOMAINS: DomainDef[] = [
   { id: 'pomodoro', name: '番茄钟', icon: DOMAIN_ICONS.pomodoro, desc: '专注计时与休息', schemaLoader: schemaLoaders.pomodoro },
   { id: 'attach', name: '附件搬移', icon: DOMAIN_ICONS.attach, desc: '附件整理', noSettings: true },
   { id: 'encrypt', name: '保险库', icon: DOMAIN_ICONS.encrypt, desc: '密码、加密笔记与加密日记', schemaLoader: schemaLoaders.encrypt },
-  { id: 'smartcat', name: '小橘陪伴猫', icon: DOMAIN_ICONS.smartcat, desc: '桌面宠物陪伴', noSettings: true },
+  { id: 'smartcat', name: '小橘陪伴猫', icon: DOMAIN_ICONS.smartcat, desc: '桌面宠物陪伴', schemaLoader: schemaLoaders.smartcat },
   { id: 'literature', name: '文献盒', icon: DOMAIN_ICONS.literature, desc: '文献笔记与术语录入', schemaLoader: schemaLoaders.literature },
 ];
 
-/** 可见域：无设置项的域（noSettings）不在左侧列表/移动端列表显示（用户拍板：没有设置的域隐藏）。
- *  搜索同样只搜可见域（隐藏的域没有可配置项，不占列表位）。 */
-const visibleDomains = (): DomainDef[] => DOMAINS.filter((d) => !d.noSettings);
-
 /** 已加载域的 schema 行缓存（移动端搜索「设置项」段用：域名 → 行名/描述列表） */
 const schemaRowCache = new Map<string, Array<{ name: string; desc: string }>>();
+
+/** 已加载域的当前端可见设置项数（preloadAllBadges 回填；面板销毁随 navBadges 一并清空）。
+ *  导出供回归测试断言（与 DOMAINS 同惯例）。 */
+export const loadedCounts = new Map<string, number>();
+
+/**
+ * 列表可见域（issue 194 按端隐藏）：无设置项的域（noSettings）不显示；有 schema 但当前端
+ * 可见项数为 0 的域（如设置全部是移动端组而处于桌面端）也不显示——加载完成前先展示
+ * （避免列表闪空），preloadAllBadges 解析后剔除。搜索同样只搜列表可见域。
+ * 导出供回归测试断言（与 DOMAINS 同惯例）。
+ */
+export const listableDomains = (): DomainDef[] =>
+  DOMAINS.filter((d) => !d.noSettings && d.schemaLoader && (!loadedCounts.has(d.id) || (loadedCounts.get(d.id) ?? 0) > 0));
 
 /** 导航徽标运行时值（域 id → 徽标文案）：初始 ·；noSettings 域 —；schema 加载后回填设置项总数。
  *  动态计算：设置项随 schema 增删或 visibleWhen 门控变化后，徽标自动跟随。 */
@@ -185,6 +194,8 @@ export class SettingsPanelUI {
   private renderHandles: Array<{ refresh: () => void }> = [];
   /** 域渲染竞态序号（P2-4：每次 renderDomain 自增，await 后校验丢弃过期渲染） */
   private renderSeq = 0;
+  /** 列表重绘回调（桌面导航/移动列表各自注册；preload 解析出零项域后剔除重绘） */
+  private rerenderList: (() => void) | null = null;
 
   /**
    * 打开面板；domainId 可选（增强包：待办场景菜单「在设置中编辑」直达）——
@@ -221,6 +232,8 @@ export class SettingsPanelUI {
     } else {
       this.buildDesktop(popup);
     }
+    // 打开即预加载全部域 schema（徽标回填 + 零项域按端从列表剔除，两端共用）
+    void this.preloadAllBadges();
 
     document.body.appendChild(mask);
     document.body.appendChild(popup);
@@ -270,8 +283,8 @@ export class SettingsPanelUI {
     const renderNav = (q: string) => {
       const query = q.trim();
       nav.innerHTML = '';
-      // 无设置项的域不在左侧列表显示（用户拍板）；搜索同样只搜可见域
-      visibleDomains().forEach((d) => {
+      // 无设置项/当前端零设置项的域不在左侧列表显示（用户拍板 + issue 194）；搜索同样只搜列表可见域
+      listableDomains().forEach((d) => {
         if (query && !d.name.includes(query) && !d.desc.includes(query)) return;
         const b = document.createElement('button');
         b.type = 'button';
@@ -299,9 +312,9 @@ export class SettingsPanelUI {
 
     searchIn.addEventListener('input', () => renderNav(searchIn.value));
     renderNav('');
+    // 注册列表重绘回调：preload 解析出零项域后按当前搜索词重绘导航（issue 194 按端隐藏）
+    this.rerenderList = () => renderNav(searchIn.value);
     void this.renderDomain(pane, DOMAINS.find((x) => x.id === this.activeDomainId) ?? DOMAINS[0]);
-    // 打开即预加载全部域 schema 元数据（仅取分组结构，不渲染 UI）→ 左侧徽标全量动态计算
-    void this.preloadAllBadges();
   }
 
   /**
@@ -315,16 +328,19 @@ export class SettingsPanelUI {
       try {
         const schema = await d.schemaLoader!();
         const count = visibleItemCount(schema);
-        navBadges.set(d.id, count > 0 ? String(count) : '·');
+        loadedCounts.set(d.id, count);
+        navBadges.set(d.id, count > 0 ? String(count) : '—');
         // 顺带填充移动端搜索「设置项」缓存
         const rowsOf = schema.groups.flatMap((g) =>
           g.rows.map((r) => ({ name: (r as { name?: string }).name ?? '', desc: (r as { desc?: string }).desc ?? '' }))
         );
         schemaRowCache.set(d.id, rowsOf);
       } catch {
-        navBadges.set(d.id, '·'); // 加载失败保守显示占位
+        navBadges.set(d.id, '·'); // 加载失败保守显示占位（域保持列表可见）
       }
       this.refreshNavBadges();
+      // 零项域解析完成 → 从列表剔除（桌面导航/移动列表按当前端注册的重绘回调）
+      this.rerenderList?.();
     });
     await Promise.allSettled(tasks);
   }
@@ -461,14 +477,14 @@ export class SettingsPanelUI {
       searchWrap.classList.toggle('hasval', !!query);
       list.innerHTML = '';
       if (!query) {
-        // 无搜索：全部可见域（无设置项的域不显示，用户拍板）
-        visibleDomains().forEach((d) => {
+        // 无搜索：全部列表可见域（无设置项/当前端零项的域不显示）
+        listableDomains().forEach((d) => {
           list.appendChild(mobItem(d));
         });
         return;
       }
-      // 搜索：域段 + 设置项段
-      const doms = visibleDomains().filter((d) => d.name.includes(query) || d.desc.includes(query));
+      // 搜索：域段 + 设置项段（同样只搜列表可见域）
+      const doms = listableDomains().filter((d) => d.name.includes(query) || d.desc.includes(query));
       const rows: Array<{ icon: string; name: string; desc: string; domain: DomainDef }> = [];
       schemaRowCache.forEach((rowsOf, did) => {
         const d = DOMAINS.find((x) => x.id === did);
@@ -545,6 +561,8 @@ export class SettingsPanelUI {
 
     searchIn.addEventListener('input', () => render(searchIn.value));
     render('');
+    // 注册列表重绘回调：preload 解析出零项域后按当前搜索词重绘列表（issue 194 按端隐藏）
+    this.rerenderList = () => render(searchIn.value);
   }
 
   /** 移动端：域设置 → 居中弹窗内嵌渲染（子面板一律弹窗，遮罩点击关闭） */
@@ -654,8 +672,10 @@ export class SettingsPanelUI {
     }
     this.renderHandles = [];
     this.navEl = null;
-    // 徽标/行缓存随面板销毁清空（下次打开重新动态计算）
+    this.rerenderList = null;
+    // 徽标/行缓存/已加载数随面板销毁清空（下次打开重新动态计算）
     navBadges.clear();
     schemaRowCache.clear();
+    loadedCounts.clear();
   }
 }
