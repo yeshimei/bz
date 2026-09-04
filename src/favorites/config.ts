@@ -83,3 +83,9 @@ export function normalizeUrl(url: string): string {
   const u = (url || '').trim();
   return /^https?:\/\//i.test(u) ? u : 'https://' + u;
 }
+
+/** URL 形态判定（ticket 188 贴链自动搬家）：无空白的 http(s):// 或 www. 开头串 */
+export function isUrlLike(text: string): boolean {
+  const t = (text || '').trim();
+  return t.length > 0 && !/\s/.test(t) && (/^https?:\/\//i.test(t) || /^www\./i.test(t));
+}

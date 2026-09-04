@@ -8,29 +8,30 @@
  * 移动 ≤768：真全屏；头行右上 ＋记一笔 → 🔍搜索(展开) → ✕关闭；状态 chips 横滑；
  *   统计两卡；时间轴同构；点行弹底部详情抽屉。全 icon lucide（分类 emoji 属数据保留）。
  *
- * 计算口径（原型 + 旧域等价，统一到今天）：总资产 = 在用+闲置原价合计；日均成本 =（总购入 - 转卖回本）
- *   / 累计持有天数；在册件数 = 全部件数；单件已用天数：一律截至今天（本地日历日；当天/无效日期 = 0 天）；
- *   单件日均成本 = 价格 / 已用天数（0 天 = 全价）。data.ts calculateDailyCost/
- *   calculateDaysUsed 语义保留（转卖无售价字段，8 字段零迁移——无回本数据，净支出/回本不显示）。
+ * 计算口径：总资产 = 在用+闲置原价合计；在册件数 = 全部件数；单件日均成本 = 价格 / 已用天数（0 天 = 全价）。
+ * ticket 189（ADR-0089 出离闭环）修订：已用天数对出离条目（转卖/丢弃）封口在 exit_date（data.calculateDaysUsedUntil）；
+ *   日均成本 =（总购入 - 转卖回本 Σ售价）/ 累计持有天数——推翻 ADR-0083「转卖不填价」，售价为可选字段。
  *
- * 契约保留：belongings.json 零迁移；smartcat 事件（add/edit/status/delete + belongingsEditChanges）；
+ * 契约保留：belongings.json 零迁移（新字段可选加法）；smartcat 事件（add/edit/status/delete + belongingsEditChanges）；
  *   belongingsMobileDefaultFullscreen 设置键；自动刷新（打开期间监听数据文件 modify，自写短路）；
  *   主题变化重渲染（MutationObserver 仅关心 theme 类）；⚙️ 设置收敛设置面板。
+ * ticket 189 增强：状态流转/删除接撤销（notifyUndo）；年节当年/上一年默认展开更早折叠；
+ *   统计卡可点（总资产=在用+闲置合成筛选、在册件数=回全部）；表单防丢检查；头行钮间距/触屏档。
  */
 import { setIcon } from 'obsidian';
-import { notice } from '../core/notice';
+import { notice, notifyUndo } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { mobileFullscreenGroup } from '../core/settings-common';
-import { openFlowDialog } from '../core/flow-dialog';
+import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { escapeHtml } from '../core/utils';
 import { openItemMenu, openItemSheet, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, closeItemMenu, type ItemAction } from '../core/item-actions';
 import { emitDomainEvent } from '../core/domain-bus';
 import { belongingsEditChanges } from '../smartcat/belongings-source';
 import type { SettingsSchema } from '../core/settings-schema';
-import { loadDatabase, saveDatabase, calculateDailyCost, calculateDaysUsed, getDataFilePath } from './data';
+import { loadDatabase, saveDatabase, calculateDaysUsedUntil, getDataFilePath } from './data';
 import { DEFAULT_CATEGORIES } from './default-categories.gen';
 import type { BelongingsDatabase, BelongingsItem } from './types';
 
@@ -162,9 +163,17 @@ function statusOf(keyOrLabel: string): { key: string; label: string } {
 function itemList(): BelongingsItem[] {
   return M.db ? Object.values(M.db.items) : [];
 }
-/** 已用天数（统一到今天；无效日期 0——复用 data.calculateDaysUsed 单一口径） */
+/** 是否出离态（转卖/丢弃） */
+function isExited(it: BelongingsItem): boolean {
+  return it.current_status === '已转卖' || it.current_status === '已丢弃';
+}
+/** 出离日期（非出离态恒 null；ADR-0089 陪伴天数封口锚点） */
+function exitDateOf(it: BelongingsItem): string | null {
+  return isExited(it) ? (it.exit_date || null) : null;
+}
+/** 已用天数：出离条目封口在 exit_date，其余截至今天（复用 data 单一口径） */
 function daysUsed(it: BelongingsItem): number {
-  return calculateDaysUsed(it.purchase_date);
+  return calculateDaysUsedUntil(it.purchase_date, exitDateOf(it));
 }
 function dailyCostOf(it: BelongingsItem): number {
   const days = daysUsed(it);
@@ -177,12 +186,13 @@ function totalAssets(): number {
     .filter((i) => i.current_status === '使用中' || i.current_status === '闲置')
     .reduce((s, i) => s + (Number(i.purchase_price) || 0), 0);
 }
-/** 日均成本 = 总购入原价 / 累计持有天数（转卖/丢弃原价仍计入，无回本字段按 0） */
+/** 日均成本 =（总购入 - 转卖回本 Σ售价）/ 累计持有天数（ADR-0089：售价可选，未记 = 0 回本） */
 function avgDailyCost(): number {
   let cost = 0;
   let days = 0;
   for (const it of itemList()) {
     cost += Number(it.purchase_price) || 0;
+    if (it.current_status === '已转卖' && Number(it.sold_price) > 0) cost -= Number(it.sold_price);
     days += daysUsed(it);
   }
   return days ? cost / days : 0;
@@ -195,7 +205,12 @@ function statusCount(label: string): number {
 }
 function filtered(): BelongingsItem[] {
   return itemList()
-    .filter((i) => (M.status ? i.current_status === statusOf(M.status).label : true))
+    .filter((i) => {
+      if (!M.status) return true;
+      // ticket 189：总资产卡合成筛选（在用+闲置）
+      if (M.status === 'asset') return i.current_status === '使用中' || i.current_status === '闲置';
+      return i.current_status === statusOf(M.status).label;
+    })
     .filter((i) => (M.year ? String(i.purchase_date || '').startsWith(M.year) : true))
     .filter((i) => {
       if (!M.q) return true;
@@ -270,8 +285,8 @@ function ensureBelongingsEsc(): void {
     close: () => {
       const form = document.querySelector('.bz-bel-form-mask') as HTMLElement | null;
       if (form) {
-        unregisterSheetCompanion(form);
-        form.remove();
+        // 脏表单走 confirmDiscard 拦截（ticket 189，对照 favorites）
+        requestCloseBelForm(form);
       } else {
         closePanel();
       }
@@ -325,6 +340,23 @@ async function openPanelInner(): Promise<void> {
     if (t.closest('[data-bel-add]')) { void openForm(null); return; }
     if (t.closest('[data-bel-close]')) { closePanel(); return; }
     if (t.closest('[data-bel-mobsearch]')) { toggleMobSearch(overlay); return; }
+    // 统计卡可点（ticket 189）：总资产=在用+闲置合成筛选（再点取消）；在册件数=清筛选回全部
+    const statCard = t.closest('[data-bel-statclick]') as HTMLElement | null;
+    if (statCard) {
+      const kind = statCard.dataset.belStatclick;
+      if (kind === 'asset') M.status = M.status === 'asset' ? null : 'asset';
+      else if (kind === 'count') {
+        M.status = null; M.year = ''; M.q = '';
+        const sel = overlay.querySelector('[data-bel-year]') as HTMLSelectElement | null;
+        if (sel) sel.value = '';
+        (['[data-bel-search]', '[data-bel-mobsearch-inp]'] as const).forEach((s2) => {
+          const inp = overlay.querySelector(s2) as HTMLInputElement | null;
+          if (inp) inp.value = '';
+        });
+      }
+      renderAll();
+      return;
+    }
   });
   // 状态（左栏 / 移动 chips）
   overlay.querySelectorAll('[data-bel-status], [data-bel-mobstatus]').forEach((el) => {
@@ -530,12 +562,13 @@ function renderStats(): void {
     avg: avgDailyCost(),
     count: itemList().length,
   };
-  const card = (label: string, value: string, ic: string, main = false) =>
-    `<div class="${main ? 'bz-bel-stat-main' : 'bz-bel-stat'}"><span class="bz-bel-stat-label">${iconSpan(ic)}${esc(label)}</span><span class="bz-bel-stat-value">${value}</span></div>`;
+  // ticket 189：总资产/在册件数两卡可点（合成筛选 / 回全部）；口径不动只加视图联动
+  const card = (label: string, value: string, ic: string, main = false, click?: string) =>
+    `<div class="${main ? 'bz-bel-stat-main' : 'bz-bel-stat'}${click ? ' bz-bel-stat--click' : ''}"${click ? ` data-bel-statclick="${click}" title="${click === 'asset' ? '只看在用与闲置' : '清除筛选回全部'}"` : ''}><span class="bz-bel-stat-label">${iconSpan(ic)}${esc(label)}</span><span class="bz-bel-stat-value">${value}</span></div>`;
   wrap.innerHTML =
-    card('总资产', moneyShort(s.total), ICON.wallet, true) +
+    card('总资产', moneyShort(s.total), ICON.wallet, true, 'asset') +
     card('日均成本', '￥' + s.avg.toFixed(2), ICON.cal) +
-    card('在册件数', String(s.count), ICON.layers);
+    card('在册件数', String(s.count), ICON.layers, false, 'count');
   mountIcons(wrap);
 }
 
@@ -581,7 +614,8 @@ function renderContent(): void {
   yearKeys.forEach((y) => {
     const yItems = list.filter((i) => (String(i.purchase_date || '').slice(0, 4) || '未标注') === y);
     const yCost = yItems.reduce((s, i) => s + (Number(i.purchase_price) || 0), 0);
-    const collapsed = !!M.collapsed[y];
+    // ticket 189：当年/上一年默认展开、更早（含未标注）默认折叠；手动操作过以会话内状态为准
+    const collapsed = M.collapsed[y] !== undefined ? M.collapsed[y] : yearDefaultCollapsed(y);
     html += `<div class="bz-bel-year">
       <div class="bz-bel-year-head${collapsed ? '' : ' is-open'}" data-bel-yearhead="${y}">${esc(y === '未标注' ? '未标注日期' : y)} <span class="bz-bel-year-meta">${yItems.length} 件 · 投入 ${moneyShort(yCost)}</span>${iconSpan(ICON.chevR, 'bz-bel-year-chev')}</div>`;
     if (!collapsed) {
@@ -591,7 +625,7 @@ function renderContent(): void {
         html += '</div>';
       });
     } else {
-      html += `<div class="bz-bel-collapsed" data-bel-expand="${y}">${iconSpan(ICON.expand, '')} 展开 ${y} 年（${yItems.length} 件）</div>`;
+      html += `<div class="bz-bel-collapsed" data-bel-expand="${y}">${iconSpan(ICON.expand, '')} 展开 ${y === '未标注' ? '未标注日期' : y + ' 年'}（${yItems.length} 件）</div>`;
     }
     html += '</div>';
   });
@@ -599,14 +633,27 @@ function renderContent(): void {
   mountIcons(content);
 }
 
+/** 年节默认折叠（ticket 189）：当年/上一年展开，更早与未标注折叠 */
+function yearDefaultCollapsed(y: string): boolean {
+  if (y === '未标注') return true;
+  const yn = parseInt(y, 10);
+  if (!Number.isFinite(yn)) return true;
+  const cy = new Date().getFullYear();
+  return yn < cy - 1;
+}
+
 function rowHtml(it: BelongingsItem): string {
-  const inactive = it.current_status === '已转卖' || it.current_status === '已丢弃';
+  const inactive = isExited(it);
   const days = daysUsed(it);
   const daily = dailyCostOf(it);
+  // 出离副行（ADR-0089）：陪伴天数封口；转卖记了售价追加「售出 ￥x」
+  const soldPart = it.current_status === '已转卖' && Number(it.sold_price) > 0
+    ? ` · 售出 ${moneyShort(Number(it.sold_price))}`
+    : '';
   const rightSub = it.current_status === '已丢弃'
     ? `陪伴 ${days || '—'} 天`
     : it.current_status === '已转卖'
-      ? `陪伴 ${days || '—'} 天`
+      ? `陪伴 ${days || '—'} 天${soldPart}`
       : `日均 ￥${daily.toFixed(1)}`;
   return `<div class="bz-bel-row${inactive ? ' bz-bel-row--inactive' : ''}" data-bel-id="${esc(it.id)}">
     <div class="bz-bel-thumb">${esc(catEmoji(it.category))}</div>
@@ -647,7 +694,8 @@ function sheetHeadOf(it: BelongingsItem): HTMLElement {
   return head;
 }
 
-/** 行操作（旧动作契约：四态流转 keepOpen → 编辑 keepOpen → 删除 danger） */
+/** 行操作（旧动作契约：四态流转 keepOpen → 编辑 keepOpen → 删除 danger）
+ *  ticket 189：流转接 notifyUndo（回写旧状态 + 清出离日期）；转卖/丢弃落 exit_date（ADR-0089） */
 function buildActions(it: BelongingsItem, rebuild: () => void): ItemAction[] {
   const acts: ItemAction[] = [];
   const iconOf: Record<string, any> = { 使用中: 'check-circle', 闲置: 'package', 已转卖: 'banknote', 已丢弃: 'archive' };
@@ -666,11 +714,28 @@ function buildActions(it: BelongingsItem, rebuild: () => void): ItemAction[] {
             rebuild();
             return;
           }
+          const prevStatus = cur.current_status;
           cur.current_status = s;
+          // 出离闭环（ADR-0089）：入出离态记当天出离日期；退出出离态且旧值存在才清（避免写冗余 null）
+          if (isExited(cur)) cur.exit_date = todayStr();
+          else if (cur.exit_date != null) cur.exit_date = null;
           cur.last_updated = new Date().toISOString();
           await saveAndRender();
           emitDomainEvent('belongings', { kind: 'status', title: cur.name, status: s });
-          notice(`「${cur.name}」已标记为${s}`, 'success');
+          notifyUndo(`「${cur.name}」已标记为${s}`, () => {
+            void (async () => {
+              const now = itemById(it.id);
+              if (!now) {
+                notice('该物品已被外部变更删除，无法撤销', 'warning');
+                return;
+              }
+              now.current_status = prevStatus;
+              if (now.exit_date != null) now.exit_date = null;
+              now.last_updated = new Date().toISOString();
+              await saveAndRender();
+              notice(`已撤销，「${now.name}」回到${prevStatus}`, 'success');
+            })();
+          }, { type: 'restore' });
           rebuild();
         })();
       },
@@ -714,12 +779,12 @@ function openMobSheet(it: BelongingsItem): void {
   openItemSheet(buildActions(it, rebuild), { sheetHead: sheetHeadOf(it) });
 }
 
-// ==================== 删除 ====================
+// ==================== 删除（ticket 189：去威慑文案，确认后接撤销 toast） ====================
 
 async function deleteItem(it: BelongingsItem): Promise<void> {
   const v = await openFlowDialog({
     title: '删除物品',
-    message: `确定要删除物品「${it.name}」吗？此操作不可撤销。`,
+    message: `确定要删除物品「${it.name}」吗？`,
     actions: [
       { label: '取消', value: 'cancel' },
       { label: '删除', value: 'del', danger: true, cta: true },
@@ -732,10 +797,22 @@ async function deleteItem(it: BelongingsItem): Promise<void> {
     M.renderFn?.();
     return;
   }
+  const snapshot = { ...M.db.items[it.id] };
   delete M.db.items[it.id];
   await saveAndRender();
   emitDomainEvent('belongings', { kind: 'delete', title: it.name });
-  notice(`已删除「${it.name}」`, 'success');
+  notifyUndo(`已删除「${it.name}」`, () => {
+    void (async () => {
+      if (!M.db) M.db = await loadDatabase();
+      if (M.db.items[snapshot.id]) {
+        notice(`已存在同 id 物品（${snapshot.id}），跳过恢复`, 'warning');
+        return;
+      }
+      M.db.items[snapshot.id] = snapshot;
+      await saveAndRender();
+      notice(`已恢复「${snapshot.name}」`, 'success');
+    })();
+  }, { type: 'restore' });
 }
 
 // ==================== 表单（记一笔 / 编辑） ====================
@@ -789,6 +866,52 @@ function categoryPicker(input: HTMLInputElement, current: string): void {
   });
 }
 
+// ==================== 表单防丢（ticket 189，对照 favorites） ====================
+
+interface BelFormBaseline {
+  name: string;
+  cat: string;
+  price: string;
+  date: string;
+  status: string;
+  desc: string;
+  exitDate: string;
+  soldPrice: string;
+}
+let _belBaseline: BelFormBaseline | null = null;
+
+function belFormStatusNow(mask: HTMLElement): string {
+  return (mask.querySelector('[data-status].is-on') as HTMLElement | null)?.dataset.status || '';
+}
+
+function belFormDirty(): boolean {
+  if (!_belBaseline) return false;
+  const mask = document.querySelector('.bz-bel-form-mask') as HTMLElement | null;
+  if (!mask) return false;
+  const g = (id: string) => (mask.querySelector(id) as HTMLInputElement | null)?.value ?? '';
+  return (
+    g('#bm-name') !== _belBaseline.name ||
+    g('#bm-cat') !== _belBaseline.cat ||
+    g('#bm-price') !== _belBaseline.price ||
+    g('#bm-date') !== _belBaseline.date ||
+    g('#bm-desc') !== _belBaseline.desc ||
+    g('#bm-exitdate') !== _belBaseline.exitDate ||
+    g('#bm-soldprice') !== _belBaseline.soldPrice ||
+    belFormStatusNow(mask) !== _belBaseline.status
+  );
+}
+
+function closeBelForm(mask: HTMLElement): void {
+  _belBaseline = null;
+  unregisterSheetCompanion(mask);
+  mask.remove();
+}
+
+function requestCloseBelForm(mask: HTMLElement): void {
+  if (belFormDirty()) confirmDiscard(() => closeBelForm(mask));
+  else closeBelForm(mask);
+}
+
 export function openForm(it: BelongingsItem | null): void {
   // 命令路径（面板未开）先确保 db 已载（旧 addBelongingsItemCommand 语义）
   if (!M.db) {
@@ -805,6 +928,10 @@ export function openForm(it: BelongingsItem | null): void {
   const dateVal = it ? String(it.purchase_date || '').slice(0, 10) : todayStr();
   const catVal = it?.category ?? DEFAULT_CATEGORIES[0] ?? '';
   const descVal = it?.description ?? '';
+  // 出离字段初值（ADR-0089）：编辑回填 exit_date；新记/未记 = 今天留空语义见下
+  const exitDateVal = it?.exit_date ? String(it.exit_date).slice(0, 10) : todayStr();
+  const soldPriceVal = it?.sold_price != null && Number.isFinite(Number(it.sold_price)) ? String(it.sold_price) : '';
+  const exitedInit = !!it && isExited(it);
   mask.innerHTML = `
   <div class="bz-bel-form">
     <div class="bz-bel-form-title">${editing ? '编辑物品' : '记一笔'}</div>
@@ -816,6 +943,10 @@ export function openForm(it: BelongingsItem | null): void {
         <div class="bz-field"><span class="bz-field-label">购买日期</span><input class="bz-input" id="bm-date" type="date" value="${esc(dateVal)}"></div>
       </div>
       <div class="bz-field"><span class="bz-field-label">状态</span><span class="bz-bel-statuspick" id="bm-status"></span></div>
+      <div class="bz-bel-form-row" id="bm-exit"${exitedInit ? '' : ' hidden'}>
+        <div class="bz-field"><span class="bz-field-label">出离日期</span><input class="bz-input" id="bm-exitdate" type="date" value="${esc(exitDateVal)}"></div>
+        <div class="bz-field" id="bm-soldfield"${it?.current_status === '已转卖' ? '' : ' hidden'}><span class="bz-field-label">转卖售价（可选）</span><input class="bz-input" id="bm-soldprice" type="number" min="0" step="0.01" value="${esc(soldPriceVal)}" placeholder="留空不记售价"></div>
+      </div>
       <div class="bz-field"><span class="bz-field-label">描述（可选）</span><textarea class="bz-input" id="bm-desc" placeholder="规格、颜色、购买原因等…">${esc(descVal)}</textarea></div>
       <div class="bz-bel-form-err" id="bm-err"></div>
       <div class="bz-btn-row bz-bel-form-actions">
@@ -828,18 +959,36 @@ export function openForm(it: BelongingsItem | null): void {
   document.body.appendChild(mask);
   mountIcons(mask);
   ensureBelongingsEsc(); // 表单可在面板未开时打开（命令路径）——ESC 层在此保证已注册
-  const popup = mask.querySelector('.bz-bel-form') as HTMLElement;
   // 编辑自抽屉：companion 防误关
   const sheetOpen = !!document.querySelector('.bz-item-sheet-mask');
   if (editing && sheetOpen) registerSheetCompanion(mask);
+
+  // 防丢基线（ticket 189）：开表单时的全字段快照
+  _belBaseline = {
+    name: it?.name ?? '',
+    cat: catVal,
+    price: priceVal,
+    date: dateVal,
+    status: it?.current_status || '使用中',
+    desc: descVal,
+    exitDate: exitDateVal,
+    soldPrice: soldPriceVal,
+  };
 
   // 分类搜索选择
   const catInput = mask.querySelector('#bm-cat') as HTMLInputElement;
   let curCat = catVal;
   categoryPicker(catInput, curCat);
-  // 状态单选（平铺胶囊）
+  // 状态单选（平铺胶囊）；出离态展开出离记录行（ADR-0089）
   const statusPick = mask.querySelector('#bm-status') as HTMLElement;
+  const exitRow = mask.querySelector('#bm-exit') as HTMLElement;
+  const soldField = mask.querySelector('#bm-soldfield') as HTMLElement;
   let curStatus = it?.current_status || '使用中';
+  const syncExitRow = () => {
+    const exited = curStatus === '已转卖' || curStatus === '已丢弃';
+    exitRow.hidden = !exited;
+    soldField.hidden = curStatus !== '已转卖';
+  };
   const drawStatus = () => {
     statusPick.innerHTML = STATUS_LABELS.map((s) =>
       `<button type="button" class="bz-choice-btn${s === curStatus ? ' is-on' : ''}" data-status="${esc(s)}">${iconSpan(STATUS[statusKeyOf(s)].ic, 'bz-ic--sm')}${esc(s)}</button>`
@@ -849,6 +998,7 @@ export function openForm(it: BelongingsItem | null): void {
       curStatus = (b as HTMLElement).dataset.status as string;
       drawStatus();
     }));
+    syncExitRow();
   };
   drawStatus();
 
@@ -858,8 +1008,8 @@ export function openForm(it: BelongingsItem | null): void {
   // 保存防重入（对齐 favorites：双击/连点不并发双写——ticket 141 通病 4）
   let saving = false;
 
-  mask.addEventListener('mousedown', (e) => { if (e.target === mask) { unregisterSheetCompanion(mask); mask.remove(); } });
-  mask.querySelector('[data-bm-cancel]')?.addEventListener('click', () => { unregisterSheetCompanion(mask); mask.remove(); });
+  mask.addEventListener('mousedown', (e) => { if (e.target === mask) requestCloseBelForm(mask); });
+  mask.querySelector('[data-bm-cancel]')?.addEventListener('click', () => requestCloseBelForm(mask));
   saveBtn.addEventListener('click', () => {
     if (saving) return;
     const name = (mask.querySelector('#bm-name') as HTMLInputElement).value.trim();
@@ -870,6 +1020,16 @@ export function openForm(it: BelongingsItem | null): void {
     if (!date) { fail('请选择购买日期'); return; }
     const category = catInput.value.trim() || curCat;
     if (!category) { fail('请选择或输入分类'); return; }
+    // 出离字段（ADR-0089）：转卖售价可选但填了必须合法
+    const exited = curStatus === '已转卖' || curStatus === '已丢弃';
+    const exitVal = exited ? (mask.querySelector('#bm-exitdate') as HTMLInputElement).value : '';
+    const soldRaw = curStatus === '已转卖' ? (mask.querySelector('#bm-soldprice') as HTMLInputElement).value.trim() : '';
+    let soldPrice: number | null = null;
+    if (soldRaw !== '') {
+      const sp = parseFloat(soldRaw);
+      if (isNaN(sp) || sp < 0) { fail('请输入有效的售价'); return; }
+      soldPrice = Math.round(sp * 100) / 100;
+    }
     const desc = (mask.querySelector('#bm-desc') as HTMLTextAreaElement).value.trim();
     saving = true;
     saveBtn.disabled = true;
@@ -893,6 +1053,11 @@ export function openForm(it: BelongingsItem | null): void {
           cur.purchase_date = date;
           cur.current_status = curStatus;
           cur.description = desc;
+          // 出离字段（ADR-0089）：只在出离态写值；退出出离态且旧值存在才清（避免给老记录写冗余 null）
+          if (exited) cur.exit_date = exitVal || todayStr();
+          else if (cur.exit_date != null) cur.exit_date = null;
+          if (curStatus === '已转卖') cur.sold_price = soldPrice;
+          else if (cur.sold_price != null) cur.sold_price = null; // 丢弃/在用态无售价语义
           cur.last_updated = new Date().toISOString();
           await saveAndRender();
           emitDomainEvent('belongings', { kind: 'edit', title: name, changes: belongingsEditChanges(snapshot, cur) });
@@ -909,12 +1074,15 @@ export function openForm(it: BelongingsItem | null): void {
             description: desc,
             created_date: new Date().toISOString(),
             last_updated: new Date().toISOString(),
+            ...(exited ? { exit_date: exitVal || todayStr() } : {}),
+            ...(curStatus === '已转卖' ? { sold_price: soldPrice } : {}),
           };
           M.db.items[newItem.id] = newItem; // 用当前库（外部 modify 换新后旧 db 引用会丢写）
           await saveAndRender();
           emitDomainEvent('belongings', { kind: 'add', item: newItem });
           notice(`物品「${name}」已添加`, 'success');
         }
+        _belBaseline = null;
         unregisterSheetCompanion(mask);
         closeItemMenu();
         mask.remove();
@@ -928,7 +1096,6 @@ export function openForm(it: BelongingsItem | null): void {
   });
   setTimeout(() => (mask.querySelector('#bm-name') as HTMLInputElement)?.focus(), 100);
 }
-
 // ==================== 移动搜索切换 ====================
 
 function toggleMobSearch(overlay: HTMLElement): void {

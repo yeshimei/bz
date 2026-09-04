@@ -12,12 +12,14 @@
 import type { FavoritesItem } from '../favorites/types';
 import type { StructuredMeta } from './types';
 
-/** 收藏本动作事件（favorites 域确认回调 → smartcat.notifyFavoritesAction） */
+/** 收藏本动作事件（favorites 域确认回调 → smartcat.notifyFavoritesAction）
+ *  ticket 188 增 unarchive（取消归档/归档撤销，恢复主列表） */
 export type FavoritesActionEvent =
   | { kind: 'add'; item: FavoritesItem }
   | { kind: 'edit'; title: string; changes: string[] }
   | { kind: 'delete'; title: string }
-  | { kind: 'archive'; title: string };
+  | { kind: 'archive'; title: string }
+  | { kind: 'unarchive'; title: string };
 
 /** 编辑变化列表（α：比较旧/新条目，只列真正变化的字段；无变化 → 空数组）。
  *  参与比较字段：title/description/url/tags（tags 用 join(',') 比较）；
@@ -62,6 +64,11 @@ export function favoritesArchivedText(title: string): string {
   return `你归档了《${title}》`;
 }
 
+/** 取消归档观察文案（ticket 188：归档撤销/已归档视图取消归档共用） */
+export function favoritesUnarchivedText(title: string): string {
+  return `你把《${title}》恢复了归档`;
+}
+
 /** 事件 → 观察文本（smartcat.notifyFavoritesAction 调用；本域所有事件均有观察，保持 string | null 签名一致） */
 export function buildFavoritesActionText(evt: FavoritesActionEvent): string | null {
   switch (evt.kind) {
@@ -73,6 +80,8 @@ export function buildFavoritesActionText(evt: FavoritesActionEvent): string | nu
       return favoritesDeletedText(evt.title);
     case 'archive':
       return favoritesArchivedText(evt.title);
+    case 'unarchive':
+      return favoritesUnarchivedText(evt.title);
   }
 }
 
@@ -92,5 +101,7 @@ export function buildFavoritesStructured(evt: FavoritesActionEvent): StructuredM
       return { entityType: 'favorite', action: 'deleted', name: evt.title };
     case 'archive':
       return { entityType: 'favorite', action: 'archived', name: evt.title };
+    case 'unarchive':
+      return { entityType: 'favorite', action: 'unarchived', name: evt.title };
   }
 }
