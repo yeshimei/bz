@@ -44,11 +44,11 @@ import { collectWeeklyStat, EMPTY_WEEKLY } from './weekly';
 import type { WeeklyStat } from './weekly';
 
 /** 首页不出统计徽标的域：纯工具/无持久化数据（attach/encrypt/smartcat/settings/wall）
- *  + 有数据但暂未接快照口径的内容域（literature 文献盒 / reading-report 阅读报告，
- *    本轮只补曝光位，徽标留空不挡「各域一览」副题文案） */
+ *  + 有数据但暂未接快照口径的内容域（literature 文献盒 / reading-report 阅读报告 /
+ *    recap 今日回顾——方向一 R2 只补入口磁贴，徽标留空不挡「各域一览」副题文案） */
 export const NO_STAT_DOMAINS: ReadonlySet<string> = new Set([
   'attach', 'encrypt', 'smartcat', 'settings', 'wall',
-  'literature', 'reading-report',
+  'literature', 'reading-report', 'recap',
 ]);
 
 export interface DomainStat {

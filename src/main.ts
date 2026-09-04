@@ -62,6 +62,8 @@ import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setL
 import { registerGestureListeners } from './launcher/gestures';
 // 内容首页（home 域，ticket 177：入口页「新标签页」升级；与旧入口页并存，不改 launcher）
 import { openHome, unloadHome } from './home';
+// 今日回顾（recap 域，方向一 R2）：当天五域痕迹聚合只读面板
+import { openRecap, unloadRecap } from './recap';
 import { ensureAutoSummary, unloadAutoSummary, redoSummaryForActiveFile } from './auto-summary';
 // ai-agent 域解散：文件同步拆入 memo/favorites 域（原 ensureAIAgent/unloadAIAgent 换线）
 import { ensureMemoFileSync, unloadMemoFileSync } from './memo';
@@ -76,6 +78,8 @@ import { applyUiSettings, init as diaryInit, showDiaryPanel, unregisterEscLayer 
 import { ensureSmartCat, unloadSmartCat, openSmartCat, openSmartCatChat, hideSmartCat, openSmartcatDashboard } from './smartcat';
 // 设置面板（settings-panel 域，ADR-0080：全域设置聚合入口，桌面侧栏工作台 / 移动命令面板）
 import { openSettingsPanel, unloadSettingsPanel } from './settings-panel';
+// 数据体检（checkup 域，D4：全插件数据可靠层只读巡检面板）
+import { openDataCheckup, unloadDataCheckup } from './checkup';
 
 /** 命令表：id/name 统一命名（spec「命令 id 全清单」第 9 轮：bz-<域>-<动作>，icon 与入口页磁贴一致）。
  *  域入口命令 icon 一律从 core/domain-icons（DOMAIN_ICONS）取——与设置面板导航单一事实源（enh-sweep-a）；
@@ -85,6 +89,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-home', name: '入口页', icon: DOMAIN_ICONS.launcher, callback: () => openLauncherPanel(getApp()) },
   // 内容首页（home 域，ticket 177：与旧入口页并存）
   { id: 'bz-home-open', name: '内容首页', icon: DOMAIN_ICONS.home, callback: () => openHome(getApp()) },
+  // 今日回顾（recap 域，方向一 R2：当天日记/影视/读书/待办/番茄痕迹聚合面板）
+  { id: 'bz-recap-today', name: '今日回顾', icon: DOMAIN_ICONS.recap, callback: () => openRecap(getApp()) },
   // 备忘录
   { id: 'bz-memo-open', name: '备忘录', icon: DOMAIN_ICONS.memo, callback: () => openBzPanel(getApp()) },
   { id: 'bz-memo-add', name: '加备忘', icon: 'pencil', callback: () => createMemoItem(getApp()) },
@@ -161,6 +167,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-smartcat-dashboard', name: '小橘数据面板', icon: 'activity', callback: () => openSmartcatDashboard(getApp()) },
   // 设置面板（ADR-0080：全域设置聚合入口）
   { id: 'bz-settings-panel-open', name: '设置面板', icon: 'settings-2', callback: () => openSettingsPanel(getApp()) },
+  // 数据体检（checkup 域，D4：全插件数据可靠层只读巡检；icon 与保险库体检同为 stethoscope，语义一致）
+  { id: 'bz-data-checkup-open', name: '数据体检', icon: 'stethoscope', callback: () => void openDataCheckup(getApp()) },
 ];
 
 /** 应用日记本设置到运行时常量（diary-notebook 原 applySettingsToRuntime） */
@@ -316,10 +324,13 @@ export default class BzPlugin extends Plugin {
     unloadFavoritesFileSync();
     unloadLauncherPanel();
     unloadHome();
+    unloadRecap();
     unloadEncrypt();
     unloadSmartCat();
     // 设置面板（ADR-0080：DOM 清理 + esc 注销）
     unloadSettingsPanel();
+    // 数据体检（checkup 域，D4：作废在途体检 + 面板 DOM 清理 + esc 注销）
+    unloadDataCheckup();
     // 第二大脑：窄窗/抽屉 DOM、5s 防抖定时器、DeepSeek 服务、模块单例复位（ticket 107 补接线——
     // 原先 unloadSecondBrain 导出但从未被调用，禁用插件后残留窗体且防抖 refresh 仍会触发）
     unloadSecondBrain();

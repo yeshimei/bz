@@ -32,6 +32,10 @@
 }
 .bz-attach-preview-row:hover { background: var(--bz-surface-hover); }
 .bz-attach-preview-row input[type='checkbox'] { flex-shrink: 0; align-self: center; margin: 0; }
+/* 触屏（pointer:coarse）：清单行 padding 抬到 ≥40px 下限档（行间距紧，不用 ::after 外扩防误触邻行） */
+@media (pointer: coarse) {
+  .bz-attach-preview-row { padding: 12px var(--bz-space-sm); }
+}
 .bz-attach-preview-from { color: var(--bz-text-2); word-break: break-all; }
 .bz-attach-preview-arrow { color: var(--bz-text-3); flex-shrink: 0; }
 .bz-attach-preview-to { color: var(--bz-text-1); font-weight: var(--bz-weight-medium); word-break: break-all; min-width: 0; }
