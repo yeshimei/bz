@@ -4,6 +4,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 import { aiProcess, processFile, formatSummaryNotice } from '../../src/auto-summary/processor';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages } from '../mock-obsidian-entry';
@@ -395,5 +396,91 @@ describe('processFile', () => {
     expect(out).toContain('  - "AI"');
     expect(out).toContain('# 剪藏备注'); // 注释行原样拼回（旧实现被删除）
     expect(out).toContain(LONG_BODY); // 正文不动
+  });
+});
+
+describe('processFile force 与「查看」/quiet（enh-autosum 包）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetAIProviderCache();
+    setAISettingsProvider(() => ({})); // 默认未配 AI：失败原因走「未配置」文案
+    document.body.innerHTML = '';
+    vault = new MockVault();
+    setApp(makeApp(vault));
+  });
+
+  it('force：字段齐全仍重建 summary/tags；title 原样保留、不重命名、提示词不含标题规则', async () => {
+    vault.files.set(
+      '归档/网页剪藏/full.md',
+      `---\ntitle: "用户自定义标题"\nsummary: "旧摘要"\ntags:\n  - "旧标签"\n---\n\n${LONG_BODY}`
+    );
+    // AI 即使回了 title 也不采用（force 档只重建 summary/tags）
+    const ai = makeAI('{"title":"AI 标题","summary":"新摘要","tags":["新A","新B"]}');
+    await processFile(makeApp(vault), ai, vault.file('归档/网页剪藏/full.md'), { force: true });
+
+    const prompt = ai.prompt.mock.calls[0][0] as string;
+    expect(prompt).toContain('150-250字'); // 请求 summary
+    expect(prompt).toContain('tags 规则'); // 请求 tags
+    expect(prompt).not.toContain('生成中文标题'); // 不请求 title
+
+    expect(vault.files.has('归档/网页剪藏/full.md')).toBe(true); // 不重命名
+    const out = vault.files.get('归档/网页剪藏/full.md')!;
+    expect(out).toContain('title: "用户自定义标题"'); // 用户改过的标题不吞
+    expect(out).toContain('summary: "新摘要"'); // summary 重建
+    expect(out).toContain('  - "新A"'); // tags 重建
+    expect(out).toContain('  - "新B"');
+    expect(out).not.toContain('旧摘要');
+  });
+
+  it('force + 标签开关关 → 只重建 summary，原 tags 与 title 保留', async () => {
+    setSettingsProvider(() => ({ autoSummaryTagsEnabled: false }) as any);
+    vault.files.set(
+      '归档/网页剪藏/nt.md',
+      `---\ntitle: "标题"\nsummary: "旧摘要"\ntags:\n  - "保留"\n---\n\n${LONG_BODY}`
+    );
+    const ai = makeAI('{"summary":"新摘要"}');
+    await processFile(makeApp(vault), ai, vault.file('归档/网页剪藏/nt.md'), { force: true });
+    const prompt = ai.prompt.mock.calls[0][0] as string;
+    expect(prompt).toContain('150-250字');
+    expect(prompt).not.toContain('tags 规则');
+    const out = vault.files.get('归档/网页剪藏/nt.md')!;
+    expect(out).toContain('title: "标题"');
+    expect(out).toContain('  - "保留"');
+    expect(out).toContain('summary: "新摘要"');
+  });
+
+  it('force 失败点「重试」→ 重试仍按 force 语义（不请求 title、不改标题）', async () => {
+    vault.files.set('归档/网页剪藏/rf.md', `---\ntitle: "自定义"\nsummary: "旧"\n---\n\n${LONG_BODY}`);
+    const prompt = vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce('{"summary":"重试新摘要"}');
+    const ai = { prompt } as any;
+    await processFile(makeApp(vault), ai, vault.file('归档/网页剪藏/rf.md'), { force: true });
+    const retryBtn = document.querySelector('.bz-notice .bz-notice-action') as HTMLElement;
+    expect(retryBtn.textContent).toBe('重试');
+    retryBtn.click();
+    await new Promise((r) => setTimeout(r, 30));
+    expect(prompt.mock.calls[1][0]).not.toContain('生成中文标题'); // 重试仍是 force
+    const out = vault.files.get('归档/网页剪藏/rf.md')!;
+    expect(out).toContain('summary: "重试新摘要"');
+    expect(out).toContain('title: "自定义"');
+  });
+
+  it('完成通知挂「查看」action（enh 包 3）', async () => {
+    vault.files.set('归档/网页剪藏/view.md', `---\ntitle: "T"\n---\n\n${LONG_BODY}`);
+    const ai = makeAI('{"summary":"S","tags":["a"]}');
+    await processFile(makeApp(vault), ai, vault.file('归档/网页剪藏/view.md'));
+    const btn = document.querySelector('.bz-notice .bz-notice-action') as HTMLElement;
+    expect(btn).not.toBeNull();
+    expect(btn.textContent).toBe('查看');
+  });
+
+  it('quiet（批量队列驱动）：不发单文件 progress 通知，完成通知照常', async () => {
+    vault.files.set('归档/网页剪藏/quiet.md', `---\ntitle: "T"\n---\n\n${LONG_BODY}`);
+    const ai = makeAI('{"summary":"安静摘要","tags":["a"]}');
+    await processFile(makeApp(vault), ai, vault.file('归档/网页剪藏/quiet.md'), { quiet: true });
+    const msgs = getNoticeMessages();
+    expect(msgs.some((m) => m.includes('正在为《'))).toBe(false); // 无逐篇 progress
+    expect(msgs.some((m) => m.includes('安静摘要'))).toBe(true); // 完成通知照常
   });
 });

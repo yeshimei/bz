@@ -23,16 +23,20 @@ import { escapeHtml } from '../core/utils';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { uiIcon } from '../core/ui';
 import { unregisterSheetCompanion } from '../core/item-actions';
-import { FSRS, LADDER_MAX, TOTAL_STAGES } from './fsrs';
+import { FSRS, DEFAULT_W, LADDER_MAX, TOTAL_STAGES } from './fsrs';
 import type { ReviewItem } from './data';
 import { ReviewDataManager } from './data';
-import { computeStats, dateKey, flattenHistory } from './stats';
+import { computeStats } from './stats';
+import { partitionQueue, roundQueue, isDueToday, isEarlyDue } from './queue';
+import { uiEmpty } from '../core/ui';
 import { SprintSession } from './sprint';
 import type { SprintMode } from './sprint';
 import type { QuizQuestion } from './quiz-core/manager';
 import type { QuizMasterUI } from './quiz-core/session';
 
 export { reviewSettingsSchema } from './settings-schema';
+// item 6：isDueToday 下沉 queue.ts 纯函数（ui 保留 re-export 签名兼容）
+export { isDueToday };
 
 /** 到期标签工具 */
 function dueLabelOf(item: ReviewItem): { label: string; cls: string } {
@@ -57,16 +61,11 @@ export function isPlayable(item: ReviewItem): boolean {
   return new Date(item.nextReviewDate).getTime() <= Date.now();
 }
 
-/** 是否今日到期（nextReviewDate 落在今日本地日内；与 isOverdue 正交的日历口径）。
- *  原「今天到期」列复用 isPlayable（与 isOverdue 只差毫秒级相等）→ 中列恒空死区。 */
-export function isDueToday(item: ReviewItem): boolean {
-  if (!item.nextReviewDate) return false;
-  return dateKey(new Date(item.nextReviewDate)) === dateKey(new Date());
-}
-
 export class UIManager {
   app: App;
   dataManager: ReviewDataManager;
+  /** R 展示口径权重源（item 12：与调度排期同读拟合权重；ensureReview 注入 reviewApp.currentW，缺省回退默认） */
+  wSource: () => number[] = () => DEFAULT_W;
   mask: HTMLElement | null = null;
   popup: HTMLElement | null = null;
   /** 内容区容器（队列/冲刺共用宿主） */
@@ -179,6 +178,32 @@ export class UIManager {
     if (!container) return;
     this.searchText = searchText;
     container.innerHTML = this.queueViewHtml(items, searchText);
+    if (!items.length) {
+      // item 10：空库两条路引导（组件库 uiEmpty 工厂）
+      const host = container.querySelector('[data-empty-host]');
+      if (host) {
+        const acts = document.createElement('div');
+        acts.className = 'bz-btn-row';
+        const addBtn = document.createElement('button');
+        addBtn.className = 'bz-btn bz-btn--primary';
+        addBtn.dataset.act = 'add-current';
+        addBtn.textContent = '把当前笔记加入复习';
+        const helpBtn = document.createElement('button');
+        helpBtn.className = 'bz-btn bz-btn--ghost';
+        helpBtn.dataset.act = 'watch-help';
+        helpBtn.textContent = '如何配置监听文件夹';
+        acts.appendChild(addBtn);
+        acts.appendChild(helpBtn);
+        host.appendChild(
+          uiEmpty({
+            icon: 'inbox',
+            title: '复习计划还是空的',
+            desc: '在 设置 → 复习计划 → 监听文件夹 添加文件夹后，新笔记会自动加入复习；也可以先把当前笔记加入。',
+            actions: acts,
+          })
+        );
+      }
+    }
     this.mountIcons(container);
     this.bindQueueEvents(container, items);
   }
@@ -194,23 +219,33 @@ export class UIManager {
 
   // ================= 队列视图 HTML =================
 
+  /** R 阈值提前复习判定（item 6：与开始本轮同口径；wSource=拟合权重） */
+  private rThreshold(): number {
+    const s = tryGetSettings() as any;
+    return Number(s?.reviewRThreshold) || 0.9;
+  }
+
+  private isEarly(it: ReviewItem): boolean {
+    return isEarlyDue(it, this.rThreshold(), this.wSource());
+  }
+
   private queueViewHtml(items: ReviewItem[], searchText: string): string {
     const kw = searchText.trim().toLowerCase();
     const vis = kw ? items.filter((i) => i.name.toLowerCase().includes(kw)) : items;
-    const active = (i: ReviewItem) => !i.isCompleted && !i.isMissing;
-    // 三区互斥分区：逾期优先（含今日早间已过期）→ 今日到期（日历日口径）→ 未来
-    const over = vis.filter((i) => active(i) && i.isOverdue);
-    const today = vis.filter((i) => active(i) && !i.isOverdue && isDueToday(i));
-    const future = vis.filter((i) => active(i) && !i.isOverdue && !isDueToday(i));
-    const done = vis.filter((i) => i.isCompleted || i.completed);
+    // item 6：三区列走 partitionQueue 纯函数（与开始本轮 roundQueue 同源口径；提前卡落「今天」列）
+    const rt = this.rThreshold();
+    const w = this.wSource();
+    const col = partitionQueue(items, rt, w);
+    const visCol = partitionQueue(vis, rt, w);
+    const over = visCol.overdue;
+    const today = visCol.today;
+    const future = visCol.future;
+    const done = visCol.done;
 
-    const overCount = items.filter((i) => i.isOverdue && !i.isCompleted).length;
-    const todayCount = items.filter((i) => !i.isCompleted && !i.isMissing && !i.isOverdue && isDueToday(i)).length;
-    const doneCount = items.filter((i) => i.isCompleted || i.completed).length;
-    // 底部统计真实数字（同步渲染，占位 … 时期已过）
-    const stats = computeStats(items);
-    // P3：「累计复习 N 次」用真实评级次数（flattenHistory 长度），非 stats.totalReviews 的去重同日天数
-    const totalReviewCount = flattenHistory(items).length;
+    // item 8：今日全清（开始本轮集合为空 = 逾期/今日/提前全无）→ 绿点 +「今日已清空」+ 隐藏主按钮
+    const round = roundQueue(items, this.rThreshold(), this.wSource());
+    const clearToday = !round.length;
+    const futureCount = col.future.length;
 
     const head = `
       <div class="bz-q-head">
@@ -223,36 +258,56 @@ export class UIManager {
         </div>
       </div>
       <div class="bz-q-tools">
-        <div class="bz-q-search${searchText ? ' typing' : ''}">${this.icon('search')}<input type="text" id="bz-q-search" placeholder="搜索笔记…" value="${escapeHtml(searchText)}"><span class="kbd">/</span></div>
-      </div>
+        <div class="bz-q-search${searchText ? ' typing' : ''}">${this.icon('search')}<input type="text" id="bz-q-search" placeholder="搜索笔记…" value="${escapeHtml(searchText)}"></div>
+      </div>`;
+
+    // item 10：空库 → 头行 + 清空条 + 空态宿主（uiEmpty 于 renderEntries 挂载并绑两条路动作）
+    if (!items.length) {
+      const strip = `
       <div class="bz-q-strip">
+        <span class="bz-q-strip-dot ok"></span>
+        <strong>今日已清空</strong>
+        <span class="bz-q-strip-txt">还没有任何复习条目</span>
+      </div>`;
+      return `<div class="bz-q-view">${head}${strip}<div class="bz-q-cols bz-q-empty-wrap"><div data-empty-host></div></div></div>`;
+    }
+
+    const strip = clearToday
+      ? `<div class="bz-q-strip">
+        <span class="bz-q-strip-dot ok"></span>
+        <strong>今日已清空</strong>
+        <span class="bz-q-strip-txt">${futureCount ? `未来还有 ${futureCount} 篇待复习` : '没有待复习条目'}</span>
+      </div>`
+      : `<div class="bz-q-strip">
         <span class="bz-q-strip-dot"></span>
-        <strong>${this.showArchived ? '归档模式' : '开始本轮'}</strong>
-        <span class="bz-q-strip-txt">${this.showArchived ? '查看已完成复习' : `今日 ${todayCount} 篇到期 · 逾期 ${overCount} 篇顺延`}</span>
+        <strong>开始本轮</strong>
+        <span class="bz-q-strip-txt">${this.showArchived ? '查看已完成复习' : `今日 ${col.today.length} 篇到期 · 逾期 ${col.overdue.length} 篇顺延`}</span>
         ${this.showArchived ? '' : `<button class="bz-btn bz-btn--primary" data-act="begin">开始本轮</button>`}
       </div>`;
 
     const body = this.showArchived
-      ? `<div class="bz-q-cols"><div class="bz-q-col done">${this.colHead(doneCount, '已完成')}${this.cardsOf(done)}</div></div>`
+      ? `<div class="bz-q-cols"><div class="bz-q-col done">${this.colHead(done.length, '已完成')}${this.cardsOf(done)}</div></div>`
       : `<div class="bz-q-cols">
-          <div class="bz-q-col danger">${this.colHead(overCount, '已逾期')}${this.cardsOf(over)}</div>
-          <div class="bz-q-col warn">${this.colHead(todayCount, '今天到期')}${this.cardsOf(today)}</div>
+          <div class="bz-q-col danger">${this.colHead(col.overdue.length, '已逾期')}${this.cardsOf(over)}</div>
+          <div class="bz-q-col warn">${this.colHead(col.today.length, '今天到期')}${this.cardsOf(today)}</div>
           <div class="bz-q-col future">${this.colHead(future.length, '未来')}${this.cardsOf(future)}</div>
         </div>`;
 
     // 底部信息行：整行可点（归档 → 切换归档；统计 → 打开分布），无引导小字
+    // item 13：「累计复习 X 次」→「累计 X 天 · 连续 Y 天」（X=去重同日天数，computeStats.totalReviews）
+    const stats = computeStats(items);
     const footer = `
       <div class="bz-q-footer">
         <span class="bz-q-fitem" data-act="arch" title="查看已完成复习">
-          ${this.icon('folder')}<span class="lbl">已完成 <b>${doneCount}</b> 篇</span>
+          ${this.icon('folder')}<span class="lbl">已完成 <b>${done.length}</b> 篇</span>
         </span>
         <i class="sep"></i>
         <span class="bz-q-fitem" data-act="stats" title="查看复习统计分布">
-          ${this.icon('chart')}<span class="lbl">累计复习 <b>${totalReviewCount}</b> 次 · 连续 <b>${stats.streak}</b> 天</span>
+          ${this.icon('chart')}<span class="lbl">累计 <b>${stats.totalReviews}</b> 天 · 连续 <b>${stats.streak}</b> 天</span>
         </span>
       </div>`;
 
-    return `<div class="bz-q-view">${head}${body}${footer}</div>`;
+    return `<div class="bz-q-view">${head}${strip}${body}${footer}</div>`;
   }
 
   private colHead(count: number, name: string): string {
@@ -277,6 +332,8 @@ export class UIManager {
     ].join(' ').trim();
     const tags = [
       it.isMissing ? `<span class="bz-q-tag is-missing">文件缺失</span>` : `<span class="bz-q-tag ${due.cls}">${due.label}</span>`,
+      // item 6：R<阈值提前复习卡挂「提前」tag（与开始本轮同口径，落「今天」列）
+      !it.isMissing && this.isEarly(it) ? `<span class="bz-q-tag is-early">提前</span>` : '',
       this.stageTagHtml(it),
     ].join('');
     return `
@@ -308,7 +365,8 @@ export class UIManager {
     if (it.phase !== 'fsrs' || !it.stability || !it.lastReviewed) return null;
     const t = (Date.now() - new Date(it.lastReviewed).getTime()) / 86400000;
     if (!(t > 0)) return null;
-    const fsrs = new FSRS();
+    // R 展示与调度排期同口径：读拟合权重（wSource 由 ensureReview 注入 reviewApp.currentW）
+    const fsrs = new FSRS(this.wSource());
     return Math.round(fsrs.R(t, it.stability) * 100);
   }
 
@@ -328,6 +386,9 @@ export class UIManager {
       void this.refreshPanel();
     });
     container.querySelector('[data-act="stats"]')?.addEventListener('click', () => void this.openStats());
+    // item 10：空态两条路（把当前笔记加入复习 / 监听文件夹配置说明）
+    container.querySelector('[data-act="add-current"]')?.addEventListener('click', () => void this.addCurrentNote());
+    container.querySelector('[data-act="watch-help"]')?.addEventListener('click', () => void this.showWatchHelp());
     const search = container.querySelector<HTMLInputElement>('#bz-q-search');
     if (search) {
       search.addEventListener('input', () => {
@@ -356,6 +417,35 @@ export class UIManager {
     // 右键/长按抽屉（保留既有统一抽屉：打开原文/查看历史/移出）
     container.querySelectorAll('.bz-q-card[data-id]').forEach((card) => {
       this.attachDrawer(card as HTMLElement, items);
+    });
+  }
+
+  // ================= 空态两条路（item 10） =================
+
+  /** 把当前笔记加入复习（空库引导动作；命令同语义） */
+  private async addCurrentNote(): Promise<void> {
+    const file = this.app.workspace.getActiveFile();
+    if (!file) {
+      notice('请先打开一个笔记', 'warning');
+      return;
+    }
+    const { reviewApp } = await import('./app');
+    try {
+      await reviewApp.addCurrentToReview(file as TFile);
+      await this.refreshPanel();
+      await reviewApp.applyReviewStyles(this.app);
+    } catch (e: any) {
+      notice('操作失败：' + (e?.message || e), 'error');
+    }
+  }
+
+  /** 配置监听文件夹说明（空库引导动作；设置面板路径指路） */
+  private async showWatchHelp(): Promise<void> {
+    const { openFlowDialog } = await import('../core/flow-dialog');
+    await openFlowDialog({
+      title: '配置监听文件夹',
+      message: '打开 设置 → 复习计划 → 监听文件夹，添加文件夹后，其中新建的笔记会自动加入复习计划；已存在的笔记可在添加时选择一并加入。',
+      actions: [{ label: '知道了', value: 'ok', cta: true }],
     });
   }
 
@@ -389,6 +479,8 @@ export class UIManager {
     queue: ReviewItem[];
     mode: SprintMode;
     quiz: QuizMasterUI | null;
+    /** item 8：连续复习天数（结算屏展示；由 app 层 computeStats 算好传入） */
+    streakDays?: number;
     fetchQuestions: (item: ReviewItem) => Promise<QuizQuestion[] | null>;
     onPassed: (item: ReviewItem, rating: string, entry: { acc: number; wrong: number }) => Promise<void>;
     onFailed: (item: ReviewItem, rating: string, entry: { acc: number; wrong: number }) => Promise<void>;
@@ -404,6 +496,7 @@ export class UIManager {
       queue: opts.queue,
       mode: opts.mode,
       quiz: opts.quiz,
+      streakDays: opts.streakDays,
       fetchQuestions: opts.fetchQuestions,
       onPassed: opts.onPassed,
       onFailed: opts.onFailed,
@@ -560,4 +653,51 @@ interface ItemActionLite {
   label: string;
   kind?: 'danger';
   onClick: () => void;
+}
+
+// ================= 普通复习悬浮迷你评级条（item 4） =================
+
+/** 评级条四档语义（复用既有 again/hard/good/easy；同 RATING_NAMES 口径） */
+const BAR_RATINGS: Array<{ rating: 'again' | 'hard' | 'good' | 'easy'; label: string; cls: string }> = [
+  { rating: 'again', label: '忘了', cls: 'again' },
+  { rating: 'hard', label: '困难', cls: 'hard' },
+  { rating: 'good', label: '一般', cls: 'good' },
+  { rating: 'easy', label: '简单', cls: 'easy' },
+];
+
+/** 屏幕底部挂悬浮迷你评级条（reviewLoop 存续期间）。返回句柄供收起（close 幂等）。 */
+export function mountFloatingRatingBar(opts: {
+  name: string;
+  index: number;
+  total: number;
+  onRate: (rating: 'again' | 'hard' | 'good' | 'easy') => void;
+  onSkip: () => void;
+}): { close: () => void } {
+  const el = document.createElement('div');
+  el.className = 'bz-review-bar';
+  el.style.zIndex = String(allocZ());
+  const btns = BAR_RATINGS.map(
+    (r) => `<button class="bz-review-bar-btn is-${r.cls}" data-rating="${r.rating}">${r.label}</button>`
+  ).join('');
+  el.innerHTML = `
+    <span class="bz-review-bar-info">${escapeHtml(opts.name.replace(/^《|》$/g, ''))}<i>(${opts.index}/${opts.total})</i></span>
+    <span class="bz-review-bar-act">${btns}
+      <button class="bz-review-bar-btn is-skip" data-rating="skip">${'跳过'}</button>
+    </span>`;
+  let closed = false;
+  const close = (): void => {
+    if (closed) return;
+    closed = true;
+    el.remove();
+  };
+  el.querySelectorAll<HTMLButtonElement>('.bz-review-bar-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const r = btn.dataset.rating;
+      if (r === 'skip') opts.onSkip();
+      else if (r === 'again' || r === 'hard' || r === 'good' || r === 'easy') opts.onRate(r);
+      close(); // 点评级/跳过即收起（评级路径由轮询翻篇重建下一条的评级条）
+    });
+  });
+  document.body.appendChild(el);
+  return { close };
 }

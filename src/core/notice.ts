@@ -355,6 +355,21 @@ function noopHandle(): NoticeHandle {
   };
 }
 
+/** 操作按钮 span（span 而非 button——Obsidian 核心 button 默认 height: var(--input-height) 会把通知框撑高）；
+ *  创建与去重合并（progress→结果原地更新时补挂）共用 */
+function appendActionBtn(n: InternalNotice, action: NoticeAction): void {
+  const btn = document.createElement('span');
+  btn.className = 'bz-notice-action';
+  btn.setAttribute('role', 'button');
+  btn.textContent = action.label;
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (action.onClick) action.onClick();
+    hideNow(n);
+  });
+  n.el.appendChild(btn);
+}
+
 export function notify(msg: string, opts?: NoticeOptions): NoticeHandle {
   const kind: NoticeKind = (opts && opts.type) || 'info';
   const isProgress = kind === 'progress';
@@ -374,6 +389,10 @@ export function notify(msg: string, opts?: NoticeOptions): NoticeHandle {
       // 类型变化（如 progress 完成 → success）时同步切换图标/配色
       if (r.n.isProgress !== isProgress || r.n.el.classList.contains('bz-notice--' + type) === false) {
         applyTypeToEl(r.n, kind);
+      }
+      // 合并期补挂 action（如 progress 原地更新为带「查看」的结果通知）；已有则不重复
+      if (opts.action && !r.n.el.querySelector('.bz-notice-action')) {
+        appendActionBtn(r.n, opts.action);
       }
       armTimer(r.n, kind, opts.duration, msg);
       return noopHandle();
@@ -425,19 +444,9 @@ export function notify(msg: string, opts?: NoticeOptions): NoticeHandle {
 
   const n: InternalNotice = { el, timer: null, msgEl, progressEl, iconEl: icon, variant, isProgress, persistent: false };
 
-  // 操作按钮（可选；span 而非 button——Obsidian 核心 button 默认 height: var(--input-height) 会把通知框撑高）
+  // 操作按钮（可选；富文本 action，点击后自动收起）
   if (opts && opts.action) {
-    const btn = document.createElement('span');
-    btn.className = 'bz-notice-action';
-    btn.setAttribute('role', 'button');
-    btn.textContent = opts.action.label;
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const cb = opts && opts.action ? opts.action.onClick : null;
-      if (cb) cb();
-      hideNow(n);
-    });
-    el.appendChild(btn);
+    appendActionBtn(n, opts.action);
   }
 
   // 点击本体关闭

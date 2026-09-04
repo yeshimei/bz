@@ -25,6 +25,10 @@ export interface CinemaItem {
   doubanRating: string | null;
   doubanUrl: string | null;
   synopsis: string | null;
+  /** 片长原文（frontmatter「片长」，如「118分钟」；分析页片长画像用，ADR-0090 并入） */
+  duration: string | null;
+  /** 季集原文（frontmatter「季集」，如「2季」；分析页追剧深度用，ADR-0090 并入） */
+  seasonText: string | null;
 }
 
 /** 排序模式：date=最近观看（默认）/ created=按创建 / rating=按评分 */

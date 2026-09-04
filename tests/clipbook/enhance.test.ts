@@ -6,12 +6,12 @@
  * 下一篇、←→jk，包6）/ 阅读字号三档（包7）/ 面板尺寸记忆（包8）/ 副题术语（包12）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { resetObsidianMocks, Platform as MockPlatform } from '../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, Platform as MockPlatform } from '../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { openClipbook, unloadClipbook } from '../../src/clipbook';
-import { reloadIfOpen, invalidateClipBodyCache, __autoReadingDelayForTests } from '../../src/clipbook/ui';
+import { reloadIfOpen, invalidateClipBodyCache, __autoReadingDelayForTests, revealClipArticle, closePanel } from '../../src/clipbook/ui';
 import { M } from '../../src/clipbook/state';
 import { drainNewsWritesForTests } from '../../src/clipbook/write-queue';
 
@@ -356,5 +356,81 @@ describe('副题术语（enh 包 12）', () => {
     const overlay = document.querySelector('.bz-clip-overlay') as HTMLElement;
     expect(overlay.querySelector('.bz-clip-head-sub')!.textContent).toBe('未读流与剪藏');
     expect(overlay.textContent).not.toContain('聚合讯已接入');
+  });
+});
+
+// ===== 自动摘要增强包（enh-autosum）：手动重跑入口 + 完成通知「查看」定位 =====
+describe('重新生成摘要入口与查看定位（enh-autosum 包）', () => {
+  /** 长正文剪藏（>100 字，processFile 不会因正文过短跳过） */
+  const LONG_CLIP =
+    '---\nurl: "https://example.com/long-clip"\ncreated: 2026-08-22 10:00:00\n---\n' + '长文段落内容。'.repeat(30) + '\n';
+
+  async function gotoClipSource(count: number): Promise<void> {
+    const clipRow = [...document.querySelectorAll('.bz-clip-rail-row')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
+    clipRow.click();
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-clip-item').length).toBe(count));
+  }
+
+  function seedLongClip(vault: MockVault): void {
+    vault.files.set('归档/网页剪藏/长文剪藏.md', LONG_CLIP);
+    reloadIfOpen(); // 目录事件 → 面板脏标记重读
+  }
+
+  it('桌面右键点「重新生成摘要」→ force 任务入队执行（AI 未配置 → 人话失败通知）', async () => {
+    const ctx = await openDesktop();
+    seedLongClip(ctx.vault);
+    await gotoClipSource(2);
+    const target = [...document.querySelectorAll('.bz-clip-item')].find((i) => i.textContent!.includes('长文剪藏')) as HTMLElement;
+    target.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+    await vi.waitFor(() => expect(document.querySelector('.bz-item-menu')).toBeTruthy());
+    const redoBtn = [...document.querySelectorAll('.bz-item-menu .bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('重新生成摘要')
+    ) as HTMLButtonElement;
+    expect(redoBtn).toBeTruthy();
+    redoBtn.click(); // → regenerateSummary → 队列 → processFile(force)
+    await vi.waitFor(() => expect(getNoticeMessages().some((m) => m.includes('AI 服务未配置'))).toBe(true));
+    closePanel();
+  });
+
+  it('移动长按抽屉同源：剪藏条目抽屉含「重新生成摘要」', async () => {
+    const ctx = await openDesktop();
+    MockPlatform.isMobile = true; // boot() 会重置 Platform mock，须在开面板后置位
+    seedLongClip(ctx.vault);
+    await gotoClipSource(2);
+    const card = [...document.querySelectorAll('.bz-clip-mob-item')].find((c) => c.textContent!.includes('长文剪藏')) as HTMLElement;
+    card.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }));
+    await new Promise((r) => setTimeout(r, 700)); // 超过长按阈值 500ms
+    card.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    await vi.waitFor(() => expect(document.querySelector('.bz-item-sheet')).toBeTruthy());
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet.textContent).toContain('重新生成摘要');
+    MockPlatform.isMobile = false;
+    closePanel();
+  });
+
+  it('revealClipArticle：已开面板 → 切剪藏源并选中该条（右栏渲染标题）', async () => {
+    await openDesktop();
+    await revealClipArticle('归档/网页剪藏/剪藏笔记A.md');
+    expect(M.sel.kind).toBe('clip');
+    expect(M.cur && M.cur.id).toBe('clip:归档/网页剪藏/剪藏笔记A.md');
+    const reader = document.querySelector('[data-clip-reader]') as HTMLElement;
+    expect(reader.textContent).toContain('剪藏笔记A');
+    closePanel();
+  });
+
+  it('revealClipArticle：面板未开 → 直接打开并定位', async () => {
+    boot();
+    await revealClipArticle('归档/网页剪藏/剪藏笔记A.md');
+    expect(M.open).toBe(true);
+    await vi.waitFor(() => expect(M.clipNotes && M.clipNotes.length).toBe(1));
+    expect(M.cur && M.cur.id).toBe('clip:归档/网页剪藏/剪藏笔记A.md');
+    closePanel();
+  });
+
+  it('revealClipArticle：未知路径不抛错，面板保持打开', async () => {
+    await openDesktop();
+    await expect(revealClipArticle('归档/网页剪藏/不存在.md')).resolves.toBeUndefined();
+    expect(M.open).toBe(true);
+    closePanel();
   });
 });

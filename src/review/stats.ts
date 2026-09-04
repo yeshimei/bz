@@ -8,6 +8,7 @@
  */
 
 import type { ReviewItem } from './data';
+import { FSRS, DEFAULT_W } from './fsrs';
 
 /** 评级 → 中文/颜色（UI 共用） */
 export const RATING_NAMES: Record<string, string> = { again: '忘了', hard: '困难', good: '一般', easy: '简单' };
@@ -75,8 +76,9 @@ export function flattenHistory(items: ReviewItem[]): HistoryEntry[] {
  * - 所有评级都计入
  * - 同一天多次复习算 1 次（按日期去重）
  * - streak = 从最近一次复习日往前连续的天数（断一天即停）
+ * @param opts.w R 口径权重（拟合优先；缺省回退 DEFAULT_W——与调度排期同口径，item 12 拍板）
  */
-export function computeStats(items: ReviewItem[]): ReviewStats {
+export function computeStats(items: ReviewItem[], opts?: { w?: number[] }): ReviewStats {
   const history = flattenHistory(items);
   const days = new Set<string>();
   for (const h of history) days.add(dateKey(new Date(h.timestamp)));
@@ -109,16 +111,15 @@ export function computeStats(items: ReviewItem[]): ReviewStats {
   const overdue = active.filter((i) => i.isOverdue);
   const overdueRate = active.length ? overdue.length / active.length : 0;
 
-  // 平均 R（FSRS 相位且有 stability+lastReviewed 的条目）
+  // 平均 R（FSRS 相位且有 stability+lastReviewed 的条目；R 公式与调度同源 FSRS.R）
+  const rFsrs = new FSRS(opts?.w || DEFAULT_W);
   let rSum = 0;
   let rN = 0;
   for (const i of items) {
     if (i.phase === 'fsrs' && i.stability && i.lastReviewed) {
-      // 用默认权重算 R（统计口径与调度一致；拟合权重由调用方传入可选）
       const t = (new Date().getTime() - new Date(i.lastReviewed).getTime()) / 86400000;
       if (t > 0) {
-        const R = Math.pow(1 + t / (i.stability * 0.9), -0.9);
-        rSum += R;
+        rSum += rFsrs.R(t, i.stability);
         rN++;
       }
     }
