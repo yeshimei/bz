@@ -250,7 +250,7 @@ describe('读书笔记弹窗（md 书）', () => {
     const app = makeApp(vault);
     showBookNotes(app, '书库/活着.md');
     await new Promise((r) => setTimeout(r, 20));
-    const quote = [...document.querySelectorAll<HTMLElement>('.bz-bs-quote')].find((d) => d.textContent === '❝ 原文一')!;
+    const quote = [...document.querySelectorAll<HTMLElement>('.bz-bs-hl-quote')].find((d) => d.textContent === '❝ 原文一')!;
     const block = quote.parentElement!.parentElement!; // quote → contentArea → block
     block.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     expect(app.workspace.openLinkText).toHaveBeenCalledWith('书库/活着.md#^h1', '', false);
@@ -263,7 +263,7 @@ describe('读书笔记弹窗（md 书）', () => {
     const app = makeApp(vault);
     showBookNotes(app, '书库/活着.md');
     await new Promise((r) => setTimeout(r, 20));
-    const quote = [...document.querySelectorAll<HTMLElement>('.bz-bs-quote')].find((d) => d.textContent === '❝ 原文一')!;
+    const quote = [...document.querySelectorAll<HTMLElement>('.bz-bs-hl-quote')].find((d) => d.textContent === '❝ 原文一')!;
     const block = quote.parentElement!.parentElement!;
     block.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })); // 挂 200ms 定时器
     showBookNotes(app, '书库/活着.md'); // 立刻重开（新弹窗替换旧弹窗）
@@ -373,7 +373,7 @@ describe('读书笔记弹窗（EPUB）', () => {
     const app = makeApp(vault);
     showEpubBookNotes(app, '书库/悉达多.epub', '悉达多');
     await new Promise((r) => setTimeout(r, 30));
-    const quote = [...document.querySelectorAll<HTMLElement>('.bz-bs-quote')].find((d) => d.textContent === '❝ 原文一')!;
+    const quote = [...document.querySelectorAll<HTMLElement>('.bz-bs-hl-quote')].find((d) => d.textContent === '❝ 原文一')!;
     const block = quote.parentElement!.parentElement!;
     block.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     expect(app.workspace.openLinkText).toHaveBeenCalledWith(

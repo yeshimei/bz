@@ -65,9 +65,9 @@ describe('enh-sweep-c：触控热区扫尾', () => {
     expect(src('src/favorites/ui.ts')).toContain('bz-touch-target');
     expect(src('src/belongings/ui.ts')).toContain('bz-touch-target');
     expect(src('src/encrypt/ui.ts')).toContain('bz-touch-target--xl');
-    // 未收编域（cinema 域 ui 冻结 / attach 为 padding 抬档形态 / home·review·pomodoro 保留
-    // padding·视觉抬档块）：域内仍持有 pointer:coarse 块
-    for (const d of ['home', 'cinema', 'review', 'pomodoro', 'attach']) {
+    // 未收编域（attach 为 padding 抬档形态 / home·review·pomodoro 保留 padding·视觉抬档块；
+    // cinema 域 ui 冻结已解除，走查批 C-8 收编 core 共享类，不再持域内块）：域内仍持有 pointer:coarse 块
+    for (const d of ['home', 'review', 'pomodoro', 'attach']) {
       expect(css(d), d).toMatch(/@media \(pointer: coarse\)/);
     }
     // 收编域不再复制 ::after 外扩（防双份外扩）

@@ -43,7 +43,7 @@
   background: var(--bz-surface-1); border: 1px solid var(--bz-border-strong);
   border-radius: var(--bz-radius-md); padding: 0 var(--bz-space-md); height: var(--bz-control-h-lg);
 }
-.bz-home-search:focus-within { border-color: var(--bz-brand); box-shadow: 0 0 0 3px var(--bz-brand-soft); }
+.bz-home-search:focus-within { border-color: var(--bz-brand); box-shadow: 0 0 0 2px var(--bz-brand-soft); } /* 焦点环 2px，对齐组件库 .bz-input:focus */
 .bz-home-search-ic { display: inline-flex; color: var(--bz-text-3); flex-shrink: 0; }
 .bz-home-search .bz-ic { width: 14px; height: 14px; }
 .bz-home-q {
