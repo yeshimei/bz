@@ -14,12 +14,11 @@ import { openHome, unloadHome } from '../../src/home/index';
 import { DOMAINS } from '../../src/home/domains';
 
 /** 带 listCommands/executeCommandById 的 app（mockAppWithVault 的 commands 只存注册） */
-function homeApp(vault: MockVault, commandIds: string[] = ['bz-diary-open', 'bz-cinema-open', 'bz-memo-open', 'bz-review-open']) {
+function homeApp(vault: MockVault, commandIds: string[] = ['bz-diary-open', 'bz-cinema-open', 'bz-review-open']) {
   const base = mockAppWithVault(vault);
   const names: Record<string, string> = {
     'bz-diary-open': '日记本',
     'bz-cinema-open': '影院',
-    'bz-memo-open': '备忘录',
     'bz-review-open': '复习计划',
   };
   const executed: string[] = [];
@@ -157,7 +156,7 @@ describe('home UI', () => {
 
   it('普通态点卡：关闭首页并执行对应命令', async () => {
     seedHome(vault, ['diary']);
-    const app = homeApp(vault, ['bz-diary-open', 'bz-memo-open']);
+    const app = homeApp(vault, ['bz-diary-open']);
     openHome(app);
     await new Promise((r) => setTimeout(r, 0));
     const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
@@ -168,7 +167,7 @@ describe('home UI', () => {
 
   it('普通态点迷你 chip：执行对应命令', async () => {
     seedHome(vault);
-    const app = homeApp(vault, ['bz-diary-open', 'bz-memo-open']);
+    const app = homeApp(vault, ['bz-diary-open']);
     openHome(app);
     await new Promise((r) => setTimeout(r, 0));
     const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
@@ -186,17 +185,17 @@ describe('home UI', () => {
     const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
     const q = overlay.querySelector('[data-home-q]') as HTMLInputElement;
     const pal = overlay.querySelector('[data-home-pal]') as HTMLElement;
-    q.value = '备忘录';
+    q.value = '复习计划';
     q.dispatchEvent(new Event('input', { bubbles: true }));
     expect(pal.hidden).toBe(false);
-    // 备忘录域 + bz-memo-open 命令（行文本均为「备忘录」：域行 + 命令行）
+    // 复习计划域 + bz-review-open 命令（行文本均为「复习计划」：域行 + 命令行）
     const rows = overlay.querySelectorAll('[data-home-pal-i]');
     expect(rows.length).toBeGreaterThanOrEqual(2);
     const names = [...rows].map((r) => (r as HTMLElement).textContent);
-    expect(names.filter((n) => n!.includes('备忘录')).length).toBe(2);
-    // 回车执行第一条（域：备忘录）
+    expect(names.filter((n) => n!.includes('复习计划')).length).toBe(2);
+    // 回车执行第一条（域：复习计划）
     q.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-    expect(executedOf(app)).toEqual(['bz-memo-open']);
+    expect(executedOf(app)).toEqual(['bz-review-open']);
   });
 
   it('搜索无匹配：空态', async () => {
@@ -284,48 +283,48 @@ describe('home UI', () => {
   });
 
   it('编辑态排序：卡上 → 钮把首卡移到第二位（数组序变化 + 落盘 + 重绘）', async () => {
-    seedHome(vault, ['diary', 'memo', 'cinema']);
+    seedHome(vault, ['diary', 'recap', 'cinema']);
     const app = homeApp(vault);
     openHome(app);
     await new Promise((r) => setTimeout(r, 0));
     const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
     (overlay.querySelector('[data-home-edit]') as HTMLElement).click();
     const ids = () => [...overlay.querySelectorAll('[data-home-card]')].map((c) => (c as HTMLElement).dataset.homeCard);
-    expect(ids()).toEqual(['diary', 'memo', 'cinema']);
+    expect(ids()).toEqual(['diary', 'recap', 'cinema']);
     // 首卡右移
     ((overlay.querySelector('[data-home-card="diary"]') as HTMLElement).querySelector('[data-home-move="1"]') as HTMLElement).click();
-    expect(H.pinned).toEqual(['memo', 'diary', 'cinema']);
-    expect(ids()).toEqual(['memo', 'diary', 'cinema']);
+    expect(H.pinned).toEqual(['recap', 'diary', 'cinema']);
+    expect(ids()).toEqual(['recap', 'diary', 'cinema']);
     const saved = JSON.parse(vault.files.get('CONFIG/STORAGE/home.json')!);
-    expect(saved.pinned).toEqual(['memo', 'diary', 'cinema']);
+    expect(saved.pinned).toEqual(['recap', 'diary', 'cinema']);
     // 编辑态点排序钮不触发移除（仍 3 张卡、无命令执行）
     expect(overlay.querySelectorAll('[data-home-card]').length).toBe(3);
     expect(executedOf(app)).toEqual([]);
   });
 
   it('编辑态排序边界：首卡 ← / 尾卡 → 为 no-op（顺序与落盘不变）', async () => {
-    seedHome(vault, ['diary', 'memo']);
+    seedHome(vault, ['diary', 'recap']);
     openHome(homeApp(vault));
     await new Promise((r) => setTimeout(r, 0));
     const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
     (overlay.querySelector('[data-home-edit]') as HTMLElement).click();
     ((overlay.querySelector('[data-home-card="diary"]') as HTMLElement).querySelector('[data-home-move="-1"]') as HTMLElement).click();
-    expect(H.pinned).toEqual(['diary', 'memo']);
-    ((overlay.querySelector('[data-home-card="memo"]') as HTMLElement).querySelector('[data-home-move="1"]') as HTMLElement).click();
-    expect(H.pinned).toEqual(['diary', 'memo']);
-    expect(JSON.parse(vault.files.get('CONFIG/STORAGE/home.json')!).pinned).toEqual(['diary', 'memo']);
+    expect(H.pinned).toEqual(['diary', 'recap']);
+    ((overlay.querySelector('[data-home-card="recap"]') as HTMLElement).querySelector('[data-home-move="1"]') as HTMLElement).click();
+    expect(H.pinned).toEqual(['diary', 'recap']);
+    expect(JSON.parse(vault.files.get('CONFIG/STORAGE/home.json')!).pinned).toEqual(['diary', 'recap']);
   });
 
   it('编辑态排序钮边界弱化：首卡 ← / 尾卡 → 带 is-edge', async () => {
-    seedHome(vault, ['diary', 'memo']);
+    seedHome(vault, ['diary', 'recap']);
     openHome(homeApp(vault));
     await new Promise((r) => setTimeout(r, 0));
     const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
     (overlay.querySelector('[data-home-edit]') as HTMLElement).click();
     const diaryMvL = (overlay.querySelector('[data-home-card="diary"]') as HTMLElement).querySelector('[data-home-move="-1"]') as HTMLElement;
-    const memoMvR = (overlay.querySelector('[data-home-card="memo"]') as HTMLElement).querySelector('[data-home-move="1"]') as HTMLElement;
+    const recapMvR = (overlay.querySelector('[data-home-card="recap"]') as HTMLElement).querySelector('[data-home-move="1"]') as HTMLElement;
     expect(diaryMvL.classList.contains('is-edge')).toBe(true);
-    expect(memoMvR.classList.contains('is-edge')).toBe(true);
+    expect(recapMvR.classList.contains('is-edge')).toBe(true);
   });
 
   it('移动统计条可点：data-home-side 复用侧栏路径，点「复习到期」直达复习计划', async () => {

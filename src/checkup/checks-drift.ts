@@ -3,7 +3,7 @@
  *
  * 各域数据 normalize 后都有约定字段集；这里对磁盘原文做「约定外字段 / 约定字段缺失」统计：
  * - 条目级：memo.json（备忘录/待办条目）、favorites.json（收藏条目）、pomodoro.json（history 条目）；
- * - 段级：clipbook / news / launcher / home / belongings / quiz / pomodoro 根段。
+ * - 段级：clipbook / news / home / belongings / quiz / pomodoro 根段。
  * 只报告不修（铁律：体检只读；缺失字段多数是旧数据常态，域读取时会自动补默认值）。
  */
 import type { App } from 'obsidian';
@@ -30,7 +30,6 @@ export const SEGMENT_FIELDS: Record<string, string[]> = {
   'pomodoro.json': ['version', 'state', 'history'],
   'clipbook.json': ['articleOverrides', 'savedArchive', 'order'],
   'news.json': ['articles', 'stats', 'bilibiliUps', 'bilibiliUpInfo', 'bilibiliMaxItems', 'bilibiliCookie', 'sources'],
-  'launcher.json': ['version', 'desktop', 'mobile'],
   'home.json': ['version', 'pinned'],
   'belongings.json': ['version', 'last_updated', 'items', 'categories', 'categoryIcons'],
   'quiz.json': ['notes'],

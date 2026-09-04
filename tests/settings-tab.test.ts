@@ -235,17 +235,3 @@ describe('storagePath 迁移（ADR-0009）', () => {
   });
 });
 
-describe('设置页 onload 迁移（保留既有）', () => {
-  it('旧手势设置 → launcherGesture 单选', async () => {
-    diskData['bz'] = { gestureDoubleTap: true, gestureTripleTap: false };
-    const p1 = await createPlugin(makeMockApp());
-    expect(p1.settings.launcherGesture).toBe('double');
-    expect((p1.settings as any).gestureDoubleTap).toBeUndefined();
-    diskData['bz'] = { gestureSwipeDown: 'bz-memo-open' };
-    const p2 = await createPlugin(makeMockApp());
-    expect(p2.settings.launcherGesture).toBe('swipe');
-    diskData['bz'] = { gestureTripleTap: 'off' };
-    const p3 = await createPlugin(makeMockApp());
-    expect(p3.settings.launcherGesture).toBe('off');
-  });
-});

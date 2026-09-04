@@ -1,9 +1,8 @@
 /**
- * 备忘录文件同步（memo.json 引用同步）
- * 自 ai-agent（ticket 19）拆分出的 memo 域本地实现：
+ * 待办域文件同步（memo.json 引用同步；ADR-0092 自旧 memo 域迁入，语义逐行等价）
  *   rename → 同步引用路径/标题/notePath（memo.json）
  *   delete → 清空 linkedNote 关联
- * sync 纯函数与队列/去抖为 ai-agent 的本地私有副本（勿跨域 import，语义逐行等价）；
+ * sync 纯函数与队列/去抖为域内私有副本（勿跨域 import）；
  * rename 经域事件总线 'vault:md-renamed' 按 DEBOUNCE_DELAY 合并去抖回放保序，
  * delete 走 'vault:md-deleted' 即时通道（obsidian-adapter 恒发、仅 md，
  * 载荷见 src/core/obsidian-adapter.ts）。
@@ -15,7 +14,7 @@ import { onDomainEvent } from '../core/domain-bus';
 import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
 import { SYNC_WATCHED_FOLDERS } from '../core/settings-common';
 
-// ---------- 同步纯函数（ai-agent/sync.ts 私有副本） ----------
+// ---------- 同步纯函数（域内私有副本） ----------
 
 interface SyncItem {
   linkedNote?: string | null;
@@ -96,8 +95,8 @@ function enqueue(task: () => Promise<any> | void) {
       return task();
     })
     .catch((e) => {
-      console.error('[memo-file-sync]', e);
-      notify('备忘录同步失败，数据可能不一致', { type: 'error', dedupeKey: 'memo-file-sync' });
+      console.error('[todo-file-sync]', e);
+      notify('待办同步失败，数据可能不一致', { type: 'error', dedupeKey: 'todo-file-sync' });
     });
 }
 
@@ -141,7 +140,7 @@ function createBatchFlusher<T>(run: (batch: T[]) => Promise<void>): ((ev: T) => 
 
 // ---------- 事件编排 ----------
 
-function createMemoFileSyncAgent(app: App): void {
+function createFileSyncAgent(app: App): void {
   /** 对 memo.json 执行同步函数，有变化才写回。
    *  读改写整体入 per-path 串行队列：与 memo UI / todo UI 的 CRUD 同队列互斥，
    *  后台同步不得用陈旧基线覆盖面板刚写入的数据（写竞态收敛）。 */
@@ -189,17 +188,17 @@ function createMemoFileSyncAgent(app: App): void {
   }));
 }
 
-/** 幂等初始化（memo 域总入口 ensureMemoFileSync 调用） */
-export function ensureMemoFileSync(app: App): void {
+/** 幂等初始化（todo 域总入口，main.ts onLayoutReady 调用） */
+export function ensureFileSync(app: App): void {
   if (initialized) return;
   initialized = true;
   _cancelled = false; // 重新启用后恢复任务受理
-  createMemoFileSyncAgent(app);
+  createFileSyncAgent(app);
 }
 
 /** 卸载清理：置位 _cancelled 使积压任务首行短路并丢弃去抖窗口内未回放的事件，
  *  退订全部监听（总线退订幂等，重复卸载无双清风险）后重置模块状态。 */
-export function unloadMemoFileSync(): void {
+export function unloadFileSync(): void {
   _cancelled = true;
   for (const f of _flushers) {
     try {

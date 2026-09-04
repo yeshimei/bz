@@ -9,7 +9,7 @@
 import { describe, it, expect } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { ensureMemoFileSync, unloadMemoFileSync } from '../../src/memo/file-sync';
+import { ensureFileSync, unloadFileSync } from '../../src/todo/file-sync';
 import { emitDomainEvent, clearDomainEvents } from '../../src/core/domain-bus';
 import { MockVault } from '../mock-vault';
 
@@ -18,13 +18,13 @@ const SETTINGS = {
 };
 
 async function setup() {
-  unloadMemoFileSync(); // 重置幂等守卫与监听（模块单例跨测试共享）
+  unloadFileSync(); // 重置幂等守卫与监听（模块单例跨测试共享）
   clearDomainEvents(); // 总线为模块级单例：清掉跨测试残留订阅
   const vault = new MockVault();
   const app = { vault: vault as any };
   setApp(app as any);
   setSettingsProvider(() => ({ ...SETTINGS } as any));
-  ensureMemoFileSync(app as any);
+  ensureFileSync(app as any);
   return { vault };
 }
 
@@ -103,7 +103,7 @@ describe('memo 引用同步', () => {
     ], null, 2));
 
     emitDomainEvent('vault:md-renamed', { oldPath: '卡片盒/旧笔记.md', newPath: '卡片盒/新笔记.md' });
-    unloadMemoFileSync(); // 立即卸载：cancelled 置位 + 清去抖定时器
+    unloadFileSync(); // 立即卸载：cancelled 置位 + 清去抖定时器
     await new Promise((r) => setTimeout(r, 500)); // 越过本应触发的去抖窗口
     expect(JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!)[0].linkedNote).toBe('卡片盒/旧笔记.md');
     expect(memoWrites(vault)).toBe(0);

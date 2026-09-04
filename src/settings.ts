@@ -223,20 +223,6 @@ export default interface BzSettings {
   /** 🚫 排除名单（不参与监听自动加入的笔记路径数组；手动移除/确认移除/批量取消/不更新落此名单） */
   reviewExcludedNotes: string[];
 
-  // ===== 🧩 入口页（2 项）=====
-  // 列数自 launcher.json v3 起存储（桌面/移动独立配置，域内设置页可调），
-  // 旧 data.json 残留的 launcherColumns/launcherMobileColumns 死键已删除（P2：全仓 0 读）
-  /** 显示磁贴文字（桌面端；关闭 = 全部磁贴仅显示图标） */
-  launcherShowText: boolean;
-  /** 移动端独立：显示磁贴文字（未设置 → 继承桌面端） */
-  launcherShowTextMobile?: boolean;
-
-  // ===== 🖐 手势触发（入口页域：选一个手势打开命令入口页，默认关闭）=====
-  /** 打开入口页的手势（桌面端）：off | double | triple | swipe */
-  launcherGesture: string;
-  /** 移动端独立：打开入口页手势（未设置 → 继承桌面端） */
-  launcherGestureMobile?: string;
-
   // ===== 🧠 第二大脑（secondbrain 域；原闪念 17 键 ticket 103 全量更名，onload 迁移旧值）=====
   /** Ollama URL（本地） */
   secondBrainOllamaUrl: string;
@@ -332,11 +318,9 @@ export default interface BzSettings {
   // ===== 📱 移动端主窗口默认全屏（ticket 68，跨域，ADR-0019）=====
   // 仅移动端（Platform.isMobile）显示与生效；≤768px 开=真全屏（.bz-win-mfs）/关=95% 常规卡。
   // 只决定每次打开的初始形态；默认值=行为保持（原移动端即全屏→开，原居中卡→关）。
-  // 聚合讯跟随剪藏本键、阅读报告跟随书架墙键、影视分析随影视键（2026-08 用户拍板，不设独立开关）。
+  // 阅读报告跟随书架墙键（2026-08 用户拍板，不设独立开关）。
   /** 日记本：移动端默认全屏（默认开——原 ≤480px 即全屏，480-768 原抽屉形态） */
   diaryMobileDefaultFullscreen: boolean;
-  /** 备忘录：移动端默认全屏（默认关——原移动端 95% 居中卡） */
-  memoMobileDefaultFullscreen: boolean;
   /** 待办（todo 新域）：移动端默认全屏（默认关——与旧备忘录一致） */
   todoMobileDefaultFullscreen: boolean;
   /** 归物本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
@@ -571,12 +555,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
   reviewWatchedFolders: [],
   reviewExcludedNotes: [],
 
-  // 入口页
-  launcherShowText: true,
-
-  // 手势触发（默认关闭；单选一个手势打开命令入口页）
-  launcherGesture: 'off',
-
   // 第二大脑（ticket 103：原闪念键更名，值语义与存储类型不变；META_PATH/VEC_PATH 废弃清除）
   secondBrainOllamaUrl: 'http://localhost:11434',
   secondBrainEmbeddingModel: 'bge-m3',
@@ -630,9 +608,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   encryptSecurityMode: false,
 
   // 移动端主窗口默认全屏（ticket 68：默认值=行为保持——原移动端即全屏→开，原居中卡→关；
-  // 聚合讯跟随剪藏本键、阅读报告跟随书架墙键，不设独立键）
+  // 阅读报告跟随书架墙键，不设独立键）
   diaryMobileDefaultFullscreen: true,
-  memoMobileDefaultFullscreen: false,
   todoMobileDefaultFullscreen: false,
   belongingsMobileDefaultFullscreen: true,
   passwordMobileDefaultFullscreen: true,

@@ -135,12 +135,11 @@ describe('P2 迁移完成立即落盘（fix(main)）', () => {
     document.body.innerHTML = '';
   });
 
-  it('storagePath/手势迁移后设置立即写回 data.json；二次 onload 无迁移 warning 重播', async () => {
-    // 旧数据：路径参差（触发 warning 分支）+ 旧手势键，storagePath 缺失
+  it('storagePath 迁移后设置立即写回 data.json；二次 onload 无迁移 warning 重播', async () => {
+    // 旧数据：路径参差（触发 warning 分支），storagePath 缺失
     diskData['bz'] = {
       todoFilePath: 'OLD1/x',
       pwStoragePath: 'OLD2/y',
-      gestureDoubleTap: 'bz-home',
     };
     await createPlugin(makeMockApp());
     // void saveSettings() 微任务落地
@@ -148,8 +147,6 @@ describe('P2 迁移完成立即落盘（fix(main)）', () => {
 
     // 迁移结果已落盘
     expect(diskData['bz'].storagePath).toBe('CONFIG/STORAGE');
-    expect(diskData['bz'].launcherGesture).toBe('double');
-    expect(diskData['bz'].gestureDoubleTap).toBeUndefined();
     // 参差路径 warning 首启恰好一条（自绘 toast）
     expect(document.querySelectorAll('.bz-notice')).toHaveLength(1);
 
@@ -161,6 +158,5 @@ describe('P2 迁移完成立即落盘（fix(main)）', () => {
     expect(document.querySelectorAll('.bz-notice')).toHaveLength(0);
     // 迁移结果自持久层数据恢复，无需再次迁移
     expect(plugin2.settings.storagePath).toBe('CONFIG/STORAGE');
-    expect(plugin2.settings.launcherGesture).toBe('double');
   });
 });

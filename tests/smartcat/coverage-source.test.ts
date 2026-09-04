@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { buildDiaryTagsStructured } from '../../src/smartcat/diary-source';
 import {
   buildReviewStructured, buildQuizAddedStructured, buildQuizAnsweredStructured,
-  buildLauncherOpenedStructured, buildAttachMovedStructured,
+  buildAttachMovedStructured,
 } from '../../src/smartcat/coverage-source';
 import { buildBehaviorWording, behaviorActionWord } from '../../src/smartcat/behavior-wording';
 import type { BehaviorItem } from '../../src/smartcat/types';
@@ -95,12 +95,6 @@ describe('coverage-source：复习计划/题库/入口页/附件搬移', () => {
     expect(plain.extras).toBeUndefined();
     expect(wordingOf('quiz', plain)).toBe('你回答了题目「勾股定理」');
     expect(buildQuizAddedStructured('')).toBeNull();
-  });
-
-  it('launcher:opened', () => {
-    const s = buildLauncherOpenedStructured();
-    expect(s).toEqual({ entityType: 'launcher', action: 'opened' });
-    expect(wordingOf('launcher', s)).toBe('你打开了入口页');
   });
 
   it('attach:moved 带计数/缺省两态', () => {

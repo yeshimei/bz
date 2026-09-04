@@ -9,10 +9,6 @@ import { openSettingsModal, closeSettingsModal, createSettingsGroup } from '../s
 import { setApp } from '../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../src/core/settings-provider';
 import { mobileFullscreenGroup } from '../src/core/settings-common';
-import { setBzSettingsProvider } from '../src/memo';
-import { App } from '../src/memo/app';
-import { UIManager } from '../src/memo/ui';
-import { DataManager } from '../src/memo/data';
 import { belongingSettingsSchema } from '../src/belongings/ui';
 import { favoritesSettingsSchema } from '../src/favorites/ui';
 import { MockVault } from './mock-vault';
@@ -436,56 +432,6 @@ describe('分组卡片（2026-08 用户拍板方案 A：先落日记本）', () 
     openSettingsModal({ title: '空分组', schema: { groups: [{ icon: 'folder-open', name: '目录', rows: [] }] }, emptyText: '暂无可配置项' });
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('暂无可配置项');
-  });
-});
-
-describe('备忘录面板 ⚙️ 设置弹窗', () => {
-  const SETTINGS = {
-    todoFilePath: 'CONFIG/STORAGE',
-    showFileName: true,
-    autoPopupOnStart: false,
-    memoAutoArchive: true,
-    cinemaFolderPath: '我的/影视',
-  };
-
-  beforeEach(async () => {
-    resetObsidianMocks();
-    document.body.innerHTML = '';
-    localStorage.clear();
-    vi.useRealTimers();
-    const vault = new MockVault();
-    const app = {
-      vault,
-      workspace: {
-        on: vi.fn(() => ({ ref: 'ref' })),
-        getLeaf: vi.fn(() => ({ openFile: vi.fn(), view: null })),
-        getActiveFile: () => null,
-      },
-      metadataCache: { getFileCache: () => null },
-      commands: { removeCommand: vi.fn() },
-    };
-    setApp(app as any);
-    setBzSettingsProvider(() => SETTINGS);
-    setSettingsProvider(() => SETTINGS as any);
-    await App.init(SETTINGS);
-  });
-
-  it('点 ⚙️ 打开弹窗，切换「完成后自动归档」写回设置（提醒行已随入口改道移出 memo schema）', async () => {
-    UIManager.showMain(null, false);
-    const settingsBtn = document.querySelector('.todo-btn-settings') as HTMLElement;
-    expect(settingsBtn).not.toBeNull();
-    settingsBtn.click();
-    const popup = document.getElementById('bz-settings-modal-popup')!;
-    expect(popup.textContent).toContain('备忘录设置');
-    const item = [...popup.querySelectorAll('.setting-item')].find((el) => (el as HTMLElement).dataset.name === '完成后自动归档') as HTMLElement;
-    expect(item).toBeTruthy();
-    const toggle = (item as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');
-    toggle.trigger(false);
-    await new Promise((r) => setTimeout(r, 10));
-    expect(SETTINGS.memoAutoArchive).toBe(false);
-    // 提醒组随被动弹窗入口一并移出（行为归待办域，同键设置在待办 schema）
-    const reminderRow = [...popup.querySelectorAll('.setting-item')].find((el) => (el as HTMLElement).dataset.name === '启动时自动弹出');
-    expect(reminderRow).toBeUndefined();
   });
 });
 

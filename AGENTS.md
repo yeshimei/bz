@@ -1,6 +1,6 @@
 # AGENTS.md — 包仔（bz）Obsidian 插件
 
-独立 Obsidian 插件，22 功能域（详见领域清单）。**项目语言：中文**。
+独立 Obsidian 插件，20 功能域（详见领域清单）。**项目语言：中文**。
 
 ## 命令与构建
 - `pnpm install` / `pnpm run dev` / `pnpm run build` / `pnpm test` / `pnpm exec tsc --noEmit`（依赖用 pnpm，勿用 npm）
@@ -29,8 +29,7 @@
 |---|---|
 | diary | `我的/日记/*.md`（旧域，冻结：只保写安全，不投资） |
 | diary-wall（回忆墙） | `我的/日记/*.md`（只读派生视图，ADR-0081） |
-| memo | memo.json（旧域，后台执行方；被动入口已改道 todo） |
-| todo（待办） | memo.json（与 memo 同源；memo 接管后退役） |
+| todo（待办） | memo.json（唯一属主，ADR-0092：UI/写盘/引用同步/被动捕获全归本域） |
 | belongings | belongings.json |
 | clipbook（剪藏本，ADR-0082） | news.json（未读流）+ `归档/网页剪藏/*.md` + clipbook.json（侧写） |
 | favorites | favorites.json |
@@ -38,7 +37,6 @@
 | review（复习；quiz 已并入） | review.json |
 | secondbrain（第二大脑） | secondbrain.json + secondbrain.vec |
 | auto-summary | 剪藏 frontmatter |
-| launcher | launcher.json |
 | pomodoro | pomodoro.json |
 | attach | 搬附件 |
 | bili-downloader | bili-tasks.json |
@@ -50,7 +48,7 @@
 | checkup（数据体检） | 全插件数据只读巡检 |
 | literature（文献盒） | literature 笔记 |
 
-> 已退役：movie（ADR-0087）、quiz（并入 review）、library（并入 bookshelf）、password（crypto 迁 core）、news/clipping（并入 clipbook）。
+> 已退役：movie（ADR-0087）、quiz（并入 review）、library（并入 bookshelf）、password（crypto 迁 core）、news/clipping（并入 clipbook）、memo（ADR-0092，todo 全面接管）、launcher（ADR-0093，home 唯一入口）。
 
 ## 测试与质量门禁
 - 新功能必须包含数据层+UI层测试，smoke.test.ts 同步验证。
