@@ -18,7 +18,6 @@ interface SecondBrainConfig {
   CHAT_TOP_K: number;
   CHUNK_MIN_LENGTH: number;
   ALLOW_PATHS: string[];
-  CONCURRENCY: number;
   CONTEXT_LIMIT: number;
   DEBOUNCE_DELAY: number;
   CURSOR_POLL_INTERVAL: number;
@@ -45,7 +44,6 @@ export function buildConfig(): SecondBrainConfig {
           .map((p: string) => p.trim())
           .filter(Boolean)
       : [], // ticket 116：空 = 什么也不录（不索引任何目录），不再是缺省目录清单
-    CONCURRENCY: Number(s.secondBrainConcurrency) || 15,
     CONTEXT_LIMIT: Number(s.secondBrainContextLimit) || 600,
     DEBOUNCE_DELAY: Number(s.secondBrainDebounceDelay) || 300,
     CURSOR_POLL_INTERVAL: Number(s.secondBrainCursorPollInterval) || 500,

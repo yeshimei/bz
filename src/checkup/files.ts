@@ -28,8 +28,7 @@ export function jsonScanTargets(app: App): JsonScanTarget[] {
   const s = tryGetSettings() as any;
   return [
     { file: storageFile('memo.json', storageDir()), label: '备忘录 / 待办' },
-    // 收藏本：目录可配置（storagePath 优先，旧 favoritesStoragePath 兜底）——favorites/app.ts 同款
-    { file: getStoragePath(s.storagePath || s.favoritesStoragePath), label: '收藏本' },
+    { file: getStoragePath(s.storagePath), label: '收藏本' },
     { file: storageFile('belongings.json'), label: '归物本' },
     { file: storageFile('clipbook.json'), label: '剪藏本侧写' },
     { file: storageFile('news.json'), label: '剪藏本（未读流）' },

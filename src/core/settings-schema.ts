@@ -33,7 +33,7 @@ export type SettingsKeyOfType<V> = {
 }[keyof BzSettings];
 
 /** 行值绑定二选一：键直绑（自动读值 + saveSettings 落盘）或外部数据三函数逃生口。 */
-export type RowBinding<V> =
+type RowBinding<V> =
   | { key: SettingsKeyOfType<V> }
   | {
       /** 读当前值 */
@@ -66,7 +66,7 @@ interface RowBase {
   isChild?: boolean;
 }
 
-export interface ToggleRow extends RowBase {
+interface ToggleRow extends RowBase {
   type: 'toggle';
   name: string;
   binding: RowBinding<boolean>;
@@ -87,7 +87,7 @@ interface TextualCommit {
   refreshKey?: string | ((snapshot: SettingsSnapshot) => string);
 }
 
-export interface TextRow extends RowBase, TextualCommit {
+interface TextRow extends RowBase, TextualCommit {
   type: 'text';
   name: string;
   binding: RowBinding<string>;
@@ -99,7 +99,7 @@ export interface TextRow extends RowBase, TextualCommit {
   num?: boolean;
 }
 
-export interface TextAreaRow extends RowBase, TextualCommit {
+interface TextAreaRow extends RowBase, TextualCommit {
   type: 'textarea';
   name: string;
   binding: RowBinding<string>;
@@ -122,7 +122,7 @@ export interface NumberRow extends RowBase, TextualCommit {
   onChange?: (value: number, ctx: SettingsRowContext) => void;
 }
 
-export interface SelectRow extends RowBase {
+interface SelectRow extends RowBase {
   type: 'select';
   name: string;
   binding: RowBinding<string>;
@@ -131,7 +131,7 @@ export interface SelectRow extends RowBase {
   onChange?: (value: string, ctx: SettingsRowContext) => void;
 }
 
-export interface SliderRow extends RowBase {
+interface SliderRow extends RowBase {
   type: 'slider';
   name: string;
   binding: RowBinding<number>;
@@ -141,7 +141,7 @@ export interface SliderRow extends RowBase {
   onChange?: (value: number, ctx: SettingsRowContext) => void;
 }
 
-export interface PathRow extends RowBase {
+interface PathRow extends RowBase {
   type: 'path';
   name: string;
   /** single = 单值（绑定 string 键）；multi = 多值（绑定 string[] 键）。ADR-0061 选择器录入 */
@@ -168,7 +168,7 @@ export interface PathRow extends RowBase {
 }
 
 /** 纯操作行（如「添加监听文件夹」）：挂 .bz-setting-action-row 豁免分组徽标计数 */
-export interface ButtonRow extends RowBase {
+interface ButtonRow extends RowBase {
   type: 'button';
   name: string;
   buttonText: string;
@@ -178,13 +178,13 @@ export interface ButtonRow extends RowBase {
 }
 
 /** 纯展示行（名称 + 描述，无控件；如影视「海报抓取」指引行） */
-export interface InfoRow extends RowBase {
+interface InfoRow extends RowBase {
   type: 'info';
   name: string;
 }
 
 /** 非常规内容唯一出口：render 插槽（内容渲染进独立包装容器，visibleWhen 作用于包装容器） */
-export interface CustomRow extends RowBase {
+interface CustomRow extends RowBase {
   type: 'custom';
   render: (body: HTMLElement, ctx: SettingsRowContext) => void;
   /** ticket 172：任意行变更后（含 aiProvider 切换）重求值时回调，供外部绑定行刷新显示值 */
@@ -221,7 +221,7 @@ export interface SettingsSchema {
 }
 
 /** 渲染句柄：refresh = 重求值显隐 + 徽标回填 + 两行式重标注（动态内容变更后调用） */
-export interface SettingsRenderHandle {
+interface SettingsRenderHandle {
   refresh: () => void;
 }
 

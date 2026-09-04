@@ -19,8 +19,6 @@ import { articleKeyOf, excerpt } from './constants';
 import { updateClipbookData, type ClipbookData } from './data';
 import { enqueueNewsWrite } from './write-queue';
 
-/** B站视频条目判定（ADR-0068：保存分流文献盒；url 异常缺失回退剪藏按钮） */
-export const isBiliVideo = (a: any): boolean => a?.platform === 'B站' && !!String(a?.url || '').trim();
 
 /** 展示站点名（news：平台；剪藏：frontmatter site） */
 function siteName(a: any): string {
@@ -186,86 +184,15 @@ export function queryBySource(
   return out.filter((a) => a.st !== 'saved');
 }
 
-/** 全量未处理数（rail「全部未读」徽标；不含 saved 命中剪藏的未读回落） */
-export function unreadTotal(articles: any[]): number {
-  return (articles || []).filter((a) => !a.read).length;
-}
 
-/** 某平台/UP 未处理数 */
-export function inboxCount(articles: any[], platform: string, up?: string): number {
-  return (articles || []).filter((a) => {
-    if (a.read) return false;
-    if (platformOf(a) !== platform) return false;
-    if (up && String(a.author || '') !== up) return false;
-    return true;
-  }).length;
-}
 
-/** 剪藏目录条目数（rail「剪藏本」计数） */
-export function clipCount(notes: Array<any> | null): number {
-  return notes ? notes.length : 0;
-}
 
-/** 已读中「已保存」的条目（saved 源列表侧写，无独立源返回 0——本票 saved 只进剪藏本） */
-export function savedCount(articles: any[], sidecar: ClipbookData, clipByUrl: Set<string>): number {
-  let n = 0;
-  for (const a of articles || []) {
-    if (!a.read) continue;
-    if (a.state === 'saved') { n++; continue; }
-    if (a.url && clipByUrl.has(String(a.url))) n++;
-  }
-  n += (sidecar.savedArchive || []).length;
-  return n;
-}
 
 /**
  * 动作执行（状态写回）。
  * @param act save|unsave|read|skip|reading|delete|open-note
  * 返回需要触发 UI 重渲染的提示文案（或空）。
  */
-export async function runAction(
-  act: string,
-  article: ClipArticle | null,
-  ctx: { articles: any[]; sidecar: ClipbookData; clipByUrl: Set<string> }
-): Promise<{ rerender: boolean; msg?: string; openPath?: string }> {
-  if (!article) return { rerender: false };
-  // 剪藏条目：删除（vault.delete 由 UI 层做）；打开笔记由 UI 层做
-  if (article.origin === 'clip') {
-    if (act === 'open-note' && article.notePath) return { rerender: false, openPath: article.notePath };
-    return { rerender: false };
-  }
-  const raw = article.raw;
-  if (!raw) return { rerender: false };
-  const key = articleKeyOf(raw);
-
-  if (act === 'reading') {
-    // 在读 ↔ 回未读（D2 收编：读改写入 per-path 串行队列，基于磁盘现值而非面板快照）
-    await updateClipbookData((sidecar) => {
-      const overrides = { ...sidecar.articleOverrides };
-      const cur = overrides[key];
-      if (cur && cur.reading === true) delete overrides[key];
-      else overrides[key] = { reading: true };
-      return { ...sidecar, articleOverrides: overrides };
-    });
-    return { rerender: true };
-  }
-  if (act === 'save' || act === 'unsave' || act === 'read' || act === 'skip') {
-    if (act === 'unsave') {
-      // 移出剪藏：清 news state + 归档残留（目录文件不动，靠目录保留；侧写走串行队列读改写）
-      await updateClipbookData((sidecar) => ({
-        ...sidecar,
-        savedArchive: (sidecar.savedArchive || []).filter((s) => s.url !== String(raw.url || '')),
-      }));
-      return { rerender: true };
-    }
-    // 落 news.json read 面（saved/skipped 语义对齐 news/reader.ts markAsRead）
-    if (act === 'save' || act === 'read' || act === 'skip') {
-      await writeNewsState(raw, act as 'save' | 'read' | 'skip');
-      return { rerender: true };
-    }
-  }
-  return { rerender: false };
-}
 
 /** 写回 news.json 单篇状态（read=true + state + 删 body；串行队列 + 段级合并——与 loader/
  *  news-source-settings/flow 共用同一条写链，daemon 并发追加的文章不被覆盖） */
@@ -287,7 +214,3 @@ export async function writeNewsState(raw: any, action: 'save' | 'read' | 'skip')
   });
 }
 
-/** 应用保留策略（news/reader.ts loadAll 语义迁移：未读不处理/已存 N 天删/已跳 M 天删，起算 fetchedAt/date） */
-export function applyRetentionTo(articles: any[], savedDays: number, skippedDays: number, now: number = Date.now()): any[] {
-  return applyRetention(articles, savedDays, skippedDays, now);
-}

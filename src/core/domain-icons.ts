@@ -21,7 +21,6 @@ export const DOMAIN_ICONS: Readonly<Record<string, string>> = {
   // 面板专属域（无对应命令）
   global: 'settings',
   ai: 'sparkles',
-  'bili-downloader': 'download',
   // 域入口命令与面板导航共用
   home: 'layout-grid',
   recap: 'calendar-heart',

@@ -24,7 +24,7 @@
  *  - onCorrupt：损坏留档重建后回调（域可保留既有 notice 文案——铁律 1 冻结文案）
  *
  * 路径 helper（storageDir/storageFile）收敛全仓 storagePath 解析的多种写法：
- *  - storageFile(name, base) 的 base 供「旧字段兜底」域使用（如 storagePath||reviewStoragePath），清理逻辑集中此处。
+ *  - storageFile(name, base) 的 base 供目录类工具函数使用，清理逻辑集中此处。
  */
 import { getApp } from './app';
 import { tryGetSettings } from './settings-provider';

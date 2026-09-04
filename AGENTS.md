@@ -8,7 +8,7 @@
 - 测试用 vitest，alias 替换 obsidian 为 mock。
 
 ## 架构
-- `src/main.ts`：命令注册、设置页、懒加载（40 命令，另有少量域内注册）。
+- `src/main.ts`：命令注册、设置页、懒加载（44 命令，另有 diary 写日记命令域内注册）。
 - `src/core/`：共享层；`src/<域>/`：index + data + ui + styles.css。
 - **依赖方向（ADR-0002）**：`core ← config/state ← parser ← store ← ui ← main`。禁止模块顶层互访，函数级环引用须延迟解析。
 
@@ -39,7 +39,6 @@
 | auto-summary | 剪藏 frontmatter |
 | pomodoro | pomodoro.json |
 | attach | 搬附件 |
-| bili-downloader | bili-tasks.json |
 | encrypt（保险库，ADR-0085） | `CONFIG/.ENCRYPT/` |
 | bookshelf（书架墙） | `书库/*.md`、EPUB（library 已退役并入） |
 | cinema（影院） | `我的/影视/*.md`（movie 已退役并入，ADR-0087） |

@@ -3,13 +3,6 @@
  */
 import type { ClipArticle, RailKind } from './types';
 
-/** 聚合讯（news.json）平台显示名（对齐 news 域；剪藏 site 自由字符串不含在内） */
-export const NEWS_PLATFORMS: Array<{ platform: string; kind: RailKind }> = [
-  { platform: '知乎日报', kind: 'inbox' },
-  { platform: '果壳科学人', kind: 'inbox' },
-  { platform: 'B站', kind: 'inbox' },
-];
-
 /** 稳定标识键（对齐 news/data.ts articleKeyOf：url 优先，其次 title+date） */
 export function articleKeyOf(a: any): string {
   if (a && a.url) return 'url:' + String(a.url);

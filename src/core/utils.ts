@@ -22,10 +22,6 @@ export function pad2(n: number | string): string {
   return String(n).padStart(2, '0');
 }
 
-/** 生成随机块 ID */
-export function generateBlockId(): string {
-  return Math.random().toString(36).substr(2, 6);
-}
 
 /** 睡眠 */
 export function sleep(ms: number): Promise<void> {

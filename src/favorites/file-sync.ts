@@ -90,7 +90,7 @@ async function withFavoritesJson<T>(filePath: string, task: () => Promise<T>): P
 /** 收藏本数据文件路径（照抄旧 ai-agent/index.ts：ADR-0009 storagePath 优先，旧字段兼容兜底） */
 function getFavoritesPath(): string {
   const s = tryGetSettings() as any;
-  return getStoragePath(s && (s.storagePath || s.favoritesStoragePath));
+  return getStoragePath(s && s.storagePath);
 }
 
 /** 监听文件夹列表（issue 187：原 aiAgentWatchedFolders 键退役，固定默认范围） */

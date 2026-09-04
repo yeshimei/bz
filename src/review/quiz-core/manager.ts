@@ -5,14 +5,14 @@ import type { App } from 'obsidian';
 import { jsonFileStore, storageFile } from '../../core/storage';
 import { tryGetSettings } from '../../core/settings-provider';
 
-/** 默认数据文件路径（设置 quizStoragePath/reviewStoragePath 可改目录） */
+/** 默认数据文件路径 */
 export const QUIZ_FILE_PATH = 'CONFIG/STORAGE/quiz.json';
 export const REVIEW_DATA_PATH = 'CONFIG/STORAGE/review.json';
 
-/** 共享数据目录（ADR-0009：storagePath 优先，旧 reviewStoragePath 兼容兜底；trim 收敛至 storageFile） */
+/** 共享数据目录（ADR-0009；trim 收敛至 storageFile） */
 function storageDir(): string {
   const s = tryGetSettings() as any;
-  return (s && (s.storagePath || s.reviewStoragePath)) || 'CONFIG/STORAGE';
+  return (s && s.storagePath) || 'CONFIG/STORAGE';
 }
 
 /** 做题家数据文件路径 */

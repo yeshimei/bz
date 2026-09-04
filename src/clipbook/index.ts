@@ -13,13 +13,6 @@ import { initPanel, showPanel, unloadPanel, reloadIfOpen, invalidateClipBodyCach
 let initialized = false;
 let autoRefreshRegistered = false;
 
-/** 幂等初始化（懒加载）：建面板 DOM + 订阅目录自动刷新 */
-export function ensureClipbook(app: App): void {
-  if (initialized) return;
-  initialized = true;
-  registerAutoRefresh(app);
-  initPanel(app);
-}
 
 /** 打开剪藏本（bz-clipbook-open 命令回调） */
 export function openClipbook(app: App): void {

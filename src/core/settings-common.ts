@@ -14,7 +14,7 @@ import { notice } from './notice';
 import { getSettings, saveSettings, tryGetSettings } from './settings-provider';
 import type { GroupDecl, SettingsKeyOfType, SettingsRow, SettingsSnapshot } from './settings-schema';
 
-export interface MobileFullscreenRowOptions {
+interface MobileFullscreenRowOptions {
   /**
    * 描述文案覆盖：ticket 170 起所有域统一无描述（用户拍板），仅保留 opts 接口
    * 以备后续单域回加。opts.desc 传非空字符串 = 覆盖；传 '' 或不传 = 无描述。
@@ -71,7 +71,7 @@ export function batchSizeRow(
 }
 
 /** 重载提示文案：快照设置改动后通知重载插件生效（正文不带 emoji，铁律 7） */
-export const RELOAD_SETTINGS_NOTICE = '设置已保存，重载插件后生效';
+const RELOAD_SETTINGS_NOTICE = '设置已保存，重载插件后生效';
 
 /**
  * string 键 ↔ number 值转换绑定（number 行显示数字，落盘保持字符串——数据格式冻结）。

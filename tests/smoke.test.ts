@@ -258,7 +258,6 @@ describe('bz 骨架冒烟', () => {
     const plugin = await createPlugin(makeMockApp());
 
     const s = plugin.settings;
-    expect(s.todoFilePath).toBe('CONFIG/STORAGE');
     expect(s.articleDirectory).toBe('归档/网页剪藏');
     expect(s.cinemaFolderPath).toBe('我的/影视'); // ADR-0087：接管影视目录（旧 movieFolderPath 键退役）
     expect(s.bookshelfFolderPath).toBe(''); // 空 = 未配置（运行时回落旧 libraryFolderPath 存量值）
@@ -267,7 +266,6 @@ describe('bz 骨架冒烟', () => {
     expect('libraryMobileDefaultFullscreen' in s).toBe(false);
     expect('bookTag' in s).toBe(false);
     expect(s.bookshelfMobileDefaultFullscreen).toBe(true);
-    expect(s.favoritesStoragePath).toBe('CONFIG/STORAGE');
     expect(s.secondBrainOllamaUrl).toBe('http://localhost:11434');
     expect(s.secondBrainEmbeddingModel).toBe('bge-m3');
     // enh-sweep-a：远程 Ollama URL 默认留空（空 = 未配置远程，不再写死内网 IP）
@@ -312,10 +310,9 @@ describe('bz 骨架冒烟', () => {
 ${failures.join('\n')}`).toEqual([]);
     expect(registeredCommands.length).toBeGreaterThanOrEqual(31);
   }, 15000);
-  it('事件常驻域 onload 注册（autoSummary 开关 / 引用同步无条件常驻 issue 187 / secondBrain 懒加载分支；旧 flashEnabled 键随 ticket 103 迁移）', async () => {
+  it('事件常驻域 onload 注册（autoSummary 开关 / 引用同步无条件常驻 issue 187 / secondBrain 懒加载分支）', async () => {
     delete diskData['bz'];
-    // 故意种旧键：验证 onload 迁移把 flashEnabled 平移为 secondBrainEnabled
-    diskData['bz'] = { autoSummaryEnabled: true, flashEnabled: true };
+    diskData['bz'] = { autoSummaryEnabled: true };
     syncSpies.ensureFileSync.mockClear();
     syncSpies.ensureFavoritesFileSync.mockClear();
     const app = makeMockApp();
@@ -324,7 +321,6 @@ ${failures.join('\n')}`).toEqual([]);
     // todo/favorites 两路文件同步 ensure 各恰好一次，均不抛错
     expect(plugin.settings.autoSummaryEnabled).toBe(true);
     expect(plugin.settings.secondBrainEnabled).toBe(true);
-    expect(plugin.settings.flashEnabled).toBeUndefined();
     expect(syncSpies.ensureFileSync).toHaveBeenCalledTimes(1);
     expect(syncSpies.ensureFileSync).toHaveBeenCalledWith(app);
     expect(syncSpies.ensureFavoritesFileSync).toHaveBeenCalledTimes(1);

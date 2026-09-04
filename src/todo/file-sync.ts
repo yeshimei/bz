@@ -64,10 +64,10 @@ async function saveJSON(app: App, filePath: string, data: any): Promise<void> {
 
 // ---------- 路径 / 设置 ----------
 
-/** 备忘录数据文件路径（照抄旧 ai-agent/index.ts：ADR-0009 storagePath 优先，旧 todoFilePath 兼容兜底） */
+/** 备忘录数据文件路径（ADR-0009 共享数据路径） */
 function getMemoPath(): string {
   const s = tryGetSettings() as any;
-  return storageFile('memo.json', (s && (s.storagePath || s.todoFilePath)) || 'CONFIG/STORAGE');
+  return storageFile('memo.json', (s && s.storagePath) || 'CONFIG/STORAGE');
 }
 
 /** 监听文件夹列表（issue 187：原 aiAgentWatchedFolders 键退役，固定默认范围） */

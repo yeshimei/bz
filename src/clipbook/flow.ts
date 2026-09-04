@@ -279,7 +279,3 @@ function dirOf(): string {
   return ((s && s.articleDirectory) || '归档/网页剪藏').replace(/\/+$/, '');
 }
 
-/** 保留策略清理 + 全量装载（面板打开时执行一次；返回是否需重渲染） */
-export async function loadPanelData(): Promise<void> {
-  await readNewsAndSidecar();
-}

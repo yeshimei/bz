@@ -75,18 +75,6 @@ export function todoSettingsSchema(): SettingsSchema {
               ...TodoData.getScenarios().map((sc) => ({ value: sc, label: sc })),
             ],
           },
-          {
-            type: 'toggle',
-            name: '完成后自动归档',
-            desc: '勾选完成后条目移入已完成折叠区，关闭则留在主列表并划线显示',
-            binding: {
-              get: () => getSettings().memoAutoArchive !== false,
-              set: (v) => {
-                (getSettings() as any).memoAutoArchive = v;
-              },
-              save: () => saveSettings(),
-            },
-          },
         ],
       },
       {

@@ -12,10 +12,8 @@ import { enqueueFileTask, storageFile } from '../core/storage';
 import type { TodoItem } from './types';
 
 export interface TodoSettingsLike {
-  /** ADR-0009 共享数据路径（优先） */
+  /** ADR-0009 共享数据路径 */
   storagePath?: string;
-  /** 旧独立路径（兼容保留，同旧 memo todoFilePath） */
-  todoFilePath?: string;
   /** 场景列表（逗号分隔，空则内置默认；与旧 memo 共用 memoScenarios 键） */
   memoScenarios?: string;
   /** 公开课笔记目录（与 memo 共用 cinemaFolderPath） */
@@ -69,8 +67,8 @@ export const TodoData = {
   cinemaFolderPath: '我的/影视',
 
   init(settings: TodoSettingsLike) {
-    // ADR-0009：storagePath 优先，旧 todoFilePath 兼容兜底（memo.json 与旧 memo 共用）
-    this.todoFilePath = storageFile('memo.json', (settings.storagePath || settings.todoFilePath) || 'CONFIG/STORAGE');
+    // memo.json 路径（ADR-0009 共享数据路径）
+    this.todoFilePath = storageFile('memo.json', settings.storagePath || 'CONFIG/STORAGE');
     this._store = jsonStore(this.todoFilePath);
     // 场景：设置可编辑（逗号分隔），空则内置默认（与旧 memo 共用 memoScenarios 键）
     this.scenarios = parseScenarios(settings.memoScenarios);
