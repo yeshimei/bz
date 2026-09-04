@@ -228,7 +228,7 @@ describe('cinema overlay', () => {
     // vault.trash(file, true)：原路径消失，.trash/ 留档可恢复
     expect(vault.files.has('我的/影视/《星际穿越》.md')).toBe(false);
     expect(vault.files.has('.trash/《星际穿越》.md')).toBe(true);
-    expect(hasNotice('已移入回收站')).toBe(true);
+    expect(hasNotice('已删除「星际穿越」，已移入系统回收站')).toBe(true);
   });
 
   it('想看灰色小字 → 快速状态窗（升级在看/已看 + 滑杆 + 影评）', () => {
@@ -587,7 +587,7 @@ tags: [电影]
     const item = M.items.find((i) => i.name === '星际穿越2');
     expect(item).toBeTruthy();
     expect(item!.file?.path).toBe('我的/影视/《星际穿越2》.md');
-    expect(hasNotice('已保存')).toBe(true);
+    expect(hasNotice('已保存「星际穿越2」')).toBe(true);
   });
 
   it('编辑改类型 → frontmatter tags 落盘（替换类型 tag、字段保留）', async () => {
@@ -627,7 +627,7 @@ tags: [电影]
     expect(vault.files.get('我的/影视/《星际穿越》.md')).toContain('评分: 9.6');
     expect(vault.files.has('我的/影视/《绝命毒师 第一季》.md')).toBe(true); // 同名文件未被覆盖
     expect(modal.textContent).toContain('编辑影视');
-    expect(hasNotice('已保存')).toBe(false);
+    expect(hasNotice('已保存「星际穿越2」')).toBe(false);
   });
 
   it('编辑改名为非法字符 → 拦截（不重命名）', async () => {
@@ -644,7 +644,7 @@ tags: [电影]
     await new Promise((r) => setTimeout(r, 0));
     expect(vault.files.has('我的/影视/《星际穿越》.md')).toBe(true);
     expect(hasNotice(/非法字符/)).toBe(true);
-    expect(hasNotice('已保存')).toBe(false);
+    expect(hasNotice('已保存「星际穿越2」')).toBe(false);
   });
 
   it('删除失败 → 报错并保留条目（不摘列表、不假报成功）', async () => {
@@ -716,7 +716,7 @@ tags: [电影]
     expect(item?.status).toBe(2);
     expect(item?.rating).toBe(5); // DEFAULT_RATING
     expect(item?.watchDate).not.toBe('2026-05-01');
-    expect(hasNotice('已标记已看')).toBe(true);
+    expect(hasNotice('已把「想看片」标记为已看')).toBe(true);
   });
 
   it('海报卡移动端长按 → 底部抽屉（.bz-item-sheet）：同名项 + 抽屉头部信息', async () => {
