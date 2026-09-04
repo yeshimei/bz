@@ -241,7 +241,7 @@ export function buildRecap(
 
 /* ---------- 采集 helpers（与 home/weekly.ts 同款只读口径；本地副本防跨文件牵连） ---------- */
 
-function settingDir(keys: string[], def: string): string {
+export function settingDir(keys: string[], def: string): string {
   const s = tryGetSettings() as Record<string, unknown>;
   for (const k of keys) {
     const v = s[k];
@@ -273,7 +273,7 @@ async function readJsonIfExists(app: App, filePath: string): Promise<unknown | u
 }
 
 /** 本地时区日期串 'YYYY-MM-DD'（日记文件名口径） */
-function localDayStr(anchor: number): string {
+export function localDayStr(anchor: number): string {
   const d = new Date(anchor);
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
