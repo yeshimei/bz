@@ -24,6 +24,14 @@ async function humanizeFailReason(): Promise<string> {
   }
 }
 
+/** processFile 可选项（enh 包 1/2） */
+export interface ProcessOptions {
+  /** force：跳过缺失检测直接重建——只重建 summary/tags，不动用户自定义标题（手动重跑入口） */
+  force?: boolean;
+  /** quiet：批量队列驱动时抑制单文件 progress 通知（进度由队列聚合通知「正在生成摘要 k/N…」承载） */
+  quiet?: boolean;
+}
+
 /** 缺失字段 → JSON 模板定义（规则文案逐字保留；不含 author；ticket 124：summary 按长度档位） */
 const FIELD_DEFS: Record<string, string> = {
   title:
@@ -125,8 +133,11 @@ export function formatSummaryNotice(fm: Record<string, any>): string {
 }
 
 /** 处理单个文件：缺什么补什么（title/summary/tags），字段齐全跳过；成功通知。
- *  ticket 124（Q8 详设）：摘要长度/标签开关数量/时机由设置驱动。 */
-export async function processFile(app: any, ai: AIService, file: any): Promise<void> {
+ *  ticket 124（Q8 详设）：摘要长度/标签开关数量/时机由设置驱动。
+ *  enh 包 1：force 档跳过缺失检测直接重建，且只重建 summary/tags——title 不进目标
+ *  字段（不重命名、不覆盖），用户改过的标题不吞；enh 包 2：quiet 抑制单文件进度通知。 */
+export async function processFile(app: any, ai: AIService, file: any, opts: ProcessOptions = {}): Promise<void> {
+  const force = opts.force === true;
   let h: NoticeHandle | null = null;
   // 设置参数（ticket 124：摘要长度/标签开关数量由设置驱动；tryGetSettings 未注入时安全返回空对象）
   const s = tryGetSettings() as any;
@@ -140,18 +151,27 @@ export async function processFile(app: any, ai: AIService, file: any): Promise<v
     const bodyText = extractBodyForAI(body);
     if (!bodyText || bodyText.length < 100) return;
 
-    // 缺失字段检测（空串/空数组视为缺失；ticket 124：标签开关关掉时不要求 tags）
+    // 缺失字段检测（空串/空数组视为缺失；ticket 124：标签开关关掉时不要求 tags）。
+    // force（enh 包 1）：跳过检测直接重建——目标字段固定 summary(+tags)，title 不入列
     const missing: string[] = [];
-    if (!fm || !fm.title) missing.push('title');
-    if (!fm || !fm.summary) missing.push('summary');
-    if (tagsEnabled !== false && (!fm || !Array.isArray(fm.tags) || fm.tags.length === 0)) missing.push('tags');
-    if (missing.length === 0) return; // 字段齐全，无需处理
+    if (force) {
+      missing.push('summary');
+      if (tagsEnabled !== false) missing.push('tags');
+    } else {
+      if (!fm || !fm.title) missing.push('title');
+      if (!fm || !fm.summary) missing.push('summary');
+      if (tagsEnabled !== false && (!fm || !Array.isArray(fm.tags) || fm.tags.length === 0)) missing.push('tags');
+      if (missing.length === 0) return; // 字段齐全，无需处理
+    }
 
     console.log(`[自动摘要] 补全缺失字段(${missing.join('/')}): ${file.basename}`);
-    // 开始调用 AI：动态通知（进行中 → 原地更新为结果；去重键按文件区分，连续剪藏各弹各）
+    // 开始调用 AI：动态通知（进行中 → 原地更新为结果；去重键按文件区分，连续剪藏各弹各）；
+    // quiet（批量队列驱动）不发单文件进度——由队列聚合通知承载（enh 包 2）
     const startName = fm && fm.title ? fm.title : file.basename;
     const key = dedupeKeyFor(file);
-    h = notify(`正在为《${startName}》生成摘要…`, { type: 'progress', dedupeKey: key });
+    if (!opts.quiet) {
+      h = notify(`正在为《${startName}》生成摘要…`, { type: 'progress', dedupeKey: key });
+    }
     const aiResult = await aiProcess(ai, bodyText, missing, { summaryLength, tagsEnabled, tagCount });
     if (!aiResult) {
       // 失败：人话原因 + action「重试」（点按重跑当前文件；原技术错误详情在 console）。
@@ -168,7 +188,7 @@ export async function processFile(app: any, ai: AIService, file: any): Promise<v
         e.stopPropagation();
         retryBtn.remove();
         errHandle.hide();
-        void processFile(app, ai, file);
+        void processFile(app, ai, file, { force }); // 重试保留 force 语义（手动重跑失败重试仍不吞标题）
       });
       errHandle.el.appendChild(retryBtn);
       return;
@@ -208,8 +228,22 @@ export async function processFile(app: any, ai: AIService, file: any): Promise<v
 
     const msg = formatSummaryNotice(mergedFm);
     if (msg) {
-      // 成功：同去重键原地合并 → 切换 success 图标并按显式时长驻留（≥8s，正文无 emoji）
-      notify(msg, { type: 'success', dedupeKey: key, duration: 8000 });
+      // 成功：同去重键原地合并 → 切换 success 图标并按显式时长驻留（≥8s，正文无 emoji）；
+      // 挂「查看」action（enh 包 3）：打开剪藏本面板并选中该条——clipbook 与本域互为
+      // 依赖面（clipbook/ui ← 本域入口），环引用按项目规约走函数级延迟解析（动态 import）
+      notify(msg, {
+        type: 'success',
+        dedupeKey: key,
+        duration: 8000,
+        action: {
+          label: '查看',
+          onClick: () => {
+            import('../clipbook/ui')
+              .then((m) => m.revealClipArticle(targetFile.path))
+              .catch(() => { /* 剪藏本面板不可用（如卸载中）时忽略 */ });
+          },
+        },
+      });
     } else if (h) {
       h.hide();
     }

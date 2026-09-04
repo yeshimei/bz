@@ -157,6 +157,9 @@ export interface PathRow extends RowBase {
   okText?: string;
   /** chips 空态文案（缺省「未选择」） */
   emptyText?: string;
+  /** 空值回落显示（可选）：绑定值为空时 chips 区展示该函数返回的「实际生效目录」锁定 chip
+   *  （仅展示不落盘，点击重开选择器可改为显式设置。先例：bookshelfFolderPath 空 = 回落旧 library 键/「书库」） */
+  fallbackValue?: () => string;
   /** 选择确定 / chip 移除后（写内存 + 落盘后触发）。返回 string[]（或其 Promise）= 否决/改写后的
    *  最终清单（如异步收编确认被取消时回退旧值），以返回值为落盘与 chips 渲染口径；void = 以 list 为准。 */
   onChange?: (list: string[], ctx: SettingsRowContext) => void | string[] | Promise<void | string[]>;

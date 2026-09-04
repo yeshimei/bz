@@ -107,11 +107,12 @@ describe('UIManager 三区队列', () => {
     expect(cards.length).toBe(3);
     const canClick = cards.filter((c) => !c.classList.contains('no'));
     expect(canClick.length).toBe(2);
-    // 底部信息行存在（归档/统计文本落位）
+    // 底部信息行存在（归档/统计文本落位；item 13 口径「累计 X 天 · 连续 Y 天」）
     const footer = document.querySelector('.bz-q-footer')!;
     expect(footer).not.toBeNull();
     expect(footer.textContent).toContain('已完成 1 篇');
-    expect(footer.textContent).toContain('累计复习');
+    expect(footer.textContent).toContain('累计');
+    expect(footer.textContent).toContain('连续');
     // 无 data-lucide 占位残留（全部已替换成真实图标）
     expect(document.querySelectorAll('[data-lucide]').length).toBe(0);
     ui.destroy();
@@ -252,26 +253,33 @@ describe('UIManager 三区队列', () => {
     ui.destroy();
   });
 
-  it('P3 回归：底部「累计复习 N 次」为真实评级次数（非去重同日天数）', async () => {
+  it('item 13：底部「累计 X 天 · 连续 Y 天」口径（X=去重同日天数，非真实评级次数）', async () => {
     const vault = new MockVault();
-    const now = new Date();
     vault.files.set('A.md', '正文');
-    const sameDay1 = new Date(now.getTime() - 2 * 3600e3).toISOString();
-    const sameDay2 = new Date(now.getTime() - 1 * 3600e3).toISOString();
-    const otherDay = new Date(now.getTime() - 86400e3).toISOString();
+    // 正午锚点：不受运行时刻（跨午夜）影响
+    const noon = (offsetDays: number, minutes = 0): string => {
+      const d = new Date();
+      d.setDate(d.getDate() + offsetDays);
+      d.setHours(12, minutes, 0, 0);
+      return d.toISOString();
+    };
+    const sameDay1 = noon(0, 30);
+    const sameDay2 = noon(0, 60);
+    const otherDay = noon(-1);
     vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
-      // 同日 2 次 + 昨日 1 次 = 3 次真实评级；去重同日天数只有 2
-      { id: '1', filePath: 'A.md', name: 'A', reviewStart: now.toISOString(), stage: 1, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [
+      // 同日 2 次 + 昨日 1 次 = 3 次真实评级；去重同日天数 = 2（今天 + 昨天）
+      { id: '1', filePath: 'A.md', name: 'A', reviewStart: noon(0), stage: 1, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [
         { timestamp: sameDay1, stage: 1, rating: 'good' },
         { timestamp: sameDay2, stage: 2, rating: 'easy' },
         { timestamp: otherDay, stage: 3, rating: 'good' },
-      ], totalReviews: 3, averageConfidence: 0, nextReviewDate: new Date(now.getTime() + 86400e3).toISOString(), lastReviewed: sameDay2, lastDifficulty: 'easy', completed: false },
+      ], totalReviews: 3, averageConfidence: 0, nextReviewDate: noon(1), lastReviewed: sameDay2, lastDifficulty: 'easy', completed: false },
     ]));
     const { ui } = await makeUI(vault);
     await ui.showMain();
     const footer = document.querySelector('.bz-q-footer')!;
-    expect(footer.textContent).toContain('累计复习 3 次'); // 真实次数 3（原 stats.totalReviews 去重同日 = 2）
-    expect(footer.innerHTML).toContain('>3</b> 次');
+    expect(footer.textContent).toContain('累计 2 天'); // 去重同日天数 2（原「累计复习 3 次」口径废除）
+    expect(footer.textContent).toContain('连续'); // 连续天数照旧（streak）
+    expect(footer.textContent).not.toContain('次');
     ui.destroy();
   });
 
@@ -374,6 +382,82 @@ describe('UIManager 三区队列', () => {
       await Promise.all([p1, p2]).catch(() => {});
     }
     expect(spy).toHaveBeenCalledTimes(1);
+    ui.destroy();
+  });
+
+  // ================= item 6/8/10/11 新增回归 =================
+
+  it('item 11：搜索框为普通输入框（无 / kbd 快捷键提示）', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const { ui } = await makeUI(vault);
+    await ui.showMain();
+    expect(document.querySelector('.bz-q-search .kbd')).toBeNull();
+    expect(document.getElementById('bz-q-search')).not.toBeNull();
+    ui.destroy();
+  });
+
+  it('item 8：今日全清（无逾期/今日/提前）→ 绿点 + 今日已清空 + 隐藏开始本轮', async () => {
+    const vault = new MockVault();
+    const now = new Date();
+    vault.files.set('C.md', '正文');
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      { id: '3', filePath: 'C.md', name: 'C', reviewStart: now.toISOString(), stage: 1, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() + 5 * 86400e3).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+    ]));
+    const { ui } = await makeUI(vault);
+    await ui.showMain();
+    const strip = document.querySelector('.bz-q-strip')!;
+    expect(strip.querySelector('.bz-q-strip-dot.ok')).not.toBeNull(); // 红点转绿
+    expect(strip.textContent).toContain('今日已清空');
+    expect(strip.querySelector('[data-act="begin"]')).toBeNull(); // 主按钮隐藏
+    ui.destroy();
+  });
+
+  it('item 8：还有到期条目 → 红点 + 开始本轮按钮在位', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const { ui } = await makeUI(vault);
+    await ui.showMain();
+    const strip = document.querySelector('.bz-q-strip')!;
+    expect(strip.querySelector('.bz-q-strip-dot.ok')).toBeNull(); // 默认红点
+    expect(strip.querySelector('[data-act="begin"]')).not.toBeNull();
+    ui.destroy();
+  });
+
+  it('item 6：R<阈值提前卡挂「提前」tag 并落「今天」列（与开始本轮同口径）', async () => {
+    const vault = new MockVault();
+    const now = new Date();
+    vault.files.set('E.md', '正文');
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      // R(t=10, S=1) < 0.9 提前；nextReviewDate 30 天后（原落未来列）
+      { id: '9', filePath: 'E.md', name: 'E', reviewStart: now.toISOString(), stage: 12, phase: 'fsrs', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() + 30 * 86400e3).toISOString(), lastReviewed: new Date(now.getTime() - 10 * 86400e3).toISOString(), lastDifficulty: 'good', completed: false },
+    ]));
+    const { ui } = await makeUI(vault);
+    await ui.showMain();
+    const cols = [...document.querySelectorAll('.bz-q-col')];
+    const todayCol = cols.find((c) => c.querySelector('.bz-q-col-head .name')?.textContent === '今天到期')!;
+    const futureCol = cols.find((c) => c.querySelector('.bz-q-col-head .name')?.textContent === '未来')!;
+    expect(todayCol.querySelectorAll('.bz-q-card').length).toBe(1); // 提前卡落今天列
+    expect(todayCol.querySelector('.bz-q-tag.is-early')!.textContent).toBe('提前');
+    expect(futureCol.querySelectorAll('.bz-q-card').length).toBe(0);
+    ui.destroy();
+  });
+
+  it('item 10：空库 → 空态两条路（把当前笔记加入复习 / 监听文件夹说明）', async () => {
+    const vault = new MockVault(); // 无条目
+    vault.files.set('Note.md', '正文');
+    const { app, ui } = await makeUI(vault);
+    (app.workspace as any).getActiveFile = () => ({ path: 'Note.md', basename: 'Note' });
+    await ui.showMain();
+    expect(document.querySelector('.bz-empty')).not.toBeNull();
+    expect(document.querySelector('.bz-empty')!.textContent).toContain('复习计划还是空的');
+    const addSpy = vi.spyOn(reviewApp, 'addCurrentToReview').mockResolvedValue({} as any);
+    (document.querySelector('[data-act="add-current"]') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(addSpy).toHaveBeenCalledTimes(1); // 路 1：加入当前笔记
+    (document.querySelector('[data-act="watch-help"]') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(document.querySelector('.flow-dialog, [class*=dialog]')).not.toBeNull(); // 路 2：说明弹窗
     ui.destroy();
   });
 });

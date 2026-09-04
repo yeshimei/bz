@@ -10,6 +10,7 @@ import { M, resetBookshelfState } from '../../src/bookshelf/state';
 import {
   scanMarkdownBooks, loadEpubItems, sortItems, kwFilter, currentSideItems, computeStats,
   resolveFolderPath, resolveBookTag, formatReadingTime, rebuildItems,
+  categoryList, catFilterItems, findAnniversary, getDisplayItems,
 } from '../../src/bookshelf/data';
 
 function makeApp(vault: MockVault) {
@@ -282,6 +283,64 @@ describe('bookshelf 数据层', () => {
     expect(currentSideItems(items, 'reading').length).toBe(1);
     expect(currentSideItems(items, 'unread').length).toBe(1);
     expect(currentSideItems(items, 'done').length).toBe(1);
+  });
+
+  it('categoryList：去重计数 + zh 序；EPUB null 分类归「未分类」桶', async () => {
+    const { app } = seedVault(); // 认知觉醒=成长；围城/算法导论无 category → 未分类
+    const items = scanMarkdownBooks(app);
+    const list = categoryList(items);
+    expect(list.map((c) => c.name)).toEqual(['成长', '未分类']); // zh localeCompare 序
+    expect(list.find((c) => c.name === '未分类')?.count).toBe(2); // 围城 + 算法导论
+    expect(list.find((c) => c.name === '成长')?.count).toBe(1);
+    // EPUB category null → 并入「未分类」桶（仅分类面；kwFilter 口径不变）
+    const vault2 = new MockVault();
+    vault2.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
+      books: { a: { meta: { title: '百年孤独' }, file: { vaultPath: 'books/x.epub' } } },
+    }));
+    const epub = await loadEpubItems(makeApp(vault2));
+    expect(categoryList([...items, ...epub]).find((c) => c.name === '未分类')?.count).toBe(3);
+  });
+
+  it('catFilterItems + getDisplayItems：分类与状态正交叠加', () => {
+    const { app } = seedVault();
+    M.items = [...scanMarkdownBooks(app)];
+    // 只分类
+    expect(catFilterItems(M.items, '成长').map((i) => i.title)).toEqual(['认知觉醒']);
+    expect(catFilterItems(M.items, '未分类').length).toBe(2);
+    expect(catFilterItems(M.items, 'all').length).toBe(3);
+    // 状态 × 分类正交：已读 ∩ 成长 = 空
+    M.side = 'done';
+    M.catFilter = '成长';
+    expect(getDisplayItems().length).toBe(0);
+    M.catFilter = 'all';
+    expect(getDisplayItems().map((i) => i.title)).toEqual(['围城']);
+    M.side = 'all';
+    M.catFilter = '未分类';
+    expect(getDisplayItems().length).toBe(2);
+  });
+
+  it('findAnniversary：那年今天命中（取最早年）；今年/非今天/未读完不命中', () => {
+    const mk = (title: string, completionDate: string | null) => ({
+      file: null, title, author: '', category: null, cover: null, bookReview: null,
+      readingDate: null, completionDate, progress: completionDate ? 100 : 0,
+      readingTimeFormat: null, readingTimeMs: 0, highlights: 0, thinks: 0,
+      status: completionDate ? '已读' : '未读', isEpub: false, epubVaultPath: null,
+    } as any);
+    const now = new Date(2026, 8, 4); // 2026-09-04
+    const items = [
+      mk('今年书', '2026-09-04'),   // 今年今天 → 不算纪念日
+      mk('三年书', '2023-09-04'),   // 命中，3 年
+      mk('错日子', '2022-05-01'),   // 月日不同
+      mk('在读中', null),           // 未读完
+      mk('十年书', '2016-09-04'),   // 命中，10 年（最早 → 胜出）
+    ];
+    const a = findAnniversary(items, now);
+    expect(a).toBeTruthy();
+    expect(a!.item.title).toBe('十年书');
+    expect(a!.years).toBe(10);
+    // 全不命中 → null（零空态）
+    expect(findAnniversary([mk('今年书', '2026-09-04'), mk('在读中', null)], now)).toBeNull();
+    expect(findAnniversary([], now)).toBeNull();
   });
 
   it('audit I：rebuildItems 并发交错——旧重建晚到不回写覆盖新数据（序号守卫）', async () => {

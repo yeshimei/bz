@@ -7,8 +7,7 @@
 
 /* ---- 分析页主题变量（增强包需求 7：此前无任何定义、靠浏览器回退，此处正式收编） ----
    亮/暗两套，跟随 Obsidian body 上的 theme-dark/theme-light 类；
-   取值引用组件库 --bz-* 色彩 token（明暗自动跟随）；图表粉彩色板常量在 core/chart-palette.ts
-   （与 movie-report 观影报告同一套视觉值）。 */
+   取值引用组件库 --bz-* 色彩 token（明暗自动跟随）；图表粉彩色板常量在 core/chart-palette.ts。 */
 .theme-dark {
   --bz-cinema-card: var(--bz-surface-2);    /* 板块卡片底 */
   --bz-cinema-panel: var(--bz-surface-1);   /* 行内 chip/浅层容器底 */
