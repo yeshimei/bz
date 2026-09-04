@@ -100,7 +100,7 @@ export default interface BzSettings {
   // ===== 📖 日记本（12 项，diary-notebook 合并）=====
   /** 📂 日记目录 */
   diaryDirectory: string;
-  /** 🎬 影视目录（日记本用） */
+  /** 🎬 影视目录（日记本/回忆墙归类用；与影院设置的「影视文件夹」cinemaFolderPath 相互独立，互不联动） */
   movieDirectory: string;
   /** ✉️ 信目录 */
   letterDirectory: string;
@@ -170,19 +170,6 @@ export default interface BzSettings {
   /** 📂 数据存储目录（文件名固定 favorites.json，只允许改目录）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
   favoritesStoragePath: string;
 
-  // ===== 📚 书库（旧域 library 已退役：目录/标签/移动全屏三键随域删除，bookshelf 接管；
-  //        以下 5 个展示开关为遗留键位，bookshelf 未接管前无消费方，按拍板保留）=====
-  /** 📦 显示文件大小 */
-  showFileSize: boolean;
-  /** ⏱️ 显示阅读时长 */
-  showReadingTime: boolean;
-  /** 💡 显示划线数 */
-  showHighlights: boolean;
-  /** 🧠 显示想法数 */
-  showThinks: boolean;
-  /** 📝 显示书评摘要 */
-  showReview: boolean;
-
   // ===== 📚 书架墙（bookshelf 域；旧书库域 library 已退役，本域独立承担书库 UI）=====
   /** 📁 书库文件夹（书架墙域；空 = 运行时回落旧 libraryFolderPath 存量值，再回落「书库」） */
   bookshelfFolderPath: string;
@@ -190,7 +177,8 @@ export default interface BzSettings {
   bookshelfMobileDefaultFullscreen: boolean;
 
   // ===== 🎬 影院（cinema 域；ADR-0087 起接管旧影视域）=====
-  /** 📁 影视文件夹（影院域；缺省回落「我的/影视」） */
+  /** 📁 影视文件夹（影院域数据源；缺省回落「我的/影视」。与日记本设置的「影视目录」
+   *  movieDirectory 相互独立——后者仅日记/回忆墙归类用，同指「我的/影视」也不联动） */
   cinemaFolderPath: string;
   // 旧 cinemaPageSize（每批加载数量）已删除：全仓无消费点（列表一次全量渲染），死配置随审计清理
 
@@ -274,7 +262,7 @@ export default interface BzSettings {
   secondBrainDefaultUseDeepseek: string;
   /** 最大历史记录 */
   secondBrainMaxHistory: string;
-  /** 远程 Ollama URL（移动端探活/降级链） */
+  /** 远程 Ollama URL（移动端探活/降级链；空 = 未配置远程——移动端回落本地 URL，不探任何远程） */
   secondBrainRemoteOllamaUrl: string;
 
   // ===== 🔗 第二大脑·自动双链管线（ticket 111，⚙️ 弹窗「自动双链」组）=====
@@ -349,8 +337,6 @@ export default interface BzSettings {
   todoMobileDefaultFullscreen: boolean;
   /** 归物本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   belongingsMobileDefaultFullscreen: boolean;
-  /** 剪藏本：移动端默认全屏（默认开——原 CSS !important 强制全屏；聚合讯跟随此键） */
-  clippingMobileDefaultFullscreen: boolean;
   /** 密码本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   passwordMobileDefaultFullscreen: boolean;
   /** 收藏本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
@@ -552,12 +538,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 收藏本（只允许改目录，文件名固定 favorites.json）
   favoritesStoragePath: 'CONFIG/STORAGE',
 
-  // 书库（旧域遗留展示开关；目录/标签/移动全屏键已随 library 域退役删除）
-  showFileSize: true,
-  showReadingTime: true,
-  showHighlights: true,
-  showThinks: true,
-  showReview: true,
+  // 书库（旧域遗留展示开关 5 键已删除：bookshelf 接管后全仓无消费方，enh-sweep-a grep 确认后随死键清理）
 
   // 书架墙（bookshelf；空 = 未配置，运行时回落旧 libraryFolderPath 存量值——零感知迁移）
   bookshelfFolderPath: '',
@@ -607,7 +588,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   secondBrainDeepseekModel: 'deepseek-v4-flash',
   secondBrainDefaultUseDeepseek: 'false',
   secondBrainMaxHistory: '10',
-  secondBrainRemoteOllamaUrl: 'http://192.168.1.8:11434',
+  // 空 = 未配置远程（enh-sweep-a：原写死内网 IP 改留空；secondbrain/config 同步去 IP 回落）
+  secondBrainRemoteOllamaUrl: '',
 
   // 自动双链管线（ticket 111；ticket 116 起默认空 = 什么也不录，由用户自行填写范围）
   linkAgentEnabled: true,
@@ -649,7 +631,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
   memoMobileDefaultFullscreen: false,
   todoMobileDefaultFullscreen: false,
   belongingsMobileDefaultFullscreen: true,
-  clippingMobileDefaultFullscreen: true,
   passwordMobileDefaultFullscreen: true,
   favoritesMobileDefaultFullscreen: true,
   favoritesSortKey: 'created',
