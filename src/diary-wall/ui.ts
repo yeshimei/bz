@@ -340,10 +340,10 @@ export class DiaryWallAppController {
           <span class="bz-diary-wall-range"></span>
         </div>
         <div class="bz-diary-wall-btns">
-          <button class="bz-diary-wall-icon-btn" data-act="add" title="写日记"></button>
-          <button class="bz-diary-wall-icon-btn" data-act="search" title="搜索"></button>
-          <button class="bz-diary-wall-icon-btn" data-act="date-picker" title="按年月跳转"></button>
-          <button class="bz-diary-wall-icon-btn bz-diary-wall-close bz-win-close" data-act="close" title="关闭"></button>
+          <button class="bz-diary-wall-icon-btn bz-touch-target--xl" data-act="add" title="写日记"></button>
+          <button class="bz-diary-wall-icon-btn bz-touch-target--xl" data-act="search" title="搜索"></button>
+          <button class="bz-diary-wall-icon-btn bz-touch-target--xl" data-act="date-picker" title="按年月跳转"></button>
+          <button class="bz-diary-wall-icon-btn bz-diary-wall-close bz-win-close bz-touch-target--xl" data-act="close" title="关闭"></button>
         </div>
       </div>
       <div class="bz-diary-wall-chiprow"></div>
@@ -559,7 +559,7 @@ export class DiaryWallAppController {
         const locked = tag === '加密' && !this.lockedVisible;
         const b = document.createElement('button');
         b.className =
-          'bz-diary-wall-chip' +
+          'bz-diary-wall-chip bz-touch-target--xl' +
           (locked ? ' bz-diary-wall-chip--locked' : '') +
           (this.selTag === tag ? ' bz-diary-wall-chip--on' : '');
         b.dataset.tag = tag;
@@ -673,7 +673,7 @@ export class DiaryWallAppController {
     subs.forEach((sub) => {
       const b = document.createElement('button');
       b.className =
-        'bz-diary-wall-subchip' + (this.selSubTag === sub.tag ? ' bz-diary-wall-subchip--on' : '');
+        'bz-diary-wall-subchip bz-touch-target--xl' + (this.selSubTag === sub.tag ? ' bz-diary-wall-subchip--on' : '');
       b.dataset.tag = sub.tag;
       b.innerHTML = `${sub.emoji} ${sub.tag}`;
       b.addEventListener('click', () => {
@@ -1138,7 +1138,7 @@ export class DiaryWallAppController {
     row.className = 'bz-diary-wall-memories-row';
     entries.forEach((e) => {
       const cell = document.createElement('button');
-      cell.className = 'bz-diary-wall-memory';
+      cell.className = 'bz-diary-wall-memory bz-touch-target--xl';
       cell.title = `${e.date} ${e.time}`;
       const thumb = document.createElement('div');
       thumb.className = 'bz-diary-wall-memory-thumb';

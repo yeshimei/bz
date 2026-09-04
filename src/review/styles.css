@@ -257,15 +257,9 @@
 .review-stage-badge .bz-ic svg { width: 100%; height: 100%; }
 
 /* ==================== 触控热区（设计手册 §8.2，触屏 pointer:coarse） ====================
-   底部信息行 / 迷你评级条 / 设置 chip 关闭钮 / 历史·统计关闭钮等小元素：padding 抬档
-   + ::after 外扩（视觉不变、热区 ≥44px；间距紧张处取 40px 下限档） */
+   ::after 外扩已收编 core .bz-touch-target（components.css，模板挂类）：信息行/设置 chip
+   关闭钮/历史·统计关闭钮 = --lg/--xl 档、迷你评级条 = --sm 档；此处仅保留 padding 抬档。 */
 @media (pointer: coarse) {
-  .bz-q-fitem, .bz-review-bar-btn,
-  .bz-review-exclude-remove, .bz-review-history-close, #review-stats-close { position: relative; }
   .bz-q-fitem { padding: 4px 0; }
-  .bz-q-fitem::after { content: ''; position: absolute; inset: -8px; }
   .bz-review-bar-btn { padding: 10px 12px; }
-  .bz-review-bar-btn::after { content: ''; position: absolute; inset: -4px; }
-  .bz-review-exclude-remove::after,
-  .bz-review-history-close::after, #review-stats-close::after { content: ''; position: absolute; inset: -12px; }
 }

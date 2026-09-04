@@ -178,7 +178,7 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
                   name.textContent = path;
                   name.title = path;
                   const remove = document.createElement('button');
-                  remove.className = 'bz-review-exclude-remove';
+                  remove.className = 'bz-review-exclude-remove bz-touch-target--xl';
                   remove.setAttribute('aria-label', `解除排除 ${path}`);
                   const removeIc = document.createElement('span');
                   removeIc.className = 'bz-ic';

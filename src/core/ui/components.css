@@ -617,6 +617,24 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   .bz-panel-mtop > div:first-child { padding-top: 0 !important; }
 }
 
+/* ═══════════ 触控热区 .bz-touch-target（设计手册 §8.2） ═══════════
+   触屏（pointer:coarse）下小元素 ::after 外扩命中区至 ≥44px，视觉不变
+   （shadcn extend-touch-target 同款）。按元素原尺寸分档：32px 档钮用默认 -6px；
+   40/36px 档用 --sm(-4px)；26/28px 档用 --lg(-8px)；20/22px 档用 --xl(-12px)；
+   非档位值可内联 --bz-touch-outset 覆写。热区外扩会盖住相邻元素命中——
+   行距紧凑的列表行勿用本类，改 padding 抬档（先例 attach 清单行）。 */
+@media (pointer: coarse) {
+  .bz-touch-target { position: relative; }
+  .bz-touch-target::after {
+    content: '';
+    position: absolute;
+    inset: var(--bz-touch-outset, -6px);
+  }
+  .bz-touch-target--sm { --bz-touch-outset: -4px; }
+  .bz-touch-target--lg { --bz-touch-outset: -8px; }
+  .bz-touch-target--xl { --bz-touch-outset: -12px; }
+}
+
 /* ═══════════ 加载 .bz-spinner ═══════════ */
 .bz-spinner {
   width: 16px;

@@ -603,7 +603,7 @@ function buildDOM(): void {
   // Obsidian 设置页，⚙️ 弹窗可正常覆盖）——e3：不再 JS 内联 z-index
   mask.innerHTML = `
     <div id="pomodoro-popup" tabindex="-1">
-      <button id="pomodoro-btn-settings" class="pomodoro-btn" title="设置"></button>
+      <button id="pomodoro-btn-settings" class="pomodoro-btn bz-touch-target" title="设置"></button>
       <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
         <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
         <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
@@ -613,9 +613,9 @@ function buildDOM(): void {
       <div id="pomodoro-task" class="pomodoro-task"></div>
       <div id="pomodoro-time"></div>
       <div class="pomodoro-controls">
-        <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary">开始</button>
-        <button id="pomodoro-btn-reset" class="pomodoro-btn">重置</button>
-        <button id="pomodoro-btn-skip" class="pomodoro-btn">跳过</button>
+        <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
+        <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>
+        <button id="pomodoro-btn-skip" class="pomodoro-btn bz-touch-target--sm">跳过</button>
       </div>
       <div class="pomodoro-stats">
         <div id="pomodoro-today"></div>

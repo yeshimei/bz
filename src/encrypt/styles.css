@@ -492,14 +492,5 @@
   #bz-encrypt-popup .bz-pwv-mobplathead .bz-pwv-btn.gold { margin-left: auto; background: var(--bz-vault-gold-soft); color: #fff; padding: 8px 14px; border-radius: 10px; font-weight: 600; }
 }
 
-/* ---- 触控热区（设计手册 §8.2）：移动端关闭/返回钮与账户卡小钮 ::after 外扩 ---- */
-@media (pointer: coarse) {
-  #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose,
-  #bz-encrypt-popup .bz-vault-mobpage .head .back,
-  #bz-encrypt-popup .bz-pwv-empty .bz-pwv-empty-add,
-  #bz-encrypt-popup .bz-pwv-acctcard .copyac { position: relative; }
-  #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose::after,
-  #bz-encrypt-popup .bz-vault-mobpage .head .back::after { content: ''; position: absolute; inset: -12px; }
-  #bz-encrypt-popup .bz-pwv-empty .bz-pwv-empty-add::after { content: ''; position: absolute; inset: -8px; }
-  #bz-encrypt-popup .bz-pwv-acctcard .copyac::after { content: ''; position: absolute; inset: -8px; }
-}
+/* 触控热区（设计手册 §8.2）已收编 core 样式库 .bz-touch-target（components.css，模板挂类）：
+   移动端关闭/返回钮 = --xl(-12px)，账户卡小钮/空态新增钮 = --lg(-8px)，域内不再复制外扩块。 */

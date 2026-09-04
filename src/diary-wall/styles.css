@@ -1027,25 +1027,9 @@
 }
 
 /* ============ 增强 #13：移动端触控热区 ≥44px 档 ============ */
-/* 触屏设备（pointer: coarse）下横滑标签/chips/头行图标钮等小元素用 ::after 外扩热区
-   （shadcn extend-touch-target 同款：视觉不变、热区 ≥44px；设计手册 §8.2）。
-   绝对定位外扩不触发横滑容器的额外滚动宽度（inset 负值向四周扩展） */
-@media (pointer: coarse) {
-  .bz-diary-wall .bz-diary-wall-chip,
-  .bz-diary-wall .bz-diary-wall-subchip,
-  .bz-diary-wall .bz-diary-wall-icon-btn,
-  .bz-diary-wall .bz-diary-wall-memory {
-    position: relative;
-  }
-  .bz-diary-wall .bz-diary-wall-chip::after,
-  .bz-diary-wall .bz-diary-wall-subchip::after,
-  .bz-diary-wall .bz-diary-wall-icon-btn::after,
-  .bz-diary-wall .bz-diary-wall-memory::after {
-    content: '';
-    position: absolute;
-    inset: -12px;
-  }
-}
+/* 触屏（pointer: coarse）下横滑标签/chips/头行图标钮/那年今天卡 ::after 外扩热区
+   已收编 core 样式库 .bz-touch-target--xl（components.css，模板挂类，inset -12px 补足 44px；
+   shadcn extend-touch-target 同款：视觉不变；绝对定位外扩不触发横滑容器额外滚动宽度） */
 
 /* ============ 右键上下文菜单（桌面，跟手） ============ */
 /* 增强 #12：z 静态档（2000）已删——显示时由 topifyZ 动态发号（ADR-0067，谁后显示谁在上） */
