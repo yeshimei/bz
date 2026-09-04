@@ -68,8 +68,21 @@
 .bz-btn--danger { background: var(--bz-danger) !important; color: var(--bz-on-danger) !important; }
 .bz-btn--danger:hover { background: var(--bz-danger) !important; opacity: 0.9; }
 
+/* 描边 danger 档（ghost 形制 + danger 色；与实底 --danger 互补）：常态透底 danger 描边字，
+   hover 转实底 on-danger（先例：书架墙详情删除钮） */
+.bz-btn--danger-ghost { background: transparent !important; border-color: var(--bz-danger) !important; color: var(--bz-danger) !important; }
+.bz-btn--danger-ghost:hover { background: var(--bz-danger) !important; border-color: var(--bz-danger) !important; color: var(--bz-on-danger) !important; }
+
 .bz-btn--ghost { background: transparent !important; border-color: var(--bz-border-strong) !important; color: var(--bz-text-1) !important; }
 .bz-btn--ghost:hover { background: var(--bz-surface-hover) !important; }
+
+/* hover 品牌档（悬停才显品牌色的静态变体）：常态走基线，hover 转品牌软底 + 品牌前景描边
+   （先例：书架墙详情「N 划线 · N 批注」可点 chip） */
+.bz-btn--hover-accent:hover {
+  background: var(--bz-brand-soft) !important;
+  border-color: var(--bz-brand) !important;
+  color: var(--bz-brand) !important;
+}
 
 .bz-btn--sm { height: var(--bz-control-h-sm); padding: 0 10px; font-size: var(--bz-font-meta); border-radius: 6px; }
 .bz-btn--lg { height: var(--bz-control-h-lg); padding: 0 20px; font-size: var(--bz-font-body); border-radius: 10px; }
@@ -178,6 +191,12 @@
 .bz-chip--tint:hover {
   background: var(--bz-chip-tint, var(--bz-surface-2)) !important;
   color: var(--bz-chip-tint-fg, var(--bz-text-1)) !important;
+}
+/* hover 品牌档（悬停才显品牌色的静态变体；与 .bz-btn--hover-accent 同语义） */
+.bz-chip--hover-accent:hover {
+  background: var(--bz-brand-soft) !important;
+  border-color: var(--bz-brand) !important;
+  color: var(--bz-brand) !important;
 }
 .bz-chip-cnt { margin-left: 2px; font-size: 11px; font-weight: 600; opacity: 0.75; }
 
@@ -596,6 +615,24 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 @media (max-width: 768px) {
   .bz-panel-mtop { padding-top: max(44px, env(safe-area-inset-top, 0px)) !important; }
   .bz-panel-mtop > div:first-child { padding-top: 0 !important; }
+}
+
+/* ═══════════ 触控热区 .bz-touch-target（设计手册 §8.2） ═══════════
+   触屏（pointer:coarse）下小元素 ::after 外扩命中区至 ≥44px，视觉不变
+   （shadcn extend-touch-target 同款）。按元素原尺寸分档：32px 档钮用默认 -6px；
+   40/36px 档用 --sm(-4px)；26/28px 档用 --lg(-8px)；20/22px 档用 --xl(-12px)；
+   非档位值可内联 --bz-touch-outset 覆写。热区外扩会盖住相邻元素命中——
+   行距紧凑的列表行勿用本类，改 padding 抬档（先例 attach 清单行）。 */
+@media (pointer: coarse) {
+  .bz-touch-target { position: relative; }
+  .bz-touch-target::after {
+    content: '';
+    position: absolute;
+    inset: var(--bz-touch-outset, -6px);
+  }
+  .bz-touch-target--sm { --bz-touch-outset: -4px; }
+  .bz-touch-target--lg { --bz-touch-outset: -8px; }
+  .bz-touch-target--xl { --bz-touch-outset: -12px; }
 }
 
 /* ═══════════ 加载 .bz-spinner ═══════════ */

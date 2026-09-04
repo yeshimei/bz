@@ -253,10 +253,10 @@ function panelHtml(): string {
   <div class="bz-fav-head">
     <div class="bz-fav-title">收藏本</div>
     <div class="bz-fav-head-btns">
-      <button class="bz-icon-btn bz-fav-mob-only" data-fav-add title="添加收藏">${iconSpan(ICON.add)}</button>
-      <button class="bz-icon-btn bz-fav-mob-only" data-fav-sort title="排序">${iconSpan(ICON.sort)}</button>
-      <button class="bz-icon-btn bz-fav-mob-only" data-fav-mobsearch title="搜索">${iconSpan(ICON.search)}</button>
-      <button class="bz-icon-btn bz-fav-mob-only" data-fav-close title="关闭">${iconSpan(ICON.close)}</button>
+      <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-fav-mob-only" data-fav-add title="添加收藏">${iconSpan(ICON.add)}</button>
+      <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-fav-mob-only" data-fav-sort title="排序">${iconSpan(ICON.sort)}</button>
+      <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-fav-mob-only" data-fav-mobsearch title="搜索">${iconSpan(ICON.search)}</button>
+      <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-fav-mob-only" data-fav-close title="关闭">${iconSpan(ICON.close)}</button>
     </div>
   </div>
   <div class="bz-fav-body">

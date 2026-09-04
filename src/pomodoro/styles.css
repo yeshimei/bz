@@ -55,11 +55,10 @@
     #pomodoro-popup.bz-panel-mtop #pomodoro-btn-settings { top: calc(max(44px, env(safe-area-inset-top, 0px)) + 12px); }
 }
 
-/* ==================== 触控热区（设计手册 §8.2，触屏 pointer:coarse） ==================== */
+/* ==================== 触控热区（设计手册 §8.2，触屏 pointer:coarse） ====================
+   ::after 外扩已收编 core .bz-touch-target（components.css，模板挂类）：
+   控制按钮 = --sm(-4px)、右上角设置钮 = 默认(-6px)；此处仅保留 padding 抬档。 */
 @media (pointer: coarse) {
-    .pomodoro-btn, #pomodoro-btn-settings { position: relative; }
     .pomodoro-btn { padding: 10px 16px; }
-    .pomodoro-btn::after { content: ''; position: absolute; inset: -4px; }
     #pomodoro-btn-settings { padding: 10px; }
-    #pomodoro-btn-settings::after { content: ''; position: absolute; inset: -6px; }
 }

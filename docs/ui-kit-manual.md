@@ -50,10 +50,10 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 ### 3.2 组件类（HTML 直接写）
 | 组件 | 类 | 修饰 | 说明 |
 |---|---|---|---|
-| 按钮 | `.bz-btn` | `--primary/--danger/--ghost`；`--sm/--lg/--icon` | 32px 高、圆角 sm；hover 自动 |
+| 按钮 | `.bz-btn` | `--primary/--danger/--danger-ghost/--ghost/--hover-accent`；`--sm/--lg/--icon` | 32px 高、圆角 sm；hover 自动；`--danger-ghost` 描边 danger（常态透底描边、hover 转实底），`--hover-accent` 悬停才显品牌软底+品牌描边 |
 | 按钮行 | `.bz-btn-row` | `--center/--grow` | 弹窗底部右对齐 |
 | 图标按钮 | `.bz-icon-btn` | `--on/--lg/--xs/--close/--accent/--boxed/--active`；`[data-danger]` | 22×26 桌面头行档；`--accent` 品牌色图标钮（卡内行动钮），`--boxed`=浮于面板底上带描边变体，`--active`=品牌实底开关激活态（与 `--boxed` 同钮叠加时激活底胜出） |
-| Chip | `.bz-chip` | `--on/--sel/--locked/--tint`；内含 `.bz-chip-cnt`/`.bz-chip-x` | 筛选/标签胶囊；`--tint` 数据语义色徽标（域内联 `--bz-chip-tint`/`--bz-chip-tint-fg` 注入底/前景色） |
+| Chip | `.bz-chip` | `--on/--sel/--locked/--tint/--hover-accent`；内含 `.bz-chip-cnt`/`.bz-chip-x` | 筛选/标签胶囊；`--tint` 数据语义色徽标（域内联 `--bz-chip-tint`/`--bz-chip-tint-fg` 注入底/前景色）；`--hover-accent` 悬停才显品牌软底+品牌描边（可点 chip 的 hover 提示） |
 | 徽标 | `.bz-badge` | `--accent/--success/--danger/--warning/--neutral` | 纯展示小胶囊 |
 | 输入框 | `.bz-input` | `--error`；`.bz-input-wrap` 前缀图标 | 32px 高 |
 | 字段行 | `.bz-field` | 内 `.bz-field-label/-desc/-error` | label+控件+说明 |
@@ -67,6 +67,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | 滑条 | `.bz-range` | `--lg` | 自绘轨道+滑块；抗 Obsidian 默认 range 外观重置 |
 | 加载 | `.bz-spinner` | `--sm/--lg` | 占位加载态 |
 | 移动全屏顶距 | `.bz-panel-mtop` | — | 挂**全屏面板根节点**：≤768px 顶部留 44px（max 安全区）避让 Obsidian 移动端头，并归零首子元素顶距（core `.bz-win-mfs` 34px 垫顶与域内头行 safe-area 垫顶由它统一接管，接入域**勿再**在头行写避让，防双份顶距）；非恒全屏面板（如番茄钟）随 mfs 开关 `classList.toggle` 同挂摘 |
+| 触控热区 | `.bz-touch-target` | `--sm/--lg/--xl`；内联 `--bz-touch-outset` 覆写 | 仅触屏（pointer:coarse）生效：`::after` 外扩命中区至 ≥44px、视觉不变；档位按元素原尺寸——默认 -6px（32px 档钮）、`--sm` -4px（36/40px 档）、`--lg` -8px（26/28px 档）、`--xl` -12px（20/22px 档）；热区外扩会盖住相邻元素命中，行距紧凑的列表行**勿用**（改 padding 抬档，先例 attach 清单行） |
 
 **图标**：一律 lucide 图标名（工厂经 `setIcon` 渲染 Obsidian 原生 SVG）。颜色默认继承 `currentColor`（在按钮里自动变 on-brand 白），需要独立语义色给图标元素加 `.bz-ic--brand/success/warning/danger/info/star/muted/on-brand`，尺寸 `.bz-ic--xs/sm/md/lg/xl`。**禁止 emoji 当图标、禁止文本符号当图标**。
 

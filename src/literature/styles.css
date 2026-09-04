@@ -2,14 +2,14 @@
 /* bz-bili-* 任务队列样式（视频录入面板/历史弹窗沿用，ticket 136 迁移时丢失、ticket 138 恢复）；
    新增 bz-lit-* 主面板/术语面板样式；主面板视觉细节对齐日记本（ticket 138 §4）。 */
 
-/* ---- 主面板/术语面板共享遮罩与窗口（bz- 前缀，样式收敛于此处，不内联视觉） ---- */
+/* ---- 主面板/术语面板共享遮罩与窗口（bz- 前缀，样式收敛于此处，不内联视觉）
+   z 静态档（99999/100000）已清——五处显示路径均由 topifyZ(mask, popup) 动态发号（ADR-0067） ---- */
 .bz-lit-mask {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, .45);
   backdrop-filter: blur(2px); /* 对齐日记本遮罩质感 */
   animation: bz-lit-fade-in .2s ease-out;
-  z-index: 99999;
 }
 .bz-lit-window {
   position: fixed;
@@ -24,7 +24,6 @@
   border-radius: 12px;
   box-shadow: 0 12px 48px rgba(0, 0, 0, .3); /* 对齐日记本弹窗阴影 */
   animation: bz-lit-slide-up .25s ease-out;
-  z-index: 100000;
 }
 /* 小型弹窗（添加任务 / 术语生成）：内容直接铺开，无需独立滚动区 */
 .bz-lit-dialog {
@@ -43,7 +42,6 @@
   border-radius: 12px;
   box-shadow: 0 12px 48px rgba(0, 0, 0, .3);
   animation: bz-lit-slide-up .25s ease-out;
-  z-index: 100000;
 }
 .bz-lit-list {
   flex: 1;

@@ -111,8 +111,8 @@ export function createOverlay(app: any): void {
             <span class="bz-home-hello" data-home-hello></span>
             <span class="bz-home-date" data-home-date></span>
           </div>
-          <button class="bz-icon-btn bz-icon-btn--boxed bz-home-edit" data-home-edit title="编辑钉选" aria-label="编辑钉选">${iconSpan(ICO.edit)}</button>
-          <button class="bz-icon-btn bz-icon-btn--boxed bz-home-close" data-home-close title="关闭" aria-label="关闭">${iconSpan(ICO.close)}</button>
+          <button class="bz-icon-btn bz-icon-btn--boxed bz-touch-target--lg bz-home-edit" data-home-edit title="编辑钉选" aria-label="编辑钉选">${iconSpan(ICO.edit)}</button>
+          <button class="bz-icon-btn bz-icon-btn--boxed bz-touch-target--lg bz-home-close" data-home-close title="关闭" aria-label="关闭">${iconSpan(ICO.close)}</button>
         </div>
         <div class="bz-home-search">
           <span class="bz-home-search-ic">${iconSpan(ICO.search)}</span>
@@ -401,8 +401,8 @@ function cardHtml(id: string, index: number, total: number): string {
   const badge = H.editing
     ? `<span class="bz-home-chk">${iconSpan(ICO.check)}</span>`
       + `<span class="bz-home-mvs">`
-      + `<span class="bz-home-mv${index <= 0 ? ' is-edge' : ''}" data-home-move="-1" role="button" aria-label="左移「${esc(d.name)}」" title="左移">${iconSpan(ICO.moveLeft)}</span>`
-      + `<span class="bz-home-mv${index >= total - 1 ? ' is-edge' : ''}" data-home-move="1" role="button" aria-label="右移「${esc(d.name)}」" title="右移">${iconSpan(ICO.moveRight)}</span>`
+      + `<span class="bz-home-mv bz-touch-target${index <= 0 ? ' is-edge' : ''}" data-home-move="-1" role="button" aria-label="左移「${esc(d.name)}」" title="左移">${iconSpan(ICO.moveLeft)}</span>`
+      + `<span class="bz-home-mv bz-touch-target${index >= total - 1 ? ' is-edge' : ''}" data-home-move="1" role="button" aria-label="右移「${esc(d.name)}」" title="右移">${iconSpan(ICO.moveRight)}</span>`
       + `</span>`
     : st.text
       ? `<span class="bz-home-badge${st.hl ? ' bz-home-badge--hl' : ''}"><i style="background:${dot}"></i><span class="bz-home-badge-t">${esc(st.text)}${st.sub ? `<em>${esc(st.sub)}</em>` : ''}</span></span>`
@@ -473,7 +473,7 @@ function renderAll(): void {
   const unpinned = ALL_DOMAIN_IDS.filter((id) => !H.pinned.includes(id));
   minis.innerHTML = unpinned.length
     ? unpinned
-        .map((id) => `<button type="button" class="bz-home-mini" data-home-mini="${id}">${iconSpan(DOMAINS.find((x) => x.id === id)!.icon)}<span>${esc(DOMAINS.find((x) => x.id === id)!.name)}</span></button>`)
+        .map((id) => `<button type="button" class="bz-home-mini bz-touch-target--lg" data-home-mini="${id}">${iconSpan(DOMAINS.find((x) => x.id === id)!.icon)}<span>${esc(DOMAINS.find((x) => x.id === id)!.name)}</span></button>`)
         .join('')
     : '';
   mountIcons(minis);

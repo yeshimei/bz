@@ -16,6 +16,21 @@ import {
   generateInteractionTrendChart, generateBarRows, generateMonthBarColumns, heatmapMonthTitle,
 } from '../../src/reading-report/report';
 import { calculateReadingStats, processHeatmapData } from '../../src/reading-report/stats';
+import {
+  CHART_GRADIENT_VIOLET,
+  CHART_GRADIENT_PINK,
+  CHART_GRADIENT_AQUA,
+  CHART_GRADIENT_MINT,
+  CHART_GRADIENT_CORAL,
+  CHART_SPEED_BAR_GRADIENT,
+  CHART_AUTHOR_RANK_COLORS,
+  CHART_FOCUS_SERIES,
+  CHART_METRIC_RED,
+  CHART_METRIC_PURPLE,
+  CHART_METRIC_VIOLET,
+  CHART_METRIC_SKY,
+  CHART_METRIC_ORANGE,
+} from '../../src/core/chart-palette';
 
 function book(fm: Record<string, any>): any {
   return { file: { name: 'x.md' }, frontmatter: fm, cache: null };
@@ -343,5 +358,38 @@ describe('report 生成函数', () => {
     // 热力图等级 0（无阅读）用主题中性色（p1）
     expect(generateHeatmapCell({ type: 'data', date: '2025-06-01', data: { duration: 600, sessions: 1 } })).toContain('var(--background-secondary)');
     expect(generateHeatmapCell({ type: 'nodata', date: '2000-01-15' })).toContain('var(--background-secondary)');
+  });
+});
+
+describe('图表色收编 core/chart-palette（终局 review 批 B-2）', () => {
+  const books = makeBooks();
+  const stats = calculateReadingStats(books);
+  stats.readingSessions = makeSessions();
+
+  it('report.ts 不再持有内联 hex——图表色全部经 chart-palette 语义常量', () => {
+    const src = readFileSync(resolve(process.cwd(), 'src/reading-report/report.ts'), 'utf8');
+    const hexes = [...src.matchAll(/#[0-9a-fA-F]{3,8}\b/g)].map((h) => h[0]);
+    expect(hexes, `残留内联 hex: ${hexes.join(', ')}`).toEqual([]);
+  });
+
+  it('生成 HTML 引用色板常量（值与收编前逐一一致）', () => {
+    // 渐变横幅（概览卡/速度分析/专注度/分类分析）
+    expect(generateStatsReport(stats)).toContain(CHART_GRADIENT_VIOLET);
+    expect(generateStatsReport(stats)).toContain(CHART_GRADIENT_PINK);
+    expect(generateReadingSpeedAnalysis(stats)).toContain(CHART_GRADIENT_AQUA);
+    expect(generateReadingSpeedAnalysis(stats)).toContain(CHART_GRADIENT_MINT);
+    expect(generateReadingSpeedAnalysis(stats)).toContain(CHART_GRADIENT_CORAL);
+    expect(generateReadingFocusAnalysis(stats, books)).toContain(CHART_GRADIENT_AQUA);
+    expect(generateReadingCategoryAnalysis(books)).toContain(CHART_GRADIENT_VIOLET);
+    // 指标数字强调色
+    expect(generateStatsReport(stats)).toContain(`color: ${CHART_METRIC_RED}`);
+    expect(generateStatsReport(stats)).toContain(`color: ${CHART_METRIC_PURPLE}`);
+    expect(generateReadingTrendsAnalysis(stats, books)).toContain(`color: ${CHART_METRIC_VIOLET}`);
+    expect(generateReadingSpeedAnalysis(stats)).toContain(`color: ${CHART_METRIC_SKY}`);
+    expect(generateReadingFocusAnalysis(stats, books)).toContain(`color: ${CHART_METRIC_ORANGE}`);
+    // 速度条 / 排名卡 / 专注分布系列
+    expect(generateReadingSpeedAnalysis(stats)).toContain(`background: ${CHART_SPEED_BAR_GRADIENT}`);
+    expect(generateAuthorStats(stats)).toContain(`linear-gradient(135deg, ${CHART_AUTHOR_RANK_COLORS[0]}`);
+    expect(generateReadingFocusAnalysis(stats, books)).toContain(`background: ${CHART_FOCUS_SERIES[0]}`);
   });
 });

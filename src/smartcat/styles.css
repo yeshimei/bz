@@ -14,7 +14,8 @@
   transform: translateX(-50%);
   width: 50px;
   height: 50px;
-  z-index: 100000;
+  /* z 静态初值（100000）已清：mountCatContainer 挂载即 registerAlwaysOnTop 发号（ADR-0067，
+     终局 review 批 B 收口——恒顶层级由分配器保证，样式源不再持有大数占位） */
   cursor: pointer;
   touch-action: none;
   user-select: none;
@@ -230,7 +231,7 @@
   animation: hologramScan 3s ease-in-out infinite;
 }
 
-/* 思考指示器（原 thinking-indicator：顶部绿点） */
+/* 思考指示器（原 thinking-indicator：顶部绿点）；z 为猫层叠上下文内局部小档（压过气泡容器） */
 #smart-companion-cat .thinking-indicator {
   position: absolute;
   top: -18px;
@@ -243,7 +244,7 @@
   box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3), 0 0 10px 4px rgba(76, 175, 80, 0.2);
   opacity: 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 100001;
+  z-index: 3;
   pointer-events: none;
 }
 #smart-companion-cat .thinking-indicator.active {
@@ -263,7 +264,7 @@
   box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.3), 0 0 10px 4px rgba(255, 107, 107, 0.2);
   opacity: 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 100001;
+  z-index: 3;
   pointer-events: none;
 }
 #smart-companion-cat .voice-indicator.active {
@@ -288,7 +289,7 @@
   pointer-events: none;
   max-height: 300px;
   overflow: visible;
-  z-index: 10001;
+  z-index: 2; /* 猫层叠上下文内局部小档（transform 自成上下文，仅压过猫本体） */
 }
 #smart-companion-cat .cat-bubble {
   position: relative;
@@ -305,7 +306,7 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui;
   line-height: 1.4;
   word-wrap: break-word;
-  z-index: 10001;
+  z-index: 1; /* 容器内局部小档（多气泡按 DOM 序堆叠，与原同值语义一致） */
   opacity: 0;
   transform: translateX(var(--bz-sc-shift, 0px)) translateY(10px) scale(0.95);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

@@ -203,6 +203,9 @@ describe('bz 骨架冒烟', () => {
       ['bz-encrypt-open', 'encrypt'],
       ['bz-smartcat-open', 'smartcat'],
       ['bz-diary-open', 'diary'],
+      // 批 B 补缺入表：回忆墙（images）/ 设置面板（settings-2）
+      ['bz-diary-wall-open', 'diary-wall'],
+      ['bz-settings-panel-open', 'settings-panel'],
     ];
     for (const [id, domain] of domainCommands) {
       expect(byId(id).icon, `${id} icon 应 = DOMAIN_ICONS.${domain}`).toBe(DOMAIN_ICONS[domain]);
