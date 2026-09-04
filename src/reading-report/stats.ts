@@ -3,7 +3,7 @@
  * 源码：阅读数据分析报告.js（重复函数只保留最终版）
  */
 import { pad2 } from '../core/utils';
-import { readWeaveDataAggregates, deriveBookSettings } from '../library/items';
+import { readWeaveAggregates, resolveBookTag } from '../bookshelf/data';
 
 // ---------- 数据采集 ----------
 
@@ -77,7 +77,7 @@ function buildEpubBookNoteEntry(aggregate: any): BookNoteEntry | null {
 
 /** 阅读报告的 EPUB 书条目（全库 weave 书，不筛目录；ADR-0013 扩展）。 */
 export async function getEpubBookNotes(app: any): Promise<BookNoteEntry[]> {
-  const aggregates = await readWeaveDataAggregates(app);
+  const aggregates = await readWeaveAggregates(app);
   const entries: BookNoteEntry[] = [];
   for (const aggregate of aggregates) {
     const entry = buildEpubBookNoteEntry(aggregate);
@@ -88,7 +88,8 @@ export async function getEpubBookNotes(app: any): Promise<BookNoteEntry[]> {
 
 /** 获取所有带 book 标签的笔记 */
 export function getAllBookNotes(app: any): BookNoteEntry[] {
-  const { bookTag } = deriveBookSettings();
+  // 旧 library 域退役：book 标签改经 bookshelf 域解析（bookshelfFolderPath/bookTag 同键同源）
+  const bookTag = resolveBookTag();
   const files = app.vault.getMarkdownFiles();
   const bookNotes: BookNoteEntry[] = [];
 
@@ -98,7 +99,7 @@ export function getAllBookNotes(app: any): BookNoteEntry[] {
       if (!cache || !cache.frontmatter) continue;
 
       const tags = cache.frontmatter.tags;
-      // 与 library/items.ts 口径对齐：数组项/整串精确等值（'ebook' 等子串不再误判）
+      // 与 bookshelf/data.ts parseBookFile 口径对齐：数组项/整串精确等值（'ebook' 等子串不再误判）
       let isBook = false;
 
       if (typeof tags === 'string') {
