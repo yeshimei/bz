@@ -25,6 +25,8 @@ export interface PomodoroState {
   pausedBy?: 'autopause';
   /** 当前循环内已完成专注数（进长休后清零） */
   cycleFocusCount: number;
+  /** 当前专注归属任务标题（待办「专注这个」联动写入；专注自然完成写入历史后清除） */
+  task?: string;
 }
 
 export interface Durations {
@@ -46,6 +48,8 @@ export interface HistoryEntry {
   ts: number;
   /** 实际专注时长（秒） */
   duration: number;
+  /** 归属任务标题（待办「专注这个」联动；普通开始无此字段，统计口径扩展预留） */
+  task?: string;
 }
 
 export type PomodoroEvent =
@@ -123,7 +127,8 @@ function completePhase(state: PomodoroState, now: number, d: Durations, o: Pomod
     longBreak = count >= d.longBreakInterval;
     if (longBreak) count = 0;
     // duration = 活跃专注时长：暂停期间时间不流逝（endTime 顺延），故恒等于名义工作时长
-    historyEntry = { ts: now, duration: d.workMin * 60 };
+    // 归属：待办「专注这个」联动时把任务标题写进历史（统计口径扩展预留）
+    historyEntry = { ts: now, duration: d.workMin * 60, ...(state.task ? { task: state.task } : {}) };
   }
   // 下一阶段
   let next: Phase;
@@ -140,7 +145,10 @@ function completePhase(state: PomodoroState, now: number, d: Durations, o: Pomod
     next = 'focus';
     autoStarted = o.autoCycle;
   }
-  const nextState: PomodoroState = { ...state, phase: next, cycleFocusCount: count };
+  // 专注完成即归属落账，任务标题不流入下一阶段（其余阶段完成时本就无 task）
+  const { task: _settled, ...rest } = state;
+  void _settled;
+  const nextState: PomodoroState = { ...rest, phase: next, cycleFocusCount: count };
   const res = autoStarted
     ? startPhase(nextState, next, now, d)
     : {
@@ -198,8 +206,11 @@ export function transition(state: PomodoroState, action: PomodoroAction, now: nu
     let next: Phase;
     if (phase === 'focus') next = o.autoSkipBreak ? 'focus' : breakPhase(state.cycleFocusCount, d);
     else next = 'focus';
+    // 跳过不记历史 → 归属机会随之作废，任务标题一并清除
+    const { task: _dropped, ...rest } = state;
+    void _dropped;
     return {
-      state: { ...state, phase: next, endTime: null, paused: false, pausedBy: undefined, remaining: phaseDurationSec(next, d) },
+      state: { ...rest, phase: next, endTime: null, paused: false, pausedBy: undefined, remaining: phaseDurationSec(next, d) },
       event: { type: 'phase-completed', completedPhase: phase, nextPhase: next, autoStarted: false, longBreak: false },
     };
   }

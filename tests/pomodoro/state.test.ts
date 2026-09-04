@@ -341,3 +341,54 @@ describe('pausedBy 暂停来源标记（P1-4：冻结 vs 手动）', () => {
     expect(r.state.pausedBy).toBeUndefined();
   });
 });
+
+describe('任务归属（增强包：待办「专注这个」联动）', () => {
+  const TASK = '完成阅读报告';
+  const withTask = (s: PomodoroState): PomodoroState => ({ ...s, task: TASK });
+
+  it('focus 自然完成 → historyEntry 带 task；state.task 落账后清除', () => {
+    const running = transition(withTask(createInitialState()), 'start', NOW, D, O).state;
+    expect(running.task).toBe(TASK); // 运行中归属随状态保留（弹窗/状态栏展示）
+    const r = transition(running, 'tick', NOW + WORK_MS, D, O);
+    expect((r.event as any).historyEntry).toEqual({ ts: NOW + WORK_MS, duration: 25 * 60, task: TASK });
+    expect(r.state.task).toBeUndefined(); // 不流入下一阶段
+  });
+
+  it('无归属开始 → historyEntry 不带 task 键（普通开始兼容）', () => {
+    const running = transition(createInitialState(), 'start', NOW, D, O).state;
+    const r = transition(running, 'tick', NOW + WORK_MS, D, O);
+    expect((r.event as any).historyEntry).toEqual({ ts: NOW + WORK_MS, duration: 25 * 60 });
+    expect('task' in (r.event as any).historyEntry).toBe(false);
+  });
+
+  it('skip 作废归属：不记历史且 state.task 一并清除', () => {
+    const running = transition(withTask(createInitialState()), 'start', NOW, D, O).state;
+    const r = transition(running, 'skip', NOW + 60_000, D, O);
+    expect(r.event.type).toBe('phase-completed');
+    expect((r.event as any).historyEntry).toBeUndefined(); // skip 不记历史
+    expect(r.state.task).toBeUndefined();
+  });
+
+  it('reset 保留归属（未跳过专注，回满重开仍归属该任务）', () => {
+    const running = transition(withTask(createInitialState()), 'start', NOW, D, O).state;
+    const r = transition(running, 'reset', NOW + 60_000, D, O);
+    expect(r.state.task).toBe(TASK);
+  });
+
+  it('暂停/恢复保留归属', () => {
+    const running = transition(withTask(createInitialState()), 'start', NOW, D, O).state;
+    const paused = transition(running, 'pause', NOW + 60_000, D, O).state;
+    expect(paused.task).toBe(TASK);
+    const resumed = transition(paused, 'resume', NOW + 120_000, D, O).state;
+    expect(resumed.task).toBe(TASK);
+  });
+
+  it('休息完成 → 无 historyEntry，不产生归属', () => {
+    let s = transition(withTask(createInitialState()), 'start', NOW, D, O).state;
+    s = transition(s, 'tick', NOW + WORK_MS, D, O).state; // focus 完成（归属落账、task 清除）
+    s = transition(s, 'start', NOW + WORK_MS + 1000, D, O).state; // 开始短休
+    const r = transition(s, 'tick', NOW + WORK_MS + 1000 + SHORT_MS, D, O);
+    expect((r.event as any).historyEntry).toBeUndefined();
+    expect(r.state.task).toBeUndefined();
+  });
+});

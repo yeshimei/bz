@@ -9,8 +9,8 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { openPomodoro, unloadPomodoro, ensurePomodoro } from '../../src/pomodoro';
-import { mountPomodoroStatusBar } from '../../src/pomodoro/statusbar';
+import { openPomodoro, unloadPomodoro, ensurePomodoro, startFocusForTask } from '../../src/pomodoro';
+import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from '../../src/pomodoro/statusbar';
 import { getPomodoroFilePath, PomodoroDataManager } from '../../src/pomodoro/data';
 
 const T0 = new Date('2026-08-10T10:00:00').getTime();
@@ -440,11 +440,14 @@ describe('番茄钟弹窗', () => {
     expect(raw.state.phase).toBe('short-break');
     expect(hasNotice('专注完成：休息 5 分钟')).toBe(true);
     expect(document.querySelector('.bz-notice--success')).not.toBeNull();
+    // 增强包：autoCycle 关 → toast 挂「开始休息」动作按钮（点击直达开始）
+    const restBtn = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '开始休息');
+    expect(restBtn).toBeTruthy();
     expect(audio.createOscillator.mock.calls.length - before).toBe(1);
     expect(audio.createOscillator.mock.results[before].value.frequency.value).toBe(523); // 短休开始
   });
 
-  it('休息完成 → toast + 专注开始声（880Hz 一声）', async () => {
+  it('休息完成 → toast 挂「开始专注」动作（autoCycle 关不计时，文案不说「开始专注」）+ 完成提示声', async () => {
     const { app } = setup();
     const audio = makeAudioMock();
     await openPomodoro(app);
@@ -453,9 +456,17 @@ describe('番茄钟弹窗', () => {
     el('pomodoro-btn-start').click(); // 开始短休
     const before = audio.createOscillator.mock.calls.length;
     await vi.advanceTimersByTimeAsync(5 * 60 * 1000); // 休息完成
-    expect(hasNotice('休息结束：开始专注')).toBe(true);
-    expect(audio.createOscillator.mock.calls.length - before).toBe(1);
-    expect(audio.createOscillator.mock.results[before].value.frequency.value).toBe(880); // 专注开始
+    // 文案按实况：手动流转（autoCycle 关）只报事实，「开始专注」由动作按钮承担
+    expect(hasNotice('休息结束：开始专注')).toBe(false);
+    expect(hasNotice('休息结束')).toBe(true);
+    expect(audio.createOscillator.mock.calls.length - before).toBe(1); // 完成提示声（新阶段预告）
+    expect(audio.createOscillator.mock.results[before].value.frequency.value).toBe(880); // 专注开始声
+    expect(el('pomodoro-btn-start').textContent).toContain('开始'); // 休息结束未自动计时
+    // 动作按钮直达开始专注
+    const actionBtn = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '开始专注');
+    expect(actionBtn).toBeTruthy();
+    (actionBtn as HTMLElement).click();
+    expect(el('pomodoro-btn-start').textContent).toContain('暂停'); // 已在计时
   });
 
   it('skip：不通知不响（仅自然完成发 toast）', async () => {
@@ -596,7 +607,8 @@ describe('番茄钟弹窗', () => {
     );
     const { app } = setup(vault);
     await openPomodoro(app);
-    expect(el('pomodoro-phase').textContent).toContain('🍅 番茄钟'); // 回空闲
+    expect(el('pomodoro-phase').textContent).toContain('番茄钟'); // 回空闲（增强包：🍅 emoji 已换 lucide timer）
+    expect(el('pomodoro-phase').querySelector('.pomodoro-phase-icon')).not.toBeNull(); // 空闲态挂图标
     const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
     expect(raw.history).toHaveLength(0); // 不补算历史
     expect(raw.state.phase).toBe('idle');
@@ -637,5 +649,148 @@ describe('番茄钟弹窗', () => {
     const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
     expect(raw.state.paused).toBe(true);
     expect(raw.state.remaining).toBe(1200); // 暂停保留
+  });
+});
+
+describe('增强包：循环圆点 / 时段分布 / 通知动作 / Space / 待办联动', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+    document.body.innerHTML = '';
+    unloadPomodoro();
+    unmountPomodoroStatusBar(); // 状态栏句柄跨 describe 残留会让 mount 早退
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(T0));
+  });
+  afterEach(() => {
+    unloadPomodoro();
+    unmountPomodoroStatusBar();
+    vi.useRealTimers();
+  });
+
+  it('循环位置圆点行：4 个 6px 方点，完成 1 个专注后点亮 1 个（替代「专注 N/M」文字）', async () => {
+    const { app } = setup(new MockVault(), { pomodoroAutoCycle: true });
+    await openPomodoro(app);
+    const dots = () => [...document.querySelectorAll('.pomodoro-cycle-dot')] as HTMLElement[];
+    expect(dots().length).toBe(4);
+    expect(dots().every((d) => !d.classList.contains('pomodoro-cycle-dot-on'))).toBe(true);
+    el('pomodoro-btn-start').click();
+    await vi.advanceTimersByTimeAsync(25 * 60 * 1000 + 500); // 第 1 个完成 → 自动短休
+    expect(dots().filter((d) => d.classList.contains('pomodoro-cycle-dot-on')).length).toBe(1);
+    await vi.advanceTimersByTimeAsync(5 * 60 * 1000 + 25 * 60 * 1000 + 500); // 第 2 个完成
+    expect(dots().filter((d) => d.classList.contains('pomodoro-cycle-dot-on')).length).toBe(2);
+  });
+
+  it('统计区：今日行带总分钟、7 天柱 title 带「N 个 · M 分钟」、今日 12 槽时段柱按完成时刻点亮', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    expect(el('pomodoro-today').textContent).toContain('今日 0 个 · 0 分钟');
+    expect(document.querySelectorAll('.pomodoro-hour-bar').length).toBe(12);
+    el('pomodoro-btn-start').click();
+    await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
+    expect(el('pomodoro-today').textContent).toContain('今日 1 个 · 25 分钟');
+    const dayBars = [...document.querySelectorAll('.pomodoro-stat-day')] as HTMLElement[];
+    expect(dayBars[6].title).toBe('2026-08-10：1 个 · 25 分钟');
+    // T0 = 10:00 → [10,12) 槽（第 6 根）点亮
+    const hourBars = [...document.querySelectorAll('.pomodoro-hour-bar')] as HTMLElement[];
+    expect(hourBars[5].classList.contains('pomodoro-hour-bar-on')).toBe(true);
+    expect(hourBars[5].title).toContain('10–12 时');
+    expect(hourBars[5].title).toContain('1 个');
+    expect(hourBars.filter((b) => b.classList.contains('pomodoro-hour-bar-on')).length).toBe(1);
+  });
+
+  it('autoCycle 关：专注完成 toast 挂「开始休息」动作，点击直达开始短休', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    el('pomodoro-btn-start').click();
+    await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
+    const restBtn = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '开始休息');
+    expect(restBtn).toBeTruthy();
+    (restBtn as HTMLElement).click();
+    expect(el('pomodoro-phase').textContent).toBe('短休息');
+    expect(el('pomodoro-btn-start').textContent).toContain('暂停'); // 动作按钮已开始计时
+  });
+
+  it('autoCycle 开：完成 toast 无动作按钮（下一阶段已自动计时，文案报事实）', async () => {
+    const { app } = setup(new MockVault(), { pomodoroAutoCycle: true });
+    await openPomodoro(app);
+    el('pomodoro-btn-start').click();
+    await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
+    expect(hasNotice('专注完成：休息 5 分钟')).toBe(true);
+    expect(document.querySelectorAll('.bz-notice-action').length).toBe(0);
+  });
+
+  it('Space 快捷键：面板聚焦切换开始/暂停；按钮聚焦走原生激活不双触发', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    const popup = el('pomodoro-popup');
+    popup.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true })); // 面板焦点 → 开始
+    expect(el('pomodoro-btn-start').textContent).toContain('暂停');
+    popup.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true })); // 再按 → 暂停
+    expect(el('pomodoro-btn-start').textContent).toContain('继续');
+    // 事件源是按钮（按钮聚焦）→ 处理器跳过，不双触发
+    el('pomodoro-btn-start').dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+    expect(el('pomodoro-btn-start').textContent).toContain('继续');
+    // 非 Space 键不触发
+    popup.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(el('pomodoro-btn-start').textContent).toContain('继续');
+  });
+
+  it('startFocusForTask：直接开始归属专注（弹窗任务行 + 状态栏 title 展示；完成落账后收起）', async () => {
+    const { app, vault } = setup();
+    const container = document.createElement('div');
+    container.className = 'status-bar';
+    document.body.appendChild(container);
+    mountPomodoroStatusBar(container, app);
+    await openPomodoro(app);
+    expect(el('pomodoro-task').textContent).toBe(''); // 无归属收起
+    await startFocusForTask(app, '完成阅读报告');
+    expect(el('pomodoro-task').textContent).toBe('完成阅读报告');
+    expect(el('pomodoro-task').title).toBe('完成阅读报告');
+    expect(el('pomodoro-btn-start').textContent).toContain('暂停'); // 已在计时
+    const statusEl = container.querySelector('.pomodoro-statusbar') as HTMLElement;
+    expect(statusEl.title).toBe('番茄钟：完成阅读报告');
+    // 自然完成 → 归属写入历史 + 任务行/状态栏收起
+    await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
+    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
+    expect(raw.history).toHaveLength(1);
+    expect(raw.history[0].task).toBe('完成阅读报告');
+    expect(raw.state.task).toBeUndefined(); // 落账即清除
+    expect(el('pomodoro-task').textContent).toBe('');
+    expect(statusEl.title).toBe('番茄钟');
+  });
+
+  it('startFocusForTask：已有专注计时中 → 提示不重启，归属维持原任务', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    await startFocusForTask(app, '任务 A');
+    await startFocusForTask(app, '任务 B');
+    expect(hasNotice('已有专注计时中，本次不重复开始')).toBe(true);
+    expect(el('pomodoro-task').textContent).toBe('任务 A');
+  });
+
+  it('startFocusForTask：休息计时中 → 跳过休息（不记历史）直接开始归属专注', async () => {
+    const { app, vault } = setup();
+    await openPomodoro(app);
+    el('pomodoro-btn-start').click();
+    await vi.advanceTimersByTimeAsync(25 * 60 * 1000); // 专注完成 → 短休未开始
+    el('pomodoro-btn-start').click(); // 开始休息
+    expect(el('pomodoro-phase').textContent).toBe('短休息');
+    await startFocusForTask(app, '给影评加封面');
+    expect(el('pomodoro-phase').textContent).toBe('专注');
+    expect(el('pomodoro-task').textContent).toBe('给影评加封面');
+    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
+    expect(raw.history).toHaveLength(1); // 仅此前自然完成的专注记账
+    expect(raw.history[0].task).toBeUndefined(); // 无归属完成不带 task 键
+    expect(raw.state.task).toBe('给影评加封面'); // 归属在当前专注上
+    expect(raw.state.phase).toBe('focus');
+  });
+
+  it('样式基线：mask 遮罩走 --background-modifier-cover token；状态栏挂 hover 反馈', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/pomodoro/styles.css'), 'utf8');
+    expect(/#pomodoro-mask\s*\{[^}]*--background-modifier-cover/.test(css)).toBe(true);
+    expect(/#pomodoro-mask\s*\{[^}]*rgba\(0,0,0,\s*0\.45\)/.test(css)).toBe(false);
+    expect(css).toContain('.pomodoro-statusbar:hover');
   });
 });
