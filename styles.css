@@ -5054,7 +5054,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   border-bottom: 1px solid var(--bz-border); flex-shrink: 0;
 }
 .bz-fav-title { font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
-.bz-fav-head-btns { display: flex; align-items: center; gap: 2px; }
+/* 头行图标钮间距 ≥8px（ticket 188 防误触：WCAG 2.5.8 相邻可点元素间距） */
+.bz-fav-head-btns { display: flex; align-items: center; gap: var(--bz-space-sm); }
 /* 头部图标钮桌面隐藏（桌面无右上钮；移动显示） */
 .bz-fav-mob-only { display: none; }
 
@@ -5139,6 +5140,9 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-fav-note-badge .bz-ic { width: 10px; height: 10px; }
 .bz-fav-time-badge { background: var(--bz-surface-1); color: var(--bz-text-3); font-weight: 400; }
 .bz-fav-time-badge .bz-ic { width: 10px; height: 10px; }
+/* 域名徽章（ticket 188：meta 行尾弱化小徽章） */
+.bz-fav-host-badge { background: var(--bz-surface-1); color: var(--bz-text-3); font-weight: 400; }
+.bz-fav-host-badge .bz-ic { width: 10px; height: 10px; }
 /* 余额读数（右侧；档位色） */
 .bz-fav-balance-wrap { flex-shrink: 0; align-self: center; padding-left: 4px; }
 .bz-fav-balance {
@@ -5168,11 +5172,25 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 /* ---- 表单（弹窗骨架用组件库 .bz-overlay-mask；内容自绘，走 token） ---- */
 .bz-fav-form-mask { z-index: 110000; }
 .bz-fav-form {
+  position: relative; /* 关联笔记候选弹层定位锚点（ticket 188） */
   background: var(--bz-surface-3); border-radius: var(--bz-radius-md);
   border: 1px solid var(--bz-border); box-shadow: var(--bz-shadow-lg);
   width: 440px; max-width: calc(100vw - 32px); max-height: 86vh; overflow-y: auto;
   padding: var(--bz-space-lg); display: flex; flex-direction: column;
 }
+/* 关联笔记候选弹层（对照 .bz-bel-catpop 范式） */
+.bz-fav-notepop {
+  position: absolute; left: var(--bz-space-lg); right: var(--bz-space-lg); top: 40%; z-index: 60;
+  background: var(--bz-surface-4); border: 1px solid var(--bz-border);
+  border-radius: var(--bz-radius-sm); box-shadow: var(--bz-shadow-md);
+  padding: 4px; max-height: 200px; overflow-y: auto;
+}
+.bz-fav-noteopt {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  font-size: var(--bz-font-label); color: var(--bz-text-1);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.bz-fav-noteopt:hover { background: var(--bz-surface-hover); }
 .bz-fav-form-title { font-size: var(--bz-font-title); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
 .bz-fav-form-body { display: flex; flex-direction: column; gap: var(--bz-space-md); margin-top: var(--bz-space-md); }
 .bz-fav-form-body .bz-field { margin-bottom: 0; }
@@ -5217,6 +5235,9 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   }
   .bz-fav-head { padding-top: max(12px, env(safe-area-inset-top)); padding-right: var(--bz-space-sm); }
   .bz-fav-mob-only { display: inline-flex; }
+  /* 头行图标钮触屏换大按钮档（ticket 188：≥40px 目标档） */
+  .bz-fav-head-btns .bz-icon-btn { width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg); }
+  .bz-fav-head-btns .bz-icon-btn .bz-ic { width: 16px; height: 16px; }
   .bz-fav-side { display: none; }
   .bz-fav-main-head { display: none; } /* 桌面专属主头行；移动主按钮收头行图标组 */
   .bz-fav-toolbar { display: none; }  /* 桌面工具栏；移动搜索走隐藏展开行 */
@@ -6576,7 +6597,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   border-bottom: 1px solid var(--bz-border); flex-shrink: 0;
 }
 .bz-bel-title { font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
-.bz-bel-head-btns { display: flex; align-items: center; gap: 2px; }
+/* 头行图标钮间距 ≥8px（ticket 189 防误触，同 favorites 档） */
+.bz-bel-head-btns { display: flex; align-items: center; gap: var(--bz-space-sm); }
 .bz-bel-mob-only { display: none; }
 
 .bz-bel-body { display: flex; flex: 1; min-height: 0; }
@@ -6660,6 +6682,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-bel-stat-main .bz-bel-stat-label { color: var(--bz-brand); }
 .bz-bel-stat-main .bz-bel-stat-value { color: var(--bz-brand); }
 .bz-bel-stat-value { font-size: 20px; font-weight: 700; color: var(--bz-text-1); font-variant-numeric: tabular-nums; line-height: 1.2; }
+/* 可点统计卡（ticket 189：总资产=合成筛选 / 在册件数=回全部）——hover 只轻提背景 */
+.bz-bel-stat--click { cursor: pointer; }
+.bz-bel-stat--click:hover { background: var(--bz-surface-hover); }
+.bz-bel-stat-main.bz-bel-stat--click:hover { background: color-mix(in srgb, var(--bz-brand) 12%, transparent); }
 
 /* ---- 时间轴 ---- */
 .bz-bel-content { flex: 1; overflow-y: auto; padding: 2px var(--bz-space-lg) var(--bz-space-md) calc(var(--bz-space-lg) + 8px); min-height: 0; }
@@ -6765,6 +6791,9 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   }
   .bz-bel-head { padding-top: max(12px, env(safe-area-inset-top)); padding-right: var(--bz-space-sm); }
   .bz-bel-mob-only { display: inline-flex; }
+  /* 头行图标钮触屏换大按钮档（ticket 189，同 favorites 档） */
+  .bz-bel-head-btns .bz-icon-btn { width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg); }
+  .bz-bel-head-btns .bz-icon-btn .bz-ic { width: 16px; height: 16px; }
   .bz-bel-side { display: none; }
   .bz-bel-main-head { display: none; }
   .bz-bel-toolbar { display: none; }
