@@ -68,8 +68,21 @@
 .bz-btn--danger { background: var(--bz-danger) !important; color: var(--bz-on-danger) !important; }
 .bz-btn--danger:hover { background: var(--bz-danger) !important; opacity: 0.9; }
 
+/* 描边 danger 档（ghost 形制 + danger 色；与实底 --danger 互补）：常态透底 danger 描边字，
+   hover 转实底 on-danger（先例：书架墙详情删除钮） */
+.bz-btn--danger-ghost { background: transparent !important; border-color: var(--bz-danger) !important; color: var(--bz-danger) !important; }
+.bz-btn--danger-ghost:hover { background: var(--bz-danger) !important; border-color: var(--bz-danger) !important; color: var(--bz-on-danger) !important; }
+
 .bz-btn--ghost { background: transparent !important; border-color: var(--bz-border-strong) !important; color: var(--bz-text-1) !important; }
 .bz-btn--ghost:hover { background: var(--bz-surface-hover) !important; }
+
+/* hover 品牌档（悬停才显品牌色的静态变体）：常态走基线，hover 转品牌软底 + 品牌前景描边
+   （先例：书架墙详情「N 划线 · N 批注」可点 chip） */
+.bz-btn--hover-accent:hover {
+  background: var(--bz-brand-soft) !important;
+  border-color: var(--bz-brand) !important;
+  color: var(--bz-brand) !important;
+}
 
 .bz-btn--sm { height: var(--bz-control-h-sm); padding: 0 10px; font-size: var(--bz-font-meta); border-radius: 6px; }
 .bz-btn--lg { height: var(--bz-control-h-lg); padding: 0 20px; font-size: var(--bz-font-body); border-radius: 10px; }
@@ -178,6 +191,12 @@
 .bz-chip--tint:hover {
   background: var(--bz-chip-tint, var(--bz-surface-2)) !important;
   color: var(--bz-chip-tint-fg, var(--bz-text-1)) !important;
+}
+/* hover 品牌档（悬停才显品牌色的静态变体；与 .bz-btn--hover-accent 同语义） */
+.bz-chip--hover-accent:hover {
+  background: var(--bz-brand-soft) !important;
+  border-color: var(--bz-brand) !important;
+  color: var(--bz-brand) !important;
 }
 .bz-chip-cnt { margin-left: 2px; font-size: 11px; font-weight: 600; opacity: 0.75; }
 
