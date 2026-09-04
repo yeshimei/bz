@@ -1538,30 +1538,37 @@ describe('smartcat 域事件总线', () => {
 
 // ==================== 13. 设置 schema ====================
 
-describe('favoritesSettingsSchema（ticket 177 空态 schema）', () => {
-  it('桌面：可见性 false（移动端组门控）', () => {
+describe('favoritesSettingsSchema（ticket 177 空态 schema；issue 194 补显示组）', () => {
+  it('桌面：显示组常显（默认排序直绑 favoritesSortKey）；移动端组门控 false', () => {
     Platform.isMobile = false;
     const schema = favoritesSettingsSchema();
-    expect(schema.groups.length).toBe(1);
-    const group = schema.groups[0];
+    expect(schema.groups.length).toBe(2);
+    // 显示组（issue 194）
+    const view = schema.groups[0];
+    expect(view.name).toBe('显示');
+    const vrow: any = view.rows[0];
+    expect(vrow.type).toBe('select');
+    expect(vrow.name).toBe('默认排序');
+    expect(vrow.binding.key).toBe('favoritesSortKey');
+    // 移动端组：桌面门控隐藏
+    const group = schema.groups[1];
     expect(group.name).toBe('移动端');
     expect(group.visibleWhen!({} as any)).toBe(false);
-    // 行级绑定键
     const row: any = group.rows[0];
     expect(row.name).toBe('移动端默认全屏');
     expect(row.binding.key).toBe('favoritesMobileDefaultFullscreen');
   });
 
-  it('移动：可见性 true + rows[0] 绑定键不变', () => {
+  it('移动：移动端组可见性 true + 绑定键不变', () => {
     Platform.isMobile = true;
     const schema = favoritesSettingsSchema();
-    const group = schema.groups[0];
+    const group = schema.groups[1];
     expect(group.visibleWhen!({} as any)).toBe(true);
     expect(group.rows.length).toBe(1);
     expect((group.rows[0] as any).binding.key).toBe('favoritesMobileDefaultFullscreen');
   });
 
-  it('schema 渲染：桌面整组隐藏；移动端显示「移动端默认全屏」toggle 行且键直绑写设置', () => {
+  it('schema 渲染：桌面移动组隐藏（显示组常显）；移动端显示「移动端默认全屏」toggle 行且键直绑写设置', () => {
     // 桌面
     Platform.isMobile = false;
     const state: Record<string, unknown> = { favoritesMobileDefaultFullscreen: true };
@@ -1570,8 +1577,11 @@ describe('favoritesSettingsSchema（ticket 177 空态 schema）', () => {
     setSettingsSaver(saver);
     let container = document.createElement('div');
     renderSettingsInto(container, favoritesSettingsSchema());
-    const groupEl = container.querySelector('.bz-settings-group') as HTMLElement;
-    expect(groupEl.classList.contains('bz-setting-hidden')).toBe(true); // 桌面组级隐藏
+    const groupEls = [...container.querySelectorAll('.bz-settings-group')] as HTMLElement[];
+    expect(groupEls).toHaveLength(2);
+    // 桌面：显示组可见；移动端组整组隐藏
+    expect(groupEls[0].classList.contains('bz-setting-hidden')).toBe(false);
+    expect(groupEls[1].classList.contains('bz-setting-hidden')).toBe(true);
     // 行本身渲染但挂隐藏类（声明式渲染不删 DOM）
     const row0 = container.querySelector('.setting-item[data-name="移动端默认全屏"]') as HTMLElement;
     expect(row0).toBeTruthy();

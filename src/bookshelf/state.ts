@@ -4,6 +4,7 @@
  * 不改数据格式；日后旧 library 域删除后本域独立承担书库 UI。
  */
 import type { App, TFile } from 'obsidian';
+import { tryGetSettings } from '../core/settings-provider';
 
 /** 书目条目（md 书与 EPUB 聚合条目统一形状；status 为派生展示态） */
 export interface BookshelfItem {
@@ -77,6 +78,19 @@ export const M: BookshelfState = {
   drawerEl: null,
   view: 'shelf',
 };
+
+/**
+ * 打开面板时的默认视图接线（issue 194）：每次冷开读设置，非法值回落
+ * （side 仅认 all/reading/unread/done 之外回落 all；sortMode 之外回落 date）。
+ * 与收藏本 openPanel 同语义：设置是「下次打开的初始值」，面板内改选为会话内临时态。
+ */
+export function applyDefaultView(): void {
+  const s = tryGetSettings() as Record<string, unknown>;
+  const side = s.bookshelfDefaultSide;
+  M.side = side === 'reading' || side === 'unread' || side === 'done' ? side : 'all';
+  const sort = s.bookshelfSortMode;
+  M.sortMode = sort === 'title' || sort === 'author' || sort === 'progress' ? sort : 'date';
+}
 
 /** 测试/重建用：整体重置模块状态 */
 export function resetBookshelfState(): void {
