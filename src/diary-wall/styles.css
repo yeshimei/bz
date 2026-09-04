@@ -96,14 +96,13 @@
   animation: bz-diary-wall-slide-up 0.24s ease-out;
   flex-shrink: 0;
 }
-/* 移动实例：真全屏（默认隐藏，≤768px 显示） */
+/* 移动实例：真全屏（默认隐藏，≤768px 显示；顶部避让由 .bz-panel-mtop 统一接管） */
 .bz-diary-wall-mob {
   display: none;
   position: absolute;
   inset: 0;
   flex-direction: column;
   background: var(--dw-bg);
-  padding-top: max(12px, env(safe-area-inset-top, 0px));
 }
 
 /* ============ 头部行（品牌 + 范围 + 按钮组） ============ */
@@ -214,7 +213,7 @@
   background: var(--dw-hover);
 }
 .bz-diary-wall-chip-cnt {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--dw-faint);
 }
 .bz-diary-wall .bz-diary-wall-chip--on {
@@ -262,7 +261,7 @@
   background: var(--dw-surface);
   border: none;
   box-shadow: none;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--dw-muted);
   cursor: pointer;
   font-family: inherit;
@@ -378,7 +377,7 @@
   color: var(--dw-ink);
 }
 .bz-diary-wall-month-count {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--dw-faint);
 }
 .bz-diary-wall-month-strip {
@@ -394,7 +393,7 @@
   flex-shrink: 0;
   overflow: hidden;
   background: var(--dw-surface);
-  font-size: 10px;
+  font-size: 11px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -414,7 +413,7 @@
   color: #fff;
 }
 .bz-diary-wall-month-thumb--t {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--dw-faint);
 }
 
@@ -486,7 +485,7 @@
   position: absolute;
   left: 6px;
   bottom: 5px;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.4;
   color: #fff;
   background: rgba(0, 0, 0, 0.45);
@@ -655,7 +654,7 @@
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.65);
   color: #fff;
-  font-size: 10px;
+  font-size: 11px;
   font-family: var(--dw-mono);
 }
 
@@ -697,10 +696,6 @@
   color: var(--dw-muted);
   line-height: 1.6;
 }
-.bz-diary-wall-text.bz-diary-wall-text--locked .bz-diary-wall-text-tx {
-  color: var(--dw-muted);
-}
-
 /* ============ 灯箱（全屏黑底，图片/视频/音频 controls 播放） ============ */
 .bz-diary-wall-lb {
   position: fixed;
@@ -1023,13 +1018,9 @@
     max-width: 100vw;
     max-height: 100vh;
     border-radius: 0;
-    padding-top: max(12px, env(safe-area-inset-top, 0px));
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-  /* 移动真全屏时的安全区避让：头部行顶部垫安全区（与 .bz-win-mfs 同规则） */
-  .bz-diary-wall-mob .bz-diary-wall-head {
-    padding-top: max(14px, env(safe-area-inset-top, 0px));
-  }
+  /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css），头行不再垫顶 */
   .bz-diary-wall-mob .bz-diary-wall-chiprow {
     padding-bottom: 10px;
   }

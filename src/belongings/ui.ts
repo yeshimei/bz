@@ -20,6 +20,7 @@
  */
 import { setIcon } from 'obsidian';
 import { notice, notifyUndo } from '../core/notice';
+import { topifyZ } from '../core/z-order';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
@@ -234,7 +235,7 @@ function itemById(id: string): BelongingsItem | undefined {
 // ==================== 主面板结构 ====================
 
 function panelHtml(): string {
-  return `<div class="bz-bel-panel">
+  return `<div class="bz-bel-panel bz-panel-mtop">
   <div class="bz-bel-head">
     <div class="bz-bel-title">归物本</div>
     <div class="bz-bel-head-btns">
@@ -322,6 +323,7 @@ async function openPanelInner(): Promise<void> {
   overlay.className = 'bz-bel-overlay';
   overlay.innerHTML = panelHtml();
   document.body.appendChild(overlay);
+  topifyZ(overlay); // ADR-0067：显示即发号（原静态 z-index:100000 已删）
   M.overlay = overlay;
   M.renderFn = () => renderAll();
   applyMobileWindowFullscreen(
@@ -957,6 +959,7 @@ export function openForm(it: BelongingsItem | null): void {
     </div>
   </div>`;
   document.body.appendChild(mask);
+  topifyZ(mask); // ADR-0067：显示即发号（原静态 z-index:110000 已删，恒压主面板）
   mountIcons(mask);
   ensureBelongingsEsc(); // 表单可在面板未开时打开（命令路径）——ESC 层在此保证已注册
   // 编辑自抽屉：companion 防误关

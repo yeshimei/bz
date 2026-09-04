@@ -7,6 +7,7 @@ import type { App } from 'obsidian';
 import { getSettings } from '../core/settings-provider';
 import { getApp } from '../core/app';
 import { EncryptAppController } from './ui';
+import { vIc } from './vault-assets-view';
 
 let initialized = false;
 let controller: EncryptAppController | null = null;
@@ -40,6 +41,11 @@ export async function ensureEncrypt(app: App): Promise<void> {
 // ---------- 状态栏（补丁2：状态栏锁状态提示） ----------
 let statusBarEl: HTMLElement | null = null;
 
+/** 状态栏内容：lucide 锁图标（解锁态开锁）+ 文案（铁律：图标不用 emoji） */
+function statusbarHtml(unlocked: boolean): string {
+  return `${vIc(unlocked ? 'lock-open' : 'lock', 12)} 保险库`;
+}
+
 /**
  * 统一保险库状态栏（main.ts onload 调用，与番茄钟同范式）：
  * 初始显示锁定态，点击打开保险库面板；ensureEncrypt 后由 Controller 接管解锁态刷新。
@@ -49,7 +55,7 @@ export function mountEncryptStatusBar(container: HTMLElement): void {
   const el = document.createElement('span');
   el.className = 'bz-encrypt-statusbar';
   el.title = '保险库：点击打开';
-  el.textContent = '🔒 保险库';
+  el.innerHTML = statusbarHtml(false);
   el.addEventListener('click', () => openEncrypt(getApp()));
   container.appendChild(el);
   statusBarEl = el;

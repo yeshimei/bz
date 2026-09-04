@@ -137,7 +137,7 @@
 .bz-cinema-poster-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .bz-cinema-poster-blank { background: var(--bz-surface-3); }
 .bz-cinema-p-badge {
-  position: absolute; top: 6px; left: 6px; font-size: 10px; padding: 1px 7px;
+  position: absolute; top: 6px; left: 6px; font-size: 11px; padding: 1px 7px;
   border-radius: var(--bz-radius-full); color: var(--bz-on-overlay);
 }
 .bz-cinema-p-name { font-size: var(--bz-font-meta); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -264,7 +264,11 @@
     border-radius: 0; border: none;
   }
   .bz-cinema-mob-only { display: inline-flex; }
-  .bz-cinema-head { padding-top: max(12px, env(safe-area-inset-top)); }
+  /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css），头行不再垫顶 */
+  /* 头行图标钮触屏换大按钮档（同 favorites/belongings；≥40px 目标档） */
+  .bz-cinema-head-btns { gap: var(--bz-space-sm); }
+  .bz-cinema-head-btns .bz-icon-btn { width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg); }
+  .bz-cinema-head-btns .bz-icon-btn .bz-ic { width: 16px; height: 16px; }
   /* 排序 segmented 桌面专属（同待办）；搜索独占一行 */
   .bz-cinema-sort { display: none; }
   .bz-cinema-nav { display: none; } /* 移动端分类在顶部横滑条 */
@@ -272,7 +276,8 @@
     display: flex; gap: var(--bz-space-sm); padding: 10px var(--bz-space-lg); overflow-x: auto; flex-shrink: 0;
   }
   .bz-cinema-mob-chip {
-    white-space: nowrap; font-size: var(--bz-font-meta); padding: var(--bz-space-sm) 14px; border-radius: var(--bz-radius-full);
+    display: inline-flex; align-items: center; min-height: 44px; /* 触控 ≥44px 档（设计手册 §8.2） */
+    white-space: nowrap; font-size: var(--bz-font-meta); padding: var(--bz-space-sm) 16px; border-radius: var(--bz-radius-full);
     background: var(--bz-surface-2); border: 1px solid var(--bz-border);
     color: var(--bz-text-1); cursor: pointer; flex-shrink: 0;
     font-family: inherit;
@@ -283,4 +288,13 @@
   }
   .bz-cinema-grid { grid-template-columns: repeat(3, 1fr); gap: var(--bz-space-md); }
   .bz-cinema-content { padding: var(--bz-space-md) var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* ---- 触控热区（设计手册 §8.2）：头行图标钮 / 豆瓣直达小图标 ::after 外扩 ---- */
+@media (pointer: coarse) {
+  .bz-cinema-head-btns .bz-icon-btn,
+  .bz-cinema-dm-douban,
+  .bz-cinema-rec-douban { position: relative; }
+  .bz-cinema-head-btns .bz-icon-btn::after { content: ''; position: absolute; inset: -6px; }
+  .bz-cinema-dm-douban::after, .bz-cinema-rec-douban::after { content: ''; position: absolute; inset: -6px; }
 }
