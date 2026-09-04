@@ -62,6 +62,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-belongings-add', 'bz-belongings-open',
   // 剪藏本（clipbook 融合域，ADR-0082）：聚合讯未读流+剪藏笔记一体化；旧 bz-clipping-open/bz-news-open 断开
   'bz-clipbook-open',
+  // 自动摘要（enh-autosum 包 1）：当前剪藏笔记手动重跑 AI 摘要
+  'bz-auto-summary-redo',
   // 统一保险库（encrypt 域，ADR-0085）：密码/笔记/日记合一；旧 bz-password-vault-open 已删
   // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图
   'bz-diary-wall-open',
