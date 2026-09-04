@@ -152,15 +152,16 @@
 .bz-clip-read-empty .bz-ic { width: 26px; height: 26px; opacity: .5; }
 .bz-clip-art-site { display: inline-flex; align-items: center; gap: 6px; font-size: var(--bz-font-meta); color: var(--bz-text-3); margin-bottom: 8px; }
 .bz-clip-art-site-name { color: var(--bz-text-2); font-weight: var(--bz-weight-medium); }
-.bz-clip-art-type { background: var(--bz-surface-3); border-radius: var(--bz-radius-full); padding: 1px 8px; font-size: 10px; color: var(--bz-text-2); }
+.bz-clip-art-type { background: var(--bz-surface-3); border-radius: var(--bz-radius-full); padding: 1px 8px; font-size: 11px; color: var(--bz-text-2); }
 .bz-clip-favimg { display: inline-flex; }
 .bz-clip-favimg img { border-radius: 3px; }
 .bz-clip-favchip {
   width: 16px; height: 16px; border-radius: var(--bz-radius-xs); flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 9px; font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
+  font-size: 11px; font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
   background: var(--bz-success);
 }
+/* .sm 14px 框为装饰性 favicon 回退字chip（正常渲染 favicon 图），字号不抬档（例外见收尾报告） */
 .bz-clip-favchip.sm { width: 14px; height: 14px; font-size: 8px; }
 .bz-clip-art-title { font-size: 20px; font-weight: var(--bz-weight-bold); line-height: 1.45; margin-bottom: 8px; color: var(--bz-text-1); }
 .bz-clip-art-meta { display: flex; align-items: center; gap: var(--bz-space-sm); flex-wrap: wrap; font-size: var(--bz-font-meta); color: var(--bz-text-3); margin-bottom: 14px; }
@@ -174,7 +175,7 @@
   border-radius: var(--bz-radius-sm); padding: var(--bz-space-md);
   font-size: var(--bz-font-meta); line-height: 1.7; color: var(--bz-text-2); margin-bottom: var(--bz-space-lg);
 }
-.bz-clip-art-sum-h { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--bz-info); margin-bottom: 4px; }
+.bz-clip-art-sum-h { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--bz-info); margin-bottom: 4px; }
 .bz-clip-art-sum-h .bz-ic { width: 11px; height: 11px; }
 .bz-clip-art-md { font-size: var(--bz-font-body); line-height: 1.9; color: var(--bz-text-1); }
 .bz-clip-art-md p { margin: 0 0 var(--bz-space-md); }
@@ -215,9 +216,9 @@
 }
 .bz-clip-mob-src.on { background: var(--bz-brand-soft); border-color: var(--bz-border-strong); color: var(--bz-text-1); }
 .bz-clip-mob-ub {
-  font-size: 9px; font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
+  font-size: 11px; font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
   background: var(--bz-brand); border-radius: var(--bz-radius-full);
-  min-width: 14px; height: 14px; padding: 0 4px;
+  min-width: 17px; height: 17px; padding: 0 4px;
   display: inline-flex; align-items: center; justify-content: center;
 }
 .bz-clip-mob-list { flex: 1; overflow-y: auto; padding: var(--bz-space-xs) var(--bz-space-sm) var(--bz-space-lg); }
@@ -264,14 +265,14 @@
   .bz-clip-desk { display: none; }
   .bz-clip-frame { position: relative; }
   .bz-clip-mob { display: flex; }
-  /* 刘海屏安全区（enh 包 9）：顶栏避让顶部刘海，列表/详情避让底部指示条 */
-  .bz-clip-mob-top { padding-top: max(var(--bz-space-sm), env(safe-area-inset-top)); }
-  .bz-clip-mob-detail-top { padding-top: max(var(--bz-space-sm), env(safe-area-inset-top)); }
+  /* 刘海屏安全区（enh 包 9）：底部避让由列表/详情自身垫；顶部避让由 frame/detail 根节点
+     .bz-panel-mtop 统一接管（44px，components.css），顶栏不再重复垫顶 */
   .bz-clip-mob-list { padding-bottom: max(var(--bz-space-lg), env(safe-area-inset-bottom, 0px)); }
   .bz-clip-mob-detail-body { padding-bottom: calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
   /* 触控热区（enh 包 10）：来源条/保存钮等可点小元素抬到 ≥44px 档（设计手册 §8.2） */
   .bz-clip-mob-src { min-height: 44px; padding: 8px 16px; }
-  .bz-clip-mob-ub { min-width: 17px; height: 17px; font-size: 11px; }
+  .bz-clip-mob-ub { min-width: 17px; height: 17px; }
   .bz-clip-mob-save { width: 44px; height: 44px; }
-  .bz-clip-mob-top .bz-icon-btn--lg { width: 44px; height: 44px; }
+  .bz-clip-mob-top .bz-icon-btn--lg,
+  .bz-clip-mob-detail-top .bz-icon-btn--lg { width: 44px; height: 44px; }
 }
