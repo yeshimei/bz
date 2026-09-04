@@ -25,9 +25,9 @@ export async function ensureSettingsPanel(_app: App): Promise<void> {
   initialized = true;
 }
 
-/** 打开设置面板（命令 bz-settings-panel-open） */
-export function openSettingsPanel(app: App): void {
-  void ensureSettingsPanel(app).then(() => getUI().open());
+/** 打开设置面板（命令 bz-settings-panel-open；domainId 可选——域内「在设置中编辑」直达定位） */
+export function openSettingsPanel(app: App, domainId?: string): void {
+  void ensureSettingsPanel(app).then(() => getUI().open(domainId));
 }
 
 /** 卸载清理（main.ts onunload 调用，幂等） */

@@ -2,7 +2,7 @@
  * 待办（todo）域 UI：场景工作台（原型 1 定稿形态）
  * 桌面：遮罩 + 720×580 面板（ADR-0084：右缘/底缘/右下角拖动缩放，
  *       钳制 720×520 ~ min(1280×880, 视口92%)；尺寸记忆 settings.todoPanelWidth/Height）：
- *       左场景栏（全部/今日/场景 + 添加场景）+ 右侧列表
+ *       左场景栏（全部/今日/重要/场景 + 添加场景）+ 右侧列表
  *       （工具栏：搜索 + 排序 segmented；条目卡 meta 对齐源码 buildMeta 顺序）
  * 移动：真全屏 + 顶部横滑场景 chips + 右上关闭（仅全屏显示）
  * 交互：
@@ -12,18 +12,22 @@
  *   - 编辑/新建弹窗 = uiModal（无关闭按钮，点遮罩/ESC 关；无滚动条）
  *   - 场景/优先级平铺选择 = 组件库 .bz-choice（选中 = 品牌色，非黑底）
  *   - 添加场景弹窗：输入场景名 → 写入 memoScenarios 设置并即时生效
+ *   - 场景项右键/长按 = 管理菜单（在设置中编辑直达 / 重命名批量改条目 / 删除迁入默认场景）
+ *   - 伪场景：今日 = 只看今天（今日/逾期未完成 + 今天完成）；重要 = 跨场景聚合 star 条目
+ *   - 删除接撤销（core notifyUndo，条目插回原位）；composer 保存 toast 挂「补全」直开编辑器
+ *   - 已完成折叠区展开默认只列近 30 天，尾部「更早 N 条」放全；空态 = 组件库 .bz-empty 三件套
  * 基线：按钮/输入/弹窗/平铺选择走组件库；域内只留待办特有布局。
  * 图标：一律 lucide。
  * 数据：与旧 memo 域读写同一 memo.json；后台任务由旧 memo 域执行。
  */
 import type { App, EventRef } from 'obsidian';
 import moment from 'moment';
-import { notice } from '../core/notice';
+import { notice, notify, notifyUndo, notifySaveError } from '../core/notice';
 import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { uiModal, uiIcon, uiSegmented, uiChoice, uiBtn, uiBtnRow, uiResizable } from '../core/ui';
+import { uiModal, uiIcon, uiSegmented, uiChoice, uiBtn, uiBtnRow, uiResizable, uiEmpty } from '../core/ui';
 import { openFlowDialog } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
@@ -40,6 +44,8 @@ import { M } from './state';
 const PANEL = { DEF_W: 720, DEF_H: 580, MIN_W: 720, MIN_H: 520, MAX_W: 1280, MAX_H: 880 };
 /** 搜索防抖（180ms，favorites/belongings 同值） */
 const SEARCH_DEBOUNCE_MS = 180;
+/** 已完成折叠区展开默认只列近 30 天，更早的收进「更早 N 条」 */
+const DONE_WINDOW_DAYS = 30;
 /** 搜索防抖计时（打开期间有效，面板关闭清理） */
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -50,6 +56,7 @@ const ICON = {
   search: 'search',
   add: 'plus',
   addScene: 'tag',
+  settings: 'settings-2',
   empty: 'inbox',
   pos: 'pin',
   clear: 'x',
@@ -112,6 +119,18 @@ function dueTagClass(status: string): string {
 function dueText(item: TodoItem): string {
   const mode = (tryGetSettings() as any).memoDueFormat === 'absolute' ? 'absolute' : 'relative';
   return formatDueText(item.due!, mode);
+}
+
+/** 某时间串（YYYY-MM-DD HH:mm:ss）是否为今天（「今日」视图只看今天完成的口径） */
+function isTodayStr(s: string): boolean {
+  return !!s && s.slice(0, 10) === moment().format('YYYY-MM-DD');
+}
+
+/** composer/编辑器场景缺省兜底：设置 memoDefaultScene（合法时）否则第一个场景 */
+function fallbackScene(): string {
+  const scenes = TodoData.getScenarios();
+  const s = (tryGetSettings() as any).memoDefaultScene;
+  return s && scenes.includes(s) ? s : scenes[0];
 }
 
 // ---------- 数据操作 ----------
@@ -194,11 +213,17 @@ function getVisibleItems(): TodoItem[] {
   let list = M.items.filter((it) => {
     // 场景筛选
     if (M.activeScene === '今日') {
-      // T3：已完成项放行（进 done 折叠区可恢复）；未完成项需今日/逾期才进列表
+      // 只看今天：已完成项仅今天完成的进 done 折叠区（含今日补完的逾期项）；
+      // 未完成项需今日/逾期才进列表；历史完成去「全部」场景看
       if (!it.completed) {
         const st = getDueStatus(it.due);
         if (st !== 'overdue' && st !== 'today') return false;
+      } else if (!isTodayStr(it.completed)) {
+        return false;
       }
+    } else if (M.activeScene === '重要') {
+      // 跨场景聚合 star 标记条目（已完成重要项同样放行进 done 折叠区）
+      if (it.priority !== 'important') return false;
     } else if (M.activeScene !== '全部' && it.scene !== M.activeScene) return false;
     // 搜索（内容/场景/笔记名）
     if (kw) {
@@ -207,6 +232,12 @@ function getVisibleItems(): TodoItem[] {
     }
     return true;
   });
+  // 录入当场可见：伪场景（今日/重要）过滤可能排除刚保存的新条目（无到期/未标星），
+  // 置顶放行避免「保存了却看不见」；切场景/关面板/下一条新建时清除
+  if (M.pinnedNewId && M.activeScene !== '全部') {
+    const pinned = M.items.find((i) => i.id === M.pinnedNewId);
+    if (pinned && !pinned.completed && !list.some((i) => i.id === pinned.id)) list = [pinned, ...list];
+  }
   // 排序：priority 模式 = 到期优先 + 重要优先（对齐 memo sortFn）
   list.sort((a, b) => {
     const ac = !!a.completed, bc = !!b.completed;
@@ -227,11 +258,16 @@ function getVisibleItems(): TodoItem[] {
   return list;
 }
 
-/** 场景计数（当前场景下满足搜索的条目数） */
+/** 场景计数（当前场景下满足搜索的条目数；伪场景与列表口径一致——今日 = 今日/逾期未完成 + 今天完成） */
 function sceneCount(scene: string): number {
   if (scene === '今日') {
-    return M.items.filter((it) => !it.completed && (getDueStatus(it.due) === 'overdue' || getDueStatus(it.due) === 'today')).length;
+    return M.items.filter((it) => {
+      if (it.completed) return isTodayStr(it.completed);
+      const st = getDueStatus(it.due);
+      return st === 'overdue' || st === 'today';
+    }).length;
   }
+  if (scene === '重要') return M.items.filter((it) => it.priority === 'important').length;
   if (scene === '全部') return M.items.length;
   return M.items.filter((it) => it.scene === scene).length;
 }
@@ -250,6 +286,8 @@ export function openTodoPanel(app: App): void {
   const sortSetting = (tryGetSettings() as any).memoSortMode;
   M.sortMode = sortSetting === 'priority' || sortSetting === 'due' || sortSetting === 'created' ? sortSetting : 'priority';
   M.showDone = (tryGetSettings() as any).memoShowArchivedByDefault === true;
+  M.showEarlierDone = false; // 「更早 N 条」每次打开重新收起
+  M.pinnedNewId = null;
 
   const overlay = document.createElement('div');
   overlay.className = 'bz-todo-overlay';
@@ -346,6 +384,7 @@ export function openTodoPanel(app: App): void {
     if (nav) {
       const scene = nav.dataset.todoScene as string;
       M.activeScene = M.activeScene === scene ? '全部' : scene;
+      M.pinnedNewId = null; // 录入置顶只服务当前视图，切场景即清
       renderAll();
       return;
     }
@@ -358,6 +397,13 @@ export function openTodoPanel(app: App): void {
     const donebar = t.closest('[data-todo-donebar]');
     if (donebar) {
       M.showDone = !M.showDone;
+      renderAll();
+      return;
+    }
+    // 「更早 N 条」：放全 30 天前的已完成条目
+    const doneMore = t.closest('[data-todo-donemore]');
+    if (doneMore) {
+      M.showEarlierDone = true;
       renderAll();
       return;
     }
@@ -434,6 +480,7 @@ export function closeTodoPanel(): void {
   }
   flushPendingSize(); // T2：面板关闭时立即落盘尺寸（防防抖窗口内丢失）
   M.renderFn = null;
+  M.pinnedNewId = null;
   M.completeTimers.forEach((t) => clearTimeout(t));
   M.completeTimers.clear();
 }
@@ -513,13 +560,27 @@ function renderMainHead(): void {
   countEl.textContent = `· ${items.length} 项 · ${undone} 未完成`;
 }
 
-/** 场景计数归一（桌面 nav / 移动 chips 共用） */
-function sceneOptions(): { scene: string; dot: string }[] {
+/** 场景选项归一（桌面 nav / 移动 chips 共用）；重要 = 伪场景（star 图标 + 警示色点，范式照「今日」） */
+function sceneOptions(): { scene: string; dot: string; icon?: string }[] {
   return [
     { scene: '全部', dot: '' },
     { scene: '今日', dot: '#e5534b' },
+    { scene: '重要', dot: 'var(--bz-warning)', icon: ICON.star },
     ...TodoData.getScenarios().map((s) => ({ scene: s, dot: sceneDot(s) })),
   ];
+}
+
+/** nav/chip 项内点 + 伪场景图标的 HTML */
+function sceneLeadHtml(o: { scene: string; dot: string; icon?: string }): string {
+  if (o.scene === '全部') return '';
+  const dotHtml = `<span class="bz-todo-nav-dot" style="background:${o.dot}"></span>`;
+  return o.icon ? `${dotHtml}${iconSpan(o.icon, 'bz-todo-nav-star')}` : dotHtml;
+}
+
+/** 场景项管理菜单（重命名/删除/设置直达；伪场景不挂）——桌面右键浮层 / 移动长按抽屉复用组件库 */
+function attachSceneActions(el: HTMLElement, scene: string): void {
+  if (scene === '全部' || scene === '今日' || scene === '重要') return;
+  attachItemActions(el, buildSceneActions(scene), { sheetTitle: scene, sheetSub: '场景' });
 }
 
 function renderNav(): void {
@@ -528,13 +589,13 @@ function renderNav(): void {
   nav.innerHTML = sceneOptions()
     .map((o) => {
       const active = M.activeScene === o.scene;
-      const dotHtml = o.scene === '全部'
-        ? ''
-        : `<span class="bz-todo-nav-dot" style="background:${o.dot}"></span>`;
-      return `<button class="bz-todo-nav-item${active ? ' bz-todo-nav-active' : ''}" data-todo-scene="${esc(o.scene)}">${dotHtml}<span>${esc(o.scene)}</span><span class="bz-todo-nav-cnt">${sceneCount(o.scene)}</span></button>`;
+      return `<button class="bz-todo-nav-item${active ? ' bz-todo-nav-active' : ''}" data-todo-scene="${esc(o.scene)}">${sceneLeadHtml(o)}<span>${esc(o.scene)}</span><span class="bz-todo-nav-cnt">${sceneCount(o.scene)}</span></button>`;
     })
     .join('');
   mountIcons(nav);
+  nav.querySelectorAll<HTMLElement>('[data-todo-scene]').forEach((el) => {
+    attachSceneActions(el, el.dataset.todoScene as string);
+  });
 }
 
 function renderMobScenes(): void {
@@ -543,12 +604,13 @@ function renderMobScenes(): void {
   wrap.innerHTML = sceneOptions()
     .map((o) => {
       const active = M.activeScene === o.scene;
-      const dotHtml = o.scene === '全部'
-        ? ''
-        : `<span class="bz-todo-nav-dot" style="background:${o.dot}"></span>`;
-      return `<button class="bz-todo-mob-chip${active ? ' bz-todo-mob-chip-active' : ''}" data-todo-scene="${esc(o.scene)}">${dotHtml}${esc(o.scene)}</button>`;
+      return `<button class="bz-todo-mob-chip${active ? ' bz-todo-mob-chip-active' : ''}" data-todo-scene="${esc(o.scene)}">${sceneLeadHtml(o)}${esc(o.scene)}</button>`;
     })
     .join('');
+  mountIcons(wrap);
+  wrap.querySelectorAll<HTMLElement>('[data-todo-scene]').forEach((el) => {
+    attachSceneActions(el, el.dataset.todoScene as string);
+  });
 }
 
 /** 卡片 meta 行（顺序对齐 memo buildMeta：课程→脚本→链接→位置→场景→截止→时间） */
@@ -596,7 +658,14 @@ function renderContent(): void {
   if (!content) return;
   const items = getVisibleItems();
   if (items.length === 0) {
-    content.innerHTML = `<div class="bz-todo-empty">${M.search ? '没有匹配的待办' : '这里还没有待办，记一条吧'}</div>`;
+    // 空态三件套（组件库 .bz-empty：图标 + 一句话 + 「新建待办」动作按钮）
+    content.innerHTML = '';
+    content.appendChild(uiEmpty({
+      icon: ICON.empty,
+      title: M.search ? '没有匹配的待办' : '这里还没有待办',
+      desc: M.search ? '试试其他关键词，或清除搜索' : '随手记一条，别让它溜走',
+      actions: uiBtnRow([uiBtn({ label: '新建待办', icon: ICON.add, tone: 'primary', onClick: () => openEditor(null) })], { center: true }),
+    }));
     return;
   }
   // 分组：到期优先（overdue/today）→ 其他 → 已完成（折叠条）
@@ -633,9 +702,19 @@ function renderContent(): void {
   }
   if (done.length) {
     const open = M.showDone;
+    // 时间界：展开默认只列近 30 天完成的，更早的收进尾部「更早 N 条」（点开放全）
+    const cutoff = moment().subtract(DONE_WINDOW_DAYS, 'days').format('YYYY-MM-DD HH:mm:ss');
+    const recent = done.filter((i) => (i.completed as string) >= cutoff);
+    const earlier = done.length - recent.length;
+    const listed = !open || M.showEarlierDone ? done : recent;
     sections.push(`<div class="bz-todo-donebar${open ? ' bz-todo-donebar-open' : ''}" data-todo-donebar>
       ${iconSpan(ICON.doneFold)} 已完成 <span class="bz-todo-donebar-cnt">${done.length}</span></div>`);
-    if (open) sections.push(...done.map((it) => cardHtml(it, true)));
+    if (open) {
+      sections.push(...listed.map((it) => cardHtml(it, true)));
+      if (earlier > 0 && !M.showEarlierDone) {
+        sections.push(`<button class="bz-todo-done-more" data-todo-donemore>更早 ${earlier} 条</button>`);
+      }
+    }
   }
   content.innerHTML = sections.join('');
   mountIcons(content);
@@ -730,7 +809,7 @@ async function completeItem(it: TodoItem): Promise<void> {
     emitDomainEvent('memo', { kind: 'completed', title: it.title });
     notice('已标记完成', 'success');
   } catch (e) {
-    notice('操作失败', 'error');
+    notifySaveError(e, '标记完成');
     console.error(e);
   }
   await refresh();
@@ -742,7 +821,7 @@ async function restoreItem(it: TodoItem): Promise<void> {
     emitDomainEvent('memo', { kind: 'restored', title: it.title });
     notice('已恢复未完成', 'success');
   } catch (e) {
-    notice('操作失败', 'error');
+    notifySaveError(e, '恢复未完成');
     console.error(e);
   }
   await refresh();
@@ -759,7 +838,7 @@ async function postponeItem(id: string, days: number): Promise<void> {
     emitDomainEvent('memo', { kind: 'postponed', title: it.title, due: next });
     notice(`已延后 ${days} 天`, 'success');
   } catch (e) {
-    notice('操作失败', 'error');
+    notifySaveError(e, '延后待办');
     console.error(e);
   }
   await refresh();
@@ -774,16 +853,17 @@ async function togglePrio(id: string): Promise<void> {
     emitDomainEvent('memo', { kind: 'priority', title: it.title, to });
     notice(to === 'important' ? '已转为重要' : '已转为次要', 'success');
   } catch (e) {
-    notice('操作失败', 'error');
+    notifySaveError(e, '切换优先级');
     console.error(e);
   }
   await refresh();
 }
 
 async function deleteItemConfirm(it: TodoItem): Promise<void> {
+  // 三段式确认框：标题 + 问句（名称「」引号）+ 后果说明（删除已接撤销，后果如实说明）
   const ok = await openFlowDialog({
     title: '删除待办',
-    message: it.title,
+    message: `确定删除待办「${it.title}」吗？\n删除后可在通知中撤销。`,
     actions: [
       { label: '取消', value: 'cancel' },
       { label: '删除', value: 'delete', danger: true, cta: true },
@@ -791,11 +871,21 @@ async function deleteItemConfirm(it: TodoItem): Promise<void> {
   });
   if (ok !== 'delete') return;
   try {
-    await TodoData.deleteItem(it.id);
+    const idx = await TodoData.deleteItem(it.id);
     emitDomainEvent('memo', { kind: 'deleted', title: it.title });
-    notice('已删除', 'success');
+    notifyUndo(`已删除待办「${it.title}」`, () => {
+      void (async () => {
+        try {
+          await TodoData.restoreItem(it, idx); // 插回删除前的原位置
+          await refresh();
+        } catch (e) {
+          notifySaveError(e, '撤销删除');
+          console.error(e);
+        }
+      })();
+    });
   } catch (e) {
-    notice('删除失败', 'error');
+    notifySaveError(e, '删除待办');
     console.error(e);
   }
   await refresh();
@@ -861,9 +951,11 @@ function addFromComposer(): void {
   const txt = (input.value || '').trim();
   if (!txt) { notice('请输入内容'); return; }
   const scenes = TodoData.getScenarios();
-  const scene = M.activeScene === '全部' || M.activeScene === '今日'
-    ? scenes[0]
-    : scenes.includes(M.activeScene) ? M.activeScene : scenes[0];
+  // 场景缺省兜底：memoDefaultScene（设置里「新条目默认场景」），未设或不合法回退第一个
+  const def = fallbackScene();
+  const scene = M.activeScene === '全部' || M.activeScene === '今日' || M.activeScene === '重要'
+    ? def
+    : scenes.includes(M.activeScene) ? M.activeScene : def;
   void (async () => {
     // T4：composer 快速录入与编辑器同口径提取 URL（标题含链接 → url 可点）
     const { url } = extractUrlAndDisplay(txt);
@@ -886,9 +978,14 @@ function addFromComposer(): void {
     try {
       await TodoData.addItem(it);
       emitDomainEvent('memo', { kind: 'added', title: it.title, scene: it.scene, priority: it.priority, due: it.due });
-      notice(`已添加到「${scene}」`, 'success');
+      M.pinnedNewId = it.id; // 录入当场可见：伪场景过滤放行这条新目
+      // 补全半径：toast 挂「补全」按钮直开该条编辑器
+      notify(`已添加到「${scene}」`, {
+        type: 'success',
+        action: { label: '补全', onClick: () => openEditor(it) },
+      });
     } catch (e) {
-      notice('保存失败', 'error');
+      notifySaveError(e, '保存待办');
       console.error(e);
     }
     input.value = '';
@@ -1192,12 +1289,13 @@ export function openEditor(item: TodoItem | null): void {
           };
           await TodoData.addItem(it);
           emitDomainEvent('memo', { kind: 'added', title: finalTitle, scene, priority, due });
+          M.pinnedNewId = it.id; // 录入当场可见：伪场景过滤放行这条新目
           notice(`已添加到「${scene}」`, 'success');
         }
         closeModal();
         await refresh();
       } catch (e) {
-        notice('保存失败', 'error');
+        notifySaveError(e, isEdit ? '保存待办' : '新建待办');
         console.error(e);
       }
     })();
@@ -1259,6 +1357,115 @@ function openAddSceneDialog(): void {
     if (e.key === 'Escape') close();
   });
   setTimeout(() => input.focus(), 30);
+}
+
+// ---------- 场景管理（左栏场景项右键菜单 / 移动长按抽屉） ----------
+
+/** 场景项动作集（伪场景不挂，见 attachSceneActions） */
+function buildSceneActions(scene: string): ItemAction[] {
+  return [
+    { icon: ICON.settings, label: '在设置中编辑', title: '打开设置面板编辑场景列表', onClick: () => openSceneInSettings() },
+    { icon: ICON.edit, label: '重命名', title: '重命名场景', onClick: () => openRenameSceneDialog(scene) },
+    { icon: ICON.del, label: '删除场景', title: '删除场景', kind: 'danger', onClick: () => void deleteSceneConfirm(scene) },
+  ];
+}
+
+/** 「在设置中编辑」直达：关面板 → 设置面板定位待办域（动态 import 防顶层环引用，ADR-0002） */
+function openSceneInSettings(): void {
+  const app = M.appRef;
+  closeTodoPanel();
+  if (!app) return;
+  void import('../settings-panel').then((m) => m.openSettingsPanel(app, 'todo'));
+}
+
+/** 场景列表写回设置串（与旧 memo 共用 memoScenarios 键）→ 重建数据层 → 刷新 */
+function commitScenarios(next: string[], okMsg: string): Promise<void> {
+  const settings = getSettings() as any;
+  settings.memoScenarios = next.join(',');
+  return saveSettings().then(async () => {
+    TodoData.init(getSettings() as any);
+    notice(okMsg, 'success');
+    await refresh();
+  });
+}
+
+/** 场景重命名浮层：批量改条目 scene 字段 + 更新设置串 */
+function openRenameSceneDialog(scene: string): void {
+  const wrap = document.createElement('div');
+  wrap.className = 'bz-todo-addscene';
+  const title = document.createElement('div');
+  title.className = 'bz-todo-form-title';
+  title.textContent = '重命名场景';
+  const input = document.createElement('input');
+  input.className = 'bz-input';
+  input.value = scene;
+  const count = M.items.filter((i) => i.scene === scene).length;
+  const hint = document.createElement('div');
+  hint.className = 'bz-todo-addscene-hint';
+  hint.textContent = count > 0 ? `保存后 ${count} 条待办将同步改为新场景名` : '场景将写入备忘录设置（与旧备忘录共用）';
+  const saveBtn = uiBtn({ label: '保存', tone: 'primary' });
+  const cancelBtn = uiBtn({ label: '取消' });
+  const row = uiBtnRow([cancelBtn, saveBtn]);
+  wrap.append(title, input, hint, row);
+  const { close } = uiModal({ content: wrap, maxWidth: 340 });
+  const doSave = () => {
+    const name = input.value.trim();
+    if (!name) { notice('请输入场景名称'); return; }
+    if (/[,，]/.test(name)) { notice('场景名不能包含逗号'); return; }
+    if (name === scene) { close(); return; }
+    const scenes = TodoData.getScenarios();
+    if (scenes.includes(name)) { notice('场景已存在'); return; }
+    void (async () => {
+      try {
+        const moved = await TodoData.updateSceneBulk(scene, name); // 批量改条目 scene 字段（同源 memo.json）
+        if (moved === 0 && count > 0) throw new Error('场景迁移未生效');
+        await commitScenarios(scenes.map((s) => (s === scene ? name : s)), `已重命名为「${name}」`);
+        if (M.activeScene === scene) M.activeScene = name;
+        renderAll();
+        close();
+      } catch (e) {
+        notifySaveError(e, '重命名场景');
+        console.error(e);
+      }
+    })();
+  };
+  saveBtn.addEventListener('click', doSave);
+  cancelBtn.addEventListener('click', () => close());
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') doSave();
+    if (e.key === 'Escape') close();
+  });
+  setTimeout(() => { input.focus(); input.select(); }, 30);
+}
+
+/** 删除场景：非空条目确认迁入默认场景（memoDefaultScene，兜底其余场景第一个）；空场景直接确认移除 */
+async function deleteSceneConfirm(scene: string): Promise<void> {
+  const scenes = TodoData.getScenarios();
+  const others = scenes.filter((s) => s !== scene);
+  const defSetting = (tryGetSettings() as any).memoDefaultScene;
+  const target = defSetting && others.includes(defSetting) ? defSetting : others[0];
+  if (!target) { notice('至少保留一个场景'); return; }
+  const count = M.items.filter((i) => i.scene === scene).length;
+  const ok = await openFlowDialog({
+    title: '删除场景',
+    message: count > 0
+      ? `确定删除场景「${scene}」吗？\n其中 ${count} 条待办将迁入默认场景「${target}」。`
+      : `确定删除场景「${scene}」吗？\n场景将从设置中移除。`,
+    actions: [
+      { label: '取消', value: 'cancel' },
+      { label: '删除', value: 'delete', danger: true, cta: true },
+    ],
+  });
+  if (ok !== 'delete') return;
+  try {
+    if (count > 0) await TodoData.updateSceneBulk(scene, target);
+    await commitScenarios(others, `已删除场景「${scene}」`);
+    if (M.activeScene === scene) M.activeScene = '全部';
+    renderAll();
+  } catch (e) {
+    notifySaveError(e, '删除场景');
+    console.error(e);
+  }
 }
 
 // ---------- 导出（index.ts 用） ----------
