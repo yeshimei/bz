@@ -879,7 +879,7 @@ export function createOverlay(app: App): void {
   const fullscreen = (tryGetSettings() as Record<string, unknown>).cinemaMobileDefaultFullscreen === true;
 
   overlay.innerHTML = `
-    <div class="bz-cinema-panel">
+    <div class="bz-cinema-panel bz-panel-mtop">
       <div class="bz-cinema-head">
         <div class="bz-cinema-title">影视</div>
         <div class="bz-cinema-head-btns">

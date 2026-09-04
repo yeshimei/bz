@@ -102,7 +102,7 @@ export function createOverlay(app: any): void {
   const overlay = document.createElement('div');
   overlay.className = 'bz-home-overlay';
   overlay.innerHTML = `
-    <div class="bz-home-panel">
+    <div class="bz-home-panel bz-panel-mtop">
       <div class="bz-home-hero">
         <div class="bz-home-hero-top">
           <div class="bz-home-hero-l">
