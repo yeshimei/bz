@@ -8,7 +8,7 @@
 import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
-import { initPanel, showPanel, unloadPanel, reloadIfOpen } from './ui';
+import { initPanel, showPanel, unloadPanel, reloadIfOpen, invalidateClipBodyCache } from './ui';
 
 let initialized = false;
 let autoRefreshRegistered = false;
@@ -50,6 +50,7 @@ function registerAutoRefresh(app: App): void {
     return ((s && s.articleDirectory) || '归档/网页剪藏').replace(/\/+$/, '');
   };
   const schedule = (path?: string) => {
+    if (path) invalidateClipBodyCache(path); // 正文缓存失效（enh 包 3：clipping:file-modified 等）
     const d = dir();
     if (path && !path.startsWith(d + '/')) return;
     if (timer) clearTimeout(timer);

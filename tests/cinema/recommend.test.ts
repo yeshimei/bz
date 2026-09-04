@@ -166,6 +166,18 @@ describe('cinema runAIRecommend（页内化：等待 → 结果列表 / 失败�
     expect(requestUrl).not.toHaveBeenCalled();
     expect(M.aiTitle).toBe('AI 荐片'); // 未被找同类改写
   });
+
+  it('增强包（换一批）：找同类记录基准影片 aiBase；荐片清空基准（按模式重跑）', async () => {
+    const base = M.items.find((i) => i.name === 'A')!;
+    // 找同类（无 provider → aiError，但基准影片在进入 try 前已记录）
+    await runSimilarRecommend(base, M.appRef as any);
+    expect(M.aiBase?.name).toBe('A');
+    expect(M.aiTitle).toContain('找同类');
+    // 荐片重跑：清空基准 → 「换一批」回到荐片模式
+    await runAIRecommend(M.appRef as any);
+    expect(M.aiBase).toBeNull();
+    expect(M.aiTitle).toBe('AI 荐片');
+  });
 });
 
 describe('cinema 找同类（ADR-0087 迁入 runSimilarRecommend/buildSimilarPrompt）', () => {

@@ -66,7 +66,7 @@ const EXPECTED_COMMAND_IDS = [
   // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图
   'bz-diary-wall-open',
   'bz-favorites-open', 'bz-favorites-add',
-  'bz-library-open', 'bz-book-notes-open',
+  // 旧书库（library）域退役：bz-library-open/bz-book-notes-open 已删（读书笔记入书架墙详情弹窗）
   'bz-reading-report-open',
   'bz-movie-report', // ADR-0087：旧 bz-movie-open/bz-movie-add 退役，报告命令保留
   'bz-cinema-open', 'bz-cinema-add',
@@ -78,8 +78,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-pomodoro-open',
   'bz-literature-open', 'bz-literature-note-term',
   'bz-attach-move',
-  // 统一保险库（ADR-0085）：密码/加密笔记/加密日记 + 加密当前笔记
-  'bz-encrypt-open', 'bz-encrypt-lock',
+  // 统一保险库（ADR-0085）：密码/加密笔记/加密日记 + 加密当前笔记 + 快速复制密码
+  'bz-encrypt-open', 'bz-encrypt-lock', 'bz-encrypt-copy-password',
   'bz-smartcat-open', 'bz-smartcat-chat', 'bz-smartcat-hide', 'bz-smartcat-dashboard',
   // 设置面板（ADR-0080）
   'bz-settings-panel-open',
@@ -210,8 +210,12 @@ describe('bz 骨架冒烟', () => {
     expect(s.todoFilePath).toBe('CONFIG/STORAGE');
     expect(s.articleDirectory).toBe('归档/网页剪藏');
     expect(s.cinemaFolderPath).toBe('我的/影视'); // ADR-0087：接管影视目录（旧 movieFolderPath 键退役）
-    expect(s.bookshelfFolderPath).toBe(''); // 空 = 未配置（回落 libraryFolderPath 同显）
-    expect(s.libraryFolderPath).toBe('书库');
+    expect(s.bookshelfFolderPath).toBe(''); // 空 = 未配置（运行时回落旧 libraryFolderPath 存量值）
+    // 旧书库（library）域退役：libraryFolderPath/libraryMobileDefaultFullscreen/bookTag 三键已删
+    expect('libraryFolderPath' in s).toBe(false);
+    expect('libraryMobileDefaultFullscreen' in s).toBe(false);
+    expect('bookTag' in s).toBe(false);
+    expect(s.bookshelfMobileDefaultFullscreen).toBe(true);
     expect(s.favoritesStoragePath).toBe('CONFIG/STORAGE');
     expect(s.secondBrainOllamaUrl).toBe('http://localhost:11434');
     expect(s.secondBrainEmbeddingModel).toBe('bge-m3');
