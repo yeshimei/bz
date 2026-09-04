@@ -126,18 +126,44 @@ export const DEFAULT_PW_STATE: PwViewState = {
 /** 密码条目操作按钮意图（宿主 handlePwAccountAction 分发） */
 export type PwAccountAct = 'copy-ac' | 'copy-pw' | 'eye' | 'edit' | 'fav' | 'del';
 
+/** 账号卡明文展示自动回遮时长（防偷看：显示密码 ~15 秒后自动回掩码） */
+export const PW_REVEAL_AUTO_MASK_MS = 15_000;
+
 export class VaultPwView {
   private dm: PasswordVaultDataManager;
   private host: PwViewHost;
   /** 密码生成配置（构造快照） */
   private charset: string;
   private length: number;
+  /** 明文自动回遮计时器（按条目 id；手动隐藏/上锁即撤） */
+  private revealTimers: Record<string, ReturnType<typeof setTimeout>> = {};
 
   constructor(dm: PasswordVaultDataManager, host: PwViewHost, cfg: { charset?: string; length?: string | number }) {
     this.dm = dm;
     this.host = host;
     this.charset = cfg.charset || '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+';
     this.length = parseInt(String(cfg.length)) || 16;
+  }
+
+  /** 收藏星内联图标（替代 ★ 文本符号；图标一律 lucide——ui-kit 手册铁律） */
+  private starIc(): string {
+    return `<span class="star">${this.ic('star', 11)}</span>`;
+  }
+
+  /** 撤销单条明文自动回遮计时 */
+  private clearRevealTimer(id: string): void {
+    if (this.revealTimers[id]) {
+      clearTimeout(this.revealTimers[id]);
+      delete this.revealTimers[id];
+    }
+  }
+
+  /** 卸载清理：撤销全部明文自动回遮计时器（防插件禁用后定时器仍触发改 UI） */
+  disposeRevealTimers(): void {
+    for (const id of Object.keys(this.revealTimers)) {
+      clearTimeout(this.revealTimers[id]);
+      delete this.revealTimers[id];
+    }
   }
 
   // ---------- 桌面列表 ----------
@@ -160,7 +186,7 @@ export class VaultPwView {
         const r = document.createElement('div');
         r.className = 'bz-pwv-row' + (d.id === st.selAccount ? ' on' : '');
         r.innerHTML = `${avatarHTML(d.platform, d.url)}
-          <div class="mid"><div class="pl">${this.esc(d.platform)}${d.fav ? ' <span class="star">★</span>' : ''}</div><div class="ac">${this.esc(d.account || '(无账号)')}</div></div>
+          <div class="mid"><div class="pl">${this.esc(d.platform)}${d.fav ? ' ' + this.starIc() : ''}</div><div class="ac">${this.esc(d.account || '(无账号)')}</div></div>
           <div class="tm">${relTime(d.createdAt)}</div>`;
         r.addEventListener('click', () => onPick(d.platform, d.id));
         this.attachAccountActions(r, d);
@@ -173,7 +199,7 @@ export class VaultPwView {
     if (st.view === 'fav') plats = plats.filter((p) => this.dm.hasFav(p.platform));
     if (!plats.length) {
       if (st.view === 'fav') {
-        container.innerHTML = '<div class="bz-pwv-empty"><div class="t">还没有收藏</div><div class="d">点条目里的 ★ 收藏常用账号</div></div>';
+        container.innerHTML = '<div class="bz-pwv-empty"><div class="t">还没有收藏</div><div class="d">右键或长按条目可收藏，常用账号一目了然</div></div>';
       } else {
         container.innerHTML = `<div class="bz-pwv-empty"><div class="t">保险库还没有密码</div><div class="d">收录第一条账号开始使用</div><button class="bz-pwv-empty-add" data-pwv="empty-add">${this.ic('plus')} 新增密码</button></div>`;
         container.querySelector('[data-pwv="empty-add"]')?.addEventListener('click', () => this.host.openPwEntryDialog());
@@ -184,7 +210,7 @@ export class VaultPwView {
       const r = document.createElement('div');
       r.className = 'bz-pwv-plrow' + (p.platform === st.selPlatform ? ' on' : '');
       const recent = p.accounts[0];
-      const favStar = this.dm.hasFav(p.platform) ? ' <span class="star">★</span>' : '';
+      const favStar = this.dm.hasFav(p.platform) ? ' ' + this.starIc() : '';
       const countBadge = p.accounts.length > 1 ? `<span class="bz-pwv-cnt">${p.accounts.length}</span>` : '';
       r.innerHTML = `${avatarHTML(p.platform, recent?.url)}
         <div class="mid"><div class="pl">${this.esc(p.platform)}${favStar}${countBadge}</div><div class="ac">${recent ? this.esc(recent.account || '(无账号)') : ''}</div></div>
@@ -211,7 +237,7 @@ export class VaultPwView {
       const accs = this.dm.accountsOf(st.selPlatform);
       const filtered = st.view === 'fav' ? accs.filter((x) => x.fav) : accs;
       const first = accs[0];
-      const favStar = this.dm.hasFav(st.selPlatform) ? ' <span class="star">★</span>' : '';
+      const favStar = this.dm.hasFav(st.selPlatform) ? ' ' + this.starIc() : '';
       container.innerHTML = `<div class="bz-pwv-dhead">
         <div class="av big">${avatarHTML(st.selPlatform, first?.url, 'bz-pwv-avatar big')}</div>
         <div class="ttl"><h2>${this.esc(st.selPlatform)}${favStar}</h2>
@@ -222,7 +248,7 @@ export class VaultPwView {
       </div>
       <div class="bz-pwv-accthead">
         <div class="t">${filtered.length} 个账号</div>
-        <button class="bz-pwv-addacct" data-pwv="plat-add">＋ 在该平台新增账号</button>
+        <button class="bz-pwv-addacct" data-pwv="plat-add">${this.ic('plus', 12)} 在该平台新增账号</button>
       </div>
       <div class="bz-pwv-accts"></div>`;
       const acctsEl = container.querySelector('.bz-pwv-accts') as HTMLElement;
@@ -251,8 +277,8 @@ export class VaultPwView {
     card.className = 'bz-pwv-acctcard';
     const shown = !!st.shownIds[d.id];
     const accMeta = withHead
-      ? `${this.esc(d.platform)}<span class="star">${d.fav ? '★' : ''}</span>`
-      : `${this.esc(d.account || '(无账号)')}${d.fav ? '<span class="star">★</span>' : ''}`;
+      ? `${this.esc(d.platform)}${d.fav ? ' ' + this.starIc() : ''}`
+      : `${this.esc(d.account || '(无账号)')}${d.fav ? ' ' + this.starIc() : ''}`;
     card.innerHTML = `<div class="accrow">
       <div class="name">${accMeta}</div>
       <button class="copyac" data-pwv="copy-ac">${this.ic('copy')} 复制账号</button>
@@ -283,7 +309,21 @@ export class VaultPwView {
     } else if (act === 'copy-pw') {
       void this.host.copySensitive(d.password || '').then((ok) => (ok ? t('密码已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true)), () => t('复制失败，请手动复制', true));
     } else if (act === 'eye') {
-      st.shownIds[d.id] = !st.shownIds[d.id];
+      const showing = !st.shownIds[d.id];
+      st.shownIds[d.id] = showing;
+      // 防偷看：明文展示 ~15 秒后自动回遮；手动提前隐藏即撤计时
+      if (showing) {
+        this.clearRevealTimer(d.id);
+        this.revealTimers[d.id] = setTimeout(() => {
+          delete this.revealTimers[d.id];
+          if (st.shownIds[d.id]) {
+            delete st.shownIds[d.id];
+            this.host.onPwChanged?.();
+          }
+        }, PW_REVEAL_AUTO_MASK_MS);
+      } else {
+        this.clearRevealTimer(d.id);
+      }
       this.host.onPwChanged?.();
     } else if (act === 'edit') {
       this.host.openPwEntryDialog(d);
@@ -425,7 +465,7 @@ export class VaultPwView {
         const c = document.createElement('div');
         c.className = 'bz-pwv-mobcard';
         c.innerHTML = `${avatarHTML(d.platform, d.url, 'bz-pwv-avatar av')}
-          <div class="mid"><div class="a">${this.esc(d.platform)}${d.fav ? ' <span class="star">★</span>' : ''}</div><div class="b">${this.esc(d.account || '(无账号)')}</div></div>
+          <div class="mid"><div class="a">${this.esc(d.platform)}${d.fav ? ' ' + this.starIc() : ''}</div><div class="b">${this.esc(d.account || '(无账号)')}</div></div>
           <span class="go">${this.ic('chevron-right')}</span>`;
         c.addEventListener('click', () => this.host.openPwAccountPage?.(d, st));
         this.attachAccountActions(c, d);
@@ -438,7 +478,7 @@ export class VaultPwView {
     if (st.view === 'fav') plats = plats.filter((p) => this.dm.hasFav(p.platform));
     if (!plats.length) {
       if (st.view === 'fav') {
-        container.innerHTML = '<div class="bz-pwv-empty"><div class="t">还没有收藏</div><div class="d">点条目里的 ★ 收藏常用账号</div></div>';
+        container.innerHTML = '<div class="bz-pwv-empty"><div class="t">还没有收藏</div><div class="d">右键或长按条目可收藏，常用账号一目了然</div></div>';
       } else {
         container.innerHTML = `<div class="bz-pwv-empty"><div class="t">保险库还没有密码</div><div class="d">收录第一条账号开始使用</div><button class="bz-pwv-empty-add" data-pwv="empty-add">${this.ic('plus')} 新增密码</button></div>`;
         container.querySelector('[data-pwv="empty-add"]')?.addEventListener('click', () => this.host.openPwEntryDialog());
@@ -449,7 +489,7 @@ export class VaultPwView {
       const recent = p.accounts[0];
       const c = document.createElement('div');
       c.className = 'bz-pwv-mobcard';
-      const favStar = this.dm.hasFav(p.platform) ? ' <span class="star">★</span>' : '';
+      const favStar = this.dm.hasFav(p.platform) ? ' ' + this.starIc() : '';
       const cnt = p.accounts.length > 1 ? `<span class="cnt">${p.accounts.length}</span>` : '';
       c.innerHTML = `${avatarHTML(p.platform, recent?.url, 'bz-pwv-avatar av')}
         <div class="mid"><div class="a">${this.esc(p.platform)}${favStar}${cnt}</div><div class="b">${recent ? this.esc(recent.account || '(无账号)') : ''}</div></div>
@@ -470,7 +510,7 @@ export class VaultPwView {
       <div class="av big">${avatarHTML(p.platform, first?.url, 'bz-pwv-avatar big')}</div>
       <div><div class="nm">${this.esc(p.platform)}${favStar}</div>
         ${first && first.url ? `<a class="url" href="${this.esc(first.url)}" target="_blank" rel="noopener">${this.esc(first.url)} ↗</a>` : '<div class="url faint">无链接</div>'}</div>
-      <button class="bz-pwv-btn gold" data-pwv="plat-add">＋ 新增账号</button>
+      <button class="bz-pwv-btn gold" data-pwv="plat-add">${this.ic('plus', 12)} 新增账号</button>
     </div>
     <div class="bz-pwv-accts"></div>`;
     const acctsEl = body.querySelector('.bz-pwv-accts') as HTMLElement;

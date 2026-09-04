@@ -96,8 +96,8 @@ export function overviewHTML(stats: OverviewStats): string {
       <div class="pt">最近加密<span class="more" data-hero="recent-all">查看全部 →</span></div>
       ${recentRows}
     </div>
-    <div class="panel">
-      <div class="pt">保险库体检</div>
+    <div class="panel" data-hero="health" title="打开保险库体检">
+      <div class="pt">保险库体检<span class="more">查看 →</span></div>
       ${healthRows}
       <div class="bz-vault-hrow"><span class="dot" style="background:var(--bz-vault-faint)"></span><span class="lbl">完整性校验</span><span class="n">${health?.lastChecked || '—'}</span></div>
     </div>
@@ -129,7 +129,8 @@ export function noteDetailHTML(note: SafeNote, kind: 'note' | 'diary', plainPrev
         .slice(0, 6)
         .map((a) => {
           const kb = a.blobSize ? Math.max(1, Math.round(a.blobSize / 1024)) : 0;
-          return `<span class="chip att">${a.kind === 'video' ? '🎬' : '🖼'} ${escapeHtml(a.path.split('/').pop() || a.path)}${kb ? ` · ${kb} KB` : ''}</span>`;
+          const kindIc = vIc(a.kind === 'video' ? 'film' : 'image', 12);
+          return `<span class="chip att">${kindIc} ${escapeHtml(a.path.split('/').pop() || a.path)}${kb ? ` · ${kb} KB` : ''}</span>`;
         })
         .join('') + (note.attachments.length > 6 ? `<span class="chip">+${note.attachments.length - 6} 更多</span>` : '')
     : '<span class="chip">无附件</span>';
@@ -181,4 +182,8 @@ const ICON_PATHS: Record<string, string> = {
   'star-outline': '<path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>',
   'layout-grid': '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
+  'eye-off': '<path d="M9.9 4.24A9.1 9.1 0 0 1 12 4c6.5 0 10 8 10 8a13.2 13.2 0 0 1-1.67 2.68M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 8 10 8a9.7 9.7 0 0 0 5.39-1.61M2 2l20 20"/>',
+  'triangle-alert': '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 20h16a2 2 0 0 0 1.73-2"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  film: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/>',
+  image: '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
 };
