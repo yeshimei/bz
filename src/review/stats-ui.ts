@@ -16,6 +16,8 @@ import { escManager } from '../core/esc-manager';
 import { escapeHtml, formatRelativeTime } from '../core/utils';
 import type { ReviewDataManager, ReviewItem } from './data';
 import { computeStats, loadDistribution, historyOf, RATING_NAMES, RATING_COLORS } from './stats';
+import { FSRS, DEFAULT_W } from './fsrs';
+import { uiIcon } from '../core/ui';
 
 let statsMask: HTMLElement | null = null;
 let statsPopup: HTMLElement | null = null;
@@ -106,15 +108,21 @@ function rankListHTML(items: Array<{ name: string; sub: string; meta: string }>,
 }
 
 // ======================= 统计弹窗 =======================
-/** 打开统计弹窗（全局视图） */
+/** 打开统计弹窗（全局视图）。R 口径与调度同源：读拟合权重 currentW()（item 12） */
 export async function showStatsModal(app: App, dm: ReviewDataManager): Promise<void> {
   lastDm = dm;
   const items = await dm.loadItems();
-  renderStatsModal(app, dm, items);
+  let w: number[] | undefined;
+  try {
+    w = (await import('./app')).reviewApp.currentW();
+  } catch {
+    w = undefined; // 取不到拟合权重 → computeStats 回退默认
+  }
+  renderStatsModal(app, dm, items, w);
 }
 
 /** 渲染统计弹窗（600px 窄卡，影视布局） */
-function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[]): void {
+function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[], w?: number[]): void {
   closeStatsModal();
   statsMask = document.createElement('div');
   statsMask.id = 'review-stats-mask';
@@ -130,10 +138,16 @@ function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[]):
 
   const header = document.createElement('div');
   header.className = 'bz-win-head bz-review-stats-head';
+  const closeBtn = document.createElement('button');
+  closeBtn.id = 'review-stats-close';
+  closeBtn.className = 'bz-win-close';
+  closeBtn.title = '关闭';
+  closeBtn.appendChild(uiIcon('x')); // item 14：❌ → lucide
   header.innerHTML = `
     <h3 class="bz-review-title">复习统计</h3>
-    <div><button id="review-stats-close" class="bz-win-close" title="关闭">❌</button></div>
+    <div></div>
   `;
+  header.querySelector('div')!.appendChild(closeBtn);
   statsPopup.appendChild(header);
 
   const body = document.createElement('div');
@@ -146,7 +160,7 @@ function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[]):
 
   header.querySelector('#review-stats-close')!.addEventListener('click', closeStatsModal);
 
-  const stats = computeStats(items);
+  const stats = computeStats(items, { w });
   body.innerHTML = buildStatsHTML(app, dm, items, stats);
 
   // 时间线列表行 → 独立复习历史弹窗
@@ -159,7 +173,7 @@ function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[]):
           const lb = b.reviewHistory?.[b.reviewHistory.length - 1]?.timestamp || '';
           return lb.localeCompare(la);
         })[idx];
-      if (target) showTimeline(app, dm, target);
+      if (target) void showTimeline(app, dm, target);
     });
   });
 
@@ -236,8 +250,7 @@ function buildStatsHTML(app: App, dm: ReviewDataManager, items: ReviewItem[], st
   const daily7 = stats.daily7.map((d) => ({ label: d.date.slice(5).replace('-', '/'), value: d.count }));
   const weekHTML = sectionHTML('最近 7 天复习量', barChartHTML(daily7, '#E6DFF5'), '#E6DFF5');
 
-  return cards + ratingHTML + loadHTML + timelineHTML + weekHTML +
-    '<p style="text-align:center;font-size:.68rem;color:var(--text-muted);margin:16px;">浅色卡 + 色条板块，对齐影视统计界面</p>';
+  return cards + ratingHTML + loadHTML + timelineHTML + weekHTML;
 }
 
 // ======================= 复习历史独立弹窗 =======================
@@ -245,9 +258,16 @@ let histMask: HTMLElement | null = null;
 let histPopup: HTMLElement | null = null;
 let histEsc: { unregister: () => void } | null = null;
 
-/** 单条笔记复习历史（独立弹窗：无标题栏、无返回统计按钮、无 🔁 名称标题行；时间轴竖线式） */
-export function showTimeline(app: App, dm: ReviewDataManager, item: ReviewItem): void {
+/** 单条笔记复习历史（独立弹窗：无标题栏、无返回统计按钮、无 🔁 名称标题行；时间轴竖线式）。
+ *  当前 R 展示与调度同口径：读拟合权重 currentW()（item 12；取不到回退默认） */
+export async function showTimeline(app: App, dm: ReviewDataManager, item: ReviewItem): Promise<void> {
   closeTimeline();
+  let w: number[] | undefined;
+  try {
+    w = (await import('./app')).reviewApp.currentW();
+  } catch {
+    w = undefined;
+  }
   const history = historyOf(item);
 
   histMask = document.createElement('div');
@@ -270,13 +290,13 @@ export function showTimeline(app: App, dm: ReviewDataManager, item: ReviewItem):
   document.body.appendChild(histMask);
   document.body.appendChild(histPopup);
 
-  // 无标题栏：内容直接顶到卡片；仅右上角 ❌（无 bz-win-head，无返回按钮）
+  // 无标题栏：内容直接顶到卡片；仅右上角关闭钮（lucide，item 14）
   const closeBtn = document.createElement('button');
   closeBtn.id = 'review-history-close';
   closeBtn.className = 'bz-win-close bz-review-history-close';
   closeBtn.title = '关闭';
-  closeBtn.textContent = '❌';
-  closeBtn.style.cssText = 'position:absolute;top:10px;right:10px;z-index:2;background:none;border:none;font-size:.55rem;cursor:pointer;color:var(--text-muted);padding:4px;box-shadow:none !important;';
+  closeBtn.appendChild(uiIcon('x'));
+  closeBtn.style.cssText = 'position:absolute;top:10px;right:10px;z-index:2;background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px;box-shadow:none !important;';
   closeBtn.addEventListener('click', closeTimeline);
   histPopup.appendChild(closeBtn);
 
@@ -291,8 +311,8 @@ export function showTimeline(app: App, dm: ReviewDataManager, item: ReviewItem):
   if (item.phase === 'fsrs' && item.stability && item.lastReviewed) {
     const t = (new Date().getTime() - new Date(item.lastReviewed).getTime()) / 86400000;
     if (t > 0) {
-      // R 公式同 fsrs.ts（d=0.9 默认口径；统计展示用）
-      const R = Math.pow(1 + t / (item.stability * 0.9), -0.9);
+      // R 公式与调度同源 FSRS.R（权重=拟合 currentW 回退默认）
+      const R = new FSRS(w || DEFAULT_W).R(t, item.stability);
       curR = ` · 当前 R ${Math.round(R * 100)}%`;
     }
   }

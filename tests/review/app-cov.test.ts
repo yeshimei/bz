@@ -10,7 +10,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, clearNotices } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { reviewApp } from '../../src/review/app';
+import { reviewApp, __setReviewAwayGraceMsForTests } from '../../src/review/app';
 import { ReviewDataManager, REVIEW_FILE_PATH } from '../../src/review/data';
 
 function makeApp(vault: MockVault) {
@@ -232,17 +232,22 @@ describe('reviewLoop 常驻通知复用与超时收尾', () => {
     vault.files.set(REVIEW_FILE_PATH, JSON.stringify([mkRow('A.md', new Date(Date.now() - 10000).toISOString()), mkRow('B.md', null)]));
     const handle = { setType: vi.fn(), setMessage: vi.fn(), hide: vi.fn() };
     vi.spyOn(await import('../../src/core/notice'), 'notify').mockReturnValue(handle as any);
-    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
+    // item 5：离篇宽限注入短值（默认 120s），测试内两个 tick 即判中断
+    __setReviewAwayGraceMsForTests(500);
+    // Date 一并伪造：宽限判定用真实 Date.now()，不伪造则两次 tick 间真实间隔≈0 永远不出宽限
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval', 'Date'] });
     const p = reviewApp.reviewLoop([mkRow('A.md', null), mkRow('B.md', null)], 0);
     await vi.advanceTimersByTimeAsync(1100); // 第一篇：发现 A 已复习 → 进第二篇（通知复用）
     expect(handle.setMessage).toHaveBeenLastCalledWith(expect.stringContaining('(2/2): B.md'));
-    // 切走活动文件 → 中断收尾
+    // 切走活动文件 → 宽限 500ms 后（两个 tick）中断收尾
     activePath = 'OTHER.md';
-    await vi.advanceTimersByTimeAsync(1100);
+    await vi.advanceTimersByTimeAsync(2100);
     vi.useRealTimers();
+    __setReviewAwayGraceMsForTests(120000);
     await expect(p).resolves.toBeUndefined();
-    expect(handle.setMessage).toHaveBeenCalledWith('已切换到其他笔记，本轮复习中断');
+    expect(handle.setMessage).toHaveBeenCalledWith('已离开当前笔记，本轮复习中断');
     expect(handle.setType).toHaveBeenCalledWith('warning');
+    expect((reviewApp as any)._pendingRound).not.toBeNull(); // item 5：断点保留可恢复
   });
 
   it('300 次轮询超时 → 常驻通知 warning「复习超时」收尾', async () => {
@@ -383,7 +388,10 @@ describe('applyReviewStyles 着色矩阵', () => {
     setApp(app);
     await reviewApp.applyReviewStyles(app);
     expect(inA.style.color).toBe('rgb(255, 71, 87)');
-    expect(inA.querySelector('.review-stage-badge')!.textContent).toBe('📅');
+    // item 14：逾期徽标 ✅📅 → lucide（calendar）
+    const badgeA = inA.querySelector('.review-stage-badge')!;
+    expect(badgeA.querySelector('.bz-ic')!.getAttribute('data-icon')).toBe('calendar');
+    expect(badgeA.textContent).not.toBe('📅');
     expect(inB.style.color).toBe('rgb(250, 173, 20)');
     expect(inB.querySelector('.review-stage-badge')!.textContent).toBe('5h');
     expect(inC.style.color).toBe('rgb(82, 196, 26)');

@@ -13,6 +13,7 @@
  *   - 场景/优先级平铺选择 = 组件库 .bz-choice（选中 = 品牌色，非黑底）
  *   - 添加场景弹窗：输入场景名 → 写入 memoScenarios 设置并即时生效
  *   - 场景项右键/长按 = 管理菜单（在设置中编辑直达 / 重命名批量改条目 / 删除迁入默认场景）
+ *   - 条目右键/长按「专注这个」= 开始一个归属到该待办的专注番茄（pomodoro 域动态 import）
  *   - 伪场景：今日 = 只看今天（今日/逾期未完成 + 今天完成）；重要 = 跨场景聚合 star 条目
  *   - 删除接撤销（core notifyUndo，条目插回原位）；composer 保存 toast 挂「补全」直开编辑器
  *   - 已完成折叠区展开默认只列近 30 天，尾部「更早 N 条」放全；空态 = 组件库 .bz-empty 三件套
@@ -891,6 +892,13 @@ async function deleteItemConfirm(it: TodoItem): Promise<void> {
   await refresh();
 }
 
+/** 专注这个：直接开始一个番茄并把归属记到该待办（pomodoro 域动态 import，ADR-0002 延迟解析防环引用） */
+function focusTodoItem(it: TodoItem): void {
+  const app = M.appRef;
+  if (!app) return;
+  void import('../pomodoro').then((m) => m.startFocusForTask(app, it.title));
+}
+
 /** 条目操作动作（桌面右键菜单 / 移动长按抽屉共用；keepOpen 用于抽屉内继续操作） */
 function buildCardActions(it: TodoItem): ItemAction[] {
   const actions: ItemAction[] = [];
@@ -910,6 +918,8 @@ function buildCardActions(it: TodoItem): ItemAction[] {
     });
   }
   if (!it.completed) {
+    // 待办×番茄联动：开始一个归属到该待办的专注番茄（未完成条目才有专注意义）
+    actions.push({ icon: 'timer', label: '专注这个', title: '开始一个归属到该待办的专注番茄', onClick: () => focusTodoItem(it) });
     actions.push({
       icon: 'check-circle', label: '标记完成', title: '标记完成',
       sub: it.due ? formatDueText(it.due) : undefined,

@@ -6,7 +6,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, setIcon } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { openPomodoro, unloadPomodoro } from '../../src/pomodoro';
+import { openPomodoro, unloadPomodoro, startFocusForTask } from '../../src/pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar, syncPomodoroStatusBar } from '../../src/pomodoro/statusbar';
 import { createInitialState } from '../../src/pomodoro/state';
 
@@ -132,5 +132,39 @@ describe('番茄钟状态栏', () => {
     expect(container.querySelector('.pomodoro-statusbar')).not.toBeNull();
     unmountPomodoroStatusBar();
     expect(container.querySelector('.pomodoro-statusbar')).toBeNull();
+  });
+});
+
+describe('状态栏任务归属（增强包：待办「专注这个」联动）', () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+    document.body.innerHTML = '';
+    unloadPomodoro();
+    unmountPomodoroStatusBar();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(T0));
+    container = document.createElement('div');
+    container.className = 'status-bar';
+    document.body.appendChild(container);
+  });
+  afterEach(() => {
+    unloadPomodoro();
+    unmountPomodoroStatusBar();
+    vi.useRealTimers();
+  });
+
+  it('有归属：title 展示「番茄钟：任务名」；无归属回退「番茄钟」', async () => {
+    const app = makeApp(new MockVault());
+    setApp(app);
+    mountPomodoroStatusBar(container, app);
+    await openPomodoro(app);
+    const statusEl = container.querySelector('.pomodoro-statusbar') as HTMLElement;
+    expect(statusEl.title).toBe('番茄钟'); // 无归属
+    await startFocusForTask(app, '完成阅读报告');
+    expect(statusEl.title).toBe('番茄钟：完成阅读报告'); // 悬停见任务全文
   });
 });

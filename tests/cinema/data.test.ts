@@ -155,7 +155,7 @@ describe('cinema 排序与筛选', () => {
       name, typeTag: '电影', group: '电影',
       watchDate: null, rating: null, status: 2, poster: null, review: null,
       genre: null, director: null, actors: null, region: null, year: null,
-      doubanRating: null, doubanUrl: null, synopsis: null,
+      doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null,
     });
     const t0 = 1000;
     const old = mk('旧片', t0, 9000); // 先创建，后被编辑 → mtime 最大
