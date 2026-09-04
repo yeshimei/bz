@@ -2,8 +2,8 @@
  * 待办（todo）域设置 schema（接入设置面板；窗口内无设置按钮，收敛进 Obsidian 设置面板）
  * 设置键全部绑定旧 memo 既有键（memoScenarios/memoSortMode/…）——并存期与旧 memo 共享
  * 设置、删旧域后零迁移；唯一新键 todoMobileDefaultFullscreen 是本域面板的移动全屏开关。
- * 注意：提醒组在旧 memo 删除前由旧 memo 的启动/file-open 提醒承担；此处仅保留设置项，
- * 待旧 memo 删除、todo 接管提醒后台后再启用（见 index.ts 头注释迁移清单）。
+ * 提醒组：启动自动弹出 / 打开笔记提醒已由本域提醒后台承担（todo/reminder.ts，
+ * 落点=待办面板；memo→todo 接管迁移第 3 项提前实施），旧 memo 侧对应入口已改道移除。
  */
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { mobileFullscreenGroup } from '../core/settings-common';
@@ -105,18 +105,18 @@ export function todoSettingsSchema(): SettingsSchema {
       },
       {
         icon: 'bell',
-        name: '提醒（待旧备忘录删除后接管）',
+        name: '提醒',
         rows: [
           {
             type: 'toggle',
             name: '启动时自动弹出',
-            desc: '旧备忘录域删除前由旧域承担；交接给待办后，启动时若有重要或到期未完成的待办自动打开面板',
+            desc: '启动时若有重要或到期未完成的待办，自动打开待办面板提醒',
             binding: { key: 'autoPopupOnStart' },
           },
           {
             type: 'toggle',
             name: '打开笔记自动提醒',
-            desc: '旧备忘录域删除前由旧域承担；交接后打开笔记时若笔记有重要或到期的未完成待办，自动弹出面板',
+            desc: '打开笔记时若笔记有重要或到期的未完成待办，自动打开待办面板并定位到关联待办',
             binding: {
               get: () => getSettings().openNoteReminder !== false,
               set: (v) => {
