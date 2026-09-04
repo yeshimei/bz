@@ -47,6 +47,8 @@ export function ensureReview(app: App): void {
   reviewApp.ensure(app);
   dataManager = new ReviewDataManager(app);
   uiManager = new UIManager(app, dataManager);
+  // item 12：R 展示与调度排期同口径——UI 层权重源接拟合权重 currentW()（拟合重算后自动生效）
+  uiManager.wSource = () => reviewApp.currentW();
   reviewWatcher = new ReviewWatcher(app, dataManager);
   // ADR-0077：启动加载拟合参数（个人化记忆曲线优先，回退默认）
   void reviewApp.loadFitParams(app).catch(() => {});

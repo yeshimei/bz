@@ -3,13 +3,15 @@
  *
  * 交互规格（对齐 rp1x 原型评审结论）：
  *  - 桌面/移动同一 DOM，布局差异走 CSS media（移动端面板全屏挂 .bz-win-mfs）
- *  - 头行：标题「做题冲刺」+ 副标题（开始本轮/待重做/单条复习）+ 右侧「回面板」
- *  - 答题：单选即点即判，答对亮绿 0.8s 自动进下一题、答错标红 + 「下一题」；
+ *  - 头行：标题「做题冲刺」+ 副标题（开始本轮/待重做/单条复习）+ 右侧「跳过此篇」「回面板」
+ *  - 答题：单选即点即判，答对亮绿 0.8s 自动进下一题、答错标红 + 「下一题」+ 一行解析；
  *    多选勾选后「提交答案」，全对才过
+ *  - 键盘化（item 2）：1-4/a-d 答题，Enter 依次 提交→下一题→结束并结算（输入框聚焦跳过）
+ *  - 跳过此篇（item 7）：头行 skip-forward，该篇回 pending 移到队尾，不评级不写盘
  *  - 答对题持久化出库（quiz manager.removeQuestion）；答错仅移出本轮（不删题）
  *  - 右栏「本轮队列」：排队/做题中/已通过/未通过 实时更新
  *  - 一篇答完自动评级（accuracyToRating）→ 结果卡：通过 → 下一篇/结束；未通过 → 复习此笔记
- *  - 队列耗尽 → 结算屏（评级分布 + 完成回面板）
+ *  - 队列耗尽 → 结算屏（评级分布 + 连续 N 天 + 完成回面板）
  *  - 图标全 lucide（uiIcon 工厂替换 data-lucide 占位），正文无 emoji
  *
  * 本模块只做「会话编排 + 视图构建」，题目获取/评级写盘/笔记打开由调用方（app 编排）
@@ -49,7 +51,6 @@ interface SprintEntry {
   /** 通过后展示文本（下次间隔等，写盘后由回调填） */
   passNote: string;
 }
-
 interface QuestionUi {
   list: QuizQuestion[]; // 剩余题目（首题为当前题）
   /** 当前作答/刚作答的题：list shift 后仍指向已答原题供反馈渲染，切题时才更新 */
@@ -84,6 +85,8 @@ export interface SprintOpts {
   onExit: () => void;
   /** 状态推进回调（宿主可刷新外部计数） */
   onProgress?: () => void;
+  /** item 8：连续复习天数（computeStats.streak，调用方算好传入；>0 时结算屏展示） */
+  streakDays?: number;
 }
 
 /**
@@ -96,6 +99,10 @@ export class SprintSession {
   private q: QuestionUi | null = null;
   private jumpTimer: ReturnType<typeof setTimeout> | null = null;
   private escHandle: { unregister: () => void } | null = null;
+  /** item 2：document keydown 句柄（finish 注销） */
+  private keyHandler: ((e: KeyboardEvent) => void) | null = null;
+  /** 当前视图态（键盘路由：题面/结果卡/结算屏 Enter 语义不同） */
+  private view: 'loading' | 'question' | 'result' | 'summary' = 'loading';
   private finished = false;
   private resolveDone: ((reason: 'done' | 'quit' | 'fail') => void) | null = null;
   private started = false;
@@ -138,6 +145,8 @@ export class SprintSession {
         isVisible: () => !this.finished,
         close: () => this.requestQuit(),
       });
+      // item 2：document 级键盘答题（会话结束统一注销）
+      this.bindKeys();
       void this.runNext();
     });
   }
@@ -163,6 +172,7 @@ export class SprintSession {
     if (this.finished) return;
     this.finished = true;
     this.clearJump();
+    this.unbindKeys(); // item 2：会话 finish 注销键盘监听
     if (this.escHandle) {
       this.escHandle.unregister();
       this.escHandle = null;
@@ -181,6 +191,82 @@ export class SprintSession {
       clearTimeout(this.jumpTimer);
       this.jumpTimer = null;
     }
+  }
+
+  // ================= 键盘答题（item 2） =================
+
+  private bindKeys(): void {
+    if (this.keyHandler) return;
+    this.keyHandler = (e: KeyboardEvent) => this.handleKey(e);
+    document.addEventListener('keydown', this.keyHandler);
+  }
+
+  private unbindKeys(): void {
+    if (this.keyHandler) {
+      document.removeEventListener('keydown', this.keyHandler);
+      this.keyHandler = null;
+    }
+  }
+
+  /** 键盘路由：1-4/a-d 答题；Enter 提交→下一题→结束并结算；结果卡/结算屏走主按钮。
+   *  输入框/文本域聚焦时跳过（不劫持打字）。 */
+  private handleKey(e: KeyboardEvent): void {
+    if (this.finished) return;
+    const t = e.target as HTMLElement | null;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+    if (e.key !== 'Enter') {
+      if (this.view !== 'question' || !this.q || this.q.answered) return;
+      const question = this.currentQuestion();
+      if (!question) return;
+      const k = e.key.toLowerCase();
+      const idx = ['1', '2', '3', '4'].indexOf(e.key) >= 0 ? Number(e.key) - 1 : ['a', 'b', 'c', 'd'].indexOf(k);
+      if (idx < 0 || idx >= question.options.length) return;
+      e.preventDefault();
+      this.answer(idx);
+      return;
+    }
+    e.preventDefault();
+    if (this.view === 'question' && this.q) {
+      const q = this.q;
+      if (!q.answered) {
+        const question = this.currentQuestion();
+        if (question && question.correctIndices.length > 1) this.submitMulti(); // 多选：Enter=提交
+        return; // 单选未选：Enter 无操作（先选项）
+      }
+      if (q.lastCorrect) return; // 答对自动跳在途，不抢跑
+      if (q.list.length) this.nextQuestion();
+      else void this.finishNote(); // 本篇答完 → 结束并结算
+      return;
+    }
+    if (this.view === 'result') {
+      const entry = this.entry();
+      void this.handleResult(entry && entry.state === 'passed' ? 'next' : 'note');
+      return;
+    }
+    if (this.view === 'summary') this.finish('done');
+  }
+
+  // ================= 跳过此篇（item 7） =================
+
+  /** 当前篇回 pending 移到队尾：不评级不写盘；仅剩它自己待做时直接结算（防自环） */
+  skipCurrent(): void {
+    if (this.finished) return;
+    const entry = this.entry();
+    if (!entry || entry.state !== 'doing') return;
+    const othersPending = this.entries.some((en, i) => i !== this.cur && en.state === 'pending');
+    entry.state = 'pending';
+    if (!othersPending) {
+      this.showSummary();
+      return;
+    }
+    const idx = this.cur;
+    this.entries.splice(idx, 1);
+    this.entries.push(entry);
+    this.cur = Math.max(0, idx - 1);
+    this.q = null;
+    void this.runNext();
   }
 
   // ================= 流程推进 =================
@@ -226,6 +312,8 @@ export class SprintSession {
 
   private async finishNote(): Promise<void> {
     const entry = this.entry();
+    // 防重入：键盘 Enter 与按钮可能连发，已结算/已结束的本篇不再二次评级
+    if (!entry || entry.state !== 'doing' || this.finished) return;
     const total = entry.acc + entry.wrong;
     const acc = total ? Math.round((entry.acc / total) * 100) : 0;
     const rating = accuracyToRating(acc);
@@ -395,12 +483,14 @@ export class SprintSession {
         </div>
         <div class="tools">
           ${extraRight}
+          <button class="bz-icon-btn" data-action="skip" title="跳过此篇（不评级，移到队尾）">${this.icon('skip-forward')}</button>
           <button class="bz-icon-btn" data-action="quit" title="回面板">${this.icon('x')}</button>
         </div>
       </div>`;
   }
 
   private showLoading(entry: SprintEntry): void {
+    this.view = 'loading';
     this.opts.host.innerHTML = `
       ${this.sprintHead()}
       <div class="bz-sprint-loading"><span class="spinner"></span>正在获取题目…</div>`;
@@ -450,6 +540,11 @@ export class SprintSession {
           ? `<button class="bz-btn bz-btn--primary" data-action="note">${this.icon('flag')} 结束并结算</button>`
           : '';
     const submit = needSubmit ? `<button class="bz-btn bz-btn--primary bz-sprint-submit" data-action="submit">提交答案</button>` : '';
+    // item 3：答错一行解析（随题存取的 explain；存量题无此字段静默不显示，零迁移）
+    const explain =
+      q.answered && !q.lastCorrect && question.explain
+        ? `<div class="bz-sprint-explain">${escapeHtml(question.explain)}</div>`
+        : '';
 
     const html = `
       ${this.sprintHead()}
@@ -460,12 +555,14 @@ export class SprintSession {
             <div class="bz-sprint-qtype">${single ? '单选' : '多选'}</div>
             <div class="bz-sprint-qtext">${escapeHtml(question.question)}</div>
             <div class="bz-sprint-opts">${optsHtml}</div>
+            ${explain}
             ${submit}
             ${nextBtn ? `<div class="bz-sprint-qfoot">${nextBtn}</div>` : ''}
           </div>
         </div>
         <aside class="bz-sprint-queue">${this.queueHtml()}</aside>
       </div>`;
+    this.view = 'question';
     this.opts.host.innerHTML = html;
     this.mountIcons(this.opts.host);
     this.bindTop();
@@ -537,6 +634,7 @@ export class SprintSession {
         <span class="bz-result-rating fail">${RATING_NAMES[rating]} · 待重做</span>
         <button class="bz-btn bz-btn--danger bz-btn--block" data-action="note">${this.icon('file-text')} 复习此笔记 · 打开原文</button>`;
 
+    this.view = 'result';
     const html = `
       ${this.sprintHead()}
       <div class="bz-sprint-body">
@@ -558,9 +656,12 @@ export class SprintSession {
   }
 
   private showSummary(): void {
+    this.view = 'summary';
     const passed = this.passedCount;
     const failed = this.failedCount;
     const total = passed + failed;
+    // item 8：结算屏追加连续 N 天（computeStats.streak 由调用方算好传入；0/缺省不展示）
+    const streak = this.opts.streakDays ?? 0;
     const html = `
       ${this.sprintHead()}
       <div class="bz-summary">
@@ -570,6 +671,7 @@ export class SprintSession {
           <div class="st"><b>${passed}</b><span>通过</span></div>
           <div class="st ${failed ? 'warn' : ''}"><b>${failed}</b><span>未通过</span></div>
         </div>
+        ${streak > 0 ? `<div class="bz-summary-streak">连续复习 <b>${streak}</b> 天</div>` : ''}
         <button class="bz-btn bz-btn--primary bz-btn--block" data-action="done">完成 · 回到复习计划</button>
       </div>`;
     this.opts.host.innerHTML = html;
@@ -578,9 +680,10 @@ export class SprintSession {
     this.opts.host.querySelector('[data-action="done"]')?.addEventListener('click', () => this.finish('done'));
   }
 
-  /** 顶部/队列共同动作（退出按钮） */
+  /** 顶部/队列共同动作（跳过此篇 / 退出按钮） */
   private bindTop(): void {
     this.opts.host.querySelector('[data-action="quit"]')?.addEventListener('click', () => this.requestQuit());
+    this.opts.host.querySelector('[data-action="skip"]')?.addEventListener('click', () => this.skipCurrent());
   }
 
   // ================= 图标/工具 =================

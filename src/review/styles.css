@@ -35,12 +35,12 @@
 .bz-q-search .bz-q-ic { width: 13px; height: 13px; flex-shrink: 0; }
 .bz-q-search input { flex: 1; background: transparent !important; border: none !important; outline: none; font-size: 13px; color: var(--text-normal); min-width: 0; font-family: inherit; }
 .bz-q-search input:hover { background: transparent !important; }
-.bz-q-search .kbd { font-size: 10px; color: var(--text-faint); border: 1px solid var(--background-modifier-border); border-radius: 4px; padding: 0 4px; flex-shrink: 0; }
 .bz-q-search.typing { border-color: var(--interactive-accent); background: var(--background-secondary); }
 
-/* 开始本轮条 */
+/* 开始本轮条（item 8：今日全清 → 绿点 +「今日已清空」+ 隐藏主按钮） */
 .bz-q-strip { display: flex; align-items: center; gap: 8px; padding: 6px 20px 10px; flex-shrink: 0; }
 .bz-q-strip-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-red, #ff4757); flex-shrink: 0; }
+.bz-q-strip-dot.ok { background: var(--color-green, #52c41a); }
 .bz-q-strip strong { font-size: 13px; color: var(--text-normal); }
 .bz-q-strip-txt { font-size: 12px; color: var(--text-muted); flex: 1; min-width: 0; }
 .bz-q-strip .bz-btn { height: 28px; padding: 0 14px; font-size: 13px; }
@@ -79,6 +79,10 @@
 .bz-q-tag.is-r.r-low { background: color-mix(in srgb, var(--color-red, #ff4757) 14%, transparent); color: var(--color-red, #ff4757); }
 .bz-q-tag.is-stage { color: var(--text-muted); }
 .bz-q-tag.is-future { color: var(--text-faint); }
+/* item 6：R 阈值提前复习卡（开始本轮同口径纳入） */
+.bz-q-tag.is-early { background: color-mix(in srgb, var(--color-cyan, #1890ff) 14%, transparent); color: var(--color-cyan, #1890ff); }
+/* item 10：空态宿主（uiEmpty 组件库类不重复定义，仅限宽居中） */
+.bz-q-empty-wrap { align-items: center; justify-content: center; }
 .bz-q-hint { font-size: 12px; color: var(--text-faint); text-align: center; padding: 18px 8px; }
 
 /* ==================== 底部信息行（归档/统计的非按钮落位，整行可点无引导小字） ==================== */
@@ -140,6 +144,9 @@
 .bz-sprint-submit { align-self: flex-end; margin-top: 4px; }
 .bz-sprint-qfoot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
 
+/* item 3：答错一行解析（一句话解析+原文依据） */
+.bz-sprint-explain { font-size: 12.5px; line-height: 1.55; color: var(--text-muted); background: var(--background-secondary); border: 1px solid var(--background-modifier-border); border-left: 3px solid var(--color-orange, #ff9f43); border-radius: 8px; padding: 8px 12px; }
+
 /* 本轮队列 */
 .bz-sq-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .bz-sq-head b { font-size: 12px; color: var(--text-normal); }
@@ -172,6 +179,9 @@
 .bz-summary-stats .st b { display: block; font-size: 20px; color: var(--text-normal); }
 .bz-summary-stats .st span { font-size: 11px; color: var(--text-muted); }
 .bz-summary-stats .st.warn b { color: var(--color-red, #ff4757); }
+/* item 8：结算屏连续 N 天 */
+.bz-summary-streak { font-size: 12.5px; color: var(--text-muted); }
+.bz-summary-streak b { color: var(--color-green, #52c41a); font-weight: 700; }
 
 /* 移动端（≤768px）：三区列纵排为分组滚动列表 */
 @media (max-width: 768px) {
@@ -187,6 +197,19 @@
   .bz-sprint-queue { width: auto; max-height: 140px; }
   .bz-sprint-qcard { padding: 12px 14px; }
 }
+
+/* ==================== 普通复习悬浮迷你评级条（item 4，屏幕底部） ==================== */
+.bz-review-bar { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,0.18); max-width: min(92vw, 560px); }
+.bz-review-bar-info { font-size: 12.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+.bz-review-bar-info i { font-style: normal; color: var(--text-faint); margin-left: 4px; }
+.bz-review-bar-act { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.bz-review-bar-btn { border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-normal); border-radius: 8px; padding: 5px 12px; font-size: 12.5px; cursor: pointer; }
+.bz-review-bar-btn:hover { border-color: var(--interactive-accent); background: var(--background-modifier-hover); }
+.bz-review-bar-btn.is-again { border-left: 3px solid var(--color-red, #ff4757); }
+.bz-review-bar-btn.is-hard { border-left: 3px solid var(--color-orange, #ff9f43); }
+.bz-review-bar-btn.is-good { border-left: 3px solid var(--color-green, #2ed573); }
+.bz-review-bar-btn.is-easy { border-left: 3px solid #7bed9f; }
+.bz-review-bar-btn.is-skip { color: var(--text-muted); }
 
 /* ==================== 既有保留块 ==================== */
 /* 难度弹窗（评分命令用） */
@@ -225,6 +248,12 @@
 #review-history-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--background-modifier-cover); backdrop-filter: blur(2px); }
 #review-history-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--background-primary); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 92%; max-width: 480px; max-height: 80vh; flex-direction: column; overflow: hidden; animation: slideUp 0.3s ease-out; }
 #review-history-body { flex: 1; overflow-y: auto; position: relative; }
-.bz-review-history-close { position: absolute; top: 10px; right: 10px; z-index: 2; background: none; border: none; font-size: .55rem; cursor: pointer; color: var(--text-muted); padding: 4px; box-shadow: none !important; }
+.bz-review-history-close { position: absolute; top: 10px; right: 10px; z-index: 2; background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px; box-shadow: none !important; }
 .bz-review-history-close:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
 .bz-review-stats-tl-row { text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: var(--background-secondary); color: var(--text-normal); font-size: 13px; cursor: pointer; }
+
+/* item 14：统计/历史关闭钮与文件树徽标的 lucide 图标尺寸 */
+#review-stats-close .bz-ic, .bz-review-history-close .bz-ic { display: inline-flex; width: 14px; height: 14px; }
+#review-stats-close .bz-ic svg, .bz-review-history-close .bz-ic svg { width: 100%; height: 100%; }
+.review-stage-badge .bz-ic { display: inline-flex; width: 1em; height: 1em; vertical-align: -0.12em; }
+.review-stage-badge .bz-ic svg { width: 100%; height: 100%; }

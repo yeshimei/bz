@@ -60,3 +60,107 @@ export const FSRS_FIRST_INTERVALS = [1 / 1440, 1 / 48, 1 / 4, 1, 3, 7, 15, 30, 6
 export const FSRS_FIRST_TEXTS = ['1m', '30m', '6h', '1d', '3d', '7d', '15d', '30d', '60d', '120d'];
 export const TOTAL_STAGES = 10;
 export const LADDER_MAX = 9; // stage≥9 进入 fsrs 阶段
+
+// ==================== 调度纯函数（ladder→fsrs 两阶段；markReview 落盘依据） ====================
+
+/** 调度输入快照（条目排期相关字段子集；对齐 ReviewItem 持久化字段） */
+export interface ScheduleState {
+  stage: number;
+  phase: 'ladder' | 'fsrs';
+  stability?: number | null;
+  difficulty?: number | null;
+  lastReviewed?: string | null;
+  reviewStart?: string;
+}
+
+/** 调度决策（纯数据，无 IO；stability/difficulty 为 null = 阶梯阶段不写记忆参数） */
+export interface ScheduleDecision {
+  stage: number;
+  phase: 'ladder' | 'fsrs';
+  /** 写回条目的 S/D（已 round 两位；阶梯阶段 null=不动） */
+  stability: number | null;
+  difficulty: number | null;
+  /** 本次间隔（天，未乘缩放系数） */
+  intervalDays: number;
+  /** 本次评级是否为阶梯→FSRS 进入点（唯一 initS 时机） */
+  enteringFsrs: boolean;
+  /** reviewHistory 记录的 stage（阶梯=targetStage+1；FSRS=原 stage+1） */
+  historyStage: number;
+  /** FSRS 相位本次 R（0-1 原始值；阶梯为 null） */
+  R: number | null;
+  /** 历史记录附带的 S/D（FSRS 相位；阶梯 null） */
+  historyStability: number | null;
+  historyDifficulty: number | null;
+}
+
+/**
+ * 调度纯函数：ladder→fsrs 两阶段（满血 FSRS，2026-09 拍板）。
+ * - 阶梯（phase==='ladder' 且 stage<LADDER_MAX）：固定间隔表爬级
+ *   （again-1 / hard 不变 / good+1 / easy+2，clamp [0,9]）；爬到 9 = 进入 FSRS，
+ *   用本次评分 initS 初始化 S/D（唯一初始化时机），间隔仍取阶梯表 [9]=120d。
+ * - FSRS（phase==='fsrs'，含正好爬满 9 级的条目）：满血动态——不再固定 120 天循环、
+ *   不再重置记忆参数，间隔由 S/D/评分/当前 R 经 nextInterval 动态算出，stage 不再变化。
+ * 存量排期数据零迁移（只读 stage/phase/S/D/lastReviewed，不改字段结构）。
+ */
+export function scheduleNext(state: ScheduleState, rating: Rating, now: Date, w: number[] = DEFAULT_W): ScheduleDecision {
+  const fsrs = new FSRS(w);
+  if (state.phase !== 'fsrs' && state.stage < LADDER_MAX) {
+    // ===== 阶梯爬级 =====
+    let target: number;
+    if (rating === 'again') target = Math.max(0, state.stage - 1);
+    else if (rating === 'hard') target = state.stage;
+    else if (rating === 'good') target = state.stage + 1;
+    else target = state.stage + 2; // easy
+    target = Math.max(0, Math.min(target, LADDER_MAX));
+    if (target >= LADDER_MAX) {
+      // 进入 FSRS：按本次评分初始化记忆参数（对齐既有语义：again→w[4]，其余 0.3）
+      const S = fsrs.initS(rating);
+      const D = rating === 'again' ? fsrs.w[4] : 0.3;
+      const rS = Math.round(S * 100) / 100;
+      const rD = Math.round(D * 100) / 100;
+      return {
+        stage: target,
+        phase: 'fsrs',
+        stability: rS,
+        difficulty: rD,
+        intervalDays: FSRS_FIRST_INTERVALS[target],
+        enteringFsrs: true,
+        historyStage: target + 1,
+        R: null,
+        historyStability: rS,
+        historyDifficulty: rD,
+      };
+    }
+    return {
+      stage: target,
+      phase: 'ladder',
+      stability: null,
+      difficulty: null,
+      intervalDays: FSRS_FIRST_INTERVALS[target],
+      enteringFsrs: false,
+      historyStage: target + 1,
+      R: null,
+      historyStability: null,
+      historyDifficulty: null,
+    };
+  }
+  // ===== 满血 FSRS（phase==='fsrs'，含正好 9 级） =====
+  const S = state.stability || 1;
+  const D = state.difficulty || 0.3;
+  const last = state.lastReviewed || state.reviewStart;
+  const t = last ? (now.getTime() - new Date(last).getTime()) / 86400000 : 0;
+  const R = fsrs.R(t, S);
+  const result = fsrs.nextInterval(S, D, rating, R);
+  return {
+    stage: state.stage,
+    phase: 'fsrs',
+    stability: Math.round(result.S * 100) / 100,
+    difficulty: Math.round(result.D * 100) / 100,
+    intervalDays: result.days,
+    enteringFsrs: false,
+    historyStage: state.stage + 1,
+    R,
+    historyStability: Math.round(result.S * 100) / 100,
+    historyDifficulty: Math.round(result.D * 100) / 100,
+  };
+}
