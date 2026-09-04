@@ -329,7 +329,7 @@ async function handleTagPickerSave(
     const proceed =
       (await openFlowDialog({
         title: '改分类',
-        message: '将解密此日记并恢复为普通类型（确定）？',
+        message: '将解密此日记并恢复为普通条目，是否继续？',
         actions: [
           { label: '取消', value: 'cancel' },
           { label: '确定', value: 'ok', cta: true },

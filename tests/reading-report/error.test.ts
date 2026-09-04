@@ -56,10 +56,10 @@ describe('统计失败（m1b 人话化）', () => {
       expect(container.textContent).toContain('请查看控制台');
       expect(container.textContent).not.toContain('模拟书库读取失败');
 
-      // progress toast 转 error，同样人话
+      // progress toast 转 error，同样人话（走查批 D：不引导用户去控制台）
       const toast = document.querySelector('#bz-notice-container .bz-notice') as HTMLElement;
       expect(toast).not.toBeNull();
-      expect(toast.textContent).toContain('统计失败：读取书库时出错');
+      expect(toast.textContent).toContain('统计失败：读取书库时出错，请重试；若反复出现请重新打开面板');
 
       // 技术详情留 console
       expect(consoleSpy).toHaveBeenCalled();

@@ -247,7 +247,7 @@ export async function deleteHighlight(
       return false;
     }
     await app.vault.process(file, (latest: string) => rewriteHighlightSpan(latest, highlightId, text, () => '').next);
-    notice('已删除 1 条高亮', 'success');
+    notice('已删除 1 条划线', 'success');
     done();
     return true;
   } catch (e) {

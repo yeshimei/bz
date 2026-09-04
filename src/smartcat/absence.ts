@@ -222,9 +222,9 @@ export function lazyAttachment(stored: number, lastPresenceAt: unknown, now: num
 export function formatSelfEventTime(at: number, now: number): string {
   const diff = Math.max(0, now - at);
   if (diff < 60 * 1000) return '刚刚';
-  if (diff < 60 * 60 * 1000) return `${Math.floor(diff / (60 * 1000))} 分钟前`;
-  if (diff < DAY_MS) return `${Math.floor(diff / (60 * 60 * 1000))} 小时前`;
-  return `${Math.floor(diff / DAY_MS)} 天前`;
+  if (diff < 60 * 60 * 1000) return `${Math.floor(diff / (60 * 1000))}分钟前`;
+  if (diff < DAY_MS) return `${Math.floor(diff / (60 * 60 * 1000))}小时前`;
+  return `${Math.floor(diff / DAY_MS)}天前`;
 }
 
 // ---------------- dashboard 卡片（表达层：事件直接呈现，体验原则 3） ----------------

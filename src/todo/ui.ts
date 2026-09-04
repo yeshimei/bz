@@ -1428,7 +1428,7 @@ function openAddSceneDialog(): void {
   input.placeholder = '场景名称（如：健身）';
   const hint = document.createElement('div');
   hint.className = 'bz-todo-addscene-hint';
-  hint.textContent = '场景将写入备忘录设置（与旧备忘录共用）';
+  hint.textContent = '场景将写入备忘录设置（与备忘录共用）';
   const saveBtn = uiBtn({ label: '添加', tone: 'primary' });
   const cancelBtn = uiBtn({ label: '取消' });
   const row = uiBtnRow([cancelBtn, saveBtn]);
@@ -1502,7 +1502,7 @@ function openRenameSceneDialog(scene: string): void {
   const count = M.items.filter((i) => i.scene === scene).length;
   const hint = document.createElement('div');
   hint.className = 'bz-todo-addscene-hint';
-  hint.textContent = count > 0 ? `保存后 ${count} 条待办将同步改为新场景名` : '场景将写入备忘录设置（与旧备忘录共用）';
+  hint.textContent = count > 0 ? `保存后 ${count} 条待办将同步改为新场景名` : '场景将写入备忘录设置（与备忘录共用）';
   const saveBtn = uiBtn({ label: '保存', tone: 'primary' });
   const cancelBtn = uiBtn({ label: '取消' });
   const row = uiBtnRow([cancelBtn, saveBtn]);

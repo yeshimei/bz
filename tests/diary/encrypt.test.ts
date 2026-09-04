@@ -347,11 +347,11 @@ describe('加密条目（ADR-0017）', () => {
     const diaryBtn = popup.querySelector('.diary-tag-selector-btn[data-tag="日记"]') as HTMLElement;
     expect(diaryBtn.classList.contains('diary-active')).toBe(true);
 
-    // 追加「诗」并保存 → 改分类确认
+    // 追加「诗」并保存 → 改分类确认（走查批 D：确认语改「恢复为普通条目，是否继续？」）
     (popup.querySelector('.diary-tag-selector-btn[data-tag="诗"]') as HTMLElement).click();
     (popup.querySelector('.diary-save-btn') as HTMLElement).click();
     await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
-    expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('恢复为普通类型');
+    expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('恢复为普通条目，是否继续？');
     (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
 
     // 从保险箱移除 + 块 merge 回 md（新标题 emoji 序列 📖🌟）
