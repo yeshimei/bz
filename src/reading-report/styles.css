@@ -2,6 +2,8 @@
  * 阅读数据分析报告（reading-report）域样式
  * audit H：热力图单元格的尺寸/@media/:hover 从内联 style 迁入——
  * 内联 style 无法承载 @media 与 &:hover，原写法移动端尺寸与 hover 放大全部失效
+ * 读书报告内嵌化：报告不再是独立弹窗，本域样式只服务书架墙面板内的报告内容区
+ * （条形行/热力图翻月段头/年卡展开体/可点筛选行；容器布局归 bookshelf 域样式）
  * ============================================================ */
 
 .bz-rr-hm-cell {
@@ -26,4 +28,212 @@
     width: 15px;
     height: 15px;
   }
+}
+
+/* ---------- 水平条形行（时段/分类/互动环形图升级拍板） ---------- */
+
+.bz-rr-bar-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.85em;
+  color: var(--text-muted);
+}
+
+.bz-rr-bar-head span:first-child {
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.bz-rr-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0;
+  padding: 8px 10px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+}
+
+.bz-rr-bar-label {
+  flex: 0 0 104px;
+  font-size: 12px;
+  color: var(--text-normal);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bz-rr-bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bz-rr-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  min-width: 0;
+}
+
+.bz-rr-bar-val {
+  flex: 0 0 auto;
+  text-align: right;
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* 可点筛选行（分类行走条形行态；作者 Top5 走卡片态）：同面板回书架列表 */
+.bz-rr-bar-row--link {
+  cursor: pointer;
+}
+
+.bz-rr-bar-row--link:hover {
+  background: var(--background-modifier-hover);
+}
+
+.bz-rr-bar-row--link:hover .bz-rr-bar-label {
+  color: var(--text-accent);
+}
+
+/* 奖杯（lucide 化拍板：分类行前三名，替代原 🏆 emoji 重复） */
+.bz-rr-trophy {
+  flex: 0 0 auto;
+  color: #b45309;
+}
+
+/* ---------- 热力图翻月段头 ---------- */
+
+.bz-rr-hm-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.bz-rr-hm-title {
+  font-weight: bold;
+  color: var(--text-normal);
+  font-size: 1.1em;
+  min-width: 8em;
+  text-align: center;
+}
+
+.bz-rr-hm-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.bz-rr-hm-nav:hover:not(:disabled) {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.bz-rr-hm-nav:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* ---------- 月柱列（年卡展开 / 趋势图共用月柱生成） ---------- */
+
+.bz-rr-mwrap {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 2px 0;
+}
+
+.bz-rr-mcol {
+  flex: 1;
+  min-width: 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.bz-rr-mbar {
+  width: 72%;
+  min-height: 3px;
+  border-radius: 4px 4px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.bz-rr-mlabel {
+  font-size: 0.72em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ---------- 年卡展开（点击年卡切换该年 12 月柱） ---------- */
+
+.bz-rr-year-cell {
+  min-width: 0;
+}
+
+.bz-rr-year-card {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  padding: 20px;
+  border-radius: 10px;
+  color: white;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.bz-rr-year-card:hover {
+  transform: translateY(-2px);
+}
+
+.bz-rr-year-chev {
+  margin-left: 6px;
+  vertical-align: -2px;
+  transition: transform 0.2s ease;
+}
+
+.bz-rr-year-card.open .bz-rr-year-chev {
+  transform: rotate(180deg);
+}
+
+.bz-rr-year-cols {
+  display: none;
+  margin-top: 10px;
+  padding: 12px 10px;
+  border: 1px dashed var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+}
+
+.bz-rr-year-cols.open {
+  display: block;
+}
+
+/* ---------- 可点作者卡（作者 Top5 → 同面板回书架搜索） ---------- */
+
+.bz-rr-author-card {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.bz-rr-author-card:hover {
+  transform: translateY(-2px);
 }

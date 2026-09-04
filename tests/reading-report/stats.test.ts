@@ -13,6 +13,7 @@ import {
   calculateBalanceScore, getSuggestedCategories, analyzeInteractionPattern,
   analyzeConnectionLevel, extractNotesInteractions, getAllBookNotes,
   analyzeReadingTrends, analyzeReadingCategories,
+  getHeatmapMonthKeys, getYearMonthBars,
 } from '../../src/reading-report/stats';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 
@@ -185,6 +186,31 @@ describe('热力图', () => {
     expect(calculateIntensityLevel(1)).toBe(2);
     expect(calculateIntensityLevel(0.6)).toBe(1);
     expect(calculateIntensityLevel(0.1)).toBe(0);
+  });
+
+  it('getHeatmapMonthKeys：月键全集升序（翻月 ‹ › 可切换范围）', () => {
+    const hm = processHeatmapData([
+      { start: '2025-06-01T08:00:00', duration: 600 },
+      { start: '2025-01-15T08:00:00', duration: 600 },
+      { start: '2024-12-24T08:00:00', duration: 600 },
+    ]);
+    expect(getHeatmapMonthKeys(hm)).toEqual(['2024-12', '2025-01', '2025-06']);
+    expect(getHeatmapMonthKeys({ monthlyData: {} })).toEqual([]);
+  });
+
+  it('getYearMonthBars：固定 12 个月柱、缺月补零（年卡展开数据源，与热力图同月桶口径）', () => {
+    const monthly = {
+      '2025-01': { booksRead: 2, booksCompleted: 1 },
+      '2025-07': { booksRead: 5, booksCompleted: 3 },
+    };
+    const bars = getYearMonthBars(monthly, '2025');
+    expect(bars.length).toBe(12);
+    expect(bars[0]).toEqual({ month: '2025-01', label: '1月', booksRead: 2, booksCompleted: 1 });
+    expect(bars[6]).toEqual({ month: '2025-07', label: '7月', booksRead: 5, booksCompleted: 3 });
+    expect(bars[11].label).toBe('12月');
+    // 缺月补零
+    expect(bars[3].booksRead).toBe(0);
+    expect(bars[3].booksCompleted).toBe(0);
   });
 
   it('analyzeFocusConsistency：<5 会话 → 5 分数据不足', () => {
@@ -368,5 +394,40 @@ describe('getAllBookNotes 集成', () => {
     };
     const r = getAllBookNotes(app as any);
     expect(r.map((b) => b.file.path)).toEqual(['书库/A.md']);
+  });
+
+  it('口径：只统计书库目录——库外 book 标签笔记不混入报告（对齐书架墙 scanMarkdownBooks）', () => {
+    setSettingsProvider(() => ({}) as any); // 目录缺省回落「书库」
+    const files = [
+      { path: '书库/库内.md' },     // 书库目录 + book → 收
+      { path: '书库/子/嵌套.md' },  // 书库子目录 + book → 收
+      { path: 'Inbox/笔记.md' },    // 库外 + book 标签 → 不收（内嵌化口径拍板）
+      { path: '读书.md' },          // 同名前缀目录/文件（非「书库/」内）→ 不收
+    ];
+    const app = {
+      vault: { getMarkdownFiles: () => files },
+      metadataCache: {
+        getFileCache: () => ({ frontmatter: { tags: ['book'] } }),
+      },
+    };
+    const r = getAllBookNotes(app as any);
+    expect(r.map((b) => b.file.path)).toEqual(['书库/库内.md', '书库/子/嵌套.md']);
+  });
+
+  it('口径：目录本身是单个 md 笔记（书库.md）时收录；自定义目录同规则', () => {
+    setSettingsProvider(() => ({ bookshelfFolderPath: '我的书' }) as any);
+    const files = [
+      { path: '我的书.md' },        // 目录本身单文件 → 收
+      { path: '我的书/里.md' },     // 目录下 → 收
+      { path: '别处.md' },          // 库外 → 不收
+    ];
+    const app = {
+      vault: { getMarkdownFiles: () => files },
+      metadataCache: {
+        getFileCache: () => ({ frontmatter: { tags: ['book'] } }),
+      },
+    };
+    const r = getAllBookNotes(app as any);
+    expect(r.map((b) => b.file.path)).toEqual(['我的书.md', '我的书/里.md']);
   });
 });
