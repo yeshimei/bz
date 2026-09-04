@@ -73,10 +73,10 @@ describe('todo 面板', () => {
     const { app } = seedVault();
     openTodoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-nav] .bz-todo-nav-item')).toBeTruthy();
+      expect(document.querySelector('[data-todo-nav] .bz-rail-item')).toBeTruthy();
     });
-    const overlay = document.querySelector('.bz-todo-overlay') as HTMLElement;
-    expect(overlay.querySelector('.bz-todo-title')?.textContent).toBe('待办');
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
+    expect(overlay.querySelector('.bz-panel-title')?.textContent).toBe('待办');
     // 桌面左栏场景：全部/今日/重要 + 6 默认场景；移动横滑条同 9
     const navItems = overlay.querySelectorAll('[data-todo-nav] [data-todo-scene]');
     expect(navItems.length).toBe(9);
@@ -230,7 +230,7 @@ describe('todo 面板', () => {
       expect(settings.todoPanelWidth).toBe(901);
     });
     expect(settings.todoPanelHeight).toBe(580);
-    // T2：resize 落盘走 150ms trailing 防抖——等待防抖窗口后 save 被调用
+    // resize 落盘走 uiResizable persist 300ms trailing 防抖——等待防抖窗口后 save 被调用
     await vi.waitFor(() => {
       expect(saveSpy).toHaveBeenCalled();
     });
@@ -548,9 +548,9 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
     const impBtn = document.querySelector('[data-todo-scene="重要"]') as HTMLElement;
     // star 图标（mountIcons → setIcon mock 记 data-icon）+ 警示色点
     expect(impBtn.querySelector('[data-icon="star"]')).toBeTruthy();
-    expect(impBtn.querySelector('.bz-todo-nav-dot')).toBeTruthy();
+    expect(impBtn.querySelector('.bz-rail-dot')).toBeTruthy();
     // 计数：未完成重要项仅 a（已完成次要项 d 不算）
-    expect(impBtn.querySelector('.bz-todo-nav-cnt')?.textContent).toBe('1');
+    expect(impBtn.querySelector('.bz-rail-count')?.textContent).toBe('1');
     impBtn.click();
     await vi.waitFor(() => {
       const cards = document.querySelectorAll('.bz-todo-card');
@@ -595,7 +595,7 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
       expect(document.querySelectorAll('.bz-todo-card').length).toBe(2);
     });
     const navBtn = document.querySelector('[data-todo-scene="今日"]') as HTMLElement;
-    expect(navBtn.querySelector('.bz-todo-nav-cnt')?.textContent).toBe('3'); // a + c + e
+    expect(navBtn.querySelector('.bz-rail-count')?.textContent).toBe('3'); // a + c + e
     const count = (document.querySelector('[data-todo-main-count]') as HTMLElement).textContent!;
     expect(count).toContain('3 项');
     expect(count).toContain('2 未完成');

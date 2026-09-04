@@ -1,10 +1,12 @@
 /**
  * 待办（todo）域 UI：场景工作台（原型 1 定稿形态）
- * 桌面：遮罩 + 720×580 面板（ADR-0084：右缘/底缘/右下角拖动缩放，
- *       钳制 720×520 ~ min(1280×880, 视口92%)；尺寸记忆 settings.todoPanelWidth/Height）：
- *       左场景栏（全部/今日/重要/场景 + 添加场景）+ 右侧列表
- *       （工具栏：搜索 + 排序 segmented；条目卡 meta 对齐源码 buildMeta 顺序）
- * 移动：真全屏 + 顶部横滑场景 chips + 右上关闭（仅全屏显示）
+ * 桌面：遮罩 + 720×580 面板（壳 = 组件库 .bz-panel-overlay/.bz-panel-frame，
+ *       ADR-0094 接入；ADR-0084：右缘/底缘/右下角拖动缩放，钳制 720×520 ~
+ *       min(1280×880, 视口92%)，尺寸记忆 persist → settings.todoPanelWidth/Height）：
+ *       左场景栏（.bz-rail 族：全部/今日/重要/场景 + .bz-rail-foot 添加场景）+ 右侧列表
+ *       （.bz-main-head 主头行 + .bz-toolrow 工具行（.bz-search 搜索 + 排序 segmented）；
+ *       条目卡 meta 对齐源码 buildMeta 顺序）
+ * 移动：真全屏 + 顶部横滑场景条（.bz-mobstrip）+ 右上关闭（仅全屏显示）
  * 交互：
  *   - 桌面右键条目 → 跟手菜单（无顶部信息卡）；移动长按 → 底部抽屉（带 sheetHead）
  *     （两者复用 core/item-actions：attachItemActions）
@@ -28,7 +30,7 @@ import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { uiModal, uiIcon, uiSegmented, uiChoice, uiBtn, uiBtnRow, uiResizable, uiEmpty } from '../core/ui';
+import { uiModal, uiIcon, uiSegmented, uiChoice, uiBtn, uiBtnRow, uiResizable, uiEmpty, mountIcons } from '../core/ui';
 import { openFlowDialog } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
@@ -41,8 +43,8 @@ import { getDueStatus, formatDueText } from './due';
 import type { TodoItem } from './types';
 import { M } from './state';
 
-/** 待办主面板尺寸（ADR-0084：默认/最小/硬上限；实际上限另受视口 92% 约束） */
-const PANEL = { DEF_W: 720, DEF_H: 580, MIN_W: 720, MIN_H: 520, MAX_W: 1280, MAX_H: 880 };
+/** 待办主面板缩放钳制（ADR-0084：最小/硬上限，实际另受视口 92% 约束；默认 720×580 走域内 CSS） */
+const PANEL = { MIN_W: 720, MIN_H: 520, MAX_W: 1280, MAX_H: 880 };
 /** 搜索防抖（180ms，favorites/belongings 同值） */
 const SEARCH_DEBOUNCE_MS = 180;
 /** 已完成折叠区展开默认只列近 30 天，更早的收进「更早 N 条」 */
@@ -80,23 +82,12 @@ const ICON = {
   doneFold: 'chevron-down',
 };
 
-/** lucide 占位 HTML（innerHTML 拼接用；渲染后 mountIcons 统一 setIcon） */
+/** lucide 占位 HTML（innerHTML 拼接用；渲染后组件库 mountIcons 统一 setIcon） */
 function iconSpan(name: string, extra = ''): string {
   return `<i data-lucide="${name}" class="bz-ic${extra ? ' ' + extra : ''}"></i>`;
 }
 
 const esc = escapeHtml;
-
-/** 容器内所有 data-lucide 占位替换为 setIcon 渲染的真图标 */
-function mountIcons(container: HTMLElement): void {
-  container.querySelectorAll('i[data-lucide]').forEach((el) => {
-    const name = el.getAttribute('data-lucide') || '';
-    const cls = el.className;
-    const fresh = uiIcon(name, '');
-    if (cls && cls !== 'bz-ic') fresh.className = cls;
-    el.replaceWith(fresh);
-  });
-}
 
 /** 场景色点（数据语义色，域内直给；与旧 memo 相近语义） */
 const SCENE_DOTS: Record<string, string> = {
@@ -331,30 +322,34 @@ export function openTodoPanel(app: App, opts?: { notePath?: string }): void {
   M.pinnedNewId = null;
 
   const overlay = document.createElement('div');
-  overlay.className = 'bz-todo-overlay';
+  overlay.className = 'bz-panel-overlay';
   overlay.innerHTML = `
-    <div class="bz-todo-panel bz-panel-mtop">
-      <div class="bz-todo-panel-head">
-        <div class="bz-todo-title">待办</div>
+    <div class="bz-panel-frame bz-todo-panel bz-panel-mtop">
+      <div class="bz-panel-head">
+        <div class="bz-panel-title">待办</div>
       </div>
       <div class="bz-todo-body">
-        <div class="bz-todo-side">
-          <div class="bz-todo-side-label">场景</div>
-          <div class="bz-todo-nav" data-todo-nav></div>
-          <button class="bz-todo-side-add" data-todo-addscene>${iconSpan(ICON.addScene)} 添加场景</button>
+        <div class="bz-rail">
+          <div class="bz-rail-scroll">
+            <div class="bz-rail-label">场景</div>
+            <div data-todo-nav></div>
+          </div>
+          <div class="bz-rail-foot">
+            <button class="bz-todo-side-add" data-todo-addscene>${iconSpan(ICON.addScene)} 添加场景</button>
+          </div>
         </div>
         <div class="bz-todo-main">
-          <div class="bz-todo-main-head">
-            <div class="bz-todo-main-title" data-todo-main-title>全部</div>
-            <div class="bz-todo-main-count" data-todo-main-count></div>
-            <div class="bz-todo-main-spacer"></div>
-            <button class="bz-btn bz-btn--primary" data-todo-newbtn>${iconSpan(ICON.add, 'bz-ic--sm')} 新建待办</button>
+          <div class="bz-main-head">
+            <div class="bz-main-title" data-todo-main-title>全部</div>
+            <div class="bz-main-count" data-todo-main-count></div>
+            <div class="bz-main-spacer"></div>
+            <button class="bz-btn bz-btn--primary bz-btn--md" data-todo-newbtn>${iconSpan(ICON.add, 'bz-ic--sm')} 新建待办</button>
           </div>
-          <div class="bz-todo-toolbar">
-            <div class="bz-todo-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-todo-search placeholder="搜索内容 / 场景…"></div>
+          <div class="bz-toolrow">
+            <div class="bz-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-todo-search placeholder="搜索内容 / 场景…"></div>
             <div class="bz-todo-sort" data-todo-sort></div>
           </div>
-          <div class="bz-todo-mob-scenes" data-todo-mob-scenes></div>
+          <div class="bz-mobstrip" data-todo-mob-scenes></div>
           <div class="bz-todo-content" data-todo-content></div>
           <div class="bz-todo-composer">
             <input class="bz-input" type="text" data-todo-composer-input placeholder="输入内容，Enter 保存…">
@@ -371,14 +366,6 @@ export function openTodoPanel(app: App, opts?: { notePath?: string }): void {
   M.renderFn = () => renderAll();
 
   const panelEl = overlay.querySelector('.bz-todo-panel') as HTMLElement;
-  // 桌面尺寸记忆（ADR-0084）：flex 居中容器内改宽高即双向对称扩缩，越界值回落默认。
-  // 仅桌面写内联宽高——内联样式优先级高于移动端媒体查询的满屏规则，写了会把移动端
-  // 面板压成视口 92% 小卡（移动端尺寸交给 CSS）
-  if (!isMobileEnv()) {
-    const saved = savedPanelSize();
-    panelEl.style.width = `${saved.w}px`;
-    panelEl.style.height = `${saved.h}px`;
-  }
   applyMobileWindowFullscreen(panelEl, fullscreen);
   mountIcons(overlay);
 
@@ -403,12 +390,30 @@ export function openTodoPanel(app: App, opts?: { notePath?: string }): void {
   seg.el.classList.add('bz-segmented--sm');
   sortEl.appendChild(seg.el);
 
-  // 桌面拖动缩放（ADR-0084；移动端真全屏/常规卡都由 CSS 撑满视口，不挂）
+  // 桌面拖动缩放（ADR-0084；移动端真全屏/常规卡都由 CSS 撑满视口，不挂）。
+  // 尺寸记忆（ADR-0094）：persist.load 挂载时恢复（resize 工厂钳到与拖拽同口径），
+  // save 防抖 300ms 落盘 + detach 补存尾值——settings 键 todoPanelWidth/Height 语义不变
   if (!isMobileEnv()) {
     panelResizeDetach = uiResizable(panelEl, {
       minW: PANEL.MIN_W, minH: PANEL.MIN_H,
       maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
-      onChange: (w, h) => rememberPanelSize(w, h),
+      persist: {
+        load: () => {
+          const s = tryGetSettings() as any;
+          const w = Number(s?.todoPanelWidth) || 0;
+          const h = Number(s?.todoPanelHeight) || 0;
+          // 无记忆/越界旧值回 null → 面板走 CSS 默认尺寸（720×580）
+          if (w < PANEL.MIN_W || h < PANEL.MIN_H) return null;
+          return { w, h };
+        },
+        save: (w, h) => {
+          const s = tryGetSettings() as any;
+          if (!s) return;
+          s.todoPanelWidth = w;
+          s.todoPanelHeight = h;
+          void saveSettings();
+        },
+      },
     });
   }
 
@@ -535,12 +540,11 @@ export function closeTodoPanel(): void {
     clearTimeout(searchDebounceTimer);
     searchDebounceTimer = null;
   }
-  // 卸载拖动缩放（detach 幂等；无会话内 handler 残留）
+  // 卸载拖动缩放（detach 幂等；persist 未落盘的尾值由工厂立即补存）
   if (panelResizeDetach) {
     panelResizeDetach.detach();
     panelResizeDetach = null;
   }
-  flushPendingSize(); // T2：面板关闭时立即落盘尺寸（防防抖窗口内丢失）
   M.renderFn = null;
   M.pinnedNewId = null;
   clipTitleHint = null; // 剪贴板预填候选随面板生命周期清空
@@ -558,47 +562,10 @@ export function registerEscapeHandler(): void {
   });
 }
 
-// ---------- 面板尺寸记忆（ADR-0084：uiResizable 松手落 settings；重开沿用） ----------
+// ---------- 面板尺寸记忆（ADR-0084/0094：uiResizable persist 托管，见 openTodoPanel） ----------
 
 /** 面板当前 resize detach（打开期间非空，关闭清空） */
 let panelResizeDetach: { detach: () => void } | null = null;
-
-/** 记忆尺寸安全读取（settings 兜底默认值；越界——旧值/手改——回落默认或钳到上限） */
-function savedPanelSize(): { w: number; h: number } {
-  const s = tryGetSettings() as any;
-  const w = Number(s?.todoPanelWidth) || 0;
-  const h = Number(s?.todoPanelHeight) || 0;
-  if (w < PANEL.MIN_W || h < PANEL.MIN_H) return { w: PANEL.DEF_W, h: PANEL.DEF_H };
-  // 上限：硬上限 + 视口 92% 双限（与 uiResizable cap 同口径，防手改超大值打开即超屏）
-  const capW = Math.min(PANEL.MAX_W, Math.floor(window.innerWidth * 0.92));
-  const capH = Math.min(PANEL.MAX_H, Math.floor(window.innerHeight * 0.92));
-  return { w: Math.min(w, capW), h: Math.min(h, capH) };
-}
-
-/**
- * 面板拖动缩放记忆（T2）：拖动期间每帧回调 → trailing 防抖 150ms 落盘一次，
- * 避免拖一次面板边界 = 几十上百次 settings 写盘（ADR-0084 意图：松手沿用，非逐帧持久化）。
- * 关闭面板时 flushPendingSize() 立即落盘防丢。
- */
-let pendingSizeTimer: ReturnType<typeof setTimeout> | null = null;
-function rememberPanelSize(w: number, h: number): void {
-  const s = tryGetSettings() as any;
-  if (!s) return;
-  s.todoPanelWidth = w;
-  s.todoPanelHeight = h;
-  if (pendingSizeTimer !== null) clearTimeout(pendingSizeTimer);
-  pendingSizeTimer = setTimeout(() => {
-    pendingSizeTimer = null;
-    void saveSettings();
-  }, 150);
-}
-function flushPendingSize(): void {
-  if (pendingSizeTimer !== null) {
-    clearTimeout(pendingSizeTimer);
-    pendingSizeTimer = null;
-    void saveSettings();
-  }
-}
 
 // ---------- 渲染 ----------
 
@@ -633,11 +600,12 @@ function sceneOptions(): { scene: string; dot: string; icon?: string }[] {
   ];
 }
 
-/** nav/chip 项内点 + 伪场景图标的 HTML */
-function sceneLeadHtml(o: { scene: string; dot: string; icon?: string }): string {
+/** nav/chip 项内点 + 伪场景图标的 HTML（dotCls = .bz-rail-dot / .bz-mobstrip-dot 随宿主；
+ *  重要 star 警示色走组件库 .bz-ic--warning——色点之外的第二佐证，§6.1 状态不只靠颜色） */
+function sceneLeadHtml(o: { scene: string; dot: string; icon?: string }, dotCls: string): string {
   if (o.scene === '全部') return '';
-  const dotHtml = `<span class="bz-todo-nav-dot" style="background:${o.dot}"></span>`;
-  return o.icon ? `${dotHtml}${iconSpan(o.icon, 'bz-todo-nav-star')}` : dotHtml;
+  const dotHtml = `<span class="${dotCls}" style="--bz-rail-tint:${o.dot}"></span>`;
+  return o.icon ? `${dotHtml}${iconSpan(o.icon, 'bz-ic--warning')}` : dotHtml;
 }
 
 /** 场景项管理菜单（重命名/删除/设置直达；伪场景不挂）——桌面右键浮层 / 移动长按抽屉复用组件库 */
@@ -652,7 +620,7 @@ function renderNav(): void {
   nav.innerHTML = sceneOptions()
     .map((o) => {
       const active = M.activeScene === o.scene;
-      return `<button class="bz-todo-nav-item${active ? ' bz-todo-nav-active' : ''}" data-todo-scene="${esc(o.scene)}">${sceneLeadHtml(o)}<span>${esc(o.scene)}</span><span class="bz-todo-nav-cnt">${sceneCount(o.scene)}</span></button>`;
+      return `<button class="bz-rail-item${active ? ' on' : ''}" data-todo-scene="${esc(o.scene)}">${sceneLeadHtml(o, 'bz-rail-dot')}<span class="bz-rail-name">${esc(o.scene)}</span><span class="bz-rail-count bz-rail-count--pill">${sceneCount(o.scene)}</span></button>`;
     })
     .join('');
   mountIcons(nav);
@@ -667,7 +635,7 @@ function renderMobScenes(): void {
   wrap.innerHTML = sceneOptions()
     .map((o) => {
       const active = M.activeScene === o.scene;
-      return `<button class="bz-todo-mob-chip${active ? ' bz-todo-mob-chip-active' : ''}" data-todo-scene="${esc(o.scene)}">${sceneLeadHtml(o)}${esc(o.scene)}</button>`;
+      return `<button class="bz-mobstrip-chip${active ? ' is-on' : ''}" data-todo-scene="${esc(o.scene)}">${sceneLeadHtml(o, 'bz-mobstrip-dot')}${esc(o.scene)}</button>`;
     })
     .join('');
   mountIcons(wrap);

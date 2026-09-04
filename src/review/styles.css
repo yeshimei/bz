@@ -5,9 +5,11 @@
  * 配色一律走 Obsidian 主题变量（原型色为演示近似值，落地不直用）。
  */
 
-/* ==================== 面板容器（既有契约） ==================== */
-#review-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--background-modifier-cover); } /* 毛玻璃明确不采用（设计手册 §5.2），遮罩统一主题 cover 色 */
-#review-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--background-primary); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 94%; max-width: 900px; max-height: 84vh; flex-direction: column; animation: slideUp 0.3s ease-out; }
+/* ==================== 面板容器（既有契约） ====================
+   壳骨架接组件库（ADR-0094）：遮罩挂 .bz-panel-overlay（fixed 铺满+遮罩色），
+   面板挂 .bz-panel-frame（底色/圆角/描边/阴影/纵向 flex）；域内只留 id 几何
+   （居中定位/宽高/动画）。配色其余仍走 Obsidian 主题变量（原型色为演示近似值，落地不直用）。 */
+#review-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 94%; max-width: 900px; max-height: 84vh; animation: slideUp 0.3s ease-out; }
 @media (max-width: 768px) {
   #review-popup { animation: none !important; width: 100%; max-width: 100%; max-height: 100%; }
 }
@@ -31,15 +33,10 @@
 .bz-q-head .tools { display: flex; align-items: center; gap: 4px; }
 .bz-q-head .bz-icon-btn { width: 26px; height: 26px; }
 
-/* 工具行：搜索（限宽不铺满；胶囊；input 背景透明需 !important——核心
-   input[type='text']:hover 0,2,1 会把悬停底喂成 form-field 白） */
+/* 工具行：搜索（共享 .bz-search + .bz-input；域内限宽不铺满 + typing 激活态描边） */
 .bz-q-tools { display: flex; align-items: center; padding: 4px 20px 6px; flex-shrink: 0; }
-.bz-q-search { flex: 0 1 300px; display: flex; align-items: center; gap: 6px; padding: 0 12px; height: 28px; border-radius: 999px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-faint); }
-.bz-q-search:hover, .bz-q-search:focus-within { background: var(--background-secondary); }
-.bz-q-search .bz-q-ic { width: 13px; height: 13px; flex-shrink: 0; }
-.bz-q-search input { flex: 1; background: transparent !important; border: none !important; outline: none; font-size: 13px; color: var(--text-normal); min-width: 0; font-family: inherit; }
-.bz-q-search input:hover { background: transparent !important; }
-.bz-q-search.typing { border-color: var(--interactive-accent); background: var(--background-secondary); }
+.bz-q-tools .bz-search { flex: 0 1 300px; }
+.bz-search.typing .bz-input { border-color: var(--bz-brand); }
 
 /* 开始本轮条（item 8：今日全清 → 绿点 +「今日已清空」+ 隐藏主按钮） */
 .bz-q-strip { display: flex; align-items: center; gap: 8px; padding: 6px 20px 10px; flex-shrink: 0; }
@@ -162,7 +159,6 @@
 .bz-sq-item.passed .nm s { color: var(--text-faint); }
 .bz-sq-item.passed .meta { color: var(--color-green, #2ed573); }
 .bz-sq-item.failed .meta { color: var(--color-red, #ff4757); }
-.bz-sq-empty { font-size: 11px; color: var(--text-faint); text-align: center; padding: 12px 0; }
 
 /* 结果卡 */
 .bz-result { max-width: 420px; margin: 0 auto; text-align: center; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -230,7 +226,6 @@
 
 /* 排除名单 chip */
 #review-excluded-list { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 4px 0; }
-.bz-review-exclude-empty { font-size: 12px; color: var(--text-faint); padding: 4px 0; }
 .bz-review-exclude-chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 12px; background: var(--background-secondary); border: 1px solid var(--background-modifier-border); max-width: 100%; }
 .bz-review-exclude-name { font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bz-review-exclude-remove { background: none; border: none; cursor: pointer; color: var(--text-faint); font-size: 11px; line-height: 1; padding: 2px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: none !important; }

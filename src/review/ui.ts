@@ -8,7 +8,8 @@
  *  - 全部 emoji 换 lucide 图标
  *  - 三区列：已逾期 / 今天到期 / 未来；只有到期（逾期/今天）条目可点击开始答题（sprint）
  *  - 「开始本轮」= 逾期 + 今天批量进入做题冲刺（forceQuizForReview 关闭时 = 普通跳转复习）
- *  - 面板容器沿用 #review-mask/#review-popup（core 主窗口规范）；内容区三区队列渲染
+ *  - 面板容器沿用 #review-mask/#review-popup id 几何契约，壳类接组件库
+ *    .bz-panel-overlay/.bz-panel-frame（ADR-0094）；内容区三区队列渲染
  *  - 整窗冲刺由 SprintSession 驱动，宿主为 #review-entries-container 内容区
  *
  * 公共面（对外契约不变）：UIManager / reviewSettingsSchema（re-export）
@@ -21,14 +22,13 @@ import { escManager } from '../core/esc-manager';
 import { tryGetSettings } from '../core/settings-provider';
 import { escapeHtml } from '../core/utils';
 import { applyMobileWindowFullscreen } from '../core/mobile';
-import { uiIcon } from '../core/ui';
+import { uiEmpty, mountIcons } from '../core/ui';
 import { unregisterSheetCompanion } from '../core/item-actions';
 import { FSRS, DEFAULT_W, LADDER_MAX, TOTAL_STAGES } from './fsrs';
 import type { ReviewItem } from './data';
 import { ReviewDataManager } from './data';
 import { computeStats } from './stats';
 import { partitionQueue, roundQueue, isDueToday, isEarlyDue } from './queue';
-import { uiEmpty } from '../core/ui';
 import { SprintSession } from './sprint';
 import type { SprintMode } from './sprint';
 import type { QuizQuestion } from './quiz-core/manager';
@@ -94,8 +94,11 @@ export class UIManager {
 
   createMainUI(): void {
     if (this.mask && document.body.contains(this.mask)) return;
+    // 面板壳接组件库（ADR-0094）：遮罩 = .bz-panel-overlay、面板 = .bz-panel-frame；
+    // id 几何（居中定位/宽高/动画）仍由 #review-mask/#review-popup 域内规则接管
     this.mask = document.createElement('div');
     this.mask.id = 'review-mask';
+    this.mask.classList.add('bz-panel-overlay');
     this.mask.style.display = 'none';
     this.mask.style.zIndex = String(allocZ());
     this.mask.onclick = () => {
@@ -104,6 +107,7 @@ export class UIManager {
 
     this.popup = document.createElement('div');
     this.popup.id = 'review-popup';
+    this.popup.classList.add('bz-panel-frame');
     // ≤768px 弹窗满宽近全屏：挂顶距工具类（44px 避让 Obsidian 移动端头，components.css 统一档）
     this.popup.classList.add('bz-panel-mtop');
     this.popup.style.display = 'none';
@@ -206,10 +210,9 @@ export class UIManager {
         );
       }
     }
-    this.mountIcons(container);
+    mountIcons(container);
     this.bindQueueEvents(container, items);
   }
-
   /** 切回队列视图（冲刺结束回调）；遇仍活动的会话先销毁再置空（防孤儿 ESC 层） */
   async showQueue(): Promise<void> {
     if (!this.entriesContainer) return;
@@ -260,7 +263,7 @@ export class UIManager {
         </div>
       </div>
       <div class="bz-q-tools">
-        <div class="bz-q-search${searchText ? ' typing' : ''}">${this.icon('search')}<input type="text" id="bz-q-search" placeholder="搜索笔记…" value="${escapeHtml(searchText)}"></div>
+        <div class="bz-search${searchText ? ' typing' : ''}">${this.icon('search', '')}<input class="bz-input" type="text" id="bz-q-search" placeholder="搜索笔记…" value="${escapeHtml(searchText)}"></div>
       </div>`;
 
     // item 10：空库 → 头行 + 清空条 + 空态宿主（uiEmpty 于 renderEntries 挂载并绑两条路动作）
@@ -635,17 +638,10 @@ export class UIManager {
 
   // ================= 工具 =================
 
-  private icon(name: string): string {
-    return `<span class="bz-q-ic" data-lucide="${name}"></span>`;
-  }
-
-  private mountIcons(host: HTMLElement): void {
-    host.querySelectorAll<HTMLElement>('[data-lucide]').forEach((el) => {
-      const name = el.dataset.lucide || '';
-      const ic = uiIcon(name);
-      ic.classList.add('bz-q-ic');
-      el.replaceWith(ic);
-    });
+  /** lucide 占位 HTML（默认挂 .bz-q-ic 域内尺寸钩子；extra 传空则只用 .bz-ic 基类，
+   *  如 .bz-search 内的搜索图标走组件库定位/尺寸）。渲染后组件库 mountIcons 统一替换 */
+  private icon(name: string, extra = 'bz-q-ic'): string {
+    return `<span class="bz-ic${extra ? ' ' + extra : ''}" data-lucide="${name}"></span>`;
   }
 }
 
