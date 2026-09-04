@@ -13,7 +13,7 @@
  * 数值：参数范围约束（稳定性/难度为正等）、从 DEFAULT_W 初始化、小学习率 + 退火、log-sum-exp 防溢出。
  */
 
-import { DEFAULT_W } from './fsrs';
+import { DEFAULT_D, DEFAULT_W } from './fsrs';
 
 /** 训练样本：一次「复习 → 下次评级」的观察 */
 export interface FitSample {
@@ -75,11 +75,13 @@ function clip(w: number[]): number[] {
  * 这样梯度解析可算、数值稳定，且抓住核心信号（间隔缩放 vs 遗忘率）。
  */
 export function computeSampleLogLikelihood(w: number[], sample: FitSample): number {
-  // d（遗忘幂律指数）来自 w[7]（对齐 fsrs.ts 的 d 参数语义：R=(1+t/(S·d))^(-d)）
-  const d = w[7] ?? DEFAULT_W[7];
+  // d（遗忘幂律指数）用全局固定 DEFAULT_D（0.9），不读 w[7]——FSRS 的 w[7] 是难度
+  // 演化参数（默认 0.01），不是幂指数，喂给 R 公式会产出「几乎不忘」的荒谬曲线。
+  // 拟合只个性化 S/D 演化权重（w[2..6] 等），遗忘曲线形状全局统一（终局 review 拍板口径）。
+  const d = DEFAULT_D;
   const S = sample.S;
   const t = sample.t;
-  // 记忆保留度（同 fsrs.ts R 公式，d 取 w[7]）
+  // 记忆保留度（同 fsrs.ts R 公式）
   const denom = Math.max(0.01, S * d);
   const R = Math.pow(1 + t / denom, -d);
   const remember = sample.rating === 2 || sample.rating === 3; // good/easy
