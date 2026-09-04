@@ -12,12 +12,13 @@ import { uiIcon } from './icon';
 
 type PopoverOption = BzPopoverOpts['options'][number];
 
-/** 候选浮层（.bz-popover），返回 open/close/setValue/setOptions */
+/** 候选浮层（.bz-popover），返回 open/close/setValue/setOptions/detach */
 export function uiPopover(opts: BzPopoverOpts): {
   open: () => void;
   close: () => void;
   setValue: (id: string) => void;
   setOptions: (items: PopoverOption[]) => void;
+  detach: () => void;
 } {
   const anchor = opts.anchor;
   let current = opts.value ?? '';
@@ -103,5 +104,16 @@ export function uiPopover(opts: BzPopoverOpts): {
     else open();
   });
 
-  return { open, close, setValue, setOptions };
+  return {
+    open,
+    close,
+    setValue,
+    setOptions,
+    /** 清理：关浮层并摘除 document 监听（宿主收尾用，对齐 uiSelect.detach） */
+    detach: () => {
+      document.removeEventListener('click', onDocClick);
+      document.removeEventListener('keydown', onDocKey);
+      close();
+    },
+  };
 }

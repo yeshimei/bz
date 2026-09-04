@@ -732,7 +732,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-main-title { font-size: 16px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
 .bz-main-count { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
 .bz-main-spacer { flex: 1; }
-.bz-main-head .bz-btn { height: 30px; padding: 0 14px; font-size: var(--bz-font-meta); }
+.bz-main-head .bz-btn { height: var(--bz-control-h-md, 30px); padding: 0 14px; font-size: var(--bz-font-meta); }
 
 /* ═══════════ D. 工具行 .bz-toolrow ═══════════
    主头行下的次级工具行：搜索 + 排序/筛选 + spacer。
@@ -931,6 +931,11 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   font-weight: var(--bz-weight-medium);
 }
 .bz-mobstrip-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--bz-rail-tint, var(--bz-text-3)); flex-shrink: 0; }
+
+/* ≤768px 显示（桌面 none 即基类；域内不再写媒体查询） */
+@media (max-width: 768px) {
+  .bz-mobstrip { display: flex; }
+}
 
 /* ═══════════ H. 统计卡 .bz-stat-grid / .bz-stat ═══════════
    数字+标签统计卡：默认中性 / --main 品牌主卡 / --click 可点筛选。
