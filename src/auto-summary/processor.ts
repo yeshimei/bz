@@ -228,8 +228,22 @@ export async function processFile(app: any, ai: AIService, file: any, opts: Proc
 
     const msg = formatSummaryNotice(mergedFm);
     if (msg) {
-      // 成功：同去重键原地合并 → 切换 success 图标并按显式时长驻留（≥8s，正文无 emoji）
-      notify(msg, { type: 'success', dedupeKey: key, duration: 8000 });
+      // 成功：同去重键原地合并 → 切换 success 图标并按显式时长驻留（≥8s，正文无 emoji）；
+      // 挂「查看」action（enh 包 3）：打开剪藏本面板并选中该条——clipbook 与本域互为
+      // 依赖面（clipbook/ui ← 本域入口），环引用按项目规约走函数级延迟解析（动态 import）
+      notify(msg, {
+        type: 'success',
+        dedupeKey: key,
+        duration: 8000,
+        action: {
+          label: '查看',
+          onClick: () => {
+            import('../clipbook/ui')
+              .then((m) => m.revealClipArticle(targetFile.path))
+              .catch(() => { /* 剪藏本面板不可用（如卸载中）时忽略 */ });
+          },
+        },
+      });
     } else if (h) {
       h.hide();
     }

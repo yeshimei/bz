@@ -26,7 +26,7 @@ import { openFlowDialog } from '../core/flow-dialog';
 import { openSettingsModal } from '../core/settings-modal';
 import type { SettingsSchema } from '../core/settings-schema';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { ensureAutoSummary, stopAutoSummary } from '../auto-summary';
+import { ensureAutoSummary, stopAutoSummary, regenerateSummary } from '../auto-summary';
 import { buildNewsSourcesGroup } from './news-sources-group';
 import { batchSizeRow, mobileFullscreenGroup } from '../core/settings-common';
 import type { ClipArticle } from './types';
@@ -148,6 +148,27 @@ export function reloadIfOpen(): void {
   dirty = true;
   if (!M.open) return;
   void loadIfNeeded();
+}
+
+/**
+ * 打开剪藏本面板并定位到指定剪藏笔记（enh-autosum 包 3：自动摘要完成通知「查看」入口）。
+ * 切「剪藏本」源（剪藏条目仅出现在该源）→ 面板装载完成后选中该条（中栏高亮 + 右栏阅读）。
+ * 定位失败（路径不在剪藏目录/装载失败）保持面板打开，不抛错。
+ */
+export async function revealClipArticle(notePath: string): Promise<void> {
+  const p = String(notePath || '');
+  if (!p) return;
+  selectSource({ kind: 'clip' });
+  showPanel();
+  if (loading && loadPromise) {
+    try {
+      await loadPromise;
+    } catch (e) {
+      /* 装载失败保持空态，不阻断定位 */
+    }
+  }
+  const a = currentList().find((x) => x.id === 'clip:' + p);
+  if (a) selectArticle(a.id);
 }
 
 /** 关闭面板（隐藏 overlay；DOM 保留——重开零扫描复用缓存；unloadPanel 才移除） */
@@ -626,6 +647,14 @@ function buildItemActions(a: ClipArticle): ItemAction[] {
       { icon: 'globe', label: '复制原文链接', sub: a.domain || undefined, onClick: () => void copyText(a.url, '原文链接已复制') },
     );
     if (a.note && (a.note as ClipNote).file) {
+      // 重新生成摘要（enh 包 1）：手动 force 重跑——只重建 summary/tags，不吞用户改过的标题；
+      // 桌面右键与移动长按抽屉共用 buildItemActions，此处一处接入两端全量生效
+      out.push({
+        icon: 'sparkles',
+        label: '重新生成摘要',
+        title: 'AI 重新生成该剪藏的摘要与标签，不改动已有标题',
+        onClick: () => { void regenerateSummary(getApp(), (a.note as ClipNote).file); },
+      });
       out.push({ icon: 'trash-2', label: '删除', kind: 'danger', title: '删除剪藏笔记', onClick: () => deleteClipNote(a) });
     }
     return out;
