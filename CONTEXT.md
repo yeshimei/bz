@@ -420,6 +420,9 @@ _Avoid_: 各脚本路径、存储路径们
 **可靠写契约 (Reliable Write Contract)**: core/storage 数据写三原语（D1，2026-09），全部域数据层统一走（D2/D3 迁移依据）：① `enqueueFileTask(path, task)`——同文件「读→改→写」任务 FIFO 串行、异文件并行，任务抛错只上抛该调用方不堵队列；② `updateFileSections(path, writer)` / `mergeWriteSections(path, set)`——段级合并写（news writeNewsDataMerged 先例上沉），队列内读磁盘现值、只声明本次改动段、未声明段保留磁盘现值合并写回（对象形态 JSON 专用，数组/标量抛错，防双写者互覆盖）；③ 冲突留档——解析失败或写失败先把原文件原样留档到 `CONFIG/.CORRUPT/<文件名>.<yyyymmdd-hhmmss>.bak`（目录不存在则建）再降级初始化/照抛原错误，永不静默丢数据；留档成功发人话化 warning 通知（同文件 30s 去重），留档失败不阻塞原流程；`onCorrupt` 返回 false 的「不清盘」域语义不变，且此类域自管损坏文案、core 不重复弹。
 _Avoid_: 裸写读快照全覆盖、域内自建写队列、直改 .CORRUPT 留档文件、旧 <名>.corrupt-<时间戳> 同目录留档
 
+**数据体检 (Data Checkup)**: 全插件数据可靠层只读巡检（D4，2026-09，`src/checkup/` 域，命令 `bz-data-checkup-open` + 设置面板通用组「数据体检」按钮行；仿保险库体检交互）。四类检查：① json 可解析（坏文件列出与 CONFIG/.CORRUPT 留档路径）；② 字段漂移（条目级 memo/favorites/pomodoro-history + 段级 clipbook/news/launcher/home/belongings/quiz 的意外/缺失字段统计，只报告不修）；③ 孤儿条目（影院海报/书架封面/EPUB 指向缺失只报告；clipbook savedArchive 残留与 favorites 失效关联可一键修复）；④ 同源一致性（memo loadItems 口径快照 vs todo normalizeItem 双视角计数 + 结构异常）。**只读纪律**：体检不走 jsonFileStore.read()（避免触发损坏留档+重建毁现场），一律 adapter 直读原文；修复只动插件自有 json（enqueueFileTask 串行写 + notifyUndo 撤销链），用户笔记 frontmatter 与外部插件数据不动；结果内存级缓存、重开显示上次结果；体检中可取消（runSeq 作废令牌）。
+_Avoid_: 体检写盘（除一键修复定点清理）、直读域单例内存态（体检以磁盘原文为准）、jsonFileStore 做体检读
+
 **筛选弹窗 (Filter Modal)**: 🔀 图标打开的筛选/排序弹窗（影视「筛选与排序」、书库「视图与筛选」），与 ⚙️ 域设置弹窗严格区分——🔀 只做筛选，⚙️ 只做设置。
 _Avoid_: 设置弹窗（指筛选时）
 

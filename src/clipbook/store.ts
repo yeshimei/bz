@@ -16,7 +16,7 @@
 import { applyRetention, readNewsData, writeNewsDataMerged } from './news-data';
 import type { ClipArticle, ClipOrigin, ClipState } from './types';
 import { articleKeyOf, excerpt } from './constants';
-import { readClipbookData, writeClipbookData, type ClipbookData } from './data';
+import { updateClipbookData, type ClipbookData } from './data';
 import { enqueueNewsWrite } from './write-queue';
 
 /** B站视频条目判定（ADR-0068：保存分流文献盒；url 异常缺失回退剪藏按钮） */
@@ -237,23 +237,25 @@ export async function runAction(
   const raw = article.raw;
   if (!raw) return { rerender: false };
   const key = articleKeyOf(raw);
-  const overrides = { ...ctx.sidecar.articleOverrides };
 
   if (act === 'reading') {
-    // 在读 ↔ 回未读
-    const cur = overrides[key];
-    if (cur && cur.reading === true) delete overrides[key];
-    else overrides[key] = { reading: true };
-    await writeSidecar({ ...ctx.sidecar, articleOverrides: overrides });
+    // 在读 ↔ 回未读（D2 收编：读改写入 per-path 串行队列，基于磁盘现值而非面板快照）
+    await updateClipbookData((sidecar) => {
+      const overrides = { ...sidecar.articleOverrides };
+      const cur = overrides[key];
+      if (cur && cur.reading === true) delete overrides[key];
+      else overrides[key] = { reading: true };
+      return { ...sidecar, articleOverrides: overrides };
+    });
     return { rerender: true };
   }
   if (act === 'save' || act === 'unsave' || act === 'read' || act === 'skip') {
     if (act === 'unsave') {
-      // 移出剪藏：清 news state + 归档残留（目录文件不动，靠目录保留）
-      const fresh = { ...ctx.sidecar };
-      fresh.articleOverrides = overrides;
-      fresh.savedArchive = (fresh.savedArchive || []).filter((s) => s.url !== String(raw.url || ''));
-      await writeSidecar(fresh);
+      // 移出剪藏：清 news state + 归档残留（目录文件不动，靠目录保留；侧写走串行队列读改写）
+      await updateClipbookData((sidecar) => ({
+        ...sidecar,
+        savedArchive: (sidecar.savedArchive || []).filter((s) => s.url !== String(raw.url || '')),
+      }));
       return { rerender: true };
     }
     // 落 news.json read 面（saved/skipped 语义对齐 news/reader.ts markAsRead）
@@ -283,11 +285,6 @@ export async function writeNewsState(raw: any, action: 'save' | 'read' | 'skip')
     });
     await writeNewsDataMerged({ set: { articles: list } });
   });
-}
-
-/** 侧写整段写回（幂等去抖由调用方做） */
-export async function writeSidecar(data: ClipbookData): Promise<void> {
-  await writeClipbookData(data);
 }
 
 /** 应用保留策略（news/reader.ts loadAll 语义迁移：未读不处理/已存 N 天删/已跳 M 天删，起算 fetchedAt/date） */

@@ -41,7 +41,20 @@ interface DomainDef {
 
 /** 惰性 schema 加载器（与各域 ⚙️ 弹窗同源） */
 const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
-  general: async () => (await import('../core/settings-main-schema')).generalSettingsSchema(),
+  // 通用组：基础 schema（存储路径）+「数据体检」按钮行（D4：检查项直达体检面板；
+  // core 不反向依赖域——入口在面板层追加，⚙️ 原生设置页不带此行）
+  general: async () => {
+    const schema = await (await import('../core/settings-main-schema')).generalSettingsSchema();
+    const { openDataCheckup } = await import('../checkup');
+    schema.groups[0].rows.push({
+      type: 'button',
+      name: '数据体检',
+      buttonText: '打开体检',
+      desc: '检查各域数据文件能否解析、字段漂移与孤儿条目（只读体检，可修复项一键清理）',
+      onClick: () => void openDataCheckup(getApp()),
+    });
+    return schema;
+  },
   ai: async () => (await import('../core/settings-main-schema')).aiSettingsSchema(),
   diary: async () => (await import('../diary/ui/panel')).diarySettingsSchema(),
   memo: async () => (await import('../memo/ui')).memoSettingsSchema(),
