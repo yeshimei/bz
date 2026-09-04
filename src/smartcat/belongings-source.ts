@@ -12,7 +12,8 @@
  */
 import type { StructuredMeta } from './types';
 
-/** 归物本物品观察形状（只含参与观察的字段；完整字段见 src/belongings/types.ts BelongingsItem） */
+/** 归物本物品观察形状（只含参与观察的字段；完整字段见 src/belongings/types.ts BelongingsItem）
+ *  ticket 189（ADR-0089）加两个可选出离字段：sold_price 售价 / exit_date 出离日期 */
 export interface BelongingsItemLike {
   name: string;
   category: string;
@@ -20,6 +21,8 @@ export interface BelongingsItemLike {
   purchase_date: string;
   current_status: string; // 使用中/闲置/已转卖/已丢弃
   description: string;
+  sold_price?: number | null;
+  exit_date?: string | null;
 }
 
 /** 编辑对比快照（α 变化列表：比较保存前后条目的相关字段） */
@@ -49,7 +52,8 @@ export function belongingsAddedText(item: BelongingsItemLike): string {
 
 /** 编辑 α 变化列表（snapshot = 弹窗打开时旧值快照；next = 保存后条目，item 是直接改的引用）
  *  比较参与：name/category/purchase_price/purchase_date/current_status/description；
- *  不参与：id/created_date/last_updated。变化项名：改了名称/分类/价格/购买日期/状态/描述。 */
+ *  ticket 189（ADR-0089）增：sold_price（售价）/ exit_date（出离日期）；
+ *  不参与：id/created_date/last_updated。变化项名：改了名称/分类/价格/购买日期/状态/描述/售价/出离日期。 */
 export function belongingsEditChanges(snapshot: BelongingsEditLike, next: BelongingsEditLike): string[] {
   const changes: string[] = [];
   if (snapshot.name !== next.name) changes.push('改了名称');
@@ -58,6 +62,8 @@ export function belongingsEditChanges(snapshot: BelongingsEditLike, next: Belong
   if (snapshot.purchase_date !== next.purchase_date) changes.push('改了购买日期');
   if (snapshot.current_status !== next.current_status) changes.push('改了状态');
   if (snapshot.description !== next.description) changes.push('改了描述');
+  if ((snapshot.sold_price ?? null) !== (next.sold_price ?? null)) changes.push('改了售价');
+  if ((snapshot.exit_date ?? null) !== (next.exit_date ?? null)) changes.push('改了出离日期');
   return changes;
 }
 
