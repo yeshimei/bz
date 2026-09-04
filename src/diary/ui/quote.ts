@@ -4,6 +4,7 @@
  */
 import { getApp } from '../app';
 import { openAddDialog } from './dialogs';
+import { DOMAIN_ICONS } from '../../core/domain-icons';
 
 // ===== 命令注册（原 3763-3774） =====
 
@@ -14,7 +15,7 @@ export async function registerOpenDialogCommand() {
     (getApp() as any).commands.addCommand({
       id: 'bz-diary-write',
       name: '写日记',
-      icon: 'notebook-pen',
+      icon: DOMAIN_ICONS.diary, // 图标单一事实源（终局 review 批 B；值同原字面量）
       callback: () => {
         openAddDialog();
       },

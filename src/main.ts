@@ -106,8 +106,7 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-auto-summary-redo', name: '重新生成当前剪藏摘要', icon: DOMAIN_ICONS['auto-summary'], callback: () => void redoSummaryForActiveFile(getApp()) },
 
   // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图（真实图片/视频/音频瀑布流）
-  // icon 用 images（lucide 相册/媒体图标，与入口页磁贴媒体语义一致；未与其他命令重复）
-  { id: 'bz-diary-wall-open', name: '回忆墙', icon: 'images', callback: () => openDiaryWall(getApp()) },
+  { id: 'bz-diary-wall-open', name: '回忆墙', icon: DOMAIN_ICONS['diary-wall'], callback: () => openDiaryWall(getApp()) },
   // 收藏本
   { id: 'bz-favorites-open', name: '收藏本', icon: DOMAIN_ICONS.favorites, callback: () => openFavoritesPanel(getApp()) },
   { id: 'bz-favorites-add', name: '加收藏', icon: 'bookmark', callback: () => addFavoriteItem(getApp()) },
@@ -166,7 +165,7 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-smartcat-hide', name: '隐藏小橘', icon: 'eye-off', callback: () => hideSmartCat() },
   { id: 'bz-smartcat-dashboard', name: '小橘数据面板', icon: 'activity', callback: () => openSmartcatDashboard(getApp()) },
   // 设置面板（ADR-0080：全域设置聚合入口）
-  { id: 'bz-settings-panel-open', name: '设置面板', icon: 'settings-2', callback: () => openSettingsPanel(getApp()) },
+  { id: 'bz-settings-panel-open', name: '设置面板', icon: DOMAIN_ICONS['settings-panel'], callback: () => openSettingsPanel(getApp()) },
   // 数据体检（checkup 域，D4：全插件数据可靠层只读巡检；icon 与保险库体检同为 stethoscope，语义一致）
   { id: 'bz-data-checkup-open', name: '数据体检', icon: 'stethoscope', callback: () => void openDataCheckup(getApp()) },
 ];
