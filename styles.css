@@ -4552,6 +4552,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-todo-nav-cnt { margin-left: auto; font-size: var(--bz-font-caption); color: var(--bz-text-3); background: var(--bz-surface-2); border-radius: 999px; padding: 0 7px; line-height: 17px; }
 .bz-todo-nav-item.bz-todo-nav-active .bz-todo-nav-cnt { color: inherit; background: transparent; opacity: 0.75; }
 .bz-todo-nav-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+/* 伪场景「重要」star 图标（警示色点之外的第二佐证，§6.1 状态不只靠颜色） */
+.bz-todo-nav-star { width: 13px; height: 13px; flex-shrink: 0; color: var(--bz-warning); }
 /* 添加场景（底部） */
 .bz-todo-side-add {
   margin: var(--bz-space-sm) var(--bz-space-xs) 0; padding: 6px 10px;
@@ -4608,6 +4610,14 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-todo-donebar .bz-todo-donebar-cnt { margin-left: auto; font-size: var(--bz-font-caption); color: var(--bz-text-3); }
 .bz-todo-donebar .bz-ic { width: 13px; height: 13px; transition: transform 0.15s ease; }
 .bz-todo-donebar.bz-todo-donebar-open .bz-ic { transform: rotate(180deg); }
+/* 「更早 N 条」（已完成折叠区尾部，30 天时间界放全入口）：与折叠条同族弱化样式 */
+.bz-todo-done-more {
+  margin: 2px var(--bz-space-xs) 0; padding: 6px var(--bz-space-sm);
+  border: none; border-radius: 8px; background: transparent;
+  color: var(--bz-brand); cursor: pointer;
+  font-size: var(--bz-font-meta); font-family: inherit; text-align: center;
+}
+.bz-todo-done-more:hover { background: var(--bz-brand-soft); }
 
 /* ---- 条目卡（右键菜单 / 长按抽屉由 core/item-actions 提供） ---- */
 .bz-todo-card {
@@ -4654,8 +4664,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-todo-tag.bz-todo-tag-future { background: color-mix(in srgb, var(--bz-success) 12%, transparent); color: var(--bz-success); }
 .bz-todo-time { font-size: var(--bz-font-caption); color: var(--bz-text-3); flex-shrink: 0; }
 
-/* 空态 */
-.bz-todo-empty { text-align: center; color: var(--bz-text-3); font-size: var(--bz-font-body); padding: 40px 12px; }
+/* 空态：组件库 .bz-empty 三件套（图标 + 一句话 + 动作按钮），域内不再自留空态样式 */
 
 /* ---- 底部录入行（桌面 + 移动共用形态；无场景 chip 提示） ---- */
 .bz-todo-composer {
@@ -4712,6 +4721,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   .bz-todo-content { padding: var(--bz-space-sm) var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
   .bz-todo-card { padding: 11px var(--bz-space-sm); }
   .bz-todo-card .bz-todo-check { width: 19px; height: 19px; }
+  /* 触控热区 ≥44px（设计手册 §8.2）：视觉尺寸不变，::after 外扩热区（19px + 13px×2 = 45px） */
+  .bz-todo-card .bz-todo-check::after { content: ''; position: absolute; inset: -13px; }
   .bz-todo-card .bz-todo-card-title { font-size: 15px; }
   .bz-todo-composer .bz-input { height: 40px; }
 }
