@@ -3,7 +3,7 @@
  * saveNewEntry 无效日期/失败分支、datetime-picker 手动模式、quote 摘抄全流程、
  * filter-shared 计数分支、panel toggle。
  */
-import { describe, expect, it, beforeEach, vi } from 'vitest';
+import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import { setApp } from '../../../src/diary/app';
 import { applyDirectories, resetTagsConfig } from '../../../src/diary/config';
 import { init, toggleSearch, setLoadingState, showDiaryPanel } from '../../../src/diary/ui/panel';
@@ -81,6 +81,15 @@ describe('openAddDialog useFileDateTime 分支', () => {
 });
 
 describe('saveNewEntry 分支', () => {
+  beforeEach(() => {
+    // fake timers 钉死系统时钟：0:00–0:10 档「10 分钟前」落在昨天，日记文件落昨日档（对齐 todo due.test.ts 先例）
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 7, 10, 12, 0)); // 2026-08-10（周一）正午
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('日期格式无效 → 「错误：日期时间格式不正确」', async () => {
     openAddDialog();
     selectTag('日记');

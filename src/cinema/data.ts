@@ -62,6 +62,9 @@ export function parseMovieFile(file: TFile, app: App): CinemaItem | null {
     doubanRating: fm['豆瓣评分'] !== undefined && fm['豆瓣评分'] !== '' ? String(fm['豆瓣评分']) : null,
     doubanUrl: /^https?:\/\//.test(String(fm['豆瓣链接'] ?? '')) ? String(fm['豆瓣链接']) : null,
     synopsis: fm['简介']?.toString() ?? null,
+    // 片长/季集：原独立观影报告的两项统计源字段（ADR-0090 并入内嵌分析页）
+    duration: fm['片长']?.toString() ?? null,
+    seasonText: fm['季集']?.toString() ?? null,
   };
 }
 

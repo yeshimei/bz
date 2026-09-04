@@ -33,12 +33,12 @@ import { applyDirectories as applyWallDirectories } from './diary-wall/config';
 import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
 // 阅读数据分析报告（读书报告内嵌化：独立弹窗退役，unloadReadingReport 只作废在途渲染/toast）
 import { unloadReadingReport } from './reading-report';
-// 影院（cinema 域，ADR-0087 起接管影视；旧 movie 域已退役）
-import { openCinema, addCinemaItem, unloadCinema } from './cinema';
-// 书架墙（bookshelf 域，新域与书库并存；不修改旧书库代码；报告内嵌为面板内视图）
+// 影院（cinema 域，ADR-0087 起接管影视；旧 movie 域已退役。ADR-0090：openCinemaAnalysis
+// 直达影院面板分析页，独立报告窗退役）
+import { openCinema, addCinemaItem, openCinemaAnalysis, unloadCinema } from './cinema';
+// 书架墙（bookshelf 域，新域与书库并存；不修改旧书库代码；读书报告内嵌为面板内视图）
 import { openBookshelf, openBookshelfReport, unloadBookshelf } from './bookshelf';
-// 影视分析报告（独立域，ADR-0048；目录随 cinema 统一回落）
-import { openMovieReport, unloadMovieReport } from './movie-report';
+// 影视分析报告独立域已退役（ADR-0090：报告窗并入影院内嵌分析页，命令直达 bz-cinema-analysis）
 import { openReviewPanel, openReviewReport, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview, unloadReview } from './review';
 import {
   openSecondBrainPanel,
@@ -60,7 +60,7 @@ import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setL
 import { registerGestureListeners } from './launcher/gestures';
 // 内容首页（home 域，ticket 177：入口页「新标签页」升级；与旧入口页并存，不改 launcher）
 import { openHome, unloadHome } from './home';
-import { ensureAutoSummary, unloadAutoSummary } from './auto-summary';
+import { ensureAutoSummary, unloadAutoSummary, redoSummaryForActiveFile } from './auto-summary';
 // ai-agent 域解散：文件同步拆入 memo/favorites 域（原 ensureAIAgent/unloadAIAgent 换线）
 import { ensureMemoFileSync, unloadMemoFileSync } from './memo';
 import { ensureFavoritesFileSync, unloadFavoritesFileSync } from './favorites';
@@ -92,6 +92,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-belongings-open', name: '归物本', icon: 'package', callback: () => openBelongings(getApp()) },
   // 剪藏本（clipbook 融合域，ADR-0082：聚合讯未读流 + 剪藏笔记一体化工作台）
   { id: 'bz-clipbook-open', name: '剪藏本', icon: 'scissors', callback: () => openClipbook(getApp()) },
+  // 自动摘要（enh-autosum 包 1）：当前剪藏笔记手动重跑 AI 摘要（只重建摘要/标签，不动用户标题）
+  { id: 'bz-auto-summary-redo', name: '重新生成当前剪藏摘要', icon: 'sparkles', callback: () => void redoSummaryForActiveFile(getApp()) },
 
   // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图（真实图片/视频/音频瀑布流）
   // icon 用 images（lucide 相册/媒体图标，与入口页磁贴媒体语义一致；未与其他命令重复）
@@ -102,9 +104,9 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 旧书库（library）域退役：bz-library-open/bz-book-notes-open 已删，读书笔记并入书架墙详情弹窗
   // 阅读数据分析报告（读书报告内嵌化：打开书架墙面板并切到报告视图；home 报告磁贴/剪藏本深链自动受益）
   { id: 'bz-reading-report-open', name: '阅读数据分析报告', icon: 'bar-chart-3', callback: () => openBookshelfReport(getApp()) },
-  // 影视分析报告（独立域，ADR-0048；f7 解冻：去 clapperboard 重复 → pie-chart，id/名称契约不动；
-  // ADR-0087 旧 movie 命令退役后仍是独立报告入口）
-  { id: 'bz-movie-report', name: '影视分析报告', icon: 'pie-chart', callback: () => openMovieReport(getApp()) },
+  // 影视分析报告（ADR-0090 内嵌化：独立报告窗退役，命令直达影院面板分析页；
+  // id 随域换 bz-cinema-analysis，名称「影视分析报告」保持用户习惯）
+  { id: 'bz-cinema-analysis', name: '影视分析报告', icon: 'pie-chart', callback: () => openCinemaAnalysis(getApp()) },
   // 影院（cinema 域，ADR-0087 接管影视——旧 bz-movie-open/bz-movie-add 已退役）
   { id: 'bz-cinema-open', name: '影院', icon: 'film', callback: () => openCinema(getApp()) },
   { id: 'bz-cinema-add', name: '加影视（影院）', icon: 'plus-circle', callback: () => addCinemaItem(getApp()) },
@@ -323,7 +325,6 @@ export default class BzPlugin extends Plugin {
     unloadCinema();
     // 书架墙（bookshelf 域：面板 DOM + 模块单例复位）
     unloadBookshelf();
-    unloadMovieReport();
     unloadReadingReport();
     // 剪藏本融合域（ADR-0082）：卸载统一面板；旧 news/clipping 已无独立挂载
     unloadClipbook();

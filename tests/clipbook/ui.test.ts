@@ -98,6 +98,26 @@ describe('clipbook UI 桌面三栏', () => {
     closePanel();
   });
 
+  it('右键菜单：「重新生成摘要」仅剪藏条目显示（enh-autosum 包 1）', async () => {
+    await openDesktop();
+    // news 条目（收件流默认源）：不含重新生成摘要
+    const newsItem = document.querySelector('.bz-clip-item') as HTMLElement;
+    newsItem.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+    await vi.waitFor(() => expect(document.querySelector('.bz-item-menu')).toBeTruthy());
+    expect((document.querySelector('.bz-item-menu') as HTMLElement).textContent).not.toContain('重新生成摘要');
+    // 切剪藏本源：剪藏条目含重新生成摘要（openItemMenu 自带关旧开新，无需先收浮层）
+    const clipRow = [...document.querySelectorAll('.bz-clip-rail-row')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
+    clipRow.click();
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-clip-item').length).toBe(1));
+    const clipItem = document.querySelector('.bz-clip-item') as HTMLElement;
+    clipItem.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+    await vi.waitFor(() => expect(document.querySelector('.bz-item-menu')).toBeTruthy());
+    const menu = document.querySelector('.bz-item-menu') as HTMLElement;
+    expect(menu.textContent).toContain('重新生成摘要');
+    expect(menu.textContent).toContain('打开笔记'); // 既有动作不受影响
+    closePanel();
+  });
+
   it('移动端（isMobileEnv）→ mob 容器显示 + 点条目进详情 + 头栏保存钮', async () => {
     boot();
     // 模拟移动端（isMobileEnv = Platform.isMobile；直接拉高 M.isMobile 需走 UI 分支——用 window 宽判定被 mock 卡，
