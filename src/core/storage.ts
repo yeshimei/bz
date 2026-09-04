@@ -5,6 +5,19 @@
  *  - read：不存在 → 建目录建初始值文件（默认 []）；解析失败 → 原文件原样留档 CONFIG/.CORRUPT/<名>.<yyyymmdd-hhmmss>.bak 后重建初始值
  *  - write：存在 modify / 不存在 create（建目录）；并发首建竞态（create 撞「已存在」）降级为重读/modify，数据不丢；写失败先把盘上原内容留档再照抛原错误
  *
+ * D1 可靠写契约（三原语，全部域数据层统一走；D2/D3 迁移依据，词条见 CONTEXT.md「可靠写契约」）：
+ *  1. enqueueFileTask(path, task)——同文件「读→改→写」任务 FIFO 串行（消灭并发互相覆盖）、异文件并行；
+ *     任务抛错只上抛该调用方，不堵后续队列。队列不可重入：enqueueFileTask 任务内勿对同路径再调原语 2（死锁）。
+ *  2. updateFileSections(path, writer) / mergeWriteSections(path, set)——段级合并写（news
+ *     writeNewsDataMerged 先例上沉）：串行队列内读磁盘现值，writer 只产出「本次声明的改动段」，未声明段
+ *     保留磁盘现值合并写回，双写者（插件与守护进程/其他写方）各写各段互不覆盖；对象形态 JSON 专用
+ *     （数组/标量/null 抛错，域须先归一形态，如 news 的 wrapArrayToNewsData）；updateFileSections 返回
+ *     合并后完整对象，mergeWriteSections 为声明式糖。
+ *  3. 冲突留档——解析失败或写失败先把原文件原样留档到 CONFIG/.CORRUPT/<名>.<yyyymmdd-hhmmss>.bak
+ *     （目录不存在则建，同秒撞名加 -N 序号），再走降级初始化/照抛原错误，永不静默丢数据；留档成功发
+ *     人话化 warning 通知（同文件 30s 去重；域传 onCorrupt 自管损坏文案时不重复弹——铁律 1 冻结文案）；
+ *     留档失败不阻塞原流程。onCorrupt 返回 false 的「不清盘」语义不变（不留档、不重建，read 返回 null）。
+ *
  * 扩展（相对 jsonStore）：
  *  - defaultValue：缺失/损坏时落盘的初始值（默认 []；允许对象，如 quiz 的 {notes:{}}）。传函数则每次读取求值
  *  - writeIfChanged：写前读盘比对，字节级相同跳过写（Syncthing 冲突止血——smartcat/secondbrain 既有能力下沉，默认关）
