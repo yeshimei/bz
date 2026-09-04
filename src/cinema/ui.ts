@@ -29,6 +29,7 @@ import {
 } from './constants';
 import { M, resetCinemaState, type CinemaItem, type CinemaState } from './state';
 import { rebuildItems, getDisplayItems } from './data';
+import { formatRelativeTime } from '../core/utils';
 import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } from './recommend';
 import { buildStatPageHtml } from './analysis';
 import { watchPosterFetch } from './poster-watch';
@@ -64,34 +65,15 @@ function esc(s: unknown): string {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => (({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]));
 }
 
-/** 相对日期（仿 core formatRelativeTime）：刚刚/N分钟前/N小时前/昨天/前天/周几/MM-DD/YYYY-MM-DD */
+/**
+ * 相对日期：统一走 core formatRelativeTime（enh-sweep B 包，散落自算收编）；
+ * 本域仅保留「未标注日期」兜底语义（null / 无效输入）。
+ */
 export function relDate(d: string | null, now: Date = new Date()): string {
   if (!d) return '未标注日期';
   const t = new Date(d).getTime();
   if (isNaN(t)) return '未标注日期';
-  const nowMs = now.getTime();
-  const diffSeconds = Math.floor((nowMs - t) / 1000);
-  const fmt = (dt: Date) => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
-  if (diffSeconds < 0) return fmt(new Date(t)); // 未来 → 原样日期
-  if (diffSeconds < 60) return '刚刚';
-  const diffMinutes = Math.floor(diffSeconds / 60);
-  if (diffMinutes < 60) return `${diffMinutes}分钟前`;
-  const startOfDay = (dt: Date) => new Date(dt.getFullYear(), dt.getMonth(), dt.getDate()).getTime();
-  const todayStart = startOfDay(now);
-  const targetDay = startOfDay(new Date(t));
-  const dayDiff = Math.round((todayStart - targetDay) / 86400000);
-  if (dayDiff === 0) return `${Math.floor(diffMinutes / 60)}小时前`;
-  if (dayDiff === 1) return '昨天';
-  if (dayDiff === 2) return '前天';
-  const day = now.getDay();
-  const weekStart = todayStart - (day === 0 ? 6 : day - 1) * 86400000;
-  if (targetDay >= weekStart && targetDay < todayStart) {
-    return ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][new Date(t).getDay()];
-  }
-  if (new Date(t).getFullYear() === now.getFullYear()) {
-    return `${String(new Date(t).getMonth() + 1).padStart(2, '0')}-${String(new Date(t).getDate()).padStart(2, '0')}`;
-  }
-  return fmt(new Date(t));
+  return formatRelativeTime(d, now);
 }
 
 /** 类型徽章色（数据语义功能色，域内直给） */
@@ -252,7 +234,7 @@ async function markStatus(item: CinemaItem, target: '在看' | '已看', app: Ap
   }
   try {
     await persistItem(item, app);
-    notice(`已标记${target}`, 'success');
+    notice(`已把「${item.name}」标记为${target}`, 'success');
     const toSt = target === '已看' ? 'watched' : 'watching';
     if (toSt !== fromSt) emitDomainEvent('movie', { kind: 'status', name: item.name, from: fromSt, to: toSt });
     if (item.rating !== null && item.rating > 0 && item.rating !== prevRating) {
@@ -753,7 +735,7 @@ function openEditForm(item: CinemaItem | null, app: App): void {
           }
         }
         close();
-        notice(editing ? '已保存' : '已添加', 'success');
+        notice(editing ? `已保存「${name}」` : `已添加「${name}」`, 'success');
         renderAll(app);
       } catch (e) {
         // CM2：新增落盘失败回退内存条目，避免 file:null 幽灵卡；编辑失败回滚内存（磁盘未动，300ms 重建不会弹回）
@@ -803,7 +785,7 @@ function openDeleteConfirm(item: CinemaItem, app: App): void {
     // 事件补发（smartcat 行为流观察；ADR-0087 cinema 接管）
     emitDomainEvent('movie', { kind: 'deleted', name: item.name });
     close();
-    notice('已移入回收站', 'success');
+    notice(`已删除「${item.name}」，已移入系统回收站`, 'success');
     renderAll(app);
   });
 }
@@ -849,7 +831,7 @@ function openQuickStatus(item: CinemaItem, app: App): void {
       try {
         await persistItem(item, app);
         close();
-        notice(`已标记${selected}`, 'success');
+        notice(`已把「${item.name}」标记为${selected}`, 'success');
         // 事件补发（smartcat 行为流观察）：状态流转 + 条件评分/影评（对齐旧 movie 快速状态窗）
         const toSt = item.status === STATUS_WANT ? 'want' : item.status === STATUS_WATCHING ? 'watching' : 'watched';
         if (toSt !== fromSt) emitDomainEvent('movie', { kind: 'status', name: item.name, from: fromSt, to: toSt });

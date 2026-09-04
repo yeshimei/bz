@@ -3,7 +3,7 @@
  * 命令（review-*）由 main.ts 裸注册（含 review-mark-again/hard/good/easy）。
  */
 import type { App } from 'obsidian';
-import { notice } from '../core/notice';
+import { notice, notifyUndo, notifySaveError } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { onDomainEvent } from '../core/domain-bus';
 import { ReviewDataManager } from './data';
@@ -116,7 +116,7 @@ export async function reviewAddCurrent(app: App): Promise<void> {
     await uiManager!.refreshPanel();
     await reviewApp.applyReviewStyles(app);
   } catch (e: any) {
-    notice('操作失败：' + e.message, 'error');
+    notice('加入复习计划失败：' + e.message + '，请重试', 'error');
   }
 }
 
@@ -129,21 +129,31 @@ export async function reviewRemoveCurrent(app: App): Promise<void> {
     return;
   }
   const items = await dataManager!.loadItems();
-  if (!items.some((i) => i.filePath === file.path)) {
+  const target = items.find((i) => i.filePath === file.path);
+  if (!target) {
     notice('该笔记不在复习计划中');
     return;
   }
   void openFlowDialog({
-    title: '确认移出复习计划？',
-    message: '所有复习数据将被删除。',
+    title: '移出复习计划',
+    message: `确定把「${file.basename}」移出复习计划吗？所有复习数据将被删除，移出后可在通知中撤销。`,
     actions: [
       { label: '取消', value: 'cancel' },
-      { label: '确定', value: 'ok', cta: true },
+      { label: '移出', value: 'ok', cta: true },
     ],
   }).then(async (v) => {
     if (v !== 'ok') return;
     await dataManager!.removeItem(file.path);
-    notice('已移出复习计划', 'success');
+    notifyUndo(`已移出「${file.basename}」`, () => {
+      void (async () => {
+        try {
+          await dataManager!.restoreItem(target);
+          await uiManager!.refreshPanel();
+        } catch (e) {
+          notifySaveError(e, '恢复复习条目');
+        }
+      })();
+    });
     await uiManager!.refreshPanel();
     await reviewApp.applyReviewStyles(app);
   });

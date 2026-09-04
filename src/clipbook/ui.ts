@@ -872,7 +872,7 @@ async function doMarkRead(a: ClipArticle | null): Promise<void> {
   if (!a || a.origin !== 'news') return;
   const rawBefore = { ...(a.raw || {}) }; // 动作前快照（撤销恢复 read/state/body 用）
   await flowMarkRead(a);
-  notifyUndo('已标记为已读', () => void undoMarkRead(rawBefore));
+  notifyUndo(`已将「${a.title}」标为已读`, () => void undoMarkRead(rawBefore));
   await refreshAfterAction();
 }
 
@@ -892,7 +892,7 @@ async function doToggleReading(a: ClipArticle | null): Promise<void> {
 
 async function deleteNewsItem(a: ClipArticle): Promise<void> {
   const ok = await openFlowDialog({
-    title: '确认删除',
+    title: '删除条目',
     message: `确定从收件流删除「${a.title}」吗？删除后可在通知中撤销。`,
     actions: [
       { label: '取消', value: 'cancel' },
@@ -902,7 +902,7 @@ async function deleteNewsItem(a: ClipArticle): Promise<void> {
   if (ok !== 'ok') return;
   const rawBefore = { ...(a.raw || {}) }; // 动作前快照（撤销插回 news.json 用）
   await flowDeleteNews(a);
-  notifyUndo('已删除', () => void undoDeleteNews(rawBefore));
+  notifyUndo(`已删除条目「${a.title}」`, () => void undoDeleteNews(rawBefore));
   await refreshAfterAction();
 }
 
@@ -915,7 +915,7 @@ async function undoDeleteNews(rawBefore: any): Promise<void> {
 
 async function deleteClipNote(a: ClipArticle): Promise<void> {
   const ok = await openFlowDialog({
-    title: '确认删除',
+    title: '删除剪藏',
     message: `确定删除剪藏「${a.title}」吗？文件将移入系统回收站。`,
     actions: [
       { label: '取消', value: 'cancel' },
@@ -931,7 +931,7 @@ async function deleteClipNote(a: ClipArticle): Promise<void> {
       try { content = await getApp().vault.cachedRead(note.file); } catch (e) { /* 快照失败也继续删 */ }
       await getApp().vault.trash(note.file, true); // 系统回收站（enh 包 5：替代硬删除）
       clipBodyCache.delete(path);
-      notifyUndo('已移入回收站', () => void undoTrashClip(path, content));
+      notifyUndo(`已删除剪藏「${a.title}」（已移入系统回收站）`, () => void undoTrashClip(path, content));
       await refreshAfterAction();
     } catch (e) {
       notice('删除失败，请检查文件权限', 'error');

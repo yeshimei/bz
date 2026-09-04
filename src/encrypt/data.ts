@@ -1,5 +1,5 @@
 /**
- * 保险箱数据层（encrypt 域，safe 数据）
+ * 保险库数据层（encrypt 域，safe 数据）
  * 移出式清单容器加密：SafeManager 负责 清单(.safe.enc) 读写、密文镜像（正文+附件）、
  * 加锁(lockNote) / 还原取出(restoreNote，还原成功即删除镜像与条目)。
  *
@@ -19,9 +19,9 @@ import { getApp } from '../core/app';
 import { emitDomainEvent } from '../core/domain-bus';
 import { CryptoService, clearCryptoKeyCache } from '../core/crypto';
 
-/** 保险箱数据变更通道（ADR-0078：密码本/保险库等外部消费者订阅；写操作后广播） */
+/** 保险库数据变更通道（ADR-0078：密码本/保险库等外部消费者订阅；写操作后广播） */
 export const ENCRYPT_CHANGED_CHANNEL = 'encrypt:changed' as const;
-/** 保险箱解锁态变更通道（ADR-0078：外部消费者订阅解锁/上锁） */
+/** 保险库解锁态变更通道（ADR-0078：外部消费者订阅解锁/上锁） */
 export const ENCRYPT_UNLOCK_CHANGED_CHANNEL = 'encrypt:unlock-changed' as const;
 
 /** 附件类型 */
@@ -49,8 +49,8 @@ export interface SafeNote {
   id: string;
   /**
    * 来源类型：缺省=普通加密笔记；
-   * 'diary-entry'=加密日记条目（ADR-0017，保险箱面板过滤，日记面板单独读）；
-   * 'password-vault'=密码本整表（与保险箱共享主密码/解锁态，密码本面板单独读写）。
+   * 'diary-entry'=加密日记条目（ADR-0017，保险库面板过滤，日记面板单独读）；
+   * 'password-vault'=密码本整表（与保险库共享主密码/解锁态，密码本面板单独读写）。
    */
   kind?: 'diary-entry' | 'password-vault';
   /** 原笔记路径（如 我的/日记/2025-06-01.md） */
@@ -924,7 +924,7 @@ export class SafeManager {
   }
 
   /**
-   * 加锁一篇笔记：把当前笔记正文 + 双链附件移入保险箱（ADR-0018 提交式加密）。
+   * 加锁一篇笔记：把当前笔记正文 + 双链附件移入保险库（ADR-0018 提交式加密）。
    * 加密阶段密文流式写入暂存区 `.staging/`（不占内存、不进入数据文件夹正式布局）；
    * 全部加密成功后才进入提交序列：
    *   S1 写挂起标记 → S2 清单先行（saveManifest，提交点）→ S3 暂存镜像搬入顶层

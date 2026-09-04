@@ -784,7 +784,7 @@ function openMobSheet(it: BelongingsItem): void {
 async function deleteItem(it: BelongingsItem): Promise<void> {
   const v = await openFlowDialog({
     title: '删除物品',
-    message: `确定要删除物品「${it.name}」吗？`,
+    message: `确定要删除物品「${it.name}」吗？删除后可在通知中撤销。`,
     actions: [
       { label: '取消', value: 'cancel' },
       { label: '删除', value: 'del', danger: true, cta: true },

@@ -1,5 +1,5 @@
-/* ==================== 保险箱域样式（src/encrypt/styles.css） ==================== */
-/* ==================== 加密保险箱（encrypt，ticket NN：移出式清单容器加密） ==================== */
+/* ==================== 保险库域样式（src/encrypt/styles.css） ==================== */
+/* ==================== 加密保险库（encrypt，ticket NN：移出式清单容器加密） ==================== */
 /* 毛玻璃明确不采用（设计手册 §5.2：backdrop-filter 对比不可控），遮罩统一 --background-modifier-cover */
 #bz-encrypt-popup { animation: slideUp 0.3s ease-out; }
 #bz-encrypt-popup, #bz-encrypt-preview-popup {
@@ -174,7 +174,7 @@
   color: var(--text-muted); cursor: pointer; user-select: none;
 }
 .bz-encrypt-dialog-ack input { margin-right: 6px; vertical-align: -1px; }
-/* 保险箱状态栏（补丁2：锁状态提示，点击打开面板） */
+/* 保险库状态栏（补丁2：锁状态提示，点击打开面板） */
 .bz-encrypt-statusbar { cursor: pointer; }
 .bz-encrypt-statusbar:hover { opacity: 0.8; }
 

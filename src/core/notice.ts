@@ -145,6 +145,15 @@ export function notifySaveError(err: unknown, what?: string): void {
   notify(what ? `保存失败（${what}）：${msg}` : `保存失败：${msg}`, { type: 'error' });
 }
 
+/**
+ * 动作失败统一提示（enh-sweep B 包）：非写盘类动作（清理/还原/加密等）失败的人话错误 toast。
+ * 与 notifySaveError 同风格——说明什么失败（动作名）+ 原因 + 重试途径（「请重试」尾巴）。
+ */
+export function notifyActionError(err: unknown, action: string): void {
+  const msg = err instanceof Error ? err.message : String(err);
+  notify(`${action}失败：${msg}，请重试`, { type: 'error' });
+}
+
 /** 当前视口是否为移动端（决定默认位置/动画：移动端顶部居中，桌面右侧弹出） */
 function isMobileView(): boolean {
   return (

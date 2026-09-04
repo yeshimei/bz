@@ -774,8 +774,11 @@ describe('桌面行动作浮层', () => {
     // flow-dialog
     const popup = document.getElementById('__shared_confirm_popup__');
     expect(popup).not.toBeNull();
-    expect(popup!.textContent).toContain('确定归档收藏 "归档项" 吗？');
-    expect(popup!.textContent).toContain('归档后不在列表显示，数据保留在 favorites.json。');
+    expect(popup!.textContent).toContain('确定归档收藏「归档项」吗？');
+    expect(popup!.textContent).toContain('归档后不在主列表显示（数据保留），可在通知中撤销。');
+    // B 包扫尾：标题「归档收藏」+ 确认按钮动词化（不是「确定」）
+    expect(popup!.querySelector('h4')!.textContent).toBe('归档收藏');
+    expect((document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).textContent).toBe('归档');
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     await tick(30);
     const saved = (await ctx.dm.getAll())[0];
@@ -846,7 +849,7 @@ describe('桌面行动作浮层', () => {
     await tick(10);
     expect(document.querySelector('.bz-item-menu')).toBeNull();
     const popup = document.getElementById('__shared_confirm_popup__');
-    expect(popup!.textContent).toContain('确定删除收藏 "被删条目" 吗？');
+    expect(popup!.textContent).toContain('确定删除收藏「被删条目」吗？');
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     await tick(30);
     expect((await ctx.dm.getAll()).length).toBe(0);

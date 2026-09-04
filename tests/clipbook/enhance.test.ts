@@ -200,6 +200,11 @@ describe('误标/误删可撤销（enh 包 5）', () => {
     const readBtn = [...menu.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.includes('标记为已读')) as HTMLElement;
     readBtn.click();
     await drainNewsWritesForTests();
+    // B 包扫尾：通知带对象名（「已将「果壳文章一」标为已读」）
+    await vi.waitFor(() => {
+      const msg = document.querySelector('.bz-notice-msg') as HTMLElement;
+      expect(msg.textContent).toBe('已将「果壳文章一」标为已读');
+    });
     const noticeAction = await vi.waitFor(() => {
       const el = document.querySelector('.bz-notice-action') as HTMLElement;
       expect(el).toBeTruthy();
@@ -230,11 +235,19 @@ describe('误标/误删可撤销（enh 包 5）', () => {
       expect(el).toBeTruthy();
       return el;
     });
+    // B 包扫尾：三段式标题「删除剪藏」+ 问句 + 回收站后果
+    expect(popup.querySelector('h4')!.textContent).toBe('删除剪藏');
+    expect(popup.textContent).toContain('确定删除剪藏「剪藏笔记A」吗？');
     expect(popup.textContent).toContain('系统回收站');
     (document.querySelector('#__shared_confirm_ok__') as HTMLElement).click();
     await vi.waitFor(() => {
       expect(vault.trashed.some((t) => t.path === '归档/网页剪藏/剪藏笔记A.md' && t.system)).toBe(true);
       expect(vault.files.has('归档/网页剪藏/剪藏笔记A.md')).toBe(false);
+    });
+    // B 包扫尾：撤销通知带对象名
+    await vi.waitFor(() => {
+      const msg = document.querySelector('.bz-notice-msg') as HTMLElement;
+      expect(msg.textContent).toBe('已删除剪藏「剪藏笔记A」（已移入系统回收站）');
     });
     // 通知撤销 → 原路径重建
     const noticeAction = await vi.waitFor(() => document.querySelector('.bz-notice-action') as HTMLElement);

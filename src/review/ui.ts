@@ -435,7 +435,7 @@ export class UIManager {
       await this.refreshPanel();
       await reviewApp.applyReviewStyles(this.app);
     } catch (e: any) {
-      notice('操作失败：' + (e?.message || e), 'error');
+      notice('加入复习计划失败：' + (e?.message || e) + '，请重试', 'error');
     }
   }
 
@@ -587,10 +587,10 @@ export class UIManager {
         onClick: () => {
           void openFlowDialog({
             title: '移出复习计划',
-            message: `确定移出“${item.name}”？`,
+            message: `确定移出「${item.name}」吗？移出后可在通知中撤销。`,
             actions: [
               { label: '取消', value: 'cancel' },
-              { label: '确定', value: 'ok', cta: true },
+              { label: '移出', value: 'ok', cta: true },
             ],
           }).then(async (v) => {
             if (v !== 'ok') return;
@@ -624,7 +624,7 @@ export class UIManager {
   private async openItemFile(item: ReviewItem): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(item.filePath);
     if (!file) {
-      notice('文件已删除', 'warning');
+      notice(`笔记「${item.name}」的文件已删除`, 'warning');
       return;
     }
     const leaf = this.app.workspace.getLeaf(false);

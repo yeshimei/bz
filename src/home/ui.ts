@@ -402,7 +402,7 @@ function renderAll(): void {
     const pom = statOf('pomodoro').text || '—';
     const mstatCell = (id: string, v: string, k: string) =>
       `<button type="button" class="bz-home-mstat" data-home-side="${id}" aria-label="${k}：${esc(v)}，点按打开"><span class="bz-home-mstat-v">${esc(v)}</span><span class="bz-home-mstat-k">${k}</span></button>`;
-    mstats.innerHTML = mstatCell('memo', memo, '待办') + mstatCell('review', rev, '复习到期') + mstatCell('pomodoro', pom, '今日专注');
+    mstats.innerHTML = mstatCell('memo', memo, '备忘') + mstatCell('review', rev, '复习到期') + mstatCell('pomodoro', pom, '今日专注');
   }
 
   // 卡片网格
