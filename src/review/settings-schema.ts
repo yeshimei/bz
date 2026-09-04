@@ -9,7 +9,7 @@
  *
  * settings-panel 桌面侧栏经 reviewSettingsSchema 消费（入口契约保持自 review/ui re-export）。
  */
-import { Setting, type App } from 'obsidian';
+import { Setting, setIcon, type App } from 'obsidian';
 import { notice } from '../core/notice';
 import { getSettings, saveSettings } from '../core/settings-provider';
 import { mobileFullscreenGroup } from '../core/settings-common';
@@ -180,7 +180,10 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
                   const remove = document.createElement('button');
                   remove.className = 'bz-review-exclude-remove';
                   remove.setAttribute('aria-label', `解除排除 ${path}`);
-                  remove.textContent = '✕';
+                  const removeIc = document.createElement('span');
+                  removeIc.className = 'bz-ic';
+                  setIcon(removeIc, 'x'); // 收尾扫尾：✕ 文本符号退役，换 lucide
+                  remove.appendChild(removeIc);
                   remove.onclick = () => {
                     void (async () => {
                       const { ReviewWatcher } = await import('./watch');

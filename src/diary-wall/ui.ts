@@ -275,7 +275,7 @@ export class DiaryWallAppController {
     this.desk = this.bindRefs(desk);
     // 移动实例（真全屏）
     const mob = document.createElement('div');
-    mob.className = 'bz-diary-wall-mob';
+    mob.className = 'bz-diary-wall-mob bz-panel-mtop';
     mob.innerHTML = this.mobHTML();
     this.root.appendChild(mob);
     this.mob = this.bindRefs(mob);

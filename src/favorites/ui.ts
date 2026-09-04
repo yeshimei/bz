@@ -15,6 +15,7 @@
  *   （favoritesSettingsSchema 空态）；file-sync 后台不动（index.ts）。
  */
 import { notice, notify, notifyUndo, notifySaveError } from '../core/notice';
+import { topifyZ } from '../core/z-order';
 import { refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, closeItemMenu, openItemMenu, openItemSheet, type ItemAction } from '../core/item-actions';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
@@ -222,19 +223,20 @@ async function refreshBalances(dm: DataManager): Promise<void> {
   );
   if (!any) return;
   try {
-    // 写前重读，基于最新快照套本批（P1-37 并发写回语义）
-    const latest = await dm.getAll();
-    for (const id of Object.keys(updates)) {
-      const idx = latest.findIndex((d) => d.id === id);
-      if (idx === -1) continue;
-      const u = updates[id];
-      if (u.balance !== undefined) {
-        latest[idx] = { ...latest[idx], balance: u.balance, balanceCacheTime: u.balanceCacheTime ?? null, balanceError: u.balanceError ?? null };
-      } else {
-        latest[idx] = { ...latest[idx], balanceError: u.balanceError ?? null };
+    // 余额批量写回走 DataManager 串行队列读改写（D2 收编）：基于队列内磁盘现值套本批，
+    // 与并发 add/update/删除撤销不再互踩（原 P1-37 写前重读语义保留，整体原子化）
+    const latest = await dm.mutateAll((data) => {
+      for (const id of Object.keys(updates)) {
+        const idx = data.findIndex((d) => d.id === id);
+        if (idx === -1) continue;
+        const u = updates[id];
+        if (u.balance !== undefined) {
+          data[idx] = { ...data[idx], balance: u.balance, balanceCacheTime: u.balanceCacheTime ?? null, balanceError: u.balanceError ?? null };
+        } else {
+          data[idx] = { ...data[idx], balanceError: u.balanceError ?? null };
+        }
       }
-    }
-    await dm.write(latest);
+    });
     // 更新内存以触发重渲
     const idxs = new Set(Object.keys(updates));
     M.items = latest.map((d) => (idxs.has(d.id) ? { ...d } : d));
@@ -247,7 +249,7 @@ async function refreshBalances(dm: DataManager): Promise<void> {
 // ==================== 主面板结构 ====================
 
 function panelHtml(): string {
-  return `<div class="bz-fav-panel">
+  return `<div class="bz-fav-panel bz-panel-mtop">
   <div class="bz-fav-head">
     <div class="bz-fav-title">收藏本</div>
     <div class="bz-fav-head-btns">
@@ -308,6 +310,7 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
   overlay.className = 'bz-fav-overlay';
   overlay.innerHTML = panelHtml();
   document.body.appendChild(overlay);
+  topifyZ(overlay); // ADR-0067：显示即发号（原静态 z-index:100000 已删）
   M.overlay = overlay;
   M.renderFn = () => renderAll();
   // 排序钮 label 与持久化排序键同步（收藏本按钮文案跟随当前模式）
@@ -883,7 +886,8 @@ function closeForm(popup: HTMLElement): void {
   _saving = false;
   closeItemMenu();
   unregisterSheetCompanion(popup);
-  popup.remove();
+  // 连同遮罩一并移除（收尾扫尾修正：原只移除表单本体，留全屏空遮罩挡住下层交互）
+  (popup.closest('.bz-fav-form-mask') ?? popup).remove();
 }
 
 /**
@@ -973,6 +977,7 @@ sk-key3">${it?.llmConfig?.apiKeys ? esc(it.llmConfig.apiKeys) : ''}</textarea></
     </div>
   </div>`;
   document.body.appendChild(mask);
+  topifyZ(mask); // ADR-0067：显示即发号（原静态 z-index:110000 已删，恒压主面板）
   mountIcons(mask);
   const popup = mask.querySelector('.bz-fav-form') as HTMLElement;
   // 编辑自抽屉浮层打开：注册 companion 防点弹窗误关抽屉（closeForm 注销）

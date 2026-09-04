@@ -268,6 +268,25 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     expect(panel()).not.toBeNull();
     cleanupBelongings();
   });
+
+  it('收尾扫尾：面板/表单遮罩 topifyZ 动态发号（表单恒压主面板）+ 根节点挂 bz-panel-mtop', async () => {
+    await openPanel();
+    const overlay = panel()!;
+    // 根节点接线移动全屏顶距工具类
+    expect(panelOf()!.classList.contains('bz-panel-mtop')).toBe(true);
+    // 静态 z 档退役：显示即发号（ADR-0067）
+    const zOverlay = Number(overlay.style.zIndex);
+    expect(Number.isFinite(zOverlay) && zOverlay > 0).toBe(true);
+    await openForm(null);
+    const mask = document.querySelector('.bz-bel-form-mask') as HTMLElement;
+    expect(mask).not.toBeNull();
+    const zMask = Number(mask.style.zIndex);
+    expect(Number.isFinite(zMask) && zMask > zOverlay).toBe(true);
+    // 收尾：取消关表单
+    (mask.querySelector('[data-bm-cancel]') as HTMLElement).click();
+    expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
+    cleanupBelongings();
+  });
 });
 
 // ==================== 渲染：统计 / 时间轴 / 行字段 ====================
