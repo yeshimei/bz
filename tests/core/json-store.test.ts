@@ -2,7 +2,7 @@
 /**
  * jsonStore 测试（ticket 02）：不存在建目录建文件、损坏留档重建、write 语义。
  * P1-31：并发首建竞态（create 撞「已存在」降级重读/modify，数据不丢）。
- * P1-32：解析失败不再静默清库——原文件改名留档 .corrupt-<时间戳> 后重建空库。
+ * P1-32：解析失败不再静默清库——原文件原样留档 CONFIG/.CORRUPT/<名>.<yyyymmdd-hhmmss>.bak（D1 契约）后重建空库。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { jsonStore } from '../../src/core/json-store';
@@ -55,26 +55,28 @@ describe('jsonStore', () => {
     } finally {
       warnSpy.mockRestore();
     }
-    // 原内容改名留档（.corrupt-<时间戳>），未丢失
-    const backups = [...vault.files.keys()].filter((p) => p.startsWith('CONFIG/STORAGE/memo.json.corrupt-'));
+    // 原内容原样留档（CONFIG/.CORRUPT/<名>.<yyyymmdd-hhmmss>.bak，D1 契约），未丢失
+    const backups = [...vault.files.keys()].filter((p) => p.startsWith('CONFIG/.CORRUPT/memo.json.'));
     expect(backups).toHaveLength(1);
-    expect(backups[0]).toMatch(/^CONFIG\/STORAGE\/memo\.json\.corrupt-\d{4}-\d{2}-\d{2}T/);
+    expect(backups[0]).toMatch(/^CONFIG\/\.CORRUPT\/memo\.json\.\d{8}-\d{6}\.bak$/);
     expect(vault.files.get(backups[0])).toBe(broken);
     // 原路径重建空库
     expect(JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!)).toEqual([]);
   });
 
-  it('P1-32 留档 rename 失败 → 容错原地重建空库（不抛错）', async () => {
+  it('P1-32 留档失败 → 容错原地重建空库（不抛错）', async () => {
     vault.files.set('CONFIG/STORAGE/memo.json', '{broken');
-    vault.rename = async () => {
-      throw new Error('rename failed');
+    const rawCreate = vault.create.bind(vault);
+    vault.create = async (path: string, content: string) => {
+      if (path.startsWith('CONFIG/.CORRUPT/')) throw new Error('create failed');
+      return rawCreate(path, content);
     };
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {
       const store = jsonStore('CONFIG/STORAGE/memo.json');
       expect(await store.read()).toEqual([]);
-      // rename 失败：无留档文件，原路径被重建为 []
-      expect([...vault.files.keys()].filter((p) => p.includes('.corrupt-'))).toHaveLength(0);
+      // 留档失败：无留档文件，原路径被重建为 []
+      expect([...vault.files.keys()].filter((p) => p.startsWith('CONFIG/.CORRUPT/'))).toHaveLength(0);
       expect(JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!)).toEqual([]);
     } finally {
       warnSpy.mockRestore();
