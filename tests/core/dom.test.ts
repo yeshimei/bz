@@ -173,22 +173,29 @@ describe('createSiteIcon', () => {
     expect(createSiteIcon(null)).toBeNull();
   });
 
-  it('生成 img 元素（yandex 源）', () => {
+  it('生成 img 元素（yandex v2 源带 size 高清参数）', () => {
     const img = createSiteIcon('example.com', 16);
     expect(img).not.toBeNull();
-    expect(img!.src).toContain('favicon.yandex.net/favicon/example.com');
+    expect(img!.src).toContain('favicon.yandex.net/favicon/v2/example.com?size=16');
     expect(img!.style.width).toBe('16px');
+    // 大尺寸头像位：源图按请求尺寸取（不再是恒 16px 小图放大发糊）
+    const big = createSiteIcon('example.com', 64);
+    expect(big!.src).toContain('size=64');
   });
 
   it('域名映射（daily.zhihu.com → zhihu.com）', () => {
     const img = createSiteIcon('daily.zhihu.com');
-    expect(img!.src).toContain('favicon/zhihu.com');
+    expect(img!.src).toContain('favicon/v2/zhihu.com');
   });
 
-  it('localStorage 缓存命中直接使用缓存', () => {
-    localStorage.setItem('favicon_example.com', 'data:image/png;base64,xxx');
+  it('localStorage 缓存命中直接使用缓存（v2 键；旧 v1 糊图键自动失效）', () => {
+    localStorage.setItem('favicon_v2_example.com_16', 'data:image/png;base64,xxx');
     const img = createSiteIcon('example.com');
     expect(img!.src).toBe('data:image/png;base64,xxx');
+    // v1 旧键不再命中：即便存在旧糊图缓存也走网络高清源
+    localStorage.setItem('favicon_example.com', 'data:image/png;base64,old-blurry');
+    const img2 = createSiteIcon('example.com', 32);
+    expect(img2!.src).toContain('favicon.yandex.net/favicon/v2/example.com?size=32');
   });
 });
 

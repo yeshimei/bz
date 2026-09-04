@@ -78,8 +78,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-pomodoro-open',
   'bz-literature-open', 'bz-literature-note-term',
   'bz-attach-move',
-  // 统一保险库（ADR-0085）：密码/加密笔记/加密日记 + 加密当前笔记
-  'bz-encrypt-open', 'bz-encrypt-lock',
+  // 统一保险库（ADR-0085）：密码/加密笔记/加密日记 + 加密当前笔记 + 快速复制密码
+  'bz-encrypt-open', 'bz-encrypt-lock', 'bz-encrypt-copy-password',
   'bz-smartcat-open', 'bz-smartcat-chat', 'bz-smartcat-hide', 'bz-smartcat-dashboard',
   // 设置面板（ADR-0080）
   'bz-settings-panel-open',
