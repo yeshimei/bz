@@ -901,3 +901,18 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **自动刷新**：复用影院 registerAutoRefresh（vault 变更 300ms 防抖重算，仅更新内容区），零新增订阅。
 - **图表升级**：类型分布 SVG 环形图改水平条形行（「圆形统计被否」拍板；softBarHTML 支持逐条目类型色）；拍板项中热力图翻月/年卡下钻经核实属 reading-report 图表升级包，归读书报告内嵌化任务（书架墙）。
 - **测试**：smoke 命令表同步；cinema 数据层 +7 用例（片长/季集/19 板块对照断言/条形行/小计/空态/整页）、UI 层 +3 用例（直达/空态动作/自动刷新）。
+
+### 读书报告内嵌化：独立弹窗退役、报告改为书架墙面板内视图（ticket 190，ADR-0091）
+
+> 用户拍板（2026-09-04，全域体验审查）：「书的报告，影视报告都一样，写进面板中」——读书报告不再独立弹窗，嵌入书架墙面板，独立窗退役。
+
+- **独立弹窗退役**：reading-report 域保留 stats/report 纯函数 + index.ts 重写为面板内容区渲染器（renderReadingReport/cancelReadingReport/handleReportInteraction）；遮罩/窗口/ESC 层/z-order/移动全屏覆写全删；分片渲染/progress toast/错误人话化保留；取消在切视图/关面板/卸载三路收口。
+- **面板内视图**：bookshelf `M.view='shelf'|'report'` 双互斥视图；左栏报告入口与移动头行报告钮互切；报告视图左栏变「‹ 返回书架」（桌面返回），视图内关闭钮仅移动端。
+- **命令改直达**：bz-reading-report-open（id/名称不变）= openBookshelfReport——冷开面板直落报告视图、已开就地切换；home 报告磁贴/剪藏本深链/书架左栏入口同一去向。
+- **同面板筛选（原深链作废）**：作者行 data-rr-author → 书架搜索预填；分类行 data-rr-cat → 分类正交筛预填。
+- **统计口径只算书库目录**：getAllBookNotes 对齐 scanMarkdownBooks（bookshelfFolderPath 回落链前缀 / 目录本身单文件）；EPUB 全库聚合口径不变（ADR-0013）。
+- **图表升级三件**：时段/分类/互动环形图 → generateBarRows 水平条形行（chart-palette 粉彩系列）；热力图 ‹ › 翻月（getHeatmapMonthKeys，去 slice(0,1)）；年卡展开该年 12 月柱（getYearMonthBars + generateMonthBarColumns 与趋势月柱共用）。
+- **自动刷新**：bookshelf registerAutoRefresh 按 M.view 分流，报告视图只重算报告内容区，零新增订阅。
+- **lucide 化 + 空态带动作**：🧮/❌/🏆/趋势 emoji 全清；空库空态 uiEmpty+uiBtn「去书架墙添加」主按钮。
+- **设置键评估**：bookshelfMobileDefaultFullscreen 保留（书架墙面板/读书笔记弹窗仍消费，报告随面板同控），settings.ts 注释更新。
+- **测试**：reading-report index/error/report/stats 重写同步 + 口径/图表纯函数用例；bookshelf ui +7 用例；smoke 命令表不变（id/名称/数量均不动）。
