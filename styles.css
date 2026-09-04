@@ -354,10 +354,16 @@ template {
   display: none;
 }
 /* ============================================================
- * bz（包仔）共享层/跨域样式（src/core/styles.css）
- * 设置页分页 / 主窗口头部行统一规范 / core 层（notice·settings-modal·confirm·dom）
- * / 移动端主窗口默认全屏 / 统一右键菜单·长按抽屉
- * 本文件是样式源之一，构建时由 scripts/build-css.mjs 聚合成根 styles.css
+ * bz（包仔）全局覆盖层（src/core/reset.css）
+ * 定位：手动书写的全局样式重置——把 Obsidian 核心（app.css）与浏览器
+ * 默认中不合适的既有样式压回无样式基态。区别于 normalize（修正跨浏览器
+ * 差异，vendor/normalize.css 勿改）：本文件放的是「覆盖某些已有样式」
+ * 的决策性规则，每条须写明覆盖动机。
+ * 规矩：只放全局基线，不带域语义；选择器保持低特异性（能被任何
+ * 单类规则覆盖），确需保底用 !important 并注明原因。
+ * 本文件是样式源之一，构建时由 scripts/build-css.mjs 聚合至根
+ * styles.css（顺序：normalize → 本文件 → core/styles.css → ui → 各域），
+ * 请勿手改产物。
  * ============================================================ */
 
 /* ===== bz 全局按钮基线：压 Obsidian 核心默认（app.css） ===== */
@@ -372,6 +378,14 @@ button:not(.clickable-icon) {
     background-color: unset;
     box-shadow: unset;
 }
+/* ============================================================
+ * bz（包仔）共享层/跨域样式（src/core/styles.css）
+ * 设置页分页 / 主窗口头部行统一规范 / core 层（notice·settings-modal·confirm·dom）
+ * / 移动端主窗口默认全屏 / 统一右键菜单·长按抽屉
+ * 本文件是样式源之一，构建时由 scripts/build-css.mjs 聚合成根 styles.css
+ * ============================================================ */
+
+/* 全局按钮基线已迁至 src/core/reset.css（全局覆盖层，issue 196） */
 
 /* ===== 设置页顶部分页（参考 obsidian-linter 设置页） ===== */
 /* 设置区块标题（ADR-0009 单页平铺：🤖 AI / 📂 数据存储路径） */
