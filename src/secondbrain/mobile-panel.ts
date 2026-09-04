@@ -217,6 +217,7 @@ export class MobilePanel {
     this.collapsed = true;
     this.sheet.classList.remove('bz-sb-mb-open');
     this.sheet.classList.remove('bz-sb-mb-dragging');
+    topifyZ(this.mini); // ADR-0067：显示即发号（后开的 overlay 仍会压过胶囊）
     this.mini.classList.add('bz-sb-mb-visible');
   }
 

@@ -94,3 +94,42 @@ describe('批 B-3：触控热区收编 core .bz-touch-target', () => {
     expect(repo('src/attach/styles.css')).not.toMatch(/\w::after\s*\{/); // attach 刻意外扩（防误触邻行，仅注释提及）
   });
 });
+
+describe('批 B-4：z-index 静态大数收口（ADR-0067）', () => {
+  it('launcher：拖拽磁贴降局部层叠档 10（兄弟磁贴间层叠，非 overlay 档）', () => {
+    const css = repo('src/launcher/styles.css');
+    expect(css).not.toMatch(/z-index:\s*9999/);
+    expect(css).toMatch(/\.launcher-tile\.dragging\s*\{[^}]*z-index: 10;/);
+  });
+
+  it('literature：遮罩/窗口/小型弹窗静态档清零（显示路径 topifyZ 发号已就位）', () => {
+    const css = repo('src/literature/styles.css');
+    expect(css).not.toMatch(/z-index:/); // 域内原本仅 3 处静态档，全清
+    for (const sel of ['.bz-lit-mask', '.bz-lit-window', '.bz-lit-dialog']) {
+      const rule = css.match(new RegExp(`${sel.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\s*\\{[^}]*\\}`));
+      expect(rule, sel).toBeTruthy();
+    }
+    // 五处显示路径均动态发号（遮罩在前本体在后）
+    const ui = repo('src/literature/ui.ts');
+    expect(ui.match(/topifyZ\(/g)!.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it('secondbrain：mini 胶囊静态档清零，collapse() 显示时 topifyZ 发号', () => {
+    expect(repo('src/secondbrain/styles.css')).not.toMatch(/z-index:\s*9000/);
+    const ts = repo('src/secondbrain/mobile-panel.ts');
+    expect(ts).toMatch(/collapse\(\)[\s\S]{0,200}topifyZ\(this\.mini\)/);
+  });
+
+  it('smartcat：猫容器 CSS 初值清零（恒顶走 registerAlwaysOnTop），子元素降局部小档且相对次序不变', () => {
+    const css = repo('src/smartcat/styles.css');
+    expect(css).not.toMatch(/z-index:\s*10000\d/);
+    expect(css).not.toMatch(/z-index:\s*10001\b/);
+    // 指示器(3) > 气泡容器(2) > 气泡(1)，同在猫 transform 层叠上下文内
+    expect(css).toMatch(/\.thinking-indicator\s*\{[^}]*z-index: 3;/);
+    expect(css).toMatch(/\.voice-indicator\s*\{[^}]*z-index: 3;/);
+    expect(css).toMatch(/\.cat-bubbles-container\s*\{[^}]*z-index: 2;/);
+    expect(css).toMatch(/\.cat-bubble\s*\{[^}]*z-index: 1;/);
+    // 恒顶层注册仍在挂载路径上
+    expect(repo('src/smartcat/ui.ts')).toContain('registerAlwaysOnTop(container)');
+  });
+});
