@@ -167,7 +167,7 @@ describe('text 行：防抖 + 失焦/回车 + onCommit 一次性提示（warnedI
       groups: [
         {
           name: 'G',
-          rows: [{ type: 'text', name: '文本行', binding: { key: 'bookTag' }, onCommit }],
+          rows: [{ type: 'text', name: '文本行', binding: { key: 'bookshelfFolderPath' }, onCommit }],
         },
       ],
     });
@@ -183,7 +183,7 @@ describe('text 行：防抖 + 失焦/回车 + onCommit 一次性提示（warnedI
     vi.advanceTimersByTime(799);
     expect(saver).not.toHaveBeenCalled(); // 重置计时
     vi.advanceTimersByTime(1);
-    expect(state.bookTag).toBe('bookxy');
+    expect(state.bookshelfFolderPath).toBe('bookxy');
     expect(saver).toHaveBeenCalledTimes(1);
   });
 
@@ -196,7 +196,7 @@ describe('text 行：防抖 + 失焦/回车 + onCommit 一次性提示（warnedI
     text.trigger('回车值');
     text.inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
     expect(saver).toHaveBeenCalledTimes(2);
-    expect(state.bookTag).toBe('回车值');
+    expect(state.bookshelfFolderPath).toBe('回车值');
     // 挂起防抖已清：时间走完不再多落盘
     vi.advanceTimersByTime(2000);
     expect(saver).toHaveBeenCalledTimes(2);
@@ -205,8 +205,8 @@ describe('text 行：防抖 + 失焦/回车 + onCommit 一次性提示（warnedI
   it('onCommit 一次性提示：变更才提示、同会话至多一次、改回原值复位可再次提示', () => {
     vi.useFakeTimers();
     const { onCommit, text } = renderTextInput();
-    // 无变更不提示
-    text.trigger('book');
+    // 无变更不提示（bookshelfFolderPath 缺省 ''，触发同值不提示）
+    text.trigger('');
     text.inputEl.dispatchEvent(new Event('blur'));
     expect(onCommit).not.toHaveBeenCalled();
     // 变更 → 提示一次
@@ -218,7 +218,7 @@ describe('text 行：防抖 + 失焦/回车 + onCommit 一次性提示（warnedI
     vi.advanceTimersByTime(800);
     expect(onCommit).toHaveBeenCalledTimes(1);
     // 改回原值 → warned 复位（不提示）
-    text.trigger('book');
+    text.trigger('');
     vi.advanceTimersByTime(800);
     expect(onCommit).toHaveBeenCalledTimes(1);
     // 再次变更 → 可再次提示
@@ -242,7 +242,7 @@ describe('visibleWhen 联动 + 徽标 + actionRow 豁免 + custom 插槽', () =>
             {
               type: 'text',
               name: '条件行',
-              binding: { key: 'bookTag' },
+              binding: { key: 'bookshelfFolderPath' },
               visibleWhen: (s) => s.showTagCount === true,
             },
             {
