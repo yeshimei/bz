@@ -163,6 +163,10 @@
   border-radius: var(--bz-radius-sm);
 }
 .bz-sp-set-row:hover { background: var(--bz-surface-hover); }
+/* isChild 子项层级降级（enh-sweep-a 拍板补齐）：透明度弱化与父项拉开层级（设计手册「一层级只做
+   一种变化」——只用透明度一轴，不改字号/字重）；hover 恢复全量可读性。 */
+.bz-sp-set-row.child { opacity: 0.7; }
+.bz-sp-set-row.child:hover { opacity: 1; }
 /* isChild 行不缩进（用户拍板 issue 186：子集关系由显隐联动表达，全部行左缘对齐） */
 .bz-sp-set-info { flex: 1; min-width: 0; }
 .bz-sp-set-name { font-size: var(--bz-font-body); font-weight: 500; color: var(--bz-text-1); line-height: 1.4; }
