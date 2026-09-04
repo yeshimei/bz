@@ -104,7 +104,7 @@ export function openPasswordQuickPicker(
 
   const search = document.createElement('input');
   search.type = 'text';
-  search.className = 'bz-encrypt-pwqp-search';
+  search.className = 'bz-input bz-encrypt-pwqp-search'; // 输入基线走样式库 .bz-input；域内类只管弹窗内边距
   search.placeholder = '搜索平台 / 账号…';
   search.spellcheck = false;
   search.setAttribute('aria-label', '搜索密码条目');
@@ -118,10 +118,10 @@ export function openPasswordQuickPicker(
   const setActive = (i: number): void => {
     if (!state.hits.length) return;
     state.active = Math.max(0, Math.min(state.hits.length - 1, i));
-    listEl.querySelectorAll('.bz-encrypt-pwqp-row').forEach((el, k) => {
-      el.classList.toggle('on', k === state.active);
+    listEl.querySelectorAll('.bz-popover-item').forEach((el, k) => {
+      el.classList.toggle('is-on', k === state.active);
     });
-    listEl.querySelector('.bz-encrypt-pwqp-row.on')?.scrollIntoView({ block: 'nearest' });
+    listEl.querySelector('.bz-popover-item.is-on')?.scrollIntoView({ block: 'nearest' });
   };
 
   const renderList = (): void => {
@@ -130,7 +130,7 @@ export function openPasswordQuickPicker(
     state.active = 0;
     if (!state.hits.length) {
       const empty = document.createElement('div');
-      empty.className = 'bz-encrypt-pwqp-empty';
+      empty.className = 'bz-popover-empty';
       empty.textContent = '没有匹配的密码条目';
       listEl.appendChild(empty);
       return;
@@ -138,7 +138,7 @@ export function openPasswordQuickPicker(
     const shown = state.hits.slice(0, LIMIT);
     shown.forEach((d, i) => {
       const row = document.createElement('div');
-      row.className = 'bz-encrypt-pwqp-row' + (i === 0 ? ' on' : '');
+      row.className = 'bz-popover-item' + (i === 0 ? ' is-on' : '');
       row.setAttribute('role', 'option');
       const mid = document.createElement('div');
       mid.className = 'mid';
@@ -163,7 +163,7 @@ export function openPasswordQuickPicker(
     });
     if (state.hits.length > LIMIT) {
       const more = document.createElement('div');
-      more.className = 'bz-encrypt-pwqp-empty';
+      more.className = 'bz-popover-empty';
       more.textContent = `已显示前 ${LIMIT} 条（共 ${state.hits.length} 条命中），请输入关键词缩小范围`;
       listEl.appendChild(more);
     }

@@ -9,7 +9,8 @@
 import { escManager } from '../core/esc-manager';
 import { createSiteIcon } from '../core/dom';
 import { attachItemActions, openItemSheet, type ItemAction, type ItemActionsOptions } from '../core/item-actions';
-import { formatRelativeTime } from '../core/utils';
+import { escapeHtml, formatRelativeTime } from '../core/utils';
+import { uiEmpty } from '../core/ui';
 import { PasswordVaultDataManager, type PasswordVaultEntry, type PlatformGroup } from './vault-data';
 
 /**
@@ -178,7 +179,7 @@ export class VaultPwView {
         .search(kw)
         .sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || '') * -1);
       if (!hits.length) {
-        container.innerHTML = '<div class="bz-pwv-empty"><div class="t">没有匹配的条目</div><div class="d">换个关键词，或清空搜索</div></div>';
+        container.replaceChildren(this.emptyState('没有匹配的条目', '换个关键词，或清空搜索'));
         return;
       }
       for (const d of hits) {
@@ -198,9 +199,9 @@ export class VaultPwView {
     if (st.view === 'fav') plats = plats.filter((p) => this.dm.hasFav(p.platform));
     if (!plats.length) {
       if (st.view === 'fav') {
-        container.innerHTML = '<div class="bz-pwv-empty"><div class="t">还没有收藏</div><div class="d">右键或长按条目可收藏，常用账号一目了然</div></div>';
+        container.replaceChildren(this.emptyState('还没有收藏', '右键或长按条目可收藏，常用账号一目了然'));
       } else {
-        container.innerHTML = `<div class="bz-pwv-empty"><div class="t">保险库还没有密码</div><div class="d">收录第一条账号开始使用</div><button class="bz-pwv-empty-add bz-touch-target--lg" data-pwv="empty-add">${this.ic('plus')} 新增密码</button></div>`;
+        container.replaceChildren(this.emptyState('保险库还没有密码', '收录第一条账号开始使用', { add: true }));
         container.querySelector('[data-pwv="empty-add"]')?.addEventListener('click', () => this.host.openPwEntryDialog());
       }
       return;
@@ -229,7 +230,7 @@ export class VaultPwView {
     if (kw) {
       d = this.dm.pwData.find((x) => x.id === st.selAccount);
       if (!d) {
-        container.innerHTML = '<div class="bz-pwv-empty"><div class="t">选择一条结果</div><div class="d">点击左侧结果查看详情</div></div>';
+        container.replaceChildren(this.emptyState('选择一条结果', '点击左侧结果查看详情'));
         return;
       }
     } else if (st.selPlatform) {
@@ -252,7 +253,7 @@ export class VaultPwView {
       <div class="bz-pwv-accts"></div>`;
       const acctsEl = container.querySelector('.bz-pwv-accts') as HTMLElement;
       if (!filtered.length) {
-        acctsEl.innerHTML = '<div class="bz-pwv-empty"><div class="t">该平台暂无账号</div><div class="d">点上方「在该平台新增账号」录入</div></div>';
+        acctsEl.replaceChildren(this.emptyState('该平台暂无账号', '点上方「在该平台新增账号」录入'));
       } else {
         for (const x of filtered) acctsEl.appendChild(this.buildAccountCard(x, st));
       }
@@ -262,8 +263,7 @@ export class VaultPwView {
       );
       return;
     } else {
-      container.innerHTML = `<div class="bz-pwv-empty">${this.ic('key', 40)}
-        <div class="t">选择一个平台</div><div class="d">左侧选择平台后，这里显示其全部账号</div></div>`;
+      container.replaceChildren(this.emptyState('选择一个平台', '左侧选择平台后，这里显示其全部账号', { icon: 'key' }));
       return;
     }
     // 搜索态单卡
@@ -457,7 +457,7 @@ export class VaultPwView {
         .search(kw)
         .sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || '') * -1);
       if (!hits.length) {
-        container.innerHTML = '<div class="bz-pwv-empty"><div class="t">没有匹配的条目</div><div class="d">换个关键词试试</div></div>';
+        container.replaceChildren(this.emptyState('没有匹配的条目', '换个关键词试试'));
         return;
       }
       for (const d of hits) {
@@ -477,9 +477,9 @@ export class VaultPwView {
     if (st.view === 'fav') plats = plats.filter((p) => this.dm.hasFav(p.platform));
     if (!plats.length) {
       if (st.view === 'fav') {
-        container.innerHTML = '<div class="bz-pwv-empty"><div class="t">还没有收藏</div><div class="d">右键或长按条目可收藏，常用账号一目了然</div></div>';
+        container.replaceChildren(this.emptyState('还没有收藏', '右键或长按条目可收藏，常用账号一目了然'));
       } else {
-        container.innerHTML = `<div class="bz-pwv-empty"><div class="t">保险库还没有密码</div><div class="d">收录第一条账号开始使用</div><button class="bz-pwv-empty-add bz-touch-target--lg" data-pwv="empty-add">${this.ic('plus')} 新增密码</button></div>`;
+        container.replaceChildren(this.emptyState('保险库还没有密码', '收录第一条账号开始使用', { add: true }));
         container.querySelector('[data-pwv="empty-add"]')?.addEventListener('click', () => this.host.openPwEntryDialog());
       }
       return;
@@ -514,7 +514,7 @@ export class VaultPwView {
     <div class="bz-pwv-accts"></div>`;
     const acctsEl = body.querySelector('.bz-pwv-accts') as HTMLElement;
     if (!accs.length) {
-      acctsEl.innerHTML = '<div class="bz-pwv-empty"><div class="t">该平台暂无账号</div><div class="d">点上方「在该平台新增账号」录入</div></div>';
+      acctsEl.replaceChildren(this.emptyState('该平台暂无账号', '点上方「在该平台新增账号」录入'));
     } else {
       for (const d of accs) acctsEl.appendChild(this.buildAccountCard(d, st));
     }
@@ -554,13 +554,21 @@ export class VaultPwView {
     return p(name);
   }
 
+  /** 空态（组件库 uiEmpty = .bz-empty 基线）；add = 附「新增密码」金色 CTA（金库主题色，域内样式） */
+  private emptyState(title: string, desc: string, opts?: { icon?: string; add?: boolean }): HTMLElement {
+    const empty = uiEmpty(opts?.icon ? { icon: opts.icon, title, desc } : { title, desc });
+    if (opts?.add) {
+      const add = document.createElement('button');
+      add.className = 'bz-pwv-empty-add bz-touch-target--lg';
+      add.setAttribute('data-pwv', 'empty-add');
+      add.innerHTML = `${this.ic('plus')} 新增密码`;
+      empty.appendChild(add);
+    }
+    return empty;
+  }
+
   private esc(s: string): string {
-    return String(s ?? '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+    return escapeHtml(String(s ?? ''));
   }
 }
 

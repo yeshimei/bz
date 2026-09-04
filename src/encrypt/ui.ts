@@ -24,6 +24,7 @@ import {
   type ItemActionsOptions,
 } from '../core/item-actions';
 import { escapeHtml, formatRelativeTime } from '../core/utils';
+import { uiEmpty, uiProgress } from '../core/ui';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
 import { applyMobileWindowFullscreen } from '../core/mobile';
@@ -851,13 +852,10 @@ export class UIManager {
     const progress = document.createElement('div');
     progress.className = 'bz-encrypt-health-progress';
     progress.textContent = '体检中…';
-    const bar = document.createElement('div');
-    bar.className = 'bz-encrypt-health-bar';
-    const barFill = document.createElement('i');
-    barFill.style.width = '0%';
-    bar.appendChild(barFill);
+    const bar = uiProgress({ value: 0 });
+    bar.el.classList.add('bz-encrypt-health-bar'); // 域内仅保留 8px 下距（styles.css），条形基线走样式库 .bz-progress
     body.appendChild(progress);
-    body.appendChild(bar);
+    body.appendChild(bar.el);
     const live = document.createElement('div');
     live.className = 'bz-encrypt-health-live';
     const liveTitle = document.createElement('div');
@@ -868,7 +866,7 @@ export class UIManager {
     try {
       const report = await this.dataManager.scanHealth((p) => {
         progress.textContent = `检查中 ${p.done}/${p.total} · ${truncateName(p.current)}`;
-        barFill.style.width = Math.round((p.done / p.total) * 100) + '%';
+        bar.setValue(Math.round((p.done / p.total) * 100));
         for (const item of p.found) {
           const row = document.createElement('div');
           row.className =
@@ -1422,10 +1420,14 @@ export class UIManager {
     list.appendChild(listHead);
     list.appendChild(listBody);
     if (!notes.length) {
-      listBody.innerHTML =
-        kind === 'note'
-          ? '<div class="bz-pwv-empty"><div class="t">还没有加密笔记</div><div class="d">用「加密当前笔记」把整篇笔记移入保险库</div></div>'
-          : '<div class="bz-pwv-empty"><div class="t">还没有加密日记</div><div class="d">日记面板把条目改分类为「加密」后移入这里</div></div>';
+      // 空态走组件库 uiEmpty（.bz-empty 基线）
+      listBody.replaceChildren(
+        uiEmpty(
+          kind === 'note'
+            ? { title: '还没有加密笔记', desc: '用「加密当前笔记」把整篇笔记移入保险库' }
+            : { title: '还没有加密日记', desc: '日记面板把条目改分类为「加密」后移入这里' }
+        )
+      );
       return;
     }
     const selId = this._selNoteId && notes.some((n) => n.id === this._selNoteId) ? this._selNoteId : notes[0].id;
@@ -1972,11 +1974,14 @@ export class UIManager {
       ? notes.filter((n) => (n.title || '').toLowerCase().includes(kw.toLowerCase()) || (n.path || '').toLowerCase().includes(kw.toLowerCase()))
       : notes;
     if (!filtered.length) {
-      // G：日记空态不复用笔记文案（移动端此前恒显「加密当前笔记」引导，日记条目无从入口）
-      body.innerHTML =
-        kind === 'diary'
-          ? '<div class="bz-pwv-empty"><div class="t">还没有加密日记</div><div class="d">日记面板把条目改分类为「加密」后移入这里</div></div>'
-          : '<div class="bz-pwv-empty"><div class="t">还没有加密笔记</div><div class="d">用「加密当前笔记」把整篇笔记移入保险库</div></div>';
+      // G：日记空态不复用笔记文案（移动端此前恒显「加密当前笔记」引导，日记条目无从入口）；空态走 uiEmpty
+      body.replaceChildren(
+        uiEmpty(
+          kind === 'diary'
+            ? { title: '还没有加密日记', desc: '日记面板把条目改分类为「加密」后移入这里' }
+            : { title: '还没有加密笔记', desc: '用「加密当前笔记」把整篇笔记移入保险库' }
+        )
+      );
       return;
     }
     for (const n of filtered) {
