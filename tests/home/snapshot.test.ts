@@ -171,13 +171,13 @@ describe('home 快照', () => {
     expect(snap.byDomain.belongings.text).toBe('2 件');
   });
 
-  it('library：在读计数（书库目录 frontmatter tags 命中）', async () => {
+  it('bookshelf：在读计数（书库目录 frontmatter tags 命中；双日期口径）', async () => {
     vault.files.set('书库/《在读》.md', '---\ntags: [book]\nreadingDate: 2026-01-01\n---\n');
     vault.files.set('书库/《已读》.md', '---\ntags: [book]\nreadingDate: 2026-01-01\ncompletionDate: 2026-02-01\n---\n');
     vault.files.set('书库/《未读》.md', '---\ntags: [book]\n---\n');
     vault.files.set('别处/非书.md', '---\ntags: [book]\nreadingDate: 2026-01-01\n---\n');
     const snap = await collectHomeSnapshot(mockAppWithVault(vault) as any);
-    expect(snap.byDomain.library.text).toBe('在读 1');
+    expect(snap.byDomain.bookshelf.text).toBe('在读 1');
   });
 
   it('review 数据文件缺失 → 空（不抛错不建文件）', async () => {

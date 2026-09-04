@@ -20,6 +20,10 @@ export interface TodoState {
   search: string;
   /** 已完成折叠区是否展开 */
   showDone: boolean;
+  /** 已完成折叠区：「更早 N 条」（30 天前）是否展开 */
+  showEarlierDone: boolean;
+  /** 录入当场可见：composer/编辑器新建条目 id（伪场景「今日」「重要」过滤放行，切场景/关面板清空） */
+  pinnedNewId: string | null;
   /** 勾选完成防抖计时（300ms，对齐 memo 卡片行为） */
   completeTimers: Map<string, ReturnType<typeof setTimeout>>;
   /** UI 重渲染回调（ADR-0002：store 层无 DOM，UI 注册） */
@@ -36,6 +40,8 @@ export const M: TodoState = {
   sortMode: 'priority',
   search: '',
   showDone: false,
+  showEarlierDone: false,
+  pinnedNewId: null,
   completeTimers: new Map(),
   renderFn: null,
   editingId: null,
@@ -50,6 +56,8 @@ export function resetTodoState(): void {
   M.sortMode = 'priority';
   M.search = '';
   M.showDone = false;
+  M.showEarlierDone = false;
+  M.pinnedNewId = null;
   M.completeTimers.forEach((t) => clearTimeout(t));
   M.completeTimers.clear();
   M.renderFn = null;

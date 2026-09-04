@@ -1,8 +1,11 @@
 /**
- * 书库 notes（ticket 12）：读书笔记解析/跳转/批注更新/删除高亮，源码逐字移植。
- * 源码：书库.js L1010-1275
+ * 书架墙 notes：读书笔记解析/跳转/批注更新/删除高亮。
+ * 迁移自旧 src/library/notes.ts（旧域退役 ADR：逻辑逐字平移，语义不变）——
+ *  - parseBookNotes：headings + cm-highlight spans 建树；
+ *  - jumpToHighlight：openLinkText(path#^id) + 150ms 后编辑器聚焦；
+ *  - updateComment / deleteHighlight：写盘收口 vault.process 原子读改写（audit D 保持）。
  */
-import { notice } from '../core/dom';
+import { notice } from '../core/notice';
 
 export interface BookNoteNode {
   level: number;
@@ -163,7 +166,7 @@ function rewriteHighlightSpan(
 /**
  * 更新批注：命中替换 data-comment，清空删属性。
  * audit D：写盘收口 vault.process 原子读改写——旧 read→modify 全文替换窗口会把
- * bookshelf 等他域并发落盘的 frontmatter 修改静默回滚。
+ * 他域并发落盘的 frontmatter 修改静默回滚。
  * audit H：返回 Promise<boolean>（成功 true；文件缺失/未命中/IO 失败 false + notice），
  * 不再静默悬挂编辑弹窗；onDone 保留（成功时回调）兼容既有调用面。
  */
@@ -214,7 +217,7 @@ export async function updateComment(
 }
 
 /**
- * 删除高亮：确认弹窗统一在 UI 层处理（ticket 52）——长按日期先关笔记壳再弹 core/flow-dialog，
+ * 删除高亮：确认弹窗统一在 UI 层处理——长按日期先关笔记壳再弹 core/flow-dialog，
  * 由调用方重开壳；此处只负责读改写文件。
  * audit D：写盘收口 vault.process 原子读改写（防他域并发写被旧快照回滚）。
  * audit H：返回 Promise<boolean>（成功 true；失败 false + notice + onDone 仍回调），

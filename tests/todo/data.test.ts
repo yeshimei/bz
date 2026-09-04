@@ -126,12 +126,57 @@ describe('TodoData CRUD', () => {
     expect(items[0].completed).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
   });
 
-  it('deleteItem：删除指定 id', async () => {
+  it('deleteItem：删除指定 id，返回被删条目原索引', async () => {
+    await TodoData.addItem({ id: 'a', title: 'A', scene: '工作' } as any);
+    await TodoData.addItem({ id: 'b', title: 'B', scene: '工作' } as any);
+    const idx = await TodoData.deleteItem('a');
+    const items = await TodoData.read();
+    expect(items.map((i: any) => i.id)).toEqual(['b']);
+    expect(idx).toBe(1); // a 在 b 之后（addItem 头插：[b, a]）
+  });
+
+  it('deleteItem：删除不存在 id 返回 -1', async () => {
+    const idx = await TodoData.deleteItem('nope');
+    expect(idx).toBe(-1);
+  });
+
+  it('restoreItem：撤销删除——条目插回删除前原索引（增强包：删除接撤销）', async () => {
+    await TodoData.addItem({ id: 'a', title: 'A', scene: '工作' } as any);
+    await TodoData.addItem({ id: 'b', title: 'B', scene: '学习' } as any);
+    await TodoData.addItem({ id: 'c', title: 'C', scene: '生活' } as any);
+    // 顺序 [c, b, a]：删中间的 b（idx=1），撤销后必须回到 idx=1 而不是头部
+    const idx = await TodoData.deleteItem('b');
+    expect(await TodoData.read()).toEqual([
+      expect.objectContaining({ id: 'c' }),
+      expect.objectContaining({ id: 'a' }),
+    ]);
+    await TodoData.restoreItem({ id: 'b', title: 'B', scene: '学习' } as any, idx);
+    expect((await TodoData.read()).map((i: any) => i.id)).toEqual(['c', 'b', 'a']);
+  });
+
+  it('restoreItem：未传索引/越界回退头部插入（对齐 addItem 语义）', async () => {
     await TodoData.addItem({ id: 'a', title: 'A', scene: '工作' } as any);
     await TodoData.addItem({ id: 'b', title: 'B', scene: '工作' } as any);
     await TodoData.deleteItem('a');
+    await TodoData.restoreItem({ id: 'a', title: 'A', scene: '工作' } as any, 99);
+    expect((await TodoData.read()).map((i: any) => i.id)).toEqual(['a', 'b']);
+    await TodoData.deleteItem('b');
+    await TodoData.restoreItem({ id: 'b', title: 'B', scene: '工作' } as any);
+    expect((await TodoData.read()).map((i: any) => i.id)).toEqual(['b', 'a']);
+  });
+
+  it('updateSceneBulk：批量迁移条目场景（场景重命名/删除的数据底座），返回迁移条数', async () => {
+    await TodoData.addItem({ id: 'a', title: 'A', scene: '工作' } as any);
+    await TodoData.addItem({ id: 'b', title: 'B', scene: '工作' } as any);
+    await TodoData.addItem({ id: 'c', title: 'C', scene: '学习' } as any);
+    const moved = await TodoData.updateSceneBulk('工作', '生活');
+    expect(moved).toBe(2);
     const items = await TodoData.read();
-    expect(items.map((i: any) => i.id)).toEqual(['b']);
+    expect(items.find((i: any) => i.id === 'a').scene).toBe('生活');
+    expect(items.find((i: any) => i.id === 'b').scene).toBe('生活');
+    expect(items.find((i: any) => i.id === 'c').scene).toBe('学习');
+    // 无命中：不写盘返回 0
+    expect(await TodoData.updateSceneBulk('不存在', '学习')).toBe(0);
   });
 
   it('getCourseNotes：影视目录下含公开课标签的 md 文件', async () => {
