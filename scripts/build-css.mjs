@@ -1,6 +1,9 @@
 // scripts/build-css.mjs — 铁律 4：样式按域拆分，构建时聚合成根 styles.css
 //
 // 源文件布局：
+//   src/core/vendor/normalize.css 官方 normalize（跨浏览器修正，勿改）
+//   src/core/reset.css    全局覆盖层（手动重置 Obsidian 核心/浏览器默认，
+//                         每条须写明覆盖动机；issue 196）
 //   src/core/styles.css   共享层/跨域样式（设置页分页、主窗口头部行统一规范、
 //                         core 层 notice/settings-modal/confirm/dom、移动端全屏、
 //                         统一右键菜单/长按抽屉）
@@ -12,7 +15,8 @@
 //
 // 拼接顺序 = 原 styles.css 的文档顺序（共享节前置，域间相对次序保持不变，
 // 级联行为与拆分前一致；跨节选择器经审计均为 !important 支配或互不冲突的复合选择器）。
-// 顺序说明：vendor/normalize.css（官方全局 reset）置顶 → 共享层 → 各域样式。
+// 顺序说明：vendor/normalize.css（官方全局 reset）置顶 → core/reset.css（全局覆盖层）
+// → 共享层 → 各域样式。
 
 import fs from "node:fs";
 import path from "node:path";
@@ -26,6 +30,8 @@ const PLUGIN_DIR = "E:/Obsidian/叫我包仔/.obsidian/plugins/bz";
 // 聚合顺序清单（勿随意调整；新增域样式文件时在对应位置插入）
 const SOURCES = [
   "src/core/vendor/normalize.css",
+  // 全局覆盖层：手动重置 Obsidian 核心/浏览器默认（issue 196）
+  "src/core/reset.css",
   "src/core/styles.css",
   // bz 组件库（自绘 token + 组件样式，源顺序在 core 之后保证可覆盖旧基线）
   "src/core/ui/tokens.css",

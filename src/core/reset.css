@@ -1,0 +1,25 @@
+/* ============================================================
+ * bz（包仔）全局覆盖层（src/core/reset.css）
+ * 定位：手动书写的全局样式重置——把 Obsidian 核心（app.css）与浏览器
+ * 默认中不合适的既有样式压回无样式基态。区别于 normalize（修正跨浏览器
+ * 差异，vendor/normalize.css 勿改）：本文件放的是「覆盖某些已有样式」
+ * 的决策性规则，每条须写明覆盖动机。
+ * 规矩：只放全局基线，不带域语义；选择器保持低特异性（能被任何
+ * 单类规则覆盖），确需保底用 !important 并注明原因。
+ * 本文件是样式源之一，构建时由 scripts/build-css.mjs 聚合至根
+ * styles.css（顺序：normalize → 本文件 → core/styles.css → ui → 各域），
+ * 请勿手改产物。
+ * ============================================================ */
+
+/* ===== bz 全局按钮基线：压 Obsidian 核心默认（app.css） ===== */
+/* Obsidian 核心 app.css 对裸 button:not(.clickable-icon) 统一喂默认
+   color/background-color/box-shadow（--interactive-normal 底 + --input-shadow）。
+   此全局覆盖使按钮回到无样式基态，由各域样式自行决定外观。
+   :where() 归零特异性（P0 收编前提，docs/ui-shared-components.md）：语义不变
+   （仍是兜底 unset），但任何单类按钮规则（.bz-btn/.bz-choice-btn 等 0,1,0）
+   即可覆盖——共享组件库的单类组件成立的前提。 */
+button:not(.clickable-icon) {
+    color: unset;
+    background-color: unset;
+    box-shadow: unset;
+}
