@@ -34,8 +34,8 @@ describe('enh-sweep-c：.bz-panel-mtop 移动全屏顶距', () => {
   it('全屏面板根节点接线：8 域挂载点 + 番茄钟随 mfs 开关同挂摘', () => {
     expect(src('src/home/ui.ts')).toContain('bz-home-panel bz-panel-mtop');
     expect(src('src/cinema/ui.ts')).toContain('bz-panel-frame bz-cinema-panel bz-panel-mtop');
-    expect(src('src/favorites/ui.ts')).toContain('bz-fav-panel bz-panel-mtop');
-    expect(src('src/belongings/ui.ts')).toContain('bz-bel-panel bz-panel-mtop');
+    expect(src('src/favorites/ui.ts')).toContain('bz-fav-panel bz-panel-frame bz-panel-mtop');
+    expect(src('src/belongings/ui.ts')).toContain('bz-bel-panel bz-panel-frame bz-panel-mtop');
     const clip = src('src/clipbook/ui.ts');
     expect(clip).toContain('bz-clip-frame bz-panel-mtop');
     expect(clip).toContain('bz-clip-mob-detail bz-panel-mtop'); // 移动详情屏2 overlay 自带避让
@@ -79,10 +79,10 @@ describe('enh-sweep-c：触控热区扫尾', () => {
     expect(css('clipbook')).toMatch(/\.bz-clip-mob-detail-top \.bz-icon-btn--lg[^}]*44px/);
   });
 
-  it('横滑标签 44px 档（cinema 走共享 .bz-mobstrip + 域内 scoped 抬档；favorites/belongings 移动 chips）', () => {
+  it('横滑标签 44px 档（cinema/favorites/belongings 走共享 .bz-mobstrip + 域内 scoped 抬档）', () => {
     expect(css('cinema')).toMatch(/bz-mobstrip-chip \{[^}]*min-height: 44px/);
-    expect(css('favorites')).toMatch(/bz-fav-mobchip \{[^}]*min-height: 44px/);
-    expect(css('belongings')).toMatch(/bz-bel-mobchip \{[^}]*min-height: 44px/);
+    expect(css('favorites')).toMatch(/bz-mobstrip-chip \{[^}]*min-height: 44px/);
+    expect(css('belongings')).toMatch(/bz-mobstrip-chip \{[^}]*min-height: 44px/);
   });
 });
 
@@ -130,8 +130,9 @@ describe('enh-sweep-c：杂项打磨', () => {
     expect(css('encrypt')).not.toMatch(/\.bz-encrypt-empty\b/);
   });
 
-  it('favorites 计数类名对齐（ui 渲染 bz-fav-chip-cnt；旧 mobchip-cnt 为死选择器笔误）', () => {
-    expect(css('favorites')).toContain('.bz-fav-chip-cnt');
+  it('favorites 移动 chips 计数收编共享 .bz-chip-cnt（ADR-0094；域内计数类退役）', () => {
+    expect(css('favorites')).not.toContain('bz-fav-chip-cnt');
+    expect(src('src/favorites/ui.ts')).toContain('bz-chip-cnt');
     expect(css('favorites')).not.toContain('bz-fav-mobchip-cnt');
   });
 });

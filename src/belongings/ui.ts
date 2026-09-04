@@ -5,6 +5,8 @@
  *   + 右内容区——主头行（「购入时间轴」/ N 件 · 总投入 ￥M / 主按钮「记一笔」）→
  *   工具栏（搜索 + 年份下拉）→ 统计条（总资产强调卡 / 日均成本 / 在册件数）→
  *   时间轴（年节 → 月节点 → 物件行；年节可折叠；转卖/丢弃行弱化）。
+ *   面板壳/头行/侧栏（uiRail）/主头行/工具行/搜索/横滑条/统计卡/候选浮层/空态均消费
+ *   组件库共享类与工厂（ADR-0094）；域 styles.css 只留域内布局。
  * 移动 ≤768：真全屏；头行右上 ＋记一笔 → 🔍搜索(展开) → ✕关闭；状态 chips 横滑；
  *   统计两卡；时间轴同构；点行弹底部详情抽屉。全 icon lucide（分类 emoji 属数据保留）。
  *
@@ -18,7 +20,6 @@
  * ticket 189 增强：状态流转/删除接撤销（notifyUndo）；年节当年/上一年默认展开更早折叠；
  *   统计卡可点（总资产=在用+闲置合成筛选、在册件数=回全部）；表单防丢检查；头行钮间距/触屏档。
  */
-import { setIcon } from 'obsidian';
 import { notice, notifyUndo } from '../core/notice';
 import { topifyZ } from '../core/z-order';
 import { getApp } from '../core/app';
@@ -28,6 +29,8 @@ import { tryGetSettings } from '../core/settings-provider';
 import { mobileFullscreenGroup } from '../core/settings-common';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { escapeHtml } from '../core/utils';
+import { mountIcons, uiEmpty, uiRail } from '../core/ui';
+import type { BzRailItem } from '../core/ui';
 import { openItemMenu, openItemSheet, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, closeItemMenu, type ItemAction } from '../core/item-actions';
 import { emitDomainEvent } from '../core/domain-bus';
 import { belongingsEditChanges } from '../smartcat/belongings-source';
@@ -143,20 +146,6 @@ function esc(s: unknown): string {
 function iconSpan(name: string, extra = ''): string {
   return `<i data-lucide="${name}" class="bz-ic${extra ? ' ' + extra : ''}"></i>`;
 }
-/** lucide 占位 → setIcon（Obsidian 原生，替换为真图标保持 class 修饰） */
-function mountIcons(container: HTMLElement): void {
-  container.querySelectorAll('i[data-lucide]').forEach((el) => {
-    const name = el.getAttribute('data-lucide') || '';
-    const cls = el.className;
-    try {
-      const fresh = document.createElement('span');
-      fresh.className = 'bz-ic';
-      if (cls && cls !== 'bz-ic') fresh.className = cls;
-      setIcon(fresh, name);
-      el.replaceWith(fresh);
-    } catch (e) { /* 未知图标忽略 */ }
-  });
-}
 function money(n: number): string {
   return '￥' + (Number(n) || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -261,39 +250,37 @@ function itemById(id: string): BelongingsItem | undefined {
 // ==================== 主面板结构 ====================
 
 function panelHtml(): string {
-  return `<div class="bz-bel-panel bz-panel-mtop">
-  <div class="bz-bel-head">
-    <div class="bz-bel-title">归物本</div>
-    <div class="bz-bel-head-btns">
-      <button class="bz-icon-btn bz-touch-target bz-bel-mob-only" data-bel-add title="记一笔">${iconSpan(ICON.add)}</button>
-      <button class="bz-icon-btn bz-touch-target bz-bel-mob-only" data-bel-mobsearch title="搜索">${iconSpan(ICON.search)}</button>
-      <button class="bz-icon-btn bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON.close)}</button>
+  return `<div class="bz-bel-panel bz-panel-frame bz-panel-mtop">
+  <div class="bz-panel-head">
+    <div class="bz-panel-title">归物本</div>
+    <div class="bz-panel-head-sp"></div>
+    <div class="bz-panel-head-btns">
+      <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-add title="记一笔">${iconSpan(ICON.add)}</button>
+      <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-mobsearch title="搜索">${iconSpan(ICON.search)}</button>
+      <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON.close)}</button>
     </div>
   </div>
   <div class="bz-bel-body">
-    <aside class="bz-bel-side">
-      <div class="bz-bel-side-label">状态</div>
-      <div class="bz-bel-side-scroll" data-bel-status></div>
-    </aside>
+    <aside data-bel-status></aside>
     <div class="bz-bel-main">
-      <div class="bz-bel-main-head">
-        <div class="bz-bel-main-title">购入时间轴</div>
-        <div class="bz-bel-main-count" data-bel-count></div>
-        <div class="bz-bel-main-spacer"></div>
-        <button class="bz-btn bz-btn--primary" data-bel-add>${iconSpan(ICON.add, 'bz-ic--sm')} 记一笔</button>
+      <div class="bz-main-head">
+        <div class="bz-main-title">购入时间轴</div>
+        <div class="bz-main-count" data-bel-count></div>
+        <div class="bz-main-spacer"></div>
+        <button class="bz-btn bz-btn--primary bz-btn--md" data-bel-add>${iconSpan(ICON.add, 'bz-ic--sm')} 记一笔</button>
       </div>
-      <div class="bz-bel-toolbar">
-        <div class="bz-bel-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类…"></div>
+      <div class="bz-toolrow">
+        <div class="bz-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类…"></div>
         <div class="bz-bel-yearsel">
           <select class="bz-bel-select" data-bel-year></select>
           ${iconSpan(ICON.chevR, 'bz-bel-select-chev')}
         </div>
       </div>
-      <div class="bz-bel-mobscenes" data-bel-mobstatus></div>
+      <div class="bz-mobstrip" data-bel-mobstatus></div>
       <div class="bz-bel-mobsearch" data-bel-mobsearch-row>
-        <div class="bz-bel-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-bel-mobsearch-inp placeholder="搜索名称 / 分类…"></div>
+        <div class="bz-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-bel-mobsearch-inp placeholder="搜索名称 / 分类…"></div>
       </div>
-      <div class="bz-bel-stats" data-bel-stats></div>
+      <div class="bz-stat-grid bz-bel-stats" data-bel-stats></div>
       <div class="bz-bel-content" data-bel-content></div>
     </div>
   </div>
@@ -350,7 +337,7 @@ async function openPanelInner(): Promise<void> {
   M.status = typeof st === 'string' && DEFAULT_STATUS_VALUES.includes(st) && st !== '' ? st : null;
   M.db = await loadDatabase();
   const overlay = document.createElement('div');
-  overlay.className = 'bz-bel-overlay';
+  overlay.className = 'bz-panel-overlay';
   overlay.innerHTML = panelHtml();
   document.body.appendChild(overlay);
   topifyZ(overlay); // ADR-0067：显示即发号（原静态 z-index:100000 已删）
@@ -390,20 +377,13 @@ async function openPanelInner(): Promise<void> {
       return;
     }
   });
-  // 状态（左栏 / 移动 chips）
-  overlay.querySelectorAll('[data-bel-status], [data-bel-mobstatus]').forEach((el) => {
+  // 状态：左栏 rail 点击由 uiRail 工厂接管（renderStatus 内 onSelect）；
+  // 移动 chips 走事件委托（data-bel-st 语义同 rail 的 data-id）
+  overlay.querySelectorAll('[data-bel-mobstatus]').forEach((el) => {
     el.addEventListener('click', (e) => {
       const b = (e.target as HTMLElement).closest('[data-bel-st]') as HTMLElement | null;
       if (!b) return;
-      const k = b.dataset.belSt as string;
-      if (k === '__all') {
-        // 再点「全部」= 取消筛选回未筛选（nav 高亮回落到全部）
-        M.status = null;
-      } else {
-        // 再点当前项 = 取消筛选回全部；点其他状态 = 切换
-        M.status = M.status === k ? null : k;
-      }
-      renderAll();
+      applyStatusFilter(b.dataset.belSt as string);
     });
   });
   // 年份下拉（桌面/移动同步）
@@ -555,18 +535,32 @@ function renderAll(): void {
   renderContent();
 }
 
+/** 状态筛选切换语义（rail onSelect 与移动 chips 委托共用）：
+ *  再点「全部」= 取消筛选回未筛选；再点当前项 = 取消筛选回全部 */
+function applyStatusFilter(k: string): void {
+  if (k === '__all') M.status = null;
+  else M.status = M.status === k ? null : k;
+  renderAll();
+}
+
 function renderStatus(): void {
   const overlay = M.overlay!;
-  const side = overlay.querySelector('[data-bel-status]') as HTMLElement;
-  const mkSide = (key: string, label: string, ic: string, cnt: number, active: boolean, dot?: string) =>
-    `<button class="bz-bel-side-item${active ? ' bz-bel-nav-active' : ''}" data-bel-st="${key}"><span class="bz-bel-side-ic">${iconSpan(ic)}</span><span class="bz-bel-side-name">${esc(label)}</span><span class="bz-bel-nav-cnt">${cnt}</span></button>`;
-  side.innerHTML =
-    mkSide('__all', '全部', ICON.all, itemList().length, M.status === null) +
-    STATUS_ORDER.map((s) => mkSide(s.key, s.label, STATUS[s.key].ic, statusCount(s.label), M.status === s.key)).join('');
-  mountIcons(side);
+  // 左栏 = 组件库 uiRail（.bz-rail）：前缀状态图标 + 胶囊计数；
+  // 合成筛选（asset）非四态之一 → 无高亮行
+  const items: BzRailItem[] = [
+    { id: '__all', name: '全部', icon: ICON.all, count: itemList().length, pill: true },
+    ...STATUS_ORDER.map((s) => ({ id: s.key, name: s.label, icon: STATUS[s.key].ic, count: statusCount(s.label), pill: true })),
+  ];
+  const rail = uiRail({
+    groups: [{ label: '状态', items }],
+    activeId: M.status === 'asset' ? '' : (M.status ?? '__all'),
+    onSelect: applyStatusFilter,
+  });
+  (overlay.querySelector('[data-bel-status]') as HTMLElement).replaceChildren(rail.el);
+  // 移动横滑 chips（.bz-mobstrip）
   const mob = overlay.querySelector('[data-bel-mobstatus]') as HTMLElement;
   const mkChip = (key: string, label: string, ic: string, cnt: number, active: boolean) =>
-    `<button class="bz-bel-mobchip${active ? ' bz-bel-mobchip-active' : ''}" data-bel-st="${key}">${iconSpan(ic)}<span>${esc(label)}</span><span class="bz-bel-chip-cnt">${cnt}</span></button>`;
+    `<button class="bz-mobstrip-chip${active ? ' is-on' : ''}" data-bel-st="${key}">${iconSpan(ic)}<span>${esc(label)}</span><span class="bz-chip-cnt">${cnt}</span></button>`;
   mob.innerHTML =
     mkChip('__all', '全部', ICON.all, itemList().length, M.status === null) +
     STATUS_ORDER.map((s) => mkChip(s.key, s.label, STATUS[s.key].ic, statusCount(s.label), M.status === s.key)).join('');
@@ -594,9 +588,10 @@ function renderStats(): void {
     avg: avgDailyCost(),
     count: itemList().length,
   };
-  // ticket 189：总资产/在册件数两卡可点（合成筛选 / 回全部）；口径不动只加视图联动
+  // ticket 189：总资产/在册件数两卡可点（合成筛选 / 回全部）；口径不动只加视图联动。
+  // 卡片走组件库 .bz-stat 族（--main 品牌主卡 / --click 可点），保留 data-bel-statclick 供委托
   const card = (label: string, value: string, ic: string, main = false, click?: string) =>
-    `<div class="${main ? 'bz-bel-stat-main' : 'bz-bel-stat'}${click ? ' bz-bel-stat--click' : ''}"${click ? ` data-bel-statclick="${click}" title="${click === 'asset' ? '只看在用与闲置' : '清除筛选回全部'}"` : ''}><span class="bz-bel-stat-label">${iconSpan(ic)}${esc(label)}</span><span class="bz-bel-stat-value">${value}</span></div>`;
+    `<div class="bz-stat${main ? ' bz-stat--main' : ''}${click ? ' bz-stat--click' : ''}"${click ? ` data-bel-statclick="${click}" title="${click === 'asset' ? '只看在用与闲置' : '清除筛选回全部'}"` : ''}><span class="bz-stat-label">${iconSpan(ic)}${esc(label)}</span><span class="bz-stat-num">${value}</span></div>`;
   wrap.innerHTML =
     card('总资产', moneyShort(s.total), ICON.wallet, true, 'asset') +
     card('日均成本', '￥' + s.avg.toFixed(2), ICON.cal) +
@@ -622,10 +617,11 @@ function renderContent(): void {
   if (!list.length) {
     // 空态文案区分：库空（这里还没有物品）vs 筛选/搜索无匹配（没有符合条件的物品）
     const noMatch = !!M.q || M.status !== null || M.year !== '';
-    content.innerHTML = `<div class="bz-empty"><span class="bz-empty-ic">${iconSpan(ICON.empty)}</span>
-      <div class="bz-empty-title">${noMatch ? '没有符合条件的物品' : '这里还没有物品'}</div>
-      <div class="bz-empty-desc">${noMatch ? '换个筛选条件，或清除搜索' : '点右上角「记一笔」登记第一个物品'}</div></div>`;
-    mountIcons(content);
+    content.replaceChildren(uiEmpty({
+      icon: ICON.empty,
+      title: noMatch ? '没有符合条件的物品' : '这里还没有物品',
+      desc: noMatch ? '换个筛选条件，或清除搜索' : '点右上角「记一笔」登记第一个物品',
+    }));
     return;
   }
   // 分组 年 → 月（降序；空购买日期归「未标注」年尾）
@@ -849,10 +845,10 @@ async function deleteItem(it: BelongingsItem): Promise<void> {
 
 // ==================== 表单（记一笔 / 编辑） ====================
 
-/** 分类搜索选择弹层（输入过滤 + 键盘选择 + 外点关闭；Esc 分层：下拉开只收下拉） */
+/** 分类搜索选择弹层（组件库 .bz-popover；输入过滤 + 键盘选择 + 外点关闭；Esc 分层：下拉开只收下拉） */
 function categoryPicker(input: HTMLInputElement, current: string): void {
   const wrap = document.createElement('div');
-  wrap.className = 'bz-bel-catpop';
+  wrap.className = 'bz-popover';
   const close = () => {
     if (wrap.isConnected) {
       wrap.remove();
@@ -869,7 +865,7 @@ function categoryPicker(input: HTMLInputElement, current: string): void {
     const q = input.value.trim().toLowerCase();
     const matched = DEFAULT_CATEGORIES.filter((c) => !q || c.toLowerCase().includes(q)).slice(0, 60);
     wrap.innerHTML = matched.map((c) =>
-      `<div class="bz-bel-catopt${c === current ? ' on' : ''}" data-cat="${esc(c)}">${esc(catEmoji(c))} <span>${esc(catNameOf(c))}</span></div>`
+      `<div class="bz-popover-item${c === current ? ' is-on' : ''}" data-cat="${esc(c)}">${esc(catEmoji(c))} <span>${esc(catNameOf(c))}</span></div>`
     ).join('');
     wrap.querySelectorAll('[data-cat]').forEach((o) => o.addEventListener('click', () => {
       current = (o as HTMLElement).dataset.cat as string;
@@ -884,12 +880,12 @@ function categoryPicker(input: HTMLInputElement, current: string): void {
   input.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowDown') {
       const opts = wrap.querySelectorAll<HTMLElement>('[data-cat]');
-      const idx = [...opts].findIndex((o) => o.classList.contains('on'));
+      const idx = [...opts].findIndex((o) => o.classList.contains('is-on'));
       const next = opts[Math.min(opts.length - 1, idx + 1)];
-      if (next) { opts.forEach((o) => o.classList.remove('on')); next.classList.add('on'); }
+      if (next) { opts.forEach((o) => o.classList.remove('is-on')); next.classList.add('is-on'); }
       e.preventDefault();
     } else if (e.key === 'Enter') {
-      const on = wrap.querySelector<HTMLElement>('[data-cat].on');
+      const on = wrap.querySelector<HTMLElement>('[data-cat].is-on');
       if (on) { current = on.dataset.cat as string; input.value = current; close(); }
       e.preventDefault();
     } else if (e.key === 'Escape') {
@@ -969,7 +965,7 @@ export function openForm(it: BelongingsItem | null): void {
     <div class="bz-bel-form-title">${editing ? '编辑物品' : '记一笔'}</div>
     <div class="bz-bel-form-body">
       <div class="bz-field"><span class="bz-field-label">名称</span><input class="bz-input" id="bm-name" value="${esc(it?.name ?? '')}" placeholder="如：iPhone 15 Pro"></div>
-      <div class="bz-field"><span class="bz-field-label">分类</span><input class="bz-input bz-bel-catinput" id="bm-cat" value="${esc(catVal)}" placeholder="输入或选择分类" autocomplete="off"></div>
+      <div class="bz-field"><span class="bz-field-label">分类</span><input class="bz-input" id="bm-cat" value="${esc(catVal)}" placeholder="输入或选择分类" autocomplete="off"></div>
       <div class="bz-bel-form-row">
         <div class="bz-field"><span class="bz-field-label">购买价格（元）</span><input class="bz-input" id="bm-price" type="number" min="0" step="0.01" value="${esc(priceVal)}" placeholder="0.00"></div>
         <div class="bz-field"><span class="bz-field-label">购买日期</span><input class="bz-input" id="bm-date" type="date" value="${esc(dateVal)}"></div>
