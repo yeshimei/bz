@@ -62,6 +62,8 @@ export interface NoticeOptions {
   title?: string;
   /** 操作按钮（点击后执行回调并收起通知） */
   action?: NoticeAction;
+  /** 多操作按钮（与 action 二选一；两个都给时合并去重）——如「写入日记/复制」双动作 */
+  actions?: NoticeAction[];
   /** 动画变体（默认：桌面 slide-right，移动端 drop） */
   variant?: NoticeVariant;
   /** 去重键：同键通知存活时合并更新消息不新弹；已消失后 30s 窗口内也不重复弹（防后台自动事件刷屏） */
@@ -399,9 +401,15 @@ export function notify(msg: string, opts?: NoticeOptions): NoticeHandle {
       if (r.n.isProgress !== isProgress || r.n.el.classList.contains('bz-notice--' + type) === false) {
         applyTypeToEl(r.n, kind);
       }
-      // 合并期补挂 action（如 progress 原地更新为带「查看」的结果通知）；已有则不重复
-      if (opts.action && !r.n.el.querySelector('.bz-notice-action')) {
-        appendActionBtn(r.n, opts.action);
+      // 合并期补挂 action（如 progress 原地更新为带「查看」的结果通知）；按 label 去重不重复挂
+      const mergeActions: NoticeAction[] = [];
+      if (opts.action) mergeActions.push(opts.action);
+      if (opts.actions) mergeActions.push(...opts.actions);
+      const existingLabels = new Set(
+        Array.from(r.n.el.querySelectorAll('.bz-notice-action')).map((el) => el.textContent || '')
+      );
+      for (const a of mergeActions) {
+        if (!existingLabels.has(a.label)) appendActionBtn(r.n, a);
       }
       armTimer(r.n, kind, opts.duration, msg);
       return noopHandle();
@@ -453,10 +461,15 @@ export function notify(msg: string, opts?: NoticeOptions): NoticeHandle {
 
   const n: InternalNotice = { el, timer: null, msgEl, progressEl, iconEl: icon, variant, isProgress, persistent: false };
 
-  // 操作按钮（可选；富文本 action，点击后自动收起）
-  if (opts && opts.action) {
-    appendActionBtn(n, opts.action);
+  // 操作按钮（可选；富文本 action，点击后自动收起；actions 多按钮与 action 单按钮合并去重）
+  const actions: NoticeAction[] = [];
+  if (opts && opts.action) actions.push(opts.action);
+  if (opts && opts.actions) {
+    for (const a of opts.actions) {
+      if (!actions.some((x) => x.label === a.label)) actions.push(a);
+    }
   }
+  for (const a of actions) appendActionBtn(n, a);
 
   // 点击本体关闭
   el.addEventListener('click', () => hideNow(n));
