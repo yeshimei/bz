@@ -103,11 +103,12 @@ describe('批 C-4：报告头行样式归位 reading-report', () => {
 describe('批 C-5：bookshelf 面板 44px 补接 .bz-panel-mtop', () => {
   it('面板根节点挂类；移动头行旧垫顶收拢（防双份顶距）', () => {
     const ui = repo('src/bookshelf/ui.ts');
-    expect(ui).toMatch(/class="bz-bs-panel bz-panel-mtop"/);
+    // ADR-0094：面板壳接入共享 .bz-panel-frame（域内只留宽高）
+    expect(ui).toMatch(/class="bz-panel-frame bz-bs-panel bz-panel-mtop"/);
     const css = bsCss();
     // 头行移动规则不再自垫 safe-area（.bz-panel-mtop > div:first-child 归零接管）
     expect(css).not.toMatch(/\.bz-bs-head\s*\{[^}]*safe-area-inset-top/);
-    expect(css).toMatch(/@media \(max-width: 768px\)\s*\{[\s\S]*?\.bz-bs-head\s*\{\s*height: 46px;\s*\}/);
+    expect(css).toMatch(/@media \(max-width: 768px\)\s*\{[\s\S]*?\.bz-bs-panel \.bz-panel-head\s*\{\s*height: 46px;\s*\}/);
   });
 });
 
@@ -134,10 +135,12 @@ describe('批 C-6：todo 头行类名拆雷', () => {
 // ═══════════ cinema（项 7-9） ═══════════
 
 describe('批 C-7：移动端主头行添加钮触控抬档', () => {
-  it('≤768px 添加钮抬 40px 档（--bz-control-h-lg），桌面维持 32px 控件档', () => {
+  it('桌面走共享 .bz-btn--md 30px 中档（ADR-0094 主头行接入）；≤768px 抬 40px 档（--bz-control-h-lg，scoped）', () => {
     const css = cineCss();
-    expect(css).toMatch(/\.bz-cinema-main-head \.bz-btn\s*\{\s*height: var\(--bz-control-h\);/); // 桌面 32px
-    expect(css).toMatch(/@media \(max-width: 768px\)\s*\{[\s\S]*?\.bz-cinema-main-head \.bz-btn\s*\{\s*height: var\(--bz-control-h-lg\);/);
+    const ui = repo('src/cinema/ui.ts');
+    expect(ui).toMatch(/bz-btn bz-btn--primary bz-btn--md bz-cinema-add/); // 共享主头行主钮（30px 中档）
+    expect(css).not.toMatch(/\.bz-main-head \.bz-btn\s*\{\s*height: var\(--bz-control-h\);/); // 域内桌面 32px 档退役
+    expect(css).toMatch(/@media \(max-width: 768px\)\s*\{[\s\S]*?\.bz-cinema-panel \.bz-main-head \.bz-btn\s*\{\s*height: var\(--bz-control-h-lg\);/);
   });
 });
 

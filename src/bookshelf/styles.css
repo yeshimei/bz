@@ -1,44 +1,24 @@
 /* ==================== 书架墙域样式（src/bookshelf/styles.css） ==================== */
 /* 试点收编（铁律 6）：基线（按钮/图标钮/chip/输入/单选/滑条/空态/弹窗骨架）全部消费组件库
    （src/core/ui/components.css 的 .bz-* 类与 --bz-* token）；
-   本文件只保留书架墙独有布局（主面板骨架/左栏状态/封面网格与统计行/移动筛选抽屉/详情排版），
-   取值一律取自 tokens.css；状态色（在读/已读/未读）为数据语义色 → 引用 --bz-brand/--bz-success/--bz-text-*。
+   面板壳/头行/侧栏/统计卡/进度细条/工具行/搜索接入共享组件批次（ADR-0094）：
+   .bz-panel-overlay/.bz-panel-frame/.bz-panel-head/.bz-rail 族/.bz-stat 族/
+   .bz-progress--thin/.bz-toolrow/.bz-search——共享类承担的域内规则已删除；
+   本文件只保留书架墙独有布局（面板宽高/移动搜索条/封面网格与月柱/移动筛选抽屉/详情排版），
+   取值一律取自 tokens.css；状态色（在读/已读/未读）为数据语义色 → 引用 --bz-brand/--bz-success/--bz-text-*；
+   涉共享类的域内覆写一律以 .bz-bs-panel 前缀 scoped，防聚合后跨域泄漏。
    主色跟品牌 --bz-brand（与其他新域统一）。 */
 
-/* ---- 遮罩 + 主面板骨架 ---- */
-.bz-bs-overlay {
-  position: fixed; inset: 0;
-  background: var(--bz-overlay);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--bz-font-ui);
-}
+/* ---- 遮罩 + 主面板骨架：共享壳 .bz-panel-overlay / .bz-panel-frame（含滚动条隐藏），
+   域内只留宽高内联 ---- */
 .bz-bs-panel {
-  background: var(--bz-surface-2); color: var(--bz-text-1);
-  border-radius: var(--bz-radius-md); border: 1px solid var(--bz-border);
-  box-shadow: var(--bz-shadow-lg);
-  display: flex; flex-direction: column;
   width: 960px; max-width: calc(100vw - 32px); height: 680px; max-height: 90vh;
-  overflow: hidden;
 }
-/* 面板内隐藏滚动条（滚动功能保留） */
-.bz-bs-overlay, .bz-bs-overlay * { scrollbar-width: none; -ms-overflow-style: none; }
-.bz-bs-overlay *::-webkit-scrollbar { display: none; }
 
-/* 头行：整宽 44px 条、仅标题 + 计数；桌面端右上无关闭钮（遮罩/ESC 关） */
-.bz-bs-head {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 0 var(--bz-space-lg); height: 44px;
-  border-bottom: 1px solid var(--bz-border); flex-shrink: 0;
-}
-.bz-bs-title {
-  font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold);
-  color: var(--bz-text-1); display: inline-flex; align-items: baseline; gap: 8px;
-}
-.bz-bs-total { font-size: var(--bz-font-caption); color: var(--bz-text-3); font-weight: var(--bz-weight-regular); }
-.bz-bs-head-btns { display: flex; align-items: center; gap: var(--bz-space-xs); }
-/* 桌面端隐藏全部头行图标钮（报告入口在左栏底部；搜索在工具栏常驻；关闭靠遮罩/ESC）；
+/* 头行 = 共享 .bz-panel-head（标题 + 计数 sub + spacer + 钮组）。
+   桌面端隐藏全部头行图标钮（报告入口在左栏底部；搜索在工具栏常驻；关闭靠遮罩/ESC）；
    仅移动端 ≤768px 显示报告/搜索/筛选/关闭 */
-.bz-bs-head-btns [data-bs-tool] { display: none; }
+.bz-bs-panel .bz-panel-head-btns [data-bs-tool] { display: none; }
 /* 移动搜索条（默认隐藏，点头部放大镜展开） */
 .bz-bs-searchbar { display: none; }
 .bz-bs-searchbar.show { display: flex; align-items: center; gap: 6px; padding: 8px 14px 2px; flex-shrink: 0; }
@@ -46,99 +26,29 @@
 
 .bz-bs-body { display: flex; flex: 1; min-height: 0; }
 
-/* ---- 左栏：状态列表 + 底部报告入口（桌面） ---- */
-.bz-bs-side {
-  width: 168px; border-right: 1px solid var(--bz-border); padding: var(--bz-space-md) var(--bz-space-sm);
-  overflow-y: auto; flex-shrink: 0; display: flex; flex-direction: column;
-}
-.bz-bs-side-label { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin: 0 var(--bz-space-xs) var(--bz-space-xs); }
-.bz-bs-side-catlabel { margin-top: var(--bz-space-md); }
-.bz-bs-side-list { display: flex; flex-direction: column; gap: 1px; }
-/* 分类第二组：沿用状态组条目样式 */
-.bz-bs-side-catlist { display: flex; flex-direction: column; gap: 1px; }
-.bz-bs-side-item {
-  display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: 7px 10px; border-radius: 6px;
-  background: none; border: none; cursor: pointer;
-  font-size: var(--bz-font-label); color: var(--bz-text-1); text-align: left;
-  font-family: inherit;
-}
-.bz-bs-side-item:hover { background: var(--bz-surface-hover); }
-.bz-bs-side-item.on { background: var(--bz-brand); color: var(--bz-on-brand); font-weight: var(--bz-weight-medium); }
-.bz-bs-side-ic { width: 15px; height: 15px; display: inline-flex; flex-shrink: 0; color: var(--bz-text-3); }
-.bz-bs-side-item.on .bz-bs-side-ic { color: inherit; }
-.bz-bs-side-item .bz-ic { width: 15px; height: 15px; }
-.bz-bs-side-cnt { margin-left: auto; font-size: var(--bz-font-caption); color: var(--bz-text-3); }
-.bz-bs-side-item.on .bz-bs-side-cnt { color: inherit; opacity: 0.72; }
-.bz-bs-side-foot { margin-top: auto; border-top: 1px solid var(--bz-border); padding-top: var(--bz-space-sm); }
-.bz-bs-report {
-  display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: 7px 10px; border-radius: 6px;
-  background: none; border: none; cursor: pointer;
-  font-size: var(--bz-font-meta); color: var(--bz-text-2); text-align: left;
-  font-family: inherit;
-}
-.bz-bs-report:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
-.bz-bs-report .bz-ic { width: 14px; height: 14px; flex-shrink: 0; color: var(--bz-text-3); }
-.bz-bs-report:hover .bz-ic { color: var(--bz-brand); }
+/* ---- 左栏 = 共享 .bz-rail 族（label/行/计数 + 底部 .bz-rail-foot 报告入口）；
+   .bz-bs-side-list/.bz-bs-side-catlist 为渲染挂载容器（无样式），.bz-bs-report 为 JS/测试钩子 ----
+   报告入口箭头靠右（共享行内无此槽位） */
 .bz-bs-report-chev { margin-left: auto; }
-/* 报告视图激活态（左栏入口变「‹ 返回书架」，桌面返回路径） */
-.bz-bs-report.on { background: var(--bz-brand); color: var(--bz-on-brand); font-weight: var(--bz-weight-medium); }
-.bz-bs-report.on .bz-ic { color: inherit; }
-.bz-bs-report.on:hover .bz-ic { color: inherit; }
 
 /* ---- 报告视图（reading-report 域内容区挂载点；头行/内容区样式归 reading-report/styles.css） ---- */
 .bz-bs-view-report { min-height: 0; }
 
-/* ---- 右内容区：视图容器（书架列表 / 阅读分析报告互斥）+ 工具栏 + 统计行 + 书架 ---- */
+/* ---- 右内容区：视图容器（书架列表 / 阅读分析报告互斥）+ 工具行 + 统计行 + 书架 ----
+   工具行/搜索壳 = 共享 .bz-toolrow / .bz-search；搜索定宽与排序槽位为域内布局 */
 .bz-bs-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 /* 面板内视图（读书报告内嵌化拍板）：报告不再是独立弹窗，而是面板内的一个视图 */
 .bz-bs-view { display: none; flex: 1; flex-direction: column; min-height: 0; }
 .bz-bs-view.active { display: flex; }
-.bz-bs-toolbar {
-  display: flex; align-items: center; gap: var(--bz-space-sm);
-  padding: 10px var(--bz-space-lg) 6px; flex-shrink: 0;
-}
-.bz-bs-search { flex: 0 0 240px; position: relative; }
-.bz-bs-search .bz-ic { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--bz-text-3); pointer-events: none; width: 14px; }
-.bz-bs-search .bz-input { width: 100%; padding-left: 30px; }
-.bz-bs-spacer { flex: 1; }
+.bz-bs-search { flex: 0 0 240px; }
 .bz-bs-sort-slot { flex-shrink: 0; }
 
-/* 统计行（桌面 3 卡 + 月柱） */
+/* 统计行（桌面 3 卡 + 月柱）＝ 共享 .bz-stat 卡 + 域内月柱卡；行内等分为域内布局 */
 .bz-bs-dash {
   display: flex; gap: var(--bz-space-md); padding: 4px var(--bz-space-lg) var(--bz-space-md);
   flex-shrink: 0;
 }
-.bz-bs-statcard {
-  flex: 1; min-width: 0;
-  background: var(--bz-surface-3); border: 1px solid var(--bz-border);
-  border-radius: var(--bz-radius-md); padding: 10px 14px;
-}
-.bz-bs-statcard.accent { background: var(--bz-brand-soft); border-color: transparent; }
-.bz-bs-stat-label {
-  font-size: var(--bz-font-caption); color: var(--bz-text-3);
-  display: flex; align-items: center; gap: 5px;
-}
-.bz-bs-statcard.accent .bz-bs-stat-label { color: var(--bz-brand); }
-.bz-bs-stat-num { font-size: 24px; font-weight: var(--bz-weight-bold); color: var(--bz-text-1); margin-top: 2px; line-height: 1.15; }
-.bz-bs-statcard.accent .bz-bs-stat-num { color: var(--bz-brand); }
-.bz-bs-stat-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* 可点统计卡（在读 accent 一键回书 / 读完纪念日回看）：整卡手型 + hover 轻抬（阴影 token，无裸色值） */
-.bz-bs-statcard[data-bs-resume], .bz-bs-statcard[data-bs-anniv], .bz-bs-mcard[data-bs-resume], .bz-bs-mcard[data-bs-anniv] {
-  cursor: pointer;
-  transition: transform var(--bz-dur-base) var(--bz-ease-out), box-shadow var(--bz-dur-base) var(--bz-ease-out);
-}
-.bz-bs-statcard[data-bs-resume]:hover, .bz-bs-statcard[data-bs-anniv]:hover,
-.bz-bs-mcard[data-bs-resume]:hover, .bz-bs-mcard[data-bs-anniv]:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--bz-shadow-sm);
-}
-/* 纪念日卡书名行：24px 大数字档收缩为标题档（一行截断） */
-.bz-bs-anniv .bz-bs-stat-num, .bz-bs-anniv .bz-bs-mnum {
-  font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold);
-  line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
+.bz-bs-dash .bz-stat { flex: 1; min-width: 0; }
 .bz-bs-chart {
   flex: 1 1 320px; min-width: 0;
   background: var(--bz-surface-3); border: 1px solid var(--bz-border);
@@ -162,14 +72,8 @@
 .bz-bs-bar-label { font-size: var(--bz-font-caption); color: var(--bz-text-3); white-space: nowrap; }
 .bz-bs-chart-foot { display: flex; justify-content: space-between; font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-top: 4px; }
 
-/* 移动统计 2 卡（移动端显示，桌面隐藏） */
+/* 移动统计 2 卡（共享 .bz-stat 卡；移动端显示，桌面隐藏） */
 .bz-bs-mcards { display: none; grid-template-columns: 1fr 1fr; gap: var(--bz-space-sm); padding: 4px 14px 0; flex-shrink: 0; }
-.bz-bs-mcard { background: var(--bz-surface-3); border: 1px solid var(--bz-border); border-radius: var(--bz-radius-md); padding: 8px 12px; }
-.bz-bs-mcard.accent { background: var(--bz-brand-soft); border-color: transparent; }
-.bz-bs-mlabel { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
-.bz-bs-mcard.accent .bz-bs-mlabel { color: var(--bz-brand); }
-.bz-bs-mnum { font-size: 20px; font-weight: var(--bz-weight-bold); color: var(--bz-text-1); margin-top: 1px; line-height: 1.2; }
-.bz-bs-mcard.accent .bz-bs-mnum { color: var(--bz-brand); }
 
 /* 书架滚动区（桌面与移动各一份，按断点显隐） */
 .bz-bs-shelves { flex: 1; overflow-y: auto; padding: 2px var(--bz-space-lg) var(--bz-space-lg); min-height: 0; }
@@ -198,9 +102,8 @@
   position: absolute; top: 7px; right: 7px; width: 9px; height: 9px;
   border-radius: 50%; box-shadow: 0 0 0 2px var(--bz-surface-2);
 }
-/* 进度细条（封面底部；非已读且有进度时） */
-.bz-bs-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(0, 0, 0, 0.14); }
-.bz-bs-prog i { display: block; height: 100%; background: var(--bz-brand); }
+/* 进度细条 = 共享 .bz-progress .bz-progress--thin；域内只给封面底部绝对定位 */
+.bz-bs-prog { position: absolute; left: 0; right: 0; bottom: 0; }
 /* B6：有书评渐变浮层时进度条上移到浮层上方（quote 高 = 14pt + 1 行 16.5 + 6pt ≈ 37px），否则被渐变遮住 */
 .bz-bs-cover-wrap:has(.bz-bs-quote) .bz-bs-prog { bottom: 37px; }
 /* 书评一句（封面底部渐变浮层，1 行截断；本类仅服务封面浮层——
@@ -329,14 +232,14 @@
     border-radius: 0; border: none;
   }
   /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css），头行不再自垫 */
-  .bz-bs-head { height: 46px; }
+  .bz-bs-panel .bz-panel-head { height: 46px; }
   /* 头行图标钮：报告/搜索/筛选/关闭（桌面隐藏的这批在此显示） */
-  .bz-bs-head-btns [data-bs-tool] { display: inline-flex; }
+  .bz-bs-panel .bz-panel-head-btns [data-bs-tool] { display: inline-flex; }
   .bz-bs-filterbtn.on { color: var(--bz-brand); background: var(--bz-brand-soft); }
   /* 头行报告钮激活态（报告视图中点击切回书架）+ 报告视图关闭钮仅移动端显示 */
-  .bz-bs-head-btns [data-bs-tool="report"].on { color: var(--bz-brand); background: var(--bz-brand-soft); }
-  /* 桌面块隐藏：左栏/工具栏/桌面统计行/桌面书架；移动块显示 */
-  .bz-bs-side, .bz-bs-toolbar, .bz-bs-dash, .bz-bs-shelves { display: none; }
+  .bz-bs-panel .bz-panel-head-btns [data-bs-tool="report"].on { color: var(--bz-brand); background: var(--bz-brand-soft); }
+  /* 桌面块隐藏：左栏/工具行/桌面统计行/桌面书架；移动块显示 */
+  .bz-bs-panel .bz-rail, .bz-bs-panel .bz-toolrow, .bz-bs-dash, .bz-bs-shelves { display: none; }
   .bz-bs-mcards { display: grid; }
   .bz-bs-shelves-m { display: block; }
   .bz-bs-grid { grid-template-columns: 1fr 1fr; gap: 14px 12px; }

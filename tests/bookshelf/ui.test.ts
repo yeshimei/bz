@@ -90,16 +90,16 @@ describe('bookshelf overlay', () => {
   it('打开主面板：头行标题 + 计数 + 统计 + 左栏状态 + 网格书卡', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(overlay).toBeTruthy();
-    expect(overlay.querySelector('.bz-bs-title')?.textContent).toContain('书架墙');
-    expect(overlay.querySelector('.bz-bs-total')?.textContent).toBe('3 本');
+    expect(overlay.querySelector('.bz-panel-title')?.textContent).toContain('书架墙');
+    expect(overlay.querySelector('.bz-panel-head-sub')?.textContent).toBe('3 本');
     // 统计卡：正在读 1 / 今年读完 1
     expect(overlay.textContent).toContain('正在读');
-    expect(overlay.querySelector('.bz-bs-stat-num')?.textContent).toBe('1 本');
+    expect(overlay.querySelector('.bz-stat-num')?.textContent).toBe('1 本');
     // 左栏 4 项（状态组）+ 分类组（全部 + 成长 + 未分类）
-    expect(overlay.querySelectorAll('.bz-bs-side-list .bz-bs-side-item').length).toBe(4);
-    const catItems = Array.from(overlay.querySelectorAll('.bz-bs-side-catlist .bz-bs-side-item')).map((b) => b.textContent);
+    expect(overlay.querySelectorAll('.bz-bs-side-list .bz-rail-item').length).toBe(4);
+    const catItems = Array.from(overlay.querySelectorAll('.bz-bs-side-catlist .bz-rail-item')).map((b) => b.textContent);
     expect(catItems.length).toBe(3);
     expect(catItems[0]).toContain('全部');
     expect(catItems.some((t) => t?.includes('成长'))).toBe(true);
@@ -114,8 +114,8 @@ describe('bookshelf overlay', () => {
   it('筛选：左栏点已读 → 只剩 1 卡', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
-    const doneBtn = Array.from(overlay.querySelectorAll('.bz-bs-side-item')).find((b) => b.textContent?.includes('已读')) as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
+    const doneBtn = Array.from(overlay.querySelectorAll('.bz-rail-item')).find((b) => b.textContent?.includes('已读')) as HTMLElement;
     doneBtn.click();
     expect(gridCards(overlay).length).toBe(1);
     expect(gridCards(overlay)[0].textContent).toContain('围城');
@@ -129,7 +129,7 @@ describe('bookshelf overlay', () => {
     input.value = '钱钟书';
     input.dispatchEvent(new Event('input'));
     await new Promise((r) => setTimeout(r, 250)); // 防抖 200ms
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(gridCards(overlay).length).toBe(1);
     expect(gridCards(overlay)[0].textContent).toContain('围城');
     input.value = '';
@@ -150,7 +150,7 @@ describe('bookshelf overlay', () => {
     // 重开：M.searchKeyword 残留，输入框必须回显同样的关键字
     createOverlay(app);
     await new Promise((r) => setTimeout(r, 20));
-    const overlay2 = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay2 = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect((overlay2.querySelector('#bz-bs-dsearch') as HTMLInputElement).value).toBe('钱钟书');
     expect((overlay2.querySelector('#bz-bs-msearch') as HTMLInputElement).value).toBe('钱钟书');
     expect(gridCards(overlay2).length).toBe(1); // 过滤仍生效且与输入框一致
@@ -160,7 +160,7 @@ describe('bookshelf overlay', () => {
   it('详情：打开书籍详情弹窗，改状态已读 → 保存 → 统计/计数联动 + frontmatter 落盘', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = Array.from(overlay.querySelectorAll('.bz-bs-book')).find((b) => b.textContent?.includes('认知觉醒')) as HTMLElement;
     card.click();
     const popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
@@ -179,7 +179,7 @@ describe('bookshelf overlay', () => {
     expect(content).toMatch(/completionDate: \d{4}-\d{2}-\d{2}/);
     expect(content).toContain('bookReview: 值得反复读');
     // 统计联动
-    const total = overlay.querySelector('.bz-bs-total') as HTMLElement;
+    const total = overlay.querySelector('.bz-panel-head-sub') as HTMLElement;
     expect(total.textContent).toBe('3 本');
     // 详情弹窗关闭（保存成功）
     expect(document.querySelector('.bz-bs-d-popup')).toBeFalsy();
@@ -189,7 +189,7 @@ describe('bookshelf overlay', () => {
   it('改状态在读 → 保存：readingProgress 归进度值、无 completionDate；清空书评删键', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     // 打开「围城」（已读）
     const card = Array.from(overlay.querySelectorAll('.bz-bs-book')).find((b) => b.textContent?.includes('围城')) as HTMLElement;
     card.click();
@@ -216,7 +216,7 @@ describe('bookshelf overlay', () => {
   it('详情：md 书可删除（二次确认链）', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = Array.from(gridCards(overlay)).find((b) => b.textContent?.includes('算法导论')) as HTMLElement;
     card.click();
     const popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
@@ -254,7 +254,7 @@ describe('bookshelf overlay', () => {
     }));
     const app = makeApp(vault);
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(gridCards(overlay).length).toBe(2);
     const epubCard = gridCards(overlay).find((b) => b.textContent?.includes('百年孤独')) as HTMLElement;
     epubCard.click();
@@ -280,7 +280,7 @@ describe('bookshelf overlay', () => {
     let executed = '';
     (app as any).commands.executeCommandById = (id: string) => { executed = id; };
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     (overlay.querySelector('.bz-bs-report') as HTMLElement).click();
     // 原深链作废：不再执行命令（面板内切换）
     expect(executed).toBe('');
@@ -303,7 +303,7 @@ describe('bookshelf overlay', () => {
   it('读书报告内嵌化：报告视图返回书架（左栏「返回书架」+ 视图内关闭钮 data-rr-goto-shelf）', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     (overlay.querySelector('.bz-bs-report') as HTMLElement).click();
     // 左栏「返回书架」→ 回书架视图（桌面返回路径）
     (overlay.querySelector('.bz-bs-report') as HTMLElement).click();
@@ -323,7 +323,7 @@ describe('bookshelf overlay', () => {
     // 面板未开：冷开 → 报告视图（rebuild 完成回调进入）
     openBookshelfReport(app);
     await new Promise((r) => setTimeout(r, 40));
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(M.view).toBe('report');
     expect(overlay.querySelector('.bz-bs-view-report')?.classList.contains('active')).toBe(true);
     closeOverlay();
@@ -337,7 +337,7 @@ describe('bookshelf overlay', () => {
   it('报告内同面板筛选：作者行点击 → 回书架列表 + 作者名预填搜索（原深链作废）', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     (overlay.querySelector('.bz-bs-report') as HTMLElement).click();
     const content = overlay.querySelector('.bz-rr-content') as HTMLElement;
     await waitReport(content);
@@ -360,7 +360,7 @@ describe('bookshelf overlay', () => {
   it('报告内同面板筛选：分类行点击 → 回书架列表 + 分类筛选预填（左栏分类组同步高亮）', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     (overlay.querySelector('.bz-bs-report') as HTMLElement).click();
     const content = overlay.querySelector('.bz-rr-content') as HTMLElement;
     await waitReport(content);
@@ -374,7 +374,7 @@ describe('bookshelf overlay', () => {
     expect(cards.length).toBe(1);
     expect(cards[0].textContent).toContain('认知觉醒');
     // 左栏分类组同步高亮
-    const onCat = overlay.querySelector('.bz-bs-side-catlist .bz-bs-side-item.on') as HTMLElement;
+    const onCat = overlay.querySelector('.bz-bs-side-catlist .bz-rail-item.on') as HTMLElement;
     expect(onCat.textContent).toContain('成长');
     closeOverlay();
   });
@@ -382,7 +382,7 @@ describe('bookshelf overlay', () => {
   it('报告视图自动刷新：报告存续期间书库变化 → 自动重算只更新报告内容区', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     (overlay.querySelector('.bz-bs-report') as HTMLElement).click();
     const content = overlay.querySelector('.bz-rr-content') as HTMLElement;
     await waitReport(content);
@@ -402,13 +402,13 @@ describe('bookshelf overlay', () => {
   it('报告渲染中止：报告视图中关面板（closeOverlay）→ 在途渲染作废不报错、toast 收起', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     (overlay.querySelector('.bz-bs-report') as HTMLElement).click();
     // 分片渲染未完成即关面板
     closeOverlay();
     // 等 toast 离场动画（hide 200ms）结束再断言容器清空
     await new Promise((r) => setTimeout(r, 450));
-    expect(document.querySelector('.bz-bs-overlay')).toBeNull();
+    expect(document.querySelector('.bz-panel-overlay')).toBeNull();
     // progress toast 已收起（不留常驻残留）
     expect(document.querySelectorAll('#bz-notice-container .bz-notice').length).toBe(0);
   });
@@ -416,7 +416,7 @@ describe('bookshelf overlay', () => {
   it('移动端视图：抽屉筛选可用（桌面模式同样能开抽屉）；选未读 → 只剩未读卡', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     // 头部筛选按钮（在 DOM 中；桌面 CSS 隐藏但可点击）
     const filterBtn = overlay.querySelector('#bz-bs-filterbtn') as HTMLElement;
     filterBtn.click();
@@ -444,7 +444,7 @@ describe('bookshelf overlay', () => {
     MockPlatform.isMobile = true;
     try {
       await openPanel(vault, app);
-      const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+      const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
       expect(mGridCards(overlay).length).toBe(3);
       expect(gridCards(overlay).length).toBe(0);
     } finally {
@@ -457,7 +457,7 @@ describe('bookshelf overlay', () => {
     const { vault, app } = seedVault();
     createOverlay(app);
     // rebuild 未完成：shelves 是加载占位而非空态文案
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(overlay.querySelector('.bz-bs-shelves')?.textContent).toContain('正在整理书架');
     await new Promise((r) => setTimeout(r, 20));
     expect(overlay.querySelector('.bz-bs-shelves')?.textContent).not.toContain('正在整理书架');
@@ -468,7 +468,7 @@ describe('bookshelf overlay', () => {
   it('B9：空态三态区分——搜索无命中 search-x、状态筛空 funnel', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     // 搜索无命中 → search-x（mock setIcon 记录图标名到 data-icon）
     const input = document.querySelector('#bz-bs-dsearch') as HTMLInputElement;
     input.value = '不存在的书名';
@@ -494,7 +494,7 @@ describe('bookshelf overlay', () => {
       books: { a: { meta: { title: '百年孤独' }, file: { vaultPath: 'books/x.epub' }, reading: { position: { percent: 0.1 } } } },
     }));
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(gridCards(overlay).some((b) => b.textContent?.includes('百年孤独'))).toBe(true);
     // Weave 外部落盘新进度 → vault modify
     vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
@@ -520,9 +520,9 @@ describe('bookshelf overlay', () => {
     // 重新开面板（不经 ensureBookshelf：模拟卸载后层未注销的对照场景）
     createOverlay(app);
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    expect(document.querySelector('.bz-bs-overlay')).toBeTruthy(); // ESC 层已注销：不关
+    expect(document.querySelector('.bz-panel-overlay')).toBeTruthy(); // ESC 层已注销：不关
     // vault modify 不再触发刷新（退订生效）
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     vault.files.set('书库/新书.md', '---\ntags: [book]\n---');
     vault.emit('modify', vault.file('书库/新书.md'));
     await new Promise((r) => setTimeout(r, 420));
@@ -533,7 +533,7 @@ describe('bookshelf overlay', () => {
   it('audit H：bindCoverFallback 容器 error 监听只挂一次（重复渲染不叠加）', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const shelves = overlay.querySelector('.bz-bs-shelves') as HTMLElement;
     const spy = vi.spyOn(shelves, 'addEventListener');
     const { renderAll } = await import('../../src/bookshelf/ui');
@@ -547,18 +547,18 @@ describe('bookshelf overlay', () => {
   it('audit H：toggle 关面板顺带关闭详情/删除确认弹窗（不留孤儿浮层）', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = Array.from(gridCards(overlay)).find((b) => b.textContent?.includes('认知觉醒')) as HTMLElement;
     card.click();
     expect(document.querySelector('.bz-bs-d-popup')).toBeTruthy(); // 详情弹窗开着
     // 再触发一次命令（toggle 语义 → closeOverlay）
     openBookshelf(app);
-    expect(document.querySelector('.bz-bs-overlay')).toBeFalsy(); // 主面板已关
+    expect(document.querySelector('.bz-panel-overlay')).toBeFalsy(); // 主面板已关
     expect(document.querySelector('.bz-bs-d-popup')).toBeFalsy(); // 详情弹窗不留孤儿
     // 删除确认弹窗同样收口
     createOverlay(app);
     await new Promise((r) => setTimeout(r, 20));
-    const overlay2 = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay2 = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card2 = Array.from(gridCards(overlay2)).find((b) => b.textContent?.includes('算法导论')) as HTMLElement;
     card2.click();
     (document.querySelector('.bz-bs-d-popup .bz-bs-d-danger') as HTMLElement).click();
@@ -575,7 +575,7 @@ describe('bookshelf overlay', () => {
     const openLink = vi.fn(async () => {});
     (app as any).workspace.openLinkText = openLink;
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = Array.from(gridCards(overlay)).find((b) => b.textContent?.includes('认知觉醒')) as HTMLElement;
     card.click();
     const popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
@@ -593,7 +593,7 @@ describe('bookshelf overlay', () => {
     const openLink = vi.fn(async () => {});
     (app as any).workspace.openLinkText = openLink;
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     // 围城（已读）→ 打开笔记
     const card = Array.from(gridCards(overlay)).find((b) => b.textContent?.includes('围城')) as HTMLElement;
     card.click();
@@ -615,7 +615,7 @@ describe('bookshelf overlay', () => {
     ensureBookshelf(app2);
     createOverlay(app2);
     await new Promise((r) => setTimeout(r, 20));
-    const overlay2 = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay2 = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const epubCard = Array.from(gridCards(overlay2)).find((b) => b.textContent?.includes('百年孤独')) as HTMLElement;
     epubCard.click();
     const popup2 = document.querySelector('.bz-bs-d-popup') as HTMLElement;
@@ -635,7 +635,7 @@ describe('bookshelf overlay', () => {
     const openLink = vi.fn(async () => {});
     (app as any).workspace.openLinkText = openLink;
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const epubCard = Array.from(gridCards(overlay)).find((b) => b.textContent?.includes('百年孤独')) as HTMLElement;
     epubCard.click();
     const popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
@@ -652,8 +652,8 @@ describe('bookshelf overlay', () => {
     const openLink = vi.fn(async () => {});
     (app as any).workspace.openLinkText = openLink;
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
-    const accentCard = overlay.querySelector('.bz-bs-dash .bz-bs-statcard[data-bs-resume]') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
+    const accentCard = overlay.querySelector('.bz-bs-dash .bz-stat[data-bs-resume]') as HTMLElement;
     expect(accentCard).toBeTruthy();
     expect(accentCard.textContent).toContain('正在读');
     accentCard.click();
@@ -665,7 +665,7 @@ describe('bookshelf overlay', () => {
   it('移动端排序入口：头行 ⇅ 钮开筛选抽屉（同入口）；uiSegmented 切排序键即时生效且抽屉不关', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const sortBtn = overlay.querySelector('[data-bs-tool="sort"]') as HTMLElement;
     expect(sortBtn).toBeTruthy();
     expect(sortBtn.querySelector('[data-icon="arrow-up-down"]')).toBeTruthy(); // lucide ⇅
@@ -690,19 +690,19 @@ describe('bookshelf overlay', () => {
   it('分类筛选：侧栏第二组正交过滤（状态 × 分类叠加）；抽屉 chips 同步', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     // 点分类「成长」→ 只剩认知觉醒
-    const catBtn = Array.from(overlay.querySelectorAll('.bz-bs-side-catlist .bz-bs-side-item')).find((b) => b.textContent?.includes('成长')) as HTMLElement;
+    const catBtn = Array.from(overlay.querySelectorAll('.bz-bs-side-catlist .bz-rail-item')).find((b) => b.textContent?.includes('成长')) as HTMLElement;
     catBtn.click();
     expect(gridCards(overlay).length).toBe(1);
     expect(gridCards(overlay)[0].textContent).toContain('认知觉醒');
     // 正交：切状态「已读」→ 已读 ∩ 成长 = 空（空态文案）
-    const doneBtn = Array.from(overlay.querySelectorAll('.bz-bs-side-list .bz-bs-side-item')).find((b) => b.textContent?.includes('已读')) as HTMLElement;
+    const doneBtn = Array.from(overlay.querySelectorAll('.bz-bs-side-list .bz-rail-item')).find((b) => b.textContent?.includes('已读')) as HTMLElement;
     doneBtn.click();
     expect(gridCards(overlay).length).toBe(0);
     expect(overlay.querySelector('.bz-bs-shelves')?.textContent).toContain('这个筛选下还没有书');
     // 分类「全部」复位 → 已读 1 本
-    const allBtn = Array.from(overlay.querySelectorAll('.bz-bs-side-catlist .bz-bs-side-item')).find((b) => b.textContent?.includes('全部')) as HTMLElement;
+    const allBtn = Array.from(overlay.querySelectorAll('.bz-bs-side-catlist .bz-rail-item')).find((b) => b.textContent?.includes('全部')) as HTMLElement;
     allBtn.click();
     expect(gridCards(overlay).length).toBe(1);
     // 移动抽屉：分类 chips 组存在，点「未分类」生效（状态已读仍叠加 → 已读 ∩ 未分类 = 围城）
@@ -722,7 +722,7 @@ describe('bookshelf overlay', () => {
   it('状态保存撤销：改已读保存后 notifyUndo 一键回滚 frontmatter 与条目', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = Array.from(gridCards(overlay)).find((b) => b.textContent?.includes('认知觉醒')) as HTMLElement;
     card.click();
     const popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
@@ -753,7 +753,7 @@ describe('bookshelf overlay', () => {
     const { vault, app } = seedVault();
     const y = new Date().getFullYear();
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     // 基线：今年读完 1 本（围城 2026-08-15）
     expect((overlay.querySelector('.bz-bs-dash') as HTMLElement).textContent).toContain(`${y} 读完`);
     const card = Array.from(gridCards(overlay)).find((b) => b.textContent?.includes('围城')) as HTMLElement;
@@ -779,7 +779,7 @@ describe('bookshelf overlay', () => {
   it('读完日期可改：在读转已读时日期行出现并默认今天；切回在读/未读隐藏', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = Array.from(gridCards(overlay)).find((b) => b.textContent?.includes('认知觉醒')) as HTMLElement;
     card.click();
     const popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
@@ -799,7 +799,7 @@ describe('bookshelf overlay', () => {
     vault.files.set('书库/纪念书.md', `---\ntags: [book]\nauthor: 纪念作者\nreadingDate: ${yearsAgoDate(3)}\ncompletionDate: ${yearsAgoDate(3)}\nreadingProgress: 100\n---`);
     const app = makeApp(vault);
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     // 命中：accent 卡位 = 纪念卡（无命中零空态的反向断言在下方）
     const anniv = overlay.querySelector('.bz-bs-dash [data-bs-anniv]') as HTMLElement;
     expect(anniv).toBeTruthy();
@@ -817,7 +817,7 @@ describe('bookshelf overlay', () => {
   it('读完纪念日卡：无命中（今天没读完纪念日）不渲染、无空态', async () => {
     const { vault, app } = seedVault(); // 围城读完 2026-08-15，非今天
     await openPanel(vault, app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(overlay.querySelector('[data-bs-anniv]')).toBeFalsy();
     // 在读 accent 卡占位（一键回书语义在位）
     expect(overlay.querySelector('.bz-bs-dash [data-bs-resume]')).toBeTruthy();
