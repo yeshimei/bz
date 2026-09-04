@@ -53,7 +53,8 @@ export function buildConfig(): SecondBrainConfig {
     DEEPSEEK_MODEL: s.secondBrainDeepseekModel || 'deepseek-v4-flash',
     DEFAULT_USE_DEEPSEEK: s.secondBrainDefaultUseDeepseek === 'true',
     MAX_HISTORY: Number(s.secondBrainMaxHistory) || 10,
-    OLLAMA_REMOTE_URL: s.secondBrainRemoteOllamaUrl || 'http://192.168.1.8:11434',
+    // 空 = 未配置远程（enh-sweep-a：不再回落写死内网 IP；消费方均有 || OLLAMA_URL/真值判断兜底）
+    OLLAMA_REMOTE_URL: s.secondBrainRemoteOllamaUrl || '',
   };
 }
 
