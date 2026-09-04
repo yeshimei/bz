@@ -5,18 +5,7 @@
  * 本文件是样式源之一，构建时由 scripts/build-css.mjs 聚合成根 styles.css
  * ============================================================ */
 
-/* ===== bz 全局按钮基线：压 Obsidian 核心默认（app.css） ===== */
-/* Obsidian 核心 app.css 对裸 button:not(.clickable-icon) 统一喂默认
-   color/background-color/box-shadow（--interactive-normal 底 + --input-shadow）。
-   此全局覆盖使按钮回到无样式基态，由各域样式自行决定外观。
-   :where() 归零特异性（P0 收编前提，docs/ui-shared-components.md）：语义不变
-   （仍是兜底 unset），但任何单类按钮规则（.bz-btn/.bz-choice-btn 等 0,1,0）
-   即可覆盖——共享组件库的单类组件成立的前提。 */
-button:not(.clickable-icon) {
-    color: unset;
-    background-color: unset;
-    box-shadow: unset;
-}
+/* 全局按钮基线已迁至 src/core/reset.css（全局覆盖层，issue 196） */
 
 /* ===== 设置页顶部分页（参考 obsidian-linter 设置页） ===== */
 /* 设置区块标题（ADR-0009 单页平铺：🤖 AI / 📂 数据存储路径） */

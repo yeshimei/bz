@@ -31,11 +31,13 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 
 | 层 | 文件 | 内容 |
 |---|---|---|
+| 全局基线 | `src/core/vendor/normalize.css` | 官方 normalize v8（跨浏览器修正，勿改） |
+| 全局基线 | `src/core/reset.css` | 全局覆盖层：手动重置 Obsidian 核心/浏览器默认（首条：裸 button 三属性 unset 基线）；只放全局基线不带域语义，每条须写明覆盖动机（issue 196） |
 | 样式库 | `src/core/ui/tokens.css` | 全部 `--bz-*` token：结构层 `:root` + 色彩层 `body.theme-dark/light` |
 | 样式库 | `src/core/ui/components.css` | 组件类样式：`.bz-btn/.bz-icon-btn/.bz-chip/.bz-input/.bz-field/.bz-empty/.bz-segmented/.bz-choice/.bz-sw/.bz-select/.bz-badge/.bz-lightbox` 等 |
 | 组件库 | `src/core/ui/index.ts` | 转发桶（唯一 import 入口） |
 | 组件库 | `src/core/ui/{types,icon,icons,button,chip,field,empty,segmented,choice,switch,select,search,mainhead,rail,mobstrip,stat,progress,popover,slider,lightbox,modal,resize}.ts` | 每组件一文件工厂 |
-| 构建 | `scripts/build-css.mjs` | SOURCES 聚合：normalize → core/styles.css → **ui/tokens.css → ui/components.css** → 各域 styles.css |
+| 构建 | `scripts/build-css.mjs` | SOURCES 聚合：normalize → **core/reset.css** → core/styles.css → **ui/tokens.css → ui/components.css** → 各域 styles.css |
 
 > 注意：`src/core/styles.css` 是**旧体系**（用 Obsidian 变量，被 20 存量域依赖，冻结不改）；`src/core/ui/` 是**新体系**（自绘 token，新 UI 用）。同名类冲突处理见 §6。
 
