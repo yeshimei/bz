@@ -1804,7 +1804,7 @@ button.news-close-btn {
   background: var(--bz-chip-tint, var(--bz-surface-2)) !important;
   color: var(--bz-chip-tint-fg, var(--bz-text-1)) !important;
 }
-.bz-chip-cnt { margin-left: 2px; font-size: 10px; font-weight: 600; opacity: 0.75; }
+.bz-chip-cnt { margin-left: 2px; font-size: 11px; font-weight: 600; opacity: 0.75; }
 
 .bz-chip-x {
   appearance: none;
@@ -2210,6 +2210,18 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-range--lg { height: 8px; }
 .bz-range--lg::-webkit-slider-thumb { width: 18px; height: 18px; }
 .bz-range--lg::-moz-range-thumb { width: 18px; height: 18px; }
+
+/* ═══════════ 移动端全屏面板顶距 .bz-panel-mtop ═══════════
+   全站统一避让档：≤768px 真全屏面板根部顶部留 44px，避让 Obsidian 移动端头部
+   （取 max(44px, 安全区) 兼顾刘海屏）；桌面不生效。
+   挂在全屏面板根节点（panel/frame）上，同时归零首子元素顶距——core
+   `.bz-win-mfs > div:first-child` 的 34px 垫顶与域内头行自带的 safe-area
+   垫顶由本类统一接管，接入域不得再在头行重复写避让（防双份顶距）。
+   非恒全屏面板（如番茄钟）随 .bz-win-mfs 开关同挂摘（classList.toggle）。 */
+@media (max-width: 768px) {
+  .bz-panel-mtop { padding-top: max(44px, env(safe-area-inset-top, 0px)) !important; }
+  .bz-panel-mtop > div:first-child { padding-top: 0 !important; }
+}
 
 /* ═══════════ 加载 .bz-spinner ═══════════ */
 .bz-spinner {
@@ -2926,14 +2938,13 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   animation: bz-diary-wall-slide-up 0.24s ease-out;
   flex-shrink: 0;
 }
-/* 移动实例：真全屏（默认隐藏，≤768px 显示） */
+/* 移动实例：真全屏（默认隐藏，≤768px 显示；顶部避让由 .bz-panel-mtop 统一接管） */
 .bz-diary-wall-mob {
   display: none;
   position: absolute;
   inset: 0;
   flex-direction: column;
   background: var(--dw-bg);
-  padding-top: max(12px, env(safe-area-inset-top, 0px));
 }
 
 /* ============ 头部行（品牌 + 范围 + 按钮组） ============ */
@@ -3044,7 +3055,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   background: var(--dw-hover);
 }
 .bz-diary-wall-chip-cnt {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--dw-faint);
 }
 .bz-diary-wall .bz-diary-wall-chip--on {
@@ -3092,7 +3103,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   background: var(--dw-surface);
   border: none;
   box-shadow: none;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--dw-muted);
   cursor: pointer;
   font-family: inherit;
@@ -3208,7 +3219,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   color: var(--dw-ink);
 }
 .bz-diary-wall-month-count {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--dw-faint);
 }
 .bz-diary-wall-month-strip {
@@ -3224,7 +3235,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   flex-shrink: 0;
   overflow: hidden;
   background: var(--dw-surface);
-  font-size: 10px;
+  font-size: 11px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3244,7 +3255,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   color: #fff;
 }
 .bz-diary-wall-month-thumb--t {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--dw-faint);
 }
 
@@ -3316,7 +3327,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   position: absolute;
   left: 6px;
   bottom: 5px;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.4;
   color: #fff;
   background: rgba(0, 0, 0, 0.45);
@@ -3485,7 +3496,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.65);
   color: #fff;
-  font-size: 10px;
+  font-size: 11px;
   font-family: var(--dw-mono);
 }
 
@@ -3527,10 +3538,6 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   color: var(--dw-muted);
   line-height: 1.6;
 }
-.bz-diary-wall-text.bz-diary-wall-text--locked .bz-diary-wall-text-tx {
-  color: var(--dw-muted);
-}
-
 /* ============ 灯箱（全屏黑底，图片/视频/音频 controls 播放） ============ */
 .bz-diary-wall-lb {
   position: fixed;
@@ -3853,13 +3860,9 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
     max-width: 100vw;
     max-height: 100vh;
     border-radius: 0;
-    padding-top: max(12px, env(safe-area-inset-top, 0px));
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-  /* 移动真全屏时的安全区避让：头部行顶部垫安全区（与 .bz-win-mfs 同规则） */
-  .bz-diary-wall-mob .bz-diary-wall-head {
-    padding-top: max(14px, env(safe-area-inset-top, 0px));
-  }
+  /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css），头行不再垫顶 */
   .bz-diary-wall-mob .bz-diary-wall-chiprow {
     padding-bottom: 10px;
   }
@@ -4493,7 +4496,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
     border-radius: 0; border: none;
   }
   .bz-home-hero {
-    padding: max(var(--bz-space-lg), env(safe-area-inset-top)) var(--bz-space-lg) var(--bz-space-xs);
+    /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css），头行不再重复垫顶 */
+    padding: var(--bz-space-lg) var(--bz-space-lg) var(--bz-space-xs);
     background: linear-gradient(165deg, var(--bz-brand-soft), transparent 70%);
   }
   .bz-home-hello { font-size: var(--bz-font-title); }
@@ -4528,6 +4532,18 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   .bz-home-week-cell { height: 40px; }
   .bz-home-minis { margin-top: var(--bz-space-md); }
   .bz-home-mini { height: var(--bz-icon-btn-lg); padding: 0 var(--bz-space-md); }
+}
+
+/* ---- 触控热区（设计手册 §8.2）：触屏下小元素 ::after 外扩至 ≥44px，视觉不变 ----
+   迷你 chips（32px）/ 排序小钮（22px，触屏同步抬视觉档）/ hero 编辑·关闭盒装钮（26px） */
+@media (pointer: coarse) {
+  .bz-home-mini, .bz-home-mv, .bz-home-edit, .bz-home-close { position: relative; }
+  .bz-home-mini { height: 40px; }
+  .bz-home-mini::after, .bz-home-edit::after, .bz-home-close::after {
+    content: ''; position: absolute; inset: -8px;
+  }
+  .bz-home-mv { width: 32px; height: 32px; }
+  .bz-home-mv::after { content: ''; position: absolute; inset: -6px; }
 }
 /* ==================== 备忘录域样式（src/memo/styles.css） ==================== */
 /* ==================== 备忘录（memo，ticket 57 样式收敛：原 TODOCSS 注入 + 内联样式提取，视觉逐字等价） ==================== */
@@ -5111,15 +5127,16 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-clip-read-empty .bz-ic { width: 26px; height: 26px; opacity: .5; }
 .bz-clip-art-site { display: inline-flex; align-items: center; gap: 6px; font-size: var(--bz-font-meta); color: var(--bz-text-3); margin-bottom: 8px; }
 .bz-clip-art-site-name { color: var(--bz-text-2); font-weight: var(--bz-weight-medium); }
-.bz-clip-art-type { background: var(--bz-surface-3); border-radius: var(--bz-radius-full); padding: 1px 8px; font-size: 10px; color: var(--bz-text-2); }
+.bz-clip-art-type { background: var(--bz-surface-3); border-radius: var(--bz-radius-full); padding: 1px 8px; font-size: 11px; color: var(--bz-text-2); }
 .bz-clip-favimg { display: inline-flex; }
 .bz-clip-favimg img { border-radius: 3px; }
 .bz-clip-favchip {
   width: 16px; height: 16px; border-radius: var(--bz-radius-xs); flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 9px; font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
+  font-size: 11px; font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
   background: var(--bz-success);
 }
+/* .sm 14px 框为装饰性 favicon 回退字chip（正常渲染 favicon 图），字号不抬档（例外见收尾报告） */
 .bz-clip-favchip.sm { width: 14px; height: 14px; font-size: 8px; }
 .bz-clip-art-title { font-size: 20px; font-weight: var(--bz-weight-bold); line-height: 1.45; margin-bottom: 8px; color: var(--bz-text-1); }
 .bz-clip-art-meta { display: flex; align-items: center; gap: var(--bz-space-sm); flex-wrap: wrap; font-size: var(--bz-font-meta); color: var(--bz-text-3); margin-bottom: 14px; }
@@ -5133,7 +5150,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   border-radius: var(--bz-radius-sm); padding: var(--bz-space-md);
   font-size: var(--bz-font-meta); line-height: 1.7; color: var(--bz-text-2); margin-bottom: var(--bz-space-lg);
 }
-.bz-clip-art-sum-h { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--bz-info); margin-bottom: 4px; }
+.bz-clip-art-sum-h { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--bz-info); margin-bottom: 4px; }
 .bz-clip-art-sum-h .bz-ic { width: 11px; height: 11px; }
 .bz-clip-art-md { font-size: var(--bz-font-body); line-height: 1.9; color: var(--bz-text-1); }
 .bz-clip-art-md p { margin: 0 0 var(--bz-space-md); }
@@ -5174,9 +5191,9 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 }
 .bz-clip-mob-src.on { background: var(--bz-brand-soft); border-color: var(--bz-border-strong); color: var(--bz-text-1); }
 .bz-clip-mob-ub {
-  font-size: 9px; font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
+  font-size: 11px; font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
   background: var(--bz-brand); border-radius: var(--bz-radius-full);
-  min-width: 14px; height: 14px; padding: 0 4px;
+  min-width: 17px; height: 17px; padding: 0 4px;
   display: inline-flex; align-items: center; justify-content: center;
 }
 .bz-clip-mob-list { flex: 1; overflow-y: auto; padding: var(--bz-space-xs) var(--bz-space-sm) var(--bz-space-lg); }
@@ -5223,16 +5240,16 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   .bz-clip-desk { display: none; }
   .bz-clip-frame { position: relative; }
   .bz-clip-mob { display: flex; }
-  /* 刘海屏安全区（enh 包 9）：顶栏避让顶部刘海，列表/详情避让底部指示条 */
-  .bz-clip-mob-top { padding-top: max(var(--bz-space-sm), env(safe-area-inset-top)); }
-  .bz-clip-mob-detail-top { padding-top: max(var(--bz-space-sm), env(safe-area-inset-top)); }
+  /* 刘海屏安全区（enh 包 9）：底部避让由列表/详情自身垫；顶部避让由 frame/detail 根节点
+     .bz-panel-mtop 统一接管（44px，components.css），顶栏不再重复垫顶 */
   .bz-clip-mob-list { padding-bottom: max(var(--bz-space-lg), env(safe-area-inset-bottom, 0px)); }
   .bz-clip-mob-detail-body { padding-bottom: calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
   /* 触控热区（enh 包 10）：来源条/保存钮等可点小元素抬到 ≥44px 档（设计手册 §8.2） */
   .bz-clip-mob-src { min-height: 44px; padding: 8px 16px; }
-  .bz-clip-mob-ub { min-width: 17px; height: 17px; font-size: 11px; }
+  .bz-clip-mob-ub { min-width: 17px; height: 17px; }
   .bz-clip-mob-save { width: 44px; height: 44px; }
-  .bz-clip-mob-top .bz-icon-btn--lg { width: 44px; height: 44px; }
+  .bz-clip-mob-top .bz-icon-btn--lg,
+  .bz-clip-mob-detail-top .bz-icon-btn--lg { width: 44px; height: 44px; }
 }
 /* ==================== 收藏本域样式（src/favorites/styles.css，ticket 177 重写） ====================
  * 基线（按钮/图标钮/chip/输入/弹窗/空态/标签多选）全部消费组件库（src/core/ui/ 的 .bz-* 类
@@ -5246,7 +5263,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   background: var(--bz-overlay);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--bz-font-ui);
-  z-index: 100000;
+  /* z-index 由 openPanel 经 topifyZ 动态发号（ADR-0067），此处不设静态档 */
 }
 .bz-fav-panel {
   background: var(--bz-surface-2); color: var(--bz-text-1);
@@ -5322,7 +5339,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 /* 移动端横滑条 / 隐藏搜索行（桌面隐藏） */
 .bz-fav-mobscenes { display: none; }
 .bz-fav-mobsearch { display: none; }
-.bz-fav-mobchip-cnt { margin-left: 2px; font-size: 10px; opacity: 0.7; }
+.bz-fav-chip-cnt { margin-left: 2px; font-size: 11px; opacity: 0.7; } /* 域内计数（ui.ts 渲染 bz-fav-chip-cnt；旧 mobchip-cnt 选择器为笔误已纠正） */
 
 /* ---- 列表 ---- */
 .bz-fav-content { flex: 1; overflow-y: auto; padding: 4px var(--bz-space-md) var(--bz-space-md); min-height: 0; }
@@ -5381,8 +5398,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-item-sheet .bz-fav-sheet-balance { font-size: 11px; line-height: 18px; padding: 0 8px; border-radius: 999px; background: color-mix(in srgb, var(--bz-brand) 12%, transparent); color: var(--bz-brand); font-weight: 600; }
 .bz-item-sheet .bz-fav-sheet-balance.bz-fav-balance--err { background: color-mix(in srgb, var(--bz-danger) 12%, transparent); color: var(--bz-danger); }
 
-/* ---- 表单（弹窗骨架用组件库 .bz-overlay-mask；内容自绘，走 token） ---- */
-.bz-fav-form-mask { z-index: 110000; }
+/* ---- 表单（弹窗骨架用组件库 .bz-overlay-mask；内容自绘，走 token）----
+   表单遮罩 z 由 openForm 经 topifyZ 动态发号（ADR-0067，恒压主面板），不写死静态档 */
 .bz-fav-form {
   position: relative; /* 关联笔记候选弹层定位锚点（ticket 188） */
   background: var(--bz-surface-3); border-radius: var(--bz-radius-md);
@@ -5445,9 +5462,9 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
     width: 100vw; height: 100vh; max-width: none; max-height: none;
     border-radius: 0; border: none;
   }
-  .bz-fav-head { padding-top: max(12px, env(safe-area-inset-top)); padding-right: var(--bz-space-sm); }
+  .bz-fav-head { padding-right: var(--bz-space-sm); } /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css） */
   .bz-fav-mob-only { display: inline-flex; }
-  /* 头行图标钮触屏换大按钮档（ticket 188：≥40px 目标档） */
+  /* 头行图标钮触屏换大按钮档（ticket 188：≥40px 目标档）；coarse 下 ::after 外扩补足 44px */
   .bz-fav-head-btns .bz-icon-btn { width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg); }
   .bz-fav-head-btns .bz-icon-btn .bz-ic { width: 16px; height: 16px; }
   .bz-fav-side { display: none; }
@@ -5458,22 +5475,30 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
     overflow-x: auto; flex-shrink: 0;
   }
   .bz-fav-mobchip {
-    display: inline-flex; align-items: center; gap: 5px;
-    white-space: nowrap; font-size: var(--bz-font-meta); padding: var(--bz-space-sm) 12px;
+    display: inline-flex; align-items: center; gap: 5px; min-height: 44px; /* 触控 ≥44px 档（设计手册 §8.2） */
+    white-space: nowrap; font-size: var(--bz-font-meta); padding: var(--bz-space-sm) 14px;
     border-radius: var(--bz-radius-full); background: var(--bz-surface-2); border: 1px solid var(--bz-border);
     color: var(--bz-text-1); cursor: pointer; flex-shrink: 0; font-family: inherit;
   }
   .bz-fav-mobchip .bz-ic { width: 13px; height: 13px; }
   .bz-fav-mobchip-active { background: var(--bz-brand); color: var(--bz-on-brand); border-color: transparent; font-weight: var(--bz-weight-medium); }
-  .bz-fav-mobchip-active .bz-fav-mobchip-cnt { color: inherit; opacity: 0.8; }
+  .bz-fav-mobchip-active .bz-fav-chip-cnt { color: inherit; opacity: 0.8; }
   .bz-fav-mobsearch {
     display: none; padding: 2px var(--bz-space-lg) 6px; flex-shrink: 0;
   }
   .bz-fav-mobsearch.bz-fav-mobsearch-show { display: block; }
+  /* 展开搜索行触屏抬到 ≥44px 档（同首页搜索条） */
+  .bz-fav-mobsearch .bz-input { height: 44px; }
   .bz-fav-content { padding: var(--bz-space-sm) var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
   .bz-fav-card { padding: 12px; border-radius: 12px; }
   .bz-fav-title { font-size: 15px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .bz-fav-desc { -webkit-line-clamp: 3; }
+}
+
+/* ---- 触控热区（设计手册 §8.2）：头行图标钮（32px 档）::after 外扩补足 44px ---- */
+@media (pointer: coarse) {
+  .bz-fav-head-btns .bz-icon-btn { position: relative; }
+  .bz-fav-head-btns .bz-icon-btn::after { content: ''; position: absolute; inset: -6px; }
 }
 /* ==================== 复习计划域样式（src/review/styles.css） ====================
  * 2026-09-04 拍板形态：三区队列面板 + 整窗做题冲刺（非弹窗）。
@@ -5483,15 +5508,19 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
  */
 
 /* ==================== 面板容器（既有契约） ==================== */
-#review-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--background-modifier-cover); backdrop-filter: blur(2px); }
+#review-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--background-modifier-cover); } /* 毛玻璃明确不采用（设计手册 §5.2），遮罩统一主题 cover 色 */
 #review-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--background-primary); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 94%; max-width: 900px; max-height: 84vh; flex-direction: column; animation: slideUp 0.3s ease-out; }
 @media (max-width: 768px) {
   #review-popup { animation: none !important; width: 100%; max-width: 100%; max-height: 100%; }
 }
-/* 内容区：队列视图与冲刺视图共用宿主；冲刺时宿主滚动由内部接管 */
+/* 内容区：队列视图与冲刺视图共用宿主（overflow:hidden 由视图内部接管滚动，
+   原死的 ::webkit-scrollbar 规则已删——队列/冲刺滚动条隐藏见 .bz-q-view） */
 #review-entries-container { flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
-#review-entries-container::-webkit-scrollbar { width: 6px; }
-#review-entries-container::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
+
+/* 队列/冲刺滚动区隐藏滚动条（滚动功能保留；对齐全站「弹窗无滚动条」。
+   冲刺视图与队列视图共用宿主 #review-entries-container，覆盖两者） */
+#review-entries-container, #review-entries-container * { scrollbar-width: none; -ms-overflow-style: none; }
+#review-entries-container *::-webkit-scrollbar, #review-entries-container::-webkit-scrollbar { display: none; }
 
 /* 队列视图整体（滚动区 = 三区列；头/工具/底部行固定） */
 .bz-q-view { display: flex; flex-direction: column; height: 100%; min-height: 0; }
@@ -5547,7 +5576,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-q-card-meta { display: flex; align-items: center; gap: 4px; margin-top: 5px; flex-wrap: wrap; min-width: 0; }
 
 /* 标签 */
-.bz-q-tag { font-size: 10px; line-height: 1; padding: 2px 7px; border-radius: 10px; background: var(--background-modifier-border); color: var(--text-muted); white-space: nowrap; }
+.bz-q-tag { font-size: 11px; line-height: 1; padding: 2px 7px; border-radius: 10px; background: var(--background-modifier-border); color: var(--text-muted); white-space: nowrap; }
 .bz-q-tag.is-overdue { background: color-mix(in srgb, var(--color-red, #ff4757) 18%, transparent); color: var(--color-red, #ff4757); font-weight: 600; }
 .bz-q-tag.is-done { background: color-mix(in srgb, var(--color-green, #52c41a) 18%, transparent); color: var(--color-green, #52c41a); }
 .bz-q-tag.is-missing { color: var(--text-faint); text-decoration: line-through; }
@@ -5638,7 +5667,6 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-sq-empty { font-size: 11px; color: var(--text-faint); text-align: center; padding: 12px 0; }
 
 /* 结果卡 */
-.bz-sprint-block { width: 100%; }
 .bz-result { max-width: 420px; margin: 0 auto; text-align: center; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .bz-result-ic { font-size: 30px; line-height: 1; }
 .bz-result-name { font-size: 15px; font-weight: 600; color: var(--text-normal); }
@@ -5700,12 +5728,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .difficulty-dialog .diff-btn[data-diff='easy'] { border-left: 3px solid #7bed9f; }
 .difficulty-dialog .diff-btn.diff-btn-cancel { margin-top: 12px; color: var(--text-muted); }
 
-/* 监听文件夹 chip */
-#review-watch-folders { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 4px 0; }
-.bz-review-watch-chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 12px; background: var(--background-secondary); border: 1px solid var(--background-modifier-border); max-width: 100%; }
-.bz-review-watch-name { font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bz-review-watch-close { background: none; border: none; cursor: pointer; color: var(--text-faint); font-size: 11px; line-height: 1; padding: 2px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: none !important; }
-.bz-review-watch-close:hover { color: var(--text-error, #ff4757); background: var(--background-modifier-hover); }
+/* 监听文件夹旧 chip 渲染已退役（死规则删除；监听文件夹设置走 settings-schema） */
 
 /* 排除名单 chip */
 #review-excluded-list { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 4px 0; }
@@ -5716,13 +5739,13 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-review-exclude-remove:hover { color: var(--text-error, #ff4757); background: var(--background-modifier-hover); }
 
 /* 统计弹窗 / 复习历史弹窗（既有实现，容器保留） */
-#review-stats-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--background-modifier-cover); backdrop-filter: blur(2px); }
+#review-stats-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--background-modifier-cover); }
 #review-stats-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--background-primary); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 92%; max-width: 600px; max-height: 88vh; flex-direction: column; animation: slideUp 0.3s ease-out; }
 #review-stats-body { flex: 1; overflow-y: auto; }
 .bz-review-stats-head { padding: 8px 18px 6px !important; }
 .bz-review-stats-head .bz-review-title { font-size: .92rem !important; font-weight: 600 !important; margin: 0 !important; }
 .bz-review-stats-tl-row:hover { background: var(--background-modifier-hover); }
-#review-history-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--background-modifier-cover); backdrop-filter: blur(2px); }
+#review-history-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--background-modifier-cover); }
 #review-history-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--background-primary); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 92%; max-width: 480px; max-height: 80vh; flex-direction: column; overflow: hidden; animation: slideUp 0.3s ease-out; }
 #review-history-body { flex: 1; overflow-y: auto; position: relative; }
 .bz-review-history-close { position: absolute; top: 10px; right: 10px; z-index: 2; background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px; box-shadow: none !important; }
@@ -5734,6 +5757,20 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 #review-stats-close .bz-ic svg, .bz-review-history-close .bz-ic svg { width: 100%; height: 100%; }
 .review-stage-badge .bz-ic { display: inline-flex; width: 1em; height: 1em; vertical-align: -0.12em; }
 .review-stage-badge .bz-ic svg { width: 100%; height: 100%; }
+
+/* ==================== 触控热区（设计手册 §8.2，触屏 pointer:coarse） ====================
+   底部信息行 / 迷你评级条 / 设置 chip 关闭钮 / 历史·统计关闭钮等小元素：padding 抬档
+   + ::after 外扩（视觉不变、热区 ≥44px；间距紧张处取 40px 下限档） */
+@media (pointer: coarse) {
+  .bz-q-fitem, .bz-review-bar-btn,
+  .bz-review-exclude-remove, .bz-review-history-close, #review-stats-close { position: relative; }
+  .bz-q-fitem { padding: 4px 0; }
+  .bz-q-fitem::after { content: ''; position: absolute; inset: -8px; }
+  .bz-review-bar-btn { padding: 10px 12px; }
+  .bz-review-bar-btn::after { content: ''; position: absolute; inset: -4px; }
+  .bz-review-exclude-remove::after,
+  .bz-review-history-close::after, #review-stats-close::after { content: ''; position: absolute; inset: -12px; }
+}
 /* ==================== 番茄钟域样式（src/pomodoro/styles.css） ==================== */
 /* ==================== 番茄钟状态栏（pomodoro，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
     .pomodoro-statusbar { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; padding: 2px 4px; border-radius: var(--radius-s, 4px); transition: background-color 0.15s ease, opacity 0.15s ease; }
@@ -5778,11 +5815,27 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
     .pomodoro-stat-day { display: flex; flex-direction: column; align-items: center; gap: 2px; }
     .pomodoro-stat-col { display: flex; align-items: flex-end; height: 40px; }
     .pomodoro-stat-bar { width: 10px; border-radius: 3px 3px 0 0; background: var(--interactive-accent); min-height: 2px; }
-    .pomodoro-stat-label { font-size: 9px; color: var(--text-faint); }
+    .pomodoro-stat-label { font-size: 11px; color: var(--text-faint); }
     /* 今日专注时段分布：12 槽（2 小时一格）小方柱，条形语言与近 7 天柱一致（增强包） */
     .pomodoro-hours { display: flex; gap: 4px; justify-content: center; align-items: flex-end; margin-top: 8px; }
     .pomodoro-hour-bar { width: 8px; border-radius: 3px 3px 0 0; background: var(--background-modifier-border); min-height: 2px; }
     .pomodoro-hour-bar-on { background: var(--interactive-accent); opacity: 0.7; }
+
+/* ==================== 移动端全屏态（.bz-panel-mtop 随 mfs 开关同挂摘） ====================
+   全屏时顶距工具类统一避让 Obsidian 移动端头（44px）；右上角设置钮为绝对定位，
+   不随文档流下移，需同步下移到避让区之下（常规小卡态无此钮规则，维持 16px） */
+@media (max-width: 768px) {
+    #pomodoro-popup.bz-panel-mtop #pomodoro-btn-settings { top: calc(max(44px, env(safe-area-inset-top, 0px)) + 12px); }
+}
+
+/* ==================== 触控热区（设计手册 §8.2，触屏 pointer:coarse） ==================== */
+@media (pointer: coarse) {
+    .pomodoro-btn, #pomodoro-btn-settings { position: relative; }
+    .pomodoro-btn { padding: 10px 16px; }
+    .pomodoro-btn::after { content: ''; position: absolute; inset: -4px; }
+    #pomodoro-btn-settings { padding: 10px; }
+    #pomodoro-btn-settings::after { content: ''; position: absolute; inset: -6px; }
+}
 /* ==================== 附件搬移域样式（src/attach/styles.css） ==================== */
 /* 原文件夹选择弹窗样式（bz-attach-*，ticket 65）随 FolderSelectModal 退役（ticket 128，
    ADR-0061）删除：路径录入统一走 core/path-picker（bz-path-picker-*，样式在 src/core/styles.css）。
@@ -5817,6 +5870,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 }
 .bz-attach-preview-row:hover { background: var(--bz-surface-hover); }
 .bz-attach-preview-row input[type='checkbox'] { flex-shrink: 0; align-self: center; margin: 0; }
+/* 触屏（pointer:coarse）：清单行 padding 抬到 ≥40px 下限档（行间距紧，不用 ::after 外扩防误触邻行） */
+@media (pointer: coarse) {
+  .bz-attach-preview-row { padding: 12px var(--bz-space-sm); }
+}
 .bz-attach-preview-from { color: var(--bz-text-2); word-break: break-all; }
 .bz-attach-preview-arrow { color: var(--bz-text-3); flex-shrink: 0; }
 .bz-attach-preview-to { color: var(--bz-text-1); font-weight: var(--bz-weight-medium); word-break: break-all; min-width: 0; }
@@ -5871,26 +5928,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 }
 #bz-encrypt-popup { width: 90%; max-width: 700px; max-height: 80vh; }
 #bz-encrypt-preview-popup { max-height: 86vh; overflow: hidden; }
-.bz-encrypt-head {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 16px 24px 8px 24px;
-}
-.bz-encrypt-head h3 { margin: 0; font-size: 18px; font-weight: 600; color: var(--text-normal); }
-.bz-encrypt-head-btns { display: flex; gap: 8px; }
 #bz-encrypt-list { flex: 1; overflow-y: auto; padding: 0 20px 16px; min-height: 200px; }
 #bz-encrypt-list::-webkit-scrollbar { width: 6px; }
 #bz-encrypt-list::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
-.bz-encrypt-empty { padding: 40px; text-align: center; color: var(--text-faint); font-size: 15px; }
-.bz-encrypt-card {
-  background: var(--background-secondary); border-radius: 10px;
-  padding: 12px 16px; margin-bottom: 10px;
-  cursor: pointer;
-}
-.bz-encrypt-card:hover { background: var(--background-modifier-hover); }
-.bz-encrypt-card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.bz-encrypt-card-titlebox { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.bz-encrypt-card-title { font-size: 15px; font-weight: 600; color: var(--text-normal); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bz-encrypt-card-meta { margin-top: 4px; font-size: 12px; color: var(--text-faint); }
+/* 旧清单卡视图规则已随 ADR-0085 统一保险库工作台退役（死规则删除） */
 .bz-encrypt-preview-head {
   display: flex; justify-content: space-between; align-items: center;
   padding: 14px 20px 8px; border-bottom: 1px solid var(--background-modifier-border);
@@ -5999,9 +6040,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   color: var(--text-muted); cursor: pointer; user-select: none;
 }
 .bz-encrypt-dialog-ack input { margin-right: 6px; vertical-align: -1px; }
-/* 保险库状态栏（补丁2：锁状态提示，点击打开面板） */
+/* 保险库状态栏（补丁2：锁状态提示，点击打开面板；lucide 锁图标随解锁态开合切换） */
 .bz-encrypt-statusbar { cursor: pointer; }
 .bz-encrypt-statusbar:hover { opacity: 0.8; }
+.bz-encrypt-statusbar svg { vertical-align: -2px; margin-right: 4px; }
 
 
 /* ============================================================
@@ -6061,8 +6103,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 #bz-encrypt-popup .bz-vault-brand .seal { width: 34px; height: 34px; border-radius: 11px; background: var(--bz-vault-gold-soft); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(150, 112, 31, 0.35); flex-shrink: 0; color: #fff; }
 #bz-encrypt-popup .bz-vault-brand .seal svg { width: 18px; height: 18px; stroke: #fff; }
 #bz-encrypt-popup .bz-vault-brand .nm { font-size: 16px; font-weight: 700; line-height: 1.15; color: var(--bz-vault-ink); }
-#bz-encrypt-popup .bz-vault-brand .nm small { display: block; font-size: 10px; font-weight: 400; color: var(--bz-vault-muted); letter-spacing: 0.14em; margin-top: 2px; }
-#bz-encrypt-popup .bz-vault-sec { font-size: 10px; letter-spacing: 0.16em; color: var(--bz-vault-faint); padding: 12px 12px 6px; text-transform: uppercase; }
+#bz-encrypt-popup .bz-vault-brand .nm small { display: block; font-size: 11px; font-weight: 400; color: var(--bz-vault-muted); letter-spacing: 0.14em; margin-top: 2px; }
+#bz-encrypt-popup .bz-vault-sec { font-size: 11px; letter-spacing: 0.16em; color: var(--bz-vault-faint); padding: 12px 12px 6px; text-transform: uppercase; }
 #bz-encrypt-popup .bz-vault-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; font-size: 13px; color: var(--bz-vault-muted); cursor: pointer; border: 1px solid transparent; margin-bottom: 2px; }
 #bz-encrypt-popup .bz-vault-item svg { width: 16px; height: 16px; flex-shrink: 0; }
 #bz-encrypt-popup .bz-vault-item:hover { background: var(--bz-vault-surface2); }
@@ -6114,7 +6156,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 #bz-encrypt-popup .bz-vault-row .t1 { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; color: var(--bz-vault-ink); }
 #bz-encrypt-popup .bz-vault-row .t2 { font-size: 11px; color: var(--bz-vault-muted); font-family: var(--font-monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
 #bz-encrypt-popup .bz-vault-row .tm { font-size: 11px; color: var(--bz-vault-faint); flex-shrink: 0; }
-#bz-encrypt-popup .bz-vault-row .star { color: var(--bz-vault-warn); font-size: 10px; }
+#bz-encrypt-popup .bz-vault-row .star { color: var(--bz-vault-warn); } /* 收藏星为内联 svg（尺寸随属性），无文本字号 */
 /* 滚动修复（ADR-0085 回归）：pw/笔记/日记资产 = 列头(不滚) + .bz-vault-lc-body 滚动区；
    列头与滚动区分离，行渲染/空态都写 body，避免行渲染把列头（含新增入口）整列清掉。 */
 #bz-encrypt-popup .bz-vault-listcol { overflow: hidden; }
@@ -6211,7 +6253,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 #bz-encrypt-popup .bz-pwv-row .pl, #bz-encrypt-popup .bz-pwv-plrow .pl { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 5px; color: var(--bz-vault-ink); }
 #bz-encrypt-popup .bz-pwv-row .ac, #bz-encrypt-popup .bz-pwv-plrow .ac { font-size: 11px; color: var(--bz-vault-muted); font-family: var(--font-monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
 #bz-encrypt-popup .bz-pwv-row .tm, #bz-encrypt-popup .bz-pwv-plrow .tm { font-size: 11px; color: var(--bz-vault-faint); flex-shrink: 0; }
-#bz-encrypt-popup .bz-pwv-row .star, #bz-encrypt-popup .bz-pwv-plrow .star { color: var(--bz-vault-warn); font-size: 10px; }
+#bz-encrypt-popup .bz-pwv-row .star, #bz-encrypt-popup .bz-pwv-plrow .star { color: var(--bz-vault-warn); } /* 同上：内联 svg 收藏星 */
 #bz-encrypt-popup .bz-pwv-cnt { font-size: 11px; color: var(--bz-vault-gold-ink); background: rgba(185, 141, 62, 0.16); border-radius: 999px; padding: 0 7px; font-variant-numeric: tabular-nums; }
 /* 平台头像 */
 #bz-encrypt-popup .bz-pwv-avatar { position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; color: #fff; flex-shrink: 0; }
@@ -6307,12 +6349,12 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   #bz-encrypt-popup .bz-vault-mbar .st { font-size: 11px; color: var(--bz-vault-ok); font-weight: 700; background: rgba(62, 142, 90, 0.12); padding: 3px 9px; border-radius: 999px; }
   #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose { color: var(--bz-vault-muted); display: flex; }
   #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose svg { width: 18px; height: 18px; }
-  #bz-encrypt-popup .bz-vault-msearch { display: flex; align-items: center; gap: 8px; margin: 4px 14px 8px; background: var(--bz-vault-surface); border: 1px solid var(--bz-vault-line); border-radius: 12px; padding: 0 12px; }
+  #bz-encrypt-popup .bz-vault-msearch { display: flex; align-items: center; gap: 8px; margin: 4px 14px 8px; min-height: 44px; background: var(--bz-vault-surface); border: 1px solid var(--bz-vault-line); border-radius: 12px; padding: 0 12px; }
   #bz-encrypt-popup .bz-vault-msearch svg { width: 13px; height: 13px; color: var(--bz-vault-faint); }
   #bz-encrypt-popup .bz-vault-msearch input { border: none; background: none; flex: 1; padding: 9px 0; font-size: 13px; }
   #bz-encrypt-popup .bz-vault-msearch input:focus { outline: none; }
   #bz-encrypt-popup .bz-vault-mseg { display: flex; gap: 6px; margin: 2px 14px 10px; padding: 4px; background: var(--bz-vault-surface); border: 1px solid var(--bz-vault-line); border-radius: 12px; }
-  #bz-encrypt-popup .bz-vault-mseg .sg { flex: 1; text-align: center; padding: 7px 0; border-radius: 9px; font-size: 12px; font-weight: 600; color: var(--bz-vault-muted); cursor: pointer; }
+  #bz-encrypt-popup .bz-vault-mseg .sg { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 44px; text-align: center; padding: 7px 0; border-radius: 9px; font-size: 12px; font-weight: 600; color: var(--bz-vault-muted); cursor: pointer; }
   #bz-encrypt-popup .bz-vault-mseg .sg.on { background: var(--bz-vault-gold-soft); color: #fff; }
   #bz-encrypt-popup .bz-vault-mbody { flex: 1; overflow-y: auto; padding: 2px 14px 24px; position: relative; }
   #bz-encrypt-popup .bz-vault-mob-overview .bz-vault-cards { grid-template-columns: 1fr; }
@@ -6330,6 +6372,18 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   #bz-encrypt-popup .bz-pwv-mobplathead .nm { font-size: 15px; font-weight: 700; color: var(--bz-vault-ink); }
   #bz-encrypt-popup .bz-pwv-mobplathead .url { font-size: 11px; color: var(--bz-vault-muted); }
   #bz-encrypt-popup .bz-pwv-mobplathead .bz-pwv-btn.gold { margin-left: auto; background: var(--bz-vault-gold-soft); color: #fff; padding: 8px 14px; border-radius: 10px; font-weight: 600; }
+}
+
+/* ---- 触控热区（设计手册 §8.2）：移动端关闭/返回钮与账户卡小钮 ::after 外扩 ---- */
+@media (pointer: coarse) {
+  #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose,
+  #bz-encrypt-popup .bz-vault-mobpage .head .back,
+  #bz-encrypt-popup .bz-pwv-empty .bz-pwv-empty-add,
+  #bz-encrypt-popup .bz-pwv-acctcard .copyac { position: relative; }
+  #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose::after,
+  #bz-encrypt-popup .bz-vault-mobpage .head .back::after { content: ''; position: absolute; inset: -12px; }
+  #bz-encrypt-popup .bz-pwv-empty .bz-pwv-empty-add::after { content: ''; position: absolute; inset: -8px; }
+  #bz-encrypt-popup .bz-pwv-acctcard .copyac::after { content: ''; position: absolute; inset: -8px; }
 }
 /* ==================== 设置面板域样式（src/settings-panel/styles.css，ADR-0080） ==================== */
 /* 收编新体系（铁律 6）：控件（按钮/输入/开关/下拉/滑条/chip/徽标/空态）全部消费组件库
@@ -6875,7 +6929,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   background: var(--bz-overlay);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--bz-font-ui);
-  z-index: 100000;
+  /* z-index 由 openPanel 经 topifyZ 动态发号（ADR-0067），此处不设静态档 */
 }
 .bz-bel-panel {
   background: var(--bz-surface-2); color: var(--bz-text-1);
@@ -7031,7 +7085,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-bel-name { font-size: 13.5px; font-weight: 600; color: var(--bz-text-1); line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bz-bel-sub { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-top: 1px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 /* 状态徽章（数据语义 tint 底） */
-.bz-bel-state { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; line-height: 16px; padding: 0 7px; border-radius: 999px; font-weight: 600; }
+.bz-bel-state { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; line-height: 16px; padding: 0 7px; border-radius: 999px; font-weight: 600; }
 .bz-bel-state .bz-ic { width: 11px; height: 11px; }
 .bz-bel-state--using { background: color-mix(in srgb, var(--bz-success) 14%, transparent); color: var(--bz-success); }
 .bz-bel-state--idle { background: color-mix(in srgb, var(--bz-info) 14%, transparent); color: var(--bz-info); }
@@ -7047,8 +7101,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 
 /* ---- 空态（组件库 .bz-empty） ---- */
 
-/* ---- 表单（弹窗骨架用组件库 .bz-overlay-mask；分类搜索 + 状态平铺自绘） ---- */
-.bz-bel-form-mask { z-index: 110000; }
+/* ---- 表单（弹窗骨架用组件库 .bz-overlay-mask；分类搜索 + 状态平铺自绘）----
+   表单遮罩 z 由 openForm 经 topifyZ 动态发号（ADR-0067，恒压主面板），不写死静态档 */
 .bz-bel-form {
   position: relative; /* 分类搜索下拉定位锚点（P2-1 审查修正） */
   background: var(--bz-surface-3); border-radius: var(--bz-radius-md);
@@ -7086,9 +7140,9 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
     width: 100vw; height: 100vh; max-width: none; max-height: none;
     border-radius: 0; border: none;
   }
-  .bz-bel-head { padding-top: max(12px, env(safe-area-inset-top)); padding-right: var(--bz-space-sm); }
+  .bz-bel-head { padding-right: var(--bz-space-sm); } /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css） */
   .bz-bel-mob-only { display: inline-flex; }
-  /* 头行图标钮触屏换大按钮档（ticket 189，同 favorites 档） */
+  /* 头行图标钮触屏换大按钮档（ticket 189，同 favorites 档）；coarse 下 ::after 外扩补足 44px */
   .bz-bel-head-btns .bz-icon-btn { width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg); }
   .bz-bel-head-btns .bz-icon-btn .bz-ic { width: 16px; height: 16px; }
   .bz-bel-side { display: none; }
@@ -7099,20 +7153,28 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
     overflow-x: auto; flex-shrink: 0;
   }
   .bz-bel-mobchip {
-    display: inline-flex; align-items: center; gap: 5px;
-    white-space: nowrap; font-size: var(--bz-font-meta); padding: var(--bz-space-sm) 12px;
+    display: inline-flex; align-items: center; gap: 5px; min-height: 44px; /* 触控 ≥44px 档（设计手册 §8.2） */
+    white-space: nowrap; font-size: var(--bz-font-meta); padding: var(--bz-space-sm) 14px;
     border-radius: var(--bz-radius-full); background: var(--bz-surface-2); border: 1px solid var(--bz-border);
     color: var(--bz-text-1); cursor: pointer; flex-shrink: 0; font-family: inherit;
   }
   .bz-bel-mobchip .bz-ic { width: 13px; height: 13px; }
   .bz-bel-mobchip-active { background: var(--bz-brand); color: var(--bz-on-brand); border-color: transparent; font-weight: var(--bz-weight-medium); }
   .bz-bel-mobchip-active .bz-bel-chip-cnt { color: inherit; opacity: 0.8; }
-  .bz-bel-chip-cnt { margin-left: 2px; font-size: 10px; opacity: 0.7; }
+  .bz-bel-chip-cnt { margin-left: 2px; font-size: 11px; opacity: 0.7; }
   .bz-bel-mobsearch { display: none; padding: 2px var(--bz-space-lg) 6px; flex-shrink: 0; }
   .bz-bel-mobsearch.bz-bel-mobsearch-show { display: block; }
+  /* 展开搜索行触屏抬到 ≥44px 档（同首页搜索条） */
+  .bz-bel-mobsearch .bz-input { height: 44px; }
   .bz-bel-stats { grid-template-columns: 1fr 1fr; padding: 8px var(--bz-space-lg) 2px; }
   .bz-bel-content { padding: var(--bz-space-sm) var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
   .bz-bel-name { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+}
+
+/* ---- 触控热区（设计手册 §8.2）：头行图标钮（32px 档）::after 外扩补足 44px ---- */
+@media (pointer: coarse) {
+  .bz-bel-head-btns .bz-icon-btn { position: relative; }
+  .bz-bel-head-btns .bz-icon-btn::after { content: ''; position: absolute; inset: -6px; }
 }
 /* ==================== 影院域样式（src/cinema/styles.css） ==================== */
 /* 试点收编（铁律 6）：基线（按钮/图标钮/chip/输入/弹窗/空态）全部消费组件库
@@ -7253,7 +7315,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-cinema-poster-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .bz-cinema-poster-blank { background: var(--bz-surface-3); }
 .bz-cinema-p-badge {
-  position: absolute; top: 6px; left: 6px; font-size: 10px; padding: 1px 7px;
+  position: absolute; top: 6px; left: 6px; font-size: 11px; padding: 1px 7px;
   border-radius: var(--bz-radius-full); color: var(--bz-on-overlay);
 }
 .bz-cinema-p-name { font-size: var(--bz-font-meta); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -7380,7 +7442,11 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
     border-radius: 0; border: none;
   }
   .bz-cinema-mob-only { display: inline-flex; }
-  .bz-cinema-head { padding-top: max(12px, env(safe-area-inset-top)); }
+  /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css），头行不再垫顶 */
+  /* 头行图标钮触屏换大按钮档（同 favorites/belongings；≥40px 目标档） */
+  .bz-cinema-head-btns { gap: var(--bz-space-sm); }
+  .bz-cinema-head-btns .bz-icon-btn { width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg); }
+  .bz-cinema-head-btns .bz-icon-btn .bz-ic { width: 16px; height: 16px; }
   /* 排序 segmented 桌面专属（同待办）；搜索独占一行 */
   .bz-cinema-sort { display: none; }
   .bz-cinema-nav { display: none; } /* 移动端分类在顶部横滑条 */
@@ -7388,7 +7454,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
     display: flex; gap: var(--bz-space-sm); padding: 10px var(--bz-space-lg); overflow-x: auto; flex-shrink: 0;
   }
   .bz-cinema-mob-chip {
-    white-space: nowrap; font-size: var(--bz-font-meta); padding: var(--bz-space-sm) 14px; border-radius: var(--bz-radius-full);
+    display: inline-flex; align-items: center; min-height: 44px; /* 触控 ≥44px 档（设计手册 §8.2） */
+    white-space: nowrap; font-size: var(--bz-font-meta); padding: var(--bz-space-sm) 16px; border-radius: var(--bz-radius-full);
     background: var(--bz-surface-2); border: 1px solid var(--bz-border);
     color: var(--bz-text-1); cursor: pointer; flex-shrink: 0;
     font-family: inherit;
@@ -7399,6 +7466,15 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   }
   .bz-cinema-grid { grid-template-columns: repeat(3, 1fr); gap: var(--bz-space-md); }
   .bz-cinema-content { padding: var(--bz-space-md) var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* ---- 触控热区（设计手册 §8.2）：头行图标钮 / 豆瓣直达小图标 ::after 外扩 ---- */
+@media (pointer: coarse) {
+  .bz-cinema-head-btns .bz-icon-btn,
+  .bz-cinema-dm-douban,
+  .bz-cinema-rec-douban { position: relative; }
+  .bz-cinema-head-btns .bz-icon-btn::after { content: ''; position: absolute; inset: -6px; }
+  .bz-cinema-dm-douban::after, .bz-cinema-rec-douban::after { content: ''; position: absolute; inset: -6px; }
 }
 /* ==================== 书架墙域样式（src/bookshelf/styles.css） ==================== */
 /* 试点收编（铁律 6）：基线（按钮/图标钮/chip/输入/单选/滑条/空态/弹窗骨架）全部消费组件库
