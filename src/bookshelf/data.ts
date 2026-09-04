@@ -296,6 +296,29 @@ export function currentSideItems(items: BookshelfItem[], side: string): Bookshel
   return items.filter((it) => it.status === status);
 }
 
+/** 分类展示名（EPUB 无分类 null → 归「未分类」桶；仅分类面用，kwFilter 口径不变） */
+export function categoryLabel(it: BookshelfItem): string {
+  return it.category || '未分类';
+}
+
+/** 分类面清单（去重 + zh 序 + 计数；数据层已有 category 字段，零新设置项） */
+export function categoryList(items: BookshelfItem[]): { name: string; count: number }[] {
+  const map = new Map<string, number>();
+  for (const it of items) {
+    const name = categoryLabel(it);
+    map.set(name, (map.get(name) || 0) + 1);
+  }
+  return [...map.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0], 'zh'))
+    .map(([name, count]) => ({ name, count }));
+}
+
+/** 分类正交过滤（'all' = 不过滤；与状态筛独立叠加） */
+export function catFilterItems(list: BookshelfItem[], cat: string): BookshelfItem[] {
+  if (!cat || cat === 'all') return list;
+  return list.filter((it) => categoryLabel(it) === cat);
+}
+
 /** 关键字过滤（书名/作者/分类） */
 export function kwFilter(list: BookshelfItem[], kw: string): BookshelfItem[] {
   if (!kw) return list;
@@ -303,11 +326,32 @@ export function kwFilter(list: BookshelfItem[], kw: string): BookshelfItem[] {
   return list.filter((it) => `${it.title} ${it.author || ''} ${it.category || ''}`.toLowerCase().includes(k));
 }
 
-/** 当前展示列表（侧栏 + 关键字 + 排序），UI 层统一入口 */
+/** 当前展示列表（侧栏 + 分类 + 关键字 + 排序），UI 层统一入口 */
 export function getDisplayItems(): BookshelfItem[] {
   let list = currentSideItems(M.items, M.side);
+  list = catFilterItems(list, M.catFilter);
   list = kwFilter(list, M.searchKeyword);
   return sortItems(list, M.sortMode);
+}
+
+/**
+ * 读完纪念日（那年今天）：completionDate 月-日 = 今天且年份更早的已读书。
+ * 命中多本取最早（「N 年前」的 N 最大，纪念日感最强）；无命中返回 null（UI 零空态）。
+ */
+export function findAnniversary(items: BookshelfItem[], now: Date = new Date()): { item: BookshelfItem; years: number } | null {
+  const md = `-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const year = now.getFullYear();
+  let best: { item: BookshelfItem; years: number } | null = null;
+  for (const it of items) {
+    if (it.status !== '已读') continue;
+    const d = it.completionDate || '';
+    if (d.length < 10 || d.slice(4) !== md) continue;
+    const y = parseInt(d.slice(0, 4), 10);
+    if (!Number.isFinite(y) || y >= year) continue;
+    const years = year - y;
+    if (!best || years > best.years) best = { item: it, years };
+  }
+  return best;
 }
 
 /** 派生统计（随时从 M.items 重算；与旧 library/原型同口径） */

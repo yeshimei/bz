@@ -9,6 +9,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import {
   loadEpubBookNotes,
   buildEpubJumpLink,
+  buildEpubResumeLink,
   updateEpubNoteComment,
   deleteEpubNote,
   findWeaveBookByPath,
@@ -88,6 +89,21 @@ describe('epub-notes（bookshelf）', () => {
     const notes = await loadEpubBookNotes(makeApp(vault), '书库/悉达多.epub');
     const link = buildEpubJumpLink({ file: { vaultPath: '书库/悉达多.epub', sourceId: 'epubsrc-demo' } }, notes[0]);
     expect(link).toBe('书库/悉达多.epub#weave-cfi=epubcfi(/6/2%5Bab%5D!/4/4)&chapter=0&sid=epubsrc-demo');
+  });
+
+  it('buildEpubResumeLink：reading.position.cfi → 当前位置深链（cfi/chapter/sid 编码对齐 Weave）', async () => {
+    const book = JSON.parse(JSON.stringify(HIGH_BOOK));
+    book.reading.position = { chapterIndex: 3, cfi: 'epubcfi(/6/14[ch4]!/4/1:0)', percent: 0.42 };
+    seedWeaveData(vault, { bk_001: book });
+    const link = await buildEpubResumeLink(makeApp(vault), '书库/悉达多.epub');
+    expect(link).toBe('书库/悉达多.epub#weave-cfi=epubcfi(/6/14%5Bch4%5D!/4/1:0)&chapter=3&sid=epubsrc-demo');
+  });
+
+  it('buildEpubResumeLink：无聚合/无 cfi → 空串（调用方回落直接打开 vaultPath）', async () => {
+    seedWeaveData(vault, { bk_001: HIGH_BOOK }); // position.cfi = ''
+    expect(await buildEpubResumeLink(makeApp(vault), '书库/悉达多.epub')).toBe('');
+    expect(await buildEpubResumeLink(makeApp(vault), '书库/缺失.epub')).toBe('');
+    expect(await buildEpubResumeLink(makeApp(vault), '')).toBe('');
   });
 
   it('updateEpubNoteComment：写回 commentText；清空则删除字段', async () => {
