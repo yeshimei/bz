@@ -3,6 +3,7 @@
  * 双击跳原文（weave-cfi 深链），长按编辑想法/删除（bz 直改 weave-data.json，ADR 记录竞态例外）。
  * 迁移自旧 src/library/epub-notes.ts（旧域退役：weave 聚合通道改走本域 data.ts）。
  */
+import { enqueueFileTask } from '../core/storage';
 import { WEAVE_DATA_FILE, readWeaveAggregates, resolveWeaveDataPath } from './data';
 
 export interface EpubBookNote {
@@ -96,46 +97,51 @@ export async function buildEpubResumeLink(app: any, vaultPath: string): Promise<
 }
 
 // ---------- 直改 weave-data.json（Q16：bz 直接操作数据文件，ADR-0013 扩展记录竞态例外） ----------
+// D3 可靠写契约原语 1 收编：「读最新文档 → 就地改动 → 整文件写回」整体入 core per-path 串行队列
+// （enqueueFileTask，键 = weave-data.json 路径）——想法编辑与划线删除并发时按序落盘，后写者不再用
+// 陈旧基线覆盖先写者。与 Weave 插件的双写竞态仍按 ADR-0013 例外口径保留（跨插件无法共队列）。
 
 function weavDataFilePath(app: any): string {
   return `${resolveWeaveDataPath(app)}/${WEAVE_DATA_FILE}`;
 }
 
-/** 读最新 weave-data.json 文档结构（原始对象，勿直接改动缓存）。 */
-async function readWeaveDocument(app: any): Promise<any> {
+/** 队列内事务：按 vaultPath 定位目标书聚合 → mutate 就地改动（返回 false = 无改动不写盘）→ 整文件写回。 */
+async function mutateWeaveBook(
+  app: any,
+  vaultPath: string,
+  mutate: (aggregate: any) => boolean
+): Promise<boolean> {
   const filePath = weavDataFilePath(app);
-  const file = app?.vault?.getAbstractFileByPath?.(filePath);
-  if (!file) throw new Error('weave-data.json 不存在');
-  const content = await app.vault.adapter.read(filePath);
-  return JSON.parse(content);
-}
-
-/** 写回 weave-data.json（整文件；沿用 vault 写入语义）。 */
-async function writeWeaveDocument(app: any, document: any): Promise<void> {
-  const filePath = weavDataFilePath(app);
-  const content = JSON.stringify(document, null, 2);
-  const file = app?.vault?.getAbstractFileByPath?.(filePath);
-  if (file) await app.vault.modify(file, content);
-  else await app.vault.create(filePath, content);
-}
-
-/** 找到目标书所在聚合；不存在返回 null。 */
-async function findWeaveBookWithMutation(app: any, vaultPath: string): Promise<any | null> {
-  let document: any;
-  try {
-    document = await readWeaveDocument(app);
-  } catch {
-    return null;
-  }
-  const books = document?.books;
-  if (!books || typeof books !== 'object') return null;
-  const normalized = String(vaultPath || '').trim();
-  for (const aggregate of Object.values(books) as any[]) {
-    if (String(aggregate?.file?.vaultPath || '').trim() === normalized) {
-      return { document, aggregate };
+  return enqueueFileTask(filePath, async () => {
+    // 读最新文档（缺失/损坏 → 不写不建文件，保持「weave 不在时零侵入」语义）
+    let document: any;
+    try {
+      const file = app?.vault?.getAbstractFileByPath?.(filePath);
+      if (!file) return false;
+      const content = await app.vault.adapter.read(filePath);
+      document = JSON.parse(content);
+    } catch {
+      return false;
     }
-  }
-  return null;
+    const books = document?.books;
+    if (!books || typeof books !== 'object') return false;
+    const normalized = String(vaultPath || '').trim();
+    let aggregate: any = null;
+    for (const agg of Object.values(books) as any[]) {
+      if (String(agg?.file?.vaultPath || '').trim() === normalized) {
+        aggregate = agg;
+        break;
+      }
+    }
+    if (!aggregate) return false;
+    if (!mutate(aggregate)) return false;
+    // 写回整文件（沿用 vault 写入语义；JSON 序列化格式 2 空格缩进不变）
+    const content = JSON.stringify(document, null, 2);
+    const f = app?.vault?.getAbstractFileByPath?.(filePath);
+    if (f) await app.vault.modify(f, content);
+    else await app.vault.create(filePath, content);
+    return true;
+  });
 }
 
 /** 更新某书某划线的想法（commentText）；高亮不存在或 highlightId 为空（脏数据）→ false。 */
@@ -147,38 +153,33 @@ export async function updateEpubNoteComment(
 ): Promise<boolean> {
   // P2：空 id 会与「无 id 高亮」的兜底空串匹配上，误改第一条脏记录
   if (!String(highlightId || '').trim()) return false;
-  const target = await findWeaveBookWithMutation(app, vaultPath);
-  if (!target) return false;
-  const { document, aggregate } = target;
-  const highlights = aggregate?.notes?.highlights;
-  if (!Array.isArray(highlights)) return false;
-  const idx = highlights.findIndex((h: any) => String(h?.id || '') === String(highlightId || ''));
-  if (idx < 0) return false;
-  const normalizedComment = String(comment || '').trim();
-  const next = { ...highlights[idx] };
-  if (normalizedComment) {
-    next.commentText = normalizedComment;
-  } else {
-    delete next.commentText;
-  }
-  next.hasCommentDivider = !!normalizedComment;
-  highlights[idx] = next;
-  await writeWeaveDocument(app, document);
-  return true;
+  return mutateWeaveBook(app, vaultPath, (aggregate) => {
+    const highlights = aggregate?.notes?.highlights;
+    if (!Array.isArray(highlights)) return false;
+    const idx = highlights.findIndex((h: any) => String(h?.id || '') === String(highlightId || ''));
+    if (idx < 0) return false;
+    const normalizedComment = String(comment || '').trim();
+    const next = { ...highlights[idx] };
+    if (normalizedComment) {
+      next.commentText = normalizedComment;
+    } else {
+      delete next.commentText;
+    }
+    next.hasCommentDivider = !!normalizedComment;
+    highlights[idx] = next;
+    return true;
+  });
 }
 
 /** 删除某书某高亮（整条移除）；不存在或 highlightId 为空（脏数据）→ false。 */
 export async function deleteEpubNote(app: any, vaultPath: string, highlightId: string): Promise<boolean> {
   // P2：空 id 在过滤条件里会命中所有「无 id 高亮」（String(h?.id||'') === ''），一次删光脏记录
   if (!String(highlightId || '').trim()) return false;
-  const target = await findWeaveBookWithMutation(app, vaultPath);
-  if (!target) return false;
-  const { document, aggregate } = target;
-  const highlights = aggregate?.notes?.highlights;
-  if (!Array.isArray(highlights)) return false;
-  const before = highlights.length;
-  aggregate.notes.highlights = highlights.filter((h: any) => String(h?.id || '') !== String(highlightId || ''));
-  if (aggregate.notes.highlights.length === before) return false;
-  await writeWeaveDocument(app, document);
-  return true;
+  return mutateWeaveBook(app, vaultPath, (aggregate) => {
+    const highlights = aggregate?.notes?.highlights;
+    if (!Array.isArray(highlights)) return false;
+    const before = highlights.length;
+    aggregate.notes.highlights = highlights.filter((h: any) => String(h?.id || '') !== String(highlightId || ''));
+    return aggregate.notes.highlights.length !== before;
+  });
 }
