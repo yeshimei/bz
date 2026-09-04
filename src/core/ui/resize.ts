@@ -10,7 +10,10 @@
  *   mousemove/mousedown 上，不注入任何常驻覆盖层，内容交互不受影响。
  * 尺寸钳制：下限 minW×minH；上限逐帧取 min(硬上限 maxW×maxH,
  *   视口 92%)——任何屏幕不越出遮罩可视区，大屏也不会拉出无边面板。
- * 位置：uiResizable 不做持久化；尺寸由调用域经 onChange 落 settings。
+ * 尺寸记忆：可选 persist（ADR-0094）——挂载时 load() 有值即恢复
+ *   （钳到与拖拽同口径的 min/max + 视口 92%）；onChange 防抖 300ms 调
+ *   save() 落盘（仿 todo 域 rememberPanelSize trailing 防抖），detach 时
+ *   未落盘的尾值立即 flush 防丢。不传 persist 行为不变（向后兼容）。
  * 注意：移动端（触屏）请勿挂载——本工厂只处理 mouse 指针事件。
  * ============================================================ */
 
@@ -26,6 +29,14 @@ function hitRegion(rect: { width: number; height: number }, x: number, y: number
   return null;
 }
 
+/** 尺寸记忆钩子（可选）：load 恢复 / save 防抖落盘（键由调用域自定义） */
+export interface BzResizablePersist {
+  /** 挂载时读回记忆尺寸（无记忆返回 null） */
+  load?(): { w: number; h: number } | null;
+  /** 尺寸变化后防抖 300ms 落盘（detach 时未落的尾值立即补调） */
+  save?(w: number, h: number): void;
+}
+
 export interface BzResizableOpts {
   /** 可拖命中热区宽度 px（默认 8） */
   edge?: number;
@@ -37,6 +48,8 @@ export interface BzResizableOpts {
   maxH?: number;
   /** 拖拽结束回调（尺寸已钳制；调方持久化用） */
   onChange?: (w: number, h: number) => void;
+  /** 尺寸记忆（可选；不传行为不变） */
+  persist?: BzResizablePersist;
 }
 
 /** 使元素支持「右缘/底缘/右下角」拖动缩放，返回 detach()。
@@ -65,6 +78,21 @@ export function uiResizable(el: HTMLElement, opts: BzResizableOpts = {}): { deta
     const view = (isW ? window.innerWidth : window.innerHeight) * 0.92;
     return Math.floor(Math.min(isW ? maxW : maxH, view));
   };
+
+  // 尺寸记忆（可选）：挂载即恢复（钳制口径与拖拽一致，防旧值/手改超大值打开即超屏）
+  const persist = opts.persist;
+  let persistTimer: ReturnType<typeof setTimeout> | null = null;
+  let lastW = 0;
+  let lastH = 0;
+  if (persist?.load) {
+    const saved = persist.load();
+    if (saved && saved.w > 0 && saved.h > 0) {
+      lastW = Math.min(Math.max(saved.w, minW), cap(true));
+      lastH = Math.min(Math.max(saved.h, minH), cap(false));
+      el.style.width = lastW + 'px';
+      el.style.height = lastH + 'px';
+    }
+  }
 
   /** 指针相对 el 的命中方向；非热区返回 null */
   const regionAt = (e: MouseEvent): string | null => {
@@ -95,6 +123,16 @@ export function uiResizable(el: HTMLElement, opts: BzResizableOpts = {}): { deta
     el.style.width = w + 'px';
     el.style.height = h + 'px';
     if (opts.onChange) opts.onChange(w, h);
+    // 尺寸记忆：trailing 防抖 300ms 落盘一次（拖一次 = 几十次回调，不逐帧写）
+    if (persist?.save) {
+      lastW = w;
+      lastH = h;
+      if (persistTimer !== null) clearTimeout(persistTimer);
+      persistTimer = setTimeout(() => {
+        persistTimer = null;
+        persist.save?.(w, h);
+      }, 300);
+    }
   };
 
   const onMouseLeave = () => {
@@ -133,6 +171,12 @@ export function uiResizable(el: HTMLElement, opts: BzResizableOpts = {}): { deta
 
   return {
     detach: () => {
+      // 未落的防抖尾值立即补存防丢（仿 todo flushPendingSize）
+      if (persistTimer !== null) {
+        clearTimeout(persistTimer);
+        persistTimer = null;
+        if (persist?.save && lastW > 0 && lastH > 0) persist.save(lastW, lastH);
+      }
       el.removeEventListener('mousemove', onHover);
       el.removeEventListener('mouseleave', onMouseLeave);
       el.removeEventListener('mousedown', onMouseDown);

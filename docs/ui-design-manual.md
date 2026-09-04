@@ -265,7 +265,8 @@
 | 禁用-容器 | 12% | 禁用态容器背景透明度 |
 
 - 我们大部分场景用主题变量（`--background-modifier-hover` 等）已满足 hover 语义；**新自绘交互层**（如自定义 ripple、拖拽反馈）按上表取值。
-- **控件高度**（[Ant Design controlHeight](https://github.com/ant-design/ant-design/blob/master/components/theme/themes/shared/genControlHeight.ts)）：桌面紧凑 `32px`（按钮/输入框），触屏 `≥44px`（§8.2）。
+- **控件高度**（[Ant Design controlHeight](https://github.com/ant-design/ant-design/blob/master/components/theme/themes/shared/genControlHeight.ts)）：桌面紧凑 `32px`（按钮/输入框；`--bz-control-h`），中档 `30px`（主头行主钮/收藏排序钮；`--bz-control-h-md`），触屏 `≥44px`（§8.2）。
+- **整宽头行高度**（面板 `.bz-panel-head` 家族）：默认 `44px`（`--bz-head-h`），高档 `50px`（`--bz-head-h-lg`，剪藏本）。
 - 焦点环 `2px`（core 已有 `outline: 2px`，[M3 官方 3dp](https://pub.dev/packages/material_design) 但 Obsidian 2px 更协调，保持现状）。
 
 ---
