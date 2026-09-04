@@ -229,8 +229,11 @@ export const UIManager = {
     topifyZ(this.mask!, this.popup!); // ADR-0067：显示即发号，谁后显示谁在上
     this.mask!.style.display = 'block';
     this.popup!.style.display = 'flex';
-    // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
+    // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡；
+    // 顶距工具类随开关同挂摘（全屏态才 44px 避让 Obsidian 移动端头，常规小卡不垫），
+    // 根节点挂 .bz-panel-mtop 后首子元素（.bz-todo-head）旧垫顶由其归零规则接管（防双份）
     applyMobileWindowFullscreen(this.popup, tryGetSettings().memoMobileDefaultFullscreen === true);
+    this.popup.classList.toggle('bz-panel-mtop', tryGetSettings().memoMobileDefaultFullscreen === true);
     App.refresh();
   },
   hideMain() {

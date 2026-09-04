@@ -43,6 +43,7 @@ describe('enh-sweep-c：.bz-panel-mtop 移动全屏顶距', () => {
     expect(src('src/review/ui.ts')).toContain("classList.add('bz-panel-mtop')");
     expect(src('src/diary-wall/ui.ts')).toContain("'bz-diary-wall-mob bz-panel-mtop'");
     expect(src('src/pomodoro/ui.ts')).toContain("classList.toggle('bz-panel-mtop'");
+    expect(src('src/memo/ui.ts')).toContain("classList.toggle('bz-panel-mtop'"); // 终局 review 批 B-6 补接
   });
 
   it('接入域头行不再自带 safe-area 垫顶（顶距由工具类统一接管，防双份）', () => {
