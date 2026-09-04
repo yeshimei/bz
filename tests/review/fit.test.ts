@@ -92,7 +92,7 @@ describe('computeSampleLogLikelihood', () => {
 });
 
 describe('fitFSRSParams', () => {
-  it('梯度上升：拟合后对数似然不降（子集 w[0..7]）', () => {
+  it('梯度上升：拟合后对数似然不降（子集 w[0..6]）', () => {
     // 构造 120 条可拟合样本（满足 100~300 子集门槛）
     const samples: Array<{ t: number; S: number; D: number; rating: number; stage: number }> = [];
     for (let i = 0; i < 120; i++) {
@@ -111,7 +111,9 @@ describe('fitFSRSParams', () => {
     for (let i = 0; i < 4; i++) expect(res.w[i]).toBeGreaterThan(0.01);
     expect(res.w[4]).toBeGreaterThanOrEqual(0);
     expect(res.w[4]).toBeLessThanOrEqual(1);
-    for (let i = 5; i < 8; i++) expect(res.w[i]).toBeGreaterThan(0.01);
+    for (let i = 5; i < 7; i++) expect(res.w[i]).toBeGreaterThan(0.01);
+    // w[7] 不参与遗忘曲线（d 固定 DEFAULT_D），似然对它梯度恒零，应保持初值不动
+    expect(res.w[7]).toBe(DEFAULT_W[7]);
   });
 });
 
