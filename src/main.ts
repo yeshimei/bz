@@ -76,6 +76,8 @@ import { applyUiSettings, init as diaryInit, showDiaryPanel, unregisterEscLayer 
 import { ensureSmartCat, unloadSmartCat, openSmartCat, openSmartCatChat, hideSmartCat, openSmartcatDashboard } from './smartcat';
 // 设置面板（settings-panel 域，ADR-0080：全域设置聚合入口，桌面侧栏工作台 / 移动命令面板）
 import { openSettingsPanel, unloadSettingsPanel } from './settings-panel';
+// 数据体检（checkup 域，D4：全插件数据可靠层只读巡检面板）
+import { openDataCheckup, unloadDataCheckup } from './checkup';
 
 /** 命令表：id/name 统一命名（spec「命令 id 全清单」第 9 轮：bz-<域>-<动作>，icon 与入口页磁贴一致）。
  *  域入口命令 icon 一律从 core/domain-icons（DOMAIN_ICONS）取——与设置面板导航单一事实源（enh-sweep-a）；
@@ -161,6 +163,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-smartcat-dashboard', name: '小橘数据面板', icon: 'activity', callback: () => openSmartcatDashboard(getApp()) },
   // 设置面板（ADR-0080：全域设置聚合入口）
   { id: 'bz-settings-panel-open', name: '设置面板', icon: 'settings-2', callback: () => openSettingsPanel(getApp()) },
+  // 数据体检（checkup 域，D4：全插件数据可靠层只读巡检；icon 与保险库体检同为 stethoscope，语义一致）
+  { id: 'bz-data-checkup-open', name: '数据体检', icon: 'stethoscope', callback: () => void openDataCheckup(getApp()) },
 ];
 
 /** 应用日记本设置到运行时常量（diary-notebook 原 applySettingsToRuntime） */
@@ -320,6 +324,8 @@ export default class BzPlugin extends Plugin {
     unloadSmartCat();
     // 设置面板（ADR-0080：DOM 清理 + esc 注销）
     unloadSettingsPanel();
+    // 数据体检（checkup 域，D4：作废在途体检 + 面板 DOM 清理 + esc 注销）
+    unloadDataCheckup();
     // 第二大脑：窄窗/抽屉 DOM、5s 防抖定时器、DeepSeek 服务、模块单例复位（ticket 107 补接线——
     // 原先 unloadSecondBrain 导出但从未被调用，禁用插件后残留窗体且防抖 refresh 仍会触发）
     unloadSecondBrain();

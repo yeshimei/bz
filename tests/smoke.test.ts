@@ -86,6 +86,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-smartcat-open', 'bz-smartcat-chat', 'bz-smartcat-hide', 'bz-smartcat-dashboard',
   // 设置面板（ADR-0080）
   'bz-settings-panel-open',
+  // 数据体检（checkup 域，D4）
+  'bz-data-checkup-open',
   'bz-diary-open',
 ];
 
