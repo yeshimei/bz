@@ -557,7 +557,7 @@ export class UIManager {
           <div class="seal">${vIc('lock', 15)}</div>
           <div class="t">保险库</div>
           <span class="st" data-mob-unlock>已解锁</span>
-          <button class="bz-vault-mobclose" data-act="mob-close" aria-label="关闭">${vIc('x', 15)}</button>
+          <button class="bz-vault-mobclose bz-touch-target--xl" data-act="mob-close" aria-label="关闭">${vIc('x', 15)}</button>
         </div>
         <div class="bz-vault-msearch">${vIc('search', 13)}<input placeholder="搜索全部资产…" data-mob-search></div>
         <div class="bz-vault-mseg" data-mob-seg>
@@ -1996,7 +1996,7 @@ export class UIManager {
     // 移动端详情 = 全屏二级页（复用桌面详情 HTML，顶部带返回）
     const page = document.createElement('div');
     page.className = 'bz-vault-mobpage';
-    page.innerHTML = `<div class="head"><button class="back" data-mob-back>${vIc('chevron-left', 16)}</button><div class="t">${kind === 'note' ? '加密笔记' : '加密日记'}</div><button class="ic" data-mob-menu>${vIc('more-h', 16)}</button></div><div class="body"></div>`;
+    page.innerHTML = `<div class="head"><button class="back bz-touch-target--xl" data-mob-back>${vIc('chevron-left', 16)}</button><div class="t">${kind === 'note' ? '加密笔记' : '加密日记'}</div><button class="ic" data-mob-menu>${vIc('more-h', 16)}</button></div><div class="body"></div>`;
     const body = page.querySelector('.body') as HTMLElement;
     body.innerHTML = noteDetailHTML(note, kind);
     // 详情动作（复用 bind 逻辑）
@@ -2032,7 +2032,7 @@ export class UIManager {
   private openPwMobPage(p: PlatformGroup) {
     const page = document.createElement('div');
     page.className = 'bz-vault-mobpage';
-    page.innerHTML = `<div class="head"><button class="back" data-mob-back>${vIc('chevron-left', 16)}</button><div class="t">${escapeHtml(p.platform)}</div><button class="ic" data-mob-menu>${vIc('more-h', 16)}</button></div><div class="body"></div>`;
+    page.innerHTML = `<div class="head"><button class="back bz-touch-target--xl" data-mob-back>${vIc('chevron-left', 16)}</button><div class="t">${escapeHtml(p.platform)}</div><button class="ic" data-mob-menu>${vIc('more-h', 16)}</button></div><div class="body"></div>`;
     this.pwView.renderMobPlatformPage(page.querySelector('.body') as HTMLElement, p, this.pwState);
     page.querySelector('[data-mob-back]')?.addEventListener('click', () => page.remove());
     // E6：平台详情页 ⋮ 此前未绑事件（点击无反应）——移动端直接开底部抽屉
@@ -2043,7 +2043,7 @@ export class UIManager {
   private openPwAccountPage(d: PasswordVaultEntry, st: PwViewState) {
     const page = document.createElement('div');
     page.className = 'bz-vault-mobpage';
-    page.innerHTML = `<div class="head"><button class="back" data-mob-back>${vIc('chevron-left', 16)}</button><div class="t">${escapeHtml(d.platform)}</div><button class="ic" data-mob-menu>${vIc('more-h', 16)}</button></div><div class="body"></div>`;
+    page.innerHTML = `<div class="head"><button class="back bz-touch-target--xl" data-mob-back>${vIc('chevron-left', 16)}</button><div class="t">${escapeHtml(d.platform)}</div><button class="ic" data-mob-menu>${vIc('more-h', 16)}</button></div><div class="body"></div>`;
     const body = page.querySelector('.body') as HTMLElement;
     // 单账号详情（搜索态复用平台页单卡逻辑——直接构账号卡）
     this.pwView.renderDeskDetail(body, { ...st, selPlatform: d.platform, selAccount: d.id });

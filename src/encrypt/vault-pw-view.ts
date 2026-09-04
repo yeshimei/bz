@@ -200,7 +200,7 @@ export class VaultPwView {
       if (st.view === 'fav') {
         container.innerHTML = '<div class="bz-pwv-empty"><div class="t">还没有收藏</div><div class="d">右键或长按条目可收藏，常用账号一目了然</div></div>';
       } else {
-        container.innerHTML = `<div class="bz-pwv-empty"><div class="t">保险库还没有密码</div><div class="d">收录第一条账号开始使用</div><button class="bz-pwv-empty-add" data-pwv="empty-add">${this.ic('plus')} 新增密码</button></div>`;
+        container.innerHTML = `<div class="bz-pwv-empty"><div class="t">保险库还没有密码</div><div class="d">收录第一条账号开始使用</div><button class="bz-pwv-empty-add bz-touch-target--lg" data-pwv="empty-add">${this.ic('plus')} 新增密码</button></div>`;
         container.querySelector('[data-pwv="empty-add"]')?.addEventListener('click', () => this.host.openPwEntryDialog());
       }
       return;
@@ -280,7 +280,7 @@ export class VaultPwView {
       : `${this.esc(d.account || '(无账号)')}${d.fav ? ' ' + this.starIc() : ''}`;
     card.innerHTML = `<div class="accrow">
       <div class="name">${accMeta}</div>
-      <button class="copyac" data-pwv="copy-ac">${this.ic('copy')} 复制账号</button>
+      <button class="copyac bz-touch-target--lg" data-pwv="copy-ac">${this.ic('copy')} 复制账号</button>
     </div>
     <div class="pwrow">
       <div class="pw ${shown ? '' : 'mask'}">${shown ? this.esc(d.password) : dots(d.password)}</div>
@@ -479,7 +479,7 @@ export class VaultPwView {
       if (st.view === 'fav') {
         container.innerHTML = '<div class="bz-pwv-empty"><div class="t">还没有收藏</div><div class="d">右键或长按条目可收藏，常用账号一目了然</div></div>';
       } else {
-        container.innerHTML = `<div class="bz-pwv-empty"><div class="t">保险库还没有密码</div><div class="d">收录第一条账号开始使用</div><button class="bz-pwv-empty-add" data-pwv="empty-add">${this.ic('plus')} 新增密码</button></div>`;
+        container.innerHTML = `<div class="bz-pwv-empty"><div class="t">保险库还没有密码</div><div class="d">收录第一条账号开始使用</div><button class="bz-pwv-empty-add bz-touch-target--lg" data-pwv="empty-add">${this.ic('plus')} 新增密码</button></div>`;
         container.querySelector('[data-pwv="empty-add"]')?.addEventListener('click', () => this.host.openPwEntryDialog());
       }
       return;

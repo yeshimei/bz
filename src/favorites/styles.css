@@ -211,9 +211,7 @@
   }
   .bz-fav-head { padding-right: var(--bz-space-sm); } /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css） */
   .bz-fav-mob-only { display: inline-flex; }
-  /* 头行图标钮触屏换大按钮档（ticket 188：≥40px 目标档）；coarse 下 ::after 外扩补足 44px */
-  .bz-fav-head-btns .bz-icon-btn { width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg); }
-  .bz-fav-head-btns .bz-icon-btn .bz-ic { width: 16px; height: 16px; }
+  /* 头行图标钮触屏换大按钮档（ticket 188：≥40px 目标档）已收编组件库 .bz-icon-btn--lg 修饰符（模板挂类） */
   .bz-fav-side { display: none; }
   .bz-fav-main-head { display: none; } /* 桌面专属主头行；移动主按钮收头行图标组 */
   .bz-fav-toolbar { display: none; }  /* 桌面工具栏；移动搜索走隐藏展开行 */
@@ -242,8 +240,6 @@
   .bz-fav-desc { -webkit-line-clamp: 3; }
 }
 
-/* ---- 触控热区（设计手册 §8.2）：头行图标钮（32px 档）::after 外扩补足 44px ---- */
-@media (pointer: coarse) {
-  .bz-fav-head-btns .bz-icon-btn { position: relative; }
-  .bz-fav-head-btns .bz-icon-btn::after { content: ''; position: absolute; inset: -6px; }
-}
+/* 触控热区（设计手册 §8.2）已收编 core 样式库 .bz-touch-target（components.css，
+   头行图标钮挂类，coarse 下 ::after 外扩 -6px 补足 44px），域内不再复制外扩块。 */
+

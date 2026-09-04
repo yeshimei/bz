@@ -253,8 +253,5 @@
   .bz-bel-name { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 }
 
-/* ---- 触控热区（设计手册 §8.2）：头行图标钮（32px 档）::after 外扩补足 44px ---- */
-@media (pointer: coarse) {
-  .bz-bel-head-btns .bz-icon-btn { position: relative; }
-  .bz-bel-head-btns .bz-icon-btn::after { content: ''; position: absolute; inset: -6px; }
-}
+/* 触控热区（设计手册 §8.2）已收编 core 样式库 .bz-touch-target（components.css，
+   头行图标钮挂类，coarse 下 ::after 外扩 -6px 补足 44px），域内不再复制外扩块。 */

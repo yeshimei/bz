@@ -67,6 +67,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | 滑条 | `.bz-range` | `--lg` | 自绘轨道+滑块；抗 Obsidian 默认 range 外观重置 |
 | 加载 | `.bz-spinner` | `--sm/--lg` | 占位加载态 |
 | 移动全屏顶距 | `.bz-panel-mtop` | — | 挂**全屏面板根节点**：≤768px 顶部留 44px（max 安全区）避让 Obsidian 移动端头，并归零首子元素顶距（core `.bz-win-mfs` 34px 垫顶与域内头行 safe-area 垫顶由它统一接管，接入域**勿再**在头行写避让，防双份顶距）；非恒全屏面板（如番茄钟）随 mfs 开关 `classList.toggle` 同挂摘 |
+| 触控热区 | `.bz-touch-target` | `--sm/--lg/--xl`；内联 `--bz-touch-outset` 覆写 | 仅触屏（pointer:coarse）生效：`::after` 外扩命中区至 ≥44px、视觉不变；档位按元素原尺寸——默认 -6px（32px 档钮）、`--sm` -4px（36/40px 档）、`--lg` -8px（26/28px 档）、`--xl` -12px（20/22px 档）；热区外扩会盖住相邻元素命中，行距紧凑的列表行**勿用**（改 padding 抬档，先例 attach 清单行） |
 
 **图标**：一律 lucide 图标名（工厂经 `setIcon` 渲染 Obsidian 原生 SVG）。颜色默认继承 `currentColor`（在按钮里自动变 on-brand 白），需要独立语义色给图标元素加 `.bz-ic--brand/success/warning/danger/info/star/muted/on-brand`，尺寸 `.bz-ic--xs/sm/md/lg/xl`。**禁止 emoji 当图标、禁止文本符号当图标**。
 

@@ -140,7 +140,7 @@ function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[], 
   header.className = 'bz-win-head bz-review-stats-head';
   const closeBtn = document.createElement('button');
   closeBtn.id = 'review-stats-close';
-  closeBtn.className = 'bz-win-close';
+  closeBtn.className = 'bz-win-close bz-touch-target--xl';
   closeBtn.title = '关闭';
   closeBtn.appendChild(uiIcon('x')); // item 14：❌ → lucide
   header.innerHTML = `
@@ -293,7 +293,7 @@ export async function showTimeline(app: App, dm: ReviewDataManager, item: Review
   // 无标题栏：内容直接顶到卡片；仅右上角关闭钮（lucide，item 14）
   const closeBtn = document.createElement('button');
   closeBtn.id = 'review-history-close';
-  closeBtn.className = 'bz-win-close bz-review-history-close';
+  closeBtn.className = 'bz-win-close bz-review-history-close bz-touch-target--xl';
   closeBtn.title = '关闭';
   closeBtn.appendChild(uiIcon('x'));
   closeBtn.style.cssText = 'position:absolute;top:10px;right:10px;z-index:2;background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px;box-shadow:none !important;';

@@ -321,14 +321,9 @@
   .bz-home-mini { height: var(--bz-icon-btn-lg); padding: 0 var(--bz-space-md); }
 }
 
-/* ---- 触控热区（设计手册 §8.2）：触屏下小元素 ::after 外扩至 ≥44px，视觉不变 ----
-   迷你 chips（32px）/ 排序小钮（22px，触屏同步抬视觉档）/ hero 编辑·关闭盒装钮（26px） */
+/* ---- 触控热区（设计手册 §8.2）：::after 外扩已收编 core .bz-touch-target（模板挂类，
+   迷你 chips/hero 编辑·关闭 = --lg(-8px)、排序小钮 = 默认(-6px)）；此处仅保留触屏视觉抬档 ---- */
 @media (pointer: coarse) {
-  .bz-home-mini, .bz-home-mv, .bz-home-edit, .bz-home-close { position: relative; }
   .bz-home-mini { height: 40px; }
-  .bz-home-mini::after, .bz-home-edit::after, .bz-home-close::after {
-    content: ''; position: absolute; inset: -8px;
-  }
   .bz-home-mv { width: 32px; height: 32px; }
-  .bz-home-mv::after { content: ''; position: absolute; inset: -6px; }
 }

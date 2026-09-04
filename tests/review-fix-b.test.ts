@@ -47,3 +47,50 @@ describe('批 B-1：样式库共享修饰符（hover 品牌档 / 描边 danger �
     expect(css).toMatch(/\.bz-btn--danger-ghost\s*\{[^}]*background: transparent/);
   });
 });
+
+describe('批 B-3：触控热区收编 core .bz-touch-target', () => {
+  it('样式库：coarse 断点内 ::after 外扩 + 默认 -6px 与三档参数化（--sm/-4 --lg/-8 --xl/-12）', () => {
+    const css = componentsCss();
+    const m = css.match(/@media \(pointer: coarse\) \{[\s\S]*?\n\}/);
+    expect(m, '缺 pointer:coarse 断点').not.toBeNull();
+    expect(m![0]).toContain('.bz-touch-target { position: relative; }');
+    expect(m![0]).toContain('inset: var(--bz-touch-outset, -6px)');
+    expect(m![0]).toContain('.bz-touch-target--sm { --bz-touch-outset: -4px; }');
+    expect(m![0]).toContain('.bz-touch-target--lg { --bz-touch-outset: -8px; }');
+    expect(m![0]).toContain('.bz-touch-target--xl { --bz-touch-outset: -12px; }');
+  });
+
+  it('收编域挂类与档位映射（外扩量与原域内 inset 一一对应）', () => {
+    // 默认档（原 inset -6px）：32px 档头行图标钮
+    expect(repo('src/belongings/ui.ts')).toMatch(/bz-icon-btn bz-touch-target/);
+    expect(repo('src/favorites/ui.ts')).toMatch(/bz-icon-btn--lg bz-touch-target/);
+    // --sm（原 -4px）：番茄钟控制钮、复习评级条
+    expect(repo('src/pomodoro/ui.ts')).toMatch(/pomodoro-btn pomodoro-btn-primary bz-touch-target--sm/);
+    expect(repo('src/review/ui.ts')).toContain('bz-review-bar-btn bz-touch-target--sm');
+    // --lg（原 -8px）：home 迷你 chips/hero 盒装钮、加密空态钮/复制账号钮、复习信息行
+    expect(repo('src/home/ui.ts')).toContain('bz-touch-target--lg bz-home-edit');
+    expect(repo('src/home/ui.ts')).toContain('bz-home-mini bz-touch-target--lg');
+    expect(repo('src/encrypt/vault-pw-view.ts')).toContain('bz-pwv-empty-add bz-touch-target--lg');
+    expect(repo('src/encrypt/vault-pw-view.ts')).toContain('copyac bz-touch-target--lg');
+    expect(repo('src/review/ui.ts')).toContain('bz-q-fitem bz-touch-target--lg');
+    // --xl（原 -12px）：回忆墙四类元素、加密移动关闭/返回钮、复习三个关闭钮
+    expect(repo('src/diary-wall/ui.ts')).toContain('bz-diary-wall-icon-btn bz-touch-target--xl');
+    expect(repo('src/encrypt/ui.ts')).toContain('bz-vault-mobclose bz-touch-target--xl');
+    expect(repo('src/encrypt/ui.ts')).toContain('back bz-touch-target--xl');
+    expect(repo('src/review/settings-schema.ts')).toContain('bz-review-exclude-remove bz-touch-target--xl');
+    expect(repo('src/review/stats-ui.ts')).toContain('bz-win-close bz-touch-target--xl');
+    expect(repo('src/review/stats-ui.ts')).toContain('bz-review-history-close bz-touch-target--xl');
+  });
+
+  it(' favorites 域内对 .bz-icon-btn 的直接覆写退役（改挂 --lg 修饰符）', () => {
+    const css = repo('src/favorites/styles.css');
+    expect(css).not.toContain('.bz-fav-head-btns .bz-icon-btn { width');
+    expect(repo('src/favorites/ui.ts')).toContain('bz-icon-btn--lg');
+  });
+
+  it('跳过项守护：cinema（ui 冻结）与 attach（padding 抬档形态）维持域内 pointer:coarse 块', () => {
+    expect(repo('src/cinema/styles.css')).toMatch(/@media \(pointer: coarse\)/);
+    expect(repo('src/attach/styles.css')).toMatch(/@media \(pointer: coarse\)/);
+    expect(repo('src/attach/styles.css')).not.toMatch(/\w::after\s*\{/); // attach 刻意外扩（防误触邻行，仅注释提及）
+  });
+});
