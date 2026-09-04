@@ -417,6 +417,9 @@ _Avoid_: 手搓确认弹窗、confirm()（已退役）
 **共享数据路径 (Shared Storage Path)**: `storagePath` 设置项——所有数据文件（memo/belongings/passwords/favorites/review/quiz/第二大脑 secondbrain.json+secondbrain.vec）的统一目录，默认 `CONFIG/STORAGE`。旧各域路径字段（todoFilePath、belongingsDataFolder、pwStoragePath、favoritesStoragePath、reviewStoragePath）废弃仅兼容保留；META_PATH/VEC_PATH 已随 ticket 103 彻底删除（不再兼容保留），闪念 16 设置键更名 secondBrain* 由 onload 迁移。
 _Avoid_: 各脚本路径、存储路径们
 
+**可靠写契约 (Reliable Write Contract)**: core/storage 数据写三原语（D1，2026-09），全部域数据层统一走（D2/D3 迁移依据）：① `enqueueFileTask(path, task)`——同文件「读→改→写」任务 FIFO 串行、异文件并行，任务抛错只上抛该调用方不堵队列；② `updateFileSections(path, writer)` / `mergeWriteSections(path, set)`——段级合并写（news writeNewsDataMerged 先例上沉），队列内读磁盘现值、只声明本次改动段、未声明段保留磁盘现值合并写回（对象形态 JSON 专用，数组/标量抛错，防双写者互覆盖）；③ 冲突留档——解析失败或写失败先把原文件原样留档到 `CONFIG/.CORRUPT/<文件名>.<yyyymmdd-hhmmss>.bak`（目录不存在则建）再降级初始化/照抛原错误，永不静默丢数据；留档成功发人话化 warning 通知（同文件 30s 去重），留档失败不阻塞原流程；`onCorrupt` 返回 false 的「不清盘」域语义不变，且此类域自管损坏文案、core 不重复弹。
+_Avoid_: 裸写读快照全覆盖、域内自建写队列、直改 .CORRUPT 留档文件、旧 <名>.corrupt-<时间戳> 同目录留档
+
 **筛选弹窗 (Filter Modal)**: 🔀 图标打开的筛选/排序弹窗（影视「筛选与排序」、书库「视图与筛选」），与 ⚙️ 域设置弹窗严格区分——🔀 只做筛选，⚙️ 只做设置。
 _Avoid_: 设置弹窗（指筛选时）
 
