@@ -16,17 +16,15 @@ import { clearDomainEvents } from './core/domain-bus';
 import { attachObsidianAdapter, detachObsidianAdapter } from './core/obsidian-adapter';
 import { renderSettingsInto } from './core/settings-schema';
 import { mainSettingsSchema } from './core/settings-main-schema';
-import { setBzSettingsProvider, unloadBz, ensureBz } from './memo';
 
 import BzSettings, { DEFAULT_SETTINGS, migrateSecondBrainSettings } from './settings';
 
-// 待办（todo 域，与旧备忘录并存：同源 memo.json，UI/交互归本域；
-// 被动捕获入口——启动自动弹出/file-open 提醒/侧栏图标——落点=待办面板，本域提醒后台承担）
-import { openTodoPanel, addTodoItem, unloadTodo, ensureTodoReminders } from './todo';
+// 待办（todo 域，ADR-0092 备忘录域退役后 memo.json 唯一属主：UI/交互/写盘/引用同步归本域；
+// 被动捕获入口——启动自动弹出/file-open 提醒/侧栏图标——落点=待办面板）
+import { openTodoPanel, addTodoItem, unloadTodo, ensureTodoReminders, ensureFileSync, unloadFileSync } from './todo';
 // 15 域（懒加载：首次命令/事件触发时 ensureXxx 幂等初始化）
-import { openBzPanel, createMemoItem } from './memo';
 import { addBelongingsItem, openBelongings, unloadBelongings } from './belongings';
-// 剪藏本融合域（clipbook，ADR-0082/issue 177）：聚合讯+剪藏本合一；旧 news/clipping 入口命令断开
+// 剪藏本融合域（clipbook，ADR-0082/issue 177）：聚合讯+剪藏本合一
 import { openClipbook, unloadClipbook } from './clipbook';
 // 统一保险库（encrypt 域，ADR-0085）：密码管理已并入 encrypt，旧 password-vault 域已删除
 // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图；复用 diary parser 读取，不改写旧数据
@@ -54,19 +52,16 @@ import { openPomodoro, unloadPomodoro, ensurePomodoro } from './pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // 文献盒（literature 域，ADR-0072 自 bili-downloader 迁出；网页版已移除，见 tools/bili-downloader）
 import { openLiteraturePanel, openTermNote, unloadLiterature } from './literature';
-// 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 入口页磁贴播种 + 右键菜单）
-import { openAttachMove, ensureAttachSeed, ensureAttachFileMenu, ATTACH_COMMAND_ID } from './attach';
+// 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 右键菜单）
+import { openAttachMove, ensureAttachFileMenu, ATTACH_COMMAND_ID } from './attach';
 // 统一保险库（encrypt 域，ADR-0085：密码/加密笔记/加密日记三资产单一面板；旧 password-vault 命令已删）
 import { openEncrypt, encryptCurrentNote, copyVaultPassword, unloadEncrypt, mountEncryptStatusBar, unmountEncryptStatusBar } from './encrypt';
-import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setLauncherGestureSetter, LauncherModal } from './launcher';
-import { registerGestureListeners } from './launcher/gestures';
-// 内容首页（home 域，ticket 177：入口页「新标签页」升级；与旧入口页并存，不改 launcher）
+// 内容首页（home 域，ticket 177；旧入口页 launcher 已退役删除，ADR-0093）
 import { openHome, unloadHome } from './home';
 // 今日回顾（recap 域，方向一 R2）：当天五域痕迹聚合只读面板
 import { openRecap, unloadRecap } from './recap';
 import { ensureAutoSummary, unloadAutoSummary, redoSummaryForActiveFile } from './auto-summary';
-// ai-agent 域解散：文件同步拆入 memo/favorites 域（原 ensureAIAgent/unloadAIAgent 换线）
-import { ensureMemoFileSync, unloadMemoFileSync } from './memo';
+// ai-agent 域解散：引用同步拆入 todo/favorites 域无条件常驻（原 ensureAIAgent/unloadAIAgent 换线）
 import { ensureFavoritesFileSync, unloadFavoritesFileSync } from './favorites';
 // 日记本（diary-notebook 合并）
 import { setApp as setDiaryApp } from './diary/app';
@@ -81,20 +76,15 @@ import { openSettingsPanel, unloadSettingsPanel } from './settings-panel';
 // 数据体检（checkup 域，D4：全插件数据可靠层只读巡检面板）
 import { openDataCheckup, unloadDataCheckup } from './checkup';
 
-/** 命令表：id/name 统一命名（spec「命令 id 全清单」第 9 轮：bz-<域>-<动作>，icon 与入口页磁贴一致）。
+/** 命令表：id/name 统一命名（spec「命令 id 全清单」第 9 轮：bz-<域>-<动作>）。
  *  域入口命令 icon 一律从 core/domain-icons（DOMAIN_ICONS）取——与设置面板导航单一事实源（enh-sweep-a）；
  *  动作类命令（加/评级/补链等）保持字面量图标。 */
 const COMMANDS: { id: string; name: string; icon: string; callback: () => void }[] = [
-  // 入口页（t1：主页 → 入口页，术语随 CONTEXT.md；id bz-home 不变）
-  { id: 'bz-home', name: '入口页', icon: DOMAIN_ICONS.launcher, callback: () => openLauncherPanel(getApp()) },
-  // 内容首页（home 域，ticket 177：与旧入口页并存）
+  // 内容首页（home 域，ticket 177）
   { id: 'bz-home-open', name: '内容首页', icon: DOMAIN_ICONS.home, callback: () => openHome(getApp()) },
   // 今日回顾（recap 域，方向一 R2：当天日记/影视/读书/待办/番茄痕迹聚合面板）
   { id: 'bz-recap-today', name: '今日回顾', icon: DOMAIN_ICONS.recap, callback: () => openRecap(getApp()) },
-  // 备忘录
-  { id: 'bz-memo-open', name: '备忘录', icon: DOMAIN_ICONS.memo, callback: () => openBzPanel(getApp()) },
-  { id: 'bz-memo-add', name: '加备忘', icon: 'pencil', callback: () => createMemoItem(getApp()) },
-  // 待办（todo 新域，与备忘录并存）
+  // 待办（todo 域，ADR-0092 起为 memo.json 唯一属主）
   { id: 'bz-todo-open', name: '待办', icon: DOMAIN_ICONS.todo, callback: () => openTodoPanel(getApp()) },
   { id: 'bz-todo-add', name: '加待办', icon: 'clipboard-list', callback: () => addTodoItem(getApp()) },
   // 归物本
@@ -110,14 +100,13 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 收藏本
   { id: 'bz-favorites-open', name: '收藏本', icon: DOMAIN_ICONS.favorites, callback: () => openFavoritesPanel(getApp()) },
   { id: 'bz-favorites-add', name: '加收藏', icon: 'bookmark', callback: () => addFavoriteItem(getApp()) },
-  // 旧书库（library）域退役：bz-library-open/bz-book-notes-open 已删，读书笔记并入书架墙详情弹窗
   // 阅读数据分析报告（读书报告内嵌化：打开书架墙面板并切到报告视图；home 报告磁贴/剪藏本深链自动受益）
   { id: 'bz-reading-report-open', name: '阅读数据分析报告', icon: DOMAIN_ICONS['reading-report'], callback: () => openBookshelfReport(getApp()) },
   // 影视分析报告（ADR-0090 内嵌化：独立报告窗退役，命令直达影院面板分析页；
   // id 随域换 bz-cinema-analysis，名称「影视分析报告」保持用户习惯；pie-chart 与阅读 bar-chart-3、
   // 复习 calendar-check 三份报告图标各异——enh-sweep-a 错开）
   { id: 'bz-cinema-analysis', name: '影视分析报告', icon: 'pie-chart', callback: () => openCinemaAnalysis(getApp()) },
-  // 影院（cinema 域，ADR-0087 接管影视——旧 bz-movie-open/bz-movie-add 已退役）
+  // 影院（cinema 域，ADR-0087）
   { id: 'bz-cinema-open', name: '影院', icon: DOMAIN_ICONS.cinema, callback: () => openCinema(getApp()) },
   { id: 'bz-cinema-add', name: '加影视（影院）', icon: 'plus-circle', callback: () => addCinemaItem(getApp()) },
   // 书架墙（bookshelf 新域）
@@ -182,7 +171,6 @@ export function applyDiarySettingsToRuntime(s: BzSettings) {
 export default class BzPlugin extends Plugin {
   settings: BzSettings = { ...DEFAULT_SETTINGS };
   private registeredCommandIds: string[] = [];
-  private unregisterGestures: (() => void) | null = null;
 
   async onload() {
     const loaded = await this.loadData();
@@ -193,31 +181,9 @@ export default class BzPlugin extends Plugin {
       this.migrateStoragePath();
       migrated = true;
     }
-    // 手势设置迁移：旧 gestureDoubleTap/TripleTap/SwipeDown（string 'off'/命令 id 或 boolean）→ launcherGesture 单选
-    const old = this.settings as any;
-    const hasOldGesture =
-      old.gestureDoubleTap !== undefined || old.gestureTripleTap !== undefined || old.gestureSwipeDown !== undefined;
-    if (hasOldGesture) {
-      const pick = (k: string): boolean => {
-        const v = old[k];
-        if (typeof v === 'string') return v !== 'off';
-        return !!v;
-      };
-      (this.settings as any).launcherGesture = pick('gestureDoubleTap')
-        ? 'double'
-        : pick('gestureTripleTap')
-          ? 'triple'
-          : pick('gestureSwipeDown')
-            ? 'swipe'
-            : 'off';
-      delete old.gestureDoubleTap;
-      delete old.gestureTripleTap;
-      delete old.gestureSwipeDown;
-      migrated = true;
-    }
     // ticket 103 迁移：闪念 16 键 → secondBrain* 更名平移（META_PATH/VEC_PATH 废弃清除）
     if (migrateSecondBrainSettings(this.settings)) migrated = true;
-    // P2：迁移完成立即落盘——storagePath/手势结果写回 data.json，迁移 warning 不随每次启动重播
+    // P2：迁移完成立即落盘——storagePath 结果写回 data.json，迁移 warning 不随每次启动重播
     if (migrated) void this.saveSettings();
     setApp(this.app);
     // AI 设置注入（Q3 的 _q3Settings 语义 → 插件设置）
@@ -227,20 +193,6 @@ export default class BzPlugin extends Plugin {
     setSettingsProvider(() => this.settings);
     // 设置保存通道（域设置弹窗写回后持久化）
     setSettingsSaver(() => this.saveSettings());
-    // 入口页：右上角文字/手势开关写回设置（平台独立字段：桌面 launcherShowText/launcherGesture，移动 launcherShowTextMobile/launcherGestureMobile）
-    setLauncherShowTextSetter((v) => {
-      if (LauncherModal.isMobileEnv()) this.settings.launcherShowTextMobile = v;
-      else this.settings.launcherShowText = v;
-      void this.saveSettings();
-    });
-    setLauncherGestureSetter((v) => {
-      if (LauncherModal.isMobileEnv()) this.settings.launcherGestureMobile = v;
-      else this.settings.launcherGesture = v;
-      void this.saveSettings();
-      this.syncGestures(); // 手势监听随设置变更重注册
-    });
-    // 备忘录设置注入
-    setBzSettingsProvider(() => this.settings);
     // 日记本注入（diary-notebook 合并）
     setDiaryApp(this.app);
     applyDiarySettingsToRuntime(this.settings);
@@ -253,12 +205,10 @@ export default class BzPlugin extends Plugin {
       this.registeredCommandIds.push(c.id);
     }
 
-    // 附件搬移：入口页磁贴自动播种（desktop+mobile 末尾，幂等）
-    void ensureAttachSeed(this.app);
     // 附件搬移：文件右键菜单入口（md 笔记 →「搬移此笔记附件」，与命令同链路）
     ensureAttachFileMenu(this);
 
-    // ribbon 主入口：待办（捕获入口改道：点击落点=待办面板，不再进备忘录弹窗）+ 日记本
+    // ribbon 主入口：待办 + 日记本
     this.addRibbonIcon('check-square', '待办', () => openTodoPanel(this.app));
     this.addRibbonIcon('notebook-pen', '日记本', () => showDiaryPanel(this));
 
@@ -277,16 +227,14 @@ export default class BzPlugin extends Plugin {
 
     // 事件常驻域按设置开关注册（懒加载架构）
     this.app.workspace.onLayoutReady(() => {
-      // 备忘录：启动即初始化（面板 UI + 同源同步；启动弹出/file-open 提醒已改道待办域，不再弹备忘录窗）
-      void ensureBz(this.app);
-      // 待办提醒后台：启动自动弹出 + 打开笔记提醒（落点=待办面板；设置键 autoPopupOnStart/openNoteReminder 与备忘录共享）
+      // 待办提醒后台：启动自动弹出 + 打开笔记提醒（落点=待办面板；设置键 autoPopupOnStart/openNoteReminder）
       ensureTodoReminders(this.app);
       // 日记本：启动即初始化（diary-notebook 原行为：onLayoutReady → init）
       void diaryInit(this);
       if (this.settings.autoSummaryEnabled) ensureAutoSummary(this.app);
       // 引用同步无条件常驻（issue 187：原 aiAgentEnabled 开关随旧 AIAgent 退役——
-      // 备忘录/收藏本笔记 rename/delete 引用同步是数据完整性功能，不设开关）
-      ensureMemoFileSync(this.app);
+      // 待办/收藏本笔记 rename/delete 引用同步是数据完整性功能，不设开关）
+      ensureFileSync(this.app);
       ensureFavoritesFileSync(this.app);
       if (this.settings.secondBrainEnabled) ensureSecondBrainOnReady(this.app);
       // 复习计划：到期提醒开启时常驻（ticket 100——监听/染色/轮询统一启动；否则懒加载）；enableAutoNotify 缺省视为开
@@ -296,8 +244,6 @@ export default class BzPlugin extends Plugin {
       // 小橘：启动即挂载（smartcatEnabled 开关；桌面宠物常驻）
       if (this.settings.smartcatEnabled) void ensureSmartCat(this.app);
     });
-    // 手势触发（设置页可配，默认关闭）
-    this.syncGestures();
   }
 
   async onunload() {
@@ -317,11 +263,9 @@ export default class BzPlugin extends Plugin {
     unmountPomodoroStatusBar();
     unmountEncryptStatusBar();
     unloadPomodoro();
-    unloadBz();
     unloadTodo();
-    unloadMemoFileSync();
+    unloadFileSync();
     unloadFavoritesFileSync();
-    unloadLauncherPanel();
     unloadHome();
     unloadRecap();
     unloadEncrypt();
@@ -352,10 +296,6 @@ export default class BzPlugin extends Plugin {
     // 域事件总线收口：摘除 vault 订阅点 + 清空全部域事件订阅（总线为进程内单例，随插件卸载全量清空）
     detachObsidianAdapter();
     clearDomainEvents();
-    if (this.unregisterGestures) {
-      this.unregisterGestures();
-      this.unregisterGestures = null;
-    }
     // 日记本清理（diary-notebook 原 onunload；escManager.destroy 已在上面统一调用）
     const diaryIds = [
       'diary-tag-filter',
@@ -420,24 +360,6 @@ export default class BzPlugin extends Plugin {
     if (custom) {
       notice('检测到旧版数据路径设置（' + custom + '），已统一为 CONFIG/STORAGE，请手动迁移对应数据文件。', 'warning');
     }
-  }
-
-  /** 手势监听同步：按设置单选手势注册（设置变更/插件加载时调用，幂等）；动作固定为打开入口页 */
-  syncGestures(): void {
-    if (this.unregisterGestures) {
-      this.unregisterGestures();
-      this.unregisterGestures = null;
-    }
-    const isMobile = LauncherModal.isMobileEnv();
-    const g = isMobile
-      ? (this.settings.launcherGestureMobile ?? this.settings.launcherGesture) // 移动端未设置 → 继承桌面
-      : this.settings.launcherGesture;
-    const on = (kind: string) => (g === kind ? 'bz-home' : 'off');
-    this.unregisterGestures = registerGestureListeners(this.app, {
-      gestureDoubleTap: on('double'),
-      gestureTripleTap: on('triple'),
-      gestureSwipeDown: on('swipe'),
-    });
   }
 }
 

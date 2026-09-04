@@ -33,7 +33,6 @@ export function jsonScanTargets(app: App): JsonScanTarget[] {
     { file: storageFile('belongings.json'), label: '归物本' },
     { file: storageFile('clipbook.json'), label: '剪藏本侧写' },
     { file: storageFile('news.json'), label: '聚合讯' },
-    { file: storageFile('launcher.json'), label: '入口页' },
     { file: storageFile('pomodoro.json'), label: '番茄钟' },
     { file: storageFile('review.json'), label: '复习计划' },
     { file: storageFile('review-fit.json'), label: '复习拟合参数' },

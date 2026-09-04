@@ -53,7 +53,7 @@ describe('DEFAULT_SETTINGS 移动端默认全屏默认值（行为保持映射�
     // 旧 library 键已随书库域退役删除：阅读报告跟随书架墙（bookshelf）键
     // 旧 clipping 键为旧剪藏域孤儿键（实际生效 = clipbook 键），enh-sweep-a 双删
     const ON = ['diary', 'belongings', 'password', 'favorites', 'cinema', 'review', 'encrypt'];
-    const OFF = ['memo', 'pomodoro'];
+    const OFF = ['todo', 'pomodoro']; // memo 键随 ADR-0092 memo 域退役删除，待办用自有 todo 键
     for (const k of ON) {
       expect(DEFAULT_SETTINGS[`${k}MobileDefaultFullscreen`]).toBe(true);
       expect(typeof DEFAULT_SETTINGS[`${k}MobileDefaultFullscreen`]).toBe('boolean');

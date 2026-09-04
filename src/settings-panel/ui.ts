@@ -25,7 +25,7 @@ import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { uiIcon, uiIconBtn, uiEmpty } from '../core/ui';
 
-/* ==================== 域清单（全局 + 20 域；图标 = lucide 名） ==================== */
+/* ==================== 域清单（全局 + 19 域；图标 = lucide 名） ==================== */
 
 interface DomainDef {
   id: string;
@@ -57,7 +57,6 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   },
   ai: async () => (await import('../core/settings-main-schema')).aiSettingsSchema(),
   diary: async () => (await import('../diary/ui/panel')).diarySettingsSchema(),
-  memo: async () => (await import('../memo/ui')).memoSettingsSchema(),
   todo: async () => (await import('../todo/settings')).todoSettingsSchema(),
   belongings: async () => (await import('../belongings/ui')).belongingSettingsSchema(),
   clipping: async () => (await import('../clipbook/ui')).clipbookSettingsSchema(),
@@ -100,19 +99,17 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   },
 };
 
-/** 域清单（图标 = core/domain-icons 单一事实源，与命令面板/入口页磁贴同源——enh-sweep-a 收敛；
+/** 域清单（图标 = core/domain-icons 单一事实源，与命令面板/内容首页同源——enh-sweep-a 收敛；
  *  描述只写功能语义，不带「新域/ADR」开发黑话；徽标运行时动态计算，见 badgeOf）。
  *  导出供回归测试断言（图标映射一致性/历史重复图标错开）。 */
 export const DOMAINS: DomainDef[] = [
   { id: 'global', name: '通用', icon: DOMAIN_ICONS.global, desc: '存储路径等跨域基础偏好', schemaLoader: schemaLoaders.general },
   { id: 'ai', name: 'AI', icon: DOMAIN_ICONS.ai, desc: 'AI 服务商与模型配置', schemaLoader: schemaLoaders.ai },
   { id: 'diary', name: '日记本', icon: DOMAIN_ICONS.diary, desc: '日记目录、显示与默认视图', schemaLoader: schemaLoaders.diary },
-  { id: 'memo', name: '备忘录', icon: DOMAIN_ICONS.memo, desc: '场景与显示行为（提醒已并入待办）', schemaLoader: schemaLoaders.memo },
   { id: 'todo', name: '待办', icon: DOMAIN_ICONS.todo, desc: '待办工作台与提醒（捕获入口落点）', schemaLoader: schemaLoaders.todo },
   { id: 'belongings', name: '归物本', icon: DOMAIN_ICONS.belongings, desc: '物品登记与查找', schemaLoader: schemaLoaders.belongings },
   { id: 'clipping', name: '剪藏本', icon: DOMAIN_ICONS.clipping, desc: '聚合讯未读流与剪藏笔记', schemaLoader: schemaLoaders.clipping },
   { id: 'favorites', name: '收藏本', icon: DOMAIN_ICONS.favorites, desc: '收藏条目', schemaLoader: schemaLoaders.favorites },
-  // 旧书库（library）域退役：其设置组删除，书库配置并入书架墙（bookshelf）组
   { id: 'reading-report', name: '阅读报告', icon: DOMAIN_ICONS['reading-report'], desc: '阅读统计', noSettings: true },
 
   { id: 'cinema', name: '影院', icon: DOMAIN_ICONS.cinema, desc: '影视目录与海报', schemaLoader: schemaLoaders.cinema },
@@ -120,7 +117,6 @@ export const DOMAINS: DomainDef[] = [
   { id: 'review', name: '复习计划', icon: DOMAIN_ICONS.review, desc: '间隔重复与做题', schemaLoader: schemaLoaders.review },
   { id: 'secondbrain', name: '第二大脑', icon: DOMAIN_ICONS.secondbrain, desc: '嵌入检索与对话', schemaLoader: schemaLoaders.secondbrain },
   { id: 'auto-summary', name: '自动摘要', icon: DOMAIN_ICONS['auto-summary'], desc: '剪藏自动摘要', noSettings: true },
-  { id: 'launcher', name: '入口页', icon: DOMAIN_ICONS.launcher, desc: '命令磁贴入口', noSettings: true },
   { id: 'home', name: '内容首页', icon: DOMAIN_ICONS.home, desc: '统计域卡首页', noSettings: true },
   { id: 'pomodoro', name: '番茄钟', icon: DOMAIN_ICONS.pomodoro, desc: '专注计时与休息', schemaLoader: schemaLoaders.pomodoro },
   { id: 'attach', name: '附件搬移', icon: DOMAIN_ICONS.attach, desc: '附件整理', noSettings: true },

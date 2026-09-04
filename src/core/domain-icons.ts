@@ -23,7 +23,6 @@ export const DOMAIN_ICONS: Readonly<Record<string, string>> = {
   ai: 'sparkles',
   'bili-downloader': 'download',
   // 域入口命令与面板导航共用
-  launcher: 'home',
   home: 'layout-grid',
   recap: 'calendar-heart',
   memo: 'sticky-note',

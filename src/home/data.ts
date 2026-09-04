@@ -10,8 +10,8 @@ import { jsonFileStore, storageFile } from '../core/storage';
 export const HOME_VERSION = 1;
 export const HOME_FILE_NAME = 'home.json';
 
-/** 默认钉选域（diary/memo/cinema/review 四域：有真实统计 + 高频入口） */
-export const DEFAULT_PINNED = ['diary', 'memo', 'cinema', 'review'];
+/** 默认钉选域（diary/cinema/review 三域：有真实统计 + 高频入口；memo 卡随 ADR-0092 退役移除） */
+export const DEFAULT_PINNED = ['diary', 'cinema', 'review'];
 
 export interface HomeData {
   version: number;

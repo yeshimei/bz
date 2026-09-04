@@ -77,7 +77,7 @@ describe('设置面板（settings-panel）', () => {
     expect(popup.querySelector('.bz-sp-logo')).toBeNull();
     // 无设置项的域不在左侧列表显示（用户拍板）；issue 186 AI 自全局拆出独立成域（通用 + AI 两项）
     // 旧书库（library）域退役：设置组删除后可见域 16 → 15
-    expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(15);
+    expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(14);
     // 无底部快捷键提示 / 无右侧导航条 / 无面包屑
     expect(popup.querySelector('.bz-sp-foot')).toBeNull();
     expect(popup.querySelector('.bz-sp-crumb')).toBeNull();
@@ -85,23 +85,23 @@ describe('设置面板（settings-panel）', () => {
     let badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
     // 等 schema 加载完成（动态 import 首次加载较慢，轮询到首个徽标回填）
     const deadline = Date.now() + 3000;
-    while (Date.now() < deadline && (badges[0] === '·' || badges[4] === '·')) {
+    while (Date.now() < deadline && (badges[0] === '·' || badges[3] === '·')) {
       await new Promise((r) => setTimeout(r, 30));
       badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
     }
     expect(badges[0]).toBe('1'); // 通用：数据存储路径 1 项
     expect(badges[1]).toBe('8'); // AI：服务商+模型名称+上下文+最大输出+采样 4 项（aiProvider 未设 → 密钥行门控隐藏）
-    expect(badges[4]).toBe('9'); // 待办（index 4，AI 插入后）：4 组 9 项
-    expect(badges[5]).toBe('·'); // 归物本（schema 仅移动端组，桌面门控全隐藏 → 0 项）
+    expect(badges[3]).toBe('9'); // 待办（index 3，memo 行随 ADR-0092 退役移除后）：4 组 9 项
+    expect(badges[4]).toBe('·'); // 归物本（schema 仅移动端组，桌面门控全隐藏 → 0 项）
     // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）
     const navIcons = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-ic')];
-    expect(navIcons.length).toBe(15);
+    expect(navIcons.length).toBe(14);
     expect(navIcons[0].getAttribute('data-icon')).toBe('settings'); // 通用
     expect(navIcons[1].getAttribute('data-icon')).toBe('sparkles'); // AI（issue 186 独立域）
     expect(navIcons[2].getAttribute('data-icon')).toBe('notebook-pen'); // 日记本（enh-sweep-a：与 ribbon/磁贴同款，错开书架墙 book-open）
-    expect(navIcons[4].getAttribute('data-icon')).toBe('check-square'); // 待办（index 4，AI 插入后）
-    expect(navIcons[7].getAttribute('data-icon')).toBe('star'); // 收藏本
-    expect(navIcons[8].getAttribute('data-icon')).toBe('clapperboard'); // 影院（enh-sweep-a：与内容首页磁贴同款）
+    expect(navIcons[3].getAttribute('data-icon')).toBe('check-square'); // 待办（index 3，memo 行退役后）
+    expect(navIcons[6].getAttribute('data-icon')).toBe('star'); // 收藏本
+    expect(navIcons[7].getAttribute('data-icon')).toBe('clapperboard'); // 影院（enh-sweep-a：与内容首页磁贴同款）
     // 无 emoji 图标残留（头行/列表/徽标全文本或 lucide）
     expect(popup.textContent).not.toMatch(EMOJI_RE);
     ui.cleanup();
@@ -462,10 +462,10 @@ describe('设置面板（settings-panel）', () => {
     const popup = document.getElementById('bz-settings-panel-popup')!;
     // 只看域名（nav-name），避免描述包含（如剪藏本「网页剪藏与聚合讯」）误判
     const names = [...popup.querySelectorAll('.bz-sp-nav-name')].map((b) => b.textContent);
-    expect(names).toHaveLength(15); // issue 186 拆 AI 独立域后 16；旧书库域退役再减 1
+    expect(names).toHaveLength(14); // issue 186 拆 AI 独立域后 16；旧书库域退役 15；memo 域退役（ADR-0092）14
     expect(names.slice(0, 2)).toEqual(['通用', 'AI']); // AI 紧随通用之后
-    // 8 个无设置域（聚合讯/阅读报告/做题家/自动摘要/入口页/附件搬移/B站下载/小橘陪伴猫）一律不出现
-    for (const n of ['聚合讯', '阅读报告', '做题家', '自动摘要', '入口页', '附件搬移', 'B站下载', '小橘陪伴猫']) {
+    // 无设置域（聚合讯/阅读报告/做题家/自动摘要/附件搬移/B站下载/小橘陪伴猫）一律不出现
+    for (const n of ['聚合讯', '阅读报告', '做题家', '自动摘要', '附件搬移', 'B站下载', '小橘陪伴猫']) {
       expect(names).not.toContain(n);
     }
     // 旧书库（library）域退役：设置组已删，不再出现
@@ -490,7 +490,7 @@ describe('设置面板（settings-panel）', () => {
     const popup = document.getElementById('bz-settings-panel-popup')!;
     // 只看域名（mob-name），避免描述包含误判
     const names = [...popup.querySelectorAll('.bz-sp-mob-name')].map((b) => b.textContent);
-    expect(names).toHaveLength(15); // issue 186 拆 AI 独立域后 16；旧书库域退役再减 1
+    expect(names).toHaveLength(14); // issue 186 拆 AI 独立域后 16；旧书库域退役 15；memo 域退役（ADR-0092）14
     expect(names.slice(0, 2)).toEqual(['通用', 'AI']);
     expect(names).not.toContain('聚合讯');
     expect(names).not.toContain('小橘陪伴猫');
@@ -542,7 +542,7 @@ describe('设置面板（settings-panel）', () => {
     expect(closeBtn.querySelector('.bz-ic[data-icon="x"]')).toBeTruthy();
     expect(popup.textContent).not.toMatch(EMOJI_RE);
     // 无设置项的域不在列表显示（用户拍板）；issue 186 AI 独立成域 → 16 个可见域；旧书库域退役 → 15
-    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(15);
+    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(14);
     // 移动列表图标为 lucide（tile 内 svg 容器）
     const firstIc = popup.querySelector('.bz-sp-mob-item .bz-sp-mob-ic .bz-ic');
     expect(firstIc).toBeTruthy();

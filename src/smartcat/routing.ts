@@ -140,9 +140,8 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
   'quiz:added':    { stream: 'behavior' },
   'quiz:answered': { stream: 'behavior' },
 
-  // === 入口页 / 附件搬移（规则就绪：launcher/attach 域当前不发域事件） ===
-  'launcher:opened': { stream: 'behavior' },
-  'attach:moved':    { stream: 'behavior' },
+  // === 附件搬移（规则就绪：attach 域当前不发域事件） ===
+  'attach:moved': { stream: 'behavior' },
 };
 
 /**

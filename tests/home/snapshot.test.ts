@@ -1,15 +1,14 @@
 // @vitest-environment node
 /**
  * 内容首页（home 域）快照测试：跨域真实统计读取（读失败静默回落默认、目录缺失容错）。
- * 环境注入：core setApp + setSettingsProvider（belongings/library/memo 严格读设置）；
- * memo 需 DataManager.init（读文件路径）；review 经 reviewApp.ensure(app) 新建 dataManager。
+ * 环境注入：core setApp + setSettingsProvider（belongings 等严格读设置）；
+ * memo.json 直读（文件缺失回落空）；review 经 reviewApp.ensure(app) 新建 dataManager。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { DEFAULT_SETTINGS } from '../../src/settings';
-import { DataManager as MemoDataManager } from '../../src/memo/data';
 import { reviewApp } from '../../src/review/app';
 import { collectHomeSnapshot, NO_STAT_DOMAINS } from '../../src/home/snapshot';
 import { DOMAINS, ALL_DOMAIN_IDS } from '../../src/home/domains';
@@ -28,7 +27,6 @@ describe('home 快照', () => {
     vault = new MockVault();
     setApp(mockAppWithVault(vault) as any);
     setSettingsProvider(() => ({ ...DEFAULT_SETTINGS }));
-    MemoDataManager.init(DEFAULT_SETTINGS as any);
     // reviewApp 为跨用例模块单例：重置 dataManager 防旧用例 vault 绑定污染
     (reviewApp as any).dataManager = null;
   });

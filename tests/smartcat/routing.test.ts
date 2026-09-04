@@ -227,7 +227,7 @@ describe('ADR-0069：盘点补齐路由规则', () => {
       'diary:tagged',
       'review:started', 'review:added', 'review:removed', 'review:rated',
       'quiz:added', 'quiz:answered',
-      'launcher:opened', 'attach:moved',
+      'attach:moved',
     ];
     for (const key of keys) {
       expect(ROUTING_RULES, `${key} 应存在`).toHaveProperty(key);
