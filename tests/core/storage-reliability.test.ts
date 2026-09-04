@@ -5,7 +5,7 @@
  *   缺省基底 / 非对象形态抛错
  * - 冲突留档：解析失败、写失败留档 CONFIG/.CORRUPT + 人话化通知 + 同文件去重（见文件后半段）
  *
- * 含通知 toast 文案断言（需 DOM），故不标 @vitest-environment node。
+ * 含通知 toast 文案断言（需 DOM），故本文件保持默认 jsdom 环境（不加 node 环境标注）。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
@@ -13,6 +13,7 @@ import {
   mergeWriteSections,
   updateFileSections,
   jsonFileStore,
+  __resetCorruptNotifyForTests,
 } from '../../src/core/storage';
 import { MockVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
@@ -140,5 +141,203 @@ describe('updateFileSections / mergeWriteSections（D1 原语 2：段级合并�
     vault.files.set('CONFIG/STORAGE/legacy.json', JSON.stringify([1, 2, 3]));
     await expect(mergeWriteSections('CONFIG/STORAGE/legacy.json', { a: 1 })).rejects.toThrow('对象形态');
     expect(JSON.parse(vault.files.get('CONFIG/STORAGE/legacy.json')!)).toEqual([1, 2, 3]); // 原文件未动
+  });
+});
+
+// ---------- 冲突留档（D1 原语 3） ----------
+
+/** 通知侧隔离：清 toast DOM 与两级去重状态（notice 30s 窗口 + storage 留档通知 30s 窗口） */
+function resetNoticeSide(): void {
+  __resetNoticeForTests();
+  __resetCorruptNotifyForTests();
+  document.getElementById('bz-notice-container')?.remove();
+}
+
+describe('冲突留档：解析失败（D1 原语 3）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vault = new MockVault();
+    setApp({ vault } as any);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' } as any));
+    resetNoticeSide();
+  });
+
+  it('解析失败 → 原样留档 CONFIG/.CORRUPT（目录自动建）+ 降级初始化默认值', async () => {
+    const broken = '{"x":'; // 半截 JSON（崩溃/同步冲突现场）
+    vault.files.set('CONFIG/STORAGE/data.json', broken);
+    expect(await jsonFileStore<unknown[]>('CONFIG/STORAGE/data.json', { defaultValue: [] }).read()).toEqual([]);
+    // 留档目录已创建，留档文件名 <原文件名>.<yyyymmdd-hhmmss>.bak，内容 = 原文
+    expect(vault.dirs.has('CONFIG/.CORRUPT')).toBe(true);
+    const backups = [...vault.files.keys()].filter((p) => p.startsWith('CONFIG/.CORRUPT/data.json.'));
+    expect(backups).toHaveLength(1);
+    expect(backups[0]).toMatch(/^CONFIG\/\.CORRUPT\/data\.json\.\d{8}-\d{6}\.bak$/);
+    expect(vault.files.get(backups[0])).toBe(broken);
+    // 原路径降级初始化为默认值
+    expect(JSON.parse(vault.files.get('CONFIG/STORAGE/data.json')!)).toEqual([]);
+  });
+
+  it('留档文件名同秒撞名 → 追加 -N 序号不覆盖', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-09-04T10:08:00'));
+      const store = jsonFileStore<unknown[]>('CONFIG/STORAGE/col.json', { defaultValue: [] });
+      vault.files.set('CONFIG/STORAGE/col.json', '{a');
+      await store.read();
+      vault.files.set('CONFIG/STORAGE/col.json', '{b');
+      await store.read();
+      const backups = [...vault.files.keys()].filter((p) => p.startsWith('CONFIG/.CORRUPT/col.json.')).sort();
+      expect(backups).toEqual([
+        'CONFIG/.CORRUPT/col.json.20260904-100800-2.bak',
+        'CONFIG/.CORRUPT/col.json.20260904-100800.bak',
+      ]);
+      expect(vault.files.get(backups[0])).toBe('{b');
+      expect(vault.files.get(backups[1])).toBe('{a');
+    } finally {
+      vi.useRealTimers();
+      resetNoticeSide();
+    }
+  });
+
+  it('留档失败（create 抛错）→ 原流程继续：降级重建照常、read 不抛', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const origCreate = vault.create.bind(vault);
+    vault.create = async (path: string, content: string) => {
+      if (path.startsWith('CONFIG/.CORRUPT/')) throw new Error('disk full');
+      return origCreate(path, content);
+    };
+    try {
+      vault.files.set('CONFIG/STORAGE/bad.json', '{broken');
+      expect(await jsonFileStore<unknown[]>('CONFIG/STORAGE/bad.json', { defaultValue: [] }).read()).toEqual([]);
+      expect([...vault.files.keys()].filter((p) => p.startsWith('CONFIG/.CORRUPT/'))).toHaveLength(0);
+      expect(JSON.parse(vault.files.get('CONFIG/STORAGE/bad.json')!)).toEqual([]);
+    } finally {
+      vault.create = origCreate;
+      warnSpy.mockRestore();
+    }
+  });
+
+  it('onCorrupt 返回 false → 不留档不清盘（P1-32「不清盘」语义保持，且不重复弹 core 通知）', async () => {
+    const broken = '{broken';
+    vault.files.set('CONFIG/STORAGE/keep.json', broken);
+    const store = jsonFileStore<unknown[] | null>('CONFIG/STORAGE/keep.json', { onCorrupt: () => false });
+    expect(await store.read()).toBeNull();
+    expect([...vault.files.keys()].filter((p) => p.startsWith('CONFIG/.CORRUPT/'))).toHaveLength(0);
+    expect(vault.files.get('CONFIG/STORAGE/keep.json')).toBe(broken);
+    expect(document.querySelectorAll('#bz-notice-container .bz-notice')).toHaveLength(0);
+  });
+
+  it('段写遇损坏文件 → 留档 + 降级初始化后以默认值为基底继续段写', async () => {
+    vault.files.set('CONFIG/STORAGE/sec.json', '{broken');
+    const next = await updateFileSections<{ articles: unknown[]; sources: Record<string, boolean> }>(
+      'CONFIG/STORAGE/sec.json',
+      () => ({ sources: { zhihu: true } }),
+      { defaultValue: { articles: [], sources: { zhihu: false } } }
+    );
+    expect(next).toEqual({ articles: [], sources: { zhihu: true } });
+    expect([...vault.files.keys()].filter((p) => p.startsWith('CONFIG/.CORRUPT/sec.json.'))).toHaveLength(1);
+    expect(JSON.parse(vault.files.get('CONFIG/STORAGE/sec.json')!)).toEqual({
+      articles: [],
+      sources: { zhihu: true },
+    });
+  });
+});
+
+describe('冲突留档：写失败兜底（D1 原语 3）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vault = new MockVault();
+    setApp({ vault } as any);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' } as any));
+    resetNoticeSide();
+  });
+
+  it('写失败 → 盘上原内容原样留档 + 原错误照抛（P2-3 调用方提示语义不变）', async () => {
+    const old = JSON.stringify({ old: true });
+    vault.files.set('CONFIG/STORAGE/w.json', old);
+    const origModify = vault.modify.bind(vault);
+    vault.modify = async (f: any, c: string) => {
+      if (f.path === 'CONFIG/STORAGE/w.json') throw new Error('adapter locked');
+      return origModify(f, c);
+    };
+    await expect(jsonFileStore('CONFIG/STORAGE/w.json').write({ fresh: 1 })).rejects.toThrow('adapter locked');
+    const backups = [...vault.files.keys()].filter((p) => p.startsWith('CONFIG/.CORRUPT/w.json.'));
+    expect(backups).toHaveLength(1);
+    expect(vault.files.get(backups[0])).toBe(old); // 写前内容留档
+    expect(JSON.parse(vault.files.get('CONFIG/STORAGE/w.json')!)).toEqual({ old: true }); // 盘上未被破坏
+  });
+});
+
+describe('留档通知：人话文案 + 同文件去重（D1 原语 3）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vault = new MockVault();
+    setApp({ vault } as any);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' } as any));
+    resetNoticeSide();
+  });
+
+  it('留档成功 → warning 通知含留档路径、文件名与「数据不会丢」', async () => {
+    vault.files.set('CONFIG/STORAGE/toast.json', '{broken');
+    await jsonFileStore<unknown[]>('CONFIG/STORAGE/toast.json', { defaultValue: [] }).read();
+    const el = document.querySelector('#bz-notice-container .bz-notice--warning .bz-notice-msg');
+    expect(el).toBeTruthy();
+    const text = el!.textContent || '';
+    const backup = [...vault.files.keys()].find((p) => p.startsWith('CONFIG/.CORRUPT/toast.json.'));
+    expect(text).toContain('toast.json');
+    expect(text).toContain(backup!);
+    expect(text).toContain('数据不会丢');
+  });
+
+  it('写失败留档 → 通知文案区分「写入失败」', async () => {
+    const origModify = vault.modify.bind(vault);
+    vault.modify = async () => {
+      throw new Error('locked');
+    };
+    vault.files.set('CONFIG/STORAGE/wf.json', '{}');
+    await expect(jsonFileStore('CONFIG/STORAGE/wf.json').write({})).rejects.toThrow('locked');
+    const text = document.querySelector('#bz-notice-container .bz-notice-msg')!.textContent || '';
+    expect(text).toContain('写入失败');
+    expect(text).toContain('数据不会丢');
+  });
+
+  it('同文件短时间重复失败 → 通知去重不刷屏，窗口过后恢复弹出', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-09-04T10:00:00'));
+      const store = jsonFileStore<unknown[]>('CONFIG/STORAGE/dup.json', { defaultValue: [] });
+      vault.files.set('CONFIG/STORAGE/dup.json', '{a');
+      await store.read();
+      vi.setSystemTime(new Date('2026-09-04T10:00:05'));
+      vault.files.set('CONFIG/STORAGE/dup.json', '{b');
+      await store.read();
+      expect(document.querySelectorAll('#bz-notice-container .bz-notice')).toHaveLength(1); // 5s 内去重
+      vi.setSystemTime(new Date('2026-09-04T10:00:36'));
+      vault.files.set('CONFIG/STORAGE/dup.json', '{c');
+      await store.read();
+      expect(document.querySelectorAll('#bz-notice-container .bz-notice')).toHaveLength(2); // 31s 后恢复
+    } finally {
+      vi.useRealTimers();
+      resetNoticeSide();
+    }
+  });
+
+  it('通知去重只抑制弹窗：重复失败每次现场照常留档', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-09-04T10:00:00'));
+      const store = jsonFileStore<unknown[]>('CONFIG/STORAGE/sil.json', { defaultValue: [] });
+      vault.files.set('CONFIG/STORAGE/sil.json', '{a');
+      await store.read();
+      vault.files.set('CONFIG/STORAGE/sil.json', '{b');
+      await store.read();
+      const backups = [...vault.files.keys()].filter((p) => p.startsWith('CONFIG/.CORRUPT/sil.json.'));
+      expect(backups).toHaveLength(2); // 每次失败现场都留档
+    } finally {
+      vi.useRealTimers();
+      resetNoticeSide();
+    }
   });
 });
