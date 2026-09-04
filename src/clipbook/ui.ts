@@ -9,18 +9,19 @@
  * 增强包（enh-clipbook）：桌面搜索（180ms 防抖）/ 移动长按抽屉（动作与桌面右键同源）/
  * 右栏读剪藏正文（cachedRead + 缓存）/ rail 源行批量已读 / 误删误标可撤销（notifyUndo）/
  * 阅读动线（10s 自动落在读、处理后前进下一篇、←→/jk 切换）/ 阅读字号三档 /
- * 桌面面板拖拽缩放 + 尺寸记忆（ADR-0084 先例）。
+ * 桌面面板拖拽缩放 + 尺寸记忆（ADR-0084 先例；ADR-0094 起走 uiResizable persist）。
  *
- * 铁律 6：基线全部消费组件库（.bz-* 类与 --bz-* token）；本文件只管布局骨架 + 交互，
+ * 铁律 6：基线全部消费组件库（.bz-* 类与 --bz-* token）；ADR-0094 起面板壳/头行/搜索/
+ * rail/横滑条/空态/尺寸记忆收编共享层，本文件只管布局骨架 + 交互，
  * 域独有视觉在 styles.css（.bz-clip-*）。
  */
 import { getApp } from '../core/app';
 import { notice, notifyUndo } from '../core/notice';
-import { uiIcon, uiSegmented, uiResizable } from '../core/ui';
+import { uiSegmented, uiEmpty, uiResizable, mountIcons } from '../core/ui';
+import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { escManager } from '../core/esc-manager';
 import { topifyZ, createSiteIcon } from '../core/dom';
-import { formatRelativeTime } from '../core/utils';
 import { attachItemActions, closeItemMenu, type ItemAction } from '../core/item-actions';
 import { openFlowDialog } from '../core/flow-dialog';
 import { openSettingsModal } from '../core/settings-modal';
@@ -30,7 +31,6 @@ import { ensureAutoSummary, stopAutoSummary, regenerateSummary } from '../auto-s
 import { buildNewsSourcesGroup } from './news-sources-group';
 import { batchSizeRow, mobileFullscreenGroup } from '../core/settings-common';
 import type { ClipArticle } from './types';
-import { esc } from './constants';
 import { toParagraphs, stripClipChrome } from './md';
 import { queryBySource } from './store';
 import { M, resetClipbookState } from './state';
@@ -74,7 +74,6 @@ const clipBodyCache = new Map<string, string>();
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let autoReadingTimer: ReturnType<typeof setTimeout> | null = null;
 let panelResizeDetach: { detach: () => void } | null = null;
-let pendingSizeTimer: ReturnType<typeof setTimeout> | null = null;
 
 /** 测试钩子：缩短自动落「在读」的停留阈值（真机恒 10s） */
 export function __autoReadingDelayForTests(ms: number): void {
@@ -175,7 +174,6 @@ export async function revealClipArticle(notePath: string): Promise<void> {
 export function closePanel(): void {
   pauseReadingSession();
   disarmAutoReading();
-  flushPendingSize(); // 防抖窗口内关闭：立即落盘面板尺寸（照 todo T2）
   M.open = false;
   M.mobDetailOpen = false;
   if (overlayEl) overlayEl.style.display = 'none';
@@ -196,10 +194,9 @@ export function unloadPanel(): void {
     searchDebounceTimer = null;
   }
   if (panelResizeDetach) {
-    panelResizeDetach.detach();
+    panelResizeDetach.detach(); // detach 内补落未存的防抖尾值（persist 收尾）
     panelResizeDetach = null;
   }
-  flushPendingSize();
   clipBodyCache.clear();
   M.open = false;
   M.mobDetailOpen = false;
@@ -224,26 +221,26 @@ export function unloadPanel(): void {
 // ================= DOM 构建 =================
 function buildDom(app: any): void {
   overlayEl = document.createElement('div');
-  overlayEl.className = 'bz-clip-overlay';
+  overlayEl.className = 'bz-panel-overlay';
   overlayEl.style.display = 'none';
   // 桌面三栏 + 移动双屏容器（isMobileEnv 决定显示哪套，CSS 媒体查询兜底隐藏）
   overlayEl.innerHTML = `
-    <div class="bz-clip-frame bz-panel-mtop">
+    <div class="bz-panel-frame bz-clip-frame bz-panel-mtop">
       <!-- 桌面三栏 -->
       <div class="bz-clip-desk">
-        <div class="bz-clip-desk-head">
-          <div class="bz-clip-brand">${iconSpan('scissors', 'bz-ic--sm')}</div>
-          <div class="bz-clip-title">剪藏本</div>
-          <div class="bz-clip-head-pipe"></div>
-          <div class="bz-clip-head-sub">未读流与剪藏</div>
-          <div class="bz-clip-head-sp"></div>
-          <div class="bz-clip-search">${iconSpan('search')}<input class="bz-input" type="text" data-clip-desk-search placeholder="搜索标题、摘要、站点、标签"></div>
+        <div class="bz-panel-head bz-panel-head--tall">
+          <div class="bz-panel-brand">${iconSpan('scissors', 'bz-ic--sm')}</div>
+          <div class="bz-panel-title">剪藏本</div>
+          <div class="bz-panel-head-pipe"></div>
+          <div class="bz-panel-head-sub">未读流与剪藏</div>
+          <div class="bz-panel-head-sp"></div>
+          <div class="bz-clip-search bz-search">${iconSpan('search')}<input class="bz-input" type="text" data-clip-desk-search placeholder="搜索标题、摘要、站点、标签"></div>
         </div>
         <div class="bz-clip-desk-body">
-          <div class="bz-clip-rail">
-            <div class="bz-clip-rail-list" data-clip-rail></div>
-            <div class="bz-clip-rail-foot">
-              <button class="bz-clip-analy" data-clip-analy title="打开阅读分析报告">${iconSpan('bar-chart-3', 'bz-ic--sm')}<span>阅读分析报告</span></button>
+          <div class="bz-rail bz-rail--wide bz-clip-rail">
+            <div class="bz-rail-scroll" data-clip-rail></div>
+            <div class="bz-rail-foot">
+              <button class="bz-rail-item" data-clip-analy title="打开阅读分析报告">${iconSpan('bar-chart-3')}<span class="bz-rail-name">阅读分析报告</span></button>
             </div>
           </div>
           <div class="bz-clip-mid">
@@ -264,7 +261,7 @@ function buildDom(app: any): void {
         <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
           <input class="bz-input" type="text" data-clip-mob-input placeholder="搜索标题、摘要、站点、标签">
         </div>
-        <div class="bz-clip-mob-sources" data-clip-mob-sources></div>
+        <div class="bz-mobstrip" data-clip-mob-sources></div>
         <div class="bz-clip-mob-list" data-clip-mob-list></div>
       </div>
       <!-- 移动详情 overlay（屏2） -->
@@ -278,6 +275,7 @@ function buildDom(app: any): void {
       </div>
     </div>
   `;
+  mountIcons(overlayEl);
   document.body.appendChild(overlayEl);
 
   railListEl = overlayEl.querySelector('[data-clip-rail]');
@@ -364,15 +362,14 @@ function buildDom(app: any): void {
   escRegistered = true;
   const frameEl = overlayEl.querySelector('.bz-clip-frame') as HTMLElement;
   applyMobileWindowFullscreen(frameEl, mobileFullscreenDefault());
-  // 桌面面板拖拽缩放 + 尺寸记忆（enh 包 8，照 todo ADR-0084 先例）：仅桌面写内联宽高——
-  // 内联样式优先级高于移动端媒体查询的满屏规则；uiResizable 自身对触屏也空操作兜底
+  // 桌面面板拖拽缩放 + 尺寸记忆（enh 包 8 → ADR-0094 persist 选项）：仅桌面写内联宽高——
+  // 内联样式优先级高于移动端媒体查询的满屏规则；恢复/防抖落盘/收尾补存全由 uiResizable 承担
+  // （挂载时 load 恢复并钳制、onChange 后防抖 300ms 调 save、detach 未落尾值立即补存）；
+  // uiResizable 自身对触屏也空操作兜底
   if (!isMobileEnv()) {
-    const saved = savedPanelSize();
-    frameEl.style.width = `${saved.w}px`;
-    frameEl.style.height = `${saved.h}px`;
     panelResizeDetach = uiResizable(frameEl, {
       minW: PANEL_MIN_W, minH: PANEL_MIN_H, maxW: PANEL_MAX_W, maxH: PANEL_MAX_H,
-      onChange: (w, h) => rememberPanelSize(w, h),
+      persist: { load: savedPanelSize, save: rememberPanelSize },
     });
   }
   // 移动源胶囊点击（委托，含搜索态）
@@ -390,6 +387,7 @@ function buildDom(app: any): void {
 }
 
 function iconSpan(name: string, extra = ''): string {
+  // 手写模板里的 data-lucide 占位（core/ui icons.ts 约定）：渲染统一由 mountIcons 批量 setIcon
   return `<span class="bz-ic${extra ? ' ' + extra : ''}" data-lucide="${name}"></span>`;
 }
 
@@ -462,18 +460,20 @@ function listWithSearch(): ClipArticle[] {
 type SrcSelJson = { kind: 'all' } | { kind: 'inbox'; platform: string; up: string | null } | { kind: 'clip' };
 
 function railItemHtml(sel: SrcSelJson, label: string, count: number, unread: number, icon: string | null, color: string | null, active: boolean, sub?: string): string {
-  // G：JSON 过 esc 再进单引号属性——UP 主名含单引号时原实现提前闭合属性，点击 JSON.parse 抛错该源失效
+  // G：JSON 过 escapeHtml 再进单引号属性——UP 主名含单引号时原实现提前闭合属性，点击 JSON.parse 抛错该源失效
+  // 前缀槽三态：feed=字母徽标（tint 内联）/ bili=B站徽标（色在样式侧 .bz-clip-rail .bz-rail-badge.bili）/ 其余=图标底座（全部未读挂 --accent 档）
+  const badge = icon === 'feed'
+    ? `<span class="bz-rail-badge" style="--bz-rail-tint:${color || '#58a6ff'}">${escapeHtml(sub || label.slice(0, 1))}</span>`
+    : icon === 'bili'
+      ? `<span class="bz-rail-badge bili">${escapeHtml(sub || label.slice(0, 1))}</span>`
+      : icon === 'clip'
+        ? `<span class="bz-rail-ic">${iconSpan('scissors')}</span>`
+        : `<span class="bz-rail-ic${sel.kind === 'all' ? ' bz-rail-ic--accent' : ''}">${icon ? iconSpan(icon) : ''}</span>`;
   return `
-    <div class="bz-clip-rail-row${active ? ' on' : ''}" data-src='${esc(JSON.stringify(sel))}' title="${esc(label)}">
-      ${icon === 'feed'
-        ? `<span class="bz-clip-rail-badge" style="--rail-c:${color || '#58a6ff'}">${esc(sub || label.slice(0, 1))}</span>`
-        : icon === 'bili'
-          ? `<span class="bz-clip-rail-badge bili">${esc(sub || label.slice(0, 1))}</span>`
-          : icon === 'clip'
-            ? `<span class="bz-clip-rail-ic">${iconSpan('scissors')}</span>`
-            : `<span class="bz-clip-rail-ic ${sel.kind === 'all' ? 'accent' : ''}">${icon ? iconSpan(icon) : ''}</span>`}
-      <span class="bz-clip-rail-name">${esc(label)}</span>
-      ${unread > 0 ? `<span class="bz-clip-rail-unread">${unread}</span>` : `<span class="bz-clip-rail-count">${count}</span>`}
+    <div class="bz-rail-item${active ? ' on' : ''}" data-src='${escapeHtml(JSON.stringify(sel))}' title="${escapeHtml(label)}">
+      ${badge}
+      <span class="bz-rail-name">${escapeHtml(label)}</span>
+      ${unread > 0 ? `<span class="bz-rail-unread">${unread}</span>` : `<span class="bz-rail-count">${count}</span>`}
     </div>`;
 }
 
@@ -516,6 +516,7 @@ function renderRail(): void {
   html += railItemHtml({ kind: 'clip' }, '剪藏本', clips, 0, 'clip', '', clipActive, '');
 
   railListEl.innerHTML = html;
+  mountIcons(railListEl);
   // rail 源行动作（enh 包 4）：右键/长按出「全部标为已读」等源级批量操作——
   // rail 是导航层，动作挂在源行而非条目卡，中栏「列表零操作」拍板不被破坏
   const rows = railListEl.querySelectorAll<HTMLElement>('[data-src]');
@@ -572,7 +573,8 @@ function renderList(): void {
   if (!listEl) return;
   const list = listWithSearch();
   if (list.length === 0) {
-    listEl.innerHTML = `<div class="bz-clip-empty">${iconSpan('inbox')}<span>这个源暂无内容</span></div>`;
+    listEl.innerHTML = '';
+    listEl.appendChild(uiEmpty({ icon: 'inbox', title: '这个源暂无内容' }));
     // G：切到空源清当前阅读——M.cur 残留上一源文章会被 renderReader/mob 详情再渲染
     M.cur = null;
     if (readerEl) renderReader();
@@ -583,11 +585,11 @@ function renderList(): void {
     M.cur = list[0];
   }
   listEl.innerHTML = list.map((a) => `
-    <div class="bz-clip-item${M.cur && M.cur.id === a.id ? ' on' : ''}" data-id="${esc(a.id)}">
-      <div class="bz-clip-item-t">${dotHtml(a.st)}<span>${esc(a.title)}</span></div>
-      ${a.summary ? `<div class="bz-clip-item-sum">${esc(a.summary)}</div>` : ''}
+    <div class="bz-clip-item${M.cur && M.cur.id === a.id ? ' on' : ''}" data-id="${escapeHtml(a.id)}">
+      <div class="bz-clip-item-t">${dotHtml(a.st)}<span>${escapeHtml(a.title)}</span></div>
+      ${a.summary ? `<div class="bz-clip-item-sum">${escapeHtml(a.summary)}</div>` : ''}
       <div class="bz-clip-item-meta">
-        <span class="bz-clip-item-site">${esc(a.srcName)}</span>
+        <span class="bz-clip-item-site">${escapeHtml(a.srcName)}</span>
         <span class="bz-clip-item-time">${relTime(a.timeTs)}</span>
       </div>
     </div>`).join('');
@@ -682,8 +684,8 @@ function buildItemActions(a: ClipArticle): ItemAction[] {
 function paragraphsHtml(body: string): string {
   return toParagraphs(body).map((p) =>
     p.type === 'quote'
-      ? `<blockquote>${esc(p.text)}</blockquote>`
-      : `<p>${esc(p.text)}</p>`
+      ? `<blockquote>${escapeHtml(p.text)}</blockquote>`
+      : `<p>${escapeHtml(p.text)}</p>`
   ).join('');
 }
 
@@ -692,7 +694,8 @@ function renderReader(): void {
   const a = M.cur;
   applyReaderFontSize();
   if (!a) {
-    readerEl.innerHTML = `<div class="bz-clip-read-empty">${iconSpan('book-open')}<span>从列表选择一篇文章开始阅读</span></div>`;
+    readerEl.innerHTML = '';
+    readerEl.appendChild(uiEmpty({ icon: 'book-open', title: '从列表选择一篇文章开始阅读' }));
     return;
   }
   setReadingSession(a.id);
@@ -714,18 +717,19 @@ function renderReader(): void {
     : '';
 
   readerEl.innerHTML = `
-    <div class="bz-clip-art-site">${siteIcon}<span class="bz-clip-art-site-name">${esc(a.srcName)}</span>${a.typeLabel ? `<span class="bz-clip-art-type">${esc(a.typeLabel)}</span>` : ''}</div>
-    <div class="bz-clip-art-title">${esc(a.title)}</div>
+    <div class="bz-clip-art-site">${siteIcon}<span class="bz-clip-art-site-name">${escapeHtml(a.srcName)}</span>${a.typeLabel ? `<span class="bz-clip-art-type">${escapeHtml(a.typeLabel)}</span>` : ''}</div>
+    <div class="bz-clip-art-title">${escapeHtml(a.title)}</div>
     <div class="bz-clip-art-meta">
-      <span>${esc(a.timeText || relTime(a.timeTs))}</span>
+      <span>${escapeHtml(a.timeText || relTime(a.timeTs))}</span>
       <span class="bz-clip-art-flag ${flagCls}">${iconSpan(a.st === 'saved' ? 'check' : a.st === 'reading' ? 'book-open' : 'mail', 'bz-ic--xs')}${stLabel}</span>
     </div>
     <div class="bz-clip-art-fs" data-clip-fs></div>
-    ${a.summary ? `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan('sparkles', 'bz-ic--xs')}摘要</span>${esc(a.summary)}</div>` : ''}
+    ${a.summary ? `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan('sparkles', 'bz-ic--xs')}摘要</span>${escapeHtml(a.summary)}</div>` : ''}
     ${openNoteBtn}
-    <div class="bz-clip-art-md" data-clip-md>${paras || `<p class="dim">${esc(a.origin === 'clip' ? '（笔记暂无正文）' : '正文已清空（已处理条目）')}</p>`}</div>
-    ${a.origin === 'news' && a.url ? `<a class="bz-clip-art-origin" href="${esc(a.url)}" target="_blank" rel="noopener">查看原文 ${iconSpan('external-link', 'bz-ic--xs')}</a>` : ''}
+    <div class="bz-clip-art-md" data-clip-md>${paras || `<p class="dim">${escapeHtml(a.origin === 'clip' ? '（笔记暂无正文）' : '正文已清空（已处理条目）')}</p>`}</div>
+    ${a.origin === 'news' && a.url ? `<a class="bz-clip-art-origin" href="${escapeHtml(a.url)}" target="_blank" rel="noopener">查看原文 ${iconSpan('external-link', 'bz-ic--xs')}</a>` : ''}
   `;
+  mountIcons(readerEl);
   mountFontSizeSeg();
   if (a.origin === 'clip') void loadClipBody(a);
 }
@@ -837,7 +841,7 @@ function stepArticle(delta: number): void {
 }
 
 function favChip(site: string): string {
-  const ch = esc(String(site || '剪').slice(0, 1));
+  const ch = escapeHtml(String(site || '剪').slice(0, 1));
   return `<span class="bz-clip-favchip">${ch}</span>`;
 }
 
@@ -996,49 +1000,33 @@ async function refreshAfterAction(): Promise<void> {
   renderAll();
 }
 
-// ================= 面板尺寸记忆（enh 包 8，照 todo ADR-0084 先例） =================
+// ================= 面板尺寸记忆（enh 包 8 → uiResizable persist，ADR-0094） =================
 
-/** 记忆尺寸安全读取（0=未拖过 → 走默认 1180×760；越界值钳到硬上限 + 视口 92%） */
-function savedPanelSize(): { w: number; h: number } {
+/** 记忆尺寸安全读取（null=未拖过 → 不写内联，走 CSS 默认 1180×760；越界值由 uiResizable 钳到硬上限 + 视口 92%） */
+function savedPanelSize(): { w: number; h: number } | null {
   const s = tryGetSettings() as any;
   const w = Number(s?.clipbookPanelWidth) || 0;
   const h = Number(s?.clipbookPanelHeight) || 0;
-  const defW = 1180;
-  const defH = 760;
-  if (w < PANEL_MIN_W || h < PANEL_MIN_H) return { w: defW, h: defH };
-  const capW = Math.min(PANEL_MAX_W, Math.floor(window.innerWidth * 0.92));
-  const capH = Math.min(PANEL_MAX_H, Math.floor(window.innerHeight * 0.92));
-  return { w: Math.min(w, capW), h: Math.min(h, capH) };
+  if (w < PANEL_MIN_W || h < PANEL_MIN_H) return null;
+  return { w, h };
 }
 
-/** 拖动期间 trailing 防抖 150ms 落盘一次（拖一次边界不写几十次 settings） */
+/** 落盘（uiResizable 防抖 300ms 后调用；键语义不变 clipbookPanelWidth/Height） */
 function rememberPanelSize(w: number, h: number): void {
   const s = tryGetSettings() as any;
   if (!s) return;
   s.clipbookPanelWidth = w;
   s.clipbookPanelHeight = h;
-  if (pendingSizeTimer !== null) clearTimeout(pendingSizeTimer);
-  pendingSizeTimer = setTimeout(() => {
-    pendingSizeTimer = null;
-    void saveSettings();
-  }, 150);
-}
-
-function flushPendingSize(): void {
-  if (pendingSizeTimer !== null) {
-    clearTimeout(pendingSizeTimer);
-    pendingSizeTimer = null;
-    void saveSettings();
-  }
+  void saveSettings();
 }
 
 // ================= 渲染：移动 =================
 function mobSrcChipHtml(sel: SrcSelJson, label: string, unread: number, active: boolean, icon: string | null, sub?: string): string {
   return `
-    <div class="bz-clip-mob-src${active ? ' on' : ''}" data-src='${esc(JSON.stringify(sel))}'>
-      ${icon === 'feed' ? `<span class="bz-clip-favchip sm">${esc(sub || label.slice(0, 1))}</span>` : ''}
-      <span>${esc(label)}</span>
-      ${unread ? `<span class="bz-clip-mob-ub">${unread}</span>` : ''}
+    <div class="bz-mobstrip-chip${active ? ' is-on' : ''}" data-src='${escapeHtml(JSON.stringify(sel))}'>
+      ${icon === 'feed' ? `<span class="bz-clip-favchip sm">${escapeHtml(sub || label.slice(0, 1))}</span>` : ''}
+      <span>${escapeHtml(label)}</span>
+      ${unread ? `<span class="bz-badge bz-badge--brand">${unread}</span>` : ''}
     </div>`;
 }
 
@@ -1072,14 +1060,15 @@ function renderMobList(): void {
   if (!mobListEl) return;
   const list = listWithSearch();
   if (!list.length) {
-    mobListEl.innerHTML = `<div class="bz-clip-empty sm">${iconSpan('inbox')}<span>暂无内容</span></div>`;
+    mobListEl.innerHTML = '';
+    mobListEl.appendChild(uiEmpty({ icon: 'inbox', title: '暂无内容' }));
     return;
   }
   mobListEl.innerHTML = list.map((a) => `
-    <div class="bz-clip-mob-item" data-id="${esc(a.id)}">
-      <div class="bz-clip-item-t">${dotHtml(a.st)}<span>${esc(a.title)}</span></div>
-      ${a.summary ? `<div class="bz-clip-item-sum">${esc(a.summary)}</div>` : ''}
-      <div class="bz-clip-item-meta"><span>${esc(a.srcName)}</span><span class="bz-clip-item-time">${relTime(a.timeTs)}</span></div>
+    <div class="bz-clip-mob-item" data-id="${escapeHtml(a.id)}">
+      <div class="bz-clip-item-t">${dotHtml(a.st)}<span>${escapeHtml(a.title)}</span></div>
+      ${a.summary ? `<div class="bz-clip-item-sum">${escapeHtml(a.summary)}</div>` : ''}
+      <div class="bz-clip-item-meta"><span>${escapeHtml(a.srcName)}</span><span class="bz-clip-item-time">${relTime(a.timeTs)}</span></div>
     </div>`).join('');
   // 移动长按抽屉（enh 包 2）：动作构建器与桌面右键同源（buildItemActions）——
   // 一处接入两端全量对齐（手册 §8.2：不得在移动端隐藏功能）；单击进详情走容器委托不受影响
@@ -1113,19 +1102,21 @@ function renderMobDetail(): void {
     mobSaveBtnEl.classList.toggle('saved', saved);
     mobSaveBtnEl.title = saved ? '已保存到剪藏本' : '保存到剪藏本';
     mobSaveBtnEl.innerHTML = iconSpan(saved ? 'check' : 'download', 'bz-ic--sm');
+    mountIcons(mobSaveBtnEl);
   }
   const stLabel = a.st === 'saved' ? '已保存' : a.st === 'reading' ? '在读' : a.st === 'read' ? '已读' : '未读';
   const flagCls = a.st === 'saved' ? 'ok' : a.st === 'reading' ? 'warn' : 'info';
   const paras = a.body ? toParagraphs(a.body).map((p) =>
-    p.type === 'quote' ? `<blockquote>${esc(p.text)}</blockquote>` : `<p>${esc(p.text)}</p>`
+    p.type === 'quote' ? `<blockquote>${escapeHtml(p.text)}</blockquote>` : `<p>${escapeHtml(p.text)}</p>`
   ).join('') : '';
   (mobDetailEl.querySelector('[data-clip-mob-detail-body]') as HTMLElement).innerHTML = `
-    <div class="bz-clip-mob-d-title">${esc(a.title)}</div>
-    <div class="bz-clip-mob-d-meta"><span class="bz-clip-favchip">${esc(a.srcName.slice(0, 1))}</span><span>${esc(a.srcName)}</span><span class="bz-clip-mob-d-time">${esc(a.timeText || relTime(a.timeTs))}</span></div>
+    <div class="bz-clip-mob-d-title">${escapeHtml(a.title)}</div>
+    <div class="bz-clip-mob-d-meta"><span class="bz-clip-favchip">${escapeHtml(a.srcName.slice(0, 1))}</span><span>${escapeHtml(a.srcName)}</span><span class="bz-clip-mob-d-time">${escapeHtml(a.timeText || relTime(a.timeTs))}</span></div>
     <div class="bz-clip-art-flag ${flagCls}">${iconSpan(a.st === 'saved' ? 'check' : a.st === 'reading' ? 'book-open' : 'mail', 'bz-ic--xs')}${stLabel}</div>
-    ${a.summary ? `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan('sparkles', 'bz-ic--xs')}摘要</span>${esc(a.summary)}</div>` : ''}
-    <div class="bz-clip-art-md">${paras || `<p class="dim">${esc(a.origin === 'clip' ? '（剪藏笔记正文请在 Obsidian 中打开）' : '正文已清空')}</p>`}</div>
+    ${a.summary ? `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan('sparkles', 'bz-ic--xs')}摘要</span>${escapeHtml(a.summary)}</div>` : ''}
+    <div class="bz-clip-art-md">${paras || `<p class="dim">${escapeHtml(a.origin === 'clip' ? '（剪藏笔记正文请在 Obsidian 中打开）' : '正文已清空')}</p>`}</div>
   `;
+  mountIcons(mobDetailEl.querySelector('[data-clip-mob-detail-body]') as HTMLElement);
 }
 
 // ================= 设置 schema（ADR-0064 声明式；settings-panel 域清单挂载） =================

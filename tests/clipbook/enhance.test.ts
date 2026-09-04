@@ -98,7 +98,7 @@ describe('桌面搜索（enh 包 1）', () => {
     input.dispatchEvent(new Event('input', { bubbles: true }));
     await vi.waitFor(() => expect(document.querySelectorAll('.bz-clip-item').length).toBe(1));
     // 切到剪藏本源 → 搜索清空
-    const clipRow = [...document.querySelectorAll('.bz-clip-rail-row')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
+    const clipRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
     clipRow.click();
     await vi.waitFor(() => expect(M.sel.kind).toBe('clip'));
     expect(input.value).toBe('');
@@ -119,7 +119,7 @@ describe('移动端长按抽屉（enh 包 2）', () => {
 describe('右栏读剪藏正文（enh 包 3）', () => {
   async function gotoClipArticle(): Promise<ReturnType<typeof boot>> {
     const ctx = await openDesktop();
-    const clipRow = [...document.querySelectorAll('.bz-clip-rail-row')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
+    const clipRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
     clipRow.click();
     await vi.waitFor(() => expect(document.querySelectorAll('.bz-clip-item').length).toBe(1));
     (document.querySelector('.bz-clip-item') as HTMLElement).click();
@@ -161,7 +161,7 @@ describe('右栏读剪藏正文（enh 包 3）', () => {
 describe('rail 源行批量已读（enh 包 4）', () => {
   it('rail 行挂动作；「全部标为已读（N 篇）」确认框写明 N 篇，确认后批量落盘', async () => {
     const { vault } = await openDesktop();
-    const allRow = [...document.querySelectorAll('.bz-clip-rail-row')].find((r) => r.textContent!.includes('全部未读')) as HTMLElement;
+    const allRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('全部未读')) as HTMLElement;
     expect(allRow.classList.contains('bz-item-card')).toBe(true);
     const menu = await openContextMenuOn(allRow);
     const btn = [...menu.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.includes('全部标为已读')) as HTMLElement;
@@ -184,7 +184,7 @@ describe('rail 源行批量已读（enh 包 4）', () => {
 
   it('剪藏本源行不挂批量已读（无未读语义）', async () => {
     await openDesktop();
-    const clipRow = [...document.querySelectorAll('.bz-clip-rail-row')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
+    const clipRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
     clipRow.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
     // 无动作 → 不弹菜单
     await new Promise((r) => setTimeout(r, 60));
@@ -223,7 +223,7 @@ describe('误标/误删可撤销（enh 包 5）', () => {
 
   it('删除剪藏 → vault.trash 移入系统回收站（确认文案写明），撤销后原路径恢复', async () => {
     const { vault } = await openDesktop();
-    const clipRow = [...document.querySelectorAll('.bz-clip-rail-row')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
+    const clipRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
     clipRow.click();
     await vi.waitFor(() => expect(document.querySelectorAll('.bz-clip-item').length).toBe(1));
     const item = document.querySelector('.bz-clip-item') as HTMLElement;
@@ -342,14 +342,14 @@ describe('面板拖拽缩放 + 尺寸记忆（enh 包 8）', () => {
     expect(frame.style.height).toBe('706px');
   });
 
-  it('0=未拖过 → 打开走默认（不写内联尺寸以外的值）', async () => {
+  it('0=未拖过 → 不写内联尺寸（走 CSS 默认 1180×760，ADR-0094 persist 语义）', async () => {
     await openDesktop();
     const frame = document.querySelector('.bz-clip-frame') as HTMLElement;
-    expect(frame.style.width).toBe('1180px');
-    expect(frame.style.height).toBe('760px');
+    expect(frame.style.width).toBe('');
+    expect(frame.style.height).toBe('');
   });
 
-  it('拖动右缘 → settings 记忆并经 150ms 防抖落盘', async () => {
+  it('拖动右缘 → settings 记忆并经 uiResizable persist 300ms 防抖落盘', async () => {
     const { settings, saveSpy } = await openDesktop();
     const frame = document.querySelector('.bz-clip-frame') as HTMLElement;
     frame.getBoundingClientRect = () => ({ width: 1180, height: 760, left: 0, top: 0 } as DOMRect);
@@ -366,8 +366,8 @@ describe('面板拖拽缩放 + 尺寸记忆（enh 包 8）', () => {
 describe('副题术语（enh 包 12）', () => {
   it('头行副题为「未读流与剪藏」，不再出现「聚合讯已接入」', async () => {
     await openDesktop();
-    const overlay = document.querySelector('.bz-clip-overlay') as HTMLElement;
-    expect(overlay.querySelector('.bz-clip-head-sub')!.textContent).toBe('未读流与剪藏');
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
+    expect(overlay.querySelector('.bz-panel-head-sub')!.textContent).toBe('未读流与剪藏');
     expect(overlay.textContent).not.toContain('聚合讯已接入');
   });
 });
@@ -379,7 +379,7 @@ describe('重新生成摘要入口与查看定位（enh-autosum 包）', () => {
     '---\nurl: "https://example.com/long-clip"\ncreated: 2026-08-22 10:00:00\n---\n' + '长文段落内容。'.repeat(30) + '\n';
 
   async function gotoClipSource(count: number): Promise<void> {
-    const clipRow = [...document.querySelectorAll('.bz-clip-rail-row')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
+    const clipRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
     clipRow.click();
     await vi.waitFor(() => expect(document.querySelectorAll('.bz-clip-item').length).toBe(count));
   }

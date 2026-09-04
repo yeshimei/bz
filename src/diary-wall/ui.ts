@@ -33,6 +33,7 @@ import type { EventRef } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
 import { uiIcon } from '../core/ui';
+import { escapeHtml } from '../core/utils';
 import { onDomainEvent } from '../core/domain-bus';
 import { notice } from '../core/notice';
 import { applyMobileWindowFullscreen } from '../core/mobile';
@@ -352,7 +353,7 @@ export class DiaryWallAppController {
         <input class="bz-diary-wall-searchbox" type="text" placeholder="搜索日记（正文、类型、时间）…" />
       </div>
       <div class="bz-diary-wall-body">
-        <div class="bz-diary-wall-rail"></div>
+        <div class="bz-rail bz-diary-wall-rail"></div>
         <div class="bz-diary-wall-wall"></div>
       </div>
       <div class="bz-diary-wall-lb">
@@ -699,12 +700,14 @@ export class DiaryWallAppController {
     // 增强 #5：那年今天时光条（首屏顶部横滑媒体条，不打断主瀑布流；无命中不渲染）
     const memories = pickOnThisDay(list, this.todayStr()).filter((e) => e.media.length > 0);
     if (memories.length) ui.wall.appendChild(this.mkMemories(memories));
-    // 章节栏（仅桌面）
+    // 章节栏（仅桌面）：壳 = .bz-rail 族（ADR-0094），月份行 = .bz-rail-item(.on) 形制
     if (!mobile) {
+      const scroll = document.createElement('div');
+      scroll.className = 'bz-rail-scroll';
       const title = document.createElement('div');
       title.className = 'bz-diary-wall-rail-title';
       title.textContent = '章 节';
-      ui.rail.appendChild(title);
+      scroll.appendChild(title);
       // 章节栏月份 = groupByMonth(list) 的 key，倒序（对齐数据层契约）
       const byMonth = groupByMonth(list);
       const months = [...byMonth.keys()].sort().reverse();
@@ -717,22 +720,19 @@ export class DiaryWallAppController {
           const yLabel = document.createElement('div');
           yLabel.className = 'bz-diary-wall-rail-year';
           yLabel.textContent = yr;
-          ui.rail.appendChild(yLabel);
+          scroll.appendChild(yLabel);
         }
         const it = document.createElement('div');
-        it.className = 'bz-diary-wall-month';
+        it.className = 'bz-rail-item bz-diary-wall-month';
         it.dataset.month = mk;
-        const row = document.createElement('div');
-        row.className = 'bz-diary-wall-month-row';
         const name = document.createElement('span');
-        name.className = 'bz-diary-wall-month-name';
+        name.className = 'bz-rail-name';
         name.textContent = `${Number(mk.slice(5))}月`;
         const cnt = document.createElement('span');
-        cnt.className = 'bz-diary-wall-month-count';
+        cnt.className = 'bz-rail-count';
         cnt.textContent = `${byMonth.get(mk)!.length} 条`;
-        row.append(name, cnt);
-        it.appendChild(row);
-        // 胶卷缩略图条（前 6 条，各取首个媒体/emoji）
+        it.append(name, cnt);
+        // 胶卷缩略图条（前 6 条，各取首个媒体/emoji；flex-wrap 换行到第二行）
         const strip = document.createElement('div');
         strip.className = 'bz-diary-wall-month-strip';
         byMonth
@@ -744,8 +744,9 @@ export class DiaryWallAppController {
           });
         it.appendChild(strip);
         // DW8：点击滚动由 bindPanel 的 rail 委托统一处理（此处原逐月再绑一次 → 双触发 smooth 滚动）
-        ui.rail.appendChild(it);
+        scroll.appendChild(it);
       });
+      ui.rail.appendChild(scroll);
     }
     // 瀑布：按日期分节
     // 条目 → 数据索引表（右键委托用）：list 是本次渲染的过滤后列表，widx 即其在 list 中的下标
@@ -824,7 +825,7 @@ export class DiaryWallAppController {
     });
     this.setupLazy(ui.wall, mobile ? 'mob' : 'desk');
     this.bindWallContext(ui.wall, mobile ? 'mob' : 'desk');
-    if (!mobile && ui.rail.children.length > 1) {
+    if (!mobile && ui.rail.children.length > 0) {
       this.setupRailHighlight(ui.wall, ui.rail, 'desk');
     }
   }
@@ -1270,7 +1271,7 @@ export class DiaryWallAppController {
       const cap = document.createElement('div');
       cap.className = 'bz-diary-wall-cap';
       const tagText = entry.tags.filter((t) => t !== '加密').join(' ');
-      cap.innerHTML = `<span style="opacity:.75">${this.esc(entry.emoji)} ${this.esc(entry.time)}</span>${tagText ? `　${this.esc(tagText)}` : ''}`;
+      cap.innerHTML = `<span style="opacity:.75">${escapeHtml(entry.emoji)} ${escapeHtml(entry.time)}</span>${tagText ? `　${escapeHtml(tagText)}` : ''}`;
       wrap.appendChild(cap);
     }
     wrap.addEventListener('click', (e) => {
@@ -1489,8 +1490,10 @@ export class DiaryWallAppController {
   }
 
   /** 滚动高亮：rAF 节流，当前月份在章节栏高亮并滚到可见。
-   *  与 scrollToMonth 同口径用 getBoundingClientRect 差值（content-visibility 下 offsetTop 不可靠，P2-1 审查修复）。 */
+   *  与 scrollToMonth 同口径用 getBoundingClientRect 差值（content-visibility 下 offsetTop 不可靠，P2-1 审查修复）。
+   *  ADR-0094：滚动容器收敛为 .bz-rail 内的 .bz-rail-scroll（共享族结构）。 */
   private setupRailHighlight(wall: HTMLElement, rail: HTMLElement, key: 'desk' | 'mob') {
+    const scroller = (rail.querySelector('.bz-rail-scroll') as HTMLElement | null) || rail;
     let raf: number | null = null;
     const onScroll = () => {
       if (raf !== null) return;
@@ -1508,14 +1511,14 @@ export class DiaryWallAppController {
         let currentMonth = pickCurrentMonth(items);
         if (!currentMonth) currentMonth = items[0].date.slice(0, 7);
         rail.querySelectorAll('.bz-diary-wall-month').forEach((it) => {
-          it.classList.toggle('bz-diary-wall-month--on', it.getAttribute('data-month') === currentMonth);
+          it.classList.toggle('on', it.getAttribute('data-month') === currentMonth);
         });
         const active = rail.querySelector<HTMLElement>(`.bz-diary-wall-month[data-month="${currentMonth}"]`);
         if (active) {
-          const railRect = rail.getBoundingClientRect();
+          const railRect = scroller.getBoundingClientRect();
           const actRect = active.getBoundingClientRect();
           if (actRect.top < railRect.top || actRect.bottom > railRect.bottom) {
-            rail.scrollTop += actRect.top - railRect.top - (rail.clientHeight - actRect.height) / 2;
+            scroller.scrollTop += actRect.top - railRect.top - (scroller.clientHeight - actRect.height) / 2;
           }
         }
       });
@@ -1953,16 +1956,6 @@ export class DiaryWallAppController {
   }
 
   // ---------- 统计 ----------
-  /** HTML 转义（防注入，原型直接用 innerHTML 有风险） */
-  private esc(s: string): string {
-    return String(s ?? '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
-
   private dayStats(list: WallEntry[]) {
     let imgs = 0;
     let vids = 0;
