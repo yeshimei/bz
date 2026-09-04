@@ -35,7 +35,12 @@ function normalizeData(raw: any): PomodoroData {
   const history = Array.isArray(raw.history)
     ? raw.history
         .filter((h: any) => h && typeof h.ts === 'number' && typeof h.duration === 'number')
-        .map((h: any) => ({ ts: h.ts, duration: h.duration })) // 显式重建：剥离 target 等残留字段（ticket 63）
+        // 显式重建：剥离 target 等残留字段（ticket 63）；归属任务标题（字符串非空）保留
+        .map((h: any) => ({
+          ts: h.ts,
+          duration: h.duration,
+          ...(typeof h.task === 'string' && h.task ? { task: h.task } : {}),
+        }))
     : [];
   return { version: 1, state, history };
 }
@@ -53,6 +58,8 @@ function normalizeState(raw: any): PomodoroState {
     pausedBy: raw.pausedBy === 'autopause' ? 'autopause' : undefined,
     cycleFocusCount:
       typeof raw.cycleFocusCount === 'number' && raw.cycleFocusCount >= 0 ? raw.cycleFocusCount : def.cycleFocusCount,
+    // 归属任务标题：仅字符串非空保留（旧数据/非法值 → undefined）
+    task: typeof raw.task === 'string' && raw.task ? raw.task : undefined,
   };
 }
 

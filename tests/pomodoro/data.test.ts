@@ -330,3 +330,63 @@ describe('PomodoroDataManager', () => {
     expect('pausedBy' in raw.state).toBe(false);
   });
 });
+
+describe('任务归属字段（增强包：待办「专注这个」联动持久化）', () => {
+  const BASE_STATE = { phase: 'focus' as const, endTime: null, remaining: 600, paused: false, cycleFocusCount: 1 };
+
+  it('load：state.task / history[].task 字符串非空保留', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      POMODORO_FILE_PATH,
+      JSON.stringify({
+        version: 1,
+        state: { ...BASE_STATE, task: '完成阅读报告' },
+        history: [{ ts: 1, duration: 1500, task: '完成阅读报告' }, { ts: 2, duration: 1500 }],
+      })
+    );
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new PomodoroDataManager(app);
+    const data = await dm.load();
+    expect(data.state.task).toBe('完成阅读报告');
+    expect(data.history[0]).toEqual({ ts: 1, duration: 1500, task: '完成阅读报告' });
+    expect(data.history[1]).toEqual({ ts: 2, duration: 1500 });
+  });
+
+  it('load：非法 task（非字符串/空串）→ 剥离不迁移', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      POMODORO_FILE_PATH,
+      JSON.stringify({
+        version: 1,
+        state: { ...BASE_STATE, task: 42 },
+        history: [{ ts: 1, duration: 1500, task: '' }, { ts: 2, duration: 1500, task: null }],
+      })
+    );
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new PomodoroDataManager(app);
+    const data = await dm.load();
+    expect(data.state.task).toBeUndefined();
+    expect('task' in data.history[0]).toBe(false);
+    expect('task' in data.history[1]).toBe(false);
+  });
+
+  it('往返：带 task 的 state/history save → load 一致', async () => {
+    const vault = new MockVault();
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new PomodoroDataManager(app);
+    const data = {
+      version: 1 as const,
+      state: { ...BASE_STATE, task: '给影评加封面' },
+      history: [{ ts: 1, duration: 1500, task: '给影评加封面' }],
+    };
+    await dm.save(data);
+    const loaded = await dm.load();
+    expect(loaded).toEqual(data);
+    const raw = JSON.parse(vault.files.get(POMODORO_FILE_PATH)!);
+    expect(raw.state.task).toBe('给影评加封面');
+    expect(raw.history[0].task).toBe('给影评加封面');
+  });
+});

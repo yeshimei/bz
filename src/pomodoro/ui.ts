@@ -4,6 +4,11 @@
  * 阶段自然完成（tick 驱动）→ toast + 提示音 + 落盘；skip 静默；打开时超时恢复（initData 路径不通知）。
  * 设置：预设/自定义时长/N/开关均读 BzSettings（tryGetSettings 缺省回退）。
  * ticket 63：移除读书番茄钟与专注目标选择（用户决策），保留后台自动暂停/不补算（ticket 62）。
+ * 增强包：完成通知挂「开始休息/开始专注」动作（autoCycle 关，文案按实况生成）；
+ * 今日行总分钟数 + 近 7 天柱 title 扩分钟 + 今日 12 槽时段分布小方柱；
+ * 循环位置 6px 方点行（替代「专注 2/4」文字）；lucide timer 图标替代 🍅；mask 遮罩走
+ * --background-modifier-cover token；面板聚焦 Space 切换开始/暂停；
+ * startFocusForTask：待办「专注这个」联动（归属记入 state/history，弹窗/状态栏展示任务名）。
  */
 import { Setting } from 'obsidian';
 import type { App } from 'obsidian';
@@ -12,7 +17,7 @@ import { escManager } from '../core/esc-manager';
 import { allocZ } from '../core/z-order';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen } from '../core/mobile';
-import { notice } from '../core/notice';
+import { notice, notify } from '../core/notice';
 import { openSettingsModal } from '../core/settings-modal';
 import { mobileFullscreenGroup, numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
@@ -20,7 +25,7 @@ import { PomodoroDataManager } from './data';
 import { playSound } from './sound';
 import type { SoundKind } from './sound';
 import { syncPomodoroStatusBar } from './statusbar';
-import { todayCount, last7Days } from './stats';
+import { todayCount, todayMinutes, todayHourBuckets, last7Days } from './stats';
 import { PRESETS, CUSTOM_PRESET_ID } from './config';
 import type { PomodoroState, HistoryEntry, Durations, PomodoroOptions, Phase, PomodoroAction, PomodoroEvent } from './state';
 import { transition, recover, createInitialState, phaseDurationSec } from './state';
@@ -66,11 +71,18 @@ function options(): PomodoroOptions {
   };
 }
 
-function phaseText(phase: Phase, count: number, d: Durations): string {
-  if (phase === 'focus') return `专注 ${count + 1}/${d.longBreakInterval}`;
+/** 弹窗阶段短文案（专注不带 N/M——循环位置由圆点行表达；空闲配 lucide timer 图标，不用 emoji） */
+function phaseLabel(phase: Phase): string {
+  if (phase === 'focus') return '专注';
   if (phase === 'short-break') return '短休息';
   if (phase === 'long-break') return '长休息';
-  return '🍅 番茄钟';
+  return '番茄钟';
+}
+
+/** 通知/恢复用阶段文案（带循环位置，如「专注 2/4」） */
+function phaseText(phase: Phase, count: number, d: Durations): string {
+  if (phase === 'focus') return `专注 ${count + 1}/${d.longBreakInterval}`;
+  return phaseLabel(phase);
 }
 
 /** 阶段开始提示声（专注/短休/长休各一种，听声即知状态；声音开关关闭时静默） */
@@ -103,17 +115,43 @@ function notifyPaused(): void {
   if (s.pomodoroSound !== false) playSound('pause', pomodoroVolume());
 }
 
-/** 阶段自然完成（tick 驱动）→ toast（完成语义）+ 新阶段开始提示声；skip 无 historyEntry 不通知 */
+/** 休息阶段标签（专注完成通知里预告下一阶段） */
+function breakLabel(phase: Phase, d: Durations): string {
+  return phase === 'long-break' ? `长休息 ${d.longBreakMin} 分钟` : `休息 ${d.shortBreakMin} 分钟`;
+}
+
+/**
+ * 阶段自然完成（tick 驱动）→ toast（完成语义）+ 新阶段开始提示声；skip 无 historyEntry 不通知。
+ * 增强包：文案按下一阶段实际是否计时生成（不说「开始专注」却不计时）；
+ * 手动流转（autoCycle 关）时挂「开始休息/开始专注」直达动作按钮（core notify action 范式，对齐 review「去复习」）。
+ */
 function notifyPhaseComplete(e: Extract<PomodoroEvent, { type: 'phase-completed' }>): void {
   const d = durations();
-  if (e.completedPhase === 'focus') {
-    const rest = e.nextPhase === 'long-break' ? `长休息 ${d.longBreakMin} 分钟` : `休息 ${d.shortBreakMin} 分钟`;
-    notice(`专注完成：${rest}`, 'success');
-  } else {
-    notice('休息结束：开始专注', 'success');
-  }
   // 声音 = 新阶段开始提示（听声即知状态，无需打开弹窗）
   playPhaseSound(e.nextPhase);
+  // 自动流转（autoCycle/autoSkipBreak）：下一阶段已在计时，toast 只报完成事实
+  if (e.autoStarted) {
+    if (e.completedPhase === 'focus') {
+      notice(e.nextPhase === 'focus' ? '专注完成：开始下一轮专注' : `专注完成：${breakLabel(e.nextPhase, d)}`, 'success');
+    } else {
+      notice('休息结束：开始专注', 'success');
+    }
+    return;
+  }
+  // 手动流转：动作按钮直达开始（6s 停留给足反应窗口；错过也可在弹窗/状态栏手动开始）
+  if (e.completedPhase === 'focus') {
+    notify(`专注完成：${breakLabel(e.nextPhase, d)}`, {
+      type: 'success',
+      duration: 6000,
+      action: { label: '开始休息', onClick: () => applyAction('start') },
+    });
+  } else {
+    notify('休息结束', {
+      type: 'success',
+      duration: 6000,
+      action: { label: '开始专注', onClick: () => applyAction('start') },
+    });
+  }
 }
 
 /** 提示音音量（0-100，默认最大；旧设置无字段 → 100） */
@@ -135,16 +173,19 @@ function fmt(sec: number): string {
   return `${pad2(m)}:${pad2(s)}`;
 }
 
-/** 历史统计区：今日计数 + 近 7 天柱条（ticket 30）；同日同计数跳过重建（防 tick 每秒 DOM churn） */
+/** 历史统计区：今日计数+总分钟 + 近 7 天柱条 + 今日 12 槽时段分布；同数据跳过重建（防 tick 每秒 DOM churn） */
 let lastStatsKey = '';
 function renderStats(): void {
   const now = Date.now();
   const todayEl = document.getElementById('pomodoro-today');
-  if (todayEl) todayEl.textContent = `今日 ${todayCount(history, now)} 个 🍅`;
+  if (todayEl) todayEl.textContent = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
   const weekEl = document.getElementById('pomodoro-week');
-  if (!weekEl) return;
+  const hoursEl = document.getElementById('pomodoro-hours');
+  if (!weekEl || !hoursEl) return;
   const days = last7Days(history, now);
-  const key = days.map((d) => `${d.date}:${d.count}`).join(',');
+  const buckets = todayHourBuckets(history, now);
+  const key =
+    days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(',') + '|' + buckets.map((b) => b.count).join(',');
   if (key === lastStatsKey) return;
   lastStatsKey = key;
   const max = Math.max(1, ...days.map((d) => d.count));
@@ -152,7 +193,7 @@ function renderStats(): void {
   for (const d of days) {
     const bar = document.createElement('div');
     bar.className = 'pomodoro-stat-day';
-    bar.title = `${d.date}：${d.count} 个`;
+    bar.title = `${d.date}：${d.count} 个 · ${d.minutes} 分钟`;
     const col = document.createElement('div');
     col.className = 'pomodoro-stat-col';
     const h = document.createElement('div');
@@ -165,6 +206,16 @@ function renderStats(): void {
     col.appendChild(label);
     bar.appendChild(col);
     weekEl.appendChild(bar);
+  }
+  // 今日专注时段分布：12 槽（2 小时一格）小方柱，条形语言与近 7 天柱一致
+  hoursEl.innerHTML = '';
+  const hmax = Math.max(1, ...buckets.map((b) => b.count));
+  for (const b of buckets) {
+    const bar = document.createElement('div');
+    bar.className = 'pomodoro-hour-bar' + (b.count > 0 ? ' pomodoro-hour-bar-on' : '');
+    bar.title = `${pad2(b.hour)}–${pad2(b.hour + 2)} 时 · ${b.count} 个`;
+    bar.style.height = `${Math.max(2, Math.round((b.count / hmax) * 20))}px`;
+    hoursEl.appendChild(bar);
   }
 }
 
@@ -184,11 +235,60 @@ function render(): void {
     circle.setAttribute('stroke-dashoffset', String(C * (1 - progress)));
   }
   const phaseEl = document.getElementById('pomodoro-phase');
-  if (phaseEl) phaseEl.textContent = phaseText(state.phase, state.cycleFocusCount, d);
+  if (phaseEl) {
+    const label = phaseLabel(state.phase);
+    // 同文案跳过重建（render 每秒跑；idle 需重建 icon span，纯文本直接换）
+    if (phaseEl.dataset.label !== label) {
+      phaseEl.dataset.label = label;
+      phaseEl.innerHTML = '';
+      if (state.phase === 'idle') {
+        const ic = document.createElement('span');
+        ic.className = 'pomodoro-phase-icon';
+        setIcon(ic, 'timer'); // lucide timer（替代旧 🍅 emoji，UI 手册禁 emoji 图标）
+        phaseEl.appendChild(ic);
+        phaseEl.appendChild(document.createTextNode(label));
+      } else {
+        phaseEl.textContent = label;
+      }
+    }
+  }
+  renderCycleDots(d);
+  renderTaskLine();
   const timeEl = document.getElementById('pomodoro-time');
   if (timeEl) timeEl.textContent = fmt(remain);
   renderStats();
   updateButtons();
+}
+
+/** 本轮循环位置：N 个 6px 方点，已完成填 accent 色（替代旧「专注 2/4」文字小字） */
+function renderCycleDots(d: Durations): void {
+  const cycleEl = document.getElementById('pomodoro-cycle');
+  if (!cycleEl) return;
+  const total = Math.max(1, d.longBreakInterval);
+  if (cycleEl.childElementCount !== total) {
+    cycleEl.innerHTML = '';
+    for (let i = 0; i < total; i++) {
+      const dot = document.createElement('span');
+      dot.className = 'pomodoro-cycle-dot';
+      cycleEl.appendChild(dot);
+    }
+  }
+  Array.from(cycleEl.children).forEach((dot, i) => {
+    dot.className = 'pomodoro-cycle-dot' + (i < state.cycleFocusCount ? ' pomodoro-cycle-dot-on' : '');
+  });
+}
+
+/** 当前专注任务行（待办「专注这个」联动）：有归属显示标题（超长省略 + title 全文），无归属收起 */
+function renderTaskLine(): void {
+  const taskEl = document.getElementById('pomodoro-task');
+  if (!taskEl) return;
+  if (state.task) {
+    if (taskEl.textContent !== state.task) taskEl.textContent = state.task;
+    taskEl.title = state.task;
+  } else {
+    taskEl.textContent = '';
+    taskEl.removeAttribute('title');
+  }
 }
 
 /** 按钮态渲染（render 内部抽取） */
@@ -485,6 +585,15 @@ function bindEvents(): void {
   popup.addEventListener('mouseleave', () => {
     settingsBtn.classList.add('pomodoro-settings-hidden');
   });
+  // Space 键切换开始/暂停（面板聚焦时；按钮聚焦走原生 Space 激活避免双触发，输入类控件跳过）
+  popup.addEventListener('keydown', (e) => {
+    if (e.key !== ' ') return;
+    const t = e.target as HTMLElement;
+    const tag = t.tagName;
+    if (tag === 'BUTTON' || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable) return;
+    e.preventDefault(); // 防页面滚动（Space 默认行为）
+    applyAction(state.paused ? 'resume' : state.endTime !== null ? 'pause' : 'start');
+  });
 }
 
 function buildDOM(): void {
@@ -493,13 +602,15 @@ function buildDOM(): void {
   // 域主弹窗层级在 src/pomodoro/styles.css（#pomodoro-mask z-index: 9998，低于域设置弹窗 10030 与
   // Obsidian 设置页，⚙️ 弹窗可正常覆盖）——e3：不再 JS 内联 z-index
   mask.innerHTML = `
-    <div id="pomodoro-popup">
+    <div id="pomodoro-popup" tabindex="-1">
       <button id="pomodoro-btn-settings" class="pomodoro-btn" title="设置"></button>
       <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
         <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
         <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
       </svg>
+      <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
       <div id="pomodoro-phase"></div>
+      <div id="pomodoro-task" class="pomodoro-task"></div>
       <div id="pomodoro-time"></div>
       <div class="pomodoro-controls">
         <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary">开始</button>
@@ -509,6 +620,7 @@ function buildDOM(): void {
       <div class="pomodoro-stats">
         <div id="pomodoro-today"></div>
         <div id="pomodoro-week" class="pomodoro-week"></div>
+        <div id="pomodoro-hours" class="pomodoro-hours"></div>
       </div>
     </div>`;
   mask.style.zIndex = String(allocZ()); // ADR-0067：创建即显示即发号
@@ -524,6 +636,8 @@ function buildDOM(): void {
   });
   bindEvents();
   render();
+  // 面板聚焦（tabindex=-1）：打开即可用 Space 切换开始/暂停
+  (document.getElementById('pomodoro-popup') as HTMLElement | null)?.focus();
 }
 
 /** 共享初始化 in-flight（P3）：ensurePomodoro 与 openPomodoro 并发调用只跑一次 initData */
@@ -590,6 +704,35 @@ export function closePomodoro(): void {
     escHandle.unregister();
     escHandle = null;
   }
+}
+
+/**
+ * 待办「专注这个」联动入口：直接开始一个专注番茄并把归属记到该待办（最小实现：只传任务标题）。
+ * - 休息中（计时/暂停）→ 先跳过休息（skip 不记历史）再开始专注；
+ * - 已有专注计时中 → 不重启，提示后返回；
+ * - forceFocus 手动暂停维持与开始按钮同一锁定口径（P1-4）；
+ * - 归属随状态持久化，专注自然完成写入 history.task 后清除（skip 作废归属）。
+ */
+export async function startFocusForTask(app: App, taskTitle: string): Promise<void> {
+  await ensurePomodoro(app);
+  const o = options();
+  const d = durations();
+  // 休息阶段（运行/暂停/停止）：跳过休息直接进专注（skip 静默；状态变化即落盘——后续可能提前 return）
+  if (state.phase === 'short-break' || state.phase === 'long-break') {
+    state = transition(state, 'skip', Date.now(), d, o).state;
+    void save();
+    render();
+  }
+  if (state.endTime !== null) {
+    notice('已有专注计时中，本次不重复开始', 'warning');
+    return;
+  }
+  if (o.forceFocus && state.paused && state.pausedBy !== 'autopause') {
+    notice('强制专注模式暂停中，请先在番茄钟恢复', 'warning');
+    return;
+  }
+  state = { ...state, task: taskTitle };
+  applyAction('start'); // 内含通知/落盘/tick 生命周期/渲染（弹窗与状态栏的任务名同步刷新）
 }
 
 /** 卸载清理（T32 接入 onunload；测试重置） */
