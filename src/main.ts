@@ -112,14 +112,14 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-favorites-add', name: '加收藏', icon: 'bookmark', callback: () => addFavoriteItem(getApp()) },
   // 旧书库（library）域退役：bz-library-open/bz-book-notes-open 已删，读书笔记并入书架墙详情弹窗
   // 阅读数据分析报告（读书报告内嵌化：打开书架墙面板并切到报告视图；home 报告磁贴/剪藏本深链自动受益）
-  { id: 'bz-reading-report-open', name: '阅读数据分析报告', icon: DOMAIN_ICONS['reading-report'], callback: () => openBookshelfReport(getApp()) },
+  { id: 'bz-reading-report-open', name: '阅读分析报告', icon: DOMAIN_ICONS['reading-report'], callback: () => openBookshelfReport(getApp()) },
   // 影视分析报告（ADR-0090 内嵌化：独立报告窗退役，命令直达影院面板分析页；
   // id 随域换 bz-cinema-analysis，名称「影视分析报告」保持用户习惯；pie-chart 与阅读 bar-chart-3、
   // 复习 calendar-check 三份报告图标各异——enh-sweep-a 错开）
   { id: 'bz-cinema-analysis', name: '影视分析报告', icon: 'pie-chart', callback: () => openCinemaAnalysis(getApp()) },
   // 影院（cinema 域，ADR-0087 接管影视——旧 bz-movie-open/bz-movie-add 已退役）
   { id: 'bz-cinema-open', name: '影院', icon: DOMAIN_ICONS.cinema, callback: () => openCinema(getApp()) },
-  { id: 'bz-cinema-add', name: '加影视（影院）', icon: 'plus-circle', callback: () => addCinemaItem(getApp()) },
+  { id: 'bz-cinema-add', name: '加影视', icon: 'plus-circle', callback: () => addCinemaItem(getApp()) },
   // 书架墙（bookshelf 新域）
   { id: 'bz-bookshelf-open', name: '书架墙', icon: DOMAIN_ICONS.bookshelf, callback: () => openBookshelf(getApp()) },
   // 复习计划（9 命令）

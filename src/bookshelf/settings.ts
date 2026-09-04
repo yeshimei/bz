@@ -18,7 +18,7 @@ export function bookshelfSettingsSchema(): SettingsSchema {
             type: 'path',
             mode: 'single',
             name: '书库文件夹',
-            desc: '存放书籍笔记的文件夹路径，留空时读旧书库遗留设置的存量值，再回落书库',
+            desc: '存放书籍笔记的文件夹，留空用 vault 根下的「书库」',
             binding: { key: 'bookshelfFolderPath' },
             fallbackValue: () => resolveFolderPath(),
           },

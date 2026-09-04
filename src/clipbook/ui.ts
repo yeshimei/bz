@@ -243,7 +243,7 @@ function buildDom(app: any): void {
           <div class="bz-clip-rail">
             <div class="bz-clip-rail-list" data-clip-rail></div>
             <div class="bz-clip-rail-foot">
-              <button class="bz-clip-analy" data-clip-analy title="打开阅读分析数据报告">${iconSpan('bar-chart-3', 'bz-ic--sm')}<span>阅读分析数据</span></button>
+              <button class="bz-clip-analy" data-clip-analy title="打开阅读分析报告">${iconSpan('bar-chart-3', 'bz-ic--sm')}<span>阅读分析报告</span></button>
             </div>
           </div>
           <div class="bz-clip-mid">

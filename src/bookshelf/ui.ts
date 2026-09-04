@@ -639,7 +639,7 @@ function openBookDetail(it: BookshelfItem, app: App): void {
       conf.popup.querySelector('[data-bs-c="1"]')?.addEventListener('click', () => {
         void (async () => {
           try {
-            if (it.file) await app.vault.delete(it.file);
+            if (it.file) await app.vault.trash(it.file, true); // 回收站可恢复（对齐文案「移入回收站」与 cinema/clipbook）
             close();
             conf.close();
             await rebuildItems(app);
@@ -822,7 +822,7 @@ export function createOverlay(app: App): void {
           </div>
           <div class="bz-bs-view bz-bs-view-report">
             <div class="bz-rr-head">
-              <span class="bz-rr-title">${iconSpan(ICON.report, 'bz-ic--sm')}阅读数据分析报告</span>
+              <span class="bz-rr-title">${iconSpan(ICON.report, 'bz-ic--sm')}阅读分析报告</span>
               <button class="bz-icon-btn bz-rr-close" data-rr-goto-shelf title="返回书架">${iconSpan(ICON.close)}</button>
             </div>
             <div class="bz-rr-content"></div>

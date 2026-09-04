@@ -110,7 +110,7 @@ function renderHighlightBlock(hl: any, app: App, filePath: string): HTMLElement 
       closeMdNotesModal();
       void openFlowDialog({
         title: '删除划线',
-        message: '确定要删除该高亮及其批注吗？此操作不可撤销。',
+        message: '确定要删除该划线及其批注吗？此操作不可撤销。',
         actions: [
           { label: '取消', value: 'cancel' },
           { label: '删除', value: 'ok', cta: true },

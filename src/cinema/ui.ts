@@ -338,7 +338,7 @@ function buildListEmpty(app: App): HTMLDivElement {
     btn = uiBtn({ label: '添加第一部影视', tone: 'primary', className: 'bz-cinema-empty-add', onClick: () => openEditForm(null, app) });
     return uiEmpty({
       icon: ICON.empty,
-      title: '还没有收藏的影视',
+      title: '还没有添加的影视',
       desc: '在影院添加你的第一部影视，观影足迹从这里开始',
       actions: uiBtnRow([btn], { center: true }),
     });
