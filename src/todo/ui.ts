@@ -333,8 +333,8 @@ export function openTodoPanel(app: App, opts?: { notePath?: string }): void {
   const overlay = document.createElement('div');
   overlay.className = 'bz-todo-overlay';
   overlay.innerHTML = `
-    <div class="bz-todo-panel">
-      <div class="bz-todo-head">
+    <div class="bz-todo-panel bz-panel-mtop">
+      <div class="bz-todo-panel-head">
         <div class="bz-todo-title">待办</div>
       </div>
       <div class="bz-todo-body">

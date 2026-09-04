@@ -24,7 +24,10 @@
 .bz-todo-overlay, .bz-todo-overlay * { scrollbar-width: none; -ms-overflow-style: none; }
 .bz-todo-overlay *::-webkit-scrollbar { display: none; }
 
-.bz-todo-head {
+/* 头行独有类名 .bz-todo-panel-head：不挂 core/styles.css 旧头行规范对 .bz-todo-head 的
+   !important 16px 垫顶（那是 memo 旧窗口的几何，会压掉本面板 44px 头行）；
+   移动端顶部避让由根节点 .bz-panel-mtop 统一接管，头行不再自垫 */
+.bz-todo-panel-head {
   display: flex; justify-content: space-between; align-items: center;
   padding: 0 var(--bz-space-lg); height: 44px;
   border-bottom: 1px solid var(--bz-border); flex-shrink: 0;
@@ -203,7 +206,7 @@
     width: 100vw; height: 100vh; max-width: none; max-height: none;
     border-radius: 0; border: none;
   }
-  .bz-todo-head { padding-top: max(12px, env(safe-area-inset-top)); }
+  /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css），头行不再自垫 */
   .bz-todo-side { display: none; }
   /* 主头行桌面专属（移动端新建走底部录入条） */
   .bz-todo-main-head { display: none; }
