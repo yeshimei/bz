@@ -13,6 +13,7 @@ import { Setting, setIcon, type App } from 'obsidian';
 import { notice } from '../core/notice';
 import { getSettings, saveSettings } from '../core/settings-provider';
 import { mobileFullscreenGroup } from '../core/settings-common';
+import { uiEmpty } from '../core/ui';
 import type { SettingsSchema } from '../core/settings-schema';
 import type { ReviewItem } from './data';
 import type { ReviewDataManager } from './data';
@@ -163,10 +164,8 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
                 excludeBox.innerHTML = '';
                 const notes = (getSettings() as any).reviewExcludedNotes || [];
                 if (!notes.length) {
-                  const empty = document.createElement('div');
-                  empty.className = 'bz-review-exclude-empty';
-                  empty.textContent = '暂无排除笔记';
-                  excludeBox.appendChild(empty);
+                  // 空态走组件库 uiEmpty（ADR-0094 收编 .bz-review-exclude-empty）
+                  excludeBox.appendChild(uiEmpty({ title: '暂无排除笔记' }));
                   return;
                 }
                 notes.forEach((path: string) => {

@@ -136,7 +136,7 @@ describe('bz 骨架冒烟', () => {
     // 点击落点核对：打开待办面板
     plugin.ribbonIcons[0].callback();
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-overlay')).toBeTruthy();
+      expect(document.querySelector('.bz-panel-overlay')).toBeTruthy();
     });
   });
 

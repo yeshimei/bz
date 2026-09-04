@@ -119,7 +119,7 @@ describe('书架墙详情弹窗读书笔记入口（迁移自旧 library 域）'
     const app = makeApp(vault);
     ensureBookshelf(app);
     await openPanel(app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = Array.from(overlay.querySelectorAll('.bz-bs-book')).find((b) => b.textContent?.includes('活着')) as HTMLElement;
     card.click();
     const popup = detailPopup();
@@ -145,7 +145,7 @@ describe('书架墙详情弹窗读书笔记入口（迁移自旧 library 域）'
     const app = makeApp(vault);
     ensureBookshelf(app);
     await openPanel(app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = Array.from(overlay.querySelectorAll('.bz-bs-book')).find((b) => b.textContent?.includes('悉达多')) as HTMLElement;
     card.click();
     const entry = detailPopup()!.querySelector('[data-bs-notes]') as HTMLElement;
@@ -165,7 +165,7 @@ describe('书架墙详情弹窗读书笔记入口（迁移自旧 library 域）'
     const app = makeApp(vault);
     ensureBookshelf(app);
     await openPanel(app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = Array.from(overlay.querySelectorAll('.bz-bs-book')).find((b) => b.textContent?.includes('算法导论')) as HTMLElement;
     card.click();
     expect(detailPopup()!.querySelector('[data-bs-notes]')).toBeFalsy();
@@ -329,7 +329,7 @@ describe('读书笔记弹窗（md 书）', () => {
     const app = makeApp(vault);
     ensureBookshelf(app);
     await openPanel(app);
-    const overlay = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const card = Array.from(overlay.querySelectorAll('.bz-bs-book')).find((b) => b.textContent?.includes('活着')) as HTMLElement;
     card.click();
     (detailPopup()!.querySelector('[data-bs-notes]') as HTMLElement).click();
@@ -337,7 +337,7 @@ describe('读书笔记弹窗（md 书）', () => {
     expect(notesPopup()).not.toBeNull();
     // toggle 关主面板：详情 + 读书笔记弹窗一并收口
     openBookshelf(app);
-    expect(document.querySelector('.bz-bs-overlay')).toBeFalsy();
+    expect(document.querySelector('.bz-panel-overlay')).toBeFalsy();
     expect(notesPopup()).toBeNull();
     expect(detailPopup()).toBeNull();
   });

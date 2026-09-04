@@ -1,31 +1,14 @@
-/* ==================== 内容首页域样式（src/home/styles.css） ==================== */
-/* 入口页「新标签页」原型（launcher-p3-newtab）一比一迁移（ticket 177）。
-   组件库纪律（铁律 6）：基线（图标钮/徽标/按钮/输入/chip）走 src/core/ui
-   components.css 的 .bz-* 类与 --bz-* token；本文件只保留首页独有布局
-   （hero/卡片网格/迷你 chips/侧栏/统计条/搜索面板/加域 pick），
-   取值一律取自 tokens.css（间距/控件高/字号全部对档，无档外裸值）；
-   徽标色点用品牌/语义功能色（数据语义，域内直给）。
-   编辑开关钮的盒装/激活视觉走样式库修饰符（.bz-icon-btn--boxed/--active），
-   域内不再覆盖基线（原 !important 对抗已收编进样式库）。 */
+/* ==================== 内容首页域样式（src/home/styles.css） ====================
+   组件库纪律（铁律 6）：面板壳（.bz-panel-overlay/.bz-panel-frame）、pick 弹层（.bz-popover 族）、
+   统计卡（.bz-stat/uiStat）、空态（.bz-empty/uiEmpty）、基线（图标钮/按钮/输入/chip）
+   走 src/core/ui；本文件只保留首页独有布局（hero/卡片网格/迷你 chips/侧栏/
+   搜索面板/统计条网格/pick 宽度与移动端变体），取值一律取自 tokens.css。 */
 
-/* ---- 遮罩 + 主面板骨架 ---- */
-.bz-home-overlay {
-  position: fixed; inset: 0;
-  background: var(--bz-overlay);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--bz-font-ui);
-  /* z-index 由 createOverlay 经 topifyZ 动态分配（ADR-0067），此处不设静态档 */
-}
+/* ---- 遮罩 + 主面板骨架：基线走样式库 .bz-panel-overlay/.bz-panel-frame（含滚动条隐藏）；
+        .bz-home-overlay 只留移动端 flex-end 变体，.bz-home-panel 只留桌面尺寸 ---- */
 .bz-home-panel {
-  background: var(--bz-surface-2); color: var(--bz-text-1);
-  border-radius: var(--bz-radius-lg); border: 1px solid var(--bz-border);
-  box-shadow: var(--bz-shadow-lg);
-  display: flex; flex-direction: column;
   width: 860px; max-width: calc(100vw - 32px); height: 600px; max-height: 90vh;
-  overflow: hidden; position: relative;
 }
-.bz-home-overlay, .bz-home-overlay * { scrollbar-width: none; -ms-overflow-style: none; }
-.bz-home-overlay *::-webkit-scrollbar { display: none; }
 
 /* ---- hero（顶部问候 + 搜索） ---- */
 .bz-home-hero { padding: var(--bz-space-xl) var(--bz-space-xl) var(--bz-space-sm); flex-shrink: 0; position: relative; }
@@ -81,7 +64,6 @@
   padding: 1px var(--bz-space-sm); flex-shrink: 0;
 }
 .bz-home-pal-tip { padding: var(--bz-space-sm) var(--bz-space-md); border-top: 1px solid var(--bz-border); font-size: var(--bz-font-caption); color: var(--bz-text-3); }
-.bz-home-pal-empty { padding: var(--bz-space-xl); text-align: center; font-size: var(--bz-font-meta); color: var(--bz-text-3); }
 
 /* ---- 主体：主列 + 侧栏 ---- */
 .bz-home-body { flex: 1; display: flex; min-height: 0; }
@@ -103,18 +85,18 @@
 
 /* ---- 域卡网格（桌面） ---- */
 .bz-home-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: var(--bz-space-md); }
-/* 空钉选态：整块可点按钮（设计手册 §8.3 空态要有动作），点击进编辑模式 */
+/* 空钉选态：uiEmpty（.bz-empty 基线）+ 整块可点进编辑（设计手册 §8.3 空态要有动作）；
+   域内只补虚线描边 CTA 观感与网格占满 */
 .bz-home-cards-empty {
   grid-column: 1 / -1; width: 100%;
-  display: flex; align-items: center; justify-content: center; gap: var(--bz-space-sm);
-  appearance: none; font-family: inherit; cursor: pointer;
+  cursor: pointer;
   padding: 40px var(--bz-space-lg); text-align: center;
-  color: var(--bz-text-3); font-size: var(--bz-font-label);
+  color: var(--bz-text-3);
   border: 1px dashed var(--bz-border-strong); border-radius: var(--bz-radius-md);
   background: none;
 }
-.bz-home-cards-empty:hover { color: var(--bz-brand); border-color: var(--bz-brand); background: var(--bz-brand-soft); }
-.bz-home-cards-empty .bz-ic { width: 14px; height: 14px; }
+.bz-home-cards-empty:hover { border-color: var(--bz-brand); background: var(--bz-brand-soft); }
+.bz-home-cards-empty:hover .bz-empty-title { color: var(--bz-brand); }
 
 .bz-home-card {
   position: relative;
@@ -219,23 +201,9 @@
 }
 .bz-home-week-k { font-size: var(--bz-font-caption); color: var(--bz-text-3); white-space: nowrap; }
 
-/* 加域 pick 弹层 */
-.bz-home-pick {
-  position: absolute; z-index: 40; width: 232px;
-  background: var(--bz-surface-4); border: 1px solid var(--bz-border);
-  border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg);
-  padding: var(--bz-space-sm); max-height: 280px; overflow-y: auto;
-}
+/* 加域 pick 弹层：浮层/选项/空态基线走样式库 .bz-popover 族；域内只留宽度与标题 */
+.bz-home-pick { width: 232px; }
 .bz-home-pick-t { padding: var(--bz-space-sm) var(--bz-space-md) var(--bz-space-xs); font-size: var(--bz-font-meta); font-weight: var(--bz-weight-semibold); color: var(--bz-text-2); }
-.bz-home-pickopt {
-  display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: var(--bz-space-sm) var(--bz-space-md); border-radius: var(--bz-radius-sm); border: none; background: none;
-  color: var(--bz-text-1); font-size: var(--bz-font-label); font-family: inherit;
-  cursor: pointer; text-align: left;
-}
-.bz-home-pickopt:hover { background: var(--bz-surface-hover); }
-.bz-home-pickopt .bz-ic { width: 15px; height: 15px; color: var(--bz-text-2); flex-shrink: 0; }
-.bz-home-pick-empty { padding: var(--bz-space-lg); text-align: center; font-size: var(--bz-font-meta); color: var(--bz-text-3); }
 
 /* ---- 迷你 chips（未钉域） ---- */
 .bz-home-minis { display: flex; flex-wrap: wrap; gap: var(--bz-space-sm); margin-top: var(--bz-space-lg); }
@@ -296,18 +264,7 @@
     display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--bz-space-sm);
     margin-top: var(--bz-space-md);
   }
-  /* 三格统计格 = 按钮（data-home-side 复用侧栏点击路径，移动端第二入口） */
-  .bz-home-mstat {
-    display: flex; flex-direction: column; align-items: center; gap: 2px;
-    appearance: none; font-family: inherit; cursor: pointer; text-align: center;
-    background: var(--bz-surface-3); border: 1px solid var(--bz-border);
-    border-radius: var(--bz-radius-sm); padding: var(--bz-space-md) var(--bz-space-xs);
-    transition: background-color var(--bz-dur-fast) ease, border-color var(--bz-dur-fast) ease;
-  }
-  .bz-home-mstat:hover { background: var(--bz-surface-hover); border-color: var(--bz-border-hover); }
-  .bz-home-mstat:active { background: var(--bz-surface-active); }
-  .bz-home-mstat-v { font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-bold); color: var(--bz-text-1); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bz-home-mstat-k { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
+  /* 三格统计格基线走样式库 .bz-stat（uiStat 工厂，--text 档 + --click 可点） */
   .bz-home-block-t { margin-top: var(--bz-space-lg); }
   .bz-home-cards { grid-template-columns: 1fr 1fr; gap: var(--bz-space-sm); }
   .bz-home-card { min-height: 96px; padding: var(--bz-space-md) var(--bz-space-md) var(--bz-space-sm); }

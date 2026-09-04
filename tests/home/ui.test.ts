@@ -335,7 +335,7 @@ describe('home UI', () => {
     const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
     const cell = overlay.querySelector('[data-home-mstats] [data-home-side="review"]') as HTMLElement;
     expect(cell).toBeTruthy();
-    expect(cell.classList.contains('bz-home-mstat')).toBe(true);
+    expect(cell.classList.contains('bz-stat')).toBe(true);
     cell.click();
     expect(executedOf(app)).toEqual(['bz-review-open']);
     expect(document.querySelector('.bz-home-overlay')).toBeFalsy();

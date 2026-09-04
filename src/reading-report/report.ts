@@ -80,7 +80,7 @@ export function generateBarRows(rows: ReportBarRow[]): string {
       return `
     <div class="${cls}"${attrs}>
     <div class="bz-rr-bar-label" title="${escapeHtml(row.label)}">${escapeHtml(row.label)}</div>
-    <div class="bz-rr-bar-track"><div class="bz-rr-bar-fill" style="width:${width}%;background:${color}"></div></div>
+    <div class="bz-progress bz-progress--lg bz-rr-bar-track"><i style="width:${width}%;background:${color}"></i></div>
     ${trophies}
     <div class="bz-rr-bar-val">${escapeHtml(row.display)}</div>
     </div>`;

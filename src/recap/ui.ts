@@ -13,7 +13,7 @@
  */
 import type { App } from 'obsidian';
 import { escManager } from '../core/esc-manager';
-import { uiIcon, uiBtn, uiBtnRow, uiEmpty } from '../core/ui';
+import { uiBtn, uiBtnRow, uiEmpty, uiStat, mountIcons } from '../core/ui';
 import { notify, notifyActionError, notifySaveError } from '../core/notice';
 import { topifyZ } from '../core/dom';
 import { DOMAIN_ICONS } from '../core/domain-icons';
@@ -28,19 +28,11 @@ import {
   writeRecapEntry,
 } from './summarize';
 
-/* ---------- lucide 占位 + 挂载（home/ui.ts 同款手法） ---------- */
+/* ---------- lucide 占位 + 挂载（home/ui.ts 同款手法；挂载收编 core/ui mountIcons） ---------- */
 
+/** 手写 HTML 模板里的 <i data-lucide> 占位（渲染后由组件库 mountIcons 统一 setIcon） */
 function iconSpan(name: string, extra = ''): string {
   return `<i data-lucide="${name}" class="bz-ic${extra ? ' ' + extra : ''}"></i>`;
-}
-
-function mountIcons(container: HTMLElement): void {
-  container.querySelectorAll('i[data-lucide]').forEach((el) => {
-    const fresh = uiIcon(el.getAttribute('data-lucide') || '', '');
-    const cls = el.className;
-    if (cls && cls !== 'bz-ic') fresh.className = cls;
-    el.replaceWith(fresh);
-  });
 }
 
 /* ---------- 域展示元数据（图标走 DOMAIN_ICONS 单一事实源） ---------- */
@@ -66,10 +58,11 @@ function dateText(now: number): string {
 /* ---------- 面板骨架 ---------- */
 
 export function createOverlay(app: App): void {
+  // 面板壳走样式库 .bz-panel-overlay/.bz-panel-frame（components.css A 段）；.bz-recap-* 只留尺寸/移动端变体
   const overlay = document.createElement('div');
-  overlay.className = 'bz-recap-overlay';
+  overlay.className = 'bz-panel-overlay bz-recap-overlay';
   overlay.innerHTML = `
-    <div class="bz-recap-panel bz-panel-mtop">
+    <div class="bz-panel-frame bz-recap-panel bz-panel-mtop">
       <div class="bz-recap-head">
         <div class="bz-recap-head-l">
           <span class="bz-recap-title">今日回顾</span>
@@ -223,23 +216,29 @@ async function onGenerateClick(app: App): Promise<void> {
 
 /* ---------- 渲染 ---------- */
 
-/** 摘要格（N/A = 该域读取失败；值文案对齐 R2 摘要行口径） */
-function statHtml(value: string, label: string): string {
-  return `<div class="bz-recap-stat"><span class="bz-recap-stat-v">${value}</span><span class="bz-recap-stat-k">${label}</span></div>`;
+/** 摘要格（uiStat 统计卡基线，--text 文字档；域内 .bz-recap-stat 只补居中排版。
+ *  N/A = 该域读取失败；值文案对齐 R2 摘要行口径） */
+function statEl(value: string, label: string): HTMLDivElement {
+  const el = uiStat({ label, num: value, tone: 'text' });
+  el.classList.add('bz-recap-stat');
+  return el;
 }
 
-function summaryHtml(s: RecapSummary, failed: RecapDomain[]): string {
+function summaryEl(s: RecapSummary, failed: RecapDomain[]): HTMLDivElement {
   const val = (domain: RecapDomain, v: string): string => (failed.includes(domain) ? 'N/A' : v);
   const pom = failed.includes('pomodoro')
     ? 'N/A'
     : `${s.pomodoros} 个 · ${s.pomodoroMinutes} 分钟`;
-  return (
-    statHtml(val('diary', `${s.diary} 条`), '日记')
-    + statHtml(val('cinema', `${s.movies}`), '影视')
-    + statHtml(val('bookshelf', `${s.books}`), '读书')
-    + statHtml(val('todo', `${s.todoDone}`), '待办完成')
-    + statHtml(pom, '番茄')
+  const summary = document.createElement('div');
+  summary.className = 'bz-recap-summary';
+  summary.append(
+    statEl(val('diary', `${s.diary} 条`), '日记'),
+    statEl(val('cinema', `${s.movies}`), '影视'),
+    statEl(val('bookshelf', `${s.books}`), '读书'),
+    statEl(val('todo', `${s.todoDone}`), '待办完成'),
+    statEl(pom, '番茄'),
   );
+  return summary;
 }
 
 function rowHtml(item: RecapItem): string {
@@ -297,10 +296,7 @@ function renderAll(data: RecapData, app: App): void {
   const body = overlay.querySelector('[data-recap-body]') as HTMLElement | null;
   if (!body) return;
   body.innerHTML = '';
-  const summary = document.createElement('div');
-  summary.className = 'bz-recap-summary';
-  summary.innerHTML = summaryHtml(data.summary, data.failed);
-  body.appendChild(summary);
+  body.appendChild(summaryEl(data.summary, data.failed));
   if (data.items.length) {
     const timeline = document.createElement('div');
     timeline.className = 'bz-recap-timeline';

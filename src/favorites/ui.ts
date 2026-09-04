@@ -4,6 +4,8 @@
  * 桌面：整宽头行「收藏本」（仅标题，设置收敛设置面板）+ 左标签栏（全部 + 9 类 + 计数）
  *   + 右内容区——主头行（当前标签 / N 条收藏 / 主按钮「添加收藏」）→ 工具栏
  *   （搜索 + 排序循环钮）→ 单列卡片流。
+ *   面板壳/头行/侧栏（uiRail）/主头行/工具行/搜索/横滑条/候选浮层/空态均消费组件库共享
+ *   类与工厂（ADR-0094）；域 styles.css 只留域内布局。
  * 移动 ≤768：真全屏；头行右上图标组 ＋添加 → ⇅排序 → 🔍搜索(展开) → ✕关闭；
  *   标签 chips 横滑；搜索默认隐藏点 🔍 展开。
  * 交互：桌面点卡片行 = 操作浮层（打开/置顶/跳转笔记/刷新余额/编辑/归档/删除）；
@@ -24,7 +26,8 @@ import { mobileFullscreenGroup } from '../core/settings-common';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { escapeHtml } from '../core/utils';
 import { getApp } from '../core/app';
-import { uiIcon } from '../core/ui';
+import { mountIcons, uiEmpty, uiRail } from '../core/ui';
+import type { BzRailItem } from '../core/ui';
 import { emitDomainEvent } from '../core/domain-bus';
 import { favoritesEditChanges } from '../smartcat/favorites-source';
 import type { SettingsSchema } from '../core/settings-schema';
@@ -128,20 +131,9 @@ function esc(s: unknown): string {
   return escapeHtml(String(s ?? ''));
 }
 
-/** lucide 占位 HTML（渲染后 mountIcons 统一 setIcon） */
+/** lucide 占位 HTML（渲染后 core mountIcons 统一 setIcon） */
 function iconSpan(name: string, extra = ''): string {
   return `<i data-lucide="${name}" class="bz-ic${extra ? ' ' + extra : ''}"></i>`;
-}
-
-/** 容器内 data-lucide 占位 → setIcon 真图标（保持 class 修饰） */
-function mountIcons(container: HTMLElement): void {
-  container.querySelectorAll('i[data-lucide]').forEach((el) => {
-    const name = el.getAttribute('data-lucide') || '';
-    const cls = el.className;
-    const fresh = uiIcon(name as any, '');
-    if (cls && cls !== 'bz-ic') fresh.className = cls;
-    el.replaceWith(fresh);
-  });
 }
 
 /** 本地时间 YYYY-MM-DD HH:mm:ss（created/archivedAt 写入格式） */
@@ -270,10 +262,11 @@ async function refreshBalances(dm: DataManager): Promise<void> {
 // ==================== 主面板结构 ====================
 
 function panelHtml(): string {
-  return `<div class="bz-fav-panel bz-panel-mtop">
-  <div class="bz-fav-head">
-    <div class="bz-fav-title">收藏本</div>
-    <div class="bz-fav-head-btns">
+  return `<div class="bz-fav-panel bz-panel-frame bz-panel-mtop">
+  <div class="bz-panel-head">
+    <div class="bz-panel-title">收藏本</div>
+    <div class="bz-panel-head-sp"></div>
+    <div class="bz-panel-head-btns">
       <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-fav-mob-only" data-fav-add title="添加收藏">${iconSpan(ICON.add)}</button>
       <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-fav-mob-only" data-fav-sort title="排序">${iconSpan(ICON.sort)}</button>
       <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-fav-mob-only" data-fav-mobsearch title="搜索">${iconSpan(ICON.search)}</button>
@@ -281,24 +274,21 @@ function panelHtml(): string {
     </div>
   </div>
   <div class="bz-fav-body">
-    <aside class="bz-fav-side">
-      <div class="bz-fav-side-label">标签</div>
-      <div class="bz-fav-side-scroll" data-fav-tags></div>
-    </aside>
+    <aside data-fav-tags></aside>
     <div class="bz-fav-main">
-      <div class="bz-fav-main-head">
-        <div class="bz-fav-main-title" data-fav-title>全部</div>
-        <div class="bz-fav-main-count" data-fav-count></div>
-        <div class="bz-fav-main-spacer"></div>
-        <button class="bz-btn bz-btn--primary" data-fav-add>${iconSpan(ICON.add, 'bz-ic--sm')} 添加收藏</button>
+      <div class="bz-main-head">
+        <div class="bz-main-title" data-fav-title>全部</div>
+        <div class="bz-main-count" data-fav-count></div>
+        <div class="bz-main-spacer"></div>
+        <button class="bz-btn bz-btn--primary bz-btn--md" data-fav-add>${iconSpan(ICON.add, 'bz-ic--sm')} 添加收藏</button>
       </div>
-      <div class="bz-fav-toolbar">
-        <div class="bz-fav-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-fav-search placeholder="搜索标题 / 简介 / 链接 / 标签…"></div>
-        <button class="bz-btn bz-fav-sort-btn" data-fav-sort>${iconSpan(ICON.sort, 'bz-ic--sm')} <span data-fav-sort-label>最新收藏</span></button>
+      <div class="bz-toolrow">
+        <div class="bz-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-fav-search placeholder="搜索标题 / 简介 / 链接 / 标签…"></div>
+        <button class="bz-btn bz-btn--md bz-fav-sort-btn" data-fav-sort>${iconSpan(ICON.sort, 'bz-ic--sm')} <span data-fav-sort-label>最新收藏</span></button>
       </div>
-      <div class="bz-fav-mobscenes" data-fav-mobtags></div>
+      <div class="bz-mobstrip" data-fav-mobtags></div>
       <div class="bz-fav-mobsearch" data-fav-mobsearch-row>
-        <div class="bz-fav-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-fav-mobsearch-inp placeholder="搜索标题 / 简介 / 链接 / 标签…"></div>
+        <div class="bz-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-fav-mobsearch-inp placeholder="搜索标题 / 简介 / 链接 / 标签…"></div>
       </div>
       <div class="bz-fav-content" data-fav-content></div>
     </div>
@@ -328,7 +318,7 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
   }
   M.sort = readSortKey();
   const overlay = document.createElement('div');
-  overlay.className = 'bz-fav-overlay';
+  overlay.className = 'bz-panel-overlay';
   overlay.innerHTML = panelHtml();
   document.body.appendChild(overlay);
   topifyZ(overlay); // ADR-0067：显示即发号（原静态 z-index:100000 已删）
@@ -366,17 +356,13 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
     if (t.closest('[data-fav-close]')) { closePanel(); return; }
     if (t.closest('[data-fav-mobsearch]')) { toggleMobSearch(overlay); return; }
   });
-  // 左栏 / 移动 chips 标签（统一按 data-fav-tag 处理；__all = 全部；__archived = 已归档视图）
-  overlay.querySelectorAll('[data-fav-tags], [data-fav-mobtags]').forEach((el) => {
+  // 左栏 rail 点击由 uiRail 工厂接管（renderTags 内 onSelect）；移动 chips 走事件委托
+  // （统一 data-fav-tag 语义；__all = 全部；__archived = 已归档视图）
+  overlay.querySelectorAll('[data-fav-mobtags]').forEach((el) => {
     el.addEventListener('click', (e) => {
       const b = (e.target as HTMLElement).closest('[data-fav-tag]') as HTMLElement | null;
       if (!b) return;
-      const label = b.dataset.favTag as string;
-      // 再点当前标签 = 取消筛选回全部；点「全部」= 全部；点「已归档」= 归档视图
-      if (label === '__all') { M.tag = null; M.archived = false; }
-      else if (label === '__archived') { M.tag = null; M.archived = !M.archived; }
-      else { M.archived = false; M.tag = M.tag === label ? null : label; }
-      renderAll();
+      applyTagFilter(b.dataset.favTag as string);
     });
   });
 
@@ -455,32 +441,46 @@ async function reload(): Promise<void> {
 function renderAll(): void {
   if (!M.overlay) return;
   renderTags();
+  renderMobTags(M.overlay);
   renderCount();
   renderContent();
 }
 
+/** 标签筛选切换语义（rail onSelect 与移动 chips 委托共用）：
+ *  再点当前标签 = 取消筛选回全部；点「全部」= 全部；点「已归档」= 归档视图 */
+function applyTagFilter(label: string): void {
+  if (label === '__all') { M.tag = null; M.archived = false; }
+  else if (label === '__archived') { M.tag = null; M.archived = !M.archived; }
+  else { M.archived = false; M.tag = M.tag === label ? null : label; }
+  renderAll();
+}
+
 function renderTags(): void {
   const overlay = M.overlay!;
-  const mkSide = (label: string, emojiOrIcon: string, cnt: number, active: boolean) =>
-    `<button class="bz-fav-side-item${active ? ' bz-fav-nav-active' : ''}" data-fav-tag="${esc(label)}"><span class="bz-fav-side-emoji">${emojiOrIcon}</span><span class="bz-fav-side-name">${esc(label)}</span><span class="bz-fav-nav-cnt">${cnt}</span></button>`;
-  renderTagLists(overlay, mkSide);
+  // 左栏 = 组件库 uiRail（.bz-rail）：前缀 lucide 图标，emoji 数据随名称渲染；
+  // 计数走胶囊档（.bz-rail-count--pill）
+  const items: BzRailItem[] = [
+    { id: '__all', name: '全部', icon: ICON.all, count: visible().length, pill: true },
+    { id: '__archived', name: '已归档', icon: ICON.archived, count: archivedItems().length, pill: true },
+    ...TAGS.map((t) => ({ id: t.label, name: `${t.emoji} ${t.label}`, icon: 'tag', count: tagCount(t.label), pill: true })),
+  ];
+  const rail = uiRail({
+    groups: [{ label: '标签', items }],
+    activeId: M.archived ? '__archived' : (M.tag ?? '__all'),
+    onSelect: applyTagFilter,
+  });
+  (overlay.querySelector('[data-fav-tags]') as HTMLElement).replaceChildren(rail.el);
   const titleEl = overlay.querySelector('[data-fav-title]') as HTMLElement;
   if (M.archived) titleEl.textContent = '已归档';
   else if (M.tag) titleEl.innerHTML = `${tagEmoji(M.tag)} ${esc(M.tag)}`;
   else titleEl.textContent = '全部';
 }
 
-/** 左栏 + 移动 chips 渲染（全部 → 已归档 → 9 类；已归档计数独立于标签） */
-function renderTagLists(overlay: HTMLElement, mkSide: (label: string, emojiOrIcon: string, cnt: number, active: boolean) => string): void {
-  const side = overlay.querySelector('[data-fav-tags]') as HTMLElement;
-  side.innerHTML =
-    mkSide('__all', iconSpan(ICON.all), visible().length, !M.archived && M.tag === null) +
-    mkSide('__archived', iconSpan(ICON.archived), archivedItems().length, M.archived) +
-    TAGS.map((t) => mkSide(t.label, t.emoji, tagCount(t.label), !M.archived && M.tag === t.label)).join('');
-  mountIcons(side);
+/** 移动横滑 chips 渲染（.bz-mobstrip；全部 → 已归档 → 9 类；已归档计数独立于标签） */
+function renderMobTags(overlay: HTMLElement): void {
   const mob = overlay.querySelector('[data-fav-mobtags]') as HTMLElement;
   const mkChip = (label: string, emojiOrIcon: string, cnt: number, active: boolean) =>
-    `<button class="bz-fav-mobchip${active ? ' bz-fav-mobchip-active' : ''}" data-fav-tag="${esc(label)}">${emojiOrIcon}<span>${esc(label)}</span><span class="bz-fav-chip-cnt">${cnt}</span></button>`;
+    `<button class="bz-mobstrip-chip${active ? ' is-on' : ''}" data-fav-tag="${esc(label)}">${emojiOrIcon}<span>${esc(label)}</span><span class="bz-chip-cnt">${cnt}</span></button>`;
   mob.innerHTML =
     mkChip('__all', iconSpan(ICON.all), visible().length, !M.archived && M.tag === null) +
     mkChip('__archived', iconSpan(ICON.archived), archivedItems().length, M.archived) +
@@ -512,10 +512,11 @@ function renderContent(): void {
     const desc = M.q
       ? (archHits > 0 ? `归档中有 ${archHits} 条匹配，左栏「已归档」可查看` : '试试其他关键词，或清除搜索')
       : '点右上角「添加收藏」记一条';
-    content.innerHTML = `<div class="bz-empty"><span class="bz-empty-ic">${iconSpan(ICON.empty)}</span>
-      <div class="bz-empty-title">${M.q ? `没有匹配「${esc(M.q)}」的收藏` : (M.archived ? '暂无归档' : '暂无收藏')}</div>
-      <div class="bz-empty-desc">${desc}</div></div>`;
-    mountIcons(content);
+    content.replaceChildren(uiEmpty({
+      icon: ICON.empty,
+      title: M.q ? `没有匹配「${M.q}」的收藏` : (M.archived ? '暂无归档' : '暂无收藏'),
+      desc,
+    }));
     return;
   }
   content.innerHTML = list.map((it) => cardHtml(it)).join('');
@@ -941,12 +942,13 @@ function notePicker(input: HTMLInputElement): void {
     const matched = files.filter((p) => p && p !== input.value.trim() && (!q || p.toLowerCase().includes(q))).slice(0, 30);
     if (!matched.length) { close(); return; }
     if (!pop) {
+      // 候选浮层走组件库 .bz-popover（锚定所在 .bz-field 下方）
       pop = document.createElement('div');
-      pop.className = 'bz-fav-notepop';
+      pop.className = 'bz-popover';
       input.parentElement!.appendChild(pop);
       document.addEventListener('mousedown', onDocDown, true);
     }
-    pop.innerHTML = matched.map((p) => `<div class="bz-fav-noteopt" data-note="${esc(p)}">${esc(p)}</div>`).join('');
+    pop.innerHTML = matched.map((p) => `<div class="bz-popover-item" data-note="${esc(p)}">${esc(p)}</div>`).join('');
     pop.querySelectorAll('[data-note]').forEach((o) => o.addEventListener('click', () => {
       input.value = (o as HTMLElement).dataset.note as string;
       close();

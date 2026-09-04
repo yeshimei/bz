@@ -14,7 +14,7 @@ import { createOverlay } from '../core/dom';
 import { topifyZ } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
 import { notice, notifyUndo, notifySaveError, notifyActionError } from '../core/notice';
-import { uiBtn, uiIcon, uiIconBtn, uiEmpty } from '../core/ui';
+import { uiBtn, uiIcon, uiIconBtn, uiEmpty, uiProgress } from '../core/ui';
 import { openFlowDialog } from '../core/flow-dialog';
 import type { CheckIssue, CheckupReport } from './types';
 import { getLastCheckupReport, runCheckup, fixOrphanIssues } from './run';
@@ -186,7 +186,7 @@ function cancelRun(): void {
   renderBody();
 }
 
-/** 运行态视图：进度条 + 四项检查清单（等待/进行/完成） */
+/** 运行态视图：进度条 + 四项检查清单（等待/进行/完成）。进度条走组件库 uiProgress（.bz-progress 品牌档） */
 function renderRunning(): void {
   renderFoot();
   const body = bodyEl();
@@ -194,11 +194,7 @@ function renderRunning(): void {
   const progress = document.createElement('div');
   progress.className = 'bz-checkup-progress';
   progress.textContent = '体检中…';
-  const bar = document.createElement('div');
-  bar.className = 'bz-checkup-bar';
-  const fill = document.createElement('i');
-  bar.appendChild(fill);
-  body.append(progress, bar);
+  body.append(progress, uiProgress().el);
 
   const list = document.createElement('div');
   list.className = 'bz-checkup-steps';
@@ -217,11 +213,11 @@ function renderRunning(): void {
   body.appendChild(list);
 }
 
-/** 运行中进度刷新（step 状态 + 进度条；宽度为功能性动态计算） */
+/** 运行中进度刷新（step 状态 + 进度条；宽度为功能性动态计算，写 .bz-progress 内 i 填充） */
 function updateProgress(index: number, total: number, label: string): void {
   if (!popup) return;
   const progress = popup.querySelector('.bz-checkup-progress') as HTMLElement | null;
-  const fill = popup.querySelector('.bz-checkup-bar i') as HTMLElement | null;
+  const fill = popup.querySelector('.bz-progress i') as HTMLElement | null;
   if (progress) progress.textContent = `体检中（${index + 1}/${total}）：${label}`;
   if (fill) fill.style.width = Math.round((index / total) * 100) + '%';
   popup.querySelectorAll<HTMLElement>('.bz-checkup-step').forEach((row) => {

@@ -1086,5 +1086,28 @@ describe('bz ui 组件库', () => {
         vi.restoreAllMocks();
       }
     });
+
+    it('flush()：拖动后不等 300ms 立即落盘尾值；再 flush 幂等不重复落盘', () => {
+      vi.useFakeTimers();
+      try {
+        const { el } = makeBox(720, 580);
+        const save = vi.fn();
+        const det = uiResizable(el, { minW: 720, minH: 520, persist: { save } });
+        fire(el, 'mousedown', 719, 579);
+        fire(document, 'mousemove', 800, 650);
+        fire(document, 'mouseup', 800, 650);
+        expect(save).not.toHaveBeenCalled(); // 防抖期内未落
+        det.flush(); // 不等 300ms 直接落盘尾值
+        expect(save).toHaveBeenCalledTimes(1);
+        expect(save).toHaveBeenCalledWith(801, 651);
+        det.flush(); // 幂等：待存值已清，no-op
+        vi.advanceTimersByTime(300); // 防抖计时器已被清除，不再触发
+        expect(save).toHaveBeenCalledTimes(1); // 不双写
+        det.detach();
+      } finally {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+      }
+    });
   });
 });
