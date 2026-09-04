@@ -17,7 +17,7 @@
  */
 import { getApp } from '../core/app';
 import { emitDomainEvent } from '../core/domain-bus';
-import { CryptoService, clearCryptoKeyCache } from '../password/crypto';
+import { CryptoService, clearCryptoKeyCache } from '../core/crypto';
 
 /** 保险箱数据变更通道（ADR-0078：密码本/保险库等外部消费者订阅；写操作后广播） */
 export const ENCRYPT_CHANGED_CHANNEL = 'encrypt:changed' as const;
