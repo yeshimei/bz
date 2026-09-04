@@ -693,8 +693,9 @@ export class SprintSession {
   }
 
   private mark(kind: 'ok' | 'bad', size: 'lg' | '' = ''): string {
-    if (kind === 'ok') return `<span class="bz-mark ok ${size}">✓</span>`;
-    return `<span class="bz-mark bad ${size}">✕</span>`;
+    // 对错标记：lucide check/x（收尾扫尾：✓/✕ 文本符号退役，渲染后 mountIcons 替换；尺寸随 .bz-mark 字号档）
+    if (kind === 'ok') return `<span class="bz-mark ok ${size}"><i data-lucide="check"></i></span>`;
+    return `<span class="bz-mark bad ${size}"><i data-lucide="x"></i></span>`;
   }
 
   /** innerHTML 渲染后把 [data-lucide] 占位替换为真实 lucide 图标（uiIcon 工厂） */
