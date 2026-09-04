@@ -7,7 +7,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { DEFAULT_SETTINGS } from '../../src/settings';
-import { loadHomeData, saveHomeData, defaultHomeData, homeFilePath, DEFAULT_PINNED } from '../../src/home/data';
+import { loadHomeData, saveHomeData, defaultHomeData, homeFilePath, DEFAULT_PINNED, movePinnedInList } from '../../src/home/data';
 
 describe('home 数据层', () => {
   let vault: MockVault;
@@ -68,5 +68,33 @@ describe('home 数据层', () => {
   it('未知域 id 保留读入（由 UI 层过滤渲染）', async () => {
     vault.files.set('CONFIG/STORAGE/home.json', JSON.stringify({ version: 1, pinned: ['diary', 'ghost-domain'] }));
     expect((await loadHomeData()).pinned).toEqual(['diary', 'ghost-domain']);
+  });
+});
+
+describe('movePinnedInList（钉选排序纯函数，UI 编辑模式 ←/→ 用）', () => {
+  it('右移/左移：与相邻位换位', () => {
+    expect(movePinnedInList(['a', 'b', 'c'], 'a', 1)).toEqual(['b', 'a', 'c']);
+    expect(movePinnedInList(['a', 'b', 'c'], 'c', -1)).toEqual(['a', 'c', 'b']);
+    expect(movePinnedInList(['a', 'b', 'c'], 'b', -1)).toEqual(['b', 'a', 'c']);
+  });
+
+  it('越界（首卡左移/尾卡右移）原样返回：引用相等 = 无变化，调用方可跳过落盘', () => {
+    const l = ['a', 'b'];
+    expect(movePinnedInList(l, 'a', -1)).toBe(l);
+    expect(movePinnedInList(l, 'b', 1)).toBe(l);
+    expect(movePinnedInList(l, 'a', 0)).toBe(l);
+  });
+
+  it('找不到 id 原样返回', () => {
+    const l = ['a', 'b'];
+    expect(movePinnedInList(l, 'zz', 1)).toBe(l);
+  });
+
+  it('非法域 id（已退役 ghost 域）占位不动，排序只在合法域视图内换位', () => {
+    const l = ['a', 'ghost', 'b', 'c'];
+    const out = movePinnedInList(l, 'c', -1, (x) => x !== 'ghost');
+    expect(out).toEqual(['a', 'ghost', 'c', 'b']);
+    const out2 = movePinnedInList(l, 'a', 1, (x) => x !== 'ghost');
+    expect(out2).toEqual(['b', 'ghost', 'a', 'c']);
   });
 });
