@@ -288,13 +288,15 @@
   }
   .bz-cinema-grid { grid-template-columns: repeat(3, 1fr); gap: var(--bz-space-md); }
   .bz-cinema-content { padding: var(--bz-space-md) var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
+  /* 移动端保留桌面主头行（影院是唯一例外）：添加钮抬 ≥40px 触控档（设计手册 §8.2 绝对下限，
+     桌面维持 32px 控件档） */
+  .bz-cinema-main-head .bz-btn { height: var(--bz-control-h-lg); }
 }
 
-/* ---- 触控热区（设计手册 §8.2）：头行图标钮 / 豆瓣直达小图标 ::after 外扩 ---- */
-@media (pointer: coarse) {
-  .bz-cinema-head-btns .bz-icon-btn,
-  .bz-cinema-dm-douban,
-  .bz-cinema-rec-douban { position: relative; }
-  .bz-cinema-head-btns .bz-icon-btn::after { content: ''; position: absolute; inset: -6px; }
-  .bz-cinema-dm-douban::after, .bz-cinema-rec-douban::after { content: ''; position: absolute; inset: -6px; }
-}
+/* ---- 非几何间距归档（自 ui.ts 内联 style 迁入） ---- */
+/* AI 失败重试钮（错误分支独有：guide-ic 带 .bz-cinema-ai-err，待机引导钮不受影响） */
+.bz-cinema-ai-err ~ .bz-cinema-ai-start { margin-top: var(--bz-space-lg); }
+/* AI 待机页「偏好：…」副标行 */
+.bz-cinema-ai-pref { margin-bottom: var(--bz-space-md); }
+/* 删除确认按钮行 */
+.bz-cinema-confirm .bz-btn-row { margin-top: var(--bz-space-lg); }

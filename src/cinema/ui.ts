@@ -382,7 +382,7 @@ function renderAiPageHtml(app: App): string {
         <span class="bz-cinema-ai-guide-ic bz-cinema-ai-err">${iconSpan(ICON.ai)}</span>
         <div class="bz-cinema-ai-guide-title">AI 分析失败</div>
         <div class="bz-cinema-ai-guide-sub">${esc(M.aiError)}</div>
-        <button class="bz-btn bz-btn--primary bz-cinema-ai-start" data-cinema-ai-start style="margin-top:16px;">重试</button>
+        <button class="bz-btn bz-btn--primary bz-cinema-ai-start" data-cinema-ai-start>重试</button>
       </div></div>`;
   }
   if (M.aiResult && M.aiResult.length > 0) {
@@ -391,7 +391,7 @@ function renderAiPageHtml(app: App): string {
   // 待机：引导页
   const profile = buildTasteProfile();
   let html = `<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title">${iconSpan(ICON.ai)}${esc(M.aiTitle)}</span><span class="bz-cinema-page-sub">基于 ${profile.total} 部已看影视的口味画像</span></div>`;
-  html += '<div class="bz-cinema-page-sub" style="margin-bottom:12px;">偏好：' + (profile.groups[0] || '暂无') + ' · ' + (profile.genres[0] || '—') + ' · ' + (profile.directors[0] || '—') + ' · ' + (profile.actors[0] || '—') + '</div>';
+  html += '<div class="bz-cinema-page-sub bz-cinema-ai-pref">偏好：' + (profile.groups[0] || '暂无') + ' · ' + (profile.genres[0] || '—') + ' · ' + (profile.directors[0] || '—') + ' · ' + (profile.actors[0] || '—') + '</div>';
   html += '<div class="bz-cinema-ai-guide">';
   html += `<span class="bz-cinema-ai-guide-ic">${iconSpan(ICON.ai)}</span>`;
   html += '<div class="bz-cinema-ai-guide-title">AI 正在分析你的观影口味</div>';
@@ -416,7 +416,7 @@ function renderAIResultList(app: App): string {
       : `<button class="bz-icon-btn bz-icon-btn--accent bz-cinema-rec-add" data-rec-add="${i}" title="加入想看">${iconSpan(ICON.add)}</button>`;
     return `<div class="bz-cinema-rec-card${inLib ? ' bz-cinema-rec-card--inlib' : ''}" data-rec-idx="${i}">
       <div class="bz-cinema-rec-main">
-        <div class="bz-cinema-rec-name">《${esc(name)}》${esc(year)}<a class="bz-cinema-rec-douban" href="${esc(doubanSearchUrl(name))}" target="_blank" rel="noopener" title="在豆瓣搜索「${esc(name)}」">${iconSpan(ICON.ext, 'bz-ic--xs')}</a></div>
+        <div class="bz-cinema-rec-name">《${esc(name)}》${esc(year)}<a class="bz-touch-target bz-cinema-rec-douban" href="${esc(doubanSearchUrl(name))}" target="_blank" rel="noopener" title="在豆瓣搜索「${esc(name)}」">${iconSpan(ICON.ext, 'bz-ic--xs')}</a></div>
         ${meta ? `<div class="bz-cinema-rec-meta">${esc(meta)}</div>` : ''}
         ${reason ? `<div class="bz-cinema-rec-reason">${esc(reason)}</div>` : ''}
       </div>
@@ -532,7 +532,7 @@ function openDetail(item: CinemaItem, app: App): void {
     rows.forEach(([k, v]) => { body += `<div class="bz-cinema-kv"><span class="bz-cinema-kv-k">${k}</span><span class="bz-cinema-kv-v">${esc(v)}</span></div>`; });
   }
   // 豆瓣直达（增强包需求 6）：链接行附「豆瓣页面」外链按钮
-  if (item.doubanUrl) body += `<div class="bz-cinema-kv"><span class="bz-cinema-kv-k">豆瓣链接</span><span class="bz-cinema-kv-v"><a href="${esc(item.doubanUrl)}" target="_blank" rel="noopener">${esc(item.doubanUrl)}</a><a class="bz-btn bz-btn--ghost bz-btn--sm bz-cinema-dm-douban" href="${esc(item.doubanUrl)}" target="_blank" rel="noopener">${iconSpan(ICON.ext, 'bz-ic--xs')}豆瓣页面</a></span></div>`;
+  if (item.doubanUrl) body += `<div class="bz-cinema-kv"><span class="bz-cinema-kv-k">豆瓣链接</span><span class="bz-cinema-kv-v"><a href="${esc(item.doubanUrl)}" target="_blank" rel="noopener">${esc(item.doubanUrl)}</a><a class="bz-btn bz-btn--ghost bz-btn--sm bz-touch-target bz-cinema-dm-douban" href="${esc(item.doubanUrl)}" target="_blank" rel="noopener">${iconSpan(ICON.ext, 'bz-ic--xs')}豆瓣页面</a></span></div>`;
   if (item.synopsis) body += `<div class="bz-cinema-sec-title">简介</div><div class="bz-cinema-synopsis">${esc(item.synopsis)}</div>`;
   body += `<div class="bz-cinema-form-actions"><button class="bz-btn bz-btn--ghost" data-cinema-dm-similar>${iconSpan(ICON.ai, 'bz-ic--sm')}找同类</button><button class="bz-btn bz-btn--ghost" data-cinema-dm-edit>${iconSpan(ICON.edit, 'bz-ic--sm')}编辑</button><button class="bz-btn bz-btn--danger" data-cinema-dm-del>${iconSpan(ICON.del, 'bz-ic--sm')}删除</button></div>`;
   const { popup, close } = uiModal({ content: body, maxWidth: 400, className: 'bz-cinema-dm' });
@@ -761,7 +761,7 @@ function openDeleteConfirm(item: CinemaItem, app: App): void {
     <div class="bz-cinema-confirm-title">删除影视</div>
     <p>确定删除「${esc(item.name)}」吗？</p>
     <div class="bz-cinema-confirm-sub">将移入系统回收站，可在回收站恢复</div>
-    <div class="bz-btn-row bz-btn-row--center" style="margin-top:16px;">
+    <div class="bz-btn-row bz-btn-row--center">
       <button class="bz-btn bz-btn--ghost" id="bz-cinema-d-cancel">取消</button>
       <button class="bz-btn bz-btn--danger" id="bz-cinema-d-del">删除</button>
     </div></div>`;
@@ -850,9 +850,9 @@ function openQuickStatus(item: CinemaItem, app: App): void {
 
 // ---------- 主 overlay ----------
 
-/** 头部图标钮 HTML（移动端工具/关闭） */
+/** 头部图标钮 HTML（移动端工具/关闭；bz-touch-target 触控热区收编 core 共享类） */
 function iconBtnHTML(icon: string, title: string, extraCls: string, toolAttr: string): string {
-  return `<button class="bz-icon-btn${extraCls ? ' ' + extraCls : ''}" data-cinema-tool="${toolAttr}" title="${title}">${iconSpan(icon)}</button>`;
+  return `<button class="bz-icon-btn bz-touch-target${extraCls ? ' ' + extraCls : ''}" data-cinema-tool="${toolAttr}" title="${title}">${iconSpan(icon)}</button>`;
 }
 
 export function createOverlay(app: App): void {
