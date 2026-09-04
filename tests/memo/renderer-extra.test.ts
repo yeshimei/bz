@@ -2,7 +2,7 @@
  * bz Renderer 补测（覆盖率目标）：createPositionTag/createCourseTag 跳转分支、
  * createDueTag 三色、createSceneTag 优先级、createPlatformTag、createCard 链接三分支。
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { setBzSettingsProvider } from '../../src/memo';
@@ -125,6 +125,15 @@ describe('Renderer.createScriptTag / createPlatformTag', () => {
 });
 
 describe('Renderer.createSceneTag / createDueTag', () => {
+  beforeEach(() => {
+    // fake timers 钉死系统时钟：+5 分钟样本在 23:55 后会跨午夜，「今天」口径翻转成明天（对齐 todo due.test.ts 先例）
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 7, 10, 12, 0)); // 2026-08-10（周一）正午
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('createSceneTag：重要红色背景，次要默认', () => {
     const imp = Renderer.createSceneTag(baseItem({ priority: 'important' }));
     expect(imp.classList.contains('important')).toBe(true); // 红色背景由 .bz-tag-scene.important 提供
@@ -136,7 +145,7 @@ describe('Renderer.createSceneTag / createDueTag', () => {
     const overdue = Renderer.createDueTag(baseItem({ due: '2020-01-01 10:00' }));
     expect(overdue.textContent).toContain('');
     expect(overdue.classList.contains('overdue')).toBe(true); // 红色背景由 .bz-tag-due.overdue 提供
-    const now = new Date(Date.now() + 5 * 60000); // +5 分钟，保证未过期
+    const now = new Date(Date.now() + 5 * 60000); // +5 分钟，保证未过期（时钟已钉死，不跨午夜）
     const pad = (n: number) => String(n).padStart(2, '0');
     const todayDue = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
     const today = Renderer.createDueTag(baseItem({ due: todayDue }));

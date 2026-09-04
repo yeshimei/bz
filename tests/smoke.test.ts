@@ -68,7 +68,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-favorites-open', 'bz-favorites-add',
   // 旧书库（library）域退役：bz-library-open/bz-book-notes-open 已删（读书笔记入书架墙详情弹窗）
   'bz-reading-report-open',
-  'bz-movie-report', // ADR-0087：旧 bz-movie-open/bz-movie-add 退役，报告命令保留
+  // ADR-0090：独立报告窗退役，原报告命令 id 换 bz-cinema-analysis（直达影院面板分析页）
+  'bz-cinema-analysis',
   'bz-cinema-open', 'bz-cinema-add',
   // 书架墙（bookshelf 域，新域与书库并存）
   'bz-bookshelf-open',
@@ -159,7 +160,8 @@ describe('bz 骨架冒烟', () => {
     // f7：重复图标去重——message-circle 各只出现一次（clapperboard 随 movie-add 退役已无）
     const icons = registeredCommands.map((c: any) => c.icon);
     expect(icons.filter((i: string) => i === 'message-circle')).toHaveLength(1);
-    expect(byId('bz-movie-report').icon).toBe('pie-chart');
+    expect(byId('bz-cinema-analysis').icon).toBe('pie-chart');
+    expect(byId('bz-cinema-analysis').name).toBe('影视分析报告');
     expect(byId('bz-smartcat-chat').icon).toBe('messages-square');
   });
 
