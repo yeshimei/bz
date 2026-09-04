@@ -146,10 +146,10 @@
 .bz-bs-bar.this { background: var(--bz-brand); }
 .bz-bs-bar.zero { background: var(--bz-surface-hover); }
 .bz-bs-bar span {
-  position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
-  font-size: 9px; color: var(--bz-text-3); font-weight: var(--bz-weight-semibold);
+  position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+  font-size: var(--bz-font-caption); color: var(--bz-text-3); font-weight: var(--bz-weight-semibold);
 }
-.bz-bs-bar-label { font-size: 9px; color: var(--bz-text-3); white-space: nowrap; }
+.bz-bs-bar-label { font-size: var(--bz-font-caption); color: var(--bz-text-3); white-space: nowrap; }
 .bz-bs-chart-foot { display: flex; justify-content: space-between; font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-top: 4px; }
 
 /* 移动统计 2 卡（移动端显示，桌面隐藏） */
@@ -181,8 +181,8 @@
   color: var(--bz-text-3);
 }
 .bz-bs-cover-ph .bz-ic { width: 34px; height: 34px; }
-/* hover 上抬（原型强调保留的唯一动效） */
-.bz-bs-book:hover .bz-bs-cover-wrap { transform: translateY(-4px); box-shadow: 0 10px 18px rgba(0, 0, 0, 0.16); }
+/* hover 上抬（原型强调保留的唯一动效；阴影走 token 档，不留死色值） */
+.bz-bs-book:hover .bz-bs-cover-wrap { transform: translateY(-4px); box-shadow: var(--bz-shadow-sm); }
 /* 状态圆点（右上角） */
 .bz-bs-statusdot {
   position: absolute; top: 7px; right: 7px; width: 9px; height: 9px;
