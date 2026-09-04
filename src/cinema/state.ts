@@ -56,6 +56,8 @@ export interface CinemaState {
   aiResult: any[] | null;
   aiError: string | null;
   aiTitle: string;
+  /** 找同类基准影片（「换一批」按基准重跑；荐片为 null） */
+  aiBase: CinemaItem | null;
 }
 
 export const M: CinemaState = {
@@ -79,6 +81,7 @@ export const M: CinemaState = {
   aiResult: null,
   aiError: null,
   aiTitle: 'AI 荐片',
+  aiBase: null,
 };
 
 /** 测试/重建用：整体重置模块状态 */
@@ -103,4 +106,5 @@ export function resetCinemaState(): void {
   M.aiResult = null;
   M.aiError = null;
   M.aiTitle = 'AI 荐片';
+  M.aiBase = null;
 }

@@ -1,7 +1,7 @@
 /**
  * 书架墙（bookshelf）域数据层：书库 md 书目解析 / EPUB(weave-data) 条目 / 排序 / 筛选 / 统计。
  * 复刻迁移自旧 src/library/items.ts（同语义、独立实现；新旧域并存互不依赖）。
- * - md 书：书库目录（bookshelfFolderPath 回落 libraryFolderPath）下 frontmatter tags 含 bookTag 的笔记
+ * - md 书：书库目录（bookshelfFolderPath 空 = 运行时回落旧 libraryFolderPath 存量值）下 frontmatter tags 含 bookTag（旧键存量值）的笔记
  * - EPUB 书：<weaveDataPath>/weave-data.json 聚合（ADR-0013 口径；与旧域同源同格式）
  * - status 派生：readingDate && !completionDate → 在读；都有 → 已读；否则未读
  */
@@ -16,7 +16,8 @@ export const WEAVE_DATA_FILE = 'weave-data.json';
 const DEFAULT_WEAVE_DATA_FILE = WEAVE_DATA_FILE;
 const COVER_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
 
-/** 书库文件夹：新设置键优先，回落旧 libraryFolderPath，最终回落「书库」 */
+/** 书库文件夹：新设置键优先；旧键 libraryFolderPath 已随 library 域退役从接口删除，
+ *  此处运行时读存量值（用户 data.json 可能仍存有该键），零感知迁移；最终回落「书库」 */
 export function resolveFolderPath(): string {
   const s = tryGetSettings() as Record<string, unknown>;
   const v = typeof s.bookshelfFolderPath === 'string' && s.bookshelfFolderPath.trim()
@@ -27,7 +28,7 @@ export function resolveFolderPath(): string {
   return v.replace(/^\/+|\/+$/g, '');
 }
 
-/** 书标签（与旧 library 域共享同一键：同一批书两域同显） */
+/** 书标签：bookTag 键已随 library 域退役从接口删除——运行时读存量值（零感知迁移），缺省 'book' */
 export function resolveBookTag(): string {
   const s = tryGetSettings() as Record<string, unknown>;
   return typeof s.bookTag === 'string' && s.bookTag.trim() ? s.bookTag.trim() : 'book';

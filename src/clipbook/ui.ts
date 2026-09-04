@@ -2,17 +2,22 @@
  * clipbook（剪藏本融合域，ADR-0082 / issue 177）：主面板 UI。
  *
  * 桌面三栏（rail 源列表 / 中栏条目 / 右栏阅读）+ 移动端双屏（源胶囊列表 / 详情+头栏保存钮）。
- * 对齐拍板原型 clipping-p3-siteboxes.html 的结构与极简口味：头行仅品牌+标题+「聚合讯已接入」，
+ * 对齐拍板原型 clipping-p3-siteboxes.html 的结构与极简口味：头行仅品牌+标题+副题「未读流与剪藏」，
  * 无右上角图标（关闭=点遮罩/ESC；移动真全屏有 ✕）；动作收进条目右键菜单（item-actions 复用）；
  * 「阅读分析数据」沉底左栏底部。
+ *
+ * 增强包（enh-clipbook）：桌面搜索（180ms 防抖）/ 移动长按抽屉（动作与桌面右键同源）/
+ * 右栏读剪藏正文（cachedRead + 缓存）/ rail 源行批量已读 / 误删误标可撤销（notifyUndo）/
+ * 阅读动线（10s 自动落在读、处理后前进下一篇、←→/jk 切换）/ 阅读字号三档 /
+ * 桌面面板拖拽缩放 + 尺寸记忆（ADR-0084 先例）。
  *
  * 铁律 6：基线全部消费组件库（.bz-* 类与 --bz-* token）；本文件只管布局骨架 + 交互，
  * 域独有视觉在 styles.css（.bz-clip-*）。
  */
 import { getApp } from '../core/app';
-import { notice } from '../core/notice';
-import { uiIcon } from '../core/ui';
-import { applyMobileWindowFullscreen } from '../core/mobile';
+import { notice, notifyUndo } from '../core/notice';
+import { uiIcon, uiSegmented, uiResizable } from '../core/ui';
+import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { escManager } from '../core/esc-manager';
 import { topifyZ, createSiteIcon } from '../core/dom';
 import { formatRelativeTime } from '../core/utils';
@@ -20,17 +25,20 @@ import { attachItemActions, closeItemMenu, type ItemAction } from '../core/item-
 import { openFlowDialog } from '../core/flow-dialog';
 import { openSettingsModal } from '../core/settings-modal';
 import type { SettingsSchema } from '../core/settings-schema';
-import { tryGetSettings } from '../core/settings-provider';
+import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { ensureAutoSummary, stopAutoSummary } from '../auto-summary';
 import { buildNewsSourcesGroup } from './news-sources-group';
 import { batchSizeRow, mobileFullscreenGroup } from '../core/settings-common';
 import type { ClipArticle } from './types';
 import { esc } from './constants';
-import { toParagraphs } from './md';
+import { toParagraphs, stripClipChrome } from './md';
 import { queryBySource } from './store';
 import { M, resetClipbookState } from './state';
 import { readNewsAndSidecar, clipDir } from './loader';
-import { flowSave, flowMarkRead, flowToggleReading, flowDeleteNews, setReadingSession, pauseReadingSession } from './flow';
+import {
+  flowSave, flowMarkRead, flowToggleReading, flowDeleteNews, setReadingSession, pauseReadingSession,
+  flowMarkAllRead, flowUndoHandled, flowUndoDeleteNews,
+} from './flow';
 import type { ClipNote } from './scan';
 
 // ================= 模块级 UI 引用 =================
@@ -38,6 +46,7 @@ let overlayEl: HTMLElement | null = null;
 let railListEl: HTMLElement | null = null;
 let listEl: HTMLElement | null = null;
 let readerEl: HTMLElement | null = null;
+let readPaneEl: HTMLElement | null = null; // .bz-clip-read（键盘导航/打开笔记委托的常驻容器）
 let mobSourcesEl: HTMLElement | null = null;
 let mobListEl: HTMLElement | null = null;
 let mobDetailEl: HTMLElement | null = null;
@@ -45,12 +54,32 @@ let mobTitleEl: HTMLElement | null = null;
 let mobSaveBtnEl: HTMLElement | null = null;
 let analyBtnEl: HTMLElement | null = null;
 let mobSearchbarEl: HTMLElement | null = null;
+let deskSearchEl: HTMLInputElement | null = null; // 桌面搜索输入
 let escKey = '';
 let escHandle: { unregister(): void } | null = null;
 let escRegistered = false;
 let loading = false;
 let dirty = false; // 数据变化待刷标志（目录事件回调期）
 let loaded = false; // C5：本次会话是否已成功装载过（false = 首开必须装载）
+
+// ================= 增强包常量与状态 =================
+const SEARCH_DEBOUNCE_MS = 180; // 对齐保险库/待办
+let AUTO_READING_MS = 10000; // 右栏停留超 10s 自动落「在读」（测试可缩短）
+const PANEL_MIN_W = 760; // 桌面缩放钳制（三栏骨架最小可读宽度）
+const PANEL_MIN_H = 520;
+const PANEL_MAX_W = 1600;
+const PANEL_MAX_H = 1000;
+/** 剪藏正文缓存（notePath → 剥 frontmatter 后正文；clipping:file-* 目录事件失效） */
+const clipBodyCache = new Map<string, string>();
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let autoReadingTimer: ReturnType<typeof setTimeout> | null = null;
+let panelResizeDetach: { detach: () => void } | null = null;
+let pendingSizeTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** 测试钩子：缩短自动落「在读」的停留阈值（真机恒 10s） */
+export function __autoReadingDelayForTests(ms: number): void {
+  AUTO_READING_MS = ms;
+}
 
 // ================= 图标（lucide，禁 emoji） =================
 const ICO = {
@@ -124,6 +153,8 @@ export function reloadIfOpen(): void {
 /** 关闭面板（隐藏 overlay；DOM 保留——重开零扫描复用缓存；unloadPanel 才移除） */
 export function closePanel(): void {
   pauseReadingSession();
+  disarmAutoReading();
+  flushPendingSize(); // 防抖窗口内关闭：立即落盘面板尺寸（照 todo T2）
   M.open = false;
   M.mobDetailOpen = false;
   if (overlayEl) overlayEl.style.display = 'none';
@@ -138,6 +169,17 @@ export function unloadPanel(): void {
     escHandle = null;
     escRegistered = false;
   }
+  disarmAutoReading();
+  if (searchDebounceTimer !== null) {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = null;
+  }
+  if (panelResizeDetach) {
+    panelResizeDetach.detach();
+    panelResizeDetach = null;
+  }
+  flushPendingSize();
+  clipBodyCache.clear();
   M.open = false;
   M.mobDetailOpen = false;
   loading = false;
@@ -146,6 +188,15 @@ export function unloadPanel(): void {
   loaded = false;
   if (overlayEl) overlayEl.remove();
   overlayEl = null;
+  readerEl = null;
+  readPaneEl = null;
+  railListEl = null;
+  listEl = null;
+  mobListEl = null;
+  mobSourcesEl = null;
+  mobDetailEl = null;
+  mobSearchbarEl = null;
+  deskSearchEl = null;
   resetClipbookState();
 }
 
@@ -163,8 +214,9 @@ function buildDom(app: any): void {
           <div class="bz-clip-brand">${iconSpan('scissors', 'bz-ic--sm')}</div>
           <div class="bz-clip-title">剪藏本</div>
           <div class="bz-clip-head-pipe"></div>
-          <div class="bz-clip-head-sub">聚合讯已接入</div>
+          <div class="bz-clip-head-sub">未读流与剪藏</div>
           <div class="bz-clip-head-sp"></div>
+          <div class="bz-clip-search">${iconSpan('search')}<input class="bz-input" type="text" data-clip-desk-search placeholder="搜索标题、摘要、站点、标签"></div>
         </div>
         <div class="bz-clip-desk-body">
           <div class="bz-clip-rail">
@@ -176,7 +228,7 @@ function buildDom(app: any): void {
           <div class="bz-clip-mid">
             <div class="bz-clip-list" data-clip-list></div>
           </div>
-          <div class="bz-clip-read">
+          <div class="bz-clip-read" data-clip-read-pane tabindex="0">
             <div class="bz-clip-read-scroll"><div class="bz-clip-read-body" data-clip-reader></div></div>
           </div>
         </div>
@@ -210,6 +262,7 @@ function buildDom(app: any): void {
   railListEl = overlayEl.querySelector('[data-clip-rail]');
   listEl = overlayEl.querySelector('[data-clip-list]');
   readerEl = overlayEl.querySelector('[data-clip-reader]');
+  readPaneEl = overlayEl.querySelector('[data-clip-read-pane]');
   mobSourcesEl = overlayEl.querySelector('[data-clip-mob-sources]');
   mobListEl = overlayEl.querySelector('[data-clip-mob-list]');
   mobDetailEl = overlayEl.querySelector('[data-clip-mob-detail]');
@@ -222,6 +275,7 @@ function buildDom(app: any): void {
   mobSearchbarEl = overlayEl.querySelector('[data-clip-mob-searchbar]') as HTMLElement;
   const mobSearchbar = mobSearchbarEl;
   const mobInput = overlayEl.querySelector('[data-clip-mob-input]') as HTMLInputElement;
+  deskSearchEl = overlayEl.querySelector('[data-clip-desk-search]') as HTMLInputElement;
 
   // 点遮罩关闭（桌面无关闭钮）
   overlayEl.addEventListener('click', (e) => {
@@ -233,7 +287,25 @@ function buildDom(app: any): void {
     if (!row) return;
     selectSource(JSON.parse(row.dataset.src || 'null'));
   });
-  // 中栏条目点击 → 阅读；右键 → item-actions（卡片内挂）
+  // 桌面搜索（enh 包 1）：180ms 防抖对齐保险库/待办
+  deskSearchEl!.addEventListener('input', () => {
+    if (searchDebounceTimer !== null) clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      searchDebounceTimer = null;
+      setSearchKw(deskSearchEl ? deskSearchEl.value.trim() : '');
+      renderList();
+      renderRail();
+    }, SEARCH_DEBOUNCE_MS);
+  });
+  // 右栏常驻委托（enh 包 3/6c）：「打开笔记」点击 + ←→/jk 条目切换（字号分段内按键不劫持）
+  readPaneEl!.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).closest('[data-clip-open-note]') && M.cur) openNote(M.cur);
+  });
+  readPaneEl!.addEventListener('keydown', (e) => {
+    if ((e.target as HTMLElement).closest('.bz-segmented')) return; // 字号分段方向键归组件库
+    if (e.key === 'ArrowLeft' || e.key === 'k') { e.preventDefault(); stepArticle(-1); }
+    else if (e.key === 'ArrowRight' || e.key === 'j') { e.preventDefault(); stepArticle(1); }
+  });
   // 阅读分析数据
   analyBtnEl!.addEventListener('click', () => {
     closePanel();
@@ -269,7 +341,19 @@ function buildDom(app: any): void {
     close: () => closePanel(),
   });
   escRegistered = true;
-  applyMobileWindowFullscreen(overlayEl.querySelector('.bz-clip-frame') as HTMLElement, mobileFullscreenDefault());
+  const frameEl = overlayEl.querySelector('.bz-clip-frame') as HTMLElement;
+  applyMobileWindowFullscreen(frameEl, mobileFullscreenDefault());
+  // 桌面面板拖拽缩放 + 尺寸记忆（enh 包 8，照 todo ADR-0084 先例）：仅桌面写内联宽高——
+  // 内联样式优先级高于移动端媒体查询的满屏规则；uiResizable 自身对触屏也空操作兜底
+  if (!isMobileEnv()) {
+    const saved = savedPanelSize();
+    frameEl.style.width = `${saved.w}px`;
+    frameEl.style.height = `${saved.h}px`;
+    panelResizeDetach = uiResizable(frameEl, {
+      minW: PANEL_MIN_W, minH: PANEL_MIN_H, maxW: PANEL_MAX_W, maxH: PANEL_MAX_H,
+      onChange: (w, h) => rememberPanelSize(w, h),
+    });
+  }
   // 移动源胶囊点击（委托，含搜索态）
   mobSourcesEl!.addEventListener('click', (e) => {
     const chip = (e.target as HTMLElement).closest('[data-src]') as HTMLElement | null;
@@ -302,6 +386,7 @@ function selectSource(src: any): void {
   };
   M.mobDetailOpen = false;
   setSearchKw('');
+  if (deskSearchEl) deskSearchEl.value = '';
   renderAll();
 }
 
@@ -409,6 +494,51 @@ function renderRail(): void {
   html += railItemHtml({ kind: 'clip' }, '剪藏本', clips, 0, 'clip', '', clipActive, '');
 
   railListEl.innerHTML = html;
+  // rail 源行动作（enh 包 4）：右键/长按出「全部标为已读」等源级批量操作——
+  // rail 是导航层，动作挂在源行而非条目卡，中栏「列表零操作」拍板不被破坏
+  const rows = railListEl.querySelectorAll<HTMLElement>('[data-src]');
+  rows.forEach((row) => {
+    let sel: any = null;
+    try { sel = JSON.parse(row.dataset.src || 'null'); } catch (e) { return; }
+    if (!sel) return;
+    const source = sel.kind === 'clip'
+      ? { kind: 'clip' as const }
+      : sel.kind === 'inbox'
+        ? { kind: 'inbox' as const, platform: String(sel.platform || ''), up: sel.up ? String(sel.up) : undefined }
+        : { kind: 'all' as const };
+    const actions = buildRailActions(String(row.title || ''), source);
+    if (actions.length) attachItemActions(row, actions, { sheetTitle: String(row.title || '') });
+  });
+}
+
+/** rail 源级动作（enh 包 4）：该源还有未读时提供「全部标为已读」；剪藏本源无未读语义不挂 */
+function buildRailActions(label: string, source: { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' }): ItemAction[] {
+  const unreadList = queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], source, M.upInfo)
+    .filter((a) => a.origin === 'news');
+  if (!unreadList.length) return [];
+  const n = unreadList.length;
+  return [{
+    icon: 'check',
+    label: `全部标为已读（${n} 篇）`,
+    title: `把「${label}」的 ${n} 篇未读标为已读`,
+    onClick: () => void markAllRead(label, unreadList),
+  }];
+}
+
+/** 批量已读：确认框写明 N 篇 → 单次读改写落盘 */
+async function markAllRead(label: string, items: ClipArticle[]): Promise<void> {
+  const ok = await openFlowDialog({
+    title: '全部标为已读',
+    message: `将把「${label}」的 ${items.length} 篇未读全部标为已读。`,
+    actions: [
+      { label: '取消', value: 'cancel' },
+      { label: `全部已读（${items.length} 篇）`, value: 'ok', cta: true },
+    ],
+  });
+  if (ok !== 'ok') return;
+  await flowMarkAllRead(items.map((a) => a.raw).filter(Boolean));
+  notice(`已把 ${items.length} 篇标为已读`, 'success');
+  await refreshAfterAction();
 }
 
 // ================= 渲染：中栏列表 =================
@@ -519,22 +649,39 @@ function buildItemActions(a: ClipArticle): ItemAction[] {
 }
 
 // ================= 渲染：右栏阅读 =================
+function paragraphsHtml(body: string): string {
+  return toParagraphs(body).map((p) =>
+    p.type === 'quote'
+      ? `<blockquote>${esc(p.text)}</blockquote>`
+      : `<p>${esc(p.text)}</p>`
+  ).join('');
+}
+
 function renderReader(): void {
   if (!readerEl) return;
   const a = M.cur;
+  applyReaderFontSize();
   if (!a) {
     readerEl.innerHTML = `<div class="bz-clip-read-empty">${iconSpan('book-open')}<span>从列表选择一篇文章开始阅读</span></div>`;
     return;
   }
   setReadingSession(a.id);
+  armAutoReading(a);
   const stLabel = a.st === 'saved' ? '已保存' : a.st === 'reading' ? '在读' : a.st === 'read' ? '已读' : '未读';
   const flagCls = a.st === 'saved' ? 'ok' : a.st === 'reading' ? 'warn' : 'info';
   const siteIcon = a.domain ? siteIconHtml(a.domain) : favChip(a.site);
-  const paras = a.body ? toParagraphs(a.body).map((p) =>
-    p.type === 'quote'
-      ? `<blockquote>${esc(p.text)}</blockquote>`
-      : `<p>${esc(p.text)}</p>`
-  ).join('') : '';
+  // 正文（enh 包 3）：news 现算；clip 懒加载 cachedRead → 剥 frontmatter → 段落化，按 path 缓存
+  let paras = '';
+  if (a.origin === 'clip') {
+    const cached = a.notePath ? clipBodyCache.get(a.notePath) : undefined;
+    paras = cached !== undefined ? paragraphsHtml(cached) : `<p class="dim">正在读取剪藏正文…</p>`;
+  } else {
+    paras = a.body ? paragraphsHtml(a.body) : '';
+  }
+  // 「打开笔记」主按钮（enh 包 3：右栏读剪藏正文后保留笔记入口）
+  const openNoteBtn = a.origin === 'clip' && a.notePath
+    ? `<div class="bz-clip-art-actions"><button class="bz-btn bz-btn--primary bz-btn--sm" data-clip-open-note type="button">${iconSpan('external-link', 'bz-ic--xs')}打开笔记</button></div>`
+    : '';
 
   readerEl.innerHTML = `
     <div class="bz-clip-art-site">${siteIcon}<span class="bz-clip-art-site-name">${esc(a.srcName)}</span>${a.typeLabel ? `<span class="bz-clip-art-type">${esc(a.typeLabel)}</span>` : ''}</div>
@@ -543,10 +690,120 @@ function renderReader(): void {
       <span>${esc(a.timeText || relTime(a.timeTs))}</span>
       <span class="bz-clip-art-flag ${flagCls}">${iconSpan(a.st === 'saved' ? 'check' : a.st === 'reading' ? 'book-open' : 'mail', 'bz-ic--xs')}${stLabel}</span>
     </div>
+    <div class="bz-clip-art-fs" data-clip-fs></div>
     ${a.summary ? `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan('sparkles', 'bz-ic--xs')}摘要</span>${esc(a.summary)}</div>` : ''}
-    <div class="bz-clip-art-md">${paras || `<p class="dim">${esc(a.body ? a.body : a.origin === 'clip' ? '' : '正文已清空（已处理条目）')}</p>`}</div>
+    ${openNoteBtn}
+    <div class="bz-clip-art-md" data-clip-md>${paras || `<p class="dim">${esc(a.origin === 'clip' ? '（笔记暂无正文）' : '正文已清空（已处理条目）')}</p>`}</div>
     ${a.origin === 'news' && a.url ? `<a class="bz-clip-art-origin" href="${esc(a.url)}" target="_blank" rel="noopener">查看原文 ${iconSpan('external-link', 'bz-ic--xs')}</a>` : ''}
   `;
+  mountFontSizeSeg();
+  if (a.origin === 'clip') void loadClipBody(a);
+}
+
+/** 剪藏正文懒加载（enh 包 3）：cachedRead → 剥 frontmatter/dataviewjs → 按 path 缓存；
+ *  完成时仍是当前篇则原位填充正文（不整篇重渲染，防滚动位置重置） */
+async function loadClipBody(a: ClipArticle): Promise<void> {
+  const path = a.notePath;
+  if (!path || clipBodyCache.has(path)) return;
+  const note = a.note as ClipNote | undefined;
+  if (!note || !note.file) return;
+  let body = '';
+  try {
+    body = stripClipChrome(await getApp().vault.cachedRead(note.file));
+  } catch (e) {
+    if (M.cur && M.cur.id === a.id && readerEl) {
+      const md = readerEl.querySelector('[data-clip-md]') as HTMLElement | null;
+      if (md) md.innerHTML = `<p class="dim">正文读取失败，可打开笔记查看</p>`;
+    }
+    return;
+  }
+  clipBodyCache.set(path, body);
+  if (M.cur && M.cur.id === a.id && readerEl) {
+    const md = readerEl.querySelector('[data-clip-md]') as HTMLElement | null;
+    if (md) md.innerHTML = body ? paragraphsHtml(body) : `<p class="dim">（笔记暂无正文）</p>`;
+  }
+}
+
+/** 目录事件失效正文缓存（enh 包 3；index.ts registerAutoRefresh 调用） */
+export function invalidateClipBodyCache(path: string): void {
+  clipBodyCache.delete(String(path || ''));
+}
+
+// ---- 阅读字号三档（enh 包 7：小/中/大，settings 记忆） ----
+function readerFontSize(): 'small' | 'medium' | 'large' {
+  const v = String((tryGetSettings() as any)?.clipbookReaderFontSize || '');
+  return v === 'small' || v === 'large' ? (v as 'small' | 'large') : 'medium';
+}
+
+function applyReaderFontSize(): void {
+  if (!readerEl) return;
+  const fs = readerFontSize();
+  readerEl.classList.toggle('fs-sm', fs === 'small');
+  readerEl.classList.toggle('fs-lg', fs === 'large');
+}
+
+function mountFontSizeSeg(): void {
+  const holder = readerEl ? (readerEl.querySelector('[data-clip-fs]') as HTMLElement | null) : null;
+  if (!holder) return;
+  const seg = uiSegmented<string>({
+    options: [
+      { value: 'small', label: '小' },
+      { value: 'medium', label: '中' },
+      { value: 'large', label: '大' },
+    ],
+    value: readerFontSize(),
+    label: '阅读字号',
+    onChange: (v) => {
+      const s = getSettings() as any;
+      s.clipbookReaderFontSize = v;
+      void saveSettings();
+      applyReaderFontSize();
+    },
+  });
+  seg.el.classList.add('bz-segmented--sm');
+  holder.appendChild(seg.el);
+}
+
+// ---- 阅读动线（enh 包 6）：自动落「在读」+ ←→/jk 切换 ----
+
+/** 右栏停留超 AUTO_READING_MS 自动落「在读」（可手动覆盖：手动标已读/取消后 st 变化即不生效） */
+function armAutoReading(a: ClipArticle): void {
+  disarmAutoReading();
+  if (!M.open || a.origin !== 'news' || a.st !== 'unread') return;
+  autoReadingTimer = setTimeout(() => {
+    autoReadingTimer = null;
+    void autoMarkReading(a.id);
+  }, AUTO_READING_MS);
+}
+
+function disarmAutoReading(): void {
+  if (autoReadingTimer) {
+    clearTimeout(autoReadingTimer);
+    autoReadingTimer = null;
+  }
+}
+
+async function autoMarkReading(id: string): Promise<void> {
+  if (!M.open || !M.cur || M.cur.id !== id) return;
+  const cur = currentList().find((x) => x.id === id);
+  if (!cur || cur.origin !== 'news' || cur.st !== 'unread') return; // 已被手动处理 → 不抢
+  await flowToggleReading(cur);
+  await readNewsAndSidecar();
+  const next = currentList().find((x) => x.id === id);
+  if (next) M.cur = next;
+  renderList();
+  renderRail();
+  renderReader();
+}
+
+/** ←→/jk 条目切换（右栏聚焦时；列表顺序即阅读顺序） */
+function stepArticle(delta: number): void {
+  const list = currentList();
+  if (!list.length) return;
+  const idx = M.cur ? list.findIndex((x) => x.id === M.cur!.id) : -1;
+  const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
+  const next = list[nextIdx];
+  if (next && (!M.cur || next.id !== M.cur.id)) selectArticle(next.id);
 }
 
 function favChip(site: string): string {
@@ -584,8 +841,16 @@ async function doSave(a: ClipArticle | null): Promise<void> {
 
 async function doMarkRead(a: ClipArticle | null): Promise<void> {
   if (!a || a.origin !== 'news') return;
+  const rawBefore = { ...(a.raw || {}) }; // 动作前快照（撤销恢复 read/state/body 用）
   await flowMarkRead(a);
-  notice('已标记为已读', 'success');
+  notifyUndo('已标记为已读', () => void undoMarkRead(rawBefore));
+  await refreshAfterAction();
+}
+
+/** 撤销标记已读（enh 包 5）：恢复动作前条目态 + 统计回退，走串行写回队列 */
+async function undoMarkRead(rawBefore: any): Promise<void> {
+  await flowUndoHandled(rawBefore);
+  notice('已撤销：条目恢复未读', 'success');
   await refreshAfterAction();
 }
 
@@ -599,22 +864,30 @@ async function doToggleReading(a: ClipArticle | null): Promise<void> {
 async function deleteNewsItem(a: ClipArticle): Promise<void> {
   const ok = await openFlowDialog({
     title: '确认删除',
-    message: `确定从收件流删除「${a.title}」吗？\n此操作不可撤销。`,
+    message: `确定从收件流删除「${a.title}」吗？删除后可在通知中撤销。`,
     actions: [
       { label: '取消', value: 'cancel' },
       { label: '删除', value: 'ok', cta: true },
     ],
   });
   if (ok !== 'ok') return;
+  const rawBefore = { ...(a.raw || {}) }; // 动作前快照（撤销插回 news.json 用）
   await flowDeleteNews(a);
-  notice('已删除', 'success');
+  notifyUndo('已删除', () => void undoDeleteNews(rawBefore));
+  await refreshAfterAction();
+}
+
+/** 撤销删除 news 条目（enh 包 5）：raw 快照插回 news.json，走串行写回队列 */
+async function undoDeleteNews(rawBefore: any): Promise<void> {
+  await flowUndoDeleteNews(rawBefore);
+  notice('已撤销删除：条目已恢复', 'success');
   await refreshAfterAction();
 }
 
 async function deleteClipNote(a: ClipArticle): Promise<void> {
   const ok = await openFlowDialog({
     title: '确认删除',
-    message: `确定删除剪藏「${a.title}」吗？\n此操作不可撤销。`,
+    message: `确定删除剪藏「${a.title}」吗？文件将移入系统回收站。`,
     actions: [
       { label: '取消', value: 'cancel' },
       { label: '删除', value: 'ok', cta: true },
@@ -624,12 +897,29 @@ async function deleteClipNote(a: ClipArticle): Promise<void> {
   const note = a.note as ClipNote | undefined;
   if (note && note.file) {
     try {
-      await getApp().vault.delete(note.file);
-      notice('已删除剪藏', 'success');
+      const path = a.notePath || note.path || '';
+      let content = '';
+      try { content = await getApp().vault.cachedRead(note.file); } catch (e) { /* 快照失败也继续删 */ }
+      await getApp().vault.trash(note.file, true); // 系统回收站（enh 包 5：替代硬删除）
+      clipBodyCache.delete(path);
+      notifyUndo('已移入回收站', () => void undoTrashClip(path, content));
       await refreshAfterAction();
     } catch (e) {
       notice('删除失败，请检查文件权限', 'error');
     }
+  }
+}
+
+/** 撤销删除剪藏笔记（enh 包 5）：按动作前内容快照在原路径重建 */
+async function undoTrashClip(path: string, content: string): Promise<void> {
+  if (!path) return;
+  try {
+    await getApp().vault.create(path, content);
+    clipBodyCache.delete(path);
+    notice('已撤销删除：剪藏已恢复', 'success');
+    await refreshAfterAction();
+  } catch (e) {
+    notice('撤销失败：原路径已存在同名文件', 'error');
   }
 }
 
@@ -657,15 +947,59 @@ async function copyText(text: string, okMsg: string): Promise<void> {
   }
 }
 
-/** 动作后刷新（数据面 + 列表 + rail 计数 + 阅读区；选中保留） */
+/**
+ * 动作后刷新（数据面 + 列表 + rail 计数 + 阅读区）。
+ * 阅读动线（enh 包 6b）：条目被处理/删除后前进到同位置下一篇（原位补位，不打断扫读）；
+ * 仍在列表（如「在读」切换）则保持选中并刷新引用。
+ */
 async function refreshAfterAction(): Promise<void> {
+  const prevIdx = M.cur ? currentList().findIndex((x) => x.id === M.cur!.id) : -1;
   await readNewsAndSidecar();
-  // 当前阅读项若已出列表（已处理/删除）→ 切到列表第一条
   const list = currentList();
-  if (M.cur && !list.some((x) => x.id === M.cur!.id)) {
-    M.cur = list[0] || null;
+  if (M.cur && list.some((x) => x.id === M.cur!.id)) {
+    M.cur = list.find((x) => x.id === M.cur!.id) || M.cur;
+  } else if (list.length) {
+    M.cur = list[Math.min(Math.max(prevIdx, 0), list.length - 1)];
+  } else {
+    M.cur = null;
   }
   renderAll();
+}
+
+// ================= 面板尺寸记忆（enh 包 8，照 todo ADR-0084 先例） =================
+
+/** 记忆尺寸安全读取（0=未拖过 → 走默认 1180×760；越界值钳到硬上限 + 视口 92%） */
+function savedPanelSize(): { w: number; h: number } {
+  const s = tryGetSettings() as any;
+  const w = Number(s?.clipbookPanelWidth) || 0;
+  const h = Number(s?.clipbookPanelHeight) || 0;
+  const defW = 1180;
+  const defH = 760;
+  if (w < PANEL_MIN_W || h < PANEL_MIN_H) return { w: defW, h: defH };
+  const capW = Math.min(PANEL_MAX_W, Math.floor(window.innerWidth * 0.92));
+  const capH = Math.min(PANEL_MAX_H, Math.floor(window.innerHeight * 0.92));
+  return { w: Math.min(w, capW), h: Math.min(h, capH) };
+}
+
+/** 拖动期间 trailing 防抖 150ms 落盘一次（拖一次边界不写几十次 settings） */
+function rememberPanelSize(w: number, h: number): void {
+  const s = tryGetSettings() as any;
+  if (!s) return;
+  s.clipbookPanelWidth = w;
+  s.clipbookPanelHeight = h;
+  if (pendingSizeTimer !== null) clearTimeout(pendingSizeTimer);
+  pendingSizeTimer = setTimeout(() => {
+    pendingSizeTimer = null;
+    void saveSettings();
+  }, 150);
+}
+
+function flushPendingSize(): void {
+  if (pendingSizeTimer !== null) {
+    clearTimeout(pendingSizeTimer);
+    pendingSizeTimer = null;
+    void saveSettings();
+  }
 }
 
 // ================= 渲染：移动 =================
@@ -717,6 +1051,14 @@ function renderMobList(): void {
       ${a.summary ? `<div class="bz-clip-item-sum">${esc(a.summary)}</div>` : ''}
       <div class="bz-clip-item-meta"><span>${esc(a.srcName)}</span><span class="bz-clip-item-time">${relTime(a.timeTs)}</span></div>
     </div>`).join('');
+  // 移动长按抽屉（enh 包 2）：动作构建器与桌面右键同源（buildItemActions）——
+  // 一处接入两端全量对齐（手册 §8.2：不得在移动端隐藏功能）；单击进详情走容器委托不受影响
+  const cards = mobListEl.querySelectorAll<HTMLElement>('[data-id]');
+  cards.forEach((card) => {
+    const art = list.find((x) => x.id === card.dataset.id);
+    if (!art) return;
+    attachItemActions(card, buildItemActions(art), { sheetHead: buildSheetHead(art) });
+  });
 }
 
 function openMobDetail(id: string): void {
@@ -766,6 +1108,8 @@ export function clipbookSettingsSchema(): SettingsSchema {
         rows: [
           { type: 'path', mode: 'single', name: '剪藏目录', desc: '存放网页剪藏文章的文件夹', binding: { key: 'articleDirectory' } },
           batchSizeRow('articleBatchSize'),
+          { type: 'number', name: '面板宽度记忆', desc: '桌面拖拽面板边缘缩放后自动记忆，0 为未拖过', binding: { key: 'clipbookPanelWidth' }, min: 0, step: 10 },
+          { type: 'number', name: '面板高度记忆', desc: '桌面拖拽面板边缘缩放后自动记忆，0 为未拖过', binding: { key: 'clipbookPanelHeight' }, min: 0, step: 10 },
         ],
       },
       {
