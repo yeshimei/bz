@@ -42,8 +42,24 @@
     .pomodoro-stat-day { display: flex; flex-direction: column; align-items: center; gap: 2px; }
     .pomodoro-stat-col { display: flex; align-items: flex-end; height: 40px; }
     .pomodoro-stat-bar { width: 10px; border-radius: 3px 3px 0 0; background: var(--interactive-accent); min-height: 2px; }
-    .pomodoro-stat-label { font-size: 9px; color: var(--text-faint); }
+    .pomodoro-stat-label { font-size: 11px; color: var(--text-faint); }
     /* 今日专注时段分布：12 槽（2 小时一格）小方柱，条形语言与近 7 天柱一致（增强包） */
     .pomodoro-hours { display: flex; gap: 4px; justify-content: center; align-items: flex-end; margin-top: 8px; }
     .pomodoro-hour-bar { width: 8px; border-radius: 3px 3px 0 0; background: var(--background-modifier-border); min-height: 2px; }
     .pomodoro-hour-bar-on { background: var(--interactive-accent); opacity: 0.7; }
+
+/* ==================== 移动端全屏态（.bz-panel-mtop 随 mfs 开关同挂摘） ====================
+   全屏时顶距工具类统一避让 Obsidian 移动端头（44px）；右上角设置钮为绝对定位，
+   不随文档流下移，需同步下移到避让区之下（常规小卡态无此钮规则，维持 16px） */
+@media (max-width: 768px) {
+    #pomodoro-popup.bz-panel-mtop #pomodoro-btn-settings { top: calc(max(44px, env(safe-area-inset-top, 0px)) + 12px); }
+}
+
+/* ==================== 触控热区（设计手册 §8.2，触屏 pointer:coarse） ==================== */
+@media (pointer: coarse) {
+    .pomodoro-btn, #pomodoro-btn-settings { position: relative; }
+    .pomodoro-btn { padding: 10px 16px; }
+    .pomodoro-btn::after { content: ''; position: absolute; inset: -4px; }
+    #pomodoro-btn-settings { padding: 10px; }
+    #pomodoro-btn-settings::after { content: ''; position: absolute; inset: -6px; }
+}

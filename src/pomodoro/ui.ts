@@ -668,11 +668,11 @@ export async function openPomodoro(app: App): Promise<void> {
       openInflight = null;
     }
   }
-  // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
-  applyMobileWindowFullscreen(
-    maskEl && (maskEl.querySelector('#pomodoro-popup') as HTMLElement),
-    tryGetSettings().pomodoroMobileDefaultFullscreen === true
-  );
+  // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡；
+  // 顶距工具类随开关同挂摘（全屏态才 44px 避让 Obsidian 移动端头，常规小卡不垫）
+  const popupEl = maskEl ? (maskEl.querySelector('#pomodoro-popup') as HTMLElement) : null;
+  applyMobileWindowFullscreen(popupEl, tryGetSettings().pomodoroMobileDefaultFullscreen === true);
+  popupEl?.classList.toggle('bz-panel-mtop', tryGetSettings().pomodoroMobileDefaultFullscreen === true);
 }
 
 /** 插件启动恢复（main.ts onLayoutReady 调用）：load+recover+落盘；正在倒计时 → 后台 tick 继续 + 弹恢复通知；popup 模式自动弹窗 */
