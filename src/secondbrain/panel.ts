@@ -982,7 +982,7 @@ export function secondBrainSettingsSchema(): SettingsSchema {
           { type: 'text', name: '上下文限制', binding: { key: 'secondBrainContextLimit' }, onChange: trimStore('secondBrainContextLimit') },
           { type: 'text', name: '防抖延迟毫秒', binding: { key: 'secondBrainDebounceDelay' }, onChange: trimStore('secondBrainDebounceDelay') },
           { type: 'text', name: '光标轮询毫秒', binding: { key: 'secondBrainCursorPollInterval' }, onChange: trimStore('secondBrainCursorPollInterval') },
-          { type: 'text', name: '嵌入并发', desc: 'QA 遗留死配置，定义后从未接线，忠实保留不删', binding: { key: 'secondBrainConcurrency' }, onChange: trimStore('secondBrainConcurrency') },
+          { type: 'text', name: '嵌入并发', desc: '该设置暂不生效，保留兼容', binding: { key: 'secondBrainConcurrency' }, onChange: trimStore('secondBrainConcurrency') },
         ],
       },
       {

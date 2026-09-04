@@ -301,6 +301,9 @@ describe('文献盒 UI（ticket 136）', () => {
     const delItem = Array.from(document.querySelectorAll<HTMLElement>('.bz-item-menu-item')).find((el) => el.textContent!.includes('删除'))!;
     delItem.click();
     await vi.waitFor(() => expect(document.getElementById('__shared_confirm_ok__')).toBeTruthy());
+    // 走查批 D：三段式标题（非问句）+ 正文无英文 vault
+    expect(document.body.textContent).toContain('删除文献笔记');
+    expect(document.body.textContent).not.toContain('从 vault 删除');
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(vault.files.has('文献盒/A.md')).toBe(false));
     const tasks = await LiteratureData.loadTasks();

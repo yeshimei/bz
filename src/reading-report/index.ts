@@ -210,7 +210,7 @@ export function renderReadingReport(container: HTMLElement, app: App, opts: Repo
     if (activeProgress === progress) activeProgress = null;
     if (alive()) {
       progress.setType('error');
-      progress.setMessage('统计失败：读取书库时出错，请查看控制台');
+      progress.setMessage('统计失败：读取书库时出错，请重试；若反复出现请重新打开面板');
       container.innerHTML = ERROR_HTML;
     } else {
       progress.hide();
