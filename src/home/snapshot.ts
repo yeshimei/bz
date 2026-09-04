@@ -50,7 +50,7 @@ export const NO_STAT_DOMAINS: ReadonlySet<string> = new Set([
 ]);
 
 export interface DomainStat {
-  /** 徽标主文案（如「3 条待办」；无数字统计为 ''） */
+  /** 徽标主文案（如「3 条备忘」；无数字统计为 ''） */
   text: string;
   /** 徽标高亮（数值>0 或「进行中/已写」等醒目态） */
   hl: boolean;
@@ -188,7 +188,7 @@ export async function collectHomeSnapshot(app?: App): Promise<HomeSnapshot> {
       out.memo = EMPTY;
     } else {
       const due = dueActiveCount(active as Array<{ completed: string | null; due: string | null }>);
-      out.memo = { text: `${active.length} 条待办`, hl: active.length > 0, sub: due ? `到期 ${due}` : '' };
+      out.memo = { text: `${active.length} 条备忘`, hl: active.length > 0, sub: due ? `到期 ${due}` : '' };
     }
   } catch {
     out.memo = EMPTY;
