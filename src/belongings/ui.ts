@@ -239,9 +239,9 @@ function panelHtml(): string {
   <div class="bz-bel-head">
     <div class="bz-bel-title">归物本</div>
     <div class="bz-bel-head-btns">
-      <button class="bz-icon-btn bz-bel-mob-only" data-bel-add title="记一笔">${iconSpan(ICON.add)}</button>
-      <button class="bz-icon-btn bz-bel-mob-only" data-bel-mobsearch title="搜索">${iconSpan(ICON.search)}</button>
-      <button class="bz-icon-btn bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON.close)}</button>
+      <button class="bz-icon-btn bz-touch-target bz-bel-mob-only" data-bel-add title="记一笔">${iconSpan(ICON.add)}</button>
+      <button class="bz-icon-btn bz-touch-target bz-bel-mob-only" data-bel-mobsearch title="搜索">${iconSpan(ICON.search)}</button>
+      <button class="bz-icon-btn bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON.close)}</button>
     </div>
   </div>
   <div class="bz-bel-body">

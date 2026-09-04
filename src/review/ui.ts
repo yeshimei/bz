@@ -300,11 +300,11 @@ export class UIManager {
     const stats = computeStats(items);
     const footer = `
       <div class="bz-q-footer">
-        <span class="bz-q-fitem" data-act="arch" title="查看已完成复习">
+        <span class="bz-q-fitem bz-touch-target--lg" data-act="arch" title="查看已完成复习">
           ${this.icon('folder')}<span class="lbl">已完成 <b>${done.length}</b> 篇</span>
         </span>
         <i class="sep"></i>
-        <span class="bz-q-fitem" data-act="stats" title="查看复习统计分布">
+        <span class="bz-q-fitem bz-touch-target--lg" data-act="stats" title="查看复习统计分布">
           ${this.icon('chart')}<span class="lbl">累计 <b>${stats.totalReviews}</b> 天 · 连续 <b>${stats.streak}</b> 天</span>
         </span>
       </div>`;
@@ -679,12 +679,12 @@ export function mountFloatingRatingBar(opts: {
   el.className = 'bz-review-bar';
   el.style.zIndex = String(allocZ());
   const btns = BAR_RATINGS.map(
-    (r) => `<button class="bz-review-bar-btn is-${r.cls}" data-rating="${r.rating}">${r.label}</button>`
+    (r) => `<button class="bz-review-bar-btn bz-touch-target--sm is-${r.cls}" data-rating="${r.rating}">${r.label}</button>`
   ).join('');
   el.innerHTML = `
     <span class="bz-review-bar-info">${escapeHtml(opts.name.replace(/^《|》$/g, ''))}<i>(${opts.index}/${opts.total})</i></span>
     <span class="bz-review-bar-act">${btns}
-      <button class="bz-review-bar-btn is-skip" data-rating="skip">${'跳过'}</button>
+      <button class="bz-review-bar-btn bz-touch-target--sm is-skip" data-rating="skip">${'跳过'}</button>
     </span>`;
   let closed = false;
   const close = (): void => {

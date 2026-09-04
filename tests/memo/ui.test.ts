@@ -774,6 +774,23 @@ describe('移动端默认全屏（ticket 68）', () => {
     expect(document.getElementById('todo-popup')!.classList.contains('bz-win-mfs')).toBe(true);
   });
 
+  it('批 B-6：44px 顶距补接——全屏态同挂 .bz-panel-mtop，常规卡态挂摘', async () => {
+    const vault = new MockVault();
+    await initApp(vault);
+    setSettingsProvider(() => ({ ...SETTINGS, memoMobileDefaultFullscreen: true } as any));
+    MockPlatform.isMobile = true;
+    UIManager.showMain(null, false);
+    await new Promise((r) => setTimeout(r, 20));
+    const popup = document.getElementById('todo-popup')!;
+    expect(popup.classList.contains('bz-panel-mtop')).toBe(true);
+    // 关开关重开：随 mfs 摘类（常规小卡不垫 44px，防误避让）
+    setSettingsProvider(() => ({ ...SETTINGS } as any));
+    UIManager.hideMain();
+    UIManager.showMain(null, false);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(popup.classList.contains('bz-panel-mtop')).toBe(false);
+  });
+
   it('移动端+开关关：不挂类（常规卡）', async () => {
     const vault = new MockVault();
     await initApp(vault);

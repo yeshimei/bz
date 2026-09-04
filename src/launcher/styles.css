@@ -93,11 +93,11 @@
   filter: grayscale(1);
   cursor: not-allowed;
 }
-/* 拖拽中（安卓式：跟随手指 + 放大 + 阴影） */
+/* 拖拽中（安卓式：跟随手指 + 放大 + 阴影）；z 为局部层叠小值（只需压过兄弟磁贴，非 overlay 档） */
 #launcher-grid .launcher-tile.dragging {
   opacity: 0.9;
   cursor: grabbing;
-  z-index: 9999;
+  z-index: 10;
   transition: none;
   animation: launcher-drag-pop 0.18s ease;
 }

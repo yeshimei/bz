@@ -1098,18 +1098,24 @@ describe('回忆墙 UI', () => {
 
   // ===== 样式回归（CSS 改动 jsdom 不可算，按源码断言；先例：reading-report report.test.ts） =====
 
-  it('增强 #13：触屏热区 ≥44px 档（pointer:coarse 下 chip/subchip/图标钮/时光条 ::after 外扩）', () => {
-    const css = readFileSync(resolve(process.cwd(), 'src/diary-wall/styles.css'), 'utf8');
-    const m = css.match(/@media\s*\(pointer:\s*coarse\)\s*\{[\s\S]*?\n\}/);
-    expect(m).toBeTruthy();
-    const block = m![0];
-    // 热区外扩对象：横滑标签/二级标签/头行图标钮/那年今天卡片
-    for (const sel of ['.bz-diary-wall-chip', '.bz-diary-wall-subchip', '.bz-diary-wall-icon-btn', '.bz-diary-wall-memory']) {
-      expect(block).toContain(sel);
+  it('增强 #13：触屏热区 ≥44px 档（修复批 B 收编 core .bz-touch-target--xl，模板挂类）', () => {
+    // 外扩本体在 core 样式库（components.css pointer:coarse ::after，--xl = inset -12px）
+    const core = readFileSync(resolve(process.cwd(), 'src/core/ui/components.css'), 'utf8');
+    expect(core).toContain('.bz-touch-target--xl');
+    expect(core).toMatch(/\.bz-touch-target::after\s*\{[^}]*inset: var\(--bz-touch-outset, -6px\)/);
+    // 热区外扩对象：横滑标签/二级标签/头行图标钮/那年今天卡片（模板挂类）
+    const ui = readFileSync(resolve(process.cwd(), 'src/diary-wall/ui.ts'), 'utf8');
+    for (const cls of [
+      'bz-diary-wall-chip bz-touch-target--xl',
+      'bz-diary-wall-subchip bz-touch-target--xl',
+      'bz-diary-wall-icon-btn bz-touch-target--xl',
+      'bz-diary-wall-memory bz-touch-target--xl',
+    ]) {
+      expect(ui, cls).toContain(cls);
     }
-    // 外扩实现：::after 绝对定位负 inset（12px ×2 + 自身 ≥20px ≈ 44px 档）
-    expect(block).toContain('::after');
-    expect(block).toContain('inset: -12px');
+    // 域内不再复制 ::after 外扩块（防双份外扩）
+    const css = readFileSync(resolve(process.cwd(), 'src/diary-wall/styles.css'), 'utf8');
+    expect(css).not.toMatch(/bz-diary-wall-chip::after/);
   });
 
   it('增强 #12/#2/#5 样式落位：菜单无静态 z-index 档；年份标签与时光条类存在', () => {

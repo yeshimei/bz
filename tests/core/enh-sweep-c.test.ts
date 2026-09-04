@@ -43,6 +43,7 @@ describe('enh-sweep-c：.bz-panel-mtop 移动全屏顶距', () => {
     expect(src('src/review/ui.ts')).toContain("classList.add('bz-panel-mtop')");
     expect(src('src/diary-wall/ui.ts')).toContain("'bz-diary-wall-mob bz-panel-mtop'");
     expect(src('src/pomodoro/ui.ts')).toContain("classList.toggle('bz-panel-mtop'");
+    expect(src('src/memo/ui.ts')).toContain("classList.toggle('bz-panel-mtop'"); // 终局 review 批 B-6 补接
   });
 
   it('接入域头行不再自带 safe-area 垫顶（顶距由工具类统一接管，防双份）', () => {
@@ -58,9 +59,20 @@ describe('enh-sweep-c：.bz-panel-mtop 移动全屏顶距', () => {
 });
 
 describe('enh-sweep-c：触控热区扫尾', () => {
-  it('coarse 外扩档落位（新接入 8 域）', () => {
-    for (const d of ['home', 'cinema', 'favorites', 'belongings', 'encrypt', 'review', 'pomodoro', 'attach']) {
+  it('coarse 外扩档落位（修复批 B 收编 core .bz-touch-target：favorites/belongings/encrypt 等挂类，其余域留域内块）', () => {
+    // 收编域：外扩本体在 core components.css，域内模板挂共享类（热区档位随类）
+    expect(componentsCss()).toMatch(/\.bz-touch-target::after/);
+    expect(src('src/favorites/ui.ts')).toContain('bz-touch-target');
+    expect(src('src/belongings/ui.ts')).toContain('bz-touch-target');
+    expect(src('src/encrypt/ui.ts')).toContain('bz-touch-target--xl');
+    // 未收编域（cinema 域 ui 冻结 / attach 为 padding 抬档形态 / home·review·pomodoro 保留
+    // padding·视觉抬档块）：域内仍持有 pointer:coarse 块
+    for (const d of ['home', 'cinema', 'review', 'pomodoro', 'attach']) {
       expect(css(d), d).toMatch(/@media \(pointer: coarse\)/);
+    }
+    // 收编域不再复制 ::after 外扩（防双份外扩）
+    for (const d of ['favorites', 'belongings', 'encrypt', 'diary-wall']) {
+      expect(css(d), d).not.toMatch(/inset: -(6|8|12)px/);
     }
   });
 
