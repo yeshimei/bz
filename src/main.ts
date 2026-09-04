@@ -31,12 +31,13 @@ import { openClipbook, unloadClipbook } from './clipbook';
 import { openDiaryWall, unloadDiaryWall } from './diary-wall';
 import { applyDirectories as applyWallDirectories } from './diary-wall/config';
 import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
-import { showReadingReport, unloadReadingReport } from './reading-report';
+// 阅读数据分析报告（读书报告内嵌化：独立弹窗退役，unloadReadingReport 只作废在途渲染/toast）
+import { unloadReadingReport } from './reading-report';
 // 影院（cinema 域，ADR-0087 起接管影视；旧 movie 域已退役。ADR-0090：openCinemaAnalysis
 // 直达影院面板分析页，独立报告窗退役）
 import { openCinema, addCinemaItem, openCinemaAnalysis, unloadCinema } from './cinema';
-// 书架墙（bookshelf 域，新域与书库并存；不修改旧书库代码）
-import { openBookshelf, unloadBookshelf } from './bookshelf';
+// 书架墙（bookshelf 域，新域与书库并存；不修改旧书库代码；读书报告内嵌为面板内视图）
+import { openBookshelf, openBookshelfReport, unloadBookshelf } from './bookshelf';
 // 影视分析报告独立域已退役（ADR-0090：报告窗并入影院内嵌分析页，命令直达 bz-cinema-analysis）
 import { openReviewPanel, openReviewReport, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview, unloadReview } from './review';
 import {
@@ -101,8 +102,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-favorites-open', name: '收藏本', icon: 'star', callback: () => openFavoritesPanel(getApp()) },
   { id: 'bz-favorites-add', name: '加收藏', icon: 'bookmark', callback: () => addFavoriteItem(getApp()) },
   // 旧书库（library）域退役：bz-library-open/bz-book-notes-open 已删，读书笔记并入书架墙详情弹窗
-  // 阅读数据分析报告（t2：阅读分析报告 → 阅读数据分析报告，术语随 CONTEXT.md）
-  { id: 'bz-reading-report-open', name: '阅读数据分析报告', icon: 'bar-chart-3', callback: () => showReadingReport(getApp()) },
+  // 阅读数据分析报告（读书报告内嵌化：打开书架墙面板并切到报告视图；home 报告磁贴/剪藏本深链自动受益）
+  { id: 'bz-reading-report-open', name: '阅读数据分析报告', icon: 'bar-chart-3', callback: () => openBookshelfReport(getApp()) },
   // 影视分析报告（ADR-0090 内嵌化：独立报告窗退役，命令直达影院面板分析页；
   // id 随域换 bz-cinema-analysis，名称「影视分析报告」保持用户习惯）
   { id: 'bz-cinema-analysis', name: '影视分析报告', icon: 'pie-chart', callback: () => openCinemaAnalysis(getApp()) },
