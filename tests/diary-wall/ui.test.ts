@@ -9,8 +9,11 @@
  * - jsdom 无 IntersectionObserver → UI 懒加载走 fallback（直接挂 src），断言以 img[src]/video[src] 为准。
  */
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { setApp } from '../../src/core/app';
 import { applyDirectories } from '../../src/diary/config';
+import { state as diaryState } from '../../src/diary/state';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { DiaryWallAppController } from '../../src/diary-wall/ui';
@@ -22,8 +25,11 @@ const mocks = vi.hoisted(() => ({
   showDatePicker: vi.fn(),
   openAddDialog: vi.fn(),
   jumpToEntry: vi.fn(),
+  applyFilter: vi.fn(),
+  showDiaryPanel: vi.fn(async () => {}),
   ensureSafeUnlocked: vi.fn(async () => true),
   openEncrypt: vi.fn(),
+  getSafeManager: vi.fn(() => ({ unlocked: false, manifest: { notes: [] } })),
   isUnlocked: vi.fn(() => false),
   loadEncryptedEntries: vi.fn(async (): Promise<any[]> => []),
   deleteEncryptedEntry: vi.fn(async () => {}),
@@ -35,18 +41,24 @@ vi.mock('../../src/diary-wall/data', async (importOriginal) => {
     mediaSrc: mocks.mediaSrc,
   };
 });
-// diary 域动作 mock：写日记/日期选择器/跳转（ui.ts 动态 import）
+// diary 域动作 mock：写日记/日期选择器/跳转/应用筛选（ui.ts 动态 import）
 vi.mock('../../src/diary/ui/dialogs', () => ({
   showDatePicker: mocks.showDatePicker,
   openAddDialog: mocks.openAddDialog,
 }));
 vi.mock('../../src/diary/ui/entries', () => ({
   jumpToEntry: mocks.jumpToEntry,
+  applyFilter: mocks.applyFilter,
 }));
-// 加密解锁 mock（ui.ts 动态 import '../encrypt' 与 '../diary/encrypt'）
+// 增强 #7：在日记本中查看（showDiaryPanel 同筛选打开日记本面板）
+vi.mock('../../src/diary/ui/panel', () => ({
+  showDiaryPanel: mocks.showDiaryPanel,
+}));
+// 加密解锁 mock（ui.ts 动态 import '../encrypt' 与 '../diary/encrypt'；getSafeManager 供加密媒体按需解密）
 vi.mock('../../src/encrypt', () => ({
   ensureSafeUnlocked: mocks.ensureSafeUnlocked,
   openEncrypt: mocks.openEncrypt,
+  getSafeManager: mocks.getSafeManager,
 }));
 vi.mock('../../src/diary/encrypt', () => ({
   isUnlocked: mocks.isUnlocked,
@@ -71,9 +83,13 @@ beforeEach(async () => {
   mocks.showDatePicker.mockClear();
   mocks.openAddDialog.mockClear();
   mocks.jumpToEntry.mockClear();
+  mocks.applyFilter.mockClear();
+  mocks.showDiaryPanel.mockClear();
   mocks.ensureSafeUnlocked.mockClear();
   mocks.ensureSafeUnlocked.mockResolvedValue(true);
   mocks.openEncrypt.mockClear();
+  mocks.getSafeManager.mockClear();
+  mocks.getSafeManager.mockImplementation(() => ({ unlocked: false, manifest: { notes: [] } }));
   mocks.isUnlocked.mockClear();
   mocks.isUnlocked.mockReturnValue(false);
   mocks.loadEncryptedEntries.mockClear();
@@ -177,7 +193,7 @@ describe('回忆墙 UI', () => {
     expect(desk.querySelector('.bz-diary-wall-lb--show')).toBeNull();
   });
 
-  it('灯箱副行显示日记正文文字而非媒体路径（#10）', async () => {
+  it('灯箱副行显示日记正文文字而非媒体路径；标题行为「日期 时间 · 标签」（增强 #6 去文件名）', async () => {
     await openAndWait();
     const desk = document.querySelector('.bz-diary-wall-desk')!;
     const media = desk.querySelector('.bz-diary-wall-media') as HTMLElement;
@@ -188,17 +204,19 @@ describe('回忆墙 UI', () => {
     const sub = lb.querySelector('.bz-diary-wall-lbsub') as HTMLElement;
     expect(sub.textContent).toContain('上厕所时被猫盯着');
     expect(sub.textContent).not.toContain('https://');
-    // 标题行 = 媒体文件名
+    // 标题行 = 「日期 时间 · 标签」，不再显示媒体文件名（增强 #6）
     const cap = lb.querySelector('.bz-diary-wall-lbcap') as HTMLElement;
-    expect(cap.textContent).toContain('IMG_20260819_164331.jpg');
+    expect(cap.textContent).toContain('2026-08-19 23:02');
+    expect(cap.textContent).toContain('日记');
+    expect(cap.textContent).not.toContain('IMG_20260819_164331.jpg');
   });
 
-  it('媒体块不再显示 emoji 角标（#1 视频无 emoji、#2 图片无 🖼 角标）', async () => {
+  it('媒体块不再显示 emoji 角标（#1 视频无 emoji、#2 图片无 🖼 角标）；音频占位与播放角标 lucide 化（增强 #4）', async () => {
     await openAndWait();
     const desk = document.querySelector('.bz-diary-wall-desk')!;
     // 图片块：无 .bz-diary-wall-att 角标
     expect(desk.querySelector('.bz-diary-wall-att')).toBeNull();
-    // 视频块占位：无 🎬 emoji 文字（ph 无文本内容）
+    // 视频块占位：无 emoji 文字（ph 无文本内容）
     const videoPh = Array.from(desk.querySelectorAll<HTMLElement>('.bz-diary-wall-media .bz-diary-wall-ph')).filter(
       (el) => {
         const wrap = el.closest('.bz-diary-wall-media')!;
@@ -207,7 +225,7 @@ describe('回忆墙 UI', () => {
     );
     expect(videoPh.length).toBeGreaterThanOrEqual(1);
     videoPh.forEach((ph) => expect(ph.textContent.trim()).toBe(''));
-    // 音频块仍保留 🎵 图标（无封面可显示）
+    // 音频块 music 线条图标（无封面可显示；增强 #4 emoji → lucide）
     const audioPh = Array.from(desk.querySelectorAll<HTMLElement>('.bz-diary-wall-media .bz-diary-wall-ph')).filter(
       (el) => {
         const wrap = el.closest('.bz-diary-wall-media')!;
@@ -215,7 +233,13 @@ describe('回忆墙 UI', () => {
       }
     );
     expect(audioPh.length).toBeGreaterThanOrEqual(1);
-    expect(audioPh[0].textContent).toContain('🎵');
+    const musicIc = audioPh[0].querySelector('.bz-ic') as HTMLElement;
+    expect(musicIc).toBeTruthy();
+    expect(musicIc.dataset.icon).toBe('music');
+    // 视频播放角标 play 线条图标（原 ▶ 文本）
+    const playIc = desk.querySelector('.bz-diary-wall-play .bz-ic') as HTMLElement;
+    expect(playIc).toBeTruthy();
+    expect(playIc.dataset.icon).toBe('play');
   });
 
   it('桌面右键：正文/图片/视频子元素右键都能打开条目菜单（#9 容器委托）', async () => {
@@ -285,14 +309,19 @@ describe('回忆墙 UI', () => {
   });
 
   // ===== v2 新功能 =====
-  it('头部按钮序：编辑在前、搜索次之、无设置按钮（关闭钮仅真全屏显示）', async () => {
+  it('头部按钮序：编辑、搜索、按年月跳转（增强 #10）、关闭；图标 lucide 化（增强 #4）；无设置按钮', async () => {
     await openAndWait();
     const btns = Array.from(document.querySelectorAll('.bz-diary-wall-desk .bz-diary-wall-btns [data-act]')).map(
       (b) => (b as HTMLElement).dataset.act
     );
-    // 编辑 → 搜索 → 关闭（无 settings）
-    expect(btns).toEqual(['add', 'search', 'close']);
+    // 编辑 → 搜索 → 年月跳转 → 关闭（无 settings）
+    expect(btns).toEqual(['add', 'search', 'date-picker', 'close']);
     expect(document.querySelector('[data-act="settings"]')).toBeNull();
+    // 头行图标：pen-line / search / calendar / x（uiIcon 经 setIcon 渲染，mock 记录到 dataset.icon）
+    const icons = Array.from(
+      document.querySelectorAll<HTMLElement>('.bz-diary-wall-desk .bz-diary-wall-btns [data-act] .bz-ic')
+    ).map((i) => i.dataset.icon);
+    expect(icons).toEqual(['pen-line', 'search', 'calendar', 'x']);
   });
 
   it('加密 chip 常驻显示（即使无加密条目），锁定态点击 → 弹解锁面板，解锁后选中「加密」', async () => {
@@ -742,5 +771,364 @@ describe('回忆墙 UI', () => {
     expect(document.querySelector('.bz-diary-wall-menu')).toBeTruthy();
     c.hide();
     expect(document.querySelector('.bz-diary-wall-menu')).toBeNull();
+  });
+
+  // ===== 增强包（2026-09 拍板 13 项） =====
+
+  it('增强 #1：灯箱连看——左右按钮切换、到尾循环、方向键、切换后旧视频 pause', async () => {
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    // 2026-08-19 有 3 个媒体（img/video/audio）：点第一个（img）进灯箱
+    const medias = desk.querySelectorAll('.bz-diary-wall-media');
+    (medias[0] as HTMLElement).click();
+    const capOf = () => (desk.querySelector('.bz-diary-wall-lbcap') as HTMLElement).textContent || '';
+    expect(capOf()).toContain('2026-08-19 23:02 · 日记');
+    // next → 第二个媒体（video）
+    const next = desk.querySelector<HTMLButtonElement>('[data-act="lb-next"]');
+    const prev = desk.querySelector<HTMLButtonElement>('[data-act="lb-prev"]');
+    expect(next).toBeTruthy();
+    expect(prev).toBeTruthy();
+    next!.click();
+    expect(desk.querySelector('.bz-diary-wall-lb-media')).toBeTruthy();
+    expect((desk.querySelector('.bz-diary-wall-lb-media') as HTMLElement).tagName).toBe('VIDEO');
+    // 方向键 → 第三个（audio）；到尾再 next 循环回首张（img）
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
+    expect((desk.querySelector('.bz-diary-wall-lb-media') as HTMLElement).tagName).toBe('AUDIO');
+    next!.click();
+    expect((desk.querySelector('.bz-diary-wall-lb-media') as HTMLElement).tagName).toBe('IMG');
+    // prev 循环回首（img → audio）
+    prev!.click();
+    expect((desk.querySelector('.bz-diary-wall-lb-media') as HTMLElement).tagName).toBe('AUDIO');
+    // 切换后旧媒体已从 DOM 清除（旧 video 不残留双份）
+    expect(desk.querySelectorAll('.bz-diary-wall-lb-media').length).toBe(1);
+  });
+
+  it('增强 #2：章节栏年份分组——跨年处插年份标签，data-month 定位不变', async () => {
+    // 追加一条 2025 年日记制造跨年
+    vault.files.set('我的/日记/2025-12-01.md', '# 📖 09:00\n去年今日。\n');
+    await openAndWait();
+    const rail = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-rail')!;
+    const years = Array.from(rail.querySelectorAll<HTMLElement>('.bz-diary-wall-rail-year')).map((y) => y.textContent);
+    expect(years).toEqual(['2026', '2025']);
+    // 年份标签在各自首个月份项之前；月份 data-month 仍为完整 YYYY-MM
+    const firstMonth = rail.querySelector<HTMLElement>('.bz-diary-wall-month');
+    expect(firstMonth!.dataset.month).toBe('2026-08');
+    expect(years).toHaveLength(2);
+  });
+
+  it('增强 #3：头行计数 = 当前结果数（筛选后随之变化）', async () => {
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    const range = desk.querySelector('.bz-diary-wall-range') as HTMLElement;
+    expect(range.textContent).toBe('3 条');
+    // 筛选「摄影」→ 计数跟随过滤结果
+    const chip = desk.querySelector<HTMLElement>('.bz-diary-wall-chip[data-tag="摄影"]');
+    chip!.click();
+    expect(range.textContent).toBe('1 条');
+    chip!.click();
+    expect(range.textContent).toBe('3 条');
+  });
+
+  it('增强 #5：那年今天时光条——命中渲染首屏横滑条（年份角标 + 点击进灯箱），无命中不渲染', async () => {
+    // 加一条去年今天、一条昨天：只有去年今天命中
+    const now = new Date();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const lastYear = now.getFullYear() - 1;
+    vault.files.set(`我的/日记/${lastYear}-${mm}-${dd}.md`, `# 📸 08:00\n去年今天拍的照片。\n![[old_photo.jpg]]\n`);
+    const yest = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    vault.files.set(
+      `我的/日记/${yest.getFullYear()}-${String(yest.getMonth() + 1).padStart(2, '0')}-${String(yest.getDate()).padStart(2, '0')}.md`,
+      '# 📖 21:00\n昨天的事。\n'
+    );
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    const memories = desk.querySelector('.bz-diary-wall-memories') as HTMLElement;
+    expect(memories).toBeTruthy();
+    expect(memories.textContent).toContain('那年今天');
+    // 年份角标 = 去年
+    expect(memories.querySelector('.bz-diary-wall-memory-year')!.textContent).toBe(String(lastYear));
+    // 不含昨天（mmdd 不命中）
+    expect(memories.textContent).not.toContain('昨天的事');
+    // 点击 → 灯箱打开该条目（媒体 URL 注入）
+    (memories.querySelector('.bz-diary-wall-memory') as HTMLElement).click();
+    expect(desk.querySelector('.bz-diary-wall-lb--show')).toBeTruthy();
+    // 无命中（默认数据无今天日期）不渲染
+    const c2 = DiaryWallAppController.instance!;
+    void c2;
+  });
+
+  it('增强 #5 反向：无去年今日条目时不渲染时光条', async () => {
+    await openAndWait();
+    expect(document.querySelector('.bz-diary-wall-desk .bz-diary-wall-memories')).toBeNull();
+  });
+
+  it('增强 #6：媒体块 cap 去文件名，显示「时间 · 标签」', async () => {
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    const cap = desk.querySelector('.bz-diary-wall-cap') as HTMLElement;
+    expect(cap).toBeTruthy();
+    expect(cap.textContent).toContain('23:02');
+    expect(cap.textContent).toContain('日记');
+    expect(cap.textContent).not.toContain('IMG_20260819_164331.jpg');
+    expect(cap.textContent).not.toContain('.jpg');
+  });
+
+  it('增强 #7：右键菜单「在日记本中查看」——带同筛选打开日记本面板（showDiaryPanel + applyFilter）', async () => {
+    const c = await openAndWait();
+    // 先选中「摄影」筛选 → 动作应把同款筛选带去日记本
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    desk.querySelector<HTMLElement>('.bz-diary-wall-chip[data-tag="摄影"]')!.click();
+    const item = desk.querySelector('.bz-diary-wall-item') as HTMLElement;
+    item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 30, clientY: 40 }));
+    const menu = document.querySelector('.bz-diary-wall-menu')!;
+    const btn = Array.from(menu.querySelectorAll('button')).find((b) => b.textContent!.includes('在日记本中查看'));
+    expect(btn).toBeTruthy();
+    // 菜单图标 lucide 化（增强 #4）
+    expect((btn!.querySelector('.bz-ic') as HTMLElement).dataset.icon).toBe('book-open');
+    btn!.click();
+    await waitFor(() => mocks.showDiaryPanel.mock.calls.length > 0);
+    expect(mocks.showDiaryPanel).toHaveBeenCalled();
+    expect(mocks.applyFilter).toHaveBeenCalled();
+    expect(diaryState.data.selectedTags.has('摄影')).toBe(true);
+    // 跳走前捕获墙状态（增强 #11 联动）+ 关墙
+    expect((c as any)._restore).not.toBeNull();
+    expect((c as any)._restore.selTag).toBe('摄影');
+    expect((document.querySelector('.bz-diary-wall') as HTMLElement).style.display).toBe('none');
+    // 清理 diary 筛选状态防泄漏
+    diaryState.data.selectedTags.clear();
+    diaryState.data.currentDateFilter = null;
+    diaryState.data.currentSearchKeyword = '';
+  });
+
+  it('增强 #7 反向：加密条目右键菜单无「在日记本中查看」（正文在保险箱）', async () => {
+    mocks.isUnlocked.mockReturnValue(true);
+    const encEntry = {
+      date: '2026-07-01',
+      time: '10:30',
+      timeValue: 1030,
+      tags: ['日记', '加密'],
+      emoji: '📖🔐',
+      content: '加密的日记内容',
+      filename: '2026-07-01',
+      lineNumber: 0,
+      encrypted: true,
+      noteId: 'enc-1',
+      id: 'enc-diary-enc-1',
+    };
+    mocks.loadEncryptedEntries.mockResolvedValueOnce([encEntry]);
+    await openAndWait();
+    await waitFor(() => {
+      const c = DiaryWallAppController.instance as any;
+      return c.entries.some((e: any) => e.noteId === 'enc-1');
+    });
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    desk.querySelector<HTMLElement>('.bz-diary-wall-chip[data-tag="加密"]')!.click();
+    await waitFor(() => desk.querySelectorAll('.bz-diary-wall-day-head').length === 1);
+    const item = desk.querySelector('.bz-diary-wall-item') as HTMLElement;
+    item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 30, clientY: 40 }));
+    const menu = document.querySelector('.bz-diary-wall-menu')!;
+    expect(Array.from(menu.querySelectorAll('button')).some((b) => b.textContent!.includes('在日记本中查看'))).toBe(false);
+    // 菜单图标 lucide 化：解密 lock-open、删除 trash-2（增强 #4）
+    const decBtn = Array.from(menu.querySelectorAll('button')).find((b) => b.textContent!.includes('解密'))!;
+    expect((decBtn.querySelector('.bz-ic') as HTMLElement).dataset.icon).toBe('lock-open');
+  });
+
+  it('增强 #8：加密媒体按需解密——解锁后卡片内直显原图（data URL），失败保持占位', async () => {
+    mocks.isUnlocked.mockReturnValue(true);
+    const encEntry = {
+      date: '2026-07-01',
+      time: '10:30',
+      timeValue: 1030,
+      tags: ['日记', '加密'],
+      emoji: '📖🔐',
+      content: '加密的照片\n![[IMG_enc.jpg]]',
+      filename: '2026-07-01',
+      lineNumber: 0,
+      encrypted: true,
+      noteId: 'enc-1',
+      id: 'enc-diary-enc-1',
+    };
+    mocks.loadEncryptedEntries.mockResolvedValueOnce([encEntry]);
+    mocks.getSafeManager.mockImplementation(
+      () =>
+        ({
+          unlocked: true,
+          manifest: {
+            notes: [
+              {
+                id: 'enc-1',
+                attachments: [{ path: 'IMG_enc.jpg', kind: 'img' }],
+              },
+            ],
+          },
+          decryptAttachmentOriginal: vi.fn(async () => 'QmFzZTY0'), // 原始层 base64
+        }) as any
+    );
+    await openAndWait();
+    await waitFor(() => {
+      const c = DiaryWallAppController.instance as any;
+      return c.entries.some((e: any) => e.noteId === 'enc-1');
+    });
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    desk.querySelector<HTMLElement>('.bz-diary-wall-chip[data-tag="加密"]')!.click();
+    await waitFor(() => desk.querySelectorAll('.bz-diary-wall-day-head').length === 1);
+    // jsdom 无 IO → fallback 挂载触发按需解密 → img src = data URL
+    await waitFor(() => {
+      const img = desk.querySelector('.bz-diary-wall-media img') as HTMLImageElement;
+      return !!img && img.getAttribute('src')?.startsWith('data:image/jpeg;base64,') === true;
+    });
+    const img = desk.querySelector('.bz-diary-wall-media img') as HTMLImageElement;
+    expect(img.getAttribute('src')).toBe('data:image/jpeg;base64,QmFzZTY0');
+  });
+
+  it('增强 #8 反向：保险箱未解锁（getSafeManager.locked）加密媒体保持占位，不显原图', async () => {
+    mocks.isUnlocked.mockReturnValue(true);
+    const encEntry = {
+      date: '2026-07-01',
+      time: '10:30',
+      timeValue: 1030,
+      tags: ['日记', '加密'],
+      emoji: '📖🔐',
+      content: '加密的照片\n![[IMG_enc.jpg]]',
+      filename: '2026-07-01',
+      lineNumber: 0,
+      encrypted: true,
+      noteId: 'enc-1',
+      id: 'enc-diary-enc-1',
+    };
+    mocks.loadEncryptedEntries.mockResolvedValueOnce([encEntry]);
+    // 默认 getSafeManager = { unlocked: false } → 解密返回 null
+    await openAndWait();
+    await waitFor(() => {
+      const c = DiaryWallAppController.instance as any;
+      return c.entries.some((e: any) => e.noteId === 'enc-1');
+    });
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    desk.querySelector<HTMLElement>('.bz-diary-wall-chip[data-tag="加密"]')!.click();
+    await waitFor(() => desk.querySelectorAll('.bz-diary-wall-day-head').length === 1);
+    await new Promise((r) => setTimeout(r, 30));
+    const img = desk.querySelector('.bz-diary-wall-media img') as HTMLImageElement;
+    expect(img).toBeTruthy();
+    expect(img.getAttribute('src')).toBeNull(); // 未解密：无 src（占位可见）
+  });
+
+  it('增强 #9：上锁实时归位——encrypt:unlock-changed(unlocked=false) 后加密条目即刻不可见', async () => {
+    mocks.isUnlocked.mockReturnValue(true);
+    const encEntry = {
+      date: '2026-07-01',
+      time: '10:30',
+      timeValue: 1030,
+      tags: ['日记', '加密'],
+      emoji: '📖🔐',
+      content: '加密的日记内容',
+      filename: '2026-07-01',
+      lineNumber: 0,
+      encrypted: true,
+      noteId: 'enc-1',
+      id: 'enc-diary-enc-1',
+    };
+    mocks.loadEncryptedEntries.mockResolvedValue([encEntry]);
+    const c = await openAndWait();
+    await waitFor(() => (c as any).entries.some((e: any) => e.noteId === 'enc-1'));
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    desk.querySelector<HTMLElement>('.bz-diary-wall-chip[data-tag="加密"]')!.click();
+    await waitFor(() => desk.querySelectorAll('.bz-diary-wall-day-head').length === 1);
+    expect((c as any).lockedVisible).toBe(true);
+    // 保险箱上锁（锁定态在别处触发域事件——墙实时归位）
+    const { emitDomainEvent } = await import('../../src/core/domain-bus');
+    emitDomainEvent('encrypt:unlock-changed', { unlocked: false });
+    await waitFor(() => (c as any).lockedVisible === false);
+    // 加密条目被剔除、筛选态清空、内容回退全量普通条目
+    expect((c as any).entries.some((e: any) => e.encrypted)).toBe(false);
+    expect((c as any).selTag).toBeNull();
+    expect(desk.querySelectorAll('.bz-diary-wall-day-head').length).toBe(3);
+    // 订阅随 hide 摘除：再次 emit 不再触发
+    c.hide();
+    mocks.loadEncryptedEntries.mockClear();
+    emitDomainEvent('encrypt:unlock-changed', { unlocked: true });
+    expect(mocks.loadEncryptedEntries).not.toHaveBeenCalled();
+  });
+
+  it('增强 #10：年月跳转显式按钮——点击打开日期筛选弹窗（与品牌行入口同动作）', async () => {
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    const btn = desk.querySelector<HTMLButtonElement>('.bz-diary-wall-btns [data-act="date-picker"]');
+    expect(btn).toBeTruthy();
+    expect((btn!.querySelector('.bz-ic') as HTMLElement).dataset.icon).toBe('calendar');
+    btn!.click();
+    const popup = document.querySelector('.bz-diary-wall-datefilter') as HTMLElement;
+    expect(popup).toBeTruthy();
+    expect(popup.style.display).toBe('flex');
+  });
+
+  it('增强 #11：跳原文回墙恢复——筛选保持、恢复态一次性消费', async () => {
+    const c = await openAndWait();
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    // 筛选「摄影」→ 跳原文（jumpTo 内捕获视图状态后关墙）
+    desk.querySelector<HTMLElement>('.bz-diary-wall-chip[data-tag="摄影"]')!.click();
+    expect((document.querySelector('.bz-diary-wall-desk .bz-diary-wall-range') as HTMLElement).textContent).toBe('1 条');
+    await (c as any).jumpTo((c as any)._wallEntries[0]);
+    expect(mocks.jumpToEntry).toHaveBeenCalled();
+    // 跳走后：捕获了筛选态、墙已隐藏
+    expect((c as any)._restore).not.toBeNull();
+    expect((c as any)._restore.selTag).toBe('摄影');
+    expect((document.querySelector('.bz-diary-wall') as HTMLElement).style.display).toBe('none');
+    // 回墙：恢复态一次性消费清空（show → loadAndRender 完成后 applyRestore；
+    // 注意不能等 range 文本——hide 前旧 DOM 已是「1 条」，waitFor 会立即通过造成假阳性）
+    c.show();
+    await waitFor(() => (c as any)._restore === null);
+    expect(c.selTag).toBe('摄影');
+    await waitFor(
+      () => (document.querySelector('.bz-diary-wall-desk .bz-diary-wall-range') as HTMLElement)?.textContent === '1 条'
+    );
+    expect(document.querySelector('.bz-diary-wall-desk .bz-diary-wall-day-head')).toBeTruthy();
+  });
+
+  it('增强 #12：右键菜单 z-index 动态发号（topifyZ，>=100000，无静态档）', async () => {
+    await openAndWait();
+    const item = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-item') as HTMLElement;
+    item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 20, clientY: 20 }));
+    const menu = document.querySelector('.bz-diary-wall-menu') as HTMLElement;
+    expect(menu).toBeTruthy();
+    const z = Number(menu.style.zIndex);
+    expect(Number.isFinite(z)).toBe(true);
+    expect(z).toBeGreaterThanOrEqual(100000);
+  });
+
+  // ===== 样式回归（CSS 改动 jsdom 不可算，按源码断言；先例：reading-report report.test.ts） =====
+
+  it('增强 #13：触屏热区 ≥44px 档（pointer:coarse 下 chip/subchip/图标钮/时光条 ::after 外扩）', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/diary-wall/styles.css'), 'utf8');
+    const m = css.match(/@media\s*\(pointer:\s*coarse\)\s*\{[\s\S]*?\n\}/);
+    expect(m).toBeTruthy();
+    const block = m![0];
+    // 热区外扩对象：横滑标签/二级标签/头行图标钮/那年今天卡片
+    for (const sel of ['.bz-diary-wall-chip', '.bz-diary-wall-subchip', '.bz-diary-wall-icon-btn', '.bz-diary-wall-memory']) {
+      expect(block).toContain(sel);
+    }
+    // 外扩实现：::after 绝对定位负 inset（12px ×2 + 自身 ≥20px ≈ 44px 档）
+    expect(block).toContain('::after');
+    expect(block).toContain('inset: -12px');
+  });
+
+  it('增强 #12/#2/#5 样式落位：菜单无静态 z-index 档；年份标签与时光条类存在', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/diary-wall/styles.css'), 'utf8');
+    // #12：.bz-diary-wall-menu 规则块内不再有静态 z-index（显示时 topifyZ 动态发号）
+    const menuBlock = css.match(/\.bz-diary-wall-menu\s*\{[^}]*\}/);
+    expect(menuBlock).toBeTruthy();
+    expect(menuBlock![0]).not.toContain('z-index');
+    // #2：年份分隔标签类
+    expect(css).toContain('.bz-diary-wall-rail-year');
+    // #5：那年今天时光条类（容器/头行/横滑行/卡片/年份角标）
+    for (const cls of [
+      '.bz-diary-wall-memories',
+      '.bz-diary-wall-memories-head',
+      '.bz-diary-wall-memories-row',
+      '.bz-diary-wall-memory-thumb',
+      '.bz-diary-wall-memory-year',
+    ]) {
+      expect(css).toContain(cls);
+    }
   });
 });
