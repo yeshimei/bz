@@ -164,8 +164,10 @@ function baseNameOf(p: string): string {
  * 原样留档到 CONFIG/.CORRUPT/<原文件名>.<yyyymmdd-hhmmss>.bak（目录不存在则创建；
  * 同秒多条留档追加 -2/-3 序号防撞名）。raw 缺省时读盘取当前内容。
  * 返回留档路径；任何一步失败返回 null（留档失败不阻塞原流程——降级初始化照常走）。
+ * 导出（D3）：供自带串行链的域（secondbrain store-file 等）复用同一留档契约，
+ * 损坏/写失败现场统一落 CONFIG/.CORRUPT，不再各域自造留档格式。
  */
-async function backupOriginal(app: any, filePath: string, raw?: string): Promise<string | null> {
+export async function backupOriginal(app: any, filePath: string, raw?: string): Promise<string | null> {
   try {
     const f = app.vault.getAbstractFileByPath(filePath);
     if (!f) return null;
