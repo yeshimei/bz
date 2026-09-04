@@ -30,7 +30,7 @@ import {
 import { M, resetCinemaState, type CinemaItem, type CinemaState } from './state';
 import { rebuildItems, getDisplayItems } from './data';
 import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } from './recommend';
-import { buildAnalysisHTML } from './analysis';
+import { buildStatPageHtml } from './analysis';
 import { watchPosterFetch } from './poster-watch';
 
 // ---------- 小工具 ----------
@@ -444,8 +444,9 @@ function renderAIResultList(app: App): string {
   return `<div class="bz-cinema-page">${head}<div class="bz-cinema-rec-list">${cards}</div></div>`;
 }
 
+/** 分析页（ADR-0090 内嵌化：整页 = 页头 + 头行小计 + 19 板块，由 analysis 层组装） */
 function renderStatPageHtml(): string {
-  return `<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title">${iconSpan(ICON.stat)}影视分析</span></div>${buildAnalysisHTML()}</div>`;
+  return buildStatPageHtml();
 }
 
 function renderContent(app: App): void {
@@ -733,7 +734,7 @@ function openEditForm(item: CinemaItem | null, app: App): void {
             notice('已存在同名影视，请换个名称');
             return;
           }
-          const it: CinemaItem = { file: null, name, typeTag: tag, group, status: st, rating: mapped, watchDate: date, review, poster: null, genre: null, director: null, actors: null, region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null };
+          const it: CinemaItem = { file: null, name, typeTag: tag, group, status: st, rating: mapped, watchDate: date, review, poster: null, genre: null, director: null, actors: null, region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null };
           newItem = it;
           M.items.unshift(it);
           await persistItem(it, app);
@@ -1036,6 +1037,9 @@ export function createOverlay(app: App): void {
       if (item) openDetail(item, app);
       return;
     }
+    // 分析页空态「添加影视」（ADR-0090：空库引导直达添加表单）
+    const analysisAdd = t.closest('[data-cinema-analysis-add]') as HTMLElement | null;
+    if (analysisAdd) { openEditForm(null, app); return; }
     const add = t.closest('[data-cinema-add]') as HTMLElement | null;
     if (add) { openEditForm(null, app); return; }
   });
