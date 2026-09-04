@@ -201,7 +201,7 @@ export function diarySettingsSchema(): SettingsSchema {
         icon: 'folder-open', name: '目录',
         rows: [
           { type: 'path', mode: 'single', name: '日记目录', desc: '存放日记文件的文件夹路径', binding: { key: 'diaryDirectory' }, onChange: () => applyDirectories(getSettings()) },
-          { type: 'path', mode: 'single', name: '影视目录', desc: '存放影视笔记的文件夹路径', binding: { key: 'movieDirectory' }, onChange: () => applyDirectories(getSettings()) },
+          { type: 'path', mode: 'single', name: '影视目录', desc: '日记与回忆墙归类用的影视文件夹，与影院设置的影视文件夹相互独立', binding: { key: 'movieDirectory' }, onChange: () => applyDirectories(getSettings()) },
           { type: 'path', mode: 'single', name: '信件目录', desc: '存放信件的文件夹路径', binding: { key: 'letterDirectory' }, onChange: () => applyDirectories(getSettings()) },
           batchSizeRow('diaryBatchSize', { onCommit: () => applyDirectories(getSettings()) }),
         ],
