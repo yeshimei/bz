@@ -44,6 +44,8 @@ export interface BookshelfState {
   items: BookshelfItem[];
   /** 当前筛选（全部/在读/未读/已读；侧栏与移动抽屉共用） */
   side: SideId;
+  /** 分类筛选（'all' = 全部；与状态正交；值 = category 或「未分类」，左栏与移动抽屉共用） */
+  catFilter: string;
   sortMode: SortKey;
   /** 桌面搜索框关键字（移动端独立输入框，共用 currentList 过滤） */
   searchKeyword: string;
@@ -60,6 +62,7 @@ export const M: BookshelfState = {
   currentOverlay: null,
   items: [],
   side: 'all',
+  catFilter: 'all',
   sortMode: 'date',
   searchKeyword: '',
   searchDebounceTimer: null,
@@ -74,6 +77,7 @@ export function resetBookshelfState(): void {
   M.currentOverlay = null;
   M.items = [];
   M.side = 'all';
+  M.catFilter = 'all';
   M.sortMode = 'date';
   M.searchKeyword = '';
   M.searchDebounceTimer = null;
