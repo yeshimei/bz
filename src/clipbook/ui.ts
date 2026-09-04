@@ -468,7 +468,7 @@ function railItemHtml(sel: SrcSelJson, label: string, count: number, unread: num
       ${icon === 'feed'
         ? `<span class="bz-clip-rail-badge" style="--rail-c:${color || '#58a6ff'}">${esc(sub || label.slice(0, 1))}</span>`
         : icon === 'bili'
-          ? `<span class="bz-clip-rail-badge bili" style="--rail-c:${color || '#58a6ff'}">${esc(sub || label.slice(0, 1))}</span>`
+          ? `<span class="bz-clip-rail-badge bili">${esc(sub || label.slice(0, 1))}</span>`
           : icon === 'clip'
             ? `<span class="bz-clip-rail-ic">${iconSpan('scissors')}</span>`
             : `<span class="bz-clip-rail-ic ${sel.kind === 'all' ? 'accent' : ''}">${icon ? iconSpan(icon) : ''}</span>`}
@@ -507,7 +507,8 @@ function renderRail(): void {
     const active = M.sel.kind === 'inbox' && M.sel.platform === 'B站' && M.sel.up === uid;
     // G：UP 行 data-src 携带 platform=B站 + up=uid（旧实现 platform=展示名、up=null，
     // 点击后按平台名过滤恒空——UP 源点开是空列表且高亮不复位）
-    html += railItemHtml({ kind: 'inbox', platform: 'B站', up: uid }, name, cnt, cnt, 'bili', '#8b7cf6', active, name.slice(0, 1));
+    // B站徽标色由 .bz-clip-rail-badge.bili 样式侧单源承担（不再内联传 #8b7cf6）
+    html += railItemHtml({ kind: 'inbox', platform: 'B站', up: uid }, name, cnt, cnt, 'bili', '', active, name.slice(0, 1));
   }
 
   // 剪藏本（聚合，saved 语义）
