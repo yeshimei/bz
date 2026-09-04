@@ -45,7 +45,7 @@ describe('loadDatabase', () => {
     expect(db.categories.filter((c) => c === '📱 智能手机').length).toBe(1);
   });
 
-  it('解析失败 → 原文件改名留档重建 + 警告 Notice + 重置为空库', async () => {
+  it('解析失败 → 原样留档 CONFIG/.CORRUPT 重建 + 警告 Notice + 重置为空库', async () => {
     setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
     const broken = '{broken';
     vault.files.set('CONFIG/STORAGE/belongings.json', broken);
@@ -53,8 +53,8 @@ describe('loadDatabase', () => {
     const db = await loadDatabase();
     expect(db.items).toEqual({});
     expect(hasNotice(/数据文件解析失败/)).toBe(true);
-    // 统一读写语义：原内容改名留档（不再直接覆盖丢失）
-    const backups = [...vault.files.keys()].filter((p) => p.startsWith('CONFIG/STORAGE/belongings.json.corrupt-'));
+    // D1 留档契约：原内容原样留档（不再直接覆盖丢失）
+    const backups = [...vault.files.keys()].filter((p) => p.startsWith('CONFIG/.CORRUPT/belongings.json.'));
     expect(backups).toHaveLength(1);
     expect(vault.files.get(backups[0])).toBe(broken);
     // 原路径重建空库
