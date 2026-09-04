@@ -5538,21 +5538,32 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-review-stats-tl-row { text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: var(--background-secondary); color: var(--text-normal); font-size: 13px; cursor: pointer; }
 /* ==================== 番茄钟域样式（src/pomodoro/styles.css） ==================== */
 /* ==================== 番茄钟状态栏（pomodoro，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
-    .pomodoro-statusbar { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+    .pomodoro-statusbar { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; padding: 2px 4px; border-radius: var(--radius-s, 4px); transition: background-color 0.15s ease, opacity 0.15s ease; }
+    .pomodoro-statusbar:hover { background: var(--background-modifier-hover); color: var(--text-normal); } /* 悬停/可点反馈，对齐组件库交互基线 */
+    .pomodoro-statusbar-idle:hover { opacity: 0.75; } /* 空闲灰态悬停抬亮 */
     .pomodoro-statusbar .pomodoro-statusbar-icon { display: inline-flex; align-items: center; }
     .pomodoro-statusbar-idle { opacity: 0.45; }
     /* x6：暂停态与空闲态视觉区分（暂停显示「已暂停」标签；醒目标识，非空闲灰态） */
     .pomodoro-statusbar-paused { opacity: 1; color: var(--text-warning, var(--text-normal)); }
     .pomodoro-statusbar-paused .pomodoro-statusbar-text { font-size: 12px; }
-  
+
 
 /* ==================== 番茄钟弹窗（pomodoro，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
-    #pomodoro-mask { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.45); } /* z 动态发号（ADR-0067） */
+    #pomodoro-mask { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--background-modifier-cover); } /* z 动态发号（ADR-0067）；遮罩色走主题 token（原写死 rgba 已对齐） */
     #pomodoro-popup { width: 320px; padding: 24px; border-radius: 16px; background: var(--background-primary); box-shadow: 0 8px 40px rgba(0,0,0,0.3); text-align: center; position: relative; }
+    #pomodoro-popup:focus { outline: none; } /* Space 快捷键承载焦点，不画焦点环 */
     #pomodoro-ring-svg { width: 160px; height: 160px; margin: 8px auto; display: block; }
     .pomodoro-ring-track { fill: none; stroke: var(--background-modifier-border); stroke-width: 8; }
     .pomodoro-ring-progress { fill: none; stroke: var(--interactive-accent); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+    /* 本轮循环位置：N 个 6px 方点，已完成填 accent（增强包，替代「专注 2/4」文字小字） */
+    .pomodoro-cycle { display: flex; gap: 4px; justify-content: center; align-items: center; margin-top: 4px; height: 6px; }
+    .pomodoro-cycle-dot { width: 6px; height: 6px; border-radius: 2px; background: var(--background-modifier-border); }
+    .pomodoro-cycle-dot-on { background: var(--interactive-accent); }
     #pomodoro-phase { font-size: 15px; color: var(--text-muted); margin-top: 8px; }
+    .pomodoro-phase-icon { display: inline-flex; align-items: center; vertical-align: -2px; margin-right: 4px; }
+    .pomodoro-phase-icon svg { width: 14px; height: 14px; }
+    /* 当前专注任务名（待办「专注这个」联动）：弱化小字，超长省略，悬停 title 见全文 */
+    .pomodoro-task { font-size: 12px; color: var(--text-faint); margin-top: 4px; max-width: 240px; margin-left: auto; margin-right: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     #pomodoro-time { font-size: 42px; font-weight: 600; color: var(--text-normal); font-variant-numeric: tabular-nums; }
     .pomodoro-controls { display: flex; gap: 8px; justify-content: center; margin-top: 16px; }
     .pomodoro-btn { padding: 6px 14px; border-radius: 8px; background: var(--background-secondary); color: var(--text-normal); cursor: pointer; font-size: 14px; }
@@ -5570,6 +5581,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
     .pomodoro-stat-col { display: flex; align-items: flex-end; height: 40px; }
     .pomodoro-stat-bar { width: 10px; border-radius: 3px 3px 0 0; background: var(--interactive-accent); min-height: 2px; }
     .pomodoro-stat-label { font-size: 9px; color: var(--text-faint); }
+    /* 今日专注时段分布：12 槽（2 小时一格）小方柱，条形语言与近 7 天柱一致（增强包） */
+    .pomodoro-hours { display: flex; gap: 4px; justify-content: center; align-items: flex-end; margin-top: 8px; }
+    .pomodoro-hour-bar { width: 8px; border-radius: 3px 3px 0 0; background: var(--background-modifier-border); min-height: 2px; }
+    .pomodoro-hour-bar-on { background: var(--interactive-accent); opacity: 0.7; }
 /* ==================== 附件搬移域样式（src/attach/styles.css） ==================== */
 /* 原文件夹选择弹窗样式（bz-attach-*，ticket 65）随 FolderSelectModal 退役（ticket 128，
    ADR-0061）删除：路径录入统一走 core/path-picker（bz-path-picker-*，样式在 src/core/styles.css）。
