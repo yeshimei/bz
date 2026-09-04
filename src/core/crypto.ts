@@ -5,7 +5,7 @@
  *
  * 派生密钥缓存：PBKDF2 十万次迭代是解密耗时大头（预览窗每附件一次），
  * 按 (password, salt) 缓存已派生密钥——同一密文重复解密（重开预览/失败重试）不再重复派生。
- * 锁定语义：保险箱上锁时须 clearCryptoKeyCache()，密钥不残留内存。
+ * 锁定语义：保险库上锁时须 clearCryptoKeyCache()，密钥不残留内存。
  */
 export class CryptoService {
   static async deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
@@ -80,7 +80,7 @@ function toBase64(bytes: Uint8Array): string {
 /** 已派生密钥缓存：(salt base64) → {密码, 密钥}；同 salt 换密码会重新派生（校验 pw） */
 const keyCache = new Map<string, { pw: string; key: CryptoKey }>();
 
-/** 清空派生密钥缓存（安全：保险箱/密码本上锁时调用，密钥不残留内存） */
+/** 清空派生密钥缓存（安全：保险库/密码本上锁时调用，密钥不残留内存） */
 export function clearCryptoKeyCache(): void {
   keyCache.clear();
 }

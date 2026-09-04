@@ -3,7 +3,7 @@
  * 覆盖：四种类型 / 时长规则 / 点击关闭 / 动态消息 / 进度条 / 操作按钮 / 堆叠上限。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { notify, __resetNoticeForTests, cleanupNotices } from '../../src/core/notice';
+import { notify, notifyUndo, notifySaveError, notifyActionError, __resetNoticeForTests, cleanupNotices } from '../../src/core/notice';
 
 function visibleNotices(): HTMLElement[] {
   return Array.from(document.querySelectorAll('.bz-notice')) as HTMLElement[];
@@ -375,6 +375,41 @@ describe('通知系统', () => {
     it('全部为常驻帧时不再挤兑（跳过驱逐，允许超上限）', () => {
       for (let i = 1; i <= 7; i++) notify('常驻 ' + i, { duration: 0 });
       expect(visibleNotices()).toHaveLength(7);
+    });
+  });
+
+  describe('便捷模板（notifyUndo / notifySaveError / notifyActionError）', () => {
+    it('notifyUndo：默认 delete 类型 + 「撤销」按钮，点击执行回滚并收起', async () => {
+      let undone = false;
+      notifyUndo('已删除待办「X」', () => { undone = true; });
+      const el = visibleNotices()[0];
+      expect(el.classList.contains('bz-notice--delete')).toBe(true);
+      const btn = el.querySelector('.bz-notice-action') as HTMLElement;
+      expect(btn.textContent).toBe('撤销');
+      btn.click();
+      expect(undone).toBe(true);
+      await vi.advanceTimersByTimeAsync(300);
+      expect(el.isConnected).toBe(false);
+    });
+
+    it('notifySaveError：统一「保存失败（what）：原因」模板 + error 类型', () => {
+      notifySaveError(new Error('磁盘已满'), '收藏');
+      const el = visibleNotices()[0];
+      expect(el.classList.contains('bz-notice--error')).toBe(true);
+      expect(el.querySelector('.bz-notice-msg')!.textContent).toBe('保存失败（收藏）：磁盘已满');
+      // 非 Error 抛出物走 String()
+      notifySaveError('boom');
+      expect(visibleNotices()[1].querySelector('.bz-notice-msg')!.textContent).toBe('保存失败：boom');
+    });
+
+    it('notifyActionError（enh-sweep B 包）：统一「<动作>失败：<原因>，请重试」模板 + error 类型', () => {
+      notifyActionError(new Error('清单被占用'), '清理');
+      const el = visibleNotices()[0];
+      expect(el.classList.contains('bz-notice--error')).toBe(true);
+      expect(el.querySelector('.bz-notice-msg')!.textContent).toBe('清理失败：清单被占用，请重试');
+      // 非 Error 抛出物同样人话化
+      notifyActionError(42, '还原');
+      expect(visibleNotices()[1].querySelector('.bz-notice-msg')!.textContent).toBe('还原失败：42，请重试');
     });
   });
 });

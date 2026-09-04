@@ -81,7 +81,7 @@ describe('home 快照', () => {
     expect(snap.byDomain.diary.text).toBe('');
   });
 
-  it('memo：未完成待办计数 + 到期标记', async () => {
+  it('memo：未完成备忘计数 + 到期标记（B 包：统计口径「N 条备忘」）', async () => {
     const now = new Date();
     const p = (n: number) => String(n).padStart(2, '0');
     const dueToday = `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())} 12:00:00`;
@@ -95,7 +95,7 @@ describe('home 快照', () => {
       ])
     );
     const snap = await collectHomeSnapshot(mockAppWithVault(vault) as any);
-    expect(snap.byDomain.memo.text).toBe('3 条待办');
+    expect(snap.byDomain.memo.text).toBe('3 条备忘');
     expect(snap.byDomain.memo.sub).toContain('到期 2');
   });
 

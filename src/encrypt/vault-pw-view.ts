@@ -9,17 +9,16 @@
 import { escManager } from '../core/esc-manager';
 import { createSiteIcon } from '../core/dom';
 import { attachItemActions, openItemSheet, type ItemAction, type ItemActionsOptions } from '../core/item-actions';
+import { formatRelativeTime } from '../core/utils';
 import { PasswordVaultDataManager, type PasswordVaultEntry, type PlatformGroup } from './vault-data';
 
-/** 相对时间（密码条目创建/更新展示） */
+/**
+ * 相对时间（密码条目创建/更新展示）：收编 core formatRelativeTime（enh-sweep B 包，
+ * 「N分钟前」无空格全站口径），本域仅保留空输入返回空串的兜底语义。
+ */
 export function relTime(iso: string): string {
   if (!iso) return '';
-  const d = new Date(iso);
-  const diff = (Date.now() - d.getTime()) / 864e5;
-  if (diff < 1) return '今天';
-  if (diff < 2) return '昨天';
-  if (diff < 30) return Math.round(diff) + ' 天前';
-  return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+  return formatRelativeTime(iso);
 }
 
 /** 密码掩码圆点 */
@@ -92,7 +91,7 @@ export interface PwViewHost {
   openPwEntryDialog(edit?: PasswordVaultEntry | null, prefill?: { platform?: string; url?: string }): void;
   /** 打开平台信息编辑弹窗 */
   openPwPlatformEdit(platform: string): void;
-  askConfirm(title: string, message: string, danger: boolean, onYes: () => void): void;
+  askConfirm(title: string, message: string, okLabel: string, onYes: () => void): void;
   /** 复制敏感文本（60s 自动清空由宿主实现） */
   copySensitive(text: string): Promise<boolean>;
   openExternal(url: string): void;
@@ -253,7 +252,7 @@ export class VaultPwView {
       <div class="bz-pwv-accts"></div>`;
       const acctsEl = container.querySelector('.bz-pwv-accts') as HTMLElement;
       if (!filtered.length) {
-        acctsEl.innerHTML = '<div class="bz-pwv-empty"><div class="t">该平台暂无账号</div></div>';
+        acctsEl.innerHTML = '<div class="bz-pwv-empty"><div class="t">该平台暂无账号</div><div class="d">点上方「在该平台新增账号」录入</div></div>';
       } else {
         for (const x of filtered) acctsEl.appendChild(this.buildAccountCard(x, st));
       }
@@ -330,11 +329,11 @@ export class VaultPwView {
     } else if (act === 'fav') {
       void this.dm.toggleFav(d.id).then(() => this.host.onPwChanged?.()).catch((e) => this.failToast(e));
     } else if (act === 'del') {
-      this.host.askConfirm('删除密码条目', `确定删除账号「${d.account}」吗？此操作不可撤销。`, true, () => {
+      this.host.askConfirm('删除密码条目', `确定删除账号「${d.account}」吗？此操作不可撤销。`, '删除', () => {
         void this.dm.deleteItem(d.id).then(() => {
           if (st.selAccount === d.id) st.selAccount = null;
           this.host.onPwChanged?.();
-          t('已删除');
+          t(`已删除账号「${d.account}」`);
         }).catch((e) => this.failToast(e));
       });
     }
@@ -375,10 +374,10 @@ export class VaultPwView {
         label: '删除',
         kind: 'danger',
         onClick: () =>
-          this.host.askConfirm('删除密码条目', `确定删除账号「${d.account}」吗？此操作不可撤销。`, true, () => {
+          this.host.askConfirm('删除密码条目', `确定删除账号「${d.account}」吗？此操作不可撤销。`, '删除', () => {
             void this.dm.deleteItem(d.id).then(() => {
               this.host.onPwChanged?.();
-              this.host.toast('已删除');
+              this.host.toast(`已删除账号「${d.account}」`);
             }).catch((e) => this.failToast(e));
           }),
       },
@@ -424,7 +423,7 @@ export class VaultPwView {
       label: '删除整个平台',
       kind: 'danger',
       onClick: () =>
-        this.host.askConfirm('删除整个平台', `将删除「${platform}」的 ${count} 个账号，此操作不可撤销。确定继续？`, true, () => {
+        this.host.askConfirm('删除整个平台', `将删除「${platform}」的 ${count} 个账号，此操作不可撤销。确定继续？`, '删除', () => {
           void this.dm.removePlatform(platform).then(() => {
             this.host.onPwChanged?.();
             this.host.toast(`已删除平台与 ${count} 个账号`);
@@ -515,7 +514,7 @@ export class VaultPwView {
     <div class="bz-pwv-accts"></div>`;
     const acctsEl = body.querySelector('.bz-pwv-accts') as HTMLElement;
     if (!accs.length) {
-      acctsEl.innerHTML = '<div class="bz-pwv-empty"><div class="t">该平台暂无账号</div></div>';
+      acctsEl.innerHTML = '<div class="bz-pwv-empty"><div class="t">该平台暂无账号</div><div class="d">点上方「在该平台新增账号」录入</div></div>';
     } else {
       for (const d of accs) acctsEl.appendChild(this.buildAccountCard(d, st));
     }

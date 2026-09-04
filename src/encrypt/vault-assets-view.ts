@@ -62,7 +62,7 @@ export function overviewHTML(stats: OverviewStats): string {
             <span class="tm">${escapeHtml(r.time)}</span></div>`;
         })
         .join('')
-    : '<div class="bz-vault-panel-empty">还没有加密资产</div>';
+    : '<div class="bz-empty"><span class="bz-empty-ic">' + vIc('lock', 28) + '</span><div class="bz-empty-title">还没有加密资产</div><div class="bz-empty-desc">录入密码、加密笔记或加密日记后，最近动态在这里显示</div></div>';
   return `
   <div class="bz-vault-hero">
     <div class="ht">${vIc('lock', 14)} 保险库已解锁 · 三类资产集中管理</div>

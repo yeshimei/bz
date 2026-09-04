@@ -1298,11 +1298,11 @@ describe('幽灵进度条收尾（ticket 5）', () => {
     await new Promise((r) => setTimeout(r, 20));
     vi.spyOn(dm, 'restoreNote').mockRejectedValue(new Error('镜像丢失'));
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
-    await waitFor(() => hasNotice('还原失败：镜像丢失'));
+    await waitFor(() => hasNotice('还原失败：镜像丢失，请重试'));
     // 常驻 progress 转圈已被收尾（等退出动画移除后 DOM 无残留）
     await waitFor(() => document.querySelectorAll('.bz-notice--progress').length === 0, 1000);
     // 错误 toast 保留
-    expect(hasNotice('还原失败：镜像丢失')).toBe(true);
+    expect(hasNotice('还原失败：镜像丢失，请重试')).toBe(true);
   });
 
   it('加密失败（lockCurrentNote）：进度通知被收尾（常驻转圈不残留），仅保留错误 toast', async () => {
@@ -1318,7 +1318,7 @@ describe('幽灵进度条收尾（ticket 5）', () => {
     await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     await p;
-    expect(hasNotice('加密失败：磁盘满')).toBe(true);
+    expect(hasNotice('加密失败：磁盘满，请重试')).toBe(true);
     await waitFor(() => document.querySelectorAll('.bz-notice--progress').length === 0, 1000);
     c.cleanup();
   });

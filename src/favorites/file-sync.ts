@@ -13,7 +13,7 @@ import type { App } from 'obsidian';
 import { notify } from '../core/notice';
 import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
-import { jsonFileStore } from '../core/storage';
+import { enqueueFileTask, jsonFileStore } from '../core/storage';
 import { SYNC_WATCHED_FOLDERS } from '../core/settings-common';
 import { getStoragePath } from './config';
 
@@ -76,6 +76,15 @@ async function saveJSON(app: App, filePath: string, data: any): Promise<void> {
   await jsonFileStore<any[]>(filePath).write(data);
 }
 
+/**
+ * 读改写事务（D2 可靠写契约原语 1 收编）：「读→改→写」整体入 core per-path 串行队列
+ * （键 = favorites.json 路径），与 UI 侧 DataManager 的 add/update/mutateAll 同队列互斥——
+ * 后台同步不再用陈旧基线覆盖面板刚写入的数据（对照 memo/file-sync.ts 同款）。
+ */
+async function withFavoritesJson<T>(filePath: string, task: () => Promise<T>): Promise<T> {
+  return enqueueFileTask(filePath, task);
+}
+
 // ---------- 路径 / 设置 ----------
 
 /** 收藏本数据文件路径（照抄旧 ai-agent/index.ts：ADR-0009 storagePath 优先，旧字段兼容兜底） */
@@ -99,7 +108,8 @@ let _cancelled = false;
 /** 待清理的去抖器（unload 时清定时器） */
 let _flushers: { cancel(): void }[] = [];
 
-/** 任务队列：串行执行（防并发读写同一 JSON）；失败通知（去重防刷屏）。
+/** 任务队列：串行执行（卸载短路 + 失败通知去重的域内任务链；同文件互斥已由
+ *  withFavoritesJson 的 core per-path 队列承担——本链只保证事件任务串行回放）。
  *  任务执行前检查 _cancelled，卸载后积压任务首行短路。 */
 let queue: Promise<any> = Promise.resolve();
 function enqueue(task: () => Promise<any> | void) {
@@ -155,21 +165,26 @@ function createBatchFlusher<T>(run: (batch: T[]) => Promise<void>): ((ev: T) => 
 // ---------- 事件编排 ----------
 
 function createFavoritesFileSyncAgent(app: App): void {
-  /** 对 favorites.json 执行同步函数，有变化才写回 */
+  /** 对 favorites.json 执行同步函数，有变化才写回（读改写整体入 per-path 串行队列） */
   async function syncSource(fn: (items: any[], ...args: any[]) => boolean, ...args: any[]) {
     const path = getFavoritesPath();
-    const items = await loadJSON(app, path);
-    if (fn(items, ...args)) await saveJSON(app, path, items);
+    await withFavoritesJson(path, async () => {
+      const items = await loadJSON(app, path);
+      if (fn(items, ...args)) await saveJSON(app, path, items);
+    });
   }
 
   const isMd = (file: any) => file && file.extension === 'md' && inFolders(file.path, getWatchedFolders());
 
-  /** 同名未关联条目自动关联（create / file-open 共用） */
+  /** 同名未关联条目自动关联（create / file-open 共用；读改写入 per-path 串行队列） */
   const autoLinkFavorites = async (file: any) => {
-    const items = await loadJSON(app, getFavoritesPath());
-    if (syncAutoLink(items, file.basename, file.path)) {
-      await saveJSON(app, getFavoritesPath(), items);
-    }
+    const path = getFavoritesPath();
+    await withFavoritesJson(path, async () => {
+      const items = await loadJSON(app, path);
+      if (syncAutoLink(items, file.basename, file.path)) {
+        await saveJSON(app, path, items);
+      }
+    });
   };
 
   // rename/create 同类事件按 DEBOUNCE_DELAY 合并去抖回放保序；delete 保持即时。

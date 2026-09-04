@@ -265,15 +265,16 @@ describe('launcher 数据层', () => {
       expect(d.desktop.tiles[0]).toMatchObject({ id: 'a', x: 2, y: 3, icon: 'star', label: '入口A' });
     });
 
-    it('解析失败 → 空布局且原文件改名留档（不再静默覆盖）', async () => {
+    it('解析失败 → 空布局且原文件留档 CONFIG/.CORRUPT（不再静默覆盖）', async () => {
       const vault = new MockVault();
       const broken = '{broken';
       await vault.create(LAUNCHER_PATH, broken);
       setApp({ vault } as any);
       const d = await loadLauncherData(getApp());
       expect(d).toEqual({ version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 6 } });
-      // 统一读写语义：原内容改名留档（.corrupt-<时间戳>），原路径重建空配置
-      const backups = [...vault.files.keys()].filter((p) => p.startsWith(LAUNCHER_PATH + '.corrupt-'));
+      // D1 留档契约：原内容原样留档（CONFIG/.CORRUPT/<名>.<yyyymmdd-hhmmss>.bak），原路径重建空配置
+      const backupPrefix = 'CONFIG/.CORRUPT/' + LAUNCHER_PATH.split('/').pop() + '.';
+      const backups = [...vault.files.keys()].filter((p) => p.startsWith(backupPrefix));
       expect(backups).toHaveLength(1);
       expect(vault.files.get(backups[0])).toBe(broken);
       expect(vault.files.get(LAUNCHER_PATH)).not.toBe(broken);

@@ -40,6 +40,8 @@ import { QuizManager } from '../review/quiz-core/manager';
 import { loadDatabase as loadBelongings } from '../belongings/data';
 import { parseMovieFile } from '../cinema/data';
 import { STATUS_WANT, STATUS_WATCHING } from '../cinema/constants';
+import { collectWeeklyStat, EMPTY_WEEKLY } from './weekly';
+import type { WeeklyStat } from './weekly';
 
 /** 首页不出统计徽标的域：纯工具/无持久化数据（attach/encrypt/smartcat/settings/wall）
  *  + 有数据但暂未接快照口径的内容域（literature 文献盒 / reading-report 阅读报告，
@@ -50,7 +52,7 @@ export const NO_STAT_DOMAINS: ReadonlySet<string> = new Set([
 ]);
 
 export interface DomainStat {
-  /** 徽标主文案（如「3 条待办」；无数字统计为 ''） */
+  /** 徽标主文案（如「3 条备忘」；无数字统计为 ''） */
   text: string;
   /** 徽标高亮（数值>0 或「进行中/已写」等醒目态） */
   hl: boolean;
@@ -62,6 +64,8 @@ const EMPTY: DomainStat = { text: '', hl: false, sub: '' };
 
 export interface HomeSnapshot {
   byDomain: Record<string, DomainStat>;
+  /** 本周聚合（R1 生活周报轻卡；可选——旧快照消费方/手工注入缺此字段时周卡隐藏） */
+  weekly?: WeeklyStat;
   ok: boolean;
 }
 
@@ -188,7 +192,7 @@ export async function collectHomeSnapshot(app?: App): Promise<HomeSnapshot> {
       out.memo = EMPTY;
     } else {
       const due = dueActiveCount(active as Array<{ completed: string | null; due: string | null }>);
-      out.memo = { text: `${active.length} 条待办`, hl: active.length > 0, sub: due ? `到期 ${due}` : '' };
+      out.memo = { text: `${active.length} 条备忘`, hl: active.length > 0, sub: due ? `到期 ${due}` : '' };
     }
   } catch {
     out.memo = EMPTY;
@@ -318,5 +322,13 @@ export async function collectHomeSnapshot(app?: App): Promise<HomeSnapshot> {
   // ---- 无统计域：空 ----
   for (const id of NO_STAT_DOMAINS) out[id] = EMPTY;
 
-  return { byDomain: out, ok: true };
+  // ---- 本周聚合（R1 生活周报轻卡；各源独立容错失败回落 0，不拖垮快照） ----
+  let weekly: WeeklyStat;
+  try {
+    weekly = await collectWeeklyStat(a, now);
+  } catch {
+    weekly = { ...EMPTY_WEEKLY };
+  }
+
+  return { byDomain: out, weekly, ok: true };
 }
