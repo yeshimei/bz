@@ -96,7 +96,7 @@
   display: none;
   position: absolute; left: 50%; top: 50%;
   width: 30px; height: 30px; margin: -15px 0 0 -15px;
-  border: 3px solid rgba(255, 255, 255, 0.35);
+  border: 3px solid var(--background-modifier-border); /* 轨道走主题描边档（原 rgba 白底亮色主题不可见） */
   border-top-color: var(--interactive-accent);
   border-radius: 50%;
   animation: bz-encrypt-spin 0.8s linear infinite;

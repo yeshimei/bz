@@ -527,7 +527,7 @@ function openBookDetail(it: BookshelfItem, app: App): void {
   const directLabel = it.status === '在读' ? '继续读' : it.isEpub ? '打开原文' : '打开笔记';
   const chips = [
     it.highlights || it.thinks
-      ? `<button type="button" class="bz-chip bz-bs-d-notes" data-bs-notes title="查看读书笔记">${iconSpan('highlighter', 'bz-ic--xs')}${it.highlights} 划线 · ${it.thinks} 批注</button>`
+      ? `<button type="button" class="bz-chip bz-chip--hover-accent bz-bs-d-notes" data-bs-notes title="查看读书笔记">${iconSpan('highlighter', 'bz-ic--xs')}${it.highlights} 划线 · ${it.thinks} 批注</button>`
       : '',
     it.readingTimeFormat ? `<span class="bz-chip">${iconSpan('clock', 'bz-ic--xs')}${esc(it.readingTimeFormat)}</span>` : '',
   ].filter(Boolean).join('');
@@ -540,7 +540,7 @@ function openBookDetail(it: BookshelfItem, app: App): void {
       <div class="bz-bs-d-info">
         <div class="bz-bs-d-title">${esc(it.title)}</div>
         <div class="bz-bs-d-author">${esc(it.author)}</div>
-        <div class="bz-bs-d-badges"><span class="bz-chip bz-chip--locked" style="background:${statusColor(it.status)};border-color:transparent;color:var(--bz-on-overlay)">${esc(it.status)}</span><button type="button" class="bz-btn bz-btn--primary bz-bs-d-open" title="${esc(directLabel)}">${iconSpan(ICON.bookOpen, 'bz-ic--sm')}${directLabel}</button></div>
+        <div class="bz-bs-d-badges"><span class="bz-chip bz-chip--tint" style="--bz-chip-tint:${statusColor(it.status)};--bz-chip-tint-fg:var(--bz-on-overlay)">${esc(it.status)}</span><button type="button" class="bz-btn bz-btn--primary bz-bs-d-open" title="${esc(directLabel)}">${iconSpan(ICON.bookOpen, 'bz-ic--sm')}${directLabel}</button></div>
         <div class="bz-bs-d-chips">${chips}</div>
         <div class="bz-bs-d-cat">${esc(it.category || '未分类')}</div>
         ${dateMeta}
@@ -621,7 +621,7 @@ function openBookDetail(it: BookshelfItem, app: App): void {
   actions.className = 'bz-bs-d-actions';
   if (!readonly && it.file) {
     const del = document.createElement('button');
-    del.className = 'bz-btn bz-btn--ghost bz-bs-d-danger';
+    del.className = 'bz-btn bz-btn--danger-ghost bz-bs-d-danger';
     del.type = 'button';
     del.innerHTML = iconSpan('trash-2', 'bz-ic--sm') + '删除';
     del.addEventListener('click', () => {
@@ -784,7 +784,7 @@ export function createOverlay(app: App): void {
   const fullscreen = (tryGetSettings() as Record<string, unknown>).bookshelfMobileDefaultFullscreen === true;
 
   overlay.innerHTML = `
-    <div class="bz-bs-panel">
+    <div class="bz-bs-panel bz-panel-mtop">
       <div class="bz-bs-head">
         <div class="bz-bs-title">书架墙<span class="bz-bs-total"></span></div>
         <div class="bz-bs-head-btns">

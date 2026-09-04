@@ -214,16 +214,19 @@ export function buildAnalysisData(): any {
 }
 
 // ======================= 渲染（自绘主题变量；粉彩图表色板 = core/chart-palette） =======================
+// 排印归档：分析页 rem 散档（.68~.95rem）归并字号 token 四档——
+// caption(11) ≤.72rem / meta(12) .74~.78rem / label(13) .8~.83rem / body(14) ≥.92rem；
+// 图表几何（1.35rem 大数字、条高/宽）保留内联不入档。
 
 function emptyHTML(): string {
-  return '<p style="text-align:center;color:var(--bz-cinema-muted);font-size:.8rem;padding:12px 0;">暂无数据</p>';
+  return '<p style="text-align:center;color:var(--bz-cinema-muted);font-size:var(--bz-font-label);padding:12px 0;">暂无数据</p>';
 }
 
 function statCardHTML(label: string, value: any, idx: number): string {
   const bg = CHART_PASTEL_SERIES[idx % CHART_PASTEL_SERIES.length];
   return `<div style="flex:1;min-width:100px;padding:14px 8px;background:${bg};border-radius:12px;text-align:center;border:1px solid rgba(0,0,0,0.06);">
     <div style="font-size:1.35rem;font-weight:700;color:${CHART_INK};line-height:1.2;">${value}</div>
-    <div style="font-size:.7rem;color:rgba(61,68,86,0.65);margin-top:3px;">${label}</div>
+    <div style="font-size:var(--bz-font-caption);color:rgba(61,68,86,0.65);margin-top:3px;">${label}</div>
   </div>`;
 }
 
@@ -240,8 +243,8 @@ function barChartHTML(entries: any[], opt?: any): string {
     const hl = o.highlight !== undefined ? o.highlight === i : false;
     const fill = hl ? CHART_HIGHLIGHT : color;
     return `<div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;">
-      <div style="width:100%;min-width:30px;height:${h}px;background:${fill};border-radius:6px 6px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:3px;color:${CHART_INK};font-weight:700;font-size:.75rem;">${e.value || ''}</div>
-      <div style="margin-top:6px;font-size:.72rem;color:var(--bz-cinema-muted);text-align:center;white-space:nowrap;">${e.label}</div>
+      <div style="width:100%;min-width:30px;height:${h}px;background:${fill};border-radius:6px 6px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:3px;color:${CHART_INK};font-weight:700;font-size:var(--bz-font-meta);">${e.value || ''}</div>
+      <div style="margin-top:6px;font-size:var(--bz-font-caption);color:var(--bz-cinema-muted);text-align:center;white-space:nowrap;">${e.label}</div>
     </div>`;
   }).join('')}
     </div></div>`;
@@ -253,18 +256,18 @@ function softBarHTML(entries: any[], color: string): string {
   const max = Math.max(...entries.map((e) => e.value), 1);
   return entries.map((e) => `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
-      <span style="width:64px;flex-shrink:0;font-size:.76rem;color:var(--bz-cinema-muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.label}</span>
+      <span style="width:64px;flex-shrink:0;font-size:var(--bz-font-meta);color:var(--bz-cinema-muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.label}</span>
       <div style="flex:1;height:10px;background:var(--bz-cinema-border);border-radius:5px;overflow:hidden;">
         <div style="height:100%;width:${Math.max((e.value / max) * 100, 2)}%;background:${e.color || color};border-radius:5px;"></div>
       </div>
-      <span style="width:36px;flex-shrink:0;font-size:.76rem;color:var(--bz-cinema-text);text-align:right;">${e.value}</span>
+      <span style="width:36px;flex-shrink:0;font-size:var(--bz-font-meta);color:var(--bz-cinema-text);text-align:right;">${e.value}</span>
     </div>`).join('');
 }
 
 function sectionHTML(title: string, body: string, accent?: string, icon?: string): string {
   const bar = accent || CHART_PASTEL_SERIES[0];
   return `<div style="margin-bottom:20px;padding:14px 14px 12px;background:var(--bz-cinema-card);border-radius:12px;border:1px solid var(--bz-cinema-border);">
-    <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:.92rem;margin-bottom:12px;">
+    <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:var(--bz-font-body);margin-bottom:12px;">
       <span style="width:4px;height:14px;border-radius:2px;background:${bar};flex-shrink:0;"></span>
       ${icon ? `<i data-lucide="${icon}" class="bz-ic bz-ic--sm" style="color:var(--bz-cinema-muted)"></i>` : ''}
       <span>${title}</span>
@@ -278,13 +281,13 @@ function topListHTML(list: any[], withRating: boolean): string {
   const badges = CHART_RANK_BADGES;
   return list.map((it, i) => {
     const rank = i < 3
-      ? `<span style="width:20px;height:20px;flex-shrink:0;border-radius:50%;background:${badges[i]};color:${CHART_INK};font-size:.68rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(0,0,0,0.06);">${i + 1}</span>`
-      : `<span style="width:20px;flex-shrink:0;font-size:.72rem;color:var(--bz-cinema-muted);text-align:center;">${i + 1}</span>`;
+      ? `<span style="width:20px;height:20px;flex-shrink:0;border-radius:50%;background:${badges[i]};color:${CHART_INK};font-size:var(--bz-font-caption);font-weight:700;display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(0,0,0,0.06);">${i + 1}</span>`
+      : `<span style="width:20px;flex-shrink:0;font-size:var(--bz-font-caption);color:var(--bz-cinema-muted);text-align:center;">${i + 1}</span>`;
     return `<div style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--bz-cinema-border);">
       ${rank}
-      <span style="flex:1;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">《${it.name}》</span>
-      <span style="font-size:.72rem;color:var(--bz-cinema-muted);flex-shrink:0;">${it.typeTag}</span>
-      ${withRating ? `<span style="font-size:.8rem;font-weight:600;color:var(--bz-cinema-accent);flex-shrink:0;">${it.rating}</span>` : ''}
+      <span style="flex:1;font-size:var(--bz-font-label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">《${it.name}》</span>
+      <span style="font-size:var(--bz-font-caption);color:var(--bz-cinema-muted);flex-shrink:0;">${it.typeTag}</span>
+      ${withRating ? `<span style="font-size:var(--bz-font-label);font-weight:600;color:var(--bz-cinema-accent);flex-shrink:0;">${it.rating}</span>` : ''}
     </div>`;
   }).join('');
 }
@@ -293,16 +296,16 @@ function ratingCompareListHTML(list: any[]): string {
   if (!list || !list.length) return emptyHTML();
   return list.map((it) => `
     <div style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--bz-cinema-border);">
-      <span style="flex:1;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">《${it.name}》</span>
-      <span style="font-size:.72rem;color:var(--bz-cinema-muted);flex-shrink:0;">${it.typeTag}</span>
-      <span style="font-size:.78rem;font-weight:600;color:var(--bz-cinema-accent);flex-shrink:0;">${it.rating}</span>
-      <span style="font-size:.78rem;color:var(--bz-cinema-muted);flex-shrink:0;">豆瓣${it.douban}</span>
+      <span style="flex:1;font-size:var(--bz-font-label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">《${it.name}》</span>
+      <span style="font-size:var(--bz-font-caption);color:var(--bz-cinema-muted);flex-shrink:0;">${it.typeTag}</span>
+      <span style="font-size:var(--bz-font-meta);font-weight:600;color:var(--bz-cinema-accent);flex-shrink:0;">${it.rating}</span>
+      <span style="font-size:var(--bz-font-meta);color:var(--bz-cinema-muted);flex-shrink:0;">豆瓣${it.douban}</span>
     </div>`).join('');
 }
 
 function statInlineHTML(items: string[]): string {
   return `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">${items.map((s) => `
-    <span style="font-size:.74rem;color:var(--bz-cinema-muted);background:var(--bz-cinema-panel);border:1px solid var(--bz-cinema-border);border-radius:8px;padding:3px 10px;">${s}</span>`).join('')}</div>`;
+    <span style="font-size:var(--bz-font-meta);color:var(--bz-cinema-muted);background:var(--bz-cinema-panel);border:1px solid var(--bz-cinema-border);border-radius:8px;padding:3px 10px;">${s}</span>`).join('')}</div>`;
 }
 
 /** 完整分析页板块流（19 板块 = 原独立报告全量能力，ADR-0090） */
@@ -310,8 +313,8 @@ export function buildAnalysisHTML(): string {
   const data = buildAnalysisData();
   if (data.total === 0) {
     return `<div style="padding:64px 20px;text-align:center;color:var(--bz-cinema-muted);">
-      <div style="font-size:.95rem;font-weight:600;margin-bottom:10px;color:var(--bz-cinema-text);">还没有可统计的影视记录</div>
-      <div style="font-size:.8rem;line-height:1.8;">影视文件夹「${M.folderPath}」里还没有可分析的条目。<br>添加影视后，这里会生成你的观影统计。</div>
+      <div style="font-size:var(--bz-font-body);font-weight:600;margin-bottom:10px;color:var(--bz-cinema-text);">还没有可统计的影视记录</div>
+      <div style="font-size:var(--bz-font-label);line-height:1.8;">影视文件夹「${M.folderPath}」里还没有可分析的条目。<br>添加影视后，这里会生成你的观影统计。</div>
       <div style="margin-top:16px;"><button class="bz-btn bz-btn--primary" data-cinema-analysis-add>添加影视</button></div>
     </div>`;
   }
@@ -321,7 +324,7 @@ export function buildAnalysisHTML(): string {
   const topN = (map: any, n: number) => Object.entries(map).sort((a, b) => (b[1] as number) - (a[1] as number)).slice(0, n).map(([label, value]) => ({ label, value }));
   const typeEntries = Object.entries(data.groups).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([label, value]) => ({ label, value, color: CHART_TYPE_COLORS[label] || CHART_FALLBACK }));
   const tagChips = Object.entries(data.tags).sort((a, b) => (b[1] as number) - (a[1] as number))
-    .map(([t, c]) => `<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:.72rem;background:var(--bz-cinema-panel);color:var(--bz-cinema-text);border:1px solid var(--bz-cinema-border);margin:2px;">${t} ${c}</span>`).join('');
+    .map(([t, c]) => `<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:var(--bz-font-caption);background:var(--bz-cinema-panel);color:var(--bz-cinema-text);border:1px solid var(--bz-cinema-border);margin:2px;">${t} ${c}</span>`).join('');
 
   const avgRating = data.ratingCount ? (data.ratingSum / data.ratingCount).toFixed(2) : '—';
   const avgDouban = data.doubanCount ? (data.doubanSum / data.doubanCount).toFixed(2) : '—';
@@ -344,18 +347,18 @@ export function buildAnalysisHTML(): string {
     ${sectionHTML('观影节奏', statInlineHTML([`月均 ${data.monthFreq} 部`, `周末 ${data.weekdays[0] + data.weekdays[6]} 部 (${data.total ? Math.round((data.weekdays[0] + data.weekdays[6]) / data.total * 100) : 0}%)`]) + barChartHTML(data.weekdayEntries, { color: '#D6E4FF' }) + (data.yearTrend.length ? '<div style="margin-top:10px;">' + statInlineHTML(data.yearTrend.map((t: any) => `${t.label} ${t.value >= 0 ? '+' : ''}${t.value}%`)) + '</div>' : ''), '#D6E4FF', 'activity')}
     ${sectionHTML('个人评分分布', barChartHTML(bucketEntries, { color: '#FADDE1' }), '#FADDE1', 'star')}
     ${sectionHTML('评分趋势（个人10分制）', barChartHTML(data.yearRatingEntries, { color: '#FFE5CC' }), '#FFE5CC', 'trending-up')}
-    ${sectionHTML('打分习惯（个人−豆瓣）', statInlineHTML([`平均差值 ${data.avgDiff >= 0 ? '+' : ''}${data.avgDiff}（个人−豆瓣）`]) + '<div style="font-weight:600;font-size:.8rem;margin:6px 0 4px;">宝藏片（个人≥9 豆瓣&lt;8）</div>' + ratingCompareListHTML(data.treasure) + '<div style="font-weight:600;font-size:.8rem;margin:10px 0 4px;">失望榜（个人≤4 豆瓣≥8.5）</div>' + ratingCompareListHTML(data.disappoint), '#FADDE1', 'scale')}
+    ${sectionHTML('打分习惯（个人−豆瓣）', statInlineHTML([`平均差值 ${data.avgDiff >= 0 ? '+' : ''}${data.avgDiff}（个人−豆瓣）`]) + '<div style="font-weight:600;font-size:var(--bz-font-label);margin:6px 0 4px;">宝藏片（个人≥9 豆瓣&lt;8）</div>' + ratingCompareListHTML(data.treasure) + '<div style="font-weight:600;font-size:var(--bz-font-label);margin:10px 0 4px;">失望榜（个人≤4 豆瓣≥8.5）</div>' + ratingCompareListHTML(data.disappoint), '#FADDE1', 'scale')}
     ${sectionHTML('题材偏好 TOP10', softBarHTML(topN(data.genres, 10), '#E6DFF5'), '#E6DFF5', 'tags')}
     ${sectionHTML('制片国家/地区 TOP10', softBarHTML(topN(data.countries, 10), '#D6E4FF'), '#D6E4FF', 'globe')}
     ${sectionHTML('最爱导演 TOP10', softBarHTML(topN(data.directors, 10), '#D8F3DC'), '#D8F3DC', 'film')}
     ${sectionHTML('最爱主演 TOP10', softBarHTML(topN(data.actors, 10), '#FADDE1'), '#FADDE1', 'users')}
     ${sectionHTML('真爱重复', statInlineHTML([`导演≥3部 ${data.dirRepeat} 人`, `主演≥3部 ${data.actRepeat} 人`]) + softBarHTML([{ label: '导演≥3部', value: data.dirRepeat }, { label: '主演≥3部', value: data.actRepeat }], '#D8F3DC'), '#D8F3DC', 'heart')}
-    ${sectionHTML('影评关键词', statInlineHTML([`有影评 ${data.reviewCount} 篇 (${data.reviewRate}%)`, `平均 ${data.reviewAvgChars} 字`]) + (data.keywordEntries.length ? data.keywordEntries.map(([k, v]) => `<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:.72rem;background:${CHART_TYPE_COLORS['公开课']};color:${CHART_INK};margin:2px;">${k} ${v}</span>`).join('') : emptyHTML()), '#E6DFF5', 'message-square')}
+    ${sectionHTML('影评关键词', statInlineHTML([`有影评 ${data.reviewCount} 篇 (${data.reviewRate}%)`, `平均 ${data.reviewAvgChars} 字`]) + (data.keywordEntries.length ? data.keywordEntries.map(([k, v]) => `<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:var(--bz-font-caption);background:${CHART_TYPE_COLORS['公开课']};color:${CHART_INK};margin:2px;">${k} ${v}</span>`).join('') : emptyHTML()), '#E6DFF5', 'message-square')}
     ${sectionHTML('我的高分 TOP10', topListHTML(data.topRated, true), '#FFE5CC', 'trophy')}
-    ${sectionHTML('系列追踪', statInlineHTML([`追了 ${data.seriesList.length} 个系列（≥2部）`]) + (data.seriesList.length ? data.seriesList.map(([k, v]: any, i: number) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--bz-cinema-border);"><span style="width:18px;flex-shrink:0;font-size:.72rem;color:var(--bz-cinema-muted);text-align:center;">${i + 1}</span><span style="flex:1;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">《${k}》</span><span style="font-size:.78rem;font-weight:600;color:var(--bz-cinema-accent);flex-shrink:0;">${v} 部</span></div>`).join('') : emptyHTML()), '#D6E4FF', 'link')}
-    ${sectionHTML('追剧深度', statInlineHTML([`平均 ${data.avgSeason} 季`]) + (data.seasons.length ? data.seasons.map((s: any, i: number) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--bz-cinema-border);"><span style="width:18px;flex-shrink:0;font-size:.72rem;color:var(--bz-cinema-muted);text-align:center;">${i + 1}</span><span style="flex:1;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">《${s.name}》</span><span style="font-size:.78rem;font-weight:600;color:var(--bz-cinema-accent);flex-shrink:0;">${s.seasons} 季</span></div>`).join('') : emptyHTML()), '#CDF0EA', 'tv')}
-    ${sectionHTML('想看清单（' + (data.wantTotal ?? data.wantList.length) + '）' + (data.wantAvgDouban !== '—' ? ' · 均豆瓣 ' + data.wantAvgDouban : ''), topListHTML(data.wantList, false) + (Object.keys(data.wantTags).length ? '<div style="margin-top:8px;">' + Object.entries(data.wantTags).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([t, c]) => `<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:.72rem;background:var(--bz-cinema-panel);color:var(--bz-cinema-text);border:1px solid var(--bz-cinema-border);margin:2px;">${t} ${c}</span>`).join('') + '</div>' : ''), '#FFF3C4', 'bookmark')}
-    <p style="text-align:center;font-size:.68rem;color:var(--bz-cinema-muted);margin-top:16px;">个人评分与豆瓣同为 10 分制，可直接对比</p>
+    ${sectionHTML('系列追踪', statInlineHTML([`追了 ${data.seriesList.length} 个系列（≥2部）`]) + (data.seriesList.length ? data.seriesList.map(([k, v]: any, i: number) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--bz-cinema-border);"><span style="width:18px;flex-shrink:0;font-size:var(--bz-font-caption);color:var(--bz-cinema-muted);text-align:center;">${i + 1}</span><span style="flex:1;font-size:var(--bz-font-label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">《${k}》</span><span style="font-size:var(--bz-font-meta);font-weight:600;color:var(--bz-cinema-accent);flex-shrink:0;">${v} 部</span></div>`).join('') : emptyHTML()), '#D6E4FF', 'link')}
+    ${sectionHTML('追剧深度', statInlineHTML([`平均 ${data.avgSeason} 季`]) + (data.seasons.length ? data.seasons.map((s: any, i: number) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--bz-cinema-border);"><span style="width:18px;flex-shrink:0;font-size:var(--bz-font-caption);color:var(--bz-cinema-muted);text-align:center;">${i + 1}</span><span style="flex:1;font-size:var(--bz-font-label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">《${s.name}》</span><span style="font-size:var(--bz-font-meta);font-weight:600;color:var(--bz-cinema-accent);flex-shrink:0;">${s.seasons} 季</span></div>`).join('') : emptyHTML()), '#CDF0EA', 'tv')}
+    ${sectionHTML('想看清单（' + (data.wantTotal ?? data.wantList.length) + '）' + (data.wantAvgDouban !== '—' ? ' · 均豆瓣 ' + data.wantAvgDouban : ''), topListHTML(data.wantList, false) + (Object.keys(data.wantTags).length ? '<div style="margin-top:8px;">' + Object.entries(data.wantTags).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([t, c]) => `<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:var(--bz-font-caption);background:var(--bz-cinema-panel);color:var(--bz-cinema-text);border:1px solid var(--bz-cinema-border);margin:2px;">${t} ${c}</span>`).join('') + '</div>' : ''), '#FFF3C4', 'bookmark')}
+    <p style="text-align:center;font-size:var(--bz-font-caption);color:var(--bz-cinema-muted);margin-top:16px;">个人评分与豆瓣同为 10 分制，可直接对比</p>
   `;
 }
 

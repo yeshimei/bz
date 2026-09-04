@@ -7,8 +7,7 @@
 .bz-lit-mask {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, .45);
-  backdrop-filter: blur(2px); /* 对齐日记本遮罩质感 */
+  background: var(--background-modifier-cover); /* 纯遮罩（手册 §5.2 不采用毛玻璃质感） */
   animation: bz-lit-fade-in .2s ease-out;
 }
 .bz-lit-window {
@@ -601,19 +600,18 @@
   color: var(--color-green, #46a758);
 }
 
-/* ---- 状态徽标 ---- */
+/* ---- 状态徽标（.bz-badge--* 模式：语义色 16% 透明底 + 深语义字，实底白字对比不达 AA 已撤） ---- */
 .bz-bili-status {
   flex-shrink: 0;
   font-size: 11px;
   padding: 1px 8px;
   border-radius: 999px;
-  color: #fff;
   line-height: 18px;
 }
-.bz-bili-pending { background: var(--text-muted); }
-.bz-bili-processing { background: var(--interactive-accent); animation: bz-bili-pulse 1.2s ease-in-out infinite; }
-.bz-bili-success { background: var(--color-green, #46a758); }
-.bz-bili-failed { background: var(--text-error, #e5484d); }
+.bz-bili-pending { background: var(--background-modifier-hover); color: var(--text-muted); }
+.bz-bili-processing { background: color-mix(in srgb, var(--interactive-accent) 16%, transparent); color: var(--interactive-accent); animation: bz-bili-pulse 1.2s ease-in-out infinite; }
+.bz-bili-success { background: color-mix(in srgb, var(--color-green, #46a758) 16%, transparent); color: var(--color-green, #46a758); }
+.bz-bili-failed { background: color-mix(in srgb, var(--text-error, #e5484d) 16%, transparent); color: var(--text-error, #e5484d); }
 
 @keyframes bz-bili-pulse {
   0%, 100% { opacity: 1; }

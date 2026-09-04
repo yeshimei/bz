@@ -80,13 +80,15 @@
 }
 
 /* ============ 面板骨架：桌面居中卡 / 移动真全屏 ============ */
-/* 桌面实例：居中卡（980px 宽 82vh，原型 desk-panel） */
+/* 桌面实例：居中卡（980px 宽 82vh，原型 desk-panel）
+   矮窗兜底：max-height 压住 640px 下限（min-height 随视口收缩到可用高度内），防溢出被裁 */
 .bz-diary-wall-desk {
   position: relative;
   width: 980px;
   max-width: 95vw;
   height: 82vh;
-  min-height: 640px;
+  min-height: min(640px, calc(100vh - 48px));
+  max-height: calc(100vh - 48px);
   display: flex;
   flex-direction: column;
   background: var(--dw-bg);
