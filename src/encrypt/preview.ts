@@ -1,5 +1,5 @@
 /**
- * 保险箱预览层生成（encrypt 域，preview）
+ * 保险库预览层生成（encrypt 域，preview）
  * 图片：canvas 缩放压缩（体积小但看得清）；视频：抽帧成图（零外部依赖，用户拍板）。
  * 依赖 document/canvas——仅 UI 层调用；环境不支持（jsdom 无 canvas 实现）时返回 null，
  * 调用方据此跳过预览层（hasPreview=false）。产物为 dataURL(base64)，再经数据层加密入库。

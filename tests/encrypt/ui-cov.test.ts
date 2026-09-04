@@ -315,7 +315,7 @@ describe('体检弹窗覆盖补测', () => {
     (document.getElementById('bz-encrypt-health-clean') as HTMLElement).click();
     await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
     (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
-    await waitFor(() => hasNotice('清理失败：磁盘只读'));
+    await waitFor(() => hasNotice('清理失败：磁盘只读，请重试'));
   });
 });
 
@@ -422,7 +422,7 @@ describe('解锁弹窗覆盖补测', () => {
     ack.checked = true;
     // 用 Enter 键触发确认（键盘路径）
     inputs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-    await waitFor(() => hasNotice('设置失败：磁盘满'));
+    await waitFor(() => hasNotice('设置主密码失败：磁盘满，请重试'));
     await expect(p).resolves.toBe(false);
   });
 

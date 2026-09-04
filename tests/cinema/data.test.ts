@@ -197,19 +197,20 @@ describe('cinema 工具函数', () => {
     expect(getGroupSafe('未知tag')).toBe('其他');
   });
 
-  it('相对日期（仿 formatRelativeTime）', () => {
+  it('相对日期（收编 core formatRelativeTime；enh-sweep B 包）', () => {
     // 固定 now：2026-09-02 12:00 本地时区
     const now = new Date(2026, 8, 2, 12, 0, 0);
     const iso = (ms: number) => new Date(now.getTime() - ms).toISOString();
     expect(relDate(iso(30 * 1000), now)).toBe('刚刚');
     expect(relDate(iso(5 * 60 * 1000), now)).toBe('5分钟前');
     expect(relDate(iso(3 * 3600 * 1000), now)).toBe('3小时前');
-    expect(relDate(iso(26 * 3600 * 1000), now)).toBe('昨天');
-    expect(relDate(iso(2.5 * 86400000), now)).toBe('前天');
-    // 跨年 → YYYY-MM-DD
+    // 含时刻的输入：昨天/前天带 HH:mm（core 全站口径）
+    expect(relDate(iso(26 * 3600 * 1000), now)).toBe('昨天 10:00');
+    expect(relDate(iso(2.5 * 86400000), now)).toBe('前天 00:00');
+    // 跨年纯日期字符串（YYYY-MM-DD）→ 不带时刻
     expect(relDate('2025-12-31', now)).toBe('2025-12-31');
-    // 未来 → 原样日期
-    expect(relDate(iso(-86400000), now)).toBe('2026-09-03');
+    // 未来 → 原样日期（含时刻）
+    expect(relDate(iso(-86400000), now)).toBe('2026-09-03 12:00');
     expect(relDate(null, now)).toBe('未标注日期');
     expect(relDate('not-a-date', now)).toBe('未标注日期');
   });

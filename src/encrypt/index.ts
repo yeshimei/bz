@@ -1,5 +1,5 @@
 /**
- * 保险箱域入口（encrypt）
+ * 保险库域入口（encrypt）
  * 命令 bz-encrypt-open / bz-encrypt-lock 由 main.ts 裸注册。
  * 懒加载：ensureEncrypt 幂等初始化（ADR-0003）。
  */
@@ -81,15 +81,15 @@ export function copyVaultPassword(app: App): void {
 }
 
 /**
- * 获取保险箱 SafeManager 单例（与保险箱面板同一实例，共享同一主密码与解锁态）。
- * 供日记域复用（ADR-0017：加密日记=保险箱 SafeNote）。惰性读取设置。
+ * 获取保险库 SafeManager 单例（与保险库面板同一实例，共享同一主密码与解锁态）。
+ * 供日记域复用（ADR-0017：加密日记=保险库 SafeNote）。惰性读取设置。
  */
 export function getSafeManager(): import('./data').SafeManager {
   return getController().dataManager;
 }
 
 /**
- * 确保保险箱已解锁（供日记域复用）：未解锁则弹主密码（首设两次确认+警告；与保险箱同一把密码）。
+ * 确保保险库已解锁（供日记域复用）：未解锁则弹主密码（首设两次确认+警告；与保险库同一把密码）。
  * @returns 解锁成功返回 true
  */
 export async function ensureSafeUnlocked(): Promise<boolean> {
@@ -99,7 +99,7 @@ export async function ensureSafeUnlocked(): Promise<boolean> {
   return ok;
 }
 
-/** 保险箱数据层类型再导出（diary 复用 SafeNote 时用） */
+/** 保险库数据层类型再导出（diary 复用 SafeNote 时用） */
 export type { SafeNote, SafeAttachment, SafeManager } from './data';
 
 /** 卸载清理 */

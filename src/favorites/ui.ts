@@ -682,11 +682,11 @@ function buildActions(it: FavoritesItem, rebuild: () => void): ItemAction[] {
       title: '归档收藏',
       onClick: () => {
         void openFlowDialog({
-          title: '归档确认',
-          message: `确定归档收藏 "${it.title}" 吗？归档后不在列表显示，数据保留在 favorites.json。`,
+          title: '归档收藏',
+          message: `确定归档收藏「${it.title}」吗？归档后不在主列表显示（数据保留），可在通知中撤销。`,
           actions: [
             { label: '取消', value: 'cancel' },
-            { label: '确定', value: 'ok', cta: true },
+            { label: '归档', value: 'ok', cta: true },
           ],
         }).then((v) => {
           if (v === 'ok') void archiveItem(it);
@@ -701,8 +701,8 @@ function buildActions(it: FavoritesItem, rebuild: () => void): ItemAction[] {
     sub: it.created || undefined,
     onClick: () => {
       void openFlowDialog({
-        title: '删除确认',
-        message: `确定删除收藏 "${it.title}" 吗？`,
+        title: '删除收藏',
+        message: `确定删除收藏「${it.title}」吗？删除后可在通知中撤销。`,
         actions: [
           { label: '取消', value: 'cancel' },
           { label: '删除', value: 'del', danger: true, cta: true },
@@ -767,7 +767,7 @@ async function unarchiveItem(it: FavoritesItem): Promise<void> {
     await dataManagerOf().update(it.id, { archived: false, archivedAt: null });
     emitDomainEvent('favorites', { kind: 'unarchive', title: it.title });
     await reload();
-    notice('已取消归档', 'success');
+    notice(`已取消归档，「${it.title}」回到主列表`, 'success');
   } catch (e) {
     notifySaveError(e, '取消归档');
   }
@@ -779,20 +779,16 @@ async function deleteItem(it: FavoritesItem): Promise<void> {
     await dataManagerOf().delete(it.id);
     emitDomainEvent('favorites', { kind: 'delete', title: it.title });
     await reload();
-    if (snapshot) {
-      notifyUndo(`已删除收藏「${it.title}」`, () => {
-        void (async () => {
-          try {
-            await dataManagerOf().restoreItem(snapshot);
-            await reload();
-          } catch (e) {
-            notifySaveError(e, '恢复收藏');
-          }
-        })();
-      });
-    } else {
-      notice('已删除收藏', 'success');
-    }
+    notifyUndo(`已删除收藏「${it.title}」`, () => {
+      void (async () => {
+        try {
+          await dataManagerOf().restoreItem(snapshot);
+          await reload();
+        } catch (e) {
+          notifySaveError(e, '恢复收藏');
+        }
+      })();
+    });
   } catch (e) {
     notifySaveError(e, '删除收藏');
   }
