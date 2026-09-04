@@ -4398,6 +4398,37 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-home-addcard .bz-ic { width: 14px; height: 14px; }
 .bz-home-addcard[hidden] { display: none; }
 
+/* ---- 本周轻卡（R1 生活周报：钉选区下方跨域数字故事；
+        数字格 data-home-side 复用统计条/侧栏点击路径直达域面板） ---- */
+.bz-home-week {
+  display: flex; align-items: center; gap: var(--bz-space-sm);
+  margin-top: var(--bz-space-md);
+  background: var(--bz-surface-3); border: 1px solid var(--bz-border);
+  border-radius: var(--bz-radius-md);
+  padding: var(--bz-space-xs) var(--bz-space-md);
+}
+.bz-home-week[hidden] { display: none; }
+.bz-home-week-t {
+  font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold);
+  color: var(--bz-text-2); flex-shrink: 0;
+}
+.bz-home-week-cells { display: flex; flex-wrap: wrap; flex: 1; min-width: 0; gap: 0 var(--bz-space-xs); }
+.bz-home-week-cell {
+  display: inline-flex; align-items: center; gap: var(--bz-space-xs);
+  appearance: none; font-family: inherit; cursor: pointer;
+  background: none; border: none; border-radius: var(--bz-radius-sm);
+  height: var(--bz-control-h); padding: 0 var(--bz-space-sm);
+  transition: background-color var(--bz-dur-fast) ease;
+}
+.bz-home-week-cell:hover { background: var(--bz-surface-hover); }
+.bz-home-week-cell:active { background: var(--bz-surface-active); }
+.bz-home-week-cell .bz-ic { width: 14px; height: 14px; color: var(--bz-text-3); flex-shrink: 0; }
+.bz-home-week-v {
+  font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-bold); color: var(--bz-text-1);
+  font-variant-numeric: tabular-nums;
+}
+.bz-home-week-k { font-size: var(--bz-font-caption); color: var(--bz-text-3); white-space: nowrap; }
+
 /* 加域 pick 弹层 */
 .bz-home-pick {
   position: absolute; z-index: 40; width: 232px;
@@ -4492,6 +4523,9 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   .bz-home-side { display: none; }
   .bz-home-search { height: 44px; } /* 触屏 ≥44px 硬规则（设计手册 §8.2），刻意非 token 档 */
   .bz-home-pal { left: var(--bz-space-lg); right: var(--bz-space-lg); top: calc(100% + var(--bz-space-xs)); }
+  /* 本周轻卡：窄屏格子自然换行；触控下限 40px（设计手册 §8.2），刻意非 token 档 */
+  .bz-home-week { flex-wrap: wrap; gap: var(--bz-space-xs); }
+  .bz-home-week-cell { height: 40px; }
   .bz-home-minis { margin-top: var(--bz-space-md); }
   .bz-home-mini { height: var(--bz-icon-btn-lg); padding: 0 var(--bz-space-md); }
 }
