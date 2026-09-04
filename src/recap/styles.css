@@ -33,7 +33,8 @@
 .bz-recap-title { font-size: var(--bz-font-title); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); white-space: nowrap; }
 .bz-recap-date { font-size: var(--bz-font-meta); color: var(--bz-text-3); white-space: nowrap; }
 .bz-recap-head-r { display: flex; align-items: center; gap: var(--bz-space-sm); flex-shrink: 0; }
-/* R3 占位（「生成今日总结」禁用态：内容/容器透明度走 state token，语义见设计手册 §6.4） */
+/* R3 生成按钮（采集期间/生成中禁用：内容/容器透明度走 state token，语义见设计手册 §6.4；
+   生成中内嵌 .bz-spinner--sm，.bz-btn 基线自带 inline-flex + 6px gap 对齐） */
 .bz-recap-ai:disabled { opacity: var(--bz-state-disabled-content); cursor: default; }
 /* 桌面隐藏关闭钮（遮罩/ESC 关闭），移动端显示 */
 .bz-recap-close { display: none; }
@@ -104,8 +105,9 @@
     width: 100vw; height: 100%; max-width: none; max-height: none;
     border-radius: 0; border: none;
   }
+  /* 顶距由根节点 .bz-panel-mtop 统一接管（ui-kit-manual §3.2），头行不再自垫 */
   .bz-recap-head {
-    padding: max(var(--bz-space-lg), env(safe-area-inset-top)) var(--bz-space-lg) var(--bz-space-md);
+    padding: var(--bz-space-sm) var(--bz-space-lg) var(--bz-space-md);
   }
   .bz-recap-title { font-size: var(--bz-font-emphasis); }
   .bz-recap-close { display: inline-flex; }

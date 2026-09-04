@@ -12,6 +12,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { openPomodoro, unloadPomodoro, ensurePomodoro, startFocusForTask } from '../../src/pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from '../../src/pomodoro/statusbar';
 import { getPomodoroFilePath, PomodoroDataManager } from '../../src/pomodoro/data';
+import { enqueueFileTask } from '../../src/core/storage';
 
 const T0 = new Date('2026-08-10T10:00:00').getTime();
 
@@ -780,6 +781,8 @@ describe('增强包：循环圆点 / 时段分布 / 通知动作 / Space / 待�
     await startFocusForTask(app, '给影评加封面');
     expect(el('pomodoro-phase').textContent).toBe('专注');
     expect(el('pomodoro-task').textContent).toBe('给影评加封面');
+    // D3 可靠写契约：save 走 core per-path 串行队列（微任务级异步）——读盘前排进同队列等写完
+    await enqueueFileTask(getPomodoroFilePath(), async () => undefined);
     const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
     expect(raw.history).toHaveLength(1); // 仅此前自然完成的专注记账
     expect(raw.history[0].task).toBeUndefined(); // 无归属完成不带 task 键

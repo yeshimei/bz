@@ -6,6 +6,7 @@
  */
 import { notice, notify } from '../core/notice';
 import { emitDomainEvent } from '../core/domain-bus';
+import { enqueueFileTask } from '../core/storage';
 import { getApp } from './app';
 import { BATCH_SIZE, DIARY_DIRECTORY, LETTER_DIRECTORY, MOVIE_DIRECTORY, getTagEmoji } from './config';
 import { isEncryptedEntry, parseFile, parseLetterFile, parseMovieFile } from './parser';
@@ -283,52 +284,61 @@ async function refuseIfDiskUnparsed(dateStr: string, action: 'write' | 'delete')
   return true;
 }
 
-/** 写入日记文件（按时间序，原 writeFile） */
+/**
+ * 写入日记文件（按时间序，原 writeFile）。
+ * D3 可靠写契约原语 1 收编（旧域冻结区只动写安全）：同日日记文件的「P0 守卫读 → 内存渲染 →
+ * 整文件写/删」整体入 core per-path 串行队列（enqueueFileTask，键 = 日记文件路径）——
+ * 连续快速追加/删除条目与外部同步写并发时按序落盘，消灭「读-写窗口交错覆盖」；
+ * 守卫读与写同队列互斥后，守卫到写之间不再可能被其他写方插入（TOCTOU 收口）。
+ * 队列不可重入：任务体内不再对同路径入队（deleteEntry 的删除分支单独入队，不嵌套调用本函数）。
+ */
 export async function writeFile(dateStr: string) {
   if (!diaryDataMap || !diaryDataMap.has(dateStr)) return;
-  // P0 写前守卫：磁盘存在未解析行时拒写，引导先用「检测日记解析」修复工具
-  if (await refuseIfDiskUnparsed(dateStr, 'write')) return;
-  state.events.isInternalUpdate = true;
-  const entries = diaryDataMap.get(dateStr)!;
-
-  if (entries.length === 0) {
-    const filePath = `${DIARY_DIRECTORY}/${dateStr}.md`;
-    const file = getApp().vault.getAbstractFileByPath(filePath) as any;
-    if (file) await getApp().vault.delete(file);
-    state.events.isInternalUpdate = false;
-    return;
-  }
-
-  entries.sort((a, b) => a.timeValue - b.timeValue);
-  // 稳定标识：写盘时把每个 map 条目的行号与磁盘标题行一一对应（P1-12：同 time 多条不再靠 time 唯一定位）
-  let headingCursor = 0;
-  const fileLines = entries
-    .map((entry) => {
-      // 使用 getTagEmoji 生成 emoji 序列
-      const emojiSeq = entry.tags.map((tag) => getTagEmoji(tag)).join('');
-      const lines = [`# ${emojiSeq} ${entry.time}`, ''];
-      if (entry.content.trim()) lines.push(entry.content.trim());
-      lines.push('');
-      entry.lineNumber = headingCursor + 1;
-      headingCursor += lines.length;
-      return lines;
-    })
-    .flat()
-    .slice(0, -1);
-
-  const finalContent = fileLines.join('\n');
   const filePath = `${DIARY_DIRECTORY}/${dateStr}.md`;
-  const file = getApp().vault.getAbstractFileByPath(filePath) as any;
+  await enqueueFileTask(filePath, async () => {
+    // P0 写前守卫：磁盘存在未解析行时拒写，引导先用「检测日记解析」修复工具
+    if (await refuseIfDiskUnparsed(dateStr, 'write')) return;
+    state.events.isInternalUpdate = true;
+    try {
+      const entries = diaryDataMap!.get(dateStr)!;
 
-  try {
-    if (file) await getApp().vault.modify(file, finalContent);
-    else await getApp().vault.create(filePath, finalContent);
-  } catch (error) {
-    console.error(`重新生成文件 ${dateStr}.md 失败:`, error);
-    throw error;
-  } finally {
-    state.events.isInternalUpdate = false;
-  }
+      if (entries.length === 0) {
+        const file = getApp().vault.getAbstractFileByPath(filePath) as any;
+        if (file) await getApp().vault.delete(file);
+        return;
+      }
+
+      entries.sort((a, b) => a.timeValue - b.timeValue);
+      // 稳定标识：写盘时把每个 map 条目的行号与磁盘标题行一一对应（P1-12：同 time 多条不再靠 time 唯一定位）
+      let headingCursor = 0;
+      const fileLines = entries
+        .map((entry) => {
+          // 使用 getTagEmoji 生成 emoji 序列
+          const emojiSeq = entry.tags.map((tag) => getTagEmoji(tag)).join('');
+          const lines = [`# ${emojiSeq} ${entry.time}`, ''];
+          if (entry.content.trim()) lines.push(entry.content.trim());
+          lines.push('');
+          entry.lineNumber = headingCursor + 1;
+          headingCursor += lines.length;
+          return lines;
+        })
+        .flat()
+        .slice(0, -1);
+
+      const finalContent = fileLines.join('\n');
+      const file = getApp().vault.getAbstractFileByPath(filePath) as any;
+
+      try {
+        if (file) await getApp().vault.modify(file, finalContent);
+        else await getApp().vault.create(filePath, finalContent);
+      } catch (error) {
+        console.error(`重新生成文件 ${dateStr}.md 失败:`, error);
+        throw error;
+      }
+    } finally {
+      state.events.isInternalUpdate = false;
+    }
+  });
 }
 
 // ===== 新增 =====
@@ -415,15 +425,23 @@ export async function deleteEntry(entryId: string) {
 
   if (entries.length === 0) {
     const filePath = `${DIARY_DIRECTORY}/${dateStr}.md`;
-    const file = getApp().vault.getAbstractFileByPath(filePath) as any;
-    // P0 守卫：整文件删除同样会丢磁盘上的未解析行——命中时保留文件（同拒写口径）
-    if (file && !(await refuseIfDiskUnparsed(dateStr, 'delete'))) {
+    // P0 守卫 + 整文件删除入同路径串行队列（D3 收编）：守卫读与删除对 writeFile 等同文件写任务互斥，
+    // 「守卫通过 → 删除」之间不再可能被其他写方重建/改写文件
+    let vacated = false;
+    await enqueueFileTask(filePath, async () => {
+      const file = getApp().vault.getAbstractFileByPath(filePath) as any;
+      if (!file) return;
+      // P0 守卫：整文件删除同样会丢磁盘上的未解析行——命中时保留文件（同拒写口径）
+      if (await refuseIfDiskUnparsed(dateStr, 'delete')) return;
       state.events.isInternalUpdate = true;
       try {
         await getApp().vault.delete(file);
+        vacated = true;
       } finally {
         state.events.isInternalUpdate = false;
       }
+    });
+    if (vacated) {
       // 结构性事实：该日期整文件已清空删除（意图类事件 entry-deleted 由 UI 确认回调负责，此处不发）
       emitDomainEvent('diary:file-vacated', { date: dateStr });
     }

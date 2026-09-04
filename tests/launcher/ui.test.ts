@@ -8,7 +8,8 @@ import { resetObsidianMocks,  Platform as MockPlatform, getNoticeMessages, hasNo
 import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { openLauncher, unloadLauncher, calcCellSize, setLauncherShowTextSetter, setLauncherGestureSetter, LauncherModal } from '../../src/launcher/ui';
-import { LAUNCHER_PATH } from '../../src/launcher/data';
+import { LAUNCHER_PATH, getLauncherFilePath } from '../../src/launcher/data';
+import { enqueueFileTask } from '../../src/core/storage';
 
 /**
  * jsdom 无真实布局（grid.clientWidth = 0）→ 网格单元尺寸 clamp 到 MIN_CELL=44，步长 = 44 + 间距 12。
@@ -432,6 +433,8 @@ describe('入口页 UI', () => {
     expect(rows.some((r) => r.textContent!.includes('删除磁贴'))).toBe(true);
     rows.find((r) => r.textContent!.includes('删除磁贴'))!.click();
     expect(gridTiles().length).toBe(0);
+    // D3 可靠写契约：保存走 core per-path 串行队列（微任务级异步）——读盘前排进同队列等写完
+    await enqueueFileTask(getLauncherFilePath(), async () => undefined);
     const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
     expect(saved.desktop.tiles.length).toBe(0);
   });

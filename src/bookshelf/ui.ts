@@ -644,7 +644,7 @@ function openBookDetail(it: BookshelfItem, app: App): void {
             conf.close();
             await rebuildItems(app);
             renderAll(app);
-            notice('已删除', 'success');
+            notice(`已删除书目《${it.title}》`, 'success');
           } catch (e) {
             console.error('删除书目失败:', e);
             notice('删除失败', 'error');

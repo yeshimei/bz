@@ -3,7 +3,7 @@
  * 数据格式：CONFIG/STORAGE/launcher.json（铁律 1：格式稳定，字段勿改）。
  */
 import type { App } from 'obsidian';
-import { jsonFileStore, storageFile } from '../core/storage';
+import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
 
 /** 磁贴：入口页上的最小单元，对应一条命令，占据 列×行 个网格单元 */
 export interface LauncherTile {
@@ -139,9 +139,16 @@ export async function loadLauncherData(app: App): Promise<LauncherData> {
   return normalizeData(raw);
 }
 
-/** 保存 launcher.json（统一数据读写层：不存在 → 建目录建文件） */
+/**
+ * 保存 launcher.json（统一数据读写层：不存在 → 建目录建文件）。
+ * D3 可靠写契约原语 1 收编：整写入 core per-path 串行队列（键 = launcher.json 路径）——
+ * 编辑器拖拽保存与快捷指令保存并发时按序落盘，后写者不再用陈旧基线覆盖先写者；
+ * 坏文件由 jsonFileStore 留档降级（原语 3）。数据形状与 API 不变。
+ */
 export async function saveLauncherData(app: App, data: LauncherData): Promise<void> {
-  await jsonFileStore<LauncherData>(getLauncherFilePath(), { app }).write(data);
+  await enqueueFileTask(getLauncherFilePath(), () =>
+    jsonFileStore<LauncherData>(getLauncherFilePath(), { app }).write(data)
+  );
 }
 
 /** 两个磁贴区域是否重叠（含边界相切？不相切——严格相交才算重叠） */

@@ -1,22 +1,32 @@
 /**
- * 今日回顾（recap 域）UI：独立 overlay 面板（方向一 R2）。
+ * 今日回顾（recap 域）UI：独立 overlay 面板（方向一 R2）+ 一键总结写日记（R3）。
  *
  * 形态（对齐各域面板：home/cinema 同构）：
- *  - 桌面：居中面板（头行「今日回顾 + 日期」+「生成今日总结」R3 占位 + 摘要行 + 痕迹时间轴），
+ *  - 桌面：居中面板（头行「今日回顾 + 日期」+「生成今日总结」+ 摘要行 + 痕迹时间轴），
  *          点遮罩/ESC 关闭（桌面无关闭钮）
  *  - 移动：≤768px 真全屏 + 右上关闭钮 + 底部安全区
  * 组件库纪律（铁律 6）：空态/按钮走 src/core/ui 工厂与 --bz-* token；
  * 域图标一律 core/domain-icons.ts 单一事实源（与命令/磁贴一致）。
  * 打开即采集一次（各源独立容错；不做常驻轮询，重开面板即得新数据）。
+ * R3：头行按钮点击 → 生成中 spinner（防重复点击）→ AI 总结自动写入当天日记（同日替换不叠条）；
+ *     AI 未配置/失败 → 降级数字模板，弹通知给「写入日记/复制」动作；同日已写过按钮变「重新生成」。
  */
 import type { App } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { uiIcon, uiBtn, uiBtnRow, uiEmpty } from '../core/ui';
+import { notify, notifyActionError, notifySaveError } from '../core/notice';
 import { topifyZ } from '../core/dom';
 import { DOMAIN_ICONS } from '../core/domain-icons';
 import { H } from './state';
 import { collectRecap } from './aggregate';
 import type { RecapData, RecapDomain, RecapItem, RecapSummary } from './aggregate';
+import {
+  entryTextWithoutMarker,
+  generateRecapContent,
+  hasRecapEntry,
+  recapDiaryFilePath,
+  writeRecapEntry,
+} from './summarize';
 
 /* ---------- lucide 占位 + 挂载（home/ui.ts 同款手法） ---------- */
 
@@ -59,14 +69,14 @@ export function createOverlay(app: App): void {
   const overlay = document.createElement('div');
   overlay.className = 'bz-recap-overlay';
   overlay.innerHTML = `
-    <div class="bz-recap-panel">
+    <div class="bz-recap-panel bz-panel-mtop">
       <div class="bz-recap-head">
         <div class="bz-recap-head-l">
           <span class="bz-recap-title">今日回顾</span>
           <span class="bz-recap-date" data-recap-date></span>
         </div>
         <div class="bz-recap-head-r">
-          <button type="button" class="bz-btn bz-recap-ai" data-recap-ai disabled title="即将可用">生成今日总结</button>
+          <button type="button" class="bz-btn bz-recap-ai" data-recap-ai disabled>生成今日总结</button>
           <button type="button" class="bz-icon-btn bz-icon-btn--lg bz-recap-close" data-recap-close title="关闭" aria-label="关闭">${iconSpan('x')}</button>
         </div>
       </div>
@@ -83,6 +93,7 @@ export function createOverlay(app: App): void {
     if (e.target === overlay) closeOverlay();
   });
   overlay.querySelector('[data-recap-close]')?.addEventListener('click', () => closeOverlay());
+  overlay.querySelector('[data-recap-ai]')?.addEventListener('click', () => void onGenerateClick(app));
 
   void refreshAndRender(app);
 }
@@ -99,6 +110,115 @@ export async function refreshAndRender(app: App): Promise<void> {
   }
   if (!H.currentOverlay) return; // 采集期间已关闭
   renderAll(data, app);
+  void syncAiButton(app);
+}
+
+/* ---------- R3：生成今日总结（AI → 写入日记；失败降级模板） ---------- */
+
+function aiButton(): HTMLButtonElement | null {
+  return (H.currentOverlay?.querySelector('[data-recap-ai]') as HTMLButtonElement | null) ?? null;
+}
+
+/** 按钮态同步（只读探测当天是否已有回顾条目）：
+ *  生成中（H.generating）保持现状（disabled），等 onGenerateClick 收口再 sync；
+ *  生成中面板被关掉重开时，新面板按钮由完成后的 sync 接管启用，不会卡死在 disabled。 */
+async function syncAiButton(app: App): Promise<void> {
+  const aiBtn = aiButton();
+  if (!aiBtn) return;
+  const written = await hasRecapEntry(H.appRef ?? app);
+  if (!H.currentOverlay || H.generating) return; // 已关闭 / 生成中（按钮态由生成流程收口）
+  setAiButton(aiBtn, written ? '重新生成' : '生成今日总结', false);
+}
+
+function setAiButton(btn: HTMLButtonElement, label: string, loading: boolean): void {
+  btn.disabled = loading;
+  if (loading) {
+    btn.innerHTML = `<span class="bz-spinner bz-spinner--sm"></span>生成中…`;
+    btn.title = '';
+  } else {
+    btn.textContent = label;
+    btn.title = label === '重新生成' ? '替换今天已有的「今日回顾」条目' : '把今天的痕迹写成一段总结，写进日记';
+  }
+}
+
+/** 成功通知：写入成功 + 「查看」打开当天日记（对齐既有通知动作范式） */
+function notifyWritten(app: App): void {
+  notify('今日总结已写入日记', {
+    type: 'success',
+    action: {
+      label: '查看',
+      onClick: () => {
+        try {
+          void (H.appRef ?? app).workspace.openLinkText(recapDiaryFilePath(Date.now()), '', false, { active: true });
+        } catch {
+          /* 打开失败静默：日记内容已写好 */
+        }
+      },
+    },
+  });
+}
+
+/** 降级模板通知：「写入日记/复制」双动作（不自动写盘，用户拍板去向） */
+function notifyTemplateFallback(app: App, reason: string, content: string): void {
+  notify(reason, {
+    type: 'warning',
+    duration: 10000,
+    actions: [
+      {
+        label: '写入日记',
+        onClick: () => {
+          writeRecapEntry(H.appRef ?? app, content)
+            .then(() => {
+              notifyWritten(H.appRef ?? app);
+              void syncAiButton(H.appRef ?? app); // 写入成功 → 按钮变「重新生成」
+            })
+            .catch((e) => notifySaveError(e, '写入日记'));
+        },
+      },
+      {
+        label: '复制',
+        onClick: () => {
+          navigator.clipboard
+            .writeText(entryTextWithoutMarker(content))
+            .then(() => notify('已复制今日总结', { type: 'success' }))
+            .catch((e) => notifyActionError(e, '复制'));
+        },
+      },
+    ],
+  });
+}
+
+/** 生成按钮点击：loading 防重复 → AI 总结自动写入；未配置/失败 → 模板 + 通知动作 */
+async function onGenerateClick(app: App): Promise<void> {
+  if (H.generating) return; // 防重复点击（AI 请求+写盘期间忽略再点）
+  const btn = aiButton();
+  if (!btn) return;
+  const data = H.lastData;
+  if (!data) {
+    notify('今天的数据还没准备好，稍后再试', { type: 'warning' });
+    return;
+  }
+  H.generating = true;
+  setAiButton(btn, '', true);
+  try {
+    const result = await generateRecapContent(data);
+    if (!result.ok) {
+      notify(result.degradeReason || '暂时生成不了今日总结，请稍后再试', { type: 'warning' });
+      return;
+    }
+    if (result.mode === 'ai') {
+      await writeRecapEntry(H.appRef ?? app, result.content);
+      notifyWritten(H.appRef ?? app);
+    } else {
+      // 降级：模板不自动写盘，弹通知给「写入日记/复制」
+      notifyTemplateFallback(H.appRef ?? app, result.degradeReason || '已生成数字模板总结', result.content);
+    }
+  } catch (e) {
+    notifyActionError(e, '生成今日总结');
+  } finally {
+    H.generating = false;
+    void syncAiButton(app); // 统一收口：按最新探测结果恢复/刷新按钮（面板已关则 no-op）
+  }
 }
 
 /* ---------- 渲染 ---------- */
@@ -171,6 +291,7 @@ function emptyEl(data: RecapData, app: App): HTMLDivElement {
 function renderAll(data: RecapData, app: App): void {
   const overlay = H.currentOverlay;
   if (!overlay) return;
+  H.lastData = data; // R3：「生成今日总结」的输入
   const date = overlay.querySelector('[data-recap-date]');
   if (date) date.textContent = dateText(Date.now());
   const body = overlay.querySelector('[data-recap-body]') as HTMLElement | null;

@@ -1,9 +1,13 @@
 /**
  * 复习计划数据层（ticket 16 修正版：对齐源码 DataManager，日期字段 ISO 字符串）
  * review.json：CONFIG/STORAGE/review.json，jsonStore 读写。
+ * D3 可靠写契约原语 1 收编：全部「读→改→写」事务整体入 core per-path 串行队列
+ * （enqueueFileTask，键 = review.json 路径）——复习中评级、文件监控批量增删与列表操作
+ * 并发写同文件时按序落盘，后写者不再用陈旧基线覆盖先写者；坏文件由 jsonFileStore
+ * 留档降级（原语 3）。read/saveItems 保持无锁原语（队列内调用，勿再入队——不可重入）。
  */
 import type { App, TFile } from 'obsidian';
-import { jsonFileStore, storageFile } from '../core/storage';
+import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
 import { tryGetSettings } from '../core/settings-provider';
 import { FSRS_FIRST_INTERVALS, LADDER_MAX, TOTAL_STAGES } from './fsrs';
 
@@ -109,61 +113,73 @@ export class ReviewDataManager {
     await jsonFileStore<any[]>(getReviewFilePath()).write(data);
   }
 
+  /** 读改写事务：fn 基于磁盘现值改动，整体入 per-path 串行队列（D3 原语 1） */
+  private mutate<T>(fn: (items: ReviewItem[]) => T | Promise<T>): Promise<T> {
+    return enqueueFileTask(getReviewFilePath(), async () => {
+      const items = await this.loadItems();
+      const result = await fn(items);
+      await this.saveItems(items);
+      return result;
+    });
+  }
+
   /** 新增条目 */
-  async addItem(filePath: string, fileName: string): Promise<ReviewItem> {
-    const items = await this.loadItems();
-    if (items.some((i) => i.filePath === filePath)) throw new Error('该笔记已在复习计划中');
-    const now = new Date();
-    const newItem: ReviewItem = {
-      id: `review_${now.getTime()}_${Math.random().toString(36).slice(2, 8)}`,
-      filePath,
-      name: fileName,
-      reviewStart: now.toISOString(),
-      stage: 0,
-      phase: 'ladder',
-      stability: 1,
-      difficulty: 0.3,
-      reviewHistory: [],
-      totalReviews: 0,
-      averageConfidence: 0,
-      nextReviewDate: new Date(now.getTime() + FSRS_FIRST_INTERVALS[0] * 86400000).toISOString(),
-      lastReviewed: null,
-      lastDifficulty: null,
-      completed: false,
-    };
-    items.push(newItem);
-    await this.saveItems(items);
-    return newItem;
+  addItem(filePath: string, fileName: string): Promise<ReviewItem> {
+    return this.mutate((items) => {
+      if (items.some((i) => i.filePath === filePath)) throw new Error('该笔记已在复习计划中');
+      const now = new Date();
+      const newItem: ReviewItem = {
+        id: `review_${now.getTime()}_${Math.random().toString(36).slice(2, 8)}`,
+        filePath,
+        name: fileName,
+        reviewStart: now.toISOString(),
+        stage: 0,
+        phase: 'ladder',
+        stability: 1,
+        difficulty: 0.3,
+        reviewHistory: [],
+        totalReviews: 0,
+        averageConfidence: 0,
+        nextReviewDate: new Date(now.getTime() + FSRS_FIRST_INTERVALS[0] * 86400000).toISOString(),
+        lastReviewed: null,
+        lastDifficulty: null,
+        completed: false,
+      };
+      items.push(newItem);
+      return newItem;
+    });
   }
 
   /** 更新条目（按 filePath 定位 + 就地修改 + 落盘） */
-  async updateItem(filePath: string, updateFn: (item: ReviewItem) => void): Promise<void> {
-    const items = await this.loadItems();
-    const idx = items.findIndex((i) => i.filePath === filePath);
-    if (idx === -1) throw new Error('条目不存在');
-    updateFn(items[idx]);
-    await this.saveItems(items);
+  updateItem(filePath: string, updateFn: (item: ReviewItem) => void): Promise<void> {
+    return this.mutate((items) => {
+      const idx = items.findIndex((i) => i.filePath === filePath);
+      if (idx === -1) throw new Error('条目不存在');
+      updateFn(items[idx]);
+    }).then(() => undefined);
   }
 
-  /** 移除条目 */
-  async removeItem(filePath: string): Promise<void> {
-    let items = await this.loadItems();
-    items = items.filter((i) => i.filePath !== filePath);
-    await this.saveItems(items);
+  /** 移除条目（同路径重复条目全数移除，与旧 filter 语义一致） */
+  removeItem(filePath: string): Promise<void> {
+    return this.mutate((items) => {
+      for (let i = items.length - 1; i >= 0; i--) {
+        if (items[i].filePath === filePath) items.splice(i, 1);
+      }
+    }).then(() => undefined);
   }
 
   /** 撤销移出（ticket 141 通病 1）：原条目（含阶段/排期/历史）原样插回，不走 addItem 重置进度。
    *  运行时字段与 saveItems 同口径剥离（file/isCompleted/isOverdue/isMissing/currentStage/totalStages 不落盘） */
-  async restoreItem(item: ReviewItem): Promise<void> {
-    const items = await this.loadItems();
-    if (items.some((i) => i.filePath === item.filePath)) return;
-    const {
-      file: _file, isCompleted: _isCompleted, isOverdue: _isOverdue, isMissing: _isMissing,
-      currentStage: _currentStage, totalStages: _totalStages,
-      ...rest
-    } = item;
-    items.push(rest as ReviewItem);
-    await this.saveItems(items);
+  restoreItem(item: ReviewItem): Promise<void> {
+    return this.mutate((items) => {
+      if (items.some((i) => i.filePath === item.filePath)) return;
+      const {
+        file: _file, isCompleted: _isCompleted, isOverdue: _isOverdue, isMissing: _isMissing,
+        currentStage: _currentStage, totalStages: _totalStages,
+        ...rest
+      } = item;
+      items.push(rest as ReviewItem);
+    }).then(() => undefined);
   }
 
   getOverdueCount(items: ReviewItem[]): number {
@@ -171,15 +187,15 @@ export class ReviewDataManager {
   }
 
   /** 文件重命名时更新路径 */
-  async updateFilePath(oldPath: string, newPath: string, newName: string): Promise<boolean> {
-    const items = await this.loadItems();
-    const item = items.find((i) => i.filePath === oldPath);
-    if (!item) return false;
-    if (items.some((i) => i.filePath === newPath && i.filePath !== oldPath)) return false;
-    item.filePath = newPath;
-    item.name = newName;
-    await this.saveItems(items);
-    return true;
+  updateFilePath(oldPath: string, newPath: string, newName: string): Promise<boolean> {
+    return this.mutate((items) => {
+      const item = items.find((i) => i.filePath === oldPath);
+      if (!item) return false;
+      if (items.some((i) => i.filePath === newPath && i.filePath !== oldPath)) return false;
+      item.filePath = newPath;
+      item.name = newName;
+      return true;
+    });
   }
 }
 
@@ -209,5 +225,6 @@ export async function loadFittedParams(app: App): Promise<FittedParams | null> {
 }
 
 export async function saveFittedParams(app: App, fit: FittedParams): Promise<void> {
-  await jsonFileStore<FittedParams>(getReviewFitFilePath()).write(fit);
+  // D3 原语 1 收编：review-fit.json 拟合写同样入 per-path 串行队列（与 loadFittedParams 读竞态无关，防多端/多入口并发拟合写互踩）
+  await enqueueFileTask(getReviewFitFilePath(), () => jsonFileStore<FittedParams>(getReviewFitFilePath()).write(fit));
 }

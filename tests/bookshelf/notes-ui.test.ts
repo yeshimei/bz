@@ -310,7 +310,7 @@ describe('读书笔记弹窗（md 书）', () => {
     okBtn.click();
     await new Promise((r) => setTimeout(r, 40));
     expect(vault.files.get('书库/活着.md')).not.toContain('data-id="h1"');
-    expect(hasNotice('已删除')).toBe(true);
+    expect(hasNotice('已删除 1 条高亮')).toBe(true);
     // 删除后重开壳（刷新列表）
     expect(notesPopup()).not.toBeNull();
     expect(notesPopup()!.textContent).toContain('没有找到高亮或批注');
