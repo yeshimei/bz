@@ -46,10 +46,15 @@
   /* 控件高度（桌面紧凑） */
   --bz-control-h: 32px;    /* 按钮/输入/选择 */
   --bz-control-h-sm: 24px;
+  --bz-control-h-md: 30px; /* 中档：主头行主钮/收藏排序钮 */
   --bz-control-h-lg: 40px;
   --bz-icon-btn-w: 22px;   /* 桌面头行图标钮 */
   --bz-icon-btn-h: 26px;
   --bz-icon-btn-lg: 32px;  /* 触控档 */
+
+  /* 面板头行高度（影院式整宽头行） */
+  --bz-head-h: 44px;
+  --bz-head-h-lg: 50px;    /* 高档：剪藏本 */
 
   /* 阴影三档（透明黑、表达抬升） */
   --bz-shadow-sm:
