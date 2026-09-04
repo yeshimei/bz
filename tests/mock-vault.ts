@@ -165,12 +165,25 @@ export class MockVault {
     this.modifiedPaths.push(file.path);
   }
 
-  /** Obsidian vault.trash 语义：移入回收站（system=true = 系统回收站）；记录路径供测试断言 */
+  /** Obsidian vault.trash 语义：system=true 移入库内 .trash/ 目录（可在回收站恢复），否则永久删除；记录路径供测试断言 */
   trashed: Array<{ path: string; system: boolean }> = [];
   async trash(file: any, system: boolean = true): Promise<void> {
     this.trashed.push({ path: file.path, system });
-    this.files.delete(file.path);
-    this.binaryFiles.delete(file.path);
+    if (system) {
+      const name = file.path.split('/').pop()!;
+      if (this.files.has(file.path)) {
+        const content = this.files.get(file.path)!;
+        this.files.delete(file.path);
+        this.files.set(`.trash/${name}`, content);
+      } else if (this.binaryFiles.has(file.path)) {
+        const bytes = this.binaryFiles.get(file.path)!;
+        this.binaryFiles.delete(file.path);
+        this.binaryFiles.set(`.trash/${name}`, bytes);
+      }
+    } else {
+      this.files.delete(file.path);
+      this.binaryFiles.delete(file.path);
+    }
     this.modifiedPaths.push(file.path);
   }
 

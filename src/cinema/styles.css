@@ -5,6 +5,27 @@
    取值一律取自 tokens.css；类型/状态色为功能色（数据语义，域内直给）。
    主色跟品牌 --bz-brand（与其他新域统一）。 */
 
+/* ---- 分析页主题变量（增强包需求 7：此前无任何定义、靠浏览器回退，此处正式收编） ----
+   亮/暗两套，跟随 Obsidian body 上的 theme-dark/theme-light 类；
+   取值引用组件库 --bz-* 色彩 token（明暗自动跟随）；图表粉彩色板常量在 core/chart-palette.ts
+   （与 movie-report 观影报告同一套视觉值）。 */
+.theme-dark {
+  --bz-cinema-card: var(--bz-surface-2);    /* 板块卡片底 */
+  --bz-cinema-panel: var(--bz-surface-1);   /* 行内 chip/浅层容器底 */
+  --bz-cinema-border: var(--bz-border);     /* 卡片边框/图表轨道 */
+  --bz-cinema-text: var(--bz-text-1);       /* 主文字 */
+  --bz-cinema-muted: var(--bz-text-2);      /* 次要文字/图例计数 */
+  --bz-cinema-accent: var(--bz-brand);      /* 强调（评分/计数） */
+}
+.theme-light {
+  --bz-cinema-card: var(--bz-surface-2);
+  --bz-cinema-panel: var(--bz-surface-1);
+  --bz-cinema-border: var(--bz-border);
+  --bz-cinema-text: var(--bz-text-1);
+  --bz-cinema-muted: var(--bz-text-2);
+  --bz-cinema-accent: var(--bz-brand);
+}
+
 /* ---- 遮罩 + 主面板骨架 ---- */
 .bz-cinema-overlay {
   position: fixed; inset: 0;
@@ -43,10 +64,10 @@
 }
 .bz-cinema-nav-label { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin: var(--bz-space-md) var(--bz-space-xs) var(--bz-space-xs); }
 .bz-cinema-nav-label:first-child { margin-top: 0; }
-/* 分类行（选中 = 品牌底） */
+/* 分类行（选中 = 品牌底）；内边距归档 token 档（8/12） */
 .bz-cinema-nav-item {
   display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: 7px 10px; border-radius: 6px;
+  padding: var(--bz-space-sm) var(--bz-space-md); border-radius: 6px;
   background: none; border: none; cursor: pointer;
   font-size: var(--bz-font-label); color: var(--bz-text-1); text-align: left;
   font-family: inherit;
@@ -61,7 +82,7 @@
 .bz-cinema-nav-sub.bz-cinema-nav-sub-open { display: flex; }
 .bz-cinema-nav-sub-item {
   display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: 5px 10px; border-radius: 6px;
+  padding: var(--bz-space-xs) var(--bz-space-md); border-radius: 6px;
   background: none; border: none; cursor: pointer;
   font-size: var(--bz-font-meta); color: var(--bz-text-2); text-align: left;
   font-family: inherit;
@@ -74,7 +95,7 @@
 .bz-cinema-nav-tools { margin-top: auto; border-top: 1px solid var(--bz-border); padding-top: var(--bz-space-sm); display: flex; flex-direction: column; gap: 2px; }
 .bz-cinema-nav-tool {
   display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: 7px 10px; border-radius: 6px;
+  padding: var(--bz-space-sm) var(--bz-space-md); border-radius: 6px;
   background: none; border: none; cursor: pointer;
   font-size: var(--bz-font-meta); color: var(--bz-text-2); text-align: left;
   font-family: inherit;
@@ -85,17 +106,18 @@
 
 /* ---- 右栏 ---- */
 .bz-cinema-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-/* 主头行（对齐待办主头行）：当前筛选名 + · N 部 + 右侧添加按钮 */
+/* 主头行（对齐待办主头行）：当前筛选名 + · N 部 + 右侧添加按钮；间距/控件高归档 token */
 .bz-cinema-main-head {
   display: flex; align-items: center; gap: var(--bz-space-sm);
-  padding: 12px var(--bz-space-lg) 2px; flex-shrink: 0;
+  padding: var(--bz-space-md) var(--bz-space-lg) 2px; flex-shrink: 0;
 }
 .bz-cinema-main-title { font-size: 16px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
 .bz-cinema-main-count { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
 .bz-cinema-main-spacer { flex: 1; }
-.bz-cinema-main-head .bz-btn { height: 30px; padding: 0 14px; font-size: var(--bz-font-meta); }
+.bz-cinema-main-head .bz-btn { height: var(--bz-control-h); padding: 0 var(--bz-space-md); font-size: var(--bz-font-meta); }
 .bz-cinema-top {
-  display: flex; align-items: center; gap: var(--bz-space-sm); padding: 8px var(--bz-space-lg) 4px;
+  display: flex; align-items: center; gap: var(--bz-space-sm);
+  padding: var(--bz-space-sm) var(--bz-space-lg) var(--bz-space-xs);
   flex-shrink: 0;
 }
 .bz-cinema-search { flex: 1; position: relative; min-width: 0; }
@@ -107,7 +129,7 @@
 .bz-cinema-content { flex: 1; overflow-y: auto; padding: var(--bz-space-md) var(--bz-space-lg) var(--bz-space-lg); display: flex; flex-direction: column; min-height: 0; }
 
 /* ---- 海报网格 ---- */
-.bz-cinema-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
+.bz-cinema-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--bz-space-md); }
 .bz-cinema-pcard { cursor: pointer; min-width: 0; }
 .bz-cinema-poster-wrap {
   width: 100%; aspect-ratio: 2 / 3; border-radius: 10px; overflow: hidden; position: relative;
@@ -126,13 +148,21 @@
 .bz-cinema-p-meta.bz-cinema-p-meta-up { cursor: pointer; transition: color var(--bz-dur-fast) ease; }
 .bz-cinema-p-meta-up .bz-cinema-st-label { color: var(--bz-text-2); }
 .bz-cinema-p-meta-up:hover .bz-cinema-st-label { color: var(--bz-brand); }
+/* 移动端触控热区加大（增强包需求 11；设计手册 §8.2）：padding 撑高 + ::after 外扩，
+   可点区 ≈44px 高、左右到网格间距边——视觉不变，热区变大 */
+@media (max-width: 768px) {
+  .bz-cinema-p-meta.bz-cinema-p-meta-up { position: relative; padding: var(--bz-space-sm) 0; margin-top: 0; }
+  .bz-cinema-p-meta.bz-cinema-p-meta-up::after { content: ""; position: absolute; inset: -6px -12px; }
+}
 
 /* ---- 详情弹窗内容（弹窗骨架在组件库 modal） ---- */
 .bz-cinema-dm-head { display: flex; align-items: flex-start; gap: var(--bz-space-md); }
 .bz-cinema-dm-poster { width: 84px; height: 120px; border-radius: var(--bz-radius-sm); overflow: hidden; flex-shrink: 0; background: var(--bz-surface-3); border: 1px solid var(--bz-border); }
 .bz-cinema-dm-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .bz-cinema-dm-title { font-size: 16px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); line-height: 1.35; }
-.bz-cinema-dm-badges { display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.bz-cinema-dm-badges { display: flex; align-items: center; gap: var(--bz-space-xs); margin-top: var(--bz-space-xs); flex-wrap: wrap; }
+/* 豆瓣直达外链按钮（豆瓣链接行内，主链接右侧） */
+.bz-cinema-dm-douban { margin-left: var(--bz-space-sm); }
 .bz-cinema-dm-stars { font-size: 13px; color: var(--bz-star); }
 .bz-cinema-dm-rating { font-size: 13px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
 .bz-cinema-dm-date { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
@@ -167,9 +197,10 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- 确认框 ---- */
+/* ---- 确认框（三段式：图标 + 标题 + 问句 + 后果说明） ---- */
 .bz-cinema-confirm { text-align: center; padding: var(--bz-space-sm) var(--bz-space-xs); }
-.bz-cinema-confirm p { margin-top: var(--bz-space-md); font-size: var(--bz-font-body); color: var(--bz-text-1); line-height: 1.6; }
+.bz-cinema-confirm-title { margin-top: var(--bz-space-sm); font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
+.bz-cinema-confirm p { margin-top: var(--bz-space-sm); font-size: var(--bz-font-body); color: var(--bz-text-1); line-height: 1.6; }
 .bz-cinema-confirm-sub { margin-top: var(--bz-space-xs); font-size: var(--bz-font-meta); color: var(--bz-text-3); }
 .bz-cinema-confirm .bz-ic { width: 30px; height: 30px; color: var(--bz-text-3); }
 
@@ -182,9 +213,14 @@
 .bz-cinema-qs-review { margin-top: var(--bz-space-md); }
 .bz-cinema-qs-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-top: 10px; line-height: 1.5; }
 
+/* ---- 海报卡长按抽屉头部（core .bz-item-sheet-head 的域内内容；对齐 clipbook 先例） ---- */
+.bz-cinema-sheet-head { padding: 2px 0 var(--bz-space-sm); }
+.bz-cinema-sheet-title { font-size: var(--bz-font-body); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); line-height: 1.5; }
+.bz-cinema-sheet-sub { font-size: var(--bz-font-meta); color: var(--bz-text-2); margin-top: var(--bz-space-xs); }
+
 /* ---- AI 荐片 / 分析页 ---- */
 .bz-cinema-page { padding: var(--bz-space-xs) var(--bz-space-sm); }
-.bz-cinema-page-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.bz-cinema-page-head { display: flex; align-items: center; gap: var(--bz-space-sm); margin-bottom: var(--bz-space-md); }
 .bz-cinema-page-title { font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); display: inline-flex; align-items: center; gap: 8px; }
 .bz-cinema-page-sub { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
 .bz-cinema-ai-guide { text-align: center; padding: 48px 16px; }
@@ -201,17 +237,25 @@
 .bz-cinema-ai-wait { text-align: center; padding: 48px 16px; }
 .bz-cinema-ai-wait .bz-cinema-ai-guide-title { margin-top: 14px; }
 .bz-cinema-ai-err { color: var(--bz-danger); }
+/* 等待页大号 spinner（组件库 .bz-spinner--lg；一页一加载动画） */
+.bz-cinema-ai-spin { display: flex; justify-content: center; margin-bottom: var(--bz-space-md); }
+/* 结果页「换一批」（头部右侧） */
+.bz-cinema-ai-refresh { margin-left: auto; }
 
 /* 推荐结果卡（AI 页内列表） */
 .bz-cinema-rec-list { overflow-y: auto; }
-.bz-cinema-rec-card { display: flex; gap: var(--bz-space-md); align-items: flex-start; padding: var(--bz-space-md); border-radius: 10px; margin-bottom: 10px; background: var(--bz-surface-3); border: 1px solid var(--bz-border); }
+.bz-cinema-rec-card { display: flex; gap: var(--bz-space-md); align-items: flex-start; padding: var(--bz-space-md); border-radius: 10px; margin-bottom: var(--bz-space-sm); background: var(--bz-surface-3); border: 1px solid var(--bz-border); }
+.bz-cinema-rec-card--inlib { opacity: 0.72; }
 .bz-cinema-rec-main { flex: 1; min-width: 0; }
 .bz-cinema-rec-name { font-size: var(--bz-font-body); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
+/* 片名旁豆瓣直达小图标（搜索页新窗打开） */
+.bz-cinema-rec-douban { display: inline-flex; align-items: center; margin-left: var(--bz-space-xs); color: var(--bz-text-3); vertical-align: middle; }
+.bz-cinema-rec-douban:hover { color: var(--bz-brand); }
+/* 已入库推荐卡：「已在库中」禁用态（组件库 .bz-btn:disabled 承担交互禁用） */
+.bz-cinema-rec-inlib { flex-shrink: 0; }
 .bz-cinema-rec-meta { font-size: var(--bz-font-caption); color: var(--bz-text-2); margin-top: 3px; }
 .bz-cinema-rec-reason { font-size: var(--bz-font-meta); color: var(--bz-text-1); margin-top: 6px; line-height: 1.6; }
-/* 加入想看钮：品牌色图标钮 */
-.bz-cinema-rec-add.bz-icon-btn { color: var(--bz-brand); border: 1px solid var(--bz-border); background: var(--bz-surface-2); }
-.bz-cinema-rec-add.bz-icon-btn:hover { background: var(--bz-brand-soft); color: var(--bz-brand); }
+/* 加入想看钮：强调图标钮（组件库 .bz-icon-btn--accent 修饰符承担配色，域内不再覆盖） */
 
 /* ---- 移动端（≤768px）：真全屏 + 右上角工具 + 3 列海报 + 横滑分类 ---- */
 .bz-cinema-mob-nav { display: none; }
