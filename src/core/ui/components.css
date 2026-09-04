@@ -113,6 +113,22 @@
 .bz-icon-btn--close { width: 20px; height: 24px; font-size: 12px; }
 .bz-icon-btn[data-danger] { color: var(--bz-danger) !important; }
 .bz-icon-btn[data-danger]:hover { background: color-mix(in srgb, var(--bz-danger) 12%, transparent) !important; }
+/* 盒装变体：浮在面板底色上的头行钮（先例 home hero 编辑/关闭）——surface 底 + 描边，
+   取代域内对基线 transparent 底的 !important 对抗 */
+.bz-icon-btn--boxed {
+  background: var(--bz-surface-2) !important;
+  border: 1px solid var(--bz-border);
+}
+.bz-icon-btn--boxed:hover { border-color: var(--bz-border-hover); }
+/* 开关激活变体：品牌实底 + on-brand 前景（编辑模式开启等 toggle 态）；
+   声明在 --boxed 之后——同钮叠加两修饰时激活底覆盖盒装底 */
+.bz-icon-btn--active,
+.bz-icon-btn--active:hover {
+  background: var(--bz-brand) !important;
+  color: var(--bz-on-brand) !important;
+  border-color: transparent;
+}
+.bz-icon-btn--active:hover { background: var(--bz-brand-hover) !important; }
 
 /* ═══════════ Chip .bz-chip ═══════════ */
 .bz-chip {

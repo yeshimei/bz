@@ -52,7 +52,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 |---|---|---|---|
 | 按钮 | `.bz-btn` | `--primary/--danger/--ghost`；`--sm/--lg/--icon` | 32px 高、圆角 sm；hover 自动 |
 | 按钮行 | `.bz-btn-row` | `--center/--grow` | 弹窗底部右对齐 |
-| 图标按钮 | `.bz-icon-btn` | `--on/--lg/--xs/--close`；`[data-danger]` | 22×26 桌面头行档 |
+| 图标按钮 | `.bz-icon-btn` | `--on/--lg/--xs/--close/--boxed/--active`；`[data-danger]` | 22×26 桌面头行档；`--boxed`=浮于面板底上带描边变体，`--active`=品牌实底开关激活态（与 `--boxed` 同钮叠加时激活底胜出） |
 | Chip | `.bz-chip` | `--on/--sel/--locked`；内含 `.bz-chip-cnt`/`.bz-chip-x` | 筛选/标签胶囊 |
 | 徽标 | `.bz-badge` | `--accent/--success/--danger/--warning/--neutral` | 纯展示小胶囊 |
 | 输入框 | `.bz-input` | `--error`；`.bz-input-wrap` 前缀图标 | 32px 高 |
