@@ -9,6 +9,7 @@ import { onDomainEvent } from '../core/domain-bus';
 import { M, resetBookshelfState } from './state';
 import { resolveFolderPath, rebuildItems, WEAVE_DATA_FILE } from './data';
 import { createOverlay, closeOverlay, registerEscapeHandler, unregisterEscapeHandler, renderAll } from './ui';
+import { closeBookNoteModals } from './notes-ui';
 
 let initialized = false;
 let autoRefreshRegistered = false;
@@ -74,6 +75,7 @@ export function unloadBookshelf(): void {
     weaveVaultRef = null;
   }
   unregisterEscapeHandler(); // B1：注销 ESC 层
+  closeBookNoteModals(); // 读书笔记弹窗（迁移自旧 library 域）：卸载不留孤儿浮层
   if (M.currentOverlay) {
     M.currentOverlay.remove();
     M.currentOverlay = null;

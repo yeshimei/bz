@@ -20,7 +20,7 @@
  *  - favorites favorites.json（排除 archived）
  *  - news     news.json（readNewsData，缺失本身不建文件）
  *  - quiz     quiz.json 题目总数（loadQuiz(app)）
- *  - library  书库目录扫描（getBookItems(app) 在读本数）
+ *  - bookshelf 书库目录扫描（bookshelf scanMarkdownBooks(app) 在读本数；旧 library 域退役后换线）
  *  - belongings belongings.json（loadDatabase 物品总数）
  *  - clipping 目录 children md 计数（最轻）
  *  - attach/encrypt/smartcat/settings/wall/vault：无持久化数字统计（徽标留空）
@@ -35,7 +35,7 @@ import { PomodoroDataManager } from '../pomodoro/data';
 import { todayCount } from '../pomodoro/stats';
 import { DataManager as FavoritesDataManager } from '../favorites/data';
 import { getStoragePath as favoritesStoragePath } from '../favorites/config';
-import { getBookItems } from '../library/items';
+import { scanMarkdownBooks } from '../bookshelf/data';
 import { QuizManager } from '../review/quiz-core/manager';
 import { loadDatabase as loadBelongings } from '../belongings/data';
 import { parseMovieFile } from '../cinema/data';
@@ -277,13 +277,13 @@ export async function collectHomeSnapshot(app?: App): Promise<HomeSnapshot> {
     out.quiz = EMPTY;
   }
 
-  // ---- library：在读本数（目录扫描；读设置兜底） ----
+  // ---- bookshelf：在读本数（书库目录扫描；口径同 bookshelf 域——readingDate && !completionDate 为在读） ----
   try {
-    const books = getBookItems(a);
-    const reading = (Array.isArray(books) ? books : []).filter((b) => (b as { status?: string }).status === '在读').length;
-    out.library = reading ? { text: `在读 ${reading}`, hl: reading > 0, sub: '' } : EMPTY;
+    const books = scanMarkdownBooks(a);
+    const reading = (Array.isArray(books) ? books : []).filter((b) => b.status === '在读').length;
+    out.bookshelf = reading ? { text: `在读 ${reading}`, hl: reading > 0, sub: '' } : EMPTY;
   } catch {
-    out.library = EMPTY;
+    out.bookshelf = EMPTY;
   }
 
   // ---- belongings：物品总数（文件缺失回落空，不建文件） ----
