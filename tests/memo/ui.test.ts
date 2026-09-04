@@ -576,28 +576,26 @@ describe('设置弹窗与新建默认值（第 9 轮设置扩展）', () => {
     vi.useRealTimers();
   });
 
-  it('⚙️ 设置弹窗含 9 项（提醒/显示/新建/场景列表分组卡片）', async () => {
+  it('⚙️ 设置弹窗含 7 项（显示/新建/场景列表分组卡片；提醒组随入口改道移出）', async () => {
     const vault = new MockVault();
     await initApp(vault);
     UIManager.showMain(null, false);
     const settingsBtn = [...document.querySelectorAll('#todo-popup button')].find((b) => b.className === 'todo-btn-settings')!;
     (settingsBtn as HTMLElement).click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
-    // 分组卡片：4 个组头可见（桌面端移动端组挂 bz-setting-hidden——ticket 131 声明式联动保留结构）+ 组内 9 项设置
+    // 分组卡片：3 个组头可见（桌面端移动端组挂 bz-setting-hidden——ticket 131 声明式联动保留结构）+ 组内 7 项设置
     const isHiddenGroup = (el: Element) =>
       Boolean((el.closest('.bz-settings-group') as HTMLElement | null)?.classList.contains('bz-setting-hidden'));
     const heads = [...popup.querySelectorAll('.bz-settings-group-head')].filter((el) => !isHiddenGroup(el));
-    expect(heads.map((el) => el.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon'))).toEqual(['bell', 'eye', 'pencil-line', 'tags']);
-    expect([...popup.querySelectorAll('.bz-settings-group-name')].filter((el) => !isHiddenGroup(el)).map((el) => el.textContent)).toEqual(['提醒', '显示', '新建', '场景列表']);
-    expect([...popup.querySelectorAll('.bz-settings-group-count')].filter((el) => !isHiddenGroup(el)).map((el) => el.textContent)).toEqual(['2 项', '3 项', '3 项', '1 项']);
+    expect(heads.map((el) => el.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon'))).toEqual(['eye', 'pencil-line', 'tags']);
+    expect([...popup.querySelectorAll('.bz-settings-group-name')].filter((el) => !isHiddenGroup(el)).map((el) => el.textContent)).toEqual(['显示', '新建', '场景列表']);
+    expect([...popup.querySelectorAll('.bz-settings-group-count')].filter((el) => !isHiddenGroup(el)).map((el) => el.textContent)).toEqual(['3 项', '3 项', '1 项']);
     const names = [...popup.querySelectorAll('.bz-settings-group-body .setting-item')]
       .filter((el) => !el.classList.contains('bz-setting-hidden'))
       .map((el) => (el as HTMLElement).dataset.name);
-    // 9 项设置
-    expect(names.length).toBe(9);
+    // 7 项设置（提醒组移出：行为归待办域，设置在待办 schema 同键）
+    expect(names.length).toBe(7);
     expect(names).toEqual([
-      '启动时自动弹出',
-      '打开笔记自动提醒',
       '默认排序方式',
       '默认显示归档',
       '到期时间格式',
@@ -606,6 +604,9 @@ describe('设置弹窗与新建默认值（第 9 轮设置扩展）', () => {
       '完成后自动归档',
       '自定义场景列表',
     ]);
+    // 提醒组随入口改道移出（启动自动弹出/打开笔记自动提醒 → 待办域承担）
+    expect(names).not.toContain('启动时自动弹出');
+    expect(names).not.toContain('打开笔记自动提醒');
     // 已删除：到期轮询（到期通知/到期检查间隔）与剪贴板监听/平台映射（ticket 59）
     expect(names).not.toContain('到期通知');
     expect(names).not.toContain('到期检查间隔（秒）');
