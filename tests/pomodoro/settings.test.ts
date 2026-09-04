@@ -28,6 +28,11 @@ function el(id: string): HTMLElement {
   return document.getElementById(id)!;
 }
 
+/** 本轮循环位置圆点行（增强包）：全部圆点 */
+function cycleDots(): HTMLElement[] {
+  return [...document.querySelectorAll('#pomodoro-cycle .pomodoro-cycle-dot')] as HTMLElement[];
+}
+
 /** 弹窗内按名称找设置项 */
 function itemByName(name: string): any {
   return Array.from(document.querySelectorAll('#bz-settings-modal-popup .setting-item')).find(
@@ -238,13 +243,14 @@ describe('设置生效', () => {
     vi.useRealTimers();
   });
 
-  it('预设生效：flow（50/10/25）→ 空闲显示 50:00，专注阶段文案 1/4', async () => {
+  it('预设生效：flow（50/10/25）→ 空闲显示 50:00，循环圆点 N=4', async () => {
     const settings = { ...DEFAULT_SETTINGS, pomodoroPreset: 'flow' } as any;
     const { app } = setup(settings);
     await openPomodoro(app);
     expect(el('pomodoro-time').textContent).toBe('50:00');
     el('pomodoro-btn-start').click();
-    expect(el('pomodoro-phase').textContent).toContain('专注 1/4');
+    expect(el('pomodoro-phase').textContent).toBe('专注'); // 增强包：阶段文案不带 N/M，位置由圆点行表达
+    expect(cycleDots().length).toBe(4);
     el('pomodoro-btn-skip').click(); // 短休息用预设时长 10min
     expect(el('pomodoro-time').textContent).toBe('10:00');
   });
@@ -265,12 +271,13 @@ describe('设置生效', () => {
     expect(el('pomodoro-time').textContent).toBe('06:00');
   });
 
-  it('长休息间隔 N 生效：N=2 → 阶段文案 1/2', async () => {
+  it('长休息间隔 N 生效：N=2 → 循环圆点 2 个', async () => {
     const settings = { ...DEFAULT_SETTINGS, pomodoroLongBreakInterval: '2' } as any;
     const { app } = setup(settings);
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
-    expect(el('pomodoro-phase').textContent).toContain('专注 1/2');
+    expect(el('pomodoro-phase').textContent).toBe('专注');
+    expect(cycleDots().length).toBe(2);
   });
 
   it('autoCycle 生效：专注完成自动开始短休', async () => {
@@ -283,13 +290,15 @@ describe('设置生效', () => {
     expect(el('pomodoro-btn-start').textContent).toContain('暂停'); // 自动开始中
   });
 
-  it('autoSkipBreak 生效：专注完成直接开始下一专注', async () => {
+  it('autoSkipBreak 生效：专注完成直接开始下一专注（圆点记 1 个已完成）', async () => {
     const settings = { ...DEFAULT_SETTINGS, pomodoroAutoSkipBreak: true } as any;
     const { app } = setup(settings);
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
     await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
-    expect(el('pomodoro-phase').textContent).toContain('专注 2/4');
+    expect(el('pomodoro-phase').textContent).toBe('专注'); // 恒回专注
+    expect(cycleDots().length).toBe(4);
+    expect(cycleDots().filter((d) => d.classList.contains('pomodoro-cycle-dot-on')).length).toBe(1); // 已完成 1 个
     expect(el('pomodoro-btn-start').textContent).toContain('暂停');
   });
 
@@ -299,7 +308,8 @@ describe('设置生效', () => {
     await openPomodoro(app);
     expect(el('pomodoro-time').textContent).toBe('25:00');
     el('pomodoro-btn-start').click();
-    expect(el('pomodoro-phase').textContent).toContain('专注 1/4');
+    expect(el('pomodoro-phase').textContent).toBe('专注');
+    expect(cycleDots().length).toBe(4);
   });
 
   it('重启保留：settings 默认值合并（data.json 持久化由插件机制）', async () => {
