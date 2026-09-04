@@ -38,3 +38,14 @@ export function toParagraphs(body: string): ClipParagraph[] {
   }
   return out;
 }
+
+/**
+ * 剥剪藏笔记的「外壳」：frontmatter 段 + dataviewjs 摘要块（右栏读剪藏正文用，enh 包 3）。
+ * 契约对齐 save.ts 写入侧（--- frontmatter + ```dataviewjs 摘要 view + 正文）。
+ */
+export function stripClipChrome(raw: string): string {
+  return String(raw || '')
+    .replace(/^\s*---[\s\S]*?---/, '')
+    .replace(/```dataviewjs[\s\S]*?```/g, '')
+    .trim();
+}

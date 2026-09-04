@@ -250,6 +250,9 @@
 .bz-bs-d-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 1px; }
 .bz-bs-d-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 1px; }
 .bz-bs-d-chips .bz-ic { width: 11px; height: 11px; }
+/* 读书笔记入口（「N 划线 · N 批注」可点 chip，消费组件库 .bz-chip 基线） */
+.bz-bs-d-notes { cursor: pointer; }
+.bz-bs-d-notes:hover { border-color: var(--bz-brand) !important; color: var(--bz-brand) !important; background: var(--bz-brand-soft) !important; }
 .bz-bs-d-cat { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
 .bz-bs-d-meta { font-size: var(--bz-font-meta); color: var(--bz-text-2); line-height: 1.8; }
 .bz-bs-d-meta b { color: var(--bz-text-1); font-weight: var(--bz-weight-semibold); }
@@ -303,3 +306,48 @@
   }
   .bz-bs-d-hero { gap: var(--bz-space-md); }
 }
+
+/* ==================== 读书笔记弹窗（迁移自旧 library 域，bz-bs-notes-*） ==================== */
+/* 弹窗壳/按钮/输入/空态为组件库基线（uiModal + .bz-btn/.bz-input/.bz-empty），
+   这里只排笔记列表（标题层级/高亮块/引文批注/日期）与编辑弹窗细节。 */
+.bz-bs-notes-pop.bz-overlay-popup { width: min(700px, calc(100vw - 32px)); }
+.bz-bs-notes { display: flex; flex-direction: column; min-height: 0; }
+.bz-bs-notes-body { min-height: 120px; }
+.bz-bs-notes-empty { text-align: center; color: var(--bz-text-3); padding: var(--bz-space-lg) 0; }
+
+.bz-bs-note-heading { color: var(--bz-brand); user-select: none; }
+.bz-bs-hl {
+  margin-bottom: 12px;
+  padding: 0 0 25px 0;
+  border-bottom: 1px solid var(--bz-border);
+}
+.bz-bs-hl-body { user-select: none; }
+.bz-bs-quote {
+  font-style: italic;
+  color: var(--bz-text-3);
+  font-size: 0.75em;
+  padding: 15px 0 5px 0;
+  margin-bottom: 2px;
+}
+.bz-bs-comment { margin-left: 12px; font-size: 0.75em; color: var(--bz-text-1); padding: 5px 0; }
+.bz-bs-hl-date {
+  text-align: right;
+  font-size: 0.65em;
+  color: var(--bz-text-3);
+  margin-top: 2px;
+  user-select: none;
+}
+.bz-bs-hl-date--pointer { cursor: pointer; }
+
+/* 编辑批注/想法弹窗（按钮走组件库 .bz-btn，输入走 .bz-input） */
+.bz-bs-edit-quote {
+  font-style: italic;
+  color: var(--bz-text-3);
+  font-size: 0.85em;
+  padding: 8px 0;
+  border-radius: var(--bz-radius-sm);
+  margin-bottom: var(--bz-space-md);
+  user-select: text;
+}
+.bz-bs-edit-textarea { width: 100%; min-height: 100px; resize: vertical; box-sizing: border-box; }
+.bz-bs-edit-btns { margin-top: var(--bz-space-md); }

@@ -1738,6 +1738,13 @@ button.news-close-btn {
 .bz-icon-btn--close { width: 20px; height: 24px; font-size: 12px; }
 .bz-icon-btn[data-danger] { color: var(--bz-danger) !important; }
 .bz-icon-btn[data-danger]:hover { background: color-mix(in srgb, var(--bz-danger) 12%, transparent) !important; }
+/* 强调图标钮（品牌色图标 + 卡片底描边）：列表卡内行动钮等需要从灰调里跳出来的单图标钮 */
+.bz-icon-btn--accent {
+  color: var(--bz-brand) !important;
+  background: var(--bz-surface-2) !important;
+  border: 1px solid var(--bz-border);
+}
+.bz-icon-btn--accent:hover { background: var(--bz-brand-soft) !important; color: var(--bz-brand) !important; }
 
 /* ═══════════ Chip .bz-chip ═══════════ */
 .bz-chip {
@@ -1769,6 +1776,18 @@ button.news-close-btn {
 .bz-chip--sel:hover { background: var(--bz-brand-soft) !important; color: var(--bz-brand) !important; }
 .bz-chip--locked { border: 1px dashed var(--bz-border-strong); opacity: 0.55; cursor: not-allowed; background: var(--bz-surface-1) !important; color: var(--bz-text-2) !important; }
 .bz-chip--locked:hover { background: var(--bz-surface-1) !important; color: var(--bz-text-2) !important; }
+/* 数据语义色徽标（域经内联 --bz-chip-tint / --bz-chip-tint-fg 注入底色/前景，如影院类型/状态徽标）；
+   底色仍走 !important 链路（压过基线 .bz-chip），域内不再自写覆盖规则 */
+.bz-chip--tint {
+  background: var(--bz-chip-tint, var(--bz-surface-2)) !important;
+  color: var(--bz-chip-tint-fg, var(--bz-text-1)) !important;
+  border-color: transparent !important;
+  cursor: default;
+}
+.bz-chip--tint:hover {
+  background: var(--bz-chip-tint, var(--bz-surface-2)) !important;
+  color: var(--bz-chip-tint-fg, var(--bz-text-1)) !important;
+}
 .bz-chip-cnt { margin-left: 2px; font-size: 10px; font-weight: 600; opacity: 0.75; }
 
 .bz-chip-x {
@@ -2027,7 +2046,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   white-space: nowrap;
 }
 .bz-select-item > span {
-  flex: 1;
+  /* 不 grow：菜单按最长选项撑宽后，flex:1 会把对勾推到行尾、与短选项名称间拉出大空隙 */
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4050,7 +4070,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   background: var(--bz-overlay);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--bz-font-ui);
-  z-index: 400;
+  /* z-index 由 createOverlay 经 topifyZ 动态分配（ADR-0067），此处不设静态档 */
 }
 .bz-home-panel {
   background: var(--bz-surface-2); color: var(--bz-text-1);
@@ -4551,6 +4571,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-todo-nav-cnt { margin-left: auto; font-size: var(--bz-font-caption); color: var(--bz-text-3); background: var(--bz-surface-2); border-radius: 999px; padding: 0 7px; line-height: 17px; }
 .bz-todo-nav-item.bz-todo-nav-active .bz-todo-nav-cnt { color: inherit; background: transparent; opacity: 0.75; }
 .bz-todo-nav-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+/* 伪场景「重要」star 图标（警示色点之外的第二佐证，§6.1 状态不只靠颜色） */
+.bz-todo-nav-star { width: 13px; height: 13px; flex-shrink: 0; color: var(--bz-warning); }
 /* 添加场景（底部） */
 .bz-todo-side-add {
   margin: var(--bz-space-sm) var(--bz-space-xs) 0; padding: 6px 10px;
@@ -4607,6 +4629,14 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-todo-donebar .bz-todo-donebar-cnt { margin-left: auto; font-size: var(--bz-font-caption); color: var(--bz-text-3); }
 .bz-todo-donebar .bz-ic { width: 13px; height: 13px; transition: transform 0.15s ease; }
 .bz-todo-donebar.bz-todo-donebar-open .bz-ic { transform: rotate(180deg); }
+/* 「更早 N 条」（已完成折叠区尾部，30 天时间界放全入口）：与折叠条同族弱化样式 */
+.bz-todo-done-more {
+  margin: 2px var(--bz-space-xs) 0; padding: 6px var(--bz-space-sm);
+  border: none; border-radius: 8px; background: transparent;
+  color: var(--bz-brand); cursor: pointer;
+  font-size: var(--bz-font-meta); font-family: inherit; text-align: center;
+}
+.bz-todo-done-more:hover { background: var(--bz-brand-soft); }
 
 /* ---- 条目卡（右键菜单 / 长按抽屉由 core/item-actions 提供） ---- */
 .bz-todo-card {
@@ -4653,8 +4683,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-todo-tag.bz-todo-tag-future { background: color-mix(in srgb, var(--bz-success) 12%, transparent); color: var(--bz-success); }
 .bz-todo-time { font-size: var(--bz-font-caption); color: var(--bz-text-3); flex-shrink: 0; }
 
-/* 空态 */
-.bz-todo-empty { text-align: center; color: var(--bz-text-3); font-size: var(--bz-font-body); padding: 40px 12px; }
+/* 空态：组件库 .bz-empty 三件套（图标 + 一句话 + 动作按钮），域内不再自留空态样式 */
 
 /* ---- 底部录入行（桌面 + 移动共用形态；无场景 chip 提示） ---- */
 .bz-todo-composer {
@@ -4711,6 +4740,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   .bz-todo-content { padding: var(--bz-space-sm) var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
   .bz-todo-card { padding: 11px var(--bz-space-sm); }
   .bz-todo-card .bz-todo-check { width: 19px; height: 19px; }
+  /* 触控热区 ≥44px（设计手册 §8.2）：视觉尺寸不变，::after 外扩热区（19px + 13px×2 = 45px） */
+  .bz-todo-card .bz-todo-check::after { content: ''; position: absolute; inset: -13px; }
   .bz-todo-card .bz-todo-card-title { font-size: 15px; }
   .bz-todo-composer .bz-input { height: 40px; }
 }
@@ -4758,6 +4789,14 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-clip-head-sub { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
 .bz-clip-head-sp { flex: 1; }
 
+/* 桌面搜索框（enh 包 1）：结构对齐 todo/favorites（前缀 search 图标 + .bz-input），无 / kbd 提示 */
+.bz-clip-search { position: relative; width: 220px; min-width: 130px; flex-shrink: 1; }
+.bz-clip-search .bz-ic {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  width: 13px; height: 13px; color: var(--bz-text-3); pointer-events: none;
+}
+.bz-clip-search .bz-input { width: 100%; padding-left: 30px; }
+
 /* ---- 三栏 ---- */
 .bz-clip-desk-body { flex: 1; display: flex; min-height: 0; }
 
@@ -4785,7 +4824,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-clip-rail-badge {
   width: 20px; height: 20px; border-radius: var(--bz-radius-xs); flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 10px; font-weight: var(--bz-weight-bold); color: #fff;
+  font-size: 11px; font-weight: var(--bz-weight-bold); color: #fff;
   background: var(--rail-c, #58a6ff);
 }
 .bz-clip-rail-badge.bili { background: #8b7cf6; }
@@ -4796,7 +4835,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-clip-rail-row.on .bz-clip-rail-name { color: var(--bz-text-1); }
 .bz-clip-rail-count { font-size: var(--bz-font-caption); color: var(--bz-text-3); font-variant-numeric: tabular-nums; }
 .bz-clip-rail-unread {
-  font-size: 10px; font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
+  font-size: 11px; font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
   background: var(--bz-brand); border-radius: var(--bz-radius-full);
   min-width: 17px; height: 17px; padding: 0 4px;
   display: inline-flex; align-items: center; justify-content: center;
@@ -4812,7 +4851,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 }
 .bz-clip-analy .bz-ic { width: 14px; height: 14px; color: var(--bz-brand); }
 .bz-clip-analy:hover { background: var(--bz-brand-soft); color: var(--bz-text-1); }
-.bz-clip-analy:hover .bz-clip-analy .bz-ic, .bz-clip-analy:hover .bz-ic { color: var(--bz-brand); }
+.bz-clip-analy:hover .bz-ic { color: var(--bz-brand); }
 
 /* 中栏：条目列表 */
 .bz-clip-mid { width: 336px; flex-shrink: 0; border-right: 1px solid var(--bz-border); display: flex; flex-direction: column; min-height: 0; }
@@ -4833,7 +4872,6 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-clip-dot { flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; margin-top: 7px; }
 .bz-clip-dot.unread { background: var(--bz-info); }
 .bz-clip-dot.reading { background: var(--bz-warning); }
-.bz-clip-dot.read { background: transparent; border: 1px solid var(--bz-border-strong); }
 .bz-clip-dot.saved { background: var(--bz-success); }
 .bz-clip-item-sum {
   font-size: var(--bz-font-meta); color: var(--bz-text-2); line-height: var(--bz-leading-normal);
@@ -4889,6 +4927,13 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-clip-art-md p { margin: 0 0 var(--bz-space-md); }
 .bz-clip-art-md blockquote { border-left: 3px solid var(--bz-brand); background: var(--bz-surface-1); border-radius: 0 var(--bz-radius-sm) var(--bz-radius-sm) 0; padding: 8px var(--bz-space-md); margin: var(--bz-space-sm) 0; color: var(--bz-text-2); font-size: var(--bz-font-label); }
 .bz-clip-art-md p.dim { color: var(--bz-text-3); }
+/* 阅读字号三档（enh 包 7）：小/中/大 = meta/body（默认）/emphasis 档 */
+.bz-clip-read-body.fs-sm .bz-clip-art-md { font-size: var(--bz-font-meta); }
+.bz-clip-read-body.fs-lg .bz-clip-art-md { font-size: var(--bz-font-emphasis); }
+/* 字号分段行（右栏 meta 下方右对齐；消费组件库 .bz-segmented 基线） */
+.bz-clip-art-fs { display: flex; justify-content: flex-end; margin-bottom: var(--bz-space-md); }
+/* 「打开笔记」主按钮行（enh 包 3；消费组件库 .bz-btn--primary 基线） */
+.bz-clip-art-actions { display: flex; margin-bottom: var(--bz-space-md); }
 .bz-clip-art-origin { display: inline-flex; align-items: center; gap: 4px; margin-top: var(--bz-space-md); font-size: var(--bz-font-meta); color: var(--bz-brand); text-decoration: none; }
 .bz-clip-art-origin:hover { text-decoration: underline; }
 .bz-clip-art-origin .bz-ic { width: 12px; height: 12px; }
@@ -4929,7 +4974,6 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 }
 .bz-clip-mob-item:hover { background: var(--bz-surface-hover); }
 .bz-clip-mob-item .bz-clip-item-t { -webkit-line-clamp: 2; }
-.bz-clip-mob-item.on { background: var(--bz-brand-soft); }
 
 /* 移动详情（屏2 overlay） */
 .bz-clip-mob-detail {
@@ -4967,191 +5011,17 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   .bz-clip-desk { display: none; }
   .bz-clip-frame { position: relative; }
   .bz-clip-mob { display: flex; }
+  /* 刘海屏安全区（enh 包 9）：顶栏避让顶部刘海，列表/详情避让底部指示条 */
+  .bz-clip-mob-top { padding-top: max(var(--bz-space-sm), env(safe-area-inset-top)); }
+  .bz-clip-mob-detail-top { padding-top: max(var(--bz-space-sm), env(safe-area-inset-top)); }
+  .bz-clip-mob-list { padding-bottom: max(var(--bz-space-lg), env(safe-area-inset-bottom, 0px)); }
+  .bz-clip-mob-detail-body { padding-bottom: calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
+  /* 触控热区（enh 包 10）：来源条/保存钮等可点小元素抬到 ≥44px 档（设计手册 §8.2） */
+  .bz-clip-mob-src { min-height: 44px; padding: 8px 16px; }
+  .bz-clip-mob-ub { min-width: 17px; height: 17px; font-size: 11px; }
+  .bz-clip-mob-save { width: 44px; height: 44px; }
+  .bz-clip-mob-top .bz-icon-btn--lg { width: 44px; height: 44px; }
 }
-/* ==================== 密码本域样式（src/password/styles.css） ==================== */
-/* ==================== 密码本（password，ticket 60 收敛：原 PW_STYLES 运行时注入，逐字搬运） ==================== */
-    #pw-mask { backdrop-filter: blur(2px); }
-    #pw-popup { animation: slideUp 0.3s ease-out; }
-    #pw-entries-container::-webkit-scrollbar { width: 6px; }
-    #pw-entries-container::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
-
-    .pw-search-container {
-        padding: 0 24px 12px 24px;
-        display: none;
-    }
-    .pw-search-container input {
-        width: 100%;
-        padding: 6px 12px;
-        border-radius: 6px;
-        border: 1px solid var(--background-modifier-border);
-        background: var(--background-primary);
-        color: var(--text-normal);
-        font-size: 14px;
-        box-sizing: border-box;
-    }
-
-    .pw-entry-card {
-        display: flex;
-        flex-direction: column;
-        padding: 10px 0;
-        border-bottom: 1px solid var(--background-modifier-border);
-    }
-    .pw-entry-top {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: nowrap;
-    }
-    .pw-account-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        flex: 0 0 40%;
-        max-width: 40%;
-        overflow: hidden;
-    }
-    .pw-platform-link, .pw-platform-text {
-        flex: 0 0 100px;
-        font-weight: 600;
-        font-size: 14px;
-        text-decoration: none;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .pw-platform-link {
-        color: var(--text-accent);
-    }
-    .pw-platform-link:hover {
-        text-decoration: underline;
-    }
-    .pw-platform-text {
-        color: var(--text-muted);
-    }
-    .pw-account {
-        flex: 1;
-        font-size: 14px;
-        color: var(--text-normal);
-        cursor: pointer;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .pw-password-area {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        flex: 1;
-        min-width: 0;
-        cursor: pointer;
-    }
-    .pw-password-text {
-        font-family: monospace;
-        cursor: pointer;
-        color: var(--text-muted);
-        font-size: 14px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .pw-eye {
-        cursor: pointer;
-        font-size: 14px;
-        user-select: none;
-        opacity: 0.6;
-        flex-shrink: 0;
-    }
-    .pw-date {
-        font-size: 12px;
-        color: var(--text-faint);
-        flex: 0 0 auto;
-        white-space: nowrap;
-        cursor: pointer;
-    }
-    .pw-note {
-        margin-top: 4px;
-        font-size: 13px;
-        color: var(--text-muted);
-        padding: 10px 0;
-        cursor: pointer;
-        white-space: pre-wrap;
-        word-break: break-word;
-    }
-    .pw-note.hidden {
-        color: transparent;
-        background: repeating-linear-gradient(45deg, var(--background-modifier-border) 0px, var(--background-modifier-border) 2px, transparent 2px, transparent 4px);
-        border-radius: 4px;
-        padding: 10px 0;
-        min-height: 1.2em;
-    }
-
-    .pw-add-dialog input, .pw-add-dialog textarea {
-        width: 100%;
-        padding: 8px 12px;
-        border-radius: 6px;
-        font-size: 14px;
-        box-sizing: border-box;
-        margin-bottom: 12px;
-        border: 1px solid var(--background-modifier-border);
-        background: var(--background-primary);
-        color: var(--text-normal);
-    }
-    .pw-add-dialog textarea {
-        resize: vertical;
-        min-height: 60px;
-    }
-    .pw-generate-btn {
-        padding: 4px 12px;
-        border-radius: 16px;
-        background: var(--interactive-accent);
-        color: var(--text-on-accent);
-        border: none;
-        cursor: pointer;
-        font-size: 13px;
-        margin-left: 8px;
-    }
-    .pw-generate-btn:hover {
-        opacity: 0.8;
-    }
-    .pw-suggestions {
-        max-height: 120px;
-        overflow-y: auto;
-        background: var(--background-secondary);
-        border-radius: 4px;
-        margin-top: -8px;
-        margin-bottom: 12px;
-        display: none;
-        border: 1px solid var(--background-modifier-border);
-    }
-    .pw-suggestions .suggestion-item {
-        padding: 6px 12px;
-        cursor: pointer;
-        font-size: 14px;
-    }
-    .pw-suggestions .suggestion-item:hover {
-        background: var(--background-modifier-hover);
-    }
-
-    @media (max-width: 768px) {
-        .pw-entry-top {
-            flex-wrap: wrap;
-        }
-        .pw-account-wrapper {
-            flex: 0 0 100%;
-            max-width: 100%;
-        }
-        .pw-platform-link, .pw-platform-text {
-            flex: 0 0 80px;
-        }
-        .pw-password-area {
-            flex: 0 0 100%;
-            min-width: 0;
-        }
-        .pw-date {
-            margin-left: auto;
-        }
-    }
-
 /* ==================== 收藏本域样式（src/favorites/styles.css，ticket 177 重写） ====================
  * 基线（按钮/图标钮/chip/输入/弹窗/空态/标签多选）全部消费组件库（src/core/ui/ 的 .bz-* 类
  * 与 --bz-* token）；本文件只保留收藏本独有布局（主面板骨架/左标签栏/卡片/表单 LLM 区）。
@@ -5636,254 +5506,12 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
     .pomodoro-stat-col { display: flex; align-items: flex-end; height: 40px; }
     .pomodoro-stat-bar { width: 10px; border-radius: 3px 3px 0 0; background: var(--interactive-accent); min-height: 2px; }
     .pomodoro-stat-label { font-size: 9px; color: var(--text-faint); }
-/* ==================== 书库域样式（src/library/styles.css） ==================== */
-/* ============ 书库 library（ticket 62 样式收敛：原 ui.ts 内联 → bz-lib-*） ============ */
-/* 遮罩分层：9997 主面板（原 1000 档）/ 9998 筛选（原 1100 档）——e3 抬档归主面板族；
-   读书笔记壳 11100 与编辑弹窗 11101 为抽屉附属档
-   （P0-7：必须压过统一抽屉遮罩 10999/本体 11000，对照 movie 12000） */
-.bz-lib-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-/* e3 抬档：修饰符名保留旧 z 值作稳定挂类契约（JS 引用不变），实际层级见值；
-   筛选档保留 0.3 半透明底（与主面板 0.5 区分用，统一去背景的例外，勿删） */
-/* 层级已动态发号（ADR-0067）：--1000/--1100/--11100/--11101 修饰名仅作标识钩子；
-   筛选档保留 0.3 半透明底（与主面板 0.5 区分用，勿删） */
-.bz-lib-overlay--1100 { background: rgba(0, 0, 0, 0.3); }
-
-.bz-lib-modal {
-  background: var(--background-primary);
-  color: var(--text-normal);
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-}
-.bz-lib-modal--full { width: 100%; max-width: 600px; height: 90vh; }
-.bz-lib-modal--full-lg { width: 100%; max-width: 700px; height: 85vh; }
-.bz-lib-modal--sm {
-  width: 90%;
-  max-width: 500px;
-  max-height: 80vh;
-  border: 1px solid var(--background-modifier-border);
-}
-@media (max-width: 768px) {
-  /* 原强制全屏规则已废止（ticket 68：真全屏统一走 .bz-win-mfs）；常规卡收窄留边。
-     须排除真全屏态：同权重 !important 下本块源序靠后会压过通用 100vw，导致全屏宽度只剩 95% */
-  .bz-lib-modal--full:not(.bz-win-mfs),
-  .bz-lib-modal--full-lg:not(.bz-win-mfs) {
-    width: 95% !important;
-    max-width: 95% !important;
-  }
-}
-
-.bz-lib-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 26px;
-  flex-shrink: 0;
-}
-.bz-lib-header-title { margin: 0; font-size: 0.8rem; }
-.bz-lib-header-btns { display: flex; align-items: center; gap: 8px; }
-.bz-lib-list { flex: 1; overflow-y: auto; padding: 8px 16px; }
-
-.bz-lib-empty { text-align: center; color: var(--text-muted); }
-
-.bz-lib-card {
-  display: flex;
-  align-items: flex-start;
-  padding: 12px;
-  border-radius: 10px;
-  margin-bottom: 10px;
-  background: var(--background-secondary);
-  transition: background 0.2s;
-}
-.bz-lib-cover { cursor: pointer; flex-shrink: 0; margin-right: 14px; }
-.bz-lib-cover-img {
-  width: 56px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 6px;
-  background: var(--background-modifier-border);
-  display: block;
-}
-.bz-lib-cover-placeholder {
-  width: 56px;
-  height: 80px;
-  background: var(--background-modifier-border);
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.8rem;
-  color: var(--text-muted);
-}
-.bz-lib-info { flex: 1; min-width: 0; }
-.bz-lib-title-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; }
-.bz-lib-title { font-weight: 700; font-size: 1rem; cursor: pointer; }
-
-/* 三状态徽章（原 items.ts getStatusColors 内联色板移入，含 theme-dark 覆写） */
-.bz-lib-badge {
-  font-size: 0.65rem;
-  color: #fff;
-  padding: 2px 8px;
-  border-radius: 20px;
-  white-space: nowrap;
-}
-.bz-lib-badge--未读 { background: #BDBDBD; }
-.bz-lib-badge--在读 { background: #FF8C42; }
-.bz-lib-badge--已读 { background: #66BB6A; }
-body.theme-dark .bz-lib-badge--未读 { background: #616161; }
-body.theme-dark .bz-lib-badge--在读 { background: #F57C00; }
-body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
-
-.bz-lib-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 6px 0;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-.bz-lib-progress {
-  margin: 6px 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.bz-lib-chip { font-size: 0.7rem; }
-.bz-lib-chip--pill { padding: 2px 6px; border-radius: 12px; }
-.bz-lib-review {
-  margin-top: 6px;
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  padding: 6px 8px;
-  border-radius: 8px;
-  line-height: 1.3;
-}
-
-.bz-lib-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--background-modifier-border);
-  flex-shrink: 0;
-}
-.bz-lib-modal-header--tight { padding: 12px 16px; }
-.bz-lib-modal-title { margin: 0; font-size: 16px; font-weight: 600; }
-.bz-lib-modal-title--lg { font-size: 1.1rem; font-weight: 600; }
-.bz-lib-modal-close {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  color: var(--text-muted);
-  padding: 0 4px;
-}
-.bz-lib-modal-close--sm {
-  background: none;
-  border: none;
-  font-size: 0.8rem;
-  cursor: pointer;
-  color: var(--text-muted);
-  box-shadow: none;
-  padding: 0;
-}
-.bz-lib-modal-content { padding: 16px; overflow-y: auto; }
-.bz-lib-notes-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
-
-.bz-lib-note-heading {
-  color: var(--heading-color, var(--text-accent));
-  user-select: none;
-}
-.bz-lib-hl {
-  margin-bottom: 12px;
-  padding: 0 0 25px 0;
-  border-bottom: 1px solid var(--background-modifier-border);
-}
-.bz-lib-hl-body { user-select: none; }
-.bz-lib-quote {
-  font-style: italic;
-  color: var(--text-muted);
-  font-size: 0.75em;
-  padding: 15px 0 5px 0;
-  margin-bottom: 2px;
-}
-.bz-lib-comment { margin-left: 12px; font-size: 0.75em; color: var(--text-normal); padding: 5px 0; }
-.bz-lib-hl-date {
-  text-align: right;
-  font-size: 0.65em;
-  color: var(--text-faint);
-  margin-top: 2px;
-  user-select: none;
-}
-.bz-lib-hl-date--pointer { cursor: pointer; }
-
-/* 编辑批注/想法弹窗 */
-.bz-lib-edit-quote {
-  font-style: italic;
-  color: var(--text-muted);
-  font-size: 0.85em;
-  padding: 8px 0;
-  border-radius: 4px;
-  margin-bottom: 16px;
-  user-select: text;
-}
-.bz-lib-edit-textarea {
-  width: 100%;
-  min-height: 100px;
-  padding: 8px;
-  font-size: 0.9rem;
-  border-radius: 4px;
-  border: 1px solid var(--background-modifier-border);
-  background: var(--background-primary);
-  color: var(--text-normal);
-  resize: vertical;
-  box-sizing: border-box;
-}
-.bz-lib-edit-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
-.bz-lib-btn {
-  padding: 6px 16px;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
-}
-.bz-lib-btn--ghost { background: var(--background-secondary); color: var(--text-normal); }
-.bz-lib-btn--primary { background: var(--interactive-accent); color: var(--text-on-accent); }
-
-/* 筛选弹窗胶囊 */
-.bz-lib-filter-section { margin-bottom: 20px; }
-.bz-lib-filter-section--tight { margin-bottom: 8px; }
-.bz-lib-filter-group { display: flex; gap: 8px; flex-wrap: wrap; }
-.bz-lib-pill {
-  padding: 5px 12px;
-  border-radius: 20px;
-  box-shadow: none;
-  background: var(--background-secondary);
-  color: var(--text-normal);
-  cursor: pointer;
-  font-size: 0.8rem;
-}
-.bz-lib-pill--sm { padding: 5px 10px; border-radius: 16px; font-size: 0.75rem; }
-.bz-lib-pill--active { background: var(--interactive-accent); color: #fff; }
-
 /* ==================== 附件搬移域样式（src/attach/styles.css） ==================== */
 /* 原文件夹选择弹窗样式（bz-attach-*，ticket 65）随 FolderSelectModal 退役（ticket 128，
    ADR-0061）删除：路径录入统一走 core/path-picker（bz-path-picker-*，样式在 src/core/styles.css）。 */
 /* ==================== 保险箱域样式（src/encrypt/styles.css） ==================== */
 /* ==================== 加密保险箱（encrypt，ticket NN：移出式清单容器加密） ==================== */
-#bz-encrypt-mask { backdrop-filter: blur(2px); }
+/* 毛玻璃明确不采用（设计手册 §5.2：backdrop-filter 对比不可控），遮罩统一 --background-modifier-cover */
 #bz-encrypt-popup { animation: slideUp 0.3s ease-out; }
 #bz-encrypt-popup, #bz-encrypt-preview-popup {
   position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -5891,10 +5519,10 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   box-shadow: 0 10px 40px rgba(0,0,0,0.2);
   flex-direction: column;
 }
-/* 主密码弹窗（铁律 9 收敛：视觉样式一律在此，JS 仅留功能性 zIndex/display） */
+/* 主密码弹窗（铁律 9 收敛：视觉样式一律在此，JS 仅留功能性 zIndex/display——动态发号见 topifyZ） */
 .bz-encrypt-dialog-mask {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.4);
+  background: var(--background-modifier-cover);
   align-items: center; justify-content: center;
 }
 .bz-encrypt-dialog-box {
@@ -5910,10 +5538,15 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   border: 1px solid var(--background-modifier-border);
   background: var(--background-primary); color: var(--text-normal);
 }
+/* 首设硬警告：主题警示色 token（亮黄死色 → --color-orange 半透明浅底 + 常规文字，对比达标） */
 .bz-encrypt-dialog-warning {
-  background: #ffecb0; color: #8a6d3b; padding: 10px 12px; border-radius: 6px;
-  margin-bottom: 16px; font-size: 14px; border: 1px solid #f5c842;
+  background: color-mix(in srgb, var(--color-orange) 14%, transparent);
+  color: var(--text-normal); padding: 10px 12px; border-radius: 6px;
+  margin-bottom: 16px; font-size: 14px; line-height: 1.5;
+  border: 1px solid color-mix(in srgb, var(--color-orange) 45%, transparent);
 }
+.bz-encrypt-dialog-warning svg { vertical-align: -2px; margin-right: 4px; color: var(--color-orange); }
+.bz-encrypt-dialog-warning strong { color: var(--color-orange); }
 .bz-encrypt-dialog-btns { display: flex; gap: 12px; justify-content: flex-end; }
 .bz-encrypt-dialog-btn {
   padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px;
@@ -5939,18 +5572,18 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   padding: 12px 16px; margin-bottom: 10px;
   cursor: pointer;
 }
-.bz-encrypt-card:hover { background: var(--background-modifier); }
+.bz-encrypt-card:hover { background: var(--background-modifier-hover); }
 .bz-encrypt-card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .bz-encrypt-card-titlebox { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .bz-encrypt-card-title { font-size: 15px; font-weight: 600; color: var(--text-normal); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bz-encrypt-card-meta { margin-top: 4px; font-size: 12px; color: var(--text-faint); }
 .bz-encrypt-preview-head {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 14px 20px 8px; border-bottom: 1px solid var(--background-modifier);
+  padding: 14px 20px 8px; border-bottom: 1px solid var(--background-modifier-border);
 }
 .bz-encrypt-preview-head .bz-encrypt-btn {
   padding: 4px 10px; border-radius: 6px; border: none; cursor: pointer;
-  font-size: 13px; background: var(--background-modifier); color: var(--text-normal);
+  font-size: 13px; background: var(--background-modifier-hover); color: var(--text-normal);
 }
 .bz-encrypt-preview-head h4 { margin: 0; font-size: 16px; font-weight: 600; color: var(--text-normal); }
 .bz-encrypt-preview-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
@@ -6007,10 +5640,10 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 @media (max-width: 768px) {
   #bz-encrypt-popup { width: 95%; max-height: 90vh; }
 }
-/* 体检弹窗（右上角 🩺 替换原清理扫把：先报告后勾选清理） */
+/* 体检弹窗（右上角体检按钮替换原清理扫把：先报告后勾选清理） */
 .bz-encrypt-health-mask {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.4);
+  background: var(--background-modifier-cover);
   align-items: center; justify-content: center;
 }
 .bz-encrypt-health-box {
@@ -6021,7 +5654,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 }
 .bz-encrypt-health-head {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 16px 20px 8px; border-bottom: 1px solid var(--background-modifier);
+  padding: 16px 20px 8px; border-bottom: 1px solid var(--background-modifier-border);
 }
 .bz-encrypt-health-head h4 { margin: 0; font-size: 17px; font-weight: 600; color: var(--text-normal); }
 .bz-encrypt-health-body { flex: 1; overflow-y: auto; padding: 4px 20px 12px; }
@@ -6039,12 +5672,12 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 .bz-encrypt-health-hint { margin: 6px 0; font-size: 13px; color: var(--text-faint); }
 /* 体检动态显示：进度文本 + 条 + 扫描中实时发现区 */
 .bz-encrypt-health-progress { margin: 10px 0 6px; font-size: 13px; color: var(--text-muted); }
-.bz-encrypt-health-bar { height: 4px; background: var(--background-modifier); border-radius: 2px; overflow: hidden; margin-bottom: 8px; }
+.bz-encrypt-health-bar { height: 4px; background: var(--background-modifier-border); border-radius: 2px; overflow: hidden; margin-bottom: 8px; }
 .bz-encrypt-health-bar i { display: block; height: 100%; background: var(--interactive-accent); transition: width 0.2s ease; }
 .bz-encrypt-health-live { margin-bottom: 8px; }
 .bz-encrypt-health-foot {
   display: flex; gap: 10px; justify-content: flex-end; align-items: center;
-  padding: 12px 20px 16px; border-top: 1px solid var(--background-modifier);
+  padding: 12px 20px 16px; border-top: 1px solid var(--background-modifier-border);
 }
 /* 首设主密码硬警告：风险确认勾选 */
 .bz-encrypt-dialog-ack {
@@ -6072,7 +5705,8 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   --bz-vault-line: var(--background-modifier-border);
   --bz-vault-gold: #b98d3e;
   --bz-vault-gold-deep: #96701f;
-  --bz-vault-gold-soft: linear-gradient(135deg, #e9d194, #b98d3e);
+  /* 金色渐变浅端加深：两端均保证白字对比 ≥3:1（旧 #e9d194 浅端白字发灰不可读） */
+  --bz-vault-gold-soft: linear-gradient(135deg, #b98d3e, #8a6a1f);
   --bz-vault-gold-ink: #7c5c15;
   --bz-vault-teal: #2e7d68;
   --bz-vault-teal-ink: #23604f;
@@ -6093,7 +5727,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   --bz-vault-line: #32353f;
   --bz-vault-gold: #d3ab5c;
   --bz-vault-gold-ink: #f0dcae;
-  --bz-vault-gold-soft: linear-gradient(135deg, #b98d3e, #e9d194);
+  --bz-vault-gold-soft: linear-gradient(135deg, #96701f, #b98d3e);
   --bz-vault-teal: #3da383;
   --bz-vault-teal-ink: #9fd8c6;
   --bz-vault-indigo: #7a83cc;
@@ -6112,13 +5746,13 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 #bz-encrypt-popup .bz-vault-brand { display: flex; align-items: center; gap: 10px; padding: 0 10px 16px; }
 #bz-encrypt-popup .bz-vault-brand .seal { width: 34px; height: 34px; border-radius: 11px; background: var(--bz-vault-gold-soft); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(150, 112, 31, 0.35); flex-shrink: 0; color: #fff; }
 #bz-encrypt-popup .bz-vault-brand .seal svg { width: 18px; height: 18px; stroke: #fff; }
-#bz-encrypt-popup .bz-vault-brand .nm { font-size: 16px; font-weight: 800; line-height: 1.15; color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-vault-brand .nm { font-size: 16px; font-weight: 700; line-height: 1.15; color: var(--bz-vault-ink); }
 #bz-encrypt-popup .bz-vault-brand .nm small { display: block; font-size: 10px; font-weight: 400; color: var(--bz-vault-muted); letter-spacing: 0.14em; margin-top: 2px; }
 #bz-encrypt-popup .bz-vault-sec { font-size: 10px; letter-spacing: 0.16em; color: var(--bz-vault-faint); padding: 12px 12px 6px; text-transform: uppercase; }
-#bz-encrypt-popup .bz-vault-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; font-size: 13.5px; color: var(--bz-vault-muted); cursor: pointer; border: 1px solid transparent; margin-bottom: 2px; }
+#bz-encrypt-popup .bz-vault-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; font-size: 13px; color: var(--bz-vault-muted); cursor: pointer; border: 1px solid transparent; margin-bottom: 2px; }
 #bz-encrypt-popup .bz-vault-item svg { width: 16px; height: 16px; flex-shrink: 0; }
 #bz-encrypt-popup .bz-vault-item:hover { background: var(--bz-vault-surface2); }
-#bz-encrypt-popup .bz-vault-item .cnt { margin-left: auto; font-size: 10.5px; color: var(--bz-vault-faint); background: var(--bz-vault-surface2); border-radius: 999px; padding: 1px 7px; font-variant-numeric: tabular-nums; }
+#bz-encrypt-popup .bz-vault-item .cnt { margin-left: auto; font-size: 11px; color: var(--bz-vault-faint); background: var(--bz-vault-surface2); border-radius: 999px; padding: 1px 7px; font-variant-numeric: tabular-nums; }
 #bz-encrypt-popup .bz-vault-item.on { background: rgba(185, 141, 62, 0.13); color: var(--bz-vault-gold-ink); font-weight: 600; border-color: rgba(185, 141, 62, 0.25); }
 #bz-encrypt-popup .bz-vault-item.on .cnt { background: rgba(185, 141, 62, 0.2); color: var(--bz-vault-gold-ink); }
 #bz-encrypt-popup .bz-vault-item.k-note.on { background: rgba(46, 125, 104, 0.12); color: var(--bz-vault-teal-ink); border-color: rgba(46, 125, 104, 0.3); }
@@ -6126,18 +5760,23 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 #bz-encrypt-popup .bz-vault-item.k-diary.on { background: rgba(90, 99, 168, 0.12); color: var(--bz-vault-indigo-ink); border-color: rgba(90, 99, 168, 0.3); }
 #bz-encrypt-popup .bz-vault-item.k-diary.on .cnt { background: rgba(90, 99, 168, 0.18); color: var(--bz-vault-indigo-ink); }
 #bz-encrypt-popup .bz-vault-nav .grow { flex: 1; }
-#bz-encrypt-popup .bz-vault-health { margin: 8px 4px 6px; background: var(--bz-vault-bg); border: 1px solid var(--bz-vault-line); border-radius: 12px; padding: 10px 12px; }
+/* 左栏健康卡：读真实体检状态（JS 按态上色，不再恒绿点），整卡可点直达体检 */
+#bz-encrypt-popup .bz-vault-health { margin: 8px 4px 6px; background: var(--bz-vault-bg); border: 1px solid var(--bz-vault-line); border-radius: 12px; padding: 10px 12px; cursor: pointer; }
+#bz-encrypt-popup .bz-vault-health:hover { border-color: var(--bz-vault-gold); }
 #bz-encrypt-popup .bz-vault-health .ht { font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; color: var(--bz-vault-ink); }
-#bz-encrypt-popup .bz-vault-health .ht .okdot { width: 7px; height: 7px; border-radius: 50%; background: var(--bz-vault-ok); box-shadow: 0 0 0 3px rgba(62, 142, 90, 0.15); flex-shrink: 0; }
+#bz-encrypt-popup .bz-vault-health .ht .okdot { width: 7px; height: 7px; border-radius: 50%; background: var(--bz-vault-faint); flex-shrink: 0; }
 #bz-encrypt-popup .bz-vault-health .hd { font-size: 11px; color: var(--bz-vault-muted); margin-top: 3px; line-height: 1.5; }
-#bz-encrypt-popup .bz-vault-lockbtn { display: flex; align-items: center; gap: 8px; padding: 9px 12px; font-size: 12.5px; color: var(--bz-vault-muted); border-top: 1px solid var(--bz-vault-line); cursor: pointer; }
+#bz-encrypt-popup .bz-vault-lockbtn { display: flex; align-items: center; gap: 8px; padding: 9px 12px; font-size: 12px; color: var(--bz-vault-muted); border-top: 1px solid var(--bz-vault-line); cursor: pointer; }
 #bz-encrypt-popup .bz-vault-lockbtn:hover { color: var(--bz-vault-ink); }
 #bz-encrypt-popup .bz-vault-lockbtn svg { width: 14px; height: 14px; }
-#bz-encrypt-popup .bz-vault-lockbtn .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bz-vault-ok); box-shadow: 0 0 0 3px rgba(62, 142, 90, 0.18); margin-left: auto; }
+/* 已解锁时长（解锁会话可见性）：等宽数字防跳动 */
+#bz-encrypt-popup .bz-vault-lockbtn .dur { margin-left: auto; font-size: 11px; color: var(--bz-vault-faint); font-variant-numeric: tabular-nums; }
+#bz-encrypt-popup .bz-vault-lockbtn .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bz-vault-ok); box-shadow: 0 0 0 3px rgba(62, 142, 90, 0.18); margin-left: auto; flex-shrink: 0; }
+#bz-encrypt-popup .bz-vault-lockbtn .dur + .dot { margin-left: 0; }
 /* 主区 */
 #bz-encrypt-popup .bz-vault-main { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bz-vault-bg); }
 #bz-encrypt-popup .bz-vault-bar { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--bz-vault-line); }
-#bz-encrypt-popup .bz-vault-bar h1 { font-size: 18px; font-weight: 800; margin: 0; color: var(--bz-vault-ink); white-space: nowrap; }
+#bz-encrypt-popup .bz-vault-bar h1 { font-size: 18px; font-weight: 700; margin: 0; color: var(--bz-vault-ink); white-space: nowrap; }
 #bz-encrypt-popup .bz-vault-bar .sub { font-size: 12px; color: var(--bz-vault-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #bz-encrypt-popup .bz-vault-search { flex: 1; max-width: 260px; display: flex; align-items: center; gap: 8px; background: var(--bz-vault-surface); border: 1px solid var(--bz-vault-line); border-radius: 11px; padding: 0 12px; margin-left: auto; }
 #bz-encrypt-popup .bz-vault-search svg { width: 14px; height: 14px; color: var(--bz-vault-faint); flex-shrink: 0; }
@@ -6146,7 +5785,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 #bz-encrypt-popup .bz-vault-pane { flex: 1; min-height: 0; display: flex; gap: 14px; padding: 16px 18px; }
 #bz-encrypt-popup .bz-vault-listcol { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; border: 1px solid var(--bz-vault-line); background: var(--bz-vault-surface); border-radius: 16px; overflow: hidden; }
 #bz-encrypt-popup .bz-vault-lc-head { display: flex; align-items: center; gap: 8px; padding: 13px 16px 8px; color: var(--bz-vault-ink); }
-#bz-encrypt-popup .bz-vault-lc-head .t { font-size: 13.5px; font-weight: 700; flex: 1; }
+#bz-encrypt-popup .bz-vault-lc-head .t { font-size: 13px; font-weight: 700; flex: 1; }
 #bz-encrypt-popup .bz-vault-lc-head .lc-count, #bz-encrypt-popup .bz-vault-lc-head .badge { font-size: 11px; color: var(--bz-vault-faint); }
 #bz-encrypt-popup .bz-vault-lc-head .lc-add { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--bz-vault-gold-ink); background: rgba(185, 141, 62, 0.14); border: 1px solid rgba(185, 141, 62, 0.3); border-radius: 999px; padding: 3px 11px; cursor: pointer; }
 #bz-encrypt-popup .bz-vault-lc-head .lc-add:hover { background: rgba(185, 141, 62, 0.22); }
@@ -6158,9 +5797,9 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 #bz-encrypt-popup .bz-vault-row .av { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; }
 #bz-encrypt-popup .bz-vault-row .av svg { width: 16px; height: 16px; }
 #bz-encrypt-popup .bz-vault-row .mid { flex: 1; min-width: 0; }
-#bz-encrypt-popup .bz-vault-row .t1 { font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; color: var(--bz-vault-ink); }
-#bz-encrypt-popup .bz-vault-row .t2 { font-size: 11.5px; color: var(--bz-vault-muted); font-family: var(--font-monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
-#bz-encrypt-popup .bz-vault-row .tm { font-size: 10.5px; color: var(--bz-vault-faint); flex-shrink: 0; }
+#bz-encrypt-popup .bz-vault-row .t1 { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-vault-row .t2 { font-size: 11px; color: var(--bz-vault-muted); font-family: var(--font-monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+#bz-encrypt-popup .bz-vault-row .tm { font-size: 11px; color: var(--bz-vault-faint); flex-shrink: 0; }
 #bz-encrypt-popup .bz-vault-row .star { color: var(--bz-vault-warn); font-size: 10px; }
 /* 滚动修复（ADR-0085 回归）：pw/笔记/日记资产 = 列头(不滚) + .bz-vault-lc-body 滚动区；
    列头与滚动区分离，行渲染/空态都写 body，避免行渲染把列头（含新增入口）整列清掉。 */
@@ -6176,18 +5815,23 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 #bz-encrypt-popup .bz-vault-dhead .big { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
 #bz-encrypt-popup .bz-vault-dhead .big svg { width: 21px; height: 21px; }
 #bz-encrypt-popup .bz-vault-dhead .ttl { flex: 1; min-width: 0; }
-#bz-encrypt-popup .bz-vault-dhead .ttl h2 { margin: 0; font-size: 16.5px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--bz-vault-ink); }
-#bz-encrypt-popup .bz-vault-dhead .ttl .url { font-size: 11.5px; color: var(--bz-vault-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+#bz-encrypt-popup .bz-vault-dhead .ttl h2 { margin: 0; font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-vault-dhead .ttl .url { font-size: 11px; color: var(--bz-vault-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 #bz-encrypt-popup .bz-vault-dhead .acts { display: flex; gap: 6px; }
 #bz-encrypt-popup .bz-vault-dcontent { flex: 1; overflow-y: auto; padding: 16px 20px 20px; }
 #bz-encrypt-popup .field { margin-bottom: 14px; }
-#bz-encrypt-popup .field .lab { display: flex; justify-content: space-between; font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--bz-vault-faint); margin-bottom: 6px; }
+#bz-encrypt-popup .field .lab { display: flex; justify-content: space-between; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--bz-vault-faint); margin-bottom: 6px; }
 #bz-encrypt-popup .field .valrow { display: flex; align-items: center; gap: 9px; background: var(--bz-vault-bg); border: 1px solid var(--bz-vault-line); border-radius: 11px; padding: 9px 12px; }
-#bz-encrypt-popup .field .valrow .val { flex: 1; min-width: 0; font-size: 13.5px; font-family: var(--font-monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--bz-vault-ink); }
+#bz-encrypt-popup .field .valrow .val { flex: 1; min-width: 0; font-size: 13px; font-family: var(--font-monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--bz-vault-ink); }
 #bz-encrypt-popup .field .valrow.chips { flex-wrap: wrap; background: none; border: none; padding: 0; gap: 6px; }
 #bz-encrypt-popup .chip { font-size: 11px; padding: 3px 10px; border-radius: 999px; background: var(--bz-vault-bg); border: 1px solid var(--bz-vault-line); color: var(--bz-vault-muted); white-space: nowrap; }
 #bz-encrypt-popup .chip.att { color: var(--bz-vault-teal-ink); background: rgba(46, 125, 104, 0.1); border-color: rgba(46, 125, 104, 0.3); }
-#bz-encrypt-popup .note { background: var(--bz-vault-bg); border: 1px solid var(--bz-vault-line); border-radius: 11px; padding: 11px 13px; font-size: 12.5px; color: var(--bz-vault-muted); line-height: 1.6; }
+#bz-encrypt-popup .chip.att svg { width: 12px; height: 12px; flex-shrink: 0; }
+#bz-encrypt-popup .field .valrow.chips .chip { display: inline-flex; align-items: center; gap: 4px; }
+/* 收藏星/新增按钮换内联 svg 后的基线对齐 */
+#bz-encrypt-popup .star svg { vertical-align: -1px; }
+#bz-encrypt-popup .bz-pwv-addacct svg, #bz-encrypt-popup .bz-pwv-btn.gold svg { vertical-align: -2px; margin-right: 3px; }
+#bz-encrypt-popup .note { background: var(--bz-vault-bg); border: 1px solid var(--bz-vault-line); border-radius: 11px; padding: 11px 13px; font-size: 12px; color: var(--bz-vault-muted); line-height: 1.6; }
 #bz-encrypt-popup .note.hint { color: var(--bz-vault-faint); font-size: 12px; }
 #bz-encrypt-popup .note.pre { white-space: normal; word-break: break-word; }
 #bz-encrypt-popup .bigbtns { display: flex; gap: 10px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--bz-vault-line); flex-wrap: wrap; }
@@ -6202,8 +5846,8 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 #bz-encrypt-popup .bz-vault-hero::after { content: ''; position: absolute; right: -40px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); }
 #bz-encrypt-popup .bz-vault-hero .ht { font-size: 12px; letter-spacing: 0.14em; opacity: 0.85; display: flex; align-items: center; gap: 8px; }
 #bz-encrypt-popup .bz-vault-hero .ht svg { width: 14px; height: 14px; }
-#bz-encrypt-popup .bz-vault-hero .hn { font-size: 24px; font-weight: 800; margin: 8px 0 2px; }
-#bz-encrypt-popup .bz-vault-hero .hd { font-size: 12.5px; opacity: 0.9; }
+#bz-encrypt-popup .bz-vault-hero .hn { font-size: 24px; font-weight: 700; margin: 8px 0 2px; }
+#bz-encrypt-popup .bz-vault-hero .hd { font-size: 12px; opacity: 0.9; }
 #bz-encrypt-popup .bz-vault-hero .hbtns { display: flex; gap: 10px; margin-top: 16px; position: relative; z-index: 2; flex-wrap: wrap; }
 #bz-encrypt-popup .bz-vault-hero .hbtn { display: inline-flex; align-items: center; gap: 7px; background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.35); color: #fff; padding: 8px 15px; border-radius: 11px; font-size: 13px; font-weight: 600; }
 #bz-encrypt-popup .bz-vault-hero .hbtn svg { width: 14px; height: 14px; }
@@ -6214,12 +5858,15 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 #bz-encrypt-popup .bz-vault-cards .card .ct { display: flex; align-items: center; gap: 9px; font-size: 12px; color: var(--bz-vault-muted); font-weight: 600; }
 #bz-encrypt-popup .bz-vault-cards .card .ct .k { width: 24px; height: 24px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; }
 #bz-encrypt-popup .bz-vault-cards .card .ct .k svg { width: 13px; height: 13px; }
-#bz-encrypt-popup .bz-vault-cards .card .num { font-size: 28px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+#bz-encrypt-popup .bz-vault-cards .card .num { font-size: 28px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 #bz-encrypt-popup .bz-vault-cards .card .num small { font-size: 12px; color: var(--bz-vault-muted); font-weight: 400; margin-left: 4px; }
-#bz-encrypt-popup .bz-vault-cards .card .cd { font-size: 11.5px; color: var(--bz-vault-faint); line-height: 1.5; }
+#bz-encrypt-popup .bz-vault-cards .card .cd { font-size: 11px; color: var(--bz-vault-faint); line-height: 1.5; }
 #bz-encrypt-popup .bz-vault-two { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; }
 #bz-encrypt-popup .bz-vault-two .panel { border: 1px solid var(--bz-vault-line); background: var(--bz-vault-surface); border-radius: 16px; padding: 14px 16px; min-width: 0; }
-#bz-encrypt-popup .bz-vault-two .panel .pt { font-size: 13px; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; color: var(--bz-vault-ink); }
+/* 概览体检卡整卡可点直达体检 */
+#bz-encrypt-popup .bz-vault-two .panel[data-hero] { cursor: pointer; }
+#bz-encrypt-popup .bz-vault-two .panel[data-hero]:hover { border-color: var(--bz-vault-gold); }
+#bz-encrypt-popup .bz-vault-two .panel .pt { font-size: 13px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; color: var(--bz-vault-ink); }
 #bz-encrypt-popup .bz-vault-two .panel .pt .more { font-size: 11px; color: var(--bz-vault-gold-ink); cursor: pointer; font-weight: 400; }
 #bz-encrypt-popup .bz-vault-panel-empty { font-size: 12px; color: var(--bz-vault-faint); padding: 12px 6px; }
 #bz-encrypt-popup .bz-vault-minirow { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 10px; cursor: pointer; }
@@ -6229,8 +5876,8 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 #bz-encrypt-popup .bz-vault-minirow .mid { flex: 1; min-width: 0; }
 #bz-encrypt-popup .bz-vault-minirow .a { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--bz-vault-ink); }
 #bz-encrypt-popup .bz-vault-minirow .b { font-size: 11px; color: var(--bz-vault-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#bz-encrypt-popup .bz-vault-minirow .tm { font-size: 10.5px; color: var(--bz-vault-faint); flex-shrink: 0; }
-#bz-encrypt-popup .bz-vault-hrow { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px dashed var(--bz-vault-line); font-size: 12.5px; color: var(--bz-vault-muted); }
+#bz-encrypt-popup .bz-vault-minirow .tm { font-size: 11px; color: var(--bz-vault-faint); flex-shrink: 0; }
+#bz-encrypt-popup .bz-vault-hrow { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px dashed var(--bz-vault-line); font-size: 12px; color: var(--bz-vault-muted); }
 #bz-encrypt-popup .bz-vault-hrow:last-child { border-bottom: none; }
 #bz-encrypt-popup .bz-vault-hrow .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 #bz-encrypt-popup .bz-vault-hrow .lbl { flex: 1; }
@@ -6239,7 +5886,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 #bz-encrypt-popup .bz-pwv-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--bz-vault-faint); padding: 36px; text-align: center; }
 #bz-encrypt-popup .bz-pwv-empty .t { font-size: 14px; color: var(--bz-vault-muted); font-weight: 600; }
 #bz-encrypt-popup .bz-pwv-empty .d { font-size: 12px; }
-#bz-encrypt-popup .bz-pwv-empty .bz-pwv-empty-add { display: inline-flex; align-items: center; gap: 5px; margin-top: 12px; font-size: 12.5px; font-weight: 600; color: var(--bz-vault-gold-ink); background: rgba(185, 141, 62, 0.14); border: 1px solid rgba(185, 141, 62, 0.3); border-radius: 999px; padding: 6px 15px; cursor: pointer; }
+#bz-encrypt-popup .bz-pwv-empty .bz-pwv-empty-add { display: inline-flex; align-items: center; gap: 5px; margin-top: 12px; font-size: 12px; font-weight: 600; color: var(--bz-vault-gold-ink); background: rgba(185, 141, 62, 0.14); border: 1px solid rgba(185, 141, 62, 0.3); border-radius: 999px; padding: 6px 15px; cursor: pointer; }
 #bz-encrypt-popup .bz-pwv-empty .bz-pwv-empty-add:hover { background: rgba(185, 141, 62, 0.24); }
 #bz-encrypt-popup .bz-pwv-empty .bz-pwv-empty-add svg { width: 13px; height: 13px; }
 /* 密码平台行 */
@@ -6247,11 +5894,11 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 #bz-encrypt-popup .bz-pwv-row:hover, #bz-encrypt-popup .bz-pwv-plrow:hover { background: var(--bz-vault-bg); }
 #bz-encrypt-popup .bz-pwv-row.on, #bz-encrypt-popup .bz-pwv-plrow.on { background: var(--bz-vault-bg); border-color: var(--bz-vault-line); box-shadow: var(--bz-vault-shadow); }
 #bz-encrypt-popup .bz-pwv-row .mid, #bz-encrypt-popup .bz-pwv-plrow .mid { flex: 1; min-width: 0; }
-#bz-encrypt-popup .bz-pwv-row .pl, #bz-encrypt-popup .bz-pwv-plrow .pl { font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 5px; color: var(--bz-vault-ink); }
-#bz-encrypt-popup .bz-pwv-row .ac, #bz-encrypt-popup .bz-pwv-plrow .ac { font-size: 11.5px; color: var(--bz-vault-muted); font-family: var(--font-monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
-#bz-encrypt-popup .bz-pwv-row .tm, #bz-encrypt-popup .bz-pwv-plrow .tm { font-size: 10.5px; color: var(--bz-vault-faint); flex-shrink: 0; }
+#bz-encrypt-popup .bz-pwv-row .pl, #bz-encrypt-popup .bz-pwv-plrow .pl { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 5px; color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-pwv-row .ac, #bz-encrypt-popup .bz-pwv-plrow .ac { font-size: 11px; color: var(--bz-vault-muted); font-family: var(--font-monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+#bz-encrypt-popup .bz-pwv-row .tm, #bz-encrypt-popup .bz-pwv-plrow .tm { font-size: 11px; color: var(--bz-vault-faint); flex-shrink: 0; }
 #bz-encrypt-popup .bz-pwv-row .star, #bz-encrypt-popup .bz-pwv-plrow .star { color: var(--bz-vault-warn); font-size: 10px; }
-#bz-encrypt-popup .bz-pwv-cnt { font-size: 10.5px; color: var(--bz-vault-gold-ink); background: rgba(185, 141, 62, 0.16); border-radius: 999px; padding: 0 7px; font-variant-numeric: tabular-nums; }
+#bz-encrypt-popup .bz-pwv-cnt { font-size: 11px; color: var(--bz-vault-gold-ink); background: rgba(185, 141, 62, 0.16); border-radius: 999px; padding: 0 7px; font-variant-numeric: tabular-nums; }
 /* 平台头像 */
 #bz-encrypt-popup .bz-pwv-avatar { position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; color: #fff; flex-shrink: 0; }
 #bz-encrypt-popup .bz-pwv-avatar.big { width: 46px; height: 46px; border-radius: 13px; font-size: 18px; }
@@ -6260,11 +5907,11 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 /* 密码详情 */
 #bz-encrypt-popup .bz-pwv-dhead { display: flex; align-items: center; gap: 13px; padding: 16px 20px; border-bottom: 1px solid var(--bz-vault-line); }
 #bz-encrypt-popup .bz-pwv-dhead .ttl { flex: 1; min-width: 0; }
-#bz-encrypt-popup .bz-pwv-dhead .ttl h2 { margin: 0; font-size: 16.5px; font-weight: 800; color: var(--bz-vault-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#bz-encrypt-popup .bz-pwv-dhead .ttl .url { font-size: 11.5px; color: var(--bz-vault-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; cursor: pointer; }
+#bz-encrypt-popup .bz-pwv-dhead .ttl h2 { margin: 0; font-size: 16px; font-weight: 700; color: var(--bz-vault-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#bz-encrypt-popup .bz-pwv-dhead .ttl .url { font-size: 11px; color: var(--bz-vault-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; cursor: pointer; }
 #bz-encrypt-popup .bz-pwv-dhead .ttl .url:hover { color: var(--bz-vault-gold-ink); }
 #bz-encrypt-popup .bz-pwv-accthead { display: flex; align-items: center; gap: 8px; padding: 12px 20px 4px; }
-#bz-encrypt-popup .bz-pwv-accthead .t { font-size: 12.5px; font-weight: 700; color: var(--bz-vault-muted); flex: 1; }
+#bz-encrypt-popup .bz-pwv-accthead .t { font-size: 12px; font-weight: 700; color: var(--bz-vault-muted); flex: 1; }
 #bz-encrypt-popup .bz-pwv-addacct { font-size: 12px; color: var(--bz-vault-gold-ink); background: rgba(185, 141, 62, 0.12); padding: 5px 12px; border-radius: 999px; font-weight: 600; }
 #bz-encrypt-popup .bz-pwv-addacct:hover { background: rgba(185, 141, 62, 0.22); }
 #bz-encrypt-popup .bz-pwv-accts { padding: 8px 20px 20px; }
@@ -6275,7 +5922,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 #bz-encrypt-popup .bz-pwv-acctcard .copyac { font-size: 12px; color: var(--bz-vault-muted); background: var(--bz-vault-surface2); padding: 5px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
 #bz-encrypt-popup .bz-pwv-acctcard .copyac svg { width: 13px; height: 13px; }
 #bz-encrypt-popup .bz-pwv-acctcard .pwrow { display: flex; align-items: center; gap: 8px; }
-#bz-encrypt-popup .bz-pwv-acctcard .pw { flex: 1; min-width: 0; font-size: 13.5px; font-family: var(--font-monospace); padding: 9px 12px; background: var(--bz-vault-surface); border: 1px solid var(--bz-vault-line); border-radius: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--bz-vault-ink); }
+#bz-encrypt-popup .bz-pwv-acctcard .pw { flex: 1; min-width: 0; font-size: 13px; font-family: var(--font-monospace); padding: 9px 12px; background: var(--bz-vault-surface); border: 1px solid var(--bz-vault-line); border-radius: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--bz-vault-ink); }
 #bz-encrypt-popup .bz-pwv-acctcard .pw.mask { letter-spacing: 0.14em; color: var(--bz-vault-muted); }
 #bz-encrypt-popup .bz-pwv-acctcard .mini { width: 30px; height: 30px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; color: var(--bz-vault-muted); flex-shrink: 0; }
 #bz-encrypt-popup .bz-pwv-acctcard .mini:hover { background: var(--bz-vault-surface2); color: var(--bz-vault-ink); }
@@ -6288,30 +5935,53 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 #bz-encrypt-popup .bz-pwv-mobcard .mid { flex: 1; min-width: 0; }
 #bz-encrypt-popup .bz-pwv-mobcard .a { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #bz-encrypt-popup .bz-pwv-mobcard .a .star { color: var(--bz-vault-warn); font-size: 11px; margin-left: 3px; }
-#bz-encrypt-popup .bz-pwv-mobcard .b { font-size: 11.5px; color: var(--bz-vault-muted); font-family: var(--font-monospace); margin-top: 1px; }
-#bz-encrypt-popup .bz-pwv-mobcard .cnt { font-size: 10.5px; color: var(--bz-vault-gold-ink); background: rgba(185, 141, 62, 0.16); border-radius: 999px; padding: 0 7px; margin-left: 4px; }
+#bz-encrypt-popup .bz-pwv-mobcard .b { font-size: 11px; color: var(--bz-vault-muted); font-family: var(--font-monospace); margin-top: 1px; }
+#bz-encrypt-popup .bz-pwv-mobcard .cnt { font-size: 11px; color: var(--bz-vault-gold-ink); background: rgba(185, 141, 62, 0.16); border-radius: 999px; padding: 0 7px; margin-left: 4px; }
 #bz-encrypt-popup .bz-pwv-mobcard .go { color: var(--bz-vault-faint); display: flex; }
 #bz-encrypt-popup .bz-pwv-mobcard .go svg { width: 15px; height: 15px; }
 /* 移动端恒真全屏（mob 默认隐藏，<768px 显示） */
 #bz-encrypt-popup .bz-vault-mob { display: none; }
 /* 密码添加/编辑/平台编辑弹窗：脱离 #bz-encrypt-popup 挂 body（ADR-0085 合并版），
-   样式必须无 popup 前缀；token 用全局 CSS 变量保证两主题可用。 */
-.bz-vault-dlg-mask { position: fixed; inset: 0; z-index: 2200; background: rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; }
+   样式必须无 popup 前缀；token 用全局 CSS 变量保证两主题可用。
+   层级走 ADR-0067 动态发号（topifyZ 显示即发号），不写死 z-index（旧 2200 已删）。 */
+.bz-vault-dlg-mask { position: fixed; inset: 0; background: var(--background-modifier-cover); display: flex; align-items: center; justify-content: center; }
 .bz-vault-dlg { background: var(--background-primary); border-radius: 16px; padding: 22px 24px; width: min(92vw, 440px); max-height: 86vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); }
 .bz-vault-dlg h3 { margin: 0 0 4px; font-size: 17px; font-weight: 700; color: var(--text-normal); }
 .bz-vault-dlg .sub { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
-.bz-vault-dlg label { display: block; font-size: 12.5px; color: var(--text-muted); margin: 10px 0 5px; }
+.bz-vault-dlg label { display: block; font-size: 12px; color: var(--text-muted); margin: 10px 0 5px; }
 .bz-vault-dlg button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
 .bz-vault-dlg input { width: 100%; box-sizing: border-box; border: 1px solid var(--background-modifier-border); background: var(--background-primary); color: var(--text-normal); border-radius: 10px; padding: 8px 10px; outline: none; }
 .bz-vault-dlg input:focus { border-color: var(--interactive-accent); }
 .bz-vault-dlg .pwdrow { display: flex; gap: 8px; }
 .bz-vault-dlg .pwdrow input { flex: 1; }
 .bz-vault-dlg .pwdrow .gen { background: var(--background-modifier-hover); padding: 8px 14px; border-radius: 10px; font-weight: 600; color: var(--text-normal); }
-.bz-vault-dlg .err { color: var(--text-error); font-size: 12.5px; margin: 8px 0 0; min-height: 16px; }
+.bz-vault-dlg .pwdrow .mini { width: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; color: var(--text-muted); flex-shrink: 0; }
+.bz-vault-dlg .pwdrow .mini:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
+.bz-vault-dlg .pwdrow .mini svg { width: 14px; height: 14px; }
+/* 密码强度提示（纯本地计算）：弱=警示橙 / 中=主题强调（弹窗在 body 层，--bz-vault-gold 不入域，回退 accent）/ 强=语义绿；状态色只表达状态且附文字 */
+.bz-vault-dlg .pwstrength { min-height: 15px; margin: 6px 0 0; font-size: 12px; color: var(--text-muted); }
+.bz-vault-dlg .pwstrength[data-level="weak"] { color: var(--color-orange); }
+.bz-vault-dlg .pwstrength[data-level="mid"] { color: var(--interactive-accent); }
+.bz-vault-dlg .pwstrength[data-level="strong"] { color: var(--color-green); }
+.bz-vault-dlg .err { color: var(--text-error); font-size: 12px; margin: 8px 0 0; min-height: 16px; }
 .bz-vault-dlg .btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
 .bz-vault-dlg .btns button { padding: 8px 18px; border-radius: 10px; font-weight: 600; }
 .bz-vault-dlg .btns .cancel { background: var(--background-modifier-hover); color: var(--text-normal); }
 .bz-vault-dlg .btns .save { background: var(--interactive-accent); color: var(--text-on-accent); }
+/* 快速取密选择器（bz-encrypt-copy-password 命令；挂 body，与 .bz-vault-dlg 同域前缀体系） */
+.bz-encrypt-pwqp { background: var(--background-primary); border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); flex-direction: column; overflow: hidden; }
+.bz-encrypt-pwqp-head { padding: 14px 16px 0; }
+.bz-encrypt-pwqp-title { margin: 0; font-size: 16px; font-weight: 600; color: var(--text-normal); }
+.bz-encrypt-pwqp-search { margin: 10px 16px; width: calc(100% - 32px); box-sizing: border-box; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-normal); border-radius: 8px; padding: 8px 10px; font-size: 14px; outline: none; }
+.bz-encrypt-pwqp-search:focus { border-color: var(--interactive-accent); }
+.bz-encrypt-pwqp-list { flex: 1; min-height: 0; overflow-y: auto; padding: 0 8px 10px; }
+.bz-encrypt-pwqp-row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; cursor: pointer; }
+.bz-encrypt-pwqp-row:hover, .bz-encrypt-pwqp-row.on { background: var(--background-modifier-hover); }
+.bz-encrypt-pwqp-row .mid { flex: 1; min-width: 0; }
+.bz-encrypt-pwqp-row .pl { font-size: 14px; font-weight: 600; color: var(--text-normal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bz-encrypt-pwqp-row .ac { font-size: 12px; color: var(--text-muted); font-family: var(--font-monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+.bz-encrypt-pwqp-row .key { font-size: 11px; color: var(--text-faint); flex-shrink: 0; }
+.bz-encrypt-pwqp-empty { padding: 32px 12px; text-align: center; color: var(--text-faint); font-size: 13px; }
 @media (max-width: 768px) {
   #bz-encrypt-popup { width: 100vw; height: 100vh; max-width: none; max-height: none; border-radius: 0; }
   #bz-encrypt-popup .bz-vault-desk { display: none; }
@@ -6319,16 +5989,16 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   #bz-encrypt-popup .bz-vault-mbar { display: flex; align-items: center; gap: 10px; padding: 14px 14px 8px; }
   #bz-encrypt-popup .bz-vault-mbar .seal { width: 30px; height: 30px; border-radius: 9px; background: var(--bz-vault-gold-soft); display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
   #bz-encrypt-popup .bz-vault-mbar .seal svg { width: 15px; height: 15px; stroke: #fff; }
-  #bz-encrypt-popup .bz-vault-mbar .t { font-size: 16px; font-weight: 800; flex: 1; color: var(--bz-vault-ink); }
-  #bz-encrypt-popup .bz-vault-mbar .st { font-size: 10.5px; color: var(--bz-vault-ok); font-weight: 700; background: rgba(62, 142, 90, 0.12); padding: 3px 9px; border-radius: 999px; }
+  #bz-encrypt-popup .bz-vault-mbar .t { font-size: 16px; font-weight: 700; flex: 1; color: var(--bz-vault-ink); }
+  #bz-encrypt-popup .bz-vault-mbar .st { font-size: 11px; color: var(--bz-vault-ok); font-weight: 700; background: rgba(62, 142, 90, 0.12); padding: 3px 9px; border-radius: 999px; }
   #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose { color: var(--bz-vault-muted); display: flex; }
   #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose svg { width: 18px; height: 18px; }
   #bz-encrypt-popup .bz-vault-msearch { display: flex; align-items: center; gap: 8px; margin: 4px 14px 8px; background: var(--bz-vault-surface); border: 1px solid var(--bz-vault-line); border-radius: 12px; padding: 0 12px; }
   #bz-encrypt-popup .bz-vault-msearch svg { width: 13px; height: 13px; color: var(--bz-vault-faint); }
-  #bz-encrypt-popup .bz-vault-msearch input { border: none; background: none; flex: 1; padding: 9px 0; font-size: 13.5px; }
+  #bz-encrypt-popup .bz-vault-msearch input { border: none; background: none; flex: 1; padding: 9px 0; font-size: 13px; }
   #bz-encrypt-popup .bz-vault-msearch input:focus { outline: none; }
   #bz-encrypt-popup .bz-vault-mseg { display: flex; gap: 6px; margin: 2px 14px 10px; padding: 4px; background: var(--bz-vault-surface); border: 1px solid var(--bz-vault-line); border-radius: 12px; }
-  #bz-encrypt-popup .bz-vault-mseg .sg { flex: 1; text-align: center; padding: 7px 0; border-radius: 9px; font-size: 12.5px; font-weight: 600; color: var(--bz-vault-muted); cursor: pointer; }
+  #bz-encrypt-popup .bz-vault-mseg .sg { flex: 1; text-align: center; padding: 7px 0; border-radius: 9px; font-size: 12px; font-weight: 600; color: var(--bz-vault-muted); cursor: pointer; }
   #bz-encrypt-popup .bz-vault-mseg .sg.on { background: var(--bz-vault-gold-soft); color: #fff; }
   #bz-encrypt-popup .bz-vault-mbody { flex: 1; overflow-y: auto; padding: 2px 14px 24px; position: relative; }
   #bz-encrypt-popup .bz-vault-mob-overview .bz-vault-cards { grid-template-columns: 1fr; }
@@ -7125,12 +6795,34 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
    取值一律取自 tokens.css；类型/状态色为功能色（数据语义，域内直给）。
    主色跟品牌 --bz-brand（与其他新域统一）。 */
 
+/* ---- 分析页主题变量（增强包需求 7：此前无任何定义、靠浏览器回退，此处正式收编） ----
+   亮/暗两套，跟随 Obsidian body 上的 theme-dark/theme-light 类；
+   取值引用组件库 --bz-* 色彩 token（明暗自动跟随）；图表粉彩色板常量在 core/chart-palette.ts
+   （与 movie-report 观影报告同一套视觉值）。 */
+.theme-dark {
+  --bz-cinema-card: var(--bz-surface-2);    /* 板块卡片底 */
+  --bz-cinema-panel: var(--bz-surface-1);   /* 行内 chip/浅层容器底 */
+  --bz-cinema-border: var(--bz-border);     /* 卡片边框/图表轨道 */
+  --bz-cinema-text: var(--bz-text-1);       /* 主文字 */
+  --bz-cinema-muted: var(--bz-text-2);      /* 次要文字/图例计数 */
+  --bz-cinema-accent: var(--bz-brand);      /* 强调（评分/计数） */
+}
+.theme-light {
+  --bz-cinema-card: var(--bz-surface-2);
+  --bz-cinema-panel: var(--bz-surface-1);
+  --bz-cinema-border: var(--bz-border);
+  --bz-cinema-text: var(--bz-text-1);
+  --bz-cinema-muted: var(--bz-text-2);
+  --bz-cinema-accent: var(--bz-brand);
+}
+
 /* ---- 遮罩 + 主面板骨架 ---- */
 .bz-cinema-overlay {
   position: fixed; inset: 0;
   background: var(--bz-overlay);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--bz-font-ui);
+  /* z-index 由 createOverlay 经 topifyZ 动态分配（ADR-0067），此处不设静态档 */
 }
 .bz-cinema-panel {
   background: var(--bz-surface-2); color: var(--bz-text-1);
@@ -7162,10 +6854,10 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 }
 .bz-cinema-nav-label { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin: var(--bz-space-md) var(--bz-space-xs) var(--bz-space-xs); }
 .bz-cinema-nav-label:first-child { margin-top: 0; }
-/* 分类行（选中 = 品牌底） */
+/* 分类行（选中 = 品牌底）；内边距归档 token 档（8/12） */
 .bz-cinema-nav-item {
   display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: 7px 10px; border-radius: 6px;
+  padding: var(--bz-space-sm) var(--bz-space-md); border-radius: 6px;
   background: none; border: none; cursor: pointer;
   font-size: var(--bz-font-label); color: var(--bz-text-1); text-align: left;
   font-family: inherit;
@@ -7180,7 +6872,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 .bz-cinema-nav-sub.bz-cinema-nav-sub-open { display: flex; }
 .bz-cinema-nav-sub-item {
   display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: 5px 10px; border-radius: 6px;
+  padding: var(--bz-space-xs) var(--bz-space-md); border-radius: 6px;
   background: none; border: none; cursor: pointer;
   font-size: var(--bz-font-meta); color: var(--bz-text-2); text-align: left;
   font-family: inherit;
@@ -7193,7 +6885,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 .bz-cinema-nav-tools { margin-top: auto; border-top: 1px solid var(--bz-border); padding-top: var(--bz-space-sm); display: flex; flex-direction: column; gap: 2px; }
 .bz-cinema-nav-tool {
   display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: 7px 10px; border-radius: 6px;
+  padding: var(--bz-space-sm) var(--bz-space-md); border-radius: 6px;
   background: none; border: none; cursor: pointer;
   font-size: var(--bz-font-meta); color: var(--bz-text-2); text-align: left;
   font-family: inherit;
@@ -7204,17 +6896,18 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 
 /* ---- 右栏 ---- */
 .bz-cinema-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-/* 主头行（对齐待办主头行）：当前筛选名 + · N 部 + 右侧添加按钮 */
+/* 主头行（对齐待办主头行）：当前筛选名 + · N 部 + 右侧添加按钮；间距/控件高归档 token */
 .bz-cinema-main-head {
   display: flex; align-items: center; gap: var(--bz-space-sm);
-  padding: 12px var(--bz-space-lg) 2px; flex-shrink: 0;
+  padding: var(--bz-space-md) var(--bz-space-lg) 2px; flex-shrink: 0;
 }
 .bz-cinema-main-title { font-size: 16px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
 .bz-cinema-main-count { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
 .bz-cinema-main-spacer { flex: 1; }
-.bz-cinema-main-head .bz-btn { height: 30px; padding: 0 14px; font-size: var(--bz-font-meta); }
+.bz-cinema-main-head .bz-btn { height: var(--bz-control-h); padding: 0 var(--bz-space-md); font-size: var(--bz-font-meta); }
 .bz-cinema-top {
-  display: flex; align-items: center; gap: var(--bz-space-sm); padding: 8px var(--bz-space-lg) 4px;
+  display: flex; align-items: center; gap: var(--bz-space-sm);
+  padding: var(--bz-space-sm) var(--bz-space-lg) var(--bz-space-xs);
   flex-shrink: 0;
 }
 .bz-cinema-search { flex: 1; position: relative; min-width: 0; }
@@ -7226,7 +6919,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 .bz-cinema-content { flex: 1; overflow-y: auto; padding: var(--bz-space-md) var(--bz-space-lg) var(--bz-space-lg); display: flex; flex-direction: column; min-height: 0; }
 
 /* ---- 海报网格 ---- */
-.bz-cinema-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
+.bz-cinema-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--bz-space-md); }
 .bz-cinema-pcard { cursor: pointer; min-width: 0; }
 .bz-cinema-poster-wrap {
   width: 100%; aspect-ratio: 2 / 3; border-radius: 10px; overflow: hidden; position: relative;
@@ -7245,13 +6938,21 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 .bz-cinema-p-meta.bz-cinema-p-meta-up { cursor: pointer; transition: color var(--bz-dur-fast) ease; }
 .bz-cinema-p-meta-up .bz-cinema-st-label { color: var(--bz-text-2); }
 .bz-cinema-p-meta-up:hover .bz-cinema-st-label { color: var(--bz-brand); }
+/* 移动端触控热区加大（增强包需求 11；设计手册 §8.2）：padding 撑高 + ::after 外扩，
+   可点区 ≈44px 高、左右到网格间距边——视觉不变，热区变大 */
+@media (max-width: 768px) {
+  .bz-cinema-p-meta.bz-cinema-p-meta-up { position: relative; padding: var(--bz-space-sm) 0; margin-top: 0; }
+  .bz-cinema-p-meta.bz-cinema-p-meta-up::after { content: ""; position: absolute; inset: -6px -12px; }
+}
 
 /* ---- 详情弹窗内容（弹窗骨架在组件库 modal） ---- */
 .bz-cinema-dm-head { display: flex; align-items: flex-start; gap: var(--bz-space-md); }
 .bz-cinema-dm-poster { width: 84px; height: 120px; border-radius: var(--bz-radius-sm); overflow: hidden; flex-shrink: 0; background: var(--bz-surface-3); border: 1px solid var(--bz-border); }
 .bz-cinema-dm-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .bz-cinema-dm-title { font-size: 16px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); line-height: 1.35; }
-.bz-cinema-dm-badges { display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.bz-cinema-dm-badges { display: flex; align-items: center; gap: var(--bz-space-xs); margin-top: var(--bz-space-xs); flex-wrap: wrap; }
+/* 豆瓣直达外链按钮（豆瓣链接行内，主链接右侧） */
+.bz-cinema-dm-douban { margin-left: var(--bz-space-sm); }
 .bz-cinema-dm-stars { font-size: 13px; color: var(--bz-star); }
 .bz-cinema-dm-rating { font-size: 13px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
 .bz-cinema-dm-date { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
@@ -7286,9 +6987,10 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- 确认框 ---- */
+/* ---- 确认框（三段式：图标 + 标题 + 问句 + 后果说明） ---- */
 .bz-cinema-confirm { text-align: center; padding: var(--bz-space-sm) var(--bz-space-xs); }
-.bz-cinema-confirm p { margin-top: var(--bz-space-md); font-size: var(--bz-font-body); color: var(--bz-text-1); line-height: 1.6; }
+.bz-cinema-confirm-title { margin-top: var(--bz-space-sm); font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
+.bz-cinema-confirm p { margin-top: var(--bz-space-sm); font-size: var(--bz-font-body); color: var(--bz-text-1); line-height: 1.6; }
 .bz-cinema-confirm-sub { margin-top: var(--bz-space-xs); font-size: var(--bz-font-meta); color: var(--bz-text-3); }
 .bz-cinema-confirm .bz-ic { width: 30px; height: 30px; color: var(--bz-text-3); }
 
@@ -7301,9 +7003,14 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 .bz-cinema-qs-review { margin-top: var(--bz-space-md); }
 .bz-cinema-qs-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-top: 10px; line-height: 1.5; }
 
+/* ---- 海报卡长按抽屉头部（core .bz-item-sheet-head 的域内内容；对齐 clipbook 先例） ---- */
+.bz-cinema-sheet-head { padding: 2px 0 var(--bz-space-sm); }
+.bz-cinema-sheet-title { font-size: var(--bz-font-body); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); line-height: 1.5; }
+.bz-cinema-sheet-sub { font-size: var(--bz-font-meta); color: var(--bz-text-2); margin-top: var(--bz-space-xs); }
+
 /* ---- AI 荐片 / 分析页 ---- */
 .bz-cinema-page { padding: var(--bz-space-xs) var(--bz-space-sm); }
-.bz-cinema-page-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.bz-cinema-page-head { display: flex; align-items: center; gap: var(--bz-space-sm); margin-bottom: var(--bz-space-md); }
 .bz-cinema-page-title { font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); display: inline-flex; align-items: center; gap: 8px; }
 .bz-cinema-page-sub { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
 .bz-cinema-ai-guide { text-align: center; padding: 48px 16px; }
@@ -7320,17 +7027,25 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 .bz-cinema-ai-wait { text-align: center; padding: 48px 16px; }
 .bz-cinema-ai-wait .bz-cinema-ai-guide-title { margin-top: 14px; }
 .bz-cinema-ai-err { color: var(--bz-danger); }
+/* 等待页大号 spinner（组件库 .bz-spinner--lg；一页一加载动画） */
+.bz-cinema-ai-spin { display: flex; justify-content: center; margin-bottom: var(--bz-space-md); }
+/* 结果页「换一批」（头部右侧） */
+.bz-cinema-ai-refresh { margin-left: auto; }
 
 /* 推荐结果卡（AI 页内列表） */
 .bz-cinema-rec-list { overflow-y: auto; }
-.bz-cinema-rec-card { display: flex; gap: var(--bz-space-md); align-items: flex-start; padding: var(--bz-space-md); border-radius: 10px; margin-bottom: 10px; background: var(--bz-surface-3); border: 1px solid var(--bz-border); }
+.bz-cinema-rec-card { display: flex; gap: var(--bz-space-md); align-items: flex-start; padding: var(--bz-space-md); border-radius: 10px; margin-bottom: var(--bz-space-sm); background: var(--bz-surface-3); border: 1px solid var(--bz-border); }
+.bz-cinema-rec-card--inlib { opacity: 0.72; }
 .bz-cinema-rec-main { flex: 1; min-width: 0; }
 .bz-cinema-rec-name { font-size: var(--bz-font-body); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
+/* 片名旁豆瓣直达小图标（搜索页新窗打开） */
+.bz-cinema-rec-douban { display: inline-flex; align-items: center; margin-left: var(--bz-space-xs); color: var(--bz-text-3); vertical-align: middle; }
+.bz-cinema-rec-douban:hover { color: var(--bz-brand); }
+/* 已入库推荐卡：「已在库中」禁用态（组件库 .bz-btn:disabled 承担交互禁用） */
+.bz-cinema-rec-inlib { flex-shrink: 0; }
 .bz-cinema-rec-meta { font-size: var(--bz-font-caption); color: var(--bz-text-2); margin-top: 3px; }
 .bz-cinema-rec-reason { font-size: var(--bz-font-meta); color: var(--bz-text-1); margin-top: 6px; line-height: 1.6; }
-/* 加入想看钮：品牌色图标钮 */
-.bz-cinema-rec-add.bz-icon-btn { color: var(--bz-brand); border: 1px solid var(--bz-border); background: var(--bz-surface-2); }
-.bz-cinema-rec-add.bz-icon-btn:hover { background: var(--bz-brand-soft); color: var(--bz-brand); }
+/* 加入想看钮：强调图标钮（组件库 .bz-icon-btn--accent 修饰符承担配色，域内不再覆盖） */
 
 /* ---- 移动端（≤768px）：真全屏 + 右上角工具 + 3 列海报 + 横滑分类 ---- */
 .bz-cinema-mob-nav { display: none; }
@@ -7612,6 +7327,9 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 .bz-bs-d-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 1px; }
 .bz-bs-d-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 1px; }
 .bz-bs-d-chips .bz-ic { width: 11px; height: 11px; }
+/* 读书笔记入口（「N 划线 · N 批注」可点 chip，消费组件库 .bz-chip 基线） */
+.bz-bs-d-notes { cursor: pointer; }
+.bz-bs-d-notes:hover { border-color: var(--bz-brand) !important; color: var(--bz-brand) !important; background: var(--bz-brand-soft) !important; }
 .bz-bs-d-cat { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
 .bz-bs-d-meta { font-size: var(--bz-font-meta); color: var(--bz-text-2); line-height: 1.8; }
 .bz-bs-d-meta b { color: var(--bz-text-1); font-weight: var(--bz-weight-semibold); }
@@ -7665,6 +7383,51 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   }
   .bz-bs-d-hero { gap: var(--bz-space-md); }
 }
+
+/* ==================== 读书笔记弹窗（迁移自旧 library 域，bz-bs-notes-*） ==================== */
+/* 弹窗壳/按钮/输入/空态为组件库基线（uiModal + .bz-btn/.bz-input/.bz-empty），
+   这里只排笔记列表（标题层级/高亮块/引文批注/日期）与编辑弹窗细节。 */
+.bz-bs-notes-pop.bz-overlay-popup { width: min(700px, calc(100vw - 32px)); }
+.bz-bs-notes { display: flex; flex-direction: column; min-height: 0; }
+.bz-bs-notes-body { min-height: 120px; }
+.bz-bs-notes-empty { text-align: center; color: var(--bz-text-3); padding: var(--bz-space-lg) 0; }
+
+.bz-bs-note-heading { color: var(--bz-brand); user-select: none; }
+.bz-bs-hl {
+  margin-bottom: 12px;
+  padding: 0 0 25px 0;
+  border-bottom: 1px solid var(--bz-border);
+}
+.bz-bs-hl-body { user-select: none; }
+.bz-bs-quote {
+  font-style: italic;
+  color: var(--bz-text-3);
+  font-size: 0.75em;
+  padding: 15px 0 5px 0;
+  margin-bottom: 2px;
+}
+.bz-bs-comment { margin-left: 12px; font-size: 0.75em; color: var(--bz-text-1); padding: 5px 0; }
+.bz-bs-hl-date {
+  text-align: right;
+  font-size: 0.65em;
+  color: var(--bz-text-3);
+  margin-top: 2px;
+  user-select: none;
+}
+.bz-bs-hl-date--pointer { cursor: pointer; }
+
+/* 编辑批注/想法弹窗（按钮走组件库 .bz-btn，输入走 .bz-input） */
+.bz-bs-edit-quote {
+  font-style: italic;
+  color: var(--bz-text-3);
+  font-size: 0.85em;
+  padding: 8px 0;
+  border-radius: var(--bz-radius-sm);
+  margin-bottom: var(--bz-space-md);
+  user-select: text;
+}
+.bz-bs-edit-textarea { width: 100%; min-height: 100px; resize: vertical; box-sizing: border-box; }
+.bz-bs-edit-btns { margin-top: var(--bz-space-md); }
 /* ==================== 文献盒域样式（src/literature/styles.css，ticket 136 改版 + ticket 138 主面板质感对齐） ==================== */
 /* bz-bili-* 任务队列样式（视频录入面板/历史弹窗沿用，ticket 136 迁移时丢失、ticket 138 恢复）；
    新增 bz-lit-* 主面板/术语面板样式；主面板视觉细节对齐日记本（ticket 138 §4）。 */

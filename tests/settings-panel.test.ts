@@ -76,7 +76,8 @@ describe('设置面板（settings-panel）', () => {
     expect(popup.querySelector('.bz-sp-brand-name')).toBeNull();
     expect(popup.querySelector('.bz-sp-logo')).toBeNull();
     // 无设置项的域不在左侧列表显示（用户拍板）；issue 186 AI 自全局拆出独立成域（通用 + AI 两项）
-    expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(16);
+    // 旧书库（library）域退役：设置组删除后可见域 16 → 15
+    expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(15);
     // 无底部快捷键提示 / 无右侧导航条 / 无面包屑
     expect(popup.querySelector('.bz-sp-foot')).toBeNull();
     expect(popup.querySelector('.bz-sp-crumb')).toBeNull();
@@ -94,7 +95,7 @@ describe('设置面板（settings-panel）', () => {
     expect(badges[5]).toBe('·'); // 归物本（schema 仅移动端组，桌面门控全隐藏 → 0 项）
     // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）
     const navIcons = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-ic')];
-    expect(navIcons.length).toBe(16);
+    expect(navIcons.length).toBe(15);
     expect(navIcons[0].getAttribute('data-icon')).toBe('settings'); // 通用
     expect(navIcons[1].getAttribute('data-icon')).toBe('sparkles'); // AI（issue 186 独立域）
     expect(navIcons[4].getAttribute('data-icon')).toBe('check-square'); // 待办（index 4，AI 插入后）
@@ -108,8 +109,9 @@ describe('设置面板（settings-panel）', () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
-    await tick();
     // 默认域 = 通用（issue 186：AI 拆出后全局改称通用，仅剩数据存储路径一组）
+    // 首次动态 import 冷加载可能超过 tick 的 20ms：改轮询等分组出现，消除时序脆断（原 await tick()）
+    expect(await waitGroups(popup, 1)).toBe(true);
     let groups = popup.querySelectorAll('.bz-sp-group');
     expect(groups.length).toBe(1);
     expect(groups[0].querySelector('.bz-sp-group-name')!.textContent).toBe('数据存储路径');
@@ -376,12 +378,14 @@ describe('设置面板（settings-panel）', () => {
     const popup = document.getElementById('bz-settings-panel-popup')!;
     // 只看域名（nav-name），避免描述包含（如剪藏本「网页剪藏与聚合讯」）误判
     const names = [...popup.querySelectorAll('.bz-sp-nav-name')].map((b) => b.textContent);
-    expect(names).toHaveLength(16); // issue 186：AI 自全局拆出独立成域
+    expect(names).toHaveLength(15); // issue 186 拆 AI 独立域后 16；旧书库域退役再减 1
     expect(names.slice(0, 2)).toEqual(['通用', 'AI']); // AI 紧随通用之后
     // 8 个无设置域（聚合讯/阅读报告/做题家/自动摘要/入口页/附件搬移/B站下载/小橘陪伴猫）一律不出现
     for (const n of ['聚合讯', '阅读报告', '做题家', '自动摘要', '入口页', '附件搬移', 'B站下载', '小橘陪伴猫']) {
       expect(names).not.toContain(n);
     }
+    // 旧书库（library）域退役：设置组已删，不再出现
+    expect(names).not.toContain('书库');
     // 搜索也搜不到该无设置域（无设置域不占列表位；但描述含词的可见域如「剪藏本」仍可能命中）
     const search = popup.querySelector('.bz-sp-search .bz-input') as HTMLInputElement;
     search.value = '聚合讯';
@@ -402,10 +406,11 @@ describe('设置面板（settings-panel）', () => {
     const popup = document.getElementById('bz-settings-panel-popup')!;
     // 只看域名（mob-name），避免描述包含误判
     const names = [...popup.querySelectorAll('.bz-sp-mob-name')].map((b) => b.textContent);
-    expect(names).toHaveLength(16); // issue 186：AI 自全局拆出独立成域
+    expect(names).toHaveLength(15); // issue 186 拆 AI 独立域后 16；旧书库域退役再减 1
     expect(names.slice(0, 2)).toEqual(['通用', 'AI']);
     expect(names).not.toContain('聚合讯');
     expect(names).not.toContain('小橘陪伴猫');
+    expect(names).not.toContain('书库'); // 旧书库域退役：设置组已删
     // 搜索也搜不到该无设置域
     const search = popup.querySelector('.bz-sp-mob-search .bz-input') as HTMLInputElement;
     search.value = '聚合讯';
@@ -449,8 +454,8 @@ describe('设置面板（settings-panel）', () => {
     expect(closeBtn).toBeTruthy();
     expect(closeBtn.querySelector('.bz-ic[data-icon="x"]')).toBeTruthy();
     expect(popup.textContent).not.toMatch(EMOJI_RE);
-    // 无设置项的域不在列表显示（用户拍板）；issue 186 AI 独立成域 → 16 个可见域
-    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(16);
+    // 无设置项的域不在列表显示（用户拍板）；issue 186 AI 独立成域 → 16 个可见域；旧书库域退役 → 15
+    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(15);
     // 移动列表图标为 lucide（tile 内 svg 容器）
     const firstIc = popup.querySelector('.bz-sp-mob-item .bz-sp-mob-ic .bz-ic');
     expect(firstIc).toBeTruthy();

@@ -31,7 +31,6 @@ import { openClipbook, unloadClipbook } from './clipbook';
 import { openDiaryWall, unloadDiaryWall } from './diary-wall';
 import { applyDirectories as applyWallDirectories } from './diary-wall/config';
 import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
-import { openLibrary, openBookNotes, unloadLibrary } from './library';
 import { showReadingReport, unloadReadingReport } from './reading-report';
 // 影院（cinema 域，ADR-0087 起接管影视；旧 movie 域已退役）
 import { openCinema, addCinemaItem, unloadCinema } from './cinema';
@@ -55,7 +54,7 @@ import { openLiteraturePanel, openTermNote, unloadLiterature } from './literatur
 // 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 入口页磁贴播种）
 import { openAttachMove, ensureAttachSeed, ATTACH_COMMAND_ID } from './attach';
 // 统一保险库（encrypt 域，ADR-0085：密码/加密笔记/加密日记三资产单一面板；旧 password-vault 命令已删）
-import { openEncrypt, encryptCurrentNote, unloadEncrypt, mountEncryptStatusBar, unmountEncryptStatusBar } from './encrypt';
+import { openEncrypt, encryptCurrentNote, copyVaultPassword, unloadEncrypt, mountEncryptStatusBar, unmountEncryptStatusBar } from './encrypt';
 import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setLauncherGestureSetter, LauncherModal } from './launcher';
 import { registerGestureListeners } from './launcher/gestures';
 // 内容首页（home 域，ticket 177：入口页「新标签页」升级；与旧入口页并存，不改 launcher）
@@ -99,9 +98,7 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 收藏本
   { id: 'bz-favorites-open', name: '收藏本', icon: 'star', callback: () => openFavoritesPanel(getApp()) },
   { id: 'bz-favorites-add', name: '加收藏', icon: 'bookmark', callback: () => addFavoriteItem(getApp()) },
-  // 书库
-  { id: 'bz-library-open', name: '书库', icon: 'library', callback: () => openLibrary(getApp()) },
-  { id: 'bz-book-notes-open', name: '读书笔记', icon: 'book-open', callback: () => openBookNotes(getApp()) },
+  // 旧书库（library）域退役：bz-library-open/bz-book-notes-open 已删，读书笔记并入书架墙详情弹窗
   // 阅读数据分析报告（t2：阅读分析报告 → 阅读数据分析报告，术语随 CONTEXT.md）
   { id: 'bz-reading-report-open', name: '阅读数据分析报告', icon: 'bar-chart-3', callback: () => showReadingReport(getApp()) },
   // 影视分析报告（独立域，ADR-0048；f7 解冻：去 clapperboard 重复 → pie-chart，id/名称契约不动；
@@ -145,6 +142,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 保险箱（encrypt 域：移出式清单容器加密；原名「加密保险箱」，ticket 68 更名仅文案）
   { id: 'bz-encrypt-open', name: '保险库', icon: 'lock', callback: () => openEncrypt(getApp()) },
   { id: 'bz-encrypt-lock', name: '加密当前笔记', icon: 'lock-keyhole', callback: () => encryptCurrentNote(getApp()) },
+  // 快速取密（fuzzy 选择器直取密码 → 剪贴板 60s 自动清空，不打开主面板）
+  { id: 'bz-encrypt-copy-password', name: '快速复制密码', icon: 'key-round', callback: () => copyVaultPassword(getApp()) },
   // 小橘陪伴猫（smartcat 域）
   { id: 'bz-smartcat-open', name: '小橘', icon: 'cat', callback: () => openSmartCat(getApp()) },
   // f7：去 message-circle 重复（第二大脑对话保留）→ messages-square
@@ -323,7 +322,6 @@ export default class BzPlugin extends Plugin {
     unloadBookshelf();
     unloadMovieReport();
     unloadReadingReport();
-    unloadLibrary();
     // 剪藏本融合域（ADR-0082）：卸载统一面板；旧 news/clipping 已无独立挂载
     unloadClipbook();
     unloadAutoSummary();

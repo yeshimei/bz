@@ -52,8 +52,8 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 |---|---|---|---|
 | 按钮 | `.bz-btn` | `--primary/--danger/--ghost`；`--sm/--lg/--icon` | 32px 高、圆角 sm；hover 自动 |
 | 按钮行 | `.bz-btn-row` | `--center/--grow` | 弹窗底部右对齐 |
-| 图标按钮 | `.bz-icon-btn` | `--on/--lg/--xs/--close`；`[data-danger]` | 22×26 桌面头行档 |
-| Chip | `.bz-chip` | `--on/--sel/--locked`；内含 `.bz-chip-cnt`/`.bz-chip-x` | 筛选/标签胶囊 |
+| 图标按钮 | `.bz-icon-btn` | `--on/--lg/--xs/--close/--accent`；`[data-danger]` | 22×26 桌面头行档；`--accent` 品牌色图标钮（卡内行动钮） |
+| Chip | `.bz-chip` | `--on/--sel/--locked/--tint`；内含 `.bz-chip-cnt`/`.bz-chip-x` | 筛选/标签胶囊；`--tint` 数据语义色徽标（域内联 `--bz-chip-tint`/`--bz-chip-tint-fg` 注入底/前景色） |
 | 徽标 | `.bz-badge` | `--accent/--success/--danger/--warning/--neutral` | 纯展示小胶囊 |
 | 输入框 | `.bz-input` | `--error`；`.bz-input-wrap` 前缀图标 | 32px 高 |
 | 字段行 | `.bz-field` | 内 `.bz-field-label/-desc/-error` | label+控件+说明 |

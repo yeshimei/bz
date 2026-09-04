@@ -149,6 +149,12 @@ export default interface BzSettings {
   // ===== 📚 剪藏本（clipbook 融合域，ADR-0082；与旧 clipping/news 并存）=====
   /** 移动端默认全屏（剪藏本融合面板） */
   clipbookMobileDefaultFullscreen: boolean;
+  /** 阅读字号档位：small/medium/large（右栏正文三档，默认 medium） */
+  clipbookReaderFontSize: string;
+  /** 剪藏本面板桌面尺寸记忆（ADR-0084；0=未拖过，打开走默认 1180×760） */
+  clipbookPanelWidth: number;
+  /** 剪藏本面板桌面尺寸记忆（ADR-0084；0=未拖过） */
+  clipbookPanelHeight: number;
 
   // ===== 🔐 密码本（4 项）=====
   /** 📂 数据存储路径——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
@@ -164,11 +170,8 @@ export default interface BzSettings {
   /** 📂 数据存储目录（文件名固定 favorites.json，只允许改目录）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
   favoritesStoragePath: string;
 
-  // ===== 📚 书库（7 项）=====
-  /** 📁 书库文件夹 */
-  libraryFolderPath: string;
-  /** 🏷️ 书籍识别标签 */
-  bookTag: string;
+  // ===== 📚 书库（旧域 library 已退役：目录/标签/移动全屏三键随域删除，bookshelf 接管；
+  //        以下 5 个展示开关为遗留键位，bookshelf 未接管前无消费方，按拍板保留）=====
   /** 📦 显示文件大小 */
   showFileSize: boolean;
   /** ⏱️ 显示阅读时长 */
@@ -180,8 +183,8 @@ export default interface BzSettings {
   /** 📝 显示书评摘要 */
   showReview: boolean;
 
-  // ===== 📚 书架墙（bookshelf 域，新域与书库并存；数据同源回落 libraryFolderPath）=====
-  /** 📁 书库文件夹（书架墙域；空 = 沿用书库设置） */
+  // ===== 📚 书架墙（bookshelf 域；旧书库域 library 已退役，本域独立承担书库 UI）=====
+  /** 📁 书库文件夹（书架墙域；空 = 运行时回落旧 libraryFolderPath 存量值，再回落「书库」） */
   bookshelfFolderPath: string;
   /** 书架墙：移动端默认全屏（默认开——与书库同控） */
   bookshelfMobileDefaultFullscreen: boolean;
@@ -337,7 +340,7 @@ export default interface BzSettings {
   // ===== 📱 移动端主窗口默认全屏（ticket 68，跨域，ADR-0019）=====
   // 仅移动端（Platform.isMobile）显示与生效；≤768px 开=真全屏（.bz-win-mfs）/关=95% 常规卡。
   // 只决定每次打开的初始形态；默认值=行为保持（原移动端即全屏→开，原居中卡→关）。
-  // 聚合讯跟随剪藏本键、阅读报告跟随书库键、影视分析随影视键（2026-08 用户拍板，不设独立开关）。
+  // 聚合讯跟随剪藏本键、阅读报告跟随书架墙键、影视分析随影视键（2026-08 用户拍板，不设独立开关）。
   /** 日记本：移动端默认全屏（默认开——原 ≤480px 即全屏，480-768 原抽屉形态） */
   diaryMobileDefaultFullscreen: boolean;
   /** 备忘录：移动端默认全屏（默认关——原移动端 95% 居中卡） */
@@ -358,8 +361,7 @@ export default interface BzSettings {
    *  顶层加字段需改根结构，会破坏仍在用的外部统计脚本 主页.js（读 favorites.length），
    *  且违背「既有结构不改」铁律；排序键落设置与 memoSortMode 同惯例） */
   favoritesSortKey: string;
-  /** 书库：移动端默认全屏（默认开——原 CSS ≤768 全屏主面板与读书笔记；阅读报告跟随此键） */
-  libraryMobileDefaultFullscreen: boolean;
+  // 旧 libraryMobileDefaultFullscreen（书库）已删：阅读报告跟随书架墙键 bookshelfMobileDefaultFullscreen
   /** 影院：移动端默认全屏（默认开——原 JS 内联强制全屏；ADR-0087 起影视报告同控此键） */
   cinemaMobileDefaultFullscreen: boolean;
   /** 复习计划：移动端默认全屏（默认开——原 JS 内联强制全屏） */
@@ -534,6 +536,11 @@ export const DEFAULT_SETTINGS: BzSettings = {
   newsRetentionSkippedDays: '7',
   // clipbook（ADR-0082）：移动端默认全屏对齐 clipping 默认开
   clipbookMobileDefaultFullscreen: true,
+  // clipbook：右栏阅读字号三档（small/medium/large）
+  clipbookReaderFontSize: 'medium',
+  // clipbook：面板桌面尺寸记忆（ADR-0084；0=未拖过）
+  clipbookPanelWidth: 0,
+  clipbookPanelHeight: 0,
 
   // 密码本
   pwStoragePath: 'CONFIG/STORAGE',
@@ -545,16 +552,14 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 收藏本（只允许改目录，文件名固定 favorites.json）
   favoritesStoragePath: 'CONFIG/STORAGE',
 
-  // 书库
-  libraryFolderPath: '书库',
-  bookTag: 'book',
+  // 书库（旧域遗留展示开关；目录/标签/移动全屏键已随 library 域退役删除）
   showFileSize: true,
   showReadingTime: true,
   showHighlights: true,
   showThinks: true,
   showReview: true,
 
-  // 书架墙（bookshelf；空 = 未配置，回落书库设置——同一批书两域同显）
+  // 书架墙（bookshelf；空 = 未配置，运行时回落旧 libraryFolderPath 存量值——零感知迁移）
   bookshelfFolderPath: '',
   bookshelfMobileDefaultFullscreen: true,
 
@@ -639,7 +644,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   encryptSecurityMode: false,
 
   // 移动端主窗口默认全屏（ticket 68：默认值=行为保持——原移动端即全屏→开，原居中卡→关；
-  // 聚合讯跟随剪藏本键、阅读报告跟随书库键，不设独立键）
+  // 聚合讯跟随剪藏本键、阅读报告跟随书架墙键，不设独立键）
   diaryMobileDefaultFullscreen: true,
   memoMobileDefaultFullscreen: false,
   todoMobileDefaultFullscreen: false,
@@ -648,7 +653,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
   passwordMobileDefaultFullscreen: true,
   favoritesMobileDefaultFullscreen: true,
   favoritesSortKey: 'created',
-  libraryMobileDefaultFullscreen: true,
   cinemaMobileDefaultFullscreen: true,
   reviewMobileDefaultFullscreen: true,
   pomodoroMobileDefaultFullscreen: false,
