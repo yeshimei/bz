@@ -222,19 +222,20 @@ async function refreshBalances(dm: DataManager): Promise<void> {
   );
   if (!any) return;
   try {
-    // 写前重读，基于最新快照套本批（P1-37 并发写回语义）
-    const latest = await dm.getAll();
-    for (const id of Object.keys(updates)) {
-      const idx = latest.findIndex((d) => d.id === id);
-      if (idx === -1) continue;
-      const u = updates[id];
-      if (u.balance !== undefined) {
-        latest[idx] = { ...latest[idx], balance: u.balance, balanceCacheTime: u.balanceCacheTime ?? null, balanceError: u.balanceError ?? null };
-      } else {
-        latest[idx] = { ...latest[idx], balanceError: u.balanceError ?? null };
+    // 余额批量写回走 DataManager 串行队列读改写（D2 收编）：基于队列内磁盘现值套本批，
+    // 与并发 add/update/删除撤销不再互踩（原 P1-37 写前重读语义保留，整体原子化）
+    const latest = await dm.mutateAll((data) => {
+      for (const id of Object.keys(updates)) {
+        const idx = data.findIndex((d) => d.id === id);
+        if (idx === -1) continue;
+        const u = updates[id];
+        if (u.balance !== undefined) {
+          data[idx] = { ...data[idx], balance: u.balance, balanceCacheTime: u.balanceCacheTime ?? null, balanceError: u.balanceError ?? null };
+        } else {
+          data[idx] = { ...data[idx], balanceError: u.balanceError ?? null };
+        }
       }
-    }
-    await dm.write(latest);
+    });
     // 更新内存以触发重渲
     const idxs = new Set(Object.keys(updates));
     M.items = latest.map((d) => (idxs.has(d.id) ? { ...d } : d));
