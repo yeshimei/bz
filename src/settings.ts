@@ -149,6 +149,12 @@ export default interface BzSettings {
   // ===== 📚 剪藏本（clipbook 融合域，ADR-0082；与旧 clipping/news 并存）=====
   /** 移动端默认全屏（剪藏本融合面板） */
   clipbookMobileDefaultFullscreen: boolean;
+  /** 阅读字号档位：small/medium/large（右栏正文三档，默认 medium） */
+  clipbookReaderFontSize: string;
+  /** 剪藏本面板桌面尺寸记忆（ADR-0084；0=未拖过，打开走默认 1180×760） */
+  clipbookPanelWidth: number;
+  /** 剪藏本面板桌面尺寸记忆（ADR-0084；0=未拖过） */
+  clipbookPanelHeight: number;
 
   // ===== 🔐 密码本（4 项）=====
   /** 📂 数据存储路径——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
@@ -534,6 +540,11 @@ export const DEFAULT_SETTINGS: BzSettings = {
   newsRetentionSkippedDays: '7',
   // clipbook（ADR-0082）：移动端默认全屏对齐 clipping 默认开
   clipbookMobileDefaultFullscreen: true,
+  // clipbook：右栏阅读字号三档（small/medium/large）
+  clipbookReaderFontSize: 'medium',
+  // clipbook：面板桌面尺寸记忆（ADR-0084；0=未拖过）
+  clipbookPanelWidth: 0,
+  clipbookPanelHeight: 0,
 
   // 密码本
   pwStoragePath: 'CONFIG/STORAGE',
