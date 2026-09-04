@@ -2,7 +2,7 @@
 /* 收编新体系（铁律 6）：控件（按钮/输入/开关/下拉/滑条/chip/徽标/空态）全部消费组件库
    src/core/ui（components.css + tokens.css）；本文件只保留域内特有布局与行内尺寸修饰：
    头行/侧栏骨架/分组卡/设置行/custom 插槽作用域重绘/移动列表与弹窗排版，取值一律 tokens。
-   顶部头行仿影院主面板（.bz-cinema-head）：整宽条、仅标题；桌面无关闭钮（遮罩/ESC 关闭）。
+   顶部头行仿影院主面板（共享 .bz-panel-head，ADR-0094 接入后影院亦消费之）：整宽条、仅标题；桌面无关闭钮（遮罩/ESC 关闭）。
    滚动条全隐藏（滚动功能保留）。 */
 
 /* ---- 弹窗根壳（几何用 !important 压 createOverlay 内联 width/maxWidth） ---- */

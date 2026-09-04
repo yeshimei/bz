@@ -33,7 +33,7 @@ describe('enh-sweep-c：.bz-panel-mtop 移动全屏顶距', () => {
 
   it('全屏面板根节点接线：8 域挂载点 + 番茄钟随 mfs 开关同挂摘', () => {
     expect(src('src/home/ui.ts')).toContain('bz-home-panel bz-panel-mtop');
-    expect(src('src/cinema/ui.ts')).toContain('bz-cinema-panel bz-panel-mtop');
+    expect(src('src/cinema/ui.ts')).toContain('bz-panel-frame bz-cinema-panel bz-panel-mtop');
     expect(src('src/favorites/ui.ts')).toContain('bz-fav-panel bz-panel-mtop');
     expect(src('src/belongings/ui.ts')).toContain('bz-bel-panel bz-panel-mtop');
     const clip = src('src/clipbook/ui.ts');
@@ -79,8 +79,8 @@ describe('enh-sweep-c：触控热区扫尾', () => {
     expect(css('clipbook')).toMatch(/\.bz-clip-mob-detail-top \.bz-icon-btn--lg[^}]*44px/);
   });
 
-  it('横滑标签 44px 档（cinema/favorites/belongings 移动 chips）', () => {
-    expect(css('cinema')).toMatch(/bz-cinema-mob-chip \{[^}]*min-height: 44px/);
+  it('横滑标签 44px 档（cinema 走共享 .bz-mobstrip + 域内 scoped 抬档；favorites/belongings 移动 chips）', () => {
+    expect(css('cinema')).toMatch(/bz-mobstrip-chip \{[^}]*min-height: 44px/);
     expect(css('favorites')).toMatch(/bz-fav-mobchip \{[^}]*min-height: 44px/);
     expect(css('belongings')).toMatch(/bz-bel-mobchip \{[^}]*min-height: 44px/);
   });

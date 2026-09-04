@@ -1,8 +1,12 @@
 /* ==================== 影院域样式（src/cinema/styles.css） ==================== */
 /* 试点收编（铁律 6）：基线（按钮/图标钮/chip/输入/弹窗/空态）全部消费组件库
    （src/core/ui/components.css 的 .bz-* 类与 --bz-* token）；
-   本文件只保留影院独有布局（面板骨架/左栏树/海报网格/详情头部/评分滑杆/分析页排版），
-   取值一律取自 tokens.css；类型/状态色为功能色（数据语义，域内直给）。
+   面板壳/头行/侧栏/主头行/工具行/搜索/移动横滑条接入共享组件批次（ADR-0094）：
+   .bz-panel-overlay/.bz-panel-frame/.bz-panel-head/.bz-rail 族/.bz-main-head/
+   .bz-toolrow/.bz-search/.bz-mobstrip——共享类承担的域内规则已删除；
+   本文件只保留影院独有布局（面板宽高/海报网格/详情头部/评分滑杆/分析页排版），
+   取值一律取自 tokens.css；类型/状态色为功能色（数据语义，域内直给）；
+   涉共享类的域内覆写一律以 .bz-cinema-panel 前缀 scoped，防聚合后跨域泄漏。
    主色跟品牌 --bz-brand（与其他新域统一）。 */
 
 /* ---- 分析页主题变量（增强包需求 7：此前无任何定义、靠浏览器回退，此处正式收编） ----
@@ -25,103 +29,22 @@
   --bz-cinema-accent: var(--bz-brand);
 }
 
-/* ---- 遮罩 + 主面板骨架 ---- */
-.bz-cinema-overlay {
-  position: fixed; inset: 0;
-  background: var(--bz-overlay);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--bz-font-ui);
-  /* z-index 由 createOverlay 经 topifyZ 动态分配（ADR-0067），此处不设静态档 */
-}
+/* ---- 遮罩 + 主面板骨架：共享壳 .bz-panel-overlay / .bz-panel-frame（含滚动条隐藏），
+   域内只留宽高内联 ---- */
 .bz-cinema-panel {
-  background: var(--bz-surface-2); color: var(--bz-text-1);
-  border-radius: var(--bz-radius-md); border: 1px solid var(--bz-border);
-  box-shadow: var(--bz-shadow-lg);
-  display: flex; flex-direction: column;
   width: 940px; max-width: calc(100vw - 32px); height: 640px; max-height: 90vh;
-  overflow: hidden;
 }
-/* 面板内隐藏滚动条（滚动功能保留） */
-.bz-cinema-overlay, .bz-cinema-overlay * { scrollbar-width: none; -ms-overflow-style: none; }
-.bz-cinema-overlay *::-webkit-scrollbar { display: none; }
 
-.bz-cinema-head {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 0 var(--bz-space-lg); height: 44px;
-  border-bottom: 1px solid var(--bz-border); flex-shrink: 0;
-}
-.bz-cinema-title { font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
-.bz-cinema-head-btns { display: flex; align-items: center; gap: var(--bz-space-xs); }
+/* ---- 头行 = 共享 .bz-panel-head；移动工具钮显隐为域内规则 ---- */
 .bz-cinema-mob-only { display: none; }
 
 .bz-cinema-body { display: flex; flex: 1; min-height: 0; }
 
-/* ---- 左栏分类树 ---- */
-.bz-cinema-nav {
-  width: 176px; border-right: 1px solid var(--bz-border); padding: var(--bz-space-md) var(--bz-space-sm);
-  overflow-y: auto; flex-shrink: 0; display: flex; flex-direction: column;
-}
-.bz-cinema-nav-label { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin: var(--bz-space-md) var(--bz-space-xs) var(--bz-space-xs); }
-.bz-cinema-nav-label:first-child { margin-top: 0; }
-/* 分类行（选中 = 品牌底）；内边距归档 token 档（8/12） */
-.bz-cinema-nav-item {
-  display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: var(--bz-space-sm) var(--bz-space-md); border-radius: 6px;
-  background: none; border: none; cursor: pointer;
-  font-size: var(--bz-font-label); color: var(--bz-text-1); text-align: left;
-  font-family: inherit;
-}
-.bz-cinema-nav-item:hover { background: var(--bz-surface-hover); }
-.bz-cinema-nav-item.bz-cinema-nav-active { background: var(--bz-brand); color: var(--bz-on-brand); font-weight: var(--bz-weight-medium); }
-.bz-cinema-nav-cnt { margin-left: auto; font-size: var(--bz-font-caption); color: var(--bz-text-3); }
-.bz-cinema-nav-item.bz-cinema-nav-active .bz-cinema-nav-cnt { color: inherit; opacity: 0.72; }
-.bz-cinema-nav-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-/* 二级分类（无三角） */
-.bz-cinema-nav-sub { display: none; flex-direction: column; gap: 1px; margin: 2px 0 2px 14px; }
-.bz-cinema-nav-sub.bz-cinema-nav-sub-open { display: flex; }
-.bz-cinema-nav-sub-item {
-  display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: var(--bz-space-xs) var(--bz-space-md); border-radius: 6px;
-  background: none; border: none; cursor: pointer;
-  font-size: var(--bz-font-meta); color: var(--bz-text-2); text-align: left;
-  font-family: inherit;
-}
-.bz-cinema-nav-sub-item:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
-.bz-cinema-nav-sub-item.bz-cinema-nav-active { background: var(--bz-brand); color: var(--bz-on-brand); font-weight: var(--bz-weight-medium); }
-.bz-cinema-nav-sub-item .bz-cinema-nav-cnt { color: var(--bz-text-3); }
-.bz-cinema-nav-sub-item.bz-cinema-nav-active .bz-cinema-nav-cnt { color: inherit; opacity: 0.72; }
-/* 底部工具（AI 荐片 / 影视分析） */
-.bz-cinema-nav-tools { margin-top: auto; border-top: 1px solid var(--bz-border); padding-top: var(--bz-space-sm); display: flex; flex-direction: column; gap: 2px; }
-.bz-cinema-nav-tool {
-  display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: var(--bz-space-sm) var(--bz-space-md); border-radius: 6px;
-  background: none; border: none; cursor: pointer;
-  font-size: var(--bz-font-meta); color: var(--bz-text-2); text-align: left;
-  font-family: inherit;
-}
-.bz-cinema-nav-tool:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
-.bz-cinema-nav-tool.bz-cinema-nav-active { background: var(--bz-brand); color: var(--bz-on-brand); font-weight: var(--bz-weight-medium); }
-.bz-cinema-tool-ic { width: 16px; text-align: center; display: inline-flex; justify-content: center; }
+/* ---- 左栏分类树 = 共享 .bz-rail 族（label/行/色点/计数/二级子列表 .bz-rail-sub + 底部 .bz-rail-foot） ---- */
 
 /* ---- 右栏 ---- */
 .bz-cinema-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-/* 主头行（对齐待办主头行）：当前筛选名 + · N 部 + 右侧添加按钮；间距/控件高归档 token */
-.bz-cinema-main-head {
-  display: flex; align-items: center; gap: var(--bz-space-sm);
-  padding: var(--bz-space-md) var(--bz-space-lg) 2px; flex-shrink: 0;
-}
-.bz-cinema-main-title { font-size: 16px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
-.bz-cinema-main-count { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
-.bz-cinema-main-spacer { flex: 1; }
-.bz-cinema-main-head .bz-btn { height: var(--bz-control-h); padding: 0 var(--bz-space-md); font-size: var(--bz-font-meta); }
-.bz-cinema-top {
-  display: flex; align-items: center; gap: var(--bz-space-sm);
-  padding: var(--bz-space-sm) var(--bz-space-lg) var(--bz-space-xs);
-  flex-shrink: 0;
-}
-.bz-cinema-search { flex: 1; position: relative; min-width: 0; }
-.bz-cinema-search .bz-ic { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--bz-text-3); pointer-events: none; }
-.bz-cinema-search .bz-input { width: 100%; padding-left: 30px; }
+/* 主头行/工具行/搜索 = 共享 .bz-main-head / .bz-toolrow / .bz-search */
 /* 排序：组件库 segmented 三档（桌面工具行；移动端隐藏——同待办） */
 .bz-cinema-sort { flex-shrink: 0; }
 .bz-cinema-sort .bz-segmented-btn { padding: 0 10px; font-size: var(--bz-font-caption); }
@@ -257,7 +180,6 @@
 /* 加入想看钮：强调图标钮（组件库 .bz-icon-btn--accent 修饰符承担配色，域内不再覆盖） */
 
 /* ---- 移动端（≤768px）：真全屏 + 右上角工具 + 3 列海报 + 横滑分类 ---- */
-.bz-cinema-mob-nav { display: none; }
 @media (max-width: 768px) {
   .bz-cinema-panel {
     width: 100vw; height: 100vh; max-width: none; max-height: none;
@@ -265,32 +187,20 @@
   }
   .bz-cinema-mob-only { display: inline-flex; }
   /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css），头行不再垫顶 */
-  /* 头行图标钮触屏换大按钮档（同 favorites/belongings；≥40px 目标档） */
-  .bz-cinema-head-btns { gap: var(--bz-space-sm); }
-  .bz-cinema-head-btns .bz-icon-btn { width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg); }
-  .bz-cinema-head-btns .bz-icon-btn .bz-ic { width: 16px; height: 16px; }
+  /* 头行图标钮触屏换大按钮档（同 favorites/belongings；≥40px 目标档）——scoped 防跨域泄漏 */
+  .bz-cinema-panel .bz-panel-head-btns { gap: var(--bz-space-sm); }
+  .bz-cinema-panel .bz-panel-head-btns .bz-icon-btn { width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg); }
+  .bz-cinema-panel .bz-panel-head-btns .bz-icon-btn .bz-ic { width: 16px; height: 16px; }
   /* 排序 segmented 桌面专属（同待办）；搜索独占一行 */
   .bz-cinema-sort { display: none; }
-  .bz-cinema-nav { display: none; } /* 移动端分类在顶部横滑条 */
-  .bz-cinema-mob-nav {
-    display: flex; gap: var(--bz-space-sm); padding: 10px var(--bz-space-lg); overflow-x: auto; flex-shrink: 0;
-  }
-  .bz-cinema-mob-chip {
-    display: inline-flex; align-items: center; min-height: 44px; /* 触控 ≥44px 档（设计手册 §8.2） */
-    white-space: nowrap; font-size: var(--bz-font-meta); padding: var(--bz-space-sm) 16px; border-radius: var(--bz-radius-full);
-    background: var(--bz-surface-2); border: 1px solid var(--bz-border);
-    color: var(--bz-text-1); cursor: pointer; flex-shrink: 0;
-    font-family: inherit;
-  }
-  .bz-cinema-mob-chip.bz-cinema-mob-chip-active {
-    background: var(--bz-brand); color: var(--bz-on-brand);
-    border-color: transparent; font-weight: var(--bz-weight-medium);
-  }
+  .bz-cinema-panel .bz-rail { display: none; } /* 移动端分类在顶部横滑条 */
+  /* 横滑分类条 = 共享 .bz-mobstrip；触屏 chip 抬 ≥44px 档（设计手册 §8.2） */
+  .bz-cinema-panel .bz-mobstrip-chip { min-height: 44px; }
   .bz-cinema-grid { grid-template-columns: repeat(3, 1fr); gap: var(--bz-space-md); }
   .bz-cinema-content { padding: var(--bz-space-md) var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
   /* 移动端保留桌面主头行（影院是唯一例外）：添加钮抬 ≥40px 触控档（设计手册 §8.2 绝对下限，
-     桌面维持 32px 控件档） */
-  .bz-cinema-main-head .bz-btn { height: var(--bz-control-h-lg); }
+     桌面走共享 .bz-btn--md 30px 中档） */
+  .bz-cinema-panel .bz-main-head .bz-btn { height: var(--bz-control-h-lg); }
 }
 
 /* ---- 非几何间距归档（自 ui.ts 内联 style 迁入） ---- */
