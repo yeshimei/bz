@@ -3,13 +3,16 @@
  * + 增强包回归：右键菜单/长按抽屉、空态两种、AI 按需触发与结果页闭环、回收站删除、
  *   豆瓣直达、观影日期、升级默认已看、组件库修饰符类
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, hasNotice, Platform } from '../mock-obsidian-entry';
 import { M, resetCinemaState } from '../../src/cinema/state';
 import { rebuildItems } from '../../src/cinema/data';
+import { runAIRecommend, runSimilarRecommend } from '../../src/cinema/recommend';
 import { createOverlay, closeOverlay, openAddModalDirect } from '../../src/cinema/ui';
 import { ensureCinema, unloadCinema, openCinemaAnalysis } from '../../src/cinema';
+import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
+import { setApp } from '../../src/core/app';
 import { emitDomainEvent, clearDomainEvents } from '../../src/core/domain-bus';
 import { closeItemMenu } from '../../src/core/item-actions';
 
@@ -366,15 +369,16 @@ describe('cinema overlay', () => {
     openCinemaAnalysis(app);
     const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
     expect(overlay.querySelector('.bz-cinema-page-sub')?.textContent).toBe('4 部 · 已看 2 · 2026');
-    // 外部落盘新条目 → vault:md-created 域事件 → 300ms 防抖后自动重算分析页
+    // 外部落盘新条目 → vault:md-created 域事件 → 300ms 防抖后自动重算分析页（轮询等防抖落地，不钉时长）
     vault.files.set('我的/影视/《新片》.md', md(`---
 tags: [电影]
 评分: 8
 观影日期: 2026-08-02
 ---`));
     emitDomainEvent('vault:md-created', { path: '我的/影视/《新片》.md' });
-    await new Promise((r) => setTimeout(r, 420));
-    expect(overlay.querySelector('.bz-cinema-page-sub')?.textContent).toBe('5 部 · 已看 3 · 2026');
+    await vi.waitFor(() => {
+      expect(overlay.querySelector('.bz-cinema-page-sub')?.textContent).toBe('5 部 · 已看 3 · 2026');
+    });
   });
 
   it('AI 结果页反馈闭环：上次结果先展示 + 换一批 + 已在库中禁用 + 豆瓣外链 + 等待页大 spinner', () => {
@@ -411,6 +415,39 @@ tags: [电影]
     expect(overlay.querySelector('.bz-cinema-content .bz-spinner--lg')).toBeTruthy();
     M.aiRunning = false;
     M.renderFn?.();
+  });
+
+  it('错误页「重试」按基准分流：找同类失败后重试重跑找同类（不退化成全库荐片）；荐片失败重试仍是荐片', async () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    // AI 返回非法 JSON → 两轮都失败落错误页
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'test-key' }));
+    resetAIProviderCache();
+    setApp(app);
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('no net')));
+    const { requestUrl } = await import('obsidian');
+    (requestUrl as any).mockResolvedValue({ status: 200, text: 'nope' });
+
+    // 找同类（基准：星际穿越）失败 → 错误页渲染「重试」按钮（data-cinema-ai-start）
+    const base = M.items.find((i) => i.name === '星际穿越')!;
+    await runSimilarRecommend(base, app);
+    expect(M.aiError).toContain('AI 分析失败');
+    expect(overlay.querySelector('[data-cinema-ai-start]')?.textContent).toContain('重试');
+    // 点「重试」→ 按基准影片重跑找同类（修复点：此前无分流，重试会走全库荐片改写标题/基准）
+    (overlay.querySelector('[data-cinema-ai-start]') as HTMLElement).click();
+    expect(M.aiTitle).toContain('找同类');
+    expect(M.aiTitle).toContain('星际穿越');
+    expect(M.aiBase?.name).toBe('星际穿越');
+    await vi.waitFor(() => expect(M.aiRunning).toBe(false)); // 第二轮失败收尾，不留挂起状态机
+
+    // 全库荐片失败（runAIRecommend 已清基准）→ 重试仍是全库荐片
+    await runAIRecommend(app);
+    expect(M.aiError).toContain('AI 分析失败');
+    (overlay.querySelector('[data-cinema-ai-start]') as HTMLElement).click();
+    expect(M.aiTitle).toBe('AI 荐片');
+    expect(M.aiBase).toBeNull();
+    await vi.waitFor(() => expect(M.aiRunning).toBe(false));
   });
 
   it('添加弹窗（命令直达 + 落盘创建笔记）', async () => {
