@@ -19,6 +19,7 @@ import { escManager } from '../core/esc-manager';
 import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import type { SettingsSchema } from '../core/settings-schema';
+import { DOMAIN_ICONS } from '../core/domain-icons';
 import { renderPanelSchema } from './renderer';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
@@ -40,7 +41,20 @@ interface DomainDef {
 
 /** 惰性 schema 加载器（与各域 ⚙️ 弹窗同源） */
 const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
-  general: async () => (await import('../core/settings-main-schema')).generalSettingsSchema(),
+  // 通用组：基础 schema（存储路径）+「数据体检」按钮行（D4：检查项直达体检面板；
+  // core 不反向依赖域——入口在面板层追加，⚙️ 原生设置页不带此行）
+  general: async () => {
+    const schema = await (await import('../core/settings-main-schema')).generalSettingsSchema();
+    const { openDataCheckup } = await import('../checkup');
+    schema.groups[0].rows.push({
+      type: 'button',
+      name: '数据体检',
+      buttonText: '打开体检',
+      desc: '检查各域数据文件能否解析、字段漂移与孤儿条目（只读体检，可修复项一键清理）',
+      onClick: () => void openDataCheckup(getApp()),
+    });
+    return schema;
+  },
   ai: async () => (await import('../core/settings-main-schema')).aiSettingsSchema(),
   diary: async () => (await import('../diary/ui/panel')).diarySettingsSchema(),
   memo: async () => (await import('../memo/ui')).memoSettingsSchema(),
@@ -86,32 +100,34 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   },
 };
 
-/** 域清单（lucide 图标名；徽标运行时动态计算，见 badgeOf） */
-const DOMAINS: DomainDef[] = [
-  { id: 'global', name: '通用', icon: 'settings', desc: '存储路径等跨域基础偏好', schemaLoader: schemaLoaders.general },
-  { id: 'ai', name: 'AI', icon: 'sparkles', desc: 'AI 服务商与模型配置', schemaLoader: schemaLoaders.ai },
-  { id: 'diary', name: '日记本', icon: 'book-open', desc: '日记目录、显示与默认视图', schemaLoader: schemaLoaders.diary },
-  { id: 'memo', name: '备忘录', icon: 'sticky-note', desc: '提醒与到期行为', schemaLoader: schemaLoaders.memo },
-  { id: 'todo', name: '待办', icon: 'check-square', desc: '备忘工作台（新域）', schemaLoader: schemaLoaders.todo },
-  { id: 'belongings', name: '归物本', icon: 'package', desc: '物品登记与查找', schemaLoader: schemaLoaders.belongings },
-  { id: 'clipping', name: '剪藏本', icon: 'scissors', desc: '聚合讯未读流与剪藏笔记（融合域 ADR-0082）', schemaLoader: schemaLoaders.clipping },
-  { id: 'favorites', name: '收藏本', icon: 'star', desc: '收藏条目', schemaLoader: schemaLoaders.favorites },
+/** 域清单（图标 = core/domain-icons 单一事实源，与命令面板/入口页磁贴同源——enh-sweep-a 收敛；
+ *  描述只写功能语义，不带「新域/ADR」开发黑话；徽标运行时动态计算，见 badgeOf）。
+ *  导出供回归测试断言（图标映射一致性/历史重复图标错开）。 */
+export const DOMAINS: DomainDef[] = [
+  { id: 'global', name: '通用', icon: DOMAIN_ICONS.global, desc: '存储路径等跨域基础偏好', schemaLoader: schemaLoaders.general },
+  { id: 'ai', name: 'AI', icon: DOMAIN_ICONS.ai, desc: 'AI 服务商与模型配置', schemaLoader: schemaLoaders.ai },
+  { id: 'diary', name: '日记本', icon: DOMAIN_ICONS.diary, desc: '日记目录、显示与默认视图', schemaLoader: schemaLoaders.diary },
+  { id: 'memo', name: '备忘录', icon: DOMAIN_ICONS.memo, desc: '场景与显示行为（提醒已并入待办）', schemaLoader: schemaLoaders.memo },
+  { id: 'todo', name: '待办', icon: DOMAIN_ICONS.todo, desc: '待办工作台与提醒（捕获入口落点）', schemaLoader: schemaLoaders.todo },
+  { id: 'belongings', name: '归物本', icon: DOMAIN_ICONS.belongings, desc: '物品登记与查找', schemaLoader: schemaLoaders.belongings },
+  { id: 'clipping', name: '剪藏本', icon: DOMAIN_ICONS.clipping, desc: '聚合讯未读流与剪藏笔记', schemaLoader: schemaLoaders.clipping },
+  { id: 'favorites', name: '收藏本', icon: DOMAIN_ICONS.favorites, desc: '收藏条目', schemaLoader: schemaLoaders.favorites },
   // 旧书库（library）域退役：其设置组删除，书库配置并入书架墙（bookshelf）组
-  { id: 'reading-report', name: '阅读报告', icon: 'bar-chart-3', desc: '阅读统计', noSettings: true },
+  { id: 'reading-report', name: '阅读报告', icon: DOMAIN_ICONS['reading-report'], desc: '阅读统计', noSettings: true },
 
-  { id: 'cinema', name: '影院', icon: 'clapperboard', desc: '影视目录与海报（ADR-0087 接管影视）', schemaLoader: schemaLoaders.cinema },
-  { id: 'bookshelf', name: '书架墙', icon: 'book-open', desc: '藏书封面墙（新域）', schemaLoader: schemaLoaders.bookshelf },
-  { id: 'review', name: '复习计划', icon: 'repeat-2', desc: '间隔重复与做题', schemaLoader: schemaLoaders.review },
-  { id: 'secondbrain', name: '第二大脑', icon: 'network', desc: '嵌入检索与对话', schemaLoader: schemaLoaders.secondbrain },
-  { id: 'auto-summary', name: '自动摘要', icon: 'sparkles', desc: '剪藏自动摘要', noSettings: true },
-  { id: 'launcher', name: '入口页', icon: 'puzzle', desc: '命令磁贴入口', noSettings: true },
-  { id: 'home', name: '内容首页', icon: 'layout-grid', desc: '统计域卡首页（新域）', noSettings: true },
-  { id: 'pomodoro', name: '番茄钟', icon: 'timer', desc: '专注计时与休息', schemaLoader: schemaLoaders.pomodoro },
-  { id: 'attach', name: '附件搬移', icon: 'paperclip', desc: '附件整理', noSettings: true },
-  { id: 'bili-downloader', name: 'B站下载', icon: 'download', desc: 'B站视频下载任务', noSettings: true },
-  { id: 'encrypt', name: '保险库', icon: 'lock', desc: '密码·加密笔记·日记（统一域 ADR-0085）', schemaLoader: schemaLoaders.encrypt },
-  { id: 'smartcat', name: '小橘陪伴猫', icon: 'cat', desc: '桌面宠物陪伴', noSettings: true },
-  { id: 'literature', name: '文献笔记', icon: 'file-text', desc: '文献管理与术语', schemaLoader: schemaLoaders.literature },
+  { id: 'cinema', name: '影院', icon: DOMAIN_ICONS.cinema, desc: '影视目录与海报', schemaLoader: schemaLoaders.cinema },
+  { id: 'bookshelf', name: '书架墙', icon: DOMAIN_ICONS.bookshelf, desc: '藏书封面墙', schemaLoader: schemaLoaders.bookshelf },
+  { id: 'review', name: '复习计划', icon: DOMAIN_ICONS.review, desc: '间隔重复与做题', schemaLoader: schemaLoaders.review },
+  { id: 'secondbrain', name: '第二大脑', icon: DOMAIN_ICONS.secondbrain, desc: '嵌入检索与对话', schemaLoader: schemaLoaders.secondbrain },
+  { id: 'auto-summary', name: '自动摘要', icon: DOMAIN_ICONS['auto-summary'], desc: '剪藏自动摘要', noSettings: true },
+  { id: 'launcher', name: '入口页', icon: DOMAIN_ICONS.launcher, desc: '命令磁贴入口', noSettings: true },
+  { id: 'home', name: '内容首页', icon: DOMAIN_ICONS.home, desc: '统计域卡首页', noSettings: true },
+  { id: 'pomodoro', name: '番茄钟', icon: DOMAIN_ICONS.pomodoro, desc: '专注计时与休息', schemaLoader: schemaLoaders.pomodoro },
+  { id: 'attach', name: '附件搬移', icon: DOMAIN_ICONS.attach, desc: '附件整理', noSettings: true },
+  { id: 'bili-downloader', name: 'B站下载', icon: DOMAIN_ICONS['bili-downloader'], desc: 'B站视频下载任务', noSettings: true },
+  { id: 'encrypt', name: '保险库', icon: DOMAIN_ICONS.encrypt, desc: '密码、加密笔记与加密日记', schemaLoader: schemaLoaders.encrypt },
+  { id: 'smartcat', name: '小橘陪伴猫', icon: DOMAIN_ICONS.smartcat, desc: '桌面宠物陪伴', noSettings: true },
+  { id: 'literature', name: '文献盒', icon: DOMAIN_ICONS.literature, desc: '文献笔记与术语录入', schemaLoader: schemaLoaders.literature },
 ];
 
 /** 可见域：无设置项的域（noSettings）不在左侧列表/移动端列表显示（用户拍板：没有设置的域隐藏）。

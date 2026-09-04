@@ -36,8 +36,10 @@ _Avoid_: 日记本（它是交互式编辑面板，回忆墙是只读媒体视�
 
 ### 待迁移域
 
-**备忘录 (Memo/Todo)**: 待办事项管理，数据 `CONFIG/STORAGE/memo.json`，场景分类（剪藏/工作/学习/生活/代码/公开课），Todo 弹窗（#todo-popup）。被第二大脑引用；引用同步已并入本域（ADR-0048，ADR-0088 起无条件常驻）；剪藏归档已退役（ADR-0088）。
+**备忘录 (Memo/Todo)**: 待办事项管理，数据 `CONFIG/STORAGE/memo.json`，场景分类（剪藏/工作/学习/生活/代码/公开课），Todo 弹窗（#todo-popup）。被第二大脑引用；引用同步已并入本域（ADR-0048，ADR-0088 起无条件常驻）；剪藏归档已退役（ADR-0088）。**被动捕获入口已改道待办面板**（memo→todo 接管迁移第 3 项提前实施）：启动自动弹出、打开笔记提醒、侧栏 ribbon 图标三入口的落点=待办工作台，本域不再做任何被动弹窗；「提醒」设置组随入口移出本域 schema（同键在待办 schema）。
 _Avoid_: 待办列表、任务
+
+**待办 (Todo)**: 场景工作台（新域），与备忘录同源 `CONFIG/STORAGE/memo.json`——UI/交互/写盘归本域，引用同步等后台任务仍由旧 memo 域执行；命令 `bz-todo-open`/`bz-todo-add`。桌面遮罩面板（左场景栏 全部/今日/重要/自定义场景 + 右列表 + 底部 composer 快速录入）+ 移动全屏场景 chips；**被动捕获入口落点=本域面板**：启动自动弹出（autoPopupOnStart，todo/reminder.ts）、打开笔记提醒（openNoteReminder，按 notePath 定位关联待办）、侧栏 ribbon 图标（tooltip「待办」）；composer/编辑器在剪藏场景读剪贴板预填 URL 并抓页面标题（复用 core extractUrlAndDisplay/fetchPageTitle，非 URL 不打扰）；设置键与备忘录共享（memoScenarios/memoSortMode/memoDefaultScene/autoPopupOnStart/openNoteReminder 等），提醒组设置在本域。
 
 **归物本 (Belongings)**: 物品登记管理，数据 `CONFIG/STORAGE/belongings.json`（目录可配置，8 字段零迁移）。**ADR-0083（2026-09-03）重设计为 P6「状态边栏×时间轴」**：整宽头行仅标题 + 左四态状态栏（全部/使用中/闲置/已转卖/已丢弃）+ 右时间轴（统计三卡：总资产=在用+闲置原价、日均成本、在册件数 → 年节/月节点/物件行，年节可折叠）；桌面点行/右键 = 行操作浮层、移动点行 = 底部详情抽屉（动作：状态流转×3 keepOpen / 编辑 / 删除确认）；移动端头行右上 ＋记一笔 → 🔍搜索（默认隐藏可展开）→ ✕，状态横滑 chips，统计两列；全 lucide 图标（分类 emoji 属数据保留）；⚙️ 设置收敛设置面板；数据文件变更自动刷新（打开期间 modify 监听自写短路）+ 主题类变化重渲染。样式全消费组件库 token（`src/core/ui/`），域内仅布局。**ticket 189（ADR-0089，2026-09-04）出离闭环**：加可选字段 `exit_date`（出离日期）/`sold_price`（转卖售价，可选）——**明示推翻 ADR-0083「转卖不填价」**（理由见 ADR-0089）；状态流转/删除接 notifyUndo（流转回写旧状态、删除 snapshot 写回，确认弹窗去「不可撤销」威慑文案）；转卖/丢弃记出离日期，陪伴天数封口在出离日（`data.calculateDaysUsedUntil`）；日均成本 =（总购入 − Σ转卖售价）/ 累计持有天数；表单出离态展开出离日期 + 售价（可选）字段，补全表单防丢检查（baseline + confirmDiscard）；年节当年/上一年默认展开、更早（含未标注）默认折叠（手动操作以会话内状态为准）；统计卡可点（总资产=在用+闲置合成筛选、在册件数=清筛选回全部，口径不动）；头行图标钮间距 ≥8px + 移动端 `--bz-icon-btn-lg` 档。
 
@@ -414,6 +416,12 @@ _Avoid_: 手搓确认弹窗、confirm()（已退役）
 
 **共享数据路径 (Shared Storage Path)**: `storagePath` 设置项——所有数据文件（memo/belongings/passwords/favorites/review/quiz/第二大脑 secondbrain.json+secondbrain.vec）的统一目录，默认 `CONFIG/STORAGE`。旧各域路径字段（todoFilePath、belongingsDataFolder、pwStoragePath、favoritesStoragePath、reviewStoragePath）废弃仅兼容保留；META_PATH/VEC_PATH 已随 ticket 103 彻底删除（不再兼容保留），闪念 16 设置键更名 secondBrain* 由 onload 迁移。
 _Avoid_: 各脚本路径、存储路径们
+
+**可靠写契约 (Reliable Write Contract)**: core/storage 数据写三原语（D1，2026-09），全部域数据层统一走（D2/D3 迁移依据）：① `enqueueFileTask(path, task)`——同文件「读→改→写」任务 FIFO 串行、异文件并行，任务抛错只上抛该调用方不堵队列；② `updateFileSections(path, writer)` / `mergeWriteSections(path, set)`——段级合并写（news writeNewsDataMerged 先例上沉），队列内读磁盘现值、只声明本次改动段、未声明段保留磁盘现值合并写回（对象形态 JSON 专用，数组/标量抛错，防双写者互覆盖）；③ 冲突留档——解析失败或写失败先把原文件原样留档到 `CONFIG/.CORRUPT/<文件名>.<yyyymmdd-hhmmss>.bak`（目录不存在则建）再降级初始化/照抛原错误，永不静默丢数据；留档成功发人话化 warning 通知（同文件 30s 去重），留档失败不阻塞原流程；`onCorrupt` 返回 false 的「不清盘」域语义不变，且此类域自管损坏文案、core 不重复弹。
+_Avoid_: 裸写读快照全覆盖、域内自建写队列、直改 .CORRUPT 留档文件、旧 <名>.corrupt-<时间戳> 同目录留档
+
+**数据体检 (Data Checkup)**: 全插件数据可靠层只读巡检（D4，2026-09，`src/checkup/` 域，命令 `bz-data-checkup-open` + 设置面板通用组「数据体检」按钮行；仿保险库体检交互）。四类检查：① json 可解析（坏文件列出与 CONFIG/.CORRUPT 留档路径）；② 字段漂移（条目级 memo/favorites/pomodoro-history + 段级 clipbook/news/launcher/home/belongings/quiz 的意外/缺失字段统计，只报告不修）；③ 孤儿条目（影院海报/书架封面/EPUB 指向缺失只报告；clipbook savedArchive 残留与 favorites 失效关联可一键修复）；④ 同源一致性（memo loadItems 口径快照 vs todo normalizeItem 双视角计数 + 结构异常）。**只读纪律**：体检不走 jsonFileStore.read()（避免触发损坏留档+重建毁现场），一律 adapter 直读原文；修复只动插件自有 json（enqueueFileTask 串行写 + notifyUndo 撤销链），用户笔记 frontmatter 与外部插件数据不动；结果内存级缓存、重开显示上次结果；体检中可取消（runSeq 作废令牌）。
+_Avoid_: 体检写盘（除一键修复定点清理）、直读域单例内存态（体检以磁盘原文为准）、jsonFileStore 做体检读
 
 **筛选弹窗 (Filter Modal)**: 🔀 图标打开的筛选/排序弹窗（影视「筛选与排序」、书库「视图与筛选」），与 ⚙️ 域设置弹窗严格区分——🔀 只做筛选，⚙️ 只做设置。
 _Avoid_: 设置弹窗（指筛选时）

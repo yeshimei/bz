@@ -86,6 +86,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-smartcat-open', 'bz-smartcat-chat', 'bz-smartcat-hide', 'bz-smartcat-dashboard',
   // 设置面板（ADR-0080）
   'bz-settings-panel-open',
+  // 数据体检（checkup 域，D4）
+  'bz-data-checkup-open',
   'bz-diary-open',
 ];
 
@@ -126,11 +128,17 @@ describe('bz 骨架冒烟', () => {
     }
   });
 
-  it('ribbon 主入口指向备忘录面板', async () => {
+  it('ribbon 主入口指向待办面板（捕获入口改道：点击落点=待办工作台）', async () => {
     const plugin = await createPlugin(makeMockApp());
 
     expect(plugin.ribbonIcons.length).toBeGreaterThanOrEqual(1);
-    expect(plugin.ribbonIcons[0].title).toBe('备忘录');
+    expect(plugin.ribbonIcons[0].title).toBe('待办');
+    // 点击落点核对：打开待办面板，备忘录旧弹窗（#todo-popup）不出现
+    plugin.ribbonIcons[0].callback();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-todo-overlay')).toBeTruthy();
+    });
+    expect(document.getElementById('todo-popup')).toBeNull();
   });
 
   it('命令名统一（f3/f7/t1/t2，id 不动）与重复图标去重（f7）', async () => {
@@ -144,11 +152,11 @@ describe('bz 骨架冒烟', () => {
     expect(byId('bz-cinema-add').name).toBe('加影视（影院）');
     // 书架墙（bookshelf 新域）
     expect(byId('bz-bookshelf-open').name).toBe('书架墙');
-    // todo 新域：待办 / 加待办（待办）
+    // todo 新域：待办 / 加待办（enh-sweep-a 去冗余括号后缀）
     expect(byId('bz-todo-open').name).toBe('待办');
     // clipbook 融合域（ADR-0082）：剪藏本 = 聚合讯+剪藏本合一入口
     expect(byId('bz-clipbook-open').name).toBe('剪藏本');
-    expect(byId('bz-todo-add').name).toBe('加待办（待办）');
+    expect(byId('bz-todo-add').name).toBe('加待办');
     // t2：阅读分析报告 → 阅读数据分析报告
     expect(byId('bz-reading-report-open').name).toBe('阅读数据分析报告');
     // f3：评级四命令去英文后缀、统一「复习（X）」标点
@@ -165,6 +173,48 @@ describe('bz 骨架冒烟', () => {
     expect(byId('bz-cinema-analysis').icon).toBe('pie-chart');
     expect(byId('bz-cinema-analysis').name).toBe('影视分析报告');
     expect(byId('bz-smartcat-chat').icon).toBe('messages-square');
+  });
+
+  it('域图标单一事实源（enh-sweep-a）：域入口命令 icon = DOMAIN_ICONS，历史重复图标已错开', async () => {
+    await createPlugin(makeMockApp());
+    const byId = (id: string) => registeredCommands.find((c: any) => c.id === id)!;
+    const { DOMAIN_ICONS } = await import('../src/core/domain-icons');
+    // 域入口命令 icon 全部来自 DOMAIN_ICONS（一处定义、两处引用：命令表 + 设置面板导航）
+    const domainCommands: Array<[string, string]> = [
+      ['bz-home', 'launcher'],
+      ['bz-home-open', 'home'],
+      ['bz-memo-open', 'memo'],
+      ['bz-todo-open', 'todo'],
+      ['bz-belongings-open', 'belongings'],
+      ['bz-clipbook-open', 'clipping'],
+      ['bz-auto-summary-redo', 'auto-summary'],
+      ['bz-favorites-open', 'favorites'],
+      ['bz-reading-report-open', 'reading-report'],
+      ['bz-cinema-open', 'cinema'],
+      ['bz-bookshelf-open', 'bookshelf'],
+      ['bz-review-open', 'review'],
+      ['bz-secondbrain-panel', 'secondbrain'],
+      ['bz-pomodoro-open', 'pomodoro'],
+      ['bz-literature-open', 'literature'],
+      ['bz-attach-move', 'attach'],
+      ['bz-encrypt-open', 'encrypt'],
+      ['bz-smartcat-open', 'smartcat'],
+      ['bz-diary-open', 'diary'],
+    ];
+    for (const [id, domain] of domainCommands) {
+      expect(byId(id).icon, `${id} icon 应 = DOMAIN_ICONS.${domain}`).toBe(DOMAIN_ICONS[domain]);
+    }
+    // 历史重复图标错开（enh-sweep-a）：
+    // 读书笔记类（日记本 notebook-pen / ribbon 同款）vs 书架墙（book-open 独占）
+    expect(byId('bz-diary-open').icon).toBe('notebook-pen');
+    expect(byId('bz-diary-open').icon).not.toBe(byId('bz-bookshelf-open').icon);
+    // 两份分析报告：阅读 bar-chart-3 / 复习 calendar-check / 影视 pie-chart 各不相同
+    expect(byId('bz-review-report').icon).toBe('calendar-check');
+    const reportIcons = [byId('bz-reading-report-open').icon, byId('bz-review-report').icon, byId('bz-cinema-analysis').icon];
+    expect(new Set(reportIcons).size).toBe(3);
+    // 影院/复习域入口与内容首页磁贴同款（clapperboard / repeat-2，收敛磁贴漂移）
+    expect(byId('bz-cinema-open').icon).toBe('clapperboard');
+    expect(byId('bz-review-open').icon).toBe('repeat-2');
   });
 
   it('回忆墙（diary-wall，ADR-0081）：命令注册 + ensureDiaryWall 幂等可调用不抛错', async () => {
@@ -223,9 +273,17 @@ describe('bz 骨架冒烟', () => {
     expect(s.favoritesStoragePath).toBe('CONFIG/STORAGE');
     expect(s.secondBrainOllamaUrl).toBe('http://localhost:11434');
     expect(s.secondBrainEmbeddingModel).toBe('bge-m3');
+    // enh-sweep-a：远程 Ollama URL 默认留空（空 = 未配置远程，不再写死内网 IP）
+    expect(s.secondBrainRemoteOllamaUrl).toBe('');
     expect(s.passwordLength).toBe('16');
     // clipbook（ADR-0082）：移动端默认全屏对齐 clipping 默认开
     expect(s.clipbookMobileDefaultFullscreen).toBe(true);
+    // enh-sweep-a 死键清理：旧 clipping 域孤儿键（实际生效 = clipbook 键）与
+    // bookshelf 未接管前遗留的 5 个书库展示开关键，全仓无消费方，接口+默认值双删
+    expect('clippingMobileDefaultFullscreen' in s).toBe(false);
+    for (const dead of ['showFileSize', 'showReadingTime', 'showHighlights', 'showThinks', 'showReview']) {
+      expect(dead in s).toBe(false);
+    }
   });
 
   it('域命令回调不抛异常（已实现域真实执行，未实现域占位 Notice）', async () => {

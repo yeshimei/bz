@@ -223,19 +223,20 @@ async function refreshBalances(dm: DataManager): Promise<void> {
   );
   if (!any) return;
   try {
-    // 写前重读，基于最新快照套本批（P1-37 并发写回语义）
-    const latest = await dm.getAll();
-    for (const id of Object.keys(updates)) {
-      const idx = latest.findIndex((d) => d.id === id);
-      if (idx === -1) continue;
-      const u = updates[id];
-      if (u.balance !== undefined) {
-        latest[idx] = { ...latest[idx], balance: u.balance, balanceCacheTime: u.balanceCacheTime ?? null, balanceError: u.balanceError ?? null };
-      } else {
-        latest[idx] = { ...latest[idx], balanceError: u.balanceError ?? null };
+    // 余额批量写回走 DataManager 串行队列读改写（D2 收编）：基于队列内磁盘现值套本批，
+    // 与并发 add/update/删除撤销不再互踩（原 P1-37 写前重读语义保留，整体原子化）
+    const latest = await dm.mutateAll((data) => {
+      for (const id of Object.keys(updates)) {
+        const idx = data.findIndex((d) => d.id === id);
+        if (idx === -1) continue;
+        const u = updates[id];
+        if (u.balance !== undefined) {
+          data[idx] = { ...data[idx], balance: u.balance, balanceCacheTime: u.balanceCacheTime ?? null, balanceError: u.balanceError ?? null };
+        } else {
+          data[idx] = { ...data[idx], balanceError: u.balanceError ?? null };
+        }
       }
-    }
-    await dm.write(latest);
+    });
     // 更新内存以触发重渲
     const idxs = new Set(Object.keys(updates));
     M.items = latest.map((d) => (idxs.has(d.id) ? { ...d } : d));
@@ -684,11 +685,11 @@ function buildActions(it: FavoritesItem, rebuild: () => void): ItemAction[] {
       title: '归档收藏',
       onClick: () => {
         void openFlowDialog({
-          title: '归档确认',
-          message: `确定归档收藏 "${it.title}" 吗？归档后不在列表显示，数据保留在 favorites.json。`,
+          title: '归档收藏',
+          message: `确定归档收藏「${it.title}」吗？归档后不在主列表显示（数据保留），可在通知中撤销。`,
           actions: [
             { label: '取消', value: 'cancel' },
-            { label: '确定', value: 'ok', cta: true },
+            { label: '归档', value: 'ok', cta: true },
           ],
         }).then((v) => {
           if (v === 'ok') void archiveItem(it);
@@ -703,8 +704,8 @@ function buildActions(it: FavoritesItem, rebuild: () => void): ItemAction[] {
     sub: it.created || undefined,
     onClick: () => {
       void openFlowDialog({
-        title: '删除确认',
-        message: `确定删除收藏 "${it.title}" 吗？`,
+        title: '删除收藏',
+        message: `确定删除收藏「${it.title}」吗？删除后可在通知中撤销。`,
         actions: [
           { label: '取消', value: 'cancel' },
           { label: '删除', value: 'del', danger: true, cta: true },
@@ -769,7 +770,7 @@ async function unarchiveItem(it: FavoritesItem): Promise<void> {
     await dataManagerOf().update(it.id, { archived: false, archivedAt: null });
     emitDomainEvent('favorites', { kind: 'unarchive', title: it.title });
     await reload();
-    notice('已取消归档', 'success');
+    notice(`已取消归档，「${it.title}」回到主列表`, 'success');
   } catch (e) {
     notifySaveError(e, '取消归档');
   }
@@ -781,20 +782,16 @@ async function deleteItem(it: FavoritesItem): Promise<void> {
     await dataManagerOf().delete(it.id);
     emitDomainEvent('favorites', { kind: 'delete', title: it.title });
     await reload();
-    if (snapshot) {
-      notifyUndo(`已删除收藏「${it.title}」`, () => {
-        void (async () => {
-          try {
-            await dataManagerOf().restoreItem(snapshot);
-            await reload();
-          } catch (e) {
-            notifySaveError(e, '恢复收藏');
-          }
-        })();
-      });
-    } else {
-      notice('已删除收藏', 'success');
-    }
+    notifyUndo(`已删除收藏「${it.title}」`, () => {
+      void (async () => {
+        try {
+          await dataManagerOf().restoreItem(snapshot);
+          await reload();
+        } catch (e) {
+          notifySaveError(e, '恢复收藏');
+        }
+      })();
+    });
   } catch (e) {
     notifySaveError(e, '删除收藏');
   }

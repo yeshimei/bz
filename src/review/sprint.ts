@@ -431,7 +431,7 @@ export class SprintSession {
         correctIndices: q.correctIndices,
       });
     } catch (e: any) {
-      notice('删除题目失败：' + e.message, 'error');
+      notice('删除题目失败：' + e.message + '，请重试', 'error');
     }
   }
 
