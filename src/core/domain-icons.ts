@@ -9,6 +9,7 @@
  * 取值基准 = 当前实际注册（enh-sweep-a 全仓核对）：
  * - 与内容首页磁贴/ribbon 对齐：diary=notebook-pen（ribbon「日记本」同款）、
  *   cinema=clapperboard（磁贴同款，命令旧 film 漂移由此收敛）、review=repeat-2（磁贴同款）；
+ * - recap=calendar-heart（今日回顾，方向一 R2 新域；lucide 日历语义，未与其他命令重复）；
  * - 历史重复图标错开：diary 不再与 bookshelf 同用 book-open（bookshelf 独占）；
  *   复习报告命令 bz-review-report 弃 bar-chart-3（阅读分析报告独占）改 calendar-check；
  *   影视分析 bz-cinema-analysis 保持 pie-chart（三份报告 bar-chart-3/calendar-check/pie-chart 各异）。
@@ -21,6 +22,7 @@ export const DOMAIN_ICONS: Readonly<Record<string, string>> = {
   // 域入口命令与面板导航共用
   launcher: 'home',
   home: 'layout-grid',
+  recap: 'calendar-heart',
   memo: 'sticky-note',
   todo: 'check-square',
   belongings: 'package',
