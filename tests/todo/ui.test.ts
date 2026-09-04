@@ -9,6 +9,7 @@ import { resetObsidianMocks, Platform as MockPlatform } from '../mock-obsidian-e
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { M, resetTodoState } from '../../src/todo/state';
 import { openTodoPanel, closeTodoPanel, addTodo, openEditor } from '../../src/todo/ui';
+import { openPomodoro, unloadPomodoro } from '../../src/pomodoro';
 import { TodoData } from '../../src/todo/data';
 
 const SETTINGS = {
@@ -806,5 +807,71 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
     expect((mob!.rows[0] as any).name).toBe('移动端默认全屏');
     expect((mob!.rows[0] as any).desc).toBeUndefined();
     void app;
+  });
+});
+
+describe('待办×番茄联动（专注这个）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetTodoState();
+    document.body.innerHTML = '';
+    MockPlatform.isMobile = false;
+  });
+  afterEach(() => {
+    closeTodoPanel();
+    unloadPomodoro(); // 联动会拉起番茄钟域（动态 import），逐测清理
+    MockPlatform.isMobile = false;
+    document.body.innerHTML = '';
+  });
+
+  function menuItems(): HTMLElement[] {
+    return [...document.querySelectorAll('.bz-item-menu-item')] as HTMLElement[];
+  }
+
+  it('未完成条目右键菜单含「专注这个」；点击直接开始归属该待办的专注', async () => {
+    const { app, vault } = seedVault();
+    openTodoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-todo-card[data-todo-id="b"]')).toBeTruthy();
+    });
+    const card = document.querySelector('.bz-todo-card[data-todo-id="b"]') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 20, clientY: 20 }));
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-item-menu')).toBeTruthy();
+    });
+    const labels = menuItems().map((b) => b.querySelector('.bz-item-menu-label')?.textContent);
+    expect(labels).toContain('专注这个');
+    // 点击 → 动态 import pomodoro 域 startFocusForTask → 直接开始归属专注
+    const hit = menuItems().find((b) => b.querySelector('.bz-item-menu-label')?.textContent === '专注这个')!;
+    hit.click();
+    // 联动最小实现：不主动拉起弹窗（toast「专注开始」+ 状态栏反馈），归属先落盘
+    await vi.waitFor(() => {
+      const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/pomodoro.json')!);
+      expect(raw.state.task).toBe('ffmpeg 转写参数整理');
+      expect(raw.state.phase).toBe('focus');
+    });
+    // 打开弹窗 → 任务行展示当前专注任务名 + 已在计时
+    await openPomodoro(app);
+    expect(document.getElementById('pomodoro-task')?.textContent).toBe('ffmpeg 转写参数整理');
+    expect(document.getElementById('pomodoro-btn-start')?.textContent).toContain('暂停');
+  });
+
+  it('已完成条目右键菜单不含「专注这个」', async () => {
+    const { app } = seedVault();
+    openTodoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-todo-donebar')).toBeTruthy();
+    });
+    (document.querySelector('.bz-todo-donebar') as HTMLElement).click(); // 展开已完成折叠区
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-todo-card.bz-todo-done')).toBeTruthy();
+    });
+    const card = document.querySelector('.bz-todo-card.bz-todo-done') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 20, clientY: 20 }));
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-item-menu')).toBeTruthy();
+    });
+    const labels = menuItems().map((b) => b.querySelector('.bz-item-menu-label')?.textContent);
+    expect(labels).not.toContain('专注这个'); // 已完成条目无专注意义
   });
 });

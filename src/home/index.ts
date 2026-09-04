@@ -4,7 +4,7 @@
  */
 import type { App } from 'obsidian';
 import { H, resetHomeState } from './state';
-import { createOverlay, closeOverlay, registerEscapeHandler, unregisterEscapeHandler } from './ui';
+import { createOverlay, closeOverlay, registerEscapeHandler, unregisterEscapeHandler, stopSnapshotTimer } from './ui';
 
 let initialized = false;
 let escRegistered = false;
@@ -37,6 +37,7 @@ export function unloadHome(): void {
     escRegistered = false;
     unregisterEscapeHandler();
   }
+  stopSnapshotTimer(); // 卸载不走 closeOverlay，计时器单独清
   if (H.currentOverlay) {
     H.currentOverlay.remove();
     H.currentOverlay = null;
