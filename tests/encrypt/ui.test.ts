@@ -1400,18 +1400,24 @@ describe('保险箱状态栏（补丁：锁状态提示）', () => {
     document.body.innerHTML = '';
   });
 
-  it('挂载后显示锁定态；解锁成功变解锁态、lock() 回锁定态', async () => {
+  it('挂载后显示锁定态；解锁成功变解锁态、lock() 回锁定态（收尾扫尾：锁图标 lucide 化）', async () => {
     const c = new EncryptAppController(CONFIG);
     const el = document.createElement('span');
     document.body.appendChild(el);
     c.attachStatusBar(el);
-    expect(el.textContent).toBe('🔒 保险库');
+    // 锁定态：lucide lock svg + 文案（原 🔒 emoji 退役）
+    expect(el.querySelector('svg')).not.toBeNull();
+    expect(el.textContent).toContain('保险库');
+    const lockedHtml = el.innerHTML;
     await c.dataManager.unlock('pw');
-    expect(el.textContent).toBe('🔓 保险库');
+    // 解锁态：开锁图标（innerHTML 随 path 切换）+ 文案不变
+    expect(el.querySelector('svg')).not.toBeNull();
+    expect(el.textContent).toContain('保险库');
+    expect(el.innerHTML).not.toBe(lockedHtml);
     c.dataManager.lock();
-    expect(el.textContent).toBe('🔒 保险库');
+    expect(el.innerHTML).toBe(lockedHtml);
     // 二次解锁（已存在清单）同样刷新
     await c.dataManager.unlock('pw');
-    expect(el.textContent).toBe('🔓 保险库');
+    expect(el.innerHTML).not.toBe(lockedHtml);
   });
 });

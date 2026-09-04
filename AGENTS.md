@@ -1,6 +1,6 @@
 # AGENTS.md — 包仔（bz）Obsidian 插件
 
-独立 Obsidian 插件，20 功能域（详见领域清单）。**项目语言：中文**。
+独立 Obsidian 插件，22 功能域（详见领域清单）。**项目语言：中文**。
 
 ## 命令与构建
 - `pnpm install` / `pnpm run dev` / `pnpm run build` / `pnpm test` / `pnpm exec tsc --noEmit`（依赖用 pnpm，勿用 npm）
@@ -8,7 +8,7 @@
 - 测试用 vitest，alias 替换 obsidian 为 mock。
 
 ## 架构
-- `src/main.ts`：命令注册、设置页、懒加载（39 命令）。
+- `src/main.ts`：命令注册、设置页、懒加载（40 命令，另有少量域内注册）。
 - `src/core/`：共享层；`src/<域>/`：index + data + ui + styles.css。
 - **依赖方向（ADR-0002）**：`core ← config/state ← parser ← store ← ui ← main`。禁止模块顶层互访，函数级环引用须延迟解析。
 
@@ -27,28 +27,30 @@
 ## 领域清单（数据均在 CONFIG/STORAGE/）
 | 域 | 数据 |
 |---|---|
-| diary | `我的/日记/*.md` |
+| diary | `我的/日记/*.md`（旧域，冻结：只保写安全，不投资） |
 | diary-wall（回忆墙） | `我的/日记/*.md`（只读派生视图，ADR-0081） |
-| memo | memo.json |
-| todo（待办，新域） | memo.json（与 memo 同源；旧 memo 删除后接管） |
+| memo | memo.json（旧域，后台执行方；被动入口已改道 todo） |
+| todo（待办） | memo.json（与 memo 同源；memo 接管后退役） |
 | belongings | belongings.json |
-| clipbook（剪藏本，ADR-0082） | news.json（聚合讯未读流）+ `归档/网页剪藏/*.md` + clipbook.json（侧写） |
-| clipping | `归档/网页剪藏/*.md`（旧域，入口已并入 clipbook，待删） |
-| news | news.json（旧域，入口已并入 clipbook，待删） |
-| password | passwords.json |
+| clipbook（剪藏本，ADR-0082） | news.json（未读流）+ `归档/网页剪藏/*.md` + clipbook.json（侧写） |
 | favorites | favorites.json |
-| library | `书库/*.md`、`我的/读书笔记` |
-| reading-report | metadataCache 统计 |
-| movie | `我的/影视/*.md` |
-| review | review.json |
-| quiz | quiz.json |
-| secondbrain | secondbrain.json + secondbrain.vec |
+| reading-report（读书分析） | metadataCache 统计（内嵌书架墙面板，ADR-0091） |
+| review（复习；quiz 已并入） | review.json |
+| secondbrain（第二大脑） | secondbrain.json + secondbrain.vec |
 | auto-summary | 剪藏 frontmatter |
 | launcher | launcher.json |
 | pomodoro | pomodoro.json |
 | attach | 搬附件 |
 | bili-downloader | bili-tasks.json |
-| encrypt | `CONFIG/.ENCRYPT/` |
+| encrypt（保险库，ADR-0085） | `CONFIG/.ENCRYPT/` |
+| bookshelf（书架墙） | `书库/*.md`、EPUB（library 已退役并入） |
+| cinema（影院） | `我的/影视/*.md`（movie 已退役并入，ADR-0087） |
+| home（内容首页） | 各域只读快照 |
+| recap（今日回顾） | 五域当天痕迹只读聚合 |
+| checkup（数据体检） | 全插件数据只读巡检 |
+| literature（文献盒） | literature 笔记 |
+
+> 已退役：movie（ADR-0087）、quiz（并入 review）、library（并入 bookshelf）、password（crypto 迁 core）、news/clipping（并入 clipbook）。
 
 ## 测试与质量门禁
 - 新功能必须包含数据层+UI层测试，smoke.test.ts 同步验证。

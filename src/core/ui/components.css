@@ -179,7 +179,7 @@
   background: var(--bz-chip-tint, var(--bz-surface-2)) !important;
   color: var(--bz-chip-tint-fg, var(--bz-text-1)) !important;
 }
-.bz-chip-cnt { margin-left: 2px; font-size: 10px; font-weight: 600; opacity: 0.75; }
+.bz-chip-cnt { margin-left: 2px; font-size: 11px; font-weight: 600; opacity: 0.75; }
 
 .bz-chip-x {
   appearance: none;
@@ -585,6 +585,18 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-range--lg { height: 8px; }
 .bz-range--lg::-webkit-slider-thumb { width: 18px; height: 18px; }
 .bz-range--lg::-moz-range-thumb { width: 18px; height: 18px; }
+
+/* ═══════════ 移动端全屏面板顶距 .bz-panel-mtop ═══════════
+   全站统一避让档：≤768px 真全屏面板根部顶部留 44px，避让 Obsidian 移动端头部
+   （取 max(44px, 安全区) 兼顾刘海屏）；桌面不生效。
+   挂在全屏面板根节点（panel/frame）上，同时归零首子元素顶距——core
+   `.bz-win-mfs > div:first-child` 的 34px 垫顶与域内头行自带的 safe-area
+   垫顶由本类统一接管，接入域不得再在头行重复写避让（防双份顶距）。
+   非恒全屏面板（如番茄钟）随 .bz-win-mfs 开关同挂摘（classList.toggle）。 */
+@media (max-width: 768px) {
+  .bz-panel-mtop { padding-top: max(44px, env(safe-area-inset-top, 0px)) !important; }
+  .bz-panel-mtop > div:first-child { padding-top: 0 !important; }
+}
 
 /* ═══════════ 加载 .bz-spinner ═══════════ */
 .bz-spinner {

@@ -11,7 +11,7 @@
   background: var(--bz-overlay);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--bz-font-ui);
-  z-index: 100000;
+  /* z-index 由 openPanel 经 topifyZ 动态发号（ADR-0067），此处不设静态档 */
 }
 .bz-bel-panel {
   background: var(--bz-surface-2); color: var(--bz-text-1);
@@ -167,7 +167,7 @@
 .bz-bel-name { font-size: 13.5px; font-weight: 600; color: var(--bz-text-1); line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bz-bel-sub { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-top: 1px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 /* 状态徽章（数据语义 tint 底） */
-.bz-bel-state { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; line-height: 16px; padding: 0 7px; border-radius: 999px; font-weight: 600; }
+.bz-bel-state { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; line-height: 16px; padding: 0 7px; border-radius: 999px; font-weight: 600; }
 .bz-bel-state .bz-ic { width: 11px; height: 11px; }
 .bz-bel-state--using { background: color-mix(in srgb, var(--bz-success) 14%, transparent); color: var(--bz-success); }
 .bz-bel-state--idle { background: color-mix(in srgb, var(--bz-info) 14%, transparent); color: var(--bz-info); }
@@ -183,8 +183,8 @@
 
 /* ---- 空态（组件库 .bz-empty） ---- */
 
-/* ---- 表单（弹窗骨架用组件库 .bz-overlay-mask；分类搜索 + 状态平铺自绘） ---- */
-.bz-bel-form-mask { z-index: 110000; }
+/* ---- 表单（弹窗骨架用组件库 .bz-overlay-mask；分类搜索 + 状态平铺自绘）----
+   表单遮罩 z 由 openForm 经 topifyZ 动态发号（ADR-0067，恒压主面板），不写死静态档 */
 .bz-bel-form {
   position: relative; /* 分类搜索下拉定位锚点（P2-1 审查修正） */
   background: var(--bz-surface-3); border-radius: var(--bz-radius-md);
@@ -222,9 +222,9 @@
     width: 100vw; height: 100vh; max-width: none; max-height: none;
     border-radius: 0; border: none;
   }
-  .bz-bel-head { padding-top: max(12px, env(safe-area-inset-top)); padding-right: var(--bz-space-sm); }
+  .bz-bel-head { padding-right: var(--bz-space-sm); } /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css） */
   .bz-bel-mob-only { display: inline-flex; }
-  /* 头行图标钮触屏换大按钮档（ticket 189，同 favorites 档） */
+  /* 头行图标钮触屏换大按钮档（ticket 189，同 favorites 档）；coarse 下 ::after 外扩补足 44px */
   .bz-bel-head-btns .bz-icon-btn { width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg); }
   .bz-bel-head-btns .bz-icon-btn .bz-ic { width: 16px; height: 16px; }
   .bz-bel-side { display: none; }
@@ -235,18 +235,26 @@
     overflow-x: auto; flex-shrink: 0;
   }
   .bz-bel-mobchip {
-    display: inline-flex; align-items: center; gap: 5px;
-    white-space: nowrap; font-size: var(--bz-font-meta); padding: var(--bz-space-sm) 12px;
+    display: inline-flex; align-items: center; gap: 5px; min-height: 44px; /* 触控 ≥44px 档（设计手册 §8.2） */
+    white-space: nowrap; font-size: var(--bz-font-meta); padding: var(--bz-space-sm) 14px;
     border-radius: var(--bz-radius-full); background: var(--bz-surface-2); border: 1px solid var(--bz-border);
     color: var(--bz-text-1); cursor: pointer; flex-shrink: 0; font-family: inherit;
   }
   .bz-bel-mobchip .bz-ic { width: 13px; height: 13px; }
   .bz-bel-mobchip-active { background: var(--bz-brand); color: var(--bz-on-brand); border-color: transparent; font-weight: var(--bz-weight-medium); }
   .bz-bel-mobchip-active .bz-bel-chip-cnt { color: inherit; opacity: 0.8; }
-  .bz-bel-chip-cnt { margin-left: 2px; font-size: 10px; opacity: 0.7; }
+  .bz-bel-chip-cnt { margin-left: 2px; font-size: 11px; opacity: 0.7; }
   .bz-bel-mobsearch { display: none; padding: 2px var(--bz-space-lg) 6px; flex-shrink: 0; }
   .bz-bel-mobsearch.bz-bel-mobsearch-show { display: block; }
+  /* 展开搜索行触屏抬到 ≥44px 档（同首页搜索条） */
+  .bz-bel-mobsearch .bz-input { height: 44px; }
   .bz-bel-stats { grid-template-columns: 1fr 1fr; padding: 8px var(--bz-space-lg) 2px; }
   .bz-bel-content { padding: var(--bz-space-sm) var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
   .bz-bel-name { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+}
+
+/* ---- 触控热区（设计手册 §8.2）：头行图标钮（32px 档）::after 外扩补足 44px ---- */
+@media (pointer: coarse) {
+  .bz-bel-head-btns .bz-icon-btn { position: relative; }
+  .bz-bel-head-btns .bz-icon-btn::after { content: ''; position: absolute; inset: -6px; }
 }

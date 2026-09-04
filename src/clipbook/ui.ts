@@ -228,7 +228,7 @@ function buildDom(app: any): void {
   overlayEl.style.display = 'none';
   // 桌面三栏 + 移动双屏容器（isMobileEnv 决定显示哪套，CSS 媒体查询兜底隐藏）
   overlayEl.innerHTML = `
-    <div class="bz-clip-frame">
+    <div class="bz-clip-frame bz-panel-mtop">
       <!-- 桌面三栏 -->
       <div class="bz-clip-desk">
         <div class="bz-clip-desk-head">
@@ -268,7 +268,7 @@ function buildDom(app: any): void {
         <div class="bz-clip-mob-list" data-clip-mob-list></div>
       </div>
       <!-- 移动详情 overlay（屏2） -->
-      <div class="bz-clip-mob-detail" data-clip-mob-detail style="display:none">
+      <div class="bz-clip-mob-detail bz-panel-mtop" data-clip-mob-detail style="display:none">
         <div class="bz-clip-mob-detail-top">
           <button class="bz-icon-btn bz-icon-btn--lg" data-clip-mob-back title="返回">${iconSpan('arrow-left')}</button>
           <div class="bz-clip-mob-detail-title" data-clip-mob-title></div>

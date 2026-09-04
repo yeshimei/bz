@@ -57,6 +57,8 @@ const registeredCommands: any[] = [];
 const EXPECTED_COMMAND_IDS = [
   'bz-home',
   'bz-home-open',
+  // 今日回顾（recap 域，方向一 R2：当天五域痕迹聚合面板）
+  'bz-recap-today',
   'bz-memo-open', 'bz-memo-add',
   'bz-todo-open', 'bz-todo-add',
   'bz-belongings-add', 'bz-belongings-open',
@@ -86,6 +88,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-smartcat-open', 'bz-smartcat-chat', 'bz-smartcat-hide', 'bz-smartcat-dashboard',
   // 设置面板（ADR-0080）
   'bz-settings-panel-open',
+  // 数据体检（checkup 域，D4）
+  'bz-data-checkup-open',
   'bz-diary-open',
 ];
 
@@ -181,6 +185,7 @@ describe('bz 骨架冒烟', () => {
     const domainCommands: Array<[string, string]> = [
       ['bz-home', 'launcher'],
       ['bz-home-open', 'home'],
+      ['bz-recap-today', 'recap'],
       ['bz-memo-open', 'memo'],
       ['bz-todo-open', 'todo'],
       ['bz-belongings-open', 'belongings'],
