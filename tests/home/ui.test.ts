@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks, clearNotices } from '../mock-obsidian-entry';
+import { resetObsidianMocks, clearNotices, Platform } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { DEFAULT_SETTINGS } from '../../src/settings';
@@ -281,5 +281,149 @@ describe('home UI', () => {
     expect(pick).toBeTruthy();
     // 右缘夹紧：min(350, 500-232=268) → 268（旧值 240 时会得到 260，多裁 8px）
     expect(pick.style.left).toBe('268px');
+  });
+
+  it('编辑态排序：卡上 → 钮把首卡移到第二位（数组序变化 + 落盘 + 重绘）', async () => {
+    seedHome(vault, ['diary', 'memo', 'cinema']);
+    const app = homeApp(vault);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 0));
+    const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
+    (overlay.querySelector('[data-home-edit]') as HTMLElement).click();
+    const ids = () => [...overlay.querySelectorAll('[data-home-card]')].map((c) => (c as HTMLElement).dataset.homeCard);
+    expect(ids()).toEqual(['diary', 'memo', 'cinema']);
+    // 首卡右移
+    ((overlay.querySelector('[data-home-card="diary"]') as HTMLElement).querySelector('[data-home-move="1"]') as HTMLElement).click();
+    expect(H.pinned).toEqual(['memo', 'diary', 'cinema']);
+    expect(ids()).toEqual(['memo', 'diary', 'cinema']);
+    const saved = JSON.parse(vault.files.get('CONFIG/STORAGE/home.json')!);
+    expect(saved.pinned).toEqual(['memo', 'diary', 'cinema']);
+    // 编辑态点排序钮不触发移除（仍 3 张卡、无命令执行）
+    expect(overlay.querySelectorAll('[data-home-card]').length).toBe(3);
+    expect(executedOf(app)).toEqual([]);
+  });
+
+  it('编辑态排序边界：首卡 ← / 尾卡 → 为 no-op（顺序与落盘不变）', async () => {
+    seedHome(vault, ['diary', 'memo']);
+    openHome(homeApp(vault));
+    await new Promise((r) => setTimeout(r, 0));
+    const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
+    (overlay.querySelector('[data-home-edit]') as HTMLElement).click();
+    ((overlay.querySelector('[data-home-card="diary"]') as HTMLElement).querySelector('[data-home-move="-1"]') as HTMLElement).click();
+    expect(H.pinned).toEqual(['diary', 'memo']);
+    ((overlay.querySelector('[data-home-card="memo"]') as HTMLElement).querySelector('[data-home-move="1"]') as HTMLElement).click();
+    expect(H.pinned).toEqual(['diary', 'memo']);
+    expect(JSON.parse(vault.files.get('CONFIG/STORAGE/home.json')!).pinned).toEqual(['diary', 'memo']);
+  });
+
+  it('编辑态排序钮边界弱化：首卡 ← / 尾卡 → 带 is-edge', async () => {
+    seedHome(vault, ['diary', 'memo']);
+    openHome(homeApp(vault));
+    await new Promise((r) => setTimeout(r, 0));
+    const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
+    (overlay.querySelector('[data-home-edit]') as HTMLElement).click();
+    const diaryMvL = (overlay.querySelector('[data-home-card="diary"]') as HTMLElement).querySelector('[data-home-move="-1"]') as HTMLElement;
+    const memoMvR = (overlay.querySelector('[data-home-card="memo"]') as HTMLElement).querySelector('[data-home-move="1"]') as HTMLElement;
+    expect(diaryMvL.classList.contains('is-edge')).toBe(true);
+    expect(memoMvR.classList.contains('is-edge')).toBe(true);
+  });
+
+  it('移动统计条可点：data-home-side 复用侧栏路径，点「复习到期」直达复习计划', async () => {
+    seedHome(vault);
+    const app = homeApp(vault, ['bz-review-open']);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 0));
+    const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
+    const cell = overlay.querySelector('[data-home-mstats] [data-home-side="review"]') as HTMLElement;
+    expect(cell).toBeTruthy();
+    expect(cell.classList.contains('bz-home-mstat')).toBe(true);
+    cell.click();
+    expect(executedOf(app)).toEqual(['bz-review-open']);
+    expect(document.querySelector('.bz-home-overlay')).toBeFalsy();
+  });
+
+  it('空钉选态：移除全部卡后整块按钮出现，点击进编辑模式', async () => {
+    seedHome(vault, ['diary']);
+    openHome(homeApp(vault));
+    await new Promise((r) => setTimeout(r, 0));
+    const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
+    (overlay.querySelector('[data-home-edit]') as HTMLElement).click();
+    (overlay.querySelector('[data-home-card]') as HTMLElement).click();
+    expect(H.pinned).toEqual([]);
+    const empty = overlay.querySelector('[data-home-empty]') as HTMLElement;
+    expect(empty).toBeTruthy();
+    expect(empty.classList.contains('bz-home-cards-empty')).toBe(true);
+    empty.click();
+    expect(H.editing).toBe(true);
+    expect((overlay.querySelector('[data-home-addcard]') as HTMLElement).hasAttribute('hidden')).toBe(false);
+  });
+
+  it('桌面打开自动聚焦搜索框（新标签页语义）', async () => {
+    seedHome(vault);
+    openHome(homeApp(vault));
+    await new Promise((r) => setTimeout(r, 0));
+    const q = document.querySelector('[data-home-q]') as HTMLInputElement;
+    expect(document.activeElement).toBe(q);
+  });
+
+  it('移动端打开不聚焦搜索框（防弹软键盘）', async () => {
+    Platform.isMobile = true;
+    try {
+      seedHome(vault);
+      openHome(homeApp(vault));
+      await new Promise((r) => setTimeout(r, 0));
+      const q = document.querySelector('[data-home-q]') as HTMLInputElement;
+      expect(document.activeElement).not.toBe(q);
+    } finally {
+      Platform.isMobile = false;
+    }
+  });
+
+  it('域清单补内容域：文献盒/阅读报告曝光位且命令真实接线', async () => {
+    seedHome(vault, DEFAULT_PINNED);
+    const app = homeApp(vault, ['bz-literature-open', 'bz-reading-report-open']);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 0));
+    const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
+    // 侧栏行（未钉域兜底位）
+    (overlay.querySelector('[data-home-side="literature"]') as HTMLElement).click();
+    expect(executedOf(app)).toEqual(['bz-literature-open']);
+    openHome(app); // toggle 重开
+    await new Promise((r) => setTimeout(r, 0));
+    const overlay2 = document.querySelector('.bz-home-overlay') as HTMLElement;
+    (overlay2.querySelector('[data-home-side="reading-report"]') as HTMLElement).click();
+    expect(executedOf(app)).toEqual(['bz-literature-open', 'bz-reading-report-open']);
+  });
+
+  it('编辑开关钮视觉走样式库修饰符：boxed 常驻、激活态挂 bz-icon-btn--active（不再域内覆盖）', async () => {
+    seedHome(vault);
+    openHome(homeApp(vault));
+    await new Promise((r) => setTimeout(r, 0));
+    const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
+    const btn = overlay.querySelector('[data-home-edit]') as HTMLElement;
+    expect(btn.classList.contains('bz-icon-btn--boxed')).toBe(true);
+    expect(btn.classList.contains('bz-icon-btn--active')).toBe(false);
+    btn.click();
+    expect(H.editing).toBe(true);
+    expect(btn.classList.contains('bz-icon-btn--active')).toBe(true);
+    btn.click();
+    expect(btn.classList.contains('bz-icon-btn--active')).toBe(false);
+  });
+
+  it('统计胶囊文案收进 .bz-home-badge-t（ellipsis 截断钩子，色点独立不被截断）', async () => {
+    seedHome(vault);
+    const app = homeApp(vault);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 0));
+    const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
+    // 注入快照后触发重绘（编辑开关来回一次）
+    H.snapshot = { byDomain: { diary: { text: '12 篇', hl: false, sub: '今日已写' } }, ok: true };
+    (overlay.querySelector('[data-home-edit]') as HTMLElement).click();
+    (overlay.querySelector('[data-home-edit]') as HTMLElement).click();
+    const badge = overlay.querySelector('[data-home-card="diary"] .bz-home-badge') as HTMLElement;
+    expect(badge).toBeTruthy();
+    expect(badge.querySelector('.bz-home-badge-t')!.textContent).toContain('12 篇');
+    expect(badge.querySelector('.bz-home-badge-t em')!.textContent).toBe('今日已写');
+    expect(badge.querySelector('i')).toBeTruthy();
   });
 });

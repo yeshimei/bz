@@ -49,11 +49,19 @@ describe('home 快照', () => {
     expect(created).toEqual([]);
   });
 
-  it('NO_STAT_DOMAINS 覆盖纯工具域（attach/encrypt/smartcat/settings/wall；vault 域已并入 encrypt ADR-0085）', () => {
-    expect(NO_STAT_DOMAINS.size).toBe(5);
+  it('NO_STAT_DOMAINS 覆盖无统计域：纯工具域（attach/encrypt/smartcat/settings/wall）+ 暂未接口径的内容域（literature/reading-report）', () => {
+    expect(NO_STAT_DOMAINS.size).toBe(7);
     for (const id of NO_STAT_DOMAINS) {
       expect(DOMAINS.some((d) => d.id === id)).toBe(true);
     }
+  });
+
+  it('新增内容域曝光：literature/reading-report 在域清单且有命令，空库徽标为空', async () => {
+    expect(DOMAINS.find((d) => d.id === 'literature')!.commandId).toBe('bz-literature-open');
+    expect(DOMAINS.find((d) => d.id === 'reading-report')!.commandId).toBe('bz-reading-report-open');
+    const snap = await collectHomeSnapshot(mockAppWithVault(vault) as any);
+    expect(snap.byDomain.literature.text).toBe('');
+    expect(snap.byDomain['reading-report'].text).toBe('');
   });
 
   it('diary：目录 md 计数 + 今日已写判定', async () => {
