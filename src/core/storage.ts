@@ -67,6 +67,55 @@ export function enqueueFileTask<T>(filePath: string, task: () => Promise<T>): Pr
   return run;
 }
 
+// ---------- 段级合并写（D1 可靠写契约原语 2） ----------
+
+/**
+ * 断言磁盘现值为对象形态（段级合并写的适用前提）。
+ * 数组/null/标量 → 抛错不写盘：把数组硬展开成对象会静默改形丢数据，宁可让调用方
+ * 显式归一（news 先例：wrapArrayToNewsData 包旧数组后再走段写）；onCorrupt 返回 false
+ * 的「不清盘」域读到 null 也在此抛错——不清盘语义下不应盲目段写。
+ */
+function assertPlainObject(filePath: string, current: unknown): Record<string, unknown> {
+  if (current && typeof current === 'object' && !Array.isArray(current)) return current as Record<string, unknown>;
+  const got = Array.isArray(current) ? 'array' : current === null ? 'null' : typeof current;
+  throw new Error('storage: 段级合并写要求对象形态 JSON（' + filePath + ' 读到 ' + got + '），请先归一文件形态');
+}
+
+/**
+ * 「读-改-段写」一步式组合（D1 可靠写契约原语 2；news writeNewsDataMerged 先例上沉）：
+ * 串行队列内 读磁盘现值 → writer 基于现值产出「本次声明的改动段」→ 未声明段保留磁盘
+ * 现值 → 合并写回。插件与守护进程/其他写方双写同一文件时各声明各段，互不覆盖、
+ * 不再放大「读-写窗口踩踏」。
+ * - 磁盘缺失 → defaultValue 基底（缺省 {}）；损坏 → 走留档 + 降级初始化（原语 3）后以默认值为基底；
+ * - 磁盘现值非对象形态（数组/标量/null）→ 抛错不写盘（见 assertPlainObject）；
+ * - 返回合并后的完整对象（调用方免二次读盘）。
+ * 注意：本体已含同路径串行入队，勿再包一层 enqueueFileTask（队列不可重入，会死锁）。
+ */
+export function updateFileSections<T extends object>(
+  filePath: string,
+  writer: (current: T) => Partial<T> | Promise<Partial<T>>,
+  opts: JsonFileStoreOptions<T> = {}
+): Promise<T> {
+  return enqueueFileTask(filePath, async () => {
+    const store = jsonFileStore<T>(filePath, { ...opts, defaultValue: opts.defaultValue ?? ({} as T) });
+    const current = assertPlainObject(filePath, await store.read());
+    const set = (await writer(current as T)) || {};
+    const next = { ...current, ...set } as T;
+    await store.write(next);
+    return next;
+  });
+}
+
+/** 段级合并写（声明式糖）：mergeWriteSections(path, set) ≡ updateFileSections(path, () => set)。
+ *  只声明改动段、未声明段取磁盘现值；要拿合并后完整对象请用 updateFileSections。 */
+export function mergeWriteSections<T extends object>(
+  filePath: string,
+  set: Partial<T>,
+  opts: JsonFileStoreOptions<T> = {}
+): Promise<void> {
+  return updateFileSections(filePath, () => set, opts).then(() => undefined);
+}
+
 /** Obsidian vault.create 对已存在路径抛错（消息含 "already exists"）——并发首建竞态判定 */
 function isAlreadyExistsError(e: unknown): boolean {
   const msg = e instanceof Error ? e.message : String(e);
