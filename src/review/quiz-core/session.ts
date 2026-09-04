@@ -105,7 +105,7 @@ export class QuizMasterUI {
       const notePaths = activeItems.map((i: any) => i.filePath);
       await this.ensureQuestions(notePaths);
     } catch (e: any) {
-      notice('更新题库失败：' + e.message, 'error');
+      notice('更新题库失败：' + e.message + '，请重试', 'error');
       console.error(e);
     }
   }
@@ -437,7 +437,7 @@ export class QuizMasterUI {
         }, CORRECT_JUMP_DELAY_MS);
       })
       .catch((e) => {
-        notice('删除题目失败：' + e.message, 'error');
+        notice('删除题目失败：' + e.message + '，请重试', 'error');
         onFailRestore();
       });
   }
