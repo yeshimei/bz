@@ -18,6 +18,7 @@
 import { getApp } from '../core/app';
 import { emitDomainEvent } from '../core/domain-bus';
 import { CryptoService, clearCryptoKeyCache } from '../core/crypto';
+import { enqueueFileTask } from '../core/storage';
 
 /** 保险库数据变更通道（ADR-0078：密码本/保险库等外部消费者订阅；写操作后广播） */
 export const ENCRYPT_CHANGED_CHANNEL = 'encrypt:changed' as const;
@@ -350,6 +351,11 @@ export class SafeManager {
 
   /**
    * 持久化清单（整体加密写回 .safe.enc；adapter 直写磁盘，点前缀可用）。
+   * D2 可靠写契约原语 1 收编：整段落盘入 core per-path 串行队列（键 = .safe.enc 路径）——
+   * 密文为点前缀文件，vault API 不可见、无法走 jsonFileStore，收编对象即队列原语本身；
+   * 此前仅 lockNote/restoreNote 经实例 opQueue 串行，removeNote/updateNotePayload/
+   * selfHeal/resolveHealth 的清单写可与 opQueue 内操作并发交错三段式 rename（tmp/bak
+   * 互踩），统一入队后同路径清单写全局串行。任务不可重入：任务体内勿再对本清单入队。
    * 原子写，三段式 rename——
    * Obsidian adapter.rename 不支持覆盖已存在目标（报「Destination file already exists」），
    * 故 rename 目标恒为唯一名：S1 写 `.tmp` 完整密文 → S2 旧清单挪走为 `.bak`
@@ -362,41 +368,43 @@ export class SafeManager {
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法保存清单');
     const json = JSON.stringify(this.manifest);
     const encrypted = await CryptoService.encrypt(json, this.password);
-    await this.ensureDirFor(this.manifestPath);
-    const tmp = this.manifestPath + '.tmp';
-    const bak = this.manifestPath + '.bak';
-    // 清上次残留（幂等）
-    try {
-      await this.adapter.remove(tmp);
-    } catch (e) {
-      /* 幂等 */
-    }
-    try {
-      await this.adapter.remove(bak);
-    } catch (e) {
-      /* 幂等 */
-    }
-    await this.adapter.write(tmp, encrypted);
-    // S2 旧清单挪走（目标 .bak 恒不存在，rename 无冲突）
-    await this.adapter.rename(this.manifestPath, bak);
-    try {
-      // S3 新清单搬入正位（目标已挪走，rename 无冲突）
-      await this.adapter.rename(tmp, this.manifestPath);
-    } catch (e) {
-      // 搬入失败：回滚旧清单（.bak → 正位），保持可用
+    await enqueueFileTask(this.manifestPath, async () => {
+      await this.ensureDirFor(this.manifestPath);
+      const tmp = this.manifestPath + '.tmp';
+      const bak = this.manifestPath + '.bak';
+      // 清上次残留（幂等）
       try {
-        await this.adapter.rename(bak, this.manifestPath);
-      } catch (err) {
-        /* 回滚失败留待解锁恢复（tmp+bak 均在，可自愈） */
+        await this.adapter.remove(tmp);
+      } catch (e) {
+        /* 幂等 */
       }
-      throw e;
-    }
-    // S4 删旧
-    try {
-      await this.adapter.remove(bak);
-    } catch (e) {
-      /* 幂等（残留的 .bak 由解锁恢复清理） */
-    }
+      try {
+        await this.adapter.remove(bak);
+      } catch (e) {
+        /* 幂等 */
+      }
+      await this.adapter.write(tmp, encrypted);
+      // S2 旧清单挪走（目标 .bak 恒不存在，rename 无冲突）
+      await this.adapter.rename(this.manifestPath, bak);
+      try {
+        // S3 新清单搬入正位（目标已挪走，rename 无冲突）
+        await this.adapter.rename(tmp, this.manifestPath);
+      } catch (e) {
+        // 搬入失败：回滚旧清单（.bak → 正位），保持可用
+        try {
+          await this.adapter.rename(bak, this.manifestPath);
+        } catch (err) {
+          /* 回滚失败留待解锁恢复（tmp+bak 均在，可自愈） */
+        }
+        throw e;
+      }
+      // S4 删旧
+      try {
+        await this.adapter.remove(bak);
+      } catch (e) {
+        /* 幂等（残留的 .bak 由解锁恢复清理） */
+      }
+    });
     // 清单变更广播（ADR-0078：保险库等外部消费者订阅重载；纯附加，无消费方依赖时不产生任何开销）
     emitDomainEvent(ENCRYPT_CHANGED_CHANNEL, { noteId: null });
   }
@@ -660,28 +668,35 @@ export class SafeManager {
   /**
    * 追加一条挂起标记（读-改-写；P1-6）：整写 `[id]` 覆盖会把并发另一笔已登记的
    * 标记互吞掉（其半提交从此失去自愈线索），故先读现列表再追加写回。
+   * D2 收编：读改写整体入 core per-path 串行队列（键 = pending.json 路径），
+   * 与 removePending 及未来任何同路径写者互斥（原语 1）。
    */
   private async addPending(id: string): Promise<void> {
-    const list = await this.readPending();
-    if (!list.includes(id)) list.push(id);
-    await this.ensureStagingDir();
-    await this.adapter.write(this.pendingPath, JSON.stringify(list));
+    await enqueueFileTask(this.pendingPath, async () => {
+      const list = await this.readPending();
+      if (!list.includes(id)) list.push(id);
+      await this.ensureStagingDir();
+      await this.adapter.write(this.pendingPath, JSON.stringify(list));
+    });
   }
 
   /**
    * 移除单条挂起标记（读-改-写；P1-6）：只摘除自己的 id，其余笔的标记原样保留；
    * 列表清空则删除文件（对齐原「清除标记」语义，暂存区回归无标记状态）。
+   * D2 收编：读改写整体入 pending.json per-path 串行队列（原语 1）。
    */
   private async removePending(id: string): Promise<void> {
-    const list = await this.readPending();
-    const idx = list.indexOf(id);
-    if (idx !== -1) list.splice(idx, 1);
-    if (list.length === 0) {
-      if (await this.adapter.exists(this.pendingPath)) await this.adapter.remove(this.pendingPath);
-      return;
-    }
-    await this.ensureStagingDir();
-    await this.adapter.write(this.pendingPath, JSON.stringify(list));
+    await enqueueFileTask(this.pendingPath, async () => {
+      const list = await this.readPending();
+      const idx = list.indexOf(id);
+      if (idx !== -1) list.splice(idx, 1);
+      if (list.length === 0) {
+        if (await this.adapter.exists(this.pendingPath)) await this.adapter.remove(this.pendingPath);
+        return;
+      }
+      await this.ensureStagingDir();
+      await this.adapter.write(this.pendingPath, JSON.stringify(list));
+    });
   }
 
   /**
