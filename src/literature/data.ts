@@ -1,9 +1,13 @@
 /**
  * 文献盒数据管理器（视频转文献，literature 域；ADR-0066 正名「文献盒」，ADR-0072 迁出为新域）
  * literature.json 读写（jsonStore）、任务 CRUD、状态流转、时间格式校验。
+ * D3 可靠写契约原语 1 收编：全部「读→改→写」事务整体入 core per-path 串行队列
+ * （enqueueFileTask，键 = literature.json 路径）——下载守护进程回写状态与面板增删任务并发时
+ * 按序落盘，后写者不再用陈旧基线覆盖先写者；坏文件由 jsonFileStore 留档降级（原语 3）。
+ * read/write 保持无锁原语（仅限队列内调用，勿再入队——队列不可重入）。
  */
 import moment from 'moment';
-import { jsonFileStore, storageFile, type JsonFileStore } from '../core/storage';
+import { enqueueFileTask, jsonFileStore, storageFile, type JsonFileStore } from '../core/storage';
 import { tryGetSettings } from '../core/settings-provider';
 import { generateId } from '../core/utils';
 import type { LiteratureTask, LiteratureTaskStatus } from './types';
@@ -90,41 +94,53 @@ export const LiteratureData = {
     return this._ensureStore().write(data);
   },
 
+  /** 读改写事务：fn 基于磁盘现值改动，整体入 per-path 串行队列（D3 原语 1） */
+  async _mutate<T>(fn: (data: any[]) => T | Promise<T>): Promise<T> {
+    return enqueueFileTask(this.filePath, async () => {
+      const data = await this.read();
+      const result = await fn(data);
+      await this.write(data);
+      return result;
+    });
+  },
+
   /** 全量读取并统一字段形状（缺省补默认值，旧/手改数据零迁移） */
   async loadTasks(): Promise<LiteratureTask[]> {
-    const raw = await this.read();
-    let needWrite = false;
-    const tasks = raw.map((item: any) => {
-      if (!item.id) {
-        item.id = generateId('literature-task');
-        needWrite = true;
-      }
-      return {
-        id: item.id,
-        url: item.url || '',
-        start: item.start || null,
-        end: item.end || null,
-        status: (item.status as LiteratureTaskStatus) || 'pending',
-        reason: item.reason || null,
-        remark: item.remark || null,
-        notePath: item.notePath || null,
-        videoPath: item.videoPath || null,
-        created: item.created || moment().format('YYYY-MM-DD HH:mm:ss'),
-        processedAt: item.processedAt || null,
-        title: item.title || null,
-        uploader: item.uploader || null,
-        archived: item.archived === true,
-        archivedAt: item.archivedAt || null,
-        quality: item.quality || null,
-        page: Number.isInteger(item.page) && Number(item.page) > 0 ? Number(item.page) : null,
-      } as LiteratureTask;
+    // 读改写整体入队：缺 id 补 id 的回写与并发任务写不互踩
+    return this._mutate(async (raw) => {
+      let needWrite = false;
+      const tasks = raw.map((item: any) => {
+        if (!item.id) {
+          item.id = generateId('literature-task');
+          needWrite = true;
+        }
+        return {
+          id: item.id,
+          url: item.url || '',
+          start: item.start || null,
+          end: item.end || null,
+          status: (item.status as LiteratureTaskStatus) || 'pending',
+          reason: item.reason || null,
+          remark: item.remark || null,
+          notePath: item.notePath || null,
+          videoPath: item.videoPath || null,
+          created: item.created || moment().format('YYYY-MM-DD HH:mm:ss'),
+          processedAt: item.processedAt || null,
+          title: item.title || null,
+          uploader: item.uploader || null,
+          archived: item.archived === true,
+          archivedAt: item.archivedAt || null,
+          quality: item.quality || null,
+          page: Number.isInteger(item.page) && Number(item.page) > 0 ? Number(item.page) : null,
+        } as LiteratureTask;
+      });
+      if (needWrite) await this.write(raw);
+      return tasks;
     });
-    if (needWrite) await this.write(raw);
-    return tasks;
   },
 
   /** 追加一条待处理任务（队列尾 = 处理顺序尾） */
-  async addTask(input: LiteratureTaskInput): Promise<LiteratureTask> {
+  addTask(input: LiteratureTaskInput): Promise<LiteratureTask> {
     const task: LiteratureTask = {
       id: generateId('literature-task'),
       url: normalizeUrl(input.url),
@@ -144,27 +160,25 @@ export const LiteratureData = {
       quality: input.quality || null,
       page: Number.isInteger(input.page) && Number(input.page) > 0 ? Number(input.page) : null,
     };
-    const data = await this.read();
-    data.push(task);
-    await this.write(data);
-    return task;
+    return this._mutate((data) => {
+      data.push(task);
+      return task;
+    });
   },
 
-  async updateTask(id: string, patch: Partial<LiteratureTask>): Promise<void> {
-    const data = await this.read();
-    const idx = data.findIndex((d: any) => d.id === id);
-    if (idx === -1) throw new Error('任务不存在');
-    data[idx] = { ...data[idx], ...patch, id: data[idx].id };
-    await this.write(data);
+  updateTask(id: string, patch: Partial<LiteratureTask>): Promise<void> {
+    return this._mutate(async (data) => {
+      const idx = data.findIndex((d: any) => d.id === id);
+      if (idx === -1) throw new Error('任务不存在');
+      data[idx] = { ...data[idx], ...patch, id: data[idx].id };
+    }).then(() => undefined);
   },
 
   async deleteTask(id: string): Promise<void> {
-    const data = await this.read();
-    const idx = data.findIndex((d: any) => d.id === id);
-    if (idx !== -1) {
-      data.splice(idx, 1);
-      await this.write(data);
-    }
+    await this._mutate((data) => {
+      const idx = data.findIndex((d: any) => d.id === id);
+      if (idx !== -1) data.splice(idx, 1);
+    });
   },
 
   /** 重试：失败/中止项回到待处理（保留旧结果字段，下次成功覆盖） */
@@ -178,8 +192,10 @@ export const LiteratureData = {
 
   /** 清空历史（archived 条目；主列表待处理/失败项不受影响，ADR-0067） */
   async clearHistory(): Promise<void> {
-    const data = await this.read();
-    const kept = data.filter((d: any) => d.archived !== true);
-    await this.write(kept);
+    await this._mutate((data) => {
+      for (let i = data.length - 1; i >= 0; i--) {
+        if (data[i].archived === true) data.splice(i, 1);
+      }
+    });
   },
 };
