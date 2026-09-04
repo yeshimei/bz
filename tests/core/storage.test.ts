@@ -76,7 +76,7 @@ describe('jsonFileStore', () => {
     expect(c.items).toEqual([]);
   });
 
-  it('损坏 JSON → 改名留档重建默认值 + onCorrupt 钩子', async () => {
+  it('损坏 JSON → CONFIG/.CORRUPT 留档重建默认值 + onCorrupt 钩子', async () => {
     const broken = '{broken';
     vault.files.set('CONFIG/STORAGE/data.json', broken);
     const corruptSpy = vi.fn();
@@ -89,7 +89,8 @@ describe('jsonFileStore', () => {
     }
     expect(corruptSpy).toHaveBeenCalledTimes(1);
     expect(corruptSpy.mock.calls[0][0]).toBe('CONFIG/STORAGE/data.json');
-    const backups = [...vault.files.keys()].filter((p) => p.startsWith('CONFIG/STORAGE/data.json.corrupt-'));
+    // D1 留档契约：原样留档到 CONFIG/.CORRUPT/<名>.<yyyymmdd-hhmmss>.bak，原路径重建默认值
+    const backups = [...vault.files.keys()].filter((p) => p.startsWith('CONFIG/.CORRUPT/data.json.'));
     expect(backups).toHaveLength(1);
     expect(vault.files.get(backups[0])).toBe(broken);
     expect(JSON.parse(vault.files.get('CONFIG/STORAGE/data.json')!)).toEqual([]);

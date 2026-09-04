@@ -46,11 +46,11 @@ describe('home 数据层', () => {
     expect(data.pinned).toEqual(['diary', 'pomodoro', 'settings']);
   });
 
-  it('损坏文件 → 重建默认（改名留档）', async () => {
+  it('损坏文件 → 重建默认（CONFIG/.CORRUPT 原样留档）', async () => {
     vault.files.set('CONFIG/STORAGE/home.json', '{{{not json');
     const data = await loadHomeData();
     expect(data.pinned).toEqual(DEFAULT_PINNED);
-    const corrupt = [...vault.files.keys()].find((p) => p.includes('.corrupt-'));
+    const corrupt = [...vault.files.keys()].find((p) => p.startsWith('CONFIG/.CORRUPT/home.json.'));
     expect(corrupt).toBeTruthy();
   });
 
