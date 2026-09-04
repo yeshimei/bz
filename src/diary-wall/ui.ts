@@ -607,7 +607,7 @@ export class DiaryWallAppController {
       await this.mergeEncryptedEntries();
       this.renderAll();
     } catch (e) {
-      notice('解锁失败', 'error');
+      notice('解密失败：主密码可能不正确，密文未受影响', 'error');
     }
   }
 
@@ -1775,10 +1775,10 @@ export class DiaryWallAppController {
         notice('已解密还原', 'success');
         void this.loadAndRender();
       } else {
-        notice('解密失败', 'error');
+        notice('解密失败：主密码可能不正确，密文未受影响', 'error');
       }
     } catch (err) {
-      notice('解密失败', 'error');
+      notice('解密失败：主密码可能不正确，密文未受影响', 'error');
     }
   }
 
