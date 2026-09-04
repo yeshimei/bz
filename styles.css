@@ -1693,8 +1693,21 @@ button.news-close-btn {
 .bz-btn--danger { background: var(--bz-danger) !important; color: var(--bz-on-danger) !important; }
 .bz-btn--danger:hover { background: var(--bz-danger) !important; opacity: 0.9; }
 
+/* 描边 danger 档（ghost 形制 + danger 色；与实底 --danger 互补）：常态透底 danger 描边字，
+   hover 转实底 on-danger（先例：书架墙详情删除钮） */
+.bz-btn--danger-ghost { background: transparent !important; border-color: var(--bz-danger) !important; color: var(--bz-danger) !important; }
+.bz-btn--danger-ghost:hover { background: var(--bz-danger) !important; border-color: var(--bz-danger) !important; color: var(--bz-on-danger) !important; }
+
 .bz-btn--ghost { background: transparent !important; border-color: var(--bz-border-strong) !important; color: var(--bz-text-1) !important; }
 .bz-btn--ghost:hover { background: var(--bz-surface-hover) !important; }
+
+/* hover 品牌档（悬停才显品牌色的静态变体）：常态走基线，hover 转品牌软底 + 品牌前景描边
+   （先例：书架墙详情「N 划线 · N 批注」可点 chip） */
+.bz-btn--hover-accent:hover {
+  background: var(--bz-brand-soft) !important;
+  border-color: var(--bz-brand) !important;
+  color: var(--bz-brand) !important;
+}
 
 .bz-btn--sm { height: var(--bz-control-h-sm); padding: 0 10px; font-size: var(--bz-font-meta); border-radius: 6px; }
 .bz-btn--lg { height: var(--bz-control-h-lg); padding: 0 20px; font-size: var(--bz-font-body); border-radius: 10px; }
@@ -1803,6 +1816,12 @@ button.news-close-btn {
 .bz-chip--tint:hover {
   background: var(--bz-chip-tint, var(--bz-surface-2)) !important;
   color: var(--bz-chip-tint-fg, var(--bz-text-1)) !important;
+}
+/* hover 品牌档（悬停才显品牌色的静态变体；与 .bz-btn--hover-accent 同语义） */
+.bz-chip--hover-accent:hover {
+  background: var(--bz-brand-soft) !important;
+  border-color: var(--bz-brand) !important;
+  color: var(--bz-brand) !important;
 }
 .bz-chip-cnt { margin-left: 2px; font-size: 11px; font-weight: 600; opacity: 0.75; }
 
@@ -2221,6 +2240,24 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 @media (max-width: 768px) {
   .bz-panel-mtop { padding-top: max(44px, env(safe-area-inset-top, 0px)) !important; }
   .bz-panel-mtop > div:first-child { padding-top: 0 !important; }
+}
+
+/* ═══════════ 触控热区 .bz-touch-target（设计手册 §8.2） ═══════════
+   触屏（pointer:coarse）下小元素 ::after 外扩命中区至 ≥44px，视觉不变
+   （shadcn extend-touch-target 同款）。按元素原尺寸分档：32px 档钮用默认 -6px；
+   40/36px 档用 --sm(-4px)；26/28px 档用 --lg(-8px)；20/22px 档用 --xl(-12px)；
+   非档位值可内联 --bz-touch-outset 覆写。热区外扩会盖住相邻元素命中——
+   行距紧凑的列表行勿用本类，改 padding 抬档（先例 attach 清单行）。 */
+@media (pointer: coarse) {
+  .bz-touch-target { position: relative; }
+  .bz-touch-target::after {
+    content: '';
+    position: absolute;
+    inset: var(--bz-touch-outset, -6px);
+  }
+  .bz-touch-target--sm { --bz-touch-outset: -4px; }
+  .bz-touch-target--lg { --bz-touch-outset: -8px; }
+  .bz-touch-target--xl { --bz-touch-outset: -12px; }
 }
 
 /* ═══════════ 加载 .bz-spinner ═══════════ */
@@ -3869,25 +3906,9 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 }
 
 /* ============ 增强 #13：移动端触控热区 ≥44px 档 ============ */
-/* 触屏设备（pointer: coarse）下横滑标签/chips/头行图标钮等小元素用 ::after 外扩热区
-   （shadcn extend-touch-target 同款：视觉不变、热区 ≥44px；设计手册 §8.2）。
-   绝对定位外扩不触发横滑容器的额外滚动宽度（inset 负值向四周扩展） */
-@media (pointer: coarse) {
-  .bz-diary-wall .bz-diary-wall-chip,
-  .bz-diary-wall .bz-diary-wall-subchip,
-  .bz-diary-wall .bz-diary-wall-icon-btn,
-  .bz-diary-wall .bz-diary-wall-memory {
-    position: relative;
-  }
-  .bz-diary-wall .bz-diary-wall-chip::after,
-  .bz-diary-wall .bz-diary-wall-subchip::after,
-  .bz-diary-wall .bz-diary-wall-icon-btn::after,
-  .bz-diary-wall .bz-diary-wall-memory::after {
-    content: '';
-    position: absolute;
-    inset: -12px;
-  }
-}
+/* 触屏（pointer: coarse）下横滑标签/chips/头行图标钮/那年今天卡 ::after 外扩热区
+   已收编 core 样式库 .bz-touch-target--xl（components.css，模板挂类，inset -12px 补足 44px；
+   shadcn extend-touch-target 同款：视觉不变；绝对定位外扩不触发横滑容器额外滚动宽度） */
 
 /* ============ 右键上下文菜单（桌面，跟手） ============ */
 /* 增强 #12：z 静态档（2000）已删——显示时由 topifyZ 动态发号（ADR-0067，谁后显示谁在上） */
@@ -4187,11 +4208,11 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   filter: grayscale(1);
   cursor: not-allowed;
 }
-/* 拖拽中（安卓式：跟随手指 + 放大 + 阴影） */
+/* 拖拽中（安卓式：跟随手指 + 放大 + 阴影）；z 为局部层叠小值（只需压过兄弟磁贴，非 overlay 档） */
 #launcher-grid .launcher-tile.dragging {
   opacity: 0.9;
   cursor: grabbing;
-  z-index: 9999;
+  z-index: 10;
   transition: none;
   animation: launcher-drag-pop 0.18s ease;
 }
@@ -4534,16 +4555,11 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   .bz-home-mini { height: var(--bz-icon-btn-lg); padding: 0 var(--bz-space-md); }
 }
 
-/* ---- 触控热区（设计手册 §8.2）：触屏下小元素 ::after 外扩至 ≥44px，视觉不变 ----
-   迷你 chips（32px）/ 排序小钮（22px，触屏同步抬视觉档）/ hero 编辑·关闭盒装钮（26px） */
+/* ---- 触控热区（设计手册 §8.2）：::after 外扩已收编 core .bz-touch-target（模板挂类，
+   迷你 chips/hero 编辑·关闭 = --lg(-8px)、排序小钮 = 默认(-6px)）；此处仅保留触屏视觉抬档 ---- */
 @media (pointer: coarse) {
-  .bz-home-mini, .bz-home-mv, .bz-home-edit, .bz-home-close { position: relative; }
   .bz-home-mini { height: 40px; }
-  .bz-home-mini::after, .bz-home-edit::after, .bz-home-close::after {
-    content: ''; position: absolute; inset: -8px;
-  }
   .bz-home-mv { width: 32px; height: 32px; }
-  .bz-home-mv::after { content: ''; position: absolute; inset: -6px; }
 }
 /* ==================== 今日回顾域样式（src/recap/styles.css，方向一 R2） ====================
    组件库纪律（铁律 6）：基线按钮/图标钮/空态/spinner 走 src/core/ui components.css 的
@@ -5581,9 +5597,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   }
   .bz-fav-head { padding-right: var(--bz-space-sm); } /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css） */
   .bz-fav-mob-only { display: inline-flex; }
-  /* 头行图标钮触屏换大按钮档（ticket 188：≥40px 目标档）；coarse 下 ::after 外扩补足 44px */
-  .bz-fav-head-btns .bz-icon-btn { width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg); }
-  .bz-fav-head-btns .bz-icon-btn .bz-ic { width: 16px; height: 16px; }
+  /* 头行图标钮触屏换大按钮档（ticket 188：≥40px 目标档）已收编组件库 .bz-icon-btn--lg 修饰符（模板挂类） */
   .bz-fav-side { display: none; }
   .bz-fav-main-head { display: none; } /* 桌面专属主头行；移动主按钮收头行图标组 */
   .bz-fav-toolbar { display: none; }  /* 桌面工具栏；移动搜索走隐藏展开行 */
@@ -5612,11 +5626,9 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   .bz-fav-desc { -webkit-line-clamp: 3; }
 }
 
-/* ---- 触控热区（设计手册 §8.2）：头行图标钮（32px 档）::after 外扩补足 44px ---- */
-@media (pointer: coarse) {
-  .bz-fav-head-btns .bz-icon-btn { position: relative; }
-  .bz-fav-head-btns .bz-icon-btn::after { content: ''; position: absolute; inset: -6px; }
-}
+/* 触控热区（设计手册 §8.2）已收编 core 样式库 .bz-touch-target（components.css，
+   头行图标钮挂类，coarse 下 ::after 外扩 -6px 补足 44px），域内不再复制外扩块。 */
+
 /* ==================== 复习计划域样式（src/review/styles.css） ====================
  * 2026-09-04 拍板形态：三区队列面板 + 整窗做题冲刺（非弹窗）。
  * 面板容器 / 难度弹窗 / watch·exclude 设置行 / 统计·历史弹窗为既有保留块；
@@ -5876,17 +5888,11 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .review-stage-badge .bz-ic svg { width: 100%; height: 100%; }
 
 /* ==================== 触控热区（设计手册 §8.2，触屏 pointer:coarse） ====================
-   底部信息行 / 迷你评级条 / 设置 chip 关闭钮 / 历史·统计关闭钮等小元素：padding 抬档
-   + ::after 外扩（视觉不变、热区 ≥44px；间距紧张处取 40px 下限档） */
+   ::after 外扩已收编 core .bz-touch-target（components.css，模板挂类）：信息行/设置 chip
+   关闭钮/历史·统计关闭钮 = --lg/--xl 档、迷你评级条 = --sm 档；此处仅保留 padding 抬档。 */
 @media (pointer: coarse) {
-  .bz-q-fitem, .bz-review-bar-btn,
-  .bz-review-exclude-remove, .bz-review-history-close, #review-stats-close { position: relative; }
   .bz-q-fitem { padding: 4px 0; }
-  .bz-q-fitem::after { content: ''; position: absolute; inset: -8px; }
   .bz-review-bar-btn { padding: 10px 12px; }
-  .bz-review-bar-btn::after { content: ''; position: absolute; inset: -4px; }
-  .bz-review-exclude-remove::after,
-  .bz-review-history-close::after, #review-stats-close::after { content: ''; position: absolute; inset: -12px; }
 }
 /* ==================== 番茄钟域样式（src/pomodoro/styles.css） ==================== */
 /* ==================== 番茄钟状态栏（pomodoro，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
@@ -5945,13 +5951,12 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
     #pomodoro-popup.bz-panel-mtop #pomodoro-btn-settings { top: calc(max(44px, env(safe-area-inset-top, 0px)) + 12px); }
 }
 
-/* ==================== 触控热区（设计手册 §8.2，触屏 pointer:coarse） ==================== */
+/* ==================== 触控热区（设计手册 §8.2，触屏 pointer:coarse） ====================
+   ::after 外扩已收编 core .bz-touch-target（components.css，模板挂类）：
+   控制按钮 = --sm(-4px)、右上角设置钮 = 默认(-6px)；此处仅保留 padding 抬档。 */
 @media (pointer: coarse) {
-    .pomodoro-btn, #pomodoro-btn-settings { position: relative; }
     .pomodoro-btn { padding: 10px 16px; }
-    .pomodoro-btn::after { content: ''; position: absolute; inset: -4px; }
     #pomodoro-btn-settings { padding: 10px; }
-    #pomodoro-btn-settings::after { content: ''; position: absolute; inset: -6px; }
 }
 /* ==================== 附件搬移域样式（src/attach/styles.css） ==================== */
 /* 原文件夹选择弹窗样式（bz-attach-*，ticket 65）随 FolderSelectModal 退役（ticket 128，
@@ -6491,17 +6496,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   #bz-encrypt-popup .bz-pwv-mobplathead .bz-pwv-btn.gold { margin-left: auto; background: var(--bz-vault-gold-soft); color: #fff; padding: 8px 14px; border-radius: 10px; font-weight: 600; }
 }
 
-/* ---- 触控热区（设计手册 §8.2）：移动端关闭/返回钮与账户卡小钮 ::after 外扩 ---- */
-@media (pointer: coarse) {
-  #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose,
-  #bz-encrypt-popup .bz-vault-mobpage .head .back,
-  #bz-encrypt-popup .bz-pwv-empty .bz-pwv-empty-add,
-  #bz-encrypt-popup .bz-pwv-acctcard .copyac { position: relative; }
-  #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose::after,
-  #bz-encrypt-popup .bz-vault-mobpage .head .back::after { content: ''; position: absolute; inset: -12px; }
-  #bz-encrypt-popup .bz-pwv-empty .bz-pwv-empty-add::after { content: ''; position: absolute; inset: -8px; }
-  #bz-encrypt-popup .bz-pwv-acctcard .copyac::after { content: ''; position: absolute; inset: -8px; }
-}
+/* 触控热区（设计手册 §8.2）已收编 core 样式库 .bz-touch-target（components.css，模板挂类）：
+   移动端关闭/返回钮 = --xl(-12px)，账户卡小钮/空态新增钮 = --lg(-8px)，域内不再复制外扩块。 */
 /* ==================== 设置面板域样式（src/settings-panel/styles.css，ADR-0080） ==================== */
 /* 收编新体系（铁律 6）：控件（按钮/输入/开关/下拉/滑条/chip/徽标/空态）全部消费组件库
    src/core/ui（components.css + tokens.css）；本文件只保留域内特有布局与行内尺寸修饰：
@@ -7288,11 +7284,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   .bz-bel-name { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 }
 
-/* ---- 触控热区（设计手册 §8.2）：头行图标钮（32px 档）::after 外扩补足 44px ---- */
-@media (pointer: coarse) {
-  .bz-bel-head-btns .bz-icon-btn { position: relative; }
-  .bz-bel-head-btns .bz-icon-btn::after { content: ''; position: absolute; inset: -6px; }
-}
+/* 触控热区（设计手册 §8.2）已收编 core 样式库 .bz-touch-target（components.css，
+   头行图标钮挂类，coarse 下 ::after 外扩 -6px 补足 44px），域内不再复制外扩块。 */
 /* ==================== 影院域样式（src/cinema/styles.css） ==================== */
 /* 试点收编（铁律 6）：基线（按钮/图标钮/chip/输入/弹窗/空态）全部消费组件库
    （src/core/ui/components.css 的 .bz-* 类与 --bz-* token）；
@@ -8246,14 +8239,14 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 /* bz-bili-* 任务队列样式（视频录入面板/历史弹窗沿用，ticket 136 迁移时丢失、ticket 138 恢复）；
    新增 bz-lit-* 主面板/术语面板样式；主面板视觉细节对齐日记本（ticket 138 §4）。 */
 
-/* ---- 主面板/术语面板共享遮罩与窗口（bz- 前缀，样式收敛于此处，不内联视觉） ---- */
+/* ---- 主面板/术语面板共享遮罩与窗口（bz- 前缀，样式收敛于此处，不内联视觉）
+   z 静态档（99999/100000）已清——五处显示路径均由 topifyZ(mask, popup) 动态发号（ADR-0067） ---- */
 .bz-lit-mask {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, .45);
   backdrop-filter: blur(2px); /* 对齐日记本遮罩质感 */
   animation: bz-lit-fade-in .2s ease-out;
-  z-index: 99999;
 }
 .bz-lit-window {
   position: fixed;
@@ -8268,7 +8261,6 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   border-radius: 12px;
   box-shadow: 0 12px 48px rgba(0, 0, 0, .3); /* 对齐日记本弹窗阴影 */
   animation: bz-lit-slide-up .25s ease-out;
-  z-index: 100000;
 }
 /* 小型弹窗（添加任务 / 术语生成）：内容直接铺开，无需独立滚动区 */
 .bz-lit-dialog {
@@ -8287,7 +8279,6 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   border-radius: 12px;
   box-shadow: 0 12px 48px rgba(0, 0, 0, .3);
   animation: bz-lit-slide-up .25s ease-out;
-  z-index: 100000;
 }
 .bz-lit-list {
   flex: 1;
@@ -9760,13 +9751,12 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   font-size: 12.5px;
   color: var(--text-muted);
 }
-/* 鏀惰捣鎬?mini 鑳跺泭 */
+/* 收起态底部 mini 胶囊（z 静态档 9000 已清——collapse() 显示时 topifyZ 发号，ADR-0067） */
 .bz-sb-mb-mini {
   position: fixed;
   left: 50%;
   bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%) translateY(80px);
-  z-index: 9000;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -9986,7 +9976,8 @@ textarea.bz-sb-chat-input {
   transform: translateX(-50%);
   width: 50px;
   height: 50px;
-  z-index: 100000;
+  /* z 静态初值（100000）已清：mountCatContainer 挂载即 registerAlwaysOnTop 发号（ADR-0067，
+     终局 review 批 B 收口——恒顶层级由分配器保证，样式源不再持有大数占位） */
   cursor: pointer;
   touch-action: none;
   user-select: none;
@@ -10202,7 +10193,7 @@ textarea.bz-sb-chat-input {
   animation: hologramScan 3s ease-in-out infinite;
 }
 
-/* 思考指示器（原 thinking-indicator：顶部绿点） */
+/* 思考指示器（原 thinking-indicator：顶部绿点）；z 为猫层叠上下文内局部小档（压过气泡容器） */
 #smart-companion-cat .thinking-indicator {
   position: absolute;
   top: -18px;
@@ -10215,7 +10206,7 @@ textarea.bz-sb-chat-input {
   box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3), 0 0 10px 4px rgba(76, 175, 80, 0.2);
   opacity: 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 100001;
+  z-index: 3;
   pointer-events: none;
 }
 #smart-companion-cat .thinking-indicator.active {
@@ -10235,7 +10226,7 @@ textarea.bz-sb-chat-input {
   box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.3), 0 0 10px 4px rgba(255, 107, 107, 0.2);
   opacity: 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 100001;
+  z-index: 3;
   pointer-events: none;
 }
 #smart-companion-cat .voice-indicator.active {
@@ -10260,7 +10251,7 @@ textarea.bz-sb-chat-input {
   pointer-events: none;
   max-height: 300px;
   overflow: visible;
-  z-index: 10001;
+  z-index: 2; /* 猫层叠上下文内局部小档（transform 自成上下文，仅压过猫本体） */
 }
 #smart-companion-cat .cat-bubble {
   position: relative;
@@ -10277,7 +10268,7 @@ textarea.bz-sb-chat-input {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui;
   line-height: 1.4;
   word-wrap: break-word;
-  z-index: 10001;
+  z-index: 1; /* 容器内局部小档（多气泡按 DOM 序堆叠，与原同值语义一致） */
   opacity: 0;
   transform: translateX(var(--bz-sc-shift, 0px)) translateY(10px) scale(0.95);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
