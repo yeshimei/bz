@@ -368,7 +368,9 @@ template {
    （仍是兜底 unset），但任何单类按钮规则（.bz-btn/.bz-choice-btn 等 0,1,0）
    即可覆盖——共享组件库的单类组件成立的前提。 */
 button:not(.clickable-icon) {
-  box-shadow: none !important;
+    color: unset;
+    background-color: unset;
+    box-shadow: unset;
 }
 
 /* ===== 设置页顶部分页（参考 obsidian-linter 设置页） ===== */
@@ -4484,19 +4486,24 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   min-width: 0;
 }
 
-/* ---- 章节栏（固定不随瀑布滚动；自身超高时内部滚动；滚动自动高亮当前月份） ---- */
+/* ---- 章节栏（固定不随瀑布滚动；自身超高时内部滚动；滚动自动高亮当前月份） ----
+   壳 = 组件库 .bz-rail 族（ADR-0094）：.bz-rail（钩子类 .bz-diary-wall-rail 锁 168px 档）
+   + .bz-rail-scroll + .bz-rail-item(.on)/.bz-rail-name/.bz-rail-count。
+   域内只留：宽度档/滚动内边距/月份行补垫（域 reset 通配会清 padding，需 ≥(0,2,0) 恢复）/
+   sticky 标题/年份分组/胶卷缩略图条（月份行域内特有形态）。 */
 .bz-diary-wall-rail {
-  width: 168px;
-  flex-shrink: 0;
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  border-right: 1px solid var(--dw-line);
-  padding: 12px 10px 16px;
-  position: relative;
+  --bz-rail-w: 168px;
 }
 .bz-diary-wall-mob .bz-diary-wall-rail {
   display: none;
+}
+.bz-diary-wall-rail .bz-rail-scroll {
+  padding: 12px 10px 16px;
+}
+.bz-diary-wall-rail .bz-diary-wall-month {
+  padding: 10px;
+  /* 胶卷缩略图条换行到名称/计数第二行（.bz-rail-item 是 flex row） */
+  flex-wrap: wrap;
 }
 .bz-diary-wall-rail-title {
   font-size: 11px;
@@ -4520,36 +4527,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-diary-wall-rail-year:first-of-type {
   padding-top: 4px;
 }
-.bz-diary-wall-month {
-  padding: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.15s;
-  position: relative;
-  border-left: 2px solid transparent;
-}
-.bz-diary-wall-month:hover {
-  background: var(--dw-hover);
-}
-.bz-diary-wall-month--on {
-  background: var(--dw-active-hover);
-  border-left-color: var(--dw-accent);
-}
-.bz-diary-wall-month-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.bz-diary-wall-month-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--dw-ink);
-}
-.bz-diary-wall-month-count {
-  font-size: 11px;
-  color: var(--dw-faint);
-}
 .bz-diary-wall-month-strip {
+  width: 100%;
   display: flex;
   gap: 3px;
   margin-top: 8px;
@@ -5403,34 +5382,17 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
     grid-template-columns: repeat(3, 1fr);
   }
 }
-/* ==================== 内容首页域样式（src/home/styles.css） ==================== */
-/* 入口页「新标签页」原型（launcher-p3-newtab）一比一迁移（ticket 177）。
-   组件库纪律（铁律 6）：基线（图标钮/徽标/按钮/输入/chip）走 src/core/ui
-   components.css 的 .bz-* 类与 --bz-* token；本文件只保留首页独有布局
-   （hero/卡片网格/迷你 chips/侧栏/统计条/搜索面板/加域 pick），
-   取值一律取自 tokens.css（间距/控件高/字号全部对档，无档外裸值）；
-   徽标色点用品牌/语义功能色（数据语义，域内直给）。
-   编辑开关钮的盒装/激活视觉走样式库修饰符（.bz-icon-btn--boxed/--active），
-   域内不再覆盖基线（原 !important 对抗已收编进样式库）。 */
+/* ==================== 内容首页域样式（src/home/styles.css） ====================
+   组件库纪律（铁律 6）：面板壳（.bz-panel-overlay/.bz-panel-frame）、pick 弹层（.bz-popover 族）、
+   统计卡（.bz-stat/uiStat）、空态（.bz-empty/uiEmpty）、基线（图标钮/按钮/输入/chip）
+   走 src/core/ui；本文件只保留首页独有布局（hero/卡片网格/迷你 chips/侧栏/
+   搜索面板/统计条网格/pick 宽度与移动端变体），取值一律取自 tokens.css。 */
 
-/* ---- 遮罩 + 主面板骨架 ---- */
-.bz-home-overlay {
-  position: fixed; inset: 0;
-  background: var(--bz-overlay);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--bz-font-ui);
-  /* z-index 由 createOverlay 经 topifyZ 动态分配（ADR-0067），此处不设静态档 */
-}
+/* ---- 遮罩 + 主面板骨架：基线走样式库 .bz-panel-overlay/.bz-panel-frame（含滚动条隐藏）；
+        .bz-home-overlay 只留移动端 flex-end 变体，.bz-home-panel 只留桌面尺寸 ---- */
 .bz-home-panel {
-  background: var(--bz-surface-2); color: var(--bz-text-1);
-  border-radius: var(--bz-radius-lg); border: 1px solid var(--bz-border);
-  box-shadow: var(--bz-shadow-lg);
-  display: flex; flex-direction: column;
   width: 860px; max-width: calc(100vw - 32px); height: 600px; max-height: 90vh;
-  overflow: hidden; position: relative;
 }
-.bz-home-overlay, .bz-home-overlay * { scrollbar-width: none; -ms-overflow-style: none; }
-.bz-home-overlay *::-webkit-scrollbar { display: none; }
 
 /* ---- hero（顶部问候 + 搜索） ---- */
 .bz-home-hero { padding: var(--bz-space-xl) var(--bz-space-xl) var(--bz-space-sm); flex-shrink: 0; position: relative; }
@@ -5486,7 +5448,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   padding: 1px var(--bz-space-sm); flex-shrink: 0;
 }
 .bz-home-pal-tip { padding: var(--bz-space-sm) var(--bz-space-md); border-top: 1px solid var(--bz-border); font-size: var(--bz-font-caption); color: var(--bz-text-3); }
-.bz-home-pal-empty { padding: var(--bz-space-xl); text-align: center; font-size: var(--bz-font-meta); color: var(--bz-text-3); }
 
 /* ---- 主体：主列 + 侧栏 ---- */
 .bz-home-body { flex: 1; display: flex; min-height: 0; }
@@ -5508,18 +5469,18 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* ---- 域卡网格（桌面） ---- */
 .bz-home-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: var(--bz-space-md); }
-/* 空钉选态：整块可点按钮（设计手册 §8.3 空态要有动作），点击进编辑模式 */
+/* 空钉选态：uiEmpty（.bz-empty 基线）+ 整块可点进编辑（设计手册 §8.3 空态要有动作）；
+   域内只补虚线描边 CTA 观感与网格占满 */
 .bz-home-cards-empty {
   grid-column: 1 / -1; width: 100%;
-  display: flex; align-items: center; justify-content: center; gap: var(--bz-space-sm);
-  appearance: none; font-family: inherit; cursor: pointer;
+  cursor: pointer;
   padding: 40px var(--bz-space-lg); text-align: center;
-  color: var(--bz-text-3); font-size: var(--bz-font-label);
+  color: var(--bz-text-3);
   border: 1px dashed var(--bz-border-strong); border-radius: var(--bz-radius-md);
   background: none;
 }
-.bz-home-cards-empty:hover { color: var(--bz-brand); border-color: var(--bz-brand); background: var(--bz-brand-soft); }
-.bz-home-cards-empty .bz-ic { width: 14px; height: 14px; }
+.bz-home-cards-empty:hover { border-color: var(--bz-brand); background: var(--bz-brand-soft); }
+.bz-home-cards-empty:hover .bz-empty-title { color: var(--bz-brand); }
 
 .bz-home-card {
   position: relative;
@@ -5624,23 +5585,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-home-week-k { font-size: var(--bz-font-caption); color: var(--bz-text-3); white-space: nowrap; }
 
-/* 加域 pick 弹层 */
-.bz-home-pick {
-  position: absolute; z-index: 40; width: 232px;
-  background: var(--bz-surface-4); border: 1px solid var(--bz-border);
-  border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg);
-  padding: var(--bz-space-sm); max-height: 280px; overflow-y: auto;
-}
+/* 加域 pick 弹层：浮层/选项/空态基线走样式库 .bz-popover 族；域内只留宽度与标题 */
+.bz-home-pick { width: 232px; }
 .bz-home-pick-t { padding: var(--bz-space-sm) var(--bz-space-md) var(--bz-space-xs); font-size: var(--bz-font-meta); font-weight: var(--bz-weight-semibold); color: var(--bz-text-2); }
-.bz-home-pickopt {
-  display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: var(--bz-space-sm) var(--bz-space-md); border-radius: var(--bz-radius-sm); border: none; background: none;
-  color: var(--bz-text-1); font-size: var(--bz-font-label); font-family: inherit;
-  cursor: pointer; text-align: left;
-}
-.bz-home-pickopt:hover { background: var(--bz-surface-hover); }
-.bz-home-pickopt .bz-ic { width: 15px; height: 15px; color: var(--bz-text-2); flex-shrink: 0; }
-.bz-home-pick-empty { padding: var(--bz-space-lg); text-align: center; font-size: var(--bz-font-meta); color: var(--bz-text-3); }
 
 /* ---- 迷你 chips（未钉域） ---- */
 .bz-home-minis { display: flex; flex-wrap: wrap; gap: var(--bz-space-sm); margin-top: var(--bz-space-lg); }
@@ -5701,18 +5648,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
     display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--bz-space-sm);
     margin-top: var(--bz-space-md);
   }
-  /* 三格统计格 = 按钮（data-home-side 复用侧栏点击路径，移动端第二入口） */
-  .bz-home-mstat {
-    display: flex; flex-direction: column; align-items: center; gap: 2px;
-    appearance: none; font-family: inherit; cursor: pointer; text-align: center;
-    background: var(--bz-surface-3); border: 1px solid var(--bz-border);
-    border-radius: var(--bz-radius-sm); padding: var(--bz-space-md) var(--bz-space-xs);
-    transition: background-color var(--bz-dur-fast) ease, border-color var(--bz-dur-fast) ease;
-  }
-  .bz-home-mstat:hover { background: var(--bz-surface-hover); border-color: var(--bz-border-hover); }
-  .bz-home-mstat:active { background: var(--bz-surface-active); }
-  .bz-home-mstat-v { font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-bold); color: var(--bz-text-1); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bz-home-mstat-k { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
+  /* 三格统计格基线走样式库 .bz-stat（uiStat 工厂，--text 档 + --click 可点） */
   .bz-home-block-t { margin-top: var(--bz-space-lg); }
   .bz-home-cards { grid-template-columns: 1fr 1fr; gap: var(--bz-space-sm); }
   .bz-home-card { min-height: 96px; padding: var(--bz-space-md) var(--bz-space-md) var(--bz-space-sm); }
@@ -5733,28 +5669,15 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-home-mv { width: 32px; height: 32px; }
 }
 /* ==================== 今日回顾域样式（src/recap/styles.css，方向一 R2） ====================
-   组件库纪律（铁律 6）：基线按钮/图标钮/空态/spinner 走 src/core/ui components.css 的
-   .bz-* 类；本文件只保留今日回顾独有布局（overlay 面板/头行/摘要行/痕迹时间轴），
-   取值一律取自 tokens.css（间距/字号/圆角/控件高全部对档，无档外裸值）。 */
+   组件库纪律（铁律 6）：面板壳（.bz-panel-overlay/.bz-panel-frame）、统计卡（.bz-stat/uiStat）、
+   空态/按钮/spinner 走 src/core/ui；本文件只保留今日回顾独有布局（overlay 移动端 flex-end 变体/
+   面板尺寸/头行/摘要行网格/痕迹时间轴），取值一律取自 tokens.css（间距/字号/圆角全部对档）。 */
 
-/* ---- 遮罩 + 主面板骨架（桌面居中面板；≤768px 真全屏） ---- */
-.bz-recap-overlay {
-  position: fixed; inset: 0;
-  background: var(--bz-overlay);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--bz-font-ui);
-  /* z-index 由 createOverlay 经 topifyZ 动态分配（ADR-0067），不设静态档 */
-}
+/* ---- 遮罩 + 主面板骨架：基线走样式库 .bz-panel-overlay/.bz-panel-frame（含滚动条隐藏）；
+        .bz-recap-overlay 只留移动端 flex-end 变体，.bz-recap-panel 只留桌面尺寸 ---- */
 .bz-recap-panel {
-  background: var(--bz-surface-2); color: var(--bz-text-1);
-  border-radius: var(--bz-radius-lg); border: 1px solid var(--bz-border);
-  box-shadow: var(--bz-shadow-lg);
-  display: flex; flex-direction: column;
   width: 640px; max-width: calc(100vw - 32px); height: 560px; max-height: 90vh;
-  overflow: hidden; position: relative;
 }
-.bz-recap-overlay, .bz-recap-overlay * { scrollbar-width: none; -ms-overflow-style: none; }
-.bz-recap-overlay *::-webkit-scrollbar { display: none; }
 
 /* ---- 头行：标题 + 日期 + R3 占位钮 + 关闭钮（移动端显示） ---- */
 .bz-recap-head {
@@ -5783,22 +5706,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   color: var(--bz-text-3);
 }
 
-/* ---- 顶部摘要行：五格数字（日记 N 条 · 影视 N · 书 N · 待办完成 N · 番茄 N 个 M 分钟） ---- */
+/* ---- 顶部摘要行：五格统计卡（日记 N 条 · 影视 N · 书 N · 待办完成 N · 番茄 N 个 M 分钟）。
+        卡基线走样式库 .bz-stat（uiStat 工厂，--text 文字档）；域内只补居中排版修饰 ---- */
 .bz-recap-summary {
   display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--bz-space-sm);
   margin-bottom: var(--bz-space-lg);
 }
-.bz-recap-stat {
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-  background: var(--bz-surface-1); border-radius: var(--bz-radius-sm);
-  padding: var(--bz-space-md) var(--bz-space-xs);
-  min-width: 0;
-}
-.bz-recap-stat-v {
-  font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1);
-  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.bz-recap-stat-k { font-size: var(--bz-font-caption); color: var(--bz-text-3); white-space: nowrap; }
+.bz-recap-stat { align-items: center; text-align: center; }
 
 /* ---- 痕迹时间轴：时刻 + 域图标 + 一句话（时间正序） ---- */
 .bz-recap-timeline { display: flex; flex-direction: column; }
@@ -5850,67 +5764,25 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-recap-time { min-width: 60px; }
 }
 /* ==================== 待办域样式（src/todo/styles.css） ==================== */
-/* 基线（按钮/图标钮/chip/输入/弹窗/空态/平铺选择）全部消费组件库（src/core/ui/components.css
-   的 .bz-* 类与 --bz-* token）；本文件只保留待办独有布局（面板骨架/左场景栏/条目卡/meta 标签/
-   录入行/编辑器额外区），取值一律取自 tokens.css。场景色为功能色（数据语义，域内直给）。
+/* 基线（按钮/图标钮/chip/输入/弹窗/空态/平铺选择/面板壳/头行/侧栏/主头行/工具行/搜索/
+   移动横滑条）全部消费组件库（src/core/ui/components.css 的 .bz-* 类与 --bz-* token）；
+   本文件只保留待办独有布局（面板几何/添加场景钮/条目卡/meta 标签/录入行/编辑器额外区），
+   取值一律取自 tokens.css。场景色为功能色（数据语义，域内直给）。
    与旧 memo 并存：读写同一 memo.json；后台任务由旧 memo 域执行。 */
 
-/* ---- 遮罩 + 主面板骨架 ---- */
-.bz-todo-overlay {
-  position: fixed; inset: 0;
-  background: var(--bz-overlay);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--bz-font-ui);
-  /* z-index 由 openTodoPanel 经 topifyZ 动态分配（ADR-0067），此处不设静态档 */
-}
+/* ---- 主面板几何（遮罩/壳骨架/滚动条隐藏/头行走共享 .bz-panel-overlay/.bz-panel-frame/
+   .bz-panel-head；域内只留宽高档。头行不撞 core/styles.css 旧 .bz-todo-head 的
+   !important 旧规范——那是 memo 旧窗口的类名，本域从未使用） ---- */
 .bz-todo-panel {
-  background: var(--bz-surface-2); color: var(--bz-text-1);
-  border-radius: var(--bz-radius-md); border: 1px solid var(--bz-border);
-  box-shadow: var(--bz-shadow-lg);
-  display: flex; flex-direction: column;
   width: 720px; max-width: calc(100vw - 32px); height: 580px; max-height: 92vh;
-  overflow: hidden;
 }
-/* 面板内隐藏滚动条（滚动功能保留，对齐「弹窗无滚动条」要求） */
-.bz-todo-overlay, .bz-todo-overlay * { scrollbar-width: none; -ms-overflow-style: none; }
-.bz-todo-overlay *::-webkit-scrollbar { display: none; }
-
-/* 头行独有类名 .bz-todo-panel-head：不挂 core/styles.css 旧头行规范对 .bz-todo-head 的
-   !important 16px 垫顶（那是 memo 旧窗口的几何，会压掉本面板 44px 头行）；
-   移动端顶部避让由根节点 .bz-panel-mtop 统一接管，头行不再自垫 */
-.bz-todo-panel-head {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 0 var(--bz-space-lg); height: 44px;
-  border-bottom: 1px solid var(--bz-border); flex-shrink: 0;
-}
-.bz-todo-title { font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
-.bz-todo-head-btns { display: flex; align-items: center; gap: var(--bz-space-xs); }
 
 .bz-todo-body { display: flex; flex: 1; min-height: 0; }
 
-/* ---- 左场景栏 ---- */
-.bz-todo-side {
-  width: 168px; border-right: 1px solid var(--bz-border); padding: var(--bz-space-md) var(--bz-space-sm);
-  overflow-y: auto; flex-shrink: 0; display: flex; flex-direction: column; background: var(--bz-surface-1);
-}
-.bz-todo-side-label { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin: 0 var(--bz-space-xs) var(--bz-space-xs); letter-spacing: 0.06em; }
-.bz-todo-nav-item {
-  display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: 7px 10px; border-radius: 6px;
-  background: none; border: none; cursor: pointer;
-  font-size: var(--bz-font-label); color: var(--bz-text-1); text-align: left;
-  font-family: inherit;
-}
-.bz-todo-nav-item:hover { background: var(--bz-surface-hover); }
-.bz-todo-nav-item.bz-todo-nav-active { background: var(--bz-brand); color: var(--bz-on-brand); font-weight: var(--bz-weight-medium); }
-.bz-todo-nav-cnt { margin-left: auto; font-size: var(--bz-font-caption); color: var(--bz-text-3); background: var(--bz-surface-2); border-radius: 999px; padding: 0 7px; line-height: 17px; }
-.bz-todo-nav-item.bz-todo-nav-active .bz-todo-nav-cnt { color: inherit; background: transparent; opacity: 0.75; }
-.bz-todo-nav-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-/* 伪场景「重要」star 图标（警示色点之外的第二佐证，§6.1 状态不只靠颜色） */
-.bz-todo-nav-star { width: 13px; height: 13px; flex-shrink: 0; color: var(--bz-warning); }
-/* 添加场景（底部） */
+/* ---- 左场景栏补充（.bz-rail 骨架走共享；底部「添加场景」虚线钮为待办特有，
+   挂 .bz-rail-foot 内由其接管外距） ---- */
 .bz-todo-side-add {
-  margin: var(--bz-space-sm) var(--bz-space-xs) 0; padding: 6px 10px;
+  width: 100%; padding: 6px 10px;
   border: 1px dashed var(--bz-border-strong); border-radius: 8px;
   background: transparent; color: var(--bz-text-3); cursor: pointer;
   font-size: var(--bz-font-meta); font-family: inherit;
@@ -5921,27 +5793,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* ---- 右栏 ---- */
 .bz-todo-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-/* 主头行（对齐原型 p1-main-head）：当前场景标题 + 计数 + 右侧新建按钮 */
-.bz-todo-main-head {
-  display: flex; align-items: center; gap: var(--bz-space-sm);
-  padding: 12px var(--bz-space-lg) 2px; flex-shrink: 0;
-}
-.bz-todo-main-title { font-size: 16px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
-.bz-todo-main-count { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
-.bz-todo-main-spacer { flex: 1; }
-.bz-todo-main-head .bz-btn { height: 30px; padding: 0 14px; font-size: var(--bz-font-meta); }
-.bz-todo-toolbar {
-  display: flex; align-items: center; gap: var(--bz-space-sm); padding: 8px var(--bz-space-lg) 4px; flex-shrink: 0;
-}
-.bz-todo-search { flex: 1; position: relative; min-width: 0; }
-.bz-todo-search .bz-ic { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--bz-text-3); pointer-events: none; }
-.bz-todo-search .bz-input { width: 100%; padding-left: 30px; }
 /* 排序：组件库 segmented 三档（替换自绘按钮） */
 .bz-todo-sort { flex-shrink: 0; }
 .bz-todo-sort .bz-segmented-btn { padding: 0 10px; font-size: var(--bz-font-caption); }
-
-/* 移动端场景横滑条（桌面隐藏） */
-.bz-todo-mob-scenes { display: none; }
 
 /* ---- 列表 ---- */
 .bz-todo-content { flex: 1; overflow-y: auto; padding: 4px var(--bz-space-md) var(--bz-space-md); display: flex; flex-direction: column; min-height: 0; }
@@ -6051,27 +5905,16 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-todo-pos-row .bz-todo-pos-hint .bz-ic { width: 12px; height: 12px; vertical-align: -2px; }
 .bz-todo-pos-row .bz-todo-pos-btn-active { background: var(--bz-brand-soft); color: var(--bz-brand); border-color: transparent; }
 
-/* ---- 移动端（≤768px）：真全屏 + 横滑场景条 + 头部关闭钮 ---- */
+/* ---- 移动端（≤768px）：真全屏 + 横滑场景条（共享 .bz-mobstrip） ---- */
 @media (max-width: 768px) {
   .bz-todo-panel {
     width: 100vw; height: 100vh; max-width: none; max-height: none;
     border-radius: 0; border: none;
   }
   /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css），头行不再自垫 */
-  .bz-todo-side { display: none; }
-  /* 主头行桌面专属（移动端新建走底部录入条） */
-  .bz-todo-main-head { display: none; }
-  .bz-todo-mob-scenes {
-    display: flex; gap: var(--bz-space-sm); padding: 10px var(--bz-space-lg) 2px;
-    overflow-x: auto; flex-shrink: 0;
-  }
-  .bz-todo-mob-chip {
-    white-space: nowrap; font-size: var(--bz-font-meta); padding: var(--bz-space-sm) 14px;
-    border-radius: var(--bz-radius-full); background: var(--bz-surface-2); border: 1px solid var(--bz-border);
-    color: var(--bz-text-1); cursor: pointer; flex-shrink: 0; font-family: inherit;
-  }
-  .bz-todo-mob-chip.bz-todo-mob-chip-active { background: var(--bz-brand); color: var(--bz-on-brand); border-color: transparent; font-weight: var(--bz-weight-medium); }
-  .bz-todo-mob-chip .bz-todo-nav-dot { width: 7px; height: 7px; }
+  /* 场景栏桌面专属（移动端走 .bz-mobstrip 横滑条）；主头行同（移动端新建走底部录入条） */
+  .bz-todo-body .bz-rail { display: none; }
+  .bz-todo-main .bz-main-head { display: none; }
   .bz-todo-content { padding: var(--bz-space-sm) var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
   .bz-todo-card { padding: 11px var(--bz-space-sm); }
   .bz-todo-card .bz-todo-check { width: 19px; height: 19px; }
@@ -6083,117 +5926,26 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* ==================== 剪藏本域样式（src/clipbook/styles.css） ==================== */
 /* 剪藏本融合域（ADR-0082 / issue 177）：桌面三栏 + 移动双屏工作台。
    基线全部消费组件库（src/core/ui 的 .bz-* 类与 --bz-* token）；本文件只保留
-   剪藏本独有布局（面板骨架/三栏/源列表/条目卡/阅读排版/移动双屏），
+   剪藏本独有布局（三栏/源列表 bili 色/条目卡/阅读排版/移动双屏）与共享部件的
+   域内尺寸微调（ADR-0094：面板壳/头行/搜索/侧栏/横滑条/空态已收编组件库），
    取值一律取自 tokens.css；功能状态色（unread 蓝/reading 琥珀/saved 绿）直给。 */
 
-/* ---- 遮罩 + 面板骨架 ---- */
-.bz-clip-overlay {
-  position: fixed; inset: 0;
-  background: var(--bz-overlay);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--bz-font-ui);
-}
-.bz-clip-overlay * { scrollbar-width: none; -ms-overflow-style: none; }
-.bz-clip-overlay *::-webkit-scrollbar { display: none; }
-
+/* ---- 面板骨架（壳 = .bz-panel-overlay/.bz-panel-frame，ADR-0094；此处只留尺寸） ---- */
 .bz-clip-frame {
-  position: relative;
-  background: var(--bz-surface-2); color: var(--bz-text-1);
-  border-radius: var(--bz-radius-lg); border: 1px solid var(--bz-border);
-  box-shadow: var(--bz-shadow-lg);
-  display: flex; flex-direction: column;
   width: 1180px; max-width: calc(100vw - 40px); height: 760px; max-height: 92vh;
-  overflow: hidden;
 }
 
-/* ---- 桌面端头行（影院式整宽头行：仅标题） ---- */
+/* ---- 桌面端头行（= .bz-panel-head .bz-panel-head--tall 整宽头行，域内零补） ---- */
 .bz-clip-desk { display: flex; flex-direction: column; height: 100%; min-height: 0; }
-.bz-clip-desk-head {
-  display: flex; align-items: center; gap: var(--bz-space-sm);
-  padding: 0 var(--bz-space-lg); height: 50px; flex-shrink: 0;
-  border-bottom: 1px solid var(--bz-border);
-}
-.bz-clip-brand {
-  width: 24px; height: 24px; border-radius: var(--bz-radius-sm);
-  background: linear-gradient(135deg, var(--bz-brand), #c9501f);
-  display: flex; align-items: center; justify-content: center; color: var(--bz-on-overlay);
-}
-.bz-clip-brand .bz-ic { width: 13px; height: 13px; }
-.bz-clip-title { font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold); }
-.bz-clip-head-pipe { width: 1px; height: 14px; background: var(--bz-border); }
-.bz-clip-head-sub { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
-.bz-clip-head-sp { flex: 1; }
 
-/* 桌面搜索框（enh 包 1）：结构对齐 todo/favorites（前缀 search 图标 + .bz-input），无 / kbd 提示 */
-.bz-clip-search { position: relative; width: 220px; min-width: 130px; flex-shrink: 1; }
-.bz-clip-search .bz-ic {
-  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
-  width: 13px; height: 13px; color: var(--bz-text-3); pointer-events: none;
-}
-.bz-clip-search .bz-input { width: 100%; padding-left: 30px; }
+/* 桌面搜索框（= .bz-search 基线；只覆写头行内定宽档） */
+.bz-clip-search { flex: 0 1 220px; min-width: 130px; }
 
 /* ---- 三栏 ---- */
 .bz-clip-desk-body { flex: 1; display: flex; min-height: 0; }
 
-/* 左 rail：源列表 + 底部阅读分析入口 */
-.bz-clip-rail {
-  width: 216px; flex-shrink: 0; border-right: 1px solid var(--bz-border);
-  display: flex; flex-direction: column; min-height: 0;
-  background: var(--bz-surface-1);
-}
-.bz-clip-rail-list { flex: 1; overflow-y: auto; padding: var(--bz-space-sm) var(--bz-space-xs); }
-.bz-clip-rail-row {
-  display: flex; align-items: center; gap: var(--bz-space-sm);
-  padding: 6px var(--bz-space-sm); border-radius: var(--bz-radius-sm);
-  cursor: pointer; font-size: var(--bz-font-label); color: var(--bz-text-2);
-}
-.bz-clip-rail-row:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
-/* 选中态对齐五域左栏实底档（todo/favorites/belongings/cinema/bookshelf）：品牌实底 + on-brand 字 */
-.bz-clip-rail-row.on { background: var(--bz-brand); color: var(--bz-on-brand); font-weight: var(--bz-weight-medium); }
-.bz-clip-rail-ic {
-  width: 20px; height: 20px; border-radius: var(--bz-radius-xs); flex-shrink: 0;
-  display: inline-flex; align-items: center; justify-content: center;
-  color: var(--bz-text-3); background: var(--bz-surface-3);
-}
-.bz-clip-rail-ic .bz-ic { width: 11px; height: 11px; }
-.bz-clip-rail-ic.accent { color: var(--bz-info); background: color-mix(in srgb, var(--bz-info) 14%, transparent); }
-.bz-clip-rail-badge {
-  width: 20px; height: 20px; border-radius: var(--bz-radius-xs); flex-shrink: 0;
-  display: inline-flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: var(--bz-weight-bold); color: #fff;
-  /* 底色加深一档（混 30% 黑）保证白字 ≥4.5:1（原白字叠中饱和数据色 2.6-3:1 不达 AA） */
-  background: color-mix(in srgb, var(--rail-c, #58a6ff) 70%, #000);
-}
-/* B站徽标色单一事实源在样式侧（ui 不再内联传 #8b7cf6） */
-.bz-clip-rail-badge.bili { --rail-c: #8b7cf6; }
-.bz-clip-rail-name {
-  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  color: var(--bz-text-2);
-}
-.bz-clip-rail-row.on .bz-clip-rail-name { color: inherit; }
-.bz-clip-rail-count { font-size: var(--bz-font-caption); color: var(--bz-text-3); font-variant-numeric: tabular-nums; }
-/* 选中行内次级文字随 on-brand（对齐 bookshelf 左栏计数档） */
-.bz-clip-rail-row.on .bz-clip-rail-count { color: inherit; opacity: 0.72; }
-/* 未读徽标在品牌实底行上加同色描边环防隐形（先例 bookshelf .bz-bs-statusdot） */
-.bz-clip-rail-row.on .bz-clip-rail-unread { box-shadow: 0 0 0 2px var(--bz-brand); }
-.bz-clip-rail-unread {
-  font-size: 11px; font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
-  background: var(--bz-brand); border-radius: var(--bz-radius-full);
-  min-width: 17px; height: 17px; padding: 0 4px;
-  display: inline-flex; align-items: center; justify-content: center;
-  font-variant-numeric: tabular-nums;
-}
-.bz-clip-rail-foot { flex-shrink: 0; border-top: 1px solid var(--bz-border); padding: var(--bz-space-sm) var(--bz-space-md); }
-.bz-clip-analy {
-  display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: 7px var(--bz-space-md); border-radius: var(--bz-radius-sm);
-  background: none; border: 1px solid transparent; cursor: pointer;
-  font-size: var(--bz-font-meta); font-weight: var(--bz-weight-medium);
-  color: var(--bz-text-2); font-family: inherit; text-align: left;
-}
-.bz-clip-analy .bz-ic { width: 14px; height: 14px; color: var(--bz-brand); }
-.bz-clip-analy:hover { background: var(--bz-brand-soft); color: var(--bz-text-1); }
-.bz-clip-analy:hover .bz-ic { color: var(--bz-brand); }
+/* 左 rail（= .bz-rail bz-rail--wide 族，ADR-0094）：域内只留 bili 徽标色单一事实源 */
+.bz-clip-rail .bz-rail-badge.bili { --bz-rail-tint: #8b7cf6; }
 
 /* 中栏：条目列表 */
 .bz-clip-mid { width: 336px; flex-shrink: 0; border-right: 1px solid var(--bz-border); display: flex; flex-direction: column; min-height: 0; }
@@ -6222,23 +5974,14 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-clip-item-meta { display: flex; align-items: center; gap: var(--bz-space-sm); margin-top: 6px; font-size: var(--bz-font-caption); color: var(--bz-text-3); }
 .bz-clip-item-site { font-weight: var(--bz-weight-medium); color: var(--bz-text-2); }
 .bz-clip-item-time { margin-left: auto; }
-.bz-clip-empty {
-  height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: var(--bz-space-sm); color: var(--bz-text-3); font-size: var(--bz-font-meta);
-  padding: 30px; text-align: center;
-}
-.bz-clip-empty .bz-ic { width: 24px; height: 24px; color: var(--bz-text-3); opacity: .5; }
-.bz-clip-empty.sm { padding: 40px 20px; }
+/* 空态 = uiEmpty（.bz-empty）工厂；域内只补满高居中（列表/阅读滚动容器内撑满） */
+.bz-clip-list .bz-empty,
+.bz-clip-read-body .bz-empty { height: 100%; }
 
 /* 右栏：阅读 */
 .bz-clip-read { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bz-surface-0); }
 .bz-clip-read-scroll { flex: 1; overflow-y: auto; padding: var(--bz-space-xl) var(--bz-space-xl) var(--bz-space-2xl); } /* 24/24/32 档（原 30/60 非档位） */
 .bz-clip-read-body { max-width: 560px; margin: 0 auto; }
-.bz-clip-read-empty {
-  height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: var(--bz-space-sm); color: var(--bz-text-3); font-size: var(--bz-font-meta); padding: 40px;
-}
-.bz-clip-read-empty .bz-ic { width: 26px; height: 26px; opacity: .5; }
 .bz-clip-art-site { display: inline-flex; align-items: center; gap: 6px; font-size: var(--bz-font-meta); color: var(--bz-text-3); margin-bottom: 8px; }
 .bz-clip-art-site-name { color: var(--bz-text-2); font-weight: var(--bz-weight-medium); }
 .bz-clip-art-type { background: var(--bz-surface-3); border-radius: var(--bz-radius-full); padding: 1px 8px; font-size: 11px; color: var(--bz-text-2); }
@@ -6296,20 +6039,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-clip-mob-title { flex: 1; font-size: 15px; font-weight: var(--bz-weight-semibold); }
 .bz-clip-mob-searchbar { padding: var(--bz-space-sm) var(--bz-space-md); flex-shrink: 0; }
 .bz-clip-mob-searchbar .bz-input { width: 100%; }
-.bz-clip-mob-sources { display: flex; gap: var(--bz-space-sm); overflow-x: auto; padding: var(--bz-space-xs) var(--bz-space-md) var(--bz-space-sm); flex-shrink: 0; }
-.bz-clip-mob-src {
-  flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px;
-  font-size: var(--bz-font-meta); color: var(--bz-text-2);
-  background: var(--bz-surface-1); border: 1px solid var(--bz-border);
-  border-radius: var(--bz-radius-full); padding: 5px 11px; cursor: pointer;
-}
-.bz-clip-mob-src.on { background: var(--bz-brand-soft); border-color: var(--bz-border-strong); color: var(--bz-text-1); }
-.bz-clip-mob-ub {
-  font-size: 11px; font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
-  background: var(--bz-brand); border-radius: var(--bz-radius-full);
-  min-width: 17px; height: 17px; padding: 0 4px;
-  display: inline-flex; align-items: center; justify-content: center;
-}
+/* 移动源横滑条（= .bz-mobstrip 族，ADR-0094；未读气泡 = .bz-badge--brand），域内零补 */
 .bz-clip-mob-list { flex: 1; overflow-y: auto; padding: var(--bz-space-xs) var(--bz-space-sm) var(--bz-space-lg); }
 .bz-clip-mob-item {
   padding: 11px var(--bz-space-md); border-radius: var(--bz-radius-md);
@@ -6352,108 +6082,46 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 @media (max-width: 768px) {
   .bz-clip-desk { display: none; }
-  .bz-clip-frame { position: relative; }
-  .bz-clip-mob { display: flex; }
+  .bz-clip-mob { display: flex; } /* 移动详情屏2 的 absolute 定位上下文由 .bz-panel-frame 自带 */
   /* 刘海屏安全区（enh 包 9）：底部避让由列表/详情自身垫；顶部避让由 frame/detail 根节点
      .bz-panel-mtop 统一接管（44px，components.css），顶栏不再重复垫顶 */
   .bz-clip-mob-list { padding-bottom: max(var(--bz-space-lg), env(safe-area-inset-bottom, 0px)); }
   .bz-clip-mob-detail-body { padding-bottom: calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
   /* 触控热区（enh 包 10）：来源条/保存钮等可点小元素抬到 ≥44px 档（设计手册 §8.2） */
-  .bz-clip-mob-src { min-height: 44px; padding: 8px 16px; }
-  .bz-clip-mob-ub { min-width: 17px; height: 17px; }
+  .bz-clip-mob .bz-mobstrip-chip { min-height: 44px; padding: 8px 16px; }
   .bz-clip-mob-save { width: 44px; height: 44px; }
   .bz-clip-mob-top .bz-icon-btn--lg,
   .bz-clip-mob-detail-top .bz-icon-btn--lg { width: 44px; height: 44px; }
 }
-/* ==================== 收藏本域样式（src/favorites/styles.css，ticket 177 重写） ====================
- * 基线（按钮/图标钮/chip/输入/弹窗/空态/标签多选）全部消费组件库（src/core/ui/ 的 .bz-* 类
- * 与 --bz-* token）；本文件只保留收藏本独有布局（主面板骨架/左标签栏/卡片/表单 LLM 区）。
+/* ==================== 收藏本域样式（src/favorites/styles.css，ADR-0094 组件库接入） ====================
+ * 基线（面板壳/头行/侧栏/主头行/工具行/搜索/横滑条/候选浮层/空态/按钮/chip/输入/弹窗）
+ * 全部消费组件库（src/core/ui/ 的 .bz-* 共享类与 uiRail/uiEmpty 等工厂）；
+ * 本文件只保留收藏本独有布局：面板尺寸 / rail 挂载点 / 移动专属显隐与触控档 /
+ * 卡片流 / 抽屉头部 / 表单 / LLM 区。
  * 视觉对齐拍板原型 P1「标签工作台」：桌面 720×560 左栏 168 + 右列表；移动真全屏。
  */
 
-/* ---- 遮罩 + 主面板骨架 ---- */
-.bz-fav-overlay {
-  position: fixed; inset: 0;
-  background: var(--bz-overlay);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--bz-font-ui);
-  /* z-index 由 openPanel 经 topifyZ 动态发号（ADR-0067），此处不设静态档 */
-}
+/* ---- 主面板尺寸（骨架走 .bz-panel-frame，遮罩走 .bz-panel-overlay，含滚动条隐藏） ---- */
 .bz-fav-panel {
-  background: var(--bz-surface-2); color: var(--bz-text-1);
-  border-radius: var(--bz-radius-md); border: 1px solid var(--bz-border);
-  box-shadow: var(--bz-shadow-lg);
-  display: flex; flex-direction: column;
   width: 720px; max-width: calc(100vw - 32px); height: 560px; max-height: 92vh;
-  overflow: hidden;
 }
-/* 面板内隐藏滚动条（滚动功能保留，对齐「弹窗无滚动条」要求） */
-.bz-fav-overlay, .bz-fav-overlay * { scrollbar-width: none; -ms-overflow-style: none; }
-.bz-fav-overlay *::-webkit-scrollbar { display: none; }
 
-.bz-fav-head {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 0 var(--bz-space-lg); height: 44px;
-  border-bottom: 1px solid var(--bz-border); flex-shrink: 0;
-}
-.bz-fav-title { font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
-/* 头行图标钮间距 ≥8px（ticket 188 防误触：WCAG 2.5.8 相邻可点元素间距） */
-.bz-fav-head-btns { display: flex; align-items: center; gap: var(--bz-space-sm); }
+.bz-fav-body { display: flex; flex: 1; min-height: 0; --bz-rail-w: 168px; }
+/* rail 挂载点（uiRail 工厂注入 .bz-rail）：桌面并入 flex 轴，移动整栏隐藏 */
+.bz-fav-body aside { display: contents; }
+
 /* 头部图标钮桌面隐藏（桌面无右上钮；移动显示） */
 .bz-fav-mob-only { display: none; }
 
-.bz-fav-body { display: flex; flex: 1; min-height: 0; }
+/* 排序钮不参与压缩（高度/字号走 .bz-btn--md） */
+.bz-fav-sort-btn { flex-shrink: 0; }
 
-/* ---- 左标签栏 ---- */
-.bz-fav-side {
-  width: 168px; border-right: 1px solid var(--bz-border); padding: var(--bz-space-md) var(--bz-space-sm);
-  display: flex; flex-direction: column; background: var(--bz-surface-1); flex-shrink: 0;
-}
-.bz-fav-side-label { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin: 0 var(--bz-space-xs) var(--bz-space-xs); letter-spacing: 0.06em; }
-.bz-fav-side-scroll { overflow-y: auto; flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.bz-fav-side-item {
-  display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: 7px 10px; border-radius: 6px;
-  background: none; border: none; cursor: pointer;
-  font-size: var(--bz-font-label); color: var(--bz-text-1); text-align: left;
-  font-family: inherit;
-}
-.bz-fav-side-item:hover { background: var(--bz-surface-hover); }
-.bz-fav-side-item.bz-fav-nav-active { background: var(--bz-brand); color: var(--bz-on-brand); font-weight: var(--bz-weight-medium); }
-.bz-fav-side-emoji { width: 18px; text-align: center; flex-shrink: 0; font-size: 13px; line-height: 1; }
-.bz-fav-side-item .bz-ic { width: 14px; height: 14px; }
-.bz-fav-side-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bz-fav-nav-cnt {
-  font-size: var(--bz-font-caption); color: var(--bz-text-3); background: var(--bz-surface-2);
-  border-radius: 999px; padding: 0 7px; line-height: 17px; flex-shrink: 0;
-}
-.bz-fav-side-item.bz-fav-nav-active .bz-fav-nav-cnt { color: inherit; background: transparent; opacity: 0.75; }
+/* ---- 移动端隐藏搜索行（桌面恒隐；头部搜索钮仅移动显示） ---- */
+.bz-fav-mobsearch { display: none; padding: 2px var(--bz-space-lg) 6px; flex-shrink: 0; }
+.bz-fav-mobsearch.bz-fav-mobsearch-show { display: block; }
 
 /* ---- 右栏 ---- */
 .bz-fav-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-/* 主头行：当前标签 + 计数 + 右侧主按钮 */
-.bz-fav-main-head {
-  display: flex; align-items: center; gap: var(--bz-space-sm);
-  padding: 12px var(--bz-space-lg) 2px; flex-shrink: 0;
-}
-.bz-fav-main-title { font-size: 16px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); display: flex; align-items: center; gap: 6px; }
-.bz-fav-main-count { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
-.bz-fav-main-spacer { flex: 1; }
-.bz-fav-main-head .bz-btn { height: 30px; padding: 0 14px; font-size: var(--bz-font-meta); }
-/* 工具栏（搜索 + 排序） */
-.bz-fav-toolbar {
-  display: flex; align-items: center; gap: var(--bz-space-sm);
-  padding: 8px var(--bz-space-lg) 4px; flex-shrink: 0;
-}
-.bz-fav-search { flex: 1; position: relative; min-width: 0; }
-.bz-fav-search .bz-ic { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--bz-text-3); pointer-events: none; }
-.bz-fav-search .bz-input { width: 100%; padding-left: 30px; }
-.bz-fav-sort-btn { flex-shrink: 0; height: 30px; padding: 0 12px; font-size: var(--bz-font-meta); }
-.bz-fav-sort-btn .bz-ic { width: 13px; height: 13px; }
-/* 移动端横滑条 / 隐藏搜索行（桌面隐藏） */
-.bz-fav-mobscenes { display: none; }
-.bz-fav-mobsearch { display: none; }
-.bz-fav-chip-cnt { margin-left: 2px; font-size: 11px; opacity: 0.7; } /* 域内计数（ui.ts 渲染 bz-fav-chip-cnt；旧 mobchip-cnt 选择器为笔误已纠正） */
 
 /* ---- 列表 ---- */
 .bz-fav-content { flex: 1; overflow-y: auto; padding: 4px var(--bz-space-md) var(--bz-space-md); min-height: 0; }
@@ -6498,7 +6166,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-fav-balance--warn { color: var(--bz-warning); }
 .bz-fav-balance--err { color: var(--bz-danger); }
 
-/* ---- 空态（组件库 .bz-empty 已含） ---- */
+/* ---- 空态（组件库 uiEmpty 工厂 → .bz-empty） ---- */
 
 /* ---- 抽屉头部（.bz-item-sheet 内） ---- */
 .bz-item-sheet .bz-fav-sheet-emoji { font-size: 20px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: var(--bz-surface-1); border-radius: 10px; flex-shrink: 0; }
@@ -6513,27 +6181,15 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-item-sheet .bz-fav-sheet-balance.bz-fav-balance--err { background: color-mix(in srgb, var(--bz-danger) 12%, transparent); color: var(--bz-danger); }
 
 /* ---- 表单（弹窗骨架用组件库 .bz-overlay-mask；内容自绘，走 token）----
-   表单遮罩 z 由 openForm 经 topifyZ 动态发号（ADR-0067，恒压主面板），不写死静态档 */
+   表单遮罩 z 由 openForm 经 topifyZ 动态发号（ADR-0067，恒压主面板），不写死静态档；
+   关联笔记候选浮层（.bz-popover）锚定所在 .bz-field 下方 */
 .bz-fav-form {
-  position: relative; /* 关联笔记候选弹层定位锚点（ticket 188） */
   background: var(--bz-surface-3); border-radius: var(--bz-radius-md);
   border: 1px solid var(--bz-border); box-shadow: var(--bz-shadow-lg);
   width: 440px; max-width: calc(100vw - 32px); max-height: 86vh; overflow-y: auto;
   padding: var(--bz-space-lg); display: flex; flex-direction: column;
 }
-/* 关联笔记候选弹层（对照 .bz-bel-catpop 范式） */
-.bz-fav-notepop {
-  position: absolute; left: var(--bz-space-lg); right: var(--bz-space-lg); top: 40%; z-index: 60;
-  background: var(--bz-surface-4); border: 1px solid var(--bz-border);
-  border-radius: var(--bz-radius-sm); box-shadow: var(--bz-shadow-md);
-  padding: 4px; max-height: 200px; overflow-y: auto;
-}
-.bz-fav-noteopt {
-  padding: 6px 10px; border-radius: 6px; cursor: pointer;
-  font-size: var(--bz-font-label); color: var(--bz-text-1);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.bz-fav-noteopt:hover { background: var(--bz-surface-hover); }
+.bz-fav-form .bz-field { position: relative; }
 .bz-fav-form-title { font-size: var(--bz-font-title); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
 .bz-fav-form-body { display: flex; flex-direction: column; gap: var(--bz-space-md); margin-top: var(--bz-space-md); }
 .bz-fav-form-body .bz-field { margin-bottom: 0; }
@@ -6576,29 +6232,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
     width: 100vw; height: 100vh; max-width: none; max-height: none;
     border-radius: 0; border: none;
   }
-  .bz-fav-head { padding-right: var(--bz-space-sm); } /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css） */
+  .bz-fav-panel .bz-panel-head { padding-right: var(--bz-space-sm); } /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css） */
   .bz-fav-mob-only { display: inline-flex; }
   /* 头行图标钮触屏换大按钮档（ticket 188：≥40px 目标档）已收编组件库 .bz-icon-btn--lg 修饰符（模板挂类） */
-  .bz-fav-side { display: none; }
-  .bz-fav-main-head { display: none; } /* 桌面专属主头行；移动主按钮收头行图标组 */
-  .bz-fav-toolbar { display: none; }  /* 桌面工具栏；移动搜索走隐藏展开行 */
-  .bz-fav-mobscenes {
-    display: flex; gap: var(--bz-space-sm); padding: 10px var(--bz-space-lg) 2px;
-    overflow-x: auto; flex-shrink: 0;
-  }
-  .bz-fav-mobchip {
-    display: inline-flex; align-items: center; gap: 5px; min-height: 44px; /* 触控 ≥44px 档（设计手册 §8.2） */
-    white-space: nowrap; font-size: var(--bz-font-meta); padding: var(--bz-space-sm) 14px;
-    border-radius: var(--bz-radius-full); background: var(--bz-surface-2); border: 1px solid var(--bz-border);
-    color: var(--bz-text-1); cursor: pointer; flex-shrink: 0; font-family: inherit;
-  }
-  .bz-fav-mobchip .bz-ic { width: 13px; height: 13px; }
-  .bz-fav-mobchip-active { background: var(--bz-brand); color: var(--bz-on-brand); border-color: transparent; font-weight: var(--bz-weight-medium); }
-  .bz-fav-mobchip-active .bz-fav-chip-cnt { color: inherit; opacity: 0.8; }
-  .bz-fav-mobsearch {
-    display: none; padding: 2px var(--bz-space-lg) 6px; flex-shrink: 0;
-  }
-  .bz-fav-mobsearch.bz-fav-mobsearch-show { display: block; }
+  .bz-fav-body aside { display: none; } /* 桌面 rail；移动走横滑 chips */
+  .bz-fav-panel .bz-main-head { display: none; } /* 桌面专属主头行；移动主按钮收头行图标组 */
+  .bz-fav-panel .bz-toolrow { display: none; }  /* 桌面工具栏；移动搜索走隐藏展开行 */
+  .bz-fav-panel .bz-mobstrip-chip { min-height: 44px; } /* 触控 ≥44px 档（设计手册 §8.2） */
   /* 展开搜索行触屏抬到 ≥44px 档（同首页搜索条） */
   .bz-fav-mobsearch .bz-input { height: 44px; }
   .bz-fav-content { padding: var(--bz-space-sm) var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
@@ -6609,7 +6249,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* 触控热区（设计手册 §8.2）已收编 core 样式库 .bz-touch-target（components.css，
    头行图标钮挂类，coarse 下 ::after 外扩 -6px 补足 44px），域内不再复制外扩块。 */
-
 /* ==================== 复习计划域样式（src/review/styles.css） ====================
  * 2026-09-04 拍板形态：三区队列面板 + 整窗做题冲刺（非弹窗）。
  * 面板容器 / 难度弹窗 / watch·exclude 设置行 / 统计·历史弹窗为既有保留块；
@@ -6617,9 +6256,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
  * 配色一律走 Obsidian 主题变量（原型色为演示近似值，落地不直用）。
  */
 
-/* ==================== 面板容器（既有契约） ==================== */
-#review-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--background-modifier-cover); } /* 毛玻璃明确不采用（设计手册 §5.2），遮罩统一主题 cover 色 */
-#review-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--background-primary); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 94%; max-width: 900px; max-height: 84vh; flex-direction: column; animation: slideUp 0.3s ease-out; }
+/* ==================== 面板容器（既有契约） ====================
+   壳骨架接组件库（ADR-0094）：遮罩挂 .bz-panel-overlay（fixed 铺满+遮罩色），
+   面板挂 .bz-panel-frame（底色/圆角/描边/阴影/纵向 flex）；域内只留 id 几何
+   （居中定位/宽高/动画）。配色其余仍走 Obsidian 主题变量（原型色为演示近似值，落地不直用）。 */
+#review-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 94%; max-width: 900px; max-height: 84vh; animation: slideUp 0.3s ease-out; }
 @media (max-width: 768px) {
   #review-popup { animation: none !important; width: 100%; max-width: 100%; max-height: 100%; }
 }
@@ -6643,15 +6284,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-q-head .tools { display: flex; align-items: center; gap: 4px; }
 .bz-q-head .bz-icon-btn { width: 26px; height: 26px; }
 
-/* 工具行：搜索（限宽不铺满；胶囊；input 背景透明需 !important——核心
-   input[type='text']:hover 0,2,1 会把悬停底喂成 form-field 白） */
+/* 工具行：搜索（共享 .bz-search + .bz-input；域内限宽不铺满 + typing 激活态描边） */
 .bz-q-tools { display: flex; align-items: center; padding: 4px 20px 6px; flex-shrink: 0; }
-.bz-q-search { flex: 0 1 300px; display: flex; align-items: center; gap: 6px; padding: 0 12px; height: 28px; border-radius: 999px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-faint); }
-.bz-q-search:hover, .bz-q-search:focus-within { background: var(--background-secondary); }
-.bz-q-search .bz-q-ic { width: 13px; height: 13px; flex-shrink: 0; }
-.bz-q-search input { flex: 1; background: transparent !important; border: none !important; outline: none; font-size: 13px; color: var(--text-normal); min-width: 0; font-family: inherit; }
-.bz-q-search input:hover { background: transparent !important; }
-.bz-q-search.typing { border-color: var(--interactive-accent); background: var(--background-secondary); }
+.bz-q-tools .bz-search { flex: 0 1 300px; }
+.bz-search.typing .bz-input { border-color: var(--bz-brand); }
 
 /* 开始本轮条（item 8：今日全清 → 绿点 +「今日已清空」+ 隐藏主按钮） */
 .bz-q-strip { display: flex; align-items: center; gap: 8px; padding: 6px 20px 10px; flex-shrink: 0; }
@@ -6774,7 +6410,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-sq-item.passed .nm s { color: var(--text-faint); }
 .bz-sq-item.passed .meta { color: var(--color-green, #2ed573); }
 .bz-sq-item.failed .meta { color: var(--color-red, #ff4757); }
-.bz-sq-empty { font-size: 11px; color: var(--text-faint); text-align: center; padding: 12px 0; }
 
 /* 结果卡 */
 .bz-result { max-width: 420px; margin: 0 auto; text-align: center; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -6842,7 +6477,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* 排除名单 chip */
 #review-excluded-list { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 4px 0; }
-.bz-review-exclude-empty { font-size: 12px; color: var(--text-faint); padding: 4px 0; }
 .bz-review-exclude-chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 12px; background: var(--background-secondary); border: 1px solid var(--background-modifier-border); max-width: 100%; }
 .bz-review-exclude-name { font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bz-review-exclude-remove { background: none; border: none; cursor: pointer; color: var(--text-faint); font-size: 11px; line-height: 1; padding: 2px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: none !important; }
@@ -7130,8 +6764,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-encrypt-health-hint { margin: 6px 0; font-size: 13px; color: var(--text-faint); }
 /* 体检动态显示：进度文本 + 条 + 扫描中实时发现区 */
 .bz-encrypt-health-progress { margin: 10px 0 6px; font-size: 13px; color: var(--text-muted); }
-.bz-encrypt-health-bar { height: 4px; background: var(--background-modifier-border); border-radius: 2px; overflow: hidden; margin-bottom: 8px; }
-.bz-encrypt-health-bar i { display: block; height: 100%; background: var(--interactive-accent); transition: width 0.2s ease; }
+/* 进度条基线（track/填充/圆角/动效）走样式库 .bz-progress（uiProgress 工厂）；域内只保留版式下距 */
+.bz-encrypt-health-bar { margin-bottom: 8px; }
 .bz-encrypt-health-live { margin-bottom: 8px; }
 .bz-encrypt-health-foot {
   display: flex; gap: 10px; justify-content: flex-end; align-items: center;
@@ -7327,7 +6961,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 #bz-encrypt-popup .bz-vault-two .panel[data-hero]:hover { border-color: var(--bz-vault-gold); }
 #bz-encrypt-popup .bz-vault-two .panel .pt { font-size: 13px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; color: var(--bz-vault-ink); }
 #bz-encrypt-popup .bz-vault-two .panel .pt .more { font-size: 11px; color: var(--bz-vault-gold-ink); cursor: pointer; font-weight: 400; }
-#bz-encrypt-popup .bz-vault-panel-empty { font-size: 12px; color: var(--bz-vault-faint); padding: 12px 6px; }
 #bz-encrypt-popup .bz-vault-minirow { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 10px; cursor: pointer; }
 #bz-encrypt-popup .bz-vault-minirow:hover { background: var(--bz-vault-bg); }
 #bz-encrypt-popup .bz-vault-minirow .av { width: 30px; height: 30px; border-radius: 9px; color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -7341,13 +6974,12 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 #bz-encrypt-popup .bz-vault-hrow .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 #bz-encrypt-popup .bz-vault-hrow .lbl { flex: 1; }
 #bz-encrypt-popup .bz-vault-hrow .n { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--bz-vault-ink); }
-/* 空态 */
-#bz-encrypt-popup .bz-pwv-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--bz-vault-faint); padding: 36px; text-align: center; }
-#bz-encrypt-popup .bz-pwv-empty .t { font-size: 14px; color: var(--bz-vault-muted); font-weight: 600; }
-#bz-encrypt-popup .bz-pwv-empty .d { font-size: 12px; }
-#bz-encrypt-popup .bz-pwv-empty .bz-pwv-empty-add { display: inline-flex; align-items: center; gap: 5px; margin-top: 12px; font-size: 12px; font-weight: 600; color: var(--bz-vault-gold-ink); background: rgba(185, 141, 62, 0.14); border: 1px solid rgba(185, 141, 62, 0.3); border-radius: 999px; padding: 6px 15px; cursor: pointer; }
-#bz-encrypt-popup .bz-pwv-empty .bz-pwv-empty-add:hover { background: rgba(185, 141, 62, 0.24); }
-#bz-encrypt-popup .bz-pwv-empty .bz-pwv-empty-add svg { width: 13px; height: 13px; }
+/* 空态：图标/标题/描述/居中基线走样式库 .bz-empty（uiEmpty 工厂，色彩层 token 随明暗）；
+   域内只补列表列纵向撑满（原 .bz-pwv-empty flex:1 的布局语义）与金库主题 CTA */
+#bz-encrypt-popup .bz-vault-lc-body > .bz-empty { flex: 1; }
+#bz-encrypt-popup .bz-empty .bz-pwv-empty-add { display: inline-flex; align-items: center; gap: 5px; margin-top: 12px; font-size: 12px; font-weight: 600; color: var(--bz-vault-gold-ink); background: rgba(185, 141, 62, 0.14); border: 1px solid rgba(185, 141, 62, 0.3); border-radius: 999px; padding: 6px 15px; cursor: pointer; }
+#bz-encrypt-popup .bz-empty .bz-pwv-empty-add:hover { background: rgba(185, 141, 62, 0.24); }
+#bz-encrypt-popup .bz-empty .bz-pwv-empty-add svg { width: 13px; height: 13px; }
 /* 密码平台行 */
 #bz-encrypt-popup .bz-pwv-row, #bz-encrypt-popup .bz-pwv-plrow { display: flex; align-items: center; gap: 11px; padding: 10px; border-radius: 12px; cursor: pointer; border: 1px solid transparent; transition: background 0.15s, border-color 0.15s; color: var(--bz-vault-ink); margin: 0 8px; }
 #bz-encrypt-popup .bz-pwv-row:hover, #bz-encrypt-popup .bz-pwv-plrow:hover { background: var(--bz-vault-bg); }
@@ -7427,20 +7059,18 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-vault-dlg .btns button { padding: 8px 18px; border-radius: 10px; font-weight: 600; }
 .bz-vault-dlg .btns .cancel { background: var(--background-modifier-hover); color: var(--text-normal); }
 .bz-vault-dlg .btns .save { background: var(--interactive-accent); color: var(--text-on-accent); }
-/* 快速取密选择器（bz-encrypt-copy-password 命令；挂 body，与 .bz-vault-dlg 同域前缀体系） */
+/* 快速取密选择器（bz-encrypt-copy-password 命令；挂 body，与 .bz-vault-dlg 同域前缀体系）。
+   候选行/空态/搜索框基线走样式库 .bz-popover-item(.is-on) / .bz-popover-empty / .bz-input；
+   域内只留弹窗壳、滚动列表与行内两行文案（平台名继承行色，is-on 时随品牌色）。 */
 .bz-encrypt-pwqp { background: var(--background-primary); border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); flex-direction: column; overflow: hidden; }
 .bz-encrypt-pwqp-head { padding: 14px 16px 0; }
 .bz-encrypt-pwqp-title { margin: 0; font-size: 16px; font-weight: 600; color: var(--text-normal); }
-.bz-encrypt-pwqp-search { margin: 10px 16px; width: calc(100% - 32px); box-sizing: border-box; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-normal); border-radius: 8px; padding: 8px 10px; font-size: 14px; outline: none; }
-.bz-encrypt-pwqp-search:focus { border-color: var(--interactive-accent); }
+.bz-encrypt-pwqp-search { margin: 10px 16px; width: calc(100% - 32px); box-sizing: border-box; }
 .bz-encrypt-pwqp-list { flex: 1; min-height: 0; overflow-y: auto; padding: 0 8px 10px; }
-.bz-encrypt-pwqp-row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; cursor: pointer; }
-.bz-encrypt-pwqp-row:hover, .bz-encrypt-pwqp-row.on { background: var(--background-modifier-hover); }
-.bz-encrypt-pwqp-row .mid { flex: 1; min-width: 0; }
-.bz-encrypt-pwqp-row .pl { font-size: 14px; font-weight: 600; color: var(--text-normal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bz-encrypt-pwqp-row .ac { font-size: 12px; color: var(--text-muted); font-family: var(--font-monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
-.bz-encrypt-pwqp-row .key { font-size: 11px; color: var(--text-faint); flex-shrink: 0; }
-.bz-encrypt-pwqp-empty { padding: 32px 12px; text-align: center; color: var(--text-faint); font-size: 13px; }
+.bz-encrypt-pwqp .bz-popover-item .mid { flex: 1; min-width: 0; }
+.bz-encrypt-pwqp .bz-popover-item .pl { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bz-encrypt-pwqp .bz-popover-item .ac { font-size: 12px; color: var(--text-muted); font-family: var(--font-monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+.bz-encrypt-pwqp .bz-popover-item .key { font-size: 11px; color: var(--text-faint); flex-shrink: 0; }
 @media (max-width: 768px) {
   #bz-encrypt-popup { width: 100vw; height: 100vh; max-width: none; max-height: none; border-radius: 0; }
   #bz-encrypt-popup .bz-vault-desk { display: none; }
@@ -7483,7 +7113,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 收编新体系（铁律 6）：控件（按钮/输入/开关/下拉/滑条/chip/徽标/空态）全部消费组件库
    src/core/ui（components.css + tokens.css）；本文件只保留域内特有布局与行内尺寸修饰：
    头行/侧栏骨架/分组卡/设置行/custom 插槽作用域重绘/移动列表与弹窗排版，取值一律 tokens。
-   顶部头行仿影院主面板（.bz-cinema-head）：整宽条、仅标题；桌面无关闭钮（遮罩/ESC 关闭）。
+   顶部头行仿影院主面板（共享 .bz-panel-head，ADR-0094 接入后影院亦消费之）：整宽条、仅标题；桌面无关闭钮（遮罩/ESC 关闭）。
    滚动条全隐藏（滚动功能保留）。 */
 
 /* ---- 弹窗根壳（几何用 !important 压 createOverlay 内联 width/maxWidth） ---- */
@@ -8010,87 +7640,30 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-sp-mob-modal-body::-webkit-scrollbar, .bz-select-menu::-webkit-scrollbar {
   display: none;
 }
-/* ==================== 归物本域样式（src/belongings/styles.css，ticket 177 重写） ====================
- * 基线（按钮/图标钮/chip/输入/弹窗/空态/平铺选择）全部消费组件库（src/core/ui/ 的 .bz-* 类
- * 与 --bz-* token）；本文件只保留归物本独有布局（主面板骨架/左状态栏/统计条/时间轴/物件行/表单）。
+/* ==================== 归物本域样式（src/belongings/styles.css，ADR-0094 组件库接入） ====================
+ * 基线（面板壳/头行/侧栏/主头行/工具行/搜索/横滑条/统计卡/候选浮层/空态/按钮/chip/输入/弹窗）
+ * 全部消费组件库（src/core/ui/ 的 .bz-* 共享类与 uiRail/uiEmpty 等工厂）；
+ * 本文件只保留归物本独有布局：面板尺寸 / rail 挂载点 / 年份下拉 / 统计条间距 /
+ * 时间轴 / 物件行 / 表单 / 移动专属显隐与触控档。
  * 视觉对齐拍板原型 P6「状态边栏 × 时间轴」：桌面 820×600 左栏 168 + 右时间轴；移动真全屏。
  * 状态色（using/idle/sold/discard）为数据语义功能色，域内直给（tint 底 + 深字，两主题可读）。
  */
 
-/* ---- 遮罩 + 主面板骨架 ---- */
-.bz-bel-overlay {
-  position: fixed; inset: 0;
-  background: var(--bz-overlay);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--bz-font-ui);
-  /* z-index 由 openPanel 经 topifyZ 动态发号（ADR-0067），此处不设静态档 */
-}
+/* ---- 主面板尺寸（骨架走 .bz-panel-frame，遮罩走 .bz-panel-overlay，含滚动条隐藏） ---- */
 .bz-bel-panel {
-  background: var(--bz-surface-2); color: var(--bz-text-1);
-  border-radius: var(--bz-radius-md); border: 1px solid var(--bz-border);
-  box-shadow: var(--bz-shadow-lg);
-  display: flex; flex-direction: column;
   width: 820px; max-width: calc(100vw - 32px); height: 600px; max-height: 92vh;
-  overflow: hidden;
 }
-.bz-bel-overlay, .bz-bel-overlay * { scrollbar-width: none; -ms-overflow-style: none; }
-.bz-bel-overlay *::-webkit-scrollbar { display: none; }
 
-.bz-bel-head {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 0 var(--bz-space-lg); height: 44px;
-  border-bottom: 1px solid var(--bz-border); flex-shrink: 0;
-}
-.bz-bel-title { font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
-/* 头行图标钮间距 ≥8px（ticket 189 防误触，同 favorites 档） */
-.bz-bel-head-btns { display: flex; align-items: center; gap: var(--bz-space-sm); }
+.bz-bel-body { display: flex; flex: 1; min-height: 0; --bz-rail-w: 168px; }
+/* rail 挂载点（uiRail 工厂注入 .bz-rail）：桌面并入 flex 轴，移动整栏隐藏 */
+.bz-bel-body aside { display: contents; }
+
 .bz-bel-mob-only { display: none; }
-
-.bz-bel-body { display: flex; flex: 1; min-height: 0; }
-
-/* ---- 左状态栏 ---- */
-.bz-bel-side {
-  width: 168px; border-right: 1px solid var(--bz-border); padding: var(--bz-space-md) var(--bz-space-sm);
-  display: flex; flex-direction: column; background: var(--bz-surface-1); flex-shrink: 0;
-}
-.bz-bel-side-label { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin: 0 var(--bz-space-xs) var(--bz-space-xs); letter-spacing: 0.06em; }
-.bz-bel-side-scroll { overflow-y: auto; flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.bz-bel-side-item {
-  display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: 7px 10px; border-radius: 6px;
-  background: none; border: none; cursor: pointer;
-  font-size: var(--bz-font-label); color: var(--bz-text-1); text-align: left;
-  font-family: inherit;
-}
-.bz-bel-side-item:hover { background: var(--bz-surface-hover); }
-.bz-bel-side-item.bz-bel-nav-active { background: var(--bz-brand); color: var(--bz-on-brand); font-weight: var(--bz-weight-medium); }
-.bz-bel-side-ic { width: 16px; text-align: center; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
-.bz-bel-side-item .bz-ic { width: 14px; height: 14px; }
-.bz-bel-side-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bz-bel-nav-cnt {
-  font-size: var(--bz-font-caption); color: var(--bz-text-3); background: var(--bz-surface-2);
-  border-radius: 999px; padding: 0 7px; line-height: 17px; flex-shrink: 0;
-}
-.bz-bel-side-item.bz-bel-nav-active .bz-bel-nav-cnt { color: inherit; background: transparent; opacity: 0.75; }
 
 /* ---- 右栏 ---- */
 .bz-bel-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-.bz-bel-main-head {
-  display: flex; align-items: center; gap: var(--bz-space-sm);
-  padding: 12px var(--bz-space-lg) 2px; flex-shrink: 0;
-}
-.bz-bel-main-title { font-size: 16px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
-.bz-bel-main-count { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
-.bz-bel-main-spacer { flex: 1; }
-.bz-bel-main-head .bz-btn { height: 30px; padding: 0 14px; font-size: var(--bz-font-meta); }
-/* 工具栏（搜索 + 年份下拉） */
-.bz-bel-toolbar {
-  display: flex; align-items: center; gap: var(--bz-space-sm);
-  padding: 8px var(--bz-space-lg) 2px; flex-shrink: 0;
-}
-.bz-bel-search { flex: 1; position: relative; min-width: 0; }
-.bz-bel-search .bz-ic { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--bz-text-3); pointer-events: none; }
-.bz-bel-search .bz-input { width: 100%; padding-left: 30px; }
+
+/* 年份下拉（原生 select 自绘外观；共享 .bz-select 为自定义下拉，交互不同不换） */
 .bz-bel-yearsel { position: relative; flex-shrink: 0; }
 .bz-bel-select {
   appearance: none; -webkit-appearance: none;
@@ -8100,37 +7673,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-bel-select:hover { background: var(--bz-surface-hover); }
 .bz-bel-select-chev { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; color: var(--bz-text-3); pointer-events: none; }
-/* 移动端横滑条 / 隐藏搜索行（桌面隐藏） */
-.bz-bel-mobscenes { display: none; }
-.bz-bel-mobsearch { display: none; }
 
-/* ---- 统计条（三卡；总资产强调卡 = 品牌浅底） ---- */
-.bz-bel-stats {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--bz-space-sm);
-  padding: 8px var(--bz-space-lg) 2px; flex-shrink: 0;
-}
-.bz-bel-stat-main {
-  border: 1px solid color-mix(in srgb, var(--bz-brand) 22%, transparent); border-radius: var(--bz-radius-md);
-  background: color-mix(in srgb, var(--bz-brand) 8%, transparent);
-  padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;
-}
-.bz-bel-stat {
-  border: 1px solid var(--bz-border); border-radius: var(--bz-radius-md);
-  background: var(--bz-surface-2);
-  padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0;
-}
-.bz-bel-stat-label {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: var(--bz-font-caption); color: var(--bz-text-2); font-weight: 500;
-}
-.bz-bel-stat-label .bz-ic { width: 12px; height: 12px; }
-.bz-bel-stat-main .bz-bel-stat-label { color: var(--bz-brand); }
-.bz-bel-stat-main .bz-bel-stat-value { color: var(--bz-brand); }
-.bz-bel-stat-value { font-size: 20px; font-weight: 700; color: var(--bz-text-1); font-variant-numeric: tabular-nums; line-height: 1.2; }
-/* 可点统计卡（ticket 189：总资产=合成筛选 / 在册件数=回全部）——hover 只轻提背景 */
-.bz-bel-stat--click { cursor: pointer; }
-.bz-bel-stat--click:hover { background: var(--bz-surface-hover); }
-.bz-bel-stat-main.bz-bel-stat--click:hover { background: color-mix(in srgb, var(--bz-brand) 12%, transparent); }
+/* ---- 移动端隐藏搜索行（桌面恒隐；头部搜索钮仅移动显示） ---- */
+.bz-bel-mobsearch { display: none; padding: 2px var(--bz-space-lg) 6px; flex-shrink: 0; }
+.bz-bel-mobsearch.bz-bel-mobsearch-show { display: block; }
+
+/* ---- 统计条（三卡走组件库 .bz-stat-grid + .bz-stat；本文件只管条内边距与移动两列） ---- */
+.bz-bel-stats { padding: 8px var(--bz-space-lg) 2px; }
 
 /* ---- 时间轴 ---- */
 .bz-bel-content { flex: 1; overflow-y: auto; padding: 2px var(--bz-space-lg) var(--bz-space-md) calc(var(--bz-space-lg) + 8px); min-height: 0; }
@@ -8193,17 +7742,18 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-bel-price b { color: var(--bz-text-1); }
 .bz-bel-daily { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
 
-/* ---- 空态（组件库 .bz-empty） ---- */
+/* ---- 空态（组件库 uiEmpty 工厂 → .bz-empty） ---- */
 
 /* ---- 表单（弹窗骨架用组件库 .bz-overlay-mask；分类搜索 + 状态平铺自绘）----
-   表单遮罩 z 由 openForm 经 topifyZ 动态发号（ADR-0067，恒压主面板），不写死静态档 */
+   表单遮罩 z 由 openForm 经 topifyZ 动态发号（ADR-0067，恒压主面板），不写死静态档；
+   分类候选浮层（.bz-popover）锚定所在 .bz-field 下方 */
 .bz-bel-form {
-  position: relative; /* 分类搜索下拉定位锚点（P2-1 审查修正） */
   background: var(--bz-surface-3); border-radius: var(--bz-radius-md);
   border: 1px solid var(--bz-border); box-shadow: var(--bz-shadow-lg);
   width: 480px; max-width: calc(100vw - 32px); max-height: 86vh; overflow-y: auto;
   padding: var(--bz-space-lg); display: flex; flex-direction: column;
 }
+.bz-bel-form .bz-field { position: relative; }
 .bz-bel-form-title { font-size: var(--bz-font-title); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
 .bz-bel-form-body { display: flex; flex-direction: column; gap: var(--bz-space-md); margin-top: var(--bz-space-md); }
 .bz-bel-form-body .bz-field { margin-bottom: 0; }
@@ -8213,20 +7763,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-bel-form-actions { justify-content: flex-end; }
 .bz-bel-form-spacer { flex: 1; }
 .bz-bel-statuspick { display: flex; flex-wrap: wrap; gap: var(--bz-space-sm); }
-/* 分类搜索下拉 */
-.bz-bel-catinput { position: relative; }
-.bz-bel-catpop {
-  position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 60;
-  background: var(--bz-surface-4); border: 1px solid var(--bz-border);
-  border-radius: var(--bz-radius-sm); box-shadow: var(--bz-shadow-md);
-  padding: 4px; max-height: 200px; overflow-y: auto;
-}
-.bz-bel-catopt {
-  display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 6px;
-  font-size: var(--bz-font-label); color: var(--bz-text-1); cursor: pointer;
-}
-.bz-bel-catopt:hover { background: var(--bz-surface-hover); }
-.bz-bel-catopt.on { background: var(--bz-brand-soft); font-weight: 600; color: var(--bz-brand); }
 
 /* ---- 移动端（≤768px） ---- */
 @media (max-width: 768px) {
@@ -8234,33 +7770,15 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
     width: 100vw; height: 100vh; max-width: none; max-height: none;
     border-radius: 0; border: none;
   }
-  .bz-bel-head { padding-right: var(--bz-space-sm); } /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css） */
+  .bz-bel-panel .bz-panel-head { padding-right: var(--bz-space-sm); } /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css） */
   .bz-bel-mob-only { display: inline-flex; }
-  /* 头行图标钮触屏换大按钮档（ticket 189，同 favorites 档）；coarse 下 ::after 外扩补足 44px */
-  .bz-bel-head-btns .bz-icon-btn { width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg); }
-  .bz-bel-head-btns .bz-icon-btn .bz-ic { width: 16px; height: 16px; }
-  .bz-bel-side { display: none; }
-  .bz-bel-main-head { display: none; }
-  .bz-bel-toolbar { display: none; }
-  .bz-bel-mobscenes {
-    display: flex; gap: var(--bz-space-sm); padding: 10px var(--bz-space-lg) 2px;
-    overflow-x: auto; flex-shrink: 0;
-  }
-  .bz-bel-mobchip {
-    display: inline-flex; align-items: center; gap: 5px; min-height: 44px; /* 触控 ≥44px 档（设计手册 §8.2） */
-    white-space: nowrap; font-size: var(--bz-font-meta); padding: var(--bz-space-sm) 14px;
-    border-radius: var(--bz-radius-full); background: var(--bz-surface-2); border: 1px solid var(--bz-border);
-    color: var(--bz-text-1); cursor: pointer; flex-shrink: 0; font-family: inherit;
-  }
-  .bz-bel-mobchip .bz-ic { width: 13px; height: 13px; }
-  .bz-bel-mobchip-active { background: var(--bz-brand); color: var(--bz-on-brand); border-color: transparent; font-weight: var(--bz-weight-medium); }
-  .bz-bel-mobchip-active .bz-bel-chip-cnt { color: inherit; opacity: 0.8; }
-  .bz-bel-chip-cnt { margin-left: 2px; font-size: 11px; opacity: 0.7; }
-  .bz-bel-mobsearch { display: none; padding: 2px var(--bz-space-lg) 6px; flex-shrink: 0; }
-  .bz-bel-mobsearch.bz-bel-mobsearch-show { display: block; }
-  /* 展开搜索行触屏抬到 ≥44px 档（同首页搜索条） */
-  .bz-bel-mobsearch .bz-input { height: 44px; }
-  .bz-bel-stats { grid-template-columns: 1fr 1fr; padding: 8px var(--bz-space-lg) 2px; }
+  /* 头行图标钮触屏换大按钮档（ticket 189，同 favorites 档）：模板挂组件库 .bz-icon-btn--lg 修饰符 */
+  .bz-bel-body aside { display: none; } /* 桌面 rail；移动走横滑 chips */
+  .bz-bel-panel .bz-main-head { display: none; }
+  .bz-bel-panel .bz-toolrow { display: none; }
+  .bz-bel-panel .bz-mobstrip-chip { min-height: 44px; } /* 触控 ≥44px 档（设计手册 §8.2） */
+  .bz-bel-stats { grid-template-columns: 1fr 1fr; }
+  .bz-bel-mobsearch .bz-input { height: 44px; } /* 展开搜索行触屏抬到 ≥44px 档（同首页搜索条） */
   .bz-bel-content { padding: var(--bz-space-sm) var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
   .bz-bel-name { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 }
@@ -8270,8 +7788,12 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* ==================== 影院域样式（src/cinema/styles.css） ==================== */
 /* 试点收编（铁律 6）：基线（按钮/图标钮/chip/输入/弹窗/空态）全部消费组件库
    （src/core/ui/components.css 的 .bz-* 类与 --bz-* token）；
-   本文件只保留影院独有布局（面板骨架/左栏树/海报网格/详情头部/评分滑杆/分析页排版），
-   取值一律取自 tokens.css；类型/状态色为功能色（数据语义，域内直给）。
+   面板壳/头行/侧栏/主头行/工具行/搜索/移动横滑条接入共享组件批次（ADR-0094）：
+   .bz-panel-overlay/.bz-panel-frame/.bz-panel-head/.bz-rail 族/.bz-main-head/
+   .bz-toolrow/.bz-search/.bz-mobstrip——共享类承担的域内规则已删除；
+   本文件只保留影院独有布局（面板宽高/海报网格/详情头部/评分滑杆/分析页排版），
+   取值一律取自 tokens.css；类型/状态色为功能色（数据语义，域内直给）；
+   涉共享类的域内覆写一律以 .bz-cinema-panel 前缀 scoped，防聚合后跨域泄漏。
    主色跟品牌 --bz-brand（与其他新域统一）。 */
 
 /* ---- 分析页主题变量（增强包需求 7：此前无任何定义、靠浏览器回退，此处正式收编） ----
@@ -8294,103 +7816,22 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   --bz-cinema-accent: var(--bz-brand);
 }
 
-/* ---- 遮罩 + 主面板骨架 ---- */
-.bz-cinema-overlay {
-  position: fixed; inset: 0;
-  background: var(--bz-overlay);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--bz-font-ui);
-  /* z-index 由 createOverlay 经 topifyZ 动态分配（ADR-0067），此处不设静态档 */
-}
+/* ---- 遮罩 + 主面板骨架：共享壳 .bz-panel-overlay / .bz-panel-frame（含滚动条隐藏），
+   域内只留宽高内联 ---- */
 .bz-cinema-panel {
-  background: var(--bz-surface-2); color: var(--bz-text-1);
-  border-radius: var(--bz-radius-md); border: 1px solid var(--bz-border);
-  box-shadow: var(--bz-shadow-lg);
-  display: flex; flex-direction: column;
   width: 940px; max-width: calc(100vw - 32px); height: 640px; max-height: 90vh;
-  overflow: hidden;
 }
-/* 面板内隐藏滚动条（滚动功能保留） */
-.bz-cinema-overlay, .bz-cinema-overlay * { scrollbar-width: none; -ms-overflow-style: none; }
-.bz-cinema-overlay *::-webkit-scrollbar { display: none; }
 
-.bz-cinema-head {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 0 var(--bz-space-lg); height: 44px;
-  border-bottom: 1px solid var(--bz-border); flex-shrink: 0;
-}
-.bz-cinema-title { font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
-.bz-cinema-head-btns { display: flex; align-items: center; gap: var(--bz-space-xs); }
+/* ---- 头行 = 共享 .bz-panel-head；移动工具钮显隐为域内规则 ---- */
 .bz-cinema-mob-only { display: none; }
 
 .bz-cinema-body { display: flex; flex: 1; min-height: 0; }
 
-/* ---- 左栏分类树 ---- */
-.bz-cinema-nav {
-  width: 176px; border-right: 1px solid var(--bz-border); padding: var(--bz-space-md) var(--bz-space-sm);
-  overflow-y: auto; flex-shrink: 0; display: flex; flex-direction: column;
-}
-.bz-cinema-nav-label { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin: var(--bz-space-md) var(--bz-space-xs) var(--bz-space-xs); }
-.bz-cinema-nav-label:first-child { margin-top: 0; }
-/* 分类行（选中 = 品牌底）；内边距归档 token 档（8/12） */
-.bz-cinema-nav-item {
-  display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: var(--bz-space-sm) var(--bz-space-md); border-radius: 6px;
-  background: none; border: none; cursor: pointer;
-  font-size: var(--bz-font-label); color: var(--bz-text-1); text-align: left;
-  font-family: inherit;
-}
-.bz-cinema-nav-item:hover { background: var(--bz-surface-hover); }
-.bz-cinema-nav-item.bz-cinema-nav-active { background: var(--bz-brand); color: var(--bz-on-brand); font-weight: var(--bz-weight-medium); }
-.bz-cinema-nav-cnt { margin-left: auto; font-size: var(--bz-font-caption); color: var(--bz-text-3); }
-.bz-cinema-nav-item.bz-cinema-nav-active .bz-cinema-nav-cnt { color: inherit; opacity: 0.72; }
-.bz-cinema-nav-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-/* 二级分类（无三角） */
-.bz-cinema-nav-sub { display: none; flex-direction: column; gap: 1px; margin: 2px 0 2px 14px; }
-.bz-cinema-nav-sub.bz-cinema-nav-sub-open { display: flex; }
-.bz-cinema-nav-sub-item {
-  display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: var(--bz-space-xs) var(--bz-space-md); border-radius: 6px;
-  background: none; border: none; cursor: pointer;
-  font-size: var(--bz-font-meta); color: var(--bz-text-2); text-align: left;
-  font-family: inherit;
-}
-.bz-cinema-nav-sub-item:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
-.bz-cinema-nav-sub-item.bz-cinema-nav-active { background: var(--bz-brand); color: var(--bz-on-brand); font-weight: var(--bz-weight-medium); }
-.bz-cinema-nav-sub-item .bz-cinema-nav-cnt { color: var(--bz-text-3); }
-.bz-cinema-nav-sub-item.bz-cinema-nav-active .bz-cinema-nav-cnt { color: inherit; opacity: 0.72; }
-/* 底部工具（AI 荐片 / 影视分析） */
-.bz-cinema-nav-tools { margin-top: auto; border-top: 1px solid var(--bz-border); padding-top: var(--bz-space-sm); display: flex; flex-direction: column; gap: 2px; }
-.bz-cinema-nav-tool {
-  display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: var(--bz-space-sm) var(--bz-space-md); border-radius: 6px;
-  background: none; border: none; cursor: pointer;
-  font-size: var(--bz-font-meta); color: var(--bz-text-2); text-align: left;
-  font-family: inherit;
-}
-.bz-cinema-nav-tool:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
-.bz-cinema-nav-tool.bz-cinema-nav-active { background: var(--bz-brand); color: var(--bz-on-brand); font-weight: var(--bz-weight-medium); }
-.bz-cinema-tool-ic { width: 16px; text-align: center; display: inline-flex; justify-content: center; }
+/* ---- 左栏分类树 = 共享 .bz-rail 族（label/行/色点/计数/二级子列表 .bz-rail-sub + 底部 .bz-rail-foot） ---- */
 
 /* ---- 右栏 ---- */
 .bz-cinema-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-/* 主头行（对齐待办主头行）：当前筛选名 + · N 部 + 右侧添加按钮；间距/控件高归档 token */
-.bz-cinema-main-head {
-  display: flex; align-items: center; gap: var(--bz-space-sm);
-  padding: var(--bz-space-md) var(--bz-space-lg) 2px; flex-shrink: 0;
-}
-.bz-cinema-main-title { font-size: 16px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
-.bz-cinema-main-count { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
-.bz-cinema-main-spacer { flex: 1; }
-.bz-cinema-main-head .bz-btn { height: var(--bz-control-h); padding: 0 var(--bz-space-md); font-size: var(--bz-font-meta); }
-.bz-cinema-top {
-  display: flex; align-items: center; gap: var(--bz-space-sm);
-  padding: var(--bz-space-sm) var(--bz-space-lg) var(--bz-space-xs);
-  flex-shrink: 0;
-}
-.bz-cinema-search { flex: 1; position: relative; min-width: 0; }
-.bz-cinema-search .bz-ic { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--bz-text-3); pointer-events: none; }
-.bz-cinema-search .bz-input { width: 100%; padding-left: 30px; }
+/* 主头行/工具行/搜索 = 共享 .bz-main-head / .bz-toolrow / .bz-search */
 /* 排序：组件库 segmented 三档（桌面工具行；移动端隐藏——同待办） */
 .bz-cinema-sort { flex-shrink: 0; }
 .bz-cinema-sort .bz-segmented-btn { padding: 0 10px; font-size: var(--bz-font-caption); }
@@ -8526,7 +7967,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 加入想看钮：强调图标钮（组件库 .bz-icon-btn--accent 修饰符承担配色，域内不再覆盖） */
 
 /* ---- 移动端（≤768px）：真全屏 + 右上角工具 + 3 列海报 + 横滑分类 ---- */
-.bz-cinema-mob-nav { display: none; }
 @media (max-width: 768px) {
   .bz-cinema-panel {
     width: 100vw; height: 100vh; max-width: none; max-height: none;
@@ -8534,32 +7974,20 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   }
   .bz-cinema-mob-only { display: inline-flex; }
   /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css），头行不再垫顶 */
-  /* 头行图标钮触屏换大按钮档（同 favorites/belongings；≥40px 目标档） */
-  .bz-cinema-head-btns { gap: var(--bz-space-sm); }
-  .bz-cinema-head-btns .bz-icon-btn { width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg); }
-  .bz-cinema-head-btns .bz-icon-btn .bz-ic { width: 16px; height: 16px; }
+  /* 头行图标钮触屏换大按钮档（同 favorites/belongings；≥40px 目标档）——scoped 防跨域泄漏 */
+  .bz-cinema-panel .bz-panel-head-btns { gap: var(--bz-space-sm); }
+  .bz-cinema-panel .bz-panel-head-btns .bz-icon-btn { width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg); }
+  .bz-cinema-panel .bz-panel-head-btns .bz-icon-btn .bz-ic { width: 16px; height: 16px; }
   /* 排序 segmented 桌面专属（同待办）；搜索独占一行 */
   .bz-cinema-sort { display: none; }
-  .bz-cinema-nav { display: none; } /* 移动端分类在顶部横滑条 */
-  .bz-cinema-mob-nav {
-    display: flex; gap: var(--bz-space-sm); padding: 10px var(--bz-space-lg); overflow-x: auto; flex-shrink: 0;
-  }
-  .bz-cinema-mob-chip {
-    display: inline-flex; align-items: center; min-height: 44px; /* 触控 ≥44px 档（设计手册 §8.2） */
-    white-space: nowrap; font-size: var(--bz-font-meta); padding: var(--bz-space-sm) 16px; border-radius: var(--bz-radius-full);
-    background: var(--bz-surface-2); border: 1px solid var(--bz-border);
-    color: var(--bz-text-1); cursor: pointer; flex-shrink: 0;
-    font-family: inherit;
-  }
-  .bz-cinema-mob-chip.bz-cinema-mob-chip-active {
-    background: var(--bz-brand); color: var(--bz-on-brand);
-    border-color: transparent; font-weight: var(--bz-weight-medium);
-  }
+  .bz-cinema-panel .bz-rail { display: none; } /* 移动端分类在顶部横滑条 */
+  /* 横滑分类条 = 共享 .bz-mobstrip；触屏 chip 抬 ≥44px 档（设计手册 §8.2） */
+  .bz-cinema-panel .bz-mobstrip-chip { min-height: 44px; }
   .bz-cinema-grid { grid-template-columns: repeat(3, 1fr); gap: var(--bz-space-md); }
   .bz-cinema-content { padding: var(--bz-space-md) var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
   /* 移动端保留桌面主头行（影院是唯一例外）：添加钮抬 ≥40px 触控档（设计手册 §8.2 绝对下限，
-     桌面维持 32px 控件档） */
-  .bz-cinema-main-head .bz-btn { height: var(--bz-control-h-lg); }
+     桌面走共享 .bz-btn--md 30px 中档） */
+  .bz-cinema-panel .bz-main-head .bz-btn { height: var(--bz-control-h-lg); }
 }
 
 /* ---- 非几何间距归档（自 ui.ts 内联 style 迁入） ---- */
@@ -8572,44 +8000,24 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* ==================== 书架墙域样式（src/bookshelf/styles.css） ==================== */
 /* 试点收编（铁律 6）：基线（按钮/图标钮/chip/输入/单选/滑条/空态/弹窗骨架）全部消费组件库
    （src/core/ui/components.css 的 .bz-* 类与 --bz-* token）；
-   本文件只保留书架墙独有布局（主面板骨架/左栏状态/封面网格与统计行/移动筛选抽屉/详情排版），
-   取值一律取自 tokens.css；状态色（在读/已读/未读）为数据语义色 → 引用 --bz-brand/--bz-success/--bz-text-*。
+   面板壳/头行/侧栏/统计卡/进度细条/工具行/搜索接入共享组件批次（ADR-0094）：
+   .bz-panel-overlay/.bz-panel-frame/.bz-panel-head/.bz-rail 族/.bz-stat 族/
+   .bz-progress--thin/.bz-toolrow/.bz-search——共享类承担的域内规则已删除；
+   本文件只保留书架墙独有布局（面板宽高/移动搜索条/封面网格与月柱/移动筛选抽屉/详情排版），
+   取值一律取自 tokens.css；状态色（在读/已读/未读）为数据语义色 → 引用 --bz-brand/--bz-success/--bz-text-*；
+   涉共享类的域内覆写一律以 .bz-bs-panel 前缀 scoped，防聚合后跨域泄漏。
    主色跟品牌 --bz-brand（与其他新域统一）。 */
 
-/* ---- 遮罩 + 主面板骨架 ---- */
-.bz-bs-overlay {
-  position: fixed; inset: 0;
-  background: var(--bz-overlay);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--bz-font-ui);
-}
+/* ---- 遮罩 + 主面板骨架：共享壳 .bz-panel-overlay / .bz-panel-frame（含滚动条隐藏），
+   域内只留宽高内联 ---- */
 .bz-bs-panel {
-  background: var(--bz-surface-2); color: var(--bz-text-1);
-  border-radius: var(--bz-radius-md); border: 1px solid var(--bz-border);
-  box-shadow: var(--bz-shadow-lg);
-  display: flex; flex-direction: column;
   width: 960px; max-width: calc(100vw - 32px); height: 680px; max-height: 90vh;
-  overflow: hidden;
 }
-/* 面板内隐藏滚动条（滚动功能保留） */
-.bz-bs-overlay, .bz-bs-overlay * { scrollbar-width: none; -ms-overflow-style: none; }
-.bz-bs-overlay *::-webkit-scrollbar { display: none; }
 
-/* 头行：整宽 44px 条、仅标题 + 计数；桌面端右上无关闭钮（遮罩/ESC 关） */
-.bz-bs-head {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 0 var(--bz-space-lg); height: 44px;
-  border-bottom: 1px solid var(--bz-border); flex-shrink: 0;
-}
-.bz-bs-title {
-  font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold);
-  color: var(--bz-text-1); display: inline-flex; align-items: baseline; gap: 8px;
-}
-.bz-bs-total { font-size: var(--bz-font-caption); color: var(--bz-text-3); font-weight: var(--bz-weight-regular); }
-.bz-bs-head-btns { display: flex; align-items: center; gap: var(--bz-space-xs); }
-/* 桌面端隐藏全部头行图标钮（报告入口在左栏底部；搜索在工具栏常驻；关闭靠遮罩/ESC）；
+/* 头行 = 共享 .bz-panel-head（标题 + 计数 sub + spacer + 钮组）。
+   桌面端隐藏全部头行图标钮（报告入口在左栏底部；搜索在工具栏常驻；关闭靠遮罩/ESC）；
    仅移动端 ≤768px 显示报告/搜索/筛选/关闭 */
-.bz-bs-head-btns [data-bs-tool] { display: none; }
+.bz-bs-panel .bz-panel-head-btns [data-bs-tool] { display: none; }
 /* 移动搜索条（默认隐藏，点头部放大镜展开） */
 .bz-bs-searchbar { display: none; }
 .bz-bs-searchbar.show { display: flex; align-items: center; gap: 6px; padding: 8px 14px 2px; flex-shrink: 0; }
@@ -8617,99 +8025,29 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 .bz-bs-body { display: flex; flex: 1; min-height: 0; }
 
-/* ---- 左栏：状态列表 + 底部报告入口（桌面） ---- */
-.bz-bs-side {
-  width: 168px; border-right: 1px solid var(--bz-border); padding: var(--bz-space-md) var(--bz-space-sm);
-  overflow-y: auto; flex-shrink: 0; display: flex; flex-direction: column;
-}
-.bz-bs-side-label { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin: 0 var(--bz-space-xs) var(--bz-space-xs); }
-.bz-bs-side-catlabel { margin-top: var(--bz-space-md); }
-.bz-bs-side-list { display: flex; flex-direction: column; gap: 1px; }
-/* 分类第二组：沿用状态组条目样式 */
-.bz-bs-side-catlist { display: flex; flex-direction: column; gap: 1px; }
-.bz-bs-side-item {
-  display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: 7px 10px; border-radius: 6px;
-  background: none; border: none; cursor: pointer;
-  font-size: var(--bz-font-label); color: var(--bz-text-1); text-align: left;
-  font-family: inherit;
-}
-.bz-bs-side-item:hover { background: var(--bz-surface-hover); }
-.bz-bs-side-item.on { background: var(--bz-brand); color: var(--bz-on-brand); font-weight: var(--bz-weight-medium); }
-.bz-bs-side-ic { width: 15px; height: 15px; display: inline-flex; flex-shrink: 0; color: var(--bz-text-3); }
-.bz-bs-side-item.on .bz-bs-side-ic { color: inherit; }
-.bz-bs-side-item .bz-ic { width: 15px; height: 15px; }
-.bz-bs-side-cnt { margin-left: auto; font-size: var(--bz-font-caption); color: var(--bz-text-3); }
-.bz-bs-side-item.on .bz-bs-side-cnt { color: inherit; opacity: 0.72; }
-.bz-bs-side-foot { margin-top: auto; border-top: 1px solid var(--bz-border); padding-top: var(--bz-space-sm); }
-.bz-bs-report {
-  display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
-  padding: 7px 10px; border-radius: 6px;
-  background: none; border: none; cursor: pointer;
-  font-size: var(--bz-font-meta); color: var(--bz-text-2); text-align: left;
-  font-family: inherit;
-}
-.bz-bs-report:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
-.bz-bs-report .bz-ic { width: 14px; height: 14px; flex-shrink: 0; color: var(--bz-text-3); }
-.bz-bs-report:hover .bz-ic { color: var(--bz-brand); }
+/* ---- 左栏 = 共享 .bz-rail 族（label/行/计数 + 底部 .bz-rail-foot 报告入口）；
+   .bz-bs-side-list/.bz-bs-side-catlist 为渲染挂载容器（无样式），.bz-bs-report 为 JS/测试钩子 ----
+   报告入口箭头靠右（共享行内无此槽位） */
 .bz-bs-report-chev { margin-left: auto; }
-/* 报告视图激活态（左栏入口变「‹ 返回书架」，桌面返回路径） */
-.bz-bs-report.on { background: var(--bz-brand); color: var(--bz-on-brand); font-weight: var(--bz-weight-medium); }
-.bz-bs-report.on .bz-ic { color: inherit; }
-.bz-bs-report.on:hover .bz-ic { color: inherit; }
 
 /* ---- 报告视图（reading-report 域内容区挂载点；头行/内容区样式归 reading-report/styles.css） ---- */
 .bz-bs-view-report { min-height: 0; }
 
-/* ---- 右内容区：视图容器（书架列表 / 阅读分析报告互斥）+ 工具栏 + 统计行 + 书架 ---- */
+/* ---- 右内容区：视图容器（书架列表 / 阅读分析报告互斥）+ 工具行 + 统计行 + 书架 ----
+   工具行/搜索壳 = 共享 .bz-toolrow / .bz-search；搜索定宽与排序槽位为域内布局 */
 .bz-bs-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 /* 面板内视图（读书报告内嵌化拍板）：报告不再是独立弹窗，而是面板内的一个视图 */
 .bz-bs-view { display: none; flex: 1; flex-direction: column; min-height: 0; }
 .bz-bs-view.active { display: flex; }
-.bz-bs-toolbar {
-  display: flex; align-items: center; gap: var(--bz-space-sm);
-  padding: 10px var(--bz-space-lg) 6px; flex-shrink: 0;
-}
-.bz-bs-search { flex: 0 0 240px; position: relative; }
-.bz-bs-search .bz-ic { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--bz-text-3); pointer-events: none; width: 14px; }
-.bz-bs-search .bz-input { width: 100%; padding-left: 30px; }
-.bz-bs-spacer { flex: 1; }
+.bz-bs-search { flex: 0 0 240px; }
 .bz-bs-sort-slot { flex-shrink: 0; }
 
-/* 统计行（桌面 3 卡 + 月柱） */
+/* 统计行（桌面 3 卡 + 月柱）＝ 共享 .bz-stat 卡 + 域内月柱卡；行内等分为域内布局 */
 .bz-bs-dash {
   display: flex; gap: var(--bz-space-md); padding: 4px var(--bz-space-lg) var(--bz-space-md);
   flex-shrink: 0;
 }
-.bz-bs-statcard {
-  flex: 1; min-width: 0;
-  background: var(--bz-surface-3); border: 1px solid var(--bz-border);
-  border-radius: var(--bz-radius-md); padding: 10px 14px;
-}
-.bz-bs-statcard.accent { background: var(--bz-brand-soft); border-color: transparent; }
-.bz-bs-stat-label {
-  font-size: var(--bz-font-caption); color: var(--bz-text-3);
-  display: flex; align-items: center; gap: 5px;
-}
-.bz-bs-statcard.accent .bz-bs-stat-label { color: var(--bz-brand); }
-.bz-bs-stat-num { font-size: 24px; font-weight: var(--bz-weight-bold); color: var(--bz-text-1); margin-top: 2px; line-height: 1.15; }
-.bz-bs-statcard.accent .bz-bs-stat-num { color: var(--bz-brand); }
-.bz-bs-stat-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* 可点统计卡（在读 accent 一键回书 / 读完纪念日回看）：整卡手型 + hover 轻抬（阴影 token，无裸色值） */
-.bz-bs-statcard[data-bs-resume], .bz-bs-statcard[data-bs-anniv], .bz-bs-mcard[data-bs-resume], .bz-bs-mcard[data-bs-anniv] {
-  cursor: pointer;
-  transition: transform var(--bz-dur-base) var(--bz-ease-out), box-shadow var(--bz-dur-base) var(--bz-ease-out);
-}
-.bz-bs-statcard[data-bs-resume]:hover, .bz-bs-statcard[data-bs-anniv]:hover,
-.bz-bs-mcard[data-bs-resume]:hover, .bz-bs-mcard[data-bs-anniv]:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--bz-shadow-sm);
-}
-/* 纪念日卡书名行：24px 大数字档收缩为标题档（一行截断） */
-.bz-bs-anniv .bz-bs-stat-num, .bz-bs-anniv .bz-bs-mnum {
-  font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold);
-  line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
+.bz-bs-dash .bz-stat { flex: 1; min-width: 0; }
 .bz-bs-chart {
   flex: 1 1 320px; min-width: 0;
   background: var(--bz-surface-3); border: 1px solid var(--bz-border);
@@ -8733,14 +8071,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-bs-bar-label { font-size: var(--bz-font-caption); color: var(--bz-text-3); white-space: nowrap; }
 .bz-bs-chart-foot { display: flex; justify-content: space-between; font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-top: 4px; }
 
-/* 移动统计 2 卡（移动端显示，桌面隐藏） */
+/* 移动统计 2 卡（共享 .bz-stat 卡；移动端显示，桌面隐藏） */
 .bz-bs-mcards { display: none; grid-template-columns: 1fr 1fr; gap: var(--bz-space-sm); padding: 4px 14px 0; flex-shrink: 0; }
-.bz-bs-mcard { background: var(--bz-surface-3); border: 1px solid var(--bz-border); border-radius: var(--bz-radius-md); padding: 8px 12px; }
-.bz-bs-mcard.accent { background: var(--bz-brand-soft); border-color: transparent; }
-.bz-bs-mlabel { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
-.bz-bs-mcard.accent .bz-bs-mlabel { color: var(--bz-brand); }
-.bz-bs-mnum { font-size: 20px; font-weight: var(--bz-weight-bold); color: var(--bz-text-1); margin-top: 1px; line-height: 1.2; }
-.bz-bs-mcard.accent .bz-bs-mnum { color: var(--bz-brand); }
 
 /* 书架滚动区（桌面与移动各一份，按断点显隐） */
 .bz-bs-shelves { flex: 1; overflow-y: auto; padding: 2px var(--bz-space-lg) var(--bz-space-lg); min-height: 0; }
@@ -8769,9 +8101,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   position: absolute; top: 7px; right: 7px; width: 9px; height: 9px;
   border-radius: 50%; box-shadow: 0 0 0 2px var(--bz-surface-2);
 }
-/* 进度细条（封面底部；非已读且有进度时） */
-.bz-bs-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(0, 0, 0, 0.14); }
-.bz-bs-prog i { display: block; height: 100%; background: var(--bz-brand); }
+/* 进度细条 = 共享 .bz-progress .bz-progress--thin；域内只给封面底部绝对定位 */
+.bz-bs-prog { position: absolute; left: 0; right: 0; bottom: 0; }
 /* B6：有书评渐变浮层时进度条上移到浮层上方（quote 高 = 14pt + 1 行 16.5 + 6pt ≈ 37px），否则被渐变遮住 */
 .bz-bs-cover-wrap:has(.bz-bs-quote) .bz-bs-prog { bottom: 37px; }
 /* 书评一句（封面底部渐变浮层，1 行截断；本类仅服务封面浮层——
@@ -8900,14 +8231,14 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
     border-radius: 0; border: none;
   }
   /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css），头行不再自垫 */
-  .bz-bs-head { height: 46px; }
+  .bz-bs-panel .bz-panel-head { height: 46px; }
   /* 头行图标钮：报告/搜索/筛选/关闭（桌面隐藏的这批在此显示） */
-  .bz-bs-head-btns [data-bs-tool] { display: inline-flex; }
+  .bz-bs-panel .bz-panel-head-btns [data-bs-tool] { display: inline-flex; }
   .bz-bs-filterbtn.on { color: var(--bz-brand); background: var(--bz-brand-soft); }
   /* 头行报告钮激活态（报告视图中点击切回书架）+ 报告视图关闭钮仅移动端显示 */
-  .bz-bs-head-btns [data-bs-tool="report"].on { color: var(--bz-brand); background: var(--bz-brand-soft); }
-  /* 桌面块隐藏：左栏/工具栏/桌面统计行/桌面书架；移动块显示 */
-  .bz-bs-side, .bz-bs-toolbar, .bz-bs-dash, .bz-bs-shelves { display: none; }
+  .bz-bs-panel .bz-panel-head-btns [data-bs-tool="report"].on { color: var(--bz-brand); background: var(--bz-brand-soft); }
+  /* 桌面块隐藏：左栏/工具行/桌面统计行/桌面书架；移动块显示 */
+  .bz-bs-panel .bz-rail, .bz-bs-panel .bz-toolrow, .bz-bs-dash, .bz-bs-shelves { display: none; }
   .bz-bs-mcards { display: grid; }
   .bz-bs-shelves-m { display: block; }
   .bz-bs-grid { grid-template-columns: 1fr 1fr; gap: 14px 12px; }
@@ -9054,18 +8385,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   white-space: nowrap;
 }
 
+/* 条形行轨道基线走样式库 .bz-progress（--lg 8px 档，填充 i 内联宽/数据语义色）；域内只留行内撑满 */
 .bz-rr-bar-track {
   flex: 1;
-  height: 8px;
-  background: var(--background-modifier-border);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.bz-rr-bar-fill {
-  height: 100%;
-  border-radius: 4px;
-  min-width: 0;
 }
 
 .bz-rr-bar-val {
@@ -12463,21 +11785,7 @@ textarea.bz-sb-chat-input {
   color: var(--bz-text-2);
 }
 
-.bz-checkup-bar {
-  height: 6px;
-  border-radius: var(--bz-radius-full);
-  background: var(--bz-track);
-  overflow: hidden;
-}
-
-.bz-checkup-bar i {
-  display: block;
-  height: 100%;
-  width: 0;
-  border-radius: var(--bz-radius-full);
-  background: var(--bz-brand);
-  transition: width var(--bz-dur-base) var(--bz-ease-out);
-}
+/* 体检进度条基线走样式库 .bz-progress（uiProgress 工厂，品牌档；与清单的间距由 body gap 承担） */
 
 .bz-checkup-steps {
   display: flex;
