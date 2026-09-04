@@ -27,6 +27,7 @@ import {
 } from './constants';
 import { M, resetBookshelfState, type BookshelfItem, type SideId, type SortKey } from './state';
 import { rebuildItems, getDisplayItems, computeStats, resolveFolderPath, resolveBookTag } from './data';
+import { showBookNotes, showEpubBookNotes, closeBookNoteModals } from './notes-ui';
 
 // ---------- 小工具 ----------
 
@@ -270,8 +271,9 @@ function closeDrawer(): void {
 let detailModalClose: (() => void) | null = null;
 let confirmModalClose: (() => void) | null = null;
 
-/** 关闭本域浮层弹窗（详情 + 删除确认；closeOverlay 调用） */
+/** 关闭本域浮层弹窗（详情 + 删除确认 + 读书笔记；closeOverlay 调用） */
 function closeDomainModals(): void {
+  closeBookNoteModals(); // 读书笔记弹窗浮于详情之上，先收（旧 library 域 unload 语义随迁）
   if (confirmModalClose) { confirmModalClose(); confirmModalClose = null; }
   if (detailModalClose) { detailModalClose(); detailModalClose = null; }
 }
@@ -293,9 +295,10 @@ function openBookDetail(it: BookshelfItem, app: App): void {
     ? `<div class="bz-bs-d-meta"><b>阅读</b>：始于 ${esc(it.readingDate)}${it.completionDate ? ` · 读完 ${esc(it.completionDate)}` : ''}</div>`
     : `<div class="bz-bs-d-meta"><b>状态</b>：${esc(it.status)}${it.completionDate ? ` · 读完 ${esc(it.completionDate)}` : ''}</div>`;
   const chips = [
-    it.highlights ? `${iconSpan('highlighter', 'bz-ic--xs')}${it.highlights} 划` : '',
-    it.thinks ? `${iconSpan('brain', 'bz-ic--xs')}${it.thinks} 想` : '',
-    it.readingTimeFormat ? `${iconSpan('clock', 'bz-ic--xs')}${esc(it.readingTimeFormat)}` : '',
+    it.highlights || it.thinks
+      ? `<button type="button" class="bz-chip bz-bs-d-notes" data-bs-notes title="查看读书笔记">${iconSpan('highlighter', 'bz-ic--xs')}${it.highlights} 划线 · ${it.thinks} 批注</button>`
+      : '',
+    it.readingTimeFormat ? `<span class="bz-chip">${iconSpan('clock', 'bz-ic--xs')}${esc(it.readingTimeFormat)}</span>` : '',
   ].filter(Boolean).join('');
 
   const body = document.createElement('div');
@@ -328,6 +331,13 @@ function openBookDetail(it: BookshelfItem, app: App): void {
     onClose: () => { detailModalClose = null; },
   });
   detailModalClose = close;
+
+  // 读书笔记入口（「N 划线 · N 批注」可点；迁移自旧 library 域）：
+  // md 书开笔记行弹窗；EPUB 走 weave 聚合弹窗（weave-cfi 深链跳原文）
+  popup.querySelector('[data-bs-notes]')?.addEventListener('click', () => {
+    if (it.isEpub) showEpubBookNotes(app, it.epubVaultPath || '', it.title);
+    else if (it.file) showBookNotes(app, it.file.path, it.title);
+  });
 
   // 只读区之上组装编辑控件（组件库工厂；EPUB 禁用）
   const statusChoice = uiChoice({
