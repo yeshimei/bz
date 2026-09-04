@@ -14,7 +14,8 @@
  * entityType/action 为必填路由键；其余按事件粒度可选。
  */
 export interface StructuredMeta {
-  /** 实体类型（diary/flash/poem/letter/movie/memo/news/favorites/belongings/pomodoro/chat/library/reflection/weekly-report/dossier） */
+  /** 实体类型（diary/flash/poem/letter/movie/memo/news/favorites/belongings/pomodoro/chat/library/reflection/weekly-report/dossier；
+   *  library = 阅读实体（旧书库域已退役，现由书架墙 bookshelf 域 Weave 通道产生，存量值不变）） */
   entityType: string;
   /** 动作（created/updated/deleted/read/saved/want/watching/watched/rated/reviewed/...） */
   action: string;

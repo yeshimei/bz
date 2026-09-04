@@ -113,6 +113,13 @@
 .bz-icon-btn--close { width: 20px; height: 24px; font-size: 12px; }
 .bz-icon-btn[data-danger] { color: var(--bz-danger) !important; }
 .bz-icon-btn[data-danger]:hover { background: color-mix(in srgb, var(--bz-danger) 12%, transparent) !important; }
+/* 强调图标钮（品牌色图标 + 卡片底描边）：列表卡内行动钮等需要从灰调里跳出来的单图标钮 */
+.bz-icon-btn--accent {
+  color: var(--bz-brand) !important;
+  background: var(--bz-surface-2) !important;
+  border: 1px solid var(--bz-border);
+}
+.bz-icon-btn--accent:hover { background: var(--bz-brand-soft) !important; color: var(--bz-brand) !important; }
 
 /* ═══════════ Chip .bz-chip ═══════════ */
 .bz-chip {
@@ -144,6 +151,18 @@
 .bz-chip--sel:hover { background: var(--bz-brand-soft) !important; color: var(--bz-brand) !important; }
 .bz-chip--locked { border: 1px dashed var(--bz-border-strong); opacity: 0.55; cursor: not-allowed; background: var(--bz-surface-1) !important; color: var(--bz-text-2) !important; }
 .bz-chip--locked:hover { background: var(--bz-surface-1) !important; color: var(--bz-text-2) !important; }
+/* 数据语义色徽标（域经内联 --bz-chip-tint / --bz-chip-tint-fg 注入底色/前景，如影院类型/状态徽标）；
+   底色仍走 !important 链路（压过基线 .bz-chip），域内不再自写覆盖规则 */
+.bz-chip--tint {
+  background: var(--bz-chip-tint, var(--bz-surface-2)) !important;
+  color: var(--bz-chip-tint-fg, var(--bz-text-1)) !important;
+  border-color: transparent !important;
+  cursor: default;
+}
+.bz-chip--tint:hover {
+  background: var(--bz-chip-tint, var(--bz-surface-2)) !important;
+  color: var(--bz-chip-tint-fg, var(--bz-text-1)) !important;
+}
 .bz-chip-cnt { margin-left: 2px; font-size: 10px; font-weight: 600; opacity: 0.75; }
 
 .bz-chip-x {

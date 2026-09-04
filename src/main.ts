@@ -31,7 +31,6 @@ import { openClipbook, unloadClipbook } from './clipbook';
 import { openDiaryWall, unloadDiaryWall } from './diary-wall';
 import { applyDirectories as applyWallDirectories } from './diary-wall/config';
 import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
-import { openLibrary, openBookNotes, unloadLibrary } from './library';
 import { showReadingReport, unloadReadingReport } from './reading-report';
 // 影院（cinema 域，ADR-0087 起接管影视；旧 movie 域已退役）
 import { openCinema, addCinemaItem, unloadCinema } from './cinema';
@@ -99,9 +98,7 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 收藏本
   { id: 'bz-favorites-open', name: '收藏本', icon: 'star', callback: () => openFavoritesPanel(getApp()) },
   { id: 'bz-favorites-add', name: '加收藏', icon: 'bookmark', callback: () => addFavoriteItem(getApp()) },
-  // 书库
-  { id: 'bz-library-open', name: '书库', icon: 'library', callback: () => openLibrary(getApp()) },
-  { id: 'bz-book-notes-open', name: '读书笔记', icon: 'book-open', callback: () => openBookNotes(getApp()) },
+  // 旧书库（library）域退役：bz-library-open/bz-book-notes-open 已删，读书笔记并入书架墙详情弹窗
   // 阅读数据分析报告（t2：阅读分析报告 → 阅读数据分析报告，术语随 CONTEXT.md）
   { id: 'bz-reading-report-open', name: '阅读数据分析报告', icon: 'bar-chart-3', callback: () => showReadingReport(getApp()) },
   // 影视分析报告（独立域，ADR-0048；f7 解冻：去 clapperboard 重复 → pie-chart，id/名称契约不动；
@@ -325,7 +322,6 @@ export default class BzPlugin extends Plugin {
     unloadBookshelf();
     unloadMovieReport();
     unloadReadingReport();
-    unloadLibrary();
     // 剪藏本融合域（ADR-0082）：卸载统一面板；旧 news/clipping 已无独立挂载
     unloadClipbook();
     unloadAutoSummary();

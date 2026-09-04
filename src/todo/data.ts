@@ -138,7 +138,8 @@ export const TodoData = {
     await this.updateItem(id, { completed: now } as any);
   },
 
-  async deleteItem(id: string) {
+  /** 删除条目；返回被删条目的原索引（未找到返回 -1），供撤销时插回原位 */
+  async deleteItem(id: string): Promise<number> {
     return enqueueFileTask(this.todoFilePath, async () => {
       const data = await this.read();
       const idx = data.findIndex((d: any) => d.id === id);
@@ -146,6 +147,34 @@ export const TodoData = {
         data.splice(idx, 1);
         await this.write(data);
       }
+      return idx;
+    });
+  },
+
+  /** 撤销删除：把删除前的条目快照插回原索引（越界/未传则头部插入，对齐 addItem 语义） */
+  async restoreItem(item: TodoItem, idx?: number) {
+    return enqueueFileTask(this.todoFilePath, async () => {
+      const data = await this.read();
+      const at = idx !== undefined && idx >= 0 && idx <= data.length ? idx : 0;
+      data.splice(at, 0, item as any);
+      await this.write(data);
+    });
+  },
+
+  /** 批量迁移条目场景（场景重命名/删除用）：scene === from → to，返回迁移条数。
+   *  同源兼容：只改条目 scene 字段，写法与 memo 域读写同文件同形，memo 侧下次 loadItems 即读到 */
+  async updateSceneBulk(from: string, to: string): Promise<number> {
+    return enqueueFileTask(this.todoFilePath, async () => {
+      const data = await this.read();
+      let n = 0;
+      data.forEach((d: any) => {
+        if (d.scene === from) {
+          d.scene = to;
+          n++;
+        }
+      });
+      if (n > 0) await this.write(data);
+      return n;
     });
   },
 

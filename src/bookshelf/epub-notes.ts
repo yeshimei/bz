@@ -1,8 +1,9 @@
 /**
- * 书库 EPUB 读书笔记（ADR-0013 扩展）：从 weave-data.json 直接渲染 划线+想法，按章节分组；
+ * 书架墙 EPUB 读书笔记（ADR-0013 扩展）：从 weave-data.json 直接渲染 划线+想法，按章节分组；
  * 双击跳原文（weave-cfi 深链），长按编辑想法/删除（bz 直改 weave-data.json，ADR 记录竞态例外）。
+ * 迁移自旧 src/library/epub-notes.ts（旧域退役：weave 聚合通道改走本域 data.ts）。
  */
-import { DEFAULT_WEAVE_DATA_FILE, readWeaveDataAggregates, resolveWeaveDataPath } from './items';
+import { WEAVE_DATA_FILE, readWeaveAggregates, resolveWeaveDataPath } from './data';
 
 export interface EpubBookNote {
   /** 高亮记录引用（notes.highlights 中索引所在项）。 */
@@ -35,7 +36,7 @@ export function resolveChapterLabel(item: any): string {
 
 /** 按 vaultPath 找书聚合（无则 null）。 */
 export async function findWeaveBookByPath(app: any, vaultPath: string): Promise<any | null> {
-  const aggregates = await readWeaveDataAggregates(app);
+  const aggregates = await readWeaveAggregates(app);
   const normalized = String(vaultPath || '').trim();
   return aggregates.find((aggregate) => String(aggregate?.file?.vaultPath || '').trim() === normalized) || null;
 }
@@ -75,7 +76,7 @@ export function buildEpubJumpLink(book: any, note: EpubBookNote): string {
 // ---------- 直改 weave-data.json（Q16：bz 直接操作数据文件，ADR-0013 扩展记录竞态例外） ----------
 
 function weavDataFilePath(app: any): string {
-  return `${resolveWeaveDataPath(app)}/${DEFAULT_WEAVE_DATA_FILE}`;
+  return `${resolveWeaveDataPath(app)}/${WEAVE_DATA_FILE}`;
 }
 
 /** 读最新 weave-data.json 文档结构（原始对象，勿直接改动缓存）。 */

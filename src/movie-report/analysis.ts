@@ -11,21 +11,14 @@ import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
 import { ALL_TAGS, getGroupForTag, STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED } from '../cinema/constants';
+// 图表粉彩色板收编 core 共享层（增强包需求 7：与 cinema 影视分析取齐同一套视觉值）
+import { CHART_TYPE_COLORS as TYPE_COLORS, CHART_PASTEL_SERIES as PASTEL_CARDS } from '../core/chart-palette';
 import { getReportFolderPath } from './state';
 
 let analysisOverlay: HTMLElement | null = null;
 // MR1：vault 变更自动刷新订阅（关闭即退订）+ 防抖计时
 let analysisOffs: (() => void)[] = [];
 let analysisTimer: ReturnType<typeof setTimeout> | null = null;
-
-// 类型颜色（浅色，环形图/图例用）
-const TYPE_COLORS: Record<string, string> = {
-  '电影': '#FFE5CC',
-  '剧集': '#D6E4FF',
-  '动漫': '#FADDE1',
-  '纪录片': '#D8F3DC',
-  '公开课': '#E6DFF5',
-};
 
 // ticket 170：个人评分原生 10 分制（不再 6→10 换算），豆瓣同为 10 分制，直接可比
 const REVIEW_KEYWORDS = ['好看', '喜欢', '推荐', '经典', '感动', '治愈', '失望', '无聊', '一般', '神作', '烂片', '封神', '震撼', '催泪', '熬夜', '二刷', '满分'];
@@ -297,15 +290,7 @@ export function buildAnalysisData(app: App): any {
   return data;
 }
 
-// ======================= 渲染辅助（浅色风格） =======================
-const PASTEL_CARDS = [
-  '#D6E4FF',
-  '#D8F3DC',
-  '#CDF0EA',
-  '#FADDE1',
-  '#FFE5CC',
-  '#E6DFF5',
-];
+// ======================= 渲染辅助（浅色风格；色板见 core/chart-palette） =======================
 
 function emptyHTML(): string {
   return '<p style="text-align:center;color:var(--text-muted);font-size:.8rem;padding:12px 0;">暂无数据</p>';
