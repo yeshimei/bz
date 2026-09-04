@@ -916,3 +916,14 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **lucide 化 + 空态带动作**：🧮/❌/🏆/趋势 emoji 全清；空库空态 uiEmpty+uiBtn「去书架墙添加」主按钮。
 - **设置键评估**：bookshelfMobileDefaultFullscreen 保留（书架墙面板/读书笔记弹窗仍消费，报告随面板同控），settings.ts 注释更新。
 - **测试**：reading-report index/error/report/stats 重写同步 + 口径/图表纯函数用例；bookshelf ui +7 用例；smoke 命令表不变（id/名称/数量均不动）。
+
+### 数据体检：全插件只读巡检面板（数据可靠层 D4，2026-09-04）
+
+> 方向三·数据可靠层收官票（设计稿 .scratch/design-recap-reliability.md D4，用户拍板直接实施）。仿保险库体检交互：跑一次缓存结果、可点直达、清理后自动重新体检收敛。
+
+- **入口**：命令 `bz-data-checkup-open`（icon stethoscope，与保险库体检同语义）+ 设置面板通用组「数据体检」按钮行（settings-panel 层追加——core 不反向依赖域，⚙️ 原生设置页不带此行）。
+- **新域 `src/checkup/`**：types / files（json 目标清单 + 只读直读工具）/ checks-json / checks-drift / checks-orphans / checks-consistency（四类检查纯函数）/ run（编排 + 一键修复 + 内存级结果缓存）/ ui（overlay 面板）/ styles.css。
+- **四类检查**：① json 可解析——全部域数据 json（files.ts 清单，跟随 storagePath；weave-data 走 Weave dataPath）adapter 直读解析，坏文件红色问题列出文件与 CONFIG/.CORRUPT 留档路径；② 字段漂移——条目级（memo 14 字段/favorites 15 字段/pomodoro history 3 字段）+ 段级（clipbook/news/launcher/home/belongings/quiz/pomodoro 根段），意外字段黄色、缺失字段只提示，只报告不修；③ 孤儿条目——影院海报缺失 / 书架 md 封面缺失 / EPUB 指向缺失（weave 外部数据只报告）/ clipbook savedArchive 残留与 favorites 失效关联（可修复）；④ 同源一致性——memo loadItems 口径快照 vs todo normalizeItem 实际归一双视角计数比对 + 结构异常（非对象红/重复 id 黄/缺 id 提示/缺标题黄）。
+- **只读纪律**：体检绝不走 jsonFileStore.read()（触发损坏留档+重建毁现场）；孤儿修复只动插件自有 json，用户笔记 frontmatter 不动。
+- **面板**：overlay 范式（createOverlay + escManager bz-checkup 层）；开始体检 → 逐项分片跑（requestIdleCallback 让出主线程，reading-report 先例）→ 绿/黄/红三态分组结果；体检中可取消（runSeq 作废令牌）；再跑覆盖上次；重开面板显示上次结果 + 可重跑提示；可修复项逐条/整组「一键修复」（openFlowDialog 确认 → enqueueFileTask 串行写 → notifyUndo 撤销链 → 自动重新体检收敛）。
+- **测试**：tests/checkup/data.test.ts（28 用例：四检查全绿/坏样本/双视角不一致样本 + 修复撤销链 + 编排缓存/取消/单检查降级）；tests/checkup/ui.test.ts（7 用例：开合空态/全绿缓存回放/三态渲染与详情展开/取消/修复撤销链/确认取消/设置面板入口直达）；smoke 命令表同步 bz-data-checkup-open。
