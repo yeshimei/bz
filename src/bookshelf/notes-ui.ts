@@ -483,11 +483,3 @@ export function openEpubEditCommentModal(
 
 // ---------- 测试辅助/卸载 ----------
 
-/** 卸载清理与测试复位共用：关闭全部读书笔记浮层并移除残留遮罩 */
-export function _resetBookNotesUi(): void {
-  closeBookNoteModals();
-  // 兜底：句柄已失（极端路径）时按内容标识整体移除本域弹窗遮罩
-  document.querySelectorAll('.bz-overlay-mask').forEach((mask) => {
-    if (mask.querySelector('.bz-bs-notes, .bz-bs-edit')) mask.remove();
-  });
-}

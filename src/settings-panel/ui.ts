@@ -120,7 +120,6 @@ export const DOMAINS: DomainDef[] = [
   { id: 'home', name: '内容首页', icon: DOMAIN_ICONS.home, desc: '统计域卡首页', noSettings: true },
   { id: 'pomodoro', name: '番茄钟', icon: DOMAIN_ICONS.pomodoro, desc: '专注计时与休息', schemaLoader: schemaLoaders.pomodoro },
   { id: 'attach', name: '附件搬移', icon: DOMAIN_ICONS.attach, desc: '附件整理', noSettings: true },
-  { id: 'bili-downloader', name: 'B站下载', icon: DOMAIN_ICONS['bili-downloader'], desc: 'B站视频下载任务', noSettings: true },
   { id: 'encrypt', name: '保险库', icon: DOMAIN_ICONS.encrypt, desc: '密码、加密笔记与加密日记', schemaLoader: schemaLoaders.encrypt },
   { id: 'smartcat', name: '小橘陪伴猫', icon: DOMAIN_ICONS.smartcat, desc: '桌面宠物陪伴', noSettings: true },
   { id: 'literature', name: '文献盒', icon: DOMAIN_ICONS.literature, desc: '文献笔记与术语录入', schemaLoader: schemaLoaders.literature },

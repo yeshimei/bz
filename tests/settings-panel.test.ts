@@ -91,7 +91,7 @@ describe('设置面板（settings-panel）', () => {
     }
     expect(badges[0]).toBe('1'); // 通用：数据存储路径 1 项
     expect(badges[1]).toBe('8'); // AI：服务商+模型名称+上下文+最大输出+采样 4 项（aiProvider 未设 → 密钥行门控隐藏）
-    expect(badges[3]).toBe('9'); // 待办（index 3，memo 行随 ADR-0092 退役移除后）：4 组 9 项
+    expect(badges[3]).toBe('8'); // 待办（index 3）：自动归档摆设行删除后 8 项
     expect(badges[4]).toBe('·'); // 归物本（schema 仅移动端组，桌面门控全隐藏 → 0 项）
     // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）
     const navIcons = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-ic')];

@@ -11,7 +11,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { articleKeyOf, excerpt } from '../../src/clipbook/constants';
 import { readClipbookData, emptySidecar } from '../../src/clipbook/data';
-import { clipArticle, clipFromNote, queryBySource, unreadTotal, inboxCount, clipUrlSet } from '../../src/clipbook/store';
+import { clipArticle, clipFromNote, queryBySource, clipUrlSet } from '../../src/clipbook/store';
 
 beforeEach(() => {
   resetObsidianMocks();
@@ -119,13 +119,6 @@ describe('clipbook/store 派生', () => {
     expect(a.backlinks).toEqual([]);
   });
 
-  it('unreadTotal / inboxCount / clipUrlSet', () => {
-    const arts = [base({ url: 'u1', read: false }), base({ url: 'u2', read: true, state: 'skipped' })];
-    expect(unreadTotal(arts)).toBe(1);
-    expect(inboxCount([base({ url: 'u3', read: false, platform: 'B站', author: 'UP1' })], 'B站')).toBe(1);
-    expect(inboxCount([base({ url: 'u3', read: true, platform: 'B站' })], 'B站')).toBe(0);
-    expect(clipUrlSet([{ url: 'a' }, {}, { url: 'b' }])).toEqual(new Set(['a', 'b']));
-  });
 
   it('excerpt：去图片/链接保文字/去记号', () => {
     expect(excerpt('![图](x) 文字 [链接](https://y) 后文')).toBe('文字 链接 后文');

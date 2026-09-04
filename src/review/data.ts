@@ -13,10 +13,10 @@ import { FSRS_FIRST_INTERVALS, LADDER_MAX, TOTAL_STAGES } from './fsrs';
 
 export const REVIEW_FILE_PATH = 'CONFIG/STORAGE/review.json';
 
-/** 复习数据文件路径（ADR-0009：storagePath 优先，旧 reviewStoragePath 兼容兜底；trim 收敛至 storageFile） */
+/** 复习数据文件路径（ADR-0009 共享数据路径；trim 收敛至 storageFile） */
 export function getReviewFilePath(): string {
   const s = tryGetSettings() as any;
-  return storageFile('review.json', (s && (s.storagePath || s.reviewStoragePath)) || 'CONFIG/STORAGE');
+  return storageFile('review.json', (s && s.storagePath) || 'CONFIG/STORAGE');
 }
 
 export interface ReviewItem {
@@ -211,11 +211,10 @@ export interface FittedParams {
   full: boolean;
 }
 
-export const REVIEW_FIT_FILE_PATH = 'CONFIG/STORAGE/review-fit.json';
 
 export function getReviewFitFilePath(): string {
   const s = tryGetSettings() as any;
-  return storageFile('review-fit.json', (s && (s.storagePath || s.reviewStoragePath)) || 'CONFIG/STORAGE');
+  return storageFile('review-fit.json', (s && s.storagePath) || 'CONFIG/STORAGE');
 }
 
 export async function loadFittedParams(app: App): Promise<FittedParams | null> {

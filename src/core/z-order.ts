@@ -18,10 +18,6 @@ export function registerAlwaysOnTop(el: HTMLElement): void {
   syncAlwaysOnTop();
 }
 
-export function unregisterAlwaysOnTop(el: HTMLElement): void {
-  alwaysOnTop.delete(el);
-}
-
 function syncAlwaysOnTop(): void {
   for (const el of alwaysOnTop) {
     if (el.isConnected) el.style.zIndex = String(zCounter);

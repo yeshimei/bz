@@ -17,7 +17,7 @@ import { attachObsidianAdapter, detachObsidianAdapter } from './core/obsidian-ad
 import { renderSettingsInto } from './core/settings-schema';
 import { mainSettingsSchema } from './core/settings-main-schema';
 
-import BzSettings, { DEFAULT_SETTINGS, migrateSecondBrainSettings } from './settings';
+import BzSettings, { DEFAULT_SETTINGS } from './settings';
 
 // 待办（todo 域，ADR-0092 备忘录域退役后 memo.json 唯一属主：UI/交互/写盘/引用同步归本域；
 // 被动捕获入口——启动自动弹出/file-open 提醒/侧栏图标——落点=待办面板）
@@ -175,16 +175,6 @@ export default class BzPlugin extends Plugin {
   async onload() {
     const loaded = await this.loadData();
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
-    // ADR-0009 迁移：共享数据路径 storagePath 初始化（旧 7 字段废弃仅兼容保留）
-    let migrated = false;
-    if (!loaded || loaded.storagePath === undefined) {
-      this.migrateStoragePath();
-      migrated = true;
-    }
-    // ticket 103 迁移：闪念 16 键 → secondBrain* 更名平移（META_PATH/VEC_PATH 废弃清除）
-    if (migrateSecondBrainSettings(this.settings)) migrated = true;
-    // P2：迁移完成立即落盘——storagePath 结果写回 data.json，迁移 warning 不随每次启动重播
-    if (migrated) void this.saveSettings();
     setApp(this.app);
     // AI 设置注入（Q3 的 _q3Settings 语义 → 插件设置）
     setAISettingsProvider(() => this.settings);
@@ -333,34 +323,6 @@ export default class BzPlugin extends Plugin {
     resetAIProviderCache();
   }
 
-  /** ADR-0009 迁移：旧 7 个 JSON 路径字段初始化 storagePath（全同 → seed；参差 → 默认 + Notice 列出被忽略路径） */
-  migrateStoragePath(): void {
-    const dirOf = (v: string) => (v || '').trim().replace(/\/+$/, '');
-    const fileDir = (v: string, file: string) => dirOf(v).replace(new RegExp('/' + file + '$'), '');
-    const oldPaths: Array<[string, string]> = [
-      ['todoFilePath', dirOf(this.settings.todoFilePath)],
-      ['belongingsDataFolder', dirOf(this.settings.belongingsDataFolder)],
-      ['pwStoragePath', dirOf(this.settings.pwStoragePath)],
-      ['favoritesStoragePath', dirOf(this.settings.favoritesStoragePath)],
-      ['reviewStoragePath', dirOf(this.settings.reviewStoragePath)],
-      // ticket 103：META_PATH/VEC_PATH 已从接口删除；此处仅 ADR-0009 首次迁移窗口读旧 data.json 残值
-      ['META_PATH', fileDir(String((this.settings as any).META_PATH ?? ''), 'ai_completion_meta.json')],
-      ['VEC_PATH', fileDir(String((this.settings as any).VEC_PATH ?? ''), 'ai_completion_vectors.vec')],
-    ];
-    const vals = oldPaths.map(([, v]) => v || 'CONFIG/STORAGE');
-    if (vals.every((v) => v === vals[0])) {
-      this.settings.storagePath = vals[0] || 'CONFIG/STORAGE';
-      return;
-    }
-    this.settings.storagePath = 'CONFIG/STORAGE';
-    const custom = oldPaths
-      .filter(([, v]) => v && v !== 'CONFIG/STORAGE')
-      .map(([k]) => k)
-      .join('、');
-    if (custom) {
-      notice('检测到旧版数据路径设置（' + custom + '），已统一为 CONFIG/STORAGE，请手动迁移对应数据文件。', 'warning');
-    }
-  }
 }
 
 /** 第二大脑在布局就绪后初始化（按设置开关；ticket 103 原闪念懒加载换线） */

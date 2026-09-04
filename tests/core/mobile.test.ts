@@ -49,10 +49,10 @@ describe('isMobileEnv / applyMobileWindowFullscreen（ticket 68）', () => {
 });
 
 describe('DEFAULT_SETTINGS 移动端默认全屏默认值（行为保持映射，ticket 68）', () => {
-  it('9 键存在且默认值 = 原移动端行为（7 开 2 关）；聚合讯/阅读报告不设独立键（ADR-0087 movie 键由 cinema 取代）', () => {
+  it('8 键存在且默认值 = 原移动端行为（6 开 2 关）', () => {
     // 旧 library 键已随书库域退役删除：阅读报告跟随书架墙（bookshelf）键
     // 旧 clipping 键为旧剪藏域孤儿键（实际生效 = clipbook 键），enh-sweep-a 双删
-    const ON = ['diary', 'belongings', 'password', 'favorites', 'cinema', 'review', 'encrypt'];
+    const ON = ['diary', 'belongings', 'favorites', 'cinema', 'review', 'encrypt']; // password 键随 ADR-0085 由 encrypt 键取代，死键已删
     const OFF = ['todo', 'pomodoro']; // memo 键随 ADR-0092 memo 域退役删除，待办用自有 todo 键
     for (const k of ON) {
       expect(DEFAULT_SETTINGS[`${k}MobileDefaultFullscreen`]).toBe(true);
@@ -71,9 +71,9 @@ describe('DEFAULT_SETTINGS 移动端默认全屏默认值（行为保持映射�
     // 旧 clipping 孤儿键已随死键清理删除（实际生效 = clipbook 键）
     expect('clippingMobileDefaultFullscreen' in DEFAULT_SETTINGS).toBe(false);
     expect('clipbookMobileDefaultFullscreen' in DEFAULT_SETTINGS).toBe(true);
-    // 9 键一个不少（与已排除的做题家/入口页区分）
+    // 8 键一个不少（password 键已随 ADR-0085 并入 encrypt 键）
     const all = [...ON, ...OFF];
-    expect(all).toHaveLength(9);
+    expect(all).toHaveLength(8);
     for (const k of all) {
       expect(`${k}MobileDefaultFullscreen` in DEFAULT_SETTINGS).toBe(true);
     }

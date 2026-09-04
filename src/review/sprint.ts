@@ -711,9 +711,3 @@ export class SprintSession {
 
 /** 评级中文名（本地映射，避免依赖 stats 大模块） */
 const RATING_NAMES: Record<string, string> = { easy: '轻松', good: '一般', hard: '困难', again: '忘了' };
-
-/** 便捷入口：在宿主容器内跑完一次冲刺 */
-export async function runSprint(opts: SprintOpts): Promise<'done' | 'quit' | 'fail'> {
-  const session = new SprintSession(opts);
-  return session.start();
-}

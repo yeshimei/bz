@@ -27,8 +27,6 @@ import type { RecapData, RecapSummary, RecapDomain } from './aggregate';
 /** 写入条目的正文首行标记（识别「今日回顾」条目的唯一稳定依据，见文件头注释） */
 export const RECAP_MARKER = '【今日回顾】';
 
-/** 语义标签名（用户可见的说法；写入 tags 用常规 ['日记']，见文件头注释） */
-export const RECAP_TAG = '今日回顾';
 
 /* ---------- 纯函数：数字段 / 模板 / 提示词 / 条目正文 ---------- */
 

@@ -982,7 +982,6 @@ export function secondBrainSettingsSchema(): SettingsSchema {
           { type: 'text', name: '上下文限制', binding: { key: 'secondBrainContextLimit' }, onChange: trimStore('secondBrainContextLimit') },
           { type: 'text', name: '防抖延迟毫秒', binding: { key: 'secondBrainDebounceDelay' }, onChange: trimStore('secondBrainDebounceDelay') },
           { type: 'text', name: '光标轮询毫秒', binding: { key: 'secondBrainCursorPollInterval' }, onChange: trimStore('secondBrainCursorPollInterval') },
-          { type: 'text', name: '嵌入并发', desc: '该设置暂不生效，保留兼容', binding: { key: 'secondBrainConcurrency' }, onChange: trimStore('secondBrainConcurrency') },
         ],
       },
       {

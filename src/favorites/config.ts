@@ -30,16 +30,10 @@ export const TAGS: FavTag[] = [
   { key: 'harness', label: 'DeepSeek Harness', emoji: '🐋' },
 ];
 
-/** 旧命名兼容导出（结构由 {tag,emoji} 升级为带 key） */
-export const DEFAULT_TAGS: { tag: string; emoji: string }[] = TAGS.map((t) => ({ tag: t.label, emoji: t.emoji }));
 
 /** label → 标签定义（数据里 tags[] 存 label） */
 export function tagOf(label: string): FavTag | undefined {
   return TAGS.find((t) => t.label === label);
-}
-/** label → 稳定 key（未知回退原串） */
-export function tagKeyOf(label: string): string {
-  return tagOf(label)?.key ?? label;
 }
 /** key 或 label → label（图标/筛选用） */
 export function tagLabel(keyOrLabel: string): string {

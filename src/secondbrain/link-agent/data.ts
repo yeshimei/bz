@@ -192,12 +192,6 @@ export async function loadQueue(): Promise<LinkQueueItem[]> {
     }));
 }
 
-/** 写队列（串行链：与 meta/panel/state 段互斥） */
-export async function saveQueue(items: LinkQueueItem[]): Promise<void> {
-  await mutateStore((s) => {
-    s.link.queue = items;
-  });
-}
 
 /**
  * 入队：同 path 合并并刷新 hash 与 queuedAt（幂等重入队不产生重复条目）。

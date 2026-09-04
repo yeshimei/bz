@@ -34,7 +34,7 @@ import type { ReviewItem } from '../review/data';
 import { PomodoroDataManager } from '../pomodoro/data';
 import { todayCount } from '../pomodoro/stats';
 import { DataManager as FavoritesDataManager } from '../favorites/data';
-import { getStoragePath as favoritesStoragePath } from '../favorites/config';
+import { getStoragePath as getFavoritesPath } from '../favorites/config';
 import { scanMarkdownBooks } from '../bookshelf/data';
 import { QuizManager } from '../review/quiz-core/manager';
 import { loadDatabase as loadBelongings } from '../belongings/data';
@@ -256,8 +256,8 @@ export async function collectHomeSnapshot(app?: App): Promise<HomeSnapshot> {
 
   // ---- favorites：条数（排除归档；文件缺失回落空） ----
   try {
-    const dir = settingDir(['favoritesStoragePath'], 'CONFIG/STORAGE');
-    const filePath = favoritesStoragePath(dir);
+    const dir = settingDir(['storagePath'], 'CONFIG/STORAGE');
+    const filePath = getFavoritesPath(dir);
     if (!fileExists(a, filePath)) {
       out.favorites = EMPTY;
     } else {

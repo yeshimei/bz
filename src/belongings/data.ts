@@ -14,7 +14,7 @@ import type { BelongingsDatabase } from './types';
 /** 数据文件路径（ADR-0009：storagePath 优先，旧 dataFolder 兼容兜底） */
 export function getDataFilePath(): string {
   const s = getSettings() as any;
-  return storageFile('belongings.json', (s.storagePath || s.belongingsDataFolder) || 'CONFIG/STORAGE');
+  return storageFile('belongings.json', s.storagePath || 'CONFIG/STORAGE');
 }
 
 /** 空数据库结构 */

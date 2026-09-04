@@ -29,10 +29,10 @@ describe('TodoData 构建', () => {
     setApp(makeApp(vault) as any);
   });
 
-  it('init 拼出 memo.json 路径（storagePath 优先 / 尾部斜杠去除）', () => {
-    TodoData.init({ ...BASE_SETTINGS, todoFilePath: 'CONFIG/STORAGE/' });
+  it('init 拼出 memo.json 路径（storagePath / 尾部斜杠去除）', () => {
+    TodoData.init({ ...BASE_SETTINGS, storagePath: 'CONFIG/STORAGE/' });
     expect(TodoData.todoFilePath).toBe('CONFIG/STORAGE/memo.json');
-    TodoData.init({ ...BASE_SETTINGS, storagePath: 'DATA/', todoFilePath: 'OLD/' });
+    TodoData.init({ ...BASE_SETTINGS, storagePath: 'DATA/' });
     expect(TodoData.todoFilePath).toBe('DATA/memo.json');
   });
 

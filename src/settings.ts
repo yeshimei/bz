@@ -70,11 +70,7 @@ export default interface BzSettings {
   /** 上次选择的目标文件夹（文件夹选择器默认值） */
   attachLastFolder: string;
 
-  // ===== 📝 备忘录（9 项）=====
-  /** 📂 备忘录数据文件路径（memo.json 所在目录）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
-  todoFilePath: string;
-  /** 📄 显示文件名（固定 true，不暴露设置） */
-  showFileName: boolean;
+  // ===== 📝 待办（memo.json 共享键）=====
   /** 🚀 启动时自动弹出：启动时若存在未完成的重要或到期备忘录，自动弹出面板提醒 */
   autoPopupOnStart: boolean;
   /** 🔔 打开笔记自动提醒：打开笔记时若该笔记有重要/到期未完成备忘录，自动弹出面板 */
@@ -90,8 +86,6 @@ export default interface BzSettings {
   memoShowArchivedByDefault: boolean;
   /** ⭐ 新条目默认优先级：minor / important */
   memoDefaultPriority: string;
-  /** ✅ 完成后自动归档：关=完成条目保留主列表显示完成态 */
-  memoAutoArchive: boolean;
   /** 🆕 新条目默认场景（空=第一个场景） */
   memoDefaultScene: string;
   /** 🕒 到期时间格式：relative（今天 14:00 到期）/ absolute（MM/DD HH:mm 到期） */
@@ -123,15 +117,10 @@ export default interface BzSettings {
   /** ✏️ 保存后立即进入编辑（关=保存后仅关闭弹窗） */
   diaryJumpToEditAfterSave: boolean;
 
-  // ===== 📦 归物本（1 项，ADR-0009 废弃）=====
-  /** 📁 存储文件夹路径（belongings.json）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
-  belongingsDataFolder: string;
 
-  // ===== 📰 剪藏本（2 项 + 自动摘要开关 + ticket 124 详设/数据源）=====
+  // ===== 📰 剪藏本（自动摘要开关 + ticket 124 详设/数据源）=====
   /** 📂 剪藏目录 */
   articleDirectory: string;
-  /** 📄 每批加载数量（滚动加载每批显示的条目数） */
-  articleBatchSize: string;
   /** 📄 自动摘要：监听剪藏目录新文件（路径与剪藏目录一致） */
   autoSummaryEnabled: boolean;
   /** 📏 自动摘要长度档位：simple（简短）/ standard（标准）/ detailed（详细）——ticket 124 详设 */
@@ -157,8 +146,6 @@ export default interface BzSettings {
   clipbookPanelHeight: number;
 
   // ===== 🔐 密码本（4 项）=====
-  /** 📂 数据存储路径——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
-  pwStoragePath: string;
   /** 🔤 密码生成字符集 */
   passwordCharset: string;
   /** 🔢 密码生成长度 */
@@ -167,8 +154,6 @@ export default interface BzSettings {
   securityMode: boolean;
 
   // ===== ⭐ 收藏本（1 项，ADR-0009 废弃）=====
-  /** 📂 数据存储目录（文件名固定 favorites.json，只允许改目录）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
-  favoritesStoragePath: string;
 
   // ===== 📚 书架墙（bookshelf 域；旧书库域 library 已退役，本域独立承担书库 UI）=====
   /** 📁 书库文件夹（书架墙域；空 = 运行时回落旧 libraryFolderPath 存量值，再回落「书库」） */
@@ -198,8 +183,6 @@ export default interface BzSettings {
   difficulty: string;
 
   // ===== 🔁 复习计划 + 做题家（合并 tab；quiz/review 共用数据路径）=====
-  /** 数据存储路径（review.json / quiz.json 所在目录）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
-  reviewStoragePath: string;
   /** 🔔 到期提醒（ticket 100：原「启用逾期通知」键名不动，真正生效——有逾期即弹） */
   enableAutoNotify: boolean;
   /** 🆕 新笔记自动加入提醒（ticket 100：自动收编时弹提示，多条合并一条；关=静默收编） */
@@ -236,8 +219,6 @@ export default interface BzSettings {
   secondBrainChunkMinLength: string;
   /** 允许的文件夹（逗号分隔；f8：留空/空=不索引任何目录，不是「全库」） */
   secondBrainAllowPaths: string;
-  /** Embedding 请求并发数（QA 遗留死配置：定义后从未接线，忠实保留不删） */
-  secondBrainConcurrency: string;
   /** 上下文限制 */
   secondBrainContextLimit: string;
   /** 防抖延迟（ms） */
@@ -325,8 +306,6 @@ export default interface BzSettings {
   todoMobileDefaultFullscreen: boolean;
   /** 归物本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   belongingsMobileDefaultFullscreen: boolean;
-  /** 密码本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
-  passwordMobileDefaultFullscreen: boolean;
   /** 收藏本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   favoritesMobileDefaultFullscreen: boolean;
   /** 收藏本：列表排序键（created=创建时间最新优先 / title=标题；toolbar 排序循环钮读写。
@@ -466,15 +445,12 @@ export const DEFAULT_SETTINGS: BzSettings = {
   attachLastFolder: '',
 
   // 备忘录
-  todoFilePath: 'CONFIG/STORAGE',
-  showFileName: true,
   autoPopupOnStart: true,
   openNoteReminder: true,
   memoScenarios: '',
   memoSortMode: 'priority',
   memoShowArchivedByDefault: false,
   memoDefaultPriority: 'minor',
-  memoAutoArchive: true,
   memoDefaultScene: '',
   memoDueFormat: 'relative',
   // 待办面板桌面尺寸记忆（ADR-0084；0=未拖过，打开走默认 720×580）
@@ -495,12 +471,10 @@ export const DEFAULT_SETTINGS: BzSettings = {
   diaryDefaultSelectedTag: '',
   diaryJumpToEditAfterSave: true,
 
-  // 归物本
-  belongingsDataFolder: 'CONFIG/STORAGE',
+
 
   // 剪藏本
   articleDirectory: '归档/网页剪藏',
-  articleBatchSize: '20',
   autoSummaryEnabled: true,
   autoSummaryLength: 'standard',
   autoSummaryTagsEnabled: true,
@@ -516,17 +490,15 @@ export const DEFAULT_SETTINGS: BzSettings = {
   clipbookPanelWidth: 0,
   clipbookPanelHeight: 0,
 
-  // 密码本
-  pwStoragePath: 'CONFIG/STORAGE',
+
   passwordCharset:
     '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+',
   passwordLength: '16',
   securityMode: false,
 
-  // 收藏本（只允许改目录，文件名固定 favorites.json）
-  favoritesStoragePath: 'CONFIG/STORAGE',
 
-  // 书库（旧域遗留展示开关 5 键已删除：bookshelf 接管后全仓无消费方，enh-sweep-a grep 确认后随死键清理）
+
+
 
   // 书架墙（bookshelf；空 = 未配置，运行时回落旧 libraryFolderPath 存量值——零感知迁移）
   bookshelfFolderPath: '',
@@ -541,8 +513,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   shuffleQuestions: true,
   difficulty: 'random',
 
-  // 复习计划（quiz/review 共用数据路径）
-  reviewStoragePath: 'CONFIG/STORAGE',
+
   enableAutoNotify: true,
   reviewAutoAddNotice: true,
   forceQuizForReview: false,
@@ -562,7 +533,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
   secondBrainChatTopK: '20',
   secondBrainChunkMinLength: '50',
   secondBrainAllowPaths: '', // ticket 116：默认空 = 什么也不录（不索引任何目录），由用户自行填写
-  secondBrainConcurrency: '15',
   secondBrainContextLimit: '600',
   secondBrainDebounceDelay: '300',
   secondBrainCursorPollInterval: '500',
@@ -612,7 +582,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
   diaryMobileDefaultFullscreen: true,
   todoMobileDefaultFullscreen: false,
   belongingsMobileDefaultFullscreen: true,
-  passwordMobileDefaultFullscreen: true,
   favoritesMobileDefaultFullscreen: true,
   favoritesSortKey: 'created',
   cinemaMobileDefaultFullscreen: true,
@@ -669,46 +638,3 @@ export const DEFAULT_SETTINGS: BzSettings = {
   memoryDirectories: [],
 };
 
-/** 闪念旧键 → 第二大脑新键映射（ticket 103；META_PATH/VEC_PATH 废弃清除无继任者） */
-export const SECOND_BRAIN_RENAMED_KEYS: ReadonlyArray<readonly [string, string]> = [
-  ['OLLAMA_URL', 'secondBrainOllamaUrl'],
-  ['EMBEDDING_MODEL', 'secondBrainEmbeddingModel'],
-  ['TOP_K', 'secondBrainTopK'],
-  ['CHAT_TOP_K', 'secondBrainChatTopK'],
-  ['CHUNK_MIN_LENGTH', 'secondBrainChunkMinLength'],
-  ['ALLOW_PATHS', 'secondBrainAllowPaths'],
-  ['CONCURRENCY', 'secondBrainConcurrency'],
-  ['CONTEXT_LIMIT', 'secondBrainContextLimit'],
-  ['DEBOUNCE_DELAY', 'secondBrainDebounceDelay'],
-  ['CURSOR_POLL_INTERVAL', 'secondBrainCursorPollInterval'],
-  ['OLLAMA_CHAT_MODEL', 'secondBrainChatModel'],
-  ['DEEPSEEK_MODEL', 'secondBrainDeepseekModel'],
-  ['DEFAULT_USE_DEEPSEEK', 'secondBrainDefaultUseDeepseek'],
-  ['MAX_HISTORY', 'secondBrainMaxHistory'],
-  ['OLLAMA_REMOTE_URL', 'secondBrainRemoteOllamaUrl'],
-  ['flashEnabled', 'secondBrainEnabled'],
-];
-
-/**
- * ticket 103 设置迁移：闪念 16 键更名平移（旧有值且新缺 → 复制；一律删旧键），
- * 废弃 META_PATH/VEC_PATH 直接清除（ADR-0009 起 storagePath 接管，不再兼容保留）。
- * 纯函数可测；main.onload 调用，返回是否发生迁移以决定落盘。
- */
-export function migrateSecondBrainSettings(s: BzSettings): boolean {
-  const anyS = s as unknown as Record<string, unknown>;
-  let migrated = false;
-  for (const [from, to] of SECOND_BRAIN_RENAMED_KEYS) {
-    if (anyS[from] !== undefined) {
-      if (anyS[to] === undefined) anyS[to] = anyS[from];
-      delete anyS[from];
-      migrated = true;
-    }
-  }
-  for (const dead of ['META_PATH', 'VEC_PATH']) {
-    if (anyS[dead] !== undefined) {
-      delete anyS[dead];
-      migrated = true;
-    }
-  }
-  return migrated;
-}

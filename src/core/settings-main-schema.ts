@@ -234,7 +234,7 @@ function aiGroupRows(): SettingsRow[] {
 }
 
 /** 采样参数组（issue 187）：四键 string 键数字项，'' = 不发该字段（API 默认） */
-export function samplingGroup(): SettingsSchema['groups'][number] {
+function samplingGroup(): SettingsSchema['groups'][number] {
   return {
     icon: 'sliders-horizontal',
     name: '采样参数',

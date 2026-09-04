@@ -235,8 +235,8 @@ describe('ReviewDataManager', () => {
 });
 
 describe('数据文件路径设置', () => {
-  it('getReviewFilePath 读取 reviewStoragePath 设置，缺省回退 CONFIG/STORAGE', () => {
-    setSettingsProvider(() => ({ reviewStoragePath: '自定义/数据' }) as any);
+  it('getReviewFilePath 读取 storagePath 设置，缺省回退 CONFIG/STORAGE', () => {
+    setSettingsProvider(() => ({ storagePath: '自定义/数据' }) as any);
     expect(getReviewFilePath()).toBe('自定义/数据/review.json');
     setSettingsProvider(() => ({} as any));
     expect(getReviewFilePath()).toBe('CONFIG/STORAGE/review.json');

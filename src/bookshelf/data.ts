@@ -34,12 +34,6 @@ export function resolveBookTag(): string {
   return typeof s.bookTag === 'string' && s.bookTag.trim() ? s.bookTag.trim() : 'book';
 }
 
-/** 去 folderPath 前缀后第一段目录，无则 null（category 未写时按子文件夹归类） */
-export function getSubfolder(filePath: string, folderPath: string): string | null {
-  const relative = filePath.slice(folderPath.length + 1);
-  const firstSlash = relative.indexOf('/');
-  return firstSlash !== -1 ? relative.slice(0, firstSlash) : null;
-}
 
 function parseStatus(readingDate: string | null, completionDate: string | null): string {
   if (readingDate && !completionDate) return '在读';
