@@ -338,6 +338,62 @@ describe('设置面板（settings-panel）', () => {
     ui.cleanup();
   });
 
+  it('桌面端：路径行回落显示（bookshelfFolderPath 空值时 chip 显示实际生效目录，旧 library 键存量值优先）', async () => {
+    // 场景 1：新键未设 + 旧 libraryFolderPath 存量值 → 回落 chip 显示旧目录
+    (panelState as any).libraryFolderPath = '旧书库';
+    const ui1 = new SettingsPanelUI();
+    ui1.open();
+    const popup1 = document.getElementById('bz-settings-panel-popup')!;
+    const shelfItem1 = Array.from(popup1.querySelectorAll('.bz-sp-nav-item')).find(
+      (el) => el.textContent?.includes('书架墙')
+    ) as HTMLElement;
+    expect(shelfItem1).toBeTruthy();
+    shelfItem1.click();
+    expect(await waitGroups(popup1, 1)).toBe(true);
+    const row1 = Array.from(popup1.querySelectorAll('.bz-sp-set-row')).find(
+      (el) => el.querySelector('.bz-sp-set-name')?.textContent === '书库文件夹'
+    ) as HTMLElement;
+    expect(row1).toBeTruthy();
+    const chip1 = row1.querySelector('.bz-chip--locked') as HTMLElement;
+    expect(chip1, '空值时显示回落目录锁定 chip').toBeTruthy();
+    expect(chip1.textContent).toContain('旧书库');
+    // 选择按钮仍在（可改为显式设置）
+    expect(row1.querySelector('.bz-sp-path-btn')).toBeTruthy();
+    ui1.cleanup();
+    delete (panelState as any).libraryFolderPath;
+
+    // 场景 2：新旧键都未设 → 回落缺省「书库」
+    const ui2 = new SettingsPanelUI();
+    ui2.open();
+    const popup2 = document.getElementById('bz-settings-panel-popup')!;
+    (Array.from(popup2.querySelectorAll('.bz-sp-nav-item')).find(
+      (el) => el.textContent?.includes('书架墙')
+    ) as HTMLElement).click();
+    expect(await waitGroups(popup2, 1)).toBe(true);
+    const row2 = Array.from(popup2.querySelectorAll('.bz-sp-set-row')).find(
+      (el) => el.querySelector('.bz-sp-set-name')?.textContent === '书库文件夹'
+    ) as HTMLElement;
+    expect(row2.querySelector('.bz-chip--locked')?.textContent).toContain('书库');
+    ui2.cleanup();
+
+    // 场景 3：显式设置后回落 chip 消失（值 chip 接管，可移除）
+    (panelState as any).bookshelfFolderPath = '我的书';
+    const ui3 = new SettingsPanelUI();
+    ui3.open();
+    const popup3 = document.getElementById('bz-settings-panel-popup')!;
+    (Array.from(popup3.querySelectorAll('.bz-sp-nav-item')).find(
+      (el) => el.textContent?.includes('书架墙')
+    ) as HTMLElement).click();
+    expect(await waitGroups(popup3, 1)).toBe(true);
+    const row3 = Array.from(popup3.querySelectorAll('.bz-sp-set-row')).find(
+      (el) => el.querySelector('.bz-sp-set-name')?.textContent === '书库文件夹'
+    ) as HTMLElement;
+    expect(row3.querySelector('.bz-chip--locked')).toBeNull();
+    expect(row3.textContent).toContain('我的书');
+    ui3.cleanup();
+    delete (panelState as any).bookshelfFolderPath;
+  });
+
   it('桌面端：无设置项域显示空态（组件库 bz-empty）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
