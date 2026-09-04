@@ -227,7 +227,7 @@ export const reviewApp = {
     } else {
       const days = Math.round(scaledDays);
       const rPct = Math.round((decision.R || 0) * 100);
-      notice(`R=${rPct}% → 下次复习：${days > 0 ? days + '天' : '1天'}后`, 'success');
+      notice(`R=${rPct}%，下次复习：${days > 0 ? days + '天' : '1天'}后`, 'success');
     }
     // ADR-0077：评级也累计拟合计数（含阶梯阶段；样本过滤在 fit.ts 内做）。
     // fire-and-forget：计数在入口同步累加，拟合自防重入；不 await 避免大历史时卡评级路径
