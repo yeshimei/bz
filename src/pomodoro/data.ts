@@ -6,7 +6,7 @@
  */
 import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
-import { jsonFileStore, storageFile } from '../core/storage';
+import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
 import type { PomodoroState, HistoryEntry } from './state';
 import { createInitialState, PHASES } from './state';
 
@@ -70,17 +70,30 @@ export class PomodoroDataManager {
     this.app = app;
   }
 
-  /** 读取数据（统一数据读写层：不存在 → 建默认数据文件；坏 JSON → 原文件改名留档后重建默认） */
+  /**
+   * 读取数据（统一数据读写层：不存在 → 建默认数据文件；坏 JSON → 原文件留档 CONFIG/.CORRUPT 后重建默认）。
+   * 读也入 core per-path 串行队列：读是「load → 改 state → save」事务的读半边，
+   * 排在未落盘的写任务之后才能读到新值（读写同队列，消灭「读-写窗口交错」）。
+   */
   async load(): Promise<PomodoroData> {
-    const raw = await jsonFileStore<any>(getPomodoroFilePath(), {
-      defaultValue: () => defaultPomodoroData(),
-      app: this.app,
-    }).read();
+    const raw = await enqueueFileTask(getPomodoroFilePath(), () =>
+      jsonFileStore<any>(getPomodoroFilePath(), {
+        defaultValue: () => defaultPomodoroData(),
+        app: this.app,
+      }).read()
+    );
     return normalizeData(raw);
   }
 
-  /** 保存（统一数据读写层：存在 modify / 不存在 create+建目录） */
+  /**
+   * 保存（统一数据读写层：存在 modify / 不存在 create+建目录）。
+   * D3 可靠写契约原语 1 收编：整写入 core per-path 串行队列（键 = pomodoro.json 路径）——
+   * 计时器心跳保存与用户操作保存并发时按序落盘，后写者不再用陈旧基线覆盖先写者；
+   * 坏文件由 jsonFileStore 留档降级（原语 3）。数据形状与 API 不变。
+   */
   async save(data: PomodoroData): Promise<void> {
-    await jsonFileStore<PomodoroData>(getPomodoroFilePath(), { app: this.app }).write(data);
+    await enqueueFileTask(getPomodoroFilePath(), () =>
+      jsonFileStore<PomodoroData>(getPomodoroFilePath(), { app: this.app }).write(data)
+    );
   }
 }
