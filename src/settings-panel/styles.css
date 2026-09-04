@@ -449,7 +449,7 @@
 }
 .bz-sp-mob-ic .bz-ic { width: 16px; height: 16px; }
 .bz-sp-mob-t { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.bz-sp-mob-name { font-size: 14.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bz-sp-mob-name { font-size: var(--bz-font-body); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bz-sp-mob-desc { font-size: var(--bz-font-meta); color: var(--bz-text-2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bz-sp-mob-chev { color: var(--bz-text-3); width: 14px; height: 14px; flex-shrink: 0; }
 .bz-sp-mob-empty {
