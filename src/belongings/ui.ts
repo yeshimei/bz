@@ -105,8 +105,34 @@ export function resetBelongingsState(): void {
 
 // ==================== 设置 schema ====================
 
+/** 默认状态筛选合法值（与侧栏 STATUS_ORDER 同源；空串=全部） */
+const DEFAULT_STATUS_VALUES = ['', 'using', 'idle', 'sold', 'discard'];
+
 export function belongingSettingsSchema(): SettingsSchema {
-  return { groups: [mobileFullscreenGroup('belongingsMobileDefaultFullscreen', { desc: '' })] };
+  return {
+    groups: [
+      {
+        icon: 'eye',
+        name: '显示',
+        rows: [
+          {
+            type: 'select',
+            name: '默认状态筛选',
+            desc: '打开面板时选中的物品状态',
+            binding: { key: 'belongingsDefaultStatus' },
+            options: [
+              { value: '', label: '全部' },
+              { value: 'using', label: '使用中' },
+              { value: 'idle', label: '闲置' },
+              { value: 'sold', label: '已转卖' },
+              { value: 'discard', label: '已丢弃' },
+            ],
+          },
+        ],
+      },
+      mobileFullscreenGroup('belongingsMobileDefaultFullscreen', { desc: '' }),
+    ],
+  };
 }
 
 // ==================== 小工具 ====================
@@ -318,6 +344,10 @@ export async function openPanel(): Promise<void> {
 }
 
 async function openPanelInner(): Promise<void> {
+  // 默认状态筛选接线（issue 194）：每次打开读设置，非法值回全部（设置是「下次打开的初始值」，
+  // 面板内改选为会话内临时态，同收藏本 openPanel 语义）
+  const st = (tryGetSettings() as Record<string, unknown>).belongingsDefaultStatus;
+  M.status = typeof st === 'string' && DEFAULT_STATUS_VALUES.includes(st) && st !== '' ? st : null;
   M.db = await loadDatabase();
   const overlay = document.createElement('div');
   overlay.className = 'bz-bel-overlay';

@@ -1209,14 +1209,22 @@ describe('归物本自动刷新 / 事件载荷 / schema / XSS', () => {
     expect(events[2]).toEqual({ kind: 'delete', title: '键盘' });
   });
 
-  it('belongingSettingsSchema：仅移动端组；桌面 visibleWhen false / 移动 true；rows[0] 直绑 belongingsMobileDefaultFullscreen', () => {
+  it('belongingSettingsSchema：显示组（默认状态筛选）+ 移动端组；桌面移动组门控 false / 移动 true', () => {
     const settings = { belongingsDataFolder: 'CONFIG/STORAGE' };
     setSettingsProvider(() => settings as any);
     const schema = belongingSettingsSchema();
-    expect(schema.groups).toHaveLength(1);
-    const g = schema.groups[0];
+    expect(schema.groups).toHaveLength(2);
+    // 显示组（issue 194）：默认状态筛选 select，常显（无组级门控）
+    const view = schema.groups[0];
+    expect(view.name).toBe('显示');
+    expect(view.visibleWhen).toBeUndefined();
+    const vrow = view.rows[0] as any;
+    expect(vrow.type).toBe('select');
+    expect(vrow.binding).toMatchObject({ key: 'belongingsDefaultStatus' });
+    // 移动端组：桌面整组隐藏 / 移动可见
+    const g = schema.groups[1];
     expect(g.name).toBe('移动端');
-    expect(g.visibleWhen!(settings as any)).toBe(false); // 桌面整组隐藏
+    expect(g.visibleWhen!(settings as any)).toBe(false);
     expect(g.rows).toHaveLength(1);
     const row = g.rows[0] as any;
     expect(row.type).toBe('toggle');
@@ -1566,5 +1574,48 @@ describe('出离闭环：售价回本 + 表单出离字段（ticket 189 ADR-0089
     await flush();
     expect(document.querySelector('.bz-bel-form-mask')).not.toBeNull();
     expect(nameInp().value).toBe('改一半');
+  });
+});
+
+describe('默认状态筛选接线（issue 194）', () => {
+  it('belongingsDefaultStatus=idle → 打开即选中「闲置」并只显闲置件', async () => {
+    const vault = new MockVault();
+    seed(vault, {
+      a: makeItem({ id: 'a', name: '机械键盘', current_status: '使用中' }),
+      b: makeItem({ id: 'b', name: '旧相机', category: '📷 相机', current_status: '闲置' }),
+    });
+    const overlay = await open(vault, { belongingsDefaultStatus: 'idle' });
+    // 侧栏激活项 = 闲置
+    const active = overlay.querySelector('.bz-bel-side-item.bz-bel-nav-active');
+    expect(active?.textContent).toContain('闲置');
+    // 内容只渲染闲置件
+    const text = content()!.textContent || '';
+    expect(text).toContain('旧相机');
+    expect(text).not.toContain('机械键盘');
+    close();
+  });
+
+  it('空串与非法值 → 回落全部', async () => {
+    const vault = new MockVault();
+    seed(vault, {
+      a: makeItem({ id: 'a', name: '机械键盘', current_status: '使用中' }),
+      b: makeItem({ id: 'b', name: '旧相机', current_status: '闲置' }),
+    });
+    const overlay = await open(vault, { belongingsDefaultStatus: 'bogus' });
+    const active = overlay.querySelector('.bz-bel-side-item.bz-bel-nav-active');
+    expect(active?.textContent).toContain('全部');
+    const text = content()!.textContent || '';
+    expect(text).toContain('机械键盘');
+    expect(text).toContain('旧相机');
+    close();
+  });
+
+  it('schema 显示组：默认状态筛选 select 五态直绑 belongingsDefaultStatus', () => {
+    const schema = belongingSettingsSchema();
+    const view = schema.groups.find((g) => g.name === '显示')!;
+    const row = view.rows[0] as any;
+    expect(row.type).toBe('select');
+    expect(row.binding).toMatchObject({ key: 'belongingsDefaultStatus' });
+    expect(row.options.map((o: any) => o.value)).toEqual(['', 'using', 'idle', 'sold', 'discard']);
   });
 });

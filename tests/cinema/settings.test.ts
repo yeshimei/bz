@@ -23,4 +23,22 @@ describe('cinema 设置 schema', () => {
     expect('cinemaPageSize' in DEFAULT_SETTINGS).toBe(false);
     expect(DEFAULT_SETTINGS.cinemaFolderPath).toBe('我的/影视');
   });
+
+  it('显示组：默认排序/默认状态筛选两行（issue 194，键与选项集契约）', () => {
+    const schema = cinemaSettingsSchema();
+    const view = schema.groups.find((g) => g.name === '显示')!;
+    expect(view.rows).toHaveLength(2);
+    const [sort, status] = view.rows as any[];
+    expect(sort.type).toBe('select');
+    expect(sort.binding).toMatchObject({ key: 'cinemaSortMode' });
+    expect(sort.options.map((o: any) => o.value)).toEqual(['date', 'created', 'rating']);
+    expect(status.type).toBe('select');
+    expect(status.binding).toMatchObject({ key: 'cinemaStatusFilter' });
+    expect(status.options.map((o: any) => o.value)).toEqual(['', '想看', '在看', '已看']);
+    // 默认值与选项集一致
+    expect(DEFAULT_SETTINGS.cinemaSortMode).toBe('date');
+    expect(DEFAULT_SETTINGS.cinemaStatusFilter).toBe('');
+    // 组序：目录 → 显示 → 移动端（移动端组置尾惯例）
+    expect(schema.groups.map((g) => g.name)).toEqual(['目录', '显示', '移动端']);
+  });
 });

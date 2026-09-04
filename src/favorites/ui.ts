@@ -95,10 +95,31 @@ export function resetFavoritesState(): void {
   M.renderFn = null;
 }
 
-// ==================== 设置 schema（⚙️ 已收敛设置面板；空态域） ====================
+// ==================== 设置 schema（⚙️ 已收敛设置面板） ====================
+// issue 194：补「显示」组——默认排序（favoritesSortKey 已有键补暴露，openPanel 每次打开读）。
 
 export function favoritesSettingsSchema(): SettingsSchema {
-  return { groups: [mobileFullscreenGroup('favoritesMobileDefaultFullscreen', { desc: '' })] };
+  return {
+    groups: [
+      {
+        icon: 'eye',
+        name: '显示',
+        rows: [
+          {
+            type: 'select',
+            name: '默认排序',
+            desc: '打开面板时列表按所选规则排序',
+            binding: { key: 'favoritesSortKey' },
+            options: [
+              { value: 'created', label: '最新收藏' },
+              { value: 'title', label: '标题排序' },
+            ],
+          },
+        ],
+      },
+      mobileFullscreenGroup('favoritesMobileDefaultFullscreen', { desc: '' }),
+    ],
+  };
 }
 
 // ==================== 小工具 ====================
