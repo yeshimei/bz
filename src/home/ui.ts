@@ -3,8 +3,9 @@
  *
  * 形态（桌面/移动同一 overlay 面板，CSS ≤768px 切换；与 cinema 同构）：
  *  - 桌面：hero（问候/日期/搜索/编辑）+ 钉选域卡 grid（徽标=真实统计）
+ *          + 钉选区下「本周」轻卡（R1 生活周报：跨域数字格，点格直达域面板）
  *          + 未钉迷你 chips + 右侧「各域一览」；点遮罩/ESC 关闭（无关闭钮）
- *  - 移动：hero 渐变 + 搜索 + 三格统计条 + 两列域卡（徽标行内）+ 迷你 chips
+ *  - 移动：hero 渐变 + 搜索 + 三格统计条 + 两列域卡（徽标行内）+ 本周轻卡 + 迷你 chips
  * 交互：卡片点按 → 执行对应 bz-* 命令（真实接线，关闭首页后开域）；
  *       编辑模式 → 点卡移除（勾选框视觉）、「＋ 加域卡」pick 钉选、卡上 ←/→ 调序；
  *       点别处收起。命令搜索：app.commands.listCommands() 真实过滤 + 执行。
@@ -21,6 +22,7 @@ import { DOMAINS, DOMAIN_MAP, DOMAIN_DOT, ALL_DOMAIN_IDS } from './domains';
 import { DEFAULT_PINNED, loadHomeData, saveHomeData, movePinnedInList } from './data';
 import { collectHomeSnapshot } from './snapshot';
 import type { DomainStat } from './snapshot';
+import type { WeeklyStat } from './weekly';
 
 /* ---------- lucide 占位 + 挂载 ---------- */
 
@@ -123,6 +125,10 @@ export function createOverlay(app: any): void {
           <div class="bz-home-mstats" data-home-mstats></div>
           <div class="bz-home-block-t">快捷入口 <span class="bz-home-block-cnt" data-home-cnt></span></div>
           <div class="bz-home-cards" data-home-cards></div>
+          <section class="bz-home-week" data-home-week hidden>
+            <span class="bz-home-week-t">本周</span>
+            <div class="bz-home-week-cells" data-home-week-cells></div>
+          </section>
           <button class="bz-home-addcard" data-home-addcard hidden>${iconSpan(ICO.add)} 加域卡</button>
           <div class="bz-home-minis" data-home-minis></div>
         </div>
@@ -362,6 +368,30 @@ function openAddPick(anchor: HTMLElement): void {
   pick.style.top = `${r.bottom - pr.top + 6}px`;
 }
 
+/* ---------- 本周轻卡（R1 生活周报） ---------- */
+
+/** 周卡数字格：图标+数字+短标签；data-home-side 复用统计条/侧栏既有点击路径直达域面板 */
+function weekCell(id: string, icon: string, value: string, label: string, aria: string): string {
+  return `<button type="button" class="bz-home-week-cell" data-home-side="${id}" aria-label="${esc(aria)}，点按打开" title="${esc(aria)}">`
+    + `${iconSpan(icon)}<span class="bz-home-week-v">${esc(value)}</span><span class="bz-home-week-k">${esc(label)}</span></button>`;
+}
+
+/** 周卡五格（数字故事）；各格 0 也渲染（格子常驻稳定不跳变） */
+function weekCellsHtml(w: WeeklyStat): string {
+  const iconOf = (id: string): string => DOMAIN_MAP.get(id)?.icon ?? '';
+  // 待办完成率：创建 > 0 显示 P%（四舍五入），创建 0 改显示完成数（无百分号）
+  const pct = w.todoCreated > 0 ? Math.round((w.todoDone / w.todoCreated) * 100) : null;
+  const todoVal = pct === null ? `${w.todoDone}` : `${pct}%`;
+  const todoAria = pct === null
+    ? `本周完成待办 ${w.todoDone} 条`
+    : `本周待办完成率 ${pct}%（完成 ${w.todoDone} / 创建 ${w.todoCreated}）`;
+  return weekCell('cinema', iconOf('cinema'), `${w.movies}`, '影视', `本周影视 ${w.movies} 部`)
+    + weekCell('bookshelf', iconOf('bookshelf'), `${w.booksFinished}`, '读完', `本周读完 ${w.booksFinished} 本`)
+    + weekCell('pomodoro', iconOf('pomodoro'), `${w.pomodoros}`, w.pomodoroMinutes ? `番茄 ${w.pomodoroMinutes} 分` : '番茄', `本周番茄 ${w.pomodoros} 个 / ${w.pomodoroMinutes} 分钟`)
+    + weekCell('memo', iconOf('memo'), todoVal, '待办', todoAria)
+    + weekCell('diary', iconOf('diary'), `${w.diary}`, '日记', `本周日记 ${w.diary} 条`);
+}
+
 /* ---------- 渲染：桌面 + 移动（同一 DOM，CSS 断点差异） ---------- */
 
 function cardHtml(id: string, index: number, total: number): string {
@@ -413,6 +443,19 @@ function renderAll(): void {
     : `<button type="button" class="bz-home-cards-empty" data-home-empty>${iconSpan(ICO.add)}<span>还没有钉选域，点这里进入编辑添加</span></button>`;
   overlay.querySelector('[data-home-cnt]')!.textContent = `${pinned.length} 个`;
   mountIcons(cards);
+
+  // 本周轻卡（R1 生活周报）：快照未到/失败整卡隐藏（避免 0 值闪现）；
+  // 显示后各格 0 也常驻（格子稳定不跳变）；随 30s 快照刷新自动重算重绘
+  const week = overlay.querySelector('[data-home-week]') as HTMLElement | null;
+  if (week) {
+    const w: WeeklyStat | undefined = H.snapshot?.weekly;
+    week.hidden = !w;
+    const cells = week.querySelector('[data-home-week-cells]') as HTMLElement | null;
+    if (w && cells) {
+      cells.innerHTML = weekCellsHtml(w);
+      mountIcons(cells);
+    }
+  }
 
   // 加域卡
   const addBtn = overlay.querySelector('[data-home-addcard]') as HTMLElement;
