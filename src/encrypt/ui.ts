@@ -1,5 +1,5 @@
 /**
- * 统一保险库 UI（encrypt 域；ADR-0085 合并保险箱 × 保险库）
+ * 统一保险库 UI（encrypt 域；ADR-0085 合并保险库 × 保险库）
  * 主面板 = 保险库三栏工作台（P1 资产档案库视觉）：
  *   - 左栏资产导航：品牌印章 + 概览 + 密码/加密笔记/加密日记（分类色计数）+ 体检状态 + 立即上锁
  *   - 中栏列表 / 右栏详情：密码（平台聚合/账号卡/收藏/复制）、加密笔记（预览/还原/删除）、
@@ -9,7 +9,7 @@
  * 解锁弹窗（showPasswordDialog）、压缩预览窗、体检弹窗、加锁当前笔记协调均保留于此。
  */
 import { MarkdownRenderer, Component } from 'obsidian';
-import { notice, notify } from '../core/notice';
+import { notice, notify, notifyActionError } from '../core/notice';
 import type { NoticeHandle } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
@@ -323,7 +323,7 @@ function finishProgress(h: NoticeHandle | null, done: number, msg: string) {
 
 
 
-/** 保险库设置 schema（ticket 131；ADR-0064；ADR-0085 统一收纳保险箱 + 密码生成/安全）：
+/** 保险库设置 schema（ticket 131；ADR-0064；ADR-0085 统一收纳保险库 + 密码生成/安全）：
  *  存储/预览/安全/移动端 + 密码「生成/安全」两组。全部配置项为启动快照
  *  （控制器构造时读取），改动需重载插件后生效——warnReload 收敛为 makeReloadWarnOnce（onCommit/
  *  onChange 一次性提示）。置于模块顶层供文案 lint 直接引用。移动端组走通用预设（mobileFullscreenGroup）。 */
@@ -381,7 +381,7 @@ export function encryptSettingsSchema(): SettingsSchema {
         icon: 'folder-open',
         name: '存储',
         rows: [
-          // ticket 128：保险箱根目录（统一路径选择器录入，无手输文本框；点前缀目录可选自 CONFIG/.ENCRYPT）
+          // ticket 128：保险库根目录（统一路径选择器录入，无手输文本框；点前缀目录可选自 CONFIG/.ENCRYPT）
           {
             type: 'path',
             mode: 'single',
@@ -462,7 +462,7 @@ export class UIManager {
         toast: (m, err) => this.toast(m, err),
         openPwEntryDialog: (edit, prefill) => this.openPwEntryDialog(edit, prefill),
         openPwPlatformEdit: (p) => this.openPwPlatformEdit(p),
-        askConfirm: (t, m, d, cb) => this.askPwConfirm(t, m, d, cb),
+        askConfirm: (t, m, okLabel, cb) => this.askPwConfirm(t, m, okLabel, cb),
         copySensitive: (t) => this.copySensitive(t),
         openExternal: (u) => this.openExternal(u),
         onPwChanged: () => this.renderAll(),
@@ -470,7 +470,7 @@ export class UIManager {
       } satisfies PwViewHost,
       { charset: config.pwCharset, length: config.pwLength }
     );
-    // 外部写密码条目（保险箱/其它实例）→ 重载密码数据 + 重绘
+    // 外部写密码条目（保险库/其它实例）→ 重载密码数据 + 重绘
     this.pwDataManager.onExternalChange = () => this.renderAll();
   }
 
@@ -1019,7 +1019,7 @@ export class UIManager {
       void this.renderList();
       void this.runHealthScan(); // 清理后重新体检，报告收敛
     } catch (e: any) {
-      notice('清理失败：' + e.message, 'error');
+      notifyActionError(e, '清理');
     }
   }
 
@@ -1110,7 +1110,7 @@ export class UIManager {
                 resolve(false);
               }
             } catch (e: any) {
-              notice('设置失败：' + e.message, 'error');
+              notifyActionError(e, '设置主密码');
               resolve(false);
             }
             return;
@@ -1138,7 +1138,7 @@ export class UIManager {
               void openFlowDialog({
                 title: '清单疑似损坏',
                 message:
-                  '保险箱清单文件为空或无法解析（可能因写入中断/同步冲突损坏）。' +
+                  '保险库清单文件为空或无法解析（可能因写入中断/同步冲突损坏）。' +
                   '重设主密码将生成全新空清单，旧加密数据将永久无法恢复。确定重设吗？',
                 actions: [
                   { label: '暂不重设', value: 'cancel' },
@@ -1795,13 +1795,13 @@ export class UIManager {
     document.body.appendChild(mask);
   }
 
-  private askPwConfirm(title: string, message: string, danger: boolean, onYes: () => void): void {
+  private askPwConfirm(title: string, message: string, okLabel: string, onYes: () => void): void {
     void openFlowDialog({
       title,
       message,
       actions: [
         { label: '取消', value: 'cancel' },
-        { label: danger ? '删除' : '确定', value: 'ok', cta: true },
+        { label: okLabel, value: 'ok', cta: true },
       ],
     }).then((v) => {
       if (v === 'ok') onYes();
@@ -2066,7 +2066,7 @@ export class UIManager {
         .then(() => {
           if (this._selNoteId === note.id) this._selNoteId = null;
           this.renderList();
-          this.toast('已删除');
+          this.toast(`已删除加密笔记「${note.title}」`);
         })
         .catch((e: any) => this.toast('删除失败：' + e.message, true));
     });
@@ -2141,7 +2141,7 @@ export class UIManager {
           delete this._diaryPlain[note.id];
           if (this._selNoteId === note.id) this._selNoteId = null;
           this.renderList();
-          this.toast('已彻底销毁');
+          this.toast(`已销毁「${note.title}」`);
         })
         .catch((e: any) => this.toast('销毁失败：' + e.message, true));
     });
@@ -2175,7 +2175,7 @@ export class UIManager {
               'warning'
             );
           } else {
-            // 原子还原（优化五）：任一冲突/失败 → 整体未写回，条目保留在保险箱
+            // 原子还原（优化五）：任一冲突/失败 → 整体未写回，条目保留在保险库
             finishProgress(h, total, '还原未完成（' + conflicts.length + ' 个目标有冲突）');
             // 列出具体冲突路径（保留目录信息让用户知道是哪个目标被占用；超长截断防通知栏过高）
             const cap = (p: string) => (p.length > 48 ? p.slice(0, 48) + '…' : p);
@@ -2190,7 +2190,7 @@ export class UIManager {
         .catch((e: any) => {
           // 失败分支收尾进度通知（ticket 5）：收起常驻转圈，不残留幽灵进度条
           if (h) h.hide();
-          notice('还原失败：' + e.message, 'error');
+          notifyActionError(e, '还原');
         });
     });
   }
@@ -2503,7 +2503,7 @@ export class EncryptAppController {
     this._initialized = true;
   }
 
-  /** 打开保险箱主面板：解锁成功直落密码资产并聚焦搜索（快速取密路径）；
+  /** 打开保险库主面板：解锁成功直落密码资产并聚焦搜索（快速取密路径）；
    *  已解锁直接打开则恢复上次停留资产（会话级记忆）。 */
   async openManager() {
     if (!this.dataManager.unlocked) {
@@ -2547,7 +2547,7 @@ export class EncryptAppController {
     });
   }
 
-  /** 二次确认：正文与附件将移入保险箱（原路径消失），点确认才开始 */
+  /** 二次确认：正文与附件将移入保险库（原路径消失），点确认才开始 */
   private async confirmLockProceed(file: { basename: string }, attCount: number): Promise<boolean> {
     return (
       (await openFlowDialog({
@@ -2649,7 +2649,7 @@ export class EncryptAppController {
       } catch (e: any) {
         // 失败分支收尾进度通知（ticket 5）：收起常驻转圈，不残留幽灵进度条；错误另由 error toast 明示
         if (h) h.hide();
-        notice('加密失败：' + e.message, 'error');
+        notifyActionError(e, '加密');
       }
     } finally {
       this._locking = false;

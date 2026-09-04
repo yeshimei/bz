@@ -311,4 +311,62 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     expect(document.querySelector('.bz-vault-dlg-mask')).toBeNull();
     expect(ui.popup!.style.display).toBe('flex');
   });
+
+  it('B 包扫尾：删除密码账号——确认框三段式 + 按钮动词「删除」，成功 toast 带账号名', async () => {
+    await dm.addItem({ platform: 'GitHub', account: 'me@example', password: 'x' });
+    ui.show();
+    await new Promise((r) => setTimeout(r, 30));
+    const pwItem = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].find((i) => i.getAttribute('data-asset') === 'pw') as HTMLElement;
+    pwItem.click();
+    await new Promise((r) => setTimeout(r, 30));
+    // 桌面三栏：先选中平台行，右侧详情区才渲染账号卡
+    const plRow = document.querySelector('.bz-vault-listcol .bz-pwv-plrow') as HTMLElement;
+    plRow.click();
+    await new Promise((r) => setTimeout(r, 30));
+    // 账号卡右键 → 动作菜单「删除」
+    const card = document.querySelector('.bz-pwv-acctcard') as HTMLElement;
+    expect(card).toBeTruthy();
+    card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+    await new Promise((r) => setTimeout(r, 20));
+    const delItem = [...document.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.trim() === '删除') as HTMLElement;
+    expect(delItem).toBeTruthy();
+    delItem.click();
+    await new Promise((r) => setTimeout(r, 20));
+    // 确认框：标题「删除密码条目」+ 问句「」引号 + 后果说明；按钮是动词「删除」而非「确定」
+    const popup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
+    expect(popup).toBeTruthy();
+    expect(popup.querySelector('h4')!.textContent).toBe('删除密码条目');
+    expect(popup.textContent).toContain('确定删除账号「me@example」吗？此操作不可撤销。');
+    expect((document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).textContent).toBe('删除');
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 30));
+    // 成功 toast 带对象名（不再是孤零零「已删除」）
+    const msgs = [...document.querySelectorAll('.bz-notice-msg')].map((el) => el.textContent);
+    expect(msgs).toContain('已删除账号「me@example」');
+    await dm.load();
+    expect(dm.pwData.length).toBe(0);
+  });
+
+  it('B 包扫尾：概览空态为 .bz-empty 三件套（图标 + 标题 + 描述），不再是单行灰字', async () => {
+    ui.show();
+    await new Promise((r) => setTimeout(r, 30));
+    const empty = document.querySelector('.bz-empty') as HTMLElement;
+    expect(empty).toBeTruthy();
+    expect(empty.querySelector('.bz-empty-ic')).toBeTruthy();
+    expect(empty.querySelector('.bz-empty-title')!.textContent).toBe('还没有加密资产');
+    expect(empty.querySelector('.bz-empty-desc')!.textContent).toContain('最近动态在这里显示');
+  });
+});
+
+describe('pw-view relTime（B 包收编 core formatRelativeTime）', () => {
+  it('「N分钟前」无空格口径；空输入返回空串', async () => {
+    const { relTime } = await import('../../src/encrypt/vault-pw-view');
+    expect(relTime('')).toBe('');
+    // relTime 内部取真实当前时间——输入相对 Date.now() 构造，5 分钟前必得「5分钟前」
+    const iso = (ms: number) => new Date(Date.now() - ms).toISOString();
+    expect(relTime(iso(5 * 60 * 1000))).toBe('5分钟前');
+    // 「N 天前」带空格的旧口径已消灭：30 天前 → core 口径（不以「天前」结尾或无空格）
+    const d30 = relTime(iso(30 * 86400000));
+    expect(d30.includes(' 天前')).toBe(false);
+  });
 });
