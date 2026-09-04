@@ -31,7 +31,6 @@ export const DOMAINS: HomeDomain[] = [
   { id: 'diary', commandId: 'bz-diary-open', name: '日记本', sub: '写今天的闪念', icon: iconOf('diary') },
   // 今日回顾（recap 域，方向一 R2）：当天五域痕迹聚合面板（icon 与 DOMAIN_ICONS.recap 一致）
   { id: 'recap', commandId: 'bz-recap-today', name: '今日回顾', sub: '今天的痕迹一条线', icon: iconOf('recap') },
-  { id: 'memo', commandId: 'bz-memo-open', name: '备忘录', sub: '记录与提醒', icon: iconOf('memo') },
   { id: 'cinema', commandId: 'bz-cinema-open', name: '影院', sub: '影视想看与在看', icon: iconOf('cinema') },
   { id: 'review', commandId: 'bz-review-open', name: '复习计划', sub: '到期卡片队列', icon: iconOf('review') },
   { id: 'pomodoro', commandId: 'bz-pomodoro-open', name: '番茄钟', sub: '专注计时', icon: iconOf('pomodoro') },
@@ -57,7 +56,6 @@ export const DOMAIN_MAP: Map<string, HomeDomain> = new Map(DOMAINS.map((d) => [d
 export const DOMAIN_DOT: Record<string, string> = {
   diary: '#e67341',
   recap: '#d64d8f',
-  memo: '#d9a13c',
   cinema: '#e6951d',
   review: '#7c5cd6',
   pomodoro: '#e5534b',

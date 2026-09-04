@@ -70,7 +70,7 @@ describe('core/dom createSiteIcon', () => {
 });
 
 describe('main.ts onunload 清理分支', () => {
-  it('onunload：unloadBz/unloadMemoFileSync/unloadFavoritesFileSync/清理 diary 全部执行', async () => {
+  it('onunload：unloadFileSync/unloadFavoritesFileSync/清理 diary 全部执行', async () => {
     setup();
     const plugin: any = new BzPlugin(app, {} as any);
     plugin.app = app;

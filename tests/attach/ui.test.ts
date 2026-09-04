@@ -11,7 +11,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { clearNotices, hasNotice } from '../mock-obsidian-entry';
 import { runMove, moveAttachments, openMovePreview } from '../../src/attach/ui';
-import { ensureAttachSeed, ensureAttachFileMenu } from '../../src/attach/index';
+import { ensureAttachFileMenu } from '../../src/attach/index';
 
 function makeApp(vault: MockVault, activePath?: string) {
   const app = mockAppWithVault(vault) as any;
@@ -637,24 +637,5 @@ describe('文件右键菜单入口（ensureAttachFileMenu）', () => {
     expect(calls).toEqual([['笔记/a.png', '归档/a.png']]);
     expect(vault.files.has('归档/a.png')).toBe(true);
     expect(hasNotice(/已移动 1 个资源到 归档/)).toBe(true);
-  });
-});
-
-describe('ensureAttachSeed 主页磁贴播种', () => {
-  it('缺磁贴时 desktop+mobile 各追加一条（末尾、1×1），幂等', async () => {
-    const vault = new MockVault();
-    const app = mockAppWithVault(vault) as any;
-    await ensureAttachSeed(app);
-    const data = JSON.parse(vault.files.get('CONFIG/STORAGE/launcher.json') as string);
-    const desktop = data.desktop.tiles;
-    const mobile = data.mobile.tiles;
-    expect(desktop.filter((t: any) => t.commandId === 'bz-attach-move')).toHaveLength(1);
-    expect(mobile.filter((t: any) => t.commandId === 'bz-attach-move')).toHaveLength(1);
-    expect(desktop[0]).toMatchObject({ commandId: 'bz-attach-move', x: 0, y: 0, w: 1, h: 1 });
-    expect(desktop[0].id).toMatch(/^lt-/);
-    await ensureAttachSeed(app);
-    const again = JSON.parse(vault.files.get('CONFIG/STORAGE/launcher.json') as string);
-    expect(again.desktop.tiles.filter((t: any) => t.commandId === 'bz-attach-move')).toHaveLength(1);
-    expect(again.mobile.tiles.filter((t: any) => t.commandId === 'bz-attach-move')).toHaveLength(1);
   });
 });

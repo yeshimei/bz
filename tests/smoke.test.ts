@@ -11,12 +11,12 @@ import { notify } from '../src/core/notice';
 // ai-agent 域解散后的新注册点隔离：ensureMemoFileSync/ensureFavoritesFileSync 换 spy
 // （vi.mock 局部替换，其余导出保持真实实现，命令回调冒烟等用例不受影响）
 const syncSpies = vi.hoisted(() => ({
-  ensureMemoFileSync: vi.fn(),
+  ensureFileSync: vi.fn(),
   ensureFavoritesFileSync: vi.fn(),
 }));
-vi.mock('../src/memo', async (importOriginal) => ({
+vi.mock('../src/todo', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  ensureMemoFileSync: syncSpies.ensureMemoFileSync,
+  ensureFileSync: syncSpies.ensureFileSync,
 }));
 vi.mock('../src/favorites', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -55,11 +55,9 @@ const registeredCommands: any[] = [];
 
 /** 期望的命令 id 全集（spec「命令 id 全清单」第 9 轮：COMMANDS 表 + 日记本 bz-diary-open） */
 const EXPECTED_COMMAND_IDS = [
-  'bz-home',
   'bz-home-open',
   // 今日回顾（recap 域，方向一 R2：当天五域痕迹聚合面板）
   'bz-recap-today',
-  'bz-memo-open', 'bz-memo-add',
   'bz-todo-open', 'bz-todo-add',
   'bz-belongings-add', 'bz-belongings-open',
   // 剪藏本（clipbook 融合域，ADR-0082）：聚合讯未读流+剪藏笔记一体化；旧 bz-clipping-open/bz-news-open 断开
@@ -135,21 +133,16 @@ describe('bz 骨架冒烟', () => {
 
     expect(plugin.ribbonIcons.length).toBeGreaterThanOrEqual(1);
     expect(plugin.ribbonIcons[0].title).toBe('待办');
-    // 点击落点核对：打开待办面板，备忘录旧弹窗（#todo-popup）不出现
+    // 点击落点核对：打开待办面板
     plugin.ribbonIcons[0].callback();
     await vi.waitFor(() => {
       expect(document.querySelector('.bz-todo-overlay')).toBeTruthy();
     });
-    expect(document.getElementById('todo-popup')).toBeNull();
   });
 
   it('命令名统一（f3/f7/t1/t2，id 不动）与重复图标去重（f7）', async () => {
     await createPlugin(makeMockApp());
     const byId = (id: string) => registeredCommands.find((c: any) => c.id === id)!;
-    // t1：主页 → 入口页（术语随 CONTEXT.md；id bz-home 不变）
-    expect(byId('bz-home').name).toBe('入口页');
-    // f3：新建类动词统一（写备忘 → 加备忘，与加物品/加收藏一致；ADR-0087 旧 movie-add 已退役）
-    expect(byId('bz-memo-add').name).toBe('加备忘');
     expect(byId('bz-cinema-open').name).toBe('影院');
     expect(byId('bz-cinema-add').name).toBe('加影视');
     // 书架墙（bookshelf 新域）
@@ -183,10 +176,8 @@ describe('bz 骨架冒烟', () => {
     const { DOMAIN_ICONS } = await import('../src/core/domain-icons');
     // 域入口命令 icon 全部来自 DOMAIN_ICONS（一处定义、两处引用：命令表 + 设置面板导航）
     const domainCommands: Array<[string, string]> = [
-      ['bz-home', 'launcher'],
       ['bz-home-open', 'home'],
       ['bz-recap-today', 'recap'],
-      ['bz-memo-open', 'memo'],
       ['bz-todo-open', 'todo'],
       ['bz-belongings-open', 'belongings'],
       ['bz-clipbook-open', 'clipping'],
@@ -325,17 +316,17 @@ ${failures.join('\n')}`).toEqual([]);
     delete diskData['bz'];
     // 故意种旧键：验证 onload 迁移把 flashEnabled 平移为 secondBrainEnabled
     diskData['bz'] = { autoSummaryEnabled: true, flashEnabled: true };
-    syncSpies.ensureMemoFileSync.mockClear();
+    syncSpies.ensureFileSync.mockClear();
     syncSpies.ensureFavoritesFileSync.mockClear();
     const app = makeMockApp();
     const plugin = await createPlugin(app);
     // 引用同步无条件常驻（issue 187：aiAgentEnabled 开关退役）——
-    // memo/favorites 两路文件同步 ensure 各恰好一次，均不抛错
+    // todo/favorites 两路文件同步 ensure 各恰好一次，均不抛错
     expect(plugin.settings.autoSummaryEnabled).toBe(true);
     expect(plugin.settings.secondBrainEnabled).toBe(true);
     expect(plugin.settings.flashEnabled).toBeUndefined();
-    expect(syncSpies.ensureMemoFileSync).toHaveBeenCalledTimes(1);
-    expect(syncSpies.ensureMemoFileSync).toHaveBeenCalledWith(app);
+    expect(syncSpies.ensureFileSync).toHaveBeenCalledTimes(1);
+    expect(syncSpies.ensureFileSync).toHaveBeenCalledWith(app);
     expect(syncSpies.ensureFavoritesFileSync).toHaveBeenCalledTimes(1);
     expect(syncSpies.ensureFavoritesFileSync).toHaveBeenCalledWith(app);
   }, 15000);

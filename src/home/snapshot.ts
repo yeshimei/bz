@@ -6,7 +6,7 @@
  *  - json 数据文件（memo/review/favorites/pomodoro/quiz/belongings/news）一律
  *    **先探测文件是否存在，不存在直接回落空徽标**——统一读写层 jsonFileStore 的
  *    read 缺省会自动建默认文件，首页只是快照，不得制造写盘副作用；
- *  - memo 不依赖 DataManager 单例（其 _store 需 memo 域 init 才可用），改直读
+ *  - memo（memo.json，todo 域数据）直读，不依赖任何域单例初始化
  *    core/storage 的 jsonFileStore（文件存在才读）；
  *  - 目录（日记/影院/剪藏/书库）不存在 → null → 回落默认，不建目录。
  *

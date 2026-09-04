@@ -4,7 +4,7 @@
  *  1) 样式库共享修饰符：.bz-btn--danger-ghost / .bz-btn--hover-accent / .bz-chip--hover-accent（项 1）；
  *  3) 触控热区收编：core .bz-touch-target（--sm/--lg/--xl 档）+ 各域挂类、域内不再复制 ::after 外扩（项 3；
  *     attach 为 padding 抬档形态维持域内块；cinema 域 ui 冻结已在走查批 C 解除并收编）；
- *  4) z-index 静态大数收口：launcher/literature/secondbrain/smartcat（项 4）；
+ *  4) z-index 静态大数收口：literature/secondbrain/smartcat（项 4）；
  *  5) 图标单一事实源：DOMAIN_ICONS 补 diary-wall/settings-panel，home 磁贴/命令/写日记命令全量引用（项 5）；
  *  6) .bz-panel-mtop 补接：memo 随 mfs 开关同挂摘（项 6）。
  * 样式断言读源文件文本（jsdom 不解析 css 文件；先例 enh-sweep-c.test.ts）。
@@ -100,12 +100,6 @@ describe('批 B-3：触控热区收编 core .bz-touch-target', () => {
 });
 
 describe('批 B-4：z-index 静态大数收口（ADR-0067）', () => {
-  it('launcher：拖拽磁贴降局部层叠档 10（兄弟磁贴间层叠，非 overlay 档）', () => {
-    const css = repo('src/launcher/styles.css');
-    expect(css).not.toMatch(/z-index:\s*9999/);
-    expect(css).toMatch(/\.launcher-tile\.dragging\s*\{[^}]*z-index: 10;/);
-  });
-
   it('literature：遮罩/窗口/小型弹窗静态档清零（显示路径 topifyZ 发号已就位）', () => {
     const css = repo('src/literature/styles.css');
     expect(css).not.toMatch(/z-index:/); // 域内原本仅 3 处静态档，全清
@@ -144,9 +138,9 @@ describe('批 B-5：图标单一事实源尾差', () => {
     expect(DOMAIN_ICONS['settings-panel']).toBe('settings-2');
   });
 
-  it('home 磁贴 17 条 icon 全量迁移：iconOf() 引 DOMAIN_ICONS，无残留字面量', () => {
+  it('home 磁贴 16 条 icon 全量迁移：iconOf() 引 DOMAIN_ICONS，无残留字面量', () => {
     const src = repo('src/home/domains.ts');
-    expect((src.match(/icon: iconOf\(/g) ?? []).length).toBe(17);
+    expect((src.match(/icon: iconOf\(/g) ?? []).length).toBe(16);
     expect(src).not.toMatch(/icon: '/);
     // 异名映射：wall→diary-wall、settings→settings-panel
     for (const d of DOMAINS) {
