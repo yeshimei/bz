@@ -27,7 +27,7 @@ import { uiIcon } from '../core/ui';
 import { emitDomainEvent } from '../core/domain-bus';
 import { favoritesEditChanges } from '../smartcat/favorites-source';
 import type { SettingsSchema } from '../core/settings-schema';
-import { TAGS, tagEmoji, tagLabel, domainOf, normalizeUrl } from './config';
+import { TAGS, tagEmoji, tagLabel, domainOf, normalizeUrl, isUrlLike } from './config';
 import { BalanceService, FavoritesAIService } from './ai';
 import type { DataManager } from './data';
 import type { FavoritesItem } from './types';
@@ -42,6 +42,8 @@ const MOB_SHOW = 'bz-fav-mobsearch-show';
 /** lucide 图标名 */
 const ICON = {
   all: 'layout-grid',
+  archived: 'archive',
+  unarchive: 'archive-restore',
   add: 'plus',
   sort: 'arrow-up-down',
   search: 'search',
@@ -56,6 +58,7 @@ const ICON = {
   del: 'trash-2',
   empty: 'star',
   balance: 'wallet',
+  globe: 'globe',
 };
 
 /** 域级模块状态（模块单例；卸载/测试重置） */
@@ -64,6 +67,8 @@ interface FavState {
   items: FavoritesItem[];
   /** 当前标签筛选（null = 全部；存标签 label） */
   tag: string | null;
+  /** 已归档视图（ticket 188：左栏「已归档」入口；数据仍 favorites.json，ADR-0074 冷存语义不变） */
+  archived: boolean;
   q: string;
   sort: SortMode;
   renderFn: (() => void) | null;
@@ -73,6 +78,7 @@ const M: FavState = {
   overlay: null,
   items: [],
   tag: null,
+  archived: false,
   q: '',
   sort: 'created',
   renderFn: null,
@@ -82,6 +88,7 @@ export function resetFavoritesState(): void {
   M.overlay = null;
   M.items = [];
   M.tag = null;
+  M.archived = false;
   M.q = '';
   M.sort = 'created';
   M.renderFn = null;
@@ -135,15 +142,27 @@ function visible(): FavoritesItem[] {
   return M.items.filter((i) => !i.archived);
 }
 
+/** 已归档条目（ticket 188「已归档」视图数据源；数据仍在 favorites.json） */
+function archivedItems(): FavoritesItem[] {
+  return M.items.filter((i) => !!i.archived);
+}
+
+/** 当前视图条目池：默认非归档；已归档视图仅归档条目 */
+function pool(): FavoritesItem[] {
+  return M.archived ? archivedItems() : visible();
+}
+
+/** 搜索 haystack（ticket 188 加 url：标题/简介/链接/关联笔记/标签文案） */
+function haystackOf(it: FavoritesItem): string {
+  return [it.title, it.description, it.url || '', (it.linkedNote || ''), ...(it.tags || []).map(tagLabel)].join(' ').toLowerCase();
+}
+
 function filtered(): FavoritesItem[] {
-  let list = visible();
-  if (M.tag) list = list.filter((i) => (i.tags || []).includes(M.tag as string));
+  let list = pool();
+  if (!M.archived && M.tag) list = list.filter((i) => (i.tags || []).includes(M.tag as string));
   if (M.q) {
     const kw = M.q.toLowerCase();
-    list = list.filter((i) => {
-      const hay = [i.title, i.description, (i.linkedNote || ''), ...(i.tags || []).map(tagLabel)].join(' ').toLowerCase();
-      return hay.includes(kw);
-    });
+    list = list.filter((i) => haystackOf(i).includes(kw));
   }
   const byTime = (a: FavoritesItem, b: FavoritesItem) =>
     (b.created || '').localeCompare(a.created || '') || (b.id || '').localeCompare(a.id || '');
@@ -251,12 +270,12 @@ function panelHtml(): string {
         <button class="bz-btn bz-btn--primary" data-fav-add>${iconSpan(ICON.add, 'bz-ic--sm')} 添加收藏</button>
       </div>
       <div class="bz-fav-toolbar">
-        <div class="bz-fav-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-fav-search placeholder="搜索标题 / 简介 / 标签…"></div>
+        <div class="bz-fav-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-fav-search placeholder="搜索标题 / 简介 / 链接 / 标签…"></div>
         <button class="bz-btn bz-fav-sort-btn" data-fav-sort>${iconSpan(ICON.sort, 'bz-ic--sm')} <span data-fav-sort-label>最新收藏</span></button>
       </div>
       <div class="bz-fav-mobscenes" data-fav-mobtags></div>
       <div class="bz-fav-mobsearch" data-fav-mobsearch-row>
-        <div class="bz-fav-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-fav-mobsearch-inp placeholder="搜索标题 / 简介 / 标签…"></div>
+        <div class="bz-fav-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-fav-mobsearch-inp placeholder="搜索标题 / 简介 / 链接 / 标签…"></div>
       </div>
       <div class="bz-fav-content" data-fav-content></div>
     </div>
@@ -323,15 +342,16 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
     if (t.closest('[data-fav-close]')) { closePanel(); return; }
     if (t.closest('[data-fav-mobsearch]')) { toggleMobSearch(overlay); return; }
   });
-  // 左栏 / 移动 chips 标签（统一按 data-fav-tag 处理；__all = 全部）
+  // 左栏 / 移动 chips 标签（统一按 data-fav-tag 处理；__all = 全部；__archived = 已归档视图）
   overlay.querySelectorAll('[data-fav-tags], [data-fav-mobtags]').forEach((el) => {
     el.addEventListener('click', (e) => {
       const b = (e.target as HTMLElement).closest('[data-fav-tag]') as HTMLElement | null;
       if (!b) return;
       const label = b.dataset.favTag as string;
-      // 再点当前标签 = 取消筛选回全部；点「全部」= 全部
-      if (label === '__all') M.tag = null;
-      else M.tag = M.tag === label ? null : label;
+      // 再点当前标签 = 取消筛选回全部；点「全部」= 全部；点「已归档」= 归档视图
+      if (label === '__all') { M.tag = null; M.archived = false; }
+      else if (label === '__archived') { M.tag = null; M.archived = !M.archived; }
+      else { M.archived = false; M.tag = M.tag === label ? null : label; }
       renderAll();
     });
   });
@@ -419,21 +439,29 @@ function renderTags(): void {
   const overlay = M.overlay!;
   const mkSide = (label: string, emojiOrIcon: string, cnt: number, active: boolean) =>
     `<button class="bz-fav-side-item${active ? ' bz-fav-nav-active' : ''}" data-fav-tag="${esc(label)}"><span class="bz-fav-side-emoji">${emojiOrIcon}</span><span class="bz-fav-side-name">${esc(label)}</span><span class="bz-fav-nav-cnt">${cnt}</span></button>`;
+  renderTagLists(overlay, mkSide);
+  const titleEl = overlay.querySelector('[data-fav-title]') as HTMLElement;
+  if (M.archived) titleEl.textContent = '已归档';
+  else if (M.tag) titleEl.innerHTML = `${tagEmoji(M.tag)} ${esc(M.tag)}`;
+  else titleEl.textContent = '全部';
+}
+
+/** 左栏 + 移动 chips 渲染（全部 → 已归档 → 9 类；已归档计数独立于标签） */
+function renderTagLists(overlay: HTMLElement, mkSide: (label: string, emojiOrIcon: string, cnt: number, active: boolean) => string): void {
   const side = overlay.querySelector('[data-fav-tags]') as HTMLElement;
   side.innerHTML =
-    mkSide('__all', iconSpan(ICON.all), visible().length, M.tag === null) +
-    TAGS.map((t) => mkSide(t.label, t.emoji, tagCount(t.label), M.tag === t.label)).join('');
+    mkSide('__all', iconSpan(ICON.all), visible().length, !M.archived && M.tag === null) +
+    mkSide('__archived', iconSpan(ICON.archived), archivedItems().length, M.archived) +
+    TAGS.map((t) => mkSide(t.label, t.emoji, tagCount(t.label), !M.archived && M.tag === t.label)).join('');
   mountIcons(side);
   const mob = overlay.querySelector('[data-fav-mobtags]') as HTMLElement;
   const mkChip = (label: string, emojiOrIcon: string, cnt: number, active: boolean) =>
     `<button class="bz-fav-mobchip${active ? ' bz-fav-mobchip-active' : ''}" data-fav-tag="${esc(label)}">${emojiOrIcon}<span>${esc(label)}</span><span class="bz-fav-chip-cnt">${cnt}</span></button>`;
   mob.innerHTML =
-    mkChip('__all', iconSpan(ICON.all), visible().length, M.tag === null) +
-    TAGS.map((t) => mkChip(t.label, t.emoji, tagCount(t.label), M.tag === t.label)).join('');
+    mkChip('__all', iconSpan(ICON.all), visible().length, !M.archived && M.tag === null) +
+    mkChip('__archived', iconSpan(ICON.archived), archivedItems().length, M.archived) +
+    TAGS.map((t) => mkChip(t.label, t.emoji, tagCount(t.label), !M.archived && M.tag === t.label)).join('');
   mountIcons(mob);
-  const titleEl = overlay.querySelector('[data-fav-title]') as HTMLElement;
-  if (M.tag) titleEl.innerHTML = `${tagEmoji(M.tag)} ${esc(M.tag)}`;
-  else titleEl.textContent = '全部';
 }
 
 function renderCount(): void {
@@ -441,7 +469,13 @@ function renderCount(): void {
   if (!overlay) return;
   const n = filtered().length;
   const el = overlay.querySelector('[data-fav-count]') as HTMLElement | null;
-  if (el) el.textContent = `${n} 条收藏`;
+  if (el) el.textContent = M.archived ? `${n} 条已归档` : `${n} 条收藏`;
+}
+
+/** 搜索无结果时归档池命中数（ticket 188：冷存找回提示） */
+function archivedMatchesOf(q: string): number {
+  const kw = q.toLowerCase();
+  return archivedItems().filter((i) => haystackOf(i).includes(kw)).length;
 }
 
 function renderContent(): void {
@@ -450,9 +484,13 @@ function renderContent(): void {
   const content = overlay.querySelector('[data-fav-content]') as HTMLElement;
   const list = filtered();
   if (!list.length) {
+    const archHits = !M.archived && M.q ? archivedMatchesOf(M.q) : 0;
+    const desc = M.q
+      ? (archHits > 0 ? `归档中有 ${archHits} 条匹配，左栏「已归档」可查看` : '试试其他关键词，或清除搜索')
+      : '点右上角「添加收藏」记一条';
     content.innerHTML = `<div class="bz-empty"><span class="bz-empty-ic">${iconSpan(ICON.empty)}</span>
-      <div class="bz-empty-title">${M.q ? `没有匹配「${esc(M.q)}」的收藏` : '暂无收藏'}</div>
-      <div class="bz-empty-desc">${M.q ? '试试其他关键词，或清除搜索' : '点右上角「添加收藏」记一条'}</div></div>`;
+      <div class="bz-empty-title">${M.q ? `没有匹配「${esc(M.q)}」的收藏` : (M.archived ? '暂无归档' : '暂无收藏')}</div>
+      <div class="bz-empty-desc">${desc}</div></div>`;
     mountIcons(content);
     return;
   }
@@ -474,6 +512,8 @@ function cardHtml(it: FavoritesItem): string {
     : '';
   const pinMark = it.pinned ? `${iconSpan(ICON.pin, 'bz-ic--xs')} 置顶 · ` : '';
   const timeBadge = `<span class="bz-badge bz-fav-time-badge">${pinMark}${esc(it.created || '')}</span>`;
+  // 弱化域名徽章（ticket 188：meta 行尾；解析失败不出徽章）
+  const hostBadge = host ? `<span class="bz-badge bz-fav-host-badge">${iconSpan(ICON.globe, 'bz-ic--xs')} ${esc(host)}</span>` : '';
   const balHtml = it.balance
     ? `<div class="bz-fav-balance-wrap"><span class="bz-fav-balance${balanceToneClass(it.balance)}">${esc(it.balance)}</span></div>`
     : it.balanceError
@@ -483,7 +523,7 @@ function cardHtml(it: FavoritesItem): string {
     <div class="bz-fav-card-main">
       <div class="bz-fav-title-row"><span class="bz-fav-title" title="${esc(host || it.title)}">${esc(it.title || '无标题')}</span></div>
       ${desc ? `<div class="bz-fav-desc">${esc(desc)}</div>` : ''}
-      <div class="bz-fav-meta">${tagBadges}${noteBadge}${timeBadge}</div>
+      <div class="bz-fav-meta">${tagBadges}${noteBadge}${timeBadge}${hostBadge}</div>
     </div>${balHtml}
   </div>`;
 }
@@ -626,23 +666,33 @@ function buildActions(it: FavoritesItem, rebuild: () => void): ItemAction[] {
       openForm(it);
     },
   });
-  acts.push({
-    icon: 'archive',
-    label: '归档',
-    title: '归档收藏',
-    onClick: () => {
-      void openFlowDialog({
-        title: '归档确认',
-        message: `确定归档收藏 "${it.title}" 吗？归档后不在列表显示，数据保留在 favorites.json。`,
-        actions: [
-          { label: '取消', value: 'cancel' },
-          { label: '确定', value: 'ok', cta: true },
-        ],
-      }).then((v) => {
-        if (v === 'ok') void archiveItem(it);
-      });
-    },
-  });
+  // 归档/取消归档（ticket 188：已归档条目动作翻转为取消归档——冷存找回入口；ADR-0074 数据仍在 favorites.json）
+  acts.push(it.archived
+    ? {
+      icon: 'archive-restore',
+      label: '取消归档',
+      title: '恢复到主列表',
+      onClick: () => {
+        void unarchiveItem(it);
+      },
+    }
+    : {
+      icon: 'archive',
+      label: '归档',
+      title: '归档收藏',
+      onClick: () => {
+        void openFlowDialog({
+          title: '归档确认',
+          message: `确定归档收藏 "${it.title}" 吗？归档后不在列表显示，数据保留在 favorites.json。`,
+          actions: [
+            { label: '取消', value: 'cancel' },
+            { label: '确定', value: 'ok', cta: true },
+          ],
+        }).then((v) => {
+          if (v === 'ok') void archiveItem(it);
+        });
+      },
+    });
   acts.push({
     icon: 'trash-2',
     label: '删除',
@@ -687,16 +737,39 @@ function openMobSheet(it: FavoritesItem): void {
   openItemSheet(buildActions(it, rebuild), { sheetHead: sheetHeadOf(it) });
 }
 
-// ==================== 归档 / 删除 ====================
+// ==================== 归档 / 取消归档 / 删除 ====================
 
+/** 归档后可撤销（ticket 188）：toast 挂「撤销」，点击回写 archived=false 恢复主列表 */
 async function archiveItem(it: FavoritesItem): Promise<void> {
   try {
     await dataManagerOf().update(it.id, { archived: true, archivedAt: localNow() });
     emitDomainEvent('favorites', { kind: 'archive', title: it.title });
     await reload();
-    notice('已归档收藏', 'archive');
+    notifyUndo(`已归档收藏「${it.title}」`, () => {
+      void (async () => {
+        try {
+          await dataManagerOf().update(it.id, { archived: false, archivedAt: null });
+          emitDomainEvent('favorites', { kind: 'unarchive', title: it.title });
+          await reload();
+        } catch (e) {
+          notifySaveError(e, '恢复收藏');
+        }
+      })();
+    }, { type: 'archive' });
   } catch (e) {
     notifySaveError(e, '归档收藏');
+  }
+}
+
+/** 取消归档（已归档视图动作）：回主列表 */
+async function unarchiveItem(it: FavoritesItem): Promise<void> {
+  try {
+    await dataManagerOf().update(it.id, { archived: false, archivedAt: null });
+    emitDomainEvent('favorites', { kind: 'unarchive', title: it.title });
+    await reload();
+    notice('已取消归档', 'success');
+  } catch (e) {
+    notifySaveError(e, '取消归档');
   }
 }
 
@@ -768,10 +841,24 @@ interface FormBaseline {
   desc: string;
   keys: string;
   balanceUrl: string;
+  note: string;   // ticket 188：关联笔记纳入防丢
+  pinned: boolean; // ticket 188：置顶纳入防丢
+  tags: string;   // ticket 188：标签（排序 join）纳入防丢
 }
 
 let _saving = false;
 let _baseline: FormBaseline | null = null;
+
+/** 表单当前 标签选中集 / 置顶态（DOM 读；供脏比较，避免闭包持有局部状态） */
+function formTagsNow(popup: HTMLElement): string {
+  return [...popup.querySelectorAll('#fz-tags [data-tag].is-on')]
+    .map((b) => (b as HTMLElement).dataset.tag || '')
+    .sort()
+    .join('|');
+}
+function formPinNow(popup: HTMLElement): boolean {
+  return !!(popup.querySelector('#fz-pin') as HTMLElement | null)?.classList.contains('on');
+}
 
 function formDirty(): boolean {
   if (!_baseline) return false;
@@ -783,7 +870,10 @@ function formDirty(): boolean {
     g('#fz-url') !== _baseline.url ||
     g('#fz-desc') !== _baseline.desc ||
     g('#fz-keys') !== _baseline.keys ||
-    g('#fz-balurl') !== _baseline.balanceUrl
+    g('#fz-balurl') !== _baseline.balanceUrl ||
+    g('#fz-note') !== _baseline.note ||
+    formPinNow(popup) !== _baseline.pinned ||
+    formTagsNow(popup) !== _baseline.tags
   );
 }
 
@@ -798,6 +888,59 @@ function closeForm(popup: HTMLElement): void {
   closeItemMenu();
   unregisterSheetCompanion(popup);
   popup.remove();
+}
+
+/**
+ * 关联笔记候选自动补全（ticket 188）：输入/聚焦时列 vault 笔记（路径包含过滤，上限 30），
+ * 点选回填；外点关闭；Escape 只收下拉不关表单（与 belongings categoryPicker 同范式）。
+ * 表单关闭后首个外部 mousedown 经 isConnected 自清监听。
+ */
+function notePicker(input: HTMLInputElement): void {
+  let pop: HTMLElement | null = null;
+  const close = () => {
+    if (pop) {
+      pop.remove();
+      pop = null;
+      document.removeEventListener('mousedown', onDocDown, true);
+    }
+  };
+  const onDocDown = (e: MouseEvent) => {
+    const t = e.target as Node;
+    if (!input.isConnected) { close(); return; }
+    if (pop?.contains(t) || input.contains(t)) return;
+    close();
+  };
+  const draw = () => {
+    const q = input.value.trim().toLowerCase();
+    let files: string[] = [];
+    try {
+      files = ((appOf().vault as any)?.getMarkdownFiles?.() || []).map((f: any) => String(f.path || ''));
+    } catch (e) { files = []; }
+    // 排除与当前值完全相同的候选（点选回焦后不再复弹自身）
+    const matched = files.filter((p) => p && p !== input.value.trim() && (!q || p.toLowerCase().includes(q))).slice(0, 30);
+    if (!matched.length) { close(); return; }
+    if (!pop) {
+      pop = document.createElement('div');
+      pop.className = 'bz-fav-notepop';
+      input.parentElement!.appendChild(pop);
+      document.addEventListener('mousedown', onDocDown, true);
+    }
+    pop.innerHTML = matched.map((p) => `<div class="bz-fav-noteopt" data-note="${esc(p)}">${esc(p)}</div>`).join('');
+    pop.querySelectorAll('[data-note]').forEach((o) => o.addEventListener('click', () => {
+      input.value = (o as HTMLElement).dataset.note as string;
+      close();
+      input.focus();
+    }));
+  };
+  input.addEventListener('input', draw);
+  input.addEventListener('focus', draw);
+  input.addEventListener('keydown', (e) => {
+    // 下拉开着时 Escape 只收下拉（stopPropagation 防 escManager 关表单）；未开不拦
+    if (e.key === 'Escape' && pop) {
+      close();
+      e.stopPropagation();
+    }
+  });
 }
 
 /** 打开添加/编辑表单（编辑来自行浮层时叠于其上：companion 防误关） */
@@ -846,7 +989,24 @@ sk-key3">${it?.llmConfig?.apiKeys ? esc(it.llmConfig.apiKeys) : ''}</textarea></
     desc: it?.description || '',
     keys: it?.llmConfig?.apiKeys || '',
     balanceUrl: it?.llmConfig?.balanceUrl || '',
+    note: it?.linkedNote || '',
+    pinned: !!it?.pinned,
+    tags: [...(it?.tags || [])].sort().join('|'),
   };
+
+  // 贴链自动搬家（ticket 188）：标题框粘贴 URL 形态内容 → 移入链接框并回焦标题
+  const titleInp = popup.querySelector('#fz-title') as HTMLInputElement;
+  const urlInp = popup.querySelector('#fz-url') as HTMLInputElement;
+  titleInp.addEventListener('paste', (e: ClipboardEvent) => {
+    const text = (e.clipboardData || (window as any).clipboardData)?.getData('text')?.trim() || '';
+    if (!isUrlLike(text)) return;
+    e.preventDefault();
+    if (!urlInp.value.trim()) urlInp.value = normalizeUrl(text);
+    setTimeout(() => titleInp.focus(), 0);
+  });
+
+  // 关联笔记候选自动补全（ticket 188，对照 belongings categoryPicker 范式）
+  notePicker(popup.querySelector('#fz-note') as HTMLInputElement);
 
   // 标签多选 chips（.bz-choice-btn 风格复用）
   const pick = popup.querySelector('#fz-tags') as HTMLElement;
@@ -1026,7 +1186,8 @@ async function saveForm(popup: HTMLElement, it: FavoritesItem | null, sel: Set<s
   const saveBtn = popup.querySelector('#fz-save') as HTMLButtonElement;
   saveBtn.disabled = true;
   const willQuery = hasAiTag && !!keys && !!balanceUrl;
-  saveBtn.textContent = willQuery ? '查询余额中…' : '保存中…';
+  // 保存不被余额查询阻塞（ticket 188）：按钮只表达「保存中」，查询后台跑
+  saveBtn.textContent = '保存中…';
   const dm = dataManagerOf();
   try {
     if (it) {
@@ -1074,19 +1235,25 @@ async function saveForm(popup: HTMLElement, it: FavoritesItem | null, sel: Set<s
         type: tags[0],
       };
       if (hasAiTag) data.llmConfig = { apiKeys: keys, balanceUrl };
-      if (willQuery) {
-        try {
-          const r = await balanceService.fetchBalance(data.llmConfig!);
-          data.balance = r.balance;
-          data.balanceCacheTime = r.timestamp;
-        } catch (e: any) {
-          data.balanceError = e?.message || '查询失败';
-          notify('余额查询失败', { type: 'warning', dedupeKey: 'favorites-balance' });
-        }
-      }
+      // 先落盘关表单（ticket 188），余额查询放后台不挡保存
       await dm.add(data);
       emitDomainEvent('favorites', { kind: 'add', item: data });
       notice('收藏已添加', 'success');
+      closeForm(popup);
+      await reload();
+      if (willQuery) {
+        void (async () => {
+          try {
+            const r = await balanceService.fetchBalance(data.llmConfig!);
+            await dm.update(data.id, { balance: r.balance, balanceCacheTime: r.timestamp, balanceError: null });
+          } catch (e: any) {
+            await dm.update(data.id, { balanceError: e?.message || '查询失败' }).catch(() => { /* 落盘失败静默（警告已弹） */ });
+            notify('余额查询失败', { type: 'warning', dedupeKey: 'favorites-balance' });
+          }
+          await reload();
+        })();
+      }
+      return;
     }
     closeForm(popup);
     await reload();

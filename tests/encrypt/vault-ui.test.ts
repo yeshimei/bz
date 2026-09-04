@@ -95,10 +95,10 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     pwItem.click();
     await new Promise((r) => setTimeout(r, 30));
     expect(pwItem.classList.contains('on')).toBe(true);
-    // 平台聚合行渲染（含 ★）
+    // 平台聚合行渲染（收藏星为内联 lucide svg，不再用 ★ 文本符号）
     const list = document.querySelector('.bz-vault-listcol')!;
     expect(list.textContent).toContain('GitHub');
-    expect(list.textContent).toContain('★');
+    expect(list.querySelector('.bz-pwv-plrow .star svg')).toBeTruthy();
   });
 
   it('密码视图详情：点平台行 → 账号卡（复制账号/密码显隐/复制密码/备注）', async () => {
@@ -179,7 +179,7 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     expect(document.querySelector('.bz-vault-dlg')).toBeTruthy();
   });
 
-  it('收藏切换（fav）：UI 点账号动作 → toggleFav 落盘 + 列表 ★', async () => {
+  it('收藏切换（fav）：UI 点账号动作 → toggleFav 落盘 + 列表收藏星（内联 svg）', async () => {
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x' });
     ui.show();
     await new Promise((r) => setTimeout(r, 30));
@@ -188,7 +188,7 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     await new Promise((r) => setTimeout(r, 20));
     await dm.toggleFav(dm.pwData[0].id);
     ui.renderAll();
-    expect(document.querySelector('.bz-vault-listcol')!.textContent).toContain('★');
+    expect(document.querySelector('.bz-vault-listcol .bz-pwv-plrow .star svg')).toBeTruthy();
   });
 
   it('加密笔记视图：show 后点「加密笔记」→ 空态提示（无笔记）', async () => {

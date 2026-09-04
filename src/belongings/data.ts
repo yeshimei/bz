@@ -89,6 +89,19 @@ export function calculateDaysUsed(purchaseDate: string): number {
   return days > 0 ? days : 0;
 }
 
+/** 已用天数封口版（ticket 189，ADR-0089 出离闭环）：endDate 缺省 = 截至今天（同 calculateDaysUsed）；
+ *  出离条目传 exit_date 把陪伴天数封在出离日（不再随时间增长）。
+ *  endDate 无效回落今天口径；早于购买日（脏数据）= 0 天。 */
+export function calculateDaysUsedUntil(purchaseDate: string, endDate?: string | null): number {
+  if (!endDate) return calculateDaysUsed(purchaseDate);
+  const purchase = moment(String(purchaseDate || '').slice(0, 10), 'YYYY-MM-DD');
+  if (!purchase.isValid()) return 0;
+  const end = moment(String(endDate).slice(0, 10), 'YYYY-MM-DD');
+  if (!end.isValid()) return calculateDaysUsed(purchaseDate);
+  const days = end.startOf('day').diff(purchase.startOf('day'), 'days');
+  return days > 0 ? days : 0;
+}
+
 export function calculateDailyCost(price: number, purchaseDate: string): string {
   const diffDays = calculateDaysUsed(purchaseDate);
   // 当天/无效日期（0 天）同走全价，不产出 "NaN"
