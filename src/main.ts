@@ -11,6 +11,7 @@ import { closeItemMenu } from './core/item-actions';
 import { setApp, getApp } from './core/app';
 import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
 import { setSettingsProvider, setSettingsSaver } from './core/settings-provider';
+import { DOMAIN_ICONS } from './core/domain-icons';
 import { clearDomainEvents } from './core/domain-bus';
 import { attachObsidianAdapter, detachObsidianAdapter } from './core/obsidian-adapter';
 import { renderSettingsInto } from './core/settings-schema';
@@ -76,47 +77,51 @@ import { ensureSmartCat, unloadSmartCat, openSmartCat, openSmartCatChat, hideSma
 // 设置面板（settings-panel 域，ADR-0080：全域设置聚合入口，桌面侧栏工作台 / 移动命令面板）
 import { openSettingsPanel, unloadSettingsPanel } from './settings-panel';
 
-/** 命令表：id/name 统一命名（spec「命令 id 全清单」第 9 轮：bz-<域>-<动作>，icon 与入口页磁贴一致） */
+/** 命令表：id/name 统一命名（spec「命令 id 全清单」第 9 轮：bz-<域>-<动作>，icon 与入口页磁贴一致）。
+ *  域入口命令 icon 一律从 core/domain-icons（DOMAIN_ICONS）取——与设置面板导航单一事实源（enh-sweep-a）；
+ *  动作类命令（加/评级/补链等）保持字面量图标。 */
 const COMMANDS: { id: string; name: string; icon: string; callback: () => void }[] = [
   // 入口页（t1：主页 → 入口页，术语随 CONTEXT.md；id bz-home 不变）
-  { id: 'bz-home', name: '入口页', icon: 'home', callback: () => openLauncherPanel(getApp()) },
+  { id: 'bz-home', name: '入口页', icon: DOMAIN_ICONS.launcher, callback: () => openLauncherPanel(getApp()) },
   // 内容首页（home 域，ticket 177：与旧入口页并存）
-  { id: 'bz-home-open', name: '内容首页', icon: 'layout-grid', callback: () => openHome(getApp()) },
+  { id: 'bz-home-open', name: '内容首页', icon: DOMAIN_ICONS.home, callback: () => openHome(getApp()) },
   // 备忘录
-  { id: 'bz-memo-open', name: '备忘录', icon: 'sticky-note', callback: () => openBzPanel(getApp()) },
+  { id: 'bz-memo-open', name: '备忘录', icon: DOMAIN_ICONS.memo, callback: () => openBzPanel(getApp()) },
   { id: 'bz-memo-add', name: '加备忘', icon: 'pencil', callback: () => createMemoItem(getApp()) },
   // 待办（todo 新域，与备忘录并存）
-  { id: 'bz-todo-open', name: '待办', icon: 'check-square', callback: () => openTodoPanel(getApp()) },
-  { id: 'bz-todo-add', name: '加待办（待办）', icon: 'clipboard-list', callback: () => addTodoItem(getApp()) },
+  { id: 'bz-todo-open', name: '待办', icon: DOMAIN_ICONS.todo, callback: () => openTodoPanel(getApp()) },
+  { id: 'bz-todo-add', name: '加待办', icon: 'clipboard-list', callback: () => addTodoItem(getApp()) },
   // 归物本
   { id: 'bz-belongings-add', name: '加物品', icon: 'archive', callback: () => addBelongingsItem(getApp()) },
-  { id: 'bz-belongings-open', name: '归物本', icon: 'package', callback: () => openBelongings(getApp()) },
+  { id: 'bz-belongings-open', name: '归物本', icon: DOMAIN_ICONS.belongings, callback: () => openBelongings(getApp()) },
   // 剪藏本（clipbook 融合域，ADR-0082：聚合讯未读流 + 剪藏笔记一体化工作台）
-  { id: 'bz-clipbook-open', name: '剪藏本', icon: 'scissors', callback: () => openClipbook(getApp()) },
+  { id: 'bz-clipbook-open', name: '剪藏本', icon: DOMAIN_ICONS.clipping, callback: () => openClipbook(getApp()) },
   // 自动摘要（enh-autosum 包 1）：当前剪藏笔记手动重跑 AI 摘要（只重建摘要/标签，不动用户标题）
-  { id: 'bz-auto-summary-redo', name: '重新生成当前剪藏摘要', icon: 'sparkles', callback: () => void redoSummaryForActiveFile(getApp()) },
+  { id: 'bz-auto-summary-redo', name: '重新生成当前剪藏摘要', icon: DOMAIN_ICONS['auto-summary'], callback: () => void redoSummaryForActiveFile(getApp()) },
 
   // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图（真实图片/视频/音频瀑布流）
   // icon 用 images（lucide 相册/媒体图标，与入口页磁贴媒体语义一致；未与其他命令重复）
   { id: 'bz-diary-wall-open', name: '回忆墙', icon: 'images', callback: () => openDiaryWall(getApp()) },
   // 收藏本
-  { id: 'bz-favorites-open', name: '收藏本', icon: 'star', callback: () => openFavoritesPanel(getApp()) },
+  { id: 'bz-favorites-open', name: '收藏本', icon: DOMAIN_ICONS.favorites, callback: () => openFavoritesPanel(getApp()) },
   { id: 'bz-favorites-add', name: '加收藏', icon: 'bookmark', callback: () => addFavoriteItem(getApp()) },
   // 旧书库（library）域退役：bz-library-open/bz-book-notes-open 已删，读书笔记并入书架墙详情弹窗
   // 阅读数据分析报告（读书报告内嵌化：打开书架墙面板并切到报告视图；home 报告磁贴/剪藏本深链自动受益）
-  { id: 'bz-reading-report-open', name: '阅读数据分析报告', icon: 'bar-chart-3', callback: () => openBookshelfReport(getApp()) },
+  { id: 'bz-reading-report-open', name: '阅读数据分析报告', icon: DOMAIN_ICONS['reading-report'], callback: () => openBookshelfReport(getApp()) },
   // 影视分析报告（ADR-0090 内嵌化：独立报告窗退役，命令直达影院面板分析页；
-  // id 随域换 bz-cinema-analysis，名称「影视分析报告」保持用户习惯）
+  // id 随域换 bz-cinema-analysis，名称「影视分析报告」保持用户习惯；pie-chart 与阅读 bar-chart-3、
+  // 复习 calendar-check 三份报告图标各异——enh-sweep-a 错开）
   { id: 'bz-cinema-analysis', name: '影视分析报告', icon: 'pie-chart', callback: () => openCinemaAnalysis(getApp()) },
   // 影院（cinema 域，ADR-0087 接管影视——旧 bz-movie-open/bz-movie-add 已退役）
-  { id: 'bz-cinema-open', name: '影院', icon: 'film', callback: () => openCinema(getApp()) },
+  { id: 'bz-cinema-open', name: '影院', icon: DOMAIN_ICONS.cinema, callback: () => openCinema(getApp()) },
   { id: 'bz-cinema-add', name: '加影视（影院）', icon: 'plus-circle', callback: () => addCinemaItem(getApp()) },
   // 书架墙（bookshelf 新域）
-  { id: 'bz-bookshelf-open', name: '书架墙', icon: 'book-open', callback: () => openBookshelf(getApp()) },
+  { id: 'bz-bookshelf-open', name: '书架墙', icon: DOMAIN_ICONS.bookshelf, callback: () => openBookshelf(getApp()) },
   // 复习计划（9 命令）
-  { id: 'bz-review-open', name: '复习计划', icon: 'calendar', callback: () => openReviewPanel(getApp()) },
-  // ticket 174：独立「复习计划分析报告」命令（直开统计弹窗）
-  { id: 'bz-review-report', name: '复习计划分析报告', icon: 'bar-chart-3', callback: () => openReviewReport(getApp()) },
+  { id: 'bz-review-open', name: '复习计划', icon: DOMAIN_ICONS.review, callback: () => openReviewPanel(getApp()) },
+  // ticket 174：独立「复习计划分析报告」命令（直开统计弹窗）；图标弃 bar-chart-3（阅读分析报告独占，
+  // enh-sweep-a 错开）改 calendar-check（呼应复习日程语义）
+  { id: 'bz-review-report', name: '复习计划分析报告', icon: 'calendar-check', callback: () => openReviewReport(getApp()) },
   { id: 'bz-review-start', name: '开始复习', icon: 'play', callback: () => reviewStart(getApp()) },
   { id: 'bz-review-add', name: '加入复习计划', icon: 'plus', callback: () => reviewAddCurrent(getApp()) },
   { id: 'bz-review-remove', name: '移出复习计划', icon: 'minus', callback: () => reviewRemoveCurrent(getApp()) },
@@ -128,7 +133,7 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-review-good', name: '复习（一般）', icon: 'check', callback: () => reviewMarkRating(getApp(), 'good') },
   { id: 'bz-review-easy', name: '复习（简单）', icon: 'sparkles', callback: () => reviewMarkRating(getApp(), 'easy') },
   // 第二大脑（ticket 103：原闪念正名接管，主面板为统一入口）
-  { id: 'bz-secondbrain-panel', name: '第二大脑面板', icon: 'brain', callback: () => openSecondBrainPanel(getApp()) },
+  { id: 'bz-secondbrain-panel', name: '第二大脑面板', icon: DOMAIN_ICONS.secondbrain, callback: () => openSecondBrainPanel(getApp()) },
   // f7：与「第二大脑面板」区分——本命令打开参考侧边栏（右侧窄窗/移动端抽屉参考 tab）
   { id: 'bz-secondbrain-open', name: '第二大脑参考', icon: 'zap', callback: () => openSecondBrainReference(getApp()) },
   { id: 'bz-secondbrain-chat', name: '第二大脑对话', icon: 'message-circle', callback: () => openSecondBrainChat(getApp()) },
@@ -137,19 +142,19 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 自动双链（ticket 115）：存量未连接笔记手动批量补链（启动自动补链的显式兜底）
   { id: 'bz-secondbrain-link-all', name: '为未关联笔记批量补链', icon: 'link-2', callback: () => runSecondBrainLinkAll(getApp()) },
   // 番茄钟（ticket 26-32 新域）
-  { id: 'bz-pomodoro-open', name: '番茄钟', icon: 'timer', callback: () => openPomodoro(getApp()) },
+  { id: 'bz-pomodoro-open', name: '番茄钟', icon: DOMAIN_ICONS.pomodoro, callback: () => openPomodoro(getApp()) },
   // 文献盒（literature 域：主面板=文献笔记列表 + 视频录入/文字录入/设置；ADR-0072 迁出、ADR-0071 AI 回迁）
-  { id: 'bz-literature-open', name: '文献盒', icon: 'list-video', callback: () => openLiteraturePanel(getApp()) },
+  { id: 'bz-literature-open', name: '文献盒', icon: DOMAIN_ICONS.literature, callback: () => openLiteraturePanel(getApp()) },
   { id: 'bz-literature-note-term', name: '术语生成文献笔记', icon: 'book-type', callback: () => openTermNote(getApp()) },
   // 附件搬移（ticket 65 新域：移动当前笔记附件到指定文件夹，fileManager 自动更新内部链接）
-  { id: ATTACH_COMMAND_ID, name: '移动附件', icon: 'folder-down', callback: () => openAttachMove(getApp()) },
+  { id: ATTACH_COMMAND_ID, name: '移动附件', icon: DOMAIN_ICONS.attach, callback: () => openAttachMove(getApp()) },
   // 保险箱（encrypt 域：移出式清单容器加密；原名「加密保险箱」，ticket 68 更名仅文案）
-  { id: 'bz-encrypt-open', name: '保险库', icon: 'lock', callback: () => openEncrypt(getApp()) },
+  { id: 'bz-encrypt-open', name: '保险库', icon: DOMAIN_ICONS.encrypt, callback: () => openEncrypt(getApp()) },
   { id: 'bz-encrypt-lock', name: '加密当前笔记', icon: 'lock-keyhole', callback: () => encryptCurrentNote(getApp()) },
   // 快速取密（fuzzy 选择器直取密码 → 剪贴板 60s 自动清空，不打开主面板）
   { id: 'bz-encrypt-copy-password', name: '快速复制密码', icon: 'key-round', callback: () => copyVaultPassword(getApp()) },
   // 小橘陪伴猫（smartcat 域）
-  { id: 'bz-smartcat-open', name: '小橘', icon: 'cat', callback: () => openSmartCat(getApp()) },
+  { id: 'bz-smartcat-open', name: '小橘', icon: DOMAIN_ICONS.smartcat, callback: () => openSmartCat(getApp()) },
   // f7：去 message-circle 重复（第二大脑对话保留）→ messages-square
   { id: 'bz-smartcat-chat', name: '小橘聊天', icon: 'messages-square', callback: () => openSmartCatChat(getApp()) },
   { id: 'bz-smartcat-hide', name: '隐藏小橘', icon: 'eye-off', callback: () => hideSmartCat() },
@@ -257,7 +262,7 @@ export default class BzPlugin extends Plugin {
     mountEncryptStatusBar(this.addStatusBarItem());
 
     // 日记本面板命令（统一 bz- 前缀；bz-diary-write 由 quote.ts init 内注册）
-    (this.app as any).commands.addCommand({ id: 'bz-diary-open', name: '日记本', icon: 'notebook', callback: () => showDiaryPanel(this) });
+    (this.app as any).commands.addCommand({ id: 'bz-diary-open', name: '日记本', icon: DOMAIN_ICONS.diary, callback: () => showDiaryPanel(this) });
     this.registeredCommandIds.push('bz-diary-open');
 
     // 设置页
