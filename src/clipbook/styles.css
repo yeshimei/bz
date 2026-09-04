@@ -66,27 +66,34 @@
   cursor: pointer; font-size: var(--bz-font-label); color: var(--bz-text-2);
 }
 .bz-clip-rail-row:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
-.bz-clip-rail-row.on { background: var(--bz-brand-soft); color: var(--bz-text-1); font-weight: var(--bz-weight-medium); }
+/* 选中态对齐五域左栏实底档（todo/favorites/belongings/cinema/bookshelf）：品牌实底 + on-brand 字 */
+.bz-clip-rail-row.on { background: var(--bz-brand); color: var(--bz-on-brand); font-weight: var(--bz-weight-medium); }
 .bz-clip-rail-ic {
   width: 20px; height: 20px; border-radius: var(--bz-radius-xs); flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
   color: var(--bz-text-3); background: var(--bz-surface-3);
 }
 .bz-clip-rail-ic .bz-ic { width: 11px; height: 11px; }
-.bz-clip-rail-ic.accent { color: var(--bz-info); background: rgba(88,166,255,.14); }
+.bz-clip-rail-ic.accent { color: var(--bz-info); background: color-mix(in srgb, var(--bz-info) 14%, transparent); }
 .bz-clip-rail-badge {
   width: 20px; height: 20px; border-radius: var(--bz-radius-xs); flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: var(--bz-weight-bold); color: #fff;
-  background: var(--rail-c, #58a6ff);
+  /* 底色加深一档（混 30% 黑）保证白字 ≥4.5:1（原白字叠中饱和数据色 2.6-3:1 不达 AA） */
+  background: color-mix(in srgb, var(--rail-c, #58a6ff) 70%, #000);
 }
-.bz-clip-rail-badge.bili { background: #8b7cf6; }
+/* B站徽标色单一事实源在样式侧（ui 不再内联传 #8b7cf6） */
+.bz-clip-rail-badge.bili { --rail-c: #8b7cf6; }
 .bz-clip-rail-name {
   flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   color: var(--bz-text-2);
 }
-.bz-clip-rail-row.on .bz-clip-rail-name { color: var(--bz-text-1); }
+.bz-clip-rail-row.on .bz-clip-rail-name { color: inherit; }
 .bz-clip-rail-count { font-size: var(--bz-font-caption); color: var(--bz-text-3); font-variant-numeric: tabular-nums; }
+/* 选中行内次级文字随 on-brand（对齐 bookshelf 左栏计数档） */
+.bz-clip-rail-row.on .bz-clip-rail-count { color: inherit; opacity: 0.72; }
+/* 未读徽标在品牌实底行上加同色描边环防隐形（先例 bookshelf .bz-bs-statusdot） */
+.bz-clip-rail-row.on .bz-clip-rail-unread { box-shadow: 0 0 0 2px var(--bz-brand); }
 .bz-clip-rail-unread {
   font-size: 11px; font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
   background: var(--bz-brand); border-radius: var(--bz-radius-full);
@@ -143,7 +150,7 @@
 
 /* 右栏：阅读 */
 .bz-clip-read { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bz-surface-0); }
-.bz-clip-read-scroll { flex: 1; overflow-y: auto; padding: var(--bz-space-xl) 30px 60px; }
+.bz-clip-read-scroll { flex: 1; overflow-y: auto; padding: var(--bz-space-xl) var(--bz-space-xl) var(--bz-space-2xl); } /* 24/24/32 档（原 30/60 非档位） */
 .bz-clip-read-body { max-width: 560px; margin: 0 auto; }
 .bz-clip-read-empty {
   height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -167,9 +174,9 @@
 .bz-clip-art-meta { display: flex; align-items: center; gap: var(--bz-space-sm); flex-wrap: wrap; font-size: var(--bz-font-meta); color: var(--bz-text-3); margin-bottom: 14px; }
 .bz-clip-art-flag { display: inline-flex; align-items: center; gap: 4px; font-size: var(--bz-font-caption); font-weight: var(--bz-weight-semibold); border-radius: var(--bz-radius-xs); padding: 2px 8px; }
 .bz-clip-art-flag .bz-ic { width: 11px; height: 11px; }
-.bz-clip-art-flag.info { color: var(--bz-info); background: rgba(88,166,255,.13); }
-.bz-clip-art-flag.warn { color: var(--bz-warning); background: rgba(217,161,60,.13); }
-.bz-clip-art-flag.ok { color: var(--bz-success); background: rgba(63,185,106,.12); }
+.bz-clip-art-flag.info { color: var(--bz-info); background: color-mix(in srgb, var(--bz-info) 13%, transparent); }
+.bz-clip-art-flag.warn { color: var(--bz-warning); background: color-mix(in srgb, var(--bz-warning) 13%, transparent); }
+.bz-clip-art-flag.ok { color: var(--bz-success); background: color-mix(in srgb, var(--bz-success) 12%, transparent); }
 .bz-clip-art-sum {
   background: var(--bz-surface-2); border-left: 3px solid var(--bz-info);
   border-radius: var(--bz-radius-sm); padding: var(--bz-space-md);
@@ -250,7 +257,7 @@
 }
 .bz-clip-mob-save .bz-ic { width: 15px; height: 15px; }
 .bz-clip-mob-save:hover { background: var(--bz-brand-hover); }
-.bz-clip-mob-save.saved { background: rgba(63,185,106,.16); color: var(--bz-success); }
+.bz-clip-mob-save.saved { background: color-mix(in srgb, var(--bz-success) 16%, transparent); color: var(--bz-success); }
 .bz-clip-mob-detail-body { flex: 1; overflow-y: auto; padding: var(--bz-space-lg) var(--bz-space-lg) 30px; }
 .bz-clip-mob-d-title { font-size: 17px; font-weight: var(--bz-weight-bold); line-height: 1.5; margin-bottom: 6px; }
 .bz-clip-mob-d-meta { display: flex; align-items: center; gap: 6px; font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-bottom: var(--bz-space-sm); }
