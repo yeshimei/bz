@@ -98,11 +98,36 @@ describe('设置面板（settings-panel）', () => {
     expect(navIcons.length).toBe(15);
     expect(navIcons[0].getAttribute('data-icon')).toBe('settings'); // 通用
     expect(navIcons[1].getAttribute('data-icon')).toBe('sparkles'); // AI（issue 186 独立域）
+    expect(navIcons[2].getAttribute('data-icon')).toBe('notebook-pen'); // 日记本（enh-sweep-a：与 ribbon/磁贴同款，错开书架墙 book-open）
     expect(navIcons[4].getAttribute('data-icon')).toBe('check-square'); // 待办（index 4，AI 插入后）
     expect(navIcons[7].getAttribute('data-icon')).toBe('star'); // 收藏本
+    expect(navIcons[8].getAttribute('data-icon')).toBe('clapperboard'); // 影院（enh-sweep-a：与内容首页磁贴同款）
     // 无 emoji 图标残留（头行/列表/徽标全文本或 lucide）
     expect(popup.textContent).not.toMatch(EMOJI_RE);
     ui.cleanup();
+  });
+
+  it('域图标单一事实源（enh-sweep-a）：导航图标全部取自 DOMAIN_ICONS，两对历史重复已错开', async () => {
+    const { DOMAINS } = await import('../src/settings-panel/ui');
+    const { DOMAIN_ICONS } = await import('../src/core/domain-icons');
+    // 每个域的导航图标 = DOMAIN_ICONS[域 id]（一处定义、两处引用：命令表 + 本导航）
+    for (const d of DOMAINS) {
+      expect(d.icon, `域 ${d.id} 导航图标应取自 DOMAIN_ICONS`).toBe(DOMAIN_ICONS[d.id]);
+    }
+    // 两对历史重复图标错开：日记本（notebook-pen）不再与书架墙（book-open）同用；
+    // 阅读报告（bar-chart-3）在导航内独占（复习报告命令侧改 calendar-check，见 smoke）
+    const diary = DOMAINS.find((d) => d.id === 'diary')!;
+    const shelf = DOMAINS.find((d) => d.id === 'bookshelf')!;
+    const reading = DOMAINS.find((d) => d.id === 'reading-report')!;
+    expect(diary.icon).toBe('notebook-pen');
+    expect(diary.icon).not.toBe(shelf.icon);
+    expect(reading.icon).toBe('bar-chart-3');
+    // 术语统一（enh-sweep-a）：面板导航「文献笔记」→「文献盒」，与命令/磁贴同词
+    expect(DOMAINS.find((d) => d.id === 'literature')!.name).toBe('文献盒');
+    // 去黑话（enh-sweep-a）：描述不含「新域/ADR」类开发字样
+    for (const d of DOMAINS) {
+      expect(d.desc).not.toMatch(/新域|ADR-\d+/);
+    }
   });
 
   it('桌面端：默认渲染通用域（数据存储路径），点 AI 域渲染 AI 服务商设置', async () => {
@@ -239,6 +264,9 @@ describe('设置面板（settings-panel）', () => {
     expect(groups.length, 'err: ' + (errDesc ? errDesc.textContent : 'none')).toBeGreaterThanOrEqual(5);
     // 设置行真实渲染（组件库开关/输入等）
     expect(popup.querySelectorAll('.bz-sp-set-row').length).toBeGreaterThan(0);
+    // isChild 子项行挂 child 语义类（enh-sweep-a：配层级降级透明度样式；隐藏行也带类）
+    const childRows = popup.querySelectorAll('.bz-sp-set-row.child');
+    expect(childRows.length).toBeGreaterThan(0);
     ui.cleanup();
   });
 
@@ -473,10 +501,13 @@ describe('设置面板（settings-panel）', () => {
     search.dispatchEvent(new Event('input', { bubbles: true }));
     const hitNames = [...popup.querySelectorAll('.bz-sp-mob-name')].map((b) => b.textContent);
     expect(hitNames).not.toContain('聚合讯');
-    // 但可见域搜索正常
+    // 但可见域搜索正常（「影院」命中：影院域 + 影视文件夹设置项——enh-sweep-a 起该行描述
+    // 含「影院」区分说明，经预加载行缓存进设置项段，共 2 条）
     search.value = '影院';
     search.dispatchEvent(new Event('input', { bubbles: true }));
-    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(1);
+    const yingyuanHits = popup.querySelectorAll('.bz-sp-mob-item').length;
+    expect(yingyuanHits).toBeGreaterThanOrEqual(1);
+    expect(popup.querySelector('.bz-sp-mob-name')!.textContent).toBe('影院');
     ui.cleanup();
   });
 
