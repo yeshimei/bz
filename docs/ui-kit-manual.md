@@ -34,7 +34,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | 样式库 | `src/core/ui/tokens.css` | 全部 `--bz-*` token：结构层 `:root` + 色彩层 `body.theme-dark/light` |
 | 样式库 | `src/core/ui/components.css` | 组件类样式：`.bz-btn/.bz-icon-btn/.bz-chip/.bz-input/.bz-field/.bz-empty/.bz-segmented/.bz-choice/.bz-sw/.bz-select/.bz-badge/.bz-lightbox` 等 |
 | 组件库 | `src/core/ui/index.ts` | 转发桶（唯一 import 入口） |
-| 组件库 | `src/core/ui/{types,icon,button,chip,field,empty,segmented,choice,switch,select,slider,lightbox,modal}.ts` | 每组件一文件工厂 |
+| 组件库 | `src/core/ui/{types,icon,icons,button,chip,field,empty,segmented,choice,switch,select,search,mainhead,rail,mobstrip,stat,progress,popover,slider,lightbox,modal,resize}.ts` | 每组件一文件工厂 |
 | 构建 | `scripts/build-css.mjs` | SOURCES 聚合：normalize → core/styles.css → **ui/tokens.css → ui/components.css** → 各域 styles.css |
 
 > 注意：`src/core/styles.css` 是**旧体系**（用 Obsidian 变量，被 20 存量域依赖，冻结不改）；`src/core/ui/` 是**新体系**（自绘 token，新 UI 用）。同名类冲突处理见 §6。
@@ -44,17 +44,17 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 ## 3. 样式库速查（HTML 原型直接用这些类）
 
 ### 3.1 Token（写 CSS 时只许用这些）
-- **结构**：`--bz-space-xs/sm/md/lg/xl/2xl`、`--bz-radius-xs/sm/md/lg/full`、`--bz-font-caption/meta/label/body/emphasis/title/display`、`--bz-weight-*`、`--bz-leading-*`、`--bz-control-h(-sm/lg)`、`--bz-icon-btn-w/h/lg`、`--bz-shadow-sm/md/lg`、`--bz-dur-fast/base/slow`、`--bz-ease-*`、`--bz-star`、`--bz-scrim`、`--bz-on-overlay`
+- **结构**：`--bz-space-xs/sm/md/lg/xl/2xl`、`--bz-radius-xs/sm/md/lg/full`、`--bz-font-caption/meta/label/body/emphasis/title/display`、`--bz-weight-*`、`--bz-leading-*`、`--bz-control-h(-sm/md/lg)`、`--bz-icon-btn-w/h/lg`、`--bz-head-h(-lg)`、`--bz-shadow-sm/md/lg`、`--bz-dur-fast/base/slow`、`--bz-ease-*`、`--bz-star`、`--bz-scrim`、`--bz-on-overlay`
 - **色彩（随明暗）**：`--bz-surface-0..4`、`--bz-surface-hover/active`、`--bz-overlay`、`--bz-text-1/2/3/invert`、`--bz-brand(-hover/-soft)/--bz-on-brand`、`--bz-success/warning/danger/info/--bz-on-danger`、`--bz-border(-strong/-hover)`、`--bz-track/thumb`、`--bz-code-bg`、`--bz-mark-bg`
 
 ### 3.2 组件类（HTML 直接写）
 | 组件 | 类 | 修饰 | 说明 |
 |---|---|---|---|
-| 按钮 | `.bz-btn` | `--primary/--danger/--danger-ghost/--ghost/--hover-accent`；`--sm/--lg/--icon` | 32px 高、圆角 sm；hover 自动；`--danger-ghost` 描边 danger（常态透底描边、hover 转实底），`--hover-accent` 悬停才显品牌软底+品牌描边 |
+| 按钮 | `.bz-btn` | `--primary/--danger/--danger-ghost/--ghost/--hover-accent`；`--sm/--md/--lg/--icon` | 32px 高、圆角 sm；`--md` 30px 中档（主头行主钮/排序钮）；hover 自动；`--danger-ghost` 描边 danger（常态透底描边、hover 转实底），`--hover-accent` 悬停才显品牌软底+品牌描边 |
 | 按钮行 | `.bz-btn-row` | `--center/--grow` | 弹窗底部右对齐 |
 | 图标按钮 | `.bz-icon-btn` | `--on/--lg/--xs/--close/--accent/--boxed/--active`；`[data-danger]` | 22×26 桌面头行档；`--accent` 品牌色图标钮（卡内行动钮），`--boxed`=浮于面板底上带描边变体，`--active`=品牌实底开关激活态（与 `--boxed` 同钮叠加时激活底胜出） |
-| Chip | `.bz-chip` | `--on/--sel/--locked/--tint/--hover-accent`；内含 `.bz-chip-cnt`/`.bz-chip-x` | 筛选/标签胶囊；`--tint` 数据语义色徽标（域内联 `--bz-chip-tint`/`--bz-chip-tint-fg` 注入底/前景色）；`--hover-accent` 悬停才显品牌软底+品牌描边（可点 chip 的 hover 提示） |
-| 徽标 | `.bz-badge` | `--accent/--success/--danger/--warning/--neutral` | 纯展示小胶囊 |
+| Chip | `.bz-chip` | `--on/--sel/--locked/--tint/--hover-accent/--lg`；内含 `.bz-chip-cnt`/`.bz-chip-x` | 筛选/标签胶囊；`--tint` 数据语义色徽标（域内联 `--bz-chip-tint`/`--bz-chip-tint-fg` 注入底/前景色）；`--hover-accent` 悬停才显品牌软底+品牌描边（可点 chip 的 hover 提示）；`--lg` 36px 触控档 |
+| 徽标 | `.bz-badge` | `--accent/--success/--danger/--warning/--neutral/--brand` | 纯展示小胶囊；`--brand` 实底品牌档（未读气泡等强提示） |
 | 输入框 | `.bz-input` | `--error`；`.bz-input-wrap` 前缀图标 | 32px 高 |
 | 字段行 | `.bz-field` | 内 `.bz-field-label/-desc/-error` | label+控件+说明 |
 | 空态 | `.bz-empty` | 内 `.bz-empty-ic/-title/-desc` + `.bz-btn-row` | CTA 放按钮行 |
@@ -66,6 +66,48 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | 弹窗 | `.bz-overlay-mask` / `.bz-overlay-popup` | 内 `.bz-dialog-head/-title/-body`；底 `.bz-btn-row` | 居中模态（遮罩点关） |
 | 滑条 | `.bz-range` | `--lg` | 自绘轨道+滑块；抗 Obsidian 默认 range 外观重置 |
 | 加载 | `.bz-spinner` | `--sm/--lg` | 占位加载态 |
+| 面板壳 | `.bz-panel-overlay` / `.bz-panel-frame` | — | 全屏遮罩+居中主面板骨架（flex 居中，z 经 topifyZ 动态分配）；**新域主面板一律此壳 + `.bz-panel-head` 头行** |
+| 窗口头行 | `.bz-panel-head` | `--tall`；内 `.bz-panel-brand/-title`/`.bz-panel-head-pipe/-sub/-sp/-btns` | 影院式整宽头行 44px（`--tall` 50px）；品牌块 24px 圆角小方块可选 |
+| 主头行 | `.bz-main-head` | 内 `.bz-main-title/-count/-spacer` | 内容区主头行：标题 16px + 计数 + 主按钮（30px 中档） |
+| 工具行 | `.bz-toolrow` | — | 主头行下搜索/排序次级行 |
+| 搜索框 | `.bz-search` | 内 `.bz-kbd` 快捷键帽 | 前缀搜索图标 + `.bz-input`（左留 30px） |
+| 状态侧栏 | `.bz-rail` | `--wide`；行 `.bz-rail-item.on/.has-sub/.sub-open`；槽 `.bz-rail-ic(--accent)/-badge/-dot/-name/-count(--pill)/-unread/-caret/-sub.open/-label/-scroll/-foot`；色注入 `--bz-rail-tint` | 左栏分组导航超集（图标/底座/字母徽标/色点四选一前缀 + 计数/未读 + 二级子列表 + 底部固定区） |
+| 移动横滑条 | `.bz-mobstrip` | 内 `.bz-mobstrip-chip.is-on`/`.bz-mobstrip-dot` | ≤768px 替代 rail 的横滑胶囊条（桌面 display:none） |
+| 统计卡 | `.bz-stat` | `--main/--ok/--warn/--danger/--text/--click`；网格 `.bz-stat-grid(--2/--4)`；趋势 `.bz-stat-trend--up/--down` | 数字+标签统计卡；`--main` 品牌主卡，`--click` 可点筛选 |
+| 候选浮层 | `.bz-popover` | 内 `.bz-popover-item.is-on`/`.bz-popover-empty` | input 锚定的候选列表（绝对定位挂 position:relative 容器，交互同 .bz-select-menu） |
+| 进度条 | `.bz-progress` | `--thin/--ok/--warn/--danger/--lg` | track + i 填充基元；`--thin` 3px 媒体封面档（绝对定位由调用方给） |
+| 提示条 | `.bz-alert` | `--success/--warning/--danger`；内 `.bz-alert-title/-x` | 信息/成功/警告/危险提示 |
+| 菜单 | `.bz-menu` | 内 `.bz-menu-item[data-danger]`/`.bz-menu-sep`；配 `.bz-kbd` | 下拉/右键菜单浮层 |
+| 键帽 | `.bz-kbd` | — | 快捷键帽（.bz-search 内自动右侧定位） |
+| 骨架屏 | `.bz-skeleton` | `--circle/--title` | 微光扫过占位 |
+| 标签页 | `.bz-tabs` | 内 `.bz-tab.is-on` | 下划线式页签 |
+| 底部抽屉 | `.bz-sheet` | 内 `.bz-sheet-grip/-head/-title/-sub` | 移动端底部抽屉壳（配遮罩，含安全区垫底） |
+| 标签输入 | `.bz-taginput` | 内 `.bz-taginput-field` | 胶囊 chips + 输入（focus 品牌描边） |
+| 星级 | `.bz-rating` | `--sm/--readonly` | 星轨（--bz-star） |
+| 环形进度 | `.bz-ring` | `--ok/--warn/--danger`；内 `.bz-ring-track/-fill/-label` | SVG 环形进度 |
+| 描述列表 | `.bz-desc-list` | dl/dt/dd | 详情弹窗键值对 |
+| 分隔线 | `.bz-divider` | `--line` | 文案居中线 / 纯线 |
+| 复选/单选 | `.bz-checkbox` / `.bz-radio` | 原生 input 自绘 | 品牌选中态 |
+| 数字步进 | `.bz-input-number` | 内 `.bz-input-number-btn/-val` | −/值/+ 步进 |
+| 状态 | `.bz-status` | `--brand/--info/--success/--warning/--danger` | 圆点 + 文本状态 |
+| 面包屑 | `.bz-crumbs` | 内 `.bz-crumb(--current)`/`.bz-crumb-sep` | 层级路径 |
+| 步骤条 | `.bz-steps` | 内 `.bz-step(--on/--done)`/`.bz-step-num/-label/-line(--done)` | 流程步骤 |
+| 数据表 | `.bz-table` | th/td | 轻量数据表 |
+| 卡片 | `.bz-card` | 内 `.bz-card-header/-title/-sub/-body/-footer` | 通用内容卡 |
+| 列表 | `.bz-list` | 内 `.bz-list-item/-main/-title/-desc/-extra` | 通用列表行 |
+| 媒体块 | `.bz-media` | `--4-3/--square`；内 `.bz-media-badge/-dur/-play` | 比例容器+角标/时长/播放钮 |
+| 头像 | `.bz-avatar` | `--sm/--lg/--square` | 32px 圆头像/字徽 |
+| 悬浮按钮 | `.bz-fab` | — | 48px 品牌圆钮 |
+| 工具提示 | `[data-tip]` | 纯 CSS hover | data-tip 属性即气泡 |
+| 多选下拉 | `.bz-multiselect` | 内 `.bz-multiselect-opt.is-on`/`.bz-ck` | 复选下拉 |
+| 月份选择 | `.bz-monthpicker` | 内 `.bz-mp-year/-grid/-month.is-on/-month-cnt` | 年 + 12 月网格 |
+| 密码强度 | `.bz-strength` | `--1..--4`；内 `.bz-strength-bar/-seg/-meta/-score` | 四段强度条 |
+| 分页 | `.bz-pagination` | 内 `.bz-page-btn.is-on[disabled]`/`.bz-page-gap` | 页码条 |
+| 折叠面板 | `.bz-collapse` | `.open`；内 `.bz-collapse-head/-caret/-body` | 手风琴（相邻间距内置） |
+| 时间线 | `.bz-timeline` | 内 `.bz-timeline-item.is-on/-date/-title/-desc` | 竖向时间轴 |
+| 二次确认 | `.bz-popconfirm` | 内 `.bz-popconfirm-btns` | 轻量确认浮层 |
+| 引文/高亮/行内码 | `.bz-quote` / `.bz-mark` / `.bz-code` | — | 品牌左线引文 / 高亮 / 行内代码 |
+| 消息卡 | `.bz-msg` | `--success/--warning/--danger` | toast 通知卡（左色条） |
 | 移动全屏顶距 | `.bz-panel-mtop` | — | 挂**全屏面板根节点**：≤768px 顶部留 44px（max 安全区）避让 Obsidian 移动端头，并归零首子元素顶距（core `.bz-win-mfs` 34px 垫顶与域内头行 safe-area 垫顶由它统一接管，接入域**勿再**在头行写避让，防双份顶距）；非恒全屏面板（如番茄钟）随 mfs 开关 `classList.toggle` 同挂摘 |
 | 触控热区 | `.bz-touch-target` | `--sm/--lg/--xl`；内联 `--bz-touch-outset` 覆写 | 仅触屏（pointer:coarse）生效：`::after` 外扩命中区至 ≥44px、视觉不变；档位按元素原尺寸——默认 -6px（32px 档钮）、`--sm` -4px（36/40px 档）、`--lg` -8px（26/28px 档）、`--xl` -12px（20/22px 档）；热区外扩会盖住相邻元素命中，行距紧凑的列表行**勿用**（改 padding 抬档，先例 attach 清单行） |
 
@@ -113,8 +155,17 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | `uiChoice` | `<T>({options:{value,label,dot?}[], value, onChange, className?})` | `{el, setValue}` |
 | `uiSwitch` | `{checked?, onChange?}` | `{el, setChecked}` |
 | `uiSelect` | `<T>({options, value, placeholder?, className?, onOpenChange?, onChange})` | `{el, setValue}` |
+| `uiIconSpan` | `(name, extraClass?)` — 同 uiIcon 语义别名 | `HTMLSpanElement` |
+| `mountIcons` | `(root)` — 扫描 root 内 `[data-lucide]` 占位逐个 setIcon（class 保留），手写 HTML 模板用 | `void` |
+| `uiSearch` | `{placeholder?, value?, onInput?}` | `{el, input, setValue}` |
+| `uiMainHead` | `{title, count?, action?: {label, icon?, onClick?}}` | `{el, setTitle, setCount}` |
+| `uiRail` | `{groups: [{label?, items}], activeId, onSelect?, foot?}` — RailItem=`{id, name, icon?, boxedIcon?, badge?: {t, label, tint?}, dot?, count?, pill?, unread?, children?}` | `{el, setActive}` |
+| `uiMobStrip` | `{items: [{id, label, dot?}], value, onChange?}` | `{el, setValue}` |
+| `uiStat` | `{label, num, icon?, hint?, tone?: 'main'\|'ok'\|'warn'\|'danger'\|'text', click?, onClick?}` | `HTMLDivElement` |
+| `uiProgress` | `{value?, tone?: 'ok'\|'warn'\|'danger', thin?}` — value 0-100 钳制 | `{el, setValue}` |
+| `uiPopover` | `{anchor, options: [{id, label, icon?}], value?, emptyText?, onPick?}` — anchor 须在 position:relative 容器内，浮层挂其父元素 | `{open, close, setValue, setOptions}` |
 | `uiIcon` | `(name, extraClass?)` | `HTMLElement` |
-| `uiResizable` | `(el, {edge?, minW?, minH?, maxW?, maxH?, onChange?})` | `{detach}` |
+| `uiResizable` | `(el, {edge?, minW?, minH?, maxW?, maxH?, onChange?, persist?: {load?, save?}})` | `{detach}` |
 | `openLightbox` | `{src, type?, title?, caption?}` | `{close}`；`closeLightbox()` |
 
 **约定**：
@@ -122,13 +173,13 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 - 文案一律 `textContent` 传入（防注入），图标名传 lucide 名由工厂生成 `<i data-lucide>`。
 - 回调风格：按钮 `onClick`、输入 `onInput`、分段 `onChange`、chip `onRemove`（内部已 stopPropagation）。
 
-**窗口缩放（uiResizable，ADR-0084）**：给桌面主面板加「右缘/底缘/右下角」拖动缩放——`el` 无需定位上下文（命中/光标挂自身，不注入覆盖层），改宽高内联。宿主若是 flex 居中（`.bz-*-overlay` center），宽高变化即双向对称扩缩不越视口。钳制下限 `minW×minH`、上限逐帧取 `min(maxW×maxH, 视口92%)`；`onChange(w,h)` 供调方持久化尺寸。零视觉提示（纯 hover 光标）；仅 mouse 事件，移动端勿挂。尺寸记忆无共享键——由调用域写自己的 settings 键（先例 `todoPanelWidth/Height`）。
+**窗口缩放（uiResizable，ADR-0084）**：给桌面主面板加「右缘/底缘/右下角」拖动缩放——`el` 无需定位上下文（命中/光标挂自身，不注入覆盖层），改宽高内联。宿主若是 flex 居中（`.bz-*-overlay` center），宽高变化即双向对称扩缩不越视口。钳制下限 `minW×minH`、上限逐帧取 `min(maxW×maxH, 视口92%)`；`onChange(w,h)` 供调方持久化尺寸。零视觉提示（纯 hover 光标）；仅 mouse 事件，移动端勿挂。尺寸记忆：可传 `persist: { load?, save? }`（ADR-0094）——挂载时 `load()` 有值即恢复（钳到与拖拽同口径），`onChange` 防抖 300ms 调 `save()`，detach 时未落尾值立即补存；不传则行为不变（键由调用域自定义，先例 `todoPanelWidth/Height`）。
 
 ---
 
 ## 5. 域接入规范
 
-1. **新建域 UI**：HTML 结构用 §3 类，事件绑定后交给组件库工厂（能工厂就不手写）；手写 DOM 时也用样式库类。
+1. **新建域 UI**：HTML 结构用 §3 类，事件绑定后交给组件库工厂（能工厂就不手写）；手写 DOM 时也用样式库类。**新域主面板一律 `.bz-panel-overlay`/`.bz-panel-frame` 壳 + `.bz-panel-head` 头行**（§3.2，不再自绘面板骨架）。
 2. **域独有布局**（主窗口骨架、瀑布流、特殊排版）写 `src/<域>/styles.css`——只做布局与域内结构，不复刻按钮/输入等基线；值从 token 取。
 3. **移动端**：真全屏 `.bz-win-mfs` 环境类 + 触控尺寸（`--lg` 档图标钮 / 行高 ≥44px / 底部安全区 `env(safe-area-inset-bottom)`），对齐设计手册 §8。
 4. **图标**：一律 lucide；禁止 emoji 图标、禁止文本符号（✕/★）当图标。

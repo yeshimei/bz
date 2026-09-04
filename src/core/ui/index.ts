@@ -15,10 +15,13 @@ export type {
   BzButtonOpts, BzIconBtnOpts, BzChipOpts,
   BzInputOpts, BzFieldOpts, BzEmptyOpts, BzSegOpts, BzRangeOpts, BzChoiceOpts,
   BzSwitchOpts, BzSelectOpts,
+  BzSearchOpts, BzMainHeadOpts, BzRailItem, BzRailOpts,
+  BzMobStripOpts, BzStatOpts, BzProgressOpts, BzPopoverOpts,
 } from './types';
 
 // 组件工厂（每组件一文件）
 export { uiIcon } from './icon';
+export { uiIconSpan, mountIcons } from './icons';
 export { uiBtn, uiIconBtn, uiBtnRow, uiDialogActions } from './button';
 export { uiChip } from './chip';
 export { uiInput, uiField } from './field';
@@ -28,9 +31,16 @@ export { uiSegmented } from './segmented';
 export { uiChoice } from './choice';
 export { uiSwitch } from './switch';
 export { uiSelect } from './select';
+export { uiSearch } from './search';
+export { uiMainHead } from './mainhead';
+export { uiRail } from './rail';
+export { uiMobStrip } from './mobstrip';
+export { uiStat } from './stat';
+export { uiProgress } from './progress';
+export { uiPopover } from './popover';
 export { openLightbox, closeLightbox } from './lightbox';
 export type { BzLightboxOpts } from './lightbox';
 export { uiModal } from './modal';
 export type { BzModalOpts } from './modal';
 export { uiResizable } from './resize';
-export type { BzResizableOpts } from './resize';
+export type { BzResizableOpts, BzResizablePersist } from './resize';
