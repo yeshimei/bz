@@ -20,8 +20,9 @@ import { setBzSettingsProvider, unloadBz, ensureBz } from './memo';
 
 import BzSettings, { DEFAULT_SETTINGS, migrateSecondBrainSettings } from './settings';
 
-// 待办（todo 域，与旧备忘录并存：同源 memo.json，UI/交互归本域；后台任务仍由 memo 执行）
-import { openTodoPanel, addTodoItem, unloadTodo } from './todo';
+// 待办（todo 域，与旧备忘录并存：同源 memo.json，UI/交互归本域；
+// 被动捕获入口——启动自动弹出/file-open 提醒/侧栏图标——落点=待办面板，本域提醒后台承担）
+import { openTodoPanel, addTodoItem, unloadTodo, ensureTodoReminders } from './todo';
 // 15 域（懒加载：首次命令/事件触发时 ensureXxx 幂等初始化）
 import { openBzPanel, createMemoItem } from './memo';
 import { addBelongingsItem, openBelongings, unloadBelongings } from './belongings';
@@ -32,12 +33,13 @@ import { openClipbook, unloadClipbook } from './clipbook';
 import { openDiaryWall, unloadDiaryWall } from './diary-wall';
 import { applyDirectories as applyWallDirectories } from './diary-wall/config';
 import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
-import { showReadingReport, unloadReadingReport } from './reading-report';
+// 阅读数据分析报告（读书报告内嵌化：独立弹窗退役，unloadReadingReport 只作废在途渲染/toast）
+import { unloadReadingReport } from './reading-report';
 // 影院（cinema 域，ADR-0087 起接管影视；旧 movie 域已退役。ADR-0090：openCinemaAnalysis
 // 直达影院面板分析页，独立报告窗退役）
 import { openCinema, addCinemaItem, openCinemaAnalysis, unloadCinema } from './cinema';
-// 书架墙（bookshelf 域，新域与书库并存；不修改旧书库代码）
-import { openBookshelf, unloadBookshelf } from './bookshelf';
+// 书架墙（bookshelf 域，新域与书库并存；不修改旧书库代码；读书报告内嵌为面板内视图）
+import { openBookshelf, openBookshelfReport, unloadBookshelf } from './bookshelf';
 // 影视分析报告独立域已退役（ADR-0090：报告窗并入影院内嵌分析页，命令直达 bz-cinema-analysis）
 import { openReviewPanel, openReviewReport, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview, unloadReview } from './review';
 import {
@@ -104,8 +106,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-favorites-open', name: '收藏本', icon: DOMAIN_ICONS.favorites, callback: () => openFavoritesPanel(getApp()) },
   { id: 'bz-favorites-add', name: '加收藏', icon: 'bookmark', callback: () => addFavoriteItem(getApp()) },
   // 旧书库（library）域退役：bz-library-open/bz-book-notes-open 已删，读书笔记并入书架墙详情弹窗
-  // 阅读数据分析报告（t2：阅读分析报告 → 阅读数据分析报告，术语随 CONTEXT.md）
-  { id: 'bz-reading-report-open', name: '阅读数据分析报告', icon: DOMAIN_ICONS['reading-report'], callback: () => showReadingReport(getApp()) },
+  // 阅读数据分析报告（读书报告内嵌化：打开书架墙面板并切到报告视图；home 报告磁贴/剪藏本深链自动受益）
+  { id: 'bz-reading-report-open', name: '阅读数据分析报告', icon: DOMAIN_ICONS['reading-report'], callback: () => openBookshelfReport(getApp()) },
   // 影视分析报告（ADR-0090 内嵌化：独立报告窗退役，命令直达影院面板分析页；
   // id 随域换 bz-cinema-analysis，名称「影视分析报告」保持用户习惯；pie-chart 与阅读 bar-chart-3、
   // 复习 calendar-check 三份报告图标各异——enh-sweep-a 错开）
@@ -249,8 +251,8 @@ export default class BzPlugin extends Plugin {
     // 附件搬移：文件右键菜单入口（md 笔记 →「搬移此笔记附件」，与命令同链路）
     ensureAttachFileMenu(this);
 
-    // ribbon 主入口：备忘录面板 + 日记本
-    this.addRibbonIcon('check-square', '备忘录', () => openBzPanel(this.app));
+    // ribbon 主入口：待办（捕获入口改道：点击落点=待办面板，不再进备忘录弹窗）+ 日记本
+    this.addRibbonIcon('check-square', '待办', () => openTodoPanel(this.app));
     this.addRibbonIcon('notebook-pen', '日记本', () => showDiaryPanel(this));
 
     // 番茄钟状态栏（ticket 29：常驻倒计时，点击打开弹窗）
@@ -268,8 +270,10 @@ export default class BzPlugin extends Plugin {
 
     // 事件常驻域按设置开关注册（懒加载架构）
     this.app.workspace.onLayoutReady(() => {
-      // 备忘录：启动即初始化（对齐源码 App.init：file-open 提醒 + 剪贴板监听 + autoPopupOnStart）
+      // 备忘录：启动即初始化（面板 UI + 同源同步；启动弹出/file-open 提醒已改道待办域，不再弹备忘录窗）
       void ensureBz(this.app);
+      // 待办提醒后台：启动自动弹出 + 打开笔记提醒（落点=待办面板；设置键 autoPopupOnStart/openNoteReminder 与备忘录共享）
+      ensureTodoReminders(this.app);
       // 日记本：启动即初始化（diary-notebook 原行为：onLayoutReady → init）
       void diaryInit(this);
       if (this.settings.autoSummaryEnabled) ensureAutoSummary(this.app);

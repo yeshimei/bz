@@ -444,6 +444,7 @@ describe('备忘录面板 ⚙️ 设置弹窗', () => {
     todoFilePath: 'CONFIG/STORAGE',
     showFileName: true,
     autoPopupOnStart: false,
+    memoAutoArchive: true,
     cinemaFolderPath: '我的/影视',
   };
 
@@ -469,19 +470,22 @@ describe('备忘录面板 ⚙️ 设置弹窗', () => {
     await App.init(SETTINGS);
   });
 
-  it('点 ⚙️ 打开弹窗，切换「启动时自动弹出」写回设置', async () => {
+  it('点 ⚙️ 打开弹窗，切换「完成后自动归档」写回设置（提醒行已随入口改道移出 memo schema）', async () => {
     UIManager.showMain(null, false);
     const settingsBtn = document.querySelector('.todo-btn-settings') as HTMLElement;
     expect(settingsBtn).not.toBeNull();
     settingsBtn.click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('备忘录设置');
-    const item = [...popup.querySelectorAll('.setting-item')].find((el) => (el as HTMLElement).dataset.name === '启动时自动弹出') as HTMLElement;
+    const item = [...popup.querySelectorAll('.setting-item')].find((el) => (el as HTMLElement).dataset.name === '完成后自动归档') as HTMLElement;
     expect(item).toBeTruthy();
     const toggle = (item as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');
-    toggle.trigger(true);
+    toggle.trigger(false);
     await new Promise((r) => setTimeout(r, 10));
-    expect(SETTINGS.autoPopupOnStart).toBe(true);
+    expect(SETTINGS.memoAutoArchive).toBe(false);
+    // 提醒组随被动弹窗入口一并移出（行为归待办域，同键设置在待办 schema）
+    const reminderRow = [...popup.querySelectorAll('.setting-item')].find((el) => (el as HTMLElement).dataset.name === '启动时自动弹出');
+    expect(reminderRow).toBeUndefined();
   });
 });
 

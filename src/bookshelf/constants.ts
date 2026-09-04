@@ -54,9 +54,6 @@ export const ICON = {
   calendarHeart: 'calendar-heart',
 } as const;
 
-/** 报告命令 id（阅读数据分析报告，reading-report 域；点报告入口执行该命令） */
-export const REPORT_COMMAND_ID = 'bz-reading-report-open';
-
 /** 空态/搜索空态图标（lucide） */
 export const EMPTY_BOOKS_ICON = 'library-big';
 export const EMPTY_SEARCH_ICON = 'search-x';

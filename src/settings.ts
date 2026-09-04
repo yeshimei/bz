@@ -173,7 +173,11 @@ export default interface BzSettings {
   // ===== 📚 书架墙（bookshelf 域；旧书库域 library 已退役，本域独立承担书库 UI）=====
   /** 📁 书库文件夹（书架墙域；空 = 运行时回落旧 libraryFolderPath 存量值，再回落「书库」） */
   bookshelfFolderPath: string;
-  /** 书架墙：移动端默认全屏（默认开——与书库同控） */
+  /**
+   * 书架墙：移动端默认全屏（默认开——与书库同控）。
+   * 读书报告内嵌化后语义仍成立：书架墙面板与读书笔记弹窗（notes-ui）共用此键；
+   * 报告随面板同控（独立报告弹窗已退役，不再单独消费）。
+   */
   bookshelfMobileDefaultFullscreen: boolean;
 
   // ===== 🎬 影院（cinema 域；ADR-0087 起接管旧影视域）=====
@@ -347,7 +351,7 @@ export default interface BzSettings {
    *  顶层加字段需改根结构，会破坏仍在用的外部统计脚本 主页.js（读 favorites.length），
    *  且违背「既有结构不改」铁律；排序键落设置与 memoSortMode 同惯例） */
   favoritesSortKey: string;
-  // 旧 libraryMobileDefaultFullscreen（书库）已删：阅读报告跟随书架墙键 bookshelfMobileDefaultFullscreen
+  // 旧 libraryMobileDefaultFullscreen（书库）已删；读书报告内嵌化后独立报告弹窗退役，报告随书架墙面板同控 bookshelfMobileDefaultFullscreen
   /** 影院：移动端默认全屏（默认开——原 JS 内联强制全屏；ADR-0087 起影视报告同控此键） */
   cinemaMobileDefaultFullscreen: boolean;
   /** 复习计划：移动端默认全屏（默认开——原 JS 内联强制全屏） */

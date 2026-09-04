@@ -1,15 +1,19 @@
 /**
  * 阅读数据分析报告 report（ticket 13）：全部 HTML 生成函数，源码逐字移植。
  * 源码：阅读数据分析报告.js（重复函数只保留最终版）
+ * 读书报告内嵌化增强：环形图升级水平条形行（时段/分类/互动，用户拍板「圆形统计被否」）、
+ * 热力图段头 ‹ › 翻月（去 slice(0,1) 硬编码）、年卡点击展开该年 12 月柱（与趋势图共用月柱生成）、
+ * 作者/分类行带 data-rr-* 筛选属性（同面板回书架列表预填，原深链作废）。
  */
 import {
   formatReadingTime,
   formatSessionDuration,
   analyzeReadingHabits,
-  analyzeSessionDurationDistribution,
   analyzeReadingTrends,
   analyzeReadingFocus,
   processHeatmapData,
+  getHeatmapMonthKeys,
+  getYearMonthBars,
   analyzeReadingSpeed,
   analyzeReadingCategories,
   analyzeNotesInteractions,
@@ -18,6 +22,78 @@ import {
 } from './stats';
 import type { ReadingStats, BookNoteEntry } from './stats';
 import { escapeHtml, pad2 } from '../core/utils';
+import { CHART_PASTEL_SERIES, CHART_INK, CHART_HIGHLIGHT } from '../core/chart-palette';
+
+// ---------- 共享图元（条形行 / 月柱列） ----------
+
+/** 条形行描述（generateBarRows 输入；环形图升级拍板后的统一行模型） */
+export interface ReportBarRow {
+  label: string;
+  /** 条宽百分比 0-100 */
+  value: number;
+  /** 行尾数值文本（如 25% / 12本 · 33.3%） */
+  display: string;
+  /** 可点击筛选属性（同面板回书架列表）：data-rr-author / data-rr-cat */
+  linkAttr?: { name: 'data-rr-author' | 'data-rr-cat'; value: string };
+  /** 排名（1 基；前三名渲染 lucide 奖杯，3/2/1 枚） */
+  rank?: number;
+}
+
+/** 水平条形行（时段/分类/互动三个环形图的替代范式；pastel 系列色按行循环取色） */
+export function generateBarRows(rows: ReportBarRow[]): string {
+  return rows
+    .map((row, index) => {
+      const color = CHART_PASTEL_SERIES[index % CHART_PASTEL_SERIES.length];
+      const width = Math.max(0, Math.min(100, row.value));
+      const attrs = row.linkAttr
+        ? ` ${row.linkAttr.name}="${escapeHtml(row.linkAttr.value)}" title="在书架中查看"`
+        : '';
+      const cls = row.linkAttr ? 'bz-rr-bar-row bz-rr-bar-row--link' : 'bz-rr-bar-row';
+      const trophies =
+        row.rank !== undefined && row.rank >= 1 && row.rank <= 3
+          ? '<i data-lucide="trophy" class="bz-ic bz-ic--xs bz-rr-trophy"></i>'.repeat(4 - row.rank)
+          : '';
+      return `
+    <div class="${cls}"${attrs}>
+    <div class="bz-rr-bar-label" title="${escapeHtml(row.label)}">${escapeHtml(row.label)}</div>
+    <div class="bz-rr-bar-track"><div class="bz-rr-bar-fill" style="width:${width}%;background:${color}"></div></div>
+    ${trophies}
+    <div class="bz-rr-bar-val">${escapeHtml(row.display)}</div>
+    </div>`;
+    })
+    .join('');
+}
+
+/** 月柱列描述（generateMonthBarColumns 输入） */
+export interface ReportMonthCol {
+  label: string;
+  count: number;
+  /** 强调列（如当前月） */
+  accent?: boolean;
+}
+
+/**
+ * 月柱列（共享月柱生成）：年度卡展开的 12 月柱与阅读趋势近 12 月柱同一生成器。
+ * 高度按 count/max 归一（3px 零线 → 56px 满柱）；粉彩底 + 深墨字，两主题一致。
+ */
+export function generateMonthBarColumns(cols: ReportMonthCol[]): string {
+  const max = Math.max(0, ...cols.map((c) => c.count));
+  return `
+  <div class="bz-rr-mwrap">
+  ${cols
+    .map((col) => {
+      const height = max > 0 && col.count > 0 ? 12 + Math.round((col.count / max) * 44) : 3;
+      const bg = col.accent ? CHART_HIGHLIGHT : CHART_PASTEL_SERIES[0];
+      const num = col.count > 0 ? `<span style="color:${CHART_INK}">${col.count}</span>` : '';
+      return `
+    <div class="bz-rr-mcol">
+    <div class="bz-rr-mbar${col.accent ? ' bz-rr-mbar--accent' : ''}" style="height:${height}px;background:${bg}">${num}</div>
+    <div class="bz-rr-mlabel">${escapeHtml(col.label)}</div>
+    </div>`;
+    })
+    .join('')}
+  </div>`;
+}
 
 // ---------- 主报告 ----------
 
@@ -118,7 +194,7 @@ export function generateStatsReport(stats: ReadingStats): string {
 
 // ---------- 年度 ----------
 
-/** 生成年度统计报告 */
+/** 生成年度统计报告（年卡点击展开该年 12 月柱；展开/收起由面板事件委托切 .open 类） */
 export function generateYearlyStats(stats: ReadingStats): string {
   const yearlyData = Object.entries(stats.yearlyStats).sort((a, b) => b[0].localeCompare(a[0]));
 
@@ -133,15 +209,21 @@ export function generateYearlyStats(stats: ReadingStats): string {
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
   ${yearlyData
     .map(([year, data]: [string, any]) => {
-      const completionRate = data.booksRead > 0 ? ((data.booksCompleted / data.booksRead) * 100).toFixed(1) : 0;
+      // 年卡展开体：该年 12 月柱（与翻月/趋势共用月桶口径 getYearMonthBars + 月柱生成 generateMonthBarColumns）
+      const monthCols = generateMonthBarColumns(
+        getYearMonthBars(stats.monthlyStats, year).map((b) => ({ label: b.label, count: b.booksRead })),
+      );
       return `
-    <div style="background: linear-gradient(135deg, #667eea, #764ba2); padding: 20px; border-radius: 10px; color: white; text-align: center;">
-    <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 5px;">${year}年</div>
+    <div class="bz-rr-year-cell">
+    <div class="bz-rr-year-card" data-rr-year="${year}" title="点击展开 ${year} 年逐月阅读" role="button">
+    <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 5px;">${year}年<i data-lucide="chevron-down" class="bz-ic bz-ic--sm bz-rr-year-chev"></i></div>
     <div style="font-size: 2em; font-weight: bold;">${data.booksRead}</div>
     <div>阅读数量</div>
     <div style="font-size: 0.8em; opacity: 0.8; margin-top: 3px;">
     ${formatReadingTime(data.totalReadingTime)}
     </div>
+    </div>
+    <div class="bz-rr-year-cols" data-rr-year-body="${year}">${monthCols}</div>
     </div>
     `;
     })
@@ -175,7 +257,8 @@ export function generateAuthorStats(stats: ReadingStats): string {
       const rankColors = ['#ffd700', '#c0c0c0', '#cd7f32', '#3498db', '#9b59b6'];
 
       return `
-    <div style="background: linear-gradient(135deg, ${rankColors[index] || '#95a5a6'}, ${rankColors[index] ? rankColors[index] + 'cc' : '#7f8c8d'});
+    <div class="bz-rr-author-card" data-rr-author="${escapeHtml(author)}" title="在书架中搜索该作者" role="button"
+    style="background: linear-gradient(135deg, ${rankColors[index] || '#95a5a6'}, ${rankColors[index] ? rankColors[index] + 'cc' : '#7f8c8d'});
     padding: 15px; border-radius: 8px; color: white; position: relative;">
     <div style="font-size: 2em; position: absolute; top: 10px; right: 15px; opacity: 0.3;">${index + 1}</div>
     <div style="font-weight: bold; font-size: 1.1em;">${escapeHtml(author)}</div>
@@ -285,39 +368,17 @@ export function generateReadingSpeedAnalysis(stats: ReadingStats): string {
   `;
 }
 
-// ---------- 时段分布 ----------
-
-/** 改进的时间段分布饼图生成函数（最终版 L795） */
-export function generateTimeDistributionChart(timeDistribution: Record<string, string>): string {
-  const colors: Record<string, string> = {
-    morning: '#4facfe',
-    afternoon: '#00f2fe',
-    evening: '#667eea',
-    night: '#764ba2',
-  };
-
-  let cumulativePercent = 0;
-  return Object.entries(timeDistribution)
-    .map(([slot, percentage]) => {
-      const percent = parseFloat(percentage) / 100;
-      const startPercent = cumulativePercent;
-      cumulativePercent += percent;
-
-      return `
-    <circle cx="50" cy="50" r="40" fill="transparent"
-    stroke="${colors[slot]}"
-    stroke-width="10"
-    stroke-dasharray="${percent * 251.2} ${(1 - percent) * 251.2}"
-    stroke-dashoffset="${-startPercent * 251.2}">
-    </circle>
-    `;
-    })
-    .join('');
-}
-
 // ---------- 习惯深度 ----------
 
-/** 生成阅读习惯深度分析模块（增强版，包含会话时长饼图） */
+/** 时段中文标签（时段条形行用；与专注度分析时段口径一致） */
+const TIME_SLOT_LABELS: Record<string, string> = {
+  morning: '早晨 (6-12点)',
+  afternoon: '下午 (12-18点)',
+  evening: '晚上 (18-24点)',
+  night: '深夜 (0-6点)',
+};
+
+/** 生成阅读习惯深度分析模块（环形图升级拍板：时段分布 → 水平条形行） */
 export function generateReadingHabitsDeepAnalysis2(readingSessions: any[]): string {
   if (!readingSessions || readingSessions.length < 5) {
     return `<div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
@@ -326,60 +387,19 @@ export function generateReadingHabitsDeepAnalysis2(readingSessions: any[]): stri
   }
 
   const analysis = analyzeReadingHabits(readingSessions);
-  const durationAnalysis = analyzeSessionDurationDistribution(readingSessions);
+  const slotRows: ReportBarRow[] = Object.entries(analysis.timeDistribution).map(([slot, percentage]) => ({
+    label: TIME_SLOT_LABELS[slot] || slot,
+    value: parseFloat(String(percentage)),
+    display: `${percentage}%`,
+  }));
 
   return `
   <div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
-
-  <!-- 双饼图布局：时间段分布 + 会话时长分布 -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin: 30px 0;">
-
-  <!-- 时间段分布饼图 -->
-  <div style="text-align: center;">
-
-  <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 15px;">
-  <div style="width: 180px; height: 180px; position: relative;">
-  <svg viewBox="0 0 100 100" style="transform: rotate(-90deg); width: 100%; height: 100%;">
-  ${generateTimeDistributionChart(analysis.timeDistribution)}
-  </svg>
-  <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
-  <div style="font-size: 1.2em; font-weight: bold;">${readingSessions.length}</div>
-  <div style="font-size: 0.8em; color: var(--text-muted);">总会话</div>
+  <div class="bz-rr-bar-head"><span>会话时段分布</span><span>共 ${readingSessions.length} 次会话</span></div>
+  <div style="margin: 12px 0;">
+  ${generateBarRows(slotRows)}
   </div>
   </div>
-  </div>
-  <div style="font-size: 0.8rem;">
-  ${Object.entries(analysis.timeDistribution)
-    .map(([timeSlot, percentage]) => {
-      const colors: Record<string, string> = {
-        morning: '#4facfe',
-        afternoon: '#00f2fe',
-        evening: '#667eea',
-        night: '#764ba2',
-      };
-      const labels: Record<string, string> = {
-        morning: '早晨 (6-12点)',
-        afternoon: '下午 (12-18点)',
-        evening: '晚上 (18-24点)',
-        night: '深夜 (0-6点)',
-      };
-
-      return `
-    <div style="display: flex; align-items: center; justify-content: center; margin: 5px 0;">
-    <div style="width: 12px; height: 12px; background: ${colors[timeSlot]}; border-radius: 50%; margin-right: 8px;"></div>
-    <span style="flex: 1; text-align: left;">${labels[timeSlot]}</span>
-    <span style="font-weight: bold; margin-left: 10px;">${percentage}%</span>
-    </div>
-    `;
-    })
-    .join('')}
-  </div>
-  </div>
-
-
-  </div>
-  </div>
-
   `;
 }
 
@@ -423,59 +443,34 @@ export function generateReadingTrendsAnalysis(stats: ReadingStats, bookNotes: Bo
   `;
 }
 
-/** 移动端优化的趋势图表 */
+/** 移动端优化的趋势图表（月柱与年度卡展开共用 generateMonthBarColumns 生成） */
 export function generateMobileFriendlyTrendChart(recentMonths: any[]): string {
   if (recentMonths.length === 0) {
     return '<p style="text-align: center; color: var(--text-muted); padding: 20px 0;">暂无月度数据</p>';
   }
 
-  const maxBooks = Math.max(...recentMonths.map((data) => data.booksRead));
-  const minHeight = 30;
-  const maxHeight = 80;
-
-  return `
-  <div style="overflow-x: auto; margin: 10px 0; padding: 10px 0;">
-  <div style="display: flex; align-items: end; gap: 15px; min-width: ${recentMonths.length * 70}px; padding: 0 10px;">
-  ${recentMonths
-    .map((data, index) => {
-      const height = maxBooks > 0 ? minHeight + (data.booksRead / maxBooks) * (maxHeight - minHeight) : minHeight;
-      const isCurrentMonth = index === 0;
-      const monthLabel = data.month.split('-')[1] + '月';
-
-      return `
-    <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
-    <div style="
-    width: 100%;
-    min-width: 40px;
-    height: ${height}px;
-    background: ${isCurrentMonth ? 'linear-gradient(to top, #667eea, #764ba2)' : 'linear-gradient(to top, #a8e6cf, #88d8a3)'};
-    border-radius: 5px 5px 0 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-    font-size: 0.9em;
-    ">${data.booksRead}</div>
-    <div style="margin-top: 8px; font-size: 0.8em; color: var(--text-muted); text-align: center;">
-    ${monthLabel}
-    </div>
-    <div style="font-size: 0.7em; color: var(--text-faint); margin-top: 3px;">
-    
-    </div>
-    </div>
-    `;
-    })
-    .join('')}
-  </div>
-  </div>
-  `;
+  return generateMonthBarColumns(
+    recentMonths.map((data, index) => ({
+      label: data.month.split('-')[1] + '月',
+      count: data.booksRead,
+      accent: index === 0, // 首位 = 最近月份（图表高亮语义保留）
+    })),
+  );
 }
 
 // ---------- 热力图 ----------
 
-/** 生成阅读会话热力图模块（移动端优化版） */
-export function generateReadingHeatmap(readingSessions: any[]): string {
+const HEATMAP_MONTH_NAMES = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+
+/** 月键 → 中文标题（2025-06 → 2025年六月；翻月段头与单月网格共用） */
+export function heatmapMonthTitle(monthKey: string): string {
+  const [year, month] = monthKey.split('-');
+  const name = HEATMAP_MONTH_NAMES[parseInt(month, 10) - 1] || month;
+  return `${year}年${name}`;
+}
+
+/** 生成阅读会话热力图模块（移动端优化版；段头 ‹ › 翻月——去原 slice(0,1) 硬编码） */
+export function generateReadingHeatmap(readingSessions: any[], cursorMonth?: string): string {
   if (!readingSessions || readingSessions.length === 0) {
     return `<div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
     <p style="text-align: center; color: var(--text-muted);">暂无阅读会话数据，无法生成热力图</p>
@@ -483,6 +478,12 @@ export function generateReadingHeatmap(readingSessions: any[]): string {
   }
 
   const heatmapData = processHeatmapData(readingSessions);
+  const monthKeys = getHeatmapMonthKeys(heatmapData);
+  // 翻月游标：缺省落在最近有阅读的月份（原 slice(0,1) 语义，现在可 ‹ › 在全部月份间移动）
+  const cursor = cursorMonth && monthKeys.includes(cursorMonth) ? cursorMonth : monthKeys[monthKeys.length - 1];
+  const idx = monthKeys.indexOf(cursor);
+  const navBtn = (dir: 'prev' | 'next', disabled: boolean) =>
+    `<button class="bz-rr-hm-nav" data-rr-hm-${dir}${disabled ? ' disabled' : ''} title="${dir === 'prev' ? '上一月' : '下一月'}" aria-label="${dir === 'prev' ? '上一月' : '下一月'}"><i data-lucide="chevron-${dir === 'prev' ? 'left' : 'right'}" class="bz-ic bz-ic--sm"></i></button>`;
 
   return `
   <div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
@@ -500,9 +501,16 @@ export function generateReadingHeatmap(readingSessions: any[]): string {
   </div>
   </div>
 
-  <!-- 热力图主体 -->
+  <!-- 热力图主体（段头翻月：processHeatmapData 已算全部月度数据，‹ › 逐月切换） -->
   <div style="margin: 25px 0;">
-  ${generateHeatmapGrid(heatmapData)}
+  <div class="bz-rr-hm-head">
+  ${navBtn('prev', idx <= 0)}
+  <div class="bz-rr-hm-title" data-rr-hm-title>${heatmapMonthTitle(cursor)}</div>
+  ${navBtn('next', idx >= monthKeys.length - 1)}
+  </div>
+  <div class="bz-rr-hm-body" data-rr-hm-body>
+  ${generateHeatmapGrid(heatmapData, cursor)}
+  </div>
   </div>
 
 
@@ -510,33 +518,22 @@ export function generateReadingHeatmap(readingSessions: any[]): string {
   `;
 }
 
-/** 生成热力图网格（移动端优化，只取最近 1 个月） */
-export function generateHeatmapGrid(heatmapData: any): string {
-  const months = Object.keys(heatmapData.monthlyData).sort().reverse().slice(0, 1);
+/** 生成热力图网格（只渲染游标月份；翻月由段头 ‹ › 切换——原 slice(0,1) 硬编码已去） */
+export function generateHeatmapGrid(heatmapData: any, cursorMonth?: string): string {
+  const months = getHeatmapMonthKeys(heatmapData);
 
   if (months.length === 0) {
     return '<p style="text-align: center; color: var(--text-muted); padding: 40px 0;">暂无数据</p>';
   }
 
-  return `
-  <div style="overflow-x: auto; margin: 15px 0;">
-  <div style="display: flex; flex-direction: column; gap: 15px; min-width: max-content; padding: 10px;">
-  ${months
-    .map((monthKey) => {
-      const monthData = heatmapData.monthlyData[monthKey];
-      return generateMonthHeatmap(monthData, monthKey);
-    })
-    .join('')}
-  </div>
-  </div>
-  `;
+  const cursor = cursorMonth && months.includes(cursorMonth) ? cursorMonth : months[months.length - 1];
+  return generateMonthHeatmap(heatmapData.monthlyData[cursor], cursor);
 }
 
 /** 生成单月热力图 */
 export function generateMonthHeatmap(monthData: any, monthKey: string): string {
-  const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
   const [year, month] = monthKey.split('-');
-  const monthName = monthNames[parseInt(month) - 1];
+  const monthName = HEATMAP_MONTH_NAMES[parseInt(month, 10) - 1] || month;
 
   const firstDay = new Date(parseInt(year), parseInt(month) - 1, 1);
   const lastDay = new Date(parseInt(year), parseInt(month), 0);
@@ -759,37 +756,20 @@ export function generateReadingCategoryAnalysis(bookNotes: BookNoteEntry[]): str
   </div>
 
   <div style="margin: 25px 0;">
-  <div style="display: flex; flex-direction: column; align-items: center;">
-  <div style="width: 200px; height: 200px; position: relative; margin-bottom: 20px;">
-  <svg viewBox="0 0 100 100" style="transform: rotate(-90deg); width: 100%; height: 100%;">
-  ${generateCategoryDistributionChart(categoryAnalysis.categoryDistribution)}
-  </svg>
-  <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
-  <div style="font-size: 1.5em; font-weight: bold;">${categoryAnalysis.totalBooks}</div>
-  <div style="font-size: 0.8em; color: var(--text-muted);">总书籍</div>
+  <div class="bz-rr-bar-head">
+  <span>分类分布 · 共 ${categoryAnalysis.totalBooks} 本 / ${categoryAnalysis.totalCategories} 类</span>
+  <span>点分类行回书架查看</span>
   </div>
-  </div>
-
-  <div style="width: 100%; max-height: auto;  padding: 10px; border: 1px solid var(--background-modifier-border); border-radius: 8px;">
-  ${categoryAnalysis.categoryDistribution
-    .map((category: any, index: number) => {
-      const colors = ['#667eea', '#764ba2', '#4facfe', '#00f2fe', '#43e97b', '#38f9d7', '#ff6b6b', '#feca57', '#ff9ff3', '#54a0ff'];
-      const color = colors[index % colors.length];
-
-      return `
-    <div style="display: flex; align-items: center; margin: 12px 0; padding: 8px; background: var(--background-secondary); border-radius: 6px;">
-    <div style="width: 12px; height: 12px; background: ${color}; border-radius: 50%; margin-right: 12px; flex-shrink: 0;"></div>
-    <div style="flex: 1; min-width: 0;">
-    <div style="font-weight: bold; font-size: 0.9em; color: var(--text-normal); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(category.name)}</div>
-    <div style="font-size: 0.8em; color: var(--text-muted);">${category.count}本书 · ${category.percentage}%</div>
-    </div>
-    <div style="font-size: 0.8em; color: var(--text-faint); flex-shrink: 0; margin-left: 10px;">
-    ${index < 3 ? '🏆'.repeat(3 - index) : ''}
-    </div>
-    </div>
-    `;
-    })
-    .join('')}
+  <div style="margin: 12px 0;">
+  ${generateBarRows(
+    categoryAnalysis.categoryDistribution.map((category: any, index: number): ReportBarRow => ({
+      label: category.name,
+      value: parseFloat(category.percentage),
+      display: `${category.count}本 · ${category.percentage}%`,
+      linkAttr: { name: 'data-rr-cat', value: String(category.name) },
+      rank: index + 1,
+    })),
+  )}
   </div>
   </div>
   </div>
@@ -797,31 +777,15 @@ export function generateReadingCategoryAnalysis(bookNotes: BookNoteEntry[]): str
   `;
 }
 
-/** 生成分类分布饼图 */
-export function generateCategoryDistributionChart(categoryDistribution: any[]): string {
-  const colors = ['#667eea', '#764ba2', '#4facfe', '#00f2fe', '#43e97b', '#38f9d7', '#ff6b6b', '#feca57', '#ff9ff3', '#54a0ff'];
-
-  let cumulativePercent = 0;
-  return categoryDistribution
-    .slice(0, 8)
-    .map((category, index) => {
-      const percent = parseFloat(category.percentage) / 100;
-      const startPercent = cumulativePercent;
-      cumulativePercent += percent;
-
-      return `
-    <circle cx="50" cy="50" r="40" fill="transparent"
-    stroke="${colors[index % colors.length]}"
-    stroke-width="10"
-    stroke-dasharray="${percent * 251.2} ${(1 - percent) * 251.2}"
-    stroke-dashoffset="${-startPercent * 251.2}">
-    </circle>
-    `;
-    })
-    .join('');
-}
-
 // ---------- 互动 ----------
+
+/** 互动类型中文标签（互动分布条形行用） */
+const INTERACTION_TYPE_LABELS: Record<string, string> = {
+  highlights: '划线',
+  thinks: '想法',
+  dialogue: '讨论',
+  outlinks: '出链',
+};
 
 /** 生成笔记互动分析模块 */
 export function generateReadingNotesInteractionAnalysis(bookNotes: BookNoteEntry[]): string {
@@ -836,19 +800,15 @@ export function generateReadingNotesInteractionAnalysis(bookNotes: BookNoteEntry
   return `
   <div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
 
-    <!-- 互动分布饼图 -->
-  <div style="margin: 25px 0;">
-  <div style="display: flex; flex-direction: column; align-items: center;">
-  <div style="width: 200px; height: 200px; position: relative; margin-bottom: 20px;">
-  <svg viewBox="0 0 100 100" style="transform: rotate(-90deg); width: 100%; height: 100%;">
-  ${generateInteractionDistributionChart(interactionAnalysis.interactionDistribution)}
-  </svg>
-  <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
-  <div style="font-size: 1.5em; font-weight: bold;">${interactionAnalysis.totalInteractions}</div>
-  <div style="font-size: 0.8em; color: var(--text-muted);">总互动</div>
-  </div>
-  </div>
-  </div>
+  <div class="bz-rr-bar-head"><span>互动分布</span><span>总互动 ${interactionAnalysis.totalInteractions}</span></div>
+  <div style="margin: 12px 0;">
+  ${generateBarRows(
+    interactionAnalysis.interactionDistribution.map((item: any): ReportBarRow => ({
+      label: INTERACTION_TYPE_LABELS[item.type] || item.type,
+      value: parseFloat(item.percentage),
+      display: `${item.count}条 · ${item.percentage}%`,
+    })),
+  )}
   </div>
 
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;">
@@ -884,29 +844,6 @@ export function generateReadingNotesInteractionAnalysis(bookNotes: BookNoteEntry
   </div>
   </div>
   `;
-}
-
-/** 生成互动分布饼图 */
-export function generateInteractionDistributionChart(distribution: any[]): string {
-  const colors = ['#667eea', '#4facfe', '#43e97b', '#ff6b6b'];
-
-  let cumulativePercent = 0;
-  return distribution
-    .map((item, index) => {
-      const percent = parseFloat(item.percentage) / 100;
-      const startPercent = cumulativePercent;
-      cumulativePercent += percent;
-
-      return `
-    <circle cx="50" cy="50" r="40" fill="transparent"
-    stroke="${colors[index % colors.length]}"
-    stroke-width="10"
-    stroke-dasharray="${percent * 251.2} ${(1 - percent) * 251.2}"
-    stroke-dashoffset="${-startPercent * 251.2}">
-    </circle>
-    `;
-    })
-    .join('');
 }
 
 /** 生成互动趋势图表（简化版） */

@@ -3171,6 +3171,17 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   background: var(--dw-bg);
   z-index: 2;
 }
+/* 增强 #2：年份分组分隔标签（跨年处插入；月份项 data-month 不变，定位逻辑不动） */
+.bz-diary-wall-rail-year {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--dw-faint);
+  padding: 12px 10px 2px;
+  letter-spacing: 0.06em;
+}
+.bz-diary-wall-rail-year:first-of-type {
+  padding-top: 4px;
+}
 .bz-diary-wall-month {
   padding: 10px;
   border-radius: 8px;
@@ -3247,6 +3258,70 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 }
 .bz-diary-wall-mob .bz-diary-wall-wall {
   padding: 0 16px 24px;
+}
+/* ---- 增强 #5：那年今天时光条（wall 首屏顶部横滑媒体条，独立块不打断瀑布流） ---- */
+.bz-diary-wall-memories {
+  padding: 12px 0 2px;
+}
+.bz-diary-wall-memories-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dw-ink);
+  padding-bottom: 8px;
+}
+.bz-diary-wall-memories-head .bz-ic {
+  color: var(--dw-accent);
+}
+.bz-diary-wall-memories-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+.bz-diary-wall .bz-diary-wall-memory {
+  position: relative;
+  flex-shrink: 0;
+  width: 96px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--dw-surface);
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+.bz-diary-wall .bz-diary-wall-memory:hover {
+  opacity: 0.85;
+}
+.bz-diary-wall-memory-thumb {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dw-muted);
+  font-size: 20px;
+}
+.bz-diary-wall-memory-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.bz-diary-wall-memory-year {
+  position: absolute;
+  left: 6px;
+  bottom: 5px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 0 6px;
+  border-radius: 999px;
 }
 /* 日期节头（sticky：滚动时吸顶显示日期 + 周几 + 统计） */
 .bz-diary-wall-day-head {
@@ -3523,14 +3598,53 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   border: none;
   font-size: 15px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .bz-diary-wall .bz-diary-wall-lbclose:hover {
   background: rgba(255, 255, 255, 0.25);
+}
+/* 增强 #1：灯箱左右连看按钮（到头循环；方向键 / 移动端滑动同口径） */
+.bz-diary-wall .bz-diary-wall-lbnav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.bz-diary-wall .bz-diary-wall-lbnav:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+.bz-diary-wall .bz-diary-wall-lbnav--prev {
+  left: 20px;
+}
+.bz-diary-wall .bz-diary-wall-lbnav--next {
+  right: 20px;
+}
+/* 增强 #8：加密媒体灯箱解密中占位（半透明块，解出后原地替换） */
+.bz-diary-wall-lb-pending {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
 }
 .bz-diary-wall-lberr {
   color: #fff;
   font-size: 40px;
   text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 /* ============ 底部抽屉（长按/右键条目 → 动作列表） ============ */
@@ -3751,10 +3865,31 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   }
 }
 
+/* ============ 增强 #13：移动端触控热区 ≥44px 档 ============ */
+/* 触屏设备（pointer: coarse）下横滑标签/chips/头行图标钮等小元素用 ::after 外扩热区
+   （shadcn extend-touch-target 同款：视觉不变、热区 ≥44px；设计手册 §8.2）。
+   绝对定位外扩不触发横滑容器的额外滚动宽度（inset 负值向四周扩展） */
+@media (pointer: coarse) {
+  .bz-diary-wall .bz-diary-wall-chip,
+  .bz-diary-wall .bz-diary-wall-subchip,
+  .bz-diary-wall .bz-diary-wall-icon-btn,
+  .bz-diary-wall .bz-diary-wall-memory {
+    position: relative;
+  }
+  .bz-diary-wall .bz-diary-wall-chip::after,
+  .bz-diary-wall .bz-diary-wall-subchip::after,
+  .bz-diary-wall .bz-diary-wall-icon-btn::after,
+  .bz-diary-wall .bz-diary-wall-memory::after {
+    content: '';
+    position: absolute;
+    inset: -12px;
+  }
+}
+
 /* ============ 右键上下文菜单（桌面，跟手） ============ */
+/* 增强 #12：z 静态档（2000）已删——显示时由 topifyZ 动态发号（ADR-0067，谁后显示谁在上） */
 .bz-diary-wall-menu {
   position: fixed;
-  z-index: 2000;
   min-width: 160px;
   padding: 6px;
   background: var(--dw-bg);
@@ -7311,9 +7446,34 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-bs-report .bz-ic { width: 14px; height: 14px; flex-shrink: 0; color: var(--bz-text-3); }
 .bz-bs-report:hover .bz-ic { color: var(--bz-brand); }
 .bz-bs-report-chev { margin-left: auto; }
+/* 报告视图激活态（左栏入口变「‹ 返回书架」，桌面返回路径） */
+.bz-bs-report.on { background: var(--bz-brand); color: var(--bz-on-brand); font-weight: var(--bz-weight-medium); }
+.bz-bs-report.on .bz-ic { color: inherit; }
+.bz-bs-report.on:hover .bz-ic { color: inherit; }
 
-/* ---- 右内容区：工具栏 + 统计行 + 书架 ---- */
+/* ---- 报告视图（reading-report 域内容区挂载点；域内样式归 reading-report/styles.css） ---- */
+.bz-bs-view-report { min-height: 0; }
+.bz-rr-head {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--bz-space-sm);
+  padding: 10px var(--bz-space-lg) 8px; flex-shrink: 0;
+  border-bottom: 1px solid var(--bz-border);
+}
+.bz-rr-title {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1);
+}
+/* 报告视图关闭钮仅移动端（拍板：桌面靠左栏「‹ 返回书架」导航返回，对齐面板范式） */
+.bz-rr-close { display: none; }
+.bz-rr-content {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: 4px var(--bz-space-lg) var(--bz-space-lg);
+}
+
+/* ---- 右内容区：视图容器（书架列表 / 阅读分析报告互斥）+ 工具栏 + 统计行 + 书架 ---- */
 .bz-bs-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+/* 面板内视图（读书报告内嵌化拍板）：报告不再是独立弹窗，而是面板内的一个视图 */
+.bz-bs-view { display: none; flex: 1; flex-direction: column; min-height: 0; }
+.bz-bs-view.active { display: flex; }
 .bz-bs-toolbar {
   display: flex; align-items: center; gap: var(--bz-space-sm);
   padding: 10px var(--bz-space-lg) 6px; flex-shrink: 0;
@@ -7552,6 +7712,9 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   /* 头行图标钮：报告/搜索/筛选/关闭（桌面隐藏的这批在此显示） */
   .bz-bs-head-btns [data-bs-tool] { display: inline-flex; }
   .bz-bs-filterbtn.on { color: var(--bz-brand); background: var(--bz-brand-soft); }
+  /* 头行报告钮激活态（报告视图中点击切回书架）+ 报告视图关闭钮仅移动端显示 */
+  .bz-bs-head-btns [data-bs-tool="report"].on { color: var(--bz-brand); background: var(--bz-brand-soft); }
+  .bz-rr-close { display: inline-flex; }
   /* 桌面块隐藏：左栏/工具栏/桌面统计行/桌面书架；移动块显示 */
   .bz-bs-side, .bz-bs-toolbar, .bz-bs-dash, .bz-bs-shelves { display: none; }
   .bz-bs-mcards { display: grid; }
