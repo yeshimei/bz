@@ -6,6 +6,27 @@
  * （条形行/热力图翻月段头/年卡展开体/可点筛选行；容器布局归 bookshelf 域样式）
  * ============================================================ */
 
+/* ---------- 报告视图头行（自 bookshelf/styles.css 归位本域：同一组件不再劈两域文件） ---------- */
+
+.bz-rr-head {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--bz-space-sm);
+  padding: 10px var(--bz-space-lg) 8px; flex-shrink: 0;
+  border-bottom: 1px solid var(--bz-border);
+}
+.bz-rr-title {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1);
+}
+/* 报告视图关闭钮仅移动端（拍板：桌面靠左栏「‹ 返回书架」导航返回，对齐面板范式） */
+.bz-rr-close { display: none; }
+@media (max-width: 768px) {
+  .bz-rr-close { display: inline-flex; }
+}
+.bz-rr-content {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: 4px var(--bz-space-lg) var(--bz-space-lg);
+}
+
 .bz-rr-hm-cell {
   width: 20px;
   height: 20px;

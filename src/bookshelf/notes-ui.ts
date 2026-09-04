@@ -68,7 +68,7 @@ function renderHighlightBlock(hl: any, app: App, filePath: string): HTMLElement 
   contentArea.className = 'bz-bs-hl-body';
 
   const quote = document.createElement('div');
-  quote.className = 'bz-bs-quote';
+  quote.className = 'bz-bs-hl-quote';
   quote.textContent = `❝ ${hl.text}`;
   contentArea.appendChild(quote);
 
@@ -309,7 +309,7 @@ function renderEpubHighlightBlock(
   contentArea.className = 'bz-bs-hl-body';
 
   const quote = document.createElement('div');
-  quote.className = 'bz-bs-quote';
+  quote.className = 'bz-bs-hl-quote';
   quote.textContent = `❝ ${note.text}`;
   contentArea.appendChild(quote);
 
