@@ -96,11 +96,12 @@ describe('enh-sweep-a：术语与描述', () => {
     expect(lintDesc(desc)).toEqual([]);
   });
 
-  it('书架墙「书库文件夹」回落描述为准确链路（旧书库遗留设置存量值，非「沿用书库设置」旧措辞）', () => {
+  it('书架墙「书库文件夹」描述人话化（走查批 D：不暴露迁移实现细节，非「沿用书库设置」旧措辞）', () => {
     const schema = bookshelfSettingsSchema();
     const row = schema.groups.flatMap((g) => g.rows).find((r) => (r as { name?: string }).name === '书库文件夹');
     const desc = (row as { desc?: string }).desc ?? '';
-    expect(desc).toContain('存量值');
+    expect(desc).toBe('存放书籍笔记的文件夹，留空用 vault 根下的「书库」');
     expect(desc).not.toContain('沿用书库设置');
+    expect(desc).not.toContain('存量值');
   });
 });

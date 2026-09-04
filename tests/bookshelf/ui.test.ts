@@ -226,9 +226,12 @@ describe('bookshelf overlay', () => {
     const conf = document.querySelector('.bz-bs-confirm-pop') as HTMLElement;
     expect(conf).toBeTruthy();
     expect(conf.textContent).toContain('算法导论');
+    expect(conf.textContent).toContain('移入回收站'); // 文案承诺回收站
     (conf.querySelector('[data-bs-c="1"]') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 30));
     expect(vault.files.has('书库/算法导论.md')).toBe(false);
+    // 行为兑现承诺：走 vault.trash(system=true) 进回收站，不再 vault.delete 真删（走查批 D）
+    expect(vault.trashed).toContainEqual({ path: '书库/算法导论.md', system: true });
     // 通知补对象名（终局 review：裸「已删除」不带对象）
     expect(getNoticeMessages().some((m) => m.includes('已删除书目《算法导论》'))).toBe(true);
     // 剩 2 本（删除后重建）

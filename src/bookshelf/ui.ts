@@ -639,7 +639,7 @@ function openBookDetail(it: BookshelfItem, app: App): void {
       conf.popup.querySelector('[data-bs-c="1"]')?.addEventListener('click', () => {
         void (async () => {
           try {
-            if (it.file) await app.vault.delete(it.file);
+            if (it.file) await app.vault.trash(it.file, true); // 回收站可恢复（对齐文案「移入回收站」与 cinema/clipbook）
             close();
             conf.close();
             await rebuildItems(app);

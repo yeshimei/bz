@@ -107,13 +107,13 @@ describe('updateComment / deleteHighlight', () => {
     expect(vault.modifiedPaths).toHaveLength(0);
   });
 
-  it('deleteHighlight：直接删除 span + 「已删除 1 条高亮」（确认弹窗统一在 UI 层）', async () => {
+  it('deleteHighlight：直接删除 span + 「已删除 1 条划线」（确认弹窗统一在 UI 层；走查批 D 统一「划线」叫法）', async () => {
     deleteHighlight(makeApp(vault), '书库/活着.md', 'h1', '原文一', () => {});
     await new Promise((r) => setTimeout(r, 20));
     const out = vault.files.get('书库/活着.md')!;
     expect(out).not.toContain('data-id="h1"');
     expect(out).toContain('data-id="h2"'); // 其他保留
-    expect(hasNotice('已删除 1 条高亮')).toBe(true);
+    expect(hasNotice('已删除 1 条划线')).toBe(true);
   });
 
   it('deleteHighlight：原文不匹配 → 「未找到对应高亮（原文不匹配），删除失败」+ onDone 仍回调（B2）', async () => {
