@@ -10,15 +10,22 @@ import {
   isAutoSummaryInitialized,
   unloadAutoSummary,
   stopAutoSummary,
+  regenerateSummary,
+  redoSummaryForActiveFile,
 } from '../../src/auto-summary/index';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages } from '../mock-obsidian-entry';
 
-/** workspace mock：可注册/触发 file-open 事件（offref 语义与 MockVault 一致） */
+/** workspace mock：可注册/触发 file-open 事件（offref 语义与 MockVault 一致）+ getActiveFile */
 function makeWorkspace() {
   const listeners: Record<string, Function[]> = {};
+  let activeFile: any = null;
   return {
     listeners,
+    getActiveFile: () => activeFile,
+    setActiveFile(f: any): void {
+      activeFile = f;
+    },
     on(event: string, cb: (...args: any[]) => void): any {
       (listeners[event] ||= []).push(cb);
       return { event, cb };
@@ -73,9 +80,14 @@ describe('auto-summary 入口', () => {
     setApp(makeApp(vault, workspace));
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // 兜底放行挂起的门控请求：断言中断的用例若留未完成的 in-flight 任务，
+    // 模块级 draining 会跨用例滞留（后续用例的队列泵全部拒动）
+    for (const r of gate.pending.splice(0)) r('{"summary":"S","tags":["a"]}');
     unloadAutoSummary();
     vi.useRealTimers();
+    // 微任务冲洗：恢复的 drain 队列收尾（draining 复位），不带入下一用例
+    for (let i = 0; i < 5; i++) await Promise.resolve();
   });
 
   it('初始化幂等 + 延迟注册 create 与 file-open 监听', () => {
@@ -251,7 +263,7 @@ describe('auto-summary 入口', () => {
     vault.files.set('归档/网页剪藏/p.md', `---\ntitle: "T"\n---\n\n${LONG_BODY}`);
 
     workspace.emit('file-open', vault.file('归档/网页剪藏/p.md'));
-    await vi.advanceTimersByTimeAsync(1500); // 进入 processFile，fetch 挂起
+    await vi.advanceTimersByTimeAsync(1600); // 延迟窗到期入队 + 0ms 合并窗后泵启动（fetch 挂起）
     expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     // 处理中再次触发（如再次 file-open）→ 直接忽略
@@ -323,5 +335,193 @@ describe('auto-summary 入口', () => {
     workspace.emit('file-open', vault.file('归档/网页剪藏/queued.md'));
     await vi.advanceTimersByTimeAsync(1600);
     expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  // ===== enh-autosum 包 2：批量串行队列与通知聚合 =====
+
+  /** 门控 fetch 状态：挂起请求按序放行；afterEach 兜底清空——断言中断的用例若留
+   *  未完成的 in-flight 任务，模块级 draining 会跨用例滞留（后续用例队列泵拒动） */
+  const gate: { fetchSpy: ReturnType<typeof vi.fn> | null; pending: Array<(json: string) => void> } = {
+    fetchSpy: null,
+    pending: [],
+  };
+
+  /** 门控 fetch mock：每次调用挂起，测试按序放行并逐个给 AI 响应 */
+  function gateFetch(): ReturnType<typeof vi.fn> {
+    const encoder = new TextEncoder();
+    const fetchSpy = vi.fn().mockImplementation(() => new Promise<any>((resolve) => {
+      gate.pending.push((json: string) => resolve({
+        ok: true,
+        status: 200,
+        body: new ReadableStream({
+          start(controller) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: json } }] })}\n`));
+            controller.enqueue(encoder.encode('data: [DONE]\n'));
+            controller.close();
+          },
+        }),
+      }));
+    }));
+    gate.fetchSpy = fetchSpy;
+    gate.pending.length = 0;
+    (global as any).fetch = fetchSpy;
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'sk-test' }));
+    resetAIProviderCache();
+    return fetchSpy;
+  }
+
+  /** 按序放行最早挂起的 AI 请求 */
+  function releaseNext(json = '{"summary":"S","tags":["a"]}'): void {
+    const r = gate.pending.shift();
+    if (r) r(json);
+  }
+
+  it('enh 包 2：多篇并发收敛为串行 FIFO——严格按入队顺序逐个处理', async () => {
+    setSettingsProvider(() => ({}) as any); // 重置残留 articleDirectory
+    const fetchSpy = gateFetch();
+    ensureAutoSummary(makeApp(vault, workspace));
+    await vi.advanceTimersByTimeAsync(2000);
+    const feats: Array<[string, string]> = [
+      ['归档/网页剪藏/q1.md', '特征句一'],
+      ['归档/网页剪藏/q2.md', '特征句二'],
+      ['归档/网页剪藏/q3.md', '特征句三'],
+    ];
+    for (const [p, feat] of feats) {
+      vault.files.set(p, `---\ntitle: "T"\n---\n\n${feat}${LONG_BODY}`);
+    }
+    vault.emit('create', vault.file('归档/网页剪藏/q1.md'));
+    vault.emit('create', vault.file('归档/网页剪藏/q2.md'));
+    vault.emit('create', vault.file('归档/网页剪藏/q3.md'));
+    await vi.advanceTimersByTimeAsync(1600); // 三个延迟窗到期 → 依序入队（0ms 合并窗后泵启动）
+    expect(fetchSpy).toHaveBeenCalledTimes(1); // 串行：第 1 篇完成前不发起第 2 篇
+    expect(String(fetchSpy.mock.calls[0][1]?.body)).toContain('特征句一'); // FIFO：队列头先跑
+
+    releaseNext('{"summary":"S1","tags":["a"]}');
+    await vi.advanceTimersByTimeAsync(100);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(String(fetchSpy.mock.calls[1][1]?.body)).toContain('特征句二');
+
+    releaseNext('{"summary":"S2","tags":["a"]}');
+    await vi.advanceTimersByTimeAsync(100);
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
+    expect(String(fetchSpy.mock.calls[2][1]?.body)).toContain('特征句三');
+
+    releaseNext('{"summary":"S3","tags":["a"]}');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(vault.files.get('归档/网页剪藏/q1.md')).toContain('summary: "S1"');
+    expect(vault.files.get('归档/网页剪藏/q2.md')).toContain('summary: "S2"');
+    expect(vault.files.get('归档/网页剪藏/q3.md')).toContain('summary: "S3"');
+  });
+
+  it('enh 包 2：批量进度聚合为单条「正在生成摘要 k/N…」逐个更新，不再逐篇叠 progress', async () => {
+    setSettingsProvider(() => ({}) as any);
+    const fetchSpy = gateFetch();
+    ensureAutoSummary(makeApp(vault, workspace));
+    await vi.advanceTimersByTimeAsync(2000);
+    for (const p of ['a', 'b', 'c']) {
+      vault.files.set(`归档/网页剪藏/batch-${p}.md`, `---\ntitle: "T"\n---\n\n${LONG_BODY}`);
+      vault.emit('create', vault.file(`归档/网页剪藏/batch-${p}.md`));
+    }
+    await vi.advanceTimersByTimeAsync(1600); // 全部入队（合并窗落位）→ 第 1 篇开跑
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    let msgs = getNoticeMessages();
+    expect(msgs.some((m) => m.includes('正在生成摘要 1/3'))).toBe(true); // 单条聚合通知
+    expect(msgs.some((m) => m.includes('正在为《'))).toBe(false); // 逐篇 progress 已静音
+
+    releaseNext();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(getNoticeMessages().some((m) => m.includes('正在生成摘要 2/3'))).toBe(true); // 原地更新
+
+    releaseNext();
+    await vi.advanceTimersByTimeAsync(100);
+    releaseNext();
+    await vi.advanceTimersByTimeAsync(400); // 末篇完成 + 聚合通知退出动画
+    // 三篇全部写回
+    for (const p of ['a', 'b', 'c']) {
+      expect(vault.files.get(`归档/网页剪藏/batch-${p}.md`)).toContain('summary: "S"');
+    }
+    // 批次收尾：聚合 progress 通知撤下
+    expect(getNoticeMessages().some((m) => m.includes('正在生成摘要'))).toBe(false);
+  });
+
+  it('enh 包 2：单篇仍走逐篇进度通知（聚合只在 >1 篇时出现）', async () => {
+    setSettingsProvider(() => ({}) as any);
+    mockAIResponse('{"summary":"S","tags":["a"]}');
+    ensureAutoSummary(makeApp(vault, workspace));
+    await vi.advanceTimersByTimeAsync(2000);
+    vault.files.set('归档/网页剪藏/solo.md', `---\ntitle: "孤篇"\n---\n\n${LONG_BODY}`);
+    workspace.emit('file-open', vault.file('归档/网页剪藏/solo.md'));
+    await vi.advanceTimersByTimeAsync(1600);
+    const msgs = getNoticeMessages();
+    expect(msgs).toHaveLength(1); // 进度原地合并为结果，单条
+    expect(msgs[0]).toBe('《孤篇》\n\nS\n\n#a');
+    expect(msgs.some((m) => m.includes('正在生成摘要'))).toBe(false); // 无聚合通知
+  });
+
+  it('enh 包 2：stopAutoSummary 清空待处理队列——进行中任务完成，未开工任务丢弃', async () => {
+    setSettingsProvider(() => ({}) as any);
+    const fetchSpy = gateFetch();
+    ensureAutoSummary(makeApp(vault, workspace));
+    await vi.advanceTimersByTimeAsync(2000);
+    vault.files.set('归档/网页剪藏/run.md', `---\ntitle: "T"\n---\n\n${LONG_BODY}`);
+    vault.files.set('归档/网页剪藏/wait.md', `---\ntitle: "T"\n---\n\n${LONG_BODY}`);
+    vault.emit('create', vault.file('归档/网页剪藏/run.md'));
+    vault.emit('create', vault.file('归档/网页剪藏/wait.md'));
+    await vi.advanceTimersByTimeAsync(1600);
+    expect(fetchSpy).toHaveBeenCalledTimes(1); // run 开跑（挂起），wait 排队
+
+    stopAutoSummary(); // 清空队列
+    releaseNext();
+    await vi.advanceTimersByTimeAsync(300);
+    expect(fetchSpy).toHaveBeenCalledTimes(1); // wait 不再发起 AI
+    expect(vault.files.get('归档/网页剪藏/run.md')).toContain('summary: "S"'); // 进行中任务完成落盘
+    expect(vault.files.get('归档/网页剪藏/wait.md')).not.toContain('summary:'); // 排队任务被丢弃
+  });
+
+  // ===== enh-autosum 包 1：手动重跑入口 =====
+
+  it('enh 包 1：regenerateSummary——字段齐全文件强制重建，title 不动、不重命名', async () => {
+    setSettingsProvider(() => ({}) as any);
+    const fetchSpy = mockAIResponse('{"summary":"新S","tags":["新"]}');
+    vault.files.set('归档/网页剪藏/manual.md', `---\ntitle: "用户标题"\nsummary: "旧S"\ntags:\n  - "旧"\n---\n\n${LONG_BODY}`);
+    const done = regenerateSummary(makeApp(vault, workspace), vault.file('归档/网页剪藏/manual.md'));
+    await vi.advanceTimersByTimeAsync(50); // 泵 0ms 合并窗（fake timers 需推进）
+    await done;
+    expect(fetchSpy).toHaveBeenCalledTimes(1); // 字段齐全仍调 AI（force 跳过缺失检测）
+    const out = vault.files.get('归档/网页剪藏/manual.md')!; // 未重命名
+    expect(out).toContain('title: "用户标题"');
+    expect(out).toContain('summary: "新S"');
+    expect(out).toContain('  - "新"');
+  });
+
+  it('enh 包 1：redoSummaryForActiveFile——非剪藏笔记给人话提示，不调 AI', async () => {
+    const fetchSpy = mockAIResponse('{"summary":"S"}');
+    vault.files.set('日记/随记.md', `---\ntitle: "T"\n---\n\n${LONG_BODY}`);
+    workspace.setActiveFile(vault.file('日记/随记.md'));
+    await redoSummaryForActiveFile(makeApp(vault, workspace));
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(getNoticeMessages().some((m) => m.includes('当前打开的不是剪藏笔记'))).toBe(true);
+  });
+
+  it('enh 包 1：redoSummaryForActiveFile——无打开文件同样人话提示', async () => {
+    mockAIResponse('{"summary":"S"}');
+    workspace.setActiveFile(null);
+    await redoSummaryForActiveFile(makeApp(vault, workspace));
+    expect(getNoticeMessages().some((m) => m.includes('当前打开的不是剪藏笔记'))).toBe(true);
+  });
+
+  it('enh 包 1：redoSummaryForActiveFile——剪藏笔记 force 重建走串行队列', async () => {
+    setSettingsProvider(() => ({}) as any);
+    const fetchSpy = mockAIResponse('{"summary":"新S","tags":["新"]}');
+    vault.files.set('归档/网页剪藏/act.md', `---\ntitle: "T"\nsummary: "旧S"\n---\n\n${LONG_BODY}`);
+    workspace.setActiveFile(vault.file('归档/网页剪藏/act.md'));
+    const done = redoSummaryForActiveFile(makeApp(vault, workspace));
+    await vi.advanceTimersByTimeAsync(50); // 泵 0ms 合并窗
+    await done;
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    const out = vault.files.get('归档/网页剪藏/act.md')!;
+    expect(out).toContain('summary: "新S"');
+    expect(out).toContain('title: "T"'); // force 不吞标题
   });
 });

@@ -59,7 +59,7 @@ import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setL
 import { registerGestureListeners } from './launcher/gestures';
 // 内容首页（home 域，ticket 177：入口页「新标签页」升级；与旧入口页并存，不改 launcher）
 import { openHome, unloadHome } from './home';
-import { ensureAutoSummary, unloadAutoSummary } from './auto-summary';
+import { ensureAutoSummary, unloadAutoSummary, redoSummaryForActiveFile } from './auto-summary';
 // ai-agent 域解散：文件同步拆入 memo/favorites 域（原 ensureAIAgent/unloadAIAgent 换线）
 import { ensureMemoFileSync, unloadMemoFileSync } from './memo';
 import { ensureFavoritesFileSync, unloadFavoritesFileSync } from './favorites';
@@ -91,6 +91,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-belongings-open', name: '归物本', icon: 'package', callback: () => openBelongings(getApp()) },
   // 剪藏本（clipbook 融合域，ADR-0082：聚合讯未读流 + 剪藏笔记一体化工作台）
   { id: 'bz-clipbook-open', name: '剪藏本', icon: 'scissors', callback: () => openClipbook(getApp()) },
+  // 自动摘要（enh-autosum 包 1）：当前剪藏笔记手动重跑 AI 摘要（只重建摘要/标签，不动用户标题）
+  { id: 'bz-auto-summary-redo', name: '重新生成当前剪藏摘要', icon: 'sparkles', callback: () => void redoSummaryForActiveFile(getApp()) },
 
   // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图（真实图片/视频/音频瀑布流）
   // icon 用 images（lucide 相册/媒体图标，与入口页磁贴媒体语义一致；未与其他命令重复）
