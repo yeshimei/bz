@@ -105,8 +105,9 @@
     width: 100vw; height: 100%; max-width: none; max-height: none;
     border-radius: 0; border: none;
   }
+  /* 顶距由根节点 .bz-panel-mtop 统一接管（ui-kit-manual §3.2），头行不再自垫 */
   .bz-recap-head {
-    padding: max(var(--bz-space-lg), env(safe-area-inset-top)) var(--bz-space-lg) var(--bz-space-md);
+    padding: var(--bz-space-sm) var(--bz-space-lg) var(--bz-space-md);
   }
   .bz-recap-title { font-size: var(--bz-font-emphasis); }
   .bz-recap-close { display: inline-flex; }

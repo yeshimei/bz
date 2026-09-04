@@ -69,7 +69,7 @@ export function createOverlay(app: App): void {
   const overlay = document.createElement('div');
   overlay.className = 'bz-recap-overlay';
   overlay.innerHTML = `
-    <div class="bz-recap-panel">
+    <div class="bz-recap-panel bz-panel-mtop">
       <div class="bz-recap-head">
         <div class="bz-recap-head-l">
           <span class="bz-recap-title">今日回顾</span>
