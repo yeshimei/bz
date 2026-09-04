@@ -7,13 +7,21 @@ import type { NoticeHandle } from '../core/notice';
 import { getApp } from '../core/app';
 import { getSettings } from '../core/settings-provider';
 import { escapeHtml } from '../core/utils';
-import { FSRS, FSRS_FIRST_INTERVALS, FSRS_FIRST_TEXTS, LADDER_MAX } from './fsrs';
+import { FSRS, FSRS_FIRST_TEXTS, scheduleNext } from './fsrs';
 import type { Rating } from './fsrs';
 import type { ReviewItem } from './data';
 import { ReviewDataManager } from './data';
 import { loadFittedParams, saveFittedParams } from './data';
 import { fitFromItems, mergeFittedW } from './fit';
 import { DEFAULT_W } from './fsrs';
+import { isEarlyDue, roundQueue } from './queue';
+import { computeStats } from './stats';
+
+/** item 5：普通复习离篇宽限期（ms）——持续离篇超过此时长才算中断；测试可注入 */
+export let REVIEW_AWAY_GRACE_MS = 120000;
+export function __setReviewAwayGraceMsForTests(ms: number): void {
+  REVIEW_AWAY_GRACE_MS = ms;
+}
 
 export const reviewApp = {
   checkInterval: null as ReturnType<typeof setInterval> | null,
@@ -36,11 +44,23 @@ export const reviewApp = {
   _fitRunning: false,
   /** P3：reviewLoop 活动轮询句柄（卸载统一清理；插件禁用后不得继续读盘翻篇弹通知） */
   _reviewLoops: new Set<ReturnType<typeof setInterval>>(),
+  /** item 4：普通复习悬浮迷你评级条句柄（reviewLoop 存续期间挂屏幕底部） */
+  _reviewBar: null as { close: () => void } | null,
+  /** item 5：本轮队列断点（中断/超时可恢复继续） */
+  _pendingRound: null as { items: ReviewItem[]; index: number } | null,
 
   /** P3：终止全部 reviewLoop 轮询（unloadReview 调用；幂等） */
   stopReviewLoops(): void {
     for (const t of this._reviewLoops) clearInterval(t);
     this._reviewLoops.clear();
+    this.hideReviewBar();
+    this._pendingRound = null;
+  },
+
+  /** item 4：收起悬浮评级条（幂等） */
+  hideReviewBar(): void {
+    this._reviewBar?.close();
+    this._reviewBar = null;
   },
 
   async getQuiz(): Promise<any> {
@@ -141,15 +161,10 @@ export const reviewApp = {
     const now = new Date();
     const nextReview = item.nextReviewDate ? new Date(item.nextReviewDate) : new Date(0);
     if (now < nextReview) {
-      // dueItems 的 R 阈值「提前逾期」口径放行（同款条件：fsrs 相位 + R < 阈值）——
+      // dueItems 的 R 阈值「提前逾期」口径放行（queue.isEarlyDue 同一纯函数，item 6 口径统一）——
       // 否则开始本轮纳入的条目评级会被此处整体拒掉（通过不刷新排期、答错不挂待重做）
       const rThreshold = Number((getSettings() as any).reviewRThreshold) || 0.9;
-      let earlyOverdue = false;
-      if (item.phase === 'fsrs' && item.stability && item.lastReviewed) {
-        const t = (now.getTime() - new Date(item.lastReviewed).getTime()) / 86400000;
-        if (t > 0) earlyOverdue = new FSRS(this.currentW()).R(t, item.stability) < rThreshold;
-      }
-      if (!earlyOverdue) {
+      if (!isEarlyDue(item, rThreshold, this.currentW())) {
         const diff = nextReview.getTime() - now.getTime();
         const mins = Math.ceil(diff / 60000);
         notice(`还未到复习时间（${mins}分钟后）`);
@@ -158,85 +173,64 @@ export const reviewApp = {
     }
 
     const rating = selectedDifficulty;
-    const currentStage = item.stage;
     // ADR-0077：优先用拟合权重（个人化记忆曲线），回退默认
-    const fsrs = new FSRS(this.currentW());
-
-    // ===== 阶段 0-9：固定阶梯 =====
-    if (currentStage <= LADDER_MAX) {
-      let targetStage: number;
-      if (rating === 'again') targetStage = Math.max(0, currentStage - 1);
-      else if (rating === 'hard') targetStage = currentStage;
-      else if (rating === 'good') targetStage = currentStage + 1;
-      else targetStage = currentStage + 2; // easy
-      targetStage = Math.max(0, Math.min(targetStage, LADDER_MAX));
-      const nextDate = new Date(now.getTime() + FSRS_FIRST_INTERVALS[targetStage] * 86400000);
-      const enteringFsrs = targetStage >= LADDER_MAX;
-
-      await dm.updateItem(filePath, (it) => {
-        it.stage = targetStage;
-        it.phase = enteringFsrs ? 'fsrs' : 'ladder';
-        it.lastReviewed = now.toISOString();
-        it.lastDifficulty = rating;
-        it.totalReviews = (it.totalReviews || 0) + 1;
-        if (!it.reviewHistory) it.reviewHistory = [];
-        it.reviewHistory.push({ timestamp: now.toISOString(), stage: targetStage + 1, rating });
-        // 进入 FSRS 阶段时，用对应评分初始化 S
-        if (enteringFsrs) {
-          const initStability = fsrs.initS(rating);
-          it.stability = initStability;
-          it.difficulty = rating === 'again' ? fsrs.w[4] : 0.3;
-          // ADR-0077：进入 FSRS 即把 S/D 记入历史（下游拟合配对依赖上一条含 stability/difficulty）
-          it.reviewHistory[it.reviewHistory.length - 1].stability = Math.round(initStability * 100) / 100;
-          it.reviewHistory[it.reviewHistory.length - 1].difficulty = Math.round(it.difficulty * 100) / 100;
-        }
-        it.nextReviewDate = nextDate.toISOString();
-        if (enteringFsrs) it.completed = false; // 进入 FSRS 不算完成
-
-        // ticket 098：做题会话自动评级未通过/通过联动待重做标记；其余路径 good/easy 清（ADR-0044）
-        if (opts?.autoPending) it.pendingRedo = rating === 'again' || rating === 'hard';
-        else if (rating === 'good' || rating === 'easy') it.pendingRedo = false;
-      });
-      notice(enteringFsrs ? `进入深度复习，${FSRS_FIRST_TEXTS[targetStage]}后复习` : `${FSRS_FIRST_TEXTS[targetStage]}后复习`, 'success');
-      // ADR-0077：评级也累计拟合计数（含阶梯阶段；样本过滤在 fit.ts 内做）。
-      // fire-and-forget：计数在入口同步累加，拟合自防重入；不 await 避免大历史时卡评级路径
-      void this.maybeRunFit(getApp());
-      return;
-    }
-
-    // ===== 阶段 10+：满血 FSRS =====
-    const S = item.stability || 1;
-    const D = item.difficulty || 0.3;
-    const t = (now.getTime() - new Date(item.lastReviewed || item.reviewStart).getTime()) / 86400000;
-    const R = fsrs.R(t, S);
-    const result = fsrs.nextInterval(S, D, rating, R);
-    // ticket 100：复习间隔缩放（ADR-0046，用户拍板解冻）——FSRS 相位出题天数 × 系数；阶梯阶段固定表不受影响
-    const scale = (getSettings() as any).reviewIntervalScale ?? 1;
-    const scaledDays = Math.max(0.01, result.days * (Number(scale) > 0 ? Number(scale) : 1));
+    // 满血 FSRS：调度决策收敛到纯函数 scheduleNext（9 级前爬阶梯、9 级后按 S/D/R 动态，
+    // 不再固定 120 天循环、不再重复 initS 重置记忆参数）
+    const decision = scheduleNext(
+      {
+        stage: item.stage,
+        phase: item.phase,
+        stability: item.stability,
+        difficulty: item.difficulty,
+        lastReviewed: item.lastReviewed,
+        reviewStart: item.reviewStart,
+      },
+      rating,
+      now,
+      this.currentW()
+    );
+    // ticket 100：复习间隔缩放（ADR-0046）——仅 FSRS 动态间隔乘系数；阶梯固定表（含进入点 120d）不受影响
+    const scaleRaw = Number((getSettings() as any).reviewIntervalScale);
+    const scale = decision.phase === 'fsrs' && !decision.enteringFsrs && scaleRaw > 0 ? scaleRaw : 1;
+    const scaledDays = Math.max(0.01, decision.intervalDays * scale);
     const nextDate = new Date(now.getTime() + scaledDays * 86400000);
 
     await dm.updateItem(filePath, (it) => {
-      it.stability = Math.round(result.S * 100) / 100;
-      it.difficulty = Math.round(result.D * 100) / 100;
+      it.stage = decision.stage;
+      it.phase = decision.phase;
+      if (decision.stability !== null) it.stability = decision.stability;
+      if (decision.difficulty !== null) it.difficulty = decision.difficulty;
       it.lastReviewed = now.toISOString();
       it.lastDifficulty = rating;
       it.totalReviews = (it.totalReviews || 0) + 1;
       if (!it.reviewHistory) it.reviewHistory = [];
-      // ADR-0077：difficulty 随历史落盘（拟合样本配对依赖上一条 difficulty；缺失时拟合层回退条目级值）
-      it.reviewHistory.push({ timestamp: now.toISOString(), stage: currentStage + 1, rating, stability: Math.round(result.S * 100) / 100, difficulty: Math.round(result.D * 100) / 100, R: Math.round(R * 100) });
+      const entry: Record<string, unknown> = { timestamp: now.toISOString(), stage: decision.historyStage, rating };
+      // ADR-0077：S/D 记入历史（下游拟合配对依赖上一条含 stability/difficulty）
+      if (decision.historyStability !== null) {
+        entry.stability = decision.historyStability;
+        entry.difficulty = decision.historyDifficulty;
+      }
+      if (decision.R !== null) entry.R = Math.round(decision.R * 100);
+      it.reviewHistory.push(entry as (typeof it.reviewHistory)[number]);
       it.nextReviewDate = nextDate.toISOString();
+      if (decision.enteringFsrs) it.completed = false; // 进入 FSRS 不算完成
 
       // ticket 098：做题会话自动评级未通过/通过联动待重做标记；其余路径 good/easy 清（ADR-0044）
       if (opts?.autoPending) it.pendingRedo = rating === 'again' || rating === 'hard';
       else if (rating === 'good' || rating === 'easy') it.pendingRedo = false;
     });
 
-    const days = Math.round(scaledDays);
-    const rPct = Math.round(R * 100);
-    notice(`R=${rPct}% → 下次复习：${days > 0 ? days + '天' : '1天'}后`, 'success');
-    // ADR-0077：每次评级后累计计数，达阈值后台触发拟合重算。
-    // fire-and-forget（不 await）：拟合计数在 maybeRunFit 入口同步累加且自带 _fitRunning
-    // 防重入，完成后自行 notice——大历史时不再阻塞评级写盘路径
+    if (decision.enteringFsrs) {
+      notice(`进入深度复习，${FSRS_FIRST_TEXTS[decision.stage]}后复习`, 'success');
+    } else if (decision.phase === 'ladder') {
+      notice(`${FSRS_FIRST_TEXTS[decision.stage]}后复习`, 'success');
+    } else {
+      const days = Math.round(scaledDays);
+      const rPct = Math.round((decision.R || 0) * 100);
+      notice(`R=${rPct}% → 下次复习：${days > 0 ? days + '天' : '1天'}后`, 'success');
+    }
+    // ADR-0077：评级也累计拟合计数（含阶梯阶段；样本过滤在 fit.ts 内做）。
+    // fire-and-forget：计数在入口同步累加，拟合自防重入；不 await 避免大历史时卡评级路径
     void this.maybeRunFit(getApp());
   },
 
@@ -354,16 +348,23 @@ export const reviewApp = {
       }
     }
 
-    // 逾期集合（R 阈值提前逾期 + 每日上限）
-    const overdue = this.dueItems(items);
-    if (!overdue.length) {
+    // item 6/9：开始本轮与三区列同口径（roundQueue 纯函数）——
+    // 逾期 ∪ R 阈值提前 ∪ 今日到期（今日到期时刻未到 = 允许提前开始今天全部）
+    const rThreshold = Number((getSettings() as any).reviewRThreshold) || 0.9;
+    const round = roundQueue(items, rThreshold, this.currentW());
+    if (!round.length) {
       notice('没有逾期笔记', 'success');
       return;
     }
+    // item 9：纳入了「今日到期但时刻未到」的篇目 → 明确反馈
+    const earlyToday = round.filter((i) => !i.isOverdue && !isEarlyDue(i, rThreshold, this.currentW()));
+    if (earlyToday.length) {
+      notice(`今日到期 ${earlyToday.length} 篇已提前纳入本轮`, 'info');
+    }
     const dailyLimit = Number((getSettings() as any).reviewDailyLimit) || 0;
-    const limited = this.sortOverdue(overdue, dailyLimit);
-    if (limited.length < overdue.length) {
-      notice(`本轮复习 ${limited.length} 篇，剩余 ${overdue.length - limited.length} 篇留到下次`, 'info');
+    const limited = this.sortOverdue(round, dailyLimit);
+    if (limited.length < round.length) {
+      notice(`本轮复习 ${limited.length} 篇，剩余 ${round.length - limited.length} 篇留到下次`, 'info');
     }
 
     if (!getSettings().forceQuizForReview) {
@@ -394,21 +395,10 @@ export const reviewApp = {
     await this.runSprintSession(limited, 'round');
   },
 
-  /** 当前逾期条目（R 阈值提前逾期） */
+  /** 当前逾期条目（item 6：改用 roundQueue 同口径——逾期 ∪ R 阈值提前 ∪ 今日到期） */
   dueItems(items: ReviewItem[]): ReviewItem[] {
     const rThreshold = Number((getSettings() as any).reviewRThreshold) || 0.9;
-    return items.filter((i) => {
-      if (i.isCompleted || i.isMissing) return false;
-      if (i.isOverdue) return true;
-      if (i.phase === 'fsrs' && i.stability && i.lastReviewed) {
-        const t = (new Date().getTime() - new Date(i.lastReviewed).getTime()) / 86400000;
-        if (t > 0) {
-          const R = new FSRS(this.currentW()).R(t, i.stability);
-          if (R < rThreshold) return true;
-        }
-      }
-      return false;
-    });
+    return roundQueue(items, rThreshold, this.currentW());
   },
 
   /**
@@ -421,6 +411,14 @@ export const reviewApp = {
     const app = getApp();
     const { uiManager } = await import('./index');
     if (!uiManager) return;
+
+    // item 8：结算屏「连续 N 天」——进会话时算好 streak 传入
+    let streakDays = 0;
+    try {
+      streakDays = computeStats(await this.dataManager!.loadItems()).streak;
+    } catch {
+      /* ignore */
+    }
 
     const quiz: any = await this.getQuiz();
     // 懒批量：首篇 fetch 触发整轮后台生成；后续篇目直接读已生成结果
@@ -440,6 +438,7 @@ export const reviewApp = {
       queue: items,
       mode,
       quiz,
+      streakDays,
       fetchQuestions: async (item) => {
         // 现成题直接读（single：现成无则重新生成；redo：重新生成）
         const qs = await quiz?.manager?.getQuestionsForNote(app, item.filePath);
@@ -492,12 +491,17 @@ export const reviewApp = {
   },
 
 
-  /** 顺序复习循环（源码 L686-709 逐字） */
+  /** 顺序复习循环（源码 L686-709 逐字；item 4 悬浮评级条 + item 5 离篇宽限/断点可恢复）
+   *  - 屏幕底部挂迷你评级条（忘了/困难/一般/简单 + 跳过）：点评级写盘 → 轮询检测翻篇；跳过不评级直接下一篇
+   *  - 离篇持续 REVIEW_AWAY_GRACE_MS 才判中断（宽限期内回篇继续）；中断/超时保留 _pendingRound，
+   *    通知挂「继续本轮」action 断点续跑 */
   async reviewLoop(overdueNotes: ReviewItem[], index: number): Promise<void> {
     const app = getApp();
     this.ensure(app);
     const dm = this.dataManager!;
     if (index >= overdueNotes.length) {
+      this._pendingRound = null;
+      this.hideReviewBar();
       if (this._reviewNotice) {
         this._reviewNotice.setType('success');
         this._reviewNotice.setMessage('所有逾期笔记已复习完成');
@@ -514,6 +518,7 @@ export const reviewApp = {
       await this.reviewLoop(overdueNotes, index + 1);
       return;
     }
+    this._pendingRound = { items: overdueNotes, index }; // item 5：断点（完成/清零时置空）
     const leaf = app.workspace.getLeaf(false);
     await leaf.openFile(file as TFile);
     // 连续复习：常驻单框动态更新（同键存活时原地合并，不刷屏）
@@ -523,33 +528,77 @@ export const reviewApp = {
     } else {
       this._reviewNotice = notify(reviewMsg, { type: 'progress', dedupeKey: 'review-loop' });
     }
+    // item 4：挂悬浮迷你评级条（fire-and-forget：不阻塞轮询/翻篇链路；ui 不可用时静默降级为命令评级）
+    this.hideReviewBar();
+    void (async () => {
+      try {
+        const { mountFloatingRatingBar } = await import('./ui');
+        this._reviewBar = mountFloatingRatingBar({
+          name: item.name,
+          index: index + 1,
+          total: overdueNotes.length,
+          onRate: (rating) => {
+            // 评级写盘 → 下方轮询检测 lastReviewed 更新自动翻篇（本条收起由按钮点击即收）
+            void this.markReview(item.filePath, rating);
+          },
+          onSkip: () => {
+            // 跳过：不评级不写盘，直接进下一篇
+            void advance();
+          },
+        });
+      } catch {
+        /* ignore */
+      }
+    })();
 
     let checkCount = 0;
     const maxChecks = 300;
+    let advanced = false;
+    let awaySince: number | null = null; // item 5：持续离篇起点（null=在篇上）
+    const advance = async (): Promise<void> => {
+      if (advanced) return;
+      advanced = true;
+      this.hideReviewBar();
+      clearLoop();
+      await this.reviewLoop(overdueNotes, index + 1);
+    };
     const interval = setInterval(async () => {
       checkCount++;
       const activeFile = app.workspace.getActiveFile();
       if (!activeFile || activeFile.path !== item.filePath) {
+        // item 5：离篇宽限——持续离篇超过阈值才算中断；宽限期内回篇自动续候
+        const nowMs = Date.now();
+        if (awaySince === null) awaySince = nowMs;
+        if (nowMs - awaySince < REVIEW_AWAY_GRACE_MS) return;
+        advanced = true;
+        this.hideReviewBar();
         clearLoop();
-        // P1-2：活动文件切走 = 本轮连续复习中断，与超时分支同样收尾常驻通知
+        // P1-2：本轮连续复习中断（保留 _pendingRound 供「继续本轮」断点续跑）
         if (this._reviewNotice) {
-          this._reviewNotice.setMessage('已切换到其他笔记，本轮复习中断');
+          this._reviewNotice.setMessage('已离开当前笔记，本轮复习中断');
           this._reviewNotice.setType('warning');
           this._reviewNotice = null;
         }
+        notify('已离开当前笔记，本轮复习中断', {
+          type: 'warning',
+          dedupeKey: 'review-loop-interrupted',
+          action: { label: '继续本轮', onClick: () => void reviewApp.resumeRound() },
+        });
         return;
       }
+      awaySince = null; // 回到篇上：宽限计时复位
       const updatedItems = await dm.loadItems();
       const updated = updatedItems.find((i) => i.filePath === item.filePath);
       if (updated && updated.lastReviewed) {
         const last = new Date(updated.lastReviewed);
         if (Date.now() - last.getTime() < 30000) {
-          clearLoop();
-          await this.reviewLoop(overdueNotes, index + 1);
+          await advance();
           return;
         }
       }
       if (checkCount >= maxChecks) {
+        advanced = true;
+        this.hideReviewBar();
         clearLoop();
         if (this._reviewNotice) {
           this._reviewNotice.setMessage('复习超时，请手动继续');
@@ -558,6 +607,11 @@ export const reviewApp = {
         } else {
           notice('复习超时，请手动继续', 'warning');
         }
+        notify('复习超时，可从断点继续本轮', {
+          type: 'info',
+          dedupeKey: 'review-loop-timeout',
+          action: { label: '继续本轮', onClick: () => void reviewApp.resumeRound() },
+        });
       }
     }, 1000);
     // P3：句柄入账（stopReviewLoops 统一清理），防插件禁用后轮询残留
@@ -566,6 +620,16 @@ export const reviewApp = {
       clearInterval(interval);
       this._reviewLoops.delete(interval);
     };
+  },
+
+  /** item 5：从断点恢复本轮（中断/超时后「继续本轮」入口；无断点给明确反馈） */
+  resumeRound(): void {
+    const r = this._pendingRound;
+    if (!r) {
+      notice('没有进行中的本轮复习');
+      return;
+    }
+    void this.reviewLoop(r.items, r.index);
   },
 
   /** 加入当前笔记到复习计划 */
@@ -607,7 +671,8 @@ export const reviewApp = {
       if (p && !els.has(p)) els.set(p, el);
     }
 
-    const fsrs = new FSRS();
+    // R 染色与排期同口径：读拟合权重 currentW()（ADR-0077；默认回退 DEFAULT_W）
+    const fsrs = new FSRS(this.currentW());
 
     for (const path of paths) {
       const el = els.get(path);
@@ -657,7 +722,8 @@ export const reviewApp = {
       target.style.color = color;
 
       let timeText = '';
-      if (status === 'complete') timeText = '✅';
+      let badgeIcon: 'check' | 'calendar' | null = null;
+      if (status === 'complete') badgeIcon = 'check'; // item 14：✅ → lucide check
       else if (nextReview) {
         const diff = nextReview.getTime() - now.getTime();
         if (diff > 0) {
@@ -667,12 +733,18 @@ export const reviewApp = {
           if (d > 0) timeText = `${d}d`;
           else if (h > 0) timeText = `${h}h`;
           else timeText = `${m}m`;
-        } else timeText = '📅';
+        } else badgeIcon = 'calendar'; // item 14：📅 → lucide calendar
       }
-      if (timeText) {
+      if (badgeIcon || timeText) {
         const badgeEl = document.createElement('span');
         badgeEl.className = 'review-stage-badge';
-        badgeEl.textContent = timeText;
+        if (badgeIcon) {
+          // item 14：徽标用 lucide（uiIcon 工厂；尺寸走域样式 .review-stage-badge svg）
+          const { uiIcon } = await import('../core/ui');
+          badgeEl.appendChild(uiIcon(badgeIcon));
+        } else {
+          badgeEl.textContent = timeText;
+        }
         badgeEl.style.cssText = `font-size:0.7em;opacity:0.8;margin-left:6px;color:${color};background:color-mix(in srgb, ${color} 10%, transparent);padding:1px 4px;border-radius:3px;border:1px solid color-mix(in srgb, ${color} 30%, transparent);font-weight:500;`;
         target.appendChild(badgeEl);
       }
