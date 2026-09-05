@@ -230,6 +230,8 @@ export class DiaryWallAppController {
   private _scrollFixTimer: ReturnType<typeof setTimeout> | null = null;
   /** 媒体懒加载 observer + 章节滚动高亮 cleanup：按 desk/mob 实例分存（双实例各自独立，互不覆盖） */
   private observers: Record<'desk' | 'mob', IntersectionObserver | null> = { desk: null, mob: null };
+  /** issue 209：章节栏视频缩略懒加载 observer（进视口才读首帧，与墙内 observers 分root 各自独立） */
+  private railObservers: Record<'desk' | 'mob', IntersectionObserver | null> = { desk: null, mob: null };
   private rafCleanups: Record<'desk' | 'mob', (() => void) | null> = { desk: null, mob: null };
   private sheetEntry: WallEntry | null = null;
   private _searchTimer: ReturnType<typeof setTimeout> | null = null;
@@ -430,7 +432,7 @@ export class DiaryWallAppController {
     // DW10：灯箱背景关闭由 bindLightbox 统一绑定、根遮罩关闭移 ensureElements 单次绑定（此处原重复绑 2~3 次）
     // 章节栏（仅桌面有）事件委托：月份点击 → 平滑滚动定位
     ui.rail.addEventListener('click', (e) => {
-      const item = (e.target as HTMLElement).closest<HTMLElement>('.bz-diary-wall-month');
+      const item = (e.target as HTMLElement).closest<HTMLElement>('.bz-diary-wall-rail-cluster');
       if (!item) return;
       this.scrollToMonth(item.dataset.month || '', ui.wall);
     });
@@ -720,53 +722,30 @@ export class DiaryWallAppController {
     // 增强 #5：那年今天时光条（首屏顶部横滑媒体条，不打断主瀑布流；无命中不渲染）
     const memories = pickOnThisDay(list, this.todayStr()).filter((e) => e.media.length > 0);
     if (memories.length) ui.wall.appendChild(this.mkMemories(memories));
-    // 章节栏（仅桌面）：壳 = .bz-rail 族（ADR-0094），月份行 = .bz-rail-item(.on) 形制
+    // 章节栏（仅桌面）：纯缩略图簇（issue 209 拍板：栏内零文字——无标题/年份标签/月名/条数。
+    // 每月 = 月内前 6 个含图/视频条目的首个非音频媒体缩略，3 列 × 2 行；纯文字月不渲染簇）
     if (!mobile) {
       const scroll = document.createElement('div');
       scroll.className = 'bz-rail-scroll';
-      const title = document.createElement('div');
-      title.className = 'bz-diary-wall-rail-title';
-      title.textContent = '章 节';
-      scroll.appendChild(title);
-      // 章节栏月份 = groupByMonth(list) 的 key，倒序（对齐数据层契约）
       const byMonth = groupByMonth(list);
       const months = [...byMonth.keys()].sort().reverse();
-      // 增强 #2：年份分组——跨年处插年份分隔标签（data-month 仍存完整 YYYY-MM，定位逻辑不动）
-      let lastYear = '';
       months.forEach((mk) => {
-        const yr = mk.slice(0, 4);
-        if (yr !== lastYear) {
-          lastYear = yr;
-          const yLabel = document.createElement('div');
-          yLabel.className = 'bz-diary-wall-rail-year';
-          yLabel.textContent = yr;
-          scroll.appendChild(yLabel);
-        }
-        const it = document.createElement('div');
-        it.className = 'bz-rail-item bz-diary-wall-month';
-        it.dataset.month = mk;
-        const name = document.createElement('span');
-        name.className = 'bz-rail-name';
-        name.textContent = `${Number(mk.slice(5))}月`;
-        const cnt = document.createElement('span');
-        cnt.className = 'bz-rail-count';
-        cnt.textContent = `${byMonth.get(mk)!.length} 条`;
-        it.append(name, cnt);
-        // 胶卷缩略图条（前 6 条，各取首个媒体/emoji；flex-wrap 换行到第二行）
-        const strip = document.createElement('div');
-        strip.className = 'bz-diary-wall-month-strip';
-        byMonth
+        const thumbs = byMonth
           .get(mk)!
           .slice(0, 6)
-          .forEach((e) => {
-            const m = e.media[0];
-            strip.appendChild(this.thumbEl(m, e));
-          });
-        it.appendChild(strip);
+          .map((e) => ({ e, m: e.media.find((x) => x.kind !== 'audio') }))
+          .filter((x) => x.m);
+        if (!thumbs.length) return; // 纯文字月：无图/视频缩略可显示（栏内零文字语义，无法定位可接受）
+        const cluster = document.createElement('div');
+        cluster.className = 'bz-diary-wall-rail-cluster';
+        cluster.dataset.month = mk;
+        thumbs.forEach(({ e, m }) => cluster.appendChild(this.thumbEl(m!, e)));
         // DW8：点击滚动由 bindPanel 的 rail 委托统一处理（此处原逐月再绑一次 → 双触发 smooth 滚动）
-        scroll.appendChild(it);
+        scroll.appendChild(cluster);
       });
       ui.rail.appendChild(scroll);
+      // issue 209：章节栏视频缩略懒加载（进视口才读首帧，修「开墙全量解码」卡顿）
+      this.setupRailLazy(ui.rail, 'desk');
     }
     // 瀑布：按日期分节
     // 条目 → 数据索引表（右键委托用）：list 是本次渲染的过滤后列表，widx 即其在 list 中的下标
@@ -791,10 +770,11 @@ export class DiaryWallAppController {
         stat.innerHTML = this.statHtml(this.dayStats(dayList));
         head.append(date, week, stat);
         ui.wall.appendChild(head);
-        // 稀疏铺满：当天条目极少时跨列占满横向空白（文字条跨列、媒体块不放大居中）
+        // 稀疏铺满（issue 209）：仅保留单条日文字条跨列；原 sparse-2 的
+        // 「width:50% + inline-block」半宽 hack 在多列容器里百分比按列宽解析，
+        // 会把卡片压成细条（用户截图实锤的挤压病根），且双列下天然无空位，直接删除
         const n = dayList.length;
-        const sparseCls =
-          n === 1 ? ' bz-diary-wall-masonry--sparse-1' : n === 2 ? ' bz-diary-wall-masonry--sparse-2' : '';
+        const sparseCls = n === 1 ? ' bz-diary-wall-masonry--sparse-1' : '';
         const m = document.createElement('div');
         m.className = 'bz-diary-wall-masonry' + (mobile ? ' bz-diary-wall-masonry--mob' : '') + sparseCls;
         ui.wall.appendChild(m);
@@ -1348,26 +1328,43 @@ export class DiaryWallAppController {
     return h % 3 === 0 ? '1 / 1' : '4 / 3';
   }
 
-  /** 章节栏缩略图（胶卷小图：图片显示真实图、视频/音频线条图标、无媒体 emoji） */
-  private thumbEl(m: WallMedia | undefined, entry: WallEntry): HTMLElement {
+  /**
+   * 章节栏缩略图（issue 209 纯缩略图，无文字兜底格）：
+   * - 图片：loading=lazy + decoding=async 直挂 src（原生懒加载，屏外不解码）；
+   * - 视频：`<video muted preload="none" data-src>`，章节栏自带 IO（setupRailLazy）
+   *   进视口才挂 src 读首帧，离视口暂停；中央小播放角标可辨识；
+   * - 加载失败回退 image 线条图标（沿用）。
+   */
+  private thumbEl(m: WallMedia, entry: WallEntry): HTMLElement {
     const t = document.createElement('span');
-    if (!m) {
-      t.className = 'bz-diary-wall-month-thumb bz-diary-wall-month-thumb--t';
-      t.textContent = entry.emoji.slice(0, 1);
-      return t;
-    }
-    t.className =
-      'bz-diary-wall-month-thumb' +
-      (m.kind === 'video' ? ' bz-diary-wall-month-thumb--v' : m.kind === 'audio' ? ' bz-diary-wall-month-thumb--a' : '');
-    if (m.kind === 'video') t.appendChild(uiIcon(ACTION_ICON.play));
-    else if (m.kind === 'audio') t.appendChild(uiIcon(ACTION_ICON.music));
-    else {
-      const src = this.mediaSrcFor(entry, m.name);
+    t.className = 'bz-diary-wall-month-thumb';
+    const src = this.mediaSrcFor(entry, m.name);
+    if (m.kind === 'video') {
+      t.classList.add('bz-diary-wall-month-thumb--video');
+      if (src) {
+        const v = document.createElement('video');
+        v.muted = true;
+        v.preload = 'none';
+        v.playsInline = true;
+        v.tabIndex = -1;
+        v.dataset.src = src;
+        v.onerror = () => {
+          v.remove();
+          t.classList.add('bz-diary-wall-month-thumb--broken');
+        };
+        t.appendChild(v);
+      } else {
+        t.classList.add('bz-diary-wall-month-thumb--broken');
+      }
+      const play = uiIcon(ACTION_ICON.play);
+      play.classList.add('bz-diary-wall-month-thumb-play');
+      t.appendChild(play);
+    } else {
       if (src) {
         const img = document.createElement('img');
         img.loading = 'lazy';
-        // 直接设 src（勿用 dataset.lazy：章节栏不在 setupLazy 观察范围内，
-        // 只挂 dataset 永不渲染 → 胶卷缩略图空白）
+        img.decoding = 'async';
+        img.alt = '';
         img.src = src;
         img.onerror = () => {
           t.innerHTML = '';
@@ -1442,6 +1439,46 @@ export class DiaryWallAppController {
     this.observers[key] = io;
   }
 
+  /**
+   * 章节栏懒加载（issue 209）：栏内视频缩略进视口才挂 src 读首帧（preload=metadata），
+   * 离视口暂停释放解码——修「开墙即全量解码章节缩略」的卡顿。root = 栏内滚动容器。
+   * 无 IO 环境（jsdom/旧内核）直接挂载，保证测试确定性。
+   */
+  private setupRailLazy(rail: HTMLElement, key: 'desk' | 'mob') {
+    if (this.railObservers[key]) this.railObservers[key]!.disconnect();
+    const scroller = (rail.querySelector('.bz-rail-scroll') as HTMLElement | null) || rail;
+    const videos = Array.from(rail.querySelectorAll<HTMLVideoElement>('video[data-src]'));
+    if (typeof IntersectionObserver === 'undefined') {
+      videos.forEach((v) => this.hydrateRailVideo(v));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((en) => {
+          const el = en.target as HTMLElement;
+          if (en.isIntersecting) {
+            this.hydrateRailVideo(el as HTMLVideoElement);
+          } else {
+            const v = el as HTMLVideoElement;
+            if (el.tagName === 'VIDEO' && !v.paused) v.pause();
+          }
+        });
+      },
+      { root: scroller, rootMargin: '120px 0px 120px 0px', threshold: 0 }
+    );
+    videos.forEach((v) => io.observe(v));
+    this.railObservers[key] = io;
+  }
+
+  /** 章节栏视频缩略挂载：data-src → src + preload=metadata（读首帧当缩略图） */
+  private hydrateRailVideo(v: HTMLVideoElement) {
+    const src = v.dataset.src;
+    if (!src || v.getAttribute('src')) return;
+    v.setAttribute('src', src);
+    delete v.dataset.src;
+    v.preload = 'metadata';
+  }
+
   // ---------- 滚动 → 章节自动高亮 ----------
   /**
    * 章节点击：平滑滚动定位到该月的第一个 day-head（不重渲染、不切过滤）。
@@ -1503,10 +1540,10 @@ export class DiaryWallAppController {
         }));
         let currentMonth = pickCurrentMonth(items);
         if (!currentMonth) currentMonth = items[0].date.slice(0, 7);
-        rail.querySelectorAll('.bz-diary-wall-month').forEach((it) => {
+        rail.querySelectorAll('.bz-diary-wall-rail-cluster').forEach((it) => {
           it.classList.toggle('on', it.getAttribute('data-month') === currentMonth);
         });
-        const active = rail.querySelector<HTMLElement>(`.bz-diary-wall-month[data-month="${currentMonth}"]`);
+        const active = rail.querySelector<HTMLElement>(`.bz-diary-wall-rail-cluster[data-month="${currentMonth}"]`);
         if (active) {
           const railRect = scroller.getBoundingClientRect();
           const actRect = active.getBoundingClientRect();
@@ -1528,6 +1565,10 @@ export class DiaryWallAppController {
     if (this.observers[key]) {
       this.observers[key]!.disconnect();
       this.observers[key] = null;
+    }
+    if (this.railObservers[key]) {
+      this.railObservers[key]!.disconnect();
+      this.railObservers[key] = null;
     }
   }
 
