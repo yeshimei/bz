@@ -99,10 +99,6 @@ export function unloadBookshelf(): void {
     M.currentOverlay.remove();
     M.currentOverlay = null;
   }
-  if (M.drawerEl) {
-    M.drawerEl.remove();
-    M.drawerEl = null;
-  }
   // 孤儿浮层兜底清理（按域锚点：面板壳已改共享 .bz-panel-overlay，经本域 .bz-bs-panel 定位其遮罩根，
   // 防止误删同时开着的其他域面板）
   document.querySelectorAll('.bz-bs-panel').forEach((el) => {
