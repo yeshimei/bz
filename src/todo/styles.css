@@ -442,6 +442,8 @@
   box-shadow: 0 18px 44px rgba(20, 20, 20, 0.2);
 }
 .bz-todo-skin-editorial .bz-panel-head { border-bottom: 1.5px solid var(--bz-skin-ink); }
+/* 头行右侧设置/关闭钮：与纸感一致一并去掉（用户拍板） */
+.bz-todo-skin-editorial .bz-panel-head-btns { display: none; }
 .bz-todo-skin-editorial .bz-panel-brand { background: var(--bz-brand); border-radius: 0; }
 .bz-todo-skin-editorial .bz-panel-title {
   font-family: var(--bz-skin-serif);
