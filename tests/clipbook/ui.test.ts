@@ -54,9 +54,9 @@ describe('clipbook UI 桌面三栏', () => {
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(overlay).toBeTruthy();
     expect(overlay.querySelector('.bz-clip-desk')).toBeTruthy();
-    // issue 201 头行对齐待办：桌面头行 ⚙设置直达 + ✕关闭（品牌块原有）
-    expect(overlay.querySelector('[data-clip-settings]')).toBeTruthy();
-    expect(overlay.querySelector('[data-clip-desk-close]')).toBeTruthy();
+    // issue 214 三轮用户拍板：头行去 ⚙/✕（关闭 = 点遮罩/ESC；设置走命令/设置面板）
+    expect(overlay.querySelector('[data-clip-settings]')).toBeNull();
+    expect(overlay.querySelector('[data-clip-desk-close]')).toBeNull();
     expect(overlay.querySelector('.bz-rail-scroll')).toBeTruthy();
     expect(overlay.querySelector('.bz-clip-list')).toBeTruthy();
     expect(overlay.querySelector('[data-clip-reader]')).toBeTruthy();
@@ -421,6 +421,8 @@ describe('clipbook UI 桌面三栏', () => {
     item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
     await vi.waitFor(() => expect(document.querySelector('.bz-item-menu')).toBeTruthy());
     expect((document.querySelector('.bz-item-menu') as HTMLElement).textContent).toContain('查看原文');
+    // 编辑部换肤靠根挂类生效（菜单挂 body，域内后代选择器不可达）
+    expect(document.querySelector('.bz-item-menu')!.classList.contains('bz-clip-menu-editorial')).toBe(true);
     // 剪藏条目：文末「打开笔记」文字脚（data-clip-open-note 保留）
     const clipRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
     clipRow.click();
