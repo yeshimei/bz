@@ -871,19 +871,16 @@ describe('bookshelf overlay', () => {
     closeOverlay();
   });
 
-  it('状态角标文字签（issue 207）：未读/在读出浅底签、已读不渲染；无状态圆点残留', async () => {
+  it('书卡零状态角标（issue 207 二轮拍板）：圆点与文字签一律不渲染，状态只在侧栏/详情呈现', async () => {
     const { vault, app } = seedVault(); // 认知觉醒=在读 / 算法导论=未读 / 围城=已读
     await openPanel(vault, app);
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     const cards = gridCards(overlay);
     expect(cards.length).toBe(3);
     expect(overlay.querySelector('.bz-bs-statusdot')).toBeFalsy();
-    const tagOf = (title: string) =>
-      cards.find((c) => c.textContent?.includes(title))?.querySelector('.bz-bs-status-tag') as HTMLElement | null;
-    expect(tagOf('算法导论')?.textContent).toBe('未读');
-    expect(tagOf('认知觉醒')?.textContent).toBe('在读');
-    expect(tagOf('认知觉醒')?.classList.contains('reading')).toBe(true);
-    expect(tagOf('围城')).toBeFalsy();
+    expect(overlay.querySelector('.bz-bs-status-tag')).toBeFalsy();
+    // 报告入口无尾随三角（chevron 已删）
+    expect(overlay.querySelector('.bz-bs-report .bz-bs-report-chev')).toBeFalsy();
     closeOverlay();
   });
 
