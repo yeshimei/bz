@@ -253,20 +253,19 @@ describe('clipbook UI 桌面三栏', () => {
 
   // ================= issue 206：搜索进 rail / 统计联动 / 图片 / 滚动重置 / 去分析入口 =================
 
-  it('issue 206：搜索框移入左栏顶部；阅读分析报告入口移除', async () => {
+  it('issue 214：搜索框在头行右缘（原型对齐），rail 只有栏头/源列表/今日脚注；阅读分析报告入口移除', async () => {
     await openDesktop();
-    const rail = document.querySelector('.bz-clip-rail') as HTMLElement;
-    // 搜索框在 rail 内且位于源列表（rail-scroll）上方
-    const railSearch = rail.querySelector('.bz-clip-rail-search input[data-clip-desk-search]');
-    expect(railSearch).toBeTruthy();
-    const scroll = rail.querySelector('.bz-rail-scroll') as HTMLElement;
-    expect((scroll.previousElementSibling as HTMLElement).classList.contains('bz-clip-rail-search')).toBe(true);
-    // 头行不再有搜索框
+    // 搜索框在头行（issue 214 原型对齐，回归 issue 206 的 rail 位置）
     const head = document.querySelector('.bz-panel-head') as HTMLElement;
-    expect(head.querySelector('[data-clip-desk-search]')).toBeNull();
+    expect(head.querySelector('input[data-clip-desk-search]')).toBeTruthy();
+    const rail = document.querySelector('.bz-clip-rail') as HTMLElement;
+    expect(rail.querySelector('[data-clip-desk-search]')).toBeNull();
+    // rail 结构：栏头 + 源列表 + 今日脚注
+    expect(rail.querySelector('.bz-clip-rail-label')!.textContent).toContain('PLATFORM');
+    expect(rail.querySelector('.bz-rail-scroll')).toBeTruthy();
+    expect(rail.querySelector('[data-clip-rail-foot]')!.textContent).toContain('今日已读');
     // 阅读分析报告入口已移除
     expect(document.querySelector('[data-clip-analy]')).toBeNull();
-    expect(rail.textContent).not.toContain('阅读分析报告');
     closePanel();
   });
 
@@ -315,9 +314,8 @@ describe('clipbook UI 桌面三栏', () => {
     // 列表第一项 = 新文（timeTs 降序，聚合讯新文章排最前）
     const first = document.querySelector('.bz-clip-item') as HTMLElement;
     expect(first.textContent).toContain('新文');
-    // 站点图标：先首字 chip 占位（jsdom 不触发网络图加载回调，停留占位态）
-    const chip = document.querySelector('[data-clip-reader] .bz-clip-favchip') as HTMLElement;
-    expect(chip.textContent).toBe('果');
+    // meta = 「站点短名 · 时间」（issue 214：favicon 链退役，站点短名 果壳科学人→果壳）
+    expect(first.querySelector('.bz-clip-item-meta')!.textContent).toContain('果壳 · ');
     // 点旧文 → 正文 markdown 图片渲染为 img 段（不再被丢弃）
     const oldItem = [...document.querySelectorAll('.bz-clip-item')].find((r) => r.textContent!.includes('旧文')) as HTMLElement;
     oldItem.click();
@@ -365,7 +363,7 @@ describe('clipbook UI 桌面三栏', () => {
     closePanel();
   });
 
-  it('issue 214：目录序号制——序号领队 + 状态类 + 桌面无状态圆点；中栏有「目录」栏头', async () => {
+  it('issue 214：目录序号制——序号领队 + 状态类 + 桌面无状态圆点/无摘要；中栏有「目录」栏头', async () => {
     await openDesktop();
     expect(document.querySelector('.bz-clip-toc-head')!.textContent).toContain('目录');
     const items = [...document.querySelectorAll('.bz-clip-item')] as HTMLElement[];
@@ -374,6 +372,9 @@ describe('clipbook UI 桌面三栏', () => {
       expect(it.querySelector('.bz-clip-no')).toBeTruthy();
       expect(it.className).toMatch(/bz-clip-item--(unread|reading|saved)/);
       expect(it.querySelector('.bz-clip-dot')).toBeNull();
+      // 原型对齐：摘要不入目录，meta 一行「站点 · 时间」
+      expect(it.querySelector('.bz-clip-item-sum')).toBeNull();
+      expect(it.querySelector('.bz-clip-item-meta')!.textContent).toMatch(/·/);
     }
     expect(items[0].querySelector('.bz-clip-no')!.textContent).toBe('01');
     closePanel();
@@ -406,8 +407,11 @@ describe('clipbook UI 桌面三栏', () => {
   it('issue 214：阅读面——站点并入 meta、去底部原文链接；news 右键含「查看原文」；剪藏条目有「打开笔记」文字脚', async () => {
     await openDesktop();
     const reader = document.querySelector('[data-clip-reader]') as HTMLElement;
-    // meta 行含站点（favicon chip 保留）且独立站点行退役（首个元素 = 标题）
-    expect(reader.querySelector('.bz-clip-art-meta .bz-clip-art-site')).toBeTruthy();
+    // meta 行：时间 + 站点短名（橘，首篇 = B站 UP 影视飓风）+ 状态右缘；无 favicon/类型胶囊（issue 214 原型对齐）
+    expect(reader.querySelector('.bz-clip-art-meta .bz-clip-art-site-name')!.textContent).toBe('影视飓风');
+    expect(reader.querySelector('.bz-clip-art-state')!.textContent).toMatch(/未读|在读|已读|已保存/);
+    expect(reader.querySelector('.bz-clip-favchip')).toBeNull();
+    expect(reader.querySelector('.bz-clip-art-type')).toBeNull();
     expect(reader.firstElementChild!.classList.contains('bz-clip-art-title')).toBe(true);
     // 底部动作退役：无原文链接；news 无打开笔记脚
     expect(reader.querySelector('.bz-clip-art-origin')).toBeNull();
