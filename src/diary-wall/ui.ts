@@ -1364,24 +1364,33 @@ export class DiaryWallAppController {
   private thumbEl(m: WallMedia, entry: WallEntry): HTMLElement {
     const t = document.createElement('span');
     t.className = 'bz-diary-wall-month-thumb' + (m.kind === 'video' ? ' bz-diary-wall-month-thumb--v' : '');
-    t.appendChild(uiIcon(m.kind === 'video' ? ACTION_ICON.play : ACTION_ICON.image));
     const src = this.mediaSrcFor(entry, m.name);
-    if (src) {
-      const key = railThumbKey(entry.date, m.name);
-      if (m.kind === 'video') {
-        const v = document.createElement('video');
-        v.muted = true;
-        v.preload = 'none';
-        v.dataset.src = src;
-        v.dataset.thumbKey = key;
-        t.appendChild(v);
-      } else {
-        const img = document.createElement('img');
-        img.decoding = 'async';
-        img.dataset.thumbSrc = src;
-        img.dataset.thumbKey = key;
-        t.appendChild(img);
-      }
+    if (!src) {
+      // 无资源：仅图标占位
+      t.appendChild(uiIcon(m.kind === 'video' ? ACTION_ICON.play : ACTION_ICON.image));
+      return t;
+    }
+    if (m.kind === 'video') {
+      // 播放角标浮层（首帧小图挂载后仍保留）；图片格不加图标——
+      // issue 216 病根：占位图标与 img 并存，图加载出来图标也不消失（用户截图破图小标）
+      t.appendChild(uiIcon(ACTION_ICON.play));
+      const v = document.createElement('video');
+      v.muted = true;
+      v.preload = 'none';
+      v.dataset.src = src;
+      v.dataset.thumbKey = railThumbKey(entry.date, m.name);
+      t.appendChild(v);
+    } else {
+      const img = document.createElement('img');
+      img.decoding = 'async';
+      img.dataset.thumbSrc = src;
+      img.dataset.thumbKey = railThumbKey(entry.date, m.name);
+      // 加载失败才出现图标占位
+      img.addEventListener('error', () => {
+        img.remove();
+        if (!t.querySelector('img')) t.appendChild(uiIcon(ACTION_ICON.image));
+      });
+      t.appendChild(img);
     }
     return t;
   }
