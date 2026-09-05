@@ -3,7 +3,7 @@
  * 数据与旧 library 域同源：bookshelfFolderPath 缺省回落 libraryFolderPath（同一批书两域同显）；
  * 空值时 chips 区显示实际生效目录（fallbackValue → data.resolveFolderPath，回落链已内置）。
  */
-import { mobileFullscreenGroup } from '../core/settings-common';
+import { mobileFullscreenGroup, numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { resolveFolderPath } from './data';
 
@@ -51,6 +51,15 @@ export function bookshelfSettingsSchema(): SettingsSchema {
               { value: 'author', label: '作者' },
               { value: 'progress', label: '进度' },
             ],
+          },
+          {
+            type: 'number',
+            name: '网格每行列数',
+            desc: '封面网格每一行的列数，范围 2 到 12，重开面板生效',
+            binding: numStrBinding('bookshelfGridColumns', 6),
+            min: 2,
+            max: 12,
+            step: 1,
           },
         ],
       },

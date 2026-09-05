@@ -306,11 +306,11 @@ function buildDom(app: any): void {
   overlayEl.addEventListener('click', (e) => {
     if (e.target === overlayEl) closePanel();
   });
-  // 桌面 rail 源切换
+  // 桌面 rail 源切换（再点已选源回「全部未读」，issue 208）
   railListEl!.addEventListener('click', (e) => {
     const row = (e.target as HTMLElement).closest('[data-src]') as HTMLElement | null;
     if (!row) return;
-    selectSource(JSON.parse(row.dataset.src || 'null'));
+    toggleSource(JSON.parse(row.dataset.src || 'null'));
   });
   // 桌面搜索（enh 包 1）：180ms 防抖对齐保险库/待办
   deskSearchEl!.addEventListener('input', () => {
@@ -374,11 +374,11 @@ function buildDom(app: any): void {
       persist: { load: savedPanelSize, save: rememberPanelSize },
     });
   }
-  // 移动源胶囊点击（委托，含搜索态）
+  // 移动源胶囊点击（委托，含搜索态；再点已选源回「全部未读」，issue 208）
   mobSourcesEl!.addEventListener('click', (e) => {
     const chip = (e.target as HTMLElement).closest('[data-src]') as HTMLElement | null;
     if (!chip) return;
-    selectSource(JSON.parse(chip.dataset.src || 'null'));
+    toggleSource(JSON.parse(chip.dataset.src || 'null'));
   });
   // 移动列表点击 → 详情
   mobListEl!.addEventListener('click', (e) => {
@@ -409,6 +409,15 @@ function selectSource(src: any): void {
   setSearchKw('');
   if (deskSearchEl) deskSearchEl.value = '';
   renderAll();
+}
+
+/** 源选择统一入口（issue 208 全域统一交互）：再点当前选中源 = 回「全部未读」；「全部未读」行点击仍走直选 */
+function toggleSource(src: any): void {
+  const same = src && src.kind !== 'all'
+    && src.kind === M.sel.kind
+    && String(src.platform || '') === M.sel.platform
+    && (src.up ? String(src.up) : null) === M.sel.up;
+  selectSource(same ? { kind: 'all' } : src);
 }
 
 /** 读当前搜索词（state 扩展占位——直接模块级变量） */

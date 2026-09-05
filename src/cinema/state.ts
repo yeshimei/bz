@@ -41,8 +41,6 @@ export interface CinemaState {
   typeFilter: string | null;
   subFilter: string | null;
   statusFilter: string | null;
-  /** 左栏展开的二级分组（组名 → 是否展开） */
-  expanded: Record<string, boolean>;
   /** 排序模式 */
   sortMode: CinemaSortMode;
   /** 当前视图：list / ai / stat */
@@ -70,7 +68,6 @@ export const M: CinemaState = {
   typeFilter: null,
   subFilter: null,
   statusFilter: null,
-  expanded: {},
   sortMode: 'date',
   view: 'list',
   searchKeyword: '',
@@ -95,7 +92,6 @@ export function resetCinemaState(): void {
   M.typeFilter = null;
   M.subFilter = null;
   M.statusFilter = null;
-  M.expanded = {};
   M.sortMode = 'date';
   M.view = 'list';
   M.searchKeyword = '';
