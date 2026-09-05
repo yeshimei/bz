@@ -297,37 +297,46 @@
   box-shadow: inset 2px 2px 0 rgba(42, 35, 24, 0.1);
 }
 
-/* 排序：不用浮岛（用户拍板）——原型 segmented：白底墨框 + 项间分隔线 + 选中黑底白字 */
-.bz-todo-skin-paper .bz-todo-sort .bz-choice--float {
+/* 选择控件统一原型 segmented（用户拍板：排序/弹窗场景/优先级全部不用浮岛）——
+   拼接格子式：白底墨框容器、项间分隔线、选中项黑底白字填满整格。
+   覆盖皮肤作用域内一切 .bz-choice（主头行排序 float + 弹窗表单场景/优先级 float）。 */
+.bz-todo-skin-paper .bz-choice--float {
   background: var(--bz-surface-2);
   border: 2px solid var(--bz-skin-ink);
   border-radius: 11px;
+  padding: 0;
+  overflow: hidden;
 }
-.bz-todo-skin-paper .bz-todo-sort .bz-choice-seg { display: none; }
-.bz-todo-skin-paper .bz-todo-sort .bz-choice-btn { border-radius: 7px; }
-.bz-todo-skin-paper .bz-todo-sort .bz-choice-btn.is-on {
+.bz-todo-skin-paper .bz-choice-seg { display: none; }
+/* 按钮规则带 .bz-choice 复合（0,3,0 ≥ 组件浮岛档），皮肤段后加载同特异性胜出 */
+.bz-todo-skin-paper .bz-choice .bz-choice-btn {
+  border-radius: 0;
+  height: auto;
+  padding: 7px 14px;
+  background: var(--bz-surface-2) !important;
+  color: var(--bz-text-2) !important;
+  border-left: 1px solid rgba(42, 35, 24, 0.16);
+}
+.bz-todo-skin-paper .bz-choice .bz-choice-btn:first-child { border-left: none; }
+.bz-todo-skin-paper .bz-choice .bz-choice-btn:hover {
+  background: var(--bz-surface-hover) !important;
+  color: var(--bz-text-1) !important;
+}
+.bz-todo-skin-paper .bz-choice .bz-choice-btn.is-on {
   background: var(--bz-skin-ink) !important;
   color: #fffdf6 !important;
   font-weight: var(--bz-weight-bold);
 }
-.bz-todo-skin-paper .bz-todo-sort .bz-choice-btn + .bz-choice-btn { border-left: 1px solid rgba(42, 35, 24, 0.16); }
+.bz-todo-skin-paper .bz-choice .bz-choice-btn.is-on:hover {
+  background: var(--bz-skin-ink) !important;
+  color: #fffdf6 !important;
+}
 
 /* 头行右侧设置/关闭钮：纸感皮肤下去掉（用户拍板，原型无此二钮） */
 .bz-todo-skin-paper .bz-panel-head-btns { display: none; }
 
-/* 弹窗表单平铺选择（场景/优先级，issue 210 二轮拍板）：与排序同语言——
-   白底墨边格子、选中黑底白字 */
-.bz-todo-skin-paper .bz-choice:not(.bz-choice--float) { gap: 8px; }
-.bz-todo-skin-paper .bz-choice:not(.bz-choice--float) .bz-choice-btn {
-  border: 1.5px solid rgba(42, 35, 24, 0.4);
-  border-radius: 8px;
-  background: var(--bz-surface-2);
-}
-.bz-todo-skin-paper .bz-choice:not(.bz-choice--float) .bz-choice-btn.is-on {
-  background: var(--bz-skin-ink) !important;
-  color: #fffdf6 !important;
-  border-color: var(--bz-skin-ink);
-}
+/* 工具行间距对齐原型（搜索框与排序之间 12px；用 margin——gap 覆盖在此环境不稳定） */
+.bz-todo-skin-paper .bz-todo-sort { margin-left: 12px; }
 
 /* 任务列表：行间虚线分隔 + 大复选框（勾位随尺寸重定位） */
 .bz-todo-skin-paper .bz-todo-card + .bz-todo-card { border-top: 1.5px dashed rgba(42, 35, 24, 0.16); }
