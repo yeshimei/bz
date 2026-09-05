@@ -6,11 +6,9 @@
  * + 右上磁圆点（首标签色 tagHue）+ 标题两行 + 3 行简介 + meta 分隔线（标签/笔记/日期徽章
  * + 余额内联右推）；置顶金圈、归档视图褪色。桌面 860×600 左 rail 168 + 右卡墙；移动真全屏单列。
  *
- * 结构（消费组件库不变）：壳头行 = 品牌块 + 「收藏本」+ ⚙设置直达 + ✕关闭；
- *   头区 = 手写体标题「亚麻记事板」+ 主按钮「添加收藏」（主头行三要素融进原型头区：
- *   标题=筛选名 · 计数为副题行，新建=主按钮；桌面）+ 磁贴标签行（全部/已归档/9 类圆贴纸，
- *   桌面换行、移动横滑共用）→ 白卡墙。
- * 移动 ≤768：真全屏；头行右上图标组 ＋添加 → ⚙设置 → ✕关闭。
+ * 结构（issue 219c 头部彻底原型化）：手写体标题「收藏本」（副题同行 = 筛选名 · 计数，主头行
+ *   三要素融进原型头区）→ 磁贴标签行（全部/已归档/9 类白底贴纸「名 数字」+ 行尾「＋ 新收藏」
+ *   贴纸=添加入口；桌面换行、移动横滑共用）→ 白卡墙。无壳头行：桌面点遮罩/Esc 关闭，移动浮动 ✕。
  * 搜索与排序已随原型化整体退役（issue 219b 拍板；favoritesSortKey 键保留兼容旧存量，无 UI 暴露）。
  * 交互：桌面点卡片 = 有链接直开浏览器，右键 = 操作浮层
  *   （打开/置顶/跳转笔记/刷新余额/编辑/归档/删除）；移动点行 = 底部详情抽屉。全 icon lucide。
@@ -243,26 +241,16 @@ async function refreshBalances(dm: DataManager): Promise<void> {
 // ==================== 主面板结构 ====================
 
 function panelHtml(): string {
-  // issue 219b 完全原型化（C5 c5-linen.html 同构）：壳头行（品牌/⚙/✕）→ 头区（手写体标题 +
-  // 副题=筛选名·计数 + 主按钮「添加收藏」，即主头行三要素的原型形态）→ 磁贴标签行（桌面换行/移动横滑共用）→ 卡墙。
-  // 旧工作台骨架（左 rail / 主头行 / 搜索+排序工具行 / 移动搜索展开行）全部退役。
+  // issue 219c 头部彻底原型化（对照 c5-linen.html）：壳头行（品牌/⚙/✕）与头区主按钮全删——
+  // 面板 = 手写体标题（副题同行：筛选名 · 计数）→ 磁贴标签行（行尾「＋ 新收藏」贴纸=添加入口，
+  // 桌面/移动共用）→ 卡墙。桌面点遮罩/Esc 关闭；移动浮动 ✕（全屏退出）。
   return `<div class="bz-fav-panel bz-panel-frame bz-panel-mtop">
-  <div class="bz-panel-head">
-    <div class="bz-panel-brand">${iconSpan(ICON.brand, 'bz-ic--sm')}</div>
-    <div class="bz-panel-title">收藏本</div>
-    <div class="bz-panel-head-sp"></div>
-    <div class="bz-panel-head-btns">
-      <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-fav-mob-only" data-fav-add title="添加收藏">${iconSpan(ICON.add)}</button>
-      <button class="bz-icon-btn" data-fav-settings title="打开收藏本设置">${iconSpan(ICON.settings)}</button>
-      <button class="bz-icon-btn" data-fav-close title="关闭">${iconSpan(ICON.close)}</button>
-    </div>
-  </div>
+  <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-fav-mob-close" data-fav-close title="关闭">${iconSpan(ICON.close)}</button>
   <div class="bz-fav-body">
     <div class="bz-fav-hero">
-      <div class="bz-fav-hero-title">亚麻记事板</div>
-      <button class="bz-btn bz-btn--primary bz-btn--md bz-fav-desk-add" data-fav-add>${iconSpan(ICON.add, 'bz-ic--sm')} 添加收藏</button>
+      <div class="bz-fav-hero-title">收藏本</div>
+      <div class="bz-fav-hero-sub"><span data-fav-title>全部</span><span class="bz-fav-hero-dot">·</span><span data-fav-count></span></div>
     </div>
-    <div class="bz-fav-hero-sub"><span data-fav-title>全部</span><span class="bz-fav-hero-dot">·</span><span data-fav-count></span></div>
     <div class="bz-fav-stickers" data-fav-tags></div>
     <div class="bz-fav-content" data-fav-content></div>
   </div>
@@ -322,7 +310,6 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
     const t = e.target as HTMLElement;
     if (e.target === overlay) { closePanel(); return; }
     if (t.closest('[data-fav-add]')) { openForm(null); return; }
-    if (t.closest('[data-fav-settings]')) { openFavoritesInSettings(); return; }
     if (t.closest('[data-fav-close]')) { closePanel(); return; }
   });
   // 磁贴行点击（桌面换行/移动横滑同一容器统一委托；__all = 全部；__archived = 已归档视图）
@@ -371,14 +358,6 @@ export function closePanel(): void {
   M.renderFn = null;
 }
 
-/** 设置直达：关面板 → 设置面板定位收藏本域（头行 ⚙；动态 import 防顶层环引用，ADR-0002） */
-function openFavoritesInSettings(): void {
-  const app = appOf();
-  closePanel();
-  if (!app) return;
-  void import('../settings-panel').then((m) => m.openSettingsPanel(app, 'favorites'));
-}
-
 export function unloadFavoritesUI(): void {
   closePanel();
   resetFavoritesState();
@@ -419,18 +398,18 @@ function applyTagFilter(label: string): void {
   renderAll();
 }
 
-/** 磁贴标签行渲染（issue 219b：桌面换行 / 移动横滑共用同一容器 .bz-fav-stickers；
- *  C5 圆贴纸 = emoji + 名 + 计数气泡；全部 → 已归档（灰贴纸）→ 9 类） */
+/** 磁贴标签行渲染（issue 219c：对照原型——纯文字白底贴纸「名 数字」，无 lucide；
+ *  全部 → 已归档（灰贴纸）→ 9 类 → 行尾「＋ 新收藏」贴纸（添加入口，样式与磁贴统一）） */
 function renderTags(): void {
   const overlay = M.overlay!;
   const stickers = overlay.querySelector('[data-fav-tags]') as HTMLElement;
-  const mkStk = (label: string, emojiOrIcon: string, cnt: number, active: boolean, grey = false) =>
-    `<button class="bz-fav-stk${active ? ' is-on' : ''}${grey ? ' bz-fav-stk--grey' : ''}" data-fav-tag="${esc(label)}">${emojiOrIcon}<span class="bz-fav-stk-name">${esc(label)}</span><span class="bz-chip-cnt">${cnt}</span></button>`;
+  const mkStk = (label: string, cnt: number, active: boolean, grey = false, emoji = '') =>
+    `<button class="bz-fav-stk${active ? ' is-on' : ''}${grey ? ' bz-fav-stk--grey' : ''}" data-fav-tag="${esc(label)}">${emoji}<span class="bz-fav-stk-name">${esc(label)}</span><span class="bz-fav-stk-num">${cnt}</span></button>`;
   stickers.innerHTML =
-    mkStk('全部', iconSpan(ICON.all, 'bz-ic--sm'), visible().length, !M.archived && M.tag === null) +
-    mkStk('已归档', iconSpan(ICON.archived, 'bz-ic--sm'), archivedItems().length, M.archived, true) +
-    TAGS.map((t) => mkStk(t.label, t.emoji, tagCount(t.label), !M.archived && M.tag === t.label)).join('');
-  mountIcons(stickers);
+    mkStk('全部', visible().length, !M.archived && M.tag === null) +
+    mkStk('已归档', archivedItems().length, M.archived, true) +
+    TAGS.map((t) => mkStk(t.label, tagCount(t.label), !M.archived && M.tag === t.label, false, t.emoji)).join('') +
+    `<button class="bz-fav-stk bz-fav-stk--add" data-fav-add title="添加收藏"><span class="bz-fav-stk-plus">＋</span><span class="bz-fav-stk-name">新收藏</span></button>`;
   // 主头行语义融进头区：副题 = 筛选名 · 计数（标题=筛选名范式，issue 208）
   const titleEl = overlay.querySelector('[data-fav-title]') as HTMLElement;
   if (M.archived) titleEl.textContent = '已归档';
@@ -452,7 +431,7 @@ function renderContent(): void {
   const content = overlay.querySelector('[data-fav-content]') as HTMLElement;
   const list = filtered();
   if (!list.length) {
-    const desc = M.archived ? '归档过的收藏会出现在这里，右键可取消归档' : '点头区「添加收藏」记一条';
+    const desc = M.archived ? '归档过的收藏会出现在这里，右键可取消归档' : '点磁贴行尾「＋ 新收藏」记一条';
     content.replaceChildren(uiEmpty({
       icon: ICON.empty,
       title: M.archived ? '暂无归档' : (M.tag ? `「${M.tag}」还没有收藏` : '暂无收藏'),
