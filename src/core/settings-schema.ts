@@ -19,6 +19,7 @@ import type BzSettings from '../settings';
 import { getSettings, saveSettings, tryGetSettings } from './settings-provider';
 import { renderPathSettingRow } from './path-picker';
 import { createSettingsGroup, markSettingSplitRows, refreshSettingsGroupCounts } from './settings-modal';
+import { uiCardChoice } from './ui';
 
 /** 设置快照：visibleWhen 条件函数的入参（键直绑行的当前值；外部数据行请自行闭包捕获）。 */
 export type SettingsSnapshot = Readonly<BzSettings>;
@@ -191,7 +192,17 @@ interface CustomRow extends RowBase {
   onRefresh?: (ctx: SettingsRowContext) => void;
 }
 
-/** 十类行判别联合（Q5） */
+/** 视觉卡片单选行（issue 210）：预览卡 + 名称的「看脸选」设置项（如待办面板皮肤）。
+ *  prevClass = 预览区附加类，视觉由使用方域样式提供；无编号无描述为拍板形态。 */
+interface ChoiceCardsRow extends RowBase {
+  type: 'choiceCards';
+  name: string;
+  binding: RowBinding<string>;
+  options: Array<{ value: string; label: string; prevClass?: string }>;
+  onChange?: (value: string, ctx: SettingsRowContext) => void;
+}
+
+/** 十一类行判别联合（Q5；issue 210 增 choiceCards） */
 export type SettingsRow =
   | ToggleRow
   | TextRow
@@ -202,7 +213,8 @@ export type SettingsRow =
   | PathRow
   | ButtonRow
   | InfoRow
-  | CustomRow;
+  | CustomRow
+  | ChoiceCardsRow;
 
 /** 分组声明：有 icon = 分组卡片（createSettingsGroup）；无 icon = 区块标题 + 平铺行
  *  （主设置页 ADR-0009 单页形态，DOM 契约 .bz-setting-section-title 不破）。 */
@@ -536,6 +548,26 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
             row.onChange?.(v, ctx);
           });
         });
+        return;
+      }
+      case 'choiceCards': {
+        // 视觉卡片单选（issue 210）：与 select 同绑定通道；空值回退首个选项（同 select 口径）
+        const acc = bindValue(row.binding);
+        const setting = new Setting(body).setName(row.name);
+        if (row.desc) setting.setDesc(row.desc);
+        if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+        const pick = uiCardChoice({
+          value: String(acc.read() ?? '') || row.options[0].value,
+          options: row.options,
+          label: row.name,
+          onChange: async (v) => {
+            acc.write(v);
+            reevaluate();
+            await acc.persist();
+            row.onChange?.(v, ctx);
+          },
+        });
+        setting.controlEl.appendChild(pick.el);
         return;
       }
       case 'slider': {

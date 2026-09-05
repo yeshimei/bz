@@ -9,6 +9,7 @@ import { getSettings, saveSettings, tryGetSettings } from '../core/settings-prov
 import { mobileFullscreenGroup } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { TodoData } from './data';
+import { applyTodoSkin } from './ui';
 
 /** 场景变更后即时生效：重建数据层场景列表（打开中的面板下次渲染即用） */
 function todoReloadScenes() {
@@ -22,6 +23,18 @@ export function todoSettingsSchema(): SettingsSchema {
         icon: 'eye',
         name: '显示',
         rows: [
+          {
+            // 面板皮肤（issue 210）：设置页最顶部的视觉卡片选择（无编号无描述，拍板形态）
+            type: 'choiceCards',
+            name: '面板皮肤',
+            binding: { key: 'todoSkin' },
+            options: [
+              { value: 'default', label: '默认', prevClass: 'bz-skinprev-default' },
+              { value: 'paper', label: '纸感手账', prevClass: 'bz-skinprev-paper' },
+              { value: 'editorial', label: '编辑部', prevClass: 'bz-skinprev-editorial' },
+            ],
+            onChange: (v) => applyTodoSkin(v),
+          },
           {
             type: 'select',
             name: '默认排序方式',

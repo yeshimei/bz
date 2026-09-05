@@ -308,6 +308,19 @@ function sceneCount(scene: string): number {
 // ---------- 主面板（打开/关闭/ESC） ----------
 
 /**
+ * 皮肤应用（issue 210）：面板根挂 bz-todo-skin-{paper|editorial}（默认无修饰类）。
+ * 双入口：openTodoPanel 打开时按 todoSkin 挂载；设置行 onChange 热切换已开面板。
+ * 面板未开时仅落盘（设置行已持久化），下次打开生效。
+ */
+export function applyTodoSkin(skin: unknown): void {
+  if (!M.overlay) return;
+  const panel = M.overlay.querySelector('.bz-todo-panel') as HTMLElement | null;
+  if (!panel) return;
+  panel.classList.remove('bz-todo-skin-paper', 'bz-todo-skin-editorial');
+  if (skin === 'paper' || skin === 'editorial') panel.classList.add(`bz-todo-skin-${skin}`);
+}
+
+/**
  * 打开主面板（toggle：开着再调关闭）。
  * opts.notePath：提醒改道定位（file-open 接管）——面板打开后搜索框预设为该笔记路径，
  * 列表即只显该笔记的关联待办；不传则普通打开。
@@ -377,6 +390,7 @@ export function openTodoPanel(app: App, opts?: { notePath?: string }): void {
 
   const panelEl = overlay.querySelector('.bz-todo-panel') as HTMLElement;
   applyMobileWindowFullscreen(panelEl, fullscreen);
+  applyTodoSkin((tryGetSettings() as any).todoSkin);
   mountIcons(overlay);
 
   // 排序三档（浮岛 segmented，issue 199：滑动白卡指示器；桌面工具行；移动不显示）

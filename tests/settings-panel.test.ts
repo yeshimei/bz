@@ -92,7 +92,7 @@ describe('设置面板（settings-panel）', () => {
     }
     expect(badges[0]).toBe('1'); // 通用：数据存储路径 1 项
     expect(badges[1]).toBe('8'); // AI：服务商+模型名称+上下文+最大输出+采样 4 项（aiProvider 未设 → 密钥行门控隐藏）
-    expect(badges[3]).toBe('8'); // 待办（index 3）：自动归档摆设行删除后 8 项
+    expect(badges[3]).toBe('9'); // 待办（index 3）：issue 210 补面板皮肤卡片行后 9 项
     expect(badges[4]).toBe('1'); // 归物本（issue 194 补默认状态筛选行，桌面 1 项）
     // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）
     const navIcons = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-ic')];
@@ -699,5 +699,60 @@ describe('设置面板（settings-panel）', () => {
     mask.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(popup.style.display).toBe('none');
     ui.cleanup();
+  });
+});
+
+describe('choiceCards 视觉卡片行（issue 210）', () => {
+  /** 局部设置单例（原 describe 的 panelState 在其闭包内，此处自管） */
+  const skinState: Record<string, unknown> = { todoSkin: 'default' };
+  beforeEach(() => {
+    resetObsidianMocks();
+    mobileFlag = false;
+    document.body.innerHTML = '';
+    skinState.todoSkin = 'default';
+    setSettingsProvider(() => skinState as any);
+  });
+
+  it('渲染行头 + 预览卡（无编号无描述）；点击写键落盘并切换选中态', async () => {
+    const saveSpy = vi.fn(async () => {});
+    const { setSettingsSaver } = await import('../src/core/settings-provider');
+    setSettingsSaver(saveSpy);
+    const { renderPanelSchema } = await import('../src/settings-panel/renderer');
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    renderPanelSchema(container, {
+      groups: [
+        {
+          icon: 'eye',
+          name: '显示',
+          rows: [
+            {
+              type: 'choiceCards',
+              name: '面板皮肤',
+              binding: { key: 'todoSkin' },
+              options: [
+                { value: 'default', label: '默认', prevClass: 'bz-skinprev-default' },
+                { value: 'paper', label: '纸感手账', prevClass: 'bz-skinprev-paper' },
+                { value: 'editorial', label: '编辑部', prevClass: 'bz-skinprev-editorial' },
+              ],
+            } as any,
+          ],
+        },
+      ],
+    });
+    const row = container.querySelector('.bz-sp-set-row--cards') as HTMLElement;
+    expect(row).toBeTruthy();
+    expect(row.querySelector('.bz-sp-set-name')!.textContent).toBe('面板皮肤');
+    // 拍板形态：卡片只含预览 + 名称（无编号/描述节点）
+    const cards = row.querySelectorAll('.bz-cardpick-card');
+    expect(cards.length).toBe(3);
+    expect(cards[1].querySelector('.bz-cardpick-prev')!.classList.contains('bz-skinprev-paper')).toBe(true);
+    expect(cards[0].classList.contains('is-on')).toBe(true);
+    // 点击「纸感手账」：写键 + 落盘 + 选中态切换
+    (cards[1] as HTMLElement).click();
+    expect(skinState.todoSkin).toBe('paper');
+    expect(saveSpy).toHaveBeenCalled();
+    expect(cards[1].classList.contains('is-on')).toBe(true);
+    expect(cards[0].classList.contains('is-on')).toBe(false);
   });
 });

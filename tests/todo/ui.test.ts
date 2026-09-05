@@ -8,7 +8,7 @@ import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-p
 import { resetObsidianMocks, Platform as MockPlatform } from '../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { M, resetTodoState } from '../../src/todo/state';
-import { openTodoPanel, closeTodoPanel, addTodo, openEditor } from '../../src/todo/ui';
+import { openTodoPanel, closeTodoPanel, addTodo, openEditor, applyTodoSkin } from '../../src/todo/ui';
 import { openPomodoro, unloadPomodoro } from '../../src/pomodoro';
 import { TodoData } from '../../src/todo/data';
 
@@ -1080,5 +1080,70 @@ describe('待办×番茄联动（专注这个）', () => {
     });
     const labels = menuItems().map((b) => b.querySelector('.bz-item-menu-label')?.textContent);
     expect(labels).not.toContain('专注这个'); // 已完成条目无专注意义
+  });
+});
+
+describe('待办面板皮肤（issue 210）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetTodoState();
+    document.body.innerHTML = '';
+    MockPlatform.isMobile = false;
+  });
+  afterEach(() => {
+    closeTodoPanel();
+    MockPlatform.isMobile = false;
+    document.body.innerHTML = '';
+  });
+
+  it('设置 schema：面板皮肤卡片行在「显示」组最顶部（三选项绑 todoSkin）', async () => {
+    const { app } = seedVault();
+    const { todoSettingsSchema } = await import('../../src/todo/settings');
+    const schema = todoSettingsSchema();
+    const show = schema.groups.find((g) => g.name === '显示');
+    expect(show).toBeTruthy();
+    const row = show!.rows[0] as any;
+    expect(row.type).toBe('choiceCards');
+    expect(row.name).toBe('面板皮肤');
+    expect(row.binding.key).toBe('todoSkin');
+    expect(row.options.map((o: any) => o.value)).toEqual(['default', 'paper', 'editorial']);
+    void app;
+  });
+
+  it('打开面板按 todoSkin 挂皮肤类；default 无修饰类', async () => {
+    const { app, settings } = seedVault();
+    settings.todoSkin = 'paper';
+    openTodoPanel(app);
+    expect(document.querySelector('.bz-todo-panel')!.classList.contains('bz-todo-skin-paper')).toBe(true);
+    closeTodoPanel();
+
+    resetTodoState();
+    settings.todoSkin = 'editorial';
+    openTodoPanel(app);
+    expect(document.querySelector('.bz-todo-panel')!.classList.contains('bz-todo-skin-editorial')).toBe(true);
+    closeTodoPanel();
+
+    resetTodoState();
+    settings.todoSkin = 'default';
+    openTodoPanel(app);
+    const panel = document.querySelector('.bz-todo-panel') as HTMLElement;
+    expect(panel.classList.contains('bz-todo-skin-paper')).toBe(false);
+    expect(panel.classList.contains('bz-todo-skin-editorial')).toBe(false);
+  });
+
+  it('applyTodoSkin 热切换已开面板；未知值回落默认（去修饰类）', async () => {
+    const { app } = seedVault();
+    openTodoPanel(app);
+    const panel = document.querySelector('.bz-todo-panel') as HTMLElement;
+    applyTodoSkin('paper');
+    expect(panel.classList.contains('bz-todo-skin-paper')).toBe(true);
+    applyTodoSkin('editorial');
+    expect(panel.classList.contains('bz-todo-skin-paper')).toBe(false);
+    expect(panel.classList.contains('bz-todo-skin-editorial')).toBe(true);
+    applyTodoSkin('default');
+    expect(panel.classList.contains('bz-todo-skin-editorial')).toBe(false);
+    // 面板未开时调用不抛错（仅落盘路径）
+    closeTodoPanel();
+    expect(() => applyTodoSkin('paper')).not.toThrow();
   });
 });
