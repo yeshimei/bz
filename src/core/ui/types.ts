@@ -88,13 +88,15 @@ export interface BzSegOpts<T extends string = string> {
   label?: string;          // radiogroup aria-label（可访问性）
 }
 
-/** 平铺单选组（.bz-choice）：选项胶囊可换行，单选带 is-on 态 */
+/** 平铺单选组（.bz-choice）：选项胶囊可换行，单选带 is-on 态；
+ *  float = 浮岛 segmented（轨道收内容宽 + 白卡滑动指示器，issue 199 拍板） */
 export interface BzChoiceOpts<T extends string = string> {
   options: { value: T; label: string; dot?: string }[]; // dot = 前置色点（数据语义色）
   value: T;
   onChange: (value: T) => void;
   className?: string;
   label?: string;          // radiogroup aria-label（可访问性）
+  float?: boolean;         // 浮岛形态：轨道 + 滑动指示器
 }
 
 /** 开关（.bz-sw）：40×22 滑块，开 = 品牌实底 */

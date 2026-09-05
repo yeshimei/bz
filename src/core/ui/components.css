@@ -351,6 +351,40 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-choice-btn.is-on { background: var(--bz-brand) !important; color: var(--bz-on-brand) !important; }
 .bz-choice-btn.is-on:hover { background: var(--bz-brand-hover) !important; }
 .bz-choice-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+/* 浮岛 segmented（float: true，issue 199 拍板）：轨道收内容宽无边框 +
+   白卡滑动指示器（choice.ts 量位 transform/width 200ms）。
+   白卡 = .bz-choice-seg（surface-2）；未选中项退为透底灰字，选中加重。 */
+.bz-choice-seg { display: none; }
+.bz-choice--float {
+  position: relative;
+  background: var(--bz-surface-track);
+  border-radius: var(--bz-radius-full);
+  padding: 3px;
+  gap: 2px;
+  width: max-content;
+  max-width: 100%;
+}
+.bz-choice--float .bz-choice-seg {
+  display: block;
+  position: absolute;
+  top: 3px; left: 0;
+  height: calc(100% - 6px);
+  border-radius: var(--bz-radius-full);
+  background: var(--bz-surface-2);
+  box-shadow: 0 1px 3px rgba(20, 20, 24, 0.14), 0 0 0 1px rgba(20, 20, 24, 0.05);
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), width 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+.bz-choice--float .bz-choice-btn {
+  position: relative; z-index: 1;
+  height: calc(var(--bz-control-h) - 6px);
+  background: transparent !important;
+  color: var(--bz-text-2) !important;
+  transition: color var(--bz-dur-fast) ease;
+}
+.bz-choice--float .bz-choice-btn:hover { background: transparent !important; color: var(--bz-text-1) !important; }
+.bz-choice--float .bz-choice-btn.is-on { background: transparent !important; color: var(--bz-text-1) !important; font-weight: var(--bz-weight-medium); }
+.bz-choice--float .bz-choice-btn.is-on:hover { background: transparent !important; }
 
 /* ═══════════ 开关 .bz-sw（switch.ts） ═══════════
    设置/表单行的滑块开关（40×22）：关 = 轨道中性、开 = 品牌实底。

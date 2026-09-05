@@ -33,7 +33,7 @@ import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { uiModal, uiIcon, uiSegmented, uiChoice, uiBtn, uiBtnRow, uiResizable, uiEmpty, mountIcons } from '../core/ui';
+import { uiModal, uiIcon, uiChoice, uiBtn, uiBtnRow, uiResizable, uiEmpty, mountIcons } from '../core/ui';
 import { openFlowDialog } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
@@ -379,15 +379,17 @@ export function openTodoPanel(app: App, opts?: { notePath?: string }): void {
   applyMobileWindowFullscreen(panelEl, fullscreen);
   mountIcons(overlay);
 
-  // 排序 segmented（组件库；桌面工具行；移动不显示）
+  // 排序三档（浮岛 segmented，issue 199：滑动白卡指示器；桌面工具行；移动不显示）
   const sortEl = overlay.querySelector('[data-todo-sort]') as HTMLElement;
-  const seg = uiSegmented<string>({
+  const sortChoice = uiChoice<string>({
     options: [
       { value: 'priority', label: '紧急优先' },
       { value: 'due', label: '仅按到期' },
       { value: 'created', label: '按创建' },
     ],
     value: M.sortMode,
+    float: true,
+    label: '排序方式',
     onChange: (v) => {
       M.sortMode = v;
       // 同步写入默认排序（与 memo 共用 memoSortMode 键）
@@ -397,8 +399,8 @@ export function openTodoPanel(app: App, opts?: { notePath?: string }): void {
       renderAll();
     },
   });
-  seg.el.classList.add('bz-segmented--sm');
-  sortEl.appendChild(seg.el);
+  sortEl.appendChild(sortChoice.el);
+  sortChoiceDetach = sortChoice.detach;
 
   // 桌面拖动缩放（ADR-0084；移动端真全屏/常规卡都由 CSS 撑满视口，不挂）。
   // 尺寸记忆（ADR-0094）：persist.load 挂载时恢复（resize 工厂钳到与拖拽同口径），
@@ -560,6 +562,11 @@ export function closeTodoPanel(): void {
     panelResizeDetach.detach();
     panelResizeDetach = null;
   }
+  // 摘排序浮岛的 resize 监听
+  if (sortChoiceDetach) {
+    sortChoiceDetach();
+    sortChoiceDetach = null;
+  }
   M.renderFn = null;
   M.pinnedNewId = null;
   clipTitleHint = null; // 剪贴板预填候选随面板生命周期清空
@@ -581,6 +588,8 @@ export function registerEscapeHandler(): void {
 
 /** 面板当前 resize detach（打开期间非空，关闭清空） */
 let panelResizeDetach: { detach: () => void } | null = null;
+/** 排序浮岛 resize 监听 detach（面板关闭时摘除，防孤儿监听） */
+let sortChoiceDetach: (() => void) | null = null;
 
 // ---------- 渲染 ----------
 
@@ -1151,6 +1160,8 @@ export function openEditor(item: TodoItem | null): void {
   const choice = uiChoice<string>({
     options: scenes.map((s) => ({ value: s, label: s })),
     value: defaultScene,
+    float: true, // 浮岛 segmented（issue 199 拍板：滑动白卡）
+    label: '场景',
     onChange: (v) => {
       // 场景联动：剪藏 → 标题框；代码 → 脚本框；公开课 → 课程框（class 驱动显隐）
       titleBox.classList.toggle('bz-todo-extra-on', v === '剪藏');
@@ -1176,6 +1187,8 @@ export function openEditor(item: TodoItem | null): void {
       { value: 'important', label: '重要' },
     ],
     value: editing ? editing.priority : (tryGetSettings() as any).memoDefaultPriority || 'minor',
+    float: true, // 浮岛 segmented（issue 199 拍板）
+    label: '优先级',
     onChange: () => { /* 值由保存时读取 */ },
   });
   prioField.appendChild(prioChoice.el);
@@ -1240,43 +1253,43 @@ export function openEditor(item: TodoItem | null): void {
   dueField.append(dueLabel, dueRow);
   form.appendChild(dueField);
 
-  // 📌 定位（真实读取当前笔记与光标；修复排版：flex 垂直居中）
+  // 📌 定位（拍板 = F 图标圆底：pin 装 22px 小圆底 + 文字素排，issue 199；
+  //        真实读取当前笔记与光标，绑定后转品牌色）
   const posRow = document.createElement('div');
   posRow.className = 'bz-todo-pos-row';
   const posState: { notePath: string | null; notePosition: { line: number; ch: number } | null } = {
     notePath: editing?.notePath || null,
     notePosition: editing?.notePosition || null,
   };
+  const posBtn = document.createElement('button');
+  posBtn.type = 'button';
+  posBtn.className = 'bz-btn bz-todo-pos-btn';
+  const posChip = document.createElement('span');
+  posChip.className = 'bz-pos-chip';
+  posChip.appendChild(uiIcon('pin'));
+  const posLabel = document.createElement('span');
+  posBtn.append(posChip, posLabel);
   const setPosBtn = (name: string, active: boolean) => {
-    posBtn.textContent = '';
-    posBtn.appendChild(uiIcon('pin'));
-    const span = document.createElement('span');
-    span.textContent = name;
-    posBtn.appendChild(span);
+    posLabel.textContent = name;
     posBtn.classList.toggle('bz-todo-pos-btn-active', active);
   };
-  const posBtn = uiBtn({
-    label: '',
-    icon: 'pin',
-    onClick: () => {
-      if (posState.notePath) {
-        posState.notePath = null;
-        posState.notePosition = null;
-        setPosBtn('定位到笔记', false);
-        return;
-      }
-      const info = getCurrentNoteInfo();
-      const pos = getCurrentCursorPosition();
-      if (info && pos) {
-        posState.notePath = info.path;
-        posState.notePosition = { line: pos.line, ch: pos.ch };
-        setPosBtn(info.name, true);
-      } else {
-        notice('无法获取当前位置');
-      }
-    },
+  posBtn.addEventListener('click', () => {
+    if (posState.notePath) {
+      posState.notePath = null;
+      posState.notePosition = null;
+      setPosBtn('定位到笔记', false);
+      return;
+    }
+    const info = getCurrentNoteInfo();
+    const pos = getCurrentCursorPosition();
+    if (info && pos) {
+      posState.notePath = info.path;
+      posState.notePosition = { line: pos.line, ch: pos.ch };
+      setPosBtn(info.name, true);
+    } else {
+      notice('无法获取当前位置');
+    }
   });
-  // uiBtn 会把 label '' 跳过，补图标后追加文本 span
   if (posState.notePath) {
     const name = (posState.notePath.split('/').pop() || '').replace(/\.md$/i, '');
     setPosBtn(name, true);

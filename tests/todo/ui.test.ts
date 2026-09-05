@@ -258,9 +258,16 @@ describe('todo 面板', () => {
   });
 
   it('设置播种：memoSortMode/memoShowArchivedByDefault 打开面板时初始化排序与已完成折叠区', async () => {
-    const { app, settings } = seedVault();
+    const { app, settings, vault } = seedVault();
     settings.memoSortMode = 'created';
     settings.memoShowArchivedByDefault = true;
+    // 清空种子条目的截止：逾期/今日条目会因 dueRank 分组压过 created 排序，
+    // 且「今天 HH:mm」过点即变逾期——断言需全天稳定（原 09:00 后单跑必挂的雷）
+    {
+      const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+      raw.forEach((r: any) => { r.due = null; });
+      vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify(raw, null, 2));
+    }
     openTodoPanel(app);
     await vi.waitFor(() => {
       expect(document.querySelector('.bz-todo-card')).toBeTruthy();
@@ -302,6 +309,28 @@ describe('todo 面板', () => {
     expect(document.querySelectorAll('.bz-todo-card').length).toBe(1);
     expect(document.querySelectorAll('.bz-todo-card')[0].textContent).toContain('ffmpeg 转写参数整理');
   });
+
+  it('排序三档 = 浮岛 segmented（issue 199）：float 轨道 + 滑动指示器节点，切换写回设置', async () => {
+    const { app, settings, saveSpy } = seedVault();
+    openTodoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-todo-sort] .bz-choice--float')).toBeTruthy();
+    });
+    const track = document.querySelector('[data-todo-sort] .bz-choice--float') as HTMLElement;
+    // 三档 + 白卡指示器节点 + 默认「紧急优先」选中
+    expect(track.querySelectorAll('.bz-choice-btn').length).toBe(3);
+    expect(track.querySelector('.bz-choice-seg')).toBeTruthy();
+    expect(track.querySelector('.bz-choice-btn.is-on')?.textContent).toBe('紧急优先');
+    // 点击「按创建」→ 写回 memoSortMode（与 memo 共用键）+ 落盘
+    ([...track.querySelectorAll('.bz-choice-btn')].find((b) => b.textContent === '按创建') as HTMLElement).click();
+    expect(settings.memoSortMode).toBe('created');
+    await vi.waitFor(() => {
+      expect(saveSpy).toHaveBeenCalled();
+    });
+    // 选中态迁移 + 面板排序生效
+    expect(track.querySelector('.bz-choice-btn.is-on')?.textContent).toBe('按创建');
+    expect(M.sortMode).toBe('created');
+  });
 });
 
 describe('todo 编辑器', () => {
@@ -335,6 +364,23 @@ describe('todo 编辑器', () => {
     expect(editor.querySelector('.bz-todo-extra-on input')?.getAttribute('placeholder')).toBe('标题（可选）');
     // 无关闭按钮
     expect(editor.querySelector('.bz-icon-btn--close')).toBeNull();
+  });
+
+  it('编辑器浮岛选择 + 定位钮 F 款（issue 199）：场景/优先级 float 轨道含指示器，定位钮带圆底图标', async () => {
+    const { app } = seedVault();
+    addTodo(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-todo-editor')).toBeTruthy();
+    });
+    const editor = document.querySelector('.bz-todo-editor') as HTMLElement;
+    // 场景 + 优先级两组浮岛 segmented（各含 1 枚白卡指示器节点）
+    expect(editor.querySelectorAll('.bz-choice--float').length).toBe(2);
+    expect(editor.querySelectorAll('.bz-choice--float > .bz-choice-seg').length).toBe(2);
+    // 定位钮 = F 图标圆底：.bz-pos-chip 内 pin 图标 + 独立文字 span
+    const posBtn = editor.querySelector('.bz-todo-pos-btn') as HTMLElement;
+    expect(posBtn).toBeTruthy();
+    expect(posBtn.querySelector('.bz-pos-chip [data-icon="pin"]')).toBeTruthy();
+    expect(posBtn.querySelector('.bz-pos-chip + span')?.textContent).toBe('定位到笔记');
   });
 
   it('场景切换联动：代码→脚本框；公开课→课程框', async () => {
@@ -484,6 +530,9 @@ describe('todo 添加场景', () => {
       expect(document.querySelector('.bz-todo-addscene')).toBeTruthy();
     });
     const wrap = document.querySelector('.bz-todo-addscene') as HTMLElement;
+    // 结构（issue 199）：标题 + 满宽输入 + caption 提示行 + 右对齐按钮行
+    expect(wrap.querySelector('.bz-todo-addscene-hint')?.textContent).toContain('备忘录设置');
+    expect(wrap.querySelector('.bz-btn-row')).toBeTruthy();
     const input = wrap.querySelector('.bz-input') as HTMLInputElement;
     input.value = '健身';
     (wrap.querySelector('.bz-btn--primary') as HTMLElement).click();
