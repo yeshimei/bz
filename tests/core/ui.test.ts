@@ -1070,6 +1070,21 @@ describe('bz ui 组件库', () => {
       pop.detach();
     });
 
+    it('焦点落入浮层时 Esc 同路收层且不穿透上层（层内 keydown 不经输入框，issue 198 review）', () => {
+      const { field, input } = buildField();
+      const pop = uiPopover({ input, options: items3 });
+      input.dispatchEvent(new Event('focus'));
+      const onDocKey = vi.fn();
+      document.addEventListener('keydown', onDocKey);
+      // 焦点落入层内（如 Tab 到选项按钮）：Esc 在选项上触发，冒泡先经浮层——同路收层
+      const itemBtn = field.querySelector('.bz-popover-item') as HTMLElement;
+      itemBtn.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+      expect(field.querySelector('.bz-popover')).toBeNull(); // 浮层收了（不残留）
+      expect(onDocKey).not.toHaveBeenCalled(); // 不穿透：escManager 不关宿主表单
+      document.removeEventListener('keydown', onDocKey);
+      pop.detach();
+    });
+
     it('keyboard：↓/↑ 移动 is-on 高亮（初位 = 当前值，边界钳制），Enter 选中回调并关层', () => {
       const pick = vi.fn();
       const { field, input } = buildField();

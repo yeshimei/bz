@@ -34,7 +34,7 @@ import type { EventRef, IconName } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
 import { uiIcon, uiSearch } from '../core/ui';
-import { openItemMenu, closeItemMenu, type ItemAction } from '../core/item-actions';
+import { openItemMenu, closeItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
 import { escapeHtml } from '../core/utils';
 import { onDomainEvent } from '../core/domain-bus';
 import { notice } from '../core/notice';
@@ -932,6 +932,9 @@ export class DiaryWallAppController {
         // 右键菜单迁移 core item-actions（issue 198 批次 A）：.bz-item-menu 跟手菜单，
         // 防溢出定位/动态 z/键盘导航/外部点击关闭统一由共享层承载（动作集与旧自绘菜单一致）
         openItemMenu(ev.clientX, ev.clientY, this.buildMenuActions(e), true);
+        // 复位残余 click 抑制（issue 198 review P1）：Chromium 右键时序（mousedown → contextmenu →
+        // mouseup 落菜单外）会置位 armed，吞掉下一次左键——菜单项要点两次；右键无补发 click，直接复位
+        resetItemMenuClickGuard();
       },
       true
     );

@@ -125,8 +125,12 @@ describe('UIManager 三区队列', () => {
     await ui.showMain();
     const head = document.querySelector('#review-popup .bz-panel-head')!;
     expect(head).not.toBeNull();
-    expect(head.querySelector('.bz-panel-title')!.textContent).toContain('复习计划');
-    expect(head.querySelector('.bz-panel-head-sub')!.textContent).toMatch(/\d+月\d+日 周[日一二三四五六]/);
+    // 平级结构（issue 198 review P2，对齐 recap）：-title 纯标题（副题不内嵌、不继承 semibold），
+    // -pipe 兄弟分隔 + -sub 平级副题
+    expect(head.querySelector('.bz-panel-title')!.textContent!.trim()).toBe('复习计划');
+    const sub = head.querySelector('.bz-panel-head-sub')!;
+    expect(sub.textContent).toMatch(/\d+月\d+日 周[日一二三四五六]/);
+    expect(sub.previousElementSibling!.classList.contains('bz-panel-head-pipe')).toBe(true);
     expect(head.querySelector('.bz-panel-head-sp')).not.toBeNull();
     // 关闭钮在共享钮组内，保留 .bz-win-close（core 门控：非真全屏隐藏）
     expect(head.querySelector('.bz-panel-head-btns .bz-icon-btn.bz-win-close')).not.toBeNull();

@@ -254,10 +254,14 @@ export class UIManager {
     const futureCount = col.future.length;
 
     // 头行接组件库 .bz-panel-head 族（issue 198 批 D）：标题+日期副题 / spacer / 关闭钮组；
-    // 关闭钮保留 .bz-win-close（core 门控：非真全屏隐藏），域内不再自绘头行
+    // 副题与标题平级（issue 198 review P2，对齐 recap 头行）：不内嵌 -title（继承 semibold 600），
+    // 以 -pipe 兄弟分隔，粗细/字号由 .bz-panel-head-sub 样式承载；关闭钮保留 .bz-win-close
+    // （core 门控：非真全屏隐藏），域内不再自绘头行
     const head = `
       <div class="bz-panel-head">
-        <div class="bz-panel-title">复习计划<span class="bz-panel-head-sub">${this.todayLabel()}</span></div>
+        <div class="bz-panel-title">复习计划</div>
+        <div class="bz-panel-head-pipe"></div>
+        <div class="bz-panel-head-sub">${this.todayLabel()}</div>
         <span class="bz-panel-head-sp"></span>
         <div class="bz-panel-head-btns">
           <button class="bz-icon-btn bz-win-close" data-act="close" title="关闭">${this.icon('x')}</button>

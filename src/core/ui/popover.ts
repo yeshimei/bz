@@ -9,7 +9,8 @@
  *    外部 click / Esc 关闭（交互骨架仿 uiSelect；监听随开挂、随关摘）。
  * 2) input 锚定（传 input）：锚定输入框 focus / input 开（开着原位刷新），
  *    外部 mousedown（捕获）关、输入框与层内不关；Esc 只收浮层
- *    （stopPropagation 挡上层 escManager——「下拉开只收下拉」分层语义）；
+ *    （输入框与浮层元素双路 keydown 同收——焦点落入层内（如 Tab 到选项）时
+ *    stopPropagation 挡上层 escManager，防「关宿主表单而浮层残留」，issue 198 review）；
  *    候选源 getOptions(q)（域内过滤，fuzzy/排除自身等域特有逻辑留域）；
  *    emptyCloses: true 无匹配即收层不弹空态；keyboard: true 时 ↑↓ 移动
  *    is-on 高亮（钳边界）、Enter 选中回调（焦点留在输入框，高亮仅视觉）。
@@ -103,8 +104,10 @@ export function uiPopover(opts: BzPopoverOpts): {
     fill(m, items);
     (anchor.parentElement || anchor).appendChild(m);
     layer = m;
-    if (input) document.addEventListener('mousedown', onDocDown, true);
-    else {
+    if (input) {
+      m.addEventListener('keydown', onLayerKey);
+      document.addEventListener('mousedown', onDocDown, true);
+    } else {
       document.addEventListener('click', onDocClick);
       document.addEventListener('keydown', onDocKey);
     }
@@ -157,6 +160,15 @@ export function uiPopover(opts: BzPopoverOpts): {
       const it = items[activeIdx];
       if (it) commit(it.id);
     }
+  };
+
+  // 浮层元素上的 Esc 同路收层（issue 198 review）：焦点落入层内（如 Tab 到选项按钮）时
+  // keydown 不经输入框，会冒泡给上层 escManager 关宿主表单而浮层残留——层上也拦一道。
+  // 随层建/随层弃（每次 open 新建元素），无需摘除。
+  const onLayerKey = (e: KeyboardEvent) => {
+    if (!layer || e.key !== 'Escape') return;
+    close();
+    e.stopPropagation(); // 分层语义与输入框 Esc 一致：只收浮层，不穿透关宿主
   };
 
   const setValue = (id: string) => {
