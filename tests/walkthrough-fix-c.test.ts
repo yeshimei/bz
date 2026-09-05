@@ -51,7 +51,7 @@ describe('批 C-1：.bz-bs-quote 双定义拆雷（笔记侧改名 .bz-bs-hl-quo
   });
 });
 
-describe('批 C-2/C-3（issue 220 只读化后口径更新）', () => {
+describe('批 C-2/C-3（issue 223 只读化后口径更新）', () => {
   it('详情卡只读：状态徽标改为台账圆点示意（不再有 chip/编辑控件/删除保存入口）', () => {
     const ui = repo('src/bookshelf/ui.ts');
     expect(ui).toMatch(/bz-bs-d-stdot/);

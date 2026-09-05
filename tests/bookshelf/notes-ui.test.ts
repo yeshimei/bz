@@ -92,7 +92,7 @@ async function longPress(el: HTMLElement) {
   await new Promise((r) => setTimeout(r, 10));
 }
 
-describe('书架墙详情弹窗只读化（issue 220）', () => {
+describe('书架墙详情弹窗只读化（issue 223）', () => {
   let vault: MockVault;
 
   beforeEach(() => {
@@ -103,7 +103,7 @@ describe('书架墙详情弹窗只读化（issue 220）', () => {
     vault = new MockVault();
   });
 
-  it('详情卡不再提供读书笔记入口按钮（issue 220 只读化：划线/想法为纯展示文字）', async () => {
+  it('详情卡不再提供读书笔记入口按钮（issue 223 只读化：划线/想法为纯展示文字）', async () => {
     vault.files.set('书库/活着.md', BOOK_MD + '\n' + NOTE_MD);
     const app = makeApp(vault);
     ensureBookshelf(app);
