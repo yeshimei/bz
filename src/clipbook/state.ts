@@ -7,10 +7,12 @@ import type { ClipNote } from './scan';
 import type { ClipbookData } from './data';
 
 export interface ClipSourceSel {
-  /** null = 全部未读；'clip' = 剪藏本；否则 inbox（platform 必填） */
-  kind: 'all' | 'inbox' | 'clip';
+  /** null = 全部未读；'clip' = 剪藏本；'site' = 站点（site 必填，issue 222）；否则 inbox（platform 必填） */
+  kind: 'all' | 'inbox' | 'clip' | 'site';
   platform: string;
   up: string | null;
+  /** site 源的站点名（归一见 store normSite；非 site 源为空串） */
+  site: string;
 }
 
 export interface ClipbookState {
@@ -52,7 +54,7 @@ export interface ClipbookState {
 }
 
 export function defaultSel(): ClipSourceSel {
-  return { kind: 'all', platform: '', up: null };
+  return { kind: 'all', platform: '', up: null, site: '' };
 }
 
 export const M: ClipbookState = {

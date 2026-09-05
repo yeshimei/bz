@@ -6,17 +6,18 @@
  * + 右上磁圆点（首标签色 tagHue）+ 标题两行 + 3 行简介 + meta 分隔线（标签/笔记/日期徽章
  * + 余额内联右推）；置顶金圈、归档视图褪色。桌面 860×600 左 rail 168 + 右卡墙；移动真全屏单列。
  *
- * 结构（消费组件库不变）：头行 = 品牌块 + 「收藏本」+ ⚙设置直达 + ✕关闭；
- *   左标签栏（uiRail：全部/已归档图标行头 + 9 分类 emoji 行头）+ 右内容区——主头行
- *   （当前标签 / N 条收藏 / 添加收藏）→ 工具栏（搜索 + 排序浮岛 uiChoice float）→ 卡流。
- * 移动 ≤768：真全屏；头行右上图标组 ＋添加 → ⇅排序 → 🔍搜索(展开) → ⚙设置 → ✕关闭；
- *   标签 chips 横滑；搜索默认隐藏点 🔍 展开。
- * 交互不变：桌面点卡片 = 有链接直开浏览器，右键 = 操作浮层（打开/置顶/跳转笔记/刷新余额/
- *   编辑/归档/删除）；移动点行 = 底部详情抽屉。全 icon lucide。
+ * 结构（消费组件库不变）：壳头行 = 品牌块 + 「收藏本」+ ⚙设置直达 + ✕关闭；
+ *   头区 = 手写体标题「亚麻记事板」+ 主按钮「添加收藏」（主头行三要素融进原型头区：
+ *   标题=筛选名 · 计数为副题行，新建=主按钮；桌面）+ 磁贴标签行（全部/已归档/9 类圆贴纸，
+ *   桌面换行、移动横滑共用）→ 白卡墙。
+ * 移动 ≤768：真全屏；头行右上图标组 ＋添加 → ⚙设置 → ✕关闭。
+ * 搜索与排序已随原型化整体退役（issue 219b 拍板；favoritesSortKey 键保留兼容旧存量，无 UI 暴露）。
+ * 交互：桌面点卡片 = 有链接直开浏览器，右键 = 操作浮层
+ *   （打开/置顶/跳转笔记/刷新余额/编辑/归档/删除）；移动点行 = 底部详情抽屉。全 icon lucide。
  *
  * 契约保留（与旧域等价）：favorites.json 零迁移；smartcat 事件载荷（add/edit/delete/
  *   archive + favoritesEditChanges）；置顶/归档/删除撤销；余额自动查询与档位色；
- *   设置键 favoritesSortKey/favoritesTimeFormat/favoritesMobileDefaultFullscreen；
+ *   设置键 favoritesTimeFormat/favoritesMobileDefaultFullscreen（favoritesSortKey 退役保留）；
  *   ⚙️ 设置收敛设置面板；file-sync 后台不动（index.ts）。
  */
 import { notice, notify, notifyUndo, notifySaveError } from '../core/notice';
@@ -24,27 +25,19 @@ import { topifyZ } from '../core/z-order';
 import { refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, closeItemMenu, openItemMenu, openItemSheet, type ItemAction, resetItemMenuClickGuard } from '../core/item-actions';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
-import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
+import { tryGetSettings } from '../core/settings-provider';
 import { mobileFullscreenGroup } from '../core/settings-common';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { getApp } from '../core/app';
-import { mountIcons, uiBtn, uiChoice, uiEmpty, uiRail, uiSuggest } from '../core/ui';
-import type { BzRailItem } from '../core/ui';
+import { mountIcons, uiBtn, uiEmpty, uiSuggest } from '../core/ui';
 import { emitDomainEvent } from '../core/domain-bus';
 import { favoritesEditChanges } from '../smartcat/favorites-source';
 import type { SettingsSchema } from '../core/settings-schema';
-import { TAGS, tagEmoji, tagLabel, domainOf, normalizeUrl, isUrlLike } from './config';
+import { TAGS, tagEmoji, domainOf, normalizeUrl, isUrlLike } from './config';
 import { BalanceService, FavoritesAIService } from './ai';
 import type { DataManager } from './data';
 import type { FavoritesItem } from './types';
-
-/** 搜索防抖（180ms，旧域同值） */
-const SEARCH_DEBOUNCE_MS = 180;
-/** 排序：created（最新收藏）/ title（标题排序） */
-type SortMode = 'created' | 'title';
-
-const MOB_SHOW = 'bz-fav-mobsearch-show';
 
 /** lucide 图标名 */
 const ICON = {
@@ -54,8 +47,6 @@ const ICON = {
   archived: 'archive',
   unarchive: 'archive-restore',
   add: 'plus',
-  sort: 'arrow-up-down',
-  search: 'search',
   close: 'x',
   open: 'external-link',
   pin: 'pin',
@@ -75,15 +66,11 @@ interface FavState {
   items: FavoritesItem[];
   /** 当前标签筛选（null = 全部；存标签 label） */
   tag: string | null;
-  /** 已归档视图（ticket 188：左栏「已归档」入口；数据仍 favorites.json，ADR-0074 冷存语义不变） */
+  /** 已归档视图（ticket 188：磁贴行「已归档」贴纸入口；数据仍 favorites.json，ADR-0074 冷存语义不变） */
   archived: boolean;
-  q: string;
-  sort: SortMode;
   /** 日期显示：relative（默认）/ absolute（issue 201，设置 favoritesTimeFormat，打开时读） */
   timeFmt: 'relative' | 'absolute';
   renderFn: (() => void) | null;
-  /** 排序浮岛 resize 监听 detach（面板关闭时摘除，同待办 sortChoiceDetach） */
-  sortDetach: (() => void) | null;
 }
 
 const M: FavState = {
@@ -91,11 +78,8 @@ const M: FavState = {
   items: [],
   tag: null,
   archived: false,
-  q: '',
-  sort: 'created',
   timeFmt: 'relative',
   renderFn: null,
-  sortDetach: null,
 };
 
 export function resetFavoritesState(): void {
@@ -103,15 +87,12 @@ export function resetFavoritesState(): void {
   M.items = [];
   M.tag = null;
   M.archived = false;
-  M.q = '';
-  M.sort = 'created';
   M.timeFmt = 'relative';
   M.renderFn = null;
-  M.sortDetach = null;
 }
 
 // ==================== 设置 schema（⚙️ 已收敛设置面板） ====================
-// issue 194：补「显示」组——默认排序（favoritesSortKey 已有键补暴露，openPanel 每次打开读）。
+// issue 219b：「默认排序」项随工具行退役（磁贴行卡墙按最新收藏固定排序；键 favoritesSortKey 保留兼容旧存量设置，无 UI 暴露）。
 
 export function favoritesSettingsSchema(): SettingsSchema {
   return {
@@ -120,16 +101,6 @@ export function favoritesSettingsSchema(): SettingsSchema {
         icon: 'eye',
         name: '显示',
         rows: [
-          {
-            type: 'select',
-            name: '默认排序',
-            desc: '打开面板时列表按所选规则排序',
-            binding: { key: 'favoritesSortKey' },
-            options: [
-              { value: 'created', label: '最新收藏' },
-              { value: 'title', label: '标题排序' },
-            ],
-          },
           {
             type: 'select',
             name: '日期显示',
@@ -165,12 +136,6 @@ function localNow(): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
-/** 排序键读（favoritesSortKey 设置；非法回退 created） */
-function readSortKey(): SortMode {
-  const v = (tryGetSettings() as any)?.favoritesSortKey;
-  return v === 'title' ? 'title' : 'created';
-}
-
 /** 日期显示读（favoritesTimeFormat 设置；非法回退 relative） */
 function readTimeFmt(): 'relative' | 'absolute' {
   return (tryGetSettings() as any)?.favoritesTimeFormat === 'absolute' ? 'absolute' : 'relative';
@@ -193,24 +158,13 @@ function pool(): FavoritesItem[] {
   return M.archived ? archivedItems() : visible();
 }
 
-/** 搜索 haystack（ticket 188 加 url：标题/简介/链接/关联笔记/标签文案） */
-function haystackOf(it: FavoritesItem): string {
-  return [it.title, it.description, it.url || '', (it.linkedNote || ''), ...(it.tags || []).map(tagLabel)].join(' ').toLowerCase();
-}
-
 function filtered(): FavoritesItem[] {
   let list = pool();
   if (!M.archived && M.tag) list = list.filter((i) => (i.tags || []).includes(M.tag as string));
-  if (M.q) {
-    const kw = M.q.toLowerCase();
-    list = list.filter((i) => haystackOf(i).includes(kw));
-  }
+  // issue 219b：固定「最新收藏」排序（搜索/排序工具随原型化退役）；置顶恒最前：稳定分区
   const byTime = (a: FavoritesItem, b: FavoritesItem) =>
     (b.created || '').localeCompare(a.created || '') || (b.id || '').localeCompare(a.id || '');
-  const byTitle = (a: FavoritesItem, b: FavoritesItem) =>
-    (a.title || '').localeCompare(b.title || '', 'zh') || byTime(a, b);
-  const base = M.sort === 'title' ? [...list].sort(byTitle) : [...list].sort(byTime);
-  // 置顶恒最前：稳定分区（组内保持 base 排序，不得用比较器重排——会退化为时间序）
+  const base = [...list].sort(byTime);
   const pinned = base.filter((i) => i.pinned);
   const rest = base.filter((i) => !i.pinned);
   return [...pinned, ...rest];
@@ -289,6 +243,9 @@ async function refreshBalances(dm: DataManager): Promise<void> {
 // ==================== 主面板结构 ====================
 
 function panelHtml(): string {
+  // issue 219b 完全原型化（C5 c5-linen.html 同构）：壳头行（品牌/⚙/✕）→ 头区（手写体标题 +
+  // 副题=筛选名·计数 + 主按钮「添加收藏」，即主头行三要素的原型形态）→ 磁贴标签行（桌面换行/移动横滑共用）→ 卡墙。
+  // 旧工作台骨架（左 rail / 主头行 / 搜索+排序工具行 / 移动搜索展开行）全部退役。
   return `<div class="bz-fav-panel bz-panel-frame bz-panel-mtop">
   <div class="bz-panel-head">
     <div class="bz-panel-brand">${iconSpan(ICON.brand, 'bz-ic--sm')}</div>
@@ -296,31 +253,18 @@ function panelHtml(): string {
     <div class="bz-panel-head-sp"></div>
     <div class="bz-panel-head-btns">
       <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-fav-mob-only" data-fav-add title="添加收藏">${iconSpan(ICON.add)}</button>
-      <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-fav-mob-only" data-fav-mobsort title="排序">${iconSpan(ICON.sort)}</button>
-      <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-fav-mob-only" data-fav-mobsearch title="搜索">${iconSpan(ICON.search)}</button>
       <button class="bz-icon-btn" data-fav-settings title="打开收藏本设置">${iconSpan(ICON.settings)}</button>
       <button class="bz-icon-btn" data-fav-close title="关闭">${iconSpan(ICON.close)}</button>
     </div>
   </div>
   <div class="bz-fav-body">
-    <aside data-fav-tags></aside>
-    <div class="bz-fav-main">
-      <div class="bz-main-head">
-        <div class="bz-main-title" data-fav-title>全部</div>
-        <div class="bz-main-count" data-fav-count></div>
-        <div class="bz-main-spacer"></div>
-        <button class="bz-btn bz-btn--primary bz-btn--md" data-fav-add>${iconSpan(ICON.add, 'bz-ic--sm')} 添加收藏</button>
-      </div>
-      <div class="bz-toolrow">
-        <div class="bz-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-fav-search placeholder="搜索标题 / 简介 / 链接 / 标签…"></div>
-        <div class="bz-fav-sort" data-fav-sort></div>
-      </div>
-      <div class="bz-mobstrip" data-fav-mobtags></div>
-      <div class="bz-fav-mobsearch" data-fav-mobsearch-row>
-        <div class="bz-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-fav-mobsearch-inp placeholder="搜索标题 / 简介 / 链接 / 标签…"></div>
-      </div>
-      <div class="bz-fav-content" data-fav-content></div>
+    <div class="bz-fav-hero">
+      <div class="bz-fav-hero-title">亚麻记事板</div>
+      <button class="bz-btn bz-btn--primary bz-btn--md bz-fav-desk-add" data-fav-add>${iconSpan(ICON.add, 'bz-ic--sm')} 添加收藏</button>
     </div>
+    <div class="bz-fav-hero-sub"><span data-fav-title>全部</span><span class="bz-fav-hero-dot">·</span><span data-fav-count></span></div>
+    <div class="bz-fav-stickers" data-fav-tags></div>
+    <div class="bz-fav-content" data-fav-content></div>
   </div>
 </div>`;
 }
@@ -345,7 +289,6 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
     closePanel();
     return;
   }
-  M.sort = readSortKey();
   M.timeFmt = readTimeFmt();
   const overlay = document.createElement('div');
   overlay.className = 'bz-panel-overlay';
@@ -360,23 +303,6 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
     (tryGetSettings() as any)?.favoritesMobileDefaultFullscreen === true
   );
   mountIcons(overlay);
-
-  // 排序浮岛（issue 201：uiChoice float，同待办排序；桌面工具行，移动不显示走头行循环钮）
-  const sortEl = overlay.querySelector('[data-fav-sort]') as HTMLElement | null;
-  if (sortEl) {
-    const sortChoice = uiChoice<string>({
-      options: [
-        { value: 'created', label: '最新收藏' },
-        { value: 'title', label: '标题排序' },
-      ],
-      value: M.sort,
-      float: true,
-      label: '排序方式',
-      onChange: (v) => setSort(v as SortMode),
-    });
-    sortEl.appendChild(sortChoice.el);
-    M.sortDetach = sortChoice.detach;
-  }
 
   // ESC（主面板 + 表单）
   if (!mainEscRegistered) {
@@ -396,33 +322,16 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
     const t = e.target as HTMLElement;
     if (e.target === overlay) { closePanel(); return; }
     if (t.closest('[data-fav-add]')) { openForm(null); return; }
-    if (t.closest('[data-fav-mobsort]')) { setSort(M.sort === 'created' ? 'title' : 'created'); return; }
     if (t.closest('[data-fav-settings]')) { openFavoritesInSettings(); return; }
     if (t.closest('[data-fav-close]')) { closePanel(); return; }
-    if (t.closest('[data-fav-mobsearch]')) { toggleMobSearch(overlay); return; }
   });
-  // 左栏 rail 点击由 uiRail 工厂接管（renderTags 内 onSelect）；移动 chips 走事件委托
-  // （统一 data-fav-tag 语义；__all = 全部；__archived = 已归档视图）
-  overlay.querySelectorAll('[data-fav-mobtags]').forEach((el) => {
-    el.addEventListener('click', (e) => {
-      const b = (e.target as HTMLElement).closest('[data-fav-tag]') as HTMLElement | null;
-      if (!b) return;
-      applyTagFilter(b.dataset.favTag as string);
-    });
+  // 磁贴行点击（桌面换行/移动横滑同一容器统一委托；__all = 全部；__archived = 已归档视图）
+  const stickers = overlay.querySelector('[data-fav-tags]') as HTMLElement;
+  stickers.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest('[data-fav-tag]') as HTMLElement | null;
+    if (!b) return;
+    applyTagFilter(b.dataset.favTag as string);
   });
-
-  // 搜索（桌面 + 移动，防抖）
-  const bindSearch = (inp: HTMLInputElement) => {
-    inp.addEventListener('input', () => {
-      clearTimeout((inp as any)._favDeb);
-      (inp as any)._favDeb = setTimeout(() => {
-        M.q = inp.value.trim();
-        renderAll();
-      }, SEARCH_DEBOUNCE_MS);
-    });
-  };
-  bindSearch(overlay.querySelector('[data-fav-search]') as HTMLInputElement);
-  bindSearch(overlay.querySelector('[data-fav-mobsearch-inp]') as HTMLInputElement);
 
   // 内容区：卡片点击（移动抽屉 / 桌面有链直开）+ 右键
   const content = overlay.querySelector('[data-fav-content]') as HTMLElement;
@@ -458,11 +367,6 @@ export function closePanel(): void {
   if (M.overlay) {
     M.overlay.remove();
     M.overlay = null;
-  }
-  // 摘排序浮岛的 resize 监听（防孤儿监听，同待办）
-  if (M.sortDetach) {
-    M.sortDetach();
-    M.sortDetach = null;
   }
   M.renderFn = null;
 }
@@ -502,51 +406,36 @@ async function reload(): Promise<void> {
 function renderAll(): void {
   if (!M.overlay) return;
   renderTags();
-  renderMobTags(M.overlay);
   renderCount();
   renderContent();
 }
 
-/** 标签筛选切换语义（rail onSelect 与移动 chips 委托共用）：
+/** 标签筛选切换语义（磁贴行委托共用；「全部」「已归档」为字面贴纸值）：
  *  再点当前标签 = 取消筛选回全部；点「全部」= 全部；点「已归档」= 归档视图 */
 function applyTagFilter(label: string): void {
-  if (label === '__all') { M.tag = null; M.archived = false; }
-  else if (label === '__archived') { M.tag = null; M.archived = !M.archived; }
+  if (label === '全部' || label === '__all') { M.tag = null; M.archived = false; }
+  else if (label === '已归档' || label === '__archived') { M.tag = null; M.archived = !M.archived; }
   else { M.archived = false; M.tag = M.tag === label ? null : label; }
   renderAll();
 }
 
+/** 磁贴标签行渲染（issue 219b：桌面换行 / 移动横滑共用同一容器 .bz-fav-stickers；
+ *  C5 圆贴纸 = emoji + 名 + 计数气泡；全部 → 已归档（灰贴纸）→ 9 类） */
 function renderTags(): void {
   const overlay = M.overlay!;
-  // 左栏 = 组件库 uiRail（.bz-rail）：全部/已归档 = lucide 图标行头（保持原状），
-  // 9 分类 = emoji 行头 + 名字直显（issue 201 对齐待办三槽）；计数素文本档（无胶囊底）
-  const items: BzRailItem[] = [
-    { id: '__all', name: '全部', icon: ICON.all, count: visible().length },
-    { id: '__archived', name: '已归档', icon: ICON.archived, count: archivedItems().length },
-    ...TAGS.map((t) => ({ id: t.label, name: t.label, emoji: t.emoji, count: tagCount(t.label) })),
-  ];
-  const rail = uiRail({
-    groups: [{ label: '标签', items }],
-    activeId: M.archived ? '__archived' : (M.tag ?? '__all'),
-    onSelect: applyTagFilter,
-  });
-  (overlay.querySelector('[data-fav-tags]') as HTMLElement).replaceChildren(rail.el);
+  const stickers = overlay.querySelector('[data-fav-tags]') as HTMLElement;
+  const mkStk = (label: string, emojiOrIcon: string, cnt: number, active: boolean, grey = false) =>
+    `<button class="bz-fav-stk${active ? ' is-on' : ''}${grey ? ' bz-fav-stk--grey' : ''}" data-fav-tag="${esc(label)}">${emojiOrIcon}<span class="bz-fav-stk-name">${esc(label)}</span><span class="bz-chip-cnt">${cnt}</span></button>`;
+  stickers.innerHTML =
+    mkStk('全部', iconSpan(ICON.all, 'bz-ic--sm'), visible().length, !M.archived && M.tag === null) +
+    mkStk('已归档', iconSpan(ICON.archived, 'bz-ic--sm'), archivedItems().length, M.archived, true) +
+    TAGS.map((t) => mkStk(t.label, t.emoji, tagCount(t.label), !M.archived && M.tag === t.label)).join('');
+  mountIcons(stickers);
+  // 主头行语义融进头区：副题 = 筛选名 · 计数（标题=筛选名范式，issue 208）
   const titleEl = overlay.querySelector('[data-fav-title]') as HTMLElement;
   if (M.archived) titleEl.textContent = '已归档';
   else if (M.tag) titleEl.innerHTML = `${tagEmoji(M.tag)} ${esc(M.tag)}`;
   else titleEl.textContent = '全部';
-}
-
-/** 移动横滑 chips 渲染（.bz-mobstrip；全部 → 已归档 → 9 类；已归档计数独立于标签） */
-function renderMobTags(overlay: HTMLElement): void {
-  const mob = overlay.querySelector('[data-fav-mobtags]') as HTMLElement;
-  const mkChip = (label: string, emojiOrIcon: string, cnt: number, active: boolean) =>
-    `<button class="bz-mobstrip-chip${active ? ' is-on' : ''}" data-fav-tag="${esc(label)}">${emojiOrIcon}<span>${esc(label)}</span><span class="bz-chip-cnt">${cnt}</span></button>`;
-  mob.innerHTML =
-    mkChip('__all', iconSpan(ICON.all), visible().length, !M.archived && M.tag === null) +
-    mkChip('__archived', iconSpan(ICON.archived), archivedItems().length, M.archived) +
-    TAGS.map((t) => mkChip(t.label, t.emoji, tagCount(t.label), !M.archived && M.tag === t.label)).join('');
-  mountIcons(mob);
 }
 
 function renderCount(): void {
@@ -554,13 +443,7 @@ function renderCount(): void {
   if (!overlay) return;
   const n = filtered().length;
   const el = overlay.querySelector('[data-fav-count]') as HTMLElement | null;
-  if (el) el.textContent = M.archived ? `${n} 条已归档` : `${n} 条收藏`;
-}
-
-/** 搜索无结果时归档池命中数（ticket 188：冷存找回提示） */
-function archivedMatchesOf(q: string): number {
-  const kw = q.toLowerCase();
-  return archivedItems().filter((i) => haystackOf(i).includes(kw)).length;
+  if (el) el.textContent = M.archived ? `${n} 张已归档` : `${n} 张白卡`;
 }
 
 function renderContent(): void {
@@ -569,13 +452,10 @@ function renderContent(): void {
   const content = overlay.querySelector('[data-fav-content]') as HTMLElement;
   const list = filtered();
   if (!list.length) {
-    const archHits = !M.archived && M.q ? archivedMatchesOf(M.q) : 0;
-    const desc = M.q
-      ? (archHits > 0 ? `归档中有 ${archHits} 条匹配，左栏「已归档」可查看` : '试试其他关键词，或清除搜索')
-      : '点右上角「添加收藏」记一条';
+    const desc = M.archived ? '归档过的收藏会出现在这里，右键可取消归档' : '点头区「添加收藏」记一条';
     content.replaceChildren(uiEmpty({
       icon: ICON.empty,
-      title: M.q ? `没有匹配「${M.q}」的收藏` : (M.archived ? '暂无归档' : '暂无收藏'),
+      title: M.archived ? '暂无归档' : (M.tag ? `「${M.tag}」还没有收藏` : '暂无收藏'),
       desc,
     }));
     return;
@@ -624,30 +504,6 @@ function cardHtml(it: FavoritesItem): string {
       <div class="bz-fav-meta">${tagBadges}${noteBadge}${timeBadge}${balHtml}</div>
     </div>
   </div>`;
-}
-
-// ==================== 排序 / 移动搜索切换 ====================
-
-/** 排序切换（工具行浮岛 onChange / 移动头行循环钮共用）：写 favoritesSortKey 落盘 + 重渲 */
-function setSort(mode: SortMode): void {
-  M.sort = mode;
-  const s = getSettings() as any;
-  if (s) {
-    s.favoritesSortKey = mode;
-    void saveSettings().catch(() => { /* 设置未注入（测试）静默 */ });
-  }
-  renderCount();
-  renderContent();
-}
-
-function toggleMobSearch(overlay: HTMLElement): void {
-  const row = overlay.querySelector('[data-fav-mobsearch-row]') as HTMLElement;
-  const on = !row.classList.contains(MOB_SHOW);
-  row.classList.toggle(MOB_SHOW, on);
-  if (on) {
-    const inp = overlay.querySelector('[data-fav-mobsearch-inp]') as HTMLInputElement | null;
-    setTimeout(() => inp?.focus(), 60);
-  }
 }
 
 // ==================== 行操作浮层（桌面菜单 / 移动抽屉） ====================

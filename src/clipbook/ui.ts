@@ -14,6 +14,8 @@
  * 桌面面板拖拽缩放 + 尺寸记忆（ADR-0084 先例；ADR-0094 走 uiResizable persist）。
  * issue 206：rail 平台动态聚合 + 列表最新在前 / 正文图片段渲染 /
  * 站点 favicon 高清多源回退（全失败才首字 chip）/ 切文章右栏滚动归零。
+ * issue 222：rail 换按 site 属性分类（平台聚合行退役，B站 UP 子行/剪藏本行保留）/
+ * 中右栏 uiVSplitter 分割线拖宽 + clipbookMidWidth 尺寸记忆。
  *
  * 铁律 6：基线全部消费组件库（.bz-* 类与 --bz-* token）；ADR-0094 起面板壳/头行/搜索/
  * rail/横滑条/空态/尺寸记忆收编共享层，本文件只管布局骨架 + 交互，
@@ -21,7 +23,7 @@
  */
 import { getApp } from '../core/app';
 import { notice, notifyUndo } from '../core/notice';
-import { uiSegmented, uiEmpty, uiResizable, mountIcons } from '../core/ui';
+import { uiSegmented, uiEmpty, uiResizable, uiVSplitter, mountIcons } from '../core/ui';
 import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { escManager } from '../core/esc-manager';
@@ -36,7 +38,7 @@ import { buildNewsSourcesGroup } from './news-sources-group';
 import { batchSizeRow, mobileFullscreenGroup } from '../core/settings-common';
 import type { ClipArticle } from './types';
 import { toParagraphs, stripClipChrome } from './md';
-import { queryBySource, platformOf } from './store';
+import { queryBySource, aggregateSites } from './store';
 import { M, resetClipbookState } from './state';
 import { readNewsAndSidecar, clipDir } from './loader';
 import {
@@ -78,6 +80,10 @@ const clipBodyCache = new Map<string, string>();
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let autoReadingTimer: ReturnType<typeof setTimeout> | null = null;
 let panelResizeDetach: { detach: () => void; flush: () => void } | null = null;
+let panelSplit: { el: HTMLElement; restore: () => void; flush: () => void; detach: () => void } | null = null;
+/** 分割线钳制：中栏（目录）最小宽 / 右栏（阅读）最小宽（对齐 PANEL_MIN_W 下整体不溢出） */
+const SPLIT_MIN_MID = 220;
+const SPLIT_MIN_READ = 320;
 
 /** 测试钩子：缩短自动落「在读」的停留阈值（真机恒 10s） */
 export function __autoReadingDelayForTests(ms: number): void {
@@ -125,6 +131,7 @@ export function showPanel(): void {
     buildDom(M.appRef);
   }
   overlayEl!.style.display = 'flex';
+  panelSplit?.restore(); // 分割线尺寸记忆（容器可见后 restore 才能按实际宽度钳制）
   M.open = true;
   // C5/ADR-0063：已装载且无目录事件（!dirty）直接用内存缓存渲染——零扫描瞬时显示；
   // 首开未装载或有变更才异步重读
@@ -178,6 +185,7 @@ export function closePanel(): void {
   pauseReadingSession();
   disarmAutoReading();
   panelResizeDetach?.flush(); // 关面板即落盘面板尺寸（review P2：恢复旧 flushPendingSize 语义）
+  panelSplit?.flush(); // 关面板即落盘分割线宽度（同上语义）
   M.open = false;
   M.mobDetailOpen = false;
   if (overlayEl) overlayEl.style.display = 'none';
@@ -200,6 +208,10 @@ export function unloadPanel(): void {
   if (panelResizeDetach) {
     panelResizeDetach.detach(); // detach 内补落未存的防抖尾值（persist 收尾）
     panelResizeDetach = null;
+  }
+  if (panelSplit) {
+    panelSplit.detach(); // detach 内补落未存的防抖尾值（persist 收尾）
+    panelSplit = null;
   }
   clipBodyCache.clear();
   setSearchKw(''); // 卸载清搜索词（模块级变量，泄漏会污染下一次装载的列表/rail 计数）
@@ -242,7 +254,7 @@ function buildDom(app: any): void {
         </div>
         <div class="bz-clip-desk-body">
           <div class="bz-rail bz-rail--wide bz-clip-rail">
-            <div class="bz-clip-rail-label">PLATFORM 平台</div>
+            <div class="bz-clip-rail-label">SITE 站点</div>
             <div class="bz-rail-scroll" data-clip-rail></div>
             <div class="bz-clip-rail-foot" data-clip-rail-foot></div>
           </div>
@@ -372,6 +384,16 @@ function buildDom(app: any): void {
       minW: PANEL_MIN_W, minH: PANEL_MIN_H, maxW: PANEL_MAX_W, maxH: PANEL_MAX_H,
       persist: { load: savedPanelSize, save: rememberPanelSize },
     });
+    // 中栏 ⇄ 右栏分割线（issue 222）：拖动改中栏定宽、右栏弹性吸收；
+    // restore 在 showPanel 面板可见后调（display:none 容器宽度为 0 无法钳制）
+    const midEl = overlayEl.querySelector('.bz-clip-mid') as HTMLElement;
+    const readEl = overlayEl.querySelector('.bz-clip-read') as HTMLElement;
+    panelSplit = uiVSplitter({
+      left: midEl, right: readEl,
+      minLeft: SPLIT_MIN_MID, minRight: SPLIT_MIN_READ,
+      persist: { load: savedSplitWidth, save: rememberSplitWidth },
+    });
+    midEl.insertAdjacentElement('afterend', panelSplit.el);
   }
   // 移动源胶囊点击（委托，含搜索态；再点已选源回「全部未读」，issue 208）
   mobSourcesEl!.addEventListener('click', (e) => {
@@ -403,6 +425,7 @@ function selectSource(src: any): void {
     kind: src.kind,
     platform: String(src.platform || ''),
     up: src.up ? String(src.up) : null,
+    site: String(src.site || ''),
   };
   M.mobDetailOpen = false;
   setSearchKw('');
@@ -415,7 +438,8 @@ function toggleSource(src: any): void {
   const same = src && src.kind !== 'all'
     && src.kind === M.sel.kind
     && String(src.platform || '') === M.sel.platform
-    && (src.up ? String(src.up) : null) === M.sel.up;
+    && (src.up ? String(src.up) : null) === M.sel.up
+    && String(src.site || '') === M.sel.site;
   selectSource(same ? { kind: 'all' } : src);
 }
 
@@ -447,9 +471,13 @@ function renderHeadIssue(): void {
 }
 
 // ================= 视图派生 =================
-function srcList(): { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' } {
+/** 源过滤条件（queryBySource 入参别名；issue 222 加 site 源） */
+type SrcFilter = { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' } | { kind: 'site'; site: string };
+
+function srcList(): SrcFilter {
   const s = M.sel;
   if (s.kind === 'clip') return { kind: 'clip' };
+  if (s.kind === 'site') return { kind: 'site', site: s.site };
   if (s.kind === 'inbox') return { kind: 'inbox', platform: s.platform, up: s.up || undefined };
   return { kind: 'all' };
 }
@@ -480,8 +508,16 @@ function sortedView(): ClipArticle[] {
 }
 
 // ================= 渲染：左 rail =================
-/** data-src JSON 序列化选择器（UP 行携带 platform=B站 + up=uid） */
-type SrcSelJson = { kind: 'all' } | { kind: 'inbox'; platform: string; up: string | null } | { kind: 'clip' };
+/** data-src JSON 序列化选择器（UP 行携带 platform=B站 + up=uid；site 行携带站点名） */
+type SrcSelJson = { kind: 'all' } | { kind: 'inbox'; platform: string; up: string | null } | { kind: 'clip' } | { kind: 'site'; site: string };
+
+/** 站点徽标色：站名哈希 → 固定饱和度/亮度的 hue（同站恒色，无需配色表） */
+function siteTint(site: string): string {
+  let h = 0;
+  const t = String(site || '');
+  for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0;
+  return `hsl(${h % 360}, 42%, 52%)`;
+}
 
 function railItemHtml(sel: SrcSelJson, label: string, unread: number, total: number, icon: string | null, color: string | null, active: boolean, sub?: string): string {
   // G：JSON 过 escapeHtml 再进单引号属性——UP 主名含单引号时原实现提前闭合属性，点击 JSON.parse 抛错该源失效
@@ -509,36 +545,21 @@ function renderRail(): void {
   const arts = M.articles;
   const clipNotes = M.clipNotes || [];
   // 源计数（issue 206：搜索时 = 该源命中数，统计联动；无搜索 = 未读数/总数）
-  const countOf = (source: { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' }): number =>
+  const countOf = (source: SrcFilter): number =>
     queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, source, M.upInfo).filter(matchesSearch).length;
   const allHit = countOf({ kind: 'all' });
   // V1 计数口径（issue 214）：未读（搜索态 = 命中数）/ 总数（全量含已处理）
   let html = railItemHtml({ kind: 'all' }, '全部未读', allHit, arts.length, 'inbox', '#58a6ff', M.sel.kind === 'all', '');
 
-  // 平台行动态聚合（issue 206：不再硬编码三平台，新平台自动出现）——
-  // 全集含已读条目平台与既知三平台（0 未读平台行保留恒显示，对齐旧行为）；
-  // 既知顺序在前，其余按未读数降序追加；「未知」平台不建行（仅全部未读可见，对齐旧语义）
-  const prefOrder = ['B站', '果壳科学人', '知乎日报'];
-  const platColor: Record<string, string> = { 'B站': '#e8669a', '果壳科学人': '#2fae8c', '知乎日报': '#58a6ff' };
-  const unreadByPlat = new Map<string, number>();
-  const totalByPlat = new Map<string, number>();
-  const platSet = new Set<string>(prefOrder);
-  for (const a of arts) {
-    const p = platformOf(a);
-    if (!p || p === '未知') continue;
-    platSet.add(p);
-    totalByPlat.set(p, (totalByPlat.get(p) || 0) + 1);
-    if (!a.read) unreadByPlat.set(p, (unreadByPlat.get(p) || 0) + 1);
-  }
-  const platforms = [...platSet].sort((x, y) => {
-    const ix = prefOrder.indexOf(x), iy = prefOrder.indexOf(y);
-    if (ix !== -1 || iy !== -1) return (ix === -1 ? prefOrder.length : ix) - (iy === -1 ? prefOrder.length : iy);
-    return (unreadByPlat.get(y) || 0) - (unreadByPlat.get(x) || 0);
-  });
-  for (const p of platforms) {
-    const cnt = countOf({ kind: 'inbox', platform: p });
-    const active = M.sel.kind === 'inbox' && M.sel.platform === p;
-    html += railItemHtml({ kind: 'inbox', platform: p, up: null }, p, cnt, totalByPlat.get(p) || cnt, 'feed', platColor[p] || '', active, '');
+  // 站点行动态聚合（issue 222：rail 按 site 属性分类，issue 206 平台聚合行退役）——
+  // 全库站点 = 剪藏全量 + 未读 news 面（行总数 = 该源列表长度，口径同 queryBySource site 源）；
+  // 排序总数降序 → 未读降序 → 名 zh 序；徽标色按站名哈希（编辑部皮肤本就隐藏徽标）
+  for (const row of aggregateSites(arts, clipNotes, new Set((M.sidecar.savedArchive || []).map((x) => x.url)), M.clipUrls)) {
+    const full = queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, { kind: 'site', site: row.site }, M.upInfo);
+    const unreadN = full.filter((a) => a.st !== 'saved').length;
+    const hit = countOf({ kind: 'site', site: row.site });
+    const active = M.sel.kind === 'site' && M.sel.site === row.site;
+    html += railItemHtml({ kind: 'site', site: row.site }, row.site, searchKw ? hit : unreadN, full.length, 'feed', siteTint(row.site), active, '');
   }
 
   // B站 UP 展开（C2：Map 按 author/uid 去重；C6：upInfo 回填名字显示）
@@ -591,7 +612,7 @@ function renderRail(): void {
 }
 
 /** rail 源级动作（enh 包 4）：该源还有未读时提供「全部标为已读」；剪藏本源无未读语义不挂 */
-function buildRailActions(label: string, source: { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' }): ItemAction[] {
+function buildRailActions(label: string, source: SrcFilter): ItemAction[] {
   const unreadList = queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], source, M.upInfo)
     .filter((a) => a.origin === 'news');
   if (!unreadList.length) return [];
@@ -1114,6 +1135,20 @@ function rememberPanelSize(w: number, h: number): void {
   void saveSettings();
 }
 
+/** 分割线宽度记忆读取（null=未拖过 → 不写内联，中栏走 CSS 默认 360px；越界值由 uiVSplitter 钳制） */
+function savedSplitWidth(): number | null {
+  const v = Number((tryGetSettings() as any)?.clipbookMidWidth) || 0;
+  return v > 0 ? v : null;
+}
+
+/** 分割线宽度落盘（uiVSplitter 防抖 300ms 后调用；键 clipbookMidWidth） */
+function rememberSplitWidth(w: number): void {
+  const s = tryGetSettings() as any;
+  if (!s) return;
+  s.clipbookMidWidth = w;
+  void saveSettings();
+}
+
 // ================= 渲染：移动 =================
 function mobSrcChipHtml(sel: SrcSelJson, label: string, unread: number, active: boolean, icon: string | null, sub?: string): string {
   return `
@@ -1128,27 +1163,15 @@ function renderMobSources(): void {
   if (!mobSourcesEl) return;
   const arts = M.articles;
   const searching = !!searchKw;
-  const countOf = (source: { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' }): number =>
+  const countOf = (source: SrcFilter): number =>
     queryBySource(arts, M.sidecar, M.clipUrls, M.clipNotes || [], source, M.upInfo).filter(matchesSearch).length;
   let html = mobSrcChipHtml({ kind: 'all' }, '全部未读', countOf({ kind: 'all' }), M.sel.kind === 'all', 'radio');
-  // 平台 chip 动态聚合（issue 206 对齐桌面 rail：全集含已读平台与既知三平台恒显示；
-  // 既知顺序在前，其余按未读数降序；「未知」平台不建 chip）
-  const prefOrder = ['B站', '果壳科学人', '知乎日报'];
-  const unreadByPlat = new Map<string, number>();
-  const platSet = new Set<string>(prefOrder);
-  for (const a of arts) {
-    const p = platformOf(a);
-    if (!p || p === '未知') continue;
-    platSet.add(p);
-    if (!a.read) unreadByPlat.set(p, (unreadByPlat.get(p) || 0) + 1);
-  }
-  const platforms = [...platSet].sort((x, y) => {
-    const ix = prefOrder.indexOf(x), iy = prefOrder.indexOf(y);
-    if (ix !== -1 || iy !== -1) return (ix === -1 ? prefOrder.length : ix) - (iy === -1 ? prefOrder.length : iy);
-    return (unreadByPlat.get(y) || 0) - (unreadByPlat.get(x) || 0);
-  });
-  for (const p of platforms) {
-    html += mobSrcChipHtml({ kind: 'inbox', platform: p, up: null }, p, countOf({ kind: 'inbox', platform: p }), M.sel.kind === 'inbox' && M.sel.platform === p, 'feed', p.slice(0, 1));
+  // 站点 chip 动态聚合（issue 222 对齐桌面 rail：site 属性分类，平台 chip 退役；
+  // 聚合口径同桌面 = 剪藏全量 + 未读 news 面，排序总数降序）
+  for (const row of aggregateSites(arts, M.clipNotes || [], new Set((M.sidecar.savedArchive || []).map((x) => x.url)), M.clipUrls)) {
+    const cnt = countOf({ kind: 'site', site: row.site });
+    if (searching && cnt === 0) continue; // 搜索态零命中 chip 隐藏（非搜索态站点恒可浏览）
+    html += mobSrcChipHtml({ kind: 'site', site: row.site }, row.site, cnt, M.sel.kind === 'site' && M.sel.site === row.site, 'feed', row.site.slice(0, 1));
   }
   // B站 UP chip（C2：Map 按 author/uid 去重——原同 UP N 条未读渲染 N 个同名 chip；C6：upInfo 回填名）
   const mobUps = new Map<string, string>();
@@ -1243,6 +1266,7 @@ export function clipbookSettingsSchema(): SettingsSchema {
           { type: 'path', mode: 'single', name: '剪藏目录', desc: '存放网页剪藏文章的文件夹', binding: { key: 'articleDirectory' } },
           { type: 'number', name: '面板宽度记忆', desc: '桌面拖拽面板边缘缩放后自动记忆，0 为未拖过', binding: { key: 'clipbookPanelWidth' }, min: 0, step: 10 },
           { type: 'number', name: '面板高度记忆', desc: '桌面拖拽面板边缘缩放后自动记忆，0 为未拖过', binding: { key: 'clipbookPanelHeight' }, min: 0, step: 10 },
+          { type: 'number', name: '目录栏宽度记忆', desc: '拖动目录与阅读分隔线后自动记忆，0 为未拖过', binding: { key: 'clipbookMidWidth' }, min: 0, step: 10 },
         ],
       },
       {
