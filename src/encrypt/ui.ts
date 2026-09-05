@@ -1281,10 +1281,10 @@ export class UIManager {
     if (dot) {
       // 状态不只靠颜色（WCAG 1.4.1）：文案已随状态变化，色点仅作辅助佐证
       const color = !this.lastHealth
-        ? 'var(--bz-vault-faint)'
+        ? 'var(--bz-text-3)'
         : this.lastHealth.issues > 0
-          ? 'var(--bz-vault-warn)'
-          : 'var(--bz-vault-ok)';
+          ? 'var(--bz-warning)'
+          : 'var(--bz-success)';
       dot.style.background = color;
       dot.style.boxShadow = 'none';
     }

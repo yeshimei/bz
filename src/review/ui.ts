@@ -9,7 +9,8 @@
  *  - 三区列：已逾期 / 今天到期 / 未来；只有到期（逾期/今天）条目可点击开始答题（sprint）
  *  - 「开始本轮」= 逾期 + 今天批量进入做题冲刺（forceQuizForReview 关闭时 = 普通跳转复习）
  *  - 面板容器沿用 #review-mask/#review-popup id 几何契约，壳类接组件库
- *    .bz-panel-overlay/.bz-panel-frame（ADR-0094）；内容区三区队列渲染
+ *    .bz-panel-overlay/.bz-panel-frame/.bz-panel-head（ADR-0094；issue 198 批 D 头行接入）；
+ *    内容区三区队列渲染
  *  - 整窗冲刺由 SprintSession 驱动，宿主为 #review-entries-container 内容区
  *
  * 公共面（对外契约不变）：UIManager / reviewSettingsSchema（re-export）
@@ -252,13 +253,13 @@ export class UIManager {
     const clearToday = !round.length;
     const futureCount = col.future.length;
 
+    // 头行接组件库 .bz-panel-head 族（issue 198 批 D）：标题+日期副题 / spacer / 关闭钮组；
+    // 关闭钮保留 .bz-win-close（core 门控：非真全屏隐藏），域内不再自绘头行
     const head = `
-      <div class="bz-q-head">
-        <div class="t">
-          <div class="bz-q-title">复习计划</div>
-          <div class="bz-q-sub">${this.todayLabel()}</div>
-        </div>
-        <div class="tools">
+      <div class="bz-panel-head">
+        <div class="bz-panel-title">复习计划<span class="bz-panel-head-sub">${this.todayLabel()}</span></div>
+        <span class="bz-panel-head-sp"></span>
+        <div class="bz-panel-head-btns">
           <button class="bz-icon-btn bz-win-close" data-act="close" title="关闭">${this.icon('x')}</button>
         </div>
       </div>

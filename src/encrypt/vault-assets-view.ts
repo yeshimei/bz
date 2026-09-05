@@ -10,9 +10,11 @@ import type { SafeNote } from './data';
 
 export type VaultAsset = 'overview' | 'pw' | 'note' | 'diary';
 
-/** 资产分类色（P1 档案库：密码=金/笔记=松石/日记=靛蓝） */
+/** 资产分类色（P1 档案库：密码=品牌金/笔记=松石/日记=靛蓝）。
+ *  pw 随 issue 198 批 D 金色归 --bz-brand 系（内联 style 引用全局 token，随明暗翻色）；
+ *  note/diary 为数据语义分类色（与 styles.css --bz-vault-teal/indigo 同源，无对应 --bz-* token）。 */
 export const ASSET_COLOR: Record<'pw' | 'note' | 'diary', string> = {
-  pw: '#b98d3e',
+  pw: 'var(--bz-brand)',
   note: '#2e7d68',
   diary: '#5a63a8',
 };
@@ -49,8 +51,8 @@ export function overviewHTML(stats: OverviewStats): string {
   const pwCd = counts.pw ? `${pwFav}${pwPlatforms} 个平台` : '还没有密码';
   const healthRows =
     health == null
-      ? `<div class="bz-vault-hrow"><span class="dot" style="background:var(--bz-vault-faint)"></span><span class="lbl">待处理</span><span class="n">未体检</span></div>`
-      : `<div class="bz-vault-hrow"><span class="dot" style="background:${health.issues ? 'var(--bz-vault-bad)' : 'var(--bz-vault-ok)'}"></span><span class="lbl">待处理</span><span class="n">${health.issues}</span></div>`;
+      ? `<div class="bz-vault-hrow"><span class="dot" style="background:var(--bz-text-3)"></span><span class="lbl">待处理</span><span class="n">未体检</span></div>`
+      : `<div class="bz-vault-hrow"><span class="dot" style="background:${health.issues ? 'var(--bz-danger)' : 'var(--bz-success)'}"></span><span class="lbl">待处理</span><span class="n">${health.issues}</span></div>`;
   const recentRows = recent.length
     ? recent
         .map((r) => {
@@ -99,7 +101,7 @@ export function overviewHTML(stats: OverviewStats): string {
     <div class="panel" data-hero="health" title="打开保险库体检">
       <div class="pt">保险库体检<span class="more">查看 →</span></div>
       ${healthRows}
-      <div class="bz-vault-hrow"><span class="dot" style="background:var(--bz-vault-faint)"></span><span class="lbl">完整性校验</span><span class="n">${health?.lastChecked || '—'}</span></div>
+      <div class="bz-vault-hrow"><span class="dot" style="background:var(--bz-text-3)"></span><span class="lbl">完整性校验</span><span class="n">${health?.lastChecked || '—'}</span></div>
     </div>
   </div>`;
 }
