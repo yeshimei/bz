@@ -740,6 +740,22 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   overflow: hidden;
 }
 
+/* ═══════════ A2. 竖向分割线 .bz-vsplit（issue 222）═══════════
+   多栏面板栏间可拖分条（uiVSplitter）：平时零视觉（贴合面板底色），
+   hover/拖拽点亮 brand-soft；触屏隐藏（移动端布局无栏宽拖拽）。 */
+.bz-vsplit {
+  flex: 0 0 7px;
+  width: 7px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background var(--bz-dur-fast) var(--bz-ease-out);
+}
+.bz-vsplit:hover,
+.bz-vsplit.is-drag { background: var(--bz-brand-soft); }
+@media (pointer: coarse) {
+  .bz-vsplit { display: none; }
+}
+
 /* ═══════════ B. 窗口头行 .bz-panel-head ═══════════
    影院式整宽头行：品牌块/标题/竖线副题 + 右侧钮组，高 44px。
    现状：cinema/bookshelf/favorites/belongings 四份逐字 + clipbook(50px) 变体。 */

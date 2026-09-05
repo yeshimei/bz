@@ -3,7 +3,7 @@
  * createSiteIcon/createOverlay——jsdom 环境行为断言。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { notice, longPress, createIconBtn, createSiteIcon, createOverlay } from '../../src/core/dom';
+import { notice, longPress, createIconBtn, createSiteIcon, createOverlay, swallowNextClick } from '../../src/core/dom';
 import { __resetZForTests, allocZ } from '../../src/core/z-order';
 import { getNoticeMessages } from '../mock-obsidian-entry';
 
@@ -233,5 +233,40 @@ describe('createOverlay', () => {
     expect(onMaskClick).toHaveBeenCalledTimes(1);
     popup.click();
     expect(onMaskClick).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ===== issue 222：拖拽收尾吞终端 click（uiResizable/uiVSplitter 共用防线）=====
+
+describe('swallowNextClick', () => {
+  const fire = (el: EventTarget, type: string) =>
+    el.dispatchEvent(new MouseEvent(type, { bubbles: true }));
+
+  it('吞掉随后一次 click：body 冒泡监听收不到（拖拽松手在遮罩上不再误关闭）', () => {
+    const inner = document.createElement('div');
+    document.body.appendChild(inner);
+    const seen = vi.fn();
+    document.body.addEventListener('click', seen);
+    swallowNextClick();
+    fire(inner, 'click');
+    expect(seen).not.toHaveBeenCalled();
+    // 只吞一发：下一次 click 正常放行
+    fire(inner, 'click');
+    expect(seen).toHaveBeenCalledTimes(1);
+    inner.remove();
+    document.body.removeEventListener('click', seen);
+  });
+
+  it('click 未触发时，下次 mousedown 撤防（不误吞正常点击）', () => {
+    const inner = document.createElement('div');
+    document.body.appendChild(inner);
+    swallowNextClick();
+    fire(document, 'mousedown'); // 撤防
+    const seen = vi.fn();
+    document.body.addEventListener('click', seen);
+    fire(inner, 'click');
+    expect(seen).toHaveBeenCalledTimes(1);
+    inner.remove();
+    document.body.removeEventListener('click', seen);
   });
 });
