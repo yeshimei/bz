@@ -1,17 +1,18 @@
 /**
- * 收藏本 UI（ticket 177：P1「标签工作台」落码，对照拍板原型重写；issue 201 头行对齐待办 + 精修）
+ * 收藏本 UI（ticket 177 落码 → issue 219「亚麻记事板」换血，对照拍板原型 C5 c5-linen.html）
  *
- * 桌面：头行 = 品牌块 + 「收藏本」+ ⚙设置直达 + ✕关闭（对齐待办头行范式，桌面/移动共用）
- *   + 左标签栏（全部/已归档 = lucide 图标行头，9 分类 = emoji 行头，素计数）
- *   + 右内容区——主头行（当前标签 / N 条收藏 / 主按钮「添加收藏」）→ 工具栏
- *   （搜索 + 排序浮岛 uiChoice float）→ 单列卡片流。
- *   面板壳/头行/侧栏（uiRail）/主头行/工具行/搜索/横滑条/候选浮层/空态均消费组件库共享
- *   类与工厂（ADR-0094）；域 styles.css 只留域内布局。
+ * 视觉（ADR-0097 域内皮肤）：面板亚麻十字纹浅色底（styles.css 域内 token 作用域覆盖，
+ * rail/头行/工具行/空态自动亚麻化）；内容区 = 白卡多列卡流——和纸胶带（CSS ::before 三色循环）
+ * + 右上磁圆点（首标签色 tagHue）+ 标题两行 + 3 行简介 + meta 分隔线（标签/笔记/日期徽章
+ * + 余额内联右推）；置顶金圈、归档视图褪色。桌面 860×600 左 rail 168 + 右卡墙；移动真全屏单列。
+ *
+ * 结构（消费组件库不变）：头行 = 品牌块 + 「收藏本」+ ⚙设置直达 + ✕关闭；
+ *   左标签栏（uiRail：全部/已归档图标行头 + 9 分类 emoji 行头）+ 右内容区——主头行
+ *   （当前标签 / N 条收藏 / 添加收藏）→ 工具栏（搜索 + 排序浮岛 uiChoice float）→ 卡流。
  * 移动 ≤768：真全屏；头行右上图标组 ＋添加 → ⇅排序 → 🔍搜索(展开) → ⚙设置 → ✕关闭；
  *   标签 chips 横滑；搜索默认隐藏点 🔍 展开。
- * 交互：桌面点卡片 = 有链接直开浏览器（弹菜单是 issue 201 前的 bug），右键 = 操作浮层
- *   （打开/置顶/跳转笔记/刷新余额/编辑/归档/删除）；移动点行 = 底部详情抽屉。全 icon lucide。
- * 卡片 meta：标签 + 关联笔记 + 日期（相对时间默认，设置 favoritesTimeFormat 可切绝对）。
+ * 交互不变：桌面点卡片 = 有链接直开浏览器，右键 = 操作浮层（打开/置顶/跳转笔记/刷新余额/
+ *   编辑/归档/删除）；移动点行 = 底部详情抽屉。全 icon lucide。
  *
  * 契约保留（与旧域等价）：favorites.json 零迁移；smartcat 事件载荷（add/edit/delete/
  *   archive + favoritesEditChanges）；置顶/归档/删除撤销；余额自动查询与档位色；
@@ -583,32 +584,45 @@ function renderContent(): void {
   mountIcons(content);
 }
 
+/** 首标签 → 磁圆点色相（C5 亚麻皮肤；9 固定标签各占一档，未知标签兜底灰蓝） */
+function tagHue(label: string): number {
+  const m: Record<string, number> = {
+    GitHub: 215, 桌面软件: 160, 网站: 30, 大模型: 265, pi: 100, Claude: 20, skills: 50, 酒馆: 330, 'DeepSeek Harness': 195,
+  };
+  return m[label] ?? 210;
+}
+
 function cardHtml(it: FavoritesItem): string {
   const pinnedCls = it.pinned ? ' bz-fav-card--pinned' : '';
   const linkCls = it.url ? ' bz-fav-card--link' : '';
+  // 已归档视图卡：褪色冷存（C5 规格；仅归档视图可见，主列表本就过滤）
+  const archCls = it.archived ? ' bz-fav-card--archived' : '';
   const rawUrl = (it.url || '').trim();
   const host = rawUrl ? domainOf(normalizeUrl(rawUrl)) : '';
   const desc = (it.description || '').trim();
   const note = (it.linkedNote || '').trim();
   const tags = displayTagsOf(it);
+  const hue = tagHue(tags[0] || '');
   const tagBadges = tags.map((t) => `<span class="bz-badge bz-badge--accent">${tagEmoji(t)} ${esc(t)}</span>`).join('');
   const noteBadge = note
     ? `<span class="bz-badge bz-fav-note-badge">${iconSpan(ICON.note, 'bz-ic--xs')} ${esc(note.split('/').pop()!.replace(/\.md$/i, ''))}</span>`
     : '';
-  // 日期（issue 201：相对时间默认，设置 favoritesTimeFormat=absolute 回绝对；置顶视觉走卡片左缘品牌条，不再文字前缀）
+  // 日期（issue 201：相对时间默认，设置 favoritesTimeFormat=absolute 回绝对；置顶视觉走金圈 --pinned，不再文字前缀）
   const timeText = M.timeFmt === 'absolute' ? (it.created || '') : formatRelativeTime(it.created || '');
   const timeBadge = `<span class="bz-badge bz-fav-time-badge">${esc(timeText)}</span>`;
   const balHtml = it.balance
-    ? `<div class="bz-fav-balance-wrap"><span class="bz-fav-balance${balanceToneClass(it.balance)}">${esc(it.balance)}</span></div>`
+    ? `<span class="bz-fav-balance-wrap"><span class="bz-fav-balance${balanceToneClass(it.balance)}">${esc(it.balance)}</span></span>`
     : it.balanceError
-      ? `<div class="bz-fav-balance-wrap"><span class="bz-fav-balance bz-fav-balance--err" title="${esc(it.balanceError)}">查询失败</span></div>`
+      ? `<span class="bz-fav-balance-wrap"><span class="bz-fav-balance bz-fav-balance--err" title="${esc(it.balanceError)}">查询失败</span></span>`
       : '';
-  return `<div class="bz-fav-card${pinnedCls}${linkCls}" data-fav-id="${esc(it.id)}">
+  // C5「亚麻记事板」卡：白卡纸 + 顶部胶带（CSS ::before）+ 右上磁圆点（首标签色）+ 标题两行 + 3 行简介 + meta 分隔线
+  return `<div class="bz-fav-card${pinnedCls}${linkCls}${archCls}" data-fav-id="${esc(it.id)}">
+    <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>
     <div class="bz-fav-card-main">
       <div class="bz-fav-title-row"><span class="bz-fav-title" title="${esc(host || it.title)}">${esc(it.title || '无标题')}</span></div>
       ${desc ? `<div class="bz-fav-desc">${esc(desc)}</div>` : ''}
-      <div class="bz-fav-meta">${tagBadges}${noteBadge}${timeBadge}</div>
-    </div>${balHtml}
+      <div class="bz-fav-meta">${tagBadges}${noteBadge}${timeBadge}${balHtml}</div>
+    </div>
   </div>`;
 }
 

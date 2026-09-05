@@ -2288,3 +2288,35 @@ describe('关联笔记候选补全（ticket 188）', () => {
     expect(document.querySelector('.bz-popover')).toBeNull();
   });
 });
+
+describe('issue 219「亚麻记事板」卡流视觉', () => {
+  it('磁圆点存在且色相随首标签（GitHub=215）', async () => {
+    const ctx = await setup();
+    seedVault(ctx.vault, [
+      seedItem({ id: '1', title: '带标签项', tags: ['GitHub'] }),
+    ]);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    const dot = cards()[0].querySelector('.bz-fav-dot') as HTMLElement;
+    expect(dot).not.toBeNull();
+    expect(dot.style.getPropertyValue('--c')).toContain('hsl(215');
+  });
+
+  it('归档视图卡挂 bz-fav-card--archived 褪色类；主列表不挂', async () => {
+    const ctx = await setup();
+    seedVault(ctx.vault, [
+      seedItem({ id: '1', title: '普通项' }),
+      seedItem({ id: '2', title: '冷存项', archived: true, archivedAt: '2025-06-02 08:00:00' }),
+    ]);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    expect(cards().find((c) => c.querySelector('.bz-fav-title')!.textContent === '普通项')!.classList.contains('bz-fav-card--archived')).toBe(false);
+    // 主列表过滤归档（ADR-0074），切归档视图后卡挂褪色类
+    (document.querySelector('[data-fav-mobtags]') as HTMLElement); // 移动 chips 不存在时走 rail：直接点 rail「已归档」
+    const railRows = [...document.querySelectorAll('.bz-rail [data-id]')] as HTMLElement[];
+    (railRows.find((r) => r.dataset.id === '__archived') as HTMLElement).click();
+    await tick(20);
+    const archCard = cards()[0];
+    expect(archCard.classList.contains('bz-fav-card--archived')).toBe(true);
+  });
+});
