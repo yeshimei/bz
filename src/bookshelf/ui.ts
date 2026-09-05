@@ -577,7 +577,7 @@ function openBookDetail(it: BookshelfItem, app: App): void {
     maxWidth: 560,
     head: true,
     title: '书籍详情',
-    className: 'bz-bs-d-popup',
+    className: `bz-bs-d-popup ${bsSkinClass()}`,
     onClose: () => { detailModalClose = null; },
   });
   detailModalClose = close;
@@ -648,7 +648,7 @@ function openBookDetail(it: BookshelfItem, app: App): void {
           <button class="bz-btn bz-btn--ghost" data-bs-c="0">取消</button>
           <button class="bz-btn bz-btn--danger" data-bs-c="1">删除</button>
         </div></div>`;
-      const conf = uiModal({ content: confHtml, maxWidth: 320, className: 'bz-bs-confirm-pop', onClose: () => { confirmModalClose = null; } });
+      const conf = uiModal({ content: confHtml, maxWidth: 320, className: `bz-bs-confirm-pop ${bsSkinClass()}`, onClose: () => { confirmModalClose = null; } });
       confirmModalClose = conf.close;
       mountIcons(conf.popup);
       conf.popup.querySelector('[data-bs-c="1"]')?.addEventListener('click', () => {
@@ -792,6 +792,34 @@ function iconBtnHTML(icon: string, title: string, toolAttr: string, extraCls = '
   return `<button class="bz-icon-btn${extraCls ? ' ' + extraCls : ''}" data-bs-tool="${toolAttr}" title="${title}">${iconSpan(icon)}</button>`;
 }
 
+
+// ---------- 面板皮肤（issue 216） ----------
+/** 全部合法皮肤值（与设置面板 choiceCards options 一一对应；默认雪松白） */
+const SKIN_IDS = ['nordic','dark','noir','wabi','bauhaus','blueprint','neon','kraft','velvet','mono'] as const;
+type SkinId = (typeof SKIN_IDS)[number];
+
+function normalizeSkin(v: unknown): SkinId {
+  return SKIN_IDS.includes(v as SkinId) ? (v as SkinId) : 'nordic';
+}
+
+/** 当前皮肤类名（弹窗与面板共用同套皮肤；非法值回落雪松白） */
+export function bsSkinClass(): string {
+  return `bz-bs-skin-${normalizeSkin((tryGetSettings() as Record<string, unknown>).bookshelfSkin)}`;
+}
+
+/**
+ * 皮肤应用（issue 216）：面板根挂 bz-bs-skin-{id}（默认 nordic，十选一全带修饰类）。
+ * 双入口：createOverlay 打开时挂载；设置行 onChange 热切换已开面板。
+ * 面板未开时仅落盘（设置行已持久化），下次打开生效。
+ */
+export function applyBookshelfSkin(skin: unknown): void {
+  if (!M.currentOverlay) return;
+  const panel = M.currentOverlay.querySelector('.bz-bs-panel') as HTMLElement | null;
+  if (!panel) return;
+  panel.classList.remove(...SKIN_IDS.map((id) => `bz-bs-skin-${id}`));
+  panel.classList.add(`bz-bs-skin-${normalizeSkin(skin)}`);
+}
+
 export function createOverlay(app: App): void {
   const overlay = document.createElement('div');
   overlay.className = 'bz-panel-overlay';
@@ -799,7 +827,7 @@ export function createOverlay(app: App): void {
   const fullscreen = (tryGetSettings() as Record<string, unknown>).bookshelfMobileDefaultFullscreen === true;
 
   overlay.innerHTML = `
-    <div class="bz-panel-frame bz-bs-panel bz-panel-mtop">
+    <div class="bz-panel-frame bz-bs-panel bz-panel-mtop ${bsSkinClass()}">
       <div class="bz-panel-head">
         <div class="bz-panel-brand">${iconSpan(ICON.bookOpen, 'bz-ic--sm')}</div>
         <div class="bz-panel-title">书库<span class="bz-panel-head-sub"></span></div>

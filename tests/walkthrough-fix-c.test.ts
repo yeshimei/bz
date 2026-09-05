@@ -104,7 +104,7 @@ describe('批 C-5：bookshelf 面板 44px 补接 .bz-panel-mtop', () => {
   it('面板根节点挂类；移动头行旧垫顶收拢（防双份顶距）', () => {
     const ui = repo('src/bookshelf/ui.ts');
     // ADR-0094：面板壳接入共享 .bz-panel-frame（域内只留宽高）
-    expect(ui).toMatch(/class="bz-panel-frame bz-bs-panel bz-panel-mtop"/);
+    expect(ui).toMatch(/class="bz-panel-frame bz-bs-panel bz-panel-mtop( \$\{bsSkinClass\(\)\})?"/); // issue 216 皮肤类尾随插入
     const css = bsCss();
     // 头行移动规则不再自垫 safe-area（.bz-panel-mtop > div:first-child 归零接管）
     expect(css).not.toMatch(/\.bz-bs-head\s*\{[^}]*safe-area-inset-top/);

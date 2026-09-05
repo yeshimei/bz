@@ -173,6 +173,8 @@ export default interface BzSettings {
   bookshelfSortMode: string;
   /** 📚 书架墙：封面网格每行列数（2~12，默认 6；issue 208） */
   bookshelfGridColumns: string;
+  /** 📚 书架墙：面板皮肤（issue 216；nordic=雪松白默认，十选一，设置面板 choiceCards） */
+  bookshelfSkin: string;
 
   // ===== 🎬 影院（cinema 域；ADR-0087 起接管旧影视域）=====
   /** 📁 影视文件夹（影院域数据源；缺省回落「我的/影视」。与日记本设置的「影视目录」
@@ -528,6 +530,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   bookshelfDefaultSide: 'all',
   bookshelfSortMode: 'date',
   bookshelfGridColumns: '6',
+  bookshelfSkin: 'nordic',
 
   // 影院（cinema；ADR-0087 起接管影视；缺省回落默认目录，旧 movieFolderPath 键已退役）
   cinemaFolderPath: '我的/影视',
