@@ -67,7 +67,12 @@ describe('数据体检面板（checkup UI）', () => {
     const popup = document.getElementById('bz-checkup-popup')!;
     expect(mask).toBeTruthy();
     expect(popup).toBeTruthy();
-    expect(popup.querySelector('.bz-checkup-title')!.textContent).toBe('数据体检');
+    // 壳走样式库共享类（issue 198 批次 C）：单根遮罩 .bz-panel-overlay + 面板 .bz-panel-frame
+    expect(mask.classList.contains('bz-panel-overlay')).toBe(true);
+    expect(popup.classList.contains('bz-panel-frame')).toBe(true);
+    // 头行走 .bz-panel-head 族（品牌块 + 标题）
+    expect(popup.querySelector('.bz-panel-head .bz-panel-title')!.textContent).toBe('数据体检');
+    expect(popup.querySelector('.bz-panel-brand')).toBeTruthy();
     expect(popup.querySelector('.bz-empty-title')!.textContent).toContain('还没体检过');
     const runBtn = [...popup.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent!.includes('开始体检'));
     expect(runBtn).toBeTruthy();
@@ -210,7 +215,7 @@ describe('数据体检面板（checkup UI）', () => {
     const btn = [...spPopup.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent!.includes('打开体检'))!;
     btn.click();
     await waitFor(() => !!document.getElementById('bz-checkup-popup'));
-    expect(document.getElementById('bz-checkup-popup')!.querySelector('.bz-checkup-title')!.textContent).toBe('数据体检');
+    expect(document.getElementById('bz-checkup-popup')!.querySelector('.bz-panel-title')!.textContent).toBe('数据体检');
     ui.cleanup();
     unloadDataCheckup();
     void app;

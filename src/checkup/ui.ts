@@ -1,5 +1,5 @@
 /**
- * 数据体检面板（checkup 域 UI，D4）：overlay 范式（对齐 settings-panel/各域面板）。
+ * 数据体检面板（checkup 域 UI，D4）：overlay 范式（对齐各域面板）。
  *
  * - 交互仿保险库体检：跑一次缓存结果、可点直达、清理后自动重新体检收敛报告；
  * - 「开始体检」逐项跑（runCheckup 分片让出主线程），顶部实时进度，体检中可取消；
@@ -7,10 +7,11 @@
  *   绿=通过项；可修复项给「一键修复」（确认框 → 定点清理 → notifyUndo 撤销链）；
  *   不可修复项给「查看详情」展开说明与路径；
  * - 重开面板显示上次结果 + 提示可重跑（内存级缓存）。
- * 视觉走样式库/组件库（铁律 6）：布局自有 styles.css，按钮/图标/空态消费 core/ui。
+ * 视觉走样式库/组件库（铁律 6）：面板壳/头行走样式库共享类
+ * （.bz-panel-overlay/.bz-panel-frame + .bz-panel-head 族），布局自有 styles.css，
+ * 按钮/图标/空态/进度条消费 core/ui。
  */
 import type { App } from 'obsidian';
-import { createOverlay } from '../core/dom';
 import { topifyZ } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
 import { notice, notifyUndo, notifySaveError, notifyActionError } from '../core/notice';
@@ -19,8 +20,7 @@ import { openFlowDialog } from '../core/flow-dialog';
 import type { CheckIssue, CheckupReport } from './types';
 import { getLastCheckupReport, runCheckup, fixOrphanIssues } from './run';
 
-let mask: HTMLElement | null = null;
-let popup: HTMLElement | null = null;
+let overlay: HTMLElement | null = null;
 let escHandle: { unregister: () => void } | null = null;
 /** 在途体检序号：取消/重开/卸载使旧 run 全部作废（分片循环逐段检查） */
 let runSeq = 0;
@@ -29,20 +29,16 @@ let running = false;
 /** 宿主 app（命令注入；卸载后置 null） */
 let hostApp: App | null = null;
 
-const MASK_ID = 'bz-checkup-mask';
-const POPUP_ID = 'bz-checkup-popup';
+/** DOM 句柄 id（沿用旧壳命名：遮罩根/面板本体，测试与设置面板直达按此寻址） */
+const OVERLAY_ID = 'bz-checkup-mask';
+const FRAME_ID = 'bz-checkup-popup';
 
 /** 打开数据体检面板（重复打开 = 抬顶；运行态/缓存态照常恢复显示） */
 export function openDataCheckup(app: App): void {
   hostApp = app;
-  if (mask && popup) {
-    topifyZ(mask, popup);
-    mask.style.display = 'flex';
-    renderBody();
-    return;
-  }
-  build(app);
-  mask!.style.display = 'flex';
+  if (!overlay) build(app);
+  topifyZ(overlay!); // ADR-0067：显示即发号（重开抬顶，谁后显示谁在上）
+  overlay!.style.display = 'flex';
   renderBody();
 }
 
@@ -53,32 +49,34 @@ export function unloadDataCheckup(): void {
   hostApp = null;
   escHandle?.unregister();
   escHandle = null;
-  mask?.remove();
-  popup?.remove();
-  mask = null;
-  popup = null;
+  overlay?.remove();
+  overlay = null;
 }
 
 function build(app: App): void {
-  const overlay = createOverlay({
-    maskId: MASK_ID,
-    popupId: POPUP_ID,
-    maxWidth: 620,
-    onMaskClick: () => hide(),
-  });
-  mask = overlay.mask;
-  popup = overlay.popup;
-  popup.classList.add('bz-checkup-popup');
+  // 面板壳走样式库 .bz-panel-overlay/.bz-panel-frame（components.css A 段）；
+  // 旧 core/dom createOverlay 双元素壳（mask+popup 分体）退役，dom.ts 本身冻结不动
+  const ov = document.createElement('div');
+  ov.id = OVERLAY_ID;
+  ov.className = 'bz-panel-overlay';
+  const frame = document.createElement('div');
+  frame.id = FRAME_ID;
+  frame.className = 'bz-panel-frame bz-checkup-popup';
 
   const head = document.createElement('div');
-  head.className = 'bz-checkup-head';
-  const ic = uiIcon('stethoscope');
-  ic.classList.add('bz-checkup-head-ic');
+  head.className = 'bz-panel-head';
+  const brand = document.createElement('div');
+  brand.className = 'bz-panel-brand';
+  brand.appendChild(uiIcon('stethoscope'));
   const title = document.createElement('div');
-  title.className = 'bz-checkup-title';
+  title.className = 'bz-panel-title';
   title.textContent = '数据体检';
-  const close = uiIconBtn({ icon: 'x', lg: true, title: '关闭', onClick: () => hide() });
-  head.append(ic, title, close);
+  const sp = document.createElement('div');
+  sp.className = 'bz-panel-head-sp';
+  const btns = document.createElement('div');
+  btns.className = 'bz-panel-head-btns';
+  btns.appendChild(uiIconBtn({ icon: 'x', lg: true, title: '关闭', onClick: () => hide() }));
+  head.append(brand, title, sp, btns);
 
   const body = document.createElement('div');
   body.className = 'bz-checkup-body';
@@ -86,32 +84,36 @@ function build(app: App): void {
   const foot = document.createElement('div');
   foot.className = 'bz-checkup-foot';
 
-  popup.append(head, body, foot);
-  document.body.appendChild(mask);
-  document.body.appendChild(popup);
+  frame.append(head, body, foot);
+  ov.appendChild(frame);
+  ov.addEventListener('click', (e) => {
+    if (e.target === ov) hide();
+  });
+  document.body.appendChild(ov);
+  overlay = ov;
 
   escHandle = escManager.register('bz-checkup', {
-    isVisible: () => !!mask && mask.style.display === 'flex',
+    isVisible: () => !!overlay && overlay.style.display === 'flex',
     close: () => hide(),
   });
   void app;
 }
 
 function hide(): void {
-  if (mask) mask.style.display = 'none';
+  if (overlay) overlay.style.display = 'none';
 }
 
 function bodyEl(): HTMLElement {
-  return popup!.querySelector('.bz-checkup-body') as HTMLElement;
+  return overlay!.querySelector('.bz-checkup-body') as HTMLElement;
 }
 
 function footEl(): HTMLElement {
-  return popup!.querySelector('.bz-checkup-foot') as HTMLElement;
+  return overlay!.querySelector('.bz-checkup-foot') as HTMLElement;
 }
 
 /** 按当前状态渲染主体：运行态 > 上次报告 > 空态 */
 function renderBody(): void {
-  if (!popup) return;
+  if (!overlay) return;
   if (running) {
     renderRunning();
     return;
@@ -215,12 +217,12 @@ function renderRunning(): void {
 
 /** 运行中进度刷新（step 状态 + 进度条；宽度为功能性动态计算，写 .bz-progress 内 i 填充） */
 function updateProgress(index: number, total: number, label: string): void {
-  if (!popup) return;
-  const progress = popup.querySelector('.bz-checkup-progress') as HTMLElement | null;
-  const fill = popup.querySelector('.bz-progress i') as HTMLElement | null;
+  if (!overlay) return;
+  const progress = overlay.querySelector('.bz-checkup-progress') as HTMLElement | null;
+  const fill = overlay.querySelector('.bz-progress i') as HTMLElement | null;
   if (progress) progress.textContent = `体检中（${index + 1}/${total}）：${label}`;
   if (fill) fill.style.width = Math.round((index / total) * 100) + '%';
-  popup.querySelectorAll<HTMLElement>('.bz-checkup-step').forEach((row) => {
+  overlay.querySelectorAll<HTMLElement>('.bz-checkup-step').forEach((row) => {
     const i = Number(row.dataset.step);
     row.classList.toggle('is-done', i < index);
     row.classList.toggle('is-current', i === index);
