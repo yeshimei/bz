@@ -172,6 +172,13 @@
 .bz-sp-set-name { font-size: var(--bz-font-body); font-weight: 500; color: var(--bz-text-1); line-height: 1.4; }
 .bz-sp-set-desc { font-size: var(--bz-font-meta); color: var(--bz-text-2); margin-top: 2px; line-height: 1.45; }
 .bz-sp-set-ctrl { flex-shrink: 0; display: flex; align-items: center; gap: var(--bz-space-sm); }
+/* 视觉卡片行（issue 210）：纵向——行头 name + 全宽卡片组（.bz-cardpick） */
+.bz-sp-set-row--cards {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--bz-space-sm);
+}
+.bz-sp-set-row--cards .bz-sp-set-name { font-size: var(--bz-font-meta); font-weight: var(--bz-weight-medium); color: var(--bz-text-2); }
 
 /* ---- 行内控件尺寸修饰（组件库基类之上，仅行布局尺寸） ---- */
 .bz-sp-set-ctrl .bz-input { width: 190px; }

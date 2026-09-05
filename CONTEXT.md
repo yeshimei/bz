@@ -327,6 +327,8 @@ _Avoid_: 整文件覆盖还原（日记条目是日期文件里的一个块，�
 _Avoid_: 手改根 styles.css、往根 styles.css 直接追加样式、styles/&lt;域&gt;.css 注入模式
 
 **组件库 (bz UI Kit, ADR-0094)**: 新体系样式库 + 组件库（`src/core/ui/`，tokens.css + components.css + 每组件一文件工厂，转发桶 index.ts 唯一入口；分层与用法见 `docs/ui-kit-manual.md`）。**ADR-0094（2026-09-05）扩充批次**：收编 8 域逐字重复的面板骨架——面板壳 `.bz-panel-overlay/.bz-panel-frame`、影院式整宽头行 `.bz-panel-head` 族（`--bz-head-h` 44px/`--head-h-lg` 50px）、主头行 `.bz-main-head`、工具行 `.bz-toolrow`、搜索 `.bz-search`、状态侧栏 `.bz-rail` 族、移动横滑条 `.bz-mobstrip`、统计卡 `.bz-stat` 族、候选浮层 `.bz-popover`、进度条 `.bz-progress` + 社区对标扩充（alert/menu/sheet/tabs/kbd/skeleton/table/card 等约 40 类族，命名归一 alert/menu/sheet）；带功能工厂 9 件（uiIconSpan/mountIcons/uiSearch/uiMainHead/uiRail/uiMobStrip/uiStat/uiProgress/uiPopover）+ `uiResizable` 可选 `persist` 尺寸记忆（防抖 300ms）。分两批落地：库批次先落（本批），存量域全域替换随后另票；**新域主面板一律 .bz-panel-overlay/.bz-panel-frame + .bz-panel-head**，不再自绘面板骨架。
+
+**待办面板皮肤 (Todo Skin, ADR-0095)**: 待办面板三选一外观（设置键 `todoSkin`：default/paper 纸感手账/editorial 编辑部），待办设置「显示」组最顶部以 `choiceCards` 视觉卡片行选择（issue 210，预览+名称无编号无描述）。机制 = 面板根挂 `.bz-todo-skin-*` 作用域就近覆盖 `--bz-*` token + 少量结构覆盖；皮肤固定明度不随 Obsidian 明暗；二级弹窗不跟随；`applyTodoSkin` 支持已开面板热切换。组件库 `uiCardChoice`（.bz-cardpick）供其他域视觉选择复用。
 _Avoid_: 域内复制组件库类族、新域自绘面板壳/头行、域内另起按钮/输入基线、手写 emoji 图标（一律 lucide 经 setIcon）
 
 **统一行操作 (Unified Item Actions)**: 跨域列表卡片统一手势组件（`src/core/item-actions.ts`）——列表**不注入任何常驻或 hover 图标排**；桌面端=**右键**弹跟手菜单（preventDefault 拦原生菜单，鼠标长按不触发），移动/触屏端=**长按**弹底部抽屉（遮罩+顶部条目信息+动作逐行）。能力：keepOpen（动作后抽屉保持+refreshItemSheet 原地重建动作与头部）、附属浮层（companion，抽屉之上的域内弹窗点击不误关抽屉）、危险项红色、强调色整行。动作项布局统一：图标左对齐 → 文案 → 小字右对齐。已接入域：待办、日记本、剪藏本（clipbook）、收藏本、归物本（含 4 状态流转+数据文件监听自动刷新）、书库（保留双击转跳书籍，md/EPUB 通用）、复习计划（保留双击打开笔记；开始复习难度弹窗为 companion）、保险库（双击预览保留）。

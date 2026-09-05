@@ -2076,3 +2076,53 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border-radius: 5px;
   color: var(--bz-text-1);
 }
+
+/* ═══════════ 卡片视觉单选组 .bz-cardpick（cardpick.ts，issue 210） ═══════════
+   「看脸选」的单选卡：迷你预览区 + 名称（无编号无描述，用户拍板），选中品牌描边。
+   适合皮肤/布局等视觉差异为主的设置项；预览变体视觉由使用方域样式提供
+   （prevClass 附加到 .bz-cardpick-prev）。 */
+.bz-cardpick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bz-space-md);
+}
+.bz-cardpick-card {
+  flex: 1 1 0;
+  min-width: 104px;
+  max-width: 170px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  border-radius: var(--bz-radius-md);
+  border: 1.5px solid var(--bz-border);
+  background: var(--bz-surface-1);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+}
+.bz-cardpick-card:hover { border-color: var(--bz-border-hover); }
+.bz-cardpick-card:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 2px; }
+.bz-cardpick-card.is-on {
+  border-color: var(--bz-brand);
+  box-shadow: 0 0 0 1px var(--bz-brand);
+}
+.bz-cardpick-prev {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--bz-radius-sm);
+  border: 1px solid var(--bz-border);
+  background: var(--bz-surface-2);
+  overflow: hidden;
+  position: relative;
+}
+.bz-cardpick-name {
+  font-size: var(--bz-font-meta);
+  color: var(--bz-text-2);
+  line-height: 1.5;
+}
+.bz-cardpick-card.is-on .bz-cardpick-name {
+  color: var(--bz-text-1);
+  font-weight: var(--bz-weight-medium);
+}
