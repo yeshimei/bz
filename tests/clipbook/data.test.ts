@@ -163,14 +163,14 @@ describe('clipbook/store 派生', () => {
     expect(noInfo.srcName).toBe('9823496');
   });
 
-  it('issue 205：domain 解析——无协议 URL 补 https；无 url 按平台兜底根域', () => {
+  it('issue 206：domain 解析——无协议 URL 补 https；无 url 按平台兜底根域', () => {
     expect(clipArticle(base({ url: 'daily.zhihu.com/story/1' }), {}).domain).toBe('daily.zhihu.com');
     expect(clipArticle(base({ url: '' }), {}).domain).toBe('guokr.com'); // 果壳科学人兜底
     expect(clipArticle(base({ url: '', platform: '知乎日报' }), {}).domain).toBe('zhihu.com');
     expect(clipArticle(base({ url: '', platform: 'B站' }), {}).domain).toBe('bilibili.com');
   });
 
-  it('issue 205：queryBySource news 面按 timeTs 降序（新文章在最前）', () => {
+  it('issue 206：queryBySource news 面按 timeTs 降序（新文章在最前）', () => {
     const arts = [
       base({ url: 'u-old', fetchedAt: '2026-08-30 09:00:00' }),
       base({ url: 'u-new', fetchedAt: '2026-09-05 22:00:00' }),

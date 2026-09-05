@@ -193,7 +193,7 @@ describe('rail 源行批量已读（enh 包 4）', () => {
 });
 
 describe('误标/误删可撤销（enh 包 5）', () => {
-  it('标记已读后通知带撤销 → 点击恢复未读与正文，统计回退（issue 205：列表倒序后首篇=影视飓风视频）', async () => {
+  it('标记已读后通知带撤销 → 点击恢复未读与正文，统计回退（issue 206：列表倒序后首篇=影视飓风视频）', async () => {
     const { vault } = await openDesktop();
     const item = document.querySelector('.bz-clip-item') as HTMLElement;
     const menu = await openContextMenuOn(item);
@@ -263,7 +263,7 @@ describe('阅读动线（enh 包 6）', () => {
   it('右栏停留超阈值自动落「在读」（可手动覆盖：手动处理后不生效）', async () => {
     __autoReadingDelayForTests(30);
     const { vault } = await openDesktop();
-    // M.cur = 列表第一条（issue 205 倒序后 = 影视飓风视频 09:00）
+    // M.cur = 列表第一条（issue 206 倒序后 = 影视飓风视频 09:00）
     expect(M.cur!.id).toBe('url:https://bilibili.com/video/BV1');
     await new Promise((r) => setTimeout(r, 130));
     await drainNewsWritesForTests();

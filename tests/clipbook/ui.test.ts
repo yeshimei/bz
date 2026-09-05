@@ -64,7 +64,7 @@ describe('clipbook UI 桌面三栏', () => {
     expect(overlay.textContent).not.toMatch(/[📥📰⚙️❌🔍📊]/);
   });
 
-  it('rail：全部未读徽标 = 实际可见未读 1（果壳文章一 url 命中剪藏 → saved 隐藏，issue 205 起计数同口径）；B站 UP 展开影视飓风；剪藏本计数 = 1', async () => {
+  it('rail：全部未读徽标 = 实际可见未读 1（果壳文章一 url 命中剪藏 → saved 隐藏，issue 206 起计数同口径）；B站 UP 展开影视飓风；剪藏本计数 = 1', async () => {
     await openDesktop();
     const rows = [...document.querySelectorAll('.bz-rail-item')] as HTMLElement[];
     const allRow = rows.find((r) => r.textContent!.includes('全部未读'))!;
@@ -75,7 +75,7 @@ describe('clipbook UI 桌面三栏', () => {
     expect(clipRow.textContent).toContain('1');
   });
 
-  it('列表点击 → 阅读区渲染标题与正文段（issue 205：列表最新在前，点首篇）', async () => {
+  it('列表点击 → 阅读区渲染标题与正文段（issue 206：列表最新在前，点首篇）', async () => {
     await openDesktop();
     const items = [...document.querySelectorAll('.bz-clip-item')] as HTMLElement[];
     expect(items.length).toBeGreaterThan(0); // 未读流非空（已读不进流）
@@ -234,9 +234,9 @@ describe('clipbook UI 桌面三栏', () => {
     closePanel();
   });
 
-  // ================= issue 205：搜索进 rail / 统计联动 / 图片 / 滚动重置 / 去分析入口 =================
+  // ================= issue 206：搜索进 rail / 统计联动 / 图片 / 滚动重置 / 去分析入口 =================
 
-  it('issue 205：搜索框移入左栏顶部；阅读分析报告入口移除', async () => {
+  it('issue 206：搜索框移入左栏顶部；阅读分析报告入口移除', async () => {
     await openDesktop();
     const rail = document.querySelector('.bz-clip-rail') as HTMLElement;
     // 搜索框在 rail 内且位于源列表（rail-scroll）上方
@@ -253,7 +253,7 @@ describe('clipbook UI 桌面三栏', () => {
     closePanel();
   });
 
-  it('issue 205：搜索时 rail 统计联动（各源数字 = 该源命中数）', async () => {
+  it('issue 206：搜索时 rail 统计联动（各源数字 = 该源命中数）', async () => {
     boot();
     const app = getApp();
     const raw = JSON.parse((app.vault as any).files.get('CONFIG/STORAGE/news.json'));
@@ -283,7 +283,7 @@ describe('clipbook UI 桌面三栏', () => {
     closePanel();
   });
 
-  it('issue 205：中栏列表最新在前 + 正文图片渲染 + 站点图标先字占位', async () => {
+  it('issue 206：中栏列表最新在前 + 正文图片渲染 + 站点图标先字占位', async () => {
     boot();
     const app = getApp();
     const raw = JSON.parse((app.vault as any).files.get('CONFIG/STORAGE/news.json'));
@@ -312,7 +312,7 @@ describe('clipbook UI 桌面三栏', () => {
     closePanel();
   });
 
-  it('issue 205：切换文章右栏滚动归零（同篇刷新不重置）', async () => {
+  it('issue 206：切换文章右栏滚动归零（同篇刷新不重置）', async () => {
     boot();
     const app = getApp();
     const raw = JSON.parse((app.vault as any).files.get('CONFIG/STORAGE/news.json'));
