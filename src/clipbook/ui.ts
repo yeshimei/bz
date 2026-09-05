@@ -239,8 +239,6 @@ function buildDom(app: any): void {
           <div class="bz-panel-head-sp"></div>
           <div class="bz-clip-issue" data-clip-issue></div>
           <div class="bz-clip-head-search bz-search">${iconSpan('search')}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点…"></div>
-          <button class="bz-icon-btn" data-clip-settings title="打开剪藏本设置">${iconSpan('settings')}</button>
-          <button class="bz-icon-btn" data-clip-desk-close title="关闭">${iconSpan('x')}</button>
         </div>
         <div class="bz-clip-desk-body">
           <div class="bz-rail bz-rail--wide bz-clip-rail">
@@ -302,13 +300,7 @@ function buildDom(app: any): void {
   const mobInput = overlayEl.querySelector('[data-clip-mob-input]') as HTMLInputElement;
   deskSearchEl = overlayEl.querySelector('[data-clip-desk-search]') as HTMLInputElement;
 
-  // 头行设置直达/关闭（issue 201 头行对齐待办；设置动态 import 防顶层环引用，ADR-0002）
-  overlayEl.querySelector('[data-clip-desk-close]')?.addEventListener('click', () => closePanel());
-  overlayEl.querySelector('[data-clip-settings]')?.addEventListener('click', () => {
-    closePanel();
-    void import('../settings-panel').then((m) => m.openSettingsPanel(app, 'clipping'));
-  });
-
+  // 头行无按钮（issue 214 三轮用户拍板：去 ⚙/✕，关闭 = 点遮罩/ESC）；设置走命令/设置面板
   // 点遮罩关闭（桌面无关闭钮）
   overlayEl.addEventListener('click', (e) => {
     if (e.target === overlayEl) closePanel();
@@ -594,7 +586,7 @@ function renderRail(): void {
         ? { kind: 'inbox' as const, platform: String(sel.platform || ''), up: sel.up ? String(sel.up) : undefined }
         : { kind: 'all' as const };
     const actions = buildRailActions(String(row.title || ''), source);
-    if (actions.length) attachItemActions(row, actions, { sheetTitle: String(row.title || '') });
+    if (actions.length) attachItemActions(row, actions, { sheetTitle: String(row.title || ''), menuClass: 'bz-clip-menu-editorial' });
   });
 }
 
@@ -684,7 +676,8 @@ function bindItemMenus(): void {
     const art = currentList().find((x) => x.id === card.dataset.id);
     if (!art) return;
     const actions = buildItemActions(art);
-    attachItemActions(card, actions, { sheetHead: buildSheetHead(art) });
+    // menuClass：菜单挂 body（域内后代选择器不可达），编辑部皮肤靠根挂类生效（同 todo 皮肤先例）
+    attachItemActions(card, actions, { sheetHead: buildSheetHead(art), menuClass: 'bz-clip-menu-editorial' });
     // 单击选中 → 阅读
     card.addEventListener('click', (e) => {
       if (e.target && (e.target as HTMLElement).closest('.bz-item-sheet')) return;
