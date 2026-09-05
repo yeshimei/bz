@@ -766,17 +766,21 @@ describe('回忆墙 UI', () => {
     expect(rail.querySelectorAll('.bz-diary-wall-month-thumb').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('issue 213：按原文段序渲染——文字段只出现一次，媒体后不再重复挂全文；sparse-2 半宽 hack 退役', async () => {
+  it('issue 214：媒体卡文字置顶——时间+类型行在上、拼接全文只出现一次、媒体堆叠下方；sparse-2 半宽 hack 退役', async () => {
     await openAndWait();
     const wall = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-wall') as HTMLElement;
-    // 夹具 3 天：08-19（文字+3媒体→1 文字段）、06-11（纯媒体→0）、06-12（纯文字→1）
-    expect(wall.querySelectorAll('.bz-diary-wall-item.bz-diary-wall-text').length).toBe(2);
-    // 08-19 的 masonry：3 个媒体块 + 1 个文字段卡
+    // 夹具 3 天：08-19（文字+3媒体→1 整卡）、06-11（纯媒体→0 文字卡）、06-12（纯文字→1）
+    expect(wall.querySelectorAll('.bz-diary-wall-item.bz-diary-wall-text').length).toBe(1);
     const m0 = wall.querySelectorAll('.bz-diary-wall-masonry')[0] as HTMLElement;
-    expect(m0.querySelectorAll('.bz-diary-wall-media-wrap').length).toBe(3);
-    expect(m0.querySelectorAll('.bz-diary-wall-text').length).toBe(1);
-    // 媒体块内不再嵌正文（旧版 .bz-diary-wall-tx 随媒体重复）
-    expect(m0.querySelector('.bz-diary-wall-media-wrap .bz-diary-wall-tx')).toBeNull();
+    // 08-19 整卡：文字置顶（时间行 + 全文一次），3 个媒体堆叠下方
+    const wrap = m0.querySelector('.bz-diary-wall-media-wrap') as HTMLElement;
+    expect(wrap).toBeTruthy();
+    expect(wrap.querySelectorAll('.bz-diary-wall-media').length).toBe(3);
+    expect(wrap.querySelectorAll('.bz-diary-wall-text-row').length).toBe(1);
+    expect(wrap.querySelectorAll('.bz-diary-wall-text-tx').length).toBe(1);
+    // 时间行在正文之上、正文在媒体之上（DOM 序 = 视觉序）
+    expect(wrap.querySelector('.bz-diary-wall-text-row')!.nextElementSibling).toBe(wrap.querySelector('.bz-diary-wall-text-tx'));
+    expect(wrap.querySelector('.bz-diary-wall-text-tx')!.nextElementSibling).toBeTruthy();
     // sparse-2 半宽类已删，2 条日不再挂
     expect(wall.querySelector('.bz-diary-wall-masonry--sparse-2')).toBeNull();
   });
