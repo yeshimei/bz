@@ -320,6 +320,12 @@ export function applyTodoSkin(skin: unknown): void {
   if (skin === 'paper' || skin === 'editorial') panel.classList.add(`bz-todo-skin-${skin}`);
 }
 
+/** 当前皮肤类名（issue 210）：uiModal 弹窗（编辑器/添加场景/重命名）与面板共用同套皮肤 */
+function skinClass(): string {
+  const s = (tryGetSettings() as any).todoSkin;
+  return s === 'paper' || s === 'editorial' ? `bz-todo-skin-${s}` : '';
+}
+
 /**
  * 打开主面板（toggle：开着再调关闭）。
  * opts.notePath：提醒改道定位（file-open 接管）——面板打开后搜索框预设为该笔记路径，
@@ -622,10 +628,11 @@ function renderMainHead(): void {
   const countEl = overlay.querySelector('[data-todo-main-count]') as HTMLElement | null;
   if (!titleEl || !countEl) return;
   titleEl.textContent = sceneLabel(M.activeScene);
-  // 计数 = 当前场景 + 当前搜索下的条目总数与未完成数（对齐原型 updateCount）
+  // 计数 = 当前场景 + 当前搜索下的条目总数与未完成数（对齐原型 updateCount）；
+  // 数字包 .bz-todo-cnt-num 供皮肤染色（issue 210 纸感/编辑部计数数字着色）
   const items = getVisibleItems();
   const undone = items.filter((i) => !i.completed).length;
-  countEl.textContent = `· ${items.length} 项 · ${undone} 未完成`;
+  countEl.innerHTML = `· <span class="bz-todo-cnt-num">${items.length}</span> 项 · <span class="bz-todo-cnt-num">${undone}</span> 未完成`;
 }
 
 /** 场景选项归一（桌面 nav / 移动 chips 共用）；dot 仅用户场景携带（伪场景走 SCENE_PSEUDO_ICONS 图标） */
@@ -1402,7 +1409,7 @@ export function openEditor(item: TodoItem | null): void {
     })();
   });
 
-  const { close } = uiModal({ content: modalBox, maxWidth: 420 });
+  const { close } = uiModal({ content: modalBox, maxWidth: 420, className: skinClass() });
   closeModal = close;
   contentInput.focus();
   // 剪藏默认场景：打开即尝试剪贴板预填（新建限定；与切场景入口共用 tryEditorClipPrefill）
@@ -1436,7 +1443,7 @@ function openAddSceneDialog(): void {
   const cancelBtn = uiBtn({ label: '取消' });
   const row = uiBtnRow([cancelBtn, saveBtn]);
   wrap.append(title, input, hint, row);
-  const { close } = uiModal({ content: wrap, maxWidth: 340 });
+  const { close } = uiModal({ content: wrap, maxWidth: 340, className: skinClass() });
   const doSave = () => {
     const name = input.value.trim();
     if (!name) { notice('请输入场景名称'); return; }
@@ -1516,7 +1523,7 @@ function openRenameSceneDialog(scene: string): void {
   const cancelBtn = uiBtn({ label: '取消' });
   const row = uiBtnRow([cancelBtn, saveBtn]);
   wrap.append(title, input, hint, row);
-  const { close } = uiModal({ content: wrap, maxWidth: 340 });
+  const { close } = uiModal({ content: wrap, maxWidth: 340, className: skinClass() });
   const doSave = () => {
     const name = input.value.trim();
     if (!name) { notice('请输入场景名称'); return; }
