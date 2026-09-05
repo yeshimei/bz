@@ -1105,6 +1105,55 @@ button.news-close-btn {
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
+/* ---- 抽屉共享基线（恢复：movie 域退役 ADR-0087 时随 src/movie/styles.css 误删的共享规则——
+   本组件样式早年散落各域文件，退役清理时未迁回 core，致动作项失 flex 纵列挤成一行、
+   抗 Obsidian 按钮 !important 组/危险红/右对齐小字/入场动画全部失效） ---- */
+/* 头部标题/小字（sheetTitle 路径；sheetHead 路径走 .bz-item-sheet-entry 族） */
+.bz-item-sheet-title {
+  font-size: 14px; font-weight: 600; color: var(--text-normal);
+  line-height: 1.4; word-break: break-word;
+}
+.bz-item-sheet-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+/* 功能项一行行列出：左对齐、无背景色、无边框分割，小字号。
+   高特异性 + !important 抗 Obsidian 默认 button 样式（灰底/边框/圆角）压盖 */
+.bz-item-sheet button.bz-item-sheet-item {
+  display: flex; align-items: center; gap: 8px;
+  justify-content: flex-start !important; /* 抗 Obsidian 默认 button 居中 */
+  width: 100%; padding: 8px 6px;
+  font-size: 13px; line-height: 1.5; color: var(--text-normal);
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  cursor: pointer; text-align: left !important;
+}
+.bz-item-sheet button.bz-item-sheet-item:hover,
+.bz-item-sheet button.bz-item-sheet-item:active {
+  background: transparent !important; /* 无背景反馈，保持纯粹 */
+}
+.bz-item-sheet button.bz-item-sheet-item--danger { color: var(--text-error) !important; }
+/* 动作项右侧小字（次级/动态数据，如「123 字」）：右对齐、faint 弱化，不参与换行；仅移动端抽屉（桌面菜单不渲染小字） */
+.bz-item-sheet-item-sub {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 45%;
+  flex-shrink: 1;
+}
+.bz-item-sheet-icon { width: 16px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text-muted); }
+.bz-item-sheet-item--danger .bz-item-sheet-icon { color: var(--text-error); }
+@keyframes bz-sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes bz-mask-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* 移动端底部抽屉（长按卡片弹出，参照 B 站/网易云：遮罩 + 底部滑入 + 顶部选中条目信息） */
 .bz-item-sheet-mask {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -1569,6 +1618,7 @@ button.news-close-btn {
   --bz-surface-hover: #2c2c36;
   --bz-surface-active: #33333e;
   --bz-overlay: rgba(0, 0, 0, 0.6);
+  --bz-surface-track: rgba(0, 0, 0, 0.2);  /* 浮岛 segmented 轨道（比选中白卡暗一档） */
 
   /* 文字 */
   --bz-text-1: #e8e8ec;
@@ -1614,6 +1664,7 @@ button.news-close-btn {
   --bz-surface-hover: #ececf0;
   --bz-surface-active: #e0e0e6;
   --bz-overlay: rgba(0, 0, 0, 0.35);
+  --bz-surface-track: #fbfbfb;             /* 浮岛 segmented 轨道（比选中白卡暗一档，2026-09-05 拍板值） */
 
   --bz-text-1: #1c1c21;
   --bz-text-2: #5c5c66;
@@ -1994,6 +2045,40 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-choice-btn.is-on { background: var(--bz-brand) !important; color: var(--bz-on-brand) !important; }
 .bz-choice-btn.is-on:hover { background: var(--bz-brand-hover) !important; }
 .bz-choice-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+/* 浮岛 segmented（float: true，issue 199 拍板）：轨道收内容宽无边框 +
+   白卡滑动指示器（choice.ts 量位 transform/width 200ms）。
+   白卡 = .bz-choice-seg（surface-2）；未选中项退为透底灰字，选中加重。 */
+.bz-choice-seg { display: none; }
+.bz-choice--float {
+  position: relative;
+  background: var(--bz-surface-track);
+  border-radius: var(--bz-radius-full);
+  padding: 3px;
+  gap: 2px;
+  width: max-content;
+  max-width: 100%;
+}
+.bz-choice--float .bz-choice-seg {
+  display: block;
+  position: absolute;
+  top: 3px; left: 0;
+  height: calc(100% - 6px);
+  border-radius: var(--bz-radius-full);
+  background: var(--bz-surface-2);
+  box-shadow: 0 1px 3px rgba(20, 20, 24, 0.14), 0 0 0 1px rgba(20, 20, 24, 0.05);
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), width 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+.bz-choice--float .bz-choice-btn {
+  position: relative; z-index: 1;
+  height: calc(var(--bz-control-h) - 6px);
+  background: transparent !important;
+  color: var(--bz-text-2) !important;
+  transition: color var(--bz-dur-fast) ease;
+}
+.bz-choice--float .bz-choice-btn:hover { background: transparent !important; color: var(--bz-text-1) !important; }
+.bz-choice--float .bz-choice-btn.is-on { background: transparent !important; color: var(--bz-text-1) !important; font-weight: var(--bz-weight-medium); }
+.bz-choice--float .bz-choice-btn.is-on:hover { background: transparent !important; }
 
 /* ═══════════ 开关 .bz-sw（switch.ts） ═══════════
    设置/表单行的滑块开关（40×22）：关 = 轨道中性、开 = 品牌实底。
@@ -5813,9 +5898,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* ---- 右栏 ---- */
 .bz-todo-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-/* 排序：组件库 segmented 三档（替换自绘按钮） */
+/* 排序：浮岛 segmented 三档（.bz-choice--float，issue 199） */
 .bz-todo-sort { flex-shrink: 0; }
-.bz-todo-sort .bz-segmented-btn { padding: 0 10px; font-size: var(--bz-font-caption); }
 
 /* ---- 列表 ---- */
 .bz-todo-content { flex: 1; overflow-y: auto; padding: 4px var(--bz-space-md) var(--bz-space-md); display: flex; flex-direction: column; min-height: 0; }
@@ -5872,7 +5956,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-todo-card.bz-todo-done .bz-todo-card-title { text-decoration: line-through; color: var(--bz-text-2); }
 .bz-todo-card-title a { color: var(--bz-brand); text-decoration: underline; cursor: pointer; word-break: break-word; }
 
-/* meta 标签行（顺序对齐源码 buildMeta：课程→脚本→链接→位置→场景→截止→时间） */
+/* meta 标签行（顺序对齐源码 buildMeta：课程→脚本→链接→位置→场景→截止→时间）。
+   行内所有文字统一 18px 行高盒——标签 18px + 时间 18px，flex 居中后基线一致
+   （issue 199：此前时间默认 ~13px 行高盒，与标签文字基线错位 ~2.5px） */
 .bz-todo-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 3px; }
 .bz-todo-tag {
   display: inline-flex; align-items: center; gap: 3px;
@@ -5890,7 +5976,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-todo-tag.bz-todo-tag-overdue { background: color-mix(in srgb, var(--bz-danger) 14%, transparent); color: var(--bz-danger); }
 .bz-todo-tag.bz-todo-tag-today { background: color-mix(in srgb, var(--bz-brand) 14%, transparent); color: var(--bz-brand); }
 .bz-todo-tag.bz-todo-tag-future { background: color-mix(in srgb, var(--bz-success) 12%, transparent); color: var(--bz-success); }
-.bz-todo-time { font-size: var(--bz-font-caption); color: var(--bz-text-3); flex-shrink: 0; }
+.bz-todo-time { font-size: var(--bz-font-caption); line-height: 18px; color: var(--bz-text-3); flex-shrink: 0; }
 
 /* 空态：组件库 .bz-empty 三件套（图标 + 一句话 + 动作按钮），域内不再自留空态样式 */
 
@@ -5907,9 +5993,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-todo-form { display: flex; flex-direction: column; gap: var(--bz-space-md); margin-top: var(--bz-space-md); }
 .bz-todo-form .bz-field { margin-bottom: 0; }
 .bz-todo-form textarea.bz-input { min-height: 64px; }
-/* 第二个输入框（剪藏标题/代码脚本/公开课课程）容器 */
+/* 第二个输入框（剪藏标题/代码脚本/公开课课程）容器：输入框满宽
+   （.bz-input 默认 240px 定宽，不在 .bz-field 里的框须显式撑满，issue 199） */
 .bz-todo-extra { display: none; }
 .bz-todo-extra.bz-todo-extra-on { display: block; }
+.bz-todo-extra .bz-input { width: 100%; }
 .bz-todo-sug-box {
   border: 1px solid var(--bz-border); border-radius: var(--bz-radius-sm);
   background: var(--bz-surface-3); margin-top: 4px; overflow: hidden;
@@ -5917,13 +6005,32 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-todo-sug-item { display: block; width: 100%; text-align: left; padding: 6px 10px; border: none; background: none; font-size: var(--bz-font-meta); color: var(--bz-text-1); cursor: pointer; font-family: inherit; }
 .bz-todo-sug-item + .bz-todo-sug-item { border-top: 1px solid var(--bz-border); }
 .bz-todo-sug-item:hover { background: var(--bz-surface-hover); }
-/* 定位行：垂直居中（按钮文字不再靠上），图标与文字同基线 */
+/* 定位行：垂直居中；按钮 = F 图标圆底（issue 199 拍板）：pin 装 22px 小圆底 +
+   文字素排，透底灰字，hover 圆底转品牌软底；绑定后整钮转品牌色 */
 .bz-todo-pos-row { display: flex; align-items: center; gap: var(--bz-space-sm); min-height: 32px; }
-.bz-todo-pos-row .bz-btn { height: 32px; display: inline-flex; align-items: center; }
-.bz-todo-pos-row .bz-btn .bz-ic { width: 14px; height: 14px; }
+.bz-todo-pos-row .bz-btn.bz-todo-pos-btn {
+  height: 32px; padding: 0 12px 0 6px; gap: 6px;
+  background: transparent !important; border-color: transparent !important;
+  color: var(--bz-text-2) !important;
+}
+.bz-todo-pos-row .bz-btn.bz-todo-pos-btn:hover { color: var(--bz-text-1) !important; }
+.bz-pos-chip {
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+  background: var(--bz-surface-hover); color: inherit;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.bz-pos-chip .bz-ic { width: 13px; height: 13px; }
+.bz-btn.bz-todo-pos-btn:hover .bz-pos-chip { background: var(--bz-brand-soft); color: var(--bz-brand); }
+.bz-btn.bz-todo-pos-btn.bz-todo-pos-btn-active { color: var(--bz-brand) !important; font-weight: var(--bz-weight-medium); }
+.bz-btn.bz-todo-pos-btn.bz-todo-pos-btn-active .bz-pos-chip { background: var(--bz-brand-soft); color: var(--bz-brand); }
 .bz-todo-pos-row .bz-todo-pos-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
 .bz-todo-pos-row .bz-todo-pos-hint .bz-ic { width: 12px; height: 12px; vertical-align: -2px; }
-.bz-todo-pos-row .bz-todo-pos-btn-active { background: var(--bz-brand-soft); color: var(--bz-brand); border-color: transparent; }
+
+/* ---- 添加场景弹窗（issue 199：此前容器/提示零规则裸排） ---- */
+.bz-todo-addscene { display: flex; flex-direction: column; gap: var(--bz-space-md); margin-top: var(--bz-space-md); }
+.bz-todo-addscene .bz-input { width: 100%; }
+.bz-todo-addscene .bz-btn-row { margin-top: 4px; }
+.bz-todo-addscene-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); line-height: 1.5; }
 
 /* ---- 移动端（≤768px）：真全屏 + 横滑场景条（共享 .bz-mobstrip） ---- */
 @media (max-width: 768px) {
