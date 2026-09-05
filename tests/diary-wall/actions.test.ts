@@ -122,7 +122,7 @@ async function openAndWait() {
 
 function openMenu(item: HTMLElement): HTMLElement {
   item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 50, clientY: 60 }));
-  const menu = document.querySelector('.bz-diary-wall-menu') as HTMLElement;
+  const menu = document.querySelector('.bz-item-menu') as HTMLElement;
   expect(menu).toBeTruthy();
   return menu;
 }
@@ -197,7 +197,7 @@ describe('回忆墙条目动作（P1 审查修复）', () => {
     const mob = document.querySelector('.bz-diary-wall-mob')!;
     // 影视条目（第 2 个）抽屉
     (mob.querySelectorAll('.bz-diary-wall-item')[1] as HTMLElement).click();
-    expect(mob.querySelector('.bz-diary-wall-sheet--show')).toBeTruthy();
+    expect(mob.querySelector('.bz-sheet--show')).toBeTruthy();
     const movieActs = mob.querySelector('.bz-diary-wall-sheet-actions') as HTMLElement;
     expect(movieActs.textContent).not.toContain('加密');
     expect(movieActs.textContent).not.toContain('删除');

@@ -269,17 +269,17 @@ describe('保险库增强包（UIManager / Controller）', () => {
     const dot = document.querySelector('.bz-vault-health .okdot') as HTMLElement;
     // 未体检（不再恒「健康」/硬编码绿点）
     expect(hd.textContent).toContain('未体检');
-    expect(dot.style.background).toContain('faint');
+    expect(dot.style.background).toContain('--bz-text-3');
     // 体检通过
     ui.lastHealth = { issues: 0, lastChecked: '2026/09/04 12:00' };
     ui.renderAll();
     expect(hd.textContent).toContain('体检通过');
-    expect(dot.style.background).toContain('ok');
+    expect(dot.style.background).toContain('--bz-success');
     // 有待处理
     ui.lastHealth = { issues: 3, lastChecked: '2026/09/04 12:00' };
     ui.renderAll();
     expect(hd.textContent).toContain('3 个待处理');
-    expect(dot.style.background).toContain('warn');
+    expect(dot.style.background).toContain('--bz-warning');
     // 点击健康卡直达体检
     ui.lastHealth = null;
     ui.renderAll();

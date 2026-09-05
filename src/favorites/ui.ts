@@ -20,7 +20,7 @@
  */
 import { notice, notify, notifyUndo, notifySaveError } from '../core/notice';
 import { topifyZ } from '../core/z-order';
-import { refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, closeItemMenu, openItemMenu, openItemSheet, type ItemAction } from '../core/item-actions';
+import { refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, closeItemMenu, openItemMenu, openItemSheet, type ItemAction, resetItemMenuClickGuard } from '../core/item-actions';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
@@ -802,6 +802,8 @@ function openRowMenuAt(row: HTMLElement, it: FavoritesItem, x: number, y: number
     if (it2) refreshItemSheet(buildActions(it2, rebuild), sheetHeadOf(it2));
   };
   openItemMenu(x, y, buildActions(it, rebuild), true);
+  // 复位残余 click 抑制（issue 198 同款 P1）：右键时序会置位 armed 吞下一次左键；右键无补发 click，直接复位
+  resetItemMenuClickGuard();
 }
 
 /** 移动：底部详情抽屉 */

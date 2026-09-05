@@ -119,8 +119,8 @@ describe('今日回顾面板（recap 域）', () => {
     await flush();
     await flush();
     expect(overlay()).toBeTruthy();
-    expect(overlay().querySelector('.bz-recap-title')!.textContent).toBe('今日回顾');
-    expect(overlay().querySelector('.bz-recap-date')!.textContent).toMatch(/周/);
+    expect(overlay().querySelector('.bz-panel-title')!.textContent).toBe('今日回顾');
+    expect(overlay().querySelector('.bz-panel-head-sub')!.textContent).toMatch(/周/);
     // R3 生成钮：数据就绪后启用；当天还没有回顾条目 → 「生成今日总结」
     const ai = overlay().querySelector('[data-recap-ai]') as HTMLButtonElement;
     expect(ai.disabled).toBe(false);
