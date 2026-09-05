@@ -64,22 +64,22 @@ describe('clipbook UI 桌面三栏', () => {
     expect(overlay.textContent).not.toMatch(/[📥📰⚙️❌🔍📊]/);
   });
 
-  it('rail：全部未读徽标 = 未读 2；B站 UP 展开影视飓风；剪藏本计数 = 1', async () => {
+  it('rail：全部未读徽标 = 实际可见未读 1（果壳文章一 url 命中剪藏 → saved 隐藏，issue 203 起计数同口径）；B站 UP 展开影视飓风；剪藏本计数 = 1', async () => {
     await openDesktop();
     const rows = [...document.querySelectorAll('.bz-rail-item')] as HTMLElement[];
     const allRow = rows.find((r) => r.textContent!.includes('全部未读'))!;
-    expect(allRow.textContent).toContain('2');
+    expect(allRow.textContent).toContain('1');
     const upRow = rows.find((r) => r.textContent!.includes('影视飓风'))!;
     expect(upRow).toBeTruthy();
     const clipRow = rows.find((r) => r.textContent!.includes('剪藏本'))!;
     expect(clipRow.textContent).toContain('1');
   });
 
-  it('列表点击 → 阅读区渲染标题与正文段', async () => {
+  it('列表点击 → 阅读区渲染标题与正文段（issue 203：列表最新在前，点首篇）', async () => {
     await openDesktop();
     const items = [...document.querySelectorAll('.bz-clip-item')] as HTMLElement[];
     expect(items.length).toBeGreaterThan(0); // 未读流非空（已读不进流）
-    (items[items.length - 1] as HTMLElement).click();
+    (items[0] as HTMLElement).click(); // timeTs 降序后首篇 = 影视飓风视频（09:00 > 07:00）
     const reader = document.querySelector('[data-clip-reader]') as HTMLElement;
     await vi.waitFor(() => expect(reader.textContent).toContain('影视飓风视频'));
     expect(reader.textContent).toContain('视频简介内容');
@@ -231,6 +231,107 @@ describe('clipbook UI 桌面三栏', () => {
     await vi.waitFor(() => expect(M.cur).toBeNull());
     const reader = document.querySelector('[data-clip-reader]') as HTMLElement;
     expect(reader.textContent).toContain('从列表选择一篇文章开始阅读');
+    closePanel();
+  });
+
+  // ================= issue 203：搜索进 rail / 统计联动 / 图片 / 滚动重置 / 去分析入口 =================
+
+  it('issue 203：搜索框移入左栏顶部；阅读分析报告入口移除', async () => {
+    await openDesktop();
+    const rail = document.querySelector('.bz-clip-rail') as HTMLElement;
+    // 搜索框在 rail 内且位于源列表（rail-scroll）上方
+    const railSearch = rail.querySelector('.bz-clip-rail-search input[data-clip-desk-search]');
+    expect(railSearch).toBeTruthy();
+    const scroll = rail.querySelector('.bz-rail-scroll') as HTMLElement;
+    expect((scroll.previousElementSibling as HTMLElement).classList.contains('bz-clip-rail-search')).toBe(true);
+    // 头行不再有搜索框
+    const head = document.querySelector('.bz-panel-head') as HTMLElement;
+    expect(head.querySelector('[data-clip-desk-search]')).toBeNull();
+    // 阅读分析报告入口已移除
+    expect(document.querySelector('[data-clip-analy]')).toBeNull();
+    expect(rail.textContent).not.toContain('阅读分析报告');
+    closePanel();
+  });
+
+  it('issue 203：搜索时 rail 统计联动（各源数字 = 该源命中数）', async () => {
+    boot();
+    const app = getApp();
+    const raw = JSON.parse((app.vault as any).files.get('CONFIG/STORAGE/news.json'));
+    raw.articles = [
+      { platform: '果壳科学人', title: '果壳文一', url: 'https://guokr.com/a1', date: '2026-09-01 08:00:00', body: 'b1' },
+      { platform: '果壳科学人', title: '果壳文二', url: 'https://guokr.com/a2', date: '2026-09-02 08:00:00', body: 'b2' },
+      { platform: 'B站', title: '视频z', url: 'https://b23.tv/z', date: '2026-09-03 08:00:00', body: 'b3' },
+    ];
+    (app.vault as any).files.set('CONFIG/STORAGE/news.json', JSON.stringify(raw));
+    openClipbook(getApp());
+    await vi.waitFor(() => expect(M.open).toBe(true));
+    await vi.waitFor(() => expect(M.articles.length).toBe(3));
+    // 无搜索：全部未读 = 3
+    const allRow0 = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('全部未读')) as HTMLElement;
+    expect(allRow0.querySelector('.bz-rail-count')!.textContent).toBe('3');
+    // 搜索「果壳」：全部未读 3→2，剪藏本行 0
+    const input = document.querySelector('[data-clip-desk-search]') as HTMLInputElement;
+    input.value = '果壳';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await vi.waitFor(() => {
+      const allRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('全部未读')) as HTMLElement;
+      expect(allRow.querySelector('.bz-rail-count')!.textContent).toBe('2');
+    });
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-clip-item').length).toBe(2));
+    const clipRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
+    expect(clipRow.querySelector('.bz-rail-count')!.textContent).toBe('0');
+    closePanel();
+  });
+
+  it('issue 203：中栏列表最新在前 + 正文图片渲染 + 站点图标先字占位', async () => {
+    boot();
+    const app = getApp();
+    const raw = JSON.parse((app.vault as any).files.get('CONFIG/STORAGE/news.json'));
+    raw.articles = [
+      { platform: '果壳科学人', title: '旧文', url: 'https://guokr.com/old', date: '2026-09-01 08:00:00', fetchedAt: '2026-09-01 08:00:00', body: '旧正文 ![配图](https://a.example/old.png)' },
+      { platform: '果壳科学人', title: '新文', url: 'https://guokr.com/new', date: '2026-09-05 22:00:00', fetchedAt: '2026-09-05 22:00:00', body: '新正文' },
+    ];
+    (app.vault as any).files.set('CONFIG/STORAGE/news.json', JSON.stringify(raw));
+    openClipbook(getApp());
+    await vi.waitFor(() => expect(M.open).toBe(true));
+    await vi.waitFor(() => expect(M.articles.length).toBe(2));
+    // 列表第一项 = 新文（timeTs 降序，聚合讯新文章排最前）
+    const first = document.querySelector('.bz-clip-item') as HTMLElement;
+    expect(first.textContent).toContain('新文');
+    // 站点图标：先首字 chip 占位（jsdom 不触发网络图加载回调，停留占位态）
+    const chip = document.querySelector('[data-clip-reader] .bz-clip-favchip') as HTMLElement;
+    expect(chip.textContent).toBe('果');
+    // 点旧文 → 正文 markdown 图片渲染为 img 段（不再被丢弃）
+    const oldItem = [...document.querySelectorAll('.bz-clip-item')].find((r) => r.textContent!.includes('旧文')) as HTMLElement;
+    oldItem.click();
+    await vi.waitFor(() => {
+      const img = document.querySelector('[data-clip-reader] img.bz-clip-art-img') as HTMLImageElement;
+      expect(img).toBeTruthy();
+      expect(img.getAttribute('src')).toBe('https://a.example/old.png');
+    });
+    closePanel();
+  });
+
+  it('issue 203：切换文章右栏滚动归零（同篇刷新不重置）', async () => {
+    boot();
+    const app = getApp();
+    const raw = JSON.parse((app.vault as any).files.get('CONFIG/STORAGE/news.json'));
+    raw.articles = [
+      { platform: '果壳科学人', title: '文章甲', url: 'https://guokr.com/s1', date: '2026-09-01 08:00:00', body: '甲正文' },
+      { platform: '果壳科学人', title: '文章乙', url: 'https://guokr.com/s2', date: '2026-09-02 08:00:00', body: '乙正文' },
+    ];
+    (app.vault as any).files.set('CONFIG/STORAGE/news.json', JSON.stringify(raw));
+    openClipbook(getApp());
+    await vi.waitFor(() => expect(M.open).toBe(true));
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-clip-item').length).toBe(2));
+    const sc = document.querySelector('.bz-clip-read-scroll') as HTMLElement;
+    // 首篇自动选中：模拟读者滚到中部
+    sc.scrollTop = 120;
+    // 点列表另一篇 → 滚动应归零
+    const items = [...document.querySelectorAll('.bz-clip-item')] as HTMLElement[];
+    const other = items.find((el) => !el.classList.contains('on')) as HTMLElement;
+    other.click();
+    await vi.waitFor(() => expect(sc.scrollTop).toBe(0));
     closePanel();
   });
 });
