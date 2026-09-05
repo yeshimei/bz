@@ -221,7 +221,7 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     closeOverlay();
   });
 
-  it('借书卡：点书脊弹出（pull-note/台账/书评/印章），改已读保存 → frontmatter 落盘', async () => {
+  it('借书卡只读化（issue 220）：点书脊弹出纯展示卡——台账/进度条/印章齐备，无任何编辑控件', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
     const spine = spines(document.querySelector('.bz-panel-overlay') as HTMLElement).find((s) => s.title?.includes('认知觉醒')) as HTMLElement;
@@ -233,57 +233,20 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     expect(popup.textContent).toContain('周岭');
     expect(popup.textContent).toContain('值得反复读');
     expect(popup.querySelector('.bz-bs-d-seal')?.textContent).toBe('阅');
-    // 状态切已读 → 保存
-    (Array.from(popup.querySelectorAll('.bz-choice-btn')).find((b) => b.textContent?.trim() === '已读') as HTMLElement).click();
-    (popup.querySelector('.bz-bs-d-save') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 30));
-    const content = vault.files.get('书库/认知觉醒.md') as string;
-    expect(content).toContain('readingProgress: 100');
-    expect(content).toMatch(/completionDate: \d{4}-\d{2}-\d{2}/);
-    expect(document.querySelector('.bz-bs-d-popup')).toBeFalsy();
+    expect(popup.querySelector('.bz-choice-btn')).toBeFalsy();
+    expect(popup.querySelector('.bz-range')).toBeFalsy();
+    expect(popup.querySelector('.bz-bs-d-review')).toBeFalsy();
+    expect(popup.querySelector('.bz-bs-d-cdate')).toBeFalsy();
+    expect(popup.querySelector('.bz-bs-d-danger')).toBeFalsy();
+    expect(popup.querySelector('.bz-bs-d-save')).toBeFalsy();
+    expect(popup.querySelector('.bz-bs-d-actions')).toBeFalsy();
+    expect(popup.querySelector('.bz-bs-d-meter .bar i')).toBeTruthy();
+    expect(popup.querySelector('.bz-bs-d-stdot')).toBeTruthy();
+    expect(popup.textContent).toContain('阅读进度');
     closeOverlay();
   });
 
-  it('借书卡：改在读 → 进度归档、清空书评删键、completionDate 移除', async () => {
-    const { vault, app } = seedVault();
-    await openPanel(vault, app);
-    const spine = spines(document.querySelector('.bz-panel-overlay') as HTMLElement).find((s) => s.title?.includes('围城')) as HTMLElement;
-    spine.click();
-    const popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
-    (Array.from(popup.querySelectorAll('.bz-choice-btn')).find((b) => b.textContent?.trim() === '在读') as HTMLElement).click();
-    const range = popup.querySelector('.bz-range') as HTMLInputElement;
-    range.value = '45';
-    range.dispatchEvent(new Event('input'));
-    (popup.querySelector('.bz-bs-d-review') as HTMLTextAreaElement).value = '';
-    (popup.querySelector('.bz-bs-d-save') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 30));
-    const content = vault.files.get('书库/围城.md') as string;
-    expect(content).toContain('readingProgress: 45');
-    expect(content).not.toContain('completionDate');
-    expect(content).not.toContain('bookReview');
-    closeOverlay();
-  });
-
-  it('借书卡：md 书可删除（二次确认 → vault.trash 回收站）', async () => {
-    const { vault, app } = seedVault();
-    await openPanel(vault, app);
-    const spine = spines(document.querySelector('.bz-panel-overlay') as HTMLElement).find((s) => s.title?.includes('银河英雄传说')) as HTMLElement;
-    spine.click();
-    const popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
-    expect(popup.textContent).toContain('删除');
-    (popup.querySelector('.bz-bs-d-danger') as HTMLElement).click();
-    const conf = document.querySelector('.bz-bs-confirm-pop') as HTMLElement;
-    expect(conf.textContent).toContain('银河英雄传说');
-    expect(conf.textContent).toContain('移入回收站');
-    (conf.querySelector('[data-bs-c="1"]') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 30));
-    expect(vault.trashed).toContainEqual({ path: '书库/银河英雄传说VOL.1：黎明篇.md', system: true });
-    expect(getNoticeMessages().some((m) => m.includes('已删除书目《银河英雄传说VOL.1：黎明篇》'))).toBe(true);
-    expect(spines(document.querySelector('.bz-panel-overlay') as HTMLElement).length).toBe(2);
-    closeOverlay();
-  });
-
-  it('借书卡：EPUB 只读（无删除/保存；直达「继续读」；状态禁用）', async () => {
+  it('借书卡：EPUB 与 md 同一只读形态（无编辑控件；展示 Weave 数据）', async () => {
     const vault = new MockVault();
     vault.files.set('书库/认知觉醒.md', '---\ntags: [book]\n---');
     vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
@@ -302,60 +265,10 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     spine.click();
     const popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
     expect(popup.textContent).toContain('百年孤独');
-    expect(popup.textContent).toContain('EPUB 书目由 Weave 阅读器记录');
+    expect(popup.textContent).toContain('EPUB');
+    expect(popup.querySelector('.bz-choice-btn')).toBeFalsy();
     expect(popup.querySelector('.bz-bs-d-danger')).toBeFalsy();
     expect(popup.querySelector('.bz-bs-d-save')).toBeFalsy();
-    const openBtn = popup.querySelector('[data-bs-d-open]') as HTMLElement;
-    expect(openBtn.textContent).toContain('继续读');
-    const btn = popup.querySelector('.bz-choice-btn') as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
-    closeOverlay();
-  });
-
-  it('借书卡：读完日期行——已读可见预填、在读隐藏、转已读默认今天', async () => {
-    const { vault, app } = seedVault();
-    await openPanel(vault, app);
-    // 围城（已读）→ 日期行可见预填
-    let spine = spines(document.querySelector('.bz-panel-overlay') as HTMLElement).find((s) => s.title?.includes('围城')) as HTMLElement;
-    spine.click();
-    let popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
-    let cdateWrap = popup.querySelector('.bz-bs-d-cdatewrap') as HTMLElement;
-    expect(cdateWrap.style.display).not.toBe('none');
-    expect((popup.querySelector('.bz-bs-d-cdate') as HTMLInputElement).value).toBe('2026-08-15');
-    (popup.querySelector('[data-bs-d-close]') as HTMLElement).click();
-    // 认知觉醒（在读）→ 隐藏；转已读出现默认今天；切回在读隐藏
-    spine = spines(document.querySelector('.bz-panel-overlay') as HTMLElement).find((s) => s.title?.includes('认知觉醒')) as HTMLElement;
-    spine.click();
-    popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
-    cdateWrap = popup.querySelector('.bz-bs-d-cdatewrap') as HTMLElement;
-    expect(cdateWrap.style.display).toBe('none');
-    (Array.from(popup.querySelectorAll('.bz-choice-btn')).find((b) => b.textContent?.trim() === '已读') as HTMLElement).click();
-    expect(cdateWrap.style.display).not.toBe('none');
-    expect((popup.querySelector('.bz-bs-d-cdate') as HTMLInputElement).value).toBe(dateStr(new Date()));
-    (Array.from(popup.querySelectorAll('.bz-choice-btn')).find((b) => b.textContent?.trim() === '在读') as HTMLElement).click();
-    expect(cdateWrap.style.display).toBe('none');
-    closeOverlay();
-  });
-
-  it('状态保存撤销：改已读保存后 notifyUndo 一键回滚 frontmatter 与条目', async () => {
-    const { vault, app } = seedVault();
-    await openPanel(vault, app);
-    const spine = spines(document.querySelector('.bz-panel-overlay') as HTMLElement).find((s) => s.title?.includes('认知觉醒')) as HTMLElement;
-    spine.click();
-    const popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
-    (Array.from(popup.querySelectorAll('.bz-choice-btn')).find((b) => b.textContent?.trim() === '已读') as HTMLElement).click();
-    (popup.querySelector('.bz-bs-d-save') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 30));
-    let content = vault.files.get('书库/认知觉醒.md') as string;
-    expect(content).toMatch(/completionDate: \d{4}-\d{2}-\d{2}/);
-    const undoBtn = Array.from(document.querySelectorAll('.bz-notice-action')).find((b) => b.textContent === '撤销') as HTMLElement;
-    expect(undoBtn).toBeTruthy();
-    undoBtn.click();
-    await new Promise((r) => setTimeout(r, 30));
-    content = vault.files.get('书库/认知觉醒.md') as string;
-    expect(content).toContain('readingProgress: 60');
-    expect(content).not.toContain('completionDate');
-    expect(M.items.find((x) => x.title === '认知觉醒')?.status).toBe('在读');
     closeOverlay();
   });
 
@@ -428,7 +341,7 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     closeOverlay();
   });
 
-  it('audit H：toggle 关面板顺带关闭借书卡/删除确认弹窗（不留孤儿浮层）', async () => {
+  it('audit H：toggle 关面板顺带关闭借书卡弹窗（不留孤儿浮层）', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
     const spine = spines(document.querySelector('.bz-panel-overlay') as HTMLElement)[0];
@@ -437,40 +350,6 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     openBookshelf(app);
     expect(document.querySelector('.bz-panel-overlay')).toBeFalsy();
     expect(document.querySelector('.bz-bs-d-popup')).toBeFalsy();
-    // 删除确认弹窗同样收口
-    createOverlay(app);
-    await new Promise((r) => setTimeout(r, 20));
-    const spine2 = spines(document.querySelector('.bz-panel-overlay') as HTMLElement)[0];
-    spine2.click();
-    (document.querySelector('.bz-bs-d-popup .bz-bs-d-danger') as HTMLElement).click();
-    expect(document.querySelector('.bz-bs-confirm-pop')).toBeTruthy();
-    openBookshelf(app);
-    expect(document.querySelector('.bz-bs-confirm-pop')).toBeFalsy();
-    expect(document.querySelector('.bz-bs-d-popup')).toBeFalsy();
-  });
-
-  it('借书卡直达：在读 md「继续读」/ 已读「打开笔记」→ openLinkText + progress 反馈 + 卡收起', async () => {
-    const { vault, app } = seedVault();
-    const openLink = vi.fn(async () => {});
-    (app as any).workspace.openLinkText = openLink;
-    await openPanel(vault, app);
-    // 认知觉醒（在读）
-    let spine = spines(document.querySelector('.bz-panel-overlay') as HTMLElement).find((s) => s.title?.includes('认知觉醒')) as HTMLElement;
-    spine.click();
-    let popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
-    expect((popup.querySelector('[data-bs-d-open]') as HTMLElement).textContent).toContain('继续读');
-    (popup.querySelector('[data-bs-d-open]') as HTMLElement).click();
-    expect(getNoticeMessages().some((m) => m.includes('正在打开…'))).toBe(true);
-    expect(openLink).toHaveBeenCalledWith('书库/认知觉醒.md', '', false);
-    expect(document.querySelector('.bz-bs-d-popup')).toBeFalsy();
-    // 围城（已读）
-    spine = spines(document.querySelector('.bz-panel-overlay') as HTMLElement).find((s) => s.title?.includes('围城')) as HTMLElement;
-    spine.click();
-    popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
-    expect((popup.querySelector('[data-bs-d-open]') as HTMLElement).textContent).toContain('打开笔记');
-    (popup.querySelector('[data-bs-d-open]') as HTMLElement).click();
-    expect(openLink).toHaveBeenLastCalledWith('书库/围城.md', '', false);
-    closeOverlay();
   });
 
   it('读书报告：命令冷开面板直落报告视图；返回书脊墙', async () => {

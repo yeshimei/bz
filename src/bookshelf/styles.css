@@ -214,22 +214,12 @@
 .bz-bs-d-ledger td { padding: 7px 4px; border-bottom: 1px dashed var(--bsw-line); vertical-align: middle; }
 .bz-bs-d-ledger td:first-child { color: var(--bsw-muted); white-space: nowrap; width: 96px; letter-spacing: 1px; }
 .bz-bs-d-ledger td:last-child { font-weight: 600; }
-.bz-bs-d-openlink {
-  background: none; border: none; cursor: pointer; padding: 0;
-  color: var(--bsw-accent); font-weight: 700; font-size: 13px; font-family: var(--bsw-sans);
-}
-.bz-bs-d-openlink:hover { text-decoration: underline; }
-.bz-bs-d-progrow { display: flex; align-items: center; gap: var(--bz-space-md); }
-.bz-bs-d-prog { flex: 1; display: flex; }
-.bz-bs-d-prog .bz-range { flex: 1; align-self: center; }
-.bz-bs-d-prognum { min-width: 40px; text-align: right; color: var(--bsw-accent); font-variant-numeric: tabular-nums; }
-.bz-bs-d-cdate { width: 170px; }
+.bz-bs-d-stdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
 .bz-bs-d-meter { margin: 4px 0 8px; }
-.bz-bs-d-meter .cap { font-size: 12px; color: var(--bsw-muted); }
+.bz-bs-d-meter .cap { font-size: 12px; color: var(--bsw-muted); display: flex; align-items: baseline; justify-content: space-between; }
+.bz-bs-d-meter .cap .bz-bs-d-prognum { color: var(--bsw-accent); font-weight: 700; }
 .bz-bs-d-meter .bar { height: 10px; background: color-mix(in srgb, var(--bsw-paper) 70%, var(--bsw-muted)); border: 1px solid var(--bsw-line); margin-top: 6px; }
 .bz-bs-d-meter .bar i { display: block; height: 100%; background: repeating-linear-gradient(90deg, var(--bsw-accent) 0 8px, color-mix(in srgb, var(--bsw-accent) 78%, #fff) 8px 16px); }
-.bz-bs-d-review { width: 100%; box-sizing: border-box; min-height: 60px; resize: vertical; }
-.bz-bs-d-readonly { margin-top: 8px; font-size: 12px; color: var(--bsw-muted); line-height: 1.6; }
 .bz-bs-d-seal {
   position: absolute; bottom: 26px; right: 30px; width: 70px; height: 70px;
   border: 3px solid color-mix(in srgb, var(--bsw-accent) 75%, transparent); border-radius: 50%;
@@ -238,8 +228,6 @@
   font-size: 20px; letter-spacing: 4px; transform: rotate(-14deg);
   font-weight: 700; pointer-events: none; font-family: var(--bsw-serif);
 }
-.bz-bs-d-actions { display: flex; align-items: center; gap: var(--bz-space-sm); padding: 0 16px 14px; }
-.bz-bs-d-actions .bz-bs-d-spacer { flex: 1; }
 .bz-bs-label { font-size: 12px; letter-spacing: 0.08em; color: var(--bsw-muted); font-weight: 600; margin: 8px 0 4px; }
 
 /* ==================== 读书笔记弹窗（notes-ui.ts 消费；样式随迁移保留） ==================== */

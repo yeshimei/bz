@@ -51,30 +51,20 @@ describe('批 C-1：.bz-bs-quote 双定义拆雷（笔记侧改名 .bz-bs-hl-quo
   });
 });
 
-describe('批 C-2：详情弹窗状态徽标改 .bz-chip--tint（状态色恢复）', () => {
-  it('ui.ts 徽标经 tint 变量注入状态色（影院先例），不再挂 --locked + 内联配色', () => {
+describe('批 C-2/C-3（issue 220 只读化后口径更新）', () => {
+  it('详情卡只读：状态徽标改为台账圆点示意（不再有 chip/编辑控件/删除保存入口）', () => {
     const ui = repo('src/bookshelf/ui.ts');
-    expect(ui).toMatch(/bz-chip--tint" style="--bz-chip-tint:\$\{statusColor\(it\.status\)\};--bz-chip-tint-fg:var\(--bz-on-overlay\)"/);
+    expect(ui).toMatch(/bz-bs-d-stdot/);
+    expect(ui).not.toContain('bz-chip--tint');
     expect(ui).not.toContain('bz-chip--locked');
-    expect(ui).not.toMatch(/bz-chip--locked/);
-  });
-});
-
-describe('批 C-3：!important 压基线换类收尾', () => {
-  it('笔记入口改借书卡台账文字钮 .bz-bs-d-openlink（issue 218），域内 hover 配色规则不存在', () => {
-    const ui = repo('src/bookshelf/ui.ts');
-    expect(ui).toMatch(/class="bz-bs-d-openlink" data-bs-notes/);
+    expect(ui).not.toContain('bz-bs-d-openlink');
+    expect(ui).not.toContain('bz-btn--danger-ghost');
+    expect(ui).not.toContain('persistBook');
+    expect(ui).not.toContain('rollbackBook');
     const css = bsCss();
-    expect(css).not.toContain('.bz-bs-d-notes:hover');
-    expect(css).toMatch(/\.bz-bs-d-openlink:hover\s*\{ text-decoration: underline; \}/); // 仅文字链下划线
-  });
-
-  it('删除钮挂 .bz-btn--danger-ghost，域内 .bz-bs-d-danger 配色规则删除', () => {
-    const ui = repo('src/bookshelf/ui.ts');
-    expect(ui).toMatch(/bz-btn--danger-ghost bz-bs-d-danger/);
-    const css = bsCss();
-    expect(css).not.toMatch(/\.bz-bs-d-danger\s*\{/);
-    expect(css).not.toMatch(/\.bz-bs-d-danger:hover/);
+    expect(css).not.toContain('.bz-bs-d-openlink');
+    expect(css).not.toContain('.bz-bs-d-review');
+    expect(css).not.toContain('.bz-bs-d-actions');
   });
 });
 
