@@ -347,13 +347,13 @@
   margin-top: 6px;
   overflow: hidden;
 }
-/* issue 210：一行 5 格超小缩略（168px 栏 − padding − 4×3px gap ≈ 20px/格） */
+/* issue 210：一行 5 格超小缩略（168px 栏 − padding − 4×3px gap ≈ 20px/格）；
+   issue 216：固定尺寸不伸缩——flex:1 均分会让缩略少的月份拉成整行宽条 */
 .bz-diary-wall-month-thumb {
   width: 20px;
   height: 20px;
   border-radius: 4px;
-  flex: 1 1 0;
-  min-width: 0;
+  flex: 0 0 auto;
   overflow: hidden;
   background: var(--dw-surface);
   font-size: 11px;
