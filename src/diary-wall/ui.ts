@@ -879,33 +879,31 @@ export class DiaryWallAppController {
 
   /**
    * Markdown 渲染正文（支持 Obsidian 语法；sourcePath 用条目 filename 供链接解析）。
-   * issue 215 病根：旧实现 3s 超时竞速——开墙几十张卡同时渲染时主线程忙，计时器
-   * 先到就把「还没渲染完」的卡整卡替换成纯文本（用户截图 [[ ]] 原样外露）。
-   * 新策略：先垫纯文本（不空白、防注入），渲染进离屏容器，成功才替换进文档、
-   * 失败保持纯文本；不再设超时——渲染慢只延迟变好看，不会误杀。
-   * 竞态保护：替换前检查 container 是否仍在文档中（renderWall 重建会清空旧 DOM）。
+   * issue 215 两轮教训：①3s 超时竞速会在开墙并发渲染时把未完成卡误杀成纯文本；
+   * ②渲染进离屏容器 Obsidian 可能静默产出纯文本节点（detached 元素不被渲染管线处理）。
+   * 终版 = diary 域同款被验证模式：直接渲染进已挂载容器，无超时；渲染前清空垫底文本，
+   * 失败回退纯文本并 console.warn（用户可凭日志报障定位到具体条目）。
    */
   private async renderText(container: HTMLElement, md: string, e: WallEntry) {
     if (!md) {
       container.textContent = '';
       return;
     }
-    container.textContent = md; // 先垫纯文本（渲染完成即被替换）
     try {
       const { Component, MarkdownRenderer } = await import('obsidian');
       const sourcePath = e.filename && e.filename.includes('/') ? e.filename : `${DIARY_DIRECTORY}/${e.date}.md`;
-      const tmp = document.createElement('div');
       const comp = new Component();
       try {
-        await Promise.resolve(MarkdownRenderer.render(this.app(), md, tmp, sourcePath, comp));
+        container.textContent = '';
+        await Promise.resolve(MarkdownRenderer.render(this.app(), md, container, sourcePath, comp));
       } finally {
         comp.unload();
       }
-      if (!container.isConnected || !tmp.firstChild) return;
-      container.textContent = '';
-      while (tmp.firstChild) container.appendChild(tmp.firstChild);
+      // 渲染成功但一条节点都没产出 = 渲染管线没吃这段内容，回退纯文本
+      if (container.isConnected && !container.firstChild) container.textContent = md;
     } catch (err) {
-      // 渲染失败：保持垫底纯文本，不空白
+      if (container.isConnected) container.textContent = md; // 渲染失败回退纯文本，不空白
+      console.warn('[bz-diary-wall] markdown 渲染失败，已回退纯文本', e.date, err);
     }
   }
 
