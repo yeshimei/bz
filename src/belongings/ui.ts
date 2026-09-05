@@ -31,7 +31,7 @@ import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { escapeHtml } from '../core/utils';
 import { mountIcons, uiEmpty, uiRail, uiSuggest } from '../core/ui';
 import type { BzRailItem } from '../core/ui';
-import { openItemMenu, openItemSheet, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, closeItemMenu, type ItemAction } from '../core/item-actions';
+import { openItemMenu, openItemSheet, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, closeItemMenu, type ItemAction, resetItemMenuClickGuard } from '../core/item-actions';
 import { emitDomainEvent } from '../core/domain-bus';
 import { belongingsEditChanges } from '../smartcat/belongings-source';
 import type { SettingsSchema } from '../core/settings-schema';
@@ -804,6 +804,8 @@ function openRowMenuAt(row: HTMLElement, it: BelongingsItem, x: number, y: numbe
     if (it2) refreshItemSheet(buildActions(it2, rebuild), sheetHeadOf(it2));
   };
   openItemMenu(x, y, buildActions(it, rebuild), true);
+  // 复位残余 click 抑制（issue 198 同款 P1）：右键时序会置位 armed 吞下一次左键；右键无补发 click，直接复位
+  resetItemMenuClickGuard();
 }
 function openMobSheet(it: BelongingsItem): void {
   const rebuild = () => {

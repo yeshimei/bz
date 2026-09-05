@@ -253,17 +253,17 @@ export class UIManager {
     const futureCount = col.future.length;
 
     const head = `
-      <div class="bz-q-head">
+      <div class="bz-panel-head">
         <div class="bz-panel-brand">${this.icon('repeat-2', 'bz-ic--sm')}</div>
-        <div class="t">
-          <div class="bz-q-title">复习计划</div>
-          <div class="bz-q-sub">${this.todayLabel()}</div>
-        </div>
-        <div class="tools">
+        <div class="bz-panel-title">复习计划</div>
+        <div class="bz-panel-head-pipe"></div>
+        <div class="bz-panel-head-sub">${this.todayLabel()}</div>
+        <span class="bz-panel-head-sp"></span>
+        <div class="bz-panel-head-btns">
           <button class="bz-icon-btn" data-act="settings" title="打开复习计划设置">${this.icon('settings', '')}</button>
           <!-- issue 201 对齐待办：关闭钮不挂 bz-win-close（core 规则非真全屏隐藏之），桌面/移动常显同待办 -->
           <button class="bz-icon-btn" data-act="close" title="关闭">${this.icon('x')}</button>
-        </div>
+      </div>
       </div>
       <div class="bz-q-tools">
         <div class="bz-search${searchText ? ' typing' : ''}">${this.icon('search', '')}<input class="bz-input" type="text" id="bz-q-search" placeholder="搜索笔记…" value="${escapeHtml(searchText)}"></div>

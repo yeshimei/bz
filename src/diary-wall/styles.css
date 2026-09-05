@@ -279,31 +279,13 @@
   color: var(--dw-on-accent);
 }
 
-/* 搜索行 */
+/* 搜索行（搜索框 = 共享 .bz-search 壳 + .bz-input，uiSearch 工厂挂载；域内只留行内边距） */
 .bz-diary-wall-searchrow {
   padding: 0 24px 10px;
   flex-shrink: 0;
 }
 .bz-diary-wall-mob .bz-diary-wall-searchrow {
   padding: 0 20px 8px;
-}
-.bz-diary-wall-searchbox {
-  width: 100%;
-  padding: 8px 14px;
-  font-size: 13px;
-  border: 1px solid var(--dw-line);
-  border-radius: 8px;
-  background: var(--dw-bg);
-  color: var(--dw-ink);
-  outline: none;
-  font-family: inherit;
-  transition: border-color 0.15s;
-}
-.bz-diary-wall-searchbox:focus {
-  border-color: var(--dw-accent);
-}
-.bz-diary-wall-searchbox::placeholder {
-  color: var(--dw-faint);
 }
 
 /* ============ 主体：左章节栏 + 右瀑布 ============ */
@@ -791,37 +773,30 @@
   gap: 10px;
 }
 
-/* ============ 底部抽屉（长按/右键条目 → 动作列表） ============ */
-.bz-diary-wall-sheet {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+/* ============ 底部抽屉（移动端单击条目 → 动作列表） ============
+   壳/动作行 = 共享 .bz-sheet 族（components.css；issue 198 批次 A 收敛：
+   .bz-sheet-mask 遮罩 + .bz-sheet 壳 + .bz-sheet-grip/-head/-title/-body/-actions/-act）。
+   域内只留：root 内层档钩子（日期节头 sticky z10 之上、灯箱 z90 之下）+ 富媒体头与媒体缩略图；
+   另因本域 reset 通配（.bz-diary-wall *）清 margin/padding 且聚合在 components.css 之后，
+   共享壳的 padding/grip 对齐/小字右对齐须按下述 ≥(0,2,0) 规则原值恢复（同 .bz-rail 先例）。 */
+.bz-diary-wall .bz-diary-wall-sheet {
   z-index: 60;
-  background: var(--dw-bg);
-  border-radius: 14px 14px 0 0;
-  box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.08), var(--dw-shadow-lg);
-  transform: translateY(100%);
-  transition: transform 0.24s cubic-bezier(0.32, 0.72, 0.24, 1);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  max-height: 70vh;
-  display: flex;
-  flex-direction: column;
+  padding: 0 var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px));
 }
-.bz-diary-wall-sheet--show {
-  transform: translateY(0);
+.bz-diary-wall .bz-diary-wall-sheet-mask {
+  z-index: 59;
 }
-.bz-diary-wall-sheet-grip {
-  width: 36px;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--dw-line);
-  margin: 8px auto 4px;
+.bz-diary-wall .bz-diary-wall-sheet .bz-sheet-grip {
+  margin: 8px auto 2px;
+}
+.bz-diary-wall .bz-diary-wall-sheet .bz-sheet-act {
+  padding: 12px var(--bz-space-sm);
+}
+.bz-diary-wall .bz-diary-wall-sheet .bz-sheet-act-sub {
+  margin-left: auto;
 }
 .bz-diary-wall-sheet-head {
-  display: flex;
-  gap: 10px;
-  padding: 10px 20px 12px;
+  padding: 10px 0 12px;
   border-bottom: 1px solid var(--dw-line);
 }
 .bz-diary-wall-sheet-emoji {
@@ -831,11 +806,6 @@
 .bz-diary-wall-sheet-info {
   flex: 1;
   min-width: 0;
-}
-.bz-diary-wall-sheet-time {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--dw-ink);
 }
 .bz-diary-wall-sheet-content {
   font-size: 13px;
@@ -870,51 +840,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-.bz-diary-wall-sheet-actions {
-  overflow-y: auto;
-  padding: 6px 0 12px;
-}
-.bz-diary-wall .bz-diary-wall-sheet-act {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 13px 20px;
-  border: none;
-  background: none;
-  color: var(--dw-ink);
-  font-size: 14px;
-  cursor: pointer;
-  font-family: inherit;
-  text-align: left;
-  transition: background 0.15s;
-}
-.bz-diary-wall .bz-diary-wall-sheet-act:hover {
-  background: var(--dw-hover);
-}
-.bz-diary-wall-sheet-act-ic {
-  width: 22px;
-  text-align: center;
-  color: var(--dw-muted);
-  font-size: 15px;
-}
-.bz-diary-wall-sheet-act-sub {
-  margin-left: auto;
-  font-size: 12px;
-  color: var(--dw-faint);
-}
-.bz-diary-wall-sheet-act--danger {
-  color: var(--text-error);
-}
-.bz-diary-wall-sheet-act--danger .bz-diary-wall-sheet-act-ic {
-  color: var(--text-error);
-}
-.bz-diary-wall-sheet-act--accent {
-  color: var(--dw-accent);
-}
-.bz-diary-wall-sheet-act--accent .bz-diary-wall-sheet-act-ic {
-  color: var(--dw-accent);
 }
 
 /* ============ 空态 ============ */
@@ -1009,73 +934,6 @@
 /* 触屏（pointer: coarse）下横滑标签/chips/头行图标钮/那年今天卡 ::after 外扩热区
    已收编 core 样式库 .bz-touch-target--xl（components.css，模板挂类，inset -12px 补足 44px；
    shadcn extend-touch-target 同款：视觉不变；绝对定位外扩不触发横滑容器额外滚动宽度） */
-
-/* ============ 右键上下文菜单（桌面，跟手） ============ */
-/* 增强 #12：z 静态档（2000）已删——显示时由 topifyZ 动态发号（ADR-0067，谁后显示谁在上） */
-.bz-diary-wall-menu {
-  position: fixed;
-  min-width: 160px;
-  padding: 6px;
-  background: var(--dw-bg);
-  border: 1px solid var(--dw-line);
-  border-radius: 8px;
-  box-shadow: var(--dw-shadow-sm);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  animation: bz-diary-wall-menu-in 0.12s ease-out;
-}
-@keyframes bz-diary-wall-menu-in {
-  from {
-    opacity: 0;
-    transform: scale(0.96) translateY(-2px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-/* 右键菜单挂 body（不在 .bz-diary-wall 根内）——前缀 .bz-diary-wall-menu 提升特异性，
-   防 reset.css 全局按钮重置清掉 hover 背景 */
-.bz-diary-wall-menu .bz-diary-wall-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 8px 12px;
-  border: none;
-  background: none;
-  color: var(--dw-ink);
-  font-size: 13px;
-  font-family: inherit;
-  text-align: left;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: background 0.12s;
-  line-height: 1.25;
-}
-.bz-diary-wall-menu .bz-diary-wall-menu-item:hover {
-  background: var(--dw-hover);
-}
-.bz-diary-wall-menu-ic {
-  width: 18px;
-  text-align: center;
-  color: var(--dw-muted);
-  font-size: 14px;
-  flex-shrink: 0;
-}
-.bz-diary-wall-menu .bz-diary-wall-menu-item--accent {
-  color: var(--dw-accent);
-}
-.bz-diary-wall-menu .bz-diary-wall-menu-item--accent .bz-diary-wall-menu-ic {
-  color: var(--dw-accent);
-}
-.bz-diary-wall-menu .bz-diary-wall-menu-item--danger {
-  color: var(--dw-bad);
-}
-.bz-diary-wall-menu .bz-diary-wall-menu-item--danger .bz-diary-wall-menu-ic {
-  color: var(--dw-bad);
-}
 
 /* ============ 日期筛选弹窗（自包含，标题「日记本」点击打开） ============ */
 .bz-diary-wall-datefilter {
