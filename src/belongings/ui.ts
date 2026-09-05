@@ -29,7 +29,7 @@ import { tryGetSettings } from '../core/settings-provider';
 import { mobileFullscreenGroup } from '../core/settings-common';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { escapeHtml } from '../core/utils';
-import { mountIcons, uiEmpty, uiRail } from '../core/ui';
+import { mountIcons, uiEmpty, uiRail, uiSuggest } from '../core/ui';
 import type { BzRailItem } from '../core/ui';
 import { openItemMenu, openItemSheet, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, closeItemMenu, type ItemAction } from '../core/item-actions';
 import { emitDomainEvent } from '../core/domain-bus';
@@ -851,62 +851,8 @@ async function deleteItem(it: BelongingsItem): Promise<void> {
 
 // ==================== 表单（记一笔 / 编辑） ====================
 
-/** 分类搜索选择弹层（组件库 .bz-popover；聚焦/输入弹出、外点关闭、键盘选择；Esc 分层：下拉开只收下拉） */
-function categoryPicker(input: HTMLInputElement, current: string): void {
-  const wrap = document.createElement('div');
-  wrap.className = 'bz-popover';
-  let opened = false; // 惰性弹出：默认收起，聚焦/输入才开（issue 202 跟进）
-  const close = () => {
-    opened = false;
-    if (wrap.isConnected) {
-      wrap.remove();
-      document.removeEventListener('mousedown', onDocDown, true);
-    }
-  };
-  const onDocDown = (e: MouseEvent) => {
-    // 点在输入框/弹层内不关；其余外部点击关闭（关表单/切焦点即收起）
-    const t = e.target as Node;
-    if (wrap.contains(t) || input.contains(t)) return;
-    close();
-  };
-  const draw = () => {
-    const q = input.value.trim().toLowerCase();
-    const matched = DEFAULT_CATEGORIES.filter((c) => !q || c.toLowerCase().includes(q)).slice(0, 60);
-    wrap.innerHTML = matched.map((c) =>
-      `<div class="bz-popover-item${c === current ? ' is-on' : ''}" data-cat="${esc(c)}">${esc(catEmoji(c))} <span>${esc(catNameOf(c))}</span></div>`
-    ).join('');
-    wrap.querySelectorAll('[data-cat]').forEach((o) => o.addEventListener('click', () => {
-      current = (o as HTMLElement).dataset.cat as string;
-      input.value = current;
-      close();
-    }));
-  };
-  const open = () => {
-    if (opened) return;
-    opened = true;
-    input.parentElement!.appendChild(wrap);
-    document.addEventListener('mousedown', onDocDown, true);
-    draw();
-  };
-  input.addEventListener('focus', open);
-  input.addEventListener('input', () => { open(); draw(); });
-  input.addEventListener('keydown', (e) => {
-    if (!opened) return; // 收起时按键不拦（Esc 落回表单层关窗）
-    if (e.key === 'ArrowDown') {
-      const opts = wrap.querySelectorAll<HTMLElement>('[data-cat]');
-      const idx = [...opts].findIndex((o) => o.classList.contains('is-on'));
-      const next = opts[Math.min(opts.length - 1, idx + 1)];
-      if (next) { opts.forEach((o) => o.classList.remove('is-on')); next.classList.add('is-on'); }
-      e.preventDefault();
-    } else if (e.key === 'Enter') {
-      const on = wrap.querySelector<HTMLElement>('[data-cat].is-on');
-      if (on) { current = on.dataset.cat as string; input.value = current; close(); }
-      e.preventDefault();
-    } else if (e.key === 'Escape') {
-      if (wrap.isConnected) { close(); e.stopPropagation(); }
-    }
-  });
-}
+// 分类搜索联想（issue 203：收敛为组件库 uiSuggest——聚焦/输入惰性弹出、外点收起、
+// Esc 只收下拉；候选 = DEFAULT_CATEGORIES 全库子串过滤，上限 60，emoji 前缀 + 去缀名）
 
 // ==================== 表单防丢（ticket 189，对照 favorites） ====================
 
@@ -1018,10 +964,16 @@ export function openForm(it: BelongingsItem | null): void {
     soldPrice: soldPriceVal,
   };
 
-  // 分类搜索选择
+  // 分类搜索联想（组件库 uiSuggest，issue 203）
   const catInput = mask.querySelector('#bm-cat') as HTMLInputElement;
   let curCat = catVal;
-  categoryPicker(catInput, curCat);
+  uiSuggest({
+    anchor: catInput,
+    source: () => DEFAULT_CATEGORIES,
+    max: 60,
+    iconOf: catEmoji,
+    labelOf: catNameOf,
+  });
   // 状态单选（平铺胶囊）；出离态展开出离记录行（ADR-0089）
   const statusPick = mask.querySelector('#bm-status') as HTMLElement;
   const exitRow = mask.querySelector('#bm-exit') as HTMLElement;

@@ -189,3 +189,15 @@ export interface BzPopoverOpts {
   emptyText?: string;      // 空态文案
   onPick?: (id: string) => void;
 }
+
+/** 输入联想（.bz-popover：聚焦/输入惰性弹出的候选下拉，uiSuggest） */
+export interface BzSuggestOpts {
+  anchor: HTMLInputElement;          // 联想锚点输入框（浮层挂其父元素）
+  source: () => string[];            // 候选源（每次开/输时求值，可动态）
+  max?: number;                      // 候选上限（默认 30）
+  excludeCurrent?: boolean;          // 排除与现值完全相同的候选（点选回焦不复弹自身）
+  iconOf?: (value: string) => string;  // 候选前缀符（emoji/图标文本；缺省无）
+  labelOf?: (value: string) => string; // 候选主文本（缺省原串）
+  onPick?: (value: string) => void;  // 点选/回车选定回调（回填后触发）
+}
+
