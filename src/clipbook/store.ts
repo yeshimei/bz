@@ -32,7 +32,8 @@ function upName(a: any, info?: any): string {
   return name || uid || '';
 }
 
-function platformOf(a: any): string {
+/** 平台归一（B站/果壳科学人/知乎日报；守护进程新旧写法都收敛；rail 动态分组共用，issue 206 导出） */
+export function platformOf(a: any): string {
   const p = a.platform || '';
   if (p === 'B站') return 'B站';
   if (p === '果壳' || p === '果壳科学人') return '果壳科学人';
@@ -40,13 +41,24 @@ function platformOf(a: any): string {
   return p || '未知';
 }
 
+/** 平台兜底根域（url 缺失/解析失败时 favicon 仍有源可取，issue 206） */
+const PLATFORM_DOMAIN: Record<string, string> = {
+  'B站': 'bilibili.com',
+  '果壳科学人': 'guokr.com',
+  '知乎日报': 'zhihu.com',
+};
+
 function siteDomain(a: any): string {
-  if (!a.url) return '';
-  try {
-    return new URL(String(a.url)).hostname;
-  } catch (e) {
-    return '';
+  const u = String(a.url || '').trim();
+  if (u) {
+    try {
+      return new URL(u).hostname;
+    } catch (e) { /* 无协议等非常规写法，补 https 重试 */ }
+    try {
+      return new URL('https://' + u.replace(/^\/+/, '')).hostname;
+    } catch (e) { /* 继续走平台兜底 */ }
   }
+  return PLATFORM_DOMAIN[platformOf(a)] || '';
 }
 
 /** body 截断/清洗（列表摘要与右栏全文共用；news body 可能已清空） */
@@ -148,6 +160,7 @@ export function clipUrlSet(notes: Array<{ url?: string }>): Set<string> {
  * - all/未读：仅未处理 news（read!==true）的 unread/reading 派生，saved 隐藏；
  * - 平台/UP：该来源未处理 news（read!==true），saved 隐藏；
  * - clip：剪藏目录全部（ClipArticle 直接返回，天然 saved）。
+ * news 面按 timeTs 降序（issue 206：聚合讯新文章排对应列表最前）。
  */
 export type ClipSource = { kind: RailKindLike; platform?: string; up?: string; note?: any };
 
@@ -180,8 +193,8 @@ export function queryBySource(
     });
     out = list.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
   }
-  // saved（含 url 命中剪藏）在收件流里隐藏（保留在「剪藏本」源）
-  return out.filter((a) => a.st !== 'saved');
+  // saved（含 url 命中剪藏）在收件流里隐藏（保留在「剪藏本」源）；新文章排最前
+  return out.filter((a) => a.st !== 'saved').sort((a, b) => b.timeTs - a.timeTs);
 }
 
 
