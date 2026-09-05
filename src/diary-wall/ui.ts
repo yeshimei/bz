@@ -879,50 +879,33 @@ export class DiaryWallAppController {
 
   /**
    * Markdown 渲染正文（支持 Obsidian 语法；sourcePath 用条目 filename 供链接解析）。
-   * 竞态保护：渲染前检查 container 是否仍在文档中（renderWall 重渲染会清空旧 DOM，
-   * 异步渲染结果不得写入已脱离文档的容器）；渲染完卸载 Component（防 Obsidian 泄漏）。
-   * 超时兜底：Obsidian MarkdownRenderer 在真实环境可能挂起（encrypt 域 b0831de 同款问题），
-   * 加 3s Promise.race 超时——超时/失败回退纯文本，保证卡片不空白。
+   * issue 215 病根：旧实现 3s 超时竞速——开墙几十张卡同时渲染时主线程忙，计时器
+   * 先到就把「还没渲染完」的卡整卡替换成纯文本（用户截图 [[ ]] 原样外露）。
+   * 新策略：先垫纯文本（不空白、防注入），渲染进离屏容器，成功才替换进文档、
+   * 失败保持纯文本；不再设超时——渲染慢只延迟变好看，不会误杀。
+   * 竞态保护：替换前检查 container 是否仍在文档中（renderWall 重建会清空旧 DOM）。
    */
   private async renderText(container: HTMLElement, md: string, e: WallEntry) {
     if (!md) {
       container.textContent = '';
       return;
     }
-    container.textContent = ''; // 先纯文本兜底（防注入）
+    container.textContent = md; // 先垫纯文本（渲染完成即被替换）
     try {
       const { Component, MarkdownRenderer } = await import('obsidian');
       const sourcePath = e.filename && e.filename.includes('/') ? e.filename : `${DIARY_DIRECTORY}/${e.date}.md`;
+      const tmp = document.createElement('div');
       const comp = new Component();
-      // 超时/失败守卫：渲染可能挂起（encrypt 域 b0831de 同款），3s 未完成即回退纯文本；
-      // 回退后挂起的渲染若恢复完成会覆盖回退文本——用 dataset 标记阻断（P1-1 审查修复）
-      container.dataset.renderFallback = '0';
-      const render = Promise.resolve(
-        MarkdownRenderer.render(this.app(), md, container, sourcePath, comp)
-      ).then(
-        () => true,
-        () => false
-      );
-      const finished = await Promise.race([render, new Promise<boolean>((r) => setTimeout(() => r(false), 3000))]);
-      comp.unload();
-      if (!container.isConnected) {
-        // 渲染期间容器已被 renderWall 重建清空——结果丢弃（新 DOM 会重新渲染本条）
-        return;
+      try {
+        await Promise.resolve(MarkdownRenderer.render(this.app(), md, tmp, sourcePath, comp));
+      } finally {
+        comp.unload();
       }
-      if (!finished) {
-        // 超时/失败：MarkdownRenderer 可能只渲染了部分或完全没渲染——回退纯文本
-        container.dataset.renderFallback = '1';
-        container.textContent = md;
-      }
-      // 挂起的渲染若在回退后才完成，会向 container 写入节点——此时清除并保持回退文本
-      void render.then((ok) => {
-        if (!ok) return;
-        if (container.dataset.renderFallback === '1' && container.isConnected) {
-          container.textContent = md;
-        }
-      });
+      if (!container.isConnected || !tmp.firstChild) return;
+      container.textContent = '';
+      while (tmp.firstChild) container.appendChild(tmp.firstChild);
     } catch (err) {
-      if (container.isConnected) container.textContent = md; // 渲染失败回退纯文本
+      // 渲染失败：保持垫底纯文本，不空白
     }
   }
 
