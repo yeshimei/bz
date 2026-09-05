@@ -2280,5 +2280,11 @@ describe('关联笔记候选补全（ticket 188）', () => {
     note.value = '不存在词';
     note.dispatchEvent(new Event('input', { bubbles: true }));
     expect(document.querySelector('.bz-popover')).toBeNull();
+    // 外点 mousedown 关（浮层生命周期走工厂捕获监听，issue 198）
+    note.value = 'B';
+    note.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(document.querySelector('.bz-popover')).not.toBeNull();
+    document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    expect(document.querySelector('.bz-popover')).toBeNull();
   });
 });

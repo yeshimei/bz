@@ -99,10 +99,10 @@ describe('UIManager 三区队列', () => {
     const { ui } = await makeUI(vault);
     await ui.showMain();
     // issue 201 头行对齐待办：品牌块 + ⚙设置直达钮（关闭钮原有）
-    expect(document.querySelector('.bz-q-head .bz-panel-brand')).toBeTruthy();
-    expect(document.querySelector('.bz-q-head [data-act="settings"]')).toBeTruthy();
+    expect(document.querySelector('.bz-panel-head .bz-panel-brand')).toBeTruthy();
+    expect(document.querySelector('.bz-panel-head [data-act="settings"]')).toBeTruthy();
     // 关闭钮对齐待办：不挂 bz-win-close（core 规则非真全屏隐藏之）→ 桌面常显
-    expect(document.querySelector('.bz-q-head [data-act="close"]')!.classList.contains('bz-win-close')).toBe(false);
+    expect(document.querySelector('.bz-panel-head [data-act="close"]')!.classList.contains('bz-win-close')).toBe(false);
     const cols = document.querySelectorAll('.bz-q-col');
     expect(cols.length).toBe(3);
     const headNames = [...document.querySelectorAll('.bz-q-col-head .name')].map((e) => e.textContent);
@@ -120,6 +120,28 @@ describe('UIManager 三区队列', () => {
     expect(footer.textContent).toContain('连续');
     // 无 data-lucide 占位残留（全部已替换成真实图标）
     expect(document.querySelectorAll('[data-lucide]').length).toBe(0);
+    ui.destroy();
+  });
+
+  it('头行接组件库 .bz-panel-head 族（issue 198 批 D）：标题/日期副题/spacer/关闭钮组', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const { ui } = await makeUI(vault);
+    await ui.showMain();
+    const head = document.querySelector('#review-popup .bz-panel-head')!;
+    expect(head).not.toBeNull();
+    // 平级结构（issue 198 review P2，对齐 recap）：-title 纯标题（副题不内嵌、不继承 semibold），
+    // -pipe 兄弟分隔 + -sub 平级副题
+    expect(head.querySelector('.bz-panel-title')!.textContent!.trim()).toBe('复习计划');
+    const sub = head.querySelector('.bz-panel-head-sub')!;
+    expect(sub.textContent).toMatch(/\d+月\d+日 周[日一二三四五六]/);
+    expect(sub.previousElementSibling!.classList.contains('bz-panel-head-pipe')).toBe(true);
+    expect(head.querySelector('.bz-panel-head-sp')).not.toBeNull();
+    // 关闭钮在共享钮组内，不挂 bz-win-close（issue 201：core 规则非真全屏隐藏之，桌面/移动常显）
+    const closeBtn = head.querySelector('.bz-panel-head-btns [data-act="close"]')!;
+    expect(closeBtn).not.toBeNull();
+    expect(closeBtn.classList.contains('bz-win-close')).toBe(false);
+    expect(document.querySelector('.bz-q-head')).toBeNull(); // 旧域内头行类已退役
     ui.destroy();
   });
 

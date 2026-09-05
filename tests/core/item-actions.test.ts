@@ -4,7 +4,7 @@
  * 外部点击/ESC 关闭、菜单项执行；移动端遮罩抽屉、下滑关闭。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { attachItemActions, closeItemMenu, openItemMenu, type ItemAction } from '../../src/core/item-actions';
+import { attachItemActions, closeItemMenu, openItemMenu, resetItemMenuClickGuard, type ItemAction } from '../../src/core/item-actions';
 import { Platform as MockPlatform } from '../mock-obsidian-entry';
 
 const ACTIONS: ItemAction[] = [
@@ -486,6 +486,26 @@ describe('openItemMenu / closeItemMenu', () => {
     closeItemMenu();
     expect(document.querySelector('.bz-item-menu')).toBeNull();
     closeItemMenu(); // 幂等不抛
+  });
+
+  it('resetItemMenuClickGuard：右键时序置位残余抑制后复位——下一次左键不被吞（issue 198 review P1）', () => {
+    (window as any).__opened = false;
+    const card = makeCard();
+    document.body.appendChild(card);
+    // 复现 diary-wall 直调路径：openItemMenu(..., true) 打开即置位 suppressNextClick
+    openItemMenu(10, 10, ACTIONS, true);
+    // Chromium 右键时序尾巴：mouseup 落在菜单外（document 捕获层）→ onMouseUpCapture 置位残余 click
+    document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    // 未复位病灶：紧随的左键（点菜单项）被 onClickCapture 吞——回调不可达、菜单也不关（要点两次）
+    const item = document.querySelector('.bz-item-menu-item') as HTMLElement;
+    item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect((window as any).__opened).toBe(false);
+    expect(document.querySelector('.bz-item-menu')).not.toBeNull();
+    // 复位后随后的左键可达：菜单项回调执行并关闭菜单
+    resetItemMenuClickGuard();
+    item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect((window as any).__opened).toBe(true);
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
   });
 
   afterEach(() => {

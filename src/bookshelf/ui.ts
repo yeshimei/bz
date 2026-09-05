@@ -411,18 +411,20 @@ function statusCount(side: SideId): number {
 }
 
 /** 底部筛选抽屉（移动端；单例互斥，二次打开先关旧）。
- *  三组：状态（同构行）＋ 分类（uiChip 胶囊，正交）＋ 排序（uiSegmented，头行 ⇅ 同入口）。 */
+ *  壳 = 共享 .bz-sheet 族（issue 198 批次 A：.bz-sheet-mask 遮罩 + .bz-sheet 壳，
+ *  打开态由遮罩 .open 驱动）；选项行为保留：三组 = 状态（共享 .bz-sheet-act 行基 +
+ *  域内图标瓦片/计数/勾选件）＋ 分类（uiChip 胶囊，正交）＋ 排序（uiSegmented，头行 ⇅ 同入口）。 */
 function openFilterDrawer(app: App): void {
   closeDrawer();
   const mask = document.createElement('div');
-  mask.className = 'bz-bs-drawer-mask';
+  mask.className = 'bz-sheet-mask';
   mask.style.zIndex = String(allocZ());
-  mask.innerHTML = `<div class="bz-bs-drawer-sheet">
-    <div class="bz-bs-drawer-grab"></div>
-    <div class="bz-bs-drawer-head">筛选<button class="bz-icon-btn bz-icon-btn--lg" data-bs-drawer-close title="关闭">${iconSpan('x')}</button></div>
-    <div class="bz-bs-drawer-body">
+  mask.innerHTML = `<div class="bz-sheet bz-bs-filtersheet">
+    <div class="bz-sheet-grip"></div>
+    <div class="bz-sheet-head"><span class="bz-sheet-title">筛选</span><button class="bz-icon-btn bz-icon-btn--lg" data-bs-drawer-close title="关闭">${iconSpan('x')}</button></div>
+    <div class="bz-sheet-body">
       ${SIDE_DEFS.map((d) => `
-        <button class="bz-bs-drawer-opt${d.id === M.side ? ' on' : ''}" data-bs-dopt="${d.id}">
+        <button class="bz-sheet-act bz-bs-drawer-opt${d.id === M.side ? ' on' : ''}" data-bs-dopt="${d.id}">
           <span class="bz-bs-drawer-ic">${iconSpan(d.icon)}</span>
           <span class="bz-bs-drawer-main"><span class="bz-bs-drawer-label">${d.label}</span>
           <span class="bz-bs-drawer-sub">${d.sub}</span></span>

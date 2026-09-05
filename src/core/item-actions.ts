@@ -13,7 +13,9 @@
  * 防穿透机制：
  * - 触屏路径：touchstart 被动监听（不 preventDefault，滚动不受影响），长按松手的合成 click
  *   在 TOUCH_SETTLE_MS 静置窗口内吞一次，防浮层刚打开就被当成「外部点击」关闭。
- * - 桌面右键路径无补发 click，无需抑制。
+ * - 桌面右键路径无补发 click，无需抑制；但 Chromium 右键时序（mousedown → contextmenu → mouseup
+ *   落在菜单外）会让 onMouseUpCapture 误置位残余抑制、吞掉下一次左键——直调 openItemMenu(..., true)
+ *   的域在打开后跟一句 resetItemMenuClickGuard() 复位（attachItemActions 右键路径已内置同款复位）。
  *
  * 实现说明：
  * - 复用 core/dom longPress（500ms 默认、10px 移动取消，仅移动端路径使用）。
@@ -191,6 +193,18 @@ function armTouchSettle(): void {
     touchSettlePending = false;
     touchSettleTimer = null;
   }, TOUCH_SETTLE_MS);
+}
+
+/**
+ * 复位 click 抑制（issue 198 review P1）：
+ * 直调 openItemMenu(..., true) 的域（如 diary-wall 容器右键委托）在 Chromium 右键时序下，
+ * 随后 mouseup 落在菜单外会经 onMouseUpCapture 置位残余抑制（residualClickArmed），
+ * 吞掉用户下一次左键（含点菜单项，要点两次才生效）。右键无补发 click，抑制本就不需要——
+ * 打开菜单后调用本函数把 suppressNextClick / residualClickArmed 一并复位。
+ */
+export function resetItemMenuClickGuard(): void {
+  suppressNextClick = false;
+  residualClickArmed = false;
 }
 
 /** 注册浮层通用监听（外部点击关闭 / 残余 click 抑制 / ESC） */

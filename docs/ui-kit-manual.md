@@ -83,7 +83,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | 键帽 | `.bz-kbd` | — | 快捷键帽（.bz-search 内自动右侧定位） |
 | 骨架屏 | `.bz-skeleton` | `--circle/--title` | 微光扫过占位 |
 | 标签页 | `.bz-tabs` | 内 `.bz-tab.is-on` | 下划线式页签 |
-| 底部抽屉 | `.bz-sheet` | 内 `.bz-sheet-grip/-head/-title/-sub` | 移动端底部抽屉壳（配遮罩，含安全区垫底） |
+| 底部抽屉 | `.bz-sheet` | `--show`；配 `.bz-sheet-mask(.open)`；内 `.bz-sheet-grip/-head/-title/-sub/-body/-actions/-act`（`.bz-sheet-act-ic/-sub`，`--danger/--accent` 语义行） | 底部抽屉壳：遮罩 + 底部定位 + 滑入滑出过渡（对齐 item-sheet 动效口径），含安全区垫底；打开态 = 壳挂 `--show` 或遮罩挂 `.open`；点遮罩/关闭时机由域负责 |
 | 标签输入 | `.bz-taginput` | 内 `.bz-taginput-field` | 胶囊 chips + 输入（focus 品牌描边） |
 | 星级 | `.bz-rating` | `--sm/--readonly` | 星轨（--bz-star） |
 | 环形进度 | `.bz-ring` | `--ok/--warn/--danger`；内 `.bz-ring-track/-fill/-label` | SVG 环形进度 |
@@ -175,6 +175,8 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 - 工厂名带 `ui` 前缀，避免与旧 `createIconBtn`（dom.ts，文本式）冲突；旧工厂新 UI 不要用。
 - 文案一律 `textContent` 传入（防注入），图标名传 lucide 名由工厂生成 `<i data-lucide>`。
 - 回调风格：按钮 `onClick`、输入 `onInput`、分段 `onChange`、chip `onRemove`（内部已 stopPropagation）。
+
+**候选浮层（uiPopover，两种锚定模式）**：① 点击锚定（默认）——`anchor` 点击开合、选项点击即关、外部 click / Esc 关闭，静态 `options`，不传 input 行为不变（向后兼容）。② 输入锚定（issue 198）——传 `input`（锚定输入框，浮层挂所在 field/search 壳下）：focus / input 开层（开着原位刷新不闪），外部 mousedown（捕获）关、输入框与层内不关，Esc 只收浮层（stopPropagation 挡上层 escManager，表单内「下拉开只收下拉」分层语义）；候选源 `getOptions(q)` 留域内过滤（fuzzy/排除自身等域特有逻辑），`emptyCloses: true` 无匹配即收层不弹空态，`keyboard: true` 内置 ↑↓ 移动 is-on 高亮（钳边界，焦点留在输入框）+ Enter 选中回调，`onOpenChange` 开合联动。监听随开挂随关摘，`detach()` 连输入监听一并摘。先例：favorites notePicker（无键盘）、belongings categoryPicker（键盘）。
 
 **窗口缩放（uiResizable，ADR-0084）**：给桌面主面板加「右缘/底缘/右下角」拖动缩放——`el` 无需定位上下文（命中/光标挂自身，不注入覆盖层），改宽高内联。宿主若是 flex 居中（`.bz-*-overlay` center），宽高变化即双向对称扩缩不越视口。钳制下限 `minW×minH`、上限逐帧取 `min(maxW×maxH, 视口92%)`；`onChange(w,h)` 供调方持久化尺寸。零视觉提示（纯 hover 光标）；仅 mouse 事件，移动端勿挂。尺寸记忆：可传 `persist: { load?, save? }`（ADR-0094）——挂载时 `load()` 有值即恢复（钳到与拖拽同口径），`onChange` 防抖 300ms 调 `save()`，detach 时未落尾值立即补存；不传则行为不变（键由调用域自定义，先例 `todoPanelWidth/Height`）。
 

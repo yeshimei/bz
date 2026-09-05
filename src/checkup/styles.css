@@ -1,33 +1,14 @@
 /* ============================================================
  * 数据体检面板（src/checkup，D4）
- * 只做域内布局；视觉值全部取 core/ui tokens（铁律 6）。
+ * 面板壳/头行走样式库共享类（.bz-panel-overlay/.bz-panel-frame +
+ * .bz-panel-head 族，铁律 6）；本文件只留面板尺寸与域内布局，
+ * 视觉值全部取 core/ui tokens。
  * ============================================================ */
 
+/* 面板本体：基线走 .bz-panel-frame（纵向 flex/圆角描边/裁切），域内只留尺寸 */
 .bz-checkup-popup {
-  flex-direction: column;
   width: min(calc(100vw - 32px), 620px);
   max-height: min(82vh, 720px);
-  padding: 0;
-  overflow: hidden;
-}
-
-.bz-checkup-head {
-  display: flex;
-  align-items: center;
-  gap: var(--bz-space-sm);
-  padding: var(--bz-space-md) var(--bz-space-lg);
-  border-bottom: 1px solid var(--bz-border);
-}
-
-.bz-checkup-head-ic {
-  color: var(--bz-brand);
-}
-
-.bz-checkup-title {
-  flex: 1;
-  font-size: var(--bz-font-emphasis);
-  font-weight: var(--bz-weight-semibold);
-  color: var(--bz-text-1);
 }
 
 .bz-checkup-body {
@@ -237,7 +218,7 @@
   }
 
   .bz-checkup-body,
-  .bz-checkup-head,
+  .bz-checkup-popup .bz-panel-head,
   .bz-checkup-foot {
     padding-left: var(--bz-space-md);
     padding-right: var(--bz-space-md);

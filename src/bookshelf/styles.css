@@ -141,33 +141,11 @@
   border-radius: var(--bz-radius-full); padding: 1px 7px; line-height: 16px; white-space: nowrap;
 }
 
-/* ---- 移动筛选抽屉（底部弹出） ---- */
-.bz-bs-drawer-mask {
-  position: fixed; inset: 0; background: var(--bz-overlay);
-  display: flex; align-items: flex-end; justify-content: center;
-  opacity: 0; transition: opacity var(--bz-dur-fast) var(--bz-ease-out);
-}
-.bz-bs-drawer-mask.open { opacity: 1; }
-.bz-bs-drawer-sheet {
-  width: 100%; max-width: 520px;
-  background: var(--bz-surface-2); color: var(--bz-text-1);
-  border-radius: var(--bz-radius-lg) var(--bz-radius-lg) 0 0;
-  box-shadow: var(--bz-shadow-lg);
-  padding: 6px var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px));
-  transform: translateY(24px); transition: transform 0.22s var(--bz-ease-out);
-}
-.bz-bs-drawer-mask.open .bz-bs-drawer-sheet { transform: translateY(0); }
-.bz-bs-drawer-grab { width: 36px; height: 4px; border-radius: var(--bz-radius-full); background: var(--bz-border-strong); margin: 0 auto 4px; }
-.bz-bs-drawer-head { display: flex; align-items: center; font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-bold); color: var(--bz-text-1); padding: 6px 2px 8px; }
-.bz-bs-drawer-head .bz-icon-btn { margin-left: auto; }
-.bz-bs-drawer-body { display: flex; flex-direction: column; }
-.bz-bs-drawer-opt {
-  display: flex; align-items: center; gap: var(--bz-space-md); width: 100%;
-  padding: 10px 8px; border-radius: var(--bz-radius-sm);
-  background: none; border: none; cursor: pointer;
-  font-family: inherit; text-align: left;
-}
-.bz-bs-drawer-opt:hover { background: var(--bz-surface-hover); }
+/* ---- 移动筛选抽屉（壳 = 共享 .bz-sheet 族，issue 198 批次 A：遮罩/壳/把手/头行/滚动体
+   与动作行基线均由 components.css .bz-sheet-* 承担，域内自绘壳规则已删） ----
+   域内只留：抽屉宽度档 + 选项行内容件（图标瓦片/主副文案/计数胶囊/勾选）+ 选中态 +
+   分组小标边距 + chips/排序铺排（共享层无对应形制，域内特有布局）。 */
+.bz-bs-filtersheet { width: 100%; max-width: 520px; }
 .bz-bs-drawer-opt.on { background: var(--bz-brand-soft); }
 .bz-bs-drawer-ic {
   width: 34px; height: 34px; border-radius: 10px; background: var(--bz-surface-3);

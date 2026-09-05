@@ -424,7 +424,7 @@ describe('bookshelf overlay', () => {
     // 头部筛选按钮（在 DOM 中；桌面 CSS 隐藏但可点击）
     const filterBtn = overlay.querySelector('#bz-bs-filterbtn') as HTMLElement;
     filterBtn.click();
-    const drawer = document.querySelector('.bz-bs-drawer-mask') as HTMLElement;
+    const drawer = document.querySelector('.bz-sheet-mask') as HTMLElement;
     expect(drawer).toBeTruthy();
     const opts = Array.from(drawer.querySelectorAll('.bz-bs-drawer-opt'));
     expect(opts.length).toBe(4);
@@ -436,7 +436,7 @@ describe('bookshelf overlay', () => {
     expect(overlay.textContent).toContain('未读 1');
     // 再开抽屉选全部 → 恢复
     (overlay.querySelector('#bz-bs-filterbtn') as HTMLElement).click();
-    const drawer2 = document.querySelector('.bz-bs-drawer-mask') as HTMLElement;
+    const drawer2 = document.querySelector('.bz-sheet-mask') as HTMLElement;
     (Array.from(drawer2.querySelectorAll('.bz-bs-drawer-opt')).find((o) => o.textContent?.includes('全部')) as HTMLElement).click();
     expect(gridCards(overlay).length).toBe(3);
     closeOverlay();
@@ -674,7 +674,7 @@ describe('bookshelf overlay', () => {
     expect(sortBtn).toBeTruthy();
     expect(sortBtn.querySelector('[data-icon="arrow-up-down"]')).toBeTruthy(); // lucide ⇅
     sortBtn.click();
-    const drawer = document.querySelector('.bz-bs-drawer-mask') as HTMLElement;
+    const drawer = document.querySelector('.bz-sheet-mask') as HTMLElement;
     expect(drawer).toBeTruthy();
     // 排序分段（组件库 uiSegmented，4 键）
     const seg = drawer.querySelector('[data-bs-drawer-sort] .bz-segmented') as HTMLElement;
@@ -684,7 +684,7 @@ describe('bookshelf overlay', () => {
     // 切「书名」→ 网格即时重排，抽屉保持打开（可连选）
     segBtns[1].click();
     expect(M.sortMode).toBe('title');
-    expect((document.querySelector('.bz-bs-drawer-mask') as HTMLElement).isConnected).toBe(true);
+    expect((document.querySelector('.bz-sheet-mask') as HTMLElement).isConnected).toBe(true);
     const titles = gridCards(overlay).map((c) => c.querySelector('.bz-bs-bname')?.textContent);
     expect(titles).toEqual([...(titles as string[])].sort((a, b) => (a || '').localeCompare(b || '', 'zh')));
     closeDrawerHelper();
@@ -711,7 +711,7 @@ describe('bookshelf overlay', () => {
     expect(gridCards(overlay).length).toBe(1);
     // 移动抽屉：分类 chips 组存在，点「未分类」生效（状态已读仍叠加 → 已读 ∩ 未分类 = 围城）
     (overlay.querySelector('#bz-bs-filterbtn') as HTMLElement).click();
-    const drawer = document.querySelector('.bz-bs-drawer-mask') as HTMLElement;
+    const drawer = document.querySelector('.bz-sheet-mask') as HTMLElement;
     const chips = Array.from(drawer.querySelectorAll('[data-bs-drawer-cats] .bz-chip')) as HTMLElement[];
     expect(chips.map((c) => c.textContent?.replace(/\d+/g, ''))).toContain('全部');
     const uncat = chips.find((c) => c.textContent?.includes('未分类')) as HTMLElement;
@@ -872,6 +872,6 @@ describe('bookshelf overlay', () => {
 
 /** 关闭书架墙筛选抽屉（测试辅助） */
 function closeDrawerHelper(): void {
-  const drawer = document.querySelector('.bz-bs-drawer-mask') as HTMLElement | null;
+  const drawer = document.querySelector('.bz-sheet-mask') as HTMLElement | null;
   if (drawer) (drawer.querySelector('[data-bs-drawer-close]') as HTMLElement)?.click();
 }
