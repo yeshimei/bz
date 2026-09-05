@@ -11,7 +11,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { articleKeyOf, excerpt } from '../../src/clipbook/constants';
 import { readClipbookData, emptySidecar } from '../../src/clipbook/data';
-import { clipArticle, clipFromNote, queryBySource, clipUrlSet } from '../../src/clipbook/store';
+import { clipArticle, clipFromNote, queryBySource, clipUrlSet, aggregateSites } from '../../src/clipbook/store';
 
 beforeEach(() => {
   resetObsidianMocks();
@@ -178,5 +178,76 @@ describe('clipbook/store 派生', () => {
     ];
     const list = queryBySource(arts, emptySidecar(), new Set(), [], { kind: 'all' });
     expect(list.map((a) => a.url)).toEqual(['u-new', 'u-mid', 'u-old']);
+  });
+});
+
+// ===== issue 220：rail 按 site 属性分类（aggregateSites + queryBySource site 源）=====
+
+describe('clipbook site 聚合与站点源（issue 220）', () => {
+  // 剪藏：果壳×2、微信公众号×1、空/缺 site×2（归「未知」）
+  const notes = [
+    { path: '归档/网页剪藏/a.md', site: '果壳', title: '剪A', url: 'https://guokr.com/1' },
+    { path: '归档/网页剪藏/b.md', site: '微信公众号', title: '剪B', url: 'https://mp.weixin.qq.com/1' },
+    { path: '归档/网页剪藏/c.md', site: '果壳', title: '剪C', url: 'https://guokr.com/3' },
+    { path: '归档/网页剪藏/d.md', site: '', title: '剪D' },
+    { path: '归档/网页剪藏/e.md', title: '剪E' },
+  ];
+  const arts = (extra: any[] = []) => [
+    { platform: '知乎日报', title: '知乎文', url: 'https://zhihu.com/1', date: '2026-09-01 08:00:00' },
+    { platform: '果壳科学人', title: '已读果壳', url: 'https://guokr.com/9', read: true, date: '2026-09-01 08:00:00' },
+    { platform: 'B站', title: 'BV视频', url: 'https://b23.tv/1', date: '2026-09-02 08:00:00' },
+    ...extra,
+  ];
+
+  it('aggregateSites：剪藏全量 + 未读 news 面；已处理骨架/url 命中剪藏不重复计', () => {
+    const rows = aggregateSites(
+      arts([{ platform: '果壳科学人', title: '未读但已剪藏', url: 'https://guokr.com/1', date: '2026-09-03 08:00:00' }]),
+      notes,
+      new Set<string>(),
+      new Set<string>(['https://guokr.com/1']),
+    );
+    const get = (site: string) => rows.find((r) => r.site === site)!;
+    expect(get('果壳')).toEqual({ site: '果壳', total: 2, unread: 0 });       // 剪藏 ×2；未读 news url 命中剪藏不重复计
+    expect(get('微信公众号')).toEqual({ site: '微信公众号', total: 1, unread: 0 });
+    expect(get('未知')).toEqual({ site: '未知', total: 2, unread: 0 });        // 空/缺 site 归桶
+    expect(get('知乎日报')).toEqual({ site: '知乎日报', total: 1, unread: 1 }); // site 缺省回落 platform
+    expect(get('B站')).toMatchObject({ total: 1, unread: 1 });
+    expect(get('果壳科学人')).toBeUndefined(); // 已读骨架 + 命中项均不建行
+  });
+
+  it('aggregateSites：savedArchive 命中不计；排序 = 总数降序 → 未读降序 → 名 zh 序', () => {
+    const rows = aggregateSites(
+      arts(),
+      notes,
+      new Set<string>(['https://zhihu.com/1']), // 知乎文被侧写归档 → 不计
+      new Set<string>(),
+    );
+    expect(rows.find((r) => r.site === '知乎日报')).toBeUndefined();
+    expect(rows.map((r) => r.site)).toEqual(['果壳', '未知', 'B站', '微信公众号']); // 总数 2/2/1/1；并列 1 时未读降序（B站 1 > 微信 0）
+  });
+
+  it('queryBySource site 源：未读 news + 该站剪藏全量；saved 命中隐藏（剪藏面承接）', () => {
+    // 知乎日报站点：1 条未读 news，无剪藏
+    const zh = queryBySource(arts(), emptySidecar(), new Set(), notes, { kind: 'site', site: '知乎日报' });
+    expect(zh).toHaveLength(1);
+    expect(zh[0].origin).toBe('news');
+    expect(zh[0].site).toBe('知乎日报');
+    // 果壳站点：2 条剪藏（news 面该文已读不入池）
+    const gk = queryBySource(arts(), emptySidecar(), new Set(), notes, { kind: 'site', site: '果壳' });
+    expect(gk).toHaveLength(2);
+    expect(gk.every((a) => a.origin === 'clip' && a.st === 'saved')).toBe(true);
+    // 未读 news 但 url 命中剪藏 → news 面 saved 隐藏，列表只剩剪藏条目（不重复）
+    const dual = queryBySource(
+      [{ platform: '果壳科学人', title: '双命中', url: 'https://guokr.com/1', date: '2026-09-03 08:00:00' }],
+      emptySidecar(),
+      new Set(['https://guokr.com/1']),
+      [notes[0]],
+      { kind: 'site', site: '果壳' },
+    );
+    expect(dual).toHaveLength(1);
+    expect(dual[0].origin).toBe('clip');
+    // 空站点名归「未知」桶可查
+    const unk = queryBySource([], emptySidecar(), new Set(), notes, { kind: 'site', site: '未知' });
+    expect(unk).toHaveLength(2);
   });
 });

@@ -46,3 +46,5 @@ export { uiModal } from './modal';
 export type { BzModalOpts } from './modal';
 export { uiResizable } from './resize';
 export type { BzResizableOpts, BzResizablePersist } from './resize';
+export { uiVSplitter } from './splitter';
+export type { BzVSplitterOpts, BzVSplitterPersist } from './splitter';
