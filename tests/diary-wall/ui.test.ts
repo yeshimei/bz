@@ -869,6 +869,33 @@ describe('回忆墙 UI', () => {
     expect(css).not.toContain('#2a9d8f'); // 小项：teal 写死色改 token
   });
 
+  it('issue 218：长文跨栏卡——≥800 字整卡跨全宽、卡内分栏、媒体横排网格；短文维持三栏小卡', async () => {
+    // 私有夹具：一篇 1200 字长文（带媒体）+ 一篇 1200 字纯文字长文
+    const long = '文'.repeat(1200);
+    vault.files.set('我的/日记/2026-07-01.md', `# 📖 09:00\n${long}\n![[IMG_20260701_090000.jpg]]\n`);
+    vault.files.set('我的/日记/2026-07-02.md', `# 📖 10:00\n${long}\n`);
+    await openAndWait();
+    const wall = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-wall') as HTMLElement;
+    const wide = wall.querySelectorAll('.bz-diary-wall-wide');
+    expect(wide.length).toBe(2);
+    // 卡内分栏容器 + 媒体横排网格
+    expect(wall.querySelectorAll('.bz-diary-wall-wide-md').length).toBe(2);
+    const grid = wall.querySelectorAll('.bz-diary-wall-wide-media');
+    expect(grid.length).toBe(1); // 纯文字长文无媒体网格
+    expect(grid[0].querySelectorAll('.bz-diary-wall-media').length).toBe(1);
+    // 短条目不升级
+    const items = wall.querySelectorAll('.bz-diary-wall-item');
+    expect(items.length).toBeGreaterThan(wide.length);
+  });
+
+  it('issue 218 样式落位：跨栏/分栏/媒体网格规则在位', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/diary-wall/styles.css'), 'utf8');
+    expect(css).toContain('.bz-diary-wall-wide {');
+    expect(css).toContain('.bz-diary-wall-wide-md');
+    expect(css).toContain('.bz-diary-wall-wide-media');
+    expect(css).toContain('column-span: all');
+  });
+
   it('issue 210：章节栏视频缩略懒加载——无 IO 直挂 src + preload=metadata，格内留播放角标', async () => {
     // 本例私有夹具：beforeEach 每例重建 vault，加一条纯视频日记不影响他例
     vault.files.set('我的/日记/2026-06-10.md', '# 🎬 10:00\n![[VID_20260610_100000.mp4]]\n');

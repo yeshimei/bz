@@ -535,6 +535,43 @@
   margin-bottom: 10px;
 }
 
+/* ---- issue 218：长文跨栏卡（正文 ≥800 字）----
+   整卡横跨瀑布全宽（column-span:all），正文卡内报纸式分栏（桌面 3 栏/移动 2 栏），
+   媒体横排网格垫底——四五千字不再单列直坠千像素、两列陪跑空白 */
+.bz-diary-wall-wide {
+  column-span: all;
+  -webkit-column-span: all;
+  background: var(--dw-surface);
+}
+.bz-diary-wall-wide > .bz-diary-wall-text-row {
+  padding: 14px 14px 0;
+}
+/* 卡内分栏：媒体嵌入已剥离的纯 markdown，块级内容自然流入各栏 */
+.bz-diary-wall-wide-md {
+  columns: 3;
+  column-gap: 28px;
+  padding: 6px 14px 10px;
+}
+.bz-diary-wall-masonry--mob .bz-diary-wall-wide-md {
+  columns: 2;
+  column-gap: 18px;
+}
+/* 分栏阅读性：小块（引用/代码/表）禁跨栏断裂，段落允许自然续栏 */
+.bz-diary-wall-wide-md pre,
+.bz-diary-wall-wide-md blockquote,
+.bz-diary-wall-wide-md img,
+.bz-diary-wall-wide-md table,
+.bz-diary-wall-wide-md li {
+  break-inside: avoid;
+}
+/* 长文媒体横排网格 */
+.bz-diary-wall-wide-media {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  padding: 2px 14px 14px;
+}
+
 /* 条目（性能：屏外内容跳过渲染 + 布局/绘制隔离，原型 .item） */
 .bz-diary-wall-item {
   min-width: 0;
