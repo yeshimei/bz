@@ -4,6 +4,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { buildTagMaps, resetTagsConfig } from '../../src/diary-wall/config';
 import {
   extractMedia,
+  extractSegments,
   groupByMonth,
   loadWallEntries,
   mediaSrc,
@@ -39,6 +40,43 @@ function makeApp(files: Record<string, string>) {
 beforeEach(() => {
   resetTagsConfig();
   buildTagMaps();
+});
+
+describe('extractSegments（issue 213：按原文顺序分段）', () => {
+  it('文字段/媒体段交错保留，原文序不压平', () => {
+    const segs = extractSegments('前文一段\n![[a.jpg]]\n中段文字\n![[b.mp4]]\n后文');
+    expect(segs).toEqual([
+      { kind: 'text', text: '前文一段' },
+      { kind: 'media', media: { name: 'a.jpg', kind: 'img' } },
+      { kind: 'text', text: '中段文字' },
+      { kind: 'media', media: { name: 'b.mp4', kind: 'video' } },
+      { kind: 'text', text: '后文' },
+    ]);
+  });
+
+  it('非媒体内链保留为文字段；纯媒体返回单媒体段；空串返回空数组', () => {
+    expect(extractSegments('记\n![[笔记.md]]\n录')).toEqual([
+      { kind: 'text', text: '记' },
+      { kind: 'text', text: '![[笔记.md]]' },
+      { kind: 'text', text: '录' },
+    ]);
+    expect(extractSegments('![[a.png|400]]')).toEqual([
+      { kind: 'media', media: { name: 'a.png', kind: 'img' } },
+    ]);
+    expect(extractSegments('')).toEqual([]);
+  });
+
+  it('toWallEntry 派生 segments 字段', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/日记/2024-06-01.md', '# 📖 09:00\n前文\n![[a.jpg]]\n后文\n');
+    const app = mockAppWithVault(vault);
+    const entries = await loadWallEntries(app);
+    expect(entries[0].segments).toEqual([
+      { kind: 'text', text: '前文' },
+      { kind: 'media', media: { name: 'a.jpg', kind: 'img' } },
+      { kind: 'text', text: '后文' },
+    ]);
+  });
 });
 
 describe('extractMedia', () => {
@@ -175,6 +213,7 @@ describe('groupByMonth', () => {
       content: 'x',
       text: 'x',
       media: [],
+      segments: [],
       filename: date,
       lineNumber: 1,
       kind: 'diary',
@@ -554,6 +593,7 @@ describe('pickOnThisDay（那年今天，增强 #5 数据口径）', () => {
     kind: 'diary',
     media: [],
     text: '内容',
+    segments: [],
   });
 
   it('mmdd 命中：往年同月日条目全部命中（跨多年）', () => {
