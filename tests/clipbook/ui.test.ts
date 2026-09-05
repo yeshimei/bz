@@ -283,20 +283,20 @@ describe('clipbook UI 桌面三栏', () => {
     openClipbook(getApp());
     await vi.waitFor(() => expect(M.open).toBe(true));
     await vi.waitFor(() => expect(M.articles.length).toBe(3));
-    // 无搜索：全部未读 = 3
+    // 无搜索：全部未读 = 3/3（V1 口径：未读/总量）
     const allRow0 = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('全部未读')) as HTMLElement;
-    expect(allRow0.querySelector('.bz-rail-count')!.textContent).toBe('3');
-    // 搜索「果壳」：全部未读 3→2，剪藏本行 0
+    expect(allRow0.querySelector('.bz-rail-count')!.textContent).toBe('3/3');
+    // 搜索「果壳」：全部未读 3→2，剪藏本行 0/1（命中/共 1 篇剪藏）
     const input = document.querySelector('[data-clip-desk-search]') as HTMLInputElement;
     input.value = '果壳';
     input.dispatchEvent(new Event('input', { bubbles: true }));
     await vi.waitFor(() => {
       const allRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('全部未读')) as HTMLElement;
-      expect(allRow.querySelector('.bz-rail-count')!.textContent).toBe('2');
+      expect(allRow.querySelector('.bz-rail-count')!.textContent).toBe('2/3');
     });
     await vi.waitFor(() => expect(document.querySelectorAll('.bz-clip-item').length).toBe(2));
     const clipRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
-    expect(clipRow.querySelector('.bz-rail-count')!.textContent).toBe('0');
+    expect(clipRow.querySelector('.bz-rail-count')!.textContent).toBe('0/1');
     closePanel();
   });
 
@@ -349,6 +349,80 @@ describe('clipbook UI 桌面三栏', () => {
     const other = items.find((el) => !el.classList.contains('on')) as HTMLElement;
     other.click();
     await vi.waitFor(() => expect(sc.scrollTop).toBe(0));
+    closePanel();
+  });
+
+  // ================= issue 214：编辑部印刷风（V1 点线索引 / 目录序号制 / 未读在前 / 阅读面去底部动作） =================
+
+  it('issue 214：rail 点线索引行 = 名 + 引导线 + 未读/总数（选中橘名）', async () => {
+    await openDesktop();
+    const row = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('全部未读')) as HTMLElement;
+    expect(row.querySelector('.bz-clip-lead')).toBeTruthy();
+    // V1 口径：1 未读（果壳篇 url 命中剪藏 → saved 隐藏）/ 3 总量
+    expect(row.querySelector('.bz-rail-count')!.textContent).toBe('1/3');
+    // 选中行样式钩子（视觉由域 CSS 承担）
+    expect(row.classList.contains('on')).toBe(true);
+    closePanel();
+  });
+
+  it('issue 214：目录序号制——序号领队 + 状态类 + 桌面无状态圆点；中栏有「目录」栏头', async () => {
+    await openDesktop();
+    expect(document.querySelector('.bz-clip-toc-head')!.textContent).toContain('目录');
+    const items = [...document.querySelectorAll('.bz-clip-item')] as HTMLElement[];
+    expect(items.length).toBeGreaterThan(0);
+    for (const it of items) {
+      expect(it.querySelector('.bz-clip-no')).toBeTruthy();
+      expect(it.className).toMatch(/bz-clip-item--(unread|reading|saved)/);
+      expect(it.querySelector('.bz-clip-dot')).toBeNull();
+    }
+    expect(items[0].querySelector('.bz-clip-no')!.textContent).toBe('01');
+    closePanel();
+  });
+
+  it('issue 214：目录未读在前（在读条目让位，组内保持最新在前）', async () => {
+    const vault = boot();
+    const app = getApp();
+    const raw = JSON.parse((app.vault as any).files.get('CONFIG/STORAGE/news.json'));
+    raw.articles = [
+      { platform: '果壳科学人', title: '在读新文', url: 'https://guokr.com/r1', date: '2026-09-05 08:00:00', body: 'b1' },
+      { platform: '果壳科学人', title: '未读旧文', url: 'https://guokr.com/u1', date: '2026-09-01 08:00:00', body: 'b2' },
+    ];
+    (app.vault as any).files.set('CONFIG/STORAGE/news.json', JSON.stringify(raw));
+    vault.files.set('CONFIG/STORAGE/clipbook.json', JSON.stringify({
+      articleOverrides: { 'url:https://guokr.com/r1': { reading: true } },
+      savedArchive: [], order: [],
+    }));
+    openClipbook(getApp());
+    await vi.waitFor(() => expect(M.open).toBe(true));
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-clip-item').length).toBe(2));
+    const first = document.querySelector('.bz-clip-item') as HTMLElement;
+    expect(first.textContent).toContain('未读旧文');
+    expect(first.classList.contains('bz-clip-item--unread')).toBe(true);
+    const second = [...document.querySelectorAll('.bz-clip-item')][1] as HTMLElement;
+    expect(second.classList.contains('bz-clip-item--reading')).toBe(true);
+    closePanel();
+  });
+
+  it('issue 214：阅读面——站点并入 meta、去底部原文链接；news 右键含「查看原文」；剪藏条目有「打开笔记」文字脚', async () => {
+    await openDesktop();
+    const reader = document.querySelector('[data-clip-reader]') as HTMLElement;
+    // meta 行含站点（favicon chip 保留）且独立站点行退役（首个元素 = 标题）
+    expect(reader.querySelector('.bz-clip-art-meta .bz-clip-art-site')).toBeTruthy();
+    expect(reader.firstElementChild!.classList.contains('bz-clip-art-title')).toBe(true);
+    // 底部动作退役：无原文链接；news 无打开笔记脚
+    expect(reader.querySelector('.bz-clip-art-origin')).toBeNull();
+    expect(reader.querySelector('[data-clip-open-note]')).toBeNull();
+    // 动作归宿：右键菜单含「查看原文」
+    const item = document.querySelector('.bz-clip-item') as HTMLElement;
+    item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+    await vi.waitFor(() => expect(document.querySelector('.bz-item-menu')).toBeTruthy());
+    expect((document.querySelector('.bz-item-menu') as HTMLElement).textContent).toContain('查看原文');
+    // 剪藏条目：文末「打开笔记」文字脚（data-clip-open-note 保留）
+    const clipRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
+    clipRow.click();
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-clip-item').length).toBe(1));
+    (document.querySelector('.bz-clip-item') as HTMLElement).click();
+    await vi.waitFor(() => expect((document.querySelector('[data-clip-reader]') as HTMLElement).querySelector('[data-clip-open-note]')).toBeTruthy());
     closePanel();
   });
 });

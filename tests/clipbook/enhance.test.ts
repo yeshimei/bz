@@ -365,11 +365,14 @@ describe('面板拖拽缩放 + 尺寸记忆（enh 包 8）', () => {
 });
 
 describe('副题术语（enh 包 12）', () => {
-  it('头行副题为「未读流与剪藏」，不再出现「聚合讯已接入」', async () => {
+  it('issue 214：头行去副题，期号行 = 日期 + news 总条数', async () => {
     await openDesktop();
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
-    expect(overlay.querySelector('.bz-panel-head-sub')!.textContent).toBe('未读流与剪藏');
+    expect(overlay.querySelector('.bz-panel-head-sub')).toBeNull();
+    expect(overlay.textContent).not.toContain('未读流与剪藏');
     expect(overlay.textContent).not.toContain('聚合讯已接入');
+    const issue = overlay.querySelector('[data-clip-issue]') as HTMLElement;
+    expect(issue.textContent).toMatch(/^\d{4} 年 \d{1,2} 月 \d{1,2} 日 · 第 2 期$/);
   });
 });
 
