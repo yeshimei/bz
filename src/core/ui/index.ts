@@ -14,7 +14,7 @@ export type {
   BzTone, BzSize, BzIconName,
   BzButtonOpts, BzIconBtnOpts, BzChipOpts,
   BzInputOpts, BzFieldOpts, BzEmptyOpts, BzSegOpts, BzRangeOpts, BzChoiceOpts,
-  BzSwitchOpts, BzSelectOpts,
+  BzSwitchOpts, BzSelectOpts, BzCardPickOpts,
   BzSearchOpts, BzMainHeadOpts, BzRailItem, BzRailOpts,
   BzMobStripOpts, BzStatOpts, BzProgressOpts, BzPopoverOpts, BzSuggestOpts,
 } from './types';
@@ -29,6 +29,7 @@ export { uiRange } from './slider';
 export { uiEmpty } from './empty';
 export { uiSegmented } from './segmented';
 export { uiChoice } from './choice';
+export { uiCardChoice } from './cardpick';
 export { uiSwitch } from './switch';
 export { uiSelect } from './select';
 export { uiSearch } from './search';

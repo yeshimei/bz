@@ -155,6 +155,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | `uiEmpty` | `{icon?, title, desc?, actions?}` | `HTMLDivElement` |
 | `uiSegmented` | `<T>({options, value, onChange})` | `{el, setValue}` |
 | `uiChoice` | `<T>({options:{value,label,dot?}[], value, onChange, className?, float?})` | `{el, setValue, detach}`；float=浮岛形态（滑动指示器，容器卸载时调 detach 摘 resize 监听） |
+| `uiCardChoice` | `<T>({options:{value,label,prevClass?}[], value, onChange, className?, label?})` | `{el, setValue}`；卡片视觉单选组（预览+名称，issue 210）；prevClass 预览变体由域样式给 |
 | `uiSwitch` | `{checked?, onChange?}` | `{el, setChecked}` |
 | `uiSelect` | `<T>({options, value, placeholder?, className?, onOpenChange?, onChange})` | `{el, setValue}` |
 | `uiIconSpan` | `(name, extraClass?)` — 同 uiIcon 语义别名 | `HTMLSpanElement` |

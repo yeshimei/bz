@@ -201,3 +201,12 @@ export interface BzSuggestOpts {
   onPick?: (value: string) => void;  // 点选/回车选定回调（回填后触发）
 }
 
+
+/** 卡片视觉单选组（.bz-cardpick，issue 210）：预览卡 + 名称，设置面板「看脸选」类设置项 */
+export interface BzCardPickOpts<T extends string = string> {
+  options: { value: T; label: string; prevClass?: string }[]; // prevClass = 预览区附加类（视觉由使用方域样式提供）
+  value: T;                // 当前选中（未匹配任何选项时无选中态，回落由调用方负责）
+  onChange: (value: T) => void;
+  className?: string;
+  label?: string;          // radiogroup aria-label
+}
