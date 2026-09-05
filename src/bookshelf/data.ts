@@ -195,12 +195,14 @@ function buildEpubItem(app: App, aggregate: any): BookshelfItem | null {
   const completionDate = toDateString(completedTime);
 
   const vaultFile = app?.vault?.getAbstractFileByPath?.(vaultPath);
+  // B11：分类接 Weave 元数据 subjects[0]（issue 221/ADR-0099）；无则置 null（kwFilter 搜「未分类」不误命中 EPUB）
+  const subjects: unknown[] = Array.isArray(meta?.subjects) ? meta.subjects : [];
+  const epubCategory = typeof subjects[0] === 'string' && subjects[0].trim() ? subjects[0].trim() : null;
   return {
     file: vaultFile instanceof TFile ? vaultFile : null,
     title,
     author: typeof meta?.author === 'string' && meta.author.trim() ? meta.author.trim() : '未知作者',
-    // B11：EPUB 无分类元数据，置 null（不再硬编码「未分类」——kwFilter 搜「未分类」曾误命中全部 EPUB）
-    category: null,
+    category: epubCategory,
     cover: resolveEpubCoverPath(app, meta),
     bookReview: null,
     readingDate,
