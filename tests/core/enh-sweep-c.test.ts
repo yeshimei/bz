@@ -79,9 +79,9 @@ describe('enh-sweep-c：触控热区扫尾', () => {
     expect(css('clipbook')).toMatch(/\.bz-clip-mob-detail-top \.bz-icon-btn--lg[^}]*44px/);
   });
 
-  it('横滑标签 44px 档（cinema/favorites/belongings 走共享 .bz-mobstrip + 域内 scoped 抬档）', () => {
+  it('横滑标签 44px 档（cinema/belongings 走共享 .bz-mobstrip；favorites issue 219b 磁贴行取代）', () => {
     expect(css('cinema')).toMatch(/bz-mobstrip-chip \{[^}]*min-height: 44px/);
-    expect(css('favorites')).toMatch(/bz-mobstrip-chip \{[^}]*min-height: 44px/);
+    expect(css('favorites')).toMatch(/bz-fav-stk \{[^}]*min-height: 44px/);
     expect(css('belongings')).toMatch(/bz-mobstrip-chip \{[^}]*min-height: 44px/);
   });
 });

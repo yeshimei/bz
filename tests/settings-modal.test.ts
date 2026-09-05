@@ -484,15 +484,16 @@ describe('收藏本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     setSettingsSaver(async () => {});
   });
 
-  it('桌面端：显示组暴露「默认排序」select（直绑 favoritesSortKey，issue 194 补暴露）', () => {
+  it('桌面端：显示组不再暴露「默认排序」（issue 219b 随工具行退役），仅「日期显示」', () => {
     const schema = favoritesSettingsSchema();
     expect(schema.groups).toHaveLength(2);
     expect(schema.groups[0].name).toBe('显示');
-    const row = schema.groups[0].rows[0] as any;
+    const rows = schema.groups[0].rows as any[];
+    expect(rows.find((r) => r.binding?.key === 'favoritesSortKey')).toBeUndefined();
+    const row = rows[0] as any;
     expect(row.type).toBe('select');
-    expect(row.name).toBe('默认排序');
-    expect(row.binding).toMatchObject({ key: 'favoritesSortKey' });
-    expect(row.options.map((o: any) => o.value)).toEqual(['created', 'title']);
+    expect(row.name).toBe('日期显示');
+    expect(row.binding).toMatchObject({ key: 'favoritesTimeFormat' });
   });
 
   it('移动端：schema 暴露「移动端默认全屏」toggle，直绑 favoritesMobileDefaultFullscreen', () => {
