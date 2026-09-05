@@ -83,7 +83,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | 键帽 | `.bz-kbd` | — | 快捷键帽（.bz-search 内自动右侧定位） |
 | 骨架屏 | `.bz-skeleton` | `--circle/--title` | 微光扫过占位 |
 | 标签页 | `.bz-tabs` | 内 `.bz-tab.is-on` | 下划线式页签 |
-| 底部抽屉 | `.bz-sheet` | 内 `.bz-sheet-grip/-head/-title/-sub` | 移动端底部抽屉壳（配遮罩，含安全区垫底） |
+| 底部抽屉 | `.bz-sheet` | `--show`；配 `.bz-sheet-mask(.open)`；内 `.bz-sheet-grip/-head/-title/-sub/-body/-actions/-act`（`.bz-sheet-act-ic/-sub`，`--danger/--accent` 语义行） | 底部抽屉壳：遮罩 + 底部定位 + 滑入滑出过渡（对齐 item-sheet 动效口径），含安全区垫底；打开态 = 壳挂 `--show` 或遮罩挂 `.open`；点遮罩/关闭时机由域负责 |
 | 标签输入 | `.bz-taginput` | 内 `.bz-taginput-field` | 胶囊 chips + 输入（focus 品牌描边） |
 | 星级 | `.bz-rating` | `--sm/--readonly` | 星轨（--bz-star） |
 | 环形进度 | `.bz-ring` | `--ok/--warn/--danger`；内 `.bz-ring-track/-fill/-label` | SVG 环形进度 |

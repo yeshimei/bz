@@ -248,17 +248,17 @@ describe('回忆墙 UI', () => {
     // 正文（文字条内文本）右键
     const tx = desk.querySelector('.bz-diary-wall-text-tx') as HTMLElement;
     tx.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 50, clientY: 60 }));
-    expect(document.querySelector('.bz-diary-wall-menu')).toBeTruthy();
-    document.querySelector('.bz-diary-wall-menu')!.remove();
+    expect(document.querySelector('.bz-item-menu')).toBeTruthy();
+    document.querySelector('.bz-item-menu')!.remove();
     // 图片（img 元素）右键
     const img = desk.querySelector('.bz-diary-wall-media img') as HTMLElement;
     img.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 80, clientY: 90 }));
-    expect(document.querySelector('.bz-diary-wall-menu')).toBeTruthy();
-    document.querySelector('.bz-diary-wall-menu')!.remove();
+    expect(document.querySelector('.bz-item-menu')).toBeTruthy();
+    document.querySelector('.bz-item-menu')!.remove();
     // 视频（video 元素）右键
     const video = desk.querySelector('.bz-diary-wall-media video') as HTMLElement;
     video.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 120, clientY: 130 }));
-    expect(document.querySelector('.bz-diary-wall-menu')).toBeTruthy();
+    expect(document.querySelector('.bz-item-menu')).toBeTruthy();
   });
 
   it('空态：无日记时显示提示与动作按钮', async () => {
@@ -418,7 +418,7 @@ describe('回忆墙 UI', () => {
     expect(mocks.openEncrypt).toHaveBeenCalled();
     // 右键菜单：加密条目显示「解密」而非「改标签/加密」
     item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 50, clientY: 60 }));
-    const menu = document.querySelector('.bz-diary-wall-menu')!;
+    const menu = document.querySelector('.bz-item-menu')!;
     expect(menu.textContent).toContain('解密');
     expect(menu.textContent).not.toContain('改标签');
   });
@@ -451,7 +451,7 @@ describe('回忆墙 UI', () => {
     await waitFor(() => desk.querySelectorAll('.bz-diary-wall-day-head').length === 1);
     const item = desk.querySelector('.bz-diary-wall-item') as HTMLElement;
     item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 50, clientY: 60 }));
-    const menu = document.querySelector('.bz-diary-wall-menu')!;
+    const menu = document.querySelector('.bz-item-menu')!;
     const delBtn = Array.from(menu.querySelectorAll('button')).find((b) => b.textContent!.includes('删除'))!;
     delBtn.click();
     await new Promise((r) => setTimeout(r, 30));
@@ -564,7 +564,7 @@ describe('回忆墙 UI', () => {
     expect(item).toBeTruthy();
     item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     // 抽屉不应打开
-    expect(desk.querySelector('.bz-diary-wall-sheet--show')).toBeNull();
+    expect(desk.querySelector('.bz-sheet--show')).toBeNull();
     // 媒体块 ⋯ 按钮已移除（用户要求去掉右上角三点）
     expect(item.querySelector('.bz-diary-wall-ops')).toBeNull();
   });
@@ -576,7 +576,7 @@ describe('回忆墙 UI', () => {
     const item = mob.querySelector('.bz-diary-wall-item') as HTMLElement;
     expect(item).toBeTruthy();
     item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(mob.querySelector('.bz-diary-wall-sheet--show')).toBeTruthy();
+    expect(mob.querySelector('.bz-sheet--show')).toBeTruthy();
   });
 
   it('稀疏铺满：单条日文字条跨列占满整行（sparse-1）', async () => {
@@ -597,7 +597,7 @@ describe('回忆墙 UI', () => {
     // 打开搜索行
     const searchBtn = desk.querySelector('[data-act="search"]') as HTMLElement;
     searchBtn.click();
-    const box = desk.querySelector('.bz-diary-wall-searchbox') as HTMLInputElement;
+    const box = desk.querySelector('.bz-diary-wall-searchrow .bz-search input') as HTMLInputElement;
     expect(box).toBeTruthy();
     // 输入「猫」（2026-08-19 日记内容含「被猫盯着」）
     box.value = '猫';
@@ -642,7 +642,7 @@ describe('回忆墙 UI', () => {
     const item = desk.querySelector('.bz-diary-wall-item') as HTMLElement;
     expect(item).toBeTruthy();
     item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 100, clientY: 100 }));
-    const menu = document.querySelector('.bz-diary-wall-menu');
+    const menu = document.querySelector('.bz-item-menu');
     expect(menu).toBeTruthy();
     expect(menu!.textContent).toContain('打开原文');
     expect(menu!.textContent).toContain('复制双链');
@@ -671,7 +671,7 @@ describe('回忆墙 UI', () => {
     expect(media).toBeTruthy();
     media.click();
     // 抽屉打开（媒体条目的条目级动作可达），灯箱未开
-    expect(mob.querySelector('.bz-diary-wall-sheet--show')).toBeTruthy();
+    expect(mob.querySelector('.bz-sheet--show')).toBeTruthy();
     expect(mob.querySelector('.bz-diary-wall-lb--show')).toBeNull();
     // 抽屉内媒体缩略图仍可进灯箱（openLightbox 按可见实例亮——jsdom 桌面宽度 → desk 实例）
     const thumb = mob.querySelector('.bz-diary-wall-sheet-thumb') as HTMLElement;
@@ -768,9 +768,9 @@ describe('回忆墙 UI', () => {
     const c = await openAndWait();
     const item = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-item') as HTMLElement;
     item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 10, clientY: 10 }));
-    expect(document.querySelector('.bz-diary-wall-menu')).toBeTruthy();
+    expect(document.querySelector('.bz-item-menu')).toBeTruthy();
     c.hide();
-    expect(document.querySelector('.bz-diary-wall-menu')).toBeNull();
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
   });
 
   // ===== 增强包（2026-09 拍板 13 项） =====
@@ -881,11 +881,11 @@ describe('回忆墙 UI', () => {
     desk.querySelector<HTMLElement>('.bz-diary-wall-chip[data-tag="摄影"]')!.click();
     const item = desk.querySelector('.bz-diary-wall-item') as HTMLElement;
     item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 30, clientY: 40 }));
-    const menu = document.querySelector('.bz-diary-wall-menu')!;
+    const menu = document.querySelector('.bz-item-menu')!;
     const btn = Array.from(menu.querySelectorAll('button')).find((b) => b.textContent!.includes('在日记本中查看'));
     expect(btn).toBeTruthy();
     // 菜单图标 lucide 化（增强 #4）
-    expect((btn!.querySelector('.bz-ic') as HTMLElement).dataset.icon).toBe('book-open');
+    expect((btn!.querySelector('.bz-item-menu-icon') as HTMLElement).dataset.icon).toBe('book-open');
     btn!.click();
     await waitFor(() => mocks.showDiaryPanel.mock.calls.length > 0);
     expect(mocks.showDiaryPanel).toHaveBeenCalled();
@@ -927,11 +927,11 @@ describe('回忆墙 UI', () => {
     await waitFor(() => desk.querySelectorAll('.bz-diary-wall-day-head').length === 1);
     const item = desk.querySelector('.bz-diary-wall-item') as HTMLElement;
     item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 30, clientY: 40 }));
-    const menu = document.querySelector('.bz-diary-wall-menu')!;
+    const menu = document.querySelector('.bz-item-menu')!;
     expect(Array.from(menu.querySelectorAll('button')).some((b) => b.textContent!.includes('在日记本中查看'))).toBe(false);
     // 菜单图标 lucide 化：解密 lock-open、删除 trash-2（增强 #4）
     const decBtn = Array.from(menu.querySelectorAll('button')).find((b) => b.textContent!.includes('解密'))!;
-    expect((decBtn.querySelector('.bz-ic') as HTMLElement).dataset.icon).toBe('lock-open');
+    expect((decBtn.querySelector('.bz-item-menu-icon') as HTMLElement).dataset.icon).toBe('lock-open');
   });
 
   it('增强 #8：加密媒体按需解密——解锁后卡片内直显原图（data URL），失败保持占位', async () => {
@@ -1089,7 +1089,7 @@ describe('回忆墙 UI', () => {
     await openAndWait();
     const item = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-item') as HTMLElement;
     item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 20, clientY: 20 }));
-    const menu = document.querySelector('.bz-diary-wall-menu') as HTMLElement;
+    const menu = document.querySelector('.bz-item-menu') as HTMLElement;
     expect(menu).toBeTruthy();
     const z = Number(menu.style.zIndex);
     expect(Number.isFinite(z)).toBe(true);
@@ -1118,12 +1118,21 @@ describe('回忆墙 UI', () => {
     expect(css).not.toMatch(/bz-diary-wall-chip::after/);
   });
 
-  it('增强 #12/#2/#5 样式落位：菜单无静态 z-index 档；年份标签与时光条类存在', () => {
+  it('issue 198 批次 A 样式落位：菜单/抽屉自绘规则已删（共享层承载）；年份标签与时光条类存在', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/diary-wall/styles.css'), 'utf8');
-    // #12：.bz-diary-wall-menu 规则块内不再有静态 z-index（显示时 topifyZ 动态发号）
-    const menuBlock = css.match(/\.bz-diary-wall-menu\s*\{[^}]*\}/);
-    expect(menuBlock).toBeTruthy();
-    expect(menuBlock![0]).not.toContain('z-index');
+    // 右键菜单迁移 core item-actions（.bz-item-menu）：域内自绘菜单规则删除
+    expect(css).not.toContain('.bz-diary-wall-menu');
+    // 详情抽屉迁移共享 .bz-sheet 族：壳/把手/动作行自绘规则删除，域内只留层档钩子与富媒体头
+    expect(css).not.toContain('.bz-diary-wall-sheet-grip');
+    expect(css).not.toContain('.bz-diary-wall-sheet-act');
+    expect(css).toContain('.bz-diary-wall-sheet-mask'); // 遮罩层档钩子
+    // 搜索框接入共享 .bz-search：域内自绘输入框规则删除
+    expect(css).not.toContain('.bz-diary-wall-searchbox');
+    // 共享层形制在位（components.css）：遮罩 + 底部定位 + 动作行
+    const core = readFileSync(resolve(process.cwd(), 'src/core/ui/components.css'), 'utf8');
+    expect(core).toContain('.bz-sheet-mask');
+    expect(core).toContain('.bz-sheet--show');
+    expect(core).toContain('.bz-sheet-act--danger');
     // #2：年份分隔标签类
     expect(css).toContain('.bz-diary-wall-rail-year');
     // #5：那年今天时光条类（容器/头行/横滑行/卡片/年份角标）
