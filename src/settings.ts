@@ -326,6 +326,9 @@ export default interface BzSettings {
    *  顶层加字段需改根结构，会破坏仍在用的外部统计脚本 主页.js（读 favorites.length），
    *  且违背「既有结构不改」铁律；排序键落设置与 memoSortMode 同惯例） */
   favoritesSortKey: string;
+  /** 收藏本：卡片日期显示格式（relative=相对时间（默认，如「3 分钟前」）/ absolute=绝对时间
+   *  YYYY-MM-DD HH:mm:ss）。issue 201；设置面板收藏本「显示」组切换 */
+  favoritesTimeFormat: string;
   // 旧 libraryMobileDefaultFullscreen（书库）已删；读书报告内嵌化后独立报告弹窗退役，报告随书架墙面板同控 bookshelfMobileDefaultFullscreen
   /** 影院：移动端默认全屏（默认开——原 JS 内联强制全屏；ADR-0087 起影视报告同控此键） */
   cinemaMobileDefaultFullscreen: boolean;
@@ -601,6 +604,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   belongingsDefaultStatus: '',
   favoritesMobileDefaultFullscreen: true,
   favoritesSortKey: 'created',
+  favoritesTimeFormat: 'relative',
   cinemaMobileDefaultFullscreen: true,
   reviewMobileDefaultFullscreen: true,
   pomodoroMobileDefaultFullscreen: false,

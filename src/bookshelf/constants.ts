@@ -37,6 +37,7 @@ export const SORT_LABEL: Record<SortKey, string> = {
 export const ICON = {
   search: 'search',
   report: 'bar-chart-3',
+  settings: 'settings',
   funnel: 'funnel',
   close: 'x',
   books: 'library',

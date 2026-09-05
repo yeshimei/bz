@@ -126,17 +126,12 @@
 .bz-todo-form .bz-field { margin-bottom: 0; }
 .bz-todo-form textarea.bz-input { min-height: 64px; }
 /* 第二个输入框（剪藏标题/代码脚本/公开课课程）容器：输入框满宽
-   （.bz-input 默认 240px 定宽，不在 .bz-field 里的框须显式撑满，issue 199） */
-.bz-todo-extra { display: none; }
+   （.bz-input 默认 240px 定宽，不在 .bz-field 里的框须显式撑满，issue 199）；
+   position:relative 供联想 .bz-popover 浮层锚定（issue 201） */
+.bz-todo-extra { display: none; position: relative; }
 .bz-todo-extra.bz-todo-extra-on { display: block; }
 .bz-todo-extra .bz-input { width: 100%; }
-.bz-todo-sug-box {
-  border: 1px solid var(--bz-border); border-radius: var(--bz-radius-sm);
-  background: var(--bz-surface-3); margin-top: 4px; overflow: hidden;
-}
-.bz-todo-sug-item { display: block; width: 100%; text-align: left; padding: 6px 10px; border: none; background: none; font-size: var(--bz-font-meta); color: var(--bz-text-1); cursor: pointer; font-family: inherit; }
-.bz-todo-sug-item + .bz-todo-sug-item { border-top: 1px solid var(--bz-border); }
-.bz-todo-sug-item:hover { background: var(--bz-surface-hover); }
+/* 联想候选已改组件库 .bz-popover 下拉浮层（issue 201，同收藏本「关联笔记」），bz-todo-sug-* 退役 */
 /* 定位行：垂直居中；按钮走组件库 .bz-btn--chip 图标圆底档（issue 200 F 款入库） */
 .bz-todo-pos-row { display: flex; align-items: center; gap: var(--bz-space-sm); min-height: 32px; }
 .bz-todo-pos-row .bz-todo-pos-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); }

@@ -98,6 +98,11 @@ describe('UIManager 三区队列', () => {
     seed(vault);
     const { ui } = await makeUI(vault);
     await ui.showMain();
+    // issue 201 头行对齐待办：品牌块 + ⚙设置直达钮（关闭钮原有）
+    expect(document.querySelector('.bz-q-head .bz-panel-brand')).toBeTruthy();
+    expect(document.querySelector('.bz-q-head [data-act="settings"]')).toBeTruthy();
+    // 关闭钮对齐待办：不挂 bz-win-close（core 规则非真全屏隐藏之）→ 桌面常显
+    expect(document.querySelector('.bz-q-head [data-act="close"]')!.classList.contains('bz-win-close')).toBe(false);
     const cols = document.querySelectorAll('.bz-q-col');
     expect(cols.length).toBe(3);
     const headNames = [...document.querySelectorAll('.bz-q-col-head .name')].map((e) => e.textContent);

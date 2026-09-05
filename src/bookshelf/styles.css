@@ -15,10 +15,12 @@
   width: 960px; max-width: calc(100vw - 32px); height: 680px; max-height: 90vh;
 }
 
-/* 头行 = 共享 .bz-panel-head（标题 + 计数 sub + spacer + 钮组）。
-   桌面端隐藏全部头行图标钮（报告入口在左栏底部；搜索在工具栏常驻；关闭靠遮罩/ESC）；
-   仅移动端 ≤768px 显示报告/搜索/筛选/关闭 */
+/* 头行 = 共享 .bz-panel-head（品牌块 + 标题 + 计数 sub + spacer + 钮组）。
+   桌面端隐藏报告/搜索/筛选钮（报告入口在左栏底部；搜索在工具栏常驻）；
+   设置直达/关闭桌面常显（issue 201 头行对齐待办）；移动端 ≤768px 全部显示 */
 .bz-bs-panel .bz-panel-head-btns [data-bs-tool] { display: none; }
+.bz-bs-panel .bz-panel-head-btns [data-bs-tool="settings"],
+.bz-bs-panel .bz-panel-head-btns [data-bs-tool="close"] { display: inline-flex; }
 /* 移动搜索条（默认隐藏，点头部放大镜展开） */
 .bz-bs-searchbar { display: none; }
 .bz-bs-searchbar.show { display: flex; align-items: center; gap: 6px; padding: 8px 14px 2px; flex-shrink: 0; }

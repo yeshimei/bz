@@ -18,8 +18,8 @@
 /* 头部图标钮桌面隐藏（桌面无右上钮；移动显示） */
 .bz-fav-mob-only { display: none; }
 
-/* 排序钮不参与压缩（高度/字号走 .bz-btn--md） */
-.bz-fav-sort-btn { flex-shrink: 0; }
+/* 排序浮岛容器（uiChoice float）不参与压缩 */
+.bz-fav-sort { flex-shrink: 0; }
 
 /* ---- 移动端隐藏搜索行（桌面恒隐；头部搜索钮仅移动显示） ---- */
 .bz-fav-mobsearch { display: none; padding: 2px var(--bz-space-lg) 6px; flex-shrink: 0; }
@@ -51,14 +51,12 @@
   word-break: break-word;
 }
 .bz-fav-meta { display: flex; align-items: center; gap: 6px; margin-top: 7px; flex-wrap: wrap; }
-/* 徽章变体（标签走组件库 .bz-badge--accent；笔记/时间走域内弱化） */
+/* 徽章变体（标签走组件库 .bz-badge--accent；笔记走域内弱化。域名徽章/置顶文字前缀
+   已随 issue 201 meta 精简退役——置顶视觉走 .bz-fav-card--pinned 左缘品牌条） */
 .bz-fav-note-badge { background: color-mix(in srgb, var(--bz-info) 12%, transparent); color: var(--bz-info); }
 .bz-fav-note-badge .bz-ic { width: 10px; height: 10px; }
 .bz-fav-time-badge { background: var(--bz-surface-1); color: var(--bz-text-3); font-weight: 400; }
 .bz-fav-time-badge .bz-ic { width: 10px; height: 10px; }
-/* 域名徽章（ticket 188：meta 行尾弱化小徽章） */
-.bz-fav-host-badge { background: var(--bz-surface-1); color: var(--bz-text-3); font-weight: 400; }
-.bz-fav-host-badge .bz-ic { width: 10px; height: 10px; }
 /* 余额读数（右侧；档位色） */
 .bz-fav-balance-wrap { flex-shrink: 0; align-self: center; padding-left: 4px; }
 .bz-fav-balance {
@@ -100,17 +98,7 @@
 .bz-fav-form-body .bz-field { margin-bottom: 0; }
 .bz-fav-form-body textarea.bz-input { min-height: 56px; }
 .bz-fav-form-inline { flex-direction: row !important; align-items: center; gap: var(--bz-space-md) !important; }
-/* 置顶开关（胶囊按钮态） */
-.bz-fav-pinbtn {
-  display: inline-flex; align-items: center; gap: 6px;
-  border: 1px solid var(--bz-border-strong); background: var(--bz-surface-2);
-  color: var(--bz-text-1); height: var(--bz-control-h); padding: 0 14px;
-  border-radius: var(--bz-radius-full); font-size: var(--bz-font-label);
-  font-weight: var(--bz-weight-medium); cursor: pointer; font-family: inherit;
-}
-.bz-fav-pinbtn:hover { background: var(--bz-surface-hover); }
-.bz-fav-pinbtn.on { background: var(--bz-brand); border-color: var(--bz-brand); color: var(--bz-on-brand); }
-.bz-fav-pinbtn .bz-ic { width: 13px; height: 13px; }
+/* 置顶开关已退役（issue 201：改组件库 uiBtn chip 档 .bz-btn--chip，同待办「定位到笔记」） */
 /* 标签多选（复用 .bz-choice-btn 胶囊，此处容器换行） */
 .bz-fav-tagpick { display: flex; flex-wrap: wrap; gap: var(--bz-space-sm); }
 /* LLM 配置区（默认隐藏；选中「大模型」展开） */

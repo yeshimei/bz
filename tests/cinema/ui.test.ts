@@ -96,10 +96,16 @@ describe('cinema overlay', () => {
     // 海报网格：4 张卡片（含 1 想看 + 1 在看）
     const cards = overlay.querySelectorAll('[data-cinema-idx]');
     expect(cards.length).toBe(4);
-    // 桌面端关闭按钮隐藏（bz-cinema-mob-only，仅移动端显示）
+    // issue 201 头行对齐待办：品牌块 + ⚙设置直达 + ✕关闭（桌面/移动共用，桌面可见）
+    expect(overlay.querySelector('.bz-panel-head .bz-panel-brand')).toBeTruthy();
+    const settingsBtn = overlay.querySelector('[data-cinema-tool="settings"]');
+    expect(settingsBtn).toBeTruthy();
+    expect(settingsBtn?.classList.contains('bz-cinema-mob-only')).toBe(false);
     const closeBtn = overlay.querySelector('.bz-cinema-close');
     expect(closeBtn).toBeTruthy();
-    expect(closeBtn?.classList.contains('bz-cinema-mob-only')).toBe(true);
+    expect(closeBtn?.classList.contains('bz-cinema-mob-only')).toBe(false);
+    // 移动专属钮（AI 荐片/影视分析）保持 mob-only
+    expect(overlay.querySelector('[data-cinema-tool="ai"]')?.classList.contains('bz-cinema-mob-only')).toBe(true);
   });
 
   it('点遮罩关闭主面板（桌面端无关闭按钮，靠遮罩/ESC）', () => {

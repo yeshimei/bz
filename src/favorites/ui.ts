@@ -1,20 +1,22 @@
 /**
- * 收藏本 UI（ticket 177：P1「标签工作台」落码，对照拍板原型重写）
+ * 收藏本 UI（ticket 177：P1「标签工作台」落码，对照拍板原型重写；issue 201 头行对齐待办 + 精修）
  *
- * 桌面：整宽头行「收藏本」（仅标题，设置收敛设置面板）+ 左标签栏（全部 + 9 类 + 计数）
+ * 桌面：头行 = 品牌块 + 「收藏本」+ ⚙设置直达 + ✕关闭（对齐待办头行范式，桌面/移动共用）
+ *   + 左标签栏（全部/已归档 = lucide 图标行头，9 分类 = emoji 行头，素计数）
  *   + 右内容区——主头行（当前标签 / N 条收藏 / 主按钮「添加收藏」）→ 工具栏
- *   （搜索 + 排序循环钮）→ 单列卡片流。
+ *   （搜索 + 排序浮岛 uiChoice float）→ 单列卡片流。
  *   面板壳/头行/侧栏（uiRail）/主头行/工具行/搜索/横滑条/候选浮层/空态均消费组件库共享
  *   类与工厂（ADR-0094）；域 styles.css 只留域内布局。
- * 移动 ≤768：真全屏；头行右上图标组 ＋添加 → ⇅排序 → 🔍搜索(展开) → ✕关闭；
+ * 移动 ≤768：真全屏；头行右上图标组 ＋添加 → ⇅排序 → 🔍搜索(展开) → ⚙设置 → ✕关闭；
  *   标签 chips 横滑；搜索默认隐藏点 🔍 展开。
- * 交互：桌面点卡片行 = 操作浮层（打开/置顶/跳转笔记/刷新余额/编辑/归档/删除）；
- *   右键 = 同浮层；移动点行 = 底部详情抽屉（动作 + 底部删除）。全 icon lucide。
+ * 交互：桌面点卡片 = 有链接直开浏览器（弹菜单是 issue 201 前的 bug），右键 = 操作浮层
+ *   （打开/置顶/跳转笔记/刷新余额/编辑/归档/删除）；移动点行 = 底部详情抽屉。全 icon lucide。
+ * 卡片 meta：标签 + 关联笔记 + 日期（相对时间默认，设置 favoritesTimeFormat 可切绝对）。
  *
  * 契约保留（与旧域等价）：favorites.json 零迁移；smartcat 事件载荷（add/edit/delete/
  *   archive + favoritesEditChanges）；置顶/归档/删除撤销；余额自动查询与档位色；
- *   设置键 favoritesSortKey/favoritesMobileDefaultFullscreen；⚙️ 设置收敛设置面板
- *   （favoritesSettingsSchema 空态）；file-sync 后台不动（index.ts）。
+ *   设置键 favoritesSortKey/favoritesTimeFormat/favoritesMobileDefaultFullscreen；
+ *   ⚙️ 设置收敛设置面板；file-sync 后台不动（index.ts）。
  */
 import { notice, notify, notifyUndo, notifySaveError } from '../core/notice';
 import { topifyZ } from '../core/z-order';
@@ -24,9 +26,9 @@ import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { mobileFullscreenGroup } from '../core/settings-common';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
-import { escapeHtml } from '../core/utils';
+import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { getApp } from '../core/app';
-import { mountIcons, uiEmpty, uiRail } from '../core/ui';
+import { mountIcons, uiBtn, uiChoice, uiEmpty, uiRail } from '../core/ui';
 import type { BzRailItem } from '../core/ui';
 import { emitDomainEvent } from '../core/domain-bus';
 import { favoritesEditChanges } from '../smartcat/favorites-source';
@@ -45,6 +47,8 @@ const MOB_SHOW = 'bz-fav-mobsearch-show';
 
 /** lucide 图标名 */
 const ICON = {
+  brand: 'star',
+  settings: 'settings',
   all: 'layout-grid',
   archived: 'archive',
   unarchive: 'archive-restore',
@@ -62,7 +66,6 @@ const ICON = {
   del: 'trash-2',
   empty: 'star',
   balance: 'wallet',
-  globe: 'globe',
 };
 
 /** 域级模块状态（模块单例；卸载/测试重置） */
@@ -75,7 +78,11 @@ interface FavState {
   archived: boolean;
   q: string;
   sort: SortMode;
+  /** 日期显示：relative（默认）/ absolute（issue 201，设置 favoritesTimeFormat，打开时读） */
+  timeFmt: 'relative' | 'absolute';
   renderFn: (() => void) | null;
+  /** 排序浮岛 resize 监听 detach（面板关闭时摘除，同待办 sortChoiceDetach） */
+  sortDetach: (() => void) | null;
 }
 
 const M: FavState = {
@@ -85,7 +92,9 @@ const M: FavState = {
   archived: false,
   q: '',
   sort: 'created',
+  timeFmt: 'relative',
   renderFn: null,
+  sortDetach: null,
 };
 
 export function resetFavoritesState(): void {
@@ -95,7 +104,9 @@ export function resetFavoritesState(): void {
   M.archived = false;
   M.q = '';
   M.sort = 'created';
+  M.timeFmt = 'relative';
   M.renderFn = null;
+  M.sortDetach = null;
 }
 
 // ==================== 设置 schema（⚙️ 已收敛设置面板） ====================
@@ -116,6 +127,16 @@ export function favoritesSettingsSchema(): SettingsSchema {
             options: [
               { value: 'created', label: '最新收藏' },
               { value: 'title', label: '标题排序' },
+            ],
+          },
+          {
+            type: 'select',
+            name: '日期显示',
+            desc: '卡片底部日期用相对时间如 3 天前，或绝对时间',
+            binding: { key: 'favoritesTimeFormat' },
+            options: [
+              { value: 'relative', label: '相对时间' },
+              { value: 'absolute', label: '绝对时间' },
             ],
           },
         ],
@@ -147,6 +168,11 @@ function localNow(): string {
 function readSortKey(): SortMode {
   const v = (tryGetSettings() as any)?.favoritesSortKey;
   return v === 'title' ? 'title' : 'created';
+}
+
+/** 日期显示读（favoritesTimeFormat 设置；非法回退 relative） */
+function readTimeFmt(): 'relative' | 'absolute' {
+  return (tryGetSettings() as any)?.favoritesTimeFormat === 'absolute' ? 'absolute' : 'relative';
 }
 
 // ==================== 派生 ====================
@@ -264,13 +290,15 @@ async function refreshBalances(dm: DataManager): Promise<void> {
 function panelHtml(): string {
   return `<div class="bz-fav-panel bz-panel-frame bz-panel-mtop">
   <div class="bz-panel-head">
+    <div class="bz-panel-brand">${iconSpan(ICON.brand, 'bz-ic--sm')}</div>
     <div class="bz-panel-title">收藏本</div>
     <div class="bz-panel-head-sp"></div>
     <div class="bz-panel-head-btns">
       <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-fav-mob-only" data-fav-add title="添加收藏">${iconSpan(ICON.add)}</button>
-      <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-fav-mob-only" data-fav-sort title="排序">${iconSpan(ICON.sort)}</button>
+      <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-fav-mob-only" data-fav-mobsort title="排序">${iconSpan(ICON.sort)}</button>
       <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-fav-mob-only" data-fav-mobsearch title="搜索">${iconSpan(ICON.search)}</button>
-      <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-fav-mob-only" data-fav-close title="关闭">${iconSpan(ICON.close)}</button>
+      <button class="bz-icon-btn" data-fav-settings title="打开收藏本设置">${iconSpan(ICON.settings)}</button>
+      <button class="bz-icon-btn" data-fav-close title="关闭">${iconSpan(ICON.close)}</button>
     </div>
   </div>
   <div class="bz-fav-body">
@@ -284,7 +312,7 @@ function panelHtml(): string {
       </div>
       <div class="bz-toolrow">
         <div class="bz-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-fav-search placeholder="搜索标题 / 简介 / 链接 / 标签…"></div>
-        <button class="bz-btn bz-btn--md bz-fav-sort-btn" data-fav-sort>${iconSpan(ICON.sort, 'bz-ic--sm')} <span data-fav-sort-label>最新收藏</span></button>
+        <div class="bz-fav-sort" data-fav-sort></div>
       </div>
       <div class="bz-mobstrip" data-fav-mobtags></div>
       <div class="bz-fav-mobsearch" data-fav-mobsearch-row>
@@ -317,6 +345,7 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
     return;
   }
   M.sort = readSortKey();
+  M.timeFmt = readTimeFmt();
   const overlay = document.createElement('div');
   overlay.className = 'bz-panel-overlay';
   overlay.innerHTML = panelHtml();
@@ -324,15 +353,29 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
   topifyZ(overlay); // ADR-0067：显示即发号（原静态 z-index:100000 已删）
   M.overlay = overlay;
   M.renderFn = () => renderAll();
-  // 排序钮 label 与持久化排序键同步（收藏本按钮文案跟随当前模式）
-  const sortLabel = overlay.querySelector('[data-fav-sort-label]') as HTMLElement | null;
-  if (sortLabel) sortLabel.textContent = M.sort === 'title' ? '标题排序' : '最新收藏';
 
   applyMobileWindowFullscreen(
     overlay.querySelector('.bz-fav-panel') as HTMLElement,
     (tryGetSettings() as any)?.favoritesMobileDefaultFullscreen === true
   );
   mountIcons(overlay);
+
+  // 排序浮岛（issue 201：uiChoice float，同待办排序；桌面工具行，移动不显示走头行循环钮）
+  const sortEl = overlay.querySelector('[data-fav-sort]') as HTMLElement | null;
+  if (sortEl) {
+    const sortChoice = uiChoice<string>({
+      options: [
+        { value: 'created', label: '最新收藏' },
+        { value: 'title', label: '标题排序' },
+      ],
+      value: M.sort,
+      float: true,
+      label: '排序方式',
+      onChange: (v) => setSort(v as SortMode),
+    });
+    sortEl.appendChild(sortChoice.el);
+    M.sortDetach = sortChoice.detach;
+  }
 
   // ESC（主面板 + 表单）
   if (!mainEscRegistered) {
@@ -352,7 +395,8 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
     const t = e.target as HTMLElement;
     if (e.target === overlay) { closePanel(); return; }
     if (t.closest('[data-fav-add]')) { openForm(null); return; }
-    if (t.closest('[data-fav-sort]')) { cycleSort(); return; }
+    if (t.closest('[data-fav-mobsort]')) { setSort(M.sort === 'created' ? 'title' : 'created'); return; }
+    if (t.closest('[data-fav-settings]')) { openFavoritesInSettings(); return; }
     if (t.closest('[data-fav-close]')) { closePanel(); return; }
     if (t.closest('[data-fav-mobsearch]')) { toggleMobSearch(overlay); return; }
   });
@@ -379,7 +423,7 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
   bindSearch(overlay.querySelector('[data-fav-search]') as HTMLInputElement);
   bindSearch(overlay.querySelector('[data-fav-mobsearch-inp]') as HTMLInputElement);
 
-  // 内容区：卡片点击（移动抽屉 / 桌面浮层）+ 右键
+  // 内容区：卡片点击（移动抽屉 / 桌面有链直开）+ 右键
   const content = overlay.querySelector('[data-fav-content]') as HTMLElement;
   content.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
@@ -388,8 +432,11 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
     e.stopPropagation();
     const it = itemById(card.dataset.favId as string);
     if (!it) return;
-    if (isMobileEnv()) openMobSheet(it);
-    else openRowMenu(card, it);
+    if (isMobileEnv()) { openMobSheet(it); return; }
+    // 桌面：点击不再弹操作菜单（issue 201 bug 修复，菜单只走右键）——
+    // 有链接的收藏直开浏览器（卡片本有 pointer 语义），无链接不动作
+    const rawUrl = (it.url || '').trim();
+    if (rawUrl) openExternal(normalizeUrl(rawUrl));
   });
   content.addEventListener('contextmenu', (e) => {
     const card = (e.target as HTMLElement).closest('[data-fav-id]') as HTMLElement | null;
@@ -411,7 +458,20 @@ export function closePanel(): void {
     M.overlay.remove();
     M.overlay = null;
   }
+  // 摘排序浮岛的 resize 监听（防孤儿监听，同待办）
+  if (M.sortDetach) {
+    M.sortDetach();
+    M.sortDetach = null;
+  }
   M.renderFn = null;
+}
+
+/** 设置直达：关面板 → 设置面板定位收藏本域（头行 ⚙；动态 import 防顶层环引用，ADR-0002） */
+function openFavoritesInSettings(): void {
+  const app = appOf();
+  closePanel();
+  if (!app) return;
+  void import('../settings-panel').then((m) => m.openSettingsPanel(app, 'favorites'));
 }
 
 export function unloadFavoritesUI(): void {
@@ -457,12 +517,12 @@ function applyTagFilter(label: string): void {
 
 function renderTags(): void {
   const overlay = M.overlay!;
-  // 左栏 = 组件库 uiRail（.bz-rail）：前缀 lucide 图标，emoji 数据随名称渲染；
-  // 计数走胶囊档（.bz-rail-count--pill）
+  // 左栏 = 组件库 uiRail（.bz-rail）：全部/已归档 = lucide 图标行头（保持原状），
+  // 9 分类 = emoji 行头 + 名字直显（issue 201 对齐待办三槽）；计数素文本档（无胶囊底）
   const items: BzRailItem[] = [
-    { id: '__all', name: '全部', icon: ICON.all, count: visible().length, pill: true },
-    { id: '__archived', name: '已归档', icon: ICON.archived, count: archivedItems().length, pill: true },
-    ...TAGS.map((t) => ({ id: t.label, name: `${t.emoji} ${t.label}`, icon: 'tag', count: tagCount(t.label), pill: true })),
+    { id: '__all', name: '全部', icon: ICON.all, count: visible().length },
+    { id: '__archived', name: '已归档', icon: ICON.archived, count: archivedItems().length },
+    ...TAGS.map((t) => ({ id: t.label, name: t.label, emoji: t.emoji, count: tagCount(t.label) })),
   ];
   const rail = uiRail({
     groups: [{ label: '标签', items }],
@@ -535,10 +595,9 @@ function cardHtml(it: FavoritesItem): string {
   const noteBadge = note
     ? `<span class="bz-badge bz-fav-note-badge">${iconSpan(ICON.note, 'bz-ic--xs')} ${esc(note.split('/').pop()!.replace(/\.md$/i, ''))}</span>`
     : '';
-  const pinMark = it.pinned ? `${iconSpan(ICON.pin, 'bz-ic--xs')} 置顶 · ` : '';
-  const timeBadge = `<span class="bz-badge bz-fav-time-badge">${pinMark}${esc(it.created || '')}</span>`;
-  // 弱化域名徽章（ticket 188：meta 行尾；解析失败不出徽章）
-  const hostBadge = host ? `<span class="bz-badge bz-fav-host-badge">${iconSpan(ICON.globe, 'bz-ic--xs')} ${esc(host)}</span>` : '';
+  // 日期（issue 201：相对时间默认，设置 favoritesTimeFormat=absolute 回绝对；置顶视觉走卡片左缘品牌条，不再文字前缀）
+  const timeText = M.timeFmt === 'absolute' ? (it.created || '') : formatRelativeTime(it.created || '');
+  const timeBadge = `<span class="bz-badge bz-fav-time-badge">${esc(timeText)}</span>`;
   const balHtml = it.balance
     ? `<div class="bz-fav-balance-wrap"><span class="bz-fav-balance${balanceToneClass(it.balance)}">${esc(it.balance)}</span></div>`
     : it.balanceError
@@ -548,24 +607,20 @@ function cardHtml(it: FavoritesItem): string {
     <div class="bz-fav-card-main">
       <div class="bz-fav-title-row"><span class="bz-fav-title" title="${esc(host || it.title)}">${esc(it.title || '无标题')}</span></div>
       ${desc ? `<div class="bz-fav-desc">${esc(desc)}</div>` : ''}
-      <div class="bz-fav-meta">${tagBadges}${noteBadge}${timeBadge}${hostBadge}</div>
+      <div class="bz-fav-meta">${tagBadges}${noteBadge}${timeBadge}</div>
     </div>${balHtml}
   </div>`;
 }
 
-// ==================== 排序循环 / 移动搜索切换 ====================
+// ==================== 排序 / 移动搜索切换 ====================
 
-function cycleSort(): void {
-  M.sort = M.sort === 'created' ? 'title' : 'created';
+/** 排序切换（工具行浮岛 onChange / 移动头行循环钮共用）：写 favoritesSortKey 落盘 + 重渲 */
+function setSort(mode: SortMode): void {
+  M.sort = mode;
   const s = getSettings() as any;
   if (s) {
-    s.favoritesSortKey = M.sort;
+    s.favoritesSortKey = mode;
     void saveSettings().catch(() => { /* 设置未注入（测试）静默 */ });
-  }
-  const overlay = M.overlay;
-  if (overlay) {
-    const lbl = overlay.querySelector('[data-fav-sort-label]') as HTMLElement | null;
-    if (lbl) lbl.textContent = M.sort === 'created' ? '最新收藏' : '标题排序';
   }
   renderCount();
   renderContent();
@@ -740,11 +795,7 @@ function buildActions(it: FavoritesItem, rebuild: () => void): ItemAction[] {
   return acts;
 }
 
-/** 桌面：点行 → 浮层（锚定卡片右下，右键坐标优先） */
-function openRowMenu(row: HTMLElement, it: FavoritesItem): void {
-  const r = row.getBoundingClientRect();
-  openRowMenuAt(row, it, r.right, r.top);
-}
+/** 桌面：右键 → 浮层（锚定卡片，右键坐标） */
 function openRowMenuAt(row: HTMLElement, it: FavoritesItem, x: number, y: number): void {
   const rebuild = () => {
     const it2 = itemById(it.id);
@@ -878,7 +929,7 @@ function formTagsNow(popup: HTMLElement): string {
     .join('|');
 }
 function formPinNow(popup: HTMLElement): boolean {
-  return !!(popup.querySelector('#fz-pin') as HTMLElement | null)?.classList.contains('on');
+  return !!(popup.querySelector('#fz-pin') as HTMLElement | null)?.classList.contains('is-on');
 }
 
 function formDirty(): boolean {
@@ -980,7 +1031,7 @@ export function openForm(item: FavoritesItem | null): void {
       <div class="bz-field"><span class="bz-field-label">链接</span><input class="bz-input" id="fz-url" value="${it ? esc(it.url) : ''}" placeholder="https://…"></div>
       <div class="bz-field"><span class="bz-field-label">简介</span><textarea class="bz-input" id="fz-desc" placeholder="一句话记住它…">${it ? esc(it.description) : ''}</textarea></div>
       <div class="bz-field"><span class="bz-field-label">标签（可多选）</span><span class="bz-fav-tagpick" id="fz-tags"></span></div>
-      <div class="bz-field bz-fav-form-inline"><button type="button" class="bz-fav-pinbtn${it?.pinned ? ' on' : ''}" id="fz-pin">${iconSpan(ICON.pin, 'bz-ic--sm')}<span>${it?.pinned ? '已置顶' : '置顶'}</span></button><span class="bz-field-desc">置顶后恒排最前</span></div>
+      <div class="bz-field bz-fav-form-inline"><span id="fz-pin-slot"></span><span class="bz-field-desc">置顶后恒排最前</span></div>
       <div class="bz-field"><span class="bz-field-label">关联笔记（可选）</span><input class="bz-input" id="fz-note" value="${it ? esc(it.linkedNote || '') : ''}" placeholder="如：我的/AI 工具库.md"></div>
       <div class="bz-fav-llm" id="fz-llm">
         <div class="bz-fav-llm-title">${iconSpan(ICON.balance, 'bz-ic--sm')}大模型配置</div>
@@ -992,7 +1043,7 @@ sk-key3">${it?.llmConfig?.apiKeys ? esc(it.llmConfig.apiKeys) : ''}</textarea></
       </div>
       <div class="bz-fav-form-err" id="fz-err"></div>
       <div class="bz-btn-row bz-fav-form-actions">
-        <button type="button" class="bz-btn bz-btn--ghost" data-fz-ai>${iconSpan('sparkles', 'bz-ic--sm')} AI 整理</button>
+        <span data-fz-ai-slot></span>
         <div class="bz-fav-form-spacer"></div>
         <button type="button" class="bz-btn bz-btn--ghost" data-fz-cancel>取消</button>
         <button type="button" class="bz-btn bz-btn--primary" id="fz-save">${editing ? '更新' : '保存'}</button>
@@ -1057,15 +1108,24 @@ sk-key3">${it?.llmConfig?.apiKeys ? esc(it.llmConfig.apiKeys) : ''}</textarea></
   drawPick();
   syncLlm();
 
-  // 置顶开关
+  // 置顶开关（issue 201：组件库 chip 档，同待办「定位到笔记」按钮。旧 .bz-fav-pinbtn 退役——
+  // mountIcons 把 <i data-lucide> 换成 span 后 querySelector('span') 命中图标位，文字双写重叠）
   let pin = !!(it?.pinned);
-  const pinBtn = popup.querySelector('#fz-pin') as HTMLElement;
+  const pinBtn = uiBtn({ icon: ICON.pin, label: pin ? '已置顶' : '置顶', chip: true, on: pin });
+  pinBtn.id = 'fz-pin';
+  const pinLabel = pinBtn.lastElementChild as HTMLElement;
   const syncPin = () => {
-    pinBtn.classList.toggle('on', pin);
-    (pinBtn.querySelector('span') as HTMLElement).textContent = pin ? '已置顶' : '置顶';
+    pinBtn.classList.toggle('is-on', pin);
+    pinLabel.textContent = pin ? '已置顶' : '置顶';
   };
   pinBtn.addEventListener('click', () => { pin = !pin; syncPin(); });
+  (popup.querySelector('#fz-pin-slot') as HTMLElement).replaceWith(pinBtn);
   syncPin();
+
+  // AI 整理（issue 201：同 chip 档；文字更新持 label 元素引用，不整钮重写保图标）
+  const aiBtn = uiBtn({ icon: 'sparkles', label: 'AI 整理', chip: true });
+  aiBtn.dataset.fzAi = '';
+  (popup.querySelector('[data-fz-ai-slot]') as HTMLElement).replaceWith(aiBtn);
 
   const errEl = popup.querySelector('#fz-err') as HTMLElement;
 
@@ -1105,9 +1165,9 @@ async function runAiFill(
     return;
   }
   const btn = popup.querySelector('[data-fz-ai]') as HTMLButtonElement;
+  const aiLabel = btn.lastElementChild as HTMLElement;
   btn.disabled = true;
-  const origin = btn.innerHTML;
-  btn.textContent = 'AI 整理中…';
+  aiLabel.textContent = 'AI 整理中…';
   const handle = notify('AI 分析中…', { type: 'progress' });
   try {
     let ghInfo: { title: string; description: string; fetched: boolean } | null = null;
@@ -1149,7 +1209,7 @@ async function runAiFill(
     handle.setMessage(`AI 整理失败：${e?.message || '未知错误'}`);
   } finally {
     btn.disabled = false;
-    btn.innerHTML = origin;
+    aiLabel.textContent = 'AI 整理';
     errEl.textContent = '';
   }
 }

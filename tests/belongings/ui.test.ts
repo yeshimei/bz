@@ -150,6 +150,11 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     await openPanel();
     expect(panelOf()).not.toBeNull();
     expect(panelOf()!.querySelector('.bz-panel-title')!.textContent).toBe('归物本');
+    // issue 201 头行对齐待办：品牌块 + ⚙设置直达 + ✕关闭（桌面/移动共用）
+    expect(panelOf()!.querySelector('.bz-panel-head .bz-panel-brand')).not.toBeNull();
+    expect(panelOf()!.querySelector('[data-bel-settings]')).not.toBeNull();
+    expect(panelOf()!.querySelector('[data-bel-close]')).not.toBeNull();
+    expect(panelOf()!.querySelector('[data-bel-close]')!.classList.contains('bz-bel-mob-only')).toBe(false);
     // 骨架：左状态栏 / 移动 chips / 移动搜索行 / 统计 / 计数 / 年份下拉
     expect(panel()!.querySelector('[data-bel-status]')).not.toBeNull();
     expect(panel()!.querySelector('[data-bel-mobstatus]')).not.toBeNull();

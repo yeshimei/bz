@@ -57,6 +57,8 @@ const MOB_SHOW = 'bz-bel-mobsearch-show';
 const THEME_CLASSES = new Set(['theme-dark', 'theme-light']);
 
 const ICON = {
+  brand: 'package',
+  settings: 'settings',
   all: 'layout-grid',
   add: 'plus',
   search: 'search',
@@ -252,12 +254,14 @@ function itemById(id: string): BelongingsItem | undefined {
 function panelHtml(): string {
   return `<div class="bz-bel-panel bz-panel-frame bz-panel-mtop">
   <div class="bz-panel-head">
+    <div class="bz-panel-brand">${iconSpan(ICON.brand, 'bz-ic--sm')}</div>
     <div class="bz-panel-title">归物本</div>
     <div class="bz-panel-head-sp"></div>
     <div class="bz-panel-head-btns">
       <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-add title="记一笔">${iconSpan(ICON.add)}</button>
       <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-mobsearch title="搜索">${iconSpan(ICON.search)}</button>
-      <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON.close)}</button>
+      <button class="bz-icon-btn" data-bel-settings title="打开归物本设置">${iconSpan(ICON.settings)}</button>
+      <button class="bz-icon-btn" data-bel-close title="关闭">${iconSpan(ICON.close)}</button>
     </div>
   </div>
   <div class="bz-bel-body">
@@ -357,6 +361,12 @@ async function openPanelInner(): Promise<void> {
     const t = e.target as HTMLElement;
     if (e.target === overlay) { closePanel(); return; }
     if (t.closest('[data-bel-add]')) { void openForm(null); return; }
+    if (t.closest('[data-bel-settings]')) {
+      // 设置直达（issue 201 头行对齐待办）：关面板 → 设置面板定位归物本域（动态 import 防环引用）
+      closePanel();
+      void import('../settings-panel').then((m) => m.openSettingsPanel(getApp(), 'belongings'));
+      return;
+    }
     if (t.closest('[data-bel-close]')) { closePanel(); return; }
     if (t.closest('[data-bel-mobsearch]')) { toggleMobSearch(overlay); return; }
     // 统计卡可点（ticket 189）：总资产=在用+闲置合成筛选（再点取消）；在册件数=清筛选回全部

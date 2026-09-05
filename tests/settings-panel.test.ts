@@ -77,7 +77,8 @@ describe('设置面板（settings-panel）', () => {
     expect(popup.querySelector('.bz-sp-logo')).toBeNull();
     // 无设置项的域不在左侧列表显示（用户拍板）；issue 186 AI 自全局拆出独立成域（通用 + AI 两项）
     // 旧书库（library）域退役：设置组删除后可见域 16 → 15；issue 194 小橘陪伴猫转可见 → 15
-    expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(15);
+    // issue 201 补回忆墙域（schemaLoader）→ 加载前列表 16（加载后桌面端零可见项被剔除回 15）
+    expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(16);
     // 无底部快捷键提示 / 无右侧导航条 / 无面包屑
     expect(popup.querySelector('.bz-sp-foot')).toBeNull();
     expect(popup.querySelector('.bz-sp-crumb')).toBeNull();
@@ -479,13 +480,21 @@ describe('设置面板（settings-panel）', () => {
     ui.cleanup();
   });
 
-  it('桌面端：无设置项的域不在左侧列表显示（含搜索）', () => {
+  it('桌面端：无设置项的域不在左侧列表显示（含搜索）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
+    // 等 schema 预载（issue 201 回忆墙域加载后桌面零可见项被剔除），轮询至徽标回填完成
+    const deadline0 = Date.now() + 3000;
+    let names: (string | null)[];
+    for (;;) {
+      names = [...popup.querySelectorAll('.bz-sp-nav-name')].map((b) => b.textContent);
+      const badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
+      if (Date.now() > deadline0 || (names.length === 15 && !badges.includes('·'))) break;
+      await new Promise((r) => setTimeout(r, 30));
+    }
     // 只看域名（nav-name），避免描述包含（如剪藏本「网页剪藏与聚合讯」）误判
-    const names = [...popup.querySelectorAll('.bz-sp-nav-name')].map((b) => b.textContent);
-    expect(names).toHaveLength(15); // issue 186 拆 AI 独立域后 16；旧书库域退役 15；memo 域退役 14；issue 194 小橘转可见 15
+    expect(names).toHaveLength(15); // issue 186 拆 AI 独立域后 16；旧书库域退役 15；memo 域退役 14；issue 194 小橘转可见 15；issue 201 回忆墙桌面零项剔除
     expect(names.slice(0, 2)).toEqual(['通用', 'AI']); // AI 紧随通用之后
     // 无设置域（聚合讯/阅读报告/自动摘要/附件搬移）一律不出现；小橘陪伴猫有 schema（issue 194 转可见）
     for (const n of ['聚合讯', '阅读报告', '做题家', '自动摘要', '附件搬移']) {
@@ -507,17 +516,26 @@ describe('设置面板（settings-panel）', () => {
     ui.cleanup();
   });
 
-  it('移动端：无设置项的域不在列表显示（含搜索）', () => {
+  it('移动端：无设置项的域不在列表显示（含搜索）', async () => {
     mobileFlag = true;
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
+    // 等 schema 预载（issue 201 回忆墙域移动端 1 项可见），轮询至徽标回填完成
+    const deadline0 = Date.now() + 3000;
+    let names: (string | null)[];
+    for (;;) {
+      names = [...popup.querySelectorAll('.bz-sp-mob-name')].map((b) => b.textContent);
+      const badges = [...popup.querySelectorAll('.bz-sp-mob-item .bz-sp-mob-count, .bz-sp-mob-item .bz-sp-nav-count')].map((b) => b.textContent);
+      if (Date.now() > deadline0 || (names.length === 16 && !badges.includes('·'))) break;
+      await new Promise((r) => setTimeout(r, 30));
+    }
     // 只看域名（mob-name），避免描述包含误判
-    const names = [...popup.querySelectorAll('.bz-sp-mob-name')].map((b) => b.textContent);
-    expect(names).toHaveLength(15); // issue 186 拆 AI 独立域后 16；旧书库域退役 15；memo 域退役 14；issue 194 小橘转可见 15
+    expect(names).toHaveLength(16); // issue 186 拆 AI 独立域后 16；旧书库域退役 15；memo 域退役 14；issue 194 小橘转可见 15；issue 201 补回忆墙域 → 16
     expect(names.slice(0, 2)).toEqual(['通用', 'AI']);
     expect(names).not.toContain('聚合讯');
     expect(names).toContain('小橘陪伴猫'); // 有 schema，issue 194 转可见
+    expect(names).toContain('回忆墙'); // issue 201 补域（移动端有「移动端默认全屏」1 项）
     expect(names).not.toContain('书库'); // 旧书库域退役：设置组已删
     // 搜索也搜不到该无设置域
     const search = popup.querySelector('.bz-sp-mob-search .bz-input') as HTMLInputElement;
@@ -566,7 +584,8 @@ describe('设置面板（settings-panel）', () => {
     expect(closeBtn.querySelector('.bz-ic[data-icon="x"]')).toBeTruthy();
     expect(popup.textContent).not.toMatch(EMOJI_RE);
     // 无设置项的域不在列表显示（用户拍板）；issue 194 小橘陪伴猫转可见 → 15
-    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(15);
+    // issue 201 补回忆墙域 → 加载前列表 16（移动端加载后仍 16：有「移动端默认全屏」1 项）
+    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(16);
     // 移动列表图标为 lucide（tile 内 svg 容器）
     const firstIc = popup.querySelector('.bz-sp-mob-item .bz-sp-mob-ic .bz-ic');
     expect(firstIc).toBeTruthy();

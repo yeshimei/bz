@@ -54,6 +54,9 @@ describe('clipbook UI 桌面三栏', () => {
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(overlay).toBeTruthy();
     expect(overlay.querySelector('.bz-clip-desk')).toBeTruthy();
+    // issue 201 头行对齐待办：桌面头行 ⚙设置直达 + ✕关闭（品牌块原有）
+    expect(overlay.querySelector('[data-clip-settings]')).toBeTruthy();
+    expect(overlay.querySelector('[data-clip-desk-close]')).toBeTruthy();
     expect(overlay.querySelector('.bz-rail-scroll')).toBeTruthy();
     expect(overlay.querySelector('.bz-clip-list')).toBeTruthy();
     expect(overlay.querySelector('[data-clip-reader]')).toBeTruthy();

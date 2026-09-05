@@ -40,6 +40,8 @@ import { watchPosterFetch } from './poster-watch';
 
 /** lucide 图标名常量（均为 Obsidian setIcon 已注册名） */
 const ICON = {
+  brand: 'clapperboard',
+  settings: 'settings',
   ai: 'bot',
   stat: 'bar-chart-3',
   close: 'x',
@@ -858,12 +860,14 @@ export function createOverlay(app: App): void {
   overlay.innerHTML = `
     <div class="bz-panel-frame bz-cinema-panel bz-panel-mtop">
       <div class="bz-panel-head">
+        <div class="bz-panel-brand">${iconSpan(ICON.brand, 'bz-ic--sm')}</div>
         <div class="bz-panel-title">影视</div>
         <span class="bz-panel-head-sp"></span>
         <div class="bz-panel-head-btns">
           ${iconBtnHTML(ICON.ai, 'AI 荐片', 'bz-cinema-mob-only', 'ai')}
           ${iconBtnHTML(ICON.stat, '影视分析', 'bz-cinema-mob-only', 'stat')}
-          ${iconBtnHTML(ICON.close, '关闭', 'bz-cinema-mob-only bz-cinema-close', 'close')}
+          ${iconBtnHTML(ICON.settings, '打开影院设置', 'bz-cinema-settings', 'settings')}
+          ${iconBtnHTML(ICON.close, '关闭', 'bz-cinema-close', 'close')}
         </div>
       </div>
       <div class="bz-cinema-body">
@@ -975,6 +979,10 @@ export function createOverlay(app: App): void {
         renderAll(app);
       } else if (tool.dataset.cinemaTool === 'close') {
         closeOverlay();
+      } else if (tool.dataset.cinemaTool === 'settings') {
+        // 设置直达（issue 201 头行对齐待办）：关面板 → 设置面板定位影院域（动态 import 防环引用）
+        closeOverlay();
+        void import('../settings-panel').then((m) => m.openSettingsPanel(app, 'cinema'));
       }
       return;
     }

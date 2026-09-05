@@ -94,6 +94,10 @@ describe('bookshelf overlay', () => {
     expect(overlay).toBeTruthy();
     expect(overlay.querySelector('.bz-panel-title')?.textContent).toContain('书架墙');
     expect(overlay.querySelector('.bz-panel-head-sub')?.textContent).toBe('3 本');
+    // issue 201 头行对齐待办：品牌块 + ⚙设置直达钮（关闭钮原有）
+    expect(overlay.querySelector('.bz-panel-head .bz-panel-brand')).toBeTruthy();
+    expect(overlay.querySelector('[data-bs-tool="settings"]')).toBeTruthy();
+    expect(overlay.querySelector('.bz-panel-head-btns [data-bs-tool="close"]')).toBeTruthy();
     // 统计卡：正在读 1 / 今年读完 1
     expect(overlay.textContent).toContain('正在读');
     expect(overlay.querySelector('.bz-stat-num')?.textContent).toBe('1 本');

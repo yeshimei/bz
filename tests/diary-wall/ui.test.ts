@@ -309,19 +309,21 @@ describe('回忆墙 UI', () => {
   });
 
   // ===== v2 新功能 =====
-  it('头部按钮序：编辑、搜索、按年月跳转（增强 #10）、关闭；图标 lucide 化（增强 #4）；无设置按钮', async () => {
+  it('头部按钮序：编辑、搜索、按年月跳转（增强 #10）、设置（issue 201）、关闭；图标 lucide 化（增强 #4）', async () => {
     await openAndWait();
     const btns = Array.from(document.querySelectorAll('.bz-diary-wall-desk .bz-diary-wall-btns [data-act]')).map(
       (b) => (b as HTMLElement).dataset.act
     );
-    // 编辑 → 搜索 → 年月跳转 → 关闭（无 settings）
-    expect(btns).toEqual(['add', 'search', 'date-picker', 'close']);
-    expect(document.querySelector('[data-act="settings"]')).toBeNull();
-    // 头行图标：pen-line / search / calendar / x（uiIcon 经 setIcon 渲染，mock 记录到 dataset.icon）
+    // 编辑 → 搜索 → 年月跳转 → 设置 → 关闭（issue 201 头行对齐待办：+⚙设置直达）
+    expect(btns).toEqual(['add', 'search', 'date-picker', 'settings', 'close']);
+    // 头行图标：pen-line / search / calendar / settings / x（uiIcon 经 setIcon 渲染，mock 记录到 dataset.icon）
     const icons = Array.from(
       document.querySelectorAll<HTMLElement>('.bz-diary-wall-desk .bz-diary-wall-btns [data-act] .bz-ic')
     ).map((i) => i.dataset.icon);
-    expect(icons).toEqual(['pen-line', 'search', 'calendar', 'x']);
+    expect(icons).toEqual(['pen-line', 'search', 'calendar', 'settings', 'x']);
+    // 关闭钮对齐待办：不挂 bz-win-close（core 规则非真全屏隐藏之）→ 桌面常显
+    const closeBtn = document.querySelector('.bz-diary-wall-desk [data-act="close"]') as HTMLElement;
+    expect(closeBtn.classList.contains('bz-win-close')).toBe(false);
   });
 
   it('加密 chip 常驻显示（即使无加密条目），锁定态点击 → 弹解锁面板，解锁后选中「加密」', async () => {

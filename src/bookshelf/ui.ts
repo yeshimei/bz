@@ -782,6 +782,7 @@ export function createOverlay(app: App): void {
   overlay.innerHTML = `
     <div class="bz-panel-frame bz-bs-panel bz-panel-mtop">
       <div class="bz-panel-head">
+        <div class="bz-panel-brand">${iconSpan(ICON.bookOpen, 'bz-ic--sm')}</div>
         <div class="bz-panel-title">书架墙<span class="bz-panel-head-sub"></span></div>
         <span class="bz-panel-head-sp"></span>
         <div class="bz-panel-head-btns">
@@ -789,6 +790,7 @@ export function createOverlay(app: App): void {
           ${iconBtnHTML(ICON.sort, '排序', 'sort')}
           ${iconBtnHTML(ICON.search, '搜索', 'search')}
           <button class="bz-icon-btn bz-bs-filterbtn" id="bz-bs-filterbtn" data-bs-tool="filter" title="筛选"></button>
+          ${iconBtnHTML(ICON.settings, '打开书架墙设置', 'settings')}
           ${iconBtnHTML(ICON.close, '关闭', 'close')}
         </div>
       </div>
@@ -890,6 +892,12 @@ export function createOverlay(app: App): void {
       if (kind === 'sort') { openFilterDrawer(app); return; }
       if (kind === 'filter') { openFilterDrawer(app); return; }
       if (kind === 'close') { closeOverlay(); return; }
+      if (kind === 'settings') {
+        // 设置直达（issue 201 头行对齐待办）：关面板 → 设置面板定位书架墙域（动态 import 防环引用）
+        closeOverlay();
+        void import('../settings-panel').then((m) => m.openSettingsPanel(app, 'bookshelf'));
+        return;
+      }
       return;
     }
     // 统计行：在读 accent 卡整卡一键回书（直达原文）
