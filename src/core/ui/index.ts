@@ -16,7 +16,7 @@ export type {
   BzInputOpts, BzFieldOpts, BzEmptyOpts, BzSegOpts, BzRangeOpts, BzChoiceOpts,
   BzSwitchOpts, BzSelectOpts,
   BzSearchOpts, BzMainHeadOpts, BzRailItem, BzRailOpts,
-  BzMobStripOpts, BzStatOpts, BzProgressOpts, BzPopoverOpts,
+  BzMobStripOpts, BzStatOpts, BzProgressOpts, BzPopoverOpts, BzSuggestOpts,
 } from './types';
 
 // 组件工厂（每组件一文件）
@@ -38,6 +38,7 @@ export { uiMobStrip } from './mobstrip';
 export { uiStat } from './stat';
 export { uiProgress } from './progress';
 export { uiPopover } from './popover';
+export { uiSuggest } from './suggest';
 export { openLightbox, closeLightbox } from './lightbox';
 export type { BzLightboxOpts } from './lightbox';
 export { uiModal } from './modal';

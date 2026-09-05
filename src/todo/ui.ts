@@ -33,7 +33,7 @@ import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { uiModal, uiIcon, uiChoice, uiBtn, uiBtnRow, uiResizable, uiEmpty, mountIcons } from '../core/ui';
+import { uiModal, uiIcon, uiChoice, uiBtn, uiBtnRow, uiResizable, uiEmpty, mountIcons, uiSuggest } from '../core/ui';
 import { openFlowDialog } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
@@ -1203,58 +1203,11 @@ export function openEditor(item: TodoItem | null): void {
   const knownScripts = [...new Set(M.items.map((i) => i.scriptName).filter((n): n is string => !!n))].sort();
   const knownCourses = [...new Set(M.items.map((i) => i.courseName).filter((n): n is string => !!n))].sort();
   /**
-   * 联想候选下拉（issue 201：改收藏本「关联笔记」同款 .bz-popover 浮层，取代在流内
-   * 撑开的 bz-todo-sug-box）：输入/聚焦展开（issue 200 焦点门控保留），外点收起，
-   * Escape 只收下拉不关弹窗（stopPropagation 防 escManager 穿透）。
-   * 候选排除与当前值完全相同项（点选回焦后不再复弹自身，同 favorites notePicker）。
-   * 表单关闭后首个外部 mousedown 经 isConnected 自清监听。
+   * 联想候选下拉（issue 203：收敛为组件库 uiSuggest——聚焦/输入惰性弹出、外点收起、
+   * Escape 只收下拉不关弹窗；候选排除当前值，上限 5。issue 200 焦点门控保留）。
    */
   function bindSug(input: HTMLInputElement, list: () => string[], onPick?: (val: string) => void) {
-    let pop: HTMLElement | null = null;
-    const close = () => {
-      if (!pop) return;
-      pop.remove();
-      pop = null;
-      document.removeEventListener('mousedown', onDocDown, true);
-    };
-    const onDocDown = (e: MouseEvent) => {
-      const t = e.target as Node;
-      if (!input.isConnected) { close(); return; }
-      if (pop?.contains(t) || input.contains(t)) return;
-      close();
-    };
-    const render = () => {
-      const v = input.value.trim().toLowerCase();
-      const all = list()
-        .filter((s) => s !== input.value.trim() && (!v || s.toLowerCase().includes(v)))
-        .slice(0, 5);
-      if (!all.length) { close(); return; }
-      if (!pop) {
-        // 候选浮层走组件库 .bz-popover（锚定所在 .bz-todo-extra 下方，样式库共享类）
-        pop = document.createElement('div');
-        pop.className = 'bz-popover';
-        input.parentElement!.appendChild(pop);
-        document.addEventListener('mousedown', onDocDown, true);
-      }
-      pop.innerHTML = all.map((s) => `<button class="bz-popover-item" type="button">${esc(s)}</button>`).join('');
-      pop.querySelectorAll('.bz-popover-item').forEach((b) => {
-        b.addEventListener('click', () => {
-          input.value = (b as HTMLElement).textContent || '';
-          close();
-          onPick?.(input.value);
-          input.focus();
-        });
-      });
-    };
-    input.addEventListener('input', render);
-    input.addEventListener('focus', render);
-    input.addEventListener('keydown', (e) => {
-      // 下拉开着时 Escape 只收下拉（不关弹窗）；未开不拦
-      if (e.key === 'Escape' && pop) {
-        close();
-        e.stopPropagation();
-      }
-    });
+    uiSuggest({ anchor: input, source: list, max: 5, excludeCurrent: true, onPick });
   }
   // 公开课课程路径（对照 memo：点建议记 path；手改名按名匹配兜底——课程标签跳转依赖 coursePath）
   let courseNotes: { name: string; path: string }[] = [];
