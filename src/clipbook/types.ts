@@ -60,7 +60,7 @@ export interface ClipArticle {
   backlinks: string[];
 }
 
-/** 文件行（右栏/移动详情渲染指令）：p 普通段 / quote 引文段 / img 图片段（issue 203） */
+/** 文件行（右栏/移动详情渲染指令）：p 普通段 / quote 引文段 / img 图片段（issue 205） */
 export interface ClipParagraph {
   type: 'p' | 'quote' | 'img';
   text: string;

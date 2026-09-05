@@ -3,7 +3,7 @@
  * 纯函数，node 可测。
  *
  * 输入 news body / 剪藏正文原样（可能含 markdown 图片/链接/列表/空行、Obsidian 嵌链）；
- * 输出「引文块 / 普通段 / 图片段」三分的段落流（issue 203：图片不再丢弃，独立成段保序），
+ * 输出「引文块 / 普通段 / 图片段」三分的段落流（issue 205：图片不再丢弃，独立成段保序），
  * 去 markdown 记号，供渲染器按语义上样式。图片段 text 存原始来源：
  * `![alt](url)` 存 url；`![[path]]` 存原 token——渲染层统一解析（外链直用 / vault 内嵌 getResourcePath）。
  */

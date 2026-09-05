@@ -4,13 +4,13 @@
  * 桌面三栏（rail 源列表 / 中栏条目 / 右栏阅读）+ 移动端双屏（源胶囊列表 / 详情+头栏保存钮）。
  * 对齐拍板原型 clipping-p3-siteboxes.html 的结构与极简口味：头行仅品牌+标题+副题「未读流与剪藏」，
  * 无右上角图标（关闭=点遮罩/ESC；移动真全屏有 ✕）；动作收进条目右键菜单（item-actions 复用）；
- * 搜索框在左栏列表顶部（issue 203：从头行移入 rail，搜索时各源统计联动）。
+ * 搜索框在左栏列表顶部（issue 205：从头行移入 rail，搜索时各源统计联动）。
  *
  * 增强包（enh-clipbook）：桌面搜索（180ms 防抖）/ 移动长按抽屉（动作与桌面右键同源）/
  * 右栏读剪藏正文（cachedRead + 缓存）/ rail 源行批量已读 / 误删误标可撤销（notifyUndo）/
  * 阅读动线（10s 自动落在读、处理后前进下一篇、←→/jk 切换）/ 阅读字号三档 /
  * 桌面面板拖拽缩放 + 尺寸记忆（ADR-0084 先例；ADR-0094 走 uiResizable persist）。
- * issue 203：rail 平台动态聚合 + 列表最新在前 / 正文图片段渲染 /
+ * issue 205：rail 平台动态聚合 + 列表最新在前 / 正文图片段渲染 /
  * 站点 favicon 高清多源回退（全失败才首字 chip）/ 切文章右栏滚动归零。
  *
  * 铁律 6：基线全部消费组件库（.bz-* 类与 --bz-* token）；ADR-0094 起面板壳/头行/搜索/
@@ -341,7 +341,7 @@ function buildDom(app: any): void {
   mobInput!.addEventListener('input', () => {
     searchKw = mobInput!.value.trim();
     renderMobList();
-    renderMobSources(); // issue 203：移动搜索态源 chip 计数同步联动（对齐桌面）
+    renderMobSources(); // issue 205：移动搜索态源 chip 计数同步联动（对齐桌面）
   });
   // 移动：关闭 / 返回
   mobCloseBtn!.addEventListener('click', () => closePanel());
@@ -441,7 +441,7 @@ function currentList(): ClipArticle[] {
   return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], srcList(), M.upInfo);
 }
 
-/** 搜索谓词（中栏列表过滤与 rail 计数共用——issue 203：搜索时各源统计联动） */
+/** 搜索谓词（中栏列表过滤与 rail 计数共用——issue 205：搜索时各源统计联动） */
 function matchesSearch(a: ClipArticle): boolean {
   const kw = (searchKw || '').toLowerCase();
   if (!kw) return true;
@@ -483,13 +483,13 @@ function renderRail(): void {
   if (!railListEl) return;
   const arts = M.articles;
   const clipNotes = M.clipNotes || [];
-  // 源计数（issue 203：搜索时 = 该源命中数，统计联动；无搜索 = 未读数/总数）
+  // 源计数（issue 205：搜索时 = 该源命中数，统计联动；无搜索 = 未读数/总数）
   const countOf = (source: { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' }): number =>
     queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, source, M.upInfo).filter(matchesSearch).length;
   const allHit = countOf({ kind: 'all' });
   let html = railItemHtml({ kind: 'all' }, '全部未读', allHit, 0, 'inbox', '#58a6ff', M.sel.kind === 'all', '');
 
-  // 平台行动态聚合（issue 203：不再硬编码三平台，新平台自动出现）——
+  // 平台行动态聚合（issue 205：不再硬编码三平台，新平台自动出现）——
   // 全集含已读条目平台与既知三平台（0 未读平台行保留恒显示，对齐旧行为）；
   // 既知顺序在前，其余按未读数降序追加；「未知」平台不建行（仅全部未读可见，对齐旧语义）
   const prefOrder = ['B站', '果壳科学人', '知乎日报'];
@@ -702,7 +702,7 @@ function buildItemActions(a: ClipArticle): ItemAction[] {
 }
 
 // ================= 渲染：右栏阅读 =================
-/** 图片段来源解析（issue 203）：外链直用；Obsidian 嵌链 `![[path]]` 走 vault 资源路径；其余拒载 */
+/** 图片段来源解析（issue 205）：外链直用；Obsidian 嵌链 `![[path]]` 走 vault 资源路径；其余拒载 */
 function resolveImgSrc(src: string): string | null {
   const s = String(src || '').trim();
   if (/^(https?:|app:|capacitor:|data:image\/)/i.test(s)) return s;
@@ -776,7 +776,7 @@ function renderReader(): void {
     <div class="bz-clip-art-md" data-clip-md>${paras || `<p class="dim">${escapeHtml(a.origin === 'clip' ? '（笔记暂无正文）' : '正文已清空（已处理条目）')}</p>`}</div>
     ${a.origin === 'news' && a.url ? `<a class="bz-clip-art-origin" href="${escapeHtml(a.url)}" target="_blank" rel="noopener">查看原文 ${iconSpan('external-link', 'bz-ic--xs')}</a>` : ''}
   `;
-  // 站点图标（issue 203）：DOM 组装——先首字 chip 占位，高清 favicon 就绪后原位换图
+  // 站点图标（issue 205）：DOM 组装——先首字 chip 占位，高清 favicon 就绪后原位换图
   const iconSlot = readerEl.querySelector('[data-clip-siteicon]') as HTMLElement | null;
   if (iconSlot) iconSlot.replaceWith(a.domain ? siteIconEl(a.domain, a.srcName || a.site) : favChipEl(a.site));
   mountIcons(readerEl);
@@ -894,7 +894,7 @@ function stepArticle(delta: number): void {
   if (next && (!M.cur || next.id !== M.cur.id)) selectArticle(next.id);
 }
 
-// ---- 站点 favicon（issue 203：高清多源回退，全失败才首字 chip） ----
+// ---- 站点 favicon（issue 205：高清多源回退，全失败才首字 chip） ----
 
 /** favicon 域名归一（承 core/dom DOMAIN_MAP 语义：长域→根域取图更稳） */
 const FAV_DOMAIN_MAP: Record<string, string> = {
@@ -967,7 +967,7 @@ function siteIconEl(domain: string, site: string): HTMLElement {
 }
 
 // ================= 动作 =================
-/** 右栏滚动容器归零（issue 203：切换文章后从开头读，刷新同篇不重置） */
+/** 右栏滚动容器归零（issue 205：切换文章后从开头读，刷新同篇不重置） */
 function resetReadScroll(): void {
   const sc = readPaneEl ? (readPaneEl.querySelector('.bz-clip-read-scroll') as HTMLElement | null) : null;
   if (sc) sc.scrollTop = 0;
@@ -1156,7 +1156,7 @@ function renderMobSources(): void {
   const countOf = (source: { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' }): number =>
     queryBySource(arts, M.sidecar, M.clipUrls, M.clipNotes || [], source, M.upInfo).filter(matchesSearch).length;
   let html = mobSrcChipHtml({ kind: 'all' }, '全部未读', countOf({ kind: 'all' }), M.sel.kind === 'all', 'radio');
-  // 平台 chip 动态聚合（issue 203 对齐桌面 rail：全集含已读平台与既知三平台恒显示；
+  // 平台 chip 动态聚合（issue 205 对齐桌面 rail：全集含已读平台与既知三平台恒显示；
   // 既知顺序在前，其余按未读数降序；「未知」平台不建 chip）
   const prefOrder = ['B站', '果壳科学人', '知乎日报'];
   const unreadByPlat = new Map<string, number>();
@@ -1225,7 +1225,7 @@ function openMobDetail(id: string): void {
   renderMobDetail();
   if (mobDetailEl) mobDetailEl.style.display = 'flex';
   const body = mobDetailEl ? (mobDetailEl.querySelector('[data-clip-mob-detail-body]') as HTMLElement | null) : null;
-  if (body) body.scrollTop = 0; // issue 203：进详情从开头读
+  if (body) body.scrollTop = 0; // issue 205：进详情从开头读
 }
 
 function renderMobDetail(): void {
