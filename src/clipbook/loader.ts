@@ -88,6 +88,7 @@ export async function readNewsAndSidecar(): Promise<PanelData> {
   const clipUrls = clipUrlSet(clipNotes || []);
 
   M.articles = data.articles;
+  M.stats = data.stats;
   M.sidecar = sidecar;
   M.clipNotes = clipNotes;
   M.clipUrls = clipUrls;
