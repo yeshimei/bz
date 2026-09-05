@@ -3802,7 +3802,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cardpick-prev {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  /* 固定高：aspect-ratio 在 WebView2 flex stretch 组合下不生效（预览区塌陷，用户实测） */
+  height: 62px;
   border-radius: var(--bz-radius-sm);
   border: 1px solid var(--bz-border);
   background: var(--bz-surface-2);
@@ -6179,15 +6180,37 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   box-shadow: inset 2px 2px 0 rgba(42, 35, 24, 0.1);
 }
 
-/* 排序浮岛：白底墨框 + 黑卡指示器 + 项间分隔线 */
+/* 排序：不用浮岛（用户拍板）——原型 segmented：白底墨框 + 项间分隔线 + 选中黑底白字 */
 .bz-todo-skin-paper .bz-todo-sort .bz-choice--float {
   background: var(--bz-surface-2);
   border: 2px solid var(--bz-skin-ink);
   border-radius: 11px;
 }
-.bz-todo-skin-paper .bz-todo-sort .bz-choice-seg { background: var(--bz-skin-ink); border-radius: 8px; }
-.bz-todo-skin-paper .bz-todo-sort .bz-choice-btn.is-on { color: #fffdf6 !important; font-weight: var(--bz-weight-bold); }
+.bz-todo-skin-paper .bz-todo-sort .bz-choice-seg { display: none; }
+.bz-todo-skin-paper .bz-todo-sort .bz-choice-btn { border-radius: 7px; }
+.bz-todo-skin-paper .bz-todo-sort .bz-choice-btn.is-on {
+  background: var(--bz-skin-ink) !important;
+  color: #fffdf6 !important;
+  font-weight: var(--bz-weight-bold);
+}
 .bz-todo-skin-paper .bz-todo-sort .bz-choice-btn + .bz-choice-btn { border-left: 1px solid rgba(42, 35, 24, 0.16); }
+
+/* 头行右侧设置/关闭钮：纸感皮肤下去掉（用户拍板，原型无此二钮） */
+.bz-todo-skin-paper .bz-panel-head-btns { display: none; }
+
+/* 弹窗表单平铺选择（场景/优先级，issue 210 二轮拍板）：与排序同语言——
+   白底墨边格子、选中黑底白字 */
+.bz-todo-skin-paper .bz-choice:not(.bz-choice--float) { gap: 8px; }
+.bz-todo-skin-paper .bz-choice:not(.bz-choice--float) .bz-choice-btn {
+  border: 1.5px solid rgba(42, 35, 24, 0.4);
+  border-radius: 8px;
+  background: var(--bz-surface-2);
+}
+.bz-todo-skin-paper .bz-choice:not(.bz-choice--float) .bz-choice-btn.is-on {
+  background: var(--bz-skin-ink) !important;
+  color: #fffdf6 !important;
+  border-color: var(--bz-skin-ink);
+}
 
 /* 任务列表：行间虚线分隔 + 大复选框（勾位随尺寸重定位） */
 .bz-todo-skin-paper .bz-todo-card + .bz-todo-card { border-top: 1.5px dashed rgba(42, 35, 24, 0.16); }
