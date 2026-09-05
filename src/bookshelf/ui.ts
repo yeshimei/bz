@@ -8,7 +8,7 @@
  *   ＋ 墙尾格言。书脊：高度=累计阅读时长、厚度=字数（开方缩放，无字数回退批注密度）、
  *   竖排书名按「：」拆主/副双列（text-orientation: upright，字号 14→9px 自适应、列宽上限 64px）。
  * 窗口缩放防抖重装箱；移动端同构（窄墙自动多排），无独立移动布局。
- * 点击书脊 → 借书卡详情（纸卡排版 + 印章；issue 220 只读化：纯展示，无编辑/删除，状态圆点示意）。
+ * 点击书脊 → 借书卡详情（纸卡排版 + 印章；issue 223 只读化：纯展示，无编辑/删除，状态圆点示意）。
  * 报告视图（读书报告内嵌化）：面板内视图容器保留，入口仅命令 bz-reading-report-open（墙面上无入口）。
  * 皮肤（issue 216 十肤随迁）：面板根挂 bz-bs-skin-{id}，皮肤改墙/纸/铜墨变量（styles.css）。
  * 铁律 6：弹窗骨架/空态/输入走组件库；墙体系为域独有视觉（styles.css .bz-bs-wall*）。
@@ -377,7 +377,7 @@ function paintViewContainers(): void {
   overlay.querySelector('.bz-bs-view-report')?.classList.toggle('active', M.view === 'report');
 }
 
-// ---------- 借书卡详情（issue 220：纯展示只读——不允许编辑/删除） ----------
+// ---------- 借书卡详情（issue 223：纯展示只读——不允许编辑/删除） ----------
 
 let detailModalClose: (() => void) | null = null;
 
@@ -387,7 +387,7 @@ function closeDomainModals(): void {
   if (detailModalClose) { detailModalClose(); detailModalClose = null; }
 }
 
-/** 借书卡（issue 220 只读版，拍板原型 p4-book-view 口径：pull-note + 纸卡双栏 + 台账 +
+/** 借书卡（issue 223 只读版，拍板原型 p4-book-view 口径：pull-note + 纸卡双栏 + 台账 +
  *  静态进度条 + 批注密度条 + 印章；无编辑控件、无删除/保存，状态用圆点示意） */
 function openBookDetail(it: BookshelfItem, app: App): void {
   const cu = coverUrl(it, app);

@@ -221,7 +221,7 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     closeOverlay();
   });
 
-  it('借书卡只读化（issue 220）：点书脊弹出纯展示卡——台账/进度条/印章齐备，无任何编辑控件', async () => {
+  it('借书卡只读化（issue 223）：点书脊弹出纯展示卡——台账/进度条/印章齐备，无任何编辑控件', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
     const spine = spines(document.querySelector('.bz-panel-overlay') as HTMLElement).find((s) => s.title?.includes('认知觉醒')) as HTMLElement;
