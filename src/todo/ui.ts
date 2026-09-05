@@ -3,10 +3,13 @@
  * 桌面：遮罩 + 720×580 面板（壳 = 组件库 .bz-panel-overlay/.bz-panel-frame，
  *       ADR-0094 接入；ADR-0084：右缘/底缘/右下角拖动缩放，钳制 720×520 ~
  *       min(1280×880, 视口92%)，尺寸记忆 persist → settings.todoPanelWidth/Height）：
- *       左场景栏（.bz-rail 族：全部/今日/重要/场景 + .bz-rail-foot 添加场景）+ 右侧列表
+ *       左场景栏（.bz-rail 族：全部/今日/重要 = 图标前缀，用户场景 = 场景色点；
+ *       「添加场景」虚线钮挂列表尾部，紧贴最后一个场景之下）+ 右侧列表
  *       （.bz-main-head 主头行 + .bz-toolrow 工具行（.bz-search 搜索 + 排序 segmented）；
  *       条目卡 meta 对齐源码 buildMeta 顺序）
- * 移动：真全屏 + 顶部横滑场景条（.bz-mobstrip）+ 右上关闭（仅全屏显示）
+ * 头行：.bz-panel-brand 品牌块 + 右侧「打开待办设置 / 关闭」图标钮（issue 197，
+ *       对齐剪藏本头行范式；设置钮直达设置面板待办域）
+ * 移动：真全屏 + 顶部横滑场景条（.bz-mobstrip；头行钮组桌面/移动共用）
  * 交互：
  *   - 桌面右键条目 → 跟手菜单（无顶部信息卡）；移动长按 → 底部抽屉（带 sheetHead）
  *     （两者复用 core/item-actions：attachItemActions）
@@ -55,6 +58,7 @@ let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 // ---------- 小工具 ----------
 
 const ICON = {
+  brand: 'list-checks',
   close: 'x',
   search: 'search',
   add: 'plus',
@@ -80,6 +84,8 @@ const ICON = {
   clock: 'clock',
   calendar: 'calendar',
   doneFold: 'chevron-down',
+  sceneAll: 'layers',
+  sceneToday: 'sun',
 };
 
 /** lucide 占位 HTML（innerHTML 拼接用；渲染后组件库 mountIcons 统一 setIcon） */
@@ -326,15 +332,19 @@ export function openTodoPanel(app: App, opts?: { notePath?: string }): void {
   overlay.innerHTML = `
     <div class="bz-panel-frame bz-todo-panel bz-panel-mtop">
       <div class="bz-panel-head">
+        <div class="bz-panel-brand">${iconSpan(ICON.brand, 'bz-ic--sm')}</div>
         <div class="bz-panel-title">待办</div>
+        <div class="bz-panel-head-sp"></div>
+        <div class="bz-panel-head-btns">
+          <button class="bz-icon-btn" data-todo-head-settings title="打开待办设置">${iconSpan(ICON.settings)}</button>
+          <button class="bz-icon-btn" data-todo-head-close title="关闭">${iconSpan(ICON.close)}</button>
+        </div>
       </div>
       <div class="bz-todo-body">
         <div class="bz-rail">
           <div class="bz-rail-scroll">
             <div class="bz-rail-label">场景</div>
             <div data-todo-nav></div>
-          </div>
-          <div class="bz-rail-foot">
             <button class="bz-todo-side-add" data-todo-addscene>${iconSpan(ICON.addScene)} 添加场景</button>
           </div>
         </div>
@@ -425,6 +435,11 @@ export function openTodoPanel(app: App, opts?: { notePath?: string }): void {
       closeTodoPanel();
       return;
     }
+    // 头行钮组：设置直达（关面板 → 设置面板定位待办域）/ 关闭
+    const headSettings = t.closest('[data-todo-head-settings]');
+    if (headSettings) { openTodoInSettings(); return; }
+    const headClose = t.closest('[data-todo-head-close]');
+    if (headClose) { closeTodoPanel(); return; }
     // 场景切换（左栏 / 移动 chips）
     const nav = t.closest('[data-todo-scene]') as HTMLElement | null;
     if (nav) {
@@ -590,22 +605,30 @@ function renderMainHead(): void {
   countEl.textContent = `· ${items.length} 项 · ${undone} 未完成`;
 }
 
-/** 场景选项归一（桌面 nav / 移动 chips 共用）；重要 = 伪场景（star 图标 + 警示色点，范式照「今日」） */
-function sceneOptions(): { scene: string; dot: string; icon?: string }[] {
+/** 场景选项归一（桌面 nav / 移动 chips 共用）；dot 仅用户场景携带（伪场景走 SCENE_PSEUDO_ICONS 图标） */
+function sceneOptions(): { scene: string; dot: string }[] {
   return [
     { scene: '全部', dot: '' },
-    { scene: '今日', dot: '#e5534b' },
-    { scene: '重要', dot: 'var(--bz-warning)', icon: ICON.star },
+    { scene: '今日', dot: '' },
+    { scene: '重要', dot: '' },
     ...TodoData.getScenarios().map((s) => ({ scene: s, dot: sceneDot(s) })),
   ];
 }
 
-/** nav/chip 项内点 + 伪场景图标的 HTML（dotCls = .bz-rail-dot / .bz-mobstrip-dot 随宿主；
- *  重要 star 警示色走组件库 .bz-ic--warning——色点之外的第二佐证，§6.1 状态不只靠颜色） */
-function sceneLeadHtml(o: { scene: string; dot: string; icon?: string }, dotCls: string): string {
-  if (o.scene === '全部') return '';
-  const dotHtml = `<span class="${dotCls}" style="--bz-rail-tint:${o.dot}"></span>`;
-  return o.icon ? `${dotHtml}${iconSpan(o.icon, 'bz-ic--warning')}` : dotHtml;
+/** 伪场景图标前缀（issue 197 拍板：全部/今日/重要 = 图标，用户场景 = 场景色点）。
+ *  重要 star 警示色走组件库 .bz-ic--warning（状态第二佐证，§6.1 状态不只靠颜色） */
+const SCENE_PSEUDO_ICONS: Record<string, { icon: string; cls?: string }> = {
+  全部: { icon: ICON.sceneAll },
+  今日: { icon: ICON.sceneToday },
+  重要: { icon: ICON.star, cls: 'bz-ic--warning' },
+};
+
+/** 场景项前导元素 HTML（伪场景图标 / 用户场景色点；dotCls = .bz-rail-dot / .bz-mobstrip-dot 随宿主） */
+function sceneLeadHtml(o: { scene: string; dot: string }, dotCls: string): string {
+  const pseudo = SCENE_PSEUDO_ICONS[o.scene];
+  if (pseudo) return iconSpan(pseudo.icon, pseudo.cls ?? '');
+  if (!o.dot) return '';
+  return `<span class="${dotCls}" style="--bz-rail-tint:${o.dot}"></span>`;
 }
 
 /** 场景项管理菜单（重命名/删除/设置直达；伪场景不挂）——桌面右键浮层 / 移动长按抽屉复用组件库 */
@@ -620,7 +643,7 @@ function renderNav(): void {
   nav.innerHTML = sceneOptions()
     .map((o) => {
       const active = M.activeScene === o.scene;
-      return `<button class="bz-rail-item${active ? ' on' : ''}" data-todo-scene="${esc(o.scene)}">${sceneLeadHtml(o, 'bz-rail-dot')}<span class="bz-rail-name">${esc(o.scene)}</span><span class="bz-rail-count bz-rail-count--pill">${sceneCount(o.scene)}</span></button>`;
+      return `<button class="bz-rail-item${active ? ' on' : ''}" data-todo-scene="${esc(o.scene)}">${sceneLeadHtml(o, 'bz-rail-dot')}<span class="bz-rail-name">${esc(o.scene)}</span><span class="bz-rail-count">${sceneCount(o.scene)}</span></button>`;
     })
     .join('');
   mountIcons(nav);
@@ -1432,14 +1455,15 @@ function openAddSceneDialog(): void {
 /** 场景项动作集（伪场景不挂，见 attachSceneActions） */
 function buildSceneActions(scene: string): ItemAction[] {
   return [
-    { icon: ICON.settings, label: '在设置中编辑', title: '打开设置面板编辑场景列表', onClick: () => openSceneInSettings() },
+    { icon: ICON.settings, label: '在设置中编辑', title: '打开设置面板编辑场景列表', onClick: () => openTodoInSettings() },
     { icon: ICON.edit, label: '重命名', title: '重命名场景', onClick: () => openRenameSceneDialog(scene) },
     { icon: ICON.del, label: '删除场景', title: '删除场景', kind: 'danger', onClick: () => void deleteSceneConfirm(scene) },
   ];
 }
 
-/** 「在设置中编辑」直达：关面板 → 设置面板定位待办域（动态 import 防顶层环引用，ADR-0002） */
-function openSceneInSettings(): void {
+/** 设置直达：关面板 → 设置面板定位待办域（头行设置钮 / 场景菜单「在设置中编辑」共用；
+ *  动态 import 防顶层环引用，ADR-0002） */
+function openTodoInSettings(): void {
   const app = M.appRef;
   closeTodoPanel();
   if (!app) return;
