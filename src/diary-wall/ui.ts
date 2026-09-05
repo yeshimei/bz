@@ -41,7 +41,7 @@ import { notice } from '../core/notice';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { getApp } from '../core/app';
 import { DIARY_DIRECTORY, MOVIE_DIRECTORY, LETTER_DIRECTORY, BOOK_DIRECTORY, getSubTagsOfPrimary, getPrimaryTagsInDisplayOrder, getTagEmoji } from './config';
-import { loadWallEntries, mediaSrc, groupByMonth, pickOnThisDay, extractMedia, stripMediaLinks, type WallEntry, type WallMedia } from './data';
+import { loadWallEntries, mediaSrc, groupByMonth, pickOnThisDay, extractMedia, extractSegments, stripMediaLinks, type WallEntry, type WallMedia } from './data';
 import { railThumbKey, getRailThumb, putRailThumb, makeImageThumb, makeVideoThumb } from './thumb-cache';
 // TODO(自包含)：以下 diary 域入口在「删除日记本域」时改为回忆墙自己的实现
 import { openAddDialog } from '../diary/ui/dialogs';
@@ -660,6 +660,7 @@ export class DiaryWallAppController {
           content: e.content,
           text: stripMediaLinks(e.content),
           media: extractMedia(e.content, DIARY_DIRECTORY),
+          segments: extractSegments(e.content),
           filename: e.filename,
           lineNumber: e.lineNumber,
           id: e.id,
@@ -798,10 +799,10 @@ export class DiaryWallAppController {
         stat.innerHTML = this.statHtml(this.dayStats(dayList));
         head.append(date, week, stat);
         ui.wall.appendChild(head);
-        // 稀疏铺满：当天条目极少时跨列占满横向空白（文字条跨列、媒体块不放大居中）
+        // 稀疏铺满：仅保留单条日文字条跨列（issue 213 删 sparse-2 半宽 hack——
+        // 多列容器内百分比按列宽解析把卡片压成细条，用户截图实锤的挤压病根）
         const n = dayList.length;
-        const sparseCls =
-          n === 1 ? ' bz-diary-wall-masonry--sparse-1' : n === 2 ? ' bz-diary-wall-masonry--sparse-2' : '';
+        const sparseCls = n === 1 ? ' bz-diary-wall-masonry--sparse-1' : '';
         const m = document.createElement('div');
         m.className = 'bz-diary-wall-masonry' + (mobile ? ' bz-diary-wall-masonry--mob' : '') + sparseCls;
         ui.wall.appendChild(m);
@@ -809,42 +810,25 @@ export class DiaryWallAppController {
       const hasMedia = e.media.length > 0;
       const container = ui.wall.lastChild as HTMLElement;
       if (hasMedia) {
-        e.media.forEach((k) => {
-          const item = document.createElement('div');
-          item.className = 'bz-diary-wall-item bz-diary-wall-media-wrap';
-          item.dataset.widx = String(widx);
-          item.appendChild(this.mediaEl(k, e, mobile));
-          if (e.text) {
-            const tx = document.createElement('div');
-            tx.className = 'bz-diary-wall-tx bz-diary-wall-md';
-            void this.renderText(tx, e.text, e);
-            item.appendChild(tx);
+        // issue 213：按原文段落序渲染（文字段/媒体段交错保留）——
+        // 旧逻辑每个媒体块下都挂整条 e.text，原文「文字·图·文字·图」被压平后全文重复两遍
+        for (const seg of e.segments ?? []) {
+          if (seg.kind === 'media') {
+            const item = document.createElement('div');
+            item.className = 'bz-diary-wall-item bz-diary-wall-media-wrap';
+            item.dataset.widx = String(widx);
+            item.appendChild(this.mediaEl(seg.media, e, mobile));
+            // 媒体块不挂 ⋯ 按钮（用户要求去掉右上角三点；动作入口 = 右键菜单 / 双击）
+            this.bindItem(item, e, mobile);
+            container.appendChild(item);
+          } else {
+            const item = this.textItem(e, seg.text, widx);
+            this.bindItem(item, e, mobile);
+            container.appendChild(item);
           }
-          // 媒体块不挂 ⋯ 按钮（用户要求去掉右上角三点；动作入口 = 右键菜单 / 双击）
-          this.bindItem(item, e, mobile);
-          container.appendChild(item);
-        });
-      } else {
-        const item = document.createElement('div');
-        item.className = 'bz-diary-wall-item bz-diary-wall-text';
-        item.dataset.widx = String(widx);
-        const row = document.createElement('div');
-        row.className = 'bz-diary-wall-text-row';
-        const t = document.createElement('span');
-        t.className = 'bz-diary-wall-text-t';
-        t.textContent = e.time;
-        const em = document.createElement('span');
-        em.className = 'bz-diary-wall-text-em';
-        em.textContent = e.emoji;
-        row.append(t, em);
-        const tx = document.createElement('div');
-        tx.className = 'bz-diary-wall-text-tx bz-diary-wall-md';
-        if ((e.encrypted || e.tags.includes('加密')) && !this.lockedVisible) {
-          tx.textContent = '（已加密）';
-        } else {
-          void this.renderText(tx, e.text, e);
         }
-        item.append(row, tx);
+      } else {
+        const item = this.textItem(e, e.text, widx);
         this.bindItem(item, e, mobile);
         container.appendChild(item);
       }
@@ -855,6 +839,31 @@ export class DiaryWallAppController {
     if (!mobile && ui.rail.children.length > 0) {
       this.setupRailHighlight(ui.wall, ui.rail, 'desk');
     }
+  }
+
+  /** 文字卡（时间 + emoji + markdown 正文；加密未解锁显示占位）——纯文字条目与段序渲染共用 */
+  private textItem(e: WallEntry, text: string, widx: number): HTMLElement {
+    const item = document.createElement('div');
+    item.className = 'bz-diary-wall-item bz-diary-wall-text';
+    item.dataset.widx = String(widx);
+    const row = document.createElement('div');
+    row.className = 'bz-diary-wall-text-row';
+    const t = document.createElement('span');
+    t.className = 'bz-diary-wall-text-t';
+    t.textContent = e.time;
+    const em = document.createElement('span');
+    em.className = 'bz-diary-wall-text-em';
+    em.textContent = e.emoji;
+    row.append(t, em);
+    const tx = document.createElement('div');
+    tx.className = 'bz-diary-wall-text-tx bz-diary-wall-md';
+    if ((e.encrypted || e.tags.includes('加密')) && !this.lockedVisible) {
+      tx.textContent = '（已加密）';
+    } else {
+      void this.renderText(tx, text, e);
+    }
+    item.append(row, tx);
+    return item;
   }
 
   /**
