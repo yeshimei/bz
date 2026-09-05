@@ -7863,8 +7863,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema-sort .bz-segmented-btn { padding: 0 10px; font-size: var(--bz-font-caption); }
 .bz-cinema-content { flex: 1; overflow-y: auto; padding: var(--bz-space-md) var(--bz-space-lg) var(--bz-space-lg); display: flex; flex-direction: column; min-height: 0; }
 
-/* ---- 海报网格 ---- */
-.bz-cinema-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--bz-space-md); }
+/* ---- 海报网格 ----
+   列数由设置 cinemaGridColumns 驱动（issue 208）：ui.ts 渲染时内联 --bz-cinema-cols，
+   默认 5；移动端媒体查询固定 3 列不受设置影响 */
+.bz-cinema-grid { display: grid; grid-template-columns: repeat(var(--bz-cinema-cols, 5), 1fr); gap: var(--bz-space-md); }
 .bz-cinema-pcard { cursor: pointer; min-width: 0; }
 .bz-cinema-poster-wrap {
   width: 100%; aspect-ratio: 2 / 3; border-radius: 10px; overflow: hidden; position: relative;
@@ -7879,16 +7881,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema-p-name { font-size: var(--bz-font-meta); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bz-cinema-p-meta { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bz-cinema-p-stars { color: var(--bz-star); }
-/* 灰色小字状态（想看/在看）可点 → 快速状态窗 */
-.bz-cinema-p-meta.bz-cinema-p-meta-up { cursor: pointer; transition: color var(--bz-dur-fast) ease; }
-.bz-cinema-p-meta-up .bz-cinema-st-label { color: var(--bz-text-2); }
-.bz-cinema-p-meta-up:hover .bz-cinema-st-label { color: var(--bz-brand); }
-/* 移动端触控热区加大（增强包需求 11；设计手册 §8.2）：padding 撑高 + ::after 外扩，
-   可点区 ≈44px 高、左右到网格间距边——视觉不变，热区变大 */
-@media (max-width: 768px) {
-  .bz-cinema-p-meta.bz-cinema-p-meta-up { position: relative; padding: var(--bz-space-sm) 0; margin-top: 0; }
-  .bz-cinema-p-meta.bz-cinema-p-meta-up::after { content: ""; position: absolute; inset: -6px -12px; }
-}
+/* 灰色小字状态（想看/在看）：纯展示（issue 208 快速状态窗退役，状态流转统一走右键菜单） */
 
 /* ---- 详情弹窗内容（弹窗骨架在组件库 modal） ---- */
 .bz-cinema-dm-head { display: flex; align-items: flex-start; gap: var(--bz-space-md); }
@@ -7896,8 +7889,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema-dm-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .bz-cinema-dm-title { font-size: 16px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); line-height: 1.35; }
 .bz-cinema-dm-badges { display: flex; align-items: center; gap: var(--bz-space-xs); margin-top: var(--bz-space-xs); flex-wrap: wrap; }
-/* 豆瓣直达外链按钮（豆瓣链接行内，主链接右侧） */
-.bz-cinema-dm-douban { margin-left: var(--bz-space-sm); }
 .bz-cinema-dm-stars { font-size: 13px; color: var(--bz-star); }
 .bz-cinema-dm-rating { font-size: 13px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
 .bz-cinema-dm-date { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
@@ -7914,7 +7905,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema-kv-v a:hover { text-decoration: underline; }
 .bz-cinema-synopsis { font-size: var(--bz-font-label); line-height: 1.8; color: var(--bz-text-1); white-space: pre-wrap; }
 
-/* ---- 表单（添加/编辑/快速状态） ----
+/* ---- 表单（添加/编辑） ----
    字段行 = 组件库 .bz-field（label 上置 + 控件 100% 宽）；
    平铺选择 = 组件库 .bz-choice（胶囊单选，类型/状态色点为数据语义色）；
    本文件只留表单容器间距与评分滑杆行内布局。 */
@@ -7938,15 +7929,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema-confirm p { margin-top: var(--bz-space-sm); font-size: var(--bz-font-body); color: var(--bz-text-1); line-height: 1.6; }
 .bz-cinema-confirm-sub { margin-top: var(--bz-space-xs); font-size: var(--bz-font-meta); color: var(--bz-text-3); }
 .bz-cinema-confirm .bz-ic { width: 30px; height: 30px; color: var(--bz-text-3); }
-
-/* ---- 快速状态窗 ---- */
-.bz-cinema-qs-title { font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
-/* 目标状态：平铺单选（.bz-choice 胶囊），等宽铺满由域布局给 */
-.bz-cinema-qs-btns { display: flex; gap: var(--bz-space-sm); margin-top: var(--bz-space-md); }
-.bz-cinema-qs-btns .bz-choice-btn { flex: 1; }
-.bz-cinema-qs-rating { margin-top: var(--bz-space-md); }
-.bz-cinema-qs-review { margin-top: var(--bz-space-md); }
-.bz-cinema-qs-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-top: 10px; line-height: 1.5; }
 
 /* ---- 海报卡长按抽屉头部（core .bz-item-sheet-head 的域内内容；对齐 clipbook 先例） ---- */
 .bz-cinema-sheet-head { padding: 2px 0 var(--bz-space-sm); }
@@ -8112,7 +8094,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-bs-none { padding: var(--bz-space-xl) var(--bz-space-md); }
 
 /* 封面网格（平铺；桌面响应式列，移动 2 列） */
-.bz-bs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px 16px; }
+/* 列数由设置 bookshelfGridColumns 驱动（issue 208）：ui.ts 渲染时内联 --bz-bs-cols，默认 6；移动端媒体查询固定 2 列不受影响 */
+.bz-bs-grid { display: grid; grid-template-columns: repeat(var(--bz-bs-cols, 6), 1fr); gap: 20px 16px; }
 .bz-bs-book { cursor: pointer; min-width: 0; }
 .bz-bs-cover-wrap {
   position: relative; aspect-ratio: 118 / 165; border-radius: 8px; overflow: hidden;
@@ -8712,6 +8695,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-size: 12px;
   line-height: 1.5;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   border: 1px solid var(--background-modifier-border);
   color: var(--text-normal);
   transition: background .2s, border-color .2s, color .2s;
@@ -9306,6 +9292,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
 }
+/* 「全部」行头图标（issue 208 全域统一；setIcon 落 .bz-lit-filter-ic 槽） */
+.bz-lit-filter-ic { display: inline-flex; width: 12px; height: 12px; flex-shrink: 0; color: var(--bz-text-3); }
+.bz-lit-filter-ic svg { width: 100%; height: 100%; }
 ﻿/* ============================================================
  * 绗簩澶ц剳锛坰econdbrain 鍩燂紝ticket 103 寤?UI / 107 琛ユ牱寮忔枃浠?/ 108 闈㈡澘鎵撶（锛?
  * 鍏ㄩ儴琛ㄩ潰锛氫富闈㈡澘寮圭獥 / 妗岄潰绐勭獥 / 鍙傝€冨崱涓庢偓鍋滈瑙?/ AI 瀵硅瘽 / 绉诲姩绔娊灞?
