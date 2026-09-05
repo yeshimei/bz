@@ -2110,7 +2110,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cardpick-prev {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  /* 固定高：aspect-ratio 在 WebView2 flex stretch 组合下不生效（预览区塌陷，用户实测） */
+  height: 62px;
   border-radius: var(--bz-radius-sm);
   border: 1px solid var(--bz-border);
   background: var(--bz-surface-2);
