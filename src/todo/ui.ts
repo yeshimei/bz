@@ -41,7 +41,7 @@ import {
   formatRelativeTime, getCurrentNoteInfo, getCurrentCursorPosition,
   generateId, extractUrlAndDisplay, escapeHtml, fetchPageTitle,
 } from '../core/utils';
-import { TodoData } from './data';
+import { TodoData, DEFAULT_SCENARIOS } from './data';
 import { getDueStatus, formatDueText } from './due';
 import type { TodoItem } from './types';
 import { M } from './state';
@@ -63,7 +63,7 @@ const ICON = {
   search: 'search',
   add: 'plus',
   addScene: 'tag',
-  settings: 'settings-2',
+  settings: 'settings',
   empty: 'inbox',
   pos: 'pin',
   clear: 'x',
@@ -607,7 +607,7 @@ function renderMainHead(): void {
   const titleEl = overlay.querySelector('[data-todo-main-title]') as HTMLElement | null;
   const countEl = overlay.querySelector('[data-todo-main-count]') as HTMLElement | null;
   if (!titleEl || !countEl) return;
-  titleEl.textContent = M.activeScene;
+  titleEl.textContent = sceneLabel(M.activeScene);
   // 计数 = 当前场景 + 当前搜索下的条目总数与未完成数（对齐原型 updateCount）
   const items = getVisibleItems();
   const undone = items.filter((i) => !i.completed).length;
@@ -632,10 +632,21 @@ const SCENE_PSEUDO_ICONS: Record<string, { icon: string; cls?: string }> = {
   重要: { icon: ICON.star, cls: 'bz-ic--warning' },
 };
 
-/** 场景项前导元素 HTML（伪场景图标 / 用户场景色点；dotCls = .bz-rail-dot / .bz-mobstrip-dot 随宿主） */
+/** 场景名首 emoji（issue 200 拍板：行头三槽 = 图标/emoji/彩圆；带 emoji 的场景名以 emoji 作行头） */
+const LEADING_EMOJI_RE = /^(\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*)\s*/u;
+
+/** 场景显示名（剥掉作行头的首 emoji；「🏠 家」→「家」） */
+function sceneLabel(scene: string): string {
+  return scene.replace(LEADING_EMOJI_RE, '');
+}
+
+/** 场景项前导元素 HTML（三槽统一 14px 宽对齐：伪场景图标 / 场景名首 emoji / 场景色点；
+ *  dotCls = .bz-rail-dot / .bz-mobstrip-dot 随宿主，彩圆本体尺寸不变居中成槽） */
 function sceneLeadHtml(o: { scene: string; dot: string }, dotCls: string): string {
   const pseudo = SCENE_PSEUDO_ICONS[o.scene];
   if (pseudo) return iconSpan(pseudo.icon, pseudo.cls ?? '');
+  const emo = o.scene.match(LEADING_EMOJI_RE)?.[1];
+  if (emo) return `<span class="bz-rail-emoji">${esc(emo)}</span>`;
   if (!o.dot) return '';
   return `<span class="${dotCls}" style="--bz-rail-tint:${o.dot}"></span>`;
 }
@@ -652,7 +663,7 @@ function renderNav(): void {
   nav.innerHTML = sceneOptions()
     .map((o) => {
       const active = M.activeScene === o.scene;
-      return `<button class="bz-rail-item${active ? ' on' : ''}" data-todo-scene="${esc(o.scene)}">${sceneLeadHtml(o, 'bz-rail-dot')}<span class="bz-rail-name">${esc(o.scene)}</span><span class="bz-rail-count">${sceneCount(o.scene)}</span></button>`;
+      return `<button class="bz-rail-item${active ? ' on' : ''}" data-todo-scene="${esc(o.scene)}">${sceneLeadHtml(o, 'bz-rail-dot')}<span class="bz-rail-name">${esc(sceneLabel(o.scene))}</span><span class="bz-rail-count">${sceneCount(o.scene)}</span></button>`;
     })
     .join('');
   mountIcons(nav);
@@ -667,7 +678,7 @@ function renderMobScenes(): void {
   wrap.innerHTML = sceneOptions()
     .map((o) => {
       const active = M.activeScene === o.scene;
-      return `<button class="bz-mobstrip-chip${active ? ' is-on' : ''}" data-todo-scene="${esc(o.scene)}">${sceneLeadHtml(o, 'bz-mobstrip-dot')}${esc(o.scene)}</button>`;
+      return `<button class="bz-mobstrip-chip${active ? ' is-on' : ''}" data-todo-scene="${esc(o.scene)}">${sceneLeadHtml(o, 'bz-mobstrip-dot')}${esc(sceneLabel(o.scene))}</button>`;
     })
     .join('');
   mountIcons(wrap);
@@ -1216,7 +1227,8 @@ export function openEditor(item: TodoItem | null): void {
     };
     input.addEventListener('input', render);
     input.addEventListener('focus', render);
-    render();
+    // 初始不渲染、失焦收起（延时 150ms 让建议项 click 先落地）——获得焦点才展开（issue 200 拍板）
+    input.addEventListener('blur', () => { window.setTimeout(() => { sug.style.display = 'none'; }, 150); });
   }
   // 公开课课程路径（对照 memo：点建议记 path；手改名按名匹配兜底——课程标签跳转依赖 coursePath）
   let courseNotes: { name: string; path: string }[] = [];
@@ -1253,25 +1265,19 @@ export function openEditor(item: TodoItem | null): void {
   dueField.append(dueLabel, dueRow);
   form.appendChild(dueField);
 
-  // 📌 定位（拍板 = F 图标圆底：pin 装 22px 小圆底 + 文字素排，issue 199；
-  //        真实读取当前笔记与光标，绑定后转品牌色）
+  // 📌 定位（F 款已入组件库 .bz-btn--chip，issue 200；真实读取当前笔记与光标，绑定后转品牌色）
   const posRow = document.createElement('div');
   posRow.className = 'bz-todo-pos-row';
   const posState: { notePath: string | null; notePosition: { line: number; ch: number } | null } = {
     notePath: editing?.notePath || null,
     notePosition: editing?.notePosition || null,
   };
-  const posBtn = document.createElement('button');
-  posBtn.type = 'button';
-  posBtn.className = 'bz-btn bz-todo-pos-btn';
-  const posChip = document.createElement('span');
-  posChip.className = 'bz-pos-chip';
-  posChip.appendChild(uiIcon('pin'));
-  const posLabel = document.createElement('span');
-  posBtn.append(posChip, posLabel);
+  // 定位钮 = 组件库 chip 档（issue 200 F 款入库：.bz-btn--chip 图标圆底 + 文字素排）
+  const posBtn = uiBtn({ icon: 'pin', label: '定位到笔记', chip: true });
+  const posLabel = posBtn.lastElementChild as HTMLElement;
   const setPosBtn = (name: string, active: boolean) => {
     posLabel.textContent = name;
-    posBtn.classList.toggle('bz-todo-pos-btn-active', active);
+    posBtn.classList.toggle('is-on', active);
   };
   posBtn.addEventListener('click', () => {
     if (posState.notePath) {
@@ -1465,13 +1471,17 @@ function openAddSceneDialog(): void {
 
 // ---------- 场景管理（左栏场景项右键菜单 / 移动长按抽屉） ----------
 
-/** 场景项动作集（伪场景不挂，见 attachSceneActions） */
+/** 场景项动作集（伪场景不挂，见 attachSceneActions；默认场景禁重命名/删除——issue 200 拍板） */
 function buildSceneActions(scene: string): ItemAction[] {
-  return [
+  const actions: ItemAction[] = [
     { icon: ICON.settings, label: '在设置中编辑', title: '打开设置面板编辑场景列表', onClick: () => openTodoInSettings() },
+  ];
+  if (DEFAULT_SCENARIOS.includes(scene)) return actions;
+  actions.push(
     { icon: ICON.edit, label: '重命名', title: '重命名场景', onClick: () => openRenameSceneDialog(scene) },
     { icon: ICON.del, label: '删除场景', title: '删除场景', kind: 'danger', onClick: () => void deleteSceneConfirm(scene) },
-  ];
+  );
+  return actions;
 }
 
 /** 设置直达：关面板 → 设置面板定位待办域（头行设置钮 / 场景菜单「在设置中编辑」共用；
@@ -1494,8 +1504,9 @@ function commitScenarios(next: string[], okMsg: string): Promise<void> {
   });
 }
 
-/** 场景重命名浮层：批量改条目 scene 字段 + 更新设置串 */
+/** 场景重命名浮层：批量改条目 scene 字段 + 更新设置串（默认场景拒改，issue 200 拍板） */
 function openRenameSceneDialog(scene: string): void {
+  if (DEFAULT_SCENARIOS.includes(scene)) { notice('默认场景不支持重命名'); return; }
   const wrap = document.createElement('div');
   wrap.className = 'bz-todo-addscene';
   const title = document.createElement('div');
@@ -1543,8 +1554,10 @@ function openRenameSceneDialog(scene: string): void {
   setTimeout(() => { input.focus(); input.select(); }, 30);
 }
 
-/** 删除场景：非空条目确认迁入默认场景（memoDefaultScene，兜底其余场景第一个）；空场景直接确认移除 */
+/** 删除场景：非空条目确认迁入默认场景（memoDefaultScene，兜底其余场景第一个）；空场景直接确认移除
+ *  （默认场景拒删，issue 200 拍板） */
 async function deleteSceneConfirm(scene: string): Promise<void> {
+  if (DEFAULT_SCENARIOS.includes(scene)) { notice('默认场景不支持删除'); return; }
   const scenes = TodoData.getScenarios();
   const others = scenes.filter((s) => s !== scene);
   const defSetting = (tryGetSettings() as any).memoDefaultScene;

@@ -54,6 +54,20 @@ describe('bz ui 组件库', () => {
       const b = uiBtn({ label: 'x', tone: 'primary' });
       expect(b.classList.contains('bz-btn--primary')).toBe(true);
     });
+
+    it('chip 档（issue 200 F 款入库）：bz-btn--chip 图标包 .bz-btn-chip 圆底 + is-on 激活类', () => {
+      const b = uiBtn({ label: '定位到笔记', icon: 'pin', chip: true, on: true });
+      expect(b.classList.contains('bz-btn--chip')).toBe(true);
+      expect(b.classList.contains('is-on')).toBe(true);
+      const chip = b.querySelector('.bz-btn-chip');
+      expect(chip).not.toBeNull();
+      expect(chip!.querySelector('[data-icon="pin"]')).not.toBeNull();
+      // 文字在圆底之外的独立 span
+      expect(chip!.nextElementSibling?.textContent).toBe('定位到笔记');
+      // 非 chip 档不产生圆底
+      const plain = uiBtn({ label: 'x', icon: 'pin' });
+      expect(plain.querySelector('.bz-btn-chip')).toBeNull();
+    });
   });
 
   describe('uiIconBtn 图标按钮', () => {

@@ -14,6 +14,8 @@ export interface BzButtonOpts {
   title?: string;          // tooltip
   disabled?: boolean;
   danger?: boolean;        // 图标红（icon-btn 用）
+  chip?: boolean;          // 图标圆底档（.bz-btn--chip，issue 200 F 款入库）
+  on?: boolean;            // 激活态（chip 档 .is-on：整钮品牌色）
   className?: string;      // 附加类
   onClick?: () => void;
 }
