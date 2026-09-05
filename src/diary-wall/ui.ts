@@ -30,7 +30,7 @@
  * - 条目动作（issue 198 批次 A 收敛）：桌面右键 = core item-actions 跟手菜单（.bz-item-menu）；
  *   移动端单击 = 共享 .bz-sheet 底部抽屉（动作集与菜单不合并，维持域内现状）。
  */
-import type { EventRef, IconName } from 'obsidian';
+import { Component, MarkdownRenderer, type EventRef, type IconName } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
 import { uiIcon, uiSearch } from '../core/ui';
@@ -879,10 +879,10 @@ export class DiaryWallAppController {
 
   /**
    * Markdown 渲染正文（支持 Obsidian 语法；sourcePath 用条目 filename 供链接解析）。
-   * issue 215 两轮教训：①3s 超时竞速会在开墙并发渲染时把未完成卡误杀成纯文本；
-   * ②渲染进离屏容器 Obsidian 可能静默产出纯文本节点（detached 元素不被渲染管线处理）。
-   * 终版 = diary 域同款被验证模式：直接渲染进已挂载容器，无超时；渲染前清空垫底文本，
-   * 失败回退纯文本并 console.warn（用户可凭日志报障定位到具体条目）。
+   * issue 215 三轮定位终版：真凶是 `await import('obsidian')` 动态导入——打包后插件
+   * 环境解析不了裸模块名，导入即抛 TypeError（用户控制台 Failed to resolve module
+   * specifier 'obsidian'），渲染从未开始、永远走纯文本回退。全仓仅此一处动态导入，
+   * 改静态 import（diary/encrypt 域同款）；直挂已挂载容器、无超时、失败回退纯文本。
    */
   private async renderText(container: HTMLElement, md: string, e: WallEntry) {
     if (!md) {
@@ -890,7 +890,6 @@ export class DiaryWallAppController {
       return;
     }
     try {
-      const { Component, MarkdownRenderer } = await import('obsidian');
       const sourcePath = e.filename && e.filename.includes('/') ? e.filename : `${DIARY_DIRECTORY}/${e.date}.md`;
       const comp = new Component();
       try {
