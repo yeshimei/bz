@@ -1,9 +1,11 @@
-/* ==================== 收藏本域样式（src/favorites/styles.css，issue 219「亚麻记事板」换血） ====================
- * 视觉对齐拍板原型 C5 c5-linen.html（ADR-0097，域内皮肤先例：issue 210 --bz-* 作用域覆盖）：
- * 面板 = 亚麻十字纹浅色底（自绘，域内 token 作用域覆盖——rail/头行/工具行/空态等组件库
- * 基线在面板内自动亚麻化，不新造基线）；内容区 = 白卡多列卡流（和纸胶带 + 磁圆点标签色标，
- * 置顶金圈、归档褪色）。基线控件（按钮/输入/chip/rail/候选浮层/弹窗骨架）仍全部消费组件库。
- * 数据与交互契约零改动（同 ADR-0083 就地重写范式）。
+/* ==================== 收藏本域样式（src/favorites/styles.css，issue 219/219b「亚麻记事板」） ====================
+ * 视觉对齐拍板原型 C5 c5-linen.html（ADR-0097/0098，域内皮肤先例：issue 210 --bz-* 作用域覆盖）：
+ * 面板 = 亚麻十字纹浅色底（自绘，域内 token 作用域覆盖，组件库基线在面板内自动亚麻化）；
+ * 结构 = 壳头行 → 头区（手写体标题 + 副题「筛选名 · 计数」+ 主按钮「添加收藏」——主头行三要素
+ * 融进原型头区，ADR-0098 豁免拍板）→ 磁贴标签行（圆贴纸，桌面换行/移动横滑共用）→ 白卡多列卡流
+ * （和纸胶带 + 磁圆点标签色标，置顶金圈、归档褪色）。
+ * issue 219b 完全原型化：旧工作台骨架（左 rail / 主头行 / 搜索+排序工具行 / 移动搜索展开行）
+ * 全部退役；基线控件（按钮/输入/chip/候选浮层/弹窗骨架）仍全部消费组件库。
  */
 
 /* ---- 主面板尺寸 + 亚麻 token 作用域（骨架走 .bz-panel-frame，遮罩走 .bz-panel-overlay） ---- */
@@ -16,45 +18,74 @@
   --bz-text-2: #6d6455;
   --bz-text-3: #a89e8a;
   --bz-border: #ddd5c4;
-  width: 860px; max-width: calc(100vw - 32px); height: 600px; max-height: 92vh;
+  width: 960px; max-width: calc(100vw - 32px); height: 640px; max-height: 92vh;
   /* 亚麻十字纹（C5 规格：45°/-45° 双向细线叠米灰底） */
   background:
     repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.4) 0 2px, transparent 2px 4px),
     repeating-linear-gradient(-45deg, rgba(160, 150, 130, 0.16) 0 2px, transparent 2px 4px),
     var(--bz-surface-3);
 }
-/* 亚麻底上头行/主头行底透出织纹，去掉组件库默认面板底重复 */
-.bz-fav-panel .bz-panel-head,
-.bz-fav-panel .bz-main-head,
-.bz-fav-panel .bz-toolrow { background: transparent; }
-
-.bz-fav-body { display: flex; flex: 1; min-height: 0; --bz-rail-w: 168px; }
-/* rail 挂载点（uiRail 工厂注入 .bz-rail）：桌面并入 flex 轴，移动整栏隐藏 */
-.bz-fav-body aside { display: contents; }
-/* 亚麻底上 rail 微透明织纹衔接 */
-.bz-fav-panel .bz-rail { background: rgba(255, 255, 255, 0.28); }
+/* 亚麻底上壳头行透出织纹 */
+.bz-fav-panel .bz-panel-head { background: transparent; }
 
 /* 头部图标钮桌面隐藏（桌面无右上钮；移动显示） */
 .bz-fav-mob-only { display: none; }
 
-/* 排序浮岛容器（uiChoice float）不参与压缩 */
-.bz-fav-sort { flex-shrink: 0; }
+/* ---- 头区（主头行三要素的原型形态，ADR-0098） ---- */
+.bz-fav-body { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 2px var(--bz-space-lg) 0; }
+.bz-fav-hero { display: flex; align-items: center; gap: var(--bz-space-md); }
+.bz-fav-hero-title {
+  font-family: 'Segoe Print', KaiTi, cursive;
+  font-size: 30px; color: #b0575b; transform: rotate(-1.2deg); flex: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* 副题 = 主头行的标题（筛选名）· 计数（C5 原型副题形态） */
+.bz-fav-hero-sub {
+  display: flex; align-items: baseline; gap: 8px;
+  font-size: var(--bz-font-meta); color: var(--bz-text-2); margin-top: 8px; letter-spacing: 0.5px;
+}
+.bz-fav-hero-sub [data-fav-title] { font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
+.bz-fav-hero-dot { color: var(--bz-text-3); }
 
-/* ---- 移动端隐藏搜索行（桌面恒隐；头部搜索钮仅移动显示） ---- */
-.bz-fav-mobsearch { display: none; padding: 2px var(--bz-space-lg) 6px; flex-shrink: 0; }
-.bz-fav-mobsearch.bz-fav-mobsearch-show { display: block; }
-
-/* ---- 右栏 ---- */
-.bz-fav-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+/* ---- 磁贴标签行（桌面换行；移动横滑共用同一容器） ---- */
+.bz-fav-stickers { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 4px; }
+.bz-fav-stk {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: none; cursor: pointer; font: 12px/1 system-ui, 'Microsoft YaHei';
+  padding: 9px 13px; border-radius: 999px;
+  background: #fff; color: var(--bz-text-2);
+  box-shadow: 0 2px 6px rgba(120, 110, 90, 0.2);
+  position: relative;
+}
+/* 磁圆点风上钉：贴纸顶部小磁点（同卡 .bz-fav-dot 材质） */
+.bz-fav-stk::before {
+  content: ''; position: absolute; top: -4px; left: 50%; transform: translateX(-50%);
+  width: 9px; height: 9px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, #b9b2a2 75%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+.bz-fav-stk .bz-ic { width: 13px; height: 13px; }
+.bz-fav-stk-name { max-width: 8em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bz-fav-stk .bz-chip-cnt {
+  font-size: var(--bz-font-caption); background: var(--bz-surface-1); color: var(--bz-text-3);
+  border-radius: 99px; padding: 1px 6px; font-variant-numeric: tabular-nums;
+}
+.bz-fav-stk.is-on { background: #5a8f6d; color: #fff; }
+.bz-fav-stk.is-on::before { background: radial-gradient(circle at 35% 30%, #fff, #3d6b4d 75%); }
+.bz-fav-stk.is-on .bz-chip-cnt { background: rgba(255, 255, 255, 0.25); color: #fff; }
+/* 已归档灰贴纸 */
+.bz-fav-stk--grey { background: #e7e2d6; color: var(--bz-text-3); }
+.bz-fav-stk--grey.is-on { background: #8a8171; color: #fff; }
+.bz-fav-stk--grey.is-on .bz-chip-cnt { background: rgba(255, 255, 255, 0.25); color: #fff; }
 
 /* ---- 卡流（C5：多列白卡墙） ---- */
 .bz-fav-content {
   flex: 1; overflow-y: auto; min-height: 0;
   display: flex; flex-wrap: wrap; gap: 16px 14px; align-content: flex-start; align-items: flex-start;
-  padding: 14px var(--bz-space-md) var(--bz-space-md);
+  padding: 14px 2px var(--bz-space-md);
 }
 .bz-fav-card {
-  position: relative; width: 184px; flex: none; display: block;
+  position: relative; width: 196px; flex: none; display: block;
   background: var(--bz-surface-2); border: none; border-radius: 10px;
   padding: 24px 14px 12px; cursor: default; user-select: none; -webkit-user-select: none;
   box-shadow: 0 4px 12px rgba(120, 110, 90, 0.18);
@@ -78,7 +109,7 @@
   background: radial-gradient(circle at 35% 30%, #fff 0 20%, var(--c, #b9b2a2) 75%);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
-/* 置顶金圈（C5 规格；替代旧左缘品牌条） */
+/* 置顶金圈（C5 规格） */
 .bz-fav-card--pinned { box-shadow: 0 4px 12px rgba(120, 110, 90, 0.18), 0 0 0 2px #e0b73a; }
 .bz-fav-card--pinned:hover { box-shadow: 0 10px 22px rgba(120, 110, 90, 0.26), 0 0 0 2px #e0b73a; }
 /* 已归档视图卡：褪色冷存 */
@@ -166,7 +197,7 @@
 .bz-fav-form-actions { justify-content: flex-start; }
 .bz-fav-form-spacer { flex: 1; }
 
-/* ---- 移动端（≤768px）：真全屏 + 横滑 chips + 头行图标组；卡流转单列 ---- */
+/* ---- 移动端（≤768px）：真全屏 + 磁贴行横滑 + 头行图标组；卡流转单列 ---- */
 @media (max-width: 768px) {
   .bz-fav-panel {
     width: 100vw; height: 100vh; max-width: none; max-height: none;
@@ -174,13 +205,15 @@
   }
   .bz-fav-panel .bz-panel-head { padding-right: var(--bz-space-sm); } /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css） */
   .bz-fav-mob-only { display: inline-flex; }
-  .bz-fav-body aside { display: none; } /* 桌面 rail；移动走横滑 chips */
-  .bz-fav-panel .bz-main-head { display: none; } /* 桌面专属主头行；移动主按钮收头行图标组 */
-  .bz-fav-panel .bz-toolrow { display: none; }  /* 桌面工具栏；移动搜索走隐藏展开行 */
-  .bz-fav-panel .bz-mobstrip-chip { min-height: 44px; } /* 触控 ≥44px 档（设计手册 §8.2） */
-  .bz-fav-mobsearch .bz-input { height: 44px; }
-  .bz-fav-content { display: block; padding: var(--bz-space-sm) var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
-  .bz-fav-card { width: 100%; margin-bottom: 12px; padding: 20px 14px 12px; border-radius: 12px; }
+  .bz-fav-desk-add { display: none; } /* 桌面头区主按钮；移动走头行 ＋ 钮 */
+  .bz-fav-body { padding: 0 var(--bz-space-lg); }
+  .bz-fav-hero-title { font-size: 26px; }
+  /* 磁贴行转横滑（触控 ≥44px 档，设计手册 §8.2） */
+  .bz-fav-stickers { flex-wrap: nowrap; overflow-x: auto; margin: 12px calc(-1 * var(--bz-space-lg)) 2px; padding: 0 var(--bz-space-lg) 4px; scrollbar-width: none; }
+  .bz-fav-stickers::-webkit-scrollbar { display: none; }
+  .bz-fav-stk { min-height: 44px; flex: none; }
+  .bz-fav-content { display: block; padding: var(--bz-space-sm) 0 calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
+  .bz-fav-card { width: 100%; margin-bottom: 14px; padding: 20px 14px 12px; border-radius: 12px; }
   .bz-fav-title { -webkit-line-clamp: 2; }
   .bz-fav-desc { -webkit-line-clamp: 3; }
 }
