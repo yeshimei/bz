@@ -721,18 +721,19 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 
 /* ═══════════ C. 主头行 .bz-main-head ═══════════
    内容区主头行：当前分组标题(16px) + 计数 + spacer + 主按钮(30px)。
-   现状：todo/cinema/favorites/belongings 四份逐字同名结构。 */
+   标题与计数 baseline 对齐（issue 197：混合字号同线排印，对齐原型内联文本观感）；
+   按钮独立垂直居中。现状：todo/cinema/favorites/belongings 四份逐字同名结构。 */
 .bz-main-head {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: var(--bz-space-sm);
   padding: var(--bz-space-md) var(--bz-space-lg) 2px;
   flex-shrink: 0;
 }
 .bz-main-title { font-size: 16px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
 .bz-main-count { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
-.bz-main-spacer { flex: 1; }
-.bz-main-head .bz-btn { height: var(--bz-control-h-md, 30px); padding: 0 14px; font-size: var(--bz-font-meta); }
+.bz-main-spacer { flex: 1; align-self: stretch; }
+.bz-main-head .bz-btn { height: var(--bz-control-h-md, 30px); padding: 0 14px; font-size: var(--bz-font-meta); align-self: center; }
 
 /* ═══════════ D. 工具行 .bz-toolrow ═══════════
    主头行下的次级工具行：搜索 + 排序/筛选 + spacer。
@@ -931,6 +932,9 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   font-weight: var(--bz-weight-medium);
 }
 .bz-mobstrip-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--bz-rail-tint, var(--bz-text-3)); flex-shrink: 0; }
+/* chip 内 lucide 图标（待办伪场景前缀等；未选中弱化，选中随行色） */
+.bz-mobstrip-chip .bz-ic { width: 13px; height: 13px; flex-shrink: 0; color: var(--bz-text-3); }
+.bz-mobstrip-chip.is-on .bz-ic { color: inherit; }
 
 /* ≤768px 显示（桌面 none 即基类；域内不再写媒体查询） */
 @media (max-width: 768px) {

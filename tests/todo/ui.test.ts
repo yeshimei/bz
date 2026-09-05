@@ -12,6 +12,9 @@ import { openTodoPanel, closeTodoPanel, addTodo, openEditor } from '../../src/to
 import { openPomodoro, unloadPomodoro } from '../../src/pomodoro';
 import { TodoData } from '../../src/todo/data';
 
+// 设置面板 mock：头行设置钮/场景菜单「在设置中编辑」直达断言用（ui.ts 动态 import 同一模块）
+vi.mock('../../src/settings-panel', () => ({ openSettingsPanel: vi.fn() }));
+
 const SETTINGS = {
   storagePath: 'CONFIG/STORAGE',
   todoFilePath: 'CONFIG/STORAGE',
@@ -539,16 +542,16 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
     (hit as HTMLElement).click();
   }
 
-  it('「重要」伪场景：跨场景聚合 star 条目（star 图标 + 警示色点，范式照「今日」）', async () => {
+  it('「重要」伪场景：跨场景聚合 star 条目（star 图标即前导元素，无色点——issue 197）', async () => {
     const { app } = seedVault();
     openTodoPanel(app);
     await vi.waitFor(() => {
       expect(document.querySelector('[data-todo-scene="重要"]')).toBeTruthy();
     });
     const impBtn = document.querySelector('[data-todo-scene="重要"]') as HTMLElement;
-    // star 图标（mountIcons → setIcon mock 记 data-icon）+ 警示色点
+    // star 图标（mountIcons → setIcon mock 记 data-icon）即前导元素，原警示色点已删
     expect(impBtn.querySelector('[data-icon="star"]')).toBeTruthy();
-    expect(impBtn.querySelector('.bz-rail-dot')).toBeTruthy();
+    expect(impBtn.querySelector('.bz-rail-dot')).toBeNull();
     // 计数：未完成重要项仅 a（已完成次要项 d 不算）
     expect(impBtn.querySelector('.bz-rail-count')?.textContent).toBe('1');
     impBtn.click();
@@ -559,6 +562,67 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
     });
     // 主头行计数与伪场景同口径
     expect((document.querySelector('[data-todo-main-count]') as HTMLElement).textContent).toContain('1 项');
+  });
+
+  it('场景栏前导元素（issue 197）：全部/今日/重要 = 图标，用户场景 = 场景色点；计数素数无药丸底', async () => {
+    const { app } = seedVault();
+    openTodoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-todo-scene="学习"]')).toBeTruthy();
+    });
+    // 伪场景图标：全部=layers / 今日=sun / 重要=star（警示色修饰类保留）
+    const lead = (scene: string) => document.querySelector(`[data-todo-scene="${scene}"]`) as HTMLElement;
+    expect(lead('全部').querySelector('[data-icon="layers"]')).toBeTruthy();
+    expect(lead('今日').querySelector('[data-icon="sun"]')).toBeTruthy();
+    expect(lead('重要').querySelector('[data-icon="star"]')!.classList.contains('bz-ic--warning')).toBe(true);
+    expect(lead('全部').querySelector('.bz-rail-dot')).toBeNull();
+    expect(lead('今日').querySelector('.bz-rail-dot')).toBeNull();
+    // 用户场景保留色点、无图标
+    expect(lead('学习').querySelector('.bz-rail-dot')).toBeTruthy();
+    expect(lead('学习').querySelector('[data-icon]')).toBeNull();
+    // 计数走素数档（无 --pill 药丸底，收藏式保留给 favorites）
+    expect(lead('学习').querySelector('.bz-rail-count')!.classList.contains('bz-rail-count--pill')).toBe(false);
+    // 移动横滑条同口径：伪场景图标 + 用户场景色点
+    const mob = (scene: string) => document.querySelector(`[data-todo-mob-scenes] [data-todo-scene="${scene}"]`) as HTMLElement;
+    expect(mob('全部').querySelector('[data-icon="layers"]')).toBeTruthy();
+    expect(mob('学习').querySelector('.bz-mobstrip-dot')).toBeTruthy();
+  });
+
+  it('头行钮组（issue 197）：品牌块 + 右侧设置/关闭；设置直达设置面板待办域，关闭即收面板', async () => {
+    const { app } = seedVault();
+    openTodoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-todo-head-close]')).toBeTruthy();
+    });
+    // 品牌块图标 + 标题
+    expect(document.querySelector('.bz-panel-brand [data-icon="list-checks"]')).toBeTruthy();
+    expect((document.querySelector('.bz-panel-title') as HTMLElement).textContent).toBe('待办');
+    // 关闭钮 → 面板收起
+    (document.querySelector('[data-todo-head-close]') as HTMLElement).click();
+    expect(document.querySelector('.bz-panel-overlay')).toBeNull();
+    // 设置钮 → 关面板 + openSettingsPanel(app, 'todo') 直达待办设置项
+    openTodoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-todo-head-settings]')).toBeTruthy();
+    });
+    (document.querySelector('[data-todo-head-settings]') as HTMLElement).click();
+    const { openSettingsPanel } = await import('../../src/settings-panel');
+    expect(openSettingsPanel).toHaveBeenCalledWith(app, 'todo');
+    expect(document.querySelector('.bz-panel-overlay')).toBeNull();
+  });
+
+  it('「添加场景」挂场景列表尾部（issue 197）：紧随 nav 之后随列表滚动，不再占底栏', async () => {
+    const { app } = seedVault();
+    openTodoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-todo-addscene]')).toBeTruthy();
+    });
+    const add = document.querySelector('[data-todo-addscene]') as HTMLElement;
+    // 位置：.bz-rail-scroll 内、前一个兄弟 = 场景 nav（即紧贴最后一个场景之下）
+    expect(add.closest('.bz-rail-scroll')).toBeTruthy();
+    expect(add.previousElementSibling?.hasAttribute('data-todo-nav')).toBe(true);
+    // 旧 .bz-rail-foot 底栏不再渲染
+    expect(document.querySelector('.bz-todo-panel .bz-rail-foot')).toBeNull();
   });
 
   it('「今日」口径改只看今天：已完成区仅今天完成的，历史完成不显示', async () => {

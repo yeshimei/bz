@@ -14,10 +14,12 @@
 
 .bz-todo-body { display: flex; flex: 1; min-height: 0; }
 
-/* ---- 左场景栏补充（.bz-rail 骨架走共享；底部「添加场景」虚线钮为待办特有，
-   挂 .bz-rail-foot 内由其接管外距） ---- */
+/* ---- 左场景栏补充（.bz-rail 骨架走共享；「添加场景」虚线钮为待办特有，
+   issue 197 拍板：挂 .bz-rail-scroll 内场景列表尾部，紧贴最后一个场景之下（随列表滚动），
+   外距由本类自管） ---- */
 .bz-todo-side-add {
-  width: 100%; padding: 6px 10px;
+  width: auto; margin: var(--bz-space-sm) var(--bz-space-xs) var(--bz-space-md);
+  padding: 6px 10px; flex-shrink: 0;
   border: 1px dashed var(--bz-border-strong); border-radius: 8px;
   background: transparent; color: var(--bz-text-3); cursor: pointer;
   font-size: var(--bz-font-meta); font-family: inherit;
