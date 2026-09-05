@@ -301,6 +301,15 @@ describe('bookshelf 数据层', () => {
     expect(categoryList([...items, ...epub]).find((c) => c.name === '未分类')?.count).toBe(3);
   });
 
+  it('categoryList：「未分类」恒置底，不参与 zh 序（issue 204）', () => {
+    const vault = new MockVault();
+    vault.files.set('书库/甲.md', '---\ntags: [book]\ncategory: 阿德勒\n---'); // zh 序最前
+    vault.files.set('书库/乙.md', '---\ntags: [book]\ncategory: 哲学\n---'); // zh 序在「未分类」之后
+    vault.files.set('书库/丙.md', '---\ntags: [book]\n---'); // 无 category → 未分类
+    const list = categoryList(scanMarkdownBooks(makeApp(vault)));
+    expect(list.map((c) => c.name)).toEqual(['阿德勒', '哲学', '未分类']);
+  });
+
   it('catFilterItems + getDisplayItems：分类与状态正交叠加', () => {
     const { app } = seedVault();
     M.items = [...scanMarkdownBooks(app)];

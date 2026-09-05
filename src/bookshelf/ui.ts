@@ -66,11 +66,16 @@ function coverUrl(it: BookshelfItem, app: App): string | null {
   return null;
 }
 
-/** 封面区块：有图出图，无图出占位（books 图标）；坏图由 bindCoverFallback 回退占位 */
+/** 无封面占位：小图标 + 书名（纯图标大留白像加载失败，issue 204） */
+function coverPhHTML(title: string, cls: string): string {
+  return `<div class="bz-bs-cover-ph ${cls}">${iconSpan('library')}<div class="bz-bs-cover-ph-name">${esc(title)}</div></div>`;
+}
+
+/** 封面区块：有图出图，无图出占位；坏图由 bindCoverFallback 回退占位（data-bs-ph-title 供回退取书名） */
 function coverBlock(it: BookshelfItem, app: App, cls: string): string {
   const url = coverUrl(it, app);
-  if (!url) return `<div class="bz-bs-cover-ph ${cls}">${iconSpan('library')}</div>`;
-  return `<div class="bz-bs-cover ${cls}"><img src="${esc(url)}" alt="" loading="lazy"></div>`;
+  if (!url) return coverPhHTML(it.title, cls);
+  return `<div class="bz-bs-cover ${cls}" data-bs-ph-title="${esc(it.title)}"><img src="${esc(url)}" alt="" loading="lazy"></div>`;
 }
 
 /** B4：坏图回退占位块（capture 阶段接 error 不冒泡事件；img 原位替换为占位）。
@@ -83,7 +88,8 @@ function bindCoverFallback(container: HTMLElement): void {
     if (!img || img.tagName !== 'IMG') return;
     const ph = document.createElement('div');
     ph.className = 'bz-bs-cover-ph';
-    ph.innerHTML = iconSpan('library');
+    const title = img.closest('.bz-bs-cover')?.getAttribute('data-bs-ph-title') || '';
+    ph.innerHTML = `${iconSpan('library')}<div class="bz-bs-cover-ph-name">${esc(title)}</div>`;
     mountIcons(ph);
     img.replaceWith(ph);
   }, true);
@@ -185,11 +191,11 @@ function dashHTML(s: ReturnType<typeof computeStats>, now: Date): { desktop: str
     ? `<div class="bz-stat bz-stat--main bz-stat--text bz-stat--click" data-bs-anniv="${esc(itemId(anniv.item))}" role="button" title="点击回看这本书">
         <div class="bz-stat-label">${iconSpan(ICON.calendarHeart)}${anniv.years} 年前的今天</div>
         <div class="bz-stat-num">《${esc(anniv.item.title.slice(0, 14))}${anniv.item.title.length > 14 ? '…' : ''}》</div>
-        <div class="bz-stat-hint">你读完了这本书 · 读完于 ${esc(anniv.item.completionDate || '')}</div>
+        <div class="bz-stat-hint">${esc(anniv.item.completionDate || '')} 读完</div>
       </div>`
     : '';
   const bars = s.bars.map((b) => `
-    <div class="bz-bs-bar-col"><div class="bz-bs-bar${b.isThis ? ' this' : ''}${b.count === 0 ? ' zero' : ''}" style="height:${Math.max(3, Math.round((b.count / s.maxBar) * 56))}px"><span>${b.count || ''}</span></div>
+    <div class="bz-bs-bar-col"><div class="bz-bs-bar${b.isThis ? ' this' : ''}${b.count === 0 ? ' zero' : ''}" style="height:${Math.max(3, Math.round((b.count / s.maxBar) * 56))}px"><span>${b.count}</span></div>
     <div class="bz-bs-bar-label">${b.label}</div></div>`).join('');
   const desktop = `
     ${anniv ? annivCard : statCard('book-open', '正在读', `${s.reading.length} 本`, esc(accentHint), true, resumeAttr)}
