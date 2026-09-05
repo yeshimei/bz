@@ -48,6 +48,7 @@ import type { ClipNote } from './scan';
 // ================= 模块级 UI 引用 =================
 let overlayEl: HTMLElement | null = null;
 let railListEl: HTMLElement | null = null;
+let railFootEl: HTMLElement | null = null;
 let listEl: HTMLElement | null = null;
 let readerEl: HTMLElement | null = null;
 let readPaneEl: HTMLElement | null = null; // .bz-clip-read（键盘导航/打开笔记委托的常驻容器）
@@ -213,6 +214,7 @@ export function unloadPanel(): void {
   readerEl = null;
   readPaneEl = null;
   railListEl = null;
+  railFootEl = null;
   listEl = null;
   mobListEl = null;
   mobSourcesEl = null;
@@ -233,17 +235,18 @@ function buildDom(app: any): void {
       <!-- 桌面三栏 -->
       <div class="bz-clip-desk">
         <div class="bz-panel-head bz-panel-head--tall">
-          <div class="bz-panel-brand">${iconSpan('scissors', 'bz-ic--sm')}</div>
           <div class="bz-panel-title">剪藏本</div>
-          <div class="bz-clip-issue" data-clip-issue></div>
           <div class="bz-panel-head-sp"></div>
+          <div class="bz-clip-issue" data-clip-issue></div>
+          <div class="bz-clip-head-search bz-search">${iconSpan('search')}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点…"></div>
           <button class="bz-icon-btn" data-clip-settings title="打开剪藏本设置">${iconSpan('settings')}</button>
           <button class="bz-icon-btn" data-clip-desk-close title="关闭">${iconSpan('x')}</button>
         </div>
         <div class="bz-clip-desk-body">
           <div class="bz-rail bz-rail--wide bz-clip-rail">
-            <div class="bz-clip-rail-search bz-search">${iconSpan('search')}<input class="bz-input" type="text" data-clip-desk-search placeholder="搜索标题、摘要、站点、标签"></div>
+            <div class="bz-clip-rail-label">PLATFORM 平台</div>
             <div class="bz-rail-scroll" data-clip-rail></div>
+            <div class="bz-clip-rail-foot" data-clip-rail-foot></div>
           </div>
           <div class="bz-clip-mid">
             <div class="bz-clip-toc-head">目录</div>
@@ -282,6 +285,7 @@ function buildDom(app: any): void {
   document.body.appendChild(overlayEl);
 
   railListEl = overlayEl.querySelector('[data-clip-rail]');
+  railFootEl = overlayEl.querySelector('[data-clip-rail-foot]');
   listEl = overlayEl.querySelector('[data-clip-list]');
   readerEl = overlayEl.querySelector('[data-clip-reader]');
   readPaneEl = overlayEl.querySelector('[data-clip-read-pane]');
@@ -571,6 +575,12 @@ function renderRail(): void {
 
   railListEl.innerHTML = html;
   mountIcons(railListEl);
+  // rail 脚注（issue 214）：今日已读 N 篇（news.json stats.byDate，键 YYYY-MM-DD；缺省 0）
+  if (railFootEl) {
+    const d = new Date();
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    railFootEl.innerHTML = `今日已读<br><b>${M.stats?.byDate?.[key] || 0}</b> 篇`;
+  }
   // rail 源行动作（enh 包 4）：右键/长按出「全部标为已读」等源级批量操作——
   // rail 是导航层，动作挂在源行而非条目卡，中栏「列表零操作」拍板不被破坏
   const rows = railListEl.querySelectorAll<HTMLElement>('[data-src]');
@@ -623,6 +633,11 @@ function dotHtml(st: string): string {
   return `<span class="bz-clip-dot ${st}"></span>`;
 }
 
+/** 展示站点短名（issue 214 原型口径：果壳科学人 → 果壳，其余原样） */
+function siteShort(s: string): string {
+  return String(s || '').replace('果壳科学人', '果壳');
+}
+
 function renderList(): void {
   if (!listEl) return;
   const list = sortedView();
@@ -638,17 +653,13 @@ function renderList(): void {
   if (!list.some((a) => a.id === (M.cur && M.cur.id))) {
     M.cur = list[0];
   }
-  // 编辑部目录（issue 214）：大号序号领队，未读唯一视觉 = 序号颜色（状态圆点桌面退役）
+  // 编辑部目录（issue 214 原型对齐）：序号 + 标题 + 「站点 · 时间」一行；摘要不入目录
   listEl.innerHTML = list.map((a, i) => `
     <div class="bz-clip-item bz-clip-item--${a.st}${M.cur && M.cur.id === a.id ? ' on' : ''}" data-id="${escapeHtml(a.id)}">
       <span class="bz-clip-no">${String(i + 1).padStart(2, '0')}</span>
       <div class="bz-clip-item-main">
         <div class="bz-clip-item-t"><span>${escapeHtml(a.title)}</span></div>
-        ${a.summary ? `<div class="bz-clip-item-sum">${escapeHtml(a.summary)}</div>` : ''}
-        <div class="bz-clip-item-meta">
-          <span class="bz-clip-item-site">${escapeHtml(a.srcName)}</span>
-          <span class="bz-clip-item-time">${relTime(a.timeTs)}</span>
-        </div>
+        <div class="bz-clip-item-meta">${escapeHtml(siteShort(a.srcName))} · ${relTime(a.timeTs)}</div>
       </div>
     </div>`).join('');
   // 卡片右键/长按（item-actions 复用）
@@ -786,7 +797,6 @@ function renderReader(): void {
   setReadingSession(a.id);
   armAutoReading(a);
   const stLabel = a.st === 'saved' ? '已保存' : a.st === 'reading' ? '在读' : a.st === 'read' ? '已读' : '未读';
-  const flagCls = a.st === 'saved' ? 'ok' : a.st === 'reading' ? 'warn' : 'info';
   // 正文（enh 包 3）：news 现算；clip 懒加载 cachedRead → 剥 frontmatter → 段落化，按 path 缓存
   let paras = '';
   if (a.origin === 'clip') {
@@ -804,19 +814,15 @@ function renderReader(): void {
   readerEl.innerHTML = `
     <div class="bz-clip-art-title">${escapeHtml(a.title)}</div>
     <div class="bz-clip-art-meta">
-      <span class="bz-clip-art-site"><span data-clip-siteicon></span><span class="bz-clip-art-site-name">${escapeHtml(a.srcName)}</span></span>
-      ${a.typeLabel ? `<span class="bz-clip-art-type">${escapeHtml(a.typeLabel)}</span>` : ''}
       <span>${escapeHtml(a.timeText || relTime(a.timeTs))}</span>
-      <span class="bz-clip-art-flag ${flagCls}">${iconSpan(a.st === 'saved' ? 'check' : a.st === 'reading' ? 'book-open' : 'mail', 'bz-ic--xs')}${stLabel}</span>
+      <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${escapeHtml(siteShort(a.srcName))}</span></span>
+      <span class="bz-clip-art-state">${stLabel}</span>
     </div>
     <div class="bz-clip-art-fs" data-clip-fs></div>
     ${a.summary ? `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan('sparkles', 'bz-ic--xs')}摘要</span>${escapeHtml(a.summary)}</div>` : ''}
     <div class="bz-clip-art-md" data-clip-md>${paras || `<p class="dim">${escapeHtml(a.origin === 'clip' ? '（笔记暂无正文）' : '正文已清空（已处理条目）')}</p>`}</div>
     ${openNoteFoot}
   `;
-  // 站点图标（issue 206）：DOM 组装——先首字 chip 占位，高清 favicon 就绪后原位换图
-  const iconSlot = readerEl.querySelector('[data-clip-siteicon]') as HTMLElement | null;
-  if (iconSlot) iconSlot.replaceWith(a.domain ? siteIconEl(a.domain, a.srcName || a.site) : favChipEl(a.site));
   mountIcons(readerEl);
   bindImgFallback(readerEl);
   mountFontSizeSeg();
@@ -932,76 +938,14 @@ function stepArticle(delta: number): void {
   if (next && (!M.cur || next.id !== M.cur.id)) selectArticle(next.id);
 }
 
-// ---- 站点 favicon（issue 206：高清多源回退，全失败才首字 chip） ----
+// ---- 站点首字 chip（favicon 高清解析链已随 issue 214 阅读面极简化退役；chip 仍服务移动端） ----
 
-/** favicon 域名归一（承 core/dom DOMAIN_MAP 语义：长域→根域取图更稳） */
-const FAV_DOMAIN_MAP: Record<string, string> = {
-  'guokrapp.guokr.com': 'guokr.com',
-  'daily.zhihu.com': 'zhihu.com',
-  'www.zhihu.com': 'zhihu.com',
-  'api.zhihu.com': 'zhihu.com',
-};
-
-/** 候选源（高清 64px 取图、16px 显示保 retina 清晰）：yandex v2 → Google s2 → 站点根 favicon */
-function favSourceUrls(domain: string): string[] {
-  return [
-    `https://favicon.yandex.net/favicon/v2/${domain}?size=64`,
-    `https://www.google.com/s2/favicons?domain=${domain}&sz=64`,
-    `https://${domain}/favicon.ico`,
-  ];
-}
-
-const favOkCache = new Map<string, string>(); // 会话内 domain → 成功源 URL
-
-function favCacheKey(domain: string): string {
-  return `clipbook_fav_v1_${domain}`;
-}
-
-/** 逐源试探加载（离线 Image，成功回调真实 URL；全失败静默——调用方保留 chip 兜底） */
-function resolveFavicon(domain: string, onOk: (url: string) => void): void {
-  const mapped = FAV_DOMAIN_MAP[domain] || domain;
-  try {
-    const cached = localStorage.getItem(favCacheKey(mapped));
-    if (cached) { onOk(cached); return; }
-  } catch (e) { /* 忽略 */ }
-  if (favOkCache.has(mapped)) { onOk(favOkCache.get(mapped)!); return; }
-  const urls = favSourceUrls(mapped);
-  const probe = new Image();
-  let i = 0;
-  probe.onload = () => {
-    favOkCache.set(mapped, probe.src);
-    try { localStorage.setItem(favCacheKey(mapped), probe.src); } catch (e) { /* 容量满等忽略 */ }
-    onOk(probe.src);
-  };
-  probe.onerror = () => {
-    if (i < urls.length) probe.src = urls[i++]; // 换下一候选源
-  };
-  probe.src = urls[i++];
-}
-
-/** 首字 chip（favicon 全失败的兜底；加载期也作占位） */
+/** 首字 chip（加载期占位 / 移动端来源标识） */
 function favChipEl(site: string): HTMLElement {
   const el = document.createElement('span');
   el.className = 'bz-clip-favchip';
   el.textContent = String(site || '剪').slice(0, 1) || '剪';
   return el;
-}
-
-/** 站点图标 holder：先放 chip 占位，高清 favicon 就绪后原位换图（缓存命中同步换） */
-function siteIconEl(domain: string, site: string): HTMLElement {
-  const holder = document.createElement('span');
-  holder.className = 'bz-clip-favimg';
-  const chip = favChipEl(site);
-  holder.appendChild(chip);
-  resolveFavicon(domain, (url) => {
-    if (!holder.isConnected) return; // 已切走其他文章
-    const img = document.createElement('img');
-    img.alt = '';
-    img.addEventListener('error', () => img.replaceWith(chip), { once: true }); // 缓存 URL 失效回落 chip
-    img.src = url;
-    chip.replaceWith(img);
-  });
-  return holder;
 }
 
 // ================= 动作 =================

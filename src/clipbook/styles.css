@@ -30,16 +30,27 @@
 /* ==================== 桌面端（编辑部印刷风） ==================== */
 .bz-clip-desk { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 
-/* ---- 头行：报细线（2px 墨色底线）+ 期号行；品牌/⚙/✕ 走 issue 201 基线，域内只换皮 ---- */
+/* ---- 头行：报细线（2px 墨色底线）；左 = serif 刊名，右 = 期号 + 检索 + ⚙/✕（issue 201） ---- */
 .bz-clip-desk .bz-panel-head { border-bottom: 2px solid var(--clip-ink); }
-.bz-clip-desk .bz-panel-brand { font-family: var(--clip-serif); }
 .bz-clip-desk .bz-panel-title { font-family: var(--clip-serif); letter-spacing: 6px; font-weight: 700; color: var(--clip-ink); }
 .bz-clip-issue { font-size: 11px; color: var(--clip-muted); letter-spacing: 1px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* 头行检索：编辑部下划线检索（issue 214 原型对齐：搜索在头行右缘，不在 rail） */
+.bz-clip-head-search { position: relative; width: 250px; }
+.bz-clip-head-search .bz-ic { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; color: var(--clip-muted); }
+.bz-clip-head-search .bz-input {
+  width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--clip-line);
+  border-radius: 0; padding: 4px 2px 5px 22px; font-size: 12.5px; font-style: italic; color: var(--clip-ink);
+}
+.bz-clip-head-search .bz-input:focus { border-bottom-color: var(--clip-accent); box-shadow: none; }
 
 .bz-clip-desk-body { flex: 1; display: flex; min-height: 0; }
 
-/* ---- 左 rail：V1 点线索引（衬线名 + 点线引导 + 未读/总数；选中 = 行首墨方块 + 橘名） ---- */
-.bz-clip-rail { border-right: 1px solid var(--clip-line); }
+/* ---- 左 rail：V1 点线索引（栏头 + 衬线名 + 点线引导 + 未读/总数；选中 = 行首墨方块 + 橘名） ---- */
+.bz-clip-rail { width: 190px; border-right: 1px solid var(--clip-line); }
+.bz-clip-rail-label {
+  flex-shrink: 0; padding: 22px 22px 12px;
+  font-size: 11px; letter-spacing: 3px; color: var(--clip-muted);
+}
 /* bili 徽标紫单一事实源（批 C-11 契约；编辑部皮肤下徽标槽隐藏，规则保留防换肤回切失色） */
 .bz-clip-rail .bz-rail-badge.bili { --bz-rail-tint: #8b7cf6; }
 /* 徽标/图标槽隐藏（V1 纯文字；DOM 槽位保留给共享结构与测试） */
@@ -47,19 +58,20 @@
 .bz-clip-rail .bz-rail-ic { display: none; }
 .bz-clip-rail .bz-rail-item {
   display: flex; align-items: baseline; gap: 8px;
-  padding: 10px 18px 10px 20px; border-radius: 0;
+  padding: 10px 18px 10px 22px; border-radius: 0;
   border: none; background: transparent; position: relative;
 }
 .bz-clip-rail .bz-rail-item:hover { background: var(--clip-cream); }
 .bz-clip-rail .bz-rail-item.on { background: transparent; }
 .bz-clip-rail .bz-rail-item.on::before {
-  content: ''; position: absolute; left: 6px; top: 50%;
+  content: ''; position: absolute; left: 8px; top: 50%;
   width: 7px; height: 7px; transform: translateY(-50%);
   background: var(--clip-accent);
 }
 .bz-clip-rail .bz-rail-name {
+  flex: 0 1 auto; min-width: 0;
   font-family: var(--clip-serif); font-size: 14px; letter-spacing: .5px;
-  color: var(--clip-ink-2); min-width: 0;
+  color: var(--clip-ink-2);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .bz-clip-rail .bz-rail-item.on .bz-rail-name { color: var(--clip-accent); font-weight: 700; }
@@ -67,25 +79,22 @@
 .bz-clip-rail .bz-rail-count { margin-left: auto; font-size: 10.5px; color: var(--clip-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .bz-clip-rail .bz-rail-count b { color: var(--clip-accent); font-weight: 700; }
 .bz-clip-rail .bz-rail-item.on .bz-rail-count b { color: var(--clip-accent-soft); }
-
-/* rail 顶部搜索：编辑部下划线检索（细线 → 聚焦橘） */
-.bz-clip-rail-search { flex: 0 0 auto; padding: var(--bz-space-sm) 18px var(--bz-space-xs); }
-.bz-clip-rail-search .bz-input {
-  background: transparent; border: none; border-bottom: 1px solid var(--clip-line);
-  border-radius: 0; padding-left: 22px; font-size: 12.5px; font-style: italic; color: var(--clip-ink);
+/* rail 脚注：今日已读（报脚式细线 + 橘大数字） */
+.bz-clip-rail-foot {
+  flex-shrink: 0; margin: 0 18px; padding: 14px 2px 16px; border-top: 1px solid var(--clip-line);
+  font-size: 10.5px; color: var(--clip-muted); line-height: 1.9;
 }
-.bz-clip-rail-search .bz-input:focus { border-bottom-color: var(--clip-accent); box-shadow: none; }
-.bz-clip-rail-search .bz-ic { color: var(--clip-muted); }
+.bz-clip-rail-foot b { color: var(--clip-accent); font-size: 14px; }
 
-/* ---- 中栏：目录（serif 栏头 + 序号制条目） ---- */
-.bz-clip-mid { width: 336px; flex-shrink: 0; border-right: 1px solid var(--clip-line); display: flex; flex-direction: column; min-height: 0; }
+/* ---- 中栏：目录（serif 栏头 + 序号制条目：序号 + 标题 + 「站点 · 时间」） ---- */
+.bz-clip-mid { width: 360px; flex-shrink: 0; border-right: 1px solid var(--clip-line); display: flex; flex-direction: column; min-height: 0; }
 .bz-clip-toc-head {
-  flex-shrink: 0; padding: 16px 24px 10px;
+  flex-shrink: 0; padding: 18px 24px 12px;
   font-family: var(--clip-serif); font-size: 17px; font-weight: 700; letter-spacing: 3px; color: var(--clip-ink);
 }
 .bz-clip-list { flex: 1; overflow-y: auto; padding: 0 0 var(--bz-space-sm); }
 .bz-clip-item {
-  display: flex; gap: 12px; align-items: baseline;
+  display: flex; gap: 14px; align-items: baseline;
   padding: 13px 24px; border-radius: 0; cursor: pointer;
   border: 1px solid transparent; border-top-color: var(--clip-line-soft); position: relative;
 }
@@ -107,13 +116,8 @@
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .bz-clip-item:not(.bz-clip-item--unread) .bz-clip-item-t { font-weight: 400; color: var(--clip-dim); }
-.bz-clip-item-sum {
-  font-size: var(--bz-font-meta); color: var(--clip-dim); line-height: var(--bz-leading-normal);
-  margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-}
-.bz-clip-item-meta { display: flex; align-items: center; gap: var(--bz-space-sm); margin-top: 6px; font-size: var(--bz-font-caption); color: var(--clip-muted); }
-.bz-clip-item-site { font-weight: var(--bz-weight-medium); color: var(--clip-muted); letter-spacing: .5px; }
-.bz-clip-item-time { margin-left: auto; font-variant-numeric: tabular-nums; }
+/* meta 一行：「站点 · 时间」（原型对齐，左对齐不散排） */
+.bz-clip-item-meta { margin-top: 5px; font-size: 11px; color: var(--clip-muted); letter-spacing: .5px; }
 /* 空态 = uiEmpty（.bz-empty）工厂；域内只补满高居中（列表/阅读滚动容器内撑满） */
 .bz-clip-list .bz-empty,
 .bz-clip-read-body .bz-empty { height: 100%; }
@@ -122,29 +126,28 @@
 .bz-clip-read { flex: 1; min-width: 0; display: flex; flex-direction: column; background: transparent; }
 .bz-clip-read-scroll { flex: 1; overflow-y: auto; padding: 28px 44px 40px; }
 .bz-clip-read-body { max-width: 560px; margin: 0 auto; }
-/* 站点并入 meta 行（issue 214：独立站点行退役）；favicon 链路（issue 206）保留 */
-.bz-clip-art-site { display: inline-flex; align-items: center; gap: 6px; font-size: inherit; color: inherit; }
-.bz-clip-art-site-name { color: var(--clip-accent); font-weight: var(--bz-weight-semibold); }
-.bz-clip-favimg { display: inline-flex; }
-.bz-clip-favimg img { width: 16px; height: 16px; border-radius: 3px; }
+/* meta 一行：时间 · 站点（橘） · 状态（右缘灰）——原型对齐，无图标无底色 */
+.bz-clip-art-meta {
+  display: flex; align-items: baseline; gap: 14px;
+  font-size: 11.5px; color: var(--clip-muted);
+  padding-bottom: 16px; margin-bottom: 18px; border-bottom: 1px solid var(--clip-line);
+}
+.bz-clip-art-site { display: inline-flex; align-items: baseline; }
+.bz-clip-art-site-name { color: var(--clip-accent); font-weight: var(--bz-weight-semibold); letter-spacing: .5px; }
+.bz-clip-art-state { margin-left: auto; letter-spacing: 2px; }
+/* 移动端详情仍用彩色状态章与首字 chip（标准皮肤） */
 .bz-clip-favchip {
   width: 16px; height: 16px; border-radius: var(--bz-radius-xs); flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
   background: var(--bz-success);
 }
-/* .sm 14px 框为装饰性 favicon 回退字chip（正常渲染 favicon 图），字号不抬档（例外见收尾报告） */
+/* .sm 14px 框为装饰性 favicon 回退字chip，字号不抬档（例外见收尾报告） */
 .bz-clip-favchip.sm { width: 14px; height: 14px; font-size: 8px; }
 .bz-clip-art-title {
   font-family: var(--clip-serif); font-size: 24px; font-weight: var(--bz-weight-bold);
   line-height: 1.42; margin-bottom: 12px; color: var(--clip-ink);
 }
-.bz-clip-art-meta {
-  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  font-size: 11.5px; color: var(--clip-muted);
-  padding-bottom: 16px; margin-bottom: 18px; border-bottom: 1px solid var(--clip-line);
-}
-.bz-clip-art-type { background: transparent; border: 1px solid var(--clip-line); border-radius: var(--bz-radius-full); padding: 0 8px; font-size: 11px; color: var(--clip-muted); }
 .bz-clip-art-flag { display: inline-flex; align-items: center; gap: 4px; font-size: var(--bz-font-caption); font-weight: var(--bz-weight-semibold); border-radius: var(--bz-radius-xs); padding: 2px 8px; }
 .bz-clip-art-flag .bz-ic { width: 11px; height: 11px; }
 .bz-clip-art-flag.info { color: var(--bz-info); background: color-mix(in srgb, var(--bz-info) 13%, transparent); }
@@ -186,12 +189,13 @@
 .bz-clip-art-foot span:hover { color: var(--clip-accent-soft); }
 .bz-clip-art-foot .bz-ic { width: 12px; height: 12px; }
 
-/* ---- 右键菜单域内换肤（core item-actions 结构不变，仅 .bz-clip-frame 子树内覆写） ---- */
+/* ---- 右键菜单域内换肤（core item-actions 结构不变；无图标纯衬线文字，对齐原型） ---- */
 .bz-clip-frame .bz-item-menu {
   background: var(--clip-paper); border: 1px solid var(--clip-ink); border-top-width: 3px;
-  border-radius: 0; box-shadow: 5px 5px 0 rgba(28, 26, 23, .16);
+  border-radius: 0; box-shadow: 5px 5px 0 rgba(28, 26, 23, .16); min-width: 148px;
 }
-.bz-clip-frame .bz-item-menu-item { font-family: var(--clip-serif); letter-spacing: 1px; }
+.bz-clip-frame .bz-item-menu .bz-item-menu-icon { display: none; }
+.bz-clip-frame .bz-item-menu-item { font-family: var(--clip-serif); letter-spacing: 2px; padding: 10px 18px; border-radius: 0; justify-content: space-between; }
 .bz-clip-frame .bz-item-menu-item:hover { background: var(--clip-ink); color: var(--clip-paper); }
 
 /* ---- 右键菜单头（item-actions 抽屉头） ---- */
@@ -217,6 +221,13 @@
 }
 .bz-clip-mob-item:hover { background: var(--bz-surface-hover); }
 .bz-clip-mob-item .bz-clip-item-t { -webkit-line-clamp: 2; }
+.bz-clip-item-sum {
+  font-size: var(--bz-font-meta); color: var(--bz-text-2); line-height: var(--bz-leading-normal);
+  margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+/* 移动条目 meta（站点/时间散排 + 状态点：桌面目录为序号制一行制，不消费这些类） */
+.bz-clip-mob-item .bz-clip-item-meta { display: flex; align-items: center; gap: var(--bz-space-sm); margin-top: 6px; font-size: var(--bz-font-caption); color: var(--bz-text-3); }
+.bz-clip-mob-item .bz-clip-item-time { margin-left: auto; }
 
 /* 移动详情（屏2 overlay） */
 .bz-clip-mob-detail {
