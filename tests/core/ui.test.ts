@@ -241,6 +241,34 @@ describe('bz ui 组件库', () => {
       expect(el.querySelectorAll('.is-on')).toHaveLength(1);
       expect((el.querySelector('.bz-choice-btn.is-on') as HTMLElement).dataset.value).toBe('b');
     });
+
+    it('浮岛指示器先建后挂自愈（issue 200 修复）：默认选中项挂载后自动量位，无需先点击', async () => {
+      // 编辑器/弹窗都是先建表单（未挂载）后挂 modal——首绘量位必须能等挂载后自愈
+      const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+        if (this.classList.contains('bz-choice--float')) return { width: 300, left: 100, top: 0, right: 0, bottom: 0, height: 30 } as DOMRect;
+        if (this.tagName === 'BUTTON' && this.classList.contains('is-on')) return { width: 64, left: 104, top: 0, right: 0, bottom: 0, height: 24 } as DOMRect;
+        return { width: 0, left: 0, top: 0, right: 0, bottom: 0, height: 0 } as DOMRect;
+      });
+      try {
+        const { el, detach } = uiChoice({
+          options: [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }],
+          value: 'b',
+          float: true,
+          onChange: () => {},
+        });
+        const seg = el.querySelector('.bz-choice-seg') as HTMLElement;
+        expect(seg.style.width).toBe(''); // 未挂载：首绘没量到，但已排队重试
+        document.body.appendChild(el); // 后挂（uiModal append 时机）
+        await vi.waitFor(() => {
+          expect(seg.style.width).toBe('64px');
+          expect(seg.style.transform).toBe('translateX(4px)');
+        });
+        detach();
+        el.remove();
+      } finally {
+        rectSpy.mockRestore();
+      }
+    });
   });
 
   describe('uiIcon', () => {

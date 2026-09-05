@@ -23,14 +23,16 @@ export function uiChoice<T extends string>(opts: BzChoiceOpts<T>): { el: HTMLDiv
   let segRAF = 0;
   let segTries = 0;
   /** 量选中项位置 → 指示器 transform/width；animate=false 用于首绘（不播动画）。
-   *  未布局（刚挂载/隐藏容器）时限次 rAF 重试；重试上限防 display:none 死循环 */
+   *  未挂载（弹窗先建表单后挂 modal，issue 200 修复）或未布局（隐藏容器/首帧）都限次
+   *  rAF 重试——此前 !isConnected 直接 return，默认选中项的指示器要等首次点击才出现；
+   *  重试上限防永不挂载/display:none 死循环 */
   const syncSeg = (animate: boolean) => {
-    if (!opts.float || !el.isConnected) return;
+    if (!opts.float) return;
     const on = el.querySelector('.bz-choice-btn.is-on') as HTMLElement | null;
     if (!on) return;
     const tb = el.getBoundingClientRect();
     const bb = on.getBoundingClientRect();
-    if (!tb.width || !bb.width) {
+    if (!el.isConnected || !tb.width || !bb.width) {
       if (segTries++ > 120) return;
       cancelAnimationFrame(segRAF);
       segRAF = requestAnimationFrame(() => syncSeg(false));
