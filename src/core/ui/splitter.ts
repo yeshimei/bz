@@ -1,11 +1,11 @@
 /* ============================================================
  * bz 组件库 · 竖向分割线拖拽（src/core/ui/splitter.ts）
- * issue 220：多栏面板的栏间可拖分割线——拖动改左栏定宽
+ * issue 222：多栏面板的栏间可拖分割线——拖动改左栏定宽
  *   （left.style.width，契约：左栏须为 width 驱动的定宽布局），
  *   右栏弹性吸收剩余空间。
  * 触屏（coarse pointer）不挂载：返回空转句柄 + 隐藏样式（.bz-vsplit
  *   的 pointer:coarse 媒体查询兜底），移动端布局不受影响。
- * 拖拽收尾吞终端 click（issue 220 同 uiResizable）：mouseup 落列表行/
+ * 拖拽收尾吞终端 click（issue 222 同 uiResizable）：mouseup 落列表行/
  *   遮罩时 click 派发公共祖先，误触发行点击/点遮罩关闭。
  * 尺寸记忆：可选 persist——restore() 由宿主在面板可见后调用
  *   （display:none 容器 clientWidth=0 无法钳制，挂载时机不可靠），

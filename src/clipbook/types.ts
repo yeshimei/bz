@@ -12,7 +12,7 @@ export type ClipState = 'unread' | 'reading' | 'read' | 'saved';
 /** 条目来源：news.json（聚合讯）或剪藏目录（.md frontmatter） */
 export type ClipOrigin = 'news' | 'clip';
 
-/** 源类型：收件流（news 聚合） / 剪藏本（目录） / 全部聚合 / 站点（issue 220） */
+/** 源类型：收件流（news 聚合） / 剪藏本（目录） / 全部聚合 / 站点（issue 222） */
 export type RailKind = 'inbox' | 'clip' | 'all' | 'site';
 
 /**

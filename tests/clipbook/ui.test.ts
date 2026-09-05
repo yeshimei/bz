@@ -222,7 +222,7 @@ describe('clipbook UI 桌面三栏', () => {
     closePanel();
   });
 
-  it('G：空列表清 M.cur——reader 空态，不残留上一源文章（issue 220 起 rail 站点行恒非空，空态经搜索零命中驱动同一 renderList 分支）', async () => {
+  it('G：空列表清 M.cur——reader 空态，不残留上一源文章（issue 222 起 rail 站点行恒非空，空态经搜索零命中驱动同一 renderList 分支）', async () => {
     await openDesktop();
     expect(M.cur).toBeTruthy();
     const input = document.querySelector('[data-clip-desk-search]') as HTMLInputElement;
@@ -239,7 +239,7 @@ describe('clipbook UI 桌面三栏', () => {
     // 初始 = 全部未读
     expect(M.sel.kind).toBe('all');
     const findRow = (txt: string) => [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes(txt)) as HTMLElement;
-    // 点 B站 站点源（issue 220 site 行）→ 选中；再点同源 → 回全部未读
+    // 点 B站 站点源（issue 222 site 行）→ 选中；再点同源 → 回全部未读
     const biliRow = findRow('B站');
     biliRow.click();
     await vi.waitFor(() => expect(M.sel.kind).not.toBe('all'));
@@ -251,7 +251,7 @@ describe('clipbook UI 桌面三栏', () => {
     closePanel();
   });
 
-  it('issue 220：rail 站点行——news 站点=平台、剪藏缺 site 归「未知」、saved 命中不建行；点行看该站列表', async () => {
+  it('issue 222：rail 站点行——news 站点=平台、剪藏缺 site 归「未知」、saved 命中不建行；点行看该站列表', async () => {
     await openDesktop();
     const rows = [...document.querySelectorAll('.bz-rail-item')] as HTMLElement[];
     const texts = rows.map((r) => r.textContent!);

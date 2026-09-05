@@ -2432,7 +2432,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   overflow: hidden;
 }
 
-/* ═══════════ A2. 竖向分割线 .bz-vsplit（issue 220）═══════════
+/* ═══════════ A2. 竖向分割线 .bz-vsplit（issue 222）═══════════
    多栏面板栏间可拖分条（uiVSplitter）：平时零视觉（贴合面板底色），
    hover/拖拽点亮 brand-soft；触屏隐藏（移动端布局无栏宽拖拽）。 */
 .bz-vsplit {

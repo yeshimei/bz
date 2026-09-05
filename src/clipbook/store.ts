@@ -159,7 +159,7 @@ export function clipUrlSet(notes: Array<{ url?: string }>): Set<string> {
  * 视图查询：按源过滤条目。
  * - all/未读：仅未处理 news（read!==true）的 unread/reading 派生，saved 隐藏；
  * - 平台/UP：该来源未处理 news（read!==true），saved 隐藏；
- * - site（issue 220）：该站点未处理 news（saved 隐藏）+ 该站剪藏全量，时间降序；
+ * - site（issue 222）：该站点未处理 news（saved 隐藏）+ 该站剪藏全量，时间降序；
  * - clip：剪藏目录全部（ClipArticle 直接返回，天然 saved）。
  * news 面按 timeTs 降序（issue 206：聚合讯新文章排对应列表最前）。
  */
@@ -181,7 +181,7 @@ export function queryBySource(
   // news 面：只取未处理（read!==true；骨架/已处理不进收件流）
   const pool = (articles || []).filter((a) => !a.read);
   const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
-  // site 源（issue 220）：该站未读 news 流（saved 命中照常隐藏）+ 该站剪藏全量
+  // site 源（issue 222）：该站未读 news 流（saved 命中照常隐藏）+ 该站剪藏全量
   if (source.kind === 'site') {
     const s = normSite(source.site);
     const newsPart = pool
@@ -241,7 +241,7 @@ export async function writeNewsState(raw: any, action: 'save' | 'read' | 'skip')
 }
 
 
-// ===== 站点聚合（issue 220：rail 按 site 属性分类，平台聚合行退役）=====
+// ===== 站点聚合（issue 222：rail 按 site 属性分类，平台聚合行退役）=====
 
 /** site 归一：去首尾空白，空值归「未知」桶 */
 function normSite(s: string): string {

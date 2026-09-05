@@ -146,7 +146,7 @@ export default interface BzSettings {
   clipbookPanelWidth: number;
   /** 剪藏本面板桌面尺寸记忆（ADR-0084；0=未拖过） */
   clipbookPanelHeight: number;
-  /** 剪藏本目录栏宽度记忆（issue 220：拖动中/右栏分割线后记住；0=未拖过走默认 360px） */
+  /** 剪藏本目录栏宽度记忆（issue 222：拖动中/右栏分割线后记住；0=未拖过走默认 360px） */
   clipbookMidWidth: number;
 
   // ===== 🔐 密码本（4 项）=====
@@ -513,7 +513,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // clipbook：面板桌面尺寸记忆（ADR-0084；0=未拖过）
   clipbookPanelWidth: 0,
   clipbookPanelHeight: 0,
-  // clipbook：目录栏宽度记忆（issue 220 分割线拖宽；0=未拖过）
+  // clipbook：目录栏宽度记忆（issue 222 分割线拖宽；0=未拖过）
   clipbookMidWidth: 0,
 
 

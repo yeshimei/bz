@@ -15,7 +15,7 @@
  *   save() 落盘（仿 todo 域 rememberPanelSize trailing 防抖），句柄另有
  *   flush()（立即落盘待存尾值，无待存 no-op；域内「关面板即落盘」用），
  *   detach 时未落盘的尾值也立即 flush 防丢。不传 persist 行为不变（向后兼容）。
- * 拖拽收尾吞终端 click（issue 220）：mousedown 在面板热区、mouseup 落遮罩时 click
+ * 拖拽收尾吞终端 click（issue 222）：mousedown 在面板热区、mouseup 落遮罩时 click
  *   派发公共祖先遮罩 → 「点遮罩关闭」误触发；经 core/dom swallowNextClick 统一防线，
  *   todo/剪藏本/保险库等「缩放热区 × 点遮罩关闭」组合全量受益。
  * 注意：移动端（触屏）请勿挂载——本工厂只处理 mouse 指针事件。
@@ -168,7 +168,7 @@ export function uiResizable(el: HTMLElement, opts: BzResizableOpts = {}): {
     dir = null;
     document.body.style.userSelect = '';
     setCursor(null);
-    // 拖拽终端 click 是拖拽残影而非用户点击意图（issue 220：落遮罩会误关窗口），吞掉
+    // 拖拽终端 click 是拖拽残影而非用户点击意图（issue 222：落遮罩会误关窗口），吞掉
     swallowNextClick();
   };
 

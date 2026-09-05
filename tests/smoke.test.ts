@@ -273,7 +273,7 @@ describe('bz 骨架冒烟', () => {
     expect(s.passwordLength).toBe('16');
     // clipbook（ADR-0082）：移动端默认全屏对齐 clipping 默认开
     expect(s.clipbookMobileDefaultFullscreen).toBe(true);
-    // issue 220：目录栏宽度记忆（分割线拖宽），0 = 未拖过走 CSS 默认 360px
+    // issue 222：目录栏宽度记忆（分割线拖宽），0 = 未拖过走 CSS 默认 360px
     expect(s.clipbookMidWidth).toBe(0);
     // 待办面板皮肤（issue 210 四轮）：默认风格下线，缺省 = 纸感手账
     expect(s.todoSkin).toBe('paper');
