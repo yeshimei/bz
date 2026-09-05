@@ -810,23 +810,34 @@ export class DiaryWallAppController {
       const hasMedia = e.media.length > 0;
       const container = ui.wall.lastChild as HTMLElement;
       if (hasMedia) {
-        // issue 213：按原文段落序渲染（文字段/媒体段交错保留）——
-        // 旧逻辑每个媒体块下都挂整条 e.text，原文「文字·图·文字·图」被压平后全文重复两遍
-        for (const seg of e.segments ?? []) {
-          if (seg.kind === 'media') {
-            const item = document.createElement('div');
-            item.className = 'bz-diary-wall-item bz-diary-wall-media-wrap';
-            item.dataset.widx = String(widx);
-            item.appendChild(this.mediaEl(seg.media, e, mobile));
-            // 媒体块不挂 ⋯ 按钮（用户要求去掉右上角三点；动作入口 = 右键菜单 / 双击）
-            this.bindItem(item, e, mobile);
-            container.appendChild(item);
+        // issue 214 拍板版式：一卡 = 顶部「时间 + 类型」行 → 拼接全文（markdown 渲染）
+        // → 图片/视频竖排堆叠下方。媒体单独提取、文字拼在一起置顶（issue 213 段序版文字被拆散，退回整卡）。
+        const item = document.createElement('div');
+        item.className = 'bz-diary-wall-item bz-diary-wall-media-wrap';
+        item.dataset.widx = String(widx);
+        if (e.text) {
+          const row = document.createElement('div');
+          row.className = 'bz-diary-wall-text-row';
+          const t = document.createElement('span');
+          t.className = 'bz-diary-wall-text-t';
+          t.textContent = e.time;
+          const em = document.createElement('span');
+          em.className = 'bz-diary-wall-text-em';
+          em.textContent = e.emoji;
+          row.append(t, em);
+          const tx = document.createElement('div');
+          tx.className = 'bz-diary-wall-text-tx bz-diary-wall-md';
+          if ((e.encrypted || e.tags.includes('加密')) && !this.lockedVisible) {
+            tx.textContent = '（已加密）';
           } else {
-            const item = this.textItem(e, seg.text, widx);
-            this.bindItem(item, e, mobile);
-            container.appendChild(item);
+            void this.renderText(tx, e.text, e);
           }
+          item.append(row, tx);
         }
+        e.media.forEach((k) => item.appendChild(this.mediaEl(k, e, mobile)));
+        // 媒体块不挂 ⋯ 按钮（用户要求去掉右上角三点；动作入口 = 右键菜单 / 双击）
+        this.bindItem(item, e, mobile);
+        container.appendChild(item);
       } else {
         const item = this.textItem(e, e.text, widx);
         this.bindItem(item, e, mobile);
