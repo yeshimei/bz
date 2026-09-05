@@ -28,12 +28,12 @@ import { escManager } from '../core/esc-manager';
 import { allocZ } from '../core/z-order';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
-import { uiModal, uiChoice, uiRange, uiSelect, uiEmpty, uiChip, uiSegmented, mountIcons } from '../core/ui';
+import { uiModal, uiChoice, uiRange, uiEmpty, uiChip, uiSegmented, mountIcons } from '../core/ui';
 import { escapeHtml } from '../core/utils';
 import { isMobileEnv } from '../core/mobile';
 import { renderReadingReport, cancelReadingReport, handleReportInteraction } from '../reading-report';
 import {
-  STATUS_COLORS, SIDE_DEFS, SORT_LABEL, ICON,
+  STATUS_READING, STATUS_DONE, STATUS_COLORS, SIDE_DEFS, SORT_LABEL, ICON,
   EMPTY_BOOKS_ICON, EMPTY_SEARCH_ICON, EMPTY_FILTER_ICON,
 } from './constants';
 import { M, resetBookshelfState, applyDefaultView, type BookshelfItem, type BookshelfView, type SideId, type SortKey } from './state';
@@ -233,10 +233,14 @@ function bookCardHTML(it: BookshelfItem, app: App): string {
     ? `<div class="bz-progress bz-progress--thin bz-bs-prog"><i style="width:${Math.min(100, it.progress)}%"></i></div>` : '';
   const quote = it.bookReview
     ? `<div class="bz-bs-quote">${esc(it.bookReview.replace(/\[\[.*?\]\]/g, '').slice(0, 48))}</div>` : '';
+  // 状态角标（issue 207 拍板）：圆点改浅底小字签，已读不出任何东西
+  const statusTag = it.status === STATUS_DONE
+    ? ''
+    : `<span class="bz-bs-status-tag${it.status === STATUS_READING ? ' reading' : ''}">${esc(it.status)}</span>`;
   // B5：路径含引号会截断 HTML 属性 → esc() 转义；回查时浏览器已解码为原值
   return `<div class="bz-bs-book" data-bs-id="${esc(it.file?.path ?? it.epubVaultPath ?? '')}" data-bs-epub="${it.isEpub ? '1' : ''}">
     <div class="bz-bs-cover-wrap">${coverBlock(it, app, '')}${prog}
-      <span class="bz-bs-statusdot" style="background:${statusColor(it.status)}"></span>${quote}
+      ${statusTag}${quote}
     </div>
     <div class="bz-bs-bname" title="${esc(it.title)}">${esc(it.title)}</div>
     <div class="bz-bs-bauthor">${esc(it.author)}</div>
@@ -247,7 +251,7 @@ function renderShelves(app: App): void {
   const list = getDisplayItems();
   // B9：空态三态区分——库空 / 搜索无命中 / 状态筛无书（图标语义各自匹配）
   const emptyCfg = !M.items.length
-    ? { icon: EMPTY_BOOKS_ICON, title: '书架墙还是空的', desc: `把书籍笔记放进「${resolveFolderPath()}」文件夹，并在 frontmatter 添加 tags: ${resolveBookTag()} 标签` }
+    ? { icon: EMPTY_BOOKS_ICON, title: '书库还是空的', desc: `把书籍笔记放进「${resolveFolderPath()}」文件夹，并在 frontmatter 添加 tags: ${resolveBookTag()} 标签` }
       : M.searchKeyword
         ? { icon: EMPTY_SEARCH_ICON, title: '没有找到相关的书', desc: '试试其他关键词，或换一个筛选' }
         : { icon: EMPTY_FILTER_ICON, title: '这个筛选下还没有书', desc: '换一个状态或分类筛选，或用搜索找找' };
@@ -281,14 +285,14 @@ export { renderAll };
 
 // ---------- 面板内视图（读书报告内嵌化：书架列表 / 阅读分析报告） ----------
 
-/** 左栏底部报告入口：书架视图 = 「阅读分析报告 ›」；报告视图 = 「‹ 返回书架」（桌面返回路径） */
+/** 左栏底部报告入口：书库视图 = 「阅读分析报告 ›」；报告视图 = 「‹ 返回书库」（桌面返回路径） */
 function paintReportEntry(): void {
   const btn = M.currentOverlay?.querySelector('.bz-bs-report') as HTMLElement | null;
   if (!btn) return;
   const active = M.view === 'report';
   btn.classList.toggle('on', active);
   btn.innerHTML = active
-    ? `${iconSpan('arrow-left')}<span>返回书架</span>${iconSpan('chevron-right', 'bz-bs-report-chev')}`
+    ? `${iconSpan('arrow-left')}<span>返回书库</span>${iconSpan('chevron-right', 'bz-bs-report-chev')}`
     : `${iconSpan(ICON.report)}<span>阅读分析报告</span>${iconSpan('chevron-right', 'bz-bs-report-chev')}`;
   mountIcons(btn);
 }
@@ -791,14 +795,14 @@ export function createOverlay(app: App): void {
     <div class="bz-panel-frame bz-bs-panel bz-panel-mtop">
       <div class="bz-panel-head">
         <div class="bz-panel-brand">${iconSpan(ICON.bookOpen, 'bz-ic--sm')}</div>
-        <div class="bz-panel-title">书架墙<span class="bz-panel-head-sub"></span></div>
+        <div class="bz-panel-title">书库<span class="bz-panel-head-sub"></span></div>
         <span class="bz-panel-head-sp"></span>
         <div class="bz-panel-head-btns">
           ${iconBtnHTML(ICON.report, '阅读分析报告', 'report')}
           ${iconBtnHTML(ICON.sort, '排序', 'sort')}
           ${iconBtnHTML(ICON.search, '搜索', 'search')}
           <button class="bz-icon-btn bz-bs-filterbtn" id="bz-bs-filterbtn" data-bs-tool="filter" title="筛选"></button>
-          ${iconBtnHTML(ICON.settings, '打开书架墙设置', 'settings')}
+          ${iconBtnHTML(ICON.settings, '打开书库设置', 'settings')}
           ${iconBtnHTML(ICON.close, '关闭', 'close')}
         </div>
       </div>
@@ -832,7 +836,7 @@ export function createOverlay(app: App): void {
           <div class="bz-bs-view bz-bs-view-report">
             <div class="bz-rr-head">
               <span class="bz-rr-title">${iconSpan(ICON.report, 'bz-ic--sm')}阅读分析报告</span>
-              <button class="bz-icon-btn bz-rr-close" data-rr-goto-shelf title="返回书架">${iconSpan(ICON.close)}</button>
+              <button class="bz-icon-btn bz-rr-close" data-rr-goto-shelf title="返回书库">${iconSpan(ICON.close)}</button>
             </div>
             <div class="bz-rr-content"></div>
           </div>
@@ -845,18 +849,20 @@ export function createOverlay(app: App): void {
   M.renderFn = () => renderAll(app);
   applyMobileWindowFullscreen(overlay.querySelector('.bz-bs-panel') as HTMLElement, fullscreen);
 
-  // 排序下拉（组件库 uiSelect 工厂；桌面工具栏占位槽）
+  // 排序浮岛（issue 207 拍板：uiChoice float 同待办/收藏本；四档收内容宽靠右，搜索框拉长）
   const sortSlot = overlay.querySelector('.bz-bs-sort-slot') as HTMLElement;
-  const sortSel = uiSelect<SortKey>({
+  const sortChoice = uiChoice<SortKey>({
     options: (Object.keys(SORT_LABEL) as SortKey[]).map((k) => ({ value: k, label: SORT_LABEL[k] })),
     value: M.sortMode,
+    float: true,
+    label: '排序方式',
     className: 'bz-bs-sort',
     onChange: (v) => {
       M.sortMode = v;
       renderShelves(app);
     },
   });
-  sortSlot.appendChild(sortSel.el);
+  sortSlot.appendChild(sortChoice.el);
 
   // 事件（单一委托）
   overlay.addEventListener('click', (e) => {
@@ -864,7 +870,7 @@ export function createOverlay(app: App): void {
     // 点遮罩 = 关闭主面板（桌面无关闭钮）
     if (e.target === overlay) { closeOverlay(); return; }
     // 详情弹窗内（uiModal mask 挂在 body，非 overlay 子级）不会被此委托命中
-    // 排序下拉（点击开关；菜单由 uiSelect 内部管理）
+    // 排序浮岛（点选即生效；选中态由 uiChoice 内部管理）
     if (t.closest('.bz-bs-sort')) return;
     const side = t.closest('[data-bs-side]') as HTMLElement | null;
     if (side) {

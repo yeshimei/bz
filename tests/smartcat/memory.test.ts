@@ -218,7 +218,7 @@ describe('观察可信度 credibility（085，ADR-0036）', () => {
 
   it('ruleCredibility 负向信号：news 跳过/移出书架 → 低档 0.3；其它来源负向词 −0.15（下限 0.25）', () => {
     expect(ruleCredibility('news', '你跳过了《X》（平台）')).toBe(0.3);
-    expect(ruleCredibility('domain:library', '你把《X》移出了书架')).toBe(0.3);
+    expect(ruleCredibility('domain:library', '你把《X》移出了书库')).toBe(0.3);
     expect(ruleCredibility('favorites', '你删除了收藏《X》')).toBeCloseTo(0.6, 10);
     expect(ruleCredibility('memo', '你删除了待办「X」')).toBeCloseTo(0.6, 10);
     expect(ruleCredibility('belongings', '你删除了物品《X》')).toBeCloseTo(0.6, 10);
@@ -270,7 +270,7 @@ describe('观察可信度 credibility（085，ADR-0036）', () => {
 
   it('addObservation 写入 credibility（来源档位 / 显式 opts 覆盖）', async () => {
     const m = make();
-    const mem: MemoryStreamEntry | null = await m.addObservation('你把《X》移出了书架', { source: 'domain:library' }) as MemoryStreamEntry | null;
+    const mem: MemoryStreamEntry | null = await m.addObservation('你把《X》移出了书库', { source: 'domain:library' }) as MemoryStreamEntry | null;
     expect(mem!.credibility).toBe(0.3);
     const mem2: MemoryStreamEntry | null = await m.addObservation('特殊观察', { source: 'chat', credibility: 0.8, importance: 0.6 }) as MemoryStreamEntry | null;
     expect(mem2!.credibility).toBe(0.8);

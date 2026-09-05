@@ -110,7 +110,7 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-cinema-open', name: '影院', icon: DOMAIN_ICONS.cinema, callback: () => openCinema(getApp()) },
   { id: 'bz-cinema-add', name: '加影视', icon: 'plus-circle', callback: () => addCinemaItem(getApp()) },
   // 书架墙（bookshelf 新域）
-  { id: 'bz-bookshelf-open', name: '书架墙', icon: DOMAIN_ICONS.bookshelf, callback: () => openBookshelf(getApp()) },
+  { id: 'bz-bookshelf-open', name: '书库', icon: DOMAIN_ICONS.bookshelf, callback: () => openBookshelf(getApp()) },
   // 复习计划（9 命令）
   { id: 'bz-review-open', name: '复习计划', icon: DOMAIN_ICONS.review, callback: () => openReviewPanel(getApp()) },
   // ticket 174：独立「复习计划分析报告」命令（直开统计弹窗）；图标弃 bar-chart-3（阅读分析报告独占，

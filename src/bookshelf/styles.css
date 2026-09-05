@@ -42,7 +42,8 @@
 /* 面板内视图（读书报告内嵌化拍板）：报告不再是独立弹窗，而是面板内的一个视图 */
 .bz-bs-view { display: none; flex: 1; flex-direction: column; min-height: 0; }
 .bz-bs-view.active { display: flex; }
-.bz-bs-search { flex: 0 0 240px; }
+/* 搜索框用共享 .bz-search 的 flex:1 弹性拉长（issue 207 拍板同待办；240px 定宽覆盖已删）；
+   排序浮岛收内容宽靠右 */
 .bz-bs-sort-slot { flex-shrink: 0; }
 
 /* 统计行（桌面 3 卡 + 月柱）＝ 共享 .bz-stat 卡 + 域内月柱卡；行内等分为域内布局。
@@ -111,11 +112,14 @@
 }
 /* hover 上抬（原型强调保留的唯一动效；阴影走 token 档，不留死色值） */
 .bz-bs-book:hover .bz-bs-cover-wrap { transform: translateY(-4px); box-shadow: var(--bz-shadow-sm); }
-/* 状态圆点（右上角） */
-.bz-bs-statusdot {
-  position: absolute; top: 7px; right: 7px; width: 9px; height: 9px;
-  border-radius: 50%; box-shadow: 0 0 0 2px var(--bz-surface-2);
+/* 状态角标（右上角浅底小字签，issue 207 拍板替代状态圆点）：未读=中性灰签、在读=品牌橙签、已读不渲染 */
+.bz-bs-status-tag {
+  position: absolute; top: 7px; right: 7px;
+  font-size: 10px; font-weight: var(--bz-weight-semibold); line-height: 16px;
+  padding: 1px 7px; border-radius: var(--bz-radius-full);
+  background: var(--bz-surface-hover); color: var(--bz-text-2);
 }
+.bz-bs-status-tag.reading { background: var(--bz-brand-soft); color: var(--bz-brand); }
 /* 进度细条 = 共享 .bz-progress .bz-progress--thin；域内只给封面底部绝对定位 */
 .bz-bs-prog { position: absolute; left: 0; right: 0; bottom: 0; }
 /* B6：有书评渐变浮层时进度条上移到浮层上方（quote 高 = 14pt + 1 行 16.5 + 6pt ≈ 37px），否则被渐变遮住 */

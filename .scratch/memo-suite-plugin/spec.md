@@ -969,3 +969,12 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **未分类恒置底**：`categoryList` zh 序加置底分支，最大桶不再混在列表中部。
 - **统计卡垂直居中** + 零值柱 `opacity: 0.45` 且显示数值 0（明示空非丢数据）。
 - **无封面占位出书名**：`coverPhHTML`（小图标 + 4 行钳制书名），坏图回退经 `data-bs-ph-title` 同款。
+
+### 书库正名 + 排序浮岛 + 月柱翻转 + 状态文字角标（issue 207，2026-09-06）
+
+> grill 四问拍板：正名范围=界面+小橘文案都改；工具行照待办（搜索拉长+浮岛右）；月柱本月置首；角标文案用数据词（用户更正：不引入「未看/在看」新词）。
+
+- **正名**：全部用户可见「书架墙」→「书库」（命令名/设置域名/面板头行/空态/设置钮题注/home 磁贴/体检报告三处/报告空态按钮/返回书库）；小橘「你把《X》加入/移出了书库」；CONTEXT.md「书库 (Library)」与「书架墙」词条合并 + _Avoid_；契约不动（bz-bookshelf-*、`书库/` 目录、设置键、frontmatter 状态值、来源标签/credibility 规则）。
+- **工具行**：桌面排序 uiSelect→uiChoice float（aria「排序方式」，`bz-bs-sort` 类保留供遮罩点击委托分流）；删域内 240px 定宽，搜索回落共享 flex:1 拉长；移动抽屉维持 uiSegmented。
+- **月柱**：bars.reverse()——本月首柱、isThis 随首柱；reading-report 年卡月柱为独立实现不动。
+- **角标**：`.bz-bs-status-tag` 浅底字签（未读灰签/在读橙签）替 `.bz-bs-statusdot`，已读零渲染（模板层 ternary）；statusColor 保留供详情弹窗 chip/编辑钮。

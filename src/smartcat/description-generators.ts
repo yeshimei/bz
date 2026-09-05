@@ -102,9 +102,9 @@ register('book', (s) => {
       return `你在《${name}》写了条想法`;
     }
     case 'added':
-      return `你把《${name}》加入了书架`;
+      return `你把《${name}》加入了书库`;
     case 'removed':
-      return `你把《${name}》移出了书架`;
+      return `你把《${name}》移出了书库`;
     default:
       return `《${name}》的书库活动`;
   }

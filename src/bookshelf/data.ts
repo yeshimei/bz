@@ -388,7 +388,7 @@ export function computeStats(now: Date = new Date()): ShelfStats {
   }
   const totalHighlights = M.items.reduce((s, x) => s + (x.highlights || 0), 0);
 
-  // 近 12 个月读完（按 completionDate）：bars[0] = 11 个月前，bars[11] = 本月（标签与数据同柱）
+  // 近 12 个月读完（按 completionDate）：倒序，bars[0] = 本月，bars[11] = 11 个月前（issue 207 拍板本月置首）
   const bars: { count: number; label: string; isThis: boolean }[] = [];
   const nowM = now.getFullYear() * 12 + now.getMonth();
   for (let i = 0; i < 12; i++) {
@@ -398,6 +398,7 @@ export function computeStats(now: Date = new Date()): ShelfStats {
     const count = done.filter((x) => x.completionDate && +x.completionDate.slice(0, 4) === y && +x.completionDate.slice(5, 7) === m + 1).length;
     bars.push({ count, label: i === 11 ? '本月' : `${m + 1}月`, isThis: i === 11 });
   }
+  bars.reverse();
   return {
     reading, unread, done, doneThisYear,
     totalHours: Math.round(totalMs / 3600000),

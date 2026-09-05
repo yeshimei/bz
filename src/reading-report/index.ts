@@ -86,7 +86,7 @@ function buildEmptyState(opts: ReportRenderOptions, folderPath: string): HTMLEle
   const actions = uiBtnRow(
     [
       uiBtn({
-        label: '去书架墙添加',
+        label: '去书库添加',
         icon: 'book-open',
         tone: 'primary',
         onClick: () => opts.onBack?.(),

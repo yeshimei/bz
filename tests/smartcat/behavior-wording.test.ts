@@ -127,8 +127,8 @@ describe('buildBehaviorWording：library（书库，entityType=book）', () => {
   it('book 动作集 + library 别名', () => {
     expect(buildBehaviorWording(makeItem('library', 'started', { entityType: 'book', action: 'started', name: '三体' }))).toBe('你开始读《三体》');
     expect(buildBehaviorWording(makeItem('library', 'completed', { entityType: 'book', action: 'completed', name: '三体' }))).toBe('你读完了《三体》');
-    expect(buildBehaviorWording(makeItem('library', 'added', { entityType: 'library', action: 'added', name: '三体' }))).toBe('你把《三体》加入了书架');
-    expect(buildBehaviorWording(makeItem('library', 'removed', { entityType: 'book', action: 'removed', name: '三体' }))).toBe('你把《三体》移出了书架');
+    expect(buildBehaviorWording(makeItem('library', 'added', { entityType: 'library', action: 'added', name: '三体' }))).toBe('你把《三体》加入了书库');
+    expect(buildBehaviorWording(makeItem('library', 'removed', { entityType: 'book', action: 'removed', name: '三体' }))).toBe('你把《三体》移出了书库');
   });
 
   it('book:progressed 带进度 / 不带', () => {
