@@ -31,9 +31,12 @@ export function uiCardChoice<T extends string>(opts: BzCardPickOpts<T>): { el: H
     card.dataset.value = String(o.value);
     card.setAttribute('role', 'radio');
     card.setAttribute('aria-checked', String(o.value === opts.value));
-    const prev = document.createElement('span');
+    // div + 内联高度双保险（issue 210 用户实测：span 在 WebView2 下会被环境样式影响，
+    // aspect-ratio/样式表高度都可能不生效——预览区塌陷成一条线）
+    const prev = document.createElement('div');
     prev.className = 'bz-cardpick-prev' + (o.prevClass ? ` ${o.prevClass}` : '');
     prev.setAttribute('aria-hidden', 'true');
+    prev.style.height = '62px';
     const name = document.createElement('span');
     name.className = 'bz-cardpick-name';
     name.textContent = o.label;

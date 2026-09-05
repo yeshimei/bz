@@ -317,7 +317,9 @@ export function applyTodoSkin(skin: unknown): void {
   const panel = M.overlay.querySelector('.bz-todo-panel') as HTMLElement | null;
   if (!panel) return;
   panel.classList.remove('bz-todo-skin-paper', 'bz-todo-skin-editorial');
-  if (skin === 'paper' || skin === 'editorial') panel.classList.add(`bz-todo-skin-${skin}`);
+  // 默认风格已下线（issue 210 四轮）：未知/缺省值一律回落纸感手账
+  const v = skin === 'editorial' ? 'editorial' : 'paper';
+  panel.classList.add(`bz-todo-skin-${v}`);
 }
 
 /** 当前皮肤类名（issue 210）：uiModal 弹窗（编辑器/添加场景/重命名）与面板共用同套皮肤 */
@@ -675,7 +677,7 @@ function sceneLeadHtml(o: { scene: string; dot: string }, dotCls: string): strin
 /** 场景项管理菜单（重命名/删除/设置直达；伪场景不挂）——桌面右键浮层 / 移动长按抽屉复用组件库 */
 function attachSceneActions(el: HTMLElement, scene: string): void {
   if (scene === '全部' || scene === '今日' || scene === '重要') return;
-  attachItemActions(el, buildSceneActions(scene), { sheetTitle: scene, sheetSub: '场景' });
+  attachItemActions(el, buildSceneActions(scene), { sheetTitle: scene, sheetSub: '场景', menuClass: skinClass() || undefined });
 }
 
 function renderNav(): void {
@@ -838,6 +840,7 @@ function renderContent(): void {
     const it = M.items.find((i) => i.id === id);
     if (!it) return;
     attachItemActions(card as HTMLElement, buildCardActions(it), {
+      menuClass: skinClass() || undefined,
       sheetHead: buildSheetHead(it),
     });
   });
