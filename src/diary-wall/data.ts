@@ -41,7 +41,15 @@ export interface WallEntry
    * content 保留完整原文供复制/跳转。
    */
   text: string;
+  /**
+   * 按原文顺序的内容段（issue 213）：文字段/媒体段交错保留，
+   * UI 段序渲染用——旧结构 media[]+text 把「文字·图·文字·图」压平，无法还原交错语义。
+   */
+  segments: WallSegment[];
 }
+
+/** 内容段：文字段（markdown，已去媒体嵌入）或单个媒体段 */
+export type WallSegment = { kind: 'text'; text: string } | { kind: 'media'; media: WallMedia };
 
 /** 扩展名 → 媒体类型（jpg/jpeg/png/webp/gif/avif→img；mp4/mov/webm→video；wav/m4a/mp3/flac/aac/ogg→audio） */
 const MEDIA_EXT_KIND: Record<string, WallMedia['kind']> = {
@@ -161,6 +169,34 @@ async function mdFilesUnder(app: App, dirPath: string): Promise<TFile[]> {
   return mdFiles;
 }
 
+/**
+ * 按原文顺序提取内容段（issue 213）：媒体嵌入切开文字，交错保留。
+ * - 媒体段 = `![[媒体文件]]`（与 extractMedia 同一扩展名判定，含 `|参数`）；
+ * - 文字段 = 嵌入之间的 markdown 原文（trim，空段丢弃）；非媒体内链原样保留在文字段；
+ * - 空串输入返回 []。
+ */
+export function extractSegments(content: string): WallSegment[] {
+  const segs: WallSegment[] = [];
+  const re = new RegExp(WIKILINK_RE.source, 'g');
+  let last = 0;
+  let m: RegExpExecArray | null;
+  const pushText = (raw: string) => {
+    const t = raw.trim();
+    if (t) segs.push({ kind: 'text', text: t });
+  };
+  while ((m = re.exec(content)) !== null) {
+    pushText(content.slice(last, m.index));
+    const ref = m[1].trim();
+    const dot = ref.lastIndexOf('.');
+    const kind = dot > 0 && dot < ref.length - 1 ? MEDIA_EXT_KIND[ref.slice(dot + 1).toLowerCase()] : undefined;
+    if (kind) segs.push({ kind: 'media', media: { name: ref, kind } });
+    else pushText(m[0]); // 非媒体内链（如 ![[xx.md]]）：原样保留为文字
+    last = re.lastIndex;
+  }
+  pushText(content.slice(last));
+  return segs;
+}
+
 /** DiaryEntry → WallEntry（透传定位字段 + kind 标记 + 派生 media/text；dir 为媒体归属目录） */
 function toWallEntry(e: DiaryEntry, kind: WallEntry['kind'], dir: string): WallEntry {
   return {
@@ -180,6 +216,8 @@ function toWallEntry(e: DiaryEntry, kind: WallEntry['kind'], dir: string): WallE
     media: extractMedia(e.content, dir),
     // 渲染用正文：去媒体嵌入，保留 markdown 语法（content 保留原文供复制/跳转）
     text: stripMediaLinks(e.content),
+    // 按原文顺序的内容段（issue 213：UI 段序渲染，文字不重复、媒体归位）
+    segments: extractSegments(e.content),
   };
 }
 
