@@ -12,11 +12,23 @@ export function uiBtn(opts: BzButtonOpts): HTMLButtonElement {
   const cls = ['bz-btn'];
   if (opts.tone && opts.tone !== 'default') cls.push(`bz-btn--${opts.tone}`);
   if (opts.size && opts.size !== 'md') cls.push(`bz-btn--${opts.size}`);
+  if (opts.chip) cls.push('bz-btn--chip');
+  if (opts.on) cls.push('is-on');
   if (opts.className) cls.push(opts.className);
   b.className = cls.join(' ');
   if (opts.title) b.title = opts.title;
   if (opts.disabled) b.disabled = true;
-  if (opts.icon) b.appendChild(uiIcon(opts.icon));
+  if (opts.icon) {
+    if (opts.chip) {
+      // 图标圆底档：图标包进 .bz-btn-chip 小圆底（issue 200 F 款入库）
+      const chip = document.createElement('span');
+      chip.className = 'bz-btn-chip';
+      chip.appendChild(uiIcon(opts.icon));
+      b.appendChild(chip);
+    } else {
+      b.appendChild(uiIcon(opts.icon));
+    }
+  }
   if (opts.label) {
     const span = document.createElement('span');
     span.textContent = opts.label;

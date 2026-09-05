@@ -137,24 +137,8 @@
 .bz-todo-sug-item { display: block; width: 100%; text-align: left; padding: 6px 10px; border: none; background: none; font-size: var(--bz-font-meta); color: var(--bz-text-1); cursor: pointer; font-family: inherit; }
 .bz-todo-sug-item + .bz-todo-sug-item { border-top: 1px solid var(--bz-border); }
 .bz-todo-sug-item:hover { background: var(--bz-surface-hover); }
-/* 定位行：垂直居中；按钮 = F 图标圆底（issue 199 拍板）：pin 装 22px 小圆底 +
-   文字素排，透底灰字，hover 圆底转品牌软底；绑定后整钮转品牌色 */
+/* 定位行：垂直居中；按钮走组件库 .bz-btn--chip 图标圆底档（issue 200 F 款入库） */
 .bz-todo-pos-row { display: flex; align-items: center; gap: var(--bz-space-sm); min-height: 32px; }
-.bz-todo-pos-row .bz-btn.bz-todo-pos-btn {
-  height: 32px; padding: 0 12px 0 6px; gap: 6px;
-  background: transparent !important; border-color: transparent !important;
-  color: var(--bz-text-2) !important;
-}
-.bz-todo-pos-row .bz-btn.bz-todo-pos-btn:hover { color: var(--bz-text-1) !important; }
-.bz-pos-chip {
-  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
-  background: var(--bz-surface-hover); color: inherit;
-  display: inline-flex; align-items: center; justify-content: center;
-}
-.bz-pos-chip .bz-ic { width: 13px; height: 13px; }
-.bz-btn.bz-todo-pos-btn:hover .bz-pos-chip { background: var(--bz-brand-soft); color: var(--bz-brand); }
-.bz-btn.bz-todo-pos-btn.bz-todo-pos-btn-active { color: var(--bz-brand) !important; font-weight: var(--bz-weight-medium); }
-.bz-btn.bz-todo-pos-btn.bz-todo-pos-btn-active .bz-pos-chip { background: var(--bz-brand-soft); color: var(--bz-brand); }
 .bz-todo-pos-row .bz-todo-pos-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
 .bz-todo-pos-row .bz-todo-pos-hint .bz-ic { width: 12px; height: 12px; vertical-align: -2px; }
 

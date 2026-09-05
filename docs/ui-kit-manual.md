@@ -47,12 +47,12 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 
 ### 3.1 Token（写 CSS 时只许用这些）
 - **结构**：`--bz-space-xs/sm/md/lg/xl/2xl`、`--bz-radius-xs/sm/md/lg/full`、`--bz-font-caption/meta/label/body/emphasis/title/display`、`--bz-weight-*`、`--bz-leading-*`、`--bz-control-h(-sm/md/lg)`、`--bz-icon-btn-w/h/lg`、`--bz-head-h(-lg)`、`--bz-shadow-sm/md/lg`、`--bz-dur-fast/base/slow`、`--bz-ease-*`、`--bz-star`、`--bz-scrim`、`--bz-on-overlay`
-- **色彩（随明暗）**：`--bz-surface-0..4`、`--bz-surface-hover/active`、`--bz-overlay`、`--bz-text-1/2/3/invert`、`--bz-brand(-hover/-soft)/--bz-on-brand`、`--bz-success/warning/danger/info/--bz-on-danger`、`--bz-border(-strong/-hover)`、`--bz-track/thumb`、`--bz-code-bg`、`--bz-mark-bg`、`--bz-surface-track`（浮岛 segmented 轨道，明 #fbfbfb / 暗 rgba 黑 20%）
+- **色彩（随明暗）**：`--bz-surface-0..4`、`--bz-surface-hover/active`、`--bz-overlay`、`--bz-text-1/2/3/invert`、`--bz-brand(-hover/-soft)/--bz-on-brand`、`--bz-success/warning/danger/info/--bz-on-danger`、`--bz-border(-strong/-hover)`、`--bz-track/thumb`、`--bz-code-bg`、`--bz-mark-bg`
 
 ### 3.2 组件类（HTML 直接写）
 | 组件 | 类 | 修饰 | 说明 |
 |---|---|---|---|
-| 按钮 | `.bz-btn` | `--primary/--danger/--danger-ghost/--ghost/--hover-accent`；`--sm/--md/--lg/--icon` | 32px 高、圆角 sm；`--md` 30px 中档（主头行主钮/排序钮）；hover 自动；`--danger-ghost` 描边 danger（常态透底描边、hover 转实底），`--hover-accent` 悬停才显品牌软底+品牌描边 |
+| 按钮 | `.bz-btn` | `--primary/--danger/--danger-ghost/--ghost/--hover-accent`；`--sm/--md/--lg/--icon`；`--chip`（图标圆底档，内 `.bz-btn-chip` 22px 圆底包图标，`.is-on` 整钮品牌色） | 32px 高、圆角 sm；`--md` 30px 中档（主头行主钮/排序钮）；hover 自动；`--danger-ghost` 描边 danger（常态透底描边、hover 转实底），`--hover-accent` 悬停才显品牌软底+品牌描边；`--chip` 先例：待办「定位到笔记」（issue 200 F 款入库） |
 | 按钮行 | `.bz-btn-row` | `--center/--grow` | 弹窗底部右对齐 |
 | 图标按钮 | `.bz-icon-btn` | `--on/--lg/--xs/--close/--accent/--boxed/--active`；`[data-danger]` | 22×26 桌面头行档；`--accent` 品牌色图标钮（卡内行动钮），`--boxed`=浮于面板底上带描边变体，`--active`=品牌实底开关激活态（与 `--boxed` 同钮叠加时激活底胜出） |
 | Chip | `.bz-chip` | `--on/--sel/--locked/--tint/--hover-accent/--lg`；内含 `.bz-chip-cnt`/`.bz-chip-x` | 筛选/标签胶囊；`--tint` 数据语义色徽标（域内联 `--bz-chip-tint`/`--bz-chip-tint-fg` 注入底/前景色）；`--hover-accent` 悬停才显品牌软底+品牌描边（可点 chip 的 hover 提示）；`--lg` 36px 触控档 |
@@ -61,7 +61,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | 字段行 | `.bz-field` | 内 `.bz-field-label/-desc/-error` | label+控件+说明 |
 | 空态 | `.bz-empty` | 内 `.bz-empty-ic/-title/-desc` + `.bz-btn-row` | CTA 放按钮行 |
 | 分段 | `.bz-segmented` | 内 `.bz-segmented-btn.is-on` | 单选多段（等宽条） |
-| 平铺单选组 | `.bz-choice` | `.bz-choice--float`（浮岛 segmented）；内 `.bz-choice-btn.is-on`（可选 `.bz-choice-dot` 色点） | 表单替代下拉的胶囊选项组，可换行；选项多/文案长/需色点时用。浮岛档：轨道收内容宽 + 白卡滑动指示器（`.bz-choice-seg`），未选透底灰字、选中加重（2026-09-05 拍板，排序条/表单单选首选形态） |
+| 平铺单选组 | `.bz-choice` | `.bz-choice--float`（浮岛 segmented）；内 `.bz-choice-btn.is-on`（可选 `.bz-choice-dot` 色点） | 表单替代下拉的胶囊选项组，可换行；选项多/文案长/需色点时用。浮岛档：视觉 = `.bz-segmented` 同款取值（surface-1 轨道 + 6px 圆角白卡，issue 200 拍板回退）+ 白卡滑动指示器（`.bz-choice-seg`，200ms transform/width），未选透底灰字、选中加重；排序条/表单单选首选形态 |
 | 开关 | `.bz-sw` | `.on`（role=switch，键盘 Space/Enter） | 40×22 滑块，开 = 品牌实底 |
 | 下拉 | `.bz-select` | `.open`；内 `.bz-select-val`/`.bz-select-car`；弹层 `.bz-select-menu` 内 `.bz-select-item.is-on` + `.bz-select-item-ck` | 单行单选下拉；菜单随最长选项加宽不截断；短选项组优先 `.bz-choice` 平铺 |
 | 灯箱 | `.bz-lightbox` | 内 `.bz-lightbox-head/media/foot/-close` | 全屏看图/视频 |
@@ -73,7 +73,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | 主头行 | `.bz-main-head` | 内 `.bz-main-title/-count/-spacer` | 内容区主头行：标题 16px + 计数 + 主按钮（30px 中档） |
 | 工具行 | `.bz-toolrow` | — | 主头行下搜索/排序次级行 |
 | 搜索框 | `.bz-search` | 内 `.bz-kbd` 快捷键帽 | 前缀搜索图标 + `.bz-input`（左留 30px） |
-| 状态侧栏 | `.bz-rail` | `--wide`；行 `.bz-rail-item.on/.has-sub/.sub-open`；槽 `.bz-rail-ic(--accent)/-badge/-dot/-name/-count(--pill)/-unread/-caret/-sub.open/-label/-scroll/-foot`；色注入 `--bz-rail-tint` | 左栏分组导航超集（图标/底座/字母徽标/色点四选一前缀 + 计数/未读 + 二级子列表 + 底部固定区） |
+| 状态侧栏 | `.bz-rail` | `--wide`；行 `.bz-rail-item.on/.has-sub/.sub-open`；槽 `.bz-rail-ic(--accent)/-badge/-emoji/-dot/-name/-count(--pill)/-unread/-caret/-sub.open/-label/-scroll/-foot`；色注入 `--bz-rail-tint` | 左栏分组导航超集（图标/底座/字母徽标/emoji/色点前缀；图标 14px、emoji 与色点同占 14px 槽居中，行名对齐——issue 200 拍板三槽统一；色点本体 8px 不放大 + 计数/未读 + 二级子列表 + 底部固定区） |
 | 移动横滑条 | `.bz-mobstrip` | 内 `.bz-mobstrip-chip.is-on`/`.bz-mobstrip-dot` | ≤768px 替代 rail 的横滑胶囊条（桌面 display:none） |
 | 统计卡 | `.bz-stat` | `--main/--ok/--warn/--danger/--text/--click`；网格 `.bz-stat-grid(--2/--4)`；趋势 `.bz-stat-trend--up/--down` | 数字+标签统计卡；`--main` 品牌主卡，`--click` 可点筛选 |
 | 候选浮层 | `.bz-popover` | 内 `.bz-popover-item.is-on`/`.bz-popover-empty` | input 锚定的候选列表（绝对定位挂 position:relative 容器，交互同 .bz-select-menu） |
@@ -144,7 +144,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 
 | 工厂 | 签名要点 | 返回 |
 |---|---|---|
-| `uiBtn` | `{label?, icon?, tone?, size?, title?, disabled?, className?, onClick?}` | `HTMLButtonElement` |
+| `uiBtn` | `{label?, icon?, tone?, size?, title?, disabled?, chip?, on?, className?, onClick?}` | `HTMLButtonElement`；chip=图标圆底档（图标包 `.bz-btn-chip`），on=激活 `.is-on`（chip 档整钮品牌色） |
 | `uiIconBtn` | `{icon, title?, on?, lg?, xs?, close?, danger?, onClick?}` | `HTMLButtonElement` |
 | `uiBtnRow` | `(buttons: HTMLElement[], {center?, grow?}?)` | `HTMLDivElement` |
 | `uiDialogActions` | `{okText, okTone?, cancelText?, onOk, onCancel?}` | `{row, cancelBtn, okBtn}` |

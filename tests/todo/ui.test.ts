@@ -366,7 +366,7 @@ describe('todo 编辑器', () => {
     expect(editor.querySelector('.bz-icon-btn--close')).toBeNull();
   });
 
-  it('编辑器浮岛选择 + 定位钮 F 款（issue 199）：场景/优先级 float 轨道含指示器，定位钮带圆底图标', async () => {
+  it('编辑器浮岛选择 + 定位钮 F 款（issue 200 入库）：场景/优先级 float 轨道含指示器，定位钮带圆底图标', async () => {
     const { app } = seedVault();
     addTodo(app);
     await vi.waitFor(() => {
@@ -376,11 +376,11 @@ describe('todo 编辑器', () => {
     // 场景 + 优先级两组浮岛 segmented（各含 1 枚白卡指示器节点）
     expect(editor.querySelectorAll('.bz-choice--float').length).toBe(2);
     expect(editor.querySelectorAll('.bz-choice--float > .bz-choice-seg').length).toBe(2);
-    // 定位钮 = F 图标圆底：.bz-pos-chip 内 pin 图标 + 独立文字 span
-    const posBtn = editor.querySelector('.bz-todo-pos-btn') as HTMLElement;
+    // 定位钮 = 组件库 chip 档：.bz-btn--chip > .bz-btn-chip 内 pin 图标 + 独立文字 span
+    const posBtn = editor.querySelector('.bz-btn--chip') as HTMLElement;
     expect(posBtn).toBeTruthy();
-    expect(posBtn.querySelector('.bz-pos-chip [data-icon="pin"]')).toBeTruthy();
-    expect(posBtn.querySelector('.bz-pos-chip + span')?.textContent).toBe('定位到笔记');
+    expect(posBtn.querySelector('.bz-btn-chip [data-icon="pin"]')).toBeTruthy();
+    expect(posBtn.querySelector('.bz-btn-chip + span')?.textContent).toBe('定位到笔记');
   });
 
   it('场景切换联动：代码→脚本框；公开课→课程框', async () => {
@@ -399,6 +399,29 @@ describe('todo 编辑器', () => {
     const scriptBox = extras[1] as HTMLElement;
     expect(scriptBox.classList.contains('bz-todo-extra-on')).toBe(true);
     expect(scriptBox.querySelector('input')?.getAttribute('placeholder')).toBe('脚本名');
+  });
+
+  it('脚本联想框初始收起，聚焦才展开、失焦收起（issue 200 拍板：不再打开即铺满建议）', async () => {
+    const { app } = seedVault(); // seed 条目 b 带 scriptName 'transcribe.py' → 建议数据源
+    addTodo(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-todo-editor')).toBeTruthy();
+    });
+    const editor = document.querySelector('.bz-todo-editor') as HTMLElement;
+    const codeBtn = [...editor.querySelectorAll('.bz-choice-btn')].find((b) => b.textContent === '代码') as HTMLElement;
+    codeBtn.click();
+    const scriptInput = editor.querySelectorAll('.bz-todo-extra')[1].querySelector('input') as HTMLInputElement;
+    const sugBox = scriptInput.nextElementSibling as HTMLElement;
+    // 初始收起（此前绑定即渲染，弹窗一开建议就全铺出来）
+    expect(sugBox.style.display).toBe('none');
+    // 聚焦展开：已有脚本名进入建议
+    scriptInput.dispatchEvent(new Event('focus'));
+    expect(sugBox.style.display).toBe('block');
+    expect(sugBox.textContent).toContain('transcribe.py');
+    // 失焦收起（150ms 延时让建议项 click 先落地）
+    scriptInput.dispatchEvent(new Event('blur'));
+    await new Promise((r) => setTimeout(r, 200));
+    expect(sugBox.style.display).toBe('none');
   });
 
   it('保存新建：写入 memo.json（含 scriptName 建议数据）', async () => {
@@ -637,6 +660,30 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
     expect(mob('学习').querySelector('.bz-mobstrip-dot')).toBeTruthy();
   });
 
+  it('场景行头三槽（issue 200 拍板）：图标/emoji/彩圆统一槽宽；emoji 场景名剥首 emoji 显示', async () => {
+    const { app, settings } = seedVault();
+    settings.memoScenarios = '剪藏,工作,学习,生活,代码,公开课,🏠 家庭';
+    openTodoPanel(app);
+    // jsdom 选择器引擎对「emoji+空格」属性选择器失灵（浏览器正常），遍历 dataset 匹配
+    const findRow = () =>
+      [...document.querySelectorAll('[data-todo-nav] [data-todo-scene]')]
+        .find((el) => el.getAttribute('data-todo-scene') === '🏠 家庭') as HTMLElement | undefined;
+    await vi.waitFor(() => {
+      expect(findRow()).toBeTruthy();
+    });
+    // emoji 行头：场景名首 emoji 进 .bz-rail-emoji 槽，行名剥掉 emoji
+    const row = findRow()!;
+    expect(row.querySelector('.bz-rail-emoji')?.textContent).toBe('🏠');
+    expect(row.querySelector('.bz-rail-name')?.textContent).toBe('家庭');
+    expect(row.querySelector('.bz-rail-dot')).toBeNull();
+    // 无 emoji 的场景仍色点；点选后主头行标题同口径剥 emoji
+    expect((document.querySelector('[data-todo-scene="代码"] .bz-rail-dot') as HTMLElement)).toBeTruthy();
+    row.click();
+    await vi.waitFor(() => {
+      expect((document.querySelector('[data-todo-main-title]') as HTMLElement).textContent).toBe('家庭');
+    });
+  });
+
   it('头行钮组（issue 197）：品牌块 + 右侧设置/关闭；设置直达设置面板待办域，关闭即收面板', async () => {
     const { app } = seedVault();
     openTodoPanel(app);
@@ -646,6 +693,8 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
     // 品牌块图标 + 标题
     expect(document.querySelector('.bz-panel-brand [data-icon="list-checks"]')).toBeTruthy();
     expect((document.querySelector('.bz-panel-title') as HTMLElement).textContent).toBe('待办');
+    // 设置钮 = 齿轮 settings（issue 200：settings-2 滑杆式改齿轮）
+    expect(document.querySelector('[data-todo-head-settings] [data-icon="settings"]')).toBeTruthy();
     // 关闭钮 → 面板收起
     (document.querySelector('[data-todo-head-close]') as HTMLElement).click();
     expect(document.querySelector('.bz-panel-overlay')).toBeNull();
@@ -848,7 +897,45 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
 
   it('场景项右键菜单：在设置中编辑 / 重命名（批量改条目 + 设置串）/ 删除场景', async () => {
     const { vault, app, settings } = seedVault();
-    pushItem(vault, { id: 'g', title: '工作场景条目', scene: '工作', priority: 'minor', created: at(-1, '10:00'), completed: null });
+    // 自定义场景（默认场景禁重命名/删除，issue 200；本条验证自定义场景全动作可用）
+    settings.memoScenarios = '剪藏,工作,学习,生活,代码,公开课,副业';
+    pushItem(vault, { id: 'g', title: '副业条目', scene: '副业', priority: 'minor', created: at(-1, '10:00'), completed: null });
+    openTodoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-todo-nav] [data-todo-scene="副业"]')).toBeTruthy();
+    });
+    const navBtn = document.querySelector('[data-todo-nav] [data-todo-scene="副业"]') as HTMLElement;
+    navBtn.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-item-menu')).toBeTruthy();
+    });
+    const labels = menuItems().map((b) => b.querySelector('.bz-item-menu-label')?.textContent);
+    expect(labels).toContain('在设置中编辑');
+    expect(labels).toContain('重命名');
+    expect(labels).toContain('删除场景');
+    // 重命名 副业 → 兼职：条目 scene 批量迁移 + memoScenarios 设置串更新（与旧 memo 共用）
+    clickMenuItem('重命名');
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-todo-addscene')).toBeTruthy();
+    });
+    const wrap = document.querySelector('.bz-todo-addscene') as HTMLElement;
+    const input = wrap.querySelector('.bz-input') as HTMLInputElement;
+    expect(input.value).toBe('副业');
+    input.value = '兼职';
+    (wrap.querySelector('.bz-btn--primary') as HTMLElement).click();
+    await vi.waitFor(() => {
+      const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+      expect(raw.find((r: any) => r.id === 'g').scene).toBe('兼职');
+    });
+    expect(settings.memoScenarios).toBe('剪藏,工作,学习,生活,代码,公开课,兼职');
+    // 左栏即时出现新场景名
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-todo-scene="兼职"]')).toBeTruthy();
+    });
+  });
+
+  it('默认场景禁重命名/删除（issue 200 拍板）：右键菜单仅剩设置直达', async () => {
+    const { app } = seedVault();
     openTodoPanel(app);
     await vi.waitFor(() => {
       expect(document.querySelector('[data-todo-nav] [data-todo-scene="工作"]')).toBeTruthy();
@@ -860,37 +947,20 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
     });
     const labels = menuItems().map((b) => b.querySelector('.bz-item-menu-label')?.textContent);
     expect(labels).toContain('在设置中编辑');
-    expect(labels).toContain('重命名');
-    expect(labels).toContain('删除场景');
-    // 重命名 工作 → 职场：条目 scene 批量迁移 + memoScenarios 设置串更新（与旧 memo 共用）
-    clickMenuItem('重命名');
-    await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-addscene')).toBeTruthy();
-    });
-    const wrap = document.querySelector('.bz-todo-addscene') as HTMLElement;
-    const input = wrap.querySelector('.bz-input') as HTMLInputElement;
-    expect(input.value).toBe('工作');
-    input.value = '职场';
-    (wrap.querySelector('.bz-btn--primary') as HTMLElement).click();
-    await vi.waitFor(() => {
-      const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
-      expect(raw.find((r: any) => r.id === 'g').scene).toBe('职场');
-    });
-    expect(settings.memoScenarios).toBe('剪藏,职场,学习,生活,代码,公开课');
-    // 左栏即时出现新场景名
-    await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-scene="职场"]')).toBeTruthy();
-    });
+    expect(labels).not.toContain('重命名');
+    expect(labels).not.toContain('删除场景');
   });
 
   it('删除场景：非空条目确认后迁入默认场景并移出设置串', async () => {
     const { vault, app, settings } = seedVault();
-    pushItem(vault, { id: 'g', title: '工作场景条目', scene: '工作', priority: 'minor', created: at(-1, '10:00'), completed: null });
+    // 自定义场景（默认场景禁删除，issue 200）
+    settings.memoScenarios = '剪藏,工作,学习,生活,代码,公开课,副业';
+    pushItem(vault, { id: 'g', title: '副业条目', scene: '副业', priority: 'minor', created: at(-1, '10:00'), completed: null });
     openTodoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-nav] [data-todo-scene="工作"]')).toBeTruthy();
+      expect(document.querySelector('[data-todo-nav] [data-todo-scene="副业"]')).toBeTruthy();
     });
-    const navBtn = document.querySelector('[data-todo-nav] [data-todo-scene="工作"]') as HTMLElement;
+    const navBtn = document.querySelector('[data-todo-nav] [data-todo-scene="副业"]') as HTMLElement;
     navBtn.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
     await vi.waitFor(() => {
       expect(document.querySelector('.bz-item-menu')).toBeTruthy();
@@ -901,14 +971,14 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
     });
     const popup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
     const msg = popup.querySelector('p')?.textContent || '';
-    expect(msg).toContain('确定删除场景「工作」吗');
+    expect(msg).toContain('确定删除场景「副业」吗');
     expect(msg).toContain('1 条待办将迁入默认场景「剪藏」'); // memoDefaultScene 未设 → 兜底其余第一个
     (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     await vi.waitFor(() => {
       const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
       expect(raw.find((r: any) => r.id === 'g').scene).toBe('剪藏');
     });
-    expect(settings.memoScenarios).not.toContain('工作');
+    expect(settings.memoScenarios).toBe('剪藏,工作,学习,生活,代码,公开课');
   });
 
   it('设置 schema：移动端组不写描述（对齐其余域铁律）', async () => {
