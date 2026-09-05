@@ -64,6 +64,8 @@ export interface ItemActionsOptions {
   sheetSub?: string;
   /** 长按触发过滤器：返回 false 的按压不弹浮层（如正文文字区——让位系统长按选字/复制） */
   longPressFilter?: (e: any) => boolean;
+  /** 桌面右键菜单附加类（issue 210：皮肤域传 bz-todo-skin-*，菜单随面板换肤） */
+  menuClass?: string;
 }
 
 /** 浮层与视口边距（px，桌面跟手菜单用） */
@@ -269,10 +271,10 @@ function focusMenuFirst(host: HTMLElement, scope: HTMLElement): void {
 }
 
 /** 桌面跟手菜单（鼠标长按；anchored at 光标，防溢出） */
-export function openItemMenu(x: number, y: number, actions: ItemAction[], suppressResidualClick = false): void {
+export function openItemMenu(x: number, y: number, actions: ItemAction[], suppressResidualClick = false, menuClass?: string): void {
   closeItemMenu();
   const m = document.createElement('div');
-  m.className = 'bz-item-menu';
+  m.className = 'bz-item-menu' + (menuClass ? ' ' + menuClass : '');
   m.style.visibility = 'hidden';
   for (const a of actions) {
     const item = document.createElement('button');
@@ -511,7 +513,7 @@ export function attachItemActions(card: HTMLElement, actions: ItemAction[], opts
     if (isMobileEnv()) return; // 移动端走触屏长按 → 抽屉
     if (opts?.longPressFilter && !opts.longPressFilter(e)) return; // 让位系统选字/复制：不弹也不拦
     e.preventDefault();
-    openItemMenu(e.clientX, e.clientY, actions, true);
+    openItemMenu(e.clientX, e.clientY, actions, true, opts?.menuClass);
     suppressNextClick = false; // 右键无补发 click，关闭残余抑制
   });
 

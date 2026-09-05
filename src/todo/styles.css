@@ -518,6 +518,85 @@
 .bz-todo-skin-editorial .bz-todo-composer { border-top: 1.5px solid var(--bz-skin-ink); }
 .bz-todo-skin-editorial .bz-dialog-title { font-family: var(--bz-skin-serif); font-weight: 900; }
 
+/* 编辑部排序：文字 + 激活红下条（原型 3 形态，不用浮岛） */
+.bz-todo-skin-editorial .bz-todo-sort .bz-choice--float {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  gap: 0;
+}
+.bz-todo-skin-editorial .bz-todo-sort .bz-choice-seg { display: none; }
+.bz-todo-skin-editorial .bz-todo-sort .bz-choice-btn {
+  position: relative;
+  border-radius: 0;
+  height: auto;
+  padding: 4px 16px 10px;
+  background: transparent !important;
+  color: var(--bz-text-2) !important;
+  border-left: 1px solid var(--bz-border);
+}
+.bz-todo-skin-editorial .bz-todo-sort .bz-choice-btn.is-on {
+  color: var(--bz-text-1) !important;
+  font-weight: var(--bz-weight-bold);
+}
+.bz-todo-skin-editorial .bz-todo-sort .bz-choice-btn.is-on::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 3px;
+  background: var(--bz-brand);
+}
+
+/* 编辑部弹窗表单平铺选择（场景/优先级）：方角描边格子、选中黑底白字（不用浮岛） */
+.bz-overlay-popup.bz-todo-skin-editorial .bz-choice--float {
+  background: #ffffff;
+  border: 1.5px solid var(--bz-skin-ink);
+  border-radius: 3px;
+  padding: 0;
+  overflow: hidden;
+}
+.bz-overlay-popup.bz-todo-skin-editorial .bz-choice-seg { display: none; }
+.bz-overlay-popup.bz-todo-skin-editorial .bz-choice .bz-choice-btn {
+  border-radius: 0;
+  height: auto;
+  padding: 7px 14px;
+  background: #ffffff !important;
+  color: var(--bz-text-2) !important;
+  border-left: 1px solid var(--bz-border);
+}
+.bz-overlay-popup.bz-todo-skin-editorial .bz-choice .bz-choice-btn.is-on {
+  background: var(--bz-skin-ink) !important;
+  color: #ffffff !important;
+  font-weight: var(--bz-weight-bold);
+}
+
+/* 右键菜单（core .bz-item-menu 根挂皮肤类；issue 210 四轮用户拍板两风格都要） */
+.bz-item-menu.bz-todo-skin-paper {
+  background: #fffdf6;
+  border: 2px solid var(--bz-skin-ink);
+  border-radius: 12px;
+  box-shadow: 5px 5px 0 rgba(42, 35, 24, 0.85);
+}
+.bz-todo-skin-paper .bz-item-menu-item { border-radius: 8px; font-weight: var(--bz-weight-medium); }
+.bz-todo-skin-paper .bz-item-menu-item:hover {
+  background: var(--bz-brand-soft);
+  color: var(--bz-text-1);
+}
+.bz-item-menu.bz-todo-skin-editorial {
+  background: #ffffff;
+  border: 1.5px solid var(--bz-skin-ink);
+  border-radius: 3px;
+  box-shadow: 6px 8px 0 rgba(20, 20, 20, 0.16);
+}
+.bz-todo-skin-editorial .bz-item-menu-item { border-radius: 0; letter-spacing: 0.05em; }
+.bz-todo-skin-editorial .bz-item-menu-item:hover {
+  background: var(--bz-skin-ink);
+  color: #ffffff;
+}
+
 /* ---- 皮肤选择卡预览（设置面板 .bz-cardpick-prev 变体；复刻各皮肤面板迷你形态） ---- */
 .bz-skinprev-default { background: linear-gradient(150deg, #ffffff, #f0f0f4); }
 .bz-skinprev-default::before {
