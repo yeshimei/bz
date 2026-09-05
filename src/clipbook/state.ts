@@ -7,7 +7,7 @@ import type { ClipNote } from './scan';
 import type { ClipbookData } from './data';
 
 export interface ClipSourceSel {
-  /** null = 全部未读；'clip' = 剪藏本；'site' = 站点（site 必填，issue 220）；否则 inbox（platform 必填） */
+  /** null = 全部未读；'clip' = 剪藏本；'site' = 站点（site 必填，issue 222）；否则 inbox（platform 必填） */
   kind: 'all' | 'inbox' | 'clip' | 'site';
   platform: string;
   up: string | null;

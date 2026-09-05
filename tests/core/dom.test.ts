@@ -236,7 +236,7 @@ describe('createOverlay', () => {
   });
 });
 
-// ===== issue 220：拖拽收尾吞终端 click（uiResizable/uiVSplitter 共用防线）=====
+// ===== issue 222：拖拽收尾吞终端 click（uiResizable/uiVSplitter 共用防线）=====
 
 describe('swallowNextClick', () => {
   const fire = (el: EventTarget, type: string) =>

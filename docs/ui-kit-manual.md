@@ -115,7 +115,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 
 **图标**：一律 lucide 图标名（工厂经 `setIcon` 渲染 Obsidian 原生 SVG）。颜色默认继承 `currentColor`（在按钮里自动变 on-brand 白），需要独立语义色给图标元素加 `.bz-ic--brand/success/warning/danger/info/star/muted/on-brand`，尺寸 `.bz-ic--xs/sm/md/lg/xl`。**禁止 emoji 当图标、禁止文本符号当图标**。
 
-#### 分割线（.bz-vsplit，issue 220）
+#### 分割线（.bz-vsplit，issue 222）
 
 ```html
 <div class="bz-vsplit" role="separator" aria-orientation="vertical" title="拖动调整两侧宽度"></div>
@@ -178,7 +178,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | `uiSuggest` | `{anchor: HTMLInputElement, source: () => string[], max?, excludeCurrent?, iconOf?, labelOf?, onPick?}` — 输入联想：聚焦/输入惰性弹出（默认不弹）、现值子串过滤、无匹配即收、点选/回车回填、外点收起、Esc 只收下拉；anchor 须在 position:relative 容器内（issue 203 收敛 belongings 分类 / favorites 关联笔记 / todo 脚本·课程联想三处同款） | `{close, detach}` |
 | `uiIcon` | `(name, extraClass?)` | `HTMLElement` |
 | `uiResizable` | `(el, {edge?, minW?, minH?, maxW?, maxH?, onChange?, persist?: {load?, save?}})` | `{detach}` |
-| `uiVSplitter` | `({left, right, minLeft?, minRight?, onChange?, persist?: {load?, save?}})` — 栏间竖向分割线（.bz-vsplit，issue 220）：拖动改 `left.style.width`（左栏须 width 驱动定宽），右栏弹性吸收；触屏空转+CSS 隐藏 | `{el, restore, flush, detach}` |
+| `uiVSplitter` | `({left, right, minLeft?, minRight?, onChange?, persist?: {load?, save?}})` — 栏间竖向分割线（.bz-vsplit，issue 222）：拖动改 `left.style.width`（左栏须 width 驱动定宽），右栏弹性吸收；触屏空转+CSS 隐藏 | `{el, restore, flush, detach}` |
 | `openLightbox` | `{src, type?, title?, caption?}` | `{close}`；`closeLightbox()` |
 
 **约定**：
@@ -190,7 +190,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 
 **窗口缩放（uiResizable，ADR-0084）**：给桌面主面板加「右缘/底缘/右下角」拖动缩放——`el` 无需定位上下文（命中/光标挂自身，不注入覆盖层），改宽高内联。宿主若是 flex 居中（`.bz-*-overlay` center），宽高变化即双向对称扩缩不越视口。钳制下限 `minW×minH`、上限逐帧取 `min(maxW×maxH, 视口92%)`；`onChange(w,h)` 供调方持久化尺寸。零视觉提示（纯 hover 光标）；仅 mouse 事件，移动端勿挂。尺寸记忆：可传 `persist: { load?, save? }`（ADR-0094）——挂载时 `load()` 有值即恢复（钳到与拖拽同口径），`onChange` 防抖 300ms 调 `save()`，detach 时未落尾值立即补存；不传则行为不变（键由调用域自定义，先例 `todoPanelWidth/Height`）。
 
-**栏间分割线（uiVSplitter，issue 220）**：多栏面板「中栏 ⇄ 右栏」宽度拖拽——`el` 插两栏之间，拖动写 `left.style.width`（左栏须为 width 驱动定宽布局），钳制 `[minLeft, 容器-minRight]`。容器 `display:none` 时 clientWidth=0 无法钳制，**记忆恢复由宿主在面板可见后调 `restore()`**（幂等）；`persist` 防抖 300ms/detach 补存口径同 `uiResizable`。拖拽收尾吞终端 click（`core/dom swallowNextClick`，`uiResizable` 同款防线）——拖拽中松手在遮罩/列表行不再误触发点遮罩关闭/行点击。
+**栏间分割线（uiVSplitter，issue 222）**：多栏面板「中栏 ⇄ 右栏」宽度拖拽——`el` 插两栏之间，拖动写 `left.style.width`（左栏须为 width 驱动定宽布局），钳制 `[minLeft, 容器-minRight]`。容器 `display:none` 时 clientWidth=0 无法钳制，**记忆恢复由宿主在面板可见后调 `restore()`**（幂等）；`persist` 防抖 300ms/detach 补存口径同 `uiResizable`。拖拽收尾吞终端 click（`core/dom swallowNextClick`，`uiResizable` 同款防线）——拖拽中松手在遮罩/列表行不再误触发点遮罩关闭/行点击。
 
 **候选浮层分工（uiPopover vs uiSuggest）**：`uiPopover` = 点击开合的「选择」浮层（同 select 语义，anchor 是按钮/任意元素）；`uiSuggest` = 输入框联想（聚焦/输入弹出、边输边滤）。域内需要输入联想时一律 `uiSuggest`，勿再手搓 `.bz-popover` 开合（三域旧实现已收敛，issue 203）；候选是结构化 id/label 时用 `uiPopover`。
 

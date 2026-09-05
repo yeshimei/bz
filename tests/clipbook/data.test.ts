@@ -181,9 +181,9 @@ describe('clipbook/store 派生', () => {
   });
 });
 
-// ===== issue 220：rail 按 site 属性分类（aggregateSites + queryBySource site 源）=====
+// ===== issue 222：rail 按 site 属性分类（aggregateSites + queryBySource site 源）=====
 
-describe('clipbook site 聚合与站点源（issue 220）', () => {
+describe('clipbook site 聚合与站点源（issue 222）', () => {
   // 剪藏：果壳×2、微信公众号×1、空/缺 site×2（归「未知」）
   const notes = [
     { path: '归档/网页剪藏/a.md', site: '果壳', title: '剪A', url: 'https://guokr.com/1' },

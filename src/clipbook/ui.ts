@@ -14,7 +14,7 @@
  * 桌面面板拖拽缩放 + 尺寸记忆（ADR-0084 先例；ADR-0094 走 uiResizable persist）。
  * issue 206：rail 平台动态聚合 + 列表最新在前 / 正文图片段渲染 /
  * 站点 favicon 高清多源回退（全失败才首字 chip）/ 切文章右栏滚动归零。
- * issue 220：rail 换按 site 属性分类（平台聚合行退役，B站 UP 子行/剪藏本行保留）/
+ * issue 222：rail 换按 site 属性分类（平台聚合行退役，B站 UP 子行/剪藏本行保留）/
  * 中右栏 uiVSplitter 分割线拖宽 + clipbookMidWidth 尺寸记忆。
  *
  * 铁律 6：基线全部消费组件库（.bz-* 类与 --bz-* token）；ADR-0094 起面板壳/头行/搜索/
@@ -384,7 +384,7 @@ function buildDom(app: any): void {
       minW: PANEL_MIN_W, minH: PANEL_MIN_H, maxW: PANEL_MAX_W, maxH: PANEL_MAX_H,
       persist: { load: savedPanelSize, save: rememberPanelSize },
     });
-    // 中栏 ⇄ 右栏分割线（issue 220）：拖动改中栏定宽、右栏弹性吸收；
+    // 中栏 ⇄ 右栏分割线（issue 222）：拖动改中栏定宽、右栏弹性吸收；
     // restore 在 showPanel 面板可见后调（display:none 容器宽度为 0 无法钳制）
     const midEl = overlayEl.querySelector('.bz-clip-mid') as HTMLElement;
     const readEl = overlayEl.querySelector('.bz-clip-read') as HTMLElement;
@@ -471,7 +471,7 @@ function renderHeadIssue(): void {
 }
 
 // ================= 视图派生 =================
-/** 源过滤条件（queryBySource 入参别名；issue 220 加 site 源） */
+/** 源过滤条件（queryBySource 入参别名；issue 222 加 site 源） */
 type SrcFilter = { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' } | { kind: 'site'; site: string };
 
 function srcList(): SrcFilter {
@@ -551,7 +551,7 @@ function renderRail(): void {
   // V1 计数口径（issue 214）：未读（搜索态 = 命中数）/ 总数（全量含已处理）
   let html = railItemHtml({ kind: 'all' }, '全部未读', allHit, arts.length, 'inbox', '#58a6ff', M.sel.kind === 'all', '');
 
-  // 站点行动态聚合（issue 220：rail 按 site 属性分类，issue 206 平台聚合行退役）——
+  // 站点行动态聚合（issue 222：rail 按 site 属性分类，issue 206 平台聚合行退役）——
   // 全库站点 = 剪藏全量 + 未读 news 面（行总数 = 该源列表长度，口径同 queryBySource site 源）；
   // 排序总数降序 → 未读降序 → 名 zh 序；徽标色按站名哈希（编辑部皮肤本就隐藏徽标）
   for (const row of aggregateSites(arts, clipNotes, new Set((M.sidecar.savedArchive || []).map((x) => x.url)), M.clipUrls)) {
@@ -1166,7 +1166,7 @@ function renderMobSources(): void {
   const countOf = (source: SrcFilter): number =>
     queryBySource(arts, M.sidecar, M.clipUrls, M.clipNotes || [], source, M.upInfo).filter(matchesSearch).length;
   let html = mobSrcChipHtml({ kind: 'all' }, '全部未读', countOf({ kind: 'all' }), M.sel.kind === 'all', 'radio');
-  // 站点 chip 动态聚合（issue 220 对齐桌面 rail：site 属性分类，平台 chip 退役；
+  // 站点 chip 动态聚合（issue 222 对齐桌面 rail：site 属性分类，平台 chip 退役；
   // 聚合口径同桌面 = 剪藏全量 + 未读 news 面，排序总数降序）
   for (const row of aggregateSites(arts, M.clipNotes || [], new Set((M.sidecar.savedArchive || []).map((x) => x.url)), M.clipUrls)) {
     const cnt = countOf({ kind: 'site', site: row.site });

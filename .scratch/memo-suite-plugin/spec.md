@@ -997,3 +997,11 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **组件**：schema 新增 `choiceCards` 行类型（十一类），组件库新工厂 `uiCardChoice`（.bz-cardpick），
   core ⚙️ 与设置面板两渲染器同源支持；预览变体视觉由 todo 域样式提供。
 - **热应用**：设置行 onChange 即时切换已开面板；二级弹窗不跟随皮肤（范围控制）。
+
+### 剪藏本 rail 按 site 分组 + 中右栏分割线 + 拖拽误关闭修复（issue 222，2026-09-06）
+
+> 用户四连需求：左栏列表按 site 属性分类；中栏与右栏之间加可拖动分割线；窗口自由缩放（参考待办）；缩放拖拽中鼠标停在遮罩上松开误关闭窗口。核实：窗口 SE 缩放 + 尺寸记忆已在（enh 包 8），误关闭为 core uiResizable 终端 click 漏吞（mousedown 在面板、mouseup 落遮罩，click 派发公共祖先遮罩 → 点遮罩关闭误触发）。
+
+- **rail 换 site 分组**：issue 206 的平台聚合行退役，改按 `site` 属性归并（news 面 = `a.site||platform`，剪藏面 = frontmatter `site`，空归「未知」）；行=全库站点索引（未读 news 流 + 剪藏全量，已存 news 骨架不计避免与剪藏重复），排序总数降序→未读降序→名 ascending；B站 UP 子行与剪藏本聚合行保留；移动源胶囊同源对齐。数据层 `aggregateSites` 纯函数 + `queryBySource` 新增 `kind:'site'` 源。
+- **中右栏分割线**：组件库新工厂 `uiVSplitter`（.bz-vsplit，竖向拖条，role=separator；桌面 only，触屏不挂），拖动改中栏定宽、右栏弹性吸收；尺寸记忆键 `clipbookMidWidth`（0=未拖过走 CSS 默认 360px），防抖 300ms 落盘口径同 uiResizable；设置页「基础」组加「目录栏宽度记忆」行。
+- **拖拽误关闭修复（core）**：`core/dom.ts` 新增 `swallowNextClick()`（capture 一次性吞终端 click，下次 mousedown 撤防）；`uiResizable` 拖拽结束接此防线——todo/剪藏本/保险库等一切「缩放热区 × 点遮罩关闭」组合全量受益；uiVSplitter 拖拽同防（防误触 rail 行/条目卡）。
