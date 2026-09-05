@@ -16,34 +16,41 @@ describe('bookshelf applyDefaultView（issue 194）', () => {
     resetBookshelfState();
   });
 
-  it('未配置 → 全部筛选 + 最近阅读排序', () => {
+  it('未配置 → 全部筛选 + 最近读完排序（issue 218 三档口径）', () => {
     setSettingsProvider(() => ({} as any));
     applyDefaultView();
     expect(M.side).toBe('all');
-    expect(M.sortMode).toBe('date');
+    expect(M.sortMode).toBe('recent');
   });
 
-  it('合法配置生效（未读筛选 + 书名排序）', () => {
+  it('合法配置生效（未读筛选 + 书名排序）；存量排序值零感知映射', () => {
     setSettingsProvider(() => ({ bookshelfDefaultSide: 'unread', bookshelfSortMode: 'title' } as any));
     applyDefaultView();
     expect(M.side).toBe('unread');
     expect(M.sortMode).toBe('title');
+    // 存量值映射（issue 218）：date/author → recent、progress → time
+    setSettingsProvider(() => ({ bookshelfSortMode: 'date' } as any));
+    applyDefaultView();
+    expect(M.sortMode).toBe('recent');
+    setSettingsProvider(() => ({ bookshelfSortMode: 'progress' } as any));
+    applyDefaultView();
+    expect(M.sortMode).toBe('time');
   });
 
-  it('非法值回落（未知 side 回 all、未知排序回 date）', () => {
+  it('非法值回落（未知 side 回 all、未知排序回 recent）', () => {
     setSettingsProvider(() => ({ bookshelfDefaultSide: 'bogus', bookshelfSortMode: 'size' } as any));
     applyDefaultView();
     expect(M.side).toBe('all');
-    expect(M.sortMode).toBe('date');
+    expect(M.sortMode).toBe('recent');
   });
 });
 
 describe('bookshelf 设置 schema（issue 194）', () => {
-  it('组序：目录 → 显示 → 移动端；显示组四行键与选项集契约（issue 208 网格列数、issue 216 面板皮肤）', () => {
+  it('组序：目录 → 显示 → 移动端；显示组三行键与选项集契约（issue 215 皮肤、issue 218 排序三档）', () => {
     const schema = bookshelfSettingsSchema();
     expect(schema.groups.map((g) => g.name)).toEqual(['目录', '显示', '移动端']);
     const view = schema.groups[1];
-    expect(view.rows).toHaveLength(4);
+    expect(view.rows).toHaveLength(3);
     const [skin, side, sort] = view.rows as any[];
     // 面板皮肤（issue 216）：choiceCards 十选一，默认雪松白，onChange 热切换
     expect(skin.type).toBe('choiceCards');
@@ -61,31 +68,10 @@ describe('bookshelf 设置 schema（issue 194）', () => {
     expect(sort.type).toBe('select');
     expect(sort.name).toBe('默认排序');
     expect(sort.binding).toMatchObject({ key: 'bookshelfSortMode' });
-    expect(sort.options.map((o: any) => o.value)).toEqual(['date', 'title', 'author', 'progress']);
-    // 网格每行列数（issue 208）：number 行 + string 键数字绑定，钳制 2~12，默认 6
-    const grid = view.rows[3] as any;
-    expect(grid.type).toBe('number');
-    expect(grid.name).toBe('网格每行列数');
-    expect(grid.min).toBe(2);
-    expect(grid.max).toBe(12);
-    expect(grid.binding.get()).toBe(6);
+    expect(sort.options.map((o: any) => o.value)).toEqual(['recent', 'time', 'title']);
     // 默认值与选项集一致
     expect(DEFAULT_SETTINGS.bookshelfDefaultSide).toBe('all');
-    expect(DEFAULT_SETTINGS.bookshelfSortMode).toBe('date');
-    expect(DEFAULT_SETTINGS.bookshelfGridColumns).toBe('6');
+    expect(DEFAULT_SETTINGS.bookshelfSortMode).toBe('date'); // 存量键值不迁移（applyDefaultView 零感知映射）
     expect(DEFAULT_SETTINGS.bookshelfSkin).toBe('nordic');
-  });
-
-  it('网格每行列数：默认 6；非法/非正数回退默认（issue 208）', () => {
-    const schema = bookshelfSettingsSchema();
-    const grid = schema.groups.find((g) => g.name === '显示')!.rows[3] as any;
-    const store: Record<string, unknown> = { ...DEFAULT_SETTINGS };
-    setSettingsProvider(() => store as never);
-    expect(grid.binding.get()).toBe(6);
-    grid.binding.set(9);
-    expect(store.bookshelfGridColumns).toBe('9');
-    expect(grid.binding.get()).toBe(9);
-    store.bookshelfGridColumns = 'abc';
-    expect(grid.binding.get()).toBe(6); // 非法值回退默认
   });
 });

@@ -1,25 +1,18 @@
 /**
- * 书架墙（bookshelf）域 UI：试点收编组件库（铁律 6）
- * 桌面：整宽头行（仅标题「书架墙」+ 计数）＋ 左栏（状态 + 分类两组列表 + 底部阅读分析报告入口）
- *       ＋ 内容区（搜索 + 排序下拉 + 统计行[3 卡+近 12 月柱] + 封面平铺网格，hover 上抬）
- * 移动：头行标题 + 右上图标组（报告 / 排序⇅ / 搜索(默认隐藏可展开) / 筛选(底部抽屉) / 关闭，对齐收藏本秩序）
- *       ＋ 2 统计卡 ＋ 封面平铺网格（2 列）
- * 统计行：在读 accent 卡整卡可点（一键回书直达原文）；命中「那年今天」时 accent 卡位临时替换
- *       读完纪念日卡（「N 年前的今天你读完了《X》」，可点回看；无命中不渲染零空态）。
- * 交互：点封面 → 详情弹窗（uiModal 头行 + ✕；移动端全屏覆写）——改状态(平铺单选)/进度(滑条)/
- *       读完日期(已读可改，默认今天)/书评(textarea)；直达原文按钮（md=打开笔记、EPUB=Weave 深链，
- *       在读文案「继续读」）；md 书可删除（二次确认，vault.delete）；EPUB 条目只读（Weave 驱动）。
- *       保存语义：已读→进度 100+补 completionDate(可改)/readingDate；在读→进度 1-99+补 readingDate 清
- *       completionDate；未读→清两日期归零进度；书评空删键。落盘走 app.fileManager.processFrontMatter；
- *       保存后 notifyUndo 一键回滚快照旧值（防手滑改状态丢数据）。
- * 基线：按钮/图标钮/输入/单选/滑条/空态/弹窗骨架走组件库（src/core/ui）；域内只留书架特有布局。
- * 面板壳/头行/侧栏/统计卡/进度细条/工具行/搜索接入共享组件批次（ADR-0094）：
- *       .bz-panel-overlay/.bz-panel-frame/.bz-panel-head/.bz-rail 族/.bz-stat 族/
- *       .bz-progress--thin/.bz-toolrow/.bz-search。
- * 图标：一律 lucide（字符串模板 data-lucide 占位 → mountIcons 统一 setIcon）。
- * 报告视图（读书报告内嵌化拍板）：阅读分析报告是面板内视图（不再独立弹窗、原深链作废）——
- *       左栏报告入口/移动头行报告钮切到报告视图，报告内点作者/分类行切回书架列表并预填筛选；
- *       桌面靠左栏返回，报告视图关闭钮仅移动端；报告视图存续期间书库数据变化自动重算内容区。
+ * 书架墙（bookshelf）域 UI：书脊墙 1:1 复刻（issue 218；原型 .zcode/ui-prototypes/bookshelf-10/p4-full.html）
+ *
+ * 布局（原型口径，完全替代旧封面网格/左栏/统计卡/月柱/筛选抽屉）：
+ *   木匾刊头（书脊墙 · SPINE WALL）＋ 纸质统计标签行（全馆/已读讫/在读抽出/未读倒叠 + 分类册数，
+ *   点选筛选、再点回全）＋ 工具行（纸感检索 + 三档排序 segmented）＋ 墙体（分类分区动态装箱：
+ *   每排按当前墙宽逐条塞满才换排；已读盖「讫」印；在读抽出一截垂书签带；未读收墙尾「倒叠区」）
+ *   ＋ 墙尾格言。书脊：高度=累计阅读时长、厚度=字数（开方缩放，无字数回退批注密度）、
+ *   竖排书名按「：」拆主/副双列（text-orientation: upright，字号 14→9px 自适应、列宽上限 64px）。
+ * 窗口缩放防抖重装箱；移动端同构（窄墙自动多排），无独立移动布局。
+ * 点击书脊 → 借书卡详情（纸卡排版 + 印章；保留全部编辑能力：状态/进度/读完日期/书评/直达原文/
+ *   读书笔记/删除，EPUB 只读）。保存语义与撤销回滚不变（persistBook/rollbackBook）。
+ * 报告视图（读书报告内嵌化）：面板内视图容器保留，入口仅命令 bz-reading-report-open（墙面上无入口）。
+ * 皮肤（issue 216 十肤随迁）：面板根挂 bz-bs-skin-{id}，皮肤改墙/纸/铜墨变量（styles.css）。
+ * 铁律 6：弹窗骨架/空态/输入走组件库；墙体系为域独有视觉（styles.css .bz-bs-wall*）。
  */
 import type { App } from 'obsidian';
 import { TFile } from 'obsidian';
@@ -28,18 +21,16 @@ import { escManager } from '../core/esc-manager';
 import { allocZ } from '../core/z-order';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
-import { uiModal, uiChoice, uiRange, uiEmpty, uiChip, uiSegmented, mountIcons } from '../core/ui';
+import { uiModal, uiChoice, uiRange, uiEmpty, mountIcons } from '../core/ui';
 import { escapeHtml } from '../core/utils';
-import { isMobileEnv } from '../core/mobile';
 import { renderReadingReport, cancelReadingReport, handleReportInteraction } from '../reading-report';
 import {
-  STATUS_COLORS, SIDE_DEFS, SORT_LABEL, ICON,
+  STATUS_COLORS, SORT_LABEL, ICON,
   EMPTY_BOOKS_ICON, EMPTY_SEARCH_ICON, EMPTY_FILTER_ICON,
 } from './constants';
-import { M, resetBookshelfState, applyDefaultView, type BookshelfItem, type BookshelfView, type SideId, type SortKey } from './state';
+import { M, applyDefaultView, type BookshelfItem, type BookshelfView, type SideId, type SortKey } from './state';
 import {
-  rebuildItems, getDisplayItems, computeStats, resolveFolderPath, resolveBookTag,
-  categoryList, findAnniversary,
+  rebuildItems, getDisplayItems, resolveFolderPath, resolveBookTag,
 } from './data';
 import { showBookNotes, showEpubBookNotes, closeBookNoteModals } from './notes-ui';
 import { buildEpubResumeLink } from './epub-notes';
@@ -51,12 +42,12 @@ function iconSpan(name: string, extra = ''): string {
   return `<i data-lucide="${name}" class="bz-ic${extra ? ' ' + extra : ''}"></i>`;
 }
 
-/** HTML 转义（core escapeHtml 的 unknown 容错壳；收藏本先例） */
+/** HTML 转义（core escapeHtml 的 unknown 容错壳） */
 function esc(s: unknown): string {
   return escapeHtml(String(s ?? ''));
 }
 
-/** 封面资源 URL（vault 路径 → resource URL）；无文件/非图返回 null */
+/** 封面资源 URL（vault 路径 → resource URL）；无文件/非图返回 null（借书卡封面用） */
 function coverUrl(it: BookshelfItem, app: App): string | null {
   if (!it.cover) return null;
   const f = app.vault.getAbstractFileByPath(it.cover);
@@ -66,20 +57,7 @@ function coverUrl(it: BookshelfItem, app: App): string | null {
   return null;
 }
 
-/** 无封面占位：小图标 + 书名（纯图标大留白像加载失败，issue 204） */
-function coverPhHTML(title: string, cls: string): string {
-  return `<div class="bz-bs-cover-ph ${cls}">${iconSpan('library')}<div class="bz-bs-cover-ph-name">${esc(title)}</div></div>`;
-}
-
-/** 封面区块：有图出图，无图出占位；坏图由 bindCoverFallback 回退占位（data-bs-ph-title 供回退取书名） */
-function coverBlock(it: BookshelfItem, app: App, cls: string): string {
-  const url = coverUrl(it, app);
-  if (!url) return coverPhHTML(it.title, cls);
-  return `<div class="bz-bs-cover ${cls}" data-bs-ph-title="${esc(it.title)}"><img src="${esc(url)}" alt="" loading="lazy"></div>`;
-}
-
-/** B4：坏图回退占位块（capture 阶段接 error 不冒泡事件；img 原位替换为占位）。
- *  container 级一次挂载，innerHTML 重渲染不失效；audit H：重复渲染不再叠加 error 监听。 */
+/** 坏图回退占位（capture 阶段 error 不冒泡；container 级一次挂载） */
 function bindCoverFallback(container: HTMLElement): void {
   if (container.dataset.bsCoverFallbackBound === '1') return;
   container.dataset.bsCoverFallbackBound = '1';
@@ -87,9 +65,8 @@ function bindCoverFallback(container: HTMLElement): void {
     const img = e.target as HTMLElement;
     if (!img || img.tagName !== 'IMG') return;
     const ph = document.createElement('div');
-    ph.className = 'bz-bs-cover-ph';
-    const title = img.closest('.bz-bs-cover')?.getAttribute('data-bs-ph-title') || '';
-    ph.innerHTML = `${iconSpan('library')}<div class="bz-bs-cover-ph-name">${esc(title)}</div>`;
+    ph.className = 'bz-bs-d-cover-ph';
+    ph.innerHTML = `${iconSpan('library')}<span>无封面</span>`;
     mountIcons(ph);
     img.replaceWith(ph);
   }, true);
@@ -100,15 +77,14 @@ function statusColor(status: string): string {
   return STATUS_COLORS[status] || 'var(--bz-text-3)';
 }
 
-/** 条目稳定 id（data-bs-* 回查用；与书卡 data-bs-id 同口径） */
+/** 条目稳定 id（data-bs-* 回查用） */
 function itemId(it: BookshelfItem): string {
   return it.file?.path ?? it.epubVaultPath ?? '';
 }
 
 /**
- * 直达原文（详情「打开原文/继续读」按钮 + 在读 accent 卡一键回书共用）：
- * md 书 = 打开对应笔记；EPUB = `path#weave-cfi=…` 深链跳 Weave 当前位置（无 cfi 回落直接打开）。
- * 点击瞬间发 progress「正在打开…」，打开后转 success（自动收起），失败转 error。
+ * 直达原文（借书卡「打开笔记/继续读」按钮）：md = 打开笔记；EPUB = Weave 深链跳当前位置。
+ * 点击瞬间 progress 反馈，打开后转 success，失败转 error。
  */
 function openBookDirect(it: BookshelfItem, app: App): void {
   if (it.isEpub && !it.epubVaultPath) return;
@@ -135,210 +111,242 @@ function openBookDirect(it: BookshelfItem, app: App): void {
   }
 }
 
-// ---------- 渲染：主面板 ----------
+// ---------- 书脊视觉（原型 p4-full 口径） ----------
 
-function statusDefs(): { id: SideId; label: string; icon: string; count: number }[] {
-  const map: Record<string, string> = { reading: '在读', unread: '未读', done: '已读' };
-  return SIDE_DEFS.map((d) => ({
-    id: d.id,
-    label: d.label,
-    icon: d.icon,
-    count: d.id === 'all' ? M.items.length : M.items.filter((x) => x.status === map[d.id]).length,
-  }));
+/** 分类色板（常见分类覆盖 + 兜底散列；取值同原型 CAT） */
+const CAT: Record<string, { bg: string; fg: string }> = {
+  '文学': { bg: '#8f4a3a', fg: '#f2e4d8' }, '推理': { bg: '#7a3b52', fg: '#f2dee6' },
+  '哲学': { bg: '#4f6f52', fg: '#e9efe6' }, '科幻': { bg: '#3d5a73', fg: '#e2ecf4' },
+  '心理学': { bg: '#5c5273', fg: '#e9e4f2' }, '摄影': { bg: '#2f4858', fg: '#dbe8f0' },
+  '天文学': { bg: '#1f3242', fg: '#c9dde9' }, '生物学': { bg: '#6d7a3f', fg: '#eef0dc' },
+  '龙与地下城': { bg: '#4a3626', fg: '#e8d9b0' },
+  '历史': { bg: '#8a6d3b', fg: '#f5ecd8' }, '武侠': { bg: '#9a5a2f', fg: '#f7ead9' },
+  '奇幻': { bg: '#3f5a4a', fg: '#dfeee4' }, '艺术': { bg: '#6b4a6e', fg: '#efe2f0' },
+  '未分类': { bg: '#6b6257', fg: '#ded8ce' },
+};
+const FALLBACKS = ['#8a6d3b', '#4f6f52', '#3d5a73', '#8f4a3a', '#5c5273', '#7a3b52', '#6d7a3f', '#2f4858'];
+
+/** 分类色（未入色板按名散列兜底） */
+function catColor(cat: string): { bg: string; fg: string } {
+  if (CAT[cat]) return CAT[cat];
+  return fallbackColor(cat);
+}
+function fallbackColor(seed: string): { bg: string; fg: string } {
+  let h = 0;
+  for (const ch of seed) h = (h * 31 + (ch.codePointAt(0) || 0)) >>> 0;
+  return { bg: FALLBACKS[h % FALLBACKS.length], fg: '#f0e8d8' };
 }
 
-function renderSide(): void {
-  const sideEl = M.currentOverlay?.querySelector('.bz-bs-side-list') as HTMLElement | null;
-  if (sideEl) {
-    sideEl.innerHTML = statusDefs().map((s) => `
-      <button class="bz-rail-item${s.id === M.side ? ' on' : ''}" data-bs-side="${s.id}">
-        ${iconSpan(s.icon)}<span class="bz-rail-name">${s.label}</span><span class="bz-rail-count">${s.count}</span>
-      </button>`).join('');
-    mountIcons(sideEl);
-  }
-  // 分类第二组（与状态正交过滤；沿用状态组条目样式）
-  const catEl = M.currentOverlay?.querySelector('.bz-bs-side-catlist') as HTMLElement | null;
-  if (catEl) {
-    const cats = categoryList(M.items);
-    const catDefs: { name: string; label: string; icon: string; count: number }[] = [
-      { name: 'all', label: '全部', icon: ICON.grid, count: M.items.length },
-      ...cats.map((c) => ({ name: c.name, label: c.name, icon: ICON.tag, count: c.count })),
-    ];
-    catEl.innerHTML = catDefs.map((c) => `
-      <button class="bz-rail-item${c.name === M.catFilter ? ' on' : ''}" data-bs-cat="${esc(c.name)}">
-        ${iconSpan(c.icon)}<span class="bz-rail-name">${esc(c.label)}</span><span class="bz-rail-count">${c.count}</span>
-      </button>`).join('');
-    mountIcons(catEl);
-  }
+function shade(hex: string, p: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  const f = (v: number) => Math.max(0, Math.min(255, v + p));
+  return `rgb(${f(r)},${f(g)},${f(b)})`;
 }
 
-/** 统计行（桌面 3 卡 + 月柱；移动 2 卡，无柱）——共享 .bz-stat 族
- *  （--main 强调 / --click 可点 / --text 纪念日标题档）。
- *  命中「那年今天」时强调卡位临时替换为读完纪念日卡（可点回看；无命中零空态不渲染）。 */
-function dashHTML(s: ReturnType<typeof computeStats>, now: Date): { desktop: string; mobile: string } {
-  const firstReading = s.reading[0];
-  const accentHint = firstReading ? `《${firstReading.title.slice(0, 12)}${firstReading.title.length > 12 ? '…' : ''}》` : '';
-  const anniv = findAnniversary(M.items, now);
-  // 在读强调卡整卡可点（一键回书；data-bs-resume 供点击委托回查）
-  const resumeAttr = firstReading ? ` data-bs-resume="${esc(itemId(firstReading))}"` : '';
-  const statCard = (icon: string, label: string, num: string, hint: string, main: boolean, extraAttr = ''): string => `
-    <div class="bz-stat${main ? ' bz-stat--main' : ''}${extraAttr ? ' bz-stat--click' : ''}"${extraAttr}>
-      <div class="bz-stat-label">${iconSpan(icon)}${label}</div>
-      <div class="bz-stat-num">${num}</div>
-      ${hint ? `<div class="bz-stat-hint">${hint}</div>` : ''}
-    </div>`;
-  const annivCard = anniv
-    ? `<div class="bz-stat bz-stat--main bz-stat--text bz-stat--click" data-bs-anniv="${esc(itemId(anniv.item))}" role="button" title="点击回看这本书">
-        <div class="bz-stat-label">${iconSpan(ICON.calendarHeart)}${anniv.years} 年前的今天</div>
-        <div class="bz-stat-num">《${esc(anniv.item.title.slice(0, 14))}${anniv.item.title.length > 14 ? '…' : ''}》</div>
-        <div class="bz-stat-hint">${esc(anniv.item.completionDate || '')} 读完</div>
-      </div>`
-    : '';
-  const bars = s.bars.map((b) => `
-    <div class="bz-bs-bar-col"><div class="bz-bs-bar${b.isThis ? ' this' : ''}${b.count === 0 ? ' zero' : ''}" style="height:${Math.max(3, Math.round((b.count / s.maxBar) * 56))}px"><span>${b.count}</span></div>
-    <div class="bz-bs-bar-label">${b.label}</div></div>`).join('');
-  const desktop = `
-    ${anniv ? annivCard : statCard('book-open', '正在读', `${s.reading.length} 本`, esc(accentHint), true, resumeAttr)}
-    ${statCard('check-circle', `${now.getFullYear()} 读完`, `${s.doneThisYear.length} 本`, `${s.done.length} 本累计`, false)}
-    ${statCard('clock', '累计时长', `${s.totalHours} 小时`, '划线 ' + s.totalHighlights + ' 条', false)}
-    <div class="bz-bs-chart">
-      <div class="bz-bs-chart-head"><span class="bz-bs-ctitle">每月读完</span><span class="bz-bs-csub">近 12 个月 · 含当前</span></div>
-      <div class="bz-bs-bars">${bars}</div>
-      <div class="bz-bs-chart-foot"><span>读完峰值 ${s.maxBar} 本 / 月</span><span>累计 ${s.done.length} 本</span></div>
-    </div>`;
-  const mobile = `
-    ${anniv
-      ? `<div class="bz-stat bz-stat--main bz-stat--text bz-stat--click" data-bs-anniv="${esc(itemId(anniv.item))}"><div class="bz-stat-label">${anniv.years} 年前的今天</div><div class="bz-stat-num">《${esc(anniv.item.title.slice(0, 10))}${anniv.item.title.length > 10 ? '…' : ''}》</div></div>`
-      : `<div class="bz-stat bz-stat--main bz-stat--click"${resumeAttr}><div class="bz-stat-label">正在读</div><div class="bz-stat-num">${s.reading.length} 本</div></div>`}
-    <div class="bz-stat"><div class="bz-stat-label">今年读完</div><div class="bz-stat-num">${s.doneThisYear.length} 本</div></div>`;
-  return { desktop, mobile };
+/** 墙内标尺（每次 rebuildItems 后重算）：高度按时长、厚度按字数开方 */
+let wallMaxHrs = 3600000;
+let wallMaxWc = 10000;
+function rescaleWall(): void {
+  wallMaxHrs = Math.max(3600000, ...M.items.map((b) => b.readingTimeMs));
+  wallMaxWc = Math.max(10000, ...M.items.map((b) => b.wordCount));
 }
 
-function renderDash(app: App): void {
-  const s = computeStats();
-  const now = new Date();
-  const htmls = dashHTML(s, now);
-  const dEl = M.currentOverlay?.querySelector('.bz-bs-dash') as HTMLElement | null;
-  if (dEl) { dEl.innerHTML = htmls.desktop; mountIcons(dEl); }
-  const mEl = M.currentOverlay?.querySelector('.bz-bs-mcards') as HTMLElement | null;
-  if (mEl) { mEl.innerHTML = htmls.mobile; mountIcons(mEl); }
-  const totalEl = M.currentOverlay?.querySelector('.bz-panel-head-sub') as HTMLElement | null;
-  if (totalEl) totalEl.textContent = `${M.items.length} 本`;
-  void app;
+/** 书脊内联样式：高度=时长（150~230px）、厚度=字数开方（22~56px，无字数回退批注密度）、
+ *  分类色（未读倒扣灰）+ 同分类 ±7% 明度抖动；颜色走 --c1/--c2 变量（皮肤层可接管） */
+function spineVars(it: BookshelfItem): string {
+  const dense = it.highlights + it.thinks;
+  const wc = it.wordCount > 0 ? it.wordCount : dense * 800;
+  const h = 150 + (it.readingTimeMs / wallMaxHrs) * 80;
+  const th = 22 + Math.sqrt(Math.min(wc, wallMaxWc) / wallMaxWc) * 34;
+  const c = it.status === '未读' ? { bg: '#6b6257', fg: '#ded8ce' } : catColor(it.category || '未分类');
+  let sh = 0;
+  for (const ch of it.title) sh = (sh * 31 + (ch.codePointAt(0) || 0)) >>> 0;
+  const jit = (sh % 15) - 7;
+  return `height:${Math.round(h)}px;width:${Math.round(th)}px;--c1:${shade(c.bg, jit)};--c2:${c.fg}`;
 }
 
-/** 封面卡（桌面/移动同结构，尺寸靠 CSS 列数/比例）；进度细条 = 共享 .bz-progress--thin（绝对定位由 .bz-bs-prog 给） */
-function bookCardHTML(it: BookshelfItem, app: App): string {
-  const prog = it.status !== '已读' && it.progress > 0
-    ? `<div class="bz-progress bz-progress--thin bz-bs-prog"><i style="width:${Math.min(100, it.progress)}%"></i></div>` : '';
-  const quote = it.bookReview
-    ? `<div class="bz-bs-quote">${esc(it.bookReview.replace(/\[\[.*?\]\]/g, '').slice(0, 48))}</div>` : '';
-  // B5：路径含引号会截断 HTML 属性 → esc() 转义；回查时浏览器已解码为原值
-  return `<div class="bz-bs-book" data-bs-id="${esc(it.file?.path ?? it.epubVaultPath ?? '')}" data-bs-epub="${it.isEpub ? '1' : ''}">
-    <div class="bz-bs-cover-wrap">${coverBlock(it, app, '')}${prog}
-      ${quote}
-    </div>
-    <div class="bz-bs-bname" title="${esc(it.title)}">${esc(it.title)}</div>
-    <div class="bz-bs-bauthor">${esc(it.author)}</div>
+/** 长书名自适应：按「：」拆主/副题双竖列（丛书书脊范式），各列独立缩字号（下限 9px），
+ *  拉丁/数字直立；书脊按列数加宽（上限 64px） */
+function fitTitle(spine: HTMLElement, it: BookshelfItem): void {
+  const t = spine.querySelector('.bz-bs-spine-title') as HTMLElement;
+  const avail = parseFloat(spine.style.height) - 36;
+  let parts = it.title.split(/[:：]/);
+  if (parts.length > 2) parts = [parts[0], parts.slice(1).join('：')];
+  const fitFs = (n: number) => Math.max(9, Math.min(14, Math.floor(avail / (1.18 * Math.max(1, n)))));
+  const cols = parts.map((p) => ({ p, fs: fitFs([...p].length) }));
+  let width = 24;
+  for (const c of cols) width += Math.ceil(c.fs * 1.25) + 6;
+  t.innerHTML = cols
+    .map((c, i) => `<span class="${i === 0 ? 't-main' : 't-sub'}" style="font-size:${c.fs}px;letter-spacing:${Math.max(1, Math.round(c.fs * 0.18))}px">${esc(c.p)}</span>`)
+    .join('');
+  spine.style.width = `${Math.min(64, Math.max(parseFloat(spine.style.width), width))}px`;
+}
+
+/** 单条书脊 HTML（未读倒扣灰 / 在读抽出一截垂书签带 / 已读盖「讫」印） */
+function spineHTML(it: BookshelfItem): string {
+  const cls = it.status === '已读' ? 'read' : it.status === '在读' ? 'reading' : 'unread';
+  return `<div class="bz-bs-spine ${cls}" style="${spineVars(it)}" data-bs-id="${esc(itemId(it))}" data-bs-epub="${it.isEpub ? '1' : ''}" title="${esc(it.title)} · ${esc(it.status)}${it.progress > 0 ? ' ' + it.progress + '%' : ''}">
+    <span class="bz-bs-spine-title"></span>
+    ${it.status === '已读' ? '<span class="stamp">讫</span>' : ''}
+    ${it.status === '在读' ? '<span class="ribbon"></span>' : ''}
   </div>`;
 }
 
-/** 封面网格每行列数（设置 bookshelfGridColumns；空值/非法回退默认 6，钳制 2~12；issue 208） */
-export function gridColumns(): number {
-  const raw = Number((tryGetSettings() as Record<string, unknown>).bookshelfGridColumns);
-  if (!Number.isFinite(raw) || raw <= 0) return 6;
-  return Math.min(12, Math.max(2, Math.round(raw)));
+// ---------- 墙体渲染（动态装箱） ----------
+
+function mkBookend(): HTMLElement {
+  const d = document.createElement('div');
+  d.className = 'bz-bs-bookend';
+  return d;
 }
 
-function renderShelves(app: App): void {
-  const list = getDisplayItems();
-  // B9：空态三态区分——库空 / 搜索无命中 / 状态筛无书（图标语义各自匹配）
-  const emptyCfg = !M.items.length
+function mkSpine(it: BookshelfItem): HTMLElement {
+  const wrap = document.createElement('div');
+  wrap.innerHTML = spineHTML(it);
+  const sp = wrap.firstElementChild as HTMLElement;
+  fitTitle(sp, it);
+  return sp;
+}
+
+/** 单个分类分区装箱：按当前墙宽逐条塞书脊，塞不下才换排（隔板从排首占位参与测宽）；
+ *  窗口缩放由 resize 防抖整墙重排 */
+function packZone(shelf: HTMLElement, cat: string, books: BookshelfItem[]): void {
+  let zone: HTMLElement | null = null;
+  const newRow = () => {
+    zone = document.createElement('div');
+    zone.className = 'bz-bs-zone';
+    zone.appendChild(mkBookend());
+    const dv = document.createElement('div');
+    dv.className = 'bz-bs-divider';
+    dv.textContent = cat + ' 区';
+    zone.appendChild(dv);
+    shelf.appendChild(zone);
+  };
+  for (let i = 0; i < books.length; i++) {
+    if (!zone) newRow();
+    const sp = mkSpine(books[i]);
+    zone!.appendChild(sp);
+    if (zone!.scrollWidth > zone!.clientWidth) {
+      zone!.removeChild(sp);
+      if (!zone!.querySelector('.bz-bs-spine')) zone!.appendChild(sp); // 单条就超宽：硬塞防死循环
+      else { i--; zone = null; } // 这条留到下一排
+    }
+  }
+  zone = null;
+}
+
+/** 空态三态（库空 / 搜索无命中 / 筛选无书）——uiEmpty 工厂 */
+function wallEmptyHTML(): string {
+  const cfg = !M.items.length
     ? { icon: EMPTY_BOOKS_ICON, title: '书库还是空的', desc: `把书籍笔记放进「${resolveFolderPath()}」文件夹，并在 frontmatter 添加 tags: ${resolveBookTag()} 标签` }
-      : M.searchKeyword
-        ? { icon: EMPTY_SEARCH_ICON, title: '没有找到相关的书', desc: '试试其他关键词，或换一个筛选' }
-        : { icon: EMPTY_FILTER_ICON, title: '这个筛选下还没有书', desc: '换一个状态或分类筛选，或用搜索找找' };
-  // 网格每行列数（issue 208）：设置驱动 CSS 变量；移动端媒体查询固定 2 列不受影响
-  const gridOrEmpty = list.length
-    ? `<div class="bz-bs-grid" style="--bz-bs-cols:${gridColumns()}">${list.map((it) => bookCardHTML(it, app)).join('')}</div>`
-    : `<div class="bz-bs-none">${uiEmpty({ icon: emptyCfg.icon, title: emptyCfg.title, desc: emptyCfg.desc }).outerHTML}</div>`;
-  const dEl = M.currentOverlay?.querySelector('.bz-bs-shelves') as HTMLElement | null;
-  const mEl = M.currentOverlay?.querySelector('.bz-bs-shelves-m') as HTMLElement | null;
-  // B7：按运行端只渲染一份网格（Platform.isMobile 静态判定；桌面/移动容器由 CSS 媒体查询切换显示），
-  // 大书库免双份 DOM/图片请求
-  const isMobile = isMobileEnv();
-  if (!isMobile && dEl) {
-    dEl.innerHTML = gridOrEmpty;
-    mountIcons(dEl);
-    bindCoverFallback(dEl);
+    : M.searchKeyword
+      ? { icon: EMPTY_SEARCH_ICON, title: '没有找到相关的书', desc: '试试其他关键词，或换一个筛选' }
+      : { icon: EMPTY_FILTER_ICON, title: '这个筛选下还没有书', desc: '换一个状态或分类标签，或用搜索找找' };
+  return `<div class="bz-bs-wall-empty">${uiEmpty({ icon: cfg.icon, title: cfg.title, desc: cfg.desc }).outerHTML}</div>`;
+}
+
+/** 整墙渲染：分类分区（未读入倒叠区）+ 动态装箱 + 在墙计数 */
+function renderWall(app: App): void {
+  void app;
+  const shelf = M.currentOverlay?.querySelector('#bz-bs-shelf') as HTMLElement | null;
+  if (!shelf) return;
+  rescaleWall();
+  const list = getDisplayItems();
+  const onShelf = list.filter((b) => b.status !== '未读');
+  const unread = list.filter((b) => b.status === '未读');
+  shelf.innerHTML = '';
+  const hint = M.currentOverlay?.querySelector('#bz-bs-hint') as HTMLElement | null;
+  if (hint) hint.textContent = `${onShelf.length + unread.length} 册在墙`;
+  if (!onShelf.length && !unread.length) {
+    shelf.innerHTML = wallEmptyHTML();
+    return;
   }
-  if (isMobile && mEl) {
-    mEl.innerHTML = gridOrEmpty;
-    mountIcons(mEl);
-    bindCoverFallback(mEl);
+  // 分类分区（未读除外）按册数降序；排序档决定分区内书序
+  const zones = new Map<string, BookshelfItem[]>();
+  for (const b of onShelf) {
+    const k = b.category || '未分类';
+    const arr = zones.get(k) || [];
+    arr.push(b);
+    zones.set(k, arr);
   }
+  const sortedZones = [...zones.entries()].sort((a, b) => b[1].length - a[1].length);
+  for (const [cat, books] of sortedZones) packZone(shelf, cat, books);
+  if (unread.length) {
+    const zone = document.createElement('div');
+    zone.className = 'bz-bs-zone';
+    const dv = document.createElement('div');
+    dv.className = 'bz-bs-divider';
+    dv.textContent = '倒 叠 区';
+    zone.appendChild(dv);
+    zone.appendChild(mkBookend());
+    for (const b of unread) zone.appendChild(mkSpine(b));
+    zone.appendChild(mkBookend());
+    shelf.appendChild(zone);
+  }
+}
+
+/** 统计标签行（纸质标签；点选筛选、再点回全馆）——状态四张 + 分类册数标签 */
+function renderLabels(): void {
+  const el = M.currentOverlay?.querySelector('#bz-bs-labels') as HTMLElement | null;
+  if (!el) return;
+  const statusDefs: { f: SideId; n: number; t: string }[] = [
+    { f: 'all', n: M.items.length, t: '全馆藏书' },
+    { f: 'done', n: M.items.filter((x) => x.status === '已读').length, t: '已读 · 讫' },
+    { f: 'reading', n: M.items.filter((x) => x.status === '在读').length, t: '在读 · 抽出' },
+    { f: 'unread', n: M.items.filter((x) => x.status === '未读').length, t: '未读 · 倒叠' },
+  ];
+  // 分类标签只数在架书（未读在倒叠区另有口径）；按时长汇总副文案
+  const cats = new Map<string, { n: number; ms: number }>();
+  for (const b of M.items) {
+    if (b.status === '未读') continue;
+    const k = b.category || '未分类';
+    const c = cats.get(k) || { n: 0, ms: 0 };
+    c.n++;
+    c.ms += b.readingTimeMs;
+    cats.set(k, c);
+  }
+  const catPairs = [...cats.entries()].sort((a, b) => b[1].n - a[1].n);
+  let html = statusDefs.map((d) => `
+    <div class="bz-bs-taglabel${(d.f === 'all' ? M.side === 'all' && M.catFilter === 'all' : M.side === d.f) ? ' on' : ''}" data-bs-side="${d.f}">
+      <span class="pin"></span><div class="n">${d.n}</div><div class="t">${d.t}</div>
+    </div>`).join('');
+  for (const [cat, c] of catPairs) {
+    const hrs = c.ms > 0 ? ` · ${Math.round(c.ms / 3600000)} 时` : '';
+    html += `<div class="bz-bs-taglabel dim-cat${M.catFilter === cat ? ' on' : ''}" data-bs-cat="${esc(cat)}">
+      <span class="pin"></span><div class="n">${esc(cat)}</div><div class="t">${c.n} 册${hrs}</div>
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+/** 排序三档 segmented（点选即生效） */
+function renderSortSeg(app: App): void {
+  void app;
+  const seg = M.currentOverlay?.querySelector('#bz-bs-sortseg') as HTMLElement | null;
+  if (!seg) return;
+  seg.innerHTML = (Object.keys(SORT_LABEL) as SortKey[])
+    .map((k) => `<button type="button" data-bs-sort="${k}"${M.sortMode === k ? ' class="on"' : ''}>${SORT_LABEL[k]}</button>`)
+    .join('');
 }
 
 function renderAll(app: App): void {
-  renderSide();
-  renderDash(app);
-  renderShelves(app);
-  paintFilterBtn();
+  renderLabels();
+  renderSortSeg(app);
+  renderWall(app);
 }
 export { renderAll };
 
-// ---------- 面板内视图（读书报告内嵌化：书架列表 / 阅读分析报告） ----------
+// ---------- 搜索关键字回写（报告筛选回墙预填口径不变） ----------
 
-/** 左栏底部报告入口：书库视图 = 「阅读分析报告」；报告视图 = 「‹ 返回书库」（桌面返回路径；尾随三角已删，issue 207 二轮拍板） */
-function paintReportEntry(): void {
-  const btn = M.currentOverlay?.querySelector('.bz-bs-report') as HTMLElement | null;
-  if (!btn) return;
-  const active = M.view === 'report';
-  btn.classList.toggle('on', active);
-  btn.innerHTML = active
-    ? `${iconSpan('arrow-left')}<span>返回书库</span>`
-    : `${iconSpan(ICON.report)}<span>阅读分析报告</span>`;
-  mountIcons(btn);
-}
-
-/** 头行报告图标钮（移动端主入口）：报告视图激活态，点击切回书架 */
-function paintHeadReportBtn(): void {
-  const btn = M.currentOverlay?.querySelector('[data-bs-tool="report"]') as HTMLElement | null;
-  btn?.classList.toggle('on', M.view === 'report');
-}
-
-/** 视图容器显隐（书架列表 / 报告内容区互斥） */
-function paintViewContainers(): void {
-  const overlay = M.currentOverlay;
-  if (!overlay) return;
-  const shelfEl = overlay.querySelector('.bz-bs-view-shelf') as HTMLElement | null;
-  const reportEl = overlay.querySelector('.bz-bs-view-report') as HTMLElement | null;
-  if (shelfEl) shelfEl.classList.toggle('active', M.view === 'shelf');
-  if (reportEl) reportEl.classList.toggle('active', M.view === 'report');
-  // 报告视图不显移动搜索栏（搜索属书架列表视图；回书架重新展开即可）
-  if (M.view === 'report') {
-    (overlay.querySelector('#bz-bs-searchbar') as HTMLElement | null)?.classList.remove('show');
-    overlay.querySelector('[data-bs-tool="search"]')?.classList.remove('on');
-  }
-}
-
-function paintView(): void {
-  paintViewContainers();
-  paintReportEntry();
-  paintHeadReportBtn();
-}
-
-/** 搜索关键字回写两个输入框（报告筛选回书架预填/清除后保持输入框一致，防「不可见过滤」黑洞） */
 function syncSearchInputs(): void {
-  const overlay = M.currentOverlay;
-  if (!overlay) return;
-  for (const id of ['bz-bs-dsearch', 'bz-bs-msearch']) {
-    const input = overlay.querySelector(`#${id}`) as HTMLInputElement | null;
-    if (input) input.value = M.searchKeyword;
-  }
+  const input = M.currentOverlay?.querySelector('#bz-bs-dsearch') as HTMLInputElement | null;
+  if (input) input.value = M.searchKeyword;
 }
 
-/** 渲染报告视图内容区（挂载点 .bz-rr-content；onFilter/onBack 回本域同面板切换） */
+// ---------- 面板内视图（报告内嵌化：命令 bz-reading-report-open 专用，墙面无入口） ----------
+
+/** 渲染报告视图内容区（挂载点 .bz-rr-content） */
 function startReportRender(app: App): void {
   const container = M.currentOverlay?.querySelector('.bz-rr-content') as HTMLElement | null;
   if (!container) return;
@@ -348,42 +356,36 @@ function startReportRender(app: App): void {
   });
 }
 
-/** 同面板筛选（原深链作废拍板）：报告点作者/分类行 → 切回书架列表并预填对应筛选 */
+/** 报告点作者/分类行 → 切回书脊墙并预填筛选 */
 function applyReportFilter(app: App, kind: 'author' | 'category', value: string): void {
   if (!value) return;
   if (kind === 'author') {
-    // 作者名进搜索（书名/作者/分类关键字过滤天然覆盖作者维）
     M.searchKeyword = value;
     M.catFilter = 'all';
   } else {
-    // 分类走正交分类筛（与左栏分类组同键，命中即高亮）
     M.catFilter = value;
     M.searchKeyword = '';
   }
   syncSearchInputs();
   showView(app, 'shelf');
-  renderSide();
-  renderShelves(app);
-  paintFilterBtn();
+  renderAll(app);
 }
 
 /** 面板内切换视图（报告视图启动分片渲染；离开视图作废在途渲染） */
 function showView(app: App, view: BookshelfView): void {
   const changed = M.view !== view;
   M.view = view;
-  paintView();
+  paintViewContainers();
   if (view === 'report') {
-    // 重入（命令连点/自动刷新）也重算，保证报告拿最新数据
     startReportRender(app);
   } else if (changed) {
     cancelReadingReport();
   }
 }
 
-/** 打开报告视图（命令 bz-reading-report-open 与书架视图入口共用；面板未开先开面板） */
+/** 打开报告视图（命令 bz-reading-report-open；面板未开先开面板） */
 export function openReportView(app: App): void {
   if (!M.currentOverlay) {
-    // 冷开：先落视图状态，createOverlay 的 rebuild 完成回调自动进报告视图（免双渲染）
     M.view = 'report';
     applyDefaultView();
     createOverlay(app);
@@ -392,132 +394,27 @@ export function openReportView(app: App): void {
   }
 }
 
-/** 报告视图存续期间书库数据变化 → 自动重算只更新报告内容区（域事件自动刷新分流，参考影院先例） */
+/** 报告视图存续期间书库数据变化 → 自动重算只更新报告内容区 */
 export function refreshReportView(app: App): void {
   if (M.view === 'report' && M.currentOverlay) startReportRender(app);
 }
 
-// ---------- 移动端：筛选按钮 + 底部抽屉 ----------
-
-function paintFilterBtn(): void {
-  const btn = M.currentOverlay?.querySelector('#bz-bs-filterbtn') as HTMLElement | null;
-  if (!btn) return;
-  const sideActive = M.side !== 'all';
-  const catActive = M.catFilter !== 'all';
-  let tag = '';
-  if (sideActive) tag = `${SIDE_DEFS.find((d) => d.id === M.side)?.label ?? ''} ${statusCount(M.side)}`;
-  else if (catActive) tag = `${M.catFilter} ${M.items.filter((x) => (x.category || '未分类') === M.catFilter).length}`;
-  btn.classList.toggle('on', sideActive || catActive);
-  btn.innerHTML = iconSpan('funnel') + (tag ? `<span class="bz-bs-filter-tag">${esc(tag)}</span>` : '');
-  mountIcons(btn);
+/** 视图容器显隐（书脊墙 / 报告内容区互斥） */
+function paintViewContainers(): void {
+  const overlay = M.currentOverlay;
+  if (!overlay) return;
+  overlay.querySelector('.bz-bs-view-shelf')?.classList.toggle('active', M.view === 'shelf');
+  overlay.querySelector('.bz-bs-view-report')?.classList.toggle('active', M.view === 'report');
 }
 
-function statusCount(side: SideId): number {
-  if (side === 'all') return M.items.length;
-  const status = side === 'reading' ? '在读' : side === 'unread' ? '未读' : '已读';
-  return M.items.filter((it) => it.status === status).length;
-}
+// ---------- 借书卡详情（改状态/进度/日期/书评；EPUB 只读） ----------
 
-/** 底部筛选抽屉（移动端；单例互斥，二次打开先关旧）。
- *  壳 = 共享 .bz-sheet 族（issue 198 批次 A：.bz-sheet-mask 遮罩 + .bz-sheet 壳，
- *  打开态由遮罩 .open 驱动）；选项行为保留：三组 = 状态（共享 .bz-sheet-act 行基 +
- *  域内图标瓦片/计数/勾选件）＋ 分类（uiChip 胶囊，正交）＋ 排序（uiSegmented，头行 ⇅ 同入口）。 */
-function openFilterDrawer(app: App): void {
-  closeDrawer();
-  const mask = document.createElement('div');
-  mask.className = 'bz-sheet-mask';
-  mask.style.zIndex = String(allocZ());
-  mask.innerHTML = `<div class="bz-sheet bz-bs-filtersheet">
-    <div class="bz-sheet-grip"></div>
-    <div class="bz-sheet-head"><span class="bz-sheet-title">筛选</span><button class="bz-icon-btn bz-icon-btn--lg" data-bs-drawer-close title="关闭">${iconSpan('x')}</button></div>
-    <div class="bz-sheet-body">
-      ${SIDE_DEFS.map((d) => `
-        <button class="bz-sheet-act bz-bs-drawer-opt${d.id === M.side ? ' on' : ''}" data-bs-dopt="${d.id}">
-          <span class="bz-bs-drawer-ic">${iconSpan(d.icon)}</span>
-          <span class="bz-bs-drawer-main"><span class="bz-bs-drawer-label">${d.label}</span>
-          <span class="bz-bs-drawer-sub">${d.sub}</span></span>
-          <span class="bz-bs-drawer-cnt">${statusCount(d.id)}</span>
-          ${d.id === M.side ? `<span class="bz-bs-drawer-check">${iconSpan('check')}</span>` : ''}
-        </button>`).join('')}
-      <div class="bz-rail-label bz-bs-drawer-group-label">分类</div>
-      <div class="bz-bs-drawer-chips" data-bs-drawer-cats></div>
-      <div class="bz-rail-label bz-bs-drawer-group-label">排序</div>
-      <div class="bz-bs-drawer-sort" data-bs-drawer-sort></div>
-    </div>
-  </div>`;
-
-  // 分类 chips（uiChip 胶囊；点选即生效、抽屉保持打开便于连选）
-  const catsWrap = mask.querySelector('[data-bs-drawer-cats]') as HTMLElement;
-  const catDefs = [{ name: 'all', label: '全部', count: M.items.length }]
-    .concat(categoryList(M.items).map((c) => ({ name: c.name, label: c.name, count: c.count })));
-  const paintCats = () => {
-    catsWrap.innerHTML = '';
-    for (const c of catDefs) {
-      catsWrap.appendChild(uiChip({
-        label: c.label,
-        count: c.count,
-        selected: c.name === M.catFilter,
-        onClick: () => {
-          // 再点已选分类 chip = 回「全部」（issue 208 全域统一交互）
-          M.catFilter = c.name !== 'all' && M.catFilter === c.name ? 'all' : c.name;
-          renderSide();
-          renderShelves(app);
-          paintFilterBtn();
-          paintCats();
-        },
-      }));
-    }
-  };
-  paintCats();
-
-  // 排序（uiSegmented；点选即生效、抽屉保持打开）
-  const sortWrap = mask.querySelector('[data-bs-drawer-sort]') as HTMLElement;
-  sortWrap.appendChild(uiSegmented<SortKey>({
-    options: (Object.keys(SORT_LABEL) as SortKey[]).map((k) => ({ value: k, label: SORT_LABEL[k] })),
-    value: M.sortMode,
-    label: '排序',
-    className: 'bz-bs-drawer-sortseg',
-    onChange: (v) => {
-      M.sortMode = v;
-      renderShelves(app);
-    },
-  }).el);
-
-  mask.addEventListener('click', (e) => {
-    const t = e.target as HTMLElement;
-    if (t === mask || t.closest('[data-bs-drawer-close]')) { closeDrawer(); return; }
-    const opt = t.closest('[data-bs-dopt]') as HTMLElement | null;
-    if (opt) {
-      const id = (opt.dataset.bsDopt || 'all') as SideId;
-      // 再点已选状态 = 回「全部」（issue 208 全域统一交互）
-      M.side = id !== 'all' && M.side === id ? 'all' : id;
-      closeDrawer();
-      renderSide();
-      renderShelves(app);
-      paintFilterBtn();
-    }
-  });
-  document.body.appendChild(mask);
-  M.drawerEl = mask;
-  requestAnimationFrame(() => mask.classList.add('open'));
-}
-
-function closeDrawer(): void {
-  if (M.drawerEl) {
-    M.drawerEl.remove();
-    M.drawerEl = null;
-  }
-}
-
-// ---------- 详情弹窗（改状态/进度/书评；EPUB 只读） ----------
-
-/** 本域 uiModal 关闭句柄（audit H：toggle 关面板时顺带关闭，不留孤儿详情/确认弹窗） */
 let detailModalClose: (() => void) | null = null;
 let confirmModalClose: (() => void) | null = null;
 
 /** 关闭本域浮层弹窗（详情 + 删除确认 + 读书笔记；closeOverlay 调用） */
 function closeDomainModals(): void {
-  closeBookNoteModals(); // 读书笔记弹窗浮于详情之上，先收（旧 library 域 unload 语义随迁）
+  closeBookNoteModals();
   if (confirmModalClose) { confirmModalClose(); confirmModalClose = null; }
   if (detailModalClose) { detailModalClose(); detailModalClose = null; }
 }
@@ -528,76 +425,63 @@ function todayStr(): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
-/** 时长展示「N小时M分」解析为小时文本（直接展示 readingTimeFormat 原文即可） */
+/** 借书卡（原型口径：pull-note + 纸卡双栏 + 台账 + 批注密度条 + 印章）；
+ *  编辑控件（状态/进度/读完日期/书评）融进卡内，功能零回退 */
 function openBookDetail(it: BookshelfItem, app: App): void {
   const readonly = it.isEpub;
-  // B4：封面坏图由 bindCoverFallback 回退占位（src 失效触发 error）
-  const cover = it.cover
-    ? `<img src="${esc(coverUrl(it, app) || '')}" alt="">`
-    : `<div class="bz-bs-d-hero-ph">${iconSpan('library')}</div>`;
-  const dateMeta = it.readingDate
-    ? `<div class="bz-bs-d-meta"><b>阅读</b>：始于 ${esc(it.readingDate)}${it.completionDate ? ` · 读完 ${esc(it.completionDate)}` : ''}</div>`
-    : `<div class="bz-bs-d-meta"><b>状态</b>：${esc(it.status)}${it.completionDate ? ` · 读完 ${esc(it.completionDate)}` : ''}</div>`;
-  // 直达原文按钮（在读=「继续读」，其余 md=「打开笔记」/ EPUB=「打开原文」；与划线回顾 chip 并存各占一行）
+  const cu = coverUrl(it, app);
+  const cover = cu ? `<img src="${esc(cu)}" alt="">` : `<div class="bz-bs-d-cover-ph">${iconSpan('library')}<span>无封面</span></div>`;
+  const review = it.bookReview
+    ? `<div class="bz-bs-d-quote">“${esc(it.bookReview)}”</div>`
+    : '<div class="bz-bs-d-quote dim">——尚无书评——</div>';
+  const dense = it.highlights + it.thinks;
+  const seal = it.status === '已读' ? '讫' : it.status === '在读' ? '阅' : '藏';
   const directLabel = it.status === '在读' ? '继续读' : it.isEpub ? '打开原文' : '打开笔记';
-  const chips = [
-    it.highlights || it.thinks
-      ? `<button type="button" class="bz-chip bz-chip--hover-accent bz-bs-d-notes" data-bs-notes title="查看读书笔记">${iconSpan('highlighter', 'bz-ic--xs')}${it.highlights} 划线 · ${it.thinks} 批注</button>`
-      : '',
-    it.readingTimeFormat ? `<span class="bz-chip">${iconSpan('clock', 'bz-ic--xs')}${esc(it.readingTimeFormat)}</span>` : '',
-  ].filter(Boolean).join('');
+  const hoursText = it.readingTimeFormat || (it.readingTimeMs > 0 ? (it.readingTimeMs / 3600000).toFixed(1) + ' 小时' : '—');
 
   const body = document.createElement('div');
   body.className = 'bz-bs-detail';
   body.innerHTML = `
-    <div class="bz-bs-d-hero">
+    <div class="bz-bs-d-pull">已抽出这本书</div>
+    <button type="button" class="bz-bs-d-x" data-bs-d-close title="放回书架">×</button>
+    <div class="bz-bs-d-card">
       <div class="bz-bs-d-cover">${cover}</div>
       <div class="bz-bs-d-info">
-        <div class="bz-bs-d-title">${esc(it.title)}</div>
-        <div class="bz-bs-d-author">${esc(it.author)}</div>
-        <div class="bz-bs-d-badges"><span class="bz-chip bz-chip--tint" style="--bz-chip-tint:${statusColor(it.status)};--bz-chip-tint-fg:var(--bz-on-overlay)">${esc(it.status)}</span><button type="button" class="bz-btn bz-btn--primary bz-bs-d-open" title="${esc(directLabel)}">${iconSpan(ICON.bookOpen, 'bz-ic--sm')}${directLabel}</button></div>
-        <div class="bz-bs-d-chips">${chips}</div>
-        <div class="bz-bs-d-cat">${esc(it.category || '未分类')}</div>
-        ${dateMeta}
+        <h2 class="bz-bs-d-title">${esc(it.title)}</h2>
+        <div class="bz-bs-d-sub">${esc(it.author)} · ${esc(it.category || '未分类')}${it.isEpub ? ' · EPUB' : ''}</div>
+        ${review}
+        <table class="bz-bs-d-ledger">
+          <tr><td>状态</td><td class="bz-bs-d-status"><span class="bz-chip bz-chip--tint" style="--bz-chip-tint:${statusColor(it.status)};--bz-chip-tint-fg:var(--bz-on-overlay)">${esc(it.status)}</span>
+            <button type="button" class="bz-bs-d-openlink" data-bs-d-open>${directLabel}</button></td></tr>
+          <tr><td>累计时长</td><td>${esc(hoursText)}</td></tr>
+          <tr><td>阅读进度</td><td><span class="bz-bs-d-progrow"><span class="bz-bs-d-prog"></span><b class="bz-bs-d-prognum">${it.progress}%</b></span></td></tr>
+          <tr class="bz-bs-d-cdatewrap"${it.status === '已读' ? '' : ' style="display:none"'}><td>读完日期</td><td><input type="date" class="bz-input bz-bs-d-cdate" value="${esc(it.completionDate || todayStr())}"></td></tr>
+          <tr><td>起读 · 读完</td><td>${esc(it.readingDate || '—')} · ${esc(it.completionDate || '—')}</td></tr>
+          <tr><td>划线 / 想法</td><td>${dense > 0 ? `<button type="button" class="bz-bs-d-openlink" data-bs-notes title="查看读书笔记">${it.highlights} 条 / ${it.thinks} 条</button>` : `${it.highlights} 条 / ${it.thinks} 条`}</td></tr>
+          ${it.pages ? `<tr><td>页数</td><td>${it.pages} 页</td></tr>` : ''}
+        </table>
+        <div class="bz-bs-d-meter">
+          <div class="cap">批注密度（划线 + 想法 = ${dense}）</div>
+          <div class="bar"><i style="width:${Math.min(100, (dense / Math.max(10, dense)) * 100)}%"></i></div>
+        </div>
+        <div class="bz-bs-label">书评</div>
+        <textarea class="bz-input bz-bs-d-review" placeholder="写一句这本书…">${esc(it.bookReview || '')}</textarea>
+        ${readonly ? '<div class="bz-bs-d-readonly">EPUB 书目由 Weave 阅读器记录：状态、进度随阅读自动更新，这里只读展示。</div>' : ''}
       </div>
-    </div>
-    <div class="bz-bs-label">状态</div>
-    <div class="bz-bs-d-status"></div>
-    <div class="bz-bs-d-cdatewrap"${it.status === '已读' ? '' : ' style="display:none"'}>
-      <div class="bz-bs-label bz-bs-d-cdate-label">读完日期</div>
-      <input type="date" class="bz-input bz-bs-d-cdate" value="${esc(it.completionDate || todayStr())}">
-    </div>
-    <div class="bz-bs-label">阅读进度</div>
-    <div class="bz-bs-d-progrow"><span class="bz-bs-d-prog"></span><span class="bz-bs-d-prognum">${it.progress}%</span></div>
-    <div class="bz-bs-label">书评</div>
-    <textarea class="bz-input bz-bs-d-review" placeholder="写一句这本书…">${esc(it.bookReview || '')}</textarea>
-    ${readonly ? '<div class="bz-bs-d-readonly">EPUB 书目由 Weave 阅读器记录：状态、进度随阅读自动更新，这里只读展示。</div>' : ''}`;
+      <div class="bz-bs-d-seal">${seal}</div>
+    </div>`;
   const { popup, close } = uiModal({
     content: body,
-    maxWidth: 560,
-    head: true,
-    title: '书籍详情',
+    maxWidth: 640,
+    head: false,
     className: `bz-bs-d-popup ${bsSkinClass()}`,
     onClose: () => { detailModalClose = null; },
   });
   detailModalClose = close;
+  popup.querySelector('[data-bs-d-close]')?.addEventListener('click', () => close());
 
-  // 直达原文/继续读：关详情弹窗后打开原文（md 笔记 / Weave 深链），点击瞬间 progress 反馈
-  popup.querySelector('.bz-bs-d-open')?.addEventListener('click', () => {
-    close();
-    openBookDirect(it, app);
-  });
-
-  // 读书笔记入口（「N 划线 · N 批注」可点；迁移自旧 library 域）：
-  // md 书开笔记行弹窗；EPUB 走 weave 聚合弹窗（weave-cfi 深链跳原文）
-  popup.querySelector('[data-bs-notes]')?.addEventListener('click', () => {
-    if (it.isEpub) showEpubBookNotes(app, it.epubVaultPath || '', it.title);
-    else if (it.file) showBookNotes(app, it.file.path, it.title);
-  });
-
-  // 只读区之上组装编辑控件（组件库工厂；EPUB 禁用）
-  const cdateWrap = popup.querySelector('.bz-bs-d-cdatewrap') as HTMLElement;
-  const cdateInput = popup.querySelector('.bz-bs-d-cdate') as HTMLInputElement;
+  // 状态行：现态 chip 后跟状态切换 choice（slots）
+  const statusCell = popup.querySelector('.bz-bs-d-status') as HTMLElement;
   const statusChoice = uiChoice({
     options: ['在读', '已读', '未读'].map((v) => ({ value: v, label: v, dot: statusColor(v) })),
     value: it.status,
@@ -606,7 +490,6 @@ function openBookDetail(it: BookshelfItem, app: App): void {
       if (v === '已读') {
         progInput.value = '100';
         paintProg();
-        // 读完日期可改（默认今天；补录历史日期按所填生效，统计/纪念日随之）
         if (!cdateInput.value) cdateInput.value = todayStr();
         cdateWrap.style.display = '';
       } else {
@@ -615,8 +498,23 @@ function openBookDetail(it: BookshelfItem, app: App): void {
       }
     },
   });
-  const statusEl = popup.querySelector('.bz-bs-d-status') as HTMLElement;
-  statusEl.appendChild(statusChoice.el);
+  statusCell.appendChild(statusChoice.el);
+
+  // 直达原文/继续读：关借书卡后打开原文（md 笔记 / Weave 深链）
+  popup.querySelector('[data-bs-d-open]')?.addEventListener('click', () => {
+    close();
+    openBookDirect(it, app);
+  });
+
+  // 读书笔记入口（划线/想法行）：md 开笔记行弹窗；EPUB 走 weave 聚合弹窗
+  popup.querySelector('[data-bs-notes]')?.addEventListener('click', () => {
+    if (it.isEpub) showEpubBookNotes(app, it.epubVaultPath || '', it.title);
+    else if (it.file) showBookNotes(app, it.file.path, it.title);
+  });
+
+  // 进度滑杆 + 读完日期 + 书评（EPUB 只读禁用）
+  const cdateWrap = popup.querySelector('.bz-bs-d-cdatewrap') as HTMLElement;
+  const cdateInput = popup.querySelector('.bz-bs-d-cdate') as HTMLInputElement;
   const progInput = uiRange({ min: 0, max: 100, value: it.progress, disabled: readonly || it.status === '已读' || it.status === '未读' });
   const progNumEl = popup.querySelector('.bz-bs-d-prognum') as HTMLElement;
   const progWrap = popup.querySelector('.bz-bs-d-prog') as HTMLElement;
@@ -628,7 +526,7 @@ function openBookDetail(it: BookshelfItem, app: App): void {
     reviewEl.disabled = true;
     statusChoice.el.querySelectorAll('button').forEach((b) => { b.disabled = true; });
     progInput.disabled = true;
-    cdateInput.disabled = true; // EPUB 读完日期由 Weave 记录，只读展示
+    cdateInput.disabled = true;
   }
 
   // 操作区：删除（md 书）＋ 取消/保存
@@ -654,7 +552,7 @@ function openBookDetail(it: BookshelfItem, app: App): void {
       conf.popup.querySelector('[data-bs-c="1"]')?.addEventListener('click', () => {
         void (async () => {
           try {
-            if (it.file) await app.vault.trash(it.file, true); // 回收站可恢复（对齐文案「移入回收站」与 cinema/clipbook）
+            if (it.file) await app.vault.trash(it.file, true);
             close();
             conf.close();
             await rebuildItems(app);
@@ -689,7 +587,6 @@ function openBookDetail(it: BookshelfItem, app: App): void {
         const status = (statusChoice.el.querySelector('.is-on') as HTMLElement | null)?.dataset.value || it.status;
         const progVal = Math.round(parseFloat(progInput.value) || 0);
         const review = reviewEl.value.trim();
-        // 撤销快照（persistBook 前取旧值；防「已读手滑改未读」无感丢数据）
         const snap = { status: it.status, progress: it.progress, readingDate: it.readingDate, completionDate: it.completionDate, bookReview: it.bookReview };
         const completionDate = status === '已读' ? cdateInput.value.trim() : '';
         try {
@@ -712,8 +609,7 @@ function openBookDetail(it: BookshelfItem, app: App): void {
 }
 
 /** 落盘语义（md 书）：状态/进度/书评/读完日期 → frontmatter（已读补 completionDate+readingDate、
- *  在读补 readingDate 清 completionDate、未读清两日期归零；已读 completionDate 以补录/修改值为准；
- *  书评空删键） */
+ *  在读补 readingDate 清 completionDate、未读清两日期归零；书评空删键） */
 async function persistBook(
   it: BookshelfItem,
   app: App,
@@ -724,7 +620,6 @@ async function persistBook(
     if (patch.status === '已读') {
       fm.readingProgress = 100;
       if (!fm.readingDate) fm.readingDate = todayStr();
-      // 读完日期可改：详情弹窗所填值优先（默认今天预填）；空值兜底保留旧值/今天（补录不污染统计口径）
       fm.completionDate = patch.completionDate || (typeof fm.completionDate === 'string' && fm.completionDate ? fm.completionDate : todayStr());
     } else if (patch.status === '在读') {
       fm.readingProgress = Math.max(1, Math.min(99, patch.progress));
@@ -738,7 +633,6 @@ async function persistBook(
     if (patch.review) fm.bookReview = patch.review;
     else delete fm.bookReview;
   });
-  // 同步本地条目（render 前保持一致；重扫由调用方 rebuildItems 兜底）
   it.status = patch.status;
   it.progress = patch.status === '已读' ? 100 : patch.status === '在读' ? Math.min(99, patch.progress) : 0;
   if (patch.status === '已读') {
@@ -755,7 +649,7 @@ async function persistBook(
   else it.bookReview = null;
 }
 
-/** 保存撤销回滚（notifyUndo 回调）：frontmatter 还原快照旧值（缺失键删除）+ 本地条目同步 + 重扫渲染 */
+/** 保存撤销回滚（notifyUndo 回调）：frontmatter 还原快照旧值 + 本地条目同步 + 重扫渲染 */
 async function rollbackBook(
   it: BookshelfItem,
   app: App,
@@ -786,16 +680,9 @@ async function rollbackBook(
   }
 }
 
-// ---------- 主面板创建 ----------
+// ---------- 面板皮肤（issue 216 十肤随迁；类挂面板根与弹窗根） ----------
 
-function iconBtnHTML(icon: string, title: string, toolAttr: string, extraCls = ''): string {
-  return `<button class="bz-icon-btn${extraCls ? ' ' + extraCls : ''}" data-bs-tool="${toolAttr}" title="${title}">${iconSpan(icon)}</button>`;
-}
-
-
-// ---------- 面板皮肤（issue 216） ----------
-/** 全部合法皮肤值（与设置面板 choiceCards options 一一对应；默认雪松白） */
-const SKIN_IDS = ['nordic','dark','noir','wabi','bauhaus','blueprint','neon','kraft','velvet','mono'] as const;
+const SKIN_IDS = ['nordic', 'dark', 'noir', 'wabi', 'bauhaus', 'blueprint', 'neon', 'kraft', 'velvet', 'mono'] as const;
 type SkinId = (typeof SKIN_IDS)[number];
 
 function normalizeSkin(v: unknown): SkinId {
@@ -807,11 +694,7 @@ export function bsSkinClass(): string {
   return `bz-bs-skin-${normalizeSkin((tryGetSettings() as Record<string, unknown>).bookshelfSkin)}`;
 }
 
-/**
- * 皮肤应用（issue 216）：面板根挂 bz-bs-skin-{id}（默认 nordic，十选一全带修饰类）。
- * 双入口：createOverlay 打开时挂载；设置行 onChange 热切换已开面板。
- * 面板未开时仅落盘（设置行已持久化），下次打开生效。
- */
+/** 皮肤应用：面板根换挂皮肤类（设置行 onChange 热切换；未开面板仅落盘） */
 export function applyBookshelfSkin(skin: unknown): void {
   if (!M.currentOverlay) return;
   const panel = M.currentOverlay.querySelector('.bz-bs-panel') as HTMLElement | null;
@@ -819,6 +702,12 @@ export function applyBookshelfSkin(skin: unknown): void {
   panel.classList.remove(...SKIN_IDS.map((id) => `bz-bs-skin-${id}`));
   panel.classList.add(`bz-bs-skin-${normalizeSkin(skin)}`);
 }
+
+// ---------- 主面板创建（书脊墙 1:1 骨架） ----------
+
+/** 窗口缩放防抖重装箱（createOverlay 挂载 / closeOverlay 摘除） */
+let wallResizeHandler: (() => void) | null = null;
+let wallResizeTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function createOverlay(app: App): void {
   const overlay = document.createElement('div');
@@ -828,52 +717,29 @@ export function createOverlay(app: App): void {
 
   overlay.innerHTML = `
     <div class="bz-panel-frame bz-bs-panel bz-panel-mtop ${bsSkinClass()}">
-      <div class="bz-panel-head">
-        <div class="bz-panel-brand">${iconSpan(ICON.bookOpen, 'bz-ic--sm')}</div>
-        <div class="bz-panel-title">书库<span class="bz-panel-head-sub"></span></div>
-        <span class="bz-panel-head-sp"></span>
-        <div class="bz-panel-head-btns">
-          ${iconBtnHTML(ICON.report, '阅读分析报告', 'report')}
-          ${iconBtnHTML(ICON.sort, '排序', 'sort')}
-          ${iconBtnHTML(ICON.search, '搜索', 'search')}
-          <button class="bz-icon-btn bz-bs-filterbtn" id="bz-bs-filterbtn" data-bs-tool="filter" title="筛选"></button>
-          ${iconBtnHTML(ICON.settings, '打开书库设置', 'settings')}
-          ${iconBtnHTML(ICON.close, '关闭', 'close')}
+      <div class="bz-bs-wallpage">
+        <div class="bz-bs-plaque">
+          <h1>书脊墙</h1>
+          <p>SPINE WALL · 以书脊读一座书房</p>
         </div>
-      </div>
-      <div class="bz-bs-searchbar" id="bz-bs-searchbar">
-        ${iconSpan('search', 'bz-bs-searchbar-ic')}<input class="bz-input" type="text" id="bz-bs-msearch" placeholder="搜索书名 / 作者 / 分类…" autocomplete="off">
-      </div>
-      <div class="bz-bs-body">
-        <aside class="bz-rail">
-          <div class="bz-rail-scroll">
-            <div class="bz-rail-label">状态</div>
-            <div class="bz-bs-side-list"></div>
-            <div class="bz-rail-label">分类</div>
-            <div class="bz-bs-side-catlist"></div>
+        <div class="bz-bs-labels" id="bz-bs-labels"></div>
+        <div class="bz-bs-tools">
+          <input id="bz-bs-dsearch" class="bz-bs-search" type="text" placeholder="检索书名或作者…" autocomplete="off">
+          <div class="bz-bs-seg" id="bz-bs-sortseg"></div>
+          <div class="bz-bs-hint" id="bz-bs-hint"></div>
+        </div>
+        <div class="bz-bs-view bz-bs-view-shelf active">
+          <div class="bz-bs-room">
+            <div class="bz-bs-shelf" id="bz-bs-shelf"></div>
+            <div class="bz-bs-wallnote">—— 书脊的高度是时长，厚度是批注，抽出的是正在进行 ——</div>
           </div>
-          <div class="bz-rail-foot">
-            <button class="bz-rail-item bz-bs-report" data-bs-tool="report" title="阅读分析报告"></button>
+        </div>
+        <div class="bz-bs-view bz-bs-view-report">
+          <div class="bz-rr-head">
+            <span class="bz-rr-title">${iconSpan(ICON.report, 'bz-ic--sm')}阅读分析报告</span>
+            <button class="bz-icon-btn bz-rr-close" data-rr-goto-shelf title="返回书脊墙">${iconSpan(ICON.close)}</button>
           </div>
-        </aside>
-        <div class="bz-bs-main">
-          <div class="bz-bs-view bz-bs-view-shelf active">
-            <div class="bz-toolrow">
-              <span class="bz-search bz-bs-search">${iconSpan('search')}<input class="bz-input" type="text" id="bz-bs-dsearch" placeholder="搜索书名 / 作者 / 分类…" autocomplete="off"></span>
-              <span class="bz-bs-sort-slot"></span>
-            </div>
-            <div class="bz-bs-dash"></div>
-            <div class="bz-bs-mcards"></div>
-            <div class="bz-bs-shelves"></div>
-            <div class="bz-bs-shelves-m"></div>
-          </div>
-          <div class="bz-bs-view bz-bs-view-report">
-            <div class="bz-rr-head">
-              <span class="bz-rr-title">${iconSpan(ICON.report, 'bz-ic--sm')}阅读分析报告</span>
-              <button class="bz-icon-btn bz-rr-close" data-rr-goto-shelf title="返回书库">${iconSpan(ICON.close)}</button>
-            </div>
-            <div class="bz-rr-content"></div>
-          </div>
+          <div class="bz-rr-content"></div>
         </div>
       </div>
     </div>`;
@@ -883,152 +749,98 @@ export function createOverlay(app: App): void {
   M.renderFn = () => renderAll(app);
   applyMobileWindowFullscreen(overlay.querySelector('.bz-bs-panel') as HTMLElement, fullscreen);
 
-  // 排序浮岛（issue 207 拍板：uiChoice float 同待办/收藏本；四档收内容宽靠右，搜索框拉长）
-  const sortSlot = overlay.querySelector('.bz-bs-sort-slot') as HTMLElement;
-  const sortChoice = uiChoice<SortKey>({
-    options: (Object.keys(SORT_LABEL) as SortKey[]).map((k) => ({ value: k, label: SORT_LABEL[k] })),
-    value: M.sortMode,
-    float: true,
-    label: '排序方式',
-    className: 'bz-bs-sort',
-    onChange: (v) => {
-      M.sortMode = v;
-      renderShelves(app);
-    },
-  });
-  sortSlot.appendChild(sortChoice.el);
-
-  // 事件（单一委托）
+  // 单一委托：标签筛选 / 排序 / 报告视图交互 / 书脊详情
   overlay.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
-    // 点遮罩 = 关闭主面板（桌面无关闭钮）
     if (e.target === overlay) { closeOverlay(); return; }
-    // 详情弹窗内（uiModal mask 挂在 body，非 overlay 子级）不会被此委托命中
-    // 排序浮岛（点选即生效；选中态由 uiChoice 内部管理）
-    if (t.closest('.bz-bs-sort')) return;
+    // 状态标签（再点已选 = 回全馆；「全馆」恒置 all）
     const side = t.closest('[data-bs-side]') as HTMLElement | null;
     if (side) {
       const id = (side.dataset.bsSide || 'all') as SideId;
-      // 再点已选状态 = 回「全部」（issue 208 全域统一交互；「全部」行本身恒置 all）
       M.side = id !== 'all' && M.side === id ? 'all' : id;
-      renderSide(); renderShelves(app); paintFilterBtn();
+      renderLabels();
+      renderWall(app);
       return;
     }
-    // 分类第二组（与状态正交）；再点已选分类 = 回「全部」
+    // 分类标签（与状态正交；再点已选 = 回全馆）
     const cat = t.closest('[data-bs-cat]') as HTMLElement | null;
     if (cat) {
       const name = cat.dataset.bsCat || 'all';
       M.catFilter = name !== 'all' && M.catFilter === name ? 'all' : name;
-      renderSide(); renderShelves(app); paintFilterBtn();
+      renderLabels();
+      renderWall(app);
       return;
     }
-    // 报告视图内交互（reading-report 域：热力图 ‹ › 翻月 / 年卡展开收起）
+    // 排序三档
+    const sortBtn = t.closest('[data-bs-sort]') as HTMLElement | null;
+    if (sortBtn) {
+      M.sortMode = (sortBtn.dataset.bsSort || 'recent') as SortKey;
+      renderSortSeg(app);
+      renderWall(app);
+      return;
+    }
+    // 报告视图内交互（reading-report 域）与返回/预填
     if (M.view === 'report') {
       const rrContent = overlay.querySelector('.bz-rr-content') as HTMLElement | null;
       if (rrContent && handleReportInteraction(rrContent, t)) return;
-      // 报告视图关闭钮（仅移动端显示，桌面靠左栏返回）/ 空态主按钮 → 返回书架
       if (t.closest('[data-rr-goto-shelf]')) { showView(app, 'shelf'); return; }
-      // 作者/分类行 → 同面板切回书架列表并预填筛选（原深链作废）
       const rrAuthor = t.closest('[data-rr-author]') as HTMLElement | null;
       if (rrAuthor) { applyReportFilter(app, 'author', rrAuthor.getAttribute('data-rr-author') || ''); return; }
       const rrCat = t.closest('[data-rr-cat]') as HTMLElement | null;
       if (rrCat) { applyReportFilter(app, 'category', rrCat.getAttribute('data-rr-cat') || ''); return; }
     }
-    // 报告入口（左栏底 + 移动头部图标，面板内互切）；排序/筛选/搜索/关闭
-    const tool = t.closest('[data-bs-tool]') as HTMLElement | null;
-    if (tool) {
-      const kind = tool.dataset.bsTool;
-      if (kind === 'report') { showView(app, M.view === 'report' ? 'shelf' : 'report'); return; }
-      if (kind === 'search') { toggleMobileSearch(); return; }
-      if (kind === 'sort') { openFilterDrawer(app); return; }
-      if (kind === 'filter') { openFilterDrawer(app); return; }
-      if (kind === 'close') { closeOverlay(); return; }
-      if (kind === 'settings') {
-        // 设置直达（issue 201 头行对齐待办）：关面板 → 设置面板定位书架墙域（动态 import 防环引用）
-        closeOverlay();
-        void import('../settings-panel').then((m) => m.openSettingsPanel(app, 'bookshelf'));
-        return;
-      }
-      return;
-    }
-    // 统计行：在读 accent 卡整卡一键回书（直达原文）
-    const resume = t.closest('[data-bs-resume]') as HTMLElement | null;
-    if (resume) {
-      const id = resume.dataset.bsResume || '';
-      const target = M.items.find((x) => x.status === '在读' && itemId(x) === id);
-      if (target) openBookDirect(target, app);
-      return;
-    }
-    // 统计行：读完纪念日卡 → 回看该书详情
-    const annivEl = t.closest('[data-bs-anniv]') as HTMLElement | null;
-    if (annivEl) {
-      const id = annivEl.dataset.bsAnniv || '';
-      const a = findAnniversary(M.items);
-      if (a && itemId(a.item) === id) openBookDetail(a.item, app);
-      return;
-    }
-    // 书卡 → 详情
-    const book = t.closest('[data-bs-id]') as HTMLElement | null;
-    if (book) {
-      const epub = book.dataset.bsEpub === '1';
-      const it = M.items.find((x) => epub ? x.epubVaultPath === book.dataset.bsId : x.file?.path === book.dataset.bsId);
+    // 书脊 → 借书卡
+    const spine = t.closest('[data-bs-id]') as HTMLElement | null;
+    if (spine && M.view === 'shelf') {
+      const epub = spine.dataset.bsEpub === '1';
+      const it = M.items.find((x) => epub ? x.epubVaultPath === spine.dataset.bsId : x.file?.path === spine.dataset.bsId);
       if (it) openBookDetail(it, app);
       return;
     }
   });
 
-  // 搜索（防抖；桌面 + 移动两个输入框共用同一关键字）
-  function bindSearch(input: HTMLInputElement): void {
-    input.addEventListener('input', () => {
-      if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
-      M.searchDebounceTimer = setTimeout(() => {
-        M.searchKeyword = input.value.trim();
-        renderShelves(app);
-      }, 200);
-    });
-  }
-  bindSearch(overlay.querySelector('#bz-bs-dsearch') as HTMLInputElement);
-  bindSearch(overlay.querySelector('#bz-bs-msearch') as HTMLInputElement);
-  // 重开残留回写：M.searchKeyword 只在插件卸载时清空，重挂面板把它回填输入框，
-  // 避免「网格被不可见关键字过滤但输入框为空」的排查黑洞
-  if (M.searchKeyword) {
-    for (const id of ['bz-bs-dsearch', 'bz-bs-msearch']) {
-      const input = overlay.querySelector(`#${id}`) as HTMLInputElement | null;
-      if (input) input.value = M.searchKeyword;
-    }
-  }
+  // 检索（200ms 防抖）
+  const searchInput = overlay.querySelector('#bz-bs-dsearch') as HTMLInputElement;
+  searchInput.addEventListener('input', () => {
+    if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
+    M.searchDebounceTimer = setTimeout(() => {
+      M.searchKeyword = searchInput.value.trim();
+      renderWall(app);
+    }, 200);
+  });
+  // 重开残留回写：防「墙被不可见关键字过滤但输入框为空」的排查黑洞
+  if (M.searchKeyword) searchInput.value = M.searchKeyword;
+
+  // 窗口缩放 → 防抖重装箱（墙宽变化）
+  wallResizeHandler = () => {
+    if (wallResizeTimer) clearTimeout(wallResizeTimer);
+    wallResizeTimer = setTimeout(() => {
+      wallResizeTimer = null;
+      if (M.currentOverlay && M.view === 'shelf') renderWall(app);
+    }, 150);
+  };
+  window.addEventListener('resize', wallResizeHandler);
 
   mountIcons(overlay);
-  // 报告入口按当前视图绘制（重开面板保持报告视图状态）
-  paintView();
-  // B8：首扫加载态——rebuild 完成前 shelves 显示占位，防异步读 weave-data 时空白闪烁
-  const loadingHtml = `<div class="bz-bs-none">${uiEmpty({ icon: 'loader', title: '正在整理书架…', desc: '' }).outerHTML}</div>`;
-  const dEl0 = overlay.querySelector('.bz-bs-shelves') as HTMLElement | null;
-  const mEl0 = overlay.querySelector('.bz-bs-shelves-m') as HTMLElement | null;
-  if (dEl0) { dEl0.innerHTML = loadingHtml; mountIcons(dEl0); }
-  if (mEl0) { mEl0.innerHTML = loadingHtml; mountIcons(mEl0); }
+  paintViewContainers();
+  // B8：首扫加载态——rebuild 完成前墙位显示占位，防异步读 weave-data 空白闪烁
+  const shelf0 = overlay.querySelector('#bz-bs-shelf') as HTMLElement | null;
+  if (shelf0) shelf0.innerHTML = `<div class="bz-bs-wall-empty">${uiEmpty({ icon: 'loader', title: '正在整理书架…', desc: '' }).outerHTML}</div>`;
   void rebuildItems(app).then(() => {
-    // 重开面板保持报告视图：数据就绪后直接进报告视图重算（报告视图存续期间自动重算的同一入口）
     if (M.view === 'report') showView(app, 'report');
     else renderAll(app);
   });
 }
 
-function toggleMobileSearch(): void {
-  const bar = M.currentOverlay?.querySelector('#bz-bs-searchbar') as HTMLElement | null;
-  const btn = M.currentOverlay?.querySelector('[data-bs-tool="search"]') as HTMLElement | null;
-  if (!bar) return;
-  const show = !bar.classList.contains('show');
-  bar.classList.toggle('show', show);
-  btn?.classList.toggle('on', show);
-  if (show) (bar.querySelector('input') as HTMLInputElement)?.focus();
-}
-
 export function closeOverlay(): void {
   if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
-  closeDrawer();
-  closeDomainModals(); // audit H：toggle 语义关面板时不留孤儿详情/确认弹窗
-  cancelReadingReport(); // 报告视图在途分片渲染作废 + progress toast 收起（不留常驻残留）
+  if (wallResizeTimer) { clearTimeout(wallResizeTimer); wallResizeTimer = null; }
+  if (wallResizeHandler) {
+    window.removeEventListener('resize', wallResizeHandler);
+    wallResizeHandler = null;
+  }
+  closeDomainModals();
+  cancelReadingReport();
   if (M.currentOverlay) {
     M.currentOverlay.remove();
     M.currentOverlay = null;
@@ -1043,13 +855,9 @@ let mainEscHandle: { unregister: () => void } | null = null;
 export function registerEscapeHandler(): void {
   if (mainEscRegistered) return;
   mainEscRegistered = true;
-  // B1：句柄存模块级，unloadBookshelf 时 unregister（卸载清理闭环）
   mainEscHandle = escManager.register('bz-bookshelf', {
-    isVisible: () => !!M.currentOverlay || !!M.drawerEl,
-    close: () => {
-      if (M.drawerEl) closeDrawer();
-      else closeOverlay();
-    },
+    isVisible: () => !!M.currentOverlay,
+    close: () => closeOverlay(),
   });
 }
 
