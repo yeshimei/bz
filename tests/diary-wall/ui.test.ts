@@ -137,10 +137,10 @@ describe('回忆墙 UI', () => {
     expect(document.querySelectorAll('.bz-diary-wall-mob').length).toBe(1);
   });
 
-  it('渲染章节栏（月份倒序）+ 瀑布流（媒体块 + 文字条 + 日期节头）', async () => {
+  it('渲染章节栏（月份簇倒序，issue 209 纯缩略图）+ 瀑布流（媒体块 + 文字条 + 日期节头）', async () => {
     await openAndWait();
-    // 章节栏月份（倒序：2026-08 / 2026-06）——只统计桌面实例（移动无章节栏）
-    const months = Array.from(document.querySelectorAll('.bz-diary-wall-desk .bz-diary-wall-month')).map(
+    // 章节栏月份簇（倒序：2026-08 / 2026-06）——只统计桌面实例（移动无章节栏）
+    const months = Array.from(document.querySelectorAll('.bz-diary-wall-desk .bz-diary-wall-rail-cluster')).map(
       (el) => (el as HTMLElement).dataset.month
     );
     expect(months).toEqual(['2026-08', '2026-06']);
@@ -159,9 +159,9 @@ describe('回忆墙 UI', () => {
     expect(heads.length).toBe(3);
   });
 
-  it('章节栏点击月份 → 平滑滚动定位到该月首个节头', async () => {
+  it('章节栏点击月份簇 → 平滑滚动定位到该月首个节头', async () => {
     const c = await openAndWait();
-    const monthItem = document.querySelector<HTMLElement>('.bz-diary-wall-month[data-month="2026-08"]');
+    const monthItem = document.querySelector<HTMLElement>('.bz-diary-wall-rail-cluster[data-month="2026-08"]');
     expect(monthItem).toBeTruthy();
     const scrollSpy = vi.fn();
     const wall = document.querySelector('.bz-diary-wall-wall') as HTMLElement;
@@ -710,7 +710,7 @@ describe('回忆墙 UI', () => {
     const wall = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-wall') as HTMLElement;
     const scrollSpy = vi.fn();
     wall.scrollTo = scrollSpy as any;
-    const monthItem = document.querySelector<HTMLElement>('.bz-diary-wall-desk .bz-diary-wall-month[data-month="2026-08"]');
+    const monthItem = document.querySelector<HTMLElement>('.bz-diary-wall-desk .bz-diary-wall-rail-cluster[data-month="2026-08"]');
     monthItem!.click();
     // DW8：委托单次绑定（原 bindPanel 委托 + renderWall 逐月绑定双触发）
     expect(scrollSpy).toHaveBeenCalledTimes(1);
@@ -738,7 +738,7 @@ describe('回忆墙 UI', () => {
     const scrollSpy = vi.fn();
     wall.scrollTo = scrollSpy as any;
     const monthItem = document.querySelector<HTMLElement>(
-      '.bz-diary-wall-desk .bz-diary-wall-month[data-month="2026-08"]'
+      '.bz-diary-wall-desk .bz-diary-wall-rail-cluster[data-month="2026-08"]'
     )!;
     monthItem.click();
     // 目标 = scrollTop + (masonry顶 − wall顶 − 节头高 − 6) = 2000 + (−860 − 100 − 40 − 6) = 994
@@ -805,17 +805,71 @@ describe('回忆墙 UI', () => {
     expect(desk.querySelectorAll('.bz-diary-wall-lb-media').length).toBe(1);
   });
 
-  it('增强 #2：章节栏年份分组——跨年处插年份标签，data-month 定位不变', async () => {
-    // 追加一条 2025 年日记制造跨年
-    vault.files.set('我的/日记/2025-12-01.md', '# 📖 09:00\n去年今日。\n');
+  it('issue 209：章节栏纯缩略图——栏内零文字，月份簇按月降序，纯文字月不渲染', async () => {
+    // 追加 2025-12 纯文字月：无图/视频缩略 → 不渲染簇（栏内零文字语义）
+    vault.files.set('我的/日记/2025-12-01.md', '# 📖 09:00\n去年今日纯文字。\n');
+    await openAndWait();
+    const rail = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-rail') as HTMLElement;
+    // 栏内零文字（无「章 节」标题/年份标签/月名/条数；img/video 不产生文本）
+    expect(rail.textContent!.trim()).toBe('');
+    // 簇按月降序；data-month 完整 YYYY-MM
+    const months = Array.from(rail.querySelectorAll<HTMLElement>('.bz-diary-wall-rail-cluster')).map((c) => c.dataset.month);
+    expect(months).toEqual(['2026-08', '2026-06']);
+    expect(months).not.toContain('2025-12');
+    // 旧 emoji 文字兜底格已删
+    expect(rail.querySelector('.bz-diary-wall-month-thumb--t')).toBeNull();
+  });
+
+  it('issue 209：章节栏缩略图——音频不产格、视频走 video[src]（jsdom fallback 已挂载）、图片直挂 src', async () => {
+    // 2026-07-02 纯视频条目 → 该月簇应为视频缩略
+    vault.files.set('我的/日记/2026-07-02.md', '# 🐱 10:00\n![[VID_20260702.mp4]]\n');
+    await openAndWait();
+    const rail = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-rail') as HTMLElement;
+    // 08 簇：条目媒体 = img+video+audio，首个非音频 = img → 仅 1 格且为图片（音频不产格）
+    const aug = rail.querySelector<HTMLElement>('.bz-diary-wall-rail-cluster[data-month="2026-08"]')!;
+    expect(aug.querySelectorAll('.bz-diary-wall-month-thumb').length).toBe(1);
+    const img = aug.querySelector('.bz-diary-wall-month-thumb img') as HTMLImageElement;
+    expect(img.getAttribute('src')).toContain('https://example.com/vault/');
+    expect(aug.querySelector('video')).toBeNull();
+    // 07 簇（纯视频条目）：jsdom 无 IO → fallback 立即挂载 src，preload=metadata 读首帧，带播放角标
+    const july = rail.querySelector<HTMLElement>('.bz-diary-wall-rail-cluster[data-month="2026-07"]')!;
+    const video = july.querySelector('video[src]') as HTMLVideoElement;
+    expect(video).toBeTruthy();
+    expect(video.preload).toBe('metadata');
+    expect(july.querySelector('.bz-diary-wall-month-thumb-play')).toBeTruthy();
+  });
+
+  it('issue 209：正文双列——CSS column-count:2，sparse-2 半宽 hack 已删，单条日仍 sparse-1 跨列', async () => {
+    await openAndWait();
+    const css = readFileSync(resolve(process.cwd(), 'src/diary-wall/styles.css'), 'utf8');
+    expect(css).toMatch(/\.bz-diary-wall-masonry \{\s*column-count: 2;/);
+    expect(css).not.toContain('sparse-2 .bz-diary-wall-item');
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    // DOM 不再产生 sparse-2 半宽内联块（用户截图实锤的挤压病根）
+    expect(desk.querySelectorAll('.bz-diary-wall-masonry--sparse-2').length).toBe(0);
+    // 单条日（06-12 纯文字等）仍 sparse-1 跨列
+    expect(desk.querySelectorAll('.bz-diary-wall-masonry--sparse-1').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('issue 209：章节栏点击簇仍跳月（委托改簇选择器后 DW8 口径回归）', async () => {
+    await openAndWait();
+    const wall = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-wall') as HTMLElement;
+    const scrollSpy = vi.fn();
+    wall.scrollTo = scrollSpy as any;
+    const cluster = document.querySelector<HTMLElement>('.bz-diary-wall-desk .bz-diary-wall-rail-cluster[data-month="2026-06"]')!;
+    cluster.click();
+    expect(scrollSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('增强 #2（issue 209 改口径）：栏内零文字后，跨年定位由簇 data-month 承接（按月降序）', async () => {
+    // 追加一条 2025 年媒体日记制造跨年
+    vault.files.set('我的/日记/2025-12-01.md', '# 📖 09:00\n![[IMG_2025.jpg]]\n');
     await openAndWait();
     const rail = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-rail')!;
-    const years = Array.from(rail.querySelectorAll<HTMLElement>('.bz-diary-wall-rail-year')).map((y) => y.textContent);
-    expect(years).toEqual(['2026', '2025']);
-    // 年份标签在各自首个月份项之前；月份 data-month 仍为完整 YYYY-MM
-    const firstMonth = rail.querySelector<HTMLElement>('.bz-diary-wall-month');
+    const months = Array.from(rail.querySelectorAll<HTMLElement>('.bz-diary-wall-rail-cluster')).map((c) => c.dataset.month);
+    expect(months).toEqual(['2026-08', '2026-06', '2025-12']);
+    const firstMonth = rail.querySelector<HTMLElement>('.bz-diary-wall-rail-cluster');
     expect(firstMonth!.dataset.month).toBe('2026-08');
-    expect(years).toHaveLength(2);
   });
 
   it('增强 #3：头行计数 = 当前结果数（筛选后随之变化）', async () => {
@@ -1135,8 +1189,10 @@ describe('回忆墙 UI', () => {
     expect(core).toContain('.bz-sheet-mask');
     expect(core).toContain('.bz-sheet--show');
     expect(core).toContain('.bz-sheet-act--danger');
-    // #2：年份分隔标签类
-    expect(css).toContain('.bz-diary-wall-rail-year');
+    // issue 209：年份标签/标题类已删（栏内零文字），章节栏簇类在位
+    expect(css).not.toContain('.bz-diary-wall-rail-year');
+    expect(css).not.toContain('.bz-diary-wall-rail-title');
+    expect(css).toContain('.bz-diary-wall-rail-cluster');
     // #5：那年今天时光条类（容器/头行/横滑行/卡片/年份角标）
     for (const cls of [
       '.bz-diary-wall-memories',
