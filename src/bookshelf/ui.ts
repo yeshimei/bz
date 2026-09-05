@@ -33,7 +33,7 @@ import { escapeHtml } from '../core/utils';
 import { isMobileEnv } from '../core/mobile';
 import { renderReadingReport, cancelReadingReport, handleReportInteraction } from '../reading-report';
 import {
-  STATUS_READING, STATUS_DONE, STATUS_COLORS, SIDE_DEFS, SORT_LABEL, ICON,
+  STATUS_COLORS, SIDE_DEFS, SORT_LABEL, ICON,
   EMPTY_BOOKS_ICON, EMPTY_SEARCH_ICON, EMPTY_FILTER_ICON,
 } from './constants';
 import { M, resetBookshelfState, applyDefaultView, type BookshelfItem, type BookshelfView, type SideId, type SortKey } from './state';
@@ -233,14 +233,10 @@ function bookCardHTML(it: BookshelfItem, app: App): string {
     ? `<div class="bz-progress bz-progress--thin bz-bs-prog"><i style="width:${Math.min(100, it.progress)}%"></i></div>` : '';
   const quote = it.bookReview
     ? `<div class="bz-bs-quote">${esc(it.bookReview.replace(/\[\[.*?\]\]/g, '').slice(0, 48))}</div>` : '';
-  // 状态角标（issue 207 拍板）：圆点改浅底小字签，已读不出任何东西
-  const statusTag = it.status === STATUS_DONE
-    ? ''
-    : `<span class="bz-bs-status-tag${it.status === STATUS_READING ? ' reading' : ''}">${esc(it.status)}</span>`;
   // B5：路径含引号会截断 HTML 属性 → esc() 转义；回查时浏览器已解码为原值
   return `<div class="bz-bs-book" data-bs-id="${esc(it.file?.path ?? it.epubVaultPath ?? '')}" data-bs-epub="${it.isEpub ? '1' : ''}">
     <div class="bz-bs-cover-wrap">${coverBlock(it, app, '')}${prog}
-      ${statusTag}${quote}
+      ${quote}
     </div>
     <div class="bz-bs-bname" title="${esc(it.title)}">${esc(it.title)}</div>
     <div class="bz-bs-bauthor">${esc(it.author)}</div>
@@ -285,15 +281,15 @@ export { renderAll };
 
 // ---------- 面板内视图（读书报告内嵌化：书架列表 / 阅读分析报告） ----------
 
-/** 左栏底部报告入口：书库视图 = 「阅读分析报告 ›」；报告视图 = 「‹ 返回书库」（桌面返回路径） */
+/** 左栏底部报告入口：书库视图 = 「阅读分析报告」；报告视图 = 「‹ 返回书库」（桌面返回路径；尾随三角已删，issue 207 二轮拍板） */
 function paintReportEntry(): void {
   const btn = M.currentOverlay?.querySelector('.bz-bs-report') as HTMLElement | null;
   if (!btn) return;
   const active = M.view === 'report';
   btn.classList.toggle('on', active);
   btn.innerHTML = active
-    ? `${iconSpan('arrow-left')}<span>返回书库</span>${iconSpan('chevron-right', 'bz-bs-report-chev')}`
-    : `${iconSpan(ICON.report)}<span>阅读分析报告</span>${iconSpan('chevron-right', 'bz-bs-report-chev')}`;
+    ? `${iconSpan('arrow-left')}<span>返回书库</span>`
+    : `${iconSpan(ICON.report)}<span>阅读分析报告</span>`;
   mountIcons(btn);
 }
 

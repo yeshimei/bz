@@ -29,9 +29,7 @@
 .bz-bs-body { display: flex; flex: 1; min-height: 0; }
 
 /* ---- 左栏 = 共享 .bz-rail 族（label/行/计数 + 底部 .bz-rail-foot 报告入口）；
-   .bz-bs-side-list/.bz-bs-side-catlist 为渲染挂载容器（无样式），.bz-bs-report 为 JS/测试钩子 ----
-   报告入口箭头靠右（共享行内无此槽位） */
-.bz-bs-report-chev { margin-left: auto; }
+   .bz-bs-side-list/.bz-bs-side-catlist 为渲染挂载容器（无样式），.bz-bs-report 为 JS/测试钩子 ---- */
 
 /* ---- 报告视图（reading-report 域内容区挂载点；头行/内容区样式归 reading-report/styles.css） ---- */
 .bz-bs-view-report { min-height: 0; }
@@ -112,14 +110,6 @@
 }
 /* hover 上抬（原型强调保留的唯一动效；阴影走 token 档，不留死色值） */
 .bz-bs-book:hover .bz-bs-cover-wrap { transform: translateY(-4px); box-shadow: var(--bz-shadow-sm); }
-/* 状态角标（右上角浅底小字签，issue 207 拍板替代状态圆点）：未读=中性灰签、在读=品牌橙签、已读不渲染 */
-.bz-bs-status-tag {
-  position: absolute; top: 7px; right: 7px;
-  font-size: 10px; font-weight: var(--bz-weight-semibold); line-height: 16px;
-  padding: 1px 7px; border-radius: var(--bz-radius-full);
-  background: var(--bz-surface-hover); color: var(--bz-text-2);
-}
-.bz-bs-status-tag.reading { background: var(--bz-brand-soft); color: var(--bz-brand); }
 /* 进度细条 = 共享 .bz-progress .bz-progress--thin；域内只给封面底部绝对定位 */
 .bz-bs-prog { position: absolute; left: 0; right: 0; bottom: 0; }
 /* B6：有书评渐变浮层时进度条上移到浮层上方（quote 高 = 14pt + 1 行 16.5 + 6pt ≈ 37px），否则被渐变遮住 */
