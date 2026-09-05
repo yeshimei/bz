@@ -43,3 +43,15 @@
 - 拖窗口右/下/角缩放，鼠标压遮罩松手：不再关闭；正常点遮罩关闭保留。
 - 测试：aggregateSites / queryBySource site / uiVSplitter 结构与拖拽 / swallowNextClick；
   全量 vitest + tsc --noEmit 绿。
+
+## 修复轮 1（用户实测反馈）：右键菜单透明裸奔
+
+- **现象**：中栏条目右键，菜单项裸浮在列表上无面板底，正文透出。
+- **根因**：issue 214 引入的暗病——编辑部换肤变量（--clip-paper/--clip-ink 等）只定义在
+  `.bz-clip-frame`，而菜单挂 body（`.bz-item-menu.bz-clip-menu-editorial`）不在其子树内，
+  `var(--clip-*)` 计算值无效 → background/border 全透明（css 层级覆盖不回落基础规则）。
+  jsdom 不算 CSS 变量级联，issue 214 测试全绿未拦住；今日重载新版后首次显形。
+- **修法**：变量定义选择器并挂菜单根 `.bz-clip-frame, .bz-item-menu.bz-clip-menu-editorial`
+  （todo 皮肤先例同口径：变量定义在菜单根也携带的类上）；取值单源不重复。
+- **回归测试**：`tests/clipbook/menu-skin-vars.test.ts`——定义 --clip-paper 的规则选择器
+  必须同时含面板根与菜单根；菜单换肤块消费的 --clip-* 全部有定义（锚样式源文本）。
