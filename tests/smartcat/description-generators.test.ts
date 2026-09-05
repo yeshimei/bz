@@ -83,14 +83,14 @@ describe('generateDescription（主入口）', () => {
     expect(generateDescription(s)).toBe('你在《深度学习》写了条想法：「想法1」');
   });
 
-  it('book:added → 加入书架', () => {
+  it('book:added → 加入书库', () => {
     const s: StructuredMeta = { entityType: 'book', action: 'added', name: '深度学习' };
-    expect(generateDescription(s)).toBe('你把《深度学习》加入了书架');
+    expect(generateDescription(s)).toBe('你把《深度学习》加入了书库');
   });
 
-  it('book:removed → 移出书架', () => {
+  it('book:removed → 移出书库', () => {
     const s: StructuredMeta = { entityType: 'book', action: 'removed', name: '深度学习' };
-    expect(generateDescription(s)).toBe('你把《深度学习》移出了书架');
+    expect(generateDescription(s)).toBe('你把《深度学习》移出了书库');
   });
 
   it('diary_entry:created → 写了一篇日记 + body', () => {

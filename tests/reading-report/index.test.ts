@@ -128,7 +128,7 @@ describe('报告视图渲染（面板内容区）', () => {
     // 收录说明（目录名在场）
     expect(container.textContent).toContain('书库');
     // 主按钮 → onBack 回书架
-    const btn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.includes('去书架墙添加')) as HTMLElement;
+    const btn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.includes('去书库添加')) as HTMLElement;
     expect(btn).toBeTruthy();
     btn.click();
     expect(back).toBe(1);

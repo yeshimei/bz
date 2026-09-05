@@ -74,10 +74,10 @@ export async function checkOrphans(app: App, opts: CheckOpts = {}): Promise<Chec
         issues.push({
           severity: 'warn',
           title: `书目《${b.title}》的封面文件不存在`,
-          detail: `笔记：${(b.file as any)?.path || '(未知)'}\n封面路径：${cover}\n书架墙会显示占位封面；请补回文件或清空笔记的 cover 字段。`,
+          detail: `笔记：${(b.file as any)?.path || '(未知)'}\n封面路径：${cover}\n书库会显示占位封面；请补回文件或清空笔记的 cover 字段。`,
         });
       }
-      await opts.tick?.(`书架墙 · ${b.title}`);
+      await opts.tick?.(`书库 · ${b.title}`);
     }
     const epubs = await loadEpubItems(app);
     for (const b of epubs) {
@@ -91,7 +91,7 @@ export async function checkOrphans(app: App, opts: CheckOpts = {}): Promise<Chec
           detail: `EPUB 路径：${p}\n该条目来自 weave 阅读数据（weave-data.json，外部插件数据，体检不改动）；请重新导入或清理 Weave 插件数据。`,
         });
       }
-      await opts.tick?.(`书架墙 · ${b.title}`);
+      await opts.tick?.(`书库 · ${b.title}`);
     }
   }
 

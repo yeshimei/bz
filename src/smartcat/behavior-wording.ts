@@ -165,8 +165,8 @@ registerEntity('book', {
     const content = s.extras?.content ? `：「${clip(s.extras.content, 40)}」` : '';
     return `你在《${s.name || '未知书'}》写了条想法${content}`;
   },
-  added: (s) => `你把《${s.name || '未知书'}》加入了书架`,
-  removed: (s) => `你把《${s.name || '未知书'}》移出了书架`,
+  added: (s) => `你把《${s.name || '未知书'}》加入了书库`,
+  removed: (s) => `你把《${s.name || '未知书'}》移出了书库`,
 }, ['library'], (s) => `《${s.name || '一本书'}》的书库活动`);
 
 // ==================== diary（日记；实际 entityType=diary_entry，注册 diary 别名） ====================

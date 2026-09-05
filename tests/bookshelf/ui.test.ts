@@ -92,7 +92,7 @@ describe('bookshelf overlay', () => {
     await openPanel(vault, app);
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(overlay).toBeTruthy();
-    expect(overlay.querySelector('.bz-panel-title')?.textContent).toContain('书架墙');
+    expect(overlay.querySelector('.bz-panel-title')?.textContent).toContain('书库');
     expect(overlay.querySelector('.bz-panel-head-sub')?.textContent).toBe('3 本');
     // issue 201 头行对齐待办：品牌块 + ⚙设置直达钮（关闭钮原有）
     expect(overlay.querySelector('.bz-panel-head .bz-panel-brand')).toBeTruthy();
@@ -288,12 +288,12 @@ describe('bookshelf overlay', () => {
     (overlay.querySelector('.bz-bs-report') as HTMLElement).click();
     // 原深链作废：不再执行命令（面板内切换）
     expect(executed).toBe('');
-    // 报告视图激活：容器显隐 + 左栏入口变「‹ 返回书架」
+    // 报告视图激活：容器显隐 + 左栏入口变「‹ 返回书库」
     expect(M.view).toBe('report');
     expect(overlay.querySelector('.bz-bs-view-shelf')?.classList.contains('active')).toBe(false);
     expect(overlay.querySelector('.bz-bs-view-report')?.classList.contains('active')).toBe(true);
     const entry = overlay.querySelector('.bz-bs-report') as HTMLElement;
-    expect(entry.textContent).toContain('返回书架');
+    expect(entry.textContent).toContain('返回书库');
     expect(entry.querySelector('[data-icon="arrow-left"]')).toBeTruthy();
     // 报告内容异步分片渲染进面板内容区
     const content = overlay.querySelector('.bz-rr-content') as HTMLElement;
@@ -866,6 +866,38 @@ describe('bookshelf overlay', () => {
     const zeroBars = Array.from(overlay.querySelectorAll('.bz-bs-bars .bz-bs-bar.zero')) as HTMLElement[];
     expect(zeroBars.length).toBeGreaterThan(0);
     for (const bar of zeroBars) expect(bar.querySelector('span')?.textContent).toBe('0');
+    // issue 207 翻转：bars[0] = 本月
+    expect(overlay.querySelector('.bz-bs-bars .bz-bs-bar-col:first-child .bz-bs-bar-label')?.textContent).toBe('本月');
+    closeOverlay();
+  });
+
+  it('状态角标文字签（issue 207）：未读/在读出浅底签、已读不渲染；无状态圆点残留', async () => {
+    const { vault, app } = seedVault(); // 认知觉醒=在读 / 算法导论=未读 / 围城=已读
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
+    const cards = gridCards(overlay);
+    expect(cards.length).toBe(3);
+    expect(overlay.querySelector('.bz-bs-statusdot')).toBeFalsy();
+    const tagOf = (title: string) =>
+      cards.find((c) => c.textContent?.includes(title))?.querySelector('.bz-bs-status-tag') as HTMLElement | null;
+    expect(tagOf('算法导论')?.textContent).toBe('未读');
+    expect(tagOf('认知觉醒')?.textContent).toBe('在读');
+    expect(tagOf('认知觉醒')?.classList.contains('reading')).toBe(true);
+    expect(tagOf('围城')).toBeFalsy();
+    closeOverlay();
+  });
+
+  it('排序浮岛（issue 207）：工具行出 uiChoice float 四档，默认选中最近阅读；无下拉残留', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
+    const slot = overlay.querySelector('.bz-bs-sort-slot') as HTMLElement;
+    const island = slot.querySelector('.bz-choice--float') as HTMLElement;
+    expect(island).toBeTruthy();
+    expect(overlay.querySelector('.bz-bs-sort .bz-select')).toBeFalsy();
+    const opts = Array.from(island.querySelectorAll('button')).map((b) => b.textContent?.trim());
+    expect(opts).toEqual(['最近阅读', '书名', '作者', '进度']);
+    expect(island.getAttribute('aria-label')).toBe('排序方式');
     closeOverlay();
   });
 });

@@ -39,7 +39,7 @@ export const DOMAINS: HomeDomain[] = [
   // 文献盒（literature 域，ADR-0072）：文献笔记列表 + 视频/术语录入（补内容域曝光位）
   { id: 'literature', commandId: 'bz-literature-open', name: '文献盒', sub: '文献笔记与录入', icon: iconOf('literature') },
   // 旧书库（library）域退役：本卡由书架墙（bookshelf）承接（id 变更后旧 home.json 里钉选的 library 自动失效，可在编辑模式重钉）
-  { id: 'bookshelf', commandId: 'bz-bookshelf-open', name: '书架墙', sub: '藏书与读书笔记', icon: iconOf('bookshelf') },
+  { id: 'bookshelf', commandId: 'bz-bookshelf-open', name: '书库', sub: '藏书与读书笔记', icon: iconOf('bookshelf') },
   // 阅读报告（reading-report 域）：metadataCache 统计的阅读数据分析（补内容域曝光位）
   { id: 'reading-report', commandId: 'bz-reading-report-open', name: '阅读报告', sub: '阅读数据分析', icon: iconOf('reading-report') },
   { id: 'wall', commandId: 'bz-diary-wall-open', name: '回忆墙', sub: '相片墙浏览日记', icon: iconOf('wall') },

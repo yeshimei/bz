@@ -146,7 +146,7 @@ describe('bz 骨架冒烟', () => {
     expect(byId('bz-cinema-open').name).toBe('影院');
     expect(byId('bz-cinema-add').name).toBe('加影视');
     // 书架墙（bookshelf 新域）
-    expect(byId('bz-bookshelf-open').name).toBe('书架墙');
+    expect(byId('bz-bookshelf-open').name).toBe('书库');
     // todo 新域：待办 / 加待办（enh-sweep-a 去冗余括号后缀）
     expect(byId('bz-todo-open').name).toBe('待办');
     // clipbook 融合域（ADR-0082）：剪藏本 = 聚合讯+剪藏本合一入口

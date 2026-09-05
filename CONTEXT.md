@@ -72,14 +72,14 @@ _Avoid_: 完成归档（备忘录语义）、历史归档（文献盒语义）
 **AI 整理 (AI Tidy)**: 收藏本添加弹窗内的字段整理动作（按钮 ✨ AI 整理）——按已输入内容补全标题/链接/简介并从固定标签中选标签；GitHub 仓库链接先经 GitHub API 取真实仓库信息（仓库名预填标题、简介忠实翻译成中文、强制含 GitHub 标签）。反馈走动态消息模板（progress「AI 分析中…」→ 阶段 setMessage → success/error），与影视 AI 荐片同一套。
 _Avoid_: AI 推荐（旧名，名不符实——它整理字段而非推荐内容）
 
-**书库 (Library)**: 读书数据目录 `书库/` 与读书笔记目录 `我的/读书笔记` 的统称——书架墙（bookshelf 域）与阅读数据分析的数据源；旧书库 UI 域已退役，能力收编书架墙（含 EPUB 只读与读书笔记详情）。
+**书库 (Bookshelf, 原名「书架墙」)**: bookshelf 功能域的显示名（2026-09-06 正名，issue 207）——面板（书库面板）、命令（bz-bookshelf-open「书库」）、设置域同名；兼指其数据源统称：读书数据目录 `书库/` 与读书笔记目录 `我的/读书笔记`；旧书库 UI 域（library）已退役，能力收编本域（含 EPUB 只读与读书笔记详情）。_Avoid_: 书架墙（旧显示名；命令 ID bz-bookshelf-* 与目录 `书库/` 属契约不变）
 
 **书库 EPUB 条目**: 书库中由 Weave 阅读数据文件（`weave-data.json`）驱动的 EPUB 书目条目，与 markdown 书目条目**并列、互不影响**（同名书不合并）。数据不经现场解析 EPUB，直接读数据文件；字段契约以 Weave 侧为准（见 fork-weave-src `docs/adr/043`）。
 _Avoid_: EPUB 电子书条目——指聚合列表中的书目条目（不要与「影视条目/信条目」混淆）
 
 **Weave 数据路径**: bz 设置中指向 Weave 阅读数据文件（`weave-data.json`）所在数据路径的设置项；书库据此读取 EPUB 书目数据。Weave 未启用或路径失效时 EPUB 条目静默缺省，markdown 部分照常。
 
-**阅读数据分析报告 (Reading Analytics, ADR-0091 内嵌化)**: 基于 metadataCache 统计的阅读报告生成器（年度统计、热力图、习惯分析等），无 __utils 依赖。自 ADR-0013 扩展起报告并入 EPUB 书目（全库 weave 书、不筛目录；缺字段按报告口径补齐后并入同一张报告）。**ADR-0091（2026-09-04）读书报告内嵌化**：独立弹窗退役，报告改为书架墙面板内视图（`M.view='shelf'|'report'`，reading-report 域只保留 stats/report 纯函数 + 面板内容区渲染器 index.ts）——命令 `bz-reading-report-open`（id/名称不变）= 打开书架墙面板并切报告视图（home 报告卡/剪藏本深链/书架左栏入口同一去向）；左栏报告入口与移动头行报告钮面板内互切、报告视图左栏变「‹ 返回书架」（桌面返回路径）、视图内关闭钮仅移动端；报告内点作者行回书架预填搜索、点分类行回书架预填分类筛（原跨面板深链作废）；统计口径只算书库目录（bookshelfFolderPath 回落链，库外 book 标签笔记不混入）；时段/分类/互动环形图升级水平条形行（core/chart-palette 粉彩系列）、热力图段头 ‹ › 翻月（去 slice(0,1)）、年卡点击展开该年 12 月柱（getYearMonthBars 与趋势月柱共用 generateMonthBarColumns）；报告视图存续期间书库变化自动重算只更新内容区；分片渲染/progress toast/错误人话化机制保留，cancelReadingReport 在切视图/关面板/卸载三路收口；空库空态带「去书架墙添加」主按钮；🧮/❌/🏆 emoji 换 lucide。
+**阅读数据分析报告 (Reading Analytics, ADR-0091 内嵌化)**: 基于 metadataCache 统计的阅读报告生成器（年度统计、热力图、习惯分析等），无 __utils 依赖。自 ADR-0013 扩展起报告并入 EPUB 书目（全库 weave 书、不筛目录；缺字段按报告口径补齐后并入同一张报告）。**ADR-0091（2026-09-04）读书报告内嵌化**：独立弹窗退役，报告改为书库面板内视图（`M.view='shelf'|'report'`，reading-report 域只保留 stats/report 纯函数 + 面板内容区渲染器 index.ts）——命令 `bz-reading-report-open`（id/名称不变）= 打开书库面板并切报告视图（home 报告卡/剪藏本深链/书架左栏入口同一去向）；左栏报告入口与移动头行报告钮面板内互切、报告视图左栏变「‹ 返回书架」（桌面返回路径）、视图内关闭钮仅移动端；报告内点作者行回书架预填搜索、点分类行回书架预填分类筛（原跨面板深链作废）；统计口径只算书库目录（bookshelfFolderPath 回落链，库外 book 标签笔记不混入）；时段/分类/互动环形图升级水平条形行（core/chart-palette 粉彩系列）、热力图段头 ‹ › 翻月（去 slice(0,1)）、年卡点击展开该年 12 月柱（getYearMonthBars 与趋势月柱共用 generateMonthBarColumns）；报告视图存续期间书库变化自动重算只更新内容区；分片渲染/progress toast/错误人话化机制保留，cancelReadingReport 在切视图/关面板/卸载三路收口；空库空态带「去书库添加」主按钮；🧮/❌/🏆 emoji 换 lucide。
 
 **EPUB 读书笔记**: 书库 EPUB 条目的读书笔记弹窗——划线（`text`）+ 想法（`commentText`）按章节（`chapterTitle`，缺省「第 N 章」）分组的只读视图。单击封面打开；双击划线块经 `weave-cfi` 深链跳回原书；长按内容编辑想法、长按日期删除划线（见「EPUB 想法编辑」）。
 _Avoid_: 与 markdown 读书笔记（读 `我的/读书笔记` 笔记文件建树）混淆——EPUB 版直接读 weave-data
@@ -304,7 +304,7 @@ _Avoid_: 记忆文件、memories 目录、四层（已废弃）；迁移（已�
 
 ### 移动端窗口（ticket 68，跨域）
 
-**移动端默认全屏 (Mobile Default Fullscreen)**: bz 的跨域设置（ticket 68，ADR-0019）——12 个有主窗口的域各一项布尔开关（键 `<域前缀>MobileDefaultFullscreen`，落 data.json），**仅移动端（`Platform.isMobile`）显示与生效**，桌面端不显示不受影响。语义：≤768px 时 **开=真全屏**（主窗口覆盖整个视口 100vw×100vh、去圆角、头部避让安全区、底部 env(safe-area-inset-bottom)，统一类 `.bz-win-mfs`），**关=常规卡**（95%/90vh 圆角卡）；只决定每次打开的**初始形态**，窗口内无手动切换按钮。多窗口域（书架墙主面板+读书笔记+阅读报告一并对控制，ADR-0091）筛选/批注等小弹窗不纳入；阅读报告跟随书架墙键（2026-08 用户拍板，不设独立开关）。默认值=行为保持（原移动端即全屏的域默认开——日记/归物本/剪藏本/收藏本/复习/保险库等；原居中卡的域默认关——待办/番茄钟/文献盒）。
+**移动端默认全屏 (Mobile Default Fullscreen)**: bz 的跨域设置（ticket 68，ADR-0019）——12 个有主窗口的域各一项布尔开关（键 `<域前缀>MobileDefaultFullscreen`，落 data.json），**仅移动端（`Platform.isMobile`）显示与生效**，桌面端不显示不受影响。语义：≤768px 时 **开=真全屏**（主窗口覆盖整个视口 100vw×100vh、去圆角、头部避让安全区、底部 env(safe-area-inset-bottom)，统一类 `.bz-win-mfs`），**关=常规卡**（95%/90vh 圆角卡）；只决定每次打开的**初始形态**，窗口内无手动切换按钮。多窗口域（书库主面板+读书笔记+阅读报告一并对控制，ADR-0091）筛选/批注等小弹窗不纳入；阅读报告跟随书库键（2026-08 用户拍板，不设独立开关）。默认值=行为保持（原移动端即全屏的域默认开——日记/归物本/剪藏本/收藏本/复习/保险库等；原居中卡的域默认关——待办/番茄钟/文献盒）。
 _Avoid_: 窗口最大化、自动全屏（注意区别于闪念 FloatWindow 双击标题栏最大化——那是未接线的桌面窄窗机制，与本设置无关）
 
 ### 加密日记条目（日记加密，ticket 67）
@@ -329,7 +329,7 @@ _Avoid_: 手改根 styles.css、往根 styles.css 直接追加样式、styles/&l
 **组件库 (bz UI Kit, ADR-0094)**: 新体系样式库 + 组件库（`src/core/ui/`，tokens.css + components.css + 每组件一文件工厂，转发桶 index.ts 唯一入口；分层与用法见 `docs/ui-kit-manual.md`）。**ADR-0094（2026-09-05）扩充批次**：收编 8 域逐字重复的面板骨架——面板壳 `.bz-panel-overlay/.bz-panel-frame`、影院式整宽头行 `.bz-panel-head` 族（`--bz-head-h` 44px/`--head-h-lg` 50px）、主头行 `.bz-main-head`、工具行 `.bz-toolrow`、搜索 `.bz-search`、状态侧栏 `.bz-rail` 族、移动横滑条 `.bz-mobstrip`、统计卡 `.bz-stat` 族、候选浮层 `.bz-popover`、进度条 `.bz-progress` + 社区对标扩充（alert/menu/sheet/tabs/kbd/skeleton/table/card 等约 40 类族，命名归一 alert/menu/sheet）；带功能工厂 9 件（uiIconSpan/mountIcons/uiSearch/uiMainHead/uiRail/uiMobStrip/uiStat/uiProgress/uiPopover）+ `uiResizable` 可选 `persist` 尺寸记忆（防抖 300ms）。分两批落地：库批次先落（本批），存量域全域替换随后另票；**新域主面板一律 .bz-panel-overlay/.bz-panel-frame + .bz-panel-head**，不再自绘面板骨架。
 _Avoid_: 域内复制组件库类族、新域自绘面板壳/头行、域内另起按钮/输入基线、手写 emoji 图标（一律 lucide 经 setIcon）
 
-**统一行操作 (Unified Item Actions)**: 跨域列表卡片统一手势组件（`src/core/item-actions.ts`）——列表**不注入任何常驻或 hover 图标排**；桌面端=**右键**弹跟手菜单（preventDefault 拦原生菜单，鼠标长按不触发），移动/触屏端=**长按**弹底部抽屉（遮罩+顶部条目信息+动作逐行）。能力：keepOpen（动作后抽屉保持+refreshItemSheet 原地重建动作与头部）、附属浮层（companion，抽屉之上的域内弹窗点击不误关抽屉）、危险项红色、强调色整行。动作项布局统一：图标左对齐 → 文案 → 小字右对齐。已接入域：待办、日记本、剪藏本（clipbook）、收藏本、归物本（含 4 状态流转+数据文件监听自动刷新）、书架墙（保留双击转跳书籍，md/EPUB 通用）、复习计划（保留双击打开笔记；开始复习难度弹窗为 companion）、保险库（双击预览保留）。
+**统一行操作 (Unified Item Actions)**: 跨域列表卡片统一手势组件（`src/core/item-actions.ts`）——列表**不注入任何常驻或 hover 图标排**；桌面端=**右键**弹跟手菜单（preventDefault 拦原生菜单，鼠标长按不触发），移动/触屏端=**长按**弹底部抽屉（遮罩+顶部条目信息+动作逐行）。能力：keepOpen（动作后抽屉保持+refreshItemSheet 原地重建动作与头部）、附属浮层（companion，抽屉之上的域内弹窗点击不误关抽屉）、危险项红色、强调色整行。动作项布局统一：图标左对齐 → 文案 → 小字右对齐。已接入域：待办、日记本、剪藏本（clipbook）、收藏本、归物本（含 4 状态流转+数据文件监听自动刷新）、书库（保留双击转跳书籍，md/EPUB 通用）、复习计划（保留双击打开笔记；开始复习难度弹窗为 companion）、保险库（双击预览保留）。
 _Avoid_: hover 操作条、行内图标排、行内按钮组（指列表卡片时）
 
 **Q3 / __utils**: QuickAdd 共享脚本（`CONFIG/SCRIPTS/Quickadd/Q/Q3.js`，1034 行），挂载 `window.__utils`，21 个导出：escManager、confirm、notice、generateId、jsonStore、longPress、injectStyles、createSiteIcon、createIconBtn、formatRelativeTime、formatFileSize、displayChangelog、checkAndShowChangelog、AIService、createAI、extractUrlAndDisplay、getPlatformName、getCurrentNoteInfo、getCurrentCursorPosition、fetchPageTitle、createOverlay。**新插件移植后为内部共享层（core），不再挂 window**。

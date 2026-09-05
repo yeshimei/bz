@@ -40,7 +40,7 @@ export function jsonScanTargets(app: App): JsonScanTarget[] {
     { file: storageFile('literature.json'), label: '文献盒' },
     { file: storageFile('secondbrain.json'), label: '第二大脑' },
     { file: storageFile('quiz.json'), label: '复习做题' },
-    { file: `${resolveWeaveDataPath(app)}/${WEAVE_DATA_FILE}`, label: 'EPUB 阅读数据（书架墙）' },
+    { file: `${resolveWeaveDataPath(app)}/${WEAVE_DATA_FILE}`, label: 'EPUB 阅读数据（书库）' },
   ];
 }
 

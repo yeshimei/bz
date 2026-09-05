@@ -375,7 +375,7 @@ describe('设置面板（settings-panel）', () => {
     ui1.open();
     const popup1 = document.getElementById('bz-settings-panel-popup')!;
     const shelfItem1 = Array.from(popup1.querySelectorAll('.bz-sp-nav-item')).find(
-      (el) => el.textContent?.includes('书架墙')
+      (el) => el.textContent?.includes('书库')
     ) as HTMLElement;
     expect(shelfItem1).toBeTruthy();
     shelfItem1.click();
@@ -397,7 +397,7 @@ describe('设置面板（settings-panel）', () => {
     ui2.open();
     const popup2 = document.getElementById('bz-settings-panel-popup')!;
     (Array.from(popup2.querySelectorAll('.bz-sp-nav-item')).find(
-      (el) => el.textContent?.includes('书架墙')
+      (el) => el.textContent?.includes('书库')
     ) as HTMLElement).click();
     expect(await waitGroups(popup2, 1)).toBe(true);
     const row2 = Array.from(popup2.querySelectorAll('.bz-sp-set-row')).find(
@@ -412,7 +412,7 @@ describe('设置面板（settings-panel）', () => {
     ui3.open();
     const popup3 = document.getElementById('bz-settings-panel-popup')!;
     (Array.from(popup3.querySelectorAll('.bz-sp-nav-item')).find(
-      (el) => el.textContent?.includes('书架墙')
+      (el) => el.textContent?.includes('书库')
     ) as HTMLElement).click();
     expect(await waitGroups(popup3, 1)).toBe(true);
     const row3 = Array.from(popup3.querySelectorAll('.bz-sp-set-row')).find(
@@ -501,8 +501,8 @@ describe('设置面板（settings-panel）', () => {
       expect(names).not.toContain(n);
     }
     expect(names).toContain('小橘陪伴猫');
-    // 旧书库（library）域退役：设置组已删，不再出现
-    expect(names).not.toContain('书库');
+    // 旧书库（library）域退役：名称由 bookshelf（书库，issue 207 正名）承接，列表恰好一个「书库」
+    expect(names.filter((n) => n === '书库')).toHaveLength(1);
     // 搜索也搜不到该无设置域（无设置域不占列表位；但描述含词的可见域如「剪藏本」仍可能命中）
     const search = popup.querySelector('.bz-sp-search .bz-input') as HTMLInputElement;
     search.value = '聚合讯';
@@ -536,7 +536,7 @@ describe('设置面板（settings-panel）', () => {
     expect(names).not.toContain('聚合讯');
     expect(names).toContain('小橘陪伴猫'); // 有 schema，issue 194 转可见
     expect(names).toContain('回忆墙'); // issue 201 补域（移动端有「移动端默认全屏」1 项）
-    expect(names).not.toContain('书库'); // 旧书库域退役：设置组已删
+    expect(names.filter((n) => n === '书库')).toHaveLength(1); // 旧书库域退役：名称由 bookshelf 承接（issue 207）
     // 搜索也搜不到该无设置域
     const search = popup.querySelector('.bz-sp-mob-search .bz-input') as HTMLInputElement;
     search.value = '聚合讯';
