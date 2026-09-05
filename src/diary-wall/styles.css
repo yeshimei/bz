@@ -375,13 +375,17 @@
   background: linear-gradient(135deg, #2a9d8f, #80cbc4);
   color: #fff;
 }
-/* 视频缩略：IO 进视口后首帧铺满格子，播放角标浮在其上 */
+/* 视频缩略：缓存首帧小图/视频元素铺满格子，播放角标浮在其上（issue 212） */
+.bz-diary-wall-month-thumb--v img,
 .bz-diary-wall-month-thumb video {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+.bz-diary-wall-month-thumb--v img {
+  z-index: 0;
 }
 .bz-diary-wall-month-thumb--v svg {
   position: relative;
