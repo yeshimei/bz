@@ -2100,6 +2100,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   cursor: pointer;
   font-family: inherit;
   text-align: center;
+  /* Obsidian 核心/主题会给 button 钉高度——显式放开，防内部预览区被 flex 压扁（用户实测塌陷根因） */
+  height: auto;
+  min-height: 0;
 }
 .bz-cardpick-card:hover { border-color: var(--bz-border-hover); }
 .bz-cardpick-card:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 2px; }
@@ -2112,6 +2115,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   width: 100%;
   /* 固定高：aspect-ratio 在 WebView2 flex stretch 组合下不生效（预览区塌陷，用户实测） */
   height: 62px;
+  /* 关键：禁止 flex 收缩——卡片被外部 button 高度约束时预览区不再被压扁 */
+  flex-shrink: 0;
   border-radius: var(--bz-radius-sm);
   border: 1px solid var(--bz-border);
   background: var(--bz-surface-2);
