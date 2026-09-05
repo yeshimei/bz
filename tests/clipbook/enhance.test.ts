@@ -193,17 +193,17 @@ describe('rail 源行批量已读（enh 包 4）', () => {
 });
 
 describe('误标/误删可撤销（enh 包 5）', () => {
-  it('标记已读后通知带撤销 → 点击恢复未读与正文，统计回退', async () => {
+  it('标记已读后通知带撤销 → 点击恢复未读与正文，统计回退（issue 203：列表倒序后首篇=影视飓风视频）', async () => {
     const { vault } = await openDesktop();
     const item = document.querySelector('.bz-clip-item') as HTMLElement;
     const menu = await openContextMenuOn(item);
     const readBtn = [...menu.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.includes('标记为已读')) as HTMLElement;
     readBtn.click();
     await drainNewsWritesForTests();
-    // B 包扫尾：通知带对象名（「已将「果壳文章一」标为已读」）
+    // B 包扫尾：通知带对象名（「已将「影视飓风视频」标为已读」）
     await vi.waitFor(() => {
       const msg = document.querySelector('.bz-notice-msg') as HTMLElement;
-      expect(msg.textContent).toBe('已将「果壳文章一」标为已读');
+      expect(msg.textContent).toBe('已将「影视飓风视频」标为已读');
     });
     const noticeAction = await vi.waitFor(() => {
       const el = document.querySelector('.bz-notice-action') as HTMLElement;
@@ -214,9 +214,9 @@ describe('误标/误删可撤销（enh 包 5）', () => {
     noticeAction.click();
     await drainNewsWritesForTests();
     await vi.waitFor(() => {
-      const a = diskJson(vault).articles.find((x: any) => x.url === 'https://guokr.com/1');
+      const a = diskJson(vault).articles.find((x: any) => x.url === 'https://bilibili.com/video/BV1');
       expect(a.read).toBeUndefined();
-      expect(a.body).toBe('正文一 的内容段落。');
+      expect(a.body).toBe('视频简介内容');
       expect(diskJson(vault).stats.totalRead).toBe(0);
     });
   });
@@ -263,8 +263,8 @@ describe('阅读动线（enh 包 6）', () => {
   it('右栏停留超阈值自动落「在读」（可手动覆盖：手动处理后不生效）', async () => {
     __autoReadingDelayForTests(30);
     const { vault } = await openDesktop();
-    // M.cur = 列表第一条（未读果壳文章一）
-    expect(M.cur!.id).toBe('url:https://guokr.com/1');
+    // M.cur = 列表第一条（issue 203 倒序后 = 影视飓风视频 09:00）
+    expect(M.cur!.id).toBe('url:https://bilibili.com/video/BV1');
     await new Promise((r) => setTimeout(r, 130));
     await drainNewsWritesForTests();
     const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/clipbook.json')!);
@@ -274,27 +274,28 @@ describe('阅读动线（enh 包 6）', () => {
 
   it('标已读后前进到同位置下一篇', async () => {
     await openDesktop();
-    expect(M.cur!.id).toBe('url:https://guokr.com/1');
+    expect(M.cur!.id).toBe('url:https://bilibili.com/video/BV1'); // 倒序后首篇
     const item = document.querySelector('.bz-clip-item') as HTMLElement;
     const menu = await openContextMenuOn(item);
     const readBtn = [...menu.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.includes('标记为已读')) as HTMLElement;
     readBtn.click();
     await drainNewsWritesForTests();
-    await vi.waitFor(() => expect(M.cur!.id).toBe('url:https://bilibili.com/video/BV1'));
+    await vi.waitFor(() => expect(M.cur!.id).toBe('url:https://guokr.com/1')); // 前进到同位置下一篇
   });
 
   it('右栏聚焦 ←/→/j/k 切换条目', async () => {
     await openDesktop();
     const pane = document.querySelector('[data-clip-read-pane]') as HTMLElement;
     expect(pane).toBeTruthy();
+    // 倒序后列表 = [影视飓风视频(B站), 果壳文章一]；M.cur 初始=首篇
     pane.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-    await vi.waitFor(() => expect(M.cur!.id).toBe('url:https://bilibili.com/video/BV1'));
+    await vi.waitFor(() => expect(M.cur!.id).toBe('url:https://guokr.com/1'));
     pane.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', bubbles: true }));
-    await vi.waitFor(() => expect(M.cur!.id).toBe('url:https://guokr.com/1'));
-    pane.dispatchEvent(new KeyboardEvent('keydown', { key: 'j', bubbles: true }));
     await vi.waitFor(() => expect(M.cur!.id).toBe('url:https://bilibili.com/video/BV1'));
-    pane.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    pane.dispatchEvent(new KeyboardEvent('keydown', { key: 'j', bubbles: true }));
     await vi.waitFor(() => expect(M.cur!.id).toBe('url:https://guokr.com/1'));
+    pane.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    await vi.waitFor(() => expect(M.cur!.id).toBe('url:https://bilibili.com/video/BV1'));
   });
 });
 
