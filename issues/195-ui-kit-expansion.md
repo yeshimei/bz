@@ -1,4 +1,6 @@
-# issue 194：组件库扩充批次——面板壳/头行/侧栏等 40+ 类与 9 工厂（ADR-0094）
+# issue 195：组件库扩充批次——面板壳/头行/侧栏等 40+ 类与 9 工厂（ADR-0094）
+
+> 原编号 194（与并行 settings 批次撞号，21c4534 改号）。
 
 ## 范围
 
@@ -31,3 +33,11 @@
 - [x] `pnpm exec tsc --noEmit` 干净
 - [x] `pnpm test` 全量绿
 - [x] 手册三处回写 + ADR-0094 + CONTEXT.md 共享层同步
+
+## 延后台账（全域接入后登记，2026-09-05 终审补录）
+
+以下项经全域接入批次（88c755a）核实为「事实延后」，立此备立后续票：
+1. **diary-wall 右键菜单迁移 item-actions**——域内 `.bz-diary-wall-menu*`（styles.css:1013 起）与移动抽屉动作集不一致，行为等价风险大，接入批明确留 P2。
+2. **bookshelf/diary-wall 底部 sheet 形制收敛**——`.bz-diary-wall-sheet*`（styles.css:795 起）与 bookshelf 筛选抽屉（ui.ts:414 `bz-bs-drawer-sheet`）未换共享 `.bz-sheet`。
+3. **encrypt / review 全面 token 化**——encrypt/styles.css 约 69 处裸色值（`--bz-vault-*` 体系）、review/styles.css 约 37 处裸 Obsidian 变量/裸 hex。
+4. **留域内形制登记**（接入批评估为特有或低收益，暂不换）：review `.bz-q-head` 头行、recap `.bz-recap-head` 头行、checkup 旧 `createOverlay` 壳、diary-wall 壳/头行/搜索框、home hero 区与 `bz-home-search`、reading-report 年度渐变卡。
