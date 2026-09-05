@@ -766,6 +766,21 @@ describe('回忆墙 UI', () => {
     expect(rail.querySelectorAll('.bz-diary-wall-month-thumb').length).toBeGreaterThanOrEqual(1);
   });
 
+  it('issue 213：按原文段序渲染——文字段只出现一次，媒体后不再重复挂全文；sparse-2 半宽 hack 退役', async () => {
+    await openAndWait();
+    const wall = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-wall') as HTMLElement;
+    // 夹具 3 天：08-19（文字+3媒体→1 文字段）、06-11（纯媒体→0）、06-12（纯文字→1）
+    expect(wall.querySelectorAll('.bz-diary-wall-item.bz-diary-wall-text').length).toBe(2);
+    // 08-19 的 masonry：3 个媒体块 + 1 个文字段卡
+    const m0 = wall.querySelectorAll('.bz-diary-wall-masonry')[0] as HTMLElement;
+    expect(m0.querySelectorAll('.bz-diary-wall-media-wrap').length).toBe(3);
+    expect(m0.querySelectorAll('.bz-diary-wall-text').length).toBe(1);
+    // 媒体块内不再嵌正文（旧版 .bz-diary-wall-tx 随媒体重复）
+    expect(m0.querySelector('.bz-diary-wall-media-wrap .bz-diary-wall-tx')).toBeNull();
+    // sparse-2 半宽类已删，2 条日不再挂
+    expect(wall.querySelector('.bz-diary-wall-masonry--sparse-2')).toBeNull();
+  });
+
   it('issue 210：章节栏视频缩略懒加载——无 IO 直挂 src + preload=metadata，格内留播放角标', async () => {
     // 本例私有夹具：beforeEach 每例重建 vault，加一条纯视频日记不影响他例
     vault.files.set('我的/日记/2026-06-10.md', '# 🎬 10:00\n![[VID_20260610_100000.mp4]]\n');

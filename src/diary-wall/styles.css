@@ -530,12 +530,6 @@
   column-span: all;
   margin-bottom: 10px;
 }
-/* 稀疏 2 条：各占半宽（文字条与媒体块都半宽并排） */
-.bz-diary-wall-masonry--sparse-2 .bz-diary-wall-item {
-  width: calc(50% - 5px);
-  display: inline-block;
-  vertical-align: top;
-}
 
 /* 条目（性能：屏外内容跳过渲染 + 布局/绘制隔离，原型 .item） */
 .bz-diary-wall-item {
