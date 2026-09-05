@@ -29,7 +29,7 @@
 - 不动存量域（全域替换另票）；不动 `select.ts`/`.bz-select-menu`（A4 合并延后）；不新增工厂范围外的空壳工厂（skip 理由见 ADR-0094）
 
 ## 验收
-- [x] `pnpm vitest run tests/core/ui.test.ts` 单文件绿（89 用例，净增 37（52→89）：结构/类名/事件回调/setValue/persist 防抖）
+- [x] `pnpm vitest run tests/core/ui.test.ts` 单文件绿（90 用例，净增 38（52→90）：结构/类名/事件回调/setValue/persist 防抖）
 - [x] `pnpm exec tsc --noEmit` 干净
 - [x] `pnpm test` 全量绿
 - [x] 手册三处回写 + ADR-0094 + CONTEXT.md 共享层同步
