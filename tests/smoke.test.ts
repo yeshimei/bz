@@ -273,6 +273,8 @@ describe('bz 骨架冒烟', () => {
     expect(s.passwordLength).toBe('16');
     // clipbook（ADR-0082）：移动端默认全屏对齐 clipping 默认开
     expect(s.clipbookMobileDefaultFullscreen).toBe(true);
+    // 待办面板皮肤（issue 210）：默认 = 现行视觉
+    expect(s.todoSkin).toBe('default');
     // enh-sweep-a 死键清理：旧 clipping 域孤儿键（实际生效 = clipbook 键）与
     // bookshelf 未接管前遗留的 5 个书库展示开关键，全仓无消费方，接口+默认值双删
     expect('clippingMobileDefaultFullscreen' in s).toBe(false);

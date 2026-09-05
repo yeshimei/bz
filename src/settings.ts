@@ -78,6 +78,8 @@ export default interface BzSettings {
   /** 🪟 待办面板桌面尺寸记忆（ADR-0084：拖动缩放后记住宽高；0 = 未拖过走默认 720×580） */
   todoPanelWidth: number;
   todoPanelHeight: number;
+  /** 🎨 待办面板皮肤（issue 210）：default（默认）/ paper（纸感手账）/ editorial（编辑部）；未知值按默认渲染 */
+  todoSkin: string;
   /** 🏷️ 场景列表（逗号分隔，空则内置默认：剪藏,工作,学习,生活,代码,公开课） */
   memoScenarios: string;
   /** 🔀 默认排序方式：priority（紧急优先）/ due（仅到期）/ created（创建时间） */
@@ -475,6 +477,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 待办面板桌面尺寸记忆（ADR-0084；0=未拖过，打开走默认 720×580）
   todoPanelWidth: 0,
   todoPanelHeight: 0,
+  todoSkin: 'default',
 
   // 日记本
   diaryDirectory: '我的/日记',

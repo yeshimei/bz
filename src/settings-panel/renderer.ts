@@ -19,7 +19,7 @@ import type { SettingsSchema, SettingsRow, SettingsSnapshot, SettingsRowContext 
 import { setIcon } from 'obsidian';
 import { openPathPicker } from '../core/path-picker';
 import { notice } from '../core/notice';
-import { uiBtn, uiChip, uiRange, uiSelect, uiSwitch } from '../core/ui';
+import { uiBtn, uiChip, uiRange, uiSelect, uiSwitch, uiCardChoice } from '../core/ui';
 
 /** 快照读取（visibleWhen 求值输入；键直绑行从 getSettings 读，三函数行由外部提供） */
 function snapshot(): SettingsSnapshot {
@@ -229,9 +229,18 @@ function renderRow(
   // custom 行：内容插槽自带标题/描述（各域 custom 内 new Setting().setName/setDesc），
   // 若面板再渲染 info 区会导致标题描述出现两遍（ticket：设置面板内容重复 a/c）。
   // 故 custom 行不渲染 info 区，控件区直接占满整行。
+  // choiceCards 行（issue 210）：纵向形态——行头仅 name（无 desc，拍板无描述）+ 全宽卡片组。
   const isCustom = row.type === 'custom';
+  const isCardsRow = row.type === 'choiceCards';
+  if (isCardsRow) el.classList.add('bz-sp-set-row--cards');
+  if (isCardsRow && rowName) {
+    const name = document.createElement('div');
+    name.className = 'bz-sp-set-name';
+    name.textContent = rowName;
+    el.appendChild(name);
+  }
   let ctrl: HTMLElement | null = null;
-  if (!isCustom) {
+  if (!isCustom && !isCardsRow) {
     const info = document.createElement('div');
     info.className = 'bz-sp-set-info';
     if (rowName) {
@@ -461,6 +470,24 @@ function renderRow(
       badge.className = 'bz-badge';
       badge.textContent = row.name;
       ctrlEl.appendChild(badge);
+      break;
+    }
+    case 'choiceCards': {
+      // 视觉卡片单选（issue 210）：行头 name + 全宽卡片组（预览卡无编号无描述，拍板形态）。
+      // 空值回退首个选项（同 select 口径）；onChange 后 refresh 联动显隐。
+      const acc = bindValue<string>(row.binding as unknown as AnyBinding);
+      const pick = uiCardChoice({
+        value: String(acc.read() ?? '') || row.options[0].value,
+        options: row.options,
+        label: rowName,
+        onChange: (v) => {
+          acc.write(v);
+          void acc.persist();
+          row.onChange?.(v, ctx);
+          refresh();
+        },
+      });
+      el.appendChild(pick.el);
       break;
     }
     case 'custom': {
