@@ -29,7 +29,6 @@ export function todoSettingsSchema(): SettingsSchema {
             name: '面板皮肤',
             binding: { key: 'todoSkin' },
             options: [
-              { value: 'default', label: '默认', prevClass: 'bz-skinprev-default' },
               { value: 'paper', label: '纸感手账', prevClass: 'bz-skinprev-paper' },
               { value: 'editorial', label: '编辑部', prevClass: 'bz-skinprev-editorial' },
             ],
