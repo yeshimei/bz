@@ -5,13 +5,14 @@
  * 此处测工厂产出的结构/类/交互）。
  * 扩充批次（ADR-0094）：uiIconSpan/mountIcons/uiSearch/uiMainHead/
  * uiRail/uiMobStrip/uiStat/uiProgress/uiPopover + uiResizable.persist。
+ * issue 203：uiSuggest 输入联想（三域联想下拉收敛）。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   uiBtn, uiIcon, uiIconBtn, uiBtnRow, uiChip, uiField, uiInput,
   uiEmpty, uiSegmented, uiChoice, uiDialogActions, uiRange, uiSwitch, uiSelect,
   uiIconSpan, mountIcons, uiSearch, uiMainHead, uiRail, uiMobStrip,
-  uiStat, uiProgress, uiPopover,
+  uiStat, uiProgress, uiPopover, uiSuggest,
 } from '../../src/core/ui';
 import { openLightbox, closeLightbox } from '../../src/core/ui';
 import { uiModal } from '../../src/core/ui';
@@ -1150,6 +1151,116 @@ describe('bz ui 组件库', () => {
         vi.useRealTimers();
         vi.restoreAllMocks();
       }
+    });
+  });
+
+  describe('uiSuggest 输入联想（issue 203）', () => {
+    /** relative 容器 + input 锚点 */
+    function build(source: () => string[], extra: Partial<Parameters<typeof uiSuggest>[0]> = {}) {
+      const wrap = document.createElement('div');
+      wrap.style.position = 'relative';
+      const input = document.createElement('input');
+      wrap.appendChild(input);
+      document.body.appendChild(wrap);
+      const sug = uiSuggest({ anchor: input, source, ...extra });
+      return { wrap, input, sug };
+    }
+    const src = () => ['📱 手机', '💻 电脑', '🎧 耳机'];
+
+    it('惰性弹出：构造不开；focus 开（挂 anchor 父元素）；iconOf/labelOf 渲染', () => {
+      const { wrap, input, sug } = build(src, { iconOf: (v) => [...v][0], labelOf: (v) => [...v].slice(2).join('') });
+      expect(wrap.querySelector('.bz-popover')).toBeNull(); // 默认收起
+      input.dispatchEvent(new Event('focus'));
+      const layer = wrap.querySelector('.bz-popover') as HTMLElement;
+      expect(layer).not.toBeNull();
+      const items = [...layer.querySelectorAll('.bz-popover-item')] as HTMLElement[];
+      expect(items).toHaveLength(3);
+      expect(items[0].dataset.value).toBe('📱 手机');
+      expect(items[0].querySelector('.bz-suggest-ic')!.textContent).toBe('📱');
+      expect(items[0].querySelector('span:last-child')!.textContent).toBe('手机');
+      sug.close();
+      expect(wrap.querySelector('.bz-popover')).toBeNull();
+    });
+
+    it('输入过滤 + 无匹配即收（不开空壳）+ max 上限', () => {
+      const { wrap, input } = build(src);
+      input.value = '手';
+      input.dispatchEvent(new Event('input'));
+      const items = wrap.querySelectorAll('.bz-popover-item');
+      expect(items).toHaveLength(1);
+      expect(items[0].textContent).toBe('📱 手机'); // 无 labelOf = 原串
+      input.value = '不存在词';
+      input.dispatchEvent(new Event('input'));
+      expect(wrap.querySelector('.bz-popover')).toBeNull();
+      const capped = build(() => ['a1', 'a2', 'a3'], { max: 2 });
+      capped.input.dispatchEvent(new Event('focus'));
+      expect(capped.wrap.querySelectorAll('.bz-popover-item')).toHaveLength(2);
+    });
+
+    it('excludeCurrent：排除现值；动态 source 每次求值', () => {
+      const { wrap, input } = build(() => ['甲一', '甲二'], { excludeCurrent: true });
+      input.value = '甲';
+      input.dispatchEvent(new Event('focus'));
+      expect([...wrap.querySelectorAll('.bz-popover-item')].map((o) => o.textContent)).toEqual(['甲一', '甲二']);
+      // 现值与候选全同 → 被排除，其余不含查询串 → 无匹配即收（点选回填不复弹自身的语义）
+      input.value = '甲一';
+      input.dispatchEvent(new Event('input'));
+      expect(wrap.querySelector('.bz-popover')).toBeNull();
+    });
+
+    it('点选：回填 + onPick + 收层 + 回焦', () => {
+      const pick = vi.fn();
+      const { wrap, input } = build(src, { onPick: pick });
+      input.dispatchEvent(new Event('focus'));
+      (wrap.querySelectorAll('.bz-popover-item')[2] as HTMLElement).click();
+      expect(input.value).toBe('🎧 耳机');
+      expect(pick).toHaveBeenCalledWith('🎧 耳机');
+      expect(wrap.querySelector('.bz-popover')).toBeNull();
+      expect(document.activeElement).toBe(input);
+    });
+
+    it('键盘：ArrowDown/Up 移 is-on，Enter 选定；Escape 只收下拉不冒泡', () => {
+      const { wrap, input } = build(src);
+      let docSawEsc = false;
+      const docListener = (e: KeyboardEvent) => { if (e.key === 'Escape') docSawEsc = true; };
+      document.addEventListener('keydown', docListener);
+      input.dispatchEvent(new Event('focus'));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      expect(wrap.querySelector('.bz-popover-item.is-on')).not.toBeNull();
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      expect(input.value).toBe('📱 手机'); // 首项被选定
+      expect(wrap.querySelector('.bz-popover')).toBeNull();
+      // 再开（输入清点选抑制位）：ArrowUp 从尾起步；Esc 收层且不冒泡
+      input.value = '';
+      input.dispatchEvent(new Event('input'));
+      expect(wrap.querySelector('.bz-popover')).not.toBeNull();
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+      const items = [...wrap.querySelectorAll('.bz-popover-item')];
+      expect(items[items.length - 1].classList.contains('is-on')).toBe(true);
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      expect(wrap.querySelector('.bz-popover')).toBeNull();
+      expect(docSawEsc).toBe(false);
+      document.removeEventListener('keydown', docListener);
+      // 收起态：按键不拦（Esc 冒泡可达 document）
+      let docSawEsc2 = false;
+      const docListener2 = (e: KeyboardEvent) => { if (e.key === 'Escape') docSawEsc2 = true; };
+      document.addEventListener('keydown', docListener2);
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      expect(docSawEsc2).toBe(true);
+      document.removeEventListener('keydown', docListener2);
+    });
+
+    it('外点 mousedown 收层；锚点离场后外点自清', () => {
+      const { wrap, input, sug } = build(src);
+      input.dispatchEvent(new Event('focus'));
+      expect(wrap.querySelector('.bz-popover')).not.toBeNull();
+      document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      expect(wrap.querySelector('.bz-popover')).toBeNull();
+      // 锚点离场（表单整体移除语义）：外点触发自清后不再报错
+      input.dispatchEvent(new Event('focus'));
+      input.remove();
+      expect(() => document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))).not.toThrow();
+      sug.detach();
     });
   });
 });

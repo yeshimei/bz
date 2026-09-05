@@ -810,6 +810,8 @@ describe('bookshelf overlay', () => {
     expect(anniv.textContent).toContain('3 年前的今天');
     expect(anniv.textContent).toContain('纪念书');
     expect(anniv.querySelector('[data-icon="calendar-heart"]')).toBeTruthy();
+    // hint = 日期前置的「YYYY-MM-DD 读完」：窄卡截断也保得住日期（issue 204）
+    expect(anniv.textContent).toContain(`${yearsAgoDate(3)} 读完`);
     // 点击 → 回看该书详情
     anniv.click();
     const popup = document.querySelector('.bz-bs-d-popup') as HTMLElement;
@@ -825,6 +827,45 @@ describe('bookshelf overlay', () => {
     expect(overlay.querySelector('[data-bs-anniv]')).toBeFalsy();
     // 在读 accent 卡占位（一键回书语义在位）
     expect(overlay.querySelector('.bz-bs-dash [data-bs-resume]')).toBeTruthy();
+    closeOverlay();
+  });
+
+  it('无封面占位卡出书名：占位含标题文本（issue 204）', async () => {
+    const { vault, app } = seedVault(); // 种子书均无 cover → 全部走占位
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
+    const phs = Array.from(overlay.querySelectorAll('.bz-bs-shelves .bz-bs-cover-ph')) as HTMLElement[];
+    expect(phs.length).toBe(3);
+    const names = phs.map((ph) => ph.querySelector('.bz-bs-cover-ph-name')?.textContent || '');
+    expect(names).toContain('认知觉醒');
+    expect(names).toContain('围城');
+    closeOverlay();
+  });
+
+  it('坏图回退占位同样带书名：img error 事件按 data-bs-ph-title 出占位（issue 204）', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
+    // jsdom 不产真实封面 img（instanceof TFile 不成立），手工构造坏图结构走 bindCoverFallback 委托
+    const shelves = overlay.querySelector('.bz-bs-shelves') as HTMLElement;
+    const wrap = document.createElement('div');
+    wrap.className = 'bz-bs-cover-wrap';
+    wrap.innerHTML = '<div class="bz-bs-cover" data-bs-ph-title="坏图书"><img src="x.png" alt=""></div>';
+    shelves.querySelector('.bz-bs-grid')!.appendChild(wrap);
+    (wrap.querySelector('img') as HTMLElement).dispatchEvent(new Event('error'));
+    const ph = wrap.querySelector('.bz-bs-cover-ph') as HTMLElement;
+    expect(ph).toBeTruthy();
+    expect(ph.querySelector('.bz-bs-cover-ph-name')?.textContent).toBe('坏图书');
+    closeOverlay();
+  });
+
+  it('月柱零值月显示数值 0（issue 204）', async () => {
+    const { vault, app } = seedVault(); // 仅围城 2026-08 读完 → 近 12 月多数为零月
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
+    const zeroBars = Array.from(overlay.querySelectorAll('.bz-bs-bars .bz-bs-bar.zero')) as HTMLElement[];
+    expect(zeroBars.length).toBeGreaterThan(0);
+    for (const bar of zeroBars) expect(bar.querySelector('span')?.textContent).toBe('0');
     closeOverlay();
   });
 });

@@ -295,7 +295,7 @@ export function categoryLabel(it: BookshelfItem): string {
   return it.category || '未分类';
 }
 
-/** 分类面清单（去重 + zh 序 + 计数；数据层已有 category 字段，零新设置项） */
+/** 分类面清单（去重 + zh 序 + 未分类恒置底 + 计数；数据层已有 category 字段，零新设置项） */
 export function categoryList(items: BookshelfItem[]): { name: string; count: number }[] {
   const map = new Map<string, number>();
   for (const it of items) {
@@ -303,7 +303,12 @@ export function categoryList(items: BookshelfItem[]): { name: string; count: num
     map.set(name, (map.get(name) || 0) + 1);
   }
   return [...map.entries()]
-    .sort((a, b) => a[0].localeCompare(b[0], 'zh'))
+    .sort((a, b) => {
+      // 「未分类」常是最大桶，混进 zh 序中部难扫读，恒置底
+      if (a[0] === '未分类') return 1;
+      if (b[0] === '未分类') return -1;
+      return a[0].localeCompare(b[0], 'zh');
+    })
     .map(([name, count]) => ({ name, count }));
 }
 
