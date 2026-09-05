@@ -2,9 +2,11 @@
  * clipbook（剪藏本融合域，ADR-0082 / issue 177）：主面板 UI。
  *
  * 桌面三栏（rail 源列表 / 中栏条目 / 右栏阅读）+ 移动端双屏（源胶囊列表 / 详情+头栏保存钮）。
- * 对齐拍板原型 clipping-p3-siteboxes.html 的结构与极简口味：头行仅品牌+标题+副题「未读流与剪藏」，
+ * 对齐拍板定稿原型 p1-final.html 的编辑部印刷风（issue 214）：头行 = 品牌 + 期号行（无副题），
  * 无右上角图标（关闭=点遮罩/ESC；移动真全屏有 ✕）；动作收进条目右键菜单（item-actions 复用）；
- * 搜索框在左栏列表顶部（issue 206：从头行移入 rail，搜索时各源统计联动）。
+ * 搜索框在左栏列表顶部（issue 206：从头行移入 rail，搜索时各源统计联动）；
+ * 左栏 = 10 版对照拍板的 V1 点线索引（衬线名 + 点线 + 未读/总数）；
+ * 中栏目录序号制（未读唯一视觉 = 序号颜色，未读在前）；阅读面无底部动作（剪藏保留「打开笔记」文字脚）。
  *
  * 增强包（enh-clipbook）：桌面搜索（180ms 防抖）/ 移动长按抽屉（动作与桌面右键同源）/
  * 右栏读剪藏正文（cachedRead + 缓存）/ rail 源行批量已读 / 误删误标可撤销（notifyUndo）/
@@ -199,6 +201,7 @@ export function unloadPanel(): void {
     panelResizeDetach = null;
   }
   clipBodyCache.clear();
+  setSearchKw(''); // 卸载清搜索词（模块级变量，泄漏会污染下一次装载的列表/rail 计数）
   M.open = false;
   M.mobDetailOpen = false;
   loading = false;
@@ -232,8 +235,7 @@ function buildDom(app: any): void {
         <div class="bz-panel-head bz-panel-head--tall">
           <div class="bz-panel-brand">${iconSpan('scissors', 'bz-ic--sm')}</div>
           <div class="bz-panel-title">剪藏本</div>
-          <div class="bz-panel-head-pipe"></div>
-          <div class="bz-panel-head-sub">未读流与剪藏</div>
+          <div class="bz-clip-issue" data-clip-issue></div>
           <div class="bz-panel-head-sp"></div>
           <button class="bz-icon-btn" data-clip-settings title="打开剪藏本设置">${iconSpan('settings')}</button>
           <button class="bz-icon-btn" data-clip-desk-close title="关闭">${iconSpan('x')}</button>
@@ -244,6 +246,7 @@ function buildDom(app: any): void {
             <div class="bz-rail-scroll" data-clip-rail></div>
           </div>
           <div class="bz-clip-mid">
+            <div class="bz-clip-toc-head">目录</div>
             <div class="bz-clip-list" data-clip-list></div>
           </div>
           <div class="bz-clip-read" data-clip-read-pane tabindex="0">
@@ -427,6 +430,7 @@ function setSearchKw(kw: string): void { searchKw = kw; }
 // ================= 装载后全量渲染 =================
 function renderAll(): void {
   if (!M.open) return;
+  renderHeadIssue();
   renderRail();
   renderList();
   renderReader();
@@ -436,6 +440,14 @@ function renderAll(): void {
     // 详情保持打开态（数据刷新后重绘正文）
     renderMobDetail();
   }
+}
+
+/** 头行期号（issue 214）：「YYYY 年 M 月 D 日 · 第 N 期」，N = news 总条数（含已处理），随刷新更新 */
+function renderHeadIssue(): void {
+  const el = overlayEl ? (overlayEl.querySelector('[data-clip-issue]') as HTMLElement | null) : null;
+  if (!el) return;
+  const d = new Date();
+  el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M.articles.length} 期`;
 }
 
 // ================= 视图派生 =================
@@ -466,13 +478,18 @@ function listWithSearch(): ClipArticle[] {
   return currentList().filter(matchesSearch);
 }
 
+/** 编辑部目录序（issue 214）：未读在前、组内保持最新在前（稳定排序）；仅桌面目录消费，移动端维持最新在前 */
+function sortedView(): ClipArticle[] {
+  return [...listWithSearch()].sort((a, b) => (a.st === 'unread' ? 0 : 1) - (b.st === 'unread' ? 0 : 1));
+}
+
 // ================= 渲染：左 rail =================
 /** data-src JSON 序列化选择器（UP 行携带 platform=B站 + up=uid） */
 type SrcSelJson = { kind: 'all' } | { kind: 'inbox'; platform: string; up: string | null } | { kind: 'clip' };
 
-function railItemHtml(sel: SrcSelJson, label: string, count: number, unread: number, icon: string | null, color: string | null, active: boolean, sub?: string): string {
+function railItemHtml(sel: SrcSelJson, label: string, unread: number, total: number, icon: string | null, color: string | null, active: boolean, sub?: string): string {
   // G：JSON 过 escapeHtml 再进单引号属性——UP 主名含单引号时原实现提前闭合属性，点击 JSON.parse 抛错该源失效
-  // 前缀槽三态：feed=字母徽标（tint 内联）/ bili=B站徽标（色在样式侧 .bz-clip-rail .bz-rail-badge.bili）/ 其余=图标底座（全部未读挂 --accent 档）
+  // 前缀槽三态保留 DOM（issue 214：编辑部皮肤在域 CSS 内隐藏徽标/图标，V1 = 纯文字点线索引）
   const badge = icon === 'feed'
     ? `<span class="bz-rail-badge" style="--bz-rail-tint:${color || '#58a6ff'}">${escapeHtml(sub || label.slice(0, 1))}</span>`
     : icon === 'bili'
@@ -480,11 +497,14 @@ function railItemHtml(sel: SrcSelJson, label: string, count: number, unread: num
       : icon === 'clip'
         ? `<span class="bz-rail-ic">${iconSpan('scissors')}</span>`
         : `<span class="bz-rail-ic${sel.kind === 'all' ? ' bz-rail-ic--accent' : ''}">${icon ? iconSpan(icon) : ''}</span>`;
+  // 计数 = 未读（搜索态为命中数，橘粗）/ 总数（issue 214 V1 口径）
+  const count = `<span class="bz-rail-count">${unread > 0 ? `<b>${unread}</b>` : unread}/${total}</span>`;
   return `
     <div class="bz-rail-item${active ? ' on' : ''}" data-src='${escapeHtml(JSON.stringify(sel))}' title="${escapeHtml(label)}">
       ${badge}
       <span class="bz-rail-name">${escapeHtml(label)}</span>
-      ${unread > 0 ? `<span class="bz-rail-unread">${unread}</span>` : `<span class="bz-rail-count">${count}</span>`}
+      <span class="bz-clip-lead"></span>
+      ${count}
     </div>`;
 }
 
@@ -496,7 +516,8 @@ function renderRail(): void {
   const countOf = (source: { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' }): number =>
     queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, source, M.upInfo).filter(matchesSearch).length;
   const allHit = countOf({ kind: 'all' });
-  let html = railItemHtml({ kind: 'all' }, '全部未读', allHit, 0, 'inbox', '#58a6ff', M.sel.kind === 'all', '');
+  // V1 计数口径（issue 214）：未读（搜索态 = 命中数）/ 总数（全量含已处理）
+  let html = railItemHtml({ kind: 'all' }, '全部未读', allHit, arts.length, 'inbox', '#58a6ff', M.sel.kind === 'all', '');
 
   // 平台行动态聚合（issue 206：不再硬编码三平台，新平台自动出现）——
   // 全集含已读条目平台与既知三平台（0 未读平台行保留恒显示，对齐旧行为）；
@@ -504,11 +525,13 @@ function renderRail(): void {
   const prefOrder = ['B站', '果壳科学人', '知乎日报'];
   const platColor: Record<string, string> = { 'B站': '#e8669a', '果壳科学人': '#2fae8c', '知乎日报': '#58a6ff' };
   const unreadByPlat = new Map<string, number>();
+  const totalByPlat = new Map<string, number>();
   const platSet = new Set<string>(prefOrder);
   for (const a of arts) {
     const p = platformOf(a);
     if (!p || p === '未知') continue;
     platSet.add(p);
+    totalByPlat.set(p, (totalByPlat.get(p) || 0) + 1);
     if (!a.read) unreadByPlat.set(p, (unreadByPlat.get(p) || 0) + 1);
   }
   const platforms = [...platSet].sort((x, y) => {
@@ -519,7 +542,7 @@ function renderRail(): void {
   for (const p of platforms) {
     const cnt = countOf({ kind: 'inbox', platform: p });
     const active = M.sel.kind === 'inbox' && M.sel.platform === p;
-    html += railItemHtml({ kind: 'inbox', platform: p, up: null }, p, cnt, cnt, 'feed', platColor[p] || '', active, '');
+    html += railItemHtml({ kind: 'inbox', platform: p, up: null }, p, cnt, totalByPlat.get(p) || cnt, 'feed', platColor[p] || '', active, '');
   }
 
   // B站 UP 展开（C2：Map 按 author/uid 去重；C6：upInfo 回填名字显示）
@@ -533,17 +556,18 @@ function renderRail(): void {
   }
   for (const [uid, name] of biliUps) {
     const cnt = countOf({ kind: 'inbox', platform: 'B站', up: uid });
+    const upTotal = arts.filter((a) => a.platform === 'B站' && String(a.author || '') === uid).length;
     const active = M.sel.kind === 'inbox' && M.sel.platform === 'B站' && M.sel.up === uid;
     // G：UP 行 data-src 携带 platform=B站 + up=uid（旧实现 platform=展示名、up=null，
     // 点击后按平台名过滤恒空——UP 源点开是空列表且高亮不复位）
     // B站徽标色由 .bz-clip-rail .bz-rail-badge.bili 样式侧单源承担（不再内联传 #8b7cf6）
-    html += railItemHtml({ kind: 'inbox', platform: 'B站', up: uid }, name, cnt, cnt, 'bili', '', active, name.slice(0, 1));
+    html += railItemHtml({ kind: 'inbox', platform: 'B站', up: uid }, name, cnt, upTotal, 'bili', '', active, name.slice(0, 1));
   }
 
   // 剪藏本（聚合，saved 语义；搜索时显示命中数）
   const clipActive = M.sel.kind === 'clip';
   const clipHit = countOf({ kind: 'clip' });
-  html += railItemHtml({ kind: 'clip' }, '剪藏本', clipHit, 0, 'clip', '', clipActive, '');
+  html += railItemHtml({ kind: 'clip' }, '剪藏本', clipHit, clipNotes.length, 'clip', '', clipActive, '');
 
   railListEl.innerHTML = html;
   mountIcons(railListEl);
@@ -601,7 +625,7 @@ function dotHtml(st: string): string {
 
 function renderList(): void {
   if (!listEl) return;
-  const list = listWithSearch();
+  const list = sortedView();
   if (list.length === 0) {
     listEl.innerHTML = '';
     listEl.appendChild(uiEmpty({ icon: 'inbox', title: '这个源暂无内容' }));
@@ -614,13 +638,17 @@ function renderList(): void {
   if (!list.some((a) => a.id === (M.cur && M.cur.id))) {
     M.cur = list[0];
   }
-  listEl.innerHTML = list.map((a) => `
-    <div class="bz-clip-item${M.cur && M.cur.id === a.id ? ' on' : ''}" data-id="${escapeHtml(a.id)}">
-      <div class="bz-clip-item-t">${dotHtml(a.st)}<span>${escapeHtml(a.title)}</span></div>
-      ${a.summary ? `<div class="bz-clip-item-sum">${escapeHtml(a.summary)}</div>` : ''}
-      <div class="bz-clip-item-meta">
-        <span class="bz-clip-item-site">${escapeHtml(a.srcName)}</span>
-        <span class="bz-clip-item-time">${relTime(a.timeTs)}</span>
+  // 编辑部目录（issue 214）：大号序号领队，未读唯一视觉 = 序号颜色（状态圆点桌面退役）
+  listEl.innerHTML = list.map((a, i) => `
+    <div class="bz-clip-item bz-clip-item--${a.st}${M.cur && M.cur.id === a.id ? ' on' : ''}" data-id="${escapeHtml(a.id)}">
+      <span class="bz-clip-no">${String(i + 1).padStart(2, '0')}</span>
+      <div class="bz-clip-item-main">
+        <div class="bz-clip-item-t"><span>${escapeHtml(a.title)}</span></div>
+        ${a.summary ? `<div class="bz-clip-item-sum">${escapeHtml(a.summary)}</div>` : ''}
+        <div class="bz-clip-item-meta">
+          <span class="bz-clip-item-site">${escapeHtml(a.srcName)}</span>
+          <span class="bz-clip-item-time">${relTime(a.timeTs)}</span>
+        </div>
       </div>
     </div>`).join('');
   // 卡片右键/长按（item-actions 复用）
@@ -652,8 +680,8 @@ function bindItemMenus(): void {
       selectArticle(art.id);
     });
   });
-  // 记录当前列表缓存（右键菜单取用）
-  M.list = currentList();
+  // 记录当前列表缓存（右键菜单取用；与桌面目录展示同序）
+  M.list = sortedView();
 }
 
 function buildSheetHead(a: ClipArticle): HTMLElement {
@@ -767,23 +795,24 @@ function renderReader(): void {
   } else {
     paras = a.body ? paragraphsHtml(a.body) : '';
   }
-  // 「打开笔记」主按钮（enh 包 3：右栏读剪藏正文后保留笔记入口）
-  const openNoteBtn = a.origin === 'clip' && a.notePath
-    ? `<div class="bz-clip-art-actions"><button class="bz-btn bz-btn--primary bz-btn--sm" data-clip-open-note type="button">${iconSpan('external-link', 'bz-ic--xs')}打开笔记</button></div>`
+  // 「打开笔记」编辑部文字脚（issue 214：底部动作按钮退役，文末唯一保留的剪藏笔记入口，
+  // news 的原文/已读/保存全在条目右键菜单）
+  const openNoteFoot = a.origin === 'clip' && a.notePath
+    ? `<div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-open-note>打开笔记 ${iconSpan('external-link', 'bz-ic--xs')}</span></div>`
     : '';
 
   readerEl.innerHTML = `
-    <div class="bz-clip-art-site"><span data-clip-siteicon></span><span class="bz-clip-art-site-name">${escapeHtml(a.srcName)}</span>${a.typeLabel ? `<span class="bz-clip-art-type">${escapeHtml(a.typeLabel)}</span>` : ''}</div>
     <div class="bz-clip-art-title">${escapeHtml(a.title)}</div>
     <div class="bz-clip-art-meta">
+      <span class="bz-clip-art-site"><span data-clip-siteicon></span><span class="bz-clip-art-site-name">${escapeHtml(a.srcName)}</span></span>
+      ${a.typeLabel ? `<span class="bz-clip-art-type">${escapeHtml(a.typeLabel)}</span>` : ''}
       <span>${escapeHtml(a.timeText || relTime(a.timeTs))}</span>
       <span class="bz-clip-art-flag ${flagCls}">${iconSpan(a.st === 'saved' ? 'check' : a.st === 'reading' ? 'book-open' : 'mail', 'bz-ic--xs')}${stLabel}</span>
     </div>
     <div class="bz-clip-art-fs" data-clip-fs></div>
     ${a.summary ? `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan('sparkles', 'bz-ic--xs')}摘要</span>${escapeHtml(a.summary)}</div>` : ''}
-    ${openNoteBtn}
     <div class="bz-clip-art-md" data-clip-md>${paras || `<p class="dim">${escapeHtml(a.origin === 'clip' ? '（笔记暂无正文）' : '正文已清空（已处理条目）')}</p>`}</div>
-    ${a.origin === 'news' && a.url ? `<a class="bz-clip-art-origin" href="${escapeHtml(a.url)}" target="_blank" rel="noopener">查看原文 ${iconSpan('external-link', 'bz-ic--xs')}</a>` : ''}
+    ${openNoteFoot}
   `;
   // 站点图标（issue 206）：DOM 组装——先首字 chip 占位，高清 favicon 就绪后原位换图
   const iconSlot = readerEl.querySelector('[data-clip-siteicon]') as HTMLElement | null;
@@ -893,9 +922,9 @@ async function autoMarkReading(id: string): Promise<void> {
   renderReader();
 }
 
-/** ←→/jk 条目切换（右栏聚焦时；列表顺序即阅读顺序） */
+/** ←→/jk 条目切换（右栏聚焦时；列表顺序即阅读顺序，与目录展示同序） */
 function stepArticle(delta: number): void {
-  const list = currentList();
+  const list = sortedView();
   if (!list.length) return;
   const idx = M.cur ? list.findIndex((x) => x.id === M.cur!.id) : -1;
   const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
