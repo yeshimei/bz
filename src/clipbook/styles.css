@@ -30,10 +30,10 @@
 /* ==================== 桌面端（编辑部印刷风） ==================== */
 .bz-clip-desk { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 
-/* ---- 头行：报细线（2px 墨色底线）；左 = serif 刊名，右 = 期号 + 检索 + ⚙/✕（issue 201） ---- */
+/* ---- 头行：报细线（2px 墨色底线）；左 = serif 刊名，右 = 期号 + 检索（去 ⚙/✕，关闭 = 点遮罩/ESC） ---- */
 .bz-clip-desk .bz-panel-head { border-bottom: 2px solid var(--clip-ink); }
-.bz-clip-desk .bz-panel-title { font-family: var(--clip-serif); letter-spacing: 6px; font-weight: 700; color: var(--clip-ink); }
-.bz-clip-issue { font-size: 11px; color: var(--clip-muted); letter-spacing: 1px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bz-clip-desk .bz-panel-title { font-family: var(--clip-serif); font-size: 21px; letter-spacing: 8px; font-weight: 700; color: var(--clip-ink); }
+.bz-clip-issue { font-size: 12px; color: var(--clip-muted); letter-spacing: 1px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 /* 头行检索：编辑部下划线检索（issue 214 原型对齐：搜索在头行右缘，不在 rail） */
 .bz-clip-head-search { position: relative; width: 250px; }
 .bz-clip-head-search .bz-ic { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; color: var(--clip-muted); }
@@ -189,14 +189,20 @@
 .bz-clip-art-foot span:hover { color: var(--clip-accent-soft); }
 .bz-clip-art-foot .bz-ic { width: 12px; height: 12px; }
 
-/* ---- 右键菜单域内换肤（core item-actions 结构不变；无图标纯衬线文字，对齐原型） ---- */
-.bz-clip-frame .bz-item-menu {
-  background: var(--clip-paper); border: 1px solid var(--clip-ink); border-top-width: 3px;
-  border-radius: 0; box-shadow: 5px 5px 0 rgba(28, 26, 23, .16); min-width: 148px;
+/* ---- 右键菜单编辑部换肤（issue 214 三轮）：菜单挂 body，域内后代选择器不可达——
+        经 item-actions menuClass 在菜单根挂 .bz-clip-menu-editorial（同 todo 皮肤先例） ---- */
+.bz-item-menu.bz-clip-menu-editorial {
+  background: var(--clip-paper); border: 1px solid var(--clip-ink); border-top: 3px solid var(--clip-ink);
+  border-radius: 0; box-shadow: 5px 5px 0 rgba(28, 26, 23, .16); min-width: 148px; padding: 0;
 }
-.bz-clip-frame .bz-item-menu .bz-item-menu-icon { display: none; }
-.bz-clip-frame .bz-item-menu-item { font-family: var(--clip-serif); letter-spacing: 2px; padding: 10px 18px; border-radius: 0; justify-content: space-between; }
-.bz-clip-frame .bz-item-menu-item:hover { background: var(--clip-ink); color: var(--clip-paper); }
+.bz-clip-menu-editorial .bz-item-menu-icon { display: none; }
+.bz-clip-menu-editorial .bz-item-menu-item {
+  font-family: var(--clip-serif); letter-spacing: 2px; border-radius: 0;
+  padding: 10px 18px; gap: 10px; font-size: 13px; color: var(--clip-ink-2);
+}
+.bz-clip-menu-editorial .bz-item-menu-item:hover { background: var(--clip-ink); color: var(--clip-paper); }
+.bz-clip-menu-editorial .bz-item-menu-item--danger { color: #b3261e; }
+.bz-clip-menu-editorial .bz-item-menu-item--danger:hover { background: #b3261e; color: var(--clip-paper); }
 
 /* ---- 右键菜单头（item-actions 抽屉头） ---- */
 .bz-clip-sheet-head { padding: 2px 0 6px; }
