@@ -725,6 +725,55 @@ button.news-close-btn {
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
+/* ---- 抽屉共享基线（恢复：movie 域退役 ADR-0087 时随 src/movie/styles.css 误删的共享规则——
+   本组件样式早年散落各域文件，退役清理时未迁回 core，致动作项失 flex 纵列挤成一行、
+   抗 Obsidian 按钮 !important 组/危险红/右对齐小字/入场动画全部失效） ---- */
+/* 头部标题/小字（sheetTitle 路径；sheetHead 路径走 .bz-item-sheet-entry 族） */
+.bz-item-sheet-title {
+  font-size: 14px; font-weight: 600; color: var(--text-normal);
+  line-height: 1.4; word-break: break-word;
+}
+.bz-item-sheet-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+/* 功能项一行行列出：左对齐、无背景色、无边框分割，小字号。
+   高特异性 + !important 抗 Obsidian 默认 button 样式（灰底/边框/圆角）压盖 */
+.bz-item-sheet button.bz-item-sheet-item {
+  display: flex; align-items: center; gap: 8px;
+  justify-content: flex-start !important; /* 抗 Obsidian 默认 button 居中 */
+  width: 100%; padding: 8px 6px;
+  font-size: 13px; line-height: 1.5; color: var(--text-normal);
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  cursor: pointer; text-align: left !important;
+}
+.bz-item-sheet button.bz-item-sheet-item:hover,
+.bz-item-sheet button.bz-item-sheet-item:active {
+  background: transparent !important; /* 无背景反馈，保持纯粹 */
+}
+.bz-item-sheet button.bz-item-sheet-item--danger { color: var(--text-error) !important; }
+/* 动作项右侧小字（次级/动态数据，如「123 字」）：右对齐、faint 弱化，不参与换行；仅移动端抽屉（桌面菜单不渲染小字） */
+.bz-item-sheet-item-sub {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 45%;
+  flex-shrink: 1;
+}
+.bz-item-sheet-icon { width: 16px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text-muted); }
+.bz-item-sheet-item--danger .bz-item-sheet-icon { color: var(--text-error); }
+@keyframes bz-sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes bz-mask-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* 移动端底部抽屉（长按卡片弹出，参照 B 站/网易云：遮罩 + 底部滑入 + 顶部选中条目信息） */
 .bz-item-sheet-mask {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
