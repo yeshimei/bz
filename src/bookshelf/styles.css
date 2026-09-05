@@ -45,12 +45,15 @@
 .bz-bs-search { flex: 0 0 240px; }
 .bz-bs-sort-slot { flex-shrink: 0; }
 
-/* 统计行（桌面 3 卡 + 月柱）＝ 共享 .bz-stat 卡 + 域内月柱卡；行内等分为域内布局 */
+/* 统计行（桌面 3 卡 + 月柱）＝ 共享 .bz-stat 卡 + 域内月柱卡；行内等分为域内布局。
+   卡内容垂直居中：行高由图表卡撑起，顶置会留大片底部空白（issue 204） */
 .bz-bs-dash {
   display: flex; gap: var(--bz-space-md); padding: 4px var(--bz-space-lg) var(--bz-space-md);
   flex-shrink: 0;
 }
-.bz-bs-dash .bz-stat { flex: 1; min-width: 0; }
+.bz-bs-dash .bz-stat { flex: 1; min-width: 0; justify-content: center; }
+/* 纪念日卡标签+书名比数字卡长，多分一档宽防标签折行（issue 204） */
+.bz-bs-dash .bz-stat--text { flex: 1.35; }
 .bz-bs-chart {
   flex: 1 1 320px; min-width: 0;
   background: var(--bz-surface-3); border: 1px solid var(--bz-border);
@@ -59,14 +62,16 @@
 .bz-bs-chart-head { display: flex; align-items: baseline; gap: 8px; }
 .bz-bs-ctitle { font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
 .bz-bs-csub { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
-.bz-bs-bars { display: flex; align-items: flex-end; gap: 5px; height: 70px; margin-top: 10px; }
+/* 高 78 = 柱 56 + 数值标签 15 头部净空 + 柱列标签行；不足则最高柱数值撞卡片标题（issue 204） */
+.bz-bs-bars { display: flex; align-items: flex-end; gap: 5px; height: 78px; margin-top: 10px; }
 .bz-bs-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
 .bz-bs-bar {
   width: 100%; max-width: 26px; min-height: 3px; position: relative;
   border-radius: 4px 4px 2px 2px; background: var(--bz-surface-hover);
 }
 .bz-bs-bar.this { background: var(--bz-brand); }
-.bz-bs-bar.zero { background: var(--bz-surface-hover); }
+/* 零值月弱化（降透明），配数值 0 明示「空」而非丢数据（issue 204） */
+.bz-bs-bar.zero { opacity: 0.45; }
 .bz-bs-bar span {
   position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
   font-size: var(--bz-font-caption); color: var(--bz-text-3); font-weight: var(--bz-weight-semibold);
@@ -93,10 +98,17 @@
 .bz-bs-cover { width: 100%; height: 100%; }
 .bz-bs-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .bz-bs-cover-ph {
-  width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 12px;
   color: var(--bz-text-3);
 }
-.bz-bs-cover-ph .bz-ic { width: 34px; height: 34px; }
+.bz-bs-cover-ph .bz-ic { width: 22px; height: 22px; opacity: 0.55; flex-shrink: 0; }
+/* 占位书名：4 行钳制居中，出「有意的空位」而非加载失败观感（issue 204） */
+.bz-bs-cover-ph-name {
+  font-size: var(--bz-font-meta); font-weight: var(--bz-weight-medium); line-height: 1.5; text-align: center;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+  word-break: break-word;
+}
 /* hover 上抬（原型强调保留的唯一动效；阴影走 token 档，不留死色值） */
 .bz-bs-book:hover .bz-bs-cover-wrap { transform: translateY(-4px); box-shadow: var(--bz-shadow-sm); }
 /* 状态圆点（右上角） */

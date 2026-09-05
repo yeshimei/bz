@@ -1034,8 +1034,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   font-size: var(--bz-font-caption);
   color: var(--bz-text-2);
   font-weight: var(--bz-weight-medium);
+  white-space: nowrap; /* 窄卡下折行出单字孤行，宁可省略也不折（issue 204） */
+  overflow: hidden;
 }
-.bz-stat-label .bz-ic { width: 12px; height: 12px; }
+.bz-stat-label .bz-ic { width: 12px; height: 12px; flex-shrink: 0; }
 .bz-stat-num {
   font-size: 20px;
   font-weight: var(--bz-weight-bold);
@@ -1063,14 +1065,15 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-stat--click { cursor: pointer; }
 .bz-stat--click:hover { background: var(--bz-surface-hover); }
 .bz-stat--main.bz-stat--click:hover { background: color-mix(in srgb, var(--bz-brand) 12%, transparent); }
-/* 文字主卡变体（纪念日等标题档数字） */
+/* 文字主卡变体（纪念日等标题档数字；2 行钳制——窄卡单行省略只剩两三字，issue 204） */
 .bz-stat--text .bz-stat-num {
   font-size: var(--bz-font-emphasis);
   font-weight: var(--bz-weight-semibold);
   line-height: 1.35;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* ═══════════ I. 候选浮层 .bz-popover ═══════════

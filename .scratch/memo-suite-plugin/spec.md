@@ -935,3 +935,37 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **默认视图键**：cinemaSortMode/cinemaStatusFilter、bookshelfDefaultSide/bookshelfSortMode、belongingsDefaultStatus 落 settings（同 favoritesSortKey/memoSortMode 惯例）；favoritesSortKey 已存在补暴露。
 - **接线语义**：每次打开面板读设置（收藏本 openPanel 先例），面板内改选为会话临时态。
 - **按端隐藏**：settings-panel preload 记录当前端可见项数，列表过滤零项域（加载完成前先展示、解析后剔除）；小橘转可见（有 schema 误标 noSettings）；阅读报告/内容首页/附件搬移/自动摘要维持隐藏。
+
+### 七域头行对齐待办 + 收藏本精修 + 待办联想下拉化（issue 201，2026-09-05）
+
+> 用户拍板：收藏本/影院/书架墙/复习计划/剪藏本/回忆墙/归物本面板头行按待办实现（品牌块 + ⚙设置直达 + ✕关闭桌面可见）；收藏本左栏按待办三槽、排序浮岛、meta 精简 + 相对时间（设置可切绝对）、桌面点击弹菜单 bug 修、表单置顶钮重叠修 + chip 化；待办编辑器脚本/课程联想改 .bz-popover 下拉（同收藏关联笔记）。
+
+- **头行范式**：`.bz-panel-brand`（图标取 DOMAIN_ICONS，不新造）+ 域名 + spacer + ⚙（openSettingsPanel(app, 域id) 动态 import）+ ✕，桌面/移动共用；域内移动专属钮保持。
+- **收藏本**：uiRail 新 emoji 槽（icon 之后 badge 之前）；计数去胶囊档；排序 uiChoice float（favoritesSortKey 落盘不变）；meta 只留 标签/笔记/日期（域名徽章、置顶文字前缀删，置顶视觉留左缘品牌条）；favoritesTimeFormat 键（relative 默认/absolute）；桌面点卡=有链开链接，菜单只走右键；置顶重叠病因=mountIcons 换 span 后 querySelector('span') 命中图标位，置顶/AI 整理改 uiBtn chip 档（label 持元素引用）。
+- **待办**：bindSug 的 bz-todo-sug-box 退役，改收藏 notePicker 同款外点/ESC 只收浮层下拉。
+
+### 归物本三修（issue 202，2026-09-05）
+
+> 用户反馈：状态计数不要背景色、左键点行弹右键菜单是 bug、记一笔分类不该默认「智能手机」。
+
+- **计数素数档**：renderStatus 去 `pill: true`（全仓唯一胶囊使用点），回落 uiRail 默认素数；组件库两档保留。
+- **桌面点击不开菜单**：同收藏本 issue 201 拍板——操作唯一入口右键；桌面点击零动作（行本就 cursor: default），移动抽屉保留；openRowMenu 死函数删除。
+- **分类默认空**：openForm 新记不回填 DEFAULT_CATEGORIES[0]，保存校验「请选择或输入分类」成真实守门；联想候选源仍 DEFAULT_CATEGORIES。
+
+### 输入联想收敛组件库 uiSuggest（issue 203，2026-09-05）
+
+> 用户拍板：归物分类下拉的「聚焦弹出」方式抽象成组件库，全域排查同款替换。
+
+- **新组件** core/ui/suggest.ts：`uiSuggest({anchor, source, max?, excludeCurrent?, iconOf?, labelOf?, onPick?})`——聚焦/输入惰性弹出、子串过滤、无匹配即收、点选/回车回填回焦、外点收起、Esc 只收下拉、ArrowDown/Up/Enter 导航；点选回焦压一次弹出不复弹自身。视觉零新类（.bz-popover 族）。
+- **三域收敛**：belongings categoryPicker（emoji 前缀 iconOf/labelOf，max 60）、favorites notePicker（vault 动态源，max 30）、todo bindSug（max 5，onPick）——三份手搓开合逻辑删除，净 -34 行；三域统一获得键盘导航。
+- **分工**：uiPopover=点击开合选择（select 语义）；uiSuggest=输入联想。手册 §4 已回写。
+
+### 书架墙统计行与封面五处布局修复（issue 204，2026-09-05）
+
+> 用户书架墙面板截图走查出五处布局问题，逐项放大核实 + 定位根因后修复。
+
+- **柱值撞标题**：`.bz-bs-bars` 70→78px（柱 56 + 数值标签 15px 头部净空 + 柱列标签行）。
+- **纪念日卡三修**：共享 `.bz-stat-label` nowrap 防单字孤行 + 域内 `--text` 卡 `flex: 1.35` 多分宽；hint 日期前置「X 读完」（截断保日期）；书名单行省略改 2 行钳制（`--text` 变体全仓仅书架纪念日卡使用）。
+- **未分类恒置底**：`categoryList` zh 序加置底分支，最大桶不再混在列表中部。
+- **统计卡垂直居中** + 零值柱 `opacity: 0.45` 且显示数值 0（明示空非丢数据）。
+- **无封面占位出书名**：`coverPhHTML`（小图标 + 4 行钳制书名），坏图回退经 `data-bs-ph-title` 同款。

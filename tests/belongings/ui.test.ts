@@ -945,7 +945,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     expect(filtered.length).toBeGreaterThan(0);
     expect(filtered.every((o) => o.textContent!.includes('手机'))).toBe(true);
     filtered[0].click();
-    expect(catInp().value).toBe(filtered[0].dataset.cat);
+    expect(catInp().value).toBe(filtered[0].dataset.value);
     expect(formMask().querySelector('.bz-popover')).toBeNull();
   });
 

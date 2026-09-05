@@ -166,6 +166,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | `uiStat` | `{label, num, icon?, hint?, tone?: 'main'\|'ok'\|'warn'\|'danger'\|'text', click?, onClick?}` | `HTMLDivElement` |
 | `uiProgress` | `{value?, tone?: 'ok'\|'warn'\|'danger', thin?}` — value 0-100 钳制 | `{el, setValue}` |
 | `uiPopover` | `{anchor, options: [{id, label, icon?}], value?, emptyText?, onPick?}` — anchor 须在 position:relative 容器内，浮层挂其父元素 | `{open, close, setValue, setOptions, detach}` |
+| `uiSuggest` | `{anchor: HTMLInputElement, source: () => string[], max?, excludeCurrent?, iconOf?, labelOf?, onPick?}` — 输入联想：聚焦/输入惰性弹出（默认不弹）、现值子串过滤、无匹配即收、点选/回车回填、外点收起、Esc 只收下拉；anchor 须在 position:relative 容器内（issue 203 收敛 belongings 分类 / favorites 关联笔记 / todo 脚本·课程联想三处同款） | `{close, detach}` |
 | `uiIcon` | `(name, extraClass?)` | `HTMLElement` |
 | `uiResizable` | `(el, {edge?, minW?, minH?, maxW?, maxH?, onChange?, persist?: {load?, save?}})` | `{detach}` |
 | `openLightbox` | `{src, type?, title?, caption?}` | `{close}`；`closeLightbox()` |
@@ -176,6 +177,8 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 - 回调风格：按钮 `onClick`、输入 `onInput`、分段 `onChange`、chip `onRemove`（内部已 stopPropagation）。
 
 **窗口缩放（uiResizable，ADR-0084）**：给桌面主面板加「右缘/底缘/右下角」拖动缩放——`el` 无需定位上下文（命中/光标挂自身，不注入覆盖层），改宽高内联。宿主若是 flex 居中（`.bz-*-overlay` center），宽高变化即双向对称扩缩不越视口。钳制下限 `minW×minH`、上限逐帧取 `min(maxW×maxH, 视口92%)`；`onChange(w,h)` 供调方持久化尺寸。零视觉提示（纯 hover 光标）；仅 mouse 事件，移动端勿挂。尺寸记忆：可传 `persist: { load?, save? }`（ADR-0094）——挂载时 `load()` 有值即恢复（钳到与拖拽同口径），`onChange` 防抖 300ms 调 `save()`，detach 时未落尾值立即补存；不传则行为不变（键由调用域自定义，先例 `todoPanelWidth/Height`）。
+
+**候选浮层分工（uiPopover vs uiSuggest）**：`uiPopover` = 点击开合的「选择」浮层（同 select 语义，anchor 是按钮/任意元素）；`uiSuggest` = 输入框联想（聚焦/输入弹出、边输边滤）。域内需要输入联想时一律 `uiSuggest`，勿再手搓 `.bz-popover` 开合（三域旧实现已收敛，issue 203）；候选是结构化 id/label 时用 `uiPopover`。
 
 ---
 
