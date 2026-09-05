@@ -118,6 +118,22 @@ describe('UIManager 三区队列', () => {
     ui.destroy();
   });
 
+  it('头行接组件库 .bz-panel-head 族（issue 198 批 D）：标题/日期副题/spacer/关闭钮组', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const { ui } = await makeUI(vault);
+    await ui.showMain();
+    const head = document.querySelector('#review-popup .bz-panel-head')!;
+    expect(head).not.toBeNull();
+    expect(head.querySelector('.bz-panel-title')!.textContent).toContain('复习计划');
+    expect(head.querySelector('.bz-panel-head-sub')!.textContent).toMatch(/\d+月\d+日 周[日一二三四五六]/);
+    expect(head.querySelector('.bz-panel-head-sp')).not.toBeNull();
+    // 关闭钮在共享钮组内，保留 .bz-win-close（core 门控：非真全屏隐藏）
+    expect(head.querySelector('.bz-panel-head-btns .bz-icon-btn.bz-win-close')).not.toBeNull();
+    expect(document.querySelector('.bz-q-head')).toBeNull(); // 旧域内头行类已退役
+    ui.destroy();
+  });
+
   it('归档切换：点底部归档信息行 → 只显示已完成列', async () => {
     const vault = new MockVault();
     seed(vault);
