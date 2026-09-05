@@ -171,8 +171,6 @@ export default interface BzSettings {
   bookshelfDefaultSide: string;
   /** 📚 书架墙：默认排序（date=最近阅读/title=书名/author=作者/progress=进度；非法值回落 date） */
   bookshelfSortMode: string;
-  /** 📚 书架墙：封面网格每行列数（2~12，默认 6；issue 208） */
-  bookshelfGridColumns: string;
   /** 📚 书架墙：面板皮肤（issue 216；nordic=雪松白默认，十选一，设置面板 choiceCards） */
   bookshelfSkin: string;
 
@@ -529,7 +527,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
   bookshelfMobileDefaultFullscreen: true,
   bookshelfDefaultSide: 'all',
   bookshelfSortMode: 'date',
-  bookshelfGridColumns: '6',
   bookshelfSkin: 'nordic',
 
   // 影院（cinema；ADR-0087 起接管影视；缺省回落默认目录，旧 movieFolderPath 键已退役）

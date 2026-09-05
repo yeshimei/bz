@@ -80,6 +80,9 @@ export function parseBookFile(file: TFile, app: App, folderPath: string, bookTag
     readingTimeMs: 0,
     highlights,
     thinks,
+    // 书脊厚度量（issue 218）：字数（缺省 0，UI 层回退批注密度）
+    wordCount: Number(fm.wordCount) || 0,
+    pages: Number(fm.pages) || 0,
     status: parseStatus(readingDate, completionDate),
     isEpub: false,
     epubVaultPath: null,
@@ -207,6 +210,8 @@ function buildEpubItem(app: App, aggregate: any): BookshelfItem | null {
     readingTimeMs: totalReadTimeMs,
     highlights: Array.isArray(notes?.highlights) ? notes.highlights.length : 0,
     thinks: Array.isArray(notes?.excerpts) ? notes.excerpts.length : 0,
+    wordCount: 0,
+    pages: 0,
     status: completionDate ? '已读' : progress > 0 ? '在读' : '未读',
     isEpub: true,
     epubVaultPath: vaultPath,
@@ -273,12 +278,14 @@ function primaryDate(it: BookshelfItem): number {
 /** 排序：date=主日期倒序（无日期排后）；title/author localeCompare('zh')；progress 倒序 */
 export function sortItems(list: BookshelfItem[], key: string): BookshelfItem[] {
   const sorted = [...list];
-  if (key === 'title' || key === 'author') {
-    sorted.sort((a, b) => (a[key] || '').localeCompare(b[key] || '', 'zh'));
-  } else if (key === 'progress') {
-    sorted.sort((a, b) => b.progress - a.progress);
+  if (key === 'title') {
+    sorted.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'zh'));
+  } else if (key === 'time') {
+    // 时长最长（issue 218 书脊墙档；时长同值按最近阅读兜底）
+    sorted.sort((a, b) => (b.readingTimeMs - a.readingTimeMs) || (primaryDate(b) - primaryDate(a)));
   } else {
-    sorted.sort((a, b) => primaryDate(b) - primaryDate(a));
+    // 最近读完（默认）：读完/起读日期新者在前，同日按时长
+    sorted.sort((a, b) => (primaryDate(b) - primaryDate(a)) || (b.readingTimeMs - a.readingTimeMs));
   }
   return sorted;
 }
