@@ -16,7 +16,7 @@ import {
 } from '../../src/core/ui';
 import { openLightbox, closeLightbox } from '../../src/core/ui';
 import { uiModal } from '../../src/core/ui';
-import { uiResizable } from '../../src/core/ui';
+import { uiResizable, uiVSplitter } from '../../src/core/ui';
 
 describe('bz ui 组件库', () => {
   beforeEach(() => {
@@ -593,6 +593,114 @@ describe('bz ui 组件库', () => {
       fire(document, 'mousemove', 900, 300);
       fire(document, 'mouseup', 900, 300);
       expect(el.style.width).toBe('720px');
+    });
+  });
+
+  describe('uiVSplitter 栏间分割线', () => {
+    // jsdom 无几何布局：mock 容器 clientWidth / 左栏 rect 读 style.width（拖拽改 style 后即反映）
+    function makePanes(cw = 1000) {
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      const left = document.createElement('div');
+      const right = document.createElement('div');
+      container.appendChild(left);
+      container.appendChild(right);
+      vi.spyOn(container, 'clientWidth', 'get').mockReturnValue(cw);
+      left.getBoundingClientRect = () => {
+        const w = parseInt(left.style.width) || 0;
+        return { left: 0, top: 0, right: w, bottom: 0, x: 0, y: 0, width: w, height: 0, toJSON: () => ({}) } as DOMRect;
+      };
+      return { container, left, right };
+    }
+    function fire(el: Element | Document, type: string, x = 0) {
+      el.dispatchEvent(new MouseEvent(type, { clientX: x, bubbles: true, button: 0 }));
+    }
+
+    it('结构：bz-vsplit + role=separator(vertical) + title', () => {
+      const { left, right } = makePanes();
+      const { el, detach } = uiVSplitter({ left, right });
+      expect(el.classList.contains('bz-vsplit')).toBe(true);
+      expect(el.getAttribute('role')).toBe('separator');
+      expect(el.getAttribute('aria-orientation')).toBe('vertical');
+      expect(el.title).toContain('拖动');
+      detach();
+    });
+
+    it('拖动改左栏宽；钳制 [minLeft, 容器-minRight]', () => {
+      const { left, right } = makePanes(1000); // jsdom offsetWidth=0 → 上限 1000-320=680
+      const onCh = vi.fn();
+      const { el, detach } = uiVSplitter({ left, right, minLeft: 220, minRight: 320, onChange: onCh });
+      fire(el, 'mousedown', 360);
+      fire(document, 'mousemove', 560); // 0 + (560-360) = 200 → 抬到 minLeft
+      expect(left.style.width).toBe('220px');
+      fire(document, 'mousemove', 900); // 540
+      expect(left.style.width).toBe('540px');
+      fire(document, 'mousemove', 3000); // 2640 → 钳 680
+      expect(left.style.width).toBe('680px');
+      expect(onCh).toHaveBeenLastCalledWith(680);
+      fire(document, 'mouseup');
+      detach();
+    });
+
+    it('persist：拖动后防抖 300ms 落盘；flush 立即落尾值', () => {
+      vi.useFakeTimers();
+      try {
+        const { left, right } = makePanes(1000);
+        const save = vi.fn();
+        const { el, flush, detach } = uiVSplitter({ left, right, minLeft: 220, persist: { save } });
+        fire(el, 'mousedown', 360);
+        fire(document, 'mousemove', 900); // 540
+        vi.advanceTimersByTime(299);
+        expect(save).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(1);
+        expect(save).toHaveBeenCalledWith(540);
+        // 第二次拖动 → flush 立即落尾值（未到防抖期）
+        fire(el, 'mousedown', 900);
+        fire(document, 'mousemove', 1200); // 540+300=840 → 钳 680
+        flush();
+        expect(save).toHaveBeenLastCalledWith(680);
+        detach();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('restore：容器可见时读回记忆并钳制应用；幂等', () => {
+      const { container, left, right } = makePanes(1000);
+      const { el, restore, detach } = uiVSplitter({ left, right, minRight: 320, persist: { load: () => 2000, save: () => {} } });
+      container.appendChild(el);
+      restore();
+      expect(left.style.width).toBe('680px'); // 2000 → 钳 1000-320
+      restore(); // 幂等：第二次不重复 load/应用
+      expect(left.style.width).toBe('680px');
+      detach();
+    });
+
+    it('restore：容器零宽（面板未显示）不应用', () => {
+      const { container, left, right } = makePanes(0);
+      const { el, restore, detach } = uiVSplitter({ left, right, persist: { load: () => 500, save: () => {} } });
+      container.appendChild(el);
+      restore();
+      expect(left.style.width).toBe('');
+      detach();
+    });
+
+    it('拖拽收尾吞终端 click（mouseup 落列表行不误触行点击）', () => {
+      const { left, right } = makePanes(1000);
+      const { el, detach } = uiVSplitter({ left, right });
+      const row = document.createElement('div');
+      document.body.appendChild(row);
+      const seen = vi.fn();
+      row.addEventListener('click', seen);
+      fire(el, 'mousedown', 360);
+      fire(document, 'mousemove', 560);
+      fire(row, 'mouseup'); // 松手压在行上
+      fire(row, 'click');   // 浏览器补发的终端 click
+      expect(seen).not.toHaveBeenCalled();
+      fire(row, 'click');   // 之后的正常点击放行
+      expect(seen).toHaveBeenCalledTimes(1);
+      row.remove();
+      detach();
     });
   });
 

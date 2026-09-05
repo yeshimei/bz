@@ -70,6 +70,22 @@ export function longPress(
   el.addEventListener('click', onClick, true);
 }
 
+/** swallowNextClick()：拖拽收尾防线——吞掉紧随本次拖拽结束的终端 click（issue 220）。
+ *  拖拽中 mousedown 落在面板、mouseup 落在遮罩/列表行时，浏览器把 click 派发到两者的
+ *  公共祖先，误触发「点遮罩关闭」「行点击」等冒泡语义。capture 一次性拦截：click 触发
+ *  即自毁；若未触发（如鼠标移出窗口松开）则下次 mousedown 撤防，不吞正常点击。 */
+export function swallowNextClick(): void {
+  const swallow = (e: MouseEvent) => {
+    document.removeEventListener('click', swallow, true);
+    e.stopPropagation();
+  };
+  const disarm = () => {
+    document.removeEventListener('click', swallow, true);
+  };
+  document.addEventListener('click', swallow, true);
+  document.addEventListener('mousedown', disarm, { capture: true, once: true });
+}
+
 /** DOMAIN_MAP：favicon 域名归一映射（Q3 同款） */
 const DOMAIN_MAP: Record<string, string> = {
   'guokrapp.guokr.com': 'guokr.com',

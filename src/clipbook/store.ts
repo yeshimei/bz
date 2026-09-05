@@ -159,19 +159,20 @@ export function clipUrlSet(notes: Array<{ url?: string }>): Set<string> {
  * 视图查询：按源过滤条目。
  * - all/未读：仅未处理 news（read!==true）的 unread/reading 派生，saved 隐藏；
  * - 平台/UP：该来源未处理 news（read!==true），saved 隐藏；
+ * - site（issue 220）：该站点未处理 news（saved 隐藏）+ 该站剪藏全量，时间降序；
  * - clip：剪藏目录全部（ClipArticle 直接返回，天然 saved）。
  * news 面按 timeTs 降序（issue 206：聚合讯新文章排对应列表最前）。
  */
-export type ClipSource = { kind: RailKindLike; platform?: string; up?: string; note?: any };
+export type ClipSource = { kind: RailKindLike; platform?: string; up?: string; site?: string; note?: any };
 
-type RailKindLike = 'inbox' | 'clip' | 'all';
+type RailKindLike = 'inbox' | 'clip' | 'all' | 'site';
 
 export function queryBySource(
   articles: any[],
   sidecar: ClipbookData,
   clipByUrl: Set<string>,
   clipNotes: any[],
-  source: { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' },
+  source: { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' } | { kind: 'site'; site: string },
   upInfoMap: Record<string, any> = {}
 ): ClipArticle[] {
   if (source.kind === 'clip') {
@@ -180,6 +181,18 @@ export function queryBySource(
   // news 面：只取未处理（read!==true；骨架/已处理不进收件流）
   const pool = (articles || []).filter((a) => !a.read);
   const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
+  // site 源（issue 220）：该站未读 news 流（saved 命中照常隐藏）+ 该站剪藏全量
+  if (source.kind === 'site') {
+    const s = normSite(source.site);
+    const newsPart = pool
+      .filter((a) => normSite(siteName(a)) === s)
+      .map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }))
+      .filter((a) => a.st !== 'saved');
+    const clipPart = (clipNotes || [])
+      .filter((n) => normSite(String((n && n.site) || '')) === s)
+      .map((n) => clipFromNote(n));
+    return [...newsPart, ...clipPart].sort((a, b) => b.timeTs - a.timeTs);
+  }
   let out: ClipArticle[] = [];
   if (source.kind === 'all') {
     out = pool.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
@@ -227,3 +240,56 @@ export async function writeNewsState(raw: any, action: 'save' | 'read' | 'skip')
   });
 }
 
+
+// ===== 站点聚合（issue 220：rail 按 site 属性分类，平台聚合行退役）=====
+
+/** site 归一：去首尾空白，空值归「未知」桶 */
+function normSite(s: string): string {
+  const t = String(s || '').trim();
+  return t || '未知';
+}
+
+/** 站点聚合行（rail 与移动源胶囊共用） */
+export interface SiteRow {
+  /** 归一站点名（空值已归「未知」） */
+  site: string;
+  /** 该站全库条目数（未读 news 流 + 剪藏全量；已存 news 骨架不计——saved 命中转由剪藏承接，防重复计数） */
+  total: number;
+  /** 其中未读 news 流条数（剪藏天然 saved 不占） */
+  unread: number;
+}
+
+/**
+ * 全库站点行聚合：剪藏全量 site + 未读 news 面 site（已存 news 骨架不进——
+ * saved 命中（侧写归档 ∨ url 命中剪藏）的条目转由剪藏目录承接，与 queryBySource
+ * site 源的可见口径一致，行总数 = 该源列表长度）。排序：总数降序 → 未读降序 → 名 zh 序。
+ */
+export function aggregateSites(
+  articles: any[],
+  clipNotes: any[],
+  savedUrls?: Set<string>,
+  clipUrls?: Set<string>
+): SiteRow[] {
+  const saved = savedUrls || new Set<string>();
+  const byUrl = clipUrls || new Set<string>();
+  const rows = new Map<string, SiteRow>();
+  const bump = (rawSite: string, unread: boolean) => {
+    const site = normSite(rawSite);
+    let r = rows.get(site);
+    if (!r) {
+      r = { site, total: 0, unread: 0 };
+      rows.set(site, r);
+    }
+    r.total++;
+    if (unread) r.unread++;
+  };
+  for (const n of clipNotes || []) bump(String((n && n.site) || ''), false);
+  for (const a of articles || []) {
+    if (!a || a.read) continue;
+    if (saved.has(String(a.url || ''))) continue;
+    if (a.url && byUrl.has(String(a.url))) continue;
+    bump(siteName(a), true);
+  }
+  return [...rows.values()].sort((x, y) =>
+    y.total - x.total || y.unread - x.unread || x.site.localeCompare(y.site, 'zh'));
+}

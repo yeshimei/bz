@@ -222,12 +222,12 @@ describe('clipbook UI 桌面三栏', () => {
     closePanel();
   });
 
-  it('G：切到空源清 M.cur——reader 空态，不残留上一源文章', async () => {
+  it('G：空列表清 M.cur——reader 空态，不残留上一源文章（issue 220 起 rail 站点行恒非空，空态经搜索零命中驱动同一 renderList 分支）', async () => {
     await openDesktop();
     expect(M.cur).toBeTruthy();
-    // 知乎日报在 seed 里唯一一条已 read → 空源
-    const zhihuRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('知乎日报')) as HTMLElement;
-    zhihuRow.click();
+    const input = document.querySelector('[data-clip-desk-search]') as HTMLInputElement;
+    input.value = '绝对不存在的关键词xyz';
+    input.dispatchEvent(new Event('input'));
     await vi.waitFor(() => expect(M.cur).toBeNull());
     const reader = document.querySelector('[data-clip-reader]') as HTMLElement;
     expect(reader.textContent).toContain('从列表选择一篇文章开始阅读');
@@ -239,15 +239,31 @@ describe('clipbook UI 桌面三栏', () => {
     // 初始 = 全部未读
     expect(M.sel.kind).toBe('all');
     const findRow = (txt: string) => [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes(txt)) as HTMLElement;
-    // 点果壳源 → 选中；再点同源 → 回全部未读
-    const guokrRow = findRow('果壳');
-    guokrRow.click();
+    // 点 B站 站点源（issue 220 site 行）→ 选中；再点同源 → 回全部未读
+    const biliRow = findRow('B站');
+    biliRow.click();
     await vi.waitFor(() => expect(M.sel.kind).not.toBe('all'));
-    findRow('果壳').click();
+    findRow('B站').click();
     await vi.waitFor(() => expect(M.sel.kind).toBe('all'));
     // 点「全部未读」行本身恒回全部（不产生异常）
     findRow('全部未读').click();
     expect(M.sel.kind).toBe('all');
+    closePanel();
+  });
+
+  it('issue 220：rail 站点行——news 站点=平台、剪藏缺 site 归「未知」、saved 命中不建行；点行看该站列表', async () => {
+    await openDesktop();
+    const rows = [...document.querySelectorAll('.bz-rail-item')] as HTMLElement[];
+    const texts = rows.map((r) => r.textContent!);
+    expect(texts.some((t) => t.includes('B站'))).toBe(true);        // 未读 news 站点（site 缺省回落 platform）
+    expect(texts.some((t) => t.includes('未知'))).toBe(true);        // 剪藏笔记A 缺 site → 「未知」桶
+    expect(texts.some((t) => t.includes('果壳科学人'))).toBe(false); // 唯一果壳文 url 命中剪藏（saved）→ 不建行
+    expect(texts.some((t) => t.includes('知乎日报'))).toBe(false);   // 唯一知乎文已 read → 不进池
+    // 点击「未知」站点行 → 列表 = 该站剪藏
+    const unkRow = rows.find((r) => r.textContent!.includes('未知'))!;
+    unkRow.click();
+    await vi.waitFor(() => expect(M.sel.kind).toBe('site'));
+    await vi.waitFor(() => expect(document.querySelector('.bz-clip-list')!.textContent).toContain('剪藏笔记A'));
     closePanel();
   });
 
@@ -261,7 +277,7 @@ describe('clipbook UI 桌面三栏', () => {
     const rail = document.querySelector('.bz-clip-rail') as HTMLElement;
     expect(rail.querySelector('[data-clip-desk-search]')).toBeNull();
     // rail 结构：栏头 + 源列表 + 今日脚注
-    expect(rail.querySelector('.bz-clip-rail-label')!.textContent).toContain('PLATFORM');
+    expect(rail.querySelector('.bz-clip-rail-label')!.textContent).toContain('SITE');
     expect(rail.querySelector('.bz-rail-scroll')).toBeTruthy();
     expect(rail.querySelector('[data-clip-rail-foot]')!.textContent).toContain('今日已读');
     // 阅读分析报告入口已移除
