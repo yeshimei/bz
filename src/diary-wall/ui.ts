@@ -244,7 +244,12 @@ export class DiaryWallAppController {
   private _ctxBound: Record<'desk' | 'mob', boolean> = { desk: false, mob: false };
   /** 增强 #1：灯箱连看序列（filtered 列表媒体平铺，renderWall 重建）与当前下标（-1 = 未开） */
   private _lbSeq: { entry: WallEntry; media: WallMedia }[] = [];
+  /** issue 217 F1：时光条灯箱打开期间暂存的墙内主序列（关闭时还原） */
+  private _lbSeqMain: { entry: WallEntry; media: WallMedia }[] | null = null;
   private _lbIdx = -1;
+  /** issue 217 F3：桌面/移动断点（renderAll 只渲染可见端；跨断点变化补渲染） */
+  private _mql: MediaQueryList | null = null;
+  private _onMqChange: (() => void) | null = null;
   /** 增强 #1：方向键切图（bindLightbox 单次注册，灯箱可见时才生效） */
   private _onLbKeydown = (ev: KeyboardEvent) => {
     if (!this.lbVisible()) return;
@@ -299,6 +304,14 @@ export class DiaryWallAppController {
     this.registerEscape();
     // 增强 #1：方向键连看（单次注册；handler 内自判灯箱可见）
     document.addEventListener('keydown', this._onLbKeydown);
+    // issue 217 F3：断点切换补渲染另一端实例（renderAll 只渲染可见端的前提）
+    if (typeof matchMedia === 'function') {
+      this._mql = matchMedia('(max-width: 768px)');
+      this._onMqChange = () => {
+        if (this.root?.style.display === 'flex') this.renderAll();
+      };
+      this._mql.addEventListener('change', this._onMqChange);
+    }
   }
 
   /** 从实例 HTML 收集 DOM 引用 */
@@ -517,18 +530,25 @@ export class DiaryWallAppController {
   }
 
   // ---------- 渲染 ----------
-  /** 重新渲染（筛选变化 / 数据加载后） */
+  /** 重新渲染（筛选变化 / 数据加载后）。
+   *  issue 217 F3：只渲染当前可见端实例——隐藏端全量渲染（每条正文 MarkdownRenderer ×2）
+   *  是开墙耗时翻倍的隐性大头；断点切换由 _onMqChange 补渲染。jsdom 无 matchMedia 保留双渲染。 */
   renderAll() {
     if (!this.root) return;
     this.renderChips();
     // 增强 #3：头行计数 = 当前结果数（filtered().length，对齐「头行计数=当前结果数」范式）；
     // 过滤结果一次计算，两实例渲染与计数共用
     const list = this.filtered();
-    this.renderWall(this.desk, false, list);
-    this.renderWall(this.mob, true, list);
     const range = `${list.length} 条`;
     this.desk.range.textContent = range;
     this.mob.range.textContent = range;
+    if (this._mql) {
+      if (this._mql.matches) this.renderWall(this.mob, true, list);
+      else this.renderWall(this.desk, false, list);
+      return;
+    }
+    this.renderWall(this.desk, false, list);
+    this.renderWall(this.mob, true, list);
   }
 
   /** 过滤后的条目（加密条目默认隐藏，选中「加密」标签时显示；支持标签/二级标签/搜索/日期） */
@@ -547,7 +567,9 @@ export class DiaryWallAppController {
         } else {
           if (this.selTag && !e.tags.includes(this.selTag)) return false;
         }
-        if (!this.lockedVisible && isEnc) return false;
+        // issue 217 F6：非「加密」筛选恒剔除加密条目——旧条件 lockedVisible 一旦为真
+        //（解锁后点过「加密」），切到其他标签加密条目会一直混入结果
+        if (isEnc) return false;
       }
       if (df) {
         if (df.month) {
@@ -714,7 +736,8 @@ export class DiaryWallAppController {
     this.teardownScrollers(mobile ? 'mob' : 'desk');
     ui.wall.innerHTML = '';
     ui.rail.innerHTML = '';
-    ui.lbMedia.innerHTML = '';
+    // issue 217 F2：这里不再清空 lbMedia——灯箱开着时 vault modify 自动刷新会把媒体
+    // 掏空成黑屏；灯箱内容生命周期完全归 closeLightbox/showLightboxAt 管
     // 增强 #1：灯箱连看序列 = 过滤列表的媒体平铺（openLightbox 按条目+媒体名定位）
     this._lbSeq = list.flatMap((e) => e.media.map((m) => ({ entry: e, media: m })));
     if (!list.length) {
@@ -779,12 +802,19 @@ export class DiaryWallAppController {
     // 瀑布：按日期分节
     // 条目 → 数据索引表（右键委托用）：list 是本次渲染的过滤后列表，widx 即其在 list 中的下标
     this._wallEntries = list;
+    // issue 217 F8：日期 → 条目表一次预聚合（旧实现每节 list.filter，O(n²)）
+    const byDate = new Map<string, WallEntry[]>();
+    list.forEach((e) => {
+      const l = byDate.get(e.date);
+      if (l) l.push(e);
+      else byDate.set(e.date, [e]);
+    });
     let widx = 0;
     let lastDate: string | null = null;
     list.forEach((e) => {
       if (e.date !== lastDate) {
         lastDate = e.date;
-        const dayList = list.filter((x) => x.date === e.date);
+        const dayList = byDate.get(e.date)!;
         const head = document.createElement('div');
         head.className = 'bz-diary-wall-day-head';
         head.dataset.date = e.date;
@@ -1149,7 +1179,22 @@ export class DiaryWallAppController {
         const img = document.createElement('img');
         img.loading = 'lazy';
         img.alt = e.date;
-        img.src = src;
+        // issue 217 S2：时光条缩略走小图缓存——直挂原图会在纪念日命中多时整排原图解码
+        //（与 issue 212 章节栏同病根）；命中贴 48px 小图，未命中贴原图 + 后台压图回存
+        const key = railThumbKey(e.date, m.name);
+        void getRailThumb(key).then((small) => {
+          if (!img.isConnected) return;
+          if (small) {
+            img.src = small;
+            return;
+          }
+          img.src = src;
+          if (typeof IntersectionObserver !== 'undefined') {
+            void makeImageThumb(src).then((t2) => {
+              if (t2) void putRailThumb(key, t2);
+            });
+          }
+        });
         thumb.appendChild(img);
       } else {
         thumb.appendChild(uiIcon(m.kind === 'video' ? ACTION_ICON.play : ACTION_ICON.music));
@@ -1159,7 +1204,10 @@ export class DiaryWallAppController {
       year.textContent = e.date.slice(0, 4);
       cell.append(thumb, year);
       cell.addEventListener('click', () => {
-        // 时光条自身成序列（该条目媒体平铺），点击进灯箱后可在条目内左右连看
+        // 时光条自身成序列（该条目媒体平铺），点击进灯箱后可在条目内左右连看。
+        // issue 217 F1：墙内主序列先存 _lbSeqMain、关灯箱时还原——旧实现直接覆盖
+        // _lbSeq 后，openLightbox 找不到就把主序列整表换成单条，墙内连看从此退化
+        this._lbSeqMain = this._lbSeq;
         this._lbSeq = e.media.map((mm) => ({ entry: e, media: mm }));
         this.openLightbox(m, e);
       });
@@ -1202,10 +1250,11 @@ export class DiaryWallAppController {
   /** 媒体块（图片/视频/音频 + 渐变占位 + 描述；无 emoji 角标——用户要求去掉） */
   private mediaEl(k: WallMedia, entry: WallEntry, mobile: boolean): HTMLElement {
     const wrap = document.createElement('div');
-    wrap.className = 'bz-diary-wall-media';
-    // 功能性内联（动态计算）：宽高比——视频 16/9，图片/音频按条目+媒体名稳定散列轮换 1/1 与 4/3
+    wrap.className = 'bz-diary-wall-media' + (k.kind === 'audio' ? ' bz-diary-wall-media--audio' : '');
+    // 功能性内联（动态计算）：宽高比——视频 16/9，图片按条目+媒体名稳定散列轮换 1/1 与 4/3，
+    // 音频矮条不设 aspect（issue 217 S4：语音备忘占 4/3~1/1 大块视觉过重）
     // （DW7：原全局 mediaSeed++ 递增——双实例各渲染一次 + 重渲染漂移，同条目宽高比不稳定致瀑布重排抖动）
-    wrap.style.aspectRatio = k.kind === 'video' ? '16 / 9' : this.mediaAspect(entry, k.name);
+    if (k.kind !== 'audio') wrap.style.aspectRatio = k.kind === 'video' ? '16 / 9' : this.mediaAspect(entry, k.name);
     const ph = document.createElement('div');
     ph.className = 'bz-diary-wall-ph';
     // 占位只保留渐变背景（视频/图片不显示图标大字；音频保留 music 图标——无封面可显示）
@@ -1280,6 +1329,15 @@ export class DiaryWallAppController {
       // 抽屉内媒体缩略图仍可进灯箱）。桌面保持单击进灯箱。
       if (mobile) this.openSheet(entry);
       else this.openLightbox(k, entry);
+    });
+    // issue 217 F4：媒体区 click stopPropagation 使卡片级双击计数器收不到事件——
+    // 桌面双击媒体补一条直达路径：首击开灯箱、双击关灯箱跳原文（与文字卡双击语义一致）
+    wrap.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      if (mobile) return;
+      if ((entry.encrypted || entry.tags.includes('加密')) && !this.lockedVisible) return;
+      if (this.lbVisible()) this.closeLightbox();
+      void this.jumpTo(entry);
     });
     return wrap;
   }
@@ -1364,8 +1422,17 @@ export class DiaryWallAppController {
   private thumbEl(m: WallMedia, entry: WallEntry): HTMLElement {
     const t = document.createElement('span');
     t.className = 'bz-diary-wall-month-thumb' + (m.kind === 'video' ? ' bz-diary-wall-month-thumb--v' : '');
-    const src = this.mediaSrcFor(entry, m.name);
+    // issue 217 F5：加密媒体 vault 路径解析不出——挂 enc 标记走保险箱按需解密
+    //（与抽屉/灯箱同口径），不再永远图标格
+    const src = entry.encrypted ? '' : this.mediaSrcFor(entry, m.name);
     if (!src) {
+      if (entry.encrypted && entry.noteId) {
+        t.dataset.thumbEnc = '1';
+        t.dataset.encName = m.name;
+        t.dataset.encKind = m.kind;
+        t.dataset.encNote = entry.noteId;
+        t.dataset.thumbKey = railThumbKey(entry.date, m.name);
+      }
       // 无资源：仅图标占位
       t.appendChild(uiIcon(m.kind === 'video' ? ACTION_ICON.play : ACTION_ICON.image));
       return t;
@@ -1405,13 +1472,13 @@ export class DiaryWallAppController {
     if (this.railObservers[key]) this.railObservers[key]!.disconnect();
     const scroller = (rail.querySelector('.bz-rail-scroll') as HTMLElement | null) || rail;
     const thumbs = Array.from(
-      rail.querySelectorAll<HTMLElement>('img[data-thumb-src], video[data-src]')
+      rail.querySelectorAll<HTMLElement>('img[data-thumb-src], video[data-src], [data-thumb-enc]')
     );
     if (typeof IntersectionObserver === 'undefined') {
-      // jsdom/旧内核：跳过缓存管线，直挂原 src（E4 语义：不依赖 IO 也有图）
+      // jsdom/旧内核：跳过缓存管线，直挂原 src（E4 语义：不依赖 IO 也有图）；加密格无 IO 不解密
       thumbs.forEach((el) => {
         if (el.tagName === 'VIDEO') this.hydrateRailVideo(el as HTMLVideoElement);
-        else (el as HTMLImageElement).src = (el as HTMLImageElement).dataset.thumbSrc!;
+        else if (el.tagName === 'IMG') (el as HTMLImageElement).src = (el as HTMLImageElement).dataset.thumbSrc!;
       });
       return;
     }
@@ -1438,6 +1505,19 @@ export class DiaryWallAppController {
    * data-thumb-src 挂载后即移除，防重复触发。
    */
   private hydrateRailThumb(el: HTMLElement): void {
+    // issue 217 F5：加密格（span 载体）——先走保险箱解密，再复用小图缓存管线
+    if (el.dataset.thumbEnc === '1') {
+      delete el.dataset.thumbEnc; // 防重复触发
+      const key = el.dataset.thumbKey;
+      const name = el.dataset.encName || '';
+      const kind = (el.dataset.encKind || 'img') as WallMedia['kind'];
+      const noteId = el.dataset.encNote || '';
+      void this.encMediaUrl(noteId, { name, kind }).then((url) => {
+        if (!el.isConnected || !url) return; // 未解锁/失败：保持图标占位
+        this.hydrateThumbViaCache(el, url, key, kind === 'video');
+      });
+      return;
+    }
     const isVideo = el.tagName === 'VIDEO';
     const key = el.dataset.thumbKey;
     if (isVideo) {
@@ -1457,8 +1537,9 @@ export class DiaryWallAppController {
   /** 查小图缓存 → 命中贴图；未命中后台压图回存；压缩失败回退原 src（视频 = 旧读首帧行为） */
   private hydrateThumbViaCache(el: HTMLElement, src: string, key: string | undefined, isVideo: boolean): void {
     if (!key) {
-      if (isVideo) this.hydrateRailVideo(el as HTMLVideoElement);
-      else (el as HTMLImageElement).src = src;
+      // issue 217 F5：加密格载体是 span（无 img/video 子元素），兜底只对真实媒体元素生效
+      if (isVideo && el.tagName === 'VIDEO') this.hydrateRailVideo(el as HTMLVideoElement);
+      else if (!isVideo && el.tagName === 'IMG') (el as HTMLImageElement).src = src;
       return;
     }
     void getRailThumb(key).then((cached) => {
@@ -1472,19 +1553,27 @@ export class DiaryWallAppController {
           this.swapThumbToImg(el, small);
           return;
         }
-        if (isVideo) this.hydrateRailVideo(el as HTMLVideoElement);
-        else (el as HTMLImageElement).src = src;
+        if (isVideo && el.tagName === 'VIDEO') this.hydrateRailVideo(el as HTMLVideoElement);
+        else if (!isVideo && el.tagName === 'IMG') (el as HTMLImageElement).src = src;
       });
     });
   }
 
-  /** 缩略格换成缓存小图（视频格保留播放角标浮层） */
+  /** 缩略格换成缓存小图（视频格保留播放角标浮层；加密格载体是 span，只换内容保角标） */
   private swapThumbToImg(el: HTMLElement, dataUrl: string): void {
-    const cell = el.parentElement;
-    if (!cell) return;
     const img = document.createElement('img');
     img.src = dataUrl;
     img.decoding = 'async';
+    if (el.tagName === 'SPAN') {
+      const keepPlay = el.classList.contains('bz-diary-wall-month-thumb--v');
+      const icon = keepPlay ? el.querySelector('[data-icon]') : null;
+      el.textContent = '';
+      if (icon) el.appendChild(icon);
+      el.appendChild(img);
+      return;
+    }
+    const cell = el.parentElement;
+    if (!cell) return;
     cell.replaceChild(img, el);
   }
 
@@ -1778,6 +1867,11 @@ export class DiaryWallAppController {
       ui.lb.classList.remove('bz-diary-wall-lb--show');
       ui.lbMedia.innerHTML = '';
     });
+    // issue 217 F1：时光条序列会话结束，还原墙内主序列
+    if (this._lbSeqMain) {
+      this._lbSeq = this._lbSeqMain;
+      this._lbSeqMain = null;
+    }
     this._lbIdx = -1;
   }
 
@@ -1956,7 +2050,8 @@ export class DiaryWallAppController {
     [this.desk, this.mob].forEach((ui) => {
       ui.sheetEmoji.textContent = e.emoji;
       ui.sheetTime.textContent = `${e.date}  ${e.time}  ·  ${e.tags.join(' ')}`;
-      ui.sheetContent.textContent = e.content || '（仅媒体）';
+      // issue 217 S6：抽屉预览去媒体嵌入语法（![[xxx.jpg]] 原样外露）
+      ui.sheetContent.textContent = stripMediaLinks(e.content) || '（仅媒体）';
       const mbox = ui.sheetMedia;
       mbox.innerHTML = '';
       e.media.forEach((k) => {
@@ -2107,15 +2202,16 @@ export class DiaryWallAppController {
       isVisible: () => !!this.root && this.root.style.display === 'flex',
       close: () => {
         // 日期弹窗优先，其次抽屉，其次灯箱，最后整体关闭
+        // issue 217 F7：双实例都查——旧实现只看 desk 实例，移动端抽屉/灯箱开着时 ESC 直接关整个面板
         if (this._dateFilterEl) {
           this.closeDateFilter();
           return;
         }
-        if (this.desk.sheet.classList.contains('bz-sheet--show')) {
+        if ([this.desk, this.mob].some((u) => u.sheet.classList.contains('bz-sheet--show'))) {
           this.closeSheet();
           return;
         }
-        if (this.desk.lb.classList.contains('bz-diary-wall-lb--show')) {
+        if ([this.desk, this.mob].some((u) => u.lb.classList.contains('bz-diary-wall-lb--show'))) {
           this.closeLightbox();
           return;
         }
@@ -2417,6 +2513,11 @@ export class DiaryWallAppController {
     this.unsubscribeVaultModify(); // DW3：摘 modify 订阅
     this.unsubscribeUnlockEvents(); // 增强 #9：摘解锁状态订阅
     document.removeEventListener('keydown', this._onLbKeydown); // 增强 #1：摘方向键连看
+    if (this._mql && this._onMqChange) {
+      this._mql.removeEventListener('change', this._onMqChange); // issue 217 F3：摘断点切换
+      this._mql = null;
+      this._onMqChange = null;
+    }
     if (this._scrollFixTimer !== null) {
       clearTimeout(this._scrollFixTimer);
       this._scrollFixTimer = null;
@@ -2426,6 +2527,7 @@ export class DiaryWallAppController {
     this._ctxBound = { desk: false, mob: false };
     this._wallEntries = [];
     this._lbSeq = [];
+    this._lbSeqMain = null;
     this._lbIdx = -1;
     this._restore = null;
     this.encMediaCache.clear();

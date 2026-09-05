@@ -49,7 +49,10 @@ export const mockMarkdownRenderer = {
   }),
 };
 
-export class MockComponent {}
+export class MockComponent {
+  // 真实 Component 有 unload（diary-wall renderText 渲染完调用）
+  unload = vi.fn();
+}
 
 export class MockMarkdownView {}
 

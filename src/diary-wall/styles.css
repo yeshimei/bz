@@ -325,11 +325,14 @@
   padding: 4px 10px 8px;
   font-weight: 600;
   position: sticky;
-  top: -12px;
+  /* issue 217 S3：top:-12px 配 12px 顶垫会让标题滚出后卡在可视区上缘外（吞半截） */
+  top: 0;
   background: var(--dw-bg);
   z-index: 2;
 }
-/* 增强 #2：年份分组分隔标签（跨年处插入；月份项 data-month 不变，定位逻辑不动） */
+/* 增强 #2：年份分组分隔标签（跨年处插入；月份项 data-month 不变，定位逻辑不动）。
+   issue 217 S3：旧 `:first-of-type` 永远命中 title div（首个 div 子元素），是死规则——
+   改用相邻选择器命中「标题后第一个年份标签」 */
 .bz-diary-wall-rail-year {
   font-size: 11px;
   font-weight: 600;
@@ -337,7 +340,7 @@
   padding: 12px 10px 2px;
   letter-spacing: 0.06em;
 }
-.bz-diary-wall-rail-year:first-of-type {
+.bz-diary-wall-rail-title + .bz-diary-wall-rail-year {
   padding-top: 4px;
 }
 .bz-diary-wall-month-strip {
@@ -372,7 +375,8 @@
   object-fit: cover;
 }
 .bz-diary-wall-month-thumb--v {
-  background: linear-gradient(135deg, #2a9d8f, #80cbc4);
+  /* issue 217 小项：teal 写死色 → 主题 token（跟随亮暗主题） */
+  background: linear-gradient(135deg, var(--dw-green), var(--dw-cyan));
   color: #fff;
 }
 /* 视频缩略：缓存首帧小图/视频元素铺满格子，播放角标浮在其上（issue 212） */
@@ -568,6 +572,12 @@
   background: var(--dw-surface);
   aspect-ratio: 4 / 3;
 }
+/* issue 217 S4：音频矮条——语音备忘不占 4/3~1/1 大块（媒体元素不设内联 aspect） */
+.bz-diary-wall-media--audio {
+  aspect-ratio: auto;
+  height: 56px;
+  cursor: pointer;
+}
 .bz-diary-wall-media img,
 .bz-diary-wall-media video {
   width: 100%;
@@ -664,17 +674,104 @@
 .bz-diary-wall-text-em {
   font-size: 12px;
 }
-.bz-diary-wall-text-tx,
-.bz-diary-wall-tx {
+/* issue 217 S5：`.bz-diary-wall-tx`（媒体下挂正文）规则已随 213/214 版式删除（死规则）；
+   正文卡允许选中复制（issue 217 小项：卡片全局 user-select:none 的文本区豁免） */
+.bz-diary-wall-text-tx {
   font-size: 13px;
   line-height: 1.6;
   color: var(--dw-ink);
+  user-select: text;
+  -webkit-user-select: text;
 }
-.bz-diary-wall-tx {
-  padding: 8px 10px;
-  font-size: 12.5px;
+
+/* ---- issue 217 S1：markdown 排版（域 reset 的 * {margin:0;padding:0} 会把
+   MarkdownRenderer 产出的块级间距全部抹平，必须有配套排版规则） ---- */
+.bz-diary-wall-md p {
+  margin: 0 0 0.6em;
+}
+.bz-diary-wall-md p:last-child {
+  margin-bottom: 0;
+}
+.bz-diary-wall-md h1,
+.bz-diary-wall-md h2,
+.bz-diary-wall-md h3,
+.bz-diary-wall-md h4,
+.bz-diary-wall-md h5,
+.bz-diary-wall-md h6 {
+  margin: 0.9em 0 0.4em;
+  line-height: 1.35;
+  font-weight: 600;
+}
+.bz-diary-wall-md h1 {
+  font-size: 1.25em;
+}
+.bz-diary-wall-md h2 {
+  font-size: 1.15em;
+}
+.bz-diary-wall-md h3 {
+  font-size: 1.05em;
+}
+.bz-diary-wall-md h4,
+.bz-diary-wall-md h5,
+.bz-diary-wall-md h6 {
+  font-size: 1em;
+}
+.bz-diary-wall-md ul,
+.bz-diary-wall-md ol {
+  margin: 0.3em 0 0.6em;
+  padding-left: 1.4em;
+}
+.bz-diary-wall-md li {
+  margin: 2px 0;
+}
+.bz-diary-wall-md blockquote {
+  margin: 0.5em 0;
+  padding: 2px 12px;
+  border-left: 3px solid var(--dw-line);
   color: var(--dw-muted);
-  line-height: 1.6;
+}
+.bz-diary-wall-md code {
+  font-family: var(--dw-mono);
+  font-size: 0.9em;
+  background: var(--dw-surface);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.bz-diary-wall-md pre {
+  margin: 0.5em 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--dw-surface);
+  overflow-x: auto;
+}
+.bz-diary-wall-md pre code {
+  background: none;
+  padding: 0;
+}
+.bz-diary-wall-md a {
+  color: var(--dw-accent);
+  text-decoration: none;
+}
+.bz-diary-wall-md a:hover {
+  text-decoration: underline;
+}
+.bz-diary-wall-md hr {
+  border: none;
+  border-top: 1px solid var(--dw-line);
+  margin: 0.8em 0;
+}
+.bz-diary-wall-md img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+.bz-diary-wall-md table {
+  border-collapse: collapse;
+  margin: 0.5em 0;
+}
+.bz-diary-wall-md th,
+.bz-diary-wall-md td {
+  border: 1px solid var(--dw-line);
+  padding: 3px 8px;
 }
 /* ============ 灯箱（全屏黑底，图片/视频/音频 controls 播放） ============ */
 .bz-diary-wall-lb {
