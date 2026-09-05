@@ -851,11 +851,13 @@ async function deleteItem(it: BelongingsItem): Promise<void> {
 
 // ==================== 表单（记一笔 / 编辑） ====================
 
-/** 分类搜索选择弹层（组件库 .bz-popover；输入过滤 + 键盘选择 + 外点关闭；Esc 分层：下拉开只收下拉） */
+/** 分类搜索选择弹层（组件库 .bz-popover；聚焦/输入弹出、外点关闭、键盘选择；Esc 分层：下拉开只收下拉） */
 function categoryPicker(input: HTMLInputElement, current: string): void {
   const wrap = document.createElement('div');
   wrap.className = 'bz-popover';
+  let opened = false; // 惰性弹出：默认收起，聚焦/输入才开（issue 202 跟进）
   const close = () => {
+    opened = false;
     if (wrap.isConnected) {
       wrap.remove();
       document.removeEventListener('mousedown', onDocDown, true);
@@ -879,11 +881,17 @@ function categoryPicker(input: HTMLInputElement, current: string): void {
       close();
     }));
   };
-  input.parentElement!.appendChild(wrap);
-  document.addEventListener('mousedown', onDocDown, true);
-  draw();
-  input.addEventListener('input', draw);
+  const open = () => {
+    if (opened) return;
+    opened = true;
+    input.parentElement!.appendChild(wrap);
+    document.addEventListener('mousedown', onDocDown, true);
+    draw();
+  };
+  input.addEventListener('focus', open);
+  input.addEventListener('input', () => { open(); draw(); });
   input.addEventListener('keydown', (e) => {
+    if (!opened) return; // 收起时按键不拦（Esc 落回表单层关窗）
     if (e.key === 'ArrowDown') {
       const opts = wrap.querySelectorAll<HTMLElement>('[data-cat]');
       const idx = [...opts].findIndex((o) => o.classList.contains('is-on'));

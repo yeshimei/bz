@@ -935,6 +935,10 @@ describe('归物本表单（记一笔 / 编辑）', () => {
   it('分类下拉：输入过滤 + 选项点击回填（弹层收起）', async () => {
     await open(vault);
     (panel()!.querySelector('.bz-main-head [data-bel-add]') as HTMLElement).click();
+    // 惰性弹出（issue 202 跟进）：开表单不弹，聚焦/输入才弹
+    expect(formMask().querySelector('.bz-popover')).toBeNull();
+    catInp().dispatchEvent(new FocusEvent('focus'));
+    expect(formMask().querySelector('.bz-popover')).not.toBeNull();
     catInp().value = '手机';
     catInp().dispatchEvent(new Event('input'));
     const filtered = [...formMask().querySelectorAll('.bz-popover-item')] as HTMLElement[];
@@ -943,6 +947,21 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     filtered[0].click();
     expect(catInp().value).toBe(filtered[0].dataset.cat);
     expect(formMask().querySelector('.bz-popover')).toBeNull();
+  });
+
+  it('分类下拉收起时 Esc 不拦（落回表单层）；弹出后 Esc 只收下拉不关表单', async () => {
+    await open(vault);
+    (panel()!.querySelector('.bz-main-head [data-bel-add]') as HTMLElement).click();
+    // 收起态：不冒泡 Esc 只到输入框，下拉不吞键、表单不被关
+    catInp().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(formMask().querySelector('.bz-popover')).toBeNull();
+    expect(formMask()).not.toBeNull();
+    // 弹出态：冒泡 Esc 被下拉拦下（stopPropagation），只收下拉，表单保持
+    catInp().dispatchEvent(new FocusEvent('focus'));
+    expect(formMask().querySelector('.bz-popover')).not.toBeNull();
+    catInp().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(formMask().querySelector('.bz-popover')).toBeNull();
+    expect(formMask()).not.toBeNull();
   });
 
   it('状态单选平铺：点选切换 is-on；保存按所选状态落盘', async () => {
