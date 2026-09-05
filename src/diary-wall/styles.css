@@ -300,43 +300,60 @@
 }
 
 /* ---- 章节栏（固定不随瀑布滚动；自身超高时内部滚动；滚动自动高亮当前月份） ----
-   壳 = 组件库 .bz-rail 族（ADR-0094）：.bz-rail（钩子类 .bz-diary-wall-rail 锁 132px 档）
-   + .bz-rail-scroll。
-   issue 209 拍板「纯缩略图」：栏内零文字（无标题/年份标签/月名/条数），
-   每月 = 一簇 3×2 微缩图（.bz-diary-wall-rail-cluster，data-month 承接跳月/高亮）。
-   域内只留：宽度档/滚动内边距/簇格与视频角标形态。 */
+   壳 = 组件库 .bz-rail 族（ADR-0094）：.bz-rail（钩子类 .bz-diary-wall-rail 锁 168px 档）
+   + .bz-rail-scroll + .bz-rail-item(.on)/.bz-rail-name/.bz-rail-count。
+   域内只留：宽度档/滚动内边距/月份行补垫（域 reset 通配会清 padding，需 ≥(0,2,0) 恢复）/
+   sticky 标题/年份分组/胶卷缩略图条（月份行域内特有形态）。 */
 .bz-diary-wall-rail {
-  --bz-rail-w: 132px;
+  --bz-rail-w: 168px;
 }
 .bz-diary-wall-mob .bz-diary-wall-rail {
   display: none;
 }
 .bz-diary-wall-rail .bz-rail-scroll {
-  padding: 10px 8px 16px;
+  padding: 12px 10px 16px;
 }
-/* 月簇：3 列微缩图 + 4px 内垫；hover/选中态用底色 + 内描边表达（无文字可标注） */
-.bz-diary-wall-rail .bz-diary-wall-rail-cluster {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 3px;
-  padding: 4px;
-  margin-bottom: 6px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.12s, box-shadow 0.12s;
+.bz-diary-wall-rail .bz-diary-wall-month {
+  padding: 10px;
+  /* 胶卷缩略图条换行到名称/计数第二行（.bz-rail-item 是 flex row） */
+  flex-wrap: wrap;
 }
-.bz-diary-wall-rail .bz-diary-wall-rail-cluster:hover {
-  background: var(--dw-hover);
+.bz-diary-wall-rail-title {
+  font-size: 11px;
+  color: var(--dw-faint);
+  letter-spacing: 0.08em;
+  padding: 4px 10px 8px;
+  font-weight: 600;
+  position: sticky;
+  top: -12px;
+  background: var(--dw-bg);
+  z-index: 2;
 }
-.bz-diary-wall-rail .bz-diary-wall-rail-cluster.on {
-  background: var(--dw-active-hover);
-  box-shadow: inset 0 0 0 1.5px var(--dw-accent);
+/* 增强 #2：年份分组分隔标签（跨年处插入；月份项 data-month 不变，定位逻辑不动） */
+.bz-diary-wall-rail-year {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--dw-faint);
+  padding: 12px 10px 2px;
+  letter-spacing: 0.06em;
 }
-.bz-diary-wall-month-thumb {
+.bz-diary-wall-rail-year:first-of-type {
+  padding-top: 4px;
+}
+.bz-diary-wall-month-strip {
   width: 100%;
-  aspect-ratio: 1;
-  border-radius: 5px;
-  flex-shrink: 0;
+  display: flex;
+  gap: 3px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+/* issue 210：一行 5 格超小缩略（168px 栏 − padding − 4×3px gap ≈ 20px/格） */
+.bz-diary-wall-month-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  flex: 1 1 0;
+  min-width: 0;
   overflow: hidden;
   background: var(--dw-surface);
   font-size: 11px;
@@ -345,47 +362,31 @@
   justify-content: center;
   position: relative;
 }
+.bz-diary-wall-month-thumb svg {
+  width: 12px;
+  height: 12px;
+}
 .bz-diary-wall-month-thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
+.bz-diary-wall-month-thumb--v {
+  background: linear-gradient(135deg, #2a9d8f, #80cbc4);
+  color: #fff;
+}
+/* 视频缩略：IO 进视口后首帧铺满格子，播放角标浮在其上 */
 .bz-diary-wall-month-thumb video {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
-  background: var(--dw-surface);
 }
-/* 视频缩略中央小播放角标（可辨识，pointer-events 不挡 IO/hover） */
-.bz-diary-wall-month-thumb .bz-diary-wall-month-thumb-play {
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.5);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-.bz-diary-wall-month-thumb .bz-diary-wall-month-thumb-play svg {
-  width: 8px;
-  height: 8px;
-}
-/* 视频/图片加载失败：回退线条图标（居中，弱化） */
-.bz-diary-wall-month-thumb--broken .bz-ic {
-  color: var(--dw-faint);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.bz-diary-wall-month-thumb--broken .bz-ic svg {
-  width: 12px;
-  height: 12px;
+.bz-diary-wall-month-thumb--v svg {
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 0 2px rgb(0 0 0 / 0.5));
 }
 
 /* ---- 瀑布区（独立滚动容器） ---- */
@@ -504,9 +505,9 @@
   background: var(--dw-line);
 }
 /* masonry 瀑布（CSS 列式填充 = 真瀑布流：列内竖向排布、不等高不产生行对齐空隙。
-   issue 209 拍板正文双列：column-count 3 → 2（长文条目阅读宽度友好；移动端本就 2 列不变） */
+   原型 v5 即 column-count:3；grid 行式在不等高媒体下会出现横向大空隙——用户反馈改回） */
 .bz-diary-wall-masonry {
-  column-count: 2;
+  column-count: 3;
   column-gap: 10px;
   padding-top: 8px;
 }
@@ -519,12 +520,17 @@
   break-inside: avoid;
   -webkit-column-break-inside: avoid;
 }
-/* 稀疏铺满（issue 209）：仅保留单条日文字条跨列通栏；
-   原 sparse-2「width:50% + inline-block」半宽 hack 已删——多列容器内百分比按列宽解析
-   会把卡片压成细条（用户截图实锤的挤压病根），双列下两条目天然各占一列，无需 hack */
+/* 稀疏铺满（columns 下用全宽/半宽表达，避免大留白）：
+   稀疏 1 条：文字条全宽，媒体块保持单列宽（居中感由整块宽度表达） */
 .bz-diary-wall-masonry--sparse-1 .bz-diary-wall-item.bz-diary-wall-text {
   column-span: all;
   margin-bottom: 10px;
+}
+/* 稀疏 2 条：各占半宽（文字条与媒体块都半宽并排） */
+.bz-diary-wall-masonry--sparse-2 .bz-diary-wall-item {
+  width: calc(50% - 5px);
+  display: inline-block;
+  vertical-align: top;
 }
 
 /* 条目（性能：屏外内容跳过渲染 + 布局/绘制隔离，原型 .item） */
