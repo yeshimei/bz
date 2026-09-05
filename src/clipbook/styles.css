@@ -13,8 +13,8 @@
 /* ---- 桌面端头行（= .bz-panel-head .bz-panel-head--tall 整宽头行，域内零补） ---- */
 .bz-clip-desk { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 
-/* 桌面搜索框（= .bz-search 基线；只覆写头行内定宽档） */
-.bz-clip-search { flex: 0 1 220px; min-width: 130px; }
+/* 桌面搜索框（= .bz-search 基线；issue 206 移入左栏顶部：与 rail 行同内边距，不参与伸缩） */
+.bz-clip-rail-search { flex-shrink: 0; padding: var(--bz-space-sm) var(--bz-space-xs) var(--bz-space-xs); }
 
 /* ---- 三栏 ---- */
 .bz-clip-desk-body { flex: 1; display: flex; min-height: 0; }
@@ -61,7 +61,7 @@
 .bz-clip-art-site-name { color: var(--bz-text-2); font-weight: var(--bz-weight-medium); }
 .bz-clip-art-type { background: var(--bz-surface-3); border-radius: var(--bz-radius-full); padding: 1px 8px; font-size: 11px; color: var(--bz-text-2); }
 .bz-clip-favimg { display: inline-flex; }
-.bz-clip-favimg img { border-radius: 3px; }
+.bz-clip-favimg img { width: 16px; height: 16px; border-radius: 3px; }
 .bz-clip-favchip {
   width: 16px; height: 16px; border-radius: var(--bz-radius-xs); flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
@@ -86,6 +86,11 @@
 .bz-clip-art-sum-h .bz-ic { width: 11px; height: 11px; }
 .bz-clip-art-md { font-size: var(--bz-font-body); line-height: 1.9; color: var(--bz-text-1); }
 .bz-clip-art-md p { margin: 0 0 var(--bz-space-md); }
+/* 正文图片段（issue 206：md 图/嵌链独立成段渲染，加载失败由 JS 摘除） */
+.bz-clip-art-md img.bz-clip-art-img {
+  display: block; max-width: 100%; height: auto;
+  border-radius: var(--bz-radius-sm); margin: 2px 0 var(--bz-space-md);
+}
 .bz-clip-art-md blockquote { border-left: 3px solid var(--bz-brand); background: var(--bz-surface-1); border-radius: 0 var(--bz-radius-sm) var(--bz-radius-sm) 0; padding: 8px var(--bz-space-md); margin: var(--bz-space-sm) 0; color: var(--bz-text-2); font-size: var(--bz-font-label); }
 .bz-clip-art-md p.dim { color: var(--bz-text-3); }
 /* 阅读字号三档（enh 包 7）：小/中/大 = meta/body（默认）/emphasis 档 */

@@ -4,12 +4,14 @@
  * 桌面三栏（rail 源列表 / 中栏条目 / 右栏阅读）+ 移动端双屏（源胶囊列表 / 详情+头栏保存钮）。
  * 对齐拍板原型 clipping-p3-siteboxes.html 的结构与极简口味：头行仅品牌+标题+副题「未读流与剪藏」，
  * 无右上角图标（关闭=点遮罩/ESC；移动真全屏有 ✕）；动作收进条目右键菜单（item-actions 复用）；
- * 「阅读分析数据」沉底左栏底部。
+ * 搜索框在左栏列表顶部（issue 206：从头行移入 rail，搜索时各源统计联动）。
  *
  * 增强包（enh-clipbook）：桌面搜索（180ms 防抖）/ 移动长按抽屉（动作与桌面右键同源）/
  * 右栏读剪藏正文（cachedRead + 缓存）/ rail 源行批量已读 / 误删误标可撤销（notifyUndo）/
  * 阅读动线（10s 自动落在读、处理后前进下一篇、←→/jk 切换）/ 阅读字号三档 /
- * 桌面面板拖拽缩放 + 尺寸记忆（ADR-0084 先例；ADR-0094 起走 uiResizable persist）。
+ * 桌面面板拖拽缩放 + 尺寸记忆（ADR-0084 先例；ADR-0094 走 uiResizable persist）。
+ * issue 206：rail 平台动态聚合 + 列表最新在前 / 正文图片段渲染 /
+ * 站点 favicon 高清多源回退（全失败才首字 chip）/ 切文章右栏滚动归零。
  *
  * 铁律 6：基线全部消费组件库（.bz-* 类与 --bz-* token）；ADR-0094 起面板壳/头行/搜索/
  * rail/横滑条/空态/尺寸记忆收编共享层，本文件只管布局骨架 + 交互，
@@ -21,7 +23,7 @@ import { uiSegmented, uiEmpty, uiResizable, mountIcons } from '../core/ui';
 import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { escManager } from '../core/esc-manager';
-import { topifyZ, createSiteIcon } from '../core/dom';
+import { topifyZ } from '../core/dom';
 import { attachItemActions, closeItemMenu, type ItemAction } from '../core/item-actions';
 import { openFlowDialog } from '../core/flow-dialog';
 import { openSettingsModal } from '../core/settings-modal';
@@ -32,7 +34,7 @@ import { buildNewsSourcesGroup } from './news-sources-group';
 import { batchSizeRow, mobileFullscreenGroup } from '../core/settings-common';
 import type { ClipArticle } from './types';
 import { toParagraphs, stripClipChrome } from './md';
-import { queryBySource } from './store';
+import { queryBySource, platformOf } from './store';
 import { M, resetClipbookState } from './state';
 import { readNewsAndSidecar, clipDir } from './loader';
 import {
@@ -52,7 +54,6 @@ let mobListEl: HTMLElement | null = null;
 let mobDetailEl: HTMLElement | null = null;
 let mobTitleEl: HTMLElement | null = null;
 let mobSaveBtnEl: HTMLElement | null = null;
-let analyBtnEl: HTMLElement | null = null;
 let mobSearchbarEl: HTMLElement | null = null;
 let deskSearchEl: HTMLInputElement | null = null; // 桌面搜索输入
 let escKey = '';
@@ -92,7 +93,6 @@ const ICO = {
   download: 'download',
   external: 'external-link',
   trash: 'trash-2',
-  chart: 'bar-chart-3',
   search: 'search',
   x: 'x',
   arrow: 'arrow-left',
@@ -235,16 +235,13 @@ function buildDom(app: any): void {
           <div class="bz-panel-head-pipe"></div>
           <div class="bz-panel-head-sub">未读流与剪藏</div>
           <div class="bz-panel-head-sp"></div>
-          <div class="bz-clip-search bz-search">${iconSpan('search')}<input class="bz-input" type="text" data-clip-desk-search placeholder="搜索标题、摘要、站点、标签"></div>
           <button class="bz-icon-btn" data-clip-settings title="打开剪藏本设置">${iconSpan('settings')}</button>
           <button class="bz-icon-btn" data-clip-desk-close title="关闭">${iconSpan('x')}</button>
         </div>
         <div class="bz-clip-desk-body">
           <div class="bz-rail bz-rail--wide bz-clip-rail">
+            <div class="bz-clip-rail-search bz-search">${iconSpan('search')}<input class="bz-input" type="text" data-clip-desk-search placeholder="搜索标题、摘要、站点、标签"></div>
             <div class="bz-rail-scroll" data-clip-rail></div>
-            <div class="bz-rail-foot">
-              <button class="bz-rail-item" data-clip-analy title="打开阅读分析报告">${iconSpan('bar-chart-3')}<span class="bz-rail-name">阅读分析报告</span></button>
-            </div>
           </div>
           <div class="bz-clip-mid">
             <div class="bz-clip-list" data-clip-list></div>
@@ -290,7 +287,6 @@ function buildDom(app: any): void {
   mobDetailEl = overlayEl.querySelector('[data-clip-mob-detail]');
   mobTitleEl = overlayEl.querySelector('[data-clip-mob-title]');
   mobSaveBtnEl = overlayEl.querySelector('[data-clip-mob-save]');
-  analyBtnEl = overlayEl.querySelector('[data-clip-analy]');
   const mobSearchBtn = overlayEl.querySelector('[data-clip-mob-search]');
   const mobCloseBtn = overlayEl.querySelector('[data-clip-mob-close]');
   const mobBackBtn = overlayEl.querySelector('[data-clip-mob-back]');
@@ -335,11 +331,6 @@ function buildDom(app: any): void {
     if (e.key === 'ArrowLeft' || e.key === 'k') { e.preventDefault(); stepArticle(-1); }
     else if (e.key === 'ArrowRight' || e.key === 'j') { e.preventDefault(); stepArticle(1); }
   });
-  // 阅读分析数据
-  analyBtnEl!.addEventListener('click', () => {
-    closePanel();
-    (getApp() as any).commands.executeCommandById('bz-reading-report-open');
-  });
   // 移动：搜索切换
   mobSearchBtn!.addEventListener('click', () => {
     const show = mobSearchbarEl!.style.display === 'none';
@@ -350,6 +341,7 @@ function buildDom(app: any): void {
   mobInput!.addEventListener('input', () => {
     searchKw = mobInput!.value.trim();
     renderMobList();
+    renderMobSources(); // issue 206：移动搜索态源 chip 计数同步联动（对齐桌面）
   });
   // 移动：关闭 / 返回
   mobCloseBtn!.addEventListener('click', () => closePanel());
@@ -449,20 +441,20 @@ function currentList(): ClipArticle[] {
   return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], srcList(), M.upInfo);
 }
 
-function listWithSearch(): ClipArticle[] {
+/** 搜索谓词（中栏列表过滤与 rail 计数共用——issue 206：搜索时各源统计联动） */
+function matchesSearch(a: ClipArticle): boolean {
   const kw = (searchKw || '').toLowerCase();
-  let list = currentList();
-  if (kw) {
-    list = list.filter((a) =>
-      a.title.toLowerCase().includes(kw) ||
-      a.summary.toLowerCase().includes(kw) ||
-      a.site.toLowerCase().includes(kw) ||
-      a.srcName.toLowerCase().includes(kw) ||
-      a.author.toLowerCase().includes(kw) ||
-      a.tags.some((t) => t.toLowerCase().includes(kw))
-    );
-  }
-  return list;
+  if (!kw) return true;
+  return a.title.toLowerCase().includes(kw) ||
+    a.summary.toLowerCase().includes(kw) ||
+    a.site.toLowerCase().includes(kw) ||
+    a.srcName.toLowerCase().includes(kw) ||
+    a.author.toLowerCase().includes(kw) ||
+    a.tags.some((t) => t.toLowerCase().includes(kw));
+}
+
+function listWithSearch(): ClipArticle[] {
+  return currentList().filter(matchesSearch);
 }
 
 // ================= 渲染：左 rail =================
@@ -490,17 +482,35 @@ function railItemHtml(sel: SrcSelJson, label: string, count: number, unread: num
 function renderRail(): void {
   if (!railListEl) return;
   const arts = M.articles;
-  const unread = arts.filter((a) => !a.read).length;
   const clipNotes = M.clipNotes || [];
-  const clips = clipNotes.length;
-  let html = railItemHtml({ kind: 'all' }, '全部未读', unread, 0, 'inbox', '#58a6ff', M.sel.kind === 'all', '');
+  // 源计数（issue 206：搜索时 = 该源命中数，统计联动；无搜索 = 未读数/总数）
+  const countOf = (source: { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' }): number =>
+    queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, source, M.upInfo).filter(matchesSearch).length;
+  const allHit = countOf({ kind: 'all' });
+  let html = railItemHtml({ kind: 'all' }, '全部未读', allHit, 0, 'inbox', '#58a6ff', M.sel.kind === 'all', '');
 
-  // 平台段
-  const platformLabels: Array<[string, string]> = [['B站', '#e8669a'], ['果壳科学人', '#2fae8c'], ['知乎日报', '#58a6ff']];
-  for (const [pfx, color] of platformLabels) {
-    const cnt = arts.filter((a) => !a.read && (a.platform === pfx || (pfx === '果壳科学人' && a.platform === '果壳') || (pfx === '知乎日报' && a.platform === '知乎'))).length;
-    const active = M.sel.kind === 'inbox' && M.sel.platform === pfx;
-    html += railItemHtml({ kind: 'inbox', platform: pfx, up: null }, pfx, cnt, cnt, 'feed', color, active, '');
+  // 平台行动态聚合（issue 206：不再硬编码三平台，新平台自动出现）——
+  // 全集含已读条目平台与既知三平台（0 未读平台行保留恒显示，对齐旧行为）；
+  // 既知顺序在前，其余按未读数降序追加；「未知」平台不建行（仅全部未读可见，对齐旧语义）
+  const prefOrder = ['B站', '果壳科学人', '知乎日报'];
+  const platColor: Record<string, string> = { 'B站': '#e8669a', '果壳科学人': '#2fae8c', '知乎日报': '#58a6ff' };
+  const unreadByPlat = new Map<string, number>();
+  const platSet = new Set<string>(prefOrder);
+  for (const a of arts) {
+    const p = platformOf(a);
+    if (!p || p === '未知') continue;
+    platSet.add(p);
+    if (!a.read) unreadByPlat.set(p, (unreadByPlat.get(p) || 0) + 1);
+  }
+  const platforms = [...platSet].sort((x, y) => {
+    const ix = prefOrder.indexOf(x), iy = prefOrder.indexOf(y);
+    if (ix !== -1 || iy !== -1) return (ix === -1 ? prefOrder.length : ix) - (iy === -1 ? prefOrder.length : iy);
+    return (unreadByPlat.get(y) || 0) - (unreadByPlat.get(x) || 0);
+  });
+  for (const p of platforms) {
+    const cnt = countOf({ kind: 'inbox', platform: p });
+    const active = M.sel.kind === 'inbox' && M.sel.platform === p;
+    html += railItemHtml({ kind: 'inbox', platform: p, up: null }, p, cnt, cnt, 'feed', platColor[p] || '', active, '');
   }
 
   // B站 UP 展开（C2：Map 按 author/uid 去重；C6：upInfo 回填名字显示）
@@ -513,7 +523,7 @@ function renderRail(): void {
     }
   }
   for (const [uid, name] of biliUps) {
-    const cnt = arts.filter((a) => !a.read && a.platform === 'B站' && String(a.author || '') === uid).length;
+    const cnt = countOf({ kind: 'inbox', platform: 'B站', up: uid });
     const active = M.sel.kind === 'inbox' && M.sel.platform === 'B站' && M.sel.up === uid;
     // G：UP 行 data-src 携带 platform=B站 + up=uid（旧实现 platform=展示名、up=null，
     // 点击后按平台名过滤恒空——UP 源点开是空列表且高亮不复位）
@@ -521,9 +531,10 @@ function renderRail(): void {
     html += railItemHtml({ kind: 'inbox', platform: 'B站', up: uid }, name, cnt, cnt, 'bili', '', active, name.slice(0, 1));
   }
 
-  // 剪藏本（聚合，saved 语义）
+  // 剪藏本（聚合，saved 语义；搜索时显示命中数）
   const clipActive = M.sel.kind === 'clip';
-  html += railItemHtml({ kind: 'clip' }, '剪藏本', clips, 0, 'clip', '', clipActive, '');
+  const clipHit = countOf({ kind: 'clip' });
+  html += railItemHtml({ kind: 'clip' }, '剪藏本', clipHit, 0, 'clip', '', clipActive, '');
 
   railListEl.innerHTML = html;
   mountIcons(railListEl);
@@ -691,12 +702,39 @@ function buildItemActions(a: ClipArticle): ItemAction[] {
 }
 
 // ================= 渲染：右栏阅读 =================
+/** 图片段来源解析（issue 206）：外链直用；Obsidian 嵌链 `![[path]]` 走 vault 资源路径；其余拒载 */
+function resolveImgSrc(src: string): string | null {
+  const s = String(src || '').trim();
+  if (/^(https?:|app:|capacitor:|data:image\/)/i.test(s)) return s;
+  const wiki = s.match(/^!\[\[([^\]]+)\]\]$/);
+  if (wiki) {
+    const p = wiki[1].split('|')[0].trim(); // ![[img.png|300]] 剥别名尺寸
+    try {
+      const af = getApp().vault.getAbstractFileByPath(p);
+      if (af) return getApp().vault.getResourcePath(af as any);
+    } catch (e) { /* 文件不存在/解析失败 → 跳过该图 */ }
+    return null;
+  }
+  return null;
+}
+
 function paragraphsHtml(body: string): string {
-  return toParagraphs(body).map((p) =>
-    p.type === 'quote'
+  return toParagraphs(body).map((p) => {
+    if (p.type === 'img') {
+      const src = resolveImgSrc(p.text);
+      return src ? `<img class="bz-clip-art-img" src="${escapeHtml(src)}" alt="文章配图" loading="lazy">` : '';
+    }
+    return p.type === 'quote'
       ? `<blockquote>${escapeHtml(p.text)}</blockquote>`
-      : `<p>${escapeHtml(p.text)}</p>`
-  ).join('');
+      : `<p>${escapeHtml(p.text)}</p>`;
+  }).join('');
+}
+
+/** 正文图片加载失败隐藏（缓存 URL 失效/断网时不留裂图） */
+function bindImgFallback(container: HTMLElement): void {
+  container.querySelectorAll('img.bz-clip-art-img').forEach((img) => {
+    img.addEventListener('error', () => img.remove(), { once: true });
+  });
 }
 
 function renderReader(): void {
@@ -712,7 +750,6 @@ function renderReader(): void {
   armAutoReading(a);
   const stLabel = a.st === 'saved' ? '已保存' : a.st === 'reading' ? '在读' : a.st === 'read' ? '已读' : '未读';
   const flagCls = a.st === 'saved' ? 'ok' : a.st === 'reading' ? 'warn' : 'info';
-  const siteIcon = a.domain ? siteIconHtml(a.domain) : favChip(a.site);
   // 正文（enh 包 3）：news 现算；clip 懒加载 cachedRead → 剥 frontmatter → 段落化，按 path 缓存
   let paras = '';
   if (a.origin === 'clip') {
@@ -727,7 +764,7 @@ function renderReader(): void {
     : '';
 
   readerEl.innerHTML = `
-    <div class="bz-clip-art-site">${siteIcon}<span class="bz-clip-art-site-name">${escapeHtml(a.srcName)}</span>${a.typeLabel ? `<span class="bz-clip-art-type">${escapeHtml(a.typeLabel)}</span>` : ''}</div>
+    <div class="bz-clip-art-site"><span data-clip-siteicon></span><span class="bz-clip-art-site-name">${escapeHtml(a.srcName)}</span>${a.typeLabel ? `<span class="bz-clip-art-type">${escapeHtml(a.typeLabel)}</span>` : ''}</div>
     <div class="bz-clip-art-title">${escapeHtml(a.title)}</div>
     <div class="bz-clip-art-meta">
       <span>${escapeHtml(a.timeText || relTime(a.timeTs))}</span>
@@ -739,7 +776,11 @@ function renderReader(): void {
     <div class="bz-clip-art-md" data-clip-md>${paras || `<p class="dim">${escapeHtml(a.origin === 'clip' ? '（笔记暂无正文）' : '正文已清空（已处理条目）')}</p>`}</div>
     ${a.origin === 'news' && a.url ? `<a class="bz-clip-art-origin" href="${escapeHtml(a.url)}" target="_blank" rel="noopener">查看原文 ${iconSpan('external-link', 'bz-ic--xs')}</a>` : ''}
   `;
+  // 站点图标（issue 206）：DOM 组装——先首字 chip 占位，高清 favicon 就绪后原位换图
+  const iconSlot = readerEl.querySelector('[data-clip-siteicon]') as HTMLElement | null;
+  if (iconSlot) iconSlot.replaceWith(a.domain ? siteIconEl(a.domain, a.srcName || a.site) : favChipEl(a.site));
   mountIcons(readerEl);
+  bindImgFallback(readerEl);
   mountFontSizeSeg();
   if (a.origin === 'clip') void loadClipBody(a);
 }
@@ -764,7 +805,10 @@ async function loadClipBody(a: ClipArticle): Promise<void> {
   clipBodyCache.set(path, body);
   if (M.cur && M.cur.id === a.id && readerEl) {
     const md = readerEl.querySelector('[data-clip-md]') as HTMLElement | null;
-    if (md) md.innerHTML = body ? paragraphsHtml(body) : `<p class="dim">（笔记暂无正文）</p>`;
+    if (md) {
+      md.innerHTML = body ? paragraphsHtml(body) : `<p class="dim">（笔记暂无正文）</p>`;
+      bindImgFallback(md);
+    }
   }
 }
 
@@ -850,30 +894,95 @@ function stepArticle(delta: number): void {
   if (next && (!M.cur || next.id !== M.cur.id)) selectArticle(next.id);
 }
 
-function favChip(site: string): string {
-  const ch = escapeHtml(String(site || '剪').slice(0, 1));
-  return `<span class="bz-clip-favchip">${ch}</span>`;
+// ---- 站点 favicon（issue 206：高清多源回退，全失败才首字 chip） ----
+
+/** favicon 域名归一（承 core/dom DOMAIN_MAP 语义：长域→根域取图更稳） */
+const FAV_DOMAIN_MAP: Record<string, string> = {
+  'guokrapp.guokr.com': 'guokr.com',
+  'daily.zhihu.com': 'zhihu.com',
+  'www.zhihu.com': 'zhihu.com',
+  'api.zhihu.com': 'zhihu.com',
+};
+
+/** 候选源（高清 64px 取图、16px 显示保 retina 清晰）：yandex v2 → Google s2 → 站点根 favicon */
+function favSourceUrls(domain: string): string[] {
+  return [
+    `https://favicon.yandex.net/favicon/v2/${domain}?size=64`,
+    `https://www.google.com/s2/favicons?domain=${domain}&sz=64`,
+    `https://${domain}/favicon.ico`,
+  ];
 }
 
-function siteIconHtml(domain: string): string {
-  // 由 createSiteIcon 真实渲染（yandex favicon）；jsdom 下返回 null → 回退字 chip
-  const img = createSiteIcon(domain, 15);
-  if (!img) return favChip('');
+const favOkCache = new Map<string, string>(); // 会话内 domain → 成功源 URL
+
+function favCacheKey(domain: string): string {
+  return `clipbook_fav_v1_${domain}`;
+}
+
+/** 逐源试探加载（离线 Image，成功回调真实 URL；全失败静默——调用方保留 chip 兜底） */
+function resolveFavicon(domain: string, onOk: (url: string) => void): void {
+  const mapped = FAV_DOMAIN_MAP[domain] || domain;
+  try {
+    const cached = localStorage.getItem(favCacheKey(mapped));
+    if (cached) { onOk(cached); return; }
+  } catch (e) { /* 忽略 */ }
+  if (favOkCache.has(mapped)) { onOk(favOkCache.get(mapped)!); return; }
+  const urls = favSourceUrls(mapped);
+  const probe = new Image();
+  let i = 0;
+  probe.onload = () => {
+    favOkCache.set(mapped, probe.src);
+    try { localStorage.setItem(favCacheKey(mapped), probe.src); } catch (e) { /* 容量满等忽略 */ }
+    onOk(probe.src);
+  };
+  probe.onerror = () => {
+    if (i < urls.length) probe.src = urls[i++]; // 换下一候选源
+  };
+  probe.src = urls[i++];
+}
+
+/** 首字 chip（favicon 全失败的兜底；加载期也作占位） */
+function favChipEl(site: string): HTMLElement {
+  const el = document.createElement('span');
+  el.className = 'bz-clip-favchip';
+  el.textContent = String(site || '剪').slice(0, 1) || '剪';
+  return el;
+}
+
+/** 站点图标 holder：先放 chip 占位，高清 favicon 就绪后原位换图（缓存命中同步换） */
+function siteIconEl(domain: string, site: string): HTMLElement {
   const holder = document.createElement('span');
   holder.className = 'bz-clip-favimg';
-  holder.appendChild(img);
-  return holder.outerHTML;
+  const chip = favChipEl(site);
+  holder.appendChild(chip);
+  resolveFavicon(domain, (url) => {
+    if (!holder.isConnected) return; // 已切走其他文章
+    const img = document.createElement('img');
+    img.alt = '';
+    img.addEventListener('error', () => img.replaceWith(chip), { once: true }); // 缓存 URL 失效回落 chip
+    img.src = url;
+    chip.replaceWith(img);
+  });
+  return holder;
 }
 
 // ================= 动作 =================
+/** 右栏滚动容器归零（issue 206：切换文章后从开头读，刷新同篇不重置） */
+function resetReadScroll(): void {
+  const sc = readPaneEl ? (readPaneEl.querySelector('.bz-clip-read-scroll') as HTMLElement | null) : null;
+  if (sc) sc.scrollTop = 0;
+}
+
 function selectArticle(id: string): void {
   const list = currentList();
   const a = list.find((x) => x.id === id);
   if (!a) return;
+  const changed = !M.cur || M.cur.id !== a.id;
   M.cur = a;
   renderList();
   renderReader();
   renderMobDetail();
+  if (changed) resetReadScroll();
 }
 
 async function doSave(a: ClipArticle | null): Promise<void> {
@@ -1043,11 +1152,28 @@ function mobSrcChipHtml(sel: SrcSelJson, label: string, unread: number, active: 
 function renderMobSources(): void {
   if (!mobSourcesEl) return;
   const arts = M.articles;
-  let html = mobSrcChipHtml({ kind: 'all' }, '全部未读', arts.filter((a) => !a.read).length, M.sel.kind === 'all', 'radio');
-  // 平台三 chip + B站 UP chip
-  for (const pfx of ['B站', '果壳科学人', '知乎日报']) {
-    const cnt = arts.filter((a) => !a.read && (a.platform === pfx || (pfx === '果壳科学人' && a.platform === '果壳') || (pfx === '知乎日报' && a.platform === '知乎'))).length;
-    html += mobSrcChipHtml({ kind: 'inbox', platform: pfx, up: null }, pfx, cnt, M.sel.kind === 'inbox' && M.sel.platform === pfx, 'feed', pfx.slice(0, 1));
+  const searching = !!searchKw;
+  const countOf = (source: { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' }): number =>
+    queryBySource(arts, M.sidecar, M.clipUrls, M.clipNotes || [], source, M.upInfo).filter(matchesSearch).length;
+  let html = mobSrcChipHtml({ kind: 'all' }, '全部未读', countOf({ kind: 'all' }), M.sel.kind === 'all', 'radio');
+  // 平台 chip 动态聚合（issue 206 对齐桌面 rail：全集含已读平台与既知三平台恒显示；
+  // 既知顺序在前，其余按未读数降序；「未知」平台不建 chip）
+  const prefOrder = ['B站', '果壳科学人', '知乎日报'];
+  const unreadByPlat = new Map<string, number>();
+  const platSet = new Set<string>(prefOrder);
+  for (const a of arts) {
+    const p = platformOf(a);
+    if (!p || p === '未知') continue;
+    platSet.add(p);
+    if (!a.read) unreadByPlat.set(p, (unreadByPlat.get(p) || 0) + 1);
+  }
+  const platforms = [...platSet].sort((x, y) => {
+    const ix = prefOrder.indexOf(x), iy = prefOrder.indexOf(y);
+    if (ix !== -1 || iy !== -1) return (ix === -1 ? prefOrder.length : ix) - (iy === -1 ? prefOrder.length : iy);
+    return (unreadByPlat.get(y) || 0) - (unreadByPlat.get(x) || 0);
+  });
+  for (const p of platforms) {
+    html += mobSrcChipHtml({ kind: 'inbox', platform: p, up: null }, p, countOf({ kind: 'inbox', platform: p }), M.sel.kind === 'inbox' && M.sel.platform === p, 'feed', p.slice(0, 1));
   }
   // B站 UP chip（C2：Map 按 author/uid 去重——原同 UP N 条未读渲染 N 个同名 chip；C6：upInfo 回填名）
   const mobUps = new Map<string, string>();
@@ -1058,11 +1184,11 @@ function renderMobSources(): void {
     if (!mobUps.has(uid)) mobUps.set(uid, backfilled ? String(backfilled) : uid);
   }
   for (const [uid, name] of mobUps) {
-    const cnt = arts.filter((x) => !x.read && x.platform === 'B站' && String(x.author || '') === uid).length;
-    if (cnt === 0) continue;
+    const cnt = countOf({ kind: 'inbox', platform: 'B站', up: uid });
+    if (cnt === 0 && !searching) continue;
     html += mobSrcChipHtml({ kind: 'inbox', platform: 'B站', up: uid }, name, cnt, M.sel.kind === 'inbox' && M.sel.platform === 'B站' && M.sel.up === uid, 'bili', name.slice(0, 1));
   }
-  html += mobSrcChipHtml({ kind: 'clip' }, '剪藏本', 0, M.sel.kind === 'clip', 'clip');
+  html += mobSrcChipHtml({ kind: 'clip' }, '剪藏本', countOf({ kind: 'clip' }), M.sel.kind === 'clip', 'clip');
   mobSourcesEl.innerHTML = html;
 }
 
@@ -1098,6 +1224,8 @@ function openMobDetail(id: string): void {
   M.mobDetailOpen = true;
   renderMobDetail();
   if (mobDetailEl) mobDetailEl.style.display = 'flex';
+  const body = mobDetailEl ? (mobDetailEl.querySelector('[data-clip-mob-detail-body]') as HTMLElement | null) : null;
+  if (body) body.scrollTop = 0; // issue 206：进详情从开头读
 }
 
 function renderMobDetail(): void {
@@ -1116,17 +1244,17 @@ function renderMobDetail(): void {
   }
   const stLabel = a.st === 'saved' ? '已保存' : a.st === 'reading' ? '在读' : a.st === 'read' ? '已读' : '未读';
   const flagCls = a.st === 'saved' ? 'ok' : a.st === 'reading' ? 'warn' : 'info';
-  const paras = a.body ? toParagraphs(a.body).map((p) =>
-    p.type === 'quote' ? `<blockquote>${escapeHtml(p.text)}</blockquote>` : `<p>${escapeHtml(p.text)}</p>`
-  ).join('') : '';
-  (mobDetailEl.querySelector('[data-clip-mob-detail-body]') as HTMLElement).innerHTML = `
+  const paras = a.body ? paragraphsHtml(a.body) : '';
+  const detailBody = mobDetailEl.querySelector('[data-clip-mob-detail-body]') as HTMLElement;
+  detailBody.innerHTML = `
     <div class="bz-clip-mob-d-title">${escapeHtml(a.title)}</div>
     <div class="bz-clip-mob-d-meta"><span class="bz-clip-favchip">${escapeHtml(a.srcName.slice(0, 1))}</span><span>${escapeHtml(a.srcName)}</span><span class="bz-clip-mob-d-time">${escapeHtml(a.timeText || relTime(a.timeTs))}</span></div>
     <div class="bz-clip-art-flag ${flagCls}">${iconSpan(a.st === 'saved' ? 'check' : a.st === 'reading' ? 'book-open' : 'mail', 'bz-ic--xs')}${stLabel}</div>
     ${a.summary ? `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan('sparkles', 'bz-ic--xs')}摘要</span>${escapeHtml(a.summary)}</div>` : ''}
     <div class="bz-clip-art-md">${paras || `<p class="dim">${escapeHtml(a.origin === 'clip' ? '（剪藏笔记正文请在 Obsidian 中打开）' : '正文已清空')}</p>`}</div>
   `;
-  mountIcons(mobDetailEl.querySelector('[data-clip-mob-detail-body]') as HTMLElement);
+  mountIcons(detailBody);
+  bindImgFallback(detailBody);
 }
 
 // ================= 设置 schema（ADR-0064 声明式；settings-panel 域清单挂载） =================
