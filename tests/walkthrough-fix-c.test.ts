@@ -258,7 +258,8 @@ describe('批 C-17：encrypt 预览 spinner 轨道', () => {
     const css = repo('src/encrypt/styles.css');
     const spinner = rule(css, '.bz-encrypt-preview-spinner');
     expect(spinner, '缺 .bz-encrypt-preview-spinner 规则').not.toBeNull();
-    expect(spinner![1]).toContain('border: 3px solid var(--background-modifier-border);');
+    // issue 198 批 D token 化：主题描边档收编 --bz-border（语义不变，仍非 rgba 白底）
+    expect(spinner![1]).toContain('border: 3px solid var(--bz-border);');
     expect(spinner![1]).not.toMatch(/rgba\(255/);
   });
 });

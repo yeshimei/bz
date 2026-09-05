@@ -1360,7 +1360,20 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-skeleton--circle { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
 .bz-skeleton--title { height: 16px; width: 45%; }
 
-/* ── 底部抽屉 .bz-sheet（收编 bookshelf 筛选抽屉 / diary-wall 详情抽屉 / item-sheet） ── */
+/* ── 底部抽屉 .bz-sheet（收编 bookshelf 筛选抽屉 / diary-wall 详情抽屉 / item-sheet） ──
+   形制 = 遮罩 .bz-sheet-mask + 底部定位抽屉壳，动效对齐 item-sheet 口径（transform
+   滑入滑出 + 遮罩淡入淡出，值全走 token）。打开态二选一：壳挂 .bz-sheet--show
+   （遮罩/壳平级使用，如 diary-wall 常驻双实例）或遮罩挂 .open（壳在遮罩内，如 bookshelf）；
+   点遮罩/关闭时机由域负责。壳内分区：grip/head/title/sub/body/actions/act。 */
+.bz-sheet-mask {
+  position: fixed;
+  inset: 0;
+  background: var(--bz-overlay);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--bz-dur-base) var(--bz-ease-out);
+}
+.bz-sheet-mask.open { opacity: 1; pointer-events: auto; }
 .bz-sheet-grip {
   width: 36px;
   height: 4px;
@@ -1370,6 +1383,13 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   flex-shrink: 0;
 }
 .bz-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0 auto;
+  /* 功能性几何：抽屉超高上限（对齐 item-sheet body 70vh 口径） */
+  max-height: 70vh;
   display: flex;
   flex-direction: column;
   background: var(--bz-surface-3);
@@ -1377,7 +1397,11 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   border-radius: var(--bz-radius-lg) var(--bz-radius-lg) 0 0;
   box-shadow: var(--bz-shadow-lg);
   padding: 0 var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px));
+  transform: translateY(100%);
+  transition: transform var(--bz-dur-base) var(--bz-ease-out);
 }
+.bz-sheet--show,
+.bz-sheet-mask.open .bz-sheet { transform: translateY(0); }
 .bz-sheet-head {
   display: flex;
   align-items: center;
@@ -1387,6 +1411,50 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 }
 .bz-sheet-title { font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
 .bz-sheet-sub { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
+/* 内容滚动区（抽屉超高时内部滚动）与动作行堆叠 */
+.bz-sheet-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.bz-sheet-actions { display: flex; flex-direction: column; }
+/* 动作行：图标 + 文案（+ 右侧小字）；danger/accent 语义整行变色 */
+.bz-sheet-act {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-md);
+  width: 100%;
+  padding: 12px var(--bz-space-sm);
+  border: none;
+  background: none;
+  border-radius: var(--bz-radius-sm);
+  color: var(--bz-text-1);
+  font-size: var(--bz-font-body);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--bz-dur-fast) ease;
+}
+.bz-sheet-act:hover { background: var(--bz-surface-hover); }
+.bz-sheet-act-ic {
+  width: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--bz-text-3);
+}
+.bz-sheet-act-sub {
+  margin-left: auto;
+  font-size: var(--bz-font-caption);
+  color: var(--bz-text-3);
+}
+.bz-sheet-act--danger { color: var(--bz-danger); }
+.bz-sheet-act--danger .bz-sheet-act-ic { color: var(--bz-danger); }
+.bz-sheet-act--accent { color: var(--bz-brand); }
+.bz-sheet-act--accent .bz-sheet-act-ic { color: var(--bz-brand); }
 
 /* ── 标签输入 .bz-taginput ── */
 .bz-taginput {

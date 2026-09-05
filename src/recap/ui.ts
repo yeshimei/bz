@@ -5,7 +5,8 @@
  *  - 桌面：居中面板（头行「今日回顾 + 日期」+「生成今日总结」+ 摘要行 + 痕迹时间轴），
  *          点遮罩/ESC 关闭（桌面无关闭钮）
  *  - 移动：≤768px 真全屏 + 右上关闭钮 + 底部安全区
- * 组件库纪律（铁律 6）：空态/按钮走 src/core/ui 工厂与 --bz-* token；
+ * 组件库纪律（铁律 6）：面板壳/头行（.bz-panel-head 族）走样式库共享类，
+ * 空态/按钮走 src/core/ui 工厂与 --bz-* token；
  * 域图标一律 core/domain-icons.ts 单一事实源（与命令/磁贴一致）。
  * 打开即采集一次（各源独立容错；不做常驻轮询，重开面板即得新数据）。
  * R3：头行按钮点击 → 生成中 spinner（防重复点击）→ AI 总结自动写入当天日记（同日替换不叠条）；
@@ -63,12 +64,12 @@ export function createOverlay(app: App): void {
   overlay.className = 'bz-panel-overlay bz-recap-overlay';
   overlay.innerHTML = `
     <div class="bz-panel-frame bz-recap-panel bz-panel-mtop">
-      <div class="bz-recap-head">
-        <div class="bz-recap-head-l">
-          <span class="bz-recap-title">今日回顾</span>
-          <span class="bz-recap-date" data-recap-date></span>
-        </div>
-        <div class="bz-recap-head-r">
+      <div class="bz-panel-head">
+        <div class="bz-panel-title">今日回顾</div>
+        <div class="bz-panel-head-pipe"></div>
+        <div class="bz-panel-head-sub" data-recap-date></div>
+        <div class="bz-panel-head-sp"></div>
+        <div class="bz-panel-head-btns">
           <button type="button" class="bz-btn bz-recap-ai" data-recap-ai disabled>生成今日总结</button>
           <button type="button" class="bz-icon-btn bz-icon-btn--lg bz-recap-close" data-recap-close title="关闭" aria-label="关闭">${iconSpan('x')}</button>
         </div>

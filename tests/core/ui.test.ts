@@ -1027,6 +1027,7 @@ describe('bz ui 组件库', () => {
     });
   });
 
+
   describe('uiResizable persist 尺寸记忆（ADR-0094）', () => {
     // 同 uiResizable 基础组：jsdom 无几何布局，mock rect 动态读 style
     function makeBox(w = 720, h = 580): { el: HTMLElement } {
