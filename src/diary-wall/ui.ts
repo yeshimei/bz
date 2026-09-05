@@ -130,6 +130,9 @@ export interface WallViewState {
 /** 周几中文 */
 const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
 
+/** issue 218：长文跨栏卡阈值——正文 ≥ 此字符数整卡跨瀑布全宽、卡内分栏（~800 字单列已明显坠长） */
+const WIDE_TEXT_MIN_CHARS = 800;
+
 /**
  * 滚动高亮的当前月份选取（纯函数，可单测）：
  * 取最后一个 relTop ≤ 8 的节头所属月份（relTop 为相对墙体的视口相对量，与滚动距离无关——
@@ -838,12 +841,16 @@ export class DiaryWallAppController {
         ui.wall.appendChild(m);
       }
       const hasMedia = e.media.length > 0;
+      // issue 218：长文跨栏卡阈值（字符数）——四五千字整卡在三栏里直坠千像素、两侧留白
+      const isLongText = (e.text || '').length >= WIDE_TEXT_MIN_CHARS;
       const container = ui.wall.lastChild as HTMLElement;
-      if (hasMedia) {
+      if (hasMedia || isLongText) {
         // issue 214 拍板版式：一卡 = 顶部「时间 + 类型」行 → 拼接全文（markdown 渲染）
         // → 图片/视频竖排堆叠下方。媒体单独提取、文字拼在一起置顶（issue 213 段序版文字被拆散，退回整卡）。
+        // issue 218：长文（含纯文字长条）整卡跨三栏，正文卡内分栏、媒体横排网格——根除长卡单列直坠+两侧空白
         const item = document.createElement('div');
-        item.className = 'bz-diary-wall-item bz-diary-wall-media-wrap';
+        item.className =
+          'bz-diary-wall-item bz-diary-wall-media-wrap' + (isLongText ? ' bz-diary-wall-wide' : '');
         item.dataset.widx = String(widx);
         if (e.text) {
           const row = document.createElement('div');
@@ -856,7 +863,7 @@ export class DiaryWallAppController {
           em.textContent = e.emoji;
           row.append(t, em);
           const tx = document.createElement('div');
-          tx.className = 'bz-diary-wall-text-tx bz-diary-wall-md';
+          tx.className = 'bz-diary-wall-text-tx bz-diary-wall-md' + (isLongText ? ' bz-diary-wall-wide-md' : '');
           if ((e.encrypted || e.tags.includes('加密')) && !this.lockedVisible) {
             tx.textContent = '（已加密）';
           } else {
@@ -864,7 +871,17 @@ export class DiaryWallAppController {
           }
           item.append(row, tx);
         }
-        e.media.forEach((k) => item.appendChild(this.mediaEl(k, e, mobile)));
+        if (isLongText) {
+          // 长文媒体横排网格（竖排堆叠会把跨栏卡再度撑成千像素高）；纯文字长文不建空网格
+          if (e.media.length) {
+            const grid = document.createElement('div');
+            grid.className = 'bz-diary-wall-wide-media';
+            e.media.forEach((k) => grid.appendChild(this.mediaEl(k, e, mobile)));
+            item.appendChild(grid);
+          }
+        } else {
+          e.media.forEach((k) => item.appendChild(this.mediaEl(k, e, mobile)));
+        }
         // 媒体块不挂 ⋯ 按钮（用户要求去掉右上角三点；动作入口 = 右键菜单 / 双击）
         this.bindItem(item, e, mobile);
         container.appendChild(item);
