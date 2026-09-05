@@ -6025,17 +6025,12 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-todo-form .bz-field { margin-bottom: 0; }
 .bz-todo-form textarea.bz-input { min-height: 64px; }
 /* 第二个输入框（剪藏标题/代码脚本/公开课课程）容器：输入框满宽
-   （.bz-input 默认 240px 定宽，不在 .bz-field 里的框须显式撑满，issue 199） */
-.bz-todo-extra { display: none; }
+   （.bz-input 默认 240px 定宽，不在 .bz-field 里的框须显式撑满，issue 199）；
+   position:relative 供联想 .bz-popover 浮层锚定（issue 201） */
+.bz-todo-extra { display: none; position: relative; }
 .bz-todo-extra.bz-todo-extra-on { display: block; }
 .bz-todo-extra .bz-input { width: 100%; }
-.bz-todo-sug-box {
-  border: 1px solid var(--bz-border); border-radius: var(--bz-radius-sm);
-  background: var(--bz-surface-3); margin-top: 4px; overflow: hidden;
-}
-.bz-todo-sug-item { display: block; width: 100%; text-align: left; padding: 6px 10px; border: none; background: none; font-size: var(--bz-font-meta); color: var(--bz-text-1); cursor: pointer; font-family: inherit; }
-.bz-todo-sug-item + .bz-todo-sug-item { border-top: 1px solid var(--bz-border); }
-.bz-todo-sug-item:hover { background: var(--bz-surface-hover); }
+/* 联想候选已改组件库 .bz-popover 下拉浮层（issue 201，同收藏本「关联笔记」），bz-todo-sug-* 退役 */
 /* 定位行：垂直居中；按钮走组件库 .bz-btn--chip 图标圆底档（issue 200 F 款入库） */
 .bz-todo-pos-row { display: flex; align-items: center; gap: var(--bz-space-sm); min-height: 32px; }
 .bz-todo-pos-row .bz-todo-pos-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
@@ -6255,8 +6250,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 头部图标钮桌面隐藏（桌面无右上钮；移动显示） */
 .bz-fav-mob-only { display: none; }
 
-/* 排序钮不参与压缩（高度/字号走 .bz-btn--md） */
-.bz-fav-sort-btn { flex-shrink: 0; }
+/* 排序浮岛容器（uiChoice float）不参与压缩 */
+.bz-fav-sort { flex-shrink: 0; }
 
 /* ---- 移动端隐藏搜索行（桌面恒隐；头部搜索钮仅移动显示） ---- */
 .bz-fav-mobsearch { display: none; padding: 2px var(--bz-space-lg) 6px; flex-shrink: 0; }
@@ -6288,14 +6283,12 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   word-break: break-word;
 }
 .bz-fav-meta { display: flex; align-items: center; gap: 6px; margin-top: 7px; flex-wrap: wrap; }
-/* 徽章变体（标签走组件库 .bz-badge--accent；笔记/时间走域内弱化） */
+/* 徽章变体（标签走组件库 .bz-badge--accent；笔记走域内弱化。域名徽章/置顶文字前缀
+   已随 issue 201 meta 精简退役——置顶视觉走 .bz-fav-card--pinned 左缘品牌条） */
 .bz-fav-note-badge { background: color-mix(in srgb, var(--bz-info) 12%, transparent); color: var(--bz-info); }
 .bz-fav-note-badge .bz-ic { width: 10px; height: 10px; }
 .bz-fav-time-badge { background: var(--bz-surface-1); color: var(--bz-text-3); font-weight: 400; }
 .bz-fav-time-badge .bz-ic { width: 10px; height: 10px; }
-/* 域名徽章（ticket 188：meta 行尾弱化小徽章） */
-.bz-fav-host-badge { background: var(--bz-surface-1); color: var(--bz-text-3); font-weight: 400; }
-.bz-fav-host-badge .bz-ic { width: 10px; height: 10px; }
 /* 余额读数（右侧；档位色） */
 .bz-fav-balance-wrap { flex-shrink: 0; align-self: center; padding-left: 4px; }
 .bz-fav-balance {
@@ -6337,17 +6330,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-fav-form-body .bz-field { margin-bottom: 0; }
 .bz-fav-form-body textarea.bz-input { min-height: 56px; }
 .bz-fav-form-inline { flex-direction: row !important; align-items: center; gap: var(--bz-space-md) !important; }
-/* 置顶开关（胶囊按钮态） */
-.bz-fav-pinbtn {
-  display: inline-flex; align-items: center; gap: 6px;
-  border: 1px solid var(--bz-border-strong); background: var(--bz-surface-2);
-  color: var(--bz-text-1); height: var(--bz-control-h); padding: 0 14px;
-  border-radius: var(--bz-radius-full); font-size: var(--bz-font-label);
-  font-weight: var(--bz-weight-medium); cursor: pointer; font-family: inherit;
-}
-.bz-fav-pinbtn:hover { background: var(--bz-surface-hover); }
-.bz-fav-pinbtn.on { background: var(--bz-brand); border-color: var(--bz-brand); color: var(--bz-on-brand); }
-.bz-fav-pinbtn .bz-ic { width: 13px; height: 13px; }
+/* 置顶开关已退役（issue 201：改组件库 uiBtn chip 档 .bz-btn--chip，同待办「定位到笔记」） */
 /* 标签多选（复用 .bz-choice-btn 胶囊，此处容器换行） */
 .bz-fav-tagpick { display: flex; flex-wrap: wrap; gap: var(--bz-space-sm); }
 /* LLM 配置区（默认隐藏；选中「大模型」展开） */
@@ -8156,10 +8139,12 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   width: 960px; max-width: calc(100vw - 32px); height: 680px; max-height: 90vh;
 }
 
-/* 头行 = 共享 .bz-panel-head（标题 + 计数 sub + spacer + 钮组）。
-   桌面端隐藏全部头行图标钮（报告入口在左栏底部；搜索在工具栏常驻；关闭靠遮罩/ESC）；
-   仅移动端 ≤768px 显示报告/搜索/筛选/关闭 */
+/* 头行 = 共享 .bz-panel-head（品牌块 + 标题 + 计数 sub + spacer + 钮组）。
+   桌面端隐藏报告/搜索/筛选钮（报告入口在左栏底部；搜索在工具栏常驻）；
+   设置直达/关闭桌面常显（issue 201 头行对齐待办）；移动端 ≤768px 全部显示 */
 .bz-bs-panel .bz-panel-head-btns [data-bs-tool] { display: none; }
+.bz-bs-panel .bz-panel-head-btns [data-bs-tool="settings"],
+.bz-bs-panel .bz-panel-head-btns [data-bs-tool="close"] { display: inline-flex; }
 /* 移动搜索条（默认隐藏，点头部放大镜展开） */
 .bz-bs-searchbar { display: none; }
 .bz-bs-searchbar.show { display: flex; align-items: center; gap: 6px; padding: 8px 14px 2px; flex-shrink: 0; }
