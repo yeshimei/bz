@@ -248,6 +248,27 @@ describe('bookshelf 数据层', () => {
     expect(kwFilter(items, '未分类').length).toBe(0);
   });
 
+  it('issue 221：EPUB 分类接 meta.subjects[0]；subjects 空数组/非字符串/空白值回落 null', async () => {
+    const vault = new MockVault();
+    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
+      books: {
+        ok: { meta: { title: '红楼梦', subjects: ['中国古典文学', '清代小说'] }, file: { vaultPath: 'books/hlm.epub' } },
+        empty: { meta: { title: '空数组', subjects: [] }, file: { vaultPath: 'books/empty.epub' } },
+        bad: { meta: { title: '非字符串', subjects: [42, null] }, file: { vaultPath: 'books/bad.epub' } },
+        blank: { meta: { title: '空白值', subjects: ['   '] }, file: { vaultPath: 'books/blank.epub' } },
+        nofield: { meta: { title: '无字段' }, file: { vaultPath: 'books/nofield.epub' } },
+      },
+    }));
+    const app = makeApp(vault);
+    const items = await loadEpubItems(app);
+    const byTitle = Object.fromEntries(items.map((i) => [i.title, i]));
+    expect(byTitle['红楼梦'].category).toBe('中国古典文学');
+    expect(byTitle['空数组'].category).toBeNull();
+    expect(byTitle['非字符串'].category).toBeNull();
+    expect(byTitle['空白值'].category).toBeNull();
+    expect(byTitle['无字段'].category).toBeNull();
+  });
+
   it('audit H：EPUB 日期本地时区切片（UTC+8 早 8 点前读完不再归前一天）', async () => {
     const vault = new MockVault();
     const ts = new Date(2024, 11, 24, 7, 30).getTime(); // UTC+8 下对应 2024-12-23T23:30Z
