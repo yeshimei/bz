@@ -2,10 +2,9 @@
  * 影院（cinema）域 UI：试点收编组件库（铁律 6）
  * 桌面：左栏分类树（类型+状态+底部 AI 荐片/分析）＋ 右侧海报网格（观影日期倒序）
  * 移动：右上角 AI/分析/关闭 ＋ 搜索/添加 ＋ 分类横滑 ＋ 海报网格（3 列）
- * 交互：点海报 → 详情弹窗（无关闭按钮，编辑/删除在弹窗内）
- *       想看/在看 灰色小字 → 快速状态窗（升级+评分滑杆+影评）
- *       左栏分类对齐待办：类型/状态顶部均有「全部」；点组=筛组并展开其二级（手风琴互斥）；
- *       再点同组不取消（回全部靠「全部」）；点二级=筛该二级；再点同二级=回该组全部；点其他组/全部=收起二级
+ * 交互：点海报 → 详情弹窗（无关闭按钮，编辑/删除在弹窗内）；状态流转统一走右键菜单/编辑表单（issue 208：快速状态窗退役）
+ *       左栏分类对齐待办范式（issue 208）：「全部」行头带图标保留；点组=筛组并展开其二级（手风琴互斥，无三角）；
+ *       再点同组=取消回「全部」（二级随收起）；点二级=筛该二级；再点同二级=回该组全部；点「全部」=清空类型与二级
  *       搜索框上方主头行（标题=当前筛选名 + · N 部 + 添加按钮）；搜索框后排序 segmented（最近观看/按创建/按评分）
  *       AI 荐片：点入口切 AI 页（按需触发不自动请求），等待消息与结果列表就地渲染在页内（不弹窗）；
  *       结果页有「换一批」重跑（找同类按基准影片重跑），已入库推荐卡置「已在库中」禁用态
@@ -140,8 +139,9 @@ function renderNavHtml(app: App): string {
 
   let html = '<div class="bz-rail-scroll">';
   html += '<div class="bz-rail-label">类型</div>';
+  // 「全部」行头带图标（issue 208，对齐收藏本/归物本行头惯例；.bz-rail-item .bz-ic 14px 槽与色点对齐）
   html += `<button class="bz-rail-item${!M.typeFilter && !M.subFilter ? ' on' : ''}" data-cinema-type="all">
-    <span class="bz-rail-name">全部</span><span class="bz-rail-count">${M.items.length}</span></button>`;
+    ${iconSpan('layout-grid')}<span class="bz-rail-name">全部</span><span class="bz-rail-count">${M.items.length}</span></button>`;
   for (const g of GROUP_ORDER) {
     if (!groupCounts[g]) continue;
     // 组选中 = 筛该组；若正筛着该组某个二级，组名仍高亮（联动）
@@ -149,10 +149,10 @@ function renderNavHtml(app: App): string {
     const groupActive = active && !M.subFilter;
     const hasSub = (GROUP_SUBS[g] || []).some((s) => subCounts[s]);
     if (hasSub) {
-      // 展开态 = 当前组被选中（typeFilter 指向该组）或有子项被选中
+      // 展开态 = 当前组被选中（typeFilter 指向该组）或有子项被选中；再点组取消 → 随选中收起（issue 208 无三角）
       const expanded = active;
-      html += `<button class="bz-rail-item has-sub${groupActive ? ' on' : ''}${expanded ? ' sub-open' : ''}" data-cinema-type="${g}">
-        <span class="bz-rail-dot" style="--bz-rail-tint:${groupColor(g)}"></span><span class="bz-rail-name">${g}</span><span class="bz-rail-count">${groupCounts[g]}</span><i data-lucide="chevron-right" class="bz-rail-caret"></i></button>`;
+      html += `<button class="bz-rail-item has-sub${groupActive ? ' on' : ''}" data-cinema-type="${g}">
+        <span class="bz-rail-dot" style="--bz-rail-tint:${groupColor(g)}"></span><span class="bz-rail-name">${g}</span><span class="bz-rail-count">${groupCounts[g]}</span></button>`;
       html += `<div class="bz-rail-sub${expanded ? ' open' : ''}">`;
       for (const s of GROUP_SUBS[g]) {
         if (!subCounts[s]) continue;
@@ -166,7 +166,7 @@ function renderNavHtml(app: App): string {
   }
   html += '<div class="bz-rail-label">状态</div>';
   html += `<button class="bz-rail-item${!M.statusFilter ? ' on' : ''}" data-cinema-status="all">
-    <span class="bz-rail-name">全部</span><span class="bz-rail-count">${M.items.length}</span></button>`;
+    ${iconSpan('layout-grid')}<span class="bz-rail-name">全部</span><span class="bz-rail-count">${M.items.length}</span></button>`;
   (['想看', '在看', '已看'] as const).forEach((s) => {
     const active = M.statusFilter === s;
     html += `<button class="bz-rail-item${active ? ' on' : ''}" data-cinema-status="${s}">
@@ -217,18 +217,18 @@ function openDouban(item: CinemaItem): void {
   }
 }
 
-/** 快速标记状态（右键菜单「标记在看/已看」）：与快速状态窗同一套语义（评分映射 + CM1 观影日期 + 事件补发） */
+/** 快速标记状态（右键菜单「标记在看/已看」）：评分映射 + 状态流转即刷新观影日期（issue 208）+ 事件补发 */
 async function markStatus(item: CinemaItem, target: '在看' | '已看', app: App): Promise<void> {
   const fromSt = item.status === STATUS_WANT ? 'want' : item.status === STATUS_WATCHING ? 'watching' : 'watched';
   const prevRating = item.rating && item.rating > 0 ? item.rating : null;
   item.status = target === '已看' ? STATUS_WATCHED : STATUS_WATCHING;
   if (target === '在看') {
     item.rating = 0;
-  } else {
-    if (!prevRating) item.rating = DEFAULT_RATING;
-    // CM1：流转为「已看」时刷新观影日期（统计口径按看完时间）
-    item.watchDate = localNow();
+  } else if (!prevRating) {
+    item.rating = DEFAULT_RATING;
   }
+  // 状态流转即刷新观影日期（统计口径按状态变更时间；菜单项仅在状态会变化时出现）
+  item.watchDate = localNow();
   try {
     await persistItem(item, app);
     notice(`已把「${item.name}」标记为${target}`, 'success');
@@ -290,20 +290,19 @@ function bindPosterActions(container: HTMLElement, app: App): void {
 function pcardHtml(item: CinemaItem, app: App): string {
   const badge = item.status !== STATUS_WATCHED
     ? `<span class="bz-cinema-p-badge" style="background:${statusColor(item.status)}">${statusText(item.status)}</span>` : '';
-  const upgradeable = item.status !== STATUS_WATCHED;
   // CM3：卡片用稳定键（file.path；未落盘新增用 name）而非数组下标——异步刷新重排后下标会指错条目
   const key = esc(item.file?.path ?? `new:${item.name}`);
-  // 灰色小字：想看/在看 = 可点状态 + 相对日期；已看 = 星星（无数字）+ 相对日期
+  // 灰色小字（issue 208 纯展示，状态流转统一走右键菜单）：想看/在看 = 状态 + 相对日期；已看 = 星星（无数字）+ 相对日期
   let metaInner = esc(relDate(item.watchDate));
   if (item.status === STATUS_WANT || item.status === STATUS_WATCHING) {
-    metaInner = `<span class="bz-cinema-st-label" data-cinema-upgrade="${key}">${statusText(item.status)}</span> · ${metaInner}`;
+    metaInner = `<span class="bz-cinema-st-label">${statusText(item.status)}</span> · ${metaInner}`;
   } else if (item.rating && item.rating > 0) {
     metaInner = `<span class="bz-cinema-p-stars">${stars(item.rating)}</span> · ${metaInner}`;
   }
   return `<div class="bz-cinema-pcard" data-cinema-idx="${key}">
     ${posterBlock(item, app, 'bz-cinema-poster-wrap')}${badge}
     <div class="bz-cinema-p-name">${esc(item.name)}</div>
-    <div class="bz-cinema-p-meta${upgradeable ? ' bz-cinema-p-meta-up' : ''}">${metaInner}</div></div>`;
+    <div class="bz-cinema-p-meta">${metaInner}</div></div>`;
 }
 
 /** 星星串（5 星轨道，黄色）——星级为分数语义展示，保留文本 ★☆（非图标用途） */
@@ -319,7 +318,15 @@ function stars(rating: number): string {
 
 function renderListHtml(app: App): string {
   const list = getDisplayItems();
-  return `<div class="bz-cinema-grid">${list.map((it) => pcardHtml(it, app)).join('')}</div>`;
+  // 网格每行列数（issue 208）：设置 cinemaGridColumns（string 键数字），CSS 变量消费；移动端媒体查询固定 3 列不受影响
+  return `<div class="bz-cinema-grid" style="--bz-cinema-cols:${gridColumns()}">${list.map((it) => pcardHtml(it, app)).join('')}</div>`;
+}
+
+/** 网格每行列数（设置 cinemaGridColumns；空值/非法回退默认 5，钳制 2~12） */
+export function gridColumns(): number {
+  const raw = Number((tryGetSettings() as Record<string, unknown>).cinemaGridColumns);
+  if (!Number.isFinite(raw) || raw <= 0) return 5;
+  return Math.min(12, Math.max(2, Math.round(raw)));
 }
 
 /**
@@ -453,7 +460,10 @@ export function renderAll(app: App): void {
     mountIcons(nav);
   }
   const mobNav = M.currentOverlay?.querySelector('.bz-mobstrip') as HTMLElement | null;
-  if (mobNav) mobNav.innerHTML = renderMobNavHtml();
+  if (mobNav) {
+    mobNav.innerHTML = renderMobNavHtml();
+    mountIcons(mobNav); // chips 行头图标（issue 208「全部」加图标后需替换占位）
+  }
   const mainHead = M.currentOverlay?.querySelector('.bz-main-head') as HTMLElement | null;
   if (mainHead) {
     mainHead.outerHTML = renderMainHeadHtml(app);
@@ -463,19 +473,19 @@ export function renderAll(app: App): void {
   renderContent(app);
 }
 
-/** 移动端分类横滑条（共享 .bz-mobstrip-chip；类型 + 状态，顶部「全部」chip；点击筛选单选切换） */
+/** 移动端分类横滑条（共享 .bz-mobstrip-chip；类型 + 状态，「全部」chip 行头带图标；再点选中 chip 取消回全部） */
 function renderMobNavHtml(): string {
   const groupCounts = countBy(M.items, (it) => it.group);
   const statusCounts = { 想看: 0, 在看: 0, 已看: 0 };
   M.items.forEach((it) => { statusCounts[statusText(it.status)]++; });
   let html = '';
-  html += `<span class="bz-mobstrip-chip${!M.typeFilter && !M.subFilter ? ' is-on' : ''}" data-cinema-mob data-cinema-type="all">全部</span>`;
+  html += `<span class="bz-mobstrip-chip${!M.typeFilter && !M.subFilter ? ' is-on' : ''}" data-cinema-mob data-cinema-type="all">${iconSpan('layout-grid')}全部</span>`;
   for (const g of GROUP_ORDER) {
     if (!groupCounts[g]) continue;
-    // 类型 chip 选中 = 筛该组（或组内二级）
+    // 类型 chip 选中 = 筛该组（或组内二级）；再点已选 chip 由点击委托取消回全部
     html += `<span class="bz-mobstrip-chip${M.typeFilter === g ? ' is-on' : ''}" data-cinema-mob data-cinema-type="${g}">${g}</span>`;
   }
-  html += `<span class="bz-mobstrip-chip${!M.statusFilter ? ' is-on' : ''}" data-cinema-mob data-cinema-status="all">状态全部</span>`;
+  html += `<span class="bz-mobstrip-chip${!M.statusFilter ? ' is-on' : ''}" data-cinema-mob data-cinema-status="all">${iconSpan('layout-grid')}状态全部</span>`;
   (['想看', '在看', '已看'] as const).forEach((s) => {
     html += `<span class="bz-mobstrip-chip${M.statusFilter === s ? ' is-on' : ''}" data-cinema-mob data-cinema-status="${s}">${s}</span>`;
   });
@@ -528,8 +538,8 @@ function openDetail(item: CinemaItem, app: App): void {
     body += '<div class="bz-cinema-sec-title">豆瓣信息</div>';
     rows.forEach(([k, v]) => { body += `<div class="bz-cinema-kv"><span class="bz-cinema-kv-k">${k}</span><span class="bz-cinema-kv-v">${esc(v)}</span></div>`; });
   }
-  // 豆瓣直达（增强包需求 6）：链接行附「豆瓣页面」外链按钮
-  if (item.doubanUrl) body += `<div class="bz-cinema-kv"><span class="bz-cinema-kv-k">豆瓣链接</span><span class="bz-cinema-kv-v"><a href="${esc(item.doubanUrl)}" target="_blank" rel="noopener">${esc(item.doubanUrl)}</a><a class="bz-btn bz-btn--ghost bz-btn--sm bz-touch-target bz-cinema-dm-douban" href="${esc(item.doubanUrl)}" target="_blank" rel="noopener">${iconSpan(ICON.ext, 'bz-ic--xs')}豆瓣页面</a></span></div>`;
+  // 豆瓣链接行（issue 208：仅保留可点链接文本；「豆瓣页面」按钮删除——打开豆瓣统一走右键菜单「在豆瓣打开」）
+  if (item.doubanUrl) body += `<div class="bz-cinema-kv"><span class="bz-cinema-kv-k">豆瓣链接</span><span class="bz-cinema-kv-v"><a href="${esc(item.doubanUrl)}" target="_blank" rel="noopener">${esc(item.doubanUrl)}</a></span></div>`;
   if (item.synopsis) body += `<div class="bz-cinema-sec-title">简介</div><div class="bz-cinema-synopsis">${esc(item.synopsis)}</div>`;
   body += `<div class="bz-cinema-form-actions"><button class="bz-btn bz-btn--ghost" data-cinema-dm-similar>${iconSpan(ICON.ai, 'bz-ic--sm')}找同类</button><button class="bz-btn bz-btn--ghost" data-cinema-dm-edit>${iconSpan(ICON.edit, 'bz-ic--sm')}编辑</button><button class="bz-btn bz-btn--danger" data-cinema-dm-del>${iconSpan(ICON.del, 'bz-ic--sm')}删除</button></div>`;
   const { popup, close } = uiModal({ content: body, maxWidth: 400, className: 'bz-cinema-dm' });
@@ -555,13 +565,6 @@ function localNow(): string {
   const d = new Date();
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-}
-
-/** 本地日期 YYYY-MM-DD（观影日期字段的默认值：今天） */
-function localToday(): string {
-  const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
 /** 文件名非法字符（Windows 保留集；名称源自文件名《X》，改名前拦截） */
@@ -636,14 +639,12 @@ function openEditForm(item: CinemaItem | null, app: App): void {
   const ratingVal = item && item.rating && item.rating > 0 ? item.rating : DEFAULT_RATING;
   const initTag = item ? item.typeTag : ALL_TAGS[0];
   const initStatus = item ? statusText(item.status) : '已看';
-  // 观影日期（增强包需求 8）：补录已看可指定；默认今天；编辑回填原日期的日期部分
-  const initDate = editing && item?.watchDate ? item.watchDate.slice(0, 10) : localToday();
+  // 观影日期不设表单字段（issue 208：不允许用户修改）——创建/状态变更自动刷当前时间
   const html = `<div class="bz-cinema-form-title">${editing ? '编辑影视' : '添加影视'}</div>
     <div class="bz-cinema-form">
       <div class="bz-field"><span class="bz-field-label">名称</span><input class="bz-input" id="bz-cinema-f-name" value="${item ? esc(item.name) : ''}" placeholder="影视名称"></div>
       <div class="bz-field"><span class="bz-field-label">类型</span><span class="bz-choice">${choiceGroupHtml({ values: ALL_TAGS, initial: initTag, attr: 'cinema-f-tag' })}</span></div>
       <div class="bz-field"><span class="bz-field-label">状态</span><span class="bz-choice">${choiceGroupHtml({ values: ['想看', '在看', '已看'], initial: initStatus, attr: 'cinema-f-status' })}</span></div>
-      <div class="bz-field" id="bz-cinema-f-date-field"><span class="bz-field-label">观影日期</span><input type="date" class="bz-input" id="bz-cinema-f-date" value="${esc(initDate)}"></div>
       <div class="bz-field" id="bz-cinema-f-rating-field"><span class="bz-field-label">评分（已看）</span><span class="bz-cinema-rating-row"><input type="range" class="bz-range" id="bz-cinema-f-rating" min="1" max="${RATING_MAX}" step="0.1" value="${ratingVal}"><span class="bz-cinema-rating-val" id="bz-cinema-f-rating-val">${Number(ratingVal).toFixed(1)}</span></span></div>
       <div class="bz-field" id="bz-cinema-f-review-field"><span class="bz-field-label">影评</span><textarea class="bz-input" id="bz-cinema-f-review" placeholder="写点什么…">${item ? esc(item.review ?? '') : ''}</textarea></div>
     </div>
@@ -654,13 +655,11 @@ function openEditForm(item: CinemaItem | null, app: App): void {
   const ratingInput = popup.querySelector('#bz-cinema-f-rating') as HTMLInputElement;
   const ratingValEl = popup.querySelector('#bz-cinema-f-rating-val') as HTMLElement;
   ratingInput.addEventListener('input', () => { ratingValEl.textContent = Number(ratingInput.value).toFixed(1); });
-  // 需求：想看/在看 不显示观影日期/评分/影评（仅「已看」显示——观影日期只对已看有统计意义）
-  const dateField = popup.querySelector('#bz-cinema-f-date-field') as HTMLElement;
+  // 需求：想看/在看 不显示评分/影评（仅「已看」显示）
   const ratingField = popup.querySelector('#bz-cinema-f-rating-field') as HTMLElement;
   const reviewField = popup.querySelector('#bz-cinema-f-review-field') as HTMLElement;
   const syncFieldsByStatus = (status: string): void => {
     const show = status === '已看';
-    dateField.style.display = show ? '' : 'none';
     ratingField.style.display = show ? '' : 'none';
     reviewField.style.display = show ? '' : 'none';
   };
@@ -674,14 +673,9 @@ function openEditForm(item: CinemaItem | null, app: App): void {
     const tag = getTag() || ALL_TAGS[0];
     const status = getStatus() || '已看';
     const rating = parseFloat(ratingInput.value);
-    // 观影日期（增强包需求 8）：已看可指定（默认今天）；编辑未改日期时保留原值（含时间部分，避免无谓改写格式）
-    const dateInput = popup.querySelector('#bz-cinema-f-date') as HTMLInputElement;
-    const pickedDate = dateInput.value;
-    const date = editing && item
-      ? (pickedDate
-        ? (item.watchDate && item.watchDate.slice(0, 10) === pickedDate ? item.watchDate : pickedDate)
-        : (item.watchDate || localNow()))
-      : (pickedDate ? pickedDate : localNow());
+    // 观影日期（issue 208）：不可改——创建 = 当前时间；编辑仅状态流转时刷新，否则保留原值
+    const statusChanged = !editing || !item || item.status !== (status === '想看' ? STATUS_WANT : status === '在看' ? STATUS_WATCHING : STATUS_WATCHED);
+    const date = statusChanged ? localNow() : (item!.watchDate || localNow());
     // 需求：非已看状态不保存影评
     const review = status === '已看' ? (popup.querySelector('#bz-cinema-f-review') as HTMLTextAreaElement).value.trim() : '';
     const group = getGroupForTag(tag) ?? '其他';
@@ -787,64 +781,6 @@ function openDeleteConfirm(item: CinemaItem, app: App): void {
   });
 }
 
-// ---------- 快速状态窗（升级 + 评分滑杆 + 影评） ----------
-
-function openQuickStatus(item: CinemaItem, app: App): void {
-  // 升级路径：想看 →（在看/已看）；在看 →（已看）——平铺单选（组件库 .bz-choice）
-  // 增强包需求 9：默认选「已看」（终态占比最高，少一次点选）
-  const targets = item.status === STATUS_WANT ? ['在看', '已看'] : ['已看'];
-  const def = targets.includes('已看') ? '已看' : targets[0];
-  const btns = targets.map((s) => `<button type="button" class="bz-choice-btn${s === def ? ' is-on' : ''}" data-cinema-qs="${s}" data-value="${s}">${s}</button>`).join('');
-  const curRating = item.rating && item.rating > 0 ? item.rating : DEFAULT_RATING;
-  const html = `<div class="bz-cinema-qs-title">${esc(item.name)}</div>
-    <div class="bz-cinema-qs-btns">${btns}</div>
-    <div class="bz-cinema-qs-rating"><div class="bz-field"><span class="bz-field-label">评分（已看时生效）</span>
-      <span class="bz-cinema-rating-row"><input type="range" class="bz-range" id="bz-cinema-qs-rating" min="1" max="${RATING_MAX}" step="0.1" value="${curRating}">
-      <span class="bz-cinema-rating-val" id="bz-cinema-qs-rating-val">${Number(curRating).toFixed(1)}</span></span></div></div>
-    <div class="bz-cinema-qs-review"><div class="bz-field"><span class="bz-field-label">影评</span><textarea class="bz-input" id="bz-cinema-qs-review" placeholder="写点什么…">${item.review ? esc(item.review) : ''}</textarea></div></div>
-    <div class="bz-cinema-form-actions"><button class="bz-btn bz-btn--primary" id="bz-cinema-qs-save">保存</button></div>
-    <div class="bz-cinema-qs-hint">想快速看完？点「在看」→「已看」，评分与影评一步保存。</div>`;
-  const { popup, close } = uiModal({ content: html, maxWidth: 360, className: 'bz-cinema-dm' });
-  const getSelected = bindChoice(popup, '[data-cinema-qs]');
-  const ratingInput = popup.querySelector('#bz-cinema-qs-rating') as HTMLInputElement;
-  const ratingValEl = popup.querySelector('#bz-cinema-qs-rating-val') as HTMLElement;
-  ratingInput.addEventListener('input', () => { ratingValEl.textContent = Number(ratingInput.value).toFixed(1); });
-  popup.querySelector('#bz-cinema-qs-save')?.addEventListener('click', () => {
-    const ratingVal = parseFloat(ratingInput.value);
-    const review = (popup.querySelector('#bz-cinema-qs-review') as HTMLTextAreaElement).value.trim();
-    const selected = getSelected() || def;
-    const mapped = selected === '已看' ? ratingVal : selected === '在看' ? 0 : -1;
-    // from 快照（事件载荷用；对齐旧 movie 语义，见 ADR-0087）
-    const fromSt = item.status === STATUS_WANT ? 'want' : item.status === STATUS_WATCHING ? 'watching' : 'watched';
-    const fromRating = item.rating && item.rating > 0 ? item.rating : null;
-    const fromReview = item.review || null;
-    item.status = selected === '已看' ? STATUS_WATCHED : selected === '在看' ? STATUS_WATCHING : STATUS_WANT;
-    item.rating = mapped;
-    if (review) item.review = review;
-    else item.review = null;
-    // CM1：流转为「已看」时刷新观影日期（统计口径按看完时间，非加入时间）
-    if (item.status === STATUS_WATCHED && fromSt !== 'watched') item.watchDate = localNow();
-    void (async () => {
-      try {
-        await persistItem(item, app);
-        close();
-        notice(`已把「${item.name}」标记为${selected}`, 'success');
-        // 事件补发（smartcat 行为流观察）：状态流转 + 条件评分/影评（对齐旧 movie 快速状态窗）
-        const toSt = item.status === STATUS_WANT ? 'want' : item.status === STATUS_WATCHING ? 'watching' : 'watched';
-        if (toSt !== fromSt) emitDomainEvent('movie', { kind: 'status', name: item.name, from: fromSt, to: toSt });
-        const toRating = item.rating && item.rating > 0 ? item.rating : null;
-        if (toRating !== null && toRating !== fromRating) emitDomainEvent('movie', { kind: 'rated', name: item.name, fromRating, toRating });
-        const toReview = item.review || null;
-        if (toReview !== fromReview) emitDomainEvent('movie', { kind: 'review', name: item.name, fromReview, toReview: toReview });
-        renderAll(app);
-      } catch (e) {
-        notifySaveError(e);
-        console.error(e);
-      }
-    })();
-  });
-}
-
 // ---------- 主 overlay ----------
 
 /** 头部图标钮 HTML（移动端工具/关闭；bz-touch-target 触控热区收编 core 共享类） */
@@ -918,25 +854,18 @@ export function createOverlay(app: App): void {
       closeOverlay();
       return;
     }
-    // 类型：全部/组。点组=筛组+展开其二级（互斥收起其他组）；点「全部」=清空类型与二级；
-    // 点已选组不取消（回全部靠「全部」）；点组内二级=筛二级（组跟随选中）
+    // 类型：全部/组。点组=筛组+展开其二级（互斥收起其他组）；再点已选组=取消回「全部」（二级随收起，issue 208）；
+    // 点「全部」=清空类型与二级；点组内二级=筛二级（组跟随选中）
     const navItem = t.closest('[data-cinema-type]') as HTMLElement | null;
     if (navItem) {
       const g = navItem.dataset.cinemaType as string;
-      const isMob = navItem.hasAttribute('data-cinema-mob');
-      if (g === 'all') {
+      if (g === 'all' || (M.typeFilter === g && !M.subFilter)) {
+        // 点「全部」/ 再点已选组：回全部（展开态绑定期选中，取消自动收起）
         M.typeFilter = null;
         M.subFilter = null;
-      } else if (M.typeFilter === g && !M.subFilter) {
-        // 再点已选组：不取消（对齐待办全部模型），保持筛选
       } else {
         M.typeFilter = g;
         M.subFilter = null;
-        // 展开态 = 本组选中；其他组自动收起（手风琴）
-        if (!isMob) {
-          const subs = (GROUP_SUBS[g] || []).filter((s) => M.items.some((i) => i.typeTag === s));
-          if (subs.length) M.expanded[g] = true;
-        }
       }
       M.view = 'list';
       renderAll(app);
@@ -1011,14 +940,7 @@ export function createOverlay(app: App): void {
       }
       return;
     }
-    // 快速状态升级（想看/在看 灰色小字）
-    const up = t.closest('[data-cinema-upgrade]') as HTMLElement | null;
-    if (up) {
-      const item = cinemaItemByKey(up.dataset.cinemaUpgrade);
-      if (item) openQuickStatus(item, app);
-      return;
-    }
-    // 海报卡片 → 详情
+    // 海报卡片 → 详情（issue 208：状态灰字纯展示不弹窗，状态流转统一走右键菜单）
     const pcard = t.closest('[data-cinema-idx]') as HTMLElement | null;
     if (pcard) {
       const item = cinemaItemByKey(pcard.dataset.cinemaIdx);

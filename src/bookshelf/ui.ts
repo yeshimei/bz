@@ -243,6 +243,13 @@ function bookCardHTML(it: BookshelfItem, app: App): string {
   </div>`;
 }
 
+/** 封面网格每行列数（设置 bookshelfGridColumns；空值/非法回退默认 6，钳制 2~12；issue 208） */
+export function gridColumns(): number {
+  const raw = Number((tryGetSettings() as Record<string, unknown>).bookshelfGridColumns);
+  if (!Number.isFinite(raw) || raw <= 0) return 6;
+  return Math.min(12, Math.max(2, Math.round(raw)));
+}
+
 function renderShelves(app: App): void {
   const list = getDisplayItems();
   // B9：空态三态区分——库空 / 搜索无命中 / 状态筛无书（图标语义各自匹配）
@@ -251,8 +258,9 @@ function renderShelves(app: App): void {
       : M.searchKeyword
         ? { icon: EMPTY_SEARCH_ICON, title: '没有找到相关的书', desc: '试试其他关键词，或换一个筛选' }
         : { icon: EMPTY_FILTER_ICON, title: '这个筛选下还没有书', desc: '换一个状态或分类筛选，或用搜索找找' };
+  // 网格每行列数（issue 208）：设置驱动 CSS 变量；移动端媒体查询固定 2 列不受影响
   const gridOrEmpty = list.length
-    ? `<div class="bz-bs-grid">${list.map((it) => bookCardHTML(it, app)).join('')}</div>`
+    ? `<div class="bz-bs-grid" style="--bz-bs-cols:${gridColumns()}">${list.map((it) => bookCardHTML(it, app)).join('')}</div>`
     : `<div class="bz-bs-none">${uiEmpty({ icon: emptyCfg.icon, title: emptyCfg.title, desc: emptyCfg.desc }).outerHTML}</div>`;
   const dEl = M.currentOverlay?.querySelector('.bz-bs-shelves') as HTMLElement | null;
   const mEl = M.currentOverlay?.querySelector('.bz-bs-shelves-m') as HTMLElement | null;
@@ -450,7 +458,8 @@ function openFilterDrawer(app: App): void {
         count: c.count,
         selected: c.name === M.catFilter,
         onClick: () => {
-          M.catFilter = c.name;
+          // 再点已选分类 chip = 回「全部」（issue 208 全域统一交互）
+          M.catFilter = c.name !== 'all' && M.catFilter === c.name ? 'all' : c.name;
           renderSide();
           renderShelves(app);
           paintFilterBtn();
@@ -479,7 +488,9 @@ function openFilterDrawer(app: App): void {
     if (t === mask || t.closest('[data-bs-drawer-close]')) { closeDrawer(); return; }
     const opt = t.closest('[data-bs-dopt]') as HTMLElement | null;
     if (opt) {
-      M.side = (opt.dataset.bsDopt || 'all') as SideId;
+      const id = (opt.dataset.bsDopt || 'all') as SideId;
+      // 再点已选状态 = 回「全部」（issue 208 全域统一交互）
+      M.side = id !== 'all' && M.side === id ? 'all' : id;
       closeDrawer();
       renderSide();
       renderShelves(app);
@@ -868,14 +879,17 @@ export function createOverlay(app: App): void {
     if (t.closest('.bz-bs-sort')) return;
     const side = t.closest('[data-bs-side]') as HTMLElement | null;
     if (side) {
-      M.side = (side.dataset.bsSide || 'all') as SideId;
+      const id = (side.dataset.bsSide || 'all') as SideId;
+      // 再点已选状态 = 回「全部」（issue 208 全域统一交互；「全部」行本身恒置 all）
+      M.side = id !== 'all' && M.side === id ? 'all' : id;
       renderSide(); renderShelves(app); paintFilterBtn();
       return;
     }
-    // 分类第二组（与状态正交）
+    // 分类第二组（与状态正交）；再点已选分类 = 回「全部」
     const cat = t.closest('[data-bs-cat]') as HTMLElement | null;
     if (cat) {
-      M.catFilter = cat.dataset.bsCat || 'all';
+      const name = cat.dataset.bsCat || 'all';
+      M.catFilter = name !== 'all' && M.catFilter === name ? 'all' : name;
       renderSide(); renderShelves(app); paintFilterBtn();
       return;
     }

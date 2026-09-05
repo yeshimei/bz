@@ -88,7 +88,8 @@
 .bz-bs-none { padding: var(--bz-space-xl) var(--bz-space-md); }
 
 /* 封面网格（平铺；桌面响应式列，移动 2 列） */
-.bz-bs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px 16px; }
+/* 列数由设置 bookshelfGridColumns 驱动（issue 208）：ui.ts 渲染时内联 --bz-bs-cols，默认 6；移动端媒体查询固定 2 列不受影响 */
+.bz-bs-grid { display: grid; grid-template-columns: repeat(var(--bz-bs-cols, 6), 1fr); gap: 20px 16px; }
 .bz-bs-book { cursor: pointer; min-width: 0; }
 .bz-bs-cover-wrap {
   position: relative; aspect-ratio: 118 / 165; border-radius: 8px; overflow: hidden;

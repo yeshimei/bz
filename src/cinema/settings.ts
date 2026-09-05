@@ -2,7 +2,7 @@
  * 影院（cinema）域设置 schema（接入设置面板；窗口内无设置按钮，收敛进 Obsidian 设置面板）
  * issue 194：补「显示」组——默认排序/默认状态筛选（打开面板时读，非法值回落，见 index.ts readDefaultView）。
  */
-import { mobileFullscreenGroup } from '../core/settings-common';
+import { mobileFullscreenGroup, numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 
 export function cinemaSettingsSchema(): SettingsSchema {
@@ -42,6 +42,15 @@ export function cinemaSettingsSchema(): SettingsSchema {
               { value: '在看', label: '在看' },
               { value: '已看', label: '已看' },
             ],
+          },
+          {
+            type: 'number',
+            name: '网格每行列数',
+            desc: '海报网格每一行的列数，范围 2 到 12，重开面板生效',
+            binding: numStrBinding('cinemaGridColumns', 5),
+            min: 2,
+            max: 12,
+            step: 1,
           },
         ],
       },
