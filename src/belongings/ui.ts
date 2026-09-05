@@ -417,7 +417,7 @@ async function openPanelInner(): Promise<void> {
   bindSearch(overlay.querySelector('[data-bel-search]') as HTMLInputElement);
   bindSearch(overlay.querySelector('[data-bel-mobsearch-inp]') as HTMLInputElement);
 
-  // 内容区：行点击（移动抽屉 / 桌面浮层）+ 右键 + 年节折叠
+  // 内容区：行点击（移动抽屉；桌面不动作，菜单只走右键）+ 右键 + 年节折叠
   const content = overlay.querySelector('[data-bel-content]') as HTMLElement;
   content.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
@@ -439,8 +439,8 @@ async function openPanelInner(): Promise<void> {
     e.stopPropagation();
     const it = itemById(row.dataset.belId as string);
     if (!it) return;
+    // 桌面点击不再弹操作菜单（issue 202，同收藏本 issue 201）：菜单只走右键；移动点行弹底部详情抽屉
     if (isMobileEnv()) openMobSheet(it);
-    else openRowMenu(row, it);
   });
   content.addEventListener('contextmenu', (e) => {
     const row = (e.target as HTMLElement).closest('[data-bel-id]') as HTMLElement | null;
@@ -555,11 +555,11 @@ function applyStatusFilter(k: string): void {
 
 function renderStatus(): void {
   const overlay = M.overlay!;
-  // 左栏 = 组件库 uiRail（.bz-rail）：前缀状态图标 + 胶囊计数；
+  // 左栏 = 组件库 uiRail（.bz-rail）：前缀状态图标 + 素数计数（issue 202：去胶囊背景）；
   // 合成筛选（asset）非四态之一 → 无高亮行
   const items: BzRailItem[] = [
-    { id: '__all', name: '全部', icon: ICON.all, count: itemList().length, pill: true },
-    ...STATUS_ORDER.map((s) => ({ id: s.key, name: s.label, icon: STATUS[s.key].ic, count: statusCount(s.label), pill: true })),
+    { id: '__all', name: '全部', icon: ICON.all, count: itemList().length },
+    ...STATUS_ORDER.map((s) => ({ id: s.key, name: s.label, icon: STATUS[s.key].ic, count: statusCount(s.label) })),
   ];
   const rail = uiRail({
     groups: [{ label: '状态', items }],
@@ -798,10 +798,6 @@ function buildActions(it: BelongingsItem, rebuild: () => void): ItemAction[] {
   return acts;
 }
 
-function openRowMenu(row: HTMLElement, it: BelongingsItem): void {
-  const r = row.getBoundingClientRect();
-  openRowMenuAt(row, it, r.right, r.top);
-}
 function openRowMenuAt(row: HTMLElement, it: BelongingsItem, x: number, y: number): void {
   const rebuild = () => {
     const it2 = itemById(it.id);
@@ -964,7 +960,7 @@ export function openForm(it: BelongingsItem | null): void {
   mask.className = 'bz-overlay-mask bz-bel-form-mask';
   const priceVal = it ? String(it.purchase_price ?? '') : '';
   const dateVal = it ? String(it.purchase_date || '').slice(0, 10) : todayStr();
-  const catVal = it?.category ?? DEFAULT_CATEGORIES[0] ?? '';
+  const catVal = it?.category ?? ''; // 新记不回填默认分类（issue 202），留空待选
   const descVal = it?.description ?? '';
   // 出离字段初值（ADR-0089）：编辑回填 exit_date；新记/未记 = 今天留空语义见下
   const exitDateVal = it?.exit_date ? String(it.exit_date).slice(0, 10) : todayStr();

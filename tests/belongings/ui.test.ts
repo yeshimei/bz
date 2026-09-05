@@ -6,7 +6,7 @@
  *   src/belongings/ui.ts：openPanel（toggle）/ openForm / cleanupBelongings / belongingSettingsSchema；
  *   DOM：.bz-panel-overlay > .bz-bel-panel → 左状态栏 + 移动 chips → 搜索/年份 → 统计卡 →
  *   年→月时间轴行（行 = 名称/状态徽章/分类名·日期/天数/价格/日均副行）；
- *   行操作桌面右键/单击跟手菜单、移动底部抽屉（core/item-actions）；删除走 core/flow-dialog
+ *   行操作桌面右键菜单（单击无动作，issue 202）、移动底部抽屉（core/item-actions）；删除走 core/flow-dialog
  *   （#__shared_confirm_*）；动作发域事件（onDomainEvent('belongings') spy 断言载荷）；
  *   数据文件 modify 自动刷新（vault.emit）；表单校验与保存（记一笔/编辑，belongingsEditChanges 真实纯函数）。
  *
@@ -63,7 +63,7 @@ const searchInp = () => document.querySelector('[data-bel-search]') as HTMLInput
 function rightClick(row: HTMLElement, x = 60, y = 60) {
   row.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: x, clientY: y }));
 }
-/** 单击行（桌面=跟手菜单 / 移动=底部抽屉） */
+/** 单击行（桌面=无动作，菜单只走右键 / 移动=底部抽屉） */
 function clickRow(row: HTMLElement) {
   row.click();
 }
@@ -179,6 +179,8 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     const names = [...document.querySelectorAll('[data-bel-status] .bz-rail-name')].map((e) => e.textContent);
     expect(names).toEqual(['全部', '使用中', '闲置', '已转卖', '已丢弃']);
     expect(document.querySelector('[data-bel-status] .bz-rail-item.on')!.getAttribute('data-id')).toBe('__all');
+    // issue 202：计数走素数档，无胶囊背景类
+    expect(document.querySelectorAll('[data-bel-status] .bz-rail-count--pill').length).toBe(0);
   });
 
   it('toggle：已开再 openPanel 关闭（overlay 移除）；重复关闭安全（幂等）', async () => {
@@ -674,10 +676,13 @@ describe('归物本行操作（桌面菜单 / 移动抽屉 / 动作集）', () =
     closeItemMenu();
   });
 
-  it('桌面单击行 → 同样出跟手菜单（content 点击委托路径）', async () => {
+  it('桌面单击行不出菜单（issue 202：菜单只走右键）；右键仍出', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘' }) });
     await open(vault);
     clickRow(rows()[0]);
+    await flush();
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
+    rightClick(rows()[0]);
     await flush();
     expect(document.querySelector('.bz-item-menu')).not.toBeNull();
     expect(actionLabels()).toContain('编辑');
@@ -884,12 +889,12 @@ describe('归物本表单（记一笔 / 编辑）', () => {
 
   const stBtns = () => [...formMask().querySelectorAll('[data-status]')] as HTMLElement[];
 
-  it('主按钮「记一笔」开表单：标题/默认分类（默认分类首条）/日期今天/状态平铺默认使用中', async () => {
+  it('主按钮「记一笔」开表单：标题/分类默认空（issue 202 不回填）/日期今天/状态平铺默认使用中', async () => {
     await open(vault);
     openAddForm(panel()!);
     expect(formTitle()).toBe('记一笔');
     expect(saveBtn().textContent).toBe('保存');
-    expect(catInp().value).toBe('📱 智能手机'); // DEFAULT_CATEGORIES[0]
+    expect(catInp().value).toBe('');
     expect(dateInp().value).not.toBe('');
     expect(stBtns().map((b) => b.dataset.status)).toEqual(['使用中', '闲置', '已转卖', '已丢弃']);
     expect(stBtns().find((b) => b.dataset.status === '使用中')!.classList.contains('is-on')).toBe(true);
@@ -1169,6 +1174,7 @@ describe('归物本自动刷新 / 事件载荷 / schema / XSS', () => {
     (panel()!.querySelector('.bz-main-head [data-bel-add]') as HTMLElement).click();
     nameInp().value = '新物品';
     priceInp().value = '10';
+    catInp().value = '🎧 耳机耳麦'; // issue 202：分类不再默认回填，保存前须自选
     saveBtn().click();
     await flush();
     expect(content()!.textContent).toContain('新物品');
