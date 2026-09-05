@@ -26,6 +26,10 @@ export interface BookshelfItem {
   readingTimeMs: number;
   highlights: number;
   thinks: number;
+  /** 字数（md 书 frontmatter wordCount；EPUB 无则 0）——书脊厚度量（issue 218） */
+  wordCount: number;
+  /** 页数（md 书 frontmatter pages；EPUB 无则 0）——详情台账展示 */
+  pages: number;
   /** 派生展示态：未读 / 在读 / 已读 */
   status: string;
   /** true = Weave 数据驱动的 EPUB 条目（ADR-0013 口径） */
@@ -37,8 +41,8 @@ export interface BookshelfItem {
 /** 侧栏/抽屉筛选视图 */
 export type SideId = 'all' | 'reading' | 'unread' | 'done';
 
-/** 排序键（对应 SORT_LABEL） */
-export type SortKey = 'date' | 'title' | 'author' | 'progress';
+/** 排序键（对应 SORT_LABEL；issue 218 书脊墙三档） */
+export type SortKey = 'recent' | 'time' | 'title';
 
 /** 面板内视图（读书报告内嵌化拍板：报告不再是独立弹窗，而是面板内的一个视图） */
 export type BookshelfView = 'shelf' | 'report';
@@ -51,15 +55,12 @@ export interface BookshelfState {
   /** 分类筛选（'all' = 全部；与状态正交；值 = category 或「未分类」，左栏与移动抽屉共用） */
   catFilter: string;
   sortMode: SortKey;
-  /** 桌面搜索框关键字（移动端独立输入框，共用 currentList 过滤） */
+  /** 搜索框关键字（墙头工具行单一输入框） */
   searchKeyword: string;
   searchDebounceTimer: ReturnType<typeof setTimeout> | null;
-  /** 是否已打开过滤抽屉（抽屉关闭时同步视图） */
   appRef: App | null;
   folderPath: string;
   renderFn: (() => void) | null;
-  /** 移动端筛选抽屉元素（互斥单例） */
-  drawerEl: HTMLElement | null;
   /** 面板内当前视图：书架列表 / 阅读分析报告（重开面板保持；unload 复位） */
   view: BookshelfView;
 }
@@ -69,19 +70,18 @@ export const M: BookshelfState = {
   items: [],
   side: 'all',
   catFilter: 'all',
-  sortMode: 'date',
+  sortMode: 'recent',
   searchKeyword: '',
   searchDebounceTimer: null,
   appRef: null,
   folderPath: '书库',
   renderFn: null,
-  drawerEl: null,
   view: 'shelf',
 };
 
 /**
- * 打开面板时的默认视图接线（issue 194）：每次冷开读设置，非法值回落
- * （side 仅认 all/reading/unread/done 之外回落 all；sortMode 之外回落 date）。
+ * 打开面板时的默认视图接线（issue 194）：每次冷开读设置，非法值回落。
+ * 排序旧值零感知迁移（issue 218）：date/author → recent、progress → time、title 沿用。
  * 与收藏本 openPanel 同语义：设置是「下次打开的初始值」，面板内改选为会话内临时态。
  */
 export function applyDefaultView(): void {
@@ -89,7 +89,9 @@ export function applyDefaultView(): void {
   const side = s.bookshelfDefaultSide;
   M.side = side === 'reading' || side === 'unread' || side === 'done' ? side : 'all';
   const sort = s.bookshelfSortMode;
-  M.sortMode = sort === 'title' || sort === 'author' || sort === 'progress' ? sort : 'date';
+  if (sort === 'title') M.sortMode = 'title';
+  else if (sort === 'progress') M.sortMode = 'time';
+  else M.sortMode = 'recent';
 }
 
 /** 测试/重建用：整体重置模块状态 */
@@ -98,12 +100,11 @@ export function resetBookshelfState(): void {
   M.items = [];
   M.side = 'all';
   M.catFilter = 'all';
-  M.sortMode = 'date';
+  M.sortMode = 'recent';
   M.searchKeyword = '';
   M.searchDebounceTimer = null;
   M.appRef = null;
   M.folderPath = '书库';
   M.renderFn = null;
-  M.drawerEl = null;
   M.view = 'shelf';
 }

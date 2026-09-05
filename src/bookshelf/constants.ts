@@ -25,12 +25,11 @@ export const SIDE_DEFS: { id: SideId; label: string; sub: string; icon: string }
   { id: 'done', label: STATUS_DONE, sub: '已经读完', icon: 'check-circle' },
 ];
 
-/** 排序键 → 展示文案（排序下拉选项） */
+/** 排序键 → 展示文案（书脊墙工具行三档，issue 218 原型口径） */
 export const SORT_LABEL: Record<SortKey, string> = {
-  date: '最近阅读',
+  recent: '最近读完',
+  time: '时长最长',
   title: '书名',
-  author: '作者',
-  progress: '进度',
 };
 
 /** 桌面头行/弹窗图标（lucide 名） */

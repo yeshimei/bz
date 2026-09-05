@@ -28,16 +28,17 @@ describe('批 C-1：.bz-bs-quote 双定义拆雷（笔记侧改名 .bz-bs-hl-quo
     expect(quote![1]).not.toMatch(/linear-gradient/);
   });
 
-  it('封面书评浮层 .bz-bs-quote 独立生效（保留绝对定位浮层形制），笔记挂载点全部改名', () => {
+  it('封面书评浮层随网格退役（issue 218 书脊墙：书评在借书卡 .bz-bs-d-quote），笔记挂载点保持 .bz-bs-hl-quote', () => {
     const css = bsCss();
-    const cover = rule(css, '.bz-bs-quote');
-    expect(cover, '封面浮层规则丢失').not.toBeNull();
-    expect(cover![1]).toMatch(/position:\s*absolute/);
-    // 封面进度条 :has 挂钩仍指向封面浮层类
-    expect(css).toContain('.bz-bs-cover-wrap:has(.bz-bs-quote) .bz-bs-prog');
-    // 挂载点：仅封面书评（ui.ts 渲染书评浮层）用 .bz-bs-quote；笔记两处（md + epub）改 .bz-bs-hl-quote
+    // 封面浮层与进度条 :has 挂钩一并退役
+    expect(rule(css, '.bz-bs-quote')).toBeNull();
+    expect(css).not.toContain('.bz-bs-cover-wrap:has(.bz-bs-quote)');
+    // 借书卡书评 = .bz-bs-d-quote（可读多行，非浮层）
+    expect(rule(css, '.bz-bs-d-quote')).not.toBeNull();
+    // 挂载点：ui.ts 不再渲染封面浮层；笔记两处（md + epub）保持 .bz-bs-hl-quote
     const ui = repo('src/bookshelf/ui.ts');
-    expect(ui).toContain('class="bz-bs-quote"');
+    expect(ui).not.toContain('class="bz-bs-quote"');
+    expect(ui).toContain('bz-bs-d-quote');
     const notesUi = repo('src/bookshelf/notes-ui.ts');
     expect(notesUi.match(/bz-bs-hl-quote/g)?.length).toBe(2);
     expect(notesUi).not.toMatch(/className = 'bz-bs-quote'/);
@@ -60,12 +61,12 @@ describe('批 C-2：详情弹窗状态徽标改 .bz-chip--tint（状态色恢复
 });
 
 describe('批 C-3：!important 压基线换类收尾', () => {
-  it('笔记入口 chip 挂 .bz-chip--hover-accent（hover 品牌档），域内 !important hover 规则删除', () => {
+  it('笔记入口改借书卡台账文字钮 .bz-bs-d-openlink（issue 218），域内 hover 配色规则不存在', () => {
     const ui = repo('src/bookshelf/ui.ts');
-    expect(ui).toMatch(/bz-chip bz-chip--hover-accent bz-bs-d-notes/);
+    expect(ui).toMatch(/class="bz-bs-d-openlink" data-bs-notes/);
     const css = bsCss();
     expect(css).not.toContain('.bz-bs-d-notes:hover');
-    expect(css).toMatch(/\.bz-bs-d-notes\s*\{\s*cursor: pointer;\s*\}/); // 仅剩指针钩子
+    expect(css).toMatch(/\.bz-bs-d-openlink:hover\s*\{ text-decoration: underline; \}/); // 仅文字链下划线
   });
 
   it('删除钮挂 .bz-btn--danger-ghost，域内 .bz-bs-d-danger 配色规则删除', () => {
@@ -101,14 +102,16 @@ describe('批 C-4：报告头行样式归位 reading-report', () => {
 });
 
 describe('批 C-5：bookshelf 面板 44px 补接 .bz-panel-mtop', () => {
-  it('面板根节点挂类；移动头行旧垫顶收拢（防双份顶距）', () => {
+  it('面板根节点挂类；书脊墙体系在位（issue 218 换血：头行退役，墙变量/书脊/借书卡落域样式）', () => {
     const ui = repo('src/bookshelf/ui.ts');
-    // ADR-0094：面板壳接入共享 .bz-panel-frame（域内只留宽高）
-    expect(ui).toMatch(/class="bz-panel-frame bz-bs-panel bz-panel-mtop( \$\{bsSkinClass\(\)\})?"/); // issue 216 皮肤类尾随插入
+    // ADR-0094：面板壳接入共享 .bz-panel-frame（域内只留宽高）；issue 216 皮肤类尾随插入
+    expect(ui).toMatch(/class="bz-panel-frame bz-bs-panel bz-panel-mtop( \$\{bsSkinClass\(\)\})?"/);
     const css = bsCss();
-    // 头行移动规则不再自垫 safe-area（.bz-panel-mtop > div:first-child 归零接管）
-    expect(css).not.toMatch(/\.bz-bs-head\s*\{[^}]*safe-area-inset-top/);
-    expect(css).toMatch(/@media \(max-width: 768px\)\s*\{[\s\S]*?\.bz-bs-panel \.bz-panel-head\s*\{\s*height: 46px;\s*\}/);
+    // issue 218：旧头行/网格退役（.bz-panel-head 规则不再存在），书脊墙体系落位
+    expect(css).not.toMatch(/\.bz-bs-panel \.bz-panel-head\s*\{/);
+    expect(css).toMatch(/\.bz-bs-spine\s*\{/);
+    expect(css).toMatch(/\.bz-bs-d-card\s*\{/);
+    expect(css).toMatch(/--bsw-wall:/);
   });
 });
 

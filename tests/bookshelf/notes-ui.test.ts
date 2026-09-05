@@ -120,14 +120,14 @@ describe('书架墙详情弹窗读书笔记入口（迁移自旧 library 域）'
     ensureBookshelf(app);
     await openPanel(app);
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
-    const card = Array.from(overlay.querySelectorAll('.bz-bs-book')).find((b) => b.textContent?.includes('活着')) as HTMLElement;
+    const card = Array.from(overlay.querySelectorAll('.bz-bs-spine')).find((b) => b.textContent?.includes('活着')) as HTMLElement;
     card.click();
     const popup = detailPopup();
     expect(popup).toBeTruthy();
     const entry = popup!.querySelector('[data-bs-notes]') as HTMLElement;
     expect(entry).toBeTruthy();
-    expect(entry.textContent).toContain('5 划线');
-    expect(entry.textContent).toContain('2 批注');
+    expect(entry.textContent).toContain('5 条'); // issue 218 借书卡台账口径「N 条 / N 条」
+    expect(entry.textContent).toContain('2 条');
     entry.click();
     await new Promise((r) => setTimeout(r, 30));
     // md 读书笔记弹窗打开：标题 + 划线内容 + 批注 + 日期
@@ -146,10 +146,10 @@ describe('书架墙详情弹窗读书笔记入口（迁移自旧 library 域）'
     ensureBookshelf(app);
     await openPanel(app);
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
-    const card = Array.from(overlay.querySelectorAll('.bz-bs-book')).find((b) => b.textContent?.includes('悉达多')) as HTMLElement;
+    const card = Array.from(overlay.querySelectorAll('.bz-bs-spine')).find((b) => b.textContent?.includes('悉达多')) as HTMLElement;
     card.click();
     const entry = detailPopup()!.querySelector('[data-bs-notes]') as HTMLElement;
-    expect(entry.textContent).toContain('1 划线');
+    expect(entry.textContent).toContain('1 条');
     entry.click();
     await new Promise((r) => setTimeout(r, 30));
     const notes = notesPopup();
@@ -166,7 +166,7 @@ describe('书架墙详情弹窗读书笔记入口（迁移自旧 library 域）'
     ensureBookshelf(app);
     await openPanel(app);
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
-    const card = Array.from(overlay.querySelectorAll('.bz-bs-book')).find((b) => b.textContent?.includes('算法导论')) as HTMLElement;
+    const card = Array.from(overlay.querySelectorAll('.bz-bs-spine')).find((b) => b.textContent?.includes('算法导论')) as HTMLElement;
     card.click();
     expect(detailPopup()!.querySelector('[data-bs-notes]')).toBeFalsy();
   });
@@ -330,7 +330,7 @@ describe('读书笔记弹窗（md 书）', () => {
     ensureBookshelf(app);
     await openPanel(app);
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
-    const card = Array.from(overlay.querySelectorAll('.bz-bs-book')).find((b) => b.textContent?.includes('活着')) as HTMLElement;
+    const card = Array.from(overlay.querySelectorAll('.bz-bs-spine')).find((b) => b.textContent?.includes('活着')) as HTMLElement;
     card.click();
     (detailPopup()!.querySelector('[data-bs-notes]') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 30));
