@@ -161,7 +161,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | `mountIcons` | `(root)` — 扫描 root 内 `[data-lucide]` 占位逐个 setIcon（class 保留），手写 HTML 模板用 | `void` |
 | `uiSearch` | `{placeholder?, value?, onInput?}` | `{el, input, setValue}` |
 | `uiMainHead` | `{title, count?, action?: {label, icon?, onClick?}}` | `{el, setTitle, setCount}` |
-| `uiRail` | `{groups: [{label?, items}], activeId, onSelect?, foot?}` — RailItem=`{id, name, icon?, boxedIcon?, badge?: {t, label, tint?}, dot?, count?, pill?, unread?, children?}` | `{el, setActive}` |
+| `uiRail` | `{groups: [{label?, items}], activeId, onSelect?, foot?}` — RailItem=`{id, name, icon?, boxedIcon?, emoji?, badge?: {t, label, tint?}, dot?, count?, pill?, unread?, children?}`（issue 201 加 emoji 槽，优先级 icon > emoji > badge） | `{el, setActive}` |
 | `uiMobStrip` | `{items: [{id, label, dot?}], value, onChange?}` | `{el, setValue}` |
 | `uiStat` | `{label, num, icon?, hint?, tone?: 'main'\|'ok'\|'warn'\|'danger'\|'text', click?, onClick?}` | `HTMLDivElement` |
 | `uiProgress` | `{value?, tone?: 'ok'\|'warn'\|'danger', thin?}` — value 0-100 钳制 | `{el, setValue}` |

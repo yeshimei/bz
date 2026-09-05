@@ -236,6 +236,8 @@ function buildDom(app: any): void {
           <div class="bz-panel-head-sub">未读流与剪藏</div>
           <div class="bz-panel-head-sp"></div>
           <div class="bz-clip-search bz-search">${iconSpan('search')}<input class="bz-input" type="text" data-clip-desk-search placeholder="搜索标题、摘要、站点、标签"></div>
+          <button class="bz-icon-btn" data-clip-settings title="打开剪藏本设置">${iconSpan('settings')}</button>
+          <button class="bz-icon-btn" data-clip-desk-close title="关闭">${iconSpan('x')}</button>
         </div>
         <div class="bz-clip-desk-body">
           <div class="bz-rail bz-rail--wide bz-clip-rail">
@@ -296,6 +298,13 @@ function buildDom(app: any): void {
   const mobSearchbar = mobSearchbarEl;
   const mobInput = overlayEl.querySelector('[data-clip-mob-input]') as HTMLInputElement;
   deskSearchEl = overlayEl.querySelector('[data-clip-desk-search]') as HTMLInputElement;
+
+  // 头行设置直达/关闭（issue 201 头行对齐待办；设置动态 import 防顶层环引用，ADR-0002）
+  overlayEl.querySelector('[data-clip-desk-close]')?.addEventListener('click', () => closePanel());
+  overlayEl.querySelector('[data-clip-settings]')?.addEventListener('click', () => {
+    closePanel();
+    void import('../settings-panel').then((m) => m.openSettingsPanel(app, 'clipping'));
+  });
 
   // 点遮罩关闭（桌面无关闭钮）
   overlayEl.addEventListener('click', (e) => {

@@ -254,12 +254,15 @@ export class UIManager {
 
     const head = `
       <div class="bz-q-head">
+        <div class="bz-panel-brand">${this.icon('repeat-2', 'bz-ic--sm')}</div>
         <div class="t">
           <div class="bz-q-title">复习计划</div>
           <div class="bz-q-sub">${this.todayLabel()}</div>
         </div>
         <div class="tools">
-          <button class="bz-icon-btn bz-win-close" data-act="close" title="关闭">${this.icon('x')}</button>
+          <button class="bz-icon-btn" data-act="settings" title="打开复习计划设置">${this.icon('settings', '')}</button>
+          <!-- issue 201 对齐待办：关闭钮不挂 bz-win-close（core 规则非真全屏隐藏之），桌面/移动常显同待办 -->
+          <button class="bz-icon-btn" data-act="close" title="关闭">${this.icon('x')}</button>
         </div>
       </div>
       <div class="bz-q-tools">
@@ -385,6 +388,11 @@ export class UIManager {
 
   private bindQueueEvents(container: HTMLElement, items: ReviewItem[]): void {
     container.querySelector('[data-act="close"]')?.addEventListener('click', () => this.hideMain());
+    // 设置直达（issue 201 头行对齐待办）：关面板 → 设置面板定位复习计划域（动态 import 防环引用）
+    container.querySelector('[data-act="settings"]')?.addEventListener('click', () => {
+      this.hideMain();
+      void import('../settings-panel').then((m) => m.openSettingsPanel(this.app, 'review'));
+    });
     container.querySelector('[data-act="begin"]')?.addEventListener('click', () => void this.beginRound());
     container.querySelector('[data-act="arch"]')?.addEventListener('click', () => {
       this.showArchived = !this.showArchived;

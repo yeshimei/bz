@@ -1,7 +1,7 @@
 /* ============================================================
  * bz 组件库 · 状态侧栏（src/core/ui/rail.ts）
- * uiRail：左栏分组导航——分组 label + 行（图标/图标底座/字母徽标/色点
- *   前缀槽四选一 + 名称 + 计数/胶囊计数 + 未读气泡）+ 可选二级子列表
+ * uiRail：左栏分组导航——分组 label + 行（图标/图标底座/emoji/字母徽标/色点
+ *   前缀槽五选一 + 名称 + 计数/胶囊计数 + 未读气泡）+ 可选二级子列表
  *   （父项点击 = 展开收起）+ 底部固定区。
  * 收编 6-8 域各自手写侧栏（超集归一，宽度/密度用变量微调，禁止域内复制）。
  * ============================================================ */
@@ -16,7 +16,7 @@ function buildRow(item: BzRailItem): HTMLButtonElement {
   b.className = 'bz-rail-item';
   b.dataset.id = item.id;
 
-  // 前缀槽四选一：图标底座 > 图标 > 字母徽标 > 状态色点
+  // 前缀槽五选一：图标底座 > 图标 > emoji > 字母徽标 > 状态色点
   if (item.boxedIcon) {
     const box = document.createElement('span');
     box.className = 'bz-rail-ic';
@@ -24,6 +24,11 @@ function buildRow(item: BzRailItem): HTMLButtonElement {
     b.appendChild(box);
   } else if (item.icon) {
     b.appendChild(uiIcon(item.icon));
+  } else if (item.emoji) {
+    const emo = document.createElement('span');
+    emo.className = 'bz-rail-emoji';
+    emo.textContent = item.emoji;
+    b.appendChild(emo);
   } else if (item.badge) {
     const badge = document.createElement('span');
     badge.className = 'bz-rail-badge';

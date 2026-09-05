@@ -411,17 +411,41 @@ describe('todo 编辑器', () => {
     const codeBtn = [...editor.querySelectorAll('.bz-choice-btn')].find((b) => b.textContent === '代码') as HTMLElement;
     codeBtn.click();
     const scriptInput = editor.querySelectorAll('.bz-todo-extra')[1].querySelector('input') as HTMLInputElement;
-    const sugBox = scriptInput.nextElementSibling as HTMLElement;
-    // 初始收起（此前绑定即渲染，弹窗一开建议就全铺出来）
-    expect(sugBox.style.display).toBe('none');
-    // 聚焦展开：已有脚本名进入建议
+    // 初始无浮层（issue 200 焦点门控保留：不绑定即渲染）
+    expect(editor.querySelector('.bz-popover')).toBeNull();
+    // 聚焦展开：已有脚本名进入候选（issue 201 改 .bz-popover 下拉，同收藏本「关联笔记」）
     scriptInput.dispatchEvent(new Event('focus'));
-    expect(sugBox.style.display).toBe('block');
-    expect(sugBox.textContent).toContain('transcribe.py');
-    // 失焦收起（150ms 延时让建议项 click 先落地）
-    scriptInput.dispatchEvent(new Event('blur'));
-    await new Promise((r) => setTimeout(r, 200));
-    expect(sugBox.style.display).toBe('none');
+    const pop = editor.querySelector('.bz-popover') as HTMLElement;
+    expect(pop).not.toBeNull();
+    expect(pop.textContent).toContain('transcribe.py');
+    // 外点（document mousedown 落在浮层/输入框之外）收起
+    document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    expect(editor.querySelector('.bz-popover')).toBeNull();
+  });
+
+  it('脚本联想下拉：Escape 只收浮层不关弹窗；点候选回填输入框（issue 201）', async () => {
+    const { app } = seedVault();
+    addTodo(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-todo-editor')).toBeTruthy();
+    });
+    const editor = document.querySelector('.bz-todo-editor') as HTMLElement;
+    const codeBtn = [...editor.querySelectorAll('.bz-choice-btn')].find((b) => b.textContent === '代码') as HTMLElement;
+    codeBtn.click();
+    const scriptInput = editor.querySelectorAll('.bz-todo-extra')[1].querySelector('input') as HTMLInputElement;
+    scriptInput.dispatchEvent(new Event('focus'));
+    expect(editor.querySelector('.bz-popover')).not.toBeNull();
+    // Escape 只收下拉（stopPropagation，弹窗还在）
+    scriptInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(editor.querySelector('.bz-popover')).toBeNull();
+    expect(document.querySelector('.bz-todo-editor')).not.toBeNull();
+    // 再聚焦 → 点候选回填
+    scriptInput.dispatchEvent(new Event('focus'));
+    const item = editor.querySelector('.bz-popover-item') as HTMLElement;
+    expect(item.textContent).toBe('transcribe.py');
+    item.click();
+    expect(scriptInput.value).toBe('transcribe.py');
+    expect(editor.querySelector('.bz-popover')).toBeNull();
   });
 
   it('保存新建：写入 memo.json（含 scriptName 建议数据）', async () => {
@@ -468,9 +492,9 @@ describe('todo 编辑器', () => {
     courseInput.value = '动手学';
     courseInput.dispatchEvent(new Event('input'));
     await vi.waitFor(() => {
-      expect(courseInput.parentElement!.querySelector('.bz-todo-sug-item')).toBeTruthy();
+      expect(courseInput.parentElement!.querySelector('.bz-popover-item')).toBeTruthy();
     });
-    const sug = [...editor.querySelectorAll('.bz-todo-sug-item')].find((b) => b.textContent === '动手学深度学习') as HTMLElement;
+    const sug = [...editor.querySelectorAll('.bz-popover-item')].find((b) => b.textContent === '动手学深度学习') as HTMLElement;
     sug.click();
     expect(courseInput.value).toBe('动手学深度学习');
     const saveBtn = [...editor.querySelectorAll('.bz-btn')].find((b) => b.textContent?.includes('添加')) as HTMLElement;
@@ -500,9 +524,9 @@ describe('todo 编辑器', () => {
     courseInput.value = '动手学';
     courseInput.dispatchEvent(new Event('input'));
     await vi.waitFor(() => {
-      return [...editor.querySelectorAll('.bz-todo-sug-item')].some((b) => b.textContent === '动手学深度学习');
+      return [...editor.querySelectorAll('.bz-popover-item')].some((b) => b.textContent === '动手学深度学习');
     });
-    const sug = [...editor.querySelectorAll('.bz-todo-sug-item')].find((b) => b.textContent === '动手学深度学习') as HTMLElement;
+    const sug = [...editor.querySelectorAll('.bz-popover-item')].find((b) => b.textContent === '动手学深度学习') as HTMLElement;
     sug.click();
     expect(courseInput.value).toBe('动手学深度学习');
     const saveBtn = [...editor.querySelectorAll('.bz-btn')].find((b) => b.textContent?.includes('保存')) as HTMLElement;

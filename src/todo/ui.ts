@@ -1128,10 +1128,7 @@ export function openEditor(item: TodoItem | null): void {
   scriptInput.className = 'bz-input';
   scriptInput.placeholder = '脚本名';
   scriptInput.value = editing?.scriptName || '';
-  const scriptSug = document.createElement('div');
-  scriptSug.className = 'bz-todo-sug-box';
-  scriptSug.style.display = 'none';
-  scriptBox.append(scriptInput, scriptSug);
+  scriptBox.appendChild(scriptInput);
   form.appendChild(scriptBox);
 
   const courseBox = document.createElement('div');
@@ -1140,10 +1137,7 @@ export function openEditor(item: TodoItem | null): void {
   courseInput.className = 'bz-input';
   courseInput.placeholder = '课程名';
   courseInput.value = editing?.courseName || '';
-  const courseSug = document.createElement('div');
-  courseSug.className = 'bz-todo-sug-box';
-  courseSug.style.display = 'none';
-  courseBox.append(courseInput, courseSug);
+  courseBox.appendChild(courseInput);
   form.appendChild(courseBox);
 
   // 剪藏场景剪贴板预填（memo 弹窗同款交互：占位符预填 + 抓标题；编辑模式不预填——
@@ -1208,34 +1202,66 @@ export function openEditor(item: TodoItem | null): void {
   // 建议（从已有条目收集脚本名/课程名 + 公开课笔记）
   const knownScripts = [...new Set(M.items.map((i) => i.scriptName).filter((n): n is string => !!n))].sort();
   const knownCourses = [...new Set(M.items.map((i) => i.courseName).filter((n): n is string => !!n))].sort();
-  function bindSug(input: HTMLInputElement, sug: HTMLElement, list: () => string[], onPick?: (val: string) => void) {
+  /**
+   * 联想候选下拉（issue 201：改收藏本「关联笔记」同款 .bz-popover 浮层，取代在流内
+   * 撑开的 bz-todo-sug-box）：输入/聚焦展开（issue 200 焦点门控保留），外点收起，
+   * Escape 只收下拉不关弹窗（stopPropagation 防 escManager 穿透）。
+   * 候选排除与当前值完全相同项（点选回焦后不再复弹自身，同 favorites notePicker）。
+   * 表单关闭后首个外部 mousedown 经 isConnected 自清监听。
+   */
+  function bindSug(input: HTMLInputElement, list: () => string[], onPick?: (val: string) => void) {
+    let pop: HTMLElement | null = null;
+    const close = () => {
+      if (!pop) return;
+      pop.remove();
+      pop = null;
+      document.removeEventListener('mousedown', onDocDown, true);
+    };
+    const onDocDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (!input.isConnected) { close(); return; }
+      if (pop?.contains(t) || input.contains(t)) return;
+      close();
+    };
     const render = () => {
       const v = input.value.trim().toLowerCase();
       const all = list()
-        .filter((s) => !v || s.toLowerCase().includes(v))
+        .filter((s) => s !== input.value.trim() && (!v || s.toLowerCase().includes(v)))
         .slice(0, 5);
-      if (!all.length) { sug.style.display = 'none'; return; }
-      sug.innerHTML = all.map((s) => `<button class="bz-todo-sug-item" type="button">${esc(s)}</button>`).join('');
-      sug.style.display = 'block';
-      sug.querySelectorAll('.bz-todo-sug-item').forEach((b) => {
+      if (!all.length) { close(); return; }
+      if (!pop) {
+        // 候选浮层走组件库 .bz-popover（锚定所在 .bz-todo-extra 下方，样式库共享类）
+        pop = document.createElement('div');
+        pop.className = 'bz-popover';
+        input.parentElement!.appendChild(pop);
+        document.addEventListener('mousedown', onDocDown, true);
+      }
+      pop.innerHTML = all.map((s) => `<button class="bz-popover-item" type="button">${esc(s)}</button>`).join('');
+      pop.querySelectorAll('.bz-popover-item').forEach((b) => {
         b.addEventListener('click', () => {
           input.value = (b as HTMLElement).textContent || '';
-          sug.style.display = 'none';
+          close();
           onPick?.(input.value);
+          input.focus();
         });
       });
     };
     input.addEventListener('input', render);
     input.addEventListener('focus', render);
-    // 初始不渲染、失焦收起（延时 150ms 让建议项 click 先落地）——获得焦点才展开（issue 200 拍板）
-    input.addEventListener('blur', () => { window.setTimeout(() => { sug.style.display = 'none'; }, 150); });
+    input.addEventListener('keydown', (e) => {
+      // 下拉开着时 Escape 只收下拉（不关弹窗）；未开不拦
+      if (e.key === 'Escape' && pop) {
+        close();
+        e.stopPropagation();
+      }
+    });
   }
   // 公开课课程路径（对照 memo：点建议记 path；手改名按名匹配兜底——课程标签跳转依赖 coursePath）
   let courseNotes: { name: string; path: string }[] = [];
   let pickedCourse: { name: string; path: string } | null =
     editing?.courseName && editing.coursePath ? { name: editing.courseName, path: editing.coursePath } : null;
-  bindSug(scriptInput, scriptSug, () => knownScripts);
-  bindSug(courseInput, courseSug, () => knownCourses, (val) => {
+  bindSug(scriptInput, () => knownScripts);
+  bindSug(courseInput, () => knownCourses, (val) => {
     pickedCourse = courseNotes.find((n) => n.name === val) || null;
   });
   void TodoData.getCourseNotes().then((notes) => {
