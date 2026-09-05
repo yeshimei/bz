@@ -931,8 +931,38 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     expect(filtered.length).toBeGreaterThan(0);
     expect(filtered.every((o) => o.textContent!.includes('手机'))).toBe(true);
     filtered[0].click();
-    expect(catInp().value).toBe(filtered[0].dataset.cat);
+    expect(catInp().value).toBe(filtered[0].dataset.id); // issue 198：候选 data-id 由工厂产出
     expect(formMask().querySelector('.bz-popover')).toBeNull();
+  });
+
+  it('分类下拉（issue 198 工厂化）：focus/输入开层、外点 mousedown 关、↓/Enter 键盘选中、Esc 只收下拉不关表单', async () => {
+    await open(vault);
+    (panel()!.querySelector('.bz-main-head [data-bel-add]') as HTMLElement).click();
+    const inp = catInp();
+    // 构建即不弹（旧实现构建即弹「当前分类单项」为毛刺，迁移后对齐 notePicker 范式：focus/input 才弹）
+    expect(formMask().querySelector('.bz-popover')).toBeNull();
+    // 清空输入 → focus 开全量候选
+    inp.value = '';
+    inp.dispatchEvent(new Event('focus'));
+    expect(formMask().querySelector('.bz-popover')).not.toBeNull();
+    document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    expect(formMask().querySelector('.bz-popover')).toBeNull(); // 外点 mousedown 关
+    // ↓ 高亮从当前分类移到下一条（初位 = 当前分类），Enter 选中回填
+    inp.dispatchEvent(new Event('focus'));
+    const onBefore = formMask().querySelector('.bz-popover-item.is-on') as HTMLElement;
+    expect(onBefore).not.toBeNull();
+    inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+    const onAfter = formMask().querySelector('.bz-popover-item.is-on') as HTMLElement;
+    expect(onAfter.getAttribute('data-id')).not.toBe(onBefore.getAttribute('data-id'));
+    inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    expect(inp.value).toBe(onAfter.getAttribute('data-id'));
+    expect(formMask().querySelector('.bz-popover')).toBeNull();
+    // Esc 只收下拉（表单保留）
+    inp.dispatchEvent(new Event('input'));
+    expect(formMask().querySelector('.bz-popover')).not.toBeNull();
+    inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    expect(formMask().querySelector('.bz-popover')).toBeNull();
+    expect(formMask().querySelector('.bz-bel-form')).not.toBeNull();
   });
 
   it('状态单选平铺：点选切换 is-on；保存按所选状态落盘', async () => {

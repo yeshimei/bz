@@ -176,11 +176,34 @@ export interface BzProgressOpts {
   thin?: boolean;          // 3px 媒体封面档
 }
 
-/** 候选浮层（.bz-popover：input 锚定的候选列表） */
-export interface BzPopoverOpts {
-  anchor: HTMLElement;     // 锚点（须位于 position:relative 容器内；浮层挂其父元素）
-  options: Array<{ id: string; label: string; icon?: BzIconName }>;
+/** 候选浮层（.bz-popover）公共选项（点击/输入锚定二模式共用） */
+interface BzPopoverBase {
+  anchor?: HTMLElement;    // 点击锚定模式锚点（须位于 position:relative 容器内；浮层挂其父元素）
+  options?: Array<{ id: string; label: string; icon?: BzIconName }>; // 静态候选（input 模式无 getOptions 时兜底）
   value?: string;          // 当前选中
   emptyText?: string;      // 空态文案
   onPick?: (id: string) => void;
+  /** 开合回调（同 uiSelect.onOpenChange，上层联动用） */
+  onOpenChange?: (open: boolean) => void;
 }
+
+/** 点击锚定模式（默认，向后兼容）：anchor 点击开合 / 选项点击即关 / 外部 click / Esc 关 */
+export interface BzPopoverClickOpts extends BzPopoverBase {
+  anchor: HTMLElement;
+  input?: undefined;       // 判别位：点击模式不传 input
+}
+
+/** 输入锚定模式（issue 198）：锚定输入框——focus/input 开（开着原位刷新），
+ *  外部 mousedown（捕获）关、输入框与层内不关，Esc 只收浮层（stopPropagation
+ *  挡上层 escManager，分层语义）；传 input 后 anchor 点击开合不再挂 */
+export interface BzPopoverInputOpts extends BzPopoverBase {
+  input: HTMLInputElement; // 锚定输入框（浮层挂其父容器，anchor 位由其顶替）
+  /** 候选源（域内过滤——fuzzy/排除自身等域特有逻辑留域；q = input.value 原文）。缺省用静态 options */
+  getOptions?: (q: string) => Array<{ id: string; label: string; icon?: BzIconName }>;
+  /** 无匹配即收层（不渲染空态；favorites notePicker 范式） */
+  emptyCloses?: boolean;
+  /** ↑↓ 移动 is-on 高亮（钳边界）+ Enter 选中回调（active 索引内置） */
+  keyboard?: boolean;
+}
+
+export type BzPopoverOpts = BzPopoverClickOpts | BzPopoverInputOpts;

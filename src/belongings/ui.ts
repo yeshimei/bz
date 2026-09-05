@@ -29,7 +29,7 @@ import { tryGetSettings } from '../core/settings-provider';
 import { mobileFullscreenGroup } from '../core/settings-common';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { escapeHtml } from '../core/utils';
-import { mountIcons, uiEmpty, uiRail } from '../core/ui';
+import { mountIcons, uiEmpty, uiRail, uiPopover } from '../core/ui';
 import type { BzRailItem } from '../core/ui';
 import { openItemMenu, openItemSheet, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, closeItemMenu, type ItemAction } from '../core/item-actions';
 import { emitDomainEvent } from '../core/domain-bus';
@@ -845,52 +845,28 @@ async function deleteItem(it: BelongingsItem): Promise<void> {
 
 // ==================== 表单（记一笔 / 编辑） ====================
 
-/** 分类搜索选择弹层（组件库 .bz-popover；输入过滤 + 键盘选择 + 外点关闭；Esc 分层：下拉开只收下拉） */
+/**
+ * 分类搜索选择（issue 198 迁 uiPopover 输入锚定模式 + keyboard）：候选浮层
+ * 生命周期/类名/定位全走工厂；过滤留域内 getOptions（DEFAULT_CATEGORIES
+ * 包含匹配 + emoji 前缀展示，上限 60）；focus/输入开层、外点 mousedown 关、
+ * Esc 分层只收下拉；keyboard 由工厂内置（↓/↑ 移动高亮钳边界、Enter 选中
+ * 回填）；无匹配收层（旧实现残留空壳层为毛刺，迁移统一为不弹；旧「构建即弹
+ * 当前分类单项」同属毛刺，对齐 notePicker 范式改为 focus/input 才弹）。
+ */
 function categoryPicker(input: HTMLInputElement, current: string): void {
-  const wrap = document.createElement('div');
-  wrap.className = 'bz-popover';
-  const close = () => {
-    if (wrap.isConnected) {
-      wrap.remove();
-      document.removeEventListener('mousedown', onDocDown, true);
-    }
-  };
-  const onDocDown = (e: MouseEvent) => {
-    // 点在输入框/弹层内不关；其余外部点击关闭（关表单/切焦点即收起）
-    const t = e.target as Node;
-    if (wrap.contains(t) || input.contains(t)) return;
-    close();
-  };
-  const draw = () => {
-    const q = input.value.trim().toLowerCase();
-    const matched = DEFAULT_CATEGORIES.filter((c) => !q || c.toLowerCase().includes(q)).slice(0, 60);
-    wrap.innerHTML = matched.map((c) =>
-      `<div class="bz-popover-item${c === current ? ' is-on' : ''}" data-cat="${esc(c)}">${esc(catEmoji(c))} <span>${esc(catNameOf(c))}</span></div>`
-    ).join('');
-    wrap.querySelectorAll('[data-cat]').forEach((o) => o.addEventListener('click', () => {
-      current = (o as HTMLElement).dataset.cat as string;
-      input.value = current;
-      close();
-    }));
-  };
-  input.parentElement!.appendChild(wrap);
-  document.addEventListener('mousedown', onDocDown, true);
-  draw();
-  input.addEventListener('input', draw);
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowDown') {
-      const opts = wrap.querySelectorAll<HTMLElement>('[data-cat]');
-      const idx = [...opts].findIndex((o) => o.classList.contains('is-on'));
-      const next = opts[Math.min(opts.length - 1, idx + 1)];
-      if (next) { opts.forEach((o) => o.classList.remove('is-on')); next.classList.add('is-on'); }
-      e.preventDefault();
-    } else if (e.key === 'Enter') {
-      const on = wrap.querySelector<HTMLElement>('[data-cat].is-on');
-      if (on) { current = on.dataset.cat as string; input.value = current; close(); }
-      e.preventDefault();
-    } else if (e.key === 'Escape') {
-      if (wrap.isConnected) { close(); e.stopPropagation(); }
-    }
+  uiPopover({
+    input,
+    value: current,
+    keyboard: true,
+    emptyCloses: true,
+    getOptions: (raw) => {
+      const q = raw.trim().toLowerCase();
+      return DEFAULT_CATEGORIES
+        .filter((c) => !q || c.toLowerCase().includes(q))
+        .slice(0, 60)
+        .map((c) => ({ id: c, label: `${catEmoji(c)} ${catNameOf(c)}` }));
+    },
+    onPick: (id) => { input.value = id; },
   });
 }
 

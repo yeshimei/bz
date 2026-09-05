@@ -984,6 +984,177 @@ describe('bz ui 组件库', () => {
     });
   });
 
+  describe('uiPopover 输入锚定模式（issue 198）', () => {
+    const items3 = [
+      { id: 'a', label: '甲' },
+      { id: 'b', label: '乙' },
+      { id: 'c', label: '丙' },
+    ];
+    /** .bz-field 仿壳（relative 容器装输入框；浮层挂壳下撑满） */
+    function buildField() {
+      const field = document.createElement('div');
+      field.style.position = 'relative';
+      const input = document.createElement('input');
+      input.type = 'text';
+      field.appendChild(input);
+      document.body.appendChild(field);
+      return { field, input };
+    }
+
+    it('focus 开层（挂输入框父容器）；input 不关且原位刷新候选', () => {
+      const { field, input } = buildField();
+      const pop = uiPopover({
+        input,
+        getOptions: (q) => (q ? [{ id: q, label: `候选:${q}` }] : []),
+      });
+      input.dispatchEvent(new Event('focus'));
+      expect(field.querySelector('.bz-popover')).not.toBeNull();
+      expect(field.querySelector('.bz-popover-empty')).not.toBeNull(); // 空输入 → 空态
+      input.value = 'x';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      expect(field.querySelector('.bz-popover')).not.toBeNull(); // input 不关
+      const its = field.querySelectorAll('.bz-popover-item');
+      expect(its).toHaveLength(1);
+      expect(its[0].textContent).toBe('候选:x');
+      pop.detach();
+    });
+
+    it('无 getOptions 兜底静态 options；外点 mousedown 关，输入框/层内不关', () => {
+      const { field, input } = buildField();
+      const pop = uiPopover({ input, options: items3 });
+      input.dispatchEvent(new Event('focus'));
+      expect(field.querySelectorAll('.bz-popover-item')).toHaveLength(3);
+      const layer = field.querySelector('.bz-popover') as HTMLElement;
+      layer.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      expect(field.querySelector('.bz-popover')).not.toBeNull(); // 层内不关
+      input.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      expect(field.querySelector('.bz-popover')).not.toBeNull(); // 输入框不关
+      document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      expect(field.querySelector('.bz-popover')).toBeNull(); // 外点关
+      pop.detach();
+    });
+
+    it('emptyCloses：无匹配即收层不弹空态；有匹配重开', () => {
+      const { field, input } = buildField();
+      const pop = uiPopover({
+        input,
+        emptyCloses: true,
+        getOptions: (q) => (q.includes('a') ? [{ id: 'a', label: '甲' }] : []),
+      });
+      input.value = 'a';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      expect(field.querySelector('.bz-popover-item')).not.toBeNull();
+      input.value = 'b';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      expect(field.querySelector('.bz-popover')).toBeNull();
+      expect(field.querySelector('.bz-popover-empty')).toBeNull();
+      input.value = 'aa';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      expect(field.querySelector('.bz-popover')).not.toBeNull();
+      pop.detach();
+    });
+
+    it('Esc 关且 stopPropagation（分层：不穿透上层监听）；未开不拦照常冒泡', () => {
+      const { field, input } = buildField();
+      const pop = uiPopover({ input, options: items3 });
+      input.dispatchEvent(new Event('focus'));
+      const onDocKey = vi.fn();
+      document.addEventListener('keydown', onDocKey);
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+      expect(field.querySelector('.bz-popover')).toBeNull();
+      expect(onDocKey).not.toHaveBeenCalled(); // stopPropagation 挡上层
+      // 未开：Esc 不拦（照常冒泡给 escManager 关宿主）
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+      expect(onDocKey).toHaveBeenCalledTimes(1);
+      document.removeEventListener('keydown', onDocKey);
+      pop.detach();
+    });
+
+    it('keyboard：↓/↑ 移动 is-on 高亮（初位 = 当前值，边界钳制），Enter 选中回调并关层', () => {
+      const pick = vi.fn();
+      const { field, input } = buildField();
+      const pop = uiPopover({ input, options: items3, value: 'a', keyboard: true, onPick: pick });
+      input.dispatchEvent(new Event('focus'));
+      expect(field.querySelector('.bz-popover-item.is-on')!.getAttribute('data-id')).toBe('a');
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+      expect(field.querySelector('.bz-popover-item.is-on')!.getAttribute('data-id')).toBe('b');
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+      expect(field.querySelector('.bz-popover-item.is-on')!.getAttribute('data-id')).toBe('c'); // 钳尾
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }));
+      expect(field.querySelector('.bz-popover-item.is-on')!.getAttribute('data-id')).toBe('a'); // 钳头
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+      expect(pick).toHaveBeenCalledWith('a');
+      expect(field.querySelector('.bz-popover')).toBeNull();
+      pop.detach();
+    });
+
+    it('keyboard 未开层时 ↑↓/Enter 不拦不开（Esc 穿透语义同源）', () => {
+      const pick = vi.fn();
+      const { field, input } = buildField();
+      const pop = uiPopover({ input, options: items3, keyboard: true, onPick: pick });
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+      expect(field.querySelector('.bz-popover')).toBeNull();
+      expect(pick).not.toHaveBeenCalled();
+      pop.detach();
+    });
+
+    it('onOpenChange 开合回调（input 模式 focus 开 / 外点 mousedown 关）', () => {
+      const { field, input } = buildField();
+      const fn = vi.fn();
+      const pop = uiPopover({ input, options: items3, onOpenChange: fn });
+      input.dispatchEvent(new Event('focus'));
+      expect(fn).toHaveBeenLastCalledWith(true);
+      document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      expect(fn).toHaveBeenLastCalledWith(false);
+      expect(fn).toHaveBeenCalledTimes(2);
+      pop.detach();
+    });
+
+    it('选项点击：onPick + 关层（input 模式同收口）', () => {
+      const pick = vi.fn();
+      const { field, input } = buildField();
+      const pop = uiPopover({ input, options: items3, onPick: pick });
+      input.dispatchEvent(new Event('focus'));
+      const its = field.querySelectorAll('.bz-popover-item');
+      (its[1] as HTMLElement).click();
+      expect(pick).toHaveBeenCalledWith('b');
+      expect(field.querySelector('.bz-popover')).toBeNull();
+      pop.detach();
+    });
+
+    it('宿主输入框被拆后：外部 mousedown 经 isConnected 自清监听；detach 幂等', () => {
+      const { field, input } = buildField();
+      const pop = uiPopover({ input, options: items3 });
+      input.dispatchEvent(new Event('focus'));
+      input.remove(); // 表单先于浮层拆场
+      document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      expect(field.querySelector('.bz-popover')).toBeNull();
+      expect(() => pop.detach()).not.toThrow(); // 幂等收尾
+    });
+
+    it('detach：输入监听一并摘除（focus/input 不再开关浮层），无残余副作用', () => {
+      const { field, input } = buildField();
+      const pick = vi.fn();
+      const pop = uiPopover({ input, options: items3, onPick: pick });
+      input.dispatchEvent(new Event('focus'));
+      expect(field.querySelector('.bz-popover')).not.toBeNull();
+      pop.detach();
+      expect(field.querySelector('.bz-popover')).toBeNull();
+      input.dispatchEvent(new Event('focus'));
+      input.value = 'x';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+      expect(field.querySelector('.bz-popover')).toBeNull(); // 不再弹
+      expect(pick).not.toHaveBeenCalled();
+      document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); // 无残余监听副作用
+    });
+  });
+
   describe('uiResizable persist 尺寸记忆（ADR-0094）', () => {
     // 同 uiResizable 基础组：jsdom 无几何布局，mock rect 动态读 style
     function makeBox(w = 720, h = 580): { el: HTMLElement } {

@@ -26,7 +26,7 @@ import { mobileFullscreenGroup } from '../core/settings-common';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { escapeHtml } from '../core/utils';
 import { getApp } from '../core/app';
-import { mountIcons, uiEmpty, uiRail } from '../core/ui';
+import { mountIcons, uiEmpty, uiRail, uiPopover } from '../core/ui';
 import type { BzRailItem } from '../core/ui';
 import { emitDomainEvent } from '../core/domain-bus';
 import { favoritesEditChanges } from '../smartcat/favorites-source';
@@ -913,56 +913,33 @@ function closeForm(popup: HTMLElement): void {
 }
 
 /**
- * 关联笔记候选自动补全（ticket 188）：输入/聚焦时列 vault 笔记（路径包含过滤，上限 30），
- * 点选回填；外点关闭；Escape 只收下拉不关表单（与 belongings categoryPicker 同范式）。
- * 表单关闭后首个外部 mousedown 经 isConnected 自清监听。
+ * 关联笔记候选自动补全（ticket 188；issue 198 迁 uiPopover 输入锚定模式）：
+ * focus/输入时列 vault 笔记候选（路径包含过滤 + 排除当前值 + 上限 30——域内
+ * getOptions 过滤），浮层生命周期/类名/定位全走工厂；点选回填回焦（回焦后
+ * 候选排除当前值，不复弹自身）；外点 mousedown 关；Escape 只收下拉不关表单
+ * （工厂分层 stopPropagation 挡 escManager）；表单拆host后首个外部 mousedown
+ * 经 isConnected 自清监听。
  */
 function notePicker(input: HTMLInputElement): void {
-  let pop: HTMLElement | null = null;
-  const close = () => {
-    if (pop) {
-      pop.remove();
-      pop = null;
-      document.removeEventListener('mousedown', onDocDown, true);
-    }
-  };
-  const onDocDown = (e: MouseEvent) => {
-    const t = e.target as Node;
-    if (!input.isConnected) { close(); return; }
-    if (pop?.contains(t) || input.contains(t)) return;
-    close();
-  };
-  const draw = () => {
-    const q = input.value.trim().toLowerCase();
-    let files: string[] = [];
-    try {
-      files = ((appOf().vault as any)?.getMarkdownFiles?.() || []).map((f: any) => String(f.path || ''));
-    } catch (e) { files = []; }
-    // 排除与当前值完全相同的候选（点选回焦后不再复弹自身）
-    const matched = files.filter((p) => p && p !== input.value.trim() && (!q || p.toLowerCase().includes(q))).slice(0, 30);
-    if (!matched.length) { close(); return; }
-    if (!pop) {
-      // 候选浮层走组件库 .bz-popover（锚定所在 .bz-field 下方）
-      pop = document.createElement('div');
-      pop.className = 'bz-popover';
-      input.parentElement!.appendChild(pop);
-      document.addEventListener('mousedown', onDocDown, true);
-    }
-    pop.innerHTML = matched.map((p) => `<div class="bz-popover-item" data-note="${esc(p)}">${esc(p)}</div>`).join('');
-    pop.querySelectorAll('[data-note]').forEach((o) => o.addEventListener('click', () => {
-      input.value = (o as HTMLElement).dataset.note as string;
-      close();
+  uiPopover({
+    input,
+    emptyCloses: true, // 无匹配即收层（旧域同行为：不弹空态）
+    getOptions: (raw) => {
+      const q = raw.trim().toLowerCase();
+      let files: string[] = [];
+      try {
+        files = ((appOf().vault as any)?.getMarkdownFiles?.() || []).map((f: any) => String(f.path || ''));
+      } catch (e) { files = []; }
+      return files
+        // 排除与当前值完全相同的候选（点选回焦后不再复弹自身）
+        .filter((p) => p && p !== raw.trim() && (!q || p.toLowerCase().includes(q)))
+        .slice(0, 30)
+        .map((p) => ({ id: p, label: p }));
+    },
+    onPick: (id) => {
+      input.value = id;
       input.focus();
-    }));
-  };
-  input.addEventListener('input', draw);
-  input.addEventListener('focus', draw);
-  input.addEventListener('keydown', (e) => {
-    // 下拉开着时 Escape 只收下拉（stopPropagation 防 escManager 关表单）；未开不拦
-    if (e.key === 'Escape' && pop) {
-      close();
-      e.stopPropagation();
-    }
+    },
   });
 }
 
