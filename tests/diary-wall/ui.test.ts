@@ -785,6 +785,90 @@ describe('回忆墙 UI', () => {
     expect(wall.querySelector('.bz-diary-wall-masonry--sparse-2')).toBeNull();
   });
 
+  it('issue 217 F1：那年今天灯箱不污染墙内连看序列——关闭后墙内点图仍是全量序列', async () => {
+    // 私有夹具：去年的今天（pickOnThisDay 口径）带图日记
+    const now = new Date();
+    const mmdd = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    vault.files.set(`我的/日记/${now.getFullYear() - 1}-${mmdd}.md`, '# 📸 08:00\n去年今日\n![[old.jpg]]\n');
+    const c = await openAndWait();
+    expect(document.querySelector('.bz-diary-wall-memories')).toBeTruthy();
+    // 点时光条卡 → 灯箱序列 = 该条目媒体
+    (document.querySelector('.bz-diary-wall-memory') as HTMLElement).click();
+    expect((c as any)._lbSeq.length).toBe(1);
+    // 关灯箱 → 主序列还原；墙内点图 → 序列仍是全量（不退化为单条）
+    (document.querySelector('.bz-diary-wall-desk [data-act="lb-close"]') as HTMLElement).click();
+    const wallMedia = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-media') as HTMLElement;
+    wallMedia.click();
+    expect((c as any)._lbSeq.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('issue 217 F2：灯箱开着时重渲染不清空灯箱媒体（不再黑屏挂死）', async () => {
+    const c = await openAndWait();
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    (desk.querySelector('.bz-diary-wall-media') as HTMLElement).click();
+    expect(desk.querySelector('.bz-diary-wall-lb--show')).toBeTruthy();
+    (c as any).renderAll();
+    expect(desk.querySelector('.bz-diary-wall-lb--show')).toBeTruthy();
+    expect(desk.querySelectorAll('.bz-diary-wall-lb-media').length).toBe(1);
+  });
+
+  it('issue 217 F3：matchMedia 移动端断点下只渲染移动实例（桌面实例不做事）', async () => {
+    const mql = { matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() };
+    vi.stubGlobal('matchMedia', vi.fn(() => mql));
+    try {
+      await openAndWait();
+      const deskWall = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-wall') as HTMLElement;
+      const mobWall = document.querySelector('.bz-diary-wall-mob .bz-diary-wall-wall') as HTMLElement;
+      expect(deskWall.querySelectorAll('.bz-diary-wall-item').length).toBe(0);
+      expect(mobWall.querySelectorAll('.bz-diary-wall-item').length).toBeGreaterThanOrEqual(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('issue 217 F4：媒体双击跳原文——首击开灯箱，双击关灯箱走跳转', async () => {
+    await openAndWait();
+    const media = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-media') as HTMLElement;
+    media.click();
+    expect(document.querySelector('.bz-diary-wall-desk .bz-diary-wall-lb--show')).toBeTruthy();
+    media.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(document.querySelector('.bz-diary-wall-desk .bz-diary-wall-lb--show')).toBeNull();
+  });
+
+  it('issue 217 F6：解锁态下其他标签筛选不混入加密条目，「加密」筛选才可见', async () => {
+    const c = await openAndWait();
+    (c as any).lockedVisible = true;
+    (c as any).entries.push({
+      date: '2026-08-19',
+      time: '23:59',
+      tags: ['日记'],
+      emoji: '📖',
+      content: '密',
+      text: '密',
+      media: [],
+      segments: [],
+      filename: '2026-08-19',
+      lineNumber: 999,
+      id: undefined,
+      noteId: 'n1',
+      encrypted: true,
+      kind: 'diary',
+    });
+    (c as any).selTag = '日记';
+    expect(((c as any).filtered() as any[]).some((e) => e.encrypted)).toBe(false);
+    (c as any).selTag = '加密';
+    expect(((c as any).filtered() as any[]).some((e) => e.encrypted)).toBe(true);
+  });
+
+  it('issue 217 样式落位：md 排版/音频矮条/年份相邻选择器在位，.bz-diary-wall-tx 死规则删除', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/diary-wall/styles.css'), 'utf8');
+    expect(css).toContain('.bz-diary-wall-md p'); // S1：markdown 排版
+    expect(css).toContain('.bz-diary-wall-media--audio'); // S4：音频矮条
+    expect(css).toContain('.bz-diary-wall-rail-title + .bz-diary-wall-rail-year'); // S3：死规则修复
+    expect(css).not.toContain('.bz-diary-wall-tx {'); // S5：死规则删除
+    expect(css).not.toContain('#2a9d8f'); // 小项：teal 写死色改 token
+  });
+
   it('issue 210：章节栏视频缩略懒加载——无 IO 直挂 src + preload=metadata，格内留播放角标', async () => {
     // 本例私有夹具：beforeEach 每例重建 vault，加一条纯视频日记不影响他例
     vault.files.set('我的/日记/2026-06-10.md', '# 🎬 10:00\n![[VID_20260610_100000.mp4]]\n');
