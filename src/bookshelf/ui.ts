@@ -825,7 +825,6 @@ export function createOverlay(app: App): void {
           <div class="bz-bs-view bz-bs-view-shelf active">
             <div class="bz-toolrow">
               <span class="bz-search bz-bs-search">${iconSpan('search')}<input class="bz-input" type="text" id="bz-bs-dsearch" placeholder="搜索书名 / 作者 / 分类…" autocomplete="off"></span>
-              <span class="bz-main-spacer"></span>
               <span class="bz-bs-sort-slot"></span>
             </div>
             <div class="bz-bs-dash"></div>
