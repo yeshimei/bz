@@ -16,6 +16,7 @@ import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { uiModal, uiEmpty } from '../core/ui';
+import { bsSkinClass } from './ui';
 import { parseBookNotes, jumpToHighlight, updateComment, deleteHighlight } from './notes';
 import type { BookNoteNode } from './notes';
 import {
@@ -247,7 +248,7 @@ function openNotesShell(title: string): { popup: HTMLElement; close: () => void 
     maxWidth: 700,
     head: true,
     title,
-    className: 'bz-bs-notes-pop',
+    className: `bz-bs-notes-pop ${bsSkinClass()}`,
     onClose: () => {
       // 句柄自清（遮罩/ESC/✕ 任一路径关闭都不留悬空句柄）
       if (mdNotesClose === close) mdNotesClose = null;
@@ -412,7 +413,7 @@ function openNoteEditModal(opts: {
     maxWidth: 420,
     head: true,
     title: opts.title,
-    className: 'bz-bs-edit-pop',
+    className: `bz-bs-edit-pop ${bsSkinClass()}`,
   });
 
   const saveBtn = document.createElement('button');

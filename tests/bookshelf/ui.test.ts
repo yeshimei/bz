@@ -7,7 +7,8 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, clearNotices } from '../mock-obsidian-entry';
 import { M, resetBookshelfState } from '../../src/bookshelf/state';
 import { ensureBookshelf, unloadBookshelf, openBookshelf, openBookshelfReport } from '../../src/bookshelf';
-import { createOverlay, closeOverlay } from '../../src/bookshelf/ui';
+import { createOverlay, closeOverlay, applyBookshelfSkin, bsSkinClass } from '../../src/bookshelf/ui';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 
 function makeApp(vault: MockVault) {
   return mockAppWithVault(vault);
@@ -938,3 +939,55 @@ function closeDrawerHelper(): void {
   const drawer = document.querySelector('.bz-sheet-mask') as HTMLElement | null;
   if (drawer) (drawer.querySelector('[data-bs-drawer-close]') as HTMLElement)?.click();
 }
+
+describe('bookshelf 面板皮肤（issue 216）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetBookshelfState();
+    clearNotices();
+    M.folderPath = '书库';
+    document.body.innerHTML = '';
+  });
+  afterEach(() => {
+    unloadBookshelf();
+    setSettingsProvider(() => ({} as never));
+    document.body.innerHTML = '';
+  });
+
+  it('未配置 → 默认挂雪松白（nordic）；配置值 → 面板根挂对应皮肤类', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    const panel = document.querySelector('.bz-bs-panel') as HTMLElement;
+    expect(panel.classList.contains('bz-bs-skin-nordic')).toBe(true);
+    closeOverlay();
+
+    setSettingsProvider(() => ({ bookshelfSkin: 'noir' }) as never);
+    await openPanel(vault, app);
+    const panel2 = document.querySelector('.bz-bs-panel') as HTMLElement;
+    expect(panel2.classList.contains('bz-bs-skin-noir')).toBe(true);
+    expect(panel2.classList.contains('bz-bs-skin-nordic')).toBe(false);
+  });
+
+  it('applyBookshelfSkin 热切换已开面板；非法值回落雪松白', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    const panel = document.querySelector('.bz-bs-panel') as HTMLElement;
+    applyBookshelfSkin('mono');
+    expect(panel.classList.contains('bz-bs-skin-mono')).toBe(true);
+    applyBookshelfSkin('bogus');
+    expect(panel.classList.contains('bz-bs-skin-nordic')).toBe(true);
+    expect(panel.className).not.toContain('bz-bs-skin-bogus');
+    // 全量换肤：切走后旧皮肤类不残留
+    applyBookshelfSkin('velvet');
+    expect(['nordic','dark','noir','wabi','bauhaus','blueprint','neon','kraft','velvet','mono'].every((id) => id === 'velvet' || !panel.classList.contains(`bz-bs-skin-${id}`))).toBe(true);
+  });
+
+  it('bsSkinClass：弹窗与面板同套皮肤；未配置回落 nordic', () => {
+    setSettingsProvider(() => ({ bookshelfSkin: 'wabi' }) as never);
+    expect(bsSkinClass()).toBe('bz-bs-skin-wabi');
+    setSettingsProvider(() => ({ bookshelfSkin: 'whatever' }) as never);
+    expect(bsSkinClass()).toBe('bz-bs-skin-nordic');
+    setSettingsProvider(() => ({} as never));
+    expect(bsSkinClass()).toBe('bz-bs-skin-nordic');
+  });
+});
