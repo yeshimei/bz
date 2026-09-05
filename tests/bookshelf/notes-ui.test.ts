@@ -92,7 +92,7 @@ async function longPress(el: HTMLElement) {
   await new Promise((r) => setTimeout(r, 10));
 }
 
-describe('书架墙详情弹窗读书笔记入口（迁移自旧 library 域）', () => {
+describe('书架墙详情弹窗只读化（issue 220）', () => {
   let vault: MockVault;
 
   beforeEach(() => {
@@ -100,21 +100,10 @@ describe('书架墙详情弹窗读书笔记入口（迁移自旧 library 域）'
     resetBookshelfState();
     closeBookNoteModals();
     document.body.innerHTML = '';
-    MockPlatform.isMobile = false;
     vault = new MockVault();
-    setApp(makeApp(vault));
-    setSettingsProvider(() => ({ bookshelfFolderPath: '', bookTag: 'book', bookshelfMobileDefaultFullscreen: true }) as any);
   });
 
-  afterEach(() => {
-    closeBookNoteModals();
-    unloadBookshelf();
-    document.body.innerHTML = '';
-    MockPlatform.isMobile = false;
-  });
-
-  it('详情弹窗出现「N 划线 · N 批注」可点入口；点击打开 md 读书笔记弹窗', async () => {
-    // 书笔记正文含划线 span（高亮与书目同文件，旧域口径）
+  it('详情卡不再提供读书笔记入口按钮（issue 220 只读化：划线/想法为纯展示文字）', async () => {
     vault.files.set('书库/活着.md', BOOK_MD + '\n' + NOTE_MD);
     const app = makeApp(vault);
     ensureBookshelf(app);
@@ -124,51 +113,8 @@ describe('书架墙详情弹窗读书笔记入口（迁移自旧 library 域）'
     card.click();
     const popup = detailPopup();
     expect(popup).toBeTruthy();
-    const entry = popup!.querySelector('[data-bs-notes]') as HTMLElement;
-    expect(entry).toBeTruthy();
-    expect(entry.textContent).toContain('5 条'); // issue 218 借书卡台账口径「N 条 / N 条」
-    expect(entry.textContent).toContain('2 条');
-    entry.click();
-    await new Promise((r) => setTimeout(r, 30));
-    // md 读书笔记弹窗打开：标题 + 划线内容 + 批注 + 日期
-    const notes = notesPopup();
-    expect(notes).toBeTruthy();
-    expect(notes!.textContent).toContain('《活着》的读书笔记');
-    expect(notes!.textContent).toContain('❝ 原文一');
-    expect(notes!.textContent).toContain('批注一');
-    expect(notes!.textContent).toContain('2025-06-01');
-  });
-
-  it('EPUB 书详情：读书笔记入口 → weave 划线/想法弹窗（章节分组）', async () => {
-    vault.files.set('书库/活着.md', BOOK_MD);
-    vault.files.set('CONFIG/STORAGE/weave-data.json', EPUB_WEAVE());
-    const app = makeApp(vault);
-    ensureBookshelf(app);
-    await openPanel(app);
-    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
-    const card = Array.from(overlay.querySelectorAll('.bz-bs-spine')).find((b) => b.textContent?.includes('悉达多')) as HTMLElement;
-    card.click();
-    const entry = detailPopup()!.querySelector('[data-bs-notes]') as HTMLElement;
-    expect(entry.textContent).toContain('1 条');
-    entry.click();
-    await new Promise((r) => setTimeout(r, 30));
-    const notes = notesPopup();
-    expect(notes).toBeTruthy();
-    expect(notes!.textContent).toContain('《悉达多》的读书笔记');
-    expect(notes!.textContent).toContain('第一章');
-    expect(notes!.textContent).toContain('❝ 原文一');
-    expect(notes!.textContent).toContain('想法一');
-  });
-
-  it('无划线无批注（0/0）→ 详情不出现读书笔记入口', async () => {
-    vault.files.set('书库/算法导论.md', '---\ntags: [book]\nauthor: CLRS\n---');
-    const app = makeApp(vault);
-    ensureBookshelf(app);
-    await openPanel(app);
-    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
-    const card = Array.from(overlay.querySelectorAll('.bz-bs-spine')).find((b) => b.textContent?.includes('算法导论')) as HTMLElement;
-    card.click();
-    expect(detailPopup()!.querySelector('[data-bs-notes]')).toBeFalsy();
+    expect(popup!.querySelector('[data-bs-notes]')).toBeFalsy();
+    expect(popup!.textContent).toContain('5 条 / 2 条');
   });
 });
 
@@ -329,17 +275,13 @@ describe('读书笔记弹窗（md 书）', () => {
     const app = makeApp(vault);
     ensureBookshelf(app);
     await openPanel(app);
-    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
-    const card = Array.from(overlay.querySelectorAll('.bz-bs-spine')).find((b) => b.textContent?.includes('活着')) as HTMLElement;
-    card.click();
-    (detailPopup()!.querySelector('[data-bs-notes]') as HTMLElement).click();
+    // 详情卡只读化后笔记入口移除：直开读书笔记弹窗再测关面板收口
+    showBookNotes(app, '书库/活着.md', '活着');
     await new Promise((r) => setTimeout(r, 30));
     expect(notesPopup()).not.toBeNull();
-    // toggle 关主面板：详情 + 读书笔记弹窗一并收口
     openBookshelf(app);
     expect(document.querySelector('.bz-panel-overlay')).toBeFalsy();
     expect(notesPopup()).toBeNull();
-    expect(detailPopup()).toBeNull();
   });
 });
 
