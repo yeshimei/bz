@@ -42,6 +42,7 @@ import { applyMobileWindowFullscreen } from '../core/mobile';
 import { getApp } from '../core/app';
 import { DIARY_DIRECTORY, MOVIE_DIRECTORY, LETTER_DIRECTORY, BOOK_DIRECTORY, getSubTagsOfPrimary, getPrimaryTagsInDisplayOrder, getTagEmoji } from './config';
 import { loadWallEntries, mediaSrc, groupByMonth, pickOnThisDay, extractMedia, stripMediaLinks, type WallEntry, type WallMedia } from './data';
+import { railThumbKey, getRailThumb, putRailThumb, makeImageThumb, makeVideoThumb } from './thumb-cache';
 // TODO(自包含)：以下 diary 域入口在「删除日记本域」时改为回忆墙自己的实现
 import { openAddDialog } from '../diary/ui/dialogs';
 
@@ -1355,55 +1356,54 @@ export class DiaryWallAppController {
   }
 
   /**
-   * 章节栏缩略图（issue 210）：调用方保证只传图片/视频媒体。
-   * 图片 lazy+async；视频先放播放角标占位，data-src 交 setupRailLazy 进视口
-   * 才 preload=metadata 读首帧当缩略图（直接挂 src 会开墙全量解码卡顿）。
+   * 章节栏缩略图（issue 210/212）：调用方保证只传图片/视频媒体。
+   * 渲染时零加载——图片挂 data-thumb-src 占位、视频挂 data-src 占位（播放角标），
+   * 交 setupRailLazy 进视口才走「查小图缓存 → 命中贴 48px 小图 / 未命中压图回存」，
+   * 20px 小格永不触发原图整张解码（issue 212 卡顿病根）。
    */
   private thumbEl(m: WallMedia, entry: WallEntry): HTMLElement {
     const t = document.createElement('span');
     t.className = 'bz-diary-wall-month-thumb' + (m.kind === 'video' ? ' bz-diary-wall-month-thumb--v' : '');
-    if (m.kind === 'video') {
-      t.appendChild(uiIcon(ACTION_ICON.play));
-      const src = this.mediaSrcFor(entry, m.name);
-      if (src) {
+    t.appendChild(uiIcon(m.kind === 'video' ? ACTION_ICON.play : ACTION_ICON.image));
+    const src = this.mediaSrcFor(entry, m.name);
+    if (src) {
+      const key = railThumbKey(entry.date, m.name);
+      if (m.kind === 'video') {
         const v = document.createElement('video');
         v.muted = true;
         v.preload = 'none';
         v.dataset.src = src;
+        v.dataset.thumbKey = key;
         t.appendChild(v);
-      }
-    } else {
-      const src = this.mediaSrcFor(entry, m.name);
-      if (src) {
-        const img = document.createElement('img');
-        img.loading = 'lazy';
-        img.decoding = 'async';
-        // 直接设 src（勿用 dataset.lazy：章节栏不在 setupLazy 观察范围内，
-        // 只挂 dataset 永不渲染 → 胶卷缩略图空白）
-        img.src = src;
-        img.onerror = () => {
-          t.innerHTML = '';
-          t.appendChild(uiIcon(ACTION_ICON.image));
-        };
-        t.appendChild(img);
       } else {
-        t.appendChild(uiIcon(ACTION_ICON.image));
+        const img = document.createElement('img');
+        img.decoding = 'async';
+        img.dataset.thumbSrc = src;
+        img.dataset.thumbKey = key;
+        t.appendChild(img);
       }
     }
     return t;
   }
 
   /**
-   * 章节栏视频缩略懒加载（issue 210，机制沿 issue 209）：root = 章节栏滚动容器，
-   * 进视口才把 data-src 换成 src + preload=metadata 读首帧，离视口暂停。
-   * 无 IO 环境（jsdom/旧内核）直接挂载，保证测试确定性。
+   * 章节栏缩略懒加载（issue 212，机制沿 issue 209/210）：root = 章节栏滚动容器，
+   * 进视口才挂载。图片/视频统一走小图缓存：命中贴 48px dataURL（零原图解码）；
+   * 未命中后台压图回存后贴小图，压缩失败回退直挂原 src（旧行为）。
+   * 无 IO 环境（jsdom/旧内核）直接按未命中路径挂载，保证测试确定性。
    */
   private setupRailLazy(rail: HTMLElement, key: 'desk' | 'mob') {
     if (this.railObservers[key]) this.railObservers[key]!.disconnect();
     const scroller = (rail.querySelector('.bz-rail-scroll') as HTMLElement | null) || rail;
-    const videos = Array.from(rail.querySelectorAll<HTMLVideoElement>('video[data-src]'));
+    const thumbs = Array.from(
+      rail.querySelectorAll<HTMLElement>('img[data-thumb-src], video[data-src]')
+    );
     if (typeof IntersectionObserver === 'undefined') {
-      videos.forEach((v) => this.hydrateRailVideo(v));
+      // jsdom/旧内核：跳过缓存管线，直挂原 src（E4 语义：不依赖 IO 也有图）
+      thumbs.forEach((el) => {
+        if (el.tagName === 'VIDEO') this.hydrateRailVideo(el as HTMLVideoElement);
+        else (el as HTMLImageElement).src = (el as HTMLImageElement).dataset.thumbSrc!;
+      });
       return;
     }
     const io = new IntersectionObserver(
@@ -1411,7 +1411,7 @@ export class DiaryWallAppController {
         entries.forEach((en) => {
           const el = en.target as HTMLElement;
           if (en.isIntersecting) {
-            this.hydrateRailVideo(el as HTMLVideoElement);
+            this.hydrateRailThumb(el);
           } else {
             const v = el as HTMLVideoElement;
             if (el.tagName === 'VIDEO' && !v.paused) v.pause();
@@ -1420,11 +1420,66 @@ export class DiaryWallAppController {
       },
       { root: scroller, rootMargin: '120px 0px 120px 0px', threshold: 0 }
     );
-    videos.forEach((v) => io.observe(v));
+    thumbs.forEach((el) => io.observe(el));
     this.railObservers[key] = io;
   }
 
-  /** 章节栏视频缩略挂载：data-src → src + preload=metadata（读首帧当缩略图） */
+  /**
+   * 章节栏缩略格挂载：查缓存贴小图 / 后台压图回存；失败回退原 src 直挂（视频 = 旧行为读首帧）。
+   * data-thumb-src 挂载后即移除，防重复触发。
+   */
+  private hydrateRailThumb(el: HTMLElement): void {
+    const isVideo = el.tagName === 'VIDEO';
+    const key = el.dataset.thumbKey;
+    if (isVideo) {
+      const v = el as HTMLVideoElement;
+      const src = v.dataset.src;
+      if (!src || v.getAttribute('src')) return;
+      this.hydrateThumbViaCache(el, src, key, true);
+    } else {
+      const img = el as HTMLImageElement;
+      const src = img.dataset.thumbSrc;
+      if (!src) return;
+      img.removeAttribute('data-thumb-src');
+      this.hydrateThumbViaCache(el, src, key, false);
+    }
+  }
+
+  /** 查小图缓存 → 命中贴图；未命中后台压图回存；压缩失败回退原 src（视频 = 旧读首帧行为） */
+  private hydrateThumbViaCache(el: HTMLElement, src: string, key: string | undefined, isVideo: boolean): void {
+    if (!key) {
+      if (isVideo) this.hydrateRailVideo(el as HTMLVideoElement);
+      else (el as HTMLImageElement).src = src;
+      return;
+    }
+    void getRailThumb(key).then((cached) => {
+      if (cached) {
+        this.swapThumbToImg(el, cached);
+        return;
+      }
+      void (isVideo ? makeVideoThumb(src) : makeImageThumb(src)).then((small) => {
+        if (small) {
+          void putRailThumb(key, small);
+          this.swapThumbToImg(el, small);
+          return;
+        }
+        if (isVideo) this.hydrateRailVideo(el as HTMLVideoElement);
+        else (el as HTMLImageElement).src = src;
+      });
+    });
+  }
+
+  /** 缩略格换成缓存小图（视频格保留播放角标浮层） */
+  private swapThumbToImg(el: HTMLElement, dataUrl: string): void {
+    const cell = el.parentElement;
+    if (!cell) return;
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.decoding = 'async';
+    cell.replaceChild(img, el);
+  }
+
+  /** 章节栏视频缩略挂载（issue 210 旧行为，现为压缩失败兜底）：data-src → src + preload=metadata */
   private hydrateRailVideo(v: HTMLVideoElement) {
     const src = v.dataset.src;
     if (!src || v.getAttribute('src')) return;
