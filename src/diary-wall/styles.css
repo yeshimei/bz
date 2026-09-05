@@ -548,6 +548,16 @@
 .bz-diary-wall-media-wrap {
   position: relative;
 }
+/* issue 214：卡内文字区（时间+类型行 + 拼接全文）垫在媒体堆叠上方 */
+.bz-diary-wall-media-wrap > .bz-diary-wall-text-row {
+  padding: 10px 10px 0;
+}
+.bz-diary-wall-media-wrap > .bz-diary-wall-text-tx {
+  padding: 2px 10px 8px;
+}
+.bz-diary-wall-media-wrap > .bz-diary-wall-media + .bz-diary-wall-media {
+  margin-top: 6px;
+}
 .bz-diary-wall-media {
   position: relative;
   display: block;
