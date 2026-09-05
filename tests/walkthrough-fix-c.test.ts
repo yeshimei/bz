@@ -220,9 +220,9 @@ describe('批 C-12：clipbook 左栏选中态对齐五域实底档（ADR-0094 �
 });
 
 describe('批 C-13：clipbook 阅读右栏间距归档', () => {
-  it('30/60 非档位间距 → 24/32 档（space-xl/space-2xl）', () => {
+  it('阅读滚动容器内边距归档（issue 214 编辑部风：28/44/40，对齐 p1-final 原型）', () => {
     const css = clipCss();
-    expect(css).toMatch(/\.bz-clip-read-scroll\s*\{[^}]*padding: var\(--bz-space-xl\) var\(--bz-space-xl\) var\(--bz-space-2xl\);/);
+    expect(css).toMatch(/\.bz-clip-read-scroll\s*\{[^}]*padding: 28px 44px 40px;/);
     expect(css).not.toMatch(/\.bz-clip-read-scroll\s*\{[^}]*30px/);
   });
 });
