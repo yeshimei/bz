@@ -169,6 +169,8 @@ export default interface BzSettings {
   bookshelfDefaultSide: string;
   /** 📚 书架墙：默认排序（date=最近阅读/title=书名/author=作者/progress=进度；非法值回落 date） */
   bookshelfSortMode: string;
+  /** 📚 书架墙：封面网格每行列数（2~12，默认 6；issue 208） */
+  bookshelfGridColumns: string;
 
   // ===== 🎬 影院（cinema 域；ADR-0087 起接管旧影视域）=====
   /** 📁 影视文件夹（影院域数据源；缺省回落「我的/影视」。与日记本设置的「影视目录」
@@ -179,6 +181,8 @@ export default interface BzSettings {
   cinemaSortMode: string;
   /** 🎬 影院：默认状态筛选（空串=全部，其余为想看/在看/已看；非法值回落全部。issue 194） */
   cinemaStatusFilter: string;
+  /** 🎬 影院：海报网格每行列数（2~12，默认 5；issue 208） */
+  cinemaGridColumns: string;
   /** 📦 归物本：默认状态筛选（空串=全部，其余 using/idle/sold/discard；非法值回落全部。issue 194） */
   belongingsDefaultStatus: string;
   // 旧 cinemaPageSize（每批加载数量）已删除：全仓无消费点（列表一次全量渲染），死配置随审计清理
@@ -520,11 +524,13 @@ export const DEFAULT_SETTINGS: BzSettings = {
   bookshelfMobileDefaultFullscreen: true,
   bookshelfDefaultSide: 'all',
   bookshelfSortMode: 'date',
+  bookshelfGridColumns: '6',
 
   // 影院（cinema；ADR-0087 起接管影视；缺省回落默认目录，旧 movieFolderPath 键已退役）
   cinemaFolderPath: '我的/影视',
   cinemaSortMode: 'date',
   cinemaStatusFilter: '',
+  cinemaGridColumns: '5',
 
   // 做题家（设置并入复习计划 tab）
   enableMultipleChoice: true,

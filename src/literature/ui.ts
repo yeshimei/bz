@@ -43,7 +43,7 @@
  * title hover）：空闲「▶️」，运行中该按钮即「⏹」（仅失败项续跑时 title 提示「中止整批」），
  * 处理完成有失败仍可再点续跑，移动端整钮隐藏。
  */
-import type { App } from 'obsidian';
+import { setIcon, type App } from 'obsidian';
 import type { SettingsSchema } from '../core/settings-schema';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
@@ -592,6 +592,11 @@ export class UIManager {
     const allBtn = document.createElement('button');
     allBtn.className = 'bz-lit-filter-btn' + (this.selectedDomain ? '' : ' active');
     allBtn.textContent = `全部 (${this.allNotes.length})`;
+    // 行头图标（issue 208 全域统一：「全部」行带图标，对齐待办/收藏本范式）
+    const allIc = document.createElement('span');
+    allIc.className = 'bz-lit-filter-ic';
+    setIcon(allIc, 'layout-grid');
+    allBtn.prepend(allIc);
     allBtn.onclick = () => { this.selectedDomain = null; this.applyFilter(); };
     container.appendChild(allBtn);
     for (const d of sorted) {

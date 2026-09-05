@@ -151,6 +151,9 @@
   font-size: 12px;
   line-height: 1.5;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   border: 1px solid var(--background-modifier-border);
   color: var(--text-normal);
   transition: background .2s, border-color .2s, color .2s;
@@ -745,3 +748,6 @@
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
 }
+/* 「全部」行头图标（issue 208 全域统一；setIcon 落 .bz-lit-filter-ic 槽） */
+.bz-lit-filter-ic { display: inline-flex; width: 12px; height: 12px; flex-shrink: 0; color: var(--bz-text-3); }
+.bz-lit-filter-ic svg { width: 100%; height: 100%; }

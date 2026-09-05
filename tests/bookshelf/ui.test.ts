@@ -115,7 +115,7 @@ describe('bookshelf overlay', () => {
     closeOverlay();
   });
 
-  it('筛选：左栏点已读 → 只剩 1 卡', async () => {
+  it('筛选：左栏点已读 → 只剩 1 卡；再点已读回全部（issue 208）', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
@@ -123,6 +123,40 @@ describe('bookshelf overlay', () => {
     doneBtn.click();
     expect(gridCards(overlay).length).toBe(1);
     expect(gridCards(overlay)[0].textContent).toContain('围城');
+    // 再点已选状态 = 回「全部」（issue 208 全域统一交互）
+    const doneBtn2 = Array.from(overlay.querySelectorAll('.bz-rail-item')).find((b) => b.textContent?.includes('已读')) as HTMLElement;
+    doneBtn2.click();
+    expect(gridCards(overlay).length).toBe(3);
+    closeOverlay();
+  });
+
+  it('分类筛选：点分类只剩该类；再点同类回全部（issue 208）', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
+    const catBtn = () => Array.from(overlay.querySelectorAll<HTMLElement>('[data-bs-cat]')).find((b) => (b.dataset.bsCat || '') !== 'all' && (b.textContent?.includes('成长') || b.textContent?.includes('小说') || b.textContent?.includes('工具'))) as HTMLElement;
+    const btn = catBtn();
+    expect(btn).toBeTruthy();
+    const catName = btn.dataset.bsCat as string;
+    const before = gridCards(overlay).length;
+    btn.click();
+    expect(gridCards(overlay).length).toBeGreaterThan(0);
+    expect(gridCards(overlay).length).toBeLessThan(before);
+    // 再点同分类 → 回全部
+    const btn2 = catBtn();
+    expect(btn2.dataset.bsCat).toBe(catName);
+    btn2.click();
+    expect(gridCards(overlay).length).toBe(before);
+    closeOverlay();
+  });
+
+  it('网格每行列数：渲染内联 --bz-bs-cols（设置默认 6；issue 208）', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
+    const grid = overlay.querySelector('.bz-bs-grid') as HTMLElement;
+    expect(grid).toBeTruthy();
+    expect(grid.style.getPropertyValue('--bz-bs-cols')).toBe('6');
     closeOverlay();
   });
 

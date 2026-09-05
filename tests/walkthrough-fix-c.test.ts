@@ -145,12 +145,13 @@ describe('批 C-7：移动端主头行添加钮触控抬档', () => {
 });
 
 describe('批 C-8：cinema 触控热区收编 .bz-touch-target', () => {
-  it('域内 pointer:coarse ::after 外扩块撤除，三处可点小元素改挂共享类', () => {
+  it('域内 pointer:coarse ::after 外扩块撤除，可点小元素改挂共享类', () => {
     expect(cineCss()).not.toMatch(/@media \(pointer: coarse\)/);
     const ui = repo('src/cinema/ui.ts');
     expect(ui).toContain('bz-icon-btn bz-touch-target'); // 头行图标钮（iconBtnHTML）
-    expect(ui).toMatch(/bz-touch-target bz-cinema-dm-douban/); // 详情豆瓣页外链
+    // 详情豆瓣页外链钮已随 issue 208 删除（打开豆瓣统一走右键菜单），仅剩推荐卡豆瓣搜索外链
     expect(ui).toMatch(/bz-touch-target bz-cinema-rec-douban/); // 推荐卡豆瓣搜索
+    expect(ui).not.toMatch(/bz-touch-target bz-cinema-dm-douban/);
   });
 });
 

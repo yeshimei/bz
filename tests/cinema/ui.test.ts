@@ -1,7 +1,9 @@
 /**
- * 影院（cinema）UI 层测试：overlay 打开/渲染/筛选交互/详情弹窗/快速状态窗/ESC
+ * 影院（cinema）UI 层测试：overlay 打开/渲染/筛选交互/详情弹窗/ESC
  * + 增强包回归：右键菜单/长按抽屉、空态两种、AI 按需触发与结果页闭环、回收站删除、
- *   豆瓣直达、观影日期、升级默认已看、组件库修饰符类
+ *   豆瓣链接行、观影日期自动维护、组件库修饰符类
+ * issue 208：快速状态窗退役（状态流转统一右键菜单）、全部行加图标、再点组取消收二级、
+ *   表单去观影日期（创建/状态变更自动刷）、详情弹窗去「豆瓣页面」按钮
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -127,15 +129,18 @@ describe('cinema overlay', () => {
     expect(cards.length).toBe(2); // 星际穿越 + 想看片
     expect(overlay.querySelector('.bz-main-title')?.textContent).toBe('电影');
     expect(overlay.querySelector('.bz-main-count')?.textContent).toBe('· 2 部');
-    // 再点已选组不取消（组保持选中）
+    // 再点已选组取消回「全部」（issue 208 全域统一交互）
     (overlay.querySelector('[data-cinema-type="电影"]') as HTMLElement).click();
-    expect(M.typeFilter).toBe('电影');
+    expect(M.typeFilter).toBeNull();
     // 点「全部」回全部
     (overlay.querySelector('[data-cinema-type="all"]') as HTMLElement).click();
     expect(M.typeFilter).toBeNull();
     cards = overlay.querySelectorAll('[data-cinema-idx]');
     expect(cards.length).toBe(4);
     expect(overlay.querySelector('.bz-main-title')?.textContent).toBe('全部');
+    // 「全部」行头带图标（issue 208）
+    const allRow = overlay.querySelector('[data-cinema-type="all"]') as HTMLElement;
+    expect(allRow.querySelector('[data-icon="layout-grid"]')).toBeTruthy();
   });
 
   it('点状态筛选 + 点「全部」取消', () => {
@@ -153,7 +158,7 @@ describe('cinema overlay', () => {
     expect(cards.length).toBe(4);
   });
 
-  it('剧集点击筛组+展开二级；点二级筛选；再点同二级回该组全部', () => {
+  it('剧集点击筛组+展开二级（无三角）；点二级筛选；再点同二级回该组全部；再点组回全部并收起', () => {
     const { app } = seedVault();
     createOverlay(app);
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
@@ -161,7 +166,8 @@ describe('cinema overlay', () => {
     tvBtn.click();
     expect(M.typeFilter).toBe('剧集');
     expect(M.subFilter).toBeNull();
-    // 展开二级（美剧）
+    // 展开二级（美剧）；组行无三角（issue 208 回归原型）
+    expect(overlay.querySelector('.bz-rail-caret')).toBeNull();
     let subs = overlay.querySelectorAll('[data-cinema-sub]');
     expect(subs.length).toBeGreaterThan(0);
     // 点二级美剧
@@ -178,6 +184,12 @@ describe('cinema overlay', () => {
     expect(M.subFilter).toBeNull();
     expect(M.typeFilter).toBe('剧集');
     expect(overlay.querySelector('.bz-main-title')?.textContent).toBe('剧集');
+    // 再点已选组 → 回「全部」，二级收起（issue 208；子列表 DOM 恒渲染，靠 .open 控制显隐）
+    (overlay.querySelector('[data-cinema-type="剧集"]') as HTMLElement).click();
+    expect(M.typeFilter).toBeNull();
+    expect(M.subFilter).toBeNull();
+    expect(overlay.querySelector('.bz-main-title')?.textContent).toBe('全部');
+    expect(overlay.querySelector('.bz-rail-sub')?.classList.contains('open')).toBe(false);
   });
 
   it('搜索过滤', () => {
@@ -240,46 +252,25 @@ describe('cinema overlay', () => {
     expect(hasNotice('已删除「星际穿越」，已移入系统回收站')).toBe(true);
   });
 
-  it('想看灰色小字 → 快速状态窗（升级在看/已看 + 滑杆 + 影评）', () => {
+  it('想看灰色小字纯展示（issue 208 快速状态窗退役）：点击不再弹窗', () => {
     const { app } = seedVault();
     createOverlay(app);
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
-    // 先筛「想看」状态，保证只有想看片可升级
+    // 先筛「想看」状态，让卡片 meta 出状态灰字
     (overlay.querySelector('[data-cinema-status="想看"]') as HTMLElement).click();
-    const up = overlay.querySelector('[data-cinema-upgrade]') as HTMLElement;
-    expect(up).toBeTruthy();
-    up.click();
+    // 无升级入口、无可点态样式
+    expect(overlay.querySelector('[data-cinema-upgrade]')).toBeNull();
+    expect(overlay.querySelector('.bz-cinema-p-meta-up')).toBeNull();
+    // 点灰字（冒泡到卡片）→ 打开的是详情弹窗，而非快速状态窗（issue 208）
+    const label = overlay.querySelector('.bz-cinema-st-label') as HTMLElement;
+    expect(label).toBeTruthy();
+    label.click();
     const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
     expect(mask).toBeTruthy();
     const modal = mask.querySelector('.bz-overlay-popup') as HTMLElement;
-    expect(modal.textContent).toContain('想看片');
-    // 目标状态按钮（想看 → 在看/已看）
-    const qsBtns = modal.querySelectorAll('[data-cinema-qs]');
-    expect(qsBtns.length).toBe(2);
-    // 评分滑杆存在（组件库 .bz-range 自绘外观）
-    expect(modal.querySelector('#bz-cinema-qs-rating')).toBeTruthy();
-    expect((modal.querySelector('#bz-cinema-qs-rating') as HTMLElement).classList.contains('bz-range')).toBe(true);
-    // 影评 textarea（.bz-field 字段行：label 上置，不与 textarea 同排）
-    expect(modal.querySelector('#bz-cinema-qs-review')).toBeTruthy();
-    expect(modal.querySelector('.bz-cinema-qs-review .bz-field-label')?.textContent).toBe('影评');
-    // 目标状态按钮为平铺单选（组件库 .bz-choice），默认选中「已看」（增强包需求 9）
-    expect(modal.querySelector('.bz-cinema-qs-btns .bz-choice-btn.is-on')?.getAttribute('data-value')).toBe('已看');
-    expect(modal.textContent).not.toContain('取消'); // 无取消钮：点遮罩/ESC 关闭
-    // 升级到已看 + 保存
-    (modal.querySelector('[data-cinema-qs="已看"]') as HTMLElement).click();
-    const rating = modal.querySelector('#bz-cinema-qs-rating') as HTMLInputElement;
-    rating.value = '9.5';
-    rating.dispatchEvent(new Event('input'));
-    (modal.querySelector('#bz-cinema-qs-save') as HTMLElement).click();
-    const item = M.items.find((i) => i.name === '想看片');
-    expect(item?.status).toBe(2); // 已看
-    expect(item?.rating).toBe(9.5);
-    // CM1：流转已看时观影日期刷新为当前时间（统计口径按看完时间，非加入时间）
-    const d = new Date();
-    const p = (n: number) => String(n).padStart(2, '0');
-    const today = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-    expect(item?.watchDate).not.toBe('2026-05-01');
-    expect(item?.watchDate).toContain(today);
+    expect(modal.querySelector('.bz-cinema-dm-title')).toBeTruthy();
+    expect(modal.querySelector('[data-cinema-qs]')).toBeNull();
+    expect(modal.querySelector('#bz-cinema-qs-rating')).toBeNull();
   });
 
   it('ESC 关闭：先弹窗后主面板', () => {
@@ -466,13 +457,9 @@ tags: [电影]
     expect(modal.querySelector('#bz-cinema-f-rating')).toBeTruthy(); // 评分滑杆
     expect((modal.querySelector('#bz-cinema-f-rating') as HTMLElement).classList.contains('bz-range')).toBe(true);
     // 字段行 = .bz-field（label 上置，不与控件同排）；类型/状态 = 平铺单选 .bz-choice（非下拉）
-    // 增强包需求 8：新增观影日期字段（6 字段：名称/类型/状态/观影日期/评分/影评），默认今天
-    expect(modal.querySelectorAll('.bz-cinema-form .bz-field')).toHaveLength(6);
-    const dateInput = modal.querySelector('#bz-cinema-f-date') as HTMLInputElement;
-    expect(dateInput).toBeTruthy();
-    const d0 = new Date();
-    const p0 = (n: number) => String(n).padStart(2, '0');
-    expect(dateInput.value).toBe(`${d0.getFullYear()}-${p0(d0.getMonth() + 1)}-${p0(d0.getDate())}`);
+    // issue 208：表单去观影日期字段（5 字段：名称/类型/状态/评分/影评），不允许用户修改
+    expect(modal.querySelectorAll('.bz-cinema-form .bz-field')).toHaveLength(5);
+    expect(modal.querySelector('#bz-cinema-f-date')).toBeNull();
     expect(modal.querySelectorAll('.bz-cinema-form .bz-choice')).toHaveLength(2);
     expect(modal.querySelector('select')).toBeNull();
     expect(modal.querySelector('.bz-choice-btn.is-on[data-cinema-f-tag]')?.getAttribute('data-value')).toBe('电影');
@@ -541,8 +528,8 @@ tags: [电影]
     expect(modal.querySelector('[data-cinema-f-status].is-on')?.getAttribute('data-value')).toBe('想看');
     // 需求：类型/状态选项前不添加彩色圆点
     expect(modal.querySelector('.bz-cinema-form .bz-choice-dot')).toBeNull();
-    // 需求：选「想看」→ 观影日期/评分与影评隐藏（状态联动；观影日期只对已看有统计意义）
-    expect((modal.querySelector('#bz-cinema-f-date-field') as HTMLElement).style.display).toBe('none');
+    // 需求（issue 208）：表单无观影日期字段；选「想看」→ 评分与影评隐藏（状态联动）
+    expect(modal.querySelector('#bz-cinema-f-date-field')).toBeNull();
     expect((modal.querySelector('#bz-cinema-f-rating-field') as HTMLElement).style.display).toBe('none');
     expect((modal.querySelector('#bz-cinema-f-review-field') as HTMLElement).style.display).toBe('none');
     (modal.querySelector('#bz-cinema-f-name') as HTMLInputElement).value = '海贼王';
@@ -560,27 +547,23 @@ tags: [电影]
     expect(content).toContain('评分: -1');
   });
 
-  it('快速状态窗升级 → 写 frontmatter 落盘', async () => {
+  it('右键「标记在看」状态流转 → 写 frontmatter 落盘（issue 208：快速状态窗退役后由右键菜单承接）', async () => {
     const { vault, app } = seedVault();
     createOverlay(app);
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
-    (overlay.querySelector('[data-cinema-status="想看"]') as HTMLElement).click();
-    const up = overlay.querySelector('[data-cinema-upgrade]') as HTMLElement;
-    up.click();
-    const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
-    const modal = mask.querySelector('.bz-overlay-popup') as HTMLElement;
-    (modal.querySelector('[data-cinema-qs="已看"]') as HTMLElement).click();
-    const rating = modal.querySelector('#bz-cinema-qs-rating') as HTMLInputElement;
-    rating.value = '9.5';
-    rating.dispatchEvent(new Event('input'));
-    (modal.querySelector('#bz-cinema-qs-save') as HTMLElement).click();
+    const card = overlay.querySelector('[data-cinema-idx="我的/影视/《想看片》.md"]') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+    const menu = document.querySelector('.bz-item-menu') as HTMLElement;
+    const watchingBtn = Array.from(menu.querySelectorAll('button')).find((b) => b.textContent === '标记在看') as HTMLElement;
+    watchingBtn.click();
     await new Promise((r) => setTimeout(r, 0)); // 等异步落盘
     const item = M.items.find((i) => i.name === '想看片');
-    expect(item?.status).toBe(2); // 已看
-    expect(item?.rating).toBe(9.5);
-    // 落盘：frontmatter 评分已更新
+    expect(item?.status).toBe(1); // 在看
+    expect(item?.rating).toBe(0);
+    // 落盘：frontmatter 评分已更新；状态流转刷新观影日期（issue 208 任意流转即刷）
     const content = vault.files.get('我的/影视/《想看片》.md');
-    expect(content).toContain('评分: 9.5');
+    expect(content).toContain('评分: 0');
+    expect(item?.watchDate).not.toBe('2026-05-01');
   });
 
   it('详情 → 编辑弹窗：字段预选当前值，保存写回 frontmatter', async () => {
@@ -826,7 +809,7 @@ tags: [电影]
 
   // ---------- 增强包回归：豆瓣直达 / 彩色徽标修饰符 / 观影日期 ----------
 
-  it('详情弹窗：豆瓣链接行出「豆瓣页面」外链钮；类型/状态徽标换 bz-chip--tint 修饰符', () => {
+  it('详情弹窗：豆瓣链接行保留可点链接、无「豆瓣页面」按钮（issue 208）；类型/状态徽标换 bz-chip--tint 修饰符', () => {
     const { vault, app } = seedVault();
     vault.files.set('我的/影视/《豆瓣片》.md', '---\ntags: [电影]\n评分: 8\n观影日期: 2026-08-02\n豆瓣链接: https://movie.douban.com/subject/123/\n---');
     rebuildItems(app);
@@ -835,12 +818,13 @@ tags: [电影]
     const card = overlay.querySelector('[data-cinema-idx="我的/影视/《豆瓣片》.md"]') as HTMLElement;
     card.click();
     const modal = (document.querySelector('.bz-overlay-mask') as HTMLElement).querySelector('.bz-overlay-popup') as HTMLElement;
-    // 外链按钮（增强包需求 6）
-    const doubanBtn = modal.querySelector('.bz-cinema-dm-douban') as HTMLAnchorElement;
-    expect(doubanBtn).toBeTruthy();
-    expect(doubanBtn.textContent).toContain('豆瓣页面');
-    expect(doubanBtn.getAttribute('href')).toBe('https://movie.douban.com/subject/123/');
-    expect(doubanBtn.target).toBe('_blank');
+    // 链接行保留文本链接；「豆瓣页面」按钮删除（issue 208：打开豆瓣统一走右键菜单）
+    const link = modal.querySelector('.bz-cinema-kv-v a') as HTMLAnchorElement;
+    expect(link).toBeTruthy();
+    expect(link.getAttribute('href')).toBe('https://movie.douban.com/subject/123/');
+    expect(link.target).toBe('_blank');
+    expect(modal.querySelector('.bz-cinema-dm-douban')).toBeNull();
+    expect(modal.textContent).not.toContain('豆瓣页面');
     // 彩色徽标（增强包需求 11）：bz-chip--tint + 变量注入（不再用被 !important 压制的 --locked+内联 background）
     const chips = modal.querySelectorAll('.bz-cinema-dm-badges .bz-chip--tint');
     expect(chips.length).toBe(1); // 豆瓣片评分 8 = 已看 → 仅类型徽标（状态徽标仅未看时出）
@@ -848,7 +832,7 @@ tags: [电影]
     expect(modal.querySelectorAll('.bz-cinema-dm-badges .bz-chip--locked').length).toBe(0);
   });
 
-  it('编辑表单：观影日期回填原值；改日期保存写回 frontmatter（统计按指定日期）', async () => {
+  it('编辑表单：无观影日期字段（issue 208 禁改）；不改状态保存保留原日期，改状态保存自动刷为当前日期', async () => {
     const { vault, app } = seedVault();
     createOverlay(app);
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
@@ -857,16 +841,34 @@ tags: [电影]
     const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
     (mask.querySelector('[data-cinema-dm-edit]') as HTMLElement).click();
     const modal = (document.querySelector('.bz-overlay-mask') as HTMLElement).querySelector('.bz-overlay-popup') as HTMLElement;
-    // 回填原观影日期的日期部分（增强包需求 8）
-    const dateInput = modal.querySelector('#bz-cinema-f-date') as HTMLInputElement;
-    expect(dateInput.value).toBe('2026-08-01');
-    // 补录指定日期
-    dateInput.value = '2026-07-15';
+    expect(modal.querySelector('#bz-cinema-f-date')).toBeNull();
+    // 只改影评保存（状态不变）→ 观影日期保留原值
+    (modal.querySelector('#bz-cinema-f-review') as HTMLTextAreaElement).value = '重看一遍';
     (modal.querySelector('#bz-cinema-f-save') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 0));
-    const content = vault.files.get('我的/影视/《星际穿越》.md');
-    expect(content).toContain('观影日期: 2026-07-15');
+    expect(vault.files.get('我的/影视/《星际穿越》.md')).toContain('观影日期: 2026-08-01');
     const item = M.items.find((i) => i.name === '星际穿越');
-    expect(item?.watchDate).toBe('2026-07-15');
+    expect(item?.watchDate).toBe('2026-08-01');
+  });
+
+  it('编辑表单改状态保存 → 观影日期自动刷新为当前日期（issue 208）', async () => {
+    const { vault, app } = seedVault();
+    createOverlay(app);
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
+    const card = overlay.querySelector('[data-cinema-idx="我的/影视/《星际穿越》.md"]') as HTMLElement;
+    card.click();
+    const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
+    (mask.querySelector('[data-cinema-dm-edit]') as HTMLElement).click();
+    const modal = (document.querySelector('.bz-overlay-mask') as HTMLElement).querySelector('.bz-overlay-popup') as HTMLElement;
+    // 已看 → 想看：状态流转刷新观影日期
+    (modal.querySelector('[data-cinema-f-status][data-value="想看"]') as HTMLElement).click();
+    (modal.querySelector('#bz-cinema-f-save') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 0));
+    const item = M.items.find((i) => i.name === '星际穿越');
+    expect(item?.status).toBe(0); // 想看
+    const d = new Date();
+    const p = (n: number) => String(n).padStart(2, '0');
+    expect(item?.watchDate).toContain(`${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`);
+    expect(vault.files.get('我的/影视/《星际穿越》.md')).not.toContain('观影日期: 2026-08-01');
   });
 });

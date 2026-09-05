@@ -234,6 +234,23 @@ describe('clipbook UI 桌面三栏', () => {
     closePanel();
   });
 
+  it('issue 208：再点当前选中源 = 回「全部未读」（桌面 rail 与移动 chip 同一入口）', async () => {
+    await openDesktop();
+    // 初始 = 全部未读
+    expect(M.sel.kind).toBe('all');
+    const findRow = (txt: string) => [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes(txt)) as HTMLElement;
+    // 点果壳源 → 选中；再点同源 → 回全部未读
+    const guokrRow = findRow('果壳');
+    guokrRow.click();
+    await vi.waitFor(() => expect(M.sel.kind).not.toBe('all'));
+    findRow('果壳').click();
+    await vi.waitFor(() => expect(M.sel.kind).toBe('all'));
+    // 点「全部未读」行本身恒回全部（不产生异常）
+    findRow('全部未读').click();
+    expect(M.sel.kind).toBe('all');
+    closePanel();
+  });
+
   // ================= issue 206：搜索进 rail / 统计联动 / 图片 / 滚动重置 / 去分析入口 =================
 
   it('issue 206：搜索框移入左栏顶部；阅读分析报告入口移除', async () => {
