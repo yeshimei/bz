@@ -47,7 +47,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 
 ### 3.1 Token（写 CSS 时只许用这些）
 - **结构**：`--bz-space-xs/sm/md/lg/xl/2xl`、`--bz-radius-xs/sm/md/lg/full`、`--bz-font-caption/meta/label/body/emphasis/title/display`、`--bz-weight-*`、`--bz-leading-*`、`--bz-control-h(-sm/md/lg)`、`--bz-icon-btn-w/h/lg`、`--bz-head-h(-lg)`、`--bz-shadow-sm/md/lg`、`--bz-dur-fast/base/slow`、`--bz-ease-*`、`--bz-star`、`--bz-scrim`、`--bz-on-overlay`
-- **色彩（随明暗）**：`--bz-surface-0..4`、`--bz-surface-hover/active`、`--bz-overlay`、`--bz-text-1/2/3/invert`、`--bz-brand(-hover/-soft)/--bz-on-brand`、`--bz-success/warning/danger/info/--bz-on-danger`、`--bz-border(-strong/-hover)`、`--bz-track/thumb`、`--bz-code-bg`、`--bz-mark-bg`
+- **色彩（随明暗）**：`--bz-surface-0..4`、`--bz-surface-hover/active`、`--bz-overlay`、`--bz-text-1/2/3/invert`、`--bz-brand(-hover/-soft)/--bz-on-brand`、`--bz-success/warning/danger/info/--bz-on-danger`、`--bz-border(-strong/-hover)`、`--bz-track/thumb`、`--bz-code-bg`、`--bz-mark-bg`、`--bz-surface-track`（浮岛 segmented 轨道，明 #fbfbfb / 暗 rgba 黑 20%）
 
 ### 3.2 组件类（HTML 直接写）
 | 组件 | 类 | 修饰 | 说明 |
@@ -61,7 +61,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | 字段行 | `.bz-field` | 内 `.bz-field-label/-desc/-error` | label+控件+说明 |
 | 空态 | `.bz-empty` | 内 `.bz-empty-ic/-title/-desc` + `.bz-btn-row` | CTA 放按钮行 |
 | 分段 | `.bz-segmented` | 内 `.bz-segmented-btn.is-on` | 单选多段（等宽条） |
-| 平铺单选组 | `.bz-choice` | 内 `.bz-choice-btn.is-on`（可选 `.bz-choice-dot` 色点） | 表单替代下拉的胶囊选项组，可换行；选项多/文案长/需色点时用 |
+| 平铺单选组 | `.bz-choice` | `.bz-choice--float`（浮岛 segmented）；内 `.bz-choice-btn.is-on`（可选 `.bz-choice-dot` 色点） | 表单替代下拉的胶囊选项组，可换行；选项多/文案长/需色点时用。浮岛档：轨道收内容宽 + 白卡滑动指示器（`.bz-choice-seg`），未选透底灰字、选中加重（2026-09-05 拍板，排序条/表单单选首选形态） |
 | 开关 | `.bz-sw` | `.on`（role=switch，键盘 Space/Enter） | 40×22 滑块，开 = 品牌实底 |
 | 下拉 | `.bz-select` | `.open`；内 `.bz-select-val`/`.bz-select-car`；弹层 `.bz-select-menu` 内 `.bz-select-item.is-on` + `.bz-select-item-ck` | 单行单选下拉；菜单随最长选项加宽不截断；短选项组优先 `.bz-choice` 平铺 |
 | 灯箱 | `.bz-lightbox` | 内 `.bz-lightbox-head/media/foot/-close` | 全屏看图/视频 |
@@ -154,7 +154,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | `uiField` | `{label?, desc?, error?, control}` | `HTMLLabelElement` |
 | `uiEmpty` | `{icon?, title, desc?, actions?}` | `HTMLDivElement` |
 | `uiSegmented` | `<T>({options, value, onChange})` | `{el, setValue}` |
-| `uiChoice` | `<T>({options:{value,label,dot?}[], value, onChange, className?})` | `{el, setValue}` |
+| `uiChoice` | `<T>({options:{value,label,dot?}[], value, onChange, className?, float?})` | `{el, setValue, detach}`；float=浮岛形态（滑动指示器，容器卸载时调 detach 摘 resize 监听） |
 | `uiSwitch` | `{checked?, onChange?}` | `{el, setChecked}` |
 | `uiSelect` | `<T>({options, value, placeholder?, className?, onOpenChange?, onChange})` | `{el, setValue}` |
 | `uiIconSpan` | `(name, extraClass?)` — 同 uiIcon 语义别名 | `HTMLSpanElement` |

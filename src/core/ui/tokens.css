@@ -120,6 +120,7 @@
   --bz-surface-hover: #2c2c36;
   --bz-surface-active: #33333e;
   --bz-overlay: rgba(0, 0, 0, 0.6);
+  --bz-surface-track: rgba(0, 0, 0, 0.2);  /* 浮岛 segmented 轨道（比选中白卡暗一档） */
 
   /* 文字 */
   --bz-text-1: #e8e8ec;
@@ -165,6 +166,7 @@
   --bz-surface-hover: #ececf0;
   --bz-surface-active: #e0e0e6;
   --bz-overlay: rgba(0, 0, 0, 0.35);
+  --bz-surface-track: #fbfbfb;             /* 浮岛 segmented 轨道（比选中白卡暗一档，2026-09-05 拍板值） */
 
   --bz-text-1: #1c1c21;
   --bz-text-2: #5c5c66;
