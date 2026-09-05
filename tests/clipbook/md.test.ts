@@ -28,14 +28,14 @@ describe('clipbook/md toParagraphs', () => {
     ]);
   });
 
-  it('图片 token 独立 img 段；列表记号去前缀（issue 205：图片不再丢弃）', () => {
+  it('图片 token 独立 img 段；列表记号去前缀（issue 206：图片不再丢弃）', () => {
     const out = toParagraphs('![图](http://a/b.jpg)\n- 列表项一\n- 列表项二\n\n正文');
     expect(out[0]).toEqual({ type: 'img', text: 'http://a/b.jpg' });
     expect(out[1]).toEqual({ type: 'p', text: '列表项一 列表项二' });
     expect(out[2]).toEqual({ type: 'p', text: '正文' });
   });
 
-  it('图片段（issue 205）：Obsidian 嵌链 ![[path]] 原样保留为 img 段', () => {
+  it('图片段（issue 206）：Obsidian 嵌链 ![[path]] 原样保留为 img 段', () => {
     const out = toParagraphs('前文\n\n![[CONFIG/IMG/图.png]]\n\n后文');
     expect(out).toEqual([
       { type: 'p', text: '前文' },
@@ -44,7 +44,7 @@ describe('clipbook/md toParagraphs', () => {
     ]);
   });
 
-  it('图片段（issue 205）：图文混行——图片打断文本流保序', () => {
+  it('图片段（issue 206）：图文混行——图片打断文本流保序', () => {
     const out = toParagraphs('开头 ![图](https://a/x.png) 结尾');
     expect(out).toEqual([
       { type: 'p', text: '开头' },
@@ -53,7 +53,7 @@ describe('clipbook/md toParagraphs', () => {
     ]);
   });
 
-  it('图片段（issue 205）：嵌链带别名尺寸剥 | 后缀；引文段内图片也拆出', () => {
+  it('图片段（issue 206）：嵌链带别名尺寸剥 | 后缀；引文段内图片也拆出', () => {
     expect(toParagraphs('![[图.png|300]]')).toEqual([{ type: 'img', text: '![[图.png]]' }]);
     const quoteMix = toParagraphs('> 引文 ![图](https://a/b.png) 续');
     expect(quoteMix).toEqual([
