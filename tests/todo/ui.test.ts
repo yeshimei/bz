@@ -1131,6 +1131,38 @@ describe('待办面板皮肤（issue 210）', () => {
     expect(panel.classList.contains('bz-todo-skin-editorial')).toBe(false);
   });
 
+  it('主头行计数数字包 .bz-todo-cnt-num（皮肤染色钩子）', async () => {
+    const { app } = seedVault();
+    openTodoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-todo-main-count] .bz-todo-cnt-num').length).toBe(2);
+    });
+    const nums = document.querySelectorAll('[data-todo-main-count] .bz-todo-cnt-num');
+    expect(nums[0].textContent).toBe('4');
+    expect(nums[1].textContent).toBe('3');
+  });
+
+  it('弹窗换肤：todoSkin=paper 时编辑器弹窗 popup 挂皮肤类；default 不挂', async () => {
+    const { app, settings } = seedVault();
+    settings.todoSkin = 'paper';
+    openTodoPanel(app);
+    openEditor(M.items.find((i) => i.id === 'a')!);
+    const popup = document.querySelector('.bz-overlay-popup') as HTMLElement;
+    expect(popup).toBeTruthy();
+    expect(popup.classList.contains('bz-todo-skin-paper')).toBe(true);
+    document.querySelector('.bz-overlay-mask')!.remove();
+    closeTodoPanel();
+
+    resetTodoState();
+    document.body.innerHTML = '';
+    settings.todoSkin = 'default';
+    openTodoPanel(app);
+    openEditor(M.items.find((i) => i.id === 'a')!);
+    const popup2 = document.querySelector('.bz-overlay-popup') as HTMLElement;
+    expect(popup2.classList.contains('bz-todo-skin-paper')).toBe(false);
+    expect(popup2.classList.contains('bz-todo-skin-editorial')).toBe(false);
+  });
+
   it('applyTodoSkin 热切换已开面板；未知值回落默认（去修饰类）', async () => {
     const { app } = seedVault();
     openTodoPanel(app);
