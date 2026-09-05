@@ -130,9 +130,9 @@ describe('enh-sweep-c：杂项打磨', () => {
     expect(css('encrypt')).not.toMatch(/\.bz-encrypt-empty\b/);
   });
 
-  it('favorites 移动 chips 计数收编共享 .bz-chip-cnt（ADR-0094；域内计数类退役）', () => {
+  it('favorites 磁贴计数=纯文本紧贴名后（issue 219c：bz-fav-stk-num，无域内计数胶囊类）', () => {
     expect(css('favorites')).not.toContain('bz-fav-chip-cnt');
-    expect(src('src/favorites/ui.ts')).toContain('bz-chip-cnt');
+    expect(src('src/favorites/ui.ts')).toContain('bz-fav-stk-num');
     expect(css('favorites')).not.toContain('bz-fav-mobchip-cnt');
   });
 });
