@@ -166,58 +166,41 @@ describe('主面板开合与空态', () => {
     consoleSpy.mockRestore();
   });
 
-  it('openPanel 建 DOM：品牌块+标题「收藏本」+设置/关闭钮 + 磁贴 11 张（全部+已归档+9 标签）+ 空态文案', async () => {
+  it('openPanel 建 DOM：手写体标题「收藏本」+ 磁贴 12 张（全部+已归档+9 标签+新收藏）+ 空态文案；无壳头行（issue 219c）', async () => {
     const ctx = await setup();
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(overlay).not.toBeNull();
     expect(overlay.querySelector('.bz-fav-panel')).not.toBeNull();
-    // 壳头行：品牌块 + 标题 + ⚙设置直达 + ✕关闭
-    expect(overlay.querySelector('.bz-panel-head .bz-panel-brand')).not.toBeNull();
-    expect(overlay.querySelector('.bz-panel-head .bz-panel-title')!.textContent).toBe('收藏本');
-    expect(overlay.querySelector('[data-fav-settings]')).not.toBeNull();
-    expect(overlay.querySelector('[data-fav-close]')).not.toBeNull();
-    // 磁贴行：全部 + 已归档 + 9 类（issue 219b：磁贴取代 rail/chips）
+    // 壳头行彻底删除（issue 219c）：无品牌块/⚙/✕ 头行（桌面点遮罩/Esc 关，移动浮动 ✕）
+    expect(overlay.querySelector('.bz-panel-head')).toBeNull();
+    expect(overlay.querySelector('[data-fav-settings]')).toBeNull();
+    // 头区：手写体标题「收藏本」+ 副题（筛选名 · 计数）
+    expect(overlay.querySelector('.bz-fav-hero .bz-fav-hero-title')!.textContent).toBe('收藏本');
+    expect(overlay.querySelector('.bz-fav-hero-sub [data-fav-title]')).not.toBeNull();
+    // 磁贴行：全部 + 已归档 + 9 类 + 行尾「＋ 新收藏」贴纸（添加入口，样式与磁贴统一）
     const stickers = overlay.querySelectorAll('[data-fav-tags] .bz-fav-stk');
-    expect(stickers.length).toBe(11);
+    expect(stickers.length).toBe(12);
     const labels = [...stickers].map((b) => (b as HTMLElement).dataset.favTag);
     expect(labels[0]).toBe('全部');
     expect(labels[1]).toBe('已归档');
     expect(labels).toContain('GitHub');
     expect(labels).toContain('DeepSeek Harness');
-    // 头区（主头行原型形态，ADR-0098）：手写体标题 + 副题筛选名 + 主按钮「添加收藏」
-    expect(overlay.querySelector('.bz-fav-hero .bz-fav-hero-title')!.textContent).toBe('亚麻记事板');
-    expect(overlay.querySelector('.bz-fav-hero-sub [data-fav-title]')).not.toBeNull();
-    // 头行右上移动专属图标组（仅添加；搜索/排序钮随原型化退役）
-    expect(overlay.querySelectorAll('.bz-panel-head-btns .bz-fav-mob-only').length).toBe(1);
-    // 主按钮文案含「添加收藏」
-    expect(overlay.querySelector('[data-fav-add].bz-btn--primary')!.textContent).toContain('添加收藏');
+    const addBtn = overlay.querySelector('[data-fav-add]') as HTMLElement;
+    expect(addBtn).not.toBeNull();
+    expect(addBtn.classList.contains('bz-fav-stk--add')).toBe(true);
+    expect(addBtn.textContent).toContain('新收藏');
     // 空态
     const empty = overlay.querySelector('.bz-fav-content .bz-empty') as HTMLElement;
     expect(empty).not.toBeNull();
     expect(empty.querySelector('.bz-empty-title')!.textContent).toBe('暂无收藏');
-    expect(empty.querySelector('.bz-empty-desc')!.textContent).toContain('点头区「添加收藏」记一条');
+    expect(empty.querySelector('.bz-empty-desc')!.textContent).toContain('「＋ 新收藏」');
     // 空库自动建文件
     expect(ctx.vault.files.has('CONFIG/STORAGE/favorites.json')).toBe(true);
     // 计数文案（C5 白卡口径）
     expect(overlay.querySelector('[data-fav-count]')!.textContent).toBe('0 张白卡');
     expect(overlay.querySelector('[data-fav-title]')!.textContent).toBe('全部');
-  });
-
-  it('设置直达：点头行 ⚙ → 关面板 + openSettingsPanel 定位收藏本域（issue 201）', async () => {
-    const ctx = await setup();
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(20);
-    const settingsMod = await import('../../src/settings-panel');
-    const spy = vi.spyOn(settingsMod, 'openSettingsPanel').mockImplementation(() => {});
-    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
-    (overlay.querySelector('[data-fav-settings]') as HTMLElement).click();
-    await tick(5);
-    expect(document.querySelector('.bz-panel-overlay')).toBeNull();
-    expect(spy).toHaveBeenCalledTimes(1);
-    expect((spy.mock.calls[0] as unknown[])[1]).toBe('favorites');
-    spy.mockRestore();
   });
 
   it('再次 openPanel = toggle 关闭；closePanel 清 DOM', async () => {
@@ -361,7 +344,7 @@ describe('标签栏', () => {
     await tick(20);
     // 桌面/移动共用 [data-fav-tags] 磁贴行（CSS 切换换行/横滑）
     const stickers = [...document.querySelectorAll('[data-fav-tags] .bz-fav-stk')] as HTMLElement[];
-    expect(stickers.length).toBe(11);
+    expect(stickers.length).toBe(12); // 含行尾「＋ 新收藏」贴纸
     const ghStk = stickers.find((b) => b.dataset.favTag === 'GitHub')!;
     ghStk.click();
     await tick(10);
@@ -373,25 +356,25 @@ describe('标签栏', () => {
     expect(document.querySelector('[data-fav-title]')!.textContent).toContain('GitHub');
   });
 
-  it('磁贴结构（issue 219b）：分类贴纸 emoji 直出；全部/已归档 lucide 图标；计数气泡', async () => {
+  it('磁贴结构（issue 219c）：分类贴纸 emoji 直出、全部/已归档纯文字、计数紧贴名后', async () => {
     const ctx = await setup();
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
     const side = [...document.querySelectorAll('[data-fav-tags] .bz-fav-stk')] as HTMLElement[];
-    // 分类贴纸：emoji + 名字 + 计数气泡，无 lucide 图标
+    // 分类贴纸：emoji + 名字，无 lucide 图标
     const gh = side.find((b) => b.dataset.favTag === 'GitHub')!;
     expect(gh.textContent).toContain('🐙');
     expect(gh.querySelector('.bz-fav-stk-name')!.textContent).toBe('GitHub');
     expect(gh.querySelector('.bz-ic')).toBeNull();
-    // 全部/已归档走 lucide 图标（非 emoji）
+    // 全部/已归档纯文字（无 lucide）
     const all = side.find((b) => b.dataset.favTag === '全部')!;
-    expect(all.querySelector('.bz-ic')).not.toBeNull();
+    expect(all.querySelector('.bz-ic')).toBeNull();
     const arch = side.find((b) => b.dataset.favTag === '已归档')!;
-    expect(arch.querySelector('.bz-ic')).not.toBeNull();
     expect(arch.classList.contains('bz-fav-stk--grey')).toBe(true);
-    // 计数气泡
+    // 计数紧贴名后（原型「GitHub 26」款）；「＋ 新收藏」贴纸无计数
     for (const b of side) {
-      expect(b.querySelector('.bz-chip-cnt')).not.toBeNull();
+      if (b.classList.contains('bz-fav-stk--add')) continue;
+      expect(b.querySelector('.bz-fav-stk-num')).not.toBeNull();
     }
   });
 
@@ -411,7 +394,7 @@ describe('标签栏', () => {
 
 function cntOf(btns: HTMLElement[], tag: string): string {
   const b = btns.find((x) => x.dataset.favTag === tag)!;
-  return b.querySelector('.bz-chip-cnt')!.textContent!;
+  return b.querySelector('.bz-fav-stk-num')!.textContent!;
 }
 
 function clickTag(label: string): void {
@@ -911,8 +894,9 @@ describe('添加表单', () => {
   });
 
   function openAddViaMainBtn(): void {
+    // issue 219c：添加入口 = 磁贴行尾「＋ 新收藏」贴纸（bz-fav-stk--add）
     const btn = [...document.querySelectorAll('[data-fav-add]')].find(
-      (b) => (b as HTMLElement).classList.contains('bz-btn--primary')
+      (b) => (b as HTMLElement).classList.contains('bz-fav-stk--add')
     ) as HTMLElement;
     btn.click();
   }
@@ -1445,7 +1429,7 @@ describe('smartcat 域事件总线', () => {
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
     const mainAdd = [...document.querySelectorAll('[data-fav-add]')].find(
-      (b) => (b as HTMLElement).classList.contains('bz-btn--primary')
+      (b) => (b as HTMLElement).classList.contains('bz-fav-stk--add')
     ) as HTMLElement;
     mainAdd.click();
     const title = document.querySelector('#fz-title') as HTMLInputElement;
@@ -1651,7 +1635,7 @@ describe('移动端抽屉', () => {
 describe('脏表单拦截', () => {
   function openAddForm(): void {
     const btn = [...document.querySelectorAll('[data-fav-add]')].find(
-      (b) => (b as HTMLElement).classList.contains('bz-btn--primary')
+      (b) => (b as HTMLElement).classList.contains('bz-fav-stk--add')
     ) as HTMLElement;
     btn.click();
   }
@@ -1743,7 +1727,7 @@ describe('ESC 关闭（escManager bz-fav 层）', () => {
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
     const mainAdd = [...document.querySelectorAll('[data-fav-add]')].find(
-      (b) => (b as HTMLElement).classList.contains('bz-btn--primary')
+      (b) => (b as HTMLElement).classList.contains('bz-fav-stk--add')
     ) as HTMLElement;
     mainAdd.click();
     await tick(10);
@@ -1773,25 +1757,28 @@ describe('ESC 关闭（escManager bz-fav 层）', () => {
   });
 });
 
-describe('移动端头行图标组（issue 219b：搜索/排序钮随原型化退役）', () => {
-  it('桌面与移动：无搜索行、无搜索钮、无排序钮；移动仅添加钮入头行图标组', async () => {
+describe('移动端头部（issue 219c：浮动 ✕ 退出；添加走磁贴行尾贴纸）', () => {
+  it('桌面与移动：无搜索/排序钮；移动浮动 ✕ 显示可关；添加贴纸桌面/移动同在', async () => {
     const ctx = await setup();
     seedVault(ctx.vault, [seedItem({ id: '1', title: 'x', url: '' })]);
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
     expect(document.querySelector('[data-fav-mobsearch-row]')).toBeNull();
-    expect(document.querySelector('[data-fav-mobsearch]')).toBeNull();
     expect(document.querySelector('[data-fav-mobsort]')).toBeNull();
     // 桌面关面板 → 切移动 → 重开（openPanel 开着再点 = toggle 关）
     closePanel();
     Platform.isMobile = true;
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
-    expect(document.querySelector('[data-fav-mobsearch-row]')).toBeNull();
     expect(document.querySelector('[data-fav-mobsort]')).toBeNull();
-    const mobAdd = document.querySelector('.bz-panel-head-btns [data-fav-add]');
-    expect(mobAdd).not.toBeNull();
-    expect(mobAdd!.classList.contains('bz-fav-mob-only')).toBe(true);
+    const mobClose = document.querySelector('.bz-fav-mob-close');
+    expect(mobClose).not.toBeNull();
+    (mobClose as HTMLElement).click();
+    expect(document.querySelector('.bz-panel-overlay')).toBeNull();
+    // 添加入口 = 磁贴行尾贴纸（移动也在）
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    expect(document.querySelector('[data-fav-tags] .bz-fav-stk--add')).not.toBeNull();
   });
 });
 
@@ -1870,7 +1857,7 @@ describe('域名徽章退役 + 搜索退役（ticket 188 / issue 201 / 219b）',
 describe('贴链自动搬家（ticket 188）', () => {
   function openAddForm() {
     const btn = [...document.querySelectorAll('[data-fav-add]')].find(
-      (b) => (b as HTMLElement).classList.contains('bz-btn--primary')
+      (b) => (b as HTMLElement).classList.contains('bz-fav-stk--add')
     ) as HTMLElement;
     btn.click();
   }
@@ -1922,7 +1909,7 @@ describe('贴链自动搬家（ticket 188）', () => {
 describe('表单防丢检查补全（ticket 188：标签/置顶/关联笔记）', () => {
   function openAddForm() {
     const btn = [...document.querySelectorAll('[data-fav-add]')].find(
-      (b) => (b as HTMLElement).classList.contains('bz-btn--primary')
+      (b) => (b as HTMLElement).classList.contains('bz-fav-stk--add')
     ) as HTMLElement;
     btn.click();
   }
@@ -1992,7 +1979,7 @@ describe('表单防丢检查补全（ticket 188：标签/置顶/关联笔记）'
 describe('保存不被余额查询阻塞（ticket 188）', () => {
   function openAddForm() {
     const btn = [...document.querySelectorAll('[data-fav-add]')].find(
-      (b) => (b as HTMLElement).classList.contains('bz-btn--primary')
+      (b) => (b as HTMLElement).classList.contains('bz-fav-stk--add')
     ) as HTMLElement;
     btn.click();
   }
@@ -2052,7 +2039,7 @@ describe('保存不被余额查询阻塞（ticket 188）', () => {
 describe('关联笔记候选补全（ticket 188）', () => {
   function openAddForm() {
     const btn = [...document.querySelectorAll('[data-fav-add]')].find(
-      (b) => (b as HTMLElement).classList.contains('bz-btn--primary')
+      (b) => (b as HTMLElement).classList.contains('bz-fav-stk--add')
     ) as HTMLElement;
     btn.click();
   }
