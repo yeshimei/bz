@@ -5993,8 +5993,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* ---- 桌面端头行（= .bz-panel-head .bz-panel-head--tall 整宽头行，域内零补） ---- */
 .bz-clip-desk { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 
-/* 桌面搜索框（= .bz-search 基线；issue 206 移入左栏顶部：与 rail 行同内边距，不参与伸缩） */
-.bz-clip-rail-search { flex-shrink: 0; padding: var(--bz-space-sm) var(--bz-space-xs) var(--bz-space-xs); }
+/* 桌面搜索框（= .bz-search 基线；issue 206 移入左栏顶部）：flex 归零覆盖基线 flex:1——防纵向 rail 内被拉伸占满（2026-09-06 实测修复） */
+.bz-clip-rail-search { flex: 0 0 auto; padding: var(--bz-space-sm) var(--bz-space-xs) var(--bz-space-xs); }
 
 /* ---- 三栏 ---- */
 .bz-clip-desk-body { flex: 1; display: flex; min-height: 0; }
