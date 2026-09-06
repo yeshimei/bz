@@ -125,12 +125,12 @@
 
   function entriesHtml() {
     return DOMAINS.map((d) =>
-          '<button type="button" class="bz-home-erow" data-go="' + d.id + '">'
+          '<div role="button" tabindex="0" class="bz-home-erow" data-go="' + d.id + '">'
           + '<span class="bz-home-dot bz-home-dot--' + dotCls(d.id) + '"></span>'
           + '<span class="bz-home-eic" style="color:' + DOT_OF[d.id] + '">' + icon(d.icon) + '</span>'
           + '<span class="bz-home-enm">' + esc2(d.name) + '</span>'
           + '<span class="bz-home-ect">' + esc2(countText(d)) + '</span>'
-          + '<span class="bz-home-ego">→</span></button>').join('');
+          + '<span class="bz-home-ego">→</span></div>').join('');
   }
 
   function flowHtml(day) {
@@ -157,19 +157,19 @@
   function nextHtml() {
     return '<div class="bz-home-sec-t bz-home-sec-t--ai">明 天 预 告</div>'
       + PREVIEWS.map((pr) =>
-          '<button type="button" class="bz-home-pr" data-go="' + pr.go + '">'
+          '<div role="button" tabindex="0" class="bz-home-pr" data-go="' + pr.go + '">'
           + '<div class="bz-home-pr-h">' + esc2(pr.h) + '</div><div>' + esc2(pr.b) + '</div>'
-          + '<span class="bz-home-pr-go">' + esc2(pr.goLabel) + '</span></button>').join('');
+          + '<span class="bz-home-pr-go">' + esc2(pr.goLabel) + '</span></div>').join('');
   }
 
   function tilesHtml() {
     return '<div class="bz-home-m-tiles">'
       + DOMAINS.map((d) =>
-          '<button type="button" class="bz-home-m-tile" data-go="' + d.id + '">'
+          '<div role="button" tabindex="0" class="bz-home-m-tile" data-go="' + d.id + '">'
           + '<span class="bz-home-dot bz-home-dot--' + dotCls(d.id) + '"></span>'
           + '<span class="bz-home-eic" style="color:' + DOT_OF[d.id] + '">' + icon(d.icon) + '</span>'
           + '<span class="bz-home-enm">' + esc2(d.name) + '</span>'
-          + '<span class="bz-home-ect">' + esc2(countText(d)) + '</span></button>').join('')
+          + '<span class="bz-home-ect">' + esc2(countText(d)) + '</span></div>').join('')
       + '</div>';
   }
 
@@ -180,7 +180,7 @@
         <h1 class="bz-home-title">首页</h1>
         <div class="bz-home-week" data-week>${weekHtml('09-07')}</div>
         <span class="bz-home-date">2026-09-07 周一 · 21:36</span>
-        <button class="bz-home-close" title="关闭" aria-label="关闭">${icon('x')}</button>
+        <div role="button" tabindex="0" class="bz-home-close" title="关闭" aria-label="关闭">${icon('x')}</div>
       </div>
       <div class="bz-home-body">
         <div class="bz-home-grid">
@@ -202,8 +202,8 @@
   ];
   function weekHtml(sel) {
     return WK_DAYS.map((w) =>
-      '<button type="button" class="bz-home-wk' + (w.hit ? ' bz-home-wk--hit' : '') + (w.d === sel ? ' bz-home-wk--sel' : '') + '" data-day="' + w.d + '">'
-      + '<i></i><span class="bz-home-wk-n">' + w.n + '</span></button>').join('');
+      '<div role="button" tabindex="0" class="bz-home-wk' + (w.hit ? ' bz-home-wk--hit' : '') + (w.d === sel ? ' bz-home-wk--sel' : '') + '" data-day="' + w.d + '">'
+      + '<i></i><span class="bz-home-wk-n">' + w.n + '</span></div>').join('');
   }
   function mount(host) {
     host.innerHTML = '<div class="bz-panel-frame bz-home-panel bz-panel-mtop">' + panelHtml() + '</div>';
