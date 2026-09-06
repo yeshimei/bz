@@ -1016,3 +1016,7 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 ### 收藏本 C5 终版原型 1:1 换血 + 三项退役（issue 227 / ADR-0101，2026-09-06）
 
 > 原型 favorites-cork-5/c5-linen-full.html 迭代终稿拍板照搬。三项退役用户逐项拍板：大模型/余额整功能退役（服务+UI，favorites.json llmConfig/balance* 字段保留不迁移）；favoritesTimeFormat 键删除固定相对时间；关联笔记整功能退役（含 file-sync.ts 整链删除 + main.ts 接线摘除）。面板 UI 豁免铁律 6：磁贴行/卡墙/右键菜单/底部抽屉/表单/空态逐字照搬原型、bz-fav-* 域内自带 CSS（.theme-dark 变量组替代原型手动暗色钮，跟随 Obsidian 主题）；跨域服务（notice/flow-dialog/esc-manager/mobile/z-order）保留。smartcat 契约零改动。
+
+### 收藏本 C5 原型后轮改动回灌（issue 228，2026-09-06）
+
+> issue 227 部署后原型再迭代一轮的纯样式回灌：主背景 #fffcf6、面板去底部内边距（桌面 26px 30px 0 / 移动 16px 14px 0）、头行 20px+标题 14px、磁贴行 20px+卡墙顶垫 6px、移动端磁贴平铺单行横滑且「新收藏」置首、移动关闭钮 24×24 图标 12px。无数据与契约变化。
