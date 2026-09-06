@@ -233,7 +233,7 @@ export class SettingsPanelUI {
     const { mask, popup } = createOverlay({
       maskId: 'bz-settings-panel-mask',
       popupId: 'bz-settings-panel-popup',
-      maxWidth: 920,
+      maxWidth: 1080, // 与 .bz-sp-desk 定稿宽 min(1080px, 94vw) 同源
       onMaskClick: () => this.hide(),
     });
     this.mask = mask;

@@ -92,7 +92,8 @@
 
 /* ═══════════ 桌面壳（几何 !important 压 createOverlay 内联尺寸） ═══════════ */
 .bz-sp-desk {
-  position: relative;
+  /* 定位不声明——popup 居中由 core .bz-overlay-mask/`.bz-overlay-popup` 体系负责，
+     域内改 position 会打断 fixed/translate 居中链（曾致面板位移出屏只剩遮罩） */
   display: flex;
   flex-direction: column !important;
   width: min(1080px, 94vw) !important;
