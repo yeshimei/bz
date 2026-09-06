@@ -3,7 +3,7 @@
  * UI 层：桌面侧栏工作台（影院式整宽头行）构建 / 域导航切换内嵌渲染真实 schema /
  *       搜索过滤 / 移动命令面板构建 / 域设置弹窗 / 关闭 / 卸载清理。
  * 核心断言：面板内嵌渲染 = 渲染器 renderPanelSchema（与 ⚙️ 弹窗同数据源、同绑定通道，
- *   控件全部走组件库（.bz-input/.bz-sw/.bz-select/.bz-chip/.bz-btn…），图标一律 lucide
+ *   控件全部域内自绘（.bz-input/.bz-sw/.bz-select/.bz-sp-chip/.bz-sp-btn/.bz-sp-cardpick…，原型逐字），图标一律 lucide
  *   （setIcon mock 记 data-icon）——面板内不出现 Obsidian 原生 .setting-item 设置行嵌套，
  *   也不残留 emoji 图标（收编铁律 6）。
  */
@@ -360,10 +360,10 @@ describe('设置面板（settings-panel）', () => {
     expect(await waitGroups(popup, 1)).toBe(true);
     const group = popup.querySelector('.bz-sp-group')!;
     expect(group.querySelector('.bz-sp-group-name')!.textContent).toBe('外观');
-    const picks = group.querySelectorAll('.bz-cardpick');
+    const picks = group.querySelectorAll('.bz-sp-cardpick');
     expect(picks.length).toBe(2);
-    const cards0 = picks[0].querySelectorAll('.bz-cardpick-card');
-    const cards1 = picks[1].querySelectorAll('.bz-cardpick-card');
+    const cards0 = picks[0].querySelectorAll('.bz-sp-cardpick-card');
+    const cards1 = picks[1].querySelectorAll('.bz-sp-cardpick-card');
     expect(cards0.length).toBe(1);
     expect(cards0[0].textContent).toContain('经纬');
     expect(cards1.length).toBe(1);
@@ -395,7 +395,7 @@ describe('设置面板（settings-panel）', () => {
     expect(chips).toBeTruthy();
     const pathBtn = chips!.querySelector('.bz-sp-path-btn') as HTMLElement;
     expect(pathBtn).toBeTruthy();
-    expect(pathBtn.classList.contains('bz-btn'), '按钮走组件库 bz-btn').toBe(true);
+    expect(pathBtn.classList.contains('bz-sp-btn'), '按钮走域内自绘 bz-sp-btn').toBe(true);
     // 无原生 .setting-item 嵌套（杜绝「设置行里再套一个设置行」）
     expect(popup.querySelector('.bz-sp-pane .setting-item')).toBeNull();
     // 空态（未设置路径）只显示选择按钮，无 chip
@@ -421,7 +421,7 @@ describe('设置面板（settings-panel）', () => {
       (el) => el.querySelector('.bz-sp-set-name')?.textContent === '书库文件夹'
     ) as HTMLElement;
     expect(row1).toBeTruthy();
-    const chip1 = row1.querySelector('.bz-chip--locked') as HTMLElement;
+    const chip1 = row1.querySelector('.bz-sp-chip--locked') as HTMLElement;
     expect(chip1, '空值时显示回落目录锁定 chip').toBeTruthy();
     expect(chip1.textContent).toContain('旧书库');
     // 选择按钮仍在（可改为显式设置）
@@ -440,7 +440,7 @@ describe('设置面板（settings-panel）', () => {
     const row2 = Array.from(popup2.querySelectorAll('.bz-sp-set-row')).find(
       (el) => el.querySelector('.bz-sp-set-name')?.textContent === '书库文件夹'
     ) as HTMLElement;
-    expect(row2.querySelector('.bz-chip--locked')?.textContent).toContain('书库');
+    expect(row2.querySelector('.bz-sp-chip--locked')?.textContent).toContain('书库');
     ui2.cleanup();
 
     // 场景 3：显式设置后回落 chip 消失（值 chip 接管，可移除）
@@ -455,7 +455,7 @@ describe('设置面板（settings-panel）', () => {
     const row3 = Array.from(popup3.querySelectorAll('.bz-sp-set-row')).find(
       (el) => el.querySelector('.bz-sp-set-name')?.textContent === '书库文件夹'
     ) as HTMLElement;
-    expect(row3.querySelector('.bz-chip--locked')).toBeNull();
+    expect(row3.querySelector('.bz-sp-chip--locked')).toBeNull();
     expect(row3.textContent).toContain('我的书');
     ui3.cleanup();
     delete (panelState as any).bookshelfFolderPath;
@@ -781,9 +781,9 @@ describe('choiceCards 视觉卡片行（issue 210）', () => {
     expect(row).toBeTruthy();
     expect(row.querySelector('.bz-sp-set-name')!.textContent).toBe('面板皮肤');
     // 拍板形态：卡片只含预览 + 名称（无编号/描述节点）
-    const cards = row.querySelectorAll('.bz-cardpick-card');
+    const cards = row.querySelectorAll('.bz-sp-cardpick-card');
     expect(cards.length).toBe(3);
-    expect(cards[1].querySelector('.bz-cardpick-prev')!.classList.contains('bz-skinprev-paper')).toBe(true);
+    expect(cards[1].querySelector('.bz-sp-mini')!.classList.contains('bz-skinprev-paper')).toBe(true);
     expect(cards[0].classList.contains('is-on')).toBe(true);
     // 点击「纸感手账」：写键 + 落盘 + 选中态切换
     (cards[1] as HTMLElement).click();

@@ -2,7 +2,7 @@
  * 拍板重设计（2026-09-07，原型 .zcode/ui-prototypes/settings-5/p1-full.html 定稿）：
  * 布局 = P1 系统面板（顶栏面包屑+搜索 / 左侧四组域导航带项数徽标 / 右侧域页头 + 分组卡行式表单）；
  * 双皮 = S1 亚麻暖白（亮，跟随 Obsidian 亮色）/ S3 炭黑夜航（暗，跟随 .theme-dark），
- * tokens 挂面板根作用域；控件层（组件库 .bz-sw/.bz-select/.bz-input/.bz-btn/.bz-chip 等）
+ * tokens 挂面板根作用域；控件层全部域内自绘（.bz-sw/.bz-select/.bz-input/.bz-sp-btn/.bz-sp-chip/.bz-sp-cardpick——原型逐字，组件库工厂退役）
  * 在面板作用域内覆写观感——renderer/ui 的组件库消费与 DOM 契约不变（测试契约同保）。
  * 本文件只服务设置面板域（bz-sp-*）；滚动条全隐藏（滚动功能保留）。
  * 消费端：ui.ts（桌面/移动壳）、renderer.ts（行/组渲染）。
@@ -11,7 +11,8 @@
 /* ═══════════ tokens：S1 亚麻暖白（亮皮，默认） ═══════════ */
 .bz-sp-desk,
 .bz-sp-mobile,
-.bz-sp-mob-modal {
+.bz-sp-mob-modal,
+.bz-sp-picker-mask {
   --sp-bg: #f6f2e9;
   --sp-panel: #fffcf6;
   --sp-line: #e5dfcf;
@@ -32,7 +33,8 @@
 /* ═══════════ tokens：S3 炭黑夜航（暗皮，跟随 Obsidian 暗色） ═══════════ */
 .theme-dark .bz-sp-desk,
 .theme-dark .bz-sp-mobile,
-.theme-dark .bz-sp-mob-modal {
+.theme-dark .bz-sp-mob-modal,
+.theme-dark .bz-sp-picker-mask {
   --sp-bg: #1b1b1f;
   --sp-panel: #242429;
   --sp-line: #35353c;
@@ -50,9 +52,95 @@
   --sp-knob: #fff;
 }
 
-/* ═══════════ 外观域卡片预览（bz-cardpick prevClass，视觉对照原型 renderMini） ═══════════ */
+/* ═══════════ 域内文件夹选择器（path 行弹层；挂 body 自挂 tokens，不受面板 overflow 裁剪） ═══════════ */
+.bz-sp-picker-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 15, 8, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.theme-dark .bz-sp-picker-mask { background: rgba(0, 0, 0, 0.62); }
+.bz-sp-picker {
+  width: min(560px, 100%);
+  max-height: min(520px, 78vh);
+  background: var(--sp-panel);
+  border: 1px solid var(--sp-line);
+  border-radius: 14px;
+  box-shadow: var(--sp-shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.bz-sp-picker-head { padding: 14px 18px 8px; font-size: 14px; font-weight: 700; color: var(--sp-ink); }
+.bz-sp-picker-search {
+  margin: 10px auto 8px;
+  width: calc(100% - 28px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--sp-bg);
+  border: 1px solid var(--sp-line);
+  border-radius: 9px;
+  padding: 8px 14px;
+  color: var(--sp-ink-3);
+}
+.bz-sp-picker-search input { flex: 1; border: 0; outline: 0; background: transparent; font-size: 12.5px; color: var(--sp-ink); font-family: inherit; }
+.bz-sp-picker-crumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-top: 1px solid var(--sp-line);
+  border-bottom: 1px solid var(--sp-line);
+  background: var(--sp-bg);
+  font-size: 11.5px;
+  color: var(--sp-ink-2);
+}
+.bz-sp-picker-lab { color: var(--sp-ink-3); margin-right: 2px; }
+.bz-sp-picker-sep { opacity: 0.6; }
+.bz-sp-picker-crumb > span:last-child { color: var(--sp-accent); font-weight: 600; }
+.bz-sp-picker-list { flex: 1; overflow-y: auto; padding: 8px 12px; }
+.bz-sp-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12.5px;
+  color: var(--sp-ink);
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  position: relative;
+}
+.bz-sp-picker-row:hover { background: var(--sp-accent-soft); }
+.bz-sp-picker-row.sel { box-shadow: inset 3px 0 0 var(--sp-accent); }
+.bz-sp-picker-row .bz-ic { width: 14px; height: 14px; color: var(--sp-ink-3); flex: none; }
+.bz-sp-picker-row.sel .bz-ic { color: var(--sp-accent); }
+.bz-sp-picker-row.sel span:first-of-type { color: var(--sp-accent); font-weight: 600; }
+.bz-sp-picker-row .anc {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--sp-ink-3);
+  opacity: 0.85;
+  font-family: ui-monospace, Consolas, monospace;
+  flex: none;
+  max-width: 46%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-sp-picker-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--sp-line); }
+
+/* ═══════════ 外观域卡片预览（bz-sp-mini prevClass，视觉对照原型 renderMini） ═══════════ */
 /* 经纬：布局缩略 = head 横条 + 左栏竖块 + 主内容块（P1 系统面板形态） */
-.bz-cardpick-prev.bz-sp-prev-jingwei {
+.bz-sp-mini.bz-sp-prev-jingwei {
   background:
     linear-gradient(rgba(90, 70, 40, 0.25), rgba(90, 70, 40, 0.25)) 0 0 / 100% 20% no-repeat,
     linear-gradient(rgba(90, 70, 40, 0.2), rgba(90, 70, 40, 0.2)) 6% 28% / 20% 62% no-repeat,
@@ -60,7 +148,7 @@
     linear-gradient(rgba(90, 70, 40, 0.13), rgba(90, 70, 40, 0.13)) 32% 76% / 62% 16% no-repeat;
   border-radius: 3px;
 }
-.theme-dark .bz-cardpick-prev.bz-sp-prev-jingwei {
+.theme-dark .bz-sp-mini.bz-sp-prev-jingwei {
   background:
     linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2)) 0 0 / 100% 20% no-repeat,
     linear-gradient(rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.16)) 6% 28% / 20% 62% no-repeat,
@@ -68,7 +156,7 @@
     linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)) 32% 76% / 62% 16% no-repeat;
 }
 /* 晨昏：亮暗双块 + 中缝 accent 圆点（自动亮暗语义——亮如晨、暗如夜） */
-.bz-cardpick-prev.bz-sp-prev-chenhun {
+.bz-sp-mini.bz-sp-prev-chenhun {
   background:
     radial-gradient(circle at 50% 50%, var(--sp-accent) 0 4px, #fff 4px 6px, transparent 6px),
     linear-gradient(90deg, #f6f2e9 0 50%, #242429 50% 100%);
@@ -362,16 +450,45 @@
   background: var(--sp-accent);
   border-color: var(--sp-accent);
 }
+/* on 态旋钮位移：38 轨道 - 18 旋钮 - 2px×2 边距 = 16px（左右对称留边） */
+.bz-sp-desk .bz-sw.on::after,
+.bz-sp-mobile .bz-sw.on::after,
+.bz-sp-mob-modal .bz-sw.on::after {
+  transform: translateX(16px);
+}
+.bz-sp-desk .bz-sw:focus-visible,
+.bz-sp-mobile .bz-sw:focus-visible,
+.bz-sp-mob-modal .bz-sw:focus-visible {
+  outline: 2px solid var(--sp-accent);
+  outline-offset: 2px;
+}
 
 /* 下拉 .bz-select：纸底描边触发器 + 面板同皮菜单（菜单挂触发器内，scope 生效） */
 .bz-sp-desk .bz-select,
 .bz-sp-mobile .bz-select,
 .bz-sp-mob-modal .bz-select {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 210px;
+  max-width: 280px;
+  padding: 6px 10px;
   background: var(--sp-input-bg);
   border: 1px solid var(--sp-line);
   border-radius: 7px;
   font-size: 12.5px;
   color: var(--sp-ink);
+  cursor: pointer;
+  user-select: none;
+}
+.bz-sp-desk .bz-select-val,
+.bz-sp-mobile .bz-select-val,
+.bz-sp-mob-modal .bz-select-val {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .bz-sp-desk .bz-select:hover,
 .bz-sp-mobile .bz-select:hover,
@@ -379,6 +496,13 @@
 .bz-sp-desk .bz-select-menu,
 .bz-sp-mobile .bz-select-menu,
 .bz-sp-mob-modal .bz-select-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
   background: var(--sp-panel);
   border: 1px solid var(--sp-line);
   border-radius: 9px;
@@ -388,9 +512,31 @@
 .bz-sp-desk .bz-select-item,
 .bz-sp-mobile .bz-select-item,
 .bz-sp-mob-modal .bz-select-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
   font-size: 12.5px;
   color: var(--sp-ink);
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
 }
+.bz-sp-desk .bz-select-item-ck,
+.bz-sp-mobile .bz-select-item-ck,
+.bz-sp-mob-modal .bz-select-item-ck {
+  margin-left: auto;
+  opacity: 0;
+  width: 13px;
+  height: 13px;
+}
+.bz-sp-desk .bz-select-item.is-on .bz-select-item-ck,
+.bz-sp-mobile .bz-select-item.is-on .bz-select-item-ck,
+.bz-sp-mob-modal .bz-select-item.is-on .bz-select-item-ck { opacity: 1; }
 .bz-sp-desk .bz-select-item:hover,
 .bz-sp-mobile .bz-select-item:hover,
 .bz-sp-mob-modal .bz-select-item:hover { background: var(--sp-accent-soft); }
@@ -433,79 +579,6 @@
 .bz-sp-mobile .bz-input.mono,
 .bz-sp-mob-modal .bz-input.mono { font-family: ui-monospace, Consolas, monospace; }
 
-/* 按钮 .bz-btn：行内 ghost 描边 / cta primary 实底（accent 随皮） */
-.bz-sp-desk .bz-btn,
-.bz-sp-mobile .bz-btn,
-.bz-sp-mob-modal .bz-btn {
-  background: var(--sp-panel);
-  border: 1px solid var(--sp-line);
-  color: var(--sp-ink);
-  border-radius: 7px;
-  font-size: 12.5px;
-  box-shadow: none;
-}
-.bz-sp-desk .bz-btn:hover,
-.bz-sp-mobile .bz-btn:hover,
-.bz-sp-mob-modal .bz-btn:hover {
-  background: var(--sp-accent-soft) !important;
-  border-color: var(--sp-line) !important;
-  color: var(--sp-ink) !important;
-}
-.bz-sp-desk .bz-btn--primary,
-.bz-sp-mobile .bz-btn--primary,
-.bz-sp-mob-modal .bz-btn--primary {
-  background: var(--sp-accent) !important;
-  color: var(--sp-on-accent) !important;
-  border-color: transparent;
-}
-.bz-sp-desk .bz-btn--primary:hover,
-.bz-sp-mobile .bz-btn--primary:hover,
-.bz-sp-mob-modal .bz-btn--primary:hover {
-  background: var(--sp-accent) !important;
-  color: var(--sp-on-accent) !important;
-  opacity: 0.92;
-}
-.bz-sp-desk .bz-btn--ghost,
-.bz-sp-mobile .bz-btn--ghost,
-.bz-sp-mob-modal .bz-btn--ghost {
-  background: var(--sp-panel) !important;
-  border-color: var(--sp-line) !important;
-  color: var(--sp-ink) !important;
-}
-.bz-sp-desk .bz-btn--ghost:hover,
-.bz-sp-mobile .bz-btn--ghost:hover,
-.bz-sp-mob-modal .bz-btn--ghost:hover {
-  background: var(--sp-accent-soft) !important;
-  color: var(--sp-ink) !important;
-}
-.bz-sp-path-btn { flex: none; }
-
-/* chips（路径行）：纸底描边 + 锁定回落 chip 虚边 */
-.bz-sp-desk .bz-chip,
-.bz-sp-mobile .bz-chip,
-.bz-sp-mob-modal .bz-chip {
-  background: var(--sp-bg);
-  border: 1px solid var(--sp-line);
-  border-radius: 7px;
-  color: var(--sp-ink);
-  font-size: 11.5px;
-  font-family: ui-monospace, Consolas, monospace;
-}
-.bz-sp-desk .bz-chip--locked,
-.bz-sp-mobile .bz-chip--locked,
-.bz-sp-mob-modal .bz-chip--locked {
-  border-style: dashed;
-  color: var(--sp-ink-2);
-  background: transparent;
-}
-.bz-sp-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  justify-content: flex-end;
-  min-width: 0;
-}
-
 /* 滑杆行 + 读数徽标 */
 .bz-sp-slider-row { display: flex; align-items: center; gap: 10px; }
 .bz-sp-slider-row input[type='range'] { accent-color: var(--sp-accent); width: 150px; }
@@ -520,30 +593,53 @@
   padding: 0;
 }
 
-/* choiceCards（皮肤预览卡）：面板观感；预览效果由各域 prevClass 全局样式承载 */
-.bz-sp-desk .bz-cardpick,
-.bz-sp-mobile .bz-cardpick,
-.bz-sp-mob-modal .bz-cardpick { gap: 10px; }
-.bz-sp-desk .bz-cardpick-card,
-.bz-sp-mobile .bz-cardpick-card,
-.bz-sp-mob-modal .bz-cardpick-card {
+/* choiceCards 自绘卡（原型逐字类）：预览 div（.bz-sp-mini）+ 名称；预览视觉由各域 prevClass 承载 */
+.bz-sp-desk .bz-sp-cardpick,
+.bz-sp-mobile .bz-sp-cardpick,
+.bz-sp-mob-modal .bz-sp-cardpick { display: flex; flex-wrap: wrap; gap: 10px; }
+.bz-sp-desk .bz-sp-cardpick-card,
+.bz-sp-mobile .bz-sp-cardpick-card,
+.bz-sp-mob-modal .bz-sp-cardpick-card {
   background: var(--sp-panel);
   border: 1.5px solid var(--sp-line);
   border-radius: 10px;
   padding: 6px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
 }
-.bz-sp-desk .bz-cardpick-card.is-on,
-.bz-sp-mobile .bz-cardpick-card.is-on,
-.bz-sp-mob-modal .bz-cardpick-card.is-on {
+.bz-sp-desk .bz-sp-cardpick-card.is-on,
+.bz-sp-mobile .bz-sp-cardpick-card.is-on,
+.bz-sp-mob-modal .bz-sp-cardpick-card.is-on {
   border-color: var(--sp-accent);
   box-shadow: 0 0 0 2px var(--sp-accent-soft);
 }
-.bz-sp-desk .bz-cardpick-name,
-.bz-sp-mobile .bz-cardpick-name,
-.bz-sp-mob-modal .bz-cardpick-name { font-size: 10.5px; color: var(--sp-ink-2); }
-.bz-sp-desk .bz-cardpick-card.is-on .bz-cardpick-name,
-.bz-sp-mobile .bz-cardpick-card.is-on .bz-cardpick-name,
-.bz-sp-mob-modal .bz-cardpick-card.is-on .bz-cardpick-name { color: var(--sp-accent); font-weight: 600; }
+.bz-sp-desk .bz-sp-cardpick-name,
+.bz-sp-mobile .bz-sp-cardpick-name,
+.bz-sp-mob-modal .bz-sp-cardpick-name { font-size: 10.5px; color: var(--sp-ink-2); }
+.bz-sp-desk .bz-sp-cardpick-card.is-on .bz-sp-cardpick-name,
+.bz-sp-mobile .bz-sp-cardpick-card.is-on .bz-sp-cardpick-name,
+.bz-sp-mob-modal .bz-sp-cardpick-card.is-on .bz-sp-cardpick-name { color: var(--sp-accent); font-weight: 600; }
+/* 迷你预览容器（原型 .bz-sp-mini 几何；底图/细节由 prevClass 各域样式绘制） */
+.bz-sp-desk .bz-sp-mini,
+.bz-sp-mobile .bz-sp-mini,
+.bz-sp-mob-modal .bz-sp-mini {
+  width: 64px;
+  height: 44px;
+  border-radius: 5px;
+  border: 1px solid var(--sp-line);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 4px;
+  display: block;
+}
+
+/* 行备注（note）：『↳』前缀灰字 + 行级搜索命中高亮 */
+.bz-sp-set-note { font-size: 10.5px; color: var(--sp-ink-3); margin-top: 3px; }
+.bz-sp-set-row.hit { box-shadow: inset 3px 0 0 var(--sp-accent); background: var(--sp-accent-soft); }
 
 /* ═══════════ 加载态 / 空态 ═══════════ */
 .bz-sp-loading {
@@ -717,7 +813,6 @@
   flex: none;
 }
 .bz-sp-mob-modal-title { font-size: 16px; font-weight: 700; margin: 0; color: var(--sp-ink); }
-.bz-sp-mob-modal-head .bz-btn { margin-left: auto; }
 .bz-sp-mob-modal-body {
   flex: 1;
   min-height: 0;
@@ -811,6 +906,11 @@
 .bz-sp-mob-modal .bz-sp-chip--muted {
   border-style: dashed;
   color: var(--sp-ink-3);
+  background: transparent;
+}
+.bz-sp-chip--locked {
+  border-style: dashed;
+  color: var(--sp-ink-2);
   background: transparent;
 }
 .bz-sp-chip .x {
