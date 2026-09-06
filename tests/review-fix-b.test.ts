@@ -65,7 +65,7 @@ describe('批 B-3：触控热区收编 core .bz-touch-target', () => {
   it('收编域挂类与档位映射（外扩量与原域内 inset 一一对应）', () => {
     // 默认档（原 inset -6px）：32px 档头行图标钮（belongings ADR-0094 起同 favorites 挂 --lg 修饰符）
     expect(repo('src/belongings/ui.ts')).toMatch(/bz-icon-btn--lg bz-touch-target/);
-    expect(repo('src/favorites/ui.ts')).toMatch(/bz-icon-btn--lg bz-touch-target/);
+    expect(repo('src/favorites/ui.ts')).toMatch(/bz-fav-mob-close bz-touch-target/); // ADR-0101：域内自绘关闭钮挂 44px 档
     // --sm（原 -4px）：番茄钟控制钮、复习评级条
     expect(repo('src/pomodoro/ui.ts')).toMatch(/pomodoro-btn pomodoro-btn-primary bz-touch-target--sm/);
     expect(repo('src/review/ui.ts')).toContain('bz-review-bar-btn bz-touch-target--sm');
@@ -84,10 +84,11 @@ describe('批 B-3：触控热区收编 core .bz-touch-target', () => {
     expect(repo('src/review/stats-ui.ts')).toContain('bz-review-history-close bz-touch-target--xl');
   });
 
-  it(' favorites 域内对 .bz-icon-btn 的直接覆写退役（改挂 --lg 修饰符）', () => {
+  it(' favorites 面板 UI 域内自绘（ADR-0101）：无组件库 icon-btn 依赖', () => {
     const css = repo('src/favorites/styles.css');
     expect(css).not.toContain('.bz-fav-head-btns .bz-icon-btn { width');
-    expect(repo('src/favorites/ui.ts')).toContain('bz-icon-btn--lg');
+    expect(repo('src/favorites/ui.ts')).not.toContain('bz-icon-btn--lg');
+    expect(repo('src/favorites/ui.ts')).not.toContain('uiBtn(');
   });
 
   it('跳过项守护：attach（padding 抬档形态）维持域内 pointer:coarse 块；cinema 已在批 C 收编 .bz-touch-target', () => {
