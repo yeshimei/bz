@@ -83,8 +83,8 @@
   .phone .m-head h1 { font-size: 14px; letter-spacing: 3px; color: var(--ink-title); }
   .phone .m-close { width: 24px; height: 24px; border-radius: 7px; border: none; background: var(--chip); color: var(--chip-ink);
     cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px var(--card-shadow); }
-  .phone .m-board { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 12px; align-items: start; }
-  .phone .card { width: auto; }
+  .phone .m-board { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px 12px; align-items: start; }
+  .phone .card { width: auto; min-width: 0; }
   .phone .sheet-mask { position: absolute; inset: 0; z-index: 60; background: var(--mask); display: none; align-items: flex-end; }
   .phone .sheet-mask.show { display: flex; }
   .sheet { width: 100%; background: var(--pop); border-radius: 18px 18px 0 0; padding: 16px 18px 20px; box-shadow: 0 -10px 30px rgba(0,0,0,.3); }

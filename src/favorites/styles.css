@@ -51,7 +51,8 @@
 .bz-fav-panel .bz-fav-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 20px; }
 .bz-fav-panel .bz-fav-head h1 { font-size: 14px; letter-spacing: 3px; color: var(--ink-title); font-weight: 700; margin: 0; }
 /* 移动端：面板即原型 .phone 内容（全屏；边框圆角交给全屏态，留内边距） */
-.bz-fav-panel.bz-fav-mob { padding: 16px 14px 0; }
+/* 移动端：面板即原型 .phone 内容（全屏；显式视口宽高——overlay 弹性子项不定宽会被卡墙 max-content 撑爆） */
+.bz-fav-panel.bz-fav-mob { width: 100vw; height: 100vh; max-width: 100vw; padding: 16px 14px 0; }
 
 /* —— 磁贴标签（原型 .tags 逐字） —— */
 .bz-fav-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
@@ -80,7 +81,7 @@
 /* —— 卡片（原型 .card 逐字） —— */
 .bz-fav-board { display: flex; flex-wrap: wrap; gap: 22px 20px; align-items: flex-start; padding-top: 6px; }
 .bz-fav-card {
-  width: 184px; background: var(--card); border-radius: 10px; padding: 24px 16px 13px; cursor: pointer; position: relative;
+  width: 184px; min-width: 0; background: var(--card); border-radius: 10px; padding: 24px 16px 13px; cursor: pointer; position: relative;
   box-shadow: 0 4px 12px var(--card-shadow); transition: transform .15s, box-shadow .15s;
 }
 .bz-fav-card:hover { transform: translateY(-4px); box-shadow: 0 10px 22px var(--card-shadow-hi); }
@@ -108,8 +109,8 @@
 .bz-fav-card.bz-fav-pinc { box-shadow: 0 4px 12px var(--card-shadow), 0 0 0 2px var(--gold); }
 .bz-fav-card.bz-fav-arch { opacity: .5; filter: grayscale(.5); }
 .bz-fav-empty { padding: 50px 0; text-align: center; color: var(--ink-faint); font-size: 13px; width: 100%; }
-/* 移动端：双列网格（原型 .phone .m-board） */
-.bz-fav-panel.bz-fav-mob .bz-fav-board { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 12px; align-items: start; }
+/* 移动端：双列网格（原型 .phone .m-board）；minmax(0,1fr) 防 line-clamp 卡片 max-content 撑爆轨道 */
+.bz-fav-panel.bz-fav-mob .bz-fav-board { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px 12px; align-items: start; }
 .bz-fav-panel.bz-fav-mob .bz-fav-card { width: auto; }
 /* 移动端磁贴行：平铺单行横向滑动（原型 .phone .tags；顶垫 5px 防磁点被 overflow 裁掉） */
 .bz-fav-panel.bz-fav-mob .bz-fav-tags { flex-wrap: nowrap; overflow-x: auto; padding: 5px 0 6px; }
@@ -220,6 +221,6 @@
 /* —— 窄面板兜底：桌面窄窗下面板宽 <520px 时卡墙退化为移动同款双列平摊（容器查询，Obsidian Chromium 支持） —— */
 .bz-fav-panel { container-type: inline-size; }
 @container (max-width: 520px) {
-  .bz-fav-panel .bz-fav-board { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 12px; align-items: start; }
+  .bz-fav-panel .bz-fav-board { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px 12px; align-items: start; }
   .bz-fav-panel .bz-fav-card { width: auto; }
 }
