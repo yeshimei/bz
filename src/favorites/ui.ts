@@ -172,7 +172,7 @@ function panelHtml(): string {
   // 桌面点遮罩/Esc 关闭；移动浮动 ✕（全屏退出）。
   const mob = isMobileEnv() ? ' bz-fav-mob bz-panel-mtop' : '';
   return `<div class="bz-fav-panel bz-fav-scope${mob}">
-  <button class="bz-fav-mob-close bz-touch-target" data-fav-close title="关闭">${iconSpan(ICON.close)}</button>
+  <button class="bz-fav-mob-close bz-touch-target" data-fav-close title="关闭">${iconSpan(ICON.close, 'bz-ic--xs')}</button>
   <div class="bz-fav-head"><h1>收藏本</h1></div>
   <div class="bz-fav-tags" data-fav-tags></div>
   <div class="bz-fav-board" data-fav-content></div>
@@ -318,20 +318,21 @@ function applyTagFilter(label: string): void {
 }
 
 /** 磁贴标签行渲染（原型 1:1：「emoji 名 数字」白底磁贴；无计数标签不显示；
- *  行尾「新收藏」chip = lucide plus 虚线磁贴、无磁点） */
+ *  「新收藏」chip = lucide plus 虚线磁贴、无磁点；移动端平铺单行时置首，桌面仍居行尾） */
 function renderTags(): void {
   const overlay = M.overlay!;
   const stickers = overlay.querySelector('[data-fav-tags]') as HTMLElement;
   const mk = (label: string, emoji: string, cnt: number, active: boolean, grey = false) =>
     `<button class="bz-fav-chip${active ? ' bz-fav-on' : ''}${grey ? ' bz-fav-chip--grey' : ''}" data-fav-tag="${esc(label)}">${emoji ? emoji + ' ' : ''}${esc(label)} ${cnt}</button>`;
-  stickers.innerHTML =
+  const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${iconSpan(ICON.add, 'bz-ic--xs')}<span>新收藏</span></button>`;
+  const chips =
     mk('全部', '', visible().length, !M.archived && M.tag === null) +
     mk('已归档', '🗄️', archivedItems().length, M.archived, true) +
     TAGS.map((t) => {
       const n = tagCount(t.label);
       return n ? mk(t.label, t.emoji, n, !M.archived && M.tag === t.label) : '';
-    }).join('') +
-    `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${iconSpan(ICON.add, 'bz-ic--xs')}<span>新收藏</span></button>`;
+    }).join('');
+  stickers.innerHTML = isMobileEnv() ? add + chips : chips + add;
 }
 
 function renderContent(): void {
