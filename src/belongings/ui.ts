@@ -43,7 +43,7 @@ import type { BelongingsDatabase, BelongingsItem } from './types';
 
 /** 状态（数据四态精确串；key = 稳定英文标识） */
 const STATUS: Record<string, { label: string; key: string; ic: string }> = {
-  using: { label: '使用中', key: 'using', ic: 'check' },
+  using: { label: '使用中', key: 'using', ic: 'check-circle' },
   idle: { label: '闲置', key: 'idle', ic: 'package' },
   sold: { label: '已转卖', key: 'sold', ic: 'banknote' },
   discard: { label: '已丢弃', key: 'discard', ic: 'archive' },
@@ -253,9 +253,6 @@ function itemById(id: string): BelongingsItem | undefined {
 
 function panelHtml(): string {
   return `<div class="bz-bel-panel bz-panel-frame bz-panel-mtop bz-bel--poster">
-  <div class="bz-bel-mobhead">
-    <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON.close)}</button>
-  </div>
   <div class="bz-bel-body">
     <div class="bz-bel-hero">
       <div class="bz-bel-hero-text">
@@ -263,6 +260,14 @@ function panelHtml(): string {
         <div class="bz-bel-hero-sub" data-bel-herosub>BELONGINGS — NOTHING MORE, NOTHING LESS</div>
       </div>
       <div class="bz-bel-kpis" data-bel-kpis></div>
+      <div class="bz-bel-mobhead">
+        <div class="bz-bel-stamp"><b data-bel-stampn>0</b><span>在库</span></div>
+        <div class="bz-bel-mobhead-tx">
+          <div class="bz-bel-mobhead-t">归物本</div>
+          <div class="bz-bel-mobhead-sub" data-bel-mobstats></div>
+        </div>
+        <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON.close)}</button>
+      </div>
     </div>
     <div class="bz-bel-chips" data-bel-chips></div>
     <div class="bz-toolrow bz-bel-toolrow">
@@ -271,17 +276,16 @@ function panelHtml(): string {
         <select class="bz-bel-select" data-bel-year></select>
         ${iconSpan(ICON.chevR, 'bz-bel-select-chev')}
       </div>
+      <div class="bz-bel-yearsel bz-bel-mobsortsel-wrap">
+        <select class="bz-bel-select" data-bel-mobsortsel></select>
+        ${iconSpan(ICON.chevR, 'bz-bel-select-chev')}
+      </div>
       <div class="bz-bel-sort" data-bel-sort></div>
       <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${iconSpan(ICON.add, 'bz-ic--sm')} 记一笔</button>
     </div>
     <div class="bz-mobstrip" data-bel-mobstatus></div>
-    <div class="bz-bel-mobsort" data-bel-mobsort></div>
     <div class="bz-bel-content" data-bel-content></div>
     <button class="bz-btn bz-btn--md bz-bel-mobadd" data-bel-add>${iconSpan(ICON.add, 'bz-ic--sm')} 记一笔</button>
-    <div class="bz-bel-foot">
-      <span class="bz-bel-foot-brand">BZ·BELONGINGS — P20 SWISS POSTER</span>
-      <span class="bz-bel-footnote" data-bel-footnote></span>
-    </div>
   </div>
 </div>`;
 }
@@ -356,25 +360,32 @@ async function openPanelInner(): Promise<void> {
   // ESC（主面板 + 表单/详情多窗口径；表单也可能先于面板打开——命令路径）
   ensureBelongingsEsc();
 
-  // ---- 排序 segmented（组件库 uiSegmented；桌面/移动双实例同步，视图档不落盘） ----
-  const sortSegs: ReturnType<typeof uiSegmented<'recent' | 'price' | 'daily'>>[] = [];
-  (['[data-bel-sort]', '[data-bel-mobsort]'] as const).forEach((sel) => {
-    const host = overlay.querySelector(sel) as HTMLElement;
-    const seg = uiSegmented<'recent' | 'price' | 'daily'>({
-      options: [
-        { value: 'recent', label: '最近购入' },
-        { value: 'price', label: '投入最高' },
-        { value: 'daily', label: '日均最高' },
-      ],
-      value: M.sort,
-      onChange: (v) => {
-        M.sort = v;
-        sortSegs.forEach((s) => s.setValue(v));
-        renderContent();
-      },
-    });
-    host.replaceChildren(seg.el);
-    sortSegs.push(seg);
+  // ---- 移动排序下拉（同年份下拉样式；与桌面 seg 双向同步，用户拍板） ----
+  const SORT_OPTIONS: { value: 'recent' | 'price' | 'daily'; label: string }[] = [
+    { value: 'recent', label: '最近购入' },
+    { value: 'price', label: '投入最高' },
+    { value: 'daily', label: '日均最高' },
+  ];
+  const mobSortSel = overlay.querySelector('[data-bel-mobsortsel]') as HTMLSelectElement;
+  mobSortSel.innerHTML = SORT_OPTIONS.map((o) => `<option value="${o.value}">${o.label}</option>`).join('');
+  mobSortSel.value = M.sort;
+
+  // ---- 排序 segmented（组件库 uiSegmented；桌面工具行专属，视图档不落盘） ----
+  const sortHost = overlay.querySelector('[data-bel-sort]') as HTMLElement;
+  const seg = uiSegmented<'recent' | 'price' | 'daily'>({
+    options: SORT_OPTIONS,
+    value: M.sort,
+    onChange: (v) => {
+      M.sort = v;
+      mobSortSel.value = v;
+      renderContent();
+    },
+  });
+  sortHost.replaceChildren(seg.el);
+  mobSortSel.addEventListener('change', () => {
+    M.sort = mobSortSel.value as 'recent' | 'price' | 'daily';
+    seg.setValue(M.sort);
+    renderContent();
   });
 
   // ---- 事件委托 ----
@@ -576,14 +587,16 @@ function renderChips(): void {
     c.dataset.belSt = d.key;
     return c;
   }));
-  // 移动横滑 chips（.bz-mobstrip；p20 m-chips：纯文字+计数，无图标）
+  // 移动横滑 chips（p20 m-chips：纯文字+计数，无图标；用户拍板去资产+缩小，五枚放一行。
+  // 资产筛选移动端走 KPI 两卡点按，不丢能力）
   const mob = overlay.querySelector('[data-bel-mobstatus]') as HTMLElement;
   const mkChip = (key: string, label: string, cnt: number, active: boolean) =>
     `<button class="bz-mobstrip-chip${active ? ' is-on' : ''}" data-bel-st="${key}"><span>${esc(label)}</span><span class="bz-chip-cnt">${cnt}</span></button>`;
-  mob.innerHTML =
-    mkChip('__all', '全部', itemList().length, M.status === null) +
-    mkChip('asset', '资产', stockCount(), M.status === 'asset') +
-    STATUS_ORDER.map((s) => mkChip(s.key, s.label, statusCount(s.label), M.status === s.key)).join('');
+  const mobDefs: { key: string; label: string; cnt: number }[] = [
+    { key: '__all', label: '全部', cnt: itemList().length },
+    ...STATUS_ORDER.map((s) => ({ key: s.key, label: s.label, cnt: statusCount(s.label) })),
+  ];
+  mob.innerHTML = mobDefs.map((d) => mkChip(d.key, d.label, d.cnt, d.key === '__all' ? M.status === null : M.status === d.key)).join('');
 }
 
 function renderYears(): void {
@@ -602,6 +615,11 @@ function renderKpis(): void {
   const overlay = M.overlay;
   if (!overlay) return;
   const wrap = overlay.querySelector('[data-bel-kpis]') as HTMLElement;
+  // 移动端印章头（H8）：章数 + 钱数小字与桌面 KPI 同口径
+  const stampN = overlay.querySelector('[data-bel-stampn]');
+  if (stampN) stampN.textContent = String(stockCount());
+  const mobStats = overlay.querySelector('[data-bel-mobstats]');
+  if (mobStats) mobStats.textContent = `投入 ${moneyShort(totalAssets())} · 日均 ${avgDailyCost().toFixed(2)}`;
   const gone = itemList().filter(isExited);
   const recover = gone.reduce((s, i) => s + (Number(i.sold_price) || 0), 0);
   // ticket 189：在库两卡可点（合成筛选，再点取消）；口径不动只加视图联动。
@@ -627,7 +645,6 @@ function renderContent(): void {
       title: noMatch ? '没有符合条件的物品' : '这里还没有物品',
       desc: noMatch ? '换个筛选条件，或清除搜索' : '点「记一笔」登记第一个物品',
     }));
-    (overlay.querySelector('[data-bel-footnote]') as HTMLElement).textContent = '';
     return;
   }
   // 末行空位补纸面 filler（P20：黑缝线只出现在卡与卡之间，空区保持纸面）。
@@ -641,8 +658,6 @@ function renderContent(): void {
   const rem = list.length % cols;
   if (rem) gridEl.insertAdjacentHTML('beforeend', `<div class="bz-bel-filler" style="grid-column:span ${cols - rem}"></div>`);
   mountIcons(content);
-  const fn = overlay.querySelector('[data-bel-footnote]') as HTMLElement;
-  fn.textContent = `共 ${itemList().length} 件 · 显示 ${list.length} 件 · 回本冲抵 ${moneyShort(itemList().reduce((s, i) => s + (Number(i.sold_price) || 0), 0))}`;
 }
 
 /** 网格卡（P20 大字报）：NO.XX 编号 + 状态徽章 + 特大 emoji + 名称 + 大字价格 + meta */
