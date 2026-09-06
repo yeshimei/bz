@@ -12,6 +12,12 @@ import { closeOverlay } from '../../src/home/ui';
 import { resetHomeState, H } from '../../src/home/state';
 import { DOMAINS } from '../../src/home/domains';
 
+function todayStr(): string {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
 function yesterdayDateStr(): string {
   const d = new Date();
   d.setDate(d.getDate() - 1);
@@ -95,6 +101,9 @@ describe('home 活动河 UI（issue 232）', () => {
     await new Promise((r) => setTimeout(r, 20));
     const wks = document.querySelectorAll('[data-home-weekday]');
     expect(wks.length).toBe(7);
+    // 倒排：第一格=今天，显示「今」不写数字
+    expect((wks[0] as HTMLElement).dataset.homeWeekday).toBe(todayStr());
+    expect(wks[0].querySelector('.bz-home-wk-n')!.textContent).toBe('今');
     expect(document.querySelectorAll('.bz-home-wk--hit').length).toBe(1); // 只有昨天有动静
     const yesterday = yesterdayDateStr();
     const ybtn = document.querySelector(`[data-home-weekday="${yesterday}"]`) as HTMLElement;
