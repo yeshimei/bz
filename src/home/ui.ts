@@ -20,6 +20,9 @@ import { DOMAINS, DOMAIN_MAP, DOMAIN_DOT } from './domains';
 import { collectRiver, buildNotes, buildPreviews, buildDots, riverCountText } from './river';
 import type { RiverData, RiverDay, RiverDot } from './river';
 
+/** 周历当前查看日（'YYYY-MM-DD'；null = 今天。周历点按切天，只重渲时间线不重采） */
+let riverView: string | null = null;
+
 /* ---------- lucide 占位 + 挂载 ---------- */
 
 function iconSpan(name: string, extra = ''): string {
@@ -49,6 +52,7 @@ export function createOverlay(app: any): void {
     <div class="bz-panel-frame bz-home-panel bz-panel-mtop">
       <div class="bz-home-head">
         <h1 class="bz-home-title">首页</h1>
+        <div class="bz-home-week" data-home-week></div>
         <span class="bz-home-date" data-home-date></span>
         <button class="bz-home-close" data-home-close title="关闭" aria-label="关闭">${iconSpan('x')}</button>
       </div>
@@ -104,6 +108,22 @@ function bindEvents(overlay: HTMLElement, app: any): void {
     if (go) {
       const id = go.dataset.homeGo || '';
       if (id && DOMAIN_MAP.has(id)) openDomain(id, app);
+      return;
+    }
+    // 周历切天：切换选中格并只重渲时间线（数据已在采集窗口内）
+    const wk = t.closest('[data-home-weekday]') as HTMLElement | null;
+    if (wk && H.river) {
+      riverView = wk.dataset.homeWeekday || null;
+      const overlay2 = H.currentOverlay;
+      if (overlay2) {
+        overlay2.querySelectorAll('[data-home-weekday]').forEach((b) =>
+          b.classList.toggle('bz-home-wk--sel', (b as HTMLElement).dataset.homeWeekday === riverView));
+        const flow = overlay2.querySelector('[data-home-flow]') as HTMLElement | null;
+        if (flow) {
+          flow.innerHTML = flowHtml(H.river!, riverView ?? '');
+          mountIcons(flow);
+        }
+      }
     }
   });
 }
@@ -140,10 +160,11 @@ function entriesHtml(data: RiverData): string {
       }).join('');
 }
 
-function flowHtml(data: RiverData): string {
-  const day: RiverDay = data.today;
-  const notes = buildNotes(data);
-  const title = '<div class="bz-home-sec-t">时 间 线 · 今 天</div>';
+function flowHtml(data: RiverData, view: string): string {
+  const day: RiverDay = data.days.find((d) => d.dateStr === view) ?? data.today;
+  const isToday = day.dateStr === data.today.dateStr;
+  const notes = isToday ? buildNotes(data) : [];
+  const title = '<div class="bz-home-sec-t">时 间 线 · ' + (isToday ? '今 天' : esc(day.dateStr.slice(5))) + '</div>';
   const body = day.events.length
     ? day.events.map((e, i) => {
         const note = notes.find((n) => n.index === i);
@@ -160,7 +181,7 @@ function flowHtml(data: RiverData): string {
           + '</div></div>';
       }).join('')
     : '<div class="bz-home-flow-empty">这一天还没有留下痕迹。<br><b>写一篇日记</b>、点一轮番茄、读几页书——<br>都会出现在这条河里。</div>';
-  return title + body;
+  return title + (day.events.length ? '<div class="bz-home-timeline">' + body + '</div>' : body);
 }
 
 function nextHtml(data: RiverData): string {
@@ -203,16 +224,29 @@ function renderAll(): void {
     flow.innerHTML = '<div class="bz-home-sec-t">时 间 线 · 今 天</div><div class="bz-home-flow-empty">正在汇入今天的痕迹…</div>';
     next.innerHTML = '';
     (overlay.querySelector('[data-home-tiles]') as HTMLElement).innerHTML = '';
+    (overlay.querySelector('[data-home-week]') as HTMLElement).innerHTML = '';
     return;
+  }
+  const river = H.river;
+  const view = riverView && river.days.some((d) => d.dateStr === riverView) ? riverView : null;
+  riverView = view;
+  // 周历（7 格动静历，hit=当天有动静，sel=当前查看日）
+  const week = overlay.querySelector('[data-home-week]') as HTMLElement;
+  if (week) {
+    week.innerHTML = river.week.map((w) =>
+      '<button type="button" class="bz-home-wk' + (w.hit ? ' bz-home-wk--hit' : '') + (w.dateStr === (view ?? river.today.dateStr) ? ' bz-home-wk--sel' : '') + '"'
+      + ' data-home-weekday="' + w.dateStr + '" aria-label="' + w.label + (w.hit ? '，有动静' : '') + '">'
+      + '<i></i><span class="bz-home-wk-n">' + w.dayOfMonth + '</span></button>').join('');
+    mountIcons(week);
   }
   const entries = overlay.querySelector('[data-home-entries]') as HTMLElement;
   const flow = overlay.querySelector('[data-home-flow]') as HTMLElement;
   const next = overlay.querySelector('[data-home-next]') as HTMLElement;
-  entries.innerHTML = entriesHtml(H.river);
-  flow.innerHTML = flowHtml(H.river);
-  next.innerHTML = nextHtml(H.river);
+  entries.innerHTML = entriesHtml(river);
+  flow.innerHTML = flowHtml(river, view ?? river.today.dateStr);
+  next.innerHTML = nextHtml(river);
   const tiles = overlay.querySelector('[data-home-tiles]') as HTMLElement;
-  tiles.innerHTML = tilesHtml(H.river); // 桌面隐藏；移动端单列置前（CSS order）
+  tiles.innerHTML = tilesHtml(river); // 桌面隐藏；移动端单列置前（CSS order）
   mountIcons(entries);
   mountIcons(flow);
   mountIcons(next);

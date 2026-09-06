@@ -90,10 +90,25 @@ export interface RiverDay {
   firstTs: number | null;
 }
 
+/** 周历一格（头行动静历，可点切天） */
+export interface RiverWeekDay {
+  /** 完整日期 'YYYY-MM-DD'（视图键，与 days[].dateStr 同键） */
+  dateStr: string;
+  /** 展示用 'MM-DD' */
+  label: string;
+  dayOfMonth: number;
+  weekday: string;
+  /** 当天有动静（时间线非空） */
+  hit: boolean;
+}
+
 /** 活动河聚合结果 */
 export interface RiverData {
   today: RiverDay;
   yesterday: RiverDay;
+  /** 本周 7 天窗口（index 0 = 今天，往回 6 天；周历切天的数据源） */
+  days: RiverDay[];
+  week: RiverWeekDay[];
   streak: RiverStreak;
   counts: RiverCounts;
 }
@@ -238,10 +253,11 @@ function collectDiary(app: App, now: number, c: RiverCounts): RiverStreak {
 
 /** 采集活动河全量数据（今天/昨天时间线 + 连击 + 全部域计数；全程只读） */
 export async function collectRiver(app: App, now: number = Date.now()): Promise<RiverData> {
-  const [todayRecap, yesterdayRecap] = await Promise.all([
-    collectRecap(app, now).catch(() => null),
-    collectRecap(app, now - DAY_MS).catch(() => null),
-  ]);
+  // 本周 7 天窗口（今天~6 天前）一次并行采集；recap anchor 参数天然支持任意天
+  const DAYS_N = 7;
+  const dayRecaps = await Promise.all(
+    Array.from({ length: DAYS_N }, (_, i) => collectRecap(app, now - i * DAY_MS).catch(() => null))
+  );
 
   const counts: RiverCounts = { ...EMPTY_COUNTS };
   const safe = (fn: () => void | Promise<void>): Promise<void> =>
@@ -263,9 +279,19 @@ export async function collectRiver(app: App, now: number = Date.now()): Promise<
     /* 连击计算失败回落空 */
   }
 
+  const days = dayRecaps.map((r, i) =>
+    toRiverDay(dateStrOf(now - i * DAY_MS), r?.summary ?? EMPTY_SUMMARY, r?.items ?? [])
+  );
+  const WD = ['日', '一', '二', '三', '四', '五', '六'];
+  const week: RiverWeekDay[] = days.map((d) => {
+    const dt = new Date(d.dateStr + ' 12:00:00');
+    return { dateStr: d.dateStr, label: d.dateStr.slice(5), dayOfMonth: dt.getDate(), weekday: WD[dt.getDay()], hit: d.events.length > 0 };
+  });
   return {
-    today: toRiverDay(dateStrOf(now), todayRecap?.summary ?? EMPTY_SUMMARY, todayRecap?.items ?? []),
-    yesterday: toRiverDay(dateStrOf(now - DAY_MS), yesterdayRecap?.summary ?? EMPTY_SUMMARY, yesterdayRecap?.items ?? []),
+    today: days[0],
+    yesterday: days[1],
+    days,
+    week,
     streak,
     counts,
   };
