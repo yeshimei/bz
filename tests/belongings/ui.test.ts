@@ -151,22 +151,24 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     closeItemMenu();
   });
 
-  it('openPanel：加载空库 → 面板骨架齐全（hero/KPI/chips/工具行/横滑条/移动搜索）+ 空态文案 + 首建数据文件', async () => {
+  it('openPanel：加载空库 → 面板骨架齐全（hero/KPI/chips/工具行/横滑条/移动排序/移动记一笔/页脚品牌）+ 空态文案 + 首建数据文件', async () => {
     await openPanel();
     expect(panelOf()).not.toBeNull();
     // P20 海报皮肤类挂面板根（enh-sweep-c：bz-bel-panel bz-panel-frame bz-panel-mtop 连续 + 皮肤类追加）
     expect(panelOf()!.classList.contains('bz-bel--poster')).toBe(true);
-    // 无壳头行（issue 219b/c 范式）：桌面无壳（hero 即头，⚙ 收敛设置面板），✕ 仅移动窄头行
+    // 无壳头行（issue 219b/c 范式）：桌面无壳（hero 即头），✕ 仅移动窄头行（p20 手机壳：头行只留关闭）
     expect(panelOf()!.querySelector('.bz-bel-mobhead')).not.toBeNull();
     expect(panelOf()!.querySelector('[data-bel-settings]')).toBeNull();
     expect(panelOf()!.querySelector('[data-bel-close]')!.classList.contains('bz-bel-mob-only')).toBe(true);
-    // 骨架：hero / KPI / chips / 工具行 / 排序 / 移动 chips / 移动搜索行 / 脚注
+    // 骨架：hero / KPI / chips / 工具行 / 排序 / 移动 chips / 移动排序段 / 移动记一笔 / 页脚品牌
     expect(panel()!.querySelector('[data-bel-herotitle]')).not.toBeNull();
     expect(kpis()).not.toBeNull();
     expect(chipsHost()).not.toBeNull();
     expect(panel()!.querySelector('[data-bel-sort]')).not.toBeNull();
     expect(panel()!.querySelector('[data-bel-mobstatus]')).not.toBeNull();
-    expect(panel()!.querySelector('[data-bel-mobsearch-row]')).not.toBeNull();
+    expect(panel()!.querySelector('[data-bel-mobsort]')).not.toBeNull();
+    expect(panel()!.querySelector('.bz-bel-mobadd')).not.toBeNull();
+    expect(panel()!.querySelector('.bz-bel-foot-brand')).not.toBeNull();
     expect(yearSel()).not.toBeNull();
     expect(footnote()).not.toBeNull();
     // 空态
@@ -690,22 +692,27 @@ describe('归物本筛选（状态 chips / 年份 / 搜索）', () => {
     expect(chipCnts()[0]).toBe(cnt);
   });
 
-  it('移动搜索 toggle：点 data-bel-mobsearch 显隐 .bz-bel-mobsearch-show 行，输入过滤生效', async () => {
+  it('移动排序段：data-bel-mobsort 与桌面段双实例同步（p20 m-sort，点移动段桌面同亮）', async () => {
     Platform.isMobile = true;
     try {
-      seed(vault, { item_1: makeItem({ id: 'item_1', name: '甲' }) });
+      seed(vault, {
+        item_1: makeItem({ id: 'item_1', name: '甲', purchase_price: 100 }),
+        item_2: makeItem({ id: 'item_2', name: '乙', purchase_price: 500 }),
+      });
       await open(vault);
-      const row = document.querySelector('[data-bel-mobsearch-row]') as HTMLElement;
-      expect(row.classList.contains('bz-bel-mobsearch-show')).toBe(false);
-      (panel()!.querySelector('[data-bel-mobsearch]') as HTMLElement).click();
-      expect(row.classList.contains('bz-bel-mobsearch-show')).toBe(true);
-      const mobInp = document.querySelector('[data-bel-mobsearch-inp]') as HTMLInputElement;
-      mobInp.value = '不存在';
-      mobInp.dispatchEvent(new Event('input'));
-      await tick(250);
-      expect(content()!.querySelector('.bz-empty')).not.toBeNull();
-      (panel()!.querySelector('[data-bel-mobsearch]') as HTMLElement).click();
-      expect(row.classList.contains('bz-bel-mobsearch-show')).toBe(false);
+      const segBtnOf = (host: string, label: string) =>
+        [...panel()!.querySelectorAll(`${host} .bz-segmented-btn`)].find((b) => b.textContent === label) as HTMLElement;
+      const mobBtn = segBtnOf('[data-bel-mobsort]', '投入最高');
+      expect(mobBtn).not.toBeNull();
+      mobBtn.click();
+      expect(mobBtn.classList.contains('is-on')).toBe(true);
+      // 桌面段同步（双实例 setValue）
+      const dtBtn = segBtnOf('[data-bel-sort]', '投入最高');
+      expect(dtBtn.classList.contains('is-on')).toBe(true);
+      await tick(50);
+      // 价格降序生效：乙(500) 在甲(100) 前
+      const names = [...content()!.querySelectorAll('.bz-bel-name')].map((e) => e.textContent);
+      expect(names).toEqual(['乙', '甲']);
     } finally {
       Platform.isMobile = false;
     }
