@@ -41,6 +41,13 @@
   font-family: var(--font-interface, system-ui);
   overflow: auto;
 }
+/* 桌面端固定 900×620 面板（原型 .frame；移动全屏态走 .bz-fav-mob 分支不受限） */
+.bz-fav-panel:not(.bz-fav-mob) {
+  width: 900px; height: 620px; flex: none;
+  max-width: calc(100vw - 48px); max-height: calc(100vh - 48px);
+  border: 1px solid var(--frame-bd); border-radius: 18px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.14);
+}
 .bz-fav-panel .bz-fav-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 20px; }
 .bz-fav-panel .bz-fav-head h1 { font-size: 14px; letter-spacing: 3px; color: var(--ink-title); font-weight: 700; margin: 0; }
 /* 移动端：面板即原型 .phone 内容（全屏；边框圆角交给全屏态，留内边距） */
@@ -108,9 +115,10 @@
 .bz-fav-panel.bz-fav-mob .bz-fav-tags { flex-wrap: nowrap; overflow-x: auto; padding: 5px 0 6px; }
 .bz-fav-panel.bz-fav-mob .bz-fav-tags button { white-space: nowrap; }
 
-/* 移动端关闭钮（浮动 ✕；桌面隐藏） */
+/* 移动端头行（原型 .m-head：标题 + 关闭钮同行两端）；关闭钮桌面隐藏 */
+.bz-fav-panel.bz-fav-mob .bz-fav-head { display: flex; align-items: center; justify-content: space-between; padding-top: 4px; }
 .bz-fav-mob-close {
-  display: none; position: absolute; top: 10px; right: 10px; z-index: 5;
+  display: none; flex: none;
   width: 24px; height: 24px; border-radius: 7px; border: none; background: var(--chip); color: var(--chip-ink);
   cursor: pointer; align-items: center; justify-content: center; box-shadow: 0 2px 6px var(--card-shadow);
 }
