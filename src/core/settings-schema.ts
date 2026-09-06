@@ -65,6 +65,8 @@ interface RowBase {
    * 父键为「缺省开」语义（键缺失视为开）的域不适用 isChild，请显式写 visibleWhen。
    */
   isChild?: boolean;
+  /** 行底补充提示（拍板原型：『↳』前缀灰字，渲染于描述之下——如存储路径的迁移提示） */
+  note?: string;
 }
 
 interface ToggleRow extends RowBase {
