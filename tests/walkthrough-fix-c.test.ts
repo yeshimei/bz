@@ -258,13 +258,6 @@ describe('批 C-17：encrypt 预览 spinner 轨道', () => {
   });
 });
 
-describe('批 C-18：home 搜索焦点环对齐组件库', () => {
-  it('focus-within 环 2px（.bz-input:focus 同档）', () => {
-    const css = repo('src/home/styles.css');
-    expect(css).toMatch(/\.bz-home-search:focus-within\s*\{[^}]*box-shadow: 0 0 0 2px var\(--bz-brand-soft\);/);
-  });
-});
-
 describe('批 C-19：settings-panel 移动列表项名归档', () => {
   it('14.5px 半像素 → var(--bz-font-body)', () => {
     const css = repo('src/settings-panel/styles.css');

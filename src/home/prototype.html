@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>内容首页 · 原型预览（与 src/home/styles.css 共用同一份 CSS）</title>
+<!--
+  ┌────────────────────────────────────────────────────────────────────┐
+  │ 本文件 = 内容首页域 UI 的评审壳 = 拍板原型 p16-full.html 的域内定稿。│
+  │ 组件样式零内联，全部来自（与 build-css SOURCES 同序）：              │
+  │   ../core/styles.css → ../core/ui/tokens.css                        │
+  │   → ../core/ui/components.css → ./styles.css                        │
+  │ 视觉基准：.zcode/ui-prototypes/home-10/p16-full.html（活动河全域    │
+  │ 入口版）；先改这里评审 → 同步 styles.css / ui.ts。                  │
+  │ 移动端判定：真实端 = 面板容器 ≤768（容器查询）；评审壳 = .demo-mob。│
+  └────────────────────────────────────────────────────────────────────┘
+-->
+<link rel="stylesheet" href="../core/styles.css">
+<link rel="stylesheet" href="../core/ui/tokens.css">
+<link rel="stylesheet" href="../core/ui/components.css">
+<link rel="stylesheet" href="./styles.css">
+<style>
+  /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 56px; padding: 32px 24px;
+    background: #e8e4d8; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+  * { scrollbar-width: none; } *::-webkit-scrollbar { display: none; }
+
+  /* 桌面面板外景（组件本体 880×580 来自 styles.css） */
+  .demo-dt { flex: none; }
+
+  /* 移动端手机框：面板（全屏态 100vw/100vh）缩进 396×780 演示框；
+     面板自身 = 容器（styles.css container-type），396px 触发 @container 单列化 */
+  .demo-mob { width: 396px; height: 780px; position: relative; overflow: hidden; flex: none;
+    border: 1px solid #b8b0a0; border-radius: 26px; background: #f5f2ec; box-shadow: 0 8px 30px rgba(0,0,0,.16); }
+  .demo-mob .bz-home-panel { width: 100% !important; height: 100% !important;
+    max-width: none !important; max-height: none !important; border: none; box-shadow: none; }
+
+  /* 评审徽牌（演示壳自用） */
+  .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #8b8474; display: flex; gap: 10px; align-items: center;
+    background: rgba(255,255,255,.92); border: 1px solid #c9c2b2; padding: 3px 8px; z-index: 900; }
+</style>
+</head>
+<body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark，壳内必须补一类才不透明 -->
+  <div id="dtHost" class="demo-dt"></div>
+  <div id="mobHost" class="demo-mob"></div>
+
+  <div class="vbadge">内容首页 · 原型预览（活动河全域入口版 · 共用 styles.css）</div>
+
+<script src="./prototype-icons.js"></script>
+<script>
+(function () {
+  /* ==================== 壳基座：转义 / 图标 / mountIcons（对齐 core/ui icons.ts） ==================== */
+  const ESC_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
+  const esc2 = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const icon = (name, extra) => `<i data-lucide="${name}" class="bz-ic${extra ? ' ' + extra : ''}"></i>`;
+  const ICONS = window.BZ_HOME_ICONS || {};
+  function mountIcons(root) {
+    if (!root) return;
+    root.querySelectorAll('i[data-lucide]').forEach((el) => {
+      const d = ICONS[el.dataset.lucide];
+      if (d && !el.firstChild) {
+        el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+      }
+    });
+  }
+
+  /* ==================== 与 ui.ts 同构的常量 / 演示数据（river 真实口径的样本快照） ==================== */
+  const DOMAINS = [
+    { id: 'diary', name: '日记本', sub: '写今天的闪念', icon: 'diary', dot: '#e67341' },
+    { id: 'recap', name: '今日回顾', sub: '晚间点亮', icon: 'recap', dot: '#d64d8f' },
+    { id: 'cinema', name: '影院', sub: '影视想看与在看', icon: 'cinema', dot: '#e6951d' },
+    { id: 'review', name: '复习计划', sub: '到期卡片队列', icon: 'review', dot: '#7c5cd6' },
+    { id: 'pomodoro', name: '番茄钟', sub: '累计在册', icon: 'pomodoro', dot: '#e5534b' },
+    { id: 'favorites', name: '收藏本', sub: '收藏条目', icon: 'favorites', dot: '#f0b429' },
+    { id: 'clipping', name: '剪藏本', sub: '未读流与剪藏', icon: 'clipping', dot: '#2f9e5f' },
+    { id: 'literature', name: '文献盒', sub: '笔记与录入', icon: 'literature', dot: '#c2559d' },
+    { id: 'bookshelf', name: '书库', sub: '在读 9 · 读完 151', icon: 'bookshelf', dot: '#3d7bd6' },
+    { id: 'reading-report', name: '阅读报告', sub: '周维度', icon: 'reading-report', dot: '#3fa7a0' },
+    { id: 'wall', name: '回忆墙', sub: '522 格', icon: 'wall', dot: '#7c8cf8' },
+    { id: 'belongings', name: '归物本', sub: '登记 65 件', icon: 'belongings', dot: '#45a35c' },
+    { id: 'attach', name: '移动附件', sub: '工具', icon: 'attach', dot: '#8a8f99' },
+    { id: 'encrypt', name: '保险库', sub: '••• 上锁', icon: 'encrypt', dot: '#8a8f99' },
+    { id: 'smartcat', name: '小橘', sub: '在岗', icon: 'smartcat', dot: '#e67341' },
+    { id: 'settings', name: '设置', sub: '20 域', icon: 'settings', dot: '#8a8f99' },
+  ];
+  const DOT_OF = Object.fromEntries(DOMAINS.map((d) => [d.id, d.dot]));
+  const NAME_OF = Object.fromEntries(DOMAINS.map((d) => [d.id, d.name]));
+  const ICON_OF = Object.fromEntries(DOMAINS.map((d) => [d.id, d.icon]));
+  // river 规则彩点（与 river.ts buildDots 同口径的演示快照）
+  const DOTS = { diary: 'warn', review: 'hot', memo: 'off', pomodoro: 'off', cinema: 'off', bookshelf: 'ok' };
+  // 与 river.ts riverCountText 同口径的演示计数
+  const COUNTS = {
+    diary: '522 篇', review: '9 张 · 逾期 1', cinema: '想看 25 · 在看 4', bookshelf: null,
+    clipping: '未读 55 篇', favorites: '48 条', belongings: '登记 65 件', wall: '522 格',
+  };
+  // 演示时间线（collectRecap 输出形状：今天空河 → 展示昨天有痕迹的样子更有评审价值；
+  // 桌面/移动共用同一份数据）
+  const EVENTS = [
+    { domain: 'bookshelf', timeLabel: '07:42', text: '《三体》读到 62%' },
+    { domain: 'todo', timeLabel: '09:10', text: '完成『给 obsidian 提 issue』' },
+    { domain: 'clipping', timeLabel: '12:31', text: '剪藏 3 篇' },
+    { domain: 'cinema', timeLabel: '21:05', text: '标记《百年孤独》已看 · ★★★★☆' },
+    { domain: 'diary', timeLabel: '22:40', text: '新增 4 条' },
+  ];
+  const NOTES = { 0: '今天第一笔动静在 07:42，比昨天早了 48 分钟，好开头。', 4: '晚上效率回来了——但日记还空着，×5 连击在等你。' };
+  const PREVIEWS = [
+    { h: '还有 1 张逾期卡', b: '逾期是唯一会随时间变贵的债。约 4 分钟一张，还掉最划算。', go: 'review', goLabel: '去还卡 →' },
+    { h: '剪藏还压 55 篇', b: '挑 1 篇放进明早：通勤读一篇，保持进出平衡。', go: 'clipping', goLabel: '挑一篇放明早 →' },
+    { h: '日记连击 ×5 待续', b: '写三行也算数。今晚补上，明天它自己接着长。', go: 'diary', goLabel: '去写日记 →' },
+  ];
+
+  /* ==================== 与 ui.ts 同构的 HTML 构建器 ==================== */
+  function dotCls(id) { return DOTS[id] ?? 'off'; }
+  function countText(d) {
+    if (d.id in COUNTS && COUNTS[d.id] !== null) return COUNTS[d.id];
+    if (d.id === 'bookshelf') return d.sub;
+    return d.sub;
+  }
+
+  function entriesHtml() {
+    return '<div class="bz-home-sec-t">全 部 域 <span class="bz-home-n">· ' + DOMAINS.length + '</span></div>'
+      + DOMAINS.map((d) =>
+          '<button type="button" class="bz-home-erow" data-go="' + d.id + '">'
+          + '<span class="bz-home-dot bz-home-dot--' + dotCls(d.id) + '"></span>'
+          + '<span class="bz-home-eic" style="color:' + DOT_OF[d.id] + '">' + icon(d.icon) + '</span>'
+          + '<span class="bz-home-enm">' + esc2(d.name) + '</span>'
+          + '<span class="bz-home-ect">' + esc2(countText(d)) + '</span>'
+          + '<span class="bz-home-ego">→</span></button>').join('');
+  }
+
+  function flowHtml() {
+    const title = '<div class="bz-home-sec-t">时 间 线 · 今 天</div>';
+    const body = EVENTS.map((e, i) => {
+      const note = NOTES[i];
+      const dmId = e.domain === 'todo' ? 'memo' : e.domain;
+      return '<div class="bz-home-ev' + (i === 4 ? ' bz-home-ev--warn' : '') + '">'
+        + '<span class="bz-home-ev-tm">' + esc2(e.timeLabel) + '</span>'
+        + '<div class="bz-home-ev-bd"><div class="bz-home-ev-tx">'
+        + '<span class="bz-home-ev-dm" style="background:' + (DOT_OF[dmId] || '#8a8f99') + '">' + icon(ICON_OF[dmId]) + esc2(NAME_OF[dmId] || e.domain) + '</span>'
+        + esc2(e.text) + '</div>'
+        + (note ? '<div class="bz-home-ev-note">' + esc2(note) + '</div>' : '')
+        + '</div></div>';
+    }).join('');
+    return title + body;
+  }
+
+  function nextHtml() {
+    return '<div class="bz-home-sec-t bz-home-sec-t--ai">明 天 预 告</div>'
+      + PREVIEWS.map((pr) =>
+          '<button type="button" class="bz-home-pr" data-go="' + pr.go + '">'
+          + '<div class="bz-home-pr-h">' + esc2(pr.h) + '</div><div>' + esc2(pr.b) + '</div>'
+          + '<span class="bz-home-pr-go">' + esc2(pr.goLabel) + '</span></button>').join('');
+  }
+
+  function tilesHtml() {
+    return '<div class="bz-home-sec-t">全 部 域 <span class="bz-home-n">· ' + DOMAINS.length + '</span></div>'
+      + '<div class="bz-home-m-tiles">'
+      + DOMAINS.map((d) =>
+          '<button type="button" class="bz-home-m-tile" data-go="' + d.id + '">'
+          + '<span class="bz-home-dot bz-home-dot--' + dotCls(d.id) + '"></span>'
+          + '<span class="bz-home-eic" style="color:' + DOT_OF[d.id] + '">' + icon(d.icon) + '</span>'
+          + '<span class="bz-home-enm">' + esc2(d.name) + '</span>'
+          + '<span class="bz-home-ect">' + esc2(countText(d)) + '</span></button>').join('')
+      + '</div>';
+  }
+
+  /* ==================== 双端装配（面板骨架与 ui.ts createOverlay 同构） ==================== */
+  function panelHtml() {
+    return `
+      <div class="bz-home-head">
+        <h1 class="bz-home-title">今日活动河</h1>
+        <span class="bz-home-date">2026-09-07 周一 · 21:36</span>
+        <button class="bz-home-close" title="关闭" aria-label="关闭">${icon('x')}</button>
+      </div>
+      <div class="bz-home-body">
+        <div class="bz-home-grid">
+          <div class="bz-home-entries">${entriesHtml()}</div>
+          <div class="bz-home-flow">${flowHtml()}</div>
+          <div class="bz-home-next">${nextHtml()}${tilesHtml()}</div>
+        </div>
+      </div>`;
+  }
+
+  function mount(host) {
+    host.innerHTML = '<div class="bz-panel-frame bz-home-panel bz-panel-mtop">' + panelHtml() + '</div>';
+    mountIcons(host);
+  }
+  mount(document.getElementById('dtHost'));
+  mount(document.getElementById('mobHost'));
+})();
+</script>
+</body>
+</html>
