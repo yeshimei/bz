@@ -681,6 +681,40 @@ describe('归物本筛选（状态 chips / 年份 / 搜索）', () => {
     expect(chipCnts()[0]).toBe(cnt);
   });
 
+  it('B3：搜索词不跨开关残留——输入后立刻关面板，防抖回调不再写入（重开面板空框配全量列表）', async () => {
+    seed(vault, {
+      item_1: makeItem({ id: 'item_1', name: '甲' }),
+      item_2: makeItem({ id: 'item_2', name: '乙' }),
+    });
+    await open(vault);
+    const inp = searchInp()!;
+    inp.value = '甲';
+    inp.dispatchEvent(new Event('input'));
+    close(); // 防抖窗口内关面板（修复前定时器仍触发写 M.q）
+    await tick(250);
+    // 重开面板：搜索框为空、列表全量（修复前 M.q 残留「甲」→ 空搜索框配过滤后列表）
+    await openPanel();
+    expect(searchInp()!.value).toBe('');
+    expect(cells()).toHaveLength(2);
+  });
+
+  it('B3：搜索渲染刷新 hero 副题（筛选态下「N 件在列」计数随搜索同步）', async () => {
+    seed(vault, {
+      item_1: makeItem({ id: 'item_1', name: '甲' }),
+      item_2: makeItem({ id: 'item_2', name: '乙', current_status: '闲置' }),
+    });
+    await open(vault);
+    clickChip('using');
+    expect(heroSub()!.textContent).toBe('归物本 — 1 件在列 · FILTERED VIEW');
+    // 搜索后该筛选下无命中 → 副题计数同步为 0（修复前搜索回调不刷 hero，仍显示 1 件在列）
+    const inp = searchInp()!;
+    inp.value = '乙';
+    inp.dispatchEvent(new Event('input'));
+    await tick(250);
+    expect(cells()).toHaveLength(0);
+    expect(heroSub()!.textContent).toBe('归物本 — 0 件在列 · FILTERED VIEW');
+  });
+
   it('移动排序下拉：data-bel-mobsortsel 三档（同年份样式），change 生效且桌面段同步', async () => {
     Platform.isMobile = true;
     try {
@@ -807,6 +841,26 @@ describe('归物本详情弹窗（P20）', () => {
     clickCell(cells()[0]);
     detailBox()!.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
     expect(detailMask()).not.toBeNull();
+  });
+
+  it('B6：表单叠详情时 ESC 先关表单（顶层先关，修复前先关底下的详情）', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘' }) });
+    await open(vault);
+    clickCell(cells()[0]);
+    expect(detailMask()).not.toBeNull();
+    // 详情内点编辑 → 表单叠上
+    (detailBox()!.querySelector('[data-bd-edit]') as HTMLElement).click();
+    await flush();
+    expect(document.querySelector('.bz-bel-form-mask')).not.toBeNull();
+    expect(detailMask()).not.toBeNull();
+    // 第一层 ESC：关表单，详情保持
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
+    expect(detailMask()).not.toBeNull();
+    // 第二层 ESC：关详情
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(detailMask()).toBeNull();
+    expect(panel()).not.toBeNull();
   });
 
   it('点卡=详情（非动作菜单，issue 202 不冲突），右键仍是动作菜单', async () => {
@@ -1038,6 +1092,69 @@ describe('归物本动作（状态流转 / 删除确认流）', () => {
     expect(events).toHaveLength(0); // 无 delete 事件（当前库已无此条目）
     expect(hasNotice('该物品已被外部变更删除，列表已刷新')).toBe(true);
   });
+
+  it('B5：状态流转写盘失败 → 保存失败通知 + 内存从盘回滚 + 不发事件不弹撤销', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘', current_status: '使用中' }) });
+    await open(vault);
+    // 注入写盘失败（jsonFileStore write 会先留档再照抛）
+    const origModify = vault.modify.bind(vault);
+    (vault as any).modify = async () => { throw new Error('disk full'); };
+    try {
+      rightClick(cells()[0]);
+      clickAction('标记为闲置');
+      await flush();
+      await tick(20);
+      // 人话错误通知（对照 favorites notifySaveError 风格）
+      expect(hasNotice('保存失败（状态流转）：disk full')).toBe(true);
+      // 失败路径：无领域事件、无撤销按钮
+      expect(events).toHaveLength(0);
+      expect([...document.querySelectorAll('.bz-notice-action')].some((b) => b.textContent === '撤销')).toBe(false);
+      // 内存已从盘回滚：卡徽章仍是使用中
+      expect(cells()[0].querySelector('.bz-bel-tag')!.textContent).toContain('使用中');
+    } finally {
+      (vault as any).modify = origModify;
+    }
+    // 回滚生效：基于回滚后的库再次流转，落盘终态正确（修复前内存残留「闲置」被下次保存补刀）
+    rightClick(cells()[0]);
+    clickAction('标记为已转卖');
+    await flush();
+    await tick(20);
+    const saved = JSON.parse(vault.files.get(DATA_PATH)!).items.item_1;
+    expect(saved.current_status).toBe('已转卖');
+    expect(events).toEqual([{ kind: 'status', title: '键盘', status: '已转卖' }]);
+  });
+
+  it('B5：删除写盘失败 → 保存失败通知 + 条目回滚（无事件无撤销）', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘' }) });
+    await open(vault);
+    const origModify = vault.modify.bind(vault);
+    (vault as any).modify = async () => { throw new Error('disk full'); };
+    try {
+      rightClick(cells()[0]);
+      clickAction('删除');
+      await flush();
+      (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+      await flush();
+      await tick(20);
+      expect(hasNotice('保存失败（删除物品）：disk full')).toBe(true);
+      expect(events).toHaveLength(0);
+      expect([...document.querySelectorAll('.bz-notice-action')].some((b) => b.textContent === '撤销')).toBe(false);
+      // 内存回滚：条目仍在列
+      expect(cells()).toHaveLength(1);
+      expect(cells()[0].textContent).toContain('键盘');
+    } finally {
+      (vault as any).modify = origModify;
+    }
+    // 回滚生效：再次删除成功落盘
+    rightClick(cells()[0]);
+    clickAction('删除');
+    await flush();
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await flush();
+    await tick(20);
+    expect(JSON.parse(vault.files.get(DATA_PATH)!).items).toEqual({});
+    expect(events).toEqual([{ kind: 'delete', title: '键盘' }]);
+  });
 });
 
 // ==================== 记一笔 / 编辑表单 ====================
@@ -1188,6 +1305,37 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     addBelongingsItem(getApp());
     expect(formMask().querySelector('.bz-bel-form-title')!.textContent).toBe('记一笔');
     (formMask().querySelector('[data-bm-cancel]') as HTMLElement).click();
+  });
+
+  it('B8：表单已开时再 openForm 不叠开（聚焦既有输入框，基线不被互踩）', async () => {
+    await open(vault);
+    openAddForm(panel()!);
+    nameInp().value = '改一半';
+    // 第二次触发打开（面板路径 / 命令路径同入口）
+    openForm(null);
+    await flush();
+    // 只有一张表单，且焦点回到既有表单输入框
+    expect(document.querySelectorAll('.bz-bel-form-mask')).toHaveLength(1);
+    expect(document.activeElement).toBe(nameInp());
+    expect((formMask().querySelector('#bm-name') as HTMLInputElement).value).toBe('改一半');
+    // 基线未被第二次调用互踩：脏拦截照常工作
+    (formMask().querySelector('[data-bm-cancel]') as HTMLElement).click();
+    await flush();
+    expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
+    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
+    await flush();
+    expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
+  });
+
+  it('B7：命令路径数据加载失败 → error 通知，表单不开（修复前静默无任何反馈）', async () => {
+    setApp({ vault } as any);
+    setSettingsProvider((() => { throw new Error('设置读取失败'); }) as any);
+    resetObsidianMocks();
+    openForm(null);
+    await flush();
+    await tick(20);
+    expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
+    expect(hasNotice('数据加载失败：设置读取失败')).toBe(true);
   });
 
   it('编辑：菜单「编辑」→ 回填 → 改名改价保存 → 落盘 + edit 事件（belongingsEditChanges）+ notice 已更新', async () => {
@@ -1565,6 +1713,65 @@ describe('状态流转 / 删除接撤销（ticket 189）', () => {
       const restored = JSON.parse(vault.files.get(DATA_PATH)!).items.item_1;
       expect(restored.current_status).toBe('使用中');
       expect(restored.exit_date ?? null).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('B4：出离→出离流转保留原封口日期；撤销后 exit_date 不丢', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2025-06-15T12:00:00'));
+    try {
+      seed(vault, {
+        item_1: makeItem({
+          id: 'item_1', name: '键盘', current_status: '已转卖',
+          purchase_date: '2024-06-01T12:00:00', exit_date: '2025-01-01', sold_price: 200,
+        }),
+      });
+      await open(vault);
+      // 已转卖 → 已丢弃：出离内流转不重置封口（修复前被盖成今天 2025-06-15）
+      rightClick(cells()[0]);
+      clickAction('标记为已丢弃');
+      await drain();
+      const discard = JSON.parse(vault.files.get(DATA_PATH)!).items.item_1;
+      expect(discard.current_status).toBe('已丢弃');
+      expect(discard.exit_date).toBe('2025-01-01');
+      // 陪伴天数仍按原封口算：2024-06-01 → 2025-01-01 = 214 天
+      expect(cells()[0].querySelector('.bz-bel-mut')!.textContent).toContain('陪伴 214 天');
+      // 撤销 → 回已转卖，原封口日期不丢（修复前被清成 null）
+      const undoBtn = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '撤销') as HTMLElement;
+      undoBtn.click();
+      await drain();
+      const restored = JSON.parse(vault.files.get(DATA_PATH)!).items.item_1;
+      expect(restored.current_status).toBe('已转卖');
+      expect(restored.exit_date).toBe('2025-01-01');
+      expect(cells()[0].querySelector('.bz-bel-mut')!.textContent).toContain('陪伴 214 天');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('B1：面板已关后流转撤销仍生效（closePanel 清库，撤销回调从盘重载不误报外部删除）', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2025-06-15T12:00:00'));
+    try {
+      seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘', current_status: '使用中', purchase_date: '2024-06-01T12:00:00' }) });
+      await open(vault);
+      rightClick(cells()[0]);
+      clickAction('标记为闲置');
+      await drain();
+      expect(JSON.parse(vault.files.get(DATA_PATH)!).items.item_1.current_status).toBe('闲置');
+      // 关面板（closePanel 置 M.db=null）后点撤销
+      close();
+      expect(panel()).toBeNull();
+      const undoBtn = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '撤销') as HTMLElement;
+      undoBtn.click();
+      await drain();
+      // 修复前：M.db 为 null → itemById 落空误报「已被外部变更删除，无法撤销」
+      expect(hasNotice('该物品已被外部变更删除，无法撤销')).toBe(false);
+      expect(hasNotice('已撤销，「键盘」回到使用中')).toBe(true);
+      const restored = JSON.parse(vault.files.get(DATA_PATH)!).items.item_1;
+      expect(restored.current_status).toBe('使用中');
     } finally {
       vi.useRealTimers();
     }

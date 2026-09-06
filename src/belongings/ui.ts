@@ -23,7 +23,7 @@
  * 视觉换血按 ADR-0097 判例：.bz-bel--poster 域内 token 作用域覆盖 + .bz-bel-* 装饰类，
  *   按钮/输入/chip/segmented/空态/菜单/抽屉基线继续消费组件库（ADR-0094），不新造共享件。
  */
-import { notice, notifyUndo } from '../core/notice';
+import { notice, notifyUndo, notifySaveError } from '../core/notice';
 import { topifyZ } from '../core/z-order';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
@@ -175,9 +175,13 @@ function statusOf(keyOrLabel: string): { key: string; label: string } {
 function itemList(): BelongingsItem[] {
   return M.db ? Object.values(M.db.items) : [];
 }
+/** 是否出离态串（转卖/丢弃）——B4：流转前旧状态也按此判定，出离内流转保留原封口 */
+function exitedStatus(st: string): boolean {
+  return st === '已转卖' || st === '已丢弃';
+}
 /** 是否出离态（转卖/丢弃） */
 function isExited(it: BelongingsItem): boolean {
-  return it.current_status === '已转卖' || it.current_status === '已丢弃';
+  return exitedStatus(it.current_status);
 }
 /** 出离日期（非出离态恒 null；ADR-0089 陪伴天数封口锚点） */
 function exitDateOf(it: BelongingsItem): string | null {
@@ -292,7 +296,8 @@ function panelHtml(): string {
 
 // ==================== 主面板生命周期 ====================
 
-/** ESC 层（bz-bel）：详情 || 表单 || 主面板——顶层先关，不穿透（对照 favorites bz-fav） */
+/** ESC 层（bz-bel）：表单 || 详情 || 主面板——顶层先关，不穿透（对照 favorites bz-fav；
+ *  表单叠详情时（详情点编辑）先关表单，修 B6 层序倒挂） */
 let mainEscRegistered = false;
 function ensureBelongingsEsc(): void {
   if (mainEscRegistered) return;
@@ -300,18 +305,18 @@ function ensureBelongingsEsc(): void {
   escManager.register('bz-bel', {
     isVisible: () => !!M.overlay || !!document.querySelector('.bz-bel-form-mask') || !!document.querySelector('.bz-bel-detail-mask'),
     close: () => {
+      const form = document.querySelector('.bz-bel-form-mask') as HTMLElement | null;
+      if (form) {
+        // 脏表单走 confirmDiscard 拦截（ticket 189，对照 favorites）
+        requestCloseBelForm(form);
+        return;
+      }
       const detail = document.querySelector('.bz-bel-detail-mask') as HTMLElement | null;
       if (detail) {
         closeBelDetail();
         return;
       }
-      const form = document.querySelector('.bz-bel-form-mask') as HTMLElement | null;
-      if (form) {
-        // 脏表单走 confirmDiscard 拦截（ticket 189，对照 favorites）
-        requestCloseBelForm(form);
-      } else {
-        closePanel();
-      }
+      closePanel();
     },
   });
 }
@@ -418,12 +423,15 @@ async function openPanelInner(): Promise<void> {
     M.year = yearSel.value;
     renderAll();
   });
-  // 搜索
+  // 搜索（B3：防抖定时器在面板关闭后仍会触发——首行守卫 overlay 存活；渲染序列含 hero，
+  // 副题「N 件在列」计数随搜索刷新）
   const bindSearch = (inp: HTMLInputElement) => {
     inp.addEventListener('input', () => {
       clearTimeout((inp as any)._belDeb);
       (inp as any)._belDeb = setTimeout(() => {
+        if (!M.overlay) return;
         M.q = inp.value.trim();
+        renderHero();
         renderKpis();
         renderContent();
       }, 180);
@@ -464,6 +472,10 @@ export function closePanel(): void {
     M.overlay = null;
   }
   M.renderFn = null;
+  // 会话态一并清（B1/B3）：面板关后命令/撤销路径若复用陈旧库会把外部改动覆盖写盘；
+  // 搜索词残留会让重开面板「空搜索框配过滤后列表」。库按需重载（openForm/撤销回调自补）
+  M.db = null;
+  M.q = '';
 }
 
 export function cleanupBelongings(): void {
@@ -791,8 +803,8 @@ function sheetHeadOf(it: BelongingsItem): HTMLElement {
   return head;
 }
 
-/** 状态流转核心（右键菜单 / 详情流转条共用）：落盘 + status 事件 + notifyUndo（回写旧状态 + 清出离日期）
- *  ticket 189：转卖/丢弃落 exit_date（ADR-0089） */
+/** 状态流转核心（右键菜单 / 详情流转条共用）：落盘 + status 事件 + notifyUndo（回写旧状态 + 恢复出离日期）
+ *  ticket 189：转卖/丢弃落 exit_date（ADR-0089）；B4：已是出离态再流转保留原封口日期 */
 async function applyFlowWithUndo(it: BelongingsItem, s: string): Promise<void> {
   // 外部 modify 自动刷新会把 M.db 整体换新——按 id 从当前库重取再改，防旧引用改动静默丢失
   const cur = itemById(it.id);
@@ -802,22 +814,39 @@ async function applyFlowWithUndo(it: BelongingsItem, s: string): Promise<void> {
     return;
   }
   const prevStatus = cur.current_status;
+  const prevExit = cur.exit_date;
   cur.current_status = s;
-  // 出离闭环（ADR-0089）：入出离态记当天出离日期；退出出离态且旧值存在才清（避免写冗余 null）
-  if (isExited(cur)) cur.exit_date = todayStr();
-  else if (cur.exit_date != null) cur.exit_date = null;
+  // 出离闭环（ADR-0089）：从非出离态转入出离态记当天封口；已是出离态再流转保留原封口日期
+  // （与表单编辑路径对齐，修复前转卖→丢弃会把锚点重置成今天）；退出出离态且旧值存在才清（避免写冗余 null）
+  if (isExited(cur)) {
+    if (!exitedStatus(prevStatus)) cur.exit_date = todayStr();
+  } else if (cur.exit_date != null) {
+    cur.exit_date = null;
+  }
   cur.last_updated = new Date().toISOString();
-  await saveAndRender();
+  // 写盘失败兜底（B5）：内存已改必须从盘回滚——否则后续任意保存会把未落盘的改动补刀持久化
+  try {
+    await saveAndRender();
+  } catch (e) {
+    notifySaveError(e, '状态流转');
+    M.db = await loadDatabase().catch(() => null);
+    M.renderFn?.();
+    return; // 失败路径不发领域事件、不弹撤销 toast
+  }
   emitDomainEvent('belongings', { kind: 'status', title: cur.name, status: s });
   notifyUndo(`「${cur.name}」已标记为${s}`, () => {
     void (async () => {
+      // B1：面板已关（closePanel 清 M.db）后撤销从盘重载，不误报「已被外部变更删除」
+      if (!M.db) M.db = await loadDatabase();
       const now = itemById(it.id);
       if (!now) {
         notice('该物品已被外部变更删除，无法撤销', 'warning');
         return;
       }
       now.current_status = prevStatus;
-      if (now.exit_date != null) now.exit_date = null;
+      // B4：恢复流转前封口快照（出离→出离撤销不丢原日期）；无快照且现值非空才清（避免写冗余 null）
+      if (prevExit != null) now.exit_date = prevExit;
+      else if (now.exit_date != null) now.exit_date = null;
       now.last_updated = new Date().toISOString();
       await saveAndRender();
       notice(`已撤销，「${now.name}」回到${prevStatus}`, 'success');
@@ -900,11 +929,20 @@ async function deleteItem(it: BelongingsItem): Promise<void> {
   const snapshot = { ...M.db.items[it.id] };
   delete M.db.items[it.id];
   closeBelDetail(); // 详情内删除：详情随之关闭
-  await saveAndRender();
+  // 写盘失败兜底（B5）：条目已在内存摘除，须回滚——否则后续任意保存把删除补刀持久化
+  try {
+    await saveAndRender();
+  } catch (e) {
+    M.db.items[snapshot.id] = snapshot;
+    notifySaveError(e, '删除物品');
+    M.db = await loadDatabase().catch(() => null);
+    M.renderFn?.();
+    return; // 失败路径不发领域事件、不弹撤销 toast
+  }
   emitDomainEvent('belongings', { kind: 'delete', title: it.name });
   notifyUndo(`已删除「${it.name}」`, () => {
     void (async () => {
-      if (!M.db) M.db = await loadDatabase();
+      if (!M.db) M.db = await loadDatabase(); // B1：面板已关后撤销从盘重载
       if (M.db.items[snapshot.id]) {
         notice(`已存在同 id 物品（${snapshot.id}），跳过恢复`, 'warning');
         return;
@@ -968,12 +1006,23 @@ function requestCloseBelForm(mask: HTMLElement): void {
 }
 
 export function openForm(it: BelongingsItem | null): void {
-  // 命令路径（面板未开）先确保 db 已载（旧 addBelongingsItemCommand 语义）
+  // B8 防叠开：已有表单悬浮时聚焦既有表单直接返回——重复开会让模块级 _belBaseline 互踩、脏拦截失效
+  const existing = document.querySelector('.bz-bel-form-mask') as HTMLElement | null;
+  if (existing) {
+    (existing.querySelector('input, textarea') as HTMLInputElement | null)?.focus();
+    return;
+  }
+  // 命令路径（面板未开）先确保 db 已载（旧 addBelongingsItemCommand 语义）；B7：失败弹提示，不静默
   if (!M.db) {
-    void loadDatabase().then((db) => {
-      M.db = db;
-      openForm(it);
-    });
+    void loadDatabase()
+      .then((db) => {
+        M.db = db;
+        openForm(it);
+      })
+      .catch((e: unknown) => {
+        const msg = e instanceof Error ? e.message : String(e);
+        notice('数据加载失败：' + msg, 'error');
+      });
     return;
   }
   const editing = !!it;
@@ -1098,6 +1147,9 @@ export function openForm(it: BelongingsItem | null): void {
     saveBtn.textContent = '保存中…';
     void (async () => {
       try {
+        // B1：面板可能已在表单开启期间被遮罩点击关闭（closePanel 清 M.db）——按需从盘重载，
+        // 不然编辑路径按 id 重取落空误报「已被外部变更删除」、新增路径直接「数据库未加载」
+        if (!M.db) M.db = await loadDatabase();
         if (it) {
           // 外部 modify 自动刷新会把 M.db 整体换新——保存前按 id 从当前库重取，防旧引用改动静默丢失
           const cur = itemById(it.id);
