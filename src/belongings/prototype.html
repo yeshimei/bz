@@ -49,7 +49,7 @@
   .vbadge button { border: none; background: none; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; }
 </style>
 </head>
-<body>
+<body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark，壳内必须补一类才不透明 -->
   <div id="dtHost" class="demo-dt"></div>
   <div id="mobHost" class="demo-mob"></div>
 
@@ -80,7 +80,7 @@
   /* ==================== 与 ui.ts 同构的常量 / 小工具 ==================== */
   const ICON = { add: 'plus', search: 'search', close: 'x', del: 'trash-2', empty: 'package', chevR: 'chevron-right' };
   const STATUS = {
-    using: { label: '使用中', key: 'using', ic: 'check' },
+    using: { label: '使用中', key: 'using', ic: 'check-circle' },
     idle: { label: '闲置', key: 'idle', ic: 'package' },
     sold: { label: '已转卖', key: 'sold', ic: 'banknote' },
     discard: { label: '已丢弃', key: 'discard', ic: 'archive' },
@@ -183,9 +183,6 @@
   /* ==================== 面板骨架（与 ui.ts panelHtml 逐字同构） ==================== */
   function panelHtml() {
     return `<div class="bz-bel-panel bz-panel-frame bz-panel-mtop bz-bel--poster">
-  <div class="bz-bel-mobhead">
-    <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${icon(ICON.close)}</button>
-  </div>
   <div class="bz-bel-body">
     <div class="bz-bel-hero">
       <div class="bz-bel-hero-text">
@@ -193,6 +190,14 @@
         <div class="bz-bel-hero-sub" data-bel-herosub></div>
       </div>
       <div class="bz-bel-kpis" data-bel-kpis></div>
+      <div class="bz-bel-mobhead">
+        <div class="bz-bel-stamp"><b data-bel-stampn>0</b><span>在库</span></div>
+        <div class="bz-bel-mobhead-tx">
+          <div class="bz-bel-mobhead-t">归物本</div>
+          <div class="bz-bel-mobhead-sub" data-bel-mobstats></div>
+        </div>
+        <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${icon(ICON.close)}</button>
+      </div>
     </div>
     <div class="bz-bel-chips" data-bel-chips></div>
     <div class="bz-toolrow bz-bel-toolrow">
@@ -201,17 +206,16 @@
         <select class="bz-bel-select" data-bel-year></select>
         ${icon(ICON.chevR, 'bz-bel-select-chev')}
       </div>
+      <div class="bz-bel-yearsel bz-bel-mobsortsel-wrap">
+        <select class="bz-bel-select" data-bel-mobsortsel></select>
+        ${icon(ICON.chevR, 'bz-bel-select-chev')}
+      </div>
       <div class="bz-bel-sort" data-bel-sort></div>
       <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${icon(ICON.add, 'bz-ic--sm')} 记一笔</button>
     </div>
     <div class="bz-mobstrip" data-bel-mobstatus></div>
-    <div class="bz-bel-mobsort" data-bel-mobsort></div>
     <div class="bz-bel-content" data-bel-content></div>
     <button class="bz-btn bz-btn--md bz-bel-mobadd" data-bel-add>${icon(ICON.add, 'bz-ic--sm')} 记一笔</button>
-    <div class="bz-bel-foot">
-      <span class="bz-bel-foot-brand">BZ·BELONGINGS — P20 SWISS POSTER</span>
-      <span class="bz-bel-footnote" data-bel-footnote></span>
-    </div>
   </div>
 </div>`;
   }
@@ -234,11 +238,17 @@
       const active = d.key === '__all' ? M.status === null : M.status === d.key;
       return `<button type="button" class="bz-chip${active ? ' bz-chip--on' : ''}" data-bel-st="${d.key}"><span>${esc2(d.label)}</span><span class="bz-chip-cnt">${d.cnt}</span></button>`;
     }).join('');
-    // 移动横滑 chips（p20 m-chips：纯文字+计数，无图标）
-    p.q('[data-bel-mobstatus]').innerHTML = defs.map((d) => {
-      const active = d.key === '__all' ? M.status === null : M.status === d.key;
-      return `<button class="bz-mobstrip-chip${active ? ' is-on' : ''}" data-bel-st="${d.key}"><span>${esc2(d.label)}</span><span class="bz-chip-cnt">${d.cnt}</span></button>`;
-    }).join('');
+    // 移动横滑 chips（p20 m-chips：纯文字+计数，无图标；用户拍板去资产+缩小，五枚放一行）
+    p.q('[data-bel-mobstatus]').innerHTML = (() => {
+      const defs = [
+        { key: '__all', label: '全部', cnt: itemList().length },
+        ...STATUS_ORDER.map((s) => ({ key: s.key, label: s.label, cnt: statusCount(s.label) })),
+      ];
+      return defs.map((d) => {
+        const active = d.key === '__all' ? M.status === null : M.status === d.key;
+        return `<button class="bz-mobstrip-chip${active ? ' is-on' : ''}" data-bel-st="${d.key}"><span>${esc2(d.label)}</span><span class="bz-chip-cnt">${d.cnt}</span></button>`;
+      }).join('');
+    })();
   }
   function renderYears(p) {
     const ys = yearsAvailable();
@@ -248,6 +258,10 @@
   function renderKpis(p) {
     const gone = itemList().filter(isExited);
     const recover = gone.reduce((s, i) => s + (Number(i.sold_price) || 0), 0);
+    const stampN = p.q('[data-bel-stampn]');
+    if (stampN) stampN.textContent = String(stockCount());
+    const mobStats = p.q('[data-bel-mobstats]');
+    if (mobStats) mobStats.textContent = `投入 ${moneyShort(totalAssets())} · 日均 ${avgDailyCost().toFixed(2)}`;
     const kpi = (num, label, opts = {}) =>
       `<div class="bz-bel-kpi${opts.hero ? ' bz-bel-kpi--hero' : ''}${opts.click ? ' bz-bel-kpi--click' : ''}"${opts.click ? ' data-bel-statclick="asset" title="只看在库（使用中与闲置）"' : ''}><b>${num}</b><span>${esc2(label)}</span></div>`;
     p.q('[data-bel-kpis]').innerHTML =
@@ -284,7 +298,6 @@
     if (!list.length) {
       const noMatch = !!M.q || M.status !== null || M.year !== '';
       content.innerHTML = `<div class="bz-empty">${icon(ICON.empty, 'bz-empty-ic')}<div class="bz-empty-title">${noMatch ? '没有符合条件的物品' : '这里还没有物品'}</div><div class="bz-empty-desc">${noMatch ? '换个筛选条件，或清除搜索' : '点「记一笔」登记第一个物品'}</div></div>`;
-      p.q('[data-bel-footnote]').textContent = '';
       mountIcons(content);
       return;
     }
@@ -295,18 +308,17 @@
     const rem = list.length % cols;
     if (rem) gridEl.insertAdjacentHTML('beforeend', `<div class="bz-bel-filler" style="grid-column:span ${cols - rem}"></div>`);
     mountIcons(content);
-    p.q('[data-bel-footnote]').textContent = `共 ${itemList().length} 件 · 显示 ${list.length} 件 · 回本冲抵 ${moneyShort(itemList().reduce((s, i) => s + (Number(i.sold_price) || 0), 0))}`;
   }
   const SORT_OPTS = [
     { v: 'recent', label: '最近购入' }, { v: 'price', label: '投入最高' }, { v: 'daily', label: '日均最高' },
   ];
   function drawSort(p) {
-    // 桌面 + 移动双段（p20 m-sort 独立段）；与 ui.ts 双 uiSegmented 实例同语义
-    ['[data-bel-sort]', '[data-bel-mobsort]'].forEach((sel) => {
-      const host = p.q(sel);
-      if (host) host.innerHTML = `<div class="bz-segmented" role="radiogroup" aria-label="排序">${SORT_OPTS.map((o) =>
-        `<button type="button" class="bz-segmented-btn${M.sort === o.v ? ' is-on' : ''}" data-k="${o.v}" role="radio" aria-checked="${M.sort === o.v}">${o.label}</button>`).join('')}</div>`;
-    });
+    // 桌面段（移动端无 seg）+ 移动下拉值回填（用户拍板：移动排序 = 同年份样式的下拉）
+    const host = p.q('[data-bel-sort]');
+    if (host) host.innerHTML = `<div class="bz-segmented" role="radiogroup" aria-label="排序">${SORT_OPTS.map((o) =>
+      `<button type="button" class="bz-segmented-btn${M.sort === o.v ? ' is-on' : ''}" data-k="${o.v}" role="radio" aria-checked="${M.sort === o.v}">${o.label}</button>`).join('')}</div>`;
+    const sel = p.q('[data-bel-mobsortsel]');
+    if (sel && sel.options.length) sel.value = M.sort;
   }
   function renderAll() {
     PANELS.forEach((p) => {
@@ -335,6 +347,11 @@
     });
     const yearSel = p.q('[data-bel-year]');
     yearSel.addEventListener('change', () => { M.year = yearSel.value; renderAll(); });
+    // 移动排序下拉（同年份样式；双向同步）
+    const mobSortSel = p.q('[data-bel-mobsortsel]');
+    mobSortSel.innerHTML = SORT_OPTS.map((o) => `<option value="${o.v}">${o.label}</option>`).join('');
+    mobSortSel.value = M.sort;
+    mobSortSel.addEventListener('change', () => { M.sort = mobSortSel.value; renderAll(); });
     const bindSearch = (inp) => {
       inp.addEventListener('input', () => {
         clearTimeout(inp._belDeb);
@@ -818,7 +835,7 @@
         t('网格65行', dtCells() === 65);
         t('KPI在库', document.querySelector('#dtHost [data-bel-kpis] .bz-bel-kpi--hero b').textContent === String(stockCount()));
         t('总投入≈71706', Math.abs(totalAssets() - 71706.48) < 1);
-        t('页脚品牌行', document.querySelector('#dtHost .bz-bel-foot-brand').textContent.includes('P20 SWISS POSTER'));
+        t('无页脚残留', !document.querySelector('.bz-bel-foot, [data-bel-footnote], .bz-bel-mobsort'));
 
         document.querySelector('#dtHost [data-bel-st="idle"]').click();
         t('闲置筛选7', dtCells() === 7);
@@ -835,12 +852,12 @@
 
         document.querySelector('#dtHost [data-k="price"]').click();
         t('投入排序首位=松下s5', document.querySelector('#dtHost .bz-bel-name').textContent === '松下s5');
-        t('移动排序段同步', document.querySelector('#mobHost [data-bel-mobsort] [data-k="price"]').classList.contains('is-on'));
-        document.querySelector('#mobHost [data-bel-mobsort] [data-k="daily"]').click();
-        t('移动排序切日均', M.sort === 'daily' && document.querySelector('#dtHost [data-bel-sort] [data-k="daily"]').classList.contains('is-on'));
         document.querySelector('#dtHost [data-k="recent"]').click();
 
         t('chips 无图标', document.querySelectorAll('#dtHost [data-bel-chips] .bz-chip i, #dtHost [data-bel-chips] .bz-chip svg').length === 0);
+        t('移动chips五枚无资产', document.querySelectorAll('#mobHost [data-bel-mobstatus] .bz-mobstrip-chip').length === 5 && !document.querySelector('#mobHost [data-bel-mobstatus] [data-bel-st="asset"]'));
+        t('移动排序下拉3项', document.querySelectorAll('#mobHost [data-bel-mobsortsel] option').length === 3 && document.querySelector('#mobHost [data-bel-mobsortsel]').value === 'recent');
+        t('使用中徽章图标=check-circle', !!document.querySelector('#dtHost .bz-bel-tag--using i[data-lucide="check-circle"]'));
 
         document.querySelector('#dtHost [data-bel-add]').click();
         await sleep(60);

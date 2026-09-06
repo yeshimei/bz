@@ -21,7 +21,7 @@ node .zcode/ui-prototypes/belongings-redesign20/_gen-icons.mjs   # 图标（传�
 
 | ui.ts | 壳内 |
 |---|---|
-| `panelHtml()` | `panelHtml()` 逐字（iconSpan → icon；mobhead 仅 ✕、mobsort/mobadd、页脚品牌行） |
+| `panelHtml()` | `panelHtml()` 逐字（iconSpan → icon；✕ 挂 hero 行尾桌面隐藏、mobadd 底部记一笔；页脚/移动排序段/窄头行已按用户拍板去除，测试有负向守卫） |
 | `renderHero/Chips/Years/Kpis/Content` + 双排序段 | 同名函数，双面板（桌面 + 手机框）共用一套 M 状态 |
 | `cellHtml` | `cellHtml`（NO.XX + 状态徽章 + 分类 emoji + 名称 + 大字价格 + meta） |
 | `openBelDetail` | 同名（bz-bel-detail-*；流转条点击后重开详情同步头行） |
@@ -35,13 +35,13 @@ node .zcode/ui-prototypes/belongings-redesign20/_gen-icons.mjs   # 图标（传�
 ## 演示钩子
 
 - `?demo=idle|detail|form|menu|mobsheet` —— 直开各态供截图/检查。
-- `?selftest=1` —— 数值自检（65 件、KPI、筛选 7/65、搜索 6、排序双段同步、增删流转撤销 66→65→66、抽屉开合、chips 零图标、页脚品牌行），结果写在 `document.title`。
+- `?selftest=1` —— 数值自检（65 件、KPI、筛选 7/65、搜索 6、排序首位、增删流转撤销 66→65→66、抽屉开合、chips 零图标、无页脚/移动排序残留），结果写在 `document.title`。
 - 徽牌按钮：重置演示数据 / 隐藏-显示移动端。
 
 ## 域内坑（踩过的）
 
 1. **移动端判定是容器查询，不是 @media**：`.bz-bel-panel / .bz-bel-form-mask / .bz-bel-detail-mask` 挂 `container-type: inline-size`，`@container (max-width:768px)` 承载全部移动端规则。容器查询**不能命中容器自己**——面板与详情的全屏尺寸规则必须留在 `@media`（真实移动端 100vw 命中条件与容器等价；评审壳由 `.demo-mob` 壳规则覆盖尺寸）。
-2. 浮层遮罩插件里挂 body（fixed 全屏）；壳内手机框版本要 `.demo-mob .bz-overlay-mask { position:absolute }` 收进框。
+2. 浮层遮罩插件里挂 body（fixed 全屏）；壳内手机框版本要 `.demo-mob .bz-overlay-mask { position:absolute }` 收进框。**壳 body 须挂 `theme-light`**：色彩 token 全在 theme-dark/light 作用域（tokens.css），Obsidian 宿主由 body 提供，裸壳不挂则 `--bz-surface-4` 等解析失败 → 联想浮层透明（.bz-popover 教训，surface-4 已同时钉进海报 token 名单防真机暗色翻色）。
 3. 分类 emoji 是**数据**（categories 字符串自带前缀），照 `catEmoji` 显示，不换 lucide；界面图标才走 lucide（`BLG_ICONS` + 壳内 mountIcons）。
 4. 壳内转义统一走 `esc2`（勿写递归 esc）；数字格式以 ui.ts 为准（`money` 两位小数 / `moneyShort` 整数 / 日均尾零裁剪）。
 5. **方向铁律（issue 230）**：p20-full（.zcode）是视觉基准 → 先改原型评审 → 同步 styles.css/ui.ts；禁止拿域现状反向改写本文件。
