@@ -436,9 +436,9 @@
   function sheetHeadOf(it) {
     const catName = catNameOf(it.category);
     const days = daysUsed(it);
-    return `<div class="bz-item-sheet-entry"><div style="display:flex;align-items:flex-start;gap:10px">
+    return `<div class="bz-item-sheet-entry"><div class="bz-bel-sheet-head">
       <span class="bz-item-sheet-emoji">${esc2(catEmoji(it.category) || '📦')}</span>
-      <div style="flex:1;min-width:0;"><div class="bz-item-sheet-title">${esc2(it.name)}</div>
+      <div class="bz-bel-sheet-info"><div class="bz-item-sheet-title">${esc2(it.name)}</div>
       <div class="bz-item-sheet-sub">${esc2(catName)} · ${money(Number(it.purchase_price) || 0)} · 已用 ${days} 天</div></div></div></div>`;
   }
   function sheetActsHtml(acts) {

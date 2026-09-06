@@ -80,8 +80,6 @@
 .bz-bel-panel .bz-input:focus,
 .bz-bel-form .bz-input:focus,
 .bz-bel-detail .bz-input:focus { outline: none; box-shadow: none; }
-/* 聚焦变黄边来自 core focus 色；海报皮肤下钉回墨线 */
-.bz-bel-panel .bz-bel-toolrow .bz-input:focus { border-color: var(--bz-bel-ink); }
 
 /* ---- 筛选 chips（p20 .chip 逐字：方角墨框、on=墨底纸字、计数弱化；组件库 .bz-chip 皮） ---- */
 .bz-bel-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 22px 0; flex-shrink: 0; }
@@ -259,6 +257,10 @@
 .bz-item-menu.bz-bel-menu button.bz-item-menu-item:hover { background: var(--bz-bel-ink) !important; color: var(--bz-bel-paper) !important; }
 .bz-item-menu.bz-bel-menu button.bz-item-menu-item--danger:hover { background: var(--bz-bel-accent) !important; color: var(--bz-bel-paper) !important; }
 
+/* ---- 底部抽屉头（sheetHeadOf：原两处内联 flex 上岸，双端同挂类） ---- */
+.bz-bel-sheet-head { display: flex; align-items: flex-start; gap: 10px; }
+.bz-bel-sheet-info { flex: 1; min-width: 0; }
+
 /* ---- 表单（弹窗骨架用组件库 .bz-overlay-mask；状态 = p20 .choice 平铺四格）----
    表单遮罩 z 由 openForm 经 topifyZ 动态发号（ADR-0067，恒压主面板），不写死静态档；
    分类候选浮层（.bz-popover）锚定所在 .bz-field 下方 */
@@ -305,7 +307,7 @@
 /* 核心 .bz-choice-btn.is-on 带 !important，皮覆盖须同重 */
 .bz-bel-statuspick .bz-choice-btn.is-on { background: var(--bz-bel-ink) !important; color: var(--bz-bel-paper) !important; }
 .bz-bel-statuspick .bz-choice-btn.is-on:hover { background: var(--bz-bel-ink) !important; }
-.bz-bel-statuspick .bz-choice-btn.is-on.bz-bel-c2 { background: var(--bz-bel-accent) !important; color: #fff !important; }
+.bz-bel-statuspick .bz-choice-btn.is-on.bz-bel-c2 { background: var(--bz-bel-accent) !important; color: var(--bz-on-brand, #fff) !important; }
 .bz-bel-statuspick .bz-choice-btn.is-on.bz-bel-c2:hover { background: var(--bz-bel-accent) !important; }
 
 /* ---- 移动端（≤768px = p20 手机壳）----
@@ -328,6 +330,7 @@
      桌面 hero 不受影响；顶部避让由根节点 .bz-panel-mtop 统一接管 44px */
   .bz-bel-mob-only { display: inline-flex; }
   .bz-bel-hero { padding: 10px 8px 10px 14px; }
+  /* 整体隐藏连带标语 hero-sub（多余装饰，用户拍板去除——C4：原单独隐藏规则系死代码已删） */
   .bz-bel-hero-text { display: none; }
   .bz-bel-kpis { display: none; }
   .bz-bel-mobhead { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
@@ -352,8 +355,6 @@
   .bz-bel-panel .bz-mobstrip-chip { flex: 1 1 0; min-width: 0; justify-content: center; padding: 5px 4px; font-size: 11px; }
   /* 底部记一笔（p20 m-add）独收尾，安全区随边距 */
   .bz-bel-mobadd { display: flex; width: calc(100% - 32px); margin: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px)); justify-content: center; flex-shrink: 0; }
-  /* 标语移动端隐藏（多余装饰，用户拍板去除） */
-  .bz-bel-hero-sub { display: none; }
   /* 网格单列 + 手机卡档（p20 #mob .cell：em 34/name 16/price 19，单行省略） */
   .bz-bel-grid { grid-template-columns: 1fr; }
   .bz-bel-content { padding: 12px 16px 10px; }
@@ -361,8 +362,6 @@
   .bz-bel-cell-em { font-size: 30px; padding: 6px 0 4px; }
   .bz-bel-name { font-size: 16px; }
   .bz-bel-price { font-size: 19px; }
-  /* 脚注居中（p20 m-foot 10px → 抬 11px 过小字号扫尾） */
-  .bz-bel-foot { justify-content: center; margin: 12px 16px calc(10px + env(safe-area-inset-bottom, 0px)); font-size: 11px; letter-spacing: 2px; }
 }
 
 /* 触控热区（设计手册 §8.2）已收编 core 样式库 .bz-touch-target（components.css，
