@@ -31,3 +31,6 @@
 - 副题只留计数：「N 张白卡」/「N 张已归档」；图例「磁圆点=标签色 · 金圈=常看（置顶）」与归档右键提示退场。
 - 磁贴白底不生效根因：reset.css 裸 `button:not(.clickable-icon)`（0,1,1）压单类（0,1,0）——该文件注释声称的 :where 归零从未落地（组件库 .bz-btn 全靠 !important 护体）。reset 不可删，域内选择器提级 `.bz-fav-stickers .bz-fav-stk`（0,2,0）定序无关压制，--grey/--add 同提；卡流为 div 不受影响。
 - 面板亚麻底 #e9e4d8 → **#fffdf8**（用户改定）。
+
+## 219g（同日第六轮）：标题字号 14px
+- `.bz-fav-hero-title` 21px → **14px**（用户改定；字重/字距/色未动，移动端 26px 覆盖未动）。
