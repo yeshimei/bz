@@ -1,20 +1,15 @@
 /**
- * 内容首页（home 域）状态：模块级可变对象 H（对齐 cinema state 单例模式）
+ * 内容首页（home 域）状态：模块级可变对象 H（对齐 cinema state 单例模式）。
+ * issue 232 活动河改版：钉选/快照退役，面板数据 = 活动河聚合（river.ts）。
  */
 import type { App } from 'obsidian';
-import type { HomeSnapshot } from './snapshot';
+import type { RiverData } from './river';
 
 export interface HomeState {
   currentOverlay: HTMLElement | null;
   appRef: App | null;
-  /** 最近一次统计快照（打开/刷新时更新） */
-  snapshot: HomeSnapshot | null;
-  /** 桌面端编辑模式 */
-  editing: boolean;
-  /** 已钉选域 id 顺序（内存态；落盘 home.json） */
-  pinned: string[];
-  /** 加载/保存开关（幂等） */
-  initialized: boolean;
+  /** 最近一次活动河聚合（打开时采集；失败 null → 空态） */
+  river: RiverData | null;
   /** 关闭动画防抖 */
   closing: boolean;
 }
@@ -22,10 +17,7 @@ export interface HomeState {
 export const H: HomeState = {
   currentOverlay: null,
   appRef: null,
-  snapshot: null,
-  editing: false,
-  pinned: [],
-  initialized: false,
+  river: null,
   closing: false,
 };
 
@@ -33,9 +25,6 @@ export const H: HomeState = {
 export function resetHomeState(): void {
   H.currentOverlay = null;
   H.appRef = null;
-  H.snapshot = null;
-  H.editing = false;
-  H.pinned = [];
-  H.initialized = false;
+  H.river = null;
   H.closing = false;
 }

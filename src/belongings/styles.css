@@ -366,3 +366,17 @@
 
 /* 触控热区（设计手册 §8.2）已收编 core 样式库 .bz-touch-target（components.css，
    头行图标钮挂类，coarse 下 ::after 外扩 -6px 补足 44px），域内不再复制外扩块。 */
+
+/* ---- 数据图标（issue 231/ADR-0102）：lucide 替位 emoji 的盒模型锚定 ----
+ * svg 尺寸走 .bz-ic svg 百分比，宿主须块级（inline 宿主会让 svg 膨胀到容器宽） */
+.bz-bel-cell-em .bz-ic, .bz-item-sheet-emoji .bz-ic, .bz-suggest-ic .bz-ic { display: block; }
+
+/* ---- 表单分类行（issue 231/ADR-0102）：图标 chip + 输入 + AI 归类钮 ---- */
+.bz-bel-catrow { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.bz-bel-catrow .bz-input { flex: 1; min-width: 0; }
+.bz-bel-form-icon { display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; flex: none; color: var(--bz-bel-ink); }
+.bz-bel-form-icon .bz-ic { width: 16px; height: 16px; }
+.bz-bel-form-icon[hidden] { display: none; }
+.bz-bel-aibtn { flex: none; }
+.bz-bel-aibtn.is-busy { opacity: 0.5; pointer-events: none; }

@@ -6,8 +6,8 @@
  *   聚焦/输入惰性弹出（issue 202 拍板：默认不弹）→ 现值子串过滤（上限 max）
  *   → 点选/回车回填并回调 → 外点收起 → Esc 只收下拉不穿表单。
  * 前提：anchor 须位于 position:relative 容器内（如 .bz-field）——浮层
- *   绝对定位挂 anchor.parentElement。候选为纯文本数据，DOM 全 textContent
- *   构造（不经 HTML 拼接，天然免注入）。
+ *   绝对定位挂 anchor.parentElement。候选文本用 textContent、图标可挂元素
+ *   （iconOf 返回 HTMLElement，issue 231），不经 HTML 拼接，天然免注入。
  * ============================================================ */
 import type { BzSuggestOpts } from './types';
 
@@ -66,7 +66,8 @@ export function uiSuggest(opts: BzSuggestOpts): {
       if (icon) {
         const ic = document.createElement('span');
         ic.className = 'bz-suggest-ic';
-        ic.textContent = icon;
+        if (typeof icon === 'string') ic.textContent = icon;
+        else ic.appendChild(icon);
         b.appendChild(ic);
       }
       const label = document.createElement('span');

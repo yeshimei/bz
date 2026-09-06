@@ -11,7 +11,8 @@
  * 窗口缩放防抖重装箱；移动端同构（窄墙自动多排），无独立移动布局。
  * 点击书脊 → 借书卡详情（纸卡排版 + 印章；issue 223 只读化：纯展示，无编辑/删除，状态圆点示意）。
  * 报告视图（读书报告内嵌化）：面板内视图容器保留，入口仅命令 bz-reading-report-open（墙面上无入口）。
- * 皮肤（issue 216 十肤随迁）：面板根挂 bz-bs-skin-{id}，皮肤改墙/纸/铜墨变量（styles.css）。
+ * 皮肤（issue 235 五肤×亮暗）：面板根挂 bz-bs-skin-{id} + bz-bs-mode-{light|dark}，
+ * 主题切模式、每肤两套变体（styles.css）；点「书库」匾 = 移动端关闭出口。
  * 铁律 6：弹窗骨架/空态/输入走组件库；墙体系为域独有视觉（styles.css .bz-bs-wall*）。
  */
 import type { App } from 'obsidian';
@@ -19,7 +20,7 @@ import { TFile } from 'obsidian';
 import { notice, notify, notifyUndo } from '../core/notice';
 import { escManager } from '../core/esc-manager';
 import { allocZ } from '../core/z-order';
-import { applyMobileWindowFullscreen } from '../core/mobile';
+import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { uiModal, uiEmpty, mountIcons } from '../core/ui';
 import { escapeHtml } from '../core/utils';
@@ -289,14 +290,15 @@ function renderLabels(): void {
       <span class="pin"></span><div class="n">${d.n}</div><div class="t">${d.t}</div>
     </div>`;
   }).join('');
-  for (const [cat, c] of catPairs) {
+  // 分类标签独立子容器（桌面 display:contents 隐身；移动端并入头行一行横滑——styles.css @media 块；与原型同构）
+  const catHtml = catPairs.map(([cat, c]) => {
     const hrs = c.ms > 0 ? ` · ${Math.round(c.ms / 3600000)} 时` : '';
     const off = filtering && M.catFilter !== cat;
-    html += `<div class="bz-bs-taglabel dim-cat${M.catFilter === cat ? ' on' : ''}${off ? ' off' : ''}" data-bs-cat="${esc(cat)}">
+    return `<div class="bz-bs-taglabel dim-cat${M.catFilter === cat ? ' on' : ''}${off ? ' off' : ''}" data-bs-cat="${esc(cat)}">
       <span class="pin"></span><div class="n">${esc(cat)}</div><div class="t">${c.n} 册${hrs}</div>
     </div>`;
-  }
-  el.innerHTML = html;
+  }).join('');
+  el.innerHTML = `${html}<div class="bz-bs-cats">${catHtml}</div>`;
 }
 
 /** 排序三档 segmented（点选即生效） */
@@ -451,27 +453,32 @@ function openBookDetail(it: BookshelfItem, app: App): void {
   bindCoverFallback(popup);
 }
 
-// ---------- 面板皮肤（issue 216 十肤随迁；类挂面板根与弹窗根） ----------
+// ---------- 面板皮肤（五肤×亮暗双模式；类挂面板根与弹窗根） ----------
 
-const SKIN_IDS = ['nordic', 'dark', 'noir', 'wabi', 'bauhaus', 'blueprint', 'neon', 'kraft', 'velvet', 'mono'] as const;
+const SKIN_IDS = ['nordic', 'noir', 'kraft', 'velvet', 'mono'] as const;
 type SkinId = (typeof SKIN_IDS)[number];
 
 function normalizeSkin(v: unknown): SkinId {
   return SKIN_IDS.includes(v as SkinId) ? (v as SkinId) : 'nordic';
 }
 
-/** 当前皮肤类名（弹窗与面板共用同套皮肤；非法值回落雪松白） */
-export function bsSkinClass(): string {
-  return `bz-bs-skin-${normalizeSkin((tryGetSettings() as Record<string, unknown>).bookshelfSkin)}`;
+/** 亮暗模式类（随 Obsidian 主题体；每肤两套变体见 styles.css「亮暗模式变体」节） */
+function bsModeClass(): string {
+  return document.body.classList.contains('theme-dark') ? 'bz-bs-mode-dark' : 'bz-bs-mode-light';
 }
 
-/** 皮肤应用：面板根换挂皮肤类（设置行 onChange 热切换；未开面板仅落盘） */
+/** 当前皮肤+亮暗模式类（弹窗与面板共用；退役肤/非法值读取回落雪松白） */
+export function bsSkinClass(): string {
+  return `bz-bs-skin-${normalizeSkin((tryGetSettings() as Record<string, unknown>).bookshelfSkin)} ${bsModeClass()}`;
+}
+
+/** 皮肤应用：面板根换挂皮肤+模式类（设置行 onChange 热切换；未开面板仅落盘） */
 export function applyBookshelfSkin(skin: unknown): void {
   if (!M.currentOverlay) return;
   const panel = M.currentOverlay.querySelector('.bz-bs-panel') as HTMLElement | null;
   if (!panel) return;
-  panel.classList.remove(...SKIN_IDS.map((id) => `bz-bs-skin-${id}`));
-  panel.classList.add(`bz-bs-skin-${normalizeSkin(skin)}`);
+  panel.classList.remove(...SKIN_IDS.map((id) => `bz-bs-skin-${id}`), 'bz-bs-mode-light', 'bz-bs-mode-dark');
+  panel.classList.add(`bz-bs-skin-${normalizeSkin(skin)}`, bsModeClass());
 }
 
 // ---------- 主面板创建（书脊墙 1:1 骨架） ----------
@@ -490,7 +497,7 @@ export function createOverlay(app: App): void {
     <div class="bz-panel-frame bz-bs-panel bz-panel-mtop ${bsSkinClass()}">
       <div class="bz-bs-wallpage">
         <div class="bz-bs-header">
-          <div class="bz-bs-plaque"><h1>书库</h1><p>LIBRARY</p></div>
+          <div class="bz-bs-plaque" data-bs-plaque><h1>书库</h1><p>LIBRARY</p></div>
           <div class="bz-bs-labels" id="bz-bs-labels"></div>
         </div>
         <div class="bz-bs-tools">
@@ -519,10 +526,15 @@ export function createOverlay(app: App): void {
   M.renderFn = () => renderAll(app);
   applyMobileWindowFullscreen(overlay.querySelector('.bz-bs-panel') as HTMLElement, fullscreen);
 
-  // 单一委托：标签筛选 / 排序 / 报告视图交互 / 书脊详情
+  // 单一委托：匾额关闭（移动端）/ 标签筛选 / 排序 / 报告视图交互 / 书脊详情
   overlay.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
     if (e.target === overlay) { closeOverlay(); return; }
+    // 移动端关闭出口 = 点「书库」匾收面板（桌面不响应，点面板外/Esc 关）
+    if (t.closest('[data-bs-plaque]')) {
+      if (isMobileEnv()) closeOverlay();
+      return;
+    }
     // 状态标签（再点已选 = 回全馆；「全馆」清状态+分类全部筛选——issue 226 修「点了没反应」）
     const side = t.closest('[data-bs-side]') as HTMLElement | null;
     if (side) {
