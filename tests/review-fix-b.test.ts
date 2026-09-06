@@ -92,7 +92,7 @@ describe('批 B-3：触控热区收编 core .bz-touch-target', () => {
   it('跳过项守护：attach（padding 抬档形态）维持域内 pointer:coarse 块；cinema 已在批 C 收编 .bz-touch-target', () => {
     // cinema ui 冻结解除（走查批 C-8）：域内 ::after 外扩块撤除，改挂 core 共享类
     expect(repo('src/cinema/styles.css')).not.toMatch(/@media \(pointer: coarse\)/);
-    expect(repo('src/cinema/ui.ts')).toMatch(/bz-icon-btn bz-touch-target/);
+    expect(repo('src/cinema/ui.ts')).not.toMatch(/bz-touch-target/); // cinema 风格化落域（issue 236 / ADR-0103）：脱离共享面板骨架，域内自绘（先例收藏本 ADR-0101）
     expect(repo('src/attach/styles.css')).toMatch(/@media \(pointer: coarse\)/);
     expect(repo('src/attach/styles.css')).not.toMatch(/\w::after\s*\{/); // attach 刻意外扩（防误触邻行，仅注释提及）
   });

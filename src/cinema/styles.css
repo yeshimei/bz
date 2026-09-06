@@ -609,3 +609,18 @@
 .bz-cinema--booth .m-search input{flex:1;min-width:0;border:0;background:none;outline:none;font-size:12.5px;color:var(--ink);font-family:inherit}
 .bz-cinema--booth .m-scroll{flex:1;overflow-y:auto;scrollbar-width:none}
 .bz-cinema--booth .m-scroll::-webkit-scrollbar{display:none}
+
+/* ====================================================================
+   落域适配段（issue 236 / ADR-0103；插件专用，原型不出）
+   ==================================================================== */
+/* 面板壳 = style section 直挂 .bz-panel-overlay，margin:auto 复用 overlay 居中链 */
+.bz-panel-overlay > .bz-cinema--midnight,
+.bz-panel-overlay > .bz-cinema--gazette,
+.bz-panel-overlay > .bz-cinema--booth,
+.bz-panel-overlay > .bz-cinema--midnight.mob,
+.bz-panel-overlay > .bz-cinema--gazette.mob,
+.bz-panel-overlay > .bz-cinema--booth.mob { margin: auto; }
+/* 移动端真全屏（.bz-win-mfs）：去演示框边（尺寸/圆角由 core !important 接管） */
+.bz-cinema--midnight.mob.bz-win-mfs,
+.bz-cinema--gazette.mob.bz-win-mfs,
+.bz-cinema--booth.mob.bz-win-mfs { border: 0 !important; box-shadow: none !important; }

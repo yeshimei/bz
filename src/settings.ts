@@ -185,6 +185,8 @@ export default interface BzSettings {
   cinemaStatusFilter: string;
   /** 🎬 影院：海报网格每行列数（2~12，默认 5；issue 208） */
   cinemaGridColumns: string;
+  /** 面板风格（issue 236 / ADR-0103）：midnight/gazette/booth */
+  cinemaStyle: string;
   /** 📦 归物本：默认状态筛选（空串=全部，其余 using/idle/sold/discard；非法值回落全部。issue 194） */
   belongingsDefaultStatus: string;
   // 旧 cinemaPageSize（每批加载数量）已删除：全仓无消费点（列表一次全量渲染），死配置随审计清理
@@ -537,6 +539,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   cinemaSortMode: 'date',
   cinemaStatusFilter: '',
   cinemaGridColumns: '5',
+  cinemaStyle: 'midnight',
 
   // 做题家（设置并入复习计划 tab）
   enableMultipleChoice: true,

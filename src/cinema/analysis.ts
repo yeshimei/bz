@@ -1,16 +1,11 @@
 /**
  * 影院（cinema）影视分析：完整版（原独立观影报告 19 板块全部并入，ADR-0090）
- * 数据源：M.items（cinema 已解析条目，含豆瓣/片长/季集字段）；样式用 bz-cinema 自绘主题变量
- * （变量在 src/cinema/styles.css 定义，亮/暗两套）；
- * 图表配色常量收编 core 共享层（src/core/chart-palette.ts，同一套视觉值）。
- * 图表范式：无圆形统计（「圆形统计被否」拍板）——分布一律水平条形行/柱状行。
+ * 数据源：M.items（cinema 已解析条目，含豆瓣/片长/季集字段）；
+ * 渲染类名对齐域内原型（issue 236 / ADR-0103），共享样式 scoped 在 .bz-cinema--midnight。
  */
 import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED } from './constants';
 import { M } from './state';
-import {
-  CHART_TYPE_COLORS, CHART_PASTEL_SERIES, CHART_RANK_BADGES,
-  CHART_INK, CHART_FALLBACK, CHART_HIGHLIGHT,
-} from '../core/chart-palette';
+import { escapeHtml } from '../core/utils';
 
 const REVIEW_KEYWORDS = ['好看', '喜欢', '推荐', '经典', '感动', '治愈', '失望', '无聊', '一般', '神作', '烂片', '封神', '震撼', '催泪', '熬夜', '二刷', '满分'];
 
@@ -213,164 +208,96 @@ export function buildAnalysisData(): any {
   return data;
 }
 
-// ======================= 渲染（自绘主题变量；粉彩图表色板 = core/chart-palette） =======================
-// 排印归档：分析页 rem 散档（.68~.95rem）归并字号 token 四档——
-// caption(11) ≤.72rem / meta(12) .74~.78rem / label(13) .8~.83rem / body(14) ≥.92rem；
-// 图表几何（1.35rem 大数字、条高/宽）保留内联不入档。
+// ======================= 渲染（午夜场分析页语言，原型 statPageHTML 同构；ADR-0103） =======================
+// 数据采集半段（buildAnalysisData）不动；渲染类名对齐域内原型（stat-cards/sec/bar-row/soft-row/
+// top-row/tag-cloud/kv-inline/cn-empty），共享样式 scoped 在 .bz-cinema--midnight（弹窗宿主承接）。
+
+function esc(s: unknown): string {
+  return escapeHtml(String(s ?? ''));
+}
 
 function emptyHTML(): string {
-  return '<p style="text-align:center;color:var(--bz-cinema-muted);font-size:var(--bz-font-label);padding:12px 0;">暂无数据</p>';
+  return '<div class="cn-empty">暂无数据</div>';
 }
 
-function statCardHTML(label: string, value: any, idx: number): string {
-  const bg = CHART_PASTEL_SERIES[idx % CHART_PASTEL_SERIES.length];
-  return `<div style="flex:1;min-width:100px;padding:14px 8px;background:${bg};border-radius:12px;text-align:center;border:1px solid rgba(0,0,0,0.06);">
-    <div style="font-size:1.35rem;font-weight:700;color:${CHART_INK};line-height:1.2;">${value}</div>
-    <div style="font-size:var(--bz-font-caption);color:rgba(61,68,86,0.65);margin-top:3px;">${label}</div>
-  </div>`;
-}
-
-function barChartHTML(entries: any[], opt?: any): string {
+/** 水平条形行（原型 bar-row；opt.color 覆盖金色默认） */
+function barHTML(entries: { label: string; value: number }[], opt?: { color?: string }): string {
   if (!entries || !entries.length) return emptyHTML();
-  const o = opt || {};
-  const color = o.color || CHART_PASTEL_SERIES[0];
-  const max = Math.max(...entries.map((e) => e.value), 1);
-  const minH = 26, maxH = 92;
-  return `<div style="overflow-x:auto;margin:8px 0 4px;">
-    <div style="display:flex;align-items:flex-end;gap:10px;min-width:${Math.max(entries.length * 46, 230)}px;padding:0 4px;">
-    ${entries.map((e, i) => {
-    const h = max > 0 ? minH + (e.value / max) * (maxH - minH) : minH;
-    const hl = o.highlight !== undefined ? o.highlight === i : false;
-    const fill = hl ? CHART_HIGHLIGHT : color;
-    return `<div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;">
-      <div style="width:100%;min-width:30px;height:${h}px;background:${fill};border-radius:6px 6px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:3px;color:${CHART_INK};font-weight:700;font-size:var(--bz-font-meta);">${e.value || ''}</div>
-      <div style="margin-top:6px;font-size:var(--bz-font-caption);color:var(--bz-cinema-muted);text-align:center;white-space:nowrap;">${e.label}</div>
-    </div>`;
-  }).join('')}
-    </div></div>`;
+  const max = Math.max(1, ...entries.map((e) => e.value));
+  return entries.map((e) =>
+    `<div class="bar-row"><span class="bar-label">${esc(e.label)}</span><span class="bar-track"><span class="bar-fill" style="width:${Math.round((e.value / max) * 100)}%;${opt?.color ? 'background:' + opt.color + ';' : ''}"></span></span><span class="bar-num">${e.value}</span></div>`).join('');
 }
 
-/** 水平条形行（entries 可带 per-entry color 覆盖默认色） */
-function softBarHTML(entries: any[], color: string): string {
+/** 柔和条形行（原型 soft-row） */
+function softHTML(entries: { label: string; value: number }[]): string {
   if (!entries || !entries.length) return emptyHTML();
-  const max = Math.max(...entries.map((e) => e.value), 1);
-  return entries.map((e) => `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
-      <span style="width:64px;flex-shrink:0;font-size:var(--bz-font-meta);color:var(--bz-cinema-muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.label}</span>
-      <div style="flex:1;height:10px;background:var(--bz-cinema-border);border-radius:5px;overflow:hidden;">
-        <div style="height:100%;width:${Math.max((e.value / max) * 100, 2)}%;background:${e.color || color};border-radius:5px;"></div>
-      </div>
-      <span style="width:36px;flex-shrink:0;font-size:var(--bz-font-meta);color:var(--bz-cinema-text);text-align:right;">${e.value}</span>
-    </div>`).join('');
+  const max = Math.max(1, ...entries.map((e) => e.value));
+  return entries.map((e) =>
+    `<div class="soft-row"><span class="bar-label">${esc(e.label)}</span><span class="soft-track"><span class="soft-fill" style="width:${Math.round((e.value / max) * 100)}%"></span></span><span class="bar-num">${e.value}</span></div>`).join('');
 }
 
-function sectionHTML(title: string, body: string, accent?: string, icon?: string): string {
-  const bar = accent || CHART_PASTEL_SERIES[0];
-  return `<div style="margin-bottom:20px;padding:14px 14px 12px;background:var(--bz-cinema-card);border-radius:12px;border:1px solid var(--bz-cinema-border);">
-    <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:var(--bz-font-body);margin-bottom:12px;">
-      <span style="width:4px;height:14px;border-radius:2px;background:${bar};flex-shrink:0;"></span>
-      ${icon ? `<i data-lucide="${icon}" class="bz-ic bz-ic--sm" style="color:var(--bz-cinema-muted)"></i>` : ''}
-      <span>${title}</span>
-    </div>
-    ${body}
-  </div>`;
+function secHTML(title: string, icon: string, body: string): string {
+  return `<div class="sec"><div class="sec-title"><i data-lucide="${icon}" class="bz-ic"></i>${esc(title)}</div>${body}</div>`;
 }
 
-function topListHTML(list: any[], withRating: boolean): string {
-  if (!list || !list.length) return emptyHTML();
-  const badges = CHART_RANK_BADGES;
-  return list.map((it, i) => {
-    const rank = i < 3
-      ? `<span style="width:20px;height:20px;flex-shrink:0;border-radius:50%;background:${badges[i]};color:${CHART_INK};font-size:var(--bz-font-caption);font-weight:700;display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(0,0,0,0.06);">${i + 1}</span>`
-      : `<span style="width:20px;flex-shrink:0;font-size:var(--bz-font-caption);color:var(--bz-cinema-muted);text-align:center;">${i + 1}</span>`;
-    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--bz-cinema-border);">
-      ${rank}
-      <span style="flex:1;font-size:var(--bz-font-label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">《${it.name}》</span>
-      <span style="font-size:var(--bz-font-caption);color:var(--bz-cinema-muted);flex-shrink:0;">${it.typeTag}</span>
-      ${withRating ? `<span style="font-size:var(--bz-font-label);font-weight:600;color:var(--bz-cinema-accent);flex-shrink:0;">${it.rating}</span>` : ''}
-    </div>`;
-  }).join('');
+function kvInline(items: string[]): string {
+  return `<div class="kv-inline">${items.map((s) => `<span>${s}</span>`).join('')}</div>`;
 }
 
-function ratingCompareListHTML(list: any[]): string {
-  if (!list || !list.length) return emptyHTML();
-  return list.map((it) => `
-    <div style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--bz-cinema-border);">
-      <span style="flex:1;font-size:var(--bz-font-label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">《${it.name}》</span>
-      <span style="font-size:var(--bz-font-caption);color:var(--bz-cinema-muted);flex-shrink:0;">${it.typeTag}</span>
-      <span style="font-size:var(--bz-font-meta);font-weight:600;color:var(--bz-cinema-accent);flex-shrink:0;">${it.rating}</span>
-      <span style="font-size:var(--bz-font-meta);color:var(--bz-cinema-muted);flex-shrink:0;">豆瓣${it.douban}</span>
-    </div>`).join('');
+function topRow(no: string, name: string, val: string): string {
+  return `<div class="top-row"><span class="top-no">${no}</span><span class="top-name">${name}</span><span class="top-val">${val}</span></div>`;
 }
 
-function statInlineHTML(items: string[]): string {
-  return `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">${items.map((s) => `
-    <span style="font-size:var(--bz-font-meta);color:var(--bz-cinema-muted);background:var(--bz-cinema-panel);border:1px solid var(--bz-cinema-border);border-radius:8px;padding:3px 10px;">${s}</span>`).join('')}</div>`;
-}
+const topN = (map: Record<string, number>, n: number) =>
+  Object.entries(map).sort((a, b) => (b[1] as number) - (a[1] as number)).slice(0, n).map(([label, value]) => ({ label, value: value as number }));
 
-/** 完整分析页板块流（19 板块 = 原独立报告全量能力，ADR-0090） */
+/** 完整分析页内容（kv 摘要 + 4 统计卡 + 19 板块；页头 sp-head 由 ui.ts 承担） */
 export function buildAnalysisHTML(): string {
   const data = buildAnalysisData();
   if (data.total === 0) {
-    return `<div style="padding:64px 20px;text-align:center;color:var(--bz-cinema-muted);">
-      <div style="font-size:var(--bz-font-body);font-weight:600;margin-bottom:10px;color:var(--bz-cinema-text);">还没有可统计的影视记录</div>
-      <div style="font-size:var(--bz-font-label);line-height:1.8;">影视文件夹「${M.folderPath}」里还没有可分析的条目。<br>添加影视后，这里会生成你的观影统计。</div>
-      <div style="margin-top:16px;"><button class="bz-btn bz-btn--primary" data-cinema-analysis-add>添加影视</button></div>
-    </div>`;
+    return `<div class="cn-empty-page"><div class="big">还没有可统计的影视记录</div>
+      <div style="font-size:11.5px;color:var(--ink-3)">影视文件夹「${esc(M.folderPath)}」里还没有可分析的条目，添加影视后这里会生成你的观影统计</div>
+      <div style="margin-top:8px"><button class="dm-btn" data-cinema-analysis-add>添加影视</button></div></div>`;
   }
-  const yearEntries = Object.keys(data.years).sort((a, b) => Number(a) - Number(b)).map((y) => ({ label: y, value: data.years[y] }));
+  const avgRating = data.ratingCount ? (data.ratingSum / data.ratingCount).toFixed(1) : '';
+  const yearEntries = Object.keys(data.years).sort((a, b) => Number(a) - Number(b)).map((y) => ({ label: y, value: data.years[y] as number }));
   const monthEntries = Array.from({ length: 12 }, (_, i) => ({ label: (i + 1) + '月', value: data.months[i + 1] || 0 }));
-  const bucketEntries = ['≥9', '8~9', '7~8', '6~7', '5~6', '<5'].map((b) => ({ label: b, value: data.buckets[b] }));
-  const topN = (map: any, n: number) => Object.entries(map).sort((a, b) => (b[1] as number) - (a[1] as number)).slice(0, n).map(([label, value]) => ({ label, value }));
-  const typeEntries = Object.entries(data.groups).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([label, value]) => ({ label, value, color: CHART_TYPE_COLORS[label] || CHART_FALLBACK }));
-  const tagChips = Object.entries(data.tags).sort((a, b) => (b[1] as number) - (a[1] as number))
-    .map(([t, c]) => `<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:var(--bz-font-caption);background:var(--bz-cinema-panel);color:var(--bz-cinema-text);border:1px solid var(--bz-cinema-border);margin:2px;">${t} ${c}</span>`).join('');
+  const bucketEntries = ['≥9', '8~9', '7~8', '6~7', '5~6', '<5'].map((b) => ({ label: b, value: data.buckets[b] as number }));
+  const ageEntries = Object.entries(data.ageBuckets).map(([label, value]) => ({ label, value: value as number }));
+  const durEntries = [['<90分', data.durBuckets['<90']], ['90-120分', data.durBuckets['90-120']], ['>120分', data.durBuckets['>120']]].map(([label, value]) => ({ label: label as string, value: value as number }));
+  const weekend = data.weekdays[0] + data.weekdays[6];
+  const weekEntries = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'].map((w, i) => ({ label: w, value: data.weekdays[(i + 1) % 7] as number }));
+  const cmpRow = (it: any) => topRow('', `《${esc(it.name)}》`, `我 ${Number(it.rating).toFixed(1)} / 豆 ${Number(it.douban).toFixed(1)}`);
 
-  const avgRating = data.ratingCount ? (data.ratingSum / data.ratingCount).toFixed(2) : '—';
-  const avgDouban = data.doubanCount ? (data.doubanSum / data.doubanCount).toFixed(2) : '—';
-  const curMonth = new Date().getMonth();
-
-  return `
-    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
-      ${statCardHTML('收录总数', data.total, 0)}
-      ${statCardHTML('已看', data.watched, 1)}
-      ${statCardHTML('在看', data.watching, 2)}
-      ${statCardHTML('想看', data.want, 3)}
-      ${statCardHTML('平均评分（10分制）', avgRating, 4)}
-      ${statCardHTML('平均豆瓣', avgDouban, 5)}
-    </div>
-    ${sectionHTML('类型分布', softBarHTML(typeEntries, CHART_FALLBACK), '#FFE5CC', 'pie-chart')}
-    ${sectionHTML('年度观影趋势', barChartHTML(yearEntries, { color: '#D6E4FF' }), '#D6E4FF', 'calendar')}
-    ${sectionHTML('片龄画像', statInlineHTML([`平均片龄 ${data.avgAge} 年`, `片龄≥10年 ${data.ageBuckets['≥10年']} 部`]) + softBarHTML([{ label: '当年', value: data.ageBuckets['当年'] }, { label: '1-3年', value: data.ageBuckets['1-3年'] }, { label: '4-10年', value: data.ageBuckets['4-10年'] }, { label: '≥10年', value: data.ageBuckets['≥10年'] }], '#E6DFF5') + '<div style="margin-top:10px;">' + barChartHTML(data.eraEntries, { color: '#CDF0EA' }) + '</div>', '#E6DFF5', 'hourglass')}
-    ${sectionHTML('片长画像', statInlineHTML([`平均片长 ${data.avgDur} 分钟`, data.groupDurEntries.map((g: any) => `${g.label} ${g.value}分`).join(' · ')]) + softBarHTML([{ label: '&lt;90分', value: data.durBuckets['<90'] }, { label: '90-120分', value: data.durBuckets['90-120'] }, { label: '&gt;120分', value: data.durBuckets['>120'] }], '#D8F3DC'), '#D8F3DC', 'timer')}
-    ${sectionHTML('月度观影分布', barChartHTML(monthEntries, { color: '#CDF0EA', highlight: curMonth }), '#CDF0EA', 'calendar-days')}
-    ${sectionHTML('观影节奏', statInlineHTML([`月均 ${data.monthFreq} 部`, `周末 ${data.weekdays[0] + data.weekdays[6]} 部 (${data.total ? Math.round((data.weekdays[0] + data.weekdays[6]) / data.total * 100) : 0}%)`]) + barChartHTML(data.weekdayEntries, { color: '#D6E4FF' }) + (data.yearTrend.length ? '<div style="margin-top:10px;">' + statInlineHTML(data.yearTrend.map((t: any) => `${t.label} ${t.value >= 0 ? '+' : ''}${t.value}%`)) + '</div>' : ''), '#D6E4FF', 'activity')}
-    ${sectionHTML('个人评分分布', barChartHTML(bucketEntries, { color: '#FADDE1' }), '#FADDE1', 'star')}
-    ${sectionHTML('评分趋势（个人10分制）', barChartHTML(data.yearRatingEntries, { color: '#FFE5CC' }), '#FFE5CC', 'trending-up')}
-    ${sectionHTML('打分习惯（个人−豆瓣）', statInlineHTML([`平均差值 ${data.avgDiff >= 0 ? '+' : ''}${data.avgDiff}（个人−豆瓣）`]) + '<div style="font-weight:600;font-size:var(--bz-font-label);margin:6px 0 4px;">宝藏片（个人≥9 豆瓣&lt;8）</div>' + ratingCompareListHTML(data.treasure) + '<div style="font-weight:600;font-size:var(--bz-font-label);margin:10px 0 4px;">失望榜（个人≤4 豆瓣≥8.5）</div>' + ratingCompareListHTML(data.disappoint), '#FADDE1', 'scale')}
-    ${sectionHTML('题材偏好 TOP10', softBarHTML(topN(data.genres, 10), '#E6DFF5'), '#E6DFF5', 'tags')}
-    ${sectionHTML('制片国家/地区 TOP10', softBarHTML(topN(data.countries, 10), '#D6E4FF'), '#D6E4FF', 'globe')}
-    ${sectionHTML('最爱导演 TOP10', softBarHTML(topN(data.directors, 10), '#D8F3DC'), '#D8F3DC', 'film')}
-    ${sectionHTML('最爱主演 TOP10', softBarHTML(topN(data.actors, 10), '#FADDE1'), '#FADDE1', 'users')}
-    ${sectionHTML('真爱重复', statInlineHTML([`导演≥3部 ${data.dirRepeat} 人`, `主演≥3部 ${data.actRepeat} 人`]) + softBarHTML([{ label: '导演≥3部', value: data.dirRepeat }, { label: '主演≥3部', value: data.actRepeat }], '#D8F3DC'), '#D8F3DC', 'heart')}
-    ${sectionHTML('影评关键词', statInlineHTML([`有影评 ${data.reviewCount} 篇 (${data.reviewRate}%)`, `平均 ${data.reviewAvgChars} 字`]) + (data.keywordEntries.length ? data.keywordEntries.map(([k, v]) => `<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:var(--bz-font-caption);background:${CHART_TYPE_COLORS['公开课']};color:${CHART_INK};margin:2px;">${k} ${v}</span>`).join('') : emptyHTML()), '#E6DFF5', 'message-square')}
-    ${sectionHTML('我的高分 TOP10', topListHTML(data.topRated, true), '#FFE5CC', 'trophy')}
-    ${sectionHTML('系列追踪', statInlineHTML([`追了 ${data.seriesList.length} 个系列（≥2部）`]) + (data.seriesList.length ? data.seriesList.map(([k, v]: any, i: number) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--bz-cinema-border);"><span style="width:18px;flex-shrink:0;font-size:var(--bz-font-caption);color:var(--bz-cinema-muted);text-align:center;">${i + 1}</span><span style="flex:1;font-size:var(--bz-font-label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">《${k}》</span><span style="font-size:var(--bz-font-meta);font-weight:600;color:var(--bz-cinema-accent);flex-shrink:0;">${v} 部</span></div>`).join('') : emptyHTML()), '#D6E4FF', 'link')}
-    ${sectionHTML('追剧深度', statInlineHTML([`平均 ${data.avgSeason} 季`]) + (data.seasons.length ? data.seasons.map((s: any, i: number) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--bz-cinema-border);"><span style="width:18px;flex-shrink:0;font-size:var(--bz-font-caption);color:var(--bz-cinema-muted);text-align:center;">${i + 1}</span><span style="flex:1;font-size:var(--bz-font-label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">《${s.name}》</span><span style="font-size:var(--bz-font-meta);font-weight:600;color:var(--bz-cinema-accent);flex-shrink:0;">${s.seasons} 季</span></div>`).join('') : emptyHTML()), '#CDF0EA', 'tv')}
-    ${sectionHTML('想看清单（' + (data.wantTotal ?? data.wantList.length) + '）' + (data.wantAvgDouban !== '—' ? ' · 均豆瓣 ' + data.wantAvgDouban : ''), topListHTML(data.wantList, false) + (Object.keys(data.wantTags).length ? '<div style="margin-top:8px;">' + Object.entries(data.wantTags).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([t, c]) => `<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:var(--bz-font-caption);background:var(--bz-cinema-panel);color:var(--bz-cinema-text);border:1px solid var(--bz-cinema-border);margin:2px;">${t} ${c}</span>`).join('') + '</div>' : ''), '#FFF3C4', 'bookmark')}
-    <p style="text-align:center;font-size:var(--bz-font-caption);color:var(--bz-cinema-muted);margin-top:16px;">个人评分与豆瓣同为 10 分制，可直接对比</p>
-  `;
+  return `${kvInline([`月均 <b>${data.monthFreq}</b> 部`, `周末 <b>${weekend}</b> 部`, `有影评 <b>${data.reviewCount}</b> 篇`])}
+  <div class="stat-cards">
+    <div class="stat-card"><div class="v">${data.total}</div><div class="k">馆藏总数</div></div>
+    <div class="stat-card"><div class="v">${data.watched}</div><div class="k">已放映</div></div>
+    <div class="stat-card"><div class="v">${avgRating || '—'}</div><div class="k">平均评分</div></div>
+    <div class="stat-card"><div class="v">${data.avgDiff === '—' ? '—' : (Number(data.avgDiff) >= 0 ? '+' : '') + data.avgDiff}</div><div class="k">个人−豆瓣</div></div>
+  </div>
+  ${secHTML('类型分布', 'clapperboard', softHTML(topN(data.groups, 8)))}
+  ${secHTML('年度观影趋势', 'bar-chart-3', barHTML(yearEntries))}
+  ${secHTML('片龄画像', 'bar-chart-3', kvInline([`平均片龄 <b>${data.avgAge}</b> 年`, `片龄≥10年 <b>${data.ageBuckets['≥10年']}</b> 部`]) + softHTML(ageEntries) + '<div style="margin-top:10px">' + barHTML(data.eraEntries) + '</div>')}
+  ${secHTML('片长画像', 'bar-chart-3', data.durCount ? kvInline([`平均片长 <b>${data.avgDur}</b> 分钟`]) + softHTML(durEntries) : '<div class="cn-empty">暂无片长数据（笔记 frontmatter 未含时长字段）</div>')}
+  ${secHTML('月度观影分布', 'bar-chart-3', barHTML(monthEntries))}
+  ${secHTML('观影节奏', 'bar-chart-3', kvInline([`月均 <b>${data.monthFreq}</b> 部`, `周末 <b>${weekend}</b> 部（${data.total ? Math.round(weekend / data.total * 100) : 0}%）`]) + barHTML(weekEntries))}
+  ${secHTML('个人评分分布', 'bar-chart-3', barHTML(bucketEntries))}
+  ${secHTML('评分趋势（个人10分制）', 'bar-chart-3', barHTML(data.yearRatingEntries, { color: '#8fa3bd' }))}
+  ${secHTML('打分习惯（个人−豆瓣）', 'bar-chart-3', kvInline([`平均差值 <b>${data.avgDiff === '—' ? '—' : (Number(data.avgDiff) >= 0 ? '+' : '') + data.avgDiff}</b>（个人−豆瓣）`]) + '<div style="font-weight:600;font-size:12px;margin:6px 0 4px">宝藏片（个人≥9 豆瓣&lt;8）</div>' + (data.treasure.length ? data.treasure.map(cmpRow).join('') : emptyHTML()) + '<div style="font-weight:600;font-size:12px;margin:10px 0 4px">失望榜（个人≤4 豆瓣≥8.5）</div>' + (data.disappoint.length ? data.disappoint.map(cmpRow).join('') : emptyHTML()))}
+  ${secHTML('题材偏好 TOP10', 'bar-chart-3', softHTML(topN(data.genres, 10)))}
+  ${secHTML('制片国家/地区 TOP10', 'bar-chart-3', softHTML(topN(data.countries, 10)))}
+  ${secHTML('最爱导演 TOP10', 'bar-chart-3', softHTML(topN(data.directors, 10)))}
+  ${secHTML('最爱主演 TOP10', 'bar-chart-3', softHTML(topN(data.actors, 10)))}
+  ${secHTML('真爱重复', 'bar-chart-3', kvInline([`导演≥3部 <b>${data.dirRepeat}</b> 人`, `主演≥3部 <b>${data.actRepeat}</b> 人`]) + softHTML([{ label: '导演≥3部', value: data.dirRepeat as number }, { label: '主演≥3部', value: data.actRepeat as number }]))}
+  ${secHTML('影评关键词', 'bar-chart-3', kvInline([`有影评 <b>${data.reviewCount}</b> 篇（${data.reviewRate}%）`]) + (data.keywordEntries.length ? `<div class="tag-cloud">${data.keywordEntries.map(([k, v]) => `<span class="tag-pill">${esc(k)} <b>${v as number}</b></span>`).join('')}</div>` : emptyHTML()))}
+  ${secHTML('我的高分 TOP10', 'bar-chart-3', data.topRated.length ? data.topRated.map((it: any, i: number) => topRow(String(i + 1), esc(it.name), Number(it.rating).toFixed(1))).join('') : emptyHTML())}
+  ${secHTML('系列追踪', 'bar-chart-3', data.seriesList.length ? data.seriesList.map(([k, v]: any, i: number) => topRow(String(i + 1), `《${esc(k)}》`, `${v as number} 部`)).join('') : emptyHTML())}
+  ${secHTML('追剧深度', 'bar-chart-3', data.seasons.length ? kvInline([`平均 <b>${data.avgSeason}</b> 季`]) + data.seasons.map((s: any, i: number) => topRow(String(i + 1), `《${esc(s.name)}》`, `${s.seasons} 季`)).join('') : emptyHTML())}
+  ${secHTML(`想看清单（${data.wantTotal ?? data.wantList.length}）`, 'bar-chart-3', (data.wantList.length ? data.wantList.map((it: any, i: number) => topRow(String(i + 1), esc(it.name) + (it.douban ? ' · 豆瓣 ' + esc(it.douban) : ''), '')).join('') : emptyHTML()) + (Object.keys(data.wantTags).length ? '<div class="tag-cloud" style="margin-top:10px">' + Object.entries(data.wantTags).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([t, c]) => `<span class="tag-pill">${esc(t)} <b>${c as number}</b></span>`).join('') + '</div>' : ''))}`;
 }
 
-/** 头行小计：「N 部 · 已看 N · YYYY–YYYY」（有记录才带年份区间；单年只出一年） */
-export function analysisHeadSub(data: any = buildAnalysisData()): string {
-  const ys = Object.keys(data.years).map(Number).sort((a, b) => a - b);
-  const range = ys.length === 0 ? '' : ys.length === 1 ? `${ys[0]}` : `${ys[0]}–${ys[ys.length - 1]}`;
-  return `${data.total} 部 · 已看 ${data.watched}${range ? ' · ' + range : ''}`;
-}
-
-/** 分析页整页 HTML（页头 + 头行小计 + 板块流；ui.ts renderStatPageHtml 直用） */
+/** 分析页整页内容（页头 sp-head 在 ui.ts；此处只出内容流） */
 export function buildStatPageHtml(): string {
-  const data = buildAnalysisData();
-  return `<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title"><i data-lucide="bar-chart-3" class="bz-ic"></i>影视分析</span><span class="bz-cinema-page-sub">${analysisHeadSub(data)}</span></div>${buildAnalysisHTML()}</div>`;
+  return buildAnalysisHTML();
 }

@@ -1,3 +1,4 @@
+import { tryGetSettings } from '../core/settings-provider';
 /**
  * 影院（cinema）域常量：类型/状态/评分（复刻自 movie 域，独立成域不共享）
  */
@@ -78,4 +79,22 @@ export function getStarString(rating: number): string {
   for (let i = 0; i < full; i++) s += '★';
   for (let j = full; j < 5; j++) s += '☆';
   return s;
+}
+
+// ======================= 风格框架（issue 236 / ADR-0103） =======================
+
+/** 面板风格 id（CINEMA_STYLES 清单 = 唯一事实源；原型壳同款） */
+export type CinemaStyle = 'midnight' | 'gazette' | 'booth';
+
+/** 三风格清单（设置选项与面板分支都从这里出；新风格 = 加一项 + styles.css 锚类段） */
+export const CINEMA_STYLES: { id: CinemaStyle; label: string; en: string }[] = [
+  { id: 'midnight', label: '午夜场', en: 'MIDNIGHT' },
+  { id: 'gazette', label: '场刊', en: 'GAZETTE' },
+  { id: 'booth', label: '放映室', en: 'BOOTH' },
+];
+
+/** 当前风格（设置 cinemaStyle；非法值回默认午夜场；重开面板生效） */
+export function cinemaStyleOf(): CinemaStyle {
+  const raw = (tryGetSettings() as Record<string, unknown>).cinemaStyle;
+  return raw === 'gazette' || raw === 'booth' ? raw : 'midnight';
 }

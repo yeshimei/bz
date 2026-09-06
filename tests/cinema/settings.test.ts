@@ -48,6 +48,10 @@ describe('cinema 设置 schema', () => {
     expect(DEFAULT_SETTINGS.cinemaSortMode).toBe('date');
     expect(DEFAULT_SETTINGS.cinemaStatusFilter).toBe('');
     expect(DEFAULT_SETTINGS.cinemaGridColumns).toBe('5');
+    // 风格扩展口（issue 236 / ADR-0103）：键在、默认午夜场；schema 暂不出行（仅一风格无选择意义）
+    expect(DEFAULT_SETTINGS.cinemaStyle).toBe('midnight');
+    const styleRow = schema.groups.flatMap((g) => g.rows).find((r: any) => (r.binding as any)?.key === 'cinemaStyle');
+    expect(styleRow).toBeUndefined();
     // 组序：目录 → 显示 → 移动端（移动端组置尾惯例）
     expect(schema.groups.map((g) => g.name)).toEqual(['目录', '显示', '移动端']);
   });

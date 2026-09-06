@@ -9,7 +9,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { M, resetCinemaState } from '../../src/cinema/state';
 import { rebuildItems } from '../../src/cinema/data';
-import { buildAnalysisData, buildAnalysisHTML, buildStatPageHtml, analysisHeadSub } from '../../src/cinema/analysis';
+import { buildAnalysisData, buildAnalysisHTML, buildStatPageHtml } from '../../src/cinema/analysis';
 
 function seed(vault: MockVault) {
   vault.files.set('我的/影视/《星际穿越》.md', `---
@@ -135,7 +135,7 @@ describe('cinema buildAnalysisHTML', () => {
 
   it('渲染 19 板块（原独立报告全量板块，ADR-0090）', () => {
     const html = buildAnalysisHTML();
-    expect(html).toContain('收录总数');
+    expect(html).toContain('馆藏总数');
     expect(html).toContain('类型分布');
     expect(html).toContain('年度观影趋势');
     expect(html).toContain('片龄画像');
@@ -147,7 +147,7 @@ describe('cinema buildAnalysisHTML', () => {
     expect(html).toContain('影评关键词');
     expect(html).toContain('我的高分');
     expect(html).toContain('想看清单');
-    expect(html).toContain('10 分制');
+    expect(html).toContain('评分趋势');
   });
 
   it('空库 → 引导文案', () => {
@@ -250,11 +250,8 @@ describe('ADR-0090 内嵌页板块对照（19 板块不丢能力）', () => {
     // 19 板块 sectionHTML 均带 data-lucide 占位（另有页头 1 个，≥19 即齐）
     const icons = html.match(/data-lucide="/g) || [];
     expect(icons.length).toBeGreaterThanOrEqual(19);
-    expect(html).toContain('data-lucide="hourglass"'); // 片龄画像（原 🕰️）
-    expect(html).toContain('data-lucide="timer"'); // 片长画像（原 ⏱️）
-    expect(html).toContain('data-lucide="tv"'); // 追剧深度（原 📺）
-    expect(html).toContain('data-lucide="heart"'); // 真爱重复（原 ❤️）
-    expect(html).toContain('data-lucide="scale"'); // 打分习惯（原 ⚖️）
+    expect(html).toContain('data-lucide="clapperboard"'); // 类型分布（原型 SVG.film）
+    expect(html).toContain('data-lucide="bar-chart-3"'); // 其余板块（原型 SVG.stat）
     // 原 19 板块标题 emoji 全无残留
     for (const emoji of ['🎬', '📅', '🕰', '⏱', '🗓', '📆', '⭐', '📈', '⚖', '🎭', '🌍', '🎥', '👥', '❤', '💬', '🏆', '🔗', '📺', '📌']) {
       expect(html).not.toContain(emoji);
@@ -279,25 +276,6 @@ describe('ADR-0090 头行小计 + 空态动作 + 整页组装', () => {
     M.folderPath = '我的/影视';
   });
 
-  it('analysisHeadSub：「N 部 · 已看 N · YYYY–YYYY」（单年只出一年）', () => {
-    const vault = new MockVault();
-    seed(vault);
-    rebuildItems(mockAppWithVault(vault));
-    // seed 4 条全部 2026 年观影 → 单年
-    expect(analysisHeadSub()).toBe('4 部 · 已看 3 · 2026');
-  });
-
-  it('analysisHeadSub：跨年区间 + 无记录时无年份段', () => {
-    const vault = new MockVault();
-    vault.files.set('我的/影视/《A》.md', '---\ntags: [电影]\n评分: 7\n观影日期: 2024-03-01\n---');
-    vault.files.set('我的/影视/《B》.md', '---\ntags: [电影]\n评分: 8\n观影日期: 2026-03-01\n---');
-    rebuildItems(mockAppWithVault(vault));
-    expect(analysisHeadSub()).toBe('2 部 · 已看 2 · 2024–2026');
-    resetCinemaState();
-    M.folderPath = '我的/影视';
-    expect(analysisHeadSub()).toBe('0 部 · 已看 0');
-  });
-
   it('空库整页：引导文案 + 「添加影视」动作按钮（data-cinema-analysis-add）', () => {
     const html = buildStatPageHtml();
     expect(html).toContain('还没有可统计的影视记录');
@@ -305,14 +283,14 @@ describe('ADR-0090 头行小计 + 空态动作 + 整页组装', () => {
     expect(html).toContain('添加影视');
   });
 
-  it('整页 = 页头（bar-chart-3 + 头行小计） + 板块流', () => {
+  it('整页 = 内容流（页头 sp-head 由 ui.ts 承担，issue 236）', () => {
     const vault = new MockVault();
     seed(vault);
     rebuildItems(mockAppWithVault(vault));
     const html = buildStatPageHtml();
-    expect(html).toContain('bz-cinema-page-head');
+    expect(html).not.toContain('bz-cinema-page-head'); // 页头退役：sp-head 在 ui.ts
+    expect(html).toContain('stat-cards');
     expect(html).toContain('data-lucide="bar-chart-3"');
-    expect(html).toContain('4 部 · 已看 3 · 2026');
     expect(html).toContain('类型分布');
     expect(html).toContain('想看清单');
   });
