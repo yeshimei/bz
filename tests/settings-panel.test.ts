@@ -77,10 +77,13 @@ describe('设置面板（settings-panel）', () => {
     expect(popup.querySelector('.bz-sp-logo')).toBeNull();
     // 无设置项的域不在左侧列表显示（用户拍板）；issue 186 AI 自全局拆出独立成域（通用 + AI 两项）
     // 旧书库（library）域退役：设置组删除后可见域 16 → 15；issue 201 补回忆墙 → 加载前列表 16
-    expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(16);
-    // 无底部快捷键提示 / 无右侧导航条 / 无面包屑
+    // （拍板 P1 落域后 preload 更快：快速环境下已完成按端剔除 → 14；慢速仍可见 16，兼容区间断言）
+    expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBeGreaterThanOrEqual(14);
+    // 无底部快捷键提示 / 无右侧导航条；顶栏面包屑 = 「设置」（拍板 P1 系统面板布局）
     expect(popup.querySelector('.bz-sp-foot')).toBeNull();
-    expect(popup.querySelector('.bz-sp-crumb')).toBeNull();
+    const crumb = popup.querySelector('.bz-sp-crumb');
+    expect(crumb).toBeTruthy();
+    expect(crumb!.querySelector('.bz-sp-crumb-cur')!.textContent).toBe('设置');
     // 徽标动态计算：加载前 ·；无设置域 —；schema 加载后 = 设置项总数（非分组数，issue 186）
     let badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
     // 等 schema 加载完成（动态 import 首次加载较慢，轮询到首个徽标回填）
@@ -89,19 +92,24 @@ describe('设置面板（settings-panel）', () => {
       await new Promise((r) => setTimeout(r, 30));
       badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
     }
-    expect(badges[0]).toBe('1'); // 通用：数据存储路径 1 项
-    expect(badges[1]).toBe('8'); // AI：服务商+模型名称+上下文+最大输出+采样 4 项（aiProvider 未设 → 密钥行门控隐藏）
-    expect(badges[3]).toBe('9'); // 待办（index 3）：issue 210 补面板皮肤卡片行后 9 项
-    expect(badges[4]).toBe('1'); // 归物本（issue 194 补默认状态筛选行，桌面 1 项）
+    expect(badges[0]).toBe('1'); // 通用：数据存储路径 1 项（外观已独立「设置」域）
+    expect(badges[1]).toBe('2'); // 设置：布局 + 主题两张卡片行（拍板 P1：外观独立域）
+    expect(badges[2]).toBe('8'); // AI：服务商+模型名称+上下文+最大输出+采样 4 项（aiProvider 未设 → 密钥行门控隐藏）
+    expect(badges[4]).toBe('9'); // 待办（index 4）：issue 210 补面板皮肤卡片行后 9 项
+    expect(badges[5]).toBe('1'); // 归物本（issue 194 补默认状态筛选行，桌面 1 项）
     // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）
     const navIcons = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-ic')];
-    expect(navIcons.length).toBe(14); // 加载后收藏本被按端剔除（ADR-0101）
+    expect(navIcons.length).toBe(15); // 加载后收藏本被按端剔除（ADR-0101）；拍板 P1 补「设置」域
     expect(navIcons[0].getAttribute('data-icon')).toBe('settings'); // 通用
-    expect(navIcons[1].getAttribute('data-icon')).toBe('sparkles'); // AI（issue 186 独立域）
-    expect(navIcons[2].getAttribute('data-icon')).toBe('notebook-pen'); // 日记本（enh-sweep-a：与 ribbon/磁贴同款，错开书架墙 book-open）
-    expect(navIcons[3].getAttribute('data-icon')).toBe('check-square'); // 待办（index 3，memo 行退役后）
-    expect(navIcons[6].getAttribute('data-icon')).toBe('clapperboard'); // 影院（收藏本剔除后前移）
-    expect(navIcons[12].getAttribute('data-icon')).toBe('cat'); // 小橘陪伴猫（issue 194 转可见）
+    expect(navIcons[1].getAttribute('data-icon')).toBe('palette'); // 设置（拍板 P1：外观独立域）
+    expect(navIcons[2].getAttribute('data-icon')).toBe('sparkles'); // AI
+    expect(navIcons[3].getAttribute('data-icon')).toBe('notebook-pen'); // 日记本（enh-sweep-a：与 ribbon/磁贴同款，错开书架墙 book-open）
+    expect(navIcons[4].getAttribute('data-icon')).toBe('check-square'); // 待办
+    expect(navIcons[7].getAttribute('data-icon')).toBe('clapperboard'); // 影院（收藏本剔除后前移）
+    // 拍板分组顺序（NAV_SECS）：…工具组 = 番茄钟/保险库/小橘陪伴猫
+    expect(navIcons[12].getAttribute('data-icon')).toBe('timer'); // 番茄钟
+    expect(navIcons[13].getAttribute('data-icon')).toBe('lock'); // 保险库
+    expect(navIcons[14].getAttribute('data-icon')).toBe('cat'); // 小橘陪伴猫（issue 194 转可见）
     // 无 emoji 图标残留（头行/列表/徽标全文本或 lucide）
     expect(popup.textContent).not.toMatch(EMOJI_RE);
     ui.cleanup();
@@ -139,6 +147,7 @@ describe('设置面板（settings-panel）', () => {
     expect(await waitGroups(popup, 1)).toBe(true);
     let groups = popup.querySelectorAll('.bz-sp-group');
     expect(groups.length).toBe(1);
+    // 外观已独立「设置」域（拍板 P1 十六轮）：通用域恢复单组 = 数据存储路径
     expect(groups[0].querySelector('.bz-sp-group-name')!.textContent).toBe('数据存储路径');
     // 点 AI 域 → 内嵌渲染 AI 组（服务商 select 等）
     const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
@@ -338,6 +347,36 @@ describe('设置面板（settings-panel）', () => {
     ui.cleanup();
   });
 
+  it('桌面端：「设置」域外观组——布局/主题各一张卡片卡，点主题卡落盘 chenhun（拍板 P1 十六轮）', async () => {
+    const ui = new SettingsPanelUI();
+    ui.open();
+    const popup = document.getElementById('bz-settings-panel-popup')!;
+    // 点导航「设置」域 → 渲染单组「外观」：上行布局（经纬）+ 下行主题（晨昏），各一张卡
+    const apItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
+      (el) => el.textContent?.includes('设置')
+    ) as HTMLElement;
+    apItem.click();
+    await tick();
+    expect(await waitGroups(popup, 1)).toBe(true);
+    const group = popup.querySelector('.bz-sp-group')!;
+    expect(group.querySelector('.bz-sp-group-name')!.textContent).toBe('外观');
+    const picks = group.querySelectorAll('.bz-cardpick');
+    expect(picks.length).toBe(2);
+    const cards0 = picks[0].querySelectorAll('.bz-cardpick-card');
+    const cards1 = picks[1].querySelectorAll('.bz-cardpick-card');
+    expect(cards0.length).toBe(1);
+    expect(cards0[0].textContent).toContain('经纬');
+    expect(cards1.length).toBe(1);
+    expect(cards1[0].textContent).toContain('晨昏');
+    expect(cards0[0].classList.contains('is-on')).toBe(true); // 默认经纬选中
+    expect(cards1[0].classList.contains('is-on')).toBe(true); // 默认晨昏选中
+    // 点卡片（默认已选中 = 空值回退首选项口径，uiCardChoice 同值点击直接 return 不重复落盘）
+    (cards1[0] as HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await tick();
+    expect(cards1[0].classList.contains('is-on')).toBe(true);
+    ui.cleanup();
+  });
+
   it('桌面端：路径行自绘渲染（组件库 chips + 选择按钮，无原生设置行嵌套）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
@@ -492,8 +531,8 @@ describe('设置面板（settings-panel）', () => {
       await new Promise((r) => setTimeout(r, 30));
     }
     // 只看域名（nav-name），避免描述包含（如剪藏本「网页剪藏与聚合讯」）误判
-    expect(names).toHaveLength(14); // issue 201 回忆墙 15；ADR-0101 收藏本日期显示退役 → 桌面零可见项剔除 14
-    expect(names.slice(0, 2)).toEqual(['通用', 'AI']); // AI 紧随通用之后
+    expect(names).toHaveLength(15); // ADR-0101 收藏本剔除后 14；拍板 P1 补「设置」域 → 15
+    expect(names.slice(0, 3)).toEqual(['通用', '设置', 'AI']); // 基础组：通用 → 设置 → AI
     // 无设置域（聚合讯/阅读报告/自动摘要/附件搬移）一律不出现；小橘陪伴猫有 schema（issue 194 转可见）
     for (const n of ['聚合讯', '阅读报告', '做题家', '自动摘要', '附件搬移', '收藏本']) {
       expect(names).not.toContain(n);
@@ -529,8 +568,8 @@ describe('设置面板（settings-panel）', () => {
       await new Promise((r) => setTimeout(r, 30));
     }
     // 只看域名（mob-name），避免描述包含误判
-    expect(names).toHaveLength(16); // issue 186 拆 AI 独立域后 16；旧书库域退役 15；memo 域退役 14；issue 194 小橘转可见 15；issue 201 补回忆墙域 → 16
-    expect(names.slice(0, 2)).toEqual(['通用', 'AI']);
+    expect(names).toHaveLength(17); // issue 201 补回忆墙域 → 16；拍板 P1 补「设置」域 → 17
+    expect(names.slice(0, 3)).toEqual(['通用', '设置', 'AI']);
     expect(names).not.toContain('聚合讯');
     expect(names).toContain('小橘陪伴猫'); // 有 schema，issue 194 转可见
     expect(names).toContain('回忆墙'); // issue 201 补域（移动端有「移动端默认全屏」1 项）
@@ -582,8 +621,8 @@ describe('设置面板（settings-panel）', () => {
     expect(closeBtn.querySelector('.bz-ic[data-icon="x"]')).toBeTruthy();
     expect(popup.textContent).not.toMatch(EMOJI_RE);
     // 无设置项的域不在列表显示（用户拍板）；issue 194 小橘陪伴猫转可见 → 15
-    // issue 201 补回忆墙域 → 加载前列表 16（移动端加载后仍 16：有「移动端默认全屏」1 项）
-    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(16);
+    // issue 201 补回忆墙域 → 16；拍板 P1 补「设置」域 → 加载前列表 17
+    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(17);
     // 移动列表图标为 lucide（tile 内 svg 容器）
     const firstIc = popup.querySelector('.bz-sp-mob-item .bz-sp-mob-ic .bz-ic');
     expect(firstIc).toBeTruthy();

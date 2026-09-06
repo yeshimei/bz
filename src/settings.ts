@@ -422,6 +422,10 @@ export default interface BzSettings {
   // ===== ⚙️ 设置面板（ADR-0080） =====
   /** 设置面板主窗口：移动端默认全屏（默认开；主面板全屏 + 关闭按钮，子面板一律弹窗） */
   settingsPanelMobileDefaultFullscreen: boolean;
+  /** 设置面板布局：'jingwei' = 经纬（左栏右域经纬分明；当前唯一布局） */
+  settingsPanelLayout: string;
+  /** 设置面板主题：'chenhun' = 晨昏（亮如晨、暗如夜，跟随 Obsidian 自动切合；当前唯一主题） */
+  settingsPanelSkin: string;
 
   // ===== 🖼️ 回忆墙（diary-wall 域，ADR-0081）=====
   /** 回忆墙：移动端默认全屏（默认开——回忆墙为媒体优先瀑布流，移动端真全屏设计） */
@@ -634,8 +638,10 @@ export const DEFAULT_SETTINGS: BzSettings = {
   literatureCacheDir: '',
   literatureCacheRetentionDays: 7,
   secondBrainMobileDefaultFullscreen: true,
-  // 设置面板（ADR-0080）：移动端默认全屏（默认开）
+  // 设置面板（ADR-0080）：移动端默认全屏（默认开）；布局默认经纬；主题默认晨昏（跟随亮暗）
   settingsPanelMobileDefaultFullscreen: true,
+  settingsPanelLayout: 'jingwei',
+  settingsPanelSkin: 'chenhun',
   // 回忆墙（diary-wall 域，ADR-0081）：移动端默认全屏（默认开——媒体优先瀑布流真全屏）
   diaryWallMobileDefaultFullscreen: true,
 
