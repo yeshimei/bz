@@ -80,7 +80,7 @@
 .bz-fav-tags button.bz-fav-chip-add:hover { border-color: var(--acc); color: var(--acc); }
 
 /* —— 卡片（原型 .card 逐字） —— */
-.bz-fav-board { display: flex; flex-wrap: wrap; gap: 22px 20px; align-items: flex-start; padding-top: 6px; flex: 1; min-height: 0; overflow: auto; }
+.bz-fav-board { display: flex; flex-wrap: wrap; justify-content: center; gap: 22px 20px; align-items: flex-start; padding-top: 6px; flex: 1; min-height: 0; overflow: auto; }
 .bz-fav-card {
   width: 184px; min-width: 0; background: var(--card); border-radius: 10px; padding: 24px 16px 13px; cursor: pointer; position: relative;
   box-shadow: 0 4px 12px var(--card-shadow); transition: transform .15s, box-shadow .15s;
