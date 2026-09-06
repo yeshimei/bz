@@ -7,7 +7,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks, getNoticeMessages, clearNotices } from '../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, clearNotices, Platform } from '../mock-obsidian-entry';
 import { M, resetBookshelfState } from '../../src/bookshelf/state';
 import { ensureBookshelf, unloadBookshelf, openBookshelf, openBookshelfReport } from '../../src/bookshelf';
 import { createOverlay, closeOverlay, applyBookshelfSkin, bsSkinClass } from '../../src/bookshelf/ui';
@@ -109,6 +109,11 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     expect(labels.some((l) => l.textContent?.includes('成长'))).toBe(true);
     expect(labels.some((l) => l.textContent?.includes('未分类'))).toBe(true);
     expect(labels.some((l) => l.textContent?.includes('科幻'))).toBe(false);
+    // 分类标签独立子容器（桌面 display:contents 隐身；移动端并入头行一行横滑；与原型 renderLabels 同构契约）
+    const catsBox = header.querySelector('.bz-bs-cats');
+    expect(catsBox?.querySelectorAll('[data-bs-cat]').length).toBe(2);
+    expect(catsBox?.querySelectorAll('[data-bs-side]').length).toBe(0);
+    expect(header.querySelectorAll('#bz-bs-labels > .bz-bs-taglabel[data-bs-side]').length).toBe(4);
     // 工具行：检索 + 三档排序 + 在墙计数
     expect(overlay.querySelector('#bz-bs-dsearch')).toBeTruthy();
     const segBtns = Array.from(overlay.querySelectorAll('#bz-bs-sortseg button')).map((b) => b.textContent);
@@ -448,57 +453,84 @@ describe('bookshelf 面板皮肤（issue 216）', () => {
     document.body.innerHTML = '';
   });
 
-  it('未配置 → 默认挂雪松白（nordic）；配置值 → 面板根挂对应皮肤类', async () => {
+  it('未配置 → 默认雪松白+亮模式；配置值 → 面板根挂对应皮肤+模式类', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
     const panel = document.querySelector('.bz-bs-panel') as HTMLElement;
     expect(panel.classList.contains('bz-bs-skin-nordic')).toBe(true);
+    expect(panel.classList.contains('bz-bs-mode-light')).toBe(true);
     closeOverlay();
 
     setSettingsProvider(() => ({ bookshelfSkin: 'noir' }) as never);
     await openPanel(vault, app);
     const panel2 = document.querySelector('.bz-bs-panel') as HTMLElement;
     expect(panel2.classList.contains('bz-bs-skin-noir')).toBe(true);
+    expect(panel2.classList.contains('bz-bs-mode-light')).toBe(true);
     expect(panel2.classList.contains('bz-bs-skin-nordic')).toBe(false);
   });
 
-  it('applyBookshelfSkin 热切换已开面板；非法值回落雪松白', async () => {
+  it('applyBookshelfSkin 热切换已开面板（模式类保留）；非法值回落雪松白', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
     const panel = document.querySelector('.bz-bs-panel') as HTMLElement;
     applyBookshelfSkin('mono');
     expect(panel.classList.contains('bz-bs-skin-mono')).toBe(true);
+    expect(panel.classList.contains('bz-bs-mode-light')).toBe(true);
     applyBookshelfSkin('bogus');
     expect(panel.classList.contains('bz-bs-skin-nordic')).toBe(true);
     expect(panel.className).not.toContain('bz-bs-skin-bogus');
     applyBookshelfSkin('velvet');
-    expect(['nordic', 'dark', 'noir', 'wabi', 'bauhaus', 'blueprint', 'neon', 'kraft', 'velvet', 'mono'].every((id) => id === 'velvet' || !panel.classList.contains(`bz-bs-skin-${id}`))).toBe(true);
+    expect(['nordic', 'noir', 'kraft', 'velvet', 'mono'].every((id) => id === 'velvet' || !panel.classList.contains(`bz-bs-skin-${id}`))).toBe(true);
   });
 
-  it('bsSkinClass：弹窗与面板同套皮肤；未配置回落 nordic', () => {
-    setSettingsProvider(() => ({ bookshelfSkin: 'wabi' }) as never);
-    expect(bsSkinClass()).toBe('bz-bs-skin-wabi');
+  it('bsSkinClass：弹窗与面板同套皮肤+亮暗模式；退役肤/非法值回落 nordic', () => {
+    setSettingsProvider(() => ({ bookshelfSkin: 'noir' }) as never);
+    expect(bsSkinClass()).toBe('bz-bs-skin-noir bz-bs-mode-light');
+    document.body.classList.add('theme-dark');
+    expect(bsSkinClass()).toBe('bz-bs-skin-noir bz-bs-mode-dark');
+    document.body.classList.remove('theme-dark');
+    setSettingsProvider(() => ({ bookshelfSkin: 'wabi' }) as never); // 退役肤读取回落雪松白
+    expect(bsSkinClass()).toBe('bz-bs-skin-nordic bz-bs-mode-light');
     setSettingsProvider(() => ({ bookshelfSkin: 'whatever' }) as never);
-    expect(bsSkinClass()).toBe('bz-bs-skin-nordic');
+    expect(bsSkinClass()).toBe('bz-bs-skin-nordic bz-bs-mode-light');
     setSettingsProvider(() => ({} as never));
-    expect(bsSkinClass()).toBe('bz-bs-skin-nordic');
+    expect(bsSkinClass()).toBe('bz-bs-skin-nordic bz-bs-mode-light');
   });
 
-  it('issue 225 皮肤全量补全：十肤预览在位；九肤结构层盖到书脊与排序（dark=原版仅 token 映射）', () => {
+  it('移动端点「书库」匾关闭面板；桌面不响应', async () => {
+    const { vault, app } = seedVault();
+    Platform.isMobile = true;
+    await openPanel(vault, app);
+    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
+    (overlay.querySelector('[data-bs-plaque]') as HTMLElement).click();
+    expect(document.querySelector('.bz-panel-overlay')).toBeNull();
+    Platform.isMobile = false;
+    await openPanel(vault, app);
+    const overlay2 = document.querySelector('.bz-panel-overlay') as HTMLElement;
+    (overlay2.querySelector('[data-bs-plaque]') as HTMLElement).click();
+    expect(document.querySelector('.bz-panel-overlay')).not.toBeNull();
+    closeOverlay();
+  });
+
+  it('issue 235 五肤×亮暗：五肤预览/结构层在位；mode 变体补对侧 token；退役五肤样式清零', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/bookshelf/styles.css'), 'utf8');
-    const ids = ['nordic', 'dark', 'noir', 'wabi', 'bauhaus', 'blueprint', 'neon', 'kraft', 'velvet', 'mono'];
-    // 设置页预览：每肤预览卡 + 迷你书脊壳（::before）都在
+    const ids = ['nordic', 'noir', 'kraft', 'velvet', 'mono'];
     for (const id of ids) {
       expect(css, `${id} 预览底`).toMatch(new RegExp(`\\.bz-skinprev-bs-${id}\\s*\\{`));
       expect(css, `${id} 预览书脊壳`).toMatch(new RegExp(`\\.bz-skinprev-bs-${id}::before`));
-    }
-    // 结构层：除 dark（= p4-full 原版观感，基础规则即本肤）外，每肤盖到书脊/排序选中态
-    for (const id of ids.filter((x) => x !== 'dark')) {
       expect(css, `${id} 书脊结构`).toMatch(new RegExp(`\\.bz-bs-skin-${id} \\.bz-bs-spine\\s*\\{`));
       expect(css, `${id} 排序选中态`).toMatch(new RegExp(`\\.bz-bs-skin-${id} \\.bz-bs-seg button\\.on`));
     }
-    // dark 补齐墙变量映射（issue 218 换血曾缺）
-    expect(css).toMatch(/\.bz-bs-skin-dark\s*\{[^}]*--bsw-wall:/);
+    // mode 变体：每肤另一侧 = 整组 token 映射（含 --bsw-wall）
+    const modes: Record<string, 'light' | 'dark'> = { nordic: 'dark', noir: 'light', kraft: 'dark', velvet: 'light', mono: 'dark' };
+    for (const [id, mode] of Object.entries(modes)) {
+      expect(css, `${id} ${mode} 变体`).toMatch(new RegExp(`\\.bz-bs-skin-${id}\\.bz-bs-mode-${mode}\\s*\\{[^}]*--bsw-wall:`));
+    }
+    // 退役五肤样式清零（dark/wabi/bauhaus/blueprint/neon）
+    for (const id of ['dark', 'wabi', 'bauhaus', 'blueprint', 'neon']) {
+      expect(css, `${id} 皮肤已退役`).not.toMatch(new RegExp(`\\.bz-bs-skin-${id}[\\s{,.]`));
+      expect(css, `${id} 预览已退役`).not.toMatch(new RegExp(`\\.bz-skinprev-bs-${id}`));
+    }
   });
 
   it('issue 226：木匾复位（基础铜双线 + 九肤逐肤换脸）；检索/排序逐行对齐原型基值；弱化 .off', () => {
@@ -508,8 +540,8 @@ describe('bookshelf 面板皮肤（issue 216）', () => {
     expect(plaque, '缺基础匾额规则').not.toBeNull();
     expect(plaque![1]).toMatch(/3px double var\(--bsw-brass\)/);
     expect(css).toMatch(/\.bz-bs-plaque h1\s*\{[^}]*color: var\(--bsw-brass\)/);
-    // 九肤逐肤匾额底色（dark 除外）
-    for (const id of ['nordic', 'noir', 'wabi', 'bauhaus', 'blueprint', 'neon', 'kraft', 'velvet', 'mono']) {
+    // 在架五肤逐肤匾额底色（dark 已退役）
+    for (const id of ['nordic', 'noir', 'kraft', 'velvet', 'mono']) {
       expect(css, `${id} 匾额`).toMatch(new RegExp(`\\.bz-bs-skin-${id} \\.bz-bs-plaque\\s*\\{`));
     }
     // 检索/排序原型基值：宽 280、阴影 .5、seg 文字 #b8a488、分隔半透明铜、on 字 #2b2018、placeholder #a08e6e

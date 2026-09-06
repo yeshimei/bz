@@ -103,6 +103,60 @@
     return m ? m[1] : String(cat || '')[0] || '📦';
   }
   function catNameOf(cat) { return String(cat || '').replace(/^\p{Extended_Pictographic}\s*/u, ''); }
+
+  /* 分类 → lucide 映射（单源 = src/belongings/emoji-icon-map.ts，生成器注入 BLG_EMOJI_MAP）；
+   * issue 231 拍板：分类 = 纯文字 + item.icon 字段，载入迁移剥离 emoji 前缀，遗留 emoji 兜底转图标 */
+  const EMOJI_ICON = window.BLG_EMOJI_MAP || {};
+  function catSplit(cat) {
+    const s = String(cat || '');
+    const m = s.match(/^(\p{Extended_Pictographic})/u);
+    if (!m) return { emoji: null, name: s, icon: null };
+    return { emoji: m[1], name: s.replace(/^\p{Extended_Pictographic}\s*/u, ''), icon: EMOJI_ICON[m[1]] || null };
+  }
+  function migrateItems(list) {
+    return list.map((x) => {
+      const it = { ...x };
+      const sp = catSplit(it.category);
+      if (sp.emoji) {
+        it.category = sp.name;
+        if (sp.icon && !(it.icon != null && it.icon !== '')) it.icon = sp.icon;
+      }
+      return it;
+    });
+  }
+  function catIconOf(cat) {
+    const sp = catSplit(cat);
+    return sp.emoji ? sp.icon : null;
+  }
+  function catEmHtml(cat) {
+    const name = catIconOf(cat);
+    return name ? icon(name) : esc2(catEmoji(cat));
+  }
+  function itemIconOf(it) {
+    const raw = String(it.icon || '').trim();
+    if (raw && /^[a-z0-9-]+$/i.test(raw)) return raw;
+    return catIconOf(it.category);
+  }
+  function itemEmHtml(it) {
+    const name = itemIconOf(it);
+    return name ? icon(name) : catEmHtml(it.category);
+  }
+  /* 历史分类派生（与 data.ts loadDatabase 同构：频次降序 → 最近更新降序） */
+  function historyCats() {
+    const freq = new Map();
+    for (const it of items) {
+      const cat = String(it.category || '').trim();
+      if (!cat) continue;
+      const cur = freq.get(cat) || { n: 0, last: '' };
+      cur.n++; cur.last = String(it.last_updated || '');
+      freq.set(cat, cur);
+    }
+    return [...freq.entries()].sort((a, b) => b[1].n - a[1].n || b[1].last.localeCompare(a[1].last)).map(([c]) => c);
+  }
+  function historyIconOf(cat) {
+    for (const it of items) if (String(it.category || '').trim() === cat && it.icon) return it.icon;
+    return null;
+  }
   function statusKeyOf(label) { const s = STATUS_ORDER.find((x) => x.label === label); return s ? s.key : label; }
   function statusOf(keyOrLabel) {
     return STATUS_ORDER.find((s) => s.key === keyOrLabel) || STATUS_ORDER.find((s) => s.label === keyOrLabel) || { key: 'using', label: '使用中' };
@@ -113,8 +167,8 @@
   let items;
   try {
     const saved = JSON.parse(localStorage.getItem(LS) || 'null');
-    items = Array.isArray(saved) && saved.length ? saved : BLG.ITEMS.map((x) => ({ ...x }));
-  } catch (e) { items = BLG.ITEMS.map((x) => ({ ...x })); }
+    items = Array.isArray(saved) && saved.length ? migrateItems(saved) : migrateItems(BLG.ITEMS.map((x) => ({ ...x })));
+  } catch (e) { items = migrateItems(BLG.ITEMS.map((x) => ({ ...x }))); }
   const save = () => { try { localStorage.setItem(LS, JSON.stringify(items)); } catch (e) { } };
   const M = { status: null, year: '', q: '', sort: 'recent' };
 
@@ -286,7 +340,7 @@
     return `<div class="bz-bel-cell${gone ? ' bz-bel-cell--gone' : ''}${idle ? ' bz-bel-cell--idle' : ''}" data-bel-id="${esc2(it.id)}">
     <span class="bz-bel-cell-idx">NO.${String(idx + 1).padStart(2, '0')} — ${esc2(catNameOf(it.category) || '未分类')}</span>
     <span class="bz-bel-tag bz-bel-tag--${key}">${icon(STATUS[key] ? STATUS[key].ic : 'box', 'bz-ic--sm')}${esc2(it.current_status)}</span>
-    <span class="bz-bel-cell-em">${esc2(catEmoji(it.category))}</span>
+    <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
     <span class="bz-bel-name">${esc2(it.name)}</span>
     <span class="bz-bel-price">${moneyShort(Number(it.purchase_price) || 0)}</span>
     <span class="bz-bel-mut">${mut}</span>
@@ -437,7 +491,7 @@
     const catName = catNameOf(it.category);
     const days = daysUsed(it);
     return `<div class="bz-item-sheet-entry"><div class="bz-bel-sheet-head">
-      <span class="bz-item-sheet-emoji">${esc2(catEmoji(it.category) || '📦')}</span>
+      <span class="bz-item-sheet-emoji">${itemEmHtml(it)}</span>
       <div class="bz-bel-sheet-info"><div class="bz-item-sheet-title">${esc2(it.name)}</div>
       <div class="bz-item-sheet-sub">${esc2(catName)} · ${money(Number(it.purchase_price) || 0)} · 已用 ${days} 天</div></div></div></div>`;
   }
@@ -520,9 +574,9 @@
       <button class="bz-icon-btn" data-bd-close title="关闭">${icon(ICON.close)}</button>
     </div>
     <div class="bz-bel-detail-idrow">
-      <span class="bz-bel-cell-em">${esc2(catEmoji(it.category))}</span>
+      <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
       <div class="bz-bel-detail-idinfo">
-        <div class="bz-bel-detail-cat">${esc2(it.category || '未分类')}</div>
+        <div class="bz-bel-detail-cat">${esc2(catNameOf(it.category) || '未分类')}</div>
         <div class="bz-bel-detail-desc">${esc2(it.description || '无备注')}</div>
       </div>
       <span class="bz-bel-tag bz-bel-tag--${key}">${icon(STATUS[key] ? STATUS[key].ic : 'box', 'bz-ic--sm')}${esc2(it.current_status)}</span>
@@ -593,7 +647,7 @@
     <div class="bz-bel-form-title">${editing ? '编辑物品' : '记一笔'}</div>
     <div class="bz-bel-form-body">
       <div class="bz-field"><span class="bz-field-label">名称</span><input class="bz-input" id="bm-name" value="${esc2(it ? it.name : '')}" placeholder="如：iPhone 15 Pro"></div>
-      <div class="bz-field"><span class="bz-field-label">分类</span><input class="bz-input" id="bm-cat" value="${esc2(catVal)}" placeholder="输入或选择分类" autocomplete="off"></div>
+      <div class="bz-field"><span class="bz-field-label">分类</span><span class="bz-bel-catrow"><span class="bz-bel-form-icon" id="bm-icon" title="分类图标（AI 归类或选历史分类自动带上）"></span><input class="bz-input" id="bm-cat" value="${esc2(catVal)}" placeholder="输入或从历史分类选择" autocomplete="off"><button type="button" class="bz-icon-btn bz-bel-aibtn" id="bm-ai" title="AI 归类：按名称建议分类与图标">${icon('sparkles', 'bz-ic--sm')}</button></span></div>
       <div class="bz-bel-form-row">
         <div class="bz-field"><span class="bz-field-label">购买价格（元）</span><input class="bz-input" id="bm-price" type="number" min="0" step="0.01" value="${esc2(priceVal)}" placeholder="0.00"></div>
         <div class="bz-field"><span class="bz-field-label">购买日期</span><input class="bz-input" id="bm-date" type="date" value="${esc2(dateVal)}"></div>
@@ -617,6 +671,20 @@
 
     // 分类联想（与 core uiSuggest 同语义：聚焦/输入惰性弹出、子串过滤、外点收起、Esc 只收下拉）
     const catInput = mask.querySelector('#bm-cat');
+    let formIcon = it ? (it.icon || null) : null;
+    const iconChip = mask.querySelector('#bm-icon');
+    const drawIconChip = () => {
+      iconChip.replaceChildren();
+      iconChip.hidden = !formIcon;
+      if (formIcon) {
+        const el = document.createElement('i');
+        el.dataset.lucide = formIcon;
+        el.className = 'bz-ic';
+        iconChip.appendChild(el);
+        mountIcons(iconChip);
+      }
+    };
+    drawIconChip();
     let layer = null, skipNextOpen = false;
     const closeSug = () => { if (layer) { layer.remove(); layer = null; document.removeEventListener('mousedown', onDocDown, true); } };
     const onDocDown = (e) => {
@@ -628,7 +696,7 @@
       if (!layer) return;
       const cur = catInput.value.trim();
       const q = cur.toLowerCase();
-      const matched = BLG.CATS.filter((s) => (!q || s.toLowerCase().includes(q))).slice(0, 60);
+      const matched = historyCats().filter((s) => (!q || s.toLowerCase().includes(q))).slice(0, 60);
       if (!matched.length) { closeSug(); return; }
       layer.replaceChildren();
       matched.forEach((raw) => {
@@ -636,12 +704,15 @@
         b.type = 'button';
         b.className = 'bz-popover-item' + (raw === cur ? ' is-on' : '');
         b.setAttribute('role', 'option');
-        b.innerHTML = `<span class="bz-suggest-ic">${esc2(catEmoji(raw))}</span><span>${esc2(catNameOf(raw))}</span>`;
+        const icName = historyIconOf(raw);
+        b.innerHTML = `<span class="bz-suggest-ic">${icName ? icon(icName) : ''}</span><span>${esc2(raw)}</span>`;
         b.addEventListener('click', () => {
           catInput.value = raw;
+          if (icName) { formIcon = icName; drawIconChip(); }
           closeSug();
           if (document.activeElement !== catInput) { skipNextOpen = true; catInput.focus(); }
         });
+        mountIcons(b);
         layer.appendChild(b);
       });
     };
@@ -685,6 +756,24 @@
     const fail = (msg) => { errEl.textContent = msg; };
     const saveBtn = mask.querySelector('#bm-save');
     let saving = false;
+
+    // AI 归类（issue 231）：插件 = core createAI 真实调用；评审壳演示 = 延迟回填样例建议
+    const aiBtn = mask.querySelector('#bm-ai');
+    aiBtn.addEventListener('click', () => {
+      if (aiBtn.disabled) return;
+      const aiName = mask.querySelector('#bm-name').value.trim();
+      if (!aiName) { fail('先填物品名称，AI 才能归类'); return; }
+      aiBtn.disabled = true;
+      aiBtn.classList.add('is-busy');
+      setTimeout(() => {
+        aiBtn.disabled = false;
+        aiBtn.classList.remove('is-busy');
+        catInput.value = '智能手机';
+        formIcon = 'smartphone';
+        drawIconChip();
+        toast('AI 演示：已回填示例分类与图标（插件内为真实调用）');
+      }, 400);
+    });
     const requestClose = () => mask.remove(); // 评审壳省 confirmDiscard（插件走 core）
     mask.addEventListener('mousedown', (e) => { if (e.target === mask) requestClose(); });
     mask.querySelector('[data-bm-cancel]').addEventListener('click', requestClose);
@@ -717,6 +806,7 @@
           if (!cur) { toast('该物品已被外部变更删除，本次保存未写入'); mask.remove(); return; }
           cur.name = name;
           cur.category = category;
+          cur.icon = formIcon;
           cur.purchase_price = Math.round(price * 100) / 100;
           cur.purchase_date = date;
           cur.current_status = curStatus;
@@ -736,6 +826,7 @@
             created_date: nowIso, last_updated: nowIso,
             ...(exited ? { exit_date: exitVal || todayStr() } : {}),
             ...(curStatus === '已转卖' ? { sold_price: soldPrice } : {}),
+            ...(formIcon ? { icon: formIcon } : {}),
           });
           toast(`物品「${name}」已添加`);
         }
@@ -799,7 +890,7 @@
   document.getElementById('reset').onclick = () => {
     confirmDlg('重置演示数据', '丢弃本地修改，还原为真实库数据（65 件）？', '还原', () => {
       try { localStorage.removeItem(LS); } catch (e) { }
-      items = BLG.ITEMS.map((x) => ({ ...x }));
+      items = migrateItems(BLG.ITEMS.map((x) => ({ ...x })));
       M.status = null; M.year = ''; M.q = ''; M.sort = 'recent';
       renderAll();
       toast('已还原为真实数据');
@@ -832,6 +923,8 @@
     (async () => {
       try {
         t('初始65件', items.length === 65);
+        t('迁移剥 emoji 前缀', items.every((i) => !/^(\p{Extended_Pictographic})/u.test(i.category || '')));
+        t('网格分类图标已挂', [...document.querySelectorAll('#dtHost .bz-bel-cell-em')].some((el) => el.querySelector('svg')));
         t('网格65行', dtCells() === 65);
         t('KPI在库', document.querySelector('#dtHost [data-bel-kpis] .bz-bel-kpi--hero b').textContent === String(stockCount()));
         t('总投入≈71706', Math.abs(totalAssets() - 71706.48) < 1);
