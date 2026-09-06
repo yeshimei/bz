@@ -1,53 +1,35 @@
 # 收藏本 · UI 原型基准（PROTOTYPE.md）
 
-> 通用规则（铁流程/同步规则/跨域通用坑）见 `docs/prototype-first.md`；本文件只写收藏本域的映射与特例。
+> 通用规则见 `docs/prototype-first.md`；本文件只写收藏本域的落地形态。
 
-## 基准文件
+## 基准文件（共用 CSS，单源）
 
-- **`prototype.html`** — 收藏本唯一视觉基准（源自 `.zcode/ui-prototypes/favorites-cork-5/c5-linen-full.html`，C5 亚麻磁贴方案，2026-09-06 拍板）。桌面端（900×620 固定面板）与移动端（396×780 面板，全屏态）两端并存，含亮暗切换、完整交互（磁贴筛选 / 右键菜单 / 底部抽屉 / 添加编辑表单 + AI 整理 / 撤销 toast）。
-- **`prototype-data.js`** — 原型演示数据（真实 vault 导出 51 条），`prototype.html` 同目录引用。
+- **`prototype.html`** — 收藏本 UI 的评审壳。组件样式**零内联**，`<link>` 引用同目录 `./styles.css`——与插件构建是**同一份源文件**。改样式只改 `styles.css`，刷新本页即见，`pnpm run build` 自动带走插件侧，**不存在二次同步**。
+- **`styles.css`** — 唯一样式源（bz-fav-* 前缀，变量组 `.bz-fav-scope` / `.theme-dark .bz-fav-scope`）。
+- **`prototype-data.js`** — 演示数据（真实 vault 导出 51 条）。
 
-改 UI 前直接双击打开 `prototype.html` 即可评审，无任何依赖。
+评审壳内**只允许**写：演示壳样式（页面底色、396×780 手机框、徽牌/主题钮）与演示逻辑（JS）。组件 markup 与 `ui.ts` 保持同构（类名、`data-fav-*` 钩子一致）。
 
-## 铁流程：原型先行
+## 铁流程
 
-**任何涉及 UI 和样式的修改，必须先改 `prototype.html`，再同步到域代码**，禁止直接在 `styles.css`/`ui.ts` 上目测调参（issue 227 系列教训：1:1 任务目测调参必返工）。
+1. **改 `styles.css`**（或原型 markup/JS）→ 双击 `prototype.html` 刷新评审；
+2. 两端各过一遍（桌面面板 + 手机框内移动面板），亮暗各一遍（右上角主题钮切 `body.theme-dark`）；
+3. 改了 markup 同步 `ui.ts`；跑 `pnpm test` + `tsc --noEmit` + `pnpm run build`。
 
-1. 改 `prototype.html`（布局/交互先在原型里评审到位）；
-2. 逐字照搬同步到 `src/favorites/styles.css`（bz-fav-* 前缀）与 `src/favorites/ui.ts`；
-3. 两端各验一遍（桌面窗口 + 移动端全屏），跑 `pnpm test` + `tsc --noEmit` 门禁。
+## 原型 ↔ 插件差异（仅剩演示壳层）
 
-## 同步映射
+| 评审壳 | 插件 |
+|---|---|
+| `body.theme-dark` 手动切换 | 跟随 Obsidian `.theme-dark` |
+| `.demo-mob` 把 100vw/100vh 全屏态缩进 396×780 手机框 | `applyMobileWindowFullscreen` 全屏 |
+| 抽屉遮罩收在手机框内（absolute） | 挂 body（fixed 全屏） |
+| toast/确认框/主题钮自绘 | core notice / flow-dialog / esc-manager |
+| lucide 内联 SVG（`FAV.icon`） | `<i data-lucide>` + `mountIcons` |
 
-| 原型 | 域代码 | 说明 |
-|---|---|---|
-| `body.dark` 变量组 | `.theme-dark .bz-fav-scope` | 原型手动暗色钮 → 跟随 Obsidian 主题 |
-| `.frame`（900×620） | `.bz-fav-panel:not(.bz-fav-mob)` | 固定宽高 + 边框/圆角/投影 |
-| `.phone`（396×780） | `.bz-fav-panel.bz-fav-mob` | 插件里是全屏态，非固定尺寸 |
-| `.ctx` / `.sheet` / `.mask+.form` | `.bz-fav-ctx` / `.bz-fav-sheet` / `.bz-fav-form` | 浮层同挂 `.bz-fav-scope` 携带变量 |
-| lucide `icon(name, px)` | `iconSpan(name)` + `mountIcons` | **见下「图标」** |
-| toast / 确认框 | core `notifyUndo` / `flow-dialog` | 不照搬，走跨域服务 |
+## 域内注意事项（踩过的坑）
 
-## 注意事项（踩过的坑）
-
-### 两端
-
-- **图标必须 `mountIcons`**：插件里模板用 `<i data-lucide>` 占位，任何 innerHTML 渲染后**不调 `mountIcons` 图标就永远不出现**（新收藏 +/关闭钮/菜单/抽屉各栽过一次）。新加模板渲染点，先问 mountIcons 在哪。
-- **overflow 容器会裁磁点**：磁贴顶部的圆钉（`::before` `top:-4px`）会被 `overflow-x:auto` 裁掉，滚动容器必须留 `padding-top: 5px`。
-- **fixed 尺寸与遮挡**：面板固定高下去掉底部 padding 后，滚动区直抵底边是预期；若底部出现遮挡，先查容器 padding 而不是加回来。
-- **浮层同挂 scope**：菜单/抽屉/表单都挂 `.bz-fav-scope`，否则 CSS 变量全丢（白底黑字裸奔）。
-
-### 桌面端
-
-- 面板固定 900×620，`max-width/max-height: calc(100vw - 48px)` 兜底小窗；窄于 520px 时 container query 切双列平摊。
-- 点遮罩 / Esc 关面板；关闭钮只在移动端显示。
-
-### 移动端
-
-- 磁贴行平铺单行横滑，「新收藏」chip 置首（桌面行尾）；触屏 44px 触控档（`pointer:coarse`）。
-- 点卡片弹底部抽屉（不是右键）；表单宽 `min(430px, 100vw - 32px)` 留边。
-- 关闭钮在头行右端（24×24，图标 12px），跟随 `applyMobileWindowFullscreen` 全屏态。
-
-### 测试
-
-- UI 测试锚 `.bz-fav-*` 类与 `data-fav-*` 钩子；jsdom 不跑 mountIcons（mock setIcon 记 `dataset.icon`，断言用 `[data-icon]`）。
+- **移动端面板必须显式 `100vw/100vh`**：overlay 弹性子项不定宽，line-clamp 卡片的 max-content 会把面板撑到两倍屏宽（右列出屏）；grid 轨道用 `minmax(0,1fr)` + 卡片 `min-width:0` 双保险。
+- **overflow 容器裁磁点**：磁贴行滚动容器留 `padding: 5px 0 6px`。
+- **移动端磁贴行**：单行横滑、「新收藏」置首（桌面行尾）；关闭钮在头行右端 24×24（图标 12px）。
+- **图标渲染点必须调 `mountIcons`**（磁贴行/头行/菜单/抽屉四处都栽过）。
+- 桌面固定 900×620 + `max-width/max-height: calc(100vw - 48px)` 兜底；面板窄于 520px 时 container query 切双列。
