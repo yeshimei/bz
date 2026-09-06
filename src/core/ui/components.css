@@ -1113,6 +1113,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-popover-item {
   display: flex;
   align-items: center;
+  /* 钉死 button 宿主基线：Obsidian 裸 button 的 justify-content:center/height:32px/投影会把候选条目顶成居中大行 */
+  justify-content: flex-start;
+  height: auto;
+  box-shadow: none;
   gap: var(--bz-space-sm);
   width: 100%;
   padding: 6px 10px;
