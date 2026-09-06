@@ -1,18 +1,19 @@
 /**
- * 归物本 UI 测试（ticket 177：状态边栏 × 时间轴重写版）
+ * 归物本 UI 测试（issue 221：P20「瑞士大字报」整体换血版）
  *
- * 旧 ui.test.ts / extra.test.ts / ui-cov.test.ts 引用已删除 API（openBelongingsPanel /
- * addBelongingsItemCommand / showSortModal）编译失败——三文件合并重写于此，覆盖新模块契约：
- *   src/belongings/ui.ts：openPanel（toggle）/ openForm / cleanupBelongings / belongingSettingsSchema；
- *   DOM：.bz-panel-overlay > .bz-bel-panel → 左状态栏 + 移动 chips → 搜索/年份 → 统计卡 →
- *   年→月时间轴行（行 = 名称/状态徽章/分类名·日期/天数/价格/日均副行）；
- *   行操作桌面右键菜单（单击无动作，issue 202）、移动底部抽屉（core/item-actions）；删除走 core/flow-dialog
- *   （#__shared_confirm_*）；动作发域事件（onDomainEvent('belongings') spy 断言载荷）；
- *   数据文件 modify 自动刷新（vault.emit）；表单校验与保存（记一笔/编辑，belongingsEditChanges 真实纯函数）。
+ * 视图层换血后的重写版（前身为 ticket 177 时间轴版）：面板骨架 = 窄头行（品牌/⚙/✕）→
+ *   海报 hero（大字标题=筛选名 + 标语 + KPI 行：在库件数强调/在库投入/日均成本/已离场·回收）→
+ *   筛选 chips（全部/资产/四态带计数，再点回全部，issue 208）→ 工具行（搜索/年份/排序三档/记一笔）→
+ *   大字网格卡（NO.XX/状态徽章/emoji/名称/大字价格/meta；离场灰化）→ 脚注。
+ *   桌面点卡 = 详情弹窗（字段全览 + 四态流转条 + 编辑/删除，P20 新增）；动作菜单仍只走右键（issue 202）；
+ *   移动点卡 = 底部抽屉（core/item-actions）；删除走 core/flow-dialog；动作发域事件（onDomainEvent spy）；
+ *   数据文件 modify 自动刷新；表单校验与保存（belongingsEditChanges 真实纯函数）。
  *
- * 测试基建对齐 data.test.ts：setApp + setSettingsProvider({belongingsDataFolder}) 先行，
- * MockVault.files 预置 belongings.json，openPanel 内部 loadDatabase 拼真实路径读写；
- * 天数口径用带 T12:00:00 的种子日期 + setSystemTime 中午，跨时区确定（对齐 data.test.ts 手法）。
+ * 契约回归不变：openPanel toggle/重入保护/ESC 分层/topifyZ 动态发号/confirmDiscard/notifyUndo/
+ *   belongingsDefaultStatus 接线/移动全屏设置键/XSS/自动刷新/自写短路。
+ *
+ * 测试基建对齐 data.test.ts：setApp + setSettingsProvider 先行，MockVault.files 预置 belongings.json；
+ * 天数口径用带 T12:00:00 的种子日期 + setSystemTime 中午，跨时区确定。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { openPanel, openForm, closePanel, cleanupBelongings, belongingSettingsSchema } from '../../src/belongings/ui';
@@ -53,19 +54,30 @@ function seed(vault: MockVault, items: Record<string, any>, extra: Record<string
 const panel = () => document.querySelector('.bz-panel-overlay') as HTMLElement | null;
 const panelOf = () => document.querySelector('.bz-bel-panel') as HTMLElement | null;
 const content = () => document.querySelector('[data-bel-content]') as HTMLElement | null;
-const stats = () => document.querySelector('[data-bel-stats]') as HTMLElement | null;
-const rows = () => [...document.querySelectorAll('[data-bel-content] .bz-bel-row')] as HTMLElement[];
-const countEl = () => document.querySelector('[data-bel-count]') as HTMLElement | null;
+const grid = () => document.querySelector('[data-bel-grid]') as HTMLElement | null;
+const cells = () => [...document.querySelectorAll('[data-bel-content] .bz-bel-cell')] as HTMLElement[];
+const kpis = () => document.querySelector('[data-bel-kpis]') as HTMLElement | null;
+const kpiByLabel = (label: string) =>
+  ([...document.querySelectorAll('[data-bel-kpis] .bz-bel-kpi')] as HTMLElement[]).find((k) => k.querySelector('span')?.textContent === label) || null;
+const kpiVal = (label: string) => kpiByLabel(label)?.querySelector('b')?.textContent || '';
+const chipsHost = () => document.querySelector('[data-bel-chips]') as HTMLElement | null;
+const chipOf = (key: string) => document.querySelector(`[data-bel-chips] .bz-chip[data-bel-st="${key}"]`) as HTMLElement | null;
+const chipCnts = () => [...document.querySelectorAll('[data-bel-chips] .bz-chip .bz-chip-cnt')].map((e) => e.textContent);
+const heroTitle = () => document.querySelector('[data-bel-herotitle]') as HTMLElement | null;
+const heroSub = () => document.querySelector('[data-bel-herosub]') as HTMLElement | null;
+const footnote = () => document.querySelector('[data-bel-footnote]') as HTMLElement | null;
 const yearSel = () => document.querySelector('[data-bel-year]') as HTMLSelectElement | null;
 const searchInp = () => document.querySelector('[data-bel-search]') as HTMLInputElement | null;
+const detailMask = () => document.querySelector('.bz-bel-detail-mask') as HTMLElement | null;
+const detailBox = () => document.querySelector('.bz-bel-detail') as HTMLElement | null;
 
-/** 桌面：行右键出跟手菜单（bubbles 到 content 委托；preventDefault 拦原生） */
-function rightClick(row: HTMLElement, x = 60, y = 60) {
-  row.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: x, clientY: y }));
+/** 桌面：卡右键出跟手菜单（bubbles 到 content 委托；preventDefault 拦原生） */
+function rightClick(cell: HTMLElement, x = 60, y = 60) {
+  cell.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: x, clientY: y }));
 }
-/** 单击行（桌面=无动作，菜单只走右键 / 移动=底部抽屉） */
-function clickRow(row: HTMLElement) {
-  row.click();
+/** 单击卡（桌面=详情弹窗 P20 / 移动=底部抽屉） */
+function clickCell(cell: HTMLElement) {
+  cell.click();
 }
 /** 当前浮层动作项文案列表（桌面菜单 / 移动抽屉共用 label 断言） */
 function actionLabels(): string[] {
@@ -79,23 +91,12 @@ function clickAction(label: string) {
   target.click();
 }
 
-/** 展开全部默认折叠的年节（ticket 189 年节默认折叠后，渲染/动作类用例经此回到全行可见态；
- *  纯同步点击——假时钟用例（useFakeTimers）也可用） */
-function expandAllYears(): void {
-  for (let i = 0; i < 10; i++) {
-    const bars = [...document.querySelectorAll('[data-bel-content] .bz-bel-collapsed[data-bel-expand]')] as HTMLElement[];
-    if (!bars.length) return;
-    bars.forEach((b) => b.click());
-  }
-}
-
-/** 打开面板（内部 setApp/setSettingsProvider/resetObsidianMocks + loadDatabase 完成；随后展开全部年节） */
+/** 打开面板（内部 setApp/setSettingsProvider/resetObsidianMocks + loadDatabase 完成） */
 async function open(vault: MockVault, settings: any = {}) {
   setApp({ vault } as any);
   setSettingsProvider(() => ({ belongingsDataFolder: 'CONFIG/STORAGE', ...settings }) as any);
   resetObsidianMocks();
   await openPanel();
-  expandAllYears();
   return panel()!;
 }
 
@@ -112,9 +113,9 @@ const dateInp = () => formMask().querySelector('#bm-date') as HTMLInputElement;
 const errEl = () => formMask().querySelector('#bm-err') as HTMLElement;
 const saveBtn = () => formMask().querySelector('#bm-save') as HTMLButtonElement;
 const formTitle = () => formMask().querySelector('.bz-bel-form-title')!.textContent!;
-/** 从面板主头行点「记一笔」开表单 */
+/** 从工具行点「记一笔」开表单 */
 function openAddForm(overlayEl: HTMLElement) {
-  (overlayEl.querySelector('.bz-main-head [data-bel-add]') as HTMLElement).click();
+  (overlayEl.querySelector('.bz-bel-toolrow [data-bel-add]') as HTMLElement).click();
 }
 
 /** 每用例前戏（清 DOM/通知/浮层/mock 计数） */
@@ -128,6 +129,10 @@ function setupDom() {
 function close() {
   closeItemMenu();
   closePanel();
+}
+/** chips 点击（状态/资产/全部） */
+function clickChip(key: string) {
+  (chipOf(key) as HTMLElement).click();
 }
 
 // ==================== 面板开合 / 空态 / 清理 ====================
@@ -146,41 +151,42 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     closeItemMenu();
   });
 
-  it('openPanel：加载空库 → 面板骨架齐全 + 空态文案（这里还没有物品）+ 首建数据文件', async () => {
+  it('openPanel：加载空库 → 面板骨架齐全（hero/KPI/chips/工具行/横滑条/移动搜索）+ 空态文案 + 首建数据文件', async () => {
     await openPanel();
     expect(panelOf()).not.toBeNull();
-    expect(panelOf()!.querySelector('.bz-panel-title')!.textContent).toBe('归物本');
-    // issue 201 头行对齐待办：品牌块 + ⚙设置直达 + ✕关闭（桌面/移动共用）
-    expect(panelOf()!.querySelector('.bz-panel-head .bz-panel-brand')).not.toBeNull();
-    expect(panelOf()!.querySelector('[data-bel-settings]')).not.toBeNull();
-    expect(panelOf()!.querySelector('[data-bel-close]')).not.toBeNull();
-    expect(panelOf()!.querySelector('[data-bel-close]')!.classList.contains('bz-bel-mob-only')).toBe(false);
-    // 骨架：左状态栏 / 移动 chips / 移动搜索行 / 统计 / 计数 / 年份下拉
-    expect(panel()!.querySelector('[data-bel-status]')).not.toBeNull();
+    // P20 海报皮肤类挂面板根（enh-sweep-c：bz-bel-panel bz-panel-frame bz-panel-mtop 连续 + 皮肤类追加）
+    expect(panelOf()!.classList.contains('bz-bel--poster')).toBe(true);
+    // 无壳头行（issue 219b/c 范式）：桌面无壳（hero 即头，⚙ 收敛设置面板），✕ 仅移动窄头行
+    expect(panelOf()!.querySelector('.bz-bel-mobhead')).not.toBeNull();
+    expect(panelOf()!.querySelector('[data-bel-settings]')).toBeNull();
+    expect(panelOf()!.querySelector('[data-bel-close]')!.classList.contains('bz-bel-mob-only')).toBe(true);
+    // 骨架：hero / KPI / chips / 工具行 / 排序 / 移动 chips / 移动搜索行 / 脚注
+    expect(panel()!.querySelector('[data-bel-herotitle]')).not.toBeNull();
+    expect(kpis()).not.toBeNull();
+    expect(chipsHost()).not.toBeNull();
+    expect(panel()!.querySelector('[data-bel-sort]')).not.toBeNull();
     expect(panel()!.querySelector('[data-bel-mobstatus]')).not.toBeNull();
     expect(panel()!.querySelector('[data-bel-mobsearch-row]')).not.toBeNull();
-    expect(stats()).not.toBeNull();
-    expect(countEl()).not.toBeNull();
     expect(yearSel()).not.toBeNull();
+    expect(footnote()).not.toBeNull();
     // 空态
     expect(content()!.textContent).toContain('这里还没有物品');
-    // 左栏计数：全部 0 + 四态 0
-    const cnts = [...document.querySelectorAll('[data-bel-status] .bz-rail-count')].map((e) => e.textContent);
-    expect(cnts).toEqual(['0', '0', '0', '0', '0']);
+    // hero 大字标题 = 筛选名（默认全部）+ 海报标语
+    expect(heroTitle()!.textContent).toBe('全部');
+    expect(heroSub()!.textContent).toBe('归物本 — BELONGINGS · NOTHING MORE, NOTHING LESS');
+    // chips 计数：全部/资产/四态 全 0
+    expect(chipCnts()).toEqual(['0', '0', '0', '0', '0', '0']);
     // 空库首建（统一读写语义：缺失建文件）
     expect(vault.files.has(DATA_PATH)).toBe(true);
   });
 
-  it('左栏含全部 + 四态（key 语义 __all/using/idle/sold/discard），默认选中全部', async () => {
+  it('chips 含全部 + 资产 + 四态（key 语义 __all/asset/using/idle/sold/discard），默认选中全部', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1' }) });
     await openPanel();
-    const sts = [...document.querySelectorAll('[data-bel-status] [data-id]')].map((e) => (e as HTMLElement).dataset.id);
-    expect(sts).toEqual(['__all', 'using', 'idle', 'sold', 'discard']);
-    const names = [...document.querySelectorAll('[data-bel-status] .bz-rail-name')].map((e) => e.textContent);
-    expect(names).toEqual(['全部', '使用中', '闲置', '已转卖', '已丢弃']);
-    expect(document.querySelector('[data-bel-status] .bz-rail-item.on')!.getAttribute('data-id')).toBe('__all');
-    // issue 202：计数走素数档，无胶囊背景类
-    expect(document.querySelectorAll('[data-bel-status] .bz-rail-count--pill').length).toBe(0);
+    const keys = [...document.querySelectorAll('[data-bel-chips] .bz-chip')].map((e) => (e as HTMLElement).dataset.belSt);
+    expect(keys).toEqual(['__all', 'asset', 'using', 'idle', 'sold', 'discard']);
+    expect(chipOf('__all')!.classList.contains('bz-chip--on')).toBe(true);
+    expect(chipOf('using')!.classList.contains('bz-chip--on')).toBe(false);
   });
 
   it('toggle：已开再 openPanel 关闭（overlay 移除）；重复关闭安全（幂等）', async () => {
@@ -207,16 +213,16 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     expect(panel()).toBeNull();
   });
 
-  it('主按钮开表单；表单取消钮关闭；表单遮罩 mousedown 关闭；面板不受影响', async () => {
+  it('工具行主按钮开表单；表单取消钮关闭；表单遮罩 mousedown 关闭；面板不受影响', async () => {
     await openPanel();
-    (panel()!.querySelector('.bz-main-head [data-bel-add]') as HTMLElement).click();
+    openAddForm(panel()!);
     expect(document.querySelector('.bz-bel-form-mask')).not.toBeNull();
     // 取消钮关闭
     (document.querySelector('[data-bm-cancel]') as HTMLElement).click();
     expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
     expect(panel()).not.toBeNull();
     // 遮罩 mousedown 关闭（表单关走 mask/取消钮，无独立 esc 注册）
-    (panel()!.querySelector('.bz-main-head [data-bel-add]') as HTMLElement).click();
+    openAddForm(panel()!);
     (document.querySelector('.bz-bel-form-mask') as HTMLElement).dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
     expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
     expect(panel()).not.toBeNull();
@@ -234,16 +240,22 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     expect(panel()).toBeNull();
   });
 
-  it('ESC 分层（对照 favorites）：表单悬浮时 ESC 只关表单，主面板保留；再 ESC 才关主面板', async () => {
+  it('ESC 分层（P20）：详情 → 表单 → 主面板 三层逐层关', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1' }) });
     await openPanel();
+    // 第一层：详情
+    clickCell(cells()[0]);
+    expect(detailMask()).not.toBeNull();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(detailMask()).toBeNull();
+    expect(panel()).not.toBeNull();
+    // 第二层：表单
     openAddForm(panel()!);
     expect(document.querySelector('.bz-bel-form-mask')).not.toBeNull();
-    // 第一次 ESC：只关表单
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
     expect(panel()).not.toBeNull();
-    // 第二次 ESC：关主面板
+    // 第三层：主面板
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(panel()).toBeNull();
   });
@@ -258,10 +270,14 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     expect(panel()).toBeNull();
   });
 
-  it('cleanupBelongings：卸载清理幂等（重复调用安全）', async () => {
+  it('cleanupBelongings：卸载清理幂等（重复调用安全）+ 详情遮罩一并清理', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1' }) });
     await openPanel();
+    clickCell(cells()[0]);
+    expect(detailMask()).not.toBeNull();
     cleanupBelongings();
     expect(panel()).toBeNull();
+    expect(detailMask()).toBeNull();
     cleanupBelongings();
     expect(panel()).toBeNull();
   });
@@ -276,7 +292,8 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     cleanupBelongings();
   });
 
-  it('收尾扫尾：面板/表单遮罩 topifyZ 动态发号（表单恒压主面板）+ 根节点挂 bz-panel-mtop', async () => {
+  it('收尾扫尾：面板/表单/详情遮罩 topifyZ 动态发号（层层恒压）+ 根节点挂 bz-panel-mtop', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1' }) });
     await openPanel();
     const overlay = panel()!;
     // 根节点接线移动全屏顶距工具类
@@ -284,21 +301,26 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     // 静态 z 档退役：显示即发号（ADR-0067）
     const zOverlay = Number(overlay.style.zIndex);
     expect(Number.isFinite(zOverlay) && zOverlay > 0).toBe(true);
+    // 详情压面板
+    clickCell(cells()[0]);
+    const zDetail = Number(detailMask()!.style.zIndex);
+    expect(Number.isFinite(zDetail) && zDetail > zOverlay).toBe(true);
+    // 表单压详情
     await openForm(null);
     const mask = document.querySelector('.bz-bel-form-mask') as HTMLElement;
-    expect(mask).not.toBeNull();
-    const zMask = Number(mask.style.zIndex);
-    expect(Number.isFinite(zMask) && zMask > zOverlay).toBe(true);
-    // 收尾：取消关表单
+    const zForm = Number(mask.style.zIndex);
+    expect(Number.isFinite(zForm) && zForm > zDetail).toBe(true);
+    // 收尾：取消关表单 + 关详情
     (mask.querySelector('[data-bm-cancel]') as HTMLElement).click();
-    expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
+    (detailMask()!.querySelector('[data-bd-close]') as HTMLElement).click();
+    expect(detailMask()).toBeNull();
     cleanupBelongings();
   });
 });
 
-// ==================== 渲染：统计 / 时间轴 / 行字段 ====================
+// ==================== 渲染：KPI / 网格卡字段 ====================
 
-describe('归物本渲染（统计卡 / 时间轴 / 行字段 / 脏数据容错）', () => {
+describe('归物本渲染（KPI / 网格卡字段 / 脏数据容错）', () => {
   let vault: MockVault;
   beforeEach(() => {
     setupDom();
@@ -309,7 +331,7 @@ describe('归物本渲染（统计卡 / 时间轴 / 行字段 / 脏数据容错�
     cleanupBelongings();
   });
 
-  it('统计卡：总资产 = 使用中+闲置合计；日均 = 总价/累计天数；件数 = 全部件数', async () => {
+  it('KPI：在库件数（hero）= 使用中+闲置；在库投入 = 在库原价合计；日均 = 总价/累计天数；已离场·回收', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2024-08-01T12:00:00'));
     try {
@@ -319,23 +341,20 @@ describe('归物本渲染（统计卡 / 时间轴 / 行字段 / 脏数据容错�
         item_3: makeItem({ id: 'item_3', name: '已卖耳机', purchase_price: 500, current_status: '已转卖' }),
       });
       await open(vault);
-      const cards = [...stats()!.querySelectorAll('.bz-stat--main, .bz-stat')] as HTMLElement[];
-      const labelOf = (el: HTMLElement) => el.querySelector('.bz-stat-label')!.textContent || '';
-      const valueOf = (el: HTMLElement) => el.querySelector('.bz-stat-num')!.textContent || '';
-      const main = cards.find((c) => c.classList.contains('bz-stat--main'))!;
-      expect(labelOf(main)).toContain('总资产');
-      expect(valueOf(main)).toBe('￥500'); // 300+200（转卖/丢弃不计）
-      expect(labelOf(cards[1])).toContain('日均成本');
+      expect(kpiByLabel('在库件数')!.classList.contains('bz-bel-kpi--hero')).toBe(true);
+      expect(kpiVal('在库件数')).toBe('2'); // 300+200（转卖/丢弃不计）
+      expect(kpiVal('在库投入')).toBe('￥500');
       // 3 件同 2024-06-01 买（61 天）：总价 1000 / (61*3) = 5.46
-      expect(valueOf(cards[1])).toBe('￥5.46');
-      expect(labelOf(cards[2])).toContain('在册件数');
-      expect(valueOf(cards[2])).toBe('3');
+      expect(kpiVal('日均成本')).toBe('￥5.46');
+      expect(kpiVal('已离场 · 回收')).toBe('1 件 · ￥0');
+      // 在库两卡可点（data-bel-statclick=asset 语义保留）
+      expect(document.querySelectorAll('[data-bel-statclick="asset"]').length).toBe(2);
     } finally {
       vi.useRealTimers();
     }
   });
 
-  it('时间轴：年节 meta / 月节 / 行字段全（emoji/名称/状态徽章/分类名·日期/天数/价格/日均副行），年降序', async () => {
+  it('网格卡字段全（NO.XX 编号/状态徽章/emoji/名称/大字价格/meta），默认按购入日期降序', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2024-08-01T12:00:00'));
     try {
@@ -344,45 +363,63 @@ describe('归物本渲染（统计卡 / 时间轴 / 行字段 / 脏数据容错�
         item_new: makeItem({ id: 'item_new', name: '新鼠标', category: '🖱 鼠标', purchase_price: 121, purchase_date: '2024-06-01T12:00:00', current_status: '使用中' }),
       });
       await open(vault);
-      // 年节降序 + meta：N 件 · 投入 ￥X
-      const years = [...document.querySelectorAll('[data-bel-yearhead]')].map((e) => e.textContent);
-      expect(years[0]).toContain('2024');
-      expect(years[0]).toContain('1 件 · 投入 ￥121');
-      expect(years[1]).toContain('2023');
-      expect(years[1]).toContain('1 件 · 投入 ￥399');
-      // 月节
-      const months = [...document.querySelectorAll('.bz-bel-month-head')].map((e) => e.textContent);
-      expect(months).toEqual(['6 月', '3 月']);
-      // 行字段
-      const r = rows();
-      expect(r).toHaveLength(2);
-      const rowNew = r.find((x) => x.dataset.belId === 'item_new')!;
-      expect(rowNew.querySelector('.bz-bel-thumb')!.textContent).toBe('🖱');
+      const cs = cells();
+      expect(cs).toHaveLength(2);
+      expect(grid()).not.toBeNull();
+      const rowNew = cs.find((x) => x.dataset.belId === 'item_new')!;
+      const rowOld = cs.find((x) => x.dataset.belId === 'item_old')!;
+      // 降序：新鼠标 = NO.01 在前
+      expect(cs[0].dataset.belId).toBe('item_new');
+      expect(rowNew.querySelector('.bz-bel-cell-idx')!.textContent).toBe('NO.01 — 鼠标');
+      expect(rowOld.querySelector('.bz-bel-cell-idx')!.textContent).toBe('NO.02 — 机械键盘');
+      expect(rowNew.querySelector('.bz-bel-cell-em')!.textContent).toBe('🖱');
       expect(rowNew.querySelector('.bz-bel-name')!.textContent).toBe('新鼠标');
-      expect(rowNew.querySelector('.bz-bel-state')!.textContent).toContain('使用中');
-      expect(rowNew.querySelector('.bz-bel-state')!.classList.contains('bz-bel-state--using')).toBe(true);
-      expect(rowNew.querySelector('.bz-bel-sub')!.textContent).toContain('鼠标 · 2024-06-01');
-      expect(rowNew.querySelector('.bz-bel-days')!.textContent).toMatch(/^61 天$/);
+      expect(rowNew.querySelector('.bz-bel-tag')!.textContent).toContain('使用中');
+      expect(rowNew.querySelector('.bz-bel-tag')!.classList.contains('bz-bel-tag--using')).toBe(true);
       expect(rowNew.querySelector('.bz-bel-price')!.textContent).toBe('￥121');
-      expect(rowNew.querySelector('.bz-bel-daily')!.textContent).toBe('日均 ￥2.0'); // 121/61 = 1.98 → 1 位
+      expect(rowNew.querySelector('.bz-bel-mut')!.textContent).toContain('2024-06-01 起 · 61 天 · 日均 ￥1.98');
     } finally {
       vi.useRealTimers();
     }
   });
 
-  it('购买日期无效（脏数据）：归入「未标注日期」年节 + 「日期未知」月 + 天数「—」、副行日均全价、不抛错', async () => {
+  it('排序三档：最近购入（默认）/投入最高/日均最高；切换立即生效', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2024-08-01T12:00:00'));
+    try {
+      seed(vault, {
+        a: makeItem({ id: 'a', name: '老贵物', purchase_price: 5000, purchase_date: '2023-01-01T12:00:00' }),
+        b: makeItem({ id: 'b', name: '新便宜物', purchase_price: 99, purchase_date: '2024-08-01T12:00:00' }),
+        c: makeItem({ id: 'c', name: '贵而新', purchase_price: 8000, purchase_date: '2024-07-01T12:00:00' }),
+      });
+      await open(vault);
+      const firstId = () => cells()[0].dataset.belId;
+      expect(firstId()).toBe('b'); // 最近购入
+      const segBtns = [...document.querySelectorAll('[data-bel-sort] .bz-segmented-btn')] as HTMLElement[];
+      expect(segBtns.map((b) => b.textContent)).toEqual(['最近购入', '投入最高', '日均最高']);
+      segBtns.find((b) => b.textContent === '投入最高')!.click();
+      expect(firstId()).toBe('c'); // 8000
+      segBtns.find((b) => b.textContent === '日均最高')!.click();
+      // a = 5000/946 ≈ 5.3；b 当天购入 0 天 = 全价档 99/天；c = 8000/31 ≈ 258 → c 最高
+      expect(firstId()).toBe('c');
+      segBtns.find((b) => b.textContent === '最近购入')!.click();
+      expect(firstId()).toBe('b');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('购买日期无效（脏数据）：meta「日期未知起 + 天数—」+ 日均全价、不抛错', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2024-08-01T12:00:00'));
     try {
       seed(vault, { item_1: makeItem({ id: 'item_1', purchase_date: '', purchase_price: 50 }) });
       await open(vault);
-      expect(content()!.querySelector('[data-bel-yearhead="未标注"]')).not.toBeNull();
-      expect(content()!.textContent).toContain('未标注日期');
-      expect(content()!.textContent).toContain('日期未知');
-      const row1 = rows()[0];
-      expect(row1.querySelector('.bz-bel-days')!.textContent).toBe('—');
-      expect(row1.querySelector('.bz-bel-price')!.textContent).toBe('￥50');
-      expect(row1.querySelector('.bz-bel-daily')!.textContent).toBe('日均 ￥50.0');
+      const c = cells()[0];
+      expect(c.querySelector('.bz-bel-mut')!.textContent).toContain('日期未知');
+      expect(c.querySelector('.bz-bel-mut')!.textContent).toContain('— 天');
+      expect(c.querySelector('.bz-bel-price')!.textContent).toBe('￥50');
+      expect(c.querySelector('.bz-bel-mut')!.textContent).toContain('日均 ￥50');
     } finally {
       vi.useRealTimers();
     }
@@ -393,60 +430,88 @@ describe('归物本渲染（统计卡 / 时间轴 / 行字段 / 脏数据容错�
       item_bad: makeItem({ id: 'item_bad', name: '坏价格', purchase_price: NaN, category: '📱 智能手机' }),
     });
     await open(vault);
-    const rowBad = rows().find((x) => x.dataset.belId === 'item_bad')!;
-    expect(rowBad.querySelector('.bz-bel-price')!.textContent).toBe('￥0');
+    const c = cells().find((x) => x.dataset.belId === 'item_bad')!;
+    expect(c.querySelector('.bz-bel-price')!.textContent).toBe('￥0');
     expect(panel()!.textContent).not.toContain('NaN');
-    expect(stats()!.textContent).not.toContain('NaN');
+    expect(kpis()!.textContent).not.toContain('NaN');
   });
 
-  it('已转卖 / 已丢弃行：inactive 弱化类 + 副行「陪伴 N 天」；使用中行无 inactive', async () => {
-    seed(vault, {
-      item_s: makeItem({ id: 'item_s', name: '卖掉的', current_status: '已转卖' }),
-      item_d: makeItem({ id: 'item_d', name: '扔掉的', current_status: '已丢弃' }),
-      item_u: makeItem({ id: 'item_u', name: '用着的', current_status: '使用中' }),
-    });
-    await open(vault);
-    const rowS = rows().find((x) => x.dataset.belId === 'item_s')!;
-    const rowD = rows().find((x) => x.dataset.belId === 'item_d')!;
-    const rowU = rows().find((x) => x.dataset.belId === 'item_u')!;
-    expect(rowS.classList.contains('bz-bel-row--inactive')).toBe(true);
-    expect(rowD.classList.contains('bz-bel-row--inactive')).toBe(true);
-    expect(rowU.classList.contains('bz-bel-row--inactive')).toBe(false);
-    expect(rowS.querySelector('.bz-bel-daily')!.textContent).toMatch(/^陪伴 \d+ 天$/);
-    expect(rowD.querySelector('.bz-bel-daily')!.textContent).toMatch(/^陪伴 \d+ 天$/);
-    expect(rowU.querySelector('.bz-bel-daily')!.textContent).toContain('日均');
-    expect(rowS.querySelector('.bz-bel-state')!.classList.contains('bz-bel-state--sold')).toBe(true);
-    expect(rowD.querySelector('.bz-bel-state')!.classList.contains('bz-bel-state--discard')).toBe(true);
+  it('已转卖 / 已丢弃卡：gone 灰化类 + meta「陪伴 N 天」；转卖带售出价；使用中卡无 gone', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2025-06-15T12:00:00'));
+    try {
+      seed(vault, {
+        item_s: makeItem({ id: 'item_s', name: '卖掉的', current_status: '已转卖', exit_date: '2025-01-01', sold_price: 200 }),
+        item_d: makeItem({ id: 'item_d', name: '扔掉的', current_status: '已丢弃' }),
+        item_u: makeItem({ id: 'item_u', name: '用着的', current_status: '使用中' }),
+      });
+      await open(vault);
+      const cS = cells().find((x) => x.dataset.belId === 'item_s')!;
+      const cD = cells().find((x) => x.dataset.belId === 'item_d')!;
+      const cU = cells().find((x) => x.dataset.belId === 'item_u')!;
+      expect(cS.classList.contains('bz-bel-cell--gone')).toBe(true);
+      expect(cD.classList.contains('bz-bel-cell--gone')).toBe(true);
+      expect(cU.classList.contains('bz-bel-cell--gone')).toBe(false);
+      expect(cS.querySelector('.bz-bel-mut')!.textContent).toContain('陪伴');
+      expect(cS.querySelector('.bz-bel-mut')!.textContent).toContain('售出 ￥200');
+      expect(cS.querySelector('.bz-bel-tag')!.classList.contains('bz-bel-tag--sold')).toBe(true);
+      expect(cD.querySelector('.bz-bel-tag')!.classList.contains('bz-bel-tag--discard')).toBe(true);
+      expect(cU.querySelector('.bz-bel-mut')!.textContent).toContain('日均');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
-  it('无 emoji 分类显示首字；空分类兜底 📦（含表单/列表双路径不抛）', async () => {
+  it('闲置卡：accent 价格类（bz-bel-cell--idle）；无 emoji 分类显示首字；空分类兜底 📦', async () => {
     seed(vault, {
+      item_i: makeItem({ id: 'item_i', name: '闲置物', current_status: '闲置' }),
       item_a: makeItem({ id: 'item_a', name: '无emoji', category: '键盘周边' }),
       item_b: makeItem({ id: 'item_b', name: '空分类', category: '' }),
     });
     await open(vault);
-    const rowA = rows().find((x) => x.dataset.belId === 'item_a')!;
-    const rowB = rows().find((x) => x.dataset.belId === 'item_b')!;
-    expect(rowA.querySelector('.bz-bel-thumb')!.textContent).toBe('键');
-    expect(rowA.querySelector('.bz-bel-sub')!.textContent).toContain('盘周边');
-    expect(rowB.querySelector('.bz-bel-thumb')!.textContent).toBe('📦');
+    const cI = cells().find((x) => x.dataset.belId === 'item_i')!;
+    expect(cI.classList.contains('bz-bel-cell--idle')).toBe(true);
+    const cA = cells().find((x) => x.dataset.belId === 'item_a')!;
+    expect(cA.querySelector('.bz-bel-cell-em')!.textContent).toBe('键');
+    expect(cA.querySelector('.bz-bel-cell-idx')!.textContent).toContain('键盘周边');
+    const cB = cells().find((x) => x.dataset.belId === 'item_b')!;
+    expect(cB.querySelector('.bz-bel-cell-em')!.textContent).toBe('📦');
+    expect(cB.querySelector('.bz-bel-cell-idx')!.textContent).toContain('未分类');
   });
 
-  it('主头行计数：无筛选 = N 件 · 总投入 ￥X；筛选后 = N 件', async () => {
+  it('脚注：共 N 件 · 显示 M 件 · 回本冲抵 ￥X；筛选后「显示」缩小', async () => {
     seed(vault, {
       item_1: makeItem({ id: 'item_1', name: '甲', purchase_price: 100 }),
       item_2: makeItem({ id: 'item_2', name: '乙', purchase_price: 200, current_status: '闲置' }),
+      item_3: makeItem({ id: 'item_3', name: '丙', purchase_price: 50, current_status: '已转卖', sold_price: 30 }),
     });
     await open(vault);
-    expect(countEl()!.textContent).toBe('2 件 · 总投入 ￥300');
-    (document.querySelector('[data-bel-status] [data-id="using"]') as HTMLElement).click();
-    expect(countEl()!.textContent).toBe('1 件');
+    expect(footnote()!.textContent).toBe('共 3 件 · 显示 3 件 · 回本冲抵 ￥30');
+    clickChip('using');
+    expect(footnote()!.textContent).toBe('共 3 件 · 显示 1 件 · 回本冲抵 ￥30');
+  });
+
+  it('hero 大字标题 = 筛选名（issue 208 语义）；筛选后标语切 FILTERED VIEW', async () => {
+    seed(vault, {
+      item_1: makeItem({ id: 'item_1', name: '甲' }),
+      item_2: makeItem({ id: 'item_2', name: '乙', current_status: '闲置' }),
+    });
+    await open(vault);
+    expect(heroTitle()!.textContent).toBe('全部');
+    expect(heroSub()!.textContent).toBe('归物本 — BELONGINGS · NOTHING MORE, NOTHING LESS');
+    clickChip('using');
+    expect(heroTitle()!.textContent).toBe('使用中');
+    expect(heroSub()!.textContent).toBe('归物本 — 1 件在列 · FILTERED VIEW');
+    clickChip('asset');
+    expect(heroTitle()!.textContent).toBe('资产');
+    clickChip('asset');
+    expect(heroTitle()!.textContent).toBe('全部');
   });
 });
 
-// ==================== 筛选：状态 / 年份 / 搜索 / 年节折叠 ====================
+// ==================== 筛选：状态 chips / 年份 / 搜索 ====================
 
-describe('归物本筛选（状态 / 年份 / 搜索 / 年节折叠）', () => {
+describe('归物本筛选（状态 chips / 年份 / 搜索）', () => {
   let vault: MockVault;
   beforeEach(() => {
     setupDom();
@@ -458,43 +523,57 @@ describe('归物本筛选（状态 / 年份 / 搜索 / 年节折叠）', () => {
     cleanupBelongings();
   });
 
-  it('左栏状态筛选：点 using → 只显示使用中 + nav-active；再点取消回全部（高亮回落全部）', async () => {
+  it('chips 状态筛选：点 using → 只显示使用中 + 实底选中；再点取消回全部（高亮回落全部）', async () => {
     seed(vault, {
       item_u: makeItem({ id: 'item_u', name: '用着的' }),
       item_i: makeItem({ id: 'item_i', name: '闲置物', current_status: '闲置' }),
     });
     await open(vault);
-    expect(rows()).toHaveLength(2);
-    const usingBtn = document.querySelector('[data-bel-status] [data-id="using"]') as HTMLElement;
-    usingBtn.click();
-    expect(rows()).toHaveLength(1);
-    expect(rows()[0].textContent).toContain('用着的');
-    expect(document.querySelector('[data-bel-status] [data-id="using"]')!.classList.contains('on')).toBe(true);
-    expect(document.querySelector('[data-bel-status] .bz-rail-item.on')!.getAttribute('data-id')).toBe('using');
-    (document.querySelector('[data-bel-status] [data-id="using"]') as HTMLElement).click();
-    expect(rows()).toHaveLength(2);
-    expect(document.querySelector('[data-bel-status] .bz-rail-item.on')!.getAttribute('data-id')).toBe('__all');
+    expect(cells()).toHaveLength(2);
+    clickChip('using');
+    expect(cells()).toHaveLength(1);
+    expect(cells()[0].textContent).toContain('用着的');
+    expect(chipOf('using')!.classList.contains('bz-chip--on')).toBe(true);
+    expect(chipOf('__all')!.classList.contains('bz-chip--on')).toBe(false);
+    clickChip('using');
+    expect(cells()).toHaveLength(2);
+    expect(chipOf('__all')!.classList.contains('bz-chip--on')).toBe(true);
   });
 
-  it('筛选计数：状态栏 + 移动 chips 同源计数正确', async () => {
+  it('资产 chip（asset 合成筛选）：使用中+闲置显示，转卖/丢弃隐藏；再点取消', async () => {
+    seed(vault, {
+      iu: makeItem({ id: 'iu', name: '用着' }),
+      ii: makeItem({ id: 'ii', name: '闲置', current_status: '闲置' }),
+      is: makeItem({ id: 'is', name: '卖了', current_status: '已转卖' }),
+    });
+    await open(vault);
+    clickChip('asset');
+    expect(cells()).toHaveLength(2);
+    expect(cells().map((c) => c.textContent).join('|')).toContain('用着');
+    expect(chipOf('asset')!.classList.contains('bz-chip--on')).toBe(true);
+    clickChip('asset');
+    expect(cells()).toHaveLength(3);
+  });
+
+  it('筛选计数：chips 与移动横滑条同源计数（全部/资产/四态）', async () => {
     seed(vault, {
       item_1: makeItem({ id: 'item_1', name: '甲' }),
       item_2: makeItem({ id: 'item_2', name: '乙', current_status: '闲置' }),
       item_3: makeItem({ id: 'item_3', name: '丙', current_status: '已丢弃' }),
     });
     await open(vault);
-    const cnts = [...document.querySelectorAll('[data-bel-status] .bz-rail-count')].map((e) => e.textContent);
-    expect(cnts).toEqual(['3', '1', '1', '0', '1']);
-    const chipCnts = [...document.querySelectorAll('[data-bel-mobstatus] .bz-chip-cnt')].map((e) => e.textContent);
-    expect(chipCnts).toEqual(['3', '1', '1', '0', '1']);
+    expect(chipCnts()).toEqual(['3', '2', '1', '1', '0', '1']);
+    const mobCnts = [...document.querySelectorAll('[data-bel-mobstatus] .bz-chip-cnt')].map((e) => e.textContent);
+    expect(mobCnts).toEqual(['3', '2', '1', '1', '0', '1']);
   });
 
-  it('筛选无匹配 → 空态（没有符合条件的物品）', async () => {
+  it('筛选无匹配 → 空态（没有符合条件的物品）+ 空态时脚注清空', async () => {
     seed(vault, { item_u: makeItem({ id: 'item_u', name: '用着的' }) });
     await open(vault);
-    (document.querySelector('[data-bel-status] [data-id="sold"]') as HTMLElement).click();
-    expect(rows()).toHaveLength(0);
+    clickChip('sold');
+    expect(cells()).toHaveLength(0);
     expect(content()!.querySelector('.bz-empty-title')!.textContent).toBe('没有符合条件的物品');
+    expect(footnote()!.textContent).toBe('');
   });
 
   it('移动 chips 筛选（Platform.isMobile）：点选过滤主列 + active 类；再点取消回全部', async () => {
@@ -507,11 +586,11 @@ describe('归物本筛选（状态 / 年份 / 搜索 / 年节折叠）', () => {
       await open(vault);
       const chipUsing = document.querySelector('[data-bel-mobstatus] [data-bel-st="using"]') as HTMLElement;
       chipUsing.click();
-      expect(rows()).toHaveLength(1);
-      expect(rows()[0].textContent).toContain('用着的');
+      expect(cells()).toHaveLength(1);
+      expect(cells()[0].textContent).toContain('用着的');
       expect(document.querySelector('[data-bel-mobstatus] [data-bel-st="using"]')!.classList.contains('is-on')).toBe(true);
       (document.querySelector('[data-bel-mobstatus] [data-bel-st="using"]') as HTMLElement).click();
-      expect(rows()).toHaveLength(2);
+      expect(cells()).toHaveLength(2);
     } finally {
       Platform.isMobile = false;
     }
@@ -529,11 +608,11 @@ describe('归物本筛选（状态 / 年份 / 搜索 / 年节折叠）', () => {
     expect(sel.options[2].value).toBe('2023');
     sel.value = '2024';
     sel.dispatchEvent(new Event('change'));
-    expect(rows()).toHaveLength(1);
-    expect(rows()[0].textContent).toContain('甲');
+    expect(cells()).toHaveLength(1);
+    expect(cells()[0].textContent).toContain('甲');
     // 年份×状态组合 → 无匹配空态（筛选/搜索语境文案）
-    (document.querySelector('[data-bel-status] [data-id="idle"]') as HTMLElement).click();
-    expect(rows()).toHaveLength(0);
+    clickChip('idle');
+    expect(cells()).toHaveLength(0);
     expect(content()!.querySelector('.bz-empty-title')!.textContent).toBe('没有符合条件的物品');
   });
 
@@ -546,7 +625,7 @@ describe('归物本筛选（状态 / 年份 / 搜索 / 年节折叠）', () => {
     const sel = yearSel()!;
     sel.value = '2024';
     sel.dispatchEvent(new Event('change'));
-    expect(rows()).toHaveLength(1);
+    expect(cells()).toHaveLength(1);
     // 外部清掉 2024 年条目 → modify 自动刷新
     const db = JSON.parse(vault.files.get(DATA_PATH)!);
     delete db.items.item_1;
@@ -555,8 +634,8 @@ describe('归物本筛选（状态 / 年份 / 搜索 / 年节折叠）', () => {
     await flush();
     await tick(20);
     // 修复：悬空年份重置回全部（列表不恒空、下拉显示与筛选状态一致）
-    expect(rows()).toHaveLength(1);
-    expect(rows()[0].textContent).toContain('乙');
+    expect(cells()).toHaveLength(1);
+    expect(cells()[0].textContent).toContain('乙');
     expect(yearSel()!.value).toBe('');
   });
 
@@ -569,21 +648,21 @@ describe('归物本筛选（状态 / 年份 / 搜索 / 年节折叠）', () => {
     const inp = searchInp()!;
     inp.value = '键盘';
     inp.dispatchEvent(new Event('input'));
-    expect(rows()).toHaveLength(2); // 防抖窗口内未渲染
+    expect(cells()).toHaveLength(2); // 防抖窗口内未渲染
     await tick(250);
-    expect(rows()).toHaveLength(1);
-    expect(rows()[0].textContent).toContain('机械键盘');
+    expect(cells()).toHaveLength(1);
+    expect(cells()[0].textContent).toContain('机械键盘');
     // 分类命中
     inp.value = '备用手机';
     inp.dispatchEvent(new Event('input'));
     await tick(250);
-    expect(rows()).toHaveLength(1);
-    expect(rows()[0].textContent).toContain('旧手机');
+    expect(cells()).toHaveLength(1);
+    expect(cells()[0].textContent).toContain('旧手机');
     // 描述命中
     inp.value = '红轴';
     inp.dispatchEvent(new Event('input'));
     await tick(250);
-    expect(rows()).toHaveLength(1);
+    expect(cells()).toHaveLength(1);
     // 无匹配
     inp.value = '不存在的';
     inp.dispatchEvent(new Event('input'));
@@ -593,39 +672,22 @@ describe('归物本筛选（状态 / 年份 / 搜索 / 年节折叠）', () => {
     inp.value = '';
     inp.dispatchEvent(new Event('input'));
     await tick(250);
-    expect(rows()).toHaveLength(2);
+    expect(cells()).toHaveLength(2);
   });
 
-  it('搜索命中只缩列表，左栏计数不随搜索缩小', async () => {
+  it('搜索命中只缩列表，chips 计数不随搜索缩小', async () => {
     seed(vault, {
       item_1: makeItem({ id: 'item_1', name: '甲' }),
       item_2: makeItem({ id: 'item_2', name: '乙' }),
     });
     await open(vault);
-    const navCnt = document.querySelector('[data-bel-status] .bz-rail-count')!.textContent;
+    const cnt = chipCnts()[0];
     const inp = searchInp()!;
     inp.value = '甲';
     inp.dispatchEvent(new Event('input'));
     await tick(250);
-    expect(rows()).toHaveLength(1);
-    expect(document.querySelector('[data-bel-status] .bz-rail-count')!.textContent).toBe(navCnt);
-  });
-
-  it('年节折叠/展开：点头部折叠出展开条；点展开条恢复', async () => {
-    seed(vault, {
-      item_1: makeItem({ id: 'item_1', name: '甲', purchase_date: '2024-06-01T12:00:00' }),
-      item_2: makeItem({ id: 'item_2', name: '乙', purchase_date: '2023-05-01T12:00:00' }),
-    });
-    await open(vault);
-    expect(rows()).toHaveLength(2);
-    (document.querySelector('[data-bel-yearhead="2024"]') as HTMLElement).click();
-    expect(content()!.querySelector('.bz-bel-collapsed[data-bel-expand="2024"]')).not.toBeNull();
-    expect(rows()).toHaveLength(1);
-    expect(rows()[0].textContent).toContain('乙');
-    expect(content()!.querySelector('.bz-bel-collapsed')!.textContent).toContain('展开 2024 年（1 件）');
-    (content()!.querySelector('.bz-bel-collapsed[data-bel-expand="2024"]') as HTMLElement).click();
-    expect(content()!.querySelector('.bz-bel-collapsed')).toBeNull();
-    expect(rows()).toHaveLength(2);
+    expect(cells()).toHaveLength(1);
+    expect(chipCnts()[0]).toBe(cnt);
   });
 
   it('移动搜索 toggle：点 data-bel-mobsearch 显隐 .bz-bel-mobsearch-show 行，输入过滤生效', async () => {
@@ -650,6 +712,121 @@ describe('归物本筛选（状态 / 年份 / 搜索 / 年节折叠）', () => {
   });
 });
 
+// ==================== 详情弹窗（P20 桌面点卡） ====================
+
+describe('归物本详情弹窗（P20）', () => {
+  let vault: MockVault;
+  let events: any[];
+  let off: () => void;
+  beforeEach(() => {
+    setupDom();
+    vault = new MockVault();
+    events = [];
+    off = onDomainEvent('belongings', (evt) => events.push(evt));
+  });
+  afterEach(() => {
+    off();
+    vi.useRealTimers();
+    Platform.isMobile = false;
+    cleanupBelongings();
+    closeItemMenu();
+  });
+
+  it('桌面点卡 → 详情弹窗：标题/分类/描述/字段全览/四态流转条（当前态高亮）/编辑删除钮', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2024-08-01T12:00:00'));
+    try {
+      seed(vault, { item_1: makeItem({ id: 'item_1', name: '机械键盘', purchase_price: 399, description: '红轴' }) });
+      await open(vault);
+      clickCell(cells()[0]);
+      expect(detailBox()).not.toBeNull();
+      expect(detailBox()!.querySelector('.bz-bel-detail-title')!.textContent).toBe('机械键盘');
+      expect(detailBox()!.textContent).toContain('红轴');
+      expect(detailBox()!.textContent).toContain('￥399.00');
+      expect(detailBox()!.textContent).toContain('购买日期');
+      const flows = [...detailBox()!.querySelectorAll('[data-bd-flow]')] as HTMLElement[];
+      expect(flows.map((b) => b.dataset.bdFlow)).toEqual(['使用中', '闲置', '已转卖', '已丢弃']);
+      expect(flows.find((b) => b.dataset.bdFlow === '使用中')!.classList.contains('is-cur')).toBe(true);
+      expect(detailBox()!.querySelector('[data-bd-edit]')).not.toBeNull();
+      expect(detailBox()!.querySelector('[data-bd-del]')).not.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('详情流转条：点闲置 → 落盘 + status 事件 + notice + 流转条高亮刷新；×钮关闭', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘' }) });
+    await open(vault);
+    clickCell(cells()[0]);
+    (detailBox()!.querySelector('[data-bd-flow="闲置"]') as HTMLElement).click();
+    await flush();
+    expect(JSON.parse(vault.files.get(DATA_PATH)!).items.item_1.current_status).toBe('闲置');
+    expect(events).toEqual([{ kind: 'status', title: '键盘', status: '闲置' }]);
+    expect(hasNotice('「键盘」已标记为闲置')).toBe(true);
+    // 详情保持 + 流转条重绘（当前态 = 闲置）
+    expect(detailBox()).not.toBeNull();
+    const flows = [...detailBox()!.querySelectorAll('[data-bd-flow]')] as HTMLElement[];
+    expect(flows.find((b) => b.dataset.bdFlow === '闲置')!.classList.contains('is-cur')).toBe(true);
+    // 网格卡徽章同步
+    expect(cells()[0].querySelector('.bz-bel-tag')!.textContent).toContain('闲置');
+    // × 关闭
+    (detailBox()!.querySelector('[data-bd-close]') as HTMLElement).click();
+    expect(detailMask()).toBeNull();
+  });
+
+  it('详情编辑钮 → 表单打开（回填）；详情删除钮 → 确认流，确认后删除 + 详情关', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘' }) });
+    await open(vault);
+    clickCell(cells()[0]);
+    (detailBox()!.querySelector('[data-bd-edit]') as HTMLElement).click();
+    await flush();
+    expect(document.querySelector('.bz-bel-form-mask')).not.toBeNull();
+    expect(nameInp().value).toBe('键盘');
+    (formMask().querySelector('[data-bm-cancel]') as HTMLElement).click();
+    // 删除
+    (detailBox()!.querySelector('[data-bd-del]') as HTMLElement).click();
+    await flush();
+    expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
+    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
+    await flush();
+    expect(detailBox()).not.toBeNull(); // 取消：详情保持
+    (detailBox()!.querySelector('[data-bd-del]') as HTMLElement).click();
+    await flush();
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await flush();
+    expect(JSON.parse(vault.files.get(DATA_PATH)!).items).toEqual({});
+    expect(detailMask()).toBeNull(); // 删除后详情随之关
+    expect(events).toEqual([{ kind: 'delete', title: '键盘' }]);
+  });
+
+  it('详情遮罩 mousedown 自身关闭；点弹窗本体不关', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1' }) });
+    await open(vault);
+    clickCell(cells()[0]);
+    (detailMask() as HTMLElement).dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    expect(detailMask()).toBeNull();
+    clickCell(cells()[0]);
+    detailBox()!.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    expect(detailMask()).not.toBeNull();
+  });
+
+  it('点卡=详情（非动作菜单，issue 202 不冲突），右键仍是动作菜单', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘' }) });
+    await open(vault);
+    clickCell(cells()[0]);
+    await flush();
+    expect(detailMask()).not.toBeNull();
+    expect(document.querySelector('.bz-item-menu')).toBeNull(); // 点卡≠菜单
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); // ESC 关详情
+    expect(detailMask()).toBeNull();
+    rightClick(cells()[0]);
+    await flush();
+    expect(document.querySelector('.bz-item-menu')).not.toBeNull();
+    expect(actionLabels()).toEqual(['标记为闲置', '标记为已转卖', '标记为已丢弃', '编辑', '删除']);
+    closeItemMenu();
+  });
+});
+
 // ==================== 行操作浮层（桌面菜单 / 移动抽屉 / 动作集） ====================
 
 describe('归物本行操作（桌面菜单 / 移动抽屉 / 动作集）', () => {
@@ -668,7 +845,7 @@ describe('归物本行操作（桌面菜单 / 移动抽屉 / 动作集）', () =
   it('桌面右键 → .bz-item-menu：动作 = 3 流转（当前状态跳过）+ 编辑 + 删除；删除 danger 类', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘', current_status: '使用中' }) });
     await open(vault);
-    rightClick(rows()[0]);
+    rightClick(cells()[0]);
     expect(document.querySelector('.bz-item-menu')).not.toBeNull();
     expect(actionLabels()).toEqual(['标记为闲置', '标记为已转卖', '标记为已丢弃', '编辑', '删除']);
     const items = [...document.querySelectorAll('.bz-item-menu-item')] as HTMLElement[];
@@ -676,25 +853,22 @@ describe('归物本行操作（桌面菜单 / 移动抽屉 / 动作集）', () =
     closeItemMenu();
   });
 
-  it('桌面单击行不出菜单（issue 202：菜单只走右键）；右键仍出', async () => {
+  it('桌面右键坐标与菜单挂载不变（P20 网格下右键仍出菜单）', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘' }) });
     await open(vault);
-    clickRow(rows()[0]);
-    await flush();
-    expect(document.querySelector('.bz-item-menu')).toBeNull();
-    rightClick(rows()[0]);
+    rightClick(cells()[0], 200, 150);
     await flush();
     expect(document.querySelector('.bz-item-menu')).not.toBeNull();
     expect(actionLabels()).toContain('编辑');
     closeItemMenu();
   });
 
-  it('移动（Platform.isMobile）：单击行出 .bz-item-sheet + sheetHead（emoji/名称/分类名 · ￥价 · 已用 N 天）', async () => {
+  it('移动（Platform.isMobile）：单击卡出 .bz-item-sheet + sheetHead（emoji/名称/分类名 · ￥价 · 已用 N 天）', async () => {
     Platform.isMobile = true;
     try {
       seed(vault, { item_1: makeItem({ id: 'item_1', name: '机械键盘', purchase_price: 399 }) });
       await open(vault);
-      clickRow(rows()[0]);
+      clickCell(cells()[0]);
       await flush();
       expect(document.querySelector('.bz-item-sheet-mask')).not.toBeNull();
       expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
@@ -731,7 +905,7 @@ describe('归物本动作（状态流转 / 删除确认流）', () => {
   it('桌面菜单状态流转：标记为闲置 → 落盘 current_status/last_updated + status 事件 + notice + 列表刷新', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘', current_status: '使用中' }) });
     await open(vault);
-    rightClick(rows()[0]);
+    rightClick(cells()[0]);
     clickAction('标记为闲置');
     await flush();
     // 落盘
@@ -741,10 +915,10 @@ describe('归物本动作（状态流转 / 删除确认流）', () => {
     // 事件载荷
     expect(events).toEqual([{ kind: 'status', title: '键盘', status: '闲置' }]);
     expect(hasNotice('「键盘」已标记为闲置')).toBe(true);
-    // 列表刷新：行徽章变闲置
-    const row1 = rows()[0];
-    expect(row1.querySelector('.bz-bel-state')!.textContent).toContain('闲置');
-    expect(row1.querySelector('.bz-bel-state')!.classList.contains('bz-bel-state--idle')).toBe(true);
+    // 列表刷新：卡徽章变闲置
+    const c1 = cells()[0];
+    expect(c1.querySelector('.bz-bel-tag')!.textContent).toContain('闲置');
+    expect(c1.querySelector('.bz-bel-tag')!.classList.contains('bz-bel-tag--idle')).toBe(true);
     // 桌面菜单非 keepOpen：动作后菜单已关
     expect(document.querySelector('.bz-item-menu')).toBeNull();
   });
@@ -753,7 +927,7 @@ describe('归物本动作（状态流转 / 删除确认流）', () => {
     Platform.isMobile = true;
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘', current_status: '闲置', purchase_date: '2024-06-01' }) });
     await open(vault);
-    clickRow(rows()[0]);
+    clickCell(cells()[0]);
     await flush();
     expect(actionLabels()).toEqual(['标记为使用中', '标记为已转卖', '标记为已丢弃', '编辑', '删除']);
     // 触屏静置窗口（item-actions 400ms 吞合成 click）：先过窗口再点动作
@@ -768,15 +942,15 @@ describe('归物本动作（状态流转 / 删除确认流）', () => {
     expect(JSON.parse(vault.files.get(DATA_PATH)!).items.item_1.current_status).toBe('使用中');
     expect(events).toEqual([{ kind: 'status', title: '键盘', status: '使用中' }]);
     expect(hasNotice('「键盘」已标记为使用中')).toBe(true);
-    // 关抽屉后列表行已刷新
+    // 关抽屉后列表卡已刷新
     closeItemMenu();
-    expect(rows()[0].querySelector('.bz-bel-state')!.textContent).toContain('使用中');
+    expect(cells()[0].querySelector('.bz-bel-tag')!.textContent).toContain('使用中');
   });
 
   it('删除确认流：文案/按钮；取消不删（无事件无 notice）；确认删除 → 落盘删除 + delete 事件 + notice', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘' }) });
     await open(vault);
-    rightClick(rows()[0]);
+    rightClick(cells()[0]);
     clickAction('删除');
     await flush();
     // 流程框（标准双动作：取消左 / 确认右）；ticket 189 去掉「不可撤销」威慑文案
@@ -791,17 +965,17 @@ describe('归物本动作（状态流转 / 删除确认流）', () => {
     (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
     await flush();
     expect(JSON.parse(vault.files.get(DATA_PATH)!).items.item_1).toBeTruthy();
-    expect(rows()).toHaveLength(1);
+    expect(cells()).toHaveLength(1);
     expect(events).toHaveLength(0);
     expect(hasNotice(/已删除/)).toBe(false);
     // 重开删除确认 → 确认删除
-    rightClick(rows()[0]);
+    rightClick(cells()[0]);
     clickAction('删除');
     await flush();
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     await flush();
     expect(JSON.parse(vault.files.get(DATA_PATH)!).items).toEqual({});
-    expect(rows()).toHaveLength(0);
+    expect(cells()).toHaveLength(0);
     expect(content()!.querySelector('.bz-empty-title')!.textContent).toBe('这里还没有物品');
     expect(events).toEqual([{ kind: 'delete', title: '键盘' }]);
     expect(hasNotice('已删除「键盘」')).toBe(true);
@@ -811,7 +985,7 @@ describe('归物本动作（状态流转 / 删除确认流）', () => {
     Platform.isMobile = true;
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '旧手机', purchase_date: '2024-06-01' }) });
     await open(vault);
-    clickRow(rows()[0]);
+    clickCell(cells()[0]);
     await flush();
     await tick(420); // 触屏静置窗口（否则删除动作的合成 click 被吞）
     clickAction('删除');
@@ -828,7 +1002,7 @@ describe('归物本动作（状态流转 / 删除确认流）', () => {
   it('外部 modify 换库后菜单状态流转：按 id 从当前库重取再改，改动照常落盘（修复前写旧引用静默丢失）', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘', current_status: '使用中' }) });
     await open(vault);
-    rightClick(rows()[0]); // 菜单开着（捕获打开时的条目引用）
+    rightClick(cells()[0]); // 菜单开着（捕获打开时的条目引用）
     // 外部改写数据文件 → modify → 面板内部 loadDatabase 把 M.db 整体换新
     const db = JSON.parse(vault.files.get(DATA_PATH)!);
     db.items.item_1.name = '外部改名';
@@ -848,7 +1022,7 @@ describe('归物本动作（状态流转 / 删除确认流）', () => {
   it('外部 modify 删除条目后：删除确认按 id 校验，不产生幽灵删除通知', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘' }) });
     await open(vault);
-    rightClick(rows()[0]);
+    rightClick(cells()[0]);
     clickAction('删除');
     await flush();
     // 确认框开着期间外部已删除该条目 → modify 换库
@@ -889,7 +1063,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
 
   const stBtns = () => [...formMask().querySelectorAll('[data-status]')] as HTMLElement[];
 
-  it('主按钮「记一笔」开表单：标题/分类默认空（issue 202 不回填）/日期今天/状态平铺默认使用中', async () => {
+  it('工具行「记一笔」开表单：标题/分类默认空（issue 202 不回填）/日期今天/状态平铺默认使用中', async () => {
     await open(vault);
     openAddForm(panel()!);
     expect(formTitle()).toBe('记一笔');
@@ -923,7 +1097,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
   it('校验：空分类 → 请选择或输入分类（编辑物品分类被清空且原分类为空才可达）', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '无分类物', category: '' }) });
     await open(vault);
-    rightClick(rows()[0]);
+    rightClick(cells()[0]);
     clickAction('编辑');
     await flush();
     catInp().value = '';
@@ -934,7 +1108,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
 
   it('分类下拉：输入过滤 + 选项点击回填（弹层收起）', async () => {
     await open(vault);
-    (panel()!.querySelector('.bz-main-head [data-bel-add]') as HTMLElement).click();
+    openAddForm(panel()!);
     // 惰性弹出（issue 202 跟进）：开表单不弹，聚焦/输入才弹
     expect(formMask().querySelector('.bz-popover')).toBeNull();
     catInp().dispatchEvent(new FocusEvent('focus'));
@@ -951,7 +1125,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
 
   it('分类下拉收起时 Esc 不拦（落回表单层）；弹出后 Esc 只收下拉不关表单', async () => {
     await open(vault);
-    (panel()!.querySelector('.bz-main-head [data-bel-add]') as HTMLElement).click();
+    openAddForm(panel()!);
     // 收起态：不冒泡 Esc 只到输入框，下拉不吞键、表单不被关
     catInp().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(formMask().querySelector('.bz-popover')).toBeNull();
@@ -984,7 +1158,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
 
   it('正常保存：8 字段 items 落盘（保存结构零冗余）+ add 事件载荷 + notice + 表单关 + 列表出现', async () => {
     await open(vault);
-    (panel()!.querySelector('.bz-main-head [data-bel-add]') as HTMLElement).click();
+    openAddForm(panel()!);
     nameInp().value = '新显示器';
     catInp().value = '🖥 显示器';
     priceInp().value = '1299';
@@ -1007,7 +1181,6 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     expect(events[0].item).toMatchObject({ name: '新显示器', purchase_price: 1299, current_status: '使用中' });
     expect(events[0].item.id).toBeTruthy();
     expect(hasNotice('物品「新显示器」已添加')).toBe(true);
-    expandAllYears(); // 保存后 2024 年节按 ticket 189 默认折叠，展开后断言行可见
     expect(content()!.textContent).toContain('新显示器');
   });
 
@@ -1023,7 +1196,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
       item_1: makeItem({ id: 'item_1', name: '机械键盘', purchase_price: 399, description: '红轴', purchase_date: '2024-06-01' }),
     });
     await open(vault);
-    rightClick(rows()[0]);
+    rightClick(cells()[0]);
     clickAction('编辑');
     await flush();
     const f = formMask();
@@ -1048,13 +1221,13 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     expect(events[0]).toEqual({ kind: 'edit', title: '红轴机械键盘', changes: ['改了名称', '改了价格'] });
     expect(hasNotice('物品「红轴机械键盘」已更新')).toBe(true);
     expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
-    expect(rows()[0].textContent).toContain('红轴机械键盘');
+    expect(cells()[0].textContent).toContain('红轴机械键盘');
   });
 
   it('编辑改状态为已转卖：changes 含 改了状态+改了出离日期；落盘状态更新 + exit_date 记当天（ADR-0089）', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘', current_status: '使用中', purchase_date: '2024-06-01' }) });
     await open(vault);
-    rightClick(rows()[0]);
+    rightClick(cells()[0]);
     clickAction('编辑');
     await flush();
     stBtns().find((b) => b.dataset.status === '已转卖')!.click(); // 重绘后新节点
@@ -1073,7 +1246,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     Platform.isMobile = true;
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '旧手机', current_status: '闲置', purchase_date: '2024-06-01' }) });
     await open(vault);
-    clickRow(rows()[0]);
+    clickCell(cells()[0]);
     await flush();
     await tick(420); // 触屏静置窗口（否则「编辑」动作的合成 click 被吞）
     clickAction('编辑');
@@ -1097,7 +1270,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
   it('编辑表单点取消：脏表单走 confirmDiscard（放弃才关）；不改动直接关', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘' }) });
     await open(vault);
-    rightClick(rows()[0]);
+    rightClick(cells()[0]);
     clickAction('编辑');
     await flush();
     nameInp().value = '改一半';
@@ -1112,9 +1285,9 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     expect(JSON.parse(vault.files.get(DATA_PATH)!).items.item_1.name).toBe('键盘');
     expect(events).toHaveLength(0);
     expect(document.querySelector('.bz-bel-form-mask')).toBeNull();
-    expect(rows()[0].textContent).toContain('键盘');
+    expect(cells()[0].textContent).toContain('键盘');
     // 未改动表单：取消直接关（无 confirm）
-    rightClick(rows()[0]);
+    rightClick(cells()[0]);
     clickAction('编辑');
     await flush();
     (formMask().querySelector('[data-bm-cancel]') as HTMLElement).click();
@@ -1126,7 +1299,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
   it('外部 modify 换库后表单保存：按 id 重取写入当前库（修复前弹已更新但改动落不进新库）', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘', description: '红轴', purchase_date: '2024-06-01' }) });
     await open(vault);
-    rightClick(rows()[0]);
+    rightClick(cells()[0]);
     clickAction('编辑');
     await flush();
     // 外部改写 → modify → M.db 整体换新；表单仍悬浮（表单字段 = 打开时快照，保存按表单值全量覆盖）
@@ -1171,7 +1344,7 @@ describe('归物本自动刷新 / 事件载荷 / schema / XSS', () => {
   it('自动刷新：面板开着时数据文件 modify → 内部 loadDatabase 重载 + 新条目出现；无关路径不触发', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘' }) });
     await open(vault);
-    expect(rows()).toHaveLength(1);
+    expect(cells()).toHaveLength(1);
     // 外部写入（非本会话 saveAndRender）
     const db = JSON.parse(vault.files.get(DATA_PATH)!);
     db.items.item_2 = makeItem({ id: 'item_2', name: '外部新增', purchase_date: '2024-07-01T12:00:00' });
@@ -1180,17 +1353,17 @@ describe('归物本自动刷新 / 事件载荷 / schema / XSS', () => {
     await flush();
     await tick(20);
     expect(content()!.textContent).toContain('外部新增');
-    expect(rows()).toHaveLength(2);
+    expect(cells()).toHaveLength(2);
     // 其他文件 modify 不触发
     vault.emit('modify', { path: 'CONFIG/STORAGE/other.json' });
     await flush();
-    expect(rows()).toHaveLength(2);
+    expect(cells()).toHaveLength(2);
   });
 
   it('自写同路径 modify 不丢内存新值（saveAndRender 后模拟外部事件：回读数据一致，列表仍在）', async () => {
     seed(vault, {});
     await open(vault);
-    (panel()!.querySelector('.bz-main-head [data-bel-add]') as HTMLElement).click();
+    openAddForm(panel()!);
     nameInp().value = '新物品';
     priceInp().value = '10';
     catInp().value = '🎧 耳机耳麦'; // issue 202：分类不再默认回填，保存前须自选
@@ -1201,10 +1374,10 @@ describe('归物本自动刷新 / 事件载荷 / schema / XSS', () => {
     vault.emit('modify', { path: DATA_PATH });
     await flush();
     await tick(20);
-    expect(rows()).toHaveLength(1);
+    expect(cells()).toHaveLength(1);
     expect(content()!.textContent).toContain('新物品');
     // 面板内 db 仍持有该条目（后续动作不炸）
-    rightClick(rows()[0]);
+    rightClick(cells()[0]);
     expect(actionLabels()).toContain('编辑');
     closeItemMenu();
   });
@@ -1213,12 +1386,12 @@ describe('归物本自动刷新 / 事件载荷 / schema / XSS', () => {
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘', current_status: '使用中' }) });
     await open(vault);
     // status
-    rightClick(rows()[0]);
+    rightClick(cells()[0]);
     clickAction('标记为闲置');
     await flush();
     expect(events[0]).toMatchObject({ kind: 'status', title: '键盘', status: '闲置' });
     // add（载荷 = 落盘 item）
-    (panel()!.querySelector('.bz-main-head [data-bel-add]') as HTMLElement).click();
+    openAddForm(panel()!);
     nameInp().value = '鼠标';
     catInp().value = '🖱 鼠标';
     priceInp().value = '99';
@@ -1231,7 +1404,7 @@ describe('归物本自动刷新 / 事件载荷 / schema / XSS', () => {
       purchase_date: '2024-07-01', current_status: '使用中', description: '',
     });
     // delete
-    rightClick(rows().find((r) => r.dataset.belId === 'item_1')!);
+    rightClick(cells().find((r) => r.dataset.belId === 'item_1')!);
     clickAction('删除');
     await flush();
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
@@ -1273,33 +1446,20 @@ describe('归物本自动刷新 / 事件载荷 / schema / XSS', () => {
       item_1: makeItem({ id: 'item_1', name: '<img src=x onerror="window.__xss=1">' }),
     });
     await open(vault);
-    const row1 = rows()[0];
-    expect(row1.querySelectorAll('img')).toHaveLength(0);
-    expect(row1.textContent).toContain('<img src=x onerror="window.__xss=1">'); // 原文以文本呈现
+    const c1 = cells()[0];
+    expect(c1.querySelectorAll('img')).toHaveLength(0);
+    expect(c1.textContent).toContain('<img src=x onerror="window.__xss=1">'); // 原文以文本呈现
     expect((window as any).__xss).toBeUndefined();
-    rightClick(row1);
+    rightClick(c1);
     expect(actionLabels()).toContain('标记为闲置');
     expect(actionLabels()).toContain('删除');
     closeItemMenu();
   });
 });
 
-// ==================== ticket 189 增强包回归 ====================
+// ==================== KPI 可点筛选（ticket 189 语义保留） ====================
 
-/** 微任务排空（假时钟用 flush 会因 setTimeout 冻结挂死，改用纯微任务驱动 async 链） */
-async function drain(): Promise<void> {
-  for (let i = 0; i < 30; i++) await Promise.resolve();
-}
-
-/** 打开面板但不展开年节（年节默认折叠用例专用） */
-async function openRaw(vault: MockVault): Promise<void> {
-  setApp({ vault } as any);
-  setSettingsProvider(() => ({ belongingsDataFolder: 'CONFIG/STORAGE' }) as any);
-  resetObsidianMocks();
-  await openPanel();
-}
-
-describe('年节默认折叠（ticket 189）', () => {
+describe('KPI 可点筛选（ticket 189 语义保留）', () => {
   let vault: MockVault;
   beforeEach(() => {
     setupDom();
@@ -1309,57 +1469,9 @@ describe('年节默认折叠（ticket 189）', () => {
     vi.useRealTimers();
     Platform.isMobile = false;
     cleanupBelongings();
-    closeItemMenu();
   });
 
-  it('当年/上一年默认展开，更早与未标注默认折叠；手动展开以会话内状态为准', async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-08-01T12:00:00'));
-    try {
-      seed(vault, {
-        i26: makeItem({ id: 'i26', name: '今年物', purchase_date: '2026-02-01T12:00:00' }),
-        i25: makeItem({ id: 'i25', name: '去年物', purchase_date: '2025-02-01T12:00:00' }),
-        i24: makeItem({ id: 'i24', name: '前年物', purchase_date: '2024-02-01T12:00:00' }),
-        iNA: makeItem({ id: 'iNA', name: '无日期物', purchase_date: '' }),
-      });
-      await openRaw(vault);
-      const names = () => rows().map((r) => r.textContent);
-      // 当年/上一年可见；更早 + 未标注折叠
-      expect(names().join('|')).toContain('今年物');
-      expect(names().join('|')).toContain('去年物');
-      expect(names().join('|')).not.toContain('前年物');
-      expect(names().join('|')).not.toContain('无日期物');
-      // 折叠条出现（未标注折叠条文案用「未标注日期」）
-      const bars = [...document.querySelectorAll('.bz-bel-collapsed[data-bel-expand]')] as HTMLElement[];
-      expect(bars.map((b) => b.dataset.belExpand).sort()).toEqual(['2024', '未标注']);
-      expect(content()!.textContent).toContain('展开 2024 年（1 件）');
-      expect(content()!.textContent).toContain('展开 未标注日期（1 件）');
-      // 手动展开 2024 → 可见（会话内状态生效）
-      (content()!.querySelector('.bz-bel-collapsed[data-bel-expand="2024"]') as HTMLElement).click();
-      expect(names().join('|')).toContain('前年物');
-      // 再点头部折叠回去
-      (document.querySelector('[data-bel-yearhead="2024"]') as HTMLElement).click();
-      expect(names().join('|')).not.toContain('前年物');
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-});
-
-describe('统计卡可点筛选（ticket 189）', () => {
-  let vault: MockVault;
-  beforeEach(() => {
-    setupDom();
-    vault = new MockVault();
-  });
-  afterEach(() => {
-    vi.useRealTimers();
-    Platform.isMobile = false;
-    cleanupBelongings();
-    closeItemMenu();
-  });
-
-  it('点总资产卡 = 在用+闲置合成筛选（转卖/丢弃隐藏）；再点取消回全部', async () => {
+  it('点在库 KPI 卡（hero/投入）= 在库合成筛选（转卖/丢弃隐藏）；再点取消；chips 资产位同步高亮', async () => {
     seed(vault, {
       iu: makeItem({ id: 'iu', name: '用着', purchase_date: '2024-06-01T12:00:00' }),
       ii: makeItem({ id: 'ii', name: '闲置', current_status: '闲置', purchase_date: '2024-06-01T12:00:00' }),
@@ -1367,45 +1479,36 @@ describe('统计卡可点筛选（ticket 189）', () => {
       idd: makeItem({ id: 'idd', name: '扔了', current_status: '已丢弃', purchase_date: '2024-06-01T12:00:00' }),
     });
     await open(vault);
-    expect(rows()).toHaveLength(4);
-    const mainCard = document.querySelector('[data-bel-statclick="asset"]') as HTMLElement;
-    expect(mainCard).not.toBeNull();
-    mainCard.click();
-    expect(rows()).toHaveLength(2);
-    expect(rows().map((r) => r.textContent).join('|')).toContain('用着');
-    expect(rows().map((r) => r.textContent).join('|')).toContain('闲置');
-    // 合成筛选下左栏无四态高亮（asset 非四态之一，「全部」也不亮）
-    expect(document.querySelector('[data-bel-status] .bz-rail-item.on')).toBeNull();
+    expect(cells()).toHaveLength(4);
+    (kpiByLabel('在库件数') as HTMLElement).click();
+    expect(cells()).toHaveLength(2);
+    expect(cells().map((c) => c.textContent).join('|')).toContain('用着');
+    expect(cells().map((c) => c.textContent).join('|')).toContain('闲置');
+    // 合成筛选：chips 资产位高亮（P20 中 asset 为一等筛选项）
+    expect(chipOf('asset')!.classList.contains('bz-chip--on')).toBe(true);
+    // hero 标题切「资产」
+    expect(heroTitle()!.textContent).toBe('资产');
     // 再点取消
-    (document.querySelector('[data-bel-statclick="asset"]') as HTMLElement).click();
-    expect(rows()).toHaveLength(4);
+    (kpiByLabel('在库投入') as HTMLElement).click();
+    expect(cells()).toHaveLength(4);
+    expect(chipOf('asset')!.classList.contains('bz-chip--on')).toBe(false);
   });
 
-  it('点在册件数卡 = 清全部筛选（状态/年份/搜索一并复位）', async () => {
+  it('chips「全部」= 清状态筛选回全部', async () => {
     seed(vault, {
       iu: makeItem({ id: 'iu', name: '用着', purchase_date: '2024-06-01T12:00:00' }),
       ii: makeItem({ id: 'ii', name: '闲置物', current_status: '闲置', purchase_date: '2024-06-01T12:00:00' }),
     });
     await open(vault);
-    // 预设三层筛选
-    (document.querySelector('[data-bel-status] [data-id="using"]') as HTMLElement).click();
-    expect(rows()).toHaveLength(1);
-    const sel = yearSel()!;
-    sel.value = '2024';
-    sel.dispatchEvent(new Event('change'));
-    const inp = searchInp()!;
-    inp.value = '用着';
-    inp.dispatchEvent(new Event('input'));
-    await tick(250);
-    expect(rows()).toHaveLength(1);
-    // 点在册件数卡 → 全复位
-    (document.querySelector('[data-bel-statclick="count"]') as HTMLElement).click();
-    expect(rows()).toHaveLength(2);
-    expect(yearSel()!.value).toBe('');
-    expect(searchInp()!.value).toBe('');
-    expect(document.querySelector('[data-bel-status] .bz-rail-item.on')!.getAttribute('data-id')).toBe('__all');
+    clickChip('using');
+    expect(cells()).toHaveLength(1);
+    clickChip('__all');
+    expect(cells()).toHaveLength(2);
+    expect(chipOf('__all')!.classList.contains('bz-chip--on')).toBe(true);
   });
 });
+
+// ==================== 状态流转 / 删除接撤销（ticket 189） ====================
 
 describe('状态流转 / 删除接撤销（ticket 189）', () => {
   let vault: MockVault;
@@ -1417,7 +1520,6 @@ describe('状态流转 / 删除接撤销（ticket 189）', () => {
     vi.useRealTimers();
     Platform.isMobile = false;
     cleanupBelongings();
-    closeItemMenu();
   });
 
   it('流转撤销：标记为闲置 → notifyUndo；点撤销回使用中并落盘', async () => {
@@ -1426,7 +1528,7 @@ describe('状态流转 / 删除接撤销（ticket 189）', () => {
     try {
       seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘', current_status: '使用中', purchase_date: '2024-06-01T12:00:00' }) });
       await open(vault);
-      rightClick(rows()[0]);
+      rightClick(cells()[0]);
       clickAction('标记为闲置');
       await drain();
       expect(JSON.parse(vault.files.get(DATA_PATH)!).items.item_1.current_status).toBe('闲置');
@@ -1436,7 +1538,7 @@ describe('状态流转 / 删除接撤销（ticket 189）', () => {
       await drain();
       const saved = JSON.parse(vault.files.get(DATA_PATH)!).items.item_1;
       expect(saved.current_status).toBe('使用中');
-      expect(rows()[0].querySelector('.bz-bel-state')!.textContent).toContain('使用中');
+      expect(cells()[0].querySelector('.bz-bel-tag')!.textContent).toContain('使用中');
       expect(hasNotice('已撤销，「键盘」回到使用中')).toBe(true);
     } finally {
       vi.useRealTimers();
@@ -1449,14 +1551,14 @@ describe('状态流转 / 删除接撤销（ticket 189）', () => {
     try {
       seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘', current_status: '使用中', purchase_date: '2024-06-01T12:00:00' }) });
       await open(vault);
-      rightClick(rows()[0]);
+      rightClick(cells()[0]);
       clickAction('标记为已转卖');
       await drain();
       const sold = JSON.parse(vault.files.get(DATA_PATH)!).items.item_1;
       expect(sold.current_status).toBe('已转卖');
       expect(sold.exit_date).toBe('2025-06-15');
       // 陪伴天数封口在出离日：2024-06-01 → 2025-06-15 = 379 天（不再随时间增长）
-      expect(rows()[0].querySelector('.bz-bel-daily')!.textContent).toContain('陪伴 379 天');
+      expect(cells()[0].querySelector('.bz-bel-mut')!.textContent).toContain('陪伴 379 天');
       // 撤销 → 回使用中 + exit_date 清除
       const undoBtn = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '撤销') as HTMLElement;
       undoBtn.click();
@@ -1474,7 +1576,7 @@ describe('状态流转 / 删除接撤销（ticket 189）', () => {
       item_1: makeItem({ id: 'item_1', name: '键盘', purchase_price: 399, current_status: '闲置', purchase_date: '2024-06-01T12:00:00' }),
     });
     await open(vault);
-    rightClick(rows()[0]);
+    rightClick(cells()[0]);
     clickAction('删除');
     await flush();
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
@@ -1486,10 +1588,12 @@ describe('状态流转 / 删除接撤销（ticket 189）', () => {
     await flush();
     const restored: any = JSON.parse(vault.files.get(DATA_PATH)!).items.item_1;
     expect(restored).toMatchObject({ id: 'item_1', name: '键盘', purchase_price: 399, current_status: '闲置' });
-    expect(rows()).toHaveLength(1);
+    expect(cells()).toHaveLength(1);
     expect(hasNotice('已恢复「键盘」')).toBe(true);
   });
 });
+
+// ==================== 出离闭环：售价回本 + 表单出离字段（ticket 189 ADR-0089） ====================
 
 describe('出离闭环：售价回本 + 表单出离字段（ticket 189 ADR-0089）', () => {
   let vault: MockVault;
@@ -1501,10 +1605,9 @@ describe('出离闭环：售价回本 + 表单出离字段（ticket 189 ADR-0089
     vi.useRealTimers();
     Platform.isMobile = false;
     cleanupBelongings();
-    closeItemMenu();
   });
 
-  it('日均成本扣转卖回本；转卖行副行带「售出 ￥x」；陪伴天数封口', async () => {
+  it('日均成本扣转卖回本（KPI）；转卖卡 meta 带「售出 ￥x」；陪伴天数封口', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2025-06-15T12:00:00'));
     try {
@@ -1518,12 +1621,11 @@ describe('出离闭环：售价回本 + 表单出离字段（ticket 189 ADR-0089
       });
       await open(vault);
       // 回本 =（300 + 500 − 200）/（379 + 214）= 600 / 593 ≈ 1.01
-      const cards = [...document.querySelectorAll('[data-bel-stats] .bz-stat, [data-bel-stats] .bz-stat--main')] as HTMLElement[];
-      const avgCard = cards.find((c) => c.textContent!.includes('日均成本'))!;
-      expect(avgCard.querySelector('.bz-stat-num')!.textContent).toBe('￥1.01');
-      // 转卖行副行：陪伴封口 214 天 + 售出 ￥200
-      const rowS = rows().find((r) => r.dataset.belId === 'is')!;
-      expect(rowS.querySelector('.bz-bel-daily')!.textContent).toBe('陪伴 214 天 · 售出 ￥200');
+      expect(kpiVal('日均成本')).toBe('￥1.01');
+      // 转卖卡 meta：陪伴封口 214 天 + 售出 ￥200
+      const cS = cells().find((r) => r.dataset.belId === 'is')!;
+      expect(cS.querySelector('.bz-bel-mut')!.textContent).toContain('陪伴 214 天');
+      expect(cS.querySelector('.bz-bel-mut')!.textContent).toContain('售出 ￥200');
     } finally {
       vi.useRealTimers();
     }
@@ -1540,7 +1642,7 @@ describe('出离闭环：售价回本 + 表单出离字段（ticket 189 ADR-0089
         }),
       });
       await open(vault);
-      rightClick(rows()[0]);
+      rightClick(cells()[0]);
       clickAction('编辑');
       await drain();
       // 出离行展开 + 字段回填
@@ -1564,7 +1666,7 @@ describe('出离闭环：售价回本 + 表单出离字段（ticket 189 ADR-0089
       is: makeItem({ id: 'is', name: '旧手机', current_status: '已转卖', purchase_date: '2024-06-01T12:00:00', exit_date: '2025-01-01' }),
     });
     await open(vault);
-    rightClick(rows()[0]);
+    rightClick(cells()[0]);
     clickAction('编辑');
     await flush();
     (formMask().querySelector('#bm-soldprice') as HTMLInputElement).value = '-5';
@@ -1577,7 +1679,7 @@ describe('出离闭环：售价回本 + 表单出离字段（ticket 189 ADR-0089
     const stBtnsLocal = () => [...formMask().querySelectorAll('[data-status]')] as HTMLElement[];
     seed(vault, { iu: makeItem({ id: 'iu', name: '用着', purchase_date: '2024-06-01T12:00:00' }) });
     await open(vault);
-    rightClick(rows()[0]);
+    rightClick(cells()[0]);
     clickAction('编辑');
     await flush();
     stBtnsLocal().find((b) => b.dataset.status === '已丢弃')!.click();
@@ -1591,7 +1693,7 @@ describe('出离闭环：售价回本 + 表单出离字段（ticket 189 ADR-0089
   it('脏表单遮罩拦截：改名称后点遮罩 → confirm；继续编辑保持', async () => {
     seed(vault, { iu: makeItem({ id: 'iu', name: '键盘', purchase_date: '2024-06-01T12:00:00' }) });
     await open(vault);
-    rightClick(rows()[0]);
+    rightClick(cells()[0]);
     clickAction('编辑');
     await flush();
     nameInp().value = '改一半';
@@ -1608,16 +1710,16 @@ describe('出离闭环：售价回本 + 表单出离字段（ticket 189 ADR-0089
 });
 
 describe('默认状态筛选接线（issue 194）', () => {
-  it('belongingsDefaultStatus=idle → 打开即选中「闲置」并只显闲置件', async () => {
+  it('belongingsDefaultStatus=idle → 打开即选中「闲置」chips 并只显闲置件', async () => {
     const vault = new MockVault();
     seed(vault, {
       a: makeItem({ id: 'a', name: '机械键盘', current_status: '使用中' }),
       b: makeItem({ id: 'b', name: '旧相机', category: '📷 相机', current_status: '闲置' }),
     });
-    const overlay = await open(vault, { belongingsDefaultStatus: 'idle' });
-    // 侧栏激活项 = 闲置
-    const active = overlay.querySelector('.bz-rail-item.on');
-    expect(active?.textContent).toContain('闲置');
+    await open(vault, { belongingsDefaultStatus: 'idle' });
+    // chips 激活项 = 闲置 + hero 大字标题切「闲置」
+    expect(chipOf('idle')!.classList.contains('bz-chip--on')).toBe(true);
+    expect(heroTitle()!.textContent).toBe('闲置');
     // 内容只渲染闲置件
     const text = content()!.textContent || '';
     expect(text).toContain('旧相机');
@@ -1631,9 +1733,8 @@ describe('默认状态筛选接线（issue 194）', () => {
       a: makeItem({ id: 'a', name: '机械键盘', current_status: '使用中' }),
       b: makeItem({ id: 'b', name: '旧相机', current_status: '闲置' }),
     });
-    const overlay = await open(vault, { belongingsDefaultStatus: 'bogus' });
-    const active = overlay.querySelector('.bz-rail-item.on');
-    expect(active?.textContent).toContain('全部');
+    await open(vault, { belongingsDefaultStatus: 'bogus' });
+    expect(chipOf('__all')!.classList.contains('bz-chip--on')).toBe(true);
     const text = content()!.textContent || '';
     expect(text).toContain('机械键盘');
     expect(text).toContain('旧相机');
@@ -1649,3 +1750,10 @@ describe('默认状态筛选接线（issue 194）', () => {
     expect(row.options.map((o: any) => o.value)).toEqual(['', 'using', 'idle', 'sold', 'discard']);
   });
 });
+
+// ==================== 撤销用假时钟排空 ====================
+
+/** 微任务排空（假时钟用 flush 会因 setTimeout 冻结挂死，改用纯微任务驱动 async 链） */
+async function drain(): Promise<void> {
+  for (let i = 0; i < 30; i++) await Promise.resolve();
+}
