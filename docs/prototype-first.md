@@ -48,6 +48,8 @@
 - 面板固定尺寸配 `max-width/max-height: calc(100vw - 48px)` 兜底小窗；窄面板 container query 退化布局（Obsidian Chromium 支持）。
 - 浮层与面板**同挂 scope 类**携带 CSS 变量，否则变量全丢。
 - 核心按钮样式会压 flex 主轴，自绘菜单/抽屉按钮显式 `justify-content: flex-start`。
+- **单类按钮规则会被 reset 压掉**：`button:not(.clickable-icon)` 是 `0,1,1`，裸单类（`.xxx-close`）的 `0,1,0` 必输（背景/字色/投影被 unset）。自绘按钮一律带容器前缀（`.bz-<域>-panel .xxx` ≥ `0,2,0`）。
+- **头行/工具行必须固定、只有内容区滚动**：面板 `display:flex; flex-direction:column; overflow:hidden`，头行 `flex:none`，内容区 `flex:1; min-height:0; overflow:auto`——面板整体滚动会把头行滚走。
 
 ### 两端
 
