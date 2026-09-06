@@ -348,45 +348,10 @@ describe('R3 生成今日总结（写进日记）', () => {
   });
 });
 
-describe('home 入口磁贴（今日回顾）', () => {
-  let vault: StatVault;
-
-  beforeEach(() => {
-    vault = new StatVault();
-    setApp(mockAppWithVault(vault) as any);
-    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS }));
-    resetObsidianMocks();
-    resetRecapState();
-    resetHomeState();
-    document.body.innerHTML = '';
-    clearNotices();
-  });
-
-  afterEach(() => {
-    unloadRecap();
-    unloadHome();
-    document.body.innerHTML = '';
-  });
-
-  it('磁贴清单注册：id recap、命令 bz-recap-today、图标与 DOMAIN_ICONS.recap 同源', () => {
-    const tile = DOMAINS.find((d) => d.id === 'recap');
-    expect(tile).toBeTruthy();
-    expect(tile!.commandId).toBe('bz-recap-today');
-    expect(tile!.name).toBe('今日回顾');
-    expect(tile!.icon).toBe(DOMAIN_ICONS.recap);
-    expect(ALL_DOMAIN_IDS).toContain('recap');
-  });
-
-  it('活动河入口行可达（点击执行 bz-recap-today）', async () => {
-    const app = recApp(vault);
-    openHome(app);
-    await new Promise((r) => setTimeout(r, 0));
-    const row = document.querySelector('[data-home-go="recap"]') as HTMLElement;
-    expect(row).toBeTruthy();
-    row.click();
-    await new Promise((r) => setTimeout(r, 0));
-    expect((app as any).__executed).toEqual(['bz-recap-today']);
-    // 首页已关（mock 命令通道只记录 id，回顾面板真实开合由上一组用例覆盖）
-    expect(document.querySelector('.bz-home-overlay')).toBeNull();
+describe('home 入口（issue 232b 收敛后）', () => {
+  it('recap/阅读报告/小橘 已从首页入口清单退役', () => {
+    expect(DOMAINS.some((d) => ['recap', 'reading-report', 'smartcat'].includes(d.id))).toBe(false);
+    expect(ALL_DOMAIN_IDS).not.toContain('recap');
   });
 });
+

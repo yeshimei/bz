@@ -48,7 +48,7 @@ export function createOverlay(app: any): void {
   overlay.innerHTML = `
     <div class="bz-panel-frame bz-home-panel bz-panel-mtop">
       <div class="bz-home-head">
-        <h1 class="bz-home-title">今日活动河</h1>
+        <h1 class="bz-home-title">首页</h1>
         <span class="bz-home-date" data-home-date></span>
         <button class="bz-home-close" data-home-close title="关闭" aria-label="关闭">${iconSpan('x')}</button>
       </div>
@@ -57,6 +57,7 @@ export function createOverlay(app: any): void {
           <div class="bz-home-entries" data-home-entries></div>
           <div class="bz-home-flow" data-home-flow></div>
           <div class="bz-home-next" data-home-next></div>
+          <div class="bz-home-tiles" data-home-tiles></div>
         </div>
       </div>
     </div>`;
@@ -127,8 +128,7 @@ function dotOf(dots: Record<string, RiverDot>, id: string): RiverDot {
 
 function entriesHtml(data: RiverData): string {
   const dots = buildDots(data);
-  return '<div class="bz-home-sec-t">全 部 域 <span class="bz-home-n">· ' + DOMAINS.length + '</span></div>'
-    + DOMAINS.map((d) => {
+  return DOMAINS.map((d) => {
         const dot = dotOf(dots, d.id);
         const ct = riverCountText(d.id, data) ?? d.sub;
         return '<button type="button" class="bz-home-erow" data-home-go="' + d.id + '">'
@@ -175,8 +175,7 @@ function nextHtml(data: RiverData): string {
 /** 移动端全部域两列瓦片（桌面隐藏；单列顺序 时间线 → 预告 → 瓦片） */
 function tilesHtml(data: RiverData): string {
   const dots = buildDots(data);
-  return '<div class="bz-home-sec-t">全 部 域 <span class="bz-home-n">· ' + DOMAINS.length + '</span></div>'
-    + '<div class="bz-home-m-tiles">'
+  return '<div class="bz-home-m-tiles">'
     + DOMAINS.map((d) => {
         const dot = dotOf(dots, d.id);
         const ct = riverCountText(d.id, data) ?? d.sub;
@@ -203,6 +202,7 @@ function renderAll(): void {
     entries.innerHTML = '<div class="bz-home-sec-t">全 部 域</div>';
     flow.innerHTML = '<div class="bz-home-sec-t">时 间 线 · 今 天</div><div class="bz-home-flow-empty">正在汇入今天的痕迹…</div>';
     next.innerHTML = '';
+    (overlay.querySelector('[data-home-tiles]') as HTMLElement).innerHTML = '';
     return;
   }
   const entries = overlay.querySelector('[data-home-entries]') as HTMLElement;
@@ -210,10 +210,13 @@ function renderAll(): void {
   const next = overlay.querySelector('[data-home-next]') as HTMLElement;
   entries.innerHTML = entriesHtml(H.river);
   flow.innerHTML = flowHtml(H.river);
-  next.innerHTML = nextHtml(H.river) + tilesHtml(H.river); // 移动端瓦片挂在预告后（CSS 单列显示，桌面隐藏）
+  next.innerHTML = nextHtml(H.river);
+  const tiles = overlay.querySelector('[data-home-tiles]') as HTMLElement;
+  tiles.innerHTML = tilesHtml(H.river); // 桌面隐藏；移动端单列置前（CSS order）
   mountIcons(entries);
   mountIcons(flow);
   mountIcons(next);
+  mountIcons(tiles);
 }
 
 /* ---------- ESC / 通知 ---------- */
