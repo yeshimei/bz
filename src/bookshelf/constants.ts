@@ -1,9 +1,9 @@
 /**
- * 书架墙（bookshelf）域常量：状态标签/侧栏定义/排序键。
+ * 书库（bookshelf）域常量：状态标签/排序键。
  * 数据语义色（状态/统计 accent）一律消费设计 token（--bz-success/--bz-brand/--bz-text-*），
  * 不写裸色——与组件库 tokens.css 同源（数据语义色域内引用 token）。
  */
-import type { SideId, SortKey } from './state';
+import type { SortKey } from './state';
 
 /** 状态中文标签（BookshelfItem.status 值） */
 export const STATUS_UNREAD = '未读';
@@ -16,14 +16,6 @@ export const STATUS_COLORS: Record<string, string> = {
   [STATUS_READING]: 'var(--bz-brand)',
   [STATUS_DONE]: 'var(--bz-success)',
 };
-
-/** 侧栏/抽屉选项定义（顺序即展示顺序） */
-export const SIDE_DEFS: { id: SideId; label: string; sub: string; icon: string }[] = [
-  { id: 'all', label: '全部', sub: '书库中所有书（按日期排）', icon: 'library' },
-  { id: 'reading', label: STATUS_READING, sub: '正在读的书', icon: 'book-open' },
-  { id: 'unread', label: STATUS_UNREAD, sub: '还没开始读', icon: 'book' },
-  { id: 'done', label: STATUS_DONE, sub: '已经读完', icon: 'check-circle' },
-];
 
 /** 排序键 → 展示文案（书脊墙工具行三档，issue 218 原型口径） */
 export const SORT_LABEL: Record<SortKey, string> = {
