@@ -377,14 +377,13 @@ describe('home 入口磁贴（今日回顾）', () => {
     expect(ALL_DOMAIN_IDS).toContain('recap');
   });
 
-  it('未钉选时以迷你 chip 可达（点击执行 bz-recap-today）', async () => {
-    vault.files.set('CONFIG/STORAGE/home.json', JSON.stringify({ version: 1, pinned: ['diary'] }));
+  it('活动河入口行可达（点击执行 bz-recap-today）', async () => {
     const app = recApp(vault);
     openHome(app);
     await new Promise((r) => setTimeout(r, 0));
-    const mini = document.querySelector('[data-home-mini="recap"]') as HTMLElement;
-    expect(mini).toBeTruthy();
-    mini.click();
+    const row = document.querySelector('[data-home-go="recap"]') as HTMLElement;
+    expect(row).toBeTruthy();
+    row.click();
     await new Promise((r) => setTimeout(r, 0));
     expect((app as any).__executed).toEqual(['bz-recap-today']);
     // 首页已关（mock 命令通道只记录 id，回顾面板真实开合由上一组用例覆盖）
