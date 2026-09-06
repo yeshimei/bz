@@ -289,14 +289,15 @@ function renderLabels(): void {
       <span class="pin"></span><div class="n">${d.n}</div><div class="t">${d.t}</div>
     </div>`;
   }).join('');
-  for (const [cat, c] of catPairs) {
+  // 分类标签独立子容器（桌面 display:contents 隐身；移动端并入头行一行横滑——styles.css @media 块；与原型同构）
+  const catHtml = catPairs.map(([cat, c]) => {
     const hrs = c.ms > 0 ? ` · ${Math.round(c.ms / 3600000)} 时` : '';
     const off = filtering && M.catFilter !== cat;
-    html += `<div class="bz-bs-taglabel dim-cat${M.catFilter === cat ? ' on' : ''}${off ? ' off' : ''}" data-bs-cat="${esc(cat)}">
+    return `<div class="bz-bs-taglabel dim-cat${M.catFilter === cat ? ' on' : ''}${off ? ' off' : ''}" data-bs-cat="${esc(cat)}">
       <span class="pin"></span><div class="n">${esc(cat)}</div><div class="t">${c.n} 册${hrs}</div>
     </div>`;
-  }
-  el.innerHTML = html;
+  }).join('');
+  el.innerHTML = `${html}<div class="bz-bs-cats">${catHtml}</div>`;
 }
 
 /** 排序三档 segmented（点选即生效） */

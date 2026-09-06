@@ -54,6 +54,8 @@
 .bz-bs-labels {
   flex: 1; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; min-width: 0;
 }
+/* 分类标签子容器：桌面 display:contents 隐身（标签行布局与拆容器前一致）；移动端换横滑带（@media 块） */
+.bz-bs-cats { display: contents; }
 .bz-bs-taglabel {
   background: var(--bsw-paper); color: var(--bsw-ink);
   font-family: var(--bsw-sans); padding: 8px 14px; min-width: 100px;
@@ -584,14 +586,24 @@
 /* ==================== 移动端（≤768px：同构书脊墙，缩距不换形） ==================== */
 @media (max-width: 768px) {
   .bz-bs-panel { width: 100vw; height: 100vh; max-width: none; max-height: none; border-radius: 0; border: none; }
-  .bz-bs-header { padding: 12px 14px 0; gap: 12px; }
-  .bz-bs-plaque { padding: 5px 12px; border-width: 2px; }
+  .bz-bs-header {
+    padding: 12px 14px 4px; gap: 8px; flex-wrap: nowrap; align-items: center;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .bz-bs-header::-webkit-scrollbar { display: none; }
+  .bz-bs-labels, .bz-bs-cats { display: contents; }
+  .bz-bs-plaque { padding: 5px 12px; border-width: 2px; flex: none; }
   .bz-bs-plaque h1 { font-size: 14px; letter-spacing: 4px; }
-  .bz-bs-labels { gap: 10px; }
-  .bz-bs-taglabel { min-width: 84px; padding: 6px 10px; }
-  .bz-bs-taglabel.dim-cat { min-width: 0; }
+  .bz-bs-taglabel { min-width: 84px; padding: 6px 10px; flex: none; }
+  .bz-bs-taglabel.dim-cat {
+    min-width: 0; padding: 3px 8px; transform: none; flex: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    display: flex; align-items: baseline; gap: 5px; white-space: nowrap;
+  }
+  .bz-bs-taglabel.dim-cat .pin { display: none; }
+  .bz-bs-taglabel.dim-cat .n { font-size: 11px; line-height: 1.3; letter-spacing: 1px; }
+  .bz-bs-taglabel.dim-cat .t { font-size: 10px; letter-spacing: 0; margin-top: 0; }
   .bz-bs-taglabel .n { font-size: 18px; }
-  .bz-bs-taglabel.dim-cat .n { font-size: 12px; }
   .bz-bs-tools { padding: 10px 14px 0; }
   .bz-bs-search { width: 100%; }
   .bz-bs-room { padding: 14px 10px 10px; }
