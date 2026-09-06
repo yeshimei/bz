@@ -27,22 +27,62 @@ describe('loadDatabase', () => {
     vi.restoreAllMocks();
   });
 
-  it('文件不存在 → 空数据库结构（version 1.0/items {}）+ 默认分类 + 建文件（统一读写语义）', async () => {
+  it('文件不存在 → 空数据库结构（version 1.0/items {}）+ 空历史分类 + 建文件（统一读写语义）', async () => {
     setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
     const db = await loadDatabase();
     expect(db.version).toBe('1.0');
     expect(db.items).toEqual({});
-    expect(db.categories.length).toBeGreaterThan(1000); // 1226 条默认分类
-    expect(db.categories[0]).toBe('📱 智能手机');
-    expect(db.categoryIcons['📱 智能手机']).toBe('📱');
+    expect(db.categories).toEqual([]); // issue 231：内置预设退役，分类由历史物品派生
+    expect(db.categoryIcons).toEqual({});
     expect(vault.files.has('CONFIG/STORAGE/belongings.json')).toBe(true); // 统一读写语义：缺失建文件
   });
 
-  it('分类固定为内置默认（自定义分类设置已移除）', async () => {
+  it('迁移（issue 231/ADR-0102）：emoji 前缀分类拆为纯文字 + icon；未映射/无 emoji/已有 icon 各归其位', async () => {
     setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
+    const item = (id: string, category: string, icon?: string) => ({
+      id, name: '物' + id, category,
+      purchase_price: 10, purchase_date: '2024-06-01',
+      current_status: '使用中', description: '',
+      created_date: '2024-06-01T10:00:00.000Z', last_updated: '2024-06-01T10:00:00.000Z',
+      ...(icon !== undefined ? { icon } : {}),
+    });
+    vault.files.set('CONFIG/STORAGE/belongings.json', JSON.stringify({
+      version: '1.0', last_updated: '2025-01-01T00:00:00.000Z',
+      items: {
+        item_1: item('item_1', '📱 智能手机'),
+        item_2: item('item_2', '🧿 护身符'),
+        item_3: item('item_3', '键盘周边'),
+        item_4: item('item_4', '💻 笔记本电脑', 'laptop'),
+      },
+    }));
     const db = await loadDatabase();
-    expect(db.categories.includes('🎁 自定义分类')).toBe(false);
-    expect(db.categories.filter((c) => c === '📱 智能手机').length).toBe(1);
+    expect(db.items['item_1']).toMatchObject({ category: '智能手机', icon: 'smartphone' });
+    expect(db.items['item_2'].category).toBe('护身符'); // 未映射 emoji：剥前缀、不写 icon
+    expect(db.items['item_2'].icon ?? null).toBeNull();
+    expect(db.items['item_3'].category).toBe('键盘周边'); // 无 emoji：原样
+    expect(db.items['item_4']).toMatchObject({ category: '笔记本电脑', icon: 'laptop' }); // 已有 icon 不覆写
+  });
+
+  it('历史分类派生（issue 231）：categories = 频次降序去重；categoryIcons = 分类 → 馆内首个 icon', async () => {
+    setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
+    const item = (id: string, category: string, icon?: string) => ({
+      id, name: '物' + id, category,
+      purchase_price: 10, purchase_date: '2024-06-01',
+      current_status: '使用中', description: '',
+      created_date: '2024-06-01T10:00:00.000Z', last_updated: '2024-06-01T10:00:00.000Z',
+      ...(icon !== undefined ? { icon } : {}),
+    });
+    vault.files.set('CONFIG/STORAGE/belongings.json', JSON.stringify({
+      version: '1.0', last_updated: '2025-01-01T00:00:00.000Z',
+      items: {
+        item_1: item('item_1', '📱 智能手机'),
+        item_2: item('item_2', '智能手机', 'smartphone'),
+        item_3: item('item_3', '机械键盘', 'keyboard'),
+      },
+    }));
+    const db = await loadDatabase();
+    expect(db.categories).toEqual(['智能手机', '机械键盘']); // 频次 2 > 1
+    expect(db.categoryIcons).toEqual({ 智能手机: 'smartphone', 机械键盘: 'keyboard' });
   });
 
   it('解析失败 → 走 core 默认通知（含留档路径）+ 原样留档 CONFIG/.CORRUPT 重建 + 重置为空库', async () => {
@@ -72,7 +112,7 @@ describe('loadDatabase', () => {
     clearNotices();
     const db = await loadDatabase();
     expect(db.items).toEqual({});
-    expect(db.categories.length).toBeGreaterThan(1000); // 仍补齐默认分类
+    expect(db.categories).toEqual([]); // issue 231：预设退役，空库无历史分类
     expect(hasNotice(/解析失败|结构异常/)).toBe(false);
     warnSpy.mockRestore();
   });
@@ -94,7 +134,7 @@ describe('loadDatabase', () => {
     warnSpy.mockRestore();
   });
 
-  it('读取已有数据（8 字段零迁移保留）', async () => {
+  it('读取已有数据（issue 231 起载入迁移：emoji 分类 → 纯文字 + icon）', async () => {
     setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
     const existing = {
       version: '1.0',
@@ -117,7 +157,8 @@ describe('loadDatabase', () => {
     const db = await loadDatabase();
     expect(db.items['item_1']).toMatchObject({
       name: '机械键盘',
-      category: '⌨ 机械键盘',
+      category: '机械键盘', // issue 231：emoji 前缀迁移为纯文字 + icon
+      icon: 'keyboard',
       purchase_price: 399,
       current_status: '使用中',
     });

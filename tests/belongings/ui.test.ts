@@ -22,6 +22,7 @@ import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { closeItemMenu } from '../../src/core/item-actions';
 import { onDomainEvent } from '../../src/core/domain-bus';
+import { resetAIProviderCache, setAISettingsProvider } from '../../src/core/ai';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, hasNotice, clearNotices, Platform } from '../mock-obsidian-entry';
 
@@ -376,7 +377,7 @@ describe('归物本渲染（KPI / 网格卡字段 / 脏数据容错）', () => {
       expect(cs[0].dataset.belId).toBe('item_new');
       expect(rowNew.querySelector('.bz-bel-cell-idx')!.textContent).toBe('NO.01 — 鼠标');
       expect(rowOld.querySelector('.bz-bel-cell-idx')!.textContent).toBe('NO.02 — 机械键盘');
-      expect(rowNew.querySelector('.bz-bel-cell-em')!.textContent).toBe('🖱');
+      expect(rowNew.querySelector('.bz-bel-cell-em [data-icon]')!.getAttribute('data-icon')).toBe('mouse');
       expect(rowNew.querySelector('.bz-bel-name')!.textContent).toBe('新鼠标');
       expect(rowNew.querySelector('.bz-bel-tag')!.textContent).toContain('使用中');
       expect(rowNew.querySelector('.bz-bel-tag')!.classList.contains('bz-bel-tag--using')).toBe(true);
@@ -466,7 +467,7 @@ describe('归物本渲染（KPI / 网格卡字段 / 脏数据容错）', () => {
     }
   });
 
-  it('闲置卡：accent 价格类（bz-bel-cell--idle）；无 emoji 分类显示首字；空分类兜底 📦', async () => {
+  it('闲置卡：accent 价格类（bz-bel-cell--idle）；无 emoji 分类显示首字；空分类兜底 package 图标（issue 231）', async () => {
     seed(vault, {
       item_i: makeItem({ id: 'item_i', name: '闲置物', current_status: '闲置' }),
       item_a: makeItem({ id: 'item_a', name: '无emoji', category: '键盘周边' }),
@@ -479,7 +480,7 @@ describe('归物本渲染（KPI / 网格卡字段 / 脏数据容错）', () => {
     expect(cA.querySelector('.bz-bel-cell-em')!.textContent).toBe('键');
     expect(cA.querySelector('.bz-bel-cell-idx')!.textContent).toContain('键盘周边');
     const cB = cells().find((x) => x.dataset.belId === 'item_b')!;
-    expect(cB.querySelector('.bz-bel-cell-em')!.textContent).toBe('📦');
+    expect(cB.querySelector('.bz-bel-cell-em [data-icon]')!.getAttribute('data-icon')).toBe('package');
     expect(cB.querySelector('.bz-bel-cell-idx')!.textContent).toContain('未分类');
   });
 
@@ -925,7 +926,7 @@ describe('归物本行操作（桌面菜单 / 移动抽屉 / 动作集）', () =
       await flush();
       expect(document.querySelector('.bz-item-sheet-mask')).not.toBeNull();
       expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
-      expect(document.querySelector('.bz-item-sheet-emoji')!.textContent).toBe('⌨');
+      expect(document.querySelector('.bz-item-sheet-emoji [data-icon]')!.getAttribute('data-icon')).toBe('keyboard');
       expect(document.querySelector('.bz-item-sheet-title')!.textContent).toBe('机械键盘');
       expect(document.querySelector('.bz-item-sheet-sub')!.textContent).toMatch(/^机械键盘 · ￥399\.00 · 已用 \d+ 天$/);
       // 内联 flex 样式上岸（合规）：头行布局走域内类，无 style.cssText
@@ -1225,7 +1226,8 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     expect(events).toHaveLength(0);
   });
 
-  it('分类下拉：输入过滤 + 选项点击回填（弹层收起）', async () => {
+  it('分类下拉：输入过滤 + 选项点击回填（弹层收起；候选 = 历史分类，issue 231）', async () => {
+    seed(vault, { item_h: makeItem({ id: 'item_h', name: '旧手机', category: '📱 智能手机' }) });
     await open(vault);
     openAddForm(panel()!);
     // 惰性弹出（issue 202 跟进）：开表单不弹，聚焦/输入才弹
@@ -1242,7 +1244,69 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     expect(formMask().querySelector('.bz-popover')).toBeNull();
   });
 
+  it('AI 归类（issue 231）：按名称回填分类+图标 chip，保存写入 item.icon', async () => {
+    await open(vault);
+    openAddForm(panel()!);
+    nameInp().value = 'AirPods Pro';
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'test-key' }) as any);
+    resetAIProviderCache();
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('no net')));
+    const { requestUrl } = await import('obsidian');
+    (requestUrl as any).mockResolvedValue({ status: 200, text: JSON.stringify({ choices: [{ message: { content: '{"category":"耳机耳麦","icon":"headphones"}' } }] }) });
+    (formMask().querySelector('#bm-ai') as HTMLButtonElement).click();
+    await flush();
+    await flush();
+    expect(catInp().value).toBe('耳机耳麦');
+    expect(formMask().querySelector('#bm-icon [data-icon]')!.getAttribute('data-icon')).toBe('headphones');
+    priceInp().value = '199';
+    dateInp().value = '2024-06-01';
+    saveBtn().click();
+    await flush();
+    const saved = JSON.parse(vault.files.get(DATA_PATH)!).items as Record<string, any>;
+    const added = Object.values(saved).find((x) => x.name === 'AirPods Pro')!;
+    expect(added.category).toBe('耳机耳麦');
+    expect(added.icon).toBe('headphones');
+  });
+
+  it('AI 归类失败 → 内联报错，手填路径不受影响（issue 231）', async () => {
+    await open(vault);
+    openAddForm(panel()!);
+    nameInp().value = '某物';
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'test-key' }) as any);
+    resetAIProviderCache();
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('no net')));
+    const { requestUrl } = await import('obsidian');
+    (requestUrl as any).mockRejectedValue(new Error('boom'));
+    (formMask().querySelector('#bm-ai') as HTMLButtonElement).click();
+    await flush();
+    await flush();
+    expect(errEl().textContent).toContain('AI 归类失败');
+    catInp().value = '桌面杂物';
+    priceInp().value = '10';
+    dateInp().value = '2024-06-01';
+    saveBtn().click();
+    await flush();
+    const saved = JSON.parse(vault.files.get(DATA_PATH)!).items as Record<string, any>;
+    const added = Object.values(saved).find((x) => x.name === '某物')!;
+    expect(added.category).toBe('桌面杂物');
+    expect(added.icon ?? null).toBeNull();
+  });
+
+  it('选历史分类自动带馆内图标（issue 231）：联想点选回填 icon chip', async () => {
+    seed(vault, { item_h: makeItem({ id: 'item_h', name: '旧手机', category: '📱 智能手机' }) });
+    await open(vault);
+    openAddForm(panel()!);
+    catInp().dispatchEvent(new FocusEvent('focus'));
+    const opt = formMask().querySelector('.bz-popover-item') as HTMLElement;
+    expect(opt).not.toBeNull();
+    expect(opt.querySelector('[data-icon]')!.getAttribute('data-icon')).toBe('smartphone');
+    opt.click();
+    expect(catInp().value).toBe('智能手机');
+    expect(formMask().querySelector('#bm-icon [data-icon]')!.getAttribute('data-icon')).toBe('smartphone');
+  });
+
   it('分类下拉收起时 Esc 不拦（落回表单层）；弹出后 Esc 只收下拉不关表单', async () => {
+    seed(vault, { item_h: makeItem({ id: 'item_h', name: '旧手机', category: '📱 智能手机' }) });
     await open(vault);
     openAddForm(panel()!);
     // 收起态：不冒泡 Esc 只到输入框，下拉不吞键、表单不被关
@@ -1354,7 +1418,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     expect(saveBtn().textContent).toBe('更新');
     // 回填（购买日期剥成 date 串）
     expect(nameInp().value).toBe('机械键盘');
-    expect(catInp().value).toBe('⌨ 机械键盘');
+    expect(catInp().value).toBe('机械键盘'); // issue 231：分类已迁移为纯文字
     expect(priceInp().value).toBe('399');
     expect(dateInp().value).toBe('2024-06-01');
     expect((f.querySelector('#bm-desc') as HTMLTextAreaElement).value).toBe('红轴');
