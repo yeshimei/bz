@@ -318,20 +318,20 @@ function applyTagFilter(label: string): void {
   renderAll();
 }
 
-/** 磁贴标签行渲染（原型 1:1：「emoji 名 数字」白底磁贴；无计数标签不显示；
+/** 磁贴标签行渲染（「图标 名 数字」白底磁贴；无计数标签不显示；
  *  「新收藏」chip = lucide plus 虚线磁贴、无磁点；移动端平铺单行时置首，桌面仍居行尾） */
 function renderTags(): void {
   const overlay = M.overlay!;
   const stickers = overlay.querySelector('[data-fav-tags]') as HTMLElement;
-  const mk = (label: string, emoji: string, cnt: number, active: boolean, grey = false) =>
-    `<button class="bz-fav-chip${active ? ' bz-fav-on' : ''}${grey ? ' bz-fav-chip--grey' : ''}" data-fav-tag="${esc(label)}">${emoji ? emoji + ' ' : ''}${esc(label)} ${cnt}</button>`;
+  const mk = (label: string, ic: string, cnt: number, active: boolean, grey = false) =>
+    `<button class="bz-fav-chip${active ? ' bz-fav-on' : ''}${grey ? ' bz-fav-chip--grey' : ''}" data-fav-tag="${esc(label)}">${ic ? iconSpan(ic, 'bz-ic--xs') : ''}<span>${esc(label)} ${cnt}</span></button>`;
   const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${iconSpan(ICON.add, 'bz-ic--xs')}<span>新收藏</span></button>`;
   const chips =
     mk('全部', '', visible().length, !M.archived && M.tag === null) +
-    mk('已归档', '🗄️', archivedItems().length, M.archived, true) +
+    mk('已归档', 'archive', archivedItems().length, M.archived, true) +
     TAGS.map((t) => {
       const n = tagCount(t.label);
-      return n ? mk(t.label, t.emoji, n, !M.archived && M.tag === t.label) : '';
+      return n ? mk(t.label, t.ic, n, !M.archived && M.tag === t.label) : '';
     }).join('');
   stickers.innerHTML = isMobileEnv() ? add + chips : chips + add;
 }
@@ -355,7 +355,8 @@ function cardHtml(it: FavoritesItem): string {
   const archCls = it.archived ? ' bz-fav-arch' : '';
   const i = M.items.indexOf(it);
   const hue = hueOf((it.tags || [])[0] || '');
-  const tape = ['bz-fav-tape', 'bz-fav-tape--r', 'bz-fav-tape--g'][i % 3];
+  // 胶带三色轮换：基础类恒在（承载 absolute 定位/尺寸），变体类只换色与角度
+  const tape = 'bz-fav-tape' + (i % 3 ? [' bz-fav-tape--r', ' bz-fav-tape--g'][i % 3 - 1] : '');
   return `<div class="bz-fav-card${pinnedCls}${archCls}" data-fav-id="${esc(it.id)}">
     <span class="${tape}"></span>
     <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>
@@ -363,8 +364,8 @@ function cardHtml(it: FavoritesItem): string {
     <p>${esc(it.description || '（这张卡只写了个名字）')}</p>
     <div class="bz-fav-ft"><span class="bz-fav-tags-row">${(it.tags || []).map((t) => {
       const h = hueOf(t);
-      const emoji = (TAGS.find((x) => x.label === t) || { emoji: '' }).emoji;
-      return `<span class="bz-fav-tagb" style="background:hsl(${h} 70% 95%);color:hsl(${h} 45% 42%)">${emoji} ${esc(t)}</span>`;
+      const ic = (TAGS.find((x) => x.label === t) || { ic: '' }).ic;
+      return `<span class="bz-fav-tagb" style="background:hsl(${h} 70% 95%);color:hsl(${h} 45% 42%)">${ic ? iconSpan(ic, 'bz-ic--xs') : ''}<span>${esc(t)}</span></span>`;
     }).join('')}</span>
       <span>${esc(relTime(it.created))}</span></div>
   </div>`;
@@ -709,7 +710,7 @@ export function openForm(item: FavoritesItem | null): void {
   const sel = new Set<string>(it?.tags || []);
   const drawPick = () => {
     pick.innerHTML = TAGS.map((t) =>
-      `<button type="button" class="bz-fav-pick-btn${sel.has(t.label) ? ' bz-fav-on' : ''}" data-tag="${esc(t.label)}">${t.emoji} ${esc(t.label)}</button>`
+      `<button type="button" class="bz-fav-pick-btn${sel.has(t.label) ? ' bz-fav-on' : ''}" data-tag="${esc(t.label)}">${iconSpan(t.ic, 'bz-ic--xs')}<span>${esc(t.label)}</span></button>`
     ).join('');
     pick.querySelectorAll('[data-tag]').forEach((b) => b.addEventListener('click', () => {
       const label = (b as HTMLElement).dataset.tag as string;
@@ -717,6 +718,7 @@ export function openForm(item: FavoritesItem | null): void {
       else sel.add(label);
       b.classList.toggle('bz-fav-on', sel.has(label));
     }));
+    mountIcons(pick);
   };
   drawPick();
 
@@ -807,7 +809,7 @@ async function runAiFill(
 
 /** AI 提示词（GitHub 版含翻译约束；简介禁编造） */
 function aiPrompt(title: string, url: string, desc: string, ghInfo: { title: string; description: string; fetched: boolean } | null): string {
-  const known = TAGS.map((t) => `${t.label}（${t.emoji}）`).join('、');
+  const known = TAGS.map((t) => t.label).join('、');
   const base = `你是收藏整理助手。把用户输入的收藏信息整理成 JSON（只输出 JSON，不输出任何多余文字），严格以下格式：
 {"title":"标题","url":"链接","description":"简介","tags":["标签1","标签2"]}
 规则：
