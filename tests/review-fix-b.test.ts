@@ -137,9 +137,9 @@ describe('批 B-5：图标单一事实源尾差', () => {
     expect(DOMAIN_ICONS['settings-panel']).toBe('settings-2');
   });
 
-  it('home 磁贴 16 条 icon 全量迁移：iconOf() 引 DOMAIN_ICONS，无残留字面量', () => {
+  it('home 入口 icon 全量迁移：iconOf() 引 DOMAIN_ICONS，无残留字面量（issue 232b 收敛后 13 条）', () => {
     const src = repo('src/home/domains.ts');
-    expect((src.match(/icon: iconOf\(/g) ?? []).length).toBe(16);
+    expect((src.match(/icon: iconOf\(/g) ?? []).length).toBe(13);
     expect(src).not.toMatch(/icon: '/);
     // 异名映射：wall→diary-wall、settings→settings-panel
     for (const d of DOMAINS) {
