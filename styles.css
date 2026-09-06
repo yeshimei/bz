@@ -2805,6 +2805,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-popover-item {
   display: flex;
   align-items: center;
+  /* 钉死 button 宿主基线：Obsidian 裸 button 的 justify-content:center/height:32px/投影会把候选条目顶成居中大行 */
+  justify-content: flex-start;
+  height: auto;
+  box-shadow: none;
   gap: var(--bz-space-sm);
   width: 100%;
   padding: 6px 10px;
@@ -8699,7 +8703,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-bel-select {
   appearance: none; -webkit-appearance: none;
   border: none; border-bottom: 2px solid var(--bz-bel-ink);
-  background: transparent; border-radius: 0;
+  background: transparent; border-radius: 0; box-shadow: none;
   height: 32px; padding: 0 24px 0 2px; font-size: 14px; color: var(--bz-text-1);
   font-family: inherit; outline: none; cursor: pointer; min-width: 104px;
 }
@@ -8856,6 +8860,15 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-bel-form .bz-field { position: relative; }
 .bz-bel-form .bz-input { border-color: var(--bz-bel-ink); background: transparent; }
+/* 分类联想浮层（uiSuggest .bz-popover）海报化：纸面+墨框方角+硬投影，hover/选中走墨系 */
+.bz-bel-form .bz-popover {
+  background: var(--bz-bel-paper);
+  border: 1.5px solid var(--bz-bel-ink); border-radius: 0;
+  box-shadow: 4px 4px 0 rgba(23, 21, 18, 0.15);
+}
+.bz-bel-form .bz-popover-item:hover { background: var(--bz-bel-dim); }
+.bz-bel-form .bz-popover-item.is-on { background: var(--bz-bel-dim); color: var(--bz-bel-accent); }
+.bz-bel-form .bz-popover-item.is-on .bz-ic { color: var(--bz-bel-accent); }
 .bz-bel-form-title {
   font-size: 22px; font-weight: 800; letter-spacing: -0.3px; color: var(--bz-text-1);
   border-bottom: 4px solid var(--bz-bel-ink); padding-bottom: 10px;
