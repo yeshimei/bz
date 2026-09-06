@@ -128,7 +128,7 @@
   .bz-home-date { display: none; }
   .bz-home-head { position: sticky; top: 0; z-index: 5; background: var(--h-bg); padding: 14px 16px 10px; }
   .bz-home-title { font-size: 17px; font-weight: 800; letter-spacing: .08em; }
-  .bz-home-close { display: inline-flex; align-items: center; justify-content: center; flex: none; margin-left: auto; width: 30px; height: 30px; border: 1px solid var(--h-line); border-radius: 8px; background: var(--h-card); color: var(--h-ink); cursor: pointer; }
+  .bz-home-panel .bz-home-close { display: inline-flex; align-items: center; justify-content: center; flex: none; margin-left: auto; width: 30px; height: 30px; border: 1px solid var(--h-line); border-radius: 8px; background: var(--h-card); color: var(--h-ink); cursor: pointer; }
   .bz-home-close .bz-ic { width: 13px; height: 13px; }
   .bz-home-body { padding: 12px 16px 24px; overflow-y: auto; }
   .bz-home-grid { display: flex; flex-direction: column; height: auto; margin-top: 0; }
