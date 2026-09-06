@@ -15,9 +15,10 @@
 /* Obsidian 核心 app.css 对裸 button:not(.clickable-icon) 统一喂默认
    color/background-color/box-shadow（--interactive-normal 底 + --input-shadow）。
    此全局覆盖使按钮回到无样式基态，由各域样式自行决定外观。
-   :where() 归零特异性（P0 收编前提，docs/ui-shared-components.md）：语义不变
-   （仍是兜底 unset），但任何单类按钮规则（.bz-btn/.bz-choice-btn 等 0,1,0）
-   即可覆盖——共享组件库的单类组件成立的前提。 */
+   特异性如实说明：本选择器 = (0,1,1)（button 元素 0,0,1 + :not(.clickable-icon)
+   的类参量 0,1,0），并非 :where() 归零；同分 (0,1,1) 规则靠聚合顺序决胜
+   （build-css.mjs：本文件先于 core/ui 与各域样式）。域/组件要稳定压过本基线、
+   不受聚合顺序影响的，加容器类前缀提至 (0,2,1)+（先例：.bz-fav-scope .bz-fav-tags button）。 */
 button:not(.clickable-icon) {
     color: unset;
     background-color: unset;
