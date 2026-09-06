@@ -44,17 +44,17 @@
 .bz-home-head { display: flex; align-items: center; gap: 16px; padding: 11px 18px 10px; border-bottom: 1px solid var(--h-line); flex: none; }
 .bz-home-title { font-size: 18px; font-weight: 800; letter-spacing: .1em; margin: 0; }
 .bz-home-week { display: flex; gap: 5px; }
-.bz-home-wk { width: 24px; border: 0; background: none; padding: 0; text-align: center; font-family: var(--h-mono); font-size: 9.5px; color: var(--h-dim); display: flex; flex-direction: column; gap: 2px; cursor: pointer; font-family: inherit; }
+.bz-home-panel .bz-home-wk { width: 24px; border: 0; background: none; padding: 0; text-align: center; font-family: var(--h-mono); font-size: 9.5px; color: var(--h-dim); display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
 .bz-home-wk .bz-home-wk-n { letter-spacing: 0; }
 .bz-home-wk i { display: block; height: 22px; border-radius: 6px; background: #efede3; }
 .theme-dark .bz-home-wk i { background: #33312a; }
-.bz-home-wk:hover i { background: #e6e3d5; }
+.bz-home-panel .bz-home-wk:hover i { background: #e6e3d5; }
 .theme-dark .bz-home-wk:hover i { background: #3d3b32; }
 .bz-home-wk.bz-home-wk--hit i { background: var(--h-ok); opacity: .8; }
 .bz-home-wk.bz-home-wk--sel i { background: var(--h-ink); }
-.bz-home-wk.bz-home-wk--sel { color: var(--h-ink); font-weight: 700; }
+.bz-home-panel .bz-home-wk.bz-home-wk--sel { color: var(--h-ink); font-weight: 700; }
 .bz-home-date { margin-left: auto; font-size: 12px; color: var(--h-dim); font-family: var(--h-mono); letter-spacing: .1em; }
-.bz-home-close { display: none; }
+.bz-home-panel .bz-home-close { display: none; }
 
 /* ---- 三栏 grid（原型 .dt-grid） ---- */
 .bz-home-body { flex: 1; min-height: 0; overflow: hidden; padding: 8px 16px 14px; scrollbar-width: none; }
@@ -71,8 +71,8 @@
 .bz-home-entries .bz-ic, .bz-home-flow .bz-ic, .bz-home-next .bz-ic { width: 17px; height: 17px; }
 
 /* ---- 全部域入口行（原型 .erow） ---- */
-.bz-home-erow { display: flex; align-items: center; gap: 9px; padding: 7px 8px 7px 6px; border-radius: 8px; cursor: pointer; border: 0; border-bottom: 1px solid var(--h-line); background: none; font-family: inherit; color: inherit; width: 100%; text-align: left; font-size: 100%; }
-.bz-home-erow:hover { background: #f0eee4; }
+.bz-home-panel .bz-home-erow { display: flex; align-items: center; gap: 9px; padding: 7px 8px 7px 6px; border-radius: 8px; cursor: pointer; border: 0; border-bottom: 1px solid var(--h-line); background: none; font-family: inherit; color: inherit; width: 100%; text-align: left; font-size: 100%; }
+.bz-home-panel .bz-home-erow:hover { background: #f0eee4; }
 .theme-dark .bz-home-erow:hover { background: #2e2c25; }
 .bz-home-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--h-ok); flex: none; }
 .bz-home-dot--off { background: none; border: 1.5px dashed #cfcabb; }
@@ -106,8 +106,8 @@
 .bz-home-flow-empty b { color: var(--h-ink); }
 
 /* ---- 明天预告（原型 .pr） ---- */
-.bz-home-pr { background: var(--h-ai-soft); border: 1px solid var(--h-ai-line); border-radius: 11px; padding: 13px 16px; margin-bottom: 10px; font-size: 13px; line-height: 1.75; cursor: pointer; text-align: left; font-family: inherit; color: inherit; width: 100%; }
-.bz-home-pr:hover { border-color: var(--h-ai); }
+.bz-home-panel .bz-home-pr { background: var(--h-ai-soft); border: 1px solid var(--h-ai-line); border-radius: 11px; padding: 13px 16px; margin-bottom: 10px; font-size: 13px; line-height: 1.75; cursor: pointer; text-align: left; font-family: inherit; color: inherit; width: 100%; }
+.bz-home-panel .bz-home-pr:hover { border-color: var(--h-ai); }
 .bz-home-pr-h { font-size: 12.5px; font-weight: 700; color: var(--h-ai); margin-bottom: 3px; }
 .bz-home-pr-h::before { content: "✦ "; }
 .bz-home-pr-go { display: inline-block; margin-top: 7px; font-size: 11.5px; color: var(--h-ai); font-weight: 700; }
@@ -115,7 +115,8 @@
 /* ---- 移动端判定：面板自身为容器（favorites 先例）。面板自身尺寸走 @media
         （容器查询不作用于自身），内部布局切换走 @container ---- */
 .bz-home-panel { container-type: inline-size; }
-.bz-home-m-tiles { display: none; }
+/* 瓦片外层桌面整块隐藏（内层 .bz-home-m-tiles 才是两列网格） */
+.bz-home-tiles { display: none; }
 
 @media (max-width: 768px) {
   .bz-home-panel { width: 100vw; height: 100vh; max-height: none; border: none; border-radius: 0; }
@@ -137,8 +138,8 @@
   /* 时间线沉底 + 标题只在桌面显示 */
   .bz-home-flow { order: 1; margin-top: 18px; background: none; border: none; border-radius: 0; padding: 0; }
   .bz-home-m-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-  .bz-home-m-tile { display: flex; align-items: center; gap: 6px; background: var(--h-card); border: 1px solid var(--h-line); border-radius: 8px; padding: 7px 8px; cursor: pointer; font-family: inherit; color: inherit; text-align: left; min-width: 0; font-size: 100%; }
-  .bz-home-m-tile:hover { border-color: var(--h-dim); }
+  .bz-home-panel .bz-home-m-tile { display: flex; align-items: center; gap: 6px; background: var(--h-card); border: 1px solid var(--h-line); border-radius: 8px; padding: 7px 8px; cursor: pointer; font-family: inherit; color: inherit; text-align: left; min-width: 0; font-size: 100%; }
+  .bz-home-panel .bz-home-m-tile:hover { border-color: var(--h-dim); }
   .bz-home-m-tile .bz-home-dot { width: 5px; height: 5px; }
   .bz-home-m-tile .bz-home-eic .bz-ic { width: 15px; height: 15px; }
   .bz-home-m-tile .bz-home-enm { font-size: 11.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
