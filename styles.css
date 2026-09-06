@@ -10006,21 +10006,22 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* ==================== 移动端（≤768px：同构书脊墙，缩距不换形） ==================== */
 @media (max-width: 768px) {
-  .bz-bs-panel { width: 100vw; height: 100vh; max-width: none; max-height: none; border-radius: 0; border: none; background: var(--bsw-wall); }
-  /* 墙纸连纹理一起延伸进安全区顶垫：wallpage 上提 + 等值补位（公式与 core .bz-panel-mtop 一致，
-     真机 safe-area 更大时也严格贴合）；纹理仍单源，无错位缝 */
-  .bz-bs-wallpage {
-    margin-top: calc(-1 * max(44px, env(safe-area-inset-top, 0px)));
-    height: calc(100% + max(44px, env(safe-area-inset-top, 0px)));
-    padding-top: max(44px, env(safe-area-inset-top, 0px));
+  .bz-bs-panel {
+    width: 100vw; height: 100vh; max-width: none; max-height: none; border-radius: 0; border: none;
+    background: var(--bsw-wall);
+    /* 安全区避让域内接管（头行等值 margin，见 .bz-bs-header），core 顶距让位给整幅墙纸 */
+    padding-top: 0 !important;
   }
   .bz-bs-header {
     padding: 12px 14px 4px; gap: 8px; flex-wrap: nowrap; align-items: center;
     overflow-x: auto; scrollbar-width: none;
+    /* 避让刘海/状态栏（=core .bz-panel-mtop 同档 44px；墙纸借此连纹理铺到面板顶边） */
+    margin-top: max(44px, env(safe-area-inset-top, 0px));
   }
   .bz-bs-header::-webkit-scrollbar { display: none; }
   .bz-bs-labels, .bz-bs-cats { display: contents; }
-  .bz-bs-plaque { padding: 5px 12px; border-width: 2px; flex: none; }
+  .bz-bs-plaque { padding: 5px 12px; border-width: 2px; flex: none; cursor: pointer; }
+  .bz-bs-plaque:active { transform: translateY(1px); }
   .bz-bs-plaque h1 { font-size: 14px; letter-spacing: 4px; }
   .bz-bs-taglabel { min-width: 84px; padding: 6px 10px; flex: none; }
   /* 分类签一行横滑但尺寸回归本脸（桌面 dim-cat 档：4px 10px + 图钉 + 12px/10px 字号） */
