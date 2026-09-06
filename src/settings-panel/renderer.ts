@@ -17,7 +17,7 @@
 import { getSettings, saveSettings } from '../core/settings-provider';
 import type { SettingsSchema, SettingsRow, SettingsSnapshot, SettingsRowContext } from '../core/settings-schema';
 import { setIcon } from 'obsidian';
-import { openPathPicker } from '../core/path-picker';
+import { openDirPicker } from './dir-picker';
 import { notice } from '../core/notice';
 import { uiBtn, uiChip, uiRange, uiSelect, uiSwitch, uiCardChoice } from '../core/ui';
 
@@ -160,10 +160,9 @@ export function makePathRowCtrl(opts: {
   };
 
   const openPicker = () => {
-    openPathPicker({
-      title: opts.pickerTitle || opts.name,
-      desc: opts.pickerDesc,
-      mode: opts.mode,
+    openDirPicker({
+      title: (opts.mode === 'multi' ? '添加文件夹 · ' : '选择文件夹 · ') + (opts.pickerTitle || opts.name),
+      multi: opts.mode === 'multi',
       selected: current,
       okText: opts.okText,
       onConfirm: (list) => {
