@@ -201,9 +201,10 @@
     { d: '09-07', n: 7, wd: '日', hit: true },
   ];
   function weekHtml(sel) {
-    return WK_DAYS.map((w) =>
+    // 倒排：最新在前；今天显示「今」不写数字
+    return WK_DAYS.slice().reverse().map((w) =>
       '<div role="button" tabindex="0" class="bz-home-wk' + (w.hit ? ' bz-home-wk--hit' : '') + (w.d === sel ? ' bz-home-wk--sel' : '') + '" data-day="' + w.d + '">'
-      + '<i></i><span class="bz-home-wk-n">' + w.n + '</span></div>').join('');
+      + '<i></i><span class="bz-home-wk-n">' + (w.d === '09-07' ? '今' : w.n) + '</span></div>').join('');
   }
   function mount(host) {
     host.innerHTML = '<div class="bz-panel-frame bz-home-panel bz-panel-mtop">' + panelHtml() + '</div>';
