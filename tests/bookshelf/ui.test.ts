@@ -1,9 +1,11 @@
 /**
- * 书架墙（bookshelf）UI 层测试：书脊墙渲染（issue 218 1:1 复刻）——
- * 刊头/统计标签筛选/分类分区/倒叠区/搜索/排序三档/借书卡（改状态进度日期书评/删除/EPUB 只读/直达）
+ * 书库（bookshelf）UI 层测试：书脊墙渲染（issue 218 1:1 复刻）——
+ * 行内标题/统计标签筛选/分类分区/倒叠区/搜索/排序三档/借书卡（改状态进度日期书评/删除/EPUB 只读/直达）
  * 读书报告内嵌化：命令路径进报告视图（墙面无入口）/返回/同面板筛选/自动刷新/渲染中止
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, clearNotices } from '../mock-obsidian-entry';
 import { M, resetBookshelfState } from '../../src/bookshelf/state';
@@ -83,13 +85,16 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     document.body.innerHTML = '';
   });
 
-  it('打开主面板：木匾刊头 + 纸质标签行（状态四张 + 分类）+ 工具行 + 墙体书脊', async () => {
+  it('打开主面板：行内标题「书库」居左与标签同行（issue 225 木匾退场）+ 标签行 + 工具行 + 墙体书脊', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
-    // 刊头
-    expect(overlay.querySelector('.bz-bs-plaque h1')?.textContent).toBe('书脊墙');
-    expect(overlay.querySelector('.bz-bs-plaque p')?.textContent).toContain('SPINE WALL');
+    // 头行：标题 + 标签行同容器；木匾不复存在
+    const header = overlay.querySelector('.bz-bs-header') as HTMLElement;
+    expect(header).toBeTruthy();
+    expect(header.querySelector('.bz-bs-title')?.textContent).toBe('书库');
+    expect(header.querySelector('#bz-bs-labels')).toBeTruthy();
+    expect(overlay.querySelector('.bz-bs-plaque')).toBeNull();
     // 标签行：全馆 3 / 已读 1 / 在读 1 / 未读 1 + 分类（成长/科幻）
     const labels = Array.from(overlay.querySelectorAll('.bz-bs-taglabel'));
     // 分类标签只数在架书（围城无分类 → 「未分类」也出标签；科幻是未读书专属分类 → 不出，未读统一在倒叠区）
@@ -352,7 +357,7 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     expect(document.querySelector('.bz-bs-d-popup')).toBeFalsy();
   });
 
-  it('读书报告：命令冷开面板直落报告视图；返回书脊墙', async () => {
+  it('读书报告：命令冷开面板直落报告视图；返回书库', async () => {
     const { vault, app } = seedVault();
     openBookshelfReport(app);
     await new Promise((r) => setTimeout(r, 40));
@@ -363,7 +368,7 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     const content = overlay.querySelector('.bz-rr-content') as HTMLElement;
     await waitReport(content);
     expect(content.textContent).toContain('已读');
-    // 返回书脊墙
+    // 返回书库
     (overlay.querySelector('[data-rr-goto-shelf]') as HTMLElement).click();
     expect(M.view).toBe('shelf');
     expect(overlay.querySelector('.bz-bs-view-shelf')?.classList.contains('active')).toBe(true);
@@ -475,5 +480,26 @@ describe('bookshelf 面板皮肤（issue 216）', () => {
     expect(bsSkinClass()).toBe('bz-bs-skin-nordic');
     setSettingsProvider(() => ({} as never));
     expect(bsSkinClass()).toBe('bz-bs-skin-nordic');
+  });
+
+  it('issue 225 皮肤全量补全：十肤预览/标题色在位；九肤结构层盖到书脊与排序（dark=原版仅 token 映射）', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/bookshelf/styles.css'), 'utf8');
+    const ids = ['nordic', 'dark', 'noir', 'wabi', 'bauhaus', 'blueprint', 'neon', 'kraft', 'velvet', 'mono'];
+    // 设置页预览：每肤预览卡 + 迷你书脊壳（::before）都在
+    for (const id of ids) {
+      expect(css, `${id} 预览底`).toMatch(new RegExp(`\\.bz-skinprev-bs-${id}\\s*\\{`));
+      expect(css, `${id} 预览书脊壳`).toMatch(new RegExp(`\\.bz-skinprev-bs-${id}::before`));
+    }
+    // 标题随肤：十肤各有一条 --bsw-title（含 dark）
+    expect(css.match(/--bsw-title:/g)?.length).toBe(10);
+    // 结构层：除 dark（= p4-full 原版观感，基础规则即本肤）外，每肤盖到书脊/排序选中态
+    for (const id of ids.filter((x) => x !== 'dark')) {
+      expect(css, `${id} 书脊结构`).toMatch(new RegExp(`\\.bz-bs-skin-${id} \\.bz-bs-spine\\s*\\{`));
+      expect(css, `${id} 排序选中态`).toMatch(new RegExp(`\\.bz-bs-skin-${id} \\.bz-bs-seg button\\.on`));
+    }
+    // dark 补齐墙变量映射（issue 218 换血曾缺）
+    expect(css).toMatch(/\.bz-bs-skin-dark\s*\{[^}]*--bsw-wall:/);
+    // 木匾规则不复活
+    expect(css).not.toMatch(/\.bz-bs-plaque/);
   });
 });
