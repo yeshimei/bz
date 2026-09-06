@@ -243,10 +243,13 @@ function renderAll(): void {
   // 周历（7 格动静历，hit=当天有动静，sel=当前查看日）
   const week = overlay.querySelector('[data-home-week]') as HTMLElement;
   if (week) {
-    week.innerHTML = river.week.map((w) =>
-      '<div role="button" tabindex="0" class="bz-home-wk' + (w.hit ? ' bz-home-wk--hit' : '') + (w.dateStr === (view ?? river.today.dateStr) ? ' bz-home-wk--sel' : '') + '"'
-      + ' data-home-weekday="' + w.dateStr + '" aria-label="' + w.label + (w.hit ? '，有动静' : '') + '">'
-      + '<i></i><span class="bz-home-wk-n">' + w.dayOfMonth + '</span></div>').join('');
+    // 倒排：最新在前；今天显示「今」不写数字（原型拍板）
+    week.innerHTML = river.week.map((w) => {
+      const isToday = w.dateStr === river.today.dateStr;
+      return '<div role="button" tabindex="0" class="bz-home-wk' + (w.hit ? ' bz-home-wk--hit' : '') + (w.dateStr === (view ?? river.today.dateStr) ? ' bz-home-wk--sel' : '') + '"'
+        + ' data-home-weekday="' + w.dateStr + '" aria-label="' + (isToday ? '今天' : w.label) + (w.hit ? '，有动静' : '') + '">'
+        + '<i></i><span class="bz-home-wk-n">' + (isToday ? '今' : w.dayOfMonth) + '</span></div>';
+    }).join('');
     mountIcons(week);
   }
   const entries = overlay.querySelector('[data-home-entries]') as HTMLElement;
