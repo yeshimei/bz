@@ -9255,11 +9255,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--midnight .bar-row{display:flex;align-items:center;gap:9px;margin-bottom:6px}
 .bz-cinema--midnight .bar-label{width:76px;flex:none;font-size:11px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
 .bz-cinema--midnight .bar-track{flex:1;height:12px;background:var(--chip);border-radius:4px;overflow:hidden}
-.bz-cinema--midnight .bar-fill{height:100%;border-radius:4px;background:var(--gold)}
+.bz-cinema--midnight .bar-fill{display:block;height:100%;border-radius:4px;background:var(--gold)}
 .bz-cinema--midnight .bar-num{width:30px;flex:none;font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
 .bz-cinema--midnight .soft-row{display:flex;align-items:center;gap:9px;margin-bottom:6px}
 .bz-cinema--midnight .soft-track{flex:1;height:9px;background:var(--chip);border-radius:99px;overflow:hidden}
-.bz-cinema--midnight .soft-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold),#e0c37e)}
+.bz-cinema--midnight .soft-fill{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold),#e0c37e)}
 .bz-cinema--midnight .kv-inline{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:11.5px;color:var(--ink-2);margin-bottom:9px}
 .bz-cinema--midnight .kv-inline b{color:var(--ink);font-weight:700}
 .bz-cinema--midnight .tag-cloud{display:flex;flex-wrap:wrap;gap:6px}
@@ -9503,12 +9503,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-bs-plaque h1 { font-size: 16px; letter-spacing: 6px; font-weight: 700; color: var(--bsw-brass); }
 .bz-bs-plaque p { font-size: 9px; letter-spacing: 3px; color: #9b8a6e; margin-top: 2px; }
 
-/* 移动端关闭钮（桌面无出口不渲染样式；收藏/归物先例：关闭钮进 head 行）。
-   .bz-bs-rail 头行内滑轨：桌面 display:contents 隐身（布局与无此层一致），移动端承载横滑、
-   关闭钮作为滑轨的固定兄弟节点常驻右端——不 sticky、不压内容。 */
-.bz-bs-rail { display: contents; }
-.bz-bs-mob-close { display: none; }
-
 /* ---- 统计标签行（纸质标签；点选筛选，再点回全馆） ---- */
 .bz-bs-labels {
   flex: 1; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; min-width: 0;
@@ -9648,7 +9642,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: var(--bsw-accent); color: var(--bsw-paper);
   font-size: 11px; letter-spacing: 2px; padding: 6px 12px; border-radius: 0 0 0 8px;
 }
-/* 关闭钮已退役（两端）：点遮罩 / Esc 放回书架 */
+/* 关闭钮（两端）：左上角净位（右上为「已抽出」红签）；点遮罩 / Esc 仍可关 */
+.bz-bs-d-x {
+  position: absolute; top: 10px; left: 14px; z-index: 2;
+  font-size: 22px; color: var(--bsw-muted); cursor: pointer;
+  background: none; border: none; line-height: 1;
+}
+.bz-bs-d-x:hover { color: var(--bsw-accent); }
 .bz-bs-d-card {
   display: flex; gap: 20px; padding: 24px 26px;
   border: 1px solid var(--bsw-line); margin: 8px;
@@ -10006,30 +10006,15 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* ==================== 移动端（≤768px：同构书脊墙，缩距不换形） ==================== */
 @media (max-width: 768px) {
-  .bz-bs-panel { width: 100vw; height: 100vh; max-width: none; max-height: none; border-radius: 0; border: none; }
+  .bz-bs-panel { width: 100vw; height: 100vh; max-width: none; max-height: none; border-radius: 0; border: none; background: var(--bsw-wall); }
   .bz-bs-header {
-    padding: 12px 14px 4px; gap: 10px; flex-wrap: nowrap; align-items: center;
-  }
-  /* 内滑轨：匾+状态签+分类签在其中横滑；关闭钮是滑轨右边的固定兄弟，永不重叠 */
-  .bz-bs-rail {
-    flex: 1; min-width: 0;
-    display: flex; flex-wrap: nowrap; align-items: center; gap: 8px;
+    padding: 12px 14px 4px; gap: 8px; flex-wrap: nowrap; align-items: center;
     overflow-x: auto; scrollbar-width: none;
   }
-  .bz-bs-rail::-webkit-scrollbar { display: none; }
+  .bz-bs-header::-webkit-scrollbar { display: none; }
   .bz-bs-labels, .bz-bs-cats { display: contents; }
   .bz-bs-plaque { padding: 5px 12px; border-width: 2px; flex: none; }
   .bz-bs-plaque h1 { font-size: 14px; letter-spacing: 4px; }
-  /* 行尾关闭钮（固定，不随横滑滚走） */
-  .bz-bs-mob-close {
-    display: flex; align-items: center; justify-content: center;
-    flex: none;
-    width: 34px; height: 34px; padding: 0;
-    background: var(--bsw-brass); color: var(--bsw-wall-dark);
-    border: none; border-radius: 50%;
-    cursor: pointer;
-  }
-  .bz-bs-mob-close .bz-ic { width: 16px; height: 16px; }
   .bz-bs-taglabel { min-width: 84px; padding: 6px 10px; flex: none; }
   /* 分类签一行横滑但尺寸回归本脸（桌面 dim-cat 档：4px 10px + 图钉 + 12px/10px 字号） */
   .bz-bs-taglabel.dim-cat { flex: none; white-space: nowrap; }
