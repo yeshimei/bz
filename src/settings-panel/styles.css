@@ -11,7 +11,8 @@
 /* ═══════════ tokens：S1 亚麻暖白（亮皮，默认） ═══════════ */
 .bz-sp-desk,
 .bz-sp-mobile,
-.bz-sp-mob-modal {
+.bz-sp-mob-modal,
+.bz-sp-picker-mask {
   --sp-bg: #f6f2e9;
   --sp-panel: #fffcf6;
   --sp-line: #e5dfcf;
@@ -32,7 +33,8 @@
 /* ═══════════ tokens：S3 炭黑夜航（暗皮，跟随 Obsidian 暗色） ═══════════ */
 .theme-dark .bz-sp-desk,
 .theme-dark .bz-sp-mobile,
-.theme-dark .bz-sp-mob-modal {
+.theme-dark .bz-sp-mob-modal,
+.theme-dark .bz-sp-picker-mask {
   --sp-bg: #1b1b1f;
   --sp-panel: #242429;
   --sp-line: #35353c;
@@ -49,6 +51,92 @@
   --sp-ctl-off: #3c3c44;
   --sp-knob: #fff;
 }
+
+/* ═══════════ 域内文件夹选择器（path 行弹层；挂 body 自挂 tokens，不受面板 overflow 裁剪） ═══════════ */
+.bz-sp-picker-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 15, 8, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.theme-dark .bz-sp-picker-mask { background: rgba(0, 0, 0, 0.62); }
+.bz-sp-picker {
+  width: min(560px, 100%);
+  max-height: min(520px, 78vh);
+  background: var(--sp-panel);
+  border: 1px solid var(--sp-line);
+  border-radius: 14px;
+  box-shadow: var(--sp-shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.bz-sp-picker-head { padding: 14px 18px 8px; font-size: 14px; font-weight: 700; color: var(--sp-ink); }
+.bz-sp-picker-search {
+  margin: 10px auto 8px;
+  width: calc(100% - 28px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--sp-bg);
+  border: 1px solid var(--sp-line);
+  border-radius: 9px;
+  padding: 8px 14px;
+  color: var(--sp-ink-3);
+}
+.bz-sp-picker-search input { flex: 1; border: 0; outline: 0; background: transparent; font-size: 12.5px; color: var(--sp-ink); font-family: inherit; }
+.bz-sp-picker-crumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-top: 1px solid var(--sp-line);
+  border-bottom: 1px solid var(--sp-line);
+  background: var(--sp-bg);
+  font-size: 11.5px;
+  color: var(--sp-ink-2);
+}
+.bz-sp-picker-lab { color: var(--sp-ink-3); margin-right: 2px; }
+.bz-sp-picker-sep { opacity: 0.6; }
+.bz-sp-picker-crumb > span:last-child { color: var(--sp-accent); font-weight: 600; }
+.bz-sp-picker-list { flex: 1; overflow-y: auto; padding: 8px 12px; }
+.bz-sp-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12.5px;
+  color: var(--sp-ink);
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  position: relative;
+}
+.bz-sp-picker-row:hover { background: var(--sp-accent-soft); }
+.bz-sp-picker-row.sel { box-shadow: inset 3px 0 0 var(--sp-accent); }
+.bz-sp-picker-row .bz-ic { width: 14px; height: 14px; color: var(--sp-ink-3); flex: none; }
+.bz-sp-picker-row.sel .bz-ic { color: var(--sp-accent); }
+.bz-sp-picker-row.sel span:first-of-type { color: var(--sp-accent); font-weight: 600; }
+.bz-sp-picker-row .anc {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--sp-ink-3);
+  opacity: 0.85;
+  font-family: ui-monospace, Consolas, monospace;
+  flex: none;
+  max-width: 46%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-sp-picker-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--sp-line); }
 
 /* ═══════════ 外观域卡片预览（bz-cardpick prevClass，视觉对照原型 renderMini） ═══════════ */
 /* 经纬：布局缩略 = head 横条 + 左栏竖块 + 主内容块（P1 系统面板形态） */
@@ -437,11 +525,15 @@
 .bz-sp-desk .bz-btn,
 .bz-sp-mobile .bz-btn,
 .bz-sp-mob-modal .bz-btn {
-  background: var(--sp-panel);
+  /* 组件库 .bz-btn 基线带 !important（surface-2 底/固定高/16px 内距）——覆写须同级 !important，
+     并压回原型紧凑形态（height auto + 5px 12px） */
+  background: var(--sp-panel) !important;
   border: 1px solid var(--sp-line);
-  color: var(--sp-ink);
+  color: var(--sp-ink) !important;
   border-radius: 7px;
   font-size: 12.5px;
+  height: auto;
+  padding: 5px 12px;
   box-shadow: none;
 }
 .bz-sp-desk .bz-btn:hover,
