@@ -44,7 +44,7 @@ describe('home 活动河 UI（issue 232）', () => {
     await new Promise((r) => setTimeout(r, 20));
     const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
     expect(overlay).toBeTruthy();
-    expect(overlay.querySelector('.bz-home-title')!.textContent).toContain('今日活动河');
+    expect(overlay.querySelector('.bz-home-title')!.textContent).toBe('首页');
     expect(overlay.querySelector('[data-home-date]')!.textContent).toMatch(/\d{4}-\d{2}-\d{2} 周/);
     expect(overlay.querySelector('[data-home-close]')).toBeTruthy();
     expect(overlay.querySelectorAll('[data-home-go]').length).toBeGreaterThanOrEqual(DOMAINS.length);

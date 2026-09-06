@@ -67,7 +67,6 @@
   /* ==================== 与 ui.ts 同构的常量 / 演示数据（river 真实口径的样本快照） ==================== */
   const DOMAINS = [
     { id: 'diary', name: '日记本', sub: '写今天的闪念', icon: 'diary', dot: '#e67341' },
-    { id: 'recap', name: '今日回顾', sub: '晚间点亮', icon: 'recap', dot: '#d64d8f' },
     { id: 'cinema', name: '影院', sub: '影视想看与在看', icon: 'cinema', dot: '#e6951d' },
     { id: 'review', name: '复习计划', sub: '到期卡片队列', icon: 'review', dot: '#7c5cd6' },
     { id: 'pomodoro', name: '番茄钟', sub: '累计在册', icon: 'pomodoro', dot: '#e5534b' },
@@ -75,12 +74,10 @@
     { id: 'clipping', name: '剪藏本', sub: '未读流与剪藏', icon: 'clipping', dot: '#2f9e5f' },
     { id: 'literature', name: '文献盒', sub: '笔记与录入', icon: 'literature', dot: '#c2559d' },
     { id: 'bookshelf', name: '书库', sub: '在读 9 · 读完 151', icon: 'bookshelf', dot: '#3d7bd6' },
-    { id: 'reading-report', name: '阅读报告', sub: '周维度', icon: 'reading-report', dot: '#3fa7a0' },
     { id: 'wall', name: '回忆墙', sub: '522 格', icon: 'wall', dot: '#7c8cf8' },
     { id: 'belongings', name: '归物本', sub: '登记 65 件', icon: 'belongings', dot: '#45a35c' },
     { id: 'attach', name: '移动附件', sub: '工具', icon: 'attach', dot: '#8a8f99' },
     { id: 'encrypt', name: '保险库', sub: '••• 上锁', icon: 'encrypt', dot: '#8a8f99' },
-    { id: 'smartcat', name: '小橘', sub: '在岗', icon: 'smartcat', dot: '#e67341' },
     { id: 'settings', name: '设置', sub: '20 域', icon: 'settings', dot: '#8a8f99' },
   ];
   const DOT_OF = Object.fromEntries(DOMAINS.map((d) => [d.id, d.dot]));
@@ -118,8 +115,7 @@
   }
 
   function entriesHtml() {
-    return '<div class="bz-home-sec-t">全 部 域 <span class="bz-home-n">· ' + DOMAINS.length + '</span></div>'
-      + DOMAINS.map((d) =>
+    return DOMAINS.map((d) =>
           '<button type="button" class="bz-home-erow" data-go="' + d.id + '">'
           + '<span class="bz-home-dot bz-home-dot--' + dotCls(d.id) + '"></span>'
           + '<span class="bz-home-eic" style="color:' + DOT_OF[d.id] + '">' + icon(d.icon) + '</span>'
@@ -153,8 +149,7 @@
   }
 
   function tilesHtml() {
-    return '<div class="bz-home-sec-t">全 部 域 <span class="bz-home-n">· ' + DOMAINS.length + '</span></div>'
-      + '<div class="bz-home-m-tiles">'
+    return '<div class="bz-home-m-tiles">'
       + DOMAINS.map((d) =>
           '<button type="button" class="bz-home-m-tile" data-go="' + d.id + '">'
           + '<span class="bz-home-dot bz-home-dot--' + dotCls(d.id) + '"></span>'
@@ -168,7 +163,7 @@
   function panelHtml() {
     return `
       <div class="bz-home-head">
-        <h1 class="bz-home-title">今日活动河</h1>
+        <h1 class="bz-home-title">首页</h1>
         <span class="bz-home-date">2026-09-07 周一 · 21:36</span>
         <button class="bz-home-close" title="关闭" aria-label="关闭">${icon('x')}</button>
       </div>
@@ -176,7 +171,8 @@
         <div class="bz-home-grid">
           <div class="bz-home-entries">${entriesHtml()}</div>
           <div class="bz-home-flow">${flowHtml()}</div>
-          <div class="bz-home-next">${nextHtml()}${tilesHtml()}</div>
+          <div class="bz-home-next">${nextHtml()}</div>
+          <div class="bz-home-tiles">${tilesHtml()}</div>
         </div>
       </div>`;
   }
