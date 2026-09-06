@@ -17,11 +17,7 @@
 2. 命令 ID 三段式：`bz-<域>-<动作>`。
 3. 通知正文不带 emoji，新语义先查 `src/core/notice.ts` ICONS。
 4. 样式写 `src/<域>/styles.css`，构建聚合至根 `styles.css`。
-5. **原型先行**：域内 `prototype.html` 是该域 UI 的唯一视觉基准（如 `src/favorites/prototype.html`，用法见同目录 `PROTOTYPE.md`）。任何涉及 UI 和样式的修改，**必须先改原型、评审通过后逐字同步到域代码**，禁止在 styles.css/ui.ts 上直接目测调参。同步时注意：
-   - 桌面端与移动端两端都要过一遍（原型两端并存；插件里移动端是全屏态 + `applyMobileWindowFullscreen`）；
-   - 插件模板里的 `<i data-lucide>` 占位，渲染后必须调 `mountIcons`，否则图标永不出现；
-   - overflow 滚动容器会裁绝对定位装饰（磁点/磁钉），须留顶部 padding；
-   - 浮层与面板同挂 scope 类携带 CSS 变量；跨域能力（toast/确认框/Esc/z 序）走 core 服务，不照搬原型实现。
+5. **原型先行**（详见 `docs/prototype-first.md`）：域内 `prototype.html` 是该域 UI 的唯一视觉基准。任何涉及 UI 和样式的修改，**必须先改原型、评审通过后逐字同步到域代码**，禁止在 styles.css/ui.ts 上直接目测调参；桌面端与移动端两端都要改、都要验。
 
 ## 领域清单（数据均在 CONFIG/STORAGE/）
 | 域 | 数据 |
