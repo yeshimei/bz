@@ -1,8 +1,7 @@
 // @vitest-environment node
 /**
  * 内容首页（home 域）本周聚合测试（R1 生活周报轻卡）：
- * 纯函数口径（跨周边界——周一 0 点前后、空数据、各指标独立）+ collectWeeklyStat /
- * collectHomeSnapshot 只读采集集成（MockVault；空库全 0、不建文件）。
+ * 纯函数口径（跨周边界——周一 0 点前后、空数据、各指标独立）+ collectWeeklyStat 只读采集集成（MockVault；空库全 0、不建文件）。
  * 锚点：2026-09-02 为周三，本周 = 2026-08-31（周一）0 点 ~ 2026-09-07（周一）0 点，本地时区。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -14,7 +13,6 @@ import {
   currentWeekRange, parseLocalDay, countMoviesThisWeek, countBooksFinished,
   sumPomodoroWeek, todoWeekStats, countDiaryThisWeek, collectWeeklyStat, EMPTY_WEEKLY,
 } from '../../src/home/weekly';
-import { collectHomeSnapshot } from '../../src/home/snapshot';
 
 const MON = new Date(2026, 7, 31).getTime(); // 本周一 0 点（2026-08-31）
 const NEXT_MON = new Date(2026, 8, 7).getTime(); // 下周一 0 点（2026-09-07）
@@ -240,31 +238,5 @@ describe('collectWeeklyStat（只读采集集成）', () => {
     vault.files.set('CONFIG/STORAGE/pomodoro.json', 'not-json-at-all');
     const stat = await collectWeeklyStat(mockAppWithVault(vault) as any, WED);
     expect(stat).toEqual(EMPTY_WEEKLY);
-  });
-});
-
-describe('collectHomeSnapshot 扩展 weekly 字段', () => {
-  let vault: MockVault;
-
-  beforeEach(() => {
-    vault = new MockVault();
-    setApp(mockAppWithVault(vault) as any);
-    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS }));
-  });
-
-  it('空库快照：weekly 存在且全 0（可选字段向后兼容旧消费方）', async () => {
-    const snap = await collectHomeSnapshot(mockAppWithVault(vault) as any);
-    expect(snap.ok).toBe(true);
-    expect(snap.weekly).toEqual(EMPTY_WEEKLY);
-  });
-
-  it('有数据快照：weekly 与 collectWeeklyStat 同口径', async () => {
-    // collectHomeSnapshot 内部以 Date.now() 定周窗，测试数据用「今天」动态构造（今天必属本周）
-    vault.files.set(`我的/日记/${localDayStr(0)}.md`, '日记');
-    vault.files.set(`我的/影视/《一场》.md`, cinemaMd(9, localDayStr(0)));
-    const snap = await collectHomeSnapshot(mockAppWithVault(vault) as any);
-    expect(snap.weekly!.movies).toBe(1);
-    expect(snap.weekly!.diary).toBe(1);
-    expect(snap.weekly!.pomodoros).toBe(0);
   });
 });
