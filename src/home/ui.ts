@@ -68,6 +68,7 @@ export function createOverlay(app: any): void {
   document.body.appendChild(overlay);
   topifyZ(overlay); // ADR-0067：显示即发号（cinema 等后开面板可压过首页）
   H.currentOverlay = overlay;
+  mountIcons(overlay); // 头行关闭钮等静态占位（renderAll 只挂数据区图标）
   bindEvents(overlay, app);
   renderAll();
   void refreshRiverAndRender();
