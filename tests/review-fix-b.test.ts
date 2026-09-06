@@ -69,9 +69,7 @@ describe('批 B-3：触控热区收编 core .bz-touch-target', () => {
     // --sm（原 -4px）：番茄钟控制钮、复习评级条
     expect(repo('src/pomodoro/ui.ts')).toMatch(/pomodoro-btn pomodoro-btn-primary bz-touch-target--sm/);
     expect(repo('src/review/ui.ts')).toContain('bz-review-bar-btn bz-touch-target--sm');
-    // --lg（原 -8px）：home 迷你 chips/hero 盒装钮、加密空态钮/复制账号钮、复习信息行
-    expect(repo('src/home/ui.ts')).toContain('bz-touch-target--lg bz-home-edit');
-    expect(repo('src/home/ui.ts')).toContain('bz-home-mini bz-touch-target--lg');
+    // --lg（原 -8px）：加密空态钮/复制账号钮、复习信息行（home 活动河改版后无盒装钮/迷你 chips）
     expect(repo('src/encrypt/vault-pw-view.ts')).toContain('bz-pwv-empty-add bz-touch-target--lg');
     expect(repo('src/encrypt/vault-pw-view.ts')).toContain('copyac bz-touch-target--lg');
     expect(repo('src/review/ui.ts')).toContain('bz-q-fitem bz-touch-target--lg');
