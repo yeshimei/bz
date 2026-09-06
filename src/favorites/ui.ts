@@ -484,6 +484,7 @@ function openRowMenuAt(it: FavoritesItem, x: number, y: number): void {
     acts[+(b as HTMLElement).dataset.k!].run();
   });
   document.body.appendChild(menuEl);
+  mountIcons(menuEl);
   topifyZ(menuEl);
   const r = menuEl.getBoundingClientRect();
   menuEl.style.left = Math.min(x, window.innerWidth - r.width - 8) + 'px';
@@ -518,6 +519,7 @@ function openMobSheet(it: FavoritesItem): void {
     acts[+(b as HTMLElement).dataset.k!].run();
   });
   document.body.appendChild(mask);
+  mountIcons(mask);
   topifyZ(mask);
 }
 

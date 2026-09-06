@@ -130,7 +130,7 @@
   box-shadow: 0 10px 28px rgba(0,0,0,.28); padding: 5px;
 }
 .bz-fav-ctx button {
-  display: flex; align-items: center; gap: 9px; width: 100%; border: none; background: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: flex-start; gap: 9px; width: 100%; border: none; background: none; cursor: pointer;
   font: 12.5px/1 var(--font-interface, 'Microsoft YaHei'); color: var(--menu-ink); padding: 8px 10px; border-radius: 7px; text-align: left;
 }
 .bz-fav-ctx button:hover { background: var(--menu-hover); }
@@ -157,7 +157,7 @@
 .bz-fav-sheet .bz-fav-sh-meta { font-size: 11px; color: var(--ink-faint); margin-top: 3px; }
 .bz-fav-sheet .bz-fav-sh-acts { display: flex; flex-direction: column; }
 .bz-fav-sheet .bz-fav-sh-acts button {
-  display: flex; align-items: center; gap: 10px; border: none; background: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: flex-start; gap: 10px; border: none; background: none; cursor: pointer;
   font: 13px/1 var(--font-interface, 'Microsoft YaHei'); color: var(--menu-ink);
   padding: 11px 6px; text-align: left; border-bottom: 1px solid var(--ft-bd);
 }
