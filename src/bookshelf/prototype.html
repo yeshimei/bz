@@ -294,14 +294,15 @@
       <span class="pin"></span><div class="n">${d.n}</div><div class="t">${d.t}</div>
     </div>`;
     }).join('');
-    for (const [cat, c] of catPairs) {
+    // 分类标签独立子容器（桌面 display:contents 隐身；移动端一行横滑带——styles.css @media 块）
+    const catHtml = catPairs.map(([cat, c]) => {
       const hrs = c.ms > 0 ? ` · ${Math.round(c.ms / 3600000)} 时` : '';
       const off = filtering && M.catFilter !== cat;
-      html += `<div class="bz-bs-taglabel dim-cat${M.catFilter === cat ? ' on' : ''}${off ? ' off' : ''}" data-bs-cat="${esc2(cat)}">
+      return `<div class="bz-bs-taglabel dim-cat${M.catFilter === cat ? ' on' : ''}${off ? ' off' : ''}" data-bs-cat="${esc2(cat)}">
       <span class="pin"></span><div class="n">${esc2(cat)}</div><div class="t">${c.n} 册${hrs}</div>
     </div>`;
-    }
-    el.innerHTML = html;
+    }).join('');
+    el.innerHTML = `${html}<div class="bz-bs-cats">${catHtml}</div>`;
   }
   function renderSortSeg() {
     const seg = document.getElementById('bz-bs-sortseg');
@@ -612,8 +613,12 @@
         if (MOB) {
           t('移动端@media全屏命中', Math.abs(panelEl.getBoundingClientRect().width - document.documentElement.clientWidth) < 1);
           t('移动端借书卡全屏规则在位', !!document.querySelector('.bz-bs-panel'));
+          const rail = $('.bz-bs-header');
+          t('头行一行横滑(overflow+隐藏滚动条)', !!rail && getComputedStyle(rail).overflowX === 'auto' && getComputedStyle(rail).scrollbarWidth === 'none' && rail.scrollWidth > rail.clientWidth);
+          t('状态签+分类带并入头行单行', getComputedStyle($('.bz-bs-labels')).display === 'contents' && getComputedStyle($('.bz-bs-cats')).display === 'contents');
         } else {
           t('报告视图容器隐藏', !$('.bz-bs-view-report.active') && !!$('.bz-bs-view-report'));
+          t('分类容器桌面contents隐身', getComputedStyle($('.bz-bs-cats')).display === 'contents');
           applySkin('mono');
           t('换肤=极简黑白类', panelEl.classList.contains('bz-bs-skin-mono'));
           applySkin('nordic');

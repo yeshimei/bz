@@ -109,6 +109,11 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     expect(labels.some((l) => l.textContent?.includes('成长'))).toBe(true);
     expect(labels.some((l) => l.textContent?.includes('未分类'))).toBe(true);
     expect(labels.some((l) => l.textContent?.includes('科幻'))).toBe(false);
+    // 分类标签独立子容器（桌面 display:contents 隐身；移动端并入头行一行横滑；与原型 renderLabels 同构契约）
+    const catsBox = header.querySelector('.bz-bs-cats');
+    expect(catsBox?.querySelectorAll('[data-bs-cat]').length).toBe(2);
+    expect(catsBox?.querySelectorAll('[data-bs-side]').length).toBe(0);
+    expect(header.querySelectorAll('#bz-bs-labels > .bz-bs-taglabel[data-bs-side]').length).toBe(4);
     // 工具行：检索 + 三档排序 + 在墙计数
     expect(overlay.querySelector('#bz-bs-dsearch')).toBeTruthy();
     const segBtns = Array.from(overlay.querySelectorAll('#bz-bs-sortseg button')).map((b) => b.textContent);
