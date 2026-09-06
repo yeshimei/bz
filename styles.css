@@ -5805,7 +5805,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-home-date { display: none; }
   .bz-home-head { position: sticky; top: 0; z-index: 5; background: var(--h-bg); padding: 14px 16px 10px; }
   .bz-home-title { font-size: 17px; font-weight: 800; letter-spacing: .08em; }
-  .bz-home-close { display: inline-flex; align-items: center; justify-content: center; flex: none; margin-left: auto; width: 30px; height: 30px; border: 1px solid var(--h-line); border-radius: 8px; background: var(--h-card); color: var(--h-ink); cursor: pointer; }
+  .bz-home-panel .bz-home-close { display: inline-flex; align-items: center; justify-content: center; flex: none; margin-left: auto; width: 30px; height: 30px; border: 1px solid var(--h-line); border-radius: 8px; background: var(--h-card); color: var(--h-ink); cursor: pointer; }
   .bz-home-close .bz-ic { width: 13px; height: 13px; }
   .bz-home-body { padding: 12px 16px 24px; overflow-y: auto; }
   .bz-home-grid { display: flex; flex-direction: column; height: auto; margin-top: 0; }
@@ -10007,6 +10007,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* ==================== 移动端（≤768px：同构书脊墙，缩距不换形） ==================== */
 @media (max-width: 768px) {
   .bz-bs-panel { width: 100vw; height: 100vh; max-width: none; max-height: none; border-radius: 0; border: none; background: var(--bsw-wall); }
+  /* 墙纸连纹理一起延伸进安全区顶垫：wallpage 上提 + 等值补位（公式与 core .bz-panel-mtop 一致，
+     真机 safe-area 更大时也严格贴合）；纹理仍单源，无错位缝 */
+  .bz-bs-wallpage {
+    margin-top: calc(-1 * max(44px, env(safe-area-inset-top, 0px)));
+    height: calc(100% + max(44px, env(safe-area-inset-top, 0px)));
+    padding-top: max(44px, env(safe-area-inset-top, 0px));
+  }
   .bz-bs-header {
     padding: 12px 14px 4px; gap: 8px; flex-wrap: nowrap; align-items: center;
     overflow-x: auto; scrollbar-width: none;
