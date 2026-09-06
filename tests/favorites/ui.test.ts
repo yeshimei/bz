@@ -176,10 +176,10 @@ describe('主面板开合与空态', () => {
     // 壳头行彻底删除（issue 219c）：无品牌块/⚙/✕ 头行（桌面点遮罩/Esc 关，移动浮动 ✕）
     expect(overlay.querySelector('.bz-panel-head')).toBeNull();
     expect(overlay.querySelector('[data-fav-settings]')).toBeNull();
-    // 头区：仅一行原型款大标题「收藏本」（issue 219d：副题/计数删）
+    // 头区：原型款大标题「收藏本」+ 同行灰色小字副题（计数+图例说明，issue 219e）
     expect(overlay.querySelector('.bz-fav-hero-title')!.textContent).toBe('收藏本');
-    expect(overlay.querySelector('[data-fav-title]')).toBeNull();
-    expect(overlay.querySelector('[data-fav-count]')).toBeNull();
+    expect(overlay.querySelector('[data-fav-sub')!.textContent).toContain('张白卡');
+    expect(overlay.querySelector('[data-fav-sub')!.textContent).toContain('磁圆点=标签色');
     // 磁贴行：全部 + 已归档 + 9 类 + 行尾「＋ 新收藏」贴纸（添加入口，样式与磁贴统一）
     const stickers = overlay.querySelectorAll('[data-fav-tags] .bz-fav-stk');
     expect(stickers.length).toBe(12);

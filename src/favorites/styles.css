@@ -14,28 +14,33 @@
 .bz-fav-panel,
 .bz-fav-form,
 .bz-item-menu.bz-fav-menu {
-  --bz-surface-3: #efe9dc;   /* 面板底（亚麻米灰） */
-  --bz-surface-2: #fffdf7;   /* 卡纸白 */
+  --bz-surface-3: #e9e4d8;   /* 面板底（原型亚麻米灰 1:1） */
+  --bz-surface-2: #ffffff;   /* 贴纸/卡片白（原型纯白） */
   --bz-surface-1: #f5f0e5;   /* 凹陷面（表单 LLM 区/徽章底） */
-  --bz-surface-hover: #faf6ec;
+  --bz-surface-hover: #f4f0e6;
   --bz-text-1: #3c362c;
   --bz-text-2: #6d6455;
   --bz-text-3: #a89e8a;
-  --bz-border: #ddd5c4;
+  --bz-border: #d8d1c0;      /* 原型 frame 边色 */
 }
 .bz-fav-panel {
   width: 960px; max-width: calc(100vw - 32px); height: 640px; max-height: 92vh;
   /* 亚麻十字纹（C5 规格：45°/-45° 双向细线叠米灰底） */
   background:
-    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.4) 0 2px, transparent 2px 4px),
-    repeating-linear-gradient(-45deg, rgba(160, 150, 130, 0.16) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.35) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(-45deg, rgba(160, 150, 130, 0.14) 0 2px, transparent 2px 4px),
     var(--bz-surface-3);
 }
-/* ---- 头区：仅一行原型款大标题（粗体、墨色、宽字距，无任何附加件） ---- */
+/* ---- 头区 1:1 原型：大标题（原型 21px/ls5px/#5a5244）+ 同行灰色小字（12px/#9a917d） ---- */
 .bz-fav-body { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 2px var(--bz-space-lg) 0; }
+.bz-fav-hero { display: flex; align-items: baseline; gap: 14px; min-width: 0; }
 .bz-fav-hero-title {
-  font-size: 28px; font-weight: 800; color: #4a3f30;
-  letter-spacing: 10px; flex: none; white-space: nowrap;
+  font-size: 21px; font-weight: 700; color: #5a5244;
+  letter-spacing: 5px; flex: none; white-space: nowrap;
+}
+.bz-fav-hero-sub {
+  font-size: 12px; color: #9a917d; letter-spacing: 0.5px;
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
 /* ---- 移动浮动 ✕（全屏退出；桌面点遮罩/Esc 关闭，无头行钮） ---- */
@@ -45,16 +50,16 @@
 .bz-fav-stickers { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 4px; }
 .bz-fav-stk {
   display: inline-flex; align-items: center; gap: 6px;
-  border: none; cursor: pointer; font: 13px/1 system-ui, 'Microsoft YaHei';
-  padding: 10px 16px; border-radius: 12px;
-  background: #fff; color: var(--bz-text-1);
+  border: none; cursor: pointer; font: 12px/1 system-ui, 'Microsoft YaHei';
+  padding: 8px 14px; border-radius: 99px;
+  background: #ffffff; color: #6d6455;
   box-shadow: 0 2px 6px rgba(120, 110, 90, 0.2);
   position: relative;
 }
 /* 磁圆点风上钉：贴纸顶部小磁点（同卡 .bz-fav-dot 材质） */
 .bz-fav-stk::before {
   content: ''; position: absolute; top: -4px; left: 50%; transform: translateX(-50%);
-  width: 9px; height: 9px; border-radius: 50%;
+  width: 10px; height: 10px; border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #fff, #b9b2a2 75%);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
 }
@@ -81,8 +86,8 @@
 }
 .bz-fav-card {
   position: relative; width: 196px; flex: none; display: block;
-  background: var(--bz-surface-2); border: none; border-radius: 10px;
-  padding: 24px 14px 12px; cursor: default; user-select: none; -webkit-user-select: none;
+  background: #ffffff; border: none; border-radius: 10px;
+  padding: 24px 16px 13px; cursor: default; user-select: none; -webkit-user-select: none;
   box-shadow: 0 4px 12px rgba(120, 110, 90, 0.18);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
@@ -101,7 +106,7 @@
 /* 磁圆点（右上 = 首标签色，--c 由 cardHtml 内联注入） */
 .bz-fav-dot {
   position: absolute; top: 10px; right: 10px; width: 12px; height: 12px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fff 0 20%, var(--c, #b9b2a2) 75%);
+  background: radial-gradient(circle at 35% 30%, #fff 0 30%, var(--c, #d8d3c8) 90%);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 /* 置顶金圈（C5 规格） */
