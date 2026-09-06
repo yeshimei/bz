@@ -8,7 +8,7 @@
 
 /* —— 变量（原型 :root / body.dark 两组逐字） —— */
 .bz-fav-scope {
-  --bg: #e9e4d8; --bg-weave1: rgba(255,255,255,.35); --bg-weave2: rgba(160,150,130,.14);
+  --bg: #fffcf6; --bg-weave1: rgba(255,255,255,.5); --bg-weave2: rgba(160,150,130,.1);
   --frame-bd: #d8d1c0; --frame-bg: rgba(255,255,255,.45);
   --ink: #4a443a; --ink-strong: #3c362c; --ink-title: #5a5244; --ink-mut: #9a917d; --ink-faint: #a89e8a;
   --card: #fff; --card-shadow: rgba(120,110,90,.18); --card-shadow-hi: rgba(120,110,90,.26);
@@ -32,7 +32,7 @@
 
 /* —— 面板（原型 body + .frame） —— */
 .bz-fav-panel {
-  padding: 30px 44px 50px;
+  padding: 26px 30px 0;
   background:
     repeating-linear-gradient(45deg, var(--bg-weave1) 0 2px, transparent 2px 4px),
     repeating-linear-gradient(-45deg, var(--bg-weave2) 0 2px, transparent 2px 4px),
@@ -41,13 +41,13 @@
   font-family: var(--font-interface, system-ui);
   overflow: auto;
 }
-.bz-fav-panel .bz-fav-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; }
-.bz-fav-panel .bz-fav-head h1 { font-size: 16px; letter-spacing: 3px; color: var(--ink-title); font-weight: 700; margin: 0; }
+.bz-fav-panel .bz-fav-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 20px; }
+.bz-fav-panel .bz-fav-head h1 { font-size: 14px; letter-spacing: 3px; color: var(--ink-title); font-weight: 700; margin: 0; }
 /* 移动端：面板即原型 .phone 内容（全屏；边框圆角交给全屏态，留内边距） */
-.bz-fav-panel.bz-fav-mob { padding: 14px 16px 24px; }
+.bz-fav-panel.bz-fav-mob { padding: 16px 14px 0; }
 
 /* —— 磁贴标签（原型 .tags 逐字） —— */
-.bz-fav-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+.bz-fav-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
 .bz-fav-tags button {
   border: none; cursor: pointer; font: 12px/1 var(--font-interface, system-ui); padding: 8px 14px;
   background: var(--chip); color: var(--chip-ink); border-radius: 99px;
@@ -71,7 +71,7 @@
 .bz-fav-tags button.bz-fav-chip-add:hover { border-color: var(--acc); color: var(--acc); }
 
 /* —— 卡片（原型 .card 逐字） —— */
-.bz-fav-board { display: flex; flex-wrap: wrap; gap: 22px 20px; align-items: flex-start; }
+.bz-fav-board { display: flex; flex-wrap: wrap; gap: 22px 20px; align-items: flex-start; padding-top: 6px; }
 .bz-fav-card {
   width: 184px; background: var(--card); border-radius: 10px; padding: 24px 16px 13px; cursor: pointer; position: relative;
   box-shadow: 0 4px 12px var(--card-shadow); transition: transform .15s, box-shadow .15s;
@@ -104,11 +104,14 @@
 /* 移动端：双列网格（原型 .phone .m-board） */
 .bz-fav-panel.bz-fav-mob .bz-fav-board { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 12px; align-items: start; }
 .bz-fav-panel.bz-fav-mob .bz-fav-card { width: auto; }
+/* 移动端磁贴行：平铺单行横向滑动（原型 .phone .tags；顶垫 5px 防磁点被 overflow 裁掉） */
+.bz-fav-panel.bz-fav-mob .bz-fav-tags { flex-wrap: nowrap; overflow-x: auto; padding: 5px 0 6px; }
+.bz-fav-panel.bz-fav-mob .bz-fav-tags button { white-space: nowrap; }
 
 /* 移动端关闭钮（浮动 ✕；桌面隐藏） */
 .bz-fav-mob-close {
   display: none; position: absolute; top: 10px; right: 10px; z-index: 5;
-  width: 30px; height: 30px; border-radius: 8px; border: none; background: var(--chip); color: var(--chip-ink);
+  width: 24px; height: 24px; border-radius: 7px; border: none; background: var(--chip); color: var(--chip-ink);
   cursor: pointer; align-items: center; justify-content: center; box-shadow: 0 2px 6px var(--card-shadow);
 }
 .bz-fav-panel.bz-fav-mob .bz-fav-mob-close { display: flex; }
