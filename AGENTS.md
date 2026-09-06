@@ -17,12 +17,11 @@
 2. 命令 ID 三段式：`bz-<域>-<动作>`。
 3. 通知正文不带 emoji，新语义先查 `src/core/notice.ts` ICONS。
 4. 样式写 `src/<域>/styles.css`，构建聚合至根 `styles.css`。
-5. UI 设计参照 `docs/ui-design-manual.md`。
-6. **UI 分层依赖（自上而下单向）**：`设计手册 → 样式库 → 组件库 → 域`。
-   - 样式库（`src/core/ui/*.css`，token + 组件样式）**依据**设计手册取值/命名；
-   - 组件库（`src/core/ui/*.ts` 工厂）**只消费**样式库的类与 token，不新造视觉值；
-   - 各域 UI **只准用**组件库工厂 + 样式库类；域需要新视觉时，**先扩样式库/组件库**（共享类），禁止域内另起一套按钮/输入/chip 等基线；
-   - 仅当**既有组件/样式确实无法表达**新功能时，才允许新增组件/样式——新增须回写样式库手册与设计手册。
+5. **原型先行**：域内 `prototype.html` 是该域 UI 的唯一视觉基准（如 `src/favorites/prototype.html`，用法见同目录 `PROTOTYPE.md`）。任何涉及 UI 和样式的修改，**必须先改原型、评审通过后逐字同步到域代码**，禁止在 styles.css/ui.ts 上直接目测调参。同步时注意：
+   - 桌面端与移动端两端都要过一遍（原型两端并存；插件里移动端是全屏态 + `applyMobileWindowFullscreen`）；
+   - 插件模板里的 `<i data-lucide>` 占位，渲染后必须调 `mountIcons`，否则图标永不出现；
+   - overflow 滚动容器会裁绝对定位装饰（磁点/磁钉），须留顶部 padding；
+   - 浮层与面板同挂 scope 类携带 CSS 变量；跨域能力（toast/确认框/Esc/z 序）走 core 服务，不照搬原型实现。
 
 ## 领域清单（数据均在 CONFIG/STORAGE/）
 | 域 | 数据 |
@@ -46,8 +45,6 @@
 | recap（今日回顾） | 五域当天痕迹只读聚合 |
 | checkup（数据体检） | 全插件数据只读巡检 |
 | literature（文献盒） | literature 笔记 |
-
-> 已退役：movie（ADR-0087）、quiz（并入 review）、library（并入 bookshelf）、password（crypto 迁 core）、news/clipping（并入 clipbook）、memo（ADR-0092，todo 全面接管）、launcher（ADR-0093，home 唯一入口）。
 
 ## 测试与质量门禁
 - 新功能必须包含数据层+UI层测试，smoke.test.ts 同步验证。
