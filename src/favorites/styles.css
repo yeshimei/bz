@@ -171,7 +171,7 @@
   position: fixed; inset: 0; z-index: 600; background: var(--mask); display: flex; align-items: center; justify-content: center;
 }
 .bz-fav-form {
-  width: 430px; max-height: 86vh; overflow: auto; background: var(--pop); border-radius: 14px; padding: 20px 22px 18px;
+  width: min(430px, calc(100vw - 32px)); max-height: 86vh; overflow: auto; background: var(--pop); border-radius: 14px; padding: 20px 22px 18px;
   box-shadow: 0 16px 44px rgba(0,0,0,.32);
 }
 .bz-fav-form h2 { font-size: 15px; color: var(--pop-ink); margin: 0 0 14px; letter-spacing: 2px; }
@@ -217,4 +217,9 @@
   .bz-fav-scope .bz-fav-tags button { min-height: 44px; }
 }
 
-/* —— 窄窗口兜底：面板内双列（非移动环境但面板窄时退化为单列换行即可，flex 自适应无需处理） —— */
+/* —— 窄面板兜底：桌面窄窗下面板宽 <520px 时卡墙退化为移动同款双列平摊（容器查询，Obsidian Chromium 支持） —— */
+.bz-fav-panel { container-type: inline-size; }
+@container (max-width: 520px) {
+  .bz-fav-panel .bz-fav-board { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 12px; align-items: start; }
+  .bz-fav-panel .bz-fav-card { width: auto; }
+}

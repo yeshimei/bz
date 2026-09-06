@@ -210,6 +210,7 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
     overlay.querySelector('.bz-fav-panel') as HTMLElement,
     (tryGetSettings() as any)?.favoritesMobileDefaultFullscreen === true
   );
+  mountIcons(overlay); // 头行关闭钮等 innerHTML 模板里的图标占位
 
   // ESC（主面板 + 浮层栈：菜单 → 抽屉 → 表单 → 面板）
   if (!mainEscRegistered) {
@@ -306,6 +307,7 @@ function renderAll(): void {
   if (!M.overlay) return;
   renderTags();
   renderContent();
+  mountIcons(M.overlay.querySelector('[data-fav-tags]') as HTMLElement);
 }
 
 /** 标签筛选切换语义（磁贴行委托共用）：再点当前标签 = 取消筛选回全部；点「已归档」= 归档视图 */
