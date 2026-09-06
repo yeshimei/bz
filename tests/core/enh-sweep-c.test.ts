@@ -135,6 +135,11 @@ describe('enh-sweep-c：杂项打磨', () => {
     expect(src('src/favorites/ui.ts')).toContain('bz-fav-stk-num');
     expect(css('favorites')).not.toContain('bz-fav-mobchip-cnt');
   });
+
+  it('favorites 磁贴选择器 0,2,0 提级（issue 219f：抗 reset/app.css 0,1,1 button:not(.clickable-icon)）', () => {
+    expect(css('favorites')).toContain('.bz-fav-stickers .bz-fav-stk {');
+    expect(css('favorites')).toContain('.bz-fav-stickers .bz-fav-stk--add {');
+  });
 });
 
 describe('enh-sweep-c：lucide 收尾', () => {
