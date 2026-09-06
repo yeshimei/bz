@@ -1005,3 +1005,14 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **rail 换 site 分组**：issue 206 的平台聚合行退役，改按 `site` 属性归并（news 面 = `a.site||platform`，剪藏面 = frontmatter `site`，空归「未知」）；行=全库站点索引（未读 news 流 + 剪藏全量，已存 news 骨架不计避免与剪藏重复），排序总数降序→未读降序→名 ascending；B站 UP 子行与剪藏本聚合行保留；移动源胶囊同源对齐。数据层 `aggregateSites` 纯函数 + `queryBySource` 新增 `kind:'site'` 源。
 - **中右栏分割线**：组件库新工厂 `uiVSplitter`（.bz-vsplit，竖向拖条，role=separator；桌面 only，触屏不挂），拖动改中栏定宽、右栏弹性吸收；尺寸记忆键 `clipbookMidWidth`（0=未拖过走 CSS 默认 360px），防抖 300ms 落盘口径同 uiResizable；设置页「基础」组加「目录栏宽度记忆」行。
 - **拖拽误关闭修复（core）**：`core/dom.ts` 新增 `swallowNextClick()`（capture 一次性吞终端 click，下次 mousedown 撤防）；`uiResizable` 拖拽结束接此防线——todo/剪藏本/保险库等一切「缩放热区 × 点遮罩关闭」组合全量受益；uiVSplitter 拖拽同防（防误触 rail 行/条目卡）。
+
+### 剪藏本在读让位移动端对齐 + 保留天数合并单键（issue 224，2026-09-06）
+
+> 用户反馈：①点进文章自动落「在读」后文章不往下排、留在原位——核实桌面中栏 sortedView 未读在前重排正常（无头复现验证），缺口在移动端列表：renderMobList 用时间序不重排，且 autoMarkReading 刷新不重绘移动列表；②设置「已保存文章保留天数(3)/已跳过文章保留天数(7)」语义重复，合并为「未保存文章保留天数」默认 30 天。
+
+- **移动端在读让位**：renderMobList 改用 sortedView()（未读在前、组内最新在前，与桌面目录同序）；autoMarkReading 落在读后补 renderMobList() 刷新。
+- **保留天数合并**：newsRetentionSavedDays + newsRetentionSkippedDays 退役，新键 `newsRetentionUnsavedDays` 默认 30；applyRetention 以同值应用于已保存骨架与已跳过骨架两档；数据源组设置两行并一行。
+
+### 收藏本 C5 终版原型 1:1 换血 + 三项退役（issue 227 / ADR-0101，2026-09-06）
+
+> 原型 favorites-cork-5/c5-linen-full.html 迭代终稿拍板照搬。三项退役用户逐项拍板：大模型/余额整功能退役（服务+UI，favorites.json llmConfig/balance* 字段保留不迁移）；favoritesTimeFormat 键删除固定相对时间；关联笔记整功能退役（含 file-sync.ts 整链删除 + main.ts 接线摘除）。面板 UI 豁免铁律 6：磁贴行/卡墙/右键菜单/底部抽屉/表单/空态逐字照搬原型、bz-fav-* 域内自带 CSS（.theme-dark 变量组替代原型手动暗色钮，跟随 Obsidian 主题）；跨域服务（notice/flow-dialog/esc-manager/mobile/z-order）保留。smartcat 契约零改动。
