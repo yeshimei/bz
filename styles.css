@@ -370,9 +370,10 @@ template {
 /* Obsidian 核心 app.css 对裸 button:not(.clickable-icon) 统一喂默认
    color/background-color/box-shadow（--interactive-normal 底 + --input-shadow）。
    此全局覆盖使按钮回到无样式基态，由各域样式自行决定外观。
-   :where() 归零特异性（P0 收编前提，docs/ui-shared-components.md）：语义不变
-   （仍是兜底 unset），但任何单类按钮规则（.bz-btn/.bz-choice-btn 等 0,1,0）
-   即可覆盖——共享组件库的单类组件成立的前提。 */
+   特异性如实说明：本选择器 = (0,1,1)（button 元素 0,0,1 + :not(.clickable-icon)
+   的类参量 0,1,0），并非 :where() 归零；同分 (0,1,1) 规则靠聚合顺序决胜
+   （build-css.mjs：本文件先于 core/ui 与各域样式）。域/组件要稳定压过本基线、
+   不受聚合顺序影响的，加容器类前缀提至 (0,2,1)+（先例：.bz-fav-scope .bz-fav-tags button）。 */
 button:not(.clickable-icon) {
     color: unset;
     background-color: unset;
@@ -7032,8 +7033,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-fav-panel.bz-fav-mob { width: 100vw; height: 100vh; max-width: 100vw; padding: 16px 14px 0; }
 
 /* —— 磁贴标签（原型 .tags 逐字） —— */
+/* 选择器带 .bz-fav-scope 前缀（(0,2,1)）：脱离与 core reset button:not(.clickable-icon) (0,1,1)
+   的同分顺序对抗，聚合顺序变化不再翻车（C1） */
 .bz-fav-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; flex: none; }
-.bz-fav-tags button {
+.bz-fav-scope .bz-fav-tags button {
   border: none; cursor: pointer; font: 12px/1 var(--font-interface, system-ui); padding: 8px 14px;
   display: inline-flex; align-items: center; gap: 5px;
   background: var(--chip); color: var(--chip-ink); border-radius: 99px;
@@ -7113,10 +7116,12 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* —— 右键菜单（原型 .ctx 逐字） —— */
 .bz-fav-ctx {
-  position: fixed; z-index: 500; min-width: 168px; background: var(--menu); border: 1px solid var(--menu-bd); border-radius: 10px;
+  position: fixed; z-index: 500; /* 原型兜底值，插件端以 topifyZ 为准 */
+  min-width: 168px; background: var(--menu); border: 1px solid var(--menu-bd); border-radius: 10px;
   box-shadow: 0 10px 28px rgba(0,0,0,.28); padding: 5px;
 }
-.bz-fav-ctx button {
+/* .bz-fav-scope 前缀（(0,2,1)）：脱离与 core reset (0,1,1) 的同分顺序对抗（C1） */
+.bz-fav-scope .bz-fav-ctx button {
   display: flex; align-items: center; justify-content: flex-start; gap: 9px; width: 100%; border: none; background: none; cursor: pointer;
   font: 12.5px/1 var(--font-interface, 'Microsoft YaHei'); color: var(--menu-ink); padding: 8px 10px; border-radius: 7px; text-align: left;
 }
@@ -7128,7 +7133,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* —— 移动端底部抽屉（原型 .sheet 逐字） —— */
 .bz-fav-sheet-mask {
-  position: fixed; inset: 0; z-index: 400; background: var(--mask); display: none; align-items: flex-end;
+  position: fixed; inset: 0; z-index: 400; /* 原型兜底值，插件端以 topifyZ 为准 */
+  background: var(--mask); display: none; align-items: flex-end;
 }
 .bz-fav-sheet-mask.bz-fav-show { display: flex; }
 .bz-fav-sheet {
@@ -7153,9 +7159,18 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-fav-sheet .bz-fav-sh-acts button.bz-fav-danger { color: var(--danger); }
 .bz-fav-sheet .bz-fav-sh-acts button.bz-fav-danger .bz-ic { color: var(--danger); }
 
+/* —— 图标尺寸对齐 c5 基准（ADR-0101 1:1，恢复基准非改视觉） ——
+   抽屉动作行 15px（c5-linen-full.html 动作按钮 icon(a.ic, 15)）；卡片标签徽记 11px
+   （域内原型 icon(ic, 11)；c5 该处为 emoji，lucide 化后以域内原型为准）。
+   插件端 .bz-ic 默认 1em（动作行 13px 字号=13px）、tagb 挂 --xs 12px（!important），
+   故 tagb 覆盖须同带 !important；原型端 svg 直出本就同值，不受此块影响。 */
+.bz-fav-sheet .bz-ic { width: 15px; height: 15px; }
+.bz-fav-card .bz-fav-tagb .bz-ic { width: 11px !important; height: 11px !important; }
+
 /* —— 表单（原型 .mask + .form 逐字） —— */
 .bz-fav-form-mask {
-  position: fixed; inset: 0; z-index: 600; background: var(--mask); display: flex; align-items: center; justify-content: center;
+  position: fixed; inset: 0; z-index: 600; /* 原型兜底值，插件端以 topifyZ 为准 */
+  background: var(--mask); display: flex; align-items: center; justify-content: center;
 }
 .bz-fav-form {
   width: min(430px, calc(100vw - 32px)); max-height: 86vh; overflow: auto; background: var(--pop); border-radius: 14px; padding: 20px 22px 18px;
@@ -7198,7 +7213,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-fav-form .bz-fav-btns button.bz-fav-pri { background: var(--acc); border-color: var(--acc); color: var(--on-acc); }
 .bz-fav-form .bz-fav-btns button:hover { filter: brightness(.97); }
 .bz-fav-form .bz-fav-btns button:disabled { opacity: .55; cursor: default; }
-.bz-fav-form .bz-fav-btns #fz-ai { display: inline-flex; align-items: center; gap: 5px; color: var(--acc); border-color: var(--acc); }
+.bz-fav-form .bz-fav-btns .bz-fav-ai-btn { display: inline-flex; align-items: center; gap: 5px; color: var(--acc); border-color: var(--acc); }
 
 /* —— 触屏 44px 触控档（磁贴行按钮；延续 issue 219 系列守护口径） —— */
 @media (pointer: coarse) {
@@ -8669,8 +8684,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-bel-panel .bz-input:focus,
 .bz-bel-form .bz-input:focus,
 .bz-bel-detail .bz-input:focus { outline: none; box-shadow: none; }
-/* 聚焦变黄边来自 core focus 色；海报皮肤下钉回墨线 */
-.bz-bel-panel .bz-bel-toolrow .bz-input:focus { border-color: var(--bz-bel-ink); }
 
 /* ---- 筛选 chips（p20 .chip 逐字：方角墨框、on=墨底纸字、计数弱化；组件库 .bz-chip 皮） ---- */
 .bz-bel-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 22px 0; flex-shrink: 0; }
@@ -8848,6 +8861,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-item-menu.bz-bel-menu button.bz-item-menu-item:hover { background: var(--bz-bel-ink) !important; color: var(--bz-bel-paper) !important; }
 .bz-item-menu.bz-bel-menu button.bz-item-menu-item--danger:hover { background: var(--bz-bel-accent) !important; color: var(--bz-bel-paper) !important; }
 
+/* ---- 底部抽屉头（sheetHeadOf：原两处内联 flex 上岸，双端同挂类） ---- */
+.bz-bel-sheet-head { display: flex; align-items: flex-start; gap: 10px; }
+.bz-bel-sheet-info { flex: 1; min-width: 0; }
+
 /* ---- 表单（弹窗骨架用组件库 .bz-overlay-mask；状态 = p20 .choice 平铺四格）----
    表单遮罩 z 由 openForm 经 topifyZ 动态发号（ADR-0067，恒压主面板），不写死静态档；
    分类候选浮层（.bz-popover）锚定所在 .bz-field 下方 */
@@ -8894,7 +8911,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 核心 .bz-choice-btn.is-on 带 !important，皮覆盖须同重 */
 .bz-bel-statuspick .bz-choice-btn.is-on { background: var(--bz-bel-ink) !important; color: var(--bz-bel-paper) !important; }
 .bz-bel-statuspick .bz-choice-btn.is-on:hover { background: var(--bz-bel-ink) !important; }
-.bz-bel-statuspick .bz-choice-btn.is-on.bz-bel-c2 { background: var(--bz-bel-accent) !important; color: #fff !important; }
+.bz-bel-statuspick .bz-choice-btn.is-on.bz-bel-c2 { background: var(--bz-bel-accent) !important; color: var(--bz-on-brand, #fff) !important; }
 .bz-bel-statuspick .bz-choice-btn.is-on.bz-bel-c2:hover { background: var(--bz-bel-accent) !important; }
 
 /* ---- 移动端（≤768px = p20 手机壳）----
@@ -8917,6 +8934,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
      桌面 hero 不受影响；顶部避让由根节点 .bz-panel-mtop 统一接管 44px */
   .bz-bel-mob-only { display: inline-flex; }
   .bz-bel-hero { padding: 10px 8px 10px 14px; }
+  /* 整体隐藏连带标语 hero-sub（多余装饰，用户拍板去除——C4：原单独隐藏规则系死代码已删） */
   .bz-bel-hero-text { display: none; }
   .bz-bel-kpis { display: none; }
   .bz-bel-mobhead { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
@@ -8941,8 +8959,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-bel-panel .bz-mobstrip-chip { flex: 1 1 0; min-width: 0; justify-content: center; padding: 5px 4px; font-size: 11px; }
   /* 底部记一笔（p20 m-add）独收尾，安全区随边距 */
   .bz-bel-mobadd { display: flex; width: calc(100% - 32px); margin: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px)); justify-content: center; flex-shrink: 0; }
-  /* 标语移动端隐藏（多余装饰，用户拍板去除） */
-  .bz-bel-hero-sub { display: none; }
   /* 网格单列 + 手机卡档（p20 #mob .cell：em 34/name 16/price 19，单行省略） */
   .bz-bel-grid { grid-template-columns: 1fr; }
   .bz-bel-content { padding: 12px 16px 10px; }
@@ -8950,8 +8966,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-bel-cell-em { font-size: 30px; padding: 6px 0 4px; }
   .bz-bel-name { font-size: 16px; }
   .bz-bel-price { font-size: 19px; }
-  /* 脚注居中（p20 m-foot 10px → 抬 11px 过小字号扫尾） */
-  .bz-bel-foot { justify-content: center; margin: 12px 16px calc(10px + env(safe-area-inset-bottom, 0px)); font-size: 11px; letter-spacing: 2px; }
 }
 
 /* 触控热区（设计手册 §8.2）已收编 core 样式库 .bz-touch-target（components.css，
