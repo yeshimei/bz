@@ -49,14 +49,14 @@
   border: 1px solid var(--frame-bd); border-radius: 18px;
   box-shadow: 0 8px 30px rgba(0,0,0,.14);
 }
-.bz-fav-panel .bz-fav-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 20px; flex: none; }
+.bz-fav-panel .bz-fav-head { display: flex; align-items: baseline; justify-content: center; gap: 14px; margin-bottom: 20px; flex: none; position: relative; }
 .bz-fav-panel .bz-fav-head h1 { font-size: 14px; letter-spacing: 3px; color: var(--ink-title); font-weight: 700; margin: 0; }
 /* 移动端：面板即原型 .phone 内容（全屏；边框圆角交给全屏态，留内边距） */
 /* 移动端：面板即原型 .phone 内容（全屏；显式视口宽高——overlay 弹性子项不定宽会被卡墙 max-content 撑爆） */
 .bz-fav-panel.bz-fav-mob { width: 100vw; height: 100vh; max-width: 100vw; padding: 16px 14px 0; }
 
 /* —— 磁贴标签（原型 .tags 逐字） —— */
-.bz-fav-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; flex: none; }
+.bz-fav-tags { display: flex; flex-wrap: wrap; justify-content: safe center; gap: 10px; margin-bottom: 20px; flex: none; }
 .bz-fav-tags button {
   border: none; cursor: pointer; font: 12px/1 var(--font-interface, system-ui); padding: 8px 14px;
   background: var(--chip); color: var(--chip-ink); border-radius: 99px;
@@ -117,11 +117,11 @@
 .bz-fav-panel.bz-fav-mob .bz-fav-tags { flex-wrap: nowrap; overflow-x: auto; padding: 5px 0 6px; }
 .bz-fav-panel.bz-fav-mob .bz-fav-tags button { white-space: nowrap; }
 
-/* 移动端头行（原型 .m-head：标题 + 关闭钮同行两端）；关闭钮桌面隐藏。
+/* 移动端头行（原型 .m-head：标题居中，关闭钮绝对定位钉右缘不挤歪标题）。
    容器前缀提 0,2,0 压过 reset 的 button:not(.clickable-icon) 0,1,1，否则背景/阴影被 unset */
-.bz-fav-panel.bz-fav-mob .bz-fav-head { align-items: center; justify-content: space-between; padding-top: 4px; }
+.bz-fav-panel.bz-fav-mob .bz-fav-head { align-items: center; padding-top: 4px; }
 .bz-fav-panel .bz-fav-mob-close {
-  display: none; flex: none;
+  display: none; flex: none; position: absolute; right: 0; top: 50%; transform: translateY(-50%);
   width: 24px; height: 24px; border-radius: 7px; border: none; background: var(--chip); color: var(--chip-ink);
   cursor: pointer; align-items: center; justify-content: center; box-shadow: 0 2px 6px var(--card-shadow);
 }
