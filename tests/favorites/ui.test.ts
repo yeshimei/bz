@@ -581,6 +581,24 @@ describe('桌面行动作浮层', () => {
     expect(app.openUrl).toHaveBeenCalledWith('https://github.com/x/y'); // 补协议头
   });
 
+  it('app.openUrl 缺失 → 调用抛错落 catch 走 electron shell 兜底（F9：去掉 ?. 短路）', async () => {
+    const ctx = await setup();
+    const app = getApp() as any;
+    delete app.openUrl; // 宿主未提供 openUrl：?. 写法会静默 no-op，兜底永不触发
+    const shellSpy = vi.fn();
+    (window as any).require = () => ({ shell: { openExternal: shellSpy } });
+    try {
+      seedVault(ctx.vault, [seedItem({ id: '1', title: '有链收藏', url: 'https://github.com/a/b' })]);
+      openPanel(getApp(), ctx.dm, ctx.ai);
+      await tick(20);
+      cards()[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await tick(10);
+      expect(shellSpy).toHaveBeenCalledWith('https://github.com/a/b');
+    } finally {
+      delete (window as any).require;
+    }
+  });
+
 
 
   it('置顶 toggle：update 写盘 pinned + 列表重排；重开浮层动作翻转为「取消置顶」', async () => {
@@ -1319,6 +1337,31 @@ describe('脏表单拦截', () => {
     await tick(10);
     expect(document.querySelector('.bz-fav-form')).toBeNull(); // 无改动直接关
     expect(document.getElementById('__shared_confirm_mask__')).toBeNull();
+  });
+
+  it('编辑含 TAGS 外标签条目：未改动直接关不误判脏（F10：基线与 DOM chip 同口径过滤）；保存仍保留未知标签', async () => {
+    const ctx = await setup();
+    seedVault(ctx.vault, [seedItem({ id: '7', title: '带野标签', tags: ['GitHub', '未收录标签'], url: '', desc: 'x' })]);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    openCardMenu(cards()[0]);
+    await tick(10);
+    clickAction('编辑');
+    await tick(10);
+    // 基线只计入九类 chip（GitHub），与 formTagsNow 同口径 → 未改动不算脏
+    maskEl().dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    await tick(10);
+    expect(document.querySelector('.bz-fav-form')).toBeNull();
+    expect(document.getElementById('__shared_confirm_mask__')).toBeNull();
+
+    // 保存侧口径不变：sel=new Set(it.tags) 保留未知标签
+    openCardMenu(cards()[0]);
+    await tick(10);
+    clickAction('编辑');
+    await tick(10);
+    (document.querySelector('#fz-save') as HTMLButtonElement).click();
+    await tick(40);
+    expect((await ctx.dm.getAll())[0].tags).toEqual(['GitHub', '未收录标签']);
   });
 });
 

@@ -612,7 +612,8 @@ function appOf(): any {
 function openExternal(url: string): void {
   const app = appOf();
   try {
-    (app as any).openUrl?.(url);
+    // 不带 ?.：openUrl 缺失时抛 TypeError 落 catch 走 electron 兜底（与 todo/literature 写法对齐）
+    (app as any).openUrl(url);
   } catch (e) {
     const electron = (window as any).require && (window as any).require('electron');
     if (electron && electron.shell) electron.shell.openExternal(url);
@@ -701,7 +702,8 @@ export function openForm(item: FavoritesItem | null): void {
     url: it?.url || '',
     desc: it?.description || '',
     pinned: !!it?.pinned,
-    tags: [...(it?.tags || [])].sort().join('|'),
+    // 与 DOM 脏比较同口径（只数九类 chip）：TAGS 外标签不进基线，一开表单不误判脏（F10）
+    tags: (it?.tags || []).filter((t) => TAGS.some((x) => x.label === t)).sort().join('|'),
   };
 
   // 贴链自动搬家：标题框粘贴 URL 形态内容 → 移入链接框并回焦标题
