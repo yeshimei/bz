@@ -52,13 +52,11 @@ describe('bookshelf 设置 schema（issue 194）', () => {
     const view = schema.groups[1];
     expect(view.rows).toHaveLength(3);
     const [skin, side, sort] = view.rows as any[];
-    // 面板皮肤（issue 216）：choiceCards 十选一，默认雪松白，onChange 热切换
+    // 面板皮肤（issue 235 五肤×亮暗）：choiceCards 五选一，默认雪松白，onChange 热切换
     expect(skin.type).toBe('choiceCards');
     expect(skin.name).toBe('面板皮肤');
     expect(skin.binding).toMatchObject({ key: 'bookshelfSkin' });
-    expect(skin.options.map((o: any) => o.value)).toEqual(
-      ['nordic', 'dark', 'noir', 'wabi', 'bauhaus', 'blueprint', 'neon', 'kraft', 'velvet', 'mono'],
-    );
+    expect(skin.options.map((o: any) => o.value)).toEqual(['nordic', 'noir', 'kraft', 'velvet', 'mono']);
     expect(skin.options.every((o: any) => typeof o.prevClass === 'string')).toBe(true);
     expect(typeof skin.onChange).toBe('function');
     expect(side.type).toBe('select');

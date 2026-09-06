@@ -30,19 +30,15 @@ export function bookshelfSettingsSchema(): SettingsSchema {
         name: '显示',
         rows: [
           {
-            // 面板皮肤（issue 216）：对齐待办 choiceCards 范式——预览卡「看脸选」，无编号无描述；
-            // 默认雪松白；onChange 热切换已开面板（applyBookshelfSkin），未开仅落盘下次打开生效
+            // 面板皮肤（issue 235 五肤×亮暗）：choiceCards「看脸选」；每肤配亮暗两套变体，
+            // Obsidian 主题切模式（bz-bs-mode-*）；默认雪松白；onChange 热切换已开面板；
+            // 存量退役肤值（dark/wabi/bauhaus/blueprint/neon）读取时回落雪松白（normalizeSkin）
             type: 'choiceCards',
             name: '面板皮肤',
             binding: { key: 'bookshelfSkin' },
             options: [
               { value: 'nordic', label: '雪松白', prevClass: 'bz-skinprev-bs-nordic' },
-              { value: 'dark', label: '暗木书房', prevClass: 'bz-skinprev-bs-dark' },
               { value: 'noir', label: '黑金夜曲', prevClass: 'bz-skinprev-bs-noir' },
-              { value: 'wabi', label: '侘寂素麻', prevClass: 'bz-skinprev-bs-wabi' },
-              { value: 'bauhaus', label: '包豪斯', prevClass: 'bz-skinprev-bs-bauhaus' },
-              { value: 'blueprint', label: '工程蓝图', prevClass: 'bz-skinprev-bs-blueprint' },
-              { value: 'neon', label: '霓虹夜馆', prevClass: 'bz-skinprev-bs-neon' },
               { value: 'kraft', label: '牛皮手帐', prevClass: 'bz-skinprev-bs-kraft' },
               { value: 'velvet', label: '丝绒剧院', prevClass: 'bz-skinprev-bs-velvet' },
               { value: 'mono', label: '极简黑白', prevClass: 'bz-skinprev-bs-mono' },
