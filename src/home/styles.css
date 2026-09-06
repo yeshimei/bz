@@ -40,10 +40,20 @@
   --h-ai-line: #453e66;
 }
 
-/* ---- 头行（原型 .top）：标题 + 日期；关闭钮仅移动端显示 ---- */
-.bz-home-head { display: flex; align-items: center; gap: 12px; padding: 11px 18px 9px; border-bottom: 2px solid var(--h-ink); flex: none; }
+/* ---- 头行（V5 周历头拍板）：标题 + 本周动静历（可点切天）+ 日期；关闭钮仅移动端显示 ---- */
+.bz-home-head { display: flex; align-items: center; gap: 16px; padding: 11px 18px 10px; border-bottom: 1px solid var(--h-line); flex: none; }
 .bz-home-title { font-size: 18px; font-weight: 800; letter-spacing: .1em; margin: 0; }
-.bz-home-date { font-size: 12px; color: var(--h-dim); font-family: var(--h-mono); letter-spacing: .1em; }
+.bz-home-week { display: flex; gap: 5px; }
+.bz-home-wk { width: 24px; border: 0; background: none; padding: 0; text-align: center; font-family: var(--h-mono); font-size: 9.5px; color: var(--h-dim); display: flex; flex-direction: column; gap: 2px; cursor: pointer; font-family: inherit; }
+.bz-home-wk .bz-home-wk-n { letter-spacing: 0; }
+.bz-home-wk i { display: block; height: 22px; border-radius: 6px; background: #efede3; }
+.theme-dark .bz-home-wk i { background: #33312a; }
+.bz-home-wk:hover i { background: #e6e3d5; }
+.theme-dark .bz-home-wk:hover i { background: #3d3b32; }
+.bz-home-wk.bz-home-wk--hit i { background: var(--h-ok); opacity: .8; }
+.bz-home-wk.bz-home-wk--sel i { background: var(--h-ink); }
+.bz-home-wk.bz-home-wk--sel { color: var(--h-ink); font-weight: 700; }
+.bz-home-date { margin-left: auto; font-size: 12px; color: var(--h-dim); font-family: var(--h-mono); letter-spacing: .1em; }
 .bz-home-close { display: none; }
 
 /* ---- 三栏 grid（原型 .dt-grid） ---- */
@@ -77,10 +87,13 @@
 .bz-home-erow:hover .bz-home-ego { opacity: 1; }
 
 /* ---- 时间线（原型 .flow/.ev） ---- */
-.bz-home-flow { border-left: 2px solid var(--h-ink); min-height: 0; overflow-y: auto; scrollbar-width: none; padding-right: 4px; }
-.bz-home-flow .bz-home-sec-t { padding-left: 14px; } /* 标题与时间线竖线的呼吸边距 */
-.bz-home-ev { display: flex; gap: 16px; position: relative; padding: 11px 0 11px 26px; }
-.bz-home-ev::before { content: ""; position: absolute; left: -6px; top: 20px; width: 10px; height: 10px; border-radius: 50%; background: var(--h-ok); box-shadow: 0 0 0 3px var(--h-bg); }
+/* V4 拍板：时间线整体成白卡，卡内虚线轨道（随内容滚、与彩点同锚对齐） */
+.bz-home-flow { min-height: 0; overflow-y: auto; scrollbar-width: none; background: var(--h-card); border: 1px solid var(--h-line); border-radius: 12px; padding: 6px 14px 8px 10px; }
+.bz-home-timeline { position: relative; }
+.bz-home-timeline::before { content: ""; position: absolute; left: 9px; top: 14px; bottom: 10px; border-left: 2px dashed var(--h-line); }
+.bz-home-flow .bz-home-sec-t { padding: 12px 0 10px 24px; }
+.bz-home-ev { display: flex; gap: 16px; position: relative; padding: 11px 0 11px 24px; }
+.bz-home-ev::before { content: ""; position: absolute; left: 6px; top: 20px; width: 8px; height: 8px; border-radius: 50%; background: var(--h-ok); box-shadow: 0 0 0 2.5px var(--h-card), 0 0 0 3.5px var(--h-line); } /* 圆心 10px = 虚线中线（left 9 + 1），白环+描边压住虚线（V4） */
 .bz-home-ev--warn::before { background: var(--h-amber); }
 .bz-home-ev-tm { font-family: var(--h-mono); font-size: 12px; color: var(--h-dim); width: 44px; flex: none; padding-top: 3px; }
 .bz-home-ev-bd { flex: 1; min-width: 0; }
@@ -110,7 +123,8 @@
 }
 
 @container (max-width: 768px) {
-  /* 单列（域快捷入口 → 时间线 → 预告），头行带关闭钮 */
+  /* 单列（域快捷入口 → 时间线 → 预告），头行带关闭钮；日期隐藏（周历即日期） */
+  .bz-home-date { display: none; }
   .bz-home-head { position: sticky; top: 0; z-index: 5; background: var(--h-bg); padding: 14px 16px 10px; }
   .bz-home-title { font-size: 17px; font-weight: 800; letter-spacing: .08em; }
   .bz-home-close { display: inline-flex; align-items: center; justify-content: center; flex: none; margin-left: auto; width: 30px; height: 30px; border: 1px solid var(--h-line); border-radius: 8px; background: var(--h-card); color: var(--h-ink); cursor: pointer; }
@@ -119,9 +133,9 @@
   .bz-home-grid { display: flex; flex-direction: column; height: auto; margin-top: 0; }
   .bz-home-tiles { display: block; order: -1; }
   .bz-home-entries { display: none; }
-  .bz-home-flow { order: 0; margin-top: 18px; overflow: visible; padding-right: 0; }
-  .bz-home-flow .bz-home-sec-t { padding-left: 0; }
-  .bz-home-next { margin-top: 18px; }
+  .bz-home-next { order: 0; margin-top: 18px; }
+  /* 时间线沉底 + 标题只在桌面显示 */
+  .bz-home-flow { order: 1; margin-top: 18px; background: none; border: none; border-radius: 0; padding: 0; }
   .bz-home-m-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   .bz-home-m-tile { display: flex; align-items: center; gap: 6px; background: var(--h-card); border: 1px solid var(--h-line); border-radius: 8px; padding: 7px 8px; cursor: pointer; font-family: inherit; color: inherit; text-align: left; min-width: 0; font-size: 100%; }
   .bz-home-m-tile:hover { border-color: var(--h-dim); }

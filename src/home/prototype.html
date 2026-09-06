@@ -90,16 +90,25 @@
     diary: '522 篇', review: '9 张 · 逾期 1', cinema: '想看 25 · 在看 4', bookshelf: null,
     clipping: '未读 55 篇', favorites: '48 条', belongings: '登记 65 件', wall: '522 格',
   };
-  // 演示时间线（collectRecap 输出形状：今天空河 → 展示昨天有痕迹的样子更有评审价值；
-  // 桌面/移动共用同一份数据）
-  const EVENTS = [
-    { domain: 'bookshelf', timeLabel: '07:42', text: '《三体》读到 62%' },
-    { domain: 'todo', timeLabel: '09:10', text: '完成『给 obsidian 提 issue』' },
-    { domain: 'clipping', timeLabel: '12:31', text: '剪藏 3 篇' },
-    { domain: 'cinema', timeLabel: '21:05', text: '标记《百年孤独》已看 · ★★★★☆' },
-    { domain: 'diary', timeLabel: '22:40', text: '新增 4 条' },
-  ];
-  const NOTES = { 0: '今天第一笔动静在 07:42，比昨天早了 48 分钟，好开头。', 4: '晚上效率回来了——但日记还空着，×5 连击在等你。' };
+  // 演示时间线（collectRecap 输出形状）：按日组织，周历可点切换（仅 06/07 有数据，其余天空态）
+  const DAYS = {
+    '09-07': [
+      { domain: 'bookshelf', timeLabel: '07:42', text: '《三体》读到 62%' },
+      { domain: 'todo', timeLabel: '09:10', text: '完成『给 obsidian 提 issue』' },
+      { domain: 'clipping', timeLabel: '12:31', text: '剪藏 3 篇' },
+      { domain: 'cinema', timeLabel: '21:05', text: '标记《百年孤独》已看 · ★★★★☆' },
+      { domain: 'diary', timeLabel: '22:40', text: '新增 4 条', warn: true },
+    ],
+    '09-06': [
+      { domain: 'cinema', timeLabel: '10:15', text: '《沙丘 2》加入片单' },
+      { domain: 'pomodoro', timeLabel: '14:02–14:27', text: '专注《周报》 · 25 分钟' },
+      { domain: 'todo', timeLabel: '20:44', text: '完成『清理收件箱』' },
+    ],
+  };
+  const NOTES = {
+    '09-07': { 0: '今天第一笔动静在 07:42，比昨天早了 48 分钟，好开头。', 4: '晚上效率回来了——但日记还空着，×5 连击在等你。' },
+    '09-06': {},
+  };
   const PREVIEWS = [
     { h: '还有 1 张逾期卡', b: '逾期是唯一会随时间变贵的债。约 4 分钟一张，还掉最划算。', go: 'review', goLabel: '去还卡 →' },
     { h: '剪藏还压 55 篇', b: '挑 1 篇放进明早：通勤读一篇，保持进出平衡。', go: 'clipping', goLabel: '挑一篇放明早 →' },
@@ -124,12 +133,14 @@
           + '<span class="bz-home-ego">→</span></button>').join('');
   }
 
-  function flowHtml() {
-    const title = '<div class="bz-home-sec-t">时 间 线 · 今 天</div>';
-    const body = EVENTS.map((e, i) => {
-      const note = NOTES[i];
+  function flowHtml(day) {
+    const events = DAYS[day] || [];
+    const notes = NOTES[day] || {};
+    const title = '<div class="bz-home-sec-t">时 间 线 · ' + (day === '09-07' ? '今 天' : day) + '</div>';
+    const body = events.map((e, i) => {
+      const note = notes[i];
       const dmId = e.domain === 'todo' ? 'memo' : e.domain;
-      return '<div class="bz-home-ev' + (i === 4 ? ' bz-home-ev--warn' : '') + '">'
+      return '<div class="bz-home-ev' + (e.warn ? ' bz-home-ev--warn' : '') + '">'
         + '<span class="bz-home-ev-tm">' + esc2(e.timeLabel) + '</span>'
         + '<div class="bz-home-ev-bd"><div class="bz-home-ev-tx">'
         + '<span class="bz-home-ev-dm" style="background:' + (DOT_OF[dmId] || '#8a8f99') + '">' + icon(ICON_OF[dmId]) + esc2(NAME_OF[dmId] || e.domain) + '</span>'
@@ -137,7 +148,10 @@
         + (note ? '<div class="bz-home-ev-note">' + esc2(note) + '</div>' : '')
         + '</div></div>';
     }).join('');
-    return title + body;
+    if (!events.length) {
+      return title + '<div class="bz-home-flow-empty">这一天还没有留下痕迹。</div>';
+    }
+    return title + '<div class="bz-home-timeline">' + body + '</div>';
   }
 
   function nextHtml() {
@@ -164,22 +178,46 @@
     return `
       <div class="bz-home-head">
         <h1 class="bz-home-title">首页</h1>
+        <div class="bz-home-week" data-week>${weekHtml('09-07')}</div>
         <span class="bz-home-date">2026-09-07 周一 · 21:36</span>
         <button class="bz-home-close" title="关闭" aria-label="关闭">${icon('x')}</button>
       </div>
       <div class="bz-home-body">
         <div class="bz-home-grid">
           <div class="bz-home-entries">${entriesHtml()}</div>
-          <div class="bz-home-flow">${flowHtml()}</div>
+          <div class="bz-home-flow">${flowHtml(curDay)}</div>
           <div class="bz-home-next">${nextHtml()}</div>
           <div class="bz-home-tiles">${tilesHtml()}</div>
         </div>
       </div>`;
   }
 
+  // 周历（09-01 周一 ~ 09-07 周日）：hit=有动静的日子；sel=当前查看日
+  let curDay = '09-07';
+  const WK_DAYS = [
+    { d: '09-01', n: 1, wd: '一', hit: false }, { d: '09-02', n: 2, wd: '二', hit: true },
+    { d: '09-03', n: 3, wd: '三', hit: false }, { d: '09-04', n: 4, wd: '四', hit: true },
+    { d: '09-05', n: 5, wd: '五', hit: false }, { d: '09-06', n: 6, wd: '六', hit: true },
+    { d: '09-07', n: 7, wd: '日', hit: true },
+  ];
+  function weekHtml(sel) {
+    return WK_DAYS.map((w) =>
+      '<button type="button" class="bz-home-wk' + (w.hit ? ' bz-home-wk--hit' : '') + (w.d === sel ? ' bz-home-wk--sel' : '') + '" data-day="' + w.d + '">'
+      + '<i></i><span class="bz-home-wk-n">' + w.n + '</span></button>').join('');
+  }
   function mount(host) {
     host.innerHTML = '<div class="bz-panel-frame bz-home-panel bz-panel-mtop">' + panelHtml() + '</div>';
     mountIcons(host);
+    // 周历切天：重渲双端时间线 + 选中态
+    host.addEventListener('click', (e) => {
+      const wk = e.target.closest('[data-day]');
+      if (!wk) return;
+      curDay = wk.dataset.day;
+      document.querySelectorAll('#dtHost, #mobHost').forEach((h) => {
+        h.querySelectorAll('[data-day]').forEach((b) => b.classList.toggle('bz-home-wk--sel', b.dataset.day === curDay));
+        h.querySelectorAll('.bz-home-flow').forEach((f) => { f.innerHTML = flowHtml(curDay); });
+      });
+    });
   }
   mount(document.getElementById('dtHost'));
   mount(document.getElementById('mobHost'));
