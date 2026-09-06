@@ -9,8 +9,11 @@
  * 移动浮动 ✕。基线控件（按钮/输入/chip/候选浮层/弹窗骨架）仍全部消费组件库。
  */
 
-/* ---- 主面板尺寸 + 亚麻 token 作用域（骨架走 .bz-panel-frame，遮罩走 .bz-panel-overlay） ---- */
-.bz-fav-panel {
+/* ---- 主面板尺寸 + 亚麻 token 作用域（骨架走 .bz-panel-frame，遮罩走 .bz-panel-overlay；
+   token 同步作用到右键菜单 .bz-fav-menu 与添加/编辑表单 .bz-fav-form——issue 219d 全件套亚麻化） ---- */
+.bz-fav-panel,
+.bz-fav-form,
+.bz-item-menu.bz-fav-menu {
   --bz-surface-3: #efe9dc;   /* 面板底（亚麻米灰） */
   --bz-surface-2: #fffdf7;   /* 卡纸白 */
   --bz-surface-1: #f5f0e5;   /* 凹陷面（表单 LLM 区/徽章底） */
@@ -19,6 +22,8 @@
   --bz-text-2: #6d6455;
   --bz-text-3: #a89e8a;
   --bz-border: #ddd5c4;
+}
+.bz-fav-panel {
   width: 960px; max-width: calc(100vw - 32px); height: 640px; max-height: 92vh;
   /* 亚麻十字纹（C5 规格：45°/-45° 双向细线叠米灰底） */
   background:
@@ -26,22 +31,12 @@
     repeating-linear-gradient(-45deg, rgba(160, 150, 130, 0.16) 0 2px, transparent 2px 4px),
     var(--bz-surface-3);
 }
-/* ---- 头区（主头行三要素的原型形态，ADR-0098） ---- */
+/* ---- 头区：仅一行原型款大标题（粗体、墨色、宽字距，无任何附加件） ---- */
 .bz-fav-body { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 2px var(--bz-space-lg) 0; }
-.bz-fav-hero { display: flex; align-items: baseline; gap: 14px; }
 .bz-fav-hero-title {
-  font-family: 'Segoe Print', KaiTi, cursive;
-  font-size: 30px; color: #b0575b; transform: rotate(-1.2deg); flex: none;
-  white-space: nowrap;
+  font-size: 28px; font-weight: 800; color: #4a3f30;
+  letter-spacing: 10px; flex: none; white-space: nowrap;
 }
-/* 副题 = 主头行的标题（筛选名）· 计数——与标题同行（C5 原型形态） */
-.bz-fav-hero-sub {
-  display: flex; align-items: baseline; gap: 8px;
-  font-size: var(--bz-font-meta); color: var(--bz-text-2); letter-spacing: 0.5px;
-  min-width: 0; overflow: hidden;
-}
-.bz-fav-hero-sub [data-fav-title] { font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); white-space: nowrap; }
-.bz-fav-hero-dot { color: var(--bz-text-3); }
 
 /* ---- 移动浮动 ✕（全屏退出；桌面点遮罩/Esc 关闭，无头行钮） ---- */
 .bz-fav-mob-close { display: none; position: absolute; top: calc(var(--bz-space-sm) + 44px); right: var(--bz-space-sm); z-index: 3; color: var(--bz-text-2); }
@@ -70,9 +65,9 @@
 .bz-fav-stk.is-on { background: #5a8f6d; color: #fff; }
 .bz-fav-stk.is-on::before { background: radial-gradient(circle at 35% 30%, #fff, #3d6b4d 75%); }
 .bz-fav-stk.is-on .bz-fav-stk-num { color: rgba(255, 255, 255, 0.85); }
-/* 已归档灰贴纸 */
-.bz-fav-stk--grey { background: #efeadf; color: var(--bz-text-3); }
-.bz-fav-stk--grey.is-on { background: #8a8171; color: #fff; }
+/* 已归档：白底统一，仅文字淡化 */
+.bz-fav-stk--grey { color: var(--bz-text-3); }
+.bz-fav-stk--grey.is-on { background: #5a8f6d; color: #fff; }
 /* 行尾「＋ 新收藏」贴纸：与磁贴同款白底（虚线描边示意「可添加」，样式统一） */
 .bz-fav-stk--add { background: #fff; color: var(--bz-text-2); border: 1px dashed #cfc6b2; box-shadow: none; }
 .bz-fav-stk--add:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
@@ -148,6 +143,20 @@
 .bz-fav-balance--warn { color: var(--bz-warning); }
 .bz-fav-balance--err { color: var(--bz-danger); }
 
+/* ---- 右键菜单亚麻皮肤（issue 219d：openItemMenu menuClass=bz-fav-menu；抗 core !important 需同级特异性） ---- */
+.bz-item-menu.bz-fav-menu {
+  background: var(--bz-surface-2);
+  border: 1px solid var(--bz-border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(90, 75, 50, 0.22);
+  padding: 6px;
+}
+.bz-item-menu.bz-fav-menu button.bz-item-menu-item { color: var(--bz-text-1) !important; border-radius: 8px !important; }
+.bz-item-menu.bz-fav-menu button.bz-item-menu-item:hover { background: var(--bz-surface-hover) !important; }
+.bz-item-menu.bz-fav-menu .bz-item-menu-icon { color: var(--bz-text-2); }
+.bz-item-menu.bz-fav-menu button.bz-item-menu-item--danger,
+.bz-item-menu.bz-fav-menu button.bz-item-menu-item--danger .bz-item-menu-icon { color: var(--bz-danger) !important; }
+
 /* ---- 空态（组件库 uiEmpty 工厂 → .bz-empty） ---- */
 
 /* ---- 抽屉头部（.bz-item-sheet 内） ---- */
@@ -166,8 +175,8 @@
    表单遮罩 z 由 openForm 经 topifyZ 动态发号（ADR-0067，恒压主面板），不写死静态档；
    关联笔记候选浮层（.bz-popover）锚定所在 .bz-field 下方 */
 .bz-fav-form {
-  background: var(--bz-surface-2); border-radius: var(--bz-radius-md);
-  border: 1px solid var(--bz-border); box-shadow: var(--bz-shadow-lg);
+  background: var(--bz-surface-2); border-radius: 12px;
+  border: 1px solid var(--bz-border); box-shadow: 0 12px 36px rgba(90, 75, 50, 0.24);
   width: 440px; max-width: calc(100vw - 32px); max-height: 86vh; overflow-y: auto;
   padding: var(--bz-space-lg); display: flex; flex-direction: column;
 }

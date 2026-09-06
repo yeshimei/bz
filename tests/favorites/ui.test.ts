@@ -176,9 +176,10 @@ describe('主面板开合与空态', () => {
     // 壳头行彻底删除（issue 219c）：无品牌块/⚙/✕ 头行（桌面点遮罩/Esc 关，移动浮动 ✕）
     expect(overlay.querySelector('.bz-panel-head')).toBeNull();
     expect(overlay.querySelector('[data-fav-settings]')).toBeNull();
-    // 头区：手写体标题「收藏本」+ 副题（筛选名 · 计数）
-    expect(overlay.querySelector('.bz-fav-hero .bz-fav-hero-title')!.textContent).toBe('收藏本');
-    expect(overlay.querySelector('.bz-fav-hero-sub [data-fav-title]')).not.toBeNull();
+    // 头区：仅一行原型款大标题「收藏本」（issue 219d：副题/计数删）
+    expect(overlay.querySelector('.bz-fav-hero-title')!.textContent).toBe('收藏本');
+    expect(overlay.querySelector('[data-fav-title]')).toBeNull();
+    expect(overlay.querySelector('[data-fav-count]')).toBeNull();
     // 磁贴行：全部 + 已归档 + 9 类 + 行尾「＋ 新收藏」贴纸（添加入口，样式与磁贴统一）
     const stickers = overlay.querySelectorAll('[data-fav-tags] .bz-fav-stk');
     expect(stickers.length).toBe(12);
@@ -199,8 +200,6 @@ describe('主面板开合与空态', () => {
     // 空库自动建文件
     expect(ctx.vault.files.has('CONFIG/STORAGE/favorites.json')).toBe(true);
     // 计数文案（C5 白卡口径）
-    expect(overlay.querySelector('[data-fav-count]')!.textContent).toBe('0 张白卡');
-    expect(overlay.querySelector('[data-fav-title]')!.textContent).toBe('全部');
   });
 
   it('再次 openPanel = toggle 关闭；closePanel 清 DOM', async () => {
@@ -289,17 +288,13 @@ describe('标签栏', () => {
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
     expect(cards().length).toBe(2);
-    expect(document.querySelector('[data-fav-title]')!.textContent).toBe('全部');
 
     clickTag('GitHub');
     await tick(10);
     expect(cards().length).toBe(1);
     expect(cardTitles()).toEqual(['Git 收藏']);
     // 主标题 = emoji + 标签
-    expect(document.querySelector('[data-fav-title]')!.textContent).toContain('🐙');
-    expect(document.querySelector('[data-fav-title]')!.textContent).toContain('GitHub');
     // 计数 = 过滤后（1 条收藏）
-    expect(document.querySelector('[data-fav-count]')!.textContent).toBe('1 张白卡');
     // 标签高亮
     const side = [...document.querySelectorAll('[data-fav-tags] .bz-fav-stk')] as HTMLElement[];
     expect(side.find((b) => b.dataset.favTag === 'GitHub')!.classList.contains('is-on')).toBe(true);
@@ -308,7 +303,6 @@ describe('标签栏', () => {
     clickTag('GitHub');
     await tick(10);
     expect(cards().length).toBe(2);
-    expect(document.querySelector('[data-fav-title]')!.textContent).toBe('全部');
   });
 
   it('点「全部」（__all）从已选标签回全部；选中的卡片只显示匹配标签徽章', async () => {
@@ -327,7 +321,6 @@ describe('标签栏', () => {
     clickTag('全部');
     await tick(10);
     expect(cards().length).toBe(1);
-    expect(document.querySelector('[data-fav-title]')!.textContent).toBe('全部');
     // 回全部后两个徽章都显示
     const badges2 = [...cards()[0].querySelectorAll('.bz-badge--accent')].map((e) => e.textContent);
     expect(badges2).toEqual(['🐙 GitHub', '🌐 网站']);
@@ -353,7 +346,6 @@ describe('标签栏', () => {
     // 渲染重建节点，重查激活态
     const stickers2 = [...document.querySelectorAll('[data-fav-tags] .bz-fav-stk')] as HTMLElement[];
     expect(stickers2.find((b) => b.dataset.favTag === 'GitHub')!.classList.contains('is-on')).toBe(true);
-    expect(document.querySelector('[data-fav-title]')!.textContent).toContain('GitHub');
   });
 
   it('磁贴结构（issue 219c）：分类贴纸 emoji 直出、全部/已归档纯文字、计数紧贴名后', async () => {
@@ -577,10 +569,12 @@ describe('桌面行动作浮层', () => {
       .dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(10);
     expect(document.querySelector('.bz-item-menu')).toBeNull();
-    // 右键仍弹菜单
+    // 右键仍弹菜单（挂域皮肤类 bz-fav-menu，issue 219d 亚麻化）
     openCardMenu(cards()[0]);
     await tick(10);
-    expect(document.querySelector('.bz-item-menu')).not.toBeNull();
+    const menuEl = document.querySelector('.bz-item-menu');
+    expect(menuEl).not.toBeNull();
+    expect(menuEl!.classList.contains('bz-fav-menu')).toBe(true);
     closeItemMenu();
   });
 
@@ -1801,8 +1795,6 @@ describe('已归档视图（ticket 188）', () => {
     clickTag('已归档');
     await tick(10);
     expect(cardTitles()).toEqual(['冷二条', '冷一条']); // created 倒序
-    expect(document.querySelector('[data-fav-title]')!.textContent).toBe('已归档');
-    expect(document.querySelector('[data-fav-count]')!.textContent).toBe('2 张已归档');
     // 渲染重建节点，重查磁贴行
     const side2 = [...document.querySelectorAll('[data-fav-tags] .bz-fav-stk')] as HTMLElement[];
     expect(side2.find((b) => b.dataset.favTag === '已归档')!.classList.contains('is-on')).toBe(true);
@@ -1810,8 +1802,6 @@ describe('已归档视图（ticket 188）', () => {
     clickTag('全部');
     await tick(10);
     expect(cardTitles()).toEqual(['活条目']);
-    expect(document.querySelector('[data-fav-title]')!.textContent).toBe('全部');
-    expect(document.querySelector('[data-fav-count]')!.textContent).toBe('1 张白卡');
   });
 
   it('已归档视图动作翻转「取消归档」：点击直接恢复（无确认弹窗）+ unarchive 事件 + 卡片消失', async () => {
