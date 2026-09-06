@@ -172,7 +172,7 @@ function panelHtml(): string {
   // 桌面固定 900×620、点遮罩/Esc 关闭；移动全屏 + head 行 ✕ 退出。
   const mob = isMobileEnv() ? ' bz-fav-mob bz-panel-mtop' : '';
   return `<div class="bz-fav-panel bz-fav-scope${mob}">
-  <div class="bz-fav-head"><h1>收藏本</h1><button class="bz-fav-mob-close bz-touch-target" data-fav-close title="关闭">${iconSpan(ICON.close, 'bz-ic--xs')}</button></div>
+  <div class="bz-fav-head"><h1>收藏本</h1><button class="bz-fav-mob-close bz-touch-target bz-touch-target--xl" data-fav-close title="关闭">${iconSpan(ICON.close, 'bz-ic--xs')}</button></div>
   <div class="bz-fav-tags" data-fav-tags></div>
   <div class="bz-fav-board" data-fav-content></div>
 </div>`;
@@ -181,6 +181,28 @@ function panelHtml(): string {
 // ==================== 主面板生命周期 ====================
 
 let mainEscRegistered = false;
+
+/** ESC 层注册（主面板 + 浮层栈：菜单 → 抽屉 → 表单 → 面板）。
+ *  openPanel 与 openForm 开头各调一次：命令（bz-favorites-add）可不经面板直开表单，
+ *  ESC 层必须随表单在场（对照 belongings ensureBelongingsEsc 同款）。 */
+function ensureFavoritesEsc(): void {
+  if (mainEscRegistered) return;
+  mainEscRegistered = true;
+  escManager.register('bz-fav', {
+    isVisible: () =>
+      !!M.overlay ||
+      !!document.querySelector('.bz-fav-form') ||
+      !!document.querySelector('.bz-fav-sheet-mask'),
+    close: () => {
+      if (closeMenu()) return;
+      // 抽屉走 closeSheet（动作路径同款）：遮罩元素连监听一并移除，不再只摘 show 类残留 DOM
+      if (document.querySelector('.bz-fav-sheet-mask')) { closeSheet(); return; }
+      const form = document.querySelector('.bz-fav-form') as HTMLElement | null;
+      if (form) requestCloseForm(form);
+      else closePanel();
+    },
+  });
+}
 
 let _dm: DataManager | null = null;
 let _ai: FavoritesAIService | null = null;
@@ -213,20 +235,7 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
   mountIcons(overlay); // 头行关闭钮等 innerHTML 模板里的图标占位
 
   // ESC（主面板 + 浮层栈：菜单 → 抽屉 → 表单 → 面板）
-  if (!mainEscRegistered) {
-    mainEscRegistered = true;
-    escManager.register('bz-fav', {
-      isVisible: () => !!M.overlay || !!document.querySelector('.bz-fav-form') || !!document.querySelector('.bz-fav-sheet-mask.bz-fav-show'),
-      close: () => {
-        if (closeMenu()) return;
-        const sheetMask = document.querySelector('.bz-fav-sheet-mask.bz-fav-show') as HTMLElement | null;
-        if (sheetMask) { sheetMask.classList.remove('bz-fav-show'); return; }
-        const form = document.querySelector('.bz-fav-form') as HTMLElement | null;
-        if (form) requestCloseForm(form);
-        else closePanel();
-      },
-    });
-  }
+  ensureFavoritesEsc();
 
   // ---- 事件委托（overlay 顶层） ----
   overlay.addEventListener('click', (e) => {
@@ -603,7 +612,8 @@ function appOf(): any {
 function openExternal(url: string): void {
   const app = appOf();
   try {
-    (app as any).openUrl?.(url);
+    // 不带 ?.：openUrl 缺失时抛 TypeError 落 catch 走 electron 兜底（与 todo/literature 写法对齐）
+    (app as any).openUrl(url);
   } catch (e) {
     const electron = (window as any).require && (window as any).require('electron');
     if (electron && electron.shell) electron.shell.openExternal(url);
@@ -663,6 +673,7 @@ function closeForm(popup: HTMLElement): void {
 
 /** 打开添加/编辑表单（原型 1:1：标题/链接/简介/标签多选/置顶开关 + AI 整理钮；无大模型/关联笔记） */
 export function openForm(item: FavoritesItem | null): void {
+  ensureFavoritesEsc(); // 命令可直开表单不经 openPanel：ESC 层随表单注册（F2）
   const it = item;
   const editing = !!it;
   const mask = document.createElement('div');
@@ -676,7 +687,7 @@ export function openForm(item: FavoritesItem | null): void {
     <div class="bz-fav-fld bz-fav-inline"><span class="bz-fav-sw${it && it.pinned ? ' bz-fav-on' : ''}" id="fz-pin"></span><span class="bz-fav-fld-desc">置顶后恒排最前</span></div>
     <div class="bz-fav-err" id="fz-err"></div>
     <div class="bz-fav-btns">
-      <button type="button" id="fz-ai">${iconSpan(ICON.ai, 'bz-ic--xs')} <span>AI 整理</span></button>
+      <button type="button" id="fz-ai" class="bz-fav-ai-btn">${iconSpan(ICON.ai, 'bz-ic--xs')} <span>AI 整理</span></button>
       <button type="button" data-fz-cancel>取消</button>
       <button type="button" id="fz-save" class="bz-fav-pri">${editing ? '更新' : '保存'}</button>
     </div>
@@ -691,7 +702,8 @@ export function openForm(item: FavoritesItem | null): void {
     url: it?.url || '',
     desc: it?.description || '',
     pinned: !!it?.pinned,
-    tags: [...(it?.tags || [])].sort().join('|'),
+    // 与 DOM 脏比较同口径（只数九类 chip）：TAGS 外标签不进基线，一开表单不误判脏（F10）
+    tags: (it?.tags || []).filter((t) => TAGS.some((x) => x.label === t)).sort().join('|'),
   };
 
   // 贴链自动搬家：标题框粘贴 URL 形态内容 → 移入链接框并回焦标题
@@ -710,7 +722,7 @@ export function openForm(item: FavoritesItem | null): void {
   const sel = new Set<string>(it?.tags || []);
   const drawPick = () => {
     pick.innerHTML = TAGS.map((t) =>
-      `<button type="button" class="bz-fav-pick-btn${sel.has(t.label) ? ' bz-fav-on' : ''}" data-tag="${esc(t.label)}">${iconSpan(t.ic, 'bz-ic--xs')}<span>${esc(t.label)}</span></button>`
+      `<button type="button" class="${sel.has(t.label) ? 'bz-fav-on' : ''}" data-tag="${esc(t.label)}">${iconSpan(t.ic, 'bz-ic--xs')}<span>${esc(t.label)}</span></button>`
     ).join('');
     pick.querySelectorAll('[data-tag]').forEach((b) => b.addEventListener('click', () => {
       const label = (b as HTMLElement).dataset.tag as string;
