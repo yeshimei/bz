@@ -46,7 +46,9 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   general: async () => {
     const schema = await (await import('../core/settings-main-schema')).generalSettingsSchema();
     const { openDataCheckup } = await import('../checkup');
-    schema.groups[0].rows.push({
+    // 「数据体检」按钮挂「数据存储路径」组尾（按 name 定位防未来组序漂移）
+    const storageGroup = schema.groups.find((g) => g.name === '数据存储路径') ?? schema.groups[schema.groups.length - 1];
+    storageGroup.rows.push({
       type: 'button',
       name: '数据体检',
       buttonText: '打开体检',
@@ -56,6 +58,7 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
     return schema;
   },
   ai: async () => (await import('../core/settings-main-schema')).aiSettingsSchema(),
+  appearance: async () => (await import('./schema')).appearanceSettingsSchema(),
   diary: async () => (await import('../diary/ui/panel')).diarySettingsSchema(),
   'diary-wall': async () => (await import('../diary-wall/settings')).diaryWallSettingsSchema(),
   todo: async () => (await import('../todo/settings')).todoSettingsSchema(),
@@ -105,6 +108,7 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
  *  导出供回归测试断言（图标映射一致性/历史重复图标错开）。 */
 export const DOMAINS: DomainDef[] = [
   { id: 'global', name: '通用', icon: DOMAIN_ICONS.global, desc: '存储路径等跨域基础偏好', schemaLoader: schemaLoaders.general },
+  { id: 'appearance', name: '设置', icon: DOMAIN_ICONS.appearance, desc: '设置面板的布局与主题', schemaLoader: schemaLoaders.appearance },
   { id: 'ai', name: 'AI', icon: DOMAIN_ICONS.ai, desc: 'AI 服务商与模型配置', schemaLoader: schemaLoaders.ai },
   { id: 'diary', name: '日记本', icon: DOMAIN_ICONS.diary, desc: '日记目录、显示与默认视图', schemaLoader: schemaLoaders.diary },
   { id: 'diary-wall', name: '回忆墙', icon: DOMAIN_ICONS['diary-wall'], desc: '回忆墙媒体视图（只读）', schemaLoader: schemaLoaders['diary-wall'] },
@@ -125,6 +129,15 @@ export const DOMAINS: DomainDef[] = [
   { id: 'encrypt', name: '保险库', icon: DOMAIN_ICONS.encrypt, desc: '密码、加密笔记与加密日记', schemaLoader: schemaLoaders.encrypt },
   { id: 'smartcat', name: '小橘陪伴猫', icon: DOMAIN_ICONS.smartcat, desc: '桌面宠物陪伴', schemaLoader: schemaLoaders.smartcat },
   { id: 'literature', name: '文献盒', icon: DOMAIN_ICONS.literature, desc: '文献笔记与术语录入', schemaLoader: schemaLoaders.literature },
+];
+
+/** 导航语义分组（拍板原型 P1：基础/记录/媒体与知识/工具 四组；不在表内的域归「其他」尾组）。
+ *  id 口径 = DOMAINS 的 id（剪藏本在 DOMAINS 里叫 clipping）。导出供回归测试断言。 */
+export const NAV_SECS: Array<{ title: string; ids: string[] }> = [
+  { title: '基础', ids: ['global', 'appearance', 'ai'] },
+  { title: '记录', ids: ['diary', 'diary-wall', 'todo', 'belongings', 'clipping', 'favorites'] },
+  { title: '媒体与知识', ids: ['cinema', 'bookshelf', 'review', 'secondbrain', 'literature'] },
+  { title: '工具', ids: ['pomodoro', 'encrypt', 'smartcat'] },
 ];
 
 /** 已加载域的 schema 行缓存（移动端搜索「设置项」段用：域名 → 行名/描述列表） */
@@ -249,11 +262,19 @@ export class SettingsPanelUI {
     });
   }
 
-  /* ---------- 头行（影院式：整宽、仅标题；关闭靠遮罩/ESC） ---------- */
+  /* ---------- 头行（拍板 P1：桌面=面包屑「设置」+ 搜索框 + 工具位；移动=标题 + 关闭钮） ---------- */
 
   private buildHeadHtml(): string {
-    // 桌面：只有标题（占满整宽的头条）；关闭钮由移动端 build 追加到 .bz-sp-head-tools
-    return `<div class="bz-sp-head"><span class="bz-sp-head-title">设置</span><span class="bz-sp-head-tools"></span></div>`;
+    // 移动：标题 + 工具位（关闭钮由 buildMobile 追加到 .bz-sp-head-tools）
+    if (isMobileEnv()) {
+      return `<div class="bz-sp-head"><span class="bz-sp-head-title">设置</span><span class="bz-sp-head-tools"></span></div>`;
+    }
+    // 桌面：面包屑 + 搜索框（.bz-sp-search 契约类保留，测试与过滤逻辑以此定位输入框）
+    return `<div class="bz-sp-head">` +
+      `<div class="bz-sp-crumb"><span class="bz-sp-head-title bz-sp-crumb-cur">设置</span></div>` +
+      `<div class="bz-sp-search bz-sp-head-search"><i class="bz-ic"></i><input class="bz-input" placeholder="搜索域与设置项" /></div>` +
+      `<span class="bz-sp-head-tools"></span>` +
+      `</div>`;
   }
 
   /* ---------- 桌面：B 侧栏工作台（头行 + 左导航 + 右内嵌渲染） ---------- */
@@ -264,9 +285,6 @@ export class SettingsPanelUI {
       ${this.buildHeadHtml()}
       <div class="bz-sp-desk-body">
         <div class="bz-sp-desk-side">
-          <div class="bz-sp-search">
-            <span class="bz-input-wrap"><i class="bz-ic"></i><input class="bz-input" placeholder="搜索设置…" /></span>
-          </div>
           <div class="bz-sp-nav"></div>
         </div>
         <div class="bz-sp-desk-main">
@@ -286,30 +304,51 @@ export class SettingsPanelUI {
       const query = q.trim();
       nav.innerHTML = '';
       // 无设置项/当前端零设置项的域不在左侧列表显示（用户拍板 + issue 194）；搜索同样只搜列表可见域
-      listableDomains().forEach((d) => {
-        if (query && !d.name.includes(query) && !d.desc.includes(query)) return;
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'bz-sp-nav-item' + (d.id === this.activeDomainId && !query ? ' on' : '');
-        b.dataset.d = d.id;
-        const ic = uiIcon(d.icon);
-        ic.classList.add('bz-sp-nav-ic');
-        const nm = document.createElement('span');
-        nm.className = 'bz-sp-nav-name';
-        nm.textContent = d.name;
-        b.append(ic, nm);
-        // 动态徽标（·/—/设置项总数，随 schema 加载与显隐门控回填）
-        const ct = document.createElement('span');
-        ct.className = 'bz-sp-nav-count';
-        ct.textContent = badgeOf(d);
-        b.appendChild(ct);
-        b.addEventListener('click', () => {
-          this.activeDomainId = d.id;
-          renderNav(searchIn.value);
-          void this.renderDomain(pane, d);
+      const visible = listableDomains();
+      // 搜索命中：域名/描述 + 已加载域的设置项行名（只匹配行名——desc 常含跨域引用词会误命中）
+      const matches = (d: DomainDef) =>
+        !query || d.name.includes(query) || d.desc.includes(query) ||
+        (schemaRowCache.get(d.id) || []).some((r) => r.name.includes(query));
+      // 拍板原型：导航按语义分四组（基础/记录/媒体与知识/工具）；不在表内的域归「其他」尾组
+      const secs: Array<{ title: string; domains: DomainDef[] }> = NAV_SECS.map((sec) => ({
+        title: sec.title,
+        domains: visible.filter((d) => sec.ids.indexOf(d.id) >= 0 && matches(d)),
+      }));
+      const rest = visible.filter((d) => !NAV_SECS.some((sec) => sec.ids.indexOf(d.id) >= 0) && matches(d));
+      if (rest.length) secs.push({ title: '其他', domains: rest });
+      for (const sec of secs) {
+        if (!sec.domains.length) continue;
+        const g = document.createElement('div');
+        g.className = 'bz-sp-nav-sec';
+        const t = document.createElement('div');
+        t.className = 'bz-sp-nav-sec-t';
+        t.textContent = sec.title;
+        g.appendChild(t);
+        sec.domains.forEach((d) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'bz-sp-nav-item' + (d.id === this.activeDomainId && !query ? ' on' : '');
+          b.dataset.d = d.id;
+          const ic = uiIcon(d.icon);
+          ic.classList.add('bz-sp-nav-ic');
+          const nm = document.createElement('span');
+          nm.className = 'bz-sp-nav-name';
+          nm.textContent = d.name;
+          b.append(ic, nm);
+          // 动态徽标（·/—/设置项总数，随 schema 加载与显隐门控回填）
+          const ct = document.createElement('span');
+          ct.className = 'bz-sp-nav-count';
+          ct.textContent = badgeOf(d);
+          b.appendChild(ct);
+          b.addEventListener('click', () => {
+            this.activeDomainId = d.id;
+            renderNav(searchIn.value);
+            void this.renderDomain(pane, d);
+          });
+          g.appendChild(b);
         });
-        nav.appendChild(b);
-      });
+        nav.appendChild(g);
+      }
     };
 
     searchIn.addEventListener('input', () => renderNav(searchIn.value));
@@ -387,6 +426,22 @@ export class SettingsPanelUI {
     this.renderHandles = [];
     pane.innerHTML = '';
 
+    // 域页头（拍板原型：域名 + 描述 + 右侧项数/组数徽标，先渲后回填）
+    const pageHead = document.createElement('div');
+    pageHead.className = 'bz-sp-page-head';
+    const headWrap = document.createElement('div');
+    const pageTitle = document.createElement('div');
+    pageTitle.className = 'bz-sp-page-title';
+    pageTitle.textContent = domain.name;
+    const pageDesc = document.createElement('div');
+    pageDesc.className = 'bz-sp-page-desc';
+    pageDesc.textContent = domain.desc;
+    headWrap.append(pageTitle, pageDesc);
+    const pageTag = document.createElement('span');
+    pageTag.className = 'bz-sp-page-tag';
+    pageHead.append(headWrap, pageTag);
+    pane.appendChild(pageHead);
+
     // 无设置项域 → 空态
     if (domain.noSettings || !domain.schemaLoader) {
       pane.appendChild(this.emptyEl(
@@ -421,6 +476,8 @@ export class SettingsPanelUI {
       const count = visibleItemCount(schema);
       navBadges.set(domain.id, count > 0 ? String(count) : '·');
       this.refreshNavBadges();
+      // 页头徽标回填（项数/组数；组数含被门控隐藏的组——与渲染出的分组卡一致）
+      pageTag.textContent = `${count} 项 · ${schema.groups.length} 组`;
       // 全部组被门控隐藏（如归物本仅移动端组，桌面无可配置项）→ 空态引导
       if (visibleGroups === 0 && groupEls.length > 0) {
         body.appendChild(this.emptyEl(
@@ -479,10 +536,24 @@ export class SettingsPanelUI {
       searchWrap.classList.toggle('hasval', !!query);
       list.innerHTML = '';
       if (!query) {
-        // 无搜索：全部列表可见域（无设置项/当前端零项的域不显示）
-        listableDomains().forEach((d) => {
-          list.appendChild(mobItem(d));
-        });
+        // 无搜索：全部列表可见域按语义分组（基础/记录/媒体与知识/工具；同桌面导航口径）
+        const visible = listableDomains();
+        const secs: Array<{ title: string; domains: DomainDef[] }> = NAV_SECS.map((sec) => ({
+          title: sec.title,
+          domains: visible.filter((d) => sec.ids.indexOf(d.id) >= 0),
+        }));
+        const rest = visible.filter((d) => !NAV_SECS.some((sec) => sec.ids.indexOf(d.id) >= 0));
+        if (rest.length) secs.push({ title: '其他', domains: rest });
+        for (const sec of secs) {
+          if (!sec.domains.length) continue;
+          const secEl = document.createElement('div');
+          secEl.className = 'bz-sp-mob-sec';
+          secEl.textContent = sec.title;
+          list.appendChild(secEl);
+          sec.domains.forEach((d) => {
+            list.appendChild(mobItem(d));
+          });
+        }
         return;
       }
       // 搜索：域段 + 设置项段（同样只搜列表可见域）

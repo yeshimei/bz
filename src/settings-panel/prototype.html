@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>设置面板 · 域内评审原型（桌面 + 移动 · S1/S3 双皮）</title>
+<!--
+  设置面板域内评审壳（prototype-first.md）：
+  - 组件样式零内联：<link href="./styles.css">（与插件共用同一份域样式，构建自动聚合）；
+  - 本壳 <style> 只写演示壳样式：页面底色、桌面演示框、手机演示框、亮暗钮、
+    原型演示专属件（文件夹/模型选择器弹层、迷你皮肤预览、toast、sub-row）——
+    这些在插件版分别由 core/path-picker（路径行）与 renderer 自绘承载，属壳层差异；
+  - 两端并存：左侧桌面面板（overlay 形态）+ 右侧手机演示框（M1 命令面板 + 域设置弹窗）；
+  - 手动亮暗钮：插件内跟随 Obsidian .theme-dark（壳层差异表）。
+  双击打开本文件即可评审；不进构建、不入 git 产物。
+-->
+<link rel="stylesheet" href="./styles.css">
+<style>
+  /* ---- 演示壳样式（非组件样式） ---- */
+  body {
+    margin: 0;
+    font-family: system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: #ece8dd;
+    background-image: repeating-linear-gradient(0deg, rgba(60,50,30,.02) 0 1px, transparent 1px 5px);
+    min-height: 100vh;
+  }
+  body.theme-dark { background: #131316; }
+  .demo-top {
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 20px; background: #26231d; color: #f3efe5; font-size: 12px;
+    position: sticky; top: 0; z-index: 90;
+  }
+  .demo-top b { letter-spacing: .05em; }
+  .demo-top .sp { opacity: .55; }
+  .demo-top button {
+    margin-left: auto; display: flex; align-items: center; gap: 6px;
+    border: 1px solid rgba(255,255,255,.25); background: transparent; color: #f3efe5;
+    border-radius: 8px; padding: 5px 12px; cursor: pointer; font-size: 12px; font-family: inherit;
+  }
+  .demo-top button:hover { border-color: #eda75c; color: #eda75c; }
+  .demo-top .bz-ic { width: 14px; height: 14px; }
+  .demo-stage {
+    display: flex; align-items: flex-start; justify-content: center;
+    gap: 40px; padding: 34px 24px 60px; flex-wrap: wrap;
+  }
+  .demo-col-title { font-size: 11px; letter-spacing: .22em; color: #8a8474; font-weight: 700; margin: 0 0 10px 2px; }
+  body.theme-dark .demo-col-title { color: #6a6a74; }
+
+  /* 桌面演示框：overlay 面板形态 */
+  .demo-desk-wrap { width: min(1080px, 92vw); }
+  .demo-desk-wrap .bz-sp-desk { position: relative; }
+
+  /* 手机演示框 */
+  .demo-phone {
+    width: 390px; height: 780px; border: 10px solid #26231d; border-radius: 36px;
+    overflow: hidden; position: relative; background: #f6f2e9; box-shadow: 0 18px 50px rgba(40,30,10,.25);
+    flex: none;
+  }
+  body.theme-dark .demo-phone { border-color: #000; background: #1b1b1f; }
+  .demo-phone .bz-sp-mobile { position: absolute; inset: 0; }
+  .bz-sp-demo-mobmask {
+    position: absolute; inset: 0; background: rgba(15,12,6,.45); z-index: 40;
+    display: flex; align-items: flex-end;
+  }
+  body.theme-dark .bz-sp-demo-mobmask { background: rgba(0,0,0,.55); }
+  .bz-sp-demo-mobmask .bz-sp-mob-modal {
+    width: 100%; height: auto; max-height: 88%; border-radius: 16px 16px 0 0; border-bottom: 0;
+  }
+
+  /* 原型演示专属：选择器弹层（插件版路径行走 core/path-picker，模型弹窗走确认框） */
+  .bz-sp-picker-mask {
+    position: absolute; inset: 0; background: rgba(20,15,8,.4); z-index: 60;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .theme-dark .bz-sp-picker-mask { background: rgba(0,0,0,.62); }
+  .bz-sp-picker {
+    width: min(560px, 86%); max-height: 74%;
+    background: var(--sp-panel); border: 1px solid var(--sp-line); border-radius: 14px;
+    box-shadow: var(--sp-shadow); display: flex; flex-direction: column; overflow: hidden;
+  }
+  .bz-sp-picker-head { padding: 14px 18px 8px; font-size: 14px; font-weight: 700; color: var(--sp-ink); }
+  .bz-sp-picker-search {
+    margin: 16px auto 8px; width: calc(100% - 28px); display: flex; align-items: center; gap: 8px;
+    background: var(--sp-bg); border: 1px solid var(--sp-line); border-radius: 9px; padding: 8px 14px;
+    color: var(--sp-ink-3);
+  }
+  .bz-sp-picker-search input { flex: 1; border: 0; outline: 0; background: transparent; font-size: 12.5px; color: var(--sp-ink); font-family: inherit; }
+  .bz-sp-picker-crumb {
+    display: flex; align-items: center; gap: 6px; padding: 8px 18px;
+    border-top: 1px solid var(--sp-line); border-bottom: 1px solid var(--sp-line);
+    background: var(--sp-bg); font-size: 11.5px; color: var(--sp-ink-2);
+  }
+  .bz-sp-picker-lab { color: var(--sp-ink-3); margin-right: 2px; }
+  .bz-sp-picker-sep { opacity: .6; }
+  .bz-sp-picker-crumb > span:last-child { color: var(--sp-accent); font-weight: 600; }
+  .bz-sp-picker-list { flex: 1; overflow-y: auto; padding: 8px 12px; scrollbar-width: none; }
+  .bz-sp-picker-list::-webkit-scrollbar { display: none; }
+  .bz-sp-picker-row {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    border: 0; background: transparent; font-family: inherit; font-size: 12.5px; color: var(--sp-ink);
+    padding: 6px 10px; border-radius: 8px; cursor: pointer; text-align: left; position: relative;
+  }
+  .bz-sp-picker-row:hover { background: var(--sp-accent-soft); }
+  .bz-sp-picker-row.sel { box-shadow: inset 3px 0 0 var(--sp-accent); }
+  .bz-sp-picker-row .bz-ic { width: 14px; height: 14px; color: var(--sp-ink-3); flex: none; }
+  .bz-sp-picker-row.sel .bz-ic { color: var(--sp-accent); }
+  .bz-sp-picker-row.sel span:first-of-type { color: var(--sp-accent); font-weight: 600; }
+  .bz-sp-picker-row .anc {
+    margin-left: auto; font-size: 10px; color: var(--sp-ink-3); opacity: .85;
+    font-family: ui-monospace, Consolas, monospace; flex: none; max-width: 46%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .bz-sp-picker-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--sp-line); }
+
+  /* 原型演示专属：迷你皮肤预览（插件版由各域 prevClass 全局样式承载） */
+  .bz-sp-mini { width: 64px; height: 44px; border-radius: 5px; border: 1px solid var(--sp-line); position: relative; overflow: hidden; margin-bottom: 4px; display: block; }
+  .bz-sp-mini .m-head { position: absolute; top: 0; left: 0; right: 0; height: 11px; }
+  .bz-sp-mini .m-head.m-stripe { background-image: repeating-linear-gradient(45deg, rgba(0,0,0,.14) 0 2px, transparent 2px 5px); }
+  .bz-sp-mini .m-line { position: absolute; left: 6px; height: 3px; border-radius: 2px; }
+  .bz-sp-mini .m-chip { position: absolute; right: 5px; bottom: 4px; width: 17px; height: 7px; border-radius: 3px; }
+  .bz-sp-mini .m-ac { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+  .bz-sp-mini .m-book { position: absolute; bottom: 0; width: 9px; border-radius: 2px 2px 0 0; }
+  .bz-sp-mini .m-cat { position: absolute; left: 50%; top: 55%; transform: translate(-50%, -50%); width: 30px; height: 24px; }
+  .bz-sp-mini .m-cat .ear { position: absolute; top: -5px; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 8px solid; }
+  .bz-sp-mini .m-cat .ear.l { left: 1px; }
+  .bz-sp-mini .m-cat .ear.r { right: 1px; }
+  .bz-sp-mini .m-cat .face { position: absolute; inset: 0 0 2px 0; border-radius: 46% 46% 50% 50%; }
+  .bz-sp-mini .m-cat .patch { position: absolute; width: 9px; height: 9px; border-radius: 50%; top: -1px; right: 3px; }
+  .bz-sp-mini .m-cat .eye { position: absolute; top: 11px; width: 3px; height: 3.5px; border-radius: 50%; }
+  .bz-sp-mini .m-cat .eye.l { left: 7px; }
+  .bz-sp-mini .m-cat .eye.r { right: 7px; }
+
+  /* 原型演示专属：custom 子行 / 行备注 / 命中高亮 / toast */
+  .bz-sp-set-row--custom { flex-direction: column; align-items: stretch; gap: 0; }
+  .bz-sp-set-row--custom > .bz-sp-set-info { padding-bottom: 4px; }
+  .bz-sp-sub-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 8px 12px 8px 16px; border-top: 1px dashed var(--sp-line, #e5dfcf);
+  }
+  .bz-sp-sub-row:first-of-type { border-top: 0; }
+  .bz-sp-sub-row .bz-sp-set-ctrl { margin-left: auto; }
+  .bz-sp-set-note { font-size: 10.5px; color: var(--sp-ink-3, #aca595); margin-top: 3px; }
+  .bz-sp-set-row.hit { box-shadow: inset 3px 0 0 var(--sp-accent, #c95a28); background: var(--sp-accent-soft, #f7e8dd); }
+  .bz-sp-demo-toast {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(8px);
+    background: var(--sp-ink, #2c2924); color: var(--sp-panel, #fffcf6); font-size: 12px;
+    padding: 7px 16px; border-radius: 8px; opacity: 0; pointer-events: none; transition: all .2s; z-index: 80;
+    max-width: 70%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .bz-sp-demo-toast.show { opacity: 1; transform: translateX(-50%); }
+  .bz-sp-btn--primary { background: var(--sp-accent, #c95a28) !important; color: var(--sp-on-accent, #fff) !important; border-color: transparent !important; }
+
+  /* 原型演示专属：外观域主题卡切换用的显式主题 tokens（落域时由「面板外观」设置键 + styles.css 正式承载） */
+  .bz-sp-desk.bz-sp-tf-linen,
+  .bz-sp-mobile.bz-sp-tf-linen,
+  .bz-sp-mob-modal.bz-sp-tf-linen,
+  .theme-dark .bz-sp-desk.bz-sp-tf-linen,
+  .theme-dark .bz-sp-mobile.bz-sp-tf-linen,
+  .theme-dark .bz-sp-mob-modal.bz-sp-tf-linen {
+    --sp-bg: #f6f2e9; --sp-panel: #fffcf6; --sp-line: #e5dfcf; --sp-line-soft: #f2eee1;
+    --sp-ink: #2c2924; --sp-ink-2: #7a7466; --sp-ink-3: #aca595;
+    --sp-accent: #c95a28; --sp-accent-soft: #f7e8dd; --sp-on-accent: #fff;
+    --sp-radius: 12px; --sp-shadow: 0 1px 5px rgba(90,70,40,.06);
+    --sp-input-bg: #fffcf6; --sp-ctl-off: #dcd5c2; --sp-knob: #fff;
+  }
+  .bz-sp-desk.bz-sp-tf-dark,
+  .bz-sp-mobile.bz-sp-tf-dark,
+  .bz-sp-mob-modal.bz-sp-tf-dark,
+  .theme-dark .bz-sp-desk.bz-sp-tf-dark,
+  .theme-dark .bz-sp-mobile.bz-sp-tf-dark,
+  .theme-dark .bz-sp-mob-modal.bz-sp-tf-dark {
+    --sp-bg: #1b1b1f; --sp-panel: #242429; --sp-line: #35353c; --sp-line-soft: #2c2c32;
+    --sp-ink: #e8e8ec; --sp-ink-2: #a2a2ac; --sp-ink-3: #6a6a74;
+    --sp-accent: #eda75c; --sp-accent-soft: rgba(237,167,92,.14); --sp-on-accent: #1b1b1f;
+    --sp-radius: 10px; --sp-shadow: 0 6px 20px rgba(0,0,0,.25);
+    --sp-input-bg: #202024; --sp-ctl-off: #3c3c44; --sp-knob: #fff;
+  }
+  .bz-sp-desk.bz-sp-tf-celadon,
+  .bz-sp-mobile.bz-sp-tf-celadon,
+  .bz-sp-mob-modal.bz-sp-tf-celadon,
+  .theme-dark .bz-sp-desk.bz-sp-tf-celadon,
+  .theme-dark .bz-sp-mobile.bz-sp-tf-celadon,
+  .theme-dark .bz-sp-mob-modal.bz-sp-tf-celadon {
+    --sp-bg: #edf2ef; --sp-panel: #fbfdfc; --sp-line: #d5e0da; --sp-line-soft: #eef3f0;
+    --sp-ink: #22322b; --sp-ink-2: #5f7268; --sp-ink-3: #93a69b;
+    --sp-accent: #2e8b6e; --sp-accent-soft: #e0efe8; --sp-on-accent: #fff;
+    --sp-radius: 14px; --sp-shadow: 0 2px 10px rgba(34,80,60,.06);
+    --sp-input-bg: #fbfdfc; --sp-ctl-off: #cfdcd5; --sp-knob: #fff;
+  }
+  .bz-sp-desk.bz-sp-tf-mono,
+  .bz-sp-mobile.bz-sp-tf-mono,
+  .bz-sp-mob-modal.bz-sp-tf-mono,
+  .theme-dark .bz-sp-desk.bz-sp-tf-mono,
+  .theme-dark .bz-sp-mobile.bz-sp-tf-mono,
+  .theme-dark .bz-sp-mob-modal.bz-sp-tf-mono {
+    --sp-bg: #fafafa; --sp-panel: #ffffff; --sp-line: #e4e4e4; --sp-line-soft: #efefef;
+    --sp-ink: #141414; --sp-ink-2: #666666; --sp-ink-3: #9b9b9b;
+    --sp-accent: #141414; --sp-accent-soft: #f0f0f0; --sp-on-accent: #fff;
+    --sp-radius: 0px; --sp-shadow: none;
+    --sp-input-bg: #ffffff; --sp-ctl-off: #d9d9d9; --sp-knob: #fff;
+  }
+</style>
+</head>
+<body>
+
+<div class="demo-top">
+  <b>设置面板 · 评审原型</b>
+  <span class="sp">桌面 + 移动 · 亮暗跟随切换钮</span>
+  <button id="sp-reset-btn">重置演示数据</button>
+  <button id="sp-theme-btn">亮暗</button>
+</div>
+
+<div class="demo-stage">
+  <div class="demo-desk-wrap">
+    <p class="demo-col-title">桌面端 · OVERLAY 面板（P1 系统面板布局）</p>
+    <div id="sp-demo-desk" class="bz-sp-desk"></div>
+  </div>
+
+  <div>
+    <p class="demo-col-title">移动端 · M1 命令面板 + 域设置弹窗（点域查看弹窗）</p>
+    <div class="demo-phone">
+      <div id="sp-demo-mob" class="bz-sp-mobile"></div>
+    </div>
+  </div>
+</div>
+
+<script src="./prototype-data.js"></script>
+<script src="./prototype.app.js"></script>
+</body>
+</html>
