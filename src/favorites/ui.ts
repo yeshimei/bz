@@ -168,12 +168,11 @@ function hueOf(label: string): number {
 // ==================== 主面板结构 ====================
 
 function panelHtml(): string {
-  // 原型 1:1：头行仅「收藏本」16px（无副题）→ 磁贴行 → 卡墙。
-  // 桌面点遮罩/Esc 关闭；移动浮动 ✕（全屏退出）。
+  // 原型 1:1：头行「收藏本」14px（无副题；移动端关闭钮同 head 行右端）→ 磁贴行 → 卡墙。
+  // 桌面固定 900×620、点遮罩/Esc 关闭；移动全屏 + head 行 ✕ 退出。
   const mob = isMobileEnv() ? ' bz-fav-mob bz-panel-mtop' : '';
   return `<div class="bz-fav-panel bz-fav-scope${mob}">
-  <button class="bz-fav-mob-close bz-touch-target" data-fav-close title="关闭">${iconSpan(ICON.close, 'bz-ic--xs')}</button>
-  <div class="bz-fav-head"><h1>收藏本</h1></div>
+  <div class="bz-fav-head"><h1>收藏本</h1><button class="bz-fav-mob-close bz-touch-target" data-fav-close title="关闭">${iconSpan(ICON.close, 'bz-ic--xs')}</button></div>
   <div class="bz-fav-tags" data-fav-tags></div>
   <div class="bz-fav-board" data-fav-content></div>
 </div>`;
