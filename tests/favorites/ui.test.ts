@@ -40,13 +40,17 @@ function openCardMenu(card: HTMLElement): void {
 
 /** 当前浮层动作项文案集合（桌面菜单 label / 移动抽屉 label） */
 function menuLabels(): (string | null)[] {
-  return [...document.querySelectorAll('.bz-item-menu-label, .bz-item-sheet-label')].map((e) => e.textContent);
+  return [...document.querySelectorAll('.bz-fav-ctx button, .bz-fav-sh-acts button')]
+    .map((b) => { const sp = b.querySelectorAll('span'); return sp.length ? sp[sp.length - 1].textContent : null; });
 }
 
 /** 按文案点击浮层动作项 */
 function clickAction(label: string): HTMLElement {
-  const items = [...document.querySelectorAll('.bz-item-menu-item, .bz-item-sheet-item')] as HTMLElement[];
-  const target = items.find((el) => el.querySelector('.bz-item-menu-label, .bz-item-sheet-label')?.textContent === label);
+  const items = [...document.querySelectorAll('.bz-fav-ctx button, .bz-fav-sh-acts button')] as HTMLElement[];
+  const target = items.find((el) => {
+    const sp = el.querySelectorAll('span');
+    return sp.length > 0 && sp[sp.length - 1].textContent === label;
+  });
   if (!target) throw new Error('找不到动作项：' + label + '；现有=' + items.map((i) => i.textContent).join('|'));
   target.click();
   return target;
@@ -87,10 +91,10 @@ function eventCollector(): { calls: any[]; off: () => void } {
 
 /** 当前卡片（[data-fav-content] 下 .bz-fav-card） */
 function cards(): HTMLElement[] {
-  return [...document.querySelectorAll('.bz-fav-content .bz-fav-card')] as HTMLElement[];
+  return [...document.querySelectorAll('.bz-fav-board .bz-fav-card')] as HTMLElement[];
 }
 function cardTitles(): (string | null)[] {
-  return cards().map((c) => c.querySelector('.bz-fav-title')?.textContent ?? null);
+  return cards().map((c) => c.querySelector('h3')?.textContent ?? null);
 }
 
 interface Ctx {
@@ -161,7 +165,7 @@ describe('主面板开合与空态', () => {
     await tick(20);
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(overlay).not.toBeNull();
-    expect(overlay.querySelector('.bz-fav-content .bz-empty')).not.toBeNull();
+    expect(overlay.querySelector('.bz-fav-board .bz-fav-empty')).not.toBeNull();
     expect(hasNotice('收藏数据读取失败，已显示为空列表')).toBe(true);
     consoleSpy.mockRestore();
   });
@@ -176,26 +180,23 @@ describe('主面板开合与空态', () => {
     // 壳头行彻底删除（issue 219c）：无品牌块/⚙/✕ 头行（桌面点遮罩/Esc 关，移动浮动 ✕）
     expect(overlay.querySelector('.bz-panel-head')).toBeNull();
     expect(overlay.querySelector('[data-fav-settings]')).toBeNull();
-    // 头区：大标题「收藏本」+ 同行灰色小字（issue 219f：副题只留白卡计数，图例退场）
-    expect(overlay.querySelector('.bz-fav-hero-title')!.textContent).toBe('收藏本');
-    expect(overlay.querySelector('[data-fav-sub')!.textContent).toBe('0 张白卡');
-    // 磁贴行：全部 + 已归档 + 9 类 + 行尾「＋ 新收藏」贴纸（添加入口，样式与磁贴统一）
-    const stickers = overlay.querySelectorAll('[data-fav-tags] .bz-fav-stk');
-    expect(stickers.length).toBe(12);
+    // 头区：仅「收藏本」16px 标题（ADR-0101：副题删除）
+    expect(overlay.querySelector('.bz-fav-head h1')!.textContent).toBe('收藏本');
+    expect(overlay.querySelector('[data-fav-sub]')).toBeNull();
+    // 磁贴行（空库）：全部 + 已归档 + 新收藏（零计数标签不显示，原型口径）
+    const stickers = overlay.querySelectorAll('[data-fav-tags] button');
+    expect(stickers.length).toBe(3);
     const labels = [...stickers].map((b) => (b as HTMLElement).dataset.favTag);
     expect(labels[0]).toBe('全部');
     expect(labels[1]).toBe('已归档');
-    expect(labels).toContain('GitHub');
-    expect(labels).toContain('DeepSeek Harness');
     const addBtn = overlay.querySelector('[data-fav-add]') as HTMLElement;
     expect(addBtn).not.toBeNull();
-    expect(addBtn.classList.contains('bz-fav-stk--add')).toBe(true);
+    expect(addBtn.classList.contains('bz-fav-chip-add')).toBe(true);
     expect(addBtn.textContent).toContain('新收藏');
-    // 空态
-    const empty = overlay.querySelector('.bz-fav-content .bz-empty') as HTMLElement;
+    // 空态（原型文案）
+    const empty = overlay.querySelector('.bz-fav-board .bz-fav-empty') as HTMLElement;
     expect(empty).not.toBeNull();
-    expect(empty.querySelector('.bz-empty-title')!.textContent).toBe('暂无收藏');
-    expect(empty.querySelector('.bz-empty-desc')!.textContent).toContain('「＋ 新收藏」');
+    expect(empty.textContent).toBe('这块板上还没有卡片');
     // 空库自动建文件
     expect(ctx.vault.files.has('CONFIG/STORAGE/favorites.json')).toBe(true);
     // 计数文案（C5 白卡口径）
@@ -233,30 +234,10 @@ describe('主面板开合与空态', () => {
     expect(overlayText()).toContain('甲');
   });
 
-  it('收尾扫尾：面板/表单遮罩 topifyZ 动态发号（表单恒压主面板）+ 根节点挂 bz-panel-mtop', async () => {
-    const ctx = await setup();
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(20);
-    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
-    // 根节点接线移动全屏顶距工具类
-    expect(overlay.querySelector('.bz-fav-panel')!.classList.contains('bz-panel-mtop')).toBe(true);
-    // 静态 z 档退役：显示即发号（ADR-0067）
-    const zOverlay = Number(overlay.style.zIndex);
-    expect(Number.isFinite(zOverlay) && zOverlay > 0).toBe(true);
-    openForm(null);
-    const mask = document.querySelector('.bz-fav-form-mask') as HTMLElement;
-    expect(mask).not.toBeNull();
-    const zMask = Number(mask.style.zIndex);
-    expect(Number.isFinite(zMask) && zMask > zOverlay).toBe(true);
-    // 收尾：取消关表单
-    (mask.querySelector('[data-fz-cancel]') as HTMLElement).click();
-    expect(document.querySelector('.bz-fav-form-mask')).toBeNull();
-    closePanel();
-  });
 });
 
 function overlayText(): string {
-  return (document.querySelector('.bz-fav-content') as HTMLElement)?.textContent ?? '';
+  return (document.querySelector('.bz-fav-board') as HTMLElement)?.textContent ?? '';
 }
 
 // ==================== 2. 标签：计数 / 过滤 / 取消 / chips 同步 ====================
@@ -271,11 +252,11 @@ describe('标签栏', () => {
     ]);
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
-    const side = [...document.querySelectorAll('[data-fav-tags] .bz-fav-stk')] as HTMLElement[];
+    const side = [...document.querySelectorAll('[data-fav-tags] button')] as HTMLElement[];
     expect(cntOf(side, '全部')).toBe('2');
     expect(cntOf(side, 'GitHub')).toBe('2');
     expect(cntOf(side, '网站')).toBe('1');
-    expect(cntOf(side, '大模型')).toBe('0');
+    expect(side.find((b) => b.dataset.favTag === '大模型')).toBeUndefined(); // 零计数标签不渲染（原型口径）
   });
 
   it('点标签过滤卡片；主标题变「emoji 标签」；计数文案仍全部；再点取消回全部', async () => {
@@ -292,11 +273,9 @@ describe('标签栏', () => {
     await tick(10);
     expect(cards().length).toBe(1);
     expect(cardTitles()).toEqual(['Git 收藏']);
-    // 主标题 = emoji + 标签
-    // 计数 = 过滤后（1 条收藏）
-    // 标签高亮
-    const side = [...document.querySelectorAll('[data-fav-tags] .bz-fav-stk')] as HTMLElement[];
-    expect(side.find((b) => b.dataset.favTag === 'GitHub')!.classList.contains('is-on')).toBe(true);
+    // 标签高亮（副题已随 ADR-0101 删除）
+    const side = [...document.querySelectorAll('[data-fav-tags] button')] as HTMLElement[];
+    expect(side.find((b) => b.dataset.favTag === 'GitHub')!.classList.contains('bz-fav-on')).toBe(true);
 
     // 再点同标签 = 取消回全部
     clickTag('GitHub');
@@ -313,16 +292,15 @@ describe('标签栏', () => {
     await tick(20);
     clickTag('GitHub');
     await tick(10);
-    // 卡片 meta 只显示匹配标签徽章
+    // 卡片脚注竖排徽记=全部标签（displayTagsOf 随 1:1 照搬退役）
     const card = cards()[0];
-    const badges = [...card.querySelectorAll('.bz-badge--accent')].map((e) => e.textContent);
-    expect(badges).toEqual(['🐙 GitHub']);
+    const badges = [...card.querySelectorAll('.bz-fav-tagb')].map((e) => e.textContent);
+    expect(badges.join('|')).toContain('GitHub');
     clickTag('全部');
     await tick(10);
     expect(cards().length).toBe(1);
-    // 回全部后两个徽章都显示
-    const badges2 = [...cards()[0].querySelectorAll('.bz-badge--accent')].map((e) => e.textContent);
-    expect(badges2).toEqual(['🐙 GitHub', '🌐 网站']);
+    const badges2 = [...cards()[0].querySelectorAll('.bz-fav-tagb')].map((e) => e.textContent);
+    expect(badges2.join('|')).toContain('网站');
   });
 
   it('移动端（Platform.isMobile）：磁贴行同一容器同语义，点贴纸过滤、激活态同步', async () => {
@@ -335,38 +313,33 @@ describe('标签栏', () => {
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
     // 桌面/移动共用 [data-fav-tags] 磁贴行（CSS 切换换行/横滑）
-    const stickers = [...document.querySelectorAll('[data-fav-tags] .bz-fav-stk')] as HTMLElement[];
-    expect(stickers.length).toBe(12); // 含行尾「＋ 新收藏」贴纸
+    const stickers = [...document.querySelectorAll('[data-fav-tags] button')] as HTMLElement[];
+    expect(stickers.length).toBe(5); // 全部+已归档+GitHub+Claude+新收藏
     const ghStk = stickers.find((b) => b.dataset.favTag === 'GitHub')!;
     ghStk.click();
     await tick(10);
     expect(cards().length).toBe(1);
     expect(cardTitles()).toEqual(['Git 收藏']);
     // 渲染重建节点，重查激活态
-    const stickers2 = [...document.querySelectorAll('[data-fav-tags] .bz-fav-stk')] as HTMLElement[];
-    expect(stickers2.find((b) => b.dataset.favTag === 'GitHub')!.classList.contains('is-on')).toBe(true);
+    const stickers2 = [...document.querySelectorAll('[data-fav-tags] button')] as HTMLElement[];
+    expect(stickers2.find((b) => b.dataset.favTag === 'GitHub')!.classList.contains('bz-fav-on')).toBe(true);
   });
 
   it('磁贴结构（issue 219c）：分类贴纸 emoji 直出、全部/已归档纯文字、计数紧贴名后', async () => {
     const ctx = await setup();
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
-    const side = [...document.querySelectorAll('[data-fav-tags] .bz-fav-stk')] as HTMLElement[];
+    const side = [...document.querySelectorAll('[data-fav-tags] button')] as HTMLElement[];
     // 分类贴纸：emoji + 名字，无 lucide 图标
-    const gh = side.find((b) => b.dataset.favTag === 'GitHub')!;
-    expect(gh.textContent).toContain('🐙');
-    expect(gh.querySelector('.bz-fav-stk-name')!.textContent).toBe('GitHub');
-    expect(gh.querySelector('.bz-ic')).toBeNull();
-    // 全部/已归档纯文字（无 lucide）
+    // 空库只 3 张；GitHub 零计数不渲染（原型口径）
+    expect(side.find((b) => b.dataset.favTag === 'GitHub')).toBeUndefined();
     const all = side.find((b) => b.dataset.favTag === '全部')!;
     expect(all.querySelector('.bz-ic')).toBeNull();
+    expect(all.textContent).toContain('全部');
     const arch = side.find((b) => b.dataset.favTag === '已归档')!;
-    expect(arch.classList.contains('bz-fav-stk--grey')).toBe(true);
-    // 计数紧贴名后（原型「GitHub 26」款）；「＋ 新收藏」贴纸无计数
-    for (const b of side) {
-      if (b.classList.contains('bz-fav-stk--add')) continue;
-      expect(b.querySelector('.bz-fav-stk-num')).not.toBeNull();
-    }
+    expect(arch.classList.contains('bz-fav-chip--grey')).toBe(true);
+    const add = side.find((b) => b.classList.contains('bz-fav-chip-add'))!;
+    expect(add.textContent).toContain('新收藏');
   });
 
   it('归档条目不进任何标签计数', async () => {
@@ -377,19 +350,20 @@ describe('标签栏', () => {
     ]);
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
-    const side = [...document.querySelectorAll('[data-fav-tags] .bz-fav-stk')] as HTMLElement[];
+    const side = [...document.querySelectorAll('[data-fav-tags] button')] as HTMLElement[];
     expect(cntOf(side, '网站')).toBe('1');
     expect(cntOf(side, '全部')).toBe('1');
+    expect(side.find((b) => b.dataset.favTag === 'GitHub')).toBeUndefined();
   });
 });
 
 function cntOf(btns: HTMLElement[], tag: string): string {
   const b = btns.find((x) => x.dataset.favTag === tag)!;
-  return b.querySelector('.bz-fav-stk-num')!.textContent!;
+  const m = (b.textContent || '').match(/(\d+)\s*$/); return m ? m[1] : '';
 }
 
 function clickTag(label: string): void {
-  const all = [...document.querySelectorAll('[data-fav-tags] .bz-fav-stk')] as HTMLElement[];
+  const all = [...document.querySelectorAll('[data-fav-tags] button')] as HTMLElement[];
   const target = all.find((b) => (b.dataset.favTag) === label);
   if (!target) throw new Error('找不到标签：' + label);
   target.click();
@@ -398,7 +372,7 @@ function clickTag(label: string): void {
 // ==================== 3. 卡片渲染 ====================
 
 describe('卡片渲染', () => {
-  it('标题/简介/时间徽章/标签徽章/关联笔记徽章（去 .md 与路径）', async () => {
+  it('标题/简介/竖排标签徽记/相对时间脚注（原型 1:1；host/笔记徽记退役）', async () => {
     const ctx = await setup();
     seedVault(ctx.vault, [
       seedItem({
@@ -410,31 +384,20 @@ describe('卡片渲染', () => {
     await tick(20);
     const card = cards()[0];
     expect(card.dataset.favId).toBe('1');
-    expect(card.querySelector('.bz-fav-title')!.textContent).toBe('项目 A');
-    expect(card.querySelector('.bz-fav-desc')!.textContent).toBe('简介文字');
-    expect(card.classList.contains('bz-fav-card--link')).toBe(true);
-    const badges = [...card.querySelectorAll('.bz-badge--accent')].map((e) => e.textContent);
-    expect(badges).toEqual(['🐙 GitHub', '🤖 Claude']);
-    expect(card.querySelector('.bz-fav-note-badge')!.textContent).toContain('AI 工具库');
-    expect(card.querySelector('.bz-fav-note-badge')!.textContent).not.toContain('.md');
-    expect(card.querySelector('.bz-fav-note-badge')!.textContent).not.toContain('我的/');
-    // 日期默认相对时间（issue 201：favoritesTimeFormat=relative 默认）；域名徽章退役
-    expect(card.querySelector('.bz-fav-time-badge')!.textContent).toBe(formatRelativeTime('2025-06-01 08:00:00'));
+    expect(card.querySelector('h3')!.textContent).toBe('项目 A');
+    expect(card.querySelector('p')!.textContent).toBe('简介文字');
+    // 脚注（原型 1:1）：竖排标签徽记（emoji+名）+ 相对时间行；host/笔记徽记已退役
+    const tagbs = [...card.querySelectorAll('.bz-fav-tagb')].map((e) => e.textContent);
+    expect(tagbs.length).toBe(2);
+    expect(tagbs[0]).toContain('GitHub');
+    expect(tagbs[1]).toContain('Claude');
+    expect(card.querySelector('.bz-fav-ft')!.textContent).not.toContain('工具库');
     expect(card.querySelector('.bz-fav-host-badge')).toBeNull();
+    expect(card.querySelector('.bz-fav-ft')!.textContent).toMatch(/天前|刚刚|分钟前|小时前|\d{1,2}-\d{2}/);
   });
 
-  it('设置 favoritesTimeFormat=absolute：日期回绝对时间（issue 201 设置项）', async () => {
-    const ctx = await setup();
-    ctx.state.favoritesTimeFormat = 'absolute';
-    seedVault(ctx.vault, [
-      seedItem({ id: '1', title: '绝对时间项', created: '2025-06-01 08:00:00' }),
-    ]);
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(20);
-    expect(cards()[0].querySelector('.bz-fav-time-badge')!.textContent).toBe('2025-06-01 08:00:00');
-  });
 
-  it('置顶卡：bz-fav-card--pinned 类；meta 不再有「置顶 · 」文字前缀（视觉走左缘品牌条）', async () => {
+  it('置顶卡：bz-fav-pinc 类；meta 不再有「置顶 · 」文字前缀（视觉走左缘品牌条）', async () => {
     const ctx = await setup();
     seedVault(ctx.vault, [
       seedItem({ id: '1', title: '置顶项', pinned: true, created: '2025-06-01 08:00:00' }),
@@ -442,11 +405,11 @@ describe('卡片渲染', () => {
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
     const card = cards()[0];
-    expect(card.classList.contains('bz-fav-card--pinned')).toBe(true);
-    expect(card.querySelector('.bz-fav-time-badge')!.textContent).not.toContain('置顶');
+    expect(card.classList.contains('bz-fav-pinc')).toBe(true);
+    expect(card.querySelector('.bz-fav-ft')!.textContent).not.toContain('置顶');
   });
 
-  it('无简介不渲染 desc 行；无 url 不加 link 类', async () => {
+  it('无简介不渲染 desc 行（link 类随 1:1 照搬退役）', async () => {
     const ctx = await setup();
     seedVault(ctx.vault, [
       seedItem({ id: '1', title: '纯文本', desc: '', url: '' }),
@@ -454,8 +417,8 @@ describe('卡片渲染', () => {
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
     const card = cards()[0];
-    expect(card.querySelector('.bz-fav-desc')).toBeNull();
-    expect(card.classList.contains('bz-fav-card--link')).toBe(false);
+    // 原型 1:1：无简介渲染占位文案「（这张卡只写了个名字）」
+    expect(card.querySelector('p')!.textContent).toBe('（这张卡只写了个名字）');
   });
 
   it('多标签卡片徽章齐全', async () => {
@@ -465,27 +428,13 @@ describe('卡片渲染', () => {
     ]);
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
-    const badges = [...cards()[0].querySelectorAll('.bz-badge--accent')].map((e) => e.textContent);
-    expect(badges).toEqual(['🐙 GitHub', '🧠 大模型', '🍺 酒馆']);
+    const badges = [...cards()[0].querySelectorAll('.bz-fav-tagb')].map((e) => e.textContent);
+    expect(badges.length).toBe(3);
+    expect(badges[0]).toContain('GitHub');
+    expect(badges[1]).toContain('大模型');
+    expect(badges[2]).toContain('酒馆');
   });
 
-  it('余额显示：数字 + 档位色类（ok/warn/err）；查询失败显示「查询失败」', async () => {
-    const ctx = await setup();
-    seedVault(ctx.vault, [
-      seedItem({ id: '1', title: '富余', balance: '120.5' }),
-      seedItem({ id: '2', title: '不足', balance: '50' }),
-      seedItem({ id: '3', title: '告急', balance: '9.9' }),
-      seedItem({ id: '4', title: '失败', balance: null, balanceError: 'HTTP 500' }),
-    ]);
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(20);
-    const titleOf = (t: string) => cards().find((c) => c.querySelector('.bz-fav-title')!.textContent === t)!;
-    expect(titleOf('富余').querySelector('.bz-fav-balance')!.classList.contains('bz-fav-balance--ok')).toBe(true);
-    expect(titleOf('不足').querySelector('.bz-fav-balance')!.classList.contains('bz-fav-balance--warn')).toBe(true);
-    expect(titleOf('告急').querySelector('.bz-fav-balance')!.classList.contains('bz-fav-balance--err')).toBe(true);
-    expect(titleOf('失败').querySelector('.bz-fav-balance')!.textContent).toBe('查询失败');
-    expect(titleOf('失败').querySelector('.bz-fav-balance')!.classList.contains('bz-fav-balance--err')).toBe(true);
-  });
 
   it('归档条目主列表不出现（冷存不可见）', async () => {
     const ctx = await setup();
@@ -558,23 +507,23 @@ describe('桌面行动作浮层', () => {
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
     // 点有链卡片 → openUrl（补协议），不弹菜单
-    cards().find((c) => c.querySelector('.bz-fav-title')!.textContent === '有链收藏')!
+    cards().find((c) => c.querySelector('h3')!.textContent === '有链收藏')!
       .dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(10);
     expect(app.openUrl).toHaveBeenCalledWith('https://github.com/a/b');
-    expect(document.querySelector('.bz-item-menu')).toBeNull();
+    expect(document.querySelector('.bz-fav-ctx')).toBeNull();
     // 点无链卡片 → 不动作、不弹菜单
-    cards().find((c) => c.querySelector('.bz-fav-title')!.textContent === '无链收藏')!
+    cards().find((c) => c.querySelector('h3')!.textContent === '无链收藏')!
       .dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(10);
-    expect(document.querySelector('.bz-item-menu')).toBeNull();
-    // 右键仍弹菜单（挂域皮肤类 bz-fav-menu，issue 219d 亚麻化）
+    expect(document.querySelector('.bz-fav-ctx')).toBeNull();
+    // 右键仍弹菜单（域内自绘 linen 浮层，ADR-0101 挂 bz-fav-scope 主题作用域）
     openCardMenu(cards()[0]);
     await tick(10);
-    const menuEl = document.querySelector('.bz-item-menu');
+    const menuEl = document.querySelector('.bz-fav-ctx');
     expect(menuEl).not.toBeNull();
-    expect(menuEl!.classList.contains('bz-fav-menu')).toBe(true);
-    closeItemMenu();
+    expect(menuEl!.classList.contains('bz-fav-scope')).toBe(true);
+    document.querySelector('.bz-fav-ctx')?.remove();
   });
 
   it('右键卡片弹 .bz-item-menu；动作文案集合按数据条件（无 url 无 note：置顶/编辑/归档/删除）', async () => {
@@ -586,15 +535,13 @@ describe('桌面行动作浮层', () => {
     await tick(20);
     openCardMenu(cards()[0]);
     await tick(10);
-    const menu = document.querySelector('.bz-item-menu');
+    const menu = document.querySelector('.bz-fav-ctx');
     expect(menu).not.toBeNull();
     expect(menuLabels()).toEqual(['置顶', '编辑', '归档', '删除']);
     // 删除项 danger 类
-    const delItem = [...menu!.querySelectorAll('.bz-item-menu-item')].find(
-      (i) => i.querySelector('.bz-item-menu-label')?.textContent === '删除'
-    );
-    expect(delItem!.classList.contains('bz-item-menu-item--danger')).toBe(true);
-    closeItemMenu();
+    const delItem = [...menu!.querySelectorAll('button')].find((i) => i.textContent?.includes('删除'));
+    expect(delItem!.classList.contains('bz-fav-danger')).toBe(true);
+    document.querySelector('.bz-fav-ctx')?.remove();
   });
 
   it('右键（contextmenu 事件）同样触发浮层', async () => {
@@ -605,7 +552,7 @@ describe('桌面行动作浮层', () => {
     const card = cards()[0];
     card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
     await tick(10);
-    expect(document.querySelector('.bz-item-menu')).not.toBeNull();
+    expect(document.querySelector('.bz-fav-ctx')).not.toBeNull();
     closeItemMenu();
   });
 
@@ -618,14 +565,14 @@ describe('桌面行动作浮层', () => {
     ]);
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
-    const byTitle = (t: string) => cards().find((c) => c.querySelector('.bz-fav-title')!.textContent === t)!;
+    const byTitle = (t: string) => cards().find((c) => c.querySelector('h3')!.textContent === t)!;
     openCardMenu(byTitle('我的项目'));
     await tick(10);
     expect(menuLabels()[0]).toBe('打开');
     clickAction('打开');
     await tick(10);
     expect(app.openUrl).toHaveBeenCalledWith('https://github.com/a/b');
-    expect(document.querySelector('.bz-item-menu')).toBeNull(); // 非 keepOpen 动作浮层收起
+    expect(document.querySelector('.bz-fav-ctx')).toBeNull(); // 非 keepOpen 动作浮层收起
 
     openCardMenu(byTitle('无协议'));
     await tick(10);
@@ -634,38 +581,7 @@ describe('桌面行动作浮层', () => {
     expect(app.openUrl).toHaveBeenCalledWith('https://github.com/x/y'); // 补协议头
   });
 
-  it('有 linkedNote：动作含「跳转笔记」；点跳转 → closePanel + workspace.openLinkText', async () => {
-    const ctx = await setup();
-    const app = getApp() as any;
-    ctx.vault.files.set('我的/笔记库/A 笔记.md', '# 内容');
-    seedVault(ctx.vault, [
-      seedItem({ id: '1', title: '带笔记', url: '', desc: 'x', linkedNote: '我的/笔记库/A 笔记.md' }),
-    ]);
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(20);
-    openCardMenu(cards()[0]);
-    await tick(10);
-    expect(menuLabels()).toContain('跳转笔记');
-    clickAction('跳转笔记');
-    await tick(10);
-    expect(app.workspace.openLinkText).toHaveBeenCalledWith('我的/笔记库/A 笔记.md', '', false);
-    expect(document.querySelector('.bz-panel-overlay')).toBeNull(); // 面板关闭
-  });
 
-  it('跳转笔记目标不存在 → warning 提示、面板保持', async () => {
-    const ctx = await setup();
-    seedVault(ctx.vault, [
-      seedItem({ id: '1', title: '孤链', url: '', desc: 'x', linkedNote: '不存在的笔记.md' }),
-    ]);
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(20);
-    openCardMenu(cards()[0]);
-    await tick(10);
-    clickAction('跳转笔记');
-    await tick(10);
-    expect(hasNotice('笔记文件不存在：不存在的笔记.md')).toBe(true);
-    expect(document.querySelector('.bz-panel-overlay')).not.toBeNull();
-  });
 
   it('置顶 toggle：update 写盘 pinned + 列表重排；重开浮层动作翻转为「取消置顶」', async () => {
     const ctx = await setup();
@@ -681,14 +597,14 @@ describe('桌面行动作浮层', () => {
     expect(menuLabels()).toContain('置顶');
     clickAction('置顶');
     // 桌面菜单点项 = 浮层收起（keepOpen 语义只服务抽屉路径）
-    expect(document.querySelector('.bz-item-menu')).toBeNull();
+    expect(document.querySelector('.bz-fav-ctx')).toBeNull();
     await tick(40);
     // 写盘
     expect((await ctx.dm.getAll()).find((d) => d.id === '1')!.pinned).toBe(true);
     // 列表重排：置顶最前
     expect(cardTitles()).toEqual(['甲', '乙']);
     // 置顶卡样式
-    expect(cards()[0].classList.contains('bz-fav-card--pinned')).toBe(true);
+    expect(cards()[0].classList.contains('bz-fav-pinc')).toBe(true);
     // 重开浮层：动作翻转为「取消置顶」
     openCardMenu(cards()[0]);
     await tick(10);
@@ -721,7 +637,7 @@ describe('桌面行动作浮层', () => {
     clickAction('归档');
     await tick(10);
     // 非 keepOpen：浮层收起
-    expect(document.querySelector('.bz-item-menu')).toBeNull();
+    expect(document.querySelector('.bz-fav-ctx')).toBeNull();
     // flow-dialog
     const popup = document.getElementById('__shared_confirm_popup__');
     expect(popup).not.toBeNull();
@@ -737,7 +653,7 @@ describe('桌面行动作浮层', () => {
     expect(saved.archivedAt).toBeTruthy();
     // 卡片消失；归档带撤销 toast（ticket 188：文案带标题）
     expect(cards().length).toBe(0);
-    expect(overlayText()).toContain('暂无收藏');
+    expect(overlayText()).toContain('这块板上还没有卡片'); // 原型空态文案（ADR-0101）
     expect(hasNotice('已归档收藏「归档项」')).toBe(true);
     expect([...document.querySelectorAll('.bz-notice-action')].some((b) => b.textContent === '撤销')).toBe(true);
     // 事件
@@ -798,7 +714,7 @@ describe('桌面行动作浮层', () => {
     await tick(10);
     clickAction('删除');
     await tick(10);
-    expect(document.querySelector('.bz-item-menu')).toBeNull();
+    expect(document.querySelector('.bz-fav-ctx')).toBeNull();
     const popup = document.getElementById('__shared_confirm_popup__');
     expect(popup!.textContent).toContain('确定删除收藏「被删条目」吗？');
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
@@ -860,36 +776,11 @@ describe('桌面行动作浮层', () => {
 // ==================== 7. 添加表单 ====================
 
 describe('添加表单', () => {
-  it('置顶/AI 整理钮 = 组件库 chip 档（issue 201）：图标圆底 + 文字素排，toggle 只改 label 元素不重写图标', async () => {
-    const ctx = await setup();
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(20);
-    openAddViaMainBtn();
-    const pin = document.querySelector('#fz-pin') as HTMLElement;
-    // chip 档结构：.bz-btn--chip + 图标圆底 .bz-btn-chip（svg 挂 data-icon）+ label span 垫底
-    expect(pin.classList.contains('bz-btn--chip')).toBe(true);
-    const chipIcon = pin.querySelector('.bz-btn-chip [data-icon]') as HTMLElement;
-    expect(chipIcon).not.toBeNull();
-    const label = pin.lastElementChild as HTMLElement;
-    expect(label.textContent).toBe('置顶');
-    // 圆底内不含文字（旧 bug：文字写进图标位与 label 并排重叠）
-    expect(pin.querySelector('.bz-btn-chip')!.textContent).toBe('');
-    // toggle → is-on + label 变已置顶，图标仍在
-    (pin as HTMLButtonElement).click();
-    expect(pin.classList.contains('is-on')).toBe(true);
-    expect((pin.lastElementChild as HTMLElement).textContent).toBe('已置顶');
-    expect(pin.querySelector('.bz-btn-chip [data-icon]')).not.toBeNull();
-    // AI 整理钮同 chip 档
-    const ai = document.querySelector('[data-fz-ai]') as HTMLElement;
-    expect(ai.classList.contains('bz-btn--chip')).toBe(true);
-    expect(ai.querySelector('.bz-btn-chip [data-icon]')).not.toBeNull();
-    expect((ai.lastElementChild as HTMLElement).textContent).toBe('AI 整理');
-  });
 
   function openAddViaMainBtn(): void {
-    // issue 219c：添加入口 = 磁贴行尾「＋ 新收藏」贴纸（bz-fav-stk--add）
+    // issue 219c：添加入口 = 磁贴行尾「＋ 新收藏」贴纸（bz-fav-chip-add）
     const btn = [...document.querySelectorAll('[data-fav-add]')].find(
-      (b) => (b as HTMLElement).classList.contains('bz-fav-stk--add')
+      (b) => (b as HTMLElement).classList.contains('bz-fav-chip-add')
     ) as HTMLElement;
     btn.click();
   }
@@ -903,17 +794,13 @@ describe('添加表单', () => {
       title: g('#fz-title'),
       url: g('#fz-url'),
       desc: g('#fz-desc') as unknown as HTMLTextAreaElement,
-      note: g('#fz-note'),
-      keys: g('#fz-keys') as unknown as HTMLTextAreaElement,
-      balurl: g('#fz-balurl'),
       err: form.querySelector('#fz-err') as HTMLElement,
       save: form.querySelector('#fz-save') as HTMLButtonElement,
       pin: form.querySelector('#fz-pin') as HTMLElement,
-      llm: form.querySelector('#fz-llm') as HTMLElement,
       tagBtns: [...form.querySelectorAll('#fz-tags [data-tag]')] as HTMLElement[],
-      aiBtn: form.querySelector('[data-fz-ai]') as HTMLButtonElement,
+      aiBtn: form.querySelector('#fz-ai') as HTMLButtonElement,
       cancel: form.querySelector('[data-fz-cancel]') as HTMLButtonElement,
-      titleEl: form.querySelector('.bz-fav-form-title') as HTMLElement,
+      titleEl: form.querySelector('h2') as HTMLElement,
     };
   }
   const clickTagBtn = (els: ReturnType<typeof formEls>, label: string) => {
@@ -932,8 +819,6 @@ describe('添加表单', () => {
     expect(els.titleEl.textContent).toBe('添加收藏');
     expect(els.save.textContent).toBe('保存');
     expect(els.tagBtns.length).toBe(9);
-    // LLM 区默认隐藏
-    expect(els.llm.classList.contains('bz-fav-llm-on')).toBe(false);
   });
 
   it('校验链：空标题 → 请输入标题；url 非 http → 链接需以 http(s):// 开头；无标签 → 请至少选择一个标签', async () => {
@@ -960,20 +845,6 @@ describe('添加表单', () => {
     expect((await ctx.dm.getAll()).length).toBe(0);
   });
 
-  it('选「大模型」无 keys → 请填写 API Keys', async () => {
-    const ctx = await setup();
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(20);
-    openAddViaMainBtn();
-    const els = formEls();
-    els.title.value = 'LLM 收藏';
-    clickTagBtn(els, '大模型');
-    expect(els.llm.classList.contains('bz-fav-llm-on')).toBe(true); // 选中展开 LLM 区
-    els.save.click();
-    await tick(10);
-    expect(els.err.textContent).toBe('请填写 API Keys');
-    expect((await ctx.dm.getAll()).length).toBe(0);
-  });
 
   it('填全保存：dm.add 落盘 13 字段 + 卡片出现 + toast「收藏已添加」+ 事件 add(item)', async () => {
     const ctx = await setup();
@@ -987,7 +858,7 @@ describe('添加表单', () => {
     els.desc.value = '新简介';
     clickTagBtn(els, 'GitHub');
     els.pin.click(); // 置顶 on
-    expect(els.pin.classList.contains('is-on')).toBe(true);
+    expect(els.pin.classList.contains('bz-fav-on')).toBe(true);
     els.save.click();
     await tick(40);
 
@@ -1026,25 +897,6 @@ describe('添加表单', () => {
     events.off();
   });
 
-  it('选「大模型」+ keys 无 url → 保存成功 llmConfig={apiKeys, balanceUrl:""}', async () => {
-    const ctx = await setup();
-    const events = eventCollector();
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(20);
-    openAddViaMainBtn();
-    const els = formEls();
-    els.title.value = 'LLM 收藏';
-    clickTagBtn(els, '大模型');
-    els.keys.value = 'sk-abc';
-    els.save.click();
-    await tick(40);
-    const data = await ctx.dm.getAll();
-    expect(data.length).toBe(1);
-    expect(data[0].llmConfig).toEqual({ apiKeys: 'sk-abc', balanceUrl: '' });
-    expect(data[0].balance).toBeNull();
-    expect(events.calls[0].kind).toBe('add');
-    events.off();
-  });
 
   it('AI 不可用 → 点 AI 整理只 notice，不调用 ai.chat', async () => {
     const ctx = await setup();
@@ -1090,7 +942,7 @@ describe('添加表单', () => {
     expect(els.desc.value).toBe('AI简介');
     expect(hasNotice('AI 整理完成')).toBe(true);
     // 标签选中（is-on；drawPick 重建过按钮，须重新查询）
-    const onTags = [...document.querySelectorAll('#fz-tags [data-tag].is-on')].map((b) => (b as HTMLElement).dataset.tag);
+    const onTags = [...document.querySelectorAll('#fz-tags [data-tag].bz-fav-on')].map((b) => (b as HTMLElement).dataset.tag);
     expect(onTags).toEqual(['GitHub', 'Claude']);
     // 按钮复位
     expect(els.aiBtn.disabled).toBe(false);
@@ -1158,7 +1010,7 @@ describe('添加表单', () => {
     expect(els.title.value).toBe('helloagents');
     expect(els.desc.value).toBe('一个 AI 实验合集');
     // GitHub 标签兜底强制选中（兜底插在列表最前；drawPick 重建过按钮须重新查询）
-    const onTags = [...document.querySelectorAll('#fz-tags [data-tag].is-on')].map((b) => (b as HTMLElement).dataset.tag);
+    const onTags = [...document.querySelectorAll('#fz-tags [data-tag].bz-fav-on')].map((b) => (b as HTMLElement).dataset.tag);
     expect(onTags).toEqual(['GitHub', 'Claude']);
     // 提示词含仓库简介原文 + 忠实翻译约束
     const prompt = (chat.mock.calls[0] as any)[0] as string;
@@ -1187,49 +1039,23 @@ describe('编辑收藏', () => {
     await tick(10);
     const form = document.querySelector('.bz-fav-form') as HTMLElement;
     expect(form).not.toBeNull();
-    expect(form.querySelector('.bz-fav-form-title')!.textContent).toBe('编辑收藏');
+    expect(form.querySelector('h2')!.textContent).toBe('编辑收藏');
     expect((form.querySelector('#fz-save') as HTMLButtonElement).textContent).toBe('更新');
     expect((form.querySelector('#fz-title') as HTMLInputElement).value).toBe('原标题');
     expect((form.querySelector('#fz-url') as HTMLInputElement).value).toBe('https://github.com/a/b');
     expect((form.querySelector('#fz-desc') as HTMLTextAreaElement).value).toBe('原简介');
-    expect((form.querySelector('#fz-note') as HTMLInputElement).value).toBe('我的/笔记.md');
+    // 关联笔记字段随 ADR-0101 退役：表单无 #fz-note
+    expect(form.querySelector('#fz-note')).toBeNull();
     // 标签回填选中
-    const onTags = [...form.querySelectorAll('#fz-tags [data-tag].is-on')].map((b) => (b as HTMLElement).dataset.tag);
+    const onTags = [...form.querySelectorAll('#fz-tags [data-tag].bz-fav-on')].map((b) => (b as HTMLElement).dataset.tag);
     expect(onTags).toEqual(['GitHub', '网站']);
-    // 置顶钮 on（issue 201 chip 档：is-on）
-    expect(form.querySelector('#fz-pin')!.classList.contains('is-on')).toBe(true);
-    // 未选大模型 → LLM 区不展开；无 llmConfig 时 keys/balurl 回填空
-    expect(form.querySelector('#fz-llm')!.classList.contains('bz-fav-llm-on')).toBe(false);
-    expect((form.querySelector('#fz-keys') as unknown as HTMLTextAreaElement).value).toBe('');
-    expect((form.querySelector('#fz-balurl') as HTMLInputElement).value).toBe('');
+    // 置顶滑钮 on
+    expect(form.querySelector('#fz-pin')!.classList.contains('bz-fav-on')).toBe(true);
+    // 大模型配置区随 ADR-0101 退役
+    expect(form.querySelector('#fz-llm')).toBeNull();
+    expect(form.querySelector('#fz-keys')).toBeNull();
   });
 
-  it('编辑「大模型」收藏：LLM 区展开 + keys/balurl 回填（编辑保存不丢配置）', async () => {
-    const ctx = await setup();
-    seedVault(ctx.vault, [
-      seedItem({
-        id: '8', title: 'LLM 条目', tags: ['大模型'], url: '',
-        llm: { apiKeys: 'sk-1', balanceUrl: 'https://api.example.com/balance' },
-        balance: '9.9', balanceCacheTime: Date.now(),
-      }),
-    ]);
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(20);
-    openCardMenu(cards()[0]);
-    await tick(10);
-    clickAction('编辑');
-    await tick(10);
-    const form = document.querySelector('.bz-fav-form') as HTMLElement;
-    expect(form.querySelector('#fz-llm')!.classList.contains('bz-fav-llm-on')).toBe(true);
-    expect((form.querySelector('#fz-keys') as unknown as HTMLTextAreaElement).value).toBe('sk-1');
-    expect((form.querySelector('#fz-balurl') as HTMLInputElement).value).toBe('https://api.example.com/balance');
-    // 不改配置直接保存：llmConfig 保留（sameCfg → 不清余额）
-    (document.querySelector('#fz-save') as HTMLButtonElement).click();
-    await tick(40);
-    const saved = (await ctx.dm.getAll())[0];
-    expect(saved.llmConfig).toEqual({ apiKeys: 'sk-1', balanceUrl: 'https://api.example.com/balance' });
-    expect(saved.balance).toBe('9.9'); // 缓存余额保留
-  });
 
   it('改标题保存 → dm.update + 事件 edit changes=["改了标题"] + toast「收藏已更新」+ created 保留', async () => {
     const ctx = await setup();
@@ -1274,143 +1100,6 @@ describe('编辑收藏', () => {
     events.off();
   });
 
-  it('编辑取消「大模型」标签保存 → llmConfig/balance 显式置 null', async () => {
-    const ctx = await setup();
-    seedVault(ctx.vault, [
-      seedItem({
-        id: '7', title: 'LLM 条目', tags: ['大模型', '网站'], url: '',
-        llm: { apiKeys: 'sk-old', balanceUrl: '' }, balance: '9.9', balanceCacheTime: Date.now(),
-      }),
-    ]);
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(20);
-    openCardMenu(cards()[0]);
-    await tick(10);
-    clickAction('编辑');
-    await tick(10);
-    // 取消「大模型」标签
-    const aiTagBtn = [...document.querySelectorAll('#fz-tags [data-tag]')].find(
-      (b) => (b as HTMLElement).dataset.tag === '大模型'
-    ) as HTMLElement;
-    aiTagBtn.click();
-    (document.querySelector('#fz-save') as HTMLButtonElement).click();
-    await tick(40);
-    const saved = (await ctx.dm.getAll())[0];
-    expect(saved.tags).toEqual(['网站']);
-    expect(saved.llmConfig).toBeNull();
-    expect(saved.balance).toBeNull();
-    expect(saved.balanceCacheTime).toBeNull();
-  });
-});
-
-// ==================== 9. 余额 ====================
-
-describe('余额', () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it('打开面板自动 fetchBalance（非缓存）→ 写盘 balance + 卡片显示余额', async () => {
-    const ctx = await setup();
-    seedVault(ctx.vault, [
-      seedItem({
-        id: '1', title: 'LLM 条目', tags: ['大模型'], url: '',
-        llm: { apiKeys: 'sk-1', balanceUrl: 'https://api.example.com/balance' },
-      }),
-    ]);
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ balance: 42.5 }) });
-    vi.stubGlobal('fetch', fetchMock);
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(60);
-    expect(fetchMock).toHaveBeenCalled();
-    const saved = (await ctx.dm.getAll())[0];
-    expect(saved.balance).toBe('42.5');
-    expect(saved.balanceCacheTime).toBeTruthy();
-    expect(saved.balanceError).toBeNull();
-    expect(cards()[0].querySelector('.bz-fav-balance')!.textContent).toBe('42.5');
-    expect(cards()[0].querySelector('.bz-fav-balance')!.classList.contains('bz-fav-balance--warn')).toBe(true); // 42.5 < 100
-  });
-
-  it('缓存有效（5 分钟内）→ 打开面板不再查询', async () => {
-    const ctx = await setup();
-    seedVault(ctx.vault, [
-      seedItem({
-        id: '1', title: 'LLM 条目', tags: ['大模型'], url: '',
-        llm: { apiKeys: 'sk-1', balanceUrl: 'https://api.example.com/balance' },
-        balance: '66.6', balanceCacheTime: Date.now(),
-      }),
-    ]);
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(60);
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(cards()[0].querySelector('.bz-fav-balance')!.textContent).toBe('66.6');
-  });
-
-  it('查询失败 → 卡片显示「查询失败」+ balanceError 写盘', async () => {
-    const ctx = await setup();
-    seedVault(ctx.vault, [
-      seedItem({
-        id: '1', title: 'LLM 条目', tags: ['大模型'], url: '',
-        llm: { apiKeys: 'sk-1', balanceUrl: 'https://api.example.com/balance' },
-      }),
-    ]);
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('网络不可达')));
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(60);
-    expect(cards()[0].querySelector('.bz-fav-balance')!.textContent).toBe('查询失败');
-    const saved = (await ctx.dm.getAll())[0];
-    expect(saved.balanceError).toBe('网络不可达');
-  });
-
-  it('菜单「刷新余额」（llmConfig 齐全时出现）→ 再查 + update 写盘', async () => {
-    const ctx = await setup();
-    seedVault(ctx.vault, [
-      seedItem({
-        id: '1', title: 'LLM 条目', tags: ['大模型'], url: '',
-        llm: { apiKeys: 'sk-1', balanceUrl: 'https://api.example.com/balance' },
-      }),
-    ]);
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ balance: 10 }) })   // 打开面板自动查
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ balance: 88.8 }) }); // 刷新余额
-    vi.stubGlobal('fetch', fetchMock);
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(60);
-    expect(cards()[0].querySelector('.bz-fav-balance')!.textContent).toBe('10');
-
-    openCardMenu(cards()[0]);
-    await tick(10);
-    expect(menuLabels()).toContain('刷新余额');
-    clickAction('刷新余额');
-    await tick(60);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    const saved = (await ctx.dm.getAll())[0];
-    expect(saved.balance).toBe('88.8');
-    expect(cards()[0].querySelector('.bz-fav-balance')!.textContent).toBe('88.8');
-    // keepOpen：桌面菜单…… 打开的是菜单（非抽屉）——点刷新后 rebuild 空转，菜单已被点击项收起
-    // （keepOpen 语义主要服务于抽屉路径，见移动端用例）
-  });
-
-  it('无 apiKeys 或无 balanceUrl 条目 → 不出现「刷新余额」动作', async () => {
-    const ctx = await setup();
-    seedVault(ctx.vault, [
-      seedItem({ id: '1', title: '普通', url: '', desc: 'x' }),
-      seedItem({ id: '2', title: '有 keys 无 url', tags: ['大模型'], url: '', desc: 'x', llm: { apiKeys: 'sk', balanceUrl: '' }, created: '2025-06-02 00:00:00' }),
-    ]);
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(20);
-    const byTitle = (t: string) => cards().find((c) => c.querySelector('.bz-fav-title')!.textContent === t)!;
-    openCardMenu(byTitle('普通'));
-    await tick(10);
-    expect(menuLabels()).not.toContain('刷新余额');
-    closeItemMenu();
-    openCardMenu(byTitle('有 keys 无 url'));
-    await tick(10);
-    expect(menuLabels()).not.toContain('刷新余额');
-    closeItemMenu();
-  });
 });
 
 // ==================== 12. smartcat 总线载荷 ====================
@@ -1422,7 +1111,7 @@ describe('smartcat 域事件总线', () => {
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
     const mainAdd = [...document.querySelectorAll('[data-fav-add]')].find(
-      (b) => (b as HTMLElement).classList.contains('bz-fav-stk--add')
+      (b) => (b as HTMLElement).classList.contains('bz-fav-chip-add')
     ) as HTMLElement;
     mainAdd.click();
     const title = document.querySelector('#fz-title') as HTMLInputElement;
@@ -1472,7 +1161,7 @@ describe('smartcat 域事件总线', () => {
     ]);
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
-    const byTitle = (t: string) => cards().find((c) => c.querySelector('.bz-fav-title')!.textContent === t)!;
+    const byTitle = (t: string) => cards().find((c) => c.querySelector('h3')!.textContent === t)!;
     openCardMenu(byTitle('归档目标'));
     await tick(10);
     clickAction('归档');
@@ -1495,74 +1184,6 @@ describe('smartcat 域事件总线', () => {
 
 // ==================== 13. 设置 schema ====================
 
-describe('favoritesSettingsSchema（issue 219b：默认排序项随工具行退役，显示组仅日期显示）', () => {
-  it('桌面：显示组仅「日期显示」（favoritesSortKey 无 UI 暴露）；移动端组门控 false', () => {
-    Platform.isMobile = false;
-    const schema = favoritesSettingsSchema();
-    expect(schema.groups.length).toBe(2);
-    // 显示组
-    const view = schema.groups[0];
-    expect(view.name).toBe('显示');
-    expect(view.rows.length).toBe(1);
-    const vrow: any = view.rows[0];
-    expect(vrow.type).toBe('select');
-    expect(vrow.name).toBe('日期显示');
-    expect(vrow.binding.key).toBe('favoritesTimeFormat');
-    // 默认排序已退役
-    expect(view.rows.find((r: any) => r.binding?.key === 'favoritesSortKey')).toBeUndefined();
-    // 移动端组：桌面门控隐藏
-    const group = schema.groups[1];
-    expect(group.name).toBe('移动端');
-    expect(group.visibleWhen!({} as any)).toBe(false);
-    const row: any = group.rows[0];
-    expect(row.name).toBe('移动端默认全屏');
-    expect(row.binding.key).toBe('favoritesMobileDefaultFullscreen');
-  });
-
-  it('移动：移动端组可见性 true + 绑定键不变', () => {
-    Platform.isMobile = true;
-    const schema = favoritesSettingsSchema();
-    const group = schema.groups[1];
-    expect(group.visibleWhen!({} as any)).toBe(true);
-    expect(group.rows.length).toBe(1);
-    expect((group.rows[0] as any).binding.key).toBe('favoritesMobileDefaultFullscreen');
-  });
-
-  it('schema 渲染：桌面移动组隐藏（显示组常显）；移动端显示「移动端默认全屏」toggle 行且键直绑写设置', () => {
-    // 桌面
-    Platform.isMobile = false;
-    const state: Record<string, unknown> = { favoritesMobileDefaultFullscreen: true };
-    setSettingsProvider(() => state as any);
-    const saver = vi.fn(async () => {});
-    setSettingsSaver(saver);
-    let container = document.createElement('div');
-    renderSettingsInto(container, favoritesSettingsSchema());
-    const groupEls = [...container.querySelectorAll('.bz-settings-group')] as HTMLElement[];
-    expect(groupEls).toHaveLength(2);
-    // 桌面：显示组可见；移动端组整组隐藏
-    expect(groupEls[0].classList.contains('bz-setting-hidden')).toBe(false);
-    expect(groupEls[1].classList.contains('bz-setting-hidden')).toBe(true);
-    // 行本身渲染但挂隐藏类（声明式渲染不删 DOM）
-    const row0 = container.querySelector('.setting-item[data-name="移动端默认全屏"]') as HTMLElement;
-    expect(row0).toBeTruthy();
-    expect(row0.classList.contains('bz-setting-hidden')).toBe(true);
-
-    // 移动端
-    Platform.isMobile = true;
-    container = document.createElement('div');
-    renderSettingsInto(container, favoritesSettingsSchema());
-    const row = [...container.querySelectorAll('.setting-item')].find(
-      (el) => (el as HTMLElement).dataset.name === '移动端默认全屏'
-    ) as HTMLElement;
-    expect(row).toBeTruthy();
-    expect(container.querySelector('.bz-setting-hidden')).toBeNull();
-    const toggle = (row as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');
-    expect(toggle.value).toBe(true); // 键直绑初始值回填
-    toggle.trigger(false);
-    expect(state.favoritesMobileDefaultFullscreen).toBe(false);
-    expect(saver).toHaveBeenCalledTimes(1);
-  });
-});
 
 // ==================== 14. 移动抽屉 ====================
 
@@ -1578,31 +1199,29 @@ describe('移动端抽屉', () => {
     // 移动点卡 = 抽屉
     cards()[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(450); // 越过触屏残余 click 静置窗口（400ms），后续点击才不被吞
-    const sheet = document.querySelector('.bz-item-sheet');
+    const sheet = document.querySelector('.bz-fav-sheet');
     expect(sheet).not.toBeNull();
-    expect(document.querySelector('.bz-item-sheet-mask')).not.toBeNull();
-    // 头部（sheetHead）：emoji + 标题
-    expect(document.querySelector('.bz-fav-sheet-title')!.textContent).toBe('抽屉条目');
-    expect(document.querySelector('.bz-fav-sheet-emoji')!.textContent).toBe('🐙');
-    // 动作项含抽屉专属小字（跳转笔记 = 去 .md 的笔记名）
-    const subs = [...document.querySelectorAll('.bz-item-sheet-item-sub')].map((e) => e.textContent);
-    expect(subs).toContain('说明');
+    expect(document.querySelector('.bz-fav-sheet-mask')).not.toBeNull();
+    // 头部（原型 1:1）：磁点 + 标题 + meta（相对时间）
+    expect(document.querySelector('.bz-fav-sh-title')!.textContent).toBe('抽屉条目');
+    expect(document.querySelector('.bz-fav-sh-dot')).not.toBeNull();
+    expect(document.querySelector('.bz-fav-sh-meta')!.textContent).not.toBe('');
+    // 动作列：打开（无 url 不出现）/置顶/编辑/归档/删除；删除红字（ADR-0101 跳转笔记退役）
+    const labels = [...document.querySelectorAll('.bz-fav-sh-acts button')].map((b) => b.textContent);
+    expect(labels.join('|')).not.toContain('跳转笔记');
     // 删除为危险项
-    const del = [...document.querySelectorAll('.bz-item-sheet-item')].find(
-      (i) => i.querySelector('.bz-item-sheet-label')?.textContent === '删除'
-    );
-    expect(del!.classList.contains('bz-item-sheet-item--danger')).toBe(true);
+    const del = [...document.querySelectorAll('.bz-fav-sh-acts button')].find((i) => i.textContent?.includes('删除'));
+    expect(del!.classList.contains('bz-fav-danger')).toBe(true);
 
-    // 编辑：keepOpen 抽屉保持 + 表单叠上（companion）
+    // 编辑：抽屉先收起 + 表单叠上（companion 防误关，ADR-0101 口径：动作前 closeSheet）
     clickAction('编辑');
     await tick(10);
     expect(document.querySelector('.bz-fav-form')).not.toBeNull();
-    expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
-    // 保存后抽屉关闭（closeForm → closeItemMenu）
+    // 保存后抽屉不复活
     (document.querySelector('#fz-title') as HTMLInputElement).value = '改后';
     (document.querySelector('#fz-save') as HTMLButtonElement).click();
     await tick(40);
-    expect(document.querySelector('.bz-item-sheet')).toBeNull();
+    expect(document.querySelector('.bz-fav-sheet')).toBeNull();
     expect((await ctx.dm.getAll())[0].title).toBe('改后');
   });
 
@@ -1614,12 +1233,11 @@ describe('移动端抽屉', () => {
     await tick(20);
     cards()[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(10);
-    expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
-    const mask = document.querySelector('.bz-item-sheet-mask') as HTMLElement;
-    mask.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-    document.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    expect(document.querySelector('.bz-fav-sheet')).not.toBeNull();
+    const mask = document.querySelector('.bz-fav-sheet-mask') as HTMLElement;
+    mask.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(10);
-    expect(document.querySelector('.bz-item-sheet')).toBeNull();
+    expect(document.querySelector('.bz-fav-sheet')).toBeNull();
   });
 });
 
@@ -1628,7 +1246,7 @@ describe('移动端抽屉', () => {
 describe('脏表单拦截', () => {
   function openAddForm(): void {
     const btn = [...document.querySelectorAll('[data-fav-add]')].find(
-      (b) => (b as HTMLElement).classList.contains('bz-fav-stk--add')
+      (b) => (b as HTMLElement).classList.contains('bz-fav-chip-add')
     ) as HTMLElement;
     btn.click();
   }
@@ -1720,7 +1338,7 @@ describe('ESC 关闭（escManager bz-fav 层）', () => {
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
     const mainAdd = [...document.querySelectorAll('[data-fav-add]')].find(
-      (b) => (b as HTMLElement).classList.contains('bz-fav-stk--add')
+      (b) => (b as HTMLElement).classList.contains('bz-fav-chip-add')
     ) as HTMLElement;
     mainAdd.click();
     await tick(10);
@@ -1771,7 +1389,7 @@ describe('移动端头部（issue 219c：浮动 ✕ 退出；添加走磁贴行�
     // 添加入口 = 磁贴行尾贴纸（移动也在）
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
-    expect(document.querySelector('[data-fav-tags] .bz-fav-stk--add')).not.toBeNull();
+    expect(document.querySelector('[data-fav-tags] .bz-fav-chip-add')).not.toBeNull();
   });
 });
 
@@ -1789,14 +1407,14 @@ describe('已归档视图（ticket 188）', () => {
     await tick(20);
     expect(cardTitles()).toEqual(['活条目']);
     // 已归档贴纸计数 = 2
-    const side = [...document.querySelectorAll('[data-fav-tags] .bz-fav-stk')] as HTMLElement[];
+    const side = [...document.querySelectorAll('[data-fav-tags] button')] as HTMLElement[];
     expect(cntOf(side, '已归档')).toBe('2');
     clickTag('已归档');
     await tick(10);
     expect(cardTitles()).toEqual(['冷二条', '冷一条']); // created 倒序
     // 渲染重建节点，重查磁贴行
-    const side2 = [...document.querySelectorAll('[data-fav-tags] .bz-fav-stk')] as HTMLElement[];
-    expect(side2.find((b) => b.dataset.favTag === '已归档')!.classList.contains('is-on')).toBe(true);
+    const side2 = [...document.querySelectorAll('[data-fav-tags] button')] as HTMLElement[];
+    expect(side2.find((b) => b.dataset.favTag === '已归档')!.classList.contains('bz-fav-on')).toBe(true);
     // 回全部
     clickTag('全部');
     await tick(10);
@@ -1846,7 +1464,7 @@ describe('域名徽章退役 + 搜索退役（ticket 188 / issue 201 / 219b）',
 describe('贴链自动搬家（ticket 188）', () => {
   function openAddForm() {
     const btn = [...document.querySelectorAll('[data-fav-add]')].find(
-      (b) => (b as HTMLElement).classList.contains('bz-fav-stk--add')
+      (b) => (b as HTMLElement).classList.contains('bz-fav-chip-add')
     ) as HTMLElement;
     btn.click();
   }
@@ -1898,7 +1516,7 @@ describe('贴链自动搬家（ticket 188）', () => {
 describe('表单防丢检查补全（ticket 188：标签/置顶/关联笔记）', () => {
   function openAddForm() {
     const btn = [...document.querySelectorAll('[data-fav-add]')].find(
-      (b) => (b as HTMLElement).classList.contains('bz-fav-stk--add')
+      (b) => (b as HTMLElement).classList.contains('bz-fav-chip-add')
     ) as HTMLElement;
     btn.click();
   }
@@ -1935,144 +1553,10 @@ describe('表单防丢检查补全（ticket 188：标签/置顶/关联笔记）'
     expect(document.querySelector('.bz-fav-form')).toBeNull();
   });
 
-  it('只改关联笔记 → ESC 关表单弹 confirm', async () => {
-    const ctx = await setup();
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(20);
-    openAddForm();
-    (document.querySelector('#fz-note') as HTMLInputElement).value = '我的/笔记.md';
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
-    await tick(10);
-    expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
-    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
-    await tick(10);
-    expect(document.querySelector('.bz-fav-form')).not.toBeNull();
-  });
 
-  it('编辑模式：关联笔记保持回填值不误拦（基线=回填值）', async () => {
-    const ctx = await setup();
-    seedVault(ctx.vault, [seedItem({ id: '7', title: '原标题', url: '', desc: '', linkedNote: '我的/笔记.md' })]);
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(20);
-    openCardMenu(cards()[0]);
-    await tick(10);
-    clickAction('编辑');
-    await tick(10);
-    maskEl().dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-    await tick(10);
-    expect(document.querySelector('.bz-fav-form')).toBeNull();
-    expect(document.getElementById('__shared_confirm_mask__')).toBeNull();
-  });
 });
 
-describe('保存不被余额查询阻塞（ticket 188）', () => {
-  function openAddForm() {
-    const btn = [...document.querySelectorAll('[data-fav-add]')].find(
-      (b) => (b as HTMLElement).classList.contains('bz-fav-stk--add')
-    ) as HTMLElement;
-    btn.click();
-  }
 
-  it('保存先落盘关表单：fetch 未决时 favorites.json 已有数据；resolve 后余额写回', async () => {
-    const ctx = await setup();
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(20);
-    openAddForm();
-    (document.querySelector('#fz-title') as HTMLInputElement).value = 'LLM 收藏';
-    (document.querySelector('#fz-tags [data-tag="大模型"]') as HTMLElement).click();
-    (document.querySelector('#fz-keys') as HTMLTextAreaElement).value = 'sk-abc';
-    (document.querySelector('#fz-balurl') as HTMLInputElement).value = 'https://api.example.com/balance';
-    // 手动 deferred fetch：resolve 时机由测试控制
-    let resolveFetch!: (v: any) => void;
-    vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise((res) => { resolveFetch = res; })));
-    (document.querySelector('#fz-save') as HTMLButtonElement).click();
-    await tick(30);
-    // 落盘先行（余额查询仍挂起）：数据已在 favorites.json + 表单已关
-    const saved = await ctx.dm.getAll();
-    expect(saved.length).toBe(1);
-    expect(saved[0].title).toBe('LLM 收藏');
-    expect(saved[0].balance).toBeNull();
-    expect(document.querySelector('.bz-fav-form')).toBeNull();
-    expect(hasNotice('收藏已添加')).toBe(true);
-    // fetch 放行 → 余额后台写回 + 列表刷新
-    resolveFetch({ ok: true, json: async () => ({ balance: 77.7 }) });
-    await tick(40);
-    const after = (await ctx.dm.getAll())[0];
-    expect(after.balance).toBe('77.7');
-    expect(after.balanceError).toBeNull();
-    expect(cards()[0].querySelector('.bz-fav-balance')!.textContent).toBe('77.7');
-    vi.unstubAllGlobals();
-  });
-
-  it('后台余额查询失败：balanceError 写盘 + warning toast，不影响已保存数据', async () => {
-    const ctx = await setup();
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(20);
-    openAddForm();
-    (document.querySelector('#fz-title') as HTMLInputElement).value = 'LLM 收藏';
-    (document.querySelector('#fz-tags [data-tag="大模型"]') as HTMLElement).click();
-    (document.querySelector('#fz-keys') as HTMLTextAreaElement).value = 'sk-abc';
-    (document.querySelector('#fz-balurl') as HTMLInputElement).value = 'https://api.example.com/balance';
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('网络不可达')));
-    (document.querySelector('#fz-save') as HTMLButtonElement).click();
-    await tick(40);
-    const saved = (await ctx.dm.getAll())[0];
-    expect(saved.title).toBe('LLM 收藏'); // 保存不受影响
-    expect(saved.balance).toBeNull();
-    expect(saved.balanceError).toBe('网络不可达');
-    expect(hasNotice('余额查询失败')).toBe(true);
-    vi.unstubAllGlobals();
-  });
-});
-
-describe('关联笔记候选补全（ticket 188）', () => {
-  function openAddForm() {
-    const btn = [...document.querySelectorAll('[data-fav-add]')].find(
-      (b) => (b as HTMLElement).classList.contains('bz-fav-stk--add')
-    ) as HTMLElement;
-    btn.click();
-  }
-
-  it('输入过滤 vault 笔记候选：点选回填；Escape 只收下拉不关表单；无匹配不弹层', async () => {
-    const ctx = await setup();
-    ctx.vault.files.set('我的/仓库/A 笔记.md', '# A');
-    ctx.vault.files.set('我的/仓库/B 笔记.md', '# B');
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(20);
-    openAddForm();
-    const note = document.querySelector('#fz-note') as HTMLInputElement;
-    note.value = 'A';
-    note.dispatchEvent(new Event('input', { bubbles: true }));
-    const pop = document.querySelector('.bz-popover') as HTMLElement;
-    expect(pop).not.toBeNull();
-    const opts = [...pop.querySelectorAll('.bz-popover-item')] as HTMLElement[];
-    expect(opts.length).toBe(1);
-    expect(opts[0].textContent).toBe('我的/仓库/A 笔记.md');
-    // 点选回填 + 弹层收起（回焦/同值 input 不复弹自身——候选排除当前值）
-    opts[0].click();
-    expect(note.value).toBe('我的/仓库/A 笔记.md');
-    note.dispatchEvent(new Event('focus', { bubbles: true }));
-    note.dispatchEvent(new Event('input', { bubbles: true }));
-    expect(document.querySelector('.bz-popover')).toBeNull();
-    // 再输关键词 → 候选重新拉起 → Escape 只收下拉（表单保留）
-    note.value = 'A';
-    note.dispatchEvent(new Event('input', { bubbles: true }));
-    expect(document.querySelector('.bz-popover')).not.toBeNull();
-    note.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
-    expect(document.querySelector('.bz-popover')).toBeNull();
-    expect(document.querySelector('.bz-fav-form')).not.toBeNull();
-    // 无匹配不弹层
-    note.value = '不存在词';
-    note.dispatchEvent(new Event('input', { bubbles: true }));
-    expect(document.querySelector('.bz-popover')).toBeNull();
-    // 外点 mousedown 关（浮层生命周期走工厂捕获监听，issue 198）
-    note.value = 'B';
-    note.dispatchEvent(new Event('input', { bubbles: true }));
-    expect(document.querySelector('.bz-popover')).not.toBeNull();
-    document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-    expect(document.querySelector('.bz-popover')).toBeNull();
-  });
-});
 
 describe('issue 219「亚麻记事板」卡流视觉', () => {
   it('磁圆点存在且色相随首标签（GitHub=215）', async () => {
@@ -2087,7 +1571,7 @@ describe('issue 219「亚麻记事板」卡流视觉', () => {
     expect(dot.style.getPropertyValue('--c')).toContain('hsl(215');
   });
 
-  it('归档视图卡挂 bz-fav-card--archived 褪色类；主列表不挂', async () => {
+  it('归档视图卡挂 bz-fav-arch 褪色类；主列表不挂', async () => {
     const ctx = await setup();
     seedVault(ctx.vault, [
       seedItem({ id: '1', title: '普通项' }),
@@ -2095,11 +1579,11 @@ describe('issue 219「亚麻记事板」卡流视觉', () => {
     ]);
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
-    expect(cards().find((c) => c.querySelector('.bz-fav-title')!.textContent === '普通项')!.classList.contains('bz-fav-card--archived')).toBe(false);
+    expect(cards().find((c) => c.querySelector('h3')!.textContent === '普通项')!.classList.contains('bz-fav-arch')).toBe(false);
     // 主列表过滤归档（ADR-0074），切归档视图后卡挂褪色类
     clickTag('已归档'); // 磁贴行「已归档」贴纸
     await tick(20);
     const archCard = cards()[0];
-    expect(archCard.classList.contains('bz-fav-card--archived')).toBe(true);
+    expect(archCard.classList.contains('bz-fav-arch')).toBe(true);
   });
 });

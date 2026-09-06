@@ -1,245 +1,209 @@
-/* ==================== 收藏本域样式（src/favorites/styles.css，issue 219/219b「亚麻记事板」） ====================
- * 视觉对齐拍板原型 C5 c5-linen.html（ADR-0097/0098，域内皮肤先例：issue 210 --bz-* 作用域覆盖）：
- * 面板 = 亚麻十字纹浅色底（自绘，域内 token 作用域覆盖，组件库基线在面板内自动亚麻化）；
- * 结构 = 手写体标题「收藏本」（副题同行：筛选名 · 计数）→ 磁贴标签行（白底圆角贴纸「名 数字」，
- * 桌面换行/移动横滑共用；行尾「＋ 新收藏」同款贴纸=添加入口）→ 白卡多列卡流（和纸胶带 +
- * 磁圆点标签色标，置顶金圈、归档褪色）。
- * issue 219b 完全原型化：旧工作台骨架（左 rail / 主头行 / 搜索+排序工具行 / 移动搜索展开行）
- * 全部退役；issue 219c 头部彻底原型化：壳头行（品牌/⚙/✕）与头区主按钮删——桌面点遮罩/Esc 关，
- * 移动浮动 ✕。基线控件（按钮/输入/chip/候选浮层/弹窗骨架）仍全部消费组件库。
+/* ==================== 收藏本域样式（src/favorites/styles.css，issue 227「C5 终版」1:1 换血） ====================
+ * 原型 .zcode/ui-prototypes/favorites-cork-5/c5-linen-full.html 逐字照搬（ADR-0101，用户拍板豁免铁律 6：
+ * 面板 UI 不使用样式库/组件库，全部域内自带）。类名映射：.tags→.bz-fav-tags、.card→.bz-fav-card、
+ * .ctx→.bz-fav-ctx、.sheet→.bz-fav-sheet、.form→.bz-fav-form、.dlg/.toast/.mask 走 core（不照搬）。
+ * 主题：原型 body.dark 手动切换 → .theme-dark 变量组（跟随 Obsidian 亮暗）。
+ * 所有浮层（菜单/抽屉/表单）与面板同挂 .bz-fav-scope 携带变量。
  */
 
-/* ---- 主面板尺寸 + 亚麻 token 作用域（骨架走 .bz-panel-frame，遮罩走 .bz-panel-overlay；
-   token 同步作用到右键菜单 .bz-fav-menu 与添加/编辑表单 .bz-fav-form——issue 219d 全件套亚麻化） ---- */
-.bz-fav-panel,
-.bz-fav-form,
-.bz-item-menu.bz-fav-menu {
-  --bz-surface-3: #fffdf8;   /* 面板底（issue 219f 用户改定；原型米灰 #e9e4d8 退场） */
-  --bz-surface-2: #ffffff;   /* 贴纸/卡片白（原型纯白） */
-  --bz-surface-1: #f5f0e5;   /* 凹陷面（表单 LLM 区/徽章底） */
-  --bz-surface-hover: #f4f0e6;
-  --bz-text-1: #3c362c;
-  --bz-text-2: #6d6455;
-  --bz-text-3: #a89e8a;
-  --bz-border: #d8d1c0;      /* 原型 frame 边色 */
+/* —— 变量（原型 :root / body.dark 两组逐字） —— */
+.bz-fav-scope {
+  --bg: #e9e4d8; --bg-weave1: rgba(255,255,255,.35); --bg-weave2: rgba(160,150,130,.14);
+  --frame-bd: #d8d1c0; --frame-bg: rgba(255,255,255,.45);
+  --ink: #4a443a; --ink-strong: #3c362c; --ink-title: #5a5244; --ink-mut: #9a917d; --ink-faint: #a89e8a;
+  --card: #fff; --card-shadow: rgba(120,110,90,.18); --card-shadow-hi: rgba(120,110,90,.26);
+  --chip: #fff; --chip-ink: #6d6455; --chip-grey: #ece7db; --chip-grey-ink: #9a917d; --chip-add-bd: #b9b2a2; --chip-add-ink: #8a8171;
+  --acc: #5a8f6d; --acc-deep: #3d6b4d; --on-acc: #fff;
+  --ft-bd: #f0ece2; --menu: #fffdf8; --menu-bd: #e3dccb; --menu-hover: #f2eee0; --menu-ink: #55503f;
+  --fld-bd: #ddd5c2; --fld-bg: #fff; --fld-ink: #4a443a; --danger: #b3564d; --gold: #e0b73a; --gold-ink: #c9a227;
+  --mask: rgba(74,68,58,.38); --pop: #fffdf8; --pop-ink: #4a443a; --pop-mut: #9a917d; --pop-faint: #b3a98f;
 }
+.theme-dark .bz-fav-scope {
+  --bg: #262320; --bg-weave1: rgba(255,255,255,.045); --bg-weave2: rgba(0,0,0,.22);
+  --frame-bd: #3a352d; --frame-bg: rgba(58,53,45,.55);
+  --ink: #cfc7b4; --ink-strong: #e8e2d2; --ink-title: #e0d8c4; --ink-mut: #9a917d; --ink-faint: #847c6a;
+  --card: #35312a; --card-shadow: rgba(0,0,0,.35); --card-shadow-hi: rgba(0,0,0,.5);
+  --chip: #35312a; --chip-ink: #cfc7b4; --chip-grey: #3a352d; --chip-grey-ink: #9a917d; --chip-add-bd: #6d6455; --chip-add-ink: #a89e8a;
+  --acc: #6da37f; --acc-deep: #4c7a5d; --on-acc: #fff;
+  --ft-bd: #454036; --menu: #35312a; --menu-bd: #4a443a; --menu-hover: #454036; --menu-ink: #d8d0bc;
+  --fld-bd: #55503f; --fld-bg: #2c2823; --fld-ink: #e0d8c4; --danger: #d0705f; --gold: #e0b73a; --gold-ink: #e0b73a;
+  --mask: rgba(0,0,0,.55); --pop: #35312a; --pop-ink: #e0d8c4; --pop-mut: #9a917d; --pop-faint: #847c6a;
+}
+
+/* —— 面板（原型 body + .frame） —— */
 .bz-fav-panel {
-  width: 960px; max-width: calc(100vw - 32px); height: 640px; max-height: 92vh;
-  /* 亚麻十字纹（C5 规格：45°/-45° 双向细线叠米灰底） */
+  padding: 30px 44px 50px;
   background:
-    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.35) 0 2px, transparent 2px 4px),
-    repeating-linear-gradient(-45deg, rgba(160, 150, 130, 0.14) 0 2px, transparent 2px 4px),
-    var(--bz-surface-3);
+    repeating-linear-gradient(45deg, var(--bg-weave1) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(-45deg, var(--bg-weave2) 0 2px, transparent 2px 4px),
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--font-interface, system-ui);
+  overflow: auto;
 }
-/* ---- 头区：大标题（issue 219g 用户改定 14px/ls5px/#5a5244）+ 同行灰色小字（12px/#9a917d）；
-   头行行样式 issue 219f 用户手写版逐值照抄（垂直居中 / 40px 行高 / 顶距 10px） ---- */
-.bz-fav-body { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 2px var(--bz-space-lg) 0; }
-.bz-fav-hero {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    min-width: 0;
-    height: 40px;
-    margin-top: 10px;
-}
-.bz-fav-hero-title {
-  font-size: 14px; font-weight: 700; color: #5a5244;
-  letter-spacing: 5px; flex: none; white-space: nowrap;
-}
-.bz-fav-hero-sub {
-  font-size: 12px; color: #9a917d; letter-spacing: 0.5px;
-  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
+.bz-fav-panel .bz-fav-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; }
+.bz-fav-panel .bz-fav-head h1 { font-size: 16px; letter-spacing: 3px; color: var(--ink-title); font-weight: 700; margin: 0; }
+/* 移动端：面板即原型 .phone 内容（全屏；边框圆角交给全屏态，留内边距） */
+.bz-fav-panel.bz-fav-mob { padding: 14px 16px 24px; }
 
-/* ---- 移动浮动 ✕（全屏退出；桌面点遮罩/Esc 关闭，无头行钮） ---- */
-.bz-fav-mob-close { display: none; position: absolute; top: calc(var(--bz-space-sm) + 44px); right: var(--bz-space-sm); z-index: 3; color: var(--bz-text-2); }
-
-/* ---- 磁贴标签行（桌面换行；移动横滑共用同一容器；白底贴纸原型款） ---- */
-.bz-fav-stickers { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 4px; }
-/* 0,2,0 提级（issue 219f）：reset.css/app.css 的 button:not(.clickable-icon) 是 0,1,1 且 reset 不可删，
-   单类（0,1,0）必被压掉背景/字色/投影——容器前缀定序无关压制（同款先例 .bz-item-menu.bz-fav-menu） */
-.bz-fav-stickers .bz-fav-stk {
-  display: inline-flex; align-items: center; gap: 6px;
-  border: none; cursor: pointer; font: 12px/1 system-ui, 'Microsoft YaHei';
-  padding: 8px 14px; border-radius: 99px;
-  background: #ffffff; color: #6d6455;
-  box-shadow: 0 2px 6px rgba(120, 110, 90, 0.2);
-  position: relative;
+/* —— 磁贴标签（原型 .tags 逐字） —— */
+.bz-fav-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+.bz-fav-tags button {
+  border: none; cursor: pointer; font: 12px/1 var(--font-interface, system-ui); padding: 8px 14px;
+  background: var(--chip); color: var(--chip-ink); border-radius: 99px;
+  box-shadow: 0 2px 6px var(--card-shadow); position: relative;
 }
-/* 磁圆点风上钉：贴纸顶部小磁点（同卡 .bz-fav-dot 材质） */
-.bz-fav-stk::before {
+.bz-fav-tags button::before {
   content: ''; position: absolute; top: -4px; left: 50%; transform: translateX(-50%);
   width: 10px; height: 10px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fff, #b9b2a2 75%);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  background: radial-gradient(circle at 35% 30%, #fff, #b9b2a2 75%); box-shadow: 0 1px 2px rgba(0,0,0,.25);
 }
-.bz-fav-stk:hover { background: var(--bz-surface-hover); }
-.bz-fav-stk-name { max-width: 8em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* 计数紧贴名后（原型「GitHub 26」款，非气泡） */
-.bz-fav-stk-num { color: var(--bz-text-3); font-variant-numeric: tabular-nums; }
-.bz-fav-stk.is-on { background: #5a8f6d; color: #fff; }
-.bz-fav-stk.is-on::before { background: radial-gradient(circle at 35% 30%, #fff, #3d6b4d 75%); }
-.bz-fav-stk.is-on .bz-fav-stk-num { color: rgba(255, 255, 255, 0.85); }
-/* 已归档：白底统一，仅文字淡化 */
-.bz-fav-stickers .bz-fav-stk--grey { color: var(--bz-text-3); }
-.bz-fav-stk--grey.is-on { background: #5a8f6d; color: #fff; }
-/* 行尾「＋ 新收藏」贴纸：与磁贴同款白底（虚线描边示意「可添加」，样式统一） */
-.bz-fav-stickers .bz-fav-stk--add { background: #fff; color: var(--bz-text-2); border: 1px dashed #cfc6b2; box-shadow: none; }
-.bz-fav-stk--add:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
-.bz-fav-stk--add .bz-fav-stk-plus { font-weight: 600; color: #5a8f6d; }
+.bz-fav-tags button.bz-fav-on { background: var(--acc); color: var(--on-acc); }
+.bz-fav-tags button.bz-fav-on::before { background: radial-gradient(circle at 35% 30%, #fff, var(--acc-deep) 75%); }
+.bz-fav-tags button.bz-fav-chip--grey { background: var(--chip-grey); color: var(--chip-grey-ink); }
+.bz-fav-tags button.bz-fav-chip--grey.bz-fav-on { background: #8a8171; color: #fff; }
+.bz-fav-tags button.bz-fav-chip--grey.bz-fav-on::before { background: radial-gradient(circle at 35% 30%, #fff, #6d6455 75%); }
+.bz-fav-tags button.bz-fav-chip-add {
+  background: transparent; border: 1.5px dashed var(--chip-add-bd); color: var(--chip-add-ink); box-shadow: none;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.bz-fav-tags button.bz-fav-chip-add::before { display: none; }
+.bz-fav-tags button.bz-fav-chip-add:hover { border-color: var(--acc); color: var(--acc); }
 
-/* ---- 卡流（C5：多列白卡墙） ---- */
-.bz-fav-content {
-  flex: 1; overflow-y: auto; min-height: 0;
-  display: flex; flex-wrap: wrap; gap: 16px 14px; align-content: flex-start; align-items: flex-start;
-  padding: 14px 2px var(--bz-space-md);
-}
+/* —— 卡片（原型 .card 逐字） —— */
+.bz-fav-board { display: flex; flex-wrap: wrap; gap: 22px 20px; align-items: flex-start; }
 .bz-fav-card {
-  position: relative; width: 196px; flex: none; display: block;
-  background: #ffffff; border: none; border-radius: 10px;
-  padding: 24px 16px 13px; cursor: default; user-select: none; -webkit-user-select: none;
-  box-shadow: 0 4px 12px rgba(120, 110, 90, 0.18);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  width: 184px; background: var(--card); border-radius: 10px; padding: 24px 16px 13px; cursor: pointer; position: relative;
+  box-shadow: 0 4px 12px var(--card-shadow); transition: transform .15s, box-shadow .15s;
 }
-.bz-fav-card:hover { transform: translateY(-3px); box-shadow: 0 10px 22px rgba(120, 110, 90, 0.26); }
-/* 和纸胶带（顶部斜条，三色随卡序循环） */
-.bz-fav-card::before {
-  content: ''; position: absolute; top: -8px; left: 50%;
-  transform: translateX(-50%) rotate(-2deg);
-  width: 64px; height: 17px; border-radius: 2px;
-  background: rgba(150, 190, 220, 0.55);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-  pointer-events: none;
+.bz-fav-card:hover { transform: translateY(-4px); box-shadow: 0 10px 22px var(--card-shadow-hi); }
+.bz-fav-card .bz-fav-tape {
+  position: absolute; top: -9px; left: 50%; transform: translateX(-50%) rotate(-2deg);
+  width: 66px; height: 18px; border-radius: 2px; background: rgba(150,190,220,.55); box-shadow: 0 1px 2px rgba(0,0,0,.1);
 }
-.bz-fav-card:nth-child(3n)::before { transform: translateX(-50%) rotate(2deg); background: rgba(235, 180, 170, 0.5); }
-.bz-fav-card:nth-child(3n + 1)::before { transform: translateX(-50%) rotate(-1deg); background: rgba(170, 210, 170, 0.5); }
-/* 磁圆点（右上 = 首标签色，--c 由 cardHtml 内联注入） */
-.bz-fav-dot {
+.bz-fav-card .bz-fav-tape--r { transform: translateX(-50%) rotate(2deg); background: rgba(235,180,170,.5); }
+.bz-fav-card .bz-fav-tape--g { transform: translateX(-50%) rotate(-1deg); background: rgba(170,210,170,.5); }
+.bz-fav-card .bz-fav-dot {
   position: absolute; top: 10px; right: 10px; width: 12px; height: 12px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fff 0 30%, var(--c, #d8d3c8) 90%);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  background: radial-gradient(circle at 35% 30%, #fff 0 20%, var(--c) 75%); box-shadow: 0 1px 3px rgba(0,0,0,.2);
 }
-/* 置顶金圈（C5 规格） */
-.bz-fav-card--pinned { box-shadow: 0 4px 12px rgba(120, 110, 90, 0.18), 0 0 0 2px #e0b73a; }
-.bz-fav-card--pinned:hover { box-shadow: 0 10px 22px rgba(120, 110, 90, 0.26), 0 0 0 2px #e0b73a; }
-/* 已归档视图卡：褪色冷存 */
-.bz-fav-card--archived { opacity: 0.5; filter: grayscale(0.5); }
-.bz-fav-card--link { cursor: pointer; }
-.bz-fav-card-main { min-width: 0; }
-.bz-fav-title-row { display: flex; align-items: flex-start; gap: 6px; min-width: 0; padding-right: 16px; }
-.bz-fav-title {
-  font-size: var(--bz-font-body); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); line-height: 1.4;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-  word-break: break-word;
-}
-.bz-fav-card--link .bz-fav-title:hover { color: var(--bz-brand); }
-.bz-fav-desc {
-  font-size: var(--bz-font-meta); color: var(--bz-text-2); line-height: 1.6; margin-top: 5px;
+.bz-fav-card h3 { font-size: 14px; margin: 0 0 6px; color: var(--ink-strong); }
+.bz-fav-card p {
+  font-size: 12px; line-height: 1.65; color: var(--ink-mut); margin: 0;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
-  word-break: break-word;
 }
-.bz-fav-meta {
-  display: flex; align-items: center; gap: 6px; margin-top: 9px; padding-top: 8px; flex-wrap: wrap;
-  border-top: 1px solid var(--bz-border);
+.bz-fav-card .bz-fav-ft {
+  margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--ft-bd); font-size: 10.5px; color: var(--ink-faint);
+  display: flex; flex-direction: column; gap: 6px; align-items: flex-start;
 }
-/* 徽章变体（标签走组件库 .bz-badge--accent；笔记/日期走域内弱化） */
-.bz-fav-note-badge { background: color-mix(in srgb, var(--bz-info) 12%, transparent); color: var(--bz-info); }
-.bz-fav-note-badge .bz-ic { width: 10px; height: 10px; }
-.bz-fav-time-badge { background: transparent; color: var(--bz-text-3); font-weight: 400; padding-left: 0; }
-/* 余额读数（meta 内联右推；档位色） */
-.bz-fav-balance-wrap { flex-shrink: 0; margin-left: auto; }
-.bz-fav-balance {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: var(--bz-font-meta); font-weight: 600; color: var(--bz-text-2);
-  font-variant-numeric: tabular-nums;
-}
-.bz-fav-balance .bz-ic { width: 12px; height: 12px; }
-.bz-fav-balance--ok { color: var(--bz-success); }
-.bz-fav-balance--warn { color: var(--bz-warning); }
-.bz-fav-balance--err { color: var(--bz-danger); }
+.bz-fav-card .bz-fav-tags-row { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
+.bz-fav-card .bz-fav-tagb { padding: 3px 8px; border-radius: 99px; font-size: 10.5px; line-height: 1; white-space: nowrap; }
+.bz-fav-card.bz-fav-pinc { box-shadow: 0 4px 12px var(--card-shadow), 0 0 0 2px var(--gold); }
+.bz-fav-card.bz-fav-arch { opacity: .5; filter: grayscale(.5); }
+.bz-fav-empty { padding: 50px 0; text-align: center; color: var(--ink-faint); font-size: 13px; width: 100%; }
+/* 移动端：双列网格（原型 .phone .m-board） */
+.bz-fav-panel.bz-fav-mob .bz-fav-board { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 12px; align-items: start; }
+.bz-fav-panel.bz-fav-mob .bz-fav-card { width: auto; }
 
-/* ---- 右键菜单亚麻皮肤（issue 219d：openItemMenu menuClass=bz-fav-menu；抗 core !important 需同级特异性） ---- */
-.bz-item-menu.bz-fav-menu {
-  background: var(--bz-surface-2);
-  border: 1px solid var(--bz-border);
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(90, 75, 50, 0.22);
-  padding: 6px;
+/* 移动端关闭钮（浮动 ✕；桌面隐藏） */
+.bz-fav-mob-close {
+  display: none; position: absolute; top: 10px; right: 10px; z-index: 5;
+  width: 30px; height: 30px; border-radius: 8px; border: none; background: var(--chip); color: var(--chip-ink);
+  cursor: pointer; align-items: center; justify-content: center; box-shadow: 0 2px 6px var(--card-shadow);
 }
-.bz-item-menu.bz-fav-menu button.bz-item-menu-item { color: var(--bz-text-1) !important; border-radius: 8px !important; }
-.bz-item-menu.bz-fav-menu button.bz-item-menu-item:hover { background: var(--bz-surface-hover) !important; }
-.bz-item-menu.bz-fav-menu .bz-item-menu-icon { color: var(--bz-text-2); }
-.bz-item-menu.bz-fav-menu button.bz-item-menu-item--danger,
-.bz-item-menu.bz-fav-menu button.bz-item-menu-item--danger .bz-item-menu-icon { color: var(--bz-danger) !important; }
+.bz-fav-panel.bz-fav-mob .bz-fav-mob-close { display: flex; }
 
-/* ---- 空态（组件库 uiEmpty 工厂 → .bz-empty） ---- */
-
-/* ---- 抽屉头部（.bz-item-sheet 内） ---- */
-.bz-item-sheet .bz-fav-sheet-emoji { font-size: 20px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: var(--bz-surface-1); border-radius: 10px; flex-shrink: 0; }
-.bz-item-sheet .bz-fav-sheet-info { flex: 1; min-width: 0; }
-.bz-item-sheet .bz-fav-sheet-title { font-size: 15px; font-weight: 600; color: var(--bz-text-1); word-break: break-word; }
-.bz-item-sheet .bz-fav-sheet-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-.bz-item-sheet .bz-fav-sheet-tag {
-  font-size: 11px; line-height: 18px; padding: 0 8px; border-radius: 999px;
-  background: var(--bz-surface-1); color: var(--bz-text-2);
+/* —— 右键菜单（原型 .ctx 逐字） —— */
+.bz-fav-ctx {
+  position: fixed; z-index: 500; min-width: 168px; background: var(--menu); border: 1px solid var(--menu-bd); border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(0,0,0,.28); padding: 5px;
 }
-.bz-item-sheet .bz-fav-sheet-balance { font-size: 11px; line-height: 18px; padding: 0 8px; border-radius: 999px; background: color-mix(in srgb, var(--bz-brand) 12%, transparent); color: var(--bz-brand); font-weight: 600; }
-.bz-item-sheet .bz-fav-sheet-balance.bz-fav-balance--err { background: color-mix(in srgb, var(--bz-danger) 12%, transparent); color: var(--bz-danger); }
+.bz-fav-ctx button {
+  display: flex; align-items: center; gap: 9px; width: 100%; border: none; background: none; cursor: pointer;
+  font: 12.5px/1 var(--font-interface, 'Microsoft YaHei'); color: var(--menu-ink); padding: 8px 10px; border-radius: 7px; text-align: left;
+}
+.bz-fav-ctx button:hover { background: var(--menu-hover); }
+.bz-fav-ctx button .bz-ic { color: var(--ink-mut); }
+.bz-fav-ctx button.bz-fav-danger { color: var(--danger); }
+.bz-fav-ctx button.bz-fav-danger .bz-ic { color: var(--danger); }
+.bz-fav-ctx .bz-fav-ctx-sep { height: 1px; background: var(--ft-bd); margin: 4px 6px; }
 
-/* ---- 表单（弹窗骨架用组件库 .bz-overlay-mask；内容自绘，走域内亚麻 token）----
-   表单遮罩 z 由 openForm 经 topifyZ 动态发号（ADR-0067，恒压主面板），不写死静态档；
-   关联笔记候选浮层（.bz-popover）锚定所在 .bz-field 下方 */
+/* —— 移动端底部抽屉（原型 .sheet 逐字） —— */
+.bz-fav-sheet-mask {
+  position: fixed; inset: 0; z-index: 400; background: var(--mask); display: none; align-items: flex-end;
+}
+.bz-fav-sheet-mask.bz-fav-show { display: flex; }
+.bz-fav-sheet {
+  width: 100%; background: var(--pop); border-radius: 18px 18px 0 0; padding: 16px 18px 20px;
+  box-shadow: 0 -10px 30px rgba(0,0,0,.3);
+}
+.bz-fav-sheet .bz-fav-sh-head { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
+.bz-fav-sheet .bz-fav-sh-dot {
+  flex: none; width: 12px; height: 12px; border-radius: 50%; margin-top: 4px;
+  background: radial-gradient(circle at 35% 30%, #fff 0 20%, var(--c) 75%); box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.bz-fav-sheet .bz-fav-sh-title { font-size: 14px; color: var(--ink-strong); }
+.bz-fav-sheet .bz-fav-sh-meta { font-size: 11px; color: var(--ink-faint); margin-top: 3px; }
+.bz-fav-sheet .bz-fav-sh-acts { display: flex; flex-direction: column; }
+.bz-fav-sheet .bz-fav-sh-acts button {
+  display: flex; align-items: center; gap: 10px; border: none; background: none; cursor: pointer;
+  font: 13px/1 var(--font-interface, 'Microsoft YaHei'); color: var(--menu-ink);
+  padding: 11px 6px; text-align: left; border-bottom: 1px solid var(--ft-bd);
+}
+.bz-fav-sheet .bz-fav-sh-acts button:last-child { border-bottom: none; }
+.bz-fav-sheet .bz-fav-sh-acts button .bz-ic { color: var(--ink-mut); }
+.bz-fav-sheet .bz-fav-sh-acts button.bz-fav-danger { color: var(--danger); }
+.bz-fav-sheet .bz-fav-sh-acts button.bz-fav-danger .bz-ic { color: var(--danger); }
+
+/* —— 表单（原型 .mask + .form 逐字） —— */
+.bz-fav-form-mask {
+  position: fixed; inset: 0; z-index: 600; background: var(--mask); display: flex; align-items: center; justify-content: center;
+}
 .bz-fav-form {
-  background: var(--bz-surface-2); border-radius: 12px;
-  border: 1px solid var(--bz-border); box-shadow: 0 12px 36px rgba(90, 75, 50, 0.24);
-  width: 440px; max-width: calc(100vw - 32px); max-height: 86vh; overflow-y: auto;
-  padding: var(--bz-space-lg); display: flex; flex-direction: column;
+  width: 430px; max-height: 86vh; overflow: auto; background: var(--pop); border-radius: 14px; padding: 20px 22px 18px;
+  box-shadow: 0 16px 44px rgba(0,0,0,.32);
 }
-.bz-fav-form .bz-field { position: relative; }
-.bz-fav-form-title { font-size: var(--bz-font-title); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
-.bz-fav-form-body { display: flex; flex-direction: column; gap: var(--bz-space-md); margin-top: var(--bz-space-md); }
-.bz-fav-form-body .bz-field { margin-bottom: 0; }
-.bz-fav-form-body textarea.bz-input { min-height: 56px; }
-.bz-fav-form-inline { flex-direction: row !important; align-items: center; gap: var(--bz-space-md) !important; }
-/* 标签多选（复用 .bz-choice-btn 胶囊，此处容器换行） */
-.bz-fav-tagpick { display: flex; flex-wrap: wrap; gap: var(--bz-space-sm); }
-/* LLM 配置区（默认隐藏；选中「大模型」展开） */
-.bz-fav-llm {
-  display: none; flex-direction: column; gap: var(--bz-space-md);
-  border: 1px solid var(--bz-border); border-radius: var(--bz-radius-sm);
-  background: var(--bz-surface-1); padding: var(--bz-space-md);
+.bz-fav-form h2 { font-size: 15px; color: var(--pop-ink); margin: 0 0 14px; letter-spacing: 2px; }
+.bz-fav-form .bz-fav-fld { margin-bottom: 12px; }
+.bz-fav-form .bz-fav-fld label { display: block; font-size: 11.5px; color: var(--pop-mut); margin-bottom: 5px; }
+.bz-fav-form input, .bz-fav-form textarea {
+  width: 100%; border: 1px solid var(--fld-bd); border-radius: 8px; background: var(--fld-bg); color: var(--fld-ink);
+  font: 12.5px/1.6 var(--font-interface, 'Microsoft YaHei'); padding: 7px 10px; outline: none;
 }
-.bz-fav-llm.bz-fav-llm-on { display: flex; }
-.bz-fav-llm-title {
-  display: flex; align-items: center; gap: 6px;
-  font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1);
+.bz-fav-form textarea { resize: vertical; min-height: 52px; }
+.bz-fav-form input:focus, .bz-fav-form textarea:focus { border-color: var(--acc); }
+.bz-fav-form .bz-fav-pick { display: flex; flex-wrap: wrap; gap: 7px; }
+.bz-fav-form .bz-fav-pick button {
+  border: 1px solid var(--fld-bd); background: var(--fld-bg); color: var(--chip-ink); border-radius: 99px; cursor: pointer;
+  font: 11.5px/1 var(--font-interface, 'Microsoft YaHei'); padding: 6px 11px;
 }
-.bz-fav-llm-title .bz-ic { width: 14px; height: 14px; color: var(--bz-brand); }
-.bz-fav-llm .bz-field-desc { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
-/* 错误行 + 动作行 */
-.bz-fav-form-err { font-size: var(--bz-font-meta); color: var(--bz-danger); min-height: 16px; }
-.bz-fav-form-actions { justify-content: flex-start; }
-.bz-fav-form-spacer { flex: 1; }
+.bz-fav-form .bz-fav-pick button.bz-fav-on { background: var(--acc); border-color: var(--acc); color: var(--on-acc); }
+.bz-fav-form .bz-fav-inline { display: flex; align-items: center; gap: 8px; }
+.bz-fav-form .bz-fav-fld-desc { font-size: 11px; color: var(--pop-faint); }
+.bz-fav-form .bz-fav-sw {
+  position: relative; width: 32px; height: 18px; border-radius: 99px; background: #b9b2a2; cursor: pointer;
+  transition: background .15s; flex: none; display: inline-block;
+}
+.bz-fav-form .bz-fav-sw::after {
+  content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: left .15s;
+}
+.bz-fav-form .bz-fav-sw.bz-fav-on { background: var(--acc); }
+.bz-fav-form .bz-fav-sw.bz-fav-on::after { left: 16px; }
+.bz-fav-form .bz-fav-err { color: var(--danger); font-size: 12px; min-height: 16px; margin-bottom: 6px; }
+.bz-fav-form .bz-fav-btns { display: flex; justify-content: flex-end; gap: 9px; }
+.bz-fav-form .bz-fav-btns button {
+  cursor: pointer; font: 12.5px/1 var(--font-interface, 'Microsoft YaHei'); padding: 8px 16px; border-radius: 8px;
+  border: 1px solid var(--fld-bd); background: var(--fld-bg); color: var(--chip-ink);
+}
+.bz-fav-form .bz-fav-btns button.bz-fav-pri { background: var(--acc); border-color: var(--acc); color: var(--on-acc); }
+.bz-fav-form .bz-fav-btns button:hover { filter: brightness(.97); }
+.bz-fav-form .bz-fav-btns button:disabled { opacity: .55; cursor: default; }
+.bz-fav-form .bz-fav-btns #fz-ai { display: inline-flex; align-items: center; gap: 5px; color: var(--acc); border-color: var(--acc); }
 
-/* ---- 移动端（≤768px）：真全屏 + 磁贴行横滑 + 浮动 ✕；卡流转单列 ---- */
-@media (max-width: 768px) {
-  .bz-fav-panel {
-    width: 100vw; height: 100vh; max-width: none; max-height: none;
-    border-radius: 0; border: none;
-  }
-  /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css） */
-  .bz-fav-mob-close { display: inline-flex; } /* 全屏退出钮（桌面隐藏，点遮罩/Esc 关） */
-  .bz-fav-body { padding: 0 var(--bz-space-lg); }
-  .bz-fav-hero-title { font-size: 26px; }
-  /* 磁贴行转横滑（触控 ≥44px 档，设计手册 §8.2） */
-  .bz-fav-stickers { flex-wrap: nowrap; overflow-x: auto; margin: 12px calc(-1 * var(--bz-space-lg)) 2px; padding: 0 var(--bz-space-lg) 4px; scrollbar-width: none; }
-  .bz-fav-stickers::-webkit-scrollbar { display: none; }
-  .bz-fav-stk { min-height: 44px; flex: none; }
-  .bz-fav-content { display: block; padding: var(--bz-space-sm) 0 calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
-  .bz-fav-card { width: 100%; margin-bottom: 14px; padding: 20px 14px 12px; border-radius: 12px; }
-  .bz-fav-title { -webkit-line-clamp: 2; }
-  .bz-fav-desc { -webkit-line-clamp: 3; }
+/* —— 触屏 44px 触控档（磁贴行按钮；延续 issue 219 系列守护口径） —— */
+@media (pointer: coarse) {
+  .bz-fav-scope .bz-fav-tags button { min-height: 44px; }
 }
 
-/* 触控热区（设计手册 §8.2）已收编 core 样式库 .bz-touch-target（components.css，
-   头行图标钮挂类，coarse 下 ::after 外扩 -6px 补足 44px），域内不再复制外扩块。 */
+/* —— 窄窗口兜底：面板内双列（非移动环境但面板窄时退化为单列换行即可，flex 自适应无需处理） —— */

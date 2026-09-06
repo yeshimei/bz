@@ -484,16 +484,13 @@ describe('收藏本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     setSettingsSaver(async () => {});
   });
 
-  it('桌面端：显示组不再暴露「默认排序」（issue 219b 随工具行退役），仅「日期显示」', () => {
+  it('桌面端：显示组随 favoritesTimeFormat 退役（ADR-0101），仅剩移动端组', () => {
     const schema = favoritesSettingsSchema();
-    expect(schema.groups).toHaveLength(2);
-    expect(schema.groups[0].name).toBe('显示');
+    expect(schema.groups).toHaveLength(1);
+    expect(schema.groups[0].name).toBe('移动端');
     const rows = schema.groups[0].rows as any[];
+    expect(rows.find((r) => r.binding?.key === 'favoritesTimeFormat')).toBeUndefined();
     expect(rows.find((r) => r.binding?.key === 'favoritesSortKey')).toBeUndefined();
-    const row = rows[0] as any;
-    expect(row.type).toBe('select');
-    expect(row.name).toBe('日期显示');
-    expect(row.binding).toMatchObject({ key: 'favoritesTimeFormat' });
   });
 
   it('移动端：schema 暴露「移动端默认全屏」toggle，直绑 favoritesMobileDefaultFullscreen', () => {
@@ -501,8 +498,8 @@ describe('收藏本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     try {
       MockPlatform.isMobile = true;
       const schema = favoritesSettingsSchema();
-      expect(schema.groups[1].visibleWhen!(settings as any)).toBe(true);
-      const row = schema.groups[1].rows[0] as any;
+      expect(schema.groups[0].visibleWhen!(settings as any)).toBe(true);
+      const row = schema.groups[0].rows[0] as any;
       expect(row.name).toBe('移动端默认全屏');
       expect(row.binding).toMatchObject({ key: 'favoritesMobileDefaultFullscreen' });
     } finally {
