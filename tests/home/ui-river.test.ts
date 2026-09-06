@@ -12,6 +12,17 @@ import { closeOverlay } from '../../src/home/ui';
 import { resetHomeState, H } from '../../src/home/state';
 import { DOMAINS } from '../../src/home/domains';
 
+function yesterdayDateStr(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+function yesterdayStr(): string {
+  return `${yesterdayDateStr()} 09:00:00`;
+}
+
 function recApp(vault: MockVault): any {
   const app = mockAppWithVault(vault) as any;
   app.__executed = [] as string[];
@@ -73,6 +84,25 @@ describe('home 活动河 UI（issue 232）', () => {
     expect(app.__executed).toEqual(['bz-cinema-open']);
     expect(document.querySelector('.bz-home-overlay')).toBeNull();
     expect(H.river).toBeNull(); // 关闭清采集态
+  });
+
+  it('周历：7 格动静历渲染；点昨天格时间线切天、选中格同步', async () => {
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
+      { title: '甲', created: yesterdayStr() + ' 09:00:00', completed: null },
+    ]));
+    const app = recApp(vault);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 20));
+    const wks = document.querySelectorAll('[data-home-weekday]');
+    expect(wks.length).toBe(7);
+    expect(document.querySelectorAll('.bz-home-wk--hit').length).toBe(1); // 只有昨天有动静
+    const yesterday = yesterdayDateStr();
+    const ybtn = document.querySelector(`[data-home-weekday="${yesterday}"]`) as HTMLElement;
+    ybtn.click();
+    await new Promise((r) => setTimeout(r, 0));
+    expect((document.querySelector('[data-home-flow] .bz-home-sec-t') as HTMLElement).textContent).toContain(yesterday.slice(5));
+    expect(document.querySelectorAll('.bz-home-timeline .bz-home-ev').length).toBe(1); // 新增待办一条
+    expect(document.querySelector(`[data-home-weekday="${yesterday}"]`)!.classList.contains('bz-home-wk--sel')).toBe(true);
   });
 
   it('点关闭钮 / 遮罩均关闭（桌面无关闭钮显示由 CSS 控制事件仍可用）', async () => {

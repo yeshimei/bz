@@ -19,9 +19,13 @@ const NOW = new Date(2026, 8, 7, 21, 36).getTime(); // 2026-09-07 周一晚
 const DAY = 86400000;
 
 function emptyRiver(): RiverData {
+  const emptyDay = (ds: string) => ({ dateStr: ds, events: [], summary: { diary: 0, movies: 0, books: 0, todoDone: 0, todoCreated: 0, pomodoros: 0, pomodoroMinutes: 0 }, firstTs: null });
+  const emptyWeek = (ds: string) => ({ dateStr: ds, label: ds.slice(5), dayOfMonth: Number(ds.slice(8)), weekday: '', hit: false });
   return {
-    today: { dateStr: dateStrOf(NOW), events: [], summary: { diary: 0, movies: 0, books: 0, todoDone: 0, todoCreated: 0, pomodoros: 0, pomodoroMinutes: 0 }, firstTs: null },
-    yesterday: { dateStr: dateStrOf(NOW - DAY), events: [], summary: { diary: 0, movies: 0, books: 0, todoDone: 0, todoCreated: 0, pomodoros: 0, pomodoroMinutes: 0 }, firstTs: null },
+    today: emptyDay(dateStrOf(NOW)),
+    yesterday: emptyDay(dateStrOf(NOW - DAY)),
+    days: Array.from({ length: 7 }, (_, i) => emptyDay(dateStrOf(NOW - i * DAY))),
+    week: Array.from({ length: 7 }, (_, i) => emptyWeek(dateStrOf(NOW - i * DAY))),
     streak: { diaryStreak: 0, diaryWrittenToday: false },
     counts: { ...EMPTY_COUNTS },
   };
@@ -207,6 +211,21 @@ describe('collectRiver（只读采集集成）', () => {
     expect(data.counts.bookshelfFinished).toBe(1);
     expect(data.counts.clippingUnread).toBe(2);
     expect(data.counts.diaryTotal).toBe(0);
+  });
+
+  it('周历 7 天窗口：今天在前、hit=当天有动静、label=MM-DD', async () => {
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
+      { title: '甲', created: '2026-09-06 09:00:00', completed: null },
+    ]));
+    const data = await collectRiver(mockAppWithVault(vault) as any, NOW);
+    expect(data.days.length).toBe(7);
+    expect(data.days[0].dateStr).toBe(dateStrOf(NOW));
+    expect(data.days[6].dateStr).toBe(dateStrOf(NOW - 6 * DAY));
+    expect(data.week[0].dateStr).toBe(dateStrOf(NOW));
+    expect(data.week[0].label).toBe('09-07');
+    expect(data.week[0].hit).toBe(false); // 今天无动静
+    expect(data.week[1].hit).toBe(true); // 昨天（09-06）有新增待办
+    expect(data.week.map((w) => w.dayOfMonth)).toEqual([7, 6, 5, 4, 3, 2, 1]);
   });
 
   it('时间线接通：今天完成待办 + 新增待办派生 todoCreated（复用 recap 口径）', async () => {
