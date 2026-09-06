@@ -11,23 +11,23 @@ export const CONFIG = {
   LONG_PRESS_DELAY: 600, // 兼容导出（长按延时实际由 core/item-actions 内部处理）
 };
 
-/** 标签定义（key 稳定；label 即数据本体 tags[] 存的值；emoji 属数据展示保留） */
+/** 标签定义（key 稳定；label 即数据本体 tags[] 存的值；ic 为 Obsidian 内置 lucide 图标名） */
 export interface FavTag {
   key: string;
   label: string;
-  emoji: string;
+  ic: string;
 }
 
 export const TAGS: FavTag[] = [
-  { key: 'github', label: 'GitHub', emoji: '🐙' },
-  { key: 'software', label: '桌面软件', emoji: '💻' },
-  { key: 'web', label: '网站', emoji: '🌐' },
-  { key: 'ai', label: '大模型', emoji: '🧠' },
-  { key: 'pi', label: 'pi', emoji: '⌨️' },
-  { key: 'claude', label: 'Claude', emoji: '🤖' },
-  { key: 'skills', label: 'skills', emoji: '⚡' },
-  { key: 'tavern', label: '酒馆', emoji: '🍺' },
-  { key: 'harness', label: 'DeepSeek Harness', emoji: '🐋' },
+  { key: 'github', label: 'GitHub', ic: 'github' },
+  { key: 'software', label: '桌面软件', ic: 'app-window' },
+  { key: 'web', label: '网站', ic: 'globe' },
+  { key: 'ai', label: '大模型', ic: 'brain-circuit' },
+  { key: 'pi', label: 'pi', ic: 'keyboard' },
+  { key: 'claude', label: 'Claude', ic: 'bot' },
+  { key: 'skills', label: 'skills', ic: 'zap' },
+  { key: 'tavern', label: '酒馆', ic: 'beer' },
+  { key: 'harness', label: 'DeepSeek Harness', ic: 'waypoints' },
 ];
 
 
@@ -38,11 +38,6 @@ export function tagOf(label: string): FavTag | undefined {
 /** key 或 label → label（图标/筛选用） */
 export function tagLabel(keyOrLabel: string): string {
   return TAGS.find((t) => t.key === keyOrLabel)?.label ?? keyOrLabel;
-}
-/** key 或 label → emoji（无匹配返回空） */
-export function tagEmoji(keyOrLabel: string): string {
-  const label = tagLabel(keyOrLabel);
-  return tagOf(label)?.emoji ?? '';
 }
 
 /**

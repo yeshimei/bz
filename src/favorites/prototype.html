@@ -57,6 +57,7 @@
 
   <div class="vbadge">收藏本 · 原型预览（共用 styles.css）· 真实 51 条 <button id="reset">重置演示数据</button></div>
 
+<script src="./prototype-icons.js"></script>
 <script src="./prototype-data.js"></script>
 <script>
 (function () {
@@ -93,15 +94,15 @@
 
   /* ==================== 标签磁贴行（与 ui.ts renderTags 同构） ==================== */
   function renderTagsInto(mount, mobile) {
-    const mk = (label, emoji, cnt, active, grey) =>
-      `<button class="bz-fav-chip${active ? ' bz-fav-on' : ''}${grey ? ' bz-fav-chip--grey' : ''}" data-fav-tag="${esc(label)}">${emoji ? emoji + ' ' : ''}${esc(label)} ${cnt}</button>`;
+    const mk = (label, ic, cnt, active, grey) =>
+      `<button class="bz-fav-chip${active ? ' bz-fav-on' : ''}${grey ? ' bz-fav-chip--grey' : ''}" data-fav-tag="${esc(label)}">${ic ? icon(ic, 12) : ''}<span>${esc(label)} ${cnt}</span></button>`;
     const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${icon('plus', 12)}<span>新收藏</span></button>`;
     const chips =
       mk('全部', '', items.filter((i) => !i.archived).length, !M.archived && M.tag === null) +
-      mk('已归档', '🗄️', items.filter((i) => i.archived).length, M.archived, true) +
+      mk('已归档', 'archive', items.filter((i) => i.archived).length, M.archived, true) +
       TAGS.map((t) => {
         const n = items.filter((i) => !i.archived && (i.tags || []).includes(t.label)).length;
-        return n ? mk(t.label, t.emoji, n, !M.archived && M.tag === t.label) : '';
+        return n ? mk(t.label, t.ic, n, !M.archived && M.tag === t.label) : '';
       }).join('');
     mount.innerHTML = mobile ? add + chips : chips + add;
   }
@@ -110,7 +111,7 @@
   function cardHtml(it) {
     const i = items.indexOf(it);
     const hue = hueOf((it.tags || [])[0] || '');
-    const tape = ['bz-fav-tape', 'bz-fav-tape--r', 'bz-fav-tape--g'][i % 3];
+    const tape = 'bz-fav-tape' + (i % 3 ? [' bz-fav-tape--r', ' bz-fav-tape--g'][i % 3 - 1] : '');
     return `<div class="bz-fav-card${it.pinned ? ' bz-fav-pinc' : ''}${it.archived ? ' bz-fav-arch' : ''}" data-fav-id="${esc(it.id)}">
       <span class="${tape}"></span>
       <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>
@@ -118,8 +119,8 @@
       <p>${esc(it.description || '（这张卡只写了个名字）')}</p>
       <div class="bz-fav-ft"><span class="bz-fav-tags-row">${(it.tags || []).map((t) => {
         const h = hueOf(t);
-        const emoji = (TAGS.find((x) => x.label === t) || { emoji: '' }).emoji;
-        return `<span class="bz-fav-tagb" style="background:hsl(${h} 70% 95%);color:hsl(${h} 45% 42%)">${emoji} ${esc(t)}</span>`;
+        const ic = (TAGS.find((x) => x.label === t) || { ic: '' }).ic;
+        return `<span class="bz-fav-tagb" style="background:hsl(${h} 70% 95%);color:hsl(${h} 45% 42%)">${ic ? icon(ic, 11) : ''}<span>${esc(t)}</span></span>`;
       }).join('')}</span>
         <span>${esc(relTime(it.created))}</span></div>
     </div>`;
@@ -283,7 +284,7 @@
       pick.innerHTML = '';
       TAGS.forEach((t) => {
         const b = document.createElement('button');
-        b.type = 'button'; b.textContent = `${t.emoji} ${t.label}`;
+        b.type = 'button'; b.innerHTML = `${icon(t.ic, 12)}<span>${t.label}</span>`;
         if (sel.has(t.label)) b.classList.add('bz-fav-on');
         b.onclick = () => { sel.has(t.label) ? sel.delete(t.label) : sel.add(t.label); drawPick(); };
         pick.appendChild(b);
