@@ -2,9 +2,9 @@
  * 书架墙（bookshelf）域 UI：书脊墙 1:1 复刻（issue 218；原型 .zcode/ui-prototypes/bookshelf-10/p4-full.html）
  *
  * 布局（原型口径，完全替代旧封面网格/左栏/统计卡/月柱/筛选抽屉）：
- *   头行（行内标题「书库」居左 + 纸质统计标签行同行：全馆/已读讫/在读抽出/未读倒叠 + 分类册数，
- *   点选筛选、再点回全；issue 225 木匾刊头退场）＋ 工具行（纸感检索 + 三档排序 segmented）＋
- *   墙体（分类分区动态装箱：
+ *   头行（小号木匾「书库 · LIBRARY」与纸质统计标签行同行居左：全馆/已读讫/在读抽出/未读倒叠 +
+ *   分类册数，点选筛选、再点回全；筛选激活时未选中标签 .off 弱化；issue 226 匾额复位）＋
+ *   工具行（纸感检索 + 三档排序 segmented）＋ 墙体（分类分区动态装箱：
  *   每排按当前墙宽逐条塞满才换排；已读盖「讫」印；在读抽出一截垂书签带；未读收墙尾「倒叠区」）
  *   ＋ 墙尾格言。书脊：高度=累计阅读时长、厚度=字数（开方缩放，无字数回退批注密度）、
  *   竖排书名按「：」拆主/副双列（text-orientation: upright，字号 14→9px 自适应、列宽上限 64px）。
@@ -278,13 +278,21 @@ function renderLabels(): void {
     cats.set(k, c);
   }
   const catPairs = [...cats.entries()].sort((a, b) => b[1].n - a[1].n);
-  let html = statusDefs.map((d) => `
-    <div class="bz-bs-taglabel${(d.f === 'all' ? M.side === 'all' && M.catFilter === 'all' : M.side === d.f) ? ' on' : ''}" data-bs-side="${d.f}">
+  // 弱化口径（issue 226 对齐原型 .off）：任一筛选激活时，未选中标签（状态+分类）弱化；
+  // 「全馆藏书」恒亮作为「回到全部」出口
+  const filtering = M.side !== 'all' || M.catFilter !== 'all';
+  let html = statusDefs.map((d) => {
+    const on = d.f === 'all' ? M.side === 'all' && M.catFilter === 'all' : M.side === d.f;
+    const off = filtering && !on && d.f !== 'all';
+    return `
+    <div class="bz-bs-taglabel${on ? ' on' : ''}${off ? ' off' : ''}" data-bs-side="${d.f}">
       <span class="pin"></span><div class="n">${d.n}</div><div class="t">${d.t}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   for (const [cat, c] of catPairs) {
     const hrs = c.ms > 0 ? ` · ${Math.round(c.ms / 3600000)} 时` : '';
-    html += `<div class="bz-bs-taglabel dim-cat${M.catFilter === cat ? ' on' : ''}" data-bs-cat="${esc(cat)}">
+    const off = filtering && M.catFilter !== cat;
+    html += `<div class="bz-bs-taglabel dim-cat${M.catFilter === cat ? ' on' : ''}${off ? ' off' : ''}" data-bs-cat="${esc(cat)}">
       <span class="pin"></span><div class="n">${esc(cat)}</div><div class="t">${c.n} 册${hrs}</div>
     </div>`;
   }
@@ -482,7 +490,7 @@ export function createOverlay(app: App): void {
     <div class="bz-panel-frame bz-bs-panel bz-panel-mtop ${bsSkinClass()}">
       <div class="bz-bs-wallpage">
         <div class="bz-bs-header">
-          <h1 class="bz-bs-title">书库</h1>
+          <div class="bz-bs-plaque"><h1>书库</h1><p>LIBRARY</p></div>
           <div class="bz-bs-labels" id="bz-bs-labels"></div>
         </div>
         <div class="bz-bs-tools">
@@ -515,11 +523,16 @@ export function createOverlay(app: App): void {
   overlay.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
     if (e.target === overlay) { closeOverlay(); return; }
-    // 状态标签（再点已选 = 回全馆；「全馆」恒置 all）
+    // 状态标签（再点已选 = 回全馆；「全馆」清状态+分类全部筛选——issue 226 修「点了没反应」）
     const side = t.closest('[data-bs-side]') as HTMLElement | null;
     if (side) {
       const id = (side.dataset.bsSide || 'all') as SideId;
-      M.side = id !== 'all' && M.side === id ? 'all' : id;
+      if (id === 'all') {
+        M.side = 'all';
+        M.catFilter = 'all';
+      } else {
+        M.side = M.side === id ? 'all' : id;
+      }
       renderLabels();
       renderWall(app);
       return;

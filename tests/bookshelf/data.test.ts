@@ -73,6 +73,19 @@ describe('bookshelf 数据层', () => {
     expect(byTitle['认知觉醒'].isEpub).toBe(false);
   });
 
+  it('issue 226 书脊起伏：md 书时长——readingTime 毫秒直读；readingTimeFormat 中英双格式兜底', () => {
+    const vault = new MockVault();
+    vault.files.set('书库/毫秒直读.md', '---\ntags: [book]\nreadingTime: 42113009\nreadingTimeFormat: 11h41m53s\n---');
+    vault.files.set('书库/英文格式.md', '---\ntags: [book]\nreadingTimeFormat: 11h41m53s\n---');
+    vault.files.set('书库/中文格式.md', '---\ntags: [book]\nreadingTimeFormat: 3小时20分\n---');
+    vault.files.set('书库/无时长.md', '---\ntags: [book]\n---');
+    const byTitle = Object.fromEntries(scanMarkdownBooks(makeApp(vault)).map((i) => [i.title, i]));
+    expect(byTitle['毫秒直读'].readingTimeMs).toBe(42113009);
+    expect(byTitle['英文格式'].readingTimeMs).toBe(11 * 3600000 + 41 * 60000 + 53000);
+    expect(byTitle['中文格式'].readingTimeMs).toBe(3 * 3600000 + 20 * 60000);
+    expect(byTitle['无时长'].readingTimeMs).toBe(0);
+  });
+
   it('cover 无斜杠 → 拼 CONFIG/BOOK/书名/', () => {
     const vault = new MockVault();
     vault.files.set('书库/A.md', '---\ntags: [book]\ncover: cover.jpg\n---');
