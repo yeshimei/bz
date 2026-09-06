@@ -10,7 +10,8 @@
  *   hover 整卡反色；离场卡灰化；末行空位补纸面 filler 防露格线）→ 脚注（共 N · 显示 M · 回本冲抵）。
  *   点卡片 = 详情弹窗（字段全览 + 四态流转条 + 编辑/删除）；操作菜单仍走右键（issue 202）。
  * 移动 ≤768：真全屏；窄头行 ＋记一笔 → 🔍搜索(展开) → ✕（移动专属）；chips 横滑（bz-mobstrip）；
- *   hero 压缩 2×2；网格单列；点卡弹底部抽屉（core/item-actions）。全 icon lucide（分类 emoji 属数据保留）。
+ *   hero 压缩 2×2；网格单列；点卡弹底部抽屉（core/item-actions）。全 icon lucide；数据 emoji 走
+ *   emoji-icon-map 全量映射（issue 231 拍板全转），未入表 emoji 原样兜底。
  *
  * 计算口径不变（ADR-0089）：总资产/在库投入 = 在用+闲置原价合计；日均成本 =（总购入 - 转卖回本 Σ售价）/
  *   累计持有天数；单件日均 = 价格/已用天数（0 天 = 全价）；出离条目天数封口 exit_date。
@@ -32,14 +33,15 @@ import { tryGetSettings } from '../core/settings-provider';
 import { mobileFullscreenGroup } from '../core/settings-common';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { escapeHtml } from '../core/utils';
-import { mountIcons, uiEmpty, uiChip, uiSegmented, uiSuggest } from '../core/ui';
+import { mountIcons, uiEmpty, uiChip, uiSegmented, uiSuggest, uiIconSpan } from '../core/ui';
+import { EMOJI_ICON } from './emoji-icon-map';
 import { openItemMenu, openItemSheet, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, closeItemMenu, type ItemAction, resetItemMenuClickGuard } from '../core/item-actions';
 import { emitDomainEvent } from '../core/domain-bus';
 import { belongingsEditChanges } from '../smartcat/belongings-source';
 import type { SettingsSchema } from '../core/settings-schema';
 import { loadDatabase, saveDatabase, calculateDaysUsedUntil, getDataFilePath } from './data';
-import { DEFAULT_CATEGORIES } from './default-categories.gen';
 import type { BelongingsDatabase, BelongingsItem } from './types';
+import { aiSuggestCategory } from './ai';
 
 /** 状态（数据四态精确串；key = 稳定英文标识） */
 const STATUS: Record<string, { label: string; key: string; ic: string }> = {
@@ -159,6 +161,28 @@ function catEmoji(cat: string): string {
 }
 function catNameOf(cat: string): string {
   return String(cat || '').replace(/^\p{Extended_Pictographic}\s*/u, '');
+}
+/** 分类图标名（首字符 emoji 查映射表；未入表返回 null，调用方回退 emoji/首字文本） */
+function catIconOf(cat: string): string | null {
+  const m = String(cat || '').match(/^(\p{Extended_Pictographic})/u);
+  return m ? (EMOJI_ICON[m[1]] ?? null) : null;
+}
+/** 分类视觉 HTML：emoji（含空分类 📦 兜底）查映射出 lucide 占位，未映射回退 emoji/首字文本 */
+function catEmHtml(cat: string): string {
+  const em = catEmoji(cat);
+  const name = catIconOf(cat) || (EMOJI_ICON[em] ?? null);
+  return name ? iconSpan(name) : esc(em);
+}
+/** 物品图标名优先级：icon 字段（issue 231）→ 遗留 emoji 分类映射（含 📦 兜底）→ null（文本兜底） */
+function itemIconOf(it: BelongingsItem): string | null {
+  const raw = String(it.icon || '').trim();
+  if (raw && /^[a-z0-9-]+$/i.test(raw)) return raw;
+  return catIconOf(it.category) || (EMOJI_ICON[catEmoji(it.category)] ?? null);
+}
+/** 物品分类视觉 HTML：优先 icon 字段，遗留 emoji 走映射，未映射回退 emoji/首字文本 */
+function itemEmHtml(it: BelongingsItem): string {
+  const name = itemIconOf(it);
+  return name ? iconSpan(name) : catEmHtml(it.category);
 }
 function statusKeyOf(label: string): string {
   return STATUS_ORDER.find((s) => s.label === label)?.key ?? label;
@@ -672,7 +696,7 @@ function renderContent(): void {
   mountIcons(content);
 }
 
-/** 网格卡（P20 大字报）：NO.XX 编号 + 状态徽章 + 特大 emoji + 名称 + 大字价格 + meta */
+/** 网格卡（P20 大字报）：NO.XX 编号 + 状态徽章 + 特大分类图标 + 名称 + 大字价格 + meta */
 function cellHtml(it: BelongingsItem, idx: number): string {
   const gone = isExited(it);
   const idle = it.current_status === '闲置';
@@ -690,7 +714,7 @@ function cellHtml(it: BelongingsItem, idx: number): string {
   return `<div class="bz-bel-cell${gone ? ' bz-bel-cell--gone' : ''}${idle ? ' bz-bel-cell--idle' : ''}" data-bel-id="${esc(it.id)}">
     <span class="bz-bel-cell-idx">NO.${String(idx + 1).padStart(2, '0')} — ${esc(catNameOf(it.category) || '未分类')}</span>
     <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(STATUS[key]?.ic || 'box', 'bz-ic--sm')}${esc(it.current_status)}</span>
-    <span class="bz-bel-cell-em">${esc(catEmoji(it.category))}</span>
+    <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
     <span class="bz-bel-name">${esc(it.name)}</span>
     <span class="bz-bel-price">${moneyShort(Number(it.purchase_price) || 0)}</span>
     <span class="bz-bel-mut">${mut}</span>
@@ -714,9 +738,9 @@ function openBelDetail(it: BelongingsItem): void {
       <button class="bz-icon-btn" data-bd-close title="关闭">${iconSpan(ICON.close)}</button>
     </div>
     <div class="bz-bel-detail-idrow">
-      <span class="bz-bel-cell-em">${esc(catEmoji(it.category))}</span>
+      <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
       <div class="bz-bel-detail-idinfo">
-        <div class="bz-bel-detail-cat">${esc(it.category || '未分类')}</div>
+        <div class="bz-bel-detail-cat">${esc(catNameOf(it.category) || '未分类')}</div>
         <div class="bz-bel-detail-desc">${esc(it.description || '无备注')}</div>
       </div>
       <span class="bz-bel-tag bz-bel-tag--${statusKeyOf(it.current_status)}">${iconSpan(STATUS[statusKeyOf(it.current_status)]?.ic || 'box', 'bz-ic--sm')}${esc(it.current_status)}</span>
@@ -784,7 +808,9 @@ function sheetHeadOf(it: BelongingsItem): HTMLElement {
   body.className = 'bz-bel-sheet-head';
   const emoji = document.createElement('span');
   emoji.className = 'bz-item-sheet-emoji';
-  emoji.textContent = catEmoji(it.category) || '📦';
+  const emIcon = itemIconOf(it);
+  if (emIcon) emoji.appendChild(uiIconSpan(emIcon));
+  else emoji.textContent = catEmoji(it.category) || '📦';
   body.appendChild(emoji);
   const info = document.createElement('div');
   info.className = 'bz-bel-sheet-info';
@@ -957,7 +983,7 @@ async function deleteItem(it: BelongingsItem): Promise<void> {
 // ==================== 表单（记一笔 / 编辑） ====================
 
 // 分类搜索联想（issue 203：收敛为组件库 uiSuggest——聚焦/输入惰性弹出、外点收起、
-// Esc 只收下拉；候选 = DEFAULT_CATEGORIES 全库子串过滤，上限 60，emoji 前缀 + 去缀名）
+// Esc 只收下拉；候选 = 自己的历史分类（issue 231 预设退役），上限 60，历史图标前缀）
 
 // ==================== 表单防丢（ticket 189，对照 favorites） ====================
 
@@ -1041,7 +1067,7 @@ export function openForm(it: BelongingsItem | null): void {
     <div class="bz-bel-form-title">${editing ? '编辑物品' : '记一笔'}</div>
     <div class="bz-bel-form-body">
       <div class="bz-field"><span class="bz-field-label">名称</span><input class="bz-input" id="bm-name" value="${esc(it?.name ?? '')}" placeholder="如：iPhone 15 Pro"></div>
-      <div class="bz-field"><span class="bz-field-label">分类</span><input class="bz-input" id="bm-cat" value="${esc(catVal)}" placeholder="输入或选择分类" autocomplete="off"></div>
+      <div class="bz-field"><span class="bz-field-label">分类</span><span class="bz-bel-catrow"><span class="bz-bel-form-icon" id="bm-icon" title="分类图标（AI 归类或选历史分类自动带上）"></span><input class="bz-input" id="bm-cat" value="${esc(catVal)}" placeholder="输入或从历史分类选择" autocomplete="off"><button type="button" class="bz-icon-btn bz-bel-aibtn" id="bm-ai" title="AI 归类：按名称建议分类与图标">${iconSpan('sparkles', 'bz-ic--sm')}</button></span></div>
       <div class="bz-bel-form-row">
         <div class="bz-field"><span class="bz-field-label">购买价格（元）</span><input class="bz-input" id="bm-price" type="number" min="0" step="0.01" value="${esc(priceVal)}" placeholder="0.00"></div>
         <div class="bz-field"><span class="bz-field-label">购买日期</span><input class="bz-input" id="bm-date" type="date" value="${esc(dateVal)}"></div>
@@ -1080,15 +1106,31 @@ export function openForm(it: BelongingsItem | null): void {
     soldPrice: soldPriceVal,
   };
 
-  // 分类搜索联想（组件库 uiSuggest，issue 203）
+  // 分类搜索联想（组件库 uiSuggest，issue 203）+ 表单图标状态（issue 231/ADR-0102）：
+  // 候选 = 历史分类；点选历史分类自动带上馆内图标；AI 归类同写 formIcon，随保存入 item.icon
   const catInput = mask.querySelector('#bm-cat') as HTMLInputElement;
   let curCat = catVal;
+  let formIcon: string | null = it?.icon || null;
+  const iconChip = mask.querySelector('#bm-icon') as HTMLElement;
+  const drawIconChip = () => {
+    iconChip.replaceChildren();
+    iconChip.hidden = !formIcon;
+    if (formIcon) iconChip.appendChild(uiIconSpan(formIcon));
+  };
+  drawIconChip();
+  const historyIconOf = (cat: string): string => (M.db?.categoryIcons?.[cat] as string) || '';
   uiSuggest({
     anchor: catInput,
-    source: () => DEFAULT_CATEGORIES,
+    source: () => M.db?.categories ?? [],
     max: 60,
-    iconOf: catEmoji,
-    labelOf: catNameOf,
+    iconOf: (raw: string) => {
+      const name = historyIconOf(raw);
+      return name ? uiIconSpan(name) : '';
+    },
+    onPick: (raw: string) => {
+      const name = historyIconOf(raw);
+      if (name) { formIcon = name; drawIconChip(); }
+    },
   });
   // 状态单选（平铺胶囊）；出离态展开出离记录行（ADR-0089）
   const statusPick = mask.querySelector('#bm-status') as HTMLElement;
@@ -1118,6 +1160,30 @@ export function openForm(it: BelongingsItem | null): void {
   const saveBtn = mask.querySelector('#bm-save') as HTMLButtonElement;
   // 保存防重入（对齐 favorites：双击/连点不并发双写——ticket 141 通病 4）
   let saving = false;
+
+  // AI 归类（issue 231/ADR-0102）：按名称建议分类 + 图标；未配置/失败内联降级，不阻塞手填
+  const aiBtn = mask.querySelector('#bm-ai') as HTMLButtonElement;
+  aiBtn.addEventListener('click', () => {
+    if (aiBtn.disabled) return;
+    const aiName = (mask.querySelector('#bm-name') as HTMLInputElement).value.trim();
+    if (!aiName) { fail('先填物品名称，AI 才能归类'); return; }
+    aiBtn.disabled = true;
+    aiBtn.classList.add('is-busy');
+    void (async () => {
+      try {
+        const sug = await aiSuggestCategory(aiName, M.db?.categories?.slice(0, 40) ?? []);
+        catInput.value = sug.category;
+        formIcon = sug.icon;
+        drawIconChip();
+        errEl.textContent = '';
+      } catch (e: any) {
+        fail('AI 归类失败：' + (e?.message || '未知错误'));
+      } finally {
+        aiBtn.disabled = false;
+        aiBtn.classList.remove('is-busy');
+      }
+    })();
+  });
 
   mask.addEventListener('mousedown', (e) => { if (e.target === mask) requestCloseBelForm(mask); });
   mask.querySelector('[data-bm-cancel]')?.addEventListener('click', () => requestCloseBelForm(mask));
@@ -1163,6 +1229,7 @@ export function openForm(it: BelongingsItem | null): void {
           const snapshot = { ...cur };
           cur.name = name;
           cur.category = category;
+          cur.icon = formIcon;
           cur.purchase_price = Math.round(price * 100) / 100;
           cur.purchase_date = date;
           cur.current_status = curStatus;
@@ -1190,6 +1257,7 @@ export function openForm(it: BelongingsItem | null): void {
             last_updated: new Date().toISOString(),
             ...(exited ? { exit_date: exitVal || todayStr() } : {}),
             ...(curStatus === '已转卖' ? { sold_price: soldPrice } : {}),
+            ...(formIcon ? { icon: formIcon } : {}),
           };
           M.db.items[newItem.id] = newItem; // 用当前库（外部 modify 换新后旧 db 引用会丢写）
           await saveAndRender();
