@@ -2,216 +2,77 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>C5 完整版 · 收藏本（桌面+移动 · 亮暗切换）</title>
+<title>收藏本 · 原型预览（与 src/favorites/styles.css 共用同一份 CSS）</title>
+<!--
+  ┌────────────────────────────────────────────────────────────────────┐
+  │ 本文件 = 收藏本域 UI 的评审壳。组件样式零内联，全部来自同目录        │
+  │ ./styles.css（与插件构建同一份源文件）。改样式只改 styles.css，      │
+  │ 刷新本页即见，插件构建自动带走——不存在二次同步。                    │
+  │ 本文件只允许写：演示壳（页面底/手机框/评审徽牌）与演示逻辑（JS）。   │
+  └────────────────────────────────────────────────────────────────────┘
+-->
+<link rel="stylesheet" href="./styles.css">
 <style>
+  /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  :root, body {
-    --bg: #fffcf6; --bg-weave1: rgba(255,255,255,.5); --bg-weave2: rgba(160,150,130,.1);
-    --frame-bd: #d8d1c0; --frame-bg: rgba(255,255,255,.45);
-    --ink: #4a443a; --ink-strong: #3c362c; --ink-title: #5a5244; --ink-mut: #9a917d; --ink-faint: #a89e8a;
-    --card: #fff; --card-bd: transparent; --card-shadow: rgba(120,110,90,.18); --card-shadow-hi: rgba(120,110,90,.26);
-    --chip: #fff; --chip-ink: #6d6455; --chip-grey: #ece7db; --chip-grey-ink: #9a917d; --chip-add-bd: #b9b2a2; --chip-add-ink: #8a8171;
-    --acc: #5a8f6d; --acc-deep: #3d6b4d; --on-acc: #fff;
-    --ft-bd: #f0ece2; --menu: #fffdf8; --menu-bd: #e3dccb; --menu-hover: #f2eee0; --menu-ink: #55503f;
-    --fld-bd: #ddd5c2; --fld-bg: #fff; --fld-ink: #4a443a; --danger: #b3564d; --gold: #e0b73a; --gold-ink: #c9a227;
-    --mask: rgba(74,68,58,.38); --pop: #fffdf8; --pop-ink: #4a443a; --pop-mut: #9a917d; --pop-faint: #b3a98f;
-    --toast: #4a443a; --toast-ink: #f3efe4; --vbadge: rgba(255,255,255,.9);
-    --app-bg: #e3e0d8; --app-rb: #d6d2c6; --app-rb-ic: #8a8171;
-  }
-  body.dark {
-    --bg: #262320; --bg-weave1: rgba(255,255,255,.045); --bg-weave2: rgba(0,0,0,.22);
-    --frame-bd: #3a352d; --frame-bg: rgba(58,53,45,.55);
-    --ink: #cfc7b4; --ink-strong: #e8e2d2; --ink-title: #e0d8c4; --ink-mut: #9a917d; --ink-faint: #847c6a;
-    --card: #35312a; --card-shadow: rgba(0,0,0,.35); --card-shadow-hi: rgba(0,0,0,.5);
-    --chip: #35312a; --chip-ink: #cfc7b4; --chip-grey: #3a352d; --chip-grey-ink: #9a917d; --chip-add-bd: #6d6455; --chip-add-ink: #a89e8a;
-    --acc: #6da37f; --acc-deep: #4c7a5d; --on-acc: #fff;
-    --ft-bd: #454036; --menu: #35312a; --menu-bd: #4a443a; --menu-hover: #454036; --menu-ink: #d8d0bc;
-    --fld-bd: #55503f; --fld-bg: #2c2823; --fld-ink: #e0d8c4; --danger: #d0705f; --gold: #e0b73a; --gold-ink: #e0b73a;
-    --mask: rgba(0,0,0,.55); --pop: #35312a; --pop-ink: #e0d8c4; --pop-mut: #9a917d; --pop-faint: #847c6a;
-    --toast: #e8e2d2; --toast-ink: #35312a; --vbadge: rgba(53,49,42,.9);
-    --app-bg: #262320; --app-rb: #1e1b18; --app-rb-ic: #6f6a5c;
-  }
-  body {
-    min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 56px; padding: 32px 24px;
-    background:
-      repeating-linear-gradient(45deg, var(--bg-weave1) 0 2px, transparent 2px 4px),
-      repeating-linear-gradient(-45deg, var(--bg-weave2) 0 2px, transparent 2px 4px),
-      var(--app-bg);
-    font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; color: var(--ink);
-  }
-  /* —— 主题切换 —— */
-  .theme { position: fixed; top: 14px; right: 14px; z-index: 800; }
-  .theme button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--frame-bd); background: var(--pop);
-    color: var(--ink-mut); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
-  .head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 20px; }
-  .head h1 { font-size: 14px; letter-spacing: 3px; color: var(--ink-title); }
-  /* —— 磁贴标签 —— */
-  .tags { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 0; margin-bottom: 20px; }
-  .tags button { border: none; cursor: pointer; font: 12px/1 system-ui, 'Microsoft YaHei'; padding: 8px 14px;
-    background: var(--chip); color: var(--chip-ink); border-radius: 99px; box-shadow: 0 2px 6px var(--card-shadow); position: relative; }
-  .tags button::before { content: ''; position: absolute; top: -4px; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #fff, #b9b2a2 75%); box-shadow: 0 1px 2px rgba(0,0,0,.25); }
-  .tags button.on { background: var(--acc); color: var(--on-acc); }
-  .tags button.on::before { background: radial-gradient(circle at 35% 30%, #fff, var(--acc-deep) 75%); }
-  .tags button.grey { background: var(--chip-grey); color: var(--chip-grey-ink); }
-  .tags button.grey.on { background: #8a8171; color: #fff; }
-  .tags button.grey.on::before { background: radial-gradient(circle at 35% 30%, #fff, #6d6455 75%); }
-  .tags button.add { background: transparent; border: 1.5px dashed var(--chip-add-bd); color: var(--chip-add-ink); box-shadow: none; }
-  .tags button.add::before { display: none; }
-  .tags button.add:hover { border-color: var(--acc); color: var(--acc); }
-  /* —— 卡片 —— */
-  .board { display: flex; flex-wrap: wrap; gap: 22px 20px; align-items: flex-start; }
-  .card { width: 184px; background: var(--card); border-radius: 10px; padding: 24px 16px 13px; cursor: pointer; position: relative;
-    box-shadow: 0 4px 12px var(--card-shadow); transition: transform .15s, box-shadow .15s; }
-  .card:hover { transform: translateY(-4px); box-shadow: 0 10px 22px var(--card-shadow-hi); }
-  .card .tape { position: absolute; top: -9px; left: 50%; transform: translateX(-50%) rotate(-2deg); width: 66px; height: 18px; border-radius: 2px;
-    background: rgba(150,190,220,.55); box-shadow: 0 1px 2px rgba(0,0,0,.1); }
-  .card .tape.r { transform: translateX(-50%) rotate(2deg); background: rgba(235,180,170,.5); }
-  .card .tape.g { transform: translateX(-50%) rotate(-1deg); background: rgba(170,210,170,.5); }
-  .card .dot { position: absolute; top: 10px; right: 10px; width: 12px; height: 12px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #fff 0 20%, var(--c) 75%); box-shadow: 0 1px 3px rgba(0,0,0,.2); }
-  .card h3 { font-size: 14px; margin-bottom: 6px; color: var(--ink-strong); }
-  .card p { font-size: 12px; line-height: 1.65; color: var(--ink-mut); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  .card .ft { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--ft-bd); font-size: 10.5px; color: var(--ink-faint); display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
-  .card .ft .tags-row { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
-  .card .ft .tagb { padding: 3px 8px; border-radius: 99px; font-size: 10.5px; line-height: 1; white-space: nowrap; }
-  .card.pinc { box-shadow: 0 4px 12px var(--card-shadow), 0 0 0 2px var(--gold); }
-  .card.arch { opacity: .5; filter: grayscale(.5); }
-  .empty { padding: 50px 0; text-align: center; color: var(--ink-faint); font-size: 13px; width: 100%; }
-  /* —— 手机端 —— */
-  .phone .m-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-top: 4px; }
-  .phone .m-head h1 { font-size: 14px; letter-spacing: 3px; color: var(--ink-title); }
-  .phone .m-close { width: 24px; height: 24px; border-radius: 7px; border: none; background: var(--chip); color: var(--chip-ink);
-    cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px var(--card-shadow); }
-  .phone .m-board { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px 12px; align-items: start; }
-  .phone .card { width: auto; min-width: 0; }
-  .phone .sheet-mask { position: absolute; inset: 0; z-index: 60; background: var(--mask); display: none; align-items: flex-end; }
-  .phone .sheet-mask.show { display: flex; }
-  .sheet { width: 100%; background: var(--pop); border-radius: 18px 18px 0 0; padding: 16px 18px 20px; box-shadow: 0 -10px 30px rgba(0,0,0,.3); }
-  .sheet .sh-head { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
-  .sheet .sh-dot { flex: none; width: 12px; height: 12px; border-radius: 50%; margin-top: 4px;
-    background: radial-gradient(circle at 35% 30%, #fff 0 20%, var(--c) 75%); box-shadow: 0 1px 3px rgba(0,0,0,.2); }
-  .sheet .sh-title { font-size: 14px; color: var(--ink-strong); }
-  .sheet .sh-meta { font-size: 11px; color: var(--ink-faint); margin-top: 3px; }
-  .sheet .sh-acts { display: flex; flex-direction: column; }
-  .sheet .sh-acts button { display: flex; align-items: center; gap: 10px; border: none; background: none; cursor: pointer;
-    font: 13px/1 'Microsoft YaHei'; color: var(--menu-ink); padding: 11px 6px; text-align: left; border-bottom: 1px solid var(--ft-bd); }
-  .sheet .sh-acts button:last-child { border-bottom: none; }
-  .sheet .sh-acts button svg { color: var(--ink-mut); }
-  .sheet .sh-acts button.danger { color: var(--danger); }
-  .sheet .sh-acts button.danger svg { color: var(--danger); }
-  .sheet .sh-acts .sub { margin-left: auto; font-size: 10.5px; color: var(--pop-faint); max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  /* —— 右键菜单 —— */
-  .ctx { position: fixed; z-index: 500; min-width: 168px; background: var(--menu); border: 1px solid var(--menu-bd); border-radius: 10px;
-    box-shadow: 0 10px 28px rgba(0,0,0,.28); padding: 5px; }
-  .ctx button { display: flex; align-items: center; gap: 9px; width: 100%; border: none; background: none; cursor: pointer;
-    font: 12.5px/1 'Microsoft YaHei', system-ui; color: var(--menu-ink); padding: 8px 10px; border-radius: 7px; text-align: left; }
-  .ctx button:hover { background: var(--menu-hover); }
-  .ctx button svg { flex: none; color: var(--ink-mut); }
-  .ctx button .sub { margin-left: auto; font-size: 10.5px; color: var(--pop-faint); max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ctx button.danger { color: var(--danger); }
-  .ctx button.danger svg { color: var(--danger); }
-  .ctx .sep { height: 1px; background: var(--ft-bd); margin: 4px 6px; }
-  /* —— 遮罩 + 表单 / 确认框 —— */
-  .mask { position: fixed; inset: 0; z-index: 600; background: var(--mask); display: flex; align-items: center; justify-content: center; }
-  .form { width: 430px; max-height: 86vh; overflow: auto; background: var(--pop); border-radius: 14px; padding: 20px 22px 18px;
-    box-shadow: 0 16px 44px rgba(0,0,0,.32); }
-  .form h2 { font-size: 15px; color: var(--pop-ink); margin-bottom: 14px; letter-spacing: 2px; }
-  .fld { margin-bottom: 12px; }
-  .fld label { display: block; font-size: 11.5px; color: var(--pop-mut); margin-bottom: 5px; }
-  .fld input, .fld textarea { width: 100%; border: 1px solid var(--fld-bd); border-radius: 8px; background: var(--fld-bg); color: var(--fld-ink);
-    font: 12.5px/1.6 'Microsoft YaHei', system-ui; padding: 7px 10px; outline: none; }
-  .fld textarea { resize: vertical; min-height: 52px; }
-  .fld input:focus, .fld textarea:focus { border-color: var(--acc); }
-  .pick { display: flex; flex-wrap: wrap; gap: 7px; }
-  .pick button { border: 1px solid var(--fld-bd); background: var(--fld-bg); color: var(--chip-ink); border-radius: 99px; cursor: pointer;
-    font: 11.5px/1 'Microsoft YaHei'; padding: 6px 11px; }
-  .pick button.on { background: var(--acc); border-color: var(--acc); color: var(--on-acc); }
-  .inline { display: flex; align-items: center; gap: 8px; }
-  .inline .desc { font-size: 11px; color: var(--pop-faint); }
-  .sw { position: relative; width: 32px; height: 18px; border-radius: 99px; background: #b9b2a2; cursor: pointer; transition: background .15s; flex: none; }
-  .sw::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff;
-    box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: left .15s; }
-  .sw.on { background: var(--acc); }
-  .sw.on::after { left: 16px; }
-  .err { color: var(--danger); font-size: 12px; min-height: 16px; margin-bottom: 6px; }
-  .btns { display: flex; justify-content: flex-end; gap: 9px; }
-  .btns button { cursor: pointer; font: 12.5px/1 'Microsoft YaHei'; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--fld-bd);
-    background: var(--fld-bg); color: var(--chip-ink); }
-  .btns button.pri { background: var(--acc); border-color: var(--acc); color: var(--on-acc); }
-  .btns button:hover { filter: brightness(.97); }
-  .btns button:disabled { opacity: .55; cursor: default; }
-  .btns #fz-ai { display: flex; align-items: center; gap: 5px; color: var(--acc); border-color: var(--acc); }
-  .dlg { width: 320px; background: var(--pop); border-radius: 14px; padding: 20px 22px 16px; box-shadow: 0 16px 44px rgba(0,0,0,.32); }
-  .dlg h2 { font-size: 14.5px; margin-bottom: 9px; color: var(--pop-ink); }
-  .dlg p { font-size: 12.5px; line-height: 1.7; color: var(--pop-mut); margin-bottom: 16px; }
-  /* —— 撤销 toast —— */
-  .toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 700; display: flex; align-items: center; gap: 14px;
-    background: var(--toast); color: var(--toast-ink); font-size: 12.5px; padding: 10px 16px; border-radius: 99px; box-shadow: 0 8px 24px rgba(0,0,0,.28); }
-  .toast button { border: none; background: none; color: var(--gold); font: 700 12.5px 'Microsoft YaHei'; cursor: pointer; }
-  .vbadge { position: fixed; left: 16px; bottom: 12px; font-size: 11px; color: var(--ink-mut); border: 1px solid var(--frame-bd); padding: 3px 8px; background: var(--vbadge); display: flex; gap: 10px; align-items: center; }
-  .vbadge button { border: none; background: none; color: var(--danger); font: 11px 'Microsoft YaHei'; cursor: pointer; }
-  /* —— 全局隐藏滚动条 —— */
-  * { scrollbar-width: none; }
-  *::-webkit-scrollbar { display: none; }
+  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 56px; padding: 32px 24px;
+    background: #e3e0d8; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+  body.theme-dark { background: #1e1b18; }
+  * { scrollbar-width: none; } *::-webkit-scrollbar { display: none; }
 
-  /* —— 桌面端：固定 900×620 面板 —— */
-  .frame { width: 900px; height: 620px; flex: none; border: 1px solid var(--frame-bd); border-radius: 18px; padding: 26px 30px 0;
-    box-shadow: 0 8px 30px rgba(0,0,0,.14); display: flex; flex-direction: column; overflow: hidden;
-    background:
-      repeating-linear-gradient(45deg, var(--bg-weave1) 0 2px, transparent 2px 4px),
-      repeating-linear-gradient(-45deg, var(--bg-weave2) 0 2px, transparent 2px 4px),
-      var(--bg); }
-  .frame .head { flex: none; }
-  .frame .tags { flex: none; }
-  .frame .board { flex: 1; min-height: 0; overflow: auto; align-content: flex-start; padding-top: 6px; }
+  /* 桌面面板外景（组件本体 900×620 来自 styles.css） */
+  .demo-dt { flex: none; }
 
-  /* —— 移动端：固定 396×780 面板 —— */
-  .phone { width: 396px; height: 780px; flex: none; border: 1px solid var(--frame-bd); border-radius: 26px;
-    background:
-      repeating-linear-gradient(45deg, var(--bg-weave1) 0 2px, transparent 2px 4px),
-      repeating-linear-gradient(-45deg, var(--bg-weave2) 0 2px, transparent 2px 4px),
-      var(--bg);
-    box-shadow: 0 8px 30px rgba(0,0,0,.14); padding: 16px 14px 0; position: relative; overflow: hidden;
-    display: flex; flex-direction: column; }
-  .phone .m-head { flex: none; }
-  .phone .tags { flex-wrap: nowrap; overflow-x: auto; padding: 5px 0 6px; }
-  .phone .tags button { white-space: nowrap; }
-  .phone .tags { flex: none; }
-  .phone .m-board { flex: 1; min-height: 0; overflow: auto; padding-top: 6px; }
+  /* 移动端手机框：把全屏态（.bz-fav-mob 100vw/100vh）缩进 396×780 演示框 */
+  .demo-mob { width: 396px !important; height: 780px !important; max-width: none !important;
+    position: relative; border: 1px solid #d8d1c0; border-radius: 26px; overflow: hidden; flex: none;
+    box-shadow: 0 8px 30px rgba(0,0,0,.14); }
+  /* 抽屉遮罩插件里挂 body（fixed 全屏）；评审壳内收进手机框 */
+  .demo-mob .bz-fav-sheet-mask { position: absolute; }
+
+  /* 评审徽牌 / 主题钮（演示壳自用） */
+  .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #9a917d; display: flex; gap: 10px; align-items: center;
+    background: rgba(255,255,255,.9); border: 1px solid #d8d1c0; padding: 3px 8px; }
+  .vbadge button { border: none; background: none; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; }
+  .theme-toggle { position: fixed; right: 16px; top: 14px; width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+    border: 1px solid #d8d1c0; background: rgba(255,255,255,.9); color: #6d6455; display: flex; align-items: center; justify-content: center; }
+  body.theme-dark .theme-toggle { background: rgba(53,49,42,.9); border-color: #3a352d; color: #cfc7b4; }
 </style>
 </head>
-<body data-expect="51">
-  <div class="theme"><button id="themeBtn" title="亮/暗切换"></button></div>
-  <div class="frame">
-    <div class="head"><h1>收 藏 本</h1></div>
-    <div class="tags" id="tags"></div>
-    <div class="board" id="board"></div>
+<body>
+  <button class="theme-toggle" id="themeBtn" title="亮/暗切换"></button>
+
+  <div class="bz-fav-panel bz-fav-scope demo-dt" id="dtPanel">
+    <div class="bz-fav-head"><h1>收藏本</h1></div>
+    <div class="bz-fav-tags" id="dtTags"></div>
+    <div class="bz-fav-board" id="dtBoard"></div>
   </div>
-  <div class="phone" id="phone">
-    <div class="m-head"><h1>收 藏 本</h1><button class="m-close" id="mClose" title="关闭"></button></div>
-    <div class="tags" id="mtags"></div>
-    <div class="m-board board" id="mboard"></div>
-    <div class="sheet-mask" id="sheetMask"><div class="sheet" id="sheet"></div></div>
+
+  <div class="bz-fav-panel bz-fav-scope bz-fav-mob demo-mob" id="mobPanel">
+    <div class="bz-fav-head"><h1>收藏本</h1><button class="bz-fav-mob-close" data-fav-close title="关闭" id="mobClose"></button></div>
+    <div class="bz-fav-tags" id="mobTags"></div>
+    <div class="bz-fav-board" id="mobBoard"></div>
+    <div class="bz-fav-sheet-mask" id="sheetMask"><div class="bz-fav-sheet" id="sheet"></div></div>
   </div>
-  <div class="vbadge">C5 完整版 · 真实 51 条 · 两端并存 <button id="reset">重置演示数据</button></div>
+
+  <div class="vbadge">收藏本 · 原型预览（共用 styles.css）· 真实 51 条 <button id="reset">重置演示数据</button></div>
 
 <script src="./prototype-data.js"></script>
 <script>
 (function () {
   const { TAGS, esc, icon, hueOf } = FAV;
-  const LS = 'bz-fav-c5-full-v1';
+  const LS = 'bz-fav-c5-shared-v1';
   const LS_THEME = 'bz-fav-c5-theme';
   let items;
   try {
     const saved = JSON.parse(localStorage.getItem(LS) || 'null');
     items = Array.isArray(saved) && saved.length ? saved : FAV.ITEMS.map((x) => ({ ...x }));
   } catch (e) { items = FAV.ITEMS.map((x) => ({ ...x })); }
-  let cur = '全部';
+  const M = { archived: false, tag: null };
 
   const byId = (id) => items.find((i) => i.id === id);
   const save = () => { try { localStorage.setItem(LS, JSON.stringify(items)); } catch (e) { } };
-  const now = () => {
+  const localNow = () => {
     const d = new Date(), p = (n) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
   };
@@ -228,111 +89,88 @@
     return `${d.getMonth() + 1}-${p(d.getDate())}`;
   };
   const curList = () => items.filter((i) =>
-    cur === '全部' ? !i.archived : cur === '已归档' ? !!i.archived : !i.archived && (i.tags || []).includes(cur));
+    !M.archived && M.tag === null ? !i.archived : M.archived ? !!i.archived : !i.archived && (i.tags || []).includes(M.tag));
 
-  // ==================== 标签行（含 + 新收藏） ====================
-  function drawChips(mount, addFirst) {
-    const mk = (label, emoji, cnt, cls) => {
-      const b = document.createElement('button');
-      b.textContent = (emoji ? emoji + ' ' : '') + label + ' ' + cnt;
-      if (cur === label) b.classList.add('on');
-      if (cls) b.classList.add(cls);
-      b.onclick = () => { cur = label; closeMenu(); drawAll(); };
-      return b;
-    };
-    const add = document.createElement('button');
-    add.className = 'add';
-    add.innerHTML = `${icon('plus', 12)} <span>新收藏</span>`;
-    add.style.display = 'flex';
-    add.style.alignItems = 'center';
-    add.style.gap = '5px';
-    add.title = '添加收藏';
-    add.onclick = () => openForm(null);
-    mount.innerHTML = '';
-    if (addFirst) mount.appendChild(add);
-    mount.appendChild(mk('全部', '', items.filter((i) => !i.archived).length));
-    mount.appendChild(mk('已归档', '🗄️', items.filter((i) => i.archived).length, 'grey'));
-    TAGS.forEach((t) => {
-      const n = items.filter((i) => !i.archived && (i.tags || []).includes(t.label)).length;
-      if (n) mount.appendChild(mk(t.label, t.emoji, n));
-    });
-    if (!addFirst) mount.appendChild(add);
+  /* ==================== 标签磁贴行（与 ui.ts renderTags 同构） ==================== */
+  function renderTagsInto(mount, mobile) {
+    const mk = (label, emoji, cnt, active, grey) =>
+      `<button class="bz-fav-chip${active ? ' bz-fav-on' : ''}${grey ? ' bz-fav-chip--grey' : ''}" data-fav-tag="${esc(label)}">${emoji ? emoji + ' ' : ''}${esc(label)} ${cnt}</button>`;
+    const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${icon('plus', 12)}<span>新收藏</span></button>`;
+    const chips =
+      mk('全部', '', items.filter((i) => !i.archived).length, !M.archived && M.tag === null) +
+      mk('已归档', '🗄️', items.filter((i) => i.archived).length, M.archived, true) +
+      TAGS.map((t) => {
+        const n = items.filter((i) => !i.archived && (i.tags || []).includes(t.label)).length;
+        return n ? mk(t.label, t.emoji, n, !M.archived && M.tag === t.label) : '';
+      }).join('');
+    mount.innerHTML = mobile ? add + chips : chips + add;
   }
 
-  // ==================== 卡片 ====================
-  function cardHtml(it, i) {
+  /* ==================== 卡片（与 ui.ts cardHtml 同构） ==================== */
+  function cardHtml(it) {
+    const i = items.indexOf(it);
     const hue = hueOf((it.tags || [])[0] || '');
-    const tape = ['tape', 'tape r', 'tape g'][i % 3];
-    return `<div class="card${it.pinned ? ' pinc' : ''}${it.archived ? ' arch' : ''}" data-id="${esc(it.id)}">
+    const tape = ['bz-fav-tape', 'bz-fav-tape--r', 'bz-fav-tape--g'][i % 3];
+    return `<div class="bz-fav-card${it.pinned ? ' bz-fav-pinc' : ''}${it.archived ? ' bz-fav-arch' : ''}" data-fav-id="${esc(it.id)}">
       <span class="${tape}"></span>
-      <span class="dot" style="--c:hsl(${hue} 52% 58%)"></span>
+      <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>
       <h3>${esc(it.title || '无标题')}</h3>
       <p>${esc(it.description || '（这张卡只写了个名字）')}</p>
-      <div class="ft"><span class="tags-row">${(it.tags || []).map((t) => {
+      <div class="bz-fav-ft"><span class="bz-fav-tags-row">${(it.tags || []).map((t) => {
         const h = hueOf(t);
-        const emoji = (TAGS.find((x) => x.label === t) || {}).emoji || '';
-        return `<span class="tagb" style="background:hsl(${h} 70% 95%);color:hsl(${h} 45% 42%)">${emoji} ${esc(t)}</span>`;
+        const emoji = (TAGS.find((x) => x.label === t) || { emoji: '' }).emoji;
+        return `<span class="bz-fav-tagb" style="background:hsl(${h} 70% 95%);color:hsl(${h} 45% 42%)">${emoji} ${esc(t)}</span>`;
       }).join('')}</span>
-        <span>${relTime(it.created)}</span></div>
+        <span>${esc(relTime(it.created))}</span></div>
     </div>`;
   }
-  function sorted(list) {
-    return list.slice().sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || (b.created || '').localeCompare(a.created || ''));
-  }
-  function drawAll() {
-    drawChips(document.getElementById('tags'));
-    drawChips(document.getElementById('mtags'), true);
+  const sorted = (list) => list.slice().sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || (b.created || '').localeCompare(a.created || ''));
+
+  function renderAll() {
+    renderTagsInto(document.getElementById('dtTags'), false);
+    renderTagsInto(document.getElementById('mobTags'), true);
     const list = sorted(curList());
-    const html = list.length ? list.map((it) => cardHtml(it, items.indexOf(it))).join('') : '<div class="empty">这块板上还没有卡片</div>';
-    document.getElementById('board').innerHTML = html;
-    document.getElementById('mboard').innerHTML = html;
+    const html = list.length ? list.map(cardHtml).join('') : '<div class="bz-fav-empty">这块板上还没有卡片</div>';
+    document.getElementById('dtBoard').innerHTML = html;
+    document.getElementById('mobBoard').innerHTML = html;
   }
 
-  // ==================== 动作（桌面菜单 / 移动抽屉共用） ====================
+  /* ==================== 行操作集（与 ui.ts buildActions 同构） ==================== */
   function buildActs(it) {
     const acts = [];
     if ((it.url || '').trim()) acts.push({ ic: 'external-link', label: '打开', run: () => window.open(it.url, '_blank') });
-    acts.push({
-      ic: it.pinned ? 'pin-off' : 'pin', label: it.pinned ? '取消置顶' : '置顶',
-      run: () => { it.pinned = !it.pinned; save(); drawAll(); },
-    });
-    if ((it.linkedNote || '').trim()) acts.push({ ic: 'file-text', label: '跳转笔记', sub: it.linkedNote.split('/').pop().replace(/\.md$/i, ''), run: () => toast(`原型：跳转笔记 ${it.linkedNote}`) });
+    acts.push({ ic: it.pinned ? 'pin-off' : 'pin', label: it.pinned ? '取消置顶' : '置顶', run: () => { it.pinned = !it.pinned; save(); renderAll(); } });
     acts.push({ ic: 'pencil', label: '编辑', run: () => openForm(it) });
     acts.push(it.archived
-      ? { ic: 'archive-restore', label: '取消归档', run: () => { it.archived = false; it.archivedAt = null; save(); drawAll(); toast(`已取消归档，「${it.title}」回到主列表`); } }
-      : {
-        ic: 'archive', label: '归档', run: () => confirmDlg('归档收藏', `确定归档收藏「${it.title}」吗？归档后不在主列表显示（数据保留），可在通知中撤销。`, '归档', () => {
-          const prev = { archived: it.archived, archivedAt: it.archivedAt };
-          it.archived = true; it.archivedAt = now(); save(); drawAll();
-          toast(`已归档收藏「${it.title}」`, '撤销', () => { it.archived = prev.archived; it.archivedAt = prev.archivedAt; save(); drawAll(); });
-        }),
-      });
-    acts.push({
-      ic: 'trash-2', label: '删除', danger: true,
-      run: () => confirmDlg('删除收藏', `确定删除收藏「${it.title}」吗？删除后可在通知中撤销。`, '删除', () => {
-        const idx = items.indexOf(it), snap = it;
-        items.splice(idx, 1); save(); drawAll();
-        toast(`已删除收藏「${it.title}」`, '撤销', () => { items.splice(Math.min(idx, items.length), 0, snap); save(); drawAll(); });
-      }),
-    });
+      ? { ic: 'archive-restore', label: '取消归档', run: () => { it.archived = false; it.archivedAt = null; save(); renderAll(); toast(`已取消归档，「${it.title}」回到主列表`); } }
+      : { ic: 'archive', label: '归档', run: () => confirmDlg('归档收藏', `确定归档收藏「${it.title}」吗？归档后不在主列表显示（数据保留），可在通知中撤销。`, '归档', () => {
+          it.archived = true; it.archivedAt = localNow(); save(); renderAll();
+          toast(`已归档收藏「${it.title}」`, '撤销', () => { it.archived = false; it.archivedAt = null; save(); renderAll(); });
+        }) });
+    acts.push({ ic: 'trash-2', label: '删除', danger: true, run: () => confirmDlg('删除收藏', `确定删除收藏「${it.title}」吗？删除后可在通知中撤销。`, '删除', () => {
+      const idx = items.indexOf(it);
+      items.splice(idx, 1); save(); renderAll();
+      toast(`已删除收藏「${it.title}」`, '撤销', () => { items.splice(Math.min(idx, items.length), 0, it); save(); renderAll(); });
+    }) });
     return acts;
   }
 
-  // ==================== 桌面右键菜单 ====================
+  /* ==================== 桌面右键菜单（.bz-fav-ctx） ==================== */
   let menuEl = null;
   function closeMenu() { if (menuEl) { menuEl.remove(); menuEl = null; } }
   function openMenu(it, x, y) {
     closeMenu();
     const acts = buildActs(it);
     menuEl = document.createElement('div');
-    menuEl.className = 'ctx';
-    menuEl.innerHTML = acts.slice(0, -1).map((a, k) =>
-      `<button data-k="${k}" class="${a.danger ? 'danger' : ''}">${icon(a.ic, 14)}<span>${esc(a.label)}</span>${a.sub ? `<span class="sub" title="${esc(a.sub)}">${esc(a.sub)}</span>` : ''}</button>`
-    ).join('') + '<div class="sep"></div>' + `<button data-k="${acts.length - 1}" class="danger">${icon('trash-2', 14)}<span>删除</span></button>`;
+    menuEl.className = 'bz-fav-ctx bz-fav-scope';
+    menuEl.innerHTML = acts.map((a, k) => {
+      const last = k === acts.length - 1;
+      const btn = `<button data-k="${k}"${a.danger ? ' class="bz-fav-danger"' : ''}>${icon(a.ic, 14)}<span>${esc(a.label)}</span></button>`;
+      return last ? `<div class="bz-fav-ctx-sep"></div>${btn}` : btn;
+    }).join('');
     menuEl.addEventListener('click', (e) => {
       const b = e.target.closest('button'); if (!b) return;
-      closeMenu();
-      acts[+b.dataset.k].run();
+      closeMenu(); acts[+b.dataset.k].run();
     });
     document.body.appendChild(menuEl);
     const r = menuEl.getBoundingClientRect();
@@ -340,52 +178,69 @@
     menuEl.style.top = Math.min(y, innerHeight - r.height - 8) + 'px';
   }
   document.addEventListener('click', (e) => { if (menuEl && !menuEl.contains(e.target)) closeMenu(); });
-  document.getElementById('board').addEventListener('contextmenu', (e) => {
-    const card = e.target.closest('.card'); if (!card) return;
+  document.getElementById('dtBoard').addEventListener('contextmenu', (e) => {
+    const card = e.target.closest('.bz-fav-card'); if (!card) return;
     e.preventDefault();
-    const it = byId(card.dataset.id);
+    const it = byId(card.dataset.favId);
     if (it) openMenu(it, e.clientX, e.clientY);
   });
-  document.getElementById('board').addEventListener('click', (e) => {
-    const card = e.target.closest('.card'); if (!card) return;
-    const it = byId(card.dataset.id); if (!it) return;
+  document.getElementById('dtBoard').addEventListener('click', (e) => {
+    const card = e.target.closest('.bz-fav-card'); if (!card) return;
+    const it = byId(card.dataset.favId); if (!it) return;
     if ((it.url || '').trim()) window.open(it.url, '_blank');
-    else if ((it.linkedNote || '').trim()) toast(`原型：跳转笔记 ${it.linkedNote}`);
   });
 
-  // ==================== 移动端：点卡片 → 底部抽屉 ====================
+  /* ==================== 移动端底部抽屉（.bz-fav-sheet） ==================== */
   const sheetMask = document.getElementById('sheetMask');
-  const sheetEl = document.getElementById('sheet');
   function openSheet(it) {
     const hue = hueOf((it.tags || [])[0] || '');
     const acts = buildActs(it);
-    sheetEl.innerHTML = `
-      <div class="sh-head"><span class="sh-dot" style="--c:hsl(${hue} 52% 58%)"></span>
-        <div><div class="sh-title">${esc(it.title || '无标题')}</div>
-        <div class="sh-meta">${relTime(it.created)}${it.pinned ? ' · 已置顶' : ''}${it.archived ? ' · 已归档' : ''}</div></div></div>
-      <div class="sh-acts">${acts.map((a, k) =>
-        `<button data-k="${k}" class="${a.danger ? 'danger' : ''}">${icon(a.ic, 15)}<span>${esc(a.label)}</span>${a.sub ? `<span class="sub">${esc(a.sub)}</span>` : ''}</button>`).join('')}</div>`;
-    sheetEl.onclick = (e) => {
+    const sheet = document.getElementById('sheet');
+    sheet.innerHTML = `
+      <div class="bz-fav-sh-head"><span class="bz-fav-sh-dot" style="--c:hsl(${hue} 52% 58%)"></span>
+        <div><div class="bz-fav-sh-title">${esc(it.title || '无标题')}</div>
+        <div class="bz-fav-sh-meta">${esc(relTime(it.created))}${it.pinned ? ' · 已置顶' : ''}${it.archived ? ' · 已归档' : ''}</div></div></div>
+      <div class="bz-fav-sh-acts">${acts.map((a, k) =>
+        `<button data-k="${k}"${a.danger ? ' class="bz-fav-danger"' : ''}>${icon(a.ic, 15)}<span>${esc(a.label)}</span></button>`).join('')}</div>`;
+    sheet.onclick = (e) => {
       const b = e.target.closest('button'); if (!b) return;
-      closeSheet();
-      acts[+b.dataset.k].run();
+      closeSheet(); acts[+b.dataset.k].run();
     };
-    sheetMask.classList.add('show');
+    sheetMask.classList.add('bz-fav-show');
   }
-  function closeSheet() { sheetMask.classList.remove('show'); }
+  function closeSheet() { sheetMask.classList.remove('bz-fav-show'); }
   sheetMask.addEventListener('click', (e) => { if (e.target === sheetMask) closeSheet(); });
-  document.getElementById('mboard').addEventListener('click', (e) => {
-    const card = e.target.closest('.card'); if (!card) return;
-    const it = byId(card.dataset.id); if (it) openSheet(it);
+  document.getElementById('mobBoard').addEventListener('click', (e) => {
+    const card = e.target.closest('.bz-fav-card'); if (!card) return;
+    const it = byId(card.dataset.favId); if (it) openSheet(it);
   });
-  document.getElementById('mClose').innerHTML = icon('x', 12);
+  const mobClose = document.getElementById('mobClose');
+  mobClose.innerHTML = icon('x', 12);
+  mobClose.onclick = () => toast('评审壳：插件内此处关闭全屏面板');
 
-  // ==================== 确认框 / toast ====================
+  /* ==================== 磁贴行点击（两端委托，与 ui.ts 同语义） ==================== */
+  function bindTags(mountId) {
+    document.getElementById(mountId).addEventListener('click', (e) => {
+      if (e.target.closest('[data-fav-add]')) { openForm(null); return; }
+      const chip = e.target.closest('[data-fav-tag]');
+      if (!chip) return;
+      const label = chip.dataset.favTag;
+      if (label === '全部') { M.tag = null; M.archived = false; }
+      else if (label === '已归档') { M.tag = null; M.archived = !M.archived; }
+      else { M.archived = false; M.tag = M.tag === label ? null : label; }
+      closeMenu(); renderAll();
+    });
+  }
+  bindTags('dtTags'); bindTags('mobTags');
+
+  /* ==================== 确认框 / toast（插件侧走 core flow-dialog/notice，演示壳自绘） ==================== */
   function confirmDlg(title, msg, okLabel, onOk) {
     const mask = document.createElement('div');
-    mask.className = 'mask';
-    mask.innerHTML = `<div class="dlg"><h2>${esc(title)}</h2><p>${esc(msg)}</p>
-      <div class="btns"><button data-a="c">取消</button><button data-a="ok" class="pri">${esc(okLabel)}</button></div></div>`;
+    mask.className = 'bz-fav-form-mask';
+    mask.innerHTML = `<div class="bz-fav-form" style="width:320px;padding:20px 22px 16px">
+      <h2 style="font-size:14.5px;margin-bottom:9px">${esc(title)}</h2>
+      <p style="font-size:12.5px;line-height:1.7;color:var(--pop-mut);margin-bottom:16px">${esc(msg)}</p>
+      <div class="bz-fav-btns"><button data-a="c">取消</button><button data-a="ok" class="bz-fav-pri">${esc(okLabel)}</button></div></div>`;
     const done = () => mask.remove();
     mask.addEventListener('click', (e) => {
       if (e.target === mask || e.target.dataset.a === 'c') return done();
@@ -398,30 +253,30 @@
     if (toastEl) toastEl.remove();
     clearTimeout(toastTimer);
     toastEl = document.createElement('div');
-    toastEl.className = 'toast';
-    toastEl.innerHTML = `<span>${esc(msg)}</span>` + (undoLabel ? `<button>${esc(undoLabel)}</button>` : '');
+    toastEl.style.cssText = 'position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:700;display:flex;align-items:center;gap:14px;background:#4a443a;color:#f3efe4;font-size:12.5px;padding:10px 16px;border-radius:99px;box-shadow:0 8px 24px rgba(0,0,0,.28)';
+    toastEl.innerHTML = `<span>${esc(msg)}</span>` + (undoLabel ? `<button style="border:none;background:none;color:#e0b73a;font:700 12.5px 'Microsoft YaHei';cursor:pointer">${esc(undoLabel)}</button>` : '');
     if (undoLabel) toastEl.querySelector('button').onclick = () => { toastEl.remove(); toastEl = null; onUndo(); };
     document.body.appendChild(toastEl);
     toastTimer = setTimeout(() => { toastEl && toastEl.remove(); toastEl = null; }, 5000);
   }
 
-  // ==================== 添加 / 编辑表单 ====================
+  /* ==================== 添加 / 编辑表单（.bz-fav-form，与 ui.ts openForm 同构） ==================== */
   function openForm(it) {
     const editing = !!it;
     const mask = document.createElement('div');
-    mask.className = 'mask';
-    mask.innerHTML = `<div class="form">
+    mask.className = 'bz-fav-form-mask';
+    mask.innerHTML = `<div class="bz-fav-form">
       <h2>${editing ? '编辑收藏' : '添加收藏'}</h2>
-      <div class="fld"><label>标题</label><input id="fz-title" value="${esc(it ? it.title : '')}" placeholder="如：某篇好文"></div>
-      <div class="fld"><label>链接</label><input id="fz-url" value="${esc(it ? it.url : '')}" placeholder="https://…"></div>
-      <div class="fld"><label>简介</label><textarea id="fz-desc" placeholder="一句话记住它…">${esc(it ? it.description || '' : '')}</textarea></div>
-      <div class="fld"><label>标签（可多选）</label><div class="pick" id="fz-tags"></div></div>
-      <div class="fld inline"><span class="sw${it && it.pinned ? ' on' : ''}" id="fz-pin"></span><span class="desc">置顶后恒排最前</span></div>
-      <div class="err" id="fz-err"></div>
-      <div class="btns"><button type="button" id="fz-ai">${icon('star', 12)} <span>AI 整理</span></button><button data-a="c">取消</button><button data-a="ok" class="pri">${editing ? '更新' : '保存'}</button></div>
+      <div class="bz-fav-fld"><label>标题</label><input id="fz-title" value="${esc(it ? it.title : '')}" placeholder="如：某篇好文"></div>
+      <div class="bz-fav-fld"><label>链接</label><input id="fz-url" value="${esc(it ? it.url : '')}" placeholder="https://…"></div>
+      <div class="bz-fav-fld"><label>简介</label><textarea id="fz-desc" placeholder="一句话记住它…">${esc(it ? it.description || '' : '')}</textarea></div>
+      <div class="bz-fav-fld"><label>标签（可多选）</label><div class="bz-fav-pick" id="fz-tags"></div></div>
+      <div class="bz-fav-fld bz-fav-inline"><span class="bz-fav-sw${it && it.pinned ? ' bz-fav-on' : ''}" id="fz-pin"></span><span class="bz-fav-fld-desc">置顶后恒排最前</span></div>
+      <div class="bz-fav-err" id="fz-err"></div>
+      <div class="bz-fav-btns"><button type="button" id="fz-ai">${icon('star', 12)} <span>AI 整理</span></button><button data-a="c">取消</button><button data-a="ok" class="bz-fav-pri">${editing ? '更新' : '保存'}</button></div>
     </div>`;
     document.body.appendChild(mask);
-    const form = mask.querySelector('.form');
+    const form = mask.querySelector('.bz-fav-form');
     const sel = new Set((it ? it.tags : []) || []);
     const pick = form.querySelector('#fz-tags');
     const drawPick = () => {
@@ -429,14 +284,13 @@
       TAGS.forEach((t) => {
         const b = document.createElement('button');
         b.type = 'button'; b.textContent = `${t.emoji} ${t.label}`;
-        if (sel.has(t.label)) b.classList.add('on');
+        if (sel.has(t.label)) b.classList.add('bz-fav-on');
         b.onclick = () => { sel.has(t.label) ? sel.delete(t.label) : sel.add(t.label); drawPick(); };
         pick.appendChild(b);
       });
     };
     drawPick();
-    form.querySelector('#fz-pin').onclick = (e) => e.currentTarget.classList.toggle('on');
-    // 贴链自动搬家：标题框粘贴 URL → 移入链接框回焦标题
+    form.querySelector('#fz-pin').onclick = (e) => e.currentTarget.classList.toggle('bz-fav-on');
     const titleInp = form.querySelector('#fz-title'), urlInp = form.querySelector('#fz-url');
     titleInp.addEventListener('paste', (e) => {
       const text = (e.clipboardData || window.clipboardData)?.getData('text')?.trim() || '';
@@ -445,36 +299,31 @@
       if (!urlInp.value.trim()) urlInp.value = text;
       setTimeout(() => titleInp.focus(), 0);
     });
-    // AI 整理（模拟域 runAiFill 口径：至少填一项；GitHub 链接取仓库真名；只补空字段；标签只收固定列表）
     const aiBtn = form.querySelector('#fz-ai');
     aiBtn.onclick = () => {
       const g = (id) => form.querySelector(id)?.value.trim() || '';
       if (!g('#fz-title') && !g('#fz-url') && !g('#fz-desc')) { form.querySelector('#fz-err').textContent = '请至少输入标题、链接或简介中的一项，以便 AI 参考'; return; }
       form.querySelector('#fz-err').textContent = '';
-      const url = g('#fz-url');
-      const gh = url.match(/github\.com\/([^\/?#]+)\/([^\/?#]+)/);
-      const setVal = (id, v) => { const el = form.querySelector(id); if (el && !el.value.trim() && v) el.value = String(v); };
       aiBtn.disabled = true;
       aiBtn.querySelector('span').textContent = 'AI 整理中…';
       toast('AI 分析中…');
       setTimeout(() => {
+        const url = g('#fz-url');
+        const gh = url.match(/github\.com\/([^\/?#]+)\/([^\/?#]+)/);
+        const setVal = (id, v) => { const el = form.querySelector(id); if (el && !el.value.trim() && v) el.value = String(v); };
         if (gh) setVal('#fz-title', gh[2]);
         else if (!g('#fz-title')) {
           try { setVal('#fz-title', new URL(/^https?:\/\//.test(url) ? url : 'https://' + url).hostname.replace(/^www\./, '').split('.')[0]); } catch (e) { }
         }
-        if (gh && !g('#fz-desc')) setVal('#fz-desc', '（原型模拟：此处为 GitHub 仓库简介原文的中文翻译，忠实不编造）');
         const guess = [];
         if (/github\.com\//.test(url)) guess.push('GitHub');
         const hay = (g('#fz-title') + ' ' + g('#fz-desc')).toLowerCase();
         TAGS.forEach((t) => { if (t.label !== 'GitHub' && hay.includes(t.label.toLowerCase())) guess.push(t.label); });
-        const unknown = [];
-        const valid = guess.filter((t) => { if (TAGS.some((x) => x.label === t)) return true; unknown.push(t); return false; });
-        if (unknown.length) toast(`AI 整理的标签「${unknown.join('、')}」不在列表中，已忽略`);
-        valid.forEach((t) => sel.add(t));
+        guess.forEach((t) => sel.add(t));
         drawPick();
         aiBtn.disabled = false;
         aiBtn.querySelector('span').textContent = 'AI 整理';
-        toast('AI 整理完成（原型为模拟结果，插件内为真实 AI 调用）');
+        toast('AI 整理完成（评审壳为模拟，插件内为真实 AI 调用）');
       }, 1200);
     };
     mask.addEventListener('click', (e) => {
@@ -483,61 +332,45 @@
       const title = titleInp.value.trim();
       if (!title) { form.querySelector('#fz-err').textContent = '标题不能为空'; return; }
       const tags = TAGS.map((t) => t.label).filter((l) => sel.has(l));
-      const patch = {
-        title,
-        url: urlInp.value.trim(),
-        description: form.querySelector('#fz-desc').value.trim(),
-        tags, type: tags[0] || '',
-        pinned: form.querySelector('#fz-pin').classList.contains('on'),
-      };
+      const patch = { title, url: urlInp.value.trim(), description: form.querySelector('#fz-desc').value.trim(), tags, type: tags[0] || '', pinned: form.querySelector('#fz-pin').classList.contains('bz-fav-on') };
       if (editing) Object.assign(it, patch);
-      else items.unshift({ id: String(Date.now()), created: now(), ...patch });
-      save(); drawAll(); mask.remove();
+      else items.unshift({ id: String(Date.now()), created: localNow(), ...patch });
+      save(); renderAll(); mask.remove();
       toast(editing ? `已更新「${title}」` : `已添加「${title}」`);
     });
     titleInp.focus();
   }
 
-  // ==================== 主题切换 ====================
+  /* ==================== 主题切换（body.theme-dark ↔ .theme-dark .bz-fav-scope） ==================== */
   const themeBtn = document.getElementById('themeBtn');
   function applyTheme(dark) {
-    document.body.classList.toggle('dark', dark);
+    document.body.classList.toggle('theme-dark', dark);
     themeBtn.innerHTML = icon(dark ? 'sun' : 'eye', 16);
     try { localStorage.setItem(LS_THEME, dark ? 'dark' : 'light'); } catch (e) { }
   }
   let dark = false;
   try { dark = localStorage.getItem(LS_THEME) === 'dark'; } catch (e) { }
-  themeBtn.onclick = () => applyTheme(!document.body.classList.contains('dark'));
+  themeBtn.onclick = () => applyTheme(!document.body.classList.contains('theme-dark'));
   applyTheme(dark);
 
-  // ==================== 全局键 / 重置 ====================
+  /* ==================== Esc / 重置 ==================== */
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (menuEl) return closeMenu();
-    if (sheetMask.classList.contains('show')) return closeSheet();
-    const mask = document.querySelector('.mask');
+    if (sheetMask.classList.contains('bz-fav-show')) return closeSheet();
+    const mask = document.querySelector('.bz-fav-form-mask');
     if (mask) mask.remove();
   });
   document.getElementById('reset').onclick = () => {
     confirmDlg('重置演示数据', '丢弃本页所有改动，恢复为 vault 里的真实收藏数据。', '重置', () => {
       localStorage.removeItem(LS);
       items = FAV.ITEMS.map((x) => ({ ...x }));
-      cur = '全部';
-      save(); drawAll(); toast('已恢复真实数据');
+      M.tag = null; M.archived = false;
+      save(); renderAll(); toast('已恢复真实数据');
     });
   };
 
-  drawAll();
-
-  // 设备壳：状态栏时钟（真时间）
-  const clock = document.getElementById('devClock');
-  if (clock) {
-    const t = () => {
-      const d = new Date(), p = (n) => String(n).padStart(2, '0');
-      clock.textContent = `${d.getHours()}:${p(d.getMinutes())}`;
-    };
-    t(); setInterval(t, 15000);
-  }
+  renderAll();
 })();
 </script>
 </body>
