@@ -18,6 +18,7 @@
 3. 通知正文不带 emoji，新语义先查 `src/core/notice.ts` ICONS。
 4. 样式写 `src/<域>/styles.css`，构建聚合至根 `styles.css`。
 5. **原型先行**（详见 `docs/prototype-first.md`）：域内 `prototype.html` 是该域 UI 的唯一视觉基准，与域 `styles.css` **共用同一份样式文件**（原型 `<link>` 引用，组件样式零内联）。任何 UI/样式修改只改 `styles.css` / 原型 markup 一处，双击原型评审两端与亮暗后过门禁；禁止绕过原型目测调参。**迭代轮只改原型与共享 styles.css，ui.ts 冻结不同构**；用户说「同步」时才一次性做 ui.ts 同构（照搬类名与钩子）+ 补测试断言 + 门禁 + build + 提交。
+6. **禁用原生 button**：Obsidian 对 button 有强基线（display/特异性）干扰，多次炸样式；交互元素一律 `div/span` + `role="button"`（`tabindex="0"` + Enter/Space 触发），样式类挂在 div 上照常写。
 
 ## 领域清单（数据均在 CONFIG/STORAGE/）
 | 域 | 数据 |

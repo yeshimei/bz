@@ -54,7 +54,7 @@ export function createOverlay(app: any): void {
         <h1 class="bz-home-title">首页</h1>
         <div class="bz-home-week" data-home-week></div>
         <span class="bz-home-date" data-home-date></span>
-        <button class="bz-home-close" data-home-close title="关闭" aria-label="关闭">${iconSpan('x')}</button>
+        <div role="button" tabindex="0" class="bz-home-close" data-home-close title="关闭" aria-label="关闭">${iconSpan('x')}</div>
       </div>
       <div class="bz-home-body">
         <div class="bz-home-grid">
@@ -94,6 +94,16 @@ export function closeOverlay(): void {
 /* ---------- 事件 ---------- */
 
 function bindEvents(overlay: HTMLElement, app: any): void {
+  // 键盘可达性：role=button 元素响应 Enter/Space（button 换 div 后的补偿）
+  overlay.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const t = e.target as HTMLElement;
+    const el = t.closest('[role="button"]') as HTMLElement | null;
+    if (el) {
+      e.preventDefault();
+      el.click();
+    }
+  });
   overlay.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
     if (e.target === overlay) {
@@ -151,12 +161,12 @@ function entriesHtml(data: RiverData): string {
   return DOMAINS.map((d) => {
         const dot = dotOf(dots, d.id);
         const ct = riverCountText(d.id, data) ?? d.sub;
-        return '<button type="button" class="bz-home-erow" data-home-go="' + d.id + '">'
+        return '<div role="button" tabindex="0" class="bz-home-erow" data-home-go="' + d.id + '">'
           + '<span class="bz-home-dot bz-home-dot--' + dot + '"></span>'
           + '<span class="bz-home-eic" style="color:' + (DOMAIN_DOT[d.id] ?? '#8a8f99') + '">' + iconSpan(d.icon) + '</span>'
           + '<span class="bz-home-enm">' + esc(d.name) + '</span>'
           + '<span class="bz-home-ect">' + esc(ct) + '</span>'
-          + '<span class="bz-home-ego">→</span></button>';
+          + '<span class="bz-home-ego">→</span></div>';
       }).join('');
 }
 
@@ -187,9 +197,9 @@ function flowHtml(data: RiverData, view: string): string {
 function nextHtml(data: RiverData): string {
   return '<div class="bz-home-sec-t bz-home-sec-t--ai">明 天 预 告</div>'
     + buildPreviews(data).map((pr) =>
-        '<button type="button" class="bz-home-pr" data-home-go="' + pr.go + '">'
+        '<div role="button" tabindex="0" class="bz-home-pr" data-home-go="' + pr.go + '">'
         + '<div class="bz-home-pr-h">' + esc(pr.h) + '</div><div>' + esc(pr.b) + '</div>'
-        + '<span class="bz-home-pr-go">' + esc(pr.goLabel) + '</span></button>'
+        + '<span class="bz-home-pr-go">' + esc(pr.goLabel) + '</span></div>'
       ).join('');
 }
 
@@ -200,11 +210,11 @@ function tilesHtml(data: RiverData): string {
     + DOMAINS.map((d) => {
         const dot = dotOf(dots, d.id);
         const ct = riverCountText(d.id, data) ?? d.sub;
-        return '<button type="button" class="bz-home-m-tile" data-home-go="' + d.id + '">'
+        return '<div role="button" tabindex="0" class="bz-home-m-tile" data-home-go="' + d.id + '">'
           + '<span class="bz-home-dot bz-home-dot--' + dot + '"></span>'
           + '<span class="bz-home-eic" style="color:' + (DOMAIN_DOT[d.id] ?? '#8a8f99') + '">' + iconSpan(d.icon) + '</span>'
           + '<span class="bz-home-enm">' + esc(d.name) + '</span>'
-          + '<span class="bz-home-ect">' + esc(ct) + '</span></button>';
+          + '<span class="bz-home-ect">' + esc(ct) + '</span></div>';
       }).join('')
     + '</div>';
 }
@@ -234,9 +244,9 @@ function renderAll(): void {
   const week = overlay.querySelector('[data-home-week]') as HTMLElement;
   if (week) {
     week.innerHTML = river.week.map((w) =>
-      '<button type="button" class="bz-home-wk' + (w.hit ? ' bz-home-wk--hit' : '') + (w.dateStr === (view ?? river.today.dateStr) ? ' bz-home-wk--sel' : '') + '"'
+      '<div role="button" tabindex="0" class="bz-home-wk' + (w.hit ? ' bz-home-wk--hit' : '') + (w.dateStr === (view ?? river.today.dateStr) ? ' bz-home-wk--sel' : '') + '"'
       + ' data-home-weekday="' + w.dateStr + '" aria-label="' + w.label + (w.hit ? '，有动静' : '') + '">'
-      + '<i></i><span class="bz-home-wk-n">' + w.dayOfMonth + '</span></button>').join('');
+      + '<i></i><span class="bz-home-wk-n">' + w.dayOfMonth + '</span></div>').join('');
     mountIcons(week);
   }
   const entries = overlay.querySelector('[data-home-entries]') as HTMLElement;
