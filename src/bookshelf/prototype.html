@@ -50,6 +50,12 @@
     background: rgba(255,255,255,.92); border: 1px solid #c9c2b2; padding: 3px 8px; z-index: 900; }
   .vbadge button { border: none; background: none; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; }
   .vbadge select { font: 11px 'Microsoft YaHei'; border: 1px solid #c9c2b2; background: #fff; color: #5c564a; }
+  /* 暗态演示外景（壳自用）：模拟 Obsidian 暗色宿主 */
+  body.theme-dark { background: #14110d; }
+  body.theme-dark .vbadge { background: rgba(30, 26, 20, 0.92); border-color: #4a4238; color: #c9bfa8; }
+  body.theme-dark .vbadge button { color: #d98873; }
+  body.theme-dark .vbadge select { background: #26211a; border-color: #4a4238; color: #c9bfa8; }
+  body.theme-dark .demo-mob { border-color: #4a4238; }
 </style>
 </head>
 <body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark；书库面板皮肤自给，壳内补一类兜底 -->
@@ -57,7 +63,8 @@
   <div id="mobHost" class="demo-mob"><iframe id="mobFrame" title="移动端预览（?mob=1 窄视口）"></iframe></div>
 
   <div class="vbadge">书库 · 原型预览（共用 styles.css）· 真实 164 册
-    <select id="skinSel" title="面板皮肤（面板根 bz-bs-skin-*）"></select>
+    <button id="themeBtn" title="模拟 Obsidian 亮暗主题（跟随主题皮肤下热切换面板）">切暗色</button>
+    <select id="skinSel" title="面板皮肤（每肤配亮暗变体，主题切模式）"></select>
     <button id="mobToggle">隐藏移动端</button>
   </div>
 
@@ -318,10 +325,10 @@
     return `
     <div class="bz-panel-frame bz-bs-panel bz-panel-mtop ${skinClass()}">
       <div class="bz-bs-wallpage">
-        <div class="bz-bs-header">
-          <div class="bz-bs-plaque"><h1>书库</h1><p>LIBRARY</p></div>
-          <div class="bz-bs-labels" id="bz-bs-labels"></div>
-        </div>
+      <div class="bz-bs-header">
+        <div class="bz-bs-plaque" data-bs-plaque><h1>书库</h1><p>LIBRARY</p></div>
+        <div class="bz-bs-labels" id="bz-bs-labels"></div>
+      </div>
         <div class="bz-bs-tools">
           <input id="bz-bs-dsearch" class="bz-bs-search" type="text" placeholder="检索书名或作者…" autocomplete="off">
           <div class="bz-bs-seg" id="bz-bs-sortseg"></div>
@@ -344,27 +351,35 @@
     </div>`;
   }
 
-  /* ==================== 面板皮肤（ui.ts SKIN_IDS/bsSkinClass 同构；?skin= 评审直达） ==================== */
-  const SKIN_IDS = ['nordic', 'dark', 'noir', 'wabi', 'bauhaus', 'blueprint', 'neon', 'kraft', 'velvet', 'mono'];
-  const SKIN_NAMES = { nordic: '雪松白', dark: '暗木书房', noir: '黑金夜曲', wabi: '侘寂素麻', bauhaus: '包豪斯', blueprint: '工程蓝图', neon: '霓虹夜馆', kraft: '牛皮手帐', velvet: '丝绒剧院', mono: '极简黑白' };
+  /* ==================== 面板皮肤（五肤×亮暗模式；?skin=/?theme= 评审直达） ====================
+     本轮拍板：皮肤收敛为 雪松白/黑金夜曲/牛皮手帐/丝绒剧院/极简黑白，每肤配亮暗变体
+     （bz-bs-mode-light/dark 变体层，styles.css「亮暗模式变体」节）；Obsidian 主题切模式，选肤只定风格。
+     壳内 themeBtn 模拟 Obsidian body.theme-dark；插件端解析与设置收敛见 ui.ts/settings.ts（同步时落）。 */
+  const SKIN_IDS = ['nordic', 'noir', 'kraft', 'velvet', 'mono'];
+  const SKIN_NAMES = { nordic: '雪松白', noir: '黑金夜曲', kraft: '牛皮手帐', velvet: '丝绒剧院', mono: '极简黑白' };
   const normalizeSkin = (v) => SKIN_IDS.includes(v) ? v : 'nordic';
   let skin = normalizeSkin(param('skin'));
-  const skinClass = () => `bz-bs-skin-${skin}`;
+  let theme = param('theme') === 'dark' ? 'dark' : 'light';
+  const skinClass = () => `bz-bs-skin-${skin} bz-bs-mode-${theme}`;
   let panelEl = null;
-  function applySkin(v) {
-    skin = normalizeSkin(v);
-    if (panelEl) {
-      panelEl.classList.remove(...SKIN_IDS.map((id) => `bz-bs-skin-${id}`));
-      panelEl.classList.add(skinClass());
-    }
-    document.querySelectorAll('.bz-bs-d-popup').forEach((p) => {
-      p.classList.remove(...SKIN_IDS.map((id) => `bz-bs-skin-${id}`));
-      p.classList.add(skinClass());
-    });
+  const ALL_SKIN = [...SKIN_IDS.map((id) => `bz-bs-skin-${id}`), 'bz-bs-mode-light', 'bz-bs-mode-dark'];
+  function paintSkin() {
+    const cls = skinClass();
+    if (panelEl) { panelEl.classList.remove(...ALL_SKIN); panelEl.classList.add(...cls.split(' ')); }
+    document.querySelectorAll('.bz-bs-d-popup').forEach((p) => { p.classList.remove(...ALL_SKIN); p.classList.add(...cls.split(' ')); });
     const sel = document.getElementById('skinSel');
     if (sel && sel.value !== skin) sel.value = skin;
     const frame = document.getElementById('mobFrame');
-    if (frame) frame.src = `./prototype.html?mob=1&skin=${skin}`; // 移动端 = 同页窄视口，换肤重载 iframe
+    if (frame) frame.src = `./prototype.html?mob=1&skin=${skin}&theme=${theme}`; // 移动端 = 同页窄视口，换肤/换模式重载 iframe
+    const btn = document.getElementById('themeBtn');
+    if (btn) btn.textContent = theme === 'dark' ? '切亮色' : '切暗色';
+  }
+  function applySkin(v) { skin = normalizeSkin(v); paintSkin(); }
+  function applyTheme(v) {
+    theme = v === 'dark' ? 'dark' : 'light';
+    document.body.classList.toggle('theme-dark', theme === 'dark');
+    document.body.classList.toggle('theme-light', theme !== 'dark');
+    paintSkin();
   }
 
   /* ==================== 借书卡详情（ui.ts openBookDetail 同构；issue 223 只读） ====================
@@ -439,6 +454,23 @@
   function wirePanel(root) {
     root.addEventListener('click', (e) => {
       const t = e.target;
+      // 移动端关闭出口 = 点「书库」匾收面板（桌面不响应，点面板外/Esc 关）
+      if (t.closest('[data-bs-plaque]')) {
+        if (!MOB) return;
+        const host = document.querySelector('.bz-panel-overlay');
+        host.style.display = 'none';
+        let reopen = document.getElementById('bsReopen');
+        if (!reopen) {
+          reopen = document.createElement('button');
+          reopen.id = 'bsReopen';
+          reopen.textContent = '重新打开面板';
+          reopen.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:900;padding:10px 18px;border:1px solid #888;background:#26211a;color:#eee;border-radius:6px;font:13px "Microsoft YaHei"';
+          reopen.onclick = () => { host.style.display = ''; reopen.remove(); };
+          document.body.appendChild(reopen);
+        }
+        toast('评审壳：插件内此处 closeOverlay()');
+        return;
+      }
       if (e.target === root && MOB) { toast('评审壳：插件内此处关闭面板'); return; }
       const side = t.closest('[data-bs-side]');
       if (side) {
@@ -514,6 +546,7 @@
     document.body.appendChild(overlay);
     panelEl = overlay.querySelector('.bz-bs-panel');
     wirePanel(overlay);
+    overlay.querySelector('.bz-bs-plaque').title = '关闭';
     mountIcons(overlay);
     renderAll();
   } else {
@@ -525,7 +558,7 @@
     renderAll();
 
     const frame = document.getElementById('mobFrame');
-    frame.src = `./prototype.html?mob=1&skin=${skin}`;
+    frame.src = `./prototype.html?mob=1&skin=${skin}&theme=${theme}`;
     const mobBtn = document.getElementById('mobToggle');
     mobBtn.onclick = () => {
       const mob = document.getElementById('mobHost');
@@ -533,8 +566,10 @@
       mobBtn.textContent = mob.style.display === 'none' ? '显示移动端' : '隐藏移动端';
     };
     const sel = document.getElementById('skinSel');
-    sel.innerHTML = SKIN_IDS.map((id) => `<option value="${id}"${id === skin ? ' selected' : ''}>${SKIN_NAMES[id]}</option>`).join('');
+    sel.innerHTML = SKIN_IDS.map((id) => `<option value="${id}"${skin === id ? ' selected' : ''}>${SKIN_NAMES[id]}</option>`).join('');
     sel.onchange = () => applySkin(sel.value);
+    document.getElementById('themeBtn').onclick = () => applyTheme(theme === 'dark' ? 'light' : 'dark');
+    applyTheme(theme); // ?theme= 直达（body 类 + 徽牌钮文案 + 面板肤）
   }
 
   /* ==================== 演示钩子（?demo=detail|unread；?skin= 十肤直达） ==================== */
@@ -606,23 +641,47 @@
         t('借书卡开', !!$('.bz-bs-d-popup .bz-bs-detail'));
         t('借书卡标题一致', $('.bz-bs-d-title').textContent === itemById(first.dataset.bsId).title);
         t('进度百分数', $('.bz-bs-d-prognum').textContent === Math.round(itemById(first.dataset.bsId).progress) + '%');
-        $('[data-bs-d-close]').click();
+        t('借书卡✕钮在位', !!$('.bz-bs-d-x'));
+        $('.bz-bs-d-x').click();
         await sleep(30);
-        t('借书卡关', !$('.bz-bs-d-popup'));
+        t('借书卡点✕关', !$('.bz-bs-d-popup'));
 
         if (MOB) {
           t('移动端@media全屏命中', Math.abs(panelEl.getBoundingClientRect().width - document.documentElement.clientWidth) < 1);
           t('移动端借书卡全屏规则在位', !!document.querySelector('.bz-bs-panel'));
-          const rail = $('.bz-bs-header');
-          t('头行一行横滑(overflow+隐藏滚动条)', !!rail && getComputedStyle(rail).overflowX === 'auto' && getComputedStyle(rail).scrollbarWidth === 'none' && rail.scrollWidth > rail.clientWidth);
+          const head = $('.bz-bs-header');
+          t('头行一行横滑(overflow+隐藏滚动条)', !!head && getComputedStyle(head).overflowX === 'auto' && getComputedStyle(head).scrollbarWidth === 'none' && head.scrollWidth > head.clientWidth);
+          t('顶部安全区避让(匾额≥44px)', $('.bz-bs-plaque').getBoundingClientRect().top >= 44);
           t('状态签+分类带并入头行单行', getComputedStyle($('.bz-bs-labels')).display === 'contents' && getComputedStyle($('.bz-bs-cats')).display === 'contents');
+          $('#bz-bs-shelf [data-bs-id]').click();
+          const pop = $('.bz-bs-d-popup');
+          t('移动借书卡留边不全屏', !!pop && pop.getBoundingClientRect().width <= document.documentElement.clientWidth - 24);
+          t('移动借书卡✕钮在位', !!$('.bz-bs-d-x'));
+          $('.bz-overlay-mask').dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+          await sleep(30);
+          t('移动借书卡点遮罩关', !$('.bz-bs-d-popup'));
+          $('.bz-bs-plaque').click();
+          t('点书库匾收面板', document.querySelector('.bz-panel-overlay').style.display === 'none');
+          $('#bsReopen').click();
+          t('评审壳重开面板', document.querySelector('.bz-panel-overlay').style.display !== 'none');
         } else {
           t('报告视图容器隐藏', !$('.bz-bs-view-report.active') && !!$('.bz-bs-view-report'));
           t('分类容器桌面contents隐身', getComputedStyle($('.bz-bs-cats')).display === 'contents');
-          applySkin('mono');
-          t('换肤=极简黑白类', panelEl.classList.contains('bz-bs-skin-mono'));
+          t('关闭面板无关钮残留', !$('.bz-bs-mob-close'));
+          $('#dtHost .bz-bs-plaque').click();
+          t('桌面点匾额不关面板', !!$('#dtHost .bz-bs-panel'));
+          t('默认雪松白+亮模式', panelEl.classList.contains('bz-bs-skin-nordic') && panelEl.classList.contains('bz-bs-mode-light'));
+          applyTheme('dark');
+          t('切暗=雪松白夜变体', panelEl.classList.contains('bz-bs-skin-nordic') && panelEl.classList.contains('bz-bs-mode-dark') && document.body.classList.contains('theme-dark'));
+          applyTheme('light');
+          t('切回亮模式', panelEl.classList.contains('bz-bs-mode-light'));
+          applySkin('noir');
+          t('锁黑金夜曲+亮变体类', panelEl.classList.contains('bz-bs-skin-noir') && panelEl.classList.contains('bz-bs-mode-light'));
+          applyTheme('dark');
+          t('黑金夜曲随主题切夜', panelEl.classList.contains('bz-bs-skin-noir') && panelEl.classList.contains('bz-bs-mode-dark'));
           applySkin('nordic');
-          t('换肤回落雪松白', panelEl.classList.contains('bz-bs-skin-nordic'));
+          applyTheme('light');
+          t('复原雪松白亮', panelEl.classList.contains('bz-bs-skin-nordic') && panelEl.classList.contains('bz-bs-mode-light'));
         }
 
         document.title = window.__st.fail.length
