@@ -128,47 +128,36 @@ describe('批 C-6：todo 头行类名拆雷', () => {
 // ═══════════ cinema（项 7-9） ═══════════
 
 describe('批 C-7：移动端主头行添加钮触控抬档', () => {
-  it('桌面走共享 .bz-btn--md 30px 中档（ADR-0094 主头行接入）；≤768px 抬 40px 档（--bz-control-h-lg，scoped）', () => {
+  it('cinema 主头行添加钮 = 域内 .d-head .add（ADR-0103 风格化：共享 .bz-btn--md 条款随骨架退役）', () => {
     const css = cineCss();
     const ui = repo('src/cinema/ui.ts');
-    expect(ui).toMatch(/bz-btn bz-btn--primary bz-btn--md bz-cinema-add/); // 共享主头行主钮（30px 中档）
-    expect(css).not.toMatch(/\.bz-main-head \.bz-btn\s*\{\s*height: var\(--bz-control-h\);/); // 域内桌面 32px 档退役
-    expect(css).toMatch(/@media \(max-width: 768px\)\s*\{[\s\S]*?\.bz-cinema-panel \.bz-main-head \.bz-btn\s*\{\s*height: var\(--bz-control-h-lg\);/);
+    expect(ui).toMatch(/class="add j-add"/); // 原型 d-head 添加钮（逐字同构）
+    expect(css).toMatch(/\.bz-cinema--midnight \.d-head \.add\s*\{/); // 域内样式承载
   });
 });
 
 describe('批 C-8：cinema 触控热区收编 .bz-touch-target', () => {
-  it('域内 pointer:coarse ::after 外扩块撤除，可点小元素改挂共享类', () => {
+  it('域内 pointer:coarse ::after 外扩块撤除；风格化后不再挂共享 .bz-touch-target（ADR-0103 域内自绘）', () => {
     expect(cineCss()).not.toMatch(/@media \(pointer: coarse\)/);
     const ui = repo('src/cinema/ui.ts');
-    expect(ui).toContain('bz-icon-btn bz-touch-target'); // 头行图标钮（iconBtnHTML）
-    // 详情豆瓣页外链钮已随 issue 208 删除（打开豆瓣统一走右键菜单），仅剩推荐卡豆瓣搜索外链
-    expect(ui).toMatch(/bz-touch-target bz-cinema-rec-douban/); // 推荐卡豆瓣搜索
-    expect(ui).not.toMatch(/bz-touch-target bz-cinema-dm-douban/);
+    expect(ui).toContain('m-tool j-mgear'); // 原型 m-head 工具钮（逐字同构）
+    expect(ui).not.toMatch(/bz-touch-target/);
   });
 });
 
 describe('批 C-9：分析页排印归档', () => {
-  it('rem 散档归并字号 token 四档，无 .68~.95rem 残留（图表大数字除外）', () => {
+  it('rem 散档守护：analysis 渲染无 .68~.95rem 残留（ADR-0103 后排印走原型 px 口径，token 断言退役）', () => {
     const ts = repo('src/cinema/analysis.ts');
     expect(ts).not.toMatch(/font-size:\.(6[89]|7[0-9]|8[0-9]|9[0-5])rem/);
-    for (const tok of ['var(--bz-font-caption)', 'var(--bz-font-meta)', 'var(--bz-font-label)', 'var(--bz-font-body)']) {
-      expect(ts).toContain(tok);
-    }
-    expect(ts).toContain('1.35rem'); // 图表几何大数字保留
+    expect(ts).toContain('stat-cards'); // 原型分析页语言在位
   });
 
-  it('ui.ts 三处非几何间距内联迁入域 styles.css', () => {
+  it('cinema 旧骨架间距条款退役（ADR-0103：原型 1:1 允许原型同款内联样式，共享弹窗仍走域内类）', () => {
     const ui = repo('src/cinema/ui.ts');
-    expect(ui).not.toMatch(/bz-cinema-ai-start" data-cinema-ai-start style="margin-top/);
-    expect(ui).not.toMatch(/bz-cinema-page-sub" style="margin-bottom/);
-    expect(ui).not.toMatch(/bz-btn-row--center" style="margin-top/);
     const css = cineCss();
-    expect(css).toMatch(/\.bz-cinema-ai-err ~ \.bz-cinema-ai-start\s*\{\s*margin-top: var\(--bz-space-lg\);/);
-    expect(css).toMatch(/\.bz-cinema-ai-pref\s*\{\s*margin-bottom: var\(--bz-space-md\);/);
-    expect(css).toMatch(/\.bz-cinema-confirm \.bz-btn-row\s*\{\s*margin-top: var\(--bz-space-lg\);/);
-    // 挂载点：偏好行挂新类
-    expect(ui).toContain('bz-cinema-page-sub bz-cinema-ai-pref');
+    expect(ui).toContain('cn-modal cn-confirm'); // 确认框域内类在位
+    expect(css).toMatch(/\.bz-cinema--midnight \.cn-confirm/); // 共享弹窗样式 scoped 午夜场锚
+    expect(css).toMatch(/\.bz-cinema--midnight \.cn-toast/); // 面板 toast 同上
   });
 });
 
