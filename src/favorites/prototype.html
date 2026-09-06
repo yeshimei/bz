@@ -5,12 +5,18 @@
 <title>收藏本 · 原型预览（与 src/favorites/styles.css 共用同一份 CSS）</title>
 <!--
   ┌────────────────────────────────────────────────────────────────────┐
-  │ 本文件 = 收藏本域 UI 的评审壳。组件样式零内联，全部来自同目录        │
-  │ ./styles.css（与插件构建同一份源文件）。改样式只改 styles.css，      │
-  │ 刷新本页即见，插件构建自动带走——不存在二次同步。                    │
+  │ 本文件 = 收藏本域 UI 的评审壳。组件样式零内联，全部来自（与          │
+  │ build-css SOURCES 同序的 core 链 +）同目录 ./styles.css（与插件构建  │
+  │ 同一份源文件）。改样式只改 styles.css，刷新本页即见，插件构建自动    │
+  │ 带走——不存在二次同步。                                              │
   │ 本文件只允许写：演示壳（页面底/手机框/评审徽牌）与演示逻辑（JS）。   │
   └────────────────────────────────────────────────────────────────────┘
 -->
+<!-- core 链与 build-css.mjs SOURCES 同序（参照 belongings 原型）：评审壳内复现
+     reset/组件基线与本域样式的级联对抗，避免「壳里看不出来」的选择器脆弱性 -->
+<link rel="stylesheet" href="../core/styles.css">
+<link rel="stylesheet" href="../core/ui/tokens.css">
+<link rel="stylesheet" href="../core/ui/components.css">
 <link rel="stylesheet" href="./styles.css">
 <style>
   /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
@@ -237,7 +243,7 @@
   /* ==================== 确认框 / toast（插件侧走 core flow-dialog/notice，演示壳自绘） ==================== */
   function confirmDlg(title, msg, okLabel, onOk) {
     const mask = document.createElement('div');
-    mask.className = 'bz-fav-form-mask';
+    mask.className = 'bz-fav-form-mask bz-fav-scope';
     mask.innerHTML = `<div class="bz-fav-form" style="width:320px;padding:20px 22px 16px">
       <h2 style="font-size:14.5px;margin-bottom:9px">${esc(title)}</h2>
       <p style="font-size:12.5px;line-height:1.7;color:var(--pop-mut);margin-bottom:16px">${esc(msg)}</p>
@@ -265,7 +271,7 @@
   function openForm(it) {
     const editing = !!it;
     const mask = document.createElement('div');
-    mask.className = 'bz-fav-form-mask';
+    mask.className = 'bz-fav-form-mask bz-fav-scope';
     mask.innerHTML = `<div class="bz-fav-form">
       <h2>${editing ? '编辑收藏' : '添加收藏'}</h2>
       <div class="bz-fav-fld"><label>标题</label><input id="fz-title" value="${esc(it ? it.title : '')}" placeholder="如：某篇好文"></div>
@@ -274,7 +280,7 @@
       <div class="bz-fav-fld"><label>标签（可多选）</label><div class="bz-fav-pick" id="fz-tags"></div></div>
       <div class="bz-fav-fld bz-fav-inline"><span class="bz-fav-sw${it && it.pinned ? ' bz-fav-on' : ''}" id="fz-pin"></span><span class="bz-fav-fld-desc">置顶后恒排最前</span></div>
       <div class="bz-fav-err" id="fz-err"></div>
-      <div class="bz-fav-btns"><button type="button" id="fz-ai">${icon('star', 12)} <span>AI 整理</span></button><button data-a="c">取消</button><button data-a="ok" class="bz-fav-pri">${editing ? '更新' : '保存'}</button></div>
+      <div class="bz-fav-btns"><button type="button" id="fz-ai" class="bz-fav-ai-btn">${icon('star', 12)} <span>AI 整理</span></button><button type="button" data-fz-cancel>取消</button><button type="button" id="fz-save" class="bz-fav-pri">${editing ? '更新' : '保存'}</button></div>
     </div>`;
     document.body.appendChild(mask);
     const form = mask.querySelector('.bz-fav-form');
@@ -328,8 +334,8 @@
       }, 1200);
     };
     mask.addEventListener('click', (e) => {
-      if (e.target === mask || e.target.dataset.a === 'c') return mask.remove();
-      if (e.target.dataset.a !== 'ok') return;
+      if (e.target === mask || e.target.closest('[data-fz-cancel]')) return mask.remove();
+      if (!e.target.closest('#fz-save')) return;
       const title = titleInp.value.trim();
       if (!title) { form.querySelector('#fz-err').textContent = '标题不能为空'; return; }
       const tags = TAGS.map((t) => t.label).filter((l) => sel.has(l));
