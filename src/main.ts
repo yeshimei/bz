@@ -62,7 +62,6 @@ import { openHome, unloadHome } from './home';
 import { openRecap, unloadRecap } from './recap';
 import { ensureAutoSummary, unloadAutoSummary, redoSummaryForActiveFile } from './auto-summary';
 // ai-agent 域解散：引用同步拆入 todo/favorites 域无条件常驻（原 ensureAIAgent/unloadAIAgent 换线）
-import { ensureFavoritesFileSync, unloadFavoritesFileSync } from './favorites';
 // 日记本（diary-notebook 合并）
 import { setApp as setDiaryApp } from './diary/app';
 import { applyDirectories } from './diary/config';
@@ -225,7 +224,6 @@ export default class BzPlugin extends Plugin {
       // 引用同步无条件常驻（issue 187：原 aiAgentEnabled 开关随旧 AIAgent 退役——
       // 待办/收藏本笔记 rename/delete 引用同步是数据完整性功能，不设开关）
       ensureFileSync(this.app);
-      ensureFavoritesFileSync(this.app);
       if (this.settings.secondBrainEnabled) ensureSecondBrainOnReady(this.app);
       // 复习计划：到期提醒开启时常驻（ticket 100——监听/染色/轮询统一启动；否则懒加载）；enableAutoNotify 缺省视为开
       if (this.settings.enableAutoNotify !== false) void ensureReview(this.app);
@@ -255,7 +253,6 @@ export default class BzPlugin extends Plugin {
     unloadPomodoro();
     unloadTodo();
     unloadFileSync();
-    unloadFavoritesFileSync();
     unloadHome();
     unloadRecap();
     unloadEncrypt();
