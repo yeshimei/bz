@@ -7003,7 +7003,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
     repeating-linear-gradient(-45deg, rgba(160, 150, 130, 0.14) 0 2px, transparent 2px 4px),
     var(--bz-surface-3);
 }
-/* ---- 头区：大标题（原型 21px/ls5px/#5a5244）+ 同行灰色小字（12px/#9a917d）；
+/* ---- 头区：大标题（issue 219g 用户改定 14px/ls5px/#5a5244）+ 同行灰色小字（12px/#9a917d）；
    头行行样式 issue 219f 用户手写版逐值照抄（垂直居中 / 40px 行高 / 顶距 10px） ---- */
 .bz-fav-body { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 2px var(--bz-space-lg) 0; }
 .bz-fav-hero {
@@ -7015,7 +7015,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
     margin-top: 10px;
 }
 .bz-fav-hero-title {
-  font-size: 21px; font-weight: 700; color: #5a5244;
+  font-size: 14px; font-weight: 700; color: #5a5244;
   letter-spacing: 5px; flex: none; white-space: nowrap;
 }
 .bz-fav-hero-sub {
