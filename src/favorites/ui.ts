@@ -182,6 +182,28 @@ function panelHtml(): string {
 
 let mainEscRegistered = false;
 
+/** ESC 层注册（主面板 + 浮层栈：菜单 → 抽屉 → 表单 → 面板）。
+ *  openPanel 与 openForm 开头各调一次：命令（bz-favorites-add）可不经面板直开表单，
+ *  ESC 层必须随表单在场（对照 belongings ensureBelongingsEsc 同款）。 */
+function ensureFavoritesEsc(): void {
+  if (mainEscRegistered) return;
+  mainEscRegistered = true;
+  escManager.register('bz-fav', {
+    isVisible: () =>
+      !!M.overlay ||
+      !!document.querySelector('.bz-fav-form') ||
+      !!document.querySelector('.bz-fav-sheet-mask'),
+    close: () => {
+      if (closeMenu()) return;
+      // 抽屉走 closeSheet（动作路径同款）：遮罩元素连监听一并移除，不再只摘 show 类残留 DOM
+      if (document.querySelector('.bz-fav-sheet-mask')) { closeSheet(); return; }
+      const form = document.querySelector('.bz-fav-form') as HTMLElement | null;
+      if (form) requestCloseForm(form);
+      else closePanel();
+    },
+  });
+}
+
 let _dm: DataManager | null = null;
 let _ai: FavoritesAIService | null = null;
 let _app: any = null;
@@ -213,20 +235,7 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
   mountIcons(overlay); // 头行关闭钮等 innerHTML 模板里的图标占位
 
   // ESC（主面板 + 浮层栈：菜单 → 抽屉 → 表单 → 面板）
-  if (!mainEscRegistered) {
-    mainEscRegistered = true;
-    escManager.register('bz-fav', {
-      isVisible: () => !!M.overlay || !!document.querySelector('.bz-fav-form') || !!document.querySelector('.bz-fav-sheet-mask.bz-fav-show'),
-      close: () => {
-        if (closeMenu()) return;
-        const sheetMask = document.querySelector('.bz-fav-sheet-mask.bz-fav-show') as HTMLElement | null;
-        if (sheetMask) { sheetMask.classList.remove('bz-fav-show'); return; }
-        const form = document.querySelector('.bz-fav-form') as HTMLElement | null;
-        if (form) requestCloseForm(form);
-        else closePanel();
-      },
-    });
-  }
+  ensureFavoritesEsc();
 
   // ---- 事件委托（overlay 顶层） ----
   overlay.addEventListener('click', (e) => {
@@ -663,6 +672,7 @@ function closeForm(popup: HTMLElement): void {
 
 /** 打开添加/编辑表单（原型 1:1：标题/链接/简介/标签多选/置顶开关 + AI 整理钮；无大模型/关联笔记） */
 export function openForm(item: FavoritesItem | null): void {
+  ensureFavoritesEsc(); // 命令可直开表单不经 openPanel：ESC 层随表单注册（F2）
   const it = item;
   const editing = !!it;
   const mask = document.createElement('div');

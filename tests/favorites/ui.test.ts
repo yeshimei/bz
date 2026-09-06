@@ -14,7 +14,7 @@ import { FavoritesAIService } from '../../src/favorites/ai';
 import { closeItemMenu } from '../../src/core/item-actions';
 import { onDomainEvent } from '../../src/core/domain-bus';
 import {
-  openPanel, openForm, closePanel, unloadFavoritesUI, favoritesSettingsSchema,
+  openPanel, openForm, closePanel, unloadFavoritesUI, favoritesSettingsSchema, initFavoritesUI,
 } from '../../src/favorites/ui';
 import { MockVault } from '../mock-vault';
 import {
@@ -1365,6 +1365,50 @@ describe('ESC 关闭（escManager bz-fav 层）', () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
     await tick(10);
     expect(document.querySelector('.bz-panel-overlay')).toBeNull();
+  });
+
+  it('命令直开表单（面板从未开过）→ ESC 走 requestCloseForm 能关（F2：ESC 层随表单注册）', async () => {
+    const ctx = await setup();
+    // 模拟 app.ts openAdd 命令路径：initFavoritesUI 后直接 openForm，openPanel 从未执行
+    initFavoritesUI(getApp(), ctx.dm, ctx.ai);
+    openForm(null);
+    await tick(10);
+    expect(document.querySelector('.bz-fav-form')).not.toBeNull();
+    expect(document.querySelector('.bz-panel-overlay')).toBeNull();
+    // 空白表单：ESC 直接关
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    await tick(10);
+    expect(document.querySelector('.bz-fav-form')).toBeNull();
+
+    // 脏表单：ESC → confirmDiscard 拦截（完整 requestCloseForm 路径）
+    openForm(null);
+    await tick(10);
+    (document.querySelector('#fz-title') as HTMLInputElement).value = '命令路径草稿';
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    await tick(10);
+    expect(document.getElementById('__shared_confirm_mask__')).not.toBeNull();
+    expect(document.querySelector('.bz-fav-form')).not.toBeNull();
+    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
+    await tick(10);
+    expect(document.querySelector('.bz-fav-form')).toBeNull();
+  });
+
+  it('移动抽屉 ESC → closeSheet 遮罩整元素移除（F11：不再只摘 show 类残留 DOM）', async () => {
+    Platform.isMobile = true;
+    const ctx = await setup();
+    seedVault(ctx.vault, [seedItem({ id: '1', title: '抽屉项', url: '', desc: 'x' })]);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    cards()[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await tick(450); // 越过触屏残余 click 静置窗口（400ms）
+    expect(document.querySelector('.bz-fav-sheet-mask')).not.toBeNull();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    await tick(10);
+    // 遮罩元素（连同其监听）整体移除，而非仅摘 bz-fav-show 类
+    expect(document.querySelector('.bz-fav-sheet-mask')).toBeNull();
+    expect(document.querySelector('.bz-fav-sheet')).toBeNull();
+    // 层序：抽屉关后主面板仍在
+    expect(document.querySelector('.bz-panel-overlay')).not.toBeNull();
   });
 });
 
