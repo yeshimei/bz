@@ -1,5 +1,7 @@
 # 收藏本 · UI 原型基准（PROTOTYPE.md）
 
+> 通用规则（铁流程/同步规则/跨域通用坑）见 `docs/prototype-first.md`；本文件只写收藏本域的映射与特例。
+
 ## 基准文件
 
 - **`prototype.html`** — 收藏本唯一视觉基准（源自 `.zcode/ui-prototypes/favorites-cork-5/c5-linen-full.html`，C5 亚麻磁贴方案，2026-09-06 拍板）。桌面端（900×620 固定面板）与移动端（396×780 面板，全屏态）两端并存，含亮暗切换、完整交互（磁贴筛选 / 右键菜单 / 底部抽屉 / 添加编辑表单 + AI 整理 / 撤销 toast）。
