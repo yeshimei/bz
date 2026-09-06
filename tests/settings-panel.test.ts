@@ -76,8 +76,7 @@ describe('设置面板（settings-panel）', () => {
     expect(popup.querySelector('.bz-sp-brand-name')).toBeNull();
     expect(popup.querySelector('.bz-sp-logo')).toBeNull();
     // 无设置项的域不在左侧列表显示（用户拍板）；issue 186 AI 自全局拆出独立成域（通用 + AI 两项）
-    // 旧书库（library）域退役：设置组删除后可见域 16 → 15；issue 194 小橘陪伴猫转可见 → 15
-    // issue 201 补回忆墙域（schemaLoader）→ 加载前列表 16（加载后桌面端零可见项被剔除回 15）
+    // 旧书库（library）域退役：设置组删除后可见域 16 → 15；issue 201 补回忆墙 → 加载前列表 16
     expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(16);
     // 无底部快捷键提示 / 无右侧导航条 / 无面包屑
     expect(popup.querySelector('.bz-sp-foot')).toBeNull();
@@ -96,14 +95,13 @@ describe('设置面板（settings-panel）', () => {
     expect(badges[4]).toBe('1'); // 归物本（issue 194 补默认状态筛选行，桌面 1 项）
     // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）
     const navIcons = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-ic')];
-    expect(navIcons.length).toBe(15);
+    expect(navIcons.length).toBe(14); // 加载后收藏本被按端剔除（ADR-0101）
     expect(navIcons[0].getAttribute('data-icon')).toBe('settings'); // 通用
     expect(navIcons[1].getAttribute('data-icon')).toBe('sparkles'); // AI（issue 186 独立域）
     expect(navIcons[2].getAttribute('data-icon')).toBe('notebook-pen'); // 日记本（enh-sweep-a：与 ribbon/磁贴同款，错开书架墙 book-open）
     expect(navIcons[3].getAttribute('data-icon')).toBe('check-square'); // 待办（index 3，memo 行退役后）
-    expect(navIcons[6].getAttribute('data-icon')).toBe('star'); // 收藏本
-    expect(navIcons[7].getAttribute('data-icon')).toBe('clapperboard'); // 影院（enh-sweep-a：与内容首页磁贴同款）
-    expect(navIcons[13].getAttribute('data-icon')).toBe('cat'); // 小橘陪伴猫（issue 194 转可见）
+    expect(navIcons[6].getAttribute('data-icon')).toBe('clapperboard'); // 影院（收藏本剔除后前移）
+    expect(navIcons[12].getAttribute('data-icon')).toBe('cat'); // 小橘陪伴猫（issue 194 转可见）
     // 无 emoji 图标残留（头行/列表/徽标全文本或 lucide）
     expect(popup.textContent).not.toMatch(EMOJI_RE);
     ui.cleanup();
@@ -490,14 +488,14 @@ describe('设置面板（settings-panel）', () => {
     for (;;) {
       names = [...popup.querySelectorAll('.bz-sp-nav-name')].map((b) => b.textContent);
       const badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
-      if (Date.now() > deadline0 || (names.length === 15 && !badges.includes('·'))) break;
+      if (Date.now() > deadline0 || (names.length === 14 && !badges.includes('·'))) break;
       await new Promise((r) => setTimeout(r, 30));
     }
     // 只看域名（nav-name），避免描述包含（如剪藏本「网页剪藏与聚合讯」）误判
-    expect(names).toHaveLength(15); // issue 186 拆 AI 独立域后 16；旧书库域退役 15；memo 域退役 14；issue 194 小橘转可见 15；issue 201 回忆墙桌面零项剔除
+    expect(names).toHaveLength(14); // issue 201 回忆墙 15；ADR-0101 收藏本日期显示退役 → 桌面零可见项剔除 14
     expect(names.slice(0, 2)).toEqual(['通用', 'AI']); // AI 紧随通用之后
     // 无设置域（聚合讯/阅读报告/自动摘要/附件搬移）一律不出现；小橘陪伴猫有 schema（issue 194 转可见）
-    for (const n of ['聚合讯', '阅读报告', '做题家', '自动摘要', '附件搬移']) {
+    for (const n of ['聚合讯', '阅读报告', '做题家', '自动摘要', '附件搬移', '收藏本']) {
       expect(names).not.toContain(n);
     }
     expect(names).toContain('小橘陪伴猫');

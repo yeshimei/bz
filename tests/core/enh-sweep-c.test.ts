@@ -34,7 +34,7 @@ describe('enh-sweep-c：.bz-panel-mtop 移动全屏顶距', () => {
   it('全屏面板根节点接线：8 域挂载点 + 番茄钟随 mfs 开关同挂摘', () => {
     expect(src('src/home/ui.ts')).toContain('bz-home-panel bz-panel-mtop');
     expect(src('src/cinema/ui.ts')).toContain('bz-panel-frame bz-cinema-panel bz-panel-mtop');
-    expect(src('src/favorites/ui.ts')).toContain('bz-fav-panel bz-panel-frame bz-panel-mtop');
+    expect(src('src/favorites/ui.ts')).toContain('bz-fav-panel bz-fav-scope'); // ADR-0101 域内自绘壳（bz-panel-mtop 随移动端挂载）
     expect(src('src/belongings/ui.ts')).toContain('bz-bel-panel bz-panel-frame bz-panel-mtop');
     const clip = src('src/clipbook/ui.ts');
     expect(clip).toContain('bz-clip-frame bz-panel-mtop');
@@ -61,7 +61,7 @@ describe('enh-sweep-c：触控热区扫尾', () => {
   it('coarse 外扩档落位（修复批 B 收编 core .bz-touch-target：favorites/belongings/encrypt 等挂类，其余域留域内块）', () => {
     // 收编域：外扩本体在 core components.css，域内模板挂共享类（热区档位随类）
     expect(componentsCss()).toMatch(/\.bz-touch-target::after/);
-    expect(src('src/favorites/ui.ts')).toContain('bz-touch-target');
+    expect(src('src/favorites/ui.ts')).toContain('bz-touch-target'); // 移动 ✕ 关闭钮挂 44px 触控档
     expect(src('src/belongings/ui.ts')).toContain('bz-touch-target');
     expect(src('src/encrypt/ui.ts')).toContain('bz-touch-target--xl');
     // 未收编域（attach 为 padding 抬档形态 / home·review·pomodoro 保留 padding·视觉抬档块；
@@ -81,7 +81,7 @@ describe('enh-sweep-c：触控热区扫尾', () => {
 
   it('横滑标签 44px 档（cinema/belongings 走共享 .bz-mobstrip；favorites issue 219b 磁贴行取代）', () => {
     expect(css('cinema')).toMatch(/bz-mobstrip-chip \{[^}]*min-height: 44px/);
-    expect(css('favorites')).toMatch(/bz-fav-stk \{[^}]*min-height: 44px/);
+    expect(css('favorites')).toMatch(/pointer: coarse[\s\S]*bz-fav-tags button[^}]*min-height: 44px/);
     expect(css('belongings')).toMatch(/bz-mobstrip-chip \{[^}]*min-height: 44px/);
   });
 });
@@ -130,15 +130,15 @@ describe('enh-sweep-c：杂项打磨', () => {
     expect(css('encrypt')).not.toMatch(/\.bz-encrypt-empty\b/);
   });
 
-  it('favorites 磁贴计数=纯文本紧贴名后（issue 219c：bz-fav-stk-num，无域内计数胶囊类）', () => {
+  it('favorites 磁贴计数=纯文本紧贴名后（issue 219c 口径延续；ADR-0101 无计数胶囊类）', () => {
     expect(css('favorites')).not.toContain('bz-fav-chip-cnt');
-    expect(src('src/favorites/ui.ts')).toContain('bz-fav-stk-num');
+    expect(src('src/favorites/ui.ts')).not.toContain('bz-fav-chip-num');
+    expect(src('src/favorites/ui.ts')).toContain('data-fav-tag');
     expect(css('favorites')).not.toContain('bz-fav-mobchip-cnt');
   });
 
-  it('favorites 磁贴选择器 0,2,0 提级（issue 219f：抗 reset/app.css 0,1,1 button:not(.clickable-icon)）', () => {
-    expect(css('favorites')).toContain('.bz-fav-stickers .bz-fav-stk {');
-    expect(css('favorites')).toContain('.bz-fav-stickers .bz-fav-stk--add {');
+  it('favorites 磁贴选择器 >0,1,1 提级（issue 219f 口径延续：抗 reset button 0,1,1 基线）', () => {
+    expect(css('favorites')).toContain('.bz-fav-scope .bz-fav-tags button {');
   });
 });
 
