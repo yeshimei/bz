@@ -2,8 +2,9 @@
  * 书架墙（bookshelf）域 UI：书脊墙 1:1 复刻（issue 218；原型 .zcode/ui-prototypes/bookshelf-10/p4-full.html）
  *
  * 布局（原型口径，完全替代旧封面网格/左栏/统计卡/月柱/筛选抽屉）：
- *   木匾刊头（书脊墙 · SPINE WALL）＋ 纸质统计标签行（全馆/已读讫/在读抽出/未读倒叠 + 分类册数，
- *   点选筛选、再点回全）＋ 工具行（纸感检索 + 三档排序 segmented）＋ 墙体（分类分区动态装箱：
+ *   头行（行内标题「书库」居左 + 纸质统计标签行同行：全馆/已读讫/在读抽出/未读倒叠 + 分类册数，
+ *   点选筛选、再点回全；issue 225 木匾刊头退场）＋ 工具行（纸感检索 + 三档排序 segmented）＋
+ *   墙体（分类分区动态装箱：
  *   每排按当前墙宽逐条塞满才换排；已读盖「讫」印；在读抽出一截垂书签带；未读收墙尾「倒叠区」）
  *   ＋ 墙尾格言。书脊：高度=累计阅读时长、厚度=字数（开方缩放，无字数回退批注密度）、
  *   竖排书名按「：」拆主/副双列（text-orientation: upright，字号 14→9px 自适应、列宽上限 64px）。
@@ -480,11 +481,10 @@ export function createOverlay(app: App): void {
   overlay.innerHTML = `
     <div class="bz-panel-frame bz-bs-panel bz-panel-mtop ${bsSkinClass()}">
       <div class="bz-bs-wallpage">
-        <div class="bz-bs-plaque">
-          <h1>书脊墙</h1>
-          <p>SPINE WALL · 以书脊读一座书房</p>
+        <div class="bz-bs-header">
+          <h1 class="bz-bs-title">书库</h1>
+          <div class="bz-bs-labels" id="bz-bs-labels"></div>
         </div>
-        <div class="bz-bs-labels" id="bz-bs-labels"></div>
         <div class="bz-bs-tools">
           <input id="bz-bs-dsearch" class="bz-bs-search" type="text" placeholder="检索书名或作者…" autocomplete="off">
           <div class="bz-bs-seg" id="bz-bs-sortseg"></div>
@@ -499,7 +499,7 @@ export function createOverlay(app: App): void {
         <div class="bz-bs-view bz-bs-view-report">
           <div class="bz-rr-head">
             <span class="bz-rr-title">${iconSpan(ICON.report, 'bz-ic--sm')}阅读分析报告</span>
-            <button class="bz-icon-btn bz-rr-close" data-rr-goto-shelf title="返回书脊墙">${iconSpan(ICON.close)}</button>
+            <button class="bz-icon-btn bz-rr-close" data-rr-goto-shelf title="返回书库">${iconSpan(ICON.close)}</button>
           </div>
           <div class="bz-rr-content"></div>
         </div>
