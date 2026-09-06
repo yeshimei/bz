@@ -19,7 +19,6 @@ import type { SettingsSchema, SettingsRow, SettingsSnapshot, SettingsRowContext 
 import { setIcon } from 'obsidian';
 import { openDirPicker } from './dir-picker';
 import { notice } from '../core/notice';
-import { uiBtn, uiChip, uiRange, uiSelect, uiSwitch, uiCardChoice } from '../core/ui';
 
 /** 快照读取（visibleWhen 求值输入；键直绑行从 getSettings 读，三函数行由外部提供） */
 function snapshot(): SettingsSnapshot {
@@ -171,40 +170,51 @@ export function makePathRowCtrl(opts: {
     });
   };
 
-  const addBtn = uiBtn({
-    label: opts.buttonText || (opts.mode === 'multi' ? '添加…' : '选择…'),
-    className: 'bz-sp-path-btn',
-    onClick: openPicker,
-  });
+  const multi = opts.mode === 'multi';
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'bz-sp-btn bz-sp-path-btn';
+  addBtn.textContent = opts.buttonText || (multi ? '添加…' : '选择…');
+  addBtn.addEventListener('click', openPicker);
 
   const renderChips = () => {
     ctrl.querySelectorAll('.bz-chip').forEach((c) => c.remove());
     // 回落 chip（可选）：绑定值为空时展示「实际生效目录」锁定态 chip（不可移除；点击重开选择器改显式值）
     if (!current.length && opts.fallbackChip) {
-      ctrl.appendChild(uiChip({
-        label: opts.fallbackChip,
-        title: '未单独设置时的实际生效目录（点击可改为显式设置）',
-        locked: true,
-        onClick: openPicker,
-      }));
+      const fb = document.createElement('span');
+      fb.className = 'bz-sp-chip bz-sp-chip--locked';
+      fb.title = '未单独设置时的实际生效目录（点击可改为显式设置）';
+      fb.textContent = opts.fallbackChip;
+      fb.addEventListener('click', openPicker);
+      ctrl.appendChild(fb);
     }
     for (const path of current) {
       const label = path === '' ? '（库根目录）' : path;
-      const chip = uiChip({
-        label,
-        title: label,
-        selectedSoft: true, // 路径多选：已选项软底（removable 不再自动暗示选中——L3）
-        removable: true,
-        onClick: openPicker, // 文本点击重开选择器（✕ 已由组件内部 stopPropagation）
-        onRemove: () => {
+      const chip = document.createElement('span');
+      chip.className = 'bz-sp-chip';
+      chip.title = label;
+      chip.textContent = label;
+      chip.addEventListener('click', openPicker); // 文本点击重开选择器
+      if (multi) {
+        const x = document.createElement('i');
+        x.className = 'x';
+        x.textContent = '✕';
+        x.addEventListener('click', (ev) => {
+          ev.stopPropagation();
           void apply(current.filter((p) => p !== path));
-        },
-      });
+        });
+        chip.appendChild(x);
+      }
       ctrl.appendChild(chip);
     }
-    addBtn.style.display = current.length ? 'none' : '';
-    if (!current.length && !addBtn.isConnected) ctrl.appendChild(addBtn);
-    if (current.length && addBtn.isConnected) addBtn.remove();
+    if (!current.length && !opts.fallbackChip) {
+      const m = document.createElement('span');
+      m.className = 'bz-sp-chip bz-sp-chip--muted';
+      m.textContent = multi ? '未选择' : '未设置';
+      ctrl.appendChild(m);
+    }
+    // 选择按钮恒显（拍板原型：chip 与「选择…」并存，已选态不再移出 DOM——旧 ticket 133 口径废止）
+    if (!addBtn.isConnected) ctrl.appendChild(addBtn);
   };
   const renderAll = () => renderChips();
   ctrl.appendChild(addBtn);
@@ -254,6 +264,14 @@ function renderRow(
       desc.textContent = (row as { desc?: string }).desc!;
       info.appendChild(desc);
     }
+    // note（拍板原型）：『↳』前缀灰字补充提示，渲染于描述之下
+    const noteText = (row as { note?: string }).note;
+    if (noteText) {
+      const nt = document.createElement('div');
+      nt.className = 'bz-sp-set-note';
+      nt.textContent = '↳ ' + noteText;
+      info.appendChild(nt);
+    }
     el.appendChild(info);
 
     ctrl = document.createElement('div');
@@ -266,16 +284,22 @@ function renderRow(
   switch (row.type) {
     case 'toggle': {
       const acc = bindValue<boolean>(row.binding as unknown as AnyBinding);
-      const sw = uiSwitch({
-        checked: acc.read() === true,
-        onChange: (v) => {
-          acc.write(v);
-          void acc.persist();
-          row.onChange?.(v, ctx);
-          refresh();
-        },
+      // 开关照原型逐字（button.bz-sw；组件库 uiSwitch 退役——观感 1:1 由域样式段承载）
+      const sw = document.createElement('button');
+      sw.type = 'button';
+      sw.className = 'bz-sw' + (acc.read() === true ? ' on' : '');
+      sw.setAttribute('role', 'switch');
+      sw.setAttribute('aria-checked', String(acc.read() === true));
+      sw.addEventListener('click', () => {
+        const v = !sw.classList.contains('on');
+        sw.classList.toggle('on', v);
+        sw.setAttribute('aria-checked', String(v));
+        acc.write(v);
+        void acc.persist();
+        row.onChange?.(v, ctx);
+        refresh();
       });
-      ctrlEl.appendChild(sw.el);
+      ctrlEl.appendChild(sw);
       break;
     }
     case 'text': {
@@ -379,45 +403,85 @@ function renderRow(
     }
     case 'select': {
       const acc = bindValue<string>(row.binding as unknown as AnyBinding);
-      const sel = uiSelect<string>({
-        value: acc.read() ?? '',
-        options: row.options,
-        // 弹层打开时把所在组卡 z 提层（配合组卡 :has 兜底移动端 WebView 无 :has 支持）
-        onOpenChange: (open) => {
-          const group = sel.el.closest('.bz-sp-group');
-          if (group) group.classList.toggle('bz-sp-group-raised', open);
-        },
-        onChange: (v) => {
-          acc.write(v);
-          void acc.persist();
-          row.onChange?.(v, ctx);
-          refresh();
-        },
+      // 下拉照原型逐字（触发器 + 菜单挂触发器内；组卡 overflow 展开期间放开并提层）
+      const sel = document.createElement('div');
+      sel.className = 'bz-select';
+      const vspan = document.createElement('span');
+      vspan.className = 'bz-select-val';
+      const car = document.createElement('span');
+      car.className = 'bz-ic bz-select-car';
+      setIcon(car, 'chevron-right');
+      car.style.transform = 'rotate(90deg)';
+      sel.append(vspan, car);
+      const options = row.options;
+      const labelOf = (v: string) => (options.find((o) => o.value === v) || { label: v }).label;
+      vspan.textContent = labelOf(String(acc.read() ?? '') || (options[0] && options[0].value) || '');
+      sel.addEventListener('click', () => {
+        if (sel.querySelector('.bz-select-menu')) return;
+        // 组卡 overflow:hidden 会裁剪伸出的菜单——展开期间放开并提层
+        const group = sel.closest<HTMLElement>('.bz-sp-group');
+        if (group) { group.style.overflow = 'visible'; group.style.zIndex = '10'; }
+        const closeMenu = () => {
+          sel.querySelector('.bz-select-menu')?.remove();
+          if (group) { group.style.overflow = ''; group.style.zIndex = ''; }
+          document.removeEventListener('click', h);
+        };
+        const h = (ev: MouseEvent) => {
+          if (!sel.contains(ev.target as Node)) closeMenu();
+        };
+        setTimeout(() => document.addEventListener('click', h));
+        const menu = document.createElement('div');
+        menu.className = 'bz-select-menu';
+        const curNow = String(acc.read() ?? '') || (options[0] && options[0].value) || '';
+        for (const o of options) {
+          const it = document.createElement('button');
+          it.type = 'button';
+          it.className = 'bz-select-item' + (o.value === curNow ? ' is-on' : '');
+          const sp = document.createElement('span');
+          sp.textContent = o.label;
+          const ck = document.createElement('span');
+          ck.className = 'bz-ic bz-select-item-ck';
+          setIcon(ck, 'check');
+          it.append(sp, ck);
+          it.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            closeMenu();
+            vspan.textContent = labelOf(o.value);
+            acc.write(o.value);
+            void acc.persist();
+            row.onChange?.(o.value, ctx);
+            refresh();
+          });
+          menu.appendChild(it);
+        }
+        sel.appendChild(menu);
       });
-      ctrlEl.appendChild(sel.el);
+      ctrlEl.appendChild(sel);
       break;
     }
     case 'slider': {
       const acc = bindValue<number>(row.binding as unknown as AnyBinding);
-      const cur = acc.read() ?? row.min;
-      const badge = document.createElement('span');
-      badge.className = 'bz-badge';
-      badge.textContent = String(cur);
-      const range = uiRange({
-        value: cur,
-        min: row.min,
-        max: row.max,
-        step: row.step,
-        onInput: (v) => {
-          badge.textContent = String(v);
-          acc.write(v);
-          void acc.persist();
-          row.onChange?.(v, ctx);
-        },
-      });
-      const wrap = document.createElement('span');
+      // 滑杆照原型逐字（轻量读数 span；组件库 uiRange 退役）
+      const cur = acc.read() ?? row.min ?? 0;
+      const wrap = document.createElement('div');
       wrap.className = 'bz-sp-slider-row';
-      wrap.append(range, badge);
+      const range = document.createElement('input');
+      range.type = 'range';
+      if (row.min !== undefined) range.min = String(row.min);
+      if (row.max !== undefined) range.max = String(row.max);
+      range.step = String(row.step ?? 1);
+      range.value = String(cur);
+      const em = document.createElement('span');
+      em.className = 'bz-sp-slider-val';
+      em.textContent = String(cur);
+      range.addEventListener('input', () => {
+        em.textContent = range.value;
+        const v = Number(range.value);
+        acc.write(v);
+        void acc.persist();
+        row.onChange?.(v, ctx);
+      });
+      wrap.append(range, em);
       ctrlEl.appendChild(wrap);
       break;
     }
@@ -456,12 +520,13 @@ function renderRow(
       break;
     }
     case 'button': {
-      ctrlEl.appendChild(uiBtn({
-        label: row.buttonText,
-        // 主操作 = primary 实底；行内普通操作 = ghost 描边（默认底与分组卡同色不可见）
-        tone: row.cta ? 'primary' : 'ghost',
-        onClick: () => row.onClick(ctx),
-      }));
+      // 按钮照原型逐字（bz-sp-btn；cta → accent 实底）
+      const b2 = document.createElement('button');
+      b2.type = 'button';
+      b2.className = 'bz-sp-btn' + (row.cta ? ' bz-sp-btn--primary' : '');
+      b2.textContent = row.buttonText;
+      b2.addEventListener('click', () => row.onClick(ctx));
+      ctrlEl.appendChild(b2);
       break;
     }
     case 'info': {
@@ -472,21 +537,41 @@ function renderRow(
       break;
     }
     case 'choiceCards': {
-      // 视觉卡片单选（issue 210）：行头 name + 全宽卡片组（预览卡无编号无描述，拍板形态）。
-      // 空值回退首个选项（同 select 口径）；onChange 后 refresh 联动显隐。
+      // 视觉卡片单选照原型逐字（bz-sp-cardpick：预览 div + 名称；空值回退首个选项同 select 口径）。
+      // options.layout + layoutKey：布局绑定的主题行只渲当前布局配套的单卡——主题不通用（拍板）。
       const acc = bindValue<string>(row.binding as unknown as AnyBinding);
-      const pick = uiCardChoice({
-        value: String(acc.read() ?? '') || row.options[0].value,
-        options: row.options,
-        label: rowName,
-        onChange: (v) => {
-          acc.write(v);
-          void acc.persist();
-          row.onChange?.(v, ctx);
-          refresh();
-        },
+      const layoutKey = (row as { layoutKey?: string }).layoutKey;
+      const curLayout = layoutKey ? String((snapshot() as any)[layoutKey] ?? '') : '';
+      const opts2 = row.options.filter((o) => {
+        const lo = (o as { layout?: string }).layout;
+        return !lo || !layoutKey || lo === curLayout;
       });
-      el.appendChild(pick.el);
+      const cur = String(acc.read() ?? '') || (opts2[0] && opts2[0].value) || '';
+      const wrap = document.createElement('div');
+      wrap.className = 'bz-sp-cardpick';
+      wrap.setAttribute('role', 'radiogroup');
+      for (const o of opts2) {
+        const c = document.createElement('button');
+        c.type = 'button';
+        c.className = 'bz-sp-cardpick-card' + (o.value === cur ? ' is-on' : '');
+        const prev = document.createElement('div');
+        prev.className = 'bz-sp-mini' + (o.prevClass ? ` ${o.prevClass}` : '');
+        prev.setAttribute('aria-hidden', 'true');
+        const lb = document.createElement('span');
+        lb.className = 'bz-sp-cardpick-name';
+        lb.textContent = o.label;
+        c.append(prev, lb);
+        c.addEventListener('click', () => {
+          wrap.querySelectorAll('.is-on').forEach((x) => x.classList.remove('is-on'));
+          c.classList.add('is-on');
+          acc.write(o.value);
+          void acc.persist();
+          row.onChange?.(o.value, ctx);
+          refresh();
+        });
+        wrap.appendChild(c);
+      }
+      el.appendChild(wrap);
       break;
     }
     case 'custom': {
