@@ -241,12 +241,15 @@ async function refreshBalances(dm: DataManager): Promise<void> {
 // ==================== 主面板结构 ====================
 
 function panelHtml(): string {
-  // issue 219d 头区 1:1 原型：仅一行原型款粗体大标题「收藏本」，无副题、无任何附加件；
+  // issue 219e 头区 1:1 原型：大标题「收藏本」+ 同行灰色小字副题（计数+图例说明）；
   // 磁贴行（行尾「＋ 新收藏」贴纸=添加入口）→ 卡墙。桌面点遮罩/Esc 关闭；移动浮动 ✕（全屏退出）。
   return `<div class="bz-fav-panel bz-panel-frame bz-panel-mtop">
   <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-fav-mob-close" data-fav-close title="关闭">${iconSpan(ICON.close)}</button>
   <div class="bz-fav-body">
-    <div class="bz-fav-hero-title">收藏本</div>
+    <div class="bz-fav-hero">
+      <div class="bz-fav-hero-title">收藏本</div>
+      <div class="bz-fav-hero-sub" data-fav-sub></div>
+    </div>
     <div class="bz-fav-stickers" data-fav-tags></div>
     <div class="bz-fav-content" data-fav-content></div>
   </div>
@@ -405,6 +408,11 @@ function renderTags(): void {
     mkStk('已归档', archivedItems().length, M.archived, true) +
     TAGS.map((t) => mkStk(t.label, tagCount(t.label), !M.archived && M.tag === t.label, false, t.emoji)).join('') +
     `<button class="bz-fav-stk bz-fav-stk--add" data-fav-add title="添加收藏"><span class="bz-fav-stk-plus">＋</span><span class="bz-fav-stk-name">新收藏</span></button>`;
+  // 副题灰色小字（原型款：计数 + 图例说明）
+  const sub = overlay.querySelector('[data-fav-sub]') as HTMLElement;
+  sub.textContent = M.archived
+    ? `${archivedItems().length} 张已归档 · 右键卡片可取消归档`
+    : `${visible().length} 张白卡 · 磁圆点=标签色 · 金圈=常看（置顶）`;
 }
 
 function renderContent(): void {
@@ -458,7 +466,7 @@ function cardHtml(it: FavoritesItem): string {
       : '';
   // C5「亚麻记事板」卡：白卡纸 + 顶部胶带（CSS ::before）+ 右上磁圆点（首标签色）+ 标题两行 + 3 行简介 + meta 分隔线
   return `<div class="bz-fav-card${pinnedCls}${linkCls}${archCls}" data-fav-id="${esc(it.id)}">
-    <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>
+    <span class="bz-fav-dot" style="--c:hsl(${hue} 38% 68%)"></span>
     <div class="bz-fav-card-main">
       <div class="bz-fav-title-row"><span class="bz-fav-title" title="${esc(host || it.title)}">${esc(it.title || '无标题')}</span></div>
       ${desc ? `<div class="bz-fav-desc">${esc(desc)}</div>` : ''}
