@@ -408,11 +408,11 @@ function renderTags(): void {
     mkStk('已归档', archivedItems().length, M.archived, true) +
     TAGS.map((t) => mkStk(t.label, tagCount(t.label), !M.archived && M.tag === t.label, false, t.emoji)).join('') +
     `<button class="bz-fav-stk bz-fav-stk--add" data-fav-add title="添加收藏"><span class="bz-fav-stk-plus">＋</span><span class="bz-fav-stk-name">新收藏</span></button>`;
-  // 副题灰色小字（原型款：计数 + 图例说明）
+  // 副题灰色小字（issue 219f：只留白卡/归档计数，图例与右键提示退场）
   const sub = overlay.querySelector('[data-fav-sub]') as HTMLElement;
   sub.textContent = M.archived
-    ? `${archivedItems().length} 张已归档 · 右键卡片可取消归档`
-    : `${visible().length} 张白卡 · 磁圆点=标签色 · 金圈=常看（置顶）`;
+    ? `${archivedItems().length} 张已归档`
+    : `${visible().length} 张白卡`;
 }
 
 function renderContent(): void {
