@@ -781,13 +781,13 @@ function sheetHeadOf(it: BelongingsItem): HTMLElement {
   const head = document.createElement('div');
   head.className = 'bz-item-sheet-entry';
   const body = document.createElement('div');
-  body.style.cssText = 'display:flex; align-items:flex-start; gap:10px;';
+  body.className = 'bz-bel-sheet-head';
   const emoji = document.createElement('span');
   emoji.className = 'bz-item-sheet-emoji';
   emoji.textContent = catEmoji(it.category) || '📦';
   body.appendChild(emoji);
   const info = document.createElement('div');
-  info.style.cssText = 'flex:1; min-width:0;';
+  info.className = 'bz-bel-sheet-info';
   const title = document.createElement('div');
   title.className = 'bz-item-sheet-title';
   title.textContent = it.name;

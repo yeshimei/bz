@@ -928,6 +928,9 @@ describe('归物本行操作（桌面菜单 / 移动抽屉 / 动作集）', () =
       expect(document.querySelector('.bz-item-sheet-emoji')!.textContent).toBe('⌨');
       expect(document.querySelector('.bz-item-sheet-title')!.textContent).toBe('机械键盘');
       expect(document.querySelector('.bz-item-sheet-sub')!.textContent).toMatch(/^机械键盘 · ￥399\.00 · 已用 \d+ 天$/);
+      // 内联 flex 样式上岸（合规）：头行布局走域内类，无 style.cssText
+      expect(document.querySelector('.bz-item-sheet-entry .bz-bel-sheet-head')).not.toBeNull();
+      expect(document.querySelector('.bz-bel-sheet-info')).not.toBeNull();
       expect(actionLabels()).toEqual(['标记为闲置', '标记为已转卖', '标记为已丢弃', '编辑', '删除']);
     } finally {
       Platform.isMobile = false;
