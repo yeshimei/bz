@@ -55,11 +55,10 @@ const STATUS_ORDER: { key: string; label: string }[] = [
   { key: 'sold', label: '已转卖' },
   { key: 'discard', label: '已丢弃' },
 ];
-const MOB_SHOW = 'bz-bel-mobsearch-show';
+
 const THEME_CLASSES = new Set(['theme-dark', 'theme-light']);
 
 const ICON = {
-  all: 'layout-grid',
   add: 'plus',
   search: 'search',
   close: 'x',
@@ -255,9 +254,6 @@ function itemById(id: string): BelongingsItem | undefined {
 function panelHtml(): string {
   return `<div class="bz-bel-panel bz-panel-frame bz-panel-mtop bz-bel--poster">
   <div class="bz-bel-mobhead">
-    <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-add title="记一笔">${iconSpan(ICON.add)}</button>
-    <div class="bz-bel-mobhead-sp"></div>
-    <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-mobsearch title="搜索">${iconSpan(ICON.search)}</button>
     <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON.close)}</button>
   </div>
   <div class="bz-bel-body">
@@ -276,14 +272,16 @@ function panelHtml(): string {
         ${iconSpan(ICON.chevR, 'bz-bel-select-chev')}
       </div>
       <div class="bz-bel-sort" data-bel-sort></div>
-      <button class="bz-btn bz-btn--primary bz-btn--md bz-bel-addbtn" data-bel-add>${iconSpan(ICON.add, 'bz-ic--sm')} 记一笔</button>
+      <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${iconSpan(ICON.add, 'bz-ic--sm')} 记一笔</button>
     </div>
     <div class="bz-mobstrip" data-bel-mobstatus></div>
-    <div class="bz-bel-mobsearch" data-bel-mobsearch-row>
-      <div class="bz-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-bel-mobsearch-inp placeholder="搜索名称 / 分类…"></div>
-    </div>
+    <div class="bz-bel-mobsort" data-bel-mobsort></div>
     <div class="bz-bel-content" data-bel-content></div>
-    <div class="bz-bel-footnote" data-bel-footnote></div>
+    <button class="bz-btn bz-btn--md bz-bel-mobadd" data-bel-add>${iconSpan(ICON.add, 'bz-ic--sm')} 记一笔</button>
+    <div class="bz-bel-foot">
+      <span class="bz-bel-foot-brand">BZ·BELONGINGS — P20 SWISS POSTER</span>
+      <span class="bz-bel-footnote" data-bel-footnote></span>
+    </div>
   </div>
 </div>`;
 }
@@ -358,21 +356,26 @@ async function openPanelInner(): Promise<void> {
   // ESC（主面板 + 表单/详情多窗口径；表单也可能先于面板打开——命令路径）
   ensureBelongingsEsc();
 
-  // ---- 排序 segmented（组件库 uiSegmented；视图档不落盘） ----
-  const sortHost = overlay.querySelector('[data-bel-sort]') as HTMLElement;
-  const seg = uiSegmented<'recent' | 'price' | 'daily'>({
-    options: [
-      { value: 'recent', label: '最近购入' },
-      { value: 'price', label: '投入最高' },
-      { value: 'daily', label: '日均最高' },
-    ],
-    value: M.sort,
-    onChange: (v) => {
-      M.sort = v;
-      renderContent();
-    },
+  // ---- 排序 segmented（组件库 uiSegmented；桌面/移动双实例同步，视图档不落盘） ----
+  const sortSegs: ReturnType<typeof uiSegmented<'recent' | 'price' | 'daily'>>[] = [];
+  (['[data-bel-sort]', '[data-bel-mobsort]'] as const).forEach((sel) => {
+    const host = overlay.querySelector(sel) as HTMLElement;
+    const seg = uiSegmented<'recent' | 'price' | 'daily'>({
+      options: [
+        { value: 'recent', label: '最近购入' },
+        { value: 'price', label: '投入最高' },
+        { value: 'daily', label: '日均最高' },
+      ],
+      value: M.sort,
+      onChange: (v) => {
+        M.sort = v;
+        sortSegs.forEach((s) => s.setValue(v));
+        renderContent();
+      },
+    });
+    host.replaceChildren(seg.el);
+    sortSegs.push(seg);
   });
-  sortHost.replaceChildren(seg.el);
 
   // ---- 事件委托 ----
   overlay.addEventListener('click', (e) => {
@@ -380,7 +383,6 @@ async function openPanelInner(): Promise<void> {
     if (e.target === overlay) { closePanel(); return; }
     if (t.closest('[data-bel-add]')) { void openForm(null); return; }
     if (t.closest('[data-bel-close]')) { closePanel(); return; }
-    if (t.closest('[data-bel-mobsearch]')) { toggleMobSearch(overlay); return; }
     // KPI 可点（ticket 189 语义保留）：在库件数/在库投入 = 在库合成筛选（再点取消）
     const kpi = t.closest('[data-bel-statclick]') as HTMLElement | null;
     if (kpi) {
@@ -417,7 +419,6 @@ async function openPanelInner(): Promise<void> {
     });
   };
   bindSearch(overlay.querySelector('[data-bel-search]') as HTMLInputElement);
-  bindSearch(overlay.querySelector('[data-bel-mobsearch-inp]') as HTMLInputElement);
 
   // 内容区：卡片点击（桌面=详情弹窗；移动=底部抽屉）+ 右键菜单
   const content = overlay.querySelector('[data-bel-content]') as HTMLElement;
@@ -564,26 +565,25 @@ function renderHero(): void {
 function renderChips(): void {
   const overlay = M.overlay!;
   const host = overlay.querySelector('[data-bel-chips]') as HTMLElement;
-  const defs: { key: string; label: string; ic: string; cnt: number }[] = [
-    { key: '__all', label: '全部', ic: ICON.all, cnt: itemList().length },
-    { key: 'asset', label: '资产', ic: 'wallet', cnt: stockCount() },
-    ...STATUS_ORDER.map((s) => ({ key: s.key, label: s.label, ic: STATUS[s.key].ic, cnt: statusCount(s.label) })),
+  const defs: { key: string; label: string; cnt: number }[] = [
+    { key: '__all', label: '全部', cnt: itemList().length },
+    { key: 'asset', label: '资产', cnt: stockCount() },
+    ...STATUS_ORDER.map((s) => ({ key: s.key, label: s.label, cnt: statusCount(s.label) })),
   ];
   host.replaceChildren(...defs.map((d) => {
     const active = d.key === '__all' ? M.status === null : M.status === d.key;
-    const c = uiChip({ label: d.label, icon: d.ic, count: d.cnt, selected: active, onClick: () => applyStatusFilter(d.key) });
+    const c = uiChip({ label: d.label, count: d.cnt, selected: active, onClick: () => applyStatusFilter(d.key) });
     c.dataset.belSt = d.key;
     return c;
   }));
-  // 移动横滑 chips（.bz-mobstrip；桌面隐藏，委托见 openPanelInner）
+  // 移动横滑 chips（.bz-mobstrip；p20 m-chips：纯文字+计数，无图标）
   const mob = overlay.querySelector('[data-bel-mobstatus]') as HTMLElement;
-  const mkChip = (key: string, label: string, ic: string, cnt: number, active: boolean) =>
-    `<button class="bz-mobstrip-chip${active ? ' is-on' : ''}" data-bel-st="${key}">${iconSpan(ic)}<span>${esc(label)}</span><span class="bz-chip-cnt">${cnt}</span></button>`;
+  const mkChip = (key: string, label: string, cnt: number, active: boolean) =>
+    `<button class="bz-mobstrip-chip${active ? ' is-on' : ''}" data-bel-st="${key}"><span>${esc(label)}</span><span class="bz-chip-cnt">${cnt}</span></button>`;
   mob.innerHTML =
-    mkChip('__all', '全部', ICON.all, itemList().length, M.status === null) +
-    mkChip('asset', '资产', 'wallet', stockCount(), M.status === 'asset') +
-    STATUS_ORDER.map((s) => mkChip(s.key, s.label, STATUS[s.key].ic, statusCount(s.label), M.status === s.key)).join('');
-  mountIcons(mob);
+    mkChip('__all', '全部', itemList().length, M.status === null) +
+    mkChip('asset', '资产', stockCount(), M.status === 'asset') +
+    STATUS_ORDER.map((s) => mkChip(s.key, s.label, statusCount(s.label), M.status === s.key)).join('');
 }
 
 function renderYears(): void {
@@ -719,12 +719,11 @@ function openBelDetail(it: BelongingsItem): void {
     const cur = itemById(it.id);
     if (!cur) return;
     acts.innerHTML = STATUS_LABELS.map((s) =>
-      `<button type="button" class="bz-bel-flowbtn${s === cur.current_status ? ' is-cur' : ''}" data-bd-flow="${esc(s)}">${esc(s)}</button>`
+      `<button type="button" class="bz-bel-flowbtn${s === cur.current_status ? ' is-cur' : ''}${s === '闲置' ? ' bz-bel-c2' : ''}" data-bd-flow="${esc(s)}">${esc(s)}</button>`
     ).join('');
   };
   drawActs();
-  acts.addEventListener('click', (e) => {
-    const b = (e.target as HTMLElement).closest('[data-bd-flow]') as HTMLElement | null;
+  acts.addEventListener('click', (e) => {    const b = (e.target as HTMLElement).closest('[data-bd-flow]') as HTMLElement | null;
     if (!b) return;
     const cur = itemById(it.id);
     if (!cur) { closeBelDetail(); return; }
@@ -853,7 +852,7 @@ function openRowMenuAt(it: BelongingsItem, x: number, y: number): void {
     const it2 = itemById(it.id);
     if (it2) refreshItemSheet(buildActions(it2, rebuild), sheetHeadOf(it2));
   };
-  openItemMenu(x, y, buildActions(it, rebuild), true);
+  openItemMenu(x, y, buildActions(it, rebuild), true, 'bz-bel-menu');
   // 复位残余 click 抑制（issue 198 同款 P1）：右键时序会置位 armed 吞下一次左键；右键无补发 click，直接复位
   resetItemMenuClickGuard();
 }
@@ -1039,7 +1038,7 @@ export function openForm(it: BelongingsItem | null): void {
   };
   const drawStatus = () => {
     statusPick.innerHTML = STATUS_LABELS.map((s) =>
-      `<button type="button" class="bz-choice-btn${s === curStatus ? ' is-on' : ''}" data-status="${esc(s)}">${iconSpan(STATUS[statusKeyOf(s)].ic, 'bz-ic--sm')}${esc(s)}</button>`
+      `<button type="button" class="bz-choice-btn${s === curStatus ? ' is-on' : ''}${s === '闲置' ? ' bz-bel-c2' : ''}" data-status="${esc(s)}">${iconSpan(STATUS[statusKeyOf(s)].ic, 'bz-ic--sm')}${esc(s)}</button>`
     ).join('');
     mountIcons(statusPick);
     statusPick.querySelectorAll('[data-status]').forEach((b) => b.addEventListener('click', () => {
@@ -1143,15 +1142,4 @@ export function openForm(it: BelongingsItem | null): void {
     })();
   });
   setTimeout(() => (mask.querySelector('#bm-name') as HTMLInputElement)?.focus(), 100);
-}
-// ==================== 移动搜索切换 ====================
-
-function toggleMobSearch(overlay: HTMLElement): void {
-  const row = overlay.querySelector('[data-bel-mobsearch-row]') as HTMLElement;
-  const on = !row.classList.contains(MOB_SHOW);
-  row.classList.toggle(MOB_SHOW, on);
-  if (on) {
-    const inp = overlay.querySelector('[data-bel-mobsearch-inp]') as HTMLInputElement | null;
-    setTimeout(() => inp?.focus(), 60);
-  }
 }
