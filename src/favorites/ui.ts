@@ -241,16 +241,12 @@ async function refreshBalances(dm: DataManager): Promise<void> {
 // ==================== 主面板结构 ====================
 
 function panelHtml(): string {
-  // issue 219c 头部彻底原型化（对照 c5-linen.html）：壳头行（品牌/⚙/✕）与头区主按钮全删——
-  // 面板 = 手写体标题（副题同行：筛选名 · 计数）→ 磁贴标签行（行尾「＋ 新收藏」贴纸=添加入口，
-  // 桌面/移动共用）→ 卡墙。桌面点遮罩/Esc 关闭；移动浮动 ✕（全屏退出）。
+  // issue 219d 头区 1:1 原型：仅一行原型款粗体大标题「收藏本」，无副题、无任何附加件；
+  // 磁贴行（行尾「＋ 新收藏」贴纸=添加入口）→ 卡墙。桌面点遮罩/Esc 关闭；移动浮动 ✕（全屏退出）。
   return `<div class="bz-fav-panel bz-panel-frame bz-panel-mtop">
   <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-fav-mob-close" data-fav-close title="关闭">${iconSpan(ICON.close)}</button>
   <div class="bz-fav-body">
-    <div class="bz-fav-hero">
-      <div class="bz-fav-hero-title">收藏本</div>
-      <div class="bz-fav-hero-sub"><span data-fav-title>全部</span><span class="bz-fav-hero-dot">·</span><span data-fav-count></span></div>
-    </div>
+    <div class="bz-fav-hero-title">收藏本</div>
     <div class="bz-fav-stickers" data-fav-tags></div>
     <div class="bz-fav-content" data-fav-content></div>
   </div>
@@ -385,7 +381,6 @@ async function reload(): Promise<void> {
 function renderAll(): void {
   if (!M.overlay) return;
   renderTags();
-  renderCount();
   renderContent();
 }
 
@@ -410,19 +405,6 @@ function renderTags(): void {
     mkStk('已归档', archivedItems().length, M.archived, true) +
     TAGS.map((t) => mkStk(t.label, tagCount(t.label), !M.archived && M.tag === t.label, false, t.emoji)).join('') +
     `<button class="bz-fav-stk bz-fav-stk--add" data-fav-add title="添加收藏"><span class="bz-fav-stk-plus">＋</span><span class="bz-fav-stk-name">新收藏</span></button>`;
-  // 主头行语义融进头区：副题 = 筛选名 · 计数（标题=筛选名范式，issue 208）
-  const titleEl = overlay.querySelector('[data-fav-title]') as HTMLElement;
-  if (M.archived) titleEl.textContent = '已归档';
-  else if (M.tag) titleEl.innerHTML = `${tagEmoji(M.tag)} ${esc(M.tag)}`;
-  else titleEl.textContent = '全部';
-}
-
-function renderCount(): void {
-  const overlay = M.overlay;
-  if (!overlay) return;
-  const n = filtered().length;
-  const el = overlay.querySelector('[data-fav-count]') as HTMLElement | null;
-  if (el) el.textContent = M.archived ? `${n} 张已归档` : `${n} 张白卡`;
 }
 
 function renderContent(): void {
@@ -650,7 +632,7 @@ function openRowMenuAt(row: HTMLElement, it: FavoritesItem, x: number, y: number
     const it2 = itemById(it.id);
     if (it2) refreshItemSheet(buildActions(it2, rebuild), sheetHeadOf(it2));
   };
-  openItemMenu(x, y, buildActions(it, rebuild), true);
+  openItemMenu(x, y, buildActions(it, rebuild), true, 'bz-fav-menu'); // issue 219d 菜单随面板亚麻化
   // 复位残余 click 抑制（issue 198 同款 P1）：右键时序会置位 armed 吞下一次左键；右键无补发 click，直接复位
   resetItemMenuClickGuard();
 }
