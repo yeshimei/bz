@@ -302,6 +302,7 @@ export function generalSettingsSchema(): SettingsSchema {
             mode: 'single',
             name: '数据存储路径',
             desc: '全部 JSON 数据文件统一存放的目录',
+            note: '改动仅改路径不迁移旧数据；重载插件后生效',
             binding: { key: 'storagePath' },
             onCommit: () => {
               notice(STORAGE_PATH_COMMIT_NOTICE, 'warning');

@@ -52,6 +52,7 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
       type: 'button',
       name: '数据体检',
       buttonText: '打开体检',
+      cta: true,
       desc: '检查各域数据文件能否解析、字段漂移与孤儿条目（只读体检，可修复项一键清理）',
       onClick: () => void openDataCheckup(getApp()),
     });
