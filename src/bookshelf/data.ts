@@ -41,6 +41,24 @@ function parseStatus(readingDate: string | null, completionDate: string | null):
   return '未读';
 }
 
+/** md 书阅读时长毫秒（issue 226 修书脊全同高）：frontmatter `readingTime`（毫秒数）直读；
+ *  缺了再解析 `readingTimeFormat`——中文「N小时M分/N分」或 weave 英文「NhMmSs」双格式 */
+function parseReadingTimeMs(fm: Record<string, unknown> | undefined | null): number {
+  const raw = Number(fm?.readingTime);
+  if (Number.isFinite(raw) && raw > 0) return Math.round(raw);
+  const fmt = String(fm?.readingTimeFormat ?? '').trim();
+  if (!fmt) return 0;
+  let ms = 0;
+  for (const m of fmt.matchAll(/(\d+(?:\.\d+)?)\s*(小时|h|分|min|m|秒|s)/gi)) {
+    const v = parseFloat(m[1]);
+    const unit = m[2].toLowerCase();
+    if (unit === '小时' || unit === 'h') ms += v * 3600000;
+    else if (unit === '分' || unit === 'min' || unit === 'm') ms += v * 60000;
+    else ms += v * 1000;
+  }
+  return Math.round(ms);
+}
+
 /** md 书目解析（同步；metadataCache frontmatter） */
 export function parseBookFile(file: TFile, app: App, folderPath: string, bookTag: string): BookshelfItem | null {
   const metadata = app.metadataCache.getFileCache(file);
@@ -77,7 +95,7 @@ export function parseBookFile(file: TFile, app: App, folderPath: string, bookTag
     completionDate,
     progress: progress > 100 ? 100 : progress,
     readingTimeFormat,
-    readingTimeMs: 0,
+    readingTimeMs: parseReadingTimeMs(fm),
     highlights,
     thinks,
     // 书脊厚度量（issue 218）：字数（缺省 0，UI 层回退批注密度）
