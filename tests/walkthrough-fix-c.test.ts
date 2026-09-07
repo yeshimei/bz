@@ -130,7 +130,7 @@ describe('批 C-6：todo 头行类名拆雷', () => {
 describe('批 C-7：移动端主头行添加钮触控抬档', () => {
   it('cinema 主头行添加钮 = 域内 .d-head .add（ADR-0103 风格化：共享 .bz-btn--md 条款随骨架退役）', () => {
     const css = cineCss();
-    const ui = repo('src/cinema/ui.ts');
+    const ui = repo('src/cinema/layouts/midnight/render.ts'); // ADR-0104 markup 单源：d-head 添加钮在午夜场布局层
     expect(ui).toMatch(/class="add j-add"/); // 原型 d-head 添加钮（逐字同构）
     expect(css).toMatch(/\.bz-cinema--midnight \.d-head \.add\s*\{/); // 域内样式承载
   });
@@ -139,7 +139,7 @@ describe('批 C-7：移动端主头行添加钮触控抬档', () => {
 describe('批 C-8：cinema 触控热区收编 .bz-touch-target', () => {
   it('域内 pointer:coarse ::after 外扩块撤除；风格化后不再挂共享 .bz-touch-target（ADR-0103 域内自绘）', () => {
     expect(cineCss()).not.toMatch(/@media \(pointer: coarse\)/);
-    const ui = repo('src/cinema/ui.ts');
+    const ui = repo('src/cinema/layouts/midnight/render.ts'); // ADR-0104 markup 单源：m-head 工具钮在午夜场布局层
     expect(ui).toContain('m-tool j-mgear'); // 原型 m-head 工具钮（逐字同构）
     expect(ui).not.toMatch(/bz-touch-target/);
   });
@@ -153,7 +153,7 @@ describe('批 C-9：分析页排印归档', () => {
   });
 
   it('cinema 旧骨架间距条款退役（ADR-0103：原型 1:1 允许原型同款内联样式，共享弹窗仍走域内类）', () => {
-    const ui = repo('src/cinema/ui.ts');
+    const ui = repo('src/cinema/shared.ts'); // ADR-0104 markup 单源：共享确认框在纯层 shared
     const css = cineCss();
     expect(ui).toContain('cn-modal cn-confirm'); // 确认框域内类在位
     expect(css).toMatch(/\.bz-cinema--midnight \.cn-confirm/); // 共享弹窗样式 scoped 午夜场锚
