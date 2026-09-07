@@ -8,6 +8,10 @@
  * 头行仅「收藏本」16px（无副题）；卡片无 host/图钉/笔记徽记/余额。空态照原型文案。
  * 主题跟随 Obsidian 亮暗（.theme-dark 变量组），不照搬原型手动切换钮。
  *
+ * markup 单源（issue 242/ADR-0104/0105）：面板/磁贴/卡片/菜单/抽屉/表单的 innerHTML 全部
+ * 出自 ./render（shared.ts + layouts/board/render.ts）——本文件只留行为绑定与 core 服务；
+ * renderTagsInto 为纯层磁贴渲染唯一出口（原 renderTags/renderTagsInto 命名债随迁移统一）。
+ *
  * 退役（ADR-0101 用户拍板）：大模型/余额整功能（表单区块/刷新余额/余额徽记/BalanceService/
  *   自动查询链）；关联笔记整功能（表单字段/跳转笔记/卡片徽记 + file-sync.ts 整链）；
  *   favoritesTimeFormat 键（固定相对时间：刚刚/N 分钟前/N 小时前/N 天前，超 7 天回落 M-D）。
@@ -24,32 +28,22 @@ import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { mobileFullscreenGroup } from '../core/settings-common';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
-import { escapeHtml } from '../core/utils';
 import { getApp } from '../core/app';
 import { mountIcons } from '../core/ui';
 import { emitDomainEvent } from '../core/domain-bus';
 import { favoritesEditChanges } from '../smartcat/favorites-source';
 import type { SettingsSchema } from '../core/settings-schema';
 import { TAGS, normalizeUrl, isUrlLike } from './config';
+import {
+  actionSpecs, ctxMenuHtml, sheetHtml, formHtml, pickChipsHtml,
+  panelHtml, renderPanelView, localNow,
+  type FavActionSpec,
+  type FavoritesItem,
+} from './render';
 import { FavoritesAIService } from './ai';
 import type { DataManager } from './data';
-import type { FavoritesItem } from './types';
 
-/** lucide 图标名 */
-const ICON = {
-  close: 'x',
-  add: 'plus',
-  open: 'external-link',
-  pin: 'pin',
-  pinOff: 'pin-off',
-  edit: 'pencil',
-  archive: 'archive',
-  unarchive: 'archive-restore',
-  del: 'trash-2',
-  ai: 'sparkles',
-};
-
-/** 域级模块状态（模块单例；卸载/测试重置） */
+/** 域级模块状态（模块单例；卸载/测试重置）。tag/archived 切片与纯层 FavView 结构兼容 */
 interface FavState {
   overlay: HTMLElement | null;
   items: FavoritesItem[];
@@ -85,97 +79,6 @@ export function favoritesSettingsSchema(): SettingsSchema {
       mobileFullscreenGroup('favoritesMobileDefaultFullscreen', { desc: '' }),
     ],
   };
-}
-
-// ==================== 小工具 ====================
-
-function esc(s: unknown): string {
-  return escapeHtml(String(s ?? ''));
-}
-
-/** lucide 占位 HTML（渲染后 core mountIcons 统一 setIcon） */
-function iconSpan(name: string, extra = ''): string {
-  return `<i data-lucide="${name}" class="bz-ic${extra ? ' ' + extra : ''}"></i>`;
-}
-
-/** 本地时间 YYYY-MM-DD HH:mm:ss（created/archivedAt 写入格式） */
-function localNow(): string {
-  const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-}
-
-/** 相对时间（原型 1:1：刚刚/N 分钟前/N 小时前/N 天前，超 7 天回落 M-D 短日期） */
-function relTime(s: string | undefined): string {
-  if (!s) return '';
-  const d = new Date(s.replace(' ', 'T'));
-  if (isNaN(d.getTime())) return s;
-  const diff = Date.now() - d.getTime();
-  const m = 60000, h = 3600000, day = 86400000;
-  if (diff < m) return '刚刚';
-  if (diff < h) return Math.floor(diff / m) + ' 分钟前';
-  if (diff < day) return Math.floor(diff / h) + ' 小时前';
-  if (diff < 7 * day) return Math.floor(diff / day) + ' 天前';
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getMonth() + 1}-${p(d.getDate())}`;
-}
-
-// ==================== 派生 ====================
-
-/** 可见条目 = 非归档（ADR-0074 冷存不可见，装载点唯一过滤） */
-function visible(): FavoritesItem[] {
-  return M.items.filter((i) => !i.archived);
-}
-
-/** 已归档条目（「已归档」视图数据源；数据仍在 favorites.json） */
-function archivedItems(): FavoritesItem[] {
-  return M.items.filter((i) => !!i.archived);
-}
-
-/** 当前视图条目池：默认非归档；已归档视图仅归档条目 */
-function pool(): FavoritesItem[] {
-  return M.archived ? archivedItems() : visible();
-}
-
-function filtered(): FavoritesItem[] {
-  let list = pool();
-  if (!M.archived && M.tag) list = list.filter((i) => (i.tags || []).includes(M.tag as string));
-  // 固定「最新收藏」排序；置顶恒最前：稳定分区
-  const byTime = (a: FavoritesItem, b: FavoritesItem) =>
-    (b.created || '').localeCompare(a.created || '') || (b.id || '').localeCompare(a.id || '');
-  const base = [...list].sort(byTime);
-  const pinned = base.filter((i) => i.pinned);
-  const rest = base.filter((i) => !i.pinned);
-  return [...pinned, ...rest];
-}
-
-function tagCount(label: string): number {
-  return visible().filter((i) => (i.tags || []).includes(label)).length;
-}
-
-function itemById(id: string): FavoritesItem | undefined {
-  return M.items.find((i) => i.id === id);
-}
-
-/** 首标签 → 磁圆点/徽记色相（原型 hueOf 逐字；9 固定标签各占一档，未知标签兜底蓝） */
-function hueOf(label: string): number {
-  const m: Record<string, number> = {
-    GitHub: 215, 桌面软件: 160, 网站: 30, 大模型: 265, pi: 100, Claude: 20, skills: 50, 酒馆: 330, 'DeepSeek Harness': 195,
-  };
-  return m[label] != null ? m[label] : 200;
-}
-
-// ==================== 主面板结构 ====================
-
-function panelHtml(): string {
-  // 原型 1:1：头行「收藏本」14px（无副题；移动端关闭钮同 head 行右端）→ 磁贴行 → 卡墙。
-  // 桌面固定 900×620、点遮罩/Esc 关闭；移动全屏 + head 行 ✕ 退出。
-  const mob = isMobileEnv() ? ' bz-fav-mob bz-panel-mtop' : '';
-  return `<div class="bz-fav-panel bz-fav-scope${mob}">
-  <div class="bz-fav-head"><h1>收藏本</h1><button class="bz-fav-mob-close bz-touch-target bz-touch-target--xl" data-fav-close title="关闭">${iconSpan(ICON.close, 'bz-ic--xs')}</button></div>
-  <div class="bz-fav-tags" data-fav-tags></div>
-  <div class="bz-fav-board" data-fav-content></div>
-</div>`;
 }
 
 // ==================== 主面板生命周期 ====================
@@ -222,7 +125,7 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
   }
   const overlay = document.createElement('div');
   overlay.className = 'bz-panel-overlay';
-  overlay.innerHTML = panelHtml();
+  overlay.innerHTML = panelHtml(isMobileEnv());
   document.body.appendChild(overlay);
   topifyZ(overlay); // ADR-0067：显示即发号
   M.overlay = overlay;
@@ -310,13 +213,12 @@ async function reload(): Promise<void> {
   M.renderFn?.();
 }
 
-// ==================== 渲染 ====================
+// ==================== 渲染（markup 全在 ./render；此处只接纯层胶水） ====================
 
 function renderAll(): void {
   if (!M.overlay) return;
-  renderTags();
-  renderContent();
-  mountIcons(M.overlay.querySelector('[data-fav-tags]') as HTMLElement);
+  const panel = M.overlay.querySelector('.bz-fav-panel') as HTMLElement;
+  renderPanelView(panel, M.items, M, { mountIcons, mobile: isMobileEnv() });
 }
 
 /** 标签筛选切换语义（磁贴行委托共用）：再点当前标签 = 取消筛选回全部；点「已归档」= 归档视图 */
@@ -327,142 +229,57 @@ function applyTagFilter(label: string): void {
   renderAll();
 }
 
-/** 磁贴标签行渲染（「图标 名 数字」白底磁贴；无计数标签不显示；
- *  「新收藏」chip = lucide plus 虚线磁贴、无磁点；移动端平铺单行时置首，桌面仍居行尾） */
-function renderTags(): void {
-  const overlay = M.overlay!;
-  const stickers = overlay.querySelector('[data-fav-tags]') as HTMLElement;
-  const mk = (label: string, ic: string, cnt: number, active: boolean, grey = false) =>
-    `<button class="bz-fav-chip${active ? ' bz-fav-on' : ''}${grey ? ' bz-fav-chip--grey' : ''}" data-fav-tag="${esc(label)}">${ic ? iconSpan(ic, 'bz-ic--xs') : ''}<span>${esc(label)} ${cnt}</span></button>`;
-  const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${iconSpan(ICON.add, 'bz-ic--xs')}<span>新收藏</span></button>`;
-  const chips =
-    mk('全部', '', visible().length, !M.archived && M.tag === null) +
-    mk('已归档', 'archive', archivedItems().length, M.archived, true) +
-    TAGS.map((t) => {
-      const n = tagCount(t.label);
-      return n ? mk(t.label, t.ic, n, !M.archived && M.tag === t.label) : '';
-    }).join('');
-  stickers.innerHTML = isMobileEnv() ? add + chips : chips + add;
-}
-
-function renderContent(): void {
-  const overlay = M.overlay;
-  if (!overlay) return;
-  const content = overlay.querySelector('[data-fav-content]') as HTMLElement;
-  const list = filtered();
-  if (!list.length) {
-    content.innerHTML = '<div class="bz-fav-empty">这块板上还没有卡片</div>';
-    return;
-  }
-  content.innerHTML = list.map((it) => cardHtml(it)).join('');
-  mountIcons(content);
-}
-
-function cardHtml(it: FavoritesItem): string {
-  const pinnedCls = it.pinned ? ' bz-fav-pinc' : '';
-  // 已归档视图卡：褪色冷存（仅归档视图可见，主列表本就过滤）
-  const archCls = it.archived ? ' bz-fav-arch' : '';
-  const i = M.items.indexOf(it);
-  const hue = hueOf((it.tags || [])[0] || '');
-  // 胶带三色轮换：基础类恒在（承载 absolute 定位/尺寸），变体类只换色与角度
-  const tape = 'bz-fav-tape' + (i % 3 ? [' bz-fav-tape--r', ' bz-fav-tape--g'][i % 3 - 1] : '');
-  return `<div class="bz-fav-card${pinnedCls}${archCls}" data-fav-id="${esc(it.id)}">
-    <span class="${tape}"></span>
-    <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>
-    <h3>${esc(it.title || '无标题')}</h3>
-    <p>${esc(it.description || '（这张卡只写了个名字）')}</p>
-    <div class="bz-fav-ft"><span class="bz-fav-tags-row">${(it.tags || []).map((t) => {
-      const h = hueOf(t);
-      const ic = (TAGS.find((x) => x.label === t) || { ic: '' }).ic;
-      return `<span class="bz-fav-tagb" style="background:hsl(${h} 70% 95%);color:hsl(${h} 45% 42%)">${ic ? iconSpan(ic, 'bz-ic--xs') : ''}<span>${esc(t)}</span></span>`;
-    }).join('')}</span>
-      <span>${esc(relTime(it.created))}</span></div>
-  </div>`;
+function itemById(id: string): FavoritesItem | undefined {
+  return M.items.find((i) => i.id === id);
 }
 
 // ==================== 行操作（桌面菜单 / 移动抽屉共用） ====================
 
-/** 构建行操作集（动作序：打开→置顶→编辑→归档⇄取消归档→删除；ADR-0101 跳转笔记/刷新余额退役） */
-interface FavAction {
-  icon: string;
-  label: string;
-  danger?: boolean;
-  run: () => void;
-}
-
-function buildActions(it: FavoritesItem): FavAction[] {
-  const acts: FavAction[] = [];
+/** 动作元语 → 行为（动作序与归档/删除确认文案契约逐字保留；ADR-0101 跳转笔记/刷新余额退役） */
+function runAction(it: FavoritesItem, spec: FavActionSpec): void {
   const rawUrl = (it.url || '').trim();
-  if (rawUrl) {
-    acts.push({ icon: ICON.open, label: '打开', run: () => openExternal(normalizeUrl(rawUrl)) });
-  }
-  acts.push({
-    icon: it.pinned ? ICON.pinOff : ICON.pin,
-    label: it.pinned ? '取消置顶' : '置顶',
-    run: () => {
-      const next = !it.pinned;
-      const prev = it.pinned;
-      it.pinned = next;
-      void dataManagerOf().update(it.id, { pinned: next })
-        .catch((e) => {
-          it.pinned = prev;
-          notifySaveError(e, '置顶收藏');
-        })
-        .finally(() => {
-          void reload();
-        });
-    },
-  });
-  acts.push({
-    icon: ICON.edit,
-    label: '编辑',
-    run: () => {
-      openForm(it);
-    },
-  });
-  // 归档/取消归档（已归档条目动作翻转——冷存找回入口；ADR-0074 数据仍在 favorites.json）
-  acts.push(it.archived
-    ? {
-      icon: ICON.unarchive,
-      label: '取消归档',
-      run: () => {
-        void unarchiveItem(it);
-      },
-    }
-    : {
-      icon: ICON.archive,
-      label: '归档',
-      run: () => {
-        void openFlowDialog({
-          title: '归档收藏',
-          message: `确定归档收藏「${it.title}」吗？归档后不在主列表显示（数据保留），可在通知中撤销。`,
-          actions: [
-            { label: '取消', value: 'cancel' },
-            { label: '归档', value: 'ok', cta: true },
-          ],
-        }).then((v) => {
-          if (v === 'ok') void archiveItem(it);
-        });
-      },
-    });
-  acts.push({
-    icon: ICON.del,
-    label: '删除',
-    danger: true,
-    run: () => {
-      void openFlowDialog({
-        title: '删除收藏',
-        message: `确定删除收藏「${it.title}」吗？删除后可在通知中撤销。`,
-        actions: [
-          { label: '取消', value: 'cancel' },
-          { label: '删除', value: 'del', danger: true, cta: true },
-        ],
-      }).then((v) => {
-        if (v === 'del') void deleteItem(it);
+  if (spec.act === 'open') {
+    openExternal(normalizeUrl(rawUrl));
+  } else if (spec.act === 'pin') {
+    const next = !it.pinned;
+    const prev = it.pinned;
+    it.pinned = next;
+    void dataManagerOf().update(it.id, { pinned: next })
+      .catch((e) => {
+        it.pinned = prev;
+        notifySaveError(e, '置顶收藏');
+      })
+      .finally(() => {
+        void reload();
       });
-    },
-  });
-  return acts;
+  } else if (spec.act === 'edit') {
+    openForm(it);
+  } else if (spec.act === 'archive') {
+    // 归档（ADR-0074 数据仍在 favorites.json）
+    void openFlowDialog({
+      title: '归档收藏',
+      message: `确定归档收藏「${it.title}」吗？归档后不在主列表显示（数据保留），可在通知中撤销。`,
+      actions: [
+        { label: '取消', value: 'cancel' },
+        { label: '归档', value: 'ok', cta: true },
+      ],
+    }).then((v) => {
+      if (v === 'ok') void archiveItem(it);
+    });
+  } else if (spec.act === 'unarchive') {
+    void unarchiveItem(it);
+  } else if (spec.act === 'del') {
+    void openFlowDialog({
+      title: '删除收藏',
+      message: `确定删除收藏「${it.title}」吗？删除后可在通知中撤销。`,
+      actions: [
+        { label: '取消', value: 'cancel' },
+        { label: '删除', value: 'del', danger: true, cta: true },
+      ],
+    }).then((v) => {
+      if (v === 'del') void deleteItem(it);
+    });
+  }
 }
 
 /** 桌面：右键 → linen 浮层菜单（原型 1:1；删除红字置底，分隔线隔开） */
@@ -482,18 +299,14 @@ function closeMenu(): boolean {
 
 function openRowMenuAt(it: FavoritesItem, x: number, y: number): void {
   closeMenu();
-  const acts = buildActions(it);
+  const acts = actionSpecs(it);
   menuEl = document.createElement('div');
   menuEl.className = 'bz-fav-ctx bz-fav-scope';
-  menuEl.innerHTML = acts.map((a, k) => {
-    const last = k === acts.length - 1;
-    const btn = `<button data-k="${k}"${a.danger ? ' class="bz-fav-danger"' : ''}>${iconSpan(a.icon, 'bz-ic--sm')}<span>${esc(a.label)}</span></button>`;
-    return last ? `<div class="bz-fav-ctx-sep"></div>${btn}` : btn;
-  }).join('');
+  menuEl.innerHTML = ctxMenuHtml(acts);
   menuEl.addEventListener('click', (e) => {
     const b = (e.target as HTMLElement).closest('button'); if (!b) return;
     closeMenu();
-    acts[+(b as HTMLElement).dataset.k!].run();
+    runAction(it, acts[+(b as HTMLElement).dataset.k!]);
   });
   document.body.appendChild(menuEl);
   mountIcons(menuEl);
@@ -509,26 +322,19 @@ function openRowMenuAt(it: FavoritesItem, x: number, y: number): void {
   document.addEventListener('click', menuOutsideHandler, true);
 }
 
-/** 移动：底部详情抽屉（原型 1:1：磁点 + 标题 + meta + 动作列） */
+/** 移动：底部详情抽屉（原型 1:1：磁点 + 标题 + meta + 动作列；markup 在 shared.sheetHtml） */
 function openMobSheet(it: FavoritesItem): void {
   closeSheet();
-  const hue = hueOf((it.tags || [])[0] || '');
-  const acts = buildActions(it);
+  const acts = actionSpecs(it);
   const mask = document.createElement('div');
   mask.className = 'bz-fav-sheet-mask bz-fav-scope bz-fav-show';
-  mask.innerHTML = `<div class="bz-fav-sheet">
-    <div class="bz-fav-sh-head"><span class="bz-fav-sh-dot" style="--c:hsl(${hue} 52% 58%)"></span>
-      <div><div class="bz-fav-sh-title">${esc(it.title || '无标题')}</div>
-      <div class="bz-fav-sh-meta">${esc(relTime(it.created))}${it.pinned ? ' · 已置顶' : ''}${it.archived ? ' · 已归档' : ''}</div></div></div>
-    <div class="bz-fav-sh-acts">${acts.map((a, k) =>
-      `<button data-k="${k}"${a.danger ? ' class="bz-fav-danger"' : ''}>${iconSpan(a.icon)}<span>${esc(a.label)}</span></button>`).join('')}</div>
-  </div>`;
+  mask.innerHTML = `<div class="bz-fav-sheet">${sheetHtml(it, acts)}</div>`;
   mask.addEventListener('click', (e) => {
     if (e.target === mask) { closeSheet(); return; }
     const b = (e.target as HTMLElement).closest('button');
     if (!b) return;
     closeSheet();
-    acts[+(b as HTMLElement).dataset.k!].run();
+    runAction(it, acts[+(b as HTMLElement).dataset.k!]);
   });
   document.body.appendChild(mask);
   mountIcons(mask);
@@ -620,7 +426,7 @@ function openExternal(url: string): void {
   }
 }
 
-// ==================== 添加 / 编辑 表单（原型 1:1） ====================
+// ==================== 添加 / 编辑 表单（markup 在 shared.formHtml） ====================
 
 interface FormBaseline {
   title: string;
@@ -678,20 +484,7 @@ export function openForm(item: FavoritesItem | null): void {
   const editing = !!it;
   const mask = document.createElement('div');
   mask.className = 'bz-fav-form-mask bz-fav-scope';
-  mask.innerHTML = `<div class="bz-fav-form">
-    <h2>${editing ? '编辑收藏' : '添加收藏'}</h2>
-    <div class="bz-fav-fld"><label>标题</label><input id="fz-title" value="${esc(it ? it.title : '')}" placeholder="如：某篇好文"></div>
-    <div class="bz-fav-fld"><label>链接</label><input id="fz-url" value="${esc(it ? it.url : '')}" placeholder="https://…"></div>
-    <div class="bz-fav-fld"><label>简介</label><textarea id="fz-desc" placeholder="一句话记住它…">${esc(it ? it.description || '' : '')}</textarea></div>
-    <div class="bz-fav-fld"><label>标签（可多选）</label><div class="bz-fav-pick" id="fz-tags"></div></div>
-    <div class="bz-fav-fld bz-fav-inline"><span class="bz-fav-sw${it && it.pinned ? ' bz-fav-on' : ''}" id="fz-pin"></span><span class="bz-fav-fld-desc">置顶后恒排最前</span></div>
-    <div class="bz-fav-err" id="fz-err"></div>
-    <div class="bz-fav-btns">
-      <button type="button" id="fz-ai" class="bz-fav-ai-btn">${iconSpan(ICON.ai, 'bz-ic--xs')} <span>AI 整理</span></button>
-      <button type="button" data-fz-cancel>取消</button>
-      <button type="button" id="fz-save" class="bz-fav-pri">${editing ? '更新' : '保存'}</button>
-    </div>
-  </div>`;
+  mask.innerHTML = formHtml(it);
   document.body.appendChild(mask);
   topifyZ(mask); // ADR-0067：显示即发号，恒压主面板
   mountIcons(mask);
@@ -717,13 +510,11 @@ export function openForm(item: FavoritesItem | null): void {
     setTimeout(() => titleInp.focus(), 0);
   });
 
-  // 标签多选 chips（原型 .pick 逐字）
+  // 标签多选 chips（markup 在 shared.pickChipsHtml；选中态切换在此绑定）
   const pick = popup.querySelector('#fz-tags') as HTMLElement;
   const sel = new Set<string>(it?.tags || []);
   const drawPick = () => {
-    pick.innerHTML = TAGS.map((t) =>
-      `<button type="button" class="${sel.has(t.label) ? 'bz-fav-on' : ''}" data-tag="${esc(t.label)}">${iconSpan(t.ic, 'bz-ic--xs')}<span>${esc(t.label)}</span></button>`
-    ).join('');
+    pick.innerHTML = pickChipsHtml(sel);
     pick.querySelectorAll('[data-tag]').forEach((b) => b.addEventListener('click', () => {
       const label = (b as HTMLElement).dataset.tag as string;
       if (sel.has(label)) sel.delete(label);

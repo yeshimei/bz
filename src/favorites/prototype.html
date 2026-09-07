@@ -10,6 +10,10 @@
   │ 同一份源文件）。改样式只改 styles.css，刷新本页即见，插件构建自动    │
   │ 带走——不存在二次同步。                                              │
   │ 本文件只允许写：演示壳（页面底/手机框/评审徽牌）与演示逻辑（JS）。   │
+  │ markup/口径单源（issue 242/ADR-0104）：面板/磁贴/卡片/菜单/抽屉/表单  │
+  │ 全部出自 ./prototype-render.js（由 src/favorites/render.ts 构建，     │
+  │ 挂 window.BZR_favorites，与插件 ui.ts 消费同一份）。重新生成：        │
+  │ node scripts/build-preview.mjs。                                     │
   └────────────────────────────────────────────────────────────────────┘
 -->
 <!-- core 链与 build-css.mjs SOURCES 同序（参照 belongings 原型）：评审壳内复现
@@ -47,27 +51,37 @@
 </head>
 <body>
   <button class="theme-toggle" id="themeBtn" title="亮/暗切换"></button>
-
-  <div class="bz-fav-panel bz-fav-scope demo-dt" id="dtPanel">
-    <div class="bz-fav-head"><h1>收藏本</h1></div>
-    <div class="bz-fav-tags" id="dtTags"></div>
-    <div class="bz-fav-board" id="dtBoard"></div>
-  </div>
-
-  <div class="bz-fav-panel bz-fav-scope bz-fav-mob demo-mob" id="mobPanel">
-    <div class="bz-fav-head"><h1>收藏本</h1><button class="bz-fav-mob-close" data-fav-close title="关闭" id="mobClose"></button></div>
-    <div class="bz-fav-tags" id="mobTags"></div>
-    <div class="bz-fav-board" id="mobBoard"></div>
-    <div class="bz-fav-sheet-mask" id="sheetMask"><div class="bz-fav-sheet" id="sheet"></div></div>
-  </div>
+  <div id="dtHost" class="demo-dt"></div>
+  <div id="mobHost" class="demo-mob"></div>
 
   <div class="vbadge">收藏本 · 原型预览（共用 styles.css）· 真实 51 条 <button id="reset">重置演示数据</button></div>
 
 <script src="./prototype-icons.js"></script>
 <script src="./prototype-data.js"></script>
+<script src="./prototype-render.js"></script>
 <script>
 (function () {
-  const { TAGS, esc, icon, hueOf } = FAV;
+  /* ==================== 渲染单源：window.BZR_favorites（构建产物，勿手改） ====================
+   * markup / 计算口径 / 行操作序列全部来自 src/favorites/render.ts（issue 242/ADR-0104/0105），
+   * 与插件 ui.ts 消费同一份；本壳只留演示层（localStorage 假数据/自绘 toast/确认框/mountIcons）。 */
+  const R = window.BZR_favorites;
+  const esc = R.esc;
+  const icon = R.iconSpan;
+  const localNow = R.localNow;
+
+  /* ==================== 壳基座：mountIcons（prototype-icons.js 内联 SVG——壳层差异表） ==================== */
+  const ICONS = window.FAV_ICONS || {};
+  function mountIcons(root) {
+    if (!root) return;
+    root.querySelectorAll('i[data-lucide]').forEach((el) => {
+      const d = ICONS[el.dataset.lucide];
+      if (d && !el.firstChild) {
+        el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+      }
+    });
+  }
+
+  /* ==================== 演示数据（壳层差异表：localStorage 假数据 + 真实库快照） ==================== */
   const LS = 'bz-fav-c5-shared-v1';
   const LS_THEME = 'bz-fav-c5-theme';
   let items;
@@ -75,159 +89,113 @@
     const saved = JSON.parse(localStorage.getItem(LS) || 'null');
     items = Array.isArray(saved) && saved.length ? saved : FAV.ITEMS.map((x) => ({ ...x }));
   } catch (e) { items = FAV.ITEMS.map((x) => ({ ...x })); }
-  const M = { archived: false, tag: null };
-
+  /* 视图状态（与 render.FavView / ui.ts FavState 切片同构） */
+  const M = { tag: null, archived: false };
   const byId = (id) => items.find((i) => i.id === id);
   const save = () => { try { localStorage.setItem(LS, JSON.stringify(items)); } catch (e) { } };
-  const localNow = () => {
-    const d = new Date(), p = (n) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-  };
-  const relTime = (s) => {
-    if (!s) return '';
-    const d = new Date(s.replace(' ', 'T'));
-    if (isNaN(d)) return s;
-    const diff = Date.now() - d.getTime(), m = 60000, h = 3600000, day = 86400000;
-    if (diff < m) return '刚刚';
-    if (diff < h) return Math.floor(diff / m) + ' 分钟前';
-    if (diff < day) return Math.floor(diff / h) + ' 小时前';
-    if (diff < 7 * day) return Math.floor(diff / day) + ' 天前';
-    const p = (n) => String(n).padStart(2, '0');
-    return `${d.getMonth() + 1}-${p(d.getDate())}`;
-  };
-  const curList = () => items.filter((i) =>
-    !M.archived && M.tag === null ? !i.archived : M.archived ? !!i.archived : !i.archived && (i.tags || []).includes(M.tag));
 
-  /* ==================== 标签磁贴行（与 ui.ts renderTags 同构） ==================== */
-  function renderTagsInto(mount, mobile) {
-    const mk = (label, ic, cnt, active, grey) =>
-      `<button class="bz-fav-chip${active ? ' bz-fav-on' : ''}${grey ? ' bz-fav-chip--grey' : ''}" data-fav-tag="${esc(label)}">${ic ? icon(ic, 12) : ''}<span>${esc(label)} ${cnt}</span></button>`;
-    const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${icon('plus', 12)}<span>新收藏</span></button>`;
-    const chips =
-      mk('全部', '', items.filter((i) => !i.archived).length, !M.archived && M.tag === null) +
-      mk('已归档', 'archive', items.filter((i) => i.archived).length, M.archived, true) +
-      TAGS.map((t) => {
-        const n = items.filter((i) => !i.archived && (i.tags || []).includes(t.label)).length;
-        return n ? mk(t.label, t.ic, n, !M.archived && M.tag === t.label) : '';
-      }).join('');
-    mount.innerHTML = mobile ? add + chips : chips + add;
+  /* ==================== 面板骨架（markup 单源 R.panelHtml；桌面 + 手机框各一份） ==================== */
+  const dtHost = document.getElementById('dtHost');
+  const mobHost = document.getElementById('mobHost');
+  dtHost.innerHTML = R.panelHtml(false);
+  mobHost.innerHTML = R.panelHtml(true);
+  const dtPanel = dtHost.querySelector('.bz-fav-panel');
+  const mobPanel = mobHost.querySelector('.bz-fav-panel');
+
+  /* 抽屉遮罩：插件挂 body（fixed 全屏），评审壳收进手机框（演示层差异） */
+  const sheetMask = document.createElement('div');
+  sheetMask.className = 'bz-fav-sheet-mask bz-fav-scope';
+  const sheet = document.createElement('div');
+  sheet.className = 'bz-fav-sheet';
+  sheetMask.appendChild(sheet);
+  mobHost.appendChild(sheetMask);
+
+  /* ==================== 渲染（纯层胶水 R.renderPanelView；磁贴单行横滑/新收藏置首随 mobile 钩子） ==================== */
+  function renderPanel(panel, mobile) {
+    R.renderPanelView(panel, items, M, { mountIcons, mobile });
   }
-
-  /* ==================== 卡片（与 ui.ts cardHtml 同构） ==================== */
-  function cardHtml(it) {
-    const i = items.indexOf(it);
-    const hue = hueOf((it.tags || [])[0] || '');
-    const tape = 'bz-fav-tape' + (i % 3 ? [' bz-fav-tape--r', ' bz-fav-tape--g'][i % 3 - 1] : '');
-    return `<div class="bz-fav-card${it.pinned ? ' bz-fav-pinc' : ''}${it.archived ? ' bz-fav-arch' : ''}" data-fav-id="${esc(it.id)}">
-      <span class="${tape}"></span>
-      <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>
-      <h3>${esc(it.title || '无标题')}</h3>
-      <p>${esc(it.description || '（这张卡只写了个名字）')}</p>
-      <div class="bz-fav-ft"><span class="bz-fav-tags-row">${(it.tags || []).map((t) => {
-        const h = hueOf(t);
-        const ic = (TAGS.find((x) => x.label === t) || { ic: '' }).ic;
-        return `<span class="bz-fav-tagb" style="background:hsl(${h} 70% 95%);color:hsl(${h} 45% 42%)">${ic ? icon(ic, 11) : ''}<span>${esc(t)}</span></span>`;
-      }).join('')}</span>
-        <span>${esc(relTime(it.created))}</span></div>
-    </div>`;
-  }
-  const sorted = (list) => list.slice().sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || (b.created || '').localeCompare(a.created || ''));
-
   function renderAll() {
-    renderTagsInto(document.getElementById('dtTags'), false);
-    renderTagsInto(document.getElementById('mobTags'), true);
-    const list = sorted(curList());
-    const html = list.length ? list.map(cardHtml).join('') : '<div class="bz-fav-empty">这块板上还没有卡片</div>';
-    document.getElementById('dtBoard').innerHTML = html;
-    document.getElementById('mobBoard').innerHTML = html;
+    renderPanel(dtPanel, false);
+    renderPanel(mobPanel, true);
   }
 
-  /* ==================== 行操作集（与 ui.ts buildActions 同构） ==================== */
-  function buildActs(it) {
-    const acts = [];
-    if ((it.url || '').trim()) acts.push({ ic: 'external-link', label: '打开', run: () => window.open(it.url, '_blank') });
-    acts.push({ ic: it.pinned ? 'pin-off' : 'pin', label: it.pinned ? '取消置顶' : '置顶', run: () => { it.pinned = !it.pinned; save(); renderAll(); } });
-    acts.push({ ic: 'pencil', label: '编辑', run: () => openForm(it) });
-    acts.push(it.archived
-      ? { ic: 'archive-restore', label: '取消归档', run: () => { it.archived = false; it.archivedAt = null; save(); renderAll(); toast(`已取消归档，「${it.title}」回到主列表`); } }
-      : { ic: 'archive', label: '归档', run: () => confirmDlg('归档收藏', `确定归档收藏「${it.title}」吗？归档后不在主列表显示（数据保留），可在通知中撤销。`, '归档', () => {
-          it.archived = true; it.archivedAt = localNow(); save(); renderAll();
-          toast(`已归档收藏「${it.title}」`, '撤销', () => { it.archived = false; it.archivedAt = null; save(); renderAll(); });
-        }) });
-    acts.push({ ic: 'trash-2', label: '删除', danger: true, run: () => confirmDlg('删除收藏', `确定删除收藏「${it.title}」吗？删除后可在通知中撤销。`, '删除', () => {
-      const idx = items.indexOf(it);
-      items.splice(idx, 1); save(); renderAll();
-      toast(`已删除收藏「${it.title}」`, '撤销', () => { items.splice(Math.min(idx, items.length), 0, it); save(); renderAll(); });
-    }) });
-    return acts;
+  /* ==================== 行为演示（动作元语 R.actionSpecs → 壳侧演示实现；插件侧映射 core 服务） ==================== */
+  function runAction(it, spec) {
+    if (spec.act === 'open') { if ((it.url || '').trim()) window.open(it.url, '_blank'); }
+    else if (spec.act === 'pin') { it.pinned = !it.pinned; save(); renderAll(); }
+    else if (spec.act === 'edit') { openForm(it); }
+    else if (spec.act === 'unarchive') {
+      it.archived = false; it.archivedAt = null; save(); renderAll();
+      toast(`已取消归档，「${it.title}」回到主列表`);
+    } else if (spec.act === 'archive') {
+      confirmDlg('归档收藏', `确定归档收藏「${it.title}」吗？归档后不在主列表显示（数据保留），可在通知中撤销。`, '归档', () => {
+        it.archived = true; it.archivedAt = localNow(); save(); renderAll();
+        toast(`已归档收藏「${it.title}」`, '撤销', () => { it.archived = false; it.archivedAt = null; save(); renderAll(); });
+      });
+    } else if (spec.act === 'del') {
+      confirmDlg('删除收藏', `确定删除收藏「${it.title}」吗？删除后可在通知中撤销。`, '删除', () => {
+        const idx = items.indexOf(it);
+        items.splice(idx, 1); save(); renderAll();
+        toast(`已删除收藏「${it.title}」`, '撤销', () => { items.splice(Math.min(idx, items.length), 0, it); save(); renderAll(); });
+      });
+    }
   }
 
-  /* ==================== 桌面右键菜单（.bz-fav-ctx） ==================== */
+  /* ==================== 桌面右键菜单（容器壳建，内容单源 R.ctxMenuHtml） ==================== */
   let menuEl = null;
   function closeMenu() { if (menuEl) { menuEl.remove(); menuEl = null; } }
   function openMenu(it, x, y) {
     closeMenu();
-    const acts = buildActs(it);
+    const acts = R.actionSpecs(it);
     menuEl = document.createElement('div');
     menuEl.className = 'bz-fav-ctx bz-fav-scope';
-    menuEl.innerHTML = acts.map((a, k) => {
-      const last = k === acts.length - 1;
-      const btn = `<button data-k="${k}"${a.danger ? ' class="bz-fav-danger"' : ''}>${icon(a.ic, 14)}<span>${esc(a.label)}</span></button>`;
-      return last ? `<div class="bz-fav-ctx-sep"></div>${btn}` : btn;
-    }).join('');
+    menuEl.innerHTML = R.ctxMenuHtml(acts);
     menuEl.addEventListener('click', (e) => {
       const b = e.target.closest('button'); if (!b) return;
-      closeMenu(); acts[+b.dataset.k].run();
+      closeMenu(); runAction(it, acts[+b.dataset.k]);
     });
     document.body.appendChild(menuEl);
+    mountIcons(menuEl);
     const r = menuEl.getBoundingClientRect();
     menuEl.style.left = Math.min(x, innerWidth - r.width - 8) + 'px';
     menuEl.style.top = Math.min(y, innerHeight - r.height - 8) + 'px';
   }
   document.addEventListener('click', (e) => { if (menuEl && !menuEl.contains(e.target)) closeMenu(); });
-  document.getElementById('dtBoard').addEventListener('contextmenu', (e) => {
-    const card = e.target.closest('.bz-fav-card'); if (!card) return;
+  dtPanel.querySelector('[data-fav-content]').addEventListener('contextmenu', (e) => {
+    const card = e.target.closest('[data-fav-id]'); if (!card) return;
     e.preventDefault();
     const it = byId(card.dataset.favId);
     if (it) openMenu(it, e.clientX, e.clientY);
   });
-  document.getElementById('dtBoard').addEventListener('click', (e) => {
-    const card = e.target.closest('.bz-fav-card'); if (!card) return;
+  /* 桌面：点击不弹菜单（操作唯一入口右键）——有链接直开 */
+  dtPanel.querySelector('[data-fav-content]').addEventListener('click', (e) => {
+    const card = e.target.closest('[data-fav-id]'); if (!card) return;
     const it = byId(card.dataset.favId); if (!it) return;
     if ((it.url || '').trim()) window.open(it.url, '_blank');
   });
 
-  /* ==================== 移动端底部抽屉（.bz-fav-sheet） ==================== */
-  const sheetMask = document.getElementById('sheetMask');
+  /* ==================== 移动端底部抽屉（内容单源 R.sheetHtml） ==================== */
   function openSheet(it) {
-    const hue = hueOf((it.tags || [])[0] || '');
-    const acts = buildActs(it);
-    const sheet = document.getElementById('sheet');
-    sheet.innerHTML = `
-      <div class="bz-fav-sh-head"><span class="bz-fav-sh-dot" style="--c:hsl(${hue} 52% 58%)"></span>
-        <div><div class="bz-fav-sh-title">${esc(it.title || '无标题')}</div>
-        <div class="bz-fav-sh-meta">${esc(relTime(it.created))}${it.pinned ? ' · 已置顶' : ''}${it.archived ? ' · 已归档' : ''}</div></div></div>
-      <div class="bz-fav-sh-acts">${acts.map((a, k) =>
-        `<button data-k="${k}"${a.danger ? ' class="bz-fav-danger"' : ''}>${icon(a.ic, 15)}<span>${esc(a.label)}</span></button>`).join('')}</div>`;
+    const acts = R.actionSpecs(it);
+    sheet.innerHTML = R.sheetHtml(it, acts);
+    mountIcons(sheet);
     sheet.onclick = (e) => {
       const b = e.target.closest('button'); if (!b) return;
-      closeSheet(); acts[+b.dataset.k].run();
+      closeSheet(); runAction(it, acts[+b.dataset.k]);
     };
     sheetMask.classList.add('bz-fav-show');
   }
   function closeSheet() { sheetMask.classList.remove('bz-fav-show'); }
   sheetMask.addEventListener('click', (e) => { if (e.target === sheetMask) closeSheet(); });
-  document.getElementById('mobBoard').addEventListener('click', (e) => {
-    const card = e.target.closest('.bz-fav-card'); if (!card) return;
+  mobPanel.querySelector('[data-fav-content]').addEventListener('click', (e) => {
+    const card = e.target.closest('[data-fav-id]'); if (!card) return;
     const it = byId(card.dataset.favId); if (it) openSheet(it);
   });
-  const mobClose = document.getElementById('mobClose');
-  mobClose.innerHTML = icon('x', 12);
-  mobClose.onclick = () => toast('评审壳：插件内此处关闭全屏面板');
+  mobPanel.querySelector('[data-fav-close]').addEventListener('click', () => toast('评审壳：插件内此处关闭全屏面板'));
 
   /* ==================== 磁贴行点击（两端委托，与 ui.ts 同语义） ==================== */
-  function bindTags(mountId) {
-    document.getElementById(mountId).addEventListener('click', (e) => {
+  function bindTags(panel) {
+    panel.querySelector('[data-fav-tags]').addEventListener('click', (e) => {
       if (e.target.closest('[data-fav-add]')) { openForm(null); return; }
       const chip = e.target.closest('[data-fav-tag]');
       if (!chip) return;
@@ -238,7 +206,7 @@
       closeMenu(); renderAll();
     });
   }
-  bindTags('dtTags'); bindTags('mobTags');
+  bindTags(dtPanel); bindTags(mobPanel);
 
   /* ==================== 确认框 / toast（插件侧走 core flow-dialog/notice，演示壳自绘） ==================== */
   function confirmDlg(title, msg, okLabel, onOk) {
@@ -260,6 +228,7 @@
     if (toastEl) toastEl.remove();
     clearTimeout(toastTimer);
     toastEl = document.createElement('div');
+    toastEl.id = 'demoToast';
     toastEl.style.cssText = 'position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:700;display:flex;align-items:center;gap:14px;background:#4a443a;color:#f3efe4;font-size:12.5px;padding:10px 16px;border-radius:99px;box-shadow:0 8px 24px rgba(0,0,0,.28)';
     toastEl.innerHTML = `<span>${esc(msg)}</span>` + (undoLabel ? `<button style="border:none;background:none;color:#e0b73a;font:700 12.5px 'Microsoft YaHei';cursor:pointer">${esc(undoLabel)}</button>` : '');
     if (undoLabel) toastEl.querySelector('button').onclick = () => { toastEl.remove(); toastEl = null; onUndo(); };
@@ -267,37 +236,28 @@
     toastTimer = setTimeout(() => { toastEl && toastEl.remove(); toastEl = null; }, 5000);
   }
 
-  /* ==================== 添加 / 编辑表单（.bz-fav-form，与 ui.ts openForm 同构） ==================== */
+  /* ==================== 添加 / 编辑表单（骨架单源 R.formHtml；演示行为在壳） ==================== */
   function openForm(it) {
     const editing = !!it;
     const mask = document.createElement('div');
     mask.className = 'bz-fav-form-mask bz-fav-scope';
-    mask.innerHTML = `<div class="bz-fav-form">
-      <h2>${editing ? '编辑收藏' : '添加收藏'}</h2>
-      <div class="bz-fav-fld"><label>标题</label><input id="fz-title" value="${esc(it ? it.title : '')}" placeholder="如：某篇好文"></div>
-      <div class="bz-fav-fld"><label>链接</label><input id="fz-url" value="${esc(it ? it.url : '')}" placeholder="https://…"></div>
-      <div class="bz-fav-fld"><label>简介</label><textarea id="fz-desc" placeholder="一句话记住它…">${esc(it ? it.description || '' : '')}</textarea></div>
-      <div class="bz-fav-fld"><label>标签（可多选）</label><div class="bz-fav-pick" id="fz-tags"></div></div>
-      <div class="bz-fav-fld bz-fav-inline"><span class="bz-fav-sw${it && it.pinned ? ' bz-fav-on' : ''}" id="fz-pin"></span><span class="bz-fav-fld-desc">置顶后恒排最前</span></div>
-      <div class="bz-fav-err" id="fz-err"></div>
-      <div class="bz-fav-btns"><button type="button" id="fz-ai" class="bz-fav-ai-btn">${icon('star', 12)} <span>AI 整理</span></button><button type="button" data-fz-cancel>取消</button><button type="button" id="fz-save" class="bz-fav-pri">${editing ? '更新' : '保存'}</button></div>
-    </div>`;
+    mask.innerHTML = R.formHtml(it);
     document.body.appendChild(mask);
+    mountIcons(mask);
     const form = mask.querySelector('.bz-fav-form');
     const sel = new Set((it ? it.tags : []) || []);
     const pick = form.querySelector('#fz-tags');
     const drawPick = () => {
-      pick.innerHTML = '';
-      TAGS.forEach((t) => {
-        const b = document.createElement('button');
-        b.type = 'button'; b.innerHTML = `${icon(t.ic, 12)}<span>${t.label}</span>`;
-        if (sel.has(t.label)) b.classList.add('bz-fav-on');
-        b.onclick = () => { sel.has(t.label) ? sel.delete(t.label) : sel.add(t.label); drawPick(); };
-        pick.appendChild(b);
-      });
+      pick.innerHTML = R.pickChipsHtml(sel);
+      pick.querySelectorAll('[data-tag]').forEach((b) => b.addEventListener('click', () => {
+        const label = b.dataset.tag;
+        if (sel.has(label)) sel.delete(label); else sel.add(label);
+        drawPick();
+      }));
+      mountIcons(pick);
     };
     drawPick();
-    form.querySelector('#fz-pin').onclick = (e) => e.currentTarget.classList.toggle('bz-fav-on');
+    form.querySelector('#fz-pin').addEventListener('click', (e) => e.currentTarget.classList.toggle('bz-fav-on'));
     const titleInp = form.querySelector('#fz-title'), urlInp = form.querySelector('#fz-url');
     titleInp.addEventListener('paste', (e) => {
       const text = (e.clipboardData || window.clipboardData)?.getData('text')?.trim() || '';
@@ -307,7 +267,7 @@
       setTimeout(() => titleInp.focus(), 0);
     });
     const aiBtn = form.querySelector('#fz-ai');
-    aiBtn.onclick = () => {
+    aiBtn.addEventListener('click', () => {
       const g = (id) => form.querySelector(id)?.value.trim() || '';
       if (!g('#fz-title') && !g('#fz-url') && !g('#fz-desc')) { form.querySelector('#fz-err').textContent = '请至少输入标题、链接或简介中的一项，以便 AI 参考'; return; }
       form.querySelector('#fz-err').textContent = '';
@@ -325,20 +285,20 @@
         const guess = [];
         if (/github\.com\//.test(url)) guess.push('GitHub');
         const hay = (g('#fz-title') + ' ' + g('#fz-desc')).toLowerCase();
-        TAGS.forEach((t) => { if (t.label !== 'GitHub' && hay.includes(t.label.toLowerCase())) guess.push(t.label); });
+        FAV.TAGS.forEach((t) => { if (t.label !== 'GitHub' && hay.includes(t.label.toLowerCase())) guess.push(t.label); });
         guess.forEach((t) => sel.add(t));
         drawPick();
         aiBtn.disabled = false;
         aiBtn.querySelector('span').textContent = 'AI 整理';
         toast('AI 整理完成（评审壳为模拟，插件内为真实 AI 调用）');
       }, 1200);
-    };
+    });
     mask.addEventListener('click', (e) => {
       if (e.target === mask || e.target.closest('[data-fz-cancel]')) return mask.remove();
       if (!e.target.closest('#fz-save')) return;
       const title = titleInp.value.trim();
       if (!title) { form.querySelector('#fz-err').textContent = '标题不能为空'; return; }
-      const tags = TAGS.map((t) => t.label).filter((l) => sel.has(l));
+      const tags = FAV.TAGS.map((t) => t.label).filter((l) => sel.has(l));
       const patch = { title, url: urlInp.value.trim(), description: form.querySelector('#fz-desc').value.trim(), tags, type: tags[0] || '', pinned: form.querySelector('#fz-pin').classList.contains('bz-fav-on') };
       if (editing) Object.assign(it, patch);
       else items.unshift({ id: String(Date.now()), created: localNow(), ...patch });
@@ -378,6 +338,94 @@
   };
 
   renderAll();
+
+  /* ==================== 自检（?selftest=1） ==================== */
+  if (location.search.includes('selftest')) {
+    window.__st = { pass: 0, fail: [] };
+    const t = (name, cond) => cond ? window.__st.pass++ : window.__st.fail.push(name);
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const dtCards = () => dtPanel.querySelectorAll('[data-fav-content] .bz-fav-card').length;
+    const mobCards = () => mobPanel.querySelectorAll('[data-fav-content] .bz-fav-card').length;
+    const chipOf = (panel, label) => [...panel.querySelectorAll('[data-fav-tag]')].find((b) => b.dataset.favTag === label);
+    const firstCardTitle = (panel) => panel.querySelector('[data-fav-content] .bz-fav-card h3')?.textContent || '';
+    (async () => {
+      try {
+        const alive = items.filter((i) => !i.archived);
+        t('初始51条', items.length === 51);
+        t('桌面卡数=非归档数', dtCards() === alive.length);
+        t('移动卡数=非归档数', mobCards() === alive.length);
+        t('磁贴首枚=全部', dtPanel.querySelector('[data-fav-tag]')?.dataset.favTag === '全部');
+        t('已归档贴纸在场', !!chipOf(dtPanel, '已归档'));
+        t('新收藏chip在场', !!dtPanel.querySelector('[data-fav-add]'));
+        t('磁贴图标兑现', !!dtPanel.querySelector('[data-fav-tags] button svg'));
+        t('移动关闭钮在场', !!mobPanel.querySelector('[data-fav-close]'));
+        t('移动磁贴新收藏置首', mobPanel.querySelector('[data-fav-tags]').firstElementChild?.hasAttribute('data-fav-add') === true);
+
+        chipOf(dtPanel, '已归档').click();
+        t('归档视图卡数=归档数', dtCards() === items.filter((i) => i.archived).length);
+        t('归档卡带冷存类', !!dtPanel.querySelector('[data-fav-content] .bz-fav-card.bz-fav-arch'));
+        chipOf(dtPanel, '已归档').click();
+        t('再点回全部', dtCards() === alive.length);
+
+        const ghChip = chipOf(dtPanel, 'GitHub');
+        if (ghChip) {
+          ghChip.click();
+          const ghOk = dtCards() > 0 && [...dtPanel.querySelectorAll('[data-fav-content] .bz-fav-card')].every((c) => c.querySelector('.bz-fav-tags-row')?.textContent.includes('GitHub'));
+          t('GitHub筛选命中', ghOk);
+          chipOf(dtPanel, 'GitHub').click();
+          t('再点取消筛选', dtCards() === alive.length);
+        }
+
+        /* 新增（表单单源 R.formHtml） */
+        dtPanel.querySelector('[data-fav-add]').click();
+        t('表单开', !!document.querySelector('.bz-fav-form-mask .bz-fav-form'));
+        document.querySelector('#fz-title').value = '测试收藏';
+        document.querySelector('#fz-tags [data-tag="网站"]').click();
+        document.querySelector('#fz-save').click();
+        await sleep(60);
+        const nu = items.find((i) => i.title === '测试收藏');
+        t('新增落演示数据', !!nu);
+        t('表单已关', !document.querySelector('.bz-fav-form'));
+        t('新增卡在场', !!dtPanel.querySelector(`[data-fav-id="${nu.id}"]`));
+        t('新增卡标签徽记', dtPanel.querySelector(`[data-fav-id="${nu.id}"] .bz-fav-tags-row`)?.textContent.includes('网站') === true);
+
+        /* 右键菜单：置顶/取消置顶 */
+        dtPanel.querySelector(`[data-fav-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
+        t('右键菜单开', !!document.querySelector('.bz-fav-ctx'));
+        [...document.querySelectorAll('.bz-fav-ctx button')].find((b) => b.textContent.includes('置顶') && !b.textContent.includes('取消')).click();
+        t('置顶生效', nu.pinned === true);
+        t('置顶卡挂金边类', !!dtPanel.querySelector(`[data-fav-id="${nu.id}"].bz-fav-pinc`));
+        t('置顶恒最前', firstCardTitle(dtPanel) === '测试收藏');
+        dtPanel.querySelector(`[data-fav-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
+        [...document.querySelectorAll('.bz-fav-ctx button')].find((b) => b.textContent.includes('取消置顶')).click();
+        t('取消置顶', nu.pinned === false);
+
+        /* 删除 + 撤销（演示 toast） */
+        dtPanel.querySelector(`[data-fav-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
+        [...document.querySelectorAll('.bz-fav-ctx button')].find((b) => b.textContent.includes('删除')).click();
+        t('确认框开', !!document.querySelector('.bz-fav-form-mask [data-a="ok"]'));
+        document.querySelector('.bz-fav-form-mask [data-a="ok"]').click();
+        t('删除生效', !items.some((i) => i.id === nu.id));
+        document.querySelector('#demoToast button').click();
+        t('撤销恢复', items.some((i) => i.id === nu.id));
+
+        /* 清理测试条目 */
+        items = items.filter((i) => i.id !== nu.id); save(); renderAll();
+
+        /* 移动抽屉 */
+        mobPanel.querySelector('[data-fav-content] [data-fav-id]').click();
+        t('移动抽屉开', sheetMask.classList.contains('bz-fav-show'));
+        t('抽屉磁点+标题', !!sheet.querySelector('.bz-fav-sh-dot') && !!sheet.querySelector('.bz-fav-sh-title'));
+        t('抽屉动作列在场', sheet.querySelectorAll('.bz-fav-sh-acts button').length >= 4);
+        sheetMask.click();
+        t('移动抽屉关', !sheetMask.classList.contains('bz-fav-show'));
+
+        document.title = window.__st.fail.length
+          ? 'SELFTEST FAIL ' + window.__st.fail.join(',')
+          : `SELFTEST OK ${window.__st.pass}/${window.__st.pass + window.__st.fail.length}`;
+      } catch (err) { document.title = 'SELFTEST ERR ' + (err && err.message || err); }
+    })();
+  }
 })();
 </script>
 </body>
