@@ -203,6 +203,14 @@ export function literatureSettingsSchema(opts?: { onClearHistory?: () => void | 
   return {
     groups: [
       {
+        // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+        icon: 'palette', name: '外观',
+        rows: [
+          { type: 'choiceCards', name: '面板布局', binding: { key: 'literatureSkin' }, options: [{ value: 'default', label: '索引卡', prevClass: 'bz-sp-prev-panel' }] },
+          { type: 'choiceCards', name: '面板主题', binding: { key: 'literatureSkinTheme' }, layoutKey: 'literatureSkin', options: [{ value: 'manila', label: '牛皮纸', layout: 'default', prevClass: 'bz-sp-prev-manila' }] },
+        ],
+      },
+      {
         icon: 'folder-open', name: '目录与分类',
         rows: [
           { type: 'path', mode: 'single', name: '文献目录', desc: '文献笔记所在文件夹，列表实时扫描该目录', binding: { key: 'literatureDirectory' } },

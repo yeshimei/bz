@@ -854,7 +854,13 @@
           rowWrite(r, o.v);
           // 外观域联动（参考待办 todoSkin）：布局与主题一一对应——点布局自动切配套主题；点主题实时换肤
           // 布局键 → 配套主题键映射（新域接外观组在此登记一行）
-          const layoutPairMap = { settingsPanelLayout: 'settingsPanelSkin', todoSkin: 'todoSkinTheme', belSkin: 'belSkinTheme' };
+          const layoutPairMap = {
+            settingsPanelLayout: 'settingsPanelSkin', todoSkin: 'todoSkinTheme', belSkin: 'belSkinTheme',
+            diarySkin: 'diarySkinTheme', diaryWallSkin: 'diaryWallSkinTheme', clipbookSkin: 'clipbookSkinTheme',
+            favoritesSkin: 'favoritesSkinTheme', cinemaStyle: 'cinemaSkinTheme', reviewSkin: 'reviewSkinTheme',
+            secondbrainSkin: 'secondbrainSkinTheme', literatureSkin: 'literatureSkinTheme',
+            pomodoroSkin: 'pomodoroSkinTheme', encryptSkin: 'encryptSkinTheme',
+          };
           if (layoutPairMap[r.k]) {
             rowWrite({ k: layoutPairMap[r.k] }, o.theme);
             if (r.k === 'settingsPanelLayout') syncThemeClass(host, o.theme);

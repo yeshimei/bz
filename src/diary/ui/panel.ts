@@ -198,6 +198,14 @@ export function diarySettingsSchema(): SettingsSchema {
   return {
     groups: [
       {
+        // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+        icon: 'palette', name: '外观',
+        rows: [
+          { type: 'choiceCards', name: '面板布局', binding: { key: 'diarySkin' }, options: [{ value: 'default', label: '纸页', prevClass: 'bz-sp-prev-panel' }] },
+          { type: 'choiceCards', name: '面板主题', binding: { key: 'diarySkinTheme' }, layoutKey: 'diarySkin', options: [{ value: 'ivory', label: '象牙白', layout: 'default', prevClass: 'bz-sp-prev-ivory' }] },
+        ],
+      },
+      {
         icon: 'folder-open', name: '目录',
         rows: [
           { type: 'path', mode: 'single', name: '日记目录', desc: '存放日记文件的文件夹路径', binding: { key: 'diaryDirectory' }, onChange: () => applyDirectories(getSettings()) },

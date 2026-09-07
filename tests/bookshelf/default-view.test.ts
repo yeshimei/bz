@@ -46,19 +46,22 @@ describe('bookshelf applyDefaultView（issue 194）', () => {
 });
 
 describe('bookshelf 设置 schema（issue 194）', () => {
-  it('组序：目录 → 显示 → 移动端；显示组三行键与选项集契约（issue 215 皮肤、issue 218 排序三档）', () => {
+  it('组序：外观 → 目录 → 显示 → 移动端；外观组皮肤行 + 显示组两行键与选项集契约（issue 246 收编、issue 218 排序三档）', () => {
     const schema = bookshelfSettingsSchema();
-    expect(schema.groups.map((g) => g.name)).toEqual(['目录', '显示', '移动端']);
-    const view = schema.groups[1];
-    expect(view.rows).toHaveLength(3);
-    const [skin, side, sort] = view.rows as any[];
-    // 面板皮肤（issue 235 五肤×亮暗）：choiceCards 五选一，默认雪松白，onChange 热切换
+    expect(schema.groups.map((g) => g.name)).toEqual(['外观', '目录', '显示', '移动端']);
+    // 外观组（issue 246 收编）：主题行 choiceCards 五选一，默认雪松白，onChange 热切换
+    const look = schema.groups[0];
+    expect(look.rows).toHaveLength(1);
+    const skin = look.rows[0] as any;
     expect(skin.type).toBe('choiceCards');
-    expect(skin.name).toBe('面板皮肤');
+    expect(skin.name).toBe('面板主题');
     expect(skin.binding).toMatchObject({ key: 'bookshelfSkin' });
     expect(skin.options.map((o: any) => o.value)).toEqual(['nordic', 'noir', 'kraft', 'velvet', 'mono']);
     expect(skin.options.every((o: any) => typeof o.prevClass === 'string')).toBe(true);
     expect(typeof skin.onChange).toBe('function');
+    const view = schema.groups[2];
+    expect(view.rows).toHaveLength(2);
+    const [side, sort] = view.rows as any[];
     expect(side.type).toBe('select');
     expect(side.name).toBe('默认筛选');
     expect(side.binding).toMatchObject({ key: 'bookshelfDefaultSide' });
