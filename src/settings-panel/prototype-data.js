@@ -144,6 +144,16 @@
       ] },
     ] },
     belongings: { name: '归物本', icon: 'package', desc: '物品登记与查找', groups: [
+      // 外观组与待办同构（上布局行下主题行，点布局自动切配套主题）；占位单卡（用户拍板 C）：
+      // 布局/主题各一档零新设计，扩展待将来开模
+      { icon: 'palette', name: '外观', rows: [
+        { t: 'choiceCards', n: '布局', k: 'belSkin', kind: 'poster', opts: [
+          { v: 'poster', l: '大字报', prev: { bg: '#f5f2ec', ink: '#171512', ac: '#e8481f' }, theme: 'warmwhite' },
+        ] },
+        { t: 'choiceCards', n: '主题', k: 'belSkinTheme', kind: 'skin', layoutKey: 'belSkin', opts: [
+          { v: 'warmwhite', l: '暖白', layout: 'poster', prev: { light: '#f5f2ec', dark: '#171512', ac: '#e8481f' } },
+        ] },
+      ] },
       { icon: 'eye', name: '显示', rows: [
         { t: 'select', n: '默认状态筛选', d: '打开面板时选中的物品状态', k: 'belongingsDefaultStatus', opts: [{ v: '', l: '全部' }, { v: 'using', l: '使用中' }, { v: 'idle', l: '闲置' }, { v: 'sold', l: '已转卖' }, { v: 'discard', l: '已丢弃' }] },
       ] },
@@ -432,7 +442,7 @@
     todoSkin: 'paper', todoSkinTheme: 'warmwhite', memoSortMode: 'priority', memoShowArchivedByDefault: false, memoDueFormat: 'relative',
     memoDefaultPriority: 'minor', memoDefaultScene: '', memoScenarios: '剪藏,工作,学习,生活,代码,公开课',
     autoPopupOnStart: true, openNoteReminder: true, todoMobileDefaultFullscreen: false,
-    belongingsDefaultStatus: '', belongingsMobileDefaultFullscreen: false,
+    belongingsDefaultStatus: '', belongingsMobileDefaultFullscreen: false, belSkin: 'poster', belSkinTheme: 'warmwhite',
     articleDirectory: '归档/网页剪藏', clipbookPanelWidth: 1306, clipbookPanelHeight: 806, clipbookMidWidth: 272,
     autoSummaryEnabled: true, autoSummaryLength: 'standard', autoSummaryTagsEnabled: true, autoSummaryTagCount: '3-6',
     autoSummaryTiming: 'immediate', clipbookMobileDefaultFullscreen: true,

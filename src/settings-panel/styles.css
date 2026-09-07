@@ -162,6 +162,24 @@
     linear-gradient(90deg, #f6f2e9 0 50%, #242429 50% 100%);
   border-radius: 3px;
 }
+/* 归物本·大字报：hero 大字墨块 + 右上赤橙 KPI + 三列缝线网格带（P20 海报三色语言；
+   域内双主题恒定纸面，缩略恒定墨色不随面板主题翻色） */
+.bz-sp-mini.bz-sp-prev-poster {
+  background:
+    linear-gradient(rgba(23, 21, 18, 0.28), rgba(23, 21, 18, 0.28)) 38% 44% / 2px 46% no-repeat,
+    linear-gradient(rgba(23, 21, 18, 0.28), rgba(23, 21, 18, 0.28)) 66% 44% / 2px 46% no-repeat,
+    linear-gradient(rgba(23, 21, 18, 0.1), rgba(23, 21, 18, 0.1)) 6% 44% / 88% 46% no-repeat,
+    linear-gradient(#171512, #171512) 6% 12% / 44% 20% no-repeat,
+    linear-gradient(#e8481f, #e8481f) 86% 14% / 8% 16% no-repeat;
+  border-radius: 3px;
+}
+/* 归物本·暖白：纸面/墨黑双块 + 赤橙圆点（P20 三色，与晨昏同构图异色） */
+.bz-sp-mini.bz-sp-prev-warmwhite {
+  background:
+    radial-gradient(circle at 50% 50%, #e8481f 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #f5f2ec 0 50%, #171512 50% 100%);
+  border-radius: 3px;
+}
 
 /* ═══════════ 滚动条全隐藏（面板作用域内） ═══════════ */
 .bz-sp-desk *,

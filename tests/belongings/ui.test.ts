@@ -1630,20 +1630,34 @@ describe('归物本自动刷新 / 事件载荷 / schema / XSS', () => {
     expect(events[2]).toEqual({ kind: 'delete', title: '键盘' });
   });
 
-  it('belongingSettingsSchema：显示组（默认状态筛选）+ 移动端组；桌面移动组门控 false / 移动 true', () => {
+  it('belongingSettingsSchema：外观组（布局/主题占位单卡）+ 显示组 + 移动端组；桌面移动组门控 false / 移动 true', () => {
     const settings = { belongingsDataFolder: 'CONFIG/STORAGE' };
     setSettingsProvider(() => settings as any);
     const schema = belongingSettingsSchema();
-    expect(schema.groups).toHaveLength(2);
+    expect(schema.groups).toHaveLength(3);
+    // 外观组（用户拍板 C 占位单卡）：布局/主题两行 choiceCards，主题行绑 layoutKey=belSkin
+    const look = schema.groups[0];
+    expect(look.name).toBe('外观');
+    expect(look.rows).toHaveLength(2);
+    const lrow = look.rows[0] as any;
+    expect(lrow.type).toBe('choiceCards');
+    expect(lrow.binding).toMatchObject({ key: 'belSkin' });
+    expect(lrow.options).toHaveLength(1);
+    expect(lrow.options[0]).toMatchObject({ value: 'poster', label: '大字报', prevClass: 'bz-sp-prev-poster' });
+    const trow = look.rows[1] as any;
+    expect(trow.type).toBe('choiceCards');
+    expect(trow.binding).toMatchObject({ key: 'belSkinTheme' });
+    expect(trow.layoutKey).toBe('belSkin');
+    expect(trow.options[0]).toMatchObject({ value: 'warmwhite', label: '暖白', layout: 'poster', prevClass: 'bz-sp-prev-warmwhite' });
     // 显示组（issue 194）：默认状态筛选 select，常显（无组级门控）
-    const view = schema.groups[0];
+    const view = schema.groups[1];
     expect(view.name).toBe('显示');
     expect(view.visibleWhen).toBeUndefined();
     const vrow = view.rows[0] as any;
     expect(vrow.type).toBe('select');
     expect(vrow.binding).toMatchObject({ key: 'belongingsDefaultStatus' });
     // 移动端组：桌面整组隐藏 / 移动可见
-    const g = schema.groups[1];
+    const g = schema.groups[2];
     expect(g.name).toBe('移动端');
     expect(g.visibleWhen!(settings as any)).toBe(false);
     expect(g.rows).toHaveLength(1);

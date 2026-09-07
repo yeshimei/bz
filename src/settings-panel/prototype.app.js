@@ -853,9 +853,10 @@
           c.classList.add('is-on');
           rowWrite(r, o.v);
           // 外观域联动（参考待办 todoSkin）：布局与主题一一对应——点布局自动切配套主题；点主题实时换肤
-          if (r.k === 'settingsPanelLayout' || r.k === 'todoSkin') {
-            const pairKey = r.k === 'settingsPanelLayout' ? 'settingsPanelSkin' : 'todoSkinTheme';
-            rowWrite({ k: pairKey }, o.theme);
+          // 布局键 → 配套主题键映射（新域接外观组在此登记一行）
+          const layoutPairMap = { settingsPanelLayout: 'settingsPanelSkin', todoSkin: 'todoSkinTheme', belSkin: 'belSkinTheme' };
+          if (layoutPairMap[r.k]) {
+            rowWrite({ k: layoutPairMap[r.k] }, o.theme);
             if (r.k === 'settingsPanelLayout') syncThemeClass(host, o.theme);
             redrawDomain();
             toast(host, '已切换布局：' + o.l);

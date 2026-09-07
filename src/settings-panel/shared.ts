@@ -102,7 +102,7 @@ export function badgeHtml(label: string): string {
   return `<span class="bz-badge">${esc(label)}</span>`;
 }
 
-/** 迷你皮肤预览（choiceCards 卡内；逐字提取原型 renderMini 六种 kind——内联样式为原型真理） */
+/** 迷你皮肤预览（choiceCards 卡内；逐字提取原型 renderMini 七种 kind——内联样式为原型真理） */
 export function miniHtml(kind: string | undefined, prev: Record<string, unknown>): string {
   const st = (extra: string): string => ` style="${extra}"`;
   const bg = st(`background:${prev.bg}`);
@@ -142,6 +142,17 @@ export function miniHtml(kind: string | undefined, prev: Record<string, unknown>
   if (kind === 'themecard') {
     return `<div class="bz-sp-mini"${bg}>` +
       `<div${st(`position:absolute;left:5px;top:50%;transform:translateY(-50%);width:5px;height:26px;border-radius:3px;background:${prev.ac};`)}></div></div>`;
+  }
+  if (kind === 'poster') {
+    // 归物本海报缩略（P20 大字报）：hero 大字墨块 + 右上赤橙 KPI + 三列缝线网格带
+    const mk = (css: string): string => `<div${st(`position:absolute;${css}`)}></div>`;
+    return `<div class="bz-sp-mini"${bg}>` +
+      mk(`left:6%;top:12%;width:44%;height:20%;background:${prev.ink || '#171512'};`) +
+      mk(`left:86%;top:14%;width:8%;height:16%;background:${prev.ac || '#e8481f'};`) +
+      mk(`left:6%;top:44%;width:88%;height:46%;background:rgba(23,21,18,.1);`) +
+      mk(`left:38%;top:44%;width:2px;height:46%;background:rgba(23,21,18,.28);`) +
+      mk(`left:66%;top:44%;width:2px;height:46%;background:rgba(23,21,18,.28);`) +
+      `</div>`;
   }
   if (kind === 'cat') {
     const ears = ['ear l', 'ear r'].map(() =>
