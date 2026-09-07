@@ -75,6 +75,10 @@ const WHITELIST: Array<{ file: RegExp; reason: string; /** 防回归哨兵：预
     reason: '影视笔记 md 用户文档写（AI 推荐一键想看建条，含防重名前置拦截）',
   },
   {
+    file: /^src\/cinema\/fake\/fake-obsidian\.ts$/,
+    reason: '评审壳假 obsidian（ADR-0106 行为单源）：浏览器版 vault/fileManager 替代实现（localStorage 文件系统）——本身即「宿主」实现面而非插件数据直写，与 core/storage.ts 契约本体同类',
+  },
+  {
     file: /^src\/bookshelf\/notes\.ts$/,
     reason: '书评/划线 md 用户笔记写，vault.process 原子读改写（audit D 已收口，Obsidian 内建单步语义）',
   },
