@@ -2,21 +2,23 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>内容首页 · 原型预览（与 src/home/styles.css 共用同一份 CSS）</title>
+<title>内容首页 · 原型预览（真行为单源）</title>
 <!--
-  ┌────────────────────────────────────────────────────────────────────┐
-  │ 本文件 = 内容首页域 UI 的评审壳 = 拍板原型 p16-full.html 的域内定稿。│
-  │ 组件样式零内联，全部来自（与 build-css SOURCES 同序）：              │
-  │   ../core/styles.css → ../core/ui/tokens.css                        │
-  │   → ../core/ui/components.css → ./styles.css                        │
-  │ markup 单源（issue 243/ADR-0104）：面板骨架/周历/入口行/时间线河卡/  │
-  │ 明天预告卡 HTML 与规则口径（点评/彩点/计数文案）全部出自             │
-  │ ./prototype-render.js（由 src/home/render.ts 构建，与插件 ui.ts      │
-  │ 消费同一份）——壳内只留演示层：演示快照数据、演示事件绑定、自检。     │
-  │ 移动端判定：真实端 = 面板容器 ≤768（容器查询 + 面板自身 @media）；   │
-  │ 评审壳 = 右下手机框内嵌本页 ?mob=1 窄视口 iframe（396×780 命中       │
-  │ 同一份规则，壳内零复制移动端样式）。                                  │
-  └────────────────────────────────────────────────────────────────────┘
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ 本文件 = 内容首页域 UI 的评审壳（行为单源版，issue 245/ADR-0106）。        │
+  │ 组件样式零内联，全部来自（与 build-css SOURCES 同序）：                    │
+  │   ../core/styles.css → ../core/ui/tokens.css → ../core/ui/components.css │
+  │   → ./styles.css                                                        │
+  │ markup 单源（ADR-0104）：面板骨架/周历/入口行/河卡/预告卡 HTML 出自        │
+  │   src/home/render.ts（与插件 ui.ts 消费同一份）。                          │
+  │ 行为单源（issue 245/ADR-0106）：交互逻辑全部是插件同款 ui.ts 依赖链——       │
+  │   经 ./prototype-behavior.js（src/home/fake-sim.ts 构建，                 │
+  │   alias obsidian→公共假层）在下方两个 iframe 视图里跑真行为；               │
+  │   桌面 iframe 920px = 桌面三栏；移动 iframe 396px = styles.css            │
+  │   @media/@container ≤768 移动布局。数据 = fake vault（localStorage 种子，  │
+  │   相对「今天」生成、跨天自动重灌，见 fake-sim.ts）。                        │
+  │ 壳内只允许：外景容器样式、评审徽牌、演示钩子与自检。                        │
+  └────────────────────────────────────────────────────────────────────────┘
 -->
 <link rel="stylesheet" href="../core/styles.css">
 <link rel="stylesheet" href="../core/ui/tokens.css">
@@ -25,192 +27,184 @@
 <style>
   /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 56px; padding: 32px 24px;
-    background: #e8e4d8; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 32px 24px;
+    background: #dcd8cd; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
   * { scrollbar-width: none; } *::-webkit-scrollbar { display: none; }
 
-  /* 桌面面板外景（组件本体 880×580 来自 styles.css） */
-  .demo-dt { flex: none; }
-
-  /* 移动端手机框：内嵌本页 ?mob=1（窄视口 iframe 命中 styles.css 的 @media/@container ≤768 规则） */
-  .demo-mob { width: 396px; height: 780px; position: relative; overflow: hidden; flex: none;
-    border: 1px solid #b8b0a0; border-radius: 26px; background: #f5f2ec; box-shadow: 0 8px 30px rgba(0,0,0,.16); }
-  .demo-mob iframe { width: 100%; height: 100%; border: none; display: block; }
-
-  /* ?mob=1 直开：本页即移动端视口，只渲染全屏面板 */
-  body.mob-root { display: block; padding: 0; background: #f5f2ec; }
+  /* 桌面外景（真行为 iframe：overlay append iframe body，宽度决定布局） */
+  .demo-dt { flex: none; width: 920px; height: 640px; }
+  /* 移动外景：396px iframe → 面板 100vw → @media/@container ≤768 移动布局 */
+  .demo-mob { width: 396px; height: 780px; border-radius: 26px; overflow: hidden; flex: none;
+    border: 1px solid #b8b0a0; box-shadow: 0 8px 30px rgba(0,0,0,.16); background: #f5f2ec; }
+  .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
 
   /* 评审徽牌（演示壳自用） */
   .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #8b8474; display: flex; gap: 10px; align-items: center;
     background: rgba(255,255,255,.92); border: 1px solid #c9c2b2; padding: 3px 8px; z-index: 900; }
   .vbadge button { border: none; background: none; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; }
+  .vbadge .ok { color: #3d8f5d; }
+  .vbadge .bad { color: #b3564d; }
 </style>
 </head>
 <body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark，壳内必须补一类才不透明 -->
-  <div id="dtHost" class="demo-dt"></div>
-  <div id="mobHost" class="demo-mob"><iframe id="mobFrame" title="移动端预览（?mob=1 窄视口）"></iframe></div>
+  <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="内容首页·桌面"></iframe></div>
+  <div id="mobHost" class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="内容首页·移动"></iframe></div>
 
-  <div class="vbadge">内容首页 · 原型预览（活动河全域入口版 · 共用 styles.css）
+  <div class="vbadge">内容首页 · 真行为单源预览（桌面=真 ui.ts 跑在 920px，移动=396px）
     <button id="mobToggle">隐藏移动端</button>
+    <button id="reset">重置演示数据</button>
+    <span id="stResult"></span>
   </div>
 
 <script src="./prototype-icons.js"></script>
-<script src="./prototype-render.js"></script>
+<script src="./prototype-behavior.js"></script>
 <script>
 (function () {
-  /* ==================== 渲染单源：window.BZR_home（构建产物，勿手改） ====================
-   * markup / 规则口径全部来自 src/home/render.ts（issue 243/ADR-0104），与插件 ui.ts
-   * 消费同一份；本壳只留演示层。重新生成：node scripts/build-preview.mjs。 */
-  const R = window.BZR_home;
+  /* ==================== 壳基座（仅外景）：两个真行为 iframe ====================
+   * 行为全部在 iframe 内跑真 ui.ts（prototype-behavior.js）；本页只做：
+   *  - 种子启动（bootHomeSim 首启写 fake vault 种子，见 fake-sim seedDatabase）
+   *  - 重置演示数据（resetHomeSim 清 bz-sim:* 后重载）
+   *  - 自检（?selftest=1）：经 iframe contentWindow/contentDocument 访问真 DOM
+   */
+  const B = window.BZW_home;
+  B.bootHomeSim(); // 父页先灌种子：双 iframe 加载时命中「已种子」分支，单写者无竞态
 
-  const param = (k) => { const m = location.search.match(new RegExp('[?&]' + k + '=([^&]+)')); return m ? m[1] : ''; };
-  const MOB = location.search.includes('mob=1');
-
-  /* ==================== 壳基座：mountIcons（prototype-icons.js 内联 SVG——壳层差异表） ==================== */
-  const ICONS = window.BZ_HOME_ICONS || {};
-  function mountIcons(root) {
-    if (!root) return;
-    root.querySelectorAll('i[data-lucide]').forEach((el) => {
-      const d = ICONS[el.dataset.lucide];
-      if (d && !el.firstChild) {
-        el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
-      }
-    });
-  }
-
-  /* ==================== 演示数据（river.ts collectRiver 输出形状的真实快照） ==================== */
-  const DAY = (dateStr, events, summary) => ({
-    dateStr, events,
-    summary: Object.assign({ diary: 0, movies: 0, books: 0, todoDone: 0, todoCreated: 0, pomodoros: 0, pomodoroMinutes: 0 }, summary || {}),
-    firstTs: events.length ? events[0].ts : null,
-  });
-  const WK = ['日', '一', '二', '三', '四', '五', '六'];
-  const mkDay = (dateStr, events, summary) => {
-    const d = new Date(dateStr + ' 12:00:00');
-    return { dateStr, label: dateStr.slice(5), dayOfMonth: d.getDate(), weekday: WK[d.getDay()], hit: events.length > 0 };
-  };
-  const E_TODAY = [
-    { domain: 'bookshelf', ts: T(2026, 9, 7, 7, 42), timeLabel: '07:42', text: '《三体》读到 62%' },
-    { domain: 'todo', ts: T(2026, 9, 7, 9, 10), timeLabel: '09:10', text: '完成『给 obsidian 提 issue』' },
-    { domain: 'clipping', ts: T(2026, 9, 7, 12, 31), timeLabel: '12:31', text: '剪藏 3 篇' },
-    { domain: 'cinema', ts: T(2026, 9, 7, 21, 5), timeLabel: '21:05', text: '标记《百年孤独》已看 · ★★★★☆' },
-    { domain: 'diary', ts: T(2026, 9, 7, 22, 40), timeLabel: '22:40', text: '新增 4 条' },
-  ];
-  const E_YESTERDAY = [
-    { domain: 'cinema', ts: T(2026, 9, 6, 10, 15), timeLabel: '10:15', text: '《沙丘 2》加入片单' },
-    { domain: 'pomodoro', ts: T(2026, 9, 6, 14, 2), timeLabel: '14:02–14:27', text: '专注《周报》 · 25 分钟' },
-    { domain: 'todo', ts: T(2026, 9, 6, 20, 44), timeLabel: '20:44', text: '完成『清理收件箱』' },
-  ];
-  function T(y, mo, d, h, mi) { return new Date(y, mo - 1, d, h, mi).getTime(); }
-  const WEEK_DATES = ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04', '2026-09-05', '2026-09-06', '2026-09-07'];
-  const DATA = {
-    today: DAY('2026-09-07', E_TODAY),
-    yesterday: DAY('2026-09-06', E_YESTERDAY),
-    days: [
-      DAY('2026-09-07', E_TODAY), DAY('2026-09-06', E_YESTERDAY),
-      DAY('2026-09-05', []), DAY('2026-09-04', []), DAY('2026-09-03', []), DAY('2026-09-02', []), DAY('2026-09-01', []),
-    ],
-    week: WEEK_DATES.map((d) => mkDay(d, d === '2026-09-07' ? E_TODAY : d === '2026-09-06' ? E_YESTERDAY : [])),
-    streak: { diaryStreak: 5, diaryWrittenToday: false },
-    counts: {
-      diaryTotal: 522, reviewTotal: 9, reviewOverdue: 1, reviewDueTomorrow: 0,
-      cinemaWant: 25, cinemaWatching: 4, bookshelfReading: 9, bookshelfFinished: 151,
-      clippingUnread: 55, favoritesTotal: 48, belongingsTotal: 65,
-    },
-  };
-  /* 视图状态（与 ui.ts riverView 同构：null = 今天） */
-  let curView = null;
-  const viewDate = () => curView ?? DATA.today.dateStr;
-
-  /* ==================== 装配（面板骨架 = render.panelFrameHtml；数据区灌单源 markup） ==================== */
-  function renderAllInto(host) {
-    host.querySelector('[data-home-date]').textContent = '2026-09-07 周一 · 21:36';
-    host.querySelector('[data-home-week]').innerHTML = R.weekHtml(DATA.week, DATA.today.dateStr, viewDate());
-    host.querySelector('[data-home-entries]').innerHTML = R.entriesHtml(DATA);
-    host.querySelector('[data-home-flow]').innerHTML = R.flowHtml(DATA, viewDate());
-    host.querySelector('[data-home-next]').innerHTML = R.nextHtml(DATA);
-    host.querySelector('[data-home-tiles]').innerHTML = R.tilesHtml(DATA);
-    mountIcons(host);
-  }
-  function mount(host) {
-    host.innerHTML = R.panelFrameHtml();
-    renderAllInto(host);
-    // 周历切天：重渲时间线 + 选中态（只动双端，不重采）
-    host.addEventListener('click', (e) => {
-      const wk = e.target.closest('[data-home-weekday]');
-      if (!wk) return;
-      curView = wk.dataset.homeWeekday || null;
-      document.querySelectorAll('.bz-home-panel').forEach((p) => {
-        p.querySelectorAll('[data-home-weekday]').forEach((b) => b.classList.toggle('bz-home-wk--sel', b.dataset.homeWeekday === viewDate()));
-        const flow = p.querySelector('[data-home-flow]');
-        if (flow) { flow.innerHTML = R.flowHtml(DATA, viewDate()); mountIcons(flow); }
-      });
-    });
-  }
-
-  if (MOB) {
-    /* ?mob=1：本页即移动端视口，只渲染全屏面板（iframe 内容自跑一份演示态） */
-    document.getElementById('dtHost')?.remove();
-    document.getElementById('mobHost')?.remove();
-    document.querySelector('.vbadge')?.remove();
-    document.body.classList.add('mob-root');
-    mount(document.body);
-  } else {
-    mount(document.getElementById('dtHost'));
-    const frame = document.getElementById('mobFrame');
-    frame.src = './prototype.html?mob=1';
-    const mobBtn = document.getElementById('mobToggle');
-    mobBtn.onclick = () => {
-      const mob = document.getElementById('mobHost');
-      mob.style.display = mob.style.display === 'none' ? '' : 'none';
-      mobBtn.textContent = mob.style.display === 'none' ? '显示移动端' : '隐藏移动端';
+  const dtFrame = () => document.querySelector('#dtHost iframe');
+  const mobFrame = () => document.querySelector('#mobHost iframe');
+  const dtDoc = () => dtFrame().contentDocument;
+  const mobDoc = () => mobFrame().contentDocument;
+  // 轮询现取 contentDocument：iframe 加载前后 document 引用会替换（about:blank → 真实文档），
+  // 不能缓存旧引用等面板——每次现查，跨文档访问本身同源安全。
+  const waitFrame = (getDoc, sel) => new Promise((res, rej) => {
+    const started = Date.now();
+    const tries = () => {
+      try {
+        const doc = getDoc();
+        // 等 [data-home-entries]：活动河采集完成后才有（骨架期无入口行）
+        if (doc && doc.querySelector(sel)) return res(doc);
+        if (Date.now() - started > 30000) return rej(new Error('iframe 面板超时'));
+        setTimeout(tries, 150);
+      } catch (e) { setTimeout(tries, 150); }
     };
-  }
+    tries();
+  });
 
-  /* ==================== 自检（?selftest=1；桌面与 ?mob=1 各跑一份） ==================== */
+  document.querySelector('#mobToggle').addEventListener('click', () => {
+    const m = document.querySelector('#mobHost');
+    const hidden = m.style.display === 'none';
+    m.style.display = hidden ? '' : 'none';
+    document.querySelector('#mobToggle').textContent = hidden ? '隐藏移动端' : '显示移动端';
+  });
+
+  document.querySelector('#reset').addEventListener('click', () => {
+    B.resetHomeSim();
+    location.reload();
+  });
+
+  /* ==================== 自检（?selftest=1）：真行为 DOM 断言（经 iframe） ==================== */
   if (location.search.includes('selftest')) {
     window.__st = { pass: 0, fail: [] };
     const t = (name, cond) => cond ? window.__st.pass++ : window.__st.fail.push(name);
-    const $ = (s) => document.querySelector(s);
-    const panel = () => $('.bz-home-panel');
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     (async () => {
+      const res = document.querySelector('#stResult');
       try {
-        await new Promise((r) => setTimeout(r, 50));
-        const rows = () => document.querySelectorAll('.bz-home-erow');
-        t('入口行13域', rows().length === 13);
-        t('入口行计数=单源口径', rows()[2].querySelector('.bz-home-ect').textContent === '9 张 · 逾期 1');
-        t('书库行计数', [...rows()].find((r) => r.dataset.homeGo === 'bookshelf').querySelector('.bz-home-ect').textContent === '在读 9 · 读完 151');
-        t('时间线5条痕迹', document.querySelectorAll('.bz-home-timeline .bz-home-ev').length === 5);
-        t('规则点评2条', document.querySelectorAll('.bz-home-ev-note').length === 2);
-        t('首条点评=比昨天晚1287分（跨天时差口径）', $('.bz-home-ev-note').textContent.indexOf('晚了 1287 分钟') >= 0);
-        t('末条挂连击提醒+warn行', [...document.querySelectorAll('.bz-home-ev')].pop().className.indexOf('bz-home-ev--warn') >= 0);
-        t('预告3卡', document.querySelectorAll('.bz-home-pr').length === 3);
-        t('预告首卡=逾期卡', $('.bz-home-pr-h').textContent === '还有 1 张逾期卡');
-        t('彩点 warn/hot/ok 各在其位', $('.bz-home-erow .bz-home-dot--warn') && $('.bz-home-erow .bz-home-dot--hot') && $('.bz-home-erow .bz-home-dot--ok'));
-        t('周历7格+今天显示今', document.querySelectorAll('.bz-home-wk').length === 7 && [...document.querySelectorAll('.bz-home-wk-n')].some((n) => n.textContent === '今'));
-        t('选中格=今天', $('.bz-home-wk--sel .bz-home-wk-n').textContent === '今');
-        t('关闭钮在位', !!$('[data-home-close] i[data-lucide="x"]'));
-        t('移动瓦片在 DOM（桌面隐藏）', document.querySelectorAll('.bz-home-m-tile').length === 13);
-
-        // 周历切天交互
-        [...document.querySelectorAll('.bz-home-wk')].find((b) => b.dataset.homeWeekday === '2026-09-06').click();
-        t('切昨天后时间线3条', document.querySelectorAll('.bz-home-timeline .bz-home-ev').length === 3);
-        t('切昨天标题带日期', $('.bz-home-sec-t').textContent.indexOf('09-06') >= 0);
-        t('切天后无点评（仅今天点评）', document.querySelectorAll('.bz-home-ev-note').length === 0);
-        [...document.querySelectorAll('.bz-home-wk')].find((b) => b.dataset.homeWeekday === '2026-09-07').click();
-        t('切回今天5条+点评2条', document.querySelectorAll('.bz-home-timeline .bz-home-ev').length === 5 && document.querySelectorAll('.bz-home-ev-note').length === 2);
-
-        if (MOB) {
-          t('移动端@media全屏命中', Math.abs(panel().getBoundingClientRect().width - document.documentElement.clientWidth) < 1);
-          t('关闭钮在头行（移动范式）', !!panel().querySelector('.bz-home-head [data-home-close]'));
-        } else {
-          t('移动瓦片桌面隐藏', getComputedStyle($('.bz-home-tiles')).display === 'none');
+        // 数据基线检查：种子标记应是今天。若缺失/过期（上次运行残留）则重灌并重载一次。
+        // headless 验收每次全新 profile 天然干净；浏览器手动隔天重复跑 selftest 也能自清理。
+        let mark = null;
+        try { mark = JSON.parse(localStorage.getItem('bz-sim:__home_seed') || 'null'); } catch { mark = null; }
+        const today = (() => { const d = new Date(); const p = (n) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; })();
+        if (!mark || mark.seededOn !== today || mark.rev !== 1) {
+          if (!location.search.includes('reset=1')) {
+            B.resetHomeSim();
+            location.search = '?selftest=1&reset=1';
+            return;
+          }
         }
+        const dd = await waitFrame(dtDoc, '.bz-home-entries .bz-home-erow');
+        const md = await waitFrame(mobDoc, '.bz-home-entries .bz-home-erow, .bz-home-m-tile');
+        res.textContent = '…';
+        const dt = (sel) => dd.querySelector(sel);
+        const mob = (sel) => md.querySelector(sel);
+        const dtRows = () => dd.querySelectorAll('.bz-home-erow');
+        const dtEvs = () => dd.querySelectorAll('.bz-home-timeline .bz-home-ev');
+
+        // CSS 生效（壳四链防 404 再犯）：core+域样式表已加载且规则非空；域样式真命中（入口行 flex 来自 ./styles.css）
+        const rules = [...dd.styleSheets].reduce((n, s) => { try { return n + s.cssRules.length; } catch { return n; } }, 0);
+        t('CSS 生效：样式表规则非空', rules > 50);
+        t('CSS 生效：域样式命中（入口行 flex）', dd.querySelector('.bz-home-erow') && getComputedStyle(dd.querySelector('.bz-home-erow')).display === 'flex');
+
+        t('桌面面板开', !!dt('.bz-home-panel'));
+        t('移动面板开', !!mob('.bz-home-panel'));
+        t('入口行13域', dtRows().length === 13);
+        t('复习行计数=9张逾期1', dtRows()[2].querySelector('.bz-home-ect').textContent === '9 张 · 逾期 1');
+        t('日记行计数=518篇', dtRows()[0].querySelector('.bz-home-ect').textContent === '518 篇');
+        t('书库行计数=在读9读完4', [...dtRows()].find((r) => r.dataset.homeGo === 'bookshelf').querySelector('.bz-home-ect').textContent === '在读 9 · 读完 4');
+        t('剪藏行计数=未读12', [...dtRows()].find((r) => r.dataset.homeGo === 'clipping').querySelector('.bz-home-ect').textContent === '未读 12 篇');
+        t('归物行计数=登记12件', [...dtRows()].find((r) => r.dataset.homeGo === 'belongings').querySelector('.bz-home-ect').textContent === '登记 12 件');
+        t('时间线9条痕迹', dtEvs().length === 9);
+        t('规则点评2条', dd.querySelectorAll('.bz-home-ev-note').length === 2);
+        t('首条点评=比昨天晚了1362分钟（今日首动07:42 vs 昨日首动09:00）', dt('.bz-home-ev-note').textContent.indexOf('晚了 1362 分钟') >= 0);
+        t('末条挂连击提醒+warn行', [...dtEvs()].pop().className.indexOf('bz-home-ev--warn') >= 0);
+        t('预告3卡', dd.querySelectorAll('.bz-home-pr').length === 3);
+        t('预告首卡=逾期卡', dt('.bz-home-pr-h').textContent === '还有 1 张逾期卡');
+        t('彩点 warn/hot/ok 各在其位', dt('.bz-home-erow .bz-home-dot--warn') && dt('.bz-home-erow .bz-home-dot--hot') && dt('.bz-home-erow .bz-home-dot--ok'));
+        t('周历7格+hit4格', dd.querySelectorAll('.bz-home-wk').length === 7 && dd.querySelectorAll('.bz-home-wk--hit').length === 4);
+        t('今天显示今+选中格=今天', [...dd.querySelectorAll('.bz-home-wk-n')].some((n) => n.textContent === '今') && dt('.bz-home-wk--sel .bz-home-wk-n').textContent === '今');
+        t('关闭钮图标已物化（真 setIcon）', !!dt('[data-home-close] svg'));
+        t('移动瓦片在 DOM（桌面隐藏）', dd.querySelectorAll('.bz-home-m-tile').length === 13);
+        t('移动瓦片桌面隐藏', getComputedStyle(dt('.bz-home-tiles')).display === 'none');
+
+        // 周历切天（桌面）：切昨天 → 时间线 4 条 + 标题带日期 + 无点评；切回今天恢复
+        const yesterKey = [...dd.querySelectorAll('.bz-home-wk')].map((b) => b.dataset.homeWeekday)[1];
+        [...dd.querySelectorAll('.bz-home-wk')].find((b) => b.dataset.homeWeekday === yesterKey).click();
+        await sleep(60);
+        t('切昨天后时间线5条', dd.querySelectorAll('.bz-home-timeline .bz-home-ev').length === 5);
+        t('切昨天标题带日期', dt('.bz-home-sec-t').textContent.indexOf(yesterKey.slice(5)) >= 0);
+        t('切天后无点评（仅今天点评）', dd.querySelectorAll('.bz-home-ev-note').length === 0);
+        [...dd.querySelectorAll('.bz-home-wk')][0].click();
+        await sleep(60);
+        t('切回今天9条+点评2条', dtEvs().length === 9 && dd.querySelectorAll('.bz-home-ev-note').length === 2);
+
+        // ESC 关闭（桌面，真 escManager 层）→ 重开（壳经 iframe contentWindow 调真 openHome）
+        dd.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        await sleep(60);
+        t('ESC 关闭面板', !dt('.bz-home-panel'));
+        dtFrame().contentWindow.BZW_home.openHome();
+        await waitFrame(dtDoc, '.bz-home-entries .bz-home-erow');
+        t('重开面板（活动河重采）', !!dt('.bz-home-panel') && dtRows().length === 13);
+
+        // 入口点击降级（桌面）：FakeApp 无 commands → openDomain 捕获走真 notice，不崩、面板关
+        dtRows()[3].click();
+        await sleep(80);
+        t('入口点击：面板关闭（域命令直达语义）', !dt('.bz-home-panel'));
+        t('入口点击：降级通知弹出不崩', !!dt('.bz-notice') && dt('.bz-notice').textContent.indexOf('暂时不可用') >= 0);
+        dtFrame().contentWindow.BZW_home.openHome();
+        await waitFrame(dtDoc, '.bz-home-entries .bz-home-erow');
+
+        // 移动端（396px iframe）：@media 全屏命中 + 瓦片置前 + 头行关闭钮 + 周历切天
+        t('移动端@media全屏命中', Math.abs(mob('.bz-home-panel').getBoundingClientRect().width - md.documentElement.clientWidth) < 1);
+        t('移动瓦片13枚', md.querySelectorAll('.bz-home-m-tile').length === 13);
+        t('移动入口行隐藏（瓦片替代，CSS display:none）', getComputedStyle(mob('.bz-home-entries')).display === 'none');
+        t('关闭钮在头行（移动范式）', !!mob('.bz-home-head [data-home-close]'));
+        const mobYester = [...md.querySelectorAll('.bz-home-wk')].map((b) => b.dataset.homeWeekday)[1];
+        [...md.querySelectorAll('.bz-home-wk')].find((b) => b.dataset.homeWeekday === mobYester).click();
+        await sleep(60);
+        t('移动切昨天时间线5条', md.querySelectorAll('.bz-home-timeline .bz-home-ev').length === 5);
+        [...md.querySelectorAll('.bz-home-wk')][0].click();
+        await sleep(60);
+        t('移动切回今天9条', md.querySelectorAll('.bz-home-timeline .bz-home-ev').length === 9);
 
         document.title = window.__st.fail.length
           ? 'SELFTEST FAIL ' + window.__st.fail.join(',')
           : `SELFTEST OK ${window.__st.pass}/${window.__st.pass + window.__st.fail.length}`;
-      } catch (err) { document.title = 'SELFTEST ERR ' + (err && err.message || err); }
+        res.textContent = window.__st.fail.length ? '自检失败' : `自检通过 ${window.__st.pass}`;
+        res.className = window.__st.fail.length ? 'bad' : 'ok';
+      } catch (err) {
+        document.title = 'SELFTEST ERR ' + (err && err.message || err);
+        res.textContent = '自检异常';
+        res.className = 'bad';
+      }
     })();
   }
 })();
