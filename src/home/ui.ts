@@ -1,70 +1,37 @@
 /**
- * 内容首页（home 域）UI：活动河全域入口版（issue 232，p16-full 原型一比一落域）。
+ * 内容首页（home 域）UI 行为层（issue 232 活动河全域入口版）。
  *
  * 形态（桌面/移动同一 overlay，CSS ≤768px 断点切换；与 cinema 同构）：
- *  - 桌面：头行（今日活动河 + 日期）+ 三栏 grid（全部域 16 行 | 时间线 | 明天预告）；
+ *  - 桌面：头行（今日活动河 + 日期）+ 三栏 grid（全部域 | 时间线 | 明天预告）；
  *          点遮罩/ESC 关闭（无关闭钮，头行去设置/关闭范式）
  *  - 移动：头行（活动河 + 关闭钮）+ 单列（时间线 → 明天预告 → 全部域两列瓦片）
  *  - 入口行/瓦片：今日动静彩点（ok/warn/hot/off）+ lucide 图标 + 实时计数，点击执行域命令
  *  - 时间线：recap 五域痕迹流 + 规则点评（✦ 域内自算，非 AI 调用）
  *  - 明天预告：复习/剪藏/日记三张规则卡，点击直达
- * 组件库纪律（铁律 6）：图标一律 lucide（data-lucide 占位 → mountIcons 统一 setIcon）。
+ * markup 单源（ADR-0104）：面板骨架/周历/入口行/河卡/预告卡 HTML 全部出自 ./render
+ * （渲染纯层，与原型壳消费同一份）；本文件只剩行为层——生命周期/事件绑定/ESC/命令直达。
  */
 import { escManager } from '../core/esc-manager';
 import { notice } from '../core/notice';
-import { escapeHtml } from '../core/utils';
 import { mountIcons } from '../core/ui';
 import { topifyZ } from '../core/dom';
 import { H } from './state';
-import { DOMAINS, DOMAIN_MAP, DOMAIN_DOT } from './domains';
-import { collectRiver, buildNotes, buildPreviews, buildDots, riverCountText } from './river';
-import type { RiverData, RiverDay, RiverDot } from './river';
+import { DOMAIN_MAP } from './domains';
+import { collectRiver } from './river';
+import {
+  headDateText, panelFrameHtml, loadingEntriesHtml, loadingFlowHtml,
+  weekHtml, entriesHtml, flowHtml, nextHtml, tilesHtml,
+} from './render';
 
 /** 周历当前查看日（'YYYY-MM-DD'；null = 今天。周历点按切天，只重渲时间线不重采） */
 let riverView: string | null = null;
 
-/* ---------- lucide 占位 + 挂载 ---------- */
-
-function iconSpan(name: string, extra = ''): string {
-  return `<i data-lucide="${name}" class="bz-ic${extra ? ' ' + extra : ''}"></i>`;
-}
-
-function esc(s: unknown): string {
-  return escapeHtml(String(s ?? ''));
-}
-
-function p2(n: number): string {
-  return String(n).padStart(2, '0');
-}
-
-function headDateText(): string {
-  const d = new Date();
-  const wd = '日一二三四五六'[d.getDay()];
-  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} 周${wd} · ${p2(d.getHours())}:${p2(d.getMinutes())}`;
-}
-
-/* ---------- 面板骨架 ---------- */
+/* ---------- 生命周期 ---------- */
 
 export function createOverlay(app: any): void {
   const overlay = document.createElement('div');
   overlay.className = 'bz-panel-overlay bz-home-overlay';
-  overlay.innerHTML = `
-    <div class="bz-panel-frame bz-home-panel bz-panel-mtop">
-      <div class="bz-home-head">
-        <h1 class="bz-home-title">首页</h1>
-        <div class="bz-home-week" data-home-week></div>
-        <span class="bz-home-date" data-home-date></span>
-        <div role="button" tabindex="0" class="bz-home-close" data-home-close title="关闭" aria-label="关闭">${iconSpan('x')}</div>
-      </div>
-      <div class="bz-home-body">
-        <div class="bz-home-grid">
-          <div class="bz-home-entries" data-home-entries></div>
-          <div class="bz-home-flow" data-home-flow></div>
-          <div class="bz-home-next" data-home-next></div>
-          <div class="bz-home-tiles" data-home-tiles></div>
-        </div>
-      </div>
-    </div>`;
+  overlay.innerHTML = panelFrameHtml();
   document.body.appendChild(overlay);
   topifyZ(overlay); // ADR-0067：显示即发号（cinema 等后开面板可压过首页）
   H.currentOverlay = overlay;
@@ -150,75 +117,7 @@ function openDomain(id: string, app: any): void {
   }
 }
 
-/* ---------- 渲染 ---------- */
-
-/** 入口行彩点（river 规则只覆盖有动静语义的 6 域，其余恒 off） */
-function dotOf(dots: Record<string, RiverDot>, id: string): RiverDot {
-  return dots[id] ?? 'off';
-}
-
-function entriesHtml(data: RiverData): string {
-  const dots = buildDots(data);
-  return DOMAINS.map((d) => {
-        const dot = dotOf(dots, d.id);
-        const ct = riverCountText(d.id, data) ?? d.sub;
-        return '<div role="button" tabindex="0" class="bz-home-erow" data-home-go="' + d.id + '">'
-          + '<span class="bz-home-dot bz-home-dot--' + dot + '"></span>'
-          + '<span class="bz-home-eic" style="color:' + (DOMAIN_DOT[d.id] ?? '#8a8f99') + '">' + iconSpan(d.icon) + '</span>'
-          + '<span class="bz-home-enm">' + esc(d.name) + '</span>'
-          + '<span class="bz-home-ect">' + esc(ct) + '</span>'
-          + '<span class="bz-home-ego">→</span></div>';
-      }).join('');
-}
-
-function flowHtml(data: RiverData, view: string): string {
-  const day: RiverDay = data.days.find((d) => d.dateStr === view) ?? data.today;
-  const isToday = day.dateStr === data.today.dateStr;
-  const notes = isToday ? buildNotes(data) : [];
-  const title = '<div class="bz-home-sec-t">时 间 线 · ' + (isToday ? '今 天' : esc(day.dateStr.slice(5))) + '</div>';
-  const body = day.events.length
-    ? day.events.map((e, i) => {
-        const note = notes.find((n) => n.index === i);
-        const lastDiary = i === day.events.length - 1 && note && note.text.indexOf('日记') >= 0 ? ' bz-home-ev--warn' : '';
-        const dmColor = DOMAIN_DOT[e.domain === 'todo' ? 'memo' : e.domain] ?? '#8a8f99';
-        const dmName = DOMAIN_MAP.get(e.domain === 'todo' ? 'memo' : e.domain)?.name ?? e.domain;
-        const dmIcon = DOMAIN_MAP.get(e.domain === 'todo' ? 'memo' : e.domain)?.icon ?? '';
-        return '<div class="bz-home-ev' + lastDiary + '">'
-          + '<span class="bz-home-ev-tm">' + esc(e.timeLabel) + '</span>'
-          + '<div class="bz-home-ev-bd"><div class="bz-home-ev-tx">'
-          + '<span class="bz-home-ev-dm" style="background:' + dmColor + '">' + iconSpan(dmIcon) + esc(dmName) + '</span>'
-          + esc(e.text) + '</div>'
-          + (note ? '<div class="bz-home-ev-note">' + esc(note.text) + '</div>' : '')
-          + '</div></div>';
-      }).join('')
-    : '<div class="bz-home-flow-empty">这一天还没有留下痕迹。<br><b>写一篇日记</b>、点一轮番茄、读几页书——<br>都会出现在这条河里。</div>';
-  return title + (day.events.length ? '<div class="bz-home-timeline">' + body + '</div>' : body);
-}
-
-function nextHtml(data: RiverData): string {
-  return '<div class="bz-home-sec-t bz-home-sec-t--ai">明 天 预 告</div>'
-    + buildPreviews(data).map((pr) =>
-        '<div role="button" tabindex="0" class="bz-home-pr" data-home-go="' + pr.go + '">'
-        + '<div class="bz-home-pr-h">' + esc(pr.h) + '</div><div>' + esc(pr.b) + '</div>'
-        + '<span class="bz-home-pr-go">' + esc(pr.goLabel) + '</span></div>'
-      ).join('');
-}
-
-/** 移动端全部域两列瓦片（桌面隐藏；单列顺序 时间线 → 预告 → 瓦片） */
-function tilesHtml(data: RiverData): string {
-  const dots = buildDots(data);
-  return '<div class="bz-home-m-tiles">'
-    + DOMAINS.map((d) => {
-        const dot = dotOf(dots, d.id);
-        const ct = riverCountText(d.id, data) ?? d.sub;
-        return '<div role="button" tabindex="0" class="bz-home-m-tile" data-home-go="' + d.id + '">'
-          + '<span class="bz-home-dot bz-home-dot--' + dot + '"></span>'
-          + '<span class="bz-home-eic" style="color:' + (DOMAIN_DOT[d.id] ?? '#8a8f99') + '">' + iconSpan(d.icon) + '</span>'
-          + '<span class="bz-home-enm">' + esc(d.name) + '</span>'
-          + '<span class="bz-home-ect">' + esc(ct) + '</span></div>';
-      }).join('')
-    + '</div>';
-}
+/* ---------- 渲染（胶水：把单源 markup 灌进骨架数据区） ---------- */
 
 function renderAll(): void {
   const overlay = H.currentOverlay;
@@ -231,8 +130,8 @@ function renderAll(): void {
     const entries = overlay.querySelector('[data-home-entries]') as HTMLElement;
     const flow = overlay.querySelector('[data-home-flow]') as HTMLElement;
     const next = overlay.querySelector('[data-home-next]') as HTMLElement;
-    entries.innerHTML = '<div class="bz-home-sec-t">全 部 域</div>';
-    flow.innerHTML = '<div class="bz-home-sec-t">时 间 线 · 今 天</div><div class="bz-home-flow-empty">正在汇入今天的痕迹…</div>';
+    entries.innerHTML = loadingEntriesHtml();
+    flow.innerHTML = loadingFlowHtml();
     next.innerHTML = '';
     (overlay.querySelector('[data-home-tiles]') as HTMLElement).innerHTML = '';
     (overlay.querySelector('[data-home-week]') as HTMLElement).innerHTML = '';
@@ -241,26 +140,18 @@ function renderAll(): void {
   const river = H.river;
   const view = riverView && river.days.some((d) => d.dateStr === riverView) ? riverView : null;
   riverView = view;
-  // 周历（7 格动静历，hit=当天有动静，sel=当前查看日）
+  const today = river.today.dateStr;
   const week = overlay.querySelector('[data-home-week]') as HTMLElement;
-  if (week) {
-    // 倒排：最新在前；今天显示「今」不写数字（原型拍板）
-    week.innerHTML = river.week.map((w) => {
-      const isToday = w.dateStr === river.today.dateStr;
-      return '<div role="button" tabindex="0" class="bz-home-wk' + (w.hit ? ' bz-home-wk--hit' : '') + (w.dateStr === (view ?? river.today.dateStr) ? ' bz-home-wk--sel' : '') + '"'
-        + ' data-home-weekday="' + w.dateStr + '" aria-label="' + (isToday ? '今天' : w.label) + (w.hit ? '，有动静' : '') + '">'
-        + '<i></i><span class="bz-home-wk-n">' + (isToday ? '今' : w.dayOfMonth) + '</span></div>';
-    }).join('');
-    mountIcons(week);
-  }
+  if (week) week.innerHTML = weekHtml(river.week, today, view ?? today);
   const entries = overlay.querySelector('[data-home-entries]') as HTMLElement;
   const flow = overlay.querySelector('[data-home-flow]') as HTMLElement;
   const next = overlay.querySelector('[data-home-next]') as HTMLElement;
   entries.innerHTML = entriesHtml(river);
-  flow.innerHTML = flowHtml(river, view ?? river.today.dateStr);
+  flow.innerHTML = flowHtml(river, view ?? today);
   next.innerHTML = nextHtml(river);
   const tiles = overlay.querySelector('[data-home-tiles]') as HTMLElement;
   tiles.innerHTML = tilesHtml(river); // 桌面隐藏；移动端单列置前（CSS order）
+  mountIcons(week);
   mountIcons(entries);
   mountIcons(flow);
   mountIcons(next);

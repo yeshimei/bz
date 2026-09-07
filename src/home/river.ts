@@ -2,6 +2,10 @@
  * 内容首页（home 域）活动河数据层（issue 232，p16-full 原型一比一落域）：
  * 「今日活动河全域入口版」= 时间线（今天痕迹流）+ 全部域入口（实时数 + 今日动静彩点）+ 明天预告。
  *
+ * 职责（ADR-0104 单源化后）：只剩「采集」——把 vault/各域数据聚合成 RiverData；
+ * 纯类型与规则纯函数（buildNotes/buildPreviews/buildDots/riverCountText 等）已收编
+ * 渲染纯层共享层（./shared），本文件 re-export 保旧引用路径不变（tests/home 等）。
+ *
  * 只读契约（与 snapshot.ts 同款）：
  *  - json 数据文件一律先探测存在再读（缺失回落空，不触发 jsonFileStore 自动建文件）；
  *  - 目录缺失不建目录；不调任何带 DOM/轮询/通知副作用的 ensure/open；
@@ -27,103 +31,31 @@ import { scanMarkdownBooks, loadEpubItems } from '../bookshelf/data';
 import { loadDatabase as loadBelongings } from '../belongings/data';
 import { DataManager as FavoritesDataManager } from '../favorites/data';
 import { getStoragePath as getFavoritesPath } from '../favorites/config';
+import { EMPTY_COUNTS, EMPTY_SUMMARY, dateStrOf } from './shared';
+import type { RiverData, RiverDay, RiverCounts, RiverStreak, RiverSummary, RiverWeekDay } from './shared';
+
+// 兼容再出口：类型与规则纯函数单源在 ./shared（旧引用 `from './river'` 零改）
+export {
+  EMPTY_COUNTS, EMPTY_SUMMARY, dateStrOf,
+  buildNotes, buildPreviews, buildDots, riverCountText, dotOf,
+} from './shared';
+export type {
+  RiverData, RiverDay, RiverEvent, RiverStreak, RiverCounts,
+  RiverSummary, RiverWeekDay, RiverNote, RiverPreview, RiverDot,
+} from './shared';
 
 const DAY_MS = 86400000;
 
-/* ---------- 类型 ---------- */
+/* ---------- RecapItem → RiverDay ---------- */
 
-/** 时间线一条痕迹（recap RecapItem 的域展宽版：todo 保留原名，前端图标/名称映射） */
-export type RiverEvent = RecapItem;
-
-/** 日记连击态 */
-export interface RiverStreak {
-  /** 从今天（未写不算断）往回连续写日记的天数 */
-  diaryStreak: number;
-  diaryWrittenToday: boolean;
-}
-
-/** 全部域入口实时计数（口径注释见各采集分支） */
-export interface RiverCounts {
-  diaryTotal: number;
-  reviewTotal: number;
-  reviewOverdue: number;
-  reviewDueTomorrow: number;
-  cinemaWant: number;
-  cinemaWatching: number;
-  bookshelfReading: number;
-  bookshelfFinished: number;
-  clippingUnread: number;
-  favoritesTotal: number;
-  belongingsTotal: number;
-}
-
-export const EMPTY_COUNTS: RiverCounts = {
-  diaryTotal: 0,
-  reviewTotal: 0,
-  reviewOverdue: 0,
-  reviewDueTomorrow: 0,
-  cinemaWant: 0,
-  cinemaWatching: 0,
-  bookshelfReading: 0,
-  bookshelfFinished: 0,
-  clippingUnread: 0,
-  favoritesTotal: 0,
-  belongingsTotal: 0,
-};
-
-/** 时间线摘要（recap RecapSummary + todoCreated：原型 buildDots 的待办动静需要） */
-export interface RiverSummary extends RecapSummary {
-  /** 今日新增待办条数（recap 摘要无此字段，由时间线「新增待办」条目数派生） */
-  todoCreated: number;
-}
-
-export const EMPTY_SUMMARY: RiverSummary = {
-  diary: 0, movies: 0, books: 0, todoDone: 0, todoCreated: 0, pomodoros: 0, pomodoroMinutes: 0,
-};
-
-/** 一天的时间线（今天/昨天同构） */
-export interface RiverDay {
-  dateStr: string;
-  events: RiverEvent[];
-  summary: RiverSummary;
-  /** 第一条痕迹时刻（无痕迹为 null；点评「动手早晚」比较用） */
-  firstTs: number | null;
-}
-
-/** 周历一格（头行动静历，可点切天） */
-export interface RiverWeekDay {
-  /** 完整日期 'YYYY-MM-DD'（视图键，与 days[].dateStr 同键） */
-  dateStr: string;
-  /** 展示用 'MM-DD' */
-  label: string;
-  dayOfMonth: number;
-  weekday: string;
-  /** 当天有动静（时间线非空） */
-  hit: boolean;
-}
-
-/** 活动河聚合结果 */
-export interface RiverData {
-  today: RiverDay;
-  yesterday: RiverDay;
-  /** 本周 7 天窗口（index 0 = 今天，往回 6 天；周历切天的数据源） */
-  days: RiverDay[];
-  week: RiverWeekDay[];
-  streak: RiverStreak;
-  counts: RiverCounts;
+function toRiverDay(dateStr: string, summary: RecapSummary, items: RecapItem[]): RiverDay {
+  const events = [...items].sort((a, b) => a.ts - b.ts);
+  // todoCreated：recap 摘要没有，由「新增待办」痕迹数派生（buildRecap 文案契约）
+  const full: RiverSummary = { ...summary, todoCreated: events.filter((e) => e.text.startsWith('新增待办')).length };
+  return { dateStr, events, summary: full, firstTs: events.length ? events[0].ts : null };
 }
 
 /* ---------- 小工具（本地副本防跨文件牵连，同 recap 口径） ---------- */
-
-function p2(n: number): string {
-  return String(n).padStart(2, '0');
-}
-
-/** 'YYYY-MM-DD'（本地时区） */
-export function dateStrOf(anchor: number): string {
-  const d = new Date(anchor);
-  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
-}
 
 function settingDir(keys: string[], def: string): string {
   const s = tryGetSettings() as Record<string, unknown>;
@@ -151,15 +83,6 @@ async function readJsonIfExists(app: App, filePath: string): Promise<unknown | n
   } catch {
     return null;
   }
-}
-
-/* ---------- RecapItem → RiverDay ---------- */
-
-function toRiverDay(dateStr: string, summary: RecapSummary, items: RecapItem[]): RiverDay {
-  const events = [...items].sort((a, b) => a.ts - b.ts);
-  // todoCreated：recap 摘要没有，由「新增待办」痕迹数派生（buildRecap 文案契约）
-  const full: RiverSummary = { ...summary, todoCreated: events.filter((e) => e.text.startsWith('新增待办')).length };
-  return { dateStr, events, summary: full, firstTs: events.length ? events[0].ts : null };
 }
 
 /* ---------- 计数采集（各源独立容错） ---------- */
@@ -295,121 +218,4 @@ export async function collectRiver(app: App, now: number = Date.now()): Promise<
     streak,
     counts,
   };
-}
-
-/* ---------- 规则纯函数（原型 buildNotes/buildPreviews/buildDots 一比一移植） ---------- */
-
-/** 时间线规则点评：index = 挂靠的事件下标（-1 = 空河整条点评，UI 层渲染在时间线顶部） */
-export interface RiverNote {
-  index: number;
-  text: string;
-}
-
-function fmtHm(t: number): string {
-  const d = new Date(t);
-  return `${p2(d.getHours())}:${p2(d.getMinutes())}`;
-}
-
-/** 点评规则（node 可测）：
- *  - 首条动静 vs 昨天首条：早晚分钟差点评（昨天无痕迹则报首动时刻）；
- *  - 今晚（≥18 点）有动静、日记还空着且连击 >0 → 末条挂连击提醒 */
-export function buildNotes(data: RiverData): RiverNote[] {
-  const notes: RiverNote[] = [];
-  const day = data.today;
-  if (!day.events.length) return notes;
-  if (day.firstTs !== null) {
-    if (data.yesterday.firstTs !== null) {
-      const diff = Math.round((day.firstTs - data.yesterday.firstTs) / 60000);
-      if (diff > 0) notes.push({ index: 0, text: `动手比昨天晚了 ${diff} 分钟，不过来了就好。` });
-      else if (diff < 0) notes.push({ index: 0, text: `动手比昨天早了 ${-diff} 分钟，好开头。` });
-      else notes.push({ index: 0, text: '和昨天几乎同一时间动手，节奏很稳。' });
-    } else {
-      notes.push({ index: 0, text: `今天第一笔动静在 ${fmtHm(day.firstTs)}。` });
-    }
-  }
-  const last = day.events[day.events.length - 1];
-  const evening = new Date(last.ts);
-  evening.setHours(18, 0, 0, 0);
-  if (!data.streak.diaryWrittenToday && data.streak.diaryStreak > 0 && last.ts >= evening.getTime()) {
-    notes.push({ index: day.events.length - 1, text: `晚上效率回来了——但日记还空着，×${data.streak.diaryStreak} 连击在等你。` });
-  }
-  return notes;
-}
-
-/** 明天预告卡 */
-export interface RiverPreview {
-  h: string;
-  b: string;
-  go: string;
-  goLabel: string;
-}
-
-/** 预告规则（node 可测）：复习到期/逾期 → 剪藏库存 → 日记连击，三张卡 */
-export function buildPreviews(data: RiverData): RiverPreview[] {
-  const c = data.counts;
-  const t = data.today.summary;
-  const s = data.streak;
-  const out: RiverPreview[] = [];
-  if (c.reviewDueTomorrow > 0) {
-    out.push({ h: `复习将到期 ${c.reviewDueTomorrow} 张`, b: '按 SRS 间隔推算，明天到期。今晚顺手过一遍队列，明天正好清干净。', go: 'review', goLabel: '去复习计划 →' });
-  } else if (c.reviewOverdue > 0) {
-    out.push({ h: `还有 ${c.reviewOverdue} 张逾期卡`, b: '逾期是唯一会随时间变贵的债。约 4 分钟一张，还掉最划算。', go: 'review', goLabel: '去还卡 →' });
-  } else {
-    out.push({ h: t.pomodoros > 0 ? `今天已专注 ${t.pomodoros} 轮` : '番茄引擎待命', b: '排一轮 25 分钟给明天最重要的那件事。', go: 'pomodoro', goLabel: '开番茄钟 →' });
-  }
-  out.push(
-    c.clippingUnread > 0
-      ? { h: `剪藏还压 ${c.clippingUnread} 篇`, b: '挑 1 篇放进明早：通勤读一篇，保持进出平衡。', go: 'clipping', goLabel: '挑一篇放明早 →' }
-      : { h: '剪藏库已清空', b: '库存干净了，明天遇到好文章放心收。', go: 'clipping', goLabel: '去剪藏本 →' }
-  );
-  if (!s.diaryWrittenToday && s.diaryStreak > 0) {
-    out.push({ h: `日记连击 ×${s.diaryStreak} 待续`, b: '写三行也算数。今晚补上，明天它自己接着长。', go: 'diary', goLabel: '去写日记 →' });
-  } else if (s.diaryWrittenToday) {
-    out.push({ h: `今日日记已写 · 连击 ×${s.diaryStreak + 1}`, b: '明天同一时间回来续上，连击就是这么长起来的。', go: 'diary', goLabel: '看日记本 →' });
-  } else {
-    out.push({ h: '给明天留一句话', b: '今晚写一篇日记，明晚它会变成回忆墙上的新格子。', go: 'diary', goLabel: '去写日记 →' });
-  }
-  return out;
-}
-
-/** 入口行彩点状态：ok=今天有动静 / warn=提醒（日记连击）/ hot=逾期 / off=无动静 */
-export type RiverDot = 'ok' | 'warn' | 'hot' | 'off';
-
-/** 彩点规则（node 可测；与原型 buildDots 一致，映射到 home 域 id：todo/memo 同源） */
-export function buildDots(data: RiverData): Record<string, RiverDot> {
-  const day = data.today;
-  const hasEvent = (d: string): boolean => day.events.some((e) => e.domain === d);
-  return {
-    diary: day.summary.diary > 0 ? 'ok' : data.streak.diaryStreak > 0 ? 'warn' : 'off',
-    review: data.counts.reviewOverdue > 0 ? 'hot' : 'off',
-    memo: day.summary.todoDone + day.summary.todoCreated > 0 ? 'ok' : 'off',
-    pomodoro: day.summary.pomodoros > 0 ? 'ok' : 'off',
-    cinema: hasEvent('cinema') ? 'ok' : 'off',
-    bookshelf: hasEvent('bookshelf') ? 'ok' : 'off',
-  };
-}
-
-/** 全部域入口行计数文案（id 与 domains.ts 一致；缺数据回落域副题） */
-export function riverCountText(id: string, data: RiverData): string | null {
-  const c = data.counts;
-  switch (id) {
-    case 'diary':
-      return `${c.diaryTotal} 篇${data.streak.diaryWrittenToday ? ' · 今日已写' : ''}`;
-    case 'review':
-      return c.reviewOverdue > 0 ? `${c.reviewTotal} 张 · 逾期 ${c.reviewOverdue}` : `${c.reviewTotal} 张在册`;
-    case 'cinema':
-      return `想看 ${c.cinemaWant} · 在看 ${c.cinemaWatching}`;
-    case 'bookshelf':
-      return `在读 ${c.bookshelfReading} · 读完 ${c.bookshelfFinished}`;
-    case 'clipping':
-      return `未读 ${c.clippingUnread} 篇`;
-    case 'favorites':
-      return `${c.favoritesTotal} 条`;
-    case 'belongings':
-      return `登记 ${c.belongingsTotal} 件`;
-    case 'wall':
-      return `${c.diaryTotal} 格`;
-    default:
-      return null; // recap/literature/reading-report/attach/encrypt/smartcat/settings/pomodoro 走域副题
-  }
 }
