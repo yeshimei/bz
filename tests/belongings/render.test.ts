@@ -117,7 +117,7 @@ describe('filtered / years / hero', () => {
     expect(heroTitleText(view)).toBe('全部');
     expect(heroTitleText({ ...view, status: 'asset' })).toBe('资产');
     expect(heroTitleText({ ...view, status: 'idle' })).toBe('闲置');
-    expect(heroSubText(items, view)).toContain('BELONGINGS');
+    expect(heroSubText(items, view)).toContain('NOTHING MORE');
     expect(heroSubText(items, { ...view, status: 'asset' })).toContain('3 件在列');
   });
 });

@@ -178,7 +178,7 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     expect(content()!.textContent).toContain('这里还没有物品');
     // hero 大字标题 = 筛选名（默认全部）+ 海报标语
     expect(heroTitle()!.textContent).toBe('全部');
-    expect(heroSub()!.textContent).toBe('归物本 — BELONGINGS · NOTHING MORE, NOTHING LESS');
+    expect(heroSub()!.textContent).toBe('归物本 — NOTHING MORE, NOTHING LESS');
     // chips 计数：全部/资产/四态 全 0
     expect(chipCnts()).toEqual(['0', '0', '0', '0', '0', '0']);
     // 空库首建（统一读写语义：缺失建文件）
@@ -493,7 +493,7 @@ describe('归物本渲染（KPI / 网格卡字段 / 脏数据容错）', () => {
     });
     await open(vault);
     expect(heroTitle()!.textContent).toBe('全部');
-    expect(heroSub()!.textContent).toBe('归物本 — BELONGINGS · NOTHING MORE, NOTHING LESS');
+    expect(heroSub()!.textContent).toBe('归物本 — NOTHING MORE, NOTHING LESS');
     clickChip('using');
     expect(heroTitle()!.textContent).toBe('使用中');
     expect(heroSub()!.textContent).toBe('归物本 — 1 件在列 · FILTERED VIEW');

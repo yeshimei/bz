@@ -70,16 +70,21 @@
 
 <script src="./prototype-icons.js"></script>
 <script src="./prototype-data.js"></script>
+<script src="./prototype-render.js"></script>
 <script>
 (function () {
-  /* ==================== 运行模式：?mob=1 = 本页即移动端视口（iframe 内容） ==================== */
+  /* ==================== 运行模式：?mob=1 = 本页即移动端视口（iframe 内容） ====================
+     markup 单源（ADR-0104）：面板/标签/排序/书脊墙/空态/借书卡/筛选排序管道全部出自
+     render.ts（经 prototype-render.js 挂 window.BZR_bookshelf）——本壳只留演示层：
+     演示数据、皮肤/亮暗切换、自绘弹窗壳与 toast、评审钩子与自检。 */
+  const R = window.BZR_bookshelf;
+  const esc2 = R.esc;
+  const iconSpan = R.iconSpan;
+
   const param = (k) => { const m = location.search.match(new RegExp('[?&]' + k + '=([^&]+)')); return m ? m[1] : ''; };
   const MOB = location.search.includes('mob=1');
 
-  /* ==================== 壳基座：转义 / 图标 / mountIcons（对齐 core/ui icons.ts） ==================== */
-  const ESC_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-  const esc2 = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ESC_MAP[c]);
-  const iconSpan = (name, extra) => `<i data-lucide="${name}" class="bz-ic${extra ? ' ' + extra : ''}"></i>`;
+  /* ==================== 壳基座：mountIcons（内联 SVG，对齐 core/ui icons.ts） ==================== */
   const ICONS = window.BS_ICONS || {};
   function mountIcons(root) {
     if (!root) return;
@@ -90,271 +95,15 @@
       }
     });
   }
+  const HOOKS = { mountIcons };
 
-  /* ==================== 与 ui.ts / data.ts / constants.ts 同构 ==================== */
-  const STATUS_COLORS = { '未读': 'var(--bz-text-3)', '在读': 'var(--bz-brand)', '已读': 'var(--bz-success)' };
-  const SORT_LABEL = { recent: '最近读完', time: '时长最长', title: '书名' };
-  const EMPTY_BOOKS_ICON = 'library-big', EMPTY_SEARCH_ICON = 'search-x', EMPTY_FILTER_ICON = 'funnel';
-
-  /** 分类色板（ui.ts CAT 逐字：常见分类覆盖 + 兜底散列） */
-  const CAT = {
-    '文学': { bg: '#8f4a3a', fg: '#f2e4d8' }, '推理': { bg: '#7a3b52', fg: '#f2dee6' },
-    '哲学': { bg: '#4f6f52', fg: '#e9efe6' }, '科幻': { bg: '#3d5a73', fg: '#e2ecf4' },
-    '心理学': { bg: '#5c5273', fg: '#e9e4f2' }, '摄影': { bg: '#2f4858', fg: '#dbe8f0' },
-    '天文学': { bg: '#1f3242', fg: '#c9dde9' }, '生物学': { bg: '#6d7a3f', fg: '#eef0dc' },
-    '龙与地下城': { bg: '#4a3626', fg: '#e8d9b0' },
-    '历史': { bg: '#8a6d3b', fg: '#f5ecd8' }, '武侠': { bg: '#9a5a2f', fg: '#f7ead9' },
-    '奇幻': { bg: '#3f5a4a', fg: '#dfeee4' }, '艺术': { bg: '#6b4a6e', fg: '#efe2f0' },
-    '未分类': { bg: '#6b6257', fg: '#ded8ce' },
-  };
-  const FALLBACKS = ['#8a6d3b', '#4f6f52', '#3d5a73', '#8f4a3a', '#5c5273', '#7a3b52', '#6d7a3f', '#2f4858'];
-  function fallbackColor(seed) {
-    let h = 0;
-    for (const ch of seed) h = (h * 31 + (ch.codePointAt(0) || 0)) >>> 0;
-    return { bg: FALLBACKS[h % FALLBACKS.length], fg: '#f0e8d8' };
-  }
-  const catColor = (cat) => CAT[cat] || fallbackColor(cat);
-  function shade(hex, p) {
-    const n = parseInt(hex.slice(1), 16);
-    const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
-    const f = (v) => Math.max(0, Math.min(255, v + p));
-    return `rgb(${f(r)},${f(g)},${f(b)})`;
-  }
-
-  /* ---- 数据管道（data.ts getDisplayItems 同构） ---- */
+  /* ==================== 演示数据 + 面板状态（state.ts M 同构；view 恒 shelf） ==================== */
   const items = window.BS.ITEMS.map((x) => ({ ...x }));
   const itemById = (id) => items.find((i) => i.id === id);
-  function primaryDate(it) {
-    const d = it.completionDate || it.readingDate;
-    if (d) { const t = new Date(d).getTime(); if (!isNaN(t)) return t; }
-    return it.ctime || 0; // 插件 = file.stat.ctime；演示数据同语义字段
-  }
-  function sortItems(list, key) {
-    const sorted = [...list];
-    if (key === 'title') sorted.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'zh'));
-    else if (key === 'time') sorted.sort((a, b) => (b.readingTimeMs - a.readingTimeMs) || (primaryDate(b) - primaryDate(a)));
-    else sorted.sort((a, b) => (primaryDate(b) - primaryDate(a)) || (b.readingTimeMs - a.readingTimeMs));
-    return sorted;
-  }
-  function currentSideItems(list, side) {
-    if (side === 'all') return list;
-    const status = side === 'reading' ? '在读' : side === 'unread' ? '未读' : '已读';
-    return list.filter((it) => it.status === status);
-  }
-  const categoryLabel = (it) => it.category || '未分类';
-  function catFilterItems(list, cat) {
-    if (!cat || cat === 'all') return list;
-    return list.filter((it) => categoryLabel(it) === cat);
-  }
-  function kwFilter(list, kw) {
-    if (!kw) return list;
-    const k = kw.trim().toLowerCase();
-    return list.filter((it) => `${it.title} ${it.author || ''} ${it.category || ''}`.toLowerCase().includes(k));
-  }
+  const M = { side: 'all', catFilter: 'all', sortMode: 'recent', searchKeyword: '', view: 'shelf' };
+  const getDisplayItems = () => R.getDisplayItems(items, { side: M.side, catFilter: M.catFilter, q: M.searchKeyword, sortMode: M.sortMode });
 
-  /* ---- 面板状态（state.ts M 同构；view 恒 shelf，报告视图为命令入口、墙面无入口） ---- */
-  const M = { side: 'all', catFilter: 'all', sort: 'recent', q: '', view: 'shelf' };
-  const getDisplayItems = () => sortItems(kwFilter(catFilterItems(currentSideItems(items, M.side), M.catFilter), M.q), M.sort);
-
-  /* ---- 墙内标尺 + 书脊（ui.ts rescaleWall/spineVars/fitTitle/spineHTML 同构） ---- */
-  let wallMaxHrs = 3600000, wallMaxWc = 10000;
-  function rescaleWall() {
-    wallMaxHrs = Math.max(3600000, ...items.map((b) => b.readingTimeMs));
-    wallMaxWc = Math.max(10000, ...items.map((b) => b.wordCount));
-  }
-  function spineVars(it) {
-    const dense = it.highlights + it.thinks;
-    const wc = it.wordCount > 0 ? it.wordCount : dense * 800;
-    const h = 150 + (it.readingTimeMs / wallMaxHrs) * 80;
-    const th = 22 + Math.sqrt(Math.min(wc, wallMaxWc) / wallMaxWc) * 34;
-    const c = it.status === '未读' ? { bg: '#6b6257', fg: '#ded8ce' } : catColor(it.category || '未分类');
-    let sh = 0;
-    for (const ch of it.title) sh = (sh * 31 + (ch.codePointAt(0) || 0)) >>> 0;
-    const jit = (sh % 15) - 7;
-    return `height:${Math.round(h)}px;width:${Math.round(th)}px;--c1:${shade(c.bg, jit)};--c2:${c.fg}`;
-  }
-  function fitTitle(spine, it) {
-    const t = spine.querySelector('.bz-bs-spine-title');
-    const avail = parseFloat(spine.style.height) - 36;
-    let parts = it.title.split(/[:：]/);
-    if (parts.length > 2) parts = [parts[0], parts.slice(1).join('：')];
-    const fitFs = (n) => Math.max(9, Math.min(14, Math.floor(avail / (1.18 * Math.max(1, n)))));
-    const cols = parts.map((p) => ({ p, fs: fitFs([...p].length) }));
-    let width = 24;
-    for (const c of cols) width += Math.ceil(c.fs * 1.25) + 6;
-    t.innerHTML = cols
-      .map((c, i) => `<span class="${i === 0 ? 't-main' : 't-sub'}" style="font-size:${c.fs}px;letter-spacing:${Math.max(1, Math.round(c.fs * 0.18))}px">${esc2(c.p)}</span>`)
-      .join('');
-    spine.style.width = `${Math.min(64, Math.max(parseFloat(spine.style.width), width))}px`;
-  }
-  function spineHTML(it) {
-    const cls = it.status === '已读' ? 'read' : it.status === '在读' ? 'reading' : 'unread';
-    return `<div class="bz-bs-spine ${cls}" style="${spineVars(it)}" data-bs-id="${esc2(it.id)}" data-bs-epub="${it.isEpub ? '1' : ''}" title="${esc2(it.title)} · ${esc2(it.status)}${it.progress > 0 ? ' ' + it.progress + '%' : ''}">
-    <span class="bz-bs-spine-title"></span>
-    ${it.status === '已读' ? '<span class="stamp">讫</span>' : ''}
-    ${it.status === '在读' ? '<span class="ribbon"></span>' : ''}
-  </div>`;
-  }
-  const mkBookend = () => { const d = document.createElement('div'); d.className = 'bz-bs-bookend'; return d; };
-  function mkSpine(it) {
-    const wrap = document.createElement('div');
-    wrap.innerHTML = spineHTML(it);
-    const sp = wrap.firstElementChild;
-    fitTitle(sp, it);
-    return sp;
-  }
-
-  /* ---- 分类分区装箱（ui.ts packZone 同构：逐条塞书脊，塞不下换排） ---- */
-  function packZone(shelf, cat, books) {
-    let zone = null;
-    const newRow = () => {
-      zone = document.createElement('div');
-      zone.className = 'bz-bs-zone';
-      zone.appendChild(mkBookend());
-      const dv = document.createElement('div');
-      dv.className = 'bz-bs-divider';
-      dv.textContent = cat + ' 区';
-      zone.appendChild(dv);
-      shelf.appendChild(zone);
-    };
-    for (let i = 0; i < books.length; i++) {
-      if (!zone) newRow();
-      const sp = mkSpine(books[i]);
-      zone.appendChild(sp);
-      if (zone.scrollWidth > zone.clientWidth) {
-        zone.removeChild(sp);
-        if (!zone.querySelector('.bz-bs-spine')) zone.appendChild(sp); // 单条就超宽：硬塞防死循环
-        else { i--; zone = null; } // 这条留到下一排
-      }
-    }
-    zone = null;
-  }
-
-  /* ---- 空态三态（ui.ts wallEmptyHTML / uiEmpty 同构） ---- */
-  function wallEmptyHTML() {
-    const cfg = !items.length
-      ? { icon: EMPTY_BOOKS_ICON, title: '书库还是空的', desc: '把书籍笔记放进「书库」文件夹，并在 frontmatter 添加 tags: book 标签' }
-      : M.q
-        ? { icon: EMPTY_SEARCH_ICON, title: '没有找到相关的书', desc: '试试其他关键词，或换一个筛选' }
-        : { icon: EMPTY_FILTER_ICON, title: '这个筛选下还没有书', desc: '换一个状态或分类标签，或用搜索找找' };
-    return `<div class="bz-bs-wall-empty"><div class="bz-empty">${iconSpan(cfg.icon, 'bz-empty-ic')}<div class="bz-empty-title">${cfg.title}</div><div class="bz-empty-desc">${cfg.desc}</div></div></div>`;
-  }
-
-  /* ==================== 渲染（ui.ts renderWall/renderLabels/renderSortSeg 同构） ==================== */
-  function renderWall() {
-    const shelf = document.getElementById('bz-bs-shelf');
-    if (!shelf) return;
-    rescaleWall();
-    const list = getDisplayItems();
-    const onShelf = list.filter((b) => b.status !== '未读');
-    const unread = list.filter((b) => b.status === '未读');
-    shelf.innerHTML = '';
-    const hint = document.getElementById('bz-bs-hint');
-    if (hint) hint.textContent = `${onShelf.length + unread.length} 册在墙`;
-    if (!onShelf.length && !unread.length) { shelf.innerHTML = wallEmptyHTML(); mountIcons(shelf); return; }
-    const zones = new Map();
-    for (const b of onShelf) {
-      const k = b.category || '未分类';
-      const arr = zones.get(k) || [];
-      arr.push(b);
-      zones.set(k, arr);
-    }
-    const sortedZones = [...zones.entries()].sort((a, b) => b[1].length - a[1].length);
-    for (const [cat, books] of sortedZones) packZone(shelf, cat, books);
-    if (unread.length) {
-      const zone = document.createElement('div');
-      zone.className = 'bz-bs-zone';
-      const dv = document.createElement('div');
-      dv.className = 'bz-bs-divider';
-      dv.textContent = '倒 叠 区';
-      zone.appendChild(dv);
-      zone.appendChild(mkBookend());
-      for (const b of unread) zone.appendChild(mkSpine(b));
-      zone.appendChild(mkBookend());
-      shelf.appendChild(zone);
-    }
-  }
-  function renderLabels() {
-    const el = document.getElementById('bz-bs-labels');
-    if (!el) return;
-    const statusDefs = [
-      { f: 'all', n: items.length, t: '全馆藏书' },
-      { f: 'done', n: items.filter((x) => x.status === '已读').length, t: '已读 · 讫' },
-      { f: 'reading', n: items.filter((x) => x.status === '在读').length, t: '在读 · 抽出' },
-      { f: 'unread', n: items.filter((x) => x.status === '未读').length, t: '未读 · 倒叠' },
-    ];
-    const cats = new Map();
-    for (const b of items) {
-      if (b.status === '未读') continue;
-      const k = b.category || '未分类';
-      const c = cats.get(k) || { n: 0, ms: 0 };
-      c.n++; c.ms += b.readingTimeMs;
-      cats.set(k, c);
-    }
-    const catPairs = [...cats.entries()].sort((a, b) => b[1].n - a[1].n);
-    const filtering = M.side !== 'all' || M.catFilter !== 'all';
-    let html = statusDefs.map((d) => {
-      const on = d.f === 'all' ? M.side === 'all' && M.catFilter === 'all' : M.side === d.f;
-      const off = filtering && !on && d.f !== 'all';
-      return `
-    <div class="bz-bs-taglabel${on ? ' on' : ''}${off ? ' off' : ''}" data-bs-side="${d.f}">
-      <span class="pin"></span><div class="n">${d.n}</div><div class="t">${d.t}</div>
-    </div>`;
-    }).join('');
-    // 分类标签独立子容器（桌面 display:contents 隐身；移动端一行横滑带——styles.css @media 块）
-    const catHtml = catPairs.map(([cat, c]) => {
-      const hrs = c.ms > 0 ? ` · ${Math.round(c.ms / 3600000)} 时` : '';
-      const off = filtering && M.catFilter !== cat;
-      return `<div class="bz-bs-taglabel dim-cat${M.catFilter === cat ? ' on' : ''}${off ? ' off' : ''}" data-bs-cat="${esc2(cat)}">
-      <span class="pin"></span><div class="n">${esc2(cat)}</div><div class="t">${c.n} 册${hrs}</div>
-    </div>`;
-    }).join('');
-    el.innerHTML = `${html}<div class="bz-bs-cats">${catHtml}</div>`;
-  }
-  function renderSortSeg() {
-    const seg = document.getElementById('bz-bs-sortseg');
-    if (!seg) return;
-    seg.innerHTML = (Object.keys(SORT_LABEL))
-      .map((k) => `<button type="button" data-bs-sort="${k}"${M.sort === k ? ' class="on"' : ''}>${SORT_LABEL[k]}</button>`)
-      .join('');
-  }
-  function renderAll() { renderLabels(); renderSortSeg(); renderWall(); }
-
-  /* ==================== 面板骨架（ui.ts createOverlay innerHTML 逐字同构） ==================== */
-  function panelHtml() {
-    return `
-    <div class="bz-panel-frame bz-bs-panel bz-panel-mtop ${skinClass()}">
-      <div class="bz-bs-wallpage">
-      <div class="bz-bs-header">
-        <div class="bz-bs-plaque" data-bs-plaque><h1>书库</h1><p>LIBRARY</p></div>
-        <div class="bz-bs-labels" id="bz-bs-labels"></div>
-      </div>
-        <div class="bz-bs-tools">
-          <input id="bz-bs-dsearch" class="bz-bs-search" type="text" placeholder="检索书名或作者…" autocomplete="off">
-          <div class="bz-bs-seg" id="bz-bs-sortseg"></div>
-          <div class="bz-bs-hint" id="bz-bs-hint"></div>
-        </div>
-        <div class="bz-bs-view bz-bs-view-shelf active">
-          <div class="bz-bs-room">
-            <div class="bz-bs-shelf" id="bz-bs-shelf"></div>
-            <div class="bz-bs-wallnote">—— 书脊的高度是时长，厚度是批注，抽出的是正在进行 ——</div>
-          </div>
-        </div>
-        <div class="bz-bs-view bz-bs-view-report">
-          <div class="bz-rr-head">
-            <span class="bz-rr-title">${iconSpan('bar-chart-3', 'bz-ic--sm')}阅读分析报告</span>
-            <button class="bz-icon-btn bz-rr-close" data-rr-goto-shelf title="返回书库">${iconSpan('x')}</button>
-          </div>
-          <div class="bz-rr-content"></div>
-        </div>
-      </div>
-    </div>`;
-  }
-
-  /* ==================== 面板皮肤（五肤×亮暗模式；?skin=/?theme= 评审直达） ====================
-     本轮拍板：皮肤收敛为 雪松白/黑金夜曲/牛皮手帐/丝绒剧院/极简黑白，每肤配亮暗变体
-     （bz-bs-mode-light/dark 变体层，styles.css「亮暗模式变体」节）；Obsidian 主题切模式，选肤只定风格。
-     壳内 themeBtn 模拟 Obsidian body.theme-dark；插件端解析与设置收敛见 ui.ts/settings.ts（同步时落）。 */
+  /* ==================== 面板皮肤（五肤×亮暗模式；?skin=/?theme= 评审直达） ==================== */
   const SKIN_IDS = ['nordic', 'noir', 'kraft', 'velvet', 'mono'];
   const SKIN_NAMES = { nordic: '雪松白', noir: '黑金夜曲', kraft: '牛皮手帐', velvet: '丝绒剧院', mono: '极简黑白' };
   const normalizeSkin = (v) => SKIN_IDS.includes(v) ? v : 'nordic';
@@ -382,11 +131,40 @@
     paintSkin();
   }
 
-  /* ==================== 借书卡详情（ui.ts openBookDetail 同构；issue 223 只读） ====================
+  /* ==================== 渲染（render.ts 胶水：各回各的挂点） ==================== */
+  function panelRoot() { return MOB ? document.querySelector('.bz-panel-overlay') : document.getElementById('dtHost'); }
+  function renderAll() {
+    const root = panelRoot();
+    if (!root) return;
+    const labels = root.querySelector('#bz-bs-labels');
+    if (labels) labels.innerHTML = R.labelsHtml(items, M.side, M.catFilter);
+    const seg = root.querySelector('#bz-bs-sortseg');
+    if (seg) seg.innerHTML = R.sortSegHtml(M.sortMode);
+    const shelf = root.querySelector('#bz-bs-shelf');
+    if (!shelf) return;
+    R.renderWallInto(shelf, {
+      hint: root.querySelector('#bz-bs-hint'),
+      all: items, list: getDisplayItems(), q: M.searchKeyword,
+      emptyFolder: '书库', emptyTag: 'book',
+      hooks: HOOKS,
+    });
+  }
+
+  /* ==================== 面板骨架（render.ts panelHtml；插件侧 bsSkinClass 读设置，壳走 ?skin=/?theme=） ==================== */
+  function buildPanel(host) {
+    host.innerHTML = R.panelHtml(skinClass());
+    const overlay = host.classList.contains('bz-panel-overlay') ? host : host.querySelector('.bz-panel-overlay') || host;
+    panelEl = host.querySelector('.bz-bs-panel');
+    wirePanel(overlay);
+    mountIcons(host);
+    renderAll();
+  }
+
+  /* ==================== 借书卡详情（render.ts detailBodyHtml；壳同构自绘弹窗壳） ====================
      插件 = uiModal（mask.bz-overlay-mask > popup.bz-overlay-popup + 皮肤类 > .bz-dialog-body）；壳同构自绘。
-     封面：插件走 vault resource URL；壳无 vault 资源，cover 路径仅作占位 → 分类色 SVG data URI 代真。 */
+     封面：插件走 vault resource URL；壳无 vault 资源 → 分类色 SVG data URI 代真。 */
   function demoCoverUri(it) {
-    const c = catColor(it.category || '未分类');
+    const c = R.catColor(it.category || '未分类');
     const t = String(it.title || '');
     const mid = Math.ceil(t.length / 2);
     const lines = t.length <= 7 ? [t] : [t.slice(0, mid), t.slice(mid)];
@@ -395,53 +173,15 @@
       `<text x="75" y="186" text-anchor="middle" font-family="Songti SC,SimSun,serif" font-size="10" fill="${c.fg}" fill-opacity=".75">${esc2(it.author || '')}</text></svg>`;
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
-  function statusColor(status) { return STATUS_COLORS[status] || 'var(--bz-text-3)'; }
   let detailEl = null;
   function closeBookDetail() { if (detailEl) { detailEl.remove(); detailEl = null; } }
   function openBookDetail(it) {
     closeBookDetail();
     const cu = it.cover ? demoCoverUri(it) : null;
-    const cover = cu ? `<img src="${esc2(cu)}" alt="">` : `<div class="bz-bs-d-cover-ph">${iconSpan('library')}<span>无封面</span></div>`;
-    const review = it.bookReview
-      ? `<div class="bz-bs-d-quote">“${esc2(it.bookReview)}”</div>`
-      : '<div class="bz-bs-d-quote dim">——尚无书评——</div>';
-    const dense = it.highlights + it.thinks;
-    const seal = it.status === '已读' ? '讫' : it.status === '在读' ? '阅' : '藏';
-    const hoursText = it.readingTimeFormat || (it.readingTimeMs > 0 ? (it.readingTimeMs / 3600000).toFixed(1) + ' 小时' : '—');
-    const prog = Math.round(it.progress);
-
     const mask = document.createElement('div');
     mask.className = 'bz-overlay-mask';
     mask.innerHTML = `<div class="bz-overlay-popup bz-bs-d-popup ${skinClass()}"><div class="bz-dialog-body">
-    <div class="bz-bs-detail">
-      <div class="bz-bs-d-pull">已抽出这本书</div>
-      <button type="button" class="bz-bs-d-x" data-bs-d-close title="放回书架">×</button>
-      <div class="bz-bs-d-card">
-        <div class="bz-bs-d-cover">${cover}</div>
-        <div class="bz-bs-d-info">
-          <h2 class="bz-bs-d-title">${esc2(it.title)}</h2>
-          <div class="bz-bs-d-sub">${esc2(it.author)} · ${esc2(it.category || '未分类')}${it.isEpub ? ' · EPUB' : ''}</div>
-          ${review}
-          <table class="bz-bs-d-ledger">
-            <tr><td>状 态</td><td><span class="bz-bs-d-stdot" style="background:${statusColor(it.status)}"></span>${esc2(it.status)}</td></tr>
-            <tr><td>累计时长</td><td>${esc2(hoursText)}</td></tr>
-            <tr><td>起读 · 读完</td><td>${esc2(it.readingDate || '—')} · ${esc2(it.completionDate || '—')}</td></tr>
-            <tr><td>划线 / 想法</td><td>${it.highlights} 条 / ${it.thinks} 条</td></tr>
-            ${it.pages ? `<tr><td>页 数</td><td>${it.pages} 页</td></tr>` : ''}
-            ${it.wordCount ? `<tr><td>字 数</td><td>${it.wordCount.toLocaleString()} 字</td></tr>` : ''}
-          </table>
-          <div class="bz-bs-d-meter">
-            <div class="cap"><span>阅读进度</span><b class="bz-bs-d-prognum">${prog}%</b></div>
-            <div class="bar"><i style="width:${prog}%"></i></div>
-          </div>
-          <div class="bz-bs-d-meter">
-            <div class="cap">批注密度（划线 + 想法 = ${dense}）</div>
-            <div class="bar"><i style="width:${Math.min(100, (dense / Math.max(10, dense)) * 100)}%"></i></div>
-          </div>
-        </div>
-        <div class="bz-bs-d-seal">${seal}</div>
-      </div>
-    </div>
+    <div class="bz-bs-detail">${R.detailBodyHtml(it, cu)}</div>
     </div></div>`;
     document.body.appendChild(mask);
     detailEl = mask;
@@ -477,20 +217,20 @@
         const id = side.dataset.bsSide || 'all';
         if (id === 'all') { M.side = 'all'; M.catFilter = 'all'; }
         else M.side = M.side === id ? 'all' : id;
-        renderLabels(); renderWall();
+        renderAll();
         return;
       }
       const cat = t.closest('[data-bs-cat]');
       if (cat) {
         const name = cat.dataset.bsCat || 'all';
         M.catFilter = name !== 'all' && M.catFilter === name ? 'all' : name;
-        renderLabels(); renderWall();
+        renderAll();
         return;
       }
       const sortBtn = t.closest('[data-bs-sort]');
       if (sortBtn) {
-        M.sort = sortBtn.dataset.bsSort || 'recent';
-        renderSortSeg(); renderWall();
+        M.sortMode = sortBtn.dataset.bsSort || 'recent';
+        renderAll();
         return;
       }
       if (t.closest('[data-rr-goto-shelf]')) { M.view = 'shelf'; paintViews(); return; }
@@ -506,11 +246,11 @@
     let deb = null;
     searchInput.addEventListener('input', () => {
       clearTimeout(deb);
-      deb = setTimeout(() => { M.q = searchInput.value.trim(); renderWall(); }, 200);
+      deb = setTimeout(() => { M.searchKeyword = searchInput.value.trim(); renderAll(); }, 200);
     });
   }
   function paintViews() {
-    const root = MOB ? document.querySelector('.bz-panel-overlay') : document.getElementById('dtHost');
+    const root = panelRoot();
     if (!root) return;
     root.querySelector('.bz-bs-view-shelf')?.classList.toggle('active', M.view === 'shelf');
     root.querySelector('.bz-bs-view-report')?.classList.toggle('active', M.view === 'report');
@@ -542,20 +282,11 @@
     document.querySelector('.vbadge')?.remove();
     const overlay = document.createElement('div');
     overlay.className = 'bz-panel-overlay';
-    overlay.innerHTML = panelHtml();
     document.body.appendChild(overlay);
-    panelEl = overlay.querySelector('.bz-bs-panel');
-    wirePanel(overlay);
+    buildPanel(overlay);
     overlay.querySelector('.bz-bs-plaque').title = '关闭';
-    mountIcons(overlay);
-    renderAll();
   } else {
-    const host = document.getElementById('dtHost');
-    host.innerHTML = panelHtml();
-    panelEl = host.querySelector('.bz-bs-panel');
-    wirePanel(panelEl);
-    mountIcons(host);
-    renderAll();
+    buildPanel(document.getElementById('dtHost'));
 
     const frame = document.getElementById('mobFrame');
     frame.src = `./prototype.html?mob=1&skin=${skin}&theme=${theme}`;
@@ -572,7 +303,7 @@
     applyTheme(theme); // ?theme= 直达（body 类 + 徽牌钮文案 + 面板肤）
   }
 
-  /* ==================== 演示钩子（?demo=detail|unread；?skin= 十肤直达） ==================== */
+  /* ==================== 演示钩子（?demo=detail|unread） ==================== */
   if (location.search.includes('demo=')) {
     const d = param('demo');
     setTimeout(() => {
@@ -617,7 +348,7 @@
         catLabel.click();
         t('分类筛选=推理区', [...document.querySelectorAll('#bz-bs-shelf .bz-bs-divider')].every((d) => d.textContent === '推理 区' || d.textContent === '倒 叠 区'));
         t('分类筛选数=管道值', spines().length === getDisplayItems().length);
-        [...document.querySelectorAll('[data-bs-cat]')].find((c) => c.dataset.bsCat === '推理').click(); // renderLabels 会重建 DOM，须重新取节点
+        [...document.querySelectorAll('[data-bs-cat]')].find((c) => c.dataset.bsCat === '推理').click(); // renderAll 会重建 DOM，须重新取节点
         t('分类再点回全馆', spines().length === 164);
 
         const q = $('#bz-bs-dsearch');
@@ -626,7 +357,7 @@
         t('搜索红楼梦1条(EPUB)', spines().length === 1 && spines()[0].dataset.bsEpub === '1');
         q.value = '不存在的书xyz'; q.dispatchEvent(new Event('input'));
         await sleep(260);
-        t('搜索空态+search-x', !!$('.bz-bs-wall-empty .bz-empty') && !!$('.bz-bs-wall-empty i[data-lucide="search-x"], .bz-bs-wall-empty [data-icon="search-x"]'));
+        t('搜索空态+search-x', !!$('.bz-bs-wall-empty .bz-empty') && !!$('.bz-bs-wall-empty i[data-lucide="search-x"]'));
         q.value = ''; q.dispatchEvent(new Event('input'));
         await sleep(260);
 
@@ -692,5 +423,6 @@
   }
 })();
 </script>
+
 </body>
 </html>
