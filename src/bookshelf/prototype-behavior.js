@@ -4029,15 +4029,9 @@ var BZW_bookshelf = (() => {
   // src/bookshelf/fake-sim.ts
   var fake_sim_exports = {};
   __export(fake_sim_exports, {
-    applyBookshelfSkin: () => applyBookshelfSkin,
     bootBookshelfSim: () => bootBookshelfSim,
-    bsSkinClass: () => bsSkinClass,
-    closeOverlay: () => closeOverlay,
-    createOverlay: () => createOverlay,
     openBookshelf: () => openBookshelf2,
-    openReport: () => openReport,
-    renderAll: () => renderAll,
-    resolveFolderPath: () => resolveFolderPath
+    openReport: () => openReport
   });
 
   // src/bookshelf/fake/fake-obsidian.ts
@@ -4278,7 +4272,6 @@ var BZW_bookshelf = (() => {
     searchKeyword: "",
     searchDebounceTimer: null,
     appRef: null,
-    folderPath: "书库",
     renderFn: null,
     view: "shelf"
   };
@@ -4307,24 +4300,8 @@ var BZW_bookshelf = (() => {
     title: "书名"
   };
   var ICON = {
-    search: "search",
     report: "bar-chart-3",
-    settings: "settings",
-    funnel: "funnel",
-    close: "x",
-    books: "library",
-    bookOpen: "book-open",
-    book: "book",
-    checkCircle: "check-circle",
-    highlighter: "highlighter",
-    brain: "brain",
-    clock: "clock",
-    trash: "trash-2",
-    empty: "library-big",
-    sort: "arrow-up-down",
-    tag: "tag",
-    grid: "layout-grid",
-    calendarHeart: "calendar-heart"
+    close: "x"
   };
   var EMPTY_BOOKS_ICON = "library-big";
   var EMPTY_SEARCH_ICON = "search-x";
@@ -4642,7 +4619,6 @@ var BZW_bookshelf = (() => {
   // src/bookshelf/data.ts
   var WEAVE_PLUGIN_ID = "weave-epub-reader";
   var WEAVE_DATA_FILE = "weave-data.json";
-  var DEFAULT_WEAVE_DATA_FILE = WEAVE_DATA_FILE;
   var COVER_EXTENSIONS = ["jpg", "jpeg", "png", "webp", "gif"];
   function resolveFolderPath() {
     const s = tryGetSettings();
@@ -4831,7 +4807,7 @@ var BZW_bookshelf = (() => {
     var _a, _b;
     try {
       const dataPath = resolveWeaveDataPath(app);
-      const dataFilePath = `${dataPath}/${DEFAULT_WEAVE_DATA_FILE}`;
+      const dataFilePath = `${dataPath}/${WEAVE_DATA_FILE}`;
       const file = (_b = (_a = app == null ? void 0 : app.vault) == null ? void 0 : _a.getAbstractFileByPath) == null ? void 0 : _b.call(_a, dataFilePath);
       if (!file) return [];
       const content = await app.vault.adapter.read(dataFilePath);
@@ -7520,13 +7496,6 @@ var BZW_bookshelf = (() => {
   function bsSkinClass() {
     return `bz-bs-skin-${normalizeSkin(tryGetSettings().bookshelfSkin)} ${bsModeClass()}`;
   }
-  function applyBookshelfSkin(skin) {
-    if (!M.currentOverlay) return;
-    const panel = M.currentOverlay.querySelector(".bz-bs-panel");
-    if (!panel) return;
-    panel.classList.remove(...SKIN_IDS.map((id) => `bz-bs-skin-${id}`), "bz-bs-mode-light", "bz-bs-mode-dark");
-    panel.classList.add(`bz-bs-skin-${normalizeSkin(skin)}`, bsModeClass());
-  }
   var wallResizeHandler = null;
   var wallResizeTimer = null;
   function createOverlay(app) {
@@ -7667,7 +7636,6 @@ var BZW_bookshelf = (() => {
     if (initialized) return;
     initialized = true;
     M.appRef = app;
-    M.folderPath = resolveFolderPath();
     registerEscapeHandler();
     registerAutoRefresh(app);
   }

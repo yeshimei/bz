@@ -23,46 +23,23 @@ var BZR_settings_panel = (() => {
   __export(render_exports, {
     badgeHtml: () => badgeHtml,
     cardpickHtml: () => cardpickHtml,
-    checkupStepsHtml: () => checkupStepsHtml,
-    confirmHtml: () => confirmHtml,
     deskShellHtml: () => deskShellHtml,
     esc: () => esc,
     groupCardHtml: () => groupCardHtml,
-    headToolsHtml: () => headToolsHtml,
     iconSpan: () => iconSpan,
     loadingHtml: () => loadingHtml,
     miniHtml: () => miniHtml,
-    mobEmptyHtml: () => mobEmptyHtml,
-    mobItemHtml: () => mobItemHtml,
-    mobModalShellHtml: () => mobModalShellHtml,
-    mobRowHitHtml: () => mobRowHitHtml,
-    mobSecHtml: () => mobSecHtml,
-    mobShellHtml: () => mobShellHtml,
-    modelItemHtml: () => modelItemHtml,
     navItemHtml: () => navItemHtml,
     navSecHtml: () => navSecHtml,
     pageHeadHtml: () => pageHeadHtml,
-    pathAddBtnHtml: () => pathAddBtnHtml,
-    pathChipsHtml: () => pathChipsHtml,
-    pathChipsItemsHtml: () => pathChipsItemsHtml,
-    pathPickerHeadHtml: () => pathPickerHeadHtml,
-    pathPickerRowHtml: () => pathPickerRowHtml,
-    pickerCrumbHtml: () => pickerCrumbHtml,
-    pickerHeadHtml: () => pickerHeadHtml,
-    pickerRowHtml: () => pickerRowHtml,
-    repairRowHtml: () => repairRowHtml,
     rowBtnHtml: () => rowBtnHtml,
     rowHtml: () => rowHtml,
     selectItemHtml: () => selectItemHtml,
     selectTriggerHtml: () => selectTriggerHtml,
-    setInfoHtml: () => setInfoHtml,
     sliderHtml: () => sliderHtml,
-    subRowHtml: () => subRowHtml,
     textInputHtml: () => textInputHtml,
     textareaHtml: () => textareaHtml,
-    toggleHtml: () => toggleHtml,
-    upmgrAddRowHtml: () => upmgrAddRowHtml,
-    upmgrItemHtml: () => upmgrItemHtml
+    toggleHtml: () => toggleHtml
   });
 
   // src/core/ui/str.ts
@@ -105,18 +82,6 @@ var BZR_settings_panel = (() => {
   }
   function sliderHtml(min, max, step, value) {
     return `<div class="bz-sp-slider-row"><input type="range"${min !== void 0 ? ` min="${min}"` : ""}${max !== void 0 ? ` max="${max}"` : ""} step="${step != null ? step : 1}" value="${value}"><span class="bz-sp-slider-val">${value}</span></div>`;
-  }
-  function pathChipsItemsHtml(chips) {
-    return chips.map((c) => {
-      const cls = c.muted ? "bz-sp-chip bz-sp-chip--muted" : c.locked ? "bz-sp-chip bz-sp-chip--locked" : "bz-sp-chip";
-      return `<span class="${cls}" data-sp-path="${esc(c.path)}"${c.label ? ` title="${esc(c.label)}"` : ""}>${esc(c.label)}` + (c.multi && !c.muted && !c.locked ? '<i class="x">✕</i>' : "") + `</span>`;
-    }).join("");
-  }
-  function pathChipsHtml(chips) {
-    return `<div class="bz-sp-chips">${pathChipsItemsHtml(chips)}</div>`;
-  }
-  function pathAddBtnHtml(text) {
-    return `<button type="button" class="bz-sp-btn bz-sp-path-btn">${esc(text)}</button>`;
   }
   function rowBtnHtml(label, cta) {
     return `<button type="button" class="bz-sp-btn${cta ? " bz-sp-btn--primary" : ""}">${esc(label)}</button>`;
@@ -187,12 +152,6 @@ var BZR_settings_panel = (() => {
     const ctrlCls = vm.isCards ? "bz-sp-set-cards" : "bz-sp-set-ctrl";
     return `${open}${info}<div class="${ctrlCls}">${(_b = vm.ctrlHtml) != null ? _b : ""}</div></div>`;
   }
-  function setInfoHtml(name, desc) {
-    return `<div class="bz-sp-set-name">${esc(name)}</div>` + (desc ? `<div class="bz-sp-set-desc">${esc(desc)}</div>` : "");
-  }
-  function subRowHtml(label, ctrlHtml) {
-    return `<div class="bz-sp-sub-row"><span class="bz-sp-set-name">${esc(label)}</span><div class="bz-sp-set-ctrl">${ctrlHtml}</div></div>`;
-  }
   function groupCardHtml(icon, name, count) {
     const ic = icon ? iconSpan(icon, "bz-sp-group-icon") : "";
     return `<section class="bz-sp-group"><div class="bz-sp-group-head">${ic}<span class="bz-sp-group-name">${esc(name)}</span><span class="bz-sp-group-count">${esc(count)}</span></div><div class="bz-sp-group-body"></div></section>`;
@@ -202,48 +161,6 @@ var BZR_settings_panel = (() => {
   }
   function loadingHtml(text = "加载设置…") {
     return `<div class="bz-sp-loading"><span class="bz-spinner"></span><span>${esc(text)}</span></div>`;
-  }
-  function headToolsHtml() {
-    return `<span class="bz-sp-head-tools"></span>`;
-  }
-  function confirmHtml(opts) {
-    return `<h4 class="bz-sp-confirm-title">${esc(opts.title || "确认")}</h4><p class="bz-sp-confirm-msg">${esc(opts.message)}</p><div class="bz-sp-confirm-actions"><button type="button" class="bz-sp-btn">${esc(opts.cancelText || "取消")}</button><button type="button" class="bz-sp-btn${opts.danger ? " bz-sp-btn--danger" : " bz-sp-btn--primary"}">${esc(opts.okText || "确定")}</button></div>`;
-  }
-  function upmgrAddRowHtml() {
-    return `<div class="bz-sp-upmgr-row"><div class="bz-sp-upmgr-label"><div class="bz-sp-set-name">添加 UP 主</div><div class="bz-sp-set-desc">粘贴主页链接（space.bilibili.com/123456）或视频链接自动解析 UID</div></div><div class="bz-sp-upmgr-ctl"><input class="bz-input" placeholder="粘贴链接或 UID"><button type="button" class="bz-sp-btn bz-sp-btn--primary">添加</button></div></div>`;
-  }
-  function upmgrItemHtml(name, uid) {
-    return `<div class="bz-sp-upmgr-item"><div class="bz-sp-upmgr-info"><div class="bz-sp-upmgr-name">${esc(name)}</div><div class="bz-sp-upmgr-uid">UID ${esc(uid)}</div></div><button type="button" class="bz-sp-btn">移除</button></div>`;
-  }
-  function repairRowHtml(file, before, after) {
-    return `<div class="bz-sp-demo-repair"><div class="bz-sp-demo-repair-file">${esc(file)}</div><div class="bz-sp-demo-repair-code"><span>${esc(before)}</span><span class="bz-sp-demo-repair-arrow"> → </span><span class="bz-sp-demo-repair-after">${esc(after)}</span></div></div>`;
-  }
-  function checkupStepsHtml(steps) {
-    return `<div class="bz-sp-demo-steps">` + steps.map((s, i) => `<div class="bz-sp-demo-step" data-step="${i}"><span class="bz-sp-demo-step-mark"></span>${esc(s)}</div>`).join("") + `</div>`;
-  }
-  function pathPickerHeadHtml(title, desc) {
-    return `<div class="bz-path-picker-head"><h3 class="bz-path-picker-title">${esc(title)}</h3>` + (desc ? `<div class="bz-path-picker-desc">${esc(desc)}</div>` : "") + `</div>`;
-  }
-  function pathPickerRowHtml(folder, on, label) {
-    return `<div class="bz-path-picker-row${on ? " bz-path-picker-row--sel" : ""}" data-path="${esc(folder)}"><span class="bz-path-picker-check">${on ? "✓" : ""}</span><span class="bz-path-picker-name"${label !== folder ? ` title="${esc(label)}"` : ""}>${esc(label)}</span></div>`;
-  }
-  function pickerHeadHtml(title, placeholder) {
-    return `<div class="bz-sp-picker-head"><b>${esc(title)}</b><div class="bz-sp-picker-search">${iconSpan("search")}<input placeholder="${esc(placeholder)}"></div></div>`;
-  }
-  function pickerCrumbHtml(multi, arr) {
-    const lab = `<span class="bz-sp-picker-lab">${multi ? "已选" : "将选用"}</span>`;
-    if (multi) {
-      return `<div class="bz-sp-picker-crumb">${lab}<span>${arr.length ? arr.length + " 个目录" : "尚未选择"}</span></div>`;
-    }
-    if (!arr.length) return `<div class="bz-sp-picker-crumb">${lab}<span>未设置</span></div>`;
-    const chain = arr[0].split("/").map((seg, i) => (i ? `<span class="bz-sp-picker-sep">▸</span>` : "") + `<span>${esc(seg)}</span>`).join("");
-    return `<div class="bz-sp-picker-crumb">${lab}${chain}</div>`;
-  }
-  function pickerRowHtml(name, anc, sel) {
-    return `<button type="button" class="bz-sp-picker-row${sel ? " sel" : ""}">${iconSpan("folder-open", "bz-ic")}<span>${esc(name)}</span><span class="anc">${esc(anc)}</span></button>`;
-  }
-  function modelItemHtml(model, on) {
-    return `<button type="button" class="bz-sp-picker-row${on ? " sel" : ""}"><span>${esc(model)}</span></button>`;
   }
 
   // src/settings-panel/layouts/jingwei/render.ts
@@ -255,24 +172,6 @@ var BZR_settings_panel = (() => {
   }
   function navItemHtml(opts) {
     return `<button type="button" class="bz-sp-nav-item${opts.on ? " on" : ""}" data-sp-domain="${esc(opts.id)}">${iconSpan(opts.icon, "bz-ic bz-sp-nav-ic")}<span class="bz-sp-nav-name">${esc(opts.name)}</span><span class="bz-sp-nav-count">${esc(opts.count)}</span></button>`;
-  }
-  function mobShellHtml() {
-    return `<div class="bz-sp-head"><span class="bz-sp-head-title">设置</span><span class="bz-sp-head-tools"></span></div><div class="bz-sp-mob-search">${iconSpan("search")}<input class="bz-input" placeholder="搜索设置、域…" autocomplete="off"></div><div class="bz-sp-mob-list"></div>`;
-  }
-  function mobSecHtml(title) {
-    return `<div class="bz-sp-mob-sec">${esc(title)}</div>`;
-  }
-  function mobItemHtml(opts) {
-    return `<button type="button" class="bz-sp-mob-item" data-sp-domain="${esc(opts.id)}"><span class="bz-sp-mob-ic">${iconSpan(opts.icon)}</span><span class="bz-sp-mob-t"><span class="bz-sp-mob-name">${esc(opts.name)}</span><span class="bz-sp-mob-desc">${esc(opts.desc)}</span></span><span class="bz-sp-mob-chev">${iconSpan("chevron-right")}</span></button>`;
-  }
-  function mobRowHitHtml(opts) {
-    return `<button type="button" class="bz-sp-mob-item" data-sp-domain="${esc(opts.id)}"><span class="bz-sp-mob-ic">${iconSpan(opts.icon)}</span><span class="bz-sp-mob-t"><span class="bz-sp-mob-name">${esc(opts.name)}</span><span class="bz-sp-mob-desc">${esc(opts.desc)}</span></span><span class="bz-sp-mob-kind">设置</span></button>`;
-  }
-  function mobEmptyHtml(query) {
-    return `<div class="bz-sp-mob-empty">没有匹配「${esc(query)}」的设置或域</div>`;
-  }
-  function mobModalShellHtml(icon, title) {
-    return `<div class="bz-sp-mob-modal-head"><span class="bz-sp-mob-modal-ic">${iconSpan(icon)}</span><div class="bz-sp-mob-modal-title">${esc(title)}</div></div><div class="bz-sp-settings-body bz-sp-mob-modal-body"></div>`;
   }
   return __toCommonJS(render_exports);
 })();

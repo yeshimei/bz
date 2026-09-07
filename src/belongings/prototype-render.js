@@ -569,7 +569,6 @@ var BZR_belongings = (() => {
     close: "x",
     del: "trash-2",
     empty: "package",
-    chevR: "chevron-right",
     chevD: "chevron-down"
   };
   var STATUS = {
@@ -578,13 +577,13 @@ var BZR_belongings = (() => {
     sold: { label: "已转卖", key: "sold", ic: "banknote" },
     discard: { label: "已丢弃", key: "discard", ic: "archive" }
   };
-  var STATUS_LABELS = ["使用中", "闲置", "已转卖", "已丢弃"];
   var STATUS_ORDER = [
     { key: "using", label: "使用中" },
     { key: "idle", label: "闲置" },
     { key: "sold", label: "已转卖" },
     { key: "discard", label: "已丢弃" }
   ];
+  var STATUS_LABELS = STATUS_ORDER.map((s) => s.label);
   var SORT_OPTS = [
     { v: "recent", label: "最近购入" },
     { v: "price", label: "投入最高" },
