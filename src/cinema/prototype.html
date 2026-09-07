@@ -315,14 +315,12 @@
         await sleep(80);
         t('抽屉遮罩关闭', !mob('.cn-sheet'));
 
-        // 设置弹窗（移动 j-mgear）：5 行 + 保存走真 saveSettings 通道
-        mob('.j-mgear').click();
-        await sleep(80);
-        t('设置弹窗5行', !!mob('.cn-modal') && mob('.cn-modal').querySelectorAll('.set-row').length === 5);
-        mob('.cn-modal .j-cols').value = '7';
-        mob('.cn-modal .j-save').click();
-        await sleep(300);
-        t('设置保存落盘', (localStorage.getItem('bz-sim:__settings') || '').includes('"cinemaGridColumns":"7"') && !mob('.cn-modal'));
+        // 头行钮序（移动 m-acts）：添加最前 → AI → 分析 → 关闭最后；设置钮退役（设置走插件设置页）
+        const acts = [...mob('.m-acts').querySelectorAll('button')];
+        t('头行钮序 添加→AI→分析→关闭', acts.length === 4
+          && acts[0].classList.contains('j-madd') && acts[1].classList.contains('j-mai')
+          && acts[2].classList.contains('j-mstat') && acts[3].classList.contains('j-mclose'));
+        t('头行无设置钮', !mob('.j-mgear'));
 
         // 详情弹窗 + 删除（桌面，确认三段式 + 回收站删除）
         cardByName(dd, '测试影片').click();

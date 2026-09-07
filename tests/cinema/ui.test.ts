@@ -518,14 +518,14 @@ tags: [电影]
 
   // ======================= 移动端（mob 壳） =======================
 
-  it('移动端：mob 壳渲染（m-head ✕/AI/分析/设置 + chips 10 + m-grid）+ 真全屏挂 .bz-win-mfs', () => {
+  it('移动端：mob 壳渲染（m-head 添加/AI/分析/关闭 + chips 10 + m-grid）+ 真全屏挂 .bz-win-mfs', () => {
     setSettingsProvider(() => ({ cinemaMobileDefaultFullscreen: true } as any));
     const { app } = seedMobile();
     createOverlay(app);
     const root = document.querySelector('section.mob.bz-cinema--midnight') as HTMLElement;
     expect(root).toBeTruthy();
     expect(root.classList.contains('bz-win-mfs')).toBe(true);
-    expect(root.querySelectorAll('.m-acts .m-tool').length).toBe(4);
+    expect(root.querySelectorAll('.m-acts .m-tool').length).toBe(3); // AI/分析/关闭（设置钮退役，添加钮为 .add）
     expect(root.querySelector('.j-mclose')).toBeTruthy(); // 落域适配：移动关闭钮
     expect(root.querySelectorAll('.m-chips .chip').length).toBe(10);
     expect(root.querySelectorAll('.m-grid .pcard').length).toBe(4);
@@ -580,29 +580,13 @@ tags: [电影]
     }
   });
 
-  it('移动端设置弹窗（j-mgear）：读写插件设置并即时生效（saveSettings 落盘一次）', async () => {
-    const store: Record<string, unknown> = { cinemaSortMode: 'date', cinemaStatusFilter: '', cinemaGridColumns: '5', cinemaMobileDefaultFullscreen: false };
-    let saved = 0;
-    setSettingsProvider(() => store as any);
-    const { setSettingsSaver } = await import('../../src/core/settings-provider');
-    setSettingsSaver(async () => { saved++; });
+  it('移动端头行钮序：添加最前、关闭最后，设置钮退役（影院设置并入插件设置页）', () => {
     const { app } = seedMobile();
     createOverlay(app);
     const root = document.querySelector('section.mob.bz-cinema--midnight') as HTMLElement;
-    clickEl(root.querySelector('.j-mgear'));
-    const modal = root.querySelector('.cn-modal') as HTMLElement;
-    expect(modal.querySelector('.cn-modal-title')?.textContent).toBe('影院设置');
-    expect(modal.querySelectorAll('.set-row').length).toBe(5);
-    (modal.querySelector('.j-cols') as HTMLInputElement).value = '7';
-    (modal.querySelector('.j-sort') as HTMLSelectElement).value = 'created';
-    clickEl(modal.querySelector('.j-sw'));
-    clickEl(modal.querySelector('.j-save'));
-    await vi.waitFor(() => expect(saved).toBe(1));
-    expect(store.cinemaGridColumns).toBe('7');
-    expect(store.cinemaSortMode).toBe('created');
-    expect(store.cinemaMobileDefaultFullscreen).toBe(true);
-    expect(M.sortMode).toBe('created');
-    expect(root.querySelector('.cn-modal')).toBeNull();
+    const acts = [...root.querySelectorAll('.m-acts button')];
+    expect(acts.map((b) => b.className)).toEqual(['add j-madd', 'm-tool j-mai', 'm-tool j-mstat', 'm-tool j-mclose']);
+    expect(root.querySelector('.j-mgear')).toBeNull();
   });
 
   it('非法 cinemaStyle 回默认午夜场（风格键扩展口，本批仅午夜场上岸）', () => {

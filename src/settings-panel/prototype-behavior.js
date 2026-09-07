@@ -1,5 +1,5 @@
-/* 构建产物（勿手改）：node scripts/build-preview.mjs — src/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
-var BZW_home = (() => {
+/* 构建产物（勿手改）：node scripts/build-preview.mjs — src/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
+var BZW_settings_panel = (() => {
   var __create = Object.create;
   var __defProp = Object.defineProperty;
   var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -600,8 +600,8 @@ var BZW_home = (() => {
           return regexEscape(
             s.replace("\\", "").replace(
               /\\(\[)|\\(\])|\[([^\]\[]*)\]|\\(.)/g,
-              function(matched, p1, p23, p3, p4) {
-                return p1 || p23 || p3 || p4;
+              function(matched, p1, p2, p3, p4) {
+                return p1 || p2 || p3 || p4;
               }
             )
           );
@@ -4029,10 +4029,10 @@ var BZW_home = (() => {
     }
   });
 
-  // src/home/fake/fake-obsidian.ts
+  // src/settings-panel/fake/fake-obsidian.ts
   function setIcon(container, iconId) {
     var _a2;
-    const d = typeof window !== "undefined" && ((_a2 = window.BZ_HOME_ICONS) == null ? void 0 : _a2[iconId]) || "";
+    const d = typeof window !== "undefined" && ((_a2 = window.BZ_SP_ICONS) == null ? void 0 : _a2[iconId]) || "";
     if (!d) return;
     const ns = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(ns, "svg");
@@ -4054,6 +4054,9 @@ var BZW_home = (() => {
     const env = { c: content, ct: (_a2 = stat == null ? void 0 : stat.ctime) != null ? _a2 : now, mt: (_c = (_b2 = stat == null ? void 0 : stat.mtime) != null ? _b2 : stat == null ? void 0 : stat.ctime) != null ? _c : now };
     return JSON.stringify(env);
   }
+  function isHiddenSegmentPath(p) {
+    return p.split("/").some((seg) => seg.startsWith("."));
+  }
   function parseFrontmatter(content) {
     if (!content.startsWith("---")) return null;
     const end = content.indexOf("\n---", 3);
@@ -4065,15 +4068,15 @@ var BZW_home = (() => {
       }
       return t;
     };
-    const fm2 = {};
+    const fm = {};
     let lastKey = null;
     for (const line of content.slice(3, end).split(/\r?\n/)) {
       if (!line.trim()) continue;
       const listItem = /^\s*-\s*(.+)$/.exec(line);
       if (listItem && lastKey) {
-        const arr = Array.isArray(fm2[lastKey]) ? fm2[lastKey] : [];
+        const arr = Array.isArray(fm[lastKey]) ? fm[lastKey] : [];
         arr.push(strip(listItem[1]));
-        fm2[lastKey] = arr;
+        fm[lastKey] = arr;
         continue;
       }
       const kv = /^([^\s:][^:]*):\s*(.*)$/.exec(line);
@@ -4082,73 +4085,221 @@ var BZW_home = (() => {
       const rawVal = kv[2].trim();
       lastKey = key;
       if (rawVal === "") {
-        fm2[key] = [];
+        fm[key] = [];
       } else if (rawVal.startsWith("[") && rawVal.endsWith("]")) {
-        fm2[key] = rawVal.slice(1, -1).split(",").map((s) => strip(s)).filter(Boolean);
+        fm[key] = rawVal.slice(1, -1).split(",").map((s) => strip(s)).filter(Boolean);
       } else {
-        fm2[key] = strip(rawVal);
+        fm[key] = strip(rawVal);
       }
     }
-    return fm2;
+    return fm;
   }
-  var import_moment, Platform, TFile, Setting, MarkdownRenderer, MarkdownView, Component, KEY_PREFIX, FakeVault, FakeMetadataCache, FakeApp;
+  var import_moment, Platform, Setting, TFile, MarkdownRenderer, MarkdownView, Component, KEY_PREFIX, FakeVault, FakeMetadataCache, FakeApp;
   var init_fake_obsidian = __esm({
-    "src/home/fake/fake-obsidian.ts"() {
+    "src/settings-panel/fake/fake-obsidian.ts"() {
       import_moment = __toESM(require_moment());
       Platform = {
         isMobile: typeof window !== "undefined" && window.innerWidth <= 768
       };
-      TFile = class {
-      };
       Setting = class {
-        constructor(_app3, _opts) {
+        constructor(container) {
+          this.settingEl = document.createElement("div");
+          this.settingEl.className = "setting-item";
+          const info = document.createElement("div");
+          info.className = "setting-item-info";
+          this.nameEl = document.createElement("div");
+          this.nameEl.className = "setting-item-name";
+          this.descEl = document.createElement("div");
+          this.descEl.className = "setting-item-description";
+          info.append(this.nameEl, this.descEl);
+          this.controlEl = document.createElement("div");
+          this.controlEl.className = "setting-item-control";
+          this.settingEl.append(info, this.controlEl);
+          container.appendChild(this.settingEl);
         }
-        setName() {
+        setName(v) {
+          this.nameEl.textContent = v instanceof DocumentFragment ? v.textContent : String(v != null ? v : "");
           return this;
         }
-        setDesc() {
+        setDesc(v) {
+          this.descEl.textContent = v instanceof DocumentFragment ? v.textContent : String(v != null ? v : "");
           return this;
         }
-        setClass() {
+        setClass(c) {
+          this.settingEl.classList.add(c);
           return this;
         }
-        setTooltip() {
+        setTooltip(_t) {
           return this;
         }
-        addText() {
+        addText(cb) {
+          const input = document.createElement("input");
+          input.type = "text";
+          input.className = "bz-input";
+          const comp = {
+            inputEl: input,
+            setValue(v) {
+              input.value = v;
+              return comp;
+            },
+            getValue: () => input.value,
+            setPlaceholder(p) {
+              input.placeholder = p;
+              return comp;
+            },
+            onChange(cb2) {
+              input.addEventListener("input", () => cb2(input.value));
+              return comp;
+            }
+          };
+          cb(comp);
+          this.controlEl.appendChild(input);
           return this;
         }
-        addTextArea() {
+        addSearch(cb) {
+          return this.addText(cb);
+        }
+        addTextArea(cb) {
+          const input = document.createElement("textarea");
+          input.className = "bz-input";
+          const comp = {
+            inputEl: input,
+            setValue(v) {
+              input.value = v;
+              return comp;
+            },
+            getValue: () => input.value,
+            setPlaceholder(p) {
+              input.placeholder = p;
+              return comp;
+            },
+            onChange(cb2) {
+              input.addEventListener("input", () => cb2(input.value));
+              return comp;
+            }
+          };
+          cb(comp);
+          this.controlEl.appendChild(input);
           return this;
         }
-        addToggle() {
+        addToggle(cb) {
+          const toggleEl = document.createElement("input");
+          toggleEl.type = "checkbox";
+          const comp = {
+            toggleEl,
+            setValue(v) {
+              toggleEl.checked = v;
+              return comp;
+            },
+            getValue: () => toggleEl.checked,
+            onChange(cb2) {
+              toggleEl.addEventListener("change", () => cb2(toggleEl.checked));
+              return comp;
+            }
+          };
+          cb(comp);
+          this.controlEl.appendChild(toggleEl);
           return this;
         }
-        addDropdown() {
+        addDropdown(cb) {
+          const selectEl = document.createElement("select");
+          const comp = {
+            selectEl,
+            addOptions(opts) {
+              for (const o of opts) {
+                const opt = document.createElement("option");
+                opt.value = o.value;
+                opt.textContent = o.label;
+                selectEl.appendChild(opt);
+              }
+              return comp;
+            },
+            setValue(v) {
+              selectEl.value = v;
+              return comp;
+            },
+            onChange(cb2) {
+              selectEl.addEventListener("change", () => cb2(selectEl.value));
+              return comp;
+            }
+          };
+          cb(comp);
+          this.controlEl.appendChild(selectEl);
           return this;
         }
-        addButton() {
+        mkButton(cb) {
+          const buttonEl = document.createElement("button");
+          buttonEl.type = "button";
+          let onClickCb = null;
+          const comp = {
+            buttonEl,
+            setButtonText(t) {
+              buttonEl.textContent = t;
+              return comp;
+            },
+            setCta(v) {
+              buttonEl.classList.toggle("bz-sp-btn--primary", v !== false);
+              return comp;
+            },
+            setDisabled(v) {
+              buttonEl.disabled = v;
+              return comp;
+            },
+            onClick(cb2) {
+              onClickCb = cb2;
+              return comp;
+            }
+          };
+          buttonEl.addEventListener("click", () => {
+            if (onClickCb && !buttonEl.disabled) void onClickCb();
+          });
+          cb(comp);
+          this.controlEl.appendChild(buttonEl);
+        }
+        addButton(cb) {
+          this.mkButton(cb);
           return this;
         }
-        addExtraButton() {
+        addExtraButton(cb) {
+          this.mkButton(cb);
           return this;
         }
-        addSlider() {
+        addSlider(cb) {
+          const input = document.createElement("input");
+          input.type = "range";
+          const comp = {
+            inputEl: input,
+            setValue(v) {
+              input.value = v;
+              return comp;
+            },
+            getValue: () => input.value,
+            setPlaceholder() {
+              return comp;
+            },
+            onChange(cb2) {
+              input.addEventListener("input", () => cb2(input.value));
+              return comp;
+            }
+          };
+          cb(comp);
+          this.controlEl.appendChild(input);
           return this;
         }
-        addSearch() {
+        addColorPicker(cb) {
+          void cb({ setValue: () => void 0, onChange: () => void 0 });
           return this;
         }
-        addColorPicker() {
-          return this;
-        }
-        addMomentFormat() {
+        addMomentFormat(cb) {
+          void cb({ sample: "" });
           return this;
         }
         then(cb) {
           if (cb) cb(this);
           return this;
         }
+      };
+      TFile = class {
       };
       MarkdownRenderer = class {
         static render() {
@@ -4189,12 +4340,30 @@ var BZW_home = (() => {
         constructor() {
           this.listeners = /* @__PURE__ */ new Map();
           this.idSeq = 0;
-          /** adapter（bookshelf readWeaveAggregates 走 vault.adapter.read 直读 weave-data.json） */
+          /**
+           * adapter 直读目录面（collectVaultFolders 的递归补齐源）：与 Obsidian DataAdapter.list
+           * 同契约——folders = dir 下一层目录的【库根绝对路径】（含空目录与点前缀目录），
+           * files = dir 下文件名。目录树 = 全量键路径父目录并集。
+           */
           this.adapter = {
-            read: async (path) => {
-              const raw = localStorage.getItem(_FakeVault.key(path));
-              if (raw == null) throw new Error("fake vault: 文件不存在 " + path);
-              return this.toFile(path, raw).content;
+            list: async (dir) => {
+              const clean = String(dir).replace(/^\/+|\/+$/g, "");
+              const dirs = /* @__PURE__ */ new Set();
+              const files = [];
+              for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (!k || !k.startsWith(KEY_PREFIX)) continue;
+                const path = k.slice(KEY_PREFIX.length);
+                if (!path) continue;
+                const parent = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
+                if (parent !== clean && !parent.startsWith(clean ? clean + "/" : "")) continue;
+                const rest = clean ? path.slice(clean.length + 1) : path;
+                if (!rest) continue;
+                const slash = rest.indexOf("/");
+                if (slash >= 0) dirs.add(clean ? clean + "/" + rest.slice(0, slash) : rest.slice(0, slash));
+                else files.push(rest);
+              }
+              return { folders: [...dirs].sort(), files };
             }
           };
           if (typeof window !== "undefined") {
@@ -4237,17 +4406,22 @@ var BZW_home = (() => {
           const raw = localStorage.getItem(_FakeVault.key(path));
           return raw == null ? null : this.toFile(path, raw);
         }
-        /** 全部 md 文件（recap 影院/日记扫描、书库回落扫描、diary 计数吃这个列表） */
-        getMarkdownFiles() {
+        /** 全部索引文件（jsonFileStore 文件 + 种子 md；点前缀目录与 .keep 空目录占位不入——与真宿主「点前缀/空目录不索引」同语义） */
+        getFiles() {
           const out = [];
           for (let i = 0; i < localStorage.length; i++) {
             const k = localStorage.key(i);
             if (!k || !k.startsWith(KEY_PREFIX)) continue;
-            if (!k.endsWith(".md")) continue;
             const path = k.slice(KEY_PREFIX.length);
+            if (!path || isHiddenSegmentPath(path)) continue;
+            if (path === ".keep" || path.endsWith("/.keep")) continue;
             out.push(this.toFile(path, localStorage.getItem(k)));
           }
           return out;
+        }
+        /** 全部 md 文件（diary/clipbook 闭包扫描吃这个列表；同 getFiles 的点前缀语义） */
+        getMarkdownFiles() {
+          return this.getFiles().filter((f) => f.extension === "md");
         }
         async read(f) {
           return f.content;
@@ -4287,11 +4461,11 @@ var BZW_home = (() => {
           if (!file || typeof file.path !== "string") return null;
           if (!this.cache.has(file.path)) {
             const raw = typeof file.content === "string" ? file.content : "";
-            const fm3 = parseFrontmatter(raw || this.readThrough(file.path));
-            this.cache.set(file.path, fm3);
+            const fm2 = parseFrontmatter(raw || this.readThrough(file.path));
+            this.cache.set(file.path, fm2);
           }
-          const fm2 = this.cache.get(file.path);
-          return fm2 ? { frontmatter: fm2 } : null;
+          const fm = this.cache.get(file.path);
+          return fm ? { frontmatter: fm } : null;
         }
         readThrough(path) {
           try {
@@ -4334,6 +4508,9 @@ var BZW_home = (() => {
   function setSettingsProvider(fn) {
     _provider = fn;
   }
+  function setSettingsSaver(fn) {
+    _saver = fn;
+  }
   function saveSettings() {
     return _saver ? _saver() : Promise.resolve();
   }
@@ -4351,56 +4528,6 @@ var BZW_home = (() => {
     "src/core/settings-provider.ts"() {
       _provider = null;
       _saver = null;
-    }
-  });
-
-  // src/core/esc-manager.ts
-  var escManager;
-  var init_esc_manager = __esm({
-    "src/core/esc-manager.ts"() {
-      escManager = (() => {
-        const layers = [];
-        const onKeydown = (e) => {
-          if (e.key !== "Escape") return;
-          for (let i = layers.length - 1; i >= 0; i--) {
-            const L = layers[i];
-            try {
-              if (L.isVisible()) {
-                L.close();
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                return;
-              }
-            } catch (err) {
-              layers.splice(i, 1);
-            }
-          }
-        };
-        if (typeof document !== "undefined") {
-          document.addEventListener("keydown", onKeydown);
-        }
-        return {
-          register(id, layer) {
-            for (let i = layers.length - 1; i >= 0; i--) {
-              if (layers[i].id === id && !layers[i].isVisible()) layers.splice(i, 1);
-            }
-            const rec = Object.assign({ id }, layer);
-            layers.push(rec);
-            return {
-              unregister: () => {
-                const i = layers.indexOf(rec);
-                if (i !== -1) layers.splice(i, 1);
-              }
-            };
-          },
-          /** 插件卸载时移除全局监听 */
-          destroy() {
-            if (typeof document !== "undefined") {
-              document.removeEventListener("keydown", onKeydown);
-            }
-          }
-        };
-      })();
     }
   });
 
@@ -4732,6 +4859,964 @@ var BZW_home = (() => {
       SHORT_THRESHOLD = 20;
       live = [];
       recent = {};
+    }
+  });
+
+  // src/core/dom.ts
+  function longPress(el, cb, dur, filter) {
+    if (!dur) dur = 500;
+    let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
+    let suppressClick = false;
+    const M7 = 10;
+    function start(e) {
+      if (filter && !filter(e)) return;
+      if (e.button !== void 0 && e.button !== 0) return;
+      fired = false;
+      moved = false;
+      if (e.touches && e.touches.length) {
+        const t = e.touches[0];
+        sx = t.clientX;
+        sy = t.clientY;
+        touching = true;
+      }
+      timer = setTimeout(function() {
+        timer = null;
+        fired = true;
+        cb(e);
+      }, dur);
+    }
+    function cancel() {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    }
+    function move(e) {
+      if (!timer || !touching || !e.touches || !e.touches.length) return;
+      const t = e.touches[0];
+      if (Math.abs(t.clientX - sx) > M7 || Math.abs(t.clientY - sy) > M7) {
+        moved = true;
+        cancel();
+      }
+    }
+    function endFromTouch() {
+      if (fired) suppressClick = true;
+      touching = false;
+      cancel();
+    }
+    function endFromMouse() {
+      touching = false;
+      cancel();
+    }
+    function onClick(e) {
+      if (suppressClick) {
+        suppressClick = false;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }
+    el.addEventListener("mousedown", start);
+    el.addEventListener("mouseup", endFromMouse);
+    el.addEventListener("mouseleave", endFromMouse);
+    el.addEventListener("touchstart", start, { passive: true });
+    el.addEventListener("touchend", endFromTouch);
+    el.addEventListener("touchmove", move, { passive: true });
+    el.addEventListener("touchcancel", endFromTouch);
+    el.addEventListener("click", onClick, true);
+  }
+  function swallowNextClick() {
+    const swallow = (e) => {
+      document.removeEventListener("click", swallow, true);
+      e.stopPropagation();
+    };
+    const disarm = () => {
+      document.removeEventListener("click", swallow, true);
+    };
+    document.addEventListener("click", swallow, true);
+    document.addEventListener("mousedown", disarm, { capture: true, once: true });
+  }
+  function createSiteIcon(domain, size = 16) {
+    if (!domain) return null;
+    const mappedDomain = DOMAIN_MAP[domain] || domain;
+    const cacheKey = `favicon_v2_${mappedDomain}_${size}`;
+    const img = document.createElement("img");
+    img.className = "bz-site-icon";
+    img.style.cssText = `width:${size}px; height:${size}px;`;
+    img.alt = "";
+    img.crossOrigin = "anonymous";
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        img.src = cached;
+        return img;
+      }
+    } catch (e) {
+    }
+    const networkUrl = `https://favicon.yandex.net/favicon/v2/${mappedDomain}?size=${size}`;
+    img.src = networkUrl;
+    img.onload = function() {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        const dataUrl = canvas.toDataURL("image/png");
+        try {
+          localStorage.setItem(cacheKey, dataUrl);
+        } catch (e) {
+        }
+      } catch (e) {
+      }
+      img.onload = null;
+    };
+    img.onerror = function() {
+      img.style.display = "none";
+      img.onerror = null;
+    };
+    return img;
+  }
+  function createOverlay(opts) {
+    const mask = document.createElement("div");
+    mask.id = opts.maskId;
+    mask.className = "bz-overlay-mask";
+    mask.style.display = "none";
+    mask.onclick = function(e) {
+      if (e.target === mask && typeof opts.onMaskClick === "function") opts.onMaskClick();
+    };
+    const popup = document.createElement("div");
+    popup.id = opts.popupId;
+    popup.className = "bz-overlay-popup";
+    popup.style.display = "none";
+    popup.style.width = opts.width || "90%";
+    popup.style.maxWidth = (opts.maxWidth || 400) + "px";
+    topifyZ(mask, popup);
+    return { mask, popup, topify: () => topifyZ(mask, popup) };
+  }
+  var DOMAIN_MAP;
+  var init_dom = __esm({
+    "src/core/dom.ts"() {
+      init_notice();
+      init_z_order();
+      DOMAIN_MAP = {
+        "guokrapp.guokr.com": "guokr.com",
+        "daily.zhihu.com": "zhihu.com"
+      };
+    }
+  });
+
+  // src/core/esc-manager.ts
+  var escManager;
+  var init_esc_manager = __esm({
+    "src/core/esc-manager.ts"() {
+      escManager = (() => {
+        const layers = [];
+        const onKeydown = (e) => {
+          if (e.key !== "Escape") return;
+          for (let i = layers.length - 1; i >= 0; i--) {
+            const L = layers[i];
+            try {
+              if (L.isVisible()) {
+                L.close();
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return;
+              }
+            } catch (err) {
+              layers.splice(i, 1);
+            }
+          }
+        };
+        if (typeof document !== "undefined") {
+          document.addEventListener("keydown", onKeydown);
+        }
+        return {
+          register(id, layer) {
+            for (let i = layers.length - 1; i >= 0; i--) {
+              if (layers[i].id === id && !layers[i].isVisible()) layers.splice(i, 1);
+            }
+            const rec = Object.assign({ id }, layer);
+            layers.push(rec);
+            return {
+              unregister: () => {
+                const i = layers.indexOf(rec);
+                if (i !== -1) layers.splice(i, 1);
+              }
+            };
+          },
+          /** 插件卸载时移除全局监听 */
+          destroy() {
+            if (typeof document !== "undefined") {
+              document.removeEventListener("keydown", onKeydown);
+            }
+          }
+        };
+      })();
+    }
+  });
+
+  // src/core/mobile.ts
+  function isMobileEnv() {
+    return typeof Platform !== "undefined" && !!Platform.isMobile;
+  }
+  function applyMobileWindowFullscreen(popup, enabled) {
+    if (!popup) return;
+    popup.classList.toggle("bz-win-mfs", isMobileEnv() && !!enabled);
+  }
+  var init_mobile = __esm({
+    "src/core/mobile.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/core/domain-icons.ts
+  var DOMAIN_ICONS;
+  var init_domain_icons = __esm({
+    "src/core/domain-icons.ts"() {
+      DOMAIN_ICONS = {
+        // 面板专属域（无对应命令）
+        global: "settings",
+        appearance: "palette",
+        ai: "sparkles",
+        // 域入口命令与面板导航共用
+        home: "layout-grid",
+        recap: "calendar-heart",
+        memo: "sticky-note",
+        todo: "check-square",
+        belongings: "package",
+        clipping: "scissors",
+        favorites: "star",
+        diary: "notebook-pen",
+        "diary-wall": "images",
+        "reading-report": "bar-chart-3",
+        cinema: "clapperboard",
+        bookshelf: "book-open",
+        review: "repeat-2",
+        secondbrain: "brain",
+        "auto-summary": "sparkles",
+        pomodoro: "timer",
+        attach: "folder-down",
+        encrypt: "lock",
+        smartcat: "cat",
+        literature: "list-video",
+        // 命令专属域
+        "settings-panel": "settings-2"
+      };
+    }
+  });
+
+  // src/core/path-picker.ts
+  function isExcludedPath(p) {
+    if (!p) return false;
+    for (const seg of p.split("/")) {
+      if (EXCLUDED_DIR_NAMES.has(seg)) return true;
+    }
+    return false;
+  }
+  function foldersFromFiles(paths) {
+    const out = /* @__PURE__ */ new Set([""]);
+    for (const p of paths) {
+      if (isExcludedPath(p)) continue;
+      const sep = p.lastIndexOf("/");
+      if (sep === -1) continue;
+      let dir = p.slice(0, sep);
+      while (dir) {
+        if (!isExcludedPath(dir)) out.add(dir);
+        const i = dir.lastIndexOf("/");
+        dir = i === -1 ? "" : dir.slice(0, i);
+      }
+    }
+    return [...out].sort();
+  }
+  async function collectVaultFolders(app2) {
+    var _a2, _b2, _c, _d;
+    const out = /* @__PURE__ */ new Set([""]);
+    try {
+      const files = ((_c = (_b2 = (_a2 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _a2.getFiles) == null ? void 0 : _b2.call(_a2)) != null ? _c : []).map((f) => f.path);
+      for (const p of foldersFromFiles(files)) out.add(p);
+    } catch (e) {
+    }
+    const adapter = (_d = app2 == null ? void 0 : app2.vault) == null ? void 0 : _d.adapter;
+    if (adapter && typeof adapter.list === "function") {
+      const walk = async (dir, depth) => {
+        var _a3;
+        if (depth > 40) return;
+        let listed = null;
+        try {
+          listed = await adapter.list(dir);
+        } catch (e) {
+          if (dir === "") {
+            try {
+              listed = await adapter.list("/");
+            } catch (e2) {
+              return;
+            }
+          } else {
+            return;
+          }
+        }
+        for (const f of (_a3 = listed == null ? void 0 : listed.folders) != null ? _a3 : []) {
+          const p = String(f).replace(/^\/+|\/+$/g, "");
+          if (!p) continue;
+          if (isExcludedPath(p)) continue;
+          if (!out.has(p)) out.add(p);
+          await walk(p, depth + 1);
+        }
+      };
+      try {
+        await walk("", 0);
+      } catch (e) {
+      }
+    }
+    return [...out].sort();
+  }
+  function normalizePicked(list) {
+    const out = [];
+    for (const item of list) {
+      const raw = String(item);
+      if (raw === "") {
+        if (!out.includes("")) out.push("");
+        continue;
+      }
+      const trimmed = raw.trim();
+      if (trimmed === "") continue;
+      const p = trimmed.replace(/^\/+|\/+$/g, "");
+      if (p === "") {
+        if (!out.includes("")) out.push("");
+        continue;
+      }
+      if (!out.includes(p)) out.push(p);
+    }
+    return out;
+  }
+  function renderPathChips(container, selected, onChange, emptyText = "未选择", onChipClick) {
+    container.innerHTML = "";
+    container.classList.add("bz-path-picker-chips");
+    if (selected.length === 0) {
+      if (!emptyText) return;
+      const empty = document.createElement("span");
+      empty.className = "bz-path-picker-chips-empty";
+      empty.textContent = emptyText;
+      container.appendChild(empty);
+      return;
+    }
+    for (const path of selected) {
+      const label = path === "" ? "（库根目录）" : path;
+      const chip = document.createElement("span");
+      chip.className = "bz-path-picker-chip" + (onChipClick ? " bz-path-picker-chip--click" : "");
+      chip.title = label;
+      const name = document.createElement("span");
+      name.className = "bz-path-picker-chip-name";
+      name.textContent = label;
+      if (onChipClick) name.onclick = () => onChipClick(path);
+      const x = document.createElement("button");
+      x.className = "bz-path-picker-chip-x";
+      x.textContent = "✕";
+      x.setAttribute("aria-label", `移除 ${label}`);
+      x.onclick = () => onChange(selected.filter((p) => p !== path));
+      chip.appendChild(name);
+      chip.appendChild(x);
+      container.appendChild(chip);
+    }
+  }
+  function renderPathSettingRow(opts) {
+    const readValue = () => {
+      const v = opts.value;
+      return Array.isArray(v) ? [...v] : v ? [v] : [];
+    };
+    let current2 = readValue();
+    const setting = new Setting(opts.parent).setName(opts.name);
+    if (opts.desc) setting.setDesc(opts.desc);
+    setting.settingEl.classList.add("bz-path-picker-setting-row");
+    const chipsWrap = document.createElement("div");
+    chipsWrap.className = "bz-path-picker-chips--setting";
+    const apply = (list) => {
+      const res = opts.onChange(list);
+      if (res && typeof res.then === "function") {
+        return Promise.resolve(res).then((final) => {
+          current2 = Array.isArray(final) ? final : list;
+          renderAll4();
+        });
+      }
+      current2 = Array.isArray(res) ? res : list;
+      renderAll4();
+    };
+    const openPicker = () => openPathPicker({
+      title: opts.pickerTitle || opts.name,
+      desc: opts.pickerDesc,
+      mode: opts.mode,
+      selected: current2,
+      okText: opts.okText,
+      onConfirm: (list) => {
+        void apply(list);
+      }
+    });
+    const render2 = () => renderPathChips(chipsWrap, current2, (next) => {
+      void apply(next);
+    }, "", openPicker);
+    let btn = null;
+    setting.addButton((b) => {
+      b.setButtonText(opts.buttonText || (opts.mode === "multi" ? "添加…" : "选择…")).onClick(openPicker);
+      b.buttonEl.classList.add("bz-path-picker-btn--slim");
+      btn = b.buttonEl;
+    });
+    const control = setting.settingEl.querySelector(".setting-item-control");
+    if (control) control.appendChild(chipsWrap);
+    const syncBtn = () => {
+      setting.settingEl.dataset.filled = current2.length > 0 ? "1" : "0";
+      if (!btn || !control) return;
+      if (current2.length === 0) {
+        if (!btn.isConnected) control.appendChild(btn);
+      } else if (btn.isConnected) {
+        btn.remove();
+      }
+    };
+    const renderAll4 = () => {
+      syncBtn();
+      render2();
+    };
+    const refresh = () => {
+      current2 = readValue();
+      renderAll4();
+    };
+    renderAll4();
+    return { refresh, settingEl: setting.settingEl };
+  }
+  function closePathPicker() {
+    if (currentMask) {
+      currentMask.remove();
+      currentMask = null;
+    }
+    if (currentPopup) {
+      currentPopup.remove();
+      currentPopup = null;
+    }
+    if (currentHandle) {
+      currentHandle.unregister();
+      currentHandle = null;
+    }
+    if (focusTimer !== null) {
+      window.clearTimeout(focusTimer);
+      focusTimer = null;
+    }
+  }
+  function openPathPicker(opts) {
+    var _a2, _b2, _c;
+    closePathPicker();
+    const app2 = getApp();
+    const mode = opts.mode || "single";
+    const selected = new Set(normalizePicked(opts.selected || []));
+    const pinnedAtOpen = [...selected];
+    const { mask, popup } = createOverlay({
+      maskId: "bz-path-picker-mask",
+      popupId: "bz-path-picker-popup",
+      // ticket 133：桌面/移动端统一一张居中卡——左右各 16px 外边距，宽视口封顶 440px（不分两套样式）
+      width: "min(calc(100vw - 32px), 440px)",
+      maxWidth: 440,
+      onMaskClick: () => closePathPicker()
+    });
+    currentMask = mask;
+    currentPopup = popup;
+    popup.classList.add("bz-path-picker");
+    popup.style.height = "min(560px, 82vh)";
+    const head = document.createElement("div");
+    head.className = "bz-path-picker-head";
+    const title = document.createElement("h3");
+    title.className = "bz-path-picker-title";
+    title.textContent = opts.title || "选择文件夹";
+    head.appendChild(title);
+    if (opts.desc) {
+      const desc = document.createElement("div");
+      desc.className = "bz-path-picker-desc";
+      desc.textContent = opts.desc;
+      head.appendChild(desc);
+    }
+    const search = document.createElement("input");
+    search.type = "text";
+    search.className = "bz-path-picker-search";
+    search.placeholder = "搜索目录…";
+    search.spellcheck = false;
+    search.setAttribute("aria-label", "搜索目录");
+    const listEl2 = document.createElement("div");
+    listEl2.className = "bz-path-picker-list";
+    const state3 = { folders: [], q: "" };
+    const foot = document.createElement("div");
+    foot.className = "bz-path-picker-foot";
+    const selinfo = document.createElement("span");
+    selinfo.className = "bz-path-picker-selinfo";
+    const btns = document.createElement("div");
+    btns.className = "bz-path-picker-foot-btns";
+    foot.appendChild(selinfo);
+    foot.appendChild(btns);
+    const mkBtn = (label, primary, onclick) => {
+      const b = document.createElement("button");
+      b.textContent = label;
+      b.className = "bz-path-picker-btn" + (primary ? " bz-path-picker-btn--primary" : "");
+      b.onclick = onclick;
+      btns.appendChild(b);
+      return b;
+    };
+    if (mode === "multi") mkBtn("清空", false, () => {
+      selected.clear();
+      renderList2();
+      updateSel();
+    });
+    mkBtn(opts.okText || "下一步", true, () => {
+      const list = normalizePicked([...selected]);
+      closePathPicker();
+      opts.onConfirm(list);
+    });
+    function orderedList() {
+      const pinned = [];
+      const rest = [];
+      const pinSet = new Set(pinnedAtOpen);
+      for (const f of state3.folders) {
+        if (pinSet.has(f)) pinned.push(f);
+        else rest.push(f);
+      }
+      const rootIdx = rest.indexOf("");
+      const root = rootIdx >= 0 ? rest.splice(rootIdx, 1)[0] : null;
+      rest.reverse();
+      return [...pinned, ...root === null ? [] : [root], ...rest];
+    }
+    function renderList2() {
+      listEl2.innerHTML = "";
+      const q2 = state3.q.trim().toLowerCase();
+      const exact = !!q2 && state3.folders.includes(q2);
+      const LIMIT2 = 300;
+      let n = 0;
+      let total = 0;
+      for (const folder of orderedList()) {
+        if (q2 && !exact && !folder.toLowerCase().includes(q2)) continue;
+        total++;
+        if (n >= LIMIT2) continue;
+        n++;
+        const on = selected.has(folder);
+        const row = document.createElement("div");
+        row.className = "bz-path-picker-row" + (on ? " bz-path-picker-row--sel" : "");
+        row.dataset.path = folder;
+        row.setAttribute("role", mode === "multi" ? "checkbox" : "option");
+        row.setAttribute("aria-checked", on ? "true" : "false");
+        const box = document.createElement("span");
+        box.className = "bz-path-picker-check";
+        box.textContent = on ? "✓" : "";
+        const name = document.createElement("span");
+        name.className = "bz-path-picker-name";
+        name.textContent = folder === "" ? "（库根目录）" : folder;
+        name.title = folder === "" ? "（库根目录）" : folder;
+        row.appendChild(box);
+        row.appendChild(name);
+        row.onclick = () => {
+          if (mode === "single") {
+            selected.clear();
+            selected.add(folder);
+          } else if (selected.has(folder)) {
+            selected.delete(folder);
+          } else {
+            selected.add(folder);
+          }
+          renderList2();
+          updateSel();
+        };
+        listEl2.appendChild(row);
+      }
+      if (!total) {
+        const empty = document.createElement("div");
+        empty.className = "bz-path-picker-empty";
+        empty.textContent = "没有匹配的目录";
+        listEl2.appendChild(empty);
+      } else if (total > LIMIT2) {
+        const more = document.createElement("div");
+        more.className = "bz-path-picker-empty";
+        more.textContent = `已显示前 ${LIMIT2} 个（共 ${total} 个匹配目录），请输入关键词缩小范围`;
+        listEl2.appendChild(more);
+      }
+    }
+    function updateSel() {
+      if (mode === "single") {
+        const first = [...selected][0];
+        selinfo.textContent = first === void 0 ? "未选择" : first === "" ? "已选（库根目录）" : `已选 ${first}`;
+      } else {
+        selinfo.textContent = `已选 ${selected.size} 项`;
+      }
+    }
+    search.oninput = () => {
+      state3.q = search.value;
+      renderList2();
+    };
+    try {
+      const files = ((_c = (_b2 = (_a2 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _a2.getFiles) == null ? void 0 : _b2.call(_a2)) != null ? _c : []).map((f) => f.path);
+      state3.folders = foldersFromFiles(files);
+    } catch (e) {
+    }
+    void collectVaultFolders(app2).then((folders) => {
+      if (!mask.isConnected) return;
+      state3.folders = folders;
+      popup.dataset.ready = "1";
+      renderList2();
+    });
+    renderList2();
+    updateSel();
+    popup.append(head, search, listEl2, foot);
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+    mask.style.display = "block";
+    popup.style.display = "flex";
+    currentHandle = escManager.register("bz-path-picker", {
+      isVisible: () => !!currentMask,
+      close: () => closePathPicker()
+    });
+    focusTimer = window.setTimeout(() => {
+      focusTimer = null;
+      if (mask.isConnected) search.focus();
+    }, 30);
+  }
+  var EXCLUDED_DIR_NAMES, currentMask, currentPopup, currentHandle, focusTimer;
+  var init_path_picker = __esm({
+    "src/core/path-picker.ts"() {
+      init_fake_obsidian();
+      init_app();
+      init_dom();
+      init_esc_manager();
+      EXCLUDED_DIR_NAMES = /* @__PURE__ */ new Set([".obsidian", ".trash", "node_modules", ".git"]);
+      currentMask = null;
+      currentPopup = null;
+      currentHandle = null;
+      focusTimer = null;
+    }
+  });
+
+  // src/settings-panel/dir-picker.ts
+  function openDirPicker(opts) {
+    var _a2;
+    const multi = opts.multi === true;
+    const selected = new Set(((_a2 = opts.selected) != null ? _a2 : []).filter((x) => x !== void 0));
+    let q2 = "";
+    let dirsCache = [];
+    let dirsLoaded = false;
+    const mask = document.createElement("div");
+    mask.className = "bz-sp-picker-mask";
+    const dlg = document.createElement("div");
+    dlg.className = "bz-sp-picker";
+    const head = document.createElement("div");
+    head.className = "bz-sp-picker-head";
+    const titleEl = document.createElement("b");
+    titleEl.textContent = opts.title;
+    const search = document.createElement("div");
+    search.className = "bz-sp-picker-search";
+    const searchIc = document.createElement("span");
+    searchIc.className = "bz-ic";
+    setIcon(searchIc, "search");
+    const sinp = document.createElement("input");
+    sinp.placeholder = "搜索目录…（命中项保留上级链）";
+    search.append(searchIc, sinp);
+    head.append(titleEl, search);
+    const crumb = document.createElement("div");
+    crumb.className = "bz-sp-picker-crumb";
+    const list = document.createElement("div");
+    list.className = "bz-sp-picker-list";
+    const foot = document.createElement("div");
+    foot.className = "bz-sp-picker-foot";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "bz-sp-btn";
+    cancel.textContent = "取消";
+    const ok = document.createElement("button");
+    ok.type = "button";
+    ok.className = "bz-sp-btn bz-sp-btn--primary";
+    ok.textContent = opts.okText || (multi ? "添加所选" : "选用");
+    let settled = false;
+    const close = (v) => {
+      if (settled) return;
+      settled = true;
+      escHandle4.unregister();
+      mask.remove();
+      if (v !== null) opts.onConfirm(normalizePicked(v));
+    };
+    cancel.addEventListener("click", () => close(null));
+    ok.addEventListener("click", () => close([...selected]));
+    mask.addEventListener("click", (e) => {
+      if (e.target === mask) close(null);
+    });
+    const escHandle4 = escManager.register("bz-sp-dir-picker", {
+      isVisible: () => mask.isConnected,
+      close: () => close(null)
+    });
+    function renderCrumb() {
+      crumb.innerHTML = "";
+      const lab = document.createElement("span");
+      lab.className = "bz-sp-picker-lab";
+      lab.textContent = multi ? "已选" : "将选用";
+      crumb.appendChild(lab);
+      const arr = [...selected].filter(Boolean);
+      if (multi) {
+        const v = document.createElement("span");
+        v.textContent = arr.length ? `${arr.length} 个目录` : "尚未选择";
+        crumb.appendChild(v);
+      } else if (!arr.length) {
+        const v = document.createElement("span");
+        v.textContent = "未设置";
+        crumb.appendChild(v);
+      } else {
+        arr[0].split("/").forEach((seg, i) => {
+          if (i) {
+            const sp = document.createElement("span");
+            sp.className = "bz-sp-picker-sep";
+            sp.textContent = "▸";
+            crumb.appendChild(sp);
+          }
+          const sg = document.createElement("span");
+          sg.textContent = seg;
+          crumb.appendChild(sg);
+        });
+      }
+    }
+    function renderList2() {
+      const query = q2.trim().toLowerCase();
+      let items = dirsCache;
+      if (query) {
+        const keep = /* @__PURE__ */ new Set();
+        for (const d of dirsCache) {
+          if (d.toLowerCase().includes(query)) {
+            keep.add(d);
+            const parts = d.split("/");
+            for (let i = 1; i < parts.length; i++) keep.add(parts.slice(0, i).join("/"));
+          }
+        }
+        items = dirsCache.filter((d) => keep.has(d));
+      }
+      items = items.slice().reverse();
+      list.innerHTML = "";
+      if (!dirsLoaded) {
+        const loading2 = document.createElement("div");
+        loading2.className = "bz-sp-picker-row";
+        loading2.style.pointerEvents = "none";
+        loading2.style.opacity = "0.55";
+        loading2.textContent = "正在读取目录…";
+        list.appendChild(loading2);
+        return;
+      }
+      for (const d of items) {
+        const parts = d.split("/");
+        const rowBtn = document.createElement("button");
+        rowBtn.type = "button";
+        rowBtn.className = "bz-sp-picker-row" + (selected.has(d) ? " sel" : "");
+        const ic = document.createElement("span");
+        ic.className = "bz-ic";
+        setIcon(ic, "folder-open");
+        rowBtn.appendChild(ic);
+        const nm = document.createElement("span");
+        nm.textContent = parts[parts.length - 1] || "（库根目录）";
+        rowBtn.appendChild(nm);
+        const anc = document.createElement("span");
+        anc.className = "anc";
+        anc.textContent = parts.length > 1 ? parts.slice(0, -1).join(" / ") + " /" : "vault 根目录";
+        rowBtn.appendChild(anc);
+        rowBtn.addEventListener("click", () => {
+          if (multi) {
+            if (selected.has(d)) selected.delete(d);
+            else selected.add(d);
+            rowBtn.classList.toggle("sel", selected.has(d));
+          } else {
+            selected.clear();
+            selected.add(d);
+            list.querySelectorAll(".sel").forEach((x) => x.classList.remove("sel"));
+            rowBtn.classList.add("sel");
+          }
+          renderCrumb();
+        });
+        if (!multi) rowBtn.addEventListener("dblclick", () => close([d]));
+        list.appendChild(rowBtn);
+      }
+      if (!items.length) {
+        const empty = document.createElement("div");
+        empty.className = "bz-sp-picker-row";
+        empty.style.pointerEvents = "none";
+        empty.style.opacity = "0.55";
+        empty.textContent = "无匹配目录";
+        list.appendChild(empty);
+      }
+    }
+    foot.append(cancel, ok);
+    dlg.append(head, crumb, list, foot);
+    mask.appendChild(dlg);
+    document.body.appendChild(mask);
+    topifyZ(mask);
+    sinp.addEventListener("input", () => {
+      q2 = sinp.value;
+      renderList2();
+    });
+    renderCrumb();
+    renderList2();
+    void collectVaultFolders(getApp()).then((dirs) => {
+      if (settled) return;
+      dirsCache = dirs;
+      dirsLoaded = true;
+      renderList2();
+    });
+  }
+  var init_dir_picker = __esm({
+    "src/settings-panel/dir-picker.ts"() {
+      init_fake_obsidian();
+      init_app();
+      init_path_picker();
+      init_esc_manager();
+      init_z_order();
+    }
+  });
+
+  // src/core/ui/str.ts
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
+  }
+  function esc(s) {
+    return escapeHtml(String(s != null ? s : ""));
+  }
+  function iconSpan(name, extra = "") {
+    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
+  var ESC_MAP;
+  var init_str = __esm({
+    "src/core/ui/str.ts"() {
+      ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    }
+  });
+
+  // src/settings-panel/shared.ts
+  function toggleHtml(on) {
+    return `<button type="button" class="bz-sw${on ? " on" : ""}" role="switch" aria-checked="${String(on)}"></button>`;
+  }
+  function selectTriggerHtml(label) {
+    return `<div class="bz-select"><span class="bz-select-val">${esc(label)}</span>${iconSpan("chevron-right", "bz-select-car")}</div>`;
+  }
+  function selectItemHtml(label, on) {
+    return `<button type="button" class="bz-select-item${on ? " is-on" : ""}"><span>${esc(label)}</span><span class="bz-ic bz-select-item-ck">${iconSpan("check")}</span></button>`;
+  }
+  function textInputHtml(opts) {
+    const cls = ["bz-input"];
+    if (opts.mono) cls.push("mono");
+    if (opts.num) cls.push("num");
+    if (opts.secret) cls.push("secret");
+    const attrs = [`class="${cls.join(" ")}"`, `value="${esc(opts.value)}"`];
+    attrs.push(opts.type === "number" ? 'type="number"' : 'type="text"');
+    if (opts.placeholder) attrs.push(`placeholder="${esc(opts.placeholder)}"`);
+    if (opts.min !== void 0) attrs.push(`min="${opts.min}"`);
+    if (opts.max !== void 0) attrs.push(`max="${opts.max}"`);
+    if (opts.step !== void 0) attrs.push(`step="${opts.step}"`);
+    return `<input ${attrs.join(" ")} autocomplete="off">`;
+  }
+  function textareaHtml(value, placeholder) {
+    return `<textarea class="bz-input bz-sp-textarea" autocomplete="off"${placeholder ? ` placeholder="${esc(placeholder)}"` : ""}>${esc(value)}</textarea>`;
+  }
+  function sliderHtml(min, max, step, value) {
+    return `<div class="bz-sp-slider-row"><input type="range"${min !== void 0 ? ` min="${min}"` : ""}${max !== void 0 ? ` max="${max}"` : ""} step="${step != null ? step : 1}" value="${value}"><span class="bz-sp-slider-val">${value}</span></div>`;
+  }
+  function rowBtnHtml(label, cta) {
+    return `<button type="button" class="bz-sp-btn${cta ? " bz-sp-btn--primary" : ""}">${esc(label)}</button>`;
+  }
+  function badgeHtml(label) {
+    return `<span class="bz-badge">${esc(label)}</span>`;
+  }
+  function miniHtml(kind, prev) {
+    const st = (extra) => ` style="${extra}"`;
+    const bg = st(`background:${prev.bg}`);
+    if (kind === "todo") {
+      const headCls = "m-head" + (prev.head === "stripe" ? " m-stripe" : "");
+      const headBg = prev.head === "stripe" ? prev.bg : prev.ink;
+      const headBorder = prev.head === "stripe" ? `border-bottom:2px solid ${prev.ink};` : "";
+      const lines = [[18, 16], [28, 24], [24, 32]].map(([w, top], i) => `<div class="m-line"${st(`top:${top}px;width:${w}px;background:${prev.ink};opacity:${i === 2 ? 0.35 : 0.55}`)}></div>`).join("");
+      return `<div class="bz-sp-mini"${bg}><div class="${headCls}"${st(`background:${headBg};${headBorder}`)}></div>${lines}<div class="m-chip"${st(`background:${prev.ac}`)}></div></div>`;
+    }
+    if (kind === "shelf") {
+      const books = (prev.books || []).map((c, i) => `<div class="m-book"${st(`left:${10 + i * 14}px;height:${[24, 32, 20][i]}px;background:${c};border-top:2px solid ${prev.ac}`)}></div>`).join("");
+      return `<div class="bz-sp-mini"${bg}><div class="m-ac"${st(`background:${prev.ac}`)}></div>${books}</div>`;
+    }
+    if (kind === "layout") {
+      const mk = (css) => `<div${st(`position:absolute;border-radius:2px;background:rgba(90,70,40,.22);${css}`)}></div>`;
+      let blocks = "";
+      if (prev.mode === "system") blocks = mk("left:4px;top:14px;width:14px;bottom:4px;") + mk("left:21px;top:14px;right:4px;height:26px;");
+      else if (prev.mode === "compact") blocks = mk("left:4px;top:14px;width:14px;bottom:4px;") + mk("left:21px;top:14px;width:26px;height:12px;") + mk("left:21px;top:28px;width:26px;height:12px;") + mk("left:50px;top:14px;width:10px;bottom:10px;");
+      else if (prev.mode === "iconrail") blocks = mk("left:2px;top:2px;bottom:2px;width:8px;") + mk("left:14px;top:4px;width:16px;bottom:4px;") + mk("left:34px;top:4px;right:4px;bottom:4px;");
+      else if (prev.mode === "outline") blocks = mk("left:4px;top:14px;right:24px;bottom:4px;") + mk("right:4px;top:14px;width:16px;height:20px;");
+      return `<div class="bz-sp-mini"${bg}><div class="m-head"${st("background:rgba(90,70,40,.28)")}></div>${blocks}</div>`;
+    }
+    if (kind === "skin") {
+      return `<div class="bz-sp-mini"${bg}><div${st(`position:absolute;inset:0 50% 0 0;background:${prev.light || "#f6f2e9"}`)}></div><div${st(`position:absolute;inset:0 0 0 50%;background:${prev.dark || "#242429"}`)}></div><div${st(`position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;background:${prev.ac || "var(--sp-accent)"};border:2px solid #fff;`)}></div></div>`;
+    }
+    if (kind === "themecard") {
+      return `<div class="bz-sp-mini"${bg}><div${st(`position:absolute;left:5px;top:50%;transform:translateY(-50%);width:5px;height:26px;border-radius:3px;background:${prev.ac};`)}></div></div>`;
+    }
+    if (kind === "poster") {
+      const mk = (css) => `<div${st(`position:absolute;${css}`)}></div>`;
+      return `<div class="bz-sp-mini"${bg}>` + mk(`left:6%;top:12%;width:44%;height:20%;background:${prev.ink || "#171512"};`) + mk(`left:86%;top:14%;width:8%;height:16%;background:${prev.ac || "#e8481f"};`) + mk(`left:6%;top:44%;width:88%;height:46%;background:rgba(23,21,18,.1);`) + mk(`left:38%;top:44%;width:2px;height:46%;background:rgba(23,21,18,.28);`) + mk(`left:66%;top:44%;width:2px;height:46%;background:rgba(23,21,18,.28);`) + `</div>`;
+    }
+    if (kind === "cat") {
+      const ears = ["ear l", "ear r"].map(() => `<div class="ear"${st(`background:transparent;border-bottom-color:${prev.fur}`)}></div>`).join("");
+      const eyes = ["eye l", "eye r"].map(() => `<div class="eye"${st("background:rgba(20,15,8,.75)")}></div>`).join("");
+      return `<div class="bz-sp-mini"${bg}><div class="m-cat">${ears}<div class="face"${st(`background:${prev.fur}`)}></div>` + (prev.patch ? `<div class="patch"${st(`background:${prev.patch}`)}></div>` : "") + eyes + `</div></div>`;
+    }
+    return `<div class="bz-sp-mini"${bg}></div>`;
+  }
+  function cardpickHtml(cards) {
+    return `<div class="bz-sp-cardpick" role="radiogroup">` + cards.map((c) => {
+      const mini = c.kind ? miniHtml(c.kind, c.prev || {}) : `<div class="bz-sp-mini${c.prevClass ? ` ${c.prevClass}` : ""}" aria-hidden="true"></div>`;
+      return `<button type="button" class="bz-sp-cardpick-card${c.on ? " is-on" : ""}" data-sp-card="${esc(c.value)}">` + mini + `<span class="bz-sp-cardpick-name">${esc(c.label)}</span></button>`;
+    }).join("") + `</div>`;
+  }
+  function rowHtml(vm) {
+    var _a2, _b2;
+    const cls = ["bz-sp-set-row"];
+    if (vm.cls) cls.push(vm.cls);
+    if (vm.isCards) cls.push("bz-sp-set-row--cards");
+    if (vm.isCustom) cls.push("bz-sp-set-row--custom");
+    const open = `<div class="${cls.join(" ")}"${vm.key ? ` data-key="${esc(vm.key)}"` : ""}>`;
+    const name = vm.name ? `<div class="bz-sp-set-name">${esc(vm.name)}</div>` : "";
+    const desc = vm.desc ? `<div class="bz-sp-set-desc">${esc(vm.desc)}</div>` : "";
+    if (vm.isCustom) {
+      return `${open}<div class="bz-sp-set-info">${name}${desc}</div>${(_a2 = vm.ctrlHtml) != null ? _a2 : ""}</div>`;
+    }
+    const note = vm.note ? `<div class="bz-sp-set-note">↳ ${esc(vm.note)}</div>` : "";
+    const info = `<div class="bz-sp-set-info">${name}${desc}${note}</div>`;
+    const ctrlCls = vm.isCards ? "bz-sp-set-cards" : "bz-sp-set-ctrl";
+    return `${open}${info}<div class="${ctrlCls}">${(_b2 = vm.ctrlHtml) != null ? _b2 : ""}</div></div>`;
+  }
+  function groupCardHtml(icon, name, count) {
+    const ic = icon ? iconSpan(icon, "bz-sp-group-icon") : "";
+    return `<section class="bz-sp-group"><div class="bz-sp-group-head">${ic}<span class="bz-sp-group-name">${esc(name)}</span><span class="bz-sp-group-count">${esc(count)}</span></div><div class="bz-sp-group-body"></div></section>`;
+  }
+  function pageHeadHtml(name, desc, tag) {
+    return `<div class="bz-sp-page-head"><div><div class="bz-sp-page-title">${esc(name)}</div><div class="bz-sp-page-desc">${esc(desc)}</div></div><span class="bz-sp-page-tag">${esc(tag)}</span></div>`;
+  }
+  function loadingHtml(text = "加载设置…") {
+    return `<div class="bz-sp-loading"><span class="bz-spinner"></span><span>${esc(text)}</span></div>`;
+  }
+  var init_shared = __esm({
+    "src/settings-panel/shared.ts"() {
+      init_str();
+    }
+  });
+
+  // src/settings-panel/layouts/jingwei/render.ts
+  function deskShellHtml() {
+    return `<div class="bz-sp-head"><div class="bz-sp-crumb"><span class="bz-sp-head-title bz-sp-crumb-cur">设置</span></div><div class="bz-sp-search bz-sp-head-search">${iconSpan("search")}<input class="bz-input" placeholder="搜索域与设置项" autocomplete="off"></div><span class="bz-sp-head-tools"></span></div><div class="bz-sp-desk-body"><aside class="bz-sp-desk-side"><div class="bz-sp-nav"></div></aside><main class="bz-sp-desk-main"><div class="bz-sp-pane"></div></main></div>`;
+  }
+  function navSecHtml(title, itemsHtml) {
+    return `<div class="bz-sp-nav-sec"><div class="bz-sp-nav-sec-t">${esc(title)}</div>${itemsHtml}</div>`;
+  }
+  function navItemHtml(opts) {
+    return `<button type="button" class="bz-sp-nav-item${opts.on ? " on" : ""}" data-sp-domain="${esc(opts.id)}">${iconSpan(opts.icon, "bz-ic bz-sp-nav-ic")}<span class="bz-sp-nav-name">${esc(opts.name)}</span><span class="bz-sp-nav-count">${esc(opts.count)}</span></button>`;
+  }
+  var init_render = __esm({
+    "src/settings-panel/layouts/jingwei/render.ts"() {
+      init_str();
+    }
+  });
+
+  // src/settings-panel/render.ts
+  var init_render2 = __esm({
+    "src/settings-panel/render.ts"() {
+      init_shared();
+      init_render();
     }
   });
 
@@ -5946,15 +7031,15 @@ var BZW_home = (() => {
     mask.appendChild(foot);
     document.body.appendChild(mask);
     lockBodyScroll(true);
-    let escHandle5 = null;
+    let escHandle4 = null;
     function close() {
       if (current !== mask) return;
       mask.remove();
-      escHandle5 == null ? void 0 : escHandle5.unregister();
+      escHandle4 == null ? void 0 : escHandle4.unregister();
       current = null;
       lockBodyScroll(false);
     }
-    escHandle5 = escManager.register("bz-lightbox", {
+    escHandle4 = escManager.register("bz-lightbox", {
       isVisible: () => mask.isConnected,
       close
     });
@@ -6013,19 +7098,19 @@ var BZW_home = (() => {
     popup.appendChild(body);
     mask.appendChild(popup);
     let closed = false;
-    let escHandle5 = null;
+    let escHandle4 = null;
     function close() {
       var _a2;
       if (closed) return;
       closed = true;
       mask.remove();
-      escHandle5 == null ? void 0 : escHandle5.unregister();
+      escHandle4 == null ? void 0 : escHandle4.unregister();
       (_a2 = opts.onClose) == null ? void 0 : _a2.call(opts);
     }
     mask.addEventListener("click", (e) => {
       if (e.target === mask) close();
     });
-    escHandle5 = escManager.register("bz-modal", {
+    escHandle4 = escManager.register("bz-modal", {
       isVisible: () => mask.isConnected,
       close
     });
@@ -6037,149 +7122,6 @@ var BZW_home = (() => {
       init_esc_manager();
       init_z_order();
       init_icon();
-    }
-  });
-
-  // src/core/dom.ts
-  function longPress(el, cb, dur, filter) {
-    if (!dur) dur = 500;
-    let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
-    let suppressClick = false;
-    const M7 = 10;
-    function start(e) {
-      if (filter && !filter(e)) return;
-      if (e.button !== void 0 && e.button !== 0) return;
-      fired = false;
-      moved = false;
-      if (e.touches && e.touches.length) {
-        const t = e.touches[0];
-        sx = t.clientX;
-        sy = t.clientY;
-        touching = true;
-      }
-      timer = setTimeout(function() {
-        timer = null;
-        fired = true;
-        cb(e);
-      }, dur);
-    }
-    function cancel() {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
-    }
-    function move(e) {
-      if (!timer || !touching || !e.touches || !e.touches.length) return;
-      const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M7 || Math.abs(t.clientY - sy) > M7) {
-        moved = true;
-        cancel();
-      }
-    }
-    function endFromTouch() {
-      if (fired) suppressClick = true;
-      touching = false;
-      cancel();
-    }
-    function endFromMouse() {
-      touching = false;
-      cancel();
-    }
-    function onClick(e) {
-      if (suppressClick) {
-        suppressClick = false;
-        e.preventDefault();
-        e.stopImmediatePropagation();
-      }
-    }
-    el.addEventListener("mousedown", start);
-    el.addEventListener("mouseup", endFromMouse);
-    el.addEventListener("mouseleave", endFromMouse);
-    el.addEventListener("touchstart", start, { passive: true });
-    el.addEventListener("touchend", endFromTouch);
-    el.addEventListener("touchmove", move, { passive: true });
-    el.addEventListener("touchcancel", endFromTouch);
-    el.addEventListener("click", onClick, true);
-  }
-  function swallowNextClick() {
-    const swallow = (e) => {
-      document.removeEventListener("click", swallow, true);
-      e.stopPropagation();
-    };
-    const disarm = () => {
-      document.removeEventListener("click", swallow, true);
-    };
-    document.addEventListener("click", swallow, true);
-    document.addEventListener("mousedown", disarm, { capture: true, once: true });
-  }
-  function createSiteIcon(domain, size = 16) {
-    if (!domain) return null;
-    const mappedDomain = DOMAIN_MAP[domain] || domain;
-    const cacheKey = `favicon_v2_${mappedDomain}_${size}`;
-    const img = document.createElement("img");
-    img.className = "bz-site-icon";
-    img.style.cssText = `width:${size}px; height:${size}px;`;
-    img.alt = "";
-    img.crossOrigin = "anonymous";
-    try {
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        img.src = cached;
-        return img;
-      }
-    } catch (e) {
-    }
-    const networkUrl = `https://favicon.yandex.net/favicon/v2/${mappedDomain}?size=${size}`;
-    img.src = networkUrl;
-    img.onload = function() {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
-        const dataUrl = canvas.toDataURL("image/png");
-        try {
-          localStorage.setItem(cacheKey, dataUrl);
-        } catch (e) {
-        }
-      } catch (e) {
-      }
-      img.onload = null;
-    };
-    img.onerror = function() {
-      img.style.display = "none";
-      img.onerror = null;
-    };
-    return img;
-  }
-  function createOverlay(opts) {
-    const mask = document.createElement("div");
-    mask.id = opts.maskId;
-    mask.className = "bz-overlay-mask";
-    mask.style.display = "none";
-    mask.onclick = function(e) {
-      if (e.target === mask && typeof opts.onMaskClick === "function") opts.onMaskClick();
-    };
-    const popup = document.createElement("div");
-    popup.id = opts.popupId;
-    popup.className = "bz-overlay-popup";
-    popup.style.display = "none";
-    popup.style.width = opts.width || "90%";
-    popup.style.maxWidth = (opts.maxWidth || 400) + "px";
-    topifyZ(mask, popup);
-    return { mask, popup, topify: () => topifyZ(mask, popup) };
-  }
-  var DOMAIN_MAP;
-  var init_dom = __esm({
-    "src/core/dom.ts"() {
-      init_notice();
-      init_z_order();
-      DOMAIN_MAP = {
-        "guokrapp.guokr.com": "guokr.com",
-        "daily.zhihu.com": "zhihu.com"
-      };
     }
   });
 
@@ -6495,1760 +7437,511 @@ var BZW_home = (() => {
     }
   });
 
-  // src/core/ui/str.ts
-  function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
+  // src/settings-panel/renderer.ts
+  function snapshot() {
+    return getSettings();
   }
-  function esc(s) {
-    return escapeHtml(String(s != null ? s : ""));
-  }
-  function iconSpan(name, extra = "") {
-    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
-  }
-  var ESC_MAP;
-  var init_str = __esm({
-    "src/core/ui/str.ts"() {
-      ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-    }
-  });
-
-  // src/core/domain-icons.ts
-  var DOMAIN_ICONS;
-  var init_domain_icons = __esm({
-    "src/core/domain-icons.ts"() {
-      DOMAIN_ICONS = {
-        // 面板专属域（无对应命令）
-        global: "settings",
-        appearance: "palette",
-        ai: "sparkles",
-        // 域入口命令与面板导航共用
-        home: "layout-grid",
-        recap: "calendar-heart",
-        memo: "sticky-note",
-        todo: "check-square",
-        belongings: "package",
-        clipping: "scissors",
-        favorites: "star",
-        diary: "notebook-pen",
-        "diary-wall": "images",
-        "reading-report": "bar-chart-3",
-        cinema: "clapperboard",
-        bookshelf: "book-open",
-        review: "repeat-2",
-        secondbrain: "brain",
-        "auto-summary": "sparkles",
-        pomodoro: "timer",
-        attach: "folder-down",
-        encrypt: "lock",
-        smartcat: "cat",
-        literature: "list-video",
-        // 命令专属域
-        "settings-panel": "settings-2"
+  function bindValue(binding) {
+    if ("key" in binding) {
+      const key = binding.key;
+      return {
+        read: () => getSettings()[key],
+        write: (v) => {
+          getSettings()[key] = v;
+        },
+        persist: () => saveSettings()
       };
-    }
-  });
-
-  // src/core/storage.ts
-  function storageDir() {
-    const s = tryGetSettings();
-    return (s && s.storagePath || "CONFIG/STORAGE").trim().replace(/\/+$/, "");
-  }
-  function storageFile(name, base) {
-    const dir = (base || storageDir()).trim().replace(/\/+$/, "");
-    return `${dir}/${name}`;
-  }
-  function enqueueFileTask(filePath, task) {
-    var _a2;
-    const prev = (_a2 = fileTaskQueues.get(filePath)) != null ? _a2 : Promise.resolve();
-    const run = prev.then(task, task);
-    const tail = run.then(
-      () => void 0,
-      () => void 0
-    );
-    fileTaskQueues.set(filePath, tail);
-    void tail.then(() => {
-      if (fileTaskQueues.get(filePath) === tail) fileTaskQueues.delete(filePath);
-    });
-    return run;
-  }
-  function isAlreadyExistsError(e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return /already exist/i.test(msg);
-  }
-  function corruptStamp(d = /* @__PURE__ */ new Date()) {
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
-  }
-  function baseNameOf(p) {
-    return p.includes("/") ? p.slice(p.lastIndexOf("/") + 1) : p;
-  }
-  async function backupOriginal(app2, filePath, raw) {
-    try {
-      const f = app2.vault.getAbstractFileByPath(filePath);
-      if (!f) return null;
-      const content = raw !== void 0 ? raw : await app2.vault.read(f);
-      if (!app2.vault.getAbstractFileByPath(CORRUPT_BACKUP_DIR)) {
-        try {
-          await app2.vault.createFolder(CORRUPT_BACKUP_DIR);
-        } catch (e) {
-        }
-      }
-      const base = baseNameOf(filePath);
-      const stamp = corruptStamp();
-      let backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}.bak`;
-      for (let i = 2; app2.vault.getAbstractFileByPath(backupPath); i++) {
-        backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}-${i}.bak`;
-      }
-      await app2.vault.create(backupPath, content);
-      return backupPath;
-    } catch (e) {
-      console.warn("[storage] " + filePath + " 留档失败（" + CORRUPT_BACKUP_DIR + "），继续原流程", e);
-      return null;
-    }
-  }
-  function notifyBackup(filePath, backupPath, cause) {
-    var _a2;
-    const now = Date.now();
-    if (now - ((_a2 = corruptNotifyAt.get(filePath)) != null ? _a2 : 0) < CORRUPT_NOTIFY_DEDUPE_MS) return;
-    corruptNotifyAt.set(filePath, now);
-    try {
-      const name = baseNameOf(filePath);
-      const msg = cause === "解析失败" ? `数据文件 ${name} 解析失败，原内容已留档到 ${backupPath}，数据不会丢，已重建默认文件继续使用` : `数据文件 ${name} 写入失败，原内容已留档到 ${backupPath}，数据不会丢，请稍后重试`;
-      notify(msg, { type: "warning" });
-    } catch (e) {
-    }
-  }
-  function serialize(v) {
-    return JSON.stringify(v, null, 2);
-  }
-  function jsonFileStore(filePath, opts = {}) {
-    const resolveApp2 = () => opts.app || getApp();
-    const resolveDefault = () => {
-      const d = opts.defaultValue;
-      return typeof d === "function" ? d() : d === void 0 ? [] : d;
-    };
-    async function ensureDir(app2) {
-      const d = filePath.substring(0, filePath.lastIndexOf("/"));
-      if (d && !app2.vault.getAbstractFileByPath(d)) await app2.vault.createFolder(d);
-    }
-    async function createIfMissing(app2, content) {
-      await ensureDir(app2);
-      try {
-        await app2.vault.create(filePath, content);
-        return true;
-      } catch (e) {
-        if (isAlreadyExistsError(e) && app2.vault.getAbstractFileByPath(filePath)) return false;
-        throw e;
-      }
-    }
-    async function handleCorrupt(app2, err, raw) {
-      var _a2;
-      if (((_a2 = opts.onCorrupt) == null ? void 0 : _a2.call(opts, filePath, err)) === false) {
-        return null;
-      }
-      const backupPath = await backupOriginal(app2, filePath, raw);
-      if (backupPath && !opts.onCorrupt) notifyBackup(filePath, backupPath, "解析失败");
-      const f = app2.vault.getAbstractFileByPath(filePath);
-      if (f) {
-        await app2.vault.modify(f, serialize(resolveDefault()));
-      } else {
-        await createIfMissing(app2, serialize(resolveDefault()));
-      }
-      return resolveDefault();
-    }
-    async function modifyWithBackup(app2, f, c) {
-      try {
-        await app2.vault.modify(f, c);
-      } catch (e) {
-        const backupPath = await backupOriginal(app2, filePath);
-        if (backupPath) notifyBackup(filePath, backupPath, "写入失败");
-        throw e;
-      }
     }
     return {
-      async read() {
-        const app2 = resolveApp2();
-        let f = app2.vault.getAbstractFileByPath(filePath);
-        if (!f) {
-          const created = await createIfMissing(app2, serialize(resolveDefault()));
-          if (created) return resolveDefault();
-          f = app2.vault.getAbstractFileByPath(filePath);
-          if (!f) return resolveDefault();
-        }
-        const raw = await app2.vault.read(f);
-        try {
-          return JSON.parse(raw);
-        } catch (e) {
-          return await handleCorrupt(app2, e, raw);
-        }
-      },
-      async write(data) {
-        const app2 = resolveApp2();
-        const c = serialize(data);
-        let f = app2.vault.getAbstractFileByPath(filePath);
-        if (f) {
-          if (opts.writeIfChanged) {
-            try {
-              const cur2 = await app2.vault.read(f);
-              if (cur2 === c) return;
-            } catch (e) {
-            }
-          }
-          await modifyWithBackup(app2, f, c);
-          return;
-        }
-        const created = await createIfMissing(app2, c);
-        if (created) return;
-        let cur = app2.vault.getAbstractFileByPath(filePath);
-        if (!cur) {
-          const retried = await createIfMissing(app2, c);
-          if (retried) return;
-          cur = app2.vault.getAbstractFileByPath(filePath);
-          if (!cur) throw new Error("storage: create 竞态降级失败（" + filePath + "）");
-        }
-        await modifyWithBackup(app2, cur, c);
-      }
+      read: () => binding.get(),
+      write: (v) => binding.set(v),
+      persist: () => binding.save()
     };
   }
-  var fileTaskQueues, CORRUPT_BACKUP_DIR, CORRUPT_NOTIFY_DEDUPE_MS, corruptNotifyAt;
-  var init_storage = __esm({
-    "src/core/storage.ts"() {
-      init_app();
-      init_settings_provider();
-      init_notice();
-      fileTaskQueues = /* @__PURE__ */ new Map();
-      CORRUPT_BACKUP_DIR = "CONFIG/.CORRUPT";
-      CORRUPT_NOTIFY_DEDUPE_MS = 3e4;
-      corruptNotifyAt = /* @__PURE__ */ new Map();
-    }
-  });
-
-  // src/cinema/constants.ts
-  function getGroupForTag(tag) {
-    for (const [group, tags] of Object.entries(TYPE_GROUPS)) {
-      if (tags.includes(tag)) return group;
-    }
-    return null;
+  function makeCtx(rowEl, refreshVisibility) {
+    return { rowEl, refreshVisibility };
   }
-  function getGroupSafe(tag) {
-    var _a2;
-    return (_a2 = getGroupForTag(tag)) != null ? _a2 : "其他";
+  function makeInput(opts) {
+    const holder = document.createElement("div");
+    holder.innerHTML = textInputHtml({
+      value: opts.value,
+      type: opts.type,
+      mono: opts.mono,
+      num: opts.num,
+      secret: opts.secret,
+      placeholder: opts.placeholder,
+      min: opts.min,
+      max: opts.max
+    });
+    const input = holder.firstElementChild;
+    let timer = null;
+    let dirty2 = false;
+    const commit = () => {
+      if (timer !== null) {
+        window.clearTimeout(timer);
+        timer = null;
+      }
+      if (!dirty2) return;
+      opts.onCommit(input.value);
+    };
+    input.addEventListener("input", () => {
+      dirty2 = true;
+      if (timer !== null) window.clearTimeout(timer);
+      timer = window.setTimeout(commit, 800);
+    });
+    input.addEventListener("blur", commit);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") commit();
+    });
+    ;
+    input.__setDisplayValue = (v) => {
+      dirty2 = false;
+      if (input.value !== v) input.value = v;
+    };
+    return input;
   }
-  function getStarString(rating) {
-    if (!rating || rating <= 0) return "";
-    const stars = Math.min(Math.round(rating / 2 * 2) / 2, 5);
-    const full = Math.floor(stars);
-    let s = "";
-    for (let i = 0; i < full; i++) s += "★";
-    for (let j = full; j < 5; j++) s += "☆";
-    return s;
+  function makePathRowCtrl(opts) {
+    const readValue = () => {
+      const v = opts.value;
+      return Array.isArray(v) ? [...v] : v ? [v] : [];
+    };
+    let current2 = readValue();
+    const ctrl = document.createElement("div");
+    ctrl.className = "bz-sp-chips";
+    const apply = (list) => {
+      const res = opts.onChange(list);
+      if (res && typeof res.then === "function") {
+        return Promise.resolve(res).then((final) => {
+          current2 = Array.isArray(final) ? final : list;
+          renderAll4();
+        });
+      }
+      current2 = Array.isArray(res) ? res : list;
+      renderAll4();
+    };
+    const openPicker = () => {
+      openDirPicker({
+        title: (opts.mode === "multi" ? "添加文件夹 · " : "选择文件夹 · ") + (opts.pickerTitle || opts.name),
+        multi: opts.mode === "multi",
+        selected: current2,
+        okText: opts.okText,
+        onConfirm: (list) => {
+          void apply(list);
+        }
+      });
+    };
+    const multi = opts.mode === "multi";
+    const addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.className = "bz-sp-btn bz-sp-path-btn";
+    addBtn.textContent = opts.buttonText || (multi ? "添加…" : "选择…");
+    addBtn.addEventListener("click", openPicker);
+    const renderChips = () => {
+      ctrl.querySelectorAll(".bz-sp-chip").forEach((c) => c.remove());
+      if (!current2.length && opts.fallbackChip) {
+        const fb = document.createElement("span");
+        fb.className = "bz-sp-chip bz-sp-chip--locked";
+        fb.title = "未单独设置时的实际生效目录（点击可改为显式设置）";
+        fb.textContent = opts.fallbackChip;
+        fb.addEventListener("click", openPicker);
+        ctrl.appendChild(fb);
+      }
+      for (const path of current2) {
+        const label = path === "" ? "（库根目录）" : path;
+        const chip = document.createElement("span");
+        chip.className = "bz-sp-chip";
+        chip.title = label;
+        chip.textContent = label;
+        chip.addEventListener("click", openPicker);
+        if (multi) {
+          const x = document.createElement("i");
+          x.className = "x";
+          x.textContent = "✕";
+          x.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            void apply(current2.filter((p) => p !== path));
+          });
+          chip.appendChild(x);
+        }
+        ctrl.appendChild(chip);
+      }
+      if (!current2.length && !opts.fallbackChip) {
+        const m = document.createElement("span");
+        m.className = "bz-sp-chip bz-sp-chip--muted";
+        m.textContent = multi ? "未选择" : "未设置";
+        ctrl.appendChild(m);
+      }
+      if (!addBtn.isConnected) ctrl.appendChild(addBtn);
+    };
+    const renderAll4 = () => renderChips();
+    ctrl.appendChild(addBtn);
+    renderChips();
+    return ctrl;
   }
-  var STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, TYPE_GROUPS, ALL_TAGS;
-  var init_constants = __esm({
-    "src/cinema/constants.ts"() {
-      STATUS_WANT = 0;
-      STATUS_WATCHING = 1;
-      STATUS_WATCHED = 2;
-      TYPE_GROUPS = {
-        电影: ["电影"],
-        剧集: ["国产剧", "美剧", "英剧", "德剧", "日剧", "韩剧", "哥伦比亚剧"],
-        动漫: ["日漫", "国漫", "美漫"],
-        纪录片: ["纪录片"],
-        公开课: ["公开课", "TED"]
-      };
-      ALL_TAGS = Object.values(TYPE_GROUPS).flat();
-    }
-  });
-
-  // src/cinema/state.ts
-  var init_state = __esm({
-    "src/cinema/state.ts"() {
-    }
-  });
-
-  // src/cinema/data.ts
-  function parseMovieFile(file, app2) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
-    const cache = app2.metadataCache.getFileCache(file);
-    if (!cache || !cache.frontmatter) return null;
-    const fm2 = cache.frontmatter;
-    const basename = file.basename;
-    const name = (_b2 = (_a2 = basename.match(/《(.+)》/)) == null ? void 0 : _a2[1]) != null ? _b2 : basename;
-    let rawTags = fm2.tags;
-    if (typeof rawTags === "string") rawTags = [rawTags];
-    const tags = Array.isArray(rawTags) ? rawTags.map((t) => String(t)) : [];
-    let typeTag = null;
-    for (const t of ALL_TAGS) {
-      if (tags.includes(t)) {
-        typeTag = t;
+  function renderRow(row, refresh, regRefresh) {
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
+    const rowName = row.name;
+    const bindKey = (_a2 = row.binding) == null ? void 0 : _a2.key;
+    const isCustom = row.type === "custom";
+    const isCardsRow = row.type === "choiceCards";
+    const holder = document.createElement("div");
+    holder.innerHTML = rowHtml({
+      key: bindKey || rowName || "",
+      cls: row.isChild ? "child" : void 0,
+      isCards: isCardsRow,
+      isCustom,
+      name: rowName,
+      desc: row.desc,
+      note: row.note
+    });
+    const el = holder.firstElementChild;
+    const ctx = makeCtx(el, refresh);
+    ctx.rowEl = el;
+    const ctrlEl = isCustom ? el : el.querySelector(isCardsRow ? ".bz-sp-set-cards" : ".bz-sp-set-ctrl");
+    switch (row.type) {
+      case "toggle": {
+        const acc = bindValue(row.binding);
+        ctrlEl.innerHTML = toggleHtml(acc.read() === true);
+        const sw = ctrlEl.querySelector(".bz-sw");
+        sw.addEventListener("click", () => {
+          var _a3;
+          const v = !sw.classList.contains("on");
+          sw.classList.toggle("on", v);
+          sw.setAttribute("aria-checked", String(v));
+          acc.write(v);
+          void acc.persist();
+          (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
+          refresh();
+        });
         break;
       }
-    }
-    if (!typeTag) {
-      if (tags.length === 0) return null;
-      typeTag = tags[0];
-    }
-    const watchDate = (_d = (_c = fm2["观影日期"]) == null ? void 0 : _c.toString()) != null ? _d : null;
-    const rawRating = fm2["评分"];
-    const rating = rawRating === void 0 || rawRating === null || rawRating === "" ? null : Number(rawRating);
-    let status;
-    if (rating === -1) status = STATUS_WANT;
-    else if (rating === 0) status = STATUS_WATCHING;
-    else status = STATUS_WATCHED;
-    return {
-      file,
-      name,
-      typeTag,
-      group: getGroupSafe(typeTag),
-      watchDate,
-      rating,
-      status,
-      poster: (_f = (_e = fm2["海报"]) == null ? void 0 : _e.toString()) != null ? _f : null,
-      review: (_h = (_g = fm2["影评"]) == null ? void 0 : _g.toString()) != null ? _h : null,
-      genre: (_j = (_i = fm2["类型"]) == null ? void 0 : _i.toString()) != null ? _j : null,
-      director: (_l = (_k = fm2["导演"]) == null ? void 0 : _k.toString()) != null ? _l : null,
-      actors: (_n = (_m = fm2["主演"]) == null ? void 0 : _m.toString()) != null ? _n : null,
-      region: (_p = (_o = fm2["制片国家/地区"]) == null ? void 0 : _o.toString()) != null ? _p : null,
-      year: fm2["上映日期"] ? String(fm2["上映日期"]).slice(0, 4) : null,
-      doubanRating: fm2["豆瓣评分"] !== void 0 && fm2["豆瓣评分"] !== "" ? String(fm2["豆瓣评分"]) : null,
-      doubanUrl: /^https?:\/\//.test(String((_q = fm2["豆瓣链接"]) != null ? _q : "")) ? String(fm2["豆瓣链接"]) : null,
-      synopsis: (_s = (_r = fm2["简介"]) == null ? void 0 : _r.toString()) != null ? _s : null,
-      // 片长/季集：原独立观影报告的两项统计源字段（ADR-0090 并入内嵌分析页）
-      duration: (_u = (_t = fm2["片长"]) == null ? void 0 : _t.toString()) != null ? _u : null,
-      seasonText: (_w = (_v = fm2["季集"]) == null ? void 0 : _v.toString()) != null ? _w : null
-    };
-  }
-  var init_data = __esm({
-    "src/cinema/data.ts"() {
-      init_constants();
-      init_state();
-    }
-  });
-
-  // src/bookshelf/state.ts
-  var M2;
-  var init_state2 = __esm({
-    "src/bookshelf/state.ts"() {
-      init_settings_provider();
-      M2 = {
-        currentOverlay: null,
-        items: [],
-        side: "all",
-        catFilter: "all",
-        sortMode: "recent",
-        searchKeyword: "",
-        searchDebounceTimer: null,
-        appRef: null,
-        folderPath: "书库",
-        renderFn: null,
-        view: "shelf"
-      };
-    }
-  });
-
-  // src/bookshelf/constants.ts
-  var STATUS_UNREAD, STATUS_READING, STATUS_DONE, STATUS_COLORS;
-  var init_constants2 = __esm({
-    "src/bookshelf/constants.ts"() {
-      STATUS_UNREAD = "未读";
-      STATUS_READING = "在读";
-      STATUS_DONE = "已读";
-      STATUS_COLORS = {
-        [STATUS_UNREAD]: "var(--bz-text-3)",
-        [STATUS_READING]: "var(--bz-brand)",
-        [STATUS_DONE]: "var(--bz-success)"
-      };
-    }
-  });
-
-  // src/bookshelf/shared.ts
-  var init_shared = __esm({
-    "src/bookshelf/shared.ts"() {
-      init_str();
-      init_constants2();
-    }
-  });
-
-  // src/bookshelf/layouts/wall/render.ts
-  var init_render = __esm({
-    "src/bookshelf/layouts/wall/render.ts"() {
-      init_str();
-      init_constants2();
-      init_shared();
-      init_constants2();
-    }
-  });
-
-  // src/bookshelf/render.ts
-  var init_render2 = __esm({
-    "src/bookshelf/render.ts"() {
-      init_shared();
-      init_render();
-    }
-  });
-
-  // src/bookshelf/data.ts
-  function resolveFolderPath() {
-    const s = tryGetSettings();
-    const v = typeof s.bookshelfFolderPath === "string" && s.bookshelfFolderPath.trim() ? s.bookshelfFolderPath : typeof s.libraryFolderPath === "string" && s.libraryFolderPath.trim() ? s.libraryFolderPath : "书库";
-    return v.replace(/^\/+|\/+$/g, "");
-  }
-  function resolveBookTag() {
-    const s = tryGetSettings();
-    return typeof s.bookTag === "string" && s.bookTag.trim() ? s.bookTag.trim() : "book";
-  }
-  function parseStatus(readingDate, completionDate) {
-    if (readingDate && !completionDate) return "在读";
-    if (readingDate && completionDate) return "已读";
-    return "未读";
-  }
-  function parseReadingTimeMs(fm2) {
-    var _a2;
-    const raw = Number(fm2 == null ? void 0 : fm2.readingTime);
-    if (Number.isFinite(raw) && raw > 0) return Math.round(raw);
-    const fmt2 = String((_a2 = fm2 == null ? void 0 : fm2.readingTimeFormat) != null ? _a2 : "").trim();
-    if (!fmt2) return 0;
-    let ms = 0;
-    for (const m of fmt2.matchAll(/(\d+(?:\.\d+)?)\s*(小时|h|分|min|m|秒|s)/gi)) {
-      const v = parseFloat(m[1]);
-      const unit = m[2].toLowerCase();
-      if (unit === "小时" || unit === "h") ms += v * 36e5;
-      else if (unit === "分" || unit === "min" || unit === "m") ms += v * 6e4;
-      else ms += v * 1e3;
-    }
-    return Math.round(ms);
-  }
-  function parseBookFile(file, app2, folderPath, bookTag) {
-    var _a2, _b2, _c;
-    const metadata = app2.metadataCache.getFileCache(file);
-    const fm2 = metadata == null ? void 0 : metadata.frontmatter;
-    if (!fm2) return null;
-    let tags = fm2.tags;
-    if (!tags) return null;
-    if (!Array.isArray(tags)) tags = [tags];
-    if (!tags.includes(bookTag)) return null;
-    const title = file.basename;
-    const author = ((_a2 = fm2.author) == null ? void 0 : _a2.toString()) || "未知作者";
-    const category = ((_b2 = fm2.category) == null ? void 0 : _b2.toString()) || "未分类";
-    let cover = fm2.cover ? fm2.cover.toString() : null;
-    if (cover && !cover.includes("/")) {
-      cover = `CONFIG/BOOK/${title}/${cover}`;
-    }
-    const bookReview = fm2.bookReview ? fm2.bookReview.toString() : null;
-    const readingDate = fm2.readingDate ? fm2.readingDate.toString() : null;
-    const completionDate = fm2.completionDate ? fm2.completionDate.toString() : null;
-    const progress = fm2.readingProgress !== void 0 ? Number(fm2.readingProgress) || 0 : 0;
-    const readingTimeFormat = ((_c = fm2.readingTimeFormat) == null ? void 0 : _c.toString()) || null;
-    const highlights = Number(fm2.highlights) || 0;
-    const thinks = Number(fm2.thinks) || 0;
-    return {
-      file,
-      title,
-      author,
-      category,
-      cover,
-      bookReview,
-      readingDate,
-      completionDate,
-      progress: progress > 100 ? 100 : progress,
-      readingTimeFormat,
-      readingTimeMs: parseReadingTimeMs(fm2),
-      highlights,
-      thinks,
-      // 书脊厚度量（issue 218）：字数（缺省 0，UI 层回退批注密度）
-      wordCount: Number(fm2.wordCount) || 0,
-      pages: Number(fm2.pages) || 0,
-      status: parseStatus(readingDate, completionDate),
-      isEpub: false,
-      epubVaultPath: null
-    };
-  }
-  function scanMarkdownBooks(app2) {
-    const folderPath = resolveFolderPath();
-    const bookTag = resolveBookTag();
-    const folder = app2.vault.getAbstractFileByPath(folderPath);
-    const files = [];
-    if (folder && Array.isArray(folder.children)) {
-      const stack = [...folder.children];
-      while (stack.length) {
-        const cur = stack.pop();
-        if (Array.isArray(cur == null ? void 0 : cur.children)) stack.push(...cur.children);
-        else if ((cur == null ? void 0 : cur.extension) === "md") files.push(cur);
-      }
-    } else {
-      files.push(...app2.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folderPath + "/") || f.path === folderPath + ".md"));
-    }
-    const items = [];
-    for (const file of files) {
-      try {
-        const item = parseBookFile(file, app2, folderPath, bookTag);
-        if (item) items.push(item);
-      } catch (e) {
-        console.warn("处理书目文件失败:", file.path, e);
-      }
-    }
-    return items;
-  }
-  function normalizeWeaveDataPath(value) {
-    const raw = String(value || "").trim().replace(/^\/+|\/+$/g, "");
-    return raw || "CONFIG/STORAGE";
-  }
-  function resolveWeaveDataPath(app2) {
-    var _a2, _b2, _c;
-    const plugins = (_a2 = app2.plugins) == null ? void 0 : _a2.plugins;
-    const fromWeave = (_c = (_b2 = plugins == null ? void 0 : plugins[WEAVE_PLUGIN_ID]) == null ? void 0 : _b2.settings) == null ? void 0 : _c.dataPath;
-    return normalizeWeaveDataPath(fromWeave);
-  }
-  function isVaultImageFile(app2, path) {
-    var _a2, _b2;
-    const file = (_b2 = (_a2 = app2.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, path);
-    return Boolean(file) && /\.(png|jpe?g|gif|webp)$/i.test(file.name || path);
-  }
-  function resolveEpubCoverPath(app2, meta) {
-    const coverPath = typeof (meta == null ? void 0 : meta.coverPath) === "string" ? meta.coverPath.trim() : "";
-    if (coverPath && isVaultImageFile(app2, coverPath)) return coverPath;
-    const title = typeof (meta == null ? void 0 : meta.title) === "string" ? meta.title.trim() : "";
-    if (title) {
-      for (const ext of COVER_EXTENSIONS) {
-        const candidate = `CONFIG/BOOK/EPUB COVER/${title}.${ext}`;
-        if (isVaultImageFile(app2, candidate)) return candidate;
-      }
-    }
-    return null;
-  }
-  function formatReadingTime(totalReadTimeMs) {
-    const totalMinutes = Math.round((Number(totalReadTimeMs) || 0) / 6e4);
-    if (totalMinutes <= 0) return null;
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    if (hours > 0) return minutes > 0 ? `${hours}小时${minutes}分` : `${hours}小时`;
-    return `${minutes}分`;
-  }
-  function toDateString(timestamp) {
-    if (!Number.isFinite(timestamp) || !timestamp) return null;
-    const d = new Date(timestamp);
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-  }
-  function buildEpubItem(app2, aggregate) {
-    var _a2, _b2, _c;
-    const meta = aggregate == null ? void 0 : aggregate.meta;
-    const fileRef = aggregate == null ? void 0 : aggregate.file;
-    const reading = aggregate == null ? void 0 : aggregate.reading;
-    const notes = aggregate == null ? void 0 : aggregate.notes;
-    const stats = reading == null ? void 0 : reading.stats;
-    const vaultPath = typeof (fileRef == null ? void 0 : fileRef.vaultPath) === "string" ? fileRef.vaultPath.trim() : "";
-    const title = typeof (meta == null ? void 0 : meta.title) === "string" ? meta.title.trim() : "";
-    if (!vaultPath || !title) return null;
-    const rawPercent = typeof ((_a2 = reading == null ? void 0 : reading.position) == null ? void 0 : _a2.percent) === "number" ? reading.position.percent : 0;
-    const progress = rawPercent > 1 ? Math.min(100, Math.round(rawPercent)) : Math.round(Math.max(0, Math.min(1, rawPercent)) * 100);
-    const lastReadTime = Number.isFinite(stats == null ? void 0 : stats.lastReadTime) ? stats.lastReadTime : 0;
-    const completedTime = Number.isFinite(stats == null ? void 0 : stats.completedTime) ? stats.completedTime : 0;
-    const totalReadTimeMs = Number.isFinite(stats == null ? void 0 : stats.totalReadTime) ? stats.totalReadTime : 0;
-    const readingDate = progress > 0 ? toDateString(lastReadTime) : null;
-    const completionDate = toDateString(completedTime);
-    const vaultFile = (_c = (_b2 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _b2.getAbstractFileByPath) == null ? void 0 : _c.call(_b2, vaultPath);
-    const subjects = Array.isArray(meta == null ? void 0 : meta.subjects) ? meta.subjects : [];
-    const epubCategory = typeof subjects[0] === "string" && subjects[0].trim() ? subjects[0].trim() : null;
-    return {
-      file: vaultFile instanceof TFile ? vaultFile : null,
-      title,
-      author: typeof (meta == null ? void 0 : meta.author) === "string" && meta.author.trim() ? meta.author.trim() : "未知作者",
-      category: epubCategory,
-      cover: resolveEpubCoverPath(app2, meta),
-      bookReview: null,
-      readingDate,
-      completionDate,
-      progress,
-      readingTimeFormat: formatReadingTime(totalReadTimeMs),
-      readingTimeMs: totalReadTimeMs,
-      highlights: Array.isArray(notes == null ? void 0 : notes.highlights) ? notes.highlights.length : 0,
-      thinks: Array.isArray(notes == null ? void 0 : notes.excerpts) ? notes.excerpts.length : 0,
-      wordCount: 0,
-      pages: 0,
-      status: completionDate ? "已读" : progress > 0 ? "在读" : "未读",
-      isEpub: true,
-      epubVaultPath: vaultPath
-    };
-  }
-  async function readWeaveAggregates(app2) {
-    var _a2, _b2;
-    try {
-      const dataPath = resolveWeaveDataPath(app2);
-      const dataFilePath = `${dataPath}/${DEFAULT_WEAVE_DATA_FILE}`;
-      const file = (_b2 = (_a2 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, dataFilePath);
-      if (!file) return [];
-      const content = await app2.vault.adapter.read(dataFilePath);
-      const parsed = JSON.parse(content);
-      const books = parsed == null ? void 0 : parsed.books;
-      if (!books || typeof books !== "object") return [];
-      return Object.values(books);
-    } catch (e) {
-      return [];
-    }
-  }
-  async function loadEpubItems(app2) {
-    const aggregates = await readWeaveAggregates(app2);
-    const items = [];
-    for (const aggregate of aggregates) {
-      const item = buildEpubItem(app2, aggregate);
-      if (item) items.push(item);
-    }
-    return items;
-  }
-  var WEAVE_PLUGIN_ID, WEAVE_DATA_FILE, DEFAULT_WEAVE_DATA_FILE, COVER_EXTENSIONS;
-  var init_data2 = __esm({
-    "src/bookshelf/data.ts"() {
-      init_fake_obsidian();
-      init_settings_provider();
-      init_state2();
-      init_render2();
-      init_render2();
-      WEAVE_PLUGIN_ID = "weave-epub-reader";
-      WEAVE_DATA_FILE = "weave-data.json";
-      DEFAULT_WEAVE_DATA_FILE = WEAVE_DATA_FILE;
-      COVER_EXTENSIONS = ["jpg", "jpeg", "png", "webp", "gif"];
-    }
-  });
-
-  // src/pomodoro/state.ts
-  function createInitialState() {
-    return { phase: "idle", endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
-  }
-  function resumePhase(state3, now) {
-    return {
-      state: { ...state3, paused: false, pausedBy: void 0, remaining: 0, endTime: now + state3.remaining * 1e3 },
-      event: { type: "started", phase: state3.phase }
-    };
-  }
-  function activePhase(phase) {
-    return phase === "idle" ? "focus" : phase;
-  }
-  function phaseDurationSec(phase, d) {
-    if (phase === "short-break") return d.shortBreakMin * 60;
-    if (phase === "long-break") return d.longBreakMin * 60;
-    return d.workMin * 60;
-  }
-  function breakPhase(count, d) {
-    return count >= d.longBreakInterval ? "long-break" : "short-break";
-  }
-  function startPhase(state3, phase, now, d) {
-    return {
-      state: { ...state3, phase, endTime: now + phaseDurationSec(phase, d) * 1e3, paused: false, pausedBy: void 0, remaining: 0 },
-      event: { type: "started", phase }
-    };
-  }
-  function completePhase(state3, now, d, o) {
-    const phase = state3.phase;
-    const isFocus = phase === "focus";
-    let count = state3.cycleFocusCount;
-    let historyEntry;
-    let longBreak = false;
-    if (isFocus) {
-      count += 1;
-      longBreak = count >= d.longBreakInterval;
-      if (longBreak) count = 0;
-      historyEntry = { ts: now, duration: d.workMin * 60, ...state3.task ? { task: state3.task } : {} };
-    }
-    let next;
-    let autoStarted = false;
-    if (isFocus) {
-      if (o.autoSkipBreak) {
-        next = "focus";
-        autoStarted = true;
-      } else {
-        next = longBreak ? "long-break" : "short-break";
-        autoStarted = o.autoCycle;
-      }
-    } else {
-      next = "focus";
-      autoStarted = o.autoCycle;
-    }
-    const { task: _settled, ...rest } = state3;
-    const nextState = { ...rest, phase: next, cycleFocusCount: count };
-    const res = autoStarted ? startPhase(nextState, next, now, d) : {
-      state: { ...nextState, endTime: null, paused: false, remaining: phaseDurationSec(next, d) },
-      event: { type: "none" }
-    };
-    return {
-      ...res,
-      event: {
-        type: "phase-completed",
-        completedPhase: phase,
-        nextPhase: next,
-        autoStarted,
-        longBreak,
-        ...historyEntry ? { historyEntry } : {}
-      }
-    };
-  }
-  function transition(state3, action, now, d, o) {
-    if (action === "start") {
-      if (state3.paused) return resumePhase(state3, now);
-      if (state3.endTime !== null) return { state: state3, event: { type: "none" } };
-      const phase = activePhase(state3.phase);
-      return startPhase(state3, phase, now, d);
-    }
-    if (action === "pause") {
-      if (state3.endTime === null) return { state: state3, event: { type: "none" } };
-      if (o.forceFocus && state3.phase === "focus") return { state: state3, event: { type: "none" } };
-      return {
-        // 手动暂停：清除可能残留的冻结来源标记（pausedBy 只在冻结暂停期间有效）
-        state: { ...state3, paused: true, pausedBy: void 0, remaining: Math.ceil((state3.endTime - now) / 1e3), endTime: null },
-        event: { type: "none" }
-      };
-    }
-    if (action === "resume") {
-      if (!state3.paused) return { state: state3, event: { type: "none" } };
-      return resumePhase(state3, now);
-    }
-    if (action === "reset") {
-      if (o.forceFocus && state3.phase === "focus") return { state: state3, event: { type: "none" } };
-      const phase = activePhase(state3.phase);
-      return {
-        state: { ...state3, phase, endTime: null, paused: false, pausedBy: void 0, remaining: phaseDurationSec(phase, d) },
-        event: { type: "none" }
-      };
-    }
-    if (action === "skip") {
-      if (o.forceFocus && state3.phase === "focus") return { state: state3, event: { type: "none" } };
-      const phase = activePhase(state3.phase);
-      let next;
-      if (phase === "focus") next = o.autoSkipBreak ? "focus" : breakPhase(state3.cycleFocusCount, d);
-      else next = "focus";
-      const { task: _dropped, ...rest } = state3;
-      return {
-        state: { ...rest, phase: next, endTime: null, paused: false, pausedBy: void 0, remaining: phaseDurationSec(next, d) },
-        event: { type: "phase-completed", completedPhase: phase, nextPhase: next, autoStarted: false, longBreak: false }
-      };
-    }
-    if (action === "tick") {
-      if (state3.endTime === null || now < state3.endTime) return { state: state3, event: { type: "none" } };
-      return completePhase(state3, now, d, o);
-    }
-    return { state: state3, event: { type: "none" } };
-  }
-  function idleState() {
-    return { phase: "idle", endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
-  }
-  function recover(state3, history2, now, d, o) {
-    if (state3.endTime === null || now < state3.endTime) return { state: state3, history: history2.slice(), events: [] };
-    return { state: idleState(), history: history2.slice(), events: [] };
-  }
-  var PHASES;
-  var init_state3 = __esm({
-    "src/pomodoro/state.ts"() {
-      PHASES = ["idle", "focus", "short-break", "long-break"];
-    }
-  });
-
-  // src/pomodoro/data.ts
-  function getPomodoroFilePath() {
-    var _a2;
-    return storageFile("pomodoro.json", ((_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath) || "CONFIG/STORAGE");
-  }
-  function defaultPomodoroData() {
-    return { version: 1, state: createInitialState(), history: [] };
-  }
-  function normalizeData(raw) {
-    const def = defaultPomodoroData();
-    if (!raw || typeof raw !== "object") return def;
-    const state3 = normalizeState(raw.state);
-    const history2 = Array.isArray(raw.history) ? raw.history.filter((h) => h && typeof h.ts === "number" && typeof h.duration === "number").map((h) => ({
-      ts: h.ts,
-      duration: h.duration,
-      ...typeof h.task === "string" && h.task ? { task: h.task } : {}
-    })) : [];
-    return { version: 1, state: state3, history: history2 };
-  }
-  function normalizeState(raw) {
-    const def = createInitialState();
-    if (!raw || typeof raw !== "object") return def;
-    return {
-      phase: PHASES.includes(raw.phase) ? raw.phase : def.phase,
-      endTime: typeof raw.endTime === "number" ? raw.endTime : def.endTime,
-      remaining: typeof raw.remaining === "number" && raw.remaining >= 0 ? raw.remaining : def.remaining,
-      paused: typeof raw.paused === "boolean" ? raw.paused : def.paused,
-      // 冻结来源标记：仅认 'autopause'，旧数据无此字段/非法值 → undefined（手动暂停语义）
-      pausedBy: raw.pausedBy === "autopause" ? "autopause" : void 0,
-      cycleFocusCount: typeof raw.cycleFocusCount === "number" && raw.cycleFocusCount >= 0 ? raw.cycleFocusCount : def.cycleFocusCount,
-      // 归属任务标题：仅字符串非空保留（旧数据/非法值 → undefined）
-      task: typeof raw.task === "string" && raw.task ? raw.task : void 0
-    };
-  }
-  var PomodoroDataManager;
-  var init_data3 = __esm({
-    "src/pomodoro/data.ts"() {
-      init_settings_provider();
-      init_storage();
-      init_state3();
-      PomodoroDataManager = class {
-        constructor(app2) {
-          this.app = app2;
-        }
-        /**
-         * 读取数据（统一数据读写层：不存在 → 建默认数据文件；坏 JSON → 原文件留档 CONFIG/.CORRUPT 后重建默认）。
-         * 读也入 core per-path 串行队列：读是「load → 改 state → save」事务的读半边，
-         * 排在未落盘的写任务之后才能读到新值（读写同队列，消灭「读-写窗口交错」）。
-         */
-        async load() {
-          const raw = await enqueueFileTask(
-            getPomodoroFilePath(),
-            () => jsonFileStore(getPomodoroFilePath(), {
-              defaultValue: () => defaultPomodoroData(),
-              app: this.app
-            }).read()
-          );
-          return normalizeData(raw);
-        }
-        /**
-         * 保存（统一数据读写层：存在 modify / 不存在 create+建目录）。
-         * D3 可靠写契约原语 1 收编：整写入 core per-path 串行队列（键 = pomodoro.json 路径）——
-         * 计时器心跳保存与用户操作保存并发时按序落盘，后写者不再用陈旧基线覆盖先写者；
-         * 坏文件由 jsonFileStore 留档降级（原语 3）。数据形状与 API 不变。
-         */
-        async save(data) {
-          await enqueueFileTask(
-            getPomodoroFilePath(),
-            () => jsonFileStore(getPomodoroFilePath(), { app: this.app }).write(data)
-          );
-        }
-      };
-    }
-  });
-
-  // src/diary/app.ts
-  function getApp2() {
-    if (!app) throw new Error("app 尚未注入（插件未加载或测试未 setApp）");
-    return app;
-  }
-  var app;
-  var init_app2 = __esm({
-    "src/diary/app.ts"() {
-      app = null;
-    }
-  });
-
-  // src/diary/config.ts
-  function applyDirectories(settings) {
-    DIARY_DIRECTORY = settings.diaryDirectory || "我的/日记";
-    MOVIE_DIRECTORY = settings.movieDirectory || "我的/影视";
-    LETTER_DIRECTORY = settings.letterDirectory || "我的/信";
-    BATCH_SIZE = parseInt(settings.diaryBatchSize || "20", 10) || 20;
-  }
-  function getPrimaryTagsConfig() {
-    return PRIMARY_TAGS_CONFIG;
-  }
-  function getPrimaryTagsInDisplayOrder() {
-    const tags = Object.keys(PRIMARY_TAGS_CONFIG);
-    const idx = tags.indexOf(ENCRYPT_TAG);
-    if (idx === -1) return tags;
-    const rest = tags.filter((t) => t !== ENCRYPT_TAG);
-    rest.push(ENCRYPT_TAG);
-    return rest;
-  }
-  function buildTagMaps() {
-    for (const key of Object.keys(tagToEmojiMap)) delete tagToEmojiMap[key];
-    for (const key of Object.keys(emojiToTagMap)) delete emojiToTagMap[key];
-    for (const [tag, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
-      tagToEmojiMap[tag] = config.emoji;
-      emojiToTagMap[config.emoji] = tag;
-      if (config.subTags) {
-        for (const sub of config.subTags) {
-          tagToEmojiMap[sub.tag] = sub.emoji;
-          emojiToTagMap[sub.emoji] = sub.tag;
-        }
-      }
-    }
-  }
-  function getTagEmoji(tag) {
-    return tagToEmojiMap[tag] || "📖";
-  }
-  function getSubTagsOfPrimary(primaryTag) {
-    const config = PRIMARY_TAGS_CONFIG[primaryTag];
-    return config && config.subTags ? config.subTags : null;
-  }
-  function isSubTag(tag) {
-    for (const [, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
-      if (config.subTags && config.subTags.some((sub) => sub.tag === tag)) {
-        return true;
-      }
-    }
-    return false;
-  }
-  function getParentPrimaryTag(subTag) {
-    for (const [primary, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
-      if (config.subTags && config.subTags.some((sub) => sub.tag === subTag)) {
-        return primary;
-      }
-    }
-    return null;
-  }
-  function getSortedTagsForAddDialog() {
-    const result = [];
-    for (const [primary, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
-      if (primary === "加密") continue;
-      if (config.subTags && config.subTags.length > 0) {
-        for (const sub of config.subTags) {
-          result.push(sub.tag);
-        }
-      } else {
-        result.push(primary);
-      }
-    }
-    return result;
-  }
-  var DIARY_DIRECTORY, MOVIE_DIRECTORY, LETTER_DIRECTORY, BATCH_SIZE, ENCRYPT_TAG, DEFAULT_TAGS_CONFIG, PRIMARY_TAGS_CONFIG, tagToEmojiMap, emojiToTagMap;
-  var init_config = __esm({
-    "src/diary/config.ts"() {
-      DIARY_DIRECTORY = "我的/日记";
-      MOVIE_DIRECTORY = "我的/影视";
-      LETTER_DIRECTORY = "我的/信";
-      BATCH_SIZE = 20;
-      ENCRYPT_TAG = "加密";
-      DEFAULT_TAGS_CONFIG = {
-        日记: { emoji: "📖" },
-        加密: { emoji: "🔐" },
-        念念碎: { emoji: "😶" },
-        对谈: { emoji: "🤝" },
-        随笔: { emoji: "✍️" },
-        梦: { emoji: "🌙" },
-        诗: { emoji: "🌟" },
-        书: { emoji: "📕" },
-        信: { emoji: "✉️" },
-        摘抄: { emoji: "📌" },
-        摄影: { emoji: "📸" },
-        骑行: { emoji: "🚴" },
-        代码: { emoji: "⚙️" },
-        做饭: { emoji: "🥘" },
-        游戏: { emoji: "🎮" },
-        音乐: { emoji: "🎧" },
-        电影: { emoji: "📽" },
-        电视剧: { emoji: "📺" },
-        动漫: { emoji: "🎨" },
-        纪录片: { emoji: "🎞" },
-        猫: { emoji: "🐱" },
-        狗: { emoji: "🐶" },
-        仓鼠: { emoji: "🐹" },
-        熊猫: { emoji: "🐼" },
-        博物馆: { emoji: "🏛️" },
-        美食: { emoji: "🍔" },
-        旅游: {
-          emoji: "✈️",
-          subTags: [
-            { tag: "四川", emoji: "🀄" },
-            { tag: "大理", emoji: "🛶" }
-          ]
-        },
-        收藏: {
-          emoji: "⭐",
-          subTags: [
-            { tag: "咪咪", emoji: "🐈" },
-            { tag: "广告", emoji: "📢" },
-            { tag: "神评", emoji: "🤣" },
-            { tag: "冷笑话", emoji: "😅" },
-            { tag: "抽象", emoji: "🌀" },
-            { tag: "AI", emoji: "🤖" },
-            { tag: "愚人节", emoji: "🤪" },
-            { tag: "舞蹈", emoji: "🕺" },
-            { tag: "达人秀", emoji: "🤹" },
-            { tag: "艺术", emoji: "🧑‍🎨" },
-            { tag: "摄影集", emoji: "📷" },
-            { tag: "植物", emoji: "🌳" },
-            { tag: "创意", emoji: "🧩" }
-          ]
-        }
-      };
-      PRIMARY_TAGS_CONFIG = JSON.parse(JSON.stringify(DEFAULT_TAGS_CONFIG));
-      tagToEmojiMap = {};
-      emojiToTagMap = {};
-      buildTagMaps();
-    }
-  });
-
-  // src/diary/parser.ts
-  function isEncryptedEntry(entry) {
-    return typeof entry.content === "string" && entry.content.includes("🔐");
-  }
-  function parseFile(content, dateStr, onUnparsed) {
-    const entries = [];
-    const lines = content.split("\n");
-    let currentEntry = null;
-    let contentLines = [];
-    let unparsedLines = 0;
-    const headingRegex = /^#\s*((?:\S+)+)\s+(\d{2}:\d{2})/u;
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const headingMatch = line.match(headingRegex);
-      if (headingMatch) {
-        if (currentEntry) {
-          currentEntry.content = contentLines.join("\n").trim();
-          entries.push(currentEntry);
-          contentLines = [];
-        }
-        const emojiSequence = headingMatch[1];
-        const time = headingMatch[2];
-        const [hours, minutes] = time.split(":").map(Number);
-        if (isNaN(hours) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
-          unparsedLines++;
-          continue;
-        }
-        const timeValue = hours * 100 + minutes;
-        const segmenter = new Intl.Segmenter(void 0, { granularity: "grapheme" });
-        const segments = segmenter.segment(emojiSequence);
-        const tags = [];
-        for (const seg of segments) {
-          const ch = seg.segment;
-          const mappedTag = emojiToTagMap[ch];
-          if (mappedTag) {
-            tags.push(mappedTag);
+      case "text": {
+        const acc = bindValue(row.binding);
+        const ph = typeof row.placeholder === "function" ? row.placeholder(snapshot()) : row.placeholder;
+        const input = makeInput({
+          value: (_b2 = acc.read()) != null ? _b2 : "",
+          mono: !!row.mono,
+          num: !!row.num,
+          secret: !!row.secret,
+          placeholder: ph,
+          onCommit: (v) => {
+            var _a3;
+            acc.write(v);
+            void acc.persist();
+            (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
           }
+        });
+        ctrlEl.appendChild(input);
+        if (regRefresh && row.refreshKey !== void 0) {
+          const ref = row.refreshKey;
+          regRefresh(() => {
+            const snap = snapshot();
+            const fresh = typeof ref === "function" ? ref(snap) : String(snap[ref]);
+            const setDisplay = input.__setDisplayValue;
+            if (setDisplay) setDisplay(String(fresh != null ? fresh : ""));
+          });
         }
-        if (tags.length === 0) {
-          tags.push("日记");
-        }
-        currentEntry = {
-          date: dateStr,
-          time,
-          timeValue,
-          tags,
-          emoji: emojiSequence,
-          content: "",
-          filename: dateStr,
-          lineNumber: i + 1
+        break;
+      }
+      case "textarea": {
+        const acc = bindValue(row.binding);
+        ctrlEl.innerHTML = textareaHtml((_c = acc.read()) != null ? _c : "", row.placeholder);
+        const ta = ctrlEl.querySelector("textarea");
+        let timer = null;
+        let dirty2 = false;
+        const commit = () => {
+          if (timer !== null) window.clearTimeout(timer);
+          if (!dirty2) return;
+          acc.write(ta.value);
+          void acc.persist();
         };
-      } else if (currentEntry) {
-        if (line.trim() === "" && i + 1 < lines.length && lines[i + 1].match(/^#\s/)) {
-          currentEntry.content = contentLines.join("\n").trim();
-          entries.push(currentEntry);
-          currentEntry = null;
-          contentLines = [];
-        } else {
-          contentLines.push(line);
+        ta.addEventListener("input", () => {
+          dirty2 = true;
+          if (timer !== null) window.clearTimeout(timer);
+          timer = window.setTimeout(commit, 800);
+        });
+        ta.addEventListener("blur", commit);
+        if (regRefresh && row.refreshKey !== void 0) {
+          const ref = row.refreshKey;
+          regRefresh(() => {
+            const snap = snapshot();
+            const fresh = typeof ref === "function" ? ref(snap) : String(snap[ref]);
+            dirty2 = false;
+            const f = String(fresh != null ? fresh : "");
+            if (ta.value !== f) ta.value = f;
+          });
         }
-      } else if (line.trim() !== "") {
-        unparsedLines++;
+        break;
       }
-    }
-    if (currentEntry) {
-      currentEntry.content = contentLines.join("\n").trim();
-      entries.push(currentEntry);
-    }
-    if (onUnparsed && unparsedLines > 0) onUnparsed(unparsedLines);
-    for (const entry of entries) {
-      if (entry.type !== void 0) {
-        entry.tags = [entry.type];
-        delete entry.type;
-      }
-      if (!entry.tags || entry.tags.length === 0) {
-        entry.tags = ["日记"];
-      }
-      entry.emoji = entry.tags.map((tag) => getTagEmoji(tag)).join("");
-    }
-    return entries;
-  }
-  function getFileFrontmatter(file) {
-    const cache = getApp2().metadataCache.getFileCache(file);
-    return cache && cache.frontmatter ? cache.frontmatter : null;
-  }
-  async function getFileTimeParts(file) {
-    const stat = await file.stat;
-    const createTime = stat.ctime || stat.birthtime;
-    const m = (0, import_moment.default)(createTime);
-    return { timeStr: m.format("HH:mm"), timeValue: parseInt(m.format("HHmm")) };
-  }
-  function makeEntryId(prefix, file, dateStr) {
-    return `${prefix}-${file.path.replace(/\//g, "-")}-${dateStr}`;
-  }
-  async function parseMovieFile2(file) {
-    try {
-      const fm2 = getFileFrontmatter(file);
-      if (!fm2) return null;
-      let review = fm2["影评"];
-      if (!review || review.trim() === "") return null;
-      let dateStr = fm2["观影日期"];
-      if (!dateStr || !(0, import_moment.default)(dateStr, "YYYY-MM-DD", true).isValid()) return null;
-      dateStr = (0, import_moment.default)(dateStr).format("YYYY-MM-DD");
-      let poster = fm2["海报"];
-      const { timeStr, timeValue } = await getFileTimeParts(file);
-      let rawTag = "";
-      if (fm2.tags && Array.isArray(fm2.tags) && fm2.tags.length > 0) {
-        rawTag = fm2.tags[0];
-      } else if (fm2.tags && typeof fm2.tags === "string") {
-        rawTag = fm2.tags;
-      }
-      let mainTag = "日记";
-      if (rawTag === "电影") mainTag = "电影";
-      else if (rawTag === "纪录片") mainTag = "纪录片";
-      else if (rawTag.endsWith("剧")) mainTag = "电视剧";
-      else if (rawTag.endsWith("漫")) mainTag = "动漫";
-      else if (rawTag === "电视剧") mainTag = "电视剧";
-      else if (rawTag === "动漫") mainTag = "动漫";
-      const fileNameWithoutExt = file.basename;
-      const content = `${review.trim()}
-
-![[${poster}]]
-
-#${fileNameWithoutExt}`;
-      return {
-        date: dateStr,
-        time: timeStr,
-        timeValue,
-        tags: [mainTag],
-        emoji: getTagEmoji(mainTag),
-        content,
-        filename: file.path,
-        lineNumber: 0,
-        id: makeEntryId("movie", file, dateStr)
-      };
-    } catch (err) {
-      console.error(`解析影视文件失败 ${file.path}:`, err);
-      return null;
-    }
-  }
-  async function parseLetterFile(file) {
-    try {
-      const fm2 = getFileFrontmatter(file);
-      if (!fm2) return null;
-      if (fm2.readonly === true) return null;
-      let dateStr = fm2.date;
-      if (!dateStr) return null;
-      let parsed = (0, import_moment.default)(dateStr, ["YYYY-MM-DD", "YYYY-MM-DD HH:mm"], true);
-      if (!parsed.isValid()) {
-        parsed = (0, import_moment.default)(dateStr);
-        if (!parsed.isValid()) return null;
-      }
-      const dateFormatted = parsed.format("YYYY-MM-DD");
-      const fullContent = await getApp2().vault.read(file);
-      const frontmatterRegex = /^---\n([\s\S]*?)\n---\n/;
-      const match = fullContent.match(frontmatterRegex);
-      let body = fullContent;
-      if (match) {
-        body = fullContent.slice(match[0].length);
-      }
-      body = body.trim();
-      const title = file.basename;
-      const entryContent = `**${title}**
-
-${body}`.trim();
-      const { timeStr, timeValue } = await getFileTimeParts(file);
-      return {
-        date: dateFormatted,
-        time: timeStr,
-        timeValue,
-        tags: ["信"],
-        emoji: getTagEmoji("信"),
-        content: entryContent,
-        filename: file.path,
-        lineNumber: 0,
-        id: makeEntryId("letter", file, dateFormatted)
-      };
-    } catch (err) {
-      console.error(`解析信文件失败 ${file.path}:`, err);
-      return null;
-    }
-  }
-  function parseNaturalTime(input) {
-    if (!input) return null;
-    const now = (0, import_moment.default)();
-    const lower = input.toLowerCase().trim();
-    const relMatch = lower.match(/^(\d+)\s*(分钟?|小时?|天|秒)前$/);
-    if (relMatch) {
-      const num = parseInt(relMatch[1], 10);
-      const unit = relMatch[2];
-      if (unit.startsWith("分")) return now.clone().subtract(num, "minutes");
-      if (unit.startsWith("小")) return now.clone().subtract(num, "hours");
-      if (unit === "天") return now.clone().subtract(num, "days");
-      if (unit === "秒") return now.clone().subtract(num, "seconds");
-    }
-    const yesterdayMatch = lower.match(/^昨天\s*(\d{1,2}:\d{2})$/);
-    if (yesterdayMatch) {
-      const time = yesterdayMatch[1];
-      const yesterday = now.clone().subtract(1, "days");
-      return (0, import_moment.default)(`${yesterday.format("YYYY-MM-DD")} ${time}`, "YYYY-MM-DD HH:mm", true);
-    }
-    const beforeYesterdayMatch = lower.match(/^前天\s*(\d{1,2}:\d{2})$/);
-    if (beforeYesterdayMatch) {
-      const time = beforeYesterdayMatch[1];
-      const before = now.clone().subtract(2, "days");
-      return (0, import_moment.default)(`${before.format("YYYY-MM-DD")} ${time}`, "YYYY-MM-DD HH:mm", true);
-    }
-    const std = (0, import_moment.default)(input, "YYYY-MM-DD HH:mm", true);
-    if (std.isValid()) return std;
-    return null;
-  }
-  function parseFlexibleDateTime(input) {
-    const natural = parseNaturalTime(input);
-    if (natural && natural.isValid()) return natural;
-    return (0, import_moment.default)(input, "YYYY-MM-DD HH:mm", true);
-  }
-  var init_parser = __esm({
-    "src/diary/parser.ts"() {
-      init_fake_obsidian();
-      init_app2();
-      init_config();
-    }
-  });
-
-  // src/review/fsrs.ts
-  function scheduleNext(state3, rating, now, w = DEFAULT_W) {
-    const fsrs = new FSRS(w);
-    if (state3.phase !== "fsrs" && state3.stage < LADDER_MAX) {
-      let target;
-      if (rating === "again") target = Math.max(0, state3.stage - 1);
-      else if (rating === "hard") target = state3.stage;
-      else if (rating === "good") target = state3.stage + 1;
-      else target = state3.stage + 2;
-      target = Math.max(0, Math.min(target, LADDER_MAX));
-      if (target >= LADDER_MAX) {
-        const S2 = fsrs.initS(rating);
-        const D2 = rating === "again" ? fsrs.w[4] : 0.3;
-        const rS = Math.round(S2 * 100) / 100;
-        const rD = Math.round(D2 * 100) / 100;
-        return {
-          stage: target,
-          phase: "fsrs",
-          stability: rS,
-          difficulty: rD,
-          intervalDays: FSRS_FIRST_INTERVALS[target],
-          enteringFsrs: true,
-          historyStage: target + 1,
-          R: null,
-          historyStability: rS,
-          historyDifficulty: rD
-        };
-      }
-      return {
-        stage: target,
-        phase: "ladder",
-        stability: null,
-        difficulty: null,
-        intervalDays: FSRS_FIRST_INTERVALS[target],
-        enteringFsrs: false,
-        historyStage: target + 1,
-        R: null,
-        historyStability: null,
-        historyDifficulty: null
-      };
-    }
-    const S = state3.stability || 1;
-    const D = state3.difficulty || 0.3;
-    const last = state3.lastReviewed || state3.reviewStart;
-    const t = last ? (now.getTime() - new Date(last).getTime()) / 864e5 : 0;
-    const R = fsrs.R(t, S);
-    const result = fsrs.nextInterval(S, D, rating, R);
-    return {
-      stage: state3.stage,
-      phase: "fsrs",
-      stability: Math.round(result.S * 100) / 100,
-      difficulty: Math.round(result.D * 100) / 100,
-      intervalDays: result.days,
-      enteringFsrs: false,
-      historyStage: state3.stage + 1,
-      R,
-      historyStability: Math.round(result.S * 100) / 100,
-      historyDifficulty: Math.round(result.D * 100) / 100
-    };
-  }
-  var DEFAULT_W, DEFAULT_D, FSRS, FSRS_FIRST_INTERVALS, FSRS_FIRST_TEXTS, TOTAL_STAGES, LADDER_MAX;
-  var init_fsrs = __esm({
-    "src/review/fsrs.ts"() {
-      DEFAULT_W = [0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01, 1.49, 0.14, 1.26, 0.07, 0.35, 2.06, 0.57, 0.09, 0.05, 0.33, 2.15];
-      DEFAULT_D = 0.9;
-      FSRS = class {
-        constructor(w = DEFAULT_W, d = DEFAULT_D) {
-          this.w = w;
-          this.d = d;
-        }
-        /** 记忆保留度：R(t, S) = (1 + t/(S·d))^-d */
-        R(t, S) {
-          return Math.pow(1 + t / (S * this.d), -this.d);
-        }
-        /** 初始稳定性 */
-        initS(rating) {
-          const map = { again: 0, hard: 1, good: 2, easy: 3 };
-          return this.w[map[rating]] || 1;
-        }
-        /** 下一难度 */
-        nextDiff(D, rating) {
-          let newD;
-          if (rating === "again") newD = this.w[4];
-          else if (rating === "hard") newD = D + this.w[5];
-          else if (rating === "easy") newD = D + this.w[6];
-          else newD = D;
-          return Math.max(0, Math.min(1, newD));
-        }
-        /** 下一稳定性 */
-        nextStab(S, D, rating, R) {
-          if (rating === "again") {
-            return this.w[11] * Math.pow(D, -this.w[12]) * (Math.pow(S + 1, this.w[13]) - 1) * Math.exp(this.w[14] * R);
+      case "number": {
+        const acc = bindValue(row.binding);
+        const ph = typeof row.placeholder === "function" ? row.placeholder(snapshot()) : row.placeholder;
+        const input = makeInput({
+          value: String((_d = acc.read()) != null ? _d : ""),
+          type: "number",
+          num: true,
+          placeholder: ph,
+          min: row.min,
+          max: row.max,
+          onCommit: (raw) => {
+            var _a3;
+            if (raw.trim() === "") return;
+            let v = Number(raw);
+            if (Number.isNaN(v)) v = 0;
+            if (row.min !== void 0 && v < row.min) v = row.min;
+            if (row.max !== void 0 && v > row.max) v = row.max;
+            acc.write(v);
+            void acc.persist();
+            (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
           }
-          const base = Math.exp(this.w[8]) * (11 - D) * Math.pow(S, -this.w[9]) * (Math.exp(this.w[10] * (1 - R)) - 1);
-          if (rating === "hard") return S * base;
-          if (rating === "good") return S * (base + 1);
-          return S * base * (Math.exp(this.w[17]) + 1);
+        });
+        input.step = String((_e = row.step) != null ? _e : 1);
+        ctrlEl.appendChild(input);
+        if (regRefresh && row.refreshKey !== void 0) {
+          const ref = row.refreshKey;
+          regRefresh(() => {
+            const snap = snapshot();
+            const fresh = typeof ref === "function" ? ref(snap) : String(snap[ref]);
+            const setDisplay = input.__setDisplayValue;
+            if (setDisplay) setDisplay(String(fresh != null ? fresh : ""));
+          });
         }
-        /** 下一间隔（天） */
-        nextInterval(S, D, rating, R) {
-          const newD = this.nextDiff(D, rating);
-          const newS = Math.max(0.01, this.nextStab(S, newD, rating, R));
-          return { S: newS, D: newD, days: newS };
-        }
-      };
-      FSRS_FIRST_INTERVALS = [1 / 1440, 1 / 48, 1 / 4, 1, 3, 7, 15, 30, 60, 120];
-      FSRS_FIRST_TEXTS = ["1m", "30m", "6h", "1d", "3d", "7d", "15d", "30d", "60d", "120d"];
-      TOTAL_STAGES = 10;
-      LADDER_MAX = 9;
-    }
-  });
-
-  // src/review/data.ts
-  function getReviewFilePath() {
-    const s = tryGetSettings();
-    return storageFile("review.json", s && s.storagePath || "CONFIG/STORAGE");
-  }
-  function getReviewFitFilePath() {
-    const s = tryGetSettings();
-    return storageFile("review-fit.json", s && s.storagePath || "CONFIG/STORAGE");
-  }
-  async function loadFittedParams(app2) {
-    const data = await jsonFileStore(getReviewFitFilePath()).read();
-    if (!data || !Array.isArray(data.w) || data.w.length < 8) return null;
-    return data;
-  }
-  async function saveFittedParams(app2, fit) {
-    await enqueueFileTask(getReviewFitFilePath(), () => jsonFileStore(getReviewFitFilePath()).write(fit));
-  }
-  var ReviewDataManager;
-  var init_data4 = __esm({
-    "src/review/data.ts"() {
-      init_storage();
-      init_settings_provider();
-      init_fsrs();
-      ReviewDataManager = class {
-        constructor(app2) {
-          this.app = app2;
-        }
-        /** 加载条目（向后兼容旧字段；日期兼容 ISO 字符串与数字）。
-         *  走模块级 getApp（reviewApp 为单例 dataManager，app 参数注入会绑定旧 app 导致跨测试/重开写错 vault） */
-        async loadItems() {
-          var _a2, _b2;
-          const data = await jsonFileStore(getReviewFilePath()).read();
-          const items = Array.isArray(data) ? data : [];
-          const valid = [];
-          for (const item of items) {
-            const file = this.app.vault.getAbstractFileByPath(item.filePath);
-            if (!file) {
-              item.file = null;
-              item.isMissing = true;
-              item.name = item.name || ((_a2 = item.filePath.split("/").pop()) == null ? void 0 : _a2.replace(/\.md$/, "")) || item.filePath;
-              item.isCompleted = item.completed || false;
-              item.isOverdue = false;
-              item.currentStage = ((_b2 = item.stage) != null ? _b2 : (item.reviewStage || 1) - 1) + 1;
-              item.totalStages = TOTAL_STAGES;
-              valid.push(item);
-              continue;
-            }
-            item.file = file;
-            item.name = file.basename;
-            if (item.stage === void 0) item.stage = (item.reviewStage || 1) - 1;
-            if (item.stability === void 0) item.stability = 1;
-            if (item.difficulty === void 0) item.difficulty = 0.3;
-            if (item.phase === void 0) item.phase = item.stage >= LADDER_MAX ? "fsrs" : "ladder";
-            const now = /* @__PURE__ */ new Date();
-            const isCompleted = item.completed || false;
-            const nextReview = item.nextReviewDate ? new Date(item.nextReviewDate) : null;
-            const isOverdue = !!nextReview && now > nextReview && !isCompleted;
-            item.isCompleted = isCompleted;
-            item.isOverdue = isOverdue;
-            item.currentStage = item.stage + 1;
-            item.totalStages = TOTAL_STAGES;
-            valid.push(item);
+        break;
+      }
+      case "select": {
+        const acc = bindValue(row.binding);
+        const options2 = row.options;
+        const labelOf = (v) => (options2.find((o) => o.value === v) || { label: v }).label;
+        ctrlEl.innerHTML = selectTriggerHtml(labelOf(String((_f = acc.read()) != null ? _f : "") || options2[0] && options2[0].value || ""));
+        const sel = ctrlEl.querySelector(".bz-select");
+        const vspan = sel.querySelector(".bz-select-val");
+        sel.addEventListener("click", () => {
+          var _a3;
+          if (sel.querySelector(".bz-select-menu")) return;
+          const group = sel.closest(".bz-sp-group");
+          if (group) {
+            group.style.overflow = "visible";
+            group.style.zIndex = "10";
           }
-          return valid;
-        }
-        /** 保存（白名单剥离运行时字段：file/isCompleted/isOverdue/isMissing/currentStage/totalStages
-         *  均为 loadItems 派生或运行时态，不落盘（数据卫生）；走模块级 getApp——见 loadItems 注释） */
-        async saveItems(items) {
-          const data = items.map((i) => {
-            const {
-              file: _file,
-              isCompleted: _isCompleted,
-              isOverdue: _isOverdue,
-              isMissing: _isMissing,
-              currentStage: _currentStage,
-              totalStages: _totalStages,
-              ...rest
-            } = i;
-            return rest;
-          });
-          await jsonFileStore(getReviewFilePath()).write(data);
-        }
-        /** 读改写事务：fn 基于磁盘现值改动，整体入 per-path 串行队列（D3 原语 1） */
-        mutate(fn) {
-          return enqueueFileTask(getReviewFilePath(), async () => {
-            const items = await this.loadItems();
-            const result = await fn(items);
-            await this.saveItems(items);
-            return result;
-          });
-        }
-        /** 新增条目 */
-        addItem(filePath, fileName) {
-          return this.mutate((items) => {
-            if (items.some((i) => i.filePath === filePath)) throw new Error("该笔记已在复习计划中");
-            const now = /* @__PURE__ */ new Date();
-            const newItem = {
-              id: `review_${now.getTime()}_${Math.random().toString(36).slice(2, 8)}`,
-              filePath,
-              name: fileName,
-              reviewStart: now.toISOString(),
-              stage: 0,
-              phase: "ladder",
-              stability: 1,
-              difficulty: 0.3,
-              reviewHistory: [],
-              totalReviews: 0,
-              averageConfidence: 0,
-              nextReviewDate: new Date(now.getTime() + FSRS_FIRST_INTERVALS[0] * 864e5).toISOString(),
-              lastReviewed: null,
-              lastDifficulty: null,
-              completed: false
-            };
-            items.push(newItem);
-            return newItem;
-          });
-        }
-        /** 更新条目（按 filePath 定位 + 就地修改 + 落盘） */
-        updateItem(filePath, updateFn) {
-          return this.mutate((items) => {
-            const idx = items.findIndex((i) => i.filePath === filePath);
-            if (idx === -1) throw new Error("条目不存在");
-            updateFn(items[idx]);
-          }).then(() => void 0);
-        }
-        /** 移除条目（同路径重复条目全数移除，与旧 filter 语义一致） */
-        removeItem(filePath) {
-          return this.mutate((items) => {
-            for (let i = items.length - 1; i >= 0; i--) {
-              if (items[i].filePath === filePath) items.splice(i, 1);
+          const closeMenu2 = () => {
+            var _a4;
+            (_a4 = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a4.remove();
+            if (group) {
+              group.style.overflow = "";
+              group.style.zIndex = "";
             }
-          }).then(() => void 0);
-        }
-        /** 撤销移出（ticket 141 通病 1）：原条目（含阶段/排期/历史）原样插回，不走 addItem 重置进度。
-         *  运行时字段与 saveItems 同口径剥离（file/isCompleted/isOverdue/isMissing/currentStage/totalStages 不落盘） */
-        restoreItem(item) {
-          return this.mutate((items) => {
-            if (items.some((i) => i.filePath === item.filePath)) return;
-            const {
-              file: _file,
-              isCompleted: _isCompleted,
-              isOverdue: _isOverdue,
-              isMissing: _isMissing,
-              currentStage: _currentStage,
-              totalStages: _totalStages,
-              ...rest
-            } = item;
-            items.push(rest);
-          }).then(() => void 0);
-        }
-        getOverdueCount(items) {
-          return items.filter((i) => i.isOverdue && !i.isCompleted).length;
-        }
-        /** 文件重命名时更新路径 */
-        updateFilePath(oldPath, newPath, newName) {
-          return this.mutate((items) => {
-            const item = items.find((i) => i.filePath === oldPath);
-            if (!item) return false;
-            if (items.some((i) => i.filePath === newPath && i.filePath !== oldPath)) return false;
-            item.filePath = newPath;
-            item.name = newName;
-            return true;
+            document.removeEventListener("click", h);
+          };
+          const h = (ev) => {
+            if (!sel.contains(ev.target)) closeMenu2();
+          };
+          setTimeout(() => document.addEventListener("click", h));
+          const menu = document.createElement("div");
+          menu.className = "bz-select-menu";
+          const curNow = String((_a3 = acc.read()) != null ? _a3 : "") || options2[0] && options2[0].value || "";
+          menu.innerHTML = options2.map((o) => selectItemHtml(o.label, o.value === curNow)).join("");
+          menu.querySelectorAll(".bz-select-item").forEach((it, i) => {
+            const o = options2[i];
+            it.addEventListener("click", (ev) => {
+              var _a4;
+              ev.stopPropagation();
+              closeMenu2();
+              vspan.textContent = labelOf(o.value);
+              acc.write(o.value);
+              void acc.persist();
+              (_a4 = row.onChange) == null ? void 0 : _a4.call(row, o.value, ctx);
+              refresh();
+            });
           });
+          sel.appendChild(menu);
+          mountIcons(menu);
+        });
+        break;
+      }
+      case "slider": {
+        const acc = bindValue(row.binding);
+        const cur = (_h = (_g = acc.read()) != null ? _g : row.min) != null ? _h : 0;
+        ctrlEl.innerHTML = sliderHtml(row.min, row.max, (_i = row.step) != null ? _i : 1, cur);
+        const range = ctrlEl.querySelector('input[type="range"]');
+        const em = ctrlEl.querySelector(".bz-sp-slider-val");
+        range.addEventListener("input", () => {
+          var _a3;
+          em.textContent = range.value;
+          const v = Number(range.value);
+          acc.write(v);
+          void acc.persist();
+          (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
+        });
+        break;
+      }
+      case "path": {
+        const acc = bindValue(row.binding);
+        const multi = row.mode === "multi";
+        const fallbackFn = row.fallbackValue;
+        ctrlEl.appendChild(makePathRowCtrl({
+          name: row.name,
+          mode: row.mode,
+          value: multi ? Array.isArray(acc.read()) ? [...acc.read()] : [] : String((_j = acc.read()) != null ? _j : ""),
+          pickerTitle: row.pickerTitle,
+          pickerDesc: row.pickerDesc,
+          buttonText: row.buttonText,
+          okText: row.okText,
+          fallbackChip: typeof fallbackFn === "function" ? fallbackFn() : "",
+          onChange: (list) => {
+            var _a3;
+            const v = multi ? list : (list[0] || "").trim().replace(/^\/+|\/+$/g, "");
+            acc.write(v);
+            void acc.persist();
+            const res = (_a3 = row.onChange) == null ? void 0 : _a3.call(row, list, ctx);
+            if (res && typeof res.then === "function") {
+              return Promise.resolve(res).then(
+                (final) => Array.isArray(final) ? final : list
+              );
+            }
+            return Array.isArray(res) ? res : void 0;
+          }
+        }));
+        break;
+      }
+      case "button": {
+        ctrlEl.innerHTML = rowBtnHtml(row.buttonText, row.cta);
+        const b2 = ctrlEl.querySelector(".bz-sp-btn");
+        b2.addEventListener("click", () => row.onClick(ctx));
+        break;
+      }
+      case "info": {
+        ctrlEl.innerHTML = badgeHtml(row.name);
+        break;
+      }
+      case "choiceCards": {
+        const acc = bindValue(row.binding);
+        const layoutKey = row.layoutKey;
+        const curLayout = layoutKey ? String((_k = snapshot()[layoutKey]) != null ? _k : "") : "";
+        const opts2 = row.options.filter((o) => {
+          const lo = o.layout;
+          return !lo || !layoutKey || lo === curLayout;
+        });
+        const cur = String((_l = acc.read()) != null ? _l : "") || opts2[0] && opts2[0].value || "";
+        ctrlEl.innerHTML = cardpickHtml(opts2.map((o) => ({
+          value: o.value,
+          label: o.label,
+          on: o.value === cur,
+          prevClass: o.prevClass
+        })));
+        const wrap = ctrlEl.querySelector(".bz-sp-cardpick");
+        wrap.querySelectorAll(".bz-sp-cardpick-card").forEach((c) => {
+          c.addEventListener("click", () => {
+            var _a3, _b3, _c2;
+            wrap.querySelectorAll(".is-on").forEach((x) => x.classList.remove("is-on"));
+            c.classList.add("is-on");
+            acc.write((_a3 = c.dataset.spCard) != null ? _a3 : "");
+            void acc.persist();
+            (_c2 = row.onChange) == null ? void 0 : _c2.call(row, (_b3 = c.dataset.spCard) != null ? _b3 : "", ctx);
+            refresh();
+          });
+        });
+        break;
+      }
+      case "custom": {
+        const slot = document.createElement("div");
+        slot.className = "bz-sp-custom-slot bz-sp-custom-slot--full";
+        el.appendChild(slot);
+        try {
+          row.render(slot, ctx);
+        } catch (e) {
+          notice(`自定义设置行渲染失败：${e instanceof Error ? e.message : String(e)}`, "error");
         }
-      };
-    }
-  });
-
-  // src/review/fit.ts
-  function clip(w) {
-    const out = [...w];
-    for (let i = 0; i < 4; i++) out[i] = Math.max(0.01, out[i]);
-    out[4] = Math.max(0, Math.min(1, out[4]));
-    for (let i = 5; i < 8; i++) out[i] = Math.max(0.01, out[i]);
-    return out;
-  }
-  function computeSampleLogLikelihood(w, sample) {
-    const d = DEFAULT_D;
-    const S = sample.S;
-    const t = sample.t;
-    const denom = Math.max(0.01, S * d);
-    const R = Math.pow(1 + t / denom, -d);
-    const remember = sample.rating === 2 || sample.rating === 3;
-    const p = remember ? R : 1 - R;
-    return Math.log(Math.max(1e-9, Math.min(1 - 1e-9, p)));
-  }
-  function isFittableSample(sample) {
-    return sample.stage >= 9;
-  }
-  function buildFitSamples(history2, opts) {
-    const out = [];
-    for (let i = 1; i < history2.length; i++) {
-      const prev = history2[i - 1];
-      const cur = history2[i];
-      if (prev.stability === void 0) continue;
-      const prevD = prev.difficulty !== void 0 ? prev.difficulty : opts == null ? void 0 : opts.fallbackDifficulty;
-      if (prevD === void 0) continue;
-      const t = (new Date(cur.timestamp).getTime() - new Date(prev.timestamp).getTime()) / 864e5;
-      if (!(t > 0)) continue;
-      const ratingIdx = RATING_INDEX[cur.rating];
-      if (ratingIdx === void 0) continue;
-      out.push({
-        t,
-        S: prev.stability,
-        D: prevD,
-        rating: ratingIdx,
-        stage: cur.stage
-      });
-    }
-    return out;
-  }
-  function totalLogLikelihood(w, samples) {
-    let sum = 0;
-    for (const s of samples) {
-      if (!isFittableSample(s)) continue;
-      sum += computeSampleLogLikelihood(w, s);
-    }
-    return sum;
-  }
-  function numericGradient(w, samples, eps = 1e-5) {
-    const grad = new Array(w.length).fill(0);
-    const base = totalLogLikelihood(w, samples);
-    for (let i = 0; i < Math.min(8, w.length); i++) {
-      const wp = [...w];
-      const wm = [...w];
-      wp[i] += eps;
-      wm[i] -= eps;
-      const fp = totalLogLikelihood(wp, samples);
-      const fm2 = totalLogLikelihood(wm, samples);
-      grad[i] = (fp - fm2) / (2 * eps);
-    }
-    return grad;
-  }
-  function fitFSRSParams(samples, opts = {}) {
-    var _a2, _b2, _c;
-    const initW = opts.initW ? [...opts.initW] : [...DEFAULT_W];
-    const iterations = (_a2 = opts.iterations) != null ? _a2 : 150;
-    const lr = (_b2 = opts.lr) != null ? _b2 : 0.02;
-    const full = (_c = opts.full) != null ? _c : false;
-    const fitLen = full ? Math.min(19, initW.length) : Math.min(8, initW.length);
-    const w = clip(initW);
-    const m = new Array(w.length).fill(0);
-    const v = new Array(w.length).fill(0);
-    const beta1 = 0.9;
-    const beta2 = 0.999;
-    const eps = 1e-8;
-    let lastLL = totalLogLikelihood(w, samples);
-    let bestW = [...w];
-    let bestLL = lastLL;
-    let stall = 0;
-    for (let it = 1; it <= iterations; it++) {
-      const lrIt = lr * (1 - 0.75 * (it / iterations));
-      const grad = numericGradient(w, samples);
-      for (let i = 0; i < fitLen; i++) {
-        m[i] = beta1 * m[i] + (1 - beta1) * grad[i];
-        v[i] = beta2 * v[i] + (1 - beta2) * grad[i] * grad[i];
-        const mHat = m[i] / (1 - Math.pow(beta1, it));
-        const vHat = v[i] / (1 - Math.pow(beta2, it));
-        w[i] += lrIt * mHat / (Math.sqrt(vHat) + eps);
-      }
-      for (let i = 0; i < fitLen; i++) {
-        if (i < 4) w[i] = Math.max(0.01, w[i]);
-        else if (i === 4) w[i] = Math.max(0, Math.min(1, w[i]));
-        else w[i] = Math.max(0.01, w[i]);
-      }
-      const ll = totalLogLikelihood(w, samples);
-      if (ll > bestLL) {
-        bestLL = ll;
-        bestW = [...w];
-      }
-      if (Math.abs(ll - lastLL) < 1e-6) {
-        stall++;
-        if (stall >= 10) break;
-      } else stall = 0;
-      lastLL = ll;
-    }
-    return { w: clip(bestW), logLikelihood: bestLL, iterations };
-  }
-  function fitFromItems(items, opts) {
-    var _a2;
-    const samples = items.flatMap((i) => buildFitSamples(i.reviewHistory || [], { fallbackDifficulty: i.difficulty }));
-    const fittable = samples.filter(isFittableSample);
-    const count = fittable.length;
-    if (count < 100) return null;
-    const full = (_a2 = opts == null ? void 0 : opts.full) != null ? _a2 : count >= 300;
-    return { fit: fitFSRSParams(samples, { full }), count };
-  }
-  function mergeFittedW(fitted) {
-    const out = [...DEFAULT_W];
-    for (let i = 0; i < Math.min(19, fitted.length); i++) out[i] = fitted[i];
-    return out;
-  }
-  var RATING_INDEX;
-  var init_fit = __esm({
-    "src/review/fit.ts"() {
-      init_fsrs();
-      RATING_INDEX = { again: 0, hard: 1, good: 2, easy: 3 };
-    }
-  });
-
-  // src/review/stats.ts
-  function dateKey(d) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${y}-${m}-${day}`;
-  }
-  function historyOf(item) {
-    return (item.reviewHistory || []).map((h) => ({
-      timestamp: h.timestamp,
-      rating: h.rating,
-      stage: h.stage,
-      stability: h.stability,
-      difficulty: h.difficulty,
-      R: h.R
-    }));
-  }
-  function flattenHistory(items) {
-    return items.flatMap((i) => historyOf(i).map((h) => ({ ...h, filePath: i.filePath })));
-  }
-  function computeStats(items, opts) {
-    const history2 = flattenHistory(items);
-    const days = /* @__PURE__ */ new Set();
-    for (const h of history2) days.add(dateKey(new Date(h.timestamp)));
-    const totalReviews = days.size;
-    const todayKey = dateKey(/* @__PURE__ */ new Date());
-    let streak = 0;
-    let cursor = /* @__PURE__ */ new Date();
-    if (!days.has(todayKey)) cursor.setDate(cursor.getDate() - 1);
-    while (days.has(dateKey(cursor))) {
-      streak++;
-      cursor.setDate(cursor.getDate() - 1);
-    }
-    const todayCount2 = history2.filter((h) => dateKey(new Date(h.timestamp)) === todayKey).length;
-    const ratingDist = { again: 0, hard: 0, good: 0, easy: 0 };
-    for (const h of history2) {
-      if (h.rating in ratingDist) ratingDist[h.rating]++;
-    }
-    const active2 = items.filter((i) => !i.completed && !i.isCompleted);
-    const overdue = active2.filter((i) => i.isOverdue);
-    const overdueRate = active2.length ? overdue.length / active2.length : 0;
-    const rFsrs = new FSRS((opts == null ? void 0 : opts.w) || DEFAULT_W);
-    let rSum = 0;
-    let rN = 0;
-    for (const i of items) {
-      if (i.phase === "fsrs" && i.stability && i.lastReviewed) {
-        const t = ((/* @__PURE__ */ new Date()).getTime() - new Date(i.lastReviewed).getTime()) / 864e5;
-        if (t > 0) {
-          rSum += rFsrs.R(t, i.stability);
-          rN++;
+        if (regRefresh && row.onRefresh) {
+          const onRefresh = row.onRefresh;
+          regRefresh(() => onRefresh(ctx));
         }
+        break;
       }
+      default:
+        break;
     }
-    const avgR = rN ? rSum / rN : null;
-    let firstReviewAt = null;
-    if (history2.length) {
-      const ts = history2.map((h) => new Date(h.timestamp).getTime());
-      firstReviewAt = new Date(Math.min(...ts)).toISOString();
-    }
-    const daily7 = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = /* @__PURE__ */ new Date();
-      d.setDate(d.getDate() - i);
-      const key = dateKey(d);
-      const count = history2.filter((h) => dateKey(new Date(h.timestamp)) === key).length;
-      daily7.push({ date: key, count });
-    }
-    const reviewedNotes = new Set(history2.filter((h) => h.filePath).map((h) => h.filePath)).size;
-    return {
-      totalReviews,
-      streak,
-      todayReviews: todayCount2,
-      ratingDist,
-      overdueRate,
-      avgR,
-      reviewedNotes,
-      firstReviewAt,
-      daily7
-    };
+    return el;
   }
-  function loadDistribution(items, nDays) {
-    const out = [];
-    for (let i = 0; i < nDays; i++) {
-      const d = /* @__PURE__ */ new Date();
-      d.setDate(d.getDate() + i);
-      out.push({ date: dateKey(d), count: 0 });
-    }
-    for (const item of items) {
-      if (item.completed || item.isCompleted || !item.nextReviewDate || item.isMissing) continue;
-      const d = new Date(item.nextReviewDate);
-      const key = dateKey(d);
-      const slot = out.find((x) => x.date === key);
-      if (slot) slot.count++;
-    }
-    return out;
-  }
-  var RATING_NAMES, RATING_COLORS;
-  var init_stats = __esm({
-    "src/review/stats.ts"() {
-      init_fsrs();
-      RATING_NAMES = { again: "忘了", hard: "困难", good: "一般", easy: "简单" };
-      RATING_COLORS = { again: "#ff4757", hard: "#ff9f43", good: "#2ed573", easy: "#7bed9f" };
-    }
-  });
-
-  // src/review/queue.ts
-  function isDueToday(item) {
-    if (!item.nextReviewDate) return false;
-    return dateKey(new Date(item.nextReviewDate)) === dateKey(/* @__PURE__ */ new Date());
-  }
-  function isEarlyDue(item, rThreshold, w) {
-    if (item.phase !== "fsrs" || !item.stability || !item.lastReviewed) return false;
-    const t = (Date.now() - new Date(item.lastReviewed).getTime()) / 864e5;
-    if (!(t > 0)) return false;
-    return new FSRS(w).R(t, item.stability) < rThreshold;
-  }
-  function active(i) {
-    return !i.isCompleted && !i.completed && !i.isMissing;
-  }
-  function partitionQueue(items, rThreshold = 0.9, w = DEFAULT_W) {
-    const overdue = [];
-    const today = [];
-    const future = [];
-    const done = [];
-    for (const i of items) {
-      if (!active(i)) {
-        done.push(i);
-        continue;
-      }
-      if (i.isOverdue) overdue.push(i);
-      else if (isDueToday(i) || isEarlyDue(i, rThreshold, w)) today.push(i);
-      else future.push(i);
-    }
-    return { overdue, today, future, done };
-  }
-  function roundQueue(items, rThreshold, w) {
-    return items.filter((i) => {
-      if (!active(i)) return false;
-      if (i.isOverdue) return true;
-      if (isDueToday(i)) return true;
-      return isEarlyDue(i, rThreshold, w);
+  function renderGroup(container, group, refresh, regRefresh) {
+    const cardHolder = document.createElement("div");
+    cardHolder.innerHTML = groupCardHtml(group.icon, group.name, `${group.rows.length} 项`);
+    const card = cardHolder.firstElementChild;
+    const count = card.querySelector(".bz-sp-group-count");
+    const body = card.querySelector(".bz-sp-group-body");
+    const rowEls = [];
+    group.rows.forEach((r) => {
+      const rowEl = renderRow(r, refresh, regRefresh);
+      rowEls.push(rowEl);
+      body.appendChild(rowEl);
     });
+    container.appendChild(card);
+    const updateCount = () => {
+      const groupHidden = card.style.display === "none" || card.classList.contains("bz-sp-hidden");
+      let n = 0;
+      if (!groupHidden) {
+        group.rows.forEach((r, i) => {
+          if (r.type === "button") return;
+          const el = rowEls[i];
+          if (el && el.style.display !== "none") n++;
+        });
+      }
+      count.textContent = `${n} 项`;
+      count.style.display = n > 0 ? "" : "none";
+    };
+    card.__bzSpUpdateCount = updateCount;
+    updateCount();
+    return card;
   }
-  var init_queue = __esm({
-    "src/review/queue.ts"() {
-      init_fsrs();
-      init_stats();
+  function renderPanelSchema(container, schema) {
+    const visibleConditions = /* @__PURE__ */ new WeakMap();
+    const valueRefreshes = [];
+    const refresh = () => {
+      container.querySelectorAll("[data-sp-row]").forEach((el) => {
+        const cond = visibleConditions.get(el);
+        if (!cond) return;
+        el.style.display = cond(snapshot()) ? "" : "none";
+      });
+      container.querySelectorAll("[data-sp-group]").forEach((el) => {
+        const cond = visibleConditions.get(el);
+        if (!cond) return;
+        el.style.display = cond(snapshot()) ? "" : "none";
+      });
+      container.querySelectorAll(".bz-sp-group").forEach((card) => {
+        const upd = card.__bzSpUpdateCount;
+        if (typeof upd === "function") upd();
+      });
+      for (const fn of valueRefreshes) fn();
+    };
+    schema.groups.forEach((g) => {
+      const card = renderGroup(container, g, refresh, (fn) => valueRefreshes.push(fn));
+      card.dataset.spGroup = g.name;
+      const groupVw = g.visibleWhen;
+      if (groupVw) {
+        card.dataset.spGroupCond = "1";
+        visibleConditions.set(card, groupVw);
+        card.style.display = groupVw(snapshot()) ? "" : "none";
+      }
+      g.rows.forEach((r, i) => {
+        const rowEl = card.querySelectorAll(".bz-sp-set-row")[i];
+        if (!rowEl) return;
+        const vw = r.visibleWhen;
+        if (vw) {
+          rowEl.dataset.spRow = String(i);
+          visibleConditions.set(rowEl, vw);
+          rowEl.style.display = vw(snapshot()) ? "" : "none";
+        }
+      });
+    });
+    mountIcons(container);
+    return { refresh };
+  }
+  var init_renderer = __esm({
+    "src/settings-panel/renderer.ts"() {
+      init_settings_provider();
+      init_dir_picker();
+      init_notice();
+      init_render2();
+      init_ui();
     }
   });
 
@@ -8727,3618 +8420,6 @@ ${body}`.trim();
           return options2;
         }
       };
-    }
-  });
-
-  // src/core/utils.ts
-  function escapeHtml2(str) {
-    return str.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
-  }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
-  }
-  function generateId(prefix) {
-    prefix = prefix || "item";
-    return prefix + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
-  }
-  function extractUrlAndDisplay(c) {
-    const m1 = c.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-    if (m1) return { url: m1[2], display: m1[1] };
-    const m2 = c.match(/(https?:\/\/\S+)/i);
-    if (m2) {
-      const u = m2[1], d = c.replace(u, "").trim();
-      return { url: u, display: d || u };
-    }
-    return { url: null, display: c };
-  }
-  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
-    const target = (0, import_moment2.default)(date);
-    if (!target.isValid()) return "无效日期";
-    let hasExplicitTime = true;
-    if (typeof date === "string") {
-      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
-    }
-    const nowMoment = (0, import_moment2.default)(now);
-    const diffSeconds = nowMoment.diff(target, "seconds");
-    function shouldShowTime() {
-      const timeStr = target.format("HH:mm");
-      if (timeStr !== "00:00") return true;
-      return hasExplicitTime;
-    }
-    if (diffSeconds < 0) {
-      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
-    }
-    if (diffSeconds < 60) return "刚刚";
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
-    const todayStart = (0, import_moment2.default)(now).startOf("day");
-    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
-      const hours = Math.floor(diffMinutes / 60);
-      return `${hours}小时前`;
-    }
-    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
-    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
-    if (target.isSame(yesterdayStart, "day")) {
-      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
-    }
-    if (target.isSame(beforeYesterdayStart, "day")) {
-      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
-    }
-    const weekStart = (0, import_moment2.default)(now).startOf("week");
-    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
-      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
-    }
-    const isThisYear = target.year() === nowMoment.year();
-    if (isThisYear) {
-      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
-    }
-    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
-  }
-  function bytesEqual(a, b) {
-    if (a.length !== b.length) return false;
-    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
-    return true;
-  }
-  var import_moment2;
-  var init_utils = __esm({
-    "src/core/utils.ts"() {
-      import_moment2 = __toESM(require_moment());
-      init_fake_obsidian();
-      init_app();
-    }
-  });
-
-  // src/core/flow-dialog.ts
-  var flow_dialog_exports = {};
-  __export(flow_dialog_exports, {
-    FLOW_DIALOG_CANCEL_ID: () => FLOW_DIALOG_CANCEL_ID,
-    FLOW_DIALOG_OK_ID: () => FLOW_DIALOG_OK_ID,
-    buildFlowDialogParts: () => buildFlowDialogParts,
-    confirmDiscard: () => confirmDiscard,
-    openFlowDialog: () => openFlowDialog
-  });
-  function buildFlowDialogParts(title, message, actions) {
-    let buttons;
-    if (actions.length === 2) {
-      buttons = [
-        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
-        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
-      ];
-    } else {
-      buttons = actions.map((a, i) => {
-        const cls = ["bz-flow-dialog-action"];
-        if (a.danger) cls.push("bz-flow-dialog-danger");
-        if (a.cta) cls.push("bz-flow-dialog-cta");
-        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
-      });
-    }
-    const ctaIdx = actions.findIndex((a) => a.cta);
-    const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
-      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
-      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
-    }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id };
-  }
-  function openFlowDialog(opts) {
-    if (!opts.actions || opts.actions.length === 0) {
-      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
-    }
-    return new Promise((resolve2) => {
-      const prevActive = document.activeElement;
-      if (activeSettle) activeSettle(void 0);
-      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
-      const mask = document.createElement("div");
-      mask.id = "__shared_confirm_mask__";
-      mask.style.zIndex = String(allocZ());
-      mask.onclick = (e) => {
-        if (e.target === mask) settle(void 0);
-      };
-      const popup = document.createElement("div");
-      popup.id = "__shared_confirm_popup__";
-      popup.setAttribute("role", "dialog");
-      popup.setAttribute("aria-modal", "true");
-      popup.innerHTML = parts.html;
-      mask.appendChild(popup);
-      document.body.appendChild(mask);
-      const escHandle5 = escManager.register("q3-confirm", {
-        isVisible: () => mask.isConnected,
-        close: () => settle(void 0)
-      });
-      let settled = false;
-      function restoreFocus() {
-        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
-          prevActive.focus();
-        }
-      }
-      function settle(v) {
-        if (settled) return;
-        settled = true;
-        if (activeSettle === settle) activeSettle = null;
-        escHandle5.unregister();
-        mask.remove();
-        restoreFocus();
-        resolve2(v);
-      }
-      activeSettle = settle;
-      for (const b of parts.buttons) {
-        const btn = document.getElementById(b.id);
-        if (btn) btn.onclick = () => settle(b.value);
-      }
-      const focusBtn = document.getElementById(parts.focusId);
-      if (focusBtn) focusBtn.focus();
-    });
-  }
-  function confirmDiscard(proceed, message) {
-    void openFlowDialog({
-      title: "放弃未保存的内容？",
-      message: message || "弹窗内有未保存的输入，关闭后将丢失",
-      actions: [
-        { label: "放弃", value: "ok" },
-        { label: "继续编辑", value: "cancel" }
-      ]
-    }).then((v) => {
-      if (v === "ok") proceed();
-    });
-  }
-  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
-  var init_flow_dialog = __esm({
-    "src/core/flow-dialog.ts"() {
-      init_esc_manager();
-      init_utils();
-      init_z_order();
-      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
-      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
-      activeSettle = null;
-    }
-  });
-
-  // src/review/quiz-core/manager.ts
-  function storageDir2() {
-    const s = tryGetSettings();
-    return s && s.storagePath || "CONFIG/STORAGE";
-  }
-  function getQuizFilePath() {
-    return storageFile("quiz.json", storageDir2());
-  }
-  function getReviewDataPath() {
-    return storageFile("review.json", storageDir2());
-  }
-  async function loadActiveItems(app2) {
-    const data = await jsonFileStore(getReviewDataPath(), { app: app2 }).read();
-    const items = Array.isArray(data) ? data : [];
-    return items.filter((f) => f && !f.completed);
-  }
-  function sameQuestion(a, b) {
-    if (a.question !== b.question) return false;
-    if (a.options.length !== b.options.length) return false;
-    for (let i = 0; i < a.options.length; i++) {
-      if (a.options[i] !== b.options[i]) return false;
-    }
-    const sa = [...a.correctIndices].sort();
-    const sb = [...b.correctIndices].sort();
-    if (sa.length !== sb.length) return false;
-    for (let i = 0; i < sa.length; i++) {
-      if (sa[i] !== sb[i]) return false;
-    }
-    return true;
-  }
-  var QuizManager;
-  var init_manager = __esm({
-    "src/review/quiz-core/manager.ts"() {
-      init_storage();
-      init_settings_provider();
-      QuizManager = class {
-        /** 加载（源码 L33-35；损坏 → {notes:{}}） */
-        async loadQuiz(app2) {
-          try {
-            const data = await jsonFileStore(getQuizFilePath(), {
-              defaultValue: { notes: {} },
-              app: app2
-            }).read();
-            if (data && typeof data === "object" && data.notes) return data;
-            return { notes: {} };
-          } catch (e) {
-            return { notes: {} };
-          }
-        }
-        async saveQuiz(app2, quiz) {
-          await jsonFileStore(getQuizFilePath(), { app: app2 }).write(quiz);
-        }
-        /** 源码 L40-43 */
-        async getQuestionsForNote(app2, notePath) {
-          const quiz = await this.loadQuiz(app2);
-          return quiz.notes[notePath] || null;
-        }
-        /** 源码 L45-49 */
-        async saveQuestionsForNote(app2, notePath, questions) {
-          const quiz = await this.loadQuiz(app2);
-          quiz.notes[notePath] = questions.map((q2) => ({ ...q2 }));
-          await this.saveQuiz(app2, quiz);
-        }
-        /** 源码 L51-57 splice 语义 + P0-2 稳定定位改造：
-         *  会话期 _index 是开考时的快照，题库并发变化（同笔记多题先后答对、复习重出题等）
-         *  后按快照下标会删错行/漏删；改为按题目生成标识（question+options+correctIndices，
-         *  correctIndices 顺序不敏感）在存储数组内定位。
-         *  同内容多题：每次删除首个匹配＝按未答优先逐个消费。
-         *  目标题已不在库中（并发刷新等）→ 终态已达成，静默成功；空键仍保留（源码语义）。 */
-        async removeQuestion(app2, notePath, target) {
-          const quiz = await this.loadQuiz(app2);
-          const list = quiz.notes[notePath];
-          if (!list) return;
-          const idx = list.findIndex((q2) => sameQuestion(q2, target));
-          if (idx === -1) return;
-          list.splice(idx, 1);
-          await this.saveQuiz(app2, quiz);
-        }
-        /** 源码 L59-72：遍历补 notePath/_index */
-        async getUncompletedQuestions(app2) {
-          const quiz = await this.loadQuiz(app2);
-          const out = [];
-          for (const [notePath, questions] of Object.entries(quiz.notes)) {
-            questions.forEach((q2, i) => {
-              out.push({ ...q2, notePath, _index: i });
-            });
-          }
-          return out;
-        }
-        /** 源码 L74-87 */
-        async getAllQuestions(app2) {
-          return this.getUncompletedQuestions(app2);
-        }
-      };
-    }
-  });
-
-  // src/review/quiz-core/generator.ts
-  var QuestionGenerator;
-  var init_generator = __esm({
-    "src/review/quiz-core/generator.ts"() {
-      QuestionGenerator = class {
-        /** 构建提示词（源码 L92-128 逐字；item 3 增 explain 字段：一句话解析+原文依据） */
-        buildPrompt(content, enableMultipleChoice, questionsPerNote, difficulty) {
-          const truncated = content.slice(0, 3e3);
-          let typeHint = "单选题（四选一）";
-          let structure = `{ "question": "题目文本", "options": ["A选项","B选项","C选项","D选项"], "correctIndices": [0], "explain": "一句话解析+原文依据" }`;
-          if (enableMultipleChoice) {
-            typeHint = "可以是单选题或多选题（正确选项数量不限）";
-            structure = `{ "question": "题目文本", "options": ["A选项","B选项","C选项","D选项"], "correctIndices": [0, 2], "explain": "一句话解析+原文依据" }（数组内为正确选项的索引）`;
-          }
-          let countHint = "";
-          if (questionsPerNote > 0) {
-            countHint = `请生成恰好 ${questionsPerNote} 道题目。`;
-          } else {
-            countHint = "生成若干道题目（数量适中，建议 3~6 道）。";
-          }
-          let difficultyHint = "";
-          if (difficulty === "easy") {
-            difficultyHint = "请生成基础概念题，选项区分度明显，避免陷阱，难度较低。";
-          } else if (difficulty === "medium") {
-            difficultyHint = "生成中等难度题目，可包含细节辨析，选项有一定迷惑性。";
-          } else if (difficulty === "hard") {
-            difficultyHint = "生成高难度题目，可涉及推理、多知识点交叉，选项具有较强迷惑性。";
-          }
-          return `根据以下笔记内容，生成若干道四选一的选择题（每题一个正确答案），数量适中，以便复习。请仅返回一个合法的 JSON 对象，结构如下：
-{
-  "questions": [
-    ${structure}
-  ]
-}
-注意：题目类型为 ${typeHint}，${countHint}
-${difficultyHint}
-每题必须带 explain 字段：用一句话解析正确答案，并附原文依据（简短引用或出处）。
-笔记内容：
-${truncated}`;
-        }
-        /** 提取 JSON（源码 L129-138 逐字） */
-        extractJSON(text) {
-          const code = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-          if (code) {
-            try {
-              return JSON.parse(code[1].trim());
-            } catch (e) {
-            }
-          }
-          try {
-            return JSON.parse(text.trim());
-          } catch (e) {
-          }
-          const first = text.indexOf("{");
-          const last = text.lastIndexOf("}");
-          if (first !== -1 && last !== -1 && last > first) {
-            try {
-              return JSON.parse(text.substring(first, last + 1));
-            } catch (e) {
-            }
-          }
-          throw new Error("无法从 AI 响应中提取有效的 JSON");
-        }
-        /** 生成题目（单篇，源码 L139-159 逐字） */
-        async generate(noteContent, aiService, enableMultipleChoice, questionsPerNote, difficulty) {
-          var _a2;
-          const prompt = this.buildPrompt(noteContent, enableMultipleChoice, questionsPerNote, difficulty);
-          const result = await aiService.json(prompt);
-          console.log("AI 原始响应:", result);
-          const parsed = this.extractJSON(result);
-          if (!((_a2 = parsed.questions) == null ? void 0 : _a2.length)) throw new Error("AI 未返回有效题目数组。");
-          for (const q2 of parsed.questions) {
-            if (!q2.question || !Array.isArray(q2.options) || q2.options.length !== 4) {
-              throw new Error("题目格式不正确：缺少 question 或 options 不是长度为4的数组");
-            }
-            if (!Array.isArray(q2.correctIndices) || q2.correctIndices.length === 0) {
-              throw new Error("题目格式不正确：correctIndices 必须是非空数组");
-            }
-            for (const idx of q2.correctIndices) {
-              if (typeof idx !== "number" || idx < 0 || idx > 3) {
-                throw new Error("correctIndices 元素必须在 0~3 之间");
-              }
-            }
-          }
-          return parsed.questions;
-        }
-        /** 批量提示词（源码 L162-191 逐字；item 3 增 explain 规则） */
-        buildBatchPrompt(notes, enableMultipleChoice, questionsPerNote, difficulty) {
-          let typeHint = "单选题（四选一）";
-          let structure = `{ "question": "题目文本", "options": ["A选项","B选项","C选项","D选项"], "correctIndices": [0], "explain": "一句话解析+原文依据" }`;
-          if (enableMultipleChoice) {
-            typeHint = "可以是单选题或多选题";
-            structure = `{ "question": "题目文本", "options": ["A选项","B选项","C选项","D选项"], "correctIndices": [0, 2], "explain": "一句话解析+原文依据" }`;
-          }
-          const countHint = questionsPerNote > 0 ? `每篇生成恰好 ${questionsPerNote} 道。` : "每篇生成 3~6 道。";
-          let difficultyHint = "";
-          if (difficulty === "easy") difficultyHint = "生成基础概念题，难度较低。";
-          else if (difficulty === "medium") difficultyHint = "生成中等难度题目。";
-          else if (difficulty === "hard") difficultyHint = "生成高难度题目，涉及推理和多知识点交叉。";
-          let notesBlock = "";
-          for (const n of notes) {
-            notesBlock += `
-===== 笔记ID:${n.id} =====
-${n.content.slice(0, 2e3)}
-`;
-          }
-          return `根据以下多篇笔记内容，为每篇笔记生成选择题。请仅返回一个合法的 JSON 对象：
-{
-  "noteId1": [ { "question": "...", "options": ["A","B","C","D"], "correctIndices": [0], "explain": "..." }, ... ],
-  "noteId2": [ ... ]
-}
-规则：
-- 类型：${typeHint}，${countHint}
-- ${difficultyHint}
-- 每题必须带 explain 字段：一句话解析正确答案并附原文依据
-- 键名为笔记ID（即 "笔记ID:xxx" 中的 xxx），值为该笔记的题目数组
-- 每题4个选项，correctIndices 为正确选项索引数组
-笔记内容：${notesBlock}`;
-        }
-        /** 批量生成（源码 L193-212 逐字） */
-        async generateBatch(notes, aiService, enableMultipleChoice, questionsPerNote, difficulty) {
-          const prompt = this.buildBatchPrompt(notes, enableMultipleChoice, questionsPerNote, difficulty);
-          const result = await aiService.json(prompt);
-          console.log("AI 批量响应:", result);
-          const parsed = this.extractJSON(result);
-          const out = {};
-          for (const [noteId, qs] of Object.entries(parsed)) {
-            if (!Array.isArray(qs)) continue;
-            const valid = [];
-            for (const q2 of qs) {
-              if (!q2.question || !Array.isArray(q2.options) || q2.options.length !== 4 || !Array.isArray(q2.correctIndices)) {
-                continue;
-              }
-              const indices = q2.correctIndices.filter((i) => typeof i === "number" && i >= 0 && i <= 3);
-              if (!indices.length) continue;
-              valid.push({ ...q2, correctIndices: indices });
-            }
-            if (valid.length) out[noteId] = valid;
-          }
-          return out;
-        }
-      };
-    }
-  });
-
-  // src/review/quiz-core/session.ts
-  function cleanOptionText(text) {
-    if (!text) return "";
-    const match = text.match(/^([A-D])\s*[.、:：)）]\s*/);
-    if (match) {
-      return text.substring(match[0].length).trim();
-    }
-    const matchParen = text.match(/^\(([A-D])\)\s*/);
-    if (matchParen) {
-      return text.substring(matchParen[0].length).trim();
-    }
-    return text.trim();
-  }
-  var CORRECT_JUMP_DELAY_MS, _QuizMasterUI, QuizMasterUI, quizUI;
-  var init_session = __esm({
-    "src/review/quiz-core/session.ts"() {
-      init_notice();
-      init_flow_dialog();
-      init_esc_manager();
-      init_z_order();
-      init_app();
-      init_manager();
-      init_generator();
-      init_utils();
-      CORRECT_JUMP_DELAY_MS = 800;
-      _QuizMasterUI = class _QuizMasterUI {
-        constructor() {
-          /**
-           * 实例镜像：复习域经 quizUI.ai 读取。静态属性不挂在实例上（JS 中 quizUI.ai 恒为
-           * undefined），故 ensureQuiz 时同步设置本字段，复习域判断才生效。
-           */
-          this.ai = null;
-          this.mask = null;
-          this.popup = null;
-          this.currentQuestions = [];
-          this.currentIndex = 0;
-          // 复习联动（仅经 startReviewSession/endReviewSession 契约访问，复习域不得直接改写）
-          // ticket 141：普通做题模式删除（独立入口 ticket 098 退役后已是死代码）——做题家只是
-          // 复习流程中的一环，会话只能经 startReviewSession 开启，不再存在「无 onComplete 的裸会话」
-          this._sessionActive = false;
-          this.onComplete = null;
-          this.correctCount = 0;
-          this.wrongCount = 0;
-          this.totalQuestions = 0;
-          this.generator = new QuestionGenerator();
-          /** ticket 098:多选提交按钮暂存（renderModal 选项后补挂，保证位于选项下方） */
-          this._pendingSubmitBtn = null;
-          /** ticket 141：做题键盘快捷键句柄（1-4/A-D 选择、Enter 提交/下一题；ESC 走 escManager） */
-          this._keyHandler = null;
-          /** ticket 156：答对自动跳题延时句柄（亮绿 0.8s 再进下一题） */
-          this._jumpTimer = null;
-          this._manager = null;
-        }
-        shuffleArray(arr) {
-          for (let i = arr.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [arr[i], arr[j]] = [arr[j], arr[i]];
-          }
-          return arr;
-        }
-        /** 更新题库（基于活跃笔记，空题目则生成；失败 Notice 逐字） */
-        async updateQuiz() {
-          const app2 = getApp();
-          try {
-            const activeItems = await loadActiveItems(app2);
-            if (!activeItems.length) {
-              await this.manager.saveQuiz(getApp(), { notes: {} });
-              return;
-            }
-            const quiz = await this.manager.loadQuiz(app2);
-            const activePaths = new Set(activeItems.map((i) => i.filePath));
-            for (const notePath of Object.keys(quiz.notes)) {
-              if (!activePaths.has(notePath)) {
-                delete quiz.notes[notePath];
-              }
-            }
-            await this.manager.saveQuiz(app2, quiz);
-            const notePaths = activeItems.map((i) => i.filePath);
-            await this.ensureQuestions(notePaths);
-          } catch (e) {
-            notice("更新题库失败：" + e.message + "，请重试", "error");
-            console.error(e);
-          }
-        }
-        /** 确保指定笔记都有题目（源码 L346-398 逐字） */
-        async ensureQuestions(notePaths) {
-          const app2 = getApp();
-          const quiz = await this.manager.loadQuiz(app2);
-          const settings = _QuizMasterUI.settings || {};
-          const enableMultipleChoice = settings.enableMultipleChoice !== false;
-          const questionsPerNote = parseInt(settings.questionsPerNote) || 0;
-          const difficulty = settings.difficulty || "random";
-          const missing = [];
-          for (const path of notePaths) {
-            const existing = quiz.notes[path];
-            if (!existing || existing.length === 0) {
-              const file = app2.vault.getAbstractFileByPath(path);
-              if (!file) continue;
-              const content = await app2.vault.read(file);
-              if (content.trim()) missing.push({ id: path, content });
-            }
-          }
-          if (!missing.length) return;
-          if (_QuizMasterUI.ai) {
-            try {
-              const h = notify(`正在为 ${missing.length} 篇笔记批量生成题目…`, { type: "progress", dedupeKey: "quiz-generate" });
-              const batchResult = await this.generator.generateBatch(missing, _QuizMasterUI.ai, enableMultipleChoice, questionsPerNote, difficulty);
-              let batchOk = 0;
-              for (const [path, qs] of Object.entries(batchResult)) {
-                if (qs.length) {
-                  quiz.notes[path] = qs;
-                  batchOk++;
-                }
-              }
-              await this.manager.saveQuiz(app2, quiz);
-              h.setType("success");
-              h.setMessage(`已为 ${batchOk} 篇笔记生成题目`);
-              return;
-            } catch (e) {
-              console.warn("批量出题失败，降级为逐篇:", e.message);
-              notify("批量出题失败，已改为逐篇生成", { type: "warning", dedupeKey: "quiz-generate" });
-            }
-          }
-          let okCount = 0;
-          let failCount = 0;
-          let firstError = "";
-          for (const note of missing) {
-            try {
-              if (!_QuizMasterUI.ai) throw new Error("AI 未初始化");
-              const qs = await this.generator.generate(note.content, _QuizMasterUI.ai, enableMultipleChoice, questionsPerNote, difficulty);
-              if (qs.length) {
-                quiz.notes[note.id] = qs;
-                okCount++;
-                await this.manager.saveQuiz(app2, quiz);
-              } else {
-                failCount++;
-              }
-            } catch (e) {
-              console.warn(`出题失败 ${note.id}:`, e.message);
-              if (!firstError) firstError = e.message || "未知错误";
-              failCount++;
-            }
-          }
-          if (okCount > 0) notify(`已为 ${okCount} 篇笔记生成题目`, { type: "success" });
-          if (failCount > 0) notify(`${failCount} 篇笔记出题失败${firstError ? `（${firstError}）` : ""}`, { type: "warning", dedupeKey: "quiz-generate" });
-        }
-        /** ticket 141：普通做题模式（startQuiz/showLoadingPopup）删除——独立入口 ticket 098 退役后
-         *  已无调用方，做题家只作为复习流程一环经 startReviewSession 进入。 */
-        /**
-         * 复习联动契约：开始一轮做题会话（复习计划经此进入做题模式）——ticket 141 起唯一入口。
-         * 会话状态（_sessionActive/currentQuestions/计数/onComplete）只允许在本方法内设置，
-         * 复习域禁止直接改写——契约化后复习域只需调用本方法与 endReviewSession。
-         * 「打乱出题顺序」设置在会话入口生效（原普通模式行为迁移，设置项保留语义不变）。
-         */
-        startReviewSession(opts) {
-          var _a2;
-          this._sessionActive = true;
-          const shuffle = ((_a2 = _QuizMasterUI.settings) == null ? void 0 : _a2.shuffleQuestions) !== false;
-          this.currentQuestions = shuffle ? this.shuffleArray([...opts.questions]) : [...opts.questions];
-          this.currentIndex = 0;
-          this.correctCount = 0;
-          this.wrongCount = 0;
-          this.totalQuestions = this.currentQuestions.length;
-          this.onComplete = opts.onComplete;
-          this.showQuestion();
-        }
-        /** 复习联动契约：结束做题会话（结算回调已消费后由复习域调用，收尾弹窗；防御性结算防悬挂） */
-        endReviewSession() {
-          const cb = this.onComplete;
-          this.onComplete = null;
-          this._sessionActive = false;
-          if (cb) cb(this._buildResults());
-          this._teardownModal();
-        }
-        /** 渲染单题（源码 L514-676 逐字） */
-        renderModal(q2) {
-          this._teardownModal();
-          this._pendingSubmitBtn = null;
-          const mask = document.createElement("div");
-          mask.id = "quiz-mask";
-          this.mask = mask;
-          mask.style.zIndex = String(allocZ());
-          const popup = document.createElement("div");
-          popup.id = "quiz-popup";
-          this.popup = popup;
-          const header = document.createElement("div");
-          header.className = "bz-quiz-head";
-          const title = document.createElement("span");
-          title.className = "bz-quiz-title";
-          const noteName = q2.notePath ? q2.notePath.split("/").pop().replace(".md", "") : "";
-          const doneCount = this.totalQuestions - this.currentQuestions.length;
-          title.textContent = noteName ? `📝 ${noteName} (${doneCount + 1}/${this.totalQuestions})` : `📝 (${doneCount + 1}/${this.totalQuestions})`;
-          header.appendChild(title);
-          popup.appendChild(header);
-          const questionDiv = document.createElement("div");
-          questionDiv.className = "bz-quiz-question";
-          questionDiv.textContent = q2.question;
-          popup.appendChild(questionDiv);
-          const optionsContainer = document.createElement("div");
-          optionsContainer.className = "bz-quiz-options";
-          const selectedIndices = /* @__PURE__ */ new Set();
-          const answeredRef = { value: false };
-          const optionElements = this._buildOptionButtons(q2, answeredRef, selectedIndices, optionsContainer);
-          optionElements.forEach((el) => optionsContainer.appendChild(el));
-          if (this._pendingSubmitBtn) {
-            optionsContainer.appendChild(this._pendingSubmitBtn);
-            this._pendingSubmitBtn = null;
-          }
-          popup.appendChild(optionsContainer);
-          mask.appendChild(popup);
-          document.body.appendChild(mask);
-          escManager.register("quiz", {
-            isVisible: () => !!(this.mask && this.mask.isConnected),
-            close: () => this.finishQuiz()
-          });
-          this._bindKeyboard();
-          mask.addEventListener("click", (e) => {
-            if (e.target === mask) this.finishQuiz();
-          });
-        }
-        /**
-         * ticket 141：做题键盘快捷键（1-4/A-D 选择、Enter 提交/下一题）。
-         * 焦点在按钮/输入框上时原生行为优先（防 Enter 双触发）；ESC 不在此处理（escManager 层级）。
-         */
-        _bindKeyboard() {
-          this._unbindKeyboard();
-          this._keyHandler = (e) => {
-            var _a2, _b2, _c;
-            if (!this.mask || !this.mask.isConnected) return;
-            const target = e.target;
-            if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "BUTTON")) return;
-            const keys = ["1", "2", "3", "4"];
-            const letters = ["a", "b", "c", "d"];
-            const key = e.key.toLowerCase();
-            const idx = keys.includes(key) ? keys.indexOf(key) : letters.indexOf(key);
-            if (idx >= 0 && idx <= 3) {
-              const btn = (_a2 = this.popup) == null ? void 0 : _a2.querySelector(`.quiz-option-btn[data-index="${idx}"]`);
-              if (btn && !btn.classList.contains("disabled")) btn.click();
-              return;
-            }
-            if (e.key === "Enter") {
-              const submit = (_b2 = this.popup) == null ? void 0 : _b2.querySelector(".quiz-submit-btn");
-              if (submit && !submit.disabled) {
-                submit.click();
-                return;
-              }
-              const next = (_c = this.popup) == null ? void 0 : _c.querySelector(".quiz-next-btn");
-              if (next && !next.disabled) next.click();
-            }
-          };
-          document.addEventListener("keydown", this._keyHandler);
-        }
-        _unbindKeyboard() {
-          if (this._keyHandler) {
-            document.removeEventListener("keydown", this._keyHandler);
-            this._keyHandler = null;
-          }
-        }
-        /** ticket 156：清除答对自动跳题延时（换题/结算/强制关闭时防迟到渲染） */
-        _clearJumpTimer() {
-          if (this._jumpTimer) {
-            clearTimeout(this._jumpTimer);
-            this._jumpTimer = null;
-          }
-        }
-        /** 选项按钮组构建与答题逻辑（renderModal 拆分）：单选即点即判 / 多选切换 + 提交 */
-        _buildOptionButtons(q2, answeredRef, selectedIndices, optionsContainer) {
-          const optionLabels = ["A", "B", "C", "D"];
-          const isSingle = q2.correctIndices.length === 1;
-          const app2 = getApp();
-          const optionElements = q2.options.map((opt, idx) => {
-            const btn = document.createElement("button");
-            btn.className = "quiz-option-btn";
-            const cleanText = cleanOptionText(opt);
-            btn.innerHTML = `<span>${optionLabels[idx]}.</span><span class="bz-quiz-option-text">${escapeHtml2(cleanText)}</span><span class="check-mark">✔️</span>`;
-            btn.dataset.index = String(idx);
-            btn.onclick = () => {
-              if (answeredRef.value) return;
-              if (isSingle) {
-                answeredRef.value = true;
-                optionElements.forEach((b) => b.classList.add("disabled"));
-                const isCorrect = idx === q2.correctIndices[0];
-                if (isCorrect) {
-                  optionElements.forEach((b, i) => {
-                    if (i === q2.correctIndices[0]) b.classList.add("correct");
-                  });
-                  this._answerCorrect(q2, app2, () => {
-                    answeredRef.value = false;
-                    optionElements.forEach((b) => b.classList.remove("disabled"));
-                  });
-                } else {
-                  this.wrongCount++;
-                  this.currentQuestions.splice(this.currentIndex, 1);
-                  optionElements.forEach((b, i) => {
-                    if (i === q2.correctIndices[0]) b.classList.add("correct");
-                    if (i === idx) b.classList.add("wrong");
-                  });
-                  this.addNextButton(optionsContainer);
-                }
-              } else {
-                if (selectedIndices.has(idx)) {
-                  selectedIndices.delete(idx);
-                  btn.classList.remove("selected");
-                } else {
-                  selectedIndices.add(idx);
-                  btn.classList.add("selected");
-                }
-              }
-            };
-            return btn;
-          });
-          if (!isSingle) {
-            const submitBtn = document.createElement("button");
-            submitBtn.className = "quiz-submit-btn";
-            submitBtn.textContent = "提交答案";
-            submitBtn.onclick = () => {
-              if (answeredRef.value) return;
-              if (selectedIndices.size === 0) {
-                notice("请至少选择一项", "warning");
-                return;
-              }
-              answeredRef.value = true;
-              submitBtn.disabled = true;
-              const selected = Array.from(selectedIndices).sort();
-              const correct = q2.correctIndices.slice().sort();
-              const isCorrect = selected.length === correct.length && selected.every((v, i) => v === correct[i]);
-              optionElements.forEach((b, i) => {
-                b.classList.add("disabled");
-                if (correct.includes(i)) b.classList.add("correct");
-                else if (selectedIndices.has(i) && !isCorrect) b.classList.add("wrong");
-              });
-              if (isCorrect) {
-                this._answerCorrect(q2, app2, () => {
-                  answeredRef.value = false;
-                  submitBtn.disabled = false;
-                  optionElements.forEach((b) => b.classList.remove("disabled"));
-                });
-              } else {
-                this.wrongCount++;
-                this.currentQuestions.splice(this.currentIndex, 1);
-                this.addNextButton(optionsContainer);
-              }
-            };
-            this._pendingSubmitBtn = submitBtn;
-          }
-          return optionElements;
-        }
-        /** 答对公共链路（ticket 141 重构）：稳定定位删题 → 计数 → splice 出当前题 → 自动进入下一题。
-         *  删除按题目内容在存储数组定位（P0-2），不再依赖会话期 _index 快照；
-         *  持久化成功后才计数并跳题（P2：失败恢复作答态时不重复计数），失败通知并恢复作答状态；
-         *  ticket 153：答对自动跳下一题（答对不出现「下一题」按钮，答错才由用户点按）；
-         *  ticket 156：跳题延后 0.8s——亮绿正确选项让用户看到反馈再进入下一题；
-         *  延时期间放弃做题/强制关闭 → 清除延时（回调内再校验会话态，防迟到渲染僵尸弹窗）。 */
-        _answerCorrect(q2, app2, onFailRestore) {
-          this.manager.removeQuestion(app2, q2.notePath, { question: q2.question, options: q2.options, correctIndices: q2.correctIndices }).then(() => {
-            this.correctCount++;
-            this.currentQuestions.splice(this.currentIndex, 1);
-            this._clearJumpTimer();
-            this._jumpTimer = setTimeout(() => {
-              this._jumpTimer = null;
-              if (!this._sessionActive) return;
-              this.showQuestion();
-            }, CORRECT_JUMP_DELAY_MS);
-          }).catch((e) => {
-            notice("删除题目失败：" + e.message + "，请重试", "error");
-            onFailRestore();
-          });
-        }
-        /** 汇总本轮做题统计（showQuestion 完题 / finishQuiz 共用） */
-        _buildResults() {
-          const total = this.correctCount + this.wrongCount;
-          return {
-            correct: this.correctCount,
-            wrong: this.wrongCount,
-            total,
-            accuracy: total > 0 ? Math.round(this.correctCount / total * 100) : 0
-          };
-        }
-        /** 渲染单题（源码 L679-697 逐字） */
-        showQuestion() {
-          if (this.currentIndex >= this.currentQuestions.length) {
-            if (this.onComplete) {
-              const cb = this.onComplete;
-              this.onComplete = null;
-              cb(this._buildResults());
-            }
-            return;
-          }
-          this.renderModal(this.currentQuestions[this.currentIndex]);
-        }
-        /**
-         * 辅助：添加「下一题」按钮（ticket 153：仅答错时出现——答对自动进入下一题，无需按钮；
-         * 答错由用户点按进入下一题）。
-         */
-        addNextButton(popup) {
-          const oldBtn = popup.querySelector(".quiz-next-btn");
-          if (oldBtn) oldBtn.remove();
-          const nextBtn = document.createElement("button");
-          nextBtn.className = "quiz-next-btn";
-          nextBtn.textContent = "下一题 →";
-          nextBtn.onclick = () => {
-            this.showQuestion();
-          };
-          popup.appendChild(nextBtn);
-        }
-        /** 仅拆除弹窗 DOM（换题/结果卡等内部过渡用，不走结算语义；连带注销键盘监听） */
-        _teardownModal() {
-          this._unbindKeyboard();
-          if (this.mask && this.mask.parentNode) this.mask.remove();
-          this.mask = null;
-          this.popup = null;
-        }
-        /**
-         * 点遮罩 / ESC（ticket 141：纯复习会话语义，原「普通模式直接关窗」分支随模式删除）。
-         * 答题中途（回调未消费）→ 先确认「放弃本次做题？」，确认才按既有语义结算；
-         * 结果卡阶段（回调已消费，复习域驱动下一步）→ 忽略，防止中途拆 DOM 令复习循环 Promise 悬挂。
-         */
-        finishQuiz() {
-          if (!this._sessionActive || !this.onComplete) return;
-          void openFlowDialog({
-            title: "放弃本次做题？",
-            message: "未完成的题目将丢弃，本次复习将按已答题目结算评级",
-            actions: [
-              { label: "继续做题", value: "cancel" },
-              { label: "放弃", value: "ok", cta: true }
-            ]
-          }).then((v) => {
-            if (v !== "ok") return;
-            this._clearJumpTimer();
-            const cb = this.onComplete;
-            this.onComplete = null;
-            this._sessionActive = false;
-            if (cb) cb(this._buildResults());
-            this._teardownModal();
-          });
-        }
-        /** 强制关闭（复习域契约调用，如结果卡「复习此笔记」）：回调防御性结算，避免外层 Promise 悬挂 */
-        close() {
-          this._clearJumpTimer();
-          const cb = this.onComplete;
-          this.onComplete = null;
-          this._sessionActive = false;
-          if (cb) cb(this._buildResults());
-          this._teardownModal();
-        }
-        get manager() {
-          if (!this._manager) this._manager = new QuizManager();
-          return this._manager;
-        }
-      };
-      _QuizMasterUI.ai = null;
-      _QuizMasterUI.settings = {};
-      QuizMasterUI = _QuizMasterUI;
-      quizUI = new QuizMasterUI();
-    }
-  });
-
-  // src/review/quiz-core/index.ts
-  var quiz_core_exports = {};
-  __export(quiz_core_exports, {
-    QuizMasterUI: () => QuizMasterUI,
-    ensureQuiz: () => ensureQuiz,
-    quizUI: () => quizUI,
-    quizUpdate: () => quizUpdate
-  });
-  function ensureQuiz(app2) {
-    if (initialized) return;
-    initialized = true;
-    QuizMasterUI.ai = createAI();
-    quizUI.ai = QuizMasterUI.ai;
-    QuizMasterUI.settings = getSettings();
-  }
-  async function quizUpdate(app2) {
-    ensureQuiz(app2);
-    await quizUI.updateQuiz();
-  }
-  var initialized;
-  var init_quiz_core = __esm({
-    "src/review/quiz-core/index.ts"() {
-      init_ai();
-      init_settings_provider();
-      init_session();
-      initialized = false;
-    }
-  });
-
-  // src/core/domain-bus.ts
-  function emitDomainEvent(channel, evt) {
-    const handlers = channels.get(channel);
-    if (!handlers || handlers.size === 0) return;
-    for (const handler of [...handlers]) {
-      try {
-        handler(evt);
-      } catch (e) {
-        console.error(`bz: 域事件 handler 异常（channel=${channel}）`, e);
-      }
-    }
-  }
-  function onDomainEvent(channel, handler) {
-    let set = channels.get(channel);
-    if (!set) {
-      set = /* @__PURE__ */ new Set();
-      channels.set(channel, set);
-    }
-    set.add(handler);
-    let offed = false;
-    return () => {
-      if (offed) return;
-      offed = true;
-      const cur = channels.get(channel);
-      if (!cur) return;
-      cur.delete(handler);
-      if (cur.size === 0) channels.delete(channel);
-    };
-  }
-  var channels;
-  var init_domain_bus = __esm({
-    "src/core/domain-bus.ts"() {
-      channels = /* @__PURE__ */ new Map();
-    }
-  });
-
-  // src/review/watch.ts
-  var watch_exports = {};
-  __export(watch_exports, {
-    RENAME_MERGE_MS: () => RENAME_MERGE_MS,
-    REVIEW_AUTO_ADD_MERGE_MS: () => REVIEW_AUTO_ADD_MERGE_MS,
-    ReviewWatcher: () => ReviewWatcher,
-    __setAutoAddMergeMsForTests: () => __setAutoAddMergeMsForTests,
-    __setRenameMergeMsForTests: () => __setRenameMergeMsForTests,
-    isUnderFolder: () => isUnderFolder
-  });
-  function isUnderFolder(folder, path) {
-    const f = (folder || "").trim().replace(/\/+$/, "");
-    if (!f) return false;
-    return path === f || path.startsWith(f + "/");
-  }
-  function __setAutoAddMergeMsForTests(ms) {
-    REVIEW_AUTO_ADD_MERGE_MS = ms;
-  }
-  function __setRenameMergeMsForTests(ms) {
-    RENAME_MERGE_MS = ms;
-  }
-  var REVIEW_AUTO_ADD_MERGE_MS, RENAME_MERGE_MS, ReviewWatcher;
-  var init_watch = __esm({
-    "src/review/watch.ts"() {
-      init_notice();
-      init_flow_dialog();
-      init_settings_provider();
-      REVIEW_AUTO_ADD_MERGE_MS = 3e3;
-      RENAME_MERGE_MS = 3e3;
-      ReviewWatcher = class {
-        constructor(app2, dataManager3) {
-          /** 删除确认防抖缓冲（多文件删除合并为一次确认） */
-          this.deleteQueue = [];
-          this.deleteTimer = null;
-          /** ticket 100：新笔记自动加入提醒合并缓冲（3 秒窗口收集，多条合并一条通知） */
-          this.autoAddQueue = [];
-          this.autoAddTimer = null;
-          /** ticket n2：改名通知合并缓冲（3 秒窗口收集；列表/文件树更新仍即时） */
-          this.renameQueue = [];
-          this.renameTimer = null;
-          this.app = app2;
-          this.dataManager = dataManager3;
-        }
-        get watchedFolders() {
-          const s = tryGetSettings();
-          return Array.isArray(s == null ? void 0 : s.reviewWatchedFolders) ? s.reviewWatchedFolders.filter((x) => typeof x === "string" && x.trim().length > 0) : [];
-        }
-        get excludedNotes() {
-          const s = tryGetSettings();
-          return Array.isArray(s == null ? void 0 : s.reviewExcludedNotes) ? s.reviewExcludedNotes : [];
-        }
-        isWatched(path) {
-          return this.watchedFolders.some((f) => isUnderFolder(f, path));
-        }
-        isExcluded(path) {
-          return this.excludedNotes.includes(path);
-        }
-        /** 追加排除名单（去重 + 落盘；手动/确认四类表态共用） */
-        async excludePaths(paths) {
-          const s = tryGetSettings();
-          const cur = Array.isArray(s == null ? void 0 : s.reviewExcludedNotes) ? [...s.reviewExcludedNotes] : [];
-          let changed = false;
-          for (const p of paths) {
-            if (p && !cur.includes(p)) {
-              cur.push(p);
-              changed = true;
-            }
-          }
-          if (!changed) return;
-          if (s) s.reviewExcludedNotes = cur;
-          await saveSettings();
-        }
-        /** ticket 57：单条解除排除记录（数据 reviewExcludedNotes 既有；仅补 UI 管理入口） */
-        async removeExcludedNote(path) {
-          const s = tryGetSettings();
-          if (!s) return;
-          const cur = Array.isArray(s.reviewExcludedNotes) ? [...s.reviewExcludedNotes] : [];
-          const kept = cur.filter((p) => p !== path);
-          if (kept.length === cur.length) return;
-          s.reviewExcludedNotes = kept;
-          await saveSettings();
-        }
-        /** vault create：监听目录内新建 md → 自动加入（未排除、未在计划）；ticket 100：3 秒窗口合并提醒 + 开关 */
-        async onVaultCreate(file) {
-          if (file.extension !== "md") return;
-          if (!this.isWatched(file.path)) return;
-          if (this.isExcluded(file.path)) return;
-          const items = await this.dataManager.loadItems();
-          if (items.some((i) => i.filePath === file.path)) return;
-          await this.dataManager.addItem(file.path, file.basename);
-          const s = tryGetSettings();
-          if (s && s.reviewAutoAddNotice === false) return;
-          this.autoAddQueue.push(file.basename);
-          if (this.autoAddTimer) return;
-          this.autoAddTimer = setTimeout(() => {
-            this.autoAddTimer = null;
-            const batch = this.autoAddQueue;
-            this.autoAddQueue = [];
-            if (!batch.length) return;
-            const shown = batch.slice(0, 3).join("、");
-            const tail = batch.length > 3 ? ` 等 ${batch.length - 3} 篇` : "";
-            notice(batch.length > 1 ? `已自动加入复习计划：${shown}${tail}` : `已自动加入复习计划：${shown}`, "success");
-          }, REVIEW_AUTO_ADD_MERGE_MS);
-        }
-        /** vault delete：计划内文件删除 → 防抖合并确认「同步移除复习记录？」 */
-        onVaultDelete(file) {
-          void (async () => {
-            const items = await this.dataManager.loadItems();
-            if (!items.some((i) => i.filePath === file.path)) return;
-            this.deleteQueue.push(file.path);
-            if (this.deleteTimer) return;
-            this.deleteTimer = setTimeout(async () => {
-              this.deleteTimer = null;
-              const batch = this.deleteQueue;
-              this.deleteQueue = [];
-              if (!batch.length) return;
-              const n = batch.length;
-              const firstName = (batch[0] || "").split("/").pop();
-              void openFlowDialog({
-                title: n > 1 ? `删除 ${n} 篇笔记` : "笔记已删除",
-                message: n > 1 ? `有 ${n} 篇笔记已从 vault 删除，是否同步移除复习计划里的记录？不移除则保留（文件恢复后继续复习，列表现删除线）。` : `「${firstName}」已从 vault 删除，是否同步移除复习计划里的记录？不移除则保留（文件恢复后继续复习，列表现删除线）。`,
-                actions: [
-                  { label: "保留", value: "cancel" },
-                  { label: "移除", value: "ok", cta: true }
-                ]
-              }).then(async (v) => {
-                if (v === "ok") {
-                  for (const path of batch) await this.dataManager.removeItem(path);
-                  await this.excludePaths(batch.filter((p) => this.isWatched(p)));
-                  notice(`已移除 ${n} 条复习记录`, "success");
-                  await this.refresh();
-                } else {
-                  void this.refresh();
-                }
-              });
-            }, 300);
-          })();
-        }
-        /** vault rename：计划内文件改名/移动 → 自动更新路径（ticket 099：不再弹确认）；
-         *   ticket n2：通知改合并窗口（窗口内多条合并一条；列表/文件树刷新仍即时） */
-        onVaultRename(file, oldPath) {
-          void (async () => {
-            if (file.extension !== "md") return;
-            if (oldPath === file.path) return;
-            const items = await this.dataManager.loadItems();
-            if (!items.some((i) => i.filePath === oldPath)) return;
-            const updated = await this.dataManager.updateFilePath(oldPath, file.path, file.basename);
-            if (!updated) return;
-            await this.refresh();
-            this.renameQueue.push(file.basename);
-            if (this.renameTimer) return;
-            this.renameTimer = setTimeout(() => {
-              this.renameTimer = null;
-              const batch = this.renameQueue;
-              this.renameQueue = [];
-              if (!batch.length) return;
-              const shown = batch.slice(0, 3).join("、");
-              const tail = batch.length > 3 ? `，等 ${batch.length - 3} 篇` : "";
-              notice(
-                batch.length > 1 ? `已更新 ${batch.length} 篇笔记的复习路径：${shown}${tail}` : "已更新复习计划路径",
-                "success"
-              );
-            }, RENAME_MERGE_MS);
-          })();
-        }
-        /** 未加入候选：目录内全部 md − 已加入 − 已排除（递归；挂起记录占位路径天然排除） */
-        collectAutoaddCandidates(folder, items) {
-          return this.app.vault.getMarkdownFiles().map((f) => f.path).filter((p) => isUnderFolder(folder, p)).filter((p) => !items.some((i) => i.filePath === p)).filter((p) => !this.isExcluded(p));
-        }
-        /** 选择监听文件夹后的存量收编确认（ticket 099）：确认 → 批量全部加入并返回 true；取消 → 什么都不做返回 false（不写排除名单） */
-        async confirmBatchAddForFolder(folder) {
-          const items = await this.dataManager.loadItems();
-          const candidates = this.collectAutoaddCandidates(folder, items);
-          if (!candidates.length) return true;
-          const v = await openFlowDialog({
-            title: "批量加入复习计划",
-            message: `监听文件夹「${folder}」下有 ${candidates.length} 篇笔记未加入复习计划，是否一并加入？`,
-            actions: [
-              { label: "取消", value: "cancel" },
-              { label: "加入", value: "ok", cta: true }
-            ]
-          });
-          if (v !== "ok") return false;
-          let ok = 0;
-          for (const p of candidates) {
-            try {
-              await this.dataManager.addItem(p, p.split("/").pop().replace(/\.md$/, ""));
-              ok++;
-            } catch (e) {
-            }
-          }
-          notice(`已加入 ${ok} 篇笔记到复习计划`, "success");
-          await this.refresh();
-          return true;
-        }
-        /** 移除监听文件夹（ticket 099 追加）：同时清空该目录下全部排除记录——否则二次添加时存量被旧黑名单挡住。
-         *  返回清理的排除条数（仅用于提示文案）。 */
-        async removeWatchedFolder(folder) {
-          const s = tryGetSettings();
-          if (!s) return 0;
-          const folders = Array.isArray(s.reviewWatchedFolders) ? [...s.reviewWatchedFolders] : [];
-          const idx = folders.indexOf(folder);
-          if (idx !== -1) folders.splice(idx, 1);
-          s.reviewWatchedFolders = folders;
-          const before = Array.isArray(s.reviewExcludedNotes) ? [...s.reviewExcludedNotes] : [];
-          const kept = before.filter((p) => !isUnderFolder(folder, p));
-          s.reviewExcludedNotes = kept;
-          await saveSettings();
-          return before.length - kept.length;
-        }
-        async refresh() {
-          const { uiManager: uiManager3 } = await Promise.resolve().then(() => (init_review(), review_exports));
-          await (uiManager3 == null ? void 0 : uiManager3.refreshPanel());
-          const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app3(), app_exports));
-          await reviewApp2.applyReviewStyles(this.app);
-        }
-        /** 卸载清理（定时器/缓冲） */
-        destroy() {
-          if (this.deleteTimer) {
-            clearTimeout(this.deleteTimer);
-            this.deleteTimer = null;
-          }
-          this.deleteQueue = [];
-          if (this.autoAddTimer) {
-            clearTimeout(this.autoAddTimer);
-            this.autoAddTimer = null;
-          }
-          this.autoAddQueue = [];
-          if (this.renameTimer) {
-            clearTimeout(this.renameTimer);
-            this.renameTimer = null;
-          }
-          this.renameQueue = [];
-        }
-      };
-    }
-  });
-
-  // src/core/mobile.ts
-  function isMobileEnv() {
-    return typeof Platform !== "undefined" && !!Platform.isMobile;
-  }
-  function applyMobileWindowFullscreen(popup, enabled) {
-    if (!popup) return;
-    popup.classList.toggle("bz-win-mfs", isMobileEnv() && !!enabled);
-  }
-  var init_mobile = __esm({
-    "src/core/mobile.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
-  // src/core/item-actions.ts
-  var item_actions_exports = {};
-  __export(item_actions_exports, {
-    attachItemActions: () => attachItemActions,
-    closeItemMenu: () => closeItemMenu,
-    openItemMenu: () => openItemMenu,
-    openItemSheet: () => openItemSheet,
-    refreshItemSheet: () => refreshItemSheet,
-    registerSheetCompanion: () => registerSheetCompanion,
-    resetItemMenuClickGuard: () => resetItemMenuClickGuard,
-    unregisterSheetCompanion: () => unregisterSheetCompanion
-  });
-  function renderIcon(container, iconId) {
-    try {
-      setIcon(container, iconId);
-    } catch (e) {
-    }
-  }
-  function registerSheetCompanion(el) {
-    sheetCompanions.add(el);
-  }
-  function unregisterSheetCompanion(el) {
-    sheetCompanions.delete(el);
-  }
-  function inSheetCompanion(target) {
-    for (const c of sheetCompanions) {
-      if (c.isConnected && c.contains(target)) return true;
-    }
-    return false;
-  }
-  function onMouseDownCapture(ev) {
-    if (popupEl && popupEl.isConnected && !popupEl.contains(ev.target) && !inSheetCompanion(ev.target)) {
-      closeItemMenu();
-    }
-  }
-  function onMouseUpCapture(ev) {
-    if (!suppressNextClick) return;
-    if (popupEl && popupEl.isConnected && popupEl.contains(ev.target)) return;
-    suppressNextClick = false;
-    residualClickArmed = true;
-  }
-  function onClickCapture(ev) {
-    const target = ev.target;
-    if (residualClickArmed) {
-      residualClickArmed = false;
-      ev.stopImmediatePropagation();
-      ev.preventDefault();
-      return;
-    }
-    if (touchSettlePending) {
-      touchSettlePending = false;
-      ev.stopImmediatePropagation();
-      ev.preventDefault();
-      return;
-    }
-    if (popupEl && popupEl.isConnected && !popupEl.contains(target) && !inSheetCompanion(target)) {
-      closeItemMenu();
-    }
-  }
-  function closeItemMenu() {
-    if (menuEsc) {
-      menuEsc.unregister();
-      menuEsc = null;
-    }
-    if (touchSettleTimer) {
-      clearTimeout(touchSettleTimer);
-      touchSettleTimer = null;
-    }
-    document.removeEventListener("mousedown", onMouseDownCapture, true);
-    document.removeEventListener("mouseup", onMouseUpCapture, true);
-    document.removeEventListener("click", onClickCapture, true);
-    if (sheetMask) {
-      sheetMask.remove();
-      sheetMask = null;
-    }
-    if (popupEl) {
-      popupEl.remove();
-      popupEl = null;
-    }
-    sheetBodyEl = null;
-    sheetHeadEl = null;
-    suppressNextClick = false;
-    residualClickArmed = false;
-    touchSettlePending = false;
-    if (prevFocus && prevFocus.isConnected && document.activeElement === document.body) {
-      prevFocus.focus();
-    }
-    prevFocus = null;
-  }
-  function armTouchSettle() {
-    touchSettlePending = true;
-    if (touchSettleTimer) clearTimeout(touchSettleTimer);
-    touchSettleTimer = setTimeout(() => {
-      touchSettlePending = false;
-      touchSettleTimer = null;
-    }, TOUCH_SETTLE_MS);
-  }
-  function resetItemMenuClickGuard() {
-    suppressNextClick = false;
-    residualClickArmed = false;
-  }
-  function attachPopupListeners(id) {
-    document.addEventListener("mousedown", onMouseDownCapture, true);
-    document.addEventListener("mouseup", onMouseUpCapture, true);
-    document.addEventListener("click", onClickCapture, true);
-    menuEsc = escManager.register(id, {
-      isVisible: () => !!(popupEl && popupEl.isConnected),
-      close: closeItemMenu
-    });
-  }
-  function positionMenu(m, x, y) {
-    const mw = m.offsetWidth || 168;
-    const mh = m.offsetHeight || m.children.length * ITEM_HEIGHT + MENU_PADDING;
-    const vw = window.innerWidth || document.documentElement.clientWidth || 0;
-    const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-    let left = x + ANCHOR_GAP;
-    let top = y + ANCHOR_GAP;
-    if (vw && left + mw > vw - VIEWPORT_PAD) left = Math.max(VIEWPORT_PAD, x - mw - ANCHOR_GAP);
-    if (vh && top + mh > vh - VIEWPORT_PAD) top = Math.max(VIEWPORT_PAD, y - mh - ANCHOR_GAP);
-    if (vw) left = Math.min(Math.max(left, VIEWPORT_PAD), Math.max(VIEWPORT_PAD, vw - mw - VIEWPORT_PAD));
-    if (vh) top = Math.min(Math.max(top, VIEWPORT_PAD), Math.max(VIEWPORT_PAD, vh - mh - VIEWPORT_PAD));
-    m.style.left = `${left}px`;
-    m.style.top = `${top}px`;
-  }
-  function attachItemKeyboardNav(host, scope) {
-    host.addEventListener("keydown", (e) => {
-      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
-      const items = Array.from(scope.querySelectorAll("button"));
-      if (items.length === 0) return;
-      e.preventDefault();
-      const idx = items.indexOf(document.activeElement);
-      const next = idx === -1 ? 0 : e.key === "ArrowDown" ? (idx + 1) % items.length : (idx - 1 + items.length) % items.length;
-      items[next].focus();
-    });
-  }
-  function focusMenuFirst(host, scope) {
-    prevFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const first = scope.querySelector("button");
-    if (first) first.focus();
-    attachItemKeyboardNav(host, scope);
-  }
-  function openItemMenu(x, y, actions, suppressResidualClick = false, menuClass) {
-    closeItemMenu();
-    const m = document.createElement("div");
-    m.className = "bz-item-menu" + (menuClass ? " " + menuClass : "");
-    m.style.visibility = "hidden";
-    for (const a of actions) {
-      const item = document.createElement("button");
-      item.type = "button";
-      if (a.title) item.title = a.title;
-      item.className = "bz-item-menu-item" + (a.kind === "danger" ? " bz-item-menu-item--danger" : "") + (a.tone === "accent" ? " bz-item-menu-item--accent" : "");
-      const itemIcon = document.createElement("span");
-      itemIcon.className = "bz-item-menu-icon";
-      renderIcon(itemIcon, a.icon);
-      const itemLabel = document.createElement("span");
-      itemLabel.className = "bz-item-menu-label";
-      itemLabel.textContent = a.label;
-      item.appendChild(itemIcon);
-      item.appendChild(itemLabel);
-      item.addEventListener("click", (ev) => {
-        ev.stopPropagation();
-        closeItemMenu();
-        a.onClick();
-      });
-      m.appendChild(item);
-    }
-    m.style.zIndex = String(allocZ());
-    document.body.appendChild(m);
-    positionMenu(m, x, y);
-    m.style.visibility = "visible";
-    popupEl = m;
-    suppressNextClick = suppressResidualClick;
-    residualClickArmed = false;
-    if (!suppressResidualClick) armTouchSettle();
-    attachPopupListeners("bz-item-menu");
-    focusMenuFirst(m, m);
-  }
-  function buildSheetItem(a) {
-    const item = document.createElement("button");
-    item.type = "button";
-    if (a.title) item.title = a.title;
-    item.className = "bz-item-sheet-item" + (a.kind === "danger" ? " bz-item-sheet-item--danger" : "") + (a.tone === "accent" ? " bz-item-sheet-item--accent" : "");
-    const itemIcon = document.createElement("span");
-    itemIcon.className = "bz-item-sheet-icon";
-    renderIcon(itemIcon, a.icon);
-    const itemLabel = document.createElement("span");
-    itemLabel.className = "bz-item-sheet-label";
-    itemLabel.textContent = a.label;
-    item.appendChild(itemIcon);
-    item.appendChild(itemLabel);
-    if (a.sub) {
-      const itemSub = document.createElement("span");
-      itemSub.className = "bz-item-sheet-item-sub";
-      itemSub.textContent = a.sub;
-      item.appendChild(itemSub);
-    }
-    item.addEventListener("click", (ev) => {
-      ev.stopPropagation();
-      if (a.keepOpen) {
-        a.onClick();
-        return;
-      }
-      closeItemMenu();
-      a.onClick();
-    });
-    return item;
-  }
-  function refreshItemSheet(actions, head) {
-    if (!popupEl || popupEl.classList.contains("bz-item-sheet") === false || !sheetBodyEl) return;
-    sheetBodyEl.innerHTML = "";
-    for (const a of actions) {
-      sheetBodyEl.appendChild(buildSheetItem(a));
-    }
-    if (head && sheetHeadEl) {
-      sheetHeadEl.innerHTML = "";
-      sheetHeadEl.appendChild(head);
-    }
-  }
-  function openItemSheet(actions, opts, suppressResidualClick = false) {
-    closeItemMenu();
-    const mask = document.createElement("div");
-    mask.className = "bz-item-sheet-mask";
-    const sheet = document.createElement("div");
-    sheet.className = "bz-item-sheet";
-    if (opts == null ? void 0 : opts.sheetHead) {
-      const head = document.createElement("div");
-      head.className = "bz-item-sheet-head";
-      head.appendChild(opts.sheetHead);
-      sheet.appendChild(head);
-      sheetHeadEl = head;
-    } else if (opts == null ? void 0 : opts.sheetTitle) {
-      const head = document.createElement("div");
-      head.className = "bz-item-sheet-head";
-      const titleEl = document.createElement("div");
-      titleEl.className = "bz-item-sheet-title";
-      titleEl.textContent = opts.sheetTitle;
-      head.appendChild(titleEl);
-      if (opts.sheetSub) {
-        const subEl = document.createElement("div");
-        subEl.className = "bz-item-sheet-sub";
-        subEl.textContent = opts.sheetSub;
-        head.appendChild(subEl);
-      }
-      sheet.appendChild(head);
-      sheetHeadEl = head;
-    }
-    const body = document.createElement("div");
-    body.className = "bz-item-sheet-body";
-    for (const a of actions) {
-      body.appendChild(buildSheetItem(a));
-    }
-    sheet.appendChild(body);
-    mask.style.zIndex = String(allocZ());
-    sheet.style.zIndex = String(allocZ());
-    document.body.appendChild(mask);
-    document.body.appendChild(sheet);
-    popupEl = sheet;
-    sheetMask = mask;
-    sheetBodyEl = body;
-    suppressNextClick = suppressResidualClick;
-    residualClickArmed = false;
-    if (!suppressResidualClick) armTouchSettle();
-    attachPopupListeners("bz-item-sheet");
-    attachSheetDismiss(sheet, body);
-    focusMenuFirst(sheet, body);
-  }
-  function attachSheetDismiss(sheet, body) {
-    const CLOSE_AT = 80;
-    let startY = 0;
-    let dragging = false;
-    let dy = 0;
-    const reset = () => {
-      dragging = false;
-      dy = 0;
-      sheet.style.transform = "";
-      sheet.classList.remove("bz-item-sheet--dragging");
-    };
-    sheet.addEventListener(
-      "touchstart",
-      (e) => {
-        const t = e.touches && e.touches[0];
-        if (!t) return;
-        startY = t.clientY;
-        dragging = true;
-        dy = 0;
-      },
-      { passive: true }
-    );
-    sheet.addEventListener(
-      "touchmove",
-      (e) => {
-        if (!dragging) return;
-        const t = e.touches && e.touches[0];
-        if (!t) return;
-        const cur = t.clientY - startY;
-        if (cur <= 0) {
-          if (dy !== 0) reset();
-          return;
-        }
-        if (body.scrollTop > 0 && body.contains(e.target)) {
-          if (dy !== 0) reset();
-          return;
-        }
-        dy = cur;
-        e.preventDefault();
-        sheet.classList.add("bz-item-sheet--dragging");
-        sheet.style.transform = `translateY(${dy}px)`;
-        if (sheetMask) sheetMask.style.opacity = String(Math.max(0, 1 - dy / 400));
-      },
-      { passive: false }
-    );
-    const onTouchEnd = () => {
-      if (!dragging) return;
-      const over = dy > CLOSE_AT;
-      dragging = false;
-      if (over) {
-        sheet.classList.remove("bz-item-sheet--dragging");
-        const s = sheet;
-        s.style.transform = "translateY(100%)";
-        if (sheetMask) sheetMask.style.opacity = "0";
-        setTimeout(() => {
-          if (popupEl === s) closeItemMenu();
-        }, 180);
-      } else {
-        reset();
-        if (sheetMask) sheetMask.style.opacity = "1";
-      }
-      dy = 0;
-    };
-    sheet.addEventListener("touchend", onTouchEnd);
-    sheet.addEventListener("touchcancel", () => {
-      reset();
-      if (sheetMask) sheetMask.style.opacity = "1";
-    });
-  }
-  function attachItemActions(card, actions, opts) {
-    if (!card || actions.length === 0) return;
-    card.classList.add("bz-item-card");
-    card.addEventListener("contextmenu", (e) => {
-      if (isMobileEnv()) return;
-      if ((opts == null ? void 0 : opts.longPressFilter) && !opts.longPressFilter(e)) return;
-      e.preventDefault();
-      openItemMenu(e.clientX, e.clientY, actions, true, opts == null ? void 0 : opts.menuClass);
-      suppressNextClick = false;
-    });
-    longPress(
-      card,
-      (ev) => {
-        if (!isMobileEnv()) return;
-        openItemSheet(actions, opts, ev.type !== "touchstart");
-      },
-      void 0,
-      opts == null ? void 0 : opts.longPressFilter
-    );
-  }
-  var VIEWPORT_PAD, ANCHOR_GAP, ITEM_HEIGHT, MENU_PADDING, TOUCH_SETTLE_MS, popupEl, sheetMask, sheetBodyEl, sheetHeadEl, sheetCompanions, menuEsc, prevFocus, suppressNextClick, residualClickArmed, touchSettlePending, touchSettleTimer;
-  var init_item_actions = __esm({
-    "src/core/item-actions.ts"() {
-      init_dom();
-      init_esc_manager();
-      init_z_order();
-      init_mobile();
-      init_fake_obsidian();
-      VIEWPORT_PAD = 8;
-      ANCHOR_GAP = 12;
-      ITEM_HEIGHT = 30;
-      MENU_PADDING = 10;
-      TOUCH_SETTLE_MS = 400;
-      popupEl = null;
-      sheetMask = null;
-      sheetBodyEl = null;
-      sheetHeadEl = null;
-      sheetCompanions = /* @__PURE__ */ new Set();
-      menuEsc = null;
-      prevFocus = null;
-      suppressNextClick = false;
-      residualClickArmed = false;
-      touchSettlePending = false;
-      touchSettleTimer = null;
-    }
-  });
-
-  // src/review/sprint.ts
-  function accuracyToRating(accuracy) {
-    if (accuracy >= 90) return "easy";
-    if (accuracy >= 70) return "good";
-    if (accuracy >= 50) return "hard";
-    return "again";
-  }
-  var CORRECT_JUMP_DELAY_MS2, SprintSession, RATING_NAMES2;
-  var init_sprint = __esm({
-    "src/review/sprint.ts"() {
-      init_notice();
-      init_flow_dialog();
-      init_ui();
-      init_esc_manager();
-      init_utils();
-      CORRECT_JUMP_DELAY_MS2 = 800;
-      SprintSession = class {
-        constructor(opts) {
-          this.entries = [];
-          this.cur = 0;
-          this.q = null;
-          this.jumpTimer = null;
-          this.escHandle = null;
-          /** item 2：document keydown 句柄（finish 注销） */
-          this.keyHandler = null;
-          /** 当前视图态（键盘路由：题面/结果卡/结算屏 Enter 语义不同） */
-          this.view = "loading";
-          this.finished = false;
-          this.resolveDone = null;
-          this.started = false;
-          this.opts = opts;
-          this.entries = opts.queue.map((item) => ({
-            item,
-            state: "pending",
-            questions: [],
-            acc: 0,
-            wrong: 0,
-            passNote: ""
-          }));
-        }
-        get mode() {
-          return this.opts.mode;
-        }
-        get current() {
-          var _a2;
-          return (_a2 = this.entries[this.cur]) != null ? _a2 : null;
-        }
-        get passedCount() {
-          return this.entries.filter((e) => e.state === "passed").length;
-        }
-        get failedCount() {
-          return this.entries.filter((e) => e.state === "failed").length;
-        }
-        get remainingCount() {
-          return this.entries.filter((e) => e.state === "pending").length;
-        }
-        /** 开始会话（异步直到结束） */
-        start() {
-          if (this.started) return Promise.resolve("quit");
-          this.started = true;
-          return new Promise((resolve2) => {
-            this.resolveDone = resolve2;
-            this.escHandle = escManager.register("review-sprint", {
-              isVisible: () => !this.finished,
-              close: () => this.requestQuit()
-            });
-            this.bindKeys();
-            void this.runNext();
-          });
-        }
-        /** 放弃确认（ESC/放弃按钮） */
-        requestQuit() {
-          if (this.finished) return;
-          void openFlowDialog({
-            title: "放弃本次做题？",
-            message: "未完成的题目将丢弃，本轮复习按已完成篇目结算",
-            actions: [
-              { label: "继续做题", value: "cancel" },
-              { label: "放弃", value: "ok", cta: true }
-            ]
-          }).then((v) => {
-            if (v !== "ok" || this.finished) return;
-            this.finish("quit");
-          });
-        }
-        /** 结束会话（清资源 + 回调宿主） */
-        finish(reason) {
-          var _a2;
-          if (this.finished) return;
-          this.finished = true;
-          this.clearJump();
-          this.unbindKeys();
-          if (this.escHandle) {
-            this.escHandle.unregister();
-            this.escHandle = null;
-          }
-          this.opts.onExit();
-          (_a2 = this.resolveDone) == null ? void 0 : _a2.call(this, reason);
-        }
-        /** 宿主强制结束（面板关闭/卸载时调用，跳过确认） */
-        destroy() {
-          this.finish("quit");
-        }
-        clearJump() {
-          if (this.jumpTimer) {
-            clearTimeout(this.jumpTimer);
-            this.jumpTimer = null;
-          }
-        }
-        // ================= 键盘答题（item 2） =================
-        bindKeys() {
-          if (this.keyHandler) return;
-          this.keyHandler = (e) => this.handleKey(e);
-          document.addEventListener("keydown", this.keyHandler);
-        }
-        unbindKeys() {
-          if (this.keyHandler) {
-            document.removeEventListener("keydown", this.keyHandler);
-            this.keyHandler = null;
-          }
-        }
-        /** 键盘路由：1-4/a-d 答题；Enter 提交→下一题→结束并结算；结果卡/结算屏走主按钮。
-         *  输入框/文本域聚焦时跳过（不劫持打字）。 */
-        handleKey(e) {
-          if (this.finished) return;
-          const t = e.target;
-          if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
-          if (e.ctrlKey || e.metaKey || e.altKey) return;
-          if (e.key !== "Enter") {
-            if (this.view !== "question" || !this.q || this.q.answered) return;
-            const question = this.currentQuestion();
-            if (!question) return;
-            const k = e.key.toLowerCase();
-            const idx = ["1", "2", "3", "4"].indexOf(e.key) >= 0 ? Number(e.key) - 1 : ["a", "b", "c", "d"].indexOf(k);
-            if (idx < 0 || idx >= question.options.length) return;
-            e.preventDefault();
-            this.answer(idx);
-            return;
-          }
-          e.preventDefault();
-          if (this.view === "question" && this.q) {
-            const q2 = this.q;
-            if (!q2.answered) {
-              const question = this.currentQuestion();
-              if (question && question.correctIndices.length > 1) this.submitMulti();
-              return;
-            }
-            if (q2.lastCorrect) return;
-            if (q2.list.length) this.nextQuestion();
-            else void this.finishNote();
-            return;
-          }
-          if (this.view === "result") {
-            const entry = this.entry();
-            void this.handleResult(entry && entry.state === "passed" ? "next" : "note");
-            return;
-          }
-          if (this.view === "summary") this.finish("done");
-        }
-        // ================= 跳过此篇（item 7） =================
-        /** 当前篇回 pending 移到队尾：不评级不写盘；仅剩它自己待做时直接结算（防自环） */
-        skipCurrent() {
-          if (this.finished) return;
-          const entry = this.entry();
-          if (!entry || entry.state !== "doing") return;
-          const othersPending = this.entries.some((en, i) => i !== this.cur && en.state === "pending");
-          entry.state = "pending";
-          if (!othersPending) {
-            this.showSummary();
-            return;
-          }
-          const idx = this.cur;
-          this.entries.splice(idx, 1);
-          this.entries.push(entry);
-          this.cur = Math.max(0, idx - 1);
-          this.q = null;
-          void this.runNext();
-        }
-        // ================= 流程推进 =================
-        async runNext() {
-          var _a2, _b2;
-          if (this.finished) return;
-          const nextIdx = this.entries.findIndex((e) => e.state === "pending");
-          if (nextIdx === -1) {
-            this.showSummary();
-            return;
-          }
-          this.cur = nextIdx;
-          const entry = this.entries[nextIdx];
-          entry.state = "doing";
-          this.renderTop();
-          this.showLoading(entry);
-          const questions = await this.opts.fetchQuestions(entry.item);
-          if (this.finished) return;
-          if (!questions || !questions.length) {
-            notice(`「${entry.item.name}」暂无题目，已跳过`, "warning");
-            entry.state = "pending";
-            this.entries.splice(nextIdx, 1);
-            this.cur = Math.max(0, nextIdx - 1);
-            await this.runNext();
-            return;
-          }
-          entry.questions = questions;
-          this.q = {
-            list: questions.slice(),
-            cur: (_a2 = questions[0]) != null ? _a2 : null,
-            answered: false,
-            sel: /* @__PURE__ */ new Set(),
-            lastCorrect: false,
-            single: ((_b2 = questions[0]) == null ? void 0 : _b2.correctIndices.length) === 1,
-            doneCount: 0,
-            totalCount: questions.length
-          };
-          this.renderQuestion();
-        }
-        async finishNote() {
-          var _a2, _b2;
-          const entry = this.entry();
-          if (!entry || entry.state !== "doing" || this.finished) return;
-          const total = entry.acc + entry.wrong;
-          const acc = total ? Math.round(entry.acc / total * 100) : 0;
-          const rating = accuracyToRating(acc);
-          const passed = rating === "easy" || rating === "good";
-          if (passed) {
-            const nextReviewAt = await this.opts.onPassed(entry.item, rating, { acc: entry.acc, wrong: entry.wrong });
-            if (this.finished) return;
-            entry.state = "passed";
-            entry.passNote = this.nextIntervalNote(nextReviewAt || entry.item.nextReviewDate);
-          } else {
-            await this.opts.onFailed(entry.item, rating, { acc: entry.acc, wrong: entry.wrong });
-            if (this.finished) return;
-            entry.state = "failed";
-            this.finish("fail");
-            return;
-          }
-          this.renderResult(entry);
-          (_b2 = (_a2 = this.opts).onProgress) == null ? void 0 : _b2.call(_a2);
-        }
-        entry() {
-          return this.entries[this.cur];
-        }
-        /** 通过后的下次间隔展示（onPassed 返回的写盘后 nextReviewDate） */
-        nextIntervalNote(nextReviewAt) {
-          if (!nextReviewAt) return "";
-          const days = Math.max(1, Math.round((new Date(nextReviewAt).getTime() - Date.now()) / 864e5));
-          return `${days} 天后`;
-        }
-        // ================= 答题 =================
-        /** 渲染目标题：优先刚作答的题（答题反馈期），否则剩余队列首题 */
-        currentQuestion() {
-          var _a2;
-          if ((_a2 = this.q) == null ? void 0 : _a2.cur) return this.q.cur;
-          return this.q && this.q.list.length ? this.q.list[0] : null;
-        }
-        /** 单选点选 / 多选勾选 */
-        answer(idx) {
-          const q2 = this.q;
-          if (!q2 || q2.answered) return;
-          const question = this.currentQuestion();
-          if (!question) return;
-          const single = question.correctIndices.length === 1;
-          if (!single) {
-            if (q2.sel.has(idx)) q2.sel.delete(idx);
-            else q2.sel.add(idx);
-            this.renderQuestion();
-            return;
-          }
-          q2.answered = true;
-          q2.sel = /* @__PURE__ */ new Set([idx]);
-          const correct = idx === question.correctIndices[0];
-          q2.lastCorrect = correct;
-          this.consume(question, correct);
-        }
-        /** 多选提交 */
-        submitMulti() {
-          const q2 = this.q;
-          if (!q2 || q2.answered) return;
-          const question = this.currentQuestion();
-          if (!question) return;
-          if (!q2.sel.size) {
-            notice("请至少选择一项", "warning");
-            return;
-          }
-          q2.answered = true;
-          const sel = Array.from(q2.sel).sort();
-          const correctArr = question.correctIndices.slice().sort();
-          const correct = sel.length === correctArr.length && sel.every((v, i) => v === correctArr[i]);
-          q2.lastCorrect = correct;
-          this.consume(question, correct);
-        }
-        /** 消费当前题（出本轮；答对持久化删库后自动下一题，答错等「下一题」按钮） */
-        consume(question, correct) {
-          const q2 = this.q;
-          const entry = this.entry();
-          q2.cur = question;
-          q2.list.shift();
-          if (correct) entry.acc++;
-          else entry.wrong++;
-          q2.doneCount++;
-          if (correct) {
-            void this.removeQuestionPersist(question).then(() => {
-              if (this.finished) return;
-              this.clearJump();
-              this.jumpTimer = setTimeout(() => {
-                this.jumpTimer = null;
-                if (this.finished) return;
-                this.advanceAfterAnswer();
-              }, CORRECT_JUMP_DELAY_MS2);
-            });
-          }
-          this.renderQuestion();
-        }
-        async removeQuestionPersist(q2) {
-          const quiz = this.opts.quiz;
-          if (!quiz || !q2.notePath) return;
-          try {
-            await quiz.manager.removeQuestion(this.opts.app, q2.notePath, {
-              question: q2.question,
-              options: q2.options,
-              correctIndices: q2.correctIndices
-            });
-          } catch (e) {
-            notice("删除题目失败：" + e.message + "，请重试", "error");
-          }
-        }
-        /** 答错后「下一题」 / 答对自动跳 */
-        nextQuestion() {
-          var _a2;
-          if (!((_a2 = this.q) == null ? void 0 : _a2.answered)) return;
-          this.advanceAfterAnswer();
-        }
-        advanceAfterAnswer() {
-          const entry = this.entry();
-          if (this.q.list.length) {
-            this.q.answered = false;
-            this.q.sel = /* @__PURE__ */ new Set();
-            this.q.cur = this.q.list[0];
-            this.renderQuestion();
-            return;
-          }
-          void this.finishNote();
-        }
-        // ================= 结果/结算动作 =================
-        async handleResult(action) {
-          if (action === "note") {
-            this.finish("quit");
-            return;
-          }
-          if (action === "end") {
-            this.showSummary();
-            return;
-          }
-          await this.runNext();
-        }
-        // ================= 视图构建（单套 DOM，CSS 适配移动） =================
-        /** 顶部头行（队列视图 / 冲刺共用外层结构由宿主渲染，本会话只接管内容区） */
-        renderTop() {
-        }
-        sprintHead(extraRight = "") {
-          return `
-      <div class="bz-sprint-head">
-        <div class="t">
-          <div class="bz-sprint-title">做题冲刺</div>
-        </div>
-        <div class="tools">
-          ${extraRight}
-          <button class="bz-icon-btn" data-action="skip" title="跳过此篇（不评级，移到队尾）">${this.icon("skip-forward")}</button>
-          <button class="bz-icon-btn" data-action="quit" title="回面板">${this.icon("x")}</button>
-        </div>
-      </div>`;
-        }
-        showLoading(entry) {
-          this.view = "loading";
-          this.opts.host.innerHTML = `
-      ${this.sprintHead()}
-      <div class="bz-sprint-loading"><span class="spinner"></span>正在获取题目…</div>`;
-          this.bindTop();
-        }
-        questionHeader(entry) {
-          const total = entry.questions.length;
-          const done = this.q.doneCount;
-          return `
-      <div class="bz-sprint-qtop">
-        <span class="bz-sprint-progress">${done + 1}/${total}</span>
-      </div>`;
-        }
-        renderQuestion() {
-          var _a2, _b2, _c, _d, _e;
-          const entry = this.entry();
-          const q2 = this.q;
-          const question = this.currentQuestion();
-          if (!question) return;
-          const single = question.correctIndices.length === 1;
-          const optsHtml = question.options.map((opt, i) => {
-            const isSel = q2.sel.has(i);
-            let extra = "";
-            if (q2.answered) {
-              if (question.correctIndices.includes(i)) extra = " is-correct";
-              else if (isSel) extra = " is-wrong";
-            } else if (isSel) extra = " is-sel";
-            return `
-          <div class="bz-sprint-opt${extra}${q2.answered ? " is-disabled" : ""}" data-i="${i}" role="button" tabindex="${q2.answered ? "-1" : "0"}" aria-disabled="${q2.answered ? "true" : "false"}">
-            <span class="k">${"ABCD"[i]}</span>
-            <span class="t">${escapeHtml2(opt)}</span>
-            <span class="m">${q2.answered && question.correctIndices.includes(i) ? this.mark("ok") : q2.answered && isSel ? this.mark("bad") : ""}</span>
-          </div>`;
-          }).join("");
-          const needSubmit = !single && !q2.answered;
-          const lastWrong = q2.answered && !q2.lastCorrect && !q2.list.length;
-          const nextBtn = q2.answered && !q2.lastCorrect && q2.list.length ? `<button class="bz-btn bz-btn--primary" data-action="next">下一题 →</button>` : lastWrong ? `<button class="bz-btn bz-btn--primary" data-action="note">${this.icon("flag")} 结束并结算</button>` : "";
-          const submit = needSubmit ? `<button class="bz-btn bz-btn--primary bz-sprint-submit" data-action="submit">提交答案</button>` : "";
-          const explain = q2.answered && !q2.lastCorrect && question.explain ? `<div class="bz-sprint-explain">${escapeHtml2(question.explain)}</div>` : "";
-          const html = `
-      ${this.sprintHead()}
-      <div class="bz-sprint-body">
-        <div class="bz-sprint-main">
-          ${this.questionHeader(entry)}
-          <div class="bz-sprint-qcard">
-            <div class="bz-sprint-qtype">${single ? "单选" : "多选"}</div>
-            <div class="bz-sprint-qtext">${escapeHtml2(question.question)}</div>
-            <div class="bz-sprint-opts">${optsHtml}</div>
-            ${explain}
-            ${submit}
-            ${nextBtn ? `<div class="bz-sprint-qfoot">${nextBtn}</div>` : ""}
-          </div>
-        </div>
-        <aside class="bz-sprint-queue">${this.queueHtml()}</aside>
-      </div>`;
-          this.view = "question";
-          this.opts.host.innerHTML = html;
-          mountIcons(this.opts.host);
-          this.bindTop();
-          (_a2 = this.opts.host.querySelector('[data-action="submit"]')) == null ? void 0 : _a2.addEventListener("click", () => this.submitMulti());
-          (_b2 = this.opts.host.querySelector('[data-action="next"]')) == null ? void 0 : _b2.addEventListener("click", () => this.nextQuestion());
-          (_c = this.opts.host.querySelector('[data-action="note"]')) == null ? void 0 : _c.addEventListener("click", () => {
-            void this.finishNote();
-          });
-          this.opts.host.querySelectorAll(".bz-sprint-opt").forEach((el) => {
-            const activate = () => this.answer(Number(el.dataset.i));
-            el.addEventListener("click", activate);
-            el.addEventListener("keydown", (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                activate();
-              }
-            });
-          });
-          (_e = (_d = this.opts).onProgress) == null ? void 0 : _e.call(_d);
-        }
-        queueHtml() {
-          const rows = this.entries.map((e) => {
-            const name = escapeHtml2(e.item.name.replace(/^《|》$/g, ""));
-            if (e.state === "passed") return `<div class="bz-sq-item passed"><span class="nm"><s>${name}</s></span></div>`;
-            if (e.state === "failed") return `<div class="bz-sq-item failed"><span class="nm">${name}</span></div>`;
-            if (e.state === "doing") return `<div class="bz-sq-item doing"><span class="nm">${name}</span></div>`;
-            return `<div class="bz-sq-item"><span class="nm">${name}</span></div>`;
-          }).join("");
-          return `
-      <div class="bz-sq-head"><b>本轮队列</b></div>
-      <div class="bz-sq-list">${rows || '<div class="bz-empty"><div class="bz-empty-title">队列完毕</div></div>'}</div>`;
-        }
-        renderResult(entry) {
-          var _a2, _b2, _c, _d, _e;
-          const total = entry.acc + entry.wrong;
-          const acc = total ? Math.round(entry.acc / total * 100) : 0;
-          const rating = accuracyToRating(acc);
-          const passed = rating === "easy" || rating === "good";
-          const remain = this.remainingCount;
-          const name = escapeHtml2(entry.item.name.replace(/^《|》$/g, ""));
-          const nextLabel = this.mode === "single" ? "完成 · 回面板" : remain > 0 ? `下一篇 · ${this.nextPendingName()}` : "完成本轮 · 结算";
-          const ratingLine = this.mode === "redo" ? `${RATING_NAMES2[rating]} · 已解除待重做` : `${RATING_NAMES2[rating]} · 下次 ${escapeHtml2(entry.passNote || "已排期")}`;
-          const inner = passed ? `
-        <div class="bz-result-ic">${this.mark("ok", "lg")}</div>
-        <div class="bz-result-name">${name}</div>
-        <div class="bz-result-score">${entry.acc}<span class="sl">/${total}</span></div>
-        <span class="bz-result-rating pass">${ratingLine}</span>
-        <button class="bz-btn bz-btn--primary bz-btn--block" data-action="next">${nextLabel}</button>
-        ${remain > 0 ? `<button class="bz-btn bz-btn--ghost bz-btn--block" data-action="end">结束这次复习</button>` : ""}` : `
-        <div class="bz-result-ic bad">${this.mark("bad", "lg")}</div>
-        <div class="bz-result-name">${name}</div>
-        <div class="bz-result-score">${entry.acc}<span class="sl">/${total}</span></div>
-        <span class="bz-result-rating fail">${RATING_NAMES2[rating]} · 待重做</span>
-        <button class="bz-btn bz-btn--danger bz-btn--block" data-action="note">${this.icon("file-text")} 复习此笔记 · 打开原文</button>`;
-          this.view = "result";
-          const html = `
-      ${this.sprintHead()}
-      <div class="bz-sprint-body">
-        <div class="bz-sprint-main"><div class="bz-result">${inner}</div></div>
-        <aside class="bz-sprint-queue">${this.queueHtml()}</aside>
-      </div>`;
-          this.opts.host.innerHTML = html;
-          mountIcons(this.opts.host);
-          this.bindTop();
-          (_a2 = this.opts.host.querySelector('[data-action="next"]')) == null ? void 0 : _a2.addEventListener("click", () => void this.handleResult("next"));
-          (_b2 = this.opts.host.querySelector('[data-action="end"]')) == null ? void 0 : _b2.addEventListener("click", () => void this.handleResult("end"));
-          (_c = this.opts.host.querySelector('[data-action="note"]')) == null ? void 0 : _c.addEventListener("click", () => void this.handleResult("note"));
-          (_e = (_d = this.opts).onProgress) == null ? void 0 : _e.call(_d);
-        }
-        nextPendingName() {
-          const nx = this.entries.find((e) => e.state === "pending");
-          return nx ? escapeHtml2(nx.item.name.replace(/^《|》$/g, "").slice(0, 12)) : "";
-        }
-        showSummary() {
-          var _a2, _b2;
-          this.view = "summary";
-          const passed = this.passedCount;
-          const failed = this.failedCount;
-          const total = passed + failed;
-          const streak = (_a2 = this.opts.streakDays) != null ? _a2 : 0;
-          const html = `
-      ${this.sprintHead()}
-      <div class="bz-summary">
-        <div class="bz-summary-title">本轮复习完成</div>
-        <div class="bz-summary-stats">
-          <div class="st"><b>${total}</b><span>复习篇数</span></div>
-          <div class="st"><b>${passed}</b><span>通过</span></div>
-          <div class="st ${failed ? "warn" : ""}"><b>${failed}</b><span>未通过</span></div>
-        </div>
-        ${streak > 0 ? `<div class="bz-summary-streak">连续复习 <b>${streak}</b> 天</div>` : ""}
-        <button class="bz-btn bz-btn--primary bz-btn--block" data-action="done">完成 · 回到复习计划</button>
-      </div>`;
-          this.opts.host.innerHTML = html;
-          mountIcons(this.opts.host);
-          this.bindTop();
-          (_b2 = this.opts.host.querySelector('[data-action="done"]')) == null ? void 0 : _b2.addEventListener("click", () => this.finish("done"));
-        }
-        /** 顶部/队列共同动作（跳过此篇 / 退出按钮） */
-        bindTop() {
-          var _a2, _b2;
-          (_a2 = this.opts.host.querySelector('[data-action="quit"]')) == null ? void 0 : _a2.addEventListener("click", () => this.requestQuit());
-          (_b2 = this.opts.host.querySelector('[data-action="skip"]')) == null ? void 0 : _b2.addEventListener("click", () => this.skipCurrent());
-        }
-        // ================= 图标/工具 =================
-        icon(name) {
-          return `<span class="bz-ic bz-sprint-ic" data-lucide="${name}"></span>`;
-        }
-        mark(kind, size = "") {
-          if (kind === "ok") return `<span class="bz-mark ok ${size}"><i data-lucide="check"></i></span>`;
-          return `<span class="bz-mark bad ${size}"><i data-lucide="x"></i></span>`;
-        }
-      };
-      RATING_NAMES2 = { easy: "轻松", good: "一般", hard: "困难", again: "忘了" };
-    }
-  });
-
-  // src/core/settings-common.ts
-  function mobileFullscreenRow(key, opts) {
-    const desc = (opts == null ? void 0 : opts.desc) || void 0;
-    return {
-      type: "toggle",
-      name: "移动端默认全屏",
-      desc,
-      binding: { key },
-      visibleWhen: (_snapshot) => isMobileEnv()
-    };
-  }
-  function mobileFullscreenGroup(key, opts) {
-    return {
-      icon: "smartphone",
-      name: "移动端",
-      // 组级门控（ticket 131 域迁移补正）：现状各域是 `if (isMobileEnv())` 才挂整行、桌面端完全无痕；
-      // 仅行级 visibleWhen 会残留空卡片壳，且 DOM 存在性空态判定会被隐藏行抑制（归物本/收藏本桌面空态丢失）。
-      visibleWhen: (_snapshot) => isMobileEnv(),
-      rows: [mobileFullscreenRow(key, opts)]
-    };
-  }
-  function batchSizeRow(key, opts) {
-    return {
-      type: "number",
-      name: "每批加载数量",
-      desc: "滚动加载时每批显示的条目数",
-      binding: numStrBinding(key, 20),
-      min: 1,
-      step: 1,
-      onCommit: opts == null ? void 0 : opts.onCommit
-    };
-  }
-  function numStrBinding(key, def) {
-    return {
-      get: () => {
-        const raw = tryGetSettings()[key];
-        if (raw === "" || raw === null || raw === void 0) return def;
-        const n = Number(raw);
-        return Number.isFinite(n) && n > 0 ? n : def;
-      },
-      set: (v) => {
-        getSettings()[key] = String(v);
-      },
-      save: () => saveSettings()
-    };
-  }
-  function makeReloadWarnOnce() {
-    let reloadWarned = false;
-    return () => {
-      if (reloadWarned) return;
-      reloadWarned = true;
-      notice(RELOAD_SETTINGS_NOTICE, "info");
-    };
-  }
-  var RELOAD_SETTINGS_NOTICE;
-  var init_settings_common = __esm({
-    "src/core/settings-common.ts"() {
-      init_mobile();
-      init_notice();
-      init_settings_provider();
-      RELOAD_SETTINGS_NOTICE = "设置已保存，重载插件后生效";
-    }
-  });
-
-  // src/review/settings-schema.ts
-  function reviewSettingsSchema(deps) {
-    let renderExcludeRows = null;
-    return {
-      groups: [
-        {
-          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
-          icon: "palette",
-          name: "外观",
-          rows: [
-            { type: "choiceCards", name: "面板布局", binding: { key: "reviewSkin" }, options: [{ value: "default", label: "三区队列", prevClass: "bz-sp-prev-panel" }] },
-            { type: "choiceCards", name: "面板主题", binding: { key: "reviewSkinTheme" }, layoutKey: "reviewSkin", options: [{ value: "sage", label: "苔绿", layout: "default", prevClass: "bz-sp-prev-sage" }] }
-          ]
-        },
-        {
-          icon: "bell",
-          name: "检查提醒",
-          rows: [
-            { type: "toggle", name: "到期提醒", desc: "有笔记到期待复习时自动弹出提醒", binding: { key: "enableAutoNotify" } },
-            { type: "toggle", name: "新笔记加入提醒", desc: "新笔记被自动加入时弹出提示，多条合并成一条", binding: { key: "reviewAutoAddNotice" } }
-          ]
-        },
-        {
-          icon: "graduation-cap",
-          name: "做题家",
-          rows: [
-            { type: "toggle", name: "用做题测难度", desc: "开始复习即做题，按正确率自动定难度", binding: { key: "forceQuizForReview" } },
-            // 出题子项：仅「用做题测难度」开启时显示（ticket 170 isChild 联动 + visibleWhen 兜底）
-            { type: "toggle", name: "允许多选题", desc: "开启后 AI 可能出多选题，关闭则只出单选题", binding: { key: "enableMultipleChoice" }, visibleWhen: (s) => s.forceQuizForReview === true, isChild: true },
-            { type: "text", name: "每篇笔记出题数量", desc: "固定每篇笔记出题的数量，留空/0=自动", binding: { key: "questionsPerNote" }, visibleWhen: (s) => s.forceQuizForReview === true, isChild: true },
-            { type: "toggle", name: "打乱出题顺序", desc: "做题时随机排列题目顺序", binding: { key: "shuffleQuestions" }, visibleWhen: (s) => s.forceQuizForReview === true, isChild: true },
-            {
-              type: "select",
-              name: "出题难度",
-              desc: "控制 AI 出题深浅",
-              binding: { key: "difficulty" },
-              options: [
-                { value: "random", label: "随机" },
-                { value: "easy", label: "简单" },
-                { value: "medium", label: "中等" },
-                { value: "hard", label: "困难" }
-              ],
-              visibleWhen: (s) => s.forceQuizForReview === true,
-              isChild: true
-            }
-          ]
-        },
-        {
-          icon: "timer",
-          name: "复习节奏",
-          rows: [
-            // 非正数钳制为 0（原 onChange 口径：>0 保留否则 0）；空串不写（防脏值落盘）
-            { type: "number", name: "每日复习上限", desc: "一轮最多复习的篇数，不填则不限制", binding: { key: "reviewDailyLimit" }, min: 0 },
-            // 原钳制「n>0 且 n<=5 保留、否则回 1」：渲染器 min/max 只做边界钳制，超上界回 1 语义在 onChange 复刻
-            {
-              type: "number",
-              name: "复习间隔缩放",
-              desc: "数值越小复习越频繁，数值越大越宽松",
-              binding: { key: "reviewIntervalScale" },
-              onChange: (v) => {
-                if (!(v > 0 && v <= 5)) getSettings().reviewIntervalScale = 1;
-              }
-            },
-            // ADR-0077：R 目标阈值（低于该值视为可复习/提前；默认 0.9）
-            {
-              type: "number",
-              name: "R 目标阈值",
-              desc: "记忆保留度低于该值视为该复习了",
-              binding: { key: "reviewRThreshold" },
-              min: 0.5,
-              max: 0.99
-            }
-          ]
-        },
-        {
-          icon: "brain",
-          name: "记忆算法",
-          rows: [
-            // ADR-0077：FSRS 参数自动拟合（全自动定期重算）
-            { type: "toggle", name: "参数自动拟合", desc: "按个人复习历史拟合记忆参数，优化复习节奏", binding: { key: "reviewEnableFit" } },
-            {
-              type: "number",
-              name: "每 N 次复习重算",
-              desc: "累计 N 次评级后自动重拟合一次",
-              binding: { key: "reviewFitEveryN" },
-              min: 1,
-              visibleWhen: (s) => s.reviewEnableFit === true,
-              isChild: true
-            }
-          ]
-        },
-        {
-          icon: "sliders-horizontal",
-          name: "自动化",
-          rows: [
-            // 监听文件夹：通用 path 行（multi chips + 添加… 按钮，ticket 133 形态）。
-            // 落盘走外部 binding 自管（权威写盘在 onChange）：新增目录需先确认存量收编（取消=不加入，
-            // 回传回退清单否决本次变更），移除目录需连带清理其下排除记录（ticket 099）。
-            {
-              type: "path",
-              mode: "multi",
-              name: "监听文件夹",
-              desc: "文件夹里的新笔记自动加入复习计划，包括子文件夹",
-              binding: {
-                get: () => getSettings().reviewWatchedFolders || [],
-                set: () => {
-                },
-                save: () => {
-                }
-              },
-              pickerTitle: "选择监听文件夹",
-              pickerDesc: "文件夹里的新笔记自动加入复习计划，包括子文件夹",
-              onChange: (list) => {
-                const prev = [...getSettings().reviewWatchedFolders || []];
-                return (async () => {
-                  const { ReviewWatcher: ReviewWatcher2 } = await Promise.resolve().then(() => (init_watch(), watch_exports));
-                  const watcher = new ReviewWatcher2(deps.app, deps.dataManager);
-                  const kept = [];
-                  for (const folder of list) {
-                    if (!folder) {
-                      notice("暂不支持监听库根目录", "warning");
-                      continue;
-                    }
-                    if (prev.includes(folder)) {
-                      kept.push(folder);
-                      continue;
-                    }
-                    if (await watcher.confirmBatchAddForFolder(folder)) kept.push(folder);
-                  }
-                  for (const folder of prev) {
-                    if (list.includes(folder)) continue;
-                    const cleared = await watcher.removeWatchedFolder(folder);
-                    notice(cleared > 0 ? `已移除监听文件夹，并清理其下 ${cleared} 条排除记录` : "已移除监听文件夹", "success");
-                  }
-                  getSettings().reviewWatchedFolders = kept;
-                  await saveSettings();
-                  return kept;
-                })();
-              }
-            },
-            // 排除名单 chips 区（ticket 57 管理 UI；DOM id/类名零变化；交互后经 renderExcludeRows 重渲染）
-            {
-              type: "custom",
-              render: (body) => {
-                const setting = new Setting(body).setName("排除名单").setDesc("不参与监听自动加入的笔记，可在此单条解除");
-                setting.settingEl.classList.add("bz-review-exclude-row");
-                const excludeBox = document.createElement("div");
-                excludeBox.id = "review-excluded-list";
-                setting.controlEl.appendChild(excludeBox);
-                renderExcludeRows = () => {
-                  excludeBox.innerHTML = "";
-                  const notes = getSettings().reviewExcludedNotes || [];
-                  if (!notes.length) {
-                    excludeBox.appendChild(uiEmpty({ title: "暂无排除笔记" }));
-                    return;
-                  }
-                  notes.forEach((path) => {
-                    const chip = document.createElement("span");
-                    chip.className = "bz-review-exclude-chip";
-                    const name = document.createElement("span");
-                    name.className = "bz-review-exclude-name";
-                    name.textContent = path;
-                    name.title = path;
-                    const remove = document.createElement("button");
-                    remove.className = "bz-review-exclude-remove bz-touch-target--xl";
-                    remove.setAttribute("aria-label", `解除排除 ${path}`);
-                    const removeIc = document.createElement("span");
-                    removeIc.className = "bz-ic";
-                    setIcon(removeIc, "x");
-                    remove.appendChild(removeIc);
-                    remove.onclick = () => {
-                      void (async () => {
-                        const { ReviewWatcher: ReviewWatcher2 } = await Promise.resolve().then(() => (init_watch(), watch_exports));
-                        await new ReviewWatcher2(deps.app, deps.dataManager).removeExcludedNote(path);
-                        renderExcludeRows == null ? void 0 : renderExcludeRows();
-                        notice("已解除排除", "success");
-                      })();
-                    };
-                    chip.appendChild(name);
-                    chip.appendChild(remove);
-                    excludeBox.appendChild(chip);
-                  });
-                };
-                renderExcludeRows();
-              }
-            }
-          ]
-        },
-        {
-          icon: "eye",
-          name: "界面",
-          rows: [
-            { type: "toggle", name: "文件树标记", desc: "在文件树中为复习笔记着色并标到期时间", binding: { key: "reviewTreeBadge" } }
-          ]
-        },
-        // ticket 170：所有域移动端组统一无描述
-        mobileFullscreenGroup("reviewMobileDefaultFullscreen", { desc: "" })
-      ]
-    };
-  }
-  var init_settings_schema = __esm({
-    "src/review/settings-schema.ts"() {
-      init_fake_obsidian();
-      init_notice();
-      init_settings_provider();
-      init_settings_common();
-      init_ui();
-    }
-  });
-
-  // src/core/path-picker.ts
-  function isExcludedPath(p) {
-    if (!p) return false;
-    for (const seg of p.split("/")) {
-      if (EXCLUDED_DIR_NAMES.has(seg)) return true;
-    }
-    return false;
-  }
-  function foldersFromFiles(paths) {
-    const out = /* @__PURE__ */ new Set([""]);
-    for (const p of paths) {
-      if (isExcludedPath(p)) continue;
-      const sep = p.lastIndexOf("/");
-      if (sep === -1) continue;
-      let dir = p.slice(0, sep);
-      while (dir) {
-        if (!isExcludedPath(dir)) out.add(dir);
-        const i = dir.lastIndexOf("/");
-        dir = i === -1 ? "" : dir.slice(0, i);
-      }
-    }
-    return [...out].sort();
-  }
-  async function collectVaultFolders(app2) {
-    var _a2, _b2, _c, _d;
-    const out = /* @__PURE__ */ new Set([""]);
-    try {
-      const files = ((_c = (_b2 = (_a2 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _a2.getFiles) == null ? void 0 : _b2.call(_a2)) != null ? _c : []).map((f) => f.path);
-      for (const p of foldersFromFiles(files)) out.add(p);
-    } catch (e) {
-    }
-    const adapter = (_d = app2 == null ? void 0 : app2.vault) == null ? void 0 : _d.adapter;
-    if (adapter && typeof adapter.list === "function") {
-      const walk = async (dir, depth) => {
-        var _a3;
-        if (depth > 40) return;
-        let listed = null;
-        try {
-          listed = await adapter.list(dir);
-        } catch (e) {
-          if (dir === "") {
-            try {
-              listed = await adapter.list("/");
-            } catch (e2) {
-              return;
-            }
-          } else {
-            return;
-          }
-        }
-        for (const f of (_a3 = listed == null ? void 0 : listed.folders) != null ? _a3 : []) {
-          const p = String(f).replace(/^\/+|\/+$/g, "");
-          if (!p) continue;
-          if (isExcludedPath(p)) continue;
-          if (!out.has(p)) out.add(p);
-          await walk(p, depth + 1);
-        }
-      };
-      try {
-        await walk("", 0);
-      } catch (e) {
-      }
-    }
-    return [...out].sort();
-  }
-  function normalizePicked(list) {
-    const out = [];
-    for (const item of list) {
-      const raw = String(item);
-      if (raw === "") {
-        if (!out.includes("")) out.push("");
-        continue;
-      }
-      const trimmed = raw.trim();
-      if (trimmed === "") continue;
-      const p = trimmed.replace(/^\/+|\/+$/g, "");
-      if (p === "") {
-        if (!out.includes("")) out.push("");
-        continue;
-      }
-      if (!out.includes(p)) out.push(p);
-    }
-    return out;
-  }
-  function renderPathChips(container, selected, onChange, emptyText = "未选择", onChipClick) {
-    container.innerHTML = "";
-    container.classList.add("bz-path-picker-chips");
-    if (selected.length === 0) {
-      if (!emptyText) return;
-      const empty = document.createElement("span");
-      empty.className = "bz-path-picker-chips-empty";
-      empty.textContent = emptyText;
-      container.appendChild(empty);
-      return;
-    }
-    for (const path of selected) {
-      const label = path === "" ? "（库根目录）" : path;
-      const chip = document.createElement("span");
-      chip.className = "bz-path-picker-chip" + (onChipClick ? " bz-path-picker-chip--click" : "");
-      chip.title = label;
-      const name = document.createElement("span");
-      name.className = "bz-path-picker-chip-name";
-      name.textContent = label;
-      if (onChipClick) name.onclick = () => onChipClick(path);
-      const x = document.createElement("button");
-      x.className = "bz-path-picker-chip-x";
-      x.textContent = "✕";
-      x.setAttribute("aria-label", `移除 ${label}`);
-      x.onclick = () => onChange(selected.filter((p) => p !== path));
-      chip.appendChild(name);
-      chip.appendChild(x);
-      container.appendChild(chip);
-    }
-  }
-  function renderPathSettingRow(opts) {
-    const readValue = () => {
-      const v = opts.value;
-      return Array.isArray(v) ? [...v] : v ? [v] : [];
-    };
-    let current2 = readValue();
-    const setting = new Setting(opts.parent).setName(opts.name);
-    if (opts.desc) setting.setDesc(opts.desc);
-    setting.settingEl.classList.add("bz-path-picker-setting-row");
-    const chipsWrap = document.createElement("div");
-    chipsWrap.className = "bz-path-picker-chips--setting";
-    const apply = (list) => {
-      const res = opts.onChange(list);
-      if (res && typeof res.then === "function") {
-        return Promise.resolve(res).then((final) => {
-          current2 = Array.isArray(final) ? final : list;
-          renderAll5();
-        });
-      }
-      current2 = Array.isArray(res) ? res : list;
-      renderAll5();
-    };
-    const openPicker = () => openPathPicker({
-      title: opts.pickerTitle || opts.name,
-      desc: opts.pickerDesc,
-      mode: opts.mode,
-      selected: current2,
-      okText: opts.okText,
-      onConfirm: (list) => {
-        void apply(list);
-      }
-    });
-    const render2 = () => renderPathChips(chipsWrap, current2, (next) => {
-      void apply(next);
-    }, "", openPicker);
-    let btn = null;
-    setting.addButton((b) => {
-      b.setButtonText(opts.buttonText || (opts.mode === "multi" ? "添加…" : "选择…")).onClick(openPicker);
-      b.buttonEl.classList.add("bz-path-picker-btn--slim");
-      btn = b.buttonEl;
-    });
-    const control = setting.settingEl.querySelector(".setting-item-control");
-    if (control) control.appendChild(chipsWrap);
-    const syncBtn = () => {
-      setting.settingEl.dataset.filled = current2.length > 0 ? "1" : "0";
-      if (!btn || !control) return;
-      if (current2.length === 0) {
-        if (!btn.isConnected) control.appendChild(btn);
-      } else if (btn.isConnected) {
-        btn.remove();
-      }
-    };
-    const renderAll5 = () => {
-      syncBtn();
-      render2();
-    };
-    const refresh = () => {
-      current2 = readValue();
-      renderAll5();
-    };
-    renderAll5();
-    return { refresh, settingEl: setting.settingEl };
-  }
-  function closePathPicker() {
-    if (currentMask) {
-      currentMask.remove();
-      currentMask = null;
-    }
-    if (currentPopup) {
-      currentPopup.remove();
-      currentPopup = null;
-    }
-    if (currentHandle) {
-      currentHandle.unregister();
-      currentHandle = null;
-    }
-    if (focusTimer !== null) {
-      window.clearTimeout(focusTimer);
-      focusTimer = null;
-    }
-  }
-  function openPathPicker(opts) {
-    var _a2, _b2, _c;
-    closePathPicker();
-    const app2 = getApp();
-    const mode = opts.mode || "single";
-    const selected = new Set(normalizePicked(opts.selected || []));
-    const pinnedAtOpen = [...selected];
-    const { mask, popup } = createOverlay({
-      maskId: "bz-path-picker-mask",
-      popupId: "bz-path-picker-popup",
-      // ticket 133：桌面/移动端统一一张居中卡——左右各 16px 外边距，宽视口封顶 440px（不分两套样式）
-      width: "min(calc(100vw - 32px), 440px)",
-      maxWidth: 440,
-      onMaskClick: () => closePathPicker()
-    });
-    currentMask = mask;
-    currentPopup = popup;
-    popup.classList.add("bz-path-picker");
-    popup.style.height = "min(560px, 82vh)";
-    const head = document.createElement("div");
-    head.className = "bz-path-picker-head";
-    const title = document.createElement("h3");
-    title.className = "bz-path-picker-title";
-    title.textContent = opts.title || "选择文件夹";
-    head.appendChild(title);
-    if (opts.desc) {
-      const desc = document.createElement("div");
-      desc.className = "bz-path-picker-desc";
-      desc.textContent = opts.desc;
-      head.appendChild(desc);
-    }
-    const search = document.createElement("input");
-    search.type = "text";
-    search.className = "bz-path-picker-search";
-    search.placeholder = "搜索目录…";
-    search.spellcheck = false;
-    search.setAttribute("aria-label", "搜索目录");
-    const listEl2 = document.createElement("div");
-    listEl2.className = "bz-path-picker-list";
-    const state3 = { folders: [], q: "" };
-    const foot = document.createElement("div");
-    foot.className = "bz-path-picker-foot";
-    const selinfo = document.createElement("span");
-    selinfo.className = "bz-path-picker-selinfo";
-    const btns = document.createElement("div");
-    btns.className = "bz-path-picker-foot-btns";
-    foot.appendChild(selinfo);
-    foot.appendChild(btns);
-    const mkBtn = (label, primary, onclick) => {
-      const b = document.createElement("button");
-      b.textContent = label;
-      b.className = "bz-path-picker-btn" + (primary ? " bz-path-picker-btn--primary" : "");
-      b.onclick = onclick;
-      btns.appendChild(b);
-      return b;
-    };
-    if (mode === "multi") mkBtn("清空", false, () => {
-      selected.clear();
-      renderList2();
-      updateSel();
-    });
-    mkBtn(opts.okText || "下一步", true, () => {
-      const list = normalizePicked([...selected]);
-      closePathPicker();
-      opts.onConfirm(list);
-    });
-    function orderedList() {
-      const pinned = [];
-      const rest = [];
-      const pinSet = new Set(pinnedAtOpen);
-      for (const f of state3.folders) {
-        if (pinSet.has(f)) pinned.push(f);
-        else rest.push(f);
-      }
-      const rootIdx = rest.indexOf("");
-      const root = rootIdx >= 0 ? rest.splice(rootIdx, 1)[0] : null;
-      rest.reverse();
-      return [...pinned, ...root === null ? [] : [root], ...rest];
-    }
-    function renderList2() {
-      listEl2.innerHTML = "";
-      const q2 = state3.q.trim().toLowerCase();
-      const exact = !!q2 && state3.folders.includes(q2);
-      const LIMIT2 = 300;
-      let n = 0;
-      let total = 0;
-      for (const folder of orderedList()) {
-        if (q2 && !exact && !folder.toLowerCase().includes(q2)) continue;
-        total++;
-        if (n >= LIMIT2) continue;
-        n++;
-        const on = selected.has(folder);
-        const row = document.createElement("div");
-        row.className = "bz-path-picker-row" + (on ? " bz-path-picker-row--sel" : "");
-        row.dataset.path = folder;
-        row.setAttribute("role", mode === "multi" ? "checkbox" : "option");
-        row.setAttribute("aria-checked", on ? "true" : "false");
-        const box = document.createElement("span");
-        box.className = "bz-path-picker-check";
-        box.textContent = on ? "✓" : "";
-        const name = document.createElement("span");
-        name.className = "bz-path-picker-name";
-        name.textContent = folder === "" ? "（库根目录）" : folder;
-        name.title = folder === "" ? "（库根目录）" : folder;
-        row.appendChild(box);
-        row.appendChild(name);
-        row.onclick = () => {
-          if (mode === "single") {
-            selected.clear();
-            selected.add(folder);
-          } else if (selected.has(folder)) {
-            selected.delete(folder);
-          } else {
-            selected.add(folder);
-          }
-          renderList2();
-          updateSel();
-        };
-        listEl2.appendChild(row);
-      }
-      if (!total) {
-        const empty = document.createElement("div");
-        empty.className = "bz-path-picker-empty";
-        empty.textContent = "没有匹配的目录";
-        listEl2.appendChild(empty);
-      } else if (total > LIMIT2) {
-        const more = document.createElement("div");
-        more.className = "bz-path-picker-empty";
-        more.textContent = `已显示前 ${LIMIT2} 个（共 ${total} 个匹配目录），请输入关键词缩小范围`;
-        listEl2.appendChild(more);
-      }
-    }
-    function updateSel() {
-      if (mode === "single") {
-        const first = [...selected][0];
-        selinfo.textContent = first === void 0 ? "未选择" : first === "" ? "已选（库根目录）" : `已选 ${first}`;
-      } else {
-        selinfo.textContent = `已选 ${selected.size} 项`;
-      }
-    }
-    search.oninput = () => {
-      state3.q = search.value;
-      renderList2();
-    };
-    try {
-      const files = ((_c = (_b2 = (_a2 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _a2.getFiles) == null ? void 0 : _b2.call(_a2)) != null ? _c : []).map((f) => f.path);
-      state3.folders = foldersFromFiles(files);
-    } catch (e) {
-    }
-    void collectVaultFolders(app2).then((folders) => {
-      if (!mask.isConnected) return;
-      state3.folders = folders;
-      popup.dataset.ready = "1";
-      renderList2();
-    });
-    renderList2();
-    updateSel();
-    popup.append(head, search, listEl2, foot);
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    mask.style.display = "block";
-    popup.style.display = "flex";
-    currentHandle = escManager.register("bz-path-picker", {
-      isVisible: () => !!currentMask,
-      close: () => closePathPicker()
-    });
-    focusTimer = window.setTimeout(() => {
-      focusTimer = null;
-      if (mask.isConnected) search.focus();
-    }, 30);
-  }
-  var EXCLUDED_DIR_NAMES, currentMask, currentPopup, currentHandle, focusTimer;
-  var init_path_picker = __esm({
-    "src/core/path-picker.ts"() {
-      init_fake_obsidian();
-      init_app();
-      init_dom();
-      init_esc_manager();
-      EXCLUDED_DIR_NAMES = /* @__PURE__ */ new Set([".obsidian", ".trash", "node_modules", ".git"]);
-      currentMask = null;
-      currentPopup = null;
-      currentHandle = null;
-      focusTimer = null;
-    }
-  });
-
-  // src/settings-panel/dir-picker.ts
-  function openDirPicker(opts) {
-    var _a2;
-    const multi = opts.multi === true;
-    const selected = new Set(((_a2 = opts.selected) != null ? _a2 : []).filter((x) => x !== void 0));
-    let q2 = "";
-    let dirsCache = [];
-    let dirsLoaded = false;
-    const mask = document.createElement("div");
-    mask.className = "bz-sp-picker-mask";
-    const dlg = document.createElement("div");
-    dlg.className = "bz-sp-picker";
-    const head = document.createElement("div");
-    head.className = "bz-sp-picker-head";
-    const titleEl = document.createElement("b");
-    titleEl.textContent = opts.title;
-    const search = document.createElement("div");
-    search.className = "bz-sp-picker-search";
-    const searchIc = document.createElement("span");
-    searchIc.className = "bz-ic";
-    setIcon(searchIc, "search");
-    const sinp = document.createElement("input");
-    sinp.placeholder = "搜索目录…（命中项保留上级链）";
-    search.append(searchIc, sinp);
-    head.append(titleEl, search);
-    const crumb = document.createElement("div");
-    crumb.className = "bz-sp-picker-crumb";
-    const list = document.createElement("div");
-    list.className = "bz-sp-picker-list";
-    const foot = document.createElement("div");
-    foot.className = "bz-sp-picker-foot";
-    const cancel = document.createElement("button");
-    cancel.type = "button";
-    cancel.className = "bz-sp-btn";
-    cancel.textContent = "取消";
-    const ok = document.createElement("button");
-    ok.type = "button";
-    ok.className = "bz-sp-btn bz-sp-btn--primary";
-    ok.textContent = opts.okText || (multi ? "添加所选" : "选用");
-    let settled = false;
-    const close = (v) => {
-      if (settled) return;
-      settled = true;
-      escHandle5.unregister();
-      mask.remove();
-      if (v !== null) opts.onConfirm(normalizePicked(v));
-    };
-    cancel.addEventListener("click", () => close(null));
-    ok.addEventListener("click", () => close([...selected]));
-    mask.addEventListener("click", (e) => {
-      if (e.target === mask) close(null);
-    });
-    const escHandle5 = escManager.register("bz-sp-dir-picker", {
-      isVisible: () => mask.isConnected,
-      close: () => close(null)
-    });
-    function renderCrumb() {
-      crumb.innerHTML = "";
-      const lab = document.createElement("span");
-      lab.className = "bz-sp-picker-lab";
-      lab.textContent = multi ? "已选" : "将选用";
-      crumb.appendChild(lab);
-      const arr = [...selected].filter(Boolean);
-      if (multi) {
-        const v = document.createElement("span");
-        v.textContent = arr.length ? `${arr.length} 个目录` : "尚未选择";
-        crumb.appendChild(v);
-      } else if (!arr.length) {
-        const v = document.createElement("span");
-        v.textContent = "未设置";
-        crumb.appendChild(v);
-      } else {
-        arr[0].split("/").forEach((seg, i) => {
-          if (i) {
-            const sp = document.createElement("span");
-            sp.className = "bz-sp-picker-sep";
-            sp.textContent = "▸";
-            crumb.appendChild(sp);
-          }
-          const sg = document.createElement("span");
-          sg.textContent = seg;
-          crumb.appendChild(sg);
-        });
-      }
-    }
-    function renderList2() {
-      const query = q2.trim().toLowerCase();
-      let items = dirsCache;
-      if (query) {
-        const keep = /* @__PURE__ */ new Set();
-        for (const d of dirsCache) {
-          if (d.toLowerCase().includes(query)) {
-            keep.add(d);
-            const parts = d.split("/");
-            for (let i = 1; i < parts.length; i++) keep.add(parts.slice(0, i).join("/"));
-          }
-        }
-        items = dirsCache.filter((d) => keep.has(d));
-      }
-      items = items.slice().reverse();
-      list.innerHTML = "";
-      if (!dirsLoaded) {
-        const loading2 = document.createElement("div");
-        loading2.className = "bz-sp-picker-row";
-        loading2.style.pointerEvents = "none";
-        loading2.style.opacity = "0.55";
-        loading2.textContent = "正在读取目录…";
-        list.appendChild(loading2);
-        return;
-      }
-      for (const d of items) {
-        const parts = d.split("/");
-        const rowBtn = document.createElement("button");
-        rowBtn.type = "button";
-        rowBtn.className = "bz-sp-picker-row" + (selected.has(d) ? " sel" : "");
-        const ic = document.createElement("span");
-        ic.className = "bz-ic";
-        setIcon(ic, "folder-open");
-        rowBtn.appendChild(ic);
-        const nm = document.createElement("span");
-        nm.textContent = parts[parts.length - 1] || "（库根目录）";
-        rowBtn.appendChild(nm);
-        const anc = document.createElement("span");
-        anc.className = "anc";
-        anc.textContent = parts.length > 1 ? parts.slice(0, -1).join(" / ") + " /" : "vault 根目录";
-        rowBtn.appendChild(anc);
-        rowBtn.addEventListener("click", () => {
-          if (multi) {
-            if (selected.has(d)) selected.delete(d);
-            else selected.add(d);
-            rowBtn.classList.toggle("sel", selected.has(d));
-          } else {
-            selected.clear();
-            selected.add(d);
-            list.querySelectorAll(".sel").forEach((x) => x.classList.remove("sel"));
-            rowBtn.classList.add("sel");
-          }
-          renderCrumb();
-        });
-        if (!multi) rowBtn.addEventListener("dblclick", () => close([d]));
-        list.appendChild(rowBtn);
-      }
-      if (!items.length) {
-        const empty = document.createElement("div");
-        empty.className = "bz-sp-picker-row";
-        empty.style.pointerEvents = "none";
-        empty.style.opacity = "0.55";
-        empty.textContent = "无匹配目录";
-        list.appendChild(empty);
-      }
-    }
-    foot.append(cancel, ok);
-    dlg.append(head, crumb, list, foot);
-    mask.appendChild(dlg);
-    document.body.appendChild(mask);
-    topifyZ(mask);
-    sinp.addEventListener("input", () => {
-      q2 = sinp.value;
-      renderList2();
-    });
-    renderCrumb();
-    renderList2();
-    void collectVaultFolders(getApp()).then((dirs) => {
-      if (settled) return;
-      dirsCache = dirs;
-      dirsLoaded = true;
-      renderList2();
-    });
-  }
-  var init_dir_picker = __esm({
-    "src/settings-panel/dir-picker.ts"() {
-      init_fake_obsidian();
-      init_app();
-      init_path_picker();
-      init_esc_manager();
-      init_z_order();
-    }
-  });
-
-  // src/settings-panel/shared.ts
-  function toggleHtml(on) {
-    return `<button type="button" class="bz-sw${on ? " on" : ""}" role="switch" aria-checked="${String(on)}"></button>`;
-  }
-  function selectTriggerHtml(label) {
-    return `<div class="bz-select"><span class="bz-select-val">${esc(label)}</span>${iconSpan("chevron-right", "bz-select-car")}</div>`;
-  }
-  function selectItemHtml(label, on) {
-    return `<button type="button" class="bz-select-item${on ? " is-on" : ""}"><span>${esc(label)}</span><span class="bz-ic bz-select-item-ck">${iconSpan("check")}</span></button>`;
-  }
-  function textInputHtml(opts) {
-    const cls = ["bz-input"];
-    if (opts.mono) cls.push("mono");
-    if (opts.num) cls.push("num");
-    if (opts.secret) cls.push("secret");
-    const attrs = [`class="${cls.join(" ")}"`, `value="${esc(opts.value)}"`];
-    attrs.push(opts.type === "number" ? 'type="number"' : 'type="text"');
-    if (opts.placeholder) attrs.push(`placeholder="${esc(opts.placeholder)}"`);
-    if (opts.min !== void 0) attrs.push(`min="${opts.min}"`);
-    if (opts.max !== void 0) attrs.push(`max="${opts.max}"`);
-    if (opts.step !== void 0) attrs.push(`step="${opts.step}"`);
-    return `<input ${attrs.join(" ")} autocomplete="off">`;
-  }
-  function textareaHtml(value, placeholder) {
-    return `<textarea class="bz-input bz-sp-textarea" autocomplete="off"${placeholder ? ` placeholder="${esc(placeholder)}"` : ""}>${esc(value)}</textarea>`;
-  }
-  function sliderHtml(min, max, step, value) {
-    return `<div class="bz-sp-slider-row"><input type="range"${min !== void 0 ? ` min="${min}"` : ""}${max !== void 0 ? ` max="${max}"` : ""} step="${step != null ? step : 1}" value="${value}"><span class="bz-sp-slider-val">${value}</span></div>`;
-  }
-  function rowBtnHtml(label, cta) {
-    return `<button type="button" class="bz-sp-btn${cta ? " bz-sp-btn--primary" : ""}">${esc(label)}</button>`;
-  }
-  function badgeHtml(label) {
-    return `<span class="bz-badge">${esc(label)}</span>`;
-  }
-  function miniHtml(kind, prev) {
-    const st = (extra) => ` style="${extra}"`;
-    const bg = st(`background:${prev.bg}`);
-    if (kind === "todo") {
-      const headCls = "m-head" + (prev.head === "stripe" ? " m-stripe" : "");
-      const headBg = prev.head === "stripe" ? prev.bg : prev.ink;
-      const headBorder = prev.head === "stripe" ? `border-bottom:2px solid ${prev.ink};` : "";
-      const lines = [[18, 16], [28, 24], [24, 32]].map(([w, top], i) => `<div class="m-line"${st(`top:${top}px;width:${w}px;background:${prev.ink};opacity:${i === 2 ? 0.35 : 0.55}`)}></div>`).join("");
-      return `<div class="bz-sp-mini"${bg}><div class="${headCls}"${st(`background:${headBg};${headBorder}`)}></div>${lines}<div class="m-chip"${st(`background:${prev.ac}`)}></div></div>`;
-    }
-    if (kind === "shelf") {
-      const books = (prev.books || []).map((c, i) => `<div class="m-book"${st(`left:${10 + i * 14}px;height:${[24, 32, 20][i]}px;background:${c};border-top:2px solid ${prev.ac}`)}></div>`).join("");
-      return `<div class="bz-sp-mini"${bg}><div class="m-ac"${st(`background:${prev.ac}`)}></div>${books}</div>`;
-    }
-    if (kind === "layout") {
-      const mk = (css) => `<div${st(`position:absolute;border-radius:2px;background:rgba(90,70,40,.22);${css}`)}></div>`;
-      let blocks = "";
-      if (prev.mode === "system") blocks = mk("left:4px;top:14px;width:14px;bottom:4px;") + mk("left:21px;top:14px;right:4px;height:26px;");
-      else if (prev.mode === "compact") blocks = mk("left:4px;top:14px;width:14px;bottom:4px;") + mk("left:21px;top:14px;width:26px;height:12px;") + mk("left:21px;top:28px;width:26px;height:12px;") + mk("left:50px;top:14px;width:10px;bottom:10px;");
-      else if (prev.mode === "iconrail") blocks = mk("left:2px;top:2px;bottom:2px;width:8px;") + mk("left:14px;top:4px;width:16px;bottom:4px;") + mk("left:34px;top:4px;right:4px;bottom:4px;");
-      else if (prev.mode === "outline") blocks = mk("left:4px;top:14px;right:24px;bottom:4px;") + mk("right:4px;top:14px;width:16px;height:20px;");
-      return `<div class="bz-sp-mini"${bg}><div class="m-head"${st("background:rgba(90,70,40,.28)")}></div>${blocks}</div>`;
-    }
-    if (kind === "skin") {
-      return `<div class="bz-sp-mini"${bg}><div${st(`position:absolute;inset:0 50% 0 0;background:${prev.light || "#f6f2e9"}`)}></div><div${st(`position:absolute;inset:0 0 0 50%;background:${prev.dark || "#242429"}`)}></div><div${st(`position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;background:${prev.ac || "var(--sp-accent)"};border:2px solid #fff;`)}></div></div>`;
-    }
-    if (kind === "themecard") {
-      return `<div class="bz-sp-mini"${bg}><div${st(`position:absolute;left:5px;top:50%;transform:translateY(-50%);width:5px;height:26px;border-radius:3px;background:${prev.ac};`)}></div></div>`;
-    }
-    if (kind === "poster") {
-      const mk = (css) => `<div${st(`position:absolute;${css}`)}></div>`;
-      return `<div class="bz-sp-mini"${bg}>` + mk(`left:6%;top:12%;width:44%;height:20%;background:${prev.ink || "#171512"};`) + mk(`left:86%;top:14%;width:8%;height:16%;background:${prev.ac || "#e8481f"};`) + mk(`left:6%;top:44%;width:88%;height:46%;background:rgba(23,21,18,.1);`) + mk(`left:38%;top:44%;width:2px;height:46%;background:rgba(23,21,18,.28);`) + mk(`left:66%;top:44%;width:2px;height:46%;background:rgba(23,21,18,.28);`) + `</div>`;
-    }
-    if (kind === "cat") {
-      const ears = ["ear l", "ear r"].map(() => `<div class="ear"${st(`background:transparent;border-bottom-color:${prev.fur}`)}></div>`).join("");
-      const eyes = ["eye l", "eye r"].map(() => `<div class="eye"${st("background:rgba(20,15,8,.75)")}></div>`).join("");
-      return `<div class="bz-sp-mini"${bg}><div class="m-cat">${ears}<div class="face"${st(`background:${prev.fur}`)}></div>` + (prev.patch ? `<div class="patch"${st(`background:${prev.patch}`)}></div>` : "") + eyes + `</div></div>`;
-    }
-    return `<div class="bz-sp-mini"${bg}></div>`;
-  }
-  function cardpickHtml(cards) {
-    return `<div class="bz-sp-cardpick" role="radiogroup">` + cards.map((c) => {
-      const mini = c.kind ? miniHtml(c.kind, c.prev || {}) : `<div class="bz-sp-mini${c.prevClass ? ` ${c.prevClass}` : ""}" aria-hidden="true"></div>`;
-      return `<button type="button" class="bz-sp-cardpick-card${c.on ? " is-on" : ""}" data-sp-card="${esc(c.value)}">` + mini + `<span class="bz-sp-cardpick-name">${esc(c.label)}</span></button>`;
-    }).join("") + `</div>`;
-  }
-  function rowHtml(vm) {
-    var _a2, _b2;
-    const cls = ["bz-sp-set-row"];
-    if (vm.cls) cls.push(vm.cls);
-    if (vm.isCards) cls.push("bz-sp-set-row--cards");
-    if (vm.isCustom) cls.push("bz-sp-set-row--custom");
-    const open = `<div class="${cls.join(" ")}"${vm.key ? ` data-key="${esc(vm.key)}"` : ""}>`;
-    const name = vm.name ? `<div class="bz-sp-set-name">${esc(vm.name)}</div>` : "";
-    const desc = vm.desc ? `<div class="bz-sp-set-desc">${esc(vm.desc)}</div>` : "";
-    if (vm.isCustom) {
-      return `${open}<div class="bz-sp-set-info">${name}${desc}</div>${(_a2 = vm.ctrlHtml) != null ? _a2 : ""}</div>`;
-    }
-    const note = vm.note ? `<div class="bz-sp-set-note">↳ ${esc(vm.note)}</div>` : "";
-    const info = `<div class="bz-sp-set-info">${name}${desc}${note}</div>`;
-    const ctrlCls = vm.isCards ? "bz-sp-set-cards" : "bz-sp-set-ctrl";
-    return `${open}${info}<div class="${ctrlCls}">${(_b2 = vm.ctrlHtml) != null ? _b2 : ""}</div></div>`;
-  }
-  function groupCardHtml(icon, name, count) {
-    const ic = icon ? iconSpan(icon, "bz-sp-group-icon") : "";
-    return `<section class="bz-sp-group"><div class="bz-sp-group-head">${ic}<span class="bz-sp-group-name">${esc(name)}</span><span class="bz-sp-group-count">${esc(count)}</span></div><div class="bz-sp-group-body"></div></section>`;
-  }
-  function pageHeadHtml(name, desc, tag) {
-    return `<div class="bz-sp-page-head"><div><div class="bz-sp-page-title">${esc(name)}</div><div class="bz-sp-page-desc">${esc(desc)}</div></div><span class="bz-sp-page-tag">${esc(tag)}</span></div>`;
-  }
-  function loadingHtml(text = "加载设置…") {
-    return `<div class="bz-sp-loading"><span class="bz-spinner"></span><span>${esc(text)}</span></div>`;
-  }
-  var init_shared2 = __esm({
-    "src/settings-panel/shared.ts"() {
-      init_str();
-    }
-  });
-
-  // src/settings-panel/layouts/jingwei/render.ts
-  function deskShellHtml() {
-    return `<div class="bz-sp-head"><div class="bz-sp-crumb"><span class="bz-sp-head-title bz-sp-crumb-cur">设置</span></div><div class="bz-sp-search bz-sp-head-search">${iconSpan("search")}<input class="bz-input" placeholder="搜索域与设置项" autocomplete="off"></div><span class="bz-sp-head-tools"></span></div><div class="bz-sp-desk-body"><aside class="bz-sp-desk-side"><div class="bz-sp-nav"></div></aside><main class="bz-sp-desk-main"><div class="bz-sp-pane"></div></main></div>`;
-  }
-  function navSecHtml(title, itemsHtml) {
-    return `<div class="bz-sp-nav-sec"><div class="bz-sp-nav-sec-t">${esc(title)}</div>${itemsHtml}</div>`;
-  }
-  function navItemHtml(opts) {
-    return `<button type="button" class="bz-sp-nav-item${opts.on ? " on" : ""}" data-sp-domain="${esc(opts.id)}">${iconSpan(opts.icon, "bz-ic bz-sp-nav-ic")}<span class="bz-sp-nav-name">${esc(opts.name)}</span><span class="bz-sp-nav-count">${esc(opts.count)}</span></button>`;
-  }
-  var init_render3 = __esm({
-    "src/settings-panel/layouts/jingwei/render.ts"() {
-      init_str();
-    }
-  });
-
-  // src/settings-panel/render.ts
-  var init_render4 = __esm({
-    "src/settings-panel/render.ts"() {
-      init_shared2();
-      init_render3();
-    }
-  });
-
-  // src/settings-panel/renderer.ts
-  function snapshot() {
-    return getSettings();
-  }
-  function bindValue(binding) {
-    if ("key" in binding) {
-      const key = binding.key;
-      return {
-        read: () => getSettings()[key],
-        write: (v) => {
-          getSettings()[key] = v;
-        },
-        persist: () => saveSettings()
-      };
-    }
-    return {
-      read: () => binding.get(),
-      write: (v) => binding.set(v),
-      persist: () => binding.save()
-    };
-  }
-  function makeCtx(rowEl, refreshVisibility) {
-    return { rowEl, refreshVisibility };
-  }
-  function makeInput(opts) {
-    const holder = document.createElement("div");
-    holder.innerHTML = textInputHtml({
-      value: opts.value,
-      type: opts.type,
-      mono: opts.mono,
-      num: opts.num,
-      secret: opts.secret,
-      placeholder: opts.placeholder,
-      min: opts.min,
-      max: opts.max
-    });
-    const input = holder.firstElementChild;
-    let timer = null;
-    let dirty2 = false;
-    const commit = () => {
-      if (timer !== null) {
-        window.clearTimeout(timer);
-        timer = null;
-      }
-      if (!dirty2) return;
-      opts.onCommit(input.value);
-    };
-    input.addEventListener("input", () => {
-      dirty2 = true;
-      if (timer !== null) window.clearTimeout(timer);
-      timer = window.setTimeout(commit, 800);
-    });
-    input.addEventListener("blur", commit);
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") commit();
-    });
-    ;
-    input.__setDisplayValue = (v) => {
-      dirty2 = false;
-      if (input.value !== v) input.value = v;
-    };
-    return input;
-  }
-  function makePathRowCtrl(opts) {
-    const readValue = () => {
-      const v = opts.value;
-      return Array.isArray(v) ? [...v] : v ? [v] : [];
-    };
-    let current2 = readValue();
-    const ctrl = document.createElement("div");
-    ctrl.className = "bz-sp-chips";
-    const apply = (list) => {
-      const res = opts.onChange(list);
-      if (res && typeof res.then === "function") {
-        return Promise.resolve(res).then((final) => {
-          current2 = Array.isArray(final) ? final : list;
-          renderAll5();
-        });
-      }
-      current2 = Array.isArray(res) ? res : list;
-      renderAll5();
-    };
-    const openPicker = () => {
-      openDirPicker({
-        title: (opts.mode === "multi" ? "添加文件夹 · " : "选择文件夹 · ") + (opts.pickerTitle || opts.name),
-        multi: opts.mode === "multi",
-        selected: current2,
-        okText: opts.okText,
-        onConfirm: (list) => {
-          void apply(list);
-        }
-      });
-    };
-    const multi = opts.mode === "multi";
-    const addBtn = document.createElement("button");
-    addBtn.type = "button";
-    addBtn.className = "bz-sp-btn bz-sp-path-btn";
-    addBtn.textContent = opts.buttonText || (multi ? "添加…" : "选择…");
-    addBtn.addEventListener("click", openPicker);
-    const renderChips = () => {
-      ctrl.querySelectorAll(".bz-chip").forEach((c) => c.remove());
-      if (!current2.length && opts.fallbackChip) {
-        const fb = document.createElement("span");
-        fb.className = "bz-sp-chip bz-sp-chip--locked";
-        fb.title = "未单独设置时的实际生效目录（点击可改为显式设置）";
-        fb.textContent = opts.fallbackChip;
-        fb.addEventListener("click", openPicker);
-        ctrl.appendChild(fb);
-      }
-      for (const path of current2) {
-        const label = path === "" ? "（库根目录）" : path;
-        const chip = document.createElement("span");
-        chip.className = "bz-sp-chip";
-        chip.title = label;
-        chip.textContent = label;
-        chip.addEventListener("click", openPicker);
-        if (multi) {
-          const x = document.createElement("i");
-          x.className = "x";
-          x.textContent = "✕";
-          x.addEventListener("click", (ev) => {
-            ev.stopPropagation();
-            void apply(current2.filter((p) => p !== path));
-          });
-          chip.appendChild(x);
-        }
-        ctrl.appendChild(chip);
-      }
-      if (!current2.length && !opts.fallbackChip) {
-        const m = document.createElement("span");
-        m.className = "bz-sp-chip bz-sp-chip--muted";
-        m.textContent = multi ? "未选择" : "未设置";
-        ctrl.appendChild(m);
-      }
-      if (!addBtn.isConnected) ctrl.appendChild(addBtn);
-    };
-    const renderAll5 = () => renderChips();
-    ctrl.appendChild(addBtn);
-    renderChips();
-    return ctrl;
-  }
-  function renderRow(row, refresh, regRefresh) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
-    const rowName = row.name;
-    const bindKey = (_a2 = row.binding) == null ? void 0 : _a2.key;
-    const isCustom = row.type === "custom";
-    const isCardsRow = row.type === "choiceCards";
-    const holder = document.createElement("div");
-    holder.innerHTML = rowHtml({
-      key: bindKey || rowName || "",
-      cls: row.isChild ? "child" : void 0,
-      isCards: isCardsRow,
-      isCustom,
-      name: rowName,
-      desc: row.desc,
-      note: row.note
-    });
-    const el = holder.firstElementChild;
-    const ctx = makeCtx(el, refresh);
-    ctx.rowEl = el;
-    const ctrlEl = isCustom ? el : el.querySelector(isCardsRow ? ".bz-sp-set-cards" : ".bz-sp-set-ctrl");
-    switch (row.type) {
-      case "toggle": {
-        const acc = bindValue(row.binding);
-        ctrlEl.innerHTML = toggleHtml(acc.read() === true);
-        const sw = ctrlEl.querySelector(".bz-sw");
-        sw.addEventListener("click", () => {
-          var _a3;
-          const v = !sw.classList.contains("on");
-          sw.classList.toggle("on", v);
-          sw.setAttribute("aria-checked", String(v));
-          acc.write(v);
-          void acc.persist();
-          (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
-          refresh();
-        });
-        break;
-      }
-      case "text": {
-        const acc = bindValue(row.binding);
-        const ph = typeof row.placeholder === "function" ? row.placeholder(snapshot()) : row.placeholder;
-        const input = makeInput({
-          value: (_b2 = acc.read()) != null ? _b2 : "",
-          mono: !!row.mono,
-          num: !!row.num,
-          secret: !!row.secret,
-          placeholder: ph,
-          onCommit: (v) => {
-            var _a3;
-            acc.write(v);
-            void acc.persist();
-            (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
-          }
-        });
-        ctrlEl.appendChild(input);
-        if (regRefresh && row.refreshKey !== void 0) {
-          const ref = row.refreshKey;
-          regRefresh(() => {
-            const snap = snapshot();
-            const fresh = typeof ref === "function" ? ref(snap) : String(snap[ref]);
-            const setDisplay = input.__setDisplayValue;
-            if (setDisplay) setDisplay(String(fresh != null ? fresh : ""));
-          });
-        }
-        break;
-      }
-      case "textarea": {
-        const acc = bindValue(row.binding);
-        ctrlEl.innerHTML = textareaHtml((_c = acc.read()) != null ? _c : "", row.placeholder);
-        const ta = ctrlEl.querySelector("textarea");
-        let timer = null;
-        let dirty2 = false;
-        const commit = () => {
-          if (timer !== null) window.clearTimeout(timer);
-          if (!dirty2) return;
-          acc.write(ta.value);
-          void acc.persist();
-        };
-        ta.addEventListener("input", () => {
-          dirty2 = true;
-          if (timer !== null) window.clearTimeout(timer);
-          timer = window.setTimeout(commit, 800);
-        });
-        ta.addEventListener("blur", commit);
-        if (regRefresh && row.refreshKey !== void 0) {
-          const ref = row.refreshKey;
-          regRefresh(() => {
-            const snap = snapshot();
-            const fresh = typeof ref === "function" ? ref(snap) : String(snap[ref]);
-            dirty2 = false;
-            const f = String(fresh != null ? fresh : "");
-            if (ta.value !== f) ta.value = f;
-          });
-        }
-        break;
-      }
-      case "number": {
-        const acc = bindValue(row.binding);
-        const ph = typeof row.placeholder === "function" ? row.placeholder(snapshot()) : row.placeholder;
-        const input = makeInput({
-          value: String((_d = acc.read()) != null ? _d : ""),
-          type: "number",
-          num: true,
-          placeholder: ph,
-          min: row.min,
-          max: row.max,
-          onCommit: (raw) => {
-            var _a3;
-            if (raw.trim() === "") return;
-            let v = Number(raw);
-            if (Number.isNaN(v)) v = 0;
-            if (row.min !== void 0 && v < row.min) v = row.min;
-            if (row.max !== void 0 && v > row.max) v = row.max;
-            acc.write(v);
-            void acc.persist();
-            (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
-          }
-        });
-        input.step = String((_e = row.step) != null ? _e : 1);
-        ctrlEl.appendChild(input);
-        if (regRefresh && row.refreshKey !== void 0) {
-          const ref = row.refreshKey;
-          regRefresh(() => {
-            const snap = snapshot();
-            const fresh = typeof ref === "function" ? ref(snap) : String(snap[ref]);
-            const setDisplay = input.__setDisplayValue;
-            if (setDisplay) setDisplay(String(fresh != null ? fresh : ""));
-          });
-        }
-        break;
-      }
-      case "select": {
-        const acc = bindValue(row.binding);
-        const options2 = row.options;
-        const labelOf = (v) => (options2.find((o) => o.value === v) || { label: v }).label;
-        ctrlEl.innerHTML = selectTriggerHtml(labelOf(String((_f = acc.read()) != null ? _f : "") || options2[0] && options2[0].value || ""));
-        const sel = ctrlEl.querySelector(".bz-select");
-        const vspan = sel.querySelector(".bz-select-val");
-        sel.addEventListener("click", () => {
-          var _a3;
-          if (sel.querySelector(".bz-select-menu")) return;
-          const group = sel.closest(".bz-sp-group");
-          if (group) {
-            group.style.overflow = "visible";
-            group.style.zIndex = "10";
-          }
-          const closeMenu2 = () => {
-            var _a4;
-            (_a4 = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a4.remove();
-            if (group) {
-              group.style.overflow = "";
-              group.style.zIndex = "";
-            }
-            document.removeEventListener("click", h);
-          };
-          const h = (ev) => {
-            if (!sel.contains(ev.target)) closeMenu2();
-          };
-          setTimeout(() => document.addEventListener("click", h));
-          const menu = document.createElement("div");
-          menu.className = "bz-select-menu";
-          const curNow = String((_a3 = acc.read()) != null ? _a3 : "") || options2[0] && options2[0].value || "";
-          menu.innerHTML = options2.map((o) => selectItemHtml(o.label, o.value === curNow)).join("");
-          menu.querySelectorAll(".bz-select-item").forEach((it, i) => {
-            const o = options2[i];
-            it.addEventListener("click", (ev) => {
-              var _a4;
-              ev.stopPropagation();
-              closeMenu2();
-              vspan.textContent = labelOf(o.value);
-              acc.write(o.value);
-              void acc.persist();
-              (_a4 = row.onChange) == null ? void 0 : _a4.call(row, o.value, ctx);
-              refresh();
-            });
-          });
-          sel.appendChild(menu);
-          mountIcons(menu);
-        });
-        break;
-      }
-      case "slider": {
-        const acc = bindValue(row.binding);
-        const cur = (_h = (_g = acc.read()) != null ? _g : row.min) != null ? _h : 0;
-        ctrlEl.innerHTML = sliderHtml(row.min, row.max, (_i = row.step) != null ? _i : 1, cur);
-        const range = ctrlEl.querySelector('input[type="range"]');
-        const em = ctrlEl.querySelector(".bz-sp-slider-val");
-        range.addEventListener("input", () => {
-          var _a3;
-          em.textContent = range.value;
-          const v = Number(range.value);
-          acc.write(v);
-          void acc.persist();
-          (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
-        });
-        break;
-      }
-      case "path": {
-        const acc = bindValue(row.binding);
-        const multi = row.mode === "multi";
-        const fallbackFn = row.fallbackValue;
-        ctrlEl.appendChild(makePathRowCtrl({
-          name: row.name,
-          mode: row.mode,
-          value: multi ? Array.isArray(acc.read()) ? [...acc.read()] : [] : String((_j = acc.read()) != null ? _j : ""),
-          pickerTitle: row.pickerTitle,
-          pickerDesc: row.pickerDesc,
-          buttonText: row.buttonText,
-          okText: row.okText,
-          fallbackChip: typeof fallbackFn === "function" ? fallbackFn() : "",
-          onChange: (list) => {
-            var _a3;
-            const v = multi ? list : (list[0] || "").trim().replace(/^\/+|\/+$/g, "");
-            acc.write(v);
-            void acc.persist();
-            const res = (_a3 = row.onChange) == null ? void 0 : _a3.call(row, list, ctx);
-            if (res && typeof res.then === "function") {
-              return Promise.resolve(res).then(
-                (final) => Array.isArray(final) ? final : list
-              );
-            }
-            return Array.isArray(res) ? res : void 0;
-          }
-        }));
-        break;
-      }
-      case "button": {
-        ctrlEl.innerHTML = rowBtnHtml(row.buttonText, row.cta);
-        const b2 = ctrlEl.querySelector(".bz-sp-btn");
-        b2.addEventListener("click", () => row.onClick(ctx));
-        break;
-      }
-      case "info": {
-        ctrlEl.innerHTML = badgeHtml(row.name);
-        break;
-      }
-      case "choiceCards": {
-        const acc = bindValue(row.binding);
-        const layoutKey = row.layoutKey;
-        const curLayout = layoutKey ? String((_k = snapshot()[layoutKey]) != null ? _k : "") : "";
-        const opts2 = row.options.filter((o) => {
-          const lo = o.layout;
-          return !lo || !layoutKey || lo === curLayout;
-        });
-        const cur = String((_l = acc.read()) != null ? _l : "") || opts2[0] && opts2[0].value || "";
-        ctrlEl.innerHTML = cardpickHtml(opts2.map((o) => ({
-          value: o.value,
-          label: o.label,
-          on: o.value === cur,
-          prevClass: o.prevClass
-        })));
-        const wrap = ctrlEl.querySelector(".bz-sp-cardpick");
-        wrap.querySelectorAll(".bz-sp-cardpick-card").forEach((c) => {
-          c.addEventListener("click", () => {
-            var _a3, _b3, _c2;
-            wrap.querySelectorAll(".is-on").forEach((x) => x.classList.remove("is-on"));
-            c.classList.add("is-on");
-            acc.write((_a3 = c.dataset.spCard) != null ? _a3 : "");
-            void acc.persist();
-            (_c2 = row.onChange) == null ? void 0 : _c2.call(row, (_b3 = c.dataset.spCard) != null ? _b3 : "", ctx);
-            refresh();
-          });
-        });
-        break;
-      }
-      case "custom": {
-        const slot = document.createElement("div");
-        slot.className = "bz-sp-custom-slot bz-sp-custom-slot--full";
-        el.appendChild(slot);
-        try {
-          row.render(slot, ctx);
-        } catch (e) {
-          notice(`自定义设置行渲染失败：${e instanceof Error ? e.message : String(e)}`, "error");
-        }
-        if (regRefresh && row.onRefresh) {
-          const onRefresh = row.onRefresh;
-          regRefresh(() => onRefresh(ctx));
-        }
-        break;
-      }
-      default:
-        break;
-    }
-    return el;
-  }
-  function renderGroup(container, group, refresh, regRefresh) {
-    const cardHolder = document.createElement("div");
-    cardHolder.innerHTML = groupCardHtml(group.icon, group.name, `${group.rows.length} 项`);
-    const card = cardHolder.firstElementChild;
-    const count = card.querySelector(".bz-sp-group-count");
-    const body = card.querySelector(".bz-sp-group-body");
-    const rowEls = [];
-    group.rows.forEach((r) => {
-      const rowEl = renderRow(r, refresh, regRefresh);
-      rowEls.push(rowEl);
-      body.appendChild(rowEl);
-    });
-    container.appendChild(card);
-    const updateCount = () => {
-      const groupHidden = card.style.display === "none" || card.classList.contains("bz-sp-hidden");
-      let n = 0;
-      if (!groupHidden) {
-        group.rows.forEach((r, i) => {
-          if (r.type === "button") return;
-          const el = rowEls[i];
-          if (el && el.style.display !== "none") n++;
-        });
-      }
-      count.textContent = `${n} 项`;
-      count.style.display = n > 0 ? "" : "none";
-    };
-    card.__bzSpUpdateCount = updateCount;
-    updateCount();
-    return card;
-  }
-  function renderPanelSchema(container, schema) {
-    const visibleConditions = /* @__PURE__ */ new WeakMap();
-    const valueRefreshes = [];
-    const refresh = () => {
-      container.querySelectorAll("[data-sp-row]").forEach((el) => {
-        const cond = visibleConditions.get(el);
-        if (!cond) return;
-        el.style.display = cond(snapshot()) ? "" : "none";
-      });
-      container.querySelectorAll("[data-sp-group]").forEach((el) => {
-        const cond = visibleConditions.get(el);
-        if (!cond) return;
-        el.style.display = cond(snapshot()) ? "" : "none";
-      });
-      container.querySelectorAll(".bz-sp-group").forEach((card) => {
-        const upd = card.__bzSpUpdateCount;
-        if (typeof upd === "function") upd();
-      });
-      for (const fn of valueRefreshes) fn();
-    };
-    schema.groups.forEach((g) => {
-      const card = renderGroup(container, g, refresh, (fn) => valueRefreshes.push(fn));
-      card.dataset.spGroup = g.name;
-      const groupVw = g.visibleWhen;
-      if (groupVw) {
-        card.dataset.spGroupCond = "1";
-        visibleConditions.set(card, groupVw);
-        card.style.display = groupVw(snapshot()) ? "" : "none";
-      }
-      g.rows.forEach((r, i) => {
-        const rowEl = card.querySelectorAll(".bz-sp-set-row")[i];
-        if (!rowEl) return;
-        const vw = r.visibleWhen;
-        if (vw) {
-          rowEl.dataset.spRow = String(i);
-          visibleConditions.set(rowEl, vw);
-          rowEl.style.display = vw(snapshot()) ? "" : "none";
-        }
-      });
-    });
-    mountIcons(container);
-    return { refresh };
-  }
-  var init_renderer = __esm({
-    "src/settings-panel/renderer.ts"() {
-      init_settings_provider();
-      init_dir_picker();
-      init_notice();
-      init_render4();
-      init_ui();
     }
   });
 
@@ -12832,6 +8913,370 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/core/utils.ts
+  function escapeHtml2(str) {
+    return str.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
+  }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function generateId(prefix) {
+    prefix = prefix || "item";
+    return prefix + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+  }
+  function extractUrlAndDisplay(c) {
+    const m1 = c.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (m1) return { url: m1[2], display: m1[1] };
+    const m2 = c.match(/(https?:\/\/\S+)/i);
+    if (m2) {
+      const u = m2[1], d = c.replace(u, "").trim();
+      return { url: u, display: d || u };
+    }
+    return { url: null, display: c };
+  }
+  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
+    const target = (0, import_moment2.default)(date);
+    if (!target.isValid()) return "无效日期";
+    let hasExplicitTime = true;
+    if (typeof date === "string") {
+      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
+    }
+    const nowMoment = (0, import_moment2.default)(now);
+    const diffSeconds = nowMoment.diff(target, "seconds");
+    function shouldShowTime() {
+      const timeStr = target.format("HH:mm");
+      if (timeStr !== "00:00") return true;
+      return hasExplicitTime;
+    }
+    if (diffSeconds < 0) {
+      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
+    }
+    if (diffSeconds < 60) return "刚刚";
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
+    const todayStart = (0, import_moment2.default)(now).startOf("day");
+    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
+      const hours = Math.floor(diffMinutes / 60);
+      return `${hours}小时前`;
+    }
+    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
+    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
+    if (target.isSame(yesterdayStart, "day")) {
+      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
+    }
+    if (target.isSame(beforeYesterdayStart, "day")) {
+      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
+    }
+    const weekStart = (0, import_moment2.default)(now).startOf("week");
+    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
+      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
+    }
+    const isThisYear = target.year() === nowMoment.year();
+    if (isThisYear) {
+      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
+    }
+    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
+  }
+  function bytesEqual(a, b) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+    return true;
+  }
+  var import_moment2;
+  var init_utils = __esm({
+    "src/core/utils.ts"() {
+      import_moment2 = __toESM(require_moment());
+      init_fake_obsidian();
+      init_app();
+    }
+  });
+
+  // src/core/flow-dialog.ts
+  var flow_dialog_exports = {};
+  __export(flow_dialog_exports, {
+    FLOW_DIALOG_CANCEL_ID: () => FLOW_DIALOG_CANCEL_ID,
+    FLOW_DIALOG_OK_ID: () => FLOW_DIALOG_OK_ID,
+    buildFlowDialogParts: () => buildFlowDialogParts,
+    confirmDiscard: () => confirmDiscard,
+    openFlowDialog: () => openFlowDialog
+  });
+  function buildFlowDialogParts(title, message, actions) {
+    let buttons;
+    if (actions.length === 2) {
+      buttons = [
+        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
+        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
+      ];
+    } else {
+      buttons = actions.map((a, i) => {
+        const cls = ["bz-flow-dialog-action"];
+        if (a.danger) cls.push("bz-flow-dialog-danger");
+        if (a.cta) cls.push("bz-flow-dialog-cta");
+        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
+      });
+    }
+    const ctaIdx = actions.findIndex((a) => a.cta);
+    const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
+    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
+      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
+    }).join("") + "</div>";
+    return { html, buttons, focusId: buttons[focusIdx].id };
+  }
+  function openFlowDialog(opts) {
+    if (!opts.actions || opts.actions.length === 0) {
+      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
+    }
+    return new Promise((resolve2) => {
+      const prevActive = document.activeElement;
+      if (activeSettle) activeSettle(void 0);
+      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
+      const mask = document.createElement("div");
+      mask.id = "__shared_confirm_mask__";
+      mask.style.zIndex = String(allocZ());
+      mask.onclick = (e) => {
+        if (e.target === mask) settle(void 0);
+      };
+      const popup = document.createElement("div");
+      popup.id = "__shared_confirm_popup__";
+      popup.setAttribute("role", "dialog");
+      popup.setAttribute("aria-modal", "true");
+      popup.innerHTML = parts.html;
+      mask.appendChild(popup);
+      document.body.appendChild(mask);
+      const escHandle4 = escManager.register("q3-confirm", {
+        isVisible: () => mask.isConnected,
+        close: () => settle(void 0)
+      });
+      let settled = false;
+      function restoreFocus() {
+        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
+          prevActive.focus();
+        }
+      }
+      function settle(v) {
+        if (settled) return;
+        settled = true;
+        if (activeSettle === settle) activeSettle = null;
+        escHandle4.unregister();
+        mask.remove();
+        restoreFocus();
+        resolve2(v);
+      }
+      activeSettle = settle;
+      for (const b of parts.buttons) {
+        const btn = document.getElementById(b.id);
+        if (btn) btn.onclick = () => settle(b.value);
+      }
+      const focusBtn = document.getElementById(parts.focusId);
+      if (focusBtn) focusBtn.focus();
+    });
+  }
+  function confirmDiscard(proceed, message) {
+    void openFlowDialog({
+      title: "放弃未保存的内容？",
+      message: message || "弹窗内有未保存的输入，关闭后将丢失",
+      actions: [
+        { label: "放弃", value: "ok" },
+        { label: "继续编辑", value: "cancel" }
+      ]
+    }).then((v) => {
+      if (v === "ok") proceed();
+    });
+  }
+  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
+  var init_flow_dialog = __esm({
+    "src/core/flow-dialog.ts"() {
+      init_esc_manager();
+      init_utils();
+      init_z_order();
+      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
+      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
+      activeSettle = null;
+    }
+  });
+
+  // src/core/storage.ts
+  function storageDir() {
+    const s = tryGetSettings();
+    return (s && s.storagePath || "CONFIG/STORAGE").trim().replace(/\/+$/, "");
+  }
+  function storageFile(name, base) {
+    const dir = (base || storageDir()).trim().replace(/\/+$/, "");
+    return `${dir}/${name}`;
+  }
+  function enqueueFileTask(filePath, task) {
+    var _a2;
+    const prev = (_a2 = fileTaskQueues.get(filePath)) != null ? _a2 : Promise.resolve();
+    const run = prev.then(task, task);
+    const tail = run.then(
+      () => void 0,
+      () => void 0
+    );
+    fileTaskQueues.set(filePath, tail);
+    void tail.then(() => {
+      if (fileTaskQueues.get(filePath) === tail) fileTaskQueues.delete(filePath);
+    });
+    return run;
+  }
+  function isAlreadyExistsError(e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return /already exist/i.test(msg);
+  }
+  function corruptStamp(d = /* @__PURE__ */ new Date()) {
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+  }
+  function baseNameOf(p) {
+    return p.includes("/") ? p.slice(p.lastIndexOf("/") + 1) : p;
+  }
+  async function backupOriginal(app2, filePath, raw) {
+    try {
+      const f = app2.vault.getAbstractFileByPath(filePath);
+      if (!f) return null;
+      const content = raw !== void 0 ? raw : await app2.vault.read(f);
+      if (!app2.vault.getAbstractFileByPath(CORRUPT_BACKUP_DIR)) {
+        try {
+          await app2.vault.createFolder(CORRUPT_BACKUP_DIR);
+        } catch (e) {
+        }
+      }
+      const base = baseNameOf(filePath);
+      const stamp = corruptStamp();
+      let backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}.bak`;
+      for (let i = 2; app2.vault.getAbstractFileByPath(backupPath); i++) {
+        backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}-${i}.bak`;
+      }
+      await app2.vault.create(backupPath, content);
+      return backupPath;
+    } catch (e) {
+      console.warn("[storage] " + filePath + " 留档失败（" + CORRUPT_BACKUP_DIR + "），继续原流程", e);
+      return null;
+    }
+  }
+  function notifyBackup(filePath, backupPath, cause) {
+    var _a2;
+    const now = Date.now();
+    if (now - ((_a2 = corruptNotifyAt.get(filePath)) != null ? _a2 : 0) < CORRUPT_NOTIFY_DEDUPE_MS) return;
+    corruptNotifyAt.set(filePath, now);
+    try {
+      const name = baseNameOf(filePath);
+      const msg = cause === "解析失败" ? `数据文件 ${name} 解析失败，原内容已留档到 ${backupPath}，数据不会丢，已重建默认文件继续使用` : `数据文件 ${name} 写入失败，原内容已留档到 ${backupPath}，数据不会丢，请稍后重试`;
+      notify(msg, { type: "warning" });
+    } catch (e) {
+    }
+  }
+  function serialize(v) {
+    return JSON.stringify(v, null, 2);
+  }
+  function jsonFileStore(filePath, opts = {}) {
+    const resolveApp2 = () => opts.app || getApp();
+    const resolveDefault = () => {
+      const d = opts.defaultValue;
+      return typeof d === "function" ? d() : d === void 0 ? [] : d;
+    };
+    async function ensureDir(app2) {
+      const d = filePath.substring(0, filePath.lastIndexOf("/"));
+      if (d && !app2.vault.getAbstractFileByPath(d)) await app2.vault.createFolder(d);
+    }
+    async function createIfMissing(app2, content) {
+      await ensureDir(app2);
+      try {
+        await app2.vault.create(filePath, content);
+        return true;
+      } catch (e) {
+        if (isAlreadyExistsError(e) && app2.vault.getAbstractFileByPath(filePath)) return false;
+        throw e;
+      }
+    }
+    async function handleCorrupt(app2, err, raw) {
+      var _a2;
+      if (((_a2 = opts.onCorrupt) == null ? void 0 : _a2.call(opts, filePath, err)) === false) {
+        return null;
+      }
+      const backupPath = await backupOriginal(app2, filePath, raw);
+      if (backupPath && !opts.onCorrupt) notifyBackup(filePath, backupPath, "解析失败");
+      const f = app2.vault.getAbstractFileByPath(filePath);
+      if (f) {
+        await app2.vault.modify(f, serialize(resolveDefault()));
+      } else {
+        await createIfMissing(app2, serialize(resolveDefault()));
+      }
+      return resolveDefault();
+    }
+    async function modifyWithBackup(app2, f, c) {
+      try {
+        await app2.vault.modify(f, c);
+      } catch (e) {
+        const backupPath = await backupOriginal(app2, filePath);
+        if (backupPath) notifyBackup(filePath, backupPath, "写入失败");
+        throw e;
+      }
+    }
+    return {
+      async read() {
+        const app2 = resolveApp2();
+        let f = app2.vault.getAbstractFileByPath(filePath);
+        if (!f) {
+          const created = await createIfMissing(app2, serialize(resolveDefault()));
+          if (created) return resolveDefault();
+          f = app2.vault.getAbstractFileByPath(filePath);
+          if (!f) return resolveDefault();
+        }
+        const raw = await app2.vault.read(f);
+        try {
+          return JSON.parse(raw);
+        } catch (e) {
+          return await handleCorrupt(app2, e, raw);
+        }
+      },
+      async write(data) {
+        const app2 = resolveApp2();
+        const c = serialize(data);
+        let f = app2.vault.getAbstractFileByPath(filePath);
+        if (f) {
+          if (opts.writeIfChanged) {
+            try {
+              const cur2 = await app2.vault.read(f);
+              if (cur2 === c) return;
+            } catch (e) {
+            }
+          }
+          await modifyWithBackup(app2, f, c);
+          return;
+        }
+        const created = await createIfMissing(app2, c);
+        if (created) return;
+        let cur = app2.vault.getAbstractFileByPath(filePath);
+        if (!cur) {
+          const retried = await createIfMissing(app2, c);
+          if (retried) return;
+          cur = app2.vault.getAbstractFileByPath(filePath);
+          if (!cur) throw new Error("storage: create 竞态降级失败（" + filePath + "）");
+        }
+        await modifyWithBackup(app2, cur, c);
+      }
+    };
+  }
+  var fileTaskQueues, CORRUPT_BACKUP_DIR, CORRUPT_NOTIFY_DEDUPE_MS, corruptNotifyAt;
+  var init_storage = __esm({
+    "src/core/storage.ts"() {
+      init_app();
+      init_settings_provider();
+      init_notice();
+      fileTaskQueues = /* @__PURE__ */ new Map();
+      CORRUPT_BACKUP_DIR = "CONFIG/.CORRUPT";
+      CORRUPT_NOTIFY_DEDUPE_MS = 3e4;
+      corruptNotifyAt = /* @__PURE__ */ new Map();
+    }
+  });
+
   // src/favorites/config.ts
   function getStorageDir(value) {
     let dir = (value || CONFIG.DEFAULT_STORAGE_PATH).trim().replace(/\/+$/, "");
@@ -12853,7 +9298,7 @@ ${n.content.slice(0, 2e3)}
     return t.length > 0 && !/\s/.test(t) && (/^https?:\/\//i.test(t) || /^www\./i.test(t));
   }
   var CONFIG, TAGS;
-  var init_config2 = __esm({
+  var init_config = __esm({
     "src/favorites/config.ts"() {
       CONFIG = {
         /** 默认存储目录（文件名固定 favorites.json，设置只允许改目录） */
@@ -12874,6 +9319,292 @@ ${n.content.slice(0, 2e3)}
         { key: "tavern", label: "酒馆", ic: "beer" },
         { key: "harness", label: "DeepSeek Harness", ic: "waypoints" }
       ];
+    }
+  });
+
+  // src/bookshelf/state.ts
+  var M;
+  var init_state = __esm({
+    "src/bookshelf/state.ts"() {
+      init_settings_provider();
+      M = {
+        currentOverlay: null,
+        items: [],
+        side: "all",
+        catFilter: "all",
+        sortMode: "recent",
+        searchKeyword: "",
+        searchDebounceTimer: null,
+        appRef: null,
+        folderPath: "书库",
+        renderFn: null,
+        view: "shelf"
+      };
+    }
+  });
+
+  // src/bookshelf/constants.ts
+  var STATUS_UNREAD, STATUS_READING, STATUS_DONE, STATUS_COLORS;
+  var init_constants = __esm({
+    "src/bookshelf/constants.ts"() {
+      STATUS_UNREAD = "未读";
+      STATUS_READING = "在读";
+      STATUS_DONE = "已读";
+      STATUS_COLORS = {
+        [STATUS_UNREAD]: "var(--bz-text-3)",
+        [STATUS_READING]: "var(--bz-brand)",
+        [STATUS_DONE]: "var(--bz-success)"
+      };
+    }
+  });
+
+  // src/bookshelf/shared.ts
+  var init_shared2 = __esm({
+    "src/bookshelf/shared.ts"() {
+      init_str();
+      init_constants();
+    }
+  });
+
+  // src/bookshelf/layouts/wall/render.ts
+  var init_render3 = __esm({
+    "src/bookshelf/layouts/wall/render.ts"() {
+      init_str();
+      init_constants();
+      init_shared2();
+      init_constants();
+    }
+  });
+
+  // src/bookshelf/render.ts
+  var init_render4 = __esm({
+    "src/bookshelf/render.ts"() {
+      init_shared2();
+      init_render3();
+    }
+  });
+
+  // src/bookshelf/data.ts
+  function resolveFolderPath() {
+    const s = tryGetSettings();
+    const v = typeof s.bookshelfFolderPath === "string" && s.bookshelfFolderPath.trim() ? s.bookshelfFolderPath : typeof s.libraryFolderPath === "string" && s.libraryFolderPath.trim() ? s.libraryFolderPath : "书库";
+    return v.replace(/^\/+|\/+$/g, "");
+  }
+  function resolveBookTag() {
+    const s = tryGetSettings();
+    return typeof s.bookTag === "string" && s.bookTag.trim() ? s.bookTag.trim() : "book";
+  }
+  function parseStatus(readingDate, completionDate) {
+    if (readingDate && !completionDate) return "在读";
+    if (readingDate && completionDate) return "已读";
+    return "未读";
+  }
+  function parseReadingTimeMs(fm) {
+    var _a2;
+    const raw = Number(fm == null ? void 0 : fm.readingTime);
+    if (Number.isFinite(raw) && raw > 0) return Math.round(raw);
+    const fmt2 = String((_a2 = fm == null ? void 0 : fm.readingTimeFormat) != null ? _a2 : "").trim();
+    if (!fmt2) return 0;
+    let ms = 0;
+    for (const m of fmt2.matchAll(/(\d+(?:\.\d+)?)\s*(小时|h|分|min|m|秒|s)/gi)) {
+      const v = parseFloat(m[1]);
+      const unit = m[2].toLowerCase();
+      if (unit === "小时" || unit === "h") ms += v * 36e5;
+      else if (unit === "分" || unit === "min" || unit === "m") ms += v * 6e4;
+      else ms += v * 1e3;
+    }
+    return Math.round(ms);
+  }
+  function parseBookFile(file, app2, folderPath, bookTag) {
+    var _a2, _b2, _c;
+    const metadata = app2.metadataCache.getFileCache(file);
+    const fm = metadata == null ? void 0 : metadata.frontmatter;
+    if (!fm) return null;
+    let tags = fm.tags;
+    if (!tags) return null;
+    if (!Array.isArray(tags)) tags = [tags];
+    if (!tags.includes(bookTag)) return null;
+    const title = file.basename;
+    const author = ((_a2 = fm.author) == null ? void 0 : _a2.toString()) || "未知作者";
+    const category = ((_b2 = fm.category) == null ? void 0 : _b2.toString()) || "未分类";
+    let cover = fm.cover ? fm.cover.toString() : null;
+    if (cover && !cover.includes("/")) {
+      cover = `CONFIG/BOOK/${title}/${cover}`;
+    }
+    const bookReview = fm.bookReview ? fm.bookReview.toString() : null;
+    const readingDate = fm.readingDate ? fm.readingDate.toString() : null;
+    const completionDate = fm.completionDate ? fm.completionDate.toString() : null;
+    const progress = fm.readingProgress !== void 0 ? Number(fm.readingProgress) || 0 : 0;
+    const readingTimeFormat = ((_c = fm.readingTimeFormat) == null ? void 0 : _c.toString()) || null;
+    const highlights = Number(fm.highlights) || 0;
+    const thinks = Number(fm.thinks) || 0;
+    return {
+      file,
+      title,
+      author,
+      category,
+      cover,
+      bookReview,
+      readingDate,
+      completionDate,
+      progress: progress > 100 ? 100 : progress,
+      readingTimeFormat,
+      readingTimeMs: parseReadingTimeMs(fm),
+      highlights,
+      thinks,
+      // 书脊厚度量（issue 218）：字数（缺省 0，UI 层回退批注密度）
+      wordCount: Number(fm.wordCount) || 0,
+      pages: Number(fm.pages) || 0,
+      status: parseStatus(readingDate, completionDate),
+      isEpub: false,
+      epubVaultPath: null
+    };
+  }
+  function scanMarkdownBooks(app2) {
+    const folderPath = resolveFolderPath();
+    const bookTag = resolveBookTag();
+    const folder = app2.vault.getAbstractFileByPath(folderPath);
+    const files = [];
+    if (folder && Array.isArray(folder.children)) {
+      const stack = [...folder.children];
+      while (stack.length) {
+        const cur = stack.pop();
+        if (Array.isArray(cur == null ? void 0 : cur.children)) stack.push(...cur.children);
+        else if ((cur == null ? void 0 : cur.extension) === "md") files.push(cur);
+      }
+    } else {
+      files.push(...app2.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folderPath + "/") || f.path === folderPath + ".md"));
+    }
+    const items = [];
+    for (const file of files) {
+      try {
+        const item = parseBookFile(file, app2, folderPath, bookTag);
+        if (item) items.push(item);
+      } catch (e) {
+        console.warn("处理书目文件失败:", file.path, e);
+      }
+    }
+    return items;
+  }
+  function normalizeWeaveDataPath(value) {
+    const raw = String(value || "").trim().replace(/^\/+|\/+$/g, "");
+    return raw || "CONFIG/STORAGE";
+  }
+  function resolveWeaveDataPath(app2) {
+    var _a2, _b2, _c;
+    const plugins = (_a2 = app2.plugins) == null ? void 0 : _a2.plugins;
+    const fromWeave = (_c = (_b2 = plugins == null ? void 0 : plugins[WEAVE_PLUGIN_ID]) == null ? void 0 : _b2.settings) == null ? void 0 : _c.dataPath;
+    return normalizeWeaveDataPath(fromWeave);
+  }
+  function isVaultImageFile(app2, path) {
+    var _a2, _b2;
+    const file = (_b2 = (_a2 = app2.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, path);
+    return Boolean(file) && /\.(png|jpe?g|gif|webp)$/i.test(file.name || path);
+  }
+  function resolveEpubCoverPath(app2, meta) {
+    const coverPath = typeof (meta == null ? void 0 : meta.coverPath) === "string" ? meta.coverPath.trim() : "";
+    if (coverPath && isVaultImageFile(app2, coverPath)) return coverPath;
+    const title = typeof (meta == null ? void 0 : meta.title) === "string" ? meta.title.trim() : "";
+    if (title) {
+      for (const ext of COVER_EXTENSIONS) {
+        const candidate = `CONFIG/BOOK/EPUB COVER/${title}.${ext}`;
+        if (isVaultImageFile(app2, candidate)) return candidate;
+      }
+    }
+    return null;
+  }
+  function formatReadingTime(totalReadTimeMs) {
+    const totalMinutes = Math.round((Number(totalReadTimeMs) || 0) / 6e4);
+    if (totalMinutes <= 0) return null;
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours > 0) return minutes > 0 ? `${hours}小时${minutes}分` : `${hours}小时`;
+    return `${minutes}分`;
+  }
+  function toDateString(timestamp) {
+    if (!Number.isFinite(timestamp) || !timestamp) return null;
+    const d = new Date(timestamp);
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+  function buildEpubItem(app2, aggregate) {
+    var _a2, _b2, _c;
+    const meta = aggregate == null ? void 0 : aggregate.meta;
+    const fileRef = aggregate == null ? void 0 : aggregate.file;
+    const reading = aggregate == null ? void 0 : aggregate.reading;
+    const notes = aggregate == null ? void 0 : aggregate.notes;
+    const stats = reading == null ? void 0 : reading.stats;
+    const vaultPath = typeof (fileRef == null ? void 0 : fileRef.vaultPath) === "string" ? fileRef.vaultPath.trim() : "";
+    const title = typeof (meta == null ? void 0 : meta.title) === "string" ? meta.title.trim() : "";
+    if (!vaultPath || !title) return null;
+    const rawPercent = typeof ((_a2 = reading == null ? void 0 : reading.position) == null ? void 0 : _a2.percent) === "number" ? reading.position.percent : 0;
+    const progress = rawPercent > 1 ? Math.min(100, Math.round(rawPercent)) : Math.round(Math.max(0, Math.min(1, rawPercent)) * 100);
+    const lastReadTime = Number.isFinite(stats == null ? void 0 : stats.lastReadTime) ? stats.lastReadTime : 0;
+    const completedTime = Number.isFinite(stats == null ? void 0 : stats.completedTime) ? stats.completedTime : 0;
+    const totalReadTimeMs = Number.isFinite(stats == null ? void 0 : stats.totalReadTime) ? stats.totalReadTime : 0;
+    const readingDate = progress > 0 ? toDateString(lastReadTime) : null;
+    const completionDate = toDateString(completedTime);
+    const vaultFile = (_c = (_b2 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _b2.getAbstractFileByPath) == null ? void 0 : _c.call(_b2, vaultPath);
+    const subjects = Array.isArray(meta == null ? void 0 : meta.subjects) ? meta.subjects : [];
+    const epubCategory = typeof subjects[0] === "string" && subjects[0].trim() ? subjects[0].trim() : null;
+    return {
+      file: vaultFile instanceof TFile ? vaultFile : null,
+      title,
+      author: typeof (meta == null ? void 0 : meta.author) === "string" && meta.author.trim() ? meta.author.trim() : "未知作者",
+      category: epubCategory,
+      cover: resolveEpubCoverPath(app2, meta),
+      bookReview: null,
+      readingDate,
+      completionDate,
+      progress,
+      readingTimeFormat: formatReadingTime(totalReadTimeMs),
+      readingTimeMs: totalReadTimeMs,
+      highlights: Array.isArray(notes == null ? void 0 : notes.highlights) ? notes.highlights.length : 0,
+      thinks: Array.isArray(notes == null ? void 0 : notes.excerpts) ? notes.excerpts.length : 0,
+      wordCount: 0,
+      pages: 0,
+      status: completionDate ? "已读" : progress > 0 ? "在读" : "未读",
+      isEpub: true,
+      epubVaultPath: vaultPath
+    };
+  }
+  async function readWeaveAggregates(app2) {
+    var _a2, _b2;
+    try {
+      const dataPath = resolveWeaveDataPath(app2);
+      const dataFilePath = `${dataPath}/${DEFAULT_WEAVE_DATA_FILE}`;
+      const file = (_b2 = (_a2 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, dataFilePath);
+      if (!file) return [];
+      const content = await app2.vault.adapter.read(dataFilePath);
+      const parsed = JSON.parse(content);
+      const books = parsed == null ? void 0 : parsed.books;
+      if (!books || typeof books !== "object") return [];
+      return Object.values(books);
+    } catch (e) {
+      return [];
+    }
+  }
+  async function loadEpubItems(app2) {
+    const aggregates = await readWeaveAggregates(app2);
+    const items = [];
+    for (const aggregate of aggregates) {
+      const item = buildEpubItem(app2, aggregate);
+      if (item) items.push(item);
+    }
+    return items;
+  }
+  var WEAVE_PLUGIN_ID, WEAVE_DATA_FILE, DEFAULT_WEAVE_DATA_FILE, COVER_EXTENSIONS;
+  var init_data = __esm({
+    "src/bookshelf/data.ts"() {
+      init_fake_obsidian();
+      init_settings_provider();
+      init_state();
+      init_render4();
+      init_render4();
+      WEAVE_PLUGIN_ID = "weave-epub-reader";
+      WEAVE_DATA_FILE = "weave-data.json";
+      DEFAULT_WEAVE_DATA_FILE = WEAVE_DATA_FILE;
+      COVER_EXTENSIONS = ["jpg", "jpeg", "png", "webp", "gif"];
     }
   });
 
@@ -12930,8 +9661,8 @@ ${n.content.slice(0, 2e3)}
     "src/checkup/files.ts"() {
       init_storage();
       init_settings_provider();
-      init_config2();
-      init_data2();
+      init_config();
+      init_data();
       CORRUPT_DIR = "CONFIG/.CORRUPT";
     }
   });
@@ -13201,6 +9932,99 @@ ${countsToText(s.missing)}
     }
   });
 
+  // src/cinema/constants.ts
+  function getGroupForTag(tag) {
+    for (const [group, tags] of Object.entries(TYPE_GROUPS)) {
+      if (tags.includes(tag)) return group;
+    }
+    return null;
+  }
+  function getGroupSafe(tag) {
+    var _a2;
+    return (_a2 = getGroupForTag(tag)) != null ? _a2 : "其他";
+  }
+  var STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, TYPE_GROUPS, ALL_TAGS;
+  var init_constants2 = __esm({
+    "src/cinema/constants.ts"() {
+      STATUS_WANT = 0;
+      STATUS_WATCHING = 1;
+      STATUS_WATCHED = 2;
+      TYPE_GROUPS = {
+        电影: ["电影"],
+        剧集: ["国产剧", "美剧", "英剧", "德剧", "日剧", "韩剧", "哥伦比亚剧"],
+        动漫: ["日漫", "国漫", "美漫"],
+        纪录片: ["纪录片"],
+        公开课: ["公开课", "TED"]
+      };
+      ALL_TAGS = Object.values(TYPE_GROUPS).flat();
+    }
+  });
+
+  // src/cinema/state.ts
+  var init_state2 = __esm({
+    "src/cinema/state.ts"() {
+    }
+  });
+
+  // src/cinema/data.ts
+  function parseMovieFile(file, app2) {
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
+    const cache = app2.metadataCache.getFileCache(file);
+    if (!cache || !cache.frontmatter) return null;
+    const fm = cache.frontmatter;
+    const basename = file.basename;
+    const name = (_b2 = (_a2 = basename.match(/《(.+)》/)) == null ? void 0 : _a2[1]) != null ? _b2 : basename;
+    let rawTags = fm.tags;
+    if (typeof rawTags === "string") rawTags = [rawTags];
+    const tags = Array.isArray(rawTags) ? rawTags.map((t) => String(t)) : [];
+    let typeTag = null;
+    for (const t of ALL_TAGS) {
+      if (tags.includes(t)) {
+        typeTag = t;
+        break;
+      }
+    }
+    if (!typeTag) {
+      if (tags.length === 0) return null;
+      typeTag = tags[0];
+    }
+    const watchDate = (_d = (_c = fm["观影日期"]) == null ? void 0 : _c.toString()) != null ? _d : null;
+    const rawRating = fm["评分"];
+    const rating = rawRating === void 0 || rawRating === null || rawRating === "" ? null : Number(rawRating);
+    let status;
+    if (rating === -1) status = STATUS_WANT;
+    else if (rating === 0) status = STATUS_WATCHING;
+    else status = STATUS_WATCHED;
+    return {
+      file,
+      name,
+      typeTag,
+      group: getGroupSafe(typeTag),
+      watchDate,
+      rating,
+      status,
+      poster: (_f = (_e = fm["海报"]) == null ? void 0 : _e.toString()) != null ? _f : null,
+      review: (_h = (_g = fm["影评"]) == null ? void 0 : _g.toString()) != null ? _h : null,
+      genre: (_j = (_i = fm["类型"]) == null ? void 0 : _i.toString()) != null ? _j : null,
+      director: (_l = (_k = fm["导演"]) == null ? void 0 : _k.toString()) != null ? _l : null,
+      actors: (_n = (_m = fm["主演"]) == null ? void 0 : _m.toString()) != null ? _n : null,
+      region: (_p = (_o = fm["制片国家/地区"]) == null ? void 0 : _o.toString()) != null ? _p : null,
+      year: fm["上映日期"] ? String(fm["上映日期"]).slice(0, 4) : null,
+      doubanRating: fm["豆瓣评分"] !== void 0 && fm["豆瓣评分"] !== "" ? String(fm["豆瓣评分"]) : null,
+      doubanUrl: /^https?:\/\//.test(String((_q = fm["豆瓣链接"]) != null ? _q : "")) ? String(fm["豆瓣链接"]) : null,
+      synopsis: (_s = (_r = fm["简介"]) == null ? void 0 : _r.toString()) != null ? _s : null,
+      // 片长/季集：原独立观影报告的两项统计源字段（ADR-0090 并入内嵌分析页）
+      duration: (_u = (_t = fm["片长"]) == null ? void 0 : _t.toString()) != null ? _u : null,
+      seasonText: (_w = (_v = fm["季集"]) == null ? void 0 : _v.toString()) != null ? _w : null
+    };
+  }
+  var init_data2 = __esm({
+    "src/cinema/data.ts"() {
+      init_constants2();
+      init_state2();
+    }
+  });
+
   // src/checkup/checks-orphans.ts
   function clipDirOf() {
     const s = tryGetSettings();
@@ -13338,8 +10162,8 @@ ${countsToText(s.missing)}
     "src/checkup/checks-orphans.ts"() {
       init_files();
       init_settings_provider();
-      init_data();
       init_data2();
+      init_data();
     }
   });
 
@@ -13384,7 +10208,7 @@ ${countsToText(s.missing)}
     };
   }
   var import_moment3, DEFAULT_SCENARIOS, TodoData;
-  var init_data5 = __esm({
+  var init_data3 = __esm({
     "src/todo/data.ts"() {
       import_moment3 = __toESM(require_moment());
       init_json_store();
@@ -13473,8 +10297,8 @@ ${countsToText(s.missing)}
         async restoreItem(item, idx) {
           return enqueueFileTask(this.todoFilePath, async () => {
             const data = await this.read();
-            const at2 = idx !== void 0 && idx >= 0 && idx <= data.length ? idx : 0;
-            data.splice(at2, 0, item);
+            const at = idx !== void 0 && idx >= 0 && idx <= data.length ? idx : 0;
+            data.splice(at, 0, item);
             await this.write(data);
           });
         },
@@ -13639,7 +10463,7 @@ ${countsToText(s.missing)}
   var init_checks_consistency = __esm({
     "src/checkup/checks-consistency.ts"() {
       init_files();
-      init_data5();
+      init_data3();
     }
   });
 
@@ -13777,8 +10601,8 @@ ${countsToText(s.missing)}
           const data = await store2.read();
           const list = Array.isArray(data && data.savedArchive) ? data.savedArchive : [];
           for (const r of removed) {
-            const at2 = r.index >= 0 && r.index <= list.length ? r.index : list.length;
-            list.splice(at2, 0, { url: r.url, title: r.title, savedAt: r.savedAt });
+            const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
+            list.splice(at, 0, { url: r.url, title: r.title, savedAt: r.savedAt });
           }
           data.savedArchive = list;
           await store2.write(data);
@@ -14189,6 +11013,42 @@ ${countsToText(s.missing)}
     }
   });
 
+  // src/core/domain-bus.ts
+  function emitDomainEvent(channel, evt) {
+    const handlers = channels.get(channel);
+    if (!handlers || handlers.size === 0) return;
+    for (const handler of [...handlers]) {
+      try {
+        handler(evt);
+      } catch (e) {
+        console.error(`bz: 域事件 handler 异常（channel=${channel}）`, e);
+      }
+    }
+  }
+  function onDomainEvent(channel, handler) {
+    let set = channels.get(channel);
+    if (!set) {
+      set = /* @__PURE__ */ new Set();
+      channels.set(channel, set);
+    }
+    set.add(handler);
+    let offed = false;
+    return () => {
+      if (offed) return;
+      offed = true;
+      const cur = channels.get(channel);
+      if (!cur) return;
+      cur.delete(handler);
+      if (cur.size === 0) channels.delete(channel);
+    };
+  }
+  var channels;
+  var init_domain_bus = __esm({
+    "src/core/domain-bus.ts"() {
+      channels = /* @__PURE__ */ new Map();
+    }
+  });
+
   // src/core/settings-schema.ts
   function bindValue2(binding) {
     if ("key" in binding) {
@@ -14505,7 +11365,7 @@ ${countsToText(s.missing)}
     return { refresh: reevaluate };
   }
   var TEXT_COMMIT_DELAY, CommitWarn;
-  var init_settings_schema2 = __esm({
+  var init_settings_schema = __esm({
     "src/core/settings-schema.ts"() {
       init_fake_obsidian();
       init_settings_provider();
@@ -14673,9 +11533,210 @@ ${countsToText(s.missing)}
       init_dom();
       init_esc_manager();
       init_mobile();
-      init_settings_schema2();
+      init_settings_schema();
       FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
       currentModal = null;
+    }
+  });
+
+  // src/core/settings-common.ts
+  function mobileFullscreenRow(key, opts) {
+    const desc = (opts == null ? void 0 : opts.desc) || void 0;
+    return {
+      type: "toggle",
+      name: "移动端默认全屏",
+      desc,
+      binding: { key },
+      visibleWhen: (_snapshot) => isMobileEnv()
+    };
+  }
+  function mobileFullscreenGroup(key, opts) {
+    return {
+      icon: "smartphone",
+      name: "移动端",
+      // 组级门控（ticket 131 域迁移补正）：现状各域是 `if (isMobileEnv())` 才挂整行、桌面端完全无痕；
+      // 仅行级 visibleWhen 会残留空卡片壳，且 DOM 存在性空态判定会被隐藏行抑制（归物本/收藏本桌面空态丢失）。
+      visibleWhen: (_snapshot) => isMobileEnv(),
+      rows: [mobileFullscreenRow(key, opts)]
+    };
+  }
+  function batchSizeRow(key, opts) {
+    return {
+      type: "number",
+      name: "每批加载数量",
+      desc: "滚动加载时每批显示的条目数",
+      binding: numStrBinding(key, 20),
+      min: 1,
+      step: 1,
+      onCommit: opts == null ? void 0 : opts.onCommit
+    };
+  }
+  function numStrBinding(key, def) {
+    return {
+      get: () => {
+        const raw = tryGetSettings()[key];
+        if (raw === "" || raw === null || raw === void 0) return def;
+        const n = Number(raw);
+        return Number.isFinite(n) && n > 0 ? n : def;
+      },
+      set: (v) => {
+        getSettings()[key] = String(v);
+      },
+      save: () => saveSettings()
+    };
+  }
+  function makeReloadWarnOnce() {
+    let reloadWarned = false;
+    return () => {
+      if (reloadWarned) return;
+      reloadWarned = true;
+      notice(RELOAD_SETTINGS_NOTICE, "info");
+    };
+  }
+  var RELOAD_SETTINGS_NOTICE;
+  var init_settings_common = __esm({
+    "src/core/settings-common.ts"() {
+      init_mobile();
+      init_notice();
+      init_settings_provider();
+      RELOAD_SETTINGS_NOTICE = "设置已保存，重载插件后生效";
+    }
+  });
+
+  // src/diary/config.ts
+  function applyDirectories(settings) {
+    DIARY_DIRECTORY = settings.diaryDirectory || "我的/日记";
+    MOVIE_DIRECTORY = settings.movieDirectory || "我的/影视";
+    LETTER_DIRECTORY = settings.letterDirectory || "我的/信";
+    BATCH_SIZE = parseInt(settings.diaryBatchSize || "20", 10) || 20;
+  }
+  function getPrimaryTagsConfig() {
+    return PRIMARY_TAGS_CONFIG;
+  }
+  function getPrimaryTagsInDisplayOrder() {
+    const tags = Object.keys(PRIMARY_TAGS_CONFIG);
+    const idx = tags.indexOf(ENCRYPT_TAG);
+    if (idx === -1) return tags;
+    const rest = tags.filter((t) => t !== ENCRYPT_TAG);
+    rest.push(ENCRYPT_TAG);
+    return rest;
+  }
+  function buildTagMaps() {
+    for (const key of Object.keys(tagToEmojiMap)) delete tagToEmojiMap[key];
+    for (const key of Object.keys(emojiToTagMap)) delete emojiToTagMap[key];
+    for (const [tag, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+      tagToEmojiMap[tag] = config.emoji;
+      emojiToTagMap[config.emoji] = tag;
+      if (config.subTags) {
+        for (const sub of config.subTags) {
+          tagToEmojiMap[sub.tag] = sub.emoji;
+          emojiToTagMap[sub.emoji] = sub.tag;
+        }
+      }
+    }
+  }
+  function getTagEmoji(tag) {
+    return tagToEmojiMap[tag] || "📖";
+  }
+  function getSubTagsOfPrimary(primaryTag) {
+    const config = PRIMARY_TAGS_CONFIG[primaryTag];
+    return config && config.subTags ? config.subTags : null;
+  }
+  function isSubTag(tag) {
+    for (const [, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+      if (config.subTags && config.subTags.some((sub) => sub.tag === tag)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  function getParentPrimaryTag(subTag) {
+    for (const [primary, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+      if (config.subTags && config.subTags.some((sub) => sub.tag === subTag)) {
+        return primary;
+      }
+    }
+    return null;
+  }
+  function getSortedTagsForAddDialog() {
+    const result = [];
+    for (const [primary, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+      if (primary === "加密") continue;
+      if (config.subTags && config.subTags.length > 0) {
+        for (const sub of config.subTags) {
+          result.push(sub.tag);
+        }
+      } else {
+        result.push(primary);
+      }
+    }
+    return result;
+  }
+  var DIARY_DIRECTORY, MOVIE_DIRECTORY, LETTER_DIRECTORY, BATCH_SIZE, ENCRYPT_TAG, DEFAULT_TAGS_CONFIG, PRIMARY_TAGS_CONFIG, tagToEmojiMap, emojiToTagMap;
+  var init_config2 = __esm({
+    "src/diary/config.ts"() {
+      DIARY_DIRECTORY = "我的/日记";
+      MOVIE_DIRECTORY = "我的/影视";
+      LETTER_DIRECTORY = "我的/信";
+      BATCH_SIZE = 20;
+      ENCRYPT_TAG = "加密";
+      DEFAULT_TAGS_CONFIG = {
+        日记: { emoji: "📖" },
+        加密: { emoji: "🔐" },
+        念念碎: { emoji: "😶" },
+        对谈: { emoji: "🤝" },
+        随笔: { emoji: "✍️" },
+        梦: { emoji: "🌙" },
+        诗: { emoji: "🌟" },
+        书: { emoji: "📕" },
+        信: { emoji: "✉️" },
+        摘抄: { emoji: "📌" },
+        摄影: { emoji: "📸" },
+        骑行: { emoji: "🚴" },
+        代码: { emoji: "⚙️" },
+        做饭: { emoji: "🥘" },
+        游戏: { emoji: "🎮" },
+        音乐: { emoji: "🎧" },
+        电影: { emoji: "📽" },
+        电视剧: { emoji: "📺" },
+        动漫: { emoji: "🎨" },
+        纪录片: { emoji: "🎞" },
+        猫: { emoji: "🐱" },
+        狗: { emoji: "🐶" },
+        仓鼠: { emoji: "🐹" },
+        熊猫: { emoji: "🐼" },
+        博物馆: { emoji: "🏛️" },
+        美食: { emoji: "🍔" },
+        旅游: {
+          emoji: "✈️",
+          subTags: [
+            { tag: "四川", emoji: "🀄" },
+            { tag: "大理", emoji: "🛶" }
+          ]
+        },
+        收藏: {
+          emoji: "⭐",
+          subTags: [
+            { tag: "咪咪", emoji: "🐈" },
+            { tag: "广告", emoji: "📢" },
+            { tag: "神评", emoji: "🤣" },
+            { tag: "冷笑话", emoji: "😅" },
+            { tag: "抽象", emoji: "🌀" },
+            { tag: "AI", emoji: "🤖" },
+            { tag: "愚人节", emoji: "🤪" },
+            { tag: "舞蹈", emoji: "🕺" },
+            { tag: "达人秀", emoji: "🤹" },
+            { tag: "艺术", emoji: "🧑‍🎨" },
+            { tag: "摄影集", emoji: "📷" },
+            { tag: "植物", emoji: "🌳" },
+            { tag: "创意", emoji: "🧩" }
+          ]
+        }
+      };
+      PRIMARY_TAGS_CONFIG = JSON.parse(JSON.stringify(DEFAULT_TAGS_CONFIG));
+      tagToEmojiMap = {};
+      emojiToTagMap = {};
+      buildTagMaps();
     }
   });
 
@@ -14742,7 +11803,7 @@ ${countsToText(s.missing)}
     return currentActiveParentForSub;
   }
   var state, diaryDataMap, currentActiveParentForSub;
-  var init_state4 = __esm({
+  var init_state3 = __esm({
     "src/diary/state.ts"() {
       state = {
         ui: {
@@ -14775,6 +11836,624 @@ ${countsToText(s.missing)}
       };
       diaryDataMap = null;
       currentActiveParentForSub = null;
+    }
+  });
+
+  // src/diary/app.ts
+  function getApp2() {
+    if (!app) throw new Error("app 尚未注入（插件未加载或测试未 setApp）");
+    return app;
+  }
+  var app;
+  var init_app2 = __esm({
+    "src/diary/app.ts"() {
+      app = null;
+    }
+  });
+
+  // src/diary/parser.ts
+  function isEncryptedEntry(entry) {
+    return typeof entry.content === "string" && entry.content.includes("🔐");
+  }
+  function parseFile(content, dateStr, onUnparsed) {
+    const entries = [];
+    const lines = content.split("\n");
+    let currentEntry = null;
+    let contentLines = [];
+    let unparsedLines = 0;
+    const headingRegex = /^#\s*((?:\S+)+)\s+(\d{2}:\d{2})/u;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const headingMatch = line.match(headingRegex);
+      if (headingMatch) {
+        if (currentEntry) {
+          currentEntry.content = contentLines.join("\n").trim();
+          entries.push(currentEntry);
+          contentLines = [];
+        }
+        const emojiSequence = headingMatch[1];
+        const time = headingMatch[2];
+        const [hours, minutes] = time.split(":").map(Number);
+        if (isNaN(hours) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+          unparsedLines++;
+          continue;
+        }
+        const timeValue = hours * 100 + minutes;
+        const segmenter = new Intl.Segmenter(void 0, { granularity: "grapheme" });
+        const segments = segmenter.segment(emojiSequence);
+        const tags = [];
+        for (const seg of segments) {
+          const ch = seg.segment;
+          const mappedTag = emojiToTagMap[ch];
+          if (mappedTag) {
+            tags.push(mappedTag);
+          }
+        }
+        if (tags.length === 0) {
+          tags.push("日记");
+        }
+        currentEntry = {
+          date: dateStr,
+          time,
+          timeValue,
+          tags,
+          emoji: emojiSequence,
+          content: "",
+          filename: dateStr,
+          lineNumber: i + 1
+        };
+      } else if (currentEntry) {
+        if (line.trim() === "" && i + 1 < lines.length && lines[i + 1].match(/^#\s/)) {
+          currentEntry.content = contentLines.join("\n").trim();
+          entries.push(currentEntry);
+          currentEntry = null;
+          contentLines = [];
+        } else {
+          contentLines.push(line);
+        }
+      } else if (line.trim() !== "") {
+        unparsedLines++;
+      }
+    }
+    if (currentEntry) {
+      currentEntry.content = contentLines.join("\n").trim();
+      entries.push(currentEntry);
+    }
+    if (onUnparsed && unparsedLines > 0) onUnparsed(unparsedLines);
+    for (const entry of entries) {
+      if (entry.type !== void 0) {
+        entry.tags = [entry.type];
+        delete entry.type;
+      }
+      if (!entry.tags || entry.tags.length === 0) {
+        entry.tags = ["日记"];
+      }
+      entry.emoji = entry.tags.map((tag) => getTagEmoji(tag)).join("");
+    }
+    return entries;
+  }
+  function getFileFrontmatter(file) {
+    const cache = getApp2().metadataCache.getFileCache(file);
+    return cache && cache.frontmatter ? cache.frontmatter : null;
+  }
+  async function getFileTimeParts(file) {
+    const stat = await file.stat;
+    const createTime = stat.ctime || stat.birthtime;
+    const m = (0, import_moment.default)(createTime);
+    return { timeStr: m.format("HH:mm"), timeValue: parseInt(m.format("HHmm")) };
+  }
+  function makeEntryId(prefix, file, dateStr) {
+    return `${prefix}-${file.path.replace(/\//g, "-")}-${dateStr}`;
+  }
+  async function parseMovieFile2(file) {
+    try {
+      const fm = getFileFrontmatter(file);
+      if (!fm) return null;
+      let review = fm["影评"];
+      if (!review || review.trim() === "") return null;
+      let dateStr = fm["观影日期"];
+      if (!dateStr || !(0, import_moment.default)(dateStr, "YYYY-MM-DD", true).isValid()) return null;
+      dateStr = (0, import_moment.default)(dateStr).format("YYYY-MM-DD");
+      let poster = fm["海报"];
+      const { timeStr, timeValue } = await getFileTimeParts(file);
+      let rawTag = "";
+      if (fm.tags && Array.isArray(fm.tags) && fm.tags.length > 0) {
+        rawTag = fm.tags[0];
+      } else if (fm.tags && typeof fm.tags === "string") {
+        rawTag = fm.tags;
+      }
+      let mainTag = "日记";
+      if (rawTag === "电影") mainTag = "电影";
+      else if (rawTag === "纪录片") mainTag = "纪录片";
+      else if (rawTag.endsWith("剧")) mainTag = "电视剧";
+      else if (rawTag.endsWith("漫")) mainTag = "动漫";
+      else if (rawTag === "电视剧") mainTag = "电视剧";
+      else if (rawTag === "动漫") mainTag = "动漫";
+      const fileNameWithoutExt = file.basename;
+      const content = `${review.trim()}
+
+![[${poster}]]
+
+#${fileNameWithoutExt}`;
+      return {
+        date: dateStr,
+        time: timeStr,
+        timeValue,
+        tags: [mainTag],
+        emoji: getTagEmoji(mainTag),
+        content,
+        filename: file.path,
+        lineNumber: 0,
+        id: makeEntryId("movie", file, dateStr)
+      };
+    } catch (err) {
+      console.error(`解析影视文件失败 ${file.path}:`, err);
+      return null;
+    }
+  }
+  async function parseLetterFile(file) {
+    try {
+      const fm = getFileFrontmatter(file);
+      if (!fm) return null;
+      if (fm.readonly === true) return null;
+      let dateStr = fm.date;
+      if (!dateStr) return null;
+      let parsed = (0, import_moment.default)(dateStr, ["YYYY-MM-DD", "YYYY-MM-DD HH:mm"], true);
+      if (!parsed.isValid()) {
+        parsed = (0, import_moment.default)(dateStr);
+        if (!parsed.isValid()) return null;
+      }
+      const dateFormatted = parsed.format("YYYY-MM-DD");
+      const fullContent = await getApp2().vault.read(file);
+      const frontmatterRegex = /^---\n([\s\S]*?)\n---\n/;
+      const match = fullContent.match(frontmatterRegex);
+      let body = fullContent;
+      if (match) {
+        body = fullContent.slice(match[0].length);
+      }
+      body = body.trim();
+      const title = file.basename;
+      const entryContent = `**${title}**
+
+${body}`.trim();
+      const { timeStr, timeValue } = await getFileTimeParts(file);
+      return {
+        date: dateFormatted,
+        time: timeStr,
+        timeValue,
+        tags: ["信"],
+        emoji: getTagEmoji("信"),
+        content: entryContent,
+        filename: file.path,
+        lineNumber: 0,
+        id: makeEntryId("letter", file, dateFormatted)
+      };
+    } catch (err) {
+      console.error(`解析信文件失败 ${file.path}:`, err);
+      return null;
+    }
+  }
+  function parseNaturalTime(input) {
+    if (!input) return null;
+    const now = (0, import_moment.default)();
+    const lower = input.toLowerCase().trim();
+    const relMatch = lower.match(/^(\d+)\s*(分钟?|小时?|天|秒)前$/);
+    if (relMatch) {
+      const num = parseInt(relMatch[1], 10);
+      const unit = relMatch[2];
+      if (unit.startsWith("分")) return now.clone().subtract(num, "minutes");
+      if (unit.startsWith("小")) return now.clone().subtract(num, "hours");
+      if (unit === "天") return now.clone().subtract(num, "days");
+      if (unit === "秒") return now.clone().subtract(num, "seconds");
+    }
+    const yesterdayMatch = lower.match(/^昨天\s*(\d{1,2}:\d{2})$/);
+    if (yesterdayMatch) {
+      const time = yesterdayMatch[1];
+      const yesterday = now.clone().subtract(1, "days");
+      return (0, import_moment.default)(`${yesterday.format("YYYY-MM-DD")} ${time}`, "YYYY-MM-DD HH:mm", true);
+    }
+    const beforeYesterdayMatch = lower.match(/^前天\s*(\d{1,2}:\d{2})$/);
+    if (beforeYesterdayMatch) {
+      const time = beforeYesterdayMatch[1];
+      const before = now.clone().subtract(2, "days");
+      return (0, import_moment.default)(`${before.format("YYYY-MM-DD")} ${time}`, "YYYY-MM-DD HH:mm", true);
+    }
+    const std = (0, import_moment.default)(input, "YYYY-MM-DD HH:mm", true);
+    if (std.isValid()) return std;
+    return null;
+  }
+  function parseFlexibleDateTime(input) {
+    const natural = parseNaturalTime(input);
+    if (natural && natural.isValid()) return natural;
+    return (0, import_moment.default)(input, "YYYY-MM-DD HH:mm", true);
+  }
+  var init_parser = __esm({
+    "src/diary/parser.ts"() {
+      init_fake_obsidian();
+      init_app2();
+      init_config2();
+    }
+  });
+
+  // src/core/item-actions.ts
+  var item_actions_exports = {};
+  __export(item_actions_exports, {
+    attachItemActions: () => attachItemActions,
+    closeItemMenu: () => closeItemMenu,
+    openItemMenu: () => openItemMenu,
+    openItemSheet: () => openItemSheet,
+    refreshItemSheet: () => refreshItemSheet,
+    registerSheetCompanion: () => registerSheetCompanion,
+    resetItemMenuClickGuard: () => resetItemMenuClickGuard,
+    unregisterSheetCompanion: () => unregisterSheetCompanion
+  });
+  function renderIcon(container, iconId) {
+    try {
+      setIcon(container, iconId);
+    } catch (e) {
+    }
+  }
+  function registerSheetCompanion(el) {
+    sheetCompanions.add(el);
+  }
+  function unregisterSheetCompanion(el) {
+    sheetCompanions.delete(el);
+  }
+  function inSheetCompanion(target) {
+    for (const c of sheetCompanions) {
+      if (c.isConnected && c.contains(target)) return true;
+    }
+    return false;
+  }
+  function onMouseDownCapture(ev) {
+    if (popupEl && popupEl.isConnected && !popupEl.contains(ev.target) && !inSheetCompanion(ev.target)) {
+      closeItemMenu();
+    }
+  }
+  function onMouseUpCapture(ev) {
+    if (!suppressNextClick) return;
+    if (popupEl && popupEl.isConnected && popupEl.contains(ev.target)) return;
+    suppressNextClick = false;
+    residualClickArmed = true;
+  }
+  function onClickCapture(ev) {
+    const target = ev.target;
+    if (residualClickArmed) {
+      residualClickArmed = false;
+      ev.stopImmediatePropagation();
+      ev.preventDefault();
+      return;
+    }
+    if (touchSettlePending) {
+      touchSettlePending = false;
+      ev.stopImmediatePropagation();
+      ev.preventDefault();
+      return;
+    }
+    if (popupEl && popupEl.isConnected && !popupEl.contains(target) && !inSheetCompanion(target)) {
+      closeItemMenu();
+    }
+  }
+  function closeItemMenu() {
+    if (menuEsc) {
+      menuEsc.unregister();
+      menuEsc = null;
+    }
+    if (touchSettleTimer) {
+      clearTimeout(touchSettleTimer);
+      touchSettleTimer = null;
+    }
+    document.removeEventListener("mousedown", onMouseDownCapture, true);
+    document.removeEventListener("mouseup", onMouseUpCapture, true);
+    document.removeEventListener("click", onClickCapture, true);
+    if (sheetMask) {
+      sheetMask.remove();
+      sheetMask = null;
+    }
+    if (popupEl) {
+      popupEl.remove();
+      popupEl = null;
+    }
+    sheetBodyEl = null;
+    sheetHeadEl = null;
+    suppressNextClick = false;
+    residualClickArmed = false;
+    touchSettlePending = false;
+    if (prevFocus && prevFocus.isConnected && document.activeElement === document.body) {
+      prevFocus.focus();
+    }
+    prevFocus = null;
+  }
+  function armTouchSettle() {
+    touchSettlePending = true;
+    if (touchSettleTimer) clearTimeout(touchSettleTimer);
+    touchSettleTimer = setTimeout(() => {
+      touchSettlePending = false;
+      touchSettleTimer = null;
+    }, TOUCH_SETTLE_MS);
+  }
+  function resetItemMenuClickGuard() {
+    suppressNextClick = false;
+    residualClickArmed = false;
+  }
+  function attachPopupListeners(id) {
+    document.addEventListener("mousedown", onMouseDownCapture, true);
+    document.addEventListener("mouseup", onMouseUpCapture, true);
+    document.addEventListener("click", onClickCapture, true);
+    menuEsc = escManager.register(id, {
+      isVisible: () => !!(popupEl && popupEl.isConnected),
+      close: closeItemMenu
+    });
+  }
+  function positionMenu(m, x, y) {
+    const mw = m.offsetWidth || 168;
+    const mh = m.offsetHeight || m.children.length * ITEM_HEIGHT + MENU_PADDING;
+    const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+    const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+    let left = x + ANCHOR_GAP;
+    let top = y + ANCHOR_GAP;
+    if (vw && left + mw > vw - VIEWPORT_PAD) left = Math.max(VIEWPORT_PAD, x - mw - ANCHOR_GAP);
+    if (vh && top + mh > vh - VIEWPORT_PAD) top = Math.max(VIEWPORT_PAD, y - mh - ANCHOR_GAP);
+    if (vw) left = Math.min(Math.max(left, VIEWPORT_PAD), Math.max(VIEWPORT_PAD, vw - mw - VIEWPORT_PAD));
+    if (vh) top = Math.min(Math.max(top, VIEWPORT_PAD), Math.max(VIEWPORT_PAD, vh - mh - VIEWPORT_PAD));
+    m.style.left = `${left}px`;
+    m.style.top = `${top}px`;
+  }
+  function attachItemKeyboardNav(host, scope) {
+    host.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+      const items = Array.from(scope.querySelectorAll("button"));
+      if (items.length === 0) return;
+      e.preventDefault();
+      const idx = items.indexOf(document.activeElement);
+      const next = idx === -1 ? 0 : e.key === "ArrowDown" ? (idx + 1) % items.length : (idx - 1 + items.length) % items.length;
+      items[next].focus();
+    });
+  }
+  function focusMenuFirst(host, scope) {
+    prevFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const first = scope.querySelector("button");
+    if (first) first.focus();
+    attachItemKeyboardNav(host, scope);
+  }
+  function openItemMenu(x, y, actions, suppressResidualClick = false, menuClass) {
+    closeItemMenu();
+    const m = document.createElement("div");
+    m.className = "bz-item-menu" + (menuClass ? " " + menuClass : "");
+    m.style.visibility = "hidden";
+    for (const a of actions) {
+      const item = document.createElement("button");
+      item.type = "button";
+      if (a.title) item.title = a.title;
+      item.className = "bz-item-menu-item" + (a.kind === "danger" ? " bz-item-menu-item--danger" : "") + (a.tone === "accent" ? " bz-item-menu-item--accent" : "");
+      const itemIcon = document.createElement("span");
+      itemIcon.className = "bz-item-menu-icon";
+      renderIcon(itemIcon, a.icon);
+      const itemLabel = document.createElement("span");
+      itemLabel.className = "bz-item-menu-label";
+      itemLabel.textContent = a.label;
+      item.appendChild(itemIcon);
+      item.appendChild(itemLabel);
+      item.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        closeItemMenu();
+        a.onClick();
+      });
+      m.appendChild(item);
+    }
+    m.style.zIndex = String(allocZ());
+    document.body.appendChild(m);
+    positionMenu(m, x, y);
+    m.style.visibility = "visible";
+    popupEl = m;
+    suppressNextClick = suppressResidualClick;
+    residualClickArmed = false;
+    if (!suppressResidualClick) armTouchSettle();
+    attachPopupListeners("bz-item-menu");
+    focusMenuFirst(m, m);
+  }
+  function buildSheetItem(a) {
+    const item = document.createElement("button");
+    item.type = "button";
+    if (a.title) item.title = a.title;
+    item.className = "bz-item-sheet-item" + (a.kind === "danger" ? " bz-item-sheet-item--danger" : "") + (a.tone === "accent" ? " bz-item-sheet-item--accent" : "");
+    const itemIcon = document.createElement("span");
+    itemIcon.className = "bz-item-sheet-icon";
+    renderIcon(itemIcon, a.icon);
+    const itemLabel = document.createElement("span");
+    itemLabel.className = "bz-item-sheet-label";
+    itemLabel.textContent = a.label;
+    item.appendChild(itemIcon);
+    item.appendChild(itemLabel);
+    if (a.sub) {
+      const itemSub = document.createElement("span");
+      itemSub.className = "bz-item-sheet-item-sub";
+      itemSub.textContent = a.sub;
+      item.appendChild(itemSub);
+    }
+    item.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      if (a.keepOpen) {
+        a.onClick();
+        return;
+      }
+      closeItemMenu();
+      a.onClick();
+    });
+    return item;
+  }
+  function refreshItemSheet(actions, head) {
+    if (!popupEl || popupEl.classList.contains("bz-item-sheet") === false || !sheetBodyEl) return;
+    sheetBodyEl.innerHTML = "";
+    for (const a of actions) {
+      sheetBodyEl.appendChild(buildSheetItem(a));
+    }
+    if (head && sheetHeadEl) {
+      sheetHeadEl.innerHTML = "";
+      sheetHeadEl.appendChild(head);
+    }
+  }
+  function openItemSheet(actions, opts, suppressResidualClick = false) {
+    closeItemMenu();
+    const mask = document.createElement("div");
+    mask.className = "bz-item-sheet-mask";
+    const sheet = document.createElement("div");
+    sheet.className = "bz-item-sheet";
+    if (opts == null ? void 0 : opts.sheetHead) {
+      const head = document.createElement("div");
+      head.className = "bz-item-sheet-head";
+      head.appendChild(opts.sheetHead);
+      sheet.appendChild(head);
+      sheetHeadEl = head;
+    } else if (opts == null ? void 0 : opts.sheetTitle) {
+      const head = document.createElement("div");
+      head.className = "bz-item-sheet-head";
+      const titleEl = document.createElement("div");
+      titleEl.className = "bz-item-sheet-title";
+      titleEl.textContent = opts.sheetTitle;
+      head.appendChild(titleEl);
+      if (opts.sheetSub) {
+        const subEl = document.createElement("div");
+        subEl.className = "bz-item-sheet-sub";
+        subEl.textContent = opts.sheetSub;
+        head.appendChild(subEl);
+      }
+      sheet.appendChild(head);
+      sheetHeadEl = head;
+    }
+    const body = document.createElement("div");
+    body.className = "bz-item-sheet-body";
+    for (const a of actions) {
+      body.appendChild(buildSheetItem(a));
+    }
+    sheet.appendChild(body);
+    mask.style.zIndex = String(allocZ());
+    sheet.style.zIndex = String(allocZ());
+    document.body.appendChild(mask);
+    document.body.appendChild(sheet);
+    popupEl = sheet;
+    sheetMask = mask;
+    sheetBodyEl = body;
+    suppressNextClick = suppressResidualClick;
+    residualClickArmed = false;
+    if (!suppressResidualClick) armTouchSettle();
+    attachPopupListeners("bz-item-sheet");
+    attachSheetDismiss(sheet, body);
+    focusMenuFirst(sheet, body);
+  }
+  function attachSheetDismiss(sheet, body) {
+    const CLOSE_AT = 80;
+    let startY = 0;
+    let dragging = false;
+    let dy = 0;
+    const reset = () => {
+      dragging = false;
+      dy = 0;
+      sheet.style.transform = "";
+      sheet.classList.remove("bz-item-sheet--dragging");
+    };
+    sheet.addEventListener(
+      "touchstart",
+      (e) => {
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        startY = t.clientY;
+        dragging = true;
+        dy = 0;
+      },
+      { passive: true }
+    );
+    sheet.addEventListener(
+      "touchmove",
+      (e) => {
+        if (!dragging) return;
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        const cur = t.clientY - startY;
+        if (cur <= 0) {
+          if (dy !== 0) reset();
+          return;
+        }
+        if (body.scrollTop > 0 && body.contains(e.target)) {
+          if (dy !== 0) reset();
+          return;
+        }
+        dy = cur;
+        e.preventDefault();
+        sheet.classList.add("bz-item-sheet--dragging");
+        sheet.style.transform = `translateY(${dy}px)`;
+        if (sheetMask) sheetMask.style.opacity = String(Math.max(0, 1 - dy / 400));
+      },
+      { passive: false }
+    );
+    const onTouchEnd = () => {
+      if (!dragging) return;
+      const over = dy > CLOSE_AT;
+      dragging = false;
+      if (over) {
+        sheet.classList.remove("bz-item-sheet--dragging");
+        const s = sheet;
+        s.style.transform = "translateY(100%)";
+        if (sheetMask) sheetMask.style.opacity = "0";
+        setTimeout(() => {
+          if (popupEl === s) closeItemMenu();
+        }, 180);
+      } else {
+        reset();
+        if (sheetMask) sheetMask.style.opacity = "1";
+      }
+      dy = 0;
+    };
+    sheet.addEventListener("touchend", onTouchEnd);
+    sheet.addEventListener("touchcancel", () => {
+      reset();
+      if (sheetMask) sheetMask.style.opacity = "1";
+    });
+  }
+  function attachItemActions(card, actions, opts) {
+    if (!card || actions.length === 0) return;
+    card.classList.add("bz-item-card");
+    card.addEventListener("contextmenu", (e) => {
+      if (isMobileEnv()) return;
+      if ((opts == null ? void 0 : opts.longPressFilter) && !opts.longPressFilter(e)) return;
+      e.preventDefault();
+      openItemMenu(e.clientX, e.clientY, actions, true, opts == null ? void 0 : opts.menuClass);
+      suppressNextClick = false;
+    });
+    longPress(
+      card,
+      (ev) => {
+        if (!isMobileEnv()) return;
+        openItemSheet(actions, opts, ev.type !== "touchstart");
+      },
+      void 0,
+      opts == null ? void 0 : opts.longPressFilter
+    );
+  }
+  var VIEWPORT_PAD, ANCHOR_GAP, ITEM_HEIGHT, MENU_PADDING, TOUCH_SETTLE_MS, popupEl, sheetMask, sheetBodyEl, sheetHeadEl, sheetCompanions, menuEsc, prevFocus, suppressNextClick, residualClickArmed, touchSettlePending, touchSettleTimer;
+  var init_item_actions = __esm({
+    "src/core/item-actions.ts"() {
+      init_dom();
+      init_esc_manager();
+      init_z_order();
+      init_mobile();
+      init_fake_obsidian();
+      VIEWPORT_PAD = 8;
+      ANCHOR_GAP = 12;
+      ITEM_HEIGHT = 30;
+      MENU_PADDING = 10;
+      TOUCH_SETTLE_MS = 400;
+      popupEl = null;
+      sheetMask = null;
+      sheetBodyEl = null;
+      sheetHeadEl = null;
+      sheetCompanions = /* @__PURE__ */ new Set();
+      menuEsc = null;
+      prevFocus = null;
+      suppressNextClick = false;
+      residualClickArmed = false;
+      touchSettlePending = false;
+      touchSettleTimer = null;
     }
   });
 
@@ -14901,7 +12580,7 @@ ${countsToText(s.missing)}
     return out;
   }
   var ENCRYPT_CHANGED_CHANNEL, ENCRYPT_UNLOCK_CHANGED_CHANNEL, RAND_CHARS, STAGING_DIR, PENDING_FILE, BLOB_CONCURRENCY, SafeManager;
-  var init_data6 = __esm({
+  var init_data4 = __esm({
     "src/encrypt/data.ts"() {
       init_app();
       init_domain_bus();
@@ -17492,7 +15171,7 @@ ${countsToText(s.missing)}
       init_settings_modal();
       init_mobile();
       init_settings_common();
-      init_data6();
+      init_data4();
       init_preview();
       init_vault_data();
       init_vault_pw_view();
@@ -19571,8 +17250,8 @@ ${countsToText(s.missing)}
     return controller;
   }
   async function ensureEncrypt(app2) {
-    if (initialized2) return;
-    initialized2 = true;
+    if (initialized) return;
+    initialized = true;
     await getController().init();
   }
   function statusbarHtml2(unlocked) {
@@ -19616,16 +17295,16 @@ ${countsToText(s.missing)}
   function unloadEncrypt() {
     if (controller) controller.cleanup();
     controller = null;
-    initialized2 = false;
+    initialized = false;
   }
-  var initialized2, controller, statusBarEl;
+  var initialized, controller, statusBarEl;
   var init_encrypt = __esm({
     "src/encrypt/index.ts"() {
       init_settings_provider();
       init_app();
       init_ui3();
       init_vault_assets_view();
-      initialized2 = false;
+      initialized = false;
       controller = null;
       statusBarEl = null;
     }
@@ -19771,8 +17450,8 @@ ${entry.content.trim()}`;
       init_app2();
       init_encrypt();
       init_ui3();
-      init_data6();
-      init_config();
+      init_data4();
+      init_config2();
       unlockedListeners = [];
     }
   });
@@ -20206,10 +17885,10 @@ ${entry.content.trim()}`;
       init_domain_bus();
       init_storage();
       init_app2();
-      init_config();
+      init_config2();
       init_parser();
       init_encrypt2();
-      init_state4();
+      init_state3();
       fullRefreshCallbacks = [];
       lightRefreshCallbacks = [];
       progressCallbacks = [];
@@ -20454,8 +18133,8 @@ ${entry.content.trim()}`;
   }
   var init_filter_shared = __esm({
     "src/diary/ui/filter-shared.ts"() {
-      init_config();
-      init_state4();
+      init_config2();
+      init_state3();
       init_ui_settings();
       init_encrypt2();
       init_encrypt();
@@ -21026,7 +18705,7 @@ ${entry.content.trim()}`;
       init_esc_manager();
       init_z_order();
       init_parser();
-      init_state4();
+      init_state3();
       activeMomentReset = null;
     }
   });
@@ -21542,11 +19221,11 @@ ${entry.content.trim()}`;
       init_flow_dialog();
       init_domain_bus();
       init_app2();
-      init_config();
+      init_config2();
       init_parser();
       init_store();
       init_encrypt2();
-      init_state4();
+      init_state3();
       init_ui_settings();
       init_filter_shared();
       init_entries();
@@ -21565,7 +19244,7 @@ ${entry.content.trim()}`;
   }
   var init_panel_close = __esm({
     "src/diary/ui/panel-close.ts"() {
-      init_state4();
+      init_state3();
       init_encrypt2();
       init_store();
     }
@@ -22144,12 +19823,12 @@ ${entry.content.trim()}`;
       init_domain_bus();
       init_item_actions();
       init_app2();
-      init_config();
+      init_config2();
       init_store();
       init_encrypt2();
       init_encrypt();
       init_ui3();
-      init_state4();
+      init_state3();
       init_ui_settings();
       init_dialogs();
       init_panel_close();
@@ -22525,7 +20204,7 @@ ${entry.content.trim()}`;
       init_flow_dialog();
       init_notice();
       init_app2();
-      init_config();
+      init_config2();
       init_repair();
       BATCH_CONCURRENCY = 10;
       REASON_TEXT = {
@@ -22971,9 +20650,9 @@ ${entry.content.trim()}`;
       init_mobile();
       init_settings_modal();
       init_settings_common();
-      init_config();
+      init_config2();
       init_ui_settings();
-      init_state4();
+      init_state3();
       init_store();
       init_encrypt2();
       init_entries();
@@ -23027,7 +20706,7 @@ ${entry.content.trim()}`;
 
   // src/todo/state.ts
   var M3;
-  var init_state5 = __esm({
+  var init_state4 = __esm({
     "src/todo/state.ts"() {
       M3 = {
         appRef: null,
@@ -23069,9 +20748,9 @@ ${entry.content.trim()}`;
       init_domain_bus();
       init_item_actions();
       init_utils();
-      init_data5();
+      init_data3();
       init_due();
-      init_state5();
+      init_state4();
       ICON2 = {
         brand: "list-checks",
         close: "x",
@@ -23238,7 +20917,7 @@ ${entry.content.trim()}`;
     "src/todo/settings.ts"() {
       init_settings_provider();
       init_settings_common();
-      init_data5();
+      init_data3();
       init_ui4();
     }
   });
@@ -23803,7 +21482,7 @@ ${entry.content.trim()}`;
     await enqueueFileTask(getDataFilePath(), () => jsonFileStore(getDataFilePath()).write(saveData));
   }
   var import_moment6;
-  var init_data7 = __esm({
+  var init_data5 = __esm({
     "src/belongings/data.ts"() {
       init_notice();
       init_settings_provider();
@@ -23871,19 +21550,19 @@ ${entry.content.trim()}`;
   function exitDateOf(it) {
     return isExited(it) ? it.exit_date || null : null;
   }
-  function parseLocalDay2(raw) {
+  function parseLocalDay(raw) {
     const parts = String(raw || "").slice(0, 10).split("-").map(Number);
     const [y, m, d] = parts;
     if (!y || !m || !d) return null;
     return new Date(y, m - 1, d);
   }
   function daysUsed(it) {
-    const start = parseLocalDay2(it.purchase_date);
+    const start = parseLocalDay(it.purchase_date);
     if (!start) return 0;
     const ex = exitDateOf(it);
     let end = /* @__PURE__ */ new Date();
     if (ex) {
-      const parsed = parseLocalDay2(ex);
+      const parsed = parseLocalDay(ex);
       if (parsed) end = parsed;
     }
     return Math.max(0, Math.floor((end.getTime() - start.getTime()) / 864e5));
@@ -25208,7 +22887,7 @@ ${entry.content.trim()}`;
       init_item_actions();
       init_domain_bus();
       init_belongings_source();
-      init_data7();
+      init_data5();
       init_render6();
       init_ai2();
       THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
@@ -25240,7 +22919,7 @@ ${entry.content.trim()}`;
   function parseFrontmatter2(content) {
     const m = content.match(/^\s*---\s*\n([\s\S]*?)\n\s*---\s*\n/);
     if (!m) return { fm: null, body: content, extraLines: [] };
-    const fm2 = {};
+    const fm = {};
     const extraLines = [];
     const lines = m[1].split("\n");
     for (let i = 0; i < lines.length; i++) {
@@ -25264,7 +22943,7 @@ ${entry.content.trim()}`;
             if (indent === null) indent = lm[1];
             bodyLines.push(l.startsWith(indent) ? l.slice(indent.length) : l.replace(/^[ \t]+/, ""));
           }
-          fm2[key] = bodyLines.join("\n").replace(/\n+$/, "");
+          fm[key] = bodyLines.join("\n").replace(/\n+$/, "");
           i = j - 1;
           continue;
         }
@@ -25291,7 +22970,7 @@ ${entry.content.trim()}`;
             i = j - 1;
             continue;
           }
-          fm2[key] = "";
+          fm[key] = "";
           continue;
         }
         if (val.startsWith('"') && val.endsWith('"') || val.startsWith("'") && val.endsWith("'")) val = val.slice(1, -1);
@@ -25301,12 +22980,12 @@ ${entry.content.trim()}`;
           } catch (e) {
           }
         }
-        fm2[key] = val;
+        fm[key] = val;
       } else if (LIST_ITEM_RE.test(line)) {
-        const lastKey = Object.keys(fm2).pop();
-        if (lastKey && !Array.isArray(fm2[lastKey])) fm2[lastKey] = [];
+        const lastKey = Object.keys(fm).pop();
+        if (lastKey && !Array.isArray(fm[lastKey])) fm[lastKey] = [];
         if (lastKey) {
-          fm2[lastKey].push(unquote(line.replace(LIST_ITEM_RE, "$1").trim()));
+          fm[lastKey].push(unquote(line.replace(LIST_ITEM_RE, "$1").trim()));
         } else {
           extraLines.push(line);
         }
@@ -25315,11 +22994,11 @@ ${entry.content.trim()}`;
       }
     }
     const body = content.slice(m[0].length);
-    return { fm: fm2, body, extraLines };
+    return { fm, body, extraLines };
   }
-  function buildFrontmatter(fm2, extraLines = []) {
+  function buildFrontmatter(fm, extraLines = []) {
     const lines = ["---"];
-    for (const [k, v] of Object.entries(fm2)) {
+    for (const [k, v] of Object.entries(fm)) {
       if (Array.isArray(v)) {
         lines.push(`${k}:`);
         for (const item of v) lines.push(`  - "${item}"`);
@@ -25404,11 +23083,11 @@ ${bodyText.substring(0, 6e3)}`;
       return { target: file, renamed: false, failed: true };
     }
   }
-  function formatSummaryNotice(fm2) {
+  function formatSummaryNotice(fm) {
     const parts = [];
-    if (fm2.title) parts.push(`《${fm2.title}》`);
-    if (fm2.summary) parts.push(String(fm2.summary));
-    if (Array.isArray(fm2.tags) && fm2.tags.length) parts.push(fm2.tags.map((t) => `#${t}`).join(" "));
+    if (fm.title) parts.push(`《${fm.title}》`);
+    if (fm.summary) parts.push(String(fm.summary));
+    if (Array.isArray(fm.tags) && fm.tags.length) parts.push(fm.tags.map((t) => `#${t}`).join(" "));
     return parts.join("\n\n");
   }
   async function processFile(app2, ai, file, opts = {}) {
@@ -25420,7 +23099,7 @@ ${bodyText.substring(0, 6e3)}`;
     const tagCount2 = String(s.autoSummaryTagCount || "3-6");
     try {
       const content = await app2.vault.read(file);
-      const { fm: fm2, body } = parseFrontmatter2(content);
+      const { fm, body } = parseFrontmatter2(content);
       const bodyText = extractBodyForAI(body);
       if (!bodyText || bodyText.length < 100) return;
       const missing = [];
@@ -25428,13 +23107,13 @@ ${bodyText.substring(0, 6e3)}`;
         missing.push("summary");
         if (tagsEnabled !== false) missing.push("tags");
       } else {
-        if (!fm2 || !fm2.title) missing.push("title");
-        if (!fm2 || !fm2.summary) missing.push("summary");
-        if (tagsEnabled !== false && (!fm2 || !Array.isArray(fm2.tags) || fm2.tags.length === 0)) missing.push("tags");
+        if (!fm || !fm.title) missing.push("title");
+        if (!fm || !fm.summary) missing.push("summary");
+        if (tagsEnabled !== false && (!fm || !Array.isArray(fm.tags) || fm.tags.length === 0)) missing.push("tags");
         if (missing.length === 0) return;
       }
       console.log(`[自动摘要] 补全缺失字段(${missing.join("/")}): ${file.basename}`);
-      const startName = fm2 && fm2.title ? fm2.title : file.basename;
+      const startName = fm && fm.title ? fm.title : file.basename;
       const key = dedupeKeyFor(file);
       if (!opts.quiet) {
         h = notify(`正在为《${startName}》生成摘要…`, { type: "progress", dedupeKey: key });
@@ -25614,11 +23293,11 @@ ${bodyText.substring(0, 6e3)}`;
     }, 2e3);
   }
   function ensureAutoSummary(app2) {
-    if (initialized3) {
+    if (initialized2) {
       if (!registerTimer && !fileListenerRef) scheduleRegister(app2);
       return;
     }
-    initialized3 = true;
+    initialized2 = true;
     vaultRef = app2.vault;
     workspaceRef = app2.workspace;
     scheduleRegister(app2);
@@ -25657,14 +23336,14 @@ ${bodyText.substring(0, 6e3)}`;
     batchDone = 0;
     processingPaths.clear();
   }
-  var initialized3, vaultRef, workspaceRef, fileListenerRef, openListenerRef, registerTimer, pendingPaths, processingPaths, jobQueue, draining, drainTimer, batchTotal, batchDone, batchNotice;
+  var initialized2, vaultRef, workspaceRef, fileListenerRef, openListenerRef, registerTimer, pendingPaths, processingPaths, jobQueue, draining, drainTimer, batchTotal, batchDone, batchNotice;
   var init_auto_summary = __esm({
     "src/auto-summary/index.ts"() {
       init_ai();
       init_settings_provider();
       init_notice();
       init_processor();
-      initialized3 = false;
+      initialized2 = false;
       vaultRef = null;
       workspaceRef = null;
       fileListenerRef = null;
@@ -26307,7 +23986,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_settings_common();
       init_dom();
       init_esc_manager();
-      init_settings_schema2();
+      init_settings_schema();
       init_news_source_settings();
       init_news_data();
     }
@@ -26581,7 +24260,7 @@ ${bodyText.substring(0, 6e3)}`;
     M5.searchKeyword = "";
   }
   var M5;
-  var init_state6 = __esm({
+  var init_state5 = __esm({
     "src/clipbook/state.ts"() {
       M5 = {
         appRef: null,
@@ -26639,7 +24318,7 @@ ${bodyText.substring(0, 6e3)}`;
     return { articleOverrides: {}, savedArchive: [], order: [] };
   }
   var CLIPBOOK_JSON;
-  var init_data8 = __esm({
+  var init_data6 = __esm({
     "src/clipbook/data.ts"() {
       init_storage();
       CLIPBOOK_JSON = "clipbook.json";
@@ -26660,11 +24339,11 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function parseClipFile(file, getCache, getBacklinks) {
     const cache = (getCache || defaultCache)(file);
-    const fm2 = cache && cache.frontmatter;
-    if (!fm2) return null;
-    if (!fm2.url || !fm2.created) return null;
+    const fm = cache && cache.frontmatter;
+    if (!fm) return null;
+    if (!fm.url || !fm.created) return null;
     const title = file.basename || String(file.name || "").replace(/\.md$/, "");
-    let created = new Date(fm2.created).valueOf();
+    let created = new Date(fm.created).valueOf();
     if (isNaN(created)) created = Date.now();
     let backlinkNames = [];
     try {
@@ -26676,17 +24355,17 @@ ${bodyText.substring(0, 6e3)}`;
     }
     let domain = "";
     try {
-      if (fm2.url) domain = new URL(String(fm2.url)).hostname;
+      if (fm.url) domain = new URL(String(fm.url)).hostname;
     } catch (e) {
     }
     return {
       path: file.path,
       file,
-      url: String(fm2.url),
-      author: fm2.author ? String(fm2.author) : "",
-      site: fm2.site ? String(fm2.site) : "未知",
-      summary: fm2.summary ? String(fm2.summary) : "",
-      tags: Array.isArray(fm2.tags) ? fm2.tags.map(String) : fm2.tags ? [String(fm2.tags)] : [],
+      url: String(fm.url),
+      author: fm.author ? String(fm.author) : "",
+      site: fm.site ? String(fm.site) : "未知",
+      summary: fm.summary ? String(fm.summary) : "",
+      tags: Array.isArray(fm.tags) ? fm.tags.map(String) : fm.tags ? [String(fm.tags)] : [],
       title,
       created,
       backlinkNames,
@@ -26775,12 +24454,12 @@ ${bodyText.substring(0, 6e3)}`;
   var init_loader = __esm({
     "src/clipbook/loader.ts"() {
       init_news_data();
-      init_data8();
+      init_data6();
       init_scan();
       init_store2();
       init_settings_provider();
       init_app();
-      init_state6();
+      init_state5();
       init_write_queue();
     }
   });
@@ -26915,7 +24594,7 @@ ${body}`;
     return raw.trim();
   }
   var import_moment7, TIME_RE, LiteratureData;
-  var init_data9 = __esm({
+  var init_data7 = __esm({
     "src/literature/data.ts"() {
       import_moment7 = __toESM(require_moment());
       init_storage();
@@ -27253,7 +24932,7 @@ ${c}`,
     }
     const whole = polished.join("");
     const videoSection = opts.videoPath ? `![[${String(opts.videoPath).replace(/\\/g, "/")}]]` : null;
-    const fm2 = [
+    const fm = [
       "---",
       `title: ${quoteYaml(title)}`,
       "tags:",
@@ -27267,7 +24946,7 @@ ${c}`,
       `domain: ${quoteYaml(domain)}`,
       "---"
     ].join("\n");
-    const body = [fm2, whole, videoSection].filter(Boolean).join("\n\n");
+    const body = [fm, whole, videoSection].filter(Boolean).join("\n\n");
     return writeUniqueNote(String(s.literatureDirectory || "文献盒"), sanitizeMdTitle(title), body);
   }
   function termPrompt(term, list) {
@@ -27317,7 +24996,7 @@ ${t}`,
       summary = String(opts.summary).trim();
       domain = String((_a2 = opts.domain) != null ? _a2 : "").trim();
     }
-    const fm2 = [
+    const fm = [
       "---",
       `title: ${quoteYaml(term)}`,
       "type: term",
@@ -27326,7 +25005,7 @@ ${t}`,
       `date: ${quoteYaml(nowStamp())}`,
       "---"
     ].join("\n");
-    const body = [fm2, summary].filter(Boolean).join("\n\n");
+    const body = [fm, summary].filter(Boolean).join("\n\n");
     return writeUniqueNote(String(s.literatureDirectory || "文献盒"), sanitizeMdTitle(term), body);
   }
   function parseFrontmatter3(content) {
@@ -27372,13 +25051,13 @@ ${content || ""}`;
     let filled = 0;
     for (const f of files) {
       const content = await app2.vault.read(f);
-      const fm2 = parseFrontmatter3(content);
-      const hasType = fm2.type === "video" || fm2.type === "term";
-      const hasDomain = !!fm2.domain;
+      const fm = parseFrontmatter3(content);
+      const hasType = fm.type === "video" || fm.type === "term";
+      const hasDomain = !!fm.domain;
       if (hasType && hasDomain) continue;
       const patch = [];
       if (!hasType) {
-        const type = fm2.url || fm2.author || fm2.videoTitle ? "video" : fm2.term ? "term" : "";
+        const type = fm.url || fm.author || fm.videoTitle ? "video" : fm.term ? "term" : "";
         if (type) patch.push(`type:${type}`);
       }
       if (!hasDomain) needDomain.push({ file: f });
@@ -27491,7 +25170,7 @@ ${sample}`,
       init_domain_bus();
       init_settings_provider();
       init_app();
-      init_data9();
+      init_data7();
       init_note_gen();
       INSTALL_HINT = "请先运行 npm install -g @jwbz/bili-downloader";
       STEP_RE = /^\[bz-step\]\s*(.+)$/;
@@ -27933,7 +25612,7 @@ ${sample}`,
       init_z_order();
       init_domain_bus();
       init_app();
-      init_data9();
+      init_data7();
       init_processor2();
       init_note_gen();
       STATUS_META = {
@@ -28188,9 +25867,9 @@ ${sample}`,
           const app2 = getApp();
           try {
             const cache = app2.metadataCache.getFileCache(file);
-            const fm2 = cache && cache.frontmatter;
-            const title = fm2 && fm2.title ? String(fm2.title) : file.basename;
-            const date = fm2 && fm2.date ? String(fm2.date) : "";
+            const fm = cache && cache.frontmatter;
+            const title = fm && fm.title ? String(fm.title) : file.basename;
+            const date = fm && fm.date ? String(fm.date) : "";
             let created = parseDateRaw(date);
             if (isNaN(created)) {
               try {
@@ -28204,10 +25883,10 @@ ${sample}`,
               file,
               path: file.path,
               title,
-              type: fm2 && fm2.type ? String(fm2.type) : "",
-              domain: fm2 && fm2.domain ? String(fm2.domain) : "",
-              summary: fm2 && fm2.summary ? String(fm2.summary) : "",
-              url: fm2 && fm2.url ? String(fm2.url) : "",
+              type: fm && fm.type ? String(fm.type) : "",
+              domain: fm && fm.domain ? String(fm.domain) : "",
+              summary: fm && fm.summary ? String(fm.summary) : "",
+              url: fm && fm.url ? String(fm.url) : "",
               date,
               created
             };
@@ -29472,11 +27151,11 @@ ${sample}`,
   });
   function ensureLiterature(app2) {
     var _a2;
-    if (initialized4) return;
+    if (initialized3) return;
     try {
       LiteratureData.init({ storagePath: (_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath });
       uiManager = new UIManager2(app2);
-      initialized4 = true;
+      initialized3 = true;
     } catch (e) {
       console.error("bz: 文献盒初始化失败（下次打开命令将自动重试）", e);
       uiManager = null;
@@ -29503,16 +27182,16 @@ ${sample}`,
   function unloadLiterature() {
     uiManager == null ? void 0 : uiManager.destroy();
     uiManager = null;
-    initialized4 = false;
+    initialized3 = false;
   }
-  var initialized4, uiManager;
+  var initialized3, uiManager;
   var init_literature = __esm({
     "src/literature/index.ts"() {
       init_fake_obsidian();
       init_settings_provider();
-      init_data9();
+      init_data7();
       init_ui6();
-      initialized4 = false;
+      initialized3 = false;
       uiManager = null;
     }
   });
@@ -29720,7 +27399,7 @@ ${sample}`,
       init_constants3();
       init_save();
       init_constants3();
-      init_data8();
+      init_data6();
       init_write_queue();
       curKey = "";
       openedAt = 0;
@@ -30799,7 +28478,7 @@ ${sample}`,
       init_settings_common();
       init_md();
       init_store2();
-      init_state6();
+      init_state5();
       init_loader();
       init_flow();
       overlayEl = null;
@@ -30981,7 +28660,7 @@ ${sample}`,
   var init_shared4 = __esm({
     "src/favorites/shared.ts"() {
       init_str();
-      init_config2();
+      init_config();
       ICON4 = {
         close: "x",
         add: "plus",
@@ -31037,7 +28716,7 @@ ${sample}`,
   var init_render7 = __esm({
     "src/favorites/layouts/board/render.ts"() {
       init_str();
-      init_config2();
+      init_config();
       init_shared4();
     }
   });
@@ -31659,7 +29338,7 @@ GitHub 仓库：${ghInfo.title}
       init_ui();
       init_domain_bus();
       init_favorites_source();
-      init_config2();
+      init_config();
       init_render8();
       M6 = {
         overlay: null,
@@ -31769,10 +29448,10 @@ GitHub 仓库：${ghInfo.title}
   });
 
   // src/reading-report/stats.ts
-  var init_stats2 = __esm({
+  var init_stats = __esm({
     "src/reading-report/stats.ts"() {
       init_utils();
-      init_data2();
+      init_data();
     }
   });
 
@@ -31785,7 +29464,7 @@ GitHub 仓库：${ghInfo.title}
   // src/reading-report/report.ts
   var init_report = __esm({
     "src/reading-report/report.ts"() {
-      init_stats2();
+      init_stats();
       init_utils();
       init_chart_palette();
     }
@@ -31796,8 +29475,8 @@ GitHub 仓库：${ghInfo.title}
     "src/reading-report/index.ts"() {
       init_notice();
       init_ui();
-      init_data2();
-      init_stats2();
+      init_data();
+      init_stats();
       init_report();
     }
   });
@@ -31813,7 +29492,7 @@ GitHub 仓库：${ghInfo.title}
   var init_epub_notes = __esm({
     "src/bookshelf/epub-notes.ts"() {
       init_storage();
-      init_data2();
+      init_data();
     }
   });
 
@@ -31840,8 +29519,8 @@ GitHub 仓库：${ghInfo.title}
     return document.body.classList.contains("theme-dark") ? "bz-bs-mode-dark" : "bz-bs-mode-light";
   }
   function applyBookshelfSkin(skin) {
-    if (!M2.currentOverlay) return;
-    const panel2 = M2.currentOverlay.querySelector(".bz-bs-panel");
+    if (!M.currentOverlay) return;
+    const panel2 = M.currentOverlay.querySelector(".bz-bs-panel");
     if (!panel2) return;
     panel2.classList.remove(...SKIN_IDS.map((id) => `bz-bs-skin-${id}`), "bz-bs-mode-light", "bz-bs-mode-dark");
     panel2.classList.add(`bz-bs-skin-${normalizeSkin(skin)}`, bsModeClass());
@@ -31856,9 +29535,9 @@ GitHub 仓库：${ghInfo.title}
       init_settings_provider();
       init_ui();
       init_reading_report();
-      init_state2();
-      init_data2();
-      init_render2();
+      init_state();
+      init_data();
+      init_render4();
       init_notes_ui();
       SKIN_IDS = ["nordic", "noir", "kraft", "velvet", "mono"];
     }
@@ -31943,8 +29622,4165 @@ GitHub 仓库：${ghInfo.title}
   var init_settings4 = __esm({
     "src/bookshelf/settings.ts"() {
       init_settings_common();
-      init_data2();
+      init_data();
       init_ui9();
+    }
+  });
+
+  // src/review/fsrs.ts
+  function scheduleNext(state3, rating, now, w = DEFAULT_W) {
+    const fsrs = new FSRS(w);
+    if (state3.phase !== "fsrs" && state3.stage < LADDER_MAX) {
+      let target;
+      if (rating === "again") target = Math.max(0, state3.stage - 1);
+      else if (rating === "hard") target = state3.stage;
+      else if (rating === "good") target = state3.stage + 1;
+      else target = state3.stage + 2;
+      target = Math.max(0, Math.min(target, LADDER_MAX));
+      if (target >= LADDER_MAX) {
+        const S2 = fsrs.initS(rating);
+        const D2 = rating === "again" ? fsrs.w[4] : 0.3;
+        const rS = Math.round(S2 * 100) / 100;
+        const rD = Math.round(D2 * 100) / 100;
+        return {
+          stage: target,
+          phase: "fsrs",
+          stability: rS,
+          difficulty: rD,
+          intervalDays: FSRS_FIRST_INTERVALS[target],
+          enteringFsrs: true,
+          historyStage: target + 1,
+          R: null,
+          historyStability: rS,
+          historyDifficulty: rD
+        };
+      }
+      return {
+        stage: target,
+        phase: "ladder",
+        stability: null,
+        difficulty: null,
+        intervalDays: FSRS_FIRST_INTERVALS[target],
+        enteringFsrs: false,
+        historyStage: target + 1,
+        R: null,
+        historyStability: null,
+        historyDifficulty: null
+      };
+    }
+    const S = state3.stability || 1;
+    const D = state3.difficulty || 0.3;
+    const last = state3.lastReviewed || state3.reviewStart;
+    const t = last ? (now.getTime() - new Date(last).getTime()) / 864e5 : 0;
+    const R = fsrs.R(t, S);
+    const result = fsrs.nextInterval(S, D, rating, R);
+    return {
+      stage: state3.stage,
+      phase: "fsrs",
+      stability: Math.round(result.S * 100) / 100,
+      difficulty: Math.round(result.D * 100) / 100,
+      intervalDays: result.days,
+      enteringFsrs: false,
+      historyStage: state3.stage + 1,
+      R,
+      historyStability: Math.round(result.S * 100) / 100,
+      historyDifficulty: Math.round(result.D * 100) / 100
+    };
+  }
+  var DEFAULT_W, DEFAULT_D, FSRS, FSRS_FIRST_INTERVALS, FSRS_FIRST_TEXTS, TOTAL_STAGES, LADDER_MAX;
+  var init_fsrs = __esm({
+    "src/review/fsrs.ts"() {
+      DEFAULT_W = [0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01, 1.49, 0.14, 1.26, 0.07, 0.35, 2.06, 0.57, 0.09, 0.05, 0.33, 2.15];
+      DEFAULT_D = 0.9;
+      FSRS = class {
+        constructor(w = DEFAULT_W, d = DEFAULT_D) {
+          this.w = w;
+          this.d = d;
+        }
+        /** 记忆保留度：R(t, S) = (1 + t/(S·d))^-d */
+        R(t, S) {
+          return Math.pow(1 + t / (S * this.d), -this.d);
+        }
+        /** 初始稳定性 */
+        initS(rating) {
+          const map = { again: 0, hard: 1, good: 2, easy: 3 };
+          return this.w[map[rating]] || 1;
+        }
+        /** 下一难度 */
+        nextDiff(D, rating) {
+          let newD;
+          if (rating === "again") newD = this.w[4];
+          else if (rating === "hard") newD = D + this.w[5];
+          else if (rating === "easy") newD = D + this.w[6];
+          else newD = D;
+          return Math.max(0, Math.min(1, newD));
+        }
+        /** 下一稳定性 */
+        nextStab(S, D, rating, R) {
+          if (rating === "again") {
+            return this.w[11] * Math.pow(D, -this.w[12]) * (Math.pow(S + 1, this.w[13]) - 1) * Math.exp(this.w[14] * R);
+          }
+          const base = Math.exp(this.w[8]) * (11 - D) * Math.pow(S, -this.w[9]) * (Math.exp(this.w[10] * (1 - R)) - 1);
+          if (rating === "hard") return S * base;
+          if (rating === "good") return S * (base + 1);
+          return S * base * (Math.exp(this.w[17]) + 1);
+        }
+        /** 下一间隔（天） */
+        nextInterval(S, D, rating, R) {
+          const newD = this.nextDiff(D, rating);
+          const newS = Math.max(0.01, this.nextStab(S, newD, rating, R));
+          return { S: newS, D: newD, days: newS };
+        }
+      };
+      FSRS_FIRST_INTERVALS = [1 / 1440, 1 / 48, 1 / 4, 1, 3, 7, 15, 30, 60, 120];
+      FSRS_FIRST_TEXTS = ["1m", "30m", "6h", "1d", "3d", "7d", "15d", "30d", "60d", "120d"];
+      TOTAL_STAGES = 10;
+      LADDER_MAX = 9;
+    }
+  });
+
+  // src/review/data.ts
+  function getReviewFilePath() {
+    const s = tryGetSettings();
+    return storageFile("review.json", s && s.storagePath || "CONFIG/STORAGE");
+  }
+  function getReviewFitFilePath() {
+    const s = tryGetSettings();
+    return storageFile("review-fit.json", s && s.storagePath || "CONFIG/STORAGE");
+  }
+  async function loadFittedParams(app2) {
+    const data = await jsonFileStore(getReviewFitFilePath()).read();
+    if (!data || !Array.isArray(data.w) || data.w.length < 8) return null;
+    return data;
+  }
+  async function saveFittedParams(app2, fit) {
+    await enqueueFileTask(getReviewFitFilePath(), () => jsonFileStore(getReviewFitFilePath()).write(fit));
+  }
+  var ReviewDataManager;
+  var init_data8 = __esm({
+    "src/review/data.ts"() {
+      init_storage();
+      init_settings_provider();
+      init_fsrs();
+      ReviewDataManager = class {
+        constructor(app2) {
+          this.app = app2;
+        }
+        /** 加载条目（向后兼容旧字段；日期兼容 ISO 字符串与数字）。
+         *  走模块级 getApp（reviewApp 为单例 dataManager，app 参数注入会绑定旧 app 导致跨测试/重开写错 vault） */
+        async loadItems() {
+          var _a2, _b2;
+          const data = await jsonFileStore(getReviewFilePath()).read();
+          const items = Array.isArray(data) ? data : [];
+          const valid = [];
+          for (const item of items) {
+            const file = this.app.vault.getAbstractFileByPath(item.filePath);
+            if (!file) {
+              item.file = null;
+              item.isMissing = true;
+              item.name = item.name || ((_a2 = item.filePath.split("/").pop()) == null ? void 0 : _a2.replace(/\.md$/, "")) || item.filePath;
+              item.isCompleted = item.completed || false;
+              item.isOverdue = false;
+              item.currentStage = ((_b2 = item.stage) != null ? _b2 : (item.reviewStage || 1) - 1) + 1;
+              item.totalStages = TOTAL_STAGES;
+              valid.push(item);
+              continue;
+            }
+            item.file = file;
+            item.name = file.basename;
+            if (item.stage === void 0) item.stage = (item.reviewStage || 1) - 1;
+            if (item.stability === void 0) item.stability = 1;
+            if (item.difficulty === void 0) item.difficulty = 0.3;
+            if (item.phase === void 0) item.phase = item.stage >= LADDER_MAX ? "fsrs" : "ladder";
+            const now = /* @__PURE__ */ new Date();
+            const isCompleted = item.completed || false;
+            const nextReview = item.nextReviewDate ? new Date(item.nextReviewDate) : null;
+            const isOverdue = !!nextReview && now > nextReview && !isCompleted;
+            item.isCompleted = isCompleted;
+            item.isOverdue = isOverdue;
+            item.currentStage = item.stage + 1;
+            item.totalStages = TOTAL_STAGES;
+            valid.push(item);
+          }
+          return valid;
+        }
+        /** 保存（白名单剥离运行时字段：file/isCompleted/isOverdue/isMissing/currentStage/totalStages
+         *  均为 loadItems 派生或运行时态，不落盘（数据卫生）；走模块级 getApp——见 loadItems 注释） */
+        async saveItems(items) {
+          const data = items.map((i) => {
+            const {
+              file: _file,
+              isCompleted: _isCompleted,
+              isOverdue: _isOverdue,
+              isMissing: _isMissing,
+              currentStage: _currentStage,
+              totalStages: _totalStages,
+              ...rest
+            } = i;
+            return rest;
+          });
+          await jsonFileStore(getReviewFilePath()).write(data);
+        }
+        /** 读改写事务：fn 基于磁盘现值改动，整体入 per-path 串行队列（D3 原语 1） */
+        mutate(fn) {
+          return enqueueFileTask(getReviewFilePath(), async () => {
+            const items = await this.loadItems();
+            const result = await fn(items);
+            await this.saveItems(items);
+            return result;
+          });
+        }
+        /** 新增条目 */
+        addItem(filePath, fileName) {
+          return this.mutate((items) => {
+            if (items.some((i) => i.filePath === filePath)) throw new Error("该笔记已在复习计划中");
+            const now = /* @__PURE__ */ new Date();
+            const newItem = {
+              id: `review_${now.getTime()}_${Math.random().toString(36).slice(2, 8)}`,
+              filePath,
+              name: fileName,
+              reviewStart: now.toISOString(),
+              stage: 0,
+              phase: "ladder",
+              stability: 1,
+              difficulty: 0.3,
+              reviewHistory: [],
+              totalReviews: 0,
+              averageConfidence: 0,
+              nextReviewDate: new Date(now.getTime() + FSRS_FIRST_INTERVALS[0] * 864e5).toISOString(),
+              lastReviewed: null,
+              lastDifficulty: null,
+              completed: false
+            };
+            items.push(newItem);
+            return newItem;
+          });
+        }
+        /** 更新条目（按 filePath 定位 + 就地修改 + 落盘） */
+        updateItem(filePath, updateFn) {
+          return this.mutate((items) => {
+            const idx = items.findIndex((i) => i.filePath === filePath);
+            if (idx === -1) throw new Error("条目不存在");
+            updateFn(items[idx]);
+          }).then(() => void 0);
+        }
+        /** 移除条目（同路径重复条目全数移除，与旧 filter 语义一致） */
+        removeItem(filePath) {
+          return this.mutate((items) => {
+            for (let i = items.length - 1; i >= 0; i--) {
+              if (items[i].filePath === filePath) items.splice(i, 1);
+            }
+          }).then(() => void 0);
+        }
+        /** 撤销移出（ticket 141 通病 1）：原条目（含阶段/排期/历史）原样插回，不走 addItem 重置进度。
+         *  运行时字段与 saveItems 同口径剥离（file/isCompleted/isOverdue/isMissing/currentStage/totalStages 不落盘） */
+        restoreItem(item) {
+          return this.mutate((items) => {
+            if (items.some((i) => i.filePath === item.filePath)) return;
+            const {
+              file: _file,
+              isCompleted: _isCompleted,
+              isOverdue: _isOverdue,
+              isMissing: _isMissing,
+              currentStage: _currentStage,
+              totalStages: _totalStages,
+              ...rest
+            } = item;
+            items.push(rest);
+          }).then(() => void 0);
+        }
+        getOverdueCount(items) {
+          return items.filter((i) => i.isOverdue && !i.isCompleted).length;
+        }
+        /** 文件重命名时更新路径 */
+        updateFilePath(oldPath, newPath, newName) {
+          return this.mutate((items) => {
+            const item = items.find((i) => i.filePath === oldPath);
+            if (!item) return false;
+            if (items.some((i) => i.filePath === newPath && i.filePath !== oldPath)) return false;
+            item.filePath = newPath;
+            item.name = newName;
+            return true;
+          });
+        }
+      };
+    }
+  });
+
+  // src/review/fit.ts
+  function clip(w) {
+    const out = [...w];
+    for (let i = 0; i < 4; i++) out[i] = Math.max(0.01, out[i]);
+    out[4] = Math.max(0, Math.min(1, out[4]));
+    for (let i = 5; i < 8; i++) out[i] = Math.max(0.01, out[i]);
+    return out;
+  }
+  function computeSampleLogLikelihood(w, sample) {
+    const d = DEFAULT_D;
+    const S = sample.S;
+    const t = sample.t;
+    const denom = Math.max(0.01, S * d);
+    const R = Math.pow(1 + t / denom, -d);
+    const remember = sample.rating === 2 || sample.rating === 3;
+    const p = remember ? R : 1 - R;
+    return Math.log(Math.max(1e-9, Math.min(1 - 1e-9, p)));
+  }
+  function isFittableSample(sample) {
+    return sample.stage >= 9;
+  }
+  function buildFitSamples(history2, opts) {
+    const out = [];
+    for (let i = 1; i < history2.length; i++) {
+      const prev = history2[i - 1];
+      const cur = history2[i];
+      if (prev.stability === void 0) continue;
+      const prevD = prev.difficulty !== void 0 ? prev.difficulty : opts == null ? void 0 : opts.fallbackDifficulty;
+      if (prevD === void 0) continue;
+      const t = (new Date(cur.timestamp).getTime() - new Date(prev.timestamp).getTime()) / 864e5;
+      if (!(t > 0)) continue;
+      const ratingIdx = RATING_INDEX[cur.rating];
+      if (ratingIdx === void 0) continue;
+      out.push({
+        t,
+        S: prev.stability,
+        D: prevD,
+        rating: ratingIdx,
+        stage: cur.stage
+      });
+    }
+    return out;
+  }
+  function totalLogLikelihood(w, samples) {
+    let sum = 0;
+    for (const s of samples) {
+      if (!isFittableSample(s)) continue;
+      sum += computeSampleLogLikelihood(w, s);
+    }
+    return sum;
+  }
+  function numericGradient(w, samples, eps = 1e-5) {
+    const grad = new Array(w.length).fill(0);
+    const base = totalLogLikelihood(w, samples);
+    for (let i = 0; i < Math.min(8, w.length); i++) {
+      const wp = [...w];
+      const wm = [...w];
+      wp[i] += eps;
+      wm[i] -= eps;
+      const fp = totalLogLikelihood(wp, samples);
+      const fm = totalLogLikelihood(wm, samples);
+      grad[i] = (fp - fm) / (2 * eps);
+    }
+    return grad;
+  }
+  function fitFSRSParams(samples, opts = {}) {
+    var _a2, _b2, _c;
+    const initW = opts.initW ? [...opts.initW] : [...DEFAULT_W];
+    const iterations = (_a2 = opts.iterations) != null ? _a2 : 150;
+    const lr = (_b2 = opts.lr) != null ? _b2 : 0.02;
+    const full = (_c = opts.full) != null ? _c : false;
+    const fitLen = full ? Math.min(19, initW.length) : Math.min(8, initW.length);
+    const w = clip(initW);
+    const m = new Array(w.length).fill(0);
+    const v = new Array(w.length).fill(0);
+    const beta1 = 0.9;
+    const beta2 = 0.999;
+    const eps = 1e-8;
+    let lastLL = totalLogLikelihood(w, samples);
+    let bestW = [...w];
+    let bestLL = lastLL;
+    let stall = 0;
+    for (let it = 1; it <= iterations; it++) {
+      const lrIt = lr * (1 - 0.75 * (it / iterations));
+      const grad = numericGradient(w, samples);
+      for (let i = 0; i < fitLen; i++) {
+        m[i] = beta1 * m[i] + (1 - beta1) * grad[i];
+        v[i] = beta2 * v[i] + (1 - beta2) * grad[i] * grad[i];
+        const mHat = m[i] / (1 - Math.pow(beta1, it));
+        const vHat = v[i] / (1 - Math.pow(beta2, it));
+        w[i] += lrIt * mHat / (Math.sqrt(vHat) + eps);
+      }
+      for (let i = 0; i < fitLen; i++) {
+        if (i < 4) w[i] = Math.max(0.01, w[i]);
+        else if (i === 4) w[i] = Math.max(0, Math.min(1, w[i]));
+        else w[i] = Math.max(0.01, w[i]);
+      }
+      const ll = totalLogLikelihood(w, samples);
+      if (ll > bestLL) {
+        bestLL = ll;
+        bestW = [...w];
+      }
+      if (Math.abs(ll - lastLL) < 1e-6) {
+        stall++;
+        if (stall >= 10) break;
+      } else stall = 0;
+      lastLL = ll;
+    }
+    return { w: clip(bestW), logLikelihood: bestLL, iterations };
+  }
+  function fitFromItems(items, opts) {
+    var _a2;
+    const samples = items.flatMap((i) => buildFitSamples(i.reviewHistory || [], { fallbackDifficulty: i.difficulty }));
+    const fittable = samples.filter(isFittableSample);
+    const count = fittable.length;
+    if (count < 100) return null;
+    const full = (_a2 = opts == null ? void 0 : opts.full) != null ? _a2 : count >= 300;
+    return { fit: fitFSRSParams(samples, { full }), count };
+  }
+  function mergeFittedW(fitted) {
+    const out = [...DEFAULT_W];
+    for (let i = 0; i < Math.min(19, fitted.length); i++) out[i] = fitted[i];
+    return out;
+  }
+  var RATING_INDEX;
+  var init_fit = __esm({
+    "src/review/fit.ts"() {
+      init_fsrs();
+      RATING_INDEX = { again: 0, hard: 1, good: 2, easy: 3 };
+    }
+  });
+
+  // src/review/stats.ts
+  function dateKey(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+  function historyOf(item) {
+    return (item.reviewHistory || []).map((h) => ({
+      timestamp: h.timestamp,
+      rating: h.rating,
+      stage: h.stage,
+      stability: h.stability,
+      difficulty: h.difficulty,
+      R: h.R
+    }));
+  }
+  function flattenHistory(items) {
+    return items.flatMap((i) => historyOf(i).map((h) => ({ ...h, filePath: i.filePath })));
+  }
+  function computeStats(items, opts) {
+    const history2 = flattenHistory(items);
+    const days = /* @__PURE__ */ new Set();
+    for (const h of history2) days.add(dateKey(new Date(h.timestamp)));
+    const totalReviews = days.size;
+    const todayKey = dateKey(/* @__PURE__ */ new Date());
+    let streak = 0;
+    let cursor = /* @__PURE__ */ new Date();
+    if (!days.has(todayKey)) cursor.setDate(cursor.getDate() - 1);
+    while (days.has(dateKey(cursor))) {
+      streak++;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    const todayCount2 = history2.filter((h) => dateKey(new Date(h.timestamp)) === todayKey).length;
+    const ratingDist = { again: 0, hard: 0, good: 0, easy: 0 };
+    for (const h of history2) {
+      if (h.rating in ratingDist) ratingDist[h.rating]++;
+    }
+    const active2 = items.filter((i) => !i.completed && !i.isCompleted);
+    const overdue = active2.filter((i) => i.isOverdue);
+    const overdueRate = active2.length ? overdue.length / active2.length : 0;
+    const rFsrs = new FSRS((opts == null ? void 0 : opts.w) || DEFAULT_W);
+    let rSum = 0;
+    let rN = 0;
+    for (const i of items) {
+      if (i.phase === "fsrs" && i.stability && i.lastReviewed) {
+        const t = ((/* @__PURE__ */ new Date()).getTime() - new Date(i.lastReviewed).getTime()) / 864e5;
+        if (t > 0) {
+          rSum += rFsrs.R(t, i.stability);
+          rN++;
+        }
+      }
+    }
+    const avgR = rN ? rSum / rN : null;
+    let firstReviewAt = null;
+    if (history2.length) {
+      const ts = history2.map((h) => new Date(h.timestamp).getTime());
+      firstReviewAt = new Date(Math.min(...ts)).toISOString();
+    }
+    const daily7 = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = /* @__PURE__ */ new Date();
+      d.setDate(d.getDate() - i);
+      const key = dateKey(d);
+      const count = history2.filter((h) => dateKey(new Date(h.timestamp)) === key).length;
+      daily7.push({ date: key, count });
+    }
+    const reviewedNotes = new Set(history2.filter((h) => h.filePath).map((h) => h.filePath)).size;
+    return {
+      totalReviews,
+      streak,
+      todayReviews: todayCount2,
+      ratingDist,
+      overdueRate,
+      avgR,
+      reviewedNotes,
+      firstReviewAt,
+      daily7
+    };
+  }
+  function loadDistribution(items, nDays) {
+    const out = [];
+    for (let i = 0; i < nDays; i++) {
+      const d = /* @__PURE__ */ new Date();
+      d.setDate(d.getDate() + i);
+      out.push({ date: dateKey(d), count: 0 });
+    }
+    for (const item of items) {
+      if (item.completed || item.isCompleted || !item.nextReviewDate || item.isMissing) continue;
+      const d = new Date(item.nextReviewDate);
+      const key = dateKey(d);
+      const slot = out.find((x) => x.date === key);
+      if (slot) slot.count++;
+    }
+    return out;
+  }
+  var RATING_NAMES, RATING_COLORS;
+  var init_stats2 = __esm({
+    "src/review/stats.ts"() {
+      init_fsrs();
+      RATING_NAMES = { again: "忘了", hard: "困难", good: "一般", easy: "简单" };
+      RATING_COLORS = { again: "#ff4757", hard: "#ff9f43", good: "#2ed573", easy: "#7bed9f" };
+    }
+  });
+
+  // src/review/queue.ts
+  function isDueToday(item) {
+    if (!item.nextReviewDate) return false;
+    return dateKey(new Date(item.nextReviewDate)) === dateKey(/* @__PURE__ */ new Date());
+  }
+  function isEarlyDue(item, rThreshold, w) {
+    if (item.phase !== "fsrs" || !item.stability || !item.lastReviewed) return false;
+    const t = (Date.now() - new Date(item.lastReviewed).getTime()) / 864e5;
+    if (!(t > 0)) return false;
+    return new FSRS(w).R(t, item.stability) < rThreshold;
+  }
+  function active(i) {
+    return !i.isCompleted && !i.completed && !i.isMissing;
+  }
+  function partitionQueue(items, rThreshold = 0.9, w = DEFAULT_W) {
+    const overdue = [];
+    const today = [];
+    const future = [];
+    const done = [];
+    for (const i of items) {
+      if (!active(i)) {
+        done.push(i);
+        continue;
+      }
+      if (i.isOverdue) overdue.push(i);
+      else if (isDueToday(i) || isEarlyDue(i, rThreshold, w)) today.push(i);
+      else future.push(i);
+    }
+    return { overdue, today, future, done };
+  }
+  function roundQueue(items, rThreshold, w) {
+    return items.filter((i) => {
+      if (!active(i)) return false;
+      if (i.isOverdue) return true;
+      if (isDueToday(i)) return true;
+      return isEarlyDue(i, rThreshold, w);
+    });
+  }
+  var init_queue = __esm({
+    "src/review/queue.ts"() {
+      init_fsrs();
+      init_stats2();
+    }
+  });
+
+  // src/review/quiz-core/manager.ts
+  function storageDir2() {
+    const s = tryGetSettings();
+    return s && s.storagePath || "CONFIG/STORAGE";
+  }
+  function getQuizFilePath() {
+    return storageFile("quiz.json", storageDir2());
+  }
+  function getReviewDataPath() {
+    return storageFile("review.json", storageDir2());
+  }
+  async function loadActiveItems(app2) {
+    const data = await jsonFileStore(getReviewDataPath(), { app: app2 }).read();
+    const items = Array.isArray(data) ? data : [];
+    return items.filter((f) => f && !f.completed);
+  }
+  function sameQuestion(a, b) {
+    if (a.question !== b.question) return false;
+    if (a.options.length !== b.options.length) return false;
+    for (let i = 0; i < a.options.length; i++) {
+      if (a.options[i] !== b.options[i]) return false;
+    }
+    const sa = [...a.correctIndices].sort();
+    const sb = [...b.correctIndices].sort();
+    if (sa.length !== sb.length) return false;
+    for (let i = 0; i < sa.length; i++) {
+      if (sa[i] !== sb[i]) return false;
+    }
+    return true;
+  }
+  var QuizManager;
+  var init_manager = __esm({
+    "src/review/quiz-core/manager.ts"() {
+      init_storage();
+      init_settings_provider();
+      QuizManager = class {
+        /** 加载（源码 L33-35；损坏 → {notes:{}}） */
+        async loadQuiz(app2) {
+          try {
+            const data = await jsonFileStore(getQuizFilePath(), {
+              defaultValue: { notes: {} },
+              app: app2
+            }).read();
+            if (data && typeof data === "object" && data.notes) return data;
+            return { notes: {} };
+          } catch (e) {
+            return { notes: {} };
+          }
+        }
+        async saveQuiz(app2, quiz) {
+          await jsonFileStore(getQuizFilePath(), { app: app2 }).write(quiz);
+        }
+        /** 源码 L40-43 */
+        async getQuestionsForNote(app2, notePath) {
+          const quiz = await this.loadQuiz(app2);
+          return quiz.notes[notePath] || null;
+        }
+        /** 源码 L45-49 */
+        async saveQuestionsForNote(app2, notePath, questions) {
+          const quiz = await this.loadQuiz(app2);
+          quiz.notes[notePath] = questions.map((q2) => ({ ...q2 }));
+          await this.saveQuiz(app2, quiz);
+        }
+        /** 源码 L51-57 splice 语义 + P0-2 稳定定位改造：
+         *  会话期 _index 是开考时的快照，题库并发变化（同笔记多题先后答对、复习重出题等）
+         *  后按快照下标会删错行/漏删；改为按题目生成标识（question+options+correctIndices，
+         *  correctIndices 顺序不敏感）在存储数组内定位。
+         *  同内容多题：每次删除首个匹配＝按未答优先逐个消费。
+         *  目标题已不在库中（并发刷新等）→ 终态已达成，静默成功；空键仍保留（源码语义）。 */
+        async removeQuestion(app2, notePath, target) {
+          const quiz = await this.loadQuiz(app2);
+          const list = quiz.notes[notePath];
+          if (!list) return;
+          const idx = list.findIndex((q2) => sameQuestion(q2, target));
+          if (idx === -1) return;
+          list.splice(idx, 1);
+          await this.saveQuiz(app2, quiz);
+        }
+        /** 源码 L59-72：遍历补 notePath/_index */
+        async getUncompletedQuestions(app2) {
+          const quiz = await this.loadQuiz(app2);
+          const out = [];
+          for (const [notePath, questions] of Object.entries(quiz.notes)) {
+            questions.forEach((q2, i) => {
+              out.push({ ...q2, notePath, _index: i });
+            });
+          }
+          return out;
+        }
+        /** 源码 L74-87 */
+        async getAllQuestions(app2) {
+          return this.getUncompletedQuestions(app2);
+        }
+      };
+    }
+  });
+
+  // src/review/quiz-core/generator.ts
+  var QuestionGenerator;
+  var init_generator = __esm({
+    "src/review/quiz-core/generator.ts"() {
+      QuestionGenerator = class {
+        /** 构建提示词（源码 L92-128 逐字；item 3 增 explain 字段：一句话解析+原文依据） */
+        buildPrompt(content, enableMultipleChoice, questionsPerNote, difficulty) {
+          const truncated = content.slice(0, 3e3);
+          let typeHint = "单选题（四选一）";
+          let structure = `{ "question": "题目文本", "options": ["A选项","B选项","C选项","D选项"], "correctIndices": [0], "explain": "一句话解析+原文依据" }`;
+          if (enableMultipleChoice) {
+            typeHint = "可以是单选题或多选题（正确选项数量不限）";
+            structure = `{ "question": "题目文本", "options": ["A选项","B选项","C选项","D选项"], "correctIndices": [0, 2], "explain": "一句话解析+原文依据" }（数组内为正确选项的索引）`;
+          }
+          let countHint = "";
+          if (questionsPerNote > 0) {
+            countHint = `请生成恰好 ${questionsPerNote} 道题目。`;
+          } else {
+            countHint = "生成若干道题目（数量适中，建议 3~6 道）。";
+          }
+          let difficultyHint = "";
+          if (difficulty === "easy") {
+            difficultyHint = "请生成基础概念题，选项区分度明显，避免陷阱，难度较低。";
+          } else if (difficulty === "medium") {
+            difficultyHint = "生成中等难度题目，可包含细节辨析，选项有一定迷惑性。";
+          } else if (difficulty === "hard") {
+            difficultyHint = "生成高难度题目，可涉及推理、多知识点交叉，选项具有较强迷惑性。";
+          }
+          return `根据以下笔记内容，生成若干道四选一的选择题（每题一个正确答案），数量适中，以便复习。请仅返回一个合法的 JSON 对象，结构如下：
+{
+  "questions": [
+    ${structure}
+  ]
+}
+注意：题目类型为 ${typeHint}，${countHint}
+${difficultyHint}
+每题必须带 explain 字段：用一句话解析正确答案，并附原文依据（简短引用或出处）。
+笔记内容：
+${truncated}`;
+        }
+        /** 提取 JSON（源码 L129-138 逐字） */
+        extractJSON(text) {
+          const code = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+          if (code) {
+            try {
+              return JSON.parse(code[1].trim());
+            } catch (e) {
+            }
+          }
+          try {
+            return JSON.parse(text.trim());
+          } catch (e) {
+          }
+          const first = text.indexOf("{");
+          const last = text.lastIndexOf("}");
+          if (first !== -1 && last !== -1 && last > first) {
+            try {
+              return JSON.parse(text.substring(first, last + 1));
+            } catch (e) {
+            }
+          }
+          throw new Error("无法从 AI 响应中提取有效的 JSON");
+        }
+        /** 生成题目（单篇，源码 L139-159 逐字） */
+        async generate(noteContent, aiService, enableMultipleChoice, questionsPerNote, difficulty) {
+          var _a2;
+          const prompt = this.buildPrompt(noteContent, enableMultipleChoice, questionsPerNote, difficulty);
+          const result = await aiService.json(prompt);
+          console.log("AI 原始响应:", result);
+          const parsed = this.extractJSON(result);
+          if (!((_a2 = parsed.questions) == null ? void 0 : _a2.length)) throw new Error("AI 未返回有效题目数组。");
+          for (const q2 of parsed.questions) {
+            if (!q2.question || !Array.isArray(q2.options) || q2.options.length !== 4) {
+              throw new Error("题目格式不正确：缺少 question 或 options 不是长度为4的数组");
+            }
+            if (!Array.isArray(q2.correctIndices) || q2.correctIndices.length === 0) {
+              throw new Error("题目格式不正确：correctIndices 必须是非空数组");
+            }
+            for (const idx of q2.correctIndices) {
+              if (typeof idx !== "number" || idx < 0 || idx > 3) {
+                throw new Error("correctIndices 元素必须在 0~3 之间");
+              }
+            }
+          }
+          return parsed.questions;
+        }
+        /** 批量提示词（源码 L162-191 逐字；item 3 增 explain 规则） */
+        buildBatchPrompt(notes, enableMultipleChoice, questionsPerNote, difficulty) {
+          let typeHint = "单选题（四选一）";
+          let structure = `{ "question": "题目文本", "options": ["A选项","B选项","C选项","D选项"], "correctIndices": [0], "explain": "一句话解析+原文依据" }`;
+          if (enableMultipleChoice) {
+            typeHint = "可以是单选题或多选题";
+            structure = `{ "question": "题目文本", "options": ["A选项","B选项","C选项","D选项"], "correctIndices": [0, 2], "explain": "一句话解析+原文依据" }`;
+          }
+          const countHint = questionsPerNote > 0 ? `每篇生成恰好 ${questionsPerNote} 道。` : "每篇生成 3~6 道。";
+          let difficultyHint = "";
+          if (difficulty === "easy") difficultyHint = "生成基础概念题，难度较低。";
+          else if (difficulty === "medium") difficultyHint = "生成中等难度题目。";
+          else if (difficulty === "hard") difficultyHint = "生成高难度题目，涉及推理和多知识点交叉。";
+          let notesBlock = "";
+          for (const n of notes) {
+            notesBlock += `
+===== 笔记ID:${n.id} =====
+${n.content.slice(0, 2e3)}
+`;
+          }
+          return `根据以下多篇笔记内容，为每篇笔记生成选择题。请仅返回一个合法的 JSON 对象：
+{
+  "noteId1": [ { "question": "...", "options": ["A","B","C","D"], "correctIndices": [0], "explain": "..." }, ... ],
+  "noteId2": [ ... ]
+}
+规则：
+- 类型：${typeHint}，${countHint}
+- ${difficultyHint}
+- 每题必须带 explain 字段：一句话解析正确答案并附原文依据
+- 键名为笔记ID（即 "笔记ID:xxx" 中的 xxx），值为该笔记的题目数组
+- 每题4个选项，correctIndices 为正确选项索引数组
+笔记内容：${notesBlock}`;
+        }
+        /** 批量生成（源码 L193-212 逐字） */
+        async generateBatch(notes, aiService, enableMultipleChoice, questionsPerNote, difficulty) {
+          const prompt = this.buildBatchPrompt(notes, enableMultipleChoice, questionsPerNote, difficulty);
+          const result = await aiService.json(prompt);
+          console.log("AI 批量响应:", result);
+          const parsed = this.extractJSON(result);
+          const out = {};
+          for (const [noteId, qs] of Object.entries(parsed)) {
+            if (!Array.isArray(qs)) continue;
+            const valid = [];
+            for (const q2 of qs) {
+              if (!q2.question || !Array.isArray(q2.options) || q2.options.length !== 4 || !Array.isArray(q2.correctIndices)) {
+                continue;
+              }
+              const indices = q2.correctIndices.filter((i) => typeof i === "number" && i >= 0 && i <= 3);
+              if (!indices.length) continue;
+              valid.push({ ...q2, correctIndices: indices });
+            }
+            if (valid.length) out[noteId] = valid;
+          }
+          return out;
+        }
+      };
+    }
+  });
+
+  // src/review/quiz-core/session.ts
+  function cleanOptionText(text) {
+    if (!text) return "";
+    const match = text.match(/^([A-D])\s*[.、:：)）]\s*/);
+    if (match) {
+      return text.substring(match[0].length).trim();
+    }
+    const matchParen = text.match(/^\(([A-D])\)\s*/);
+    if (matchParen) {
+      return text.substring(matchParen[0].length).trim();
+    }
+    return text.trim();
+  }
+  var CORRECT_JUMP_DELAY_MS, _QuizMasterUI, QuizMasterUI, quizUI;
+  var init_session = __esm({
+    "src/review/quiz-core/session.ts"() {
+      init_notice();
+      init_flow_dialog();
+      init_esc_manager();
+      init_z_order();
+      init_app();
+      init_manager();
+      init_generator();
+      init_utils();
+      CORRECT_JUMP_DELAY_MS = 800;
+      _QuizMasterUI = class _QuizMasterUI {
+        constructor() {
+          /**
+           * 实例镜像：复习域经 quizUI.ai 读取。静态属性不挂在实例上（JS 中 quizUI.ai 恒为
+           * undefined），故 ensureQuiz 时同步设置本字段，复习域判断才生效。
+           */
+          this.ai = null;
+          this.mask = null;
+          this.popup = null;
+          this.currentQuestions = [];
+          this.currentIndex = 0;
+          // 复习联动（仅经 startReviewSession/endReviewSession 契约访问，复习域不得直接改写）
+          // ticket 141：普通做题模式删除（独立入口 ticket 098 退役后已是死代码）——做题家只是
+          // 复习流程中的一环，会话只能经 startReviewSession 开启，不再存在「无 onComplete 的裸会话」
+          this._sessionActive = false;
+          this.onComplete = null;
+          this.correctCount = 0;
+          this.wrongCount = 0;
+          this.totalQuestions = 0;
+          this.generator = new QuestionGenerator();
+          /** ticket 098:多选提交按钮暂存（renderModal 选项后补挂，保证位于选项下方） */
+          this._pendingSubmitBtn = null;
+          /** ticket 141：做题键盘快捷键句柄（1-4/A-D 选择、Enter 提交/下一题；ESC 走 escManager） */
+          this._keyHandler = null;
+          /** ticket 156：答对自动跳题延时句柄（亮绿 0.8s 再进下一题） */
+          this._jumpTimer = null;
+          this._manager = null;
+        }
+        shuffleArray(arr) {
+          for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+          }
+          return arr;
+        }
+        /** 更新题库（基于活跃笔记，空题目则生成；失败 Notice 逐字） */
+        async updateQuiz() {
+          const app2 = getApp();
+          try {
+            const activeItems = await loadActiveItems(app2);
+            if (!activeItems.length) {
+              await this.manager.saveQuiz(getApp(), { notes: {} });
+              return;
+            }
+            const quiz = await this.manager.loadQuiz(app2);
+            const activePaths = new Set(activeItems.map((i) => i.filePath));
+            for (const notePath of Object.keys(quiz.notes)) {
+              if (!activePaths.has(notePath)) {
+                delete quiz.notes[notePath];
+              }
+            }
+            await this.manager.saveQuiz(app2, quiz);
+            const notePaths = activeItems.map((i) => i.filePath);
+            await this.ensureQuestions(notePaths);
+          } catch (e) {
+            notice("更新题库失败：" + e.message + "，请重试", "error");
+            console.error(e);
+          }
+        }
+        /** 确保指定笔记都有题目（源码 L346-398 逐字） */
+        async ensureQuestions(notePaths) {
+          const app2 = getApp();
+          const quiz = await this.manager.loadQuiz(app2);
+          const settings = _QuizMasterUI.settings || {};
+          const enableMultipleChoice = settings.enableMultipleChoice !== false;
+          const questionsPerNote = parseInt(settings.questionsPerNote) || 0;
+          const difficulty = settings.difficulty || "random";
+          const missing = [];
+          for (const path of notePaths) {
+            const existing = quiz.notes[path];
+            if (!existing || existing.length === 0) {
+              const file = app2.vault.getAbstractFileByPath(path);
+              if (!file) continue;
+              const content = await app2.vault.read(file);
+              if (content.trim()) missing.push({ id: path, content });
+            }
+          }
+          if (!missing.length) return;
+          if (_QuizMasterUI.ai) {
+            try {
+              const h = notify(`正在为 ${missing.length} 篇笔记批量生成题目…`, { type: "progress", dedupeKey: "quiz-generate" });
+              const batchResult = await this.generator.generateBatch(missing, _QuizMasterUI.ai, enableMultipleChoice, questionsPerNote, difficulty);
+              let batchOk = 0;
+              for (const [path, qs] of Object.entries(batchResult)) {
+                if (qs.length) {
+                  quiz.notes[path] = qs;
+                  batchOk++;
+                }
+              }
+              await this.manager.saveQuiz(app2, quiz);
+              h.setType("success");
+              h.setMessage(`已为 ${batchOk} 篇笔记生成题目`);
+              return;
+            } catch (e) {
+              console.warn("批量出题失败，降级为逐篇:", e.message);
+              notify("批量出题失败，已改为逐篇生成", { type: "warning", dedupeKey: "quiz-generate" });
+            }
+          }
+          let okCount = 0;
+          let failCount = 0;
+          let firstError = "";
+          for (const note of missing) {
+            try {
+              if (!_QuizMasterUI.ai) throw new Error("AI 未初始化");
+              const qs = await this.generator.generate(note.content, _QuizMasterUI.ai, enableMultipleChoice, questionsPerNote, difficulty);
+              if (qs.length) {
+                quiz.notes[note.id] = qs;
+                okCount++;
+                await this.manager.saveQuiz(app2, quiz);
+              } else {
+                failCount++;
+              }
+            } catch (e) {
+              console.warn(`出题失败 ${note.id}:`, e.message);
+              if (!firstError) firstError = e.message || "未知错误";
+              failCount++;
+            }
+          }
+          if (okCount > 0) notify(`已为 ${okCount} 篇笔记生成题目`, { type: "success" });
+          if (failCount > 0) notify(`${failCount} 篇笔记出题失败${firstError ? `（${firstError}）` : ""}`, { type: "warning", dedupeKey: "quiz-generate" });
+        }
+        /** ticket 141：普通做题模式（startQuiz/showLoadingPopup）删除——独立入口 ticket 098 退役后
+         *  已无调用方，做题家只作为复习流程一环经 startReviewSession 进入。 */
+        /**
+         * 复习联动契约：开始一轮做题会话（复习计划经此进入做题模式）——ticket 141 起唯一入口。
+         * 会话状态（_sessionActive/currentQuestions/计数/onComplete）只允许在本方法内设置，
+         * 复习域禁止直接改写——契约化后复习域只需调用本方法与 endReviewSession。
+         * 「打乱出题顺序」设置在会话入口生效（原普通模式行为迁移，设置项保留语义不变）。
+         */
+        startReviewSession(opts) {
+          var _a2;
+          this._sessionActive = true;
+          const shuffle = ((_a2 = _QuizMasterUI.settings) == null ? void 0 : _a2.shuffleQuestions) !== false;
+          this.currentQuestions = shuffle ? this.shuffleArray([...opts.questions]) : [...opts.questions];
+          this.currentIndex = 0;
+          this.correctCount = 0;
+          this.wrongCount = 0;
+          this.totalQuestions = this.currentQuestions.length;
+          this.onComplete = opts.onComplete;
+          this.showQuestion();
+        }
+        /** 复习联动契约：结束做题会话（结算回调已消费后由复习域调用，收尾弹窗；防御性结算防悬挂） */
+        endReviewSession() {
+          const cb = this.onComplete;
+          this.onComplete = null;
+          this._sessionActive = false;
+          if (cb) cb(this._buildResults());
+          this._teardownModal();
+        }
+        /** 渲染单题（源码 L514-676 逐字） */
+        renderModal(q2) {
+          this._teardownModal();
+          this._pendingSubmitBtn = null;
+          const mask = document.createElement("div");
+          mask.id = "quiz-mask";
+          this.mask = mask;
+          mask.style.zIndex = String(allocZ());
+          const popup = document.createElement("div");
+          popup.id = "quiz-popup";
+          this.popup = popup;
+          const header = document.createElement("div");
+          header.className = "bz-quiz-head";
+          const title = document.createElement("span");
+          title.className = "bz-quiz-title";
+          const noteName = q2.notePath ? q2.notePath.split("/").pop().replace(".md", "") : "";
+          const doneCount = this.totalQuestions - this.currentQuestions.length;
+          title.textContent = noteName ? `📝 ${noteName} (${doneCount + 1}/${this.totalQuestions})` : `📝 (${doneCount + 1}/${this.totalQuestions})`;
+          header.appendChild(title);
+          popup.appendChild(header);
+          const questionDiv = document.createElement("div");
+          questionDiv.className = "bz-quiz-question";
+          questionDiv.textContent = q2.question;
+          popup.appendChild(questionDiv);
+          const optionsContainer = document.createElement("div");
+          optionsContainer.className = "bz-quiz-options";
+          const selectedIndices = /* @__PURE__ */ new Set();
+          const answeredRef = { value: false };
+          const optionElements = this._buildOptionButtons(q2, answeredRef, selectedIndices, optionsContainer);
+          optionElements.forEach((el) => optionsContainer.appendChild(el));
+          if (this._pendingSubmitBtn) {
+            optionsContainer.appendChild(this._pendingSubmitBtn);
+            this._pendingSubmitBtn = null;
+          }
+          popup.appendChild(optionsContainer);
+          mask.appendChild(popup);
+          document.body.appendChild(mask);
+          escManager.register("quiz", {
+            isVisible: () => !!(this.mask && this.mask.isConnected),
+            close: () => this.finishQuiz()
+          });
+          this._bindKeyboard();
+          mask.addEventListener("click", (e) => {
+            if (e.target === mask) this.finishQuiz();
+          });
+        }
+        /**
+         * ticket 141：做题键盘快捷键（1-4/A-D 选择、Enter 提交/下一题）。
+         * 焦点在按钮/输入框上时原生行为优先（防 Enter 双触发）；ESC 不在此处理（escManager 层级）。
+         */
+        _bindKeyboard() {
+          this._unbindKeyboard();
+          this._keyHandler = (e) => {
+            var _a2, _b2, _c;
+            if (!this.mask || !this.mask.isConnected) return;
+            const target = e.target;
+            if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "BUTTON")) return;
+            const keys = ["1", "2", "3", "4"];
+            const letters = ["a", "b", "c", "d"];
+            const key = e.key.toLowerCase();
+            const idx = keys.includes(key) ? keys.indexOf(key) : letters.indexOf(key);
+            if (idx >= 0 && idx <= 3) {
+              const btn = (_a2 = this.popup) == null ? void 0 : _a2.querySelector(`.quiz-option-btn[data-index="${idx}"]`);
+              if (btn && !btn.classList.contains("disabled")) btn.click();
+              return;
+            }
+            if (e.key === "Enter") {
+              const submit = (_b2 = this.popup) == null ? void 0 : _b2.querySelector(".quiz-submit-btn");
+              if (submit && !submit.disabled) {
+                submit.click();
+                return;
+              }
+              const next = (_c = this.popup) == null ? void 0 : _c.querySelector(".quiz-next-btn");
+              if (next && !next.disabled) next.click();
+            }
+          };
+          document.addEventListener("keydown", this._keyHandler);
+        }
+        _unbindKeyboard() {
+          if (this._keyHandler) {
+            document.removeEventListener("keydown", this._keyHandler);
+            this._keyHandler = null;
+          }
+        }
+        /** ticket 156：清除答对自动跳题延时（换题/结算/强制关闭时防迟到渲染） */
+        _clearJumpTimer() {
+          if (this._jumpTimer) {
+            clearTimeout(this._jumpTimer);
+            this._jumpTimer = null;
+          }
+        }
+        /** 选项按钮组构建与答题逻辑（renderModal 拆分）：单选即点即判 / 多选切换 + 提交 */
+        _buildOptionButtons(q2, answeredRef, selectedIndices, optionsContainer) {
+          const optionLabels = ["A", "B", "C", "D"];
+          const isSingle = q2.correctIndices.length === 1;
+          const app2 = getApp();
+          const optionElements = q2.options.map((opt, idx) => {
+            const btn = document.createElement("button");
+            btn.className = "quiz-option-btn";
+            const cleanText = cleanOptionText(opt);
+            btn.innerHTML = `<span>${optionLabels[idx]}.</span><span class="bz-quiz-option-text">${escapeHtml2(cleanText)}</span><span class="check-mark">✔️</span>`;
+            btn.dataset.index = String(idx);
+            btn.onclick = () => {
+              if (answeredRef.value) return;
+              if (isSingle) {
+                answeredRef.value = true;
+                optionElements.forEach((b) => b.classList.add("disabled"));
+                const isCorrect = idx === q2.correctIndices[0];
+                if (isCorrect) {
+                  optionElements.forEach((b, i) => {
+                    if (i === q2.correctIndices[0]) b.classList.add("correct");
+                  });
+                  this._answerCorrect(q2, app2, () => {
+                    answeredRef.value = false;
+                    optionElements.forEach((b) => b.classList.remove("disabled"));
+                  });
+                } else {
+                  this.wrongCount++;
+                  this.currentQuestions.splice(this.currentIndex, 1);
+                  optionElements.forEach((b, i) => {
+                    if (i === q2.correctIndices[0]) b.classList.add("correct");
+                    if (i === idx) b.classList.add("wrong");
+                  });
+                  this.addNextButton(optionsContainer);
+                }
+              } else {
+                if (selectedIndices.has(idx)) {
+                  selectedIndices.delete(idx);
+                  btn.classList.remove("selected");
+                } else {
+                  selectedIndices.add(idx);
+                  btn.classList.add("selected");
+                }
+              }
+            };
+            return btn;
+          });
+          if (!isSingle) {
+            const submitBtn = document.createElement("button");
+            submitBtn.className = "quiz-submit-btn";
+            submitBtn.textContent = "提交答案";
+            submitBtn.onclick = () => {
+              if (answeredRef.value) return;
+              if (selectedIndices.size === 0) {
+                notice("请至少选择一项", "warning");
+                return;
+              }
+              answeredRef.value = true;
+              submitBtn.disabled = true;
+              const selected = Array.from(selectedIndices).sort();
+              const correct = q2.correctIndices.slice().sort();
+              const isCorrect = selected.length === correct.length && selected.every((v, i) => v === correct[i]);
+              optionElements.forEach((b, i) => {
+                b.classList.add("disabled");
+                if (correct.includes(i)) b.classList.add("correct");
+                else if (selectedIndices.has(i) && !isCorrect) b.classList.add("wrong");
+              });
+              if (isCorrect) {
+                this._answerCorrect(q2, app2, () => {
+                  answeredRef.value = false;
+                  submitBtn.disabled = false;
+                  optionElements.forEach((b) => b.classList.remove("disabled"));
+                });
+              } else {
+                this.wrongCount++;
+                this.currentQuestions.splice(this.currentIndex, 1);
+                this.addNextButton(optionsContainer);
+              }
+            };
+            this._pendingSubmitBtn = submitBtn;
+          }
+          return optionElements;
+        }
+        /** 答对公共链路（ticket 141 重构）：稳定定位删题 → 计数 → splice 出当前题 → 自动进入下一题。
+         *  删除按题目内容在存储数组定位（P0-2），不再依赖会话期 _index 快照；
+         *  持久化成功后才计数并跳题（P2：失败恢复作答态时不重复计数），失败通知并恢复作答状态；
+         *  ticket 153：答对自动跳下一题（答对不出现「下一题」按钮，答错才由用户点按）；
+         *  ticket 156：跳题延后 0.8s——亮绿正确选项让用户看到反馈再进入下一题；
+         *  延时期间放弃做题/强制关闭 → 清除延时（回调内再校验会话态，防迟到渲染僵尸弹窗）。 */
+        _answerCorrect(q2, app2, onFailRestore) {
+          this.manager.removeQuestion(app2, q2.notePath, { question: q2.question, options: q2.options, correctIndices: q2.correctIndices }).then(() => {
+            this.correctCount++;
+            this.currentQuestions.splice(this.currentIndex, 1);
+            this._clearJumpTimer();
+            this._jumpTimer = setTimeout(() => {
+              this._jumpTimer = null;
+              if (!this._sessionActive) return;
+              this.showQuestion();
+            }, CORRECT_JUMP_DELAY_MS);
+          }).catch((e) => {
+            notice("删除题目失败：" + e.message + "，请重试", "error");
+            onFailRestore();
+          });
+        }
+        /** 汇总本轮做题统计（showQuestion 完题 / finishQuiz 共用） */
+        _buildResults() {
+          const total = this.correctCount + this.wrongCount;
+          return {
+            correct: this.correctCount,
+            wrong: this.wrongCount,
+            total,
+            accuracy: total > 0 ? Math.round(this.correctCount / total * 100) : 0
+          };
+        }
+        /** 渲染单题（源码 L679-697 逐字） */
+        showQuestion() {
+          if (this.currentIndex >= this.currentQuestions.length) {
+            if (this.onComplete) {
+              const cb = this.onComplete;
+              this.onComplete = null;
+              cb(this._buildResults());
+            }
+            return;
+          }
+          this.renderModal(this.currentQuestions[this.currentIndex]);
+        }
+        /**
+         * 辅助：添加「下一题」按钮（ticket 153：仅答错时出现——答对自动进入下一题，无需按钮；
+         * 答错由用户点按进入下一题）。
+         */
+        addNextButton(popup) {
+          const oldBtn = popup.querySelector(".quiz-next-btn");
+          if (oldBtn) oldBtn.remove();
+          const nextBtn = document.createElement("button");
+          nextBtn.className = "quiz-next-btn";
+          nextBtn.textContent = "下一题 →";
+          nextBtn.onclick = () => {
+            this.showQuestion();
+          };
+          popup.appendChild(nextBtn);
+        }
+        /** 仅拆除弹窗 DOM（换题/结果卡等内部过渡用，不走结算语义；连带注销键盘监听） */
+        _teardownModal() {
+          this._unbindKeyboard();
+          if (this.mask && this.mask.parentNode) this.mask.remove();
+          this.mask = null;
+          this.popup = null;
+        }
+        /**
+         * 点遮罩 / ESC（ticket 141：纯复习会话语义，原「普通模式直接关窗」分支随模式删除）。
+         * 答题中途（回调未消费）→ 先确认「放弃本次做题？」，确认才按既有语义结算；
+         * 结果卡阶段（回调已消费，复习域驱动下一步）→ 忽略，防止中途拆 DOM 令复习循环 Promise 悬挂。
+         */
+        finishQuiz() {
+          if (!this._sessionActive || !this.onComplete) return;
+          void openFlowDialog({
+            title: "放弃本次做题？",
+            message: "未完成的题目将丢弃，本次复习将按已答题目结算评级",
+            actions: [
+              { label: "继续做题", value: "cancel" },
+              { label: "放弃", value: "ok", cta: true }
+            ]
+          }).then((v) => {
+            if (v !== "ok") return;
+            this._clearJumpTimer();
+            const cb = this.onComplete;
+            this.onComplete = null;
+            this._sessionActive = false;
+            if (cb) cb(this._buildResults());
+            this._teardownModal();
+          });
+        }
+        /** 强制关闭（复习域契约调用，如结果卡「复习此笔记」）：回调防御性结算，避免外层 Promise 悬挂 */
+        close() {
+          this._clearJumpTimer();
+          const cb = this.onComplete;
+          this.onComplete = null;
+          this._sessionActive = false;
+          if (cb) cb(this._buildResults());
+          this._teardownModal();
+        }
+        get manager() {
+          if (!this._manager) this._manager = new QuizManager();
+          return this._manager;
+        }
+      };
+      _QuizMasterUI.ai = null;
+      _QuizMasterUI.settings = {};
+      QuizMasterUI = _QuizMasterUI;
+      quizUI = new QuizMasterUI();
+    }
+  });
+
+  // src/review/quiz-core/index.ts
+  var quiz_core_exports = {};
+  __export(quiz_core_exports, {
+    QuizMasterUI: () => QuizMasterUI,
+    ensureQuiz: () => ensureQuiz,
+    quizUI: () => quizUI,
+    quizUpdate: () => quizUpdate
+  });
+  function ensureQuiz(app2) {
+    if (initialized4) return;
+    initialized4 = true;
+    QuizMasterUI.ai = createAI();
+    quizUI.ai = QuizMasterUI.ai;
+    QuizMasterUI.settings = getSettings();
+  }
+  async function quizUpdate(app2) {
+    ensureQuiz(app2);
+    await quizUI.updateQuiz();
+  }
+  var initialized4;
+  var init_quiz_core = __esm({
+    "src/review/quiz-core/index.ts"() {
+      init_ai();
+      init_settings_provider();
+      init_session();
+      initialized4 = false;
+    }
+  });
+
+  // src/review/watch.ts
+  var watch_exports = {};
+  __export(watch_exports, {
+    RENAME_MERGE_MS: () => RENAME_MERGE_MS,
+    REVIEW_AUTO_ADD_MERGE_MS: () => REVIEW_AUTO_ADD_MERGE_MS,
+    ReviewWatcher: () => ReviewWatcher,
+    __setAutoAddMergeMsForTests: () => __setAutoAddMergeMsForTests,
+    __setRenameMergeMsForTests: () => __setRenameMergeMsForTests,
+    isUnderFolder: () => isUnderFolder
+  });
+  function isUnderFolder(folder, path) {
+    const f = (folder || "").trim().replace(/\/+$/, "");
+    if (!f) return false;
+    return path === f || path.startsWith(f + "/");
+  }
+  function __setAutoAddMergeMsForTests(ms) {
+    REVIEW_AUTO_ADD_MERGE_MS = ms;
+  }
+  function __setRenameMergeMsForTests(ms) {
+    RENAME_MERGE_MS = ms;
+  }
+  var REVIEW_AUTO_ADD_MERGE_MS, RENAME_MERGE_MS, ReviewWatcher;
+  var init_watch = __esm({
+    "src/review/watch.ts"() {
+      init_notice();
+      init_flow_dialog();
+      init_settings_provider();
+      REVIEW_AUTO_ADD_MERGE_MS = 3e3;
+      RENAME_MERGE_MS = 3e3;
+      ReviewWatcher = class {
+        constructor(app2, dataManager3) {
+          /** 删除确认防抖缓冲（多文件删除合并为一次确认） */
+          this.deleteQueue = [];
+          this.deleteTimer = null;
+          /** ticket 100：新笔记自动加入提醒合并缓冲（3 秒窗口收集，多条合并一条通知） */
+          this.autoAddQueue = [];
+          this.autoAddTimer = null;
+          /** ticket n2：改名通知合并缓冲（3 秒窗口收集；列表/文件树更新仍即时） */
+          this.renameQueue = [];
+          this.renameTimer = null;
+          this.app = app2;
+          this.dataManager = dataManager3;
+        }
+        get watchedFolders() {
+          const s = tryGetSettings();
+          return Array.isArray(s == null ? void 0 : s.reviewWatchedFolders) ? s.reviewWatchedFolders.filter((x) => typeof x === "string" && x.trim().length > 0) : [];
+        }
+        get excludedNotes() {
+          const s = tryGetSettings();
+          return Array.isArray(s == null ? void 0 : s.reviewExcludedNotes) ? s.reviewExcludedNotes : [];
+        }
+        isWatched(path) {
+          return this.watchedFolders.some((f) => isUnderFolder(f, path));
+        }
+        isExcluded(path) {
+          return this.excludedNotes.includes(path);
+        }
+        /** 追加排除名单（去重 + 落盘；手动/确认四类表态共用） */
+        async excludePaths(paths) {
+          const s = tryGetSettings();
+          const cur = Array.isArray(s == null ? void 0 : s.reviewExcludedNotes) ? [...s.reviewExcludedNotes] : [];
+          let changed = false;
+          for (const p of paths) {
+            if (p && !cur.includes(p)) {
+              cur.push(p);
+              changed = true;
+            }
+          }
+          if (!changed) return;
+          if (s) s.reviewExcludedNotes = cur;
+          await saveSettings();
+        }
+        /** ticket 57：单条解除排除记录（数据 reviewExcludedNotes 既有；仅补 UI 管理入口） */
+        async removeExcludedNote(path) {
+          const s = tryGetSettings();
+          if (!s) return;
+          const cur = Array.isArray(s.reviewExcludedNotes) ? [...s.reviewExcludedNotes] : [];
+          const kept = cur.filter((p) => p !== path);
+          if (kept.length === cur.length) return;
+          s.reviewExcludedNotes = kept;
+          await saveSettings();
+        }
+        /** vault create：监听目录内新建 md → 自动加入（未排除、未在计划）；ticket 100：3 秒窗口合并提醒 + 开关 */
+        async onVaultCreate(file) {
+          if (file.extension !== "md") return;
+          if (!this.isWatched(file.path)) return;
+          if (this.isExcluded(file.path)) return;
+          const items = await this.dataManager.loadItems();
+          if (items.some((i) => i.filePath === file.path)) return;
+          await this.dataManager.addItem(file.path, file.basename);
+          const s = tryGetSettings();
+          if (s && s.reviewAutoAddNotice === false) return;
+          this.autoAddQueue.push(file.basename);
+          if (this.autoAddTimer) return;
+          this.autoAddTimer = setTimeout(() => {
+            this.autoAddTimer = null;
+            const batch = this.autoAddQueue;
+            this.autoAddQueue = [];
+            if (!batch.length) return;
+            const shown = batch.slice(0, 3).join("、");
+            const tail = batch.length > 3 ? ` 等 ${batch.length - 3} 篇` : "";
+            notice(batch.length > 1 ? `已自动加入复习计划：${shown}${tail}` : `已自动加入复习计划：${shown}`, "success");
+          }, REVIEW_AUTO_ADD_MERGE_MS);
+        }
+        /** vault delete：计划内文件删除 → 防抖合并确认「同步移除复习记录？」 */
+        onVaultDelete(file) {
+          void (async () => {
+            const items = await this.dataManager.loadItems();
+            if (!items.some((i) => i.filePath === file.path)) return;
+            this.deleteQueue.push(file.path);
+            if (this.deleteTimer) return;
+            this.deleteTimer = setTimeout(async () => {
+              this.deleteTimer = null;
+              const batch = this.deleteQueue;
+              this.deleteQueue = [];
+              if (!batch.length) return;
+              const n = batch.length;
+              const firstName = (batch[0] || "").split("/").pop();
+              void openFlowDialog({
+                title: n > 1 ? `删除 ${n} 篇笔记` : "笔记已删除",
+                message: n > 1 ? `有 ${n} 篇笔记已从 vault 删除，是否同步移除复习计划里的记录？不移除则保留（文件恢复后继续复习，列表现删除线）。` : `「${firstName}」已从 vault 删除，是否同步移除复习计划里的记录？不移除则保留（文件恢复后继续复习，列表现删除线）。`,
+                actions: [
+                  { label: "保留", value: "cancel" },
+                  { label: "移除", value: "ok", cta: true }
+                ]
+              }).then(async (v) => {
+                if (v === "ok") {
+                  for (const path of batch) await this.dataManager.removeItem(path);
+                  await this.excludePaths(batch.filter((p) => this.isWatched(p)));
+                  notice(`已移除 ${n} 条复习记录`, "success");
+                  await this.refresh();
+                } else {
+                  void this.refresh();
+                }
+              });
+            }, 300);
+          })();
+        }
+        /** vault rename：计划内文件改名/移动 → 自动更新路径（ticket 099：不再弹确认）；
+         *   ticket n2：通知改合并窗口（窗口内多条合并一条；列表/文件树刷新仍即时） */
+        onVaultRename(file, oldPath) {
+          void (async () => {
+            if (file.extension !== "md") return;
+            if (oldPath === file.path) return;
+            const items = await this.dataManager.loadItems();
+            if (!items.some((i) => i.filePath === oldPath)) return;
+            const updated = await this.dataManager.updateFilePath(oldPath, file.path, file.basename);
+            if (!updated) return;
+            await this.refresh();
+            this.renameQueue.push(file.basename);
+            if (this.renameTimer) return;
+            this.renameTimer = setTimeout(() => {
+              this.renameTimer = null;
+              const batch = this.renameQueue;
+              this.renameQueue = [];
+              if (!batch.length) return;
+              const shown = batch.slice(0, 3).join("、");
+              const tail = batch.length > 3 ? `，等 ${batch.length - 3} 篇` : "";
+              notice(
+                batch.length > 1 ? `已更新 ${batch.length} 篇笔记的复习路径：${shown}${tail}` : "已更新复习计划路径",
+                "success"
+              );
+            }, RENAME_MERGE_MS);
+          })();
+        }
+        /** 未加入候选：目录内全部 md − 已加入 − 已排除（递归；挂起记录占位路径天然排除） */
+        collectAutoaddCandidates(folder, items) {
+          return this.app.vault.getMarkdownFiles().map((f) => f.path).filter((p) => isUnderFolder(folder, p)).filter((p) => !items.some((i) => i.filePath === p)).filter((p) => !this.isExcluded(p));
+        }
+        /** 选择监听文件夹后的存量收编确认（ticket 099）：确认 → 批量全部加入并返回 true；取消 → 什么都不做返回 false（不写排除名单） */
+        async confirmBatchAddForFolder(folder) {
+          const items = await this.dataManager.loadItems();
+          const candidates = this.collectAutoaddCandidates(folder, items);
+          if (!candidates.length) return true;
+          const v = await openFlowDialog({
+            title: "批量加入复习计划",
+            message: `监听文件夹「${folder}」下有 ${candidates.length} 篇笔记未加入复习计划，是否一并加入？`,
+            actions: [
+              { label: "取消", value: "cancel" },
+              { label: "加入", value: "ok", cta: true }
+            ]
+          });
+          if (v !== "ok") return false;
+          let ok = 0;
+          for (const p of candidates) {
+            try {
+              await this.dataManager.addItem(p, p.split("/").pop().replace(/\.md$/, ""));
+              ok++;
+            } catch (e) {
+            }
+          }
+          notice(`已加入 ${ok} 篇笔记到复习计划`, "success");
+          await this.refresh();
+          return true;
+        }
+        /** 移除监听文件夹（ticket 099 追加）：同时清空该目录下全部排除记录——否则二次添加时存量被旧黑名单挡住。
+         *  返回清理的排除条数（仅用于提示文案）。 */
+        async removeWatchedFolder(folder) {
+          const s = tryGetSettings();
+          if (!s) return 0;
+          const folders = Array.isArray(s.reviewWatchedFolders) ? [...s.reviewWatchedFolders] : [];
+          const idx = folders.indexOf(folder);
+          if (idx !== -1) folders.splice(idx, 1);
+          s.reviewWatchedFolders = folders;
+          const before = Array.isArray(s.reviewExcludedNotes) ? [...s.reviewExcludedNotes] : [];
+          const kept = before.filter((p) => !isUnderFolder(folder, p));
+          s.reviewExcludedNotes = kept;
+          await saveSettings();
+          return before.length - kept.length;
+        }
+        async refresh() {
+          const { uiManager: uiManager3 } = await Promise.resolve().then(() => (init_review(), review_exports));
+          await (uiManager3 == null ? void 0 : uiManager3.refreshPanel());
+          const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app3(), app_exports));
+          await reviewApp2.applyReviewStyles(this.app);
+        }
+        /** 卸载清理（定时器/缓冲） */
+        destroy() {
+          if (this.deleteTimer) {
+            clearTimeout(this.deleteTimer);
+            this.deleteTimer = null;
+          }
+          this.deleteQueue = [];
+          if (this.autoAddTimer) {
+            clearTimeout(this.autoAddTimer);
+            this.autoAddTimer = null;
+          }
+          this.autoAddQueue = [];
+          if (this.renameTimer) {
+            clearTimeout(this.renameTimer);
+            this.renameTimer = null;
+          }
+          this.renameQueue = [];
+        }
+      };
+    }
+  });
+
+  // src/review/sprint.ts
+  function accuracyToRating(accuracy) {
+    if (accuracy >= 90) return "easy";
+    if (accuracy >= 70) return "good";
+    if (accuracy >= 50) return "hard";
+    return "again";
+  }
+  var CORRECT_JUMP_DELAY_MS2, SprintSession, RATING_NAMES2;
+  var init_sprint = __esm({
+    "src/review/sprint.ts"() {
+      init_notice();
+      init_flow_dialog();
+      init_ui();
+      init_esc_manager();
+      init_utils();
+      CORRECT_JUMP_DELAY_MS2 = 800;
+      SprintSession = class {
+        constructor(opts) {
+          this.entries = [];
+          this.cur = 0;
+          this.q = null;
+          this.jumpTimer = null;
+          this.escHandle = null;
+          /** item 2：document keydown 句柄（finish 注销） */
+          this.keyHandler = null;
+          /** 当前视图态（键盘路由：题面/结果卡/结算屏 Enter 语义不同） */
+          this.view = "loading";
+          this.finished = false;
+          this.resolveDone = null;
+          this.started = false;
+          this.opts = opts;
+          this.entries = opts.queue.map((item) => ({
+            item,
+            state: "pending",
+            questions: [],
+            acc: 0,
+            wrong: 0,
+            passNote: ""
+          }));
+        }
+        get mode() {
+          return this.opts.mode;
+        }
+        get current() {
+          var _a2;
+          return (_a2 = this.entries[this.cur]) != null ? _a2 : null;
+        }
+        get passedCount() {
+          return this.entries.filter((e) => e.state === "passed").length;
+        }
+        get failedCount() {
+          return this.entries.filter((e) => e.state === "failed").length;
+        }
+        get remainingCount() {
+          return this.entries.filter((e) => e.state === "pending").length;
+        }
+        /** 开始会话（异步直到结束） */
+        start() {
+          if (this.started) return Promise.resolve("quit");
+          this.started = true;
+          return new Promise((resolve2) => {
+            this.resolveDone = resolve2;
+            this.escHandle = escManager.register("review-sprint", {
+              isVisible: () => !this.finished,
+              close: () => this.requestQuit()
+            });
+            this.bindKeys();
+            void this.runNext();
+          });
+        }
+        /** 放弃确认（ESC/放弃按钮） */
+        requestQuit() {
+          if (this.finished) return;
+          void openFlowDialog({
+            title: "放弃本次做题？",
+            message: "未完成的题目将丢弃，本轮复习按已完成篇目结算",
+            actions: [
+              { label: "继续做题", value: "cancel" },
+              { label: "放弃", value: "ok", cta: true }
+            ]
+          }).then((v) => {
+            if (v !== "ok" || this.finished) return;
+            this.finish("quit");
+          });
+        }
+        /** 结束会话（清资源 + 回调宿主） */
+        finish(reason) {
+          var _a2;
+          if (this.finished) return;
+          this.finished = true;
+          this.clearJump();
+          this.unbindKeys();
+          if (this.escHandle) {
+            this.escHandle.unregister();
+            this.escHandle = null;
+          }
+          this.opts.onExit();
+          (_a2 = this.resolveDone) == null ? void 0 : _a2.call(this, reason);
+        }
+        /** 宿主强制结束（面板关闭/卸载时调用，跳过确认） */
+        destroy() {
+          this.finish("quit");
+        }
+        clearJump() {
+          if (this.jumpTimer) {
+            clearTimeout(this.jumpTimer);
+            this.jumpTimer = null;
+          }
+        }
+        // ================= 键盘答题（item 2） =================
+        bindKeys() {
+          if (this.keyHandler) return;
+          this.keyHandler = (e) => this.handleKey(e);
+          document.addEventListener("keydown", this.keyHandler);
+        }
+        unbindKeys() {
+          if (this.keyHandler) {
+            document.removeEventListener("keydown", this.keyHandler);
+            this.keyHandler = null;
+          }
+        }
+        /** 键盘路由：1-4/a-d 答题；Enter 提交→下一题→结束并结算；结果卡/结算屏走主按钮。
+         *  输入框/文本域聚焦时跳过（不劫持打字）。 */
+        handleKey(e) {
+          if (this.finished) return;
+          const t = e.target;
+          if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+          if (e.ctrlKey || e.metaKey || e.altKey) return;
+          if (e.key !== "Enter") {
+            if (this.view !== "question" || !this.q || this.q.answered) return;
+            const question = this.currentQuestion();
+            if (!question) return;
+            const k = e.key.toLowerCase();
+            const idx = ["1", "2", "3", "4"].indexOf(e.key) >= 0 ? Number(e.key) - 1 : ["a", "b", "c", "d"].indexOf(k);
+            if (idx < 0 || idx >= question.options.length) return;
+            e.preventDefault();
+            this.answer(idx);
+            return;
+          }
+          e.preventDefault();
+          if (this.view === "question" && this.q) {
+            const q2 = this.q;
+            if (!q2.answered) {
+              const question = this.currentQuestion();
+              if (question && question.correctIndices.length > 1) this.submitMulti();
+              return;
+            }
+            if (q2.lastCorrect) return;
+            if (q2.list.length) this.nextQuestion();
+            else void this.finishNote();
+            return;
+          }
+          if (this.view === "result") {
+            const entry = this.entry();
+            void this.handleResult(entry && entry.state === "passed" ? "next" : "note");
+            return;
+          }
+          if (this.view === "summary") this.finish("done");
+        }
+        // ================= 跳过此篇（item 7） =================
+        /** 当前篇回 pending 移到队尾：不评级不写盘；仅剩它自己待做时直接结算（防自环） */
+        skipCurrent() {
+          if (this.finished) return;
+          const entry = this.entry();
+          if (!entry || entry.state !== "doing") return;
+          const othersPending = this.entries.some((en, i) => i !== this.cur && en.state === "pending");
+          entry.state = "pending";
+          if (!othersPending) {
+            this.showSummary();
+            return;
+          }
+          const idx = this.cur;
+          this.entries.splice(idx, 1);
+          this.entries.push(entry);
+          this.cur = Math.max(0, idx - 1);
+          this.q = null;
+          void this.runNext();
+        }
+        // ================= 流程推进 =================
+        async runNext() {
+          var _a2, _b2;
+          if (this.finished) return;
+          const nextIdx = this.entries.findIndex((e) => e.state === "pending");
+          if (nextIdx === -1) {
+            this.showSummary();
+            return;
+          }
+          this.cur = nextIdx;
+          const entry = this.entries[nextIdx];
+          entry.state = "doing";
+          this.renderTop();
+          this.showLoading(entry);
+          const questions = await this.opts.fetchQuestions(entry.item);
+          if (this.finished) return;
+          if (!questions || !questions.length) {
+            notice(`「${entry.item.name}」暂无题目，已跳过`, "warning");
+            entry.state = "pending";
+            this.entries.splice(nextIdx, 1);
+            this.cur = Math.max(0, nextIdx - 1);
+            await this.runNext();
+            return;
+          }
+          entry.questions = questions;
+          this.q = {
+            list: questions.slice(),
+            cur: (_a2 = questions[0]) != null ? _a2 : null,
+            answered: false,
+            sel: /* @__PURE__ */ new Set(),
+            lastCorrect: false,
+            single: ((_b2 = questions[0]) == null ? void 0 : _b2.correctIndices.length) === 1,
+            doneCount: 0,
+            totalCount: questions.length
+          };
+          this.renderQuestion();
+        }
+        async finishNote() {
+          var _a2, _b2;
+          const entry = this.entry();
+          if (!entry || entry.state !== "doing" || this.finished) return;
+          const total = entry.acc + entry.wrong;
+          const acc = total ? Math.round(entry.acc / total * 100) : 0;
+          const rating = accuracyToRating(acc);
+          const passed = rating === "easy" || rating === "good";
+          if (passed) {
+            const nextReviewAt = await this.opts.onPassed(entry.item, rating, { acc: entry.acc, wrong: entry.wrong });
+            if (this.finished) return;
+            entry.state = "passed";
+            entry.passNote = this.nextIntervalNote(nextReviewAt || entry.item.nextReviewDate);
+          } else {
+            await this.opts.onFailed(entry.item, rating, { acc: entry.acc, wrong: entry.wrong });
+            if (this.finished) return;
+            entry.state = "failed";
+            this.finish("fail");
+            return;
+          }
+          this.renderResult(entry);
+          (_b2 = (_a2 = this.opts).onProgress) == null ? void 0 : _b2.call(_a2);
+        }
+        entry() {
+          return this.entries[this.cur];
+        }
+        /** 通过后的下次间隔展示（onPassed 返回的写盘后 nextReviewDate） */
+        nextIntervalNote(nextReviewAt) {
+          if (!nextReviewAt) return "";
+          const days = Math.max(1, Math.round((new Date(nextReviewAt).getTime() - Date.now()) / 864e5));
+          return `${days} 天后`;
+        }
+        // ================= 答题 =================
+        /** 渲染目标题：优先刚作答的题（答题反馈期），否则剩余队列首题 */
+        currentQuestion() {
+          var _a2;
+          if ((_a2 = this.q) == null ? void 0 : _a2.cur) return this.q.cur;
+          return this.q && this.q.list.length ? this.q.list[0] : null;
+        }
+        /** 单选点选 / 多选勾选 */
+        answer(idx) {
+          const q2 = this.q;
+          if (!q2 || q2.answered) return;
+          const question = this.currentQuestion();
+          if (!question) return;
+          const single = question.correctIndices.length === 1;
+          if (!single) {
+            if (q2.sel.has(idx)) q2.sel.delete(idx);
+            else q2.sel.add(idx);
+            this.renderQuestion();
+            return;
+          }
+          q2.answered = true;
+          q2.sel = /* @__PURE__ */ new Set([idx]);
+          const correct = idx === question.correctIndices[0];
+          q2.lastCorrect = correct;
+          this.consume(question, correct);
+        }
+        /** 多选提交 */
+        submitMulti() {
+          const q2 = this.q;
+          if (!q2 || q2.answered) return;
+          const question = this.currentQuestion();
+          if (!question) return;
+          if (!q2.sel.size) {
+            notice("请至少选择一项", "warning");
+            return;
+          }
+          q2.answered = true;
+          const sel = Array.from(q2.sel).sort();
+          const correctArr = question.correctIndices.slice().sort();
+          const correct = sel.length === correctArr.length && sel.every((v, i) => v === correctArr[i]);
+          q2.lastCorrect = correct;
+          this.consume(question, correct);
+        }
+        /** 消费当前题（出本轮；答对持久化删库后自动下一题，答错等「下一题」按钮） */
+        consume(question, correct) {
+          const q2 = this.q;
+          const entry = this.entry();
+          q2.cur = question;
+          q2.list.shift();
+          if (correct) entry.acc++;
+          else entry.wrong++;
+          q2.doneCount++;
+          if (correct) {
+            void this.removeQuestionPersist(question).then(() => {
+              if (this.finished) return;
+              this.clearJump();
+              this.jumpTimer = setTimeout(() => {
+                this.jumpTimer = null;
+                if (this.finished) return;
+                this.advanceAfterAnswer();
+              }, CORRECT_JUMP_DELAY_MS2);
+            });
+          }
+          this.renderQuestion();
+        }
+        async removeQuestionPersist(q2) {
+          const quiz = this.opts.quiz;
+          if (!quiz || !q2.notePath) return;
+          try {
+            await quiz.manager.removeQuestion(this.opts.app, q2.notePath, {
+              question: q2.question,
+              options: q2.options,
+              correctIndices: q2.correctIndices
+            });
+          } catch (e) {
+            notice("删除题目失败：" + e.message + "，请重试", "error");
+          }
+        }
+        /** 答错后「下一题」 / 答对自动跳 */
+        nextQuestion() {
+          var _a2;
+          if (!((_a2 = this.q) == null ? void 0 : _a2.answered)) return;
+          this.advanceAfterAnswer();
+        }
+        advanceAfterAnswer() {
+          const entry = this.entry();
+          if (this.q.list.length) {
+            this.q.answered = false;
+            this.q.sel = /* @__PURE__ */ new Set();
+            this.q.cur = this.q.list[0];
+            this.renderQuestion();
+            return;
+          }
+          void this.finishNote();
+        }
+        // ================= 结果/结算动作 =================
+        async handleResult(action) {
+          if (action === "note") {
+            this.finish("quit");
+            return;
+          }
+          if (action === "end") {
+            this.showSummary();
+            return;
+          }
+          await this.runNext();
+        }
+        // ================= 视图构建（单套 DOM，CSS 适配移动） =================
+        /** 顶部头行（队列视图 / 冲刺共用外层结构由宿主渲染，本会话只接管内容区） */
+        renderTop() {
+        }
+        sprintHead(extraRight = "") {
+          return `
+      <div class="bz-sprint-head">
+        <div class="t">
+          <div class="bz-sprint-title">做题冲刺</div>
+        </div>
+        <div class="tools">
+          ${extraRight}
+          <button class="bz-icon-btn" data-action="skip" title="跳过此篇（不评级，移到队尾）">${this.icon("skip-forward")}</button>
+          <button class="bz-icon-btn" data-action="quit" title="回面板">${this.icon("x")}</button>
+        </div>
+      </div>`;
+        }
+        showLoading(entry) {
+          this.view = "loading";
+          this.opts.host.innerHTML = `
+      ${this.sprintHead()}
+      <div class="bz-sprint-loading"><span class="spinner"></span>正在获取题目…</div>`;
+          this.bindTop();
+        }
+        questionHeader(entry) {
+          const total = entry.questions.length;
+          const done = this.q.doneCount;
+          return `
+      <div class="bz-sprint-qtop">
+        <span class="bz-sprint-progress">${done + 1}/${total}</span>
+      </div>`;
+        }
+        renderQuestion() {
+          var _a2, _b2, _c, _d, _e;
+          const entry = this.entry();
+          const q2 = this.q;
+          const question = this.currentQuestion();
+          if (!question) return;
+          const single = question.correctIndices.length === 1;
+          const optsHtml = question.options.map((opt, i) => {
+            const isSel = q2.sel.has(i);
+            let extra = "";
+            if (q2.answered) {
+              if (question.correctIndices.includes(i)) extra = " is-correct";
+              else if (isSel) extra = " is-wrong";
+            } else if (isSel) extra = " is-sel";
+            return `
+          <div class="bz-sprint-opt${extra}${q2.answered ? " is-disabled" : ""}" data-i="${i}" role="button" tabindex="${q2.answered ? "-1" : "0"}" aria-disabled="${q2.answered ? "true" : "false"}">
+            <span class="k">${"ABCD"[i]}</span>
+            <span class="t">${escapeHtml2(opt)}</span>
+            <span class="m">${q2.answered && question.correctIndices.includes(i) ? this.mark("ok") : q2.answered && isSel ? this.mark("bad") : ""}</span>
+          </div>`;
+          }).join("");
+          const needSubmit = !single && !q2.answered;
+          const lastWrong = q2.answered && !q2.lastCorrect && !q2.list.length;
+          const nextBtn = q2.answered && !q2.lastCorrect && q2.list.length ? `<button class="bz-btn bz-btn--primary" data-action="next">下一题 →</button>` : lastWrong ? `<button class="bz-btn bz-btn--primary" data-action="note">${this.icon("flag")} 结束并结算</button>` : "";
+          const submit = needSubmit ? `<button class="bz-btn bz-btn--primary bz-sprint-submit" data-action="submit">提交答案</button>` : "";
+          const explain = q2.answered && !q2.lastCorrect && question.explain ? `<div class="bz-sprint-explain">${escapeHtml2(question.explain)}</div>` : "";
+          const html = `
+      ${this.sprintHead()}
+      <div class="bz-sprint-body">
+        <div class="bz-sprint-main">
+          ${this.questionHeader(entry)}
+          <div class="bz-sprint-qcard">
+            <div class="bz-sprint-qtype">${single ? "单选" : "多选"}</div>
+            <div class="bz-sprint-qtext">${escapeHtml2(question.question)}</div>
+            <div class="bz-sprint-opts">${optsHtml}</div>
+            ${explain}
+            ${submit}
+            ${nextBtn ? `<div class="bz-sprint-qfoot">${nextBtn}</div>` : ""}
+          </div>
+        </div>
+        <aside class="bz-sprint-queue">${this.queueHtml()}</aside>
+      </div>`;
+          this.view = "question";
+          this.opts.host.innerHTML = html;
+          mountIcons(this.opts.host);
+          this.bindTop();
+          (_a2 = this.opts.host.querySelector('[data-action="submit"]')) == null ? void 0 : _a2.addEventListener("click", () => this.submitMulti());
+          (_b2 = this.opts.host.querySelector('[data-action="next"]')) == null ? void 0 : _b2.addEventListener("click", () => this.nextQuestion());
+          (_c = this.opts.host.querySelector('[data-action="note"]')) == null ? void 0 : _c.addEventListener("click", () => {
+            void this.finishNote();
+          });
+          this.opts.host.querySelectorAll(".bz-sprint-opt").forEach((el) => {
+            const activate = () => this.answer(Number(el.dataset.i));
+            el.addEventListener("click", activate);
+            el.addEventListener("keydown", (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                activate();
+              }
+            });
+          });
+          (_e = (_d = this.opts).onProgress) == null ? void 0 : _e.call(_d);
+        }
+        queueHtml() {
+          const rows = this.entries.map((e) => {
+            const name = escapeHtml2(e.item.name.replace(/^《|》$/g, ""));
+            if (e.state === "passed") return `<div class="bz-sq-item passed"><span class="nm"><s>${name}</s></span></div>`;
+            if (e.state === "failed") return `<div class="bz-sq-item failed"><span class="nm">${name}</span></div>`;
+            if (e.state === "doing") return `<div class="bz-sq-item doing"><span class="nm">${name}</span></div>`;
+            return `<div class="bz-sq-item"><span class="nm">${name}</span></div>`;
+          }).join("");
+          return `
+      <div class="bz-sq-head"><b>本轮队列</b></div>
+      <div class="bz-sq-list">${rows || '<div class="bz-empty"><div class="bz-empty-title">队列完毕</div></div>'}</div>`;
+        }
+        renderResult(entry) {
+          var _a2, _b2, _c, _d, _e;
+          const total = entry.acc + entry.wrong;
+          const acc = total ? Math.round(entry.acc / total * 100) : 0;
+          const rating = accuracyToRating(acc);
+          const passed = rating === "easy" || rating === "good";
+          const remain = this.remainingCount;
+          const name = escapeHtml2(entry.item.name.replace(/^《|》$/g, ""));
+          const nextLabel = this.mode === "single" ? "完成 · 回面板" : remain > 0 ? `下一篇 · ${this.nextPendingName()}` : "完成本轮 · 结算";
+          const ratingLine = this.mode === "redo" ? `${RATING_NAMES2[rating]} · 已解除待重做` : `${RATING_NAMES2[rating]} · 下次 ${escapeHtml2(entry.passNote || "已排期")}`;
+          const inner = passed ? `
+        <div class="bz-result-ic">${this.mark("ok", "lg")}</div>
+        <div class="bz-result-name">${name}</div>
+        <div class="bz-result-score">${entry.acc}<span class="sl">/${total}</span></div>
+        <span class="bz-result-rating pass">${ratingLine}</span>
+        <button class="bz-btn bz-btn--primary bz-btn--block" data-action="next">${nextLabel}</button>
+        ${remain > 0 ? `<button class="bz-btn bz-btn--ghost bz-btn--block" data-action="end">结束这次复习</button>` : ""}` : `
+        <div class="bz-result-ic bad">${this.mark("bad", "lg")}</div>
+        <div class="bz-result-name">${name}</div>
+        <div class="bz-result-score">${entry.acc}<span class="sl">/${total}</span></div>
+        <span class="bz-result-rating fail">${RATING_NAMES2[rating]} · 待重做</span>
+        <button class="bz-btn bz-btn--danger bz-btn--block" data-action="note">${this.icon("file-text")} 复习此笔记 · 打开原文</button>`;
+          this.view = "result";
+          const html = `
+      ${this.sprintHead()}
+      <div class="bz-sprint-body">
+        <div class="bz-sprint-main"><div class="bz-result">${inner}</div></div>
+        <aside class="bz-sprint-queue">${this.queueHtml()}</aside>
+      </div>`;
+          this.opts.host.innerHTML = html;
+          mountIcons(this.opts.host);
+          this.bindTop();
+          (_a2 = this.opts.host.querySelector('[data-action="next"]')) == null ? void 0 : _a2.addEventListener("click", () => void this.handleResult("next"));
+          (_b2 = this.opts.host.querySelector('[data-action="end"]')) == null ? void 0 : _b2.addEventListener("click", () => void this.handleResult("end"));
+          (_c = this.opts.host.querySelector('[data-action="note"]')) == null ? void 0 : _c.addEventListener("click", () => void this.handleResult("note"));
+          (_e = (_d = this.opts).onProgress) == null ? void 0 : _e.call(_d);
+        }
+        nextPendingName() {
+          const nx = this.entries.find((e) => e.state === "pending");
+          return nx ? escapeHtml2(nx.item.name.replace(/^《|》$/g, "").slice(0, 12)) : "";
+        }
+        showSummary() {
+          var _a2, _b2;
+          this.view = "summary";
+          const passed = this.passedCount;
+          const failed = this.failedCount;
+          const total = passed + failed;
+          const streak = (_a2 = this.opts.streakDays) != null ? _a2 : 0;
+          const html = `
+      ${this.sprintHead()}
+      <div class="bz-summary">
+        <div class="bz-summary-title">本轮复习完成</div>
+        <div class="bz-summary-stats">
+          <div class="st"><b>${total}</b><span>复习篇数</span></div>
+          <div class="st"><b>${passed}</b><span>通过</span></div>
+          <div class="st ${failed ? "warn" : ""}"><b>${failed}</b><span>未通过</span></div>
+        </div>
+        ${streak > 0 ? `<div class="bz-summary-streak">连续复习 <b>${streak}</b> 天</div>` : ""}
+        <button class="bz-btn bz-btn--primary bz-btn--block" data-action="done">完成 · 回到复习计划</button>
+      </div>`;
+          this.opts.host.innerHTML = html;
+          mountIcons(this.opts.host);
+          this.bindTop();
+          (_b2 = this.opts.host.querySelector('[data-action="done"]')) == null ? void 0 : _b2.addEventListener("click", () => this.finish("done"));
+        }
+        /** 顶部/队列共同动作（跳过此篇 / 退出按钮） */
+        bindTop() {
+          var _a2, _b2;
+          (_a2 = this.opts.host.querySelector('[data-action="quit"]')) == null ? void 0 : _a2.addEventListener("click", () => this.requestQuit());
+          (_b2 = this.opts.host.querySelector('[data-action="skip"]')) == null ? void 0 : _b2.addEventListener("click", () => this.skipCurrent());
+        }
+        // ================= 图标/工具 =================
+        icon(name) {
+          return `<span class="bz-ic bz-sprint-ic" data-lucide="${name}"></span>`;
+        }
+        mark(kind, size = "") {
+          if (kind === "ok") return `<span class="bz-mark ok ${size}"><i data-lucide="check"></i></span>`;
+          return `<span class="bz-mark bad ${size}"><i data-lucide="x"></i></span>`;
+        }
+      };
+      RATING_NAMES2 = { easy: "轻松", good: "一般", hard: "困难", again: "忘了" };
+    }
+  });
+
+  // src/review/settings-schema.ts
+  function reviewSettingsSchema(deps) {
+    let renderExcludeRows = null;
+    return {
+      groups: [
+        {
+          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "reviewSkin" }, options: [{ value: "default", label: "三区队列", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板主题", binding: { key: "reviewSkinTheme" }, layoutKey: "reviewSkin", options: [{ value: "sage", label: "苔绿", layout: "default", prevClass: "bz-sp-prev-sage" }] }
+          ]
+        },
+        {
+          icon: "bell",
+          name: "检查提醒",
+          rows: [
+            { type: "toggle", name: "到期提醒", desc: "有笔记到期待复习时自动弹出提醒", binding: { key: "enableAutoNotify" } },
+            { type: "toggle", name: "新笔记加入提醒", desc: "新笔记被自动加入时弹出提示，多条合并成一条", binding: { key: "reviewAutoAddNotice" } }
+          ]
+        },
+        {
+          icon: "graduation-cap",
+          name: "做题家",
+          rows: [
+            { type: "toggle", name: "用做题测难度", desc: "开始复习即做题，按正确率自动定难度", binding: { key: "forceQuizForReview" } },
+            // 出题子项：仅「用做题测难度」开启时显示（ticket 170 isChild 联动 + visibleWhen 兜底）
+            { type: "toggle", name: "允许多选题", desc: "开启后 AI 可能出多选题，关闭则只出单选题", binding: { key: "enableMultipleChoice" }, visibleWhen: (s) => s.forceQuizForReview === true, isChild: true },
+            { type: "text", name: "每篇笔记出题数量", desc: "固定每篇笔记出题的数量，留空/0=自动", binding: { key: "questionsPerNote" }, visibleWhen: (s) => s.forceQuizForReview === true, isChild: true },
+            { type: "toggle", name: "打乱出题顺序", desc: "做题时随机排列题目顺序", binding: { key: "shuffleQuestions" }, visibleWhen: (s) => s.forceQuizForReview === true, isChild: true },
+            {
+              type: "select",
+              name: "出题难度",
+              desc: "控制 AI 出题深浅",
+              binding: { key: "difficulty" },
+              options: [
+                { value: "random", label: "随机" },
+                { value: "easy", label: "简单" },
+                { value: "medium", label: "中等" },
+                { value: "hard", label: "困难" }
+              ],
+              visibleWhen: (s) => s.forceQuizForReview === true,
+              isChild: true
+            }
+          ]
+        },
+        {
+          icon: "timer",
+          name: "复习节奏",
+          rows: [
+            // 非正数钳制为 0（原 onChange 口径：>0 保留否则 0）；空串不写（防脏值落盘）
+            { type: "number", name: "每日复习上限", desc: "一轮最多复习的篇数，不填则不限制", binding: { key: "reviewDailyLimit" }, min: 0 },
+            // 原钳制「n>0 且 n<=5 保留、否则回 1」：渲染器 min/max 只做边界钳制，超上界回 1 语义在 onChange 复刻
+            {
+              type: "number",
+              name: "复习间隔缩放",
+              desc: "数值越小复习越频繁，数值越大越宽松",
+              binding: { key: "reviewIntervalScale" },
+              onChange: (v) => {
+                if (!(v > 0 && v <= 5)) getSettings().reviewIntervalScale = 1;
+              }
+            },
+            // ADR-0077：R 目标阈值（低于该值视为可复习/提前；默认 0.9）
+            {
+              type: "number",
+              name: "R 目标阈值",
+              desc: "记忆保留度低于该值视为该复习了",
+              binding: { key: "reviewRThreshold" },
+              min: 0.5,
+              max: 0.99
+            }
+          ]
+        },
+        {
+          icon: "brain",
+          name: "记忆算法",
+          rows: [
+            // ADR-0077：FSRS 参数自动拟合（全自动定期重算）
+            { type: "toggle", name: "参数自动拟合", desc: "按个人复习历史拟合记忆参数，优化复习节奏", binding: { key: "reviewEnableFit" } },
+            {
+              type: "number",
+              name: "每 N 次复习重算",
+              desc: "累计 N 次评级后自动重拟合一次",
+              binding: { key: "reviewFitEveryN" },
+              min: 1,
+              visibleWhen: (s) => s.reviewEnableFit === true,
+              isChild: true
+            }
+          ]
+        },
+        {
+          icon: "sliders-horizontal",
+          name: "自动化",
+          rows: [
+            // 监听文件夹：通用 path 行（multi chips + 添加… 按钮，ticket 133 形态）。
+            // 落盘走外部 binding 自管（权威写盘在 onChange）：新增目录需先确认存量收编（取消=不加入，
+            // 回传回退清单否决本次变更），移除目录需连带清理其下排除记录（ticket 099）。
+            {
+              type: "path",
+              mode: "multi",
+              name: "监听文件夹",
+              desc: "文件夹里的新笔记自动加入复习计划，包括子文件夹",
+              binding: {
+                get: () => getSettings().reviewWatchedFolders || [],
+                set: () => {
+                },
+                save: () => {
+                }
+              },
+              pickerTitle: "选择监听文件夹",
+              pickerDesc: "文件夹里的新笔记自动加入复习计划，包括子文件夹",
+              onChange: (list) => {
+                const prev = [...getSettings().reviewWatchedFolders || []];
+                return (async () => {
+                  const { ReviewWatcher: ReviewWatcher2 } = await Promise.resolve().then(() => (init_watch(), watch_exports));
+                  const watcher = new ReviewWatcher2(deps.app, deps.dataManager);
+                  const kept = [];
+                  for (const folder of list) {
+                    if (!folder) {
+                      notice("暂不支持监听库根目录", "warning");
+                      continue;
+                    }
+                    if (prev.includes(folder)) {
+                      kept.push(folder);
+                      continue;
+                    }
+                    if (await watcher.confirmBatchAddForFolder(folder)) kept.push(folder);
+                  }
+                  for (const folder of prev) {
+                    if (list.includes(folder)) continue;
+                    const cleared = await watcher.removeWatchedFolder(folder);
+                    notice(cleared > 0 ? `已移除监听文件夹，并清理其下 ${cleared} 条排除记录` : "已移除监听文件夹", "success");
+                  }
+                  getSettings().reviewWatchedFolders = kept;
+                  await saveSettings();
+                  return kept;
+                })();
+              }
+            },
+            // 排除名单 chips 区（ticket 57 管理 UI；DOM id/类名零变化；交互后经 renderExcludeRows 重渲染）
+            {
+              type: "custom",
+              render: (body) => {
+                const setting = new Setting(body).setName("排除名单").setDesc("不参与监听自动加入的笔记，可在此单条解除");
+                setting.settingEl.classList.add("bz-review-exclude-row");
+                const excludeBox = document.createElement("div");
+                excludeBox.id = "review-excluded-list";
+                setting.controlEl.appendChild(excludeBox);
+                renderExcludeRows = () => {
+                  excludeBox.innerHTML = "";
+                  const notes = getSettings().reviewExcludedNotes || [];
+                  if (!notes.length) {
+                    excludeBox.appendChild(uiEmpty({ title: "暂无排除笔记" }));
+                    return;
+                  }
+                  notes.forEach((path) => {
+                    const chip = document.createElement("span");
+                    chip.className = "bz-review-exclude-chip";
+                    const name = document.createElement("span");
+                    name.className = "bz-review-exclude-name";
+                    name.textContent = path;
+                    name.title = path;
+                    const remove = document.createElement("button");
+                    remove.className = "bz-review-exclude-remove bz-touch-target--xl";
+                    remove.setAttribute("aria-label", `解除排除 ${path}`);
+                    const removeIc = document.createElement("span");
+                    removeIc.className = "bz-ic";
+                    setIcon(removeIc, "x");
+                    remove.appendChild(removeIc);
+                    remove.onclick = () => {
+                      void (async () => {
+                        const { ReviewWatcher: ReviewWatcher2 } = await Promise.resolve().then(() => (init_watch(), watch_exports));
+                        await new ReviewWatcher2(deps.app, deps.dataManager).removeExcludedNote(path);
+                        renderExcludeRows == null ? void 0 : renderExcludeRows();
+                        notice("已解除排除", "success");
+                      })();
+                    };
+                    chip.appendChild(name);
+                    chip.appendChild(remove);
+                    excludeBox.appendChild(chip);
+                  });
+                };
+                renderExcludeRows();
+              }
+            }
+          ]
+        },
+        {
+          icon: "eye",
+          name: "界面",
+          rows: [
+            { type: "toggle", name: "文件树标记", desc: "在文件树中为复习笔记着色并标到期时间", binding: { key: "reviewTreeBadge" } }
+          ]
+        },
+        // ticket 170：所有域移动端组统一无描述
+        mobileFullscreenGroup("reviewMobileDefaultFullscreen", { desc: "" })
+      ]
+    };
+  }
+  var init_settings_schema2 = __esm({
+    "src/review/settings-schema.ts"() {
+      init_fake_obsidian();
+      init_notice();
+      init_settings_provider();
+      init_settings_common();
+      init_ui();
+    }
+  });
+
+  // src/review/stats-ui.ts
+  var stats_ui_exports = {};
+  __export(stats_ui_exports, {
+    closeStatsModal: () => closeStatsModal,
+    closeTimeline: () => closeTimeline,
+    showStatsModal: () => showStatsModal,
+    showTimeline: () => showTimeline
+  });
+  function statCardHTML(label, value, idx) {
+    const bg = PASTEL_CARDS[idx % PASTEL_CARDS.length];
+    return `<div style="flex:1;min-width:80px;padding:12px 6px;background:${bg};border-radius:10px;text-align:center;border:1px solid rgba(0,0,0,0.06);">
+    <div style="font-size:1.3rem;font-weight:700;color:#3D4456;line-height:1.2;">${value}</div>
+    <div style="font-size:.68rem;color:rgba(61,68,86,0.65);margin-top:3px;">${label}</div>
+  </div>`;
+  }
+  function sectionHTML(title, body, accent = "#D6E4FF") {
+    return `<div style="margin:12px 16px;padding:14px 14px 12px;background:var(--background-secondary);border-radius:12px;border:1px solid var(--background-modifier-border);">
+    <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:.92rem;margin-bottom:12px;">
+      <span style="width:4px;height:14px;border-radius:2px;background:${accent};flex-shrink:0;"></span>
+      <span>${title}</span>
+    </div>
+    ${body}
+  </div>`;
+  }
+  function emptyHTML() {
+    return '<p style="text-align:center;color:var(--text-muted);font-size:.8rem;padding:12px 0;">暂无数据</p>';
+  }
+  function softBarHTML(entries, color) {
+    if (!entries.length) return emptyHTML();
+    const max = Math.max(...entries.map((e) => e.value), 1);
+    return entries.map((e) => `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
+      <span style="width:56px;flex-shrink:0;font-size:.76rem;color:var(--text-muted);text-align:right;white-space:nowrap;">${e.label}</span>
+      <div style="flex:1;height:10px;background:var(--background-modifier-border);border-radius:5px;overflow:hidden;">
+        <div style="height:100%;width:${Math.max(e.value / max * 100, 2)}%;background:${color};border-radius:5px;"></div>
+      </div>
+      <span style="width:30px;flex-shrink:0;font-size:.76rem;color:var(--text-normal);text-align:right;">${e.value}</span>
+    </div>`).join("");
+  }
+  function barChartHTML(entries, color) {
+    if (!entries.length) return emptyHTML();
+    const max = Math.max(...entries.map((e) => e.value), 1);
+    const minH = 26, maxH = 92;
+    return `
+    <div style="overflow-x:auto;margin:8px 0 4px;">
+      <div style="display:flex;align-items:flex-end;gap:6px;min-width:${Math.max(entries.length * 34, 200)}px;padding:0 4px;">
+      ${entries.map((e) => {
+      const h = max > 0 ? minH + e.value / max * (maxH - minH) : minH;
+      return `
+        <div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;">
+          <div style="width:100%;min-width:22px;height:${h}px;background:${color};border-radius:6px 6px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:3px;color:#3D4456;font-weight:700;font-size:.7rem;">${e.value || ""}</div>
+          <div style="margin-top:5px;font-size:.66rem;color:var(--text-muted);text-align:center;white-space:nowrap;">${e.label}</div>
+        </div>`;
+    }).join("")}
+      </div>
+    </div>`;
+  }
+  function statInlineHTML(items) {
+    return `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">${items.map((s) => `
+    <span style="font-size:.74rem;color:var(--text-muted);background:var(--background-primary);border:1px solid var(--background-modifier-border);border-radius:8px;padding:3px 10px;">${s}</span>`).join("")}</div>`;
+  }
+  function rankListHTML(items, onClick) {
+    if (!items.length) return emptyHTML();
+    const badges = ["#FFF3C4", "#D8F3DC", "#D6E4FF"];
+    return items.map((it, i) => {
+      const rank = i < 3 ? `<span style="width:20px;height:20px;flex-shrink:0;border-radius:50%;background:${badges[i]};color:#3D4456;font-size:.68rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(0,0,0,0.06);">${i + 1}</span>` : `<span style="width:20px;flex-shrink:0;font-size:.72rem;color:var(--text-muted);text-align:center;">${i + 1}</span>`;
+      return `<div class="bz-review-stats-tl-row" data-idx="${i}" style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--background-modifier-border);cursor:pointer;">
+      ${rank}
+      <span style="flex:1;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml2(it.name)}</span>
+      ${it.sub ? `<span style="font-size:.7rem;color:var(--text-muted);flex-shrink:0;">${it.sub}</span>` : ""}
+      <span style="font-size:.72rem;color:var(--text-muted);flex-shrink:0;">${it.meta}</span>
+    </div>`;
+    }).join("");
+  }
+  async function showStatsModal(app2, dm) {
+    lastDm = dm;
+    const items = await dm.loadItems();
+    let w;
+    try {
+      w = (await Promise.resolve().then(() => (init_app3(), app_exports))).reviewApp.currentW();
+    } catch (e) {
+      w = void 0;
+    }
+    renderStatsModal(app2, dm, items, w);
+  }
+  function renderStatsModal(app2, dm, items, w) {
+    closeStatsModal();
+    statsMask = document.createElement("div");
+    statsMask.id = "review-stats-mask";
+    statsMask.style.display = "block";
+    statsMask.style.zIndex = String(allocZ());
+    statsMask.onclick = closeStatsModal;
+    statsPopup = document.createElement("div");
+    statsPopup.id = "review-stats-popup";
+    statsPopup.style.display = "flex";
+    statsPopup.style.zIndex = String(allocZ());
+    topifyZ(statsMask, statsPopup);
+    const header = document.createElement("div");
+    header.className = "bz-win-head bz-review-stats-head";
+    const closeBtn = document.createElement("button");
+    closeBtn.id = "review-stats-close";
+    closeBtn.className = "bz-win-close bz-touch-target--xl";
+    closeBtn.title = "关闭";
+    closeBtn.appendChild(uiIcon("x"));
+    header.innerHTML = `
+    <h3 class="bz-review-title">复习统计</h3>
+    <div></div>
+  `;
+    header.querySelector("div").appendChild(closeBtn);
+    statsPopup.appendChild(header);
+    const body = document.createElement("div");
+    body.id = "review-stats-body";
+    body.className = "bz-review-stats-body";
+    statsPopup.appendChild(body);
+    document.body.appendChild(statsMask);
+    document.body.appendChild(statsPopup);
+    header.querySelector("#review-stats-close").addEventListener("click", closeStatsModal);
+    const stats = computeStats(items, { w });
+    body.innerHTML = buildStatsHTML(app2, dm, items, stats);
+    body.querySelectorAll(".bz-review-stats-tl-row").forEach((el) => {
+      el.addEventListener("click", () => {
+        const idx = Number(el.dataset.idx);
+        const target = items.filter((i) => (i.reviewHistory || []).length).sort((a, b) => {
+          var _a2, _b2, _c, _d;
+          const la = ((_b2 = (_a2 = a.reviewHistory) == null ? void 0 : _a2[a.reviewHistory.length - 1]) == null ? void 0 : _b2.timestamp) || "";
+          const lb = ((_d = (_c = b.reviewHistory) == null ? void 0 : _c[b.reviewHistory.length - 1]) == null ? void 0 : _d.timestamp) || "";
+          return lb.localeCompare(la);
+        })[idx];
+        if (target) void showTimeline(app2, dm, target);
+      });
+    });
+    statsEsc = escManager.register("review-stats", {
+      isVisible: () => !!statsMask && statsMask.style.display === "block",
+      close: closeStatsModal
+    });
+  }
+  function buildStatsHTML(app2, dm, items, stats) {
+    var _a2, _b2;
+    const cards = `
+    <div style="display:flex;flex-wrap:wrap;gap:8px;padding:16px 16px 0;">
+      ${statCardHTML("总复习（天）", stats.totalReviews, 0)}
+      ${statCardHTML("连续天数", stats.streak, 1)}
+      ${statCardHTML("今日复习", stats.todayReviews, 2)}
+      ${statCardHTML("逾期率", Math.round(stats.overdueRate * 100) + "%", 3)}
+      ${statCardHTML("平均 R", stats.avgR === null ? "-" : Math.round(stats.avgR * 100) + "%", 4)}
+      ${statCardHTML("复习笔记", stats.reviewedNotes, 5)}
+    </div>`;
+    const total = Object.values(stats.ratingDist).reduce((a, b) => a + b, 0) || 1;
+    const ratingBars = ["again", "hard", "good", "easy"].map((r) => ({
+      label: RATING_NAMES[r],
+      value: stats.ratingDist[r] || 0
+    }));
+    const ratingHTML = sectionHTML(
+      "评级分布",
+      softBarHTML(ratingBars, "#D6E4FF") + statInlineHTML([`共 ${total} 次评级`]),
+      "#FFE5CC"
+    );
+    const dist = loadDistribution(items, 14);
+    const todayKey = /* @__PURE__ */ new Date();
+    const tmrKey = /* @__PURE__ */ new Date();
+    tmrKey.setDate(tmrKey.getDate() + 1);
+    const fmt2 = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const todayCnt = ((_a2 = dist.find((d) => d.date === fmt2(todayKey))) == null ? void 0 : _a2.count) || 0;
+    const tmrCnt = ((_b2 = dist.find((d) => d.date === fmt2(tmrKey))) == null ? void 0 : _b2.count) || 0;
+    const maxDist = Math.max(1, ...dist.map((d) => d.count));
+    const distBars = dist.map((d) => ({
+      label: d.date === fmt2(todayKey) ? "今" : `+${dist.indexOf(d)}`,
+      value: d.count
+    }));
+    const loadHTML = sectionHTML(
+      "复习负载",
+      statInlineHTML([`今日 ${todayCnt} 篇`, `明日 ${tmrCnt} 篇`, `峰值 ${maxDist} 篇/天`]) + barChartHTML(distBars, "#D6E4FF"),
+      "#D6E4FF"
+    );
+    const withHistory = items.filter((i) => (i.reviewHistory || []).length).sort((a, b) => {
+      var _a3, _b3, _c, _d;
+      const la = ((_b3 = (_a3 = a.reviewHistory) == null ? void 0 : _a3[a.reviewHistory.length - 1]) == null ? void 0 : _b3.timestamp) || "";
+      const lb = ((_d = (_c = b.reviewHistory) == null ? void 0 : _c[b.reviewHistory.length - 1]) == null ? void 0 : _d.timestamp) || "";
+      return lb.localeCompare(la);
+    });
+    const tlItems = withHistory.slice(0, 10).map((i) => {
+      var _a3;
+      const h = i.reviewHistory || [];
+      const lastTs = (_a3 = h[h.length - 1]) == null ? void 0 : _a3.timestamp;
+      const cnt = h.length;
+      return {
+        name: i.name.replace(/^《|》$/g, ""),
+        sub: `${cnt} 次`,
+        meta: lastTs ? formatRelativeTime(new Date(lastTs)) : ""
+      };
+    });
+    const timelineHTML = sectionHTML(
+      "复习时间线",
+      rankListHTML(tlItems, () => {
+      }) + '<div style="font-size:.68rem;color:var(--text-faint);text-align:center;padding-top:8px;">点击笔记查看复习历史</div>',
+      "#FADDE1"
+    );
+    const daily7 = stats.daily7.map((d) => ({ label: d.date.slice(5).replace("-", "/"), value: d.count }));
+    const weekHTML = sectionHTML("最近 7 天复习量", barChartHTML(daily7, "#E6DFF5"), "#E6DFF5");
+    return cards + ratingHTML + loadHTML + timelineHTML + weekHTML;
+  }
+  async function showTimeline(app2, dm, item) {
+    closeTimeline();
+    let w;
+    try {
+      w = (await Promise.resolve().then(() => (init_app3(), app_exports))).reviewApp.currentW();
+    } catch (e) {
+      w = void 0;
+    }
+    const history2 = historyOf(item);
+    histMask = document.createElement("div");
+    histMask.id = "review-history-mask";
+    histMask.style.display = "block";
+    histMask.style.zIndex = String(allocZ());
+    histMask.onclick = closeTimeline;
+    histPopup = document.createElement("div");
+    histPopup.id = "review-history-popup";
+    histPopup.style.display = "flex";
+    histPopup.style.zIndex = String(allocZ());
+    topifyZ(histMask, histPopup);
+    const body = document.createElement("div");
+    body.id = "review-history-body";
+    body.className = "bz-review-history-body";
+    histPopup.appendChild(body);
+    document.body.appendChild(histMask);
+    document.body.appendChild(histPopup);
+    const closeBtn = document.createElement("button");
+    closeBtn.id = "review-history-close";
+    closeBtn.className = "bz-win-close bz-review-history-close bz-touch-target--xl";
+    closeBtn.title = "关闭";
+    closeBtn.appendChild(uiIcon("x"));
+    closeBtn.style.cssText = "position:absolute;top:10px;right:10px;z-index:2;background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px;box-shadow:none !important;";
+    closeBtn.addEventListener("click", closeTimeline);
+    histPopup.appendChild(closeBtn);
+    const status = document.createElement("div");
+    status.className = "bz-review-history-status";
+    status.style.cssText = "padding:16px 18px 10px;";
+    const stageText = item.phase === "fsrs" ? `FSRS Lv.${(item.stage || 0) - 9 + 1}` : `${(item.stage || 0) + 1}/10`;
+    let curR = null;
+    if (item.phase === "fsrs" && item.stability && item.lastReviewed) {
+      const t = ((/* @__PURE__ */ new Date()).getTime() - new Date(item.lastReviewed).getTime()) / 864e5;
+      if (t > 0) {
+        const R = new FSRS(w || DEFAULT_W).R(t, item.stability);
+        curR = ` · 当前 R ${Math.round(R * 100)}%`;
+      }
+    }
+    status.innerHTML = `
+    <div style="font-size:15px;font-weight:600;color:var(--text-normal);">${escapeHtml2(item.name.replace(/^《|》$/g, ""))}</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${stageText} · 共 ${history2.length} 次复习${curR || ""}</div>
+  `;
+    body.appendChild(status);
+    if (!history2.length) {
+      const empty = document.createElement("div");
+      empty.style.cssText = "padding:30px;text-align:center;color:var(--text-faint);font-size:13px;";
+      empty.textContent = "暂无复习记录";
+      body.appendChild(empty);
+      histEsc = escManager.register("review-history", { isVisible: () => !!histMask && histMask.style.display === "block", close: closeTimeline });
+      return;
+    }
+    const tl = document.createElement("div");
+    tl.className = "bz-review-history-tl";
+    tl.style.cssText = "flex:1;overflow-y:auto;padding:4px 18px 20px;";
+    const itemsHTML = history2.map((h, i) => {
+      const isLast = i === history2.length - 1;
+      const ratingName = RATING_NAMES[h.rating] || h.rating;
+      const color = RATING_COLORS[h.rating] || "#888";
+      const rText = h.R !== void 0 ? `R=${h.R <= 1 ? Math.round(h.R * 100) : Math.round(h.R)}%` : "";
+      const sText = h.stability !== void 0 ? `S=${h.stability}` : "";
+      const meta = [rText, sText].filter(Boolean).join(" · ");
+      const line = isLast ? "" : '<div style="position:absolute;left:5px;top:14px;bottom:-4px;width:2px;background:var(--background-modifier-border);"></div>';
+      return `
+      <div style="position:relative;padding-left:20px;padding-bottom:${isLast ? "4px" : "14px"};">
+        ${line}
+        <div style="position:absolute;left:0;top:4px;width:12px;height:12px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+        <div style="display:flex;align-items:baseline;gap:10px;font-size:13px;">
+          <span style="color:var(--text-muted);font-size:12px;min-width:86px;flex-shrink:0;">${formatRelativeTime(new Date(h.timestamp))}</span>
+          <span style="font-weight:500;color:${color};min-width:32px;">${ratingName}</span>
+          <span style="color:var(--text-faint);font-size:12px;">阶段${h.stage}${meta ? " · " + meta : ""}</span>
+        </div>
+      </div>`;
+    }).join("");
+    tl.innerHTML = itemsHTML;
+    body.appendChild(tl);
+    histEsc = escManager.register("review-history", {
+      isVisible: () => !!histMask && histMask.style.display === "block",
+      close: closeTimeline
+    });
+  }
+  function closeTimeline() {
+    histEsc == null ? void 0 : histEsc.unregister();
+    histEsc = null;
+    if (histMask) histMask.remove();
+    if (histPopup) histPopup.remove();
+    histMask = null;
+    histPopup = null;
+  }
+  function closeStatsModal() {
+    statsEsc == null ? void 0 : statsEsc.unregister();
+    statsEsc = null;
+    if (statsMask) statsMask.remove();
+    if (statsPopup) statsPopup.remove();
+    statsMask = null;
+    statsPopup = null;
+    closeTimeline();
+  }
+  var statsMask, statsPopup, statsEsc, lastDm, PASTEL_CARDS, histMask, histPopup, histEsc;
+  var init_stats_ui = __esm({
+    "src/review/stats-ui.ts"() {
+      init_z_order();
+      init_esc_manager();
+      init_utils();
+      init_stats2();
+      init_fsrs();
+      init_ui();
+      statsMask = null;
+      statsPopup = null;
+      statsEsc = null;
+      lastDm = null;
+      PASTEL_CARDS = ["#D6E4FF", "#D8F3DC", "#CDF0EA", "#FADDE1", "#FFE5CC", "#E6DFF5"];
+      histMask = null;
+      histPopup = null;
+      histEsc = null;
+    }
+  });
+
+  // src/review/ui.ts
+  var ui_exports7 = {};
+  __export(ui_exports7, {
+    UIManager: () => UIManager3,
+    isDueToday: () => isDueToday,
+    isPlayable: () => isPlayable,
+    mountFloatingRatingBar: () => mountFloatingRatingBar,
+    reviewSettingsSchema: () => reviewSettingsSchema
+  });
+  function dueLabelOf(item) {
+    if (item.isMissing) return { label: "文件缺失", cls: "is-missing" };
+    if (item.isCompleted) return { label: "已完成", cls: "is-done" };
+    if (!item.nextReviewDate) return { label: "待定", cls: "is-future" };
+    const diff = new Date(item.nextReviewDate).getTime() - Date.now();
+    if (diff > 0) {
+      const days = Math.floor(diff / 864e5);
+      const hours = Math.floor(diff % 864e5 / 36e5);
+      if (days > 0) return { label: `${days} 天后`, cls: "is-future" };
+      if (hours > 0) return { label: `${hours} 小时后`, cls: "is-future" };
+      return { label: `${Math.max(1, Math.floor(diff / 6e4))} 分钟后`, cls: "is-future" };
+    }
+    return { label: "已逾期", cls: "is-overdue" };
+  }
+  function isPlayable(item) {
+    if (item.isMissing || item.isCompleted || item.completed) return false;
+    if (!item.nextReviewDate) return false;
+    return new Date(item.nextReviewDate).getTime() <= Date.now();
+  }
+  function mountFloatingRatingBar(opts) {
+    const el = document.createElement("div");
+    el.className = "bz-review-bar";
+    el.style.zIndex = String(allocZ());
+    const btns = BAR_RATINGS.map(
+      (r) => `<button class="bz-review-bar-btn bz-touch-target--sm is-${r.cls}" data-rating="${r.rating}">${r.label}</button>`
+    ).join("");
+    el.innerHTML = `
+    <span class="bz-review-bar-info">${escapeHtml2(opts.name.replace(/^《|》$/g, ""))}<i>(${opts.index}/${opts.total})</i></span>
+    <span class="bz-review-bar-act">${btns}
+      <button class="bz-review-bar-btn bz-touch-target--sm is-skip" data-rating="skip">${"跳过"}</button>
+    </span>`;
+    let closed = false;
+    const close = () => {
+      if (closed) return;
+      closed = true;
+      el.remove();
+    };
+    el.querySelectorAll(".bz-review-bar-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const r = btn.dataset.rating;
+        if (r === "skip") opts.onSkip();
+        else if (r === "again" || r === "hard" || r === "good" || r === "easy") opts.onRate(r);
+        close();
+      });
+    });
+    document.body.appendChild(el);
+    return { close };
+  }
+  var UIManager3, BAR_RATINGS;
+  var init_ui10 = __esm({
+    "src/review/ui.ts"() {
+      init_z_order();
+      init_notice();
+      init_flow_dialog();
+      init_esc_manager();
+      init_settings_provider();
+      init_utils();
+      init_mobile();
+      init_ui();
+      init_item_actions();
+      init_fsrs();
+      init_stats2();
+      init_queue();
+      init_sprint();
+      init_settings_schema2();
+      UIManager3 = class {
+        constructor(app2, dataManager3) {
+          /** R 展示口径权重源（item 12：与调度排期同读拟合权重；ensureReview 注入 reviewApp.currentW，缺省回退默认） */
+          this.wSource = () => DEFAULT_W;
+          this.mask = null;
+          this.popup = null;
+          /** 内容区容器（队列/冲刺共用宿主） */
+          this.entriesContainer = null;
+          /** 当前冲刺会话（内容区被占用时队列交互禁用） */
+          this.sprint = null;
+          /** 冲刺入口 in-flight 防抖（双击/并发触发只放行一次，防双开会话双倍 AI 调用） */
+          this.sprintStarting = false;
+          this.showArchived = false;
+          this.searchTimer = null;
+          this.searchText = "";
+          this.escHandle = null;
+          this.app = app2;
+          this.dataManager = dataManager3;
+          this.createMainUI();
+          this.registerEscLayer();
+        }
+        get inSprint() {
+          return !!this.sprint;
+        }
+        // ================= 面板构建 =================
+        createMainUI() {
+          if (this.mask && document.body.contains(this.mask)) return;
+          this.mask = document.createElement("div");
+          this.mask.id = "review-mask";
+          this.mask.classList.add("bz-panel-overlay");
+          this.mask.style.display = "none";
+          this.mask.style.zIndex = String(allocZ());
+          this.mask.onclick = () => {
+            if (!this.sprint) this.hideMain();
+          };
+          this.popup = document.createElement("div");
+          this.popup.id = "review-popup";
+          this.popup.classList.add("bz-panel-frame");
+          this.popup.classList.add("bz-panel-mtop");
+          this.popup.style.display = "none";
+          this.popup.style.zIndex = String(allocZ());
+          const content = document.createElement("div");
+          content.id = "review-entries-container";
+          this.popup.appendChild(content);
+          this.entriesContainer = content;
+          document.body.appendChild(this.mask);
+          document.body.appendChild(this.popup);
+        }
+        registerEscLayer() {
+          if (this.escHandle) return;
+          this.escHandle = escManager.register("review-main", {
+            isVisible: () => !!this.mask && this.mask.style.display === "block",
+            close: () => this.hideMain()
+          });
+        }
+        // ================= 显示/隐藏 =================
+        async showMain() {
+          this.createMainUI();
+          if (!this.mask || !this.popup) return;
+          applyMobileWindowFullscreen(this.popup, tryGetSettings().reviewMobileDefaultFullscreen === true);
+          topifyZ(this.mask, this.popup);
+          this.mask.style.display = "block";
+          this.popup.style.display = "flex";
+          await this.showQueue();
+        }
+        hideMain() {
+          if (this.sprint) return;
+          if (this.mask) this.mask.style.display = "none";
+          if (this.popup) this.popup.style.display = "none";
+        }
+        destroy() {
+          const sprint = this.sprint;
+          this.sprint = null;
+          sprint == null ? void 0 : sprint.destroy();
+          this.hideMain();
+          if (this.searchTimer !== null) {
+            window.clearTimeout(this.searchTimer);
+            this.searchTimer = null;
+          }
+          if (this.escHandle) {
+            this.escHandle.unregister();
+            this.escHandle = null;
+          }
+          if (this.mask) this.mask.remove();
+          if (this.popup) this.popup.remove();
+          this.mask = null;
+          this.popup = null;
+          this.entriesContainer = null;
+        }
+        // ================= 队列渲染（三区） =================
+        /** 读盘并渲染三区队列（外部刷新入口） */
+        async refreshPanel() {
+          if (this.sprint) return;
+          const items = await this.dataManager.loadItems();
+          this.renderEntries(items, this.searchText);
+        }
+        /** 渲染队列视图（冲刺态不响应） */
+        renderEntries(items, searchText = "") {
+          if (this.sprint) return;
+          const container = this.entriesContainer;
+          if (!container) return;
+          this.searchText = searchText;
+          container.innerHTML = this.queueViewHtml(items, searchText);
+          if (!items.length) {
+            const host = container.querySelector("[data-empty-host]");
+            if (host) {
+              const acts = document.createElement("div");
+              acts.className = "bz-btn-row";
+              const addBtn = document.createElement("button");
+              addBtn.className = "bz-btn bz-btn--primary";
+              addBtn.dataset.act = "add-current";
+              addBtn.textContent = "把当前笔记加入复习";
+              const helpBtn = document.createElement("button");
+              helpBtn.className = "bz-btn bz-btn--ghost";
+              helpBtn.dataset.act = "watch-help";
+              helpBtn.textContent = "如何配置监听文件夹";
+              acts.appendChild(addBtn);
+              acts.appendChild(helpBtn);
+              host.appendChild(
+                uiEmpty({
+                  icon: "inbox",
+                  title: "复习计划还是空的",
+                  desc: "在 设置 → 复习计划 → 监听文件夹 添加文件夹后，新笔记会自动加入复习；也可以先把当前笔记加入。",
+                  actions: acts
+                })
+              );
+            }
+          }
+          mountIcons(container);
+          this.bindQueueEvents(container, items);
+        }
+        /** 切回队列视图（冲刺结束回调）；遇仍活动的会话先销毁再置空（防孤儿 ESC 层） */
+        async showQueue() {
+          if (!this.entriesContainer) return;
+          const active2 = this.sprint;
+          this.sprint = null;
+          active2 == null ? void 0 : active2.destroy();
+          await this.refreshPanel();
+        }
+        // ================= 队列视图 HTML =================
+        /** R 阈值提前复习判定（item 6：与开始本轮同口径；wSource=拟合权重） */
+        rThreshold() {
+          const s = tryGetSettings();
+          return Number(s == null ? void 0 : s.reviewRThreshold) || 0.9;
+        }
+        isEarly(it) {
+          return isEarlyDue(it, this.rThreshold(), this.wSource());
+        }
+        queueViewHtml(items, searchText) {
+          const kw = searchText.trim().toLowerCase();
+          const vis = kw ? items.filter((i) => i.name.toLowerCase().includes(kw)) : items;
+          const rt = this.rThreshold();
+          const w = this.wSource();
+          const col = partitionQueue(items, rt, w);
+          const visCol = partitionQueue(vis, rt, w);
+          const over = visCol.overdue;
+          const today = visCol.today;
+          const future = visCol.future;
+          const done = visCol.done;
+          const round = roundQueue(items, this.rThreshold(), this.wSource());
+          const clearToday = !round.length;
+          const futureCount = col.future.length;
+          const head = `
+      <div class="bz-panel-head">
+        <div class="bz-panel-brand">${this.icon("repeat-2", "bz-ic--sm")}</div>
+        <div class="bz-panel-title">复习计划</div>
+        <div class="bz-panel-head-pipe"></div>
+        <div class="bz-panel-head-sub">${this.todayLabel()}</div>
+        <span class="bz-panel-head-sp"></span>
+        <div class="bz-panel-head-btns">
+          <button class="bz-icon-btn" data-act="settings" title="打开复习计划设置">${this.icon("settings", "")}</button>
+          <!-- issue 201 对齐待办：关闭钮不挂 bz-win-close（core 规则非真全屏隐藏之），桌面/移动常显同待办 -->
+          <button class="bz-icon-btn" data-act="close" title="关闭">${this.icon("x")}</button>
+      </div>
+      </div>
+      <div class="bz-q-tools">
+        <div class="bz-search${searchText ? " typing" : ""}">${this.icon("search", "")}<input class="bz-input" type="text" id="bz-q-search" placeholder="搜索笔记…" value="${escapeHtml2(searchText)}"></div>
+      </div>`;
+          if (!items.length) {
+            const strip2 = `
+      <div class="bz-q-strip">
+        <span class="bz-q-strip-dot ok"></span>
+        <strong>今日已清空</strong>
+        <span class="bz-q-strip-txt">还没有任何复习条目</span>
+      </div>`;
+            return `<div class="bz-q-view">${head}${strip2}<div class="bz-q-cols bz-q-empty-wrap"><div data-empty-host></div></div></div>`;
+          }
+          const strip = clearToday ? `<div class="bz-q-strip">
+        <span class="bz-q-strip-dot ok"></span>
+        <strong>今日已清空</strong>
+        <span class="bz-q-strip-txt">${futureCount ? `未来还有 ${futureCount} 篇待复习` : "没有待复习条目"}</span>
+      </div>` : `<div class="bz-q-strip">
+        <span class="bz-q-strip-dot"></span>
+        <strong>开始本轮</strong>
+        <span class="bz-q-strip-txt">${this.showArchived ? "查看已完成复习" : `今日 ${col.today.length} 篇到期 · 逾期 ${col.overdue.length} 篇顺延`}</span>
+        ${this.showArchived ? "" : `<button class="bz-btn bz-btn--primary" data-act="begin">开始本轮</button>`}
+      </div>`;
+          const body = this.showArchived ? `<div class="bz-q-cols"><div class="bz-q-col done">${this.colHead(done.length, "已完成")}${this.cardsOf(done)}</div></div>` : `<div class="bz-q-cols">
+          <div class="bz-q-col danger">${this.colHead(col.overdue.length, "已逾期")}${this.cardsOf(over)}</div>
+          <div class="bz-q-col warn">${this.colHead(col.today.length, "今天到期")}${this.cardsOf(today)}</div>
+          <div class="bz-q-col future">${this.colHead(future.length, "未来")}${this.cardsOf(future)}</div>
+        </div>`;
+          const stats = computeStats(items);
+          const footer = `
+      <div class="bz-q-footer">
+        <span class="bz-q-fitem bz-touch-target--lg" data-act="arch" title="查看已完成复习">
+          ${this.icon("folder")}<span class="lbl">已完成 <b>${done.length}</b> 篇</span>
+        </span>
+        <i class="sep"></i>
+        <span class="bz-q-fitem bz-touch-target--lg" data-act="stats" title="查看复习统计分布">
+          ${this.icon("chart")}<span class="lbl">累计 <b>${stats.totalReviews}</b> 天 · 连续 <b>${stats.streak}</b> 天</span>
+        </span>
+      </div>`;
+          return `<div class="bz-q-view">${head}${strip}${body}${footer}</div>`;
+        }
+        colHead(count, name) {
+          return `<div class="bz-q-col-head"><span class="cnt">${count}</span><span class="name">${name}</span></div>`;
+        }
+        cardsOf(items) {
+          if (!items.length) return `<div class="bz-q-hint">没有条目</div>`;
+          return items.map((it) => this.cardHtml(it)).join("");
+        }
+        cardHtml(it) {
+          const due = dueLabelOf(it);
+          const canPlay = isPlayable(it) && !it.isMissing;
+          const title = it.isCompleted ? `<s>${escapeHtml2(it.name)}</s>` : escapeHtml2(it.name);
+          const cls = [
+            "bz-q-card",
+            it.isOverdue ? "danger" : "",
+            it.isCompleted ? "done" : "",
+            canPlay ? "" : "no",
+            it.isMissing ? "missing" : ""
+          ].join(" ").trim();
+          const tags = [
+            it.isMissing ? `<span class="bz-q-tag is-missing">文件缺失</span>` : `<span class="bz-q-tag ${due.cls}">${due.label}</span>`,
+            // item 6：R<阈值提前复习卡挂「提前」tag（与开始本轮同口径，落「今天」列）
+            !it.isMissing && this.isEarly(it) ? `<span class="bz-q-tag is-early">提前</span>` : "",
+            this.stageTagHtml(it)
+          ].join("");
+          return `
+      <div class="${cls}" data-id="${it.id}" role="button" tabindex="0" aria-disabled="${canPlay ? "false" : "true"}">
+        <div class="bz-q-card-top"><span class="bz-q-card-title">${title}</span><span class="bz-q-card-stage">${it.isMissing ? "挂起" : this.stageNum(it)}</span></div>
+        <div class="bz-q-card-meta">${tags}</div>
+      </div>`;
+        }
+        stageTagHtml(it) {
+          var _a2;
+          if (it.completed) return '<span class="bz-q-tag is-done">已完成</span>';
+          if (it.phase === "fsrs") {
+            const r = this.currentRPct(it);
+            if (r !== null) {
+              const cls = r >= 90 ? "r-high" : r >= 70 ? "r-mid" : "r-low";
+              return `<span class="bz-q-tag is-r ${cls}">R=${r}%</span>`;
+            }
+            return `<span class="bz-q-tag is-r">FSRS</span>`;
+          }
+          return `<span class="bz-q-tag is-stage">阶段 ${(_a2 = it.currentStage) != null ? _a2 : it.stage + 1}/${TOTAL_STAGES}</span>`;
+        }
+        stageNum(it) {
+          var _a2;
+          if (it.phase === "fsrs") return `FSRS Lv.${it.stage - LADDER_MAX + 1}`;
+          return `${(_a2 = it.currentStage) != null ? _a2 : it.stage + 1}/${TOTAL_STAGES}`;
+        }
+        currentRPct(it) {
+          if (it.phase !== "fsrs" || !it.stability || !it.lastReviewed) return null;
+          const t = (Date.now() - new Date(it.lastReviewed).getTime()) / 864e5;
+          if (!(t > 0)) return null;
+          const fsrs = new FSRS(this.wSource());
+          return Math.round(fsrs.R(t, it.stability) * 100);
+        }
+        todayLabel() {
+          const d = /* @__PURE__ */ new Date();
+          const week = ["日", "一", "二", "三", "四", "五", "六"][d.getDay()];
+          return `${d.getMonth() + 1}月${d.getDate()}日 周${week}`;
+        }
+        // ================= 队列事件 =================
+        bindQueueEvents(container, items) {
+          var _a2, _b2, _c, _d, _e, _f, _g;
+          (_a2 = container.querySelector('[data-act="close"]')) == null ? void 0 : _a2.addEventListener("click", () => this.hideMain());
+          (_b2 = container.querySelector('[data-act="settings"]')) == null ? void 0 : _b2.addEventListener("click", () => {
+            this.hideMain();
+            void Promise.resolve().then(() => (init_settings_panel(), settings_panel_exports)).then((m) => m.openSettingsPanel(this.app, "review"));
+          });
+          (_c = container.querySelector('[data-act="begin"]')) == null ? void 0 : _c.addEventListener("click", () => void this.beginRound());
+          (_d = container.querySelector('[data-act="arch"]')) == null ? void 0 : _d.addEventListener("click", () => {
+            this.showArchived = !this.showArchived;
+            void this.refreshPanel();
+          });
+          (_e = container.querySelector('[data-act="stats"]')) == null ? void 0 : _e.addEventListener("click", () => void this.openStats());
+          (_f = container.querySelector('[data-act="add-current"]')) == null ? void 0 : _f.addEventListener("click", () => void this.addCurrentNote());
+          (_g = container.querySelector('[data-act="watch-help"]')) == null ? void 0 : _g.addEventListener("click", () => void this.showWatchHelp());
+          const search = container.querySelector("#bz-q-search");
+          if (search) {
+            search.addEventListener("input", () => {
+              if (this.searchTimer !== null) window.clearTimeout(this.searchTimer);
+              this.searchTimer = window.setTimeout(() => {
+                this.searchTimer = null;
+                this.searchText = search.value;
+                void this.refreshPanel();
+              }, 180);
+            });
+          }
+          container.querySelectorAll(".bz-q-card[data-id]:not(.no)").forEach((card) => {
+            const activate = () => {
+              const it = items.find((x) => x.id === card.dataset.id);
+              if (it && isPlayable(it)) void this.beginSingle(it);
+            };
+            card.addEventListener("click", activate);
+            card.addEventListener("keydown", (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                activate();
+              }
+            });
+          });
+          container.querySelectorAll(".bz-q-card[data-id]").forEach((card) => {
+            this.attachDrawer(card, items);
+          });
+        }
+        // ================= 空态两条路（item 10） =================
+        /** 把当前笔记加入复习（空库引导动作；命令同语义） */
+        async addCurrentNote() {
+          const file = this.app.workspace.getActiveFile();
+          if (!file) {
+            notice("请先打开一个笔记", "warning");
+            return;
+          }
+          const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app3(), app_exports));
+          try {
+            await reviewApp2.addCurrentToReview(file);
+            await this.refreshPanel();
+            await reviewApp2.applyReviewStyles(this.app);
+          } catch (e) {
+            notice("加入复习计划失败：" + ((e == null ? void 0 : e.message) || e) + "，请重试", "error");
+          }
+        }
+        /** 配置监听文件夹说明（空库引导动作；设置面板路径指路） */
+        async showWatchHelp() {
+          const { openFlowDialog: openFlowDialog2 } = await Promise.resolve().then(() => (init_flow_dialog(), flow_dialog_exports));
+          await openFlowDialog2({
+            title: "配置监听文件夹",
+            message: "打开 设置 → 复习计划 → 监听文件夹，添加文件夹后，其中新建的笔记会自动加入复习计划；已存在的笔记可在添加时选择一并加入。",
+            actions: [{ label: "知道了", value: "ok", cta: true }]
+          });
+        }
+        // ================= 冲刺入口（连接 app 编排） =================
+        async beginRound() {
+          if (this.sprintStarting) return;
+          this.sprintStarting = true;
+          try {
+            const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app3(), app_exports));
+            await reviewApp2.autoJumpOverdue();
+          } finally {
+            this.sprintStarting = false;
+          }
+        }
+        async beginSingle(item) {
+          if (this.sprintStarting) return;
+          this.sprintStarting = true;
+          try {
+            const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app3(), app_exports));
+            await reviewApp2.startSingleSprint(item);
+          } finally {
+            this.sprintStarting = false;
+          }
+        }
+        /** 供 app 编排：进入做题冲刺会话（宿主接管内容区）。
+         *  互斥：进入前强制销毁旧会话（防孤儿冲刺 ESC 层 + 旧题面覆盖队列视图）。 */
+        startSprint(opts) {
+          const container = this.entriesContainer;
+          if (!container) return Promise.resolve("quit");
+          const old = this.sprint;
+          this.sprint = null;
+          old == null ? void 0 : old.destroy();
+          this.sprint = new SprintSession({
+            app: this.app,
+            host: container,
+            queue: opts.queue,
+            mode: opts.mode,
+            quiz: opts.quiz,
+            streakDays: opts.streakDays,
+            fetchQuestions: opts.fetchQuestions,
+            onPassed: opts.onPassed,
+            onFailed: opts.onFailed,
+            onExit: () => this.showQueue()
+          });
+          return this.sprint.start();
+        }
+        // ================= 归档 / 统计 =================
+        async openStats() {
+          const { showStatsModal: showStatsModal2 } = await Promise.resolve().then(() => (init_stats_ui(), stats_ui_exports));
+          await showStatsModal2(this.app, this.dataManager);
+        }
+        // ================= 难度弹窗（评分命令用，保留旧实现） =================
+        showDifficultyDialog(item, onSelect) {
+          const old = document.querySelector(".difficulty-dialog");
+          if (old) old.remove();
+          const div = document.createElement("div");
+          div.className = "difficulty-dialog";
+          div.style.zIndex = String(allocZ());
+          div.innerHTML = `
+      <h4>标记复习：${escapeHtml2(item.name)}</h4>
+      <button class="diff-btn" data-diff="again">忘了（Again）</button>
+      <button class="diff-btn" data-diff="hard">困难（Hard）</button>
+      <button class="diff-btn" data-diff="good">一般（Good）</button>
+      <button class="diff-btn" data-diff="easy">简单（Easy）</button>
+      <button class="diff-btn diff-btn-cancel" data-diff="cancel">取消</button>
+    `;
+          document.body.appendChild(div);
+          div.style.display = "block";
+          div.querySelectorAll(".diff-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              unregisterSheetCompanion(div);
+              div.remove();
+              const diff = btn.dataset.diff;
+              if (diff !== "cancel" && diff && onSelect) onSelect(diff);
+            });
+          });
+          setTimeout(() => {
+            const handler = (e) => {
+              if (!div.contains(e.target)) {
+                unregisterSheetCompanion(div);
+                div.remove();
+                document.removeEventListener("click", handler);
+              }
+            };
+            document.addEventListener("click", handler);
+          }, 100);
+        }
+        // ================= 抽屉（右键/长按） =================
+        attachDrawer(card, items) {
+          const item = items.find((x) => x.id === card.dataset.id);
+          if (!item) return;
+          card.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            void this.openDrawer(item, card);
+          });
+        }
+        async openDrawer(item, anchor) {
+          const { attachItemActions: attachItemActions2, closeItemMenu: closeItemMenu2 } = await Promise.resolve().then(() => (init_item_actions(), item_actions_exports));
+          const actions = [
+            {
+              icon: "file-text",
+              label: "打开原文",
+              onClick: () => void this.openItemFile(item)
+            },
+            {
+              icon: "history",
+              label: "查看历史",
+              onClick: () => {
+                void (async () => {
+                  const { showTimeline: showTimeline2 } = await Promise.resolve().then(() => (init_stats_ui(), stats_ui_exports));
+                  showTimeline2(this.app, this.dataManager, item);
+                })();
+              }
+            },
+            {
+              icon: "trash-2",
+              label: "移出复习计划",
+              kind: "danger",
+              onClick: () => {
+                void openFlowDialog({
+                  title: "移出复习计划",
+                  message: `确定移出「${item.name}」吗？移出后可在通知中撤销。`,
+                  actions: [
+                    { label: "取消", value: "cancel" },
+                    { label: "移出", value: "ok", cta: true }
+                  ]
+                }).then(async (v) => {
+                  if (v !== "ok") return;
+                  try {
+                    await this.dataManager.removeItem(item.filePath);
+                    await this.refreshPanel();
+                    const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app3(), app_exports));
+                    await reviewApp2.applyReviewStyles(this.app);
+                    notifyUndo(`已移出「${item.name}」`, () => {
+                      void (async () => {
+                        try {
+                          await this.dataManager.restoreItem(item);
+                          await this.refreshPanel();
+                          const { reviewApp: ra } = await Promise.resolve().then(() => (init_app3(), app_exports));
+                          await ra.applyReviewStyles(this.app);
+                        } catch (e) {
+                          notifySaveError(e, "恢复复习条目");
+                        }
+                      })();
+                    });
+                  } catch (e) {
+                    notifySaveError(e, "移出复习条目");
+                  }
+                });
+              }
+            }
+          ];
+          attachItemActions2(anchor, actions);
+        }
+        async openItemFile(item) {
+          const file = this.app.vault.getAbstractFileByPath(item.filePath);
+          if (!file) {
+            notice(`笔记「${item.name}」的文件已删除`, "warning");
+            return;
+          }
+          const leaf = this.app.workspace.getLeaf(false);
+          await leaf.openFile(file);
+        }
+        // ================= 工具 =================
+        /** lucide 占位 HTML（默认挂 .bz-q-ic 域内尺寸钩子；extra 传空则只用 .bz-ic 基类，
+         *  如 .bz-search 内的搜索图标走组件库定位/尺寸）。渲染后组件库 mountIcons 统一替换 */
+        icon(name, extra = "bz-q-ic") {
+          return `<span class="bz-ic${extra ? " " + extra : ""}" data-lucide="${name}"></span>`;
+        }
+      };
+      BAR_RATINGS = [
+        { rating: "again", label: "忘了", cls: "again" },
+        { rating: "hard", label: "困难", cls: "hard" },
+        { rating: "good", label: "一般", cls: "good" },
+        { rating: "easy", label: "简单", cls: "easy" }
+      ];
+    }
+  });
+
+  // src/review/index.ts
+  var review_exports = {};
+  __export(review_exports, {
+    dataManager: () => dataManager,
+    ensureReview: () => ensureReview,
+    openReviewPanel: () => openReviewPanel,
+    openReviewReport: () => openReviewReport,
+    reviewAddCurrent: () => reviewAddCurrent,
+    reviewJumpOverdue: () => reviewJumpOverdue,
+    reviewMarkDialog: () => reviewMarkDialog,
+    reviewMarkRating: () => reviewMarkRating,
+    reviewRemoveCurrent: () => reviewRemoveCurrent,
+    reviewStart: () => reviewStart,
+    reviewWatcher: () => reviewWatcher,
+    uiManager: () => uiManager2,
+    unloadReview: () => unloadReview
+  });
+  function listen(source, event, cb) {
+    const ref = source.on(event, cb);
+    if (!ref) return;
+    unsubscribers.push(() => {
+      var _a2;
+      return (_a2 = source.offref) == null ? void 0 : _a2.call(source, ref);
+    });
+  }
+  function listenBus(channel, cb) {
+    unsubscribers.push(onDomainEvent(channel, cb));
+  }
+  function pseudoMdFile(path) {
+    const base = path.split("/").pop() || "";
+    return { path, basename: base.replace(/\.md$/, ""), extension: "md" };
+  }
+  function ensureReview(app2) {
+    if (initialized5) return;
+    initialized5 = true;
+    reviewApp.ensure(app2);
+    dataManager = new ReviewDataManager(app2);
+    uiManager2 = new UIManager3(app2, dataManager);
+    uiManager2.wSource = () => reviewApp.currentW();
+    reviewWatcher = new ReviewWatcher(app2, dataManager);
+    void reviewApp.loadFitParams(app2).catch(() => {
+    });
+    firstCheckTimer = setTimeout(() => {
+      firstCheckTimer = null;
+      reviewApp.checkOverdueAndNotify();
+      checkInterval = setInterval(() => reviewApp.checkOverdueAndNotify(), 6e4);
+    }, 2e3);
+    listen(app2.metadataCache, "resolved", async () => {
+      await reviewApp.applyReviewStyles(app2);
+    });
+    listen(app2.vault, "modify", async (file) => {
+      if (file.extension === "md") await reviewApp.applyReviewStyles(app2, file);
+    });
+    listenBus("vault:md-created", (evt) => {
+      void (reviewWatcher == null ? void 0 : reviewWatcher.onVaultCreate(pseudoMdFile(evt.path)));
+    });
+    listenBus("vault:md-deleted", (evt) => {
+      reviewWatcher == null ? void 0 : reviewWatcher.onVaultDelete(pseudoMdFile(evt.path));
+    });
+    listenBus("vault:md-renamed", (evt) => {
+      const file = pseudoMdFile(evt.newPath);
+      file.oldPath = evt.oldPath;
+      reviewWatcher == null ? void 0 : reviewWatcher.onVaultRename(file, evt.oldPath);
+    });
+    listen(app2.workspace, "quit", () => {
+      if (checkInterval) {
+        clearInterval(checkInterval);
+        checkInterval = null;
+      }
+    });
+  }
+  function openReviewPanel(app2) {
+    ensureReview(app2);
+    uiManager2 == null ? void 0 : uiManager2.showMain();
+  }
+  async function openReviewReport(app2) {
+    ensureReview(app2);
+    const { showStatsModal: showStatsModal2 } = await Promise.resolve().then(() => (init_stats_ui(), stats_ui_exports));
+    await showStatsModal2(app2, dataManager);
+  }
+  async function reviewAddCurrent(app2) {
+    ensureReview(app2);
+    const file = app2.workspace.getActiveFile();
+    if (!file) {
+      notice("请先打开一个笔记");
+      return;
+    }
+    try {
+      await reviewApp.addCurrentToReview(file);
+      await uiManager2.refreshPanel();
+      await reviewApp.applyReviewStyles(app2);
+    } catch (e) {
+      notice("加入复习计划失败：" + e.message + "，请重试", "error");
+    }
+  }
+  async function reviewRemoveCurrent(app2) {
+    ensureReview(app2);
+    const file = app2.workspace.getActiveFile();
+    if (!file) {
+      notice("请先打开一个笔记");
+      return;
+    }
+    const items = await dataManager.loadItems();
+    const target = items.find((i) => i.filePath === file.path);
+    if (!target) {
+      notice("该笔记不在复习计划中");
+      return;
+    }
+    void openFlowDialog({
+      title: "移出复习计划",
+      message: `确定把「${file.basename}」移出复习计划吗？所有复习数据将被删除，移出后可在通知中撤销。`,
+      actions: [
+        { label: "取消", value: "cancel" },
+        { label: "移出", value: "ok", cta: true }
+      ]
+    }).then(async (v) => {
+      if (v !== "ok") return;
+      await dataManager.removeItem(file.path);
+      notifyUndo(`已移出「${file.basename}」`, () => {
+        void (async () => {
+          try {
+            await dataManager.restoreItem(target);
+            await uiManager2.refreshPanel();
+          } catch (e) {
+            notifySaveError(e, "恢复复习条目");
+          }
+        })();
+      });
+      await uiManager2.refreshPanel();
+      await reviewApp.applyReviewStyles(app2);
+    });
+  }
+  async function reviewJumpOverdue(app2) {
+    ensureReview(app2);
+    await reviewApp.autoJumpOverdue();
+  }
+  async function reviewStart(app2) {
+    ensureReview(app2);
+    await reviewApp.autoJumpOverdue();
+  }
+  async function reviewMarkDialog(app2) {
+    ensureReview(app2);
+    const file = app2.workspace.getActiveFile();
+    if (!file) {
+      notice("请先打开一个笔记");
+      return;
+    }
+    const items = await dataManager.loadItems();
+    const item = items.find((i) => i.filePath === file.path);
+    if (!item) {
+      notice("该笔记不在复习计划中");
+      return;
+    }
+    if (item.completed) {
+      notice("该笔记已完成全部复习");
+      return;
+    }
+    uiManager2 == null ? void 0 : uiManager2.showDifficultyDialog(item, async (diff) => {
+      await reviewApp.markReview(file.path, diff);
+      await reviewApp.applyReviewStyles(app2);
+    });
+  }
+  async function reviewMarkRating(app2, rating) {
+    ensureReview(app2);
+    const file = app2.workspace.getActiveFile();
+    if (!file) {
+      notice("请先打开一个笔记");
+      return;
+    }
+    const items = await dataManager.loadItems();
+    const item = items.find((i) => i.filePath === file.path);
+    if (!item) {
+      notice("该笔记不在复习计划中");
+      return;
+    }
+    if (item.completed) {
+      notice("该笔记已完成全部复习");
+      return;
+    }
+    await reviewApp.markReview(file.path, rating);
+    await reviewApp.applyReviewStyles(app2);
+  }
+  function unloadReview() {
+    initialized5 = false;
+    if (firstCheckTimer) {
+      clearTimeout(firstCheckTimer);
+      firstCheckTimer = null;
+    }
+    if (checkInterval) {
+      clearInterval(checkInterval);
+      checkInterval = null;
+    }
+    reviewApp.stopReviewLoops();
+    reviewApp.dataManager = null;
+    for (const off of unsubscribers) {
+      try {
+        off();
+      } catch (e) {
+      }
+    }
+    unsubscribers = [];
+    uiManager2 == null ? void 0 : uiManager2.destroy();
+    uiManager2 = null;
+    dataManager = null;
+    reviewWatcher == null ? void 0 : reviewWatcher.destroy();
+    reviewWatcher = null;
+  }
+  var initialized5, dataManager, uiManager2, reviewWatcher, checkInterval, firstCheckTimer, unsubscribers;
+  var init_review = __esm({
+    "src/review/index.ts"() {
+      init_notice();
+      init_flow_dialog();
+      init_domain_bus();
+      init_data8();
+      init_watch();
+      init_ui10();
+      init_app3();
+      initialized5 = false;
+      dataManager = null;
+      uiManager2 = null;
+      reviewWatcher = null;
+      checkInterval = null;
+      firstCheckTimer = null;
+      unsubscribers = [];
+    }
+  });
+
+  // src/review/app.ts
+  var app_exports = {};
+  __export(app_exports, {
+    REVIEW_AWAY_GRACE_MS: () => REVIEW_AWAY_GRACE_MS,
+    __setReviewAwayGraceMsForTests: () => __setReviewAwayGraceMsForTests,
+    reviewApp: () => reviewApp
+  });
+  function __setReviewAwayGraceMsForTests(ms) {
+    REVIEW_AWAY_GRACE_MS = ms;
+  }
+  var REVIEW_AWAY_GRACE_MS, reviewApp;
+  var init_app3 = __esm({
+    "src/review/app.ts"() {
+      init_notice();
+      init_app();
+      init_settings_provider();
+      init_fsrs();
+      init_data8();
+      init_data8();
+      init_fit();
+      init_fsrs();
+      init_queue();
+      init_stats2();
+      REVIEW_AWAY_GRACE_MS = 12e4;
+      reviewApp = {
+        checkInterval: null,
+        dataManager: null,
+        /** 测试注入：对齐源码 window.__quiz 语义 */
+        _quizOverride: null,
+        /** 连续复习单框通知（同键合并，动态更新消息） */
+        _reviewNotice: null,
+        /** 已通知逾期的笔记路径（ticket 100：diff 记忆集合，避免重复刷屏） */
+        _notifiedOverdue: /* @__PURE__ */ new Set(),
+        /** 逾期常驻通知句柄：同键合并时 notify 返回空操作，留存真句柄供逾期清零时主动收起 */
+        _overdueNotice: null,
+        /** ticket 48：已染色/挂徽章的文件路径（移出计划后据此回退；仅提交计划路径 + 曾染色路径，不再全库扫描） */
+        _styledPaths: /* @__PURE__ */ new Set(),
+        /** ADR-0077：最近一次复习的累计计数（每 N 次触发拟合重算） */
+        _reviewCountSinceFit: 0,
+        /** ADR-0077：当前生效的拟合权重（null=用默认 DEFAULT_W） */
+        _fittedW: null,
+        /** ADR-0077：拟合运行防重入 */
+        _fitRunning: false,
+        /** P3：reviewLoop 活动轮询句柄（卸载统一清理；插件禁用后不得继续读盘翻篇弹通知） */
+        _reviewLoops: /* @__PURE__ */ new Set(),
+        /** item 4：普通复习悬浮迷你评级条句柄（reviewLoop 存续期间挂屏幕底部） */
+        _reviewBar: null,
+        /** item 5：本轮队列断点（中断/超时可恢复继续） */
+        _pendingRound: null,
+        /** P3：终止全部 reviewLoop 轮询（unloadReview 调用；幂等） */
+        stopReviewLoops() {
+          for (const t of this._reviewLoops) clearInterval(t);
+          this._reviewLoops.clear();
+          this.hideReviewBar();
+          this._pendingRound = null;
+        },
+        /** item 4：收起悬浮评级条（幂等） */
+        hideReviewBar() {
+          var _a2;
+          (_a2 = this._reviewBar) == null ? void 0 : _a2.close();
+          this._reviewBar = null;
+        },
+        async getQuiz() {
+          if (this._quizOverride) return this._quizOverride;
+          return (await Promise.resolve().then(() => (init_quiz_core(), quiz_core_exports))).quizUI;
+        },
+        ensure(app2) {
+          if (!this.dataManager) this.dataManager = new ReviewDataManager(app2);
+        },
+        /** ADR-0077：加载拟合参数到 _fittedW（无则 null 回退默认）；ensureReview 启动时调用 */
+        async loadFitParams(app2) {
+          try {
+            const fit = await loadFittedParams(app2);
+            this._fittedW = fit ? mergeFittedW(fit.w) : null;
+          } catch (e) {
+            this._fittedW = null;
+          }
+        },
+        /**
+         * ADR-0077：每 N 次复习自动重拟合（全自动定期重算）。
+         * markReview 每次评级后调用（count+1）；达阈值且开关开 → 异步后台跑，完成后轻提示；
+         * 样本不足/失败静默回退默认；防重入。
+         */
+        async maybeRunFit(app2) {
+          const s = getSettings();
+          if (s.reviewEnableFit === false) return;
+          const n = Number(s.reviewFitEveryN) || 10;
+          this._reviewCountSinceFit++;
+          if (this._reviewCountSinceFit < n || this._fitRunning) return;
+          this._fitRunning = true;
+          this._reviewCountSinceFit = 0;
+          try {
+            const dm = this.dataManager;
+            const items = await dm.loadItems();
+            const result = fitFromItems(items);
+            if (result) {
+              await saveFittedParams(app2, {
+                w: result.fit.w,
+                fitAt: (/* @__PURE__ */ new Date()).toISOString(),
+                fitCount: result.count,
+                full: result.fit.w.length >= 19
+              });
+              this._fittedW = mergeFittedW(result.fit.w);
+              notice(`已根据 ${result.count} 条复习记录拟合记忆参数`, "success");
+            }
+          } catch (e) {
+            console.warn("复习参数拟合失败，回退默认:", e);
+          } finally {
+            this._fitRunning = false;
+          }
+        },
+        /** ADR-0077：获取当前生效权重（拟合参数优先，回退默认） */
+        currentW() {
+          return this._fittedW || DEFAULT_W;
+        },
+        /** ADR-0077：某条目当前记忆保留度 R（FSRS 相位且已复习过才可算；否则 null） */
+        currentR(item) {
+          if (item.phase !== "fsrs" || !item.stability || !item.lastReviewed) return null;
+          const t = ((/* @__PURE__ */ new Date()).getTime() - new Date(item.lastReviewed).getTime()) / 864e5;
+          if (!(t > 0)) return null;
+          return new FSRS(this.currentW()).R(t, item.stability);
+        },
+        /** ADR-0077：逾期队列排序 + 每日上限截断。
+         *  R 升序（遗忘风险最高优先，仅可算 R 的条目）→ nextReviewDate 升序。
+         *  ticket 174：移除置顶（用户拍板去掉置顶功能）。 */
+        sortOverdue(items, dailyLimit = 0) {
+          const sorted = [...items].sort((a, b) => {
+            const rA = this.currentR(a);
+            const rB = this.currentR(b);
+            if (rA !== null && rB !== null && rA !== rB) return rA - rB;
+            return new Date(a.nextReviewDate).getTime() - new Date(b.nextReviewDate).getTime();
+          });
+          return dailyLimit > 0 ? sorted.slice(0, dailyLimit) : sorted;
+        },
+        async markReview(filePath, selectedDifficulty, opts) {
+          const app2 = getApp();
+          this.ensure(app2);
+          const dm = this.dataManager;
+          const items = await dm.loadItems();
+          const item = items.find((i) => i.filePath === filePath);
+          if (!item) {
+            notice("条目不存在");
+            return;
+          }
+          if (item.completed) {
+            notice("该笔记已完成全部复习");
+            return;
+          }
+          const now = /* @__PURE__ */ new Date();
+          const nextReview = item.nextReviewDate ? new Date(item.nextReviewDate) : /* @__PURE__ */ new Date(0);
+          if (now < nextReview) {
+            const rThreshold = Number(getSettings().reviewRThreshold) || 0.9;
+            if (!isEarlyDue(item, rThreshold, this.currentW())) {
+              const diff = nextReview.getTime() - now.getTime();
+              const mins = Math.ceil(diff / 6e4);
+              notice(`还未到复习时间（${mins}分钟后）`);
+              return;
+            }
+          }
+          const rating = selectedDifficulty;
+          const decision = scheduleNext(
+            {
+              stage: item.stage,
+              phase: item.phase,
+              stability: item.stability,
+              difficulty: item.difficulty,
+              lastReviewed: item.lastReviewed,
+              reviewStart: item.reviewStart
+            },
+            rating,
+            now,
+            this.currentW()
+          );
+          const scaleRaw = Number(getSettings().reviewIntervalScale);
+          const scale = decision.phase === "fsrs" && !decision.enteringFsrs && scaleRaw > 0 ? scaleRaw : 1;
+          const scaledDays = Math.max(0.01, decision.intervalDays * scale);
+          const nextDate = new Date(now.getTime() + scaledDays * 864e5);
+          await dm.updateItem(filePath, (it) => {
+            it.stage = decision.stage;
+            it.phase = decision.phase;
+            if (decision.stability !== null) it.stability = decision.stability;
+            if (decision.difficulty !== null) it.difficulty = decision.difficulty;
+            it.lastReviewed = now.toISOString();
+            it.lastDifficulty = rating;
+            it.totalReviews = (it.totalReviews || 0) + 1;
+            if (!it.reviewHistory) it.reviewHistory = [];
+            const entry = { timestamp: now.toISOString(), stage: decision.historyStage, rating };
+            if (decision.historyStability !== null) {
+              entry.stability = decision.historyStability;
+              entry.difficulty = decision.historyDifficulty;
+            }
+            if (decision.R !== null) entry.R = Math.round(decision.R * 100);
+            it.reviewHistory.push(entry);
+            it.nextReviewDate = nextDate.toISOString();
+            if (decision.enteringFsrs) it.completed = false;
+            if (opts == null ? void 0 : opts.autoPending) it.pendingRedo = rating === "again" || rating === "hard";
+            else if (rating === "good" || rating === "easy") it.pendingRedo = false;
+          });
+          if (decision.enteringFsrs) {
+            notice(`进入深度复习，${FSRS_FIRST_TEXTS[decision.stage]}后复习`, "success");
+          } else if (decision.phase === "ladder") {
+            notice(`${FSRS_FIRST_TEXTS[decision.stage]}后复习`, "success");
+          } else {
+            const days = Math.round(scaledDays);
+            const rPct = Math.round((decision.R || 0) * 100);
+            notice(`R=${rPct}%，下次复习：${days > 0 ? days + "天" : "1天"}后`, "success");
+          }
+          void this.maybeRunFit(getApp());
+        },
+        /** 跳转逾期（做题决定难度：开启 → 做题复习；关闭 → 普通复习跳转笔记） */
+        /** 跳转逾期（bz-review-start/overdue 命令入口）：完整复习流程 = startRoundSprint */
+        async autoJumpOverdue() {
+          await this.startRoundSprint();
+        },
+        /** 准确率 → 难度评级 */
+        accuracyToRating(accuracy) {
+          if (accuracy >= 90) return "easy";
+          if (accuracy >= 70) return "good";
+          if (accuracy >= 50) return "hard";
+          return "again";
+        },
+        /** 待重做条目（文件存在、未完成；按进入顺序 = lastReviewed 升序 FIFO） */
+        pendingRedoItems(items) {
+          return items.filter((i) => i.pendingRedo && !i.isCompleted && i.file).sort(
+            (a, b) => new Date(a.lastReviewed || a.reviewStart).getTime() - new Date(b.lastReviewed || b.reviewStart).getTime()
+          );
+        },
+        /** 重做出题（ADR-0044/Q7-②）：清空旧题 → ensureQuestions 全新生成；失败或空题回退剩余错题 */
+        async regenerateQuestions(filePath) {
+          const quiz = await this.getQuiz();
+          if (!quiz || !quiz.ai) return [];
+          const leftover = await quiz.manager.getQuestionsForNote(getApp(), filePath) || [];
+          await quiz.manager.saveQuestionsForNote(getApp(), filePath, []);
+          await quiz.ensureQuestions([filePath]);
+          const fresh = await quiz.manager.getQuestionsForNote(getApp(), filePath) || [];
+          const picked = fresh.length ? fresh : leftover;
+          return picked.map((q2, i) => ({ ...q2, notePath: filePath, _index: i }));
+        },
+        /** 批量生成题目（返回 {filePath: questions[]} 映射）：先清空存量题再 ensureQuestions 全新生成 */
+        async batchGenerateQuestions(items) {
+          const quiz = await this.getQuiz();
+          if (!quiz || !quiz.ai) {
+            console.warn("做题家未初始化（缺少 AI）");
+            notify("做题家未初始化（缺少 AI），已改用普通复习", { type: "warning", dedupeKey: "review-quiz-ai" });
+            return {};
+          }
+          for (const item of items) {
+            await quiz.manager.saveQuestionsForNote(getApp(), item.filePath, []);
+          }
+          await quiz.ensureQuestions(items.map((i) => i.filePath));
+          const out = {};
+          for (const item of items) {
+            const qs = await quiz.manager.getQuestionsForNote(getApp(), item.filePath);
+            if (qs && qs.length) {
+              out[item.filePath] = qs.map((q2, i) => ({
+                ...q2,
+                notePath: item.filePath,
+                _index: i
+              }));
+            }
+          }
+          return out;
+        },
+        /** 单条做题冲刺（点队列到期卡片）：该篇直接进入做题会话 */
+        async startSingleSprint(item) {
+          const app2 = getApp();
+          this.ensure(app2);
+          const quiz = await this.getQuiz();
+          if (quiz && !quiz.ai) {
+            try {
+              const { ensureQuiz: ensureQuiz2 } = await Promise.resolve().then(() => (init_quiz_core(), quiz_core_exports));
+              ensureQuiz2(app2);
+            } catch (e) {
+            }
+          }
+          if (!quiz || !quiz.ai) {
+            notify("做题家未初始化，改用普通复习", { type: "warning", dedupeKey: "review-quiz-ai" });
+            await this.reviewLoop([item], 0);
+            return;
+          }
+          await this.runSprintSession([item], "single");
+        },
+        /** 开始本轮（队列视图「开始本轮」）：待重做优先 → 逾期队列 → 做题/普通分流 */
+        async startRoundSprint() {
+          const app2 = getApp();
+          this.ensure(app2);
+          let items = await this.dataManager.loadItems();
+          const pend = this.pendingRedoItems(items);
+          if (pend.length && getSettings().forceQuizForReview) {
+            const quiz2 = await this.getQuiz();
+            if (quiz2 && !quiz2.ai) {
+              try {
+                const { ensureQuiz: ensureQuiz2 } = await Promise.resolve().then(() => (init_quiz_core(), quiz_core_exports));
+                ensureQuiz2(app2);
+              } catch (e) {
+              }
+            }
+            if (quiz2 && quiz2.ai) {
+              await this.runSprintSession(pend, "redo");
+              const fresh = await this.dataManager.loadItems();
+              const passedSet = new Set(
+                fresh.filter((i) => pend.some((p) => p.filePath === i.filePath) && !i.pendingRedo).map((i) => i.filePath)
+              );
+              if (passedSet.size) items = fresh.filter((i) => !passedSet.has(i.filePath));
+              else items = fresh;
+            } else {
+              notify("做题家未初始化，跳过待重做队列", { type: "warning", dedupeKey: "review-quiz-ai" });
+            }
+          }
+          const rThreshold = Number(getSettings().reviewRThreshold) || 0.9;
+          const round = roundQueue(items, rThreshold, this.currentW());
+          if (!round.length) {
+            notice("没有逾期笔记", "success");
+            return;
+          }
+          const earlyToday = round.filter((i) => !i.isOverdue && !isEarlyDue(i, rThreshold, this.currentW()));
+          if (earlyToday.length) {
+            notice(`今日到期 ${earlyToday.length} 篇已提前纳入本轮`, "info");
+          }
+          const dailyLimit = Number(getSettings().reviewDailyLimit) || 0;
+          const limited = this.sortOverdue(round, dailyLimit);
+          if (limited.length < round.length) {
+            notice(`本轮复习 ${limited.length} 篇，剩余 ${round.length - limited.length} 篇留到下次`, "info");
+          }
+          if (!getSettings().forceQuizForReview) {
+            await this.reviewLoop(limited, 0);
+            return;
+          }
+          let quiz = null;
+          try {
+            quiz = await this.getQuiz();
+          } catch (e) {
+          }
+          if (quiz && !quiz.ai) {
+            try {
+              const { ensureQuiz: ensureQuiz2 } = await Promise.resolve().then(() => (init_quiz_core(), quiz_core_exports));
+              ensureQuiz2(app2);
+            } catch (e) {
+            }
+          }
+          if (!quiz || !quiz.ai) {
+            notify("做题家未初始化，已改用普通复习", { type: "warning", dedupeKey: "review-quiz-ai" });
+            await this.reviewLoop(limited, 0);
+            return;
+          }
+          await this.runSprintSession(limited, "round");
+        },
+        /** 当前逾期条目（item 6：改用 roundQueue 同口径——逾期 ∪ R 阈值提前 ∪ 今日到期） */
+        dueItems(items) {
+          const rThreshold = Number(getSettings().reviewRThreshold) || 0.9;
+          return roundQueue(items, rThreshold, this.currentW());
+        },
+        /**
+         * 统一冲刺会话驱动：把队列交给 UI 层 SprintSession 渲染，本层只提供
+         * 取题/评级写盘回调。会话结束（done/quit/fail）后刷新列表与染色。
+         *  - round/single：通过 → markReview autoPending；未通过 → markReview autoPending + 开笔记
+         *  - redo：通过 → 仅清 pendingRedo（ADR-0044 不写 FSRS）；未通过 → 开笔记（保持待重做）
+         */
+        async runSprintSession(items, mode) {
+          const app2 = getApp();
+          const { uiManager: uiManager3 } = await Promise.resolve().then(() => (init_review(), review_exports));
+          if (!uiManager3) return;
+          let streakDays = 0;
+          try {
+            streakDays = computeStats(await this.dataManager.loadItems()).streak;
+          } catch (e) {
+          }
+          const quiz = await this.getQuiz();
+          let batchStarted = false;
+          let batchMap = null;
+          const ensureBatch = async () => {
+            if (batchStarted) return;
+            batchStarted = true;
+            try {
+              batchMap = await this.batchGenerateQuestions(items);
+            } catch (e) {
+              batchMap = {};
+            }
+          };
+          await uiManager3.startSprint({
+            queue: items,
+            mode,
+            quiz,
+            streakDays,
+            fetchQuestions: async (item) => {
+              var _a2;
+              const qs = await ((_a2 = quiz == null ? void 0 : quiz.manager) == null ? void 0 : _a2.getQuestionsForNote(app2, item.filePath));
+              if (qs && qs.length) {
+                return qs.map((q2, i) => ({ ...q2, notePath: item.filePath, _index: i }));
+              }
+              if (!(quiz == null ? void 0 : quiz.ai)) return null;
+              if (mode === "round") {
+                await ensureBatch();
+                const mapped = batchMap == null ? void 0 : batchMap[item.filePath];
+                if (mapped && mapped.length) {
+                  return mapped;
+                }
+                return null;
+              }
+              const fresh = await this.regenerateQuestions(item.filePath);
+              return fresh.length ? fresh : null;
+            },
+            onPassed: async (item, rating, entry) => {
+              if (mode === "redo") {
+                await this.dataManager.updateItem(item.filePath, (it) => {
+                  it.pendingRedo = false;
+                });
+                return void 0;
+              }
+              await this.markReview(item.filePath, rating, { autoPending: true });
+              await this.applyReviewStyles(app2);
+              const fresh = await this.dataManager.loadItems();
+              const updated = fresh.find((i) => i.filePath === item.filePath);
+              return (updated == null ? void 0 : updated.nextReviewDate) || void 0;
+            },
+            onFailed: async (item, rating, entry) => {
+              if (mode !== "redo") {
+                await this.markReview(item.filePath, rating, { autoPending: true });
+                await this.applyReviewStyles(app2);
+              }
+              const file = app2.vault.getAbstractFileByPath(item.filePath);
+              if (file) {
+                const leaf = app2.workspace.getLeaf(false);
+                await leaf.openFile(file);
+              }
+            }
+          });
+          await this.refreshPanel();
+          await this.applyReviewStyles(app2);
+        },
+        /** 顺序复习循环（源码 L686-709 逐字；item 4 悬浮评级条 + item 5 离篇宽限/断点可恢复）
+         *  - 屏幕底部挂迷你评级条（忘了/困难/一般/简单 + 跳过）：点评级写盘 → 轮询检测翻篇；跳过不评级直接下一篇
+         *  - 离篇持续 REVIEW_AWAY_GRACE_MS 才判中断（宽限期内回篇继续）；中断/超时保留 _pendingRound，
+         *    通知挂「继续本轮」action 断点续跑 */
+        async reviewLoop(overdueNotes, index) {
+          const app2 = getApp();
+          this.ensure(app2);
+          const dm = this.dataManager;
+          if (index >= overdueNotes.length) {
+            this._pendingRound = null;
+            this.hideReviewBar();
+            if (this._reviewNotice) {
+              this._reviewNotice.setType("success");
+              this._reviewNotice.setMessage("所有逾期笔记已复习完成");
+              this._reviewNotice = null;
+            } else {
+              notice("所有逾期笔记已复习完成", "success");
+            }
+            return;
+          }
+          const item = overdueNotes[index];
+          const file = app2.vault.getAbstractFileByPath(item.filePath);
+          if (!file) {
+            await dm.removeItem(item.filePath);
+            await this.reviewLoop(overdueNotes, index + 1);
+            return;
+          }
+          this._pendingRound = { items: overdueNotes, index };
+          const leaf = app2.workspace.getLeaf(false);
+          await leaf.openFile(file);
+          const reviewMsg = `复习中 (${index + 1}/${overdueNotes.length}): ${item.name}`;
+          if (this._reviewNotice) {
+            this._reviewNotice.setMessage(reviewMsg);
+          } else {
+            this._reviewNotice = notify(reviewMsg, { type: "progress", dedupeKey: "review-loop" });
+          }
+          this.hideReviewBar();
+          void (async () => {
+            try {
+              const { mountFloatingRatingBar: mountFloatingRatingBar2 } = await Promise.resolve().then(() => (init_ui10(), ui_exports7));
+              this._reviewBar = mountFloatingRatingBar2({
+                name: item.name,
+                index: index + 1,
+                total: overdueNotes.length,
+                onRate: (rating) => {
+                  void this.markReview(item.filePath, rating);
+                },
+                onSkip: () => {
+                  void advance();
+                }
+              });
+            } catch (e) {
+            }
+          })();
+          let checkCount = 0;
+          const maxChecks = 300;
+          let advanced = false;
+          let awaySince = null;
+          const advance = async () => {
+            if (advanced) return;
+            advanced = true;
+            this.hideReviewBar();
+            clearLoop();
+            await this.reviewLoop(overdueNotes, index + 1);
+          };
+          const interval = setInterval(async () => {
+            checkCount++;
+            const activeFile = app2.workspace.getActiveFile();
+            if (!activeFile || activeFile.path !== item.filePath) {
+              const nowMs = Date.now();
+              if (awaySince === null) awaySince = nowMs;
+              if (nowMs - awaySince < REVIEW_AWAY_GRACE_MS) return;
+              advanced = true;
+              this.hideReviewBar();
+              clearLoop();
+              if (this._reviewNotice) {
+                this._reviewNotice.setMessage("已离开当前笔记，本轮复习中断");
+                this._reviewNotice.setType("warning");
+                this._reviewNotice = null;
+              }
+              notify("已离开当前笔记，本轮复习中断", {
+                type: "warning",
+                dedupeKey: "review-loop-interrupted",
+                action: { label: "继续本轮", onClick: () => void reviewApp.resumeRound() }
+              });
+              return;
+            }
+            awaySince = null;
+            const updatedItems = await dm.loadItems();
+            const updated = updatedItems.find((i) => i.filePath === item.filePath);
+            if (updated && updated.lastReviewed) {
+              const last = new Date(updated.lastReviewed);
+              if (Date.now() - last.getTime() < 3e4) {
+                await advance();
+                return;
+              }
+            }
+            if (checkCount >= maxChecks) {
+              advanced = true;
+              this.hideReviewBar();
+              clearLoop();
+              if (this._reviewNotice) {
+                this._reviewNotice.setMessage("复习超时，请手动继续");
+                this._reviewNotice.setType("warning");
+                this._reviewNotice = null;
+              } else {
+                notice("复习超时，请手动继续", "warning");
+              }
+              notify("复习超时，可从断点继续本轮", {
+                type: "info",
+                dedupeKey: "review-loop-timeout",
+                action: { label: "继续本轮", onClick: () => void reviewApp.resumeRound() }
+              });
+            }
+          }, 1e3);
+          this._reviewLoops.add(interval);
+          const clearLoop = () => {
+            clearInterval(interval);
+            this._reviewLoops.delete(interval);
+          };
+        },
+        /** item 5：从断点恢复本轮（中断/超时后「继续本轮」入口；无断点给明确反馈） */
+        resumeRound() {
+          const r = this._pendingRound;
+          if (!r) {
+            notice("没有进行中的本轮复习");
+            return;
+          }
+          void this.reviewLoop(r.items, r.index);
+        },
+        /** 加入当前笔记到复习计划 */
+        async addCurrentToReview(file) {
+          this.ensure(getApp());
+          const dm = this.dataManager;
+          const items = await dm.loadItems();
+          if (items.some((i) => i.filePath === file.path)) throw new Error("该笔记已在复习计划中");
+          await dm.addItem(file.path, file.basename);
+          notice("已加入复习计划，首次复习：1分钟后", "success");
+        },
+        /** 文件树染色 + 阶段徽标（源码 L719-772 逐字；ticket 100 加「文件树标记」开关；
+         *   ticket 48 收敛：不再全库 getMarkdownFiles + 逐路径 querySelector——
+         *   处理范围 = 复习条目路径 + 曾染色路径（移出计划后回退），树节点一次 querySelectorAll 建 Map 查找；
+         *   可选 items 参数：checkOverdueAndNotify 传本轮已加载结果，避免每轮二次读盘。 */
+        async applyReviewStyles(app2, changedFile, items) {
+          if (getSettings().reviewTreeBadge === false) return;
+          this.ensure(app2);
+          const allItems = items || await this.dataManager.loadItems();
+          const itemByPath = /* @__PURE__ */ new Map();
+          for (const item of allItems) {
+            if (item.filePath) itemByPath.set(item.filePath, item);
+          }
+          const paths = /* @__PURE__ */ new Set();
+          if (changedFile) {
+            paths.add(changedFile.path);
+          } else {
+            for (const p of itemByPath.keys()) paths.add(p);
+            for (const p of this._styledPaths) paths.add(p);
+          }
+          const els = /* @__PURE__ */ new Map();
+          for (const el of Array.from(document.querySelectorAll("div[data-path]"))) {
+            const p = el.getAttribute("data-path");
+            if (p && !els.has(p)) els.set(p, el);
+          }
+          const fsrs = new FSRS(this.currentW());
+          for (const path of paths) {
+            const el = els.get(path);
+            if (!el) {
+              this._styledPaths.delete(path);
+              continue;
+            }
+            const target = el.querySelector("div.tree-item-inner");
+            if (!target) continue;
+            const badge = target.querySelector(".review-stage-badge");
+            if (badge) badge.remove();
+            const item = itemByPath.get(path);
+            if (!item) {
+              if (this._styledPaths.has(path)) {
+                target.style.color = "";
+                this._styledPaths.delete(path);
+              }
+              continue;
+            }
+            const currentStage = item.stage || 0;
+            const now = /* @__PURE__ */ new Date();
+            const nextReview = item.nextReviewDate ? new Date(item.nextReviewDate) : null;
+            let color = "currentColor";
+            let status = "";
+            if (item.completed) {
+              color = "#52c41a";
+              status = "complete";
+            } else if (nextReview && now > nextReview) {
+              color = "#ff4757";
+              status = "overdue";
+            } else if (item.phase === "fsrs" && item.stability && item.lastReviewed) {
+              const t = (now.getTime() - new Date(item.lastReviewed).getTime()) / 864e5;
+              const r = fsrs.R(t, item.stability);
+              if (r >= 0.9) color = "#52c41a";
+              else if (r >= 0.7) color = "#faad14";
+              else color = "#ff9f43";
+            } else if (currentStage <= 2) {
+              color = "#1890ff";
+            } else if (currentStage <= 6) {
+              color = "#faad14";
+            } else {
+              color = "#52c41a";
+            }
+            target.style.color = color;
+            let timeText = "";
+            let badgeIcon = null;
+            if (status === "complete") badgeIcon = "check";
+            else if (nextReview) {
+              const diff = nextReview.getTime() - now.getTime();
+              if (diff > 0) {
+                const d = Math.floor(diff / (1e3 * 60 * 60 * 24));
+                const h = Math.floor(diff % (1e3 * 60 * 60 * 24) / (1e3 * 60 * 60));
+                const m = Math.floor(diff % (1e3 * 60 * 60) / (1e3 * 60));
+                if (d > 0) timeText = `${d}d`;
+                else if (h > 0) timeText = `${h}h`;
+                else timeText = `${m}m`;
+              } else badgeIcon = "calendar";
+            }
+            if (badgeIcon || timeText) {
+              const badgeEl = document.createElement("span");
+              badgeEl.className = "review-stage-badge";
+              if (badgeIcon) {
+                const { uiIcon: uiIcon2 } = await Promise.resolve().then(() => (init_ui(), ui_exports));
+                badgeEl.appendChild(uiIcon2(badgeIcon));
+              } else {
+                badgeEl.textContent = timeText;
+              }
+              badgeEl.style.cssText = `font-size:0.7em;opacity:0.8;margin-left:6px;color:${color};background:color-mix(in srgb, ${color} 10%, transparent);padding:1px 4px;border-radius:3px;border:1px solid color-mix(in srgb, ${color} 30%, transparent);font-weight:500;`;
+              target.appendChild(badgeEl);
+            }
+            this._styledPaths.add(path);
+          }
+        },
+        /**
+         * 到期提醒 + 染色刷新（ticket 100：原只刷染色，重写为 diff + 通知；染色职责保留）
+         * 每轮与已通知集合对比：新增逾期 → 弹篇数常驻通知（duration 0，逾期清零主动收起；不列题目）；
+         * 移出逾期（评级/完成/挂起）从集合剔除 → 之后再次逾期重新提醒。
+         * 启动首查把存量逾期当新产生 → 汇总篇数（Q1 拍板接受）。
+         * ticket 48 收敛：与本轮 loadItems 共用结果，不再二次读盘；
+         * ticket 58：通知挂「去复习」action → 打开最早逾期笔记；
+         * ticket 153：「去复习」升级为走 autoJumpOverdue 完整流程（做题决定难度分流）。
+         */
+        async checkOverdueAndNotify() {
+          var _a2;
+          try {
+            this.ensure(getApp());
+            const dm = this.dataManager;
+            const items = await dm.loadItems();
+            await this.applyReviewStyles(getApp(), void 0, items);
+            if (getSettings().enableAutoNotify === false) return;
+            const overdueMap = new Map(
+              items.filter((i) => i.isOverdue && !i.completed && !i.isMissing).map((i) => [i.filePath, i])
+            );
+            const newly = [...overdueMap.entries()].filter(([p]) => !this._notifiedOverdue.has(p));
+            for (const p of this._notifiedOverdue) {
+              if (!overdueMap.has(p)) this._notifiedOverdue.delete(p);
+            }
+            if (newly.length) {
+              for (const [p] of newly) this._notifiedOverdue.add(p);
+              const handle = notify(`有 ${overdueMap.size} 篇笔记逾期`, {
+                type: "info",
+                duration: 0,
+                // 常驻不自动消失，靠点击「去复习」/本体收起
+                dedupeKey: "review-overdue-notice",
+                action: {
+                  label: "去复习",
+                  // action 文案不带 emoji（通知规范）
+                  onClick: () => {
+                    void reviewApp.autoJumpOverdue();
+                  }
+                }
+              });
+              const cur = this._overdueNotice;
+              if (!cur || !cur.el.isConnected) this._overdueNotice = handle;
+            } else if (!overdueMap.size) {
+              (_a2 = this._overdueNotice) == null ? void 0 : _a2.hide();
+              this._overdueNotice = null;
+            }
+          } catch (e) {
+            console.error("复习计划检查出错:", e);
+          }
+        },
+        /** 刷新面板（源码 refreshPanel） */
+        async refreshPanel() {
+          const { uiManager: uiManager3 } = await Promise.resolve().then(() => (init_review(), review_exports));
+          if (!uiManager3) return;
+          const items = await this.dataManager.loadItems();
+          uiManager3.renderEntries(items);
+        }
+      };
     }
   });
 
@@ -32091,7 +33927,7 @@ GitHub 仓库：${ghInfo.title}
   function hasFn(adapter, name) {
     return typeof (adapter == null ? void 0 : adapter[name]) === "function";
   }
-  async function readJsonIfExists2(app2, path) {
+  async function readJsonIfExists(app2, path) {
     const adapter = app2.vault.adapter;
     try {
       if (hasFn(adapter, "exists") && !await adapter.exists(path)) return null;
@@ -32119,7 +33955,7 @@ GitHub 仓库：${ghInfo.title}
     const store2 = emptyStore();
     for (const name of LEGACY_FILES) {
       const legacyPath = storeDir() + "/" + name;
-      const raw = await readJsonIfExists2(app2, legacyPath).catch(() => null);
+      const raw = await readJsonIfExists(app2, legacyPath).catch(() => null);
       if (raw === null) continue;
       anyLegacy = true;
       if (name === "secondbrain_meta.json" && raw && typeof raw === "object") store2.meta = raw;
@@ -35068,7 +36904,7 @@ ${text}`;
     }
     return out;
   }
-  var init_data10 = __esm({
+  var init_data9 = __esm({
     "src/secondbrain/link-agent/data.ts"() {
       init_store_file();
       init_settings_provider();
@@ -35114,7 +36950,7 @@ ${text}`;
       init_settings_provider();
       init_config3();
       init_ai3();
-      init_data10();
+      init_data9();
       LINK_PROBE_TIMEOUT_MS = 1500;
       LINK_BATCH_DELAY_MS = 6e4;
       LINK_BATCH_NOTICE_KEY = "bz-sb-link-agent-batch";
@@ -35179,8 +37015,8 @@ ${text}`;
           }
           const hash = computeHash(content);
           if ((opts == null ? void 0 : opts.respectRelated) !== false && this.respectRelated) {
-            const fm2 = (_c = (_b2 = (_a2 = this.app.metadataCache) == null ? void 0 : _a2.getFileCache) == null ? void 0 : _b2.call(_a2, file)) == null ? void 0 : _c.frontmatter;
-            if (hasRelatedEntries(fm2 == null ? void 0 : fm2.related)) return { status: "skipped-related" };
+            const fm = (_c = (_b2 = (_a2 = this.app.metadataCache) == null ? void 0 : _a2.getFileCache) == null ? void 0 : _b2.call(_a2, file)) == null ? void 0 : _c.frontmatter;
+            if (hasRelatedEntries(fm == null ? void 0 : fm.related)) return { status: "skipped-related" };
           }
           if (!(opts == null ? void 0 : opts.assumeReachable)) {
             const ok = await this.probeFn();
@@ -35313,14 +37149,14 @@ ${text}`;
           let summary = "";
           let title = file.basename;
           try {
-            const fm2 = (_a2 = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter;
-            if (fm2) {
-              if (typeof fm2.title === "string" && fm2.title.trim()) title = fm2.title.trim();
-              else if (typeof fm2["标题"] === "string" && fm2["标题"].trim()) title = fm2["标题"].trim();
-              const rawTags = (_c = (_b2 = fm2.tags) != null ? _b2 : fm2.tag) != null ? _c : fm2["标签"];
+            const fm = (_a2 = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter;
+            if (fm) {
+              if (typeof fm.title === "string" && fm.title.trim()) title = fm.title.trim();
+              else if (typeof fm["标题"] === "string" && fm["标题"].trim()) title = fm["标题"].trim();
+              const rawTags = (_c = (_b2 = fm.tags) != null ? _b2 : fm.tag) != null ? _c : fm["标签"];
               if (Array.isArray(rawTags)) tags = rawTags.map((t) => String(t)).join(", ");
               else if (typeof rawTags === "string") tags = rawTags;
-              const rawSummary = (_e = (_d = fm2.summary) != null ? _d : fm2["简介"]) != null ? _e : fm2["一句话简介"];
+              const rawSummary = (_e = (_d = fm.summary) != null ? _d : fm["简介"]) != null ? _e : fm["一句话简介"];
               if (typeof rawSummary === "string") summary = rawSummary;
             }
           } catch (e) {
@@ -35338,14 +37174,14 @@ ${text}`;
           if (!targetPaths.length) return 0;
           let addedCount = 0;
           try {
-            await this.app.fileManager.processFrontMatter(file, (fm2) => {
-              const existing = parseRelatedEntries(fm2.related);
+            await this.app.fileManager.processFrontMatter(file, (fm) => {
+              const existing = parseRelatedEntries(fm.related);
               const additions = targetPaths.map(toRelatedEntry);
               const merged = mergeRelated(existing, additions, this.maxLinks);
               addedCount = merged.added.length;
               if (merged.added.length > 0) {
-                if (merged.entries.length > 0) fm2.related = merged.entries;
-                else delete fm2.related;
+                if (merged.entries.length > 0) fm.related = merged.entries;
+                else delete fm.related;
               }
             });
           } catch (e) {
@@ -35510,8 +37346,8 @@ ${text}`;
               hasRelated: (p) => {
                 var _a2, _b2;
                 try {
-                  const fm2 = (_b2 = (_a2 = cache == null ? void 0 : cache.getFileCache) == null ? void 0 : _a2.call(cache, vault.getAbstractFileByPath(p))) == null ? void 0 : _b2.frontmatter;
-                  return parseRelatedEntries(fm2 == null ? void 0 : fm2.related).length > 0;
+                  const fm = (_b2 = (_a2 = cache == null ? void 0 : cache.getFileCache) == null ? void 0 : _a2.call(cache, vault.getAbstractFileByPath(p))) == null ? void 0 : _b2.frontmatter;
+                  return parseRelatedEntries(fm == null ? void 0 : fm.related).length > 0;
                 } catch (e) {
                   return true;
                 }
@@ -35572,8 +37408,8 @@ ${text}`;
           for (const file of scopedFiles) {
             let entries;
             try {
-              const fm2 = (_d = cache.getFileCache(file)) == null ? void 0 : _d.frontmatter;
-              entries = parseRelatedEntries(fm2 == null ? void 0 : fm2.related);
+              const fm = (_d = cache.getFileCache(file)) == null ? void 0 : _d.frontmatter;
+              entries = parseRelatedEntries(fm == null ? void 0 : fm.related);
             } catch (e) {
               continue;
             }
@@ -35630,7 +37466,7 @@ ${text}`;
       init_domain_bus();
       init_notice();
       init_settings_provider();
-      init_data10();
+      init_data9();
       init_pipeline();
       LINK_CLEAN_DEBOUNCE_MS = 5e3;
       LINK_SWEEP_INTERVAL_MS = 30 * 60 * 1e3;
@@ -35800,8 +37636,8 @@ ${text}`;
     unloadSecondBrain: () => unloadSecondBrain
   });
   function ensureSecondBrain(app2) {
-    if (initialized5) return;
-    initialized5 = true;
+    if (initialized6) return;
+    initialized6 = true;
     appRef = app2;
     const s = new VectorStore(app2);
     store = s;
@@ -35869,7 +37705,7 @@ ${text}`;
     linkAgent = null;
     store = null;
     appRef = null;
-    initialized5 = false;
+    initialized6 = false;
     resetDeepseekAI();
   }
   function ensureReference() {
@@ -35995,7 +37831,7 @@ ${text}`;
       notice(`关联处理失败：${e instanceof Error ? e.message : String(e)}`, "error");
     }
   }
-  var appRef, store, initialized5, panel, reference, chat, mobile, linkAgent, linkWatcher, unsubVault, refreshTimer;
+  var appRef, store, initialized6, panel, reference, chat, mobile, linkAgent, linkWatcher, unsubVault, refreshTimer;
   var init_secondbrain = __esm({
     "src/secondbrain/index.ts"() {
       init_domain_bus();
@@ -36012,7 +37848,7 @@ ${text}`;
       init_watch2();
       appRef = null;
       store = null;
-      initialized5 = false;
+      initialized6 = false;
       panel = null;
       reference = null;
       chat = null;
@@ -36912,6 +38748,212 @@ ${text}`;
     }
   });
 
+  // src/pomodoro/state.ts
+  function createInitialState() {
+    return { phase: "idle", endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
+  }
+  function resumePhase(state3, now) {
+    return {
+      state: { ...state3, paused: false, pausedBy: void 0, remaining: 0, endTime: now + state3.remaining * 1e3 },
+      event: { type: "started", phase: state3.phase }
+    };
+  }
+  function activePhase(phase) {
+    return phase === "idle" ? "focus" : phase;
+  }
+  function phaseDurationSec(phase, d) {
+    if (phase === "short-break") return d.shortBreakMin * 60;
+    if (phase === "long-break") return d.longBreakMin * 60;
+    return d.workMin * 60;
+  }
+  function breakPhase(count, d) {
+    return count >= d.longBreakInterval ? "long-break" : "short-break";
+  }
+  function startPhase(state3, phase, now, d) {
+    return {
+      state: { ...state3, phase, endTime: now + phaseDurationSec(phase, d) * 1e3, paused: false, pausedBy: void 0, remaining: 0 },
+      event: { type: "started", phase }
+    };
+  }
+  function completePhase(state3, now, d, o) {
+    const phase = state3.phase;
+    const isFocus = phase === "focus";
+    let count = state3.cycleFocusCount;
+    let historyEntry;
+    let longBreak = false;
+    if (isFocus) {
+      count += 1;
+      longBreak = count >= d.longBreakInterval;
+      if (longBreak) count = 0;
+      historyEntry = { ts: now, duration: d.workMin * 60, ...state3.task ? { task: state3.task } : {} };
+    }
+    let next;
+    let autoStarted = false;
+    if (isFocus) {
+      if (o.autoSkipBreak) {
+        next = "focus";
+        autoStarted = true;
+      } else {
+        next = longBreak ? "long-break" : "short-break";
+        autoStarted = o.autoCycle;
+      }
+    } else {
+      next = "focus";
+      autoStarted = o.autoCycle;
+    }
+    const { task: _settled, ...rest } = state3;
+    const nextState = { ...rest, phase: next, cycleFocusCount: count };
+    const res = autoStarted ? startPhase(nextState, next, now, d) : {
+      state: { ...nextState, endTime: null, paused: false, remaining: phaseDurationSec(next, d) },
+      event: { type: "none" }
+    };
+    return {
+      ...res,
+      event: {
+        type: "phase-completed",
+        completedPhase: phase,
+        nextPhase: next,
+        autoStarted,
+        longBreak,
+        ...historyEntry ? { historyEntry } : {}
+      }
+    };
+  }
+  function transition(state3, action, now, d, o) {
+    if (action === "start") {
+      if (state3.paused) return resumePhase(state3, now);
+      if (state3.endTime !== null) return { state: state3, event: { type: "none" } };
+      const phase = activePhase(state3.phase);
+      return startPhase(state3, phase, now, d);
+    }
+    if (action === "pause") {
+      if (state3.endTime === null) return { state: state3, event: { type: "none" } };
+      if (o.forceFocus && state3.phase === "focus") return { state: state3, event: { type: "none" } };
+      return {
+        // 手动暂停：清除可能残留的冻结来源标记（pausedBy 只在冻结暂停期间有效）
+        state: { ...state3, paused: true, pausedBy: void 0, remaining: Math.ceil((state3.endTime - now) / 1e3), endTime: null },
+        event: { type: "none" }
+      };
+    }
+    if (action === "resume") {
+      if (!state3.paused) return { state: state3, event: { type: "none" } };
+      return resumePhase(state3, now);
+    }
+    if (action === "reset") {
+      if (o.forceFocus && state3.phase === "focus") return { state: state3, event: { type: "none" } };
+      const phase = activePhase(state3.phase);
+      return {
+        state: { ...state3, phase, endTime: null, paused: false, pausedBy: void 0, remaining: phaseDurationSec(phase, d) },
+        event: { type: "none" }
+      };
+    }
+    if (action === "skip") {
+      if (o.forceFocus && state3.phase === "focus") return { state: state3, event: { type: "none" } };
+      const phase = activePhase(state3.phase);
+      let next;
+      if (phase === "focus") next = o.autoSkipBreak ? "focus" : breakPhase(state3.cycleFocusCount, d);
+      else next = "focus";
+      const { task: _dropped, ...rest } = state3;
+      return {
+        state: { ...rest, phase: next, endTime: null, paused: false, pausedBy: void 0, remaining: phaseDurationSec(next, d) },
+        event: { type: "phase-completed", completedPhase: phase, nextPhase: next, autoStarted: false, longBreak: false }
+      };
+    }
+    if (action === "tick") {
+      if (state3.endTime === null || now < state3.endTime) return { state: state3, event: { type: "none" } };
+      return completePhase(state3, now, d, o);
+    }
+    return { state: state3, event: { type: "none" } };
+  }
+  function idleState() {
+    return { phase: "idle", endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
+  }
+  function recover(state3, history2, now, d, o) {
+    if (state3.endTime === null || now < state3.endTime) return { state: state3, history: history2.slice(), events: [] };
+    return { state: idleState(), history: history2.slice(), events: [] };
+  }
+  var PHASES;
+  var init_state6 = __esm({
+    "src/pomodoro/state.ts"() {
+      PHASES = ["idle", "focus", "short-break", "long-break"];
+    }
+  });
+
+  // src/pomodoro/data.ts
+  function getPomodoroFilePath() {
+    var _a2;
+    return storageFile("pomodoro.json", ((_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath) || "CONFIG/STORAGE");
+  }
+  function defaultPomodoroData() {
+    return { version: 1, state: createInitialState(), history: [] };
+  }
+  function normalizeData(raw) {
+    const def = defaultPomodoroData();
+    if (!raw || typeof raw !== "object") return def;
+    const state3 = normalizeState(raw.state);
+    const history2 = Array.isArray(raw.history) ? raw.history.filter((h) => h && typeof h.ts === "number" && typeof h.duration === "number").map((h) => ({
+      ts: h.ts,
+      duration: h.duration,
+      ...typeof h.task === "string" && h.task ? { task: h.task } : {}
+    })) : [];
+    return { version: 1, state: state3, history: history2 };
+  }
+  function normalizeState(raw) {
+    const def = createInitialState();
+    if (!raw || typeof raw !== "object") return def;
+    return {
+      phase: PHASES.includes(raw.phase) ? raw.phase : def.phase,
+      endTime: typeof raw.endTime === "number" ? raw.endTime : def.endTime,
+      remaining: typeof raw.remaining === "number" && raw.remaining >= 0 ? raw.remaining : def.remaining,
+      paused: typeof raw.paused === "boolean" ? raw.paused : def.paused,
+      // 冻结来源标记：仅认 'autopause'，旧数据无此字段/非法值 → undefined（手动暂停语义）
+      pausedBy: raw.pausedBy === "autopause" ? "autopause" : void 0,
+      cycleFocusCount: typeof raw.cycleFocusCount === "number" && raw.cycleFocusCount >= 0 ? raw.cycleFocusCount : def.cycleFocusCount,
+      // 归属任务标题：仅字符串非空保留（旧数据/非法值 → undefined）
+      task: typeof raw.task === "string" && raw.task ? raw.task : void 0
+    };
+  }
+  var PomodoroDataManager;
+  var init_data10 = __esm({
+    "src/pomodoro/data.ts"() {
+      init_settings_provider();
+      init_storage();
+      init_state6();
+      PomodoroDataManager = class {
+        constructor(app2) {
+          this.app = app2;
+        }
+        /**
+         * 读取数据（统一数据读写层：不存在 → 建默认数据文件；坏 JSON → 原文件留档 CONFIG/.CORRUPT 后重建默认）。
+         * 读也入 core per-path 串行队列：读是「load → 改 state → save」事务的读半边，
+         * 排在未落盘的写任务之后才能读到新值（读写同队列，消灭「读-写窗口交错」）。
+         */
+        async load() {
+          const raw = await enqueueFileTask(
+            getPomodoroFilePath(),
+            () => jsonFileStore(getPomodoroFilePath(), {
+              defaultValue: () => defaultPomodoroData(),
+              app: this.app
+            }).read()
+          );
+          return normalizeData(raw);
+        }
+        /**
+         * 保存（统一数据读写层：存在 modify / 不存在 create+建目录）。
+         * D3 可靠写契约原语 1 收编：整写入 core per-path 串行队列（键 = pomodoro.json 路径）——
+         * 计时器心跳保存与用户操作保存并发时按序落盘，后写者不再用陈旧基线覆盖先写者；
+         * 坏文件由 jsonFileStore 留档降级（原语 3）。数据形状与 API 不变。
+         */
+        async save(data) {
+          await enqueueFileTask(
+            getPomodoroFilePath(),
+            () => jsonFileStore(getPomodoroFilePath(), { app: this.app }).write(data)
+          );
+        }
+      };
+    }
+  });
+
   // src/pomodoro/sound.ts
   function playSound(kind, volume = 100) {
     const w = typeof window !== "undefined" ? window : globalThis;
@@ -37062,8 +39104,8 @@ ${text}`;
   });
 
   // src/pomodoro/ui.ts
-  var ui_exports7 = {};
-  __export(ui_exports7, {
+  var ui_exports8 = {};
+  __export(ui_exports8, {
     closePomodoro: () => closePomodoro,
     ensurePomodoro: () => ensurePomodoro,
     openPomodoro: () => openPomodoro,
@@ -37369,15 +39411,15 @@ ${text}`;
     }
   }
   async function save() {
-    if (dataManager) await dataManager.save({ version: 1, state: state2, history });
+    if (dataManager2) await dataManager2.save({ version: 1, state: state2, history });
   }
   async function initData() {
-    const data = await dataManager.load();
+    const data = await dataManager2.load();
     const r = recover(data.state, data.history, Date.now(), durations(), options());
     state2 = r.state;
     history = r.history;
     const mainChanged = data.state.endTime !== null && r.state.endTime === null;
-    if (mainChanged) await dataManager.save({ version: 1, state: state2, history });
+    if (mainChanged) await dataManager2.save({ version: 1, state: state2, history });
     loaded2 = true;
   }
   function openPomodoroSettings() {
@@ -37582,7 +39624,7 @@ ${text}`;
   }
   async function openPomodoro(app2) {
     appRef2 = app2;
-    if (!dataManager) dataManager = new PomodoroDataManager(app2);
+    if (!dataManager2) dataManager2 = new PomodoroDataManager(app2);
     if (!maskEl) {
       openInflight != null ? openInflight : openInflight = (async () => {
         await initDataOnce();
@@ -37601,7 +39643,7 @@ ${text}`;
   }
   async function ensurePomodoro(app2) {
     appRef2 = app2;
-    if (!dataManager) dataManager = new PomodoroDataManager(app2);
+    if (!dataManager2) dataManager2 = new PomodoroDataManager(app2);
     registerVisibilityListener();
     if (!loaded2) {
       await initDataOnce();
@@ -37658,12 +39700,12 @@ ${text}`;
     state2 = createInitialState();
     history = [];
     lastStatsKey = "";
-    dataManager = null;
+    dataManager2 = null;
     appRef2 = null;
     loaded2 = false;
   }
-  var dataManager, state2, history, loaded2, maskEl, escHandle3, timerId, appRef2, autoPauseMain, visibilityHandler, lastStatsKey, initInflight, openInflight;
-  var init_ui10 = __esm({
+  var dataManager2, state2, history, loaded2, maskEl, escHandle3, timerId, appRef2, autoPauseMain, visibilityHandler, lastStatsKey, initInflight, openInflight;
+  var init_ui11 = __esm({
     "src/pomodoro/ui.ts"() {
       init_fake_obsidian();
       init_fake_obsidian();
@@ -37674,15 +39716,15 @@ ${text}`;
       init_notice();
       init_settings_modal();
       init_settings_common();
-      init_data3();
+      init_data10();
       init_sound();
       init_statusbar();
       init_stats3();
       init_config4();
-      init_state3();
+      init_state6();
       init_utils();
       init_domain_bus();
-      dataManager = null;
+      dataManager2 = null;
       state2 = createInitialState();
       history = [];
       loaded2 = false;
@@ -37853,7 +39895,7 @@ ${text}`;
   // src/smartcat/data.ts
   var data_exports = {};
   __export(data_exports, {
-    DAY_MS: () => DAY_MS2,
+    DAY_MS: () => DAY_MS,
     SMARTCAT_FILE: () => SMARTCAT_FILE,
     SMARTCAT_VEC_FILE: () => SMARTCAT_VEC_FILE,
     applyInsightPatch: () => applyInsightPatch,
@@ -37876,7 +39918,7 @@ ${text}`;
   function getAbsenceDays(data, now = Date.now()) {
     var _a2;
     const last = typeof ((_a2 = data.editingData) == null ? void 0 : _a2.lastPresenceAt) === "number" ? data.editingData.lastPresenceAt : now;
-    return Math.max(0, Math.floor((now - last) / DAY_MS2));
+    return Math.max(0, Math.floor((now - last) / DAY_MS));
   }
   function smartcatStorageDir() {
     return storageDir();
@@ -38029,7 +40071,7 @@ ${text}`;
   async function saveSmartCatData(app2, data) {
     await jsonFileStore(getSmartcatFilePath(), { writeIfChanged: true, app: app2 }).write(data);
   }
-  var SMARTCAT_FILE, SMARTCAT_VEC_FILE, DAY_MS2;
+  var SMARTCAT_FILE, SMARTCAT_VEC_FILE, DAY_MS;
   var init_data11 = __esm({
     "src/smartcat/data.ts"() {
       init_storage();
@@ -38037,13 +40079,13 @@ ${text}`;
       init_character();
       SMARTCAT_FILE = "smartcat.json";
       SMARTCAT_VEC_FILE = "smartcat-memory-vectors.vec";
-      DAY_MS2 = 24 * 60 * 60 * 1e3;
+      DAY_MS = 24 * 60 * 60 * 1e3;
     }
   });
 
   // src/smartcat/ui.ts
-  var ui_exports8 = {};
-  __export(ui_exports8, {
+  var ui_exports9 = {};
+  __export(ui_exports9, {
     CAT_CONTAINER_ID: () => CAT_CONTAINER_ID,
     SKINS: () => SKINS,
     applyAppearance: () => applyAppearance,
@@ -38404,7 +40446,7 @@ ${text}`;
     return labels[skin] || skin;
   }
   var CAT_CONTAINER_ID, SKINS, CAT_HTML, DEFAULT_BEHAVIOR;
-  var init_ui11 = __esm({
+  var init_ui12 = __esm({
     "src/smartcat/ui.ts"() {
       init_dom();
       init_z_order();
@@ -38485,8 +40527,8 @@ ${text}`;
     }
     return n;
   }
-  var schemaLoaders, DOMAINS2, NAV_SECS, schemaRowCache, loadedCounts, listableDomains, navBadges, SettingsPanelUI;
-  var init_ui12 = __esm({
+  var schemaLoaders, DOMAINS, NAV_SECS, schemaRowCache, loadedCounts, listableDomains, navBadges, SettingsPanelUI;
+  var init_ui13 = __esm({
     "src/settings-panel/ui.ts"() {
       init_fake_obsidian();
       init_dom();
@@ -38498,7 +40540,7 @@ ${text}`;
       init_notice();
       init_app();
       init_ui();
-      init_render4();
+      init_render2();
       schemaLoaders = {
         // 通用组：基础 schema（存储路径）+「数据体检」按钮行（D4：检查项直达体检面板；
         // core 不反向依赖域——入口在面板层追加，⚙️ 原生设置页不带此行）
@@ -38529,18 +40571,18 @@ ${text}`;
         bookshelf: async () => (await Promise.resolve().then(() => (init_settings4(), settings_exports4))).bookshelfSettingsSchema(),
         review: async () => {
           const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app3(), app_exports));
-          const { reviewSettingsSchema: reviewSettingsSchema2 } = await Promise.resolve().then(() => (init_ui13(), ui_exports9));
+          const { reviewSettingsSchema: reviewSettingsSchema2 } = await Promise.resolve().then(() => (init_ui10(), ui_exports7));
           const app2 = getApp();
           reviewApp2.ensure(app2);
           return reviewSettingsSchema2({ app: app2, dataManager: reviewApp2.dataManager });
         },
         secondbrain: async () => (await Promise.resolve().then(() => (init_panel2(), panel_exports2))).secondBrainSettingsSchema(),
-        pomodoro: async () => (await Promise.resolve().then(() => (init_ui10(), ui_exports7))).pomodoroSettingsSchema(),
+        pomodoro: async () => (await Promise.resolve().then(() => (init_ui11(), ui_exports8))).pomodoroSettingsSchema(),
         encrypt: async () => (await Promise.resolve().then(() => (init_ui3(), ui_exports2))).encryptSettingsSchema(),
         literature: async () => (await Promise.resolve().then(() => (init_ui6(), ui_exports4))).literatureSettingsSchema(),
         smartcat: async () => {
           const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data11(), data_exports));
-          const { smartcatSettingsSchema: smartcatSettingsSchema2 } = await Promise.resolve().then(() => (init_ui11(), ui_exports8));
+          const { smartcatSettingsSchema: smartcatSettingsSchema2 } = await Promise.resolve().then(() => (init_ui12(), ui_exports9));
           const app2 = getApp();
           const data = await loadSmartCatData2(app2);
           const saveConfig = async (config) => {
@@ -38562,7 +40604,7 @@ ${text}`;
           });
         }
       };
-      DOMAINS2 = [
+      DOMAINS = [
         { id: "global", name: "通用", icon: DOMAIN_ICONS.global, desc: "存储路径等跨域基础偏好", schemaLoader: schemaLoaders.general },
         { id: "appearance", name: "设置", icon: DOMAIN_ICONS.appearance, desc: "设置面板的布局与主题", schemaLoader: schemaLoaders.appearance },
         { id: "ai", name: "AI", icon: DOMAIN_ICONS.ai, desc: "AI 服务商与模型配置", schemaLoader: schemaLoaders.ai },
@@ -38593,7 +40635,7 @@ ${text}`;
       ];
       schemaRowCache = /* @__PURE__ */ new Map();
       loadedCounts = /* @__PURE__ */ new Map();
-      listableDomains = () => DOMAINS2.filter((d) => {
+      listableDomains = () => DOMAINS.filter((d) => {
         var _a2;
         return !d.noSettings && d.schemaLoader && (!loadedCounts.has(d.id) || ((_a2 = loadedCounts.get(d.id)) != null ? _a2 : 0) > 0);
       });
@@ -38619,7 +40661,7 @@ ${text}`;
          * 桌面定位左栏选中域；移动端打开后直接进域设置弹窗。未知 id 忽略（回退通用）。
          */
         open(domainId) {
-          const deep = domainId ? DOMAINS2.find((x) => x.id === domainId) : void 0;
+          const deep = domainId ? DOMAINS.find((x) => x.id === domainId) : void 0;
           if (deep) this.activeDomainId = deep.id;
           if (this.mask && this.popup) {
             topifyZ(this.mask, this.popup);
@@ -38699,7 +40741,7 @@ ${text}`;
               b.addEventListener("click", () => {
                 this.activeDomainId = id;
                 renderNav(searchIn.value);
-                void this.renderDomain(pane, DOMAINS2.find((x) => x.id === id));
+                void this.renderDomain(pane, DOMAINS.find((x) => x.id === id));
               });
             });
           };
@@ -38712,7 +40754,7 @@ ${text}`;
           });
           renderNav("");
           this.rerenderList = () => renderNav(searchIn.value);
-          void this.renderDomain(pane, (_a2 = DOMAINS2.find((x) => x.id === this.activeDomainId)) != null ? _a2 : DOMAINS2[0]);
+          void this.renderDomain(pane, (_a2 = DOMAINS.find((x) => x.id === this.activeDomainId)) != null ? _a2 : DOMAINS[0]);
         }
         /**
          * 预加载全部有 schema 的域，回填左侧导航徽标（设置项总数）。
@@ -38721,7 +40763,7 @@ ${text}`;
          * 组级/行级 visibleWhen 门控（如移动端组）按当前端环境过滤。
          */
         async preloadAllBadges() {
-          const tasks = DOMAINS2.filter((d) => d.schemaLoader).map(async (d) => {
+          const tasks = DOMAINS.filter((d) => d.schemaLoader).map(async (d) => {
             var _a2;
             try {
               const schema = await d.schemaLoader();
@@ -38747,7 +40789,7 @@ ${text}`;
         refreshNavBadges() {
           if (!this.navEl) return;
           this.navEl.querySelectorAll(".bz-sp-nav-item").forEach((b) => {
-            const d = DOMAINS2.find((x) => x.id === b.dataset.spDomain);
+            const d = DOMAINS.find((x) => x.id === b.dataset.spDomain);
             if (!d) return;
             const ct = b.querySelector(".bz-sp-nav-count");
             if (ct) ct.textContent = badgeOf(d);
@@ -38884,7 +40926,7 @@ ${text}`;
             const doms = listableDomains().filter((d) => d.name.includes(query) || d.desc.includes(query));
             const rows = [];
             schemaRowCache.forEach((rowsOf, did) => {
-              const d = DOMAINS2.find((x) => x.id === did);
+              const d = DOMAINS.find((x) => x.id === did);
               if (!d) return;
               rowsOf.forEach((r) => {
                 if (r.name.includes(query) || r.desc && r.desc.includes(query)) {
@@ -38985,7 +41027,7 @@ ${text}`;
           body.className = "bz-sp-settings-body bz-sp-mob-modal-body";
           popup.appendChild(body);
           const close = () => {
-            escHandle5 == null ? void 0 : escHandle5.unregister();
+            escHandle4 == null ? void 0 : escHandle4.unregister();
             mask.remove();
             popup.remove();
           };
@@ -38995,8 +41037,8 @@ ${text}`;
           });
           document.body.appendChild(mask);
           document.body.appendChild(popup);
-          let escHandle5 = null;
-          escHandle5 = escManager.register("bz-settings-panel-domain", {
+          let escHandle4 = null;
+          escHandle4 = escManager.register("bz-settings-panel-domain", {
             isVisible: () => popup.isConnected,
             close
           });
@@ -39078,8 +41120,8 @@ ${text}`;
     return ui;
   }
   async function ensureSettingsPanel(_app3) {
-    if (initialized6) return;
-    initialized6 = true;
+    if (initialized7) return;
+    initialized7 = true;
   }
   function openSettingsPanel(app2, domainId) {
     void ensureSettingsPanel(app2).then(() => getUI().open(domainId));
@@ -39087,3085 +41129,108 @@ ${text}`;
   function unloadSettingsPanel() {
     if (ui) ui.cleanup();
     ui = null;
-    initialized6 = false;
+    initialized7 = false;
   }
-  var initialized6, ui;
+  var initialized7, ui;
   var init_settings_panel = __esm({
     "src/settings-panel/index.ts"() {
-      init_ui12();
-      initialized6 = false;
+      init_ui13();
+      initialized7 = false;
       ui = null;
     }
   });
 
-  // src/review/stats-ui.ts
-  var stats_ui_exports = {};
-  __export(stats_ui_exports, {
-    closeStatsModal: () => closeStatsModal,
-    closeTimeline: () => closeTimeline,
-    showStatsModal: () => showStatsModal,
-    showTimeline: () => showTimeline
-  });
-  function statCardHTML(label, value, idx) {
-    const bg = PASTEL_CARDS[idx % PASTEL_CARDS.length];
-    return `<div style="flex:1;min-width:80px;padding:12px 6px;background:${bg};border-radius:10px;text-align:center;border:1px solid rgba(0,0,0,0.06);">
-    <div style="font-size:1.3rem;font-weight:700;color:#3D4456;line-height:1.2;">${value}</div>
-    <div style="font-size:.68rem;color:rgba(61,68,86,0.65);margin-top:3px;">${label}</div>
-  </div>`;
-  }
-  function sectionHTML(title, body, accent = "#D6E4FF") {
-    return `<div style="margin:12px 16px;padding:14px 14px 12px;background:var(--background-secondary);border-radius:12px;border:1px solid var(--background-modifier-border);">
-    <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:.92rem;margin-bottom:12px;">
-      <span style="width:4px;height:14px;border-radius:2px;background:${accent};flex-shrink:0;"></span>
-      <span>${title}</span>
-    </div>
-    ${body}
-  </div>`;
-  }
-  function emptyHTML() {
-    return '<p style="text-align:center;color:var(--text-muted);font-size:.8rem;padding:12px 0;">暂无数据</p>';
-  }
-  function softBarHTML(entries, color) {
-    if (!entries.length) return emptyHTML();
-    const max = Math.max(...entries.map((e) => e.value), 1);
-    return entries.map((e) => `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
-      <span style="width:56px;flex-shrink:0;font-size:.76rem;color:var(--text-muted);text-align:right;white-space:nowrap;">${e.label}</span>
-      <div style="flex:1;height:10px;background:var(--background-modifier-border);border-radius:5px;overflow:hidden;">
-        <div style="height:100%;width:${Math.max(e.value / max * 100, 2)}%;background:${color};border-radius:5px;"></div>
-      </div>
-      <span style="width:30px;flex-shrink:0;font-size:.76rem;color:var(--text-normal);text-align:right;">${e.value}</span>
-    </div>`).join("");
-  }
-  function barChartHTML(entries, color) {
-    if (!entries.length) return emptyHTML();
-    const max = Math.max(...entries.map((e) => e.value), 1);
-    const minH = 26, maxH = 92;
-    return `
-    <div style="overflow-x:auto;margin:8px 0 4px;">
-      <div style="display:flex;align-items:flex-end;gap:6px;min-width:${Math.max(entries.length * 34, 200)}px;padding:0 4px;">
-      ${entries.map((e) => {
-      const h = max > 0 ? minH + e.value / max * (maxH - minH) : minH;
-      return `
-        <div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;">
-          <div style="width:100%;min-width:22px;height:${h}px;background:${color};border-radius:6px 6px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:3px;color:#3D4456;font-weight:700;font-size:.7rem;">${e.value || ""}</div>
-          <div style="margin-top:5px;font-size:.66rem;color:var(--text-muted);text-align:center;white-space:nowrap;">${e.label}</div>
-        </div>`;
-    }).join("")}
-      </div>
-    </div>`;
-  }
-  function statInlineHTML(items) {
-    return `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">${items.map((s) => `
-    <span style="font-size:.74rem;color:var(--text-muted);background:var(--background-primary);border:1px solid var(--background-modifier-border);border-radius:8px;padding:3px 10px;">${s}</span>`).join("")}</div>`;
-  }
-  function rankListHTML(items, onClick) {
-    if (!items.length) return emptyHTML();
-    const badges = ["#FFF3C4", "#D8F3DC", "#D6E4FF"];
-    return items.map((it, i) => {
-      const rank = i < 3 ? `<span style="width:20px;height:20px;flex-shrink:0;border-radius:50%;background:${badges[i]};color:#3D4456;font-size:.68rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(0,0,0,0.06);">${i + 1}</span>` : `<span style="width:20px;flex-shrink:0;font-size:.72rem;color:var(--text-muted);text-align:center;">${i + 1}</span>`;
-      return `<div class="bz-review-stats-tl-row" data-idx="${i}" style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--background-modifier-border);cursor:pointer;">
-      ${rank}
-      <span style="flex:1;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml2(it.name)}</span>
-      ${it.sub ? `<span style="font-size:.7rem;color:var(--text-muted);flex-shrink:0;">${it.sub}</span>` : ""}
-      <span style="font-size:.72rem;color:var(--text-muted);flex-shrink:0;">${it.meta}</span>
-    </div>`;
-    }).join("");
-  }
-  async function showStatsModal(app2, dm) {
-    lastDm = dm;
-    const items = await dm.loadItems();
-    let w;
-    try {
-      w = (await Promise.resolve().then(() => (init_app3(), app_exports))).reviewApp.currentW();
-    } catch (e) {
-      w = void 0;
-    }
-    renderStatsModal(app2, dm, items, w);
-  }
-  function renderStatsModal(app2, dm, items, w) {
-    closeStatsModal();
-    statsMask = document.createElement("div");
-    statsMask.id = "review-stats-mask";
-    statsMask.style.display = "block";
-    statsMask.style.zIndex = String(allocZ());
-    statsMask.onclick = closeStatsModal;
-    statsPopup = document.createElement("div");
-    statsPopup.id = "review-stats-popup";
-    statsPopup.style.display = "flex";
-    statsPopup.style.zIndex = String(allocZ());
-    topifyZ(statsMask, statsPopup);
-    const header = document.createElement("div");
-    header.className = "bz-win-head bz-review-stats-head";
-    const closeBtn = document.createElement("button");
-    closeBtn.id = "review-stats-close";
-    closeBtn.className = "bz-win-close bz-touch-target--xl";
-    closeBtn.title = "关闭";
-    closeBtn.appendChild(uiIcon("x"));
-    header.innerHTML = `
-    <h3 class="bz-review-title">复习统计</h3>
-    <div></div>
-  `;
-    header.querySelector("div").appendChild(closeBtn);
-    statsPopup.appendChild(header);
-    const body = document.createElement("div");
-    body.id = "review-stats-body";
-    body.className = "bz-review-stats-body";
-    statsPopup.appendChild(body);
-    document.body.appendChild(statsMask);
-    document.body.appendChild(statsPopup);
-    header.querySelector("#review-stats-close").addEventListener("click", closeStatsModal);
-    const stats = computeStats(items, { w });
-    body.innerHTML = buildStatsHTML(app2, dm, items, stats);
-    body.querySelectorAll(".bz-review-stats-tl-row").forEach((el) => {
-      el.addEventListener("click", () => {
-        const idx = Number(el.dataset.idx);
-        const target = items.filter((i) => (i.reviewHistory || []).length).sort((a, b) => {
-          var _a2, _b2, _c, _d;
-          const la = ((_b2 = (_a2 = a.reviewHistory) == null ? void 0 : _a2[a.reviewHistory.length - 1]) == null ? void 0 : _b2.timestamp) || "";
-          const lb = ((_d = (_c = b.reviewHistory) == null ? void 0 : _c[b.reviewHistory.length - 1]) == null ? void 0 : _d.timestamp) || "";
-          return lb.localeCompare(la);
-        })[idx];
-        if (target) void showTimeline(app2, dm, target);
-      });
-    });
-    statsEsc = escManager.register("review-stats", {
-      isVisible: () => !!statsMask && statsMask.style.display === "block",
-      close: closeStatsModal
-    });
-  }
-  function buildStatsHTML(app2, dm, items, stats) {
-    var _a2, _b2;
-    const cards = `
-    <div style="display:flex;flex-wrap:wrap;gap:8px;padding:16px 16px 0;">
-      ${statCardHTML("总复习（天）", stats.totalReviews, 0)}
-      ${statCardHTML("连续天数", stats.streak, 1)}
-      ${statCardHTML("今日复习", stats.todayReviews, 2)}
-      ${statCardHTML("逾期率", Math.round(stats.overdueRate * 100) + "%", 3)}
-      ${statCardHTML("平均 R", stats.avgR === null ? "-" : Math.round(stats.avgR * 100) + "%", 4)}
-      ${statCardHTML("复习笔记", stats.reviewedNotes, 5)}
-    </div>`;
-    const total = Object.values(stats.ratingDist).reduce((a, b) => a + b, 0) || 1;
-    const ratingBars = ["again", "hard", "good", "easy"].map((r) => ({
-      label: RATING_NAMES[r],
-      value: stats.ratingDist[r] || 0
-    }));
-    const ratingHTML = sectionHTML(
-      "评级分布",
-      softBarHTML(ratingBars, "#D6E4FF") + statInlineHTML([`共 ${total} 次评级`]),
-      "#FFE5CC"
-    );
-    const dist = loadDistribution(items, 14);
-    const todayKey = /* @__PURE__ */ new Date();
-    const tmrKey = /* @__PURE__ */ new Date();
-    tmrKey.setDate(tmrKey.getDate() + 1);
-    const fmt2 = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    const todayCnt = ((_a2 = dist.find((d) => d.date === fmt2(todayKey))) == null ? void 0 : _a2.count) || 0;
-    const tmrCnt = ((_b2 = dist.find((d) => d.date === fmt2(tmrKey))) == null ? void 0 : _b2.count) || 0;
-    const maxDist = Math.max(1, ...dist.map((d) => d.count));
-    const distBars = dist.map((d) => ({
-      label: d.date === fmt2(todayKey) ? "今" : `+${dist.indexOf(d)}`,
-      value: d.count
-    }));
-    const loadHTML = sectionHTML(
-      "复习负载",
-      statInlineHTML([`今日 ${todayCnt} 篇`, `明日 ${tmrCnt} 篇`, `峰值 ${maxDist} 篇/天`]) + barChartHTML(distBars, "#D6E4FF"),
-      "#D6E4FF"
-    );
-    const withHistory = items.filter((i) => (i.reviewHistory || []).length).sort((a, b) => {
-      var _a3, _b3, _c, _d;
-      const la = ((_b3 = (_a3 = a.reviewHistory) == null ? void 0 : _a3[a.reviewHistory.length - 1]) == null ? void 0 : _b3.timestamp) || "";
-      const lb = ((_d = (_c = b.reviewHistory) == null ? void 0 : _c[b.reviewHistory.length - 1]) == null ? void 0 : _d.timestamp) || "";
-      return lb.localeCompare(la);
-    });
-    const tlItems = withHistory.slice(0, 10).map((i) => {
-      var _a3;
-      const h = i.reviewHistory || [];
-      const lastTs = (_a3 = h[h.length - 1]) == null ? void 0 : _a3.timestamp;
-      const cnt = h.length;
-      return {
-        name: i.name.replace(/^《|》$/g, ""),
-        sub: `${cnt} 次`,
-        meta: lastTs ? formatRelativeTime(new Date(lastTs)) : ""
-      };
-    });
-    const timelineHTML = sectionHTML(
-      "复习时间线",
-      rankListHTML(tlItems, () => {
-      }) + '<div style="font-size:.68rem;color:var(--text-faint);text-align:center;padding-top:8px;">点击笔记查看复习历史</div>',
-      "#FADDE1"
-    );
-    const daily7 = stats.daily7.map((d) => ({ label: d.date.slice(5).replace("-", "/"), value: d.count }));
-    const weekHTML = sectionHTML("最近 7 天复习量", barChartHTML(daily7, "#E6DFF5"), "#E6DFF5");
-    return cards + ratingHTML + loadHTML + timelineHTML + weekHTML;
-  }
-  async function showTimeline(app2, dm, item) {
-    closeTimeline();
-    let w;
-    try {
-      w = (await Promise.resolve().then(() => (init_app3(), app_exports))).reviewApp.currentW();
-    } catch (e) {
-      w = void 0;
-    }
-    const history2 = historyOf(item);
-    histMask = document.createElement("div");
-    histMask.id = "review-history-mask";
-    histMask.style.display = "block";
-    histMask.style.zIndex = String(allocZ());
-    histMask.onclick = closeTimeline;
-    histPopup = document.createElement("div");
-    histPopup.id = "review-history-popup";
-    histPopup.style.display = "flex";
-    histPopup.style.zIndex = String(allocZ());
-    topifyZ(histMask, histPopup);
-    const body = document.createElement("div");
-    body.id = "review-history-body";
-    body.className = "bz-review-history-body";
-    histPopup.appendChild(body);
-    document.body.appendChild(histMask);
-    document.body.appendChild(histPopup);
-    const closeBtn = document.createElement("button");
-    closeBtn.id = "review-history-close";
-    closeBtn.className = "bz-win-close bz-review-history-close bz-touch-target--xl";
-    closeBtn.title = "关闭";
-    closeBtn.appendChild(uiIcon("x"));
-    closeBtn.style.cssText = "position:absolute;top:10px;right:10px;z-index:2;background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px;box-shadow:none !important;";
-    closeBtn.addEventListener("click", closeTimeline);
-    histPopup.appendChild(closeBtn);
-    const status = document.createElement("div");
-    status.className = "bz-review-history-status";
-    status.style.cssText = "padding:16px 18px 10px;";
-    const stageText = item.phase === "fsrs" ? `FSRS Lv.${(item.stage || 0) - 9 + 1}` : `${(item.stage || 0) + 1}/10`;
-    let curR = null;
-    if (item.phase === "fsrs" && item.stability && item.lastReviewed) {
-      const t = ((/* @__PURE__ */ new Date()).getTime() - new Date(item.lastReviewed).getTime()) / 864e5;
-      if (t > 0) {
-        const R = new FSRS(w || DEFAULT_W).R(t, item.stability);
-        curR = ` · 当前 R ${Math.round(R * 100)}%`;
-      }
-    }
-    status.innerHTML = `
-    <div style="font-size:15px;font-weight:600;color:var(--text-normal);">${escapeHtml2(item.name.replace(/^《|》$/g, ""))}</div>
-    <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${stageText} · 共 ${history2.length} 次复习${curR || ""}</div>
-  `;
-    body.appendChild(status);
-    if (!history2.length) {
-      const empty = document.createElement("div");
-      empty.style.cssText = "padding:30px;text-align:center;color:var(--text-faint);font-size:13px;";
-      empty.textContent = "暂无复习记录";
-      body.appendChild(empty);
-      histEsc = escManager.register("review-history", { isVisible: () => !!histMask && histMask.style.display === "block", close: closeTimeline });
-      return;
-    }
-    const tl = document.createElement("div");
-    tl.className = "bz-review-history-tl";
-    tl.style.cssText = "flex:1;overflow-y:auto;padding:4px 18px 20px;";
-    const itemsHTML = history2.map((h, i) => {
-      const isLast = i === history2.length - 1;
-      const ratingName = RATING_NAMES[h.rating] || h.rating;
-      const color = RATING_COLORS[h.rating] || "#888";
-      const rText = h.R !== void 0 ? `R=${h.R <= 1 ? Math.round(h.R * 100) : Math.round(h.R)}%` : "";
-      const sText = h.stability !== void 0 ? `S=${h.stability}` : "";
-      const meta = [rText, sText].filter(Boolean).join(" · ");
-      const line = isLast ? "" : '<div style="position:absolute;left:5px;top:14px;bottom:-4px;width:2px;background:var(--background-modifier-border);"></div>';
-      return `
-      <div style="position:relative;padding-left:20px;padding-bottom:${isLast ? "4px" : "14px"};">
-        ${line}
-        <div style="position:absolute;left:0;top:4px;width:12px;height:12px;border-radius:50%;background:${color};flex-shrink:0;"></div>
-        <div style="display:flex;align-items:baseline;gap:10px;font-size:13px;">
-          <span style="color:var(--text-muted);font-size:12px;min-width:86px;flex-shrink:0;">${formatRelativeTime(new Date(h.timestamp))}</span>
-          <span style="font-weight:500;color:${color};min-width:32px;">${ratingName}</span>
-          <span style="color:var(--text-faint);font-size:12px;">阶段${h.stage}${meta ? " · " + meta : ""}</span>
-        </div>
-      </div>`;
-    }).join("");
-    tl.innerHTML = itemsHTML;
-    body.appendChild(tl);
-    histEsc = escManager.register("review-history", {
-      isVisible: () => !!histMask && histMask.style.display === "block",
-      close: closeTimeline
-    });
-  }
-  function closeTimeline() {
-    histEsc == null ? void 0 : histEsc.unregister();
-    histEsc = null;
-    if (histMask) histMask.remove();
-    if (histPopup) histPopup.remove();
-    histMask = null;
-    histPopup = null;
-  }
-  function closeStatsModal() {
-    statsEsc == null ? void 0 : statsEsc.unregister();
-    statsEsc = null;
-    if (statsMask) statsMask.remove();
-    if (statsPopup) statsPopup.remove();
-    statsMask = null;
-    statsPopup = null;
-    closeTimeline();
-  }
-  var statsMask, statsPopup, statsEsc, lastDm, PASTEL_CARDS, histMask, histPopup, histEsc;
-  var init_stats_ui = __esm({
-    "src/review/stats-ui.ts"() {
-      init_z_order();
-      init_esc_manager();
-      init_utils();
-      init_stats();
-      init_fsrs();
-      init_ui();
-      statsMask = null;
-      statsPopup = null;
-      statsEsc = null;
-      lastDm = null;
-      PASTEL_CARDS = ["#D6E4FF", "#D8F3DC", "#CDF0EA", "#FADDE1", "#FFE5CC", "#E6DFF5"];
-      histMask = null;
-      histPopup = null;
-      histEsc = null;
-    }
-  });
-
-  // src/review/ui.ts
-  var ui_exports9 = {};
-  __export(ui_exports9, {
-    UIManager: () => UIManager3,
-    isDueToday: () => isDueToday,
-    isPlayable: () => isPlayable,
-    mountFloatingRatingBar: () => mountFloatingRatingBar,
-    reviewSettingsSchema: () => reviewSettingsSchema
-  });
-  function dueLabelOf(item) {
-    if (item.isMissing) return { label: "文件缺失", cls: "is-missing" };
-    if (item.isCompleted) return { label: "已完成", cls: "is-done" };
-    if (!item.nextReviewDate) return { label: "待定", cls: "is-future" };
-    const diff = new Date(item.nextReviewDate).getTime() - Date.now();
-    if (diff > 0) {
-      const days = Math.floor(diff / 864e5);
-      const hours = Math.floor(diff % 864e5 / 36e5);
-      if (days > 0) return { label: `${days} 天后`, cls: "is-future" };
-      if (hours > 0) return { label: `${hours} 小时后`, cls: "is-future" };
-      return { label: `${Math.max(1, Math.floor(diff / 6e4))} 分钟后`, cls: "is-future" };
-    }
-    return { label: "已逾期", cls: "is-overdue" };
-  }
-  function isPlayable(item) {
-    if (item.isMissing || item.isCompleted || item.completed) return false;
-    if (!item.nextReviewDate) return false;
-    return new Date(item.nextReviewDate).getTime() <= Date.now();
-  }
-  function mountFloatingRatingBar(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-review-bar";
-    el.style.zIndex = String(allocZ());
-    const btns = BAR_RATINGS.map(
-      (r) => `<button class="bz-review-bar-btn bz-touch-target--sm is-${r.cls}" data-rating="${r.rating}">${r.label}</button>`
-    ).join("");
-    el.innerHTML = `
-    <span class="bz-review-bar-info">${escapeHtml2(opts.name.replace(/^《|》$/g, ""))}<i>(${opts.index}/${opts.total})</i></span>
-    <span class="bz-review-bar-act">${btns}
-      <button class="bz-review-bar-btn bz-touch-target--sm is-skip" data-rating="skip">${"跳过"}</button>
-    </span>`;
-    let closed = false;
-    const close = () => {
-      if (closed) return;
-      closed = true;
-      el.remove();
-    };
-    el.querySelectorAll(".bz-review-bar-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const r = btn.dataset.rating;
-        if (r === "skip") opts.onSkip();
-        else if (r === "again" || r === "hard" || r === "good" || r === "easy") opts.onRate(r);
-        close();
-      });
-    });
-    document.body.appendChild(el);
-    return { close };
-  }
-  var UIManager3, BAR_RATINGS;
-  var init_ui13 = __esm({
-    "src/review/ui.ts"() {
-      init_z_order();
-      init_notice();
-      init_flow_dialog();
-      init_esc_manager();
-      init_settings_provider();
-      init_utils();
-      init_mobile();
-      init_ui();
-      init_item_actions();
-      init_fsrs();
-      init_stats();
-      init_queue();
-      init_sprint();
-      init_settings_schema();
-      UIManager3 = class {
-        constructor(app2, dataManager3) {
-          /** R 展示口径权重源（item 12：与调度排期同读拟合权重；ensureReview 注入 reviewApp.currentW，缺省回退默认） */
-          this.wSource = () => DEFAULT_W;
-          this.mask = null;
-          this.popup = null;
-          /** 内容区容器（队列/冲刺共用宿主） */
-          this.entriesContainer = null;
-          /** 当前冲刺会话（内容区被占用时队列交互禁用） */
-          this.sprint = null;
-          /** 冲刺入口 in-flight 防抖（双击/并发触发只放行一次，防双开会话双倍 AI 调用） */
-          this.sprintStarting = false;
-          this.showArchived = false;
-          this.searchTimer = null;
-          this.searchText = "";
-          this.escHandle = null;
-          this.app = app2;
-          this.dataManager = dataManager3;
-          this.createMainUI();
-          this.registerEscLayer();
-        }
-        get inSprint() {
-          return !!this.sprint;
-        }
-        // ================= 面板构建 =================
-        createMainUI() {
-          if (this.mask && document.body.contains(this.mask)) return;
-          this.mask = document.createElement("div");
-          this.mask.id = "review-mask";
-          this.mask.classList.add("bz-panel-overlay");
-          this.mask.style.display = "none";
-          this.mask.style.zIndex = String(allocZ());
-          this.mask.onclick = () => {
-            if (!this.sprint) this.hideMain();
-          };
-          this.popup = document.createElement("div");
-          this.popup.id = "review-popup";
-          this.popup.classList.add("bz-panel-frame");
-          this.popup.classList.add("bz-panel-mtop");
-          this.popup.style.display = "none";
-          this.popup.style.zIndex = String(allocZ());
-          const content = document.createElement("div");
-          content.id = "review-entries-container";
-          this.popup.appendChild(content);
-          this.entriesContainer = content;
-          document.body.appendChild(this.mask);
-          document.body.appendChild(this.popup);
-        }
-        registerEscLayer() {
-          if (this.escHandle) return;
-          this.escHandle = escManager.register("review-main", {
-            isVisible: () => !!this.mask && this.mask.style.display === "block",
-            close: () => this.hideMain()
-          });
-        }
-        // ================= 显示/隐藏 =================
-        async showMain() {
-          this.createMainUI();
-          if (!this.mask || !this.popup) return;
-          applyMobileWindowFullscreen(this.popup, tryGetSettings().reviewMobileDefaultFullscreen === true);
-          topifyZ(this.mask, this.popup);
-          this.mask.style.display = "block";
-          this.popup.style.display = "flex";
-          await this.showQueue();
-        }
-        hideMain() {
-          if (this.sprint) return;
-          if (this.mask) this.mask.style.display = "none";
-          if (this.popup) this.popup.style.display = "none";
-        }
-        destroy() {
-          const sprint = this.sprint;
-          this.sprint = null;
-          sprint == null ? void 0 : sprint.destroy();
-          this.hideMain();
-          if (this.searchTimer !== null) {
-            window.clearTimeout(this.searchTimer);
-            this.searchTimer = null;
-          }
-          if (this.escHandle) {
-            this.escHandle.unregister();
-            this.escHandle = null;
-          }
-          if (this.mask) this.mask.remove();
-          if (this.popup) this.popup.remove();
-          this.mask = null;
-          this.popup = null;
-          this.entriesContainer = null;
-        }
-        // ================= 队列渲染（三区） =================
-        /** 读盘并渲染三区队列（外部刷新入口） */
-        async refreshPanel() {
-          if (this.sprint) return;
-          const items = await this.dataManager.loadItems();
-          this.renderEntries(items, this.searchText);
-        }
-        /** 渲染队列视图（冲刺态不响应） */
-        renderEntries(items, searchText = "") {
-          if (this.sprint) return;
-          const container = this.entriesContainer;
-          if (!container) return;
-          this.searchText = searchText;
-          container.innerHTML = this.queueViewHtml(items, searchText);
-          if (!items.length) {
-            const host = container.querySelector("[data-empty-host]");
-            if (host) {
-              const acts = document.createElement("div");
-              acts.className = "bz-btn-row";
-              const addBtn = document.createElement("button");
-              addBtn.className = "bz-btn bz-btn--primary";
-              addBtn.dataset.act = "add-current";
-              addBtn.textContent = "把当前笔记加入复习";
-              const helpBtn = document.createElement("button");
-              helpBtn.className = "bz-btn bz-btn--ghost";
-              helpBtn.dataset.act = "watch-help";
-              helpBtn.textContent = "如何配置监听文件夹";
-              acts.appendChild(addBtn);
-              acts.appendChild(helpBtn);
-              host.appendChild(
-                uiEmpty({
-                  icon: "inbox",
-                  title: "复习计划还是空的",
-                  desc: "在 设置 → 复习计划 → 监听文件夹 添加文件夹后，新笔记会自动加入复习；也可以先把当前笔记加入。",
-                  actions: acts
-                })
-              );
-            }
-          }
-          mountIcons(container);
-          this.bindQueueEvents(container, items);
-        }
-        /** 切回队列视图（冲刺结束回调）；遇仍活动的会话先销毁再置空（防孤儿 ESC 层） */
-        async showQueue() {
-          if (!this.entriesContainer) return;
-          const active2 = this.sprint;
-          this.sprint = null;
-          active2 == null ? void 0 : active2.destroy();
-          await this.refreshPanel();
-        }
-        // ================= 队列视图 HTML =================
-        /** R 阈值提前复习判定（item 6：与开始本轮同口径；wSource=拟合权重） */
-        rThreshold() {
-          const s = tryGetSettings();
-          return Number(s == null ? void 0 : s.reviewRThreshold) || 0.9;
-        }
-        isEarly(it) {
-          return isEarlyDue(it, this.rThreshold(), this.wSource());
-        }
-        queueViewHtml(items, searchText) {
-          const kw = searchText.trim().toLowerCase();
-          const vis = kw ? items.filter((i) => i.name.toLowerCase().includes(kw)) : items;
-          const rt = this.rThreshold();
-          const w = this.wSource();
-          const col = partitionQueue(items, rt, w);
-          const visCol = partitionQueue(vis, rt, w);
-          const over = visCol.overdue;
-          const today = visCol.today;
-          const future = visCol.future;
-          const done = visCol.done;
-          const round = roundQueue(items, this.rThreshold(), this.wSource());
-          const clearToday = !round.length;
-          const futureCount = col.future.length;
-          const head = `
-      <div class="bz-panel-head">
-        <div class="bz-panel-brand">${this.icon("repeat-2", "bz-ic--sm")}</div>
-        <div class="bz-panel-title">复习计划</div>
-        <div class="bz-panel-head-pipe"></div>
-        <div class="bz-panel-head-sub">${this.todayLabel()}</div>
-        <span class="bz-panel-head-sp"></span>
-        <div class="bz-panel-head-btns">
-          <button class="bz-icon-btn" data-act="settings" title="打开复习计划设置">${this.icon("settings", "")}</button>
-          <!-- issue 201 对齐待办：关闭钮不挂 bz-win-close（core 规则非真全屏隐藏之），桌面/移动常显同待办 -->
-          <button class="bz-icon-btn" data-act="close" title="关闭">${this.icon("x")}</button>
-      </div>
-      </div>
-      <div class="bz-q-tools">
-        <div class="bz-search${searchText ? " typing" : ""}">${this.icon("search", "")}<input class="bz-input" type="text" id="bz-q-search" placeholder="搜索笔记…" value="${escapeHtml2(searchText)}"></div>
-      </div>`;
-          if (!items.length) {
-            const strip2 = `
-      <div class="bz-q-strip">
-        <span class="bz-q-strip-dot ok"></span>
-        <strong>今日已清空</strong>
-        <span class="bz-q-strip-txt">还没有任何复习条目</span>
-      </div>`;
-            return `<div class="bz-q-view">${head}${strip2}<div class="bz-q-cols bz-q-empty-wrap"><div data-empty-host></div></div></div>`;
-          }
-          const strip = clearToday ? `<div class="bz-q-strip">
-        <span class="bz-q-strip-dot ok"></span>
-        <strong>今日已清空</strong>
-        <span class="bz-q-strip-txt">${futureCount ? `未来还有 ${futureCount} 篇待复习` : "没有待复习条目"}</span>
-      </div>` : `<div class="bz-q-strip">
-        <span class="bz-q-strip-dot"></span>
-        <strong>开始本轮</strong>
-        <span class="bz-q-strip-txt">${this.showArchived ? "查看已完成复习" : `今日 ${col.today.length} 篇到期 · 逾期 ${col.overdue.length} 篇顺延`}</span>
-        ${this.showArchived ? "" : `<button class="bz-btn bz-btn--primary" data-act="begin">开始本轮</button>`}
-      </div>`;
-          const body = this.showArchived ? `<div class="bz-q-cols"><div class="bz-q-col done">${this.colHead(done.length, "已完成")}${this.cardsOf(done)}</div></div>` : `<div class="bz-q-cols">
-          <div class="bz-q-col danger">${this.colHead(col.overdue.length, "已逾期")}${this.cardsOf(over)}</div>
-          <div class="bz-q-col warn">${this.colHead(col.today.length, "今天到期")}${this.cardsOf(today)}</div>
-          <div class="bz-q-col future">${this.colHead(future.length, "未来")}${this.cardsOf(future)}</div>
-        </div>`;
-          const stats = computeStats(items);
-          const footer = `
-      <div class="bz-q-footer">
-        <span class="bz-q-fitem bz-touch-target--lg" data-act="arch" title="查看已完成复习">
-          ${this.icon("folder")}<span class="lbl">已完成 <b>${done.length}</b> 篇</span>
-        </span>
-        <i class="sep"></i>
-        <span class="bz-q-fitem bz-touch-target--lg" data-act="stats" title="查看复习统计分布">
-          ${this.icon("chart")}<span class="lbl">累计 <b>${stats.totalReviews}</b> 天 · 连续 <b>${stats.streak}</b> 天</span>
-        </span>
-      </div>`;
-          return `<div class="bz-q-view">${head}${strip}${body}${footer}</div>`;
-        }
-        colHead(count, name) {
-          return `<div class="bz-q-col-head"><span class="cnt">${count}</span><span class="name">${name}</span></div>`;
-        }
-        cardsOf(items) {
-          if (!items.length) return `<div class="bz-q-hint">没有条目</div>`;
-          return items.map((it) => this.cardHtml(it)).join("");
-        }
-        cardHtml(it) {
-          const due = dueLabelOf(it);
-          const canPlay = isPlayable(it) && !it.isMissing;
-          const title = it.isCompleted ? `<s>${escapeHtml2(it.name)}</s>` : escapeHtml2(it.name);
-          const cls = [
-            "bz-q-card",
-            it.isOverdue ? "danger" : "",
-            it.isCompleted ? "done" : "",
-            canPlay ? "" : "no",
-            it.isMissing ? "missing" : ""
-          ].join(" ").trim();
-          const tags = [
-            it.isMissing ? `<span class="bz-q-tag is-missing">文件缺失</span>` : `<span class="bz-q-tag ${due.cls}">${due.label}</span>`,
-            // item 6：R<阈值提前复习卡挂「提前」tag（与开始本轮同口径，落「今天」列）
-            !it.isMissing && this.isEarly(it) ? `<span class="bz-q-tag is-early">提前</span>` : "",
-            this.stageTagHtml(it)
-          ].join("");
-          return `
-      <div class="${cls}" data-id="${it.id}" role="button" tabindex="0" aria-disabled="${canPlay ? "false" : "true"}">
-        <div class="bz-q-card-top"><span class="bz-q-card-title">${title}</span><span class="bz-q-card-stage">${it.isMissing ? "挂起" : this.stageNum(it)}</span></div>
-        <div class="bz-q-card-meta">${tags}</div>
-      </div>`;
-        }
-        stageTagHtml(it) {
-          var _a2;
-          if (it.completed) return '<span class="bz-q-tag is-done">已完成</span>';
-          if (it.phase === "fsrs") {
-            const r = this.currentRPct(it);
-            if (r !== null) {
-              const cls = r >= 90 ? "r-high" : r >= 70 ? "r-mid" : "r-low";
-              return `<span class="bz-q-tag is-r ${cls}">R=${r}%</span>`;
-            }
-            return `<span class="bz-q-tag is-r">FSRS</span>`;
-          }
-          return `<span class="bz-q-tag is-stage">阶段 ${(_a2 = it.currentStage) != null ? _a2 : it.stage + 1}/${TOTAL_STAGES}</span>`;
-        }
-        stageNum(it) {
-          var _a2;
-          if (it.phase === "fsrs") return `FSRS Lv.${it.stage - LADDER_MAX + 1}`;
-          return `${(_a2 = it.currentStage) != null ? _a2 : it.stage + 1}/${TOTAL_STAGES}`;
-        }
-        currentRPct(it) {
-          if (it.phase !== "fsrs" || !it.stability || !it.lastReviewed) return null;
-          const t = (Date.now() - new Date(it.lastReviewed).getTime()) / 864e5;
-          if (!(t > 0)) return null;
-          const fsrs = new FSRS(this.wSource());
-          return Math.round(fsrs.R(t, it.stability) * 100);
-        }
-        todayLabel() {
-          const d = /* @__PURE__ */ new Date();
-          const week = ["日", "一", "二", "三", "四", "五", "六"][d.getDay()];
-          return `${d.getMonth() + 1}月${d.getDate()}日 周${week}`;
-        }
-        // ================= 队列事件 =================
-        bindQueueEvents(container, items) {
-          var _a2, _b2, _c, _d, _e, _f, _g;
-          (_a2 = container.querySelector('[data-act="close"]')) == null ? void 0 : _a2.addEventListener("click", () => this.hideMain());
-          (_b2 = container.querySelector('[data-act="settings"]')) == null ? void 0 : _b2.addEventListener("click", () => {
-            this.hideMain();
-            void Promise.resolve().then(() => (init_settings_panel(), settings_panel_exports)).then((m) => m.openSettingsPanel(this.app, "review"));
-          });
-          (_c = container.querySelector('[data-act="begin"]')) == null ? void 0 : _c.addEventListener("click", () => void this.beginRound());
-          (_d = container.querySelector('[data-act="arch"]')) == null ? void 0 : _d.addEventListener("click", () => {
-            this.showArchived = !this.showArchived;
-            void this.refreshPanel();
-          });
-          (_e = container.querySelector('[data-act="stats"]')) == null ? void 0 : _e.addEventListener("click", () => void this.openStats());
-          (_f = container.querySelector('[data-act="add-current"]')) == null ? void 0 : _f.addEventListener("click", () => void this.addCurrentNote());
-          (_g = container.querySelector('[data-act="watch-help"]')) == null ? void 0 : _g.addEventListener("click", () => void this.showWatchHelp());
-          const search = container.querySelector("#bz-q-search");
-          if (search) {
-            search.addEventListener("input", () => {
-              if (this.searchTimer !== null) window.clearTimeout(this.searchTimer);
-              this.searchTimer = window.setTimeout(() => {
-                this.searchTimer = null;
-                this.searchText = search.value;
-                void this.refreshPanel();
-              }, 180);
-            });
-          }
-          container.querySelectorAll(".bz-q-card[data-id]:not(.no)").forEach((card) => {
-            const activate = () => {
-              const it = items.find((x) => x.id === card.dataset.id);
-              if (it && isPlayable(it)) void this.beginSingle(it);
-            };
-            card.addEventListener("click", activate);
-            card.addEventListener("keydown", (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                activate();
-              }
-            });
-          });
-          container.querySelectorAll(".bz-q-card[data-id]").forEach((card) => {
-            this.attachDrawer(card, items);
-          });
-        }
-        // ================= 空态两条路（item 10） =================
-        /** 把当前笔记加入复习（空库引导动作；命令同语义） */
-        async addCurrentNote() {
-          const file = this.app.workspace.getActiveFile();
-          if (!file) {
-            notice("请先打开一个笔记", "warning");
-            return;
-          }
-          const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app3(), app_exports));
-          try {
-            await reviewApp2.addCurrentToReview(file);
-            await this.refreshPanel();
-            await reviewApp2.applyReviewStyles(this.app);
-          } catch (e) {
-            notice("加入复习计划失败：" + ((e == null ? void 0 : e.message) || e) + "，请重试", "error");
-          }
-        }
-        /** 配置监听文件夹说明（空库引导动作；设置面板路径指路） */
-        async showWatchHelp() {
-          const { openFlowDialog: openFlowDialog2 } = await Promise.resolve().then(() => (init_flow_dialog(), flow_dialog_exports));
-          await openFlowDialog2({
-            title: "配置监听文件夹",
-            message: "打开 设置 → 复习计划 → 监听文件夹，添加文件夹后，其中新建的笔记会自动加入复习计划；已存在的笔记可在添加时选择一并加入。",
-            actions: [{ label: "知道了", value: "ok", cta: true }]
-          });
-        }
-        // ================= 冲刺入口（连接 app 编排） =================
-        async beginRound() {
-          if (this.sprintStarting) return;
-          this.sprintStarting = true;
-          try {
-            const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app3(), app_exports));
-            await reviewApp2.autoJumpOverdue();
-          } finally {
-            this.sprintStarting = false;
-          }
-        }
-        async beginSingle(item) {
-          if (this.sprintStarting) return;
-          this.sprintStarting = true;
-          try {
-            const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app3(), app_exports));
-            await reviewApp2.startSingleSprint(item);
-          } finally {
-            this.sprintStarting = false;
-          }
-        }
-        /** 供 app 编排：进入做题冲刺会话（宿主接管内容区）。
-         *  互斥：进入前强制销毁旧会话（防孤儿冲刺 ESC 层 + 旧题面覆盖队列视图）。 */
-        startSprint(opts) {
-          const container = this.entriesContainer;
-          if (!container) return Promise.resolve("quit");
-          const old = this.sprint;
-          this.sprint = null;
-          old == null ? void 0 : old.destroy();
-          this.sprint = new SprintSession({
-            app: this.app,
-            host: container,
-            queue: opts.queue,
-            mode: opts.mode,
-            quiz: opts.quiz,
-            streakDays: opts.streakDays,
-            fetchQuestions: opts.fetchQuestions,
-            onPassed: opts.onPassed,
-            onFailed: opts.onFailed,
-            onExit: () => this.showQueue()
-          });
-          return this.sprint.start();
-        }
-        // ================= 归档 / 统计 =================
-        async openStats() {
-          const { showStatsModal: showStatsModal2 } = await Promise.resolve().then(() => (init_stats_ui(), stats_ui_exports));
-          await showStatsModal2(this.app, this.dataManager);
-        }
-        // ================= 难度弹窗（评分命令用，保留旧实现） =================
-        showDifficultyDialog(item, onSelect) {
-          const old = document.querySelector(".difficulty-dialog");
-          if (old) old.remove();
-          const div = document.createElement("div");
-          div.className = "difficulty-dialog";
-          div.style.zIndex = String(allocZ());
-          div.innerHTML = `
-      <h4>标记复习：${escapeHtml2(item.name)}</h4>
-      <button class="diff-btn" data-diff="again">忘了（Again）</button>
-      <button class="diff-btn" data-diff="hard">困难（Hard）</button>
-      <button class="diff-btn" data-diff="good">一般（Good）</button>
-      <button class="diff-btn" data-diff="easy">简单（Easy）</button>
-      <button class="diff-btn diff-btn-cancel" data-diff="cancel">取消</button>
-    `;
-          document.body.appendChild(div);
-          div.style.display = "block";
-          div.querySelectorAll(".diff-btn").forEach((btn) => {
-            btn.addEventListener("click", () => {
-              unregisterSheetCompanion(div);
-              div.remove();
-              const diff = btn.dataset.diff;
-              if (diff !== "cancel" && diff && onSelect) onSelect(diff);
-            });
-          });
-          setTimeout(() => {
-            const handler = (e) => {
-              if (!div.contains(e.target)) {
-                unregisterSheetCompanion(div);
-                div.remove();
-                document.removeEventListener("click", handler);
-              }
-            };
-            document.addEventListener("click", handler);
-          }, 100);
-        }
-        // ================= 抽屉（右键/长按） =================
-        attachDrawer(card, items) {
-          const item = items.find((x) => x.id === card.dataset.id);
-          if (!item) return;
-          card.addEventListener("contextmenu", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            void this.openDrawer(item, card);
-          });
-        }
-        async openDrawer(item, anchor) {
-          const { attachItemActions: attachItemActions2, closeItemMenu: closeItemMenu2 } = await Promise.resolve().then(() => (init_item_actions(), item_actions_exports));
-          const actions = [
-            {
-              icon: "file-text",
-              label: "打开原文",
-              onClick: () => void this.openItemFile(item)
-            },
-            {
-              icon: "history",
-              label: "查看历史",
-              onClick: () => {
-                void (async () => {
-                  const { showTimeline: showTimeline2 } = await Promise.resolve().then(() => (init_stats_ui(), stats_ui_exports));
-                  showTimeline2(this.app, this.dataManager, item);
-                })();
-              }
-            },
-            {
-              icon: "trash-2",
-              label: "移出复习计划",
-              kind: "danger",
-              onClick: () => {
-                void openFlowDialog({
-                  title: "移出复习计划",
-                  message: `确定移出「${item.name}」吗？移出后可在通知中撤销。`,
-                  actions: [
-                    { label: "取消", value: "cancel" },
-                    { label: "移出", value: "ok", cta: true }
-                  ]
-                }).then(async (v) => {
-                  if (v !== "ok") return;
-                  try {
-                    await this.dataManager.removeItem(item.filePath);
-                    await this.refreshPanel();
-                    const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app3(), app_exports));
-                    await reviewApp2.applyReviewStyles(this.app);
-                    notifyUndo(`已移出「${item.name}」`, () => {
-                      void (async () => {
-                        try {
-                          await this.dataManager.restoreItem(item);
-                          await this.refreshPanel();
-                          const { reviewApp: ra } = await Promise.resolve().then(() => (init_app3(), app_exports));
-                          await ra.applyReviewStyles(this.app);
-                        } catch (e) {
-                          notifySaveError(e, "恢复复习条目");
-                        }
-                      })();
-                    });
-                  } catch (e) {
-                    notifySaveError(e, "移出复习条目");
-                  }
-                });
-              }
-            }
-          ];
-          attachItemActions2(anchor, actions);
-        }
-        async openItemFile(item) {
-          const file = this.app.vault.getAbstractFileByPath(item.filePath);
-          if (!file) {
-            notice(`笔记「${item.name}」的文件已删除`, "warning");
-            return;
-          }
-          const leaf = this.app.workspace.getLeaf(false);
-          await leaf.openFile(file);
-        }
-        // ================= 工具 =================
-        /** lucide 占位 HTML（默认挂 .bz-q-ic 域内尺寸钩子；extra 传空则只用 .bz-ic 基类，
-         *  如 .bz-search 内的搜索图标走组件库定位/尺寸）。渲染后组件库 mountIcons 统一替换 */
-        icon(name, extra = "bz-q-ic") {
-          return `<span class="bz-ic${extra ? " " + extra : ""}" data-lucide="${name}"></span>`;
-        }
-      };
-      BAR_RATINGS = [
-        { rating: "again", label: "忘了", cls: "again" },
-        { rating: "hard", label: "困难", cls: "hard" },
-        { rating: "good", label: "一般", cls: "good" },
-        { rating: "easy", label: "简单", cls: "easy" }
-      ];
-    }
-  });
-
-  // src/review/index.ts
-  var review_exports = {};
-  __export(review_exports, {
-    dataManager: () => dataManager2,
-    ensureReview: () => ensureReview,
-    openReviewPanel: () => openReviewPanel,
-    openReviewReport: () => openReviewReport,
-    reviewAddCurrent: () => reviewAddCurrent,
-    reviewJumpOverdue: () => reviewJumpOverdue,
-    reviewMarkDialog: () => reviewMarkDialog,
-    reviewMarkRating: () => reviewMarkRating,
-    reviewRemoveCurrent: () => reviewRemoveCurrent,
-    reviewStart: () => reviewStart,
-    reviewWatcher: () => reviewWatcher,
-    uiManager: () => uiManager2,
-    unloadReview: () => unloadReview
-  });
-  function listen(source, event, cb) {
-    const ref = source.on(event, cb);
-    if (!ref) return;
-    unsubscribers.push(() => {
-      var _a2;
-      return (_a2 = source.offref) == null ? void 0 : _a2.call(source, ref);
-    });
-  }
-  function listenBus(channel, cb) {
-    unsubscribers.push(onDomainEvent(channel, cb));
-  }
-  function pseudoMdFile(path) {
-    const base = path.split("/").pop() || "";
-    return { path, basename: base.replace(/\.md$/, ""), extension: "md" };
-  }
-  function ensureReview(app2) {
-    if (initialized7) return;
-    initialized7 = true;
-    reviewApp.ensure(app2);
-    dataManager2 = new ReviewDataManager(app2);
-    uiManager2 = new UIManager3(app2, dataManager2);
-    uiManager2.wSource = () => reviewApp.currentW();
-    reviewWatcher = new ReviewWatcher(app2, dataManager2);
-    void reviewApp.loadFitParams(app2).catch(() => {
-    });
-    firstCheckTimer = setTimeout(() => {
-      firstCheckTimer = null;
-      reviewApp.checkOverdueAndNotify();
-      checkInterval = setInterval(() => reviewApp.checkOverdueAndNotify(), 6e4);
-    }, 2e3);
-    listen(app2.metadataCache, "resolved", async () => {
-      await reviewApp.applyReviewStyles(app2);
-    });
-    listen(app2.vault, "modify", async (file) => {
-      if (file.extension === "md") await reviewApp.applyReviewStyles(app2, file);
-    });
-    listenBus("vault:md-created", (evt) => {
-      void (reviewWatcher == null ? void 0 : reviewWatcher.onVaultCreate(pseudoMdFile(evt.path)));
-    });
-    listenBus("vault:md-deleted", (evt) => {
-      reviewWatcher == null ? void 0 : reviewWatcher.onVaultDelete(pseudoMdFile(evt.path));
-    });
-    listenBus("vault:md-renamed", (evt) => {
-      const file = pseudoMdFile(evt.newPath);
-      file.oldPath = evt.oldPath;
-      reviewWatcher == null ? void 0 : reviewWatcher.onVaultRename(file, evt.oldPath);
-    });
-    listen(app2.workspace, "quit", () => {
-      if (checkInterval) {
-        clearInterval(checkInterval);
-        checkInterval = null;
-      }
-    });
-  }
-  function openReviewPanel(app2) {
-    ensureReview(app2);
-    uiManager2 == null ? void 0 : uiManager2.showMain();
-  }
-  async function openReviewReport(app2) {
-    ensureReview(app2);
-    const { showStatsModal: showStatsModal2 } = await Promise.resolve().then(() => (init_stats_ui(), stats_ui_exports));
-    await showStatsModal2(app2, dataManager2);
-  }
-  async function reviewAddCurrent(app2) {
-    ensureReview(app2);
-    const file = app2.workspace.getActiveFile();
-    if (!file) {
-      notice("请先打开一个笔记");
-      return;
-    }
-    try {
-      await reviewApp.addCurrentToReview(file);
-      await uiManager2.refreshPanel();
-      await reviewApp.applyReviewStyles(app2);
-    } catch (e) {
-      notice("加入复习计划失败：" + e.message + "，请重试", "error");
-    }
-  }
-  async function reviewRemoveCurrent(app2) {
-    ensureReview(app2);
-    const file = app2.workspace.getActiveFile();
-    if (!file) {
-      notice("请先打开一个笔记");
-      return;
-    }
-    const items = await dataManager2.loadItems();
-    const target = items.find((i) => i.filePath === file.path);
-    if (!target) {
-      notice("该笔记不在复习计划中");
-      return;
-    }
-    void openFlowDialog({
-      title: "移出复习计划",
-      message: `确定把「${file.basename}」移出复习计划吗？所有复习数据将被删除，移出后可在通知中撤销。`,
-      actions: [
-        { label: "取消", value: "cancel" },
-        { label: "移出", value: "ok", cta: true }
-      ]
-    }).then(async (v) => {
-      if (v !== "ok") return;
-      await dataManager2.removeItem(file.path);
-      notifyUndo(`已移出「${file.basename}」`, () => {
-        void (async () => {
-          try {
-            await dataManager2.restoreItem(target);
-            await uiManager2.refreshPanel();
-          } catch (e) {
-            notifySaveError(e, "恢复复习条目");
-          }
-        })();
-      });
-      await uiManager2.refreshPanel();
-      await reviewApp.applyReviewStyles(app2);
-    });
-  }
-  async function reviewJumpOverdue(app2) {
-    ensureReview(app2);
-    await reviewApp.autoJumpOverdue();
-  }
-  async function reviewStart(app2) {
-    ensureReview(app2);
-    await reviewApp.autoJumpOverdue();
-  }
-  async function reviewMarkDialog(app2) {
-    ensureReview(app2);
-    const file = app2.workspace.getActiveFile();
-    if (!file) {
-      notice("请先打开一个笔记");
-      return;
-    }
-    const items = await dataManager2.loadItems();
-    const item = items.find((i) => i.filePath === file.path);
-    if (!item) {
-      notice("该笔记不在复习计划中");
-      return;
-    }
-    if (item.completed) {
-      notice("该笔记已完成全部复习");
-      return;
-    }
-    uiManager2 == null ? void 0 : uiManager2.showDifficultyDialog(item, async (diff) => {
-      await reviewApp.markReview(file.path, diff);
-      await reviewApp.applyReviewStyles(app2);
-    });
-  }
-  async function reviewMarkRating(app2, rating) {
-    ensureReview(app2);
-    const file = app2.workspace.getActiveFile();
-    if (!file) {
-      notice("请先打开一个笔记");
-      return;
-    }
-    const items = await dataManager2.loadItems();
-    const item = items.find((i) => i.filePath === file.path);
-    if (!item) {
-      notice("该笔记不在复习计划中");
-      return;
-    }
-    if (item.completed) {
-      notice("该笔记已完成全部复习");
-      return;
-    }
-    await reviewApp.markReview(file.path, rating);
-    await reviewApp.applyReviewStyles(app2);
-  }
-  function unloadReview() {
-    initialized7 = false;
-    if (firstCheckTimer) {
-      clearTimeout(firstCheckTimer);
-      firstCheckTimer = null;
-    }
-    if (checkInterval) {
-      clearInterval(checkInterval);
-      checkInterval = null;
-    }
-    reviewApp.stopReviewLoops();
-    reviewApp.dataManager = null;
-    for (const off of unsubscribers) {
-      try {
-        off();
-      } catch (e) {
-      }
-    }
-    unsubscribers = [];
-    uiManager2 == null ? void 0 : uiManager2.destroy();
-    uiManager2 = null;
-    dataManager2 = null;
-    reviewWatcher == null ? void 0 : reviewWatcher.destroy();
-    reviewWatcher = null;
-  }
-  var initialized7, dataManager2, uiManager2, reviewWatcher, checkInterval, firstCheckTimer, unsubscribers;
-  var init_review = __esm({
-    "src/review/index.ts"() {
-      init_notice();
-      init_flow_dialog();
-      init_domain_bus();
-      init_data4();
-      init_watch();
-      init_ui13();
-      init_app3();
-      initialized7 = false;
-      dataManager2 = null;
-      uiManager2 = null;
-      reviewWatcher = null;
-      checkInterval = null;
-      firstCheckTimer = null;
-      unsubscribers = [];
-    }
-  });
-
-  // src/review/app.ts
-  var app_exports = {};
-  __export(app_exports, {
-    REVIEW_AWAY_GRACE_MS: () => REVIEW_AWAY_GRACE_MS,
-    __setReviewAwayGraceMsForTests: () => __setReviewAwayGraceMsForTests,
-    reviewApp: () => reviewApp
-  });
-  function __setReviewAwayGraceMsForTests(ms) {
-    REVIEW_AWAY_GRACE_MS = ms;
-  }
-  var REVIEW_AWAY_GRACE_MS, reviewApp;
-  var init_app3 = __esm({
-    "src/review/app.ts"() {
-      init_notice();
-      init_app();
-      init_settings_provider();
-      init_fsrs();
-      init_data4();
-      init_data4();
-      init_fit();
-      init_fsrs();
-      init_queue();
-      init_stats();
-      REVIEW_AWAY_GRACE_MS = 12e4;
-      reviewApp = {
-        checkInterval: null,
-        dataManager: null,
-        /** 测试注入：对齐源码 window.__quiz 语义 */
-        _quizOverride: null,
-        /** 连续复习单框通知（同键合并，动态更新消息） */
-        _reviewNotice: null,
-        /** 已通知逾期的笔记路径（ticket 100：diff 记忆集合，避免重复刷屏） */
-        _notifiedOverdue: /* @__PURE__ */ new Set(),
-        /** 逾期常驻通知句柄：同键合并时 notify 返回空操作，留存真句柄供逾期清零时主动收起 */
-        _overdueNotice: null,
-        /** ticket 48：已染色/挂徽章的文件路径（移出计划后据此回退；仅提交计划路径 + 曾染色路径，不再全库扫描） */
-        _styledPaths: /* @__PURE__ */ new Set(),
-        /** ADR-0077：最近一次复习的累计计数（每 N 次触发拟合重算） */
-        _reviewCountSinceFit: 0,
-        /** ADR-0077：当前生效的拟合权重（null=用默认 DEFAULT_W） */
-        _fittedW: null,
-        /** ADR-0077：拟合运行防重入 */
-        _fitRunning: false,
-        /** P3：reviewLoop 活动轮询句柄（卸载统一清理；插件禁用后不得继续读盘翻篇弹通知） */
-        _reviewLoops: /* @__PURE__ */ new Set(),
-        /** item 4：普通复习悬浮迷你评级条句柄（reviewLoop 存续期间挂屏幕底部） */
-        _reviewBar: null,
-        /** item 5：本轮队列断点（中断/超时可恢复继续） */
-        _pendingRound: null,
-        /** P3：终止全部 reviewLoop 轮询（unloadReview 调用；幂等） */
-        stopReviewLoops() {
-          for (const t of this._reviewLoops) clearInterval(t);
-          this._reviewLoops.clear();
-          this.hideReviewBar();
-          this._pendingRound = null;
-        },
-        /** item 4：收起悬浮评级条（幂等） */
-        hideReviewBar() {
-          var _a2;
-          (_a2 = this._reviewBar) == null ? void 0 : _a2.close();
-          this._reviewBar = null;
-        },
-        async getQuiz() {
-          if (this._quizOverride) return this._quizOverride;
-          return (await Promise.resolve().then(() => (init_quiz_core(), quiz_core_exports))).quizUI;
-        },
-        ensure(app2) {
-          if (!this.dataManager) this.dataManager = new ReviewDataManager(app2);
-        },
-        /** ADR-0077：加载拟合参数到 _fittedW（无则 null 回退默认）；ensureReview 启动时调用 */
-        async loadFitParams(app2) {
-          try {
-            const fit = await loadFittedParams(app2);
-            this._fittedW = fit ? mergeFittedW(fit.w) : null;
-          } catch (e) {
-            this._fittedW = null;
-          }
-        },
-        /**
-         * ADR-0077：每 N 次复习自动重拟合（全自动定期重算）。
-         * markReview 每次评级后调用（count+1）；达阈值且开关开 → 异步后台跑，完成后轻提示；
-         * 样本不足/失败静默回退默认；防重入。
-         */
-        async maybeRunFit(app2) {
-          const s = getSettings();
-          if (s.reviewEnableFit === false) return;
-          const n = Number(s.reviewFitEveryN) || 10;
-          this._reviewCountSinceFit++;
-          if (this._reviewCountSinceFit < n || this._fitRunning) return;
-          this._fitRunning = true;
-          this._reviewCountSinceFit = 0;
-          try {
-            const dm = this.dataManager;
-            const items = await dm.loadItems();
-            const result = fitFromItems(items);
-            if (result) {
-              await saveFittedParams(app2, {
-                w: result.fit.w,
-                fitAt: (/* @__PURE__ */ new Date()).toISOString(),
-                fitCount: result.count,
-                full: result.fit.w.length >= 19
-              });
-              this._fittedW = mergeFittedW(result.fit.w);
-              notice(`已根据 ${result.count} 条复习记录拟合记忆参数`, "success");
-            }
-          } catch (e) {
-            console.warn("复习参数拟合失败，回退默认:", e);
-          } finally {
-            this._fitRunning = false;
-          }
-        },
-        /** ADR-0077：获取当前生效权重（拟合参数优先，回退默认） */
-        currentW() {
-          return this._fittedW || DEFAULT_W;
-        },
-        /** ADR-0077：某条目当前记忆保留度 R（FSRS 相位且已复习过才可算；否则 null） */
-        currentR(item) {
-          if (item.phase !== "fsrs" || !item.stability || !item.lastReviewed) return null;
-          const t = ((/* @__PURE__ */ new Date()).getTime() - new Date(item.lastReviewed).getTime()) / 864e5;
-          if (!(t > 0)) return null;
-          return new FSRS(this.currentW()).R(t, item.stability);
-        },
-        /** ADR-0077：逾期队列排序 + 每日上限截断。
-         *  R 升序（遗忘风险最高优先，仅可算 R 的条目）→ nextReviewDate 升序。
-         *  ticket 174：移除置顶（用户拍板去掉置顶功能）。 */
-        sortOverdue(items, dailyLimit = 0) {
-          const sorted = [...items].sort((a, b) => {
-            const rA = this.currentR(a);
-            const rB = this.currentR(b);
-            if (rA !== null && rB !== null && rA !== rB) return rA - rB;
-            return new Date(a.nextReviewDate).getTime() - new Date(b.nextReviewDate).getTime();
-          });
-          return dailyLimit > 0 ? sorted.slice(0, dailyLimit) : sorted;
-        },
-        async markReview(filePath, selectedDifficulty, opts) {
-          const app2 = getApp();
-          this.ensure(app2);
-          const dm = this.dataManager;
-          const items = await dm.loadItems();
-          const item = items.find((i) => i.filePath === filePath);
-          if (!item) {
-            notice("条目不存在");
-            return;
-          }
-          if (item.completed) {
-            notice("该笔记已完成全部复习");
-            return;
-          }
-          const now = /* @__PURE__ */ new Date();
-          const nextReview = item.nextReviewDate ? new Date(item.nextReviewDate) : /* @__PURE__ */ new Date(0);
-          if (now < nextReview) {
-            const rThreshold = Number(getSettings().reviewRThreshold) || 0.9;
-            if (!isEarlyDue(item, rThreshold, this.currentW())) {
-              const diff = nextReview.getTime() - now.getTime();
-              const mins = Math.ceil(diff / 6e4);
-              notice(`还未到复习时间（${mins}分钟后）`);
-              return;
-            }
-          }
-          const rating = selectedDifficulty;
-          const decision = scheduleNext(
-            {
-              stage: item.stage,
-              phase: item.phase,
-              stability: item.stability,
-              difficulty: item.difficulty,
-              lastReviewed: item.lastReviewed,
-              reviewStart: item.reviewStart
-            },
-            rating,
-            now,
-            this.currentW()
-          );
-          const scaleRaw = Number(getSettings().reviewIntervalScale);
-          const scale = decision.phase === "fsrs" && !decision.enteringFsrs && scaleRaw > 0 ? scaleRaw : 1;
-          const scaledDays = Math.max(0.01, decision.intervalDays * scale);
-          const nextDate = new Date(now.getTime() + scaledDays * 864e5);
-          await dm.updateItem(filePath, (it) => {
-            it.stage = decision.stage;
-            it.phase = decision.phase;
-            if (decision.stability !== null) it.stability = decision.stability;
-            if (decision.difficulty !== null) it.difficulty = decision.difficulty;
-            it.lastReviewed = now.toISOString();
-            it.lastDifficulty = rating;
-            it.totalReviews = (it.totalReviews || 0) + 1;
-            if (!it.reviewHistory) it.reviewHistory = [];
-            const entry = { timestamp: now.toISOString(), stage: decision.historyStage, rating };
-            if (decision.historyStability !== null) {
-              entry.stability = decision.historyStability;
-              entry.difficulty = decision.historyDifficulty;
-            }
-            if (decision.R !== null) entry.R = Math.round(decision.R * 100);
-            it.reviewHistory.push(entry);
-            it.nextReviewDate = nextDate.toISOString();
-            if (decision.enteringFsrs) it.completed = false;
-            if (opts == null ? void 0 : opts.autoPending) it.pendingRedo = rating === "again" || rating === "hard";
-            else if (rating === "good" || rating === "easy") it.pendingRedo = false;
-          });
-          if (decision.enteringFsrs) {
-            notice(`进入深度复习，${FSRS_FIRST_TEXTS[decision.stage]}后复习`, "success");
-          } else if (decision.phase === "ladder") {
-            notice(`${FSRS_FIRST_TEXTS[decision.stage]}后复习`, "success");
-          } else {
-            const days = Math.round(scaledDays);
-            const rPct = Math.round((decision.R || 0) * 100);
-            notice(`R=${rPct}%，下次复习：${days > 0 ? days + "天" : "1天"}后`, "success");
-          }
-          void this.maybeRunFit(getApp());
-        },
-        /** 跳转逾期（做题决定难度：开启 → 做题复习；关闭 → 普通复习跳转笔记） */
-        /** 跳转逾期（bz-review-start/overdue 命令入口）：完整复习流程 = startRoundSprint */
-        async autoJumpOverdue() {
-          await this.startRoundSprint();
-        },
-        /** 准确率 → 难度评级 */
-        accuracyToRating(accuracy) {
-          if (accuracy >= 90) return "easy";
-          if (accuracy >= 70) return "good";
-          if (accuracy >= 50) return "hard";
-          return "again";
-        },
-        /** 待重做条目（文件存在、未完成；按进入顺序 = lastReviewed 升序 FIFO） */
-        pendingRedoItems(items) {
-          return items.filter((i) => i.pendingRedo && !i.isCompleted && i.file).sort(
-            (a, b) => new Date(a.lastReviewed || a.reviewStart).getTime() - new Date(b.lastReviewed || b.reviewStart).getTime()
-          );
-        },
-        /** 重做出题（ADR-0044/Q7-②）：清空旧题 → ensureQuestions 全新生成；失败或空题回退剩余错题 */
-        async regenerateQuestions(filePath) {
-          const quiz = await this.getQuiz();
-          if (!quiz || !quiz.ai) return [];
-          const leftover = await quiz.manager.getQuestionsForNote(getApp(), filePath) || [];
-          await quiz.manager.saveQuestionsForNote(getApp(), filePath, []);
-          await quiz.ensureQuestions([filePath]);
-          const fresh = await quiz.manager.getQuestionsForNote(getApp(), filePath) || [];
-          const picked = fresh.length ? fresh : leftover;
-          return picked.map((q2, i) => ({ ...q2, notePath: filePath, _index: i }));
-        },
-        /** 批量生成题目（返回 {filePath: questions[]} 映射）：先清空存量题再 ensureQuestions 全新生成 */
-        async batchGenerateQuestions(items) {
-          const quiz = await this.getQuiz();
-          if (!quiz || !quiz.ai) {
-            console.warn("做题家未初始化（缺少 AI）");
-            notify("做题家未初始化（缺少 AI），已改用普通复习", { type: "warning", dedupeKey: "review-quiz-ai" });
-            return {};
-          }
-          for (const item of items) {
-            await quiz.manager.saveQuestionsForNote(getApp(), item.filePath, []);
-          }
-          await quiz.ensureQuestions(items.map((i) => i.filePath));
-          const out = {};
-          for (const item of items) {
-            const qs = await quiz.manager.getQuestionsForNote(getApp(), item.filePath);
-            if (qs && qs.length) {
-              out[item.filePath] = qs.map((q2, i) => ({
-                ...q2,
-                notePath: item.filePath,
-                _index: i
-              }));
-            }
-          }
-          return out;
-        },
-        /** 单条做题冲刺（点队列到期卡片）：该篇直接进入做题会话 */
-        async startSingleSprint(item) {
-          const app2 = getApp();
-          this.ensure(app2);
-          const quiz = await this.getQuiz();
-          if (quiz && !quiz.ai) {
-            try {
-              const { ensureQuiz: ensureQuiz2 } = await Promise.resolve().then(() => (init_quiz_core(), quiz_core_exports));
-              ensureQuiz2(app2);
-            } catch (e) {
-            }
-          }
-          if (!quiz || !quiz.ai) {
-            notify("做题家未初始化，改用普通复习", { type: "warning", dedupeKey: "review-quiz-ai" });
-            await this.reviewLoop([item], 0);
-            return;
-          }
-          await this.runSprintSession([item], "single");
-        },
-        /** 开始本轮（队列视图「开始本轮」）：待重做优先 → 逾期队列 → 做题/普通分流 */
-        async startRoundSprint() {
-          const app2 = getApp();
-          this.ensure(app2);
-          let items = await this.dataManager.loadItems();
-          const pend = this.pendingRedoItems(items);
-          if (pend.length && getSettings().forceQuizForReview) {
-            const quiz2 = await this.getQuiz();
-            if (quiz2 && !quiz2.ai) {
-              try {
-                const { ensureQuiz: ensureQuiz2 } = await Promise.resolve().then(() => (init_quiz_core(), quiz_core_exports));
-                ensureQuiz2(app2);
-              } catch (e) {
-              }
-            }
-            if (quiz2 && quiz2.ai) {
-              await this.runSprintSession(pend, "redo");
-              const fresh = await this.dataManager.loadItems();
-              const passedSet = new Set(
-                fresh.filter((i) => pend.some((p) => p.filePath === i.filePath) && !i.pendingRedo).map((i) => i.filePath)
-              );
-              if (passedSet.size) items = fresh.filter((i) => !passedSet.has(i.filePath));
-              else items = fresh;
-            } else {
-              notify("做题家未初始化，跳过待重做队列", { type: "warning", dedupeKey: "review-quiz-ai" });
-            }
-          }
-          const rThreshold = Number(getSettings().reviewRThreshold) || 0.9;
-          const round = roundQueue(items, rThreshold, this.currentW());
-          if (!round.length) {
-            notice("没有逾期笔记", "success");
-            return;
-          }
-          const earlyToday = round.filter((i) => !i.isOverdue && !isEarlyDue(i, rThreshold, this.currentW()));
-          if (earlyToday.length) {
-            notice(`今日到期 ${earlyToday.length} 篇已提前纳入本轮`, "info");
-          }
-          const dailyLimit = Number(getSettings().reviewDailyLimit) || 0;
-          const limited = this.sortOverdue(round, dailyLimit);
-          if (limited.length < round.length) {
-            notice(`本轮复习 ${limited.length} 篇，剩余 ${round.length - limited.length} 篇留到下次`, "info");
-          }
-          if (!getSettings().forceQuizForReview) {
-            await this.reviewLoop(limited, 0);
-            return;
-          }
-          let quiz = null;
-          try {
-            quiz = await this.getQuiz();
-          } catch (e) {
-          }
-          if (quiz && !quiz.ai) {
-            try {
-              const { ensureQuiz: ensureQuiz2 } = await Promise.resolve().then(() => (init_quiz_core(), quiz_core_exports));
-              ensureQuiz2(app2);
-            } catch (e) {
-            }
-          }
-          if (!quiz || !quiz.ai) {
-            notify("做题家未初始化，已改用普通复习", { type: "warning", dedupeKey: "review-quiz-ai" });
-            await this.reviewLoop(limited, 0);
-            return;
-          }
-          await this.runSprintSession(limited, "round");
-        },
-        /** 当前逾期条目（item 6：改用 roundQueue 同口径——逾期 ∪ R 阈值提前 ∪ 今日到期） */
-        dueItems(items) {
-          const rThreshold = Number(getSettings().reviewRThreshold) || 0.9;
-          return roundQueue(items, rThreshold, this.currentW());
-        },
-        /**
-         * 统一冲刺会话驱动：把队列交给 UI 层 SprintSession 渲染，本层只提供
-         * 取题/评级写盘回调。会话结束（done/quit/fail）后刷新列表与染色。
-         *  - round/single：通过 → markReview autoPending；未通过 → markReview autoPending + 开笔记
-         *  - redo：通过 → 仅清 pendingRedo（ADR-0044 不写 FSRS）；未通过 → 开笔记（保持待重做）
-         */
-        async runSprintSession(items, mode) {
-          const app2 = getApp();
-          const { uiManager: uiManager3 } = await Promise.resolve().then(() => (init_review(), review_exports));
-          if (!uiManager3) return;
-          let streakDays = 0;
-          try {
-            streakDays = computeStats(await this.dataManager.loadItems()).streak;
-          } catch (e) {
-          }
-          const quiz = await this.getQuiz();
-          let batchStarted = false;
-          let batchMap = null;
-          const ensureBatch = async () => {
-            if (batchStarted) return;
-            batchStarted = true;
-            try {
-              batchMap = await this.batchGenerateQuestions(items);
-            } catch (e) {
-              batchMap = {};
-            }
-          };
-          await uiManager3.startSprint({
-            queue: items,
-            mode,
-            quiz,
-            streakDays,
-            fetchQuestions: async (item) => {
-              var _a2;
-              const qs = await ((_a2 = quiz == null ? void 0 : quiz.manager) == null ? void 0 : _a2.getQuestionsForNote(app2, item.filePath));
-              if (qs && qs.length) {
-                return qs.map((q2, i) => ({ ...q2, notePath: item.filePath, _index: i }));
-              }
-              if (!(quiz == null ? void 0 : quiz.ai)) return null;
-              if (mode === "round") {
-                await ensureBatch();
-                const mapped = batchMap == null ? void 0 : batchMap[item.filePath];
-                if (mapped && mapped.length) {
-                  return mapped;
-                }
-                return null;
-              }
-              const fresh = await this.regenerateQuestions(item.filePath);
-              return fresh.length ? fresh : null;
-            },
-            onPassed: async (item, rating, entry) => {
-              if (mode === "redo") {
-                await this.dataManager.updateItem(item.filePath, (it) => {
-                  it.pendingRedo = false;
-                });
-                return void 0;
-              }
-              await this.markReview(item.filePath, rating, { autoPending: true });
-              await this.applyReviewStyles(app2);
-              const fresh = await this.dataManager.loadItems();
-              const updated = fresh.find((i) => i.filePath === item.filePath);
-              return (updated == null ? void 0 : updated.nextReviewDate) || void 0;
-            },
-            onFailed: async (item, rating, entry) => {
-              if (mode !== "redo") {
-                await this.markReview(item.filePath, rating, { autoPending: true });
-                await this.applyReviewStyles(app2);
-              }
-              const file = app2.vault.getAbstractFileByPath(item.filePath);
-              if (file) {
-                const leaf = app2.workspace.getLeaf(false);
-                await leaf.openFile(file);
-              }
-            }
-          });
-          await this.refreshPanel();
-          await this.applyReviewStyles(app2);
-        },
-        /** 顺序复习循环（源码 L686-709 逐字；item 4 悬浮评级条 + item 5 离篇宽限/断点可恢复）
-         *  - 屏幕底部挂迷你评级条（忘了/困难/一般/简单 + 跳过）：点评级写盘 → 轮询检测翻篇；跳过不评级直接下一篇
-         *  - 离篇持续 REVIEW_AWAY_GRACE_MS 才判中断（宽限期内回篇继续）；中断/超时保留 _pendingRound，
-         *    通知挂「继续本轮」action 断点续跑 */
-        async reviewLoop(overdueNotes, index) {
-          const app2 = getApp();
-          this.ensure(app2);
-          const dm = this.dataManager;
-          if (index >= overdueNotes.length) {
-            this._pendingRound = null;
-            this.hideReviewBar();
-            if (this._reviewNotice) {
-              this._reviewNotice.setType("success");
-              this._reviewNotice.setMessage("所有逾期笔记已复习完成");
-              this._reviewNotice = null;
-            } else {
-              notice("所有逾期笔记已复习完成", "success");
-            }
-            return;
-          }
-          const item = overdueNotes[index];
-          const file = app2.vault.getAbstractFileByPath(item.filePath);
-          if (!file) {
-            await dm.removeItem(item.filePath);
-            await this.reviewLoop(overdueNotes, index + 1);
-            return;
-          }
-          this._pendingRound = { items: overdueNotes, index };
-          const leaf = app2.workspace.getLeaf(false);
-          await leaf.openFile(file);
-          const reviewMsg = `复习中 (${index + 1}/${overdueNotes.length}): ${item.name}`;
-          if (this._reviewNotice) {
-            this._reviewNotice.setMessage(reviewMsg);
-          } else {
-            this._reviewNotice = notify(reviewMsg, { type: "progress", dedupeKey: "review-loop" });
-          }
-          this.hideReviewBar();
-          void (async () => {
-            try {
-              const { mountFloatingRatingBar: mountFloatingRatingBar2 } = await Promise.resolve().then(() => (init_ui13(), ui_exports9));
-              this._reviewBar = mountFloatingRatingBar2({
-                name: item.name,
-                index: index + 1,
-                total: overdueNotes.length,
-                onRate: (rating) => {
-                  void this.markReview(item.filePath, rating);
-                },
-                onSkip: () => {
-                  void advance();
-                }
-              });
-            } catch (e) {
-            }
-          })();
-          let checkCount = 0;
-          const maxChecks = 300;
-          let advanced = false;
-          let awaySince = null;
-          const advance = async () => {
-            if (advanced) return;
-            advanced = true;
-            this.hideReviewBar();
-            clearLoop();
-            await this.reviewLoop(overdueNotes, index + 1);
-          };
-          const interval = setInterval(async () => {
-            checkCount++;
-            const activeFile = app2.workspace.getActiveFile();
-            if (!activeFile || activeFile.path !== item.filePath) {
-              const nowMs = Date.now();
-              if (awaySince === null) awaySince = nowMs;
-              if (nowMs - awaySince < REVIEW_AWAY_GRACE_MS) return;
-              advanced = true;
-              this.hideReviewBar();
-              clearLoop();
-              if (this._reviewNotice) {
-                this._reviewNotice.setMessage("已离开当前笔记，本轮复习中断");
-                this._reviewNotice.setType("warning");
-                this._reviewNotice = null;
-              }
-              notify("已离开当前笔记，本轮复习中断", {
-                type: "warning",
-                dedupeKey: "review-loop-interrupted",
-                action: { label: "继续本轮", onClick: () => void reviewApp.resumeRound() }
-              });
-              return;
-            }
-            awaySince = null;
-            const updatedItems = await dm.loadItems();
-            const updated = updatedItems.find((i) => i.filePath === item.filePath);
-            if (updated && updated.lastReviewed) {
-              const last = new Date(updated.lastReviewed);
-              if (Date.now() - last.getTime() < 3e4) {
-                await advance();
-                return;
-              }
-            }
-            if (checkCount >= maxChecks) {
-              advanced = true;
-              this.hideReviewBar();
-              clearLoop();
-              if (this._reviewNotice) {
-                this._reviewNotice.setMessage("复习超时，请手动继续");
-                this._reviewNotice.setType("warning");
-                this._reviewNotice = null;
-              } else {
-                notice("复习超时，请手动继续", "warning");
-              }
-              notify("复习超时，可从断点继续本轮", {
-                type: "info",
-                dedupeKey: "review-loop-timeout",
-                action: { label: "继续本轮", onClick: () => void reviewApp.resumeRound() }
-              });
-            }
-          }, 1e3);
-          this._reviewLoops.add(interval);
-          const clearLoop = () => {
-            clearInterval(interval);
-            this._reviewLoops.delete(interval);
-          };
-        },
-        /** item 5：从断点恢复本轮（中断/超时后「继续本轮」入口；无断点给明确反馈） */
-        resumeRound() {
-          const r = this._pendingRound;
-          if (!r) {
-            notice("没有进行中的本轮复习");
-            return;
-          }
-          void this.reviewLoop(r.items, r.index);
-        },
-        /** 加入当前笔记到复习计划 */
-        async addCurrentToReview(file) {
-          this.ensure(getApp());
-          const dm = this.dataManager;
-          const items = await dm.loadItems();
-          if (items.some((i) => i.filePath === file.path)) throw new Error("该笔记已在复习计划中");
-          await dm.addItem(file.path, file.basename);
-          notice("已加入复习计划，首次复习：1分钟后", "success");
-        },
-        /** 文件树染色 + 阶段徽标（源码 L719-772 逐字；ticket 100 加「文件树标记」开关；
-         *   ticket 48 收敛：不再全库 getMarkdownFiles + 逐路径 querySelector——
-         *   处理范围 = 复习条目路径 + 曾染色路径（移出计划后回退），树节点一次 querySelectorAll 建 Map 查找；
-         *   可选 items 参数：checkOverdueAndNotify 传本轮已加载结果，避免每轮二次读盘。 */
-        async applyReviewStyles(app2, changedFile, items) {
-          if (getSettings().reviewTreeBadge === false) return;
-          this.ensure(app2);
-          const allItems = items || await this.dataManager.loadItems();
-          const itemByPath = /* @__PURE__ */ new Map();
-          for (const item of allItems) {
-            if (item.filePath) itemByPath.set(item.filePath, item);
-          }
-          const paths = /* @__PURE__ */ new Set();
-          if (changedFile) {
-            paths.add(changedFile.path);
-          } else {
-            for (const p of itemByPath.keys()) paths.add(p);
-            for (const p of this._styledPaths) paths.add(p);
-          }
-          const els = /* @__PURE__ */ new Map();
-          for (const el of Array.from(document.querySelectorAll("div[data-path]"))) {
-            const p = el.getAttribute("data-path");
-            if (p && !els.has(p)) els.set(p, el);
-          }
-          const fsrs = new FSRS(this.currentW());
-          for (const path of paths) {
-            const el = els.get(path);
-            if (!el) {
-              this._styledPaths.delete(path);
-              continue;
-            }
-            const target = el.querySelector("div.tree-item-inner");
-            if (!target) continue;
-            const badge = target.querySelector(".review-stage-badge");
-            if (badge) badge.remove();
-            const item = itemByPath.get(path);
-            if (!item) {
-              if (this._styledPaths.has(path)) {
-                target.style.color = "";
-                this._styledPaths.delete(path);
-              }
-              continue;
-            }
-            const currentStage = item.stage || 0;
-            const now = /* @__PURE__ */ new Date();
-            const nextReview = item.nextReviewDate ? new Date(item.nextReviewDate) : null;
-            let color = "currentColor";
-            let status = "";
-            if (item.completed) {
-              color = "#52c41a";
-              status = "complete";
-            } else if (nextReview && now > nextReview) {
-              color = "#ff4757";
-              status = "overdue";
-            } else if (item.phase === "fsrs" && item.stability && item.lastReviewed) {
-              const t = (now.getTime() - new Date(item.lastReviewed).getTime()) / 864e5;
-              const r = fsrs.R(t, item.stability);
-              if (r >= 0.9) color = "#52c41a";
-              else if (r >= 0.7) color = "#faad14";
-              else color = "#ff9f43";
-            } else if (currentStage <= 2) {
-              color = "#1890ff";
-            } else if (currentStage <= 6) {
-              color = "#faad14";
-            } else {
-              color = "#52c41a";
-            }
-            target.style.color = color;
-            let timeText = "";
-            let badgeIcon = null;
-            if (status === "complete") badgeIcon = "check";
-            else if (nextReview) {
-              const diff = nextReview.getTime() - now.getTime();
-              if (diff > 0) {
-                const d = Math.floor(diff / (1e3 * 60 * 60 * 24));
-                const h = Math.floor(diff % (1e3 * 60 * 60 * 24) / (1e3 * 60 * 60));
-                const m = Math.floor(diff % (1e3 * 60 * 60) / (1e3 * 60));
-                if (d > 0) timeText = `${d}d`;
-                else if (h > 0) timeText = `${h}h`;
-                else timeText = `${m}m`;
-              } else badgeIcon = "calendar";
-            }
-            if (badgeIcon || timeText) {
-              const badgeEl = document.createElement("span");
-              badgeEl.className = "review-stage-badge";
-              if (badgeIcon) {
-                const { uiIcon: uiIcon2 } = await Promise.resolve().then(() => (init_ui(), ui_exports));
-                badgeEl.appendChild(uiIcon2(badgeIcon));
-              } else {
-                badgeEl.textContent = timeText;
-              }
-              badgeEl.style.cssText = `font-size:0.7em;opacity:0.8;margin-left:6px;color:${color};background:color-mix(in srgb, ${color} 10%, transparent);padding:1px 4px;border-radius:3px;border:1px solid color-mix(in srgb, ${color} 30%, transparent);font-weight:500;`;
-              target.appendChild(badgeEl);
-            }
-            this._styledPaths.add(path);
-          }
-        },
-        /**
-         * 到期提醒 + 染色刷新（ticket 100：原只刷染色，重写为 diff + 通知；染色职责保留）
-         * 每轮与已通知集合对比：新增逾期 → 弹篇数常驻通知（duration 0，逾期清零主动收起；不列题目）；
-         * 移出逾期（评级/完成/挂起）从集合剔除 → 之后再次逾期重新提醒。
-         * 启动首查把存量逾期当新产生 → 汇总篇数（Q1 拍板接受）。
-         * ticket 48 收敛：与本轮 loadItems 共用结果，不再二次读盘；
-         * ticket 58：通知挂「去复习」action → 打开最早逾期笔记；
-         * ticket 153：「去复习」升级为走 autoJumpOverdue 完整流程（做题决定难度分流）。
-         */
-        async checkOverdueAndNotify() {
-          var _a2;
-          try {
-            this.ensure(getApp());
-            const dm = this.dataManager;
-            const items = await dm.loadItems();
-            await this.applyReviewStyles(getApp(), void 0, items);
-            if (getSettings().enableAutoNotify === false) return;
-            const overdueMap = new Map(
-              items.filter((i) => i.isOverdue && !i.completed && !i.isMissing).map((i) => [i.filePath, i])
-            );
-            const newly = [...overdueMap.entries()].filter(([p]) => !this._notifiedOverdue.has(p));
-            for (const p of this._notifiedOverdue) {
-              if (!overdueMap.has(p)) this._notifiedOverdue.delete(p);
-            }
-            if (newly.length) {
-              for (const [p] of newly) this._notifiedOverdue.add(p);
-              const handle = notify(`有 ${overdueMap.size} 篇笔记逾期`, {
-                type: "info",
-                duration: 0,
-                // 常驻不自动消失，靠点击「去复习」/本体收起
-                dedupeKey: "review-overdue-notice",
-                action: {
-                  label: "去复习",
-                  // action 文案不带 emoji（通知规范）
-                  onClick: () => {
-                    void reviewApp.autoJumpOverdue();
-                  }
-                }
-              });
-              const cur = this._overdueNotice;
-              if (!cur || !cur.el.isConnected) this._overdueNotice = handle;
-            } else if (!overdueMap.size) {
-              (_a2 = this._overdueNotice) == null ? void 0 : _a2.hide();
-              this._overdueNotice = null;
-            }
-          } catch (e) {
-            console.error("复习计划检查出错:", e);
-          }
-        },
-        /** 刷新面板（源码 refreshPanel） */
-        async refreshPanel() {
-          const { uiManager: uiManager3 } = await Promise.resolve().then(() => (init_review(), review_exports));
-          if (!uiManager3) return;
-          const items = await this.dataManager.loadItems();
-          uiManager3.renderEntries(items);
-        }
-      };
-    }
-  });
-
-  // src/home/fake-sim.ts
+  // src/settings-panel/fake-sim.ts
   var fake_sim_exports = {};
   __export(fake_sim_exports, {
-    bootHomeSim: () => bootHomeSim,
-    openHome: () => openHome2,
-    resetHomeSim: () => resetHomeSim
+    SIM_SETTINGS_KEY: () => SIM_SETTINGS_KEY,
+    __simResetSettings: () => __simResetSettings,
+    __simSettings: () => __simSettings,
+    bootSettingsPanelSim: () => bootSettingsPanelSim,
+    openDomain: () => openDomain,
+    openPanel: () => openPanel3
   });
   init_fake_obsidian();
   init_app();
   init_settings_provider();
-
-  // src/home/state.ts
-  var H = {
-    currentOverlay: null,
-    appRef: null,
-    river: null,
-    closing: false
+  init_settings_panel();
+  var SIM_SETTINGS_KEY = "bz-sim:bz-settings.json";
+  var SEED_MARKER = "bz-sim:__sp_seed_v1";
+  var SEED_SETTINGS = {
+    storagePath: "CONFIG/STORAGE",
+    aiProvider: "deepseek",
+    settingsPanelLayout: "jingwei",
+    settingsPanelSkin: "chenhun",
+    settingsPanelMobileDefaultFullscreen: false,
+    belSkin: "poster",
+    belSkinTheme: "warmwhite",
+    cinemaStyle: "midnight",
+    cinemaSkinTheme: "nightfall"
   };
-
-  // src/home/ui.ts
-  init_esc_manager();
-  init_notice();
-  init_ui();
-  init_dom();
-
-  // src/home/shared.ts
-  init_str();
-  init_domain_icons();
-  var ICON_KEY = { wall: "diary-wall", settings: "settings-panel" };
-  var iconOf = (id) => {
-    var _a2;
-    return DOMAIN_ICONS[(_a2 = ICON_KEY[id]) != null ? _a2 : id];
-  };
-  var DOMAINS = [
-    { id: "diary", commandId: "bz-diary-open", name: "日记本", sub: "写今天的闪念", icon: iconOf("diary") },
-    { id: "cinema", commandId: "bz-cinema-open", name: "影院", sub: "影视想看与在看", icon: iconOf("cinema") },
-    { id: "review", commandId: "bz-review-open", name: "复习计划", sub: "到期卡片队列", icon: iconOf("review") },
-    { id: "pomodoro", commandId: "bz-pomodoro-open", name: "番茄钟", sub: "专注计时", icon: iconOf("pomodoro") },
-    { id: "favorites", commandId: "bz-favorites-open", name: "收藏本", sub: "收藏条目", icon: iconOf("favorites") },
-    { id: "clipping", commandId: "bz-clipbook-open", name: "剪藏本", sub: "未读流与剪藏", icon: iconOf("clipping") },
-    // 文献盒（literature 域，ADR-0072）：文献笔记列表 + 视频/术语录入（补内容域曝光位）
-    { id: "literature", commandId: "bz-literature-open", name: "文献盒", sub: "文献笔记与录入", icon: iconOf("literature") },
-    // 旧书库（library）域退役：本卡由书架墙（bookshelf）承接（id 变更后旧 home.json 里钉选的 library 自动失效，可在编辑模式重钉）
-    { id: "bookshelf", commandId: "bz-bookshelf-open", name: "书库", sub: "藏书与读书笔记", icon: iconOf("bookshelf") },
-    { id: "wall", commandId: "bz-diary-wall-open", name: "回忆墙", sub: "相片墙浏览日记", icon: iconOf("wall") },
-    { id: "belongings", commandId: "bz-belongings-open", name: "归物本", sub: "物品登记", icon: iconOf("belongings") },
-    { id: "attach", commandId: "bz-attach-move", name: "移动附件", sub: "附件归位", icon: iconOf("attach") },
-    { id: "encrypt", commandId: "bz-encrypt-open", name: "保险库", sub: "密码·加密笔记·日记", icon: iconOf("encrypt") },
-    { id: "settings", commandId: "bz-settings-panel-open", name: "设置", sub: "全域设置", icon: iconOf("settings") }
+  var SEED_FILES = [
+    ["我的/日记/2026-09-01.md", "# 日记\n\n演示日记。"],
+    ["我的/日记/2026-09-07.md", "# 日记\n\n演示日记。"],
+    ["书库/三体.md", "---\ntitle: 三体\n---\n\n演示藏书。"],
+    ["我的/影视/流浪地球2.md", "---\ntitle: 流浪地球2\n---\n\n演示影视条目。"],
+    ["归档/网页剪藏/示例文章.md", "# 示例文章\n\n演示剪藏。"],
+    ["CONFIG/.ENCRYPT/保险箱.md", "---\nbz-encrypted: true\n---\n\n演示加密笔记。"]
   ];
-  var DOMAIN_MAP2 = new Map(DOMAINS.map((d) => [d.id, d]));
-  var DOMAIN_DOT = {
-    diary: "#e67341",
-    recap: "#d64d8f",
-    cinema: "#e6951d",
-    review: "#7c5cd6",
-    pomodoro: "#e5534b",
-    favorites: "#f0b429",
-    clipping: "#2f9e5f",
-    literature: "#c2559d",
-    bookshelf: "#3d7bd6",
-    "reading-report": "#3fa7a0",
-    wall: "#7c8cf8",
-    belongings: "#45a35c",
-    attach: "#8a8f99",
-    encrypt: "#8a8f99",
-    smartcat: "#e67341",
-    settings: "#8a8f99"
-  };
-  var ALL_DOMAIN_IDS = DOMAINS.map((d) => d.id);
-  var EMPTY_COUNTS = {
-    diaryTotal: 0,
-    reviewTotal: 0,
-    reviewOverdue: 0,
-    reviewDueTomorrow: 0,
-    cinemaWant: 0,
-    cinemaWatching: 0,
-    bookshelfReading: 0,
-    bookshelfFinished: 0,
-    clippingUnread: 0,
-    favoritesTotal: 0,
-    belongingsTotal: 0
-  };
-  var EMPTY_SUMMARY = {
-    diary: 0,
-    movies: 0,
-    books: 0,
-    todoDone: 0,
-    todoCreated: 0,
-    pomodoros: 0,
-    pomodoroMinutes: 0
-  };
-  function p2(n) {
-    return String(n).padStart(2, "0");
-  }
-  function dateStrOf(anchor) {
-    const d = new Date(anchor);
-    return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
-  }
-  function fmtHm(t) {
-    const d = new Date(t);
-    return `${p2(d.getHours())}:${p2(d.getMinutes())}`;
-  }
-  function headDateText(now = Date.now()) {
-    const d = new Date(now);
-    const wd = "日一二三四五六"[d.getDay()];
-    return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} 周${wd} · ${p2(d.getHours())}:${p2(d.getMinutes())}`;
-  }
-  function buildNotes(data) {
-    const notes = [];
-    const day = data.today;
-    if (!day.events.length) return notes;
-    if (day.firstTs !== null) {
-      if (data.yesterday.firstTs !== null) {
-        const diff = Math.round((day.firstTs - data.yesterday.firstTs) / 6e4);
-        if (diff > 0) notes.push({ index: 0, text: `动手比昨天晚了 ${diff} 分钟，不过来了就好。` });
-        else if (diff < 0) notes.push({ index: 0, text: `动手比昨天早了 ${-diff} 分钟，好开头。` });
-        else notes.push({ index: 0, text: "和昨天几乎同一时间动手，节奏很稳。" });
-      } else {
-        notes.push({ index: 0, text: `今天第一笔动静在 ${fmtHm(day.firstTs)}。` });
-      }
+  var SEED_EMPTY_DIRS = ["我的/信件"];
+  var simSettings = { ...SEED_SETTINGS };
+  var simApp = null;
+  function seedVault() {
+    if (localStorage.getItem(SEED_MARKER)) return;
+    for (const [path, content] of SEED_FILES) {
+      localStorage.setItem("bz-sim:" + path, encodeSeedFile(content));
     }
-    const last = day.events[day.events.length - 1];
-    const evening = new Date(last.ts);
-    evening.setHours(18, 0, 0, 0);
-    if (!data.streak.diaryWrittenToday && data.streak.diaryStreak > 0 && last.ts >= evening.getTime()) {
-      notes.push({ index: day.events.length - 1, text: `晚上效率回来了——但日记还空着，×${data.streak.diaryStreak} 连击在等你。` });
+    for (const dir of SEED_EMPTY_DIRS) {
+      localStorage.setItem("bz-sim:" + dir + "/.keep", encodeSeedFile(""));
     }
-    return notes;
-  }
-  function buildPreviews(data) {
-    const c = data.counts;
-    const t = data.today.summary;
-    const s = data.streak;
-    const out = [];
-    if (c.reviewDueTomorrow > 0) {
-      out.push({ h: `复习将到期 ${c.reviewDueTomorrow} 张`, b: "按 SRS 间隔推算，明天到期。今晚顺手过一遍队列，明天正好清干净。", go: "review", goLabel: "去复习计划 →" });
-    } else if (c.reviewOverdue > 0) {
-      out.push({ h: `还有 ${c.reviewOverdue} 张逾期卡`, b: "逾期是唯一会随时间变贵的债。约 4 分钟一张，还掉最划算。", go: "review", goLabel: "去还卡 →" });
-    } else {
-      out.push({ h: t.pomodoros > 0 ? `今天已专注 ${t.pomodoros} 轮` : "番茄引擎待命", b: "排一轮 25 分钟给明天最重要的那件事。", go: "pomodoro", goLabel: "开番茄钟 →" });
-    }
-    out.push(
-      c.clippingUnread > 0 ? { h: `剪藏还压 ${c.clippingUnread} 篇`, b: "挑 1 篇放进明早：通勤读一篇，保持进出平衡。", go: "clipping", goLabel: "挑一篇放明早 →" } : { h: "剪藏库已清空", b: "库存干净了，明天遇到好文章放心收。", go: "clipping", goLabel: "去剪藏本 →" }
-    );
-    if (!s.diaryWrittenToday && s.diaryStreak > 0) {
-      out.push({ h: `日记连击 ×${s.diaryStreak} 待续`, b: "写三行也算数。今晚补上，明天它自己接着长。", go: "diary", goLabel: "去写日记 →" });
-    } else if (s.diaryWrittenToday) {
-      out.push({ h: `今日日记已写 · 连击 ×${s.diaryStreak + 1}`, b: "明天同一时间回来续上，连击就是这么长起来的。", go: "diary", goLabel: "看日记本 →" });
-    } else {
-      out.push({ h: "给明天留一句话", b: "今晚写一篇日记，明晚它会变成回忆墙上的新格子。", go: "diary", goLabel: "去写日记 →" });
-    }
-    return out;
-  }
-  function buildDots(data) {
-    const day = data.today;
-    const hasEvent = (d) => day.events.some((e) => e.domain === d);
-    return {
-      diary: day.summary.diary > 0 ? "ok" : data.streak.diaryStreak > 0 ? "warn" : "off",
-      review: data.counts.reviewOverdue > 0 ? "hot" : "off",
-      memo: day.summary.todoDone + day.summary.todoCreated > 0 ? "ok" : "off",
-      pomodoro: day.summary.pomodoros > 0 ? "ok" : "off",
-      cinema: hasEvent("cinema") ? "ok" : "off",
-      bookshelf: hasEvent("bookshelf") ? "ok" : "off"
-    };
-  }
-  function dotOf(dots2, id) {
-    var _a2;
-    return (_a2 = dots2[id]) != null ? _a2 : "off";
-  }
-  function riverCountText(id, data) {
-    const c = data.counts;
-    switch (id) {
-      case "diary":
-        return `${c.diaryTotal} 篇${data.streak.diaryWrittenToday ? " · 今日已写" : ""}`;
-      case "review":
-        return c.reviewOverdue > 0 ? `${c.reviewTotal} 张 · 逾期 ${c.reviewOverdue}` : `${c.reviewTotal} 张在册`;
-      case "cinema":
-        return `想看 ${c.cinemaWant} · 在看 ${c.cinemaWatching}`;
-      case "bookshelf":
-        return `在读 ${c.bookshelfReading} · 读完 ${c.bookshelfFinished}`;
-      case "clipping":
-        return `未读 ${c.clippingUnread} 篇`;
-      case "favorites":
-        return `${c.favoritesTotal} 条`;
-      case "belongings":
-        return `登记 ${c.belongingsTotal} 件`;
-      case "wall":
-        return `${c.diaryTotal} 格`;
-      default:
-        return null;
-    }
-  }
-  function memoIdOf(domain) {
-    return domain === "todo" ? "memo" : domain;
-  }
-
-  // src/recap/aggregate.ts
-  init_settings_provider();
-  init_storage();
-
-  // src/home/weekly.ts
-  init_settings_provider();
-  init_storage();
-  init_data();
-  init_constants();
-  init_data2();
-  init_data3();
-  function parseLocalDay(s) {
-    const m = /^\s*(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(s != null ? s : ""));
-    if (!m) return null;
-    const y = Number(m[1]);
-    const mo = Number(m[2]);
-    const d = Number(m[3]);
-    if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
-    return new Date(y, mo - 1, d).getTime();
-  }
-
-  // src/recap/aggregate.ts
-  init_parser();
-  init_data();
-  init_constants();
-  init_data2();
-  var EMPTY_SUMMARY2 = {
-    diary: 0,
-    movies: 0,
-    books: 0,
-    todoDone: 0,
-    pomodoros: 0,
-    pomodoroMinutes: 0
-  };
-  var DAY_MS = 864e5;
-  function todayRange(anchor) {
-    const d = new Date(anchor);
-    d.setHours(0, 0, 0, 0);
-    return { start: d.getTime(), end: d.getTime() + DAY_MS };
-  }
-  function parseLocalDateTime(s) {
-    const m = /^\s*(\d{4})-(\d{1,2})-(\d{1,2})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2}))?)?/.exec(String(s != null ? s : ""));
-    if (!m) return null;
-    const y = Number(m[1]);
-    const mo = Number(m[2]);
-    const d = Number(m[3]);
-    if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
-    const hh = m[4] !== void 0 ? Number(m[4]) : 0;
-    const mi = m[5] !== void 0 ? Number(m[5]) : 0;
-    const ss = m[6] !== void 0 ? Number(m[6]) : 0;
-    if (hh > 23 || mi > 59 || ss > 59) return null;
-    return new Date(y, mo - 1, d, hh, mi, ss).getTime();
-  }
-  function fmtHM(t) {
-    const d = new Date(t);
-    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-  }
-  function inRange(t, range) {
-    return Number.isFinite(t) && t >= range.start && t < range.end;
-  }
-  function clampToDay(t, range) {
-    return inRange(t, range) ? t : range.start;
-  }
-  function hmOffset(s) {
-    const m = /^(\d{1,2}):(\d{2})$/.exec(String(s != null ? s : ""));
-    if (!m) return null;
-    const hh = Number(m[1]);
-    const mi = Number(m[2]);
-    if (hh > 23 || mi > 59) return null;
-    return hh * 36e5 + mi * 6e4;
-  }
-  function buildRecap(sources, range) {
-    var _a2;
-    const summary = { ...EMPTY_SUMMARY2 };
-    const items = [];
-    summary.diary = sources.diaryTimes.length;
-    if (sources.diaryTimes.length) {
-      const offsets = sources.diaryTimes.map(hmOffset).filter((v) => v !== null);
-      const last = offsets.length ? Math.max(...offsets) : 0;
-      const ts = range.start + last;
-      items.push({ domain: "diary", ts, timeLabel: fmtHM(ts), text: `新增 ${summary.diary} 条` });
-    }
-    for (const m of sources.movies) {
-      const ts = clampToDay(m.ts, range);
-      if (m.watched) {
-        summary.movies++;
-        const star = m.rating !== null && m.rating > 0 ? ` · ${getStarString(m.rating)}` : "";
-        items.push({ domain: "cinema", ts, timeLabel: fmtHM(ts), text: `标记《${m.name}》已看${star}` });
-      } else {
-        items.push({ domain: "cinema", ts, timeLabel: fmtHM(ts), text: `《${m.name}》加入片单` });
-      }
-    }
-    const bookSeen = /* @__PURE__ */ new Set();
-    const bookDated = [...sources.books].sort((a, b) => a.ts - b.ts);
-    for (const b of bookDated) {
-      const seen = bookSeen.has(b.title);
-      if (!seen) {
-        summary.books++;
-        bookSeen.add(b.title);
-      }
-      const ts = clampToDay(b.ts, range);
-      if (b.finished) {
-        items.push({ domain: "bookshelf", ts, timeLabel: fmtHM(ts), text: `读完《${b.title}》` });
-      } else {
-        items.push({
-          domain: "bookshelf",
-          ts,
-          timeLabel: fmtHM(ts),
-          text: `《${b.title}》读到 ${(_a2 = b.progress) != null ? _a2 : 0}%`
-        });
-      }
-    }
-    for (const t of sources.todos) {
-      const ts = clampToDay(t.ts, range);
-      if (t.done) {
-        summary.todoDone++;
-        items.push({ domain: "todo", ts, timeLabel: fmtHM(ts), text: `完成『${t.title}』` });
-      } else {
-        items.push({ domain: "todo", ts, timeLabel: fmtHM(ts), text: `新增待办『${t.title}』` });
-      }
-    }
-    let seconds = 0;
-    for (const p of sources.pomodoros) {
-      summary.pomodoros++;
-      seconds += Number(p.duration) || 0;
-      const ts = clampToDay(p.ts, range);
-      const durMs = (Number(p.duration) || 0) * 1e3;
-      const task = p.task ? `《${p.task}》` : "";
-      const minutes = Math.round((Number(p.duration) || 0) / 60);
-      items.push({
-        domain: "pomodoro",
-        ts,
-        timeLabel: durMs > 0 ? `${fmtHM(ts - durMs)}–${fmtHM(ts)}` : fmtHM(ts),
-        text: `专注${task} · ${minutes} 分钟`
-      });
-    }
-    summary.pomodoroMinutes = Math.round(seconds / 60);
-    items.sort((a, b) => a.ts - b.ts);
-    return { summary, items };
-  }
-  function settingDir(keys, def) {
-    const s = tryGetSettings();
-    for (const k of keys) {
-      const v = s[k];
-      if (typeof v === "string" && v.trim()) return v.trim().replace(/\/+$/, "");
-    }
-    return def;
-  }
-  function numOr0(v) {
-    return typeof v === "number" && Number.isFinite(v) ? v : 0;
-  }
-  function fileIfExists(app2, filePath) {
-    try {
-      const f = app2.vault.getAbstractFileByPath(filePath);
-      return f && "basename" in f ? f : null;
-    } catch (e) {
-      return null;
-    }
-  }
-  async function readJsonIfExists(app2, filePath) {
-    const f = fileIfExists(app2, filePath);
-    if (!f) return void 0;
-    return JSON.parse(await app2.vault.read(f));
-  }
-  function localDayStr(anchor) {
-    const d = new Date(anchor);
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-  }
-  async function collectRecap(app2, now = Date.now()) {
-    var _a2, _b2, _c;
-    const range = todayRange(now);
-    const failed = [];
-    const sources = {
-      diaryTimes: [],
-      movies: [],
-      books: [],
-      todos: [],
-      pomodoros: []
-    };
-    try {
-      const dir = settingDir(["diaryDirectory"], "我的/日记");
-      const dateStr = localDayStr(now);
-      const f = fileIfExists(app2, `${dir}/${dateStr}.md`);
-      if (f) {
-        const entries = parseFile(await app2.vault.read(f), dateStr).filter((e) => !isEncryptedEntry(e));
-        sources.diaryTimes = entries.map((e) => e.time);
-      }
-    } catch (e) {
-      failed.push("diary");
-    }
-    try {
-      const folder = settingDir(["cinemaFolderPath"], "我的/影视");
-      for (const f of app2.vault.getMarkdownFiles()) {
-        if (!f.path.startsWith(folder + "/")) continue;
-        const item = parseMovieFile(f, app2);
-        if (!item) continue;
-        const stat = (_a2 = item.file) == null ? void 0 : _a2.stat;
-        const wd = parseLocalDay(item.watchDate);
-        if (item.status === STATUS_WATCHED && wd === range.start) {
-          sources.movies.push({
-            name: item.name,
-            watched: true,
-            rating: item.rating,
-            ts: numOr0(stat == null ? void 0 : stat.mtime)
-          });
-        } else if (inRange(numOr0(stat == null ? void 0 : stat.ctime), range)) {
-          sources.movies.push({ name: item.name, watched: false, rating: null, ts: numOr0(stat == null ? void 0 : stat.ctime) });
-        }
-      }
-    } catch (e) {
-      failed.push("cinema");
-    }
-    try {
-      for (const b of scanMarkdownBooks(app2)) {
-        const finished = parseLocalDay(b.completionDate) === range.start;
-        const mtime = numOr0((_c = (_b2 = b.file) == null ? void 0 : _b2.stat) == null ? void 0 : _c.mtime);
-        if (finished) {
-          sources.books.push({ title: b.title, finished: true, progress: null, ts: mtime });
-        } else if (b.status === "在读" && b.progress > 0 && inRange(mtime, range)) {
-          sources.books.push({ title: b.title, finished: false, progress: b.progress, ts: mtime });
-        }
-      }
-      for (const b of await loadEpubItems(app2)) {
-        if (parseLocalDay(b.completionDate) === range.start) {
-          sources.books.push({ title: b.title, finished: true, progress: null, ts: range.start });
-        }
-      }
-    } catch (e) {
-      failed.push("bookshelf");
-    }
-    try {
-      const raw = await readJsonIfExists(app2, storageFile("memo.json"));
-      const all = Array.isArray(raw) ? raw : [];
-      for (const it of all) {
-        const title = typeof (it == null ? void 0 : it.title) === "string" ? it.title : "";
-        if (!title) continue;
-        const done = parseLocalDateTime(it.completed);
-        if (done !== null && inRange(done, range)) sources.todos.push({ title, done: true, ts: done });
-        const created = parseLocalDateTime(it.created);
-        if (created !== null && inRange(created, range)) sources.todos.push({ title, done: false, ts: created });
-      }
-    } catch (e) {
-      failed.push("todo");
-    }
-    try {
-      const raw = await readJsonIfExists(app2, storageFile("pomodoro.json"));
-      const history2 = Array.isArray(raw == null ? void 0 : raw.history) ? raw.history : [];
-      for (const h of history2) {
-        const ts = numOr0(h == null ? void 0 : h.ts);
-        if (!ts || !inRange(ts, range)) continue;
-        sources.pomodoros.push({
-          task: typeof (h == null ? void 0 : h.task) === "string" && h.task ? h.task : null,
-          duration: numOr0(h == null ? void 0 : h.duration),
-          ts
-        });
-      }
-    } catch (e) {
-      failed.push("pomodoro");
-    }
-    const { summary, items } = buildRecap(sources, range);
-    return { summary, items, failed };
-  }
-
-  // src/home/river.ts
-  init_settings_provider();
-  init_storage();
-  init_app3();
-  init_data();
-  init_constants();
-  init_data2();
-  init_data7();
-
-  // src/favorites/data.ts
-  init_json_store();
-  init_storage();
-  var DataManager = class {
-    constructor(storagePath) {
-      this.store = jsonStore(storagePath);
-      this.filePath = storagePath;
-    }
-    async read() {
-      return this.store.read();
-    }
-    async write(data) {
-      return this.store.write(data);
-    }
-    /** 读改写事务：fn 基于磁盘现值就地改动（或返回新数组），整体入串行队列执行 */
-    async mutateAll(fn) {
-      return enqueueFileTask(this.filePath, async () => {
-        const data = await this.read();
-        const next = fn(data) || data;
-        await this.write(next);
-        return next;
-      });
-    }
-    add(item) {
-      return this.mutateAll((data) => {
-        data.unshift(item);
-      });
-    }
-    delete(id) {
-      return this.mutateAll((data) => {
-        const idx = data.findIndex((d) => d.id === id);
-        if (idx !== -1) data.splice(idx, 1);
-      });
-    }
-    /**
-     * 撤销删除（ticket 141 通病 1）：删除前取到的完整条目原样插回（含 archived/llmConfig 等全部字段），
-     * 不走 add() 重排——同 id 已存在（并发写回）则幂等跳过。参照 review/data.ts restoreItem 先例。
-     */
-    restoreItem(item) {
-      return this.mutateAll((data) => {
-        if (data.some((d) => d.id === item.id)) return;
-        data.push(item);
-      }).then(() => void 0);
-    }
-    update(id, newData) {
-      return this.mutateAll((data) => {
-        const idx = data.findIndex((d) => d.id === id);
-        if (idx !== -1) data[idx] = { ...data[idx], ...newData };
-      });
-    }
-    async getAll() {
-      return await this.read();
-    }
-  };
-
-  // src/home/river.ts
-  init_config2();
-  var DAY_MS3 = 864e5;
-  function toRiverDay(dateStr, summary, items) {
-    const events = [...items].sort((a, b) => a.ts - b.ts);
-    const full = { ...summary, todoCreated: events.filter((e) => e.text.startsWith("新增待办")).length };
-    return { dateStr, events, summary: full, firstTs: events.length ? events[0].ts : null };
-  }
-  function settingDir2(keys, def) {
-    const s = tryGetSettings();
-    for (const k of keys) {
-      const v = s[k];
-      if (typeof v === "string" && v.trim()) return v.trim().replace(/\/+$/, "");
-    }
-    return def;
-  }
-  function fileExists2(app2, filePath) {
-    try {
-      return !!app2.vault.getAbstractFileByPath(filePath);
-    } catch (e) {
-      return false;
-    }
-  }
-  async function readJsonIfExists3(app2, filePath) {
-    if (!fileExists2(app2, filePath)) return null;
-    try {
-      const f = app2.vault.getAbstractFileByPath(filePath);
-      return JSON.parse(await app2.vault.read(f));
-    } catch (e) {
-      return null;
-    }
-  }
-  async function collectReviewCounts(app2, now, c) {
-    const filePath = storageFile("review.json");
-    if (!fileExists2(app2, filePath)) return;
-    reviewApp.ensure(app2);
-    const items = await reviewApp.dataManager.loadItems();
-    c.reviewTotal = items.filter((i) => !i.isMissing).length;
-    c.reviewOverdue = items.filter((i) => i.isOverdue && !i.completed && !i.isMissing).length;
-    const d = new Date(now);
-    const start = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-    c.reviewDueTomorrow = items.filter((i) => {
-      if (i.completed || i.isMissing || !i.nextReviewDate) return false;
-      const t = new Date(i.nextReviewDate).getTime();
-      return Number.isFinite(t) && t >= start + DAY_MS3 && t < start + 2 * DAY_MS3;
-    }).length;
-  }
-  function collectCinemaCounts(app2, c) {
-    const folder = settingDir2(["cinemaFolderPath"], "我的/影视");
-    for (const f of app2.vault.getMarkdownFiles()) {
-      if (!f.path.startsWith(folder + "/")) continue;
-      const item = parseMovieFile(f, app2);
-      if (!item) continue;
-      if (item.status === STATUS_WANT) c.cinemaWant++;
-      else if (item.status === STATUS_WATCHING) c.cinemaWatching++;
-    }
-  }
-  async function collectBookshelfCounts(app2, c) {
-    for (const b of scanMarkdownBooks(app2)) {
-      if (b.status === "在读") c.bookshelfReading++;
-      else if (b.status === "已读") c.bookshelfFinished++;
-    }
-    for (const b of await loadEpubItems(app2)) {
-      if (b.status === "在读") c.bookshelfReading++;
-      else if (b.status === "已读") c.bookshelfFinished++;
-    }
-  }
-  async function collectClippingCounts(app2, c) {
-    const raw = await readJsonIfExists3(app2, storageFile("news.json"));
-    const articles = Array.isArray(raw == null ? void 0 : raw.articles) ? raw.articles : [];
-    c.clippingUnread = articles.filter((a) => !a.read).length;
-  }
-  async function collectFavoritesCounts(app2, c) {
-    const dir = settingDir2(["storagePath"], "CONFIG/STORAGE");
-    const filePath = getStoragePath(dir);
-    if (!fileExists2(app2, filePath)) return;
-    const dm = new DataManager(filePath);
-    const all = await dm.getAll();
-    c.favoritesTotal = (Array.isArray(all) ? all : []).filter((i) => !i.archived).length;
-  }
-  async function collectBelongingsCounts(app2, c) {
-    var _a2;
-    const filePath = storageFile("belongings.json");
-    if (!fileExists2(app2, filePath)) return;
-    const db = await loadDatabase();
-    c.belongingsTotal = Object.keys((_a2 = db.items) != null ? _a2 : {}).length;
-  }
-  function collectDiary(app2, now, c) {
-    const dir = settingDir2(["diaryDirectory"], "我的/日记");
-    try {
-      c.diaryTotal = app2.vault.getMarkdownFiles().filter((f) => f.path.startsWith(dir + "/")).length;
-    } catch (e) {
-    }
-    const writtenToday = fileExists2(app2, `${dir}/${dateStrOf(now)}.md`);
-    let streak = 0;
-    for (let t = writtenToday ? now : now - DAY_MS3; fileExists2(app2, `${dir}/${dateStrOf(t)}.md`); t -= DAY_MS3) {
-      streak++;
-    }
-    return { diaryStreak: streak, diaryWrittenToday: writtenToday };
-  }
-  async function collectRiver(app2, now = Date.now()) {
-    const DAYS_N = 7;
-    const dayRecaps = await Promise.all(
-      Array.from({ length: DAYS_N }, (_, i) => collectRecap(app2, now - i * DAY_MS3).catch(() => null))
-    );
-    const counts = { ...EMPTY_COUNTS };
-    const safe = (fn) => Promise.resolve().then(fn).catch(() => void 0);
-    await Promise.all([
-      safe(() => collectReviewCounts(app2, now, counts)),
-      safe(() => collectCinemaCounts(app2, counts)),
-      safe(() => collectBookshelfCounts(app2, counts)),
-      safe(() => collectClippingCounts(app2, counts)),
-      safe(() => collectFavoritesCounts(app2, counts)),
-      safe(() => collectBelongingsCounts(app2, counts))
-    ]);
-    let streak = { diaryStreak: 0, diaryWrittenToday: false };
-    try {
-      streak = collectDiary(app2, now, counts);
-    } catch (e) {
-    }
-    const days = dayRecaps.map(
-      (r, i) => {
-        var _a2, _b2;
-        return toRiverDay(dateStrOf(now - i * DAY_MS3), (_a2 = r == null ? void 0 : r.summary) != null ? _a2 : EMPTY_SUMMARY, (_b2 = r == null ? void 0 : r.items) != null ? _b2 : []);
-      }
-    );
-    const WD = ["日", "一", "二", "三", "四", "五", "六"];
-    const week = days.map((d) => {
-      const dt = /* @__PURE__ */ new Date(d.dateStr + " 12:00:00");
-      return { dateStr: d.dateStr, label: d.dateStr.slice(5), dayOfMonth: dt.getDate(), weekday: WD[dt.getDay()], hit: d.events.length > 0 };
-    });
-    return {
-      today: days[0],
-      yesterday: days[1],
-      days,
-      week,
-      streak,
-      counts
-    };
-  }
-
-  // src/home/layouts/river/render.ts
-  function panelFrameHtml() {
-    return `
-    <div class="bz-panel-frame bz-home-panel bz-panel-mtop">
-      <div class="bz-home-head">
-        <h1 class="bz-home-title">首页</h1>
-        <div class="bz-home-week" data-home-week></div>
-        <span class="bz-home-date" data-home-date></span>
-        <div role="button" tabindex="0" class="bz-home-close" data-home-close title="关闭" aria-label="关闭">${iconSpan("x")}</div>
-      </div>
-      <div class="bz-home-body">
-        <div class="bz-home-grid">
-          <div class="bz-home-entries" data-home-entries></div>
-          <div class="bz-home-flow" data-home-flow></div>
-          <div class="bz-home-next" data-home-next></div>
-          <div class="bz-home-tiles" data-home-tiles></div>
-        </div>
-      </div>
-    </div>`;
-  }
-  function loadingEntriesHtml() {
-    return '<div class="bz-home-sec-t">全 部 域</div>';
-  }
-  function loadingFlowHtml() {
-    return '<div class="bz-home-flow-empty">正在汇入今天的痕迹…</div>';
-  }
-  function weekHtml(week, todayDateStr, selDate) {
-    return week.map((w) => {
-      const isToday = w.dateStr === todayDateStr;
-      return '<div role="button" tabindex="0" class="bz-home-wk' + (w.hit ? " bz-home-wk--hit" : "") + (w.dateStr === selDate ? " bz-home-wk--sel" : "") + '" data-home-weekday="' + w.dateStr + '" aria-label="' + (isToday ? "今天" : w.label) + (w.hit ? "，有动静" : "") + '"><i></i><span class="bz-home-wk-n">' + (isToday ? "今" : w.dayOfMonth) + "</span></div>";
-    }).join("");
-  }
-  function entriesHtml(data) {
-    const dotsMap = buildDots(data);
-    return DOMAINS.map((d) => {
-      var _a2, _b2;
-      const dot = dotOf(dotsMap, d.id);
-      const ct = (_a2 = riverCountText(d.id, data)) != null ? _a2 : d.sub;
-      return '<div role="button" tabindex="0" class="bz-home-erow" data-home-go="' + d.id + '"><span class="bz-home-dot bz-home-dot--' + dot + '"></span><span class="bz-home-eic" style="color:' + ((_b2 = DOMAIN_DOT[d.id]) != null ? _b2 : "#8a8f99") + '">' + iconSpan(d.icon) + '</span><span class="bz-home-enm">' + esc(d.name) + '</span><span class="bz-home-ect">' + esc(ct) + '</span><span class="bz-home-ego">→</span></div>';
-    }).join("");
-  }
-  function flowHtml(data, view) {
-    var _a2;
-    const day = (_a2 = data.days.find((d) => d.dateStr === view)) != null ? _a2 : data.today;
-    const isToday = day.dateStr === data.today.dateStr;
-    const notes = isToday ? buildNotes(data) : [];
-    const body = day.events.map((e, i) => {
-      var _a3, _b2, _c, _d, _e;
-      const note = notes.find((n) => n.index === i);
-      const lastDiary = i === day.events.length - 1 && note && note.text.indexOf("日记") >= 0 ? " bz-home-ev--warn" : "";
-      const memoId = memoIdOf(e.domain);
-      const dmColor = (_a3 = DOMAIN_DOT[memoId]) != null ? _a3 : "#8a8f99";
-      const dmName = (_c = (_b2 = DOMAIN_MAP2.get(memoId)) == null ? void 0 : _b2.name) != null ? _c : e.domain;
-      const dmIcon = (_e = (_d = DOMAIN_MAP2.get(memoId)) == null ? void 0 : _d.icon) != null ? _e : "";
-      return '<div class="bz-home-ev' + lastDiary + '"><span class="bz-home-ev-tm">' + esc(e.timeLabel) + '</span><div class="bz-home-ev-bd"><div class="bz-home-ev-tx"><span class="bz-home-ev-dm" style="background:' + dmColor + '">' + iconSpan(dmIcon) + esc(dmName) + "</span>" + esc(e.text) + "</div>" + (note ? '<div class="bz-home-ev-note">' + esc(note.text) + "</div>" : "") + "</div></div>";
-    }).join("");
-    const empty = '<div class="bz-home-flow-empty">这一天还没有留下痕迹。<br><b>写一篇日记</b>、点一轮番茄、读几页书——<br>都会出现在这条河里。</div>';
-    return day.events.length ? '<div class="bz-home-timeline">' + body + "</div>" : empty;
-  }
-  function nextHtml(data) {
-    return '<div class="bz-home-sec-t bz-home-sec-t--ai">明 天 预 告</div>' + buildPreviews(data).map(
-      (pr) => '<div role="button" tabindex="0" class="bz-home-pr" data-home-go="' + pr.go + '"><div class="bz-home-pr-h">' + esc(pr.h) + "</div><div>" + esc(pr.b) + '</div><span class="bz-home-pr-go">' + esc(pr.goLabel) + "</span></div>"
-    ).join("");
-  }
-  function tilesHtml(data) {
-    const dotsMap = buildDots(data);
-    return '<div class="bz-home-m-tiles">' + DOMAINS.map((d) => {
-      var _a2, _b2;
-      const dot = dotOf(dotsMap, d.id);
-      const ct = (_a2 = riverCountText(d.id, data)) != null ? _a2 : d.sub;
-      return '<div role="button" tabindex="0" class="bz-home-m-tile" data-home-go="' + d.id + '"><span class="bz-home-dot bz-home-dot--' + dot + '"></span><span class="bz-home-eic" style="color:' + ((_b2 = DOMAIN_DOT[d.id]) != null ? _b2 : "#8a8f99") + '">' + iconSpan(d.icon) + '</span><span class="bz-home-enm">' + esc(d.name) + '</span><span class="bz-home-ect">' + esc(ct) + "</span></div>";
-    }).join("") + "</div>";
-  }
-
-  // src/home/ui.ts
-  var riverView = null;
-  function createOverlay2(app2) {
-    const overlay2 = document.createElement("div");
-    overlay2.className = "bz-panel-overlay bz-home-overlay";
-    overlay2.innerHTML = panelFrameHtml();
-    document.body.appendChild(overlay2);
-    topifyZ(overlay2);
-    H.currentOverlay = overlay2;
-    mountIcons(overlay2);
-    bindEvents2(overlay2, app2);
-    renderAll4();
-    void refreshRiverAndRender();
-  }
-  async function refreshRiverAndRender() {
-    if (!H.currentOverlay || !H.appRef) return;
-    try {
-      H.river = await collectRiver(H.appRef);
-    } catch (e) {
-      H.river = null;
-    }
-    renderAll4();
-  }
-  function closeOverlay() {
-    if (!H.currentOverlay) return;
-    H.currentOverlay.remove();
-    H.currentOverlay = null;
-    H.river = null;
-  }
-  function bindEvents2(overlay2, app2) {
-    overlay2.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter" && e.key !== " ") return;
-      const t = e.target;
-      const el = t.closest('[role="button"]');
-      if (el) {
-        e.preventDefault();
-        el.click();
-      }
-    });
-    overlay2.addEventListener("click", (e) => {
-      const t = e.target;
-      if (e.target === overlay2) {
-        closeOverlay();
-        return;
-      }
-      if (t.closest("[data-home-close]")) {
-        closeOverlay();
-        return;
-      }
-      const go = t.closest("[data-home-go]");
-      if (go) {
-        const id = go.dataset.homeGo || "";
-        if (id && DOMAIN_MAP2.has(id)) openDomain(id, app2);
-        return;
-      }
-      const wk = t.closest("[data-home-weekday]");
-      if (wk && H.river) {
-        riverView = wk.dataset.homeWeekday || null;
-        const overlay22 = H.currentOverlay;
-        if (overlay22) {
-          overlay22.querySelectorAll("[data-home-weekday]").forEach((b) => b.classList.toggle("bz-home-wk--sel", b.dataset.homeWeekday === riverView));
-          const flow = overlay22.querySelector("[data-home-flow]");
-          if (flow) {
-            flow.innerHTML = flowHtml(H.river, riverView != null ? riverView : "");
-            mountIcons(flow);
-          }
-        }
-      }
-    });
-  }
-  function openDomain(id, app2) {
-    const d = DOMAIN_MAP2.get(id);
-    if (!d) return;
-    closeOverlay();
-    try {
-      void app2.commands.executeCommandById(d.commandId);
-    } catch (e) {
-      notice(`「${d.name}」暂时不可用`, "warning");
-    }
-  }
-  function renderAll4() {
-    const overlay2 = H.currentOverlay;
-    if (!overlay2) return;
-    const date = overlay2.querySelector("[data-home-date]");
-    if (date) date.textContent = headDateText();
-    if (!H.river) {
-      const entries2 = overlay2.querySelector("[data-home-entries]");
-      const flow2 = overlay2.querySelector("[data-home-flow]");
-      const next2 = overlay2.querySelector("[data-home-next]");
-      entries2.innerHTML = loadingEntriesHtml();
-      flow2.innerHTML = loadingFlowHtml();
-      next2.innerHTML = "";
-      overlay2.querySelector("[data-home-tiles]").innerHTML = "";
-      overlay2.querySelector("[data-home-week]").innerHTML = "";
-      return;
-    }
-    const river = H.river;
-    const view = riverView && river.days.some((d) => d.dateStr === riverView) ? riverView : null;
-    riverView = view;
-    const today = river.today.dateStr;
-    const week = overlay2.querySelector("[data-home-week]");
-    if (week) week.innerHTML = weekHtml(river.week, today, view != null ? view : today);
-    const entries = overlay2.querySelector("[data-home-entries]");
-    const flow = overlay2.querySelector("[data-home-flow]");
-    const next = overlay2.querySelector("[data-home-next]");
-    entries.innerHTML = entriesHtml(river);
-    flow.innerHTML = flowHtml(river, view != null ? view : today);
-    next.innerHTML = nextHtml(river);
-    const tiles = overlay2.querySelector("[data-home-tiles]");
-    tiles.innerHTML = tilesHtml(river);
-    mountIcons(week);
-    mountIcons(entries);
-    mountIcons(flow);
-    mountIcons(next);
-    mountIcons(tiles);
-  }
-  var escRegistered2 = false;
-  var escHandle4 = null;
-  function registerEscapeHandler() {
-    if (escRegistered2) return;
-    escRegistered2 = true;
-    escHandle4 = escManager.register("bz-home", {
-      isVisible: () => !!H.currentOverlay,
-      close: closeOverlay
-    });
-  }
-
-  // src/home/index.ts
-  var initialized8 = false;
-  var escRegistered3 = false;
-  function ensureHome(app2) {
-    if (initialized8) return;
-    initialized8 = true;
-    H.appRef = app2;
-  }
-  function openHome(app2) {
-    ensureHome(app2);
-    if (H.currentOverlay) {
-      closeOverlay();
-      return;
-    }
-    if (!escRegistered3) {
-      escRegistered3 = true;
-      registerEscapeHandler();
-    }
-    createOverlay2(app2);
-  }
-
-  // src/home/fake-sim.ts
-  var SEED_REV = 3;
-  var SEED_MARK = "bz-sim:__home_seed";
-  var KEY_PREFIX2 = "bz-sim:";
-  var p22 = (n) => String(n).padStart(2, "0");
-  function dstr(n) {
-    const d = /* @__PURE__ */ new Date();
-    d.setDate(d.getDate() - n);
-    return `${d.getFullYear()}-${p22(d.getMonth() + 1)}-${p22(d.getDate())}`;
-  }
-  function at(n, hm) {
-    const [h, m] = hm.split(":").map(Number);
-    const d = /* @__PURE__ */ new Date();
-    d.setDate(d.getDate() - n);
-    d.setHours(h, m, 0, 0);
-    return d.getTime();
-  }
-  function isoFuture(n, hm = "09:00") {
-    return new Date(at(-n, hm)).toISOString();
-  }
-  function fm(fields) {
-    const lines = Object.entries(fields).map(
-      ([k, v]) => Array.isArray(v) ? `${k}:
-${v.map((x) => `  - ${x}`).join("\n")}` : `${k}: ${v}`
-    );
-    return `---
-${lines.join("\n")}
----
-`;
-  }
-  function seedDiary(out) {
-    const dayFile = (n, times) => {
-      out.push({
-        path: `我的/日记/${dstr(n)}.md`,
-        content: times.map((t) => `# 🌤 ${t}
-记一笔。
-`).join("\n"),
-        ctime: at(n, "08:00"),
-        mtime: at(n, times[times.length - 1])
-      });
-    };
-    dayFile(1, ["08:30", "22:15"]);
-    dayFile(2, ["09:00"]);
-    dayFile(3, ["21:00"]);
-    for (let n = 7; n <= 521; n++) {
-      out.push({ path: `我的/日记/${dstr(n)}.md`, content: "", ctime: at(n, "12:00"), mtime: at(n, "12:00") });
-    }
-  }
-  function seedCinema(out) {
-    const movie = (name, fields, ctime, mtime) => {
-      out.push({
-        path: `我的/影视/${name}.md`,
-        content: fm({ tags: ["电影"], ...fields }) + `观影短评：${name}。
-`,
-        ctime: at(ctime[0], ctime[1]),
-        mtime: at(mtime[0], mtime[1])
-      });
-    };
-    movie("《百年孤独》", { 评分: 4, 观影日期: dstr(0) }, [30, "12:00"], [0, "21:05"]);
-    movie("《沙丘 2》", {}, [1, "10:15"], [1, "10:15"]);
-    ["《奥本海默》", "《流浪地球 3》", "《花样年华》", "《完美日子》", "《怪物》", "《坠落的审判》", "《瞬息全宇宙》", "《驾驶我的车》"].forEach(
-      (name, i) => movie(name, { 评分: -1 }, [30 + i, "12:00"], [30 + i, "12:00"])
-    );
-    movie("《漫长的季节》", { 评分: 0 }, [12, "12:00"], [12, "20:00"]);
-    movie("《幕府将军》", { 评分: 0 }, [13, "12:00"], [13, "20:00"]);
-    movie("《怦然心动》", { 评分: 5, 观影日期: dstr(9) }, [9, "12:00"], [9, "21:00"]);
-    movie("《海边的曼彻斯特》", { 评分: 4, 观影日期: dstr(15) }, [15, "12:00"], [15, "21:00"]);
-    movie("《入殓师》", { 评分: 3, 观影日期: dstr(22) }, [22, "12:00"], [22, "21:00"]);
-  }
-  function seedBookshelf(out) {
-    const book = (name, fields, ctime, mtime) => {
-      out.push({
-        path: `书库/${name}.md`,
-        content: fm({ tags: ["book"], ...fields }) + `${name} 的书摘。
-`,
-        ctime: at(ctime[0], ctime[1]),
-        mtime: at(mtime[0], mtime[1])
-      });
-    };
-    book("三体", { author: "刘慈欣", category: "科幻", readingDate: dstr(20), readingProgress: 62 }, [30, "12:00"], [0, "07:42"]);
-    ["算法导论", "人类简史", "经济学原理", "雪国", "万历十五年", "乡土中国", "失控", "哥德尔、艾舍尔、巴赫"].forEach(
-      (name, i) => book(name, { author: "佚名", category: "未分类", readingDate: dstr(30 + i), readingProgress: 15 + i * 9 }, [60 + i, "12:00"], [15 + i, "12:00"])
-    );
-    book("时间简史", { author: "霍金", category: "科普", readingDate: dstr(18), completionDate: dstr(0) }, [40, "12:00"], [0, "18:20"]);
-    book("小王子", { author: "圣埃克苏佩里", category: "文学", readingDate: dstr(40), completionDate: dstr(12) }, [60, "12:00"], [12, "12:00"]);
-    book("活着", { author: "余华", category: "文学", readingDate: dstr(60), completionDate: dstr(30) }, [80, "12:00"], [30, "12:00"]);
-  }
-  function seedEpub(out) {
-    out.push({ path: "书库/EPUB/深入理解计算机系统.epub", content: "fake-epub" });
-    out.push({
-      path: "CONFIG/STORAGE/weave-data.json",
-      content: JSON.stringify(
-        {
-          books: {
-            csapp: {
-              meta: { title: "深入理解计算机系统", author: "Randal E. Bryant", subjects: ["计算机"] },
-              file: { vaultPath: "书库/EPUB/深入理解计算机系统.epub" },
-              reading: {
-                position: { percent: 1 },
-                stats: { lastReadTime: at(2, "09:40"), completedTime: at(2, "09:40"), totalReadTime: 72e5 }
-              },
-              notes: { highlights: [1, 2, 3], excerpts: [] }
-            }
-          }
-        },
-        null,
-        2
-      )
-    });
-  }
-  function seedReview(out) {
-    const notes = ["费曼学习法", "间隔重复原理", "FSRS 参数", "记忆曲线", "主动回忆", "交错练习", "双编码理论", "检索练习", "艾宾浩斯遗忘曲线"];
-    for (const n of notes) {
-      out.push({ path: `复习卡片/${n}.md`, content: `# ${n}
-
-卡片正文。
-` });
-    }
-    const item = (i, filePath, nextReviewDate, completed = false) => {
-      var _a2;
-      return {
-        id: `review_seed_${i}`,
-        filePath,
-        name: ((_a2 = filePath.split("/").pop()) == null ? void 0 : _a2.replace(/\.md$/, "")) || filePath,
-        reviewStart: isoFuture(-20),
-        stage: i % 5,
-        phase: "ladder",
-        stability: 1,
-        difficulty: 0.3,
-        reviewHistory: [],
-        totalReviews: i,
-        averageConfidence: 0.6,
-        nextReviewDate,
-        lastReviewed: isoFuture(-2),
-        lastDifficulty: "记得",
-        completed
-      };
-    };
-    const items = [
-      item(1, "复习卡片/费曼学习法.md", isoFuture(-1, "12:00")),
-      // 逾期
-      item(2, "复习卡片/间隔重复原理.md", isoFuture(3)),
-      item(3, "复习卡片/FSRS 参数.md", isoFuture(5)),
-      item(4, "复习卡片/记忆曲线.md", isoFuture(7)),
-      item(5, "复习卡片/主动回忆.md", isoFuture(10)),
-      item(6, "复习卡片/交错练习.md", isoFuture(14)),
-      item(7, "复习卡片/双编码理论.md", isoFuture(20)),
-      item(8, "复习卡片/检索练习.md", isoFuture(30)),
-      item(9, "复习卡片/艾宾浩斯遗忘曲线.md", isoFuture(45), true)
-      // 已完成（不计逾期）
-    ];
-    out.push({ path: "CONFIG/STORAGE/review.json", content: JSON.stringify(items, null, 2) });
-  }
-  function seedNews(out) {
-    const titles = [
-      "为什么深度工作越来越难",
-      "Obsidian 插件开发入门",
-      "本地优先软件宣言",
-      "间隔重复的实践误区",
-      "卡片笔记写作法复盘",
-      "ES2026 新特性速览",
-      "TypeScript 类型体操实例",
-      "数字花园的养护指南",
-      "阅读的技艺",
-      "注意力和时间的经济学",
-      "极简主义的陷阱",
-      "知识管理工具评测",
-      "写作是思考的过程",
-      "第二大脑的边界",
-      "效率工具断舍离"
-    ];
-    const articles = titles.map((title, i) => ({
-      id: `news_seed_${i}`,
-      title,
-      url: `https://example.com/${i + 1}`,
-      read: i >= 12,
-      // 前 12 篇未读
-      created: new Date(at(14 - i, "10:00")).toISOString()
-    }));
-    out.push({ path: "CONFIG/STORAGE/news.json", content: JSON.stringify({ articles }, null, 2) });
-  }
-  function seedFavorites(out) {
-    const items = Array.from({ length: 20 }, (_, i) => ({
-      id: `fav_seed_${i}`,
-      title: `收藏条目 ${i + 1}`,
-      url: `https://example.com/fav/${i + 1}`,
-      tags: ["网站"],
-      created: new Date(at(30 - i, "09:00")).toISOString(),
-      archived: i >= 18
-    }));
-    out.push({ path: "CONFIG/STORAGE/favorites.json", content: JSON.stringify(items, null, 2) });
-  }
-  function seedBelongings(out) {
-    const items = {};
-    const names = ["机械键盘", "降噪耳机", "Kindle", "保温杯", "人体工学椅", "显示器灯", "移动电源", "相机", "桌面支架", "手账本", "钢笔", "台灯"];
-    names.forEach((name, i) => {
-      items[`bel_seed_${i}`] = {
-        id: `bel_seed_${i}`,
-        name,
-        category: "数码",
-        price: 100 + i * 37,
-        purchase_date: dstr(100 + i * 10),
-        current_status: "在用",
-        last_updated: new Date(at(30, "12:00")).toISOString()
-      };
-    });
-    out.push({
-      path: "CONFIG/STORAGE/belongings.json",
-      content: JSON.stringify({ version: "1.0", last_updated: (/* @__PURE__ */ new Date()).toISOString(), items }, null, 2)
-    });
-  }
-  function seedMemo(out) {
-    const memo = [
-      { id: "memo_seed_1", title: "给 obsidian 提 issue", created: `${dstr(0)} 09:05`, completed: `${dstr(0)} 09:10` },
-      { id: "memo_seed_2", title: "写周报初稿", created: `${dstr(1)} 09:00`, completed: `${dstr(0)} 20:44` },
-      { id: "memo_seed_3", title: "预约体检", created: `${dstr(0)} 12:20`, completed: null },
-      { id: "memo_seed_4", title: "清理收件箱", created: `${dstr(2)} 10:00`, completed: `${dstr(1)} 20:44` },
-      { id: "memo_seed_5", title: "回复审稿意见", created: `${dstr(3)} 09:00`, completed: null }
-    ];
-    out.push({ path: "CONFIG/STORAGE/memo.json", content: JSON.stringify(memo, null, 2) });
-  }
-  function seedPomodoro(out) {
-    out.push({
-      path: "CONFIG/STORAGE/pomodoro.json",
-      content: JSON.stringify(
-        {
-          version: 1,
-          state: { phase: "idle" },
-          history: [
-            { task: "周报", duration: 1500, ts: at(0, "09:00") },
-            { task: "读书笔记", duration: 1500, ts: at(0, "14:27") },
-            { task: "周报", duration: 1500, ts: at(1, "14:27") }
-          ]
-        },
-        null,
-        2
-      )
-    });
-  }
-  function buildSeedFiles() {
-    const out = [];
-    seedDiary(out);
-    seedCinema(out);
-    seedBookshelf(out);
-    seedEpub(out);
-    seedReview(out);
-    seedNews(out);
-    seedFavorites(out);
-    seedBelongings(out);
-    seedMemo(out);
-    seedPomodoro(out);
-    return out;
-  }
-  function wipeSimKeys() {
-    const doomed = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith(KEY_PREFIX2)) doomed.push(k);
-    }
-    for (const k of doomed) localStorage.removeItem(k);
-  }
-  function seedDatabase() {
-    const today = dstr(0);
-    let fresh = false;
-    try {
-      const mark = JSON.parse(localStorage.getItem(SEED_MARK) || "null");
-      fresh = !!mark && mark.rev === SEED_REV && mark.seededOn === today;
-    } catch (e) {
-      fresh = false;
-    }
-    if (!fresh) {
-      wipeSimKeys();
-      for (const f of buildSeedFiles()) {
-        localStorage.setItem(KEY_PREFIX2 + f.path, encodeSeedFile(f.content, { ctime: f.ctime, mtime: f.mtime }));
-      }
-      localStorage.setItem(SEED_MARK, JSON.stringify({ rev: SEED_REV, seededOn: today }));
-    }
+    localStorage.setItem(SEED_MARKER, "1");
+  }
+  function injectApp() {
+    const app2 = new FakeApp();
+    setApp(app2);
+    simApp = app2;
   }
   function injectSettings() {
-    setSettingsProvider(
-      () => ({
-        storagePath: "CONFIG/STORAGE",
-        diaryDirectory: "我的/日记",
-        cinemaFolderPath: "我的/影视",
-        bookshelfFolderPath: "书库",
-        bookTag: "book"
-      })
-    );
+    try {
+      const raw = localStorage.getItem(SIM_SETTINGS_KEY);
+      if (raw) simSettings = { ...SEED_SETTINGS, ...JSON.parse(raw) };
+    } catch (e) {
+      simSettings = { ...SEED_SETTINGS };
+    }
+    setSettingsProvider(() => simSettings);
+    setSettingsSaver(async () => {
+      localStorage.setItem(SIM_SETTINGS_KEY, JSON.stringify(simSettings));
+    });
   }
-  var appRef3 = null;
-  function bootHomeSim() {
+  function bootSettingsPanelSim() {
     const g = window;
-    if (g.__bzHomeSimBooted) return;
-    g.__bzHomeSimBooted = true;
-    seedDatabase();
+    if (g.__bzSpSimBooted) return;
+    g.__bzSpSimBooted = true;
+    seedVault();
+    injectApp();
     injectSettings();
-    appRef3 = new FakeApp();
-    setApp(appRef3);
   }
-  function openHome2() {
-    bootHomeSim();
-    openHome(appRef3);
+  function ensureBoot() {
+    bootSettingsPanelSim();
   }
-  function resetHomeSim() {
-    wipeSimKeys();
-    localStorage.removeItem(SEED_MARK);
+  function openPanel3() {
+    ensureBoot();
+    openSettingsPanel(simApp);
+  }
+  function openDomain(domainId) {
+    ensureBoot();
+    openSettingsPanel(simApp, domainId);
+  }
+  function __simSettings() {
+    ensureBoot();
+    return simSettings;
+  }
+  function __simResetSettings() {
+    localStorage.removeItem(SIM_SETTINGS_KEY);
+    simSettings = { ...SEED_SETTINGS };
   }
   return __toCommonJS(fake_sim_exports);
 })();
