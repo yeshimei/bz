@@ -21,6 +21,38 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "cinema", "favorites", "home", "settings-panel"];
 
+// 行为单源域（issue 245/ADR-0106 试点：belongings）：除渲染产物外，另产「行为产物」——
+// 以 fake-sim.ts 为入口、alias obsidian→belongings/fake/fake-obsidian，把真 ui.ts
+// 依赖链打进 prototype-behavior.js（挂 window.BZW_<域>），壳只调 openPanel 等。
+// 新域接入：render.ts 落域 + fake-sim.ts 启动器就绪后在此登记。
+export const BEHAVIOR_DOMAINS = ["belongings"];
+
+export async function buildBehavior(domain) {
+  const entry = path.join(ROOT, "src", domain, "fake-sim.ts");
+  if (!fs.existsSync(entry)) {
+    throw new Error(`行为入口缺失：src/${domain}/fake-sim.ts（清单见 BEHAVIOR_DOMAINS）`);
+  }
+  const globalName = `BZW_${domain.replace(/-/g, "_")}`;
+  await esbuild.build({
+    entryPoints: [entry],
+    bundle: true,
+    format: "iife",
+    globalName,
+    outfile: path.join(ROOT, "src", domain, "prototype-behavior.js"),
+    target: "es2018",
+    charset: "utf8",
+    logLevel: "warning",
+    alias: {
+      // 浏览器无 obsidian：替换为公共假层（接口与真实现一致，见 fake/fake-obsidian.ts）
+      obsidian: path.join(ROOT, "src", domain, "fake", "fake-obsidian.ts"),
+    },
+    banner: {
+      js: `/* 构建产物（勿手改）：node scripts/build-preview.mjs — src/${domain}/fake-sim.ts → window.${globalName}（行为单源预览包，issue 245/ADR-0106） */`,
+    },
+  });
+  console.log(`✓ src/${domain}/prototype-behavior.js ← fake-sim.ts（alias obsidian→fake）`);
+}
+
 export async function buildPreview(domains = PREVIEW_DOMAINS) {
   for (const d of domains) {
     const entry = path.join(ROOT, "src", d, "render.ts");
@@ -48,5 +80,10 @@ export async function buildPreview(domains = PREVIEW_DOMAINS) {
 
 if (process.argv[1] && process.argv[1].endsWith("build-preview.mjs")) {
   const args = process.argv.slice(2);
-  await buildPreview(args.length ? args : PREVIEW_DOMAINS);
+  const targets = args.length ? args : PREVIEW_DOMAINS;
+  await buildPreview(targets);
+  // 行为产物（试点域；显式指定域时同步构建其行为包）
+  for (const d of BEHAVIOR_DOMAINS) {
+    if (!args.length || args.includes(d)) await buildBehavior(d);
+  }
 }
