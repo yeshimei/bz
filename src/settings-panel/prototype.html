@@ -2,299 +2,306 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>设置面板 · 原型预览（真行为单源）</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>设置面板 · 域内评审原型（桌面 + 移动 · S1/S3 双皮）</title>
 <!--
-  ┌────────────────────────────────────────────────────────────────────────┐
-  │ 本文件 = 设置面板域 UI 的评审壳（行为单源版，issue 245/ADR-0106，          │
-  │ 范式随 belongings 试点；2026-09-07 拍板推翻 4b068bb「原型 app.js 为真理」  │
-  │ 方向——行为唯一真理 = 域 ui.ts，本壳退化为双 iframe 评审壳，                │
-  │ prototype.app.js / prototype-data.js 退役删除）。                         │
-  │ 组件样式零内联，全部来自（与 build-css SOURCES 同序）：                    │
-  │   ../core/styles.css → ../core/ui/tokens.css → ../core/ui/components.css │
-  │   → ./styles.css                                                        │
-  │ 行为单源：交互逻辑全部是插件同款 ui.ts / renderer.ts / dir-picker.ts        │
-  │   依赖链——经 ./prototype-behavior.js（src/settings-panel/fake-sim.ts       │
-  │   构建，alias obsidian→公共假层）在下方两个 iframe 视图里跑真行为；          │
-  │   桌面 iframe 1120px 宽视口 = 桌面 B 侧栏工作台（本体 min(1080px,94vw)）；  │
-  │   移动 iframe 396px = M1 命令面板 + 域设置弹窗（fake Platform ≤768 判定）。 │
-  │ 数据 = schema 全真（ui.ts schemaLoaders 调各域真实 xxxSettingsSchema()）；  │
-  │   设置 = localStorage 内存单例（fake-sim 注入，键直绑改动可持久）；          │
-  │   vault 目录面 = localStorage 种子树（dir-picker 真聚合 + adapter 补齐）。  │
-  │ 壳内只允许：外景容器样式、评审徽牌、重置与自检。                            │
-  └────────────────────────────────────────────────────────────────────────┘
+  设置面板域内评审壳（prototype-first.md）：
+  - 组件样式零内联：<link href="./styles.css">（与插件共用同一份域样式，构建自动聚合）；
+  - 本壳 <style> 只写演示壳样式：页面底色、桌面演示框、手机演示框、亮暗钮、
+    原型演示专属件（文件夹/模型选择器弹层、迷你皮肤预览、toast、sub-row）——
+    这些在插件版分别由 core/path-picker（路径行）与 renderer 自绘承载，属壳层差异；
+  - 两端并存：左侧桌面面板（overlay 形态）+ 右侧手机演示框（M1 命令面板 + 域设置弹窗）；
+  - 手动亮暗钮：插件内跟随 Obsidian .theme-dark（壳层差异表）。
+  双击打开本文件即可评审；不进构建、不入 git 产物。
 -->
-<link rel="stylesheet" href="../core/styles.css">
-<link rel="stylesheet" href="../core/ui/tokens.css">
-<link rel="stylesheet" href="../core/ui/components.css">
 <link rel="stylesheet" href="./styles.css">
 <style>
-  /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 32px 24px;
-    background: #e3e0d8; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
-  /* 模拟 Obsidian 宿主变量（core/styles.css 的弹层/通知取值用；插件内由主题提供） */
+  /* ---- 演示壳样式（非组件样式） ---- */
   body {
-    --background-primary: #fbf9f3; --text-normal: #171512; --text-muted: #8b8474; --text-faint: #b3ab99;
-    --text-error: #b3564d; --background-modifier-hover: rgba(23,21,18,.06); --color-green: #3d8f5d;
+    margin: 0;
+    font-family: system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: #ece8dd;
+    background-image: repeating-linear-gradient(0deg, rgba(60,50,30,.02) 0 1px, transparent 1px 5px);
+    min-height: 100vh;
   }
-  * { scrollbar-width: none; } *::-webkit-scrollbar { display: none; }
+  body.theme-dark { background: #131316; }
+  .demo-top {
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 20px; background: #26231d; color: #f3efe5; font-size: 12px;
+    position: sticky; top: 0; z-index: 90;
+  }
+  .demo-top b { letter-spacing: .05em; }
+  .demo-top .sp { opacity: .55; }
+  .demo-top button {
+    margin-left: auto; display: flex; align-items: center; gap: 6px;
+    border: 1px solid rgba(255,255,255,.25); background: transparent; color: #f3efe5;
+    border-radius: 8px; padding: 5px 12px; cursor: pointer; font-size: 12px; font-family: inherit;
+  }
+  .demo-top button:hover { border-color: #eda75c; color: #eda75c; }
+  .demo-top .bz-ic { width: 14px; height: 14px; }
+  .demo-stage {
+    display: flex; align-items: flex-start; justify-content: center;
+    gap: 40px; padding: 34px 24px 60px; flex-wrap: wrap;
+  }
+  .demo-col-title { font-size: 11px; letter-spacing: .22em; color: #8a8474; font-weight: 700; margin: 0 0 10px 2px; }
+  body.theme-dark .demo-col-title { color: #6a6a74; }
 
-  /* 桌面外景（真行为 iframe：面板 append iframe body，本体 min(1080px,94vw) 来自 styles.css） */
-  .demo-dt { flex: none; width: 1120px; height: 720px; }
-  /* 移动外景：396px iframe → M1 命令面板真全屏态即手机框尺寸 */
-  .demo-mob { width: 396px; height: 780px; border-radius: 26px; overflow: hidden; flex: none;
-    border: 1px solid #d8d1c0; box-shadow: 0 8px 30px rgba(0,0,0,.14); background: #f5f2ec; }
-  .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
+  /* 桌面演示框：overlay 面板形态 */
+  .demo-desk-wrap { width: min(1080px, 92vw); }
+  .demo-desk-wrap .bz-sp-desk { position: relative; }
 
-  /* 评审徽牌（演示壳自用） */
-  .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #9a917d; display: flex; gap: 10px; align-items: center;
-    background: rgba(255,255,255,.9); border: 1px solid #d8d1c0; padding: 3px 8px; z-index: 900; }
-  .vbadge button { border: none; background: none; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; }
-  .vbadge .ok { color: #3d8f5d; }
-  .vbadge .bad { color: #b3564d; }
+  /* 手机演示框 */
+  .demo-phone {
+    width: 390px; height: 780px; border: 10px solid #26231d; border-radius: 36px;
+    overflow: hidden; position: relative; background: #f6f2e9; box-shadow: 0 18px 50px rgba(40,30,10,.25);
+    flex: none;
+  }
+  body.theme-dark .demo-phone { border-color: #000; background: #1b1b1f; }
+  .demo-phone .bz-sp-mobile { position: absolute; inset: 0; }
+  .bz-sp-demo-mobmask {
+    position: absolute; inset: 0; background: rgba(15,12,6,.45); z-index: 40;
+    display: flex; align-items: flex-end;
+  }
+  body.theme-dark .bz-sp-demo-mobmask { background: rgba(0,0,0,.55); }
+  .bz-sp-demo-mobmask .bz-sp-mob-modal {
+    width: 100%; height: auto; max-height: 88%; border-radius: 16px 16px 0 0; border-bottom: 0;
+  }
+
+  /* 原型演示专属：选择器弹层（插件版路径行走 core/path-picker，模型弹窗走确认框） */
+  .bz-sp-picker-mask {
+    position: absolute; inset: 0; background: rgba(20,15,8,.4); z-index: 60;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .theme-dark .bz-sp-picker-mask { background: rgba(0,0,0,.62); }
+  .bz-sp-picker {
+    width: min(560px, 86%); max-height: 74%;
+    background: var(--sp-panel); border: 1px solid var(--sp-line); border-radius: 14px;
+    box-shadow: var(--sp-shadow); display: flex; flex-direction: column; overflow: hidden;
+  }
+  .bz-sp-picker-head { padding: 14px 18px 8px; font-size: 14px; font-weight: 700; color: var(--sp-ink); }
+  .bz-sp-picker-search {
+    margin: 16px auto 8px; width: calc(100% - 28px); display: flex; align-items: center; gap: 8px;
+    background: var(--sp-bg); border: 1px solid var(--sp-line); border-radius: 9px; padding: 8px 14px;
+    color: var(--sp-ink-3);
+  }
+  .bz-sp-picker-search input { flex: 1; border: 0; outline: 0; background: transparent; font-size: 12.5px; color: var(--sp-ink); font-family: inherit; }
+  .bz-sp-picker-crumb {
+    display: flex; align-items: center; gap: 6px; padding: 8px 18px;
+    border-top: 1px solid var(--sp-line); border-bottom: 1px solid var(--sp-line);
+    background: var(--sp-bg); font-size: 11.5px; color: var(--sp-ink-2);
+  }
+  .bz-sp-picker-lab { color: var(--sp-ink-3); margin-right: 2px; }
+  .bz-sp-picker-sep { opacity: .6; }
+  .bz-sp-picker-crumb > span:last-child { color: var(--sp-accent); font-weight: 600; }
+  .bz-sp-picker-list { flex: 1; overflow-y: auto; padding: 8px 12px; scrollbar-width: none; }
+  .bz-sp-picker-list::-webkit-scrollbar { display: none; }
+  .bz-sp-picker-row {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    border: 0; background: transparent; font-family: inherit; font-size: 12.5px; color: var(--sp-ink);
+    padding: 6px 10px; border-radius: 8px; cursor: pointer; text-align: left; position: relative;
+  }
+  .bz-sp-picker-row:hover { background: var(--sp-accent-soft); }
+  .bz-sp-picker-row.sel { box-shadow: inset 3px 0 0 var(--sp-accent); }
+  .bz-sp-picker-row .bz-ic { width: 14px; height: 14px; color: var(--sp-ink-3); flex: none; }
+  .bz-sp-picker-row.sel .bz-ic { color: var(--sp-accent); }
+  .bz-sp-picker-row.sel span:first-of-type { color: var(--sp-accent); font-weight: 600; }
+  .bz-sp-picker-row .anc {
+    margin-left: auto; font-size: 10px; color: var(--sp-ink-3); opacity: .85;
+    font-family: ui-monospace, Consolas, monospace; flex: none; max-width: 46%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .bz-sp-picker-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--sp-line); }
+
+  /* 原型演示专属：迷你皮肤预览（插件版由各域 prevClass 全局样式承载） */
+  .bz-sp-mini { width: 64px; height: 44px; border-radius: 5px; border: 1px solid var(--sp-line); position: relative; overflow: hidden; margin-bottom: 4px; display: block; }
+  .bz-sp-mini .m-head { position: absolute; top: 0; left: 0; right: 0; height: 11px; }
+  .bz-sp-mini .m-head.m-stripe { background-image: repeating-linear-gradient(45deg, rgba(0,0,0,.14) 0 2px, transparent 2px 5px); }
+  .bz-sp-mini .m-line { position: absolute; left: 6px; height: 3px; border-radius: 2px; }
+  .bz-sp-mini .m-chip { position: absolute; right: 5px; bottom: 4px; width: 17px; height: 7px; border-radius: 3px; }
+  .bz-sp-mini .m-ac { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+  .bz-sp-mini .m-book { position: absolute; bottom: 0; width: 9px; border-radius: 2px 2px 0 0; }
+  .bz-sp-mini .m-cat { position: absolute; left: 50%; top: 55%; transform: translate(-50%, -50%); width: 30px; height: 24px; }
+  .bz-sp-mini .m-cat .ear { position: absolute; top: -5px; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 8px solid; }
+  .bz-sp-mini .m-cat .ear.l { left: 1px; }
+  .bz-sp-mini .m-cat .ear.r { right: 1px; }
+  .bz-sp-mini .m-cat .face { position: absolute; inset: 0 0 2px 0; border-radius: 46% 46% 50% 50%; }
+  .bz-sp-mini .m-cat .patch { position: absolute; width: 9px; height: 9px; border-radius: 50%; top: -1px; right: 3px; }
+  .bz-sp-mini .m-cat .eye { position: absolute; top: 11px; width: 3px; height: 3.5px; border-radius: 50%; }
+  .bz-sp-mini .m-cat .eye.l { left: 7px; }
+  .bz-sp-mini .m-cat .eye.r { right: 7px; }
+
+  /* 原型演示专属：custom 子行 / 行备注 / 命中高亮 / toast */
+  .bz-sp-set-row--custom { flex-direction: column; align-items: stretch; gap: 0; }
+  .bz-sp-set-row--custom > .bz-sp-set-info { padding-bottom: 4px; }
+  .bz-sp-sub-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 8px 12px 8px 16px; border-top: 1px dashed var(--sp-line, #e5dfcf);
+  }
+  .bz-sp-sub-row:first-of-type { border-top: 0; }
+  .bz-sp-sub-row .bz-sp-set-ctrl { margin-left: auto; }
+  .bz-sp-set-note { font-size: 10.5px; color: var(--sp-ink-3, #aca595); margin-top: 3px; }
+  .bz-sp-set-row.hit { box-shadow: inset 3px 0 0 var(--sp-accent, #c95a28); background: var(--sp-accent-soft, #f7e8dd); }
+  .bz-sp-demo-toast {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(8px);
+    background: var(--sp-ink, #2c2924); color: var(--sp-panel, #fffcf6); font-size: 12px;
+    padding: 7px 16px; border-radius: 8px; opacity: 0; pointer-events: none; transition: all .2s; z-index: 80;
+    max-width: 70%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .bz-sp-demo-toast.show { opacity: 1; transform: translateX(-50%); }
+  .bz-sp-btn--primary { background: var(--sp-accent, #c95a28) !important; color: var(--sp-on-accent, #fff) !important; border-color: transparent !important; }
+  .bz-sp-btn--danger { background: #c0392b !important; color: #fff !important; border-color: transparent !important; }
+
+  /* 子弹窗（插件真实可达层演示）：通用居中卡 + 共享确认框 + 面板（UP 管理/日记修复/体检/卡片目录选择器） */
+  .bz-sp-demo-card {
+    width: min(560px, 92%); max-height: min(620px, 84vh);
+    background: var(--sp-panel, #fffcf6); border: 1px solid var(--sp-line, #e5dfcf); border-radius: 14px;
+    box-shadow: var(--sp-shadow, 0 6px 24px rgba(40,30,10,.18));
+    display: flex; flex-direction: column; overflow: hidden; font-size: 12.5px; color: var(--sp-ink, #2c2924);
+  }
+  .bz-sp-demo-card-head {
+    display: flex; align-items: center; gap: 10px; padding: 14px 18px; flex-shrink: 0;
+    border-bottom: 1px solid var(--sp-line, #e5dfcf); font-size: 14px;
+  }
+  .bz-sp-demo-card-body { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 18px 12px; }
+  .bz-sp-demo-card-head b { color: var(--sp-ink, #2c2924); }
+  /* 共享确认框 */
+  .bz-sp-confirm { width: min(400px, 86%) !important; padding: 20px 22px; gap: 12px; }
+  .bz-sp-confirm-title { margin: 0; font-size: 15px; color: var(--sp-ink, #2c2924); }
+  .bz-sp-confirm-msg { margin: 6px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--sp-ink-2, #7a7466); white-space: pre-line; }
+  .bz-sp-confirm-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+  /* UP 主名单管理弹窗 */
+  .bz-sp-upmgr-row { display: flex; align-items: flex-start; gap: 14px; padding: 12px 2px; border-bottom: 1px dashed var(--sp-line, #e5dfcf); }
+  .bz-sp-upmgr-row:last-of-type { border-bottom: 0; }
+  .bz-sp-upmgr-label { flex: 1; min-width: 0; }
+  .bz-sp-upmgr-ctl { display: flex; align-items: center; gap: 8px; }
+  .bz-sp-upmgr-ctl .bz-input { width: 220px; }
+  .bz-sp-upmgr-list { display: flex; flex-direction: column; gap: 6px; padding: 6px 0 2px; }
+  .bz-sp-upmgr-item { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border: 1px solid var(--sp-line-soft, #f2eee1); border-radius: 9px; background: var(--sp-bg, #f6f2e9); }
+  .bz-sp-upmgr-info { flex: 1; min-width: 0; }
+  .bz-sp-upmgr-name { font-size: 13px; color: var(--sp-ink, #2c2924); font-weight: 600; }
+  .bz-sp-upmgr-uid { font-size: 10.5px; color: var(--sp-ink-3, #aca595); font-family: ui-monospace, Consolas, monospace; }
+  /* 日记修复/体检面板共用段 */
+  .bz-sp-demo-sec { padding: 8px 0 4px; }
+  .bz-sp-demo-sec-t { font-size: 11px; letter-spacing: .08em; color: var(--sp-ink-3, #aca595); font-weight: 700; padding: 8px 2px 6px; border-bottom: 1px solid var(--sp-line, #e5dfcf); margin-bottom: 6px; }
+  .bz-sp-demo-repair { display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; border-radius: 9px; }
+  .bz-sp-demo-repair:hover { background: var(--sp-accent-soft, #f7e8dd); }
+  .bz-sp-demo-repair-file { font-size: 11px; color: var(--sp-ink-3, #aca595); font-family: ui-monospace, Consolas, monospace; }
+  .bz-sp-demo-repair-code { font-size: 12.5px; color: var(--sp-ink, #2c2924); font-family: ui-monospace, Consolas, monospace; }
+  .bz-sp-demo-repair-code .bz-sp-demo-repair-after { color: var(--sp-accent, #c95a28); }
+  .bz-sp-demo-repair-code .bz-sp-demo-repair-arrow { opacity: .5; margin: 0 4px; }
+  .bz-sp-demo-empty { padding: 44px 10px; text-align: center; }
+  .bz-sp-demo-empty .bz-sp-set-desc { margin: 6px auto 0; max-width: 420px; }
+  .bz-sp-demo-steps { display: flex; flex-direction: column; gap: 8px; padding: 12px 4px; }
+  .bz-sp-demo-step { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--sp-ink-2, #7a7466); }
+  .bz-sp-demo-step.is-done { color: var(--sp-ink, #2c2924); }
+  .bz-sp-demo-step.is-current { color: var(--sp-accent, #c95a28); font-weight: 600; }
+  .bz-sp-demo-step-mark { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--sp-line, #e5dfcf); flex: none; }
+  .bz-sp-demo-step.is-done .bz-sp-demo-step-mark { background: var(--sp-accent, #c95a28); border-color: var(--sp-accent, #c95a28); }
+  .bz-sp-demo-step.is-current .bz-sp-demo-step-mark { border-color: var(--sp-accent, #c95a28); }
+  .bz-sp-demo-prog { padding: 12px 4px 2px; font-size: 13px; color: var(--sp-ink, #2c2924); }
+  .bz-sp-demo-summary { padding: 12px; border-radius: 10px; margin: 10px 0 4px; font-weight: 600; font-size: 13px; }
+  .bz-sp-demo-summary--ok { background: rgba(46,139,110,.12); color: #2e8b6e; }
+  .bz-sp-demo-clean { padding: 5px 2px; font-size: 12.5px; color: var(--sp-ink-2, #7a7466); }
+  .theme-dark .bz-sp-demo-clean { color: var(--sp-ink-2); }
+  /* 卡片目录选择器（bz-path-picker 壳：对齐插件 openPathPicker 形态，tokens 用 --sp-*） */
+  .bz-sp-demo-card.bz-path-picker { display: flex; flex-direction: column; overflow: hidden; max-height: min(560px, 82vh); }
+  .bz-sp-demo-card .bz-path-picker-head { padding: 14px 18px 10px; border-bottom: 1px solid var(--sp-line, #e5dfcf); flex-shrink: 0; }
+  .bz-sp-demo-card .bz-path-picker-title { margin: 0; font-size: 15px; font-weight: 700; color: var(--sp-ink, #2c2924); }
+  .bz-sp-demo-card .bz-path-picker-desc { margin-top: 4px; font-size: 12px; color: var(--sp-ink-2, #7a7466); line-height: 1.55; }
+  .bz-sp-demo-card .bz-path-picker-search { flex-shrink: 0; margin: 12px 16px 0; padding: 8px 10px; border: 1px solid var(--sp-line, #e5dfcf); border-radius: 8px; font-size: 13px; background: var(--sp-input-bg, #fffcf6); color: var(--sp-ink, #2c2924); font-family: inherit; }
+  .bz-sp-demo-card .bz-path-picker-search:focus { outline: none; border-color: var(--sp-accent, #c95a28); }
+  .bz-sp-demo-card .bz-path-picker-list { flex: 1; min-height: 120px; overflow-y: auto; margin: 10px 8px; padding: 4px; }
+  .bz-sp-demo-card .bz-path-picker-row { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border-radius: 8px; font-size: 13px; color: var(--sp-ink, #2c2924); cursor: pointer; user-select: none; }
+  .bz-sp-demo-card .bz-path-picker-row:hover { background: var(--sp-accent-soft, #f7e8dd); }
+  .bz-sp-demo-card .bz-path-picker-row--sel { background: var(--sp-accent-soft, #f7e8dd); color: var(--sp-accent, #c95a28); font-weight: 600; }
+  .bz-sp-demo-card .bz-path-picker-check { flex: 0 0 auto; width: 18px; height: 18px; border: 1.5px solid var(--sp-line, #e5dfcf); border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; color: var(--sp-on-accent, #fff); }
+  .bz-sp-demo-card .bz-path-picker-row--sel .bz-path-picker-check { background: var(--sp-accent, #c95a28); border-color: var(--sp-accent, #c95a28); }
+  .bz-sp-demo-card .bz-path-picker-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bz-sp-demo-card .bz-path-picker-empty { padding: 24px 0; text-align: center; font-size: 13px; color: var(--sp-ink-3, #aca595); }
+  .bz-sp-demo-card .bz-path-picker-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--sp-line, #e5dfcf); flex-shrink: 0; }
+  .bz-sp-demo-card .bz-path-picker-selinfo { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--sp-ink-2, #7a7466); }
+  .bz-sp-demo-card .bz-path-picker-foot-btns { display: flex; gap: 8px; flex: 0 0 auto; }
+  .bz-sp-demo-card .bz-path-picker-btn { font-size: 12.5px; padding: 6px 14px; border: 1px solid var(--sp-line, #e5dfcf); border-radius: 8px; background: var(--sp-bg, #f6f2e9); color: var(--sp-ink, #2c2924); cursor: pointer; font-family: inherit; }
+  .bz-sp-demo-card .bz-path-picker-btn:hover { background: var(--sp-accent-soft, #f7e8dd); }
+  .bz-sp-demo-card .bz-path-picker-btn--primary { border-color: transparent; background: var(--sp-accent, #c95a28); color: var(--sp-on-accent, #fff); }
+  .bz-sp-demo-card .bz-path-picker-btn--primary:hover { opacity: .88; background: var(--sp-accent, #c95a28); }
+
+  /* 原型演示专属：外观域主题卡切换用的显式主题 tokens（落域时由「面板外观」设置键 + styles.css 正式承载） */
+  .bz-sp-desk.bz-sp-tf-linen,
+  .bz-sp-mobile.bz-sp-tf-linen,
+  .bz-sp-mob-modal.bz-sp-tf-linen,
+  .theme-dark .bz-sp-desk.bz-sp-tf-linen,
+  .theme-dark .bz-sp-mobile.bz-sp-tf-linen,
+  .theme-dark .bz-sp-mob-modal.bz-sp-tf-linen {
+    --sp-bg: #f6f2e9; --sp-panel: #fffcf6; --sp-line: #e5dfcf; --sp-line-soft: #f2eee1;
+    --sp-ink: #2c2924; --sp-ink-2: #7a7466; --sp-ink-3: #aca595;
+    --sp-accent: #c95a28; --sp-accent-soft: #f7e8dd; --sp-on-accent: #fff;
+    --sp-radius: 12px; --sp-shadow: 0 1px 5px rgba(90,70,40,.06);
+    --sp-input-bg: #fffcf6; --sp-ctl-off: #dcd5c2; --sp-knob: #fff;
+  }
+  .bz-sp-desk.bz-sp-tf-dark,
+  .bz-sp-mobile.bz-sp-tf-dark,
+  .bz-sp-mob-modal.bz-sp-tf-dark,
+  .theme-dark .bz-sp-desk.bz-sp-tf-dark,
+  .theme-dark .bz-sp-mobile.bz-sp-tf-dark,
+  .theme-dark .bz-sp-mob-modal.bz-sp-tf-dark {
+    --sp-bg: #1b1b1f; --sp-panel: #242429; --sp-line: #35353c; --sp-line-soft: #2c2c32;
+    --sp-ink: #e8e8ec; --sp-ink-2: #a2a2ac; --sp-ink-3: #6a6a74;
+    --sp-accent: #eda75c; --sp-accent-soft: rgba(237,167,92,.14); --sp-on-accent: #1b1b1f;
+    --sp-radius: 10px; --sp-shadow: 0 6px 20px rgba(0,0,0,.25);
+    --sp-input-bg: #202024; --sp-ctl-off: #3c3c44; --sp-knob: #fff;
+  }
+  .bz-sp-desk.bz-sp-tf-celadon,
+  .bz-sp-mobile.bz-sp-tf-celadon,
+  .bz-sp-mob-modal.bz-sp-tf-celadon,
+  .theme-dark .bz-sp-desk.bz-sp-tf-celadon,
+  .theme-dark .bz-sp-mobile.bz-sp-tf-celadon,
+  .theme-dark .bz-sp-mob-modal.bz-sp-tf-celadon {
+    --sp-bg: #edf2ef; --sp-panel: #fbfdfc; --sp-line: #d5e0da; --sp-line-soft: #eef3f0;
+    --sp-ink: #22322b; --sp-ink-2: #5f7268; --sp-ink-3: #93a69b;
+    --sp-accent: #2e8b6e; --sp-accent-soft: #e0efe8; --sp-on-accent: #fff;
+    --sp-radius: 14px; --sp-shadow: 0 2px 10px rgba(34,80,60,.06);
+    --sp-input-bg: #fbfdfc; --sp-ctl-off: #cfdcd5; --sp-knob: #fff;
+  }
+  .bz-sp-desk.bz-sp-tf-mono,
+  .bz-sp-mobile.bz-sp-tf-mono,
+  .bz-sp-mob-modal.bz-sp-tf-mono,
+  .theme-dark .bz-sp-desk.bz-sp-tf-mono,
+  .theme-dark .bz-sp-mobile.bz-sp-tf-mono,
+  .theme-dark .bz-sp-mob-modal.bz-sp-tf-mono {
+    --sp-bg: #fafafa; --sp-panel: #ffffff; --sp-line: #e4e4e4; --sp-line-soft: #efefef;
+    --sp-ink: #141414; --sp-ink-2: #666666; --sp-ink-3: #9b9b9b;
+    --sp-accent: #141414; --sp-accent-soft: #f0f0f0; --sp-on-accent: #fff;
+    --sp-radius: 0px; --sp-shadow: none;
+    --sp-input-bg: #ffffff; --sp-ctl-off: #d9d9d9; --sp-knob: #fff;
+  }
 </style>
 </head>
-<body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark，壳内必须补一类才不透明 -->
-  <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="设置面板·桌面"></iframe></div>
-  <div id="mobHost" class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="设置面板·移动"></iframe></div>
+<body>
 
-  <div class="vbadge">设置面板 · 真行为单源预览（桌面=真 ui.ts 跑在 1120px，移动=396px M1 命令面板）
-    <button id="mobToggle">隐藏移动端</button>
-    <button id="reset">重置演示数据</button>
-    <span id="stResult"></span>
+<div class="demo-top">
+  <b>设置面板 · 评审原型</b>
+  <span class="sp">桌面 + 移动 · 亮暗跟随切换钮</span>
+  <button id="sp-reset-btn">重置演示数据</button>
+  <button id="sp-theme-btn">亮暗</button>
+</div>
+
+<div class="demo-stage">
+  <div class="demo-desk-wrap">
+    <p class="demo-col-title">桌面端 · OVERLAY 面板（P1 系统面板布局）</p>
+    <div id="sp-demo-desk" class="bz-sp-desk"></div>
   </div>
 
-<script src="./prototype-icons.js"></script>
-<script>
-(function () {
-  /* ==================== 壳基座（仅外景）：两个真行为 iframe + 重置 ====================
-   * 行为全部在 iframe 内跑真 ui.ts（prototype-behavior.js）；本页只做：
-   *  - 重置演示数据（清 bz-sim:* 后重载 iframe——设置单例/vault 种子由 fake-sim 重播）
-   *  - 自检（?selftest=1）：经 iframe contentWindow 访问真 DOM
-   */
-  const SIM_SETTINGS_KEY = 'bz-sim:bz-settings.json';
-  const clearSim = () => {
-    const doomed = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith('bz-sim:')) doomed.push(k);
-    }
-    doomed.forEach((k) => localStorage.removeItem(k));
-  };
+  <div>
+    <p class="demo-col-title">移动端 · M1 命令面板 + 域设置弹窗（点域查看弹窗）</p>
+    <div class="demo-phone">
+      <div id="sp-demo-mob" class="bz-sp-mobile"></div>
+    </div>
+  </div>
+</div>
 
-  const dtFrame = () => document.querySelector('#dtHost iframe');
-  const mobFrame = () => document.querySelector('#mobHost iframe');
-  const dtDoc = () => dtFrame().contentDocument;
-  const mobDoc = () => mobFrame().contentDocument;
-  // 轮询现取 contentDocument：iframe 加载前后 document 引用会替换（about:blank → 真实文档），
-  // 不能缓存旧引用等面板——每次现查，跨文档访问本身同源安全。
-  const waitFrame = (getDoc, sel) => new Promise((res, rej) => {
-    const started = Date.now();
-    const tries = () => {
-      try {
-        const doc = getDoc();
-        if (doc && doc.querySelector(sel)) return res(doc);
-        if (Date.now() - started > 25000) return rej(new Error('iframe 面板超时'));
-        setTimeout(tries, 150);
-      } catch (e) { setTimeout(tries, 150); }
-    };
-    tries();
-  });
-
-  document.querySelector('#mobToggle').addEventListener('click', () => {
-    const m = document.querySelector('#mobHost');
-    const hidden = m.style.display === 'none';
-    m.style.display = hidden ? '' : 'none';
-    document.querySelector('#mobToggle').textContent = hidden ? '隐藏移动端' : '显示移动端';
-  });
-
-  document.querySelector('#reset').addEventListener('click', () => {
-    clearSim();
-    location.reload();
-  });
-
-  /* ==================== 自检（?selftest=1）：真行为 DOM 断言（经 iframe） ==================== */
-  if (location.search.includes('selftest')) {
-    window.__st = { pass: 0, fail: [] };
-    const t = (name, cond) => cond ? window.__st.pass++ : window.__st.fail.push(name);
-    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-    /** 轮询断言面出现（防异步渲染时序脆断）：ok() 返回真值即通过 */
-    const waitFor = (ok, ms = 6000) => new Promise((res) => {
-      const started = Date.now();
-      const tries = () => {
-        let v = null;
-        try { v = ok(); } catch { v = null; }
-        if (v) return res(v);
-        if (Date.now() - started > ms) return res(null);
-        setTimeout(tries, 100);
-      };
-      tries();
-    });
-    (async () => {
-      const res = document.querySelector('#stResult');
-      try {
-        // 基线检查：自检会改设置（diarySkin/diaryDirectory/cinemaSortMode/belongingsMobileDefaultFullscreen）。
-        // 残留上次运行（键在）则清 bz-sim:* 重载一次。headless 全新 profile 天然干净；
-        // 浏览器手动重复跑 selftest 也能自清理（壳可重复）。
-        const dirtyKeys = ['diarySkin', 'diaryDirectory', 'cinemaSortMode', 'belongingsMobileDefaultFullscreen'];
-        let base = {};
-        try { base = JSON.parse(localStorage.getItem(SIM_SETTINGS_KEY) || '{}'); } catch { base = {}; }
-        if (dirtyKeys.some((k) => k in base)) {
-          if (!location.search.includes('reset=1')) {
-            clearSim();
-            location.search = '?selftest=1&reset=1';
-            return;
-          }
-        }
-        const dd = await waitFrame(dtDoc, '.bz-sp-desk');
-        const md = await waitFrame(mobDoc, '.bz-sp-mobile');
-        res.textContent = '…';
-        const dt = (sel) => dd.querySelector(sel);
-        const mob = (sel) => md.querySelector(sel);
-        const sim = () => dtFrame().contentWindow.BZW_settings_panel.__simSettings();
-        // 移动 iframe 是独立 JS realm：自己的设置内存单例（经 localStorage 持久层与桌面同源共享）
-        const simMob = () => mobFrame().contentWindow.BZW_settings_panel.__simSettings();
-        const dtAll = (sel) => [...dd.querySelectorAll(sel)];
-        const mobAll = (sel) => [...md.querySelectorAll(sel)];
-        const badgeOf = (id) => dt(`.bz-sp-nav-item[data-sp-domain="${id}"] .bz-sp-nav-count`)?.textContent || '';
-        const waitPaneGroups = (min) => waitFor(() => {
-          const gs = dtAll('.bz-sp-pane .bz-sp-group');
-          return gs.length >= min ? gs : null;
-        });
-
-        /* ---------- CSS 生效（壳四链防 404 再犯）：外链表已加载、规则非空、域样式真命中 ---------- */
-        const sheetsOf = (doc) => [...doc.styleSheets].filter((s) => s.href).length;
-        const rulesOf = (doc) => [...doc.styleSheets].reduce((n, s) => { try { return n + s.cssRules.length; } catch { return n; } }, 0);
-        t('桌面CSS外链≥4', sheetsOf(dd) >= 4);
-        t('桌面CSS规则非空', rulesOf(dd) > 50);
-        t('桌面面板底色非透明（域 tokens 命中）', getComputedStyle(dt('.bz-sp-desk')).backgroundColor !== 'rgba(0, 0, 0, 0)');
-        t('移动CSS外链≥4', sheetsOf(md) >= 4);
-        t('移动CSS规则非空', rulesOf(md) > 50);
-        t('移动面板底色非透明', getComputedStyle(mob('.bz-sp-mobile')).backgroundColor !== 'rgba(0, 0, 0, 0)');
-
-        /* ---------- 桌面：壳结构 + 徽标（schema 预载回填）+ 默认域 ---------- */
-        t('桌面面板开', !!dt('#bz-settings-panel-popup.bz-sp-desk'));
-        t('桌面导航域≥16', dtAll('.bz-sp-nav-item').length >= 16);
-        t('导航图标兑现（fake setIcon SVG）', !!dt('.bz-sp-nav-item .bz-sp-nav-ic svg'));
-        t('头行搜索框在场', !!dt('.bz-sp-search .bz-input'));
-        await waitFor(() => badgeOf('global') !== '·' && badgeOf('global') !== '');
-        t('通用徽标=1', badgeOf('global') === '1');
-        t('设置徽标=2（外观独立域）', badgeOf('appearance') === '2');
-        // AI=9：4 常显（服务商/模型名称/上下文/最大输出）+ deepseek 密钥行（seed aiProvider=deepseek，
-        // visibleWhen 门控放行）+ 采样参数组 4
-        t('AI徽标=9（含 seed deepseek 密钥行门控放行）', badgeOf('ai') === '9');
-        t('归物本徽标=3（移动端组桌面门控不计）', badgeOf('belongings') === '3');
-        t('默认域=通用（数据存储路径组）', await waitFor(() => dt('.bz-sp-pane .bz-sp-group-name')?.textContent === '数据存储路径') !== null);
-        t('通用路径行选择按钮（自绘 bz-sp-btn）', !!dt('.bz-sp-pane .bz-sp-path-btn.bz-sp-btn'));
-
-        /* ---------- 桌面：搜索过滤域导航 ---------- */
-        const searchIn = dt('.bz-sp-search .bz-input');
-        searchIn.value = '番茄';
-        searchIn.dispatchEvent(new Event('input', { bubbles: true }));
-        t('搜索过滤域导航', dtAll('.bz-sp-nav-item').length === 1 && dt('.bz-sp-nav-item').textContent.includes('番茄钟'));
-        searchIn.value = '';
-        searchIn.dispatchEvent(new Event('input', { bubbles: true }));
-
-        /* ---------- 桌面：「设置」域外观组（经纬/晨昏 各一卡） ---------- */
-        dt('.bz-sp-nav-item[data-sp-domain="appearance"]').click();
-        await waitPaneGroups(1);
-        const apPicks = () => dtAll('.bz-sp-pane .bz-sp-cardpick');
-        await waitFor(() => apPicks().length === 2 && apPicks()[0].querySelectorAll('.bz-sp-cardpick-card').length === 1);
-        t('设置域外观组两卡组', apPicks().length === 2);
-        t('布局卡=经纬', apPicks()[0].textContent.includes('经纬'));
-        t('主题卡=晨昏', apPicks()[1].textContent.includes('晨昏'));
-        t('空值回退首卡选中', apPicks()[0].querySelector('.bz-sp-cardpick-card').classList.contains('is-on') &&
-          apPicks()[1].querySelector('.bz-sp-cardpick-card').classList.contains('is-on'));
-
-        /* ---------- 桌面：日记本——choiceCards 联动过滤 + 键直绑 + dir-picker 真聚合 ---------- */
-        dt('.bz-sp-nav-item[data-sp-domain="diary"]').click();
-        await waitPaneGroups(3);
-        const diaryPicks = () => dtAll('.bz-sp-pane .bz-sp-cardpick');
-        await waitFor(() => diaryPicks().length === 2);
-        t('日记主题卡被布局联动过滤为空（diarySkin 未设）', diaryPicks()[1].querySelectorAll('.bz-sp-cardpick-card').length === 0);
-        diaryPicks()[0].querySelector('.bz-sp-cardpick-card').click();
-        t('布局卡键直绑落内存设置（diarySkin=default）', sim().diarySkin === 'default');
-        // choiceCards 不热重渲（真行为口径）：切走再切回，联动过滤放行主题单卡
-        dt('.bz-sp-nav-item[data-sp-domain="ai"]').click();
-        dt('.bz-sp-nav-item[data-sp-domain="diary"]').click();
-        await waitPaneGroups(3);
-        await waitFor(() => diaryPicks().length === 2 && diaryPicks()[1].querySelectorAll('.bz-sp-cardpick-card').length === 1);
-        t('布局落盘后主题行单卡（象牙白放行）', diaryPicks()[1].querySelector('.bz-sp-cardpick-card')?.textContent.includes('象牙白') === true);
-
-        // dir-picker：日记目录 → 打开（先快速首渲染后 adapter 补齐）
-        const diaryRow = () => dtAll('.bz-sp-pane .bz-sp-set-row').find((r) => r.querySelector('.bz-sp-set-name')?.textContent === '日记目录');
-        await waitFor(() => diaryRow());
-        diaryRow().querySelector('.bz-sp-path-btn').click();
-        const pickerRows = () => dtAll('.bz-sp-picker-mask .bz-sp-picker-row');
-        await waitFor(() => dt('.bz-sp-picker-mask'));
-        t('dir-picker 打开（挂 body 弹层）', !!dt('.bz-sp-picker-mask .bz-sp-picker'));
-        t('dir-picker 空选面包屑（未设置）', dt('.bz-sp-picker-crumb')?.textContent.includes('未设置') === true);
-        await waitFor(() => pickerRows().length >= 10 && pickerRows().some((r) => r.textContent.includes('信件')));
-        t('dir-picker 降级聚合目录（库根+文件父目录+adapter 补齐）',
-          pickerRows().length >= 10 && pickerRows().some((r) => r.textContent.includes('（库根目录）')) &&
-          pickerRows().some((r) => r.textContent.includes('信件')) &&
-          pickerRows().some((r) => r.textContent.includes('.ENCRYPT')));
-        pickerRows().find((r) => r.textContent.includes('日记') && r.textContent.includes('我的 /')).click();
-        t('dir-picker 点选高亮+面包屑跟随', dt('.bz-sp-picker-crumb').textContent.includes('我的') && dt('.bz-sp-picker-crumb').textContent.includes('日记'));
-        dt('.bz-sp-picker-mask .bz-sp-picker-foot .bz-sp-btn--primary').click();
-        await waitFor(() => diaryRow().querySelector('.bz-sp-chip'));
-        t('dir-picker 选用落 chip', diaryRow().querySelector('.bz-sp-chip')?.textContent === '我的/日记');
-        t('路径键直绑落内存设置（diaryDirectory）', sim().diaryDirectory === '我的/日记');
-        t('dir-picker 已关', !dt('.bz-sp-picker-mask'));
-
-        /* ---------- 桌面：影院——下拉键直绑 + 主题联动单卡（seed cinemaStyle=midnight） ---------- */
-        dt('.bz-sp-nav-item[data-sp-domain="cinema"]').click();
-        await waitPaneGroups(1);
-        await waitFor(() => dtAll('.bz-sp-pane .bz-sp-cardpick').length === 2);
-        t('影院主题卡联动单卡（夜幕）', dtAll('.bz-sp-pane .bz-sp-cardpick')[1].querySelectorAll('.bz-sp-cardpick-card').length === 1 &&
-          dtAll('.bz-sp-pane .bz-sp-cardpick')[1].textContent.includes('夜幕'));
-        const sortRow = () => dtAll('.bz-sp-pane .bz-sp-set-row').find((r) => r.querySelector('.bz-sp-set-name')?.textContent === '默认排序');
-        await waitFor(() => sortRow());
-        sortRow().querySelector('.bz-select').dispatchEvent(new MouseEvent('click', { bubbles: true }));
-        const rateOpt = await waitFor(() => dtAll('.bz-select-menu').map((m) => [...m.querySelectorAll('.bz-select-item')]).flat().find((o) => o.textContent.includes('按评分')));
-        rateOpt.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-        t('下拉键直绑落内存设置（cinemaSortMode=rating）', sim().cinemaSortMode === 'rating');
-        t('下拉触发器值跟随', sortRow().querySelector('.bz-select-val')?.textContent === '按评分');
-
-        /* ---------- 移动：M1 命令面板 + 域设置弹窗 + 移动端组沉底 ---------- */
-        t('移动面板开', !!mob('#bz-settings-panel-popup.bz-sp-mobile'));
-        t('移动头行关闭钮图标兑现', !!mob('.bz-sp-mob-close svg'));
-        t('移动分组列表（基础/记录/媒体与知识/工具）', mobAll('.bz-sp-mob-sec').filter((s) => ['基础', '记录', '媒体与知识', '工具'].includes(s.textContent)).length === 4);
-        const mobBelItem = () => mobAll('.bz-sp-mob-item').find((b) => b.querySelector('.bz-sp-mob-name')?.textContent === '归物本');
-        mobBelItem().click();
-        await waitFor(() => md.querySelector('.bz-sp-mob-modal'));
-        const mobGroups = () => [...md.querySelectorAll('.bz-sp-mob-modal .bz-sp-group')];
-        await waitFor(() => mobGroups().length >= 3);
-        t('移动弹窗渲染归物本全部组（含移动端组）', mobGroups().length === 3);
-        t('移动端组沉底（弹窗末组）', mobGroups()[mobGroups().length - 1].querySelector('.bz-sp-group-name')?.textContent === '移动端');
-        const mfsSw = mobGroups()[mobGroups().length - 1].querySelector('.bz-sw');
-        mfsSw.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-        t('移动端开关键直绑落内存（移动 realm 设置单例）', simMob().belongingsMobileDefaultFullscreen === true);
-        const mobMask = md.querySelector('.bz-sp-mob-modal').previousElementSibling;
-        mobMask.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-        t('移动弹窗遮罩点击关闭', !md.querySelector('.bz-sp-mob-modal'));
-
-        // 移动搜索：域段 + 设置项段（schemaRowCache 预载）
-        const mobSearch = mob('.bz-sp-mob-search .bz-input');
-        mobSearch.value = 'AI';
-        mobSearch.dispatchEvent(new Event('input', { bubbles: true }));
-        await waitFor(() => mobAll('.bz-sp-mob-sec').some((s) => s.textContent.startsWith('设置项')));
-        t('移动搜索「设置项」段在场', mobAll('.bz-sp-mob-sec').some((s) => s.textContent.startsWith('设置项')));
-        t('移动设置项命中行 kind 徽标', mobAll('.bz-sp-mob-kind').length > 0);
-
-        document.title = window.__st.fail.length
-          ? 'SELFTEST FAIL ' + window.__st.fail.join(',')
-          : `SELFTEST OK ${window.__st.pass}/${window.__st.pass + window.__st.fail.length}`;
-        res.textContent = window.__st.fail.length ? '自检失败' : `自检通过 ${window.__st.pass}`;
-        res.className = window.__st.fail.length ? 'bad' : 'ok';
-      } catch (err) {
-        document.title = 'SELFTEST ERR ' + (err && err.message || err);
-        res.textContent = '自检异常';
-        res.className = 'bad';
-      }
-    })();
-  }
-})();
-</script>
+<script src="./prototype-data.js"></script>
+<script src="./prototype-render.js"></script>
+<script src="./prototype.app.js"></script>
 </body>
 </html>
