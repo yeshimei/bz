@@ -63,3 +63,10 @@ src/settings-panel/
 - esbuild globalName 禁连字符（`BZR_settings-panel` 编译炸）——build-preview 改为 `-`→`_` sanitize，purity 守卫同步。
 - mountIcons 会 replaceWith 载体元素，内联 style 会丢——下拉箭头旋转改由 styles.css 承载。
 - 分组卡图标契约：旧实现 setIcon 挂在 `.bz-sp-group-icon` 元素自身（data-icon 在上）——纯层须出单元素占位（iconSpan(icon,'bz-sp-group-icon)），不能再包一层 span，否则 data-icon 断言红。
+
+## Review P2 处置（合并批补记）
+
+- 演示壳移动搜索 bindMob/renderMobList 裸调 ReferenceError（master 既有 bug）→ 已修：createApp 返回对象命名 api，搜索分支走 api.renderMobList + api.bindMobList。
+- 补测试断言（.hit 高亮/.bz-sp-set-cards 同构/data-sp-* 契约）→ 本批随总门禁加入 tests/settings-panel.test.ts。
+- 演示壳搜索只搜域不搜设置项（插件真实现已覆盖）→ 演示壳限制，知悉。
+- number 输入 clamp 后显示回写（落盘值与旧版一致）→ 方向正确，知悉。

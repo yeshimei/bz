@@ -5,7 +5,7 @@
  */
 import {
   esc, iconSpan, DOMAINS, DOMAIN_MAP, DOMAIN_DOT,
-  buildDots, buildNotes, buildPreviews, dotOf, riverCountText,
+  buildDots, buildNotes, buildPreviews, dotOf, riverCountText, memoIdOf,
   type RiverData, type RiverWeekDay,
 } from '../../shared';
 
@@ -80,7 +80,7 @@ export function flowHtml(data: RiverData, view: string): string {
   const body = day.events.map((e, i) => {
     const note = notes.find((n) => n.index === i);
     const lastDiary = i === day.events.length - 1 && note && note.text.indexOf('日记') >= 0 ? ' bz-home-ev--warn' : '';
-    const memoId = e.domain === 'todo' ? 'memo' : e.domain;
+    const memoId = memoIdOf(e.domain);
     const dmColor = DOMAIN_DOT[memoId] ?? '#8a8f99';
     const dmName = DOMAIN_MAP.get(memoId)?.name ?? e.domain;
     const dmIcon = DOMAIN_MAP.get(memoId)?.icon ?? '';

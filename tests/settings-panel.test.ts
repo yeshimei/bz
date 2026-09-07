@@ -793,3 +793,26 @@ describe('choiceCards 视觉卡片行（issue 210）', () => {
     expect(cards[0].classList.contains('is-on')).toBe(false);
   });
 });
+
+describe('原型对齐回归锚点（issue 244 review P2）', () => {
+  it('桌面搜索命中高亮：ui.ts renderNav 挂 .hit（原型同构，防回退）', async () => {
+    const { readFileSync } = await import('node:fs');
+    const ui = readFileSync('src/settings-panel/ui.ts', 'utf8');
+    expect(ui).toMatch(/classList\.toggle\('hit'/);
+    expect(ui).toContain('bz-sp-set-row');
+  });
+
+  it('choiceCards 容器同构：纯层 rowHtml 出 .bz-sp-set-cards（原型口径）', async () => {
+    const { readFileSync } = await import('node:fs');
+    const shared = readFileSync('src/settings-panel/shared.ts', 'utf8');
+    expect(shared).toContain('bz-sp-set-cards');
+  });
+
+  it('path/domain 契约钩子在位（data-sp-path / data-sp-domain）', async () => {
+    const { readFileSync } = await import('node:fs');
+    const shared = readFileSync('src/settings-panel/shared.ts', 'utf8');
+    const layouts = readFileSync('src/settings-panel/layouts/jingwei/render.ts', 'utf8');
+    expect(shared).toContain('data-sp-path');
+    expect(layouts.match(/data-sp-domain/g)?.length).toBeGreaterThanOrEqual(3);
+  });
+});

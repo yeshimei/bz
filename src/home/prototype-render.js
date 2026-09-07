@@ -312,7 +312,7 @@ var BZR_home = (() => {
       var _a2, _b, _c, _d, _e;
       const note = notes.find((n) => n.index === i);
       const lastDiary = i === day.events.length - 1 && note && note.text.indexOf("日记") >= 0 ? " bz-home-ev--warn" : "";
-      const memoId = e.domain === "todo" ? "memo" : e.domain;
+      const memoId = memoIdOf(e.domain);
       const dmColor = (_a2 = DOMAIN_DOT[memoId]) != null ? _a2 : "#8a8f99";
       const dmName = (_c = (_b = DOMAIN_MAP.get(memoId)) == null ? void 0 : _b.name) != null ? _c : e.domain;
       const dmIcon = (_e = (_d = DOMAIN_MAP.get(memoId)) == null ? void 0 : _d.icon) != null ? _e : "";
