@@ -16,7 +16,7 @@
 
 原型历史版本与评审过程留在 `.zcode/ui-prototypes/`（不入 git）；域内 `prototype.html` 始终是「当前定稿」。
 
-## markup 单源（render.ts 范式，ADR-0104——已迁：belongings、bookshelf；favorites/home 待迁）
+## markup 单源（render.ts 范式，ADR-0104——已迁全六域：belongings、bookshelf、favorites、home、cinema、settings-panel）
 
 样式单源之上再进一步：**已迁移域的 markup 也单源**。域 `render.ts`（渲染纯层）是面板/弹窗 HTML、视图口径计算、行操作序列的唯一事实源：
 
