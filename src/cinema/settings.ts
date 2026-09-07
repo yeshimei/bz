@@ -9,6 +9,31 @@ export function cinemaSettingsSchema(): SettingsSchema {
   return {
     groups: [
       {
+        // 外观组（issue 246）：布局行收编真键 cinemaStyle——午夜场上岸单卡（gaz/booth 未实现不暴露，
+        // 非法值域内回落午夜场，重开面板生效）；主题行占位，域消费待皮肤设计时接入
+        icon: 'palette',
+        name: '外观',
+        rows: [
+          {
+            type: 'choiceCards',
+            name: '布局',
+            binding: { key: 'cinemaStyle' },
+            options: [
+              { value: 'midnight', label: '午夜场', prevClass: 'bz-sp-prev-panel' },
+            ],
+          },
+          {
+            type: 'choiceCards',
+            name: '主题',
+            binding: { key: 'cinemaSkinTheme' },
+            layoutKey: 'cinemaStyle',
+            options: [
+              { value: 'nightfall', label: '夜幕', layout: 'midnight', prevClass: 'bz-sp-prev-nightfall' },
+            ],
+          },
+        ],
+      },
+      {
         icon: 'folder-open',
         name: '目录',
         rows: [

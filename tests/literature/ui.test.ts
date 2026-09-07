@@ -592,7 +592,7 @@ describe('文献盒 UI（ticket 136）', () => {
     expect(hList.querySelector('.bz-bili-status')).toBeNull(); // 无成功徽标
     // 清空历史（设置面板按钮行触发）
     const schema = literatureSettingsSchema({ onClearHistory: () => (ui as any).confirmClearHistory() });
-    (schema.groups[4].rows[0] as any).onClick({});
+    (schema.groups[5].rows[0] as any).onClick({});
     await vi.waitFor(() => expect(document.getElementById('__shared_confirm_ok__')).toBeTruthy());
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     await vi.waitFor(async () => {
@@ -833,23 +833,29 @@ ${summary ?? ''}`);
 
   // ==================== 设置 schema 与设置弹窗 ====================
 
-  it('literatureSettingsSchema：五组键齐全；清空历史 button 行回调', () => {
+  it('literatureSettingsSchema：六组键齐全（issue 246 补外观组）；清空历史 button 行回调', () => {
     const schema = literatureSettingsSchema({ onClearHistory: () => {} });
-    expect(schema.groups).toHaveLength(5);
-    expect(schema.groups[0].name).toBe('目录与分类');
-    expect(schema.groups[1].name).toBe('视频处理');
-    expect(schema.groups[2].name).toBe('工具');
-    expect(schema.groups[3].name).toBe('移动端');
-    expect(schema.groups[4].name).toBe('维护');
+    expect(schema.groups).toHaveLength(6);
+    expect(schema.groups[0].name).toBe('外观');
+    expect(schema.groups[1].name).toBe('目录与分类');
+    expect(schema.groups[2].name).toBe('视频处理');
+    expect(schema.groups[3].name).toBe('工具');
+    expect(schema.groups[4].name).toBe('移动端');
+    expect(schema.groups[5].name).toBe('维护');
+    // 外观组两行契约（issue 246 占位单卡）
+    const [layout, theme] = schema.groups[0].rows as any[];
+    expect(layout.binding).toMatchObject({ key: 'literatureSkin' });
+    expect(theme.binding).toMatchObject({ key: 'literatureSkinTheme' });
+    expect(theme.layoutKey).toBe('literatureSkin');
     // 视频处理组七项
-    const rows2 = schema.groups[1].rows.map((r: any) => r.name);
+    const rows2 = schema.groups[2].rows.map((r: any) => r.name);
     expect(rows2).toEqual(['详细进度提示', '保留视频原件', '下载清晰度', '遇错即停', '输出目录', '压缩', '压缩质量（CRF）']);
     // 工具组六项
-    expect(schema.groups[2].rows).toHaveLength(6);
+    expect(schema.groups[3].rows).toHaveLength(6);
     // 清空历史回调
     const cleared = vi.fn();
     const schema2 = literatureSettingsSchema({ onClearHistory: cleared });
-    const row = schema2.groups[4].rows[0] as any;
+    const row = schema2.groups[5].rows[0] as any;
     expect(row.type).toBe('button');
     expect(row.buttonText).toBe('清空历史');
     row.onClick({});

@@ -26,6 +26,15 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
   return {
     groups: [
       {
+        // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+        icon: 'palette',
+        name: '外观',
+        rows: [
+          { type: 'choiceCards', name: '布局', binding: { key: 'reviewSkin' }, options: [{ value: 'default', label: '三区队列', prevClass: 'bz-sp-prev-panel' }] },
+          { type: 'choiceCards', name: '主题', binding: { key: 'reviewSkinTheme' }, layoutKey: 'reviewSkin', options: [{ value: 'sage', label: '苔绿', layout: 'default', prevClass: 'bz-sp-prev-sage' }] },
+        ],
+      },
+      {
         icon: 'bell',
         name: '检查提醒',
         rows: [

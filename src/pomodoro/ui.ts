@@ -464,6 +464,15 @@ export function pomodoroSettingsSchema(): SettingsSchema {
   return {
     groups: [
       {
+        // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+        icon: 'palette',
+        name: '外观',
+        rows: [
+          { type: 'choiceCards', name: '布局', binding: { key: 'pomodoroSkin' }, options: [{ value: 'default', label: '计时盘', prevClass: 'bz-sp-prev-panel' }] },
+          { type: 'choiceCards', name: '主题', binding: { key: 'pomodoroSkinTheme' }, layoutKey: 'pomodoroSkin', options: [{ value: 'tomato', label: '番茄', layout: 'default', prevClass: 'bz-sp-prev-tomato' }] },
+        ],
+      },
+      {
         icon: 'timer',
         name: '时间方案',
         rows: [
