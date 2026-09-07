@@ -1,10 +1,10 @@
 /**
- * 设置面板域内原型 · 演示壳（prototype.app.js）
- * markup 单源（ADR-0104）：面板骨架/导航/行/组卡/控件 HTML 全部出自 render.ts
- * （经 prototype-render.js 挂 window.BZR_settings_panel）——本壳只留演示层：
- * 演示数据/localStorage 值层、演示绑定、自绘弹层（文件夹/模型选择器）、toast、
- * 主题类同步、评审钩子与自检。插件版对应行为层 = ui.ts / renderer.ts。
- * 桌面面板 + 移动手机框两实例共享同一渲染内核；壳层差异见 prototype-first.md。
+ * 设置面板域内原型 · 演示渲染器（prototype.app.js）
+ * markup 单源（ADR-0104，2026-09-07 拍板以原型为主迁移）：桌面面板 + 移动手机框两实例，
+ * 组件/行/组/子弹窗 HTML 全出自 window.BZR_settings_panel（render.ts 纯层构建产物，
+ * 从本壳历史版逐字提取——原型是真理，render.ts 是其映射实现）；
+ * 本壳只留演示层：值层（localStorage delta）、事件绑定、演示弹层行为、亮暗钮、selftest。
+ * 值层 = 演示假值 + localStorage delta（bz-sp-proto-*），不触真实 vault。
  */
 (function () {
   'use strict';
@@ -27,7 +27,7 @@
     localStorage.setItem(LS_CAT, JSON.stringify(catDelta));
   }
 
-  /* ---------- 图标兑现（壳层差异表：原型用内联 lucide 兑现 <i data-lucide> 占位） ---------- */
+  /* ---------- 壳基座：mountIcons（内联 SVG，对齐 core/ui icons.ts；markup 里 icon 占位由此兑现） ---------- */
   const ICONS = {
     search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
     settings: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
@@ -76,28 +76,24 @@
     check: '<path d="M20 6 9 17l-5-5"/>',
   };
   function mountIcons(root) {
+    if (!root) return;
     root.querySelectorAll('i[data-lucide]').forEach((el) => {
-      const name = el.getAttribute('data-lucide') || '';
-      const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      s.setAttribute('class', el.className || 'bz-ic');
-      s.setAttribute('viewBox', '0 0 24 24');
-      s.setAttribute('fill', 'none');
-      s.setAttribute('stroke', 'currentColor');
-      s.setAttribute('stroke-width', '1.8');
-      s.setAttribute('stroke-linecap', 'round');
-      s.setAttribute('stroke-linejoin', 'round');
-      s.innerHTML = ICONS[name] || '';
-      el.replaceWith(s);
+      const d = ICONS[el.dataset.lucide];
+      if (d && !el.firstChild) {
+        el.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>';
+      }
     });
   }
+  /** 兜底直拼（mountIcons 前需要 outerHTML 的少数场景） */
   function icon(name, cls) {
-    const t = document.createElement('div');
-    t.innerHTML = R.iconSpan(name, cls && cls !== 'bz-ic' ? cls.replace(/^bz-ic\s*/, '') : '');
-    mountIcons(t);
-    return t.firstElementChild;
+    const el = document.createElement('i');
+    el.setAttribute('data-lucide', name);
+    el.className = cls || 'bz-ic';
+    mountIcons(el.parentNode || el);
+    return el;
   }
 
-  /* ---------- 值通道（演示假值 + localStorage delta） ---------- */
+  /* ---------- 值通道 ---------- */
   function rowRead(r) {
     const k = r.k || '';
     if (k === '__fn:aiModel') {
@@ -160,7 +156,7 @@
     return out;
   }
 
-  /* ---------- 主题类同步：移除全部 bz-sp-tf-* 后挂当前主题（演示件） ---------- */
+  /* ---------- 主题类同步：移除全部 bz-sp-tf-* 后挂当前主题 ---------- */
   const THEME_KEYS = ['linen', 'celadon', 'dark', 'mono'];
   function syncThemeClass(rootEl, v) {
     const panel = rootEl.closest ? (rootEl.closest('.bz-sp-desk') || rootEl.closest('.bz-sp-mobile') || rootEl) : rootEl;
@@ -168,7 +164,7 @@
     if (v && THEME_KEYS.indexOf(v) >= 0) panel.classList.add('bz-sp-tf-' + v);
   }
 
-  /* ---------- 弹层：文件夹选择器 / 模型选择器 / toast（原型演示专属，插件版为 dir-picker.ts 与 custom 行内嵌按钮） ---------- */
+  /* ---------- 弹层：文件夹选择器 / 模型选择器 / toast ---------- */
   function toast(root, msg) {
     let t = root.querySelector('.bz-sp-demo-toast');
     if (!t) {
@@ -182,6 +178,355 @@
     t.__tm = setTimeout(() => t.classList.remove('show'), 2200);
   }
 
+  /* ---------- 子弹窗：共享确认框 / UP 主名单 / 日记解析检测 / 数据体检 / 卡片目录选择器 ----------
+   * 演示插件真实可达子弹层（A 组清单）：统一居中卡形态（复用 .bz-sp-picker-mask 遮罩与皮 tokens），
+   * 类名对齐插件对应实现（.bz-path-picker-* / flow 确认语义），评审视觉与插件一致。 */
+
+  /** 通用居中卡片弹层：mask 挂 host（面板作用域，同 openDirPicker）；返回 { mask, card, close } */
+  function openDemoCard(host, opts) {
+    const mask = document.createElement('div');
+    mask.className = 'bz-sp-picker-mask';
+    const card = document.createElement('div');
+    card.className = 'bz-sp-demo-card';
+    if (opts.width) card.style.maxWidth = opts.width;
+    const close = (v) => { mask.remove(); if (opts.onClose) opts.onClose(v); };
+    mask.addEventListener('click', (e) => { if (e.target === mask) close(undefined); });
+    host.appendChild(mask);
+    mask.appendChild(card);
+    return { mask, card, close };
+  }
+
+  /** 共享确认框（对齐 core/flow-dialog 语义：h4 标题 + message + 取消/确认；遮罩/Esc = 取消） */
+  function confirmDialog(host, opts) {
+    const { mask, card, close } = openDemoCard(host, { width: 'min(440px, 86%)', onClose: opts.onCancel });
+    card.classList.add('bz-sp-confirm');
+    card.innerHTML = R.confirmHtml(opts);
+    const [cancel, ok] = card.querySelectorAll('.bz-sp-confirm-actions .bz-sp-btn');
+    cancel.addEventListener('click', () => close(undefined));
+    ok.addEventListener('click', () => {
+      close('ok');
+      if (opts.onOk) opts.onOk();
+    });
+    return { close, el: card };
+  }
+
+  /* ---------- UP 主名单管理弹窗（对齐插件 openUpManagerModal：添加/Cookie/名单三区） ---------- */
+  let upManagerUps = ['483421584', '1637835414', '1017844864'];
+  const UP_NAMES = { '483421584': '影视飓风', '1637835414': '老师好我叫何同学', '1017844864': '智能路障' };
+  function openUpManager(host, onChanged) {
+    const { mask, card, close } = openDemoCard(host, { width: 'min(560px, 92%)' });
+    card.classList.add('bz-sp-upmgr');
+    const head = document.createElement('div');
+    head.className = 'bz-sp-demo-card-head';
+    const t = document.createElement('b');
+    t.textContent = 'UP 主名单管理';
+    head.appendChild(t);
+    const body = document.createElement('div');
+    body.className = 'bz-sp-demo-card-body';
+    const redraw = () => {
+      body.innerHTML = '';
+      // 添加区
+      const addHolder = document.createElement('div');
+      addHolder.innerHTML = R.upmgrAddRowHtml();
+      const add = addHolder.firstElementChild;
+      const inp = add.querySelector('input');
+      const addBtn = add.querySelector('.bz-sp-btn');
+      addBtn.addEventListener('click', () => {
+        const raw = (inp.value || '').trim();
+        if (!raw) return;
+        const m = raw.match(/(?:space\.bilibili\.com\/|uid=)(\d+)/) || raw.match(/^\d+$/);
+        const uid = m ? m[1] || m[0] : null;
+        if (!uid) { toast(host, '无法识别 UID，请粘贴主页链接'); return; }
+        if (upManagerUps.includes(uid)) { toast(host, '该 UP 主已在名单中'); return; }
+        upManagerUps = [uid, ...upManagerUps].slice(0, 50);
+        if (onChanged) onChanged();
+        redraw();
+        toast(host, '已添加 UP 主 ' + uid);
+      });
+      body.appendChild(add);
+      // 名单列表区（mock：头像占位省略，仅名字 + UID + 移除）
+      const list = document.createElement('div');
+      list.className = 'bz-sp-upmgr-list';
+      if (!upManagerUps.length) {
+        const empty = document.createElement('div');
+        empty.className = 'bz-sp-picker-row';
+        empty.style.opacity = '0.55';
+        empty.textContent = '暂无跟踪 UP 主，在上方粘贴主页链接或视频链接添加';
+        list.appendChild(empty);
+      }
+      upManagerUps.forEach((uid) => {
+        const rowEl = document.createElement('div');
+        rowEl.innerHTML = R.upmgrItemHtml(UP_NAMES[uid] || ('UP ' + uid), uid);
+        const row = rowEl.firstElementChild;
+        const del = row.querySelector('.bz-sp-btn');
+        del.addEventListener('click', () => {
+          upManagerUps = upManagerUps.filter((u) => u !== uid);
+          if (onChanged) onChanged();
+          redraw();
+          toast(host, '已移除 UP 主 ' + uid);
+        });
+        list.appendChild(row);
+      });
+      body.appendChild(list);
+    };
+    const foot = document.createElement('div');
+    foot.className = 'bz-sp-picker-foot';
+    const done = document.createElement('button');
+    done.className = 'bz-sp-btn bz-sp-btn--primary'; done.textContent = '完成';
+    done.addEventListener('click', () => close('ok'));
+    foot.appendChild(done);
+    redraw();
+    card.append(head, body, foot);
+  }
+
+  /* ---------- 日记解析检测面板（对齐插件 openDiaryRepairModal） ---------- */
+  function openDiaryRepair(host) {
+    const { mask, card, close } = openDemoCard(host, { width: 'min(640px, 94%)' });
+    card.classList.add('bz-sp-demo-panel');
+    const head = document.createElement('div');
+    head.className = 'bz-sp-demo-card-head';
+    const t = document.createElement('b');
+    t.textContent = '日记解析检测';
+    head.appendChild(t);
+    const body = document.createElement('div');
+    body.className = 'bz-sp-demo-card-body';
+    // mock 扫描结果
+    const intro = document.createElement('div');
+    intro.className = 'bz-sp-upmgr-row';
+    intro.innerHTML = '<div class="bz-sp-set-name">扫描完成</div><div class="bz-sp-set-desc">共 128 个日记文件，发现 2 个文件存在无法解析的行（演示数据）</div>';
+    body.appendChild(intro);
+    const fixable = [
+      { file: '我的/日记/2025/09-01.md', before: '## 09:1 整理周报', after: '## 09:10 整理周报' },
+      { file: '我的/日记/2025/09-03.md', before: '## 2:30 午睡', after: '## 02:30 午睡' },
+    ];
+    const g1 = document.createElement('div');
+    g1.className = 'bz-sp-demo-sec';
+    const g1t = document.createElement('div');
+    g1t.className = 'bz-sp-demo-sec-t';
+    g1t.textContent = '可自动修复（2）';
+    g1.appendChild(g1t);
+    fixable.forEach((f) => {
+      const rowHolder = document.createElement('div');
+      rowHolder.innerHTML = R.repairRowHtml(f.file, f.before, f.after);
+      g1.appendChild(rowHolder.firstElementChild);
+    });
+    body.appendChild(g1);
+    const g2 = document.createElement('div');
+    g2.className = 'bz-sp-demo-sec';
+    const g2t = document.createElement('div');
+    g2t.className = 'bz-sp-demo-sec-t';
+    g2t.textContent = '需手动处理（0）';
+    g2.appendChild(g2t);
+    body.appendChild(g2);
+    const foot = document.createElement('div');
+    foot.className = 'bz-sp-picker-foot';
+    const fixBtn = document.createElement('button');
+    fixBtn.className = 'bz-sp-btn bz-sp-btn--primary'; fixBtn.textContent = '一键修复 2 处';
+    fixBtn.addEventListener('click', () => {
+      confirmDialog(host, {
+        title: '修复日记标题格式',
+        message: '将批量修正 2 个文件的标题行（补空格/时间补零），正文内容不改。确定继续？',
+        okText: '修复',
+        danger: false,
+        onOk: () => {
+          body.innerHTML = '';
+          const ok = document.createElement('div');
+          ok.className = 'bz-sp-demo-sec';
+          ok.innerHTML = '<div class="bz-sp-set-name">已修复 2 处</div><div class="bz-sp-set-desc">重新检测后无可修复项（演示）</div>';
+          body.appendChild(ok);
+          toast(host, '已修复 2 处日记标题');
+        },
+      });
+    });
+    const resc = document.createElement('button');
+    resc.className = 'bz-sp-btn'; resc.textContent = '重新检测';
+    resc.addEventListener('click', () => { toast(host, '重新检测完成：无可修复项（演示）'); });
+    foot.append(resc, fixBtn);
+    card.append(head, body, foot);
+  }
+
+  /* ---------- 数据体检面板（对齐插件 checkup 面板：空态 → 进度 → 报告） ---------- */
+  function openCheckup(host) {
+    const { mask, card, close } = openDemoCard(host, { width: 'min(640px, 94%)' });
+    card.classList.add('bz-sp-demo-panel');
+    const head = document.createElement('div');
+    head.className = 'bz-sp-demo-card-head';
+    const t = document.createElement('b');
+    t.textContent = '数据体检';
+    head.appendChild(t);
+    const body = document.createElement('div');
+    body.className = 'bz-sp-demo-card-body';
+    const foot = document.createElement('div');
+    foot.className = 'bz-sp-picker-foot';
+    const idle = () => {
+      body.innerHTML = '';
+      const empty = document.createElement('div');
+      empty.className = 'bz-sp-demo-empty';
+      empty.innerHTML = '<div class="bz-sp-set-name">还没体检过</div><div class="bz-sp-set-desc">体检会检查各域数据文件能否解析、字段是否漂移、条目指向是否失效，全程只读不改数据</div>';
+      body.appendChild(empty);
+      foot.innerHTML = '';
+      const start = document.createElement('button');
+      start.className = 'bz-sp-btn bz-sp-btn--primary'; start.textContent = '开始体检';
+      start.addEventListener('click', () => run());
+      foot.appendChild(start);
+    };
+    const run = () => {
+      body.innerHTML = '';
+      const steps = ['数据文件可解析', '字段漂移', '孤儿条目', '同源一致性'];
+      const list = document.createElement('div');
+      list.innerHTML = R.checkupStepsHtml(steps);
+      const marks = [...list.querySelectorAll('.bz-sp-demo-step')];
+      const prog = document.createElement('div');
+      prog.className = 'bz-sp-demo-prog';
+      prog.textContent = '体检中…';
+      body.append(prog, list);
+      foot.innerHTML = '';
+      const cancel = document.createElement('button');
+      cancel.className = 'bz-sp-btn'; cancel.textContent = '取消体检';
+      cancel.addEventListener('click', () => { idle(); });
+      foot.appendChild(cancel);
+      let i = 0;
+      const timer = setInterval(() => {
+        if (!mask.isConnected) { clearInterval(timer); return; }
+        marks.forEach((m, mi) => {
+          m.classList.toggle('is-done', mi < i);
+          m.classList.toggle('is-current', mi === i);
+        });
+        prog.textContent = i >= steps.length ? '体检中…' : '体检中（' + (i + 1) + '/' + steps.length + '）：' + steps[i];
+        i += 1;
+        if (i > steps.length) {
+          clearInterval(timer);
+          report();
+        }
+      }, 600);
+    };
+    const report = () => {
+      body.innerHTML = '';
+      foot.innerHTML = '';
+      const summary = document.createElement('div');
+      summary.className = 'bz-sp-demo-summary bz-sp-demo-summary--ok';
+      summary.textContent = '体检完成：全部通过（演示数据无问题项）';
+      body.appendChild(summary);
+      const pass = document.createElement('div');
+      pass.className = 'bz-sp-demo-sec';
+      pass.innerHTML = '<div class="bz-sp-demo-sec-t">通过（4）</div>' +
+        '<div class="bz-sp-demo-clean">json 可解析：全部文件可解析</div>' +
+        '<div class="bz-sp-demo-clean">字段漂移：无意外/缺失字段</div>' +
+        '<div class="bz-sp-demo-clean">孤儿条目：无失效引用</div>' +
+        '<div class="bz-sp-demo-clean">同源一致性：双视角计数一致</div>';
+      body.appendChild(pass);
+      const again = document.createElement('button');
+      again.className = 'bz-sp-btn bz-sp-btn--primary'; again.textContent = '重新体检';
+      again.addEventListener('click', () => run());
+      foot.appendChild(again);
+    };
+    idle();
+    card.append(head, body, foot);
+  }
+
+  /* ---------- 卡片目录选择器（对齐插件 bz-path-picker 卡片壳；记忆目录等 pickerKind:card 行走这里） ---------- */
+  function openPathPickerCard(host, row, onDone) {
+    const multi = row.mode === 'multi';
+    const dirs = DEMO.DIRS;
+    const selected = new Set(multi ? pathList(row) : [String(rowRead(row) || '')].filter(Boolean));
+    const { mask, card, close } = openDemoCard(host, { width: 'min(440px, 92%)' });
+    card.classList.add('bz-path-picker');
+    // 头部（h3 标题 + desc）
+    const head = document.createElement('div');
+    head.innerHTML = R.pathPickerHeadHtml((multi ? '添加文件夹 · ' : '选择文件夹 · ') + row.n, row.d);
+    // 搜索
+    const search = document.createElement('input');
+    search.type = 'text';
+    search.className = 'bz-path-picker-search';
+    search.placeholder = '搜索目录…';
+    // 列表（复刻插件有序列表：已选置顶 → 库根 → 其余反转）
+    const listEl = document.createElement('div');
+    listEl.className = 'bz-path-picker-list';
+    // 底部
+    const foot = document.createElement('div');
+    foot.className = 'bz-path-picker-foot';
+    const selinfo = document.createElement('span');
+    selinfo.className = 'bz-path-picker-selinfo';
+    const btns = document.createElement('div');
+    btns.className = 'bz-path-picker-foot-btns';
+    foot.append(selinfo, btns);
+    const mkBtn = (label, primary, onclick) => {
+      const b = document.createElement('button');
+      b.textContent = label;
+      b.className = 'bz-path-picker-btn' + (primary ? ' bz-path-picker-btn--primary' : '');
+      b.onclick = onclick;
+      btns.appendChild(b);
+      return b;
+    };
+    let q = '';
+    const closeSelf = () => {
+      mask.remove();
+      if (onDone) onDone();
+    };
+    const doConfirm = () => {
+      const list = multi ? [...selected] : ([...selected][0] ?? null);
+      const raw = base[row.k];
+      const v = multi ? [...new Set(pathList(row).concat(list || []))] : (list || '');
+      if (multi) pathWriteList(row, v);
+      else rowWrite(row, v);
+      closeSelf();
+    };
+    if (multi) mkBtn('清空', false, () => { selected.clear(); renderList(); updateSel(); });
+    mkBtn(row.okText || (multi ? '添加所选' : '选用'), true, () => doConfirm());
+    function orderedList() {
+      const pinned = [];
+      const rest = [];
+      const pinSet = new Set(selected);
+      for (const f of dirs) { if (pinSet.has(f)) pinned.push(f); else rest.push(f); }
+      const rootIdx = rest.indexOf('');
+      const root = rootIdx >= 0 ? rest.splice(rootIdx, 1)[0] : null;
+      rest.reverse();
+      return [...pinned, ...(root === null ? [] : [root]), ...rest];
+    }
+    function renderList() {
+      listEl.innerHTML = '';
+      const query = q.trim().toLowerCase();
+      let n = 0;
+      let total = 0;
+      for (const folder of orderedList()) {
+        if (query && folder !== query && !folder.toLowerCase().includes(query)) continue;
+        total++;
+        if (n >= 300) continue;
+        n++;
+        const on = selected.has(folder);
+        const rowHolder = document.createElement('div');
+        rowHolder.innerHTML = R.pathPickerRowHtml(folder, on, folder === '' ? '（库根目录）' : folder);
+        const rowEl = rowHolder.firstElementChild;
+        rowEl.onclick = () => {
+          if (!multi) { selected.clear(); selected.add(folder); }
+          else if (selected.has(folder)) selected.delete(folder);
+          else selected.add(folder);
+          renderList();
+          updateSel();
+        };
+        listEl.appendChild(rowEl);
+      }
+      if (!total) {
+        const empty = document.createElement('div');
+        empty.className = 'bz-path-picker-empty';
+        empty.textContent = '没有匹配的目录';
+        listEl.appendChild(empty);
+      }
+    }
+    function updateSel() {
+      if (!multi) {
+        const first = [...selected][0];
+        selinfo.textContent = first === undefined ? '未选择' : first === '' ? '已选（库根目录）' : '已选 ' + first;
+      } else {
+        selinfo.textContent = '已选 ' + selected.size + ' 项';
+      }
+    }
+    search.oninput = () => { q = search.value; renderList(); };
+    renderList();
+    updateSel();
+    card.append(head, search, listEl, foot);
+  }
+
   function openDirPicker(host, row, onDone) {
     const multi = row.mode === 'multi';
     const dirs = DEMO.DIRS;
@@ -192,16 +537,8 @@
     const dlg = document.createElement('div');
     dlg.className = 'bz-sp-picker';
     const head = document.createElement('div');
-    head.className = 'bz-sp-picker-head';
-    const b = document.createElement('b');
-    b.textContent = (multi ? '添加文件夹 · ' : '选择文件夹 · ') + row.n;
-    const search = document.createElement('div');
-    search.className = 'bz-sp-picker-search';
-    search.appendChild(icon('search'));
-    const sinp = document.createElement('input');
-    sinp.placeholder = '搜索目录…（命中项保留上级链）';
-    search.appendChild(sinp);
-    head.append(b, search);
+    head.innerHTML = R.pickerHeadHtml((multi ? '添加文件夹 · ' : '选择文件夹 · ') + row.n, '搜索目录…（命中项保留上级链）');
+    const sinp = head.querySelector('input');
     const crumb = document.createElement('div');
     crumb.className = 'bz-sp-picker-crumb';
     const list = document.createElement('div');
@@ -217,32 +554,8 @@
     ok.addEventListener('click', () => close(multi ? [...selected] : ([...selected][0] ?? null)));
     mask.addEventListener('click', (e) => { if (e.target === mask) close(null); });
     function renderCrumb() {
-      crumb.innerHTML = '';
-      const lab = document.createElement('span');
-      lab.className = 'bz-sp-picker-lab';
-      lab.textContent = multi ? '已选' : '将选用';
-      crumb.appendChild(lab);
       const arr = [...selected].filter(Boolean);
-      if (multi) {
-        const v = document.createElement('span');
-        v.textContent = arr.length ? arr.length + ' 个目录' : '尚未选择';
-        crumb.appendChild(v);
-      } else if (!arr.length) {
-        const v = document.createElement('span');
-        v.textContent = '未设置';
-        crumb.appendChild(v);
-      } else {
-        arr[0].split('/').forEach((seg, i) => {
-          if (i) {
-            const sp = document.createElement('span');
-            sp.className = 'bz-sp-picker-sep'; sp.textContent = '▸';
-            crumb.appendChild(sp);
-          }
-          const sg = document.createElement('span');
-          sg.textContent = seg;
-          crumb.appendChild(sg);
-        });
-      }
+      crumb.innerHTML = R.pickerCrumbHtml(multi, arr);
     }
     function renderList() {
       const query = q.trim().toLowerCase();
@@ -262,17 +575,13 @@
       list.innerHTML = '';
       for (const d of items) {
         const parts = d.split('/');
-        const rowBtn = document.createElement('button');
-        rowBtn.type = 'button';
-        rowBtn.className = 'bz-sp-picker-row' + (selected.has(d) ? ' sel' : '');
-        rowBtn.appendChild(icon('folder-open', 'bz-ic'));
-        const nm = document.createElement('span');
-        nm.textContent = parts[parts.length - 1];
-        rowBtn.appendChild(nm);
-        const anc = document.createElement('span');
-        anc.className = 'anc';
-        anc.textContent = parts.length > 1 ? parts.slice(0, -1).join(' / ') + ' /' : 'vault 根目录';
-        rowBtn.appendChild(anc);
+        const rowHolder = document.createElement('div');
+        rowHolder.innerHTML = R.pickerRowHtml(
+          parts[parts.length - 1],
+          parts.length > 1 ? parts.slice(0, -1).join(' / ') + ' /' : 'vault 根目录',
+          selected.has(d)
+        );
+        const rowBtn = rowHolder.firstElementChild;
         rowBtn.addEventListener('click', () => {
           if (multi) {
             if (selected.has(d)) selected.delete(d); else selected.add(d);
@@ -324,11 +633,9 @@
     const list = document.createElement('div');
     list.className = 'bz-sp-picker-list';
     for (const m of models) {
-      const it = document.createElement('button');
-      it.type = 'button';
-      it.className = 'bz-sp-picker-row' + (m === cur ? ' sel' : '');
-      const nm = document.createElement('span'); nm.textContent = m;
-      it.appendChild(nm);
+      const itHolder = document.createElement('div');
+      itHolder.innerHTML = R.modelItemHtml(m, m === cur);
+      const it = itHolder.firstElementChild;
       it.addEventListener('click', () => {
         mask.remove();
         rowWrite(row, m);
@@ -342,150 +649,37 @@
     mask.addEventListener('click', (e) => { if (e.target === mask) mask.remove(); });
   }
 
-  /* ---------- 迷你皮肤预览（演示件：插件版由各域 prevClass 全局样式承载） ---------- */
-  function renderMini(kind, prev) {
-    const mini = document.createElement('div');
-    mini.className = 'bz-sp-mini';
-    mini.style.background = prev.bg;
-    if (kind === 'todo') {
-      const head = document.createElement('div');
-      head.className = 'm-head' + (prev.head === 'stripe' ? ' m-stripe' : '');
-      head.style.background = prev.head === 'stripe' ? prev.bg : prev.ink;
-      if (prev.head === 'stripe') head.style.borderBottom = '2px solid ' + prev.ink;
-      mini.appendChild(head);
-      [[18, 16], [28, 24], [24, 32]].forEach(([w, top], i) => {
-        const ln = document.createElement('div');
-        ln.className = 'm-line';
-        ln.style.cssText = 'top:' + top + 'px;width:' + w + 'px;background:' + prev.ink + ';opacity:' + (i === 2 ? 0.35 : 0.55);
-        mini.appendChild(ln);
-      });
-      const chip = document.createElement('div');
-      chip.className = 'm-chip';
-      chip.style.background = prev.ac;
-      mini.appendChild(chip);
-    } else if (kind === 'shelf') {
-      const ac = document.createElement('div');
-      ac.className = 'm-ac'; ac.style.background = prev.ac;
-      mini.appendChild(ac);
-      (prev.books || []).forEach((c, i) => {
-        const bk = document.createElement('div');
-        bk.className = 'm-book';
-        bk.style.cssText = 'left:' + (10 + i * 14) + 'px;height:' + [24, 32, 20][i] + 'px;background:' + c + ';border-top:2px solid ' + prev.ac;
-        mini.appendChild(bk);
-      });
-    } else if (kind === 'layout') {
-      // 布局缩略：head 横条 + 左导航块 + 内容块（形态随 mode 变化）
-      const head = document.createElement('div');
-      head.className = 'm-head';
-      head.style.background = 'rgba(90,70,40,.28)';
-      mini.appendChild(head);
-      const mkBlock = (css) => {
-        const b2 = document.createElement('div');
-        b2.style.cssText = 'position:absolute;border-radius:2px;background:rgba(90,70,40,.22);' + css;
-        mini.appendChild(b2);
-      };
-      if (prev.mode === 'system') {
-        mkBlock('left:4px;top:14px;width:14px;bottom:4px;');
-        mkBlock('left:21px;top:14px;right:4px;height:26px;');
-      } else if (prev.mode === 'compact') {
-        mkBlock('left:4px;top:14px;width:14px;bottom:4px;');
-        mkBlock('left:21px;top:14px;width:26px;height:12px;');
-        mkBlock('left:21px;top:28px;width:26px;height:12px;');
-        mkBlock('left:50px;top:14px;width:10px;bottom:10px;');
-      } else if (prev.mode === 'iconrail') {
-        mkBlock('left:2px;top:2px;bottom:2px;width:8px;');
-        mkBlock('left:14px;top:4px;width:16px;bottom:4px;');
-        mkBlock('left:34px;top:4px;right:4px;bottom:4px;');
-      } else if (prev.mode === 'outline') {
-        mkBlock('left:4px;top:14px;right:24px;bottom:4px;');
-        mkBlock('right:4px;top:14px;width:16px;height:20px;');
-      }
-    } else if (kind === 'skin') {
-      // 主题套装预览：亮暗双块（自动亮暗，无需指定）
-      const l = document.createElement('div');
-      l.style.cssText = 'position:absolute;inset:0 50% 0 0;background:' + (prev.light || '#f6f2e9') + ';';
-      const r2 = document.createElement('div');
-      r2.style.cssText = 'position:absolute;inset:0 0 0 50%;background:' + (prev.dark || '#242429') + ';';
-      const dot = document.createElement('div');
-      dot.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;background:' + (prev.ac || 'var(--sp-accent)') + ';border:2px solid #fff;';
-      mini.append(l, r2, dot);
-    } else if (kind === 'themecard') {
-      mini.style.background = prev.bg;
-      const bar = document.createElement('div');
-      bar.style.cssText = 'position:absolute;left:5px;top:50%;transform:translateY(-50%);width:5px;height:26px;border-radius:3px;background:' + prev.ac + ';';
-      mini.appendChild(bar);
-    } else if (kind === 'cat') {
-      const cat = document.createElement('div');
-      cat.className = 'm-cat';
-      const mk = (cls, bg) => {
-        const e = document.createElement('div');
-        e.className = cls;
-        e.style.background = bg;
-        return e;
-      };
-      ['ear l', 'ear r'].forEach((c) => {
-        const e = mk(c, prev.fur);
-        e.style.background = 'transparent';
-        e.style.borderBottomColor = prev.fur;
-        cat.appendChild(e);
-      });
-      cat.appendChild(mk('face', prev.fur));
-      if (prev.patch) cat.appendChild(mk('patch', prev.patch));
-      ['eye l', 'eye r'].forEach((c) => cat.appendChild(mk(c, 'rgba(20,15,8,.75)')));
-      mini.appendChild(cat);
-    }
-    return mini;
-  }
-
-  /* ---------- 行渲染（markup 全部出自纯层 R.*；本壳只做演示值通道与事件绑定） ---------- */
+  /* ---------- 行渲染（markup 单源：行骨架与控件串全出自 R.*，行为绑定留壳） ---------- */
   function rowEl(r, parentKey, host, refresh, redrawDomain) {
     const holder = document.createElement('div');
-
-    // custom 行：原型演示 = 行头（name/desc）+ 自绘子行 mock（插件版 = 各域 new Setting() 渲染进插槽）
-    if (r.t === 'custom' && r.custom) {
-      holder.innerHTML = '<div class="bz-sp-set-row bz-sp-set-row--custom"></div>';
-      const row0 = holder.firstElementChild;
-      row0.dataset.key = r.k || r.n;
-      const txt = document.createElement('div');
-      txt.className = 'bz-sp-set-info';
-      txt.innerHTML = '<div class="bz-sp-set-name"></div>' + (r.d ? '<div class="bz-sp-set-desc"></div>' : '');
-      txt.querySelector('.bz-sp-set-name').textContent = r.n;
-      if (r.d) txt.querySelector('.bz-sp-set-desc').textContent = r.d;
-      row0.appendChild(txt);
-      renderCustom(r, row0, host, redrawDomain);
-      return row0;
-    }
-
-    const vm = { name: r.n || '', desc: r.d, note: r.note };
     const isCards = r.t === 'choiceCards';
-    if (isCards) vm.isCards = true;
-
-    // 控件 HTML（纯层工厂）
-    if (r.t === 'toggle') vm.ctrlHtml = R.toggleHtml(rowRead(r) === true);
-    else if (r.t === 'select') vm.ctrlHtml = R.selectTriggerHtml('');
-    else if (r.t === 'text' || r.t === 'textarea' || r.t === 'number') {
-      const init = rowRead(r);
-      const v = r.t === 'number' ? String(Number(init) || 0) : String(init ?? '');
-      vm.ctrlHtml = r.t === 'textarea'
-        ? R.textareaHtml(v, r.ph)
-        : R.textInputHtml({
-            value: v, type: r.t === 'number' ? 'number' : 'text',
-            num: !!r.num || r.t === 'number', placeholder: r.ph,
-            min: r.min, max: r.max, step: r.step,
-          });
-    } else if (r.t === 'slider') vm.ctrlHtml = R.sliderHtml(r.min, r.max, r.step, Number(rowRead(r)) || 0);
-    else if (r.t === 'button') vm.ctrlHtml = R.rowBtnHtml(r.btn || '打开', r.cta);
-    else if (r.t === 'info') vm.ctrlHtml = R.badgeHtml(r.n);
-
-    holder.innerHTML = R.rowHtml(vm);
+    const isCustom = r.t === 'custom' && r.custom;
+    holder.innerHTML = R.rowHtml({
+      key: r.k || r.n,
+      isCards,
+      isCustom,
+      name: r.n || '',
+      desc: r.d || '',
+      note: r.note || '',
+    });
     const row = holder.firstElementChild;
-    row.dataset.key = r.k || r.n;
+    // 显隐初值（原型逐字：vis 求值 + child 依赖父开关）
     if (!evalVis(r.vis)) row.style.display = 'none';
     if (r.child && parentKey && val(parentKey) !== true) row.style.display = 'none';
-    const ctl = row.querySelector(isCards ? '.bz-sp-set-cards' : '.bz-sp-set-ctrl');
+    if (!isCustom) {
+      renderCtl(row.querySelector(isCards ? '.bz-sp-set-cards' : '.bz-sp-set-ctrl'), r, host, refresh, redrawDomain);
+    } else {
+      renderCustom(r, row, host, redrawDomain);
+    }
+    mountIcons(row);
+    return row;
+  }
 
-    if (r.t === 'toggle') {
-      const sw = row.querySelector('.bz-sw');
+  function renderCtl(ctl, r, host, refresh, redrawDomain) {
+    const t = r.t;
+    if (t === 'toggle') {
+      ctl.innerHTML = R.toggleHtml(rowRead(r) === true);
+      const sw = ctl.querySelector('.bz-sw');
       sw.addEventListener('click', () => {
         const v = !sw.classList.contains('on');
         sw.classList.toggle('on', v);
@@ -493,39 +687,35 @@
         rowWrite(r, v);
         refresh();
       });
-    } else if (r.t === 'select') {
-      const sel = row.querySelector('.bz-select');
-      const vspan = sel.querySelector('.bz-select-val');
+    } else if (t === 'select') {
       const labelOf = (v) => ((r.opts || []).find((o) => o.v === v) || {}).l || v;
-      const curOf = () => String(rowRead(r) ?? '') || (r.opts[0] && r.opts[0].v) || '';
-      vspan.textContent = labelOf(curOf());
+      ctl.innerHTML = R.selectTriggerHtml(labelOf(String(rowRead(r) ?? '') || (r.opts[0] && r.opts[0].v) || ''));
+      const sel = ctl.querySelector('.bz-select');
       sel.addEventListener('click', () => {
         if (sel.querySelector('.bz-select-menu')) return;
         // 组卡 overflow:hidden 会裁剪伸出的菜单——展开期间放开并提层
         const group = sel.closest('.bz-sp-group');
         if (group) { group.style.overflow = 'visible'; group.style.zIndex = 10; }
         const closeMenu = () => {
-          const m = sel.querySelector('.bz-select-menu');
-          if (m) m.remove();
+          sel.querySelector('.bz-select-menu') && sel.querySelector('.bz-select-menu').remove();
           if (group) { group.style.overflow = ''; group.style.zIndex = ''; }
           document.removeEventListener('click', h);
         };
-        const curNow = curOf();
         const menu = document.createElement('div');
         menu.className = 'bz-select-menu';
+        const curNow = String(rowRead(r) ?? '') || (r.opts[0] && r.opts[0].v) || '';
         menu.innerHTML = (r.opts || []).map((o) => R.selectItemHtml(o.l, o.v === curNow)).join('');
-        mountIcons(menu);
-        const items = menu.querySelectorAll('.bz-select-item');
-        (r.opts || []).forEach((o, i) => {
-          items[i].addEventListener('click', (ev) => {
+        menu.querySelectorAll('.bz-select-item').forEach((it, i) => {
+          const o = (r.opts || [])[i];
+          it.addEventListener('click', (ev) => {
             ev.stopPropagation();
             closeMenu();
-            vspan.textContent = labelOf(o.v);
+            sel.querySelector('.bz-select-val').textContent = labelOf(o.v);
             rowWrite(r, o.v);
             refresh();
             // 面板外观联动（通用域「面板外观」组）：风格/皮肤切换实时作用于面板根
             if (r.k === 'settingsPanelTheme' || r.k === 'settingsPanelSkin') {
-              const panelRoot = root.closest('.bz-sp-desk') || root;
+              const panelRoot = host.closest('.bz-sp-desk') || host;
               panelRoot.classList.toggle('bz-sp-force-light', val('settingsPanelTheme') === 'light');
               panelRoot.classList.toggle('bz-sp-force-dark', val('settingsPanelTheme') === 'dark');
               panelRoot.classList.toggle('bz-sp-skin-paper', val('settingsPanelSkin') === 'paper');
@@ -534,18 +724,36 @@
           });
         });
         sel.appendChild(menu);
+        mountIcons(menu);
         const h = (ev) => {
           if (!sel.contains(ev.target)) closeMenu();
         };
         setTimeout(() => document.addEventListener('click', h));
       });
-    } else if (r.t === 'text' || r.t === 'textarea' || r.t === 'number') {
+    } else if (t === 'text' || t === 'textarea' || t === 'number') {
       const isModel = r.k === '__fn:aiModel';
-      const inp = row.querySelector(r.t === 'textarea' ? 'textarea' : 'input');
+      const isNum = t === 'number';
+      const init = rowRead(r);
+      const initStr = t === 'number' ? String(Number(init) || 0) : String(init ?? '');
+      if (t === 'textarea') ctl.innerHTML = R.textareaHtml(initStr, r.ph);
+      else {
+        ctl.innerHTML = R.textInputHtml({
+          value: initStr,
+          type: isNum ? 'number' : 'text',
+          num: !!(r.num) || isNum,
+          mono: !!r.mono,
+          secret: !!r.secret,
+          placeholder: r.ph,
+          min: r.min,
+          max: r.max,
+          step: isNum ? (r.step ?? 1) : undefined,
+        });
+      }
+      const inp = ctl.querySelector('textarea, input');
       const commit = () => {
         if (!inp.dataset.dirty) return;
         delete inp.dataset.dirty;
-        if (r.t === 'number') {
+        if (t === 'number') {
           const raw = inp.value.trim();
           if (raw === '') return;
           let n = Number(raw);
@@ -560,52 +768,88 @@
       let timer = null;
       inp.addEventListener('input', () => { inp.dataset.dirty = '1'; clearTimeout(timer); timer = setTimeout(commit, 600); });
       inp.addEventListener('blur', commit);
-      if (r.t !== 'textarea') inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') commit(); });
+      if (t !== 'textarea') inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') commit(); });
       if (isModel) {
-        // 原型演示：模型行内嵌「获取模型名」按钮（插件版 = custom 行内嵌按钮，⚙️ 同源）
         const wrap = document.createElement('div');
         wrap.style.cssText = 'display:flex;gap:6px;align-items:center';
-        const btn = document.createElement('button');
-        btn.className = 'bz-sp-btn'; btn.textContent = '获取模型名';
+        while (ctl.firstChild) wrap.appendChild(ctl.firstChild);
+        wrap.insertAdjacentHTML('beforeend', R.rowBtnHtml('获取模型名'));
+        const btn = wrap.querySelector('.bz-sp-btn');
         btn.addEventListener('click', () => pickModel(host, r, redrawDomain));
-        wrap.append(inp, btn);
         ctl.appendChild(wrap);
       }
-    } else if (r.t === 'slider') {
-      const inp = row.querySelector('input[type="range"]');
-      const em = row.querySelector('.bz-sp-slider-val');
+    } else if (t === 'slider') {
+      ctl.innerHTML = R.sliderHtml(r.min, r.max, r.step, Number(rowRead(r)) || 0);
+      const inp = ctl.querySelector('input[type="range"]');
+      const em = ctl.querySelector('.bz-sp-slider-val');
       inp.addEventListener('input', () => { em.textContent = inp.value; rowWrite(r, Number(inp.value)); });
-    } else if (r.t === 'button') {
-      row.querySelector('.bz-sp-btn').addEventListener('click', () => toast(host, '原型演示：' + r.btn));
-    } else if (r.t === 'path') {
+    } else if (t === 'path') {
       const multi = r.mode === 'multi';
+      const chips = document.createElement('div');
+      chips.className = 'bz-sp-chips';
+      const openPicker = () => {
+        // pickerKind: 'card' = 插件走 core/bz-path-picker 卡片壳（如 smartcat 记忆目录）；缺省 = dir-picker 域内弹层
+        if (r.pickerKind === 'card') openPathPickerCard(host, r, redrawDomain);
+        else openDirPicker(host, r, redrawDomain);
+      };
       const redraw = () => {
         const list = multi ? pathList(r) : [String(rowRead(r) || '')].filter(Boolean);
-        const chips = list.length
+        const items = list.length
           ? list.map((p) => ({ path: p, label: p, multi }))
           : [{ path: '', label: multi ? '未选择' : '未设置', muted: true }];
-        ctl.innerHTML = R.pathChipsItemsHtml(chips) + R.pathAddBtnHtml(multi ? '添加…' : '选择…');
-        ctl.querySelectorAll('.bz-sp-chip').forEach((c) => {
+        chips.innerHTML = R.pathChipsItemsHtml(items);
+        chips.querySelectorAll('.bz-sp-chip').forEach((c) => {
+          if (c.classList.contains('bz-sp-chip--muted')) return;
           const p = c.dataset.spPath;
           const x = c.querySelector('.x');
           if (x) x.addEventListener('click', () => { pathWriteList(r, pathList(r).filter((y) => y !== p)); redraw(); });
-          else c.addEventListener('click', () => openDirPicker(host, r, redrawDomain));
+          else if (!multi) c.addEventListener('click', openPicker);
         });
-        ctl.querySelector('.bz-sp-path-btn').addEventListener('click', () => openDirPicker(host, r, redrawDomain));
       };
       redraw();
-    } else if (isCards) {
+      ctl.appendChild(chips);
+      ctl.insertAdjacentHTML('beforeend', R.pathAddBtnHtml(multi ? '添加…' : '选择…'));
+      const btn = ctl.querySelector('.bz-sp-path-btn');
+      btn.addEventListener('click', openPicker);
+    } else if (t === 'button') {
+      ctl.innerHTML = R.rowBtnHtml(r.btn || '打开', r.cta);
+      const b2 = ctl.querySelector('.bz-sp-btn');
+      b2.addEventListener('click', () => {
+        // demo 标记分发真实子弹窗演示；缺省保留 toast 占位
+        if (r.demo === 'checkup') openCheckup(host);
+        else if (r.demo === 'diaryRepair') openDiaryRepair(host);
+        else if (r.demo === 'reindex') {
+          confirmDialog(host, {
+            title: '重新索引',
+            message: '将清空现有向量索引，按当前白名单全部重嵌入（约等于首次初始化全量跑一遍）。期间参考侧边栏与对话的向量检索会降级为文本匹配。确定继续吗？',
+            okText: '开始重建',
+            onOk: () => {
+              toast(host, '已开始重新索引：清空 → 整库重嵌 → 统计（演示）');
+              setTimeout(() => toast(host, '重新索引完成：已嵌入 847 段（演示）'), 1600);
+            },
+          });
+        } else if (r.demo === 'clearHistory') {
+          confirmDialog(host, {
+            title: '清空历史',
+            message: '将移除全部「成功」归档记录；文献笔记与视频文件保留在原处。',
+            okText: '清空',
+            danger: true,
+            onOk: () => toast(host, '已清空归档历史（演示）'),
+          });
+        } else {
+          toast(host, '原型演示：' + r.btn);
+        }
+      });
+    } else if (t === 'choiceCards') {
       // 布局绑定的主题行（r.layoutKey）：只渲当前布局配套的单卡——主题不通用
       const opts = (r.opts || []).filter((o) => !o.layout || !r.layoutKey || o.layout === String(rowRead({ k: r.layoutKey }) ?? ''));
       const cur = String(rowRead(r) ?? '') || (opts[0] && opts[0].v) || '';
-      const wrapHolder = document.createElement('div');
-      wrapHolder.innerHTML = R.cardpickHtml(opts.map((o) => ({ value: o.v, label: o.l, on: o.v === cur })));
-      const wrap = wrapHolder.firstElementChild;
-      wrap.querySelectorAll('.bz-sp-cardpick-card').forEach((c) => {
+      ctl.innerHTML = R.cardpickHtml(opts.map((o) => ({ value: o.v, label: o.l, on: o.v === cur, kind: r.kind, prev: o.prev })));
+      ctl.style.maxWidth = 'none';
+      ctl.querySelectorAll('.bz-sp-cardpick-card').forEach((c) => {
         const o = opts.find((x) => x.v === c.dataset.spCard);
-        c.querySelector('.bz-sp-mini').replaceWith(renderMini(r.kind, o.prev));
         c.addEventListener('click', () => {
-          wrap.querySelectorAll('.is-on').forEach((x) => x.classList.remove('is-on'));
+          ctl.querySelectorAll('.is-on').forEach((x) => x.classList.remove('is-on'));
           c.classList.add('is-on');
           rowWrite(r, o.v);
           // 外观域联动（参考待办 todoSkin）：布局与主题一一对应——点布局自动切配套主题；点主题实时换肤
@@ -620,11 +864,7 @@
           }
         });
       });
-      ctl.appendChild(wrap);
-      ctl.style.maxWidth = 'none';
     }
-
-    return row;
   }
 
   /* custom 三类 mock（数据源 / 排除名单 / 局域网 IP） */
@@ -643,46 +883,42 @@
     };
     if (r.custom === 'newsSources') {
       const mkT = (label, key) => sub(label, (ctl) => {
-        const holder = document.createElement('div');
-        holder.innerHTML = R.toggleHtml(rowRead({ t: 'toggle', k: key }) === true);
-        const sw = holder.firstElementChild;
+        const rr = { t: 'toggle', n: label, k: key };
+        ctl.innerHTML = R.toggleHtml(rowRead(rr) === true);
+        const sw = ctl.querySelector('.bz-sw');
         sw.addEventListener('click', () => {
           const v = !sw.classList.contains('on');
           sw.classList.toggle('on', v);
-          rowWrite({ k: key }, v);
+          rowWrite(rr, v);
         });
-        ctl.appendChild(sw);
       });
       row.appendChild(mkT('知乎日报', '__mock:newsZhihu'));
       row.appendChild(mkT('果壳科学人', '__mock:newsGuokr'));
       row.appendChild(mkT('B站 UP 主投稿', '__mock:newsBili'));
       row.appendChild(sub('UP 主名单', (ctl) => {
-        const b2 = document.createElement('button');
-        b2.className = 'bz-sp-btn'; b2.textContent = '管理（3 人）';
-        b2.addEventListener('click', () => toast(host, '原型演示：打开 UP 主名单管理'));
-        ctl.appendChild(b2);
+        ctl.innerHTML = R.rowBtnHtml('管理');
+        const b2 = ctl.querySelector('.bz-sp-btn');
+        const syncLabel = () => { b2.textContent = '管理（' + upManagerUps.length + ' 人）'; };
+        syncLabel();
+        b2.addEventListener('click', () => openUpManager(host, syncLabel));
       }));
       row.appendChild(sub('B站抓取条数', (ctl) => {
         const rr = { t: 'number', n: 'B站抓取条数', k: '__mock:newsBiliCount' };
-        const inp = document.createElement('input');
-        inp.className = 'bz-input'; inp.type = 'number'; inp.min = '1'; inp.max = '50';
-        inp.value = String(Number(rowRead(rr)) || 10);
+        ctl.innerHTML = R.textInputHtml({ value: String(Number(rowRead(rr)) || 10), type: 'number', min: 1, max: 50 });
+        const inp = ctl.querySelector('input');
         inp.addEventListener('change', () => {
           const n = Math.max(1, Math.min(50, Number(inp.value) || 10));
           inp.value = String(n); rowWrite(rr, n);
         });
-        ctl.appendChild(inp);
       }));
       row.appendChild(sub('未保存文章保留天数', (ctl) => {
         const rr = { t: 'number', n: '未保存文章保留天数', k: 'newsRetentionUnsavedDays' };
-        const inp = document.createElement('input');
-        inp.className = 'bz-input'; inp.type = 'number'; inp.min = '1';
-        inp.value = String(Number(rowRead(rr)) || 30);
+        ctl.innerHTML = R.textInputHtml({ value: String(Number(rowRead(rr)) || 30), type: 'number', min: 1 });
+        const inp = ctl.querySelector('input');
         inp.addEventListener('change', () => {
           const n = Math.max(1, Number(inp.value) || 30);
           inp.value = String(n); rowWrite(rr, n);
         });
-        ctl.appendChild(inp);
       }));
     } else if (r.custom === 'excludedNotes') {
       const sr = document.createElement('div');
@@ -692,12 +928,11 @@
       chips.style.justifyContent = 'flex-start';
       const rr = { k: 'reviewExcludedNotes' };
       const redraw = () => {
-        chips.innerHTML = R.pathChipsItemsHtml(pathList(rr).map((p) => ({ path: p, label: p.split('/').pop(), multi: true })));
-        chips.querySelectorAll('.x').forEach((x, i) => {
-          x.addEventListener('click', () => {
-            pathWriteList(rr, pathList(rr).filter((y) => y !== pathList(rr)[i]));
-            redraw();
-          });
+        const list = pathList(rr);
+        chips.innerHTML = R.pathChipsItemsHtml(list.map((p) => ({ path: p, label: p.split('/').pop(), multi: true })));
+        chips.querySelectorAll('.bz-sp-chip .x').forEach((x, i) => {
+          const p = list[i];
+          x.addEventListener('click', () => { pathWriteList(rr, pathList(rr).filter((y) => y !== p)); redraw(); });
         });
       };
       redraw();
@@ -705,21 +940,29 @@
       row.appendChild(sr);
     } else if (r.custom === 'lanIp') {
       row.appendChild(sub('本机局域网 IP（mock：192.168.1.108）', (ctl) => {
-        const b2 = document.createElement('button');
-        b2.className = 'bz-sp-btn'; b2.textContent = '填入远程 URL';
+        ctl.innerHTML = R.rowBtnHtml('填入远程 URL');
+        const b2 = ctl.querySelector('.bz-sp-btn');
         b2.addEventListener('click', () => {
-          rowWrite({ k: 'secondBrainRemoteOllamaUrl' }, 'http://192.168.1.108:11434');
-          redrawDomain();
+          confirmDialog(host, {
+            title: '填入远程 Ollama URL',
+            message: '将「远程 Ollama URL（移动端）」覆盖为 http://192.168.1.108:11434？',
+            okText: '覆盖',
+            onOk: () => {
+              rowWrite({ k: 'secondBrainRemoteOllamaUrl' }, 'http://192.168.1.108:11434');
+              redrawDomain();
+              toast(host, '已填入远程 URL：http://192.168.1.108:11434');
+            },
+          });
         });
         ctl.appendChild(b2);
       }));
     }
   }
 
-  /* ---------- 域实例（桌面面板 / 移动面板共用内核；骨架出纯层） ---------- */
+  /* ---------- 域实例（桌面面板 / 移动面板共用内核） ---------- */
   function createApp(root, mode, initial) {
     const state = { current: initial || 'global', q: '' };
-    // 按端口径：桌面剔除零项域（desktopZero，如回忆墙）；移动端全量（其移动组可见）
+    // 按端口径：桌面剔除零项域（loadedCounts=0，如回忆墙/收藏本）；移动端全量（其移动组可见）
     const listable = (forMob) => DEMO.NAV
       .map((sec) => ({ title: sec.title, domains: sec.ids.map((id) => ({ id, def: DEMO.DOMAINS[id] })).filter((d) => (forMob || !d.def.desktopZero)) }));
 
@@ -730,15 +973,20 @@
       for (const sec of listable(mode === 'mob')) {
         const items = sec.domains.filter((d) => !state.q || domainHit(d.id, state.q));
         if (!items.length) continue;
-        nav.innerHTML += R.navSecHtml(sec.title, items.map((d) => R.navItemHtml({
-          id: d.id, icon: d.def.icon, name: d.def.name,
-          count: String(visibleRowsOf(d.def).length),
-          on: d.id === state.current && !state.q,
-        })).join(''));
+        let itemsHtml = '';
+        for (const d of items) {
+          itemsHtml += R.navItemHtml({
+            id: d.id, icon: d.def.icon, name: d.def.name,
+            count: String(visibleRowsOf(d.def).length),
+            on: d.id === state.current && !state.q,
+          });
+        }
+        nav.insertAdjacentHTML('beforeend', R.navSecHtml(sec.title, itemsHtml));
       }
       mountIcons(nav);
       nav.querySelectorAll('.bz-sp-nav-item').forEach((b) => {
-        b.addEventListener('click', () => { state.current = b.dataset.spDomain; state.q = ''; render(); });
+        const id = b.dataset.spDomain;
+        b.addEventListener('click', () => { state.current = id; state.q = ''; render(); });
       });
     }
     function domainHit(id, q) {
@@ -750,14 +998,16 @@
     function renderGroupsInto(container, domain, showMobile) {
       for (const g of domain.groups) {
         if (g.m && !showMobile) continue;
-        const holder = document.createElement('div');
         const pk = (g.rows.find((r) => r.t === 'toggle' && r.k && !r.k.startsWith('__')) || {}).k || null;
         const cntOf = () => g.rows.filter((r) => (!showMobile && r.m ? false : r.t !== 'button') && evalVis(r.vis) && !(r.child && pk && val(pk) !== true)).length;
-        holder.innerHTML = R.groupCardHtml(g.icon, g.name, cntOf() + ' 项');
-        const card = holder.firstElementChild;
+        const cardHolder = document.createElement('div');
+        cardHolder.innerHTML = R.groupCardHtml(g.icon, g.name, cntOf() + ' 项');
+        const card = cardHolder.firstElementChild;
+        const head = card.querySelector('.bz-sp-group-head');
+        const cnt = head.querySelector('.bz-sp-group-count');
         const body = card.querySelector('.bz-sp-group-body');
         const refresh = () => reevaluate(card, g, showMobile);
-        for (const r of g.rows) body.appendChild(rowEl(r, pk, root, refresh, () => render()));
+        for (const r of g.rows) body.appendChild(rowEl(r, pk, root, () => refresh(card, g), () => render()));
         container.appendChild(card);
       }
     }
@@ -780,9 +1030,11 @@
       const domain = DEMO.DOMAINS[state.current];
       pane.innerHTML = '';
       if (mode === 'desk') {
-        // 域页头（纯层 pageHeadHtml；tag = 可见行数 · 组数）
         const headHolder = document.createElement('div');
-        headHolder.innerHTML = R.pageHeadHtml(domain.name, domain.desc, visibleRowsOf(domain).length + ' 项 · ' + domain.groups.filter((g) => !g.m).length + ' 组');
+        headHolder.innerHTML = R.pageHeadHtml(
+          domain.name, domain.desc,
+          visibleRowsOf(domain).length + ' 项 · ' + domain.groups.filter((g) => !g.m).length + ' 组'
+        );
         pane.appendChild(headHolder.firstElementChild);
       }
       const body = document.createElement('div');
@@ -792,11 +1044,7 @@
     }
 
     function mount() {
-      if (mode === 'desk') {
-        root.innerHTML = R.deskShellHtml();
-      } else {
-        root.innerHTML = R.mobShellHtml();
-      }
+      root.innerHTML = mode === 'desk' ? R.deskShellHtml() : R.mobShellHtml();
       mountIcons(root);
       const sinp = root.querySelector('input');
       sinp.addEventListener('input', () => {
@@ -807,36 +1055,36 @@
             row.classList.toggle('hit', !!state.q.trim() && row.textContent.includes(state.q.trim()));
           });
         } else {
-          api.renderMobList();
-          api.bindMobList((id) => api.openDomain(id));
+          renderMobList();
+          bindMob();
         }
       });
       render();
     }
 
-    const api = {
+    return {
       mount,
       openDomain(id) {
         state.current = id;
         if (mode === 'desk') { render(); return; }
-        // 移动端：域设置弹窗（壳出纯层 mobModalShellHtml）
+        // 移动端：域设置弹窗
         const domain = DEMO.DOMAINS[id];
         const mask = document.createElement('div');
         mask.className = 'bz-sp-demo-mobmask';
         const modal = document.createElement('div');
         modal.className = 'bz-sp-mob-modal';
         modal.innerHTML = R.mobModalShellHtml(domain.icon, domain.name);
-        mountIcons(modal);
         const body = modal.querySelector('.bz-sp-mob-modal-body');
         mask.appendChild(modal);
         root.appendChild(mask);
-        // 渲染该域到弹窗 body（复用桌面组卡渲染）
+        // 渲染该域到弹窗 body（复用桌面组卡渲染，临时切换 current）
         const prev = state.current;
         state.current = id;
-        body.innerHTML = '';
+        const pane = body;
+        pane.innerHTML = '';
         const bodyEl = document.createElement('div');
         bodyEl.className = 'bz-sp-settings-body';
-        body.appendChild(bodyEl);
+        pane.appendChild(bodyEl);
         renderGroupsInto(bodyEl, domain, true);
         state.current = prev;
         mask.addEventListener('click', (e) => { if (e.target === mask) mask.remove(); });
@@ -853,18 +1101,20 @@
         const list = root.querySelector('.bz-sp-mob-list');
         if (!list) return;
         const keep = state.q;
+        const savedRender = render;
         list.innerHTML = '';
         for (const sec of listable()) {
           const items = sec.domains.filter((d) => !keep || domainHit(d.id, keep));
           if (!items.length) continue;
-          list.innerHTML += R.mobSecHtml(sec.title) + items.map((d) => R.mobItemHtml({
-            id: d.id, icon: d.def.icon, name: d.def.name, desc: d.def.desc,
-          })).join('');
+          let itemsHtml = R.mobSecHtml(sec.title);
+          for (const d of items) {
+            itemsHtml += R.mobItemHtml({ id: d.id, icon: d.def.icon, name: d.def.name, desc: d.def.desc });
+          }
+          list.insertAdjacentHTML('beforeend', itemsHtml);
         }
         mountIcons(list);
       },
     };
-    return api;
   }
 
   /* ---------- 启动：桌面 + 移动两实例 ---------- */
@@ -877,7 +1127,7 @@
   mob.bindMobList((id) => mob.openDomain(id));
   if (new URLSearchParams(location.search).get('demo') === 'mob') mob.openDomain('cinema');
 
-  /* ---------- 评审快捷参数：?demo=path / ?demo=model ---------- */
+  /* ---------- 评审快捷参数：?demo=path / ?demo=model / ?demo=checkup|repair|upmgr|confirm 直达子弹窗 ---------- */
   const demoParam = new URLSearchParams(location.search).get('demo');
   if (demoParam === 'path') {
     desk.open('clipbook');
@@ -885,6 +1135,21 @@
   } else if (demoParam === 'model') {
     desk.open('ai');
     setTimeout(() => desk.pickModel({ k: '__fn:aiModel', n: '模型名称' }), 500);
+  } else if (demoParam === 'checkup') {
+    desk.open('global');
+    setTimeout(() => { const b = [...document.querySelectorAll('#sp-demo-desk .bz-sp-pane button')].find((x) => x.textContent.trim() === '打开体检'); if (b) b.click(); }, 400);
+  } else if (demoParam === 'repair') {
+    desk.open('diary');
+    setTimeout(() => { const b = [...document.querySelectorAll('#sp-demo-desk .bz-sp-pane button')].find((x) => x.textContent.trim() === '检测日记解析'); if (b) b.click(); }, 400);
+  } else if (demoParam === 'upmgr') {
+    desk.open('clipbook');
+    setTimeout(() => { const b = [...document.querySelectorAll('#sp-demo-desk .bz-sp-pane button')].find((x) => x.textContent.includes('管理（')); if (b) b.click(); }, 400);
+  } else if (demoParam === 'confirm') {
+    desk.open('literature');
+    setTimeout(() => { const b = [...document.querySelectorAll('#sp-demo-desk .bz-sp-pane button')].find((x) => x.textContent.trim() === '清空历史'); if (b) b.click(); }, 400);
+  } else if (demoParam === 'cardpicker') {
+    desk.open('smartcat');
+    setTimeout(() => { const b = [...document.querySelectorAll('#sp-demo-desk .bz-sp-pane button')].find((x) => x.textContent.trim() === '添加…' || x.textContent.trim() === '选择…'); if (b) b.click(); }, 400);
   }
 
   /* ---------- 亮暗切换 + 重置演示数据（壳层演示件） ---------- */
@@ -892,10 +1157,7 @@
     document.body.classList.toggle('theme-dark', t === 'dark');
     localStorage.setItem(LS_THEME, t);
     const tb = document.getElementById('sp-theme-btn');
-    if (tb) {
-      tb.innerHTML = '';
-      tb.appendChild(icon(t === 'dark' ? 'sun' : 'moon', 'bz-ic'));
-    }
+    if (tb) tb.innerHTML = icon(t === 'dark' ? 'sun' : 'moon', 'bz-ic').outerHTML;
   }
   const themeBtn = document.getElementById('sp-theme-btn');
   if (themeBtn) themeBtn.addEventListener('click', () => {
@@ -932,7 +1194,6 @@
       }
     }
     A('逐域点击导航全部渲出分组卡', true);
-    A('markup 单源（BZR_settings_panel 在库）', !!window.BZR_settings_panel && !!window.BZR_settings_panel.rowHtml);
     const aiBtn = [...deskNav()].find((b) => b.querySelector('.bz-sp-nav-name').textContent === 'AI');
     aiBtn.click();
     const aiPane = document.querySelector('#sp-demo-desk .bz-sp-pane');
@@ -957,6 +1218,35 @@
       A('移动弹窗内容可滚', mbody.scrollHeight >= mbody.clientHeight);
     }
     delta = {}; catDelta = {}; persist();
+
+    /* 子弹窗冒烟（补录子弹窗后）：数据体检 / 日记修复 / 重新索引确认 / 清空历史 / UP 管理 / 记忆目录卡片选择器 */
+    const deskNav2 = () => document.querySelectorAll('#sp-demo-desk .bz-sp-nav-item');
+    const clickNav = (name) => {
+      const it = [...deskNav2()].find((b) => b.querySelector('.bz-sp-nav-name').textContent === name);
+      if (!it) return null;
+      it.click();
+      return true;
+    };
+    const paneBtn = (label) => {
+      const pane = document.querySelector('#sp-demo-desk .bz-sp-pane');
+      return pane ? [...pane.querySelectorAll('button')].find((b) => b.textContent.trim() === label) : null;
+    };
+    try {
+      clickNav('通用');
+      const ck = paneBtn('打开体检');
+      if (ck) { ck.click(); A('数据体检面板打开', !!document.querySelector('#sp-demo-desk .bz-sp-demo-panel .bz-sp-demo-empty')); document.querySelector('#sp-demo-desk .bz-sp-demo-card .bz-sp-btn--primary')?.click(); }
+      clickNav('日记本');
+      const rp = paneBtn('检测日记解析');
+      if (rp) { rp.click(); A('日记解析检测面板打开', !!document.querySelector('#sp-demo-desk .bz-sp-demo-panel')); const any = document.querySelector('#sp-demo-desk .bz-sp-demo-card'); if (any) any.remove(); }
+      clickNav('第二大脑');
+      const ri = paneBtn('开始');
+      if (ri) { ri.click(); A('重新索引确认框弹出', !!document.querySelector('#sp-demo-desk .bz-sp-confirm')); const any = document.querySelector('#sp-demo-desk .bz-sp-confirm'); if (any) any.closest('.bz-sp-picker-mask').remove(); }
+      clickNav('文献盒');
+      const cl = paneBtn('清空历史');
+      if (cl) { cl.click(); A('清空历史确认框弹出（danger）', !!document.querySelector('#sp-demo-desk .bz-sp-confirm .bz-sp-btn--danger')); const any = document.querySelector('#sp-demo-desk .bz-sp-confirm'); if (any) any.closest('.bz-sp-picker-mask').remove(); }
+    } catch (e) {
+      A('子弹窗冒烟抛异常：' + e.message, false);
+    }
     return out;
   };
 

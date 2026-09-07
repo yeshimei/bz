@@ -5,17 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>设置面板 · 域内评审原型（桌面 + 移动 · S1/S3 双皮）</title>
 <!--
-  设置面板域内评审壳（prototype-first.md + ADR-0104 markup 单源）：
-  - markup 单源：面板骨架/导航/行/组卡/控件 HTML 全部出自 render.ts（经 prototype-render.js
-    挂 window.BZR_settings_panel，<script> 加载），prototype.app.js 只留演示层
-    （演示数据/localStorage 值层、演示绑定、自绘弹层、toast、主题类同步、selftest）；
+  设置面板域内评审壳（prototype-first.md）：
   - 组件样式零内联：<link href="./styles.css">（与插件共用同一份域样式，构建自动聚合）；
   - 本壳 <style> 只写演示壳样式：页面底色、桌面演示框、手机演示框、亮暗钮、
-    原型演示专属件（文件夹/模型选择器弹层、迷你皮肤预览、toast、sub-row、tf-* 未来皮肤 token 预览）——
-    这些在插件版分别由 dir-picker.ts（路径行）与 renderer 自绘承载，属壳层差异；
+    原型演示专属件（文件夹/模型选择器弹层、迷你皮肤预览、toast、sub-row）——
+    这些在插件版分别由 core/path-picker（路径行）与 renderer 自绘承载，属壳层差异；
   - 两端并存：左侧桌面面板（overlay 形态）+ 右侧手机演示框（M1 命令面板 + 域设置弹窗）；
   - 手动亮暗钮：插件内跟随 Obsidian .theme-dark（壳层差异表）。
-  双击打开本文件即可评审；?selftest=1 自检 / ?demo=path|model 直达弹层 / ?domain= 直达域。
+  双击打开本文件即可评审；不进构建、不入 git 产物。
 -->
 <link rel="stylesheet" href="./styles.css">
 <style>
@@ -152,6 +149,82 @@
   }
   .bz-sp-demo-toast.show { opacity: 1; transform: translateX(-50%); }
   .bz-sp-btn--primary { background: var(--sp-accent, #c95a28) !important; color: var(--sp-on-accent, #fff) !important; border-color: transparent !important; }
+  .bz-sp-btn--danger { background: #c0392b !important; color: #fff !important; border-color: transparent !important; }
+
+  /* 子弹窗（插件真实可达层演示）：通用居中卡 + 共享确认框 + 面板（UP 管理/日记修复/体检/卡片目录选择器） */
+  .bz-sp-demo-card {
+    width: min(560px, 92%); max-height: min(620px, 84vh);
+    background: var(--sp-panel, #fffcf6); border: 1px solid var(--sp-line, #e5dfcf); border-radius: 14px;
+    box-shadow: var(--sp-shadow, 0 6px 24px rgba(40,30,10,.18));
+    display: flex; flex-direction: column; overflow: hidden; font-size: 12.5px; color: var(--sp-ink, #2c2924);
+  }
+  .bz-sp-demo-card-head {
+    display: flex; align-items: center; gap: 10px; padding: 14px 18px; flex-shrink: 0;
+    border-bottom: 1px solid var(--sp-line, #e5dfcf); font-size: 14px;
+  }
+  .bz-sp-demo-card-body { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 18px 12px; }
+  .bz-sp-demo-card-head b { color: var(--sp-ink, #2c2924); }
+  /* 共享确认框 */
+  .bz-sp-confirm { width: min(400px, 86%) !important; padding: 20px 22px; gap: 12px; }
+  .bz-sp-confirm-title { margin: 0; font-size: 15px; color: var(--sp-ink, #2c2924); }
+  .bz-sp-confirm-msg { margin: 6px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--sp-ink-2, #7a7466); white-space: pre-line; }
+  .bz-sp-confirm-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+  /* UP 主名单管理弹窗 */
+  .bz-sp-upmgr-row { display: flex; align-items: flex-start; gap: 14px; padding: 12px 2px; border-bottom: 1px dashed var(--sp-line, #e5dfcf); }
+  .bz-sp-upmgr-row:last-of-type { border-bottom: 0; }
+  .bz-sp-upmgr-label { flex: 1; min-width: 0; }
+  .bz-sp-upmgr-ctl { display: flex; align-items: center; gap: 8px; }
+  .bz-sp-upmgr-ctl .bz-input { width: 220px; }
+  .bz-sp-upmgr-list { display: flex; flex-direction: column; gap: 6px; padding: 6px 0 2px; }
+  .bz-sp-upmgr-item { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border: 1px solid var(--sp-line-soft, #f2eee1); border-radius: 9px; background: var(--sp-bg, #f6f2e9); }
+  .bz-sp-upmgr-info { flex: 1; min-width: 0; }
+  .bz-sp-upmgr-name { font-size: 13px; color: var(--sp-ink, #2c2924); font-weight: 600; }
+  .bz-sp-upmgr-uid { font-size: 10.5px; color: var(--sp-ink-3, #aca595); font-family: ui-monospace, Consolas, monospace; }
+  /* 日记修复/体检面板共用段 */
+  .bz-sp-demo-sec { padding: 8px 0 4px; }
+  .bz-sp-demo-sec-t { font-size: 11px; letter-spacing: .08em; color: var(--sp-ink-3, #aca595); font-weight: 700; padding: 8px 2px 6px; border-bottom: 1px solid var(--sp-line, #e5dfcf); margin-bottom: 6px; }
+  .bz-sp-demo-repair { display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; border-radius: 9px; }
+  .bz-sp-demo-repair:hover { background: var(--sp-accent-soft, #f7e8dd); }
+  .bz-sp-demo-repair-file { font-size: 11px; color: var(--sp-ink-3, #aca595); font-family: ui-monospace, Consolas, monospace; }
+  .bz-sp-demo-repair-code { font-size: 12.5px; color: var(--sp-ink, #2c2924); font-family: ui-monospace, Consolas, monospace; }
+  .bz-sp-demo-repair-code .bz-sp-demo-repair-after { color: var(--sp-accent, #c95a28); }
+  .bz-sp-demo-repair-code .bz-sp-demo-repair-arrow { opacity: .5; margin: 0 4px; }
+  .bz-sp-demo-empty { padding: 44px 10px; text-align: center; }
+  .bz-sp-demo-empty .bz-sp-set-desc { margin: 6px auto 0; max-width: 420px; }
+  .bz-sp-demo-steps { display: flex; flex-direction: column; gap: 8px; padding: 12px 4px; }
+  .bz-sp-demo-step { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--sp-ink-2, #7a7466); }
+  .bz-sp-demo-step.is-done { color: var(--sp-ink, #2c2924); }
+  .bz-sp-demo-step.is-current { color: var(--sp-accent, #c95a28); font-weight: 600; }
+  .bz-sp-demo-step-mark { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--sp-line, #e5dfcf); flex: none; }
+  .bz-sp-demo-step.is-done .bz-sp-demo-step-mark { background: var(--sp-accent, #c95a28); border-color: var(--sp-accent, #c95a28); }
+  .bz-sp-demo-step.is-current .bz-sp-demo-step-mark { border-color: var(--sp-accent, #c95a28); }
+  .bz-sp-demo-prog { padding: 12px 4px 2px; font-size: 13px; color: var(--sp-ink, #2c2924); }
+  .bz-sp-demo-summary { padding: 12px; border-radius: 10px; margin: 10px 0 4px; font-weight: 600; font-size: 13px; }
+  .bz-sp-demo-summary--ok { background: rgba(46,139,110,.12); color: #2e8b6e; }
+  .bz-sp-demo-clean { padding: 5px 2px; font-size: 12.5px; color: var(--sp-ink-2, #7a7466); }
+  .theme-dark .bz-sp-demo-clean { color: var(--sp-ink-2); }
+  /* 卡片目录选择器（bz-path-picker 壳：对齐插件 openPathPicker 形态，tokens 用 --sp-*） */
+  .bz-sp-demo-card.bz-path-picker { display: flex; flex-direction: column; overflow: hidden; max-height: min(560px, 82vh); }
+  .bz-sp-demo-card .bz-path-picker-head { padding: 14px 18px 10px; border-bottom: 1px solid var(--sp-line, #e5dfcf); flex-shrink: 0; }
+  .bz-sp-demo-card .bz-path-picker-title { margin: 0; font-size: 15px; font-weight: 700; color: var(--sp-ink, #2c2924); }
+  .bz-sp-demo-card .bz-path-picker-desc { margin-top: 4px; font-size: 12px; color: var(--sp-ink-2, #7a7466); line-height: 1.55; }
+  .bz-sp-demo-card .bz-path-picker-search { flex-shrink: 0; margin: 12px 16px 0; padding: 8px 10px; border: 1px solid var(--sp-line, #e5dfcf); border-radius: 8px; font-size: 13px; background: var(--sp-input-bg, #fffcf6); color: var(--sp-ink, #2c2924); font-family: inherit; }
+  .bz-sp-demo-card .bz-path-picker-search:focus { outline: none; border-color: var(--sp-accent, #c95a28); }
+  .bz-sp-demo-card .bz-path-picker-list { flex: 1; min-height: 120px; overflow-y: auto; margin: 10px 8px; padding: 4px; }
+  .bz-sp-demo-card .bz-path-picker-row { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border-radius: 8px; font-size: 13px; color: var(--sp-ink, #2c2924); cursor: pointer; user-select: none; }
+  .bz-sp-demo-card .bz-path-picker-row:hover { background: var(--sp-accent-soft, #f7e8dd); }
+  .bz-sp-demo-card .bz-path-picker-row--sel { background: var(--sp-accent-soft, #f7e8dd); color: var(--sp-accent, #c95a28); font-weight: 600; }
+  .bz-sp-demo-card .bz-path-picker-check { flex: 0 0 auto; width: 18px; height: 18px; border: 1.5px solid var(--sp-line, #e5dfcf); border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; color: var(--sp-on-accent, #fff); }
+  .bz-sp-demo-card .bz-path-picker-row--sel .bz-path-picker-check { background: var(--sp-accent, #c95a28); border-color: var(--sp-accent, #c95a28); }
+  .bz-sp-demo-card .bz-path-picker-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bz-sp-demo-card .bz-path-picker-empty { padding: 24px 0; text-align: center; font-size: 13px; color: var(--sp-ink-3, #aca595); }
+  .bz-sp-demo-card .bz-path-picker-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--sp-line, #e5dfcf); flex-shrink: 0; }
+  .bz-sp-demo-card .bz-path-picker-selinfo { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--sp-ink-2, #7a7466); }
+  .bz-sp-demo-card .bz-path-picker-foot-btns { display: flex; gap: 8px; flex: 0 0 auto; }
+  .bz-sp-demo-card .bz-path-picker-btn { font-size: 12.5px; padding: 6px 14px; border: 1px solid var(--sp-line, #e5dfcf); border-radius: 8px; background: var(--sp-bg, #f6f2e9); color: var(--sp-ink, #2c2924); cursor: pointer; font-family: inherit; }
+  .bz-sp-demo-card .bz-path-picker-btn:hover { background: var(--sp-accent-soft, #f7e8dd); }
+  .bz-sp-demo-card .bz-path-picker-btn--primary { border-color: transparent; background: var(--sp-accent, #c95a28); color: var(--sp-on-accent, #fff); }
+  .bz-sp-demo-card .bz-path-picker-btn--primary:hover { opacity: .88; background: var(--sp-accent, #c95a28); }
 
   /* 原型演示专属：外观域主题卡切换用的显式主题 tokens（落域时由「面板外观」设置键 + styles.css 正式承载） */
   .bz-sp-desk.bz-sp-tf-linen,

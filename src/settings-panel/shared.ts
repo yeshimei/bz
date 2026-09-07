@@ -1,12 +1,11 @@
 /**
  * 设置面板渲染纯层 · 共享层（settings-panel，ADR-0104 markup 单源 + ADR-0105 布局分层）。
  *
- * 本文件是「原型 × 插件」控件级 markup 的唯一事实源：开关/下拉/输入/滑杆/路径 chips/
- * 按钮徽标/choiceCards 卡组/行骨架/分组卡/域页头/加载态——全部出自这里——
- *   - 插件侧：renderer.ts / ui.ts 拼 innerHTML 后按契约类绑事件（core 服务/落盘留行为层）；
+ * 本文件是「原型 × 插件」控件级 markup 的唯一实现，**以原型 prototype.app.js 为唯一真理逐字提取**
+ * （2026-09-07 拍板：render.ts 以原型为主迁移，禁止从域侧反向提炼——上次混合的根源）：
+ *   - 插件侧：renderer.ts / ui.ts 消费串工厂后按契约类绑事件（core 服务/落盘留行为层）；
  *   - 原型侧：dev 打成 prototype-render.js（IIFE，挂 window.BZR_settings_panel），壳消费同一份。
- * 与模板串孪生域（bookshelf/belongings）不同：本域是 schema 驱动，纯层收的是
- * 「输入 schema 节点视图 + 值 → 输出 HTML 串」的工厂，schema 本体不进纯层。
+ * 本域 schema 驱动，纯层收「输入 schema 节点视图 + 值 → 输出 HTML 串」的工厂，schema 本体不进纯层。
  *
  * 纯层契约（tests/core/render-purity.test.ts 守卫）：import 白名单仅 `../core/ui/str`；
  * settings-schema 仅 type-only（编译期剥除）；禁 obsidian/moment/core 服务/组件库 barrel；
@@ -17,27 +16,27 @@ import { esc, iconSpan } from '../core/ui/str';
 // 再出口（壳经 window.BZR_settings_panel 取用；插件 renderer/ui 亦统一从这里取）
 export { esc, iconSpan };
 
-/* ==================== 控件级工厂（跨布局/跨面板复用） ==================== */
+/* ==================== 控件级工厂（跨布局/跨面板复用；逐字对齐 prototype.app.js renderCtl） ==================== */
 
-/** 开关（button.bz-sw；role=switch；on = 选中态） */
+/** 开关（button.bz-sw；role=switch；on = 选中态）——原型 toggle 分支 */
 export function toggleHtml(on: boolean): string {
   return `<button type="button" class="bz-sw${on ? ' on' : ''}" role="switch" aria-checked="${String(on)}"></button>`;
 }
 
-/** 下拉触发器（菜单 open 时动态渲——selectMenuHtml / selectItemHtml 同为纯串） */
+/** 下拉触发器（菜单 open 时动态渲——selectMenuHtml / selectItemHtml 同为纯串）
+ *  原型 select 分支：bz-select = 值 span + chevron 右转箭头（旋转由 styles.css .bz-select-car 单源承载） */
 export function selectTriggerHtml(label: string): string {
   return `<div class="bz-select"><span class="bz-select-val">${esc(label)}</span>` +
-    // 箭头旋转由 styles.css .bz-select-car 统一承载（样式单源，两侧同构）
     `${iconSpan('chevron-right', 'bz-select-car')}</div>`;
 }
 
-/** 下拉菜单项（is-on = 当前值；勾标 icon 占位由 mountIcons 兑现） */
+/** 下拉菜单项（is-on = 当前值；勾标 icon 占位由 mountIcons 兑现）——原型菜单循环项 */
 export function selectItemHtml(label: string, on: boolean): string {
   return `<button type="button" class="bz-select-item${on ? ' is-on' : ''}"><span>${esc(label)}</span>` +
     `<span class="bz-ic bz-select-item-ck">${iconSpan('check')}</span></button>`;
 }
 
-/** 文本/数字输入（mono/num/secret 修饰；契约类 bz-input） */
+/** 文本/数字输入（mono/num/secret 修饰；契约类 bz-input）——原型 text/textarea/number 分支 */
 export function textInputHtml(opts: {
   value: string;
   type?: 'text' | 'number';
@@ -67,14 +66,14 @@ export function textareaHtml(value: string, placeholder?: string): string {
   return `<textarea class="bz-input bz-sp-textarea" autocomplete="off"${placeholder ? ` placeholder="${esc(placeholder)}"` : ''}>${esc(value)}</textarea>`;
 }
 
-/** 滑杆行（轻量读数 span） */
+/** 滑杆行（轻量读数 span）——原型 slider 分支 bz-sp-slider-row */
 export function sliderHtml(min: number | undefined, max: number | undefined, step: number | undefined, value: number): string {
   return `<div class="bz-sp-slider-row">` +
     `<input type="range"${min !== undefined ? ` min="${min}"` : ''}${max !== undefined ? ` max="${max}"` : ''} step="${step ?? 1}" value="${value}">` +
     `<span class="bz-sp-slider-val">${value}</span></div>`;
 }
 
-/** 路径行 chips 项串（无容器——容器 .bz-sp-chips 由调用方持有，重渲只换内部串） */
+/** 路径行 chips 项串（无容器——容器 .bz-sp-chips 由调用方持有，重渲只换内部串）——原型 path 分支 redraw */
 export function pathChipsItemsHtml(chips: Array<{ path: string; label: string; locked?: boolean; muted?: boolean; multi?: boolean }>): string {
   return chips.map((c) => {
     const cls = c.muted ? 'bz-sp-chip bz-sp-chip--muted' : c.locked ? 'bz-sp-chip bz-sp-chip--locked' : 'bz-sp-chip';
@@ -88,12 +87,12 @@ export function pathChipsHtml(chips: Array<{ path: string; label: string; locked
   return `<div class="bz-sp-chips">${pathChipsItemsHtml(chips)}</div>`;
 }
 
-/** 路径行「选择…/添加…」按钮 */
+/** 路径行「选择…/添加…」按钮——原型 path 分支 bz-sp-path-btn */
 export function pathAddBtnHtml(text: string): string {
   return `<button type="button" class="bz-sp-btn bz-sp-path-btn">${esc(text)}</button>`;
 }
 
-/** 行操作按钮（cta → accent 实底） */
+/** 行操作按钮（cta → accent 实底）——原型 button 分支 */
 export function rowBtnHtml(label: string, cta?: boolean): string {
   return `<button type="button" class="bz-sp-btn${cta ? ' bz-sp-btn--primary' : ''}">${esc(label)}</button>`;
 }
@@ -103,62 +102,128 @@ export function badgeHtml(label: string): string {
   return `<span class="bz-badge">${esc(label)}</span>`;
 }
 
-/** choiceCards 卡组（radiogroup；卡片 = 迷你预览 div + 名称；is-on = 当前值；
- *  卡上 data-sp-card 契约供事件层回查选项值） */
-export function cardpickHtml(cards: Array<{ value: string; label: string; on: boolean; prevClass?: string }>): string {
-  return `<div class="bz-sp-cardpick" role="radiogroup">` + cards.map((c) =>
-    `<button type="button" class="bz-sp-cardpick-card${c.on ? ' is-on' : ''}" data-sp-card="${esc(c.value)}">` +
-    `<div class="bz-sp-mini${c.prevClass ? ` ${c.prevClass}` : ''}" aria-hidden="true"></div>` +
-    `<span class="bz-sp-cardpick-name">${esc(c.label)}</span></button>`
-  ).join('') + `</div>`;
+/** 迷你皮肤预览（choiceCards 卡内；逐字提取原型 renderMini 六种 kind——内联样式为原型真理） */
+export function miniHtml(kind: string | undefined, prev: Record<string, unknown>): string {
+  const st = (extra: string): string => ` style="${extra}"`;
+  const bg = st(`background:${prev.bg}`);
+  if (kind === 'todo') {
+    const headCls = 'm-head' + (prev.head === 'stripe' ? ' m-stripe' : '');
+    const headBg = prev.head === 'stripe' ? prev.bg : prev.ink;
+    const headBorder = prev.head === 'stripe' ? `border-bottom:2px solid ${prev.ink};` : '';
+    const lines = [[18, 16], [28, 24], [24, 32]].map(([w, top], i) =>
+      `<div class="m-line"${st(`top:${top}px;width:${w}px;background:${prev.ink};opacity:${i === 2 ? 0.35 : 0.55}`)}></div>`).join('');
+    return `<div class="bz-sp-mini"${bg}><div class="${headCls}"${st(`background:${headBg};${headBorder}`)}></div>${lines}` +
+      `<div class="m-chip"${st(`background:${prev.ac}`)}></div></div>`;
+  }
+  if (kind === 'shelf') {
+    const books = (prev.books as string[] | undefined || []).map((c, i) =>
+      `<div class="m-book"${st(`left:${10 + i * 14}px;height:${[24, 32, 20][i]}px;background:${c};border-top:2px solid ${prev.ac}`)}></div>`).join('');
+    return `<div class="bz-sp-mini"${bg}><div class="m-ac"${st(`background:${prev.ac}`)}></div>${books}</div>`;
+  }
+  if (kind === 'layout') {
+    // 布局缩略：head 横条 + 形态块（mode: system/compact/iconrail/outline）
+    const mk = (css: string): string => `<div${st(`position:absolute;border-radius:2px;background:rgba(90,70,40,.22);${css}`)}></div>`;
+    let blocks = '';
+    if (prev.mode === 'system') blocks = mk('left:4px;top:14px;width:14px;bottom:4px;') + mk('left:21px;top:14px;right:4px;height:26px;');
+    else if (prev.mode === 'compact') blocks = mk('left:4px;top:14px;width:14px;bottom:4px;') + mk('left:21px;top:14px;width:26px;height:12px;') +
+      mk('left:21px;top:28px;width:26px;height:12px;') + mk('left:50px;top:14px;width:10px;bottom:10px;');
+    else if (prev.mode === 'iconrail') blocks = mk('left:2px;top:2px;bottom:2px;width:8px;') + mk('left:14px;top:4px;width:16px;bottom:4px;') +
+      mk('left:34px;top:4px;right:4px;bottom:4px;');
+    else if (prev.mode === 'outline') blocks = mk('left:4px;top:14px;right:24px;bottom:4px;') + mk('right:4px;top:14px;width:16px;height:20px;');
+    return `<div class="bz-sp-mini"${bg}><div class="m-head"${st('background:rgba(90,70,40,.28)')}></div>${blocks}</div>`;
+  }
+  if (kind === 'skin') {
+    // 主题套装预览：亮暗双块（自动亮暗，无需指定）
+    return `<div class="bz-sp-mini"${bg}>` +
+      `<div${st(`position:absolute;inset:0 50% 0 0;background:${prev.light || '#f6f2e9'}`)}></div>` +
+      `<div${st(`position:absolute;inset:0 0 0 50%;background:${prev.dark || '#242429'}`)}></div>` +
+      `<div${st(`position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;background:${prev.ac || 'var(--sp-accent)'};border:2px solid #fff;`)}></div></div>`;
+  }
+  if (kind === 'themecard') {
+    return `<div class="bz-sp-mini"${bg}>` +
+      `<div${st(`position:absolute;left:5px;top:50%;transform:translateY(-50%);width:5px;height:26px;border-radius:3px;background:${prev.ac};`)}></div></div>`;
+  }
+  if (kind === 'cat') {
+    const ears = ['ear l', 'ear r'].map(() =>
+      `<div class="ear"${st(`background:transparent;border-bottom-color:${prev.fur}`)}></div>`).join('');
+    const eyes = ['eye l', 'eye r'].map(() => `<div class="eye"${st('background:rgba(20,15,8,.75)')}></div>`).join('');
+    return `<div class="bz-sp-mini"${bg}><div class="m-cat">${ears}` +
+      `<div class="face"${st(`background:${prev.fur}`)}></div>` +
+      (prev.patch ? `<div class="patch"${st(`background:${prev.patch}`)}></div>` : '') + eyes + `</div></div>`;
+  }
+  return `<div class="bz-sp-mini"${bg}></div>`;
 }
 
-/* ==================== 行 / 组骨架 ==================== */
+/** choiceCards 卡组（radiogroup；卡 = mini 预览 + 名称；is-on = 当前值；data-sp-card 契约供事件层回查）。
+ *  每卡预览二选一：kind+prev（原型 renderMini 数据内联构建）或 prevClass（插件端 CSS 承载）——结构同源。 */
+export function cardpickHtml(cards: Array<{ value: string; label: string; on: boolean; kind?: string; prev?: Record<string, unknown>; prevClass?: string }>): string {
+  return `<div class="bz-sp-cardpick" role="radiogroup">` + cards.map((c) => {
+    const mini = c.kind
+      ? miniHtml(c.kind, c.prev || {})
+      : `<div class="bz-sp-mini${c.prevClass ? ` ${c.prevClass}` : ''}" aria-hidden="true"></div>`;
+    return `<button type="button" class="bz-sp-cardpick-card${c.on ? ' is-on' : ''}" data-sp-card="${esc(c.value)}">` +
+      mini + `<span class="bz-sp-cardpick-name">${esc(c.label)}</span></button>`;
+  }).join('') + `</div>`;
+}
+
+/* ==================== 行 / 组骨架（逐字对齐 prototype.app.js rowEl / renderGroupsInto） ==================== */
 
 /** 行视图模型（renderer 从 schema 行摘出的纯数据投影视图） */
 export interface SpRowVm {
-  /** 行语义修饰类（child / bz-sp-set-row--cards 等） */
+  /** 行定位契约（原型 rowEl：data-key = 绑定键 || 行名；搜索命中/显隐重算同构钩子） */
+  key?: string;
+  /** 行语义修饰类（child） */
   cls?: string;
-  /** info 区：名称/描述/备注（↳ 前缀 note）；custom 行不渲 info（插槽自带标题描述） */
+  /** info 区：名称/描述/备注（↳ 前缀 note）；custom 行 = info + 自定义内容 */
   name?: string;
   desc?: string;
   note?: string;
-  /** 控件区 HTML（isCards 时容器用 .bz-sp-set-cards；isCustom 时整行 = 插槽） */
+  /** 控件区 HTML（isCards 时容器用 .bz-sp-set-cards；isCustom 时为整行自定义内容） */
   ctrlHtml?: string;
   isCards?: boolean;
   isCustom?: boolean;
 }
 
-/** 单行骨架（返回完整行串；契约类 .bz-sp-set-ctrl / .bz-sp-set-cards / .bz-sp-custom-slot 供事件层定位） */
+/** 单行骨架（返回完整行串；契约类 .bz-sp-set-ctrl / .bz-sp-set-cards / data-key 供事件层定位）。
+ *  custom 行 = info（名称/描述）+ 自定义内容占满整行（原型 renderCustom 子行串或插件插槽串由 ctrlHtml 注入）。 */
 export function rowHtml(vm: SpRowVm): string {
   const cls = ['bz-sp-set-row'];
   if (vm.cls) cls.push(vm.cls);
   if (vm.isCards) cls.push('bz-sp-set-row--cards');
   if (vm.isCustom) cls.push('bz-sp-set-row--custom');
-  if (vm.isCustom) {
-    // custom 行：内容插槽自带标题/描述（各域 new Setting().setName/setDesc），面板不渲 info 区，
-    // 插槽占满整行（避免标题描述两遍——ticket 设置面板内容重复 a/c）
-    return `<div class="${cls.join(' ')}"><div class="bz-sp-custom-slot bz-sp-custom-slot--full">${vm.ctrlHtml ?? ''}</div></div>`;
-  }
+  const open = `<div class="${cls.join(' ')}"${vm.key ? ` data-key="${esc(vm.key)}"` : ''}>`;
   const name = vm.name ? `<div class="bz-sp-set-name">${esc(vm.name)}</div>` : '';
   const desc = vm.desc ? `<div class="bz-sp-set-desc">${esc(vm.desc)}</div>` : '';
+  if (vm.isCustom) {
+    return `${open}<div class="bz-sp-set-info">${name}${desc}</div>${vm.ctrlHtml ?? ''}</div>`;
+  }
   const note = vm.note ? `<div class="bz-sp-set-note">↳ ${esc(vm.note)}</div>` : '';
   const info = `<div class="bz-sp-set-info">${name}${desc}${note}</div>`;
   const ctrlCls = vm.isCards ? 'bz-sp-set-cards' : 'bz-sp-set-ctrl';
-  return `<div class="${cls.join(' ')}">${info}<div class="${ctrlCls}">${vm.ctrlHtml ?? ''}</div></div>`;
+  return `${open}${info}<div class="${ctrlCls}">${vm.ctrlHtml ?? ''}</div></div>`;
 }
 
-/** 分组卡骨架（图标块 + 名称 + 项数徽标 + 空 body；body 由 renderer 逐行填） */
+/** 通用信息块（name + desc；子弹窗文案区/标签行复用——原型 innerHTML 拼接处） */
+export function setInfoHtml(name: string, desc?: string): string {
+  return `<div class="bz-sp-set-name">${esc(name)}</div>` + (desc ? `<div class="bz-sp-set-desc">${esc(desc)}</div>` : '');
+}
+
+/** custom 子行（label + 控件区；原型 renderCustom 的 sub 骨架） */
+export function subRowHtml(label: string, ctrlHtml: string): string {
+  return `<div class="bz-sp-sub-row"><span class="bz-sp-set-name">${esc(label)}</span>` +
+    `<div class="bz-sp-set-ctrl">${ctrlHtml}</div></div>`;
+}
+
+/** 分组卡骨架（图标块 + 名称 + 项数徽标 + 空 body；body 由调用方逐行填）——原型 renderGroupsInto（section） */
 export function groupCardHtml(icon: string | undefined, name: string, count: string): string {
-  // 图标块 = 单元素占位（mountIcons 物化后 .bz-sp-group-icon 自身带 data-icon——契约与旧 setIcon 一致）
   const ic = icon ? iconSpan(icon, 'bz-sp-group-icon') : '';
-  return `<div class="bz-sp-group"><div class="bz-sp-group-head">${ic}` +
+  return `<section class="bz-sp-group"><div class="bz-sp-group-head">${ic}` +
     `<span class="bz-sp-group-name">${esc(name)}</span>` +
     `<span class="bz-sp-group-count">${esc(count)}</span></div>` +
-    `<div class="bz-sp-group-body"></div></div>`;
+    `<div class="bz-sp-group-body"></div></section>`;
 }
 
-/** 域页头（域名 + 描述 + 右侧项数/组数徽标；tag 可后填） */
+/** 域页头（域名 + 描述 + 右侧项数/组数徽标）——原型 render desk 分支 */
 export function pageHeadHtml(name: string, desc: string, tag: string): string {
   return `<div class="bz-sp-page-head"><div><div class="bz-sp-page-title">${esc(name)}</div>` +
     `<div class="bz-sp-page-desc">${esc(desc)}</div></div>` +
@@ -173,4 +238,90 @@ export function loadingHtml(text = '加载设置…'): string {
 /** 头行工具位图标钮占位（bz-sp-mob-close 等由 ui 层用组件库物化，此处仅头行容器契约） */
 export function headToolsHtml(): string {
   return `<span class="bz-sp-head-tools"></span>`;
+}
+
+/* ==================== 子弹窗骨架（逐字对齐原型 openDemoCard 系；行为/redraw 留调用方） ==================== */
+
+/** 共享确认框内容（h4 标题 + message + 取消/确认；danger = 红色确认）——原型 confirmDialog 卡体 */
+export function confirmHtml(opts: { title?: string; message: string; cancelText?: string; okText?: string; danger?: boolean }): string {
+  return `<h4 class="bz-sp-confirm-title">${esc(opts.title || '确认')}</h4>` +
+    `<p class="bz-sp-confirm-msg">${esc(opts.message)}</p>` +
+    `<div class="bz-sp-confirm-actions">` +
+    `<button type="button" class="bz-sp-btn">${esc(opts.cancelText || '取消')}</button>` +
+    `<button type="button" class="bz-sp-btn${opts.danger ? ' bz-sp-btn--danger' : ' bz-sp-btn--primary'}">${esc(opts.okText || '确定')}</button>` +
+    `</div>`;
+}
+
+/** UP 主名单：添加区行（label 块 + 链接输入 + 添加钮）——原型 openUpManager redraw 添加区 */
+export function upmgrAddRowHtml(): string {
+  return `<div class="bz-sp-upmgr-row"><div class="bz-sp-upmgr-label">` +
+    `<div class="bz-sp-set-name">添加 UP 主</div>` +
+    `<div class="bz-sp-set-desc">粘贴主页链接（space.bilibili.com/123456）或视频链接自动解析 UID</div></div>` +
+    `<div class="bz-sp-upmgr-ctl"><input class="bz-input" placeholder="粘贴链接或 UID">` +
+    `<button type="button" class="bz-sp-btn bz-sp-btn--primary">添加</button></div></div>`;
+}
+
+/** UP 主名单项（名字 + UID + 移除钮） */
+export function upmgrItemHtml(name: string, uid: string): string {
+  return `<div class="bz-sp-upmgr-item"><div class="bz-sp-upmgr-info">` +
+    `<div class="bz-sp-upmgr-name">${esc(name)}</div>` +
+    `<div class="bz-sp-upmgr-uid">UID ${esc(uid)}</div></div>` +
+    `<button type="button" class="bz-sp-btn">移除</button></div>`;
+}
+
+/** 日记修复行（文件路径 + before → after 高亮）——原型 openDiaryRepair fixable 行 */
+export function repairRowHtml(file: string, before: string, after: string): string {
+  return `<div class="bz-sp-demo-repair"><div class="bz-sp-demo-repair-file">${esc(file)}</div>` +
+    `<div class="bz-sp-demo-repair-code"><span>${esc(before)}</span>` +
+    `<span class="bz-sp-demo-repair-arrow"> → </span>` +
+    `<span class="bz-sp-demo-repair-after">${esc(after)}</span></div></div>`;
+}
+
+/** 数据体检进度步骤行（mark 圆点 + 文案；data-step 供进度切换定位）——原型 openCheckup run */
+export function checkupStepsHtml(steps: string[]): string {
+  return `<div class="bz-sp-demo-steps">` + steps.map((s, i) =>
+    `<div class="bz-sp-demo-step" data-step="${i}"><span class="bz-sp-demo-step-mark"></span>${esc(s)}</div>`).join('') +
+    `</div>`;
+}
+
+/** 卡片目录选择器：头 + 行 + 空态（原型 openPathPickerCard） */
+export function pathPickerHeadHtml(title: string, desc?: string): string {
+  return `<div class="bz-path-picker-head"><h3 class="bz-path-picker-title">${esc(title)}</h3>` +
+    (desc ? `<div class="bz-path-picker-desc">${esc(desc)}</div>` : '') + `</div>`;
+}
+
+export function pathPickerRowHtml(folder: string, on: boolean, label: string): string {
+  return `<div class="bz-path-picker-row${on ? ' bz-path-picker-row--sel' : ''}" data-path="${esc(folder)}">` +
+    `<span class="bz-path-picker-check">${on ? '✓' : ''}</span>` +
+    `<span class="bz-path-picker-name"${label !== folder ? ` title="${esc(label)}"` : ''}>${esc(label)}</span></div>`;
+}
+
+/** 文件夹选择器弹层：头（标题 + 搜索框）——原型 openDirPicker head */
+export function pickerHeadHtml(title: string, placeholder: string): string {
+  return `<div class="bz-sp-picker-head"><b>${esc(title)}</b>` +
+    `<div class="bz-sp-picker-search">${iconSpan('search')}<input placeholder="${esc(placeholder)}"></div></div>`;
+}
+
+/** 文件夹选择器：选中面包屑（单选 = 段链；多选 = 计数）——原型 renderCrumb */
+export function pickerCrumbHtml(multi: boolean, arr: string[]): string {
+  const lab = `<span class="bz-sp-picker-lab">${multi ? '已选' : '将选用'}</span>`;
+  if (multi) {
+    return `<div class="bz-sp-picker-crumb">${lab}<span>${arr.length ? arr.length + ' 个目录' : '尚未选择'}</span></div>`;
+  }
+  if (!arr.length) return `<div class="bz-sp-picker-crumb">${lab}<span>未设置</span></div>`;
+  const chain = arr[0].split('/').map((seg, i) =>
+    (i ? `<span class="bz-sp-picker-sep">▸</span>` : '') + `<span>${esc(seg)}</span>`).join('');
+  return `<div class="bz-sp-picker-crumb">${lab}${chain}</div>`;
+}
+
+/** 文件夹选择器：目录行（folder 图标 + 尾段名 + 祖先链灰字；sel = 选中）——原型 renderList 行 */
+export function pickerRowHtml(name: string, anc: string, sel: boolean): string {
+  return `<button type="button" class="bz-sp-picker-row${sel ? ' sel' : ''}">` +
+    `${iconSpan('folder-open', 'bz-ic')}<span>${esc(name)}</span>` +
+    `<span class="anc">${esc(anc)}</span></button>`;
+}
+
+/** 获取模型名：候选项（sel = 当前值）——原型 pickModel 列表项 */
+export function modelItemHtml(model: string, on: boolean): string {
+  return `<button type="button" class="bz-sp-picker-row${on ? ' sel' : ''}"><span>${esc(model)}</span></button>`;
 }
