@@ -8880,7 +8880,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-sp-cardpick-name { font-size: 10.5px; color: var(--sp-ink-2); }
 .bz-sp-cardpick-card.is-on .bz-sp-cardpick-name { color: var(--sp-accent); font-weight: 600; }
 
-/* 下拉箭头（自绘下拉；旋转样式单源——原型/插件同构） */
+/* 下拉箭头（自绘下拉；旋转样式单源——原型/插件同构，markup 串出自 render.ts） */
 .bz-select-car { width: 12px; height: 12px; opacity: 0.7; transform: rotate(90deg); }
 
 /* ═══════════ 自绘控件完整基线（域内原型不引全局组件库——本段自给自足，
