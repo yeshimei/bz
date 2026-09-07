@@ -17,7 +17,7 @@ import { emitDomainEvent } from '../core/domain-bus';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { topifyZ } from '../core/dom';
-import { tryGetSettings, saveSettings } from '../core/settings-provider';
+import { tryGetSettings } from '../core/settings-provider';
 import { mountIcons } from '../core/ui';
 import {
   STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, DEFAULT_RATING,
@@ -31,7 +31,7 @@ import { buildStatPageHtml } from './analysis';
 import { watchPosterFetch } from './poster-watch';
 import {
   ICON, statusText, itemByKey, doubanSearchUrl,
-  detailModalHtml, confirmModalHtml, formModalHtml, setModalHtml,
+  detailModalHtml, confirmModalHtml, formModalHtml,
   aiPageHtml, actionRowsHtml, sheetHeadHtml, pcardHtml, type AiPageInput,
   midnightDeskHtml, midnightMobHtml, renderMidnightDesk, renderMidnightMob,
   type MidnightRenderInput,
@@ -459,32 +459,6 @@ function openConfirm(sec: HTMLElement, item: CinemaItem, app: App): void {
   });
 }
 
-// ---------- 弹窗：影院设置（面板内；写插件设置经 saveSettings 持久化） ----------
-
-function openSet(sec: HTMLElement, app: App): void {
-  const s = tryGetSettings() as Record<string, unknown>;
-  const sort = s.cinemaSortMode === 'created' || s.cinemaSortMode === 'rating' ? (s.cinemaSortMode as string) : 'date';
-  const stf = typeof s.cinemaStatusFilter === 'string' ? s.cinemaStatusFilter : '';
-  const cols = gridColumns();
-  const mobFull = s.cinemaMobileDefaultFullscreen === true;
-  const { el, close } = ovl(sec, setModalHtml({ sort, stf, cols, mobFull, folderPath: M.folderPath }));
-  mountIcons(el);
-  el.querySelector('.j-close')?.addEventListener('click', close);
-  el.querySelector('.j-sw')?.addEventListener('click', (e) => (e.currentTarget as HTMLElement).classList.toggle('on'));
-  el.querySelector('.j-save')?.addEventListener('click', () => {
-    s.cinemaSortMode = (el.querySelector('.j-sort') as HTMLSelectElement).value;
-    s.cinemaStatusFilter = (el.querySelector('.j-stf') as HTMLSelectElement).value;
-    s.cinemaGridColumns = String(Math.min(12, Math.max(2, parseInt((el.querySelector('.j-cols') as HTMLInputElement).value, 10) || 5)));
-    s.cinemaMobileDefaultFullscreen = el.querySelector('.j-sw')?.classList.contains('on') ?? false;
-    void saveSettings();
-    M.sortMode = s.cinemaSortMode as CinemaSortMode;
-    M.statusFilter = (s.cinemaStatusFilter as string) || null;
-    close();
-    panelToast(sec, '设置已保存');
-    renderAll(app);
-  });
-}
-
 // ---------- 共享页：AI 荐片（画像行 + 页面状态快照 → 纯层 aiPageHtml） ----------
 
 /** 偏好行（buildTasteProfile 真实画像；无数据回退「暂无」） */
@@ -590,10 +564,9 @@ function bindMidnight(sec: HTMLElement, app: App): void {
       renderAll(app);
       return;
     }
-    const mb = t.closest('.j-mai,.j-mstat,.j-mgear,.j-mclose') as HTMLElement | null;
+    const mb = t.closest('.j-mai,.j-mstat,.j-mclose') as HTMLElement | null;
     if (mb) {
-      if (mb.classList.contains('j-mgear')) openSet(sec, app);
-      else if (mb.classList.contains('j-mclose')) closeOverlay();
+      if (mb.classList.contains('j-mclose')) closeOverlay();
       else {
         const v = mb.classList.contains('j-mai') ? 'ai' : 'stat';
         M.view = M.view === v ? 'list' : v; // 落域适配：再点回列表

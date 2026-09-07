@@ -46,11 +46,10 @@ export function midnightMobHtml(): string {
   return `<section class="mob bz-cinema--midnight" data-cinema-root="midnight">
     <div class="m-head"><h2 class="j-mtitle">全部</h2><span class="cnt j-mcnt"></span>
       <span class="m-acts">
-        <button class="m-tool j-mclose" title="关闭">${iconSpan(ICON.close)}</button>
+        <button class="add j-madd" data-cinema-add title="添加影片">${iconSpan(ICON.add)}</button>
         <button class="m-tool j-mai" title="AI 荐片">${iconSpan(ICON.ai)}</button>
         <button class="m-tool j-mstat" title="观影分析">${iconSpan(ICON.stat)}</button>
-        <button class="m-tool j-mgear" title="影院设置">${iconSpan(ICON.gear)}</button>
-        <button class="add j-madd" data-cinema-add>${iconSpan(ICON.add)}</button>
+        <button class="m-tool j-mclose" title="关闭">${iconSpan(ICON.close)}</button>
       </span>
     </div>
     <div class="m-chips j-chips"></div>

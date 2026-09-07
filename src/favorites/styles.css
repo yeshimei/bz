@@ -85,9 +85,10 @@
 
 /* —— 卡片（原型 .card 逐字） —— */
 /* 卡墙：auto-fill 网格——列宽均分剩余空间（184 起步），行缘严格贴合内容区，左右只余对称内边距 */
+/* 左右 4px 垫 + 负 margin 找回：钉选金圈(盒外 2px)与软阴影不再被 overflow:auto 裁边，卡缘对齐不变 */
 .bz-fav-board {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(184px, 1fr)); gap: 22px 20px;
-  align-items: start; padding-top: 6px; flex: 1; min-height: 0; overflow: auto;
+  align-items: start; padding: 6px 4px 0; margin: 0 -4px; flex: 1; min-height: 0; overflow: auto;
 }
 .bz-fav-board .bz-fav-card { width: auto; }
 .bz-fav-board .bz-fav-empty { grid-column: 1 / -1; }

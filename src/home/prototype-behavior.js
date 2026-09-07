@@ -41662,7 +41662,7 @@ ${text}`;
     return '<div class="bz-home-sec-t">全 部 域</div>';
   }
   function loadingFlowHtml() {
-    return '<div class="bz-home-sec-t">时 间 线 · 今 天</div><div class="bz-home-flow-empty">正在汇入今天的痕迹…</div>';
+    return '<div class="bz-home-flow-empty">正在汇入今天的痕迹…</div>';
   }
   function weekHtml(week, todayDateStr, selDate) {
     return week.map((w) => {
@@ -41684,7 +41684,6 @@ ${text}`;
     const day = (_a2 = data.days.find((d) => d.dateStr === view)) != null ? _a2 : data.today;
     const isToday = day.dateStr === data.today.dateStr;
     const notes = isToday ? buildNotes(data) : [];
-    const title = '<div class="bz-home-sec-t">时 间 线 · ' + (isToday ? "今 天" : esc(day.dateStr.slice(5))) + "</div>";
     const body = day.events.map((e, i) => {
       var _a3, _b2, _c, _d, _e;
       const note = notes.find((n) => n.index === i);
@@ -41696,7 +41695,7 @@ ${text}`;
       return '<div class="bz-home-ev' + lastDiary + '"><span class="bz-home-ev-tm">' + esc(e.timeLabel) + '</span><div class="bz-home-ev-bd"><div class="bz-home-ev-tx"><span class="bz-home-ev-dm" style="background:' + dmColor + '">' + iconSpan(dmIcon) + esc(dmName) + "</span>" + esc(e.text) + "</div>" + (note ? '<div class="bz-home-ev-note">' + esc(note.text) + "</div>" : "") + "</div></div>";
     }).join("");
     const empty = '<div class="bz-home-flow-empty">这一天还没有留下痕迹。<br><b>写一篇日记</b>、点一轮番茄、读几页书——<br>都会出现在这条河里。</div>';
-    return title + (day.events.length ? '<div class="bz-home-timeline">' + body + "</div>" : empty);
+    return day.events.length ? '<div class="bz-home-timeline">' + body + "</div>" : empty;
   }
   function nextHtml(data) {
     return '<div class="bz-home-sec-t bz-home-sec-t--ai">明 天 预 告</div>' + buildPreviews(data).map(
