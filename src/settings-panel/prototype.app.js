@@ -1,14 +1,16 @@
 /**
- * 设置面板域内原型 · 演示渲染器（prototype.app.js）
- * 桌面面板 + 移动手机框两实例，共享同一渲染函数与值层（markup 与 ui.ts 同构：
- * 类名 bz-sp-* 与 styles.css 一一对应；控件在插件版由 renderer.ts 消费组件库生成，
- * 原型里按同结构自绘 + mini 预览示意——壳层差异见 prototype-first.md 壳层差异表）。
- * 值层 = 演示假值 + localStorage delta（bz-sp-proto-*），不触真实 vault。
+ * 设置面板域内原型 · 演示壳（prototype.app.js）
+ * markup 单源（ADR-0104）：面板骨架/导航/行/组卡/控件 HTML 全部出自 render.ts
+ * （经 prototype-render.js 挂 window.BZR_settings_panel）——本壳只留演示层：
+ * 演示数据/localStorage 值层、演示绑定、自绘弹层（文件夹/模型选择器）、toast、
+ * 主题类同步、评审钩子与自检。插件版对应行为层 = ui.ts / renderer.ts。
+ * 桌面面板 + 移动手机框两实例共享同一渲染内核；壳层差异见 prototype-first.md。
  */
 (function () {
   'use strict';
   window.onerror = function (m, src, line) { try { document.title = 'ERR ' + m + ' @' + line; } catch (e) {} };
 
+  const R = window.BZR_settings_panel;
   const DEMO = window.SP_DEMO;
   const LS = 'bz-sp-proto-delta';
   const LS_CAT = 'bz-sp-proto-smartcat';
@@ -25,7 +27,7 @@
     localStorage.setItem(LS_CAT, JSON.stringify(catDelta));
   }
 
-  /* ---------- 图标（内联 SVG，壳层差异表：原型用内联 lucide） ---------- */
+  /* ---------- 图标兑现（壳层差异表：原型用内联 lucide 兑现 <i data-lucide> 占位） ---------- */
   const ICONS = {
     search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
     settings: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
@@ -71,21 +73,31 @@
     terminal: '<polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/>',
     x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
     'chevron-right': '<path d="m9 18 6-6-6-6"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>',
   };
+  function mountIcons(root) {
+    root.querySelectorAll('i[data-lucide]').forEach((el) => {
+      const name = el.getAttribute('data-lucide') || '';
+      const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      s.setAttribute('class', el.className || 'bz-ic');
+      s.setAttribute('viewBox', '0 0 24 24');
+      s.setAttribute('fill', 'none');
+      s.setAttribute('stroke', 'currentColor');
+      s.setAttribute('stroke-width', '1.8');
+      s.setAttribute('stroke-linecap', 'round');
+      s.setAttribute('stroke-linejoin', 'round');
+      s.innerHTML = ICONS[name] || '';
+      el.replaceWith(s);
+    });
+  }
   function icon(name, cls) {
-    const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    s.setAttribute('class', cls || 'bz-ic');
-    s.setAttribute('viewBox', '0 0 24 24');
-    s.setAttribute('fill', 'none');
-    s.setAttribute('stroke', 'currentColor');
-    s.setAttribute('stroke-width', '1.8');
-    s.setAttribute('stroke-linecap', 'round');
-    s.setAttribute('stroke-linejoin', 'round');
-    s.innerHTML = ICONS[name] || '';
-    return s;
+    const t = document.createElement('div');
+    t.innerHTML = R.iconSpan(name, cls && cls !== 'bz-ic' ? cls.replace(/^bz-ic\s*/, '') : '');
+    mountIcons(t);
+    return t.firstElementChild;
   }
 
-  /* ---------- 值通道 ---------- */
+  /* ---------- 值通道（演示假值 + localStorage delta） ---------- */
   function rowRead(r) {
     const k = r.k || '';
     if (k === '__fn:aiModel') {
@@ -148,7 +160,7 @@
     return out;
   }
 
-  /* ---------- 主题类同步：移除全部 bz-sp-tf-* 后挂当前主题 ---------- */
+  /* ---------- 主题类同步：移除全部 bz-sp-tf-* 后挂当前主题（演示件） ---------- */
   const THEME_KEYS = ['linen', 'celadon', 'dark', 'mono'];
   function syncThemeClass(rootEl, v) {
     const panel = rootEl.closest ? (rootEl.closest('.bz-sp-desk') || rootEl.closest('.bz-sp-mobile') || rootEl) : rootEl;
@@ -156,7 +168,7 @@
     if (v && THEME_KEYS.indexOf(v) >= 0) panel.classList.add('bz-sp-tf-' + v);
   }
 
-  /* ---------- 弹层：文件夹选择器 / 模型选择器 / toast ---------- */
+  /* ---------- 弹层：文件夹选择器 / 模型选择器 / toast（原型演示专属，插件版为 dir-picker.ts 与 custom 行内嵌按钮） ---------- */
   function toast(root, msg) {
     let t = root.querySelector('.bz-sp-demo-toast');
     if (!t) {
@@ -330,7 +342,7 @@
     mask.addEventListener('click', (e) => { if (e.target === mask) mask.remove(); });
   }
 
-  /* ---------- 迷你皮肤预览 ---------- */
+  /* ---------- 迷你皮肤预览（演示件：插件版由各域 prevClass 全局样式承载） ---------- */
   function renderMini(kind, prev) {
     const mini = document.createElement('div');
     mini.className = 'bz-sp-mini';
@@ -425,61 +437,55 @@
     return mini;
   }
 
-  /* ---------- 行渲染（原型自绘；插件版由 renderer.ts 消费组件库生成同构 DOM） ---------- */
+  /* ---------- 行渲染（markup 全部出自纯层 R.*；本壳只做演示值通道与事件绑定） ---------- */
   function rowEl(r, parentKey, host, refresh, redrawDomain) {
-    const row = document.createElement('div');
-    row.className = 'bz-sp-set-row';
-    row.dataset.key = r.k || r.n;
-    if (!evalVis(r.vis)) row.style.display = 'none';
-    if (r.child && parentKey && val(parentKey) !== true) row.style.display = 'none';
+    const holder = document.createElement('div');
 
+    // custom 行：原型演示 = 行头（name/desc）+ 自绘子行 mock（插件版 = 各域 new Setting() 渲染进插槽）
     if (r.t === 'custom' && r.custom) {
-      row.classList.add('bz-sp-set-row--custom');
+      holder.innerHTML = '<div class="bz-sp-set-row bz-sp-set-row--custom"></div>';
+      const row0 = holder.firstElementChild;
+      row0.dataset.key = r.k || r.n;
       const txt = document.createElement('div');
       txt.className = 'bz-sp-set-info';
       txt.innerHTML = '<div class="bz-sp-set-name"></div>' + (r.d ? '<div class="bz-sp-set-desc"></div>' : '');
       txt.querySelector('.bz-sp-set-name').textContent = r.n;
       if (r.d) txt.querySelector('.bz-sp-set-desc').textContent = r.d;
-      row.appendChild(txt);
-      renderCustom(r, row, host, redrawDomain);
-      return row;
+      row0.appendChild(txt);
+      renderCustom(r, row0, host, redrawDomain);
+      return row0;
     }
 
+    const vm = { name: r.n || '', desc: r.d, note: r.note };
     const isCards = r.t === 'choiceCards';
-    if (isCards) row.classList.add('bz-sp-set-row--cards');
-    const info = document.createElement('div');
-    info.className = 'bz-sp-set-info';
-    const nm = document.createElement('div');
-    nm.className = 'bz-sp-set-name';
-    nm.textContent = r.n || '';
-    info.appendChild(nm);
-    if (r.d) {
-      const d = document.createElement('div');
-      d.className = 'bz-sp-set-desc';
-      d.textContent = r.d;
-      info.appendChild(d);
-    }
-    if (r.note) {
-      const nt = document.createElement('div');
-      nt.className = 'bz-sp-set-note';
-      nt.textContent = '↳ ' + r.note;
-      info.appendChild(nt);
-    }
-    row.appendChild(info);
-    const ctl = document.createElement('div');
-    ctl.className = isCards ? 'bz-sp-set-cards' : 'bz-sp-set-ctrl';
-    row.appendChild(ctl);
-    renderCtl(ctl, r, host, refresh, redrawDomain);
-    return row;
-  }
+    if (isCards) vm.isCards = true;
 
-  function renderCtl(ctl, r, host, refresh, redrawDomain) {
-    const t = r.t;
-    if (t === 'toggle') {
-      const sw = document.createElement('button');
-      sw.className = 'bz-sw' + (rowRead(r) === true ? ' on' : '');
-      sw.setAttribute('role', 'switch');
-      sw.setAttribute('aria-checked', String(rowRead(r) === true));
+    // 控件 HTML（纯层工厂）
+    if (r.t === 'toggle') vm.ctrlHtml = R.toggleHtml(rowRead(r) === true);
+    else if (r.t === 'select') vm.ctrlHtml = R.selectTriggerHtml('');
+    else if (r.t === 'text' || r.t === 'textarea' || r.t === 'number') {
+      const init = rowRead(r);
+      const v = r.t === 'number' ? String(Number(init) || 0) : String(init ?? '');
+      vm.ctrlHtml = r.t === 'textarea'
+        ? R.textareaHtml(v, r.ph)
+        : R.textInputHtml({
+            value: v, type: r.t === 'number' ? 'number' : 'text',
+            num: !!r.num || r.t === 'number', placeholder: r.ph,
+            min: r.min, max: r.max, step: r.step,
+          });
+    } else if (r.t === 'slider') vm.ctrlHtml = R.sliderHtml(r.min, r.max, r.step, Number(rowRead(r)) || 0);
+    else if (r.t === 'button') vm.ctrlHtml = R.rowBtnHtml(r.btn || '打开', r.cta);
+    else if (r.t === 'info') vm.ctrlHtml = R.badgeHtml(r.n);
+
+    holder.innerHTML = R.rowHtml(vm);
+    const row = holder.firstElementChild;
+    row.dataset.key = r.k || r.n;
+    if (!evalVis(r.vis)) row.style.display = 'none';
+    if (r.child && parentKey && val(parentKey) !== true) row.style.display = 'none';
+    const ctl = row.querySelector(isCards ? '.bz-sp-set-cards' : '.bz-sp-set-ctrl');
+
+    if (r.t === 'toggle') {
+      const sw = row.querySelector('.bz-sw');
       sw.addEventListener('click', () => {
         const v = !sw.classList.contains('on');
         sw.classList.toggle('on', v);
@@ -487,38 +493,31 @@
         rowWrite(r, v);
         refresh();
       });
-      ctl.appendChild(sw);
-    } else if (t === 'select') {
-      const sel = document.createElement('div');
-      sel.className = 'bz-select';
-      const vspan = document.createElement('span');
-      vspan.className = 'bz-select-val';
-      const car = icon('chevron-right', 'bz-ic bz-select-car');
-      car.style.transform = 'rotate(90deg)';
-      sel.append(vspan, car);
-      const cur = String(rowRead(r) ?? '') || (r.opts[0] && r.opts[0].v) || '';
+    } else if (r.t === 'select') {
+      const sel = row.querySelector('.bz-select');
+      const vspan = sel.querySelector('.bz-select-val');
       const labelOf = (v) => ((r.opts || []).find((o) => o.v === v) || {}).l || v;
-      vspan.textContent = labelOf(cur);
+      const curOf = () => String(rowRead(r) ?? '') || (r.opts[0] && r.opts[0].v) || '';
+      vspan.textContent = labelOf(curOf());
       sel.addEventListener('click', () => {
         if (sel.querySelector('.bz-select-menu')) return;
         // 组卡 overflow:hidden 会裁剪伸出的菜单——展开期间放开并提层
         const group = sel.closest('.bz-sp-group');
         if (group) { group.style.overflow = 'visible'; group.style.zIndex = 10; }
         const closeMenu = () => {
-          sel.querySelector('.bz-select-menu') && sel.querySelector('.bz-select-menu').remove();
+          const m = sel.querySelector('.bz-select-menu');
+          if (m) m.remove();
           if (group) { group.style.overflow = ''; group.style.zIndex = ''; }
           document.removeEventListener('click', h);
         };
+        const curNow = curOf();
         const menu = document.createElement('div');
         menu.className = 'bz-select-menu';
-        const curNow = String(rowRead(r) ?? '') || (r.opts[0] && r.opts[0].v) || '';
-        for (const o of r.opts || []) {
-          const it = document.createElement('button');
-          it.type = 'button';
-          it.className = 'bz-select-item' + (o.v === curNow ? ' is-on' : '');
-          const sp = document.createElement('span'); sp.textContent = o.l;
-          it.append(sp, icon('check', 'bz-ic bz-select-item-ck'));
-          it.addEventListener('click', (ev) => {
+        menu.innerHTML = (r.opts || []).map((o) => R.selectItemHtml(o.l, o.v === curNow)).join('');
+        mountIcons(menu);
+        const items = menu.querySelectorAll('.bz-select-item');
+        (r.opts || []).forEach((o, i) => {
+          items[i].addEventListener('click', (ev) => {
             ev.stopPropagation();
             closeMenu();
             vspan.textContent = labelOf(o.v);
@@ -533,32 +532,20 @@
               panelRoot.classList.toggle('bz-sp-skin-weave', val('settingsPanelSkin') === 'weave');
             }
           });
-          menu.appendChild(it);
-        }
+        });
         sel.appendChild(menu);
         const h = (ev) => {
           if (!sel.contains(ev.target)) closeMenu();
         };
         setTimeout(() => document.addEventListener('click', h));
       });
-      ctl.appendChild(sel);
-    } else if (t === 'text' || t === 'textarea' || t === 'number') {
+    } else if (r.t === 'text' || r.t === 'textarea' || r.t === 'number') {
       const isModel = r.k === '__fn:aiModel';
-      const inp = t === 'textarea' ? document.createElement('textarea') : document.createElement('input');
-      inp.className = 'bz-input' + (t === 'textarea' ? ' bz-sp-textarea' : '') + (r.num || t === 'number' ? ' num' : '');
-      if (t !== 'textarea') inp.type = t === 'number' ? 'number' : 'text';
-      if (r.ph) inp.placeholder = r.ph;
-      if (t === 'number') {
-        if (r.min !== undefined) inp.min = String(r.min);
-        if (r.max !== undefined) inp.max = String(r.max);
-        if (r.step !== undefined) inp.step = String(r.step);
-      }
-      let init = rowRead(r);
-      inp.value = t === 'number' ? String(Number(init) || 0) : String(init ?? '');
+      const inp = row.querySelector(r.t === 'textarea' ? 'textarea' : 'input');
       const commit = () => {
         if (!inp.dataset.dirty) return;
         delete inp.dataset.dirty;
-        if (t === 'number') {
+        if (r.t === 'number') {
           const raw = inp.value.trim();
           if (raw === '') return;
           let n = Number(raw);
@@ -573,8 +560,9 @@
       let timer = null;
       inp.addEventListener('input', () => { inp.dataset.dirty = '1'; clearTimeout(timer); timer = setTimeout(commit, 600); });
       inp.addEventListener('blur', commit);
-      if (t !== 'textarea') inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') commit(); });
+      if (r.t !== 'textarea') inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') commit(); });
       if (isModel) {
+        // 原型演示：模型行内嵌「获取模型名」按钮（插件版 = custom 行内嵌按钮，⚙️ 同源）
         const wrap = document.createElement('div');
         wrap.style.cssText = 'display:flex;gap:6px;align-items:center';
         const btn = document.createElement('button');
@@ -582,73 +570,40 @@
         btn.addEventListener('click', () => pickModel(host, r, redrawDomain));
         wrap.append(inp, btn);
         ctl.appendChild(wrap);
-      } else ctl.appendChild(inp);
-    } else if (t === 'slider') {
-      const wrap = document.createElement('div');
-      wrap.className = 'bz-sp-slider-row';
-      const inp = document.createElement('input');
-      inp.type = 'range';
-      inp.min = r.min; inp.max = r.max; inp.step = r.step || 1;
-      inp.value = Number(rowRead(r)) || 0;
-      const em = document.createElement('span');
-      em.className = 'bz-sp-slider-val';
-      em.textContent = inp.value;
+      }
+    } else if (r.t === 'slider') {
+      const inp = row.querySelector('input[type="range"]');
+      const em = row.querySelector('.bz-sp-slider-val');
       inp.addEventListener('input', () => { em.textContent = inp.value; rowWrite(r, Number(inp.value)); });
-      wrap.append(inp, em);
-      ctl.appendChild(wrap);
-    } else if (t === 'path') {
+    } else if (r.t === 'button') {
+      row.querySelector('.bz-sp-btn').addEventListener('click', () => toast(host, '原型演示：' + r.btn));
+    } else if (r.t === 'path') {
       const multi = r.mode === 'multi';
-      const chips = document.createElement('div');
-      chips.className = 'bz-sp-chips';
       const redraw = () => {
-        chips.innerHTML = '';
         const list = multi ? pathList(r) : [String(rowRead(r) || '')].filter(Boolean);
-        if (!list.length) {
-          const m = document.createElement('span');
-          m.className = 'bz-sp-chip bz-sp-chip--muted';
-          m.textContent = multi ? '未选择' : '未设置';
-          chips.appendChild(m);
-        }
-        for (const p of list) {
-          const c = document.createElement('span');
-          c.className = 'bz-sp-chip';
-          c.textContent = p;
-          if (multi) {
-            const x = document.createElement('i');
-            x.className = 'x'; x.textContent = '✕';
-            x.addEventListener('click', () => { pathWriteList(r, pathList(r).filter((y) => y !== p)); redraw(); });
-            c.appendChild(x);
-          }
-          chips.appendChild(c);
-        }
+        const chips = list.length
+          ? list.map((p) => ({ path: p, label: p, multi }))
+          : [{ path: '', label: multi ? '未选择' : '未设置', muted: true }];
+        ctl.innerHTML = R.pathChipsItemsHtml(chips) + R.pathAddBtnHtml(multi ? '添加…' : '选择…');
+        ctl.querySelectorAll('.bz-sp-chip').forEach((c) => {
+          const p = c.dataset.spPath;
+          const x = c.querySelector('.x');
+          if (x) x.addEventListener('click', () => { pathWriteList(r, pathList(r).filter((y) => y !== p)); redraw(); });
+          else c.addEventListener('click', () => openDirPicker(host, r, redrawDomain));
+        });
+        ctl.querySelector('.bz-sp-path-btn').addEventListener('click', () => openDirPicker(host, r, redrawDomain));
       };
       redraw();
-      const btn = document.createElement('button');
-      btn.className = 'bz-sp-btn bz-sp-path-btn';
-      btn.textContent = multi ? '添加…' : '选择…';
-      btn.addEventListener('click', () => openDirPicker(host, r, redrawDomain));
-      ctl.append(chips, btn);
-    } else if (t === 'button') {
-      const b2 = document.createElement('button');
-      b2.className = 'bz-sp-btn' + (r.cta ? ' bz-sp-btn--primary' : '');
-      b2.textContent = r.btn || '打开';
-      b2.addEventListener('click', () => toast(host, '原型演示：' + r.btn));
-      ctl.appendChild(b2);
-    } else if (t === 'choiceCards') {
-      const wrap = document.createElement('div');
-      wrap.className = 'bz-sp-cardpick';
+    } else if (isCards) {
       // 布局绑定的主题行（r.layoutKey）：只渲当前布局配套的单卡——主题不通用
       const opts = (r.opts || []).filter((o) => !o.layout || !r.layoutKey || o.layout === String(rowRead({ k: r.layoutKey }) ?? ''));
       const cur = String(rowRead(r) ?? '') || (opts[0] && opts[0].v) || '';
-      for (const o of opts) {
-        const c = document.createElement('button');
-        c.type = 'button';
-        c.className = 'bz-sp-cardpick-card' + (o.v === cur ? ' is-on' : '');
-        c.appendChild(renderMini(r.kind, o.prev));
-        const lb = document.createElement('span');
-        lb.className = 'bz-sp-cardpick-name';
-        lb.textContent = o.l;
-        c.appendChild(lb);
+      const wrapHolder = document.createElement('div');
+      wrapHolder.innerHTML = R.cardpickHtml(opts.map((o) => ({ value: o.v, label: o.l, on: o.v === cur })));
+      const wrap = wrapHolder.firstElementChild;
+      wrap.querySelectorAll('.bz-sp-cardpick-card').forEach((c) => {
+        const o = opts.find((x) => x.v === c.dataset.spCard);
+        c.querySelector('.bz-sp-mini').replaceWith(renderMini(r.kind, o.prev));
         c.addEventListener('click', () => {
           wrap.querySelectorAll('.is-on').forEach((x) => x.classList.remove('is-on'));
           c.classList.add('is-on');
@@ -664,11 +619,12 @@
             syncThemeClass(host, o.v);
           }
         });
-        wrap.appendChild(c);
-      }
+      });
       ctl.appendChild(wrap);
       ctl.style.maxWidth = 'none';
     }
+
+    return row;
   }
 
   /* custom 三类 mock（数据源 / 排除名单 / 局域网 IP） */
@@ -687,14 +643,13 @@
     };
     if (r.custom === 'newsSources') {
       const mkT = (label, key) => sub(label, (ctl) => {
-        const rr = { t: 'toggle', n: label, k: key };
-        const sw = document.createElement('button');
-        sw.className = 'bz-sw' + (rowRead(rr) === true ? ' on' : '');
-        sw.setAttribute('role', 'switch');
+        const holder = document.createElement('div');
+        holder.innerHTML = R.toggleHtml(rowRead({ t: 'toggle', k: key }) === true);
+        const sw = holder.firstElementChild;
         sw.addEventListener('click', () => {
           const v = !sw.classList.contains('on');
           sw.classList.toggle('on', v);
-          rowWrite(rr, v);
+          rowWrite({ k: key }, v);
         });
         ctl.appendChild(sw);
       });
@@ -737,17 +692,13 @@
       chips.style.justifyContent = 'flex-start';
       const rr = { k: 'reviewExcludedNotes' };
       const redraw = () => {
-        chips.innerHTML = '';
-        for (const p of pathList(rr)) {
-          const c = document.createElement('span');
-          c.className = 'bz-sp-chip';
-          c.textContent = p.split('/').pop();
-          const x = document.createElement('i');
-          x.className = 'x'; x.textContent = '✕';
-          x.addEventListener('click', () => { pathWriteList(rr, pathList(rr).filter((y) => y !== p)); redraw(); });
-          c.appendChild(x);
-          chips.appendChild(c);
-        }
+        chips.innerHTML = R.pathChipsItemsHtml(pathList(rr).map((p) => ({ path: p, label: p.split('/').pop(), multi: true })));
+        chips.querySelectorAll('.x').forEach((x, i) => {
+          x.addEventListener('click', () => {
+            pathWriteList(rr, pathList(rr).filter((y) => y !== pathList(rr)[i]));
+            redraw();
+          });
+        });
       };
       redraw();
       sr.appendChild(chips);
@@ -765,10 +716,10 @@
     }
   }
 
-  /* ---------- 域实例（桌面面板 / 移动面板共用内核） ---------- */
+  /* ---------- 域实例（桌面面板 / 移动面板共用内核；骨架出纯层） ---------- */
   function createApp(root, mode, initial) {
     const state = { current: initial || 'global', q: '' };
-    // 按端口径：桌面剔除零项域（loadedCounts=0，如回忆墙/收藏本）；移动端全量（其移动组可见）
+    // 按端口径：桌面剔除零项域（desktopZero，如回忆墙）；移动端全量（其移动组可见）
     const listable = (forMob) => DEMO.NAV
       .map((sec) => ({ title: sec.title, domains: sec.ids.map((id) => ({ id, def: DEMO.DOMAINS[id] })).filter((d) => (forMob || !d.def.desktopZero)) }));
 
@@ -779,28 +730,16 @@
       for (const sec of listable(mode === 'mob')) {
         const items = sec.domains.filter((d) => !state.q || domainHit(d.id, state.q));
         if (!items.length) continue;
-        const g = document.createElement('div');
-        g.className = 'bz-sp-nav-sec';
-        const t = document.createElement('div');
-        t.className = 'bz-sp-nav-sec-t';
-        t.textContent = sec.title;
-        g.appendChild(t);
-        for (const d of items) {
-          const b = document.createElement('button');
-          b.className = 'bz-sp-nav-item' + (d.id === state.current && !state.q ? ' on' : '');
-          b.appendChild(icon(d.def.icon, 'bz-ic bz-sp-nav-ic'));
-          const nm = document.createElement('span');
-          nm.className = 'bz-sp-nav-name';
-          nm.textContent = d.def.name;
-          const bd = document.createElement('span');
-          bd.className = 'bz-sp-nav-count';
-          bd.textContent = String(visibleRowsOf(d.def).length);
-          b.append(nm, bd);
-          b.addEventListener('click', () => { state.current = d.id; state.q = ''; render(); });
-          g.appendChild(b);
-        }
-        nav.appendChild(g);
+        nav.innerHTML += R.navSecHtml(sec.title, items.map((d) => R.navItemHtml({
+          id: d.id, icon: d.def.icon, name: d.def.name,
+          count: String(visibleRowsOf(d.def).length),
+          on: d.id === state.current && !state.q,
+        })).join(''));
       }
+      mountIcons(nav);
+      nav.querySelectorAll('.bz-sp-nav-item').forEach((b) => {
+        b.addEventListener('click', () => { state.current = b.dataset.spDomain; state.q = ''; render(); });
+      });
     }
     function domainHit(id, q) {
       const def = DEMO.DOMAINS[id];
@@ -811,26 +750,14 @@
     function renderGroupsInto(container, domain, showMobile) {
       for (const g of domain.groups) {
         if (g.m && !showMobile) continue;
-        const card = document.createElement('section');
-        card.className = 'bz-sp-group';
-        const head = document.createElement('div');
-        head.className = 'bz-sp-group-head';
-        head.appendChild(icon(g.icon, 'bz-ic bz-sp-group-icon'));
-        const gn = document.createElement('span');
-        gn.className = 'bz-sp-group-name';
-        gn.textContent = g.name;
-        const cnt = document.createElement('span');
-        cnt.className = 'bz-sp-group-count';
+        const holder = document.createElement('div');
         const pk = (g.rows.find((r) => r.t === 'toggle' && r.k && !r.k.startsWith('__')) || {}).k || null;
         const cntOf = () => g.rows.filter((r) => (!showMobile && r.m ? false : r.t !== 'button') && evalVis(r.vis) && !(r.child && pk && val(pk) !== true)).length;
-        cnt.textContent = cntOf() + ' 项';
-        head.append(gn, cnt);
-        card.appendChild(head);
-        const body = document.createElement('div');
-        body.className = 'bz-sp-group-body';
+        holder.innerHTML = R.groupCardHtml(g.icon, g.name, cntOf() + ' 项');
+        const card = holder.firstElementChild;
+        const body = card.querySelector('.bz-sp-group-body');
         const refresh = () => reevaluate(card, g, showMobile);
-        for (const r of g.rows) body.appendChild(rowEl(r, pk, root, () => refresh(card, g), () => render()));
-        card.appendChild(body);
+        for (const r of g.rows) body.appendChild(rowEl(r, pk, root, refresh, () => render()));
         container.appendChild(card);
       }
     }
@@ -853,21 +780,10 @@
       const domain = DEMO.DOMAINS[state.current];
       pane.innerHTML = '';
       if (mode === 'desk') {
-        const head = document.createElement('div');
-        head.className = 'bz-sp-page-head';
-        const hw = document.createElement('div');
-        const h = document.createElement('div');
-        h.className = 'bz-sp-page-title';
-        h.textContent = domain.name;
-        const p = document.createElement('div');
-        p.className = 'bz-sp-page-desc';
-        p.textContent = domain.desc;
-        hw.append(h, p);
-        const tg = document.createElement('span');
-        tg.className = 'bz-sp-page-tag';
-        tg.textContent = visibleRowsOf(domain).length + ' 项 · ' + domain.groups.filter((g) => !g.m).length + ' 组';
-        head.append(hw, tg);
-        pane.appendChild(head);
+        // 域页头（纯层 pageHeadHtml；tag = 可见行数 · 组数）
+        const headHolder = document.createElement('div');
+        headHolder.innerHTML = R.pageHeadHtml(domain.name, domain.desc, visibleRowsOf(domain).length + ' 项 · ' + domain.groups.filter((g) => !g.m).length + ' 组');
+        pane.appendChild(headHolder.firstElementChild);
       }
       const body = document.createElement('div');
       body.className = 'bz-sp-settings-body';
@@ -877,19 +793,11 @@
 
     function mount() {
       if (mode === 'desk') {
-        root.innerHTML =
-          '<div class="bz-sp-head">' +
-          '<div class="bz-sp-crumb"><span class="bz-sp-head-title bz-sp-crumb-cur">设置</span></div>' +
-          '<div class="bz-sp-search bz-sp-head-search">' + icon('search').outerHTML + '<input placeholder="搜索域与设置项" /></div>' +
-          '<span class="bz-sp-head-tools"></span></div>' +
-          '<div class="bz-sp-desk-body"><aside class="bz-sp-desk-side"><div class="bz-sp-nav"></div></aside>' +
-          '<main class="bz-sp-desk-main"><div class="bz-sp-pane"></div></main></div>';
+        root.innerHTML = R.deskShellHtml();
       } else {
-        root.innerHTML =
-          '<div class="bz-sp-head"><span class="bz-sp-head-title">设置</span><span class="bz-sp-head-tools"></span></div>' +
-          '<div class="bz-sp-mob-search">' + icon('search').outerHTML + '<input placeholder="搜索域" /></div>' +
-          '<div class="bz-sp-mob-list"></div>';
+        root.innerHTML = R.mobShellHtml();
       }
+      mountIcons(root);
       const sinp = root.querySelector('input');
       sinp.addEventListener('input', () => {
         state.q = sinp.value;
@@ -911,41 +819,31 @@
       openDomain(id) {
         state.current = id;
         if (mode === 'desk') { render(); return; }
-        // 移动端：域设置弹窗
+        // 移动端：域设置弹窗（壳出纯层 mobModalShellHtml）
         const domain = DEMO.DOMAINS[id];
         const mask = document.createElement('div');
         mask.className = 'bz-sp-demo-mobmask';
         const modal = document.createElement('div');
         modal.className = 'bz-sp-mob-modal';
-        const head = document.createElement('div');
-        head.className = 'bz-sp-mob-modal-head';
-        const ic = document.createElement('span');
-        ic.className = 'bz-sp-mob-modal-ic';
-        ic.appendChild(icon(domain.icon));
-        const title = document.createElement('div');
-        title.className = 'bz-sp-mob-modal-title';
-        title.textContent = domain.name;
-        head.append(ic, title);
-        const body = document.createElement('div');
-        body.className = 'bz-sp-mob-modal-body';
-        modal.append(head, body);
+        modal.innerHTML = R.mobModalShellHtml(domain.icon, domain.name);
+        mountIcons(modal);
+        const body = modal.querySelector('.bz-sp-mob-modal-body');
         mask.appendChild(modal);
         root.appendChild(mask);
-        // 渲染该域到弹窗 body（复用桌面组卡渲染，临时切换 current）
+        // 渲染该域到弹窗 body（复用桌面组卡渲染）
         const prev = state.current;
         state.current = id;
-        const pane = body;
-        pane.innerHTML = '';
+        body.innerHTML = '';
         const bodyEl = document.createElement('div');
         bodyEl.className = 'bz-sp-settings-body';
-        pane.appendChild(bodyEl);
+        body.appendChild(bodyEl);
         renderGroupsInto(bodyEl, domain, true);
         state.current = prev;
         mask.addEventListener('click', (e) => { if (e.target === mask) mask.remove(); });
       },
       bindMobList(onOpen) {
         root.querySelectorAll('.bz-sp-mob-item').forEach((it) => {
-          it.addEventListener('click', () => onOpen(it.dataset.d));
+          it.addEventListener('click', () => onOpen(it.dataset.spDomain));
         });
       },
       open(id) { state.current = id; render(); },
@@ -955,34 +853,15 @@
         const list = root.querySelector('.bz-sp-mob-list');
         if (!list) return;
         const keep = state.q;
-        const savedRender = render;
         list.innerHTML = '';
         for (const sec of listable()) {
           const items = sec.domains.filter((d) => !keep || domainHit(d.id, keep));
           if (!items.length) continue;
-          const secEl = document.createElement('div');
-          secEl.className = 'bz-sp-mob-sec';
-          secEl.textContent = sec.title;
-          list.appendChild(secEl);
-          for (const d of items) {
-            const it = document.createElement('button');
-            it.className = 'bz-sp-mob-item';
-            it.dataset.d = d.id;
-            const ic = document.createElement('span');
-            ic.className = 'bz-sp-mob-ic';
-            ic.appendChild(icon(d.def.icon));
-            const t = document.createElement('span');
-            t.className = 'bz-sp-mob-t';
-            t.innerHTML = '<span class="bz-sp-mob-name"></span><span class="bz-sp-mob-desc"></span>';
-            t.querySelector('.bz-sp-mob-name').textContent = d.def.name;
-            t.querySelector('.bz-sp-mob-desc').textContent = d.def.desc;
-            const chev = document.createElement('span');
-            chev.className = 'bz-sp-mob-chev';
-            chev.appendChild(icon('chevron-right'));
-            it.append(ic, t, chev);
-            list.appendChild(it);
-          }
+          list.innerHTML += R.mobSecHtml(sec.title) + items.map((d) => R.mobItemHtml({
+            id: d.id, icon: d.def.icon, name: d.def.name, desc: d.def.desc,
+          })).join('');
         }
+        mountIcons(list);
       },
     };
   }
@@ -1012,7 +891,10 @@
     document.body.classList.toggle('theme-dark', t === 'dark');
     localStorage.setItem(LS_THEME, t);
     const tb = document.getElementById('sp-theme-btn');
-    if (tb) tb.innerHTML = icon(t === 'dark' ? 'sun' : 'moon', 'bz-ic').outerHTML;
+    if (tb) {
+      tb.innerHTML = '';
+      tb.appendChild(icon(t === 'dark' ? 'sun' : 'moon', 'bz-ic'));
+    }
   }
   const themeBtn = document.getElementById('sp-theme-btn');
   if (themeBtn) themeBtn.addEventListener('click', () => {
@@ -1049,6 +931,7 @@
       }
     }
     A('逐域点击导航全部渲出分组卡', true);
+    A('markup 单源（BZR_settings_panel 在库）', !!window.BZR_settings_panel && !!window.BZR_settings_panel.rowHtml);
     const aiBtn = [...deskNav()].find((b) => b.querySelector('.bz-sp-nav-name').textContent === 'AI');
     aiBtn.click();
     const aiPane = document.querySelector('#sp-demo-desk .bz-sp-pane');

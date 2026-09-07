@@ -5,14 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>设置面板 · 域内评审原型（桌面 + 移动 · S1/S3 双皮）</title>
 <!--
-  设置面板域内评审壳（prototype-first.md）：
+  设置面板域内评审壳（prototype-first.md + ADR-0104 markup 单源）：
+  - markup 单源：面板骨架/导航/行/组卡/控件 HTML 全部出自 render.ts（经 prototype-render.js
+    挂 window.BZR_settings_panel，<script> 加载），prototype.app.js 只留演示层
+    （演示数据/localStorage 值层、演示绑定、自绘弹层、toast、主题类同步、selftest）；
   - 组件样式零内联：<link href="./styles.css">（与插件共用同一份域样式，构建自动聚合）；
   - 本壳 <style> 只写演示壳样式：页面底色、桌面演示框、手机演示框、亮暗钮、
-    原型演示专属件（文件夹/模型选择器弹层、迷你皮肤预览、toast、sub-row）——
-    这些在插件版分别由 core/path-picker（路径行）与 renderer 自绘承载，属壳层差异；
+    原型演示专属件（文件夹/模型选择器弹层、迷你皮肤预览、toast、sub-row、tf-* 未来皮肤 token 预览）——
+    这些在插件版分别由 dir-picker.ts（路径行）与 renderer 自绘承载，属壳层差异；
   - 两端并存：左侧桌面面板（overlay 形态）+ 右侧手机演示框（M1 命令面板 + 域设置弹窗）；
   - 手动亮暗钮：插件内跟随 Obsidian .theme-dark（壳层差异表）。
-  双击打开本文件即可评审；不进构建、不入 git 产物。
+  双击打开本文件即可评审；?selftest=1 自检 / ?demo=path|model 直达弹层 / ?domain= 直达域。
 -->
 <link rel="stylesheet" href="./styles.css">
 <style>
@@ -225,6 +228,7 @@
 </div>
 
 <script src="./prototype-data.js"></script>
+<script src="./prototype-render.js"></script>
 <script src="./prototype.app.js"></script>
 </body>
 </html>
