@@ -28,17 +28,42 @@ const SIM_SETTINGS_KEY = 'bz-sim:bz-settings.json';
 /** 种子标记（种子不可变：有标记即跳过，不覆盖） */
 const SEED_MARKER = 'bz-sim:__sp_seed_v1';
 
-/** 演示设置默认值（键与插件 data.json 同形；持久层只叠加差异） */
+/** 演示设置默认值（键与插件 data.json 同形；持久层只叠加差异）。
+ *  外观键须与 src/settings.ts DEFAULT 三处同值（issue 246 铁律）：缺键 = 主题行 layoutKey
+ *  过滤落空 → 面板主题整行空卡。 */
 const SEED_SETTINGS: Record<string, unknown> = {
   storagePath: 'CONFIG/STORAGE',
   aiProvider: 'deepseek',
+  diaryDirectory: '我的/日记',
+  letterDirectory: '我的/信',
+  movieDirectory: '我的/影视',
   settingsPanelLayout: 'jingwei',
   settingsPanelSkin: 'chenhun',
   settingsPanelMobileDefaultFullscreen: false,
+  todoSkin: 'paper',
+  bookshelfSkin: 'nordic',
   belSkin: 'poster',
   belSkinTheme: 'warmwhite',
+  diarySkin: 'default',
+  diarySkinTheme: 'ivory',
+  diaryWallSkin: 'default',
+  diaryWallSkinTheme: 'gallery',
+  clipbookSkin: 'default',
+  clipbookSkinTheme: 'newsprint',
+  favoritesSkin: 'default',
+  favoritesSkinTheme: 'linen',
   cinemaStyle: 'midnight',
   cinemaSkinTheme: 'nightfall',
+  reviewSkin: 'default',
+  reviewSkinTheme: 'sage',
+  secondbrainSkin: 'default',
+  secondbrainSkinTheme: 'graphite',
+  literatureSkin: 'default',
+  literatureSkinTheme: 'manila',
+  pomodoroSkin: 'default',
+  pomodoroSkinTheme: 'tomato',
+  encryptSkin: 'default',
+  encryptSkinTheme: 'steel',
 };
 
 /**
