@@ -1,26 +1,20 @@
 /**
  * 原型热更新服务器（零依赖）：node scripts/preview-live.mjs [端口，默认 5177]
- * 服务仓库根目录；监听单源清单内各域的 styles.css / prototype.html / prototype-render.js / render.ts，
- * render.ts 变化先自动重出预览包，然后经 SSE 推浏览器 location.reload()。
+ * 服务仓库根目录；监听单源清单内各域的 styles.css / prototype.html / render 链 / ui 链，
+ * render.ts/shared.ts 变化自动重出预览包+行为包，ui.ts/fake 链变化重出行为包，然后经 SSE 推浏览器 location.reload()。
  * 打开 http://localhost:5177/src/<域>/prototype.html 即得免刷新预览。
  */
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildPreview, PREVIEW_DOMAINS } from './build-preview.mjs';
+import { buildPreview, buildBehavior, PREVIEW_DOMAINS, BEHAVIOR_DOMAINS } from './build-preview.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.argv[2]) || 5177;
 const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml' };
 
-// 域目录 → 监听文件集合；render.ts 变化须先重出预览包再广播
-const watchMap = new Map();
-for (const d of PREVIEW_DOMAINS) {
-  const dir = path.join(ROOT, 'src', d);
-  watchMap.set(dir, { domain: d, files: new Set([`${d}/styles.css`, `${d}/prototype.html`, `${d}/prototype-render.js`, `${d}/render.ts`, `${d}/prototype-behavior.js`, `${d}/fake-sim.ts`]) });
-}
-const watchedDirs = [...watchMap.keys()];
+// 监听 src/<单源域>/ 下全部源码变化（含 layouts/** 嵌套与 fake 层）；构建产物 .js 不在监听之列
 const srcRoot = path.join(ROOT, 'src');
 
 let reloadTimer = 0;
@@ -28,11 +22,14 @@ function scheduleReload(changedRel) {
   clearTimeout(reloadTimer);
   // 防抖：编辑器常连发多个事件
   reloadTimer = setTimeout(async () => {
-    if (changedRel.endsWith('/render.ts')) {
-      try { await buildPreview(); } catch (e) { console.error('[preview-live] 预览包重出失败：', e.message); return; }
-    }
-    if (changedRel.endsWith('/fake-sim.ts') || changedRel.endsWith('/fake-obsidian.ts')) {
-      try { await buildPreview(['belongings', 'cinema']); } catch (e) { console.error('[preview-live] 行为包重出失败：', e.message); return; }
+    const domain = changedRel.split('/')[0];
+    // .ts 是打包链源码（入口 render.ts/ui.ts 及其任意依赖）：两包都可能吃进，按域全部重出最稳；
+    // css/html 由服务器直出，广播刷新即可。
+    if (changedRel.endsWith('.ts')) {
+      try {
+        await buildPreview([domain]);
+        if (BEHAVIOR_DOMAINS.includes(domain)) await buildBehavior(domain);
+      } catch (e) { console.error('[preview-live] 产物重出失败：', e.message); return; }
     }
     for (const res of clients) res.write('data: reload\n\n');
     console.log(`[preview-live] ${changedRel} 变化 → 已推送刷新`);
@@ -42,9 +39,9 @@ function scheduleReload(changedRel) {
 fs.watch(srcRoot, { recursive: true }, (_ev, filename) => {
   if (!filename) return;
   const rel = filename.split(path.sep).join('/');
-  for (const [, info] of watchMap) {
-    if (info.files.has(rel)) return scheduleReload(rel);
-  }
+  if (!rel.endsWith('.ts') && !rel.endsWith('.css') && !rel.endsWith('.html')) return;
+  if (!PREVIEW_DOMAINS.includes(rel.split('/')[0])) return;
+  scheduleReload(rel);
 });
 
 const clients = new Set();
@@ -71,5 +68,5 @@ http.createServer((req, res) => {
   }
 }).listen(PORT, () => {
   console.log(`[preview-live] http://localhost:${PORT}/src/${PREVIEW_DOMAINS[0]}/prototype.html`);
-  console.log(`[preview-live] 监听：${watchedDirs.map((d) => path.relative(ROOT, d)).join('、')}`);
+  console.log(`[preview-live] 监听：src/{${PREVIEW_DOMAINS.join(',')}}/** 的 .ts/.css/.html`);
 });

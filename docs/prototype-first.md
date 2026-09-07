@@ -1,11 +1,11 @@
 # 原型先行 · UI 开发通用指导
 
-域 UI 的唯一真理源是**与插件共用的实现源码**：`styles.css`（样式）、`render.ts`（markup/口径）、`ui.ts`（行为，经公共假层，ADR-0106，试点 belongings）。`prototype.html` 评审壳与插件是同一份代码的两个运行端——改源码一处两侧生效，无「同步/追赶」环节；两侧表现不一致 = 缺陷，修复改源码（或假层），禁止任一侧私改遮盖。迭代遵循「改源码 → 原型评审 → 构建」单向流程，评审以双击 `prototype.html` 实跑为准，禁止目测调参。未迁移域照旧「原型先行、域追赶」（settings-panel 例外：原型即真理，见 skill「域状态」）。
+域 UI 的唯一真理源是**与插件共用的实现源码**：`styles.css`（样式）、`render.ts`（markup/口径）、`ui.ts`（行为，经公共假层，ADR-0106，六域全覆盖）。`prototype.html` 评审壳与插件是同一份代码的两个运行端——改源码一处两侧生效，无「同步/追赶」环节；两侧表现不一致 = 缺陷，修复改源码（或假层），禁止任一侧私改遮盖。迭代遵循「改源码 → 原型评审 → 构建」单向流程，评审以双击 `prototype.html` 实跑为准，禁止目测调参。六域（belongings/bookshelf/cinema/favorites/home/settings-panel）已全部行为单源。
 
 ## 总则
 
 - 共享源码是唯一基准：任何 UI/行为改动先落源码，在 `prototype.html` 实跑评审，禁止绕过评审目测调参。
-- 两侧表现不一致 = 缺陷：已迁移域修复改共享源码（或假层），未迁移域修复改原型再让域追赶；禁止反向适配或域侧私改。
+- 两侧表现不一致 = 缺陷：修复改共享源码（或假层），禁止反向适配或任一侧私改。
 - 拿不准的问用户，绝不擅自替原型或域做取舍。
 
 ## 机制：共用实现，无需同步
@@ -14,7 +14,7 @@
 |---|---|---|
 | `styles.css` | 样式 | 原型 × 插件 |
 | `render.ts`（产物 `prototype-render.js`） | markup / 视图口径 | 原型 × 插件 |
-| `ui.ts`（产物 `prototype-behavior.js`，试点 belongings，ADR-0106） | 交互行为 | 原型 × 插件 |
+| `ui.ts`（产物 `prototype-behavior.js`，ADR-0106） | 交互行为 | 原型 × 插件 |
 
 改一处两侧自动生效，无二次同步。行为单源 = 原型直接运行插件同款 ui.ts：宿主差异由构建期 esbuild alias 换成公共假层 `fake/`——零依赖 core 服务（notice/flow-dialog 等）真身打进；setIcon/Platform 用假 obsidian 覆盖共用；数据/AI/设置写接口一致的假函数（localStorage 假库/抛错降级/注入默认值）。
 
@@ -26,11 +26,11 @@
 | `render.ts` | markup 单源（面板/弹窗/行操作序列） |
 | `prototype-render.js` | 构建产物（入库，勿手改） |
 | `ui.ts` | 行为单源：生命周期/事件委托/数据流（markup 只出自 render.ts） |
-| `fake-sim.ts` | 行为产物入口：种子数据 + 注入 + 导出 openPanel（试点 belongings） |
+| `fake-sim.ts` | 行为产物入口：种子数据 + 注入 + 导出面板入口（各域一份） |
 | `fake/fake-obsidian.ts` | 公共假 obsidian：Platform 视口判定 / setIcon 用 BLG_ICONS / FakeVault（localStorage + storage 桥） |
 | `prototype-behavior.js` | 行为产物（入库，勿手改） |
-| `prototype.html` | 评审壳：行为单源域 = 双 iframe（桌面 920 / 移动 396 各跑一份真行为）+ 自检；未迁移域 = 消费 `prototype-render.js` 自绘演示 |
-| `prototype-view.html` | iframe 视图页：boot + openPanel（试点 belongings） |
+| `prototype.html` | 评审壳：双 iframe（桌面 / 移动 396 各跑一份真行为）+ 自检 |
+| `prototype-view.html` | iframe 视图页：boot + 面板入口（各域一份） |
 | `prototype-data.js` / `prototype-icons.js` | 演示数据/图标（生成物） |
 
 原型历史版本在 `.zcode/ui-prototypes/`（不入 git）；域内 `prototype.html` 始终是当前定稿。
@@ -46,7 +46,7 @@
 - 两侧消费同一份 `render.ts`（ADR-0104 结构性保证）。
 - `render-purity.test.ts` 守纯层契约（import 白名单、禁 obsidian/moment、禁模块级可变状态）。
 - UI 测试锚（`bz-<域>-*` 类 / `data-*` 钩子）同源 `render.ts`，断言通用。
-- 评审壳自检（`?selftest=1` / CDP）：行为单源域跑同一份 ui.ts（真交互真断言），未迁移域跑同一份渲染实现。
+- 评审壳自检（`?selftest=1` / CDP）：跑同一份 ui.ts（真交互真断言）。
 
 ## 壳层差异（允许不同，组件层禁止分叉）
 

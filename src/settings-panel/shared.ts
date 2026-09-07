@@ -1,10 +1,12 @@
 /**
  * 设置面板渲染纯层 · 共享层（settings-panel，ADR-0104 markup 单源 + ADR-0105 布局分层）。
  *
- * 本文件是「原型 × 插件」控件级 markup 的唯一实现，**以原型 prototype.app.js 为唯一真理逐字提取**
- * （2026-09-07 拍板：render.ts 以原型为主迁移，禁止从域侧反向提炼——上次混合的根源）：
+ * 本文件是「插件 × 评审壳」控件级 markup 的唯一实现（ADR-0104/0105 markup 单源；
+ * 2026-09-07 拍板 ADR-0106：行为唯一真理 = 域 ui.ts，原型壳退化为双 iframe 评审壳，
+ * 旧 prototype.app.js 自绘脚本退役删除——本层不再以壳脚本为真理，两侧 markup 均由
+ * 真 ui.ts / renderer.ts 消费同一份）：
  *   - 插件侧：renderer.ts / ui.ts 消费串工厂后按契约类绑事件（core 服务/落盘留行为层）；
- *   - 原型侧：dev 打成 prototype-render.js（IIFE，挂 window.BZR_settings_panel），壳消费同一份。
+ *   - 原型侧：prototype-behavior.js（fake-sim 构建）跑同一依赖链，壳零自绘。
  * 本域 schema 驱动，纯层收「输入 schema 节点视图 + 值 → 输出 HTML 串」的工厂，schema 本体不进纯层。
  *
  * 纯层契约（tests/core/render-purity.test.ts 守卫）：import 白名单仅 `../core/ui/str`；
@@ -16,7 +18,7 @@ import { esc, iconSpan } from '../core/ui/str';
 // 再出口（壳经 window.BZR_settings_panel 取用；插件 renderer/ui 亦统一从这里取）
 export { esc, iconSpan };
 
-/* ==================== 控件级工厂（跨布局/跨面板复用；逐字对齐 prototype.app.js renderCtl） ==================== */
+/* ==================== 控件级工厂（跨布局/跨面板复用；源出原型定稿 renderCtl 口径） ==================== */
 
 /** 开关（button.bz-sw；role=switch；on = 选中态）——原型 toggle 分支 */
 export function toggleHtml(on: boolean): string {
@@ -177,7 +179,7 @@ export function cardpickHtml(cards: Array<{ value: string; label: string; on: bo
   }).join('') + `</div>`;
 }
 
-/* ==================== 行 / 组骨架（逐字对齐 prototype.app.js rowEl / renderGroupsInto） ==================== */
+/* ==================== 行 / 组骨架（源出原型定稿 rowEl / renderGroupsInto 口径） ==================== */
 
 /** 行视图模型（renderer 从 schema 行摘出的纯数据投影视图） */
 export interface SpRowVm {

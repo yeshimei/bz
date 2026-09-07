@@ -39,7 +39,7 @@ export function loadingEntriesHtml(): string {
 
 /** 数据未到/采集失败的骨架占位：时间线列 */
 export function loadingFlowHtml(): string {
-  return '<div class="bz-home-sec-t">时 间 线 · 今 天</div><div class="bz-home-flow-empty">正在汇入今天的痕迹…</div>';
+  return '<div class="bz-home-flow-empty">正在汇入今天的痕迹…</div>';
 }
 
 /* ---------- 周历（7 格动静历，hit=当天有动静，sel=当前查看日） ---------- */
@@ -76,7 +76,6 @@ export function flowHtml(data: RiverData, view: string): string {
   const day = data.days.find((d) => d.dateStr === view) ?? data.today;
   const isToday = day.dateStr === data.today.dateStr;
   const notes = isToday ? buildNotes(data) : [];
-  const title = '<div class="bz-home-sec-t">时 间 线 · ' + (isToday ? '今 天' : esc(day.dateStr.slice(5))) + '</div>';
   const body = day.events.map((e, i) => {
     const note = notes.find((n) => n.index === i);
     const lastDiary = i === day.events.length - 1 && note && note.text.indexOf('日记') >= 0 ? ' bz-home-ev--warn' : '';
@@ -93,7 +92,7 @@ export function flowHtml(data: RiverData, view: string): string {
       + '</div></div>';
   }).join('');
   const empty = '<div class="bz-home-flow-empty">这一天还没有留下痕迹。<br><b>写一篇日记</b>、点一轮番茄、读几页书——<br>都会出现在这条河里。</div>';
-  return title + (day.events.length ? '<div class="bz-home-timeline">' + body + '</div>' : empty);
+  return day.events.length ? '<div class="bz-home-timeline">' + body + '</div>' : empty;
 }
 
 /* ---------- 明天预告卡 ---------- */

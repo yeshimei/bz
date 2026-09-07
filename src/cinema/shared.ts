@@ -42,7 +42,6 @@ export const ICON = {
   play: 'play',
   globe: 'globe',
   film: 'clapperboard',
-  gear: 'sliders-horizontal',
 } as const;
 
 // ---------- 格式化/口径 ----------
@@ -206,25 +205,6 @@ export function confirmModalHtml(item: CinemaItem): string {
     <p>确定删除「${esc(item.name)}」吗？</p>
     <div class="cn-confirm-sub">将移入系统回收站，可在回收站恢复</div>
     <div class="dm-actions"><button class="dm-btn j-cancel">取消</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
-  </div>`;
-}
-
-/** 影院设置弹窗内容（面板内；写设置经 saveSettings 持久化留行为层） */
-export function setModalHtml(opts: { sort: string; stf: string; cols: number; mobFull: boolean; folderPath: string }): string {
-  const { sort, stf, cols, mobFull } = opts;
-  return `<div class="cn-modal" style="width:100%">
-    <div class="cn-modal-title">影院设置</div><button class="cn-modal-x j-close" title="关闭">${iconSpan(ICON.close)}</button>
-    <div class="set-row"><div class="set-name">默认排序<div class="set-desc">打开面板时列表按所选规则排序</div></div>
-      <div class="set-ctl"><select class="j-sort">${[['date', '最近观看'], ['created', '按创建时间'], ['rating', '按评分']].map(([v, l]) => `<option value="${v}"${sort === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div></div>
-    <div class="set-row"><div class="set-name">默认状态筛选<div class="set-desc">打开面板时选中的状态筛选</div></div>
-      <div class="set-ctl"><select class="j-stf">${['', '想看', '在看', '已看'].map((v) => `<option value="${v}"${stf === v ? ' selected' : ''}>${v || '全部'}</option>`).join('')}</select></div></div>
-    <div class="set-row"><div class="set-name">网格每行列数<div class="set-desc">海报网格每一行的列数（2-12）</div></div>
-      <div class="set-ctl"><input type="number" class="j-cols" min="2" max="12" step="1" value="${cols}"></div></div>
-    <div class="set-row"><div class="set-name">移动端默认全屏<div class="set-desc">打开面板时移动端进入全屏态</div></div>
-      <div class="set-ctl"><button class="set-sw j-sw${mobFull ? ' on' : ''}"></button></div></div>
-    <div class="set-row"><div class="set-name">影视文件夹<div class="set-desc">影院读取的影视文件夹</div></div>
-      <div class="set-ctl" style="font-size:11px;color:var(--ink-3);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(opts.folderPath)}</div></div>
-    <div class="dm-actions"><button class="dm-btn gold j-save">保存</button></div>
   </div>`;
 }
 
