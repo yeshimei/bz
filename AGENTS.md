@@ -17,7 +17,7 @@
 2. 命令 ID 三段式：`bz-<域>-<动作>`。
 3. 通知正文不带 emoji，新语义先查 `src/core/notice.ts` ICONS。
 4. 样式写 `src/<域>/styles.css`，构建聚合至根 `styles.css`。
-5. 原型是该域 UI 的唯一真理源（详见 `docs/prototype-first.md`），域与原型共用样式、渲染与行为实现。
+5. 域 UI 的唯一真理源是与原型共用的实现源码——样式 / 渲染 / 行为六域全单源（详见 `docs/prototype-first.md`）。
 
 ## 领域清单（数据均在 CONFIG/STORAGE/）
 | 域 | 数据 |
