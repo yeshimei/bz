@@ -18,7 +18,7 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=u
 const watchMap = new Map();
 for (const d of PREVIEW_DOMAINS) {
   const dir = path.join(ROOT, 'src', d);
-  watchMap.set(dir, { domain: d, files: new Set([`${d}/styles.css`, `${d}/prototype.html`, `${d}/prototype-render.js`, `${d}/render.ts`]) });
+  watchMap.set(dir, { domain: d, files: new Set([`${d}/styles.css`, `${d}/prototype.html`, `${d}/prototype-render.js`, `${d}/render.ts`, `${d}/prototype-behavior.js`, `${d}/fake-sim.ts`]) });
 }
 const watchedDirs = [...watchMap.keys()];
 const srcRoot = path.join(ROOT, 'src');
@@ -30,6 +30,9 @@ function scheduleReload(changedRel) {
   reloadTimer = setTimeout(async () => {
     if (changedRel.endsWith('/render.ts')) {
       try { await buildPreview(); } catch (e) { console.error('[preview-live] 预览包重出失败：', e.message); return; }
+    }
+    if (changedRel.endsWith('/fake-sim.ts') || changedRel.endsWith('/fake-obsidian.ts')) {
+      try { await buildPreview(['belongings']); } catch (e) { console.error('[preview-live] 行为包重出失败：', e.message); return; }
     }
     for (const res of clients) res.write('data: reload\n\n');
     console.log(`[preview-live] ${changedRel} 变化 → 已推送刷新`);
