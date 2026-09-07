@@ -1,6 +1,6 @@
 # 原型先行 · UI 开发通用指导
 
-原型是该域 UI 的唯一真理源，差异即缺陷，修复只能改原型再让域追赶。域与原型共用样式和渲染实现，内容一致性由自动化测试强制；迭代遵循「改原型→评审→构建」单向流程，禁止反向适配或私改。
+原型是该域 UI 的唯一真理源，差异即缺陷，修复只能改原型再让域追赶。域与原型共用样式、渲染与行为实现（行为经公共假层，ADR-0106），内容一致性由自动化测试强制；迭代遵循「改原型→评审→构建」单向流程，禁止反向适配或私改。
 
 ## 总则
 
@@ -14,8 +14,9 @@
 |---|---|---|
 | `styles.css` | 样式 | 原型 × 插件 |
 | `render.ts`（产物 `prototype-render.js`） | markup / 视图口径 | 原型 × 插件 |
+| `ui.ts`（产物 `prototype-behavior.js`，试点 belongings，ADR-0106） | 交互行为 | 原型 × 插件 |
 
-改一处两侧自动生效，无二次同步。
+改一处两侧自动生效，无二次同步。行为单源 = 原型直接运行插件同款 ui.ts：宿主差异由构建期 esbuild alias 换成公共假层 `fake/`——零依赖 core 服务（notice/flow-dialog 等）真身打进；setIcon/Platform 用假 obsidian 覆盖共用；数据/AI/设置写接口一致的假函数（localStorage 假库/抛错降级/注入默认值）。
 
 ## 文件约定（`src/<域>/`）
 
@@ -24,14 +25,19 @@
 | `styles.css` | 唯一样式源（`bz-<域>-*` 前缀） |
 | `render.ts` | markup 单源（面板/弹窗/行操作序列） |
 | `prototype-render.js` | 构建产物（入库，勿手改） |
-| `prototype.html` | 评审壳：消费 `prototype-render.js`，桌面/移动两端并存 |
+| `ui.ts` | 行为单源：生命周期/事件委托/数据流（markup 只出自 render.ts） |
+| `fake-sim.ts` | 行为产物入口：种子数据 + 注入 + 导出 openPanel（试点 belongings） |
+| `fake/fake-obsidian.ts` | 公共假 obsidian：Platform 视口判定 / setIcon 用 BLG_ICONS / FakeVault（localStorage + storage 桥） |
+| `prototype-behavior.js` | 行为产物（入库，勿手改） |
+| `prototype.html` | 评审壳：行为单源域 = 双 iframe（桌面 920 / 移动 396 各跑一份真行为）+ 自检；未迁移域 = 消费 `prototype-render.js` 自绘演示 |
+| `prototype-view.html` | iframe 视图页：boot + openPanel（试点 belongings） |
 | `prototype-data.js` / `prototype-icons.js` | 演示数据/图标（生成物） |
 
 原型历史版本在 `.zcode/ui-prototypes/`（不入 git）；域内 `prototype.html` 始终是当前定稿。
 
 ## 流程（单向）
 
-1. **改原型**：样式改 `styles.css`；结构/交互/markup 改 `render.ts`（改后重出 `prototype-render.js`）；演示逻辑改 `prototype.html`。禁止手改 `prototype-render.js`，禁止往 `ui.ts` 手写 markup。
+1. **改原型**：样式改 `styles.css`；结构/交互/markup 改 `render.ts`（改后重出 `prototype-render.js`）；**行为逻辑改 `ui.ts`（改后重出 `prototype-behavior.js`）**；演示外景/自检改 `prototype.html`。禁止手改任何构建产物，禁止往 `ui.ts` 手写 markup。
 2. **评审**：双击 `prototype.html`，两端 × 亮暗各过一遍。1:1 复刻以浏览器实跑为准，**禁止目测调参**（残留规则污染 computed）。
 3. **构建**：`pnpm test` + `tsc --noEmit` + `pnpm run build`。
 
@@ -40,18 +46,18 @@
 - 两侧消费同一份 `render.ts`（ADR-0104 结构性保证）。
 - `render-purity.test.ts` 守纯层契约（import 白名单、禁 obsidian/moment、禁模块级可变状态）。
 - UI 测试锚（`bz-<域>-*` 类 / `data-*` 钩子）同源 `render.ts`，断言通用。
-- 评审壳自检（`?selftest=1` / CDP）跑同一份渲染实现。
+- 评审壳自检（`?selftest=1` / CDP）：行为单源域跑同一份 ui.ts（真交互真断言），未迁移域跑同一份渲染实现。
 
 ## 壳层差异（允许不同，组件层禁止分叉）
 
 | 评审壳 | 插件 |
 |---|---|
 | `body.theme-dark` 手动切 | 跟随 Obsidian `.theme-dark` |
-| 移动端手机演示框 | `applyMobileWindowFullscreen` 全屏 |
-| 自绘 toast/确认框 | core 服务 |
-| lucide 内联 SVG | `<i data-lucide>` + `mountIcons` |
-| localStorage 假数据 | DataManager / settings |
-| `window.BZR_<域>`（产物） | `render.ts` 直接 import |
+| 移动端 396px iframe（容器查询出移动布局） | `Platform.isMobile` + `applyMobileWindowFullscreen` |
+| FakeVault：localStorage + storage 桥 | 真 vault 文件 + modify 监听 |
+| setIcon 用 BLG_ICONS 内联 SVG | `setIcon` 原生 lucide |
+| localStorage 假数据 + 注入默认设置 | DataManager / settings |
+| `window.BZR_/BZW_<域>`（产物） | `render.ts`/`ui.ts` 直接 import |
 
 ## 注意事项（通用坑）
 
