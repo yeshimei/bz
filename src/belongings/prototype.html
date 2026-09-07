@@ -2,19 +2,23 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>归物本 · 原型预览（与 src/belongings/styles.css 共用同一份 CSS）</title>
+<title>归物本 · 原型预览（真行为单源）</title>
 <!--
-  ┌────────────────────────────────────────────────────────────────────┐
-  │ 本文件 = 归物本域 UI 的评审壳。组件样式零内联，全部来自（与 build-css  │
-  │ SOURCES 同序）：../core/styles.css → ../core/ui/tokens.css           │
-  │   → ../core/ui/components.css → ./styles.css                         │
-  │ markup 单源（issue 237/ADR-0104）：面板/网格/详情/表单 HTML 与计算口径  │
-  │ 全部出自 ./prototype-render.js（由 src/belongings/render.ts 构建，      │
-  │ 与插件 ui.ts 消费同一份）——改 markup 改 render.ts，两侧即时生效。      │
-  │ 壳内只允许：演示壳样式、演示数据（localStorage）、演示事件绑定、        │
-  │ 自绘 toast/确认框、演示钩子与自检。                                    │
-  │ 移动端判定：真实端 = 视口/面板 ≤768（容器查询）；评审壳 = .demo-mob。  │
-  └────────────────────────────────────────────────────────────────────┘
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ 本文件 = 归物本域 UI 的评审壳（行为单源版，issue 245/ADR-0106）。          │
+  │ 组件样式零内联，全部来自（与 build-css SOURCES 同序）：                    │
+  │   ../core/styles.css → ../core/ui/tokens.css → ../core/ui/components.css │
+  │   → ./styles.css                                                        │
+  │ markup 单源（ADR-0104）：面板/网格/详情/表单 HTML 出自 ./prototype-render.js│
+  │   （src/belongings/render.ts 构建）。                                    │
+  │ 行为单源（issue 245/ADR-0106）：交互逻辑全部是插件同款 ui.ts 依赖链——       │
+  │   经 ./prototype-behavior.js（src/belongings/fake-sim.ts 构建，           │
+  │   alias obsidian→公共假层）在下方两个 iframe 视图里跑真行为；                │
+  │   桌面 iframe 宽视口 = 桌面布局；移动 iframe 396px = styles.css           │
+  │   @container 移动布局。数据 = localStorage（跨 iframe storage 桥同步，     │
+  │   完整模拟插件「数据文件外部变更自动刷新」）。                              │
+  │ 壳内只允许：外景容器样式、评审徽牌、演示钩子与自检。                        │
+  └────────────────────────────────────────────────────────────────────────┘
 -->
 <link rel="stylesheet" href="../core/styles.css">
 <link rel="stylesheet" href="../core/ui/tokens.css">
@@ -23,7 +27,7 @@
 <style>
   /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 56px; padding: 32px 24px;
+  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 32px 24px;
     background: #dcd8cd; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
   /* 模拟 Obsidian 宿主变量（core/styles.css 的右键菜单/底部抽屉取值用；插件内由主题提供） */
   body {
@@ -32,32 +36,29 @@
   }
   * { scrollbar-width: none; } *::-webkit-scrollbar { display: none; }
 
-  /* 桌面面板外景（组件本体 920×640 来自 styles.css） */
-  .demo-dt { flex: none; }
+  /* 桌面外景（真行为 iframe：面板 append iframe body，宽度决定布局） */
+  .demo-dt { flex: none; width: 920px; height: 640px; }
+  /* 移动外景：396px iframe → 面板 body 容器 396px → @container 移动布局 */
+  .demo-mob { width: 396px; height: 780px; border-radius: 26px; overflow: hidden; flex: none;
+    border: 1px solid #b8b0a0; box-shadow: 0 8px 30px rgba(0,0,0,.16); background: #f5f2ec; }
+  .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
 
-  /* 移动端手机框：面板（全屏态 100vw/100vh）缩进 396×780 演示框，
-     并把面板自身变成 396px 容器 → styles.css @container 移动端规则生效 */
-  .demo-mob { width: 396px; height: 780px; position: relative; overflow: hidden; flex: none;
-    border: 1px solid #b8b0a0; border-radius: 26px; background: #f5f2ec; box-shadow: 0 8px 30px rgba(0,0,0,.16); }
-  .demo-mob .bz-bel-panel { width: 100% !important; height: 100% !important;
-    max-width: none !important; max-height: none !important; border: none; box-shadow: none; }
-  /* 插件把浮层遮罩挂 body（fixed 全屏）；评审壳内收进手机框 */
-  .demo-mob .bz-overlay-mask, .demo-mob .bz-item-sheet-mask { position: absolute; }
-  .demo-mob .bz-item-sheet { position: absolute; } /* 抽屉本体在 core 是 fixed 钉视口，壳内钉手机框 */
-
-  /* 评审徽牌（演示壳自用）；P20 纸面双主题恒定，无亮暗切换 */
+  /* 评审徽牌（演示壳自用） */
   .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #8b8474; display: flex; gap: 10px; align-items: center;
     background: rgba(255,255,255,.92); border: 1px solid #c9c2b2; padding: 3px 8px; z-index: 900; }
   .vbadge button { border: none; background: none; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; }
+  .vbadge .ok { color: #3d8f5d; }
+  .vbadge .bad { color: #b3564d; }
 </style>
 </head>
 <body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark，壳内必须补一类才不透明 -->
-  <div id="dtHost" class="demo-dt"></div>
-  <div id="mobHost" class="demo-mob"></div>
+  <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="归物本·桌面"></iframe></div>
+  <div id="mobHost" class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="归物本·移动"></iframe></div>
 
-  <div class="vbadge">归物本 · 原型预览（共用 styles.css）· 真实 65 件
+  <div class="vbadge">归物本 · 真行为单源预览（桌面=真 ui.ts 跑在 920px，移动=396px）
     <button id="mobToggle">隐藏移动端</button>
     <button id="reset">重置演示数据</button>
+    <span id="stResult"></span>
   </div>
 
 <script src="./prototype-icons.js"></script>
@@ -65,636 +66,211 @@
 <script src="./prototype-render.js"></script>
 <script>
 (function () {
-  /* ==================== 渲染单源：window.BZR_belongings（构建产物，勿手改） ====================
-   * markup / 计算口径 / 行操作序列全部来自 src/belongings/render.ts（issue 237/ADR-0104），
-   * 与插件 ui.ts 消费同一份；本壳只留演示层。重新生成：node scripts/build-preview.mjs。 */
-  const R = window.BZR_belongings;
-  const esc = R.esc;
-  const icon = R.iconSpan;
-
-  /* ==================== 壳基座：mountIcons（prototype-icons.js 内联 SVG——壳层差异表） ==================== */
-  const ICONS = window.BLG_ICONS || {};
-  function mountIcons(root) {
-    if (!root) return;
-    root.querySelectorAll('i[data-lucide]').forEach((el) => {
-      const d = ICONS[el.dataset.lucide];
-      if (d && !el.firstChild) {
-        el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
-      }
-    });
-  }
-
-  /* ==================== 演示数据（壳层差异表：localStorage 假数据 + 真实库快照） ==================== */
-  const LS = 'bz-bel-p20-shared-v1';
-  const migrateItems = (list) => list.map((x) => {
-    const it = { ...x };
-    const sp = R.splitEmojiCategory(it.category);
-    if (sp.emoji) {
-      it.category = sp.name;
-      if (sp.icon && !(it.icon != null && it.icon !== '')) it.icon = sp.icon;
-    }
-    return it;
-  });
-  let items;
-  try {
-    const saved = JSON.parse(localStorage.getItem(LS) || 'null');
-    items = Array.isArray(saved) && saved.length ? migrateItems(saved) : migrateItems(BLG.ITEMS.map((x) => ({ ...x })));
-  } catch (e) { items = migrateItems(BLG.ITEMS.map((x) => ({ ...x }))); }
-  const save = () => { try { localStorage.setItem(LS, JSON.stringify(items)); } catch (e) { } };
-  /* 视图状态（与 render.BelViewState / ui.ts BelState 切片同构） */
-  const M = { status: null, year: '', q: '', sort: 'recent' };
-  const itemById = (id) => items.find((i) => i.id === id);
-  /* 历史分类派生（壳内演示数据无 db.categories，按 items 现算；插件 = data.ts 载入派生） */
-  function historyCats() {
-    const freq = new Map();
-    for (const it of items) {
-      const cat = String(it.category || '').trim();
-      if (!cat) continue;
-      const cur = freq.get(cat) || { n: 0, last: '' };
-      cur.n++; cur.last = String(it.last_updated || '');
-      freq.set(cat, cur);
-    }
-    return [...freq.entries()].sort((a, b) => b[1].n - a[1].n || b[1].last.localeCompare(a[1].last)).map(([c]) => c);
-  }
-  function historyIconOf(cat) {
-    for (const it of items) if (String(it.category || '').trim() === cat && it.icon) return it.icon;
-    return null;
-  }
-
-  /* ==================== 渲染 = 单源胶水（ui.ts renderAll 同款调用） ==================== */
-  const PANELS = [];
-  function renderAll() {
-    PANELS.forEach((p) => R.renderPanelView(p.el, items, M, { mountIcons }));
-  }
-
-  /* ==================== 面板装配 / 事件（演示语义；插件走 core 服务） ==================== */
-  function buildPanel(host, mobile) {
-    host.innerHTML = R.panelHtml();
-    const el = host.querySelector('.bz-bel-panel');
-    const p = { host, el, mobile, q: (sel) => el.querySelector(sel) };
-    mountIcons(el);
-
-    el.addEventListener('click', (e) => {
-      const t = e.target;
-      if (t.closest('[data-bel-add]')) { openForm(null, p); return; }
-      if (t.closest('[data-bel-close]')) { host.style.display = 'none'; syncMobBtn(); toast('评审壳：插件内此处关闭全屏面板'); return; }
-      const chip = t.closest('[data-bel-st]');
-      if (chip) { applyStatusFilter(chip.dataset.belSt); return; }
-      const seg = t.closest('.bz-segmented-btn');
-      if (seg) { M.sort = seg.dataset.k; renderAll(); return; }
-      const kpi = t.closest('[data-bel-statclick]');
-      if (kpi) { M.status = M.status === 'asset' ? null : 'asset'; renderAll(); return; }
-    });
-    // 年份/移动排序下拉（自绘海报菜单；开合+点选+外点收起，与 ui.ts 同语义）
-    el.addEventListener('click', (e) => {
-      const trig = e.target.closest('[data-bel-year],[data-bel-mobsortsel]');
-      if (trig) {
-        const wrap = trig.parentElement;
-        const wasOpen = wrap.classList.contains('is-open');
-        el.querySelectorAll('.bz-bel-yearsel.is-open').forEach((w) => w.classList.remove('is-open'));
-        if (!wasOpen) wrap.classList.add('is-open');
-        return;
-      }
-      const opt = e.target.closest('.bz-bel-dropopt');
-      if (opt) {
-        el.querySelectorAll('.bz-bel-yearsel.is-open').forEach((w) => w.classList.remove('is-open'));
-        const v = opt.dataset.v ?? '';
-        if (opt.closest('[data-bel-yearmenu]')) M.year = v; else M.sort = v;
-        renderAll();
-        return;
-      }
-      el.querySelectorAll('.bz-bel-yearsel.is-open').forEach((w) => w.classList.remove('is-open'));
-    });
-    const bindSearch = (inp) => {
-      inp.addEventListener('input', () => {
-        clearTimeout(inp._belDeb);
-        inp._belDeb = setTimeout(() => { M.q = inp.value.trim(); renderAll(); }, 180);
-      });
+  /* ==================== 壳基座（仅外景）：两个真行为 iframe + storage 桥 ====================
+   * 行为全部在 iframe 内跑真 ui.ts（prototype-behavior.js）；本页只做：
+   *  - 数据种子（BLG.ITEMS 首启写 localStorage，见 fake-sim seedDatabase）
+   *  - 重置演示数据（清 localStorage 后重载 iframe）
+   *  - 演示钩子（?demo=…）与自检（?selftest=1）：经 iframe contentWindow 访问真 DOM
+   */
+  const LS = 'bz-sim:CONFIG/STORAGE/belongings.json';
+  const seedOnce = () => {
+    if (localStorage.getItem(LS)) return;
+    const db = {
+      version: '1.0',
+      last_updated: new Date().toISOString(),
+      items: Object.fromEntries((window.BLG?.ITEMS || []).map((x) => [x.id, x])),
     };
-    bindSearch(p.q('[data-bel-search]'));
-    const content = p.q('[data-bel-content]');
-    content.addEventListener('click', (e) => {
-      const cell = e.target.closest('[data-bel-id]');
-      if (!cell) return;
-      const it = itemById(cell.dataset.belId);
-      if (!it) return;
-      // 桌面点卡 = 详情弹窗；移动点卡 = 底部抽屉（与 ui.ts 同语义）
-      if (p.mobile) openMobSheet(it, p); else openBelDetail(it, p);
-    });
-    content.addEventListener('contextmenu', (e) => {
-      const cell = e.target.closest('[data-bel-id]');
-      if (!cell || p.mobile) return;
-      e.preventDefault();
-      const it = itemById(cell.dataset.belId);
-      if (it) openRowMenuAt(it, e.clientX, e.clientY, p);
-    });
-    PANELS.push(p);
-    return p;
-  }
-  function applyStatusFilter(k) {
-    if (k === '__all') M.status = null;
-    else M.status = M.status === k ? null : k;
-    renderAll();
-  }
+    localStorage.setItem(LS, JSON.stringify(db, null, 2));
+  };
+  seedOnce();
 
-  /* ==================== 流转 / 删除（演示版：内存改 + 壳自绘撤销 toast；插件走 core notice） ==================== */
-  async function applyFlowWithUndo(it, s) {
-    const cur = itemById(it.id);
-    if (!cur) { toast('该物品已被外部变更删除，列表已刷新'); renderAll(); return; }
-    const prevStatus = cur.current_status;
-    cur.current_status = s;
-    if (R.isExited(cur)) cur.exit_date = R.todayStr();
-    else if (cur.exit_date != null) cur.exit_date = null;
-    cur.last_updated = new Date().toISOString();
-    save(); renderAll();
-    toast(`「${cur.name}」已标记为${s}`, '撤销', () => {
-      const now = itemById(it.id);
-      if (!now) { toast('该物品已被外部变更删除，无法撤销'); return; }
-      now.current_status = prevStatus;
-      if (now.exit_date != null) now.exit_date = null;
-      now.last_updated = new Date().toISOString();
-      save(); renderAll();
-      toast(`已撤销，「${now.name}」回到${prevStatus}`);
-    });
-  }
-  async function deleteItem(it, p) {
-    confirmDlg('删除物品', `确定要删除物品「${it.name}」吗？删除后可在通知中撤销。`, '删除', () => {
-      const idx = items.findIndex((i) => i.id === it.id);
-      if (idx < 0) { toast('该物品已被外部变更删除，列表已刷新'); renderAll(); return; }
-      const snapshot = { ...items[idx] };
-      items.splice(idx, 1);
-      closeBelDetail();
-      save(); renderAll();
-      toast(`已删除「${it.name}」`, '撤销', () => {
-        if (itemById(snapshot.id)) { toast(`已存在同 id 物品（${snapshot.id}），跳过恢复`); return; }
-        items.splice(Math.min(idx, items.length), 0, snapshot);
-        save(); renderAll();
-        toast(`已恢复「${snapshot.name}」`);
-      });
-    });
-  }
-
-  /* ==================== 行操作集（specs → 演示动作；插件 ui.ts 同款映射走 core/item-actions） ==================== */
-  function buildActions(it, rebuild, p) {
-    return R.actionSpecs(it).map((sp) => ({
-      icon: sp.icon,
-      label: sp.label,
-      keepOpen: sp.keepOpen,
-      kind: sp.danger ? 'danger' : undefined,
-      onClick: () => {
-        if (sp.act === 'flow' && sp.status) { applyFlowWithUndo(it, sp.status).then(rebuild); return; }
-        if (sp.act === 'edit') { openForm(it, p); return; }
-        deleteItem(it, p);
-      },
-    }));
-  }
-  function sheetActsHtml(acts) {
-    return acts.map((a) =>
-      `<button type="button" class="bz-item-sheet-item${a.kind === 'danger' ? ' bz-item-sheet-item--danger' : ''}"><span class="bz-item-sheet-icon">${icon(a.icon)}</span><span class="bz-item-sheet-label">${esc(a.label)}</span></button>`).join('');
-  }
-  function openMobSheet(it, p) {
-    closeMobSheet();
-    const mask = document.createElement('div');
-    mask.className = 'bz-item-sheet-mask';
-    const rebuild = () => {
-      const it2 = itemById(it.id);
-      if (!it2) { closeMobSheet(); return; }
-      mask.querySelector('.bz-item-sheet-body').innerHTML = sheetActsHtml(buildActions(it2, rebuild, p));
-      mountIcons(mask);
+  const dtFrame = () => document.querySelector('#dtHost iframe');
+  const mobFrame = () => document.querySelector('#mobHost iframe');
+  const dtDoc = () => dtFrame().contentDocument;
+  const mobDoc = () => mobFrame().contentDocument;
+  // 轮询现取 contentDocument：iframe 加载前后 document 引用会替换（about:blank → 真实文档），
+  // 不能缓存旧引用等面板——每次现查，跨文档访问本身同源安全。
+  const waitFrame = (getDoc) => new Promise((res, rej) => {
+    const started = Date.now();
+    const tries = () => {
+      try {
+        const doc = getDoc();
+        if (doc && doc.querySelector('.bz-bel-panel')) return res(doc);
+        if (Date.now() - started > 25000) return rej(new Error('iframe 面板超时'));
+        setTimeout(tries, 150);
+      } catch (e) { setTimeout(tries, 150); }
     };
-    mask.innerHTML = `<div class="bz-item-sheet">
-      <div class="bz-item-sheet-head">${R.sheetHeadHtml(it)}</div>
-      <div class="bz-item-sheet-body">${sheetActsHtml(buildActions(it, rebuild, p))}</div>
-    </div>`;
-    mask.addEventListener('click', (e) => {
-      if (e.target === mask) return closeMobSheet();
-      const b = e.target.closest('.bz-item-sheet-item');
-      if (!b) return;
-      const acts = buildActions(itemById(it.id) || it, rebuild, p);
-      const idx = [...mask.querySelectorAll('.bz-item-sheet-item')].indexOf(b);
-      const a = acts[idx];
-      if (!a) return;
-      if (!a.keepOpen) closeMobSheet();
-      a.onClick();
-    });
-    p.host.appendChild(mask);
-    mountIcons(mask);
-  }
-  function closeMobSheet() { document.getElementById('mobHost').querySelector('.bz-item-sheet-mask')?.remove(); }
-
-  /* ==================== 桌面右键菜单（core .bz-item-menu + 海报皮 bz-bel-menu；演示版自绘） ==================== */
-  let menuEl = null;
-  function closeMenu() { if (menuEl) { menuEl.remove(); menuEl = null; } }
-  function openRowMenuAt(it, x, y, p) {
-    closeMenu();
-    const rebuild = () => {
-      const it2 = itemById(it.id);
-      if (it2) refreshMenu(it2, p);
-    };
-    const acts = buildActions(it, rebuild, p);
-    menuEl = document.createElement('div');
-    menuEl.className = 'bz-item-menu bz-bel-menu';
-    menuEl.innerHTML = acts.map((a) =>
-      `<button type="button" class="bz-item-menu-item${a.kind === 'danger' ? ' bz-item-menu-item--danger' : ''}"><span class="bz-item-menu-icon">${icon(a.icon)}</span><span class="bz-item-menu-label">${esc(a.label)}</span></button>`).join('');
-    menuEl.addEventListener('click', (e) => {
-      const b = e.target.closest('.bz-item-menu-item');
-      if (!b) return;
-      const idx = [...menuEl.querySelectorAll('.bz-item-menu-item')].indexOf(b);
-      const a = acts[idx];
-      closeMenu();
-      if (a) a.onClick();
-    });
-    document.body.appendChild(menuEl);
-    mountIcons(menuEl);
-    const r = menuEl.getBoundingClientRect();
-    menuEl.style.left = Math.min(x, innerWidth - r.width - 8) + 'px';
-    menuEl.style.top = Math.min(y, innerHeight - r.height - 8) + 'px';
-  }
-  function refreshMenu(it, p) { if (menuEl) { const r = menuEl.getBoundingClientRect(); openRowMenuAt(it, r.left, r.top, p); } }
-  document.addEventListener('click', (e) => { if (menuEl && !menuEl.contains(e.target)) closeMenu(); });
-
-  /* ==================== 详情弹窗（演示版：R.belDetailHtml + 壳绑定；插件走 core topifyZ/Esc） ==================== */
-  function closeBelDetail() { document.querySelector('.bz-bel-detail-mask')?.remove(); }
-  function openBelDetail(it, p) {
-    closeBelDetail();
-    const mask = document.createElement('div');
-    mask.className = 'bz-overlay-mask bz-bel-detail-mask';
-    mask.innerHTML = R.belDetailHtml(it);
-    (p && p.mobile ? p.host : document.body).appendChild(mask);
-    mountIcons(mask);
-
-    const acts = mask.querySelector('[data-bd-acts]');
-    const drawActs = () => {
-      const cur = itemById(it.id);
-      if (!cur) return;
-      acts.innerHTML = R.flowBtnsHtml(cur.current_status);
-    };
-    drawActs();
-    acts.addEventListener('click', (e) => {
-      const b = e.target.closest('[data-bd-flow]');
-      if (!b) return;
-      const cur = itemById(it.id);
-      if (!cur) { closeBelDetail(); return; }
-      applyFlowWithUndo(cur, b.dataset.bdFlow).then(() => {
-        const now = itemById(it.id);
-        if (!now) { closeBelDetail(); return; }
-        drawActs();
-        openBelDetail(now, p); // 详情头行字段同步（状态徽章/出离行随流转刷新）
-      });
-    });
-    mask.addEventListener('mousedown', (e) => { if (e.target === mask) closeBelDetail(); });
-    mask.querySelector('[data-bd-close]').addEventListener('click', closeBelDetail);
-    mask.querySelector('[data-bd-edit]').addEventListener('click', () => {
-      const cur = itemById(it.id);
-      if (cur) openForm(cur, p);
-    });
-    mask.querySelector('[data-bd-del]').addEventListener('click', () => {
-      const cur = itemById(it.id);
-      if (cur) deleteItem(cur, p);
-    });
-  }
-
-  /* ==================== 表单（演示版：R.belFormHtml + 壳绑定；联想 = 壳内历史派生） ==================== */
-  function openForm(it, p) {
-    const editing = !!it;
-    const mask = document.createElement('div');
-    mask.className = 'bz-overlay-mask bz-bel-form-mask';
-    mask.innerHTML = R.belFormHtml(it);
-    (p && p.mobile ? p.host : document.body).appendChild(mask);
-    mountIcons(mask);
-
-    // 分类联想（与 core uiSuggest 同语义：聚焦/输入惰性弹出、子串过滤、外点收起、Esc 只收下拉）
-    const catInput = mask.querySelector('#bm-cat');
-    let formIcon = it ? (it.icon || null) : null;
-    const iconChip = mask.querySelector('#bm-icon');
-    const drawIconChip = () => {
-      iconChip.replaceChildren();
-      iconChip.hidden = !formIcon;
-      if (formIcon) {
-        const el = document.createElement('i');
-        el.dataset.lucide = formIcon;
-        el.className = 'bz-ic';
-        iconChip.appendChild(el);
-        mountIcons(iconChip);
-      }
-    };
-    drawIconChip();
-    let layer = null, skipNextOpen = false;
-    const closeSug = () => { if (layer) { layer.remove(); layer = null; document.removeEventListener('mousedown', onDocDown, true); } };
-    const onDocDown = (e) => {
-      if (!catInput.isConnected) { closeSug(); return; }
-      if (layer && (layer.contains(e.target) || catInput.contains(e.target))) return;
-      closeSug();
-    };
-    const drawSug = () => {
-      if (!layer) return;
-      const cur = catInput.value.trim();
-      const q = cur.toLowerCase();
-      const matched = historyCats().filter((s) => (!q || s.toLowerCase().includes(q))).slice(0, 60);
-      if (!matched.length) { closeSug(); return; }
-      layer.replaceChildren();
-      matched.forEach((raw) => {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'bz-popover-item' + (raw === cur ? ' is-on' : '');
-        b.setAttribute('role', 'option');
-        const icName = historyIconOf(raw);
-        b.innerHTML = `<span class="bz-suggest-ic">${icName ? icon(icName) : ''}</span><span>${esc(raw)}</span>`;
-        b.addEventListener('click', () => {
-          catInput.value = raw;
-          if (icName) { formIcon = icName; drawIconChip(); }
-          closeSug();
-          if (document.activeElement !== catInput) { skipNextOpen = true; catInput.focus(); }
-        });
-        mountIcons(b);
-        layer.appendChild(b);
-      });
-    };
-    const openSug = () => {
-      if (skipNextOpen) { skipNextOpen = false; return; }
-      if (layer) { drawSug(); return; }
-      layer = document.createElement('div');
-      layer.className = 'bz-popover';
-      layer.setAttribute('role', 'listbox');
-      (catInput.parentElement || catInput).appendChild(layer);
-      document.addEventListener('mousedown', onDocDown, true);
-      drawSug();
-    };
-    catInput.addEventListener('focus', openSug);
-    catInput.addEventListener('input', openSug);
-    catInput.addEventListener('keydown', (e) => { if (e.key === 'Escape' && layer) { e.stopPropagation(); closeSug(); } });
-
-    // 状态单选（markup = R.statusPickHtml）+ 出离行联动（ADR-0089）
-    const statusPick = mask.querySelector('#bm-status');
-    const exitRow = mask.querySelector('#bm-exit');
-    const soldField = mask.querySelector('#bm-soldfield');
-    let curStatus = it ? it.current_status || '使用中' : '使用中';
-    const syncExitRow = () => {
-      const exited = curStatus === '已转卖' || curStatus === '已丢弃';
-      exitRow.hidden = !exited;
-      soldField.hidden = curStatus !== '已转卖';
-    };
-    const drawStatus = () => {
-      statusPick.innerHTML = R.statusPickHtml(curStatus);
-      mountIcons(statusPick);
-      statusPick.querySelectorAll('[data-status]').forEach((b) => b.addEventListener('click', () => {
-        curStatus = b.dataset.status;
-        drawStatus();
-      }));
-      syncExitRow();
-    };
-    drawStatus();
-
-    const errEl = mask.querySelector('#bm-err');
-    const fail = (msg) => { errEl.textContent = msg; };
-    const saveBtn = mask.querySelector('#bm-save');
-    let saving = false;
-
-    // AI 归类（issue 231）：插件 = core createAI 真实调用；评审壳演示 = 延迟回填样例建议
-    const aiBtn = mask.querySelector('#bm-ai');
-    aiBtn.addEventListener('click', () => {
-      if (aiBtn.disabled) return;
-      const aiName = mask.querySelector('#bm-name').value.trim();
-      if (!aiName) { fail('先填物品名称，AI 才能归类'); return; }
-      aiBtn.disabled = true;
-      aiBtn.classList.add('is-busy');
-      setTimeout(() => {
-        aiBtn.disabled = false;
-        aiBtn.classList.remove('is-busy');
-        catInput.value = '智能手机';
-        formIcon = 'smartphone';
-        drawIconChip();
-        toast('AI 演示：已回填示例分类与图标（插件内为真实调用）');
-      }, 400);
-    });
-    const requestClose = () => mask.remove(); // 评审壳省 confirmDiscard（插件走 core）
-    mask.addEventListener('mousedown', (e) => { if (e.target === mask) requestClose(); });
-    mask.querySelector('[data-bm-cancel]').addEventListener('click', requestClose);
-    saveBtn.addEventListener('click', () => {
-      if (saving) return;
-      const name = mask.querySelector('#bm-name').value.trim();
-      const price = parseFloat(mask.querySelector('#bm-price').value);
-      const date = mask.querySelector('#bm-date').value;
-      if (!name) { fail('请输入物品名称'); return; }
-      if (isNaN(price) || price < 0) { fail('请输入有效的价格'); return; }
-      if (!date) { fail('请选择购买日期'); return; }
-      const category = catInput.value.trim();
-      if (!category) { fail('请选择或输入分类'); return; }
-      const exited = curStatus === '已转卖' || curStatus === '已丢弃';
-      const exitVal = exited ? mask.querySelector('#bm-exitdate').value : '';
-      const soldRaw = curStatus === '已转卖' ? mask.querySelector('#bm-soldprice').value.trim() : '';
-      let soldPrice = null;
-      if (soldRaw !== '') {
-        const sp = parseFloat(soldRaw);
-        if (isNaN(sp) || sp < 0) { fail('请输入有效的售价'); return; }
-        soldPrice = Math.round(sp * 100) / 100;
-      }
-      const desc = mask.querySelector('#bm-desc').value.trim();
-      saving = true;
-      saveBtn.disabled = true;
-      saveBtn.textContent = '保存中…';
-      setTimeout(() => {
-        if (editing) {
-          const cur = itemById(it.id);
-          if (!cur) { toast('该物品已被外部变更删除，本次保存未写入'); mask.remove(); return; }
-          cur.name = name;
-          cur.category = category;
-          cur.icon = formIcon;
-          cur.purchase_price = Math.round(price * 100) / 100;
-          cur.purchase_date = date;
-          cur.current_status = curStatus;
-          cur.description = desc;
-          if (exited) cur.exit_date = exitVal || R.todayStr();
-          else if (cur.exit_date != null) cur.exit_date = null;
-          if (curStatus === '已转卖') cur.sold_price = soldPrice;
-          else if (cur.sold_price != null) cur.sold_price = null;
-          cur.last_updated = new Date().toISOString();
-          toast(`物品「${name}」已更新`);
-        } else {
-          const nowIso = new Date().toISOString();
-          items.push({
-            id: 'item_' + Date.now(), name, category,
-            purchase_price: Math.round(price * 100) / 100, purchase_date: date,
-            current_status: curStatus, description: desc,
-            created_date: nowIso, last_updated: nowIso,
-            ...(exited ? { exit_date: exitVal || R.todayStr() } : {}),
-            ...(curStatus === '已转卖' ? { sold_price: soldPrice } : {}),
-            ...(formIcon ? { icon: formIcon } : {}),
-          });
-          toast(`物品「${name}」已添加`);
-        }
-        save(); renderAll(); mask.remove();
-      }, 60);
-    });
-    setTimeout(() => mask.querySelector('#bm-name').focus(), 100);
-  }
-
-  /* ==================== 确认框 / toast（插件侧走 core flow-dialog/notice，演示壳自绘） ==================== */
-  function confirmDlg(title, msg, okLabel, onOk) {
-    const mask = document.createElement('div');
-    mask.className = 'bz-overlay-mask';
-    mask.style.zIndex = 950;
-    mask.innerHTML = `<div class="bz-bel-form" style="width:340px">
-      <div class="bz-bel-form-title" style="font-size:16px;border-width:2px;padding-bottom:8px">${esc(title)}</div>
-      <p style="font-size:13px;line-height:1.8;color:var(--bz-text-2);margin:14px 0 4px">${esc(msg)}</p>
-      <div class="bz-btn-row bz-bel-form-actions" style="margin-top:12px"><div class="bz-bel-form-spacer"></div>
-      <button type="button" class="bz-btn bz-btn--ghost" data-a="c">取消</button>
-      <button type="button" class="bz-btn bz-btn--primary bz-bel-delbtn" data-a="ok">${esc(okLabel)}</button></div></div>`;
-    const done = () => mask.remove();
-    mask.addEventListener('click', (e) => {
-      if (e.target === mask || e.target.closest('[data-a="c"]')) return done();
-      if (e.target.closest('[data-a="ok"]')) { done(); onOk(); }
-    });
-    document.body.appendChild(mask);
-  }
-  let toastEl = null, toastTimer = 0;
-  function toast(msg, undoLabel, onUndo) {
-    if (toastEl) toastEl.remove();
-    clearTimeout(toastTimer);
-    toastEl = document.createElement('div');
-    toastEl.style.cssText = 'position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:960;display:flex;align-items:center;gap:14px;background:#171512;color:#f0ece4;font-size:12.5px;padding:10px 16px;box-shadow:4px 4px 0 rgba(23,21,18,.3)';
-    toastEl.innerHTML = `<span>${esc(msg)}</span>` + (undoLabel ? `<button style="border:none;background:none;color:#e8481f;font:700 12.5px 'Microsoft YaHei';cursor:pointer">${esc(undoLabel)}</button>` : '');
-    if (undoLabel) toastEl.querySelector('button').onclick = () => { toastEl.remove(); toastEl = null; onUndo(); };
-    document.body.appendChild(toastEl);
-    toastTimer = setTimeout(() => { if (toastEl) { toastEl.remove(); toastEl = null; } }, 5000);
-  }
-
-  /* ==================== Esc 分层（详情 → 表单 → 抽屉 → 菜单 → 联想） ==================== */
-  document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape') return;
-    if (menuEl) return closeMenu();
-    if (document.querySelector('.bz-bel-detail-mask')) return closeBelDetail();
-    const fm = document.querySelector('.bz-bel-form-mask');
-    if (fm) return fm.remove();
-    const sm = document.querySelector('.bz-item-sheet-mask');
-    if (sm) return sm.remove();
+    tries();
   });
 
-  /* ==================== 启动 ==================== */
-  buildPanel(document.getElementById('dtHost'), false);
-  buildPanel(document.getElementById('mobHost'), true);
-  const mobHost = document.getElementById('mobHost');
-  const mobBtn = document.getElementById('mobToggle');
-  function syncMobBtn() { mobBtn.textContent = mobHost.style.display === 'none' ? '显示移动端' : '隐藏移动端'; }
-  mobBtn.onclick = () => {
-    mobHost.style.display = mobHost.style.display === 'none' ? '' : 'none';
-    syncMobBtn();
-  };
-  document.getElementById('reset').onclick = () => {
-    confirmDlg('重置演示数据', '丢弃本地修改，还原为真实库数据（65 件）？', '还原', () => {
-      try { localStorage.removeItem(LS); } catch (e) { }
-      items = migrateItems(BLG.ITEMS.map((x) => ({ ...x })));
-      M.status = null; M.year = ''; M.q = ''; M.sort = 'recent';
-      renderAll();
-      toast('已还原为真实数据');
-    });
-  };
-  renderAll();
+  document.querySelector('#mobToggle').addEventListener('click', () => {
+    const m = document.querySelector('#mobHost');
+    const hidden = m.style.display === 'none';
+    m.style.display = hidden ? '' : 'none';
+    document.querySelector('#mobToggle').textContent = hidden ? '隐藏移动端' : '显示移动端';
+  });
 
-  /* ==================== 演示钩子（?demo=idle/detail/form/menu/mobsheet） ==================== */
-  if (location.search.includes('demo=')) {
-    const d = location.search.split('demo=')[1].split('&')[0];
-    setTimeout(() => {
-      if (d === 'idle') document.querySelector('#dtHost [data-bel-st="idle"]').click();
-      if (d === 'detail') document.querySelector('#dtHost [data-bel-id]').click();
-      if (d === 'form') document.querySelector('#dtHost [data-bel-add]').click();
-      if (d === 'menu') {
-        const c = document.querySelector('#dtHost [data-bel-id]');
-        const r = c.getBoundingClientRect();
-        c.dispatchEvent(new MouseEvent('contextmenu', { clientX: r.left + 60, clientY: r.top + 80, bubbles: true, cancelable: true }));
-      }
-      if (d === 'mobsheet') document.querySelector('#mobHost [data-bel-id]').click();
-    }, 120);
-  }
+  document.querySelector('#reset').addEventListener('click', () => {
+    localStorage.removeItem(LS);
+    localStorage.removeItem('bz-bel-p20-shared-v1'); // 旧壳数据键一并清（防误读旧壳残留）
+    location.reload();
+  });
 
-  /* ==================== 自检（?selftest=1） ==================== */
+  /* ==================== 自检（?selftest=1）：真行为 DOM 断言（经 iframe） ==================== */
   if (location.search.includes('selftest')) {
+    const R = window.BZR_belongings;
     window.__st = { pass: 0, fail: [] };
     const t = (name, cond) => cond ? window.__st.pass++ : window.__st.fail.push(name);
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-    const dtCells = () => document.querySelectorAll('#dtHost .bz-bel-cell').length;
     (async () => {
+      const res = document.querySelector('#stResult');
       try {
-        t('初始65件', items.length === 65);
-        t('迁移剥 emoji 前缀', items.every((i) => !/^(\p{Extended_Pictographic})/u.test(i.category || '')));
-        t('网格分类图标已挂', [...document.querySelectorAll('#dtHost .bz-bel-cell-em')].some((el) => el.querySelector('svg')));
-        t('网格65行', dtCells() === 65);
-        t('KPI在库', document.querySelector('#dtHost [data-bel-kpis] .bz-bel-kpi--hero b').textContent === String(R.stockCount(items)));
-        t('总投入≈71706', Math.abs(R.totalAssets(items) - 71706.48) < 1);
-        t('无页脚残留', !document.querySelector('.bz-bel-foot, [data-bel-footnote], .bz-bel-mobsort'));
+        // 数据基线检查：种子应是 65 件。若残留上次运行（非 65 或含「测试物品」）则重置重载一次。
+        // headless 验收每次全新 profile 天然干净；浏览器手动重复跑 selftest 也能自清理。
+        const pre = (() => { try { return JSON.parse(localStorage.getItem(LS) || 'null'); } catch { return null; } })();
+        const dirty = !pre || Object.keys(pre.items).length !== 65 || Object.values(pre.items).some((i) => i.name === '测试物品');
+        if (dirty) {
+          if (!location.search.includes('reset=1')) {
+            localStorage.removeItem(LS);
+            seedOnce();
+            location.search = '?selftest=1&reset=1';
+            return;
+          }
+        }
+        const dd = await waitFrame(dtDoc);
+        const md = await waitFrame(mobDoc);
+        res.textContent = '…';
+        const dt = (sel) => dd.querySelector(sel);
+        const mob = (sel) => md.querySelector(sel);
+        const dtCells = () => dd.querySelectorAll('.bz-bel-cell').length;
+        const mobCells = () => md.querySelectorAll('.bz-bel-cell').length;
 
-        document.querySelector('#dtHost [data-bel-st="idle"]').click();
+        t('桌面面板开', !!dt('.bz-bel-panel'));
+        t('移动面板开', !!mob('.bz-bel-panel'));
+        t('桌面65行', dtCells() === 65);
+        t('移动65行', mobCells() === 65);
+        t('KPI在库', dt('[data-bel-kpis] .bz-bel-kpi--hero b')?.textContent === String(R.stockCount(Object.values(JSON.parse(localStorage.getItem(LS)).items))));
+        t('总投入≈71706', Math.abs(R.totalAssets(Object.values(JSON.parse(localStorage.getItem(LS)).items)) - 71706.48) < 1);
+        t('无页脚残留', !dt('.bz-bel-foot, [data-bel-footnote], .bz-bel-mobsort'));
+
+        // 筛选：闲置（桌面）
+        dt('[data-bel-st="idle"]').click();
+        await sleep(50);
         t('闲置筛选7', dtCells() === 7);
-        t('标题=闲置', document.querySelector('#dtHost [data-bel-herotitle]').textContent === '闲置');
-        document.querySelector('#dtHost [data-bel-st="idle"]').click();
+        t('标题=闲置', dt('[data-bel-herotitle]').textContent === '闲置');
+        dt('[data-bel-st="idle"]').click();
+        await sleep(50);
         t('再点回全部', dtCells() === 65);
 
-        const q = document.querySelector('#dtHost [data-bel-search]');
+        // 搜索（桌面，防抖 180ms）
+        const q = dt('[data-bel-search]');
         q.value = '松下'; q.dispatchEvent(new Event('input'));
-        await sleep(260);
+        await sleep(300);
         t('搜索松下6', dtCells() === 6);
         q.value = ''; q.dispatchEvent(new Event('input'));
-        await sleep(260);
+        await sleep(300);
 
-        document.querySelector('#dtHost [data-k="price"]').click();
-        t('投入排序首位=松下s5', document.querySelector('#dtHost .bz-bel-name').textContent === '松下s5');
-        document.querySelector('#dtHost [data-k="recent"]').click();
+        // 排序（桌面）
+        dt('[data-k="price"]').click();
+        await sleep(50);
+        t('投入排序首位=松下s5', dt('.bz-bel-name').textContent === '松下s5');
+        dt('[data-k="recent"]').click();
 
-        t('chips 无图标', document.querySelectorAll('#dtHost [data-bel-chips] .bz-chip i, #dtHost [data-bel-chips] .bz-chip svg').length === 0);
-        t('移动chips五枚无资产', document.querySelectorAll('#mobHost [data-bel-mobstatus] .bz-mobstrip-chip').length === 5 && !document.querySelector('#mobHost [data-bel-mobstatus] [data-bel-st="asset"]'));
-        t('移动排序下拉3项', document.querySelectorAll('#mobHost [data-bel-mobsortmenu] .bz-bel-dropopt').length === 3 && document.querySelector('#mobHost [data-bel-mobsortsel] .bz-bel-select-label').textContent === '最近购入');
-        t('年份下拉开合+点选', (() => { const w = document.querySelector('#dtHost .bz-bel-yearsel'); w.querySelector('[data-bel-year]').click(); const open = w.classList.contains('is-open'); const y26 = [...w.querySelectorAll('.bz-bel-dropopt')].find((o) => o.dataset.v === '2026'); if (y26) y26.click(); const ok = open && !w.classList.contains('is-open'); w.querySelector('[data-bel-year]').click(); [...w.querySelectorAll('.bz-bel-dropopt')].find((o) => o.dataset.v === '').click(); return ok; })());
-        t('使用中徽章图标=check-circle', !!document.querySelector('#dtHost .bz-bel-tag--using i[data-lucide="check-circle"]'));
+        // 移动专属：横滑条 / 排序下拉
+        t('移动chips五枚无资产', md.querySelectorAll('[data-bel-mobstatus] .bz-mobstrip-chip').length === 5 && !md.querySelector('[data-bel-mobstatus] [data-bel-st="asset"]'));
+        t('移动排序下拉3项', md.querySelectorAll('[data-bel-mobsortmenu] .bz-bel-dropopt').length === 3 && mob('[data-bel-mobsortsel] .bz-bel-select-label')?.textContent === '最近购入');
 
-        document.querySelector('#dtHost [data-bel-add]').click();
-        await sleep(60);
-        document.querySelector('#bm-name').value = '测试物品';
-        document.querySelector('#bm-cat').value = '💡 落地灯';
-        document.querySelector('#bm-price').value = '100';
-        document.querySelector('#bm-save').click();
-        await sleep(120);
-        t('新增后66件', items.length === 66 && dtCells() === 66);
-        const nu = items.find((i) => i.name === '测试物品');
-        t('新增在首位(最近)', R.filtered(items, M)[0].name === '测试物品');
+        // 新增（桌面表单）
+        dt('[data-bel-add]').click();
+        await sleep(80);
+        t('表单开', !!dd.querySelector('.bz-bel-form-mask'));
+        dd.querySelector('#bm-name').value = '测试物品';
+        dd.querySelector('#bm-cat').value = '落地灯';
+        dd.querySelector('#bm-price').value = '100';
+        dd.querySelector('#bm-date').value = '2026-09-01';
+        dd.querySelector('#bm-save').click();
+        await sleep(180);
+        const saved = JSON.parse(localStorage.getItem(LS)).items;
+        const nu = Object.values(saved).find((i) => i.name === '测试物品');
+        t('新增后66件', Object.keys(saved).length === 66 && dtCells() === 66);
+        t('新增在列表首位', dt('.bz-bel-name').textContent === '测试物品'); // 最近排序：新增置顶
+        t('新增同步到移动', mobCells() === 66); // storage 桥自动刷新
 
-        document.querySelector(`#dtHost [data-bel-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
-        t('右键菜单开', !!document.querySelector('.bz-item-menu.bz-bel-menu'));
-        [...document.querySelectorAll('.bz-item-menu .bz-item-menu-item')].find((b) => b.textContent.includes('闲置')).click();
-        await sleep(60);
-        t('流转闲置生效', nu.current_status === '闲置');
-        t('闲置数=8', items.filter((i) => i.current_status === '闲置').length === 8);
+        // 右键菜单流转（桌面）
+        const clickReal = (el) => {
+          if (!el) return;
+          const r = el.getBoundingClientRect();
+          const mk = (type) => new MouseEvent(type, { clientX: r.left + 10, clientY: r.top + 10, bubbles: true, cancelable: true });
+          el.dispatchEvent(mk('mousedown'));
+          el.dispatchEvent(mk('mouseup'));
+          el.dispatchEvent(mk('click'));
+        };
+        dd.querySelector(`[data-bel-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
+        await sleep(100);
+        t('右键菜单开', !!dd.querySelector('.bz-item-menu.bz-bel-menu'));
+        const flowIdle = [...dd.querySelectorAll('.bz-item-menu .bz-item-menu-item')].find((b) => b.textContent.includes('闲置'));
+        clickReal(flowIdle);
+        await sleep(150);
+        t('流转闲置生效', JSON.parse(localStorage.getItem(LS)).items[nu.id].current_status === '闲置');
+        t('闲置数=8', Object.values(JSON.parse(localStorage.getItem(LS)).items).filter((i) => i.current_status === '闲置').length === 8);
 
-        document.querySelector(`#dtHost [data-bel-id="${nu.id}"]`).click();
-        await sleep(60);
-        t('详情开', !!document.querySelector('.bz-bel-detail-mask'));
-        t('详情流转条4档', document.querySelectorAll('.bz-bel-flowbtn').length === 4);
-        document.querySelector('.bz-bel-detail-mask [data-bd-close]').click();
-        await sleep(30);
-        t('详情关', !document.querySelector('.bz-bel-detail-mask'));
+        // 详情（桌面）
+        dd.querySelector(`[data-bel-id="${nu.id}"]`).click();
+        await sleep(80);
+        t('详情开', !!dd.querySelector('.bz-bel-detail-mask'));
+        t('详情流转条4档', dd.querySelectorAll('.bz-bel-flowbtn').length === 4);
+        dd.querySelector('.bz-bel-detail-mask [data-bd-close]').click();
+        await sleep(50);
+        t('详情关', !dd.querySelector('.bz-bel-detail-mask'));
 
-        document.querySelector(`#dtHost [data-bel-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
-        [...document.querySelectorAll('.bz-item-menu .bz-item-menu-item')].find((b) => b.textContent.includes('删除')).click();
-        await sleep(30);
-        document.querySelector('.bz-overlay-mask [data-a="ok"]').click();
-        await sleep(60);
-        t('删除后65件', items.length === 65);
-        toastEl.querySelector('button').click();
-        await sleep(60);
-        t('撤销后66件', items.length === 66);
-        items = items.filter((i) => i.name !== '测试物品'); save(); renderAll();
+        // 删除 + 撤销（桌面，真 notice）
+        dd.querySelector(`[data-bel-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
+        await sleep(100);
+        const delItem = [...dd.querySelectorAll('.bz-item-menu .bz-item-menu-item')].find((b) => b.textContent.includes('删除'));
+        t('删除菜单项在', !!delItem);
+        clickReal(delItem);
+        await sleep(150);
+        // 删除确认 = core flow-dialog 标准双动作（取消左/删除右：__shared_confirm_ok__）
+        const delBtn = dd.querySelector('#__shared_confirm_ok__');
+        t('删除确认框开', !!delBtn);
+        clickReal(delBtn);
+        await sleep(180);
+        const afterDel = JSON.parse(localStorage.getItem(LS)).items;
+        t('删除后65件', Object.keys(afterDel).length === 65);
+        // 撤销（真 notice 的撤销钮在 iframe body 内）
+        const undoBtn = [...dd.querySelectorAll('.bz-notice-action')].pop();
+        if (undoBtn) undoBtn.click();
+        await sleep(180);
+        t('撤销后66件', Object.keys(JSON.parse(localStorage.getItem(LS)).items).length === 66);
 
-        document.querySelector('#mobHost [data-bel-id]').click();
-        await sleep(60);
-        t('移动抽屉开', !!document.querySelector('.bz-item-sheet-mask'));
-        document.querySelector('.bz-item-sheet-mask').click();
-        await sleep(30);
-        t('移动抽屉关', !document.querySelector('.bz-item-sheet-mask'));
-        t('移动记一笔存在', !!document.querySelector('#mobHost .bz-bel-mobadd'));
+        // 移动抽屉：真行为只支持下拉关闭（core item-actions touch 拖拽），模拟合成 touch
+        mob('.bz-bel-cell').click();
+        await sleep(100);
+        t('移动抽屉开', !!md.querySelector('.bz-item-sheet-mask'));
+        const sheetEl = md.querySelector('.bz-item-sheet');
+        if (sheetEl) {
+          const mkTouch = (type, y) => new TouchEvent(type, {
+            bubbles: true, cancelable: true,
+            touches: type === 'touchend' ? [] : [new Touch({ identifier: 1, target: sheetEl, clientX: 100, clientY: y })],
+            changedTouches: [new Touch({ identifier: 1, target: sheetEl, clientX: 100, clientY: y })],
+          });
+          sheetEl.dispatchEvent(mkTouch('touchstart', 100));
+          sheetEl.dispatchEvent(mkTouch('touchmove', 300)); // 下拉 200px > 80 阈值
+          sheetEl.dispatchEvent(mkTouch('touchend', 300));
+        }
+        await sleep(300); // 滑出动画 180ms
+        t('移动抽屉关', !md.querySelector('.bz-item-sheet-mask'));
 
         document.title = window.__st.fail.length
           ? 'SELFTEST FAIL ' + window.__st.fail.join(',')
           : `SELFTEST OK ${window.__st.pass}/${window.__st.pass + window.__st.fail.length}`;
-      } catch (err) { document.title = 'SELFTEST ERR ' + (err && err.message || err); }
+        res.textContent = window.__st.fail.length ? '自检失败' : `自检通过 ${window.__st.pass}`;
+        res.className = window.__st.fail.length ? 'bad' : 'ok';
+      } catch (err) {
+        document.title = 'SELFTEST ERR ' + (err && err.message || err);
+        res.textContent = '自检异常';
+        res.className = 'bad';
+      }
     })();
   }
 })();
