@@ -5291,9 +5291,6 @@ var BZW_belongings = (() => {
     };
   }
 
-  // src/belongings/data.ts
-  var import_moment2 = __toESM(require_moment());
-
   // src/belongings/emoji-icon-map.ts
   var EMOJI_ICON = {
     /* ---- 数码影音 ---- */
@@ -5849,7 +5846,6 @@ var BZW_belongings = (() => {
     close: "x",
     del: "trash-2",
     empty: "package",
-    chevR: "chevron-right",
     chevD: "chevron-down"
   };
   var STATUS = {
@@ -5858,13 +5854,13 @@ var BZW_belongings = (() => {
     sold: { label: "已转卖", key: "sold", ic: "banknote" },
     discard: { label: "已丢弃", key: "discard", ic: "archive" }
   };
-  var STATUS_LABELS = ["使用中", "闲置", "已转卖", "已丢弃"];
   var STATUS_ORDER = [
     { key: "using", label: "使用中" },
     { key: "idle", label: "闲置" },
     { key: "sold", label: "已转卖" },
     { key: "discard", label: "已丢弃" }
   ];
+  var STATUS_LABELS = STATUS_ORDER.map((s) => s.label);
   var SORT_OPTS = [
     { v: "recent", label: "最近购入" },
     { v: "price", label: "投入最高" },
@@ -7207,8 +7203,7 @@ var BZW_belongings = (() => {
           closeBelDetail();
           return;
         }
-        drawActs();
-        openBelDetail(itemById(it.id));
+        openBelDetail(now);
       })();
     });
     mask.addEventListener("mousedown", (e) => {
@@ -7295,19 +7290,20 @@ var BZW_belongings = (() => {
       }
     }));
   }
-  function openRowMenuAt(it, x, y) {
+  function makeSheetRebuild(it) {
     const rebuild = () => {
       const it2 = itemById(it.id);
       if (it2) refreshItemSheet(buildActions(it2, rebuild), sheetHeadEl2(it2));
     };
+    return rebuild;
+  }
+  function openRowMenuAt(it, x, y) {
+    const rebuild = makeSheetRebuild(it);
     openItemMenu(x, y, buildActions(it, rebuild), true, "bz-bel-menu");
     resetItemMenuClickGuard();
   }
   function openMobSheet(it) {
-    const rebuild = () => {
-      const it2 = itemById(it.id);
-      if (it2) refreshItemSheet(buildActions(it2, rebuild), sheetHeadEl2(it2));
-    };
+    const rebuild = makeSheetRebuild(it);
     openItemSheet(buildActions(it, rebuild), { sheetHead: sheetHeadEl2(it) });
   }
   async function deleteItem(it) {

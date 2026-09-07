@@ -33,11 +33,9 @@ var BZR_cinema = (() => {
     detailModalHtml: () => detailModalHtml,
     doubanSearchUrl: () => doubanSearchUrl,
     emptyPageHtml: () => emptyPageHtml,
-    esc: () => esc,
     formAllTags: () => formAllTags,
     formChoicesHtml: () => formChoicesHtml,
     formModalHtml: () => formModalHtml,
-    iconSpan: () => iconSpan,
     itemByKey: () => itemByKey,
     itemKey: () => itemKey,
     listHeadHtml: () => listHeadHtml,
@@ -51,7 +49,6 @@ var BZR_cinema = (() => {
     renderMidnightMob: () => renderMidnightMob,
     sheetHeadHtml: () => sheetHeadHtml,
     spHeadHtml: () => spHeadHtml,
-    stars: () => stars,
     statusColor: () => statusColor,
     statusNum: () => statusNum,
     statusText: () => statusText,
@@ -98,6 +95,15 @@ var BZR_cinema = (() => {
     }
     return null;
   }
+  function getStarString(rating) {
+    if (!rating || rating <= 0) return "";
+    const stars = Math.min(Math.round(rating / 2 * 2) / 2, 5);
+    const full = Math.floor(stars);
+    let s = "";
+    for (let i = 0; i < full; i++) s += "★";
+    for (let j = full; j < 5; j++) s += "☆";
+    return s;
+  }
 
   // src/cinema/shared.ts
   var ICON = {
@@ -113,8 +119,7 @@ var BZR_cinema = (() => {
     grid: "layout-grid",
     eye: "eye",
     play: "play",
-    globe: "globe",
-    film: "clapperboard"
+    globe: "globe"
   };
   function typeColor(group) {
     var _a;
@@ -132,15 +137,6 @@ var BZR_cinema = (() => {
   function statusText(status) {
     const v = statusNum(status);
     return v === STATUS_WANT ? "想看" : v === STATUS_WATCHING ? "在看" : "已看";
-  }
-  function stars(rating) {
-    if (!rating || rating <= 0) return "";
-    const st = Math.min(Math.round(rating / 2 * 2) / 2, 5);
-    const full = Math.floor(st);
-    let s = "";
-    for (let i = 0; i < full; i++) s += "★";
-    for (let j = full; j < 5; j++) s += "☆";
-    return s;
   }
   function doubanSearchUrl(name) {
     return "https://movie.douban.com/search?q=" + encodeURIComponent(name);
@@ -168,7 +164,7 @@ var BZR_cinema = (() => {
     })()}</div>
     <div class="pname">${esc(it.name)}</div>
     <div class="pmeta">${esc(it.year || "")}${it.year && it.director ? " · " : ""}${esc(it.director || "")}</div>
-    <div class="pstars">${r && r > 0 ? stars(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span style="opacity:.35">未评分</span>'}</div></div>`;
+    <div class="pstars">${r && r > 0 ? getStarString(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span style="opacity:.35">未评分</span>'}</div></div>`;
   }
   function viewFiltered(view) {
     return !!(view.typeFilter || view.statusFilter || view.searchKeyword);
@@ -193,7 +189,7 @@ var BZR_cinema = (() => {
       const st = statusNum(it.status);
       return st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : "";
     })()}
-          ${it.rating && it.rating > 0 ? `<span class="dm-stars">${stars(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ""}
+          ${it.rating && it.rating > 0 ? `<span class="dm-stars">${getStarString(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ""}
           ${it.watchDate ? `<span class="dm-date">${esc((it.watchDate || "").slice(0, 10))}</span>` : ""}</div>
         ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ""}</div></div>
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join("") : ""}

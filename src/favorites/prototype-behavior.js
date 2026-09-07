@@ -4145,9 +4145,7 @@ var BZW_favorites = (() => {
     /** 默认存储目录（文件名固定 favorites.json，设置只允许改目录） */
     DEFAULT_STORAGE_PATH: "CONFIG/STORAGE",
     /** 数据文件名（固定，不允许用户修改） */
-    STORAGE_FILE: "favorites.json",
-    LONG_PRESS_DELAY: 600
-    // 兼容导出（长按延时实际由 core/item-actions 内部处理）
+    STORAGE_FILE: "favorites.json"
   };
   var TAGS = [
     { key: "github", label: "GitHub", ic: "github" },
@@ -5975,11 +5973,7 @@ var BZW_favorites = (() => {
     if (!_baseline) return false;
     const popup = document.querySelector(".bz-fav-form");
     if (!popup) return false;
-    const g = (id) => {
-      var _a, _b;
-      return (_b = (_a = popup.querySelector(id)) == null ? void 0 : _a.value) != null ? _b : "";
-    };
-    return g("#fz-title") !== _baseline.title || g("#fz-url") !== _baseline.url || g("#fz-desc") !== _baseline.desc || formPinNow(popup) !== _baseline.pinned || formTagsNow(popup) !== _baseline.tags;
+    return inputVal(popup, "#fz-title") !== _baseline.title || inputVal(popup, "#fz-url") !== _baseline.url || inputVal(popup, "#fz-desc") !== _baseline.desc || formPinNow(popup) !== _baseline.pinned || formTagsNow(popup) !== _baseline.tags;
   }
   function requestCloseForm(popup) {
     if (formDirty()) confirmDiscard(() => closeForm(popup));
@@ -5992,11 +5986,14 @@ var BZW_favorites = (() => {
     closeMenu();
     ((_a = popup.closest(".bz-fav-form-mask")) != null ? _a : popup).remove();
   }
+  function inputVal(popup, id) {
+    var _a, _b;
+    return (_b = (_a = popup.querySelector(id)) == null ? void 0 : _a.value) != null ? _b : "";
+  }
   function openForm(item) {
     var _a, _b, _c;
     ensureFavoritesEsc();
     const it = item;
-    const editing = !!it;
     const mask = document.createElement("div");
     mask.className = "bz-fav-form-mask bz-fav-scope";
     mask.innerHTML = formHtml(it);
@@ -6055,13 +6052,9 @@ var BZW_favorites = (() => {
       notice("AI 服务未配置或不可用", "warning");
       return;
     }
-    const g = (id) => {
-      var _a, _b;
-      return (_b = (_a = popup.querySelector(id)) == null ? void 0 : _a.value) != null ? _b : "";
-    };
-    const title = g("#fz-title").trim();
-    const url = g("#fz-url").trim();
-    const desc = g("#fz-desc").trim();
+    const title = inputVal(popup, "#fz-title").trim();
+    const url = inputVal(popup, "#fz-url").trim();
+    const desc = inputVal(popup, "#fz-desc").trim();
     if (!title && !url && !desc) {
       notice("请至少输入标题、链接或简介中的一项，以便 AI 参考");
       return;
@@ -6149,12 +6142,8 @@ GitHub 仓库：${ghInfo.title}
   }
   async function saveForm(popup, it, sel, errEl) {
     if (_saving) return;
-    const g = (id) => {
-      var _a, _b;
-      return (_b = (_a = popup.querySelector(id)) == null ? void 0 : _a.value) != null ? _b : "";
-    };
-    const title = g("#fz-title").trim();
-    const url = g("#fz-url").trim();
+    const title = inputVal(popup, "#fz-title").trim();
+    const url = inputVal(popup, "#fz-url").trim();
     if (!title) {
       errEl.textContent = "请输入标题";
       return;
@@ -6167,7 +6156,7 @@ GitHub 仓库：${ghInfo.title}
       errEl.textContent = "请至少选择一个标签";
       return;
     }
-    const desc = g("#fz-desc").trim();
+    const desc = inputVal(popup, "#fz-desc").trim();
     const tags = [...sel];
     const pin = formPinNow(popup);
     _saving = true;

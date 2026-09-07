@@ -4913,7 +4913,6 @@ var BZW_cinema = (() => {
     currentOverlay: null,
     items: [],
     typeFilter: null,
-    subFilter: null,
     statusFilter: null,
     sortMode: "date",
     view: "list",
@@ -4922,13 +4921,10 @@ var BZW_cinema = (() => {
     appRef: null,
     folderPath: DEFAULT_FOLDER,
     renderFn: null,
-    aiOverlay: null,
-    statOverlay: null,
     aiRunning: false,
     aiWaitMsg: "",
     aiResult: null,
     aiError: null,
-    aiTitle: "AI 荐片",
     aiBase: null
   };
 
@@ -4963,6 +4959,15 @@ var BZW_cinema = (() => {
   function getGroupSafe(tag) {
     var _a;
     return (_a = getGroupForTag(tag)) != null ? _a : "其他";
+  }
+  function getStarString(rating) {
+    if (!rating || rating <= 0) return "";
+    const stars = Math.min(Math.round(rating / 2 * 2) / 2, 5);
+    const full = Math.floor(stars);
+    let s = "";
+    for (let i = 0; i < full; i++) s += "★";
+    for (let j = full; j < 5; j++) s += "☆";
+    return s;
   }
 
   // src/cinema/data.ts
@@ -5064,7 +5069,6 @@ var BZW_cinema = (() => {
   function getDisplayItems() {
     let list = [...M.items];
     if (M.typeFilter) list = list.filter((it) => it.group === M.typeFilter);
-    if (M.subFilter) list = list.filter((it) => it.typeTag === M.subFilter);
     if (M.statusFilter) list = list.filter((it) => it.status === (M.statusFilter === "想看" ? STATUS_WANT : M.statusFilter === "在看" ? STATUS_WATCHING : STATUS_WATCHED));
     if (M.searchKeyword) {
       const kw = M.searchKeyword.toLowerCase();
@@ -5459,16 +5463,21 @@ var BZW_cinema = (() => {
     });
   }
 
-  // src/core/utils.ts
-  var import_moment = __toESM(require_moment());
-  function escapeHtml(str) {
-    return str.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
+  // src/core/ui/str.ts
+  var ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
+  }
+  function esc(s) {
+    return escapeHtml(String(s != null ? s : ""));
+  }
+  function localNow() {
+    const d = /* @__PURE__ */ new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  }
+  function iconSpan(name, extra = "") {
+    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
   }
 
   // src/cinema/poster-watch.ts
@@ -5588,11 +5597,6 @@ var BZW_cinema = (() => {
       return null;
     }
   }
-  function localNowFormat() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-  }
   async function quickAddWant(app, name, type) {
     const trimmedName = typeof name === "string" ? name.trim() : "";
     if (!trimmedName) {
@@ -5607,7 +5611,7 @@ var BZW_cinema = (() => {
       notice(`影视「${trimmedName}」已在库中`);
       return;
     }
-    const now = localNowFormat();
+    const now = localNow();
     const content = `---
 tags:
 - ${tag}
@@ -5628,22 +5632,19 @@ tags:
       console.error(e);
     }
   }
-  async function runAIRecommend(app) {
+  async function runAIPage(app, opts) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
     if (M.aiRunning) return;
     M.aiRunning = true;
-    M.aiWaitMsg = "AI 正在分析你的观影口味…";
+    M.aiWaitMsg = opts.initWaitMsg;
     M.aiResult = null;
     M.aiError = null;
-    M.aiTitle = "AI 荐片";
-    M.aiBase = null;
+    M.aiBase = opts.base;
     M.view = "ai";
     (_b = (_a = M).renderFn) == null ? void 0 : _b.call(_a);
     try {
-      const profile = buildTasteProfile();
-      const allNames = M.items.map((i) => i.name);
-      const prompt = buildRecommendPrompt(profile, profile.recent, allNames);
-      M.aiWaitMsg = `已分析 ${profile.total} 部观影历史，正在生成推荐…`;
+      const { prompt, waitMsg } = opts.prepare();
+      M.aiWaitMsg = waitMsg;
       (_d = (_c = M).renderFn) == null ? void 0 : _d.call(_c);
       const ai = createAI();
       const raw = await ai.json(prompt, {});
@@ -5663,38 +5664,31 @@ tags:
       (_j = (_i = M).renderFn) == null ? void 0 : _j.call(_i);
     }
   }
-  async function runSimilarRecommend(item, app) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
-    if (M.aiRunning) return;
-    M.aiRunning = true;
-    M.aiWaitMsg = "AI 正在分析同类影片…";
-    M.aiResult = null;
-    M.aiError = null;
-    M.aiTitle = `找同类 ·《${item.name}》`;
-    M.aiBase = item;
-    M.view = "ai";
-    (_b = (_a = M).renderFn) == null ? void 0 : _b.call(_a);
-    try {
-      const watched = M.items.filter((i) => i.status === STATUS_WATCHED && i.name !== item.name);
-      M.aiWaitMsg = `已分析 ${M.items.length} 部影视，正在生成同类推荐…`;
-      (_d = (_c = M).renderFn) == null ? void 0 : _d.call(_c);
-      const ai = createAI();
-      const raw = await ai.json(buildSimilarPrompt(item, watched), {});
-      const parsed = parseRecommendJson(raw);
-      if (!parsed || parsed.length === 0) {
-        M.aiRunning = false;
-        M.aiError = "AI 分析失败：返回格式无法解析";
-        (_f = (_e = M).renderFn) == null ? void 0 : _f.call(_e);
-        return;
+  function runAIRecommend(app) {
+    return runAIPage(app, {
+      base: null,
+      // 荐片模式（「换一批」重跑荐片而非找同类）
+      initWaitMsg: "AI 正在分析你的观影口味…",
+      prepare: () => {
+        const profile = buildTasteProfile();
+        const allNames = M.items.map((i) => i.name);
+        return {
+          prompt: buildRecommendPrompt(profile, profile.recent, allNames),
+          waitMsg: `已分析 ${profile.total} 部观影历史，正在生成推荐…`
+        };
       }
-      M.aiRunning = false;
-      M.aiResult = parsed;
-      (_h = (_g = M).renderFn) == null ? void 0 : _h.call(_g);
-    } catch (e) {
-      M.aiRunning = false;
-      M.aiError = "AI 分析失败：" + (e.message || e);
-      (_j = (_i = M).renderFn) == null ? void 0 : _j.call(_i);
-    }
+    });
+  }
+  function runSimilarRecommend(item, app) {
+    return runAIPage(app, {
+      base: item,
+      // 记录基准影片供「换一批」重跑
+      initWaitMsg: "AI 正在分析同类影片…",
+      prepare: () => ({
+        prompt: buildSimilarPrompt(item, M.items.filter((i) => i.status === STATUS_WATCHED && i.name !== item.name)),
+        waitMsg: `已分析 ${M.items.length} 部影视，正在生成同类推荐…`
+      })
+    });
   }
   function buildSimilarPrompt(item, watched) {
     const self = `片名《${item.name}》（${item.typeTag || "未知类型"}${item.rating !== null && item.rating > 0 ? `，我的评分 ${item.rating}` : ""}${item.review ? `，我的影评「${item.review.slice(0, 80)}」` : ""}${item.director ? `，导演 ${item.director}` : ""}）`;
@@ -5704,6 +5698,18 @@ tags:
 我已看过：${list || "（暂无）"}
 请推荐 3~5 部与基准影片气质相近、但我还没看过的同类佳作（可从真实世界影视中挑选），结合我的观影口味说明理由。
 严格输出 JSON（不要输出其他内容）：{"recommendations":[{"title":"片名","year":"年份","type":"类型","director":"导演","reason":"为何与基准影片同类、为何适合我"}]}`;
+  }
+
+  // src/core/utils.ts
+  var import_moment = __toESM(require_moment());
+  function escapeHtml2(str) {
+    return str.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
   }
 
   // src/cinema/analysis.ts
@@ -5914,8 +5920,8 @@ tags:
     finalizeAnalysis(data);
     return data;
   }
-  function esc(s) {
-    return escapeHtml(String(s != null ? s : ""));
+  function esc2(s) {
+    return escapeHtml2(String(s != null ? s : ""));
   }
   function emptyHTML() {
     return '<div class="cn-empty">暂无数据</div>';
@@ -5923,15 +5929,15 @@ tags:
   function barHTML(entries, opt) {
     if (!entries || !entries.length) return emptyHTML();
     const max = Math.max(1, ...entries.map((e) => e.value));
-    return entries.map((e) => `<div class="bar-row"><span class="bar-label">${esc(e.label)}</span><span class="bar-track"><span class="bar-fill" style="width:${Math.round(e.value / max * 100)}%;${(opt == null ? void 0 : opt.color) ? "background:" + opt.color + ";" : ""}"></span></span><span class="bar-num">${e.value}</span></div>`).join("");
+    return entries.map((e) => `<div class="bar-row"><span class="bar-label">${esc2(e.label)}</span><span class="bar-track"><span class="bar-fill" style="width:${Math.round(e.value / max * 100)}%;${(opt == null ? void 0 : opt.color) ? "background:" + opt.color + ";" : ""}"></span></span><span class="bar-num">${e.value}</span></div>`).join("");
   }
   function softHTML(entries) {
     if (!entries || !entries.length) return emptyHTML();
     const max = Math.max(1, ...entries.map((e) => e.value));
-    return entries.map((e) => `<div class="soft-row"><span class="bar-label">${esc(e.label)}</span><span class="soft-track"><span class="soft-fill" style="width:${Math.round(e.value / max * 100)}%"></span></span><span class="bar-num">${e.value}</span></div>`).join("");
+    return entries.map((e) => `<div class="soft-row"><span class="bar-label">${esc2(e.label)}</span><span class="soft-track"><span class="soft-fill" style="width:${Math.round(e.value / max * 100)}%"></span></span><span class="bar-num">${e.value}</span></div>`).join("");
   }
   function secHTML(title, icon, body) {
-    return `<div class="sec"><div class="sec-title"><i data-lucide="${icon}" class="bz-ic"></i>${esc(title)}</div>${body}</div>`;
+    return `<div class="sec"><div class="sec-title"><i data-lucide="${icon}" class="bz-ic"></i>${esc2(title)}</div>${body}</div>`;
   }
   function kvInline(items) {
     return `<div class="kv-inline">${items.map((s) => `<span>${s}</span>`).join("")}</div>`;
@@ -5945,7 +5951,7 @@ tags:
     const data = buildAnalysisData();
     if (data.total === 0) {
       return `<div class="cn-empty-page"><div class="big">还没有可统计的影视记录</div>
-      <div style="font-size:11.5px;color:var(--ink-3)">影视文件夹「${esc(M.folderPath)}」里还没有可分析的条目，添加影视后这里会生成你的观影统计</div>
+      <div style="font-size:11.5px;color:var(--ink-3)">影视文件夹「${esc2(M.folderPath)}」里还没有可分析的条目，添加影视后这里会生成你的观影统计</div>
       <div style="margin-top:8px"><button class="dm-btn" data-cinema-analysis-add>添加影视</button></div></div>`;
     }
     const avgRating = data.ratingCount ? (data.ratingSum / data.ratingCount).toFixed(1) : "";
@@ -5956,7 +5962,7 @@ tags:
     const durEntries = [["<90分", data.durBuckets["<90"]], ["90-120分", data.durBuckets["90-120"]], [">120分", data.durBuckets[">120"]]].map(([label, value]) => ({ label, value }));
     const weekend = data.weekdays[0] + data.weekdays[6];
     const weekEntries = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"].map((w, i) => ({ label: w, value: data.weekdays[(i + 1) % 7] }));
-    const cmpRow = (it) => topRow("", `《${esc(it.name)}》`, `我 ${Number(it.rating).toFixed(1)} / 豆 ${Number(it.douban).toFixed(1)}`);
+    const cmpRow = (it) => topRow("", `《${esc2(it.name)}》`, `我 ${Number(it.rating).toFixed(1)} / 豆 ${Number(it.douban).toFixed(1)}`);
     return `${kvInline([`月均 <b>${data.monthFreq}</b> 部`, `周末 <b>${weekend}</b> 部`, `有影评 <b>${data.reviewCount}</b> 篇`])}
   <div class="stat-cards">
     <div class="stat-card"><div class="v">${data.total}</div><div class="k">馆藏总数</div></div>
@@ -5978,26 +5984,11 @@ tags:
   ${secHTML("最爱导演 TOP10", "bar-chart-3", softHTML(topN(data.directors, 10)))}
   ${secHTML("最爱主演 TOP10", "bar-chart-3", softHTML(topN(data.actors, 10)))}
   ${secHTML("真爱重复", "bar-chart-3", kvInline([`导演≥3部 <b>${data.dirRepeat}</b> 人`, `主演≥3部 <b>${data.actRepeat}</b> 人`]) + softHTML([{ label: "导演≥3部", value: data.dirRepeat }, { label: "主演≥3部", value: data.actRepeat }]))}
-  ${secHTML("影评关键词", "bar-chart-3", kvInline([`有影评 <b>${data.reviewCount}</b> 篇（${data.reviewRate}%）`]) + (data.keywordEntries.length ? `<div class="tag-cloud">${data.keywordEntries.map(([k, v]) => `<span class="tag-pill">${esc(k)} <b>${v}</b></span>`).join("")}</div>` : emptyHTML()))}
-  ${secHTML("我的高分 TOP10", "bar-chart-3", data.topRated.length ? data.topRated.map((it, i) => topRow(String(i + 1), esc(it.name), Number(it.rating).toFixed(1))).join("") : emptyHTML())}
-  ${secHTML("系列追踪", "bar-chart-3", data.seriesList.length ? data.seriesList.map(([k, v], i) => topRow(String(i + 1), `《${esc(k)}》`, `${v} 部`)).join("") : emptyHTML())}
-  ${secHTML("追剧深度", "bar-chart-3", data.seasons.length ? kvInline([`平均 <b>${data.avgSeason}</b> 季`]) + data.seasons.map((s, i) => topRow(String(i + 1), `《${esc(s.name)}》`, `${s.seasons} 季`)).join("") : emptyHTML())}
-  ${secHTML(`想看清单（${(_a = data.wantTotal) != null ? _a : data.wantList.length}）`, "bar-chart-3", (data.wantList.length ? data.wantList.map((it, i) => topRow(String(i + 1), esc(it.name) + (it.douban ? " · 豆瓣 " + esc(it.douban) : ""), "")).join("") : emptyHTML()) + (Object.keys(data.wantTags).length ? '<div class="tag-cloud" style="margin-top:10px">' + Object.entries(data.wantTags).sort((a, b) => b[1] - a[1]).map(([t, c]) => `<span class="tag-pill">${esc(t)} <b>${c}</b></span>`).join("") + "</div>" : ""))}`;
-  }
-  function buildStatPageHtml() {
-    return buildAnalysisHTML();
-  }
-
-  // src/core/ui/str.ts
-  var ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-  function escapeHtml2(s) {
-    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
-  }
-  function esc2(s) {
-    return escapeHtml2(String(s != null ? s : ""));
-  }
-  function iconSpan(name, extra = "") {
-    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  ${secHTML("影评关键词", "bar-chart-3", kvInline([`有影评 <b>${data.reviewCount}</b> 篇（${data.reviewRate}%）`]) + (data.keywordEntries.length ? `<div class="tag-cloud">${data.keywordEntries.map(([k, v]) => `<span class="tag-pill">${esc2(k)} <b>${v}</b></span>`).join("")}</div>` : emptyHTML()))}
+  ${secHTML("我的高分 TOP10", "bar-chart-3", data.topRated.length ? data.topRated.map((it, i) => topRow(String(i + 1), esc2(it.name), Number(it.rating).toFixed(1))).join("") : emptyHTML())}
+  ${secHTML("系列追踪", "bar-chart-3", data.seriesList.length ? data.seriesList.map(([k, v], i) => topRow(String(i + 1), `《${esc2(k)}》`, `${v} 部`)).join("") : emptyHTML())}
+  ${secHTML("追剧深度", "bar-chart-3", data.seasons.length ? kvInline([`平均 <b>${data.avgSeason}</b> 季`]) + data.seasons.map((s, i) => topRow(String(i + 1), `《${esc2(s.name)}》`, `${s.seasons} 季`)).join("") : emptyHTML())}
+  ${secHTML(`想看清单（${(_a = data.wantTotal) != null ? _a : data.wantList.length}）`, "bar-chart-3", (data.wantList.length ? data.wantList.map((it, i) => topRow(String(i + 1), esc2(it.name) + (it.douban ? " · 豆瓣 " + esc2(it.douban) : ""), "")).join("") : emptyHTML()) + (Object.keys(data.wantTags).length ? '<div class="tag-cloud" style="margin-top:10px">' + Object.entries(data.wantTags).sort((a, b) => b[1] - a[1]).map(([t, c]) => `<span class="tag-pill">${esc2(t)} <b>${c}</b></span>`).join("") + "</div>" : ""))}`;
   }
 
   // src/cinema/shared.ts
@@ -6014,8 +6005,7 @@ tags:
     grid: "layout-grid",
     eye: "eye",
     play: "play",
-    globe: "globe",
-    film: "clapperboard"
+    globe: "globe"
   };
   function typeColor(group) {
     var _a;
@@ -6034,15 +6024,6 @@ tags:
     const v = statusNum(status);
     return v === STATUS_WANT ? "想看" : v === STATUS_WATCHING ? "在看" : "已看";
   }
-  function stars(rating) {
-    if (!rating || rating <= 0) return "";
-    const st = Math.min(Math.round(rating / 2 * 2) / 2, 5);
-    const full = Math.floor(st);
-    let s = "";
-    for (let i = 0; i < full; i++) s += "★";
-    for (let j = full; j < 5; j++) s += "☆";
-    return s;
-  }
   function doubanSearchUrl(name) {
     return "https://movie.douban.com/search?q=" + encodeURIComponent(name);
   }
@@ -6056,27 +6037,27 @@ tags:
   }
   function posterInner(item, url) {
     var _a, _b;
-    const ph = `<div class="ph">${esc2((_a = item.name[0]) != null ? _a : "")}</div>`;
+    const ph = `<div class="ph">${esc((_a = item.name[0]) != null ? _a : "")}</div>`;
     if (!url) return ph;
-    return `<img loading="lazy" src="${esc2(url)}" onerror="this.outerHTML='<div class=\\'ph\\'>${esc2((_b = item.name[0]) != null ? _b : "")}</div>'">`;
+    return `<img loading="lazy" src="${esc(url)}" onerror="this.outerHTML='<div class=\\'ph\\'>${esc((_b = item.name[0]) != null ? _b : "")}</div>'">`;
   }
   function pcardHtml(it, posterUrl2) {
     const r = it.rating;
-    return `<div class="pcard" data-cinema-key="${esc2(itemKey(it))}"><div class="pw">${posterInner(it, posterUrl2)}
+    return `<div class="pcard" data-cinema-key="${esc(itemKey(it))}"><div class="pw">${posterInner(it, posterUrl2)}
     ${(() => {
       const st = statusNum(it.status);
       return st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : "";
     })()}</div>
-    <div class="pname">${esc2(it.name)}</div>
-    <div class="pmeta">${esc2(it.year || "")}${it.year && it.director ? " · " : ""}${esc2(it.director || "")}</div>
-    <div class="pstars">${r && r > 0 ? stars(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span style="opacity:.35">未评分</span>'}</div></div>`;
+    <div class="pname">${esc(it.name)}</div>
+    <div class="pmeta">${esc(it.year || "")}${it.year && it.director ? " · " : ""}${esc(it.director || "")}</div>
+    <div class="pstars">${r && r > 0 ? getStarString(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span style="opacity:.35">未评分</span>'}</div></div>`;
   }
   function viewFiltered(view) {
     return !!(view.typeFilter || view.statusFilter || view.searchKeyword);
   }
   function detailModalHtml(it, posterUrl2) {
     var _a, _b, _c, _d, _e, _f;
-    const badge = (color, text) => `<span class="dm-chip" style="background:${color}">${esc2(text)}</span>`;
+    const badge = (color, text) => `<span class="dm-chip" style="background:${color}">${esc(text)}</span>`;
     const rows = [
       ["类型", (_a = it.genre) != null ? _a : ""],
       ["导演", (_b = it.director) != null ? _b : ""],
@@ -6087,19 +6068,19 @@ tags:
     ].filter(([, v]) => v !== "");
     return `<div class="cn-modal" style="max-width:400px;width:100%">
     <button class="cn-modal-x j-close" title="关闭">${iconSpan(ICON.close)}</button>
-    <div class="dm-head"><div class="dm-poster">${posterUrl2 ? `<img src="${esc2(posterUrl2)}" onerror="this.remove()">` : ""}</div>
-      <div style="flex:1;min-width:0"><div class="dm-title">${esc2(it.name)}</div>
+    <div class="dm-head"><div class="dm-poster">${posterUrl2 ? `<img src="${esc(posterUrl2)}" onerror="this.remove()">` : ""}</div>
+      <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
         <div class="dm-badges">${badge(typeColor(it.group), it.typeTag)}
           ${(() => {
       const st = statusNum(it.status);
       return st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : "";
     })()}
-          ${it.rating && it.rating > 0 ? `<span class="dm-stars">${stars(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ""}
-          ${it.watchDate ? `<span class="dm-date">${esc2((it.watchDate || "").slice(0, 10))}</span>` : ""}</div>
-        ${it.review ? `<div class="dm-review">${esc2(it.review)}</div>` : ""}</div></div>
-    ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc2(v)}</span></div>`).join("") : ""}
-    ${it.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc2(it.doubanUrl)}" target="_blank" rel="noopener">${esc2(it.doubanUrl)}</a></span></div>` : ""}
-    ${it.synopsis ? `<div class="dm-sec">简 介</div><div style="font-size:12px;line-height:1.8;color:var(--ink-2);text-align:justify">${esc2(it.synopsis)}</div>` : ""}
+          ${it.rating && it.rating > 0 ? `<span class="dm-stars">${getStarString(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ""}
+          ${it.watchDate ? `<span class="dm-date">${esc((it.watchDate || "").slice(0, 10))}</span>` : ""}</div>
+        ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ""}</div></div>
+    ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join("") : ""}
+    ${it.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(it.doubanUrl)}" target="_blank" rel="noopener">${esc(it.doubanUrl)}</a></span></div>` : ""}
+    ${it.synopsis ? `<div class="dm-sec">简 介</div><div style="font-size:12px;line-height:1.8;color:var(--ink-2);text-align:justify">${esc(it.synopsis)}</div>` : ""}
     <div class="dm-actions"><button class="dm-btn j-similar">${iconSpan(ICON.ai)}找同类</button><button class="dm-btn j-edit">${iconSpan(ICON.edit)}编辑</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
   </div>`;
   }
@@ -6132,12 +6113,12 @@ tags:
     const ratingVal = opts.rating;
     return `<div class="cn-modal" style="width:100%">
     <div class="cn-modal-title">${editing ? "编辑影视" : "添加影视"}</div><button class="cn-modal-x j-close" title="关闭">${iconSpan(ICON.close)}</button>
-    <div class="f-field"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc2(opts.name)}" placeholder="影视名称"></div>
+    <div class="f-field"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>
     <div class="f-field"><span class="f-label">类 型</span><div class="f-choice j-tags">${formChoicesHtml(formAllTags(), opts.typeTag, "f-tag")}</div></div>
     <div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${formChoicesHtml(["想看", "在看", "已看"], initSt, "f-st")}</div></div>
     <div class="f-field j-rating" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">评 分</span>
       <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${ratingVal}"><span class="f-range-val j-rval">${Number(ratingVal).toFixed(1)}</span></div></div>
-    <div class="f-field j-review" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc2(opts.review)}</textarea></div>
+    <div class="f-field j-review" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc(opts.review)}</textarea></div>
     <div class="dm-actions"><button class="dm-btn gold j-save">${editing ? "保存" : "添加"}</button></div>
   </div>`;
   }
@@ -6145,7 +6126,7 @@ tags:
     return `<div class="cn-modal cn-confirm" style="max-width:320px;width:100%">
     <span class="cn-confirm-ic">${iconSpan(ICON.confirm)}</span>
     <div class="cn-confirm-title">删除影视</div>
-    <p>确定删除「${esc2(item.name)}」吗？</p>
+    <p>确定删除「${esc(item.name)}」吗？</p>
     <div class="cn-confirm-sub">将移入系统回收站，可在回收站恢复</div>
     <div class="dm-actions"><button class="dm-btn j-cancel">取消</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
   </div>`;
@@ -6159,28 +6140,28 @@ tags:
   function aiPageHtml(inp) {
     if (inp.running) {
       return `<div class="ai-guide"><div class="ai-spin"></div>
-      <span class="ai-ic">${iconSpan(ICON.ai)}</span><div class="ai-title">${esc2(inp.waitMsg || "AI 正在分析你的观影口味…")}</div>
+      <span class="ai-ic">${iconSpan(ICON.ai)}</span><div class="ai-title">${esc(inp.waitMsg || "AI 正在分析你的观影口味…")}</div>
       <div class="ai-sub">正在生成推荐，请稍候</div></div>`;
     }
     if (inp.error) {
       return `<div class="ai-guide"><span class="ai-ic ai-err-ic">${iconSpan(ICON.ai)}</span>
-      <div class="ai-title">AI 分析失败</div><div class="ai-sub">${esc2(inp.error)}</div>
+      <div class="ai-title">AI 分析失败</div><div class="ai-sub">${esc(inp.error)}</div>
       <button class="ai-start j-ai-start" data-cinema-ai-start>重试</button></div>`;
     }
     if (inp.results && inp.results.length > 0) {
       const cards = inp.results.map((rec, i) => {
         const name = aiRecName(rec);
         const inLib = inp.inLibrary(name);
-        return `<div class="rec-card"><div class="rec-main"><div class="rec-name">${esc2(name)}
-        <a href="${esc2(doubanSearchUrl(name))}" target="_blank" rel="noopener" title="在豆瓣搜索">${iconSpan(ICON.globe)}</a></div>
-        <div class="rec-meta">${esc2(aiRecMeta(rec))}</div><div class="rec-reason">${esc2((rec == null ? void 0 : rec.reason) || "")}</div></div>
+        return `<div class="rec-card"><div class="rec-main"><div class="rec-name">${esc(name)}
+        <a href="${esc(doubanSearchUrl(name))}" target="_blank" rel="noopener" title="在豆瓣搜索">${iconSpan(ICON.globe)}</a></div>
+        <div class="rec-meta">${esc(aiRecMeta(rec))}</div><div class="rec-reason">${esc((rec == null ? void 0 : rec.reason) || "")}</div></div>
         <button class="rec-add" data-rec-add="${i}"${inLib ? " disabled" : ""}>${inLib ? "已在库中" : "＋ 想看"}</button></div>`;
       }).join("");
-      return `<div class="ai-pref">偏好：<b>${esc2(inp.pref)}</b></div>
+      return `<div class="ai-pref">偏好：<b>${esc(inp.pref)}</b></div>
       <div class="rec-list">${cards}</div>
       <div style="text-align:center;margin-top:14px"><button class="dm-btn j-ai-more" data-cinema-ai-start>${iconSpan(ICON.ai)}换一批</button></div>`;
     }
-    return `<div class="ai-pref">偏好：<b>${esc2(inp.pref)}</b></div>
+    return `<div class="ai-pref">偏好：<b>${esc(inp.pref)}</b></div>
     <div class="ai-guide"><span class="ai-ic">${iconSpan(ICON.ai)}</span>
       <div class="ai-title">让 AI 读懂你的片库</div>
       <div class="ai-sub">基于你的评分、影评与偏好标签生成荐片，<br>结果可直接加入想看清单</div>
@@ -6190,8 +6171,8 @@ tags:
     return acts.map((a, i) => `<button class="${itemClass}${a.danger ? " danger" : ""}" data-i="${i}">${iconSpan(a.icon)}${a.label}</button>`).join("");
   }
   function sheetHeadHtml(it, posterUrl2) {
-    return `<div class="cn-sheet-head">${posterUrl2 ? `<img class="cn-sheet-poster" src="${esc2(posterUrl2)}" onerror="this.remove()">` : ""}
-    <div><div class="cn-sheet-name">${esc2(it.name)}</div><div class="cn-sheet-sub">${esc2(it.year || "")} · ${esc2(it.director || it.group)} · ${statusText(it.status)}</div></div></div>`;
+    return `<div class="cn-sheet-head">${posterUrl2 ? `<img class="cn-sheet-poster" src="${esc(posterUrl2)}" onerror="this.remove()">` : ""}
+    <div><div class="cn-sheet-name">${esc(it.name)}</div><div class="cn-sheet-sub">${esc(it.year || "")} · ${esc(it.director || it.group)} · ${statusText(it.status)}</div></div></div>`;
   }
 
   // src/cinema/layouts/midnight/render.ts
@@ -6230,7 +6211,7 @@ tags:
     <div class="m-scroll j-mview"></div>
   </section>`;
   }
-  var railRow = (on, attr, color, name, n) => `<button class="rail-item${on ? " is-on" : ""}" ${attr}><span class="dot" style="background:${color}"></span>${esc2(name)}<span class="n">${n}</span></button>`;
+  var railRow = (on, attr, color, name, n) => `<button class="rail-item${on ? " is-on" : ""}" ${attr}><span class="dot" style="background:${color}"></span>${esc(name)}<span class="n">${n}</span></button>`;
   function railHtml(items, view) {
     const g = {};
     const c = { 想看: 0, 在看: 0, 已看: 0 };
@@ -6263,14 +6244,14 @@ tags:
     ${filtered ? '<button class="dm-btn j-clear" data-cinema-clear style="margin-top:6px">清空筛选</button>' : '<span style="font-size:11.5px">点右上「添加影片」开始记录</span>'}</div>`;
   }
   function spHeadHtml(title, cnt) {
-    return `<div class="sp-head"><button class="sp-back j-back">${iconSpan(ICON.back)}</button><span class="sp-title">${esc2(title)}</span><span class="sp-cnt j-spcnt">${cnt}</span></div>`;
+    return `<div class="sp-head"><button class="sp-back j-back">${iconSpan(ICON.back)}</button><span class="sp-title">${esc(title)}</span><span class="sp-cnt j-spcnt">${cnt}</span></div>`;
   }
   function listHeadHtml(inp) {
-    return `<div class="d-head"><h2 class="j-title">${esc2(inp.title)}</h2><span class="cnt j-cnt">· ${inp.list.length} 部</span>
+    return `<div class="d-head"><h2 class="j-title">${esc(inp.title)}</h2><span class="cnt j-cnt">· ${inp.list.length} 部</span>
     <button class="add j-add" data-cinema-add>${iconSpan(ICON.add)}添加影片</button></div>`;
   }
   function listToolsHtml(view) {
-    return `<div class="d-tools"><label class="d-search">${iconSpan(ICON.search)}<input class="j-q" placeholder="搜索影视（名称、类型、影评）..." value="${esc2(view.searchKeyword)}"></label>
+    return `<div class="d-tools"><label class="d-search">${iconSpan(ICON.search)}<input class="j-q" placeholder="搜索影视（名称、类型、影评）..." value="${esc(view.searchKeyword)}"></label>
     <div class="seg j-sort">${[["date", "最近观看"], ["created", "加入先后"], ["rating", "按评分"]].map(([k, l]) => `<button data-k="${k}" class="${view.sortMode === k ? "is-on" : ""}">${l}</button>`).join("")}</div></div>`;
   }
   function renderMidnightDesk(root, inp) {
@@ -6378,11 +6359,6 @@ tags:
       { icon: ICON.del, label: "删除", danger: true, run: () => openConfirm(sec, it, app) }
     );
     return out;
-  }
-  function localNow() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
   }
   var ILLEGAL_NAME_RE = /[\\/:*?"<>|]/;
   async function persistItem(item, app, edit) {
@@ -6756,7 +6732,7 @@ ${item.review ? `影评: ${item.review}
       watchedCount: watchedCount(),
       aiHtml: aiPageHtml(aiInput()),
       aiCount: M.aiResult && M.aiResult.length ? M.aiResult.length : null,
-      statHtml: buildStatPageHtml(),
+      statHtml: buildAnalysisHTML(),
       poster: (it) => posterUrl(it, app)
     };
   }
@@ -6873,12 +6849,7 @@ ${item.review ? `影评: ${item.review}
         renderAll(app);
         return;
       }
-      const analysisAdd = t.closest("[data-cinema-analysis-add]");
-      if (analysisAdd) {
-        openForm(sec, null, app);
-        return;
-      }
-      const add = t.closest("[data-cinema-add]");
+      const add = t.closest("[data-cinema-analysis-add],[data-cinema-add]");
       if (add) {
         openForm(sec, null, app);
         return;
@@ -6993,11 +6964,9 @@ ${item.review ? `影评: ${item.review}
         renderAll(app);
       }, 300);
     };
-    for (const kind of ["cinema"]) {
-      onDomainEvent(`${kind}:file-created`, (evt) => schedule({ path: evt.path }));
-      onDomainEvent(`${kind}:file-deleted`, (evt) => schedule({ path: evt.path }));
-      onDomainEvent(`${kind}:file-modified`, (evt) => schedule({ path: evt.path }));
-    }
+    onDomainEvent("cinema:file-created", (evt) => schedule({ path: evt.path }));
+    onDomainEvent("cinema:file-deleted", (evt) => schedule({ path: evt.path }));
+    onDomainEvent("cinema:file-modified", (evt) => schedule({ path: evt.path }));
     onDomainEvent("vault:md-created", (evt) => schedule({ path: evt.path }));
     onDomainEvent("vault:md-deleted", (evt) => schedule({ path: evt.path }));
     onDomainEvent("vault:md-modified", (evt) => schedule({ path: evt.path }));

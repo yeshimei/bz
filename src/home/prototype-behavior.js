@@ -6839,7 +6839,6 @@ var BZW_home = (() => {
         searchKeyword: "",
         searchDebounceTimer: null,
         appRef: null,
-        folderPath: "书库",
         renderFn: null,
         view: "shelf"
       };
@@ -7075,7 +7074,7 @@ var BZW_home = (() => {
     var _a2, _b2;
     try {
       const dataPath = resolveWeaveDataPath(app2);
-      const dataFilePath = `${dataPath}/${DEFAULT_WEAVE_DATA_FILE}`;
+      const dataFilePath = `${dataPath}/${WEAVE_DATA_FILE}`;
       const file = (_b2 = (_a2 = app2 == null ? void 0 : app2.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, dataFilePath);
       if (!file) return [];
       const content = await app2.vault.adapter.read(dataFilePath);
@@ -7096,17 +7095,15 @@ var BZW_home = (() => {
     }
     return items;
   }
-  var WEAVE_PLUGIN_ID, WEAVE_DATA_FILE, DEFAULT_WEAVE_DATA_FILE, COVER_EXTENSIONS;
+  var WEAVE_PLUGIN_ID, WEAVE_DATA_FILE, COVER_EXTENSIONS;
   var init_data2 = __esm({
     "src/bookshelf/data.ts"() {
       init_fake_obsidian();
       init_settings_provider();
       init_state2();
       init_render2();
-      init_render2();
       WEAVE_PLUGIN_ID = "weave-epub-reader";
       WEAVE_DATA_FILE = "weave-data.json";
-      DEFAULT_WEAVE_DATA_FILE = WEAVE_DATA_FILE;
       COVER_EXTENSIONS = ["jpg", "jpeg", "png", "webp", "gif"];
     }
   });
@@ -11517,6 +11514,496 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/core/settings-modal.ts
+  function createSettingsGroup(container, opts) {
+    const group = document.createElement("div");
+    group.className = "bz-settings-group";
+    const head = document.createElement("div");
+    head.className = "bz-settings-group-head";
+    const icon = document.createElement("span");
+    icon.className = "bz-settings-group-icon";
+    setIcon(icon, opts.icon);
+    const name = document.createElement("span");
+    name.className = "bz-settings-group-name";
+    name.textContent = opts.name;
+    const count = document.createElement("span");
+    count.className = "bz-settings-group-count";
+    count.textContent = "0 项";
+    head.append(icon, name, count);
+    const body = document.createElement("div");
+    body.className = "bz-settings-group-body";
+    group.append(head, body);
+    container.appendChild(group);
+    return body;
+  }
+  function isItemHidden(el) {
+    let cur = el;
+    while (cur && cur !== document.body) {
+      if (cur.classList.contains("bz-setting-hidden")) return true;
+      if (cur.style.display === "none") return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+  function refreshSettingsGroupCounts(content) {
+    content.querySelectorAll(".bz-settings-group").forEach((g) => {
+      const body = g.querySelector(".bz-settings-group-body");
+      const countEl = g.querySelector(".bz-settings-group-count");
+      if (!body || !countEl) return;
+      const n = [...body.querySelectorAll(".setting-item")].filter((el) => {
+        const h = el;
+        return !h.classList.contains("bz-setting-action-row") && !isItemHidden(h);
+      }).length;
+      countEl.textContent = `${n} 项`;
+      countEl.style.display = n > 0 ? "" : "none";
+    });
+  }
+  function markSettingSplitRows(container) {
+    container.querySelectorAll(".setting-item").forEach((el) => {
+      if (el.classList.contains("bz-path-picker-setting-row")) return;
+      const ctl = el.querySelector(".setting-item-control");
+      el.classList.toggle("bz-setting-split", !!ctl && ctl.children.length >= 2);
+    });
+  }
+  function closeSettingsModal() {
+    var _a2;
+    if (currentModal) {
+      const m = currentModal;
+      currentModal = null;
+      m.dispose();
+      (_a2 = m.onClose) == null ? void 0 : _a2.call(m);
+    }
+  }
+  function openSettingsModal(opts) {
+    var _a2;
+    closeSettingsModal();
+    const prevActive = document.activeElement;
+    const { mask, popup } = createOverlay({
+      maskId: "bz-settings-modal-mask",
+      popupId: "bz-settings-modal-popup",
+      // z-index 动态发号（ADR-0067）：原静态层规家族表随动态层级制退役，
+      // 全站规则只有一条——谁后显示谁在上（settings-modal 每次打开新建 DOM，创建即显示）
+      maxWidth: opts.maxWidth,
+      onMaskClick: () => closeSettingsModal()
+    });
+    const header = document.createElement("div");
+    header.className = "bz-settings-header";
+    const title = document.createElement("h3");
+    title.className = "bz-settings-title";
+    title.textContent = opts.title;
+    header.appendChild(title);
+    const content = document.createElement("div");
+    content.className = "bz-settings-content";
+    renderSettingsInto(content, (_a2 = opts.schema) != null ? _a2 : { groups: [] });
+    const hasVisibleItem = Array.from(content.querySelectorAll(".setting-item")).some(
+      (el) => !el.classList.contains("bz-setting-action-row") && !isItemHidden(el)
+    );
+    if (!hasVisibleItem) {
+      content.innerHTML = "";
+      const empty = document.createElement("div");
+      empty.className = "bz-settings-empty";
+      empty.textContent = opts.emptyText || "暂无设置项";
+      if (opts.emptyDesc) {
+        const desc = document.createElement("div");
+        desc.className = "bz-settings-empty-desc";
+        desc.textContent = opts.emptyDesc;
+        empty.appendChild(desc);
+      }
+      content.appendChild(empty);
+    }
+    popup.appendChild(header);
+    popup.appendChild(content);
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+    mask.style.display = "block";
+    popup.style.display = "flex";
+    popup.setAttribute("role", "dialog");
+    popup.setAttribute("aria-modal", "true");
+    const firstFocusable = Array.from(popup.querySelectorAll(FOCUSABLE_SELECTOR)).find((el) => {
+      if (isItemHidden(el)) return false;
+      if (isMobileEnv()) {
+        const tag = el.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return false;
+      }
+      return true;
+    });
+    if (firstFocusable) firstFocusable.focus();
+    const handle = escManager.register("bz-settings-modal", {
+      isVisible: () => !!currentModal,
+      close: () => closeSettingsModal()
+    });
+    currentModal = {
+      mask,
+      popup,
+      onClose: opts.onClose,
+      dispose: () => {
+        mask.remove();
+        popup.remove();
+        handle.unregister();
+        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
+          prevActive.focus();
+        }
+      }
+    };
+  }
+  var FOCUSABLE_SELECTOR, currentModal;
+  var init_settings_modal = __esm({
+    "src/core/settings-modal.ts"() {
+      init_fake_obsidian();
+      init_dom();
+      init_esc_manager();
+      init_mobile();
+      init_settings_schema2();
+      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+      currentModal = null;
+    }
+  });
+
+  // src/core/settings-schema.ts
+  function bindValue(binding) {
+    if ("key" in binding) {
+      const key = binding.key;
+      return {
+        read: () => getSettings()[key],
+        write: (v) => {
+          getSettings()[key] = v;
+        },
+        persist: () => saveSettings()
+      };
+    }
+    return { read: () => binding.get(), write: (v) => binding.set(v), persist: () => binding.save() };
+  }
+  function currentSnapshot() {
+    return tryGetSettings();
+  }
+  function parseClampedNumber(raw, min, max) {
+    const trimmed = raw.trim();
+    if (trimmed === "") return null;
+    const n = Number(trimmed);
+    if (!Number.isFinite(n)) return null;
+    let out = n;
+    if (min !== void 0) out = Math.max(min, out);
+    if (max !== void 0) out = Math.min(max, out);
+    return out;
+  }
+  function renderSettingsInto(container, schema) {
+    var _a2;
+    const entries = [];
+    const customRefreshes = [];
+    const reevaluate = () => {
+      const snap = currentSnapshot();
+      for (const e of entries) {
+        e.el.classList.toggle("bz-setting-hidden", e.visibleWhen ? !e.visibleWhen(snap) : false);
+      }
+      for (const fn of customRefreshes) {
+        try {
+          fn();
+        } catch (e) {
+        }
+      }
+      refreshSettingsGroupCounts(container);
+      markSettingSplitRows(container);
+    };
+    const renderTextualRow = (body, row) => {
+      var _a3;
+      const ctx = { rowEl: body, refreshVisibility: reevaluate };
+      const setting = new Setting(body).setName(row.name);
+      if (row.desc) setting.setDesc(row.desc);
+      if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+      const isNumber = row.type === "number";
+      const acc = isNumber ? bindValue(row.binding) : bindValue(row.binding);
+      const changeCb = row.onChange;
+      const initial = String((_a3 = acc.read()) != null ? _a3 : "");
+      let pending = null;
+      let last = initial;
+      let dirty2 = false;
+      const warn = new CommitWarn(initial, row.onCommit);
+      const commit = () => {
+        if (pending !== null) {
+          clearTimeout(pending);
+          pending = null;
+        }
+        if (!dirty2) return;
+        void acc.persist();
+        warn.fire(last);
+        reevaluate();
+      };
+      let currentText = null;
+      const addInto = (t) => {
+        currentText = t;
+        t.setValue(initial);
+        const place = (snap) => typeof row.placeholder === "function" ? row.placeholder(snap) : row.placeholder;
+        const applyPlaceholder = () => {
+          if (t.setPlaceholder) {
+            const p = place(currentSnapshot());
+            if (p !== void 0) t.setPlaceholder(p);
+          }
+        };
+        applyPlaceholder();
+        t.onChange((v) => {
+          dirty2 = true;
+          if (isNumber) {
+            const n = parseClampedNumber(v, row.min, row.max);
+            if (n === null) return;
+            acc.write(n);
+          } else {
+            acc.write(v);
+          }
+          last = v;
+          changeCb == null ? void 0 : changeCb(isNumber ? acc.read() : v, ctx);
+          if (pending !== null) clearTimeout(pending);
+          pending = setTimeout(commit, TEXT_COMMIT_DELAY);
+        });
+        const inputEl = t.inputEl;
+        if (inputEl) {
+          if (isNumber) {
+            const num = row;
+            inputEl.type = "number";
+            if (num.min !== void 0) inputEl.min = String(num.min);
+            if (num.max !== void 0) inputEl.max = String(num.max);
+            if (num.step !== void 0) inputEl.step = String(num.step);
+          }
+          inputEl.addEventListener("blur", commit);
+          if (row.type !== "textarea") {
+            inputEl.addEventListener("keydown", (e) => {
+              if (e.key === "Enter") commit();
+            });
+          }
+        }
+        if (typeof row.placeholder === "function") {
+          const origReevaluate = ctx.refreshVisibility;
+          ctx.refreshVisibility = () => {
+            applyPlaceholder();
+            origReevaluate();
+          };
+        }
+        if (row.refreshKey !== void 0) {
+          const ref = row.refreshKey;
+          customRefreshes.push(() => {
+            if (currentText) {
+              const snap = currentSnapshot();
+              const fresh = typeof ref === "function" ? ref(snap) : String(snap[ref]);
+              if (currentText.setValue) {
+                dirty2 = false;
+                currentText.setValue(String(fresh != null ? fresh : ""));
+              }
+            }
+          });
+        }
+      };
+      if (row.type === "text") setting.addText(addInto);
+      else if (row.type === "textarea") setting.addTextArea(addInto);
+      else setting.addText(addInto);
+    };
+    const renderRow2 = (body, rowArg, parentToggleKey) => {
+      var _a3;
+      const ctx = { rowEl: body, refreshVisibility: reevaluate };
+      let row = rowArg;
+      if (row.isChild && parentToggleKey) {
+        row = {
+          ...row,
+          visibleWhen: (snap) => snap[parentToggleKey] === true && (rowArg.visibleWhen ? rowArg.visibleWhen(snap) : true)
+        };
+      }
+      switch (row.type) {
+        case "custom": {
+          const wrap = document.createElement("div");
+          body.appendChild(wrap);
+          if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
+          row.render(wrap, { rowEl: wrap, refreshVisibility: reevaluate });
+          if (row.onRefresh) customRefreshes.push(() => row.onRefresh({ rowEl: wrap, refreshVisibility: reevaluate }));
+          return;
+        }
+        case "path": {
+          const acc = bindValue(row.binding);
+          const multi = row.mode === "multi";
+          const initialRaw = acc.read();
+          const initialKey = multi ? JSON.stringify(initialRaw != null ? initialRaw : []) : String(initialRaw != null ? initialRaw : "");
+          const warn = new CommitWarn(initialKey, row.onCommit);
+          const wrap = document.createElement("div");
+          body.appendChild(wrap);
+          if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
+          renderPathSettingRow({
+            parent: wrap,
+            name: row.name,
+            desc: row.desc,
+            mode: row.mode,
+            value: multi ? Array.isArray(initialRaw) ? [...initialRaw] : [] : String(initialRaw != null ? initialRaw : ""),
+            pickerTitle: row.pickerTitle,
+            pickerDesc: row.pickerDesc,
+            buttonText: row.buttonText,
+            okText: row.okText,
+            emptyText: row.emptyText,
+            onChange: (list) => {
+              var _a4;
+              const v = multi ? list : (list[0] || "").trim().replace(/^\/+|\/+$/g, "");
+              acc.write(v);
+              void acc.persist();
+              const res = (_a4 = row.onChange) == null ? void 0 : _a4.call(row, list, ctx);
+              warn.fire(multi ? JSON.stringify(v) : String(v));
+              reevaluate();
+              if (res && typeof res.then === "function") {
+                return Promise.resolve(res).then(
+                  (final) => Array.isArray(final) ? final : list
+                );
+              }
+              return Array.isArray(res) ? res : void 0;
+            }
+          });
+          return;
+        }
+        case "toggle": {
+          const acc = bindValue(row.binding);
+          const setting = new Setting(body).setName(row.name);
+          if (row.desc) setting.setDesc(row.desc);
+          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          setting.addToggle(
+            (t) => t.setValue(acc.read() === true).onChange(async (v) => {
+              var _a4;
+              acc.write(v);
+              reevaluate();
+              await acc.persist();
+              (_a4 = row.onChange) == null ? void 0 : _a4.call(row, v, ctx);
+            })
+          );
+          return;
+        }
+        case "select": {
+          const acc = bindValue(row.binding);
+          const setting = new Setting(body).setName(row.name);
+          if (row.desc) setting.setDesc(row.desc);
+          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          setting.addDropdown((dd) => {
+            var _a4;
+            for (const opt of row.options) dd.addOption(opt.value, opt.label);
+            dd.setValue(String((_a4 = acc.read()) != null ? _a4 : "") || row.options[0].value);
+            dd.onChange(async (v) => {
+              var _a5;
+              acc.write(v);
+              reevaluate();
+              await acc.persist();
+              (_a5 = row.onChange) == null ? void 0 : _a5.call(row, v, ctx);
+            });
+          });
+          return;
+        }
+        case "choiceCards": {
+          const acc = bindValue(row.binding);
+          const setting = new Setting(body).setName(row.name);
+          if (row.desc) setting.setDesc(row.desc);
+          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          const pick = uiCardChoice({
+            value: String((_a3 = acc.read()) != null ? _a3 : "") || row.options[0].value,
+            options: row.options,
+            label: row.name,
+            onChange: async (v) => {
+              var _a4;
+              acc.write(v);
+              reevaluate();
+              await acc.persist();
+              (_a4 = row.onChange) == null ? void 0 : _a4.call(row, v, ctx);
+            }
+          });
+          setting.controlEl.appendChild(pick.el);
+          return;
+        }
+        case "slider": {
+          const acc = bindValue(row.binding);
+          const setting = new Setting(body).setName(row.name);
+          if (row.desc) setting.setDesc(row.desc);
+          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          setting.addSlider((sl) => {
+            var _a4;
+            sl.setLimits(row.min, row.max, (_a4 = row.step) != null ? _a4 : 1);
+            sl.setValue(Number(acc.read()) || 0);
+            sl.setDynamicTooltip();
+            sl.onChange(async (v) => {
+              var _a5;
+              acc.write(v);
+              reevaluate();
+              await acc.persist();
+              (_a5 = row.onChange) == null ? void 0 : _a5.call(row, v, ctx);
+            });
+          });
+          return;
+        }
+        case "button": {
+          const setting = new Setting(body).setName(row.name);
+          if (row.desc) setting.setDesc(row.desc);
+          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          setting.addButton((b) => {
+            if (row.cta) b.setCta();
+            b.setButtonText(row.buttonText).onClick(() => row.onClick(ctx));
+          });
+          setting.settingEl.classList.add("bz-setting-action-row");
+          return;
+        }
+        case "info": {
+          const setting = new Setting(body).setName(row.name);
+          if (row.desc) setting.setDesc(row.desc);
+          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          return;
+        }
+        case "text":
+        case "textarea":
+        case "number":
+          renderTextualRow(body, row);
+          return;
+      }
+    };
+    const renderGroupRows = (body, rows) => {
+      var _a3, _b2;
+      const firstToggleKey = (_b2 = (_a3 = rows.find((r) => r.type === "toggle" && "key" in r.binding)) == null ? void 0 : _a3.binding.key) != null ? _b2 : null;
+      for (const row of rows) renderRow2(body, row, firstToggleKey);
+    };
+    for (const group of schema.groups) {
+      if (group.icon) {
+        const body = createSettingsGroup(container, { icon: group.icon, name: group.name });
+        const groupEl = (_a2 = body.parentElement) != null ? _a2 : container;
+        if (group.visibleWhen) entries.push({ el: groupEl, visibleWhen: group.visibleWhen });
+        renderGroupRows(body, group.rows);
+      } else {
+        const title = document.createElement("div");
+        title.className = "bz-setting-section-title";
+        title.textContent = group.name;
+        container.appendChild(title);
+        if (group.visibleWhen) entries.push({ el: title, visibleWhen: group.visibleWhen });
+        renderGroupRows(container, group.rows);
+      }
+    }
+    reevaluate();
+    return { refresh: reevaluate };
+  }
+  var TEXT_COMMIT_DELAY, CommitWarn;
+  var init_settings_schema2 = __esm({
+    "src/core/settings-schema.ts"() {
+      init_fake_obsidian();
+      init_settings_provider();
+      init_path_picker();
+      init_settings_modal();
+      init_ui();
+      TEXT_COMMIT_DELAY = 800;
+      CommitWarn = class {
+        constructor(initial, onCommit) {
+          this.initial = initial;
+          this.onCommit = onCommit;
+          this.warnedInitial = null;
+        }
+        fire(current2) {
+          if (!this.onCommit) return;
+          if (current2 !== this.initial) {
+            if (this.warnedInitial !== this.initial) {
+              this.warnedInitial = this.initial;
+              this.onCommit();
+            }
+          } else {
+            this.warnedInitial = null;
+          }
+        }
+      };
+    }
+  });
+
   // src/settings-panel/dir-picker.ts
   function openDirPicker(opts) {
     var _a2;
@@ -11838,25 +12325,17 @@ ${n.content.slice(0, 2e3)}
   function snapshot() {
     return getSettings();
   }
-  function bindValue(binding) {
-    if ("key" in binding) {
-      const key = binding.key;
-      return {
-        read: () => getSettings()[key],
-        write: (v) => {
-          getSettings()[key] = v;
-        },
-        persist: () => saveSettings()
-      };
-    }
-    return {
-      read: () => binding.get(),
-      write: (v) => binding.set(v),
-      persist: () => binding.save()
-    };
-  }
   function makeCtx(rowEl, refreshVisibility) {
     return { rowEl, refreshVisibility };
+  }
+  function regRefreshDisplay(regRefresh, ref, input) {
+    if (!regRefresh || ref === void 0) return;
+    regRefresh(() => {
+      const snap = snapshot();
+      const fresh = typeof ref === "function" ? ref(snap) : String(snap[ref]);
+      const setDisplay = input.__setDisplayValue;
+      if (setDisplay) setDisplay(String(fresh != null ? fresh : ""));
+    });
   }
   function makeInput(opts) {
     const holder = document.createElement("div");
@@ -12029,15 +12508,7 @@ ${n.content.slice(0, 2e3)}
           }
         });
         ctrlEl.appendChild(input);
-        if (regRefresh && row.refreshKey !== void 0) {
-          const ref = row.refreshKey;
-          regRefresh(() => {
-            const snap = snapshot();
-            const fresh = typeof ref === "function" ? ref(snap) : String(snap[ref]);
-            const setDisplay = input.__setDisplayValue;
-            if (setDisplay) setDisplay(String(fresh != null ? fresh : ""));
-          });
-        }
+        regRefreshDisplay(regRefresh, row.refreshKey, input);
         break;
       }
       case "textarea": {
@@ -12094,15 +12565,7 @@ ${n.content.slice(0, 2e3)}
         });
         input.step = String((_e = row.step) != null ? _e : 1);
         ctrlEl.appendChild(input);
-        if (regRefresh && row.refreshKey !== void 0) {
-          const ref = row.refreshKey;
-          regRefresh(() => {
-            const snap = snapshot();
-            const fresh = typeof ref === "function" ? ref(snap) : String(snap[ref]);
-            const setDisplay = input.__setDisplayValue;
-            if (setDisplay) setDisplay(String(fresh != null ? fresh : ""));
-          });
-        }
+        regRefreshDisplay(regRefresh, row.refreshKey, input);
         break;
       }
       case "select": {
@@ -12335,6 +12798,7 @@ ${n.content.slice(0, 2e3)}
   var init_renderer = __esm({
     "src/settings-panel/renderer.ts"() {
       init_settings_provider();
+      init_settings_schema2();
       init_dir_picker();
       init_notice();
       init_render4();
@@ -12859,9 +13323,7 @@ ${n.content.slice(0, 2e3)}
         /** 默认存储目录（文件名固定 favorites.json，设置只允许改目录） */
         DEFAULT_STORAGE_PATH: "CONFIG/STORAGE",
         /** 数据文件名（固定，不允许用户修改） */
-        STORAGE_FILE: "favorites.json",
-        LONG_PRESS_DELAY: 600
-        // 兼容导出（长按延时实际由 core/item-actions 内部处理）
+        STORAGE_FILE: "favorites.json"
       };
       TAGS = [
         { key: "github", label: "GitHub", ic: "github" },
@@ -14186,496 +14648,6 @@ ${countsToText(s.missing)}
   }
   var init_schema = __esm({
     "src/settings-panel/schema.ts"() {
-    }
-  });
-
-  // src/core/settings-schema.ts
-  function bindValue2(binding) {
-    if ("key" in binding) {
-      const key = binding.key;
-      return {
-        read: () => getSettings()[key],
-        write: (v) => {
-          getSettings()[key] = v;
-        },
-        persist: () => saveSettings()
-      };
-    }
-    return { read: () => binding.get(), write: (v) => binding.set(v), persist: () => binding.save() };
-  }
-  function currentSnapshot() {
-    return tryGetSettings();
-  }
-  function parseClampedNumber(raw, min, max) {
-    const trimmed = raw.trim();
-    if (trimmed === "") return null;
-    const n = Number(trimmed);
-    if (!Number.isFinite(n)) return null;
-    let out = n;
-    if (min !== void 0) out = Math.max(min, out);
-    if (max !== void 0) out = Math.min(max, out);
-    return out;
-  }
-  function renderSettingsInto(container, schema) {
-    var _a2;
-    const entries = [];
-    const customRefreshes = [];
-    const reevaluate = () => {
-      const snap = currentSnapshot();
-      for (const e of entries) {
-        e.el.classList.toggle("bz-setting-hidden", e.visibleWhen ? !e.visibleWhen(snap) : false);
-      }
-      for (const fn of customRefreshes) {
-        try {
-          fn();
-        } catch (e) {
-        }
-      }
-      refreshSettingsGroupCounts(container);
-      markSettingSplitRows(container);
-    };
-    const renderTextualRow = (body, row) => {
-      var _a3;
-      const ctx = { rowEl: body, refreshVisibility: reevaluate };
-      const setting = new Setting(body).setName(row.name);
-      if (row.desc) setting.setDesc(row.desc);
-      if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
-      const isNumber = row.type === "number";
-      const acc = isNumber ? bindValue2(row.binding) : bindValue2(row.binding);
-      const changeCb = row.onChange;
-      const initial = String((_a3 = acc.read()) != null ? _a3 : "");
-      let pending = null;
-      let last = initial;
-      let dirty2 = false;
-      const warn = new CommitWarn(initial, row.onCommit);
-      const commit = () => {
-        if (pending !== null) {
-          clearTimeout(pending);
-          pending = null;
-        }
-        if (!dirty2) return;
-        void acc.persist();
-        warn.fire(last);
-        reevaluate();
-      };
-      let currentText = null;
-      const addInto = (t) => {
-        currentText = t;
-        t.setValue(initial);
-        const place = (snap) => typeof row.placeholder === "function" ? row.placeholder(snap) : row.placeholder;
-        const applyPlaceholder = () => {
-          if (t.setPlaceholder) {
-            const p = place(currentSnapshot());
-            if (p !== void 0) t.setPlaceholder(p);
-          }
-        };
-        applyPlaceholder();
-        t.onChange((v) => {
-          dirty2 = true;
-          if (isNumber) {
-            const n = parseClampedNumber(v, row.min, row.max);
-            if (n === null) return;
-            acc.write(n);
-          } else {
-            acc.write(v);
-          }
-          last = v;
-          changeCb == null ? void 0 : changeCb(isNumber ? acc.read() : v, ctx);
-          if (pending !== null) clearTimeout(pending);
-          pending = setTimeout(commit, TEXT_COMMIT_DELAY);
-        });
-        const inputEl = t.inputEl;
-        if (inputEl) {
-          if (isNumber) {
-            const num = row;
-            inputEl.type = "number";
-            if (num.min !== void 0) inputEl.min = String(num.min);
-            if (num.max !== void 0) inputEl.max = String(num.max);
-            if (num.step !== void 0) inputEl.step = String(num.step);
-          }
-          inputEl.addEventListener("blur", commit);
-          if (row.type !== "textarea") {
-            inputEl.addEventListener("keydown", (e) => {
-              if (e.key === "Enter") commit();
-            });
-          }
-        }
-        if (typeof row.placeholder === "function") {
-          const origReevaluate = ctx.refreshVisibility;
-          ctx.refreshVisibility = () => {
-            applyPlaceholder();
-            origReevaluate();
-          };
-        }
-        if (row.refreshKey !== void 0) {
-          const ref = row.refreshKey;
-          customRefreshes.push(() => {
-            if (currentText) {
-              const snap = currentSnapshot();
-              const fresh = typeof ref === "function" ? ref(snap) : String(snap[ref]);
-              if (currentText.setValue) {
-                dirty2 = false;
-                currentText.setValue(String(fresh != null ? fresh : ""));
-              }
-            }
-          });
-        }
-      };
-      if (row.type === "text") setting.addText(addInto);
-      else if (row.type === "textarea") setting.addTextArea(addInto);
-      else setting.addText(addInto);
-    };
-    const renderRow2 = (body, rowArg, parentToggleKey) => {
-      var _a3;
-      const ctx = { rowEl: body, refreshVisibility: reevaluate };
-      let row = rowArg;
-      if (row.isChild && parentToggleKey) {
-        row = {
-          ...row,
-          visibleWhen: (snap) => snap[parentToggleKey] === true && (rowArg.visibleWhen ? rowArg.visibleWhen(snap) : true)
-        };
-      }
-      switch (row.type) {
-        case "custom": {
-          const wrap = document.createElement("div");
-          body.appendChild(wrap);
-          if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
-          row.render(wrap, { rowEl: wrap, refreshVisibility: reevaluate });
-          if (row.onRefresh) customRefreshes.push(() => row.onRefresh({ rowEl: wrap, refreshVisibility: reevaluate }));
-          return;
-        }
-        case "path": {
-          const acc = bindValue2(row.binding);
-          const multi = row.mode === "multi";
-          const initialRaw = acc.read();
-          const initialKey = multi ? JSON.stringify(initialRaw != null ? initialRaw : []) : String(initialRaw != null ? initialRaw : "");
-          const warn = new CommitWarn(initialKey, row.onCommit);
-          const wrap = document.createElement("div");
-          body.appendChild(wrap);
-          if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
-          renderPathSettingRow({
-            parent: wrap,
-            name: row.name,
-            desc: row.desc,
-            mode: row.mode,
-            value: multi ? Array.isArray(initialRaw) ? [...initialRaw] : [] : String(initialRaw != null ? initialRaw : ""),
-            pickerTitle: row.pickerTitle,
-            pickerDesc: row.pickerDesc,
-            buttonText: row.buttonText,
-            okText: row.okText,
-            emptyText: row.emptyText,
-            onChange: (list) => {
-              var _a4;
-              const v = multi ? list : (list[0] || "").trim().replace(/^\/+|\/+$/g, "");
-              acc.write(v);
-              void acc.persist();
-              const res = (_a4 = row.onChange) == null ? void 0 : _a4.call(row, list, ctx);
-              warn.fire(multi ? JSON.stringify(v) : String(v));
-              reevaluate();
-              if (res && typeof res.then === "function") {
-                return Promise.resolve(res).then(
-                  (final) => Array.isArray(final) ? final : list
-                );
-              }
-              return Array.isArray(res) ? res : void 0;
-            }
-          });
-          return;
-        }
-        case "toggle": {
-          const acc = bindValue2(row.binding);
-          const setting = new Setting(body).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
-          setting.addToggle(
-            (t) => t.setValue(acc.read() === true).onChange(async (v) => {
-              var _a4;
-              acc.write(v);
-              reevaluate();
-              await acc.persist();
-              (_a4 = row.onChange) == null ? void 0 : _a4.call(row, v, ctx);
-            })
-          );
-          return;
-        }
-        case "select": {
-          const acc = bindValue2(row.binding);
-          const setting = new Setting(body).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
-          setting.addDropdown((dd) => {
-            var _a4;
-            for (const opt of row.options) dd.addOption(opt.value, opt.label);
-            dd.setValue(String((_a4 = acc.read()) != null ? _a4 : "") || row.options[0].value);
-            dd.onChange(async (v) => {
-              var _a5;
-              acc.write(v);
-              reevaluate();
-              await acc.persist();
-              (_a5 = row.onChange) == null ? void 0 : _a5.call(row, v, ctx);
-            });
-          });
-          return;
-        }
-        case "choiceCards": {
-          const acc = bindValue2(row.binding);
-          const setting = new Setting(body).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
-          const pick = uiCardChoice({
-            value: String((_a3 = acc.read()) != null ? _a3 : "") || row.options[0].value,
-            options: row.options,
-            label: row.name,
-            onChange: async (v) => {
-              var _a4;
-              acc.write(v);
-              reevaluate();
-              await acc.persist();
-              (_a4 = row.onChange) == null ? void 0 : _a4.call(row, v, ctx);
-            }
-          });
-          setting.controlEl.appendChild(pick.el);
-          return;
-        }
-        case "slider": {
-          const acc = bindValue2(row.binding);
-          const setting = new Setting(body).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
-          setting.addSlider((sl) => {
-            var _a4;
-            sl.setLimits(row.min, row.max, (_a4 = row.step) != null ? _a4 : 1);
-            sl.setValue(Number(acc.read()) || 0);
-            sl.setDynamicTooltip();
-            sl.onChange(async (v) => {
-              var _a5;
-              acc.write(v);
-              reevaluate();
-              await acc.persist();
-              (_a5 = row.onChange) == null ? void 0 : _a5.call(row, v, ctx);
-            });
-          });
-          return;
-        }
-        case "button": {
-          const setting = new Setting(body).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
-          setting.addButton((b) => {
-            if (row.cta) b.setCta();
-            b.setButtonText(row.buttonText).onClick(() => row.onClick(ctx));
-          });
-          setting.settingEl.classList.add("bz-setting-action-row");
-          return;
-        }
-        case "info": {
-          const setting = new Setting(body).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
-          return;
-        }
-        case "text":
-        case "textarea":
-        case "number":
-          renderTextualRow(body, row);
-          return;
-      }
-    };
-    const renderGroupRows = (body, rows) => {
-      var _a3, _b2;
-      const firstToggleKey = (_b2 = (_a3 = rows.find((r) => r.type === "toggle" && "key" in r.binding)) == null ? void 0 : _a3.binding.key) != null ? _b2 : null;
-      for (const row of rows) renderRow2(body, row, firstToggleKey);
-    };
-    for (const group of schema.groups) {
-      if (group.icon) {
-        const body = createSettingsGroup(container, { icon: group.icon, name: group.name });
-        const groupEl = (_a2 = body.parentElement) != null ? _a2 : container;
-        if (group.visibleWhen) entries.push({ el: groupEl, visibleWhen: group.visibleWhen });
-        renderGroupRows(body, group.rows);
-      } else {
-        const title = document.createElement("div");
-        title.className = "bz-setting-section-title";
-        title.textContent = group.name;
-        container.appendChild(title);
-        if (group.visibleWhen) entries.push({ el: title, visibleWhen: group.visibleWhen });
-        renderGroupRows(container, group.rows);
-      }
-    }
-    reevaluate();
-    return { refresh: reevaluate };
-  }
-  var TEXT_COMMIT_DELAY, CommitWarn;
-  var init_settings_schema2 = __esm({
-    "src/core/settings-schema.ts"() {
-      init_fake_obsidian();
-      init_settings_provider();
-      init_path_picker();
-      init_settings_modal();
-      init_ui();
-      TEXT_COMMIT_DELAY = 800;
-      CommitWarn = class {
-        constructor(initial, onCommit) {
-          this.initial = initial;
-          this.onCommit = onCommit;
-          this.warnedInitial = null;
-        }
-        fire(current2) {
-          if (!this.onCommit) return;
-          if (current2 !== this.initial) {
-            if (this.warnedInitial !== this.initial) {
-              this.warnedInitial = this.initial;
-              this.onCommit();
-            }
-          } else {
-            this.warnedInitial = null;
-          }
-        }
-      };
-    }
-  });
-
-  // src/core/settings-modal.ts
-  function createSettingsGroup(container, opts) {
-    const group = document.createElement("div");
-    group.className = "bz-settings-group";
-    const head = document.createElement("div");
-    head.className = "bz-settings-group-head";
-    const icon = document.createElement("span");
-    icon.className = "bz-settings-group-icon";
-    setIcon(icon, opts.icon);
-    const name = document.createElement("span");
-    name.className = "bz-settings-group-name";
-    name.textContent = opts.name;
-    const count = document.createElement("span");
-    count.className = "bz-settings-group-count";
-    count.textContent = "0 项";
-    head.append(icon, name, count);
-    const body = document.createElement("div");
-    body.className = "bz-settings-group-body";
-    group.append(head, body);
-    container.appendChild(group);
-    return body;
-  }
-  function isItemHidden(el) {
-    let cur = el;
-    while (cur && cur !== document.body) {
-      if (cur.classList.contains("bz-setting-hidden")) return true;
-      if (cur.style.display === "none") return true;
-      cur = cur.parentElement;
-    }
-    return false;
-  }
-  function refreshSettingsGroupCounts(content) {
-    content.querySelectorAll(".bz-settings-group").forEach((g) => {
-      const body = g.querySelector(".bz-settings-group-body");
-      const countEl = g.querySelector(".bz-settings-group-count");
-      if (!body || !countEl) return;
-      const n = [...body.querySelectorAll(".setting-item")].filter((el) => {
-        const h = el;
-        return !h.classList.contains("bz-setting-action-row") && !isItemHidden(h);
-      }).length;
-      countEl.textContent = `${n} 项`;
-      countEl.style.display = n > 0 ? "" : "none";
-    });
-  }
-  function markSettingSplitRows(container) {
-    container.querySelectorAll(".setting-item").forEach((el) => {
-      if (el.classList.contains("bz-path-picker-setting-row")) return;
-      const ctl = el.querySelector(".setting-item-control");
-      el.classList.toggle("bz-setting-split", !!ctl && ctl.children.length >= 2);
-    });
-  }
-  function closeSettingsModal() {
-    var _a2;
-    if (currentModal) {
-      const m = currentModal;
-      currentModal = null;
-      m.dispose();
-      (_a2 = m.onClose) == null ? void 0 : _a2.call(m);
-    }
-  }
-  function openSettingsModal(opts) {
-    var _a2;
-    closeSettingsModal();
-    const prevActive = document.activeElement;
-    const { mask, popup } = createOverlay({
-      maskId: "bz-settings-modal-mask",
-      popupId: "bz-settings-modal-popup",
-      // z-index 动态发号（ADR-0067）：原静态层规家族表随动态层级制退役，
-      // 全站规则只有一条——谁后显示谁在上（settings-modal 每次打开新建 DOM，创建即显示）
-      maxWidth: opts.maxWidth,
-      onMaskClick: () => closeSettingsModal()
-    });
-    const header = document.createElement("div");
-    header.className = "bz-settings-header";
-    const title = document.createElement("h3");
-    title.className = "bz-settings-title";
-    title.textContent = opts.title;
-    header.appendChild(title);
-    const content = document.createElement("div");
-    content.className = "bz-settings-content";
-    renderSettingsInto(content, (_a2 = opts.schema) != null ? _a2 : { groups: [] });
-    const hasVisibleItem = Array.from(content.querySelectorAll(".setting-item")).some(
-      (el) => !el.classList.contains("bz-setting-action-row") && !isItemHidden(el)
-    );
-    if (!hasVisibleItem) {
-      content.innerHTML = "";
-      const empty = document.createElement("div");
-      empty.className = "bz-settings-empty";
-      empty.textContent = opts.emptyText || "暂无设置项";
-      if (opts.emptyDesc) {
-        const desc = document.createElement("div");
-        desc.className = "bz-settings-empty-desc";
-        desc.textContent = opts.emptyDesc;
-        empty.appendChild(desc);
-      }
-      content.appendChild(empty);
-    }
-    popup.appendChild(header);
-    popup.appendChild(content);
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    mask.style.display = "block";
-    popup.style.display = "flex";
-    popup.setAttribute("role", "dialog");
-    popup.setAttribute("aria-modal", "true");
-    const firstFocusable = Array.from(popup.querySelectorAll(FOCUSABLE_SELECTOR)).find((el) => {
-      if (isItemHidden(el)) return false;
-      if (isMobileEnv()) {
-        const tag = el.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA") return false;
-      }
-      return true;
-    });
-    if (firstFocusable) firstFocusable.focus();
-    const handle = escManager.register("bz-settings-modal", {
-      isVisible: () => !!currentModal,
-      close: () => closeSettingsModal()
-    });
-    currentModal = {
-      mask,
-      popup,
-      onClose: opts.onClose,
-      dispose: () => {
-        mask.remove();
-        popup.remove();
-        handle.unregister();
-        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
-          prevActive.focus();
-        }
-      }
-    };
-  }
-  var FOCUSABLE_SELECTOR, currentModal;
-  var init_settings_modal = __esm({
-    "src/core/settings-modal.ts"() {
-      init_fake_obsidian();
-      init_dom();
-      init_esc_manager();
-      init_mobile();
-      init_settings_schema2();
-      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-      currentModal = null;
     }
   });
 
@@ -23055,7 +23027,7 @@ ${entry.content.trim()}`;
     const v = skin === "editorial" ? "editorial" : "paper";
     panel2.classList.add(`bz-todo-skin-${v}`);
   }
-  var import_moment5, ICON2, SCENE_PSEUDO_ICONS;
+  var import_moment5, ICON3, SCENE_PSEUDO_ICONS;
   var init_ui4 = __esm({
     "src/todo/ui.ts"() {
       import_moment5 = __toESM(require_moment());
@@ -23072,7 +23044,7 @@ ${entry.content.trim()}`;
       init_data5();
       init_due();
       init_state5();
-      ICON2 = {
+      ICON3 = {
         brand: "list-checks",
         close: "x",
         search: "search",
@@ -23103,9 +23075,9 @@ ${entry.content.trim()}`;
         sceneToday: "sun"
       };
       SCENE_PSEUDO_ICONS = {
-        全部: { icon: ICON2.sceneAll },
-        今日: { icon: ICON2.sceneToday },
-        重要: { icon: ICON2.star, cls: "bz-ic--warning" }
+        全部: { icon: ICON3.sceneAll },
+        今日: { icon: ICON3.sceneToday },
+        重要: { icon: ICON3.star, cls: "bz-ic--warning" }
       };
     }
   });
@@ -23802,13 +23774,11 @@ ${entry.content.trim()}`;
     };
     await enqueueFileTask(getDataFilePath(), () => jsonFileStore(getDataFilePath()).write(saveData));
   }
-  var import_moment6;
   var init_data7 = __esm({
     "src/belongings/data.ts"() {
       init_notice();
       init_settings_provider();
       init_storage();
-      import_moment6 = __toESM(require_moment());
       init_emoji_icon_map();
     }
   });
@@ -23956,7 +23926,7 @@ ${entry.content.trim()}`;
     return `<div class="bz-bel-detail">
     <div class="bz-bel-detail-head">
       <div class="bz-bel-detail-title">${esc(it.name)}</div>
-      <button class="bz-icon-btn" data-bd-close title="关闭">${iconSpan(ICON3.close)}</button>
+      <button class="bz-icon-btn" data-bd-close title="关闭">${iconSpan(ICON4.close)}</button>
     </div>
     <div class="bz-bel-detail-idrow">
       <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
@@ -23977,7 +23947,7 @@ ${entry.content.trim()}`;
     <div class="bz-btn-row bz-bel-detail-btns">
       <div class="bz-bel-form-spacer"></div>
       <button type="button" class="bz-btn bz-btn--ghost" data-bd-edit>${iconSpan("pencil", "bz-ic--sm")} 编辑</button>
-      <button type="button" class="bz-btn bz-btn--primary bz-bel-delbtn" data-bd-del>${iconSpan(ICON3.del, "bz-ic--sm")} 删除</button>
+      <button type="button" class="bz-btn bz-btn--primary bz-bel-delbtn" data-bd-del>${iconSpan(ICON4.del, "bz-ic--sm")} 删除</button>
     </div>
   </div>`;
   }
@@ -24056,20 +24026,19 @@ ${entry.content.trim()}`;
     specs.push({ icon: "trash-2", label: "删除", act: "del", danger: true });
     return specs;
   }
-  var ICON3, STATUS, STATUS_LABELS, STATUS_ORDER, SORT_OPTS;
+  var ICON4, STATUS, STATUS_ORDER, STATUS_LABELS, SORT_OPTS;
   var init_shared3 = __esm({
     "src/belongings/shared.ts"() {
       init_str();
       init_emoji_icon_map();
       init_emoji_icon_map();
       init_str();
-      ICON3 = {
+      ICON4 = {
         add: "plus",
         search: "search",
         close: "x",
         del: "trash-2",
         empty: "package",
-        chevR: "chevron-right",
         chevD: "chevron-down"
       };
       STATUS = {
@@ -24078,13 +24047,13 @@ ${entry.content.trim()}`;
         sold: { label: "已转卖", key: "sold", ic: "banknote" },
         discard: { label: "已丢弃", key: "discard", ic: "archive" }
       };
-      STATUS_LABELS = ["使用中", "闲置", "已转卖", "已丢弃"];
       STATUS_ORDER = [
         { key: "using", label: "使用中" },
         { key: "idle", label: "闲置" },
         { key: "sold", label: "已转卖" },
         { key: "discard", label: "已丢弃" }
       ];
+      STATUS_LABELS = STATUS_ORDER.map((s) => s.label);
       SORT_OPTS = [
         { v: "recent", label: "最近购入" },
         { v: "price", label: "投入最高" },
@@ -24109,26 +24078,26 @@ ${entry.content.trim()}`;
           <div class="bz-bel-mobhead-t">归物本</div>
           <div class="bz-bel-mobhead-sub" data-bel-mobstats></div>
         </div>
-        <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON3.close)}</button>
+        <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON4.close)}</button>
       </div>
     </div>
     <div class="bz-bel-chips" data-bel-chips></div>
     <div class="bz-toolrow bz-bel-toolrow">
-      <div class="bz-search">${iconSpan(ICON3.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类…"></div>
+      <div class="bz-search">${iconSpan(ICON4.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类…"></div>
       <div class="bz-bel-yearsel">
-        <div class="bz-bel-select" data-bel-year role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">全部年份</span>${iconSpan(ICON3.chevD, "bz-bel-select-chev")}</div>
+        <div class="bz-bel-select" data-bel-year role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">全部年份</span>${iconSpan(ICON4.chevD, "bz-bel-select-chev")}</div>
         <div class="bz-bel-dropmenu" data-bel-yearmenu role="listbox"></div>
       </div>
       <div class="bz-bel-yearsel bz-bel-mobsortsel-wrap">
-        <div class="bz-bel-select" data-bel-mobsortsel role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">最近购入</span>${iconSpan(ICON3.chevD, "bz-bel-select-chev")}</div>
+        <div class="bz-bel-select" data-bel-mobsortsel role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">最近购入</span>${iconSpan(ICON4.chevD, "bz-bel-select-chev")}</div>
         <div class="bz-bel-dropmenu" data-bel-mobsortmenu role="listbox"></div>
       </div>
       <div class="bz-bel-sort" data-bel-sort></div>
-      <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${iconSpan(ICON3.add, "bz-ic--sm")} 记一笔</button>
+      <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${iconSpan(ICON4.add, "bz-ic--sm")} 记一笔</button>
     </div>
     <div class="bz-mobstrip" data-bel-mobstatus></div>
     <div class="bz-bel-content" data-bel-content></div>
-    <button class="bz-btn bz-btn--md bz-bel-mobadd" data-bel-add>${iconSpan(ICON3.add, "bz-ic--sm")} 记一笔</button>
+    <button class="bz-btn bz-btn--md bz-bel-mobadd" data-bel-add>${iconSpan(ICON4.add, "bz-ic--sm")} 记一笔</button>
   </div>
 </div>`;
   }
@@ -24175,7 +24144,7 @@ ${entry.content.trim()}`;
     return `投入 ${moneyShort(totalAssets(items))} · 日均 ${avgDailyCost(items).toFixed(2)}`;
   }
   function emptyHtml(noMatch) {
-    return `<div class="bz-empty">${iconSpan(ICON3.empty, "bz-empty-ic")}<div class="bz-empty-title">${noMatch ? "没有符合条件的物品" : "这里还没有物品"}</div><div class="bz-empty-desc">${noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"}</div></div>`;
+    return `<div class="bz-empty">${iconSpan(ICON4.empty, "bz-empty-ic")}<div class="bz-empty-title">${noMatch ? "没有符合条件的物品" : "这里还没有物品"}</div><div class="bz-empty-desc">${noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"}</div></div>`;
   }
   function cellHtml(it, idx) {
     var _a2;
@@ -24679,19 +24648,10 @@ ${entry.content.trim()}`;
     M4.q = "";
   }
   function cleanupBelongings() {
-    stopAutoRefresh();
-    closeBelDetail();
-    if (dropDocClick) {
-      document.removeEventListener("click", dropDocClick);
-      dropDocClick = null;
-    }
+    closePanel2();
     if (bodyThemeObserver) {
       bodyThemeObserver.disconnect();
       bodyThemeObserver = null;
-    }
-    if (M4.overlay) {
-      M4.overlay.remove();
-      M4.overlay = null;
     }
     resetBelongingsState();
   }
@@ -24797,8 +24757,7 @@ ${entry.content.trim()}`;
           closeBelDetail();
           return;
         }
-        drawActs();
-        openBelDetail(itemById(it.id));
+        openBelDetail(now);
       })();
     });
     mask.addEventListener("mousedown", (e) => {
@@ -24885,19 +24844,20 @@ ${entry.content.trim()}`;
       }
     }));
   }
-  function openRowMenuAt(it, x, y) {
+  function makeSheetRebuild(it) {
     const rebuild = () => {
       const it2 = itemById(it.id);
       if (it2) refreshItemSheet(buildActions(it2, rebuild), sheetHeadEl2(it2));
     };
+    return rebuild;
+  }
+  function openRowMenuAt(it, x, y) {
+    const rebuild = makeSheetRebuild(it);
     openItemMenu(x, y, buildActions(it, rebuild), true, "bz-bel-menu");
     resetItemMenuClickGuard();
   }
   function openMobSheet(it) {
-    const rebuild = () => {
-      const it2 = itemById(it.id);
-      if (it2) refreshItemSheet(buildActions(it2, rebuild), sheetHeadEl2(it2));
-    };
+    const rebuild = makeSheetRebuild(it);
     openItemSheet(buildActions(it, rebuild), { sheetHead: sheetHeadEl2(it) });
   }
   async function deleteItem(it) {
@@ -27093,10 +27053,10 @@ ${body}`;
   function normalizeUrl2(raw) {
     return raw.trim();
   }
-  var import_moment7, TIME_RE, LiteratureData;
+  var import_moment6, TIME_RE, LiteratureData;
   var init_data9 = __esm({
     "src/literature/data.ts"() {
-      import_moment7 = __toESM(require_moment());
+      import_moment6 = __toESM(require_moment());
       init_storage();
       init_settings_provider();
       init_utils();
@@ -27150,7 +27110,7 @@ ${body}`;
                 remark: item.remark || null,
                 notePath: item.notePath || null,
                 videoPath: item.videoPath || null,
-                created: item.created || (0, import_moment7.default)().format("YYYY-MM-DD HH:mm:ss"),
+                created: item.created || (0, import_moment6.default)().format("YYYY-MM-DD HH:mm:ss"),
                 processedAt: item.processedAt || null,
                 title: item.title || null,
                 uploader: item.uploader || null,
@@ -27179,7 +27139,7 @@ ${body}`;
             uploader: ((_e = input.uploader) == null ? void 0 : _e.trim()) || null,
             notePath: null,
             videoPath: null,
-            created: (0, import_moment7.default)().format("YYYY-MM-DD HH:mm:ss"),
+            created: (0, import_moment6.default)().format("YYYY-MM-DD HH:mm:ss"),
             processedAt: null,
             archived: false,
             archivedAt: null,
@@ -30989,15 +30949,15 @@ ${sample}`,
   }
   function actionSpecs2(it) {
     const acts = [];
-    if ((it.url || "").trim()) acts.push({ icon: ICON4.open, label: "打开", act: "open" });
+    if ((it.url || "").trim()) acts.push({ icon: ICON5.open, label: "打开", act: "open" });
     acts.push({
-      icon: it.pinned ? ICON4.pinOff : ICON4.pin,
+      icon: it.pinned ? ICON5.pinOff : ICON5.pin,
       label: it.pinned ? "取消置顶" : "置顶",
       act: "pin"
     });
-    acts.push({ icon: ICON4.edit, label: "编辑", act: "edit" });
-    acts.push(it.archived ? { icon: ICON4.unarchive, label: "取消归档", act: "unarchive" } : { icon: ICON4.archive, label: "归档", act: "archive" });
-    acts.push({ icon: ICON4.del, label: "删除", act: "del", danger: true });
+    acts.push({ icon: ICON5.edit, label: "编辑", act: "edit" });
+    acts.push(it.archived ? { icon: ICON5.unarchive, label: "取消归档", act: "unarchive" } : { icon: ICON5.archive, label: "归档", act: "archive" });
+    acts.push({ icon: ICON5.del, label: "删除", act: "del", danger: true });
     return acts;
   }
   function ctxMenuHtml(acts) {
@@ -31030,18 +30990,18 @@ ${sample}`,
     <div class="bz-fav-fld bz-fav-inline"><span class="bz-fav-sw${it && it.pinned ? " bz-fav-on" : ""}" id="fz-pin"></span><span class="bz-fav-fld-desc">置顶后恒排最前</span></div>
     <div class="bz-fav-err" id="fz-err"></div>
     <div class="bz-fav-btns">
-      <button type="button" id="fz-ai" class="bz-fav-ai-btn">${iconSpan(ICON4.ai, "bz-ic--xs")} <span>AI 整理</span></button>
+      <button type="button" id="fz-ai" class="bz-fav-ai-btn">${iconSpan(ICON5.ai, "bz-ic--xs")} <span>AI 整理</span></button>
       <button type="button" data-fz-cancel>取消</button>
       <button type="button" id="fz-save" class="bz-fav-pri">${editing ? "更新" : "保存"}</button>
     </div>
   </div>`;
   }
-  var ICON4;
+  var ICON5;
   var init_shared4 = __esm({
     "src/favorites/shared.ts"() {
       init_str();
       init_config2();
-      ICON4 = {
+      ICON5 = {
         close: "x",
         add: "plus",
         open: "external-link",
@@ -31060,14 +31020,14 @@ ${sample}`,
   function panelHtml4(mobile2) {
     const mob = mobile2 ? " bz-fav-mob bz-panel-mtop" : "";
     return `<div class="bz-fav-panel bz-fav-scope${mob}">
-  <div class="bz-fav-head"><h1>收藏本</h1><button class="bz-fav-mob-close bz-touch-target bz-touch-target--xl" data-fav-close title="关闭">${iconSpan(ICON4.close, "bz-ic--xs")}</button></div>
+  <div class="bz-fav-head"><h1>收藏本</h1><button class="bz-fav-mob-close bz-touch-target bz-touch-target--xl" data-fav-close title="关闭">${iconSpan(ICON5.close, "bz-ic--xs")}</button></div>
   <div class="bz-fav-tags" data-fav-tags></div>
   <div class="bz-fav-board" data-fav-content></div>
 </div>`;
   }
   function chipsHtml2(items, view, mobile2) {
     const mk = (label, ic, cnt, active2, grey = false) => `<button class="bz-fav-chip${active2 ? " bz-fav-on" : ""}${grey ? " bz-fav-chip--grey" : ""}" data-fav-tag="${esc(label)}">${ic ? iconSpan(ic, "bz-ic--xs") : ""}<span>${esc(label)} ${cnt}</span></button>`;
-    const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${iconSpan(ICON4.add, "bz-ic--xs")}<span>新收藏</span></button>`;
+    const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${iconSpan(ICON5.add, "bz-ic--xs")}<span>新收藏</span></button>`;
     const chips = mk("全部", "", visibleItems(items).length, !view.archived && view.tag === null) + mk("已归档", "archive", archivedItems(items).length, view.archived, true) + TAGS.map((t) => {
       const n = tagCount(items, t.label);
       return n ? mk(t.label, t.ic, n, !view.archived && view.tag === t.label) : "";
@@ -31460,11 +31420,7 @@ ${sample}`,
     if (!_baseline) return false;
     const popup = document.querySelector(".bz-fav-form");
     if (!popup) return false;
-    const g = (id) => {
-      var _a2, _b2;
-      return (_b2 = (_a2 = popup.querySelector(id)) == null ? void 0 : _a2.value) != null ? _b2 : "";
-    };
-    return g("#fz-title") !== _baseline.title || g("#fz-url") !== _baseline.url || g("#fz-desc") !== _baseline.desc || formPinNow(popup) !== _baseline.pinned || formTagsNow(popup) !== _baseline.tags;
+    return inputVal(popup, "#fz-title") !== _baseline.title || inputVal(popup, "#fz-url") !== _baseline.url || inputVal(popup, "#fz-desc") !== _baseline.desc || formPinNow(popup) !== _baseline.pinned || formTagsNow(popup) !== _baseline.tags;
   }
   function requestCloseForm(popup) {
     if (formDirty()) confirmDiscard(() => closeForm(popup));
@@ -31477,11 +31433,14 @@ ${sample}`,
     closeMenu();
     ((_a2 = popup.closest(".bz-fav-form-mask")) != null ? _a2 : popup).remove();
   }
+  function inputVal(popup, id) {
+    var _a2, _b2;
+    return (_b2 = (_a2 = popup.querySelector(id)) == null ? void 0 : _a2.value) != null ? _b2 : "";
+  }
   function openForm2(item) {
     var _a2, _b2, _c;
     ensureFavoritesEsc();
     const it = item;
-    const editing = !!it;
     const mask = document.createElement("div");
     mask.className = "bz-fav-form-mask bz-fav-scope";
     mask.innerHTML = formHtml(it);
@@ -31540,13 +31499,9 @@ ${sample}`,
       notice("AI 服务未配置或不可用", "warning");
       return;
     }
-    const g = (id) => {
-      var _a2, _b2;
-      return (_b2 = (_a2 = popup.querySelector(id)) == null ? void 0 : _a2.value) != null ? _b2 : "";
-    };
-    const title = g("#fz-title").trim();
-    const url = g("#fz-url").trim();
-    const desc = g("#fz-desc").trim();
+    const title = inputVal(popup, "#fz-title").trim();
+    const url = inputVal(popup, "#fz-url").trim();
+    const desc = inputVal(popup, "#fz-desc").trim();
     if (!title && !url && !desc) {
       notice("请至少输入标题、链接或简介中的一项，以便 AI 参考");
       return;
@@ -31634,12 +31589,8 @@ GitHub 仓库：${ghInfo.title}
   }
   async function saveForm(popup, it, sel, errEl) {
     if (_saving) return;
-    const g = (id) => {
-      var _a2, _b2;
-      return (_b2 = (_a2 = popup.querySelector(id)) == null ? void 0 : _a2.value) != null ? _b2 : "";
-    };
-    const title = g("#fz-title").trim();
-    const url = g("#fz-url").trim();
+    const title = inputVal(popup, "#fz-title").trim();
+    const url = inputVal(popup, "#fz-url").trim();
     if (!title) {
       errEl.textContent = "请输入标题";
       return;
@@ -31652,7 +31603,7 @@ GitHub 仓库：${ghInfo.title}
       errEl.textContent = "请至少选择一个标签";
       return;
     }
-    const desc = g("#fz-desc").trim();
+    const desc = inputVal(popup, "#fz-desc").trim();
     const tags = [...sel];
     const pin = formPinNow(popup);
     _saving = true;
@@ -38515,6 +38466,25 @@ ${text}`;
   });
 
   // src/settings-panel/ui.ts
+  function cacheRowsFor(domainId, schema) {
+    const rows = schema.groups.flatMap(
+      (g) => g.rows.map((r) => {
+        var _a2, _b2;
+        return { name: (_a2 = r.name) != null ? _a2 : "", desc: (_b2 = r.desc) != null ? _b2 : "" };
+      })
+    );
+    schemaRowCache.set(domainId, rows);
+  }
+  function groupDomains(visible, matches) {
+    const hit = matches != null ? matches : () => true;
+    const secs = NAV_SECS.map((sec) => ({
+      title: sec.title,
+      domains: visible.filter((d) => sec.ids.indexOf(d.id) >= 0 && hit(d))
+    }));
+    const rest = visible.filter((d) => !NAV_SECS.some((sec) => sec.ids.indexOf(d.id) >= 0) && hit(d));
+    if (rest.length) secs.push({ title: "其他", domains: rest });
+    return secs;
+  }
   function badgeOf(d) {
     var _a2;
     if (d.noSettings || !d.schemaLoader) return "—";
@@ -38732,12 +38702,7 @@ ${text}`;
             nav.innerHTML = "";
             const visible = listableDomains();
             const matches = (d) => !query || d.name.includes(query) || d.desc.includes(query) || (schemaRowCache.get(d.id) || []).some((r) => r.name.includes(query));
-            const secs = NAV_SECS.map((sec) => ({
-              title: sec.title,
-              domains: visible.filter((d) => sec.ids.indexOf(d.id) >= 0 && matches(d))
-            }));
-            const rest = visible.filter((d) => !NAV_SECS.some((sec) => sec.ids.indexOf(d.id) >= 0) && matches(d));
-            if (rest.length) secs.push({ title: "其他", domains: rest });
+            const secs = groupDomains(visible, matches);
             for (const sec of secs) {
               if (!sec.domains.length) continue;
               let itemsHtml = "";
@@ -38787,13 +38752,7 @@ ${text}`;
               const count = visibleItemCount(schema);
               loadedCounts.set(d.id, count);
               navBadges.set(d.id, count > 0 ? String(count) : "—");
-              const rowsOf = schema.groups.flatMap(
-                (g) => g.rows.map((r) => {
-                  var _a3, _b2;
-                  return { name: (_a3 = r.name) != null ? _a3 : "", desc: (_b2 = r.desc) != null ? _b2 : "" };
-                })
-              );
-              schemaRowCache.set(d.id, rowsOf);
+              cacheRowsFor(d.id, schema);
             } catch (e) {
               navBadges.set(d.id, "·");
             }
@@ -38815,17 +38774,6 @@ ${text}`;
         /** 空态构建（组件库 uiEmpty：图标 lucide + 标题 + 描述） */
         emptyEl(icon, title, desc) {
           return uiEmpty({ icon, title, desc });
-        }
-        /** 加载态（spinner + 文案） */
-        loadingEl() {
-          const loading2 = document.createElement("div");
-          loading2.className = "bz-sp-loading";
-          const sp = document.createElement("span");
-          sp.className = "bz-spinner";
-          const tx = document.createElement("span");
-          tx.textContent = "加载设置…";
-          loading2.append(sp, tx);
-          return loading2;
         }
         /**
          * 渲染某域设置到容器：内嵌渲染器（与 ⚙️ 弹窗同数据源）。
@@ -38857,13 +38805,7 @@ ${text}`;
             body.innerHTML = "";
             const handle = renderPanelSchema(body, schema);
             this.renderHandles.push(handle);
-            const rowsOf = schema.groups.flatMap(
-              (g) => g.rows.map((r) => {
-                var _a2, _b2;
-                return { name: (_a2 = r.name) != null ? _a2 : "", desc: (_b2 = r.desc) != null ? _b2 : "" };
-              })
-            );
-            schemaRowCache.set(domain.id, rowsOf);
+            cacheRowsFor(domain.id, schema);
             const groupEls = body.querySelectorAll(".bz-sp-group");
             const visibleGroups = [...groupEls].filter((g) => g.style.display !== "none").length;
             const count = visibleItemCount(schema);
@@ -38912,22 +38854,15 @@ ${text}`;
           searchWrap.appendChild(clearBtn);
           clearBtn.addEventListener("click", () => {
             searchIn.value = "";
-            searchWrap.classList.remove("hasval");
             render2("");
             searchIn.focus();
           });
           const render2 = (q2) => {
             const query = q2.trim();
-            searchWrap.classList.toggle("hasval", !!query);
             list.innerHTML = "";
             if (!query) {
               const visible = listableDomains();
-              const secs = NAV_SECS.map((sec) => ({
-                title: sec.title,
-                domains: visible.filter((d) => sec.ids.indexOf(d.id) >= 0)
-              }));
-              const rest = visible.filter((d) => !NAV_SECS.some((sec) => sec.ids.indexOf(d.id) >= 0));
-              if (rest.length) secs.push({ title: "其他", domains: rest });
+              const secs = groupDomains(visible);
               for (const sec of secs) {
                 if (!sec.domains.length) continue;
                 const secEl = document.createElement("div");
@@ -39074,7 +39009,7 @@ ${text}`;
             ));
             return;
           }
-          body.appendChild(this.loadingEl());
+          body.innerHTML = loadingHtml();
           const openSeq = ++this.renderSeq;
           try {
             const schema = await domain.schemaLoader();
@@ -39084,13 +39019,7 @@ ${text}`;
             }
             body.innerHTML = "";
             renderPanelSchema(body, schema);
-            const rowsOf = schema.groups.flatMap(
-              (g) => g.rows.map((r) => {
-                var _a2, _b2;
-                return { name: (_a2 = r.name) != null ? _a2 : "", desc: (_b2 = r.desc) != null ? _b2 : "" };
-              })
-            );
-            schemaRowCache.set(domain.id, rowsOf);
+            cacheRowsFor(domain.id, schema);
             const count = visibleItemCount(schema);
             navBadges.set(domain.id, count > 0 ? String(count) : "·");
           } catch (e) {
@@ -41053,8 +40982,7 @@ ${text}`;
   var H = {
     currentOverlay: null,
     appRef: null,
-    river: null,
-    closing: false
+    river: null
   };
 
   // src/home/ui.ts
@@ -41907,7 +41835,6 @@ ${text}`;
 
   // src/home/index.ts
   var initialized8 = false;
-  var escRegistered3 = false;
   function ensureHome(app2) {
     if (initialized8) return;
     initialized8 = true;
@@ -41919,10 +41846,7 @@ ${text}`;
       closeOverlay();
       return;
     }
-    if (!escRegistered3) {
-      escRegistered3 = true;
-      registerEscapeHandler();
-    }
+    registerEscapeHandler();
     createOverlay2(app2);
   }
 

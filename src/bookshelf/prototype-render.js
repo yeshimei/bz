@@ -21,21 +21,13 @@ var BZR_bookshelf = (() => {
   // src/bookshelf/render.ts
   var render_exports = {};
   __export(render_exports, {
-    EMPTY_BOOKS_ICON: () => EMPTY_BOOKS_ICON,
-    EMPTY_FILTER_ICON: () => EMPTY_FILTER_ICON,
-    EMPTY_SEARCH_ICON: () => EMPTY_SEARCH_ICON,
-    ICON: () => ICON,
-    SORT_LABEL: () => SORT_LABEL,
-    STATUS_COLORS: () => STATUS_COLORS,
     catColor: () => catColor,
     catFilterItems: () => catFilterItems,
     categoryLabel: () => categoryLabel,
     currentSideItems: () => currentSideItems,
     detailBodyHtml: () => detailBodyHtml,
-    esc: () => esc,
     fitTitle: () => fitTitle,
     getDisplayItems: () => getDisplayItems,
-    iconSpan: () => iconSpan,
     itemId: () => itemId,
     kwFilter: () => kwFilter,
     labelsHtml: () => labelsHtml,
@@ -80,24 +72,8 @@ var BZR_bookshelf = (() => {
     title: "书名"
   };
   var ICON = {
-    search: "search",
     report: "bar-chart-3",
-    settings: "settings",
-    funnel: "funnel",
-    close: "x",
-    books: "library",
-    bookOpen: "book-open",
-    book: "book",
-    checkCircle: "check-circle",
-    highlighter: "highlighter",
-    brain: "brain",
-    clock: "clock",
-    trash: "trash-2",
-    empty: "library-big",
-    sort: "arrow-up-down",
-    tag: "tag",
-    grid: "layout-grid",
-    calendarHeart: "calendar-heart"
+    close: "x"
   };
   var EMPTY_BOOKS_ICON = "library-big";
   var EMPTY_SEARCH_ICON = "search-x";
