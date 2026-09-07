@@ -1,7 +1,7 @@
 /**
  * 经纬布局（settings-panel，ADR-0105 布局差异层）：面板骨架与导航差异。
  * 当前唯一布局 = P1 系统面板：桌面 B 侧栏工作台 + 移动 M1 命令面板。
- * 全部逐字对齐原型 prototype.app.js（mount / renderNav / renderMobList / openDomain）；
+ * 骨架/导航串与 ui.ts 消费侧同一份 markup（ADR-0104/0106 单源，评审壳零自绘）；
  * 控件级工厂见 ../../shared.ts；本文件只写面板骨架/头行/导航/移动列表/域弹窗壳。
  */
 import { esc, iconSpan } from '../../../core/ui/str';

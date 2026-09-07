@@ -19,7 +19,7 @@ import type { SettingsSchema, SettingsRow, SettingsSnapshot, SettingsRowContext 
 import { setIcon } from 'obsidian';
 import { openDirPicker } from './dir-picker';
 import { notice } from '../core/notice';
-// markup 单源（ADR-0104，以原型为真理）：行/组/控件结构串全出自渲染纯层，本文件只留行为绑定
+// markup 单源（ADR-0104/0105）：行/组/控件结构串全出自渲染纯层，本文件只留行为绑定
 import * as R from './render';
 import { mountIcons } from '../core/ui';
 
@@ -183,7 +183,8 @@ export function makePathRowCtrl(opts: {
   addBtn.addEventListener('click', openPicker);
 
   const renderChips = () => {
-    ctrl.querySelectorAll('.bz-chip').forEach((c) => c.remove());
+    // 重渲前清旧 chip（.bz-sp-chip 契约类——含 muted/locked；旧值残留即双 chip 缺陷）
+    ctrl.querySelectorAll('.bz-sp-chip').forEach((c) => c.remove());
     // 回落 chip（可选）：绑定值为空时展示「实际生效目录」锁定态 chip（不可移除；点击重开选择器改显式值）
     if (!current.length && opts.fallbackChip) {
       const fb = document.createElement('span');
