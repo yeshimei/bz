@@ -30,7 +30,7 @@ import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } 
 import { buildStatPageHtml } from './analysis';
 import { watchPosterFetch } from './poster-watch';
 import {
-  ICON, statusText, itemKey, itemByKey, doubanSearchUrl,
+  ICON, statusText, itemByKey, doubanSearchUrl,
   detailModalHtml, confirmModalHtml, formModalHtml, setModalHtml,
   aiPageHtml, actionRowsHtml, sheetHeadHtml, pcardHtml, type AiPageInput,
   midnightDeskHtml, midnightMobHtml, renderMidnightDesk, renderMidnightMob,
@@ -44,7 +44,6 @@ function cinemaStyleOf(): CinemaStyle {
   const raw = (tryGetSettings() as Record<string, unknown>).cinemaStyle;
   return raw === 'gazette' || raw === 'booth' ? raw : 'midnight';
 }
-void itemKey; // 稳定键口径单源在 shared（markup 拼 data-cinema-key）；行为层只用 itemByKey 回查
 
 /** 相对日期：统一走 core formatRelativeTime；本域仅保留「未标注日期」兜底语义 */
 export function relDate(d: string | null, now: Date = new Date()): string {

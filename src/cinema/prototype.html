@@ -116,6 +116,7 @@ let GRID_COLS = Math.min(12, Math.max(2, parseInt(SET.cols, 10) || 5));
 
 /* ==================== 午夜场（markup 单源消费；状态与插件 M 同构） ==================== */
 const MM = { view: 'list', g: '全部', st: null, sort: SET.sort || 'date', q: '', ai: { phase: 'idle', results: null, err: '', base: '' } };
+let lpFired = false, lpTimer = 0;
 const day = w => (w || '').slice(0, 10);
 
 function midList() { let a = DB.filter(x => (MM.g === '全部' || x.group === MM.g) && (!MM.st || x.status === MM.st));
@@ -137,8 +138,18 @@ function midInput() {
     watchedCount: DB.filter(x => x.status === '已看').length,
     aiHtml: R.aiPageHtml(midAiInput()), aiCount: MM.ai.phase === 'result' ? MM.ai.results.length : null,
     statHtml: statPageHTML(), poster: it => it.poster || null }; }
+/* 长按（移动端 m-grid 卡片；markup 单源后每次渲染重建，须随 midRefresh 重挂——与插件 renderAll 同构） */
+function attachLongPress(root) {
+  root.querySelectorAll('.m-grid .pcard').forEach(c => {
+    c.addEventListener('pointerdown', () => { const it = byKey(c.dataset.cinemaKey); if (!it) return;
+      lpFired = false;
+      lpTimer = setTimeout(() => { lpFired = true; openSheet(root, it); }, 450); });
+    ['pointerup','pointerleave','pointercancel'].forEach(ev => c.addEventListener(ev, () => clearTimeout(lpTimer)));
+    c.addEventListener('click', e => { if (lpFired) { e.stopImmediatePropagation(); lpFired = false; } });
+    c.addEventListener('contextmenu', ev => ev.preventDefault()); });
+}
 function midRefresh(root) {
-  if (root.classList.contains('mob')) R.renderMidnightMob(root, midInput());
+  if (root.classList.contains('mob')) { R.renderMidnightMob(root, midInput()); attachLongPress(root); }
   else R.renderMidnightDesk(root, midInput());
   mountIcons(root); }
 
@@ -280,7 +291,6 @@ function aiAct(root, btn) {
     MM.ai.results = [...SIM_POOL].sort(() => Math.random() - 0.5).slice(0, 5); midAll(root); }, 1200); }
 
 /* ---------- 午夜场事件（sec 级委托一次；与插件 ui.ts bindMidnight 同构） ---------- */
-let lpTimer = null, lpFired = false;
 function midnightBind(root) {
   root.addEventListener('click', e => {
     const t = e.target;
@@ -317,14 +327,7 @@ function midnightBind(root) {
     const host = cardEl.closest('.bz-cinema--midnight');
     const h = host.getBoundingClientRect();
     openMenu(root, it, e.clientX - h.left + 4, e.clientY - h.top + 4); });
-  /* 长按（移动端 m-grid 卡片；渲染重建后重挂） */
-  root.querySelectorAll('.m-grid .pcard').forEach(c => {
-    c.addEventListener('pointerdown', () => { const it = byKey(c.dataset.cinemaKey); if (!it) return;
-      lpFired = false;
-      lpTimer = setTimeout(() => { lpFired = true; openSheet(root, it); }, 450); });
-    ['pointerup','pointerleave','pointercancel'].forEach(ev => c.addEventListener(ev, () => clearTimeout(lpTimer)));
-    c.addEventListener('click', e => { if (lpFired) { e.stopImmediatePropagation(); lpFired = false; } });
-    c.addEventListener('contextmenu', ev => ev.preventDefault()); });
+  /* 搜索（防抖 300ms，保焦点；与插件 onSearchInput 同语义） */
   /* 搜索（防抖 300ms，保焦点；与插件 onSearchInput 同语义） */
   root.addEventListener('input', e => {
     const t = e.target;
@@ -558,6 +561,12 @@ if (location.search.includes('selftest')) {
       t('状态筛选联动', mob.querySelectorAll('.m-grid .pcard').length === DB.filter(x => x.status === '已看').length && mob.querySelector('.j-mtitle').textContent === '全部 · 已看');
       mob.querySelector('.chip[data-c="all"]').click();
       t('chips回全部', mob.querySelectorAll('.m-grid .pcard').length === DB.length);
+      const badges = [...desk.querySelectorAll('.grid .pcard .badge')].map(b => b.textContent);
+      t('未看徽标文字(串/数兼容)', badges.length === DB.filter(x => x.status !== '已看').length && badges.every(b => b === '想看' || b === '在看'));
+      t('已看卡无徽标', [...desk.querySelectorAll('.grid .pcard')].filter(c => c.querySelector('.badge') === null).length === DB.filter(x => x.status === '已看').length);
+      t('rail状态计数=数据口径', (() => { const want = DB.filter(x => x.status === '想看').length, watching = DB.filter(x => x.status === '在看').length, watched = DB.filter(x => x.status === '已看').length;
+        const rail = [...desk.querySelectorAll('[data-s] .n, [data-s] b, [data-s]')].map(e => e.textContent);
+        return rail.includes(String(want)) && rail.includes(String(watching)) && rail.includes(String(watched)); })());
       desk.querySelector('.grid .pcard').click();
       const dm = desk.querySelector('.cn-ovl .cn-modal');
       t('详情弹窗(单源)', !!dm && !!dm.querySelector('.dm-title') && !!dm.querySelector('.j-similar'));
@@ -574,7 +583,8 @@ if (location.search.includes('selftest')) {
       desk.querySelector('.j-ai-start').click();
       await sleep(1500);
       t('AI结果5条(单源rec-card)', desk.querySelectorAll('.j-view .rec-card').length === 5);
-      desk.querySelector('.j-mgear') === null && t('mob设置钮(单源m-tool)', !!mob.querySelector('.j-mgear'));
+      t('desk无设置钮(桌面专属)', desk.querySelector('.j-mgear') === null);
+      t('mob设置钮(单源m-tool)', !!mob.querySelector('.j-mgear'));
       mob.querySelector('.j-mgear').click();
       const sm = mob.querySelector('.cn-ovl .cn-modal');
       t('设置弹窗(单源set-row)', !!sm && sm.querySelectorAll('.set-row').length === 5);
