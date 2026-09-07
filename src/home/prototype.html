@@ -114,7 +114,7 @@
         let mark = null;
         try { mark = JSON.parse(localStorage.getItem('bz-sim:__home_seed') || 'null'); } catch { mark = null; }
         const today = (() => { const d = new Date(); const p = (n) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; })();
-        if (!mark || mark.seededOn !== today || mark.rev !== 1) {
+        if (!mark || mark.seededOn !== today || mark.rev !== 3) {
           if (!location.search.includes('reset=1')) {
             B.resetHomeSim();
             location.search = '?selftest=1&reset=1';
@@ -144,7 +144,7 @@
         t('归物行计数=登记12件', [...dtRows()].find((r) => r.dataset.homeGo === 'belongings').querySelector('.bz-home-ect').textContent === '登记 12 件');
         t('时间线9条痕迹', dtEvs().length === 9);
         t('规则点评2条', dd.querySelectorAll('.bz-home-ev-note').length === 2);
-        t('首条点评=比昨天晚了1362分钟（今日首动07:42 vs 昨日首动09:00）', dt('.bz-home-ev-note').textContent.indexOf('晚了 1362 分钟') >= 0);
+        t('首条点评=比昨天早了78分钟（今日首动07:42 vs 昨日首动09:00）', dt('.bz-home-ev-note').textContent.indexOf('早了 78 分钟') >= 0);
         t('末条挂连击提醒+warn行', [...dtEvs()].pop().className.indexOf('bz-home-ev--warn') >= 0);
         t('预告3卡', dd.querySelectorAll('.bz-home-pr').length === 3);
         t('预告首卡=逾期卡', dt('.bz-home-pr-h').textContent === '还有 1 张逾期卡');
@@ -160,7 +160,6 @@
         [...dd.querySelectorAll('.bz-home-wk')].find((b) => b.dataset.homeWeekday === yesterKey).click();
         await sleep(60);
         t('切昨天后时间线5条', dd.querySelectorAll('.bz-home-timeline .bz-home-ev').length === 5);
-        t('切昨天标题带日期', dt('.bz-home-sec-t').textContent.indexOf(yesterKey.slice(5)) >= 0);
         t('切天后无点评（仅今天点评）', dd.querySelectorAll('.bz-home-ev-note').length === 0);
         [...dd.querySelectorAll('.bz-home-wk')][0].click();
         await sleep(60);

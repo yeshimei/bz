@@ -5,10 +5,10 @@
  */
 import type { SortKey } from './state';
 
-/** 状态中文标签（BookshelfItem.status 值） */
-export const STATUS_UNREAD = '未读';
-export const STATUS_READING = '在读';
-export const STATUS_DONE = '已读';
+/** 状态中文标签（BookshelfItem.status 值；域内 STATUS_COLORS 键用，不作公共 API） */
+const STATUS_UNREAD = '未读';
+const STATUS_READING = '在读';
+const STATUS_DONE = '已读';
 
 /** 状态 → 展示色 token 映射（徽章/色点/统计条用；css 变量名不带 var() 包裹，由调用处内联） */
 export const STATUS_COLORS: Record<string, string> = {
@@ -26,24 +26,8 @@ export const SORT_LABEL: Record<SortKey, string> = {
 
 /** 桌面头行/弹窗图标（lucide 名） */
 export const ICON = {
-  search: 'search',
   report: 'bar-chart-3',
-  settings: 'settings',
-  funnel: 'funnel',
   close: 'x',
-  books: 'library',
-  bookOpen: 'book-open',
-  book: 'book',
-  checkCircle: 'check-circle',
-  highlighter: 'highlighter',
-  brain: 'brain',
-  clock: 'clock',
-  trash: 'trash-2',
-  empty: 'library-big',
-  sort: 'arrow-up-down',
-  tag: 'tag',
-  grid: 'layout-grid',
-  calendarHeart: 'calendar-heart',
 } as const;
 
 /** 空态/搜索空态图标（lucide） */

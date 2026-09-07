@@ -14,9 +14,6 @@ import {
 } from '../../shared';
 import type { CinemaItem } from '../../state';
 
-// 再出口（壳经 window.BZR_cinema 取用）
-export { esc, iconSpan };
-
 // ---------- 壳骨架 ----------
 
 /** desk 壳（900×620：左侧栏 + 主视图；j-groups/j-status/j-view 为渲染挂点） */
@@ -122,7 +119,7 @@ export interface MidnightRenderInput {
   aiHtml: string;
   /** AI 结果部数（页头计数；null = 无结果） */
   aiCount: number | null;
-  /** 观影分析页 HTML（analysis.buildStatPageHtml / 壳自绘演示统计） */
+  /** 观影分析页 HTML（analysis.buildAnalysisHTML / 壳自绘演示统计） */
   statHtml: string;
   /** 海报资源解析（插件 vault resourcePath，壳给演示字段直读） */
   poster: (it: CinemaItem) => string | null;

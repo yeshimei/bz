@@ -79,11 +79,11 @@ describe('enh-sweep-c：触控热区扫尾', () => {
     expect(css('clipbook')).toMatch(/\.bz-clip-mob-detail-top \.bz-icon-btn--lg[^}]*44px/);
   });
 
-  it('横滑标签 44px 档（cinema 走共享 .bz-mobstrip；favorites issue 219b 磁贴行取代；belongings 用户拍板缩小让位）', () => {
-    expect(css('cinema')).toMatch(/bz-mobstrip-chip \{[^}]*min-height: 44px/);
+  it('横滑标签 44px 档（favorites issue 219b 磁贴行取代；cinema 午夜场走 1:1 探索稿 .m-chips 原生档、旧 .bz-cinema-panel 死段已随纯清理批退役；belongings 用户拍板缩小让位）', () => {
     expect(css('favorites')).toMatch(/pointer: coarse[\s\S]*bz-fav-tags button[^}]*min-height: 44px/);
-    // belongings：移动五枚小 chips（issue 230 轮后用户拍板），不再持 44px 档
+    // belongings/cinema：均不持 44px 档（belongings 用户拍板；cinema 午夜场原型逐字档）
     expect(css('belongings')).not.toMatch(/bz-mobstrip-chip \{[^}]*min-height: 44px/);
+    expect(css('cinema')).not.toMatch(/bz-mobstrip-chip \{[^}]*min-height: 44px/);
   });
 });
 

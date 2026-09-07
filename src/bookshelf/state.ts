@@ -59,7 +59,6 @@ export interface BookshelfState {
   searchKeyword: string;
   searchDebounceTimer: ReturnType<typeof setTimeout> | null;
   appRef: App | null;
-  folderPath: string;
   renderFn: (() => void) | null;
   /** 面板内当前视图：书架列表 / 阅读分析报告（重开面板保持；unload 复位） */
   view: BookshelfView;
@@ -74,7 +73,6 @@ export const M: BookshelfState = {
   searchKeyword: '',
   searchDebounceTimer: null,
   appRef: null,
-  folderPath: '书库',
   renderFn: null,
   view: 'shelf',
 };
@@ -104,7 +102,6 @@ export function resetBookshelfState(): void {
   M.searchKeyword = '';
   M.searchDebounceTimer = null;
   M.appRef = null;
-  M.folderPath = '书库';
   M.renderFn = null;
   M.view = 'shelf';
 }

@@ -42,7 +42,7 @@ export function createOverlay(app: any): void {
 }
 
 /** 重新采集活动河数据并重绘（打开时调用） */
-export async function refreshRiverAndRender(): Promise<void> {
+async function refreshRiverAndRender(): Promise<void> {
   if (!H.currentOverlay || !H.appRef) return;
   try {
     H.river = await collectRiver(H.appRef);

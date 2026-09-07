@@ -75,24 +75,6 @@ export function sliderHtml(min: number | undefined, max: number | undefined, ste
     `<span class="bz-sp-slider-val">${value}</span></div>`;
 }
 
-/** 路径行 chips 项串（无容器——容器 .bz-sp-chips 由调用方持有，重渲只换内部串）——原型 path 分支 redraw */
-export function pathChipsItemsHtml(chips: Array<{ path: string; label: string; locked?: boolean; muted?: boolean; multi?: boolean }>): string {
-  return chips.map((c) => {
-    const cls = c.muted ? 'bz-sp-chip bz-sp-chip--muted' : c.locked ? 'bz-sp-chip bz-sp-chip--locked' : 'bz-sp-chip';
-    return `<span class="${cls}" data-sp-path="${esc(c.path)}"${c.label ? ` title="${esc(c.label)}"` : ''}>${esc(c.label)}` +
-      (c.multi && !c.muted && !c.locked ? '<i class="x">✕</i>' : '') + `</span>`;
-  }).join('');
-}
-
-/** 路径行 chips（容器版；域内路径行走容器版逐项重渲时用 pathChipsItemsHtml） */
-export function pathChipsHtml(chips: Array<{ path: string; label: string; locked?: boolean; muted?: boolean; multi?: boolean }>): string {
-  return `<div class="bz-sp-chips">${pathChipsItemsHtml(chips)}</div>`;
-}
-
-/** 路径行「选择…/添加…」按钮——原型 path 分支 bz-sp-path-btn */
-export function pathAddBtnHtml(text: string): string {
-  return `<button type="button" class="bz-sp-btn bz-sp-path-btn">${esc(text)}</button>`;
-}
 
 /** 行操作按钮（cta → accent 实底）——原型 button 分支 */
 export function rowBtnHtml(label: string, cta?: boolean): string {
@@ -216,17 +198,6 @@ export function rowHtml(vm: SpRowVm): string {
   return `${open}${info}<div class="${ctrlCls}">${vm.ctrlHtml ?? ''}</div></div>`;
 }
 
-/** 通用信息块（name + desc；子弹窗文案区/标签行复用——原型 innerHTML 拼接处） */
-export function setInfoHtml(name: string, desc?: string): string {
-  return `<div class="bz-sp-set-name">${esc(name)}</div>` + (desc ? `<div class="bz-sp-set-desc">${esc(desc)}</div>` : '');
-}
-
-/** custom 子行（label + 控件区；原型 renderCustom 的 sub 骨架） */
-export function subRowHtml(label: string, ctrlHtml: string): string {
-  return `<div class="bz-sp-sub-row"><span class="bz-sp-set-name">${esc(label)}</span>` +
-    `<div class="bz-sp-set-ctrl">${ctrlHtml}</div></div>`;
-}
-
 /** 分组卡骨架（图标块 + 名称 + 项数徽标 + 空 body；body 由调用方逐行填）——原型 renderGroupsInto（section） */
 export function groupCardHtml(icon: string | undefined, name: string, count: string): string {
   const ic = icon ? iconSpan(icon, 'bz-sp-group-icon') : '';
@@ -248,93 +219,4 @@ export function loadingHtml(text = '加载设置…'): string {
   return `<div class="bz-sp-loading"><span class="bz-spinner"></span><span>${esc(text)}</span></div>`;
 }
 
-/** 头行工具位图标钮占位（bz-sp-mob-close 等由 ui 层用组件库物化，此处仅头行容器契约） */
-export function headToolsHtml(): string {
-  return `<span class="bz-sp-head-tools"></span>`;
-}
 
-/* ==================== 子弹窗骨架（逐字对齐原型 openDemoCard 系；行为/redraw 留调用方） ==================== */
-
-/** 共享确认框内容（h4 标题 + message + 取消/确认；danger = 红色确认）——原型 confirmDialog 卡体 */
-export function confirmHtml(opts: { title?: string; message: string; cancelText?: string; okText?: string; danger?: boolean }): string {
-  return `<h4 class="bz-sp-confirm-title">${esc(opts.title || '确认')}</h4>` +
-    `<p class="bz-sp-confirm-msg">${esc(opts.message)}</p>` +
-    `<div class="bz-sp-confirm-actions">` +
-    `<button type="button" class="bz-sp-btn">${esc(opts.cancelText || '取消')}</button>` +
-    `<button type="button" class="bz-sp-btn${opts.danger ? ' bz-sp-btn--danger' : ' bz-sp-btn--primary'}">${esc(opts.okText || '确定')}</button>` +
-    `</div>`;
-}
-
-/** UP 主名单：添加区行（label 块 + 链接输入 + 添加钮）——原型 openUpManager redraw 添加区 */
-export function upmgrAddRowHtml(): string {
-  return `<div class="bz-sp-upmgr-row"><div class="bz-sp-upmgr-label">` +
-    `<div class="bz-sp-set-name">添加 UP 主</div>` +
-    `<div class="bz-sp-set-desc">粘贴主页链接（space.bilibili.com/123456）或视频链接自动解析 UID</div></div>` +
-    `<div class="bz-sp-upmgr-ctl"><input class="bz-input" placeholder="粘贴链接或 UID">` +
-    `<button type="button" class="bz-sp-btn bz-sp-btn--primary">添加</button></div></div>`;
-}
-
-/** UP 主名单项（名字 + UID + 移除钮） */
-export function upmgrItemHtml(name: string, uid: string): string {
-  return `<div class="bz-sp-upmgr-item"><div class="bz-sp-upmgr-info">` +
-    `<div class="bz-sp-upmgr-name">${esc(name)}</div>` +
-    `<div class="bz-sp-upmgr-uid">UID ${esc(uid)}</div></div>` +
-    `<button type="button" class="bz-sp-btn">移除</button></div>`;
-}
-
-/** 日记修复行（文件路径 + before → after 高亮）——原型 openDiaryRepair fixable 行 */
-export function repairRowHtml(file: string, before: string, after: string): string {
-  return `<div class="bz-sp-demo-repair"><div class="bz-sp-demo-repair-file">${esc(file)}</div>` +
-    `<div class="bz-sp-demo-repair-code"><span>${esc(before)}</span>` +
-    `<span class="bz-sp-demo-repair-arrow"> → </span>` +
-    `<span class="bz-sp-demo-repair-after">${esc(after)}</span></div></div>`;
-}
-
-/** 数据体检进度步骤行（mark 圆点 + 文案；data-step 供进度切换定位）——原型 openCheckup run */
-export function checkupStepsHtml(steps: string[]): string {
-  return `<div class="bz-sp-demo-steps">` + steps.map((s, i) =>
-    `<div class="bz-sp-demo-step" data-step="${i}"><span class="bz-sp-demo-step-mark"></span>${esc(s)}</div>`).join('') +
-    `</div>`;
-}
-
-/** 卡片目录选择器：头 + 行 + 空态（原型 openPathPickerCard） */
-export function pathPickerHeadHtml(title: string, desc?: string): string {
-  return `<div class="bz-path-picker-head"><h3 class="bz-path-picker-title">${esc(title)}</h3>` +
-    (desc ? `<div class="bz-path-picker-desc">${esc(desc)}</div>` : '') + `</div>`;
-}
-
-export function pathPickerRowHtml(folder: string, on: boolean, label: string): string {
-  return `<div class="bz-path-picker-row${on ? ' bz-path-picker-row--sel' : ''}" data-path="${esc(folder)}">` +
-    `<span class="bz-path-picker-check">${on ? '✓' : ''}</span>` +
-    `<span class="bz-path-picker-name"${label !== folder ? ` title="${esc(label)}"` : ''}>${esc(label)}</span></div>`;
-}
-
-/** 文件夹选择器弹层：头（标题 + 搜索框）——原型 openDirPicker head */
-export function pickerHeadHtml(title: string, placeholder: string): string {
-  return `<div class="bz-sp-picker-head"><b>${esc(title)}</b>` +
-    `<div class="bz-sp-picker-search">${iconSpan('search')}<input placeholder="${esc(placeholder)}"></div></div>`;
-}
-
-/** 文件夹选择器：选中面包屑（单选 = 段链；多选 = 计数）——原型 renderCrumb */
-export function pickerCrumbHtml(multi: boolean, arr: string[]): string {
-  const lab = `<span class="bz-sp-picker-lab">${multi ? '已选' : '将选用'}</span>`;
-  if (multi) {
-    return `<div class="bz-sp-picker-crumb">${lab}<span>${arr.length ? arr.length + ' 个目录' : '尚未选择'}</span></div>`;
-  }
-  if (!arr.length) return `<div class="bz-sp-picker-crumb">${lab}<span>未设置</span></div>`;
-  const chain = arr[0].split('/').map((seg, i) =>
-    (i ? `<span class="bz-sp-picker-sep">▸</span>` : '') + `<span>${esc(seg)}</span>`).join('');
-  return `<div class="bz-sp-picker-crumb">${lab}${chain}</div>`;
-}
-
-/** 文件夹选择器：目录行（folder 图标 + 尾段名 + 祖先链灰字；sel = 选中）——原型 renderList 行 */
-export function pickerRowHtml(name: string, anc: string, sel: boolean): string {
-  return `<button type="button" class="bz-sp-picker-row${sel ? ' sel' : ''}">` +
-    `${iconSpan('folder-open', 'bz-ic')}<span>${esc(name)}</span>` +
-    `<span class="anc">${esc(anc)}</span></button>`;
-}
-
-/** 获取模型名：候选项（sel = 当前值）——原型 pickModel 列表项 */
-export function modelItemHtml(model: string, on: boolean): string {
-  return `<button type="button" class="bz-sp-picker-row${on ? ' sel' : ''}"><span>${esc(model)}</span></button>`;
-}

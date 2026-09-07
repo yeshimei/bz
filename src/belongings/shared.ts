@@ -36,7 +36,6 @@ export const ICON = {
   close: 'x',
   del: 'trash-2',
   empty: 'package',
-  chevR: 'chevron-right',
   chevD: 'chevron-down',
 };
 
@@ -47,13 +46,14 @@ export const STATUS: Record<string, { label: string; key: string; ic: string }> 
   sold: { label: '已转卖', key: 'sold', ic: 'banknote' },
   discard: { label: '已丢弃', key: 'discard', ic: 'archive' },
 };
-export const STATUS_LABELS = ['使用中', '闲置', '已转卖', '已丢弃'];
 export const STATUS_ORDER: { key: string; label: string }[] = [
   { key: 'using', label: '使用中' },
   { key: 'idle', label: '闲置' },
   { key: 'sold', label: '已转卖' },
   { key: 'discard', label: '已丢弃' },
 ];
+/** 展示顺序的标签清单（从 STATUS_ORDER 派生，禁再手抄一份） */
+export const STATUS_LABELS = STATUS_ORDER.map((s) => s.label);
 
 /** 排序三档（纯视图增强：最近购入默认 / 投入最高 / 日均最高；视图档不落盘） */
 export const SORT_OPTS: { v: string; label: string }[] = [

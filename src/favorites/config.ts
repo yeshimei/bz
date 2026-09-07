@@ -8,7 +8,6 @@ export const CONFIG = {
   DEFAULT_STORAGE_PATH: 'CONFIG/STORAGE',
   /** 数据文件名（固定，不允许用户修改） */
   STORAGE_FILE: 'favorites.json',
-  LONG_PRESS_DELAY: 600, // 兼容导出（长按延时实际由 core/item-actions 内部处理）
 };
 
 /** 标签定义（key 稳定；label 即数据本体 tags[] 存的值；ic 为 Obsidian 内置 lucide 图标名） */
@@ -31,14 +30,6 @@ export const TAGS: FavTag[] = [
 ];
 
 
-/** label → 标签定义（数据里 tags[] 存 label） */
-export function tagOf(label: string): FavTag | undefined {
-  return TAGS.find((t) => t.label === label);
-}
-/** key 或 label → label（图标/筛选用） */
-export function tagLabel(keyOrLabel: string): string {
-  return TAGS.find((t) => t.key === keyOrLabel)?.label ?? keyOrLabel;
-}
 
 /**
  * 归一化存储目录：设置只允许填目录；兼容旧值（旧设置可能存了完整文件路径，
@@ -58,14 +49,6 @@ export function getStoragePath(value?: string): string {
   return getStorageDir(value) + '/' + CONFIG.STORAGE_FILE;
 }
 
-/** 域名（排序/小字展示用）：解析失败原样返回 */
-export function domainOf(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, '');
-  } catch (e) {
-    return (url || '').slice(0, 24);
-  }
-}
 
 /** 补协议头（无 http(s) 前缀时补 https://） */
 export function normalizeUrl(url: string): string {

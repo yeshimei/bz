@@ -463,11 +463,10 @@ function formDirty(): boolean {
   if (!_baseline) return false;
   const popup = document.querySelector('.bz-fav-form') as HTMLElement | null;
   if (!popup) return false;
-  const g = (id: string) => (popup.querySelector(id) as HTMLInputElement | null)?.value ?? '';
   return (
-    g('#fz-title') !== _baseline.title ||
-    g('#fz-url') !== _baseline.url ||
-    g('#fz-desc') !== _baseline.desc ||
+    inputVal(popup, '#fz-title') !== _baseline.title ||
+    inputVal(popup, '#fz-url') !== _baseline.url ||
+    inputVal(popup, '#fz-desc') !== _baseline.desc ||
     formPinNow(popup) !== _baseline.pinned ||
     formTagsNow(popup) !== _baseline.tags
   );
@@ -486,11 +485,15 @@ function closeForm(popup: HTMLElement): void {
   (popup.closest('.bz-fav-form-mask') ?? popup).remove();
 }
 
+/** 表单弹窗内取输入值（id 选择器；空串兜底；formDirty/runAiFill/saveForm 共用） */
+function inputVal(popup: HTMLElement, id: string): string {
+  return (popup.querySelector(id) as HTMLInputElement | null)?.value ?? '';
+}
+
 /** 打开添加/编辑表单（原型 1:1：标题/链接/简介/标签多选/置顶开关 + AI 整理钮；无大模型/关联笔记） */
 export function openForm(item: FavoritesItem | null): void {
   ensureFavoritesEsc(); // 命令可直开表单不经 openPanel：ESC 层随表单注册（F2）
   const it = item;
-  const editing = !!it;
   const mask = document.createElement('div');
   mask.className = 'bz-fav-form-mask bz-fav-scope';
   mask.innerHTML = formHtml(it);
@@ -562,10 +565,9 @@ async function runAiFill(
     notice('AI 服务未配置或不可用', 'warning');
     return;
   }
-  const g = (id: string) => (popup.querySelector(id) as HTMLInputElement | null)?.value ?? '';
-  const title = g('#fz-title').trim();
-  const url = g('#fz-url').trim();
-  const desc = g('#fz-desc').trim();
+  const title = inputVal(popup, '#fz-title').trim();
+  const url = inputVal(popup, '#fz-url').trim();
+  const desc = inputVal(popup, '#fz-desc').trim();
   if (!title && !url && !desc) {
     notice('请至少输入标题、链接或简介中的一项，以便 AI 参考');
     return;
@@ -657,13 +659,12 @@ function parseAiJson(raw: string): { title?: string; url?: string; description?:
 
 async function saveForm(popup: HTMLElement, it: FavoritesItem | null, sel: Set<string>, errEl: HTMLElement): Promise<void> {
   if (_saving) return;
-  const g = (id: string) => (popup.querySelector(id) as HTMLInputElement | null)?.value ?? '';
-  const title = g('#fz-title').trim();
-  const url = g('#fz-url').trim();
+  const title = inputVal(popup, '#fz-title').trim();
+  const url = inputVal(popup, '#fz-url').trim();
   if (!title) { errEl.textContent = '请输入标题'; return; }
   if (url && !/^https?:\/\//i.test(url)) { errEl.textContent = '链接需以 http(s):// 开头'; return; }
   if (sel.size === 0) { errEl.textContent = '请至少选择一个标签'; return; }
-  const desc = g('#fz-desc').trim();
+  const desc = inputVal(popup, '#fz-desc').trim();
   const tags = [...sel];
   const pin = formPinNow(popup);
 

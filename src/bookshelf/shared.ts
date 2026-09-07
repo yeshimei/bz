@@ -19,9 +19,6 @@ import {
 } from './constants';
 import type { BookshelfItem, SideId, SortKey } from './state';
 
-// 再出口（壳经 window.BZR_bookshelf 取用；插件 ui.ts 亦统一从这里取）
-export { esc, iconSpan };
-export { STATUS_COLORS, SORT_LABEL, EMPTY_BOOKS_ICON, EMPTY_SEARCH_ICON, EMPTY_FILTER_ICON, ICON };
 
 // ---------- 小工具 ----------
 

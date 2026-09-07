@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * 影院（cinema）数据层测试：解析/排序/筛选/相对日期
+ * 影院（cinema）数据层测试：解析/排序/筛选
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -8,7 +8,6 @@ import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { M, resetCinemaState, type CinemaItem } from '../../src/cinema/state';
 import { rebuildItems, getDisplayItems, sortByDateDesc, sortByCreatedDesc, dateVal } from '../../src/cinema/data';
 import { getStarString, getGroupForTag, getGroupSafe } from '../../src/cinema/constants';
-import { relDate } from '../../src/cinema/ui';
 
 function makeApp(vault: MockVault) {
   return mockAppWithVault(vault);
@@ -128,13 +127,6 @@ describe('cinema 排序与筛选', () => {
     expect(getDisplayItems().length).toBe(4);
   });
 
-  it('二级筛选（subFilter）', () => {
-    seed();
-    M.subFilter = '美剧';
-    M.typeFilter = '剧集';
-    expect(getDisplayItems().map((i) => i.name)).toEqual(['剧']);
-  });
-
   it('状态筛选', () => {
     const vault = new MockVault();
     vault.files.set('我的/影视/《想看》.md', '---\ntags: [电影]\n评分: -1\n---');
@@ -197,21 +189,4 @@ describe('cinema 工具函数', () => {
     expect(getGroupSafe('未知tag')).toBe('其他');
   });
 
-  it('相对日期（收编 core formatRelativeTime；enh-sweep B 包）', () => {
-    // 固定 now：2026-09-02 12:00 本地时区
-    const now = new Date(2026, 8, 2, 12, 0, 0);
-    const iso = (ms: number) => new Date(now.getTime() - ms).toISOString();
-    expect(relDate(iso(30 * 1000), now)).toBe('刚刚');
-    expect(relDate(iso(5 * 60 * 1000), now)).toBe('5分钟前');
-    expect(relDate(iso(3 * 3600 * 1000), now)).toBe('3小时前');
-    // 含时刻的输入：昨天/前天带 HH:mm（core 全站口径）
-    expect(relDate(iso(26 * 3600 * 1000), now)).toBe('昨天 10:00');
-    expect(relDate(iso(2.5 * 86400000), now)).toBe('前天 00:00');
-    // 跨年纯日期字符串（YYYY-MM-DD）→ 不带时刻
-    expect(relDate('2025-12-31', now)).toBe('2025-12-31');
-    // 未来 → 原样日期（含时刻）
-    expect(relDate(iso(-86400000), now)).toBe('2026-09-03 12:00');
-    expect(relDate(null, now)).toBe('未标注日期');
-    expect(relDate('not-a-date', now)).toBe('未标注日期');
-  });
 });

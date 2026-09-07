@@ -10,15 +10,12 @@ export interface HomeState {
   appRef: App | null;
   /** 最近一次活动河聚合（打开时采集；失败 null → 空态） */
   river: RiverData | null;
-  /** 关闭动画防抖 */
-  closing: boolean;
 }
 
 export const H: HomeState = {
   currentOverlay: null,
   appRef: null,
   river: null,
-  closing: false,
 };
 
 /** 测试/重建用：整体重置模块状态 */
@@ -26,5 +23,4 @@ export function resetHomeState(): void {
   H.currentOverlay = null;
   H.appRef = null;
   H.river = null;
-  H.closing = false;
 }

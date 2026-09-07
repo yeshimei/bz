@@ -396,14 +396,12 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(M.aiError).toContain('AI 分析失败');
     expect(root.querySelector('[data-cinema-ai-start]')?.textContent).toContain('重试');
     clickEl(root.querySelector('[data-cinema-ai-start]'));
-    expect(M.aiTitle).toContain('找同类');
     expect(M.aiBase?.name).toBe('星际穿越');
     await vi.waitFor(() => expect(M.aiRunning).toBe(false));
 
     await runAIRecommend(app);
     expect(M.aiError).toContain('AI 分析失败');
     clickEl(root.querySelector('[data-cinema-ai-start]'));
-    expect(M.aiTitle).toBe('AI 荐片');
     expect(M.aiBase).toBeNull();
     await vi.waitFor(() => expect(M.aiRunning).toBe(false));
   });

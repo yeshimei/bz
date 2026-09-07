@@ -9,7 +9,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { M, resetCinemaState } from '../../src/cinema/state';
 import { rebuildItems } from '../../src/cinema/data';
-import { buildAnalysisData, buildAnalysisHTML, buildStatPageHtml } from '../../src/cinema/analysis';
+import { buildAnalysisData, buildAnalysisHTML } from '../../src/cinema/analysis';
 
 function seed(vault: MockVault) {
   vault.files.set('我的/影视/《星际穿越》.md', `---
@@ -277,7 +277,7 @@ describe('ADR-0090 头行小计 + 空态动作 + 整页组装', () => {
   });
 
   it('空库整页：引导文案 + 「添加影视」动作按钮（data-cinema-analysis-add）', () => {
-    const html = buildStatPageHtml();
+    const html = buildAnalysisHTML();
     expect(html).toContain('还没有可统计的影视记录');
     expect(html).toContain('data-cinema-analysis-add');
     expect(html).toContain('添加影视');
@@ -287,7 +287,7 @@ describe('ADR-0090 头行小计 + 空态动作 + 整页组装', () => {
     const vault = new MockVault();
     seed(vault);
     rebuildItems(mockAppWithVault(vault));
-    const html = buildStatPageHtml();
+    const html = buildAnalysisHTML();
     expect(html).not.toContain('bz-cinema-page-head'); // 页头退役：sp-head 在 ui.ts
     expect(html).toContain('stat-cards');
     expect(html).toContain('data-lucide="bar-chart-3"');

@@ -337,16 +337,10 @@ export function closePanel(): void {
 }
 
 export function cleanupBelongings(): void {
-  stopAutoRefresh();
-  closeBelDetail();
-  if (dropDocClick) { document.removeEventListener('click', dropDocClick); dropDocClick = null; }
+  closePanel();
   if (bodyThemeObserver) {
     bodyThemeObserver.disconnect();
     bodyThemeObserver = null;
-  }
-  if (M.overlay) {
-    M.overlay.remove();
-    M.overlay = null;
   }
   resetBelongingsState();
 }
@@ -459,9 +453,8 @@ function openBelDetail(it: BelongingsItem): void {
       await applyFlowWithUndo(cur, b.dataset.bdFlow as string);
       const now = itemById(it.id);
       if (!now) { closeBelDetail(); return; }
-      drawActs();
-      // 详情头行字段同步（状态徽章/出离行随流转刷新）
-      openBelDetail(itemById(it.id)!);
+      // 详情头行字段同步（状态徽章/出离行随流转刷新；openBelDetail 全量重建含操作钮）
+      openBelDetail(now);
     })();
   });
   mask.addEventListener('mousedown', (e) => { if (e.target === mask) closeBelDetail(); });
@@ -561,20 +554,23 @@ function buildActions(it: BelongingsItem, rebuild: () => void): ItemAction[] {
   }));
 }
 
-function openRowMenuAt(it: BelongingsItem, x: number, y: number): void {
+/** 菜单/抽屉动作回调后按最新条目重建（条目可能已被替换，按 id 回查） */
+function makeSheetRebuild(it: BelongingsItem): () => void {
   const rebuild = () => {
     const it2 = itemById(it.id);
     if (it2) refreshItemSheet(buildActions(it2, rebuild), sheetHeadEl(it2));
   };
+  return rebuild;
+}
+
+function openRowMenuAt(it: BelongingsItem, x: number, y: number): void {
+  const rebuild = makeSheetRebuild(it);
   openItemMenu(x, y, buildActions(it, rebuild), true, 'bz-bel-menu');
   // 复位残余 click 抑制（issue 198 同款 P1）：右键时序会置位 armed 吞下一次左键；右键无补发 click，直接复位
   resetItemMenuClickGuard();
 }
 function openMobSheet(it: BelongingsItem): void {
-  const rebuild = () => {
-    const it2 = itemById(it.id);
-    if (it2) refreshItemSheet(buildActions(it2, rebuild), sheetHeadEl(it2));
-  };
+  const rebuild = makeSheetRebuild(it);
   openItemSheet(buildActions(it, rebuild), { sheetHead: sheetHeadEl(it) });
 }
 

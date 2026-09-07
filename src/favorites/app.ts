@@ -46,8 +46,4 @@ export class FavoritesApp {
       openForm(null);
     }
   }
-
-  getDataManager(): DataManager | null {
-    return this.dataManager;
-  }
 }

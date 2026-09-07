@@ -35,12 +35,12 @@ describe('favorites 入口', () => {
   });
 
   it('ensureFavorites 幂等初始化 + openPanel', () => {
-    ensureFavorites(app);
+    ensureFavorites();
     expect(() => openFavoritesPanel(app)).not.toThrow();
   });
 
   it('addFavoriteItem 打开添加弹窗', () => {
-    ensureFavorites(app);
+    ensureFavorites();
     expect(() => addFavoriteItem(app)).not.toThrow();
   });
 

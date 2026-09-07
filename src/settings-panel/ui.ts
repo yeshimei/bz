@@ -147,6 +147,26 @@ export const NAV_SECS: Array<{ title: string; ids: string[] }> = [
 /** 已加载域的 schema 行缓存（移动端搜索「设置项」段用：域名 → 行名/描述列表） */
 const schemaRowCache = new Map<string, Array<{ name: string; desc: string }>>();
 
+/** 缓存域 schema 行（移动端搜索「设置项」段用；preload/renderDomain/openMobileDomain 三处同口径） */
+function cacheRowsFor(domainId: string, schema: SettingsSchema): void {
+  const rows = schema.groups.flatMap((g) =>
+    g.rows.map((r) => ({ name: (r as { name?: string }).name ?? '', desc: (r as { desc?: string }).desc ?? '' }))
+  );
+  schemaRowCache.set(domainId, rows);
+}
+
+/** NAV_SECS 语义分组 +「其他」尾组；matches 可选（桌面搜索命中过滤用；桌面导航/移动列表共用） */
+function groupDomains(visible: DomainDef[], matches?: (d: DomainDef) => boolean): Array<{ title: string; domains: DomainDef[] }> {
+  const hit = matches ?? (() => true);
+  const secs: Array<{ title: string; domains: DomainDef[] }> = NAV_SECS.map((sec) => ({
+    title: sec.title,
+    domains: visible.filter((d) => sec.ids.indexOf(d.id) >= 0 && hit(d)),
+  }));
+  const rest = visible.filter((d) => !NAV_SECS.some((sec) => sec.ids.indexOf(d.id) >= 0) && hit(d));
+  if (rest.length) secs.push({ title: '其他', domains: rest });
+  return secs;
+}
+
 /** 已加载域的当前端可见设置项数（preloadAllBadges 回填；面板销毁随 navBadges 一并清空）。
  *  导出供回归测试断言（与 DOMAINS 同惯例）。 */
 export const loadedCounts = new Map<string, number>();
@@ -289,12 +309,7 @@ export class SettingsPanelUI {
         !query || d.name.includes(query) || d.desc.includes(query) ||
         (schemaRowCache.get(d.id) || []).some((r) => r.name.includes(query));
       // 拍板原型：导航按语义分四组（基础/记录/媒体与知识/工具）；不在表内的域归「其他」尾组
-      const secs: Array<{ title: string; domains: DomainDef[] }> = NAV_SECS.map((sec) => ({
-        title: sec.title,
-        domains: visible.filter((d) => sec.ids.indexOf(d.id) >= 0 && matches(d)),
-      }));
-      const rest = visible.filter((d) => !NAV_SECS.some((sec) => sec.ids.indexOf(d.id) >= 0) && matches(d));
-      if (rest.length) secs.push({ title: '其他', domains: rest });
+      const secs = groupDomains(visible, matches);
       for (const sec of secs) {
         if (!sec.domains.length) continue;
         // 导航结构单源（R.navSecHtml/navItemHtml；data-sp-domain 契约供点击回查）
@@ -346,10 +361,7 @@ export class SettingsPanelUI {
         loadedCounts.set(d.id, count);
         navBadges.set(d.id, count > 0 ? String(count) : '—');
         // 顺带填充移动端搜索「设置项」缓存
-        const rowsOf = schema.groups.flatMap((g) =>
-          g.rows.map((r) => ({ name: (r as { name?: string }).name ?? '', desc: (r as { desc?: string }).desc ?? '' }))
-        );
-        schemaRowCache.set(d.id, rowsOf);
+        cacheRowsFor(d.id, schema);
       } catch {
         navBadges.set(d.id, '·'); // 加载失败保守显示占位（域保持列表可见）
       }
@@ -374,18 +386,6 @@ export class SettingsPanelUI {
   /** 空态构建（组件库 uiEmpty：图标 lucide + 标题 + 描述） */
   private emptyEl(icon: string, title: string, desc: string): HTMLElement {
     return uiEmpty({ icon, title, desc });
-  }
-
-  /** 加载态（spinner + 文案） */
-  private loadingEl(): HTMLElement {
-    const loading = document.createElement('div');
-    loading.className = 'bz-sp-loading';
-    const sp = document.createElement('span');
-    sp.className = 'bz-spinner';
-    const tx = document.createElement('span');
-    tx.textContent = '加载设置…';
-    loading.append(sp, tx);
-    return loading;
   }
 
   /**
@@ -430,10 +430,7 @@ export class SettingsPanelUI {
       const handle = renderPanelSchema(body, schema);
       this.renderHandles.push(handle);
       // 记录本域 schema 行（移动端搜索「设置项」段用）
-      const rowsOf = schema.groups.flatMap((g) =>
-        g.rows.map((r) => ({ name: (r as { name?: string }).name ?? '', desc: (r as { desc?: string }).desc ?? '' }))
-      );
-      schemaRowCache.set(domain.id, rowsOf);
+      cacheRowsFor(domain.id, schema);
       // 回填导航徽标：设置项总数（visibleWhen 门控隐藏的不计、button 操作行不计，与 preload 同口径）；
       // 0 项显示 ·（有 schema 但全被门控隐藏）
       const groupEls = body.querySelectorAll<HTMLElement>('.bz-sp-group');
@@ -491,24 +488,17 @@ export class SettingsPanelUI {
     searchWrap.appendChild(clearBtn);
     clearBtn.addEventListener('click', () => {
       searchIn.value = '';
-      searchWrap.classList.remove('hasval');
       render('');
       searchIn.focus();
     });
 
     const render = (q: string) => {
       const query = q.trim();
-      searchWrap.classList.toggle('hasval', !!query);
       list.innerHTML = '';
       if (!query) {
         // 无搜索：全部列表可见域按语义分组（基础/记录/媒体与知识/工具；同桌面导航口径）
         const visible = listableDomains();
-        const secs: Array<{ title: string; domains: DomainDef[] }> = NAV_SECS.map((sec) => ({
-          title: sec.title,
-          domains: visible.filter((d) => sec.ids.indexOf(d.id) >= 0),
-        }));
-        const rest = visible.filter((d) => !NAV_SECS.some((sec) => sec.ids.indexOf(d.id) >= 0));
-        if (rest.length) secs.push({ title: '其他', domains: rest });
+        const secs = groupDomains(visible);
         for (const sec of secs) {
           if (!sec.domains.length) continue;
           const secEl = document.createElement('div');
@@ -674,7 +664,7 @@ export class SettingsPanelUI {
       return;
     }
 
-    body.appendChild(this.loadingEl());
+    body.innerHTML = R.loadingHtml(); // 加载态结构单源
     const openSeq = ++this.renderSeq; // 与 renderDomain 共用竞态序号：最新一次打开/切换生效
     try {
       const schema = await domain.schemaLoader();
@@ -682,10 +672,7 @@ export class SettingsPanelUI {
       body.innerHTML = '';
       renderPanelSchema(body, schema);
       // 记录本域 schema 行（移动端搜索「设置项」段用；与桌面 renderDomain 同口径）
-      const rowsOf = schema.groups.flatMap((g) =>
-        g.rows.map((r) => ({ name: (r as { name?: string }).name ?? '', desc: (r as { desc?: string }).desc ?? '' }))
-      );
-      schemaRowCache.set(domain.id, rowsOf);
+      cacheRowsFor(domain.id, schema);
       // 回填导航徽标（移动端列表无徽标展示，但保持与桌面一致的设置项总数口径）
       const count = visibleItemCount(schema);
       navBadges.set(domain.id, count > 0 ? String(count) : '·');

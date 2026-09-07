@@ -34,7 +34,7 @@ export type SettingsKeyOfType<V> = {
 }[keyof BzSettings];
 
 /** 行值绑定二选一：键直绑（自动读值 + saveSettings 落盘）或外部数据三函数逃生口。 */
-type RowBinding<V> =
+export type RowBinding<V> =
   | { key: SettingsKeyOfType<V> }
   | {
       /** 读当前值 */
@@ -245,13 +245,13 @@ interface SettingsRenderHandle {
 const TEXT_COMMIT_DELAY = 800;
 
 /** 绑定统一读写通道：键直绑走 settings-provider（getSettings/saveSettings），外部数据走三函数 */
-interface ValueAccess<V> {
+export interface ValueAccess<V> {
   read: () => V;
   write: (v: V) => void;
   persist: () => Promise<void> | void;
 }
 
-function bindValue<V>(binding: RowBinding<V>): ValueAccess<V> {
+export function bindValue<V>(binding: RowBinding<V>): ValueAccess<V> {
   if ('key' in binding) {
     const key = binding.key;
     return {
