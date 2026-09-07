@@ -34,7 +34,7 @@ describe('enh-sweep-c：.bz-panel-mtop 移动全屏顶距', () => {
   it('全屏面板根节点接线：8 域挂载点 + 番茄钟随 mfs 开关同挂摘', () => {
     expect(src('src/home/ui.ts')).toContain('bz-home-panel bz-panel-mtop');
     expect(src('src/cinema/ui.ts')).toContain('applyMobileWindowFullscreen(root'); // ADR-0103 风格壳：mfs 挂 style 根（首子垫顶由 core .bz-win-mfs 规则承担）
-    expect(src('src/favorites/ui.ts')).toContain('bz-fav-panel bz-fav-scope'); // ADR-0101 域内自绘壳（bz-panel-mtop 随移动端挂载）
+    expect(src('src/favorites/layouts/board/render.ts')).toContain('bz-fav-panel bz-fav-scope'); // issue 242 markup 单源 render.ts（bz-panel-mtop 随移动端挂载）
     expect(src('src/belongings/layouts/poster/render.ts')).toContain('bz-bel-panel bz-panel-frame bz-panel-mtop'); // issue 237 markup 单源 render.ts
     const clip = src('src/clipbook/ui.ts');
     expect(clip).toContain('bz-clip-frame bz-panel-mtop');
@@ -61,7 +61,7 @@ describe('enh-sweep-c：触控热区扫尾', () => {
   it('coarse 外扩档落位（修复批 B 收编 core .bz-touch-target：favorites/belongings/encrypt 等挂类，其余域留域内块）', () => {
     // 收编域：外扩本体在 core components.css，域内模板挂共享类（热区档位随类）
     expect(componentsCss()).toMatch(/\.bz-touch-target::after/);
-    expect(src('src/favorites/ui.ts')).toContain('bz-touch-target'); // 移动 ✕ 关闭钮挂 44px 触控档
+    expect(src('src/favorites/layouts/board/render.ts')).toContain('bz-touch-target'); // issue 242 markup 单源 render.ts：移动 ✕ 关闭钮挂 44px 触控档
     expect(src('src/belongings/layouts/poster/render.ts')).toContain('bz-touch-target'); // issue 237 markup 单源 render.ts
     expect(src('src/encrypt/ui.ts')).toContain('bz-touch-target--xl');
     // 未收编域（attach 为 padding 抬档形态 / review·pomodoro 保留 padding·视觉抬档块；
@@ -134,7 +134,8 @@ describe('enh-sweep-c：杂项打磨', () => {
   it('favorites 磁贴计数=纯文本紧贴名后（issue 219c 口径延续；ADR-0101 无计数胶囊类）', () => {
     expect(css('favorites')).not.toContain('bz-fav-chip-cnt');
     expect(src('src/favorites/ui.ts')).not.toContain('bz-fav-chip-num');
-    expect(src('src/favorites/ui.ts')).toContain('data-fav-tag');
+    expect(src('src/favorites/layouts/board/render.ts')).not.toContain('bz-fav-chip-num'); // issue 242 markup 单源
+    expect(src('src/favorites/layouts/board/render.ts')).toContain('data-fav-tag');
     expect(css('favorites')).not.toContain('bz-fav-mobchip-cnt');
   });
 

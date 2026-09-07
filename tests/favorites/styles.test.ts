@@ -12,6 +12,8 @@ import { resolve } from 'node:path';
 const repo = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8');
 const favCss = () => repo('src/favorites/styles.css');
 const favUi = () => repo('src/favorites/ui.ts');
+const favShared = () => repo('src/favorites/shared.ts');
+const favRender = () => repo('src/favorites/layouts/board/render.ts');
 const favProto = () => repo('src/favorites/prototype.html');
 
 describe('C1：域选择器脱离 core reset 同分顺序对抗 + 原型 core 链', () => {
@@ -57,8 +59,8 @@ describe('C7/C8：表单按钮类名合规', () => {
   it('C8：#fz-ai ID 选择器退役 → .bz-fav-ai-btn 类（ui.ts 模板与原型同步，#fz-ai 锚点保留供 JS/测试）', () => {
     expect(favCss()).not.toContain('#fz-ai');
     expect(favCss()).toContain('.bz-fav-form .bz-fav-btns .bz-fav-ai-btn {');
-    expect(favUi()).toContain('<button type="button" id="fz-ai" class="bz-fav-ai-btn">');
-    expect(favProto()).toContain('id="fz-ai" class="bz-fav-ai-btn"');
+    expect(favShared()).toContain('<button type="button" id="fz-ai" class="bz-fav-ai-btn">'); // issue 242：表单 markup 单源 shared.ts，壳经 BZR_favorites 消费
+    expect(favRender()).not.toContain('fz-ai');
   });
 });
 
@@ -68,7 +70,7 @@ describe('C9：移动关闭钮触控档 --xl', () => {
     const core = repo('src/core/ui/components.css');
     expect(core).toContain('.bz-touch-target--xl { --bz-touch-outset: -12px; }');
     expect(core).toMatch(/\.bz-touch-target::after\s*\{[^}]*inset: var\(--bz-touch-outset, -6px\)/);
-    expect(favUi()).toContain('bz-fav-mob-close bz-touch-target bz-touch-target--xl');
+    expect(favRender()).toContain('bz-fav-mob-close bz-touch-target bz-touch-target--xl'); // issue 242：markup 单源 render.ts
   });
 });
 
@@ -100,8 +102,8 @@ describe('C11：静态 z-index 标注原型兜底', () => {
 describe('C12：原型表单演示钩子对齐插件契约', () => {
   it('取消= data-fz-cancel / 保存= id="fz-save"（模板与演示 JS 同步；确认框演示壳 data-a 不在约束内）', () => {
     const proto = favProto();
-    expect(proto).toContain('<button type="button" data-fz-cancel>取消</button>');
-    expect(proto).toContain('id="fz-save" class="bz-fav-pri"');
+    expect(favShared()).toContain('<button type="button" data-fz-cancel>取消</button>'); // issue 242：markup 单源 shared.ts
+    expect(favShared()).toContain('id="fz-save" class="bz-fav-pri"');
     // 演示 JS 委托改走 closest 契约钩子
     expect(proto).toContain("e.target.closest('[data-fz-cancel]')");
     expect(proto).toContain("e.target.closest('#fz-save')");
