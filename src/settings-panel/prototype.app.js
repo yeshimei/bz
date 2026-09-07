@@ -807,14 +807,14 @@
             row.classList.toggle('hit', !!state.q.trim() && row.textContent.includes(state.q.trim()));
           });
         } else {
-          renderMobList();
-          bindMob();
+          api.renderMobList();
+          api.bindMobList((id) => api.openDomain(id));
         }
       });
       render();
     }
 
-    return {
+    const api = {
       mount,
       openDomain(id) {
         state.current = id;
@@ -864,6 +864,7 @@
         mountIcons(list);
       },
     };
+    return api;
   }
 
   /* ---------- 启动：桌面 + 移动两实例 ---------- */
