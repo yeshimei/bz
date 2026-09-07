@@ -19,7 +19,6 @@ button:not(.clickable-icon) {
 
 button {
     display: inline-block;
-    justify-content: flex-start;
     height: auto;
     padding: 0;
     border: 0;

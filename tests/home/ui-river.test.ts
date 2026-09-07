@@ -109,7 +109,7 @@ describe('home 活动河 UI（issue 232）', () => {
     const ybtn = document.querySelector(`[data-home-weekday="${yesterday}"]`) as HTMLElement;
     ybtn.click();
     await new Promise((r) => setTimeout(r, 0));
-    expect((document.querySelector('[data-home-flow] .bz-home-sec-t') as HTMLElement).textContent).toContain(yesterday.slice(5));
+    expect(document.querySelector('[data-home-flow] .bz-home-sec-t')).toBeNull(); // 时间线标题行已退役，选中日由周历高亮表达
     expect(document.querySelectorAll('.bz-home-timeline .bz-home-ev').length).toBe(1); // 新增待办一条
     expect(document.querySelector(`[data-home-weekday="${yesterday}"]`)!.classList.contains('bz-home-wk--sel')).toBe(true);
   });

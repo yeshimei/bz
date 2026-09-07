@@ -4307,9 +4307,6 @@ var BZW_cinema = (() => {
   function setSettingsSaver(fn) {
     _saver = fn;
   }
-  function saveSettings() {
-    return _saver ? _saver() : Promise.resolve();
-  }
   function tryGetSettings() {
     return _provider ? _provider() : {};
   }
@@ -6018,8 +6015,7 @@ tags:
     eye: "eye",
     play: "play",
     globe: "globe",
-    film: "clapperboard",
-    gear: "sliders-horizontal"
+    film: "clapperboard"
   };
   function typeColor(group) {
     var _a;
@@ -6154,23 +6150,6 @@ tags:
     <div class="dm-actions"><button class="dm-btn j-cancel">取消</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
   </div>`;
   }
-  function setModalHtml(opts) {
-    const { sort, stf, cols, mobFull } = opts;
-    return `<div class="cn-modal" style="width:100%">
-    <div class="cn-modal-title">影院设置</div><button class="cn-modal-x j-close" title="关闭">${iconSpan(ICON.close)}</button>
-    <div class="set-row"><div class="set-name">默认排序<div class="set-desc">打开面板时列表按所选规则排序</div></div>
-      <div class="set-ctl"><select class="j-sort">${[["date", "最近观看"], ["created", "按创建时间"], ["rating", "按评分"]].map(([v, l]) => `<option value="${v}"${sort === v ? " selected" : ""}>${l}</option>`).join("")}</select></div></div>
-    <div class="set-row"><div class="set-name">默认状态筛选<div class="set-desc">打开面板时选中的状态筛选</div></div>
-      <div class="set-ctl"><select class="j-stf">${["", "想看", "在看", "已看"].map((v) => `<option value="${v}"${stf === v ? " selected" : ""}>${v || "全部"}</option>`).join("")}</select></div></div>
-    <div class="set-row"><div class="set-name">网格每行列数<div class="set-desc">海报网格每一行的列数（2-12）</div></div>
-      <div class="set-ctl"><input type="number" class="j-cols" min="2" max="12" step="1" value="${cols}"></div></div>
-    <div class="set-row"><div class="set-name">移动端默认全屏<div class="set-desc">打开面板时移动端进入全屏态</div></div>
-      <div class="set-ctl"><button class="set-sw j-sw${mobFull ? " on" : ""}"></button></div></div>
-    <div class="set-row"><div class="set-name">影视文件夹<div class="set-desc">影院读取的影视文件夹</div></div>
-      <div class="set-ctl" style="font-size:11px;color:var(--ink-3);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc2(opts.folderPath)}</div></div>
-    <div class="dm-actions"><button class="dm-btn gold j-save">保存</button></div>
-  </div>`;
-  }
   function aiRecName(r) {
     return (r == null ? void 0 : r.title) || (r == null ? void 0 : r.name) || "未命名";
   }
@@ -6240,11 +6219,10 @@ tags:
     return `<section class="mob bz-cinema--midnight" data-cinema-root="midnight">
     <div class="m-head"><h2 class="j-mtitle">全部</h2><span class="cnt j-mcnt"></span>
       <span class="m-acts">
-        <button class="m-tool j-mclose" title="关闭">${iconSpan(ICON.close)}</button>
+        <button class="add j-madd" data-cinema-add title="添加影片">${iconSpan(ICON.add)}</button>
         <button class="m-tool j-mai" title="AI 荐片">${iconSpan(ICON.ai)}</button>
         <button class="m-tool j-mstat" title="观影分析">${iconSpan(ICON.stat)}</button>
-        <button class="m-tool j-mgear" title="影院设置">${iconSpan(ICON.gear)}</button>
-        <button class="add j-madd" data-cinema-add>${iconSpan(ICON.add)}</button>
+        <button class="m-tool j-mclose" title="关闭">${iconSpan(ICON.close)}</button>
       </span>
     </div>
     <div class="m-chips j-chips"></div>
@@ -6747,31 +6725,6 @@ ${item.review ? `影评: ${item.review}
       renderAll(app);
     });
   }
-  function openSet(sec, app) {
-    var _a, _b, _c;
-    const s = tryGetSettings();
-    const sort = s.cinemaSortMode === "created" || s.cinemaSortMode === "rating" ? s.cinemaSortMode : "date";
-    const stf = typeof s.cinemaStatusFilter === "string" ? s.cinemaStatusFilter : "";
-    const cols = gridColumns();
-    const mobFull = s.cinemaMobileDefaultFullscreen === true;
-    const { el, close } = ovl(sec, setModalHtml({ sort, stf, cols, mobFull, folderPath: M.folderPath }));
-    mountIcons(el);
-    (_a = el.querySelector(".j-close")) == null ? void 0 : _a.addEventListener("click", close);
-    (_b = el.querySelector(".j-sw")) == null ? void 0 : _b.addEventListener("click", (e) => e.currentTarget.classList.toggle("on"));
-    (_c = el.querySelector(".j-save")) == null ? void 0 : _c.addEventListener("click", () => {
-      var _a2, _b2;
-      s.cinemaSortMode = el.querySelector(".j-sort").value;
-      s.cinemaStatusFilter = el.querySelector(".j-stf").value;
-      s.cinemaGridColumns = String(Math.min(12, Math.max(2, parseInt(el.querySelector(".j-cols").value, 10) || 5)));
-      s.cinemaMobileDefaultFullscreen = (_b2 = (_a2 = el.querySelector(".j-sw")) == null ? void 0 : _a2.classList.contains("on")) != null ? _b2 : false;
-      void saveSettings();
-      M.sortMode = s.cinemaSortMode;
-      M.statusFilter = s.cinemaStatusFilter || null;
-      close();
-      panelToast(sec, "设置已保存");
-      renderAll(app);
-    });
-  }
   function aiPrefLine() {
     const p = buildTasteProfile();
     const parts = [p.groups[0] || "", p.genres[0] || "", p.directors[0] || "", p.actors[0] || ""].filter(Boolean);
@@ -6873,10 +6826,9 @@ ${item.review ? `影评: ${item.review}
         renderAll(app);
         return;
       }
-      const mb = t.closest(".j-mai,.j-mstat,.j-mgear,.j-mclose");
+      const mb = t.closest(".j-mai,.j-mstat,.j-mclose");
       if (mb) {
-        if (mb.classList.contains("j-mgear")) openSet(sec, app);
-        else if (mb.classList.contains("j-mclose")) closeOverlay();
+        if (mb.classList.contains("j-mclose")) closeOverlay();
         else {
           const v = mb.classList.contains("j-mai") ? "ai" : "stat";
           M.view = M.view === v ? "list" : v;

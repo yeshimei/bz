@@ -106,7 +106,7 @@ function seedDatabase(): void {
   localStorage.setItem(SEED_MARK, new Date().toISOString());
 }
 
-/** 影院设置 store（真 settings-provider 注入；同一对象供设置弹窗就地改 + saveSettings 落 localStorage） */
+/** 影院设置 store（真 settings-provider 注入；saveSettings 落 localStorage，设置项走插件设置页） */
 const settingsStore: Record<string, unknown> = {
   cinemaStyle: 'midnight',
   cinemaFolderPath: FOLDER,
