@@ -195,12 +195,14 @@ interface CustomRow extends RowBase {
 }
 
 /** 视觉卡片单选行（issue 210）：预览卡 + 名称的「看脸选」设置项（如待办面板皮肤）。
- *  prevClass = 预览区附加类，视觉由使用方域样式提供；无编号无描述为拍板形态。 */
+ *  prevClass = 预览区附加类，视觉由使用方域样式提供；无编号无描述为拍板形态。
+ *  layoutKey/layout（外观组范式）：布局绑定的主题行按该键当前值过滤 options——主题不通用（拍板）。 */
 interface ChoiceCardsRow extends RowBase {
   type: 'choiceCards';
   name: string;
   binding: RowBinding<string>;
-  options: Array<{ value: string; label: string; prevClass?: string }>;
+  options: Array<{ value: string; label: string; prevClass?: string; layout?: string }>;
+  layoutKey?: string;
   onChange?: (value: string, ctx: SettingsRowContext) => void;
 }
 

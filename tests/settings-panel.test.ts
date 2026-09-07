@@ -56,7 +56,7 @@ describe('设置面板（settings-panel）', () => {
     unloadSettingsPanel();
     (escManager as any).handlers = new Map();
     // 共享单例 state（每次 getSettings 返回同一对象——否则 select 等写入落到临时对象丢失）
-    panelState = { settingsPanelMobileDefaultFullscreen: true } as any;
+    panelState = { settingsPanelMobileDefaultFullscreen: true, belSkin: 'poster', belSkinTheme: 'warmwhite' } as any;
     setSettingsProvider(() => panelState as any);
     // 注入 app（review schema 构造经 getApp；mock 与其它域测试一致）
     setApp({ vault: new MockVault(), workspace: { getLeaf: () => ({ openFile: vi.fn() }) } } as any);
@@ -96,7 +96,7 @@ describe('设置面板（settings-panel）', () => {
     expect(badges[1]).toBe('2'); // 设置：布局 + 主题两张卡片行（拍板 P1：外观独立域）
     expect(badges[2]).toBe('8'); // AI：服务商+模型名称+上下文+最大输出+采样 4 项（aiProvider 未设 → 密钥行门控隐藏）
     expect(badges[4]).toBe('9'); // 待办（index 4）：issue 210 补面板皮肤卡片行后 9 项
-    expect(badges[5]).toBe('1'); // 归物本（issue 194 补默认状态筛选行，桌面 1 项）
+    expect(badges[5]).toBe('3'); // 归物本（index 5）：外观组布局/主题两卡 + 默认状态筛选，桌面 3 项
     // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）
     const navIcons = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-ic')];
     expect(navIcons.length).toBe(15); // 加载后收藏本被按端剔除（ADR-0101）；拍板 P1 补「设置」域
@@ -374,6 +374,36 @@ describe('设置面板（settings-panel）', () => {
     (cards1[0] as HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick();
     expect(cards1[0].classList.contains('is-on')).toBe(true);
+    ui.cleanup();
+  });
+
+  it('桌面端：归物本外观组——布局（大字报）/主题（暖白）占位单卡，layoutKey 过滤后主题行单卡（拍板 C）', async () => {
+    const ui = new SettingsPanelUI();
+    ui.open();
+    const popup = document.getElementById('bz-settings-panel-popup')!;
+    const belItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
+      (el) => el.textContent?.includes('归物本')
+    ) as HTMLElement;
+    expect(belItem).toBeTruthy();
+    belItem.click();
+    // 归物本桌面可见组 = 外观 + 显示（移动端组按端剔除）
+    expect(await waitGroups(popup, 2)).toBe(true);
+    const group = popup.querySelector('.bz-sp-group')!;
+    expect(group.querySelector('.bz-sp-group-name')!.textContent).toBe('外观');
+    const picks = group.querySelectorAll('.bz-sp-cardpick');
+    expect(picks.length).toBe(2);
+    const cards0 = picks[0].querySelectorAll('.bz-sp-cardpick-card');
+    const cards1 = picks[1].querySelectorAll('.bz-sp-cardpick-card');
+    // 占位单卡：布局「大字报」/ 主题「暖白」（layoutKey=belSkin 过滤，poster 配套 warmwhite）
+    expect(cards0.length).toBe(1);
+    expect(cards0[0].textContent).toContain('大字报');
+    expect(cards1.length).toBe(1);
+    expect(cards1[0].textContent).toContain('暖白');
+    expect(cards0[0].classList.contains('is-on')).toBe(true);
+    expect(cards1[0].classList.contains('is-on')).toBe(true);
+    // prevClass 预览挂卡内 mini 容器（视觉由 settings-panel/styles.css 承载）
+    expect(cards0[0].querySelector('.bz-sp-mini.bz-sp-prev-poster')).toBeTruthy();
+    expect(cards1[0].querySelector('.bz-sp-mini.bz-sp-prev-warmwhite')).toBeTruthy();
     ui.cleanup();
   });
 

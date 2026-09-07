@@ -189,6 +189,10 @@ export default interface BzSettings {
   cinemaStyle: string;
   /** 📦 归物本：默认状态筛选（空串=全部，其余 using/idle/sold/discard；非法值回落全部。issue 194） */
   belongingsDefaultStatus: string;
+  /** 🎨 归物本面板布局皮肤（外观组占位单卡，用户拍板 C）：当前仅 poster（P20 瑞士大字报）；未知值回落 poster */
+  belSkin: string;
+  /** 🎨 归物本主题（与布局一一对应，poster ↔ warmwhite 恒定纸面） */
+  belSkinTheme: string;
   // 旧 cinemaPageSize（每批加载数量）已删除：全仓无消费点（列表一次全量渲染），死配置随审计清理
 
 
@@ -617,6 +621,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   todoMobileDefaultFullscreen: false,
   belongingsMobileDefaultFullscreen: true,
   belongingsDefaultStatus: '',
+  belSkin: 'poster',
+  belSkinTheme: 'warmwhite',
   favoritesMobileDefaultFullscreen: true,
   favoritesSortKey: 'created',
   cinemaMobileDefaultFullscreen: true,

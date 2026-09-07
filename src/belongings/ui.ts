@@ -92,6 +92,31 @@ export function belongingSettingsSchema(): SettingsSchema {
   return {
     groups: [
       {
+        // 外观组与待办同构（上布局行下主题行）；占位单卡（用户拍板 C）：当前仅 P20 大字报 × 暖白，
+        // 布局/主题扩展待将来开模——键与联动契约已按可扩展形态立好
+        icon: 'palette',
+        name: '外观',
+        rows: [
+          {
+            type: 'choiceCards',
+            name: '布局',
+            binding: { key: 'belSkin' },
+            options: [
+              { value: 'poster', label: '大字报', prevClass: 'bz-sp-prev-poster' },
+            ],
+          },
+          {
+            type: 'choiceCards',
+            name: '主题',
+            binding: { key: 'belSkinTheme' },
+            layoutKey: 'belSkin',
+            options: [
+              { value: 'warmwhite', label: '暖白', layout: 'poster', prevClass: 'bz-sp-prev-warmwhite' },
+            ],
+          },
+        ],
+      },
+      {
         icon: 'eye',
         name: '显示',
         rows: [
