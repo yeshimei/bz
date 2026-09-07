@@ -36,7 +36,7 @@ import { belongingsEditChanges } from '../smartcat/belongings-source';
 import type { SettingsSchema } from '../core/settings-schema';
 import { loadDatabase, saveDatabase, getDataFilePath } from './data';
 import {
-  renderPanelView, panelHtml, sortOptionsHtml, yearsOptionsHtml,
+  renderPanelView, panelHtml,
   belDetailHtml, flowBtnsHtml, belFormHtml, belFormInit, statusPickHtml, sheetHeadHtml,
   actionSpecs, todayStr, isExited, exitedStatus,
 } from './render';
@@ -69,6 +69,9 @@ const M: BelState = {
   sort: 'recent',
   renderFn: null,
 };
+
+/** 自绘下拉的 document 外点收起监听（openPanel 挂，closePanel 摘） */
+let dropDocClick: ((e: MouseEvent) => void) | null = null;
 
 export function resetBelongingsState(): void {
   M.overlay = null;
@@ -192,14 +195,42 @@ async function openPanelInner(): Promise<void> {
   // ESC（主面板 + 表单/详情多窗口径；表单也可能先于面板打开——命令路径）
   ensureBelongingsEsc();
 
-  // ---- 移动排序下拉（同年份下拉样式；与桌面 seg 双向同步，用户拍板） ----
-  const mobSortSel = overlay.querySelector('[data-bel-mobsortsel]') as HTMLSelectElement;
-  mobSortSel.innerHTML = sortOptionsHtml();
-  mobSortSel.value = M.sort;
-  mobSortSel.addEventListener('change', () => {
-    M.sort = mobSortSel.value as BelState['sort'];
-    renderAll();
-  });
+  // ---- 年份/移动排序下拉（自绘海报菜单，原生 select 弹层退役；与桌面 seg 双向同步） ----
+  // 触发器开合 + 选项点选 + 外点收起，一处 document 委托；closePanel 时摘除
+  const closeDrops = () => {
+    overlay.querySelectorAll('.bz-bel-yearsel.is-open').forEach((w) => w.classList.remove('is-open'));
+  };
+  const onDocClick = (e: MouseEvent) => {
+    const t = e.target as HTMLElement;
+    const trig = t.closest('[data-bel-year],[data-bel-mobsortsel]') as HTMLElement | null;
+    if (trig) {
+      const wrap = trig.parentElement as HTMLElement;
+      const wasOpen = wrap.classList.contains('is-open');
+      closeDrops();
+      if (!wasOpen) wrap.classList.add('is-open');
+      return;
+    }
+    const opt = t.closest('.bz-bel-dropopt') as HTMLElement | null;
+    if (opt) {
+      closeDrops();
+      const v = opt.dataset.v ?? '';
+      if (opt.closest('[data-bel-yearmenu]')) M.year = v;
+      else M.sort = v as BelState['sort'];
+      renderAll();
+      return;
+    }
+    closeDrops();
+  };
+  const onDropKey = (e: KeyboardEvent) => {
+    const t = e.target as HTMLElement;
+    if ((e.key === 'Enter' || e.key === ' ') && t.closest('.bz-bel-select')) {
+      e.preventDefault();
+      (t as HTMLElement).click();
+    }
+  };
+  document.addEventListener('click', onDocClick);
+  overlay.addEventListener('keydown', onDropKey);
+  dropDocClick = onDocClick;
 
   // ---- 事件委托（chips/排序/KPI 一处接管；桌面与移动横滑条共用 data-bel-st 钩子） ----
   overlay.addEventListener('click', (e) => {
@@ -214,7 +245,6 @@ async function openPanelInner(): Promise<void> {
     const segBtn = t.closest('.bz-segmented-btn') as HTMLElement | null;
     if (segBtn) {
       M.sort = segBtn.dataset.k as BelState['sort'];
-      mobSortSel.value = M.sort;
       renderAll();
       return;
     }
@@ -226,12 +256,6 @@ async function openPanelInner(): Promise<void> {
       renderAll();
       return;
     }
-  });
-  // 年份下拉（桌面/移动同步）
-  const yearSel = overlay.querySelector('[data-bel-year]') as HTMLSelectElement;
-  yearSel.addEventListener('change', () => {
-    M.year = yearSel.value;
-    renderAll();
   });
   // 搜索（B3：防抖定时器在面板关闭后仍会触发——首行守卫 overlay 存活；渲染序列含 hero，
   // 副题「N 件在列」计数随搜索刷新）
@@ -275,6 +299,7 @@ async function openPanelInner(): Promise<void> {
 export function closePanel(): void {
   stopAutoRefresh();
   closeBelDetail();
+  if (dropDocClick) { document.removeEventListener('click', dropDocClick); dropDocClick = null; }
   if (M.overlay) {
     M.overlay.remove();
     M.overlay = null;
@@ -289,6 +314,7 @@ export function closePanel(): void {
 export function cleanupBelongings(): void {
   stopAutoRefresh();
   closeBelDetail();
+  if (dropDocClick) { document.removeEventListener('click', dropDocClick); dropDocClick = null; }
   if (bodyThemeObserver) {
     bodyThemeObserver.disconnect();
     bodyThemeObserver = null;

@@ -175,7 +175,8 @@ describe('markup 构建器（钩子契约 = 两侧绑定与测试断言的共同
     expect(seg.match(/bz-segmented-btn/g)?.length).toBe(3);
     expect(seg).toContain('data-k="price"');
     expect(seg).toContain('is-on');
-    expect(sortOptionsHtml().match(/<option/g)?.length).toBe(3);
+    expect(sortOptionsHtml('recent').match(/bz-bel-dropopt/g)?.length).toBe(3);
+    expect(sortOptionsHtml('price')).toContain('is-cur');
   });
 
   it('emptyHtml 两态文案；statusPickHtml 选中态 + 闲置 c2；flowBtnsHtml is-cur', () => {
