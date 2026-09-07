@@ -379,6 +379,30 @@ button:not(.clickable-icon) {
     background-color: unset;
     box-shadow: unset;
 }
+
+/* ===== bz 裸 button 排版基线：压平 Obsidian 核心的 button 组件化排版 ===== */
+/* Obsidian 核心 app.css 的裸 button 规则（特异性同为 (0,0,1)）注入一整套组件化
+   排版：display:inline-flex + justify-content:center + height:var(--input-height)
+   + padding + border-radius + font-size/weight + white-space:nowrap。域内裸 button
+   的类没显式声明这些属性时就被它带偏（实例 2026-09-07：影院侧栏底部「AI 荐片/
+   观影分析」被居中、行高被钉成 32px，与原型端 UA/域 flex 默认不一致）。
+   本条与之同特异性 (0,0,1)，靠聚合顺序（插件 styles.css 后于 app.css 注入）整体
+   压平：button 退化成「可点击的 div」——UA 中性态（inline-block、零 padding、
+   内容自适应高、继承字体、可换行），外观排版完全由各域/组件类自决；这也让
+   插件端与原型端（浏览器 UA + 域类）在裸 button 上同基线。
+   误伤面为零：任何单类 (0,1,0)+ 规则天然压过本条（.bz-btn 系 display/height/
+   padding/nowrap 全显式，不受影响）；上一条 (0,1,1) 三件套维持原样。 */
+button {
+    display: inline-block;
+    justify-content: flex-start;
+    height: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    font: inherit;
+    white-space: normal;
+    appearance: none;
+}
 /* ============================================================
  * bz（包仔）共享层/跨域样式（src/core/styles.css）
  * 设置页分页 / 主窗口头部行统一规范 / core 层（notice·settings-modal·confirm·dom）
