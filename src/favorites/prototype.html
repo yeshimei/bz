@@ -2,22 +2,27 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>收藏本 · 原型预览（与 src/favorites/styles.css 共用同一份 CSS）</title>
+<title>收藏本 · 原型预览（真行为单源）</title>
 <!--
-  ┌────────────────────────────────────────────────────────────────────┐
-  │ 本文件 = 收藏本域 UI 的评审壳。组件样式零内联，全部来自（与          │
-  │ build-css SOURCES 同序的 core 链 +）同目录 ./styles.css（与插件构建  │
-  │ 同一份源文件）。改样式只改 styles.css，刷新本页即见，插件构建自动    │
-  │ 带走——不存在二次同步。                                              │
-  │ 本文件只允许写：演示壳（页面底/手机框/评审徽牌）与演示逻辑（JS）。   │
-  │ markup/口径单源（issue 242/ADR-0104）：面板/磁贴/卡片/菜单/抽屉/表单  │
-  │ 全部出自 ./prototype-render.js（由 src/favorites/render.ts 构建，     │
-  │ 挂 window.BZR_favorites，与插件 ui.ts 消费同一份）。重新生成：        │
-  │ node scripts/build-preview.mjs。                                     │
-  └────────────────────────────────────────────────────────────────────┘
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ 本文件 = 收藏本域 UI 的评审壳（行为单源版，issue 245/ADR-0106，            │
+  │ 范式随 belongings 试点）。                                               │
+  │ 组件样式零内联，全部来自（与 build-css SOURCES 同序）：                    │
+  │   ../core/styles.css → ../core/ui/tokens.css → ../core/ui/components.css │
+  │   → ./styles.css                                                        │
+  │ markup 单源（ADR-0104/0105）：面板/磁贴/卡片/菜单/抽屉/表单 HTML 出自       │
+  │   ./shared.ts + ./layouts/board/render.ts（构建产物 prototype-render.js   │
+  │   仍在 git，但壳不再自绘渲染——两侧 markup 均由真 ui.ts 消费同一份）。        │
+  │ 行为单源（issue 245/ADR-0106）：交互逻辑全部是插件同款 ui.ts 依赖链——       │
+  │   经 ./prototype-behavior.js（src/favorites/fake-sim.ts 构建，             │
+  │   alias obsidian→公共假层）在下方两个 iframe 视图里跑真行为；                │
+  │   桌面 iframe 920px 宽视口 = 桌面 900×620 本体；移动 iframe 396px =        │
+  │   styles.css 移动全屏态。数据 = localStorage favorites.json（数组同构；     │
+  │   跨 iframe storage 桥共享数据源，favorites 的自动刷新接线在插件侧域外，    │
+  │   ui.ts 链上无 modify 订阅——跨实例刷新以「重开面板」语义验证）。             │
+  │ 壳内只允许：外景容器样式、评审徽牌、演示钩子与自检。                        │
+  └────────────────────────────────────────────────────────────────────────┘
 -->
-<!-- core 链与 build-css.mjs SOURCES 同序（参照 belongings 原型）：评审壳内复现
-     reset/组件基线与本域样式的级联对抗，避免「壳里看不出来」的选择器脆弱性 -->
 <link rel="stylesheet" href="../core/styles.css">
 <link rel="stylesheet" href="../core/ui/tokens.css">
 <link rel="stylesheet" href="../core/ui/components.css">
@@ -25,405 +30,240 @@
 <style>
   /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 56px; padding: 32px 24px;
+  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 32px 24px;
     background: #e3e0d8; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
-  body.theme-dark { background: #1e1b18; }
+  /* 模拟 Obsidian 宿主变量（core/styles.css 的弹层/通知取值用；插件内由主题提供） */
+  body {
+    --background-primary: #fbf9f3; --text-normal: #171512; --text-muted: #8b8474; --text-faint: #b3ab99;
+    --text-error: #b3564d; --background-modifier-hover: rgba(23,21,18,.06); --color-green: #3d8f5d;
+  }
   * { scrollbar-width: none; } *::-webkit-scrollbar { display: none; }
 
-  /* 桌面面板外景（组件本体 900×620 来自 styles.css） */
-  .demo-dt { flex: none; }
+  /* 桌面外景（真行为 iframe：面板 append iframe body，本体 900×620 来自 styles.css） */
+  .demo-dt { flex: none; width: 920px; height: 640px; }
+  /* 移动外景：396px iframe → 全屏态 100vw/100vh 即手机框尺寸 */
+  .demo-mob { width: 396px; height: 780px; border-radius: 26px; overflow: hidden; flex: none;
+    border: 1px solid #d8d1c0; box-shadow: 0 8px 30px rgba(0,0,0,.14); background: #f5f2ec; }
+  .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
 
-  /* 移动端手机框：把全屏态（.bz-fav-mob 100vw/100vh）缩进 396×780 演示框 */
-  .demo-mob { width: 396px !important; height: 780px !important; max-width: none !important;
-    position: relative; border: 1px solid #d8d1c0; border-radius: 26px; overflow: hidden; flex: none;
-    box-shadow: 0 8px 30px rgba(0,0,0,.14); }
-  /* 抽屉遮罩插件里挂 body（fixed 全屏）；评审壳内收进手机框 */
-  .demo-mob .bz-fav-sheet-mask { position: absolute; }
-
-  /* 评审徽牌 / 主题钮（演示壳自用） */
+  /* 评审徽牌（演示壳自用） */
   .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #9a917d; display: flex; gap: 10px; align-items: center;
-    background: rgba(255,255,255,.9); border: 1px solid #d8d1c0; padding: 3px 8px; }
+    background: rgba(255,255,255,.9); border: 1px solid #d8d1c0; padding: 3px 8px; z-index: 900; }
   .vbadge button { border: none; background: none; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; }
-  .theme-toggle { position: fixed; right: 16px; top: 14px; width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
-    border: 1px solid #d8d1c0; background: rgba(255,255,255,.9); color: #6d6455; display: flex; align-items: center; justify-content: center; }
-  body.theme-dark .theme-toggle { background: rgba(53,49,42,.9); border-color: #3a352d; color: #cfc7b4; }
+  .vbadge .ok { color: #3d8f5d; }
+  .vbadge .bad { color: #b3564d; }
 </style>
 </head>
-<body>
-  <button class="theme-toggle" id="themeBtn" title="亮/暗切换"></button>
-  <div id="dtHost" class="demo-dt"></div>
-  <div id="mobHost" class="demo-mob"></div>
+<body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark，壳内必须补一类才不透明 -->
+  <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="收藏本·桌面"></iframe></div>
+  <div id="mobHost" class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="收藏本·移动"></iframe></div>
 
-  <div class="vbadge">收藏本 · 原型预览（共用 styles.css）· 真实 51 条 <button id="reset">重置演示数据</button></div>
+  <div class="vbadge">收藏本 · 真行为单源预览（桌面=真 ui.ts 跑在 920px，移动=396px）· 真实 51 条
+    <button id="mobToggle">隐藏移动端</button>
+    <button id="reset">重置演示数据</button>
+    <span id="stResult"></span>
+  </div>
 
 <script src="./prototype-icons.js"></script>
 <script src="./prototype-data.js"></script>
-<script src="./prototype-render.js"></script>
 <script>
 (function () {
-  /* ==================== 渲染单源：window.BZR_favorites（构建产物，勿手改） ====================
-   * markup / 计算口径 / 行操作序列全部来自 src/favorites/render.ts（issue 242/ADR-0104/0105），
-   * 与插件 ui.ts 消费同一份；本壳只留演示层（localStorage 假数据/自绘 toast/确认框/mountIcons）。 */
-  const R = window.BZR_favorites;
-  const esc = R.esc;
-  const icon = R.iconSpan;
-  const localNow = R.localNow;
-
-  /* ==================== 壳基座：mountIcons（prototype-icons.js 内联 SVG——壳层差异表） ==================== */
-  const ICONS = window.FAV_ICONS || {};
-  function mountIcons(root) {
-    if (!root) return;
-    root.querySelectorAll('i[data-lucide]').forEach((el) => {
-      const d = ICONS[el.dataset.lucide];
-      if (d && !el.firstChild) {
-        el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
-      }
-    });
-  }
-
-  /* ==================== 演示数据（壳层差异表：localStorage 假数据 + 真实库快照） ==================== */
-  const LS = 'bz-fav-c5-shared-v1';
-  const LS_THEME = 'bz-fav-c5-theme';
-  let items;
-  try {
-    const saved = JSON.parse(localStorage.getItem(LS) || 'null');
-    items = Array.isArray(saved) && saved.length ? saved : FAV.ITEMS.map((x) => ({ ...x }));
-  } catch (e) { items = FAV.ITEMS.map((x) => ({ ...x })); }
-  /* 视图状态（与 render.FavView / ui.ts FavState 切片同构） */
-  const M = { tag: null, archived: false };
-  const byId = (id) => items.find((i) => i.id === id);
-  const save = () => { try { localStorage.setItem(LS, JSON.stringify(items)); } catch (e) { } };
-
-  /* ==================== 面板骨架（markup 单源 R.panelHtml；桌面 + 手机框各一份） ==================== */
-  const dtHost = document.getElementById('dtHost');
-  const mobHost = document.getElementById('mobHost');
-  dtHost.innerHTML = R.panelHtml(false);
-  mobHost.innerHTML = R.panelHtml(true);
-  const dtPanel = dtHost.querySelector('.bz-fav-panel');
-  const mobPanel = mobHost.querySelector('.bz-fav-panel');
-
-  /* 抽屉遮罩：插件挂 body（fixed 全屏），评审壳收进手机框（演示层差异） */
-  const sheetMask = document.createElement('div');
-  sheetMask.className = 'bz-fav-sheet-mask bz-fav-scope';
-  const sheet = document.createElement('div');
-  sheet.className = 'bz-fav-sheet';
-  sheetMask.appendChild(sheet);
-  mobHost.appendChild(sheetMask);
-
-  /* ==================== 渲染（纯层胶水 R.renderPanelView；磁贴单行横滑/新收藏置首随 mobile 钩子） ==================== */
-  function renderPanel(panel, mobile) {
-    R.renderPanelView(panel, items, M, { mountIcons, mobile });
-  }
-  function renderAll() {
-    renderPanel(dtPanel, false);
-    renderPanel(mobPanel, true);
-  }
-
-  /* ==================== 行为演示（动作元语 R.actionSpecs → 壳侧演示实现；插件侧映射 core 服务） ==================== */
-  function runAction(it, spec) {
-    if (spec.act === 'open') { if ((it.url || '').trim()) window.open(it.url, '_blank'); }
-    else if (spec.act === 'pin') { it.pinned = !it.pinned; save(); renderAll(); }
-    else if (spec.act === 'edit') { openForm(it); }
-    else if (spec.act === 'unarchive') {
-      it.archived = false; it.archivedAt = null; save(); renderAll();
-      toast(`已取消归档，「${it.title}」回到主列表`);
-    } else if (spec.act === 'archive') {
-      confirmDlg('归档收藏', `确定归档收藏「${it.title}」吗？归档后不在主列表显示（数据保留），可在通知中撤销。`, '归档', () => {
-        it.archived = true; it.archivedAt = localNow(); save(); renderAll();
-        toast(`已归档收藏「${it.title}」`, '撤销', () => { it.archived = false; it.archivedAt = null; save(); renderAll(); });
-      });
-    } else if (spec.act === 'del') {
-      confirmDlg('删除收藏', `确定删除收藏「${it.title}」吗？删除后可在通知中撤销。`, '删除', () => {
-        const idx = items.indexOf(it);
-        items.splice(idx, 1); save(); renderAll();
-        toast(`已删除收藏「${it.title}」`, '撤销', () => { items.splice(Math.min(idx, items.length), 0, it); save(); renderAll(); });
-      });
-    }
-  }
-
-  /* ==================== 桌面右键菜单（容器壳建，内容单源 R.ctxMenuHtml） ==================== */
-  let menuEl = null;
-  function closeMenu() { if (menuEl) { menuEl.remove(); menuEl = null; } }
-  function openMenu(it, x, y) {
-    closeMenu();
-    const acts = R.actionSpecs(it);
-    menuEl = document.createElement('div');
-    menuEl.className = 'bz-fav-ctx bz-fav-scope';
-    menuEl.innerHTML = R.ctxMenuHtml(acts);
-    menuEl.addEventListener('click', (e) => {
-      const b = e.target.closest('button'); if (!b) return;
-      closeMenu(); runAction(it, acts[+b.dataset.k]);
-    });
-    document.body.appendChild(menuEl);
-    mountIcons(menuEl);
-    const r = menuEl.getBoundingClientRect();
-    menuEl.style.left = Math.min(x, innerWidth - r.width - 8) + 'px';
-    menuEl.style.top = Math.min(y, innerHeight - r.height - 8) + 'px';
-  }
-  document.addEventListener('click', (e) => { if (menuEl && !menuEl.contains(e.target)) closeMenu(); });
-  dtPanel.querySelector('[data-fav-content]').addEventListener('contextmenu', (e) => {
-    const card = e.target.closest('[data-fav-id]'); if (!card) return;
-    e.preventDefault();
-    const it = byId(card.dataset.favId);
-    if (it) openMenu(it, e.clientX, e.clientY);
-  });
-  /* 桌面：点击不弹菜单（操作唯一入口右键）——有链接直开 */
-  dtPanel.querySelector('[data-fav-content]').addEventListener('click', (e) => {
-    const card = e.target.closest('[data-fav-id]'); if (!card) return;
-    const it = byId(card.dataset.favId); if (!it) return;
-    if ((it.url || '').trim()) window.open(it.url, '_blank');
-  });
-
-  /* ==================== 移动端底部抽屉（内容单源 R.sheetHtml） ==================== */
-  function openSheet(it) {
-    const acts = R.actionSpecs(it);
-    sheet.innerHTML = R.sheetHtml(it, acts);
-    mountIcons(sheet);
-    sheet.onclick = (e) => {
-      const b = e.target.closest('button'); if (!b) return;
-      closeSheet(); runAction(it, acts[+b.dataset.k]);
-    };
-    sheetMask.classList.add('bz-fav-show');
-  }
-  function closeSheet() { sheetMask.classList.remove('bz-fav-show'); }
-  sheetMask.addEventListener('click', (e) => { if (e.target === sheetMask) closeSheet(); });
-  mobPanel.querySelector('[data-fav-content]').addEventListener('click', (e) => {
-    const card = e.target.closest('[data-fav-id]'); if (!card) return;
-    const it = byId(card.dataset.favId); if (it) openSheet(it);
-  });
-  mobPanel.querySelector('[data-fav-close]').addEventListener('click', () => toast('评审壳：插件内此处关闭全屏面板'));
-
-  /* ==================== 磁贴行点击（两端委托，与 ui.ts 同语义） ==================== */
-  function bindTags(panel) {
-    panel.querySelector('[data-fav-tags]').addEventListener('click', (e) => {
-      if (e.target.closest('[data-fav-add]')) { openForm(null); return; }
-      const chip = e.target.closest('[data-fav-tag]');
-      if (!chip) return;
-      const label = chip.dataset.favTag;
-      if (label === '全部') { M.tag = null; M.archived = false; }
-      else if (label === '已归档') { M.tag = null; M.archived = !M.archived; }
-      else { M.archived = false; M.tag = M.tag === label ? null : label; }
-      closeMenu(); renderAll();
-    });
-  }
-  bindTags(dtPanel); bindTags(mobPanel);
-
-  /* ==================== 确认框 / toast（插件侧走 core flow-dialog/notice，演示壳自绘） ==================== */
-  function confirmDlg(title, msg, okLabel, onOk) {
-    const mask = document.createElement('div');
-    mask.className = 'bz-fav-form-mask bz-fav-scope';
-    mask.innerHTML = `<div class="bz-fav-form" style="width:320px;padding:20px 22px 16px">
-      <h2 style="font-size:14.5px;margin-bottom:9px">${esc(title)}</h2>
-      <p style="font-size:12.5px;line-height:1.7;color:var(--pop-mut);margin-bottom:16px">${esc(msg)}</p>
-      <div class="bz-fav-btns"><button data-a="c">取消</button><button data-a="ok" class="bz-fav-pri">${esc(okLabel)}</button></div></div>`;
-    const done = () => mask.remove();
-    mask.addEventListener('click', (e) => {
-      if (e.target === mask || e.target.dataset.a === 'c') return done();
-      if (e.target.dataset.a === 'ok') { done(); onOk(); }
-    });
-    document.body.appendChild(mask);
-  }
-  let toastEl = null, toastTimer = 0;
-  function toast(msg, undoLabel, onUndo) {
-    if (toastEl) toastEl.remove();
-    clearTimeout(toastTimer);
-    toastEl = document.createElement('div');
-    toastEl.id = 'demoToast';
-    toastEl.style.cssText = 'position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:700;display:flex;align-items:center;gap:14px;background:#4a443a;color:#f3efe4;font-size:12.5px;padding:10px 16px;border-radius:99px;box-shadow:0 8px 24px rgba(0,0,0,.28)';
-    toastEl.innerHTML = `<span>${esc(msg)}</span>` + (undoLabel ? `<button style="border:none;background:none;color:#e0b73a;font:700 12.5px 'Microsoft YaHei';cursor:pointer">${esc(undoLabel)}</button>` : '');
-    if (undoLabel) toastEl.querySelector('button').onclick = () => { toastEl.remove(); toastEl = null; onUndo(); };
-    document.body.appendChild(toastEl);
-    toastTimer = setTimeout(() => { toastEl && toastEl.remove(); toastEl = null; }, 5000);
-  }
-
-  /* ==================== 添加 / 编辑表单（骨架单源 R.formHtml；演示行为在壳） ==================== */
-  function openForm(it) {
-    const editing = !!it;
-    const mask = document.createElement('div');
-    mask.className = 'bz-fav-form-mask bz-fav-scope';
-    mask.innerHTML = R.formHtml(it);
-    document.body.appendChild(mask);
-    mountIcons(mask);
-    const form = mask.querySelector('.bz-fav-form');
-    const sel = new Set((it ? it.tags : []) || []);
-    const pick = form.querySelector('#fz-tags');
-    const drawPick = () => {
-      pick.innerHTML = R.pickChipsHtml(sel);
-      pick.querySelectorAll('[data-tag]').forEach((b) => b.addEventListener('click', () => {
-        const label = b.dataset.tag;
-        if (sel.has(label)) sel.delete(label); else sel.add(label);
-        drawPick();
-      }));
-      mountIcons(pick);
-    };
-    drawPick();
-    form.querySelector('#fz-pin').addEventListener('click', (e) => e.currentTarget.classList.toggle('bz-fav-on'));
-    const titleInp = form.querySelector('#fz-title'), urlInp = form.querySelector('#fz-url');
-    titleInp.addEventListener('paste', (e) => {
-      const text = (e.clipboardData || window.clipboardData)?.getData('text')?.trim() || '';
-      if (!/^https?:\/\/\S+$/i.test(text)) return;
-      e.preventDefault();
-      if (!urlInp.value.trim()) urlInp.value = text;
-      setTimeout(() => titleInp.focus(), 0);
-    });
-    const aiBtn = form.querySelector('#fz-ai');
-    aiBtn.addEventListener('click', () => {
-      const g = (id) => form.querySelector(id)?.value.trim() || '';
-      if (!g('#fz-title') && !g('#fz-url') && !g('#fz-desc')) { form.querySelector('#fz-err').textContent = '请至少输入标题、链接或简介中的一项，以便 AI 参考'; return; }
-      form.querySelector('#fz-err').textContent = '';
-      aiBtn.disabled = true;
-      aiBtn.querySelector('span').textContent = 'AI 整理中…';
-      toast('AI 分析中…');
-      setTimeout(() => {
-        const url = g('#fz-url');
-        const gh = url.match(/github\.com\/([^\/?#]+)\/([^\/?#]+)/);
-        const setVal = (id, v) => { const el = form.querySelector(id); if (el && !el.value.trim() && v) el.value = String(v); };
-        if (gh) setVal('#fz-title', gh[2]);
-        else if (!g('#fz-title')) {
-          try { setVal('#fz-title', new URL(/^https?:\/\//.test(url) ? url : 'https://' + url).hostname.replace(/^www\./, '').split('.')[0]); } catch (e) { }
-        }
-        const guess = [];
-        if (/github\.com\//.test(url)) guess.push('GitHub');
-        const hay = (g('#fz-title') + ' ' + g('#fz-desc')).toLowerCase();
-        FAV.TAGS.forEach((t) => { if (t.label !== 'GitHub' && hay.includes(t.label.toLowerCase())) guess.push(t.label); });
-        guess.forEach((t) => sel.add(t));
-        drawPick();
-        aiBtn.disabled = false;
-        aiBtn.querySelector('span').textContent = 'AI 整理';
-        toast('AI 整理完成（评审壳为模拟，插件内为真实 AI 调用）');
-      }, 1200);
-    });
-    mask.addEventListener('click', (e) => {
-      if (e.target === mask || e.target.closest('[data-fz-cancel]')) return mask.remove();
-      if (!e.target.closest('#fz-save')) return;
-      const title = titleInp.value.trim();
-      if (!title) { form.querySelector('#fz-err').textContent = '标题不能为空'; return; }
-      const tags = FAV.TAGS.map((t) => t.label).filter((l) => sel.has(l));
-      const patch = { title, url: urlInp.value.trim(), description: form.querySelector('#fz-desc').value.trim(), tags, type: tags[0] || '', pinned: form.querySelector('#fz-pin').classList.contains('bz-fav-on') };
-      if (editing) Object.assign(it, patch);
-      else items.unshift({ id: String(Date.now()), created: localNow(), ...patch });
-      save(); renderAll(); mask.remove();
-      toast(editing ? `已更新「${title}」` : `已添加「${title}」`);
-    });
-    titleInp.focus();
-  }
-
-  /* ==================== 主题切换（body.theme-dark ↔ .theme-dark .bz-fav-scope） ==================== */
-  const themeBtn = document.getElementById('themeBtn');
-  function applyTheme(dark) {
-    document.body.classList.toggle('theme-dark', dark);
-    themeBtn.innerHTML = icon(dark ? 'sun' : 'eye', 16);
-    try { localStorage.setItem(LS_THEME, dark ? 'dark' : 'light'); } catch (e) { }
-  }
-  let dark = false;
-  try { dark = localStorage.getItem(LS_THEME) === 'dark'; } catch (e) { }
-  themeBtn.onclick = () => applyTheme(!document.body.classList.contains('theme-dark'));
-  applyTheme(dark);
-
-  /* ==================== Esc / 重置 ==================== */
-  document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape') return;
-    if (menuEl) return closeMenu();
-    if (sheetMask.classList.contains('bz-fav-show')) return closeSheet();
-    const mask = document.querySelector('.bz-fav-form-mask');
-    if (mask) mask.remove();
-  });
-  document.getElementById('reset').onclick = () => {
-    confirmDlg('重置演示数据', '丢弃本页所有改动，恢复为 vault 里的真实收藏数据。', '重置', () => {
-      localStorage.removeItem(LS);
-      items = FAV.ITEMS.map((x) => ({ ...x }));
-      M.tag = null; M.archived = false;
-      save(); renderAll(); toast('已恢复真实数据');
-    });
+  /* ==================== 壳基座（仅外景）：两个真行为 iframe + 数据种子 ====================
+   * 行为全部在 iframe 内跑真 ui.ts（prototype-behavior.js）；本页只做：
+   *  - 数据种子（FAV.ITEMS 首启写 localStorage favorites.json，数组同构，见 fake-sim seedDatabase）
+   *  - 重置演示数据（清 localStorage 后重载 iframe）
+   *  - 自检（?selftest=1）：经 iframe contentWindow 访问真 DOM
+   */
+  const LS = 'bz-sim:CONFIG/STORAGE/favorites.json';
+  const seedOnce = () => {
+    if (localStorage.getItem(LS)) return;
+    localStorage.setItem(LS, JSON.stringify(window.FAV?.ITEMS || []));
   };
+  seedOnce();
 
-  renderAll();
+  const dtFrame = () => document.querySelector('#dtHost iframe');
+  const mobFrame = () => document.querySelector('#mobHost iframe');
+  const dtDoc = () => dtFrame().contentDocument;
+  const mobDoc = () => mobFrame().contentDocument;
+  // 轮询现取 contentDocument：iframe 加载前后 document 引用会替换（about:blank → 真实文档），
+  // 不能缓存旧引用等面板——每次现查，跨文档访问本身同源安全。
+  const waitFrame = (getDoc, sel) => new Promise((res, rej) => {
+    const started = Date.now();
+    const tries = () => {
+      try {
+        const doc = getDoc();
+        if (doc && doc.querySelector(sel)) return res(doc);
+        if (Date.now() - started > 25000) return rej(new Error('iframe 面板超时'));
+        setTimeout(tries, 150);
+      } catch (e) { setTimeout(tries, 150); }
+    };
+    tries();
+  });
 
-  /* ==================== 自检（?selftest=1） ==================== */
+  document.querySelector('#mobToggle').addEventListener('click', () => {
+    const m = document.querySelector('#mobHost');
+    const hidden = m.style.display === 'none';
+    m.style.display = hidden ? '' : 'none';
+    document.querySelector('#mobToggle').textContent = hidden ? '隐藏移动端' : '显示移动端';
+  });
+
+  document.querySelector('#reset').addEventListener('click', () => {
+    localStorage.removeItem(LS);
+    localStorage.removeItem('bz-fav-c5-shared-v1'); // 旧壳数据键一并清（防误读旧壳残留）
+    location.reload();
+  });
+
+  /* ==================== 自检（?selftest=1）：真行为 DOM 断言（经 iframe） ==================== */
   if (location.search.includes('selftest')) {
     window.__st = { pass: 0, fail: [] };
     const t = (name, cond) => cond ? window.__st.pass++ : window.__st.fail.push(name);
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-    const dtCards = () => dtPanel.querySelectorAll('[data-fav-content] .bz-fav-card').length;
-    const mobCards = () => mobPanel.querySelectorAll('[data-fav-content] .bz-fav-card').length;
-    const chipOf = (panel, label) => [...panel.querySelectorAll('[data-fav-tag]')].find((b) => b.dataset.favTag === label);
-    const firstCardTitle = (panel) => panel.querySelector('[data-fav-content] .bz-fav-card h3')?.textContent || '';
     (async () => {
+      const res = document.querySelector('#stResult');
       try {
-        const alive = items.filter((i) => !i.archived);
-        t('初始51条', items.length === 51);
-        t('桌面卡数=非归档数', dtCards() === alive.length);
-        t('移动卡数=非归档数', mobCards() === alive.length);
-        t('磁贴首枚=全部', dtPanel.querySelector('[data-fav-tag]')?.dataset.favTag === '全部');
-        t('已归档贴纸在场', !!chipOf(dtPanel, '已归档'));
-        t('新收藏chip在场', !!dtPanel.querySelector('[data-fav-add]'));
-        t('磁贴图标兑现', !!dtPanel.querySelector('[data-fav-tags] button svg'));
-        t('移动关闭钮在场', !!mobPanel.querySelector('[data-fav-close]'));
-        t('移动磁贴新收藏置首', mobPanel.querySelector('[data-fav-tags]').firstElementChild?.hasAttribute('data-fav-add') === true);
-
-        chipOf(dtPanel, '已归档').click();
-        t('归档视图卡数=归档数', dtCards() === items.filter((i) => i.archived).length);
-        t('归档卡带冷存类', !!dtPanel.querySelector('[data-fav-content] .bz-fav-card.bz-fav-arch'));
-        chipOf(dtPanel, '已归档').click();
-        t('再点回全部', dtCards() === alive.length);
-
-        const ghChip = chipOf(dtPanel, 'GitHub');
-        if (ghChip) {
-          ghChip.click();
-          const ghOk = dtCards() > 0 && [...dtPanel.querySelectorAll('[data-fav-content] .bz-fav-card')].every((c) => c.querySelector('.bz-fav-tags-row')?.textContent.includes('GitHub'));
-          t('GitHub筛选命中', ghOk);
-          chipOf(dtPanel, 'GitHub').click();
-          t('再点取消筛选', dtCards() === alive.length);
+        // 数据基线检查：种子应是 FAV.ITEMS 全量（51 条）。若残留上次运行（非基线数或含「测试收藏」）
+        // 则重置重载一次。headless 验收每次全新 profile 天然干净；浏览器手动重复跑 selftest 也能自清理。
+        const BASE = (window.FAV?.ITEMS || []).length;
+        const pre = (() => { try { return JSON.parse(localStorage.getItem(LS) || 'null'); } catch { return null; } })();
+        const dirty = !Array.isArray(pre) || pre.length !== BASE || pre.some((i) => i.title === '测试收藏');
+        if (dirty) {
+          if (!location.search.includes('reset=1')) {
+            localStorage.removeItem(LS);
+            seedOnce();
+            location.search = '?selftest=1&reset=1';
+            return;
+          }
         }
+        const db = () => JSON.parse(localStorage.getItem(LS));
+        const dd = await waitFrame(dtDoc, '.bz-fav-panel');
+        const md = await waitFrame(mobDoc, '.bz-fav-panel');
+        res.textContent = '…';
+        const dt = (sel) => dd.querySelector(sel);
+        const mob = (sel) => md.querySelector(sel);
+        const dtCards = () => dd.querySelectorAll('[data-fav-content] .bz-fav-card').length;
+        const mobCards = () => md.querySelectorAll('[data-fav-content] .bz-fav-card').length;
+        const chipOf = (doc, label) => [...doc.querySelectorAll('[data-fav-tag]')].find((b) => b.dataset.favTag === label);
+        const firstCardTitle = (doc) => doc.querySelector('[data-fav-content] .bz-fav-card h3')?.textContent || '';
+        const alive0 = db().filter((i) => !i.archived);
 
-        /* 新增（表单单源 R.formHtml） */
-        dtPanel.querySelector('[data-fav-add]').click();
-        t('表单开', !!document.querySelector('.bz-fav-form-mask .bz-fav-form'));
-        document.querySelector('#fz-title').value = '测试收藏';
-        document.querySelector('#fz-tags [data-tag="网站"]').click();
-        document.querySelector('#fz-save').click();
-        await sleep(60);
-        const nu = items.find((i) => i.title === '测试收藏');
-        t('新增落演示数据', !!nu);
-        t('表单已关', !document.querySelector('.bz-fav-form'));
-        t('新增卡在场', !!dtPanel.querySelector(`[data-fav-id="${nu.id}"]`));
-        t('新增卡标签徽记', dtPanel.querySelector(`[data-fav-id="${nu.id}"] .bz-fav-tags-row`)?.textContent.includes('网站') === true);
+        t('桌面面板开', !!dt('.bz-fav-panel'));
+        t('移动面板开', !!mob('.bz-fav-panel'));
+        t('初始51条', db().length === BASE);
+        t('桌面卡数=非归档数', dtCards() === alive0.length);
+        t('移动卡数=非归档数', mobCards() === alive0.length);
+        t('磁贴首枚=全部', dt('[data-fav-tag]')?.dataset.favTag === '全部');
+        t('已归档贴纸在场', !!chipOf(dd, '已归档'));
+        t('新收藏chip在场', !!dt('[data-fav-add]'));
+        t('磁贴图标兑现', !!dt('[data-fav-tags] button svg')); // fake setIcon + FAV_ICONS 表生效
+        t('移动关闭钮在场', !!mob('[data-fav-close]'));
+        t('移动磁贴新收藏置首', mob('[data-fav-tags]')?.firstElementChild?.hasAttribute('data-fav-add') === true);
 
-        /* 右键菜单：置顶/取消置顶 */
-        dtPanel.querySelector(`[data-fav-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
-        t('右键菜单开', !!document.querySelector('.bz-fav-ctx'));
-        [...document.querySelectorAll('.bz-fav-ctx button')].find((b) => b.textContent.includes('置顶') && !b.textContent.includes('取消')).click();
-        t('置顶生效', nu.pinned === true);
-        t('置顶卡挂金边类', !!dtPanel.querySelector(`[data-fav-id="${nu.id}"].bz-fav-pinc`));
-        t('置顶恒最前', firstCardTitle(dtPanel) === '测试收藏');
-        dtPanel.querySelector(`[data-fav-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
-        [...document.querySelectorAll('.bz-fav-ctx button')].find((b) => b.textContent.includes('取消置顶')).click();
-        t('取消置顶', nu.pinned === false);
+        // 归档视图（磁贴切换，渲染同步）
+        chipOf(dd, '已归档').click();
+        await sleep(50);
+        t('归档视图卡数=归档数', dtCards() === db().filter((i) => i.archived).length);
+        t('归档卡带冷存类', !!dt('[data-fav-content] .bz-fav-card.bz-fav-arch'));
+        chipOf(dd, '已归档').click();
+        await sleep(50);
+        t('再点回全部', dtCards() === alive0.length);
 
-        /* 删除 + 撤销（演示 toast） */
-        dtPanel.querySelector(`[data-fav-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
-        [...document.querySelectorAll('.bz-fav-ctx button')].find((b) => b.textContent.includes('删除')).click();
-        t('确认框开', !!document.querySelector('.bz-fav-form-mask [data-a="ok"]'));
-        document.querySelector('.bz-fav-form-mask [data-a="ok"]').click();
-        t('删除生效', !items.some((i) => i.id === nu.id));
-        document.querySelector('#demoToast button').click();
-        t('撤销恢复', items.some((i) => i.id === nu.id));
+        // 标签筛选（磁贴；renderAll 会重绘磁贴行——chip 引用不可缓存，每次现取）
+        chipOf(dd, 'GitHub').click();
+        await sleep(50);
+        const ghOk = dtCards() > 0 && [...dd.querySelectorAll('[data-fav-content] .bz-fav-card')].every((c) => c.querySelector('.bz-fav-tags-row')?.textContent.includes('GitHub'));
+        t('GitHub筛选命中', ghOk);
+        chipOf(dd, 'GitHub').click();
+        await sleep(50);
+        t('再点取消筛选', dtCards() === alive0.length);
 
-        /* 清理测试条目 */
-        items = items.filter((i) => i.id !== nu.id); save(); renderAll();
+        // 新增（桌面表单，真 saveForm 走 jsonFileStore 写队列）
+        dt('[data-fav-add]').click();
+        await sleep(80);
+        t('表单开', !!dd.querySelector('.bz-fav-form-mask .bz-fav-form'));
+        dd.querySelector('#fz-title').value = '测试收藏';
+        dd.querySelector('#fz-tags [data-tag="网站"]').click();
+        dd.querySelector('#fz-save').click();
+        await sleep(250);
+        const saved = db();
+        const nu = saved.find((i) => i.title === '测试收藏');
+        t('新增落盘', !!nu);
+        t('表单已关', !dd.querySelector('.bz-fav-form'));
+        t('新增卡在场', !!dt(`[data-fav-id="${nu.id}"]`));
+        t('新增卡标签徽记', dt(`[data-fav-id="${nu.id}"] .bz-fav-tags-row`)?.textContent.includes('网站') === true);
 
-        /* 移动抽屉 */
-        mobPanel.querySelector('[data-fav-content] [data-fav-id]').click();
-        t('移动抽屉开', sheetMask.classList.contains('bz-fav-show'));
-        t('抽屉磁点+标题', !!sheet.querySelector('.bz-fav-sh-dot') && !!sheet.querySelector('.bz-fav-sh-title'));
-        t('抽屉动作列在场', sheet.querySelectorAll('.bz-fav-sh-acts button').length >= 4);
-        sheetMask.click();
-        t('移动抽屉关', !sheetMask.classList.contains('bz-fav-show'));
+        // 跨实例共享（storage 桥写同源 favorites.json；favorites 无 modify 订阅，
+        // 自动刷新接线在插件侧域外——以「重开面板」语义验证移动侧读到新数据）
+        mobFrame().contentWindow.BZW_favorites.closePanel();
+        mobFrame().contentWindow.BZW_favorites.openPanel();
+        await waitFrame(mobDoc, '.bz-fav-panel');
+        await sleep(250);
+        t('重开后移动同步51+1', mobCards() === alive0.length + 1);
+
+        // 右键菜单：置顶/取消置顶（真 runAction pin 落盘）
+        // 右键菜单/浮层 capture 层需完整鼠标事件序列（mousedown+mouseup+click 带真实坐标）
+        const clickReal = (el) => {
+          if (!el) return;
+          const r = el.getBoundingClientRect();
+          const mk = (type) => new MouseEvent(type, { clientX: r.left + 10, clientY: r.top + 10, bubbles: true, cancelable: true });
+          el.dispatchEvent(mk('mousedown'));
+          el.dispatchEvent(mk('mouseup'));
+          el.dispatchEvent(mk('click'));
+        };
+        dd.querySelector(`[data-fav-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
+        await sleep(100);
+        t('右键菜单开', !!dd.querySelector('.bz-fav-ctx'));
+        const pinBtn = [...dd.querySelectorAll('.bz-fav-ctx button')].find((b) => b.textContent.includes('置顶') && !b.textContent.includes('取消'));
+        clickReal(pinBtn);
+        await sleep(250);
+        t('置顶生效', db().find((i) => i.id === nu.id).pinned === true);
+        t('置顶卡挂金边类', !!dt(`[data-fav-id="${nu.id}"].bz-fav-pinc`));
+        t('置顶恒最前', firstCardTitle(dd) === '测试收藏');
+        dd.querySelector(`[data-fav-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
+        await sleep(100);
+        const unpinBtn = [...dd.querySelectorAll('.bz-fav-ctx button')].find((b) => b.textContent.includes('取消置顶'));
+        clickReal(unpinBtn);
+        await sleep(250);
+        t('取消置顶', db().find((i) => i.id === nu.id).pinned === false);
+
+        // 删除 + 撤销（真 flow-dialog 标准双动作 + 真 notice 撤销钮）
+        dd.querySelector(`[data-fav-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
+        await sleep(100);
+        const delItem = [...dd.querySelectorAll('.bz-fav-ctx button')].find((b) => b.textContent.includes('删除'));
+        t('删除菜单项在', !!delItem);
+        clickReal(delItem);
+        await sleep(150);
+        // 删除确认 = core flow-dialog 标准双动作（取消左/删除右：__shared_confirm_ok__）
+        const delBtn = dd.querySelector('#__shared_confirm_ok__');
+        t('删除确认框开', !!delBtn);
+        clickReal(delBtn);
+        await sleep(250);
+        t('删除生效', !db().some((i) => i.id === nu.id));
+        // 撤销（真 notice 的撤销钮在 iframe body 内）
+        const undoBtn = [...dd.querySelectorAll('.bz-notice-action')].pop();
+        if (undoBtn) undoBtn.click();
+        await sleep(250);
+        t('撤销恢复', !!db().some((i) => i.id === nu.id));
+
+        // 移动抽屉（真 openMobSheet；点遮罩本体关闭——与 core item-actions 抽屉的 touch 下拉关闭不同）
+        mob('[data-fav-content] [data-fav-id]').click();
+        await sleep(100);
+        t('移动抽屉开', !!md.querySelector('.bz-fav-sheet-mask.bz-fav-show'));
+        t('抽屉磁点+标题', !!md.querySelector('.bz-fav-sheet .bz-fav-sh-dot') && !!md.querySelector('.bz-fav-sheet .bz-fav-sh-title'));
+        t('抽屉动作列在场', md.querySelectorAll('.bz-fav-sheet .bz-fav-sh-acts button').length >= 4);
+        md.querySelector('.bz-fav-sheet-mask').click();
+        await sleep(80);
+        t('移动抽屉关', !md.querySelector('.bz-fav-sheet-mask'));
 
         document.title = window.__st.fail.length
           ? 'SELFTEST FAIL ' + window.__st.fail.join(',')
           : `SELFTEST OK ${window.__st.pass}/${window.__st.pass + window.__st.fail.length}`;
-      } catch (err) { document.title = 'SELFTEST ERR ' + (err && err.message || err); }
+        res.textContent = window.__st.fail.length ? '自检失败' : `自检通过 ${window.__st.pass}`;
+        res.className = window.__st.fail.length ? 'bad' : 'ok';
+      } catch (err) {
+        document.title = 'SELFTEST ERR ' + (err && err.message || err);
+        res.textContent = '自检异常';
+        res.className = 'bad';
+      }
     })();
   }
 })();

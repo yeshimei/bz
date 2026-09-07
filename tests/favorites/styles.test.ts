@@ -41,11 +41,13 @@ describe('C1：域选择器脱离 core reset 同分顺序对抗 + 原型 core �
   });
 });
 
-describe('C2：原型两处动态 mask 挂 bz-fav-scope（评审壳变量生效）', () => {
-  it('confirmDlg / openForm 的 mask className 带 scope；无裸 bz-fav-form-mask 赋值残留', () => {
+describe('C2：动态 mask 挂 bz-fav-scope（行为单源后断言指向真行为 ui.ts，壳不自绘）', () => {
+  it('openForm 的 mask className 带 scope（issue 245：壳只载真行为包，无自绘 confirmDlg）', () => {
     const proto = favProto();
-    expect(proto.match(/bz-fav-form-mask bz-fav-scope/g)?.length).toBe(2);
+    // 行为单源（issue 245/ADR-0106）：动态 mask 的 className 赋值唯一落点 = 真行为 ui.ts
+    expect(favUi().match(/bz-fav-form-mask bz-fav-scope/g)?.length).toBe(1);
     expect(proto).not.toContain("= 'bz-fav-form-mask';");
+    expect(proto).toContain('prototype-behavior.js');
   });
 });
 
@@ -99,15 +101,17 @@ describe('C11：静态 z-index 标注原型兜底', () => {
   });
 });
 
-describe('C12：原型表单演示钩子对齐插件契约', () => {
-  it('取消= data-fz-cancel / 保存= id="fz-save"（模板与演示 JS 同步；确认框演示壳 data-a 不在约束内）', () => {
+describe('C12：表单演示钩子对齐插件契约（行为单源后断言指向真行为 ui.ts）', () => {
+  it('取消= data-fz-cancel / 保存= id="fz-save"（模板与真行为委托同源；壳无自绘演示 JS）', () => {
     const proto = favProto();
     expect(favShared()).toContain('<button type="button" data-fz-cancel>取消</button>'); // issue 242：markup 单源 shared.ts
     expect(favShared()).toContain('id="fz-save" class="bz-fav-pri"');
-    // 演示 JS 委托改走 closest 契约钩子
-    expect(proto).toContain("e.target.closest('[data-fz-cancel]')");
-    expect(proto).toContain("e.target.closest('#fz-save')");
+    // 行为单源（issue 245/ADR-0106）：演示 JS 已随旧壳退役，钩子委托在真行为 ui.ts
+    expect(favUi()).toContain("querySelector('[data-fz-cancel]')");
+    expect(favUi()).toContain("querySelector('#fz-save')");
     expect(proto).not.toContain("e.target.dataset.a !== 'ok'");
+    expect(proto).not.toContain("e.target.closest('[data-fz-cancel]')"); // 壳不再自绘委托
+    expect(proto).toContain('prototype-behavior.js');
   });
 });
 
