@@ -3,9 +3,11 @@
  * UI 层：桌面侧栏工作台（影院式整宽头行）构建 / 域导航切换内嵌渲染真实 schema /
  *       搜索过滤 / 移动命令面板构建 / 域设置弹窗 / 关闭 / 卸载清理。
  * 核心断言：面板内嵌渲染 = 渲染器 renderPanelSchema（与 ⚙️ 弹窗同数据源、同绑定通道，
- *   控件全部域内自绘（.bz-input/.bz-sw/.bz-select/.bz-sp-chip/.bz-sp-btn/.bz-sp-cardpick…，原型逐字），图标一律 lucide
+ *   控件全部域内自绘（.bz-input/.bz-sw/.bz-select/.bz-sp-chip/.bz-sp-btn/.bz-sp-cardpick…），图标一律 lucide
  *   （setIcon mock 记 data-icon）——面板内不出现 Obsidian 原生 .setting-item 设置行嵌套，
  *   也不残留 emoji 图标（收编铁律 6）。
+ * 行为单源（ADR-0106，issue 245 范式）：行为唯一真理 = 域 ui.ts，原型壳 = 双 iframe 评审壳
+ *   （prototype.app.js 已退役删除，不再有「app.js ↔ ui.ts」镜像对齐锚点）。
  */
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -528,6 +530,41 @@ describe('设置面板（settings-panel）', () => {
     delete (panelState as any).bookshelfFolderPath;
   });
 
+  it('桌面端：路径行 chips 重渲清旧值（回归：dir-picker 选用后 muted 占位不得残留）', async () => {
+    const ui = new SettingsPanelUI();
+    ui.open();
+    const popup = document.getElementById('bz-settings-panel-popup')!;
+    // 默认域 = 通用：数据存储路径 path 行（空态 = muted「未设置」占位 chip + 选择按钮）
+    expect(await waitGroups(popup, 1)).toBe(true);
+    const chips = popup.querySelector('.bz-sp-chips') as HTMLElement;
+    expect(chips).toBeTruthy();
+    expect(chips.querySelector('.bz-sp-chip--muted')?.textContent).toBe('未设置');
+    // 打开 dir-picker（目录聚合走 MockVault；轮询至目录扫描完成——加载占位行同为
+    // .bz-sp-picker-row 但无点击行为，须等到真实目录行（库根目录）出现）
+    chips.querySelector('.bz-sp-path-btn')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(document.querySelector('.bz-sp-picker-mask')).toBeTruthy();
+    const deadline = Date.now() + 5000;
+    let row: Element | null = null;
+    while (Date.now() < deadline) {
+      row = [...document.querySelectorAll('.bz-sp-picker-row')].find((r) => r.textContent?.includes('（库根目录）')) ?? null;
+      if (row) break;
+      await new Promise((r) => setTimeout(r, 30));
+    }
+    expect(row, 'dir-picker 目录行就绪').toBeTruthy();
+    (row as HTMLElement).click();
+    (document.querySelector('.bz-sp-picker-foot .bz-sp-btn--primary') as HTMLElement).click();
+    await tick();
+    // 重渲后：唯一 chip =（库根目录）；muted 占位已清（清旧值选择器错类名即残留双 chip 缺陷）
+    const after = popup.querySelector('.bz-sp-chips')!;
+    const chipsAll = after.querySelectorAll('.bz-sp-chip');
+    expect(chipsAll).toHaveLength(1);
+    expect(chipsAll[0].textContent).toBe('（库根目录）');
+    expect(chipsAll[0].classList.contains('bz-sp-chip--muted')).toBe(false);
+    // 键直绑落盘：库根目录 = 空串
+    expect(panelState.storagePath).toBe('');
+    ui.cleanup();
+  });
+
   it('桌面端：无设置项域深链直达显示空态（组件库 bz-empty）', async () => {
     // issue 194：无设置域已从列表移除（不可点击），深链 open(domainId) 直达仍落空态
     const ui = new SettingsPanelUI();
@@ -864,27 +901,23 @@ describe('choiceCards 视觉卡片行（issue 210）', () => {
   });
 });
 
-describe('原型对齐回归锚点（markup 单源：render.ts 以原型为真理）', () => {
-  it('行定位 data-key 契约：纯层 rowHtml 出 data-key（原型 rowEl 逐字）', async () => {
+describe('行为单源回归锚点（ADR-0106：行为唯一真理 = 域 ui.ts，原型壳为双 iframe 评审壳）', () => {
+  it('行定位 data-key 契约：纯层 rowHtml 出 data-key（渲染器/ui.ts 消费同一份）', async () => {
     const { readFileSync } = await import('node:fs');
     const shared = readFileSync('src/settings-panel/shared.ts', 'utf8');
-    // 原型：.bz-sp-set-row[data-key="..."] 定位行；纯层行骨架串必须带 data-key
+    // 渲染器按 data-key 定位行（搜索命中/显隐重算钩子）；纯层行骨架串必须带 data-key
     expect(shared).toMatch(/data-key/);
   });
 
-  it('桌面搜索命中高亮 .hit：原型 mount 监听与域侧 ui.ts 同构', async () => {
+  it('桌面搜索命中高亮 .hit：行为唯一实现在域侧 ui.ts（prototype.app.js 已退役，无镜像对齐锚点）', async () => {
     const { readFileSync } = await import('node:fs');
-    const proto = readFileSync('src/settings-panel/prototype.app.js', 'utf8');
     const ui = readFileSync('src/settings-panel/ui.ts', 'utf8');
-    expect(proto).toMatch(/row\.classList\.toggle\('hit'/);
     expect(ui).toContain("row.classList.toggle('hit'");
   });
 
-  it('choiceCards 卡组同构：纯层 cardpickHtml 串（原型 renderCtl 口径）', async () => {
+  it('choiceCards 卡组结构契约：纯层 cardpickHtml 串（renderer/ui 消费同一份）', async () => {
     const { readFileSync } = await import('node:fs');
-    const proto = readFileSync('src/settings-panel/prototype.app.js', 'utf8');
     const shared = readFileSync('src/settings-panel/shared.ts', 'utf8');
-    expect(proto).toContain('R.cardpickHtml');
     expect(shared).toContain('bz-sp-cardpick');
     expect(shared).toContain('bz-sp-set-cards');
   });

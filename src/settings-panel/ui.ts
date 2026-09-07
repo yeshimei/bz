@@ -24,7 +24,8 @@ import { renderPanelSchema } from './renderer';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { uiIcon, uiIconBtn, uiEmpty, mountIcons } from '../core/ui';
-// markup 单源（ADR-0104，以原型为真理）：面板壳/导航/页头结构串全出自渲染纯层
+// markup 单源（ADR-0104/0105）：面板壳/导航/页头结构串全出自渲染纯层；
+// 行为单源（ADR-0106，issue 245 范式）：本文件即唯一真理，原型壳为双 iframe 评审壳
 import * as R from './render';
 
 /* ==================== 域清单（全局 + 19 域；图标 = lucide 名） ==================== */
@@ -319,7 +320,7 @@ export class SettingsPanelUI {
 
     searchIn.addEventListener('input', () => {
       renderNav(searchIn.value);
-      // 原型逐字（prototype.app.js mount 输入监听）：桌面搜索词对当前内容区行做 .hit 命中高亮
+      // 桌面搜索词对当前内容区行做 .hit 命中高亮（renderNav 重绘 + 行级命中同刷）
       const q = searchIn.value.trim();
       popup.querySelectorAll<HTMLElement>('.bz-sp-settings-body .bz-sp-set-row').forEach((row) => {
         row.classList.toggle('hit', !!q && !!row.textContent && row.textContent.includes(q));
