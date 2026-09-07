@@ -184,7 +184,7 @@ describe('批 C-11：clipbook 死色收编 color-mix 语义变量', () => {
 
   it('.bili 徽标紫单一事实源收敛到样式侧（ui 不再内联传 #8b7cf6；ADR-0094 起 tint 变量注入 .bz-rail-badge）', () => {
     expect(clipCss()).toMatch(/\.bz-clip-rail \.bz-rail-badge\.bili\s*\{\s*--bz-rail-tint: #8b7cf6;\s*\}/);
-    const ui = repo('src/clipbook/ui.ts');
+    const ui = repo('src/clipbook/render.ts'); // issue 247 markup 单源 render.ts（挂载点 markup 迁纯层）
     expect(ui).not.toMatch(/'bili', '#8b7cf6'/);
     expect(ui).toMatch(/bz-rail-badge bili">\$/); // 挂载点不再带内联 tint
   });

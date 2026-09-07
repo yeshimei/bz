@@ -22,14 +22,14 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // settings-panel 2026-09-07 拍板重新纳入单源：render.ts 三件套以原型 prototype.app.js
 // 为唯一真理逐字提取（不做混合——上一版从域侧反向提炼导致原型被污染），原型壳与
 // renderer/ui 消费同一份 prototype-render.js 产物。
-export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "cinema", "favorites", "home", "settings-panel"];
+export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "favorites", "home", "settings-panel"];
 
 // 行为单源域（issue 245/ADR-0106 试点：belongings）：除渲染产物外，另产「行为产物」——
 // 以 fake-sim.ts 为入口、alias obsidian→belongings/fake/fake-obsidian，把真 ui.ts
 // 依赖链打进 prototype-behavior.js（挂 window.BZW_<域>），壳只调 openPanel 等。
 // 新域接入：render.ts 落域 + fake-sim.ts 启动器就绪后在此登记。
 // home 行为产物 ~1.7MB：river 静态+动态 import 闭包实测 218 模块（含 npm moment），首页永不执行的模块仅求值不调用
-export const BEHAVIOR_DOMAINS = ["belongings", "bookshelf", "cinema", "favorites", "home"];
+export const BEHAVIOR_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "favorites", "home"];
 
 export async function buildBehavior(domain) {
   const entry = path.join(ROOT, "src", domain, "fake-sim.ts");
