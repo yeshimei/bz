@@ -19,9 +19,9 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-/** 单源域清单（belongings 试点；bookshelf/favorites/home 待拍板后接入。
+/** 单源域清单（belongings 试点；bookshelf、home 已接入（issue 243）。
  *  与 tests/core/render-purity.test.ts 守卫同一份清单，勿在测试里另抄） */
-export const PREVIEW_DOMAINS = ["belongings", "bookshelf"];
+export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "home"];
 
 export async function buildPreview(domains = PREVIEW_DOMAINS) {
   for (const d of domains) {
