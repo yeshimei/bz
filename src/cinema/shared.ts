@@ -8,10 +8,11 @@
  *   - 原型侧：dev 打成 prototype-render.js（IIFE，挂 window.BZR_cinema），壳消费同一份。
  * 布局差异层（午夜场 desk/mob 壳、侧栏、chips、视图装配）在 layouts/midnight/，
  * 域入口 render.ts 聚合两者。
- * 纯层契约（tests/core/render-purity.test.ts 守卫）：import 白名单仅 `../core/ui/str`
- * 与域内 constants/types（state 仅 type-only，编译期擦除）；禁模块级可变状态
- * （条目与视图状态显式入参）；图标一律 `<i data-lucide>` 占位，由各端 mountIcons 物化。
- * 演示数据字段与插件形状不同处取兼容回退（AI 推荐 name/meta、itemKey 回退 new:name）。
+ * 纯层契约（import 白名单由 tests/core/render-purity.test.ts 守卫承担，其余为层约定）：
+ * 白名单仅 `../core/ui/str` 与域内 constants/types（state 仅 type-only，编译期擦除）；
+ * 禁模块级可变状态（条目与视图状态显式入参）；图标一律 `<i data-lucide>` 占位，由各端 mountIcons 物化。
+ * 演示数据字段与插件形状不同处取兼容回退（AI 推荐 name/meta、itemKey 回退 new:name、
+ * status 中文串经 statusNum 归一——壳 localStorage 旧档与演示字段是串）。
  */
 import { esc, iconSpan } from '../core/ui/str';
 import {
@@ -53,11 +54,18 @@ export function typeColor(group: string): string {
 
 /** 状态色（原型 ST_C 口径） */
 export const ST_COLOR: Record<string, string> = { 想看: '#98917f', 在看: '#d97c1d', 已看: '#4a9a5c' };
-export function statusColor(status: number): string {
-  return status === STATUS_WANT ? ST_COLOR['想看'] : status === STATUS_WATCHING ? ST_COLOR['在看'] : ST_COLOR['已看'];
+/** 演示数据兼容：status 可能是中文串（评审壳 localStorage 旧档/演示字段直读），归一为数值口径 */
+export function statusNum(status: number | string): number {
+  if (typeof status === 'number') return status;
+  return status === '想看' ? STATUS_WANT : status === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
 }
-export function statusText(status: number): string {
-  return status === STATUS_WANT ? '想看' : status === STATUS_WATCHING ? '在看' : '已看';
+export function statusColor(status: number | string): string {
+  const v = statusNum(status);
+  return v === STATUS_WANT ? ST_COLOR['想看'] : v === STATUS_WATCHING ? ST_COLOR['在看'] : ST_COLOR['已看'];
+}
+export function statusText(status: number | string): string {
+  const v = statusNum(status);
+  return v === STATUS_WANT ? '想看' : v === STATUS_WATCHING ? '在看' : '已看';
 }
 
 /** 星星串（沿用 floor 口径：半星=空心；5 星轨道文本） */
@@ -100,7 +108,7 @@ export function posterInner(item: CinemaItem, url: string | null): string {
 export function pcardHtml(it: CinemaItem, posterUrl: string | null): string {
   const r = it.rating;
   return `<div class="pcard" data-cinema-key="${esc(itemKey(it))}"><div class="pw">${posterInner(it, posterUrl)}
-    ${it.status !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(it.status)}">${statusText(it.status)}</span>` : ''}</div>
+    ${(() => { const st = statusNum(it.status); return st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : ''; })()}</div>
     <div class="pname">${esc(it.name)}</div>
     <div class="pmeta">${esc(it.year || '')}${it.year && it.director ? ' · ' : ''}${esc(it.director || '')}</div>
     <div class="pstars">${r && r > 0 ? stars(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span style="opacity:.35">未评分</span>'}</div></div>`;
@@ -139,7 +147,7 @@ export function detailModalHtml(it: CinemaItem, posterUrl: string | null): strin
     <div class="dm-head"><div class="dm-poster">${posterUrl ? `<img src="${esc(posterUrl)}" onerror="this.remove()">` : ''}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
         <div class="dm-badges">${badge(typeColor(it.group), it.typeTag)}
-          ${it.status !== STATUS_WATCHED ? badge(statusColor(it.status), statusText(it.status)) : ''}
+          ${(() => { const st = statusNum(it.status); return st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : ''; })()}
           ${it.rating && it.rating > 0 ? `<span class="dm-stars">${stars(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ''}
           ${it.watchDate ? `<span class="dm-date">${esc((it.watchDate || '').slice(0, 10))}</span>` : ''}</div>
         ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ''}</div></div>

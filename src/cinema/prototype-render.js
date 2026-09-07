@@ -54,6 +54,7 @@ var BZR_cinema = (() => {
     spHeadHtml: () => spHeadHtml,
     stars: () => stars,
     statusColor: () => statusColor,
+    statusNum: () => statusNum,
     statusText: () => statusText,
     typeColor: () => typeColor,
     viewFiltered: () => viewFiltered
@@ -122,11 +123,17 @@ var BZR_cinema = (() => {
     return group === "其他" ? "#8a8578" : (_a = TYPE_COLORS[group]) != null ? _a : "#8a8578";
   }
   var ST_COLOR = { 想看: "#98917f", 在看: "#d97c1d", 已看: "#4a9a5c" };
+  function statusNum(status) {
+    if (typeof status === "number") return status;
+    return status === "想看" ? STATUS_WANT : status === "在看" ? STATUS_WATCHING : STATUS_WATCHED;
+  }
   function statusColor(status) {
-    return status === STATUS_WANT ? ST_COLOR["想看"] : status === STATUS_WATCHING ? ST_COLOR["在看"] : ST_COLOR["已看"];
+    const v = statusNum(status);
+    return v === STATUS_WANT ? ST_COLOR["想看"] : v === STATUS_WATCHING ? ST_COLOR["在看"] : ST_COLOR["已看"];
   }
   function statusText(status) {
-    return status === STATUS_WANT ? "想看" : status === STATUS_WATCHING ? "在看" : "已看";
+    const v = statusNum(status);
+    return v === STATUS_WANT ? "想看" : v === STATUS_WATCHING ? "在看" : "已看";
   }
   function stars(rating) {
     if (!rating || rating <= 0) return "";
@@ -157,7 +164,10 @@ var BZR_cinema = (() => {
   function pcardHtml(it, posterUrl) {
     const r = it.rating;
     return `<div class="pcard" data-cinema-key="${esc(itemKey(it))}"><div class="pw">${posterInner(it, posterUrl)}
-    ${it.status !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(it.status)}">${statusText(it.status)}</span>` : ""}</div>
+    ${(() => {
+      const st = statusNum(it.status);
+      return st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : "";
+    })()}</div>
     <div class="pname">${esc(it.name)}</div>
     <div class="pmeta">${esc(it.year || "")}${it.year && it.director ? " · " : ""}${esc(it.director || "")}</div>
     <div class="pstars">${r && r > 0 ? stars(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span style="opacity:.35">未评分</span>'}</div></div>`;
@@ -181,7 +191,10 @@ var BZR_cinema = (() => {
     <div class="dm-head"><div class="dm-poster">${posterUrl ? `<img src="${esc(posterUrl)}" onerror="this.remove()">` : ""}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
         <div class="dm-badges">${badge(typeColor(it.group), it.typeTag)}
-          ${it.status !== STATUS_WATCHED ? badge(statusColor(it.status), statusText(it.status)) : ""}
+          ${(() => {
+      const st = statusNum(it.status);
+      return st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : "";
+    })()}
           ${it.rating && it.rating > 0 ? `<span class="dm-stars">${stars(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ""}
           ${it.watchDate ? `<span class="dm-date">${esc((it.watchDate || "").slice(0, 10))}</span>` : ""}</div>
         ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ""}</div></div>
