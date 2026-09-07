@@ -12,6 +12,27 @@ export function bookshelfSettingsSchema(): SettingsSchema {
   return {
     groups: [
       {
+        // 外观组（issue 246 收编）：bookshelfSkin 五肤×亮暗（issue 235 拍板）；无布局维度走单行组
+        // （小橘先例）；onChange 热切换已开面板；退役肤值读取回落雪松白（normalizeSkin）
+        icon: 'palette',
+        name: '外观',
+        rows: [
+          {
+            type: 'choiceCards',
+            name: '面板主题',
+            binding: { key: 'bookshelfSkin' },
+            options: [
+              { value: 'nordic', label: '雪松白', prevClass: 'bz-skinprev-bs-nordic' },
+              { value: 'noir', label: '黑金夜曲', prevClass: 'bz-skinprev-bs-noir' },
+              { value: 'kraft', label: '牛皮手帐', prevClass: 'bz-skinprev-bs-kraft' },
+              { value: 'velvet', label: '丝绒剧院', prevClass: 'bz-skinprev-bs-velvet' },
+              { value: 'mono', label: '极简黑白', prevClass: 'bz-skinprev-bs-mono' },
+            ],
+            onChange: (v) => applyBookshelfSkin(v),
+          },
+        ],
+      },
+      {
         icon: 'folder-open',
         name: '目录',
         rows: [
@@ -29,22 +50,6 @@ export function bookshelfSettingsSchema(): SettingsSchema {
         icon: 'eye',
         name: '显示',
         rows: [
-          {
-            // 面板皮肤（issue 235 五肤×亮暗）：choiceCards「看脸选」；每肤配亮暗两套变体，
-            // Obsidian 主题切模式（bz-bs-mode-*）；默认雪松白；onChange 热切换已开面板；
-            // 存量退役肤值（dark/wabi/bauhaus/blueprint/neon）读取时回落雪松白（normalizeSkin）
-            type: 'choiceCards',
-            name: '面板皮肤',
-            binding: { key: 'bookshelfSkin' },
-            options: [
-              { value: 'nordic', label: '雪松白', prevClass: 'bz-skinprev-bs-nordic' },
-              { value: 'noir', label: '黑金夜曲', prevClass: 'bz-skinprev-bs-noir' },
-              { value: 'kraft', label: '牛皮手帐', prevClass: 'bz-skinprev-bs-kraft' },
-              { value: 'velvet', label: '丝绒剧院', prevClass: 'bz-skinprev-bs-velvet' },
-              { value: 'mono', label: '极简黑白', prevClass: 'bz-skinprev-bs-mono' },
-            ],
-            onChange: (v) => applyBookshelfSkin(v),
-          },
           {
             type: 'select',
             name: '默认筛选',
