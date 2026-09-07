@@ -113,10 +113,15 @@ describe('C12：原型表单演示钩子对齐插件契约', () => {
 
 describe('C16：core reset 注释与实现相符', () => {
   it('button:not(.clickable-icon) 特异性如实标注 (0,1,1)，不再声称 :where 归零', () => {
+    // 0db692c 起裸 button 三件套基线直落聚合产物 styles.css（reset.css 只留源规则），
+    // 带 (0,1,1) 说明的注释随产物走——断言指向实际落点。
+    const css = repo('styles.css');
+    expect(css).not.toContain(':where() 归零特异性'); // 原失实句式（实现并未用 :where）
+    expect(css).toContain('(0,1,1)');
+    // 规则本体（聚合产物内同样未被触碰）
+    expect(css).toMatch(/button:not\(\.clickable-icon\) \{\s*color: unset;\s*background-color: unset;\s*box-shadow: unset;/);
+    // 源文件 reset.css 仍保留规则本体（构建时聚合）
     const reset = repo('src/core/reset.css');
-    expect(reset).not.toContain(':where() 归零特异性'); // 原失实句式（实现并未用 :where）
-    expect(reset).toContain('(0,1,1)');
-    // 规则本体未被触碰
     expect(reset).toMatch(/button:not\(\.clickable-icon\) \{\s*color: unset;\s*background-color: unset;\s*box-shadow: unset;/);
   });
 });
