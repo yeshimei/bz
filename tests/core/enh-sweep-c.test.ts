@@ -36,7 +36,7 @@ describe('enh-sweep-c：.bz-panel-mtop 移动全屏顶距', () => {
     expect(src('src/cinema/ui.ts')).toContain('applyMobileWindowFullscreen(root'); // ADR-0103 风格壳：mfs 挂 style 根（首子垫顶由 core .bz-win-mfs 规则承担）
     expect(src('src/favorites/layouts/board/render.ts')).toContain('bz-fav-panel bz-fav-scope'); // issue 242 markup 单源 render.ts（bz-panel-mtop 随移动端挂载）
     expect(src('src/belongings/layouts/poster/render.ts')).toContain('bz-bel-panel bz-panel-frame bz-panel-mtop'); // issue 237 markup 单源 render.ts
-    const clip = src('src/clipbook/ui.ts');
+    const clip = src('src/clipbook/render.ts'); // issue 247 markup 单源 render.ts
     expect(clip).toContain('bz-clip-frame bz-panel-mtop');
     expect(clip).toContain('bz-clip-mob-detail bz-panel-mtop'); // 移动详情屏2 overlay 自带避让
     expect(src('src/encrypt/ui.ts')).toContain("classList.add('bz-panel-mtop')");

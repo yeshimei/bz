@@ -1028,3 +1028,17 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 ### 原型 × 插件 markup 单源：belongings 试点落域（issue 237 / ADR-0104，2026-09-07）
 
 > 原型先行此前只单源样式；markup 靠「同步」轮人肉照搬且已实测漂移（itemEmHtml 兜底链两侧分叉）。ADR-0104 拍板：带自绘 UI 的域新增 `render.ts` 渲染纯层（零 obsidian 依赖：常量/口径/markup 构建器/actionSpecs/renderPanelView 胶水），插件 ui.ts 与评审壳（构建产物 prototype-render.js，提交入 git 保双击零依赖）消费同一份；纯度由 tests/core/render-purity.test.ts 守卫。本批试点 belongings：ui.ts 1280→~660 行、壳内联脚本 ~945→~380 行、data.ts 三个 moment 版纯函数退役收编（用例随迁 render.test.ts）；chips/排序段/空态从组件库工厂切「串+委托」（类名 = 库皮，视觉零变化；方向键循环随串退役）。pnpm test 4146/4146 绿 + tsc 干净 + 原型 selftest 29/29（headless）。流程改动：AGENTS 铁律 5 双轨（已迁移域改 render.ts 即两侧生效，同步轮只剩绑定验收；未迁移域照旧冻结同构）、prototype-first.md 增「markup 单源」节、新域落域必带 render.ts。后续拍板项：bookshelf/home/favorites 迁移（favorites 先统一命名）、settings-panel 缓行（先拆 renderer 值层）、cinema 用户拍板跳过。
+
+### 剪藏本原型落域：markup 单源 + 行为单源（issue 247，2026-09-08）
+
+> 剪藏本 UI 已在 issue 214 对齐 p1-final 编辑部风定稿，但原型本体留在 .zcode/ui-prototypes/
+>（内联样式、不入 git），域内无 prototype.html 评审壳——原型先行流程对该域缺位。用户发话落域。
+
+- **render.ts 纯层（ADR-0104）**：面板骨架/rail 点线索引/目录序号制/阅读面/移动端 markup 全部
+  自 ui.ts 平移收编；时间串由调用方注入（moment 留行为层）；段落化复用 md.ts + ImgResolver 钩子；
+  纯度守卫自动纳管（PREVIEW_DOMAINS 登记）。
+- **行为单源（ADR-0106）**：fake-obsidian（localStorage 假 vault + 目录键子树合成 + frontmatter
+  现场解析）+ fake-sim（真实库快照种子 + 设置注入 + obsidian-adapter 事件桥）→ prototype.html
+  双 iframe 评审壳跑真 ui.ts，selftest 28/28 含 CSS 生效断言。
+- **生成物入库**：CLIP_ICONS 19 枚（域表并集 + lucide-static 补缺）、CLIP_DATA 真实库脱敏快照
+  （63 未读 + 10 骨架 + 8 篇剪藏）。契约零改动，数据零迁移。

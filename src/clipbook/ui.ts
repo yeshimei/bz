@@ -20,11 +20,15 @@
  * 铁律 6：基线全部消费组件库（.bz-* 类与 --bz-* token）；ADR-0094 起面板壳/头行/搜索/
  * rail/横滑条/空态/尺寸记忆收编共享层，本文件只管布局骨架 + 交互，
  * 域独有视觉在 styles.css（.bz-clip-*）。
+ *
+ * issue 247：markup 单源化（ADR-0104）——面板骨架/rail 行/目录条目/阅读面/移动端
+ * markup 全部出自 render.ts（纯层，原型 × 插件一份），本文件只管生命周期/事件委托/
+ * 数据流；行为单源（ADR-0106）经 fake-sim.ts 打进评审壳 prototype.html（alias obsidian→fake）。
  */
 import { getApp } from '../core/app';
 import { notice, notifyUndo } from '../core/notice';
 import { uiSegmented, uiEmpty, uiResizable, uiVSplitter, mountIcons } from '../core/ui';
-import { escapeHtml, formatRelativeTime } from '../core/utils';
+import { formatRelativeTime } from '../core/utils';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
@@ -39,6 +43,11 @@ import { batchSizeRow, mobileFullscreenGroup } from '../core/settings-common';
 import type { ClipArticle } from './types';
 import { toParagraphs, stripClipChrome } from './md';
 import { queryBySource, aggregateSites } from './store';
+import {
+  panelHtml, railItemHtml, railFootHtml, tocListHtml, paragraphsHtml as paragraphsMarkup,
+  clipLoadingHtml, readerHtml, mobChipHtml, mobListHtml, mobDetailHtml, siteShort, siteTint,
+  iconSpan, type SrcSelJson,
+} from './render';
 import { M, resetClipbookState } from './state';
 import { readNewsAndSidecar, clipDir } from './loader';
 import {
@@ -89,28 +98,6 @@ const SPLIT_MIN_READ = 320;
 export function __autoReadingDelayForTests(ms: number): void {
   AUTO_READING_MS = ms;
 }
-
-// ================= 图标（lucide，禁 emoji） =================
-const ICO = {
-  inbox: 'inbox',
-  feed: 'rss',
-  clip: 'scissors',
-  bili: 'play-square',
-  mail: 'mail',
-  book: 'book-open',
-  check: 'check',
-  download: 'download',
-  external: 'external-link',
-  trash: 'trash-2',
-  search: 'search',
-  x: 'x',
-  arrow: 'arrow-left',
-  link: 'link',
-  globe: 'globe',
-  folder: 'folder-open',
-  rotate: 'rotate-ccw',
-  radio: 'radio',
-};
 
 // ================= 生命周期 =================
 /** 幂等初始化面板 DOM（首开建结构 + 装载 + 订阅；重复调用只切可见性） */
@@ -241,56 +228,9 @@ function buildDom(app: any): void {
   overlayEl = document.createElement('div');
   overlayEl.className = 'bz-panel-overlay';
   overlayEl.style.display = 'none';
-  // 桌面三栏 + 移动双屏容器（isMobileEnv 决定显示哪套，CSS 媒体查询兜底隐藏）
-  overlayEl.innerHTML = `
-    <div class="bz-panel-frame bz-clip-frame bz-panel-mtop">
-      <!-- 桌面三栏 -->
-      <div class="bz-clip-desk">
-        <div class="bz-panel-head bz-panel-head--tall">
-          <div class="bz-panel-title">剪藏本</div>
-          <div class="bz-panel-head-sp"></div>
-          <div class="bz-clip-issue" data-clip-issue></div>
-          <div class="bz-clip-head-search bz-search">${iconSpan('search')}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点…"></div>
-        </div>
-        <div class="bz-clip-desk-body">
-          <div class="bz-rail bz-rail--wide bz-clip-rail">
-            <div class="bz-clip-rail-label">SITE 站点</div>
-            <div class="bz-rail-scroll" data-clip-rail></div>
-            <div class="bz-clip-rail-foot" data-clip-rail-foot></div>
-          </div>
-          <div class="bz-clip-mid">
-            <div class="bz-clip-toc-head">目录</div>
-            <div class="bz-clip-list" data-clip-list></div>
-          </div>
-          <div class="bz-clip-read" data-clip-read-pane tabindex="0">
-            <div class="bz-clip-read-scroll"><div class="bz-clip-read-body" data-clip-reader></div></div>
-          </div>
-        </div>
-      </div>
-      <!-- 移动双屏 -->
-      <div class="bz-clip-mob" data-clip-mob>
-        <div class="bz-clip-mob-top">
-          <div class="bz-clip-mob-title">剪藏本</div>
-          <button class="bz-icon-btn bz-icon-btn--lg" data-clip-mob-search title="搜索">${iconSpan('search')}</button>
-          <button class="bz-icon-btn bz-icon-btn--lg bz-icon-btn--close" data-clip-mob-close title="关闭">${iconSpan('x')}</button>
-        </div>
-        <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
-          <input class="bz-input" type="text" data-clip-mob-input placeholder="搜索标题、摘要、站点、标签">
-        </div>
-        <div class="bz-mobstrip" data-clip-mob-sources></div>
-        <div class="bz-clip-mob-list" data-clip-mob-list></div>
-      </div>
-      <!-- 移动详情 overlay（屏2） -->
-      <div class="bz-clip-mob-detail bz-panel-mtop" data-clip-mob-detail style="display:none">
-        <div class="bz-clip-mob-detail-top">
-          <button class="bz-icon-btn bz-icon-btn--lg" data-clip-mob-back title="返回">${iconSpan('arrow-left')}</button>
-          <div class="bz-clip-mob-detail-title" data-clip-mob-title></div>
-          <button class="bz-clip-mob-save" data-clip-mob-save title="保存到剪藏本">${iconSpan('download', 'bz-ic--sm')}</button>
-        </div>
-        <div class="bz-clip-mob-detail-body" data-clip-mob-detail-body></div>
-      </div>
-    </div>
-  `;
+  // 面板骨架 markup 单源 render.ts（issue 247）：桌面三栏 + 移动双屏 + 移动详情 overlay
+  // （isMobileEnv 决定显示哪套，CSS 媒体查询兜底隐藏）
+  overlayEl.innerHTML = panelHtml();
   mountIcons(overlayEl);
   document.body.appendChild(overlayEl);
 
@@ -409,11 +349,6 @@ function buildDom(app: any): void {
   });
 }
 
-function iconSpan(name: string, extra = ''): string {
-  // 手写模板里的 data-lucide 占位（core/ui icons.ts 约定）：渲染统一由 mountIcons 批量 setIcon
-  return `<span class="bz-ic${extra ? ' ' + extra : ''}" data-lucide="${name}"></span>`;
-}
-
 /** 移动端默认全屏（读设置；缺省对齐 clipping 默认 true） */
 function mobileFullscreenDefault(): boolean {
   const s = tryGetSettings() as any;
@@ -508,38 +443,6 @@ function sortedView(): ClipArticle[] {
 }
 
 // ================= 渲染：左 rail =================
-/** data-src JSON 序列化选择器（UP 行携带 platform=B站 + up=uid；site 行携带站点名） */
-type SrcSelJson = { kind: 'all' } | { kind: 'inbox'; platform: string; up: string | null } | { kind: 'clip' } | { kind: 'site'; site: string };
-
-/** 站点徽标色：站名哈希 → 固定饱和度/亮度的 hue（同站恒色，无需配色表） */
-function siteTint(site: string): string {
-  let h = 0;
-  const t = String(site || '');
-  for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0;
-  return `hsl(${h % 360}, 42%, 52%)`;
-}
-
-function railItemHtml(sel: SrcSelJson, label: string, unread: number, total: number, icon: string | null, color: string | null, active: boolean, sub?: string): string {
-  // G：JSON 过 escapeHtml 再进单引号属性——UP 主名含单引号时原实现提前闭合属性，点击 JSON.parse 抛错该源失效
-  // 前缀槽三态保留 DOM（issue 214：编辑部皮肤在域 CSS 内隐藏徽标/图标，V1 = 纯文字点线索引）
-  const badge = icon === 'feed'
-    ? `<span class="bz-rail-badge" style="--bz-rail-tint:${color || '#58a6ff'}">${escapeHtml(sub || label.slice(0, 1))}</span>`
-    : icon === 'bili'
-      ? `<span class="bz-rail-badge bili">${escapeHtml(sub || label.slice(0, 1))}</span>`
-      : icon === 'clip'
-        ? `<span class="bz-rail-ic">${iconSpan('scissors')}</span>`
-        : `<span class="bz-rail-ic${sel.kind === 'all' ? ' bz-rail-ic--accent' : ''}">${icon ? iconSpan(icon) : ''}</span>`;
-  // 计数 = 未读（搜索态为命中数，橘粗）/ 总数（issue 214 V1 口径）
-  const count = `<span class="bz-rail-count">${unread > 0 ? `<b>${unread}</b>` : unread}/${total}</span>`;
-  return `
-    <div class="bz-rail-item${active ? ' on' : ''}" data-src='${escapeHtml(JSON.stringify(sel))}' title="${escapeHtml(label)}">
-      ${badge}
-      <span class="bz-rail-name">${escapeHtml(label)}</span>
-      <span class="bz-clip-lead"></span>
-      ${count}
-    </div>`;
-}
-
 function renderRail(): void {
   if (!railListEl) return;
   const arts = M.articles;
@@ -592,7 +495,7 @@ function renderRail(): void {
   if (railFootEl) {
     const d = new Date();
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    railFootEl.innerHTML = `今日已读<br><b>${M.stats?.byDate?.[key] || 0}</b> 篇`;
+    railFootEl.innerHTML = railFootHtml(M.stats?.byDate?.[key] || 0);
   }
   // rail 源行动作（enh 包 4）：右键/长按出「全部标为已读」等源级批量操作——
   // rail 是导航层，动作挂在源行而非条目卡，中栏「列表零操作」拍板不被破坏
@@ -642,15 +545,6 @@ async function markAllRead(label: string, items: ClipArticle[]): Promise<void> {
 }
 
 // ================= 渲染：中栏列表 =================
-function dotHtml(st: string): string {
-  return `<span class="bz-clip-dot ${st}"></span>`;
-}
-
-/** 展示站点短名（issue 214 原型口径：果壳科学人 → 果壳，其余原样） */
-function siteShort(s: string): string {
-  return String(s || '').replace('果壳科学人', '果壳');
-}
-
 function renderList(): void {
   if (!listEl) return;
   const list = sortedView();
@@ -667,14 +561,8 @@ function renderList(): void {
     M.cur = list[0];
   }
   // 编辑部目录（issue 214 原型对齐）：序号 + 标题 + 「站点 · 时间」一行；摘要不入目录
-  listEl.innerHTML = list.map((a, i) => `
-    <div class="bz-clip-item bz-clip-item--${a.st}${M.cur && M.cur.id === a.id ? ' on' : ''}" data-id="${escapeHtml(a.id)}">
-      <span class="bz-clip-no">${String(i + 1).padStart(2, '0')}</span>
-      <div class="bz-clip-item-main">
-        <div class="bz-clip-item-t"><span>${escapeHtml(a.title)}</span></div>
-        <div class="bz-clip-item-meta">${escapeHtml(siteShort(a.srcName))} · ${relTime(a.timeTs)}</div>
-      </div>
-    </div>`).join('');
+  // （markup 单源 render.ts，issue 247）
+  listEl.innerHTML = tocListHtml(list, M.cur ? M.cur.id : null, (a) => relTime(a.timeTs));
   // 卡片右键/长按（item-actions 复用）
   bindItemMenus();
 }
@@ -781,15 +669,8 @@ function resolveImgSrc(src: string): string | null {
 }
 
 function paragraphsHtml(body: string): string {
-  return toParagraphs(body).map((p) => {
-    if (p.type === 'img') {
-      const src = resolveImgSrc(p.text);
-      return src ? `<img class="bz-clip-art-img" src="${escapeHtml(src)}" alt="文章配图" loading="lazy">` : '';
-    }
-    return p.type === 'quote'
-      ? `<blockquote>${escapeHtml(p.text)}</blockquote>`
-      : `<p>${escapeHtml(p.text)}</p>`;
-  }).join('');
+  // 段落 markup 单源 render.ts（issue 247）：段落化（md.ts 纯层）+ 图片解析（行为层钩子）
+  return paragraphsMarkup(toParagraphs(body), resolveImgSrc);
 }
 
 /** 正文图片加载失败隐藏（缓存 URL 失效/断网时不留裂图） */
@@ -810,33 +691,16 @@ function renderReader(): void {
   }
   setReadingSession(a.id);
   armAutoReading(a);
-  const stLabel = a.st === 'saved' ? '已保存' : a.st === 'reading' ? '在读' : a.st === 'read' ? '已读' : '未读';
   // 正文（enh 包 3）：news 现算；clip 懒加载 cachedRead → 剥 frontmatter → 段落化，按 path 缓存
   let paras = '';
   if (a.origin === 'clip') {
     const cached = a.notePath ? clipBodyCache.get(a.notePath) : undefined;
-    paras = cached !== undefined ? paragraphsHtml(cached) : `<p class="dim">正在读取剪藏正文…</p>`;
+    paras = cached !== undefined ? paragraphsHtml(cached) : clipLoadingHtml();
   } else {
     paras = a.body ? paragraphsHtml(a.body) : '';
   }
-  // 「打开笔记」编辑部文字脚（issue 214：底部动作按钮退役，文末唯一保留的剪藏笔记入口，
-  // news 的原文/已读/保存全在条目右键菜单）
-  const openNoteFoot = a.origin === 'clip' && a.notePath
-    ? `<div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-open-note>打开笔记 ${iconSpan('external-link', 'bz-ic--xs')}</span></div>`
-    : '';
 
-  readerEl.innerHTML = `
-    <div class="bz-clip-art-title">${escapeHtml(a.title)}</div>
-    <div class="bz-clip-art-meta">
-      <span>${escapeHtml(a.timeText || relTime(a.timeTs))}</span>
-      <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${escapeHtml(siteShort(a.srcName))}</span></span>
-      <span class="bz-clip-art-state">${stLabel}</span>
-    </div>
-    <div class="bz-clip-art-fs" data-clip-fs></div>
-    ${a.summary ? `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan('sparkles', 'bz-ic--xs')}摘要</span>${escapeHtml(a.summary)}</div>` : ''}
-    <div class="bz-clip-art-md" data-clip-md>${paras || `<p class="dim">${escapeHtml(a.origin === 'clip' ? '（笔记暂无正文）' : '正文已清空（已处理条目）')}</p>`}</div>
-    ${openNoteFoot}
-  `;
+  readerEl.innerHTML = readerHtml(a, { time: a.timeText || relTime(a.timeTs), paras });
   mountIcons(readerEl);
   bindImgFallback(readerEl);
   mountFontSizeSeg();
@@ -1151,28 +1015,19 @@ function rememberSplitWidth(w: number): void {
 }
 
 // ================= 渲染：移动 =================
-function mobSrcChipHtml(sel: SrcSelJson, label: string, unread: number, active: boolean, icon: string | null, sub?: string): string {
-  return `
-    <div class="bz-mobstrip-chip${active ? ' is-on' : ''}" data-src='${escapeHtml(JSON.stringify(sel))}'>
-      ${icon === 'feed' ? `<span class="bz-clip-favchip sm">${escapeHtml(sub || label.slice(0, 1))}</span>` : ''}
-      <span>${escapeHtml(label)}</span>
-      ${unread ? `<span class="bz-badge bz-badge--brand">${unread}</span>` : ''}
-    </div>`;
-}
-
 function renderMobSources(): void {
   if (!mobSourcesEl) return;
   const arts = M.articles;
   const searching = !!searchKw;
   const countOf = (source: SrcFilter): number =>
     queryBySource(arts, M.sidecar, M.clipUrls, M.clipNotes || [], source, M.upInfo).filter(matchesSearch).length;
-  let html = mobSrcChipHtml({ kind: 'all' }, '全部未读', countOf({ kind: 'all' }), M.sel.kind === 'all', 'radio');
+  let html = mobChipHtml({ kind: 'all' }, '全部未读', countOf({ kind: 'all' }), M.sel.kind === 'all', 'radio');
   // 站点 chip 动态聚合（issue 222 对齐桌面 rail：site 属性分类，平台 chip 退役；
   // 聚合口径同桌面 = 剪藏全量 + 未读 news 面，排序总数降序）
   for (const row of aggregateSites(arts, M.clipNotes || [], new Set((M.sidecar.savedArchive || []).map((x) => x.url)), M.clipUrls)) {
     const cnt = countOf({ kind: 'site', site: row.site });
     if (searching && cnt === 0) continue; // 搜索态零命中 chip 隐藏（非搜索态站点恒可浏览）
-    html += mobSrcChipHtml({ kind: 'site', site: row.site }, row.site, cnt, M.sel.kind === 'site' && M.sel.site === row.site, 'feed', row.site.slice(0, 1));
+    html += mobChipHtml({ kind: 'site', site: row.site }, row.site, cnt, M.sel.kind === 'site' && M.sel.site === row.site, 'feed', row.site.slice(0, 1));
   }
   // B站 UP chip（C2：Map 按 author/uid 去重——原同 UP N 条未读渲染 N 个同名 chip；C6：upInfo 回填名）
   const mobUps = new Map<string, string>();
@@ -1185,28 +1040,23 @@ function renderMobSources(): void {
   for (const [uid, name] of mobUps) {
     const cnt = countOf({ kind: 'inbox', platform: 'B站', up: uid });
     if (cnt === 0 && !searching) continue;
-    html += mobSrcChipHtml({ kind: 'inbox', platform: 'B站', up: uid }, name, cnt, M.sel.kind === 'inbox' && M.sel.platform === 'B站' && M.sel.up === uid, 'bili', name.slice(0, 1));
+    html += mobChipHtml({ kind: 'inbox', platform: 'B站', up: uid }, name, cnt, M.sel.kind === 'inbox' && M.sel.platform === 'B站' && M.sel.up === uid, 'bili', name.slice(0, 1));
   }
-  html += mobSrcChipHtml({ kind: 'clip' }, '剪藏本', countOf({ kind: 'clip' }), M.sel.kind === 'clip', 'clip');
+  html += mobChipHtml({ kind: 'clip' }, '剪藏本', countOf({ kind: 'clip' }), M.sel.kind === 'clip', 'clip');
   mobSourcesEl.innerHTML = html;
 }
 
 function renderMobList(): void {
   if (!mobListEl) return;
   // issue 224：未读在前、组内最新在前（与桌面目录同序）——原时间序让落在读的条目
-  // 永远钉在原位，用户感知「变为在读但不往下排」
+  // 永远钉在原位，用户感知「变为在读但不往下排」；markup 单源 render.ts（issue 247）
   const list = sortedView();
   if (!list.length) {
     mobListEl.innerHTML = '';
     mobListEl.appendChild(uiEmpty({ icon: 'inbox', title: '暂无内容' }));
     return;
   }
-  mobListEl.innerHTML = list.map((a) => `
-    <div class="bz-clip-mob-item" data-id="${escapeHtml(a.id)}">
-      <div class="bz-clip-item-t">${dotHtml(a.st)}<span>${escapeHtml(a.title)}</span></div>
-      ${a.summary ? `<div class="bz-clip-item-sum">${escapeHtml(a.summary)}</div>` : ''}
-      <div class="bz-clip-item-meta"><span>${escapeHtml(a.srcName)}</span><span class="bz-clip-item-time">${relTime(a.timeTs)}</span></div>
-    </div>`).join('');
+  mobListEl.innerHTML = mobListHtml(list, (a) => relTime(a.timeTs));
   // 移动长按抽屉（enh 包 2）：动作构建器与桌面右键同源（buildItemActions）——
   // 一处接入两端全量对齐（手册 §8.2：不得在移动端隐藏功能）；单击进详情走容器委托不受影响
   const cards = mobListEl.querySelectorAll<HTMLElement>('[data-id]');
@@ -1243,17 +1093,10 @@ function renderMobDetail(): void {
     mobSaveBtnEl.innerHTML = iconSpan(saved ? 'check' : 'download', 'bz-ic--sm');
     mountIcons(mobSaveBtnEl);
   }
-  const stLabel = a.st === 'saved' ? '已保存' : a.st === 'reading' ? '在读' : a.st === 'read' ? '已读' : '未读';
-  const flagCls = a.st === 'saved' ? 'ok' : a.st === 'reading' ? 'warn' : 'info';
   const paras = a.body ? paragraphsHtml(a.body) : '';
+  // 详情正文 markup 单源 render.ts（issue 247）
   const detailBody = mobDetailEl.querySelector('[data-clip-mob-detail-body]') as HTMLElement;
-  detailBody.innerHTML = `
-    <div class="bz-clip-mob-d-title">${escapeHtml(a.title)}</div>
-    <div class="bz-clip-mob-d-meta"><span class="bz-clip-favchip">${escapeHtml(a.srcName.slice(0, 1))}</span><span>${escapeHtml(a.srcName)}</span><span class="bz-clip-mob-d-time">${escapeHtml(a.timeText || relTime(a.timeTs))}</span></div>
-    <div class="bz-clip-art-flag ${flagCls}">${iconSpan(a.st === 'saved' ? 'check' : a.st === 'reading' ? 'book-open' : 'mail', 'bz-ic--xs')}${stLabel}</div>
-    ${a.summary ? `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan('sparkles', 'bz-ic--xs')}摘要</span>${escapeHtml(a.summary)}</div>` : ''}
-    <div class="bz-clip-art-md">${paras || `<p class="dim">${escapeHtml(a.origin === 'clip' ? '（剪藏笔记正文请在 Obsidian 中打开）' : '正文已清空')}</p>`}</div>
-  `;
+  detailBody.innerHTML = mobDetailHtml(a, { time: a.timeText || relTime(a.timeTs), paras });
   mountIcons(detailBody);
   bindImgFallback(detailBody);
 }
