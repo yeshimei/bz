@@ -32,7 +32,7 @@ describe('enh-sweep-c：.bz-panel-mtop 移动全屏顶距', () => {
   });
 
   it('全屏面板根节点接线：8 域挂载点 + 番茄钟随 mfs 开关同挂摘', () => {
-    expect(src('src/home/ui.ts')).toContain('bz-home-panel bz-panel-mtop');
+    expect(src('src/home/layouts/river/render.ts')).toContain('bz-home-panel bz-panel-mtop'); // issue 243 markup 单源 render.ts
     expect(src('src/cinema/ui.ts')).toContain('applyMobileWindowFullscreen(root'); // ADR-0103 风格壳：mfs 挂 style 根（首子垫顶由 core .bz-win-mfs 规则承担）
     expect(src('src/favorites/ui.ts')).toContain('bz-fav-panel bz-fav-scope'); // ADR-0101 域内自绘壳（bz-panel-mtop 随移动端挂载）
     expect(src('src/belongings/layouts/poster/render.ts')).toContain('bz-bel-panel bz-panel-frame bz-panel-mtop'); // issue 237 markup 单源 render.ts
