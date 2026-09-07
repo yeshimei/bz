@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "favorites", "home"];
+export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "cinema", "favorites", "home"];
 
 export async function buildPreview(domains = PREVIEW_DOMAINS) {
   for (const d of domains) {
