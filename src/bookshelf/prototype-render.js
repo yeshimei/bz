@@ -103,7 +103,7 @@ var BZR_bookshelf = (() => {
   var EMPTY_SEARCH_ICON = "search-x";
   var EMPTY_FILTER_ICON = "funnel";
 
-  // src/bookshelf/render.ts
+  // src/bookshelf/shared.ts
   function statusColor(status) {
     return STATUS_COLORS[status] || "var(--bz-text-3)";
   }
@@ -155,6 +155,44 @@ var BZR_bookshelf = (() => {
     list = kwFilter(list, view.q);
     return sortItems(list, view.sortMode);
   }
+  function detailBodyHtml(it, coverSrc) {
+    const cover = coverSrc ? `<img src="${esc(coverSrc)}" alt="">` : `<div class="bz-bs-d-cover-ph">${iconSpan("library")}<span>无封面</span></div>`;
+    const review = it.bookReview ? `<div class="bz-bs-d-quote">“${esc(it.bookReview)}”</div>` : '<div class="bz-bs-d-quote dim">——尚无书评——</div>';
+    const dense = it.highlights + it.thinks;
+    const seal = it.status === "已读" ? "讫" : it.status === "在读" ? "阅" : "藏";
+    const hoursText = it.readingTimeFormat || (it.readingTimeMs > 0 ? (it.readingTimeMs / 36e5).toFixed(1) + " 小时" : "—");
+    const prog = Math.round(it.progress);
+    return `
+    <div class="bz-bs-d-pull">已抽出这本书</div>
+    <button type="button" class="bz-bs-d-x" data-bs-d-close title="放回书架">×</button>
+    <div class="bz-bs-d-card">
+      <div class="bz-bs-d-cover">${cover}</div>
+      <div class="bz-bs-d-info">
+        <h2 class="bz-bs-d-title">${esc(it.title)}</h2>
+        <div class="bz-bs-d-sub">${esc(it.author)} · ${esc(it.category || "未分类")}${it.isEpub ? " · EPUB" : ""}</div>
+        ${review}
+        <table class="bz-bs-d-ledger">
+          <tr><td>状 态</td><td><span class="bz-bs-d-stdot" style="background:${statusColor(it.status)}"></span>${esc(it.status)}</td></tr>
+          <tr><td>累计时长</td><td>${esc(hoursText)}</td></tr>
+          <tr><td>起读 · 读完</td><td>${esc(it.readingDate || "—")} · ${esc(it.completionDate || "—")}</td></tr>
+          <tr><td>划线 / 想法</td><td>${it.highlights} 条 / ${it.thinks} 条</td></tr>
+          ${it.pages ? `<tr><td>页 数</td><td>${it.pages} 页</td></tr>` : ""}
+          ${it.wordCount ? `<tr><td>字 数</td><td>${it.wordCount.toLocaleString()} 字</td></tr>` : ""}
+        </table>
+        <div class="bz-bs-d-meter">
+          <div class="cap"><span>阅读进度</span><b class="bz-bs-d-prognum">${prog}%</b></div>
+          <div class="bar"><i style="width:${prog}%"></i></div>
+        </div>
+        <div class="bz-bs-d-meter">
+          <div class="cap">批注密度（划线 + 想法 = ${dense}）</div>
+          <div class="bar"><i style="width:${Math.min(100, dense / Math.max(10, dense) * 100)}%"></i></div>
+        </div>
+      </div>
+      <div class="bz-bs-d-seal">${seal}</div>
+    </div>`;
+  }
+
+  // src/bookshelf/layouts/wall/render.ts
   var CAT = {
     "文学": { bg: "#8f4a3a", fg: "#f2e4d8" },
     "推理": { bg: "#7a3b52", fg: "#f2dee6" },
@@ -337,42 +375,6 @@ var BZR_bookshelf = (() => {
           <div class="bz-rr-content"></div>
         </div>
       </div>
-    </div>`;
-  }
-  function detailBodyHtml(it, coverSrc) {
-    const cover = coverSrc ? `<img src="${esc(coverSrc)}" alt="">` : `<div class="bz-bs-d-cover-ph">${iconSpan("library")}<span>无封面</span></div>`;
-    const review = it.bookReview ? `<div class="bz-bs-d-quote">“${esc(it.bookReview)}”</div>` : '<div class="bz-bs-d-quote dim">——尚无书评——</div>';
-    const dense = it.highlights + it.thinks;
-    const seal = it.status === "已读" ? "讫" : it.status === "在读" ? "阅" : "藏";
-    const hoursText = it.readingTimeFormat || (it.readingTimeMs > 0 ? (it.readingTimeMs / 36e5).toFixed(1) + " 小时" : "—");
-    const prog = Math.round(it.progress);
-    return `
-    <div class="bz-bs-d-pull">已抽出这本书</div>
-    <button type="button" class="bz-bs-d-x" data-bs-d-close title="放回书架">×</button>
-    <div class="bz-bs-d-card">
-      <div class="bz-bs-d-cover">${cover}</div>
-      <div class="bz-bs-d-info">
-        <h2 class="bz-bs-d-title">${esc(it.title)}</h2>
-        <div class="bz-bs-d-sub">${esc(it.author)} · ${esc(it.category || "未分类")}${it.isEpub ? " · EPUB" : ""}</div>
-        ${review}
-        <table class="bz-bs-d-ledger">
-          <tr><td>状 态</td><td><span class="bz-bs-d-stdot" style="background:${statusColor(it.status)}"></span>${esc(it.status)}</td></tr>
-          <tr><td>累计时长</td><td>${esc(hoursText)}</td></tr>
-          <tr><td>起读 · 读完</td><td>${esc(it.readingDate || "—")} · ${esc(it.completionDate || "—")}</td></tr>
-          <tr><td>划线 / 想法</td><td>${it.highlights} 条 / ${it.thinks} 条</td></tr>
-          ${it.pages ? `<tr><td>页 数</td><td>${it.pages} 页</td></tr>` : ""}
-          ${it.wordCount ? `<tr><td>字 数</td><td>${it.wordCount.toLocaleString()} 字</td></tr>` : ""}
-        </table>
-        <div class="bz-bs-d-meter">
-          <div class="cap"><span>阅读进度</span><b class="bz-bs-d-prognum">${prog}%</b></div>
-          <div class="bar"><i style="width:${prog}%"></i></div>
-        </div>
-        <div class="bz-bs-d-meter">
-          <div class="cap">批注密度（划线 + 想法 = ${dense}）</div>
-          <div class="bar"><i style="width:${Math.min(100, dense / Math.max(10, dense) * 100)}%"></i></div>
-        </div>
-      </div>
-      <div class="bz-bs-d-seal">${seal}</div>
     </div>`;
   }
   function renderWallInto(shelf, opts) {
