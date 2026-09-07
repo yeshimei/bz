@@ -1,13 +1,14 @@
 /**
- * 影院（cinema）域 UI：风格化面板（issue 236 / ADR-0103）
- * 三风格单键 cinemaStyle（清单 CINEMA_STYLES）：午夜场（完整功能）/ 场刊 / 放映室；
- * DOM 与 src/cinema/prototype.html 逐字同构（桌面 desk 壳 900×620 / 移动 mob 壳独立自绘，两套按端渲染其一）。
- * 共享件（详情/表单/菜单/抽屉/确认/AI/分析/设置弹窗）= 午夜场视觉，三风格共用：
- * 弹窗宿主为 display:contents 的 .bz-cinema--midnight 锚类容器，共享样式（scoped 午夜场锚下）零复制生效。
- * 业务层零迁移：persistItem 落盘 / smartcat movie 域事件 / AI 推荐 / 分析统计 / 海报守护全部原样。
- * 落域适配（ADR-0103 §5，原型不出）：移动头行补 ✕ 关闭钮；移动 ✦ 再点回列表；
- * 演示「模拟失败」按钮退役。gazette/booth 风格延后（清单与设置键已备，本批仅午夜场）。
- * 图标：lucide（data-lucide 占位 → mountIcons 统一 setIcon）；弹窗 ESC 一律走 escManager 层级。
+ * 影院（cinema）域 UI：风格化面板·行为层（issue 236 / ADR-0103）
+ * markup 单源已迁 render 纯层（ADR-0104/0105）：共享件（详情/表单/菜单/抽屉/确认/AI/设置
+ * 弹窗）在 shared.ts，午夜场 desk/mob 壳与渲染胶水在 layouts/midnight/——ui.ts 经域入口
+ * render.ts 消费同一份（与原型壳 prototype-render.js 同源）。本文件只留：
+ * 事件绑定 / core 服务（落盘、通知、域事件、ESC、全屏、图标物化）/ AI·分析·海报守护接线。
+ * 三风格单键 cinemaStyle（清单 CINEMA_STYLES）；共享弹窗宿主为 display:contents 的
+ * .bz-cinema--midnight 锚类容器。业务层零迁移：persistItem 落盘 / smartcat movie 域事件 /
+ * AI 推荐 / 分析统计 / 海报守护全部原样。
+ * 落域适配（ADR-0103 §5，原型不出）：移动头行补 ✕ 关闭钮；移动 ✦ 再点回列表。
+ * 图标：lucide（纯层 data-lucide 占位 → mountIcons 统一 setIcon）；弹窗 ESC 走 escManager 层级。
  */
 import type { App } from 'obsidian';
 import { TFile } from 'obsidian';
@@ -20,44 +21,28 @@ import { tryGetSettings, saveSettings } from '../core/settings-provider';
 import { mountIcons } from '../core/ui';
 import {
   STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, DEFAULT_RATING,
-  GROUP_ORDER, TYPE_COLORS, getGroupForTag, cinemaStyleOf,
+  getGroupForTag, type CinemaStyle,
 } from './constants';
-import { M, type CinemaItem } from './state';
+import { M, type CinemaItem, type CinemaSortMode } from './state';
 import { rebuildItems, getDisplayItems } from './data';
-import { formatRelativeTime, escapeHtml } from '../core/utils';
+import { formatRelativeTime } from '../core/utils';
 import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } from './recommend';
 import { buildStatPageHtml } from './analysis';
 import { watchPosterFetch } from './poster-watch';
+import {
+  ICON, statusText, itemByKey, doubanSearchUrl,
+  detailModalHtml, confirmModalHtml, formModalHtml, setModalHtml,
+  aiPageHtml, actionRowsHtml, sheetHeadHtml, pcardHtml, type AiPageInput,
+  midnightDeskHtml, midnightMobHtml, renderMidnightDesk, renderMidnightMob,
+  type MidnightRenderInput,
+} from './render';
 
 // ---------- 小工具 ----------
 
-/** lucide 图标名（均为 Obsidian setIcon 已注册名） */
-const ICON = {
-  ai: 'bot',
-  stat: 'bar-chart-3',
-  close: 'x',
-  search: 'search',
-  add: 'plus',
-  edit: 'pencil',
-  del: 'trash-2',
-  confirm: 'alert-circle',
-  back: 'chevron-left',
-  grid: 'layout-grid',
-  eye: 'eye',
-  play: 'play',
-  globe: 'globe',
-  film: 'clapperboard',
-  gear: 'sliders-horizontal',
-} as const;
-
-/** lucide 占位 HTML（innerHTML 拼接用；渲染后 mountIcons 统一 setIcon） */
-function iconSpan(name: string, extra = ''): string {
-  return `<i data-lucide="${name}" class="bz-ic${extra ? ' ' + extra : ''}"></i>`;
-}
-
-/** HTML 转义（core escapeHtml 的 unknown 容错壳） */
-function esc(s: unknown): string {
-  return escapeHtml(String(s ?? ''));
+/** 当前风格（设置 cinemaStyle；非法值回默认午夜场；重开面板生效。读设置属行为层，ADR-0104） */
+function cinemaStyleOf(): CinemaStyle {
+  const raw = (tryGetSettings() as Record<string, unknown>).cinemaStyle;
+  return raw === 'gazette' || raw === 'booth' ? raw : 'midnight';
 }
 
 /** 相对日期：统一走 core formatRelativeTime；本域仅保留「未标注日期」兜底语义 */
@@ -68,34 +53,9 @@ export function relDate(d: string | null, now: Date = new Date()): string {
   return formatRelativeTime(d, now);
 }
 
-/** 类型色（原型 TYPE_C 口径：其他 = #8a8578） */
-function typeColor(group: string): string {
-  return group === '其他' ? '#8a8578' : (TYPE_COLORS[group] ?? '#8a8578');
-}
-
-/** 状态色（原型 ST_C 口径） */
-const ST_COLOR: Record<string, string> = { 想看: '#98917f', 在看: '#d97c1d', 已看: '#4a9a5c' };
-function statusColor(status: number): string {
-  return status === STATUS_WANT ? ST_COLOR['想看'] : status === STATUS_WATCHING ? ST_COLOR['在看'] : ST_COLOR['已看'];
-}
-function statusText(status: number): string {
-  return status === STATUS_WANT ? '想看' : status === STATUS_WATCHING ? '在看' : '已看';
-}
-
-/** 星星串（沿用 floor 口径：半星=空心；5 星轨道文本） */
-function stars(rating: number): string {
-  if (!rating || rating <= 0) return '';
-  const st = Math.min(Math.round((rating / 2) * 2) / 2, 5);
-  const full = Math.floor(st);
-  let s = '';
-  for (let i = 0; i < full; i++) s += '★';
-  for (let j = full; j < 5; j++) s += '☆';
-  return s;
-}
-
 // ---------- 海报 ----------
 
-/** 海报资源 URL（vault 资源路径）；无图返回 null */
+/** 海报资源 URL（vault 资源路径）；无图返回 null（markup 侧只认 URL，资源解析留行为层） */
 function posterUrl(item: CinemaItem, app: App): string | null {
   if (!item.poster) return null;
   const f = app.vault.getAbstractFileByPath(item.poster);
@@ -105,30 +65,13 @@ function posterUrl(item: CinemaItem, app: App): string | null {
   return null;
 }
 
-/** 海报内芯 HTML：有图出图（onerror 兜底换首字占位），无图出首字占位（原型 .pw>.ph 同构） */
-function posterInner(item: CinemaItem, app: App): string {
-  const url = posterUrl(item, app);
-  const ph = `<div class="ph">${esc(item.name[0] ?? '')}</div>`;
-  if (!url) return ph;
-  return `<img loading="lazy" src="${esc(url)}" onerror="this.outerHTML='<div class=\\'ph\\'>${esc(item.name[0] ?? '')}</div>'">`;
-}
-
 // ---------- 稳定键（CM3：file.path / new:name） ----------
 
-function itemKey(it: CinemaItem): string {
-  return esc(it.file?.path ?? `new:${it.name}`);
-}
-function itemByKey(key: string | undefined): CinemaItem | undefined {
-  if (!key) return undefined;
-  return M.items.find((it) => (it.file?.path ?? `new:${it.name}`) === key);
+function itemByKeyInState(key: string | undefined): CinemaItem | undefined {
+  return itemByKey(M.items, key);
 }
 
 // ---------- 通用业务（菜单/抽屉动作、快速状态、豆瓣） ----------
-
-/** 豆瓣搜索页 URL（无豆瓣链接条目的直达兜底） */
-export function doubanSearchUrl(name: string): string {
-  return 'https://movie.douban.com/search?q=' + encodeURIComponent(name);
-}
 
 /** 在豆瓣打开：有豆瓣链接走链接，否则走片名搜索页（新窗） */
 function openDouban(item: CinemaItem): void {
@@ -249,16 +192,6 @@ export function openAddModalDirect(app: App): void {
 
 // ---------- 面板统计/标题 ----------
 
-function statusCounts(): Record<string, number> {
-  const c: Record<string, number> = { 想看: 0, 在看: 0, 已看: 0 };
-  M.items.forEach((it) => { c[statusText(it.status)]++; });
-  return c;
-}
-function groupCounts(): Record<string, number> {
-  const g: Record<string, number> = {};
-  M.items.forEach((it) => { g[it.group] = (g[it.group] || 0) + 1; });
-  return g;
-}
 function watchedCount(): number {
   return M.items.filter((it) => it.status === STATUS_WATCHED).length;
 }
@@ -323,13 +256,13 @@ function closeSheets(): void {
   M.currentOverlay?.querySelectorAll('.cn-sheet,.cn-sheet-mask').forEach((x) => x.remove());
 }
 
-/** 桌面右键菜单（.cn-menu；坐标相对面板根） */
+/** 桌面右键菜单（.cn-menu；坐标相对面板根；动作行 markup 单源 actionRowsHtml） */
 function openMenu(sec: HTMLElement, it: CinemaItem, app: App, x: number, y: number): void {
   closeMenus();
   const acts = itemActions(it, sec, app);
   const el = document.createElement('div');
   el.className = 'cn-menu';
-  el.innerHTML = acts.map((a, i) => `<button class="cn-menu-item${a.danger ? ' danger' : ''}" data-i="${i}">${iconSpan(a.icon)}${a.label}</button>`).join('');
+  el.innerHTML = actionRowsHtml(acts, 'cn-menu-item');
   ovHost(sec).appendChild(el);
   mountIcons(el);
   const mw = el.offsetWidth, mh = el.offsetHeight, W = sec.clientWidth, H = sec.clientHeight;
@@ -354,9 +287,7 @@ function openSheet(sec: HTMLElement, it: CinemaItem, app: App): void {
   mask.className = 'cn-sheet-mask';
   const el = document.createElement('div');
   el.className = 'cn-sheet';
-  el.innerHTML = `<div class="cn-sheet-head">${url ? `<img class="cn-sheet-poster" src="${esc(url)}" onerror="this.remove()">` : ''}
-    <div><div class="cn-sheet-name">${esc(it.name)}</div><div class="cn-sheet-sub">${esc(it.year || '')} · ${esc(it.director || it.group)} · ${statusText(it.status)}</div></div></div>` +
-    acts.map((a, i) => `<button class="cn-sheet-item${a.danger ? ' danger' : ''}" data-i="${i}">${iconSpan(a.icon)}${a.label}</button>`).join('');
+  el.innerHTML = sheetHeadHtml(it, url) + actionRowsHtml(acts, 'cn-sheet-item');
   ovHost(sec).appendChild(mask);
   ovHost(sec).appendChild(el);
   mountIcons(el);
@@ -376,7 +307,7 @@ let lpFired = false;
 function attachLongPress(sec: HTMLElement, app: App): void {
   sec.querySelectorAll<HTMLElement>('.m-grid .pcard').forEach((c) => {
     c.addEventListener('pointerdown', () => {
-      const it = itemByKey(c.dataset.cinemaKey);
+      const it = itemByKeyInState(c.dataset.cinemaKey);
       if (!it) return;
       lpFired = false;
       lpTimer = setTimeout(() => { lpFired = true; openSheet(sec, it, app); }, 450);
@@ -390,30 +321,8 @@ function attachLongPress(sec: HTMLElement, app: App): void {
 // ---------- 弹窗：详情 ----------
 
 function openDetail(sec: HTMLElement, it: CinemaItem, app: App): void {
-  const badge = (color: string, text: string) => `<span class="dm-chip" style="background:${color}">${esc(text)}</span>`;
-  const rows: [string, string][] = ([
-    ['类型', it.genre ?? ''],
-    ['导演', it.director ?? ''],
-    ['主演', it.actors ?? ''],
-    ['制片国家/地区', it.region ?? ''],
-    ['上映日期', it.year ?? ''],
-    ['豆瓣评分', it.doubanRating ?? ''],
-  ] as [string, string][]).filter(([, v]) => v !== '');
   const url = posterUrl(it, app);
-  const { el, close } = ovl(sec, `<div class="cn-modal" style="max-width:400px;width:100%">
-    <button class="cn-modal-x j-close" title="关闭">${iconSpan(ICON.close)}</button>
-    <div class="dm-head"><div class="dm-poster">${url ? `<img src="${esc(url)}" onerror="this.remove()">` : ''}</div>
-      <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
-        <div class="dm-badges">${badge(typeColor(it.group), it.typeTag)}
-          ${it.status !== STATUS_WATCHED ? badge(statusColor(it.status), statusText(it.status)) : ''}
-          ${it.rating && it.rating > 0 ? `<span class="dm-stars">${stars(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ''}
-          ${it.watchDate ? `<span class="dm-date">${esc((it.watchDate || '').slice(0, 10))}</span>` : ''}</div>
-        ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ''}</div></div>
-    ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join('') : ''}
-    ${it.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(it.doubanUrl)}" target="_blank" rel="noopener">${esc(it.doubanUrl)}</a></span></div>` : ''}
-    ${it.synopsis ? `<div class="dm-sec">简 介</div><div style="font-size:12px;line-height:1.8;color:var(--ink-2);text-align:justify">${esc(it.synopsis)}</div>` : ''}
-    <div class="dm-actions"><button class="dm-btn j-similar">${iconSpan(ICON.ai)}找同类</button><button class="dm-btn j-edit">${iconSpan(ICON.edit)}编辑</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
-  </div>`);
+  const { el, close } = ovl(sec, detailModalHtml(it, url));
   mountIcons(el);
   el.querySelector('.j-close')?.addEventListener('click', close);
   el.querySelector('.j-edit')?.addEventListener('click', () => { close(); openForm(sec, it, app); });
@@ -423,35 +332,15 @@ function openDetail(sec: HTMLElement, it: CinemaItem, app: App): void {
 
 // ---------- 弹窗：添加 / 编辑表单 ----------
 
-/** 组 → 细分 tag 映射（表单 choices 用） */
-const GROUP_SUBS_OF: Record<string, string[]> = {
-  电影: [], 剧集: ['国产剧', '美剧', '英剧', '德剧', '日剧', '韩剧', '哥伦比亚剧'], 动漫: ['日漫', '国漫', '美漫'], 纪录片: [], 公开课: ['公开课', 'TED'],
-};
-
 function openForm(sec: HTMLElement, item: CinemaItem | null, app: App): void {
   const editing = !!item;
   const initTag = item ? item.typeTag : '电影';
   const initSt = item ? statusText(item.status) : '想看';
   const ratingVal = item && item.rating && item.rating > 0 ? item.rating : DEFAULT_RATING;
-  const allTags: string[] = [];
-  for (const g of GROUP_ORDER) {
-    if (g === '其他') continue;
-    const subs = GROUP_SUBS_OF[g];
-    if (subs.length) subs.forEach((t) => allTags.push(t));
-    else allTags.push(g);
-  }
-  const choices = (values: string[], cur: string, attr: string) => values.map((v) =>
-    `<button type="button" class="f-choice-btn${v === cur ? ' is-on' : ''}" data-${attr}="${v}"><span class="dot" style="background:${attr === 'f-tag' ? typeColor(getGroupForTag(v) ?? '其他') : ST_COLOR[v] ?? '#888'}"></span>${v}</button>`).join('');
-  const { el, close } = ovl(sec, `<div class="cn-modal" style="width:100%">
-    <div class="cn-modal-title">${editing ? '编辑影视' : '添加影视'}</div><button class="cn-modal-x j-close" title="关闭">${iconSpan(ICON.close)}</button>
-    <div class="f-field"><span class="f-label">名 称</span><input class="f-input j-name" value="${item ? esc(item.name) : ''}" placeholder="影视名称"></div>
-    <div class="f-field"><span class="f-label">类 型</span><div class="f-choice j-tags">${choices(allTags, initTag, 'f-tag')}</div></div>
-    <div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${choices(['想看', '在看', '已看'], initSt, 'f-st')}</div></div>
-    <div class="f-field j-rating" style="display:${initSt === '已看' ? '' : 'none'}"><span class="f-label">评 分</span>
-      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${ratingVal}"><span class="f-range-val j-rval">${Number(ratingVal).toFixed(1)}</span></div></div>
-    <div class="f-field j-review" style="display:${initSt === '已看' ? '' : 'none'}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${item ? esc(item.review ?? '') : ''}</textarea></div>
-    <div class="dm-actions"><button class="dm-btn gold j-save">${editing ? '保存' : '添加'}</button></div>
-  </div>`);
+  const { el, close } = ovl(sec, formModalHtml({
+    editing, name: item ? item.name : '', typeTag: initTag, stText: initSt,
+    rating: ratingVal, review: item ? item.review ?? '' : '',
+  }));
   mountIcons(el);
   const cur = { tag: initTag, st: initSt };
   el.querySelectorAll<HTMLElement>('[data-f-tag]').forEach((b) => b.addEventListener('click', () => {
@@ -548,13 +437,7 @@ async function saveEdit(sec: HTMLElement, item: CinemaItem, p: FormPayload, app:
 // ---------- 弹窗：删除确认 ----------
 
 function openConfirm(sec: HTMLElement, item: CinemaItem, app: App): void {
-  const { el, close } = ovl(sec, `<div class="cn-modal cn-confirm" style="max-width:320px;width:100%">
-    <span class="cn-confirm-ic">${iconSpan(ICON.confirm)}</span>
-    <div class="cn-confirm-title">删除影视</div>
-    <p>确定删除「${esc(item.name)}」吗？</p>
-    <div class="cn-confirm-sub">将移入系统回收站，可在回收站恢复</div>
-    <div class="dm-actions"><button class="dm-btn j-cancel">取消</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
-  </div>`, { sticky: true });
+  const { el, close } = ovl(sec, confirmModalHtml(item), { sticky: true });
   mountIcons(el);
   el.querySelector('.j-cancel')?.addEventListener('click', close);
   el.querySelector('.j-del')?.addEventListener('click', async () => {
@@ -578,28 +461,13 @@ function openConfirm(sec: HTMLElement, item: CinemaItem, app: App): void {
 
 // ---------- 弹窗：影院设置（面板内；写插件设置经 saveSettings 持久化） ----------
 
-type CinemaStateSort = 'date' | 'created' | 'rating';
-
 function openSet(sec: HTMLElement, app: App): void {
   const s = tryGetSettings() as Record<string, unknown>;
   const sort = s.cinemaSortMode === 'created' || s.cinemaSortMode === 'rating' ? (s.cinemaSortMode as string) : 'date';
   const stf = typeof s.cinemaStatusFilter === 'string' ? s.cinemaStatusFilter : '';
   const cols = gridColumns();
   const mobFull = s.cinemaMobileDefaultFullscreen === true;
-  const { el, close } = ovl(sec, `<div class="cn-modal" style="width:100%">
-    <div class="cn-modal-title">影院设置</div><button class="cn-modal-x j-close" title="关闭">${iconSpan(ICON.close)}</button>
-    <div class="set-row"><div class="set-name">默认排序<div class="set-desc">打开面板时列表按所选规则排序</div></div>
-      <div class="set-ctl"><select class="j-sort">${[['date', '最近观看'], ['created', '按创建时间'], ['rating', '按评分']].map(([v, l]) => `<option value="${v}"${sort === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div></div>
-    <div class="set-row"><div class="set-name">默认状态筛选<div class="set-desc">打开面板时选中的状态筛选</div></div>
-      <div class="set-ctl"><select class="j-stf">${['', '想看', '在看', '已看'].map((v) => `<option value="${v}"${stf === v ? ' selected' : ''}>${v || '全部'}</option>`).join('')}</select></div></div>
-    <div class="set-row"><div class="set-name">网格每行列数<div class="set-desc">海报网格每一行的列数（2-12）</div></div>
-      <div class="set-ctl"><input type="number" class="j-cols" min="2" max="12" step="1" value="${cols}"></div></div>
-    <div class="set-row"><div class="set-name">移动端默认全屏<div class="set-desc">打开面板时移动端进入全屏态</div></div>
-      <div class="set-ctl"><button class="set-sw j-sw${mobFull ? ' on' : ''}"></button></div></div>
-    <div class="set-row"><div class="set-name">影视文件夹<div class="set-desc">影院读取的影视文件夹</div></div>
-      <div class="set-ctl" style="font-size:11px;color:var(--ink-3);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(M.folderPath)}</div></div>
-    <div class="dm-actions"><button class="dm-btn gold j-save">保存</button></div>
-  </div>`);
+  const { el, close } = ovl(sec, setModalHtml({ sort, stf, cols, mobFull, folderPath: M.folderPath }));
   mountIcons(el);
   el.querySelector('.j-close')?.addEventListener('click', close);
   el.querySelector('.j-sw')?.addEventListener('click', (e) => (e.currentTarget as HTMLElement).classList.toggle('on'));
@@ -609,7 +477,7 @@ function openSet(sec: HTMLElement, app: App): void {
     s.cinemaGridColumns = String(Math.min(12, Math.max(2, parseInt((el.querySelector('.j-cols') as HTMLInputElement).value, 10) || 5)));
     s.cinemaMobileDefaultFullscreen = el.querySelector('.j-sw')?.classList.contains('on') ?? false;
     void saveSettings();
-    M.sortMode = s.cinemaSortMode as CinemaStateSort;
+    M.sortMode = s.cinemaSortMode as CinemaSortMode;
     M.statusFilter = (s.cinemaStatusFilter as string) || null;
     close();
     panelToast(sec, '设置已保存');
@@ -617,183 +485,47 @@ function openSet(sec: HTMLElement, app: App): void {
   });
 }
 
-// ---------- 共享页：AI 荐片 ----------
+// ---------- 共享页：AI 荐片（画像行 + 页面状态快照 → 纯层 aiPageHtml） ----------
 
 /** 偏好行（buildTasteProfile 真实画像；无数据回退「暂无」） */
-function prefLine(): string {
+function aiPrefLine(): string {
   const p = buildTasteProfile();
   const parts = [p.groups[0] || '', p.genres[0] || '', p.directors[0] || '', p.actors[0] || ''].filter(Boolean);
   return parts.length ? parts.join(' · ') : '暂无';
 }
 
-function aiPageHtml(app: App): string {
-  if (M.aiRunning) {
-    return `<div class="ai-guide"><div class="ai-spin"></div>
-      <span class="ai-ic">${iconSpan(ICON.ai)}</span><div class="ai-title">${esc(M.aiWaitMsg || 'AI 正在分析你的观影口味…')}</div>
-      <div class="ai-sub">正在生成推荐，请稍候</div></div>`;
-  }
-  if (M.aiError) {
-    return `<div class="ai-guide"><span class="ai-ic ai-err-ic">${iconSpan(ICON.ai)}</span>
-      <div class="ai-title">AI 分析失败</div><div class="ai-sub">${esc(M.aiError)}</div>
-      <button class="ai-start j-ai-start" data-cinema-ai-start>重试</button></div>`;
-  }
-  if (M.aiResult && M.aiResult.length > 0) {
-    const cards = M.aiResult.map((rec: any, i: number) => {
-      const name = rec?.title || rec?.name || '未命名';
-      const meta = [rec?.type, rec?.director].filter(Boolean).join(' · ');
-      const inLib = M.items.some((it) => it.name === name);
-      return `<div class="rec-card"><div class="rec-main"><div class="rec-name">${esc(name)}
-        <a href="${esc(doubanSearchUrl(name))}" target="_blank" rel="noopener" title="在豆瓣搜索">${iconSpan(ICON.globe)}</a></div>
-        <div class="rec-meta">${esc(meta)}</div><div class="rec-reason">${esc(rec?.reason || '')}</div></div>
-        <button class="rec-add" data-rec-add="${i}"${inLib ? ' disabled' : ''}>${inLib ? '已在库中' : '＋ 想看'}</button></div>`;
-    }).join('');
-    return `<div class="ai-pref">偏好：<b>${esc(prefLine())}</b></div>
-      <div class="rec-list">${cards}</div>
-      <div style="text-align:center;margin-top:14px"><button class="dm-btn j-ai-more" data-cinema-ai-start>${iconSpan(ICON.ai)}换一批</button></div>`;
-  }
-  return `<div class="ai-pref">偏好：<b>${esc(prefLine())}</b></div>
-    <div class="ai-guide"><span class="ai-ic">${iconSpan(ICON.ai)}</span>
-      <div class="ai-title">让 AI 读懂你的片库</div>
-      <div class="ai-sub">基于你的评分、影评与偏好标签生成荐片，<br>结果可直接加入想看清单</div>
-      <button class="ai-start j-ai-start" data-cinema-ai-start>${iconSpan(ICON.ai)}开始推荐</button></div>`;
+function aiInput(): AiPageInput {
+  return {
+    running: M.aiRunning,
+    waitMsg: M.aiWaitMsg,
+    error: M.aiError,
+    results: M.aiResult,
+    pref: aiPrefLine(),
+    inLibrary: (name: string) => M.items.some((it) => it.name === name),
+  };
 }
 
-// ---------- 午夜场：desk 壳 ----------
+// ---------- 渲染（布局胶水入参装配；vault 自动刷新与 M.renderFn 都走 renderAll） ----------
 
-function midnightDeskHtml(): string {
-  return `<section class="bz-cinema--midnight" data-cinema-root="midnight">
-    <div class="d-body">
-      <aside class="d-rail">
-        <div class="rail-brand"><h1>影院</h1><div class="en">CINEMA CLUB</div></div>
-        <div class="rail-sec">
-          <div class="rail-label">类 型</div>
-          <div class="j-groups"></div>
-          <div class="rail-label" style="padding-top:14px">状 态</div>
-          <div class="j-status"></div>
-        </div>
-        <div class="rail-foot">
-          <button class="rail-item j-tool" data-tool="ai">${iconSpan(ICON.ai)}AI 荐片</button>
-          <button class="rail-item j-tool" data-tool="stat">${iconSpan(ICON.stat)}观影分析</button>
-        </div>
-      </aside>
-      <div class="d-main j-view"></div>
-    </div>
-  </section>`;
-}
-
-const railRow = (on: boolean, attr: string, color: string, name: string, n: number) =>
-  `<button class="rail-item${on ? ' is-on' : ''}" ${attr}><span class="dot" style="background:${color}"></span>${esc(name)}<span class="n">${n}</span></button>`;
-
-function midnightRailHtml(): { groups: string; status: string } {
-  const g = groupCounts();
-  const c = statusCounts();
-  let groups = railRow(!M.typeFilter && !M.statusFilter, 'data-g="全部"', 'var(--gold)', '全部', M.items.length);
-  for (const name of GROUP_ORDER) {
-    groups += railRow(M.typeFilter === name && !M.statusFilter, `data-g="${name}"`, typeColor(name), name, g[name] || 0);
-  }
-  let status = '';
-  for (const s of ['想看', '在看', '已看'] as const) {
-    status += railRow(M.statusFilter === s, `data-s="${s}"`, ST_COLOR[s], s, c[s]);
-  }
-  return { groups, status };
-}
-
-function pcardHtml(it: CinemaItem, app: App): string {
-  const r = it.rating;
-  return `<div class="pcard" data-cinema-key="${itemKey(it)}"><div class="pw">${posterInner(it, app)}
-    ${it.status !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(it.status)}">${statusText(it.status)}</span>` : ''}</div>
-    <div class="pname">${esc(it.name)}</div>
-    <div class="pmeta">${esc(it.year || '')}${it.year && it.director ? ' · ' : ''}${esc(it.director || '')}</div>
-    <div class="pstars">${r && r > 0 ? stars(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span style="opacity:.35">未评分</span>'}</div></div>`;
-}
-
-function emptyPageHtml(): string {
-  const filtered = !!(M.typeFilter || M.statusFilter || M.searchKeyword);
-  return `<div class="cn-empty-page"><div class="big">${filtered ? '无匹配影片' : '影片空空如也'}</div>
-    ${filtered ? '<button class="dm-btn j-clear" data-cinema-clear style="margin-top:6px">清空筛选</button>' : '<span style="font-size:11.5px">点右上「添加影片」开始记录</span>'}</div>`;
-}
-
-function midnightViewHtml(app: App): string {
-  if (M.view === 'ai') {
-    return `<div class="sp-head"><button class="sp-back j-back">${iconSpan(ICON.back)}</button><span class="sp-title">AI 荐片</span><span class="sp-cnt j-spcnt">${M.aiResult && M.aiResult.length ? `· ${M.aiResult.length} 部` : ''}</span></div><div class="sp-body">${aiPageHtml(app)}</div>`;
-  }
-  if (M.view === 'stat') {
-    return `<div class="sp-head"><button class="sp-back j-back">${iconSpan(ICON.back)}</button><span class="sp-title">观影分析</span><span class="sp-cnt j-spcnt">· ${watchedCount()} 部已看</span></div><div class="sp-body">${buildStatPageHtml()}</div>`;
-  }
-  const list = getDisplayItems();
-  let html = `<div class="d-head"><h2 class="j-title">${esc(listTitle())}</h2><span class="cnt j-cnt">· ${list.length} 部</span>
-    <button class="add j-add" data-cinema-add>${iconSpan(ICON.add)}添加影片</button></div>`;
-  html += `<div class="d-tools"><label class="d-search">${iconSpan(ICON.search)}<input class="j-q" placeholder="搜索影视（名称、类型、影评）..." value="${esc(M.searchKeyword)}"></label>
-    <div class="seg j-sort">${([['date', '最近观看'], ['created', '加入先后'], ['rating', '按评分']] as const).map(([k, l]) => `<button data-k="${k}" class="${M.sortMode === k ? 'is-on' : ''}">${l}</button>`).join('')}</div></div>`;
-  html += list.length
-    ? `<div class="d-scroll"><div class="grid" style="grid-template-columns:repeat(${gridColumns()},1fr)">${list.map((it) => pcardHtml(it, app)).join('')}</div></div>`
-    : emptyPageHtml();
-  return html;
-}
-
-function renderMidnightDesk(app: App, sec: HTMLElement): void {
-  const rail = midnightRailHtml();
-  const groupsEl = sec.querySelector('.j-groups');
-  const statusEl = sec.querySelector('.j-status');
-  if (groupsEl) groupsEl.innerHTML = rail.groups;
-  if (statusEl) statusEl.innerHTML = rail.status;
-  const view = sec.querySelector('.j-view');
-  if (view) view.innerHTML = midnightViewHtml(app);
-}
-
-// ---------- 午夜场：mob 壳 ----------
-
-function midnightMobHtml(): string {
-  return `<section class="mob bz-cinema--midnight" data-cinema-root="midnight">
-    <div class="m-head"><h2 class="j-mtitle">全部</h2><span class="cnt j-mcnt"></span>
-      <span class="m-acts">
-        <button class="m-tool j-mclose" title="关闭">${iconSpan(ICON.close)}</button>
-        <button class="m-tool j-mai" title="AI 荐片">${iconSpan(ICON.ai)}</button>
-        <button class="m-tool j-mstat" title="观影分析">${iconSpan(ICON.stat)}</button>
-        <button class="m-tool j-mgear" title="影院设置">${iconSpan(ICON.gear)}</button>
-        <button class="add j-madd" data-cinema-add>${iconSpan(ICON.add)}</button>
-      </span>
-    </div>
-    <div class="m-chips j-chips"></div>
-    <label class="m-search">${iconSpan(ICON.search)}<input class="j-mq" placeholder="搜索片名 / 导演…"></label>
-    <div class="m-scroll j-mview"></div>
-  </section>`;
-}
-
-function midnightChipsHtml(): string {
-  let html = `<button class="chip${!M.typeFilter && !M.statusFilter ? ' is-on' : ''}" data-c="all">${iconSpan(ICON.grid)}全部</button>`;
-  for (const name of GROUP_ORDER) {
-    html += `<button class="chip${M.typeFilter === name && !M.statusFilter ? ' is-on' : ''}" data-c="${name}">${name}</button>`;
-  }
-  for (const s of ['想看', '在看', '已看'] as const) {
-    html += `<button class="chip${M.statusFilter === s ? ' is-on' : ''}" data-s="${s}">${s}</button>`;
-  }
-  return html;
-}
-
-function renderMidnightMob(app: App, sec: HTMLElement): void {
-  const list = getDisplayItems();
-  const t = M.view === 'list' ? listTitle() : M.view === 'ai' ? 'AI 荐片' : '观影分析';
-  const titleEl = sec.querySelector('.j-mtitle');
-  const cntEl = sec.querySelector('.j-mcnt');
-  if (titleEl) titleEl.textContent = t;
-  if (cntEl) cntEl.textContent = M.view === 'list' ? `· ${list.length}` : '';
-  const mv = sec.querySelector<HTMLElement>('.j-mview');
-  if (mv) {
-    if (M.view === 'list') {
-      mv.className = 'm-scroll j-mview';
-      mv.innerHTML = `<div class="m-grid">${list.map((it) => pcardHtml(it, app)).join('')}</div>`;
-    } else if (M.view === 'ai') {
-      mv.className = 'sp-body j-mview';
-      mv.innerHTML = aiPageHtml(app);
-    } else {
-      mv.className = 'sp-body j-mview';
-      mv.innerHTML = buildStatPageHtml();
-    }
-    attachLongPress(sec, app);
-  }
-  const chips = sec.querySelector('.j-chips');
-  if (chips) chips.innerHTML = midnightChipsHtml();
+function midnightInput(app: App): MidnightRenderInput {
+  return {
+    items: M.items,
+    list: getDisplayItems(),
+    view: {
+      view: M.view,
+      typeFilter: M.typeFilter,
+      statusFilter: M.statusFilter,
+      sortMode: M.sortMode,
+      searchKeyword: M.searchKeyword,
+    },
+    cols: gridColumns(),
+    title: listTitle(),
+    watchedCount: watchedCount(),
+    aiHtml: aiPageHtml(aiInput()),
+    aiCount: M.aiResult && M.aiResult.length ? M.aiResult.length : null,
+    statHtml: buildStatPageHtml(),
+    poster: (it) => posterUrl(it, app),
+  };
 }
 
 // ---------- 搜索（防抖；desk 部分刷新保焦点 / mob 全刷+回焦） ----------
@@ -824,7 +556,7 @@ function refreshDeskList(app: App, sec: HTMLElement): void {
   const cnt = head.querySelector('.j-cnt');
   if (cnt) cnt.textContent = `· ${list.length} 部`;
   const grid = body.querySelector('.grid');
-  if (grid) grid.innerHTML = list.map((it) => pcardHtml(it, app)).join('');
+  if (grid) grid.innerHTML = list.map((it) => pcardHtml(it, posterUrl(it, app))).join('');
   mountIcons(sec);
 }
 
@@ -898,7 +630,7 @@ function bindMidnight(sec: HTMLElement, app: App): void {
     }
     const sortBtn = t.closest('.j-sort button') as HTMLElement | null;
     if (sortBtn && sortBtn.dataset.k) {
-      M.sortMode = sortBtn.dataset.k as CinemaStateSort;
+      M.sortMode = sortBtn.dataset.k as CinemaSortMode;
       renderAll(app);
       return;
     }
@@ -908,7 +640,7 @@ function bindMidnight(sec: HTMLElement, app: App): void {
     if (add) { openForm(sec, null, app); return; }
     const cardEl = t.closest('.pcard') as HTMLElement | null;
     if (cardEl) {
-      const it = itemByKey(cardEl.dataset.cinemaKey);
+      const it = itemByKeyInState(cardEl.dataset.cinemaKey);
       if (it) openDetail(sec, it, app);
     }
   });
@@ -916,7 +648,7 @@ function bindMidnight(sec: HTMLElement, app: App): void {
     const cardEl = (e.target as HTMLElement).closest('.pcard') as HTMLElement | null;
     if (!cardEl) return;
     e.preventDefault();
-    const it = itemByKey(cardEl.dataset.cinemaKey);
+    const it = itemByKeyInState(cardEl.dataset.cinemaKey);
     if (!it) return;
     const h = sec.getBoundingClientRect();
     openMenu(sec, it, app, e.clientX - h.left + 4, e.clientY - h.top + 4);
@@ -968,8 +700,11 @@ export function renderAll(app: App): void {
   if (!overlay) return;
   const root = overlay.querySelector<HTMLElement>('[data-cinema-root]');
   if (!root) return;
-  if (root.classList.contains('mob')) renderMidnightMob(app, root);
-  else renderMidnightDesk(app, root);
+  const inp = midnightInput(app);
+  if (root.classList.contains('mob')) {
+    renderMidnightMob(root, inp);
+    attachLongPress(root, app); // m-grid 卡片重渲染重建后重挂（原 mob 渲染胶水同语义）
+  } else renderMidnightDesk(root, inp);
   mountIcons(root);
 }
 
@@ -994,4 +729,3 @@ export function registerEscapeHandler(): void {
     close: () => closeOverlay(),
   });
 }
-
