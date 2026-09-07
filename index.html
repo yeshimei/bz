@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>包仔 · 原型预览导航</title>
+<!--
+  原型热重载服务（node scripts/preview-live.mjs）的导航主页 = 仓库根 index.html。
+  纯静态自包含（不依赖 core 样式与构建链）；域清单与 scripts/build-preview.mjs 的
+  PREVIEW_DOMAINS 手工同步——新增单源域时在下方 DOMAINS 加一行。
+  本页同样吃 preview-live 的 SSE 热刷新（改源码/本页都会自动重载）。
+-->
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+    gap: 26px; padding: 46px 24px 40px;
+    background: #f5f2ec; color: #171512;
+    font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  }
+  * { scrollbar-width: none; } *::-webkit-scrollbar { display: none; }
+
+  .head { text-align: center; }
+  .head h1 { font-size: 34px; font-weight: 800; letter-spacing: 1px; line-height: 1; }
+  .head .sub { margin-top: 10px; font-size: 12px; font-weight: 600; letter-spacing: 3px; color: #e8481f; }
+  .head .tip { margin-top: 12px; font-size: 12.5px; color: #8b8474; }
+
+  .grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    width: 100%; max-width: 960px;
+  }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+
+  a.card {
+    display: flex; flex-direction: column; gap: 12px;
+    padding: 18px 18px 16px; text-decoration: none; color: inherit;
+    background: #fbf9f3; border: 2px solid #171512; border-radius: 0;
+    box-shadow: 5px 5px 0 rgba(23, 21, 18, 0.16);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  a.card:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 rgba(232, 72, 31, 0.35); border-color: #e8481f; }
+  .card .name { font-size: 21px; font-weight: 800; letter-spacing: 0.5px; }
+  .card .id { font-size: 11px; letter-spacing: 1.5px; color: #8b8474; }
+  .card .desc { font-size: 12.5px; line-height: 1.65; color: #4a4638; flex: 1; }
+  .card .foot { display: flex; align-items: center; gap: 8px; }
+  .badge {
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    padding: 3px 9px; border: 1.5px solid #171512;
+  }
+  .badge.behavior { background: #171512; color: #f5f2ec; }
+  .badge.schema { border-color: #e8481f; color: #e8481f; }
+  .card .st { font-size: 11px; color: #b3ab99; margin-left: auto; }
+
+  .footnote { max-width: 960px; width: 100%; font-size: 12px; color: #8b8474; line-height: 1.8;
+    border-top: 1.5px solid #dcd5c4; padding-top: 14px; }
+  .footnote b { color: #171512; font-weight: 700; }
+  code { font-family: Consolas, monospace; font-size: 11.5px; background: #eae4d6; padding: 1px 5px; }
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1>原型预览</h1>
+    <div class="sub">NOTHING MORE, NOTHING LESS</div>
+    <div class="tip">改 <b>src/&lt;域&gt;/</b> 源码 → F5 即见；render.ts / 行为源改动自动重出产物并推送刷新</div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="footnote">
+    <b>真行为单源</b>＝评审壳双 iframe 直跑插件同款 ui.ts（桌面 920px / 移动 396px，@container 定布局），数据在 localStorage；自检加 <code>?selftest=1</code>。<br>
+    <b>schema 评审壳</b>＝设置面板三件套（原型即真理源，域侧 1:1 复刻）。评审双端 × 亮暗各过一遍，绿了再走 build 门禁。
+  </div>
+
+<script>
+  // 与 scripts/build-preview.mjs PREVIEW_DOMAINS 手工同步（新增单源域时加一行）
+  var DOMAINS = [
+    { id: 'belongings',     name: '归物本',   kind: 'behavior', desc: '物品登记与流转。P20 瑞士大字报：海报 hero + 墨缝网格 + 右键菜单流转。' },
+    { id: 'bookshelf',      name: '书库',     kind: 'behavior', desc: '藏书封面墙。五肤 × 亮暗变体，书脊行内标题与分类签。' },
+    { id: 'cinema',         name: '影院',     kind: 'behavior', desc: '影视目录与海报。午夜场风格，筛选/排序/AI 荐片页内化。' },
+    { id: 'favorites',      name: '收藏本',   kind: 'behavior', desc: '收藏条目。C5 亚麻纸：磁贴单行横滑 + 标签工作台。' },
+    { id: 'home',           name: '内容首页', kind: 'behavior', desc: '统计域卡首页。活动河七天窗口 + 周历切天。' },
+    { id: 'settings-panel', name: '设置',     kind: 'schema',   desc: '设置面板。schema 驱动 + 外观组（面板布局/面板主题）范式，原型即真理源。' },
+  ];
+  var KIND_LABEL = { behavior: '真行为单源', schema: 'schema 评审壳' };
+  document.getElementById('grid').innerHTML = DOMAINS.map(function (d) {
+    return '<a class="card" href="src/' + d.id + '/prototype.html">' +
+      '<div><div class="name">' + d.name + '</div><div class="id">' + d.id + '</div></div>' +
+      '<div class="desc">' + d.desc + '</div>' +
+      '<div class="foot"><span class="badge ' + d.kind + '">' + KIND_LABEL[d.kind] + '</span>' +
+      (d.kind === 'behavior' ? '<span class="st">?selftest=1</span>' : '') + '</div>' +
+    '</a>';
+  }).join('');
+</script>
+</body>
+</html>
