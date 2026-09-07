@@ -34,6 +34,8 @@
   --bz-border-strong: #171512;
   --bz-border-hover: #b9b2a0;
   --bz-brand: #e8481f;
+  --bz-brand-hover: #c93a10; /* 海报橙加深档：悬停/按压不漏组件库全局暗橙 */
+  --bz-brand-soft: rgba(232, 72, 31, 0.14); /* 品牌浅底（accent 图标钮/badge）同源 */
 }
 
 /* ---- 主面板（骨架走 .bz-panel-frame，遮罩走 .bz-panel-overlay；瑞士方角） ---- */

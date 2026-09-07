@@ -228,7 +228,7 @@ export function heroTitleText(view: BelViewState): string {
 export function heroSubText(items: BelongingsItem[], view: BelViewState): string {
   return view.status
     ? `归物本 — ${filtered(items, view).length} 件在列 · FILTERED VIEW`
-    : '归物本 — BELONGINGS · NOTHING MORE, NOTHING LESS';
+    : '归物本 — NOTHING MORE, NOTHING LESS';
 }
 
 // ==================== markup 构建器 ====================
@@ -240,7 +240,7 @@ export function panelHtml(): string {
     <div class="bz-bel-hero">
       <div class="bz-bel-hero-text">
         <div class="bz-bel-hero-title" data-bel-herotitle>全部</div>
-        <div class="bz-bel-hero-sub" data-bel-herosub>BELONGINGS — NOTHING MORE, NOTHING LESS</div>
+        <div class="bz-bel-hero-sub" data-bel-herosub>归物本 — NOTHING MORE, NOTHING LESS</div>
       </div>
       <div class="bz-bel-kpis" data-bel-kpis></div>
       <div class="bz-bel-mobhead">
