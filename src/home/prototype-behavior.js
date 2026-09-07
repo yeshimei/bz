@@ -11934,7 +11934,7 @@ ${n.content.slice(0, 2e3)}
     addBtn.textContent = opts.buttonText || (multi ? "添加…" : "选择…");
     addBtn.addEventListener("click", openPicker);
     const renderChips = () => {
-      ctrl.querySelectorAll(".bz-chip").forEach((c) => c.remove());
+      ctrl.querySelectorAll(".bz-sp-chip").forEach((c) => c.remove());
       if (!current2.length && opts.fallbackChip) {
         const fb = document.createElement("span");
         fb.className = "bz-sp-chip bz-sp-chip--locked";
@@ -26558,6 +26558,185 @@ ${bodyText.substring(0, 6e3)}`;
     }
   });
 
+  // src/clipbook/render.ts
+  function panelHtml3() {
+    return `
+    <div class="bz-panel-frame bz-clip-frame bz-panel-mtop">
+      <!-- 桌面三栏 -->
+      <div class="bz-clip-desk">
+        <div class="bz-panel-head bz-panel-head--tall">
+          <div class="bz-panel-title">剪藏本</div>
+          <div class="bz-panel-head-sp"></div>
+          <div class="bz-clip-issue" data-clip-issue></div>
+          <div class="bz-clip-head-search bz-search">${iconSpan(ICO.search)}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点…"></div>
+        </div>
+        <div class="bz-clip-desk-body">
+          <div class="bz-rail bz-rail--wide bz-clip-rail">
+            <div class="bz-clip-rail-label">SITE 站点</div>
+            <div class="bz-rail-scroll" data-clip-rail></div>
+            <div class="bz-clip-rail-foot" data-clip-rail-foot></div>
+          </div>
+          <div class="bz-clip-mid">
+            <div class="bz-clip-toc-head">目录</div>
+            <div class="bz-clip-list" data-clip-list></div>
+          </div>
+          <div class="bz-clip-read" data-clip-read-pane tabindex="0">
+            <div class="bz-clip-read-scroll"><div class="bz-clip-read-body" data-clip-reader></div></div>
+          </div>
+        </div>
+      </div>
+      <!-- 移动双屏 -->
+      <div class="bz-clip-mob" data-clip-mob>
+        <div class="bz-clip-mob-top">
+          <div class="bz-clip-mob-title">剪藏本</div>
+          <button class="bz-icon-btn bz-icon-btn--lg" data-clip-mob-search title="搜索">${iconSpan(ICO.search)}</button>
+          <button class="bz-icon-btn bz-icon-btn--lg bz-icon-btn--close" data-clip-mob-close title="关闭">${iconSpan(ICO.x)}</button>
+        </div>
+        <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
+          <input class="bz-input" type="text" data-clip-mob-input placeholder="搜索标题、摘要、站点、标签">
+        </div>
+        <div class="bz-mobstrip" data-clip-mob-sources></div>
+        <div class="bz-clip-mob-list" data-clip-mob-list></div>
+      </div>
+      <!-- 移动详情 overlay（屏2） -->
+      <div class="bz-clip-mob-detail bz-panel-mtop" data-clip-mob-detail style="display:none">
+        <div class="bz-clip-mob-detail-top">
+          <button class="bz-icon-btn bz-icon-btn--lg" data-clip-mob-back title="返回">${iconSpan(ICO.arrow)}</button>
+          <div class="bz-clip-mob-detail-title" data-clip-mob-title></div>
+          <button class="bz-clip-mob-save" data-clip-mob-save title="保存到剪藏本">${iconSpan(ICO.download, "bz-ic--sm")}</button>
+        </div>
+        <div class="bz-clip-mob-detail-body" data-clip-mob-detail-body></div>
+      </div>
+    </div>
+  `;
+  }
+  function siteShort(s) {
+    return String(s || "").replace("果壳科学人", "果壳");
+  }
+  function siteTint(site) {
+    let h = 0;
+    const t = String(site || "");
+    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
+    return `hsl(${h % 360}, 42%, 52%)`;
+  }
+  function dotHtml(st) {
+    return `<span class="bz-clip-dot ${st}"></span>`;
+  }
+  function stateFlag(st) {
+    if (st === "saved") return { icon: ICO.check, cls: "ok" };
+    if (st === "reading") return { icon: ICO.book, cls: "warn" };
+    return { icon: ICO.mail, cls: "info" };
+  }
+  function stateLabel(st) {
+    return st === "saved" ? "已保存" : st === "reading" ? "在读" : st === "read" ? "已读" : "未读";
+  }
+  function railItemHtml(sel, label, unread, total, icon, color, active2, sub) {
+    const badge = icon === "feed" ? `<span class="bz-rail-badge" style="--bz-rail-tint:${color || "#58a6ff"}">${esc(sub || label.slice(0, 1))}</span>` : icon === "bili" ? `<span class="bz-rail-badge bili">${esc(sub || label.slice(0, 1))}</span>` : icon === "clip" ? `<span class="bz-rail-ic">${iconSpan("scissors")}</span>` : `<span class="bz-rail-ic${sel.kind === "all" ? " bz-rail-ic--accent" : ""}">${icon ? iconSpan(icon) : ""}</span>`;
+    const count = `<span class="bz-rail-count">${unread > 0 ? `<b>${unread}</b>` : unread}/${total}</span>`;
+    return `
+    <div class="bz-rail-item${active2 ? " on" : ""}" data-src='${esc(JSON.stringify(sel))}' title="${esc(label)}">
+      ${badge}
+      <span class="bz-rail-name">${esc(label)}</span>
+      <span class="bz-clip-lead"></span>
+      ${count}
+    </div>`;
+  }
+  function railFootHtml(todayRead) {
+    return `今日已读<br><b>${todayRead}</b> 篇`;
+  }
+  function tocListHtml(list, curId, timeOf) {
+    return list.map((a, i) => `
+    <div class="bz-clip-item bz-clip-item--${a.st}${curId && curId === a.id ? " on" : ""}" data-id="${esc(a.id)}">
+      <span class="bz-clip-no">${String(i + 1).padStart(2, "0")}</span>
+      <div class="bz-clip-item-main">
+        <div class="bz-clip-item-t"><span>${esc(a.title)}</span></div>
+        <div class="bz-clip-item-meta">${esc(siteShort(a.srcName))} · ${esc(timeOf(a))}</div>
+      </div>
+    </div>`).join("");
+  }
+  function paragraphsHtml(paras, resolveImg) {
+    return paras.map((p) => {
+      if (p.type === "img") {
+        const src = resolveImg(p.text);
+        return src ? `<img class="bz-clip-art-img" src="${esc(src)}" alt="文章配图" loading="lazy">` : "";
+      }
+      return p.type === "quote" ? `<blockquote>${esc(p.text)}</blockquote>` : `<p>${esc(p.text)}</p>`;
+    }).join("");
+  }
+  function summaryHtml(summary) {
+    return `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan("sparkles", "bz-ic--xs")}摘要</span>${esc(summary)}</div>`;
+  }
+  function clipLoadingHtml() {
+    return `<p class="dim">正在读取剪藏正文…</p>`;
+  }
+  function readerHtml(a, opts) {
+    const openNoteFoot = a.origin === "clip" && a.notePath ? `<div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-open-note>打开笔记 ${iconSpan(ICO.external, "bz-ic--xs")}</span></div>` : "";
+    return `
+    <div class="bz-clip-art-title">${esc(a.title)}</div>
+    <div class="bz-clip-art-meta">
+      <span>${esc(opts.time)}</span>
+      <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${esc(siteShort(a.srcName))}</span></span>
+      <span class="bz-clip-art-state">${stateLabel(a.st)}</span>
+    </div>
+    <div class="bz-clip-art-fs" data-clip-fs></div>
+    ${a.summary ? summaryHtml(a.summary) : ""}
+    <div class="bz-clip-art-md" data-clip-md>${opts.paras || `<p class="dim">${esc(a.origin === "clip" ? "（笔记暂无正文）" : "正文已清空（已处理条目）")}</p>`}</div>
+    ${openNoteFoot}
+  `;
+  }
+  function mobChipHtml(sel, label, unread, active2, icon, sub) {
+    return `
+    <div class="bz-mobstrip-chip${active2 ? " is-on" : ""}" data-src='${esc(JSON.stringify(sel))}'>
+      ${icon === "feed" ? `<span class="bz-clip-favchip sm">${esc(sub || label.slice(0, 1))}</span>` : ""}
+      <span>${esc(label)}</span>
+      ${unread ? `<span class="bz-badge bz-badge--brand">${unread}</span>` : ""}
+    </div>`;
+  }
+  function mobListHtml(list, timeOf) {
+    return list.map((a) => `
+    <div class="bz-clip-mob-item" data-id="${esc(a.id)}">
+      <div class="bz-clip-item-t">${dotHtml(a.st)}<span>${esc(a.title)}</span></div>
+      ${a.summary ? `<div class="bz-clip-item-sum">${esc(a.summary)}</div>` : ""}
+      <div class="bz-clip-item-meta"><span>${esc(a.srcName)}</span><span class="bz-clip-item-time">${esc(timeOf(a))}</span></div>
+    </div>`).join("");
+  }
+  function mobDetailHtml(a, opts) {
+    const flag = stateFlag(a.st);
+    return `
+    <div class="bz-clip-mob-d-title">${esc(a.title)}</div>
+    <div class="bz-clip-mob-d-meta"><span class="bz-clip-favchip">${esc(a.srcName.slice(0, 1))}</span><span>${esc(a.srcName)}</span><span class="bz-clip-mob-d-time">${esc(opts.time)}</span></div>
+    <div class="bz-clip-art-flag ${flag.cls}">${iconSpan(flag.icon, "bz-ic--xs")}${stateLabel(a.st)}</div>
+    ${a.summary ? summaryHtml(a.summary) : ""}
+    <div class="bz-clip-art-md">${opts.paras || `<p class="dim">${esc(a.origin === "clip" ? "（剪藏笔记正文请在 Obsidian 中打开）" : "正文已清空")}</p>`}</div>
+  `;
+  }
+  var ICO;
+  var init_render7 = __esm({
+    "src/clipbook/render.ts"() {
+      init_str();
+      ICO = {
+        inbox: "inbox",
+        feed: "rss",
+        clip: "scissors",
+        bili: "play-square",
+        mail: "mail",
+        book: "book-open",
+        check: "check",
+        download: "download",
+        external: "external-link",
+        trash: "trash-2",
+        search: "search",
+        x: "x",
+        arrow: "arrow-left",
+        link: "link",
+        globe: "globe",
+        folder: "folder-open",
+        rotate: "rotate-ccw",
+        radio: "radio"
+      };
+    }
+  });
+
   // src/clipbook/state.ts
   function defaultSel() {
     return { kind: "all", platform: "", up: null, site: "" };
@@ -29858,55 +30037,7 @@ ${sample}`,
     overlayEl = document.createElement("div");
     overlayEl.className = "bz-panel-overlay";
     overlayEl.style.display = "none";
-    overlayEl.innerHTML = `
-    <div class="bz-panel-frame bz-clip-frame bz-panel-mtop">
-      <!-- 桌面三栏 -->
-      <div class="bz-clip-desk">
-        <div class="bz-panel-head bz-panel-head--tall">
-          <div class="bz-panel-title">剪藏本</div>
-          <div class="bz-panel-head-sp"></div>
-          <div class="bz-clip-issue" data-clip-issue></div>
-          <div class="bz-clip-head-search bz-search">${iconSpan2("search")}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点…"></div>
-        </div>
-        <div class="bz-clip-desk-body">
-          <div class="bz-rail bz-rail--wide bz-clip-rail">
-            <div class="bz-clip-rail-label">SITE 站点</div>
-            <div class="bz-rail-scroll" data-clip-rail></div>
-            <div class="bz-clip-rail-foot" data-clip-rail-foot></div>
-          </div>
-          <div class="bz-clip-mid">
-            <div class="bz-clip-toc-head">目录</div>
-            <div class="bz-clip-list" data-clip-list></div>
-          </div>
-          <div class="bz-clip-read" data-clip-read-pane tabindex="0">
-            <div class="bz-clip-read-scroll"><div class="bz-clip-read-body" data-clip-reader></div></div>
-          </div>
-        </div>
-      </div>
-      <!-- 移动双屏 -->
-      <div class="bz-clip-mob" data-clip-mob>
-        <div class="bz-clip-mob-top">
-          <div class="bz-clip-mob-title">剪藏本</div>
-          <button class="bz-icon-btn bz-icon-btn--lg" data-clip-mob-search title="搜索">${iconSpan2("search")}</button>
-          <button class="bz-icon-btn bz-icon-btn--lg bz-icon-btn--close" data-clip-mob-close title="关闭">${iconSpan2("x")}</button>
-        </div>
-        <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
-          <input class="bz-input" type="text" data-clip-mob-input placeholder="搜索标题、摘要、站点、标签">
-        </div>
-        <div class="bz-mobstrip" data-clip-mob-sources></div>
-        <div class="bz-clip-mob-list" data-clip-mob-list></div>
-      </div>
-      <!-- 移动详情 overlay（屏2） -->
-      <div class="bz-clip-mob-detail bz-panel-mtop" data-clip-mob-detail style="display:none">
-        <div class="bz-clip-mob-detail-top">
-          <button class="bz-icon-btn bz-icon-btn--lg" data-clip-mob-back title="返回">${iconSpan2("arrow-left")}</button>
-          <div class="bz-clip-mob-detail-title" data-clip-mob-title></div>
-          <button class="bz-clip-mob-save" data-clip-mob-save title="保存到剪藏本">${iconSpan2("download", "bz-ic--sm")}</button>
-        </div>
-        <div class="bz-clip-mob-detail-body" data-clip-mob-detail-body></div>
-      </div>
-    </div>
-  `;
+    overlayEl.innerHTML = panelHtml3();
     mountIcons(overlayEl);
     document.body.appendChild(overlayEl);
     railListEl = overlayEl.querySelector("[data-clip-rail]");
@@ -30018,9 +30149,6 @@ ${sample}`,
       openMobDetail(item.dataset.id || "");
     });
   }
-  function iconSpan2(name, extra = "") {
-    return `<span class="bz-ic${extra ? " " + extra : ""}" data-lucide="${name}"></span>`;
-  }
   function mobileFullscreenDefault() {
     const s = tryGetSettings();
     return (s == null ? void 0 : s.clipbookMobileDefaultFullscreen) !== false;
@@ -30083,23 +30211,6 @@ ${sample}`,
   function sortedView() {
     return [...listWithSearch()].sort((a, b) => (a.st === "unread" ? 0 : 1) - (b.st === "unread" ? 0 : 1));
   }
-  function siteTint(site) {
-    let h = 0;
-    const t = String(site || "");
-    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
-    return `hsl(${h % 360}, 42%, 52%)`;
-  }
-  function railItemHtml(sel, label, unread, total, icon, color, active2, sub) {
-    const badge = icon === "feed" ? `<span class="bz-rail-badge" style="--bz-rail-tint:${color || "#58a6ff"}">${escapeHtml2(sub || label.slice(0, 1))}</span>` : icon === "bili" ? `<span class="bz-rail-badge bili">${escapeHtml2(sub || label.slice(0, 1))}</span>` : icon === "clip" ? `<span class="bz-rail-ic">${iconSpan2("scissors")}</span>` : `<span class="bz-rail-ic${sel.kind === "all" ? " bz-rail-ic--accent" : ""}">${icon ? iconSpan2(icon) : ""}</span>`;
-    const count = `<span class="bz-rail-count">${unread > 0 ? `<b>${unread}</b>` : unread}/${total}</span>`;
-    return `
-    <div class="bz-rail-item${active2 ? " on" : ""}" data-src='${escapeHtml2(JSON.stringify(sel))}' title="${escapeHtml2(label)}">
-      ${badge}
-      <span class="bz-rail-name">${escapeHtml2(label)}</span>
-      <span class="bz-clip-lead"></span>
-      ${count}
-    </div>`;
-  }
   function renderRail() {
     var _a2, _b2, _c, _d;
     if (!railListEl) return;
@@ -30137,7 +30248,7 @@ ${sample}`,
     if (railFootEl) {
       const d = /* @__PURE__ */ new Date();
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      railFootEl.innerHTML = `今日已读<br><b>${((_d = (_c = M5.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[key]) || 0}</b> 篇`;
+      railFootEl.innerHTML = railFootHtml(((_d = (_c = M5.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[key]) || 0);
     }
     const rows = railListEl.querySelectorAll("[data-src]");
     rows.forEach((row) => {
@@ -30178,12 +30289,6 @@ ${sample}`,
     notice(`已把 ${items.length} 篇标为已读`, "success");
     await refreshAfterAction();
   }
-  function dotHtml(st) {
-    return `<span class="bz-clip-dot ${st}"></span>`;
-  }
-  function siteShort(s) {
-    return String(s || "").replace("果壳科学人", "果壳");
-  }
   function renderList() {
     if (!listEl) return;
     const list = sortedView();
@@ -30197,14 +30302,7 @@ ${sample}`,
     if (!list.some((a) => a.id === (M5.cur && M5.cur.id))) {
       M5.cur = list[0];
     }
-    listEl.innerHTML = list.map((a, i) => `
-    <div class="bz-clip-item bz-clip-item--${a.st}${M5.cur && M5.cur.id === a.id ? " on" : ""}" data-id="${escapeHtml2(a.id)}">
-      <span class="bz-clip-no">${String(i + 1).padStart(2, "0")}</span>
-      <div class="bz-clip-item-main">
-        <div class="bz-clip-item-t"><span>${escapeHtml2(a.title)}</span></div>
-        <div class="bz-clip-item-meta">${escapeHtml2(siteShort(a.srcName))} · ${relTime2(a.timeTs)}</div>
-      </div>
-    </div>`).join("");
+    listEl.innerHTML = tocListHtml(list, M5.cur ? M5.cur.id : null, (a) => relTime2(a.timeTs));
     bindItemMenus();
   }
   function relTime2(ts) {
@@ -30295,14 +30393,8 @@ ${sample}`,
     }
     return null;
   }
-  function paragraphsHtml(body) {
-    return toParagraphs(body).map((p) => {
-      if (p.type === "img") {
-        const src = resolveImgSrc(p.text);
-        return src ? `<img class="bz-clip-art-img" src="${escapeHtml2(src)}" alt="文章配图" loading="lazy">` : "";
-      }
-      return p.type === "quote" ? `<blockquote>${escapeHtml2(p.text)}</blockquote>` : `<p>${escapeHtml2(p.text)}</p>`;
-    }).join("");
+  function paragraphsHtml2(body) {
+    return paragraphsHtml(toParagraphs(body), resolveImgSrc);
   }
   function bindImgFallback(container) {
     container.querySelectorAll("img.bz-clip-art-img").forEach((img) => {
@@ -30320,27 +30412,14 @@ ${sample}`,
     }
     setReadingSession(a.id);
     armAutoReading(a);
-    const stLabel = a.st === "saved" ? "已保存" : a.st === "reading" ? "在读" : a.st === "read" ? "已读" : "未读";
     let paras = "";
     if (a.origin === "clip") {
       const cached = a.notePath ? clipBodyCache.get(a.notePath) : void 0;
-      paras = cached !== void 0 ? paragraphsHtml(cached) : `<p class="dim">正在读取剪藏正文…</p>`;
+      paras = cached !== void 0 ? paragraphsHtml2(cached) : clipLoadingHtml();
     } else {
-      paras = a.body ? paragraphsHtml(a.body) : "";
+      paras = a.body ? paragraphsHtml2(a.body) : "";
     }
-    const openNoteFoot = a.origin === "clip" && a.notePath ? `<div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-open-note>打开笔记 ${iconSpan2("external-link", "bz-ic--xs")}</span></div>` : "";
-    readerEl.innerHTML = `
-    <div class="bz-clip-art-title">${escapeHtml2(a.title)}</div>
-    <div class="bz-clip-art-meta">
-      <span>${escapeHtml2(a.timeText || relTime2(a.timeTs))}</span>
-      <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${escapeHtml2(siteShort(a.srcName))}</span></span>
-      <span class="bz-clip-art-state">${stLabel}</span>
-    </div>
-    <div class="bz-clip-art-fs" data-clip-fs></div>
-    ${a.summary ? `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan2("sparkles", "bz-ic--xs")}摘要</span>${escapeHtml2(a.summary)}</div>` : ""}
-    <div class="bz-clip-art-md" data-clip-md>${paras || `<p class="dim">${escapeHtml2(a.origin === "clip" ? "（笔记暂无正文）" : "正文已清空（已处理条目）")}</p>`}</div>
-    ${openNoteFoot}
-  `;
+    readerEl.innerHTML = readerHtml(a, { time: a.timeText || relTime2(a.timeTs), paras });
     mountIcons(readerEl);
     bindImgFallback(readerEl);
     mountFontSizeSeg();
@@ -30365,7 +30444,7 @@ ${sample}`,
     if (M5.cur && M5.cur.id === a.id && readerEl) {
       const md = readerEl.querySelector("[data-clip-md]");
       if (md) {
-        md.innerHTML = body ? paragraphsHtml(body) : `<p class="dim">（笔记暂无正文）</p>`;
+        md.innerHTML = body ? paragraphsHtml2(body) : `<p class="dim">（笔记暂无正文）</p>`;
         bindImgFallback(md);
       }
     }
@@ -30597,25 +30676,17 @@ ${sample}`,
     s.clipbookMidWidth = w;
     void saveSettings();
   }
-  function mobSrcChipHtml(sel, label, unread, active2, icon, sub) {
-    return `
-    <div class="bz-mobstrip-chip${active2 ? " is-on" : ""}" data-src='${escapeHtml2(JSON.stringify(sel))}'>
-      ${icon === "feed" ? `<span class="bz-clip-favchip sm">${escapeHtml2(sub || label.slice(0, 1))}</span>` : ""}
-      <span>${escapeHtml2(label)}</span>
-      ${unread ? `<span class="bz-badge bz-badge--brand">${unread}</span>` : ""}
-    </div>`;
-  }
   function renderMobSources() {
     var _a2, _b2;
     if (!mobSourcesEl) return;
     const arts = M5.articles;
     const searching = !!searchKw;
     const countOf = (source) => queryBySource(arts, M5.sidecar, M5.clipUrls, M5.clipNotes || [], source, M5.upInfo).filter(matchesSearch).length;
-    let html = mobSrcChipHtml({ kind: "all" }, "全部未读", countOf({ kind: "all" }), M5.sel.kind === "all", "radio");
+    let html = mobChipHtml({ kind: "all" }, "全部未读", countOf({ kind: "all" }), M5.sel.kind === "all", "radio");
     for (const row of aggregateSites(arts, M5.clipNotes || [], new Set((M5.sidecar.savedArchive || []).map((x) => x.url)), M5.clipUrls)) {
       const cnt = countOf({ kind: "site", site: row.site });
       if (searching && cnt === 0) continue;
-      html += mobSrcChipHtml({ kind: "site", site: row.site }, row.site, cnt, M5.sel.kind === "site" && M5.sel.site === row.site, "feed", row.site.slice(0, 1));
+      html += mobChipHtml({ kind: "site", site: row.site }, row.site, cnt, M5.sel.kind === "site" && M5.sel.site === row.site, "feed", row.site.slice(0, 1));
     }
     const mobUps = /* @__PURE__ */ new Map();
     for (const a of arts) {
@@ -30627,9 +30698,9 @@ ${sample}`,
     for (const [uid, name] of mobUps) {
       const cnt = countOf({ kind: "inbox", platform: "B站", up: uid });
       if (cnt === 0 && !searching) continue;
-      html += mobSrcChipHtml({ kind: "inbox", platform: "B站", up: uid }, name, cnt, M5.sel.kind === "inbox" && M5.sel.platform === "B站" && M5.sel.up === uid, "bili", name.slice(0, 1));
+      html += mobChipHtml({ kind: "inbox", platform: "B站", up: uid }, name, cnt, M5.sel.kind === "inbox" && M5.sel.platform === "B站" && M5.sel.up === uid, "bili", name.slice(0, 1));
     }
-    html += mobSrcChipHtml({ kind: "clip" }, "剪藏本", countOf({ kind: "clip" }), M5.sel.kind === "clip", "clip");
+    html += mobChipHtml({ kind: "clip" }, "剪藏本", countOf({ kind: "clip" }), M5.sel.kind === "clip", "clip");
     mobSourcesEl.innerHTML = html;
   }
   function renderMobList() {
@@ -30640,12 +30711,7 @@ ${sample}`,
       mobListEl.appendChild(uiEmpty({ icon: "inbox", title: "暂无内容" }));
       return;
     }
-    mobListEl.innerHTML = list.map((a) => `
-    <div class="bz-clip-mob-item" data-id="${escapeHtml2(a.id)}">
-      <div class="bz-clip-item-t">${dotHtml(a.st)}<span>${escapeHtml2(a.title)}</span></div>
-      ${a.summary ? `<div class="bz-clip-item-sum">${escapeHtml2(a.summary)}</div>` : ""}
-      <div class="bz-clip-item-meta"><span>${escapeHtml2(a.srcName)}</span><span class="bz-clip-item-time">${relTime2(a.timeTs)}</span></div>
-    </div>`).join("");
+    mobListEl.innerHTML = mobListHtml(list, (a) => relTime2(a.timeTs));
     const cards = mobListEl.querySelectorAll("[data-id]");
     cards.forEach((card) => {
       const art = list.find((x) => x.id === card.dataset.id);
@@ -30673,20 +30739,12 @@ ${sample}`,
       mobSaveBtnEl.style.display = a.origin !== "news" ? "none" : "";
       mobSaveBtnEl.classList.toggle("saved", saved);
       mobSaveBtnEl.title = saved ? "已保存到剪藏本" : "保存到剪藏本";
-      mobSaveBtnEl.innerHTML = iconSpan2(saved ? "check" : "download", "bz-ic--sm");
+      mobSaveBtnEl.innerHTML = iconSpan(saved ? "check" : "download", "bz-ic--sm");
       mountIcons(mobSaveBtnEl);
     }
-    const stLabel = a.st === "saved" ? "已保存" : a.st === "reading" ? "在读" : a.st === "read" ? "已读" : "未读";
-    const flagCls = a.st === "saved" ? "ok" : a.st === "reading" ? "warn" : "info";
-    const paras = a.body ? paragraphsHtml(a.body) : "";
+    const paras = a.body ? paragraphsHtml2(a.body) : "";
     const detailBody = mobDetailEl.querySelector("[data-clip-mob-detail-body]");
-    detailBody.innerHTML = `
-    <div class="bz-clip-mob-d-title">${escapeHtml2(a.title)}</div>
-    <div class="bz-clip-mob-d-meta"><span class="bz-clip-favchip">${escapeHtml2(a.srcName.slice(0, 1))}</span><span>${escapeHtml2(a.srcName)}</span><span class="bz-clip-mob-d-time">${escapeHtml2(a.timeText || relTime2(a.timeTs))}</span></div>
-    <div class="bz-clip-art-flag ${flagCls}">${iconSpan2(a.st === "saved" ? "check" : a.st === "reading" ? "book-open" : "mail", "bz-ic--xs")}${stLabel}</div>
-    ${a.summary ? `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan2("sparkles", "bz-ic--xs")}摘要</span>${escapeHtml2(a.summary)}</div>` : ""}
-    <div class="bz-clip-art-md">${paras || `<p class="dim">${escapeHtml2(a.origin === "clip" ? "（剪藏笔记正文请在 Obsidian 中打开）" : "正文已清空")}</p>`}</div>
-  `;
+    detailBody.innerHTML = mobDetailHtml(a, { time: a.timeText || relTime2(a.timeTs), paras });
     mountIcons(detailBody);
     bindImgFallback(detailBody);
   }
@@ -30799,6 +30857,7 @@ ${sample}`,
       init_settings_common();
       init_md();
       init_store2();
+      init_render7();
       init_state6();
       init_loader();
       init_flow();
@@ -30998,7 +31057,7 @@ ${sample}`,
   });
 
   // src/favorites/layouts/board/render.ts
-  function panelHtml3(mobile2) {
+  function panelHtml4(mobile2) {
     const mob = mobile2 ? " bz-fav-mob bz-panel-mtop" : "";
     return `<div class="bz-fav-panel bz-fav-scope${mob}">
   <div class="bz-fav-head"><h1>收藏本</h1><button class="bz-fav-mob-close bz-touch-target bz-touch-target--xl" data-fav-close title="关闭">${iconSpan(ICON4.close, "bz-ic--xs")}</button></div>
@@ -31034,7 +31093,7 @@ ${sample}`,
     const board = panel2.querySelector("[data-fav-content]");
     if (board) renderBoardInto(board, items, view, hooks);
   }
-  var init_render7 = __esm({
+  var init_render8 = __esm({
     "src/favorites/layouts/board/render.ts"() {
       init_str();
       init_config2();
@@ -31043,10 +31102,10 @@ ${sample}`,
   });
 
   // src/favorites/render.ts
-  var init_render8 = __esm({
+  var init_render9 = __esm({
     "src/favorites/render.ts"() {
       init_shared4();
-      init_render7();
+      init_render8();
     }
   });
 
@@ -31115,7 +31174,7 @@ ${sample}`,
     }
     const overlay2 = document.createElement("div");
     overlay2.className = "bz-panel-overlay";
-    overlay2.innerHTML = panelHtml3(isMobileEnv());
+    overlay2.innerHTML = panelHtml4(isMobileEnv());
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
     M6.overlay = overlay2;
@@ -31660,7 +31719,7 @@ GitHub 仓库：${ghInfo.title}
       init_domain_bus();
       init_favorites_source();
       init_config2();
-      init_render8();
+      init_render9();
       M6 = {
         overlay: null,
         items: [],
@@ -38965,9 +39024,16 @@ ${text}`;
           const popup = document.createElement("div");
           popup.className = "bz-overlay-popup bz-sp-mob-modal";
           popup.style.display = "flex";
-          popup.style.maxWidth = "560px";
-          popup.style.width = "min(calc(100vw - 32px), 560px)";
-          popup.style.maxHeight = "82vh";
+          popup.style.top = "auto";
+          popup.style.left = "0";
+          popup.style.right = "0";
+          popup.style.bottom = "0";
+          popup.style.transform = "none";
+          popup.style.width = "100%";
+          popup.style.maxWidth = "100%";
+          popup.style.maxHeight = "88%";
+          popup.style.borderRadius = "16px 16px 0 0";
+          popup.style.borderBottom = "0";
           topifyZ(mask, popup);
           const head = document.createElement("div");
           head.className = "bz-sp-mob-modal-head";

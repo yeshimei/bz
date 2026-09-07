@@ -39,7 +39,9 @@ function scheduleReload(changedRel) {
 fs.watch(srcRoot, { recursive: true }, (_ev, filename) => {
   if (!filename) return;
   const rel = filename.split(path.sep).join('/');
-  if (!rel.endsWith('.ts') && !rel.endsWith('.css') && !rel.endsWith('.html')) return;
+  // .ts → 按域重出两包；css/html/原型三件套 .js → 直出广播（settings-panel 原型自足三件套无产物）
+  const isSrc = rel.endsWith('.ts') || rel.endsWith('.css') || rel.endsWith('.html') || /\/prototype(\.app|\.data)?\.js$/.test(rel);
+  if (!isSrc) return;
   if (!PREVIEW_DOMAINS.includes(rel.split('/')[0])) return;
   scheduleReload(rel);
 });

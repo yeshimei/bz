@@ -611,9 +611,18 @@ export class SettingsPanelUI {
     const popup = document.createElement('div');
     popup.className = 'bz-overlay-popup bz-sp-mob-modal';
     popup.style.display = 'flex';
-    popup.style.maxWidth = '560px';
-    popup.style.width = 'min(calc(100vw - 32px), 560px)';
-    popup.style.maxHeight = '82vh';
+    // 移动端域设置 = 底部抽屉（原型 .bz-sp-demo-mobmask 拍板样式：钉底全宽、顶圆角、高 ≤88%）。
+    // 只覆盖锚点偏移不碰 position 属性——域内声明 position 会打断 core .bz-overlay-popup 居中链
+    popup.style.top = 'auto';
+    popup.style.left = '0';
+    popup.style.right = '0';
+    popup.style.bottom = '0';
+    popup.style.transform = 'none';
+    popup.style.width = '100%';
+    popup.style.maxWidth = '100%';
+    popup.style.maxHeight = '88%';
+    popup.style.borderRadius = '16px 16px 0 0';
+    popup.style.borderBottom = '0';
     topifyZ(mask, popup);
 
     // 弹窗头行：图标方块 + 名称 + 关闭钮（图标为 lucide，非 emoji）
