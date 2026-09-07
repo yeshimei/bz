@@ -39,7 +39,7 @@ export function navItemHtml(opts: { id: string; icon: string; name: string; coun
 /** 移动面板骨架（头行 + 搜索 + 域列表）——原型 mount mob 分支 */
 export function mobShellHtml(): string {
   return `<div class="bz-sp-head"><span class="bz-sp-head-title">设置</span><span class="bz-sp-head-tools"></span></div>` +
-    `<div class="bz-sp-mob-search"><span class="bz-input-wrap">${iconSpan('search')}<input class="bz-input" placeholder="搜索设置、域…" autocomplete="off"></span></div>` +
+    `<div class="bz-sp-mob-search">${iconSpan('search')}<input class="bz-input" placeholder="搜索设置、域…" autocomplete="off"></div>` +
     `<div class="bz-sp-mob-list"></div>`;
 }
 

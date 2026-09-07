@@ -257,7 +257,7 @@ var BZR_settings_panel = (() => {
     return `<button type="button" class="bz-sp-nav-item${opts.on ? " on" : ""}" data-sp-domain="${esc(opts.id)}">${iconSpan(opts.icon, "bz-ic bz-sp-nav-ic")}<span class="bz-sp-nav-name">${esc(opts.name)}</span><span class="bz-sp-nav-count">${esc(opts.count)}</span></button>`;
   }
   function mobShellHtml() {
-    return `<div class="bz-sp-head"><span class="bz-sp-head-title">设置</span><span class="bz-sp-head-tools"></span></div><div class="bz-sp-mob-search"><span class="bz-input-wrap">${iconSpan("search")}<input class="bz-input" placeholder="搜索设置、域…" autocomplete="off"></span></div><div class="bz-sp-mob-list"></div>`;
+    return `<div class="bz-sp-head"><span class="bz-sp-head-title">设置</span><span class="bz-sp-head-tools"></span></div><div class="bz-sp-mob-search">${iconSpan("search")}<input class="bz-input" placeholder="搜索设置、域…" autocomplete="off"></div><div class="bz-sp-mob-list"></div>`;
   }
   function mobSecHtml(title) {
     return `<div class="bz-sp-mob-sec">${esc(title)}</div>`;

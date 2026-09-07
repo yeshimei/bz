@@ -19,9 +19,9 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-// settings-panel 2026-09-07 拍板重新纳入单源：render.ts 三件套以原型 prototype.app.js
-// 为唯一真理逐字提取（不做混合——上一版从域侧反向提炼导致原型被污染），原型壳与
-// renderer/ui 消费同一份 prototype-render.js 产物。
+// settings-panel 2026-09-08 拍板维持行为单源（样式/渲染/行为一份源码两端共用）；
+// 原型观感对齐以 35c4342 自足三件套为参照系——冲突在壳环境（core 链 vs 域内自绘）逐一调和，
+// 不回退双轨。
 export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "favorites", "home", "settings-panel"];
 
 // 行为单源域（issue 245/ADR-0106 试点：belongings）：除渲染产物外，另产「行为产物」——
