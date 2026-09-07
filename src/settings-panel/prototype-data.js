@@ -55,7 +55,7 @@
     global: { name: '通用', icon: 'settings', desc: '存储路径等跨域基础偏好', groups: [
       { icon: 'folder-open', name: '数据存储路径', rows: [
         { t: 'path', mode: 'single', n: '数据存储路径', d: '全部 JSON 数据文件统一存放的目录', k: 'storagePath', note: '改动仅改路径不迁移旧数据；重载插件后生效' },
-        { t: 'button', n: '数据体检', d: '检查各域数据文件能否解析、字段漂移与孤儿条目（只读体检，可修复项一键清理）', btn: '打开体检', cta: true },
+        { t: 'button', n: '数据体检', d: '检查各域数据文件能否解析、字段漂移与孤儿条目（只读体检，可修复项一键清理）', btn: '打开体检', cta: true, demo: 'checkup' },
       ] },
     ] },
     appearance: { name: '设置', icon: 'palette', desc: '设置面板的布局与主题', groups: [
@@ -102,7 +102,7 @@
         { t: 'toggle', n: '移动端默认全屏', k: 'diaryMobileDefaultFullscreen' },
       ] },
       { icon: 'wrench', name: '维护', rows: [
-        { t: 'button', n: '日记解析检测', d: '扫描所有日记文件，定位未能解析的行，可一键修复标题格式问题', btn: '检测日记解析', cta: true },
+        { t: 'button', n: '日记解析检测', d: '扫描所有日记文件，定位未能解析的行，可一键修复标题格式问题', btn: '检测日记解析', cta: true, demo: 'diaryRepair' },
       ] },
     ] },
     'diary-wall': { name: '回忆墙', icon: 'images', desc: '回忆墙媒体视图（只读）', desktopZero: true, groups: [
@@ -278,7 +278,7 @@
       ] },
       { icon: 'layout-dashboard', name: '面板', rows: [
         { t: 'toggle', n: '移动端默认全屏', k: 'secondBrainMobileDefaultFullscreen', m: true },
-        { t: 'button', n: '重新索引', d: '清空现有向量索引并按当前白名单重嵌入，期间检索降级为文本匹配', btn: '开始' },
+        { t: 'button', n: '重新索引', d: '清空现有向量索引并按当前白名单重嵌入，期间检索降级为文本匹配', btn: '开始', demo: 'reindex' },
       ] },
     ] },
     literature: { name: '文献盒', icon: 'list-video', desc: '文献笔记与术语录入', groups: [
@@ -307,7 +307,7 @@
         { t: 'toggle', n: '移动端默认全屏', k: 'literatureMobileDefaultFullscreen' },
       ] },
       { icon: 'wrench', name: '维护', rows: [
-        { t: 'button', n: '清空历史', d: '移除全部成功归档的转文献记录；文献笔记与视频文件保留在 vault 中', btn: '清空历史' },
+        { t: 'button', n: '清空历史', d: '移除全部成功归档的转文献记录；文献笔记与视频文件保留在 vault 中', btn: '清空历史', demo: 'clearHistory' },
       ] },
     ] },
     pomodoro: { name: '番茄钟', icon: 'timer', desc: '专注计时与休息', groups: [
@@ -390,7 +390,7 @@
         { t: 'number', n: '分块字符上限', d: '长笔记每块向量的最大字符数，200 到 6000，越小检索越精准', k: 'smartcatChunkLimitChars', min: 200, max: 6000, step: 100 },
       ] },
       { icon: 'folder-open', name: '记忆目录', rows: [
-        { t: 'path', mode: 'multi', n: '记忆目录', d: '这些文件夹内的笔记会进入小橘的记忆库（日记按时间段拆条）；移除目录会清掉对应记忆', k: 'memoryDirectories' },
+        { t: 'path', mode: 'multi', n: '记忆目录', d: '这些文件夹内的笔记会进入小橘的记忆库（日记按时间段拆条）；移除目录会清掉对应记忆', k: 'memoryDirectories', pickerKind: 'card' },
       ] },
       { icon: 'database', name: '存储与记忆', rows: [
         { t: 'number', n: '行为流保留天数', d: '行为流条目最多保留 1 到 365 天，超出部分自动删除', k: 'behaviorMaxDays', min: 1, max: 365, step: 1 },

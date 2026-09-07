@@ -13,21 +13,19 @@
  * - 通用域/AI 域 → generalSettingsSchema()/aiSettingsSchema()（issue 186：AI 自全局拆出独立成域）。
  */
 import type { App } from 'obsidian';
+import { setIcon } from 'obsidian';
 import { createOverlay, topifyZ } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import type { SettingsSchema } from '../core/settings-schema';
 import { DOMAIN_ICONS } from '../core/domain-icons';
-import { mountIcons } from '../core/ui/icons';
 import { renderPanelSchema } from './renderer';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
-import { uiIconBtn, uiEmpty } from '../core/ui';
-import {
-  deskShellHtml, navSecHtml, navItemHtml, pageHeadHtml, loadingHtml,
-  mobShellHtml, mobItemHtml, mobRowHitHtml, mobModalShellHtml, mobSecHtml, mobEmptyHtml,
-} from './render';
+import { uiIcon, uiIconBtn, uiEmpty, mountIcons } from '../core/ui';
+// markup 单源（ADR-0104，以原型为真理）：面板壳/导航/页头结构串全出自渲染纯层
+import * as R from './render';
 
 /* ==================== 域清单（全局 + 19 域；图标 = lucide 名） ==================== */
 
@@ -267,11 +265,12 @@ export class SettingsPanelUI {
     });
   }
 
-  /* ---------- 桌面：B 侧栏工作台（头行 + 左导航 + 右内嵌渲染；markup 出纯层 deskShellHtml） ---------- */
+  /* ---------- 桌面：B 侧栏工作台（头行 + 左导航 + 右内嵌渲染） ---------- */
 
   private buildDesktop(popup: HTMLElement): void {
     popup.classList.add('bz-sp-desk');
-    popup.innerHTML = deskShellHtml();
+    // 壳结构单源（R.deskShellHtml：头行 + 左导航 + 右内容区，逐字原型）
+    popup.innerHTML = R.deskShellHtml();
     mountIcons(popup); // 头行搜索图标占位物化
 
     const nav = popup.querySelector('.bz-sp-nav') as HTMLElement;
@@ -281,6 +280,7 @@ export class SettingsPanelUI {
 
     const renderNav = (q: string) => {
       const query = q.trim();
+      nav.innerHTML = '';
       // 无设置项/当前端零设置项的域不在左侧列表显示（用户拍板 + issue 194）；搜索同样只搜列表可见域
       const visible = listableDomains();
       // 搜索命中：域名/描述 + 已加载域的设置项行名（只匹配行名——desc 常含跨域引用词会误命中）
@@ -294,33 +294,37 @@ export class SettingsPanelUI {
       }));
       const rest = visible.filter((d) => !NAV_SECS.some((sec) => sec.ids.indexOf(d.id) >= 0) && matches(d));
       if (rest.length) secs.push({ title: '其他', domains: rest });
-      // markup 出纯层（navSecHtml × navItemHtml 串拼），事件经 data-sp-domain 契约委托绑定
-      nav.innerHTML = secs
-        .filter((sec) => sec.domains.length)
-        .map((sec) => navSecHtml(sec.title, sec.domains.map((d) => navItemHtml({
-          id: d.id,
-          icon: d.icon,
-          name: d.name,
-          count: badgeOf(d),
-          on: d.id === this.activeDomainId && !query,
-        })).join('')))
-        .join('');
-      mountIcons(nav);
-      nav.querySelectorAll<HTMLElement>('.bz-sp-nav-item').forEach((b) => {
-        b.addEventListener('click', () => {
-          this.activeDomainId = b.dataset.spDomain ?? 'global';
-          renderNav(searchIn.value);
-          void this.renderDomain(pane, DOMAINS.find((x) => x.id === this.activeDomainId) ?? DOMAINS[0]);
+      for (const sec of secs) {
+        if (!sec.domains.length) continue;
+        // 导航结构单源（R.navSecHtml/navItemHtml；data-sp-domain 契约供点击回查）
+        let itemsHtml = '';
+        sec.domains.forEach((d) => {
+          itemsHtml += R.navItemHtml({
+            id: d.id, icon: d.icon, name: d.name, count: badgeOf(d),
+            on: d.id === this.activeDomainId && !query,
+          });
         });
-      });
-      // 原型对齐（issue 244）：桌面搜索同时高亮右侧内容区命中行（.bz-sp-set-row.hit）
-      const kw = query;
-      pane.querySelectorAll<HTMLElement>('.bz-sp-set-row').forEach((row) => {
-        row.classList.toggle('hit', !!kw && row.textContent!.includes(kw));
+        nav.insertAdjacentHTML('beforeend', R.navSecHtml(sec.title, itemsHtml));
+      }
+      mountIcons(nav); // 导航图标占位物化（mock setIcon 记 data-icon）
+      nav.querySelectorAll<HTMLElement>('.bz-sp-nav-item').forEach((b) => {
+        const id = b.dataset.spDomain!;
+        b.addEventListener('click', () => {
+          this.activeDomainId = id;
+          renderNav(searchIn.value);
+          void this.renderDomain(pane, DOMAINS.find((x) => x.id === id)!);
+        });
       });
     };
 
-    searchIn.addEventListener('input', () => renderNav(searchIn.value));
+    searchIn.addEventListener('input', () => {
+      renderNav(searchIn.value);
+      // 原型逐字（prototype.app.js mount 输入监听）：桌面搜索词对当前内容区行做 .hit 命中高亮
+      const q = searchIn.value.trim();
+      popup.querySelectorAll<HTMLElement>('.bz-sp-settings-body .bz-sp-set-row').forEach((row) => {
+        row.classList.toggle('hit', !!q && !!row.textContent && row.textContent.includes(q));
+      });
+    });
     renderNav('');
     // 注册列表重绘回调：preload 解析出零项域后按当前搜索词重绘导航（issue 194 按端隐藏）
     this.rerenderList = () => renderNav(searchIn.value);
@@ -371,11 +375,16 @@ export class SettingsPanelUI {
     return uiEmpty({ icon, title, desc });
   }
 
-  /** 加载态（spinner + 文案；markup 出纯层 loadingHtml） */
+  /** 加载态（spinner + 文案） */
   private loadingEl(): HTMLElement {
-    const wrap = document.createElement('div');
-    wrap.innerHTML = loadingHtml();
-    return wrap.firstElementChild as HTMLElement;
+    const loading = document.createElement('div');
+    loading.className = 'bz-sp-loading';
+    const sp = document.createElement('span');
+    sp.className = 'bz-spinner';
+    const tx = document.createElement('span');
+    tx.textContent = '加载设置…';
+    loading.append(sp, tx);
+    return loading;
   }
 
   /**
@@ -390,11 +399,11 @@ export class SettingsPanelUI {
     this.renderHandles = [];
     pane.innerHTML = '';
 
-    // 域页头（拍板原型：域名 + 描述 + 右侧项数/组数徽标，先渲后回填；markup 出纯层）
-    const paneWrap = document.createElement('div');
-    paneWrap.innerHTML = pageHeadHtml(domain.name, domain.desc, '');
-    const pageHead = paneWrap.firstElementChild as HTMLElement;
-    const pageTag = pageHead.querySelector<HTMLElement>('.bz-sp-page-tag')!;
+    // 域页头（拍板原型：域名 + 描述 + 右侧项数/组数徽标，先渲后回填）
+    // 结构单源（R.pageHeadHtml：域名 + 描述 + 右侧项数/组数徽标）
+    const headHolder = document.createElement('div');
+    headHolder.innerHTML = R.pageHeadHtml(domain.name, domain.desc, '');
+    const pageHead = headHolder.firstElementChild as HTMLElement;
     pane.appendChild(pageHead);
 
     // 无设置项域 → 空态
@@ -411,7 +420,7 @@ export class SettingsPanelUI {
     const body = document.createElement('div');
     body.className = 'bz-sp-settings-body';
     pane.appendChild(body);
-    body.appendChild(this.loadingEl());
+    body.innerHTML = R.loadingHtml(); // 加载态结构单源
 
     try {
       const schema = await domain.schemaLoader();
@@ -432,7 +441,7 @@ export class SettingsPanelUI {
       navBadges.set(domain.id, count > 0 ? String(count) : '·');
       this.refreshNavBadges();
       // 页头徽标回填（项数/组数；组数含被门控隐藏的组——与渲染出的分组卡一致）
-      pageTag.textContent = `${count} 项 · ${schema.groups.length} 组`;
+      (pageHead.querySelector('.bz-sp-page-tag') as HTMLElement).textContent = `${count} 项 · ${schema.groups.length} 组`;
       // 全部组被门控隐藏（如归物本仅移动端组，桌面无可配置项）→ 空态引导
       if (visibleGroups === 0 && groupEls.length > 0) {
         body.appendChild(this.emptyEl(
@@ -457,16 +466,26 @@ export class SettingsPanelUI {
 
   private buildMobile(popup: HTMLElement): void {
     popup.classList.add('bz-sp-mobile');
-    popup.innerHTML = mobShellHtml();
-    mountIcons(popup); // 搜索图标占位物化
+    popup.innerHTML = `
+      <div class="bz-sp-head">
+        <span class="bz-sp-head-title">设置</span>
+        <span class="bz-sp-head-tools"></span>
+      </div>
+      <div class="bz-sp-mob-search">
+        <span class="bz-input-wrap"><i class="bz-ic"></i><input class="bz-input" placeholder="搜索设置、域…" /></span>
+      </div>
+      <div class="bz-sp-mob-list"></div>
+    `;
 
     // 头行工具（移动端：关闭钮）
     const tools = popup.querySelector('.bz-sp-head-tools') as HTMLElement;
     tools.appendChild(uiIconBtn({ icon: 'x', lg: true, title: '关闭', className: 'bz-sp-mob-close', onClick: () => this.hide() }));
 
-    const list = popup.querySelector('.bz-sp-mob-list') as HTMLElement;
+    const list = popup.querySelector('.bz-sp-mob-list')!;
     const searchWrap = popup.querySelector('.bz-sp-mob-search') as HTMLElement;
     const searchIn = popup.querySelector('.bz-sp-mob-search .bz-input') as HTMLInputElement;
+    const searchIcon = popup.querySelector('.bz-sp-mob-search .bz-ic') as HTMLElement;
+    setIcon(searchIcon, 'search');
     const clearBtn = uiIconBtn({ icon: 'x', title: '清除', className: 'bz-sp-mob-clear' });
     searchWrap.appendChild(clearBtn);
     clearBtn.addEventListener('click', () => {
@@ -479,6 +498,7 @@ export class SettingsPanelUI {
     const render = (q: string) => {
       const query = q.trim();
       searchWrap.classList.toggle('hasval', !!query);
+      list.innerHTML = '';
       if (!query) {
         // 无搜索：全部列表可见域按语义分组（基础/记录/媒体与知识/工具；同桌面导航口径）
         const visible = listableDomains();
@@ -488,18 +508,19 @@ export class SettingsPanelUI {
         }));
         const rest = visible.filter((d) => !NAV_SECS.some((sec) => sec.ids.indexOf(d.id) >= 0));
         if (rest.length) secs.push({ title: '其他', domains: rest });
-        // markup 出纯层（mobSecHtml × mobItemHtml 串拼），事件经 data-sp-domain 契约委托绑定
-        list.innerHTML = secs
-          .filter((sec) => sec.domains.length)
-          .map((sec) => mobSecHtml(sec.title) + sec.domains.map((d) => mobItemHtml({
-            id: d.id, icon: d.icon, name: d.name, desc: d.desc,
-          })).join(''))
-          .join('');
-        mountIcons(list);
-        bindList();
+        for (const sec of secs) {
+          if (!sec.domains.length) continue;
+          const secEl = document.createElement('div');
+          secEl.className = 'bz-sp-mob-sec';
+          secEl.textContent = sec.title;
+          list.appendChild(secEl);
+          sec.domains.forEach((d) => {
+            list.appendChild(mobItem(d));
+          });
+        }
         return;
       }
-      // 搜索：域段 + 设置项段（同样只搜列表可见域；设置项段 = 域有原型无，issue 244 保留）
+      // 搜索：域段 + 设置项段（同样只搜列表可见域）
       const doms = listableDomains().filter((d) => d.name.includes(query) || d.desc.includes(query));
       const rows: Array<{ icon: string; name: string; desc: string; domain: DomainDef }> = [];
       schemaRowCache.forEach((rowsOf, did) => {
@@ -513,33 +534,66 @@ export class SettingsPanelUI {
       });
       let html = '';
       if (doms.length) {
-        html += mobSecHtml(`域（${doms.length}）`);
+        html += `<div class="bz-sp-mob-sec">域（${doms.length}）</div>`;
         doms.forEach((d) => {
-          html += mobItemHtml({ id: d.id, icon: d.icon, name: d.name, desc: d.desc });
+          html += mobItem(d).outerHTML;
         });
       }
       if (rows.length) {
-        html += mobSecHtml(`设置项（${rows.length}）`);
+        html += `<div class="bz-sp-mob-sec">设置项（${rows.length}）</div>`;
         rows.forEach((r) => {
-          html += mobRowHitHtml({ id: r.domain.id, icon: r.icon, name: r.name, desc: `${r.domain.name} · ${r.desc}` });
+          const item = document.createElement('button');
+          item.type = 'button';
+          item.className = 'bz-sp-mob-item';
+          const ic = document.createElement('span');
+          ic.className = 'bz-sp-mob-ic';
+          ic.appendChild(uiIcon(r.icon));
+          const t = document.createElement('span');
+          t.className = 'bz-sp-mob-t';
+          const nm = document.createElement('span');
+          nm.className = 'bz-sp-mob-name';
+          nm.textContent = r.name;
+          const ds = document.createElement('span');
+          ds.className = 'bz-sp-mob-desc';
+          ds.textContent = `${r.domain.name} · ${r.desc}`;
+          t.append(nm, ds);
+          const kind = document.createElement('span');
+          kind.className = 'bz-sp-mob-kind';
+          kind.textContent = '设置';
+          item.append(ic, t, kind);
+          item.addEventListener('click', () => void this.openMobileDomain(r.domain));
+          html += item.outerHTML;
         });
       }
       if (!doms.length && !rows.length) {
-        html = mobEmptyHtml(query);
+        html = `<div class="bz-sp-mob-empty">没有匹配「${query}」的设置或域</div>`;
       }
       list.innerHTML = html;
-      mountIcons(list);
-      bindList();
     };
 
-    // 列表点击委托：域行/设置项行都进该域设置弹窗（data-sp-domain 契约回查）
-    const bindList = () => {
-      list.querySelectorAll<HTMLElement>('[data-sp-domain]').forEach((it) => {
-        it.addEventListener('click', () => {
-          const d = DOMAINS.find((x) => x.id === it.dataset.spDomain);
-          if (d) void this.openMobileDomain(d);
-        });
-      });
+    /** 构造移动端域行（图标方块 + 名称 + 描述 + ›） */
+    const mobItem = (d: DomainDef): HTMLElement => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'bz-sp-mob-item';
+      const ic = document.createElement('span');
+      ic.className = 'bz-sp-mob-ic';
+      ic.appendChild(uiIcon(d.icon));
+      const t = document.createElement('span');
+      t.className = 'bz-sp-mob-t';
+      const nm = document.createElement('span');
+      nm.className = 'bz-sp-mob-name';
+      nm.textContent = d.name;
+      const ds = document.createElement('span');
+      ds.className = 'bz-sp-mob-desc';
+      ds.textContent = d.desc;
+      t.append(nm, ds);
+      const chev = document.createElement('span');
+      chev.className = 'bz-sp-mob-chev';
+      chev.appendChild(uiIcon('chevron-right'));
+      item.append(ic, t, chev);
+      item.addEventListener('click', () => void this.openMobileDomain(d));
+      return item;
     };
 
     searchIn.addEventListener('input', () => render(searchIn.value));
@@ -561,14 +615,23 @@ export class SettingsPanelUI {
     popup.style.maxHeight = '82vh';
     topifyZ(mask, popup);
 
-    // 弹窗头行：图标方块 + 名称 + 关闭钮（markup 出纯层 mobModalShellHtml；图标 lucide）
-    popup.innerHTML = mobModalShellHtml(domain.icon, domain.name);
-    mountIcons(popup); // 头行图标占位物化
-    const head = popup.querySelector('.bz-sp-mob-modal-head') as HTMLElement;
+    // 弹窗头行：图标方块 + 名称 + 关闭钮（图标为 lucide，非 emoji）
+    const head = document.createElement('div');
+    head.className = 'bz-sp-mob-modal-head';
+    const ic = document.createElement('span');
+    ic.className = 'bz-sp-mob-modal-ic';
+    ic.appendChild(uiIcon(domain.icon));
+    const title = document.createElement('h3');
+    title.className = 'bz-sp-mob-modal-title';
+    title.textContent = domain.name;
+    head.append(ic, title);
     const x = uiIconBtn({ icon: 'x', lg: true, title: '关闭' });
     head.appendChild(x);
+    popup.appendChild(head);
 
-    const body = popup.querySelector('.bz-sp-mob-modal-body') as HTMLElement;
+    const body = document.createElement('div');
+    body.className = 'bz-sp-settings-body bz-sp-mob-modal-body';
+    popup.appendChild(body);
 
     const close = () => {
       escHandle?.unregister();
