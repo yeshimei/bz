@@ -27,7 +27,8 @@ function resolveSpec(fromFile: string, spec: string): string {
 
 /** 抽取一个 TS 文件的全部模块说明符（static import/export-from + dynamic import） */
 function importSpecs(file: string): string[] {
-  const text = fs.readFileSync(file, 'utf8');
+  const text = fs.readFileSync(file, 'utf8')
+    .replace(/^\s*(?:import|export)\s+type\s[^;]*?from\s*['"][^'"]+['"]\s*;?\s*$/gm, '');
   const specs: string[] = [];
   for (const re of [/from\s*['"]([^'"]+)['"]/g, /^import\s*['"]([^'"]+)['"]/gm, /import\(\s*['"]([^'"]+)['"]\s*\)/g]) {
     let m: RegExpExecArray | null;

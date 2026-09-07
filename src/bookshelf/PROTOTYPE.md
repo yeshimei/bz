@@ -6,7 +6,7 @@
 
 | 文件 | 作用 |
 |---|---|
-| `prototype.html` | 评审壳。组件样式零内联，按构建同序链接 `../core/styles.css → ../core/ui/tokens.css → ../core/ui/components.css → ../reading-report/styles.css → ./styles.css`；演示 JS 与 `ui.ts` 逐字同构 |
+| `prototype.html` | 评审壳。组件样式零内联，按构建同序链接 `../core/styles.css → ../core/ui/tokens.css → ../core/ui/components.css → ../reading-report/styles.css → ./styles.css`；演示壳只留演示层（数据/皮肤/toast/钩子），markup 与筛选排序管道消费 `prototype-render.js`（`window.BZR_bookshelf`，ADR-0104 markup 单源，源 `render.ts`）；`ui.ts` 只留行为层（生命周期/绑定/core 服务，657→353 行） |
 | `prototype-data.js` | 演示数据（生成物）：真实库 md 162 册 + EPUB 2 册 = 164 册（在读 9 / 已读 151 / 未读 4）。`BookshelfItem` 同构字段；`file` → `id`（md = `书库/<title>.md`，EPUB = vault 路径）+ `ctime`（无日期书兜底排序） |
 | `prototype-icons.js` | 演示图标集（生成物）：`window.BS_ICONS`，lucide-static@0.544.0 路径数据（library / bar-chart-3 / x / library-big / search-x / funnel / loader / search） |
 

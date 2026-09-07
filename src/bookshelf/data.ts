@@ -10,6 +10,7 @@ import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 import type { BookshelfItem } from './state';
 import { M } from './state';
+import { categoryLabel, getDisplayItems as pipeDisplay } from './render';
 const WEAVE_PLUGIN_ID = 'weave-epub-reader';
 /** Weave 阅读数据文件名（EPUB 自动刷新按此后缀识别 json 通道；index.ts 引用） */
 export const WEAVE_DATA_FILE = 'weave-data.json';
@@ -282,44 +283,15 @@ export async function rebuildItems(app: App): Promise<BookshelfItem[]> {
   return merged;
 }
 
-// ===== 排序 / 筛选 / 统计 =====
+// ===== 排序 / 筛选（ADR-0104 markup 单源：管道纯函数迁 render.ts，此处 re-export 兼容旧引用） =====
 
-/** 条目主日期（排序/详情展示）：读完日 > 开始日；无日期按文件创建时间；再无可视化底部 */
-function primaryDate(it: BookshelfItem): number {
-  const d = it.completionDate || it.readingDate;
-  if (d) {
-    const t = new Date(d).getTime();
-    if (!isNaN(t)) return t;
-  }
-  if (it.file?.stat?.ctime) return it.file.stat.ctime;
-  return 0;
-}
+export {
+  primaryDate, sortItems, currentSideItems, categoryLabel, catFilterItems, kwFilter,
+} from './render';
 
-/** 排序：date=主日期倒序（无日期排后）；title/author localeCompare('zh')；progress 倒序 */
-export function sortItems(list: BookshelfItem[], key: string): BookshelfItem[] {
-  const sorted = [...list];
-  if (key === 'title') {
-    sorted.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'zh'));
-  } else if (key === 'time') {
-    // 时长最长（issue 218 书脊墙档；时长同值按最近阅读兜底）
-    sorted.sort((a, b) => (b.readingTimeMs - a.readingTimeMs) || (primaryDate(b) - primaryDate(a)));
-  } else {
-    // 最近读完（默认）：读完/起读日期新者在前，同日按时长
-    sorted.sort((a, b) => (primaryDate(b) - primaryDate(a)) || (b.readingTimeMs - a.readingTimeMs));
-  }
-  return sorted;
-}
-
-/** 当前侧栏过滤（全部 = 不过滤） */
-export function currentSideItems(items: BookshelfItem[], side: string): BookshelfItem[] {
-  if (side === 'all') return items;
-  const status = side === 'reading' ? '在读' : side === 'unread' ? '未读' : '已读';
-  return items.filter((it) => it.status === status);
-}
-
-/** 分类展示名（EPUB 无分类 null → 归「未分类」桶；仅分类面用，kwFilter 口径不变） */
-export function categoryLabel(it: BookshelfItem): string {
-  return it.category || '未分类';
+/** 当前展示列表（状态 + 分类 + 关键字 + 排序），UI 层统一入口（读 M；纯管道在 render.ts） */
+export function getDisplayItems(): BookshelfItem[] {
+  return pipeDisplay(M.items, { side: M.side, catFilter: M.catFilter, q: M.searchKeyword, sortMode: M.sortMode });
 }
 
 /** 分类面清单（去重 + zh 序 + 未分类恒置底 + 计数；数据层已有 category 字段，零新设置项） */
@@ -337,27 +309,6 @@ export function categoryList(items: BookshelfItem[]): { name: string; count: num
       return a[0].localeCompare(b[0], 'zh');
     })
     .map(([name, count]) => ({ name, count }));
-}
-
-/** 分类正交过滤（'all' = 不过滤；与状态筛独立叠加） */
-export function catFilterItems(list: BookshelfItem[], cat: string): BookshelfItem[] {
-  if (!cat || cat === 'all') return list;
-  return list.filter((it) => categoryLabel(it) === cat);
-}
-
-/** 关键字过滤（书名/作者/分类） */
-export function kwFilter(list: BookshelfItem[], kw: string): BookshelfItem[] {
-  if (!kw) return list;
-  const k = kw.trim().toLowerCase();
-  return list.filter((it) => `${it.title} ${it.author || ''} ${it.category || ''}`.toLowerCase().includes(k));
-}
-
-/** 当前展示列表（侧栏 + 分类 + 关键字 + 排序），UI 层统一入口 */
-export function getDisplayItems(): BookshelfItem[] {
-  let list = currentSideItems(M.items, M.side);
-  list = catFilterItems(list, M.catFilter);
-  list = kwFilter(list, M.searchKeyword);
-  return sortItems(list, M.sortMode);
 }
 
 /**
