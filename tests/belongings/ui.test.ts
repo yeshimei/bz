@@ -400,14 +400,16 @@ describe('归物本渲染（KPI / 网格卡字段 / 脏数据容错）', () => {
       await open(vault);
       const firstId = () => cells()[0].dataset.belId;
       expect(firstId()).toBe('b'); // 最近购入
-      const segBtns = [...document.querySelectorAll('[data-bel-sort] .bz-segmented-btn')] as HTMLElement[];
-      expect(segBtns.map((b) => b.textContent)).toEqual(['最近购入', '投入最高', '日均最高']);
-      segBtns.find((b) => b.textContent === '投入最高')!.click();
+      // issue 237 起排序段控随 renderAll 全量重渲（markup 单源胶水，委托在 overlay）——
+      // 每次点击前须现查活 DOM，旧工厂「捕获节点连点」模式会点到已 detach 的按钮
+      const segBtn = (label: string) => [...document.querySelectorAll('[data-bel-sort] .bz-segmented-btn')].find((b) => b.textContent === label) as HTMLElement;
+      expect([...document.querySelectorAll('[data-bel-sort] .bz-segmented-btn')].map((b) => b.textContent)).toEqual(['最近购入', '投入最高', '日均最高']);
+      segBtn('投入最高')!.click();
       expect(firstId()).toBe('c'); // 8000
-      segBtns.find((b) => b.textContent === '日均最高')!.click();
+      segBtn('日均最高')!.click();
       // a = 5000/946 ≈ 5.3；b 当天购入 0 天 = 全价档 99/天；c = 8000/31 ≈ 258 → c 最高
       expect(firstId()).toBe('c');
-      segBtns.find((b) => b.textContent === '最近购入')!.click();
+      segBtn('最近购入')!.click();
       expect(firstId()).toBe('b');
     } finally {
       vi.useRealTimers();

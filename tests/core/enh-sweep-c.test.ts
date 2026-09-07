@@ -35,7 +35,7 @@ describe('enh-sweep-c：.bz-panel-mtop 移动全屏顶距', () => {
     expect(src('src/home/ui.ts')).toContain('bz-home-panel bz-panel-mtop');
     expect(src('src/cinema/ui.ts')).toContain('applyMobileWindowFullscreen(root'); // ADR-0103 风格壳：mfs 挂 style 根（首子垫顶由 core .bz-win-mfs 规则承担）
     expect(src('src/favorites/ui.ts')).toContain('bz-fav-panel bz-fav-scope'); // ADR-0101 域内自绘壳（bz-panel-mtop 随移动端挂载）
-    expect(src('src/belongings/ui.ts')).toContain('bz-bel-panel bz-panel-frame bz-panel-mtop');
+    expect(src('src/belongings/render.ts')).toContain('bz-bel-panel bz-panel-frame bz-panel-mtop'); // issue 237 markup 单源 render.ts
     const clip = src('src/clipbook/ui.ts');
     expect(clip).toContain('bz-clip-frame bz-panel-mtop');
     expect(clip).toContain('bz-clip-mob-detail bz-panel-mtop'); // 移动详情屏2 overlay 自带避让
@@ -62,7 +62,7 @@ describe('enh-sweep-c：触控热区扫尾', () => {
     // 收编域：外扩本体在 core components.css，域内模板挂共享类（热区档位随类）
     expect(componentsCss()).toMatch(/\.bz-touch-target::after/);
     expect(src('src/favorites/ui.ts')).toContain('bz-touch-target'); // 移动 ✕ 关闭钮挂 44px 触控档
-    expect(src('src/belongings/ui.ts')).toContain('bz-touch-target');
+    expect(src('src/belongings/render.ts')).toContain('bz-touch-target'); // issue 237 markup 单源 render.ts
     expect(src('src/encrypt/ui.ts')).toContain('bz-touch-target--xl');
     // 未收编域（attach 为 padding 抬档形态 / review·pomodoro 保留 padding·视觉抬档块；
     // cinema 走查批 C-8、home 活动河改版（issue 232）均收编/退役，不再持域内块）：域内仍持有 pointer:coarse 块
