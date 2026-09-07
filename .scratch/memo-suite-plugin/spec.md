@@ -1024,3 +1024,7 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 ### 影院风格化落域：三风格框架 + 午夜场完整版进插件（issue 236 / ADR-0103，2026-09-07）
 
 > 域内原型（29250cf）评审定稿后落域。契约：CINEMA_STYLES 清单上岸 constants.ts；设置单键 cinemaStyle（midnight 默认/gazette/booth）；ui.ts 午夜场 DOM 与原型逐字同构（桌面 900×620 desk 壳 + 移动独立自绘 mob 壳，非 @media）；详情/表单/菜单/抽屉/AI/分析全按原型 markup 重建；**用户中途拍板收敛：本批仅午夜场上岸，gazette/booth 延后（清单/键/锚类段已备），风格行暂不进 schema**。命令/数据层/smartcat 事件零改动，数据零迁移。落域适配（原型不出，文档记录）：移动端头行补 ✕ 关闭钮、演示按钮（模拟失败）退役。
+
+### 原型 × 插件 markup 单源：belongings 试点落域（issue 237 / ADR-0104，2026-09-07）
+
+> 原型先行此前只单源样式；markup 靠「同步」轮人肉照搬且已实测漂移（itemEmHtml 兜底链两侧分叉）。ADR-0104 拍板：带自绘 UI 的域新增 `render.ts` 渲染纯层（零 obsidian 依赖：常量/口径/markup 构建器/actionSpecs/renderPanelView 胶水），插件 ui.ts 与评审壳（构建产物 prototype-render.js，提交入 git 保双击零依赖）消费同一份；纯度由 tests/core/render-purity.test.ts 守卫。本批试点 belongings：ui.ts 1280→~660 行、壳内联脚本 ~945→~380 行、data.ts 三个 moment 版纯函数退役收编（用例随迁 render.test.ts）；chips/排序段/空态从组件库工厂切「串+委托」（类名 = 库皮，视觉零变化；方向键循环随串退役）。pnpm test 4146/4146 绿 + tsc 干净 + 原型 selftest 29/29（headless）。流程改动：AGENTS 铁律 5 双轨（已迁移域改 render.ts 即两侧生效，同步轮只剩绑定验收；未迁移域照旧冻结同构）、prototype-first.md 增「markup 单源」节、新域落域必带 render.ts。后续拍板项：bookshelf/home/favorites 迁移（favorites 先统一命名）、settings-panel 缓行（先拆 renderer 值层）、cinema 用户拍板跳过。

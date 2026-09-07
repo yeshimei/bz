@@ -1,9 +1,9 @@
 /**
  * 归物本数据层测试（ticket 06）：8 字段零迁移、默认分类合并、
- * 解析失败警告、保存结构、纯函数数值断言。
+ * 解析失败警告、保存结构。（纯函数数值断言随 render 单源迁至 render.test.ts，issue 237）
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { loadDatabase, saveDatabase, calculateDailyCost, calculateDaysUsed, calculateDaysUsedUntil, getDataFilePath } from '../../src/belongings/data';
+import { loadDatabase, saveDatabase, getDataFilePath } from '../../src/belongings/data';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { MockVault } from '../mock-vault';
@@ -196,63 +196,5 @@ describe('saveDatabase', () => {
   it('getDataFilePath：目录尾部斜杠去除', () => {
     setSettingsProvider(() => ({ belongingsDataFolder: 'CONFIG/STORAGE/' }) as any);
     expect(getDataFilePath()).toBe('CONFIG/STORAGE/belongings.json');
-  });
-});
-
-describe('纯函数', () => {
-  it('calculateDailyCost：价格/天数', () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2025-06-15T12:00:00'));
-    // 30 天前买 300 元 → 10.00/天
-    expect(calculateDailyCost(300, '2025-05-16T12:00:00')).toBe('10.00');
-    // 当天买 → 返回全价
-    expect(calculateDailyCost(100, '2025-06-15')).toBe('100.00');
-    vi.useRealTimers();
-  });
-
-  it('calculateDaysUsed', () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2025-06-15T12:00:00'));
-    expect(calculateDaysUsed('2025-06-14T12:00:00')).toBe(1);
-    expect(calculateDaysUsed('2025-05-16T12:00:00')).toBe(30);
-    vi.useRealTimers();
-  });
-
-  it('P2 形状容错：无效日期 → 全价/0 天（不产出 NaN）', () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2025-06-15T12:00:00'));
-    expect(calculateDailyCost(300, '')).toBe('300.00');
-    expect(calculateDaysUsed('')).toBe(0);
-    vi.useRealTimers();
-  });
-
-  it('已用天数本地日历日口径：当天买 = 0 天（UTC 口径会多算一天——UTC+8 早 8 点前即触发）', () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2025-06-15T12:00:00'));
-    expect(calculateDaysUsed('2025-06-15')).toBe(0);
-    expect(calculateDaysUsed('2025-06-15T00:30:00')).toBe(0);
-    expect(calculateDaysUsed('2025-06-14')).toBe(1);
-    // 跨时区确定：本地同一自然日内任意时刻都算 0 天
-    vi.setSystemTime(new Date('2025-06-15T23:59:00'));
-    expect(calculateDaysUsed('2025-06-15')).toBe(0);
-    vi.useRealTimers();
-  });
-
-  it('calculateDaysUsedUntil（ticket 189 ADR-0089 出离封口）：endDate 缺省 = 今天口径；封口日期生效', () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2025-06-15T12:00:00'));
-    // 缺省 endDate = 同 calculateDaysUsed
-    expect(calculateDaysUsedUntil('2025-05-16T12:00:00')).toBe(30);
-    expect(calculateDaysUsedUntil('2025-05-16T12:00:00', null)).toBe(30);
-    // 封口在出离日：不再随「今天」增长
-    expect(calculateDaysUsedUntil('2025-05-16T12:00:00', '2025-06-01')).toBe(16);
-    expect(calculateDaysUsedUntil('2025-05-16', '2025-05-17')).toBe(1);
-    // 出离日早于购买日（脏数据）= 0 天
-    expect(calculateDaysUsedUntil('2025-06-10', '2025-06-01')).toBe(0);
-    // 出离日无效 → 回落今天口径
-    expect(calculateDaysUsedUntil('2025-05-16T12:00:00', 'not-a-date')).toBe(30);
-    // 购买日无效 = 0
-    expect(calculateDaysUsedUntil('', '2025-06-01')).toBe(0);
-    vi.useRealTimers();
   });
 });

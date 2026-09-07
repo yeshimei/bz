@@ -5,13 +5,15 @@
 <title>归物本 · 原型预览（与 src/belongings/styles.css 共用同一份 CSS）</title>
 <!--
   ┌────────────────────────────────────────────────────────────────────┐
-  │ 本文件 = 归物本域 UI 的评审壳 = 拍板原型 p20-full.html 的域内定稿。  │
-  │ 组件样式零内联，全部来自（与 build-css SOURCES 同序）：              │
-  │   ../core/styles.css → ../core/ui/tokens.css                        │
-  │   → ../core/ui/components.css → ./styles.css                        │
-  │ 方向铁律：p20-full（.zcode）是视觉基准 → 先改这里评审 → 同步 styles  │
-  │ /ui.ts；禁止拿域现状反向改写本文件（issue 230 教训）。               │
-  │ 移动端判定：真实端 = 视口/面板 ≤768（容器查询）；评审壳 = .demo-mob。│
+  │ 本文件 = 归物本域 UI 的评审壳。组件样式零内联，全部来自（与 build-css  │
+  │ SOURCES 同序）：../core/styles.css → ../core/ui/tokens.css           │
+  │   → ../core/ui/components.css → ./styles.css                         │
+  │ markup 单源（issue 237/ADR-0104）：面板/网格/详情/表单 HTML 与计算口径  │
+  │ 全部出自 ./prototype-render.js（由 src/belongings/render.ts 构建，      │
+  │ 与插件 ui.ts 消费同一份）——改 markup 改 render.ts，两侧即时生效。      │
+  │ 壳内只允许：演示壳样式、演示数据（localStorage）、演示事件绑定、        │
+  │ 自绘 toast/确认框、演示钩子与自检。                                    │
+  │ 移动端判定：真实端 = 视口/面板 ≤768（容器查询）；评审壳 = .demo-mob。  │
   └────────────────────────────────────────────────────────────────────┘
 -->
 <link rel="stylesheet" href="../core/styles.css">
@@ -60,12 +62,17 @@
 
 <script src="./prototype-icons.js"></script>
 <script src="./prototype-data.js"></script>
+<script src="./prototype-render.js"></script>
 <script>
 (function () {
-  /* ==================== 壳基座：转义 / 图标 / mountIcons（对齐 core/ui icons.ts） ==================== */
-  const ESC_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-  const esc2 = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ESC_MAP[c]);
-  const icon = (name, extra) => `<i data-lucide="${name}" class="bz-ic${extra ? ' ' + extra : ''}"></i>`;
+  /* ==================== 渲染单源：window.BZR_belongings（构建产物，勿手改） ====================
+   * markup / 计算口径 / 行操作序列全部来自 src/belongings/render.ts（issue 237/ADR-0104），
+   * 与插件 ui.ts 消费同一份；本壳只留演示层。重新生成：node scripts/build-preview.mjs。 */
+  const R = window.BZR_belongings;
+  const esc = R.esc;
+  const icon = R.iconSpan;
+
+  /* ==================== 壳基座：mountIcons（prototype-icons.js 内联 SVG——壳层差异表） ==================== */
   const ICONS = window.BLG_ICONS || {};
   function mountIcons(root) {
     if (!root) return;
@@ -77,71 +84,27 @@
     });
   }
 
-  /* ==================== 与 ui.ts 同构的常量 / 小工具 ==================== */
-  const ICON = { add: 'plus', search: 'search', close: 'x', del: 'trash-2', empty: 'package', chevR: 'chevron-right' };
-  const STATUS = {
-    using: { label: '使用中', key: 'using', ic: 'check-circle' },
-    idle: { label: '闲置', key: 'idle', ic: 'package' },
-    sold: { label: '已转卖', key: 'sold', ic: 'banknote' },
-    discard: { label: '已丢弃', key: 'discard', ic: 'archive' },
-  };
-  const STATUS_LABELS = ['使用中', '闲置', '已转卖', '已丢弃'];
-  const STATUS_ORDER = [
-    { key: 'using', label: '使用中' }, { key: 'idle', label: '闲置' },
-    { key: 'sold', label: '已转卖' }, { key: 'discard', label: '已丢弃' },
-  ];
-
-  const money = (n) => '￥' + (Number(n) || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const moneyShort = (n) => '￥' + (Number(n) || 0).toLocaleString('zh-CN', { maximumFractionDigits: 0 });
-  function todayStr() {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  }
-  /** 分类 emoji（取首段 emoji；无 emoji 显示首字）——与 ui.ts catEmoji 同构（分类 emoji 属数据保留） */
-  function catEmoji(cat) {
-    const m = String(cat || '').match(/^(\p{Extended_Pictographic})/u);
-    return m ? m[1] : String(cat || '')[0] || '📦';
-  }
-  function catNameOf(cat) { return String(cat || '').replace(/^\p{Extended_Pictographic}\s*/u, ''); }
-
-  /* 分类 → lucide 映射（单源 = src/belongings/emoji-icon-map.ts，生成器注入 BLG_EMOJI_MAP）；
-   * issue 231 拍板：分类 = 纯文字 + item.icon 字段，载入迁移剥离 emoji 前缀，遗留 emoji 兜底转图标 */
-  const EMOJI_ICON = window.BLG_EMOJI_MAP || {};
-  function catSplit(cat) {
-    const s = String(cat || '');
-    const m = s.match(/^(\p{Extended_Pictographic})/u);
-    if (!m) return { emoji: null, name: s, icon: null };
-    return { emoji: m[1], name: s.replace(/^\p{Extended_Pictographic}\s*/u, ''), icon: EMOJI_ICON[m[1]] || null };
-  }
-  function migrateItems(list) {
-    return list.map((x) => {
-      const it = { ...x };
-      const sp = catSplit(it.category);
-      if (sp.emoji) {
-        it.category = sp.name;
-        if (sp.icon && !(it.icon != null && it.icon !== '')) it.icon = sp.icon;
-      }
-      return it;
-    });
-  }
-  function catIconOf(cat) {
-    const sp = catSplit(cat);
-    return sp.emoji ? sp.icon : null;
-  }
-  function catEmHtml(cat) {
-    const name = catIconOf(cat);
-    return name ? icon(name) : esc2(catEmoji(cat));
-  }
-  function itemIconOf(it) {
-    const raw = String(it.icon || '').trim();
-    if (raw && /^[a-z0-9-]+$/i.test(raw)) return raw;
-    return catIconOf(it.category);
-  }
-  function itemEmHtml(it) {
-    const name = itemIconOf(it);
-    return name ? icon(name) : catEmHtml(it.category);
-  }
-  /* 历史分类派生（与 data.ts loadDatabase 同构：频次降序 → 最近更新降序） */
+  /* ==================== 演示数据（壳层差异表：localStorage 假数据 + 真实库快照） ==================== */
+  const LS = 'bz-bel-p20-shared-v1';
+  const migrateItems = (list) => list.map((x) => {
+    const it = { ...x };
+    const sp = R.splitEmojiCategory(it.category);
+    if (sp.emoji) {
+      it.category = sp.name;
+      if (sp.icon && !(it.icon != null && it.icon !== '')) it.icon = sp.icon;
+    }
+    return it;
+  });
+  let items;
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS) || 'null');
+    items = Array.isArray(saved) && saved.length ? migrateItems(saved) : migrateItems(BLG.ITEMS.map((x) => ({ ...x })));
+  } catch (e) { items = migrateItems(BLG.ITEMS.map((x) => ({ ...x }))); }
+  const save = () => { try { localStorage.setItem(LS, JSON.stringify(items)); } catch (e) { } };
+  /* 视图状态（与 render.BelViewState / ui.ts BelState 切片同构） */
+  const M = { status: null, year: '', q: '', sort: 'recent' };
+  const itemById = (id) => items.find((i) => i.id === id);
+  /* 历史分类派生（壳内演示数据无 db.categories，按 items 现算；插件 = data.ts 载入派生） */
   function historyCats() {
     const freq = new Map();
     for (const it of items) {
@@ -157,233 +120,16 @@
     for (const it of items) if (String(it.category || '').trim() === cat && it.icon) return it.icon;
     return null;
   }
-  function statusKeyOf(label) { const s = STATUS_ORDER.find((x) => x.label === label); return s ? s.key : label; }
-  function statusOf(keyOrLabel) {
-    return STATUS_ORDER.find((s) => s.key === keyOrLabel) || STATUS_ORDER.find((s) => s.label === keyOrLabel) || { key: 'using', label: '使用中' };
-  }
 
-  /* ==================== 数据 / 状态 ==================== */
-  const LS = 'bz-bel-p20-shared-v1';
-  let items;
-  try {
-    const saved = JSON.parse(localStorage.getItem(LS) || 'null');
-    items = Array.isArray(saved) && saved.length ? migrateItems(saved) : migrateItems(BLG.ITEMS.map((x) => ({ ...x })));
-  } catch (e) { items = migrateItems(BLG.ITEMS.map((x) => ({ ...x }))); }
-  const save = () => { try { localStorage.setItem(LS, JSON.stringify(items)); } catch (e) { } };
-  const M = { status: null, year: '', q: '', sort: 'recent' };
-
-  const itemList = () => items;
-  const isExited = (it) => it.current_status === '已转卖' || it.current_status === '已丢弃';
-  const exitDateOf = (it) => (isExited(it) ? (it.exit_date || null) : null);
-  function daysUsed(it) {
-    const raw = it.purchase_date || '';
-    if (!raw) return 0;
-    const [y, m, d] = String(raw).slice(0, 10).split('-').map(Number);
-    if (!y || !m || !d) return 0;
-    const start = new Date(y, m - 1, d);
-    const ex = exitDateOf(it);
-    let end = new Date();
-    if (ex) {
-      const p = String(ex).slice(0, 10).split('-').map(Number);
-      if (p[0] && p[1] && p[2]) end = new Date(p[0], p[1] - 1, p[2]);
-    }
-    return Math.max(0, Math.floor((end - start) / 864e5));
-  }
-  const dailyCostOf = (it) => { const days = daysUsed(it), price = Number(it.purchase_price) || 0; return days > 0 ? price / days : price; };
-  const inStock = (it) => it.current_status === '使用中' || it.current_status === '闲置';
-  const totalAssets = () => itemList().filter(inStock).reduce((s, i) => s + (Number(i.purchase_price) || 0), 0);
-  function avgDailyCost() {
-    let cost = 0, days = 0;
-    for (const it of itemList()) {
-      cost += Number(it.purchase_price) || 0;
-      if (it.current_status === '已转卖' && Number(it.sold_price) > 0) cost -= Number(it.sold_price);
-      days += daysUsed(it);
-    }
-    return days ? cost / days : 0;
-  }
-  const statusCount = (label) => itemList().filter((i) => i.current_status === label).length;
-  const stockCount = () => itemList().filter(inStock).length;
-  const itemById = (id) => items.find((i) => i.id === id);
-  function filtered() {
-    return itemList()
-      .filter((i) => {
-        if (!M.status) return true;
-        if (M.status === 'asset') return inStock(i);
-        return i.current_status === statusOf(M.status).label;
-      })
-      .filter((i) => (M.year ? String(i.purchase_date || '').startsWith(M.year) : true))
-      .filter((i) => {
-        if (!M.q) return true;
-        const q = M.q.toLowerCase();
-        return [i.name, i.category, i.description].join(' ').toLowerCase().includes(q);
-      })
-      .sort((a, b) => {
-        if (M.sort === 'price') return (Number(b.purchase_price) || 0) - (Number(a.purchase_price) || 0);
-        if (M.sort === 'daily') return dailyCostOf(b) - dailyCostOf(a);
-        return String(b.purchase_date || '').localeCompare(String(a.purchase_date || '')) || String(a.name || '').localeCompare(String(b.name || ''), 'zh');
-      });
-  }
-  function yearsAvailable() {
-    const set = new Set();
-    itemList().forEach((i) => { const y = String(i.purchase_date || '').slice(0, 4); if (y) set.add(y); });
-    return [...set].sort().reverse();
-  }
-  function heroTitleText() {
-    if (!M.status) return '全部';
-    if (M.status === 'asset') return '资产';
-    return statusOf(M.status).label;
-  }
-
-  /* ==================== 面板骨架（与 ui.ts panelHtml 逐字同构） ==================== */
-  function panelHtml() {
-    return `<div class="bz-bel-panel bz-panel-frame bz-panel-mtop bz-bel--poster">
-  <div class="bz-bel-body">
-    <div class="bz-bel-hero">
-      <div class="bz-bel-hero-text">
-        <div class="bz-bel-hero-title" data-bel-herotitle>全部</div>
-        <div class="bz-bel-hero-sub" data-bel-herosub></div>
-      </div>
-      <div class="bz-bel-kpis" data-bel-kpis></div>
-      <div class="bz-bel-mobhead">
-        <div class="bz-bel-stamp"><b data-bel-stampn>0</b><span>在库</span></div>
-        <div class="bz-bel-mobhead-tx">
-          <div class="bz-bel-mobhead-t">归物本</div>
-          <div class="bz-bel-mobhead-sub" data-bel-mobstats></div>
-        </div>
-        <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${icon(ICON.close)}</button>
-      </div>
-    </div>
-    <div class="bz-bel-chips" data-bel-chips></div>
-    <div class="bz-toolrow bz-bel-toolrow">
-      <div class="bz-search">${icon(ICON.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类…"></div>
-      <div class="bz-bel-yearsel">
-        <select class="bz-bel-select" data-bel-year></select>
-        ${icon(ICON.chevR, 'bz-bel-select-chev')}
-      </div>
-      <div class="bz-bel-yearsel bz-bel-mobsortsel-wrap">
-        <select class="bz-bel-select" data-bel-mobsortsel></select>
-        ${icon(ICON.chevR, 'bz-bel-select-chev')}
-      </div>
-      <div class="bz-bel-sort" data-bel-sort></div>
-      <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${icon(ICON.add, 'bz-ic--sm')} 记一笔</button>
-    </div>
-    <div class="bz-mobstrip" data-bel-mobstatus></div>
-    <div class="bz-bel-content" data-bel-content></div>
-    <button class="bz-btn bz-btn--md bz-bel-mobadd" data-bel-add>${icon(ICON.add, 'bz-ic--sm')} 记一笔</button>
-  </div>
-</div>`;
-  }
-
-  /* ==================== 渲染（与 ui.ts renderAll 族同构，双面板共用） ==================== */
-  function renderHero(p) {
-    p.q('[data-bel-herotitle]').textContent = heroTitleText();
-    p.q('[data-bel-herosub]').textContent = M.status
-      ? `归物本 — ${filtered().length} 件在列 · FILTERED VIEW`
-      : '归物本 — BELONGINGS · NOTHING MORE, NOTHING LESS';
-  }
-  function renderChips(p) {
-    const defs = [
-      { key: '__all', label: '全部', cnt: itemList().length },
-      { key: 'asset', label: '资产', cnt: stockCount() },
-      ...STATUS_ORDER.map((s) => ({ key: s.key, label: s.label, cnt: statusCount(s.label) })),
-    ];
-    // 桌面 chips（p20 .chip 方角墨框；uiChip 皮 = bz-chip / bz-chip--on / bz-chip-cnt，无图标）
-    p.q('[data-bel-chips]').innerHTML = defs.map((d) => {
-      const active = d.key === '__all' ? M.status === null : M.status === d.key;
-      return `<button type="button" class="bz-chip${active ? ' bz-chip--on' : ''}" data-bel-st="${d.key}"><span>${esc2(d.label)}</span><span class="bz-chip-cnt">${d.cnt}</span></button>`;
-    }).join('');
-    // 移动横滑 chips（p20 m-chips：纯文字+计数，无图标；用户拍板去资产+缩小，五枚放一行）
-    p.q('[data-bel-mobstatus]').innerHTML = (() => {
-      const defs = [
-        { key: '__all', label: '全部', cnt: itemList().length },
-        ...STATUS_ORDER.map((s) => ({ key: s.key, label: s.label, cnt: statusCount(s.label) })),
-      ];
-      return defs.map((d) => {
-        const active = d.key === '__all' ? M.status === null : M.status === d.key;
-        return `<button class="bz-mobstrip-chip${active ? ' is-on' : ''}" data-bel-st="${d.key}"><span>${esc2(d.label)}</span><span class="bz-chip-cnt">${d.cnt}</span></button>`;
-      }).join('');
-    })();
-  }
-  function renderYears(p) {
-    const ys = yearsAvailable();
-    if (M.year && !ys.includes(M.year)) M.year = '';
-    p.q('[data-bel-year]').innerHTML = '<option value="">全部年份</option>' + ys.map((y) => `<option value="${y}"${M.year === y ? ' selected' : ''}>${y}</option>`).join('');
-  }
-  function renderKpis(p) {
-    const gone = itemList().filter(isExited);
-    const recover = gone.reduce((s, i) => s + (Number(i.sold_price) || 0), 0);
-    const stampN = p.q('[data-bel-stampn]');
-    if (stampN) stampN.textContent = String(stockCount());
-    const mobStats = p.q('[data-bel-mobstats]');
-    if (mobStats) mobStats.textContent = `投入 ${moneyShort(totalAssets())} · 日均 ${avgDailyCost().toFixed(2)}`;
-    const kpi = (num, label, opts = {}) =>
-      `<div class="bz-bel-kpi${opts.hero ? ' bz-bel-kpi--hero' : ''}${opts.click ? ' bz-bel-kpi--click' : ''}"${opts.click ? ' data-bel-statclick="asset" title="只看在库（使用中与闲置）"' : ''}><b>${num}</b><span>${esc2(label)}</span></div>`;
-    p.q('[data-bel-kpis]').innerHTML =
-      kpi(String(stockCount()), '在库件数', { hero: true, click: true }) +
-      kpi(moneyShort(totalAssets()), '在库投入', { click: true }) +
-      kpi('￥' + avgDailyCost().toFixed(2), '日均成本') +
-      kpi(`${gone.length} 件 · ${moneyShort(recover)}`, '已离场 · 回收');
-  }
-  function cellHtml(it, idx) {
-    const gone = isExited(it);
-    const idle = it.current_status === '闲置';
-    const days = daysUsed(it);
-    const daily = dailyCostOf(it);
-    const key = statusKeyOf(it.current_status);
-    const exitNote = gone
-      ? `${it.exit_date ? ' → ' + esc2(String(it.exit_date).slice(0, 10)) : ''}${it.current_status === '已转卖' && Number(it.sold_price) > 0 ? ' · 售出 ' + moneyShort(Number(it.sold_price)) : ''}`
-      : '';
-    const dailyStr = daily < 0.01 ? daily.toFixed(4) : daily.toFixed(2).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
-    const mut = gone
-      ? `${esc2(String(it.purchase_date || '').slice(0, 10) || '日期未知')} 起 · 陪伴 ${days || '—'} 天${exitNote}`
-      : `${esc2(String(it.purchase_date || '').slice(0, 10) || '日期未知')} 起 · ${days || '—'} 天 · 日均 ￥${dailyStr}`;
-    return `<div class="bz-bel-cell${gone ? ' bz-bel-cell--gone' : ''}${idle ? ' bz-bel-cell--idle' : ''}" data-bel-id="${esc2(it.id)}">
-    <span class="bz-bel-cell-idx">NO.${String(idx + 1).padStart(2, '0')} — ${esc2(catNameOf(it.category) || '未分类')}</span>
-    <span class="bz-bel-tag bz-bel-tag--${key}">${icon(STATUS[key] ? STATUS[key].ic : 'box', 'bz-ic--sm')}${esc2(it.current_status)}</span>
-    <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
-    <span class="bz-bel-name">${esc2(it.name)}</span>
-    <span class="bz-bel-price">${moneyShort(Number(it.purchase_price) || 0)}</span>
-    <span class="bz-bel-mut">${mut}</span>
-  </div>`;
-  }
-  function renderContent(p) {
-    const content = p.q('[data-bel-content]');
-    const list = filtered();
-    if (!list.length) {
-      const noMatch = !!M.q || M.status !== null || M.year !== '';
-      content.innerHTML = `<div class="bz-empty">${icon(ICON.empty, 'bz-empty-ic')}<div class="bz-empty-title">${noMatch ? '没有符合条件的物品' : '这里还没有物品'}</div><div class="bz-empty-desc">${noMatch ? '换个筛选条件，或清除搜索' : '点「记一笔」登记第一个物品'}</div></div>`;
-      mountIcons(content);
-      return;
-    }
-    content.innerHTML = `<div class="bz-bel-grid" data-bel-grid>${list.map(cellHtml).join('')}</div>`;
-    // 末行空位补纸面 filler（列数入 DOM 后量，与 ui.ts renderContent 同语义）
-    const gridEl = content.querySelector('[data-bel-grid]');
-    const cols = (((getComputedStyle(gridEl).gridTemplateColumns) || '').split(' ').filter(Boolean).length) || 1;
-    const rem = list.length % cols;
-    if (rem) gridEl.insertAdjacentHTML('beforeend', `<div class="bz-bel-filler" style="grid-column:span ${cols - rem}"></div>`);
-    mountIcons(content);
-  }
-  const SORT_OPTS = [
-    { v: 'recent', label: '最近购入' }, { v: 'price', label: '投入最高' }, { v: 'daily', label: '日均最高' },
-  ];
-  function drawSort(p) {
-    // 桌面段（移动端无 seg）+ 移动下拉值回填（用户拍板：移动排序 = 同年份样式的下拉）
-    const host = p.q('[data-bel-sort]');
-    if (host) host.innerHTML = `<div class="bz-segmented" role="radiogroup" aria-label="排序">${SORT_OPTS.map((o) =>
-      `<button type="button" class="bz-segmented-btn${M.sort === o.v ? ' is-on' : ''}" data-k="${o.v}" role="radio" aria-checked="${M.sort === o.v}">${o.label}</button>`).join('')}</div>`;
-    const sel = p.q('[data-bel-mobsortsel]');
-    if (sel && sel.options.length) sel.value = M.sort;
-  }
-  function renderAll() {
-    PANELS.forEach((p) => {
-      renderHero(p); renderChips(p); renderYears(p); renderKpis(p); drawSort(p); renderContent(p);
-    });
-  }
-
-  /* ==================== 面板装配 / 事件（与 ui.ts openPanelInner 同语义；mobile=演示端标记） ==================== */
+  /* ==================== 渲染 = 单源胶水（ui.ts renderAll 同款调用） ==================== */
   const PANELS = [];
+  function renderAll() {
+    PANELS.forEach((p) => R.renderPanelView(p.el, items, M, { mountIcons }));
+  }
+
+  /* ==================== 面板装配 / 事件（演示语义；插件走 core 服务） ==================== */
   function buildPanel(host, mobile) {
-    host.innerHTML = panelHtml();
+    host.innerHTML = R.panelHtml();
     const el = host.querySelector('.bz-bel-panel');
     const p = { host, el, mobile, q: (sel) => el.querySelector(sel) };
     mountIcons(el);
@@ -392,24 +138,24 @@
       const t = e.target;
       if (t.closest('[data-bel-add]')) { openForm(null, p); return; }
       if (t.closest('[data-bel-close]')) { host.style.display = 'none'; syncMobBtn(); toast('评审壳：插件内此处关闭全屏面板'); return; }
-      const kpi = t.closest('[data-bel-statclick]');
-      if (kpi) { M.status = M.status === 'asset' ? null : 'asset'; renderAll(); return; }
-      const seg = t.closest('.bz-segmented-btn');
-      if (seg) { M.sort = seg.dataset.k; renderAll(); return; }
       const chip = t.closest('[data-bel-st]');
       if (chip) { applyStatusFilter(chip.dataset.belSt); return; }
+      const seg = t.closest('.bz-segmented-btn');
+      if (seg) { M.sort = seg.dataset.k; renderAll(); return; }
+      const kpi = t.closest('[data-bel-statclick]');
+      if (kpi) { M.status = M.status === 'asset' ? null : 'asset'; renderAll(); return; }
     });
     const yearSel = p.q('[data-bel-year]');
     yearSel.addEventListener('change', () => { M.year = yearSel.value; renderAll(); });
     // 移动排序下拉（同年份样式；双向同步）
     const mobSortSel = p.q('[data-bel-mobsortsel]');
-    mobSortSel.innerHTML = SORT_OPTS.map((o) => `<option value="${o.v}">${o.label}</option>`).join('');
+    mobSortSel.innerHTML = R.sortOptionsHtml();
     mobSortSel.value = M.sort;
     mobSortSel.addEventListener('change', () => { M.sort = mobSortSel.value; renderAll(); });
     const bindSearch = (inp) => {
       inp.addEventListener('input', () => {
         clearTimeout(inp._belDeb);
-        inp._belDeb = setTimeout(() => { M.q = inp.value.trim(); PANELS.forEach((x) => { renderKpis(x); renderContent(x); }); }, 180);
+        inp._belDeb = setTimeout(() => { M.q = inp.value.trim(); renderAll(); }, 180);
       });
     };
     bindSearch(p.q('[data-bel-search]'));
@@ -438,13 +184,13 @@
     renderAll();
   }
 
-  /* ==================== 流转 / 删除（与 ui.ts applyFlowWithUndo / deleteItem 同构） ==================== */
+  /* ==================== 流转 / 删除（演示版：内存改 + 壳自绘撤销 toast；插件走 core notice） ==================== */
   async function applyFlowWithUndo(it, s) {
     const cur = itemById(it.id);
     if (!cur) { toast('该物品已被外部变更删除，列表已刷新'); renderAll(); return; }
     const prevStatus = cur.current_status;
     cur.current_status = s;
-    if (isExited(cur)) cur.exit_date = todayStr();
+    if (R.isExited(cur)) cur.exit_date = R.todayStr();
     else if (cur.exit_date != null) cur.exit_date = null;
     cur.last_updated = new Date().toISOString();
     save(); renderAll();
@@ -475,29 +221,23 @@
     });
   }
 
-  /* ==================== 行操作集（与 ui.ts buildActions 同构；插件走 core/item-actions） ==================== */
+  /* ==================== 行操作集（specs → 演示动作；插件 ui.ts 同款映射走 core/item-actions） ==================== */
   function buildActions(it, rebuild, p) {
-    const acts = [];
-    const iconOf = { 使用中: 'check-circle', 闲置: 'package', 已转卖: 'banknote', 已丢弃: 'archive' };
-    STATUS_LABELS.forEach((s) => {
-      if (s === it.current_status) return;
-      acts.push({ icon: iconOf[s], label: `标记为${s}`, keepOpen: true, onClick: () => { applyFlowWithUndo(it, s).then(rebuild); } });
-    });
-    acts.push({ icon: 'pencil', label: '编辑', keepOpen: true, onClick: () => openForm(it, p) });
-    acts.push({ icon: 'trash-2', label: '删除', kind: 'danger', onClick: () => deleteItem(it, p) });
-    return acts;
-  }
-  function sheetHeadOf(it) {
-    const catName = catNameOf(it.category);
-    const days = daysUsed(it);
-    return `<div class="bz-item-sheet-entry"><div class="bz-bel-sheet-head">
-      <span class="bz-item-sheet-emoji">${itemEmHtml(it)}</span>
-      <div class="bz-bel-sheet-info"><div class="bz-item-sheet-title">${esc2(it.name)}</div>
-      <div class="bz-item-sheet-sub">${esc2(catName)} · ${money(Number(it.purchase_price) || 0)} · 已用 ${days} 天</div></div></div></div>`;
+    return R.actionSpecs(it).map((sp) => ({
+      icon: sp.icon,
+      label: sp.label,
+      keepOpen: sp.keepOpen,
+      kind: sp.danger ? 'danger' : undefined,
+      onClick: () => {
+        if (sp.act === 'flow' && sp.status) { applyFlowWithUndo(it, sp.status).then(rebuild); return; }
+        if (sp.act === 'edit') { openForm(it, p); return; }
+        deleteItem(it, p);
+      },
+    }));
   }
   function sheetActsHtml(acts) {
     return acts.map((a) =>
-      `<button type="button" class="bz-item-sheet-item${a.kind === 'danger' ? ' bz-item-sheet-item--danger' : ''}"><span class="bz-item-sheet-icon">${icon(a.icon)}</span><span class="bz-item-sheet-label">${esc2(a.label)}</span></button>`).join('');
+      `<button type="button" class="bz-item-sheet-item${a.kind === 'danger' ? ' bz-item-sheet-item--danger' : ''}"><span class="bz-item-sheet-icon">${icon(a.icon)}</span><span class="bz-item-sheet-label">${esc(a.label)}</span></button>`).join('');
   }
   function openMobSheet(it, p) {
     closeMobSheet();
@@ -510,7 +250,7 @@
       mountIcons(mask);
     };
     mask.innerHTML = `<div class="bz-item-sheet">
-      <div class="bz-item-sheet-head">${sheetHeadOf(it)}</div>
+      <div class="bz-item-sheet-head">${R.sheetHeadHtml(it)}</div>
       <div class="bz-item-sheet-body">${sheetActsHtml(buildActions(it, rebuild, p))}</div>
     </div>`;
     mask.addEventListener('click', (e) => {
@@ -529,7 +269,7 @@
   }
   function closeMobSheet() { document.getElementById('mobHost').querySelector('.bz-item-sheet-mask')?.remove(); }
 
-  /* ==================== 桌面右键菜单（core .bz-item-menu + 海报皮 bz-bel-menu 同构） ==================== */
+  /* ==================== 桌面右键菜单（core .bz-item-menu + 海报皮 bz-bel-menu；演示版自绘） ==================== */
   let menuEl = null;
   function closeMenu() { if (menuEl) { menuEl.remove(); menuEl = null; } }
   function openRowMenuAt(it, x, y, p) {
@@ -542,7 +282,7 @@
     menuEl = document.createElement('div');
     menuEl.className = 'bz-item-menu bz-bel-menu';
     menuEl.innerHTML = acts.map((a) =>
-      `<button type="button" class="bz-item-menu-item${a.kind === 'danger' ? ' bz-item-menu-item--danger' : ''}"><span class="bz-item-menu-icon">${icon(a.icon)}</span><span class="bz-item-menu-label">${esc2(a.label)}</span></button>`).join('');
+      `<button type="button" class="bz-item-menu-item${a.kind === 'danger' ? ' bz-item-menu-item--danger' : ''}"><span class="bz-item-menu-icon">${icon(a.icon)}</span><span class="bz-item-menu-label">${esc(a.label)}</span></button>`).join('');
     menuEl.addEventListener('click', (e) => {
       const b = e.target.closest('.bz-item-menu-item');
       if (!b) return;
@@ -560,41 +300,13 @@
   function refreshMenu(it, p) { if (menuEl) { const r = menuEl.getBoundingClientRect(); openRowMenuAt(it, r.left, r.top, p); } }
   document.addEventListener('click', (e) => { if (menuEl && !menuEl.contains(e.target)) closeMenu(); });
 
-  /* ==================== 详情弹窗（与 ui.ts openBelDetail 同构） ==================== */
+  /* ==================== 详情弹窗（演示版：R.belDetailHtml + 壳绑定；插件走 core topifyZ/Esc） ==================== */
   function closeBelDetail() { document.querySelector('.bz-bel-detail-mask')?.remove(); }
   function openBelDetail(it, p) {
     closeBelDetail();
     const mask = document.createElement('div');
     mask.className = 'bz-overlay-mask bz-bel-detail-mask';
-    const gone = isExited(it);
-    const key = statusKeyOf(it.current_status);
-    mask.innerHTML = `<div class="bz-bel-detail">
-    <div class="bz-bel-detail-head">
-      <div class="bz-bel-detail-title">${esc2(it.name)}</div>
-      <button class="bz-icon-btn" data-bd-close title="关闭">${icon(ICON.close)}</button>
-    </div>
-    <div class="bz-bel-detail-idrow">
-      <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
-      <div class="bz-bel-detail-idinfo">
-        <div class="bz-bel-detail-cat">${esc2(catNameOf(it.category) || '未分类')}</div>
-        <div class="bz-bel-detail-desc">${esc2(it.description || '无备注')}</div>
-      </div>
-      <span class="bz-bel-tag bz-bel-tag--${key}">${icon(STATUS[key] ? STATUS[key].ic : 'box', 'bz-ic--sm')}${esc2(it.current_status)}</span>
-    </div>
-    <div class="bz-bel-detail-fields">
-      <div class="bz-bel-dfield"><span>购买价</span><b>${money(Number(it.purchase_price) || 0)}</b></div>
-      <div class="bz-bel-dfield"><span>购买日期</span><b>${esc2(String(it.purchase_date || '').slice(0, 10) || '—')} · ${daysUsed(it)} 天</b></div>
-      <div class="bz-bel-dfield"><span>日均成本</span><b>￥${dailyCostOf(it).toFixed(2)}${gone ? '（已封口）' : '/天 · 越用越便宜'}</b></div>
-      ${gone ? `<div class="bz-bel-dfield"><span>出离日期</span><b>${esc2(it.exit_date || '—')}${it.current_status === '已转卖' && Number(it.sold_price) > 0 ? ' · 售出 ' + money(Number(it.sold_price)) : ''}</b></div>` : ''}
-      <div class="bz-bel-dfield"><span>录入 / 更新</span><b>${esc2(String(it.created_date || '').slice(0, 10))} / ${esc2(String(it.last_updated || '').slice(0, 10))}</b></div>
-    </div>
-    <div class="bz-bel-detail-acts" data-bd-acts></div>
-    <div class="bz-btn-row bz-bel-detail-btns">
-      <div class="bz-bel-form-spacer"></div>
-      <button type="button" class="bz-btn bz-btn--ghost" data-bd-edit>${icon('pencil', 'bz-ic--sm')} 编辑</button>
-      <button type="button" class="bz-btn bz-btn--primary bz-bel-delbtn" data-bd-del>${icon(ICON.del, 'bz-ic--sm')} 删除</button>
-    </div>
-  </div>`;
+    mask.innerHTML = R.belDetailHtml(it);
     (p && p.mobile ? p.host : document.body).appendChild(mask);
     mountIcons(mask);
 
@@ -602,8 +314,7 @@
     const drawActs = () => {
       const cur = itemById(it.id);
       if (!cur) return;
-      acts.innerHTML = STATUS_LABELS.map((s) =>
-        `<button type="button" class="bz-bel-flowbtn${s === cur.current_status ? ' is-cur' : ''}${s === '闲置' ? ' bz-bel-c2' : ''}" data-bd-flow="${esc2(s)}">${esc2(s)}</button>`).join('');
+      acts.innerHTML = R.flowBtnsHtml(cur.current_status);
     };
     drawActs();
     acts.addEventListener('click', (e) => {
@@ -630,42 +341,12 @@
     });
   }
 
-  /* ==================== 表单（与 ui.ts openForm 同构：字段/校验/出离行/联想） ==================== */
+  /* ==================== 表单（演示版：R.belFormHtml + 壳绑定；联想 = 壳内历史派生） ==================== */
   function openForm(it, p) {
     const editing = !!it;
     const mask = document.createElement('div');
     mask.className = 'bz-overlay-mask bz-bel-form-mask';
-    const priceVal = it ? String(it.purchase_price ?? '') : '';
-    const dateVal = it ? String(it.purchase_date || '').slice(0, 10) : todayStr();
-    const catVal = it ? (it.category ?? '') : ''; // 新记不回填默认分类（issue 202）
-    const descVal = it ? (it.description ?? '') : '';
-    const exitDateVal = it && it.exit_date ? String(it.exit_date).slice(0, 10) : todayStr();
-    const soldPriceVal = it && it.sold_price != null && Number.isFinite(Number(it.sold_price)) ? String(it.sold_price) : '';
-    const exitedInit = !!it && isExited(it);
-    mask.innerHTML = `
-  <div class="bz-bel-form">
-    <div class="bz-bel-form-title">${editing ? '编辑物品' : '记一笔'}</div>
-    <div class="bz-bel-form-body">
-      <div class="bz-field"><span class="bz-field-label">名称</span><input class="bz-input" id="bm-name" value="${esc2(it ? it.name : '')}" placeholder="如：iPhone 15 Pro"></div>
-      <div class="bz-field"><span class="bz-field-label">分类</span><span class="bz-bel-catrow"><span class="bz-bel-form-icon" id="bm-icon" title="分类图标（AI 归类或选历史分类自动带上）"></span><input class="bz-input" id="bm-cat" value="${esc2(catVal)}" placeholder="输入或从历史分类选择" autocomplete="off"><button type="button" class="bz-icon-btn bz-bel-aibtn" id="bm-ai" title="AI 归类：按名称建议分类与图标">${icon('sparkles', 'bz-ic--sm')}</button></span></div>
-      <div class="bz-bel-form-row">
-        <div class="bz-field"><span class="bz-field-label">购买价格（元）</span><input class="bz-input" id="bm-price" type="number" min="0" step="0.01" value="${esc2(priceVal)}" placeholder="0.00"></div>
-        <div class="bz-field"><span class="bz-field-label">购买日期</span><input class="bz-input" id="bm-date" type="date" value="${esc2(dateVal)}"></div>
-      </div>
-      <div class="bz-field"><span class="bz-field-label">状态</span><span class="bz-bel-statuspick" id="bm-status"></span></div>
-      <div class="bz-bel-form-row" id="bm-exit"${exitedInit ? '' : ' hidden'}>
-        <div class="bz-field"><span class="bz-field-label">出离日期</span><input class="bz-input" id="bm-exitdate" type="date" value="${esc2(exitDateVal)}"></div>
-        <div class="bz-field" id="bm-soldfield"${it && it.current_status === '已转卖' ? '' : ' hidden'}><span class="bz-field-label">转卖售价（可选）</span><input class="bz-input" id="bm-soldprice" type="number" min="0" step="0.01" value="${esc2(soldPriceVal)}" placeholder="留空不记售价"></div>
-      </div>
-      <div class="bz-field"><span class="bz-field-label">描述（可选）</span><textarea class="bz-input" id="bm-desc" placeholder="规格、颜色、购买原因等…">${esc2(descVal)}</textarea></div>
-      <div class="bz-bel-form-err" id="bm-err"></div>
-      <div class="bz-btn-row bz-bel-form-actions">
-        <div class="bz-bel-form-spacer"></div>
-        <button type="button" class="bz-btn bz-btn--ghost" data-bm-cancel>取消</button>
-        <button type="button" class="bz-btn bz-btn--primary" id="bm-save">${editing ? '更新' : '保存'}</button>
-      </div>
-    </div>
-  </div>`;
+    mask.innerHTML = R.belFormHtml(it);
     (p && p.mobile ? p.host : document.body).appendChild(mask);
     mountIcons(mask);
 
@@ -705,7 +386,7 @@
         b.className = 'bz-popover-item' + (raw === cur ? ' is-on' : '');
         b.setAttribute('role', 'option');
         const icName = historyIconOf(raw);
-        b.innerHTML = `<span class="bz-suggest-ic">${icName ? icon(icName) : ''}</span><span>${esc2(raw)}</span>`;
+        b.innerHTML = `<span class="bz-suggest-ic">${icName ? icon(icName) : ''}</span><span>${esc(raw)}</span>`;
         b.addEventListener('click', () => {
           catInput.value = raw;
           if (icName) { formIcon = icName; drawIconChip(); }
@@ -730,7 +411,7 @@
     catInput.addEventListener('input', openSug);
     catInput.addEventListener('keydown', (e) => { if (e.key === 'Escape' && layer) { e.stopPropagation(); closeSug(); } });
 
-    // 状态单选（p20 .choice 平铺四格 + 闲置 c2）+ 出离行联动（ADR-0089）
+    // 状态单选（markup = R.statusPickHtml）+ 出离行联动（ADR-0089）
     const statusPick = mask.querySelector('#bm-status');
     const exitRow = mask.querySelector('#bm-exit');
     const soldField = mask.querySelector('#bm-soldfield');
@@ -741,8 +422,7 @@
       soldField.hidden = curStatus !== '已转卖';
     };
     const drawStatus = () => {
-      statusPick.innerHTML = STATUS_LABELS.map((s) =>
-        `<button type="button" class="bz-choice-btn${s === curStatus ? ' is-on' : ''}${s === '闲置' ? ' bz-bel-c2' : ''}" data-status="${esc2(s)}">${icon(STATUS[statusKeyOf(s)].ic, 'bz-ic--sm')}${esc2(s)}</button>`).join('');
+      statusPick.innerHTML = R.statusPickHtml(curStatus);
       mountIcons(statusPick);
       statusPick.querySelectorAll('[data-status]').forEach((b) => b.addEventListener('click', () => {
         curStatus = b.dataset.status;
@@ -811,7 +491,7 @@
           cur.purchase_date = date;
           cur.current_status = curStatus;
           cur.description = desc;
-          if (exited) cur.exit_date = exitVal || todayStr();
+          if (exited) cur.exit_date = exitVal || R.todayStr();
           else if (cur.exit_date != null) cur.exit_date = null;
           if (curStatus === '已转卖') cur.sold_price = soldPrice;
           else if (cur.sold_price != null) cur.sold_price = null;
@@ -824,7 +504,7 @@
             purchase_price: Math.round(price * 100) / 100, purchase_date: date,
             current_status: curStatus, description: desc,
             created_date: nowIso, last_updated: nowIso,
-            ...(exited ? { exit_date: exitVal || todayStr() } : {}),
+            ...(exited ? { exit_date: exitVal || R.todayStr() } : {}),
             ...(curStatus === '已转卖' ? { sold_price: soldPrice } : {}),
             ...(formIcon ? { icon: formIcon } : {}),
           });
@@ -842,11 +522,11 @@
     mask.className = 'bz-overlay-mask';
     mask.style.zIndex = 950;
     mask.innerHTML = `<div class="bz-bel-form" style="width:340px">
-      <div class="bz-bel-form-title" style="font-size:16px;border-width:2px;padding-bottom:8px">${esc2(title)}</div>
-      <p style="font-size:13px;line-height:1.8;color:var(--bz-text-2);margin:14px 0 4px">${esc2(msg)}</p>
+      <div class="bz-bel-form-title" style="font-size:16px;border-width:2px;padding-bottom:8px">${esc(title)}</div>
+      <p style="font-size:13px;line-height:1.8;color:var(--bz-text-2);margin:14px 0 4px">${esc(msg)}</p>
       <div class="bz-btn-row bz-bel-form-actions" style="margin-top:12px"><div class="bz-bel-form-spacer"></div>
       <button type="button" class="bz-btn bz-btn--ghost" data-a="c">取消</button>
-      <button type="button" class="bz-btn bz-btn--primary bz-bel-delbtn" data-a="ok">${esc2(okLabel)}</button></div></div>`;
+      <button type="button" class="bz-btn bz-btn--primary bz-bel-delbtn" data-a="ok">${esc(okLabel)}</button></div></div>`;
     const done = () => mask.remove();
     mask.addEventListener('click', (e) => {
       if (e.target === mask || e.target.closest('[data-a="c"]')) return done();
@@ -860,7 +540,7 @@
     clearTimeout(toastTimer);
     toastEl = document.createElement('div');
     toastEl.style.cssText = 'position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:960;display:flex;align-items:center;gap:14px;background:#171512;color:#f0ece4;font-size:12.5px;padding:10px 16px;box-shadow:4px 4px 0 rgba(23,21,18,.3)';
-    toastEl.innerHTML = `<span>${esc2(msg)}</span>` + (undoLabel ? `<button style="border:none;background:none;color:#e8481f;font:700 12.5px 'Microsoft YaHei';cursor:pointer">${esc2(undoLabel)}</button>` : '');
+    toastEl.innerHTML = `<span>${esc(msg)}</span>` + (undoLabel ? `<button style="border:none;background:none;color:#e8481f;font:700 12.5px 'Microsoft YaHei';cursor:pointer">${esc(undoLabel)}</button>` : '');
     if (undoLabel) toastEl.querySelector('button').onclick = () => { toastEl.remove(); toastEl = null; onUndo(); };
     document.body.appendChild(toastEl);
     toastTimer = setTimeout(() => { if (toastEl) { toastEl.remove(); toastEl = null; } }, 5000);
@@ -926,8 +606,8 @@
         t('迁移剥 emoji 前缀', items.every((i) => !/^(\p{Extended_Pictographic})/u.test(i.category || '')));
         t('网格分类图标已挂', [...document.querySelectorAll('#dtHost .bz-bel-cell-em')].some((el) => el.querySelector('svg')));
         t('网格65行', dtCells() === 65);
-        t('KPI在库', document.querySelector('#dtHost [data-bel-kpis] .bz-bel-kpi--hero b').textContent === String(stockCount()));
-        t('总投入≈71706', Math.abs(totalAssets() - 71706.48) < 1);
+        t('KPI在库', document.querySelector('#dtHost [data-bel-kpis] .bz-bel-kpi--hero b').textContent === String(R.stockCount(items)));
+        t('总投入≈71706', Math.abs(R.totalAssets(items) - 71706.48) < 1);
         t('无页脚残留', !document.querySelector('.bz-bel-foot, [data-bel-footnote], .bz-bel-mobsort'));
 
         document.querySelector('#dtHost [data-bel-st="idle"]').click();
@@ -961,7 +641,7 @@
         await sleep(120);
         t('新增后66件', items.length === 66 && dtCells() === 66);
         const nu = items.find((i) => i.name === '测试物品');
-        t('新增在首位(最近)', filtered()[0].name === '测试物品');
+        t('新增在首位(最近)', R.filtered(items, M)[0].name === '测试物品');
 
         document.querySelector(`#dtHost [data-bel-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
         t('右键菜单开', !!document.querySelector('.bz-item-menu.bz-bel-menu'));

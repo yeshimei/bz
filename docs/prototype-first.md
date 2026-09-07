@@ -16,6 +16,18 @@
 
 原型历史版本与评审过程留在 `.zcode/ui-prototypes/`（不入 git）；域内 `prototype.html` 始终是「当前定稿」。
 
+## markup 单源（render.ts 范式，ADR-0104——试点：belongings；bookshelf/favorites/home 待迁）
+
+样式单源之上再进一步：**已迁移域的 markup 也单源**。域 `render.ts`（渲染纯层）是面板/弹窗 HTML、视图口径计算、行操作序列的唯一事实源：
+
+- 插件 `ui.ts` 直接 import render.ts（只留事件绑定 + core 服务 + 数据读写）；
+- `node scripts/build-preview.mjs`（dev watch 自动）把 render.ts 打成同目录 `prototype-render.js`（IIFE，挂 `window.BZR_<域>`，**提交入 git** 保「双击零依赖」），prototype.html 壳脚本消费同一份；
+- 改 markup/口径 = 改 render.ts 一处两侧生效；改过 render.ts 须让 dev/build 重出预览包再评审；
+- render.ts 契约（`tests/core/render-purity.test.ts` 守卫）：import 白名单（`core/ui/str`、`./types`、`./emoji-icon-map`）、禁 obsidian/moment/core 服务/barrel、禁模块级可变状态（items + view 显式入参）、图标一律 `<i data-lucide>` 占位；
+- 「同步」轮语义收窄：markup 已随迭代就位（Obsidian 不重载不加载，隔离效果与旧 ui.ts 冻结等效），只剩**绑定验收 + 补测试 + 门禁 + build + 提交**。
+
+新域落域必带 render.ts；存量域重设计时顺带迁移（迁法照 belongings 批：抽取映射先 diff 逐字验证，再瘦身 ui.ts、重写壳脚本）。
+
 ## 铁流程
 
 1. **改**：样式改 `styles.css`（唯一入口）；结构/交互改原型 markup+JS——**迭代轮 `ui.ts` 冻结不同构**（原型带路），「同步」时再照搬类名与钩子同构 `ui.ts`，并补因此 stale 的测试断言。
@@ -37,6 +49,7 @@
 | toast/确认框/Esc 自绘演示 | core 服务（notice、flow-dialog、esc-manager、z-order、mobile） |
 | lucide 内联 SVG（`FAV.icon(name, px)`） | `<i data-lucide>` 占位 + `mountIcons` |
 | localStorage 假数据 | 域 DataManager / settings 键 |
+| `window.BZR_<域>` 渲染函数（构建产物 prototype-render.js） | render.ts 直接 import |
 
 ## 注意事项（跨域通用坑）
 

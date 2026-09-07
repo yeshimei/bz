@@ -64,7 +64,7 @@ describe('批 B-3：触控热区收编 core .bz-touch-target', () => {
 
   it('收编域挂类与档位映射（外扩量与原域内 inset 一一对应）', () => {
     // 默认档（原 inset -6px）：32px 档头行图标钮（belongings ADR-0094 起同 favorites 挂 --lg 修饰符）
-    expect(repo('src/belongings/ui.ts')).toMatch(/bz-icon-btn--lg bz-touch-target/);
+    expect(repo('src/belongings/render.ts')).toMatch(/bz-icon-btn--lg bz-touch-target/); // issue 237 markup 单源 render.ts
     expect(repo('src/favorites/ui.ts')).toMatch(/bz-fav-mob-close bz-touch-target/); // ADR-0101：域内自绘关闭钮挂 44px 档
     // --sm（原 -4px）：番茄钟控制钮、复习评级条
     expect(repo('src/pomodoro/ui.ts')).toMatch(/pomodoro-btn pomodoro-btn-primary bz-touch-target--sm/);
