@@ -99,7 +99,7 @@ export function belongingSettingsSchema(): SettingsSchema {
         rows: [
           {
             type: 'choiceCards',
-            name: '布局',
+            name: '面板布局',
             binding: { key: 'belSkin' },
             options: [
               { value: 'poster', label: '大字报', prevClass: 'bz-sp-prev-poster' },
@@ -107,7 +107,7 @@ export function belongingSettingsSchema(): SettingsSchema {
           },
           {
             type: 'choiceCards',
-            name: '主题',
+            name: '面板主题',
             binding: { key: 'belSkinTheme' },
             layoutKey: 'belSkin',
             options: [

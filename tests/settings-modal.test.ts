@@ -450,9 +450,10 @@ describe('归物本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
 
   it('桌面端：显示组暴露「默认状态筛选」select（五态，直绑 belongingsDefaultStatus）', () => {
     const schema = belongingSettingsSchema();
-    expect(schema.groups).toHaveLength(2);
-    expect(schema.groups[0].name).toBe('显示');
-    const row = schema.groups[0].rows[0] as any;
+    // bef5b76 起外观组（布局/主题占位单卡）插在首位：3 组 = 外观/显示/移动
+    expect(schema.groups).toHaveLength(3);
+    expect(schema.groups[1].name).toBe('显示');
+    const row = schema.groups[1].rows[0] as any;
     expect(row.type).toBe('select');
     expect(row.name).toBe('默认状态筛选');
     expect(row.binding).toMatchObject({ key: 'belongingsDefaultStatus' });
@@ -464,8 +465,8 @@ describe('归物本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     try {
       MockPlatform.isMobile = true;
       const schema = belongingSettingsSchema();
-      expect(schema.groups[1].visibleWhen!(settings as any)).toBe(true);
-      const row = schema.groups[1].rows[0] as any;
+      expect(schema.groups[2].visibleWhen!(settings as any)).toBe(true);
+      const row = schema.groups[2].rows[0] as any;
       expect(row.name).toBe('移动端默认全屏');
       expect(row.binding).toMatchObject({ key: 'belongingsMobileDefaultFullscreen' });
     } finally {

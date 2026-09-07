@@ -28,7 +28,7 @@ export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "cinema", "favorites"
 // 以 fake-sim.ts 为入口、alias obsidian→belongings/fake/fake-obsidian，把真 ui.ts
 // 依赖链打进 prototype-behavior.js（挂 window.BZW_<域>），壳只调 openPanel 等。
 // 新域接入：render.ts 落域 + fake-sim.ts 启动器就绪后在此登记。
-export const BEHAVIOR_DOMAINS = ["belongings"];
+export const BEHAVIOR_DOMAINS = ["belongings", "bookshelf", "cinema", "favorites"];
 
 export async function buildBehavior(domain) {
   const entry = path.join(ROOT, "src", domain, "fake-sim.ts");
