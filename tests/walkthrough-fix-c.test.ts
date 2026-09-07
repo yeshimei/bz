@@ -36,7 +36,7 @@ describe('批 C-1：.bz-bs-quote 双定义拆雷（笔记侧改名 .bz-bs-hl-quo
     // 借书卡书评 = .bz-bs-d-quote（可读多行，非浮层）
     expect(rule(css, '.bz-bs-d-quote')).not.toBeNull();
     // 挂载点：ui.ts 不再渲染封面浮层；笔记两处（md + epub）保持 .bz-bs-hl-quote
-    const ui = repo('src/bookshelf/render.ts');
+    const ui = repo('src/bookshelf/shared.ts'); // ADR-0105：借书卡=跨布局共享层
     expect(ui).not.toContain('class="bz-bs-quote"');
     expect(ui).toContain('bz-bs-d-quote');
     const notesUi = repo('src/bookshelf/notes-ui.ts');
@@ -53,7 +53,7 @@ describe('批 C-1：.bz-bs-quote 双定义拆雷（笔记侧改名 .bz-bs-hl-quo
 
 describe('批 C-2/C-3（issue 223 只读化后口径更新）', () => {
   it('详情卡只读：状态徽标改为台账圆点示意（不再有 chip/编辑控件/删除保存入口）', () => {
-    const ui = repo('src/bookshelf/render.ts');
+    const ui = repo('src/bookshelf/shared.ts'); // ADR-0105：借书卡=跨布局共享层
     expect(ui).toMatch(/bz-bs-d-stdot/);
     expect(ui).not.toContain('bz-chip--tint');
     expect(ui).not.toContain('bz-chip--locked');
@@ -83,8 +83,8 @@ describe('批 C-4：报告头行样式归位 reading-report', () => {
     expect(bs).not.toMatch(/\.bz-rr-content/);
   });
 
-  it('挂载点仍在 bookshelf/ui.ts（视图容器归属不变）', () => {
-    const ui = repo('src/bookshelf/render.ts');
+  it('挂载点在书脊墙布局层（ADR-0105：面板骨架=布局差异层）', () => {
+    const ui = repo('src/bookshelf/layouts/wall/render.ts');
     for (const sel of ['bz-rr-head', 'bz-rr-title', 'bz-rr-close', 'bz-rr-content']) {
       expect(ui).toContain(sel);
     }
@@ -93,7 +93,7 @@ describe('批 C-4：报告头行样式归位 reading-report', () => {
 
 describe('批 C-5：bookshelf 面板 44px 补接 .bz-panel-mtop', () => {
   it('面板根节点挂类；书脊墙体系在位（issue 218 换血：头行退役，墙变量/书脊/借书卡落域样式）', () => {
-    const ui = repo('src/bookshelf/render.ts');
+    const ui = repo('src/bookshelf/layouts/wall/render.ts');
     // ADR-0094：面板壳接入共享 .bz-panel-frame（域内只留宽高）；issue 216 皮肤类尾随插入
     expect(ui).toMatch(/class="bz-panel-frame bz-bs-panel bz-panel-mtop( \$\{esc\(skinClass\)\}| \$\{bsSkinClass\(\)\})?"/);
     const css = bsCss();
