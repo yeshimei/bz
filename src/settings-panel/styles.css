@@ -346,19 +346,6 @@
   align-items: center;
   gap: 6px;
 }
-.bz-sp-head-tools .bz-sp-head-btn {
-  border: 1px solid var(--sp-line);
-  background: var(--sp-panel);
-  color: var(--sp-ink-2);
-  border-radius: 8px;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-.bz-sp-head-tools .bz-sp-head-btn:hover { color: var(--sp-accent); }
 
 /* ═══════════ 主体双栏 ═══════════ */
 .bz-sp-desk-body {
@@ -403,8 +390,6 @@
 .theme-dark .bz-sp-nav-item.on .bz-sp-nav-count { background: rgba(27, 27, 31, 0.25); }
 .bz-sp-nav-item .bz-sp-nav-ic { color: var(--sp-ink-2); }
 .bz-sp-nav-item.on .bz-sp-nav-ic { color: inherit; }
-.bz-sp-nav-ic { display: flex; }
-.bz-sp-nav-ic .bz-ic { width: 15px; height: 15px; }
 .bz-sp-nav-count {
   margin-left: auto;
   font-size: 10.5px;
@@ -606,15 +591,18 @@
   border-radius: 9px;
   box-shadow: var(--sp-shadow);
   z-index: 20;
+  max-height: 260px;
+  overflow-y: auto;
 }
 .bz-sp-desk .bz-select-item,
 .bz-sp-mobile .bz-select-item,
 .bz-sp-mob-modal .bz-select-item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   width: 100%;
-  padding: 7px 10px;
+  padding: 6px 8px;
   border: 0;
   background: transparent;
   font-family: inherit;
@@ -629,8 +617,9 @@
 .bz-sp-mob-modal .bz-select-item-ck {
   margin-left: auto;
   opacity: 0;
-  width: 13px;
-  height: 13px;
+  width: 12px;
+  height: 12px;
+  flex: none;
 }
 .bz-sp-desk .bz-select-item.is-on .bz-select-item-ck,
 .bz-sp-mobile .bz-select-item.is-on .bz-select-item-ck,
@@ -680,17 +669,6 @@
 /* 滑杆行 + 读数徽标 */
 .bz-sp-slider-row { display: flex; align-items: center; gap: 10px; }
 .bz-sp-slider-row input[type='range'] { accent-color: var(--sp-accent); width: 150px; }
-.bz-sp-slider-row .bz-badge {
-  font-family: ui-monospace, Consolas, monospace;
-  font-size: 11.5px;
-  color: var(--sp-ink-2);
-  background: transparent;
-  border: 0;
-  width: 34px;
-  text-align: right;
-  padding: 0;
-}
-
 /* choiceCards 自绘卡（原型逐字类）：预览 div（.bz-sp-mini）+ 名称；预览视觉由各域 prevClass 承载 */
 .bz-sp-desk .bz-sp-cardpick,
 .bz-sp-mobile .bz-sp-cardpick,
@@ -948,7 +926,6 @@
 }
 .bz-sp-mob-ic .bz-ic,
 .bz-sp-mob-modal-ic .bz-ic { width: 16px; height: 16px; }
-.bz-sp-select-car { width: 12px !important; height: 12px !important; opacity: .7; }
 
 /* ═══════════ 域内自绘控件（原型演示与 renderer 共用；容器前缀防 reset 压制） ═══════════ */
 .bz-sp-desk .bz-sp-btn,
@@ -1027,26 +1004,6 @@
   text-align: right;
 }
 
-/* 皮肤预览卡（choiceCards 域内形态；迷你预览图为演示件） */
-.bz-sp-cardpick { display: flex; flex-wrap: wrap; gap: 10px; }
-.bz-sp-cardpick-card {
-  border: 1.5px solid var(--sp-line);
-  border-radius: 10px;
-  background: var(--sp-panel);
-  padding: 6px;
-  cursor: pointer;
-  font-family: inherit;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.bz-sp-cardpick-card.is-on {
-  border-color: var(--sp-accent);
-  box-shadow: 0 0 0 2px var(--sp-accent-soft);
-}
-.bz-sp-cardpick-name { font-size: 10.5px; color: var(--sp-ink-2); }
-.bz-sp-cardpick-card.is-on .bz-sp-cardpick-name { color: var(--sp-accent); font-weight: 600; }
-
 /* 下拉箭头（自绘下拉；旋转样式单源——原型/插件同构，markup 串出自 render.ts） */
 .bz-select-car { width: 12px; height: 12px; opacity: 0.7; transform: rotate(90deg); }
 
@@ -1076,74 +1033,6 @@
 .bz-sp-desk .bz-sw.on::after,
 .bz-sp-mobile .bz-sw.on::after,
 .bz-sp-mob-modal .bz-sw.on::after { left: 18px; }
-
-/* 下拉：触发器定宽 + 绝对定位菜单 + 菜单项完整基线 */
-.bz-sp-desk .bz-select,
-.bz-sp-mobile .bz-select,
-.bz-sp-mob-modal .bz-select {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-width: 210px;
-  max-width: 280px;
-  padding: 6px 10px;
-  cursor: pointer;
-  user-select: none;
-}
-.bz-sp-desk .bz-select-menu,
-.bz-sp-mobile .bz-select-menu,
-.bz-sp-mob-modal .bz-select-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 4px;
-  max-height: 260px;
-  overflow-y: auto;
-}
-.bz-sp-desk .bz-select-item,
-.bz-sp-mobile .bz-select-item,
-.bz-sp-mob-modal .bz-select-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  border: 0;
-  background: transparent;
-  font-family: inherit;
-  font-size: 12.5px;
-  color: var(--sp-ink);
-  padding: 6px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  text-align: left;
-}
-.bz-sp-desk .bz-select-item .bz-select-item-ck,
-.bz-sp-mobile .bz-select-item .bz-select-item-ck,
-.bz-sp-mob-modal .bz-select-item .bz-select-item-ck {
-  width: 12px;
-  height: 12px;
-  color: var(--sp-accent);
-  flex: none;
-}
-
-/* 移动搜索框（演示 input 无类，元素选择器兜底） */
-.bz-sp-mob-search .bz-input,
-.bz-sp-mob-search input {
-  flex: 1;
-  border: 0 !important;
-  outline: 0 !important;
-  background: transparent;
-  padding: 0;
-  font-size: 13px;
-  color: var(--sp-ink);
-  font-family: inherit;
-}
 
 /* choiceCards 全宽卡组（上下结构行的卡容器） */
 .bz-sp-set-cards { display: flex; flex-wrap: wrap; gap: 10px; }

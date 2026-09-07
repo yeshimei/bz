@@ -8,10 +8,10 @@ import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { M, resetBookshelfState } from '../../src/bookshelf/state';
 import {
-  scanMarkdownBooks, loadEpubItems, sortItems, kwFilter, currentSideItems, computeStats,
-  resolveFolderPath, resolveBookTag, formatReadingTime, rebuildItems,
-  categoryList, catFilterItems, findAnniversary, getDisplayItems,
+  scanMarkdownBooks, loadEpubItems, resolveFolderPath, resolveBookTag, formatReadingTime,
+  rebuildItems, getDisplayItems,
 } from '../../src/bookshelf/data';
+import { sortItems, kwFilter, currentSideItems, catFilterItems } from '../../src/bookshelf/render';
 
 function makeApp(vault: MockVault) {
   return mockAppWithVault(vault);
@@ -51,7 +51,6 @@ describe('bookshelf 数据层', () => {
   beforeEach(() => {
     resetObsidianMocks();
     resetBookshelfState();
-    M.folderPath = '书库';
   });
   afterEach(() => {
     setSettingsProvider(null as any);
@@ -163,41 +162,6 @@ describe('bookshelf 数据层', () => {
     expect(formatReadingTime(0)).toBeNull();
     expect(formatReadingTime(45 * 60000)).toBe('45分');
     expect(formatReadingTime(3 * 3600000 + 20 * 60000)).toBe('3小时20分');
-  });
-
-  it('computeStats：状态分布/今年读完/时长/近 12 月读完柱', () => {
-    const { app } = seedVault();
-    M.items = [...scanMarkdownBooks(app)];
-    const s = computeStats(new Date(2026, 8, 3));
-    expect(s.reading.length).toBe(1); // 认知觉醒（无 completionDate）
-    expect(s.done.length).toBe(1); // 围城
-    expect(s.unread.length).toBe(1); // 算法导论
-    expect(s.doneThisYear.length).toBe(1);
-    // 3小时20分 → 3 小时（向下取整小时）
-    expect(s.totalHours).toBe(3);
-    // 围城 2026-08 读完 → 8 月柱 count=1（issue 207 翻转：bars[0]=本月，向右倒退到 bars[11]=11 个月前）
-    const aug = s.bars.find((b) => b.label === '8月')!;
-    expect(aug.count).toBe(1);
-    expect(aug.isThis).toBe(false);
-    expect(s.bars[0].label).toBe('本月');
-    expect(s.bars[0].isThis).toBe(true);
-    expect(s.bars[0].count).toBe(0); // 当前月（2026-09）无读完数据
-    expect(s.bars[11].label).toBe('10月'); // 11 个月前 = 2025-10
-  });
-
-  it('computeStats：近 12 月柱倒序（issue 207 本月置首）——bars[0]=本月承载当月数据，bars[11] 承载 11 个月前', () => {
-    // 回归：旧实现正序 bars[11]=本月；翻转后数据↔标签仍须同柱
-    const vault = new MockVault();
-    vault.files.set('书库/当月书.md', '---\ntags: [book]\nreadingDate: 2026-09-01\ncompletionDate: 2026-09-10\n---');
-    vault.files.set('书库/去年书.md', '---\ntags: [book]\nreadingDate: 2025-10-01\ncompletionDate: 2025-10-20\n---');
-    const app = makeApp(vault);
-    M.items = [...scanMarkdownBooks(app)];
-    const s = computeStats(new Date(2026, 8, 3)); // 2026-09（11 个月前 = 2025-10）
-    expect(s.bars[0].label).toBe('本月');
-    expect(s.bars[0].count).toBe(1); // 当月读完的「当月书」落在「本月」柱
-    expect(s.bars[0].isThis).toBe(true);
-    expect(s.bars[11].count).toBe(1); // 2025-10 读完的「去年书」落在末柱
-    expect(s.bars[11].label).toBe('10月');
   });
 
   it('排序：date 主日期倒序/无日期排后；title/author/progress', () => {
@@ -319,31 +283,6 @@ describe('bookshelf 数据层', () => {
     expect(currentSideItems(items, 'done').length).toBe(1);
   });
 
-  it('categoryList：去重计数 + zh 序；EPUB null 分类归「未分类」桶', async () => {
-    const { app } = seedVault(); // 认知觉醒=成长；围城/算法导论无 category → 未分类
-    const items = scanMarkdownBooks(app);
-    const list = categoryList(items);
-    expect(list.map((c) => c.name)).toEqual(['成长', '未分类']); // zh localeCompare 序
-    expect(list.find((c) => c.name === '未分类')?.count).toBe(2); // 围城 + 算法导论
-    expect(list.find((c) => c.name === '成长')?.count).toBe(1);
-    // EPUB category null → 并入「未分类」桶（仅分类面；kwFilter 口径不变）
-    const vault2 = new MockVault();
-    vault2.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
-      books: { a: { meta: { title: '百年孤独' }, file: { vaultPath: 'books/x.epub' } } },
-    }));
-    const epub = await loadEpubItems(makeApp(vault2));
-    expect(categoryList([...items, ...epub]).find((c) => c.name === '未分类')?.count).toBe(3);
-  });
-
-  it('categoryList：「未分类」恒置底，不参与 zh 序（issue 204）', () => {
-    const vault = new MockVault();
-    vault.files.set('书库/甲.md', '---\ntags: [book]\ncategory: 阿德勒\n---'); // zh 序最前
-    vault.files.set('书库/乙.md', '---\ntags: [book]\ncategory: 哲学\n---'); // zh 序在「未分类」之后
-    vault.files.set('书库/丙.md', '---\ntags: [book]\n---'); // 无 category → 未分类
-    const list = categoryList(scanMarkdownBooks(makeApp(vault)));
-    expect(list.map((c) => c.name)).toEqual(['阿德勒', '哲学', '未分类']);
-  });
-
   it('catFilterItems + getDisplayItems：分类与状态正交叠加', () => {
     const { app } = seedVault();
     M.items = [...scanMarkdownBooks(app)];
@@ -362,31 +301,7 @@ describe('bookshelf 数据层', () => {
     expect(getDisplayItems().length).toBe(2);
   });
 
-  it('findAnniversary：那年今天命中（取最早年）；今年/非今天/未读完不命中', () => {
-    const mk = (title: string, completionDate: string | null) => ({
-      file: null, title, author: '', category: null, cover: null, bookReview: null,
-      readingDate: null, completionDate, progress: completionDate ? 100 : 0,
-      readingTimeFormat: null, readingTimeMs: 0, highlights: 0, thinks: 0,
-      status: completionDate ? '已读' : '未读', isEpub: false, epubVaultPath: null,
-    } as any);
-    const now = new Date(2026, 8, 4); // 2026-09-04
-    const items = [
-      mk('今年书', '2026-09-04'),   // 今年今天 → 不算纪念日
-      mk('三年书', '2023-09-04'),   // 命中，3 年
-      mk('错日子', '2022-05-01'),   // 月日不同
-      mk('在读中', null),           // 未读完
-      mk('十年书', '2016-09-04'),   // 命中，10 年（最早 → 胜出）
-    ];
-    const a = findAnniversary(items, now);
-    expect(a).toBeTruthy();
-    expect(a!.item.title).toBe('十年书');
-    expect(a!.years).toBe(10);
-    // 全不命中 → null（零空态）
-    expect(findAnniversary([mk('今年书', '2026-09-04'), mk('在读中', null)], now)).toBeNull();
-    expect(findAnniversary([], now)).toBeNull();
-  });
-
-  it('audit I：rebuildItems 并发交错——旧重建晚到不回写覆盖新数据（序号守卫）', async () => {
+    it('audit I：rebuildItems 并发交错——旧重建晚到不回写覆盖新数据（序号守卫）', async () => {
     // 场景：重建 1 的 EPUB 读取在途时新增书目并触发重建 2；重建 2 先完成，重建 1 的
     // 陈旧 md 快照（无 B 书）后到——旧实现会把 B 书从 M.items 挤掉
     const vault = new MockVault();

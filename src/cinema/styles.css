@@ -1,197 +1,7 @@
-/* ==================== 影院域样式（src/cinema/styles.css） ==================== */
-/* 试点收编（铁律 6）：基线（按钮/图标钮/chip/输入/弹窗/空态）全部消费组件库
-   （src/core/ui/components.css 的 .bz-* 类与 --bz-* token）；
-   面板壳/头行/侧栏/主头行/工具行/搜索/移动横滑条接入共享组件批次（ADR-0094）：
-   .bz-panel-overlay/.bz-panel-frame/.bz-panel-head/.bz-rail 族/.bz-main-head/
-   .bz-toolrow/.bz-search/.bz-mobstrip——共享类承担的域内规则已删除；
-   本文件只保留影院独有布局（面板宽高/海报网格/详情头部/评分滑杆/分析页排版），
-   取值一律取自 tokens.css；类型/状态色为功能色（数据语义，域内直给）；
-   涉共享类的域内覆写一律以 .bz-cinema-panel 前缀 scoped，防聚合后跨域泄漏。
-   主色跟品牌 --bz-brand（与其他新域统一）。 */
-
-/* ---- 分析页主题变量（增强包需求 7：此前无任何定义、靠浏览器回退，此处正式收编） ----
-   亮/暗两套，跟随 Obsidian body 上的 theme-dark/theme-light 类；
-   取值引用组件库 --bz-* 色彩 token（明暗自动跟随）；图表粉彩色板常量在 core/chart-palette.ts。 */
-.theme-dark {
-  --bz-cinema-card: var(--bz-surface-2);    /* 板块卡片底 */
-  --bz-cinema-panel: var(--bz-surface-1);   /* 行内 chip/浅层容器底 */
-  --bz-cinema-border: var(--bz-border);     /* 卡片边框/图表轨道 */
-  --bz-cinema-text: var(--bz-text-1);       /* 主文字 */
-  --bz-cinema-muted: var(--bz-text-2);      /* 次要文字/图例计数 */
-  --bz-cinema-accent: var(--bz-brand);      /* 强调（评分/计数） */
-}
-.theme-light {
-  --bz-cinema-card: var(--bz-surface-2);
-  --bz-cinema-panel: var(--bz-surface-1);
-  --bz-cinema-border: var(--bz-border);
-  --bz-cinema-text: var(--bz-text-1);
-  --bz-cinema-muted: var(--bz-text-2);
-  --bz-cinema-accent: var(--bz-brand);
-}
-
-/* ---- 遮罩 + 主面板骨架：共享壳 .bz-panel-overlay / .bz-panel-frame（含滚动条隐藏），
-   域内只留宽高内联 ---- */
-.bz-cinema-panel {
-  width: 940px; max-width: calc(100vw - 32px); height: 640px; max-height: 90vh;
-}
-
-/* ---- 头行 = 共享 .bz-panel-head；移动工具钮显隐为域内规则 ---- */
-.bz-cinema-mob-only { display: none; }
-
-.bz-cinema-body { display: flex; flex: 1; min-height: 0; }
-
-/* ---- 左栏分类树 = 共享 .bz-rail 族（label/行/色点/计数/二级子列表 .bz-rail-sub + 底部 .bz-rail-foot） ---- */
-
-/* ---- 右栏 ---- */
-.bz-cinema-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-/* 主头行/工具行/搜索 = 共享 .bz-main-head / .bz-toolrow / .bz-search */
-/* 排序：组件库 segmented 三档（桌面工具行；移动端隐藏——同待办） */
-.bz-cinema-sort { flex-shrink: 0; }
-.bz-cinema-sort .bz-segmented-btn { padding: 0 10px; font-size: var(--bz-font-caption); }
-.bz-cinema-content { flex: 1; overflow-y: auto; padding: var(--bz-space-md) var(--bz-space-lg) var(--bz-space-lg); display: flex; flex-direction: column; min-height: 0; }
-
-/* ---- 海报网格 ----
-   列数由设置 cinemaGridColumns 驱动（issue 208）：ui.ts 渲染时内联 --bz-cinema-cols，
-   默认 5；移动端媒体查询固定 3 列不受设置影响 */
-.bz-cinema-grid { display: grid; grid-template-columns: repeat(var(--bz-cinema-cols, 5), 1fr); gap: var(--bz-space-md); }
-.bz-cinema-pcard { cursor: pointer; min-width: 0; }
-.bz-cinema-poster-wrap {
-  width: 100%; aspect-ratio: 2 / 3; border-radius: 10px; overflow: hidden; position: relative;
-  background: var(--bz-surface-3); border: 1px solid var(--bz-border);
-}
-.bz-cinema-poster-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.bz-cinema-poster-blank { background: var(--bz-surface-3); }
-.bz-cinema-p-badge {
-  position: absolute; top: 6px; left: 6px; font-size: 11px; padding: 1px 7px;
-  border-radius: var(--bz-radius-full); color: var(--bz-on-overlay);
-}
-.bz-cinema-p-name { font-size: var(--bz-font-meta); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bz-cinema-p-meta { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bz-cinema-p-stars { color: var(--bz-star); }
-/* 灰色小字状态（想看/在看）：纯展示（issue 208 快速状态窗退役，状态流转统一走右键菜单） */
-
-/* ---- 详情弹窗内容（弹窗骨架在组件库 modal） ---- */
-.bz-cinema-dm-head { display: flex; align-items: flex-start; gap: var(--bz-space-md); }
-.bz-cinema-dm-poster { width: 84px; height: 120px; border-radius: var(--bz-radius-sm); overflow: hidden; flex-shrink: 0; background: var(--bz-surface-3); border: 1px solid var(--bz-border); }
-.bz-cinema-dm-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.bz-cinema-dm-title { font-size: 16px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); line-height: 1.35; }
-.bz-cinema-dm-badges { display: flex; align-items: center; gap: var(--bz-space-xs); margin-top: var(--bz-space-xs); flex-wrap: wrap; }
-.bz-cinema-dm-stars { font-size: 13px; color: var(--bz-star); }
-.bz-cinema-dm-rating { font-size: 13px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
-.bz-cinema-dm-date { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
-/* 头部影评：评分/日期下方、海报右侧，纯文本无边框 */
-.bz-cinema-dm-review {
-  font-size: var(--bz-font-meta); color: var(--bz-text-2); line-height: 1.7; margin-top: var(--bz-space-sm);
-  white-space: pre-wrap; word-break: break-all;
-}
-.bz-cinema-sec-title { font-size: var(--bz-font-meta); font-weight: var(--bz-weight-semibold); color: var(--bz-text-2); margin: 14px 0 6px; }
-.bz-cinema-kv { display: flex; gap: 10px; padding: 3px 0; font-size: var(--bz-font-label); line-height: 1.6; }
-.bz-cinema-kv-k { color: var(--bz-text-3); flex-shrink: 0; min-width: 70px; }
-.bz-cinema-kv-v { color: var(--bz-text-1); word-break: break-all; }
-.bz-cinema-kv-v a { color: var(--bz-brand); text-decoration: none; word-break: break-all; }
-.bz-cinema-kv-v a:hover { text-decoration: underline; }
-.bz-cinema-synopsis { font-size: var(--bz-font-label); line-height: 1.8; color: var(--bz-text-1); white-space: pre-wrap; }
-
-/* ---- 表单（添加/编辑） ----
-   字段行 = 组件库 .bz-field（label 上置 + 控件 100% 宽）；
-   平铺选择 = 组件库 .bz-choice（胶囊单选，类型/状态色点为数据语义色）；
-   本文件只留表单容器间距与评分滑杆行内布局。 */
-.bz-cinema-form-title { font-size: var(--bz-font-title); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); margin-bottom: 2px; }
-.bz-cinema-form { display: flex; flex-direction: column; gap: var(--bz-space-md); margin-top: var(--bz-space-md); }
-/* 行距由容器 gap 承担，抵消 .bz-field 自带 margin-bottom */
-.bz-cinema-form .bz-field { margin-bottom: 0; }
-.bz-cinema-form-actions { display: flex; justify-content: flex-end; gap: var(--bz-space-sm); margin-top: var(--bz-space-md); }
-/* 评分滑杆行（轨道/滑块组件库 .bz-range；读数轻量，随滑杆同一行） */
-.bz-cinema-rating-row { display: flex; align-items: center; gap: var(--bz-space-md); }
-.bz-cinema-rating-row .bz-range { flex: 1; align-self: center; }
-.bz-cinema-rating-val {
-  min-width: 40px; text-align: center;
-  font-size: var(--bz-font-label); font-weight: var(--bz-weight-regular); color: var(--bz-text-1);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---- 确认框（三段式：图标 + 标题 + 问句 + 后果说明） ---- */
-.bz-cinema-confirm { text-align: center; padding: var(--bz-space-sm) var(--bz-space-xs); }
-.bz-cinema-confirm-title { margin-top: var(--bz-space-sm); font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
-.bz-cinema-confirm p { margin-top: var(--bz-space-sm); font-size: var(--bz-font-body); color: var(--bz-text-1); line-height: 1.6; }
-.bz-cinema-confirm-sub { margin-top: var(--bz-space-xs); font-size: var(--bz-font-meta); color: var(--bz-text-3); }
-.bz-cinema-confirm .bz-ic { width: 30px; height: 30px; color: var(--bz-text-3); }
-
-/* ---- 海报卡长按抽屉头部（core .bz-item-sheet-head 的域内内容；对齐 clipbook 先例） ---- */
-.bz-cinema-sheet-head { padding: 2px 0 var(--bz-space-sm); }
-.bz-cinema-sheet-title { font-size: var(--bz-font-body); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); line-height: 1.5; }
-.bz-cinema-sheet-sub { font-size: var(--bz-font-meta); color: var(--bz-text-2); margin-top: var(--bz-space-xs); }
-
-/* ---- AI 荐片 / 分析页 ---- */
-.bz-cinema-page { padding: var(--bz-space-xs) var(--bz-space-sm); }
-.bz-cinema-page-head { display: flex; align-items: center; gap: var(--bz-space-sm); margin-bottom: var(--bz-space-md); }
-.bz-cinema-page-title { font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); display: inline-flex; align-items: center; gap: 8px; }
-.bz-cinema-page-sub { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
-.bz-cinema-ai-guide { text-align: center; padding: 48px 16px; }
-/* AI 荐片机器人图标（需求 4）：span 默认 inline，宽高不会生效、svg 100% 会撑满父宽铺满页面——
-   设 display:inline-flex 使 36px 尺寸真正生效，图标回到引导位小图标 */
-.bz-cinema-ai-guide-ic {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 36px; height: 36px; color: var(--bz-text-3);
-}
-.bz-cinema-ai-guide-title { margin-top: 14px; font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
-.bz-cinema-ai-guide-sub { margin-top: 6px; font-size: var(--bz-font-meta); color: var(--bz-text-3); line-height: 1.6; }
-
-/* AI 等待 / 失败（页内，不弹窗） */
-.bz-cinema-ai-wait { text-align: center; padding: 48px 16px; }
-.bz-cinema-ai-wait .bz-cinema-ai-guide-title { margin-top: 14px; }
-.bz-cinema-ai-err { color: var(--bz-danger); }
-/* 等待页大号 spinner（组件库 .bz-spinner--lg；一页一加载动画） */
-.bz-cinema-ai-spin { display: flex; justify-content: center; margin-bottom: var(--bz-space-md); }
-/* 结果页「换一批」（头部右侧） */
-.bz-cinema-ai-refresh { margin-left: auto; }
-
-/* 推荐结果卡（AI 页内列表） */
-.bz-cinema-rec-list { overflow-y: auto; }
-.bz-cinema-rec-card { display: flex; gap: var(--bz-space-md); align-items: flex-start; padding: var(--bz-space-md); border-radius: 10px; margin-bottom: var(--bz-space-sm); background: var(--bz-surface-3); border: 1px solid var(--bz-border); }
-.bz-cinema-rec-card--inlib { opacity: 0.72; }
-.bz-cinema-rec-main { flex: 1; min-width: 0; }
-.bz-cinema-rec-name { font-size: var(--bz-font-body); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
-/* 片名旁豆瓣直达小图标（搜索页新窗打开） */
-.bz-cinema-rec-douban { display: inline-flex; align-items: center; margin-left: var(--bz-space-xs); color: var(--bz-text-3); vertical-align: middle; }
-.bz-cinema-rec-douban:hover { color: var(--bz-brand); }
-/* 已入库推荐卡：「已在库中」禁用态（组件库 .bz-btn:disabled 承担交互禁用） */
-.bz-cinema-rec-inlib { flex-shrink: 0; }
-.bz-cinema-rec-meta { font-size: var(--bz-font-caption); color: var(--bz-text-2); margin-top: 3px; }
-.bz-cinema-rec-reason { font-size: var(--bz-font-meta); color: var(--bz-text-1); margin-top: 6px; line-height: 1.6; }
-/* 加入想看钮：强调图标钮（组件库 .bz-icon-btn--accent 修饰符承担配色，域内不再覆盖） */
-
-/* ---- 移动端（≤768px）：真全屏 + 右上角工具 + 3 列海报 + 横滑分类 ---- */
-@media (max-width: 768px) {
-  .bz-cinema-panel {
-    width: 100vw; height: 100vh; max-width: none; max-height: none;
-    border-radius: 0; border: none;
-  }
-  .bz-cinema-mob-only { display: inline-flex; }
-  /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css），头行不再垫顶 */
-  /* 头行图标钮触屏换大按钮档（同 favorites/belongings；≥40px 目标档）——scoped 防跨域泄漏 */
-  .bz-cinema-panel .bz-panel-head-btns { gap: var(--bz-space-sm); }
-  .bz-cinema-panel .bz-panel-head-btns .bz-icon-btn { width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg); }
-  .bz-cinema-panel .bz-panel-head-btns .bz-icon-btn .bz-ic { width: 16px; height: 16px; }
-  /* 排序 segmented 桌面专属（同待办）；搜索独占一行 */
-  .bz-cinema-sort { display: none; }
-  .bz-cinema-panel .bz-rail { display: none; } /* 移动端分类在顶部横滑条 */
-  /* 横滑分类条 = 共享 .bz-mobstrip；触屏 chip 抬 ≥44px 档（设计手册 §8.2） */
-  .bz-cinema-panel .bz-mobstrip-chip { min-height: 44px; }
-  .bz-cinema-grid { grid-template-columns: repeat(3, 1fr); gap: var(--bz-space-md); }
-  .bz-cinema-content { padding: var(--bz-space-md) var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
-  /* 移动端保留桌面主头行（影院是唯一例外）：添加钮抬 ≥40px 触控档（设计手册 §8.2 绝对下限，
-     桌面走共享 .bz-btn--md 30px 中档） */
-  .bz-cinema-panel .bz-main-head .bz-btn { height: var(--bz-control-h-lg); }
-}
-
-/* ---- 非几何间距归档（自 ui.ts 内联 style 迁入） ---- */
-/* AI 失败重试钮（错误分支独有：guide-ic 带 .bz-cinema-ai-err，待机引导钮不受影响） */
-.bz-cinema-ai-err ~ .bz-cinema-ai-start { margin-top: var(--bz-space-lg); }
-/* AI 待机页「偏好：…」副标行 */
-.bz-cinema-ai-pref { margin-bottom: var(--bz-space-md); }
-/* 删除确认按钮行 */
-.bz-cinema-confirm .bz-btn-row { margin-top: var(--bz-space-lg); }
+/* ==================== 影院域样式（src/cinema/styles.css） ====================
+   全部视觉走「风格化框架」锚类体系（.bz-cinema--midnight，1:1 回灌探索稿）；
+   面板挂载/图标等基建消费组件库（.bz-panel-overlay 等）。旧组件库时代的
+   .bz-cinema-panel/grid/form 等类已随午夜场上岸整段退役（纯清理批）。 */
 
 /* ====================================================================
    风格化框架：三风格（1:1 回灌自 .zcode/ui-prototypes/cinema-5 探索稿）
@@ -214,14 +24,12 @@
 /* ---------- 午夜场 midnight（探索稿 p1-midnight.html） ---------- */
 
 .bz-cinema--midnight {
-  --gold:#c9992f;--gold-bright:#b3831d;--ink:#2c271d;--ink-2:#6d6656;--ink-3:#9a9280;--line:#ddd5c2;--panel:#fdfaf2;--chip:#f1ecdf;--star:#d9a441;
-  --st-want:#98917f;--st-watching:#d97c1d;--st-watched:#4a9a5c;
-  width:900px;height:620px;flex:none;background:var(--panel);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;position:relative;
+  --gold:#c9992f;--ink:#2c271d;--ink-2:#6d6656;--ink-3:#9a9280;--line:#ddd5c2;--panel:#fdfaf2;--chip:#f1ecdf;--star:#d9a441;
+   width:900px;height:620px;flex:none;background:var(--panel);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;position:relative;
   box-shadow:0 14px 44px #0004,0 2px 8px #0002;border:1px solid var(--line);
 }
 .theme-dark .bz-cinema--midnight {
-  --gold:#e0aa4b;--gold-bright:#e0aa4b;--ink:#ece5d3;--ink-2:#a89f8a;--ink-3:#7a7261;--line:#2e2a20;--panel:#161410;--chip:#221f17;--star:#e0aa4b;
-  --st-want:#7a7261;--st-watching:#e08b2d;--st-watched:#5aab6d;
+  --gold:#e0aa4b;--ink:#ece5d3;--ink-2:#a89f8a;--ink-3:#7a7261;--line:#2e2a20;--panel:#161410;--chip:#221f17;--star:#e0aa4b;
 }
 .bz-cinema--midnight::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold) 30%,var(--gold) 70%,transparent);z-index:5}
 .bz-cinema--midnight .d-body{flex:1;display:flex;min-height:0}
@@ -388,7 +196,6 @@
 .bz-cinema--midnight .ai-err-ic{color:#b3402a}
 .bz-cinema--midnight .ai-spin{width:26px;height:26px;border:3px solid var(--chip);border-top-color:var(--gold);border-radius:50%;animation:cn-spin .8s linear infinite;margin:0 auto 16px}
 @keyframes cn-spin{to{transform:rotate(360deg)}}
-.bz-cinema--midnight .ai-simfail{margin-top:14px;background:none;border:0;font-size:10.5px;color:var(--ink-3);cursor:pointer;font-family:inherit;letter-spacing:.1em;border-bottom:1px dashed var(--line)}
 .bz-cinema--midnight .rec-list{display:flex;flex-direction:column;gap:10px}
 .bz-cinema--midnight .rec-card{display:flex;gap:12px;align-items:flex-start;background:var(--chip);border:1px solid var(--line);border-radius:11px;padding:13px 14px}
 .bz-cinema--midnight .rec-main{flex:1;min-width:0}

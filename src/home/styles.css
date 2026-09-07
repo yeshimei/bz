@@ -68,7 +68,7 @@
 .bz-home-sec-t--ai::before { content: "✦ "; }
 
 /* ---- 图标占位 ---- */
-.bz-home-entries .bz-ic, .bz-home-flow .bz-ic, .bz-home-next .bz-ic { width: 17px; height: 17px; }
+.bz-home-entries .bz-ic, .bz-home-flow .bz-ic { width: 17px; height: 17px; }
 
 /* ---- 全部域入口行（原型 .erow） ---- */
 .bz-home-panel .bz-home-erow { display: flex; align-items: center; gap: 9px; padding: 7px 8px 7px 6px; border-radius: 8px; cursor: pointer; border: 0; border-bottom: 1px solid var(--h-line); background: none; font-family: inherit; color: inherit; width: 100%; text-align: left; font-size: 100%; }
@@ -91,7 +91,6 @@
 .bz-home-flow { min-height: 0; overflow-y: auto; scrollbar-width: none; background: var(--h-card); border: 1px solid var(--h-line); border-radius: 12px; padding: 6px 14px 8px 10px; }
 .bz-home-timeline { position: relative; }
 .bz-home-timeline::before { content: ""; position: absolute; left: 9px; top: 14px; bottom: 10px; border-left: 2px dashed var(--h-line); }
-.bz-home-flow .bz-home-sec-t { padding: 12px 0 10px 24px; }
 .bz-home-ev { display: flex; gap: 16px; position: relative; padding: 11px 0 11px 24px; }
 .bz-home-ev::before { content: ""; position: absolute; left: 6px; top: 20px; width: 8px; height: 8px; border-radius: 50%; background: var(--h-ok); box-shadow: 0 0 0 2.5px var(--h-card), 0 0 0 3.5px var(--h-line); } /* 圆心 10px = 虚线中线（left 9 + 1），白环+描边压住虚线（V4） */
 .bz-home-ev--warn::before { background: var(--h-amber); }

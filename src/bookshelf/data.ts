@@ -10,11 +10,10 @@ import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 import type { BookshelfItem } from './state';
 import { M } from './state';
-import { categoryLabel, getDisplayItems as pipeDisplay } from './render';
+import { getDisplayItems as pipeDisplay } from './render';
 const WEAVE_PLUGIN_ID = 'weave-epub-reader';
 /** Weave 阅读数据文件名（EPUB 自动刷新按此后缀识别 json 通道；index.ts 引用） */
 export const WEAVE_DATA_FILE = 'weave-data.json';
-const DEFAULT_WEAVE_DATA_FILE = WEAVE_DATA_FILE;
 const COVER_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
 
 /** 书库文件夹：新设置键优先；旧键 libraryFolderPath 已随 library 域退役从接口删除，
@@ -243,7 +242,7 @@ function buildEpubItem(app: App, aggregate: any): BookshelfItem | null {
 export async function readWeaveAggregates(app: App): Promise<any[]> {
   try {
     const dataPath = resolveWeaveDataPath(app);
-    const dataFilePath = `${dataPath}/${DEFAULT_WEAVE_DATA_FILE}`;
+    const dataFilePath = `${dataPath}/${WEAVE_DATA_FILE}`;
     const file = app?.vault?.getAbstractFileByPath?.(dataFilePath);
     if (!file) return [];
     const content = await app.vault.adapter.read(dataFilePath);
@@ -283,105 +282,8 @@ export async function rebuildItems(app: App): Promise<BookshelfItem[]> {
   return merged;
 }
 
-// ===== 排序 / 筛选（ADR-0104 markup 单源：管道纯函数迁 render.ts，此处 re-export 兼容旧引用） =====
-
-export {
-  primaryDate, sortItems, currentSideItems, categoryLabel, catFilterItems, kwFilter,
-} from './render';
 
 /** 当前展示列表（状态 + 分类 + 关键字 + 排序），UI 层统一入口（读 M；纯管道在 render.ts） */
 export function getDisplayItems(): BookshelfItem[] {
   return pipeDisplay(M.items, { side: M.side, catFilter: M.catFilter, q: M.searchKeyword, sortMode: M.sortMode });
-}
-
-/** 分类面清单（去重 + zh 序 + 未分类恒置底 + 计数；数据层已有 category 字段，零新设置项） */
-export function categoryList(items: BookshelfItem[]): { name: string; count: number }[] {
-  const map = new Map<string, number>();
-  for (const it of items) {
-    const name = categoryLabel(it);
-    map.set(name, (map.get(name) || 0) + 1);
-  }
-  return [...map.entries()]
-    .sort((a, b) => {
-      // 「未分类」常是最大桶，混进 zh 序中部难扫读，恒置底
-      if (a[0] === '未分类') return 1;
-      if (b[0] === '未分类') return -1;
-      return a[0].localeCompare(b[0], 'zh');
-    })
-    .map(([name, count]) => ({ name, count }));
-}
-
-/**
- * 读完纪念日（那年今天）：completionDate 月-日 = 今天且年份更早的已读书。
- * 命中多本取最早（「N 年前」的 N 最大，纪念日感最强）；无命中返回 null（UI 零空态）。
- */
-export function findAnniversary(items: BookshelfItem[], now: Date = new Date()): { item: BookshelfItem; years: number } | null {
-  const md = `-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  const year = now.getFullYear();
-  let best: { item: BookshelfItem; years: number } | null = null;
-  for (const it of items) {
-    if (it.status !== '已读') continue;
-    const d = it.completionDate || '';
-    if (d.length < 10 || d.slice(4) !== md) continue;
-    const y = parseInt(d.slice(0, 4), 10);
-    if (!Number.isFinite(y) || y >= year) continue;
-    const years = year - y;
-    if (!best || years > best.years) best = { item: it, years };
-  }
-  return best;
-}
-
-/** 派生统计（随时从 M.items 重算；与旧 library/原型同口径） */
-export interface ShelfStats {
-  reading: BookshelfItem[];
-  unread: BookshelfItem[];
-  done: BookshelfItem[];
-  doneThisYear: BookshelfItem[];
-  totalHours: number;
-  totalHighlights: number;
-  bars: { count: number; label: string; isThis: boolean }[];
-  maxBar: number;
-}
-
-export function computeStats(now: Date = new Date()): ShelfStats {
-  const reading = M.items.filter((x) => x.status === '在读');
-  const unread = M.items.filter((x) => x.status === '未读');
-  const done = M.items.filter((x) => x.status === '已读');
-  const thisYear = now.getFullYear();
-  const doneThisYear = done.filter((x) => x.completionDate && x.completionDate.startsWith(String(thisYear)));
-
-  // 时长：md 书 frontmatter readingTimeFormat 中文「N小时M分/N小时/M分」；EPUB 直接毫秒
-  let totalMs = 0;
-  for (const it of M.items) {
-    if (it.readingTimeMs) totalMs += it.readingTimeMs;
-    else if (it.readingTimeFormat) {
-      const m = it.readingTimeFormat.match(/(\d+)\s*小时|(\d+)\s*分/g);
-      if (m) {
-        for (const part of m) {
-          if (part.includes('小时')) totalMs += (parseInt(part, 10) || 0) * 3600000;
-          else if (part.includes('分')) totalMs += (parseInt(part, 10) || 0) * 60000;
-        }
-      }
-    }
-  }
-  const totalHighlights = M.items.reduce((s, x) => s + (x.highlights || 0), 0);
-
-  // 近 12 个月读完（按 completionDate）：倒序，bars[0] = 本月，bars[11] = 11 个月前（issue 207 拍板本月置首）
-  const bars: { count: number; label: string; isThis: boolean }[] = [];
-  const nowM = now.getFullYear() * 12 + now.getMonth();
-  for (let i = 0; i < 12; i++) {
-    const t = nowM - (11 - i);
-    const y = Math.floor(t / 12);
-    const m = t % 12;
-    const count = done.filter((x) => x.completionDate && +x.completionDate.slice(0, 4) === y && +x.completionDate.slice(5, 7) === m + 1).length;
-    bars.push({ count, label: i === 11 ? '本月' : `${m + 1}月`, isThis: i === 11 });
-  }
-  bars.reverse();
-  return {
-    reading, unread, done, doneThisYear,
-    totalHours: Math.round(totalMs / 3600000),
-    totalHighlights,
-    bars,
-    maxBar: Math.max(2, ...bars.map((b) => b.count)),
-  };
 }

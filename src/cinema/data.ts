@@ -124,11 +124,10 @@ export function applySortMode(list: CinemaItem[], mode: string): CinemaItem[] {
   return sortByDateDesc(list);
 }
 
-/** 当前筛选（类型/二级/状态/搜索）+ 当前排序模式（先筛选后排序，保证列表正确） */
+/** 当前筛选（类型/状态/搜索）+ 当前排序模式（先筛选后排序，保证列表正确） */
 export function getDisplayItems(): CinemaItem[] {
   let list = [...M.items];
   if (M.typeFilter) list = list.filter((it) => it.group === M.typeFilter);
-  if (M.subFilter) list = list.filter((it) => it.typeTag === M.subFilter);
   if (M.statusFilter) list = list.filter((it) => it.status === (M.statusFilter === '想看' ? STATUS_WANT : M.statusFilter === '在看' ? STATUS_WATCHING : STATUS_WATCHED));
   if (M.searchKeyword) {
     const kw = M.searchKeyword.toLowerCase();

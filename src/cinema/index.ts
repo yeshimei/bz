@@ -52,11 +52,9 @@ function registerAutoRefresh(app: App): void {
       renderAll(app);
     }, 300);
   };
-  for (const kind of ['cinema']) {
-    onDomainEvent<{ path: string }>(`${kind}:file-created`, (evt) => schedule({ path: evt.path }));
-    onDomainEvent<{ path: string }>(`${kind}:file-deleted`, (evt) => schedule({ path: evt.path }));
-    onDomainEvent<{ path: string }>(`${kind}:file-modified`, (evt) => schedule({ path: evt.path }));
-  }
+  onDomainEvent<{ path: string }>('cinema:file-created', (evt) => schedule({ path: evt.path }));
+  onDomainEvent<{ path: string }>('cinema:file-deleted', (evt) => schedule({ path: evt.path }));
+  onDomainEvent<{ path: string }>('cinema:file-modified', (evt) => schedule({ path: evt.path }));
   onDomainEvent<{ path: string }>('vault:md-created', (evt) => schedule({ path: evt.path }));
   onDomainEvent<{ path: string }>('vault:md-deleted', (evt) => schedule({ path: evt.path }));
   onDomainEvent<{ path: string }>('vault:md-modified', (evt) => schedule({ path: evt.path }));

@@ -296,8 +296,3 @@ export function buildAnalysisHTML(): string {
   ${secHTML('追剧深度', 'bar-chart-3', data.seasons.length ? kvInline([`平均 <b>${data.avgSeason}</b> 季`]) + data.seasons.map((s: any, i: number) => topRow(String(i + 1), `《${esc(s.name)}》`, `${s.seasons} 季`)).join('') : emptyHTML())}
   ${secHTML(`想看清单（${data.wantTotal ?? data.wantList.length}）`, 'bar-chart-3', (data.wantList.length ? data.wantList.map((it: any, i: number) => topRow(String(i + 1), esc(it.name) + (it.douban ? ' · 豆瓣 ' + esc(it.douban) : ''), '')).join('') : emptyHTML()) + (Object.keys(data.wantTags).length ? '<div class="tag-cloud" style="margin-top:10px">' + Object.entries(data.wantTags).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([t, c]) => `<span class="tag-pill">${esc(t)} <b>${c as number}</b></span>`).join('') + '</div>' : ''))}`;
 }
-
-/** 分析页整页内容（页头 sp-head 在 ui.ts；此处只出内容流） */
-export function buildStatPageHtml(): string {
-  return buildAnalysisHTML();
-}

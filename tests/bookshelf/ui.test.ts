@@ -77,7 +77,6 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     resetObsidianMocks();
     resetBookshelfState();
     clearNotices();
-    M.folderPath = '书库';
     document.body.innerHTML = '';
   });
   afterEach(() => {
@@ -444,7 +443,6 @@ describe('bookshelf 面板皮肤（issue 216）', () => {
     resetObsidianMocks();
     resetBookshelfState();
     clearNotices();
-    M.folderPath = '书库';
     document.body.innerHTML = '';
   });
   afterEach(() => {

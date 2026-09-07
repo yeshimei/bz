@@ -28,7 +28,6 @@ export function ensureBookshelf(app: App): void {
   if (initialized) return;
   initialized = true;
   M.appRef = app;
-  M.folderPath = resolveFolderPath();
   registerEscapeHandler();
   registerAutoRefresh(app);
 }
@@ -103,12 +102,6 @@ export function unloadBookshelf(): void {
   // 防止误删同时开着的其他域面板）
   document.querySelectorAll('.bz-bs-panel').forEach((el) => {
     const root = el.closest('.bz-panel-overlay');
-    if (root) root.remove();
-  });
-  // 筛选抽屉兜底清理（壳已收敛共享 .bz-sheet-mask，经域内 .bz-bs-filtersheet 定位其遮罩根，
-  // 防止误删同时开着的其他域抽屉）
-  document.querySelectorAll('.bz-bs-filtersheet').forEach((el) => {
-    const root = el.closest('.bz-sheet-mask');
     if (root) root.remove();
   });
   resetBookshelfState();

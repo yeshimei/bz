@@ -11,7 +11,7 @@
  *     schema 本体不需要种子：ui.ts 的 schemaLoaders 全部调各域真实 xxxSettingsSchema()；
  *   - 设置注入：setSettingsProvider/setSettingsSaver（真 settings-provider 实现可用，
  *     键直绑行的读写落内存单例、saveSettings 持久化 localStorage——评审壳内改动可久）；
- *   - 入口导出：bootSettingsPanelSim / openPanel / openDomain（等价插件
+ *   - 入口导出：bootSettingsPanelSim / openPanel / __simSettings（等价插件
  *     openSettingsPanel(app[, domainId]) 接线形态）+ __simSettings（自检读内存设置）。
  *
  * 产物：build-preview.mjs 以本文件为入口、alias obsidian→fake-obsidian，
@@ -24,7 +24,7 @@ import { setSettingsProvider, setSettingsSaver } from '../core/settings-provider
 import { openSettingsPanel as openPanelReal } from './index';
 
 /** 设置持久化键（localStorage；壳重置 = 移除本键 + 种子标记后重载） */
-export const SIM_SETTINGS_KEY = 'bz-sim:bz-settings.json';
+const SIM_SETTINGS_KEY = 'bz-sim:bz-settings.json';
 /** 种子标记（种子不可变：有标记即跳过，不覆盖） */
 const SEED_MARKER = 'bz-sim:__sp_seed_v1';
 
@@ -122,11 +122,6 @@ export function openPanel(): void {
   openPanelReal(simApp as never);
 }
 
-/** 直达域（桌面定位左栏选中 / 移动端直接进域弹窗——等价「在设置中编辑」深链） */
-export function openDomain(domainId: string): void {
-  ensureBoot();
-  openPanelReal(simApp as never, domainId);
-}
 
 /** 自检/演示钩子：读内存设置单例（键直绑断言用；勿在壳内直改——改请走面板真行为） */
 export function __simSettings(): Record<string, unknown> {
@@ -134,8 +129,3 @@ export function __simSettings(): Record<string, unknown> {
   return simSettings;
 }
 
-/** 自检钩子：恢复演示设置基线（壳「重置」按钮/自检脏基线用；同时清持久层） */
-export function __simResetSettings(): void {
-  localStorage.removeItem(SIM_SETTINGS_KEY);
-  simSettings = { ...SEED_SETTINGS };
-}

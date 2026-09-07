@@ -25,9 +25,9 @@ import {
 } from './constants';
 import { M, type CinemaItem, type CinemaSortMode } from './state';
 import { rebuildItems, getDisplayItems } from './data';
-import { formatRelativeTime } from '../core/utils';
+import { localNow } from '../core/ui/str';
 import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } from './recommend';
-import { buildStatPageHtml } from './analysis';
+import { buildAnalysisHTML } from './analysis';
 import { watchPosterFetch } from './poster-watch';
 import {
   ICON, statusText, itemByKey, doubanSearchUrl,
@@ -43,14 +43,6 @@ import {
 function cinemaStyleOf(): CinemaStyle {
   const raw = (tryGetSettings() as Record<string, unknown>).cinemaStyle;
   return raw === 'gazette' || raw === 'booth' ? raw : 'midnight';
-}
-
-/** 相对日期：统一走 core formatRelativeTime；本域仅保留「未标注日期」兜底语义 */
-export function relDate(d: string | null, now: Date = new Date()): string {
-  if (!d) return '未标注日期';
-  const t = new Date(d).getTime();
-  if (isNaN(t)) return '未标注日期';
-  return formatRelativeTime(d, now);
 }
 
 // ---------- 海报 ----------
@@ -130,13 +122,6 @@ function itemActions(it: CinemaItem, sec: HTMLElement, app: App): MenuAct[] {
 }
 
 // ---------- 落盘（数据契约零改动） ----------
-
-/** 本地时间 YYYY-MM-DD HH:mm:ss */
-function localNow(): string {
-  const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-}
 
 /** 文件名非法字符（Windows 保留集；名称源自文件名《X》，改名前拦截） */
 const ILLEGAL_NAME_RE = /[\\/:*?"<>|]/;
@@ -497,7 +482,7 @@ function midnightInput(app: App): MidnightRenderInput {
     watchedCount: watchedCount(),
     aiHtml: aiPageHtml(aiInput()),
     aiCount: M.aiResult && M.aiResult.length ? M.aiResult.length : null,
-    statHtml: buildStatPageHtml(),
+    statHtml: buildAnalysisHTML(),
     poster: (it) => posterUrl(it, app),
   };
 }
@@ -607,9 +592,7 @@ function bindMidnight(sec: HTMLElement, app: App): void {
       renderAll(app);
       return;
     }
-    const analysisAdd = t.closest('[data-cinema-analysis-add]') as HTMLElement | null;
-    if (analysisAdd) { openForm(sec, null, app); return; }
-    const add = t.closest('[data-cinema-add]') as HTMLElement | null;
+    const add = t.closest('[data-cinema-analysis-add],[data-cinema-add]') as HTMLElement | null;
     if (add) { openForm(sec, null, app); return; }
     const cardEl = t.closest('.pcard') as HTMLElement | null;
     if (cardEl) {

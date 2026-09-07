@@ -15,7 +15,7 @@
   --chip: #fff; --chip-ink: #6d6455; --chip-grey: #ece7db; --chip-grey-ink: #9a917d; --chip-add-bd: #b9b2a2; --chip-add-ink: #8a8171;
   --acc: #5a8f6d; --acc-deep: #3d6b4d; --on-acc: #fff;
   --ft-bd: #f0ece2; --menu: #fffdf8; --menu-bd: #e3dccb; --menu-hover: #f2eee0; --menu-ink: #55503f;
-  --fld-bd: #ddd5c2; --fld-bg: #fff; --fld-ink: #4a443a; --danger: #b3564d; --gold: #e0b73a; --gold-ink: #c9a227;
+  --fld-bd: #ddd5c2; --fld-bg: #fff; --fld-ink: #4a443a; --danger: #b3564d; --gold: #e0b73a;
   --mask: rgba(74,68,58,.38); --pop: #fffdf8; --pop-ink: #4a443a; --pop-mut: #9a917d; --pop-faint: #b3a98f;
 }
 .theme-dark .bz-fav-scope {
@@ -26,7 +26,7 @@
   --chip: #35312a; --chip-ink: #cfc7b4; --chip-grey: #3a352d; --chip-grey-ink: #9a917d; --chip-add-bd: #6d6455; --chip-add-ink: #a89e8a;
   --acc: #6da37f; --acc-deep: #4c7a5d; --on-acc: #fff;
   --ft-bd: #454036; --menu: #35312a; --menu-bd: #4a443a; --menu-hover: #454036; --menu-ink: #d8d0bc;
-  --fld-bd: #55503f; --fld-bg: #2c2823; --fld-ink: #e0d8c4; --danger: #d0705f; --gold: #e0b73a; --gold-ink: #e0b73a;
+  --fld-bd: #55503f; --fld-bg: #2c2823; --fld-ink: #e0d8c4; --danger: #d0705f; --gold: #e0b73a;
   --mask: rgba(0,0,0,.55); --pop: #35312a; --pop-ink: #e0d8c4; --pop-mut: #9a917d; --pop-faint: #847c6a;
 }
 
@@ -51,7 +51,6 @@
 }
 .bz-fav-panel .bz-fav-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 20px; flex: none; position: relative; }
 .bz-fav-panel .bz-fav-head h1 { font-size: 14px; letter-spacing: 3px; color: var(--ink-title); font-weight: 700; margin: 0; }
-/* 移动端：面板即原型 .phone 内容（全屏；边框圆角交给全屏态，留内边距） */
 /* 移动端：面板即原型 .phone 内容（全屏；显式视口宽高——overlay 弹性子项不定宽会被卡墙 max-content 撑爆） */
 .bz-fav-panel.bz-fav-mob { width: 100vw; height: 100vh; max-width: 100vw; padding: 16px 14px 0; }
 
@@ -158,9 +157,8 @@
 /* —— 移动端底部抽屉（原型 .sheet 逐字） —— */
 .bz-fav-sheet-mask {
   position: fixed; inset: 0; z-index: 400; /* 原型兜底值，插件端以 topifyZ 为准 */
-  background: var(--mask); display: none; align-items: flex-end;
+  background: var(--mask); display: flex; align-items: flex-end;
 }
-.bz-fav-sheet-mask.bz-fav-show { display: flex; }
 .bz-fav-sheet {
   width: 100%; background: var(--pop); border-radius: 18px 18px 0 0; padding: 16px 18px 20px;
   box-shadow: 0 -10px 30px rgba(0,0,0,.3);

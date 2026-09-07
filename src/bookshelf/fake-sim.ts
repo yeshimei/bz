@@ -22,11 +22,8 @@ import { setApp, getApp } from '../core/app';
 import { setSettingsProvider } from '../core/settings-provider';
 import { esc } from '../core/ui/str';
 import { ensureBookshelf, openBookshelf as openBookshelfDomain } from './index';
-import { resolveFolderPath } from './data';
 import { catColor } from './render';
-import {
-  createOverlay, closeOverlay, openReportView, renderAll, applyBookshelfSkin, bsSkinClass,
-} from './ui';
+import { openReportView } from './ui';
 
 /** 种子条目（prototype-data.js 的 BookshelfItem 同构快照 + 生成器补的 ctime） */
 interface BsSeedItem {
@@ -184,7 +181,7 @@ export function bootBookshelfSim(): void {
   // 运行期 data.ts 以 (app as any) 访问 plugins 等——类型断言收敛此处差异。
   setApp(app as never);
   injectSettings();
-  // index.ts 真接线：ESC 层 + vault modify 自动刷新 + M.appRef/folderPath（ensure 幂等）
+  // index.ts 真接线：ESC 层 + vault modify 自动刷新 + M.appRef（ensure 幂等）
   ensureBookshelf(getApp());
 }
 
@@ -197,5 +194,3 @@ export function openBookshelf(): void {
 export function openReport(): void {
   openReportView(getApp());
 }
-
-export { createOverlay, closeOverlay, renderAll, applyBookshelfSkin, bsSkinClass, resolveFolderPath };

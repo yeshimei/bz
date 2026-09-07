@@ -4,10 +4,8 @@
  * 历史分类派生 + emoji 分类迁移（issue 231/ADR-0102：内置预设 1226 条退役）
  */
 import { notice } from '../core/notice';
-import { getApp } from '../core/app';
 import { getSettings } from '../core/settings-provider';
 import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
-import moment from 'moment';
 import { splitEmojiCategory } from './emoji-icon-map';
 import type { BelongingsDatabase } from './types';
 
@@ -94,37 +92,4 @@ export async function saveDatabase(database: BelongingsDatabase): Promise<void> 
     items: database.items,
   };
   await enqueueFileTask(getDataFilePath(), () => jsonFileStore<any>(getDataFilePath()).write(saveData));
-}
-
-// ----- 工具函数（复用） -----
-
-/** 已用天数（本地日历日口径，对照 todo/due 的 moment 用法）：
- *  购买日与今天按本地时区取自然日相减；当天/无效日期 = 0 天（全价）。
- *  原 new Date('YYYY-MM-DD') 按 UTC 解析，UTC+8 早 8 点前会多算一天。 */
-export function calculateDaysUsed(purchaseDate: string): number {
-  const purchase = moment(String(purchaseDate || '').slice(0, 10), 'YYYY-MM-DD');
-  if (!purchase.isValid()) return 0;
-  const days = moment().startOf('day').diff(purchase.startOf('day'), 'days');
-  return days > 0 ? days : 0;
-}
-
-/** 已用天数封口版（ticket 189，ADR-0089 出离闭环）：endDate 缺省 = 截至今天（同 calculateDaysUsed）；
- *  出离条目传 exit_date 把陪伴天数封在出离日（不再随时间增长）。
- *  endDate 无效回落今天口径；早于购买日（脏数据）= 0 天。 */
-export function calculateDaysUsedUntil(purchaseDate: string, endDate?: string | null): number {
-  if (!endDate) return calculateDaysUsed(purchaseDate);
-  const purchase = moment(String(purchaseDate || '').slice(0, 10), 'YYYY-MM-DD');
-  if (!purchase.isValid()) return 0;
-  const end = moment(String(endDate).slice(0, 10), 'YYYY-MM-DD');
-  if (!end.isValid()) return calculateDaysUsed(purchaseDate);
-  const days = end.startOf('day').diff(purchase.startOf('day'), 'days');
-  return days > 0 ? days : 0;
-}
-
-export function calculateDailyCost(price: number, purchaseDate: string): string {
-  const diffDays = calculateDaysUsed(purchaseDate);
-  // 当天/无效日期（0 天）同走全价，不产出 "NaN"
-  if (!(diffDays > 0)) return price.toFixed(2);
-  const dailyCost = price / diffDays;
-  return dailyCost < 0.01 ? dailyCost.toFixed(4) : dailyCost.toFixed(2);
 }

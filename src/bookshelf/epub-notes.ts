@@ -74,28 +74,6 @@ export function buildEpubJumpLink(book: any, note: EpubBookNote): string {
   return `${vaultPath}#${subpath}`;
 }
 
-/**
- * 继续读深链：weave-data.json reading.position.cfi（Weave 进度契约 { chapterIndex, cfi, percent }）
- * → `path#weave-cfi=…&chapter=…&sid=…`，跳当前阅读位置（编码函数本域自带，不引用已删 library）。
- * 无聚合/无 cfi 返回 ''（调用方回落直接打开 vaultPath，Weave 自行恢复上次位置）。
- */
-export async function buildEpubResumeLink(app: any, vaultPath: string): Promise<string> {
-  const path = String(vaultPath || '').trim();
-  if (!path) return '';
-  const book = await findWeaveBookByPath(app, path);
-  const position = book?.reading?.position;
-  const cfi = typeof position?.cfi === 'string' ? position.cfi.trim() : '';
-  if (!cfi) return '';
-  const chapter = typeof position?.chapterIndex === 'number' && Number.isFinite(position.chapterIndex)
-    ? position.chapterIndex
-    : undefined;
-  const sourceId = typeof book?.file?.sourceId === 'string' ? book.file.sourceId : '';
-  let subpath = `weave-cfi=${encodeCfiForWikilink(cfi)}`;
-  if (chapter !== undefined) subpath += `&chapter=${chapter}`;
-  if (sourceId) subpath += `&sid=${encodeURIComponent(sourceId)}`;
-  return `${path}#${subpath}`;
-}
-
 // ---------- 直改 weave-data.json（Q16：bz 直接操作数据文件，ADR-0013 扩展记录竞态例外） ----------
 // D3 可靠写契约原语 1 收编：「读最新文档 → 就地改动 → 整文件写回」整体入 core per-path 串行队列
 // （enqueueFileTask，键 = weave-data.json 路径）——想法编辑与划线删除并发时按序落盘，后写者不再用

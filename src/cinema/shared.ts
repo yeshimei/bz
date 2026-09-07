@@ -17,12 +17,9 @@
 import { esc, iconSpan } from '../core/ui/str';
 import {
   STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED,
-  GROUP_ORDER, TYPE_COLORS, getGroupForTag,
+  GROUP_ORDER, TYPE_COLORS, getGroupForTag, getStarString,
 } from './constants';
 import type { CinemaItem } from './state';
-
-// 再出口（壳经 window.BZR_cinema 取用；插件 ui.ts 亦统一从这里取）
-export { esc, iconSpan };
 
 // ---------- 图标名 ----------
 
@@ -41,7 +38,6 @@ export const ICON = {
   eye: 'eye',
   play: 'play',
   globe: 'globe',
-  film: 'clapperboard',
 } as const;
 
 // ---------- 格式化/口径 ----------
@@ -65,17 +61,6 @@ export function statusColor(status: number | string): string {
 export function statusText(status: number | string): string {
   const v = statusNum(status);
   return v === STATUS_WANT ? '想看' : v === STATUS_WATCHING ? '在看' : '已看';
-}
-
-/** 星星串（沿用 floor 口径：半星=空心；5 星轨道文本） */
-export function stars(rating: number): string {
-  if (!rating || rating <= 0) return '';
-  const st = Math.min(Math.round((rating / 2) * 2) / 2, 5);
-  const full = Math.floor(st);
-  let s = '';
-  for (let i = 0; i < full; i++) s += '★';
-  for (let j = full; j < 5; j++) s += '☆';
-  return s;
 }
 
 /** 豆瓣搜索页 URL（无豆瓣链接条目的直达兜底） */
@@ -110,7 +95,7 @@ export function pcardHtml(it: CinemaItem, posterUrl: string | null): string {
     ${(() => { const st = statusNum(it.status); return st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : ''; })()}</div>
     <div class="pname">${esc(it.name)}</div>
     <div class="pmeta">${esc(it.year || '')}${it.year && it.director ? ' · ' : ''}${esc(it.director || '')}</div>
-    <div class="pstars">${r && r > 0 ? stars(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span style="opacity:.35">未评分</span>'}</div></div>`;
+    <div class="pstars">${r && r > 0 ? getStarString(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span style="opacity:.35">未评分</span>'}</div></div>`;
 }
 
 // ---------- 视图状态快照（纯层禁读 M：筛选/排序/视图显式入参） ----------
@@ -147,7 +132,7 @@ export function detailModalHtml(it: CinemaItem, posterUrl: string | null): strin
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
         <div class="dm-badges">${badge(typeColor(it.group), it.typeTag)}
           ${(() => { const st = statusNum(it.status); return st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : ''; })()}
-          ${it.rating && it.rating > 0 ? `<span class="dm-stars">${stars(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ''}
+          ${it.rating && it.rating > 0 ? `<span class="dm-stars">${getStarString(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ''}
           ${it.watchDate ? `<span class="dm-date">${esc((it.watchDate || '').slice(0, 10))}</span>` : ''}</div>
         ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ''}</div></div>
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join('') : ''}

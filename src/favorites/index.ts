@@ -9,8 +9,8 @@ import { openForm, unloadFavoritesUI } from './ui';
 
 let initialized = false;
 
-/** 幂等初始化（懒加载） */
-export function ensureFavorites(app: App): void {
+/** 幂等初始化（懒加载；app 由 open/add 回调持传，初始化本身不需要） */
+export function ensureFavorites(): void {
   if (initialized) return;
   initialized = true;
   void FavoritesApp.getInstance().init();
@@ -18,13 +18,13 @@ export function ensureFavorites(app: App): void {
 
 /** 打开收藏面板（favorites-open-panel 命令回调） */
 export function openFavoritesPanel(app: App): void {
-  ensureFavorites(app);
+  ensureFavorites();
   void FavoritesApp.getInstance().openPanel(app);
 }
 
 /** 添加收藏（favorites-add-item 命令回调，直接打开添加弹窗） */
 export function addFavoriteItem(app: App): void {
-  ensureFavorites(app);
+  ensureFavorites();
   FavoritesApp.getInstance().openAdd(app);
 }
 

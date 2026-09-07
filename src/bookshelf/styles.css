@@ -260,11 +260,6 @@
 .bz-bs-edit-textarea { width: 100%; min-height: 100px; resize: vertical; }
 .bz-bs-edit-btns { margin-top: var(--bz-space-md); }
 
-/* 删除确认（复用组件库弹窗骨架；文案排布保留） */
-.bz-bs-confirm { text-align: center; padding: var(--bz-space-sm) var(--bz-space-xs); }
-.bz-bs-confirm-ic { width: 30px; height: 30px; color: var(--bz-text-3); display: inline-flex; }
-.bz-bs-confirm p { margin-top: var(--bz-space-md); font-size: var(--bz-font-body); color: var(--bz-text-1); line-height: 1.6; }
-.bz-bs-confirm-sub { margin-top: var(--bz-space-xs); font-size: var(--bz-font-meta); color: var(--bz-text-3); }
 
 /* ==================== 报告视图（命令 bz-reading-report-open 专用；墙面无入口） ====================
    头行/关闭钮/内容区样式归 reading-report/styles.css（walkthrough C-4 单一事实源），本域只留容器。 */

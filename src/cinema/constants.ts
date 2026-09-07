@@ -6,8 +6,6 @@ export const STATUS_WANT = 0;
 export const STATUS_WATCHING = 1;
 export const STATUS_WATCHED = 2;
 
-/** 评分制刻度上限（10 分制） */
-export const RATING_MAX = 10;
 /** 默认评分（标记已看直改默认分；10 分制中点 5） */
 export const DEFAULT_RATING = 5;
 
@@ -25,16 +23,6 @@ export const ALL_TAGS: string[] = Object.values(TYPE_GROUPS).flat();
 /** 组展示顺序（左栏/移动端分类条） */
 export const GROUP_ORDER: string[] = ['电影', '剧集', '动漫', '纪录片', '公开课', '其他'];
 
-/** 组 → 细分 tag 映射（左栏二级展开用） */
-export const GROUP_SUBS: Record<string, string[]> = {
-  剧集: ['美剧', '英剧', '国产剧', '日剧', '韩剧', '德剧', '哥伦比亚剧'],
-  动漫: ['日漫', '国漫', '美漫'],
-  电影: [],
-  纪录片: [],
-  公开课: [],
-  其他: [],
-};
-
 /** 类型色（功能色，双主题一致；与原型一比一） */
 export const TYPE_COLORS: Record<string, string> = {
   电影: '#e6951d',
@@ -43,13 +31,6 @@ export const TYPE_COLORS: Record<string, string> = {
   纪录片: '#45a35c',
   公开课: '#9b6dd4',
   其他: '#888',
-};
-
-/** 状态色 */
-export const STATUS_COLORS: Record<string, string> = {
-  想看: '#888',
-  在看: '#e6951d',
-  已看: '#45a35c',
 };
 
 /** tag → 组 */
@@ -82,13 +63,6 @@ export function getStarString(rating: number): string {
 
 // ======================= 风格框架（issue 236 / ADR-0103） =======================
 
-/** 面板风格 id（CINEMA_STYLES 清单 = 唯一事实源；原型壳同款） */
+/** 面板风格 id（当前仅午夜场上岸；gazette/booth 为 styles.css 预留段，设置项见 settings.ts） */
 export type CinemaStyle = 'midnight' | 'gazette' | 'booth';
-
-/** 三风格清单（设置选项与面板分支都从这里出；新风格 = 加一项 + styles.css 锚类段） */
-export const CINEMA_STYLES: { id: CinemaStyle; label: string; en: string }[] = [
-  { id: 'midnight', label: '午夜场', en: 'MIDNIGHT' },
-  { id: 'gazette', label: '场刊', en: 'GAZETTE' },
-  { id: 'booth', label: '放映室', en: 'BOOTH' },
-];
 // 当前风格取值 cinemaStyleOf() 在 ui.ts（读设置属行为层；本文件保持纯常量，ADR-0104 纯度守卫）。

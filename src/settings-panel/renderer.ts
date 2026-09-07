@@ -15,7 +15,8 @@
  * 3. 图标一律 lucide（setIcon/组件库），禁止 emoji 当图标（ui-kit-manual §5）。
  */
 import { getSettings, saveSettings } from '../core/settings-provider';
-import type { SettingsSchema, SettingsRow, SettingsSnapshot, SettingsRowContext } from '../core/settings-schema';
+import { bindValue } from '../core/settings-schema';
+import type { RowBinding, SettingsSchema, SettingsRow, SettingsSnapshot, SettingsRowContext } from '../core/settings-schema';
 import { setIcon } from 'obsidian';
 import { openDirPicker } from './dir-picker';
 import { notice } from '../core/notice';
@@ -28,42 +29,30 @@ function snapshot(): SettingsSnapshot {
   return getSettings() as unknown as SettingsSnapshot;
 }
 
-/** 绑定统一读写通道（照抄 settings-schema.ts bindValue） */
-interface ValueAccess<V> {
-  read: () => V;
-  write: (v: V) => void;
-  persist: () => Promise<void> | void;
-}
-
-// 行绑定类型（键直绑 或 三函数逃生口）
-type AnyBinding =
-  | { key: string }
-  | { get: () => unknown; set: (v: unknown) => void; save: () => Promise<void> | void };
-
-function bindValue<V>(binding: AnyBinding): ValueAccess<V> {
-  if ('key' in binding) {
-    const key = binding.key;
-    return {
-      read: () => getSettings()[key] as V,
-      write: (v) => {
-        (getSettings() as unknown as Record<string, unknown>)[key as string] = v;
-      },
-      persist: () => saveSettings(),
-    };
-  }
-  return {
-    read: () => binding.get() as V,
-    write: (v) => binding.set(v),
-    persist: () => binding.save(),
-  };
-}
-
 /** 行上下文（供 onChange/custom/button 回调；结构与 core SettingsRowContext 一致） */
 function makeCtx(rowEl: HTMLElement, refreshVisibility: () => void): SettingsRowContext {
   return { rowEl, refreshVisibility };
 }
 
 /* ==================== 行控件（全部消费组件库共享类） ==================== */
+
+/**
+ * refreshKey 联动注册（makeInput 系共用）：任意行变更后重读显示值，
+ * 经 __setDisplayValue 写回输入框（不落盘、不置脏）。
+ */
+function regRefreshDisplay(
+  regRefresh: ((fn: () => void) => void) | undefined,
+  ref: string | ((snapshot: SettingsSnapshot) => string) | undefined,
+  input: HTMLInputElement,
+): void {
+  if (!regRefresh || ref === undefined) return;
+  regRefresh(() => {
+    const snap = snapshot();
+    const fresh = typeof ref === 'function' ? ref(snap) : String((snap as any)[ref]);
+    const setDisplay = (input as any).__setDisplayValue as ((v: string) => void) | undefined;
+    if (setDisplay) setDisplay(String(fresh ?? ''));
+  });
+}
 
 /** 文本/数字输入：.bz-input 共享底 + 行内布局修饰（mono/num/secret 尺寸见域样式）。
  *  行为层独有：防抖落盘 + 失焦/回车提交 + refreshKey 程序化刷新（不置脏，防 blur 假写）。 */
@@ -262,7 +251,7 @@ function renderRow(
 
   switch (row.type) {
     case 'toggle': {
-      const acc = bindValue<boolean>(row.binding as unknown as AnyBinding);
+      const acc = bindValue<boolean>(row.binding as unknown as RowBinding<boolean>);
       // 开关结构单源（R.toggleHtml 逐字原型），行为绑定留本层
       ctrlEl.innerHTML = R.toggleHtml(acc.read() === true);
       const sw = ctrlEl.querySelector('.bz-sw')!;
@@ -278,7 +267,7 @@ function renderRow(
       break;
     }
     case 'text': {
-      const acc = bindValue<string>(row.binding as unknown as AnyBinding);
+      const acc = bindValue<string>(row.binding as unknown as RowBinding<string>);
       const ph = typeof row.placeholder === 'function' ? row.placeholder(snapshot()) : row.placeholder;
       const input = makeInput({
         value: acc.read() ?? '',
@@ -294,19 +283,11 @@ function renderRow(
       });
       ctrlEl.appendChild(input);
       // refreshKey 联动：任意行变更（含 aiProvider 切换）后重读显示值写回输入框（不落盘）
-      if (regRefresh && row.refreshKey !== undefined) {
-        const ref = row.refreshKey; // 闭包内窄化不保留，先提为局部常量
-        regRefresh(() => {
-          const snap = snapshot();
-          const fresh = typeof ref === 'function' ? ref(snap) : String((snap as any)[ref]);
-          const setDisplay = (input as any).__setDisplayValue as ((v: string) => void) | undefined;
-          if (setDisplay) setDisplay(String(fresh ?? ''));
-        });
-      }
+      regRefreshDisplay(regRefresh, row.refreshKey, input);
       break;
     }
     case 'textarea': {
-      const acc = bindValue<string>(row.binding as unknown as AnyBinding);
+      const acc = bindValue<string>(row.binding as unknown as RowBinding<string>);
       // 结构单源（R.textareaHtml）
       ctrlEl.innerHTML = R.textareaHtml(acc.read() ?? '', row.placeholder);
       const ta = ctrlEl.querySelector('textarea')!;
@@ -338,7 +319,7 @@ function renderRow(
       break;
     }
     case 'number': {
-      const acc = bindValue<number>(row.binding as unknown as AnyBinding);
+      const acc = bindValue<number>(row.binding as unknown as RowBinding<number>);
       const ph = typeof row.placeholder === 'function' ? row.placeholder(snapshot()) : row.placeholder;
       const input = makeInput({
         value: String(acc.read() ?? ''),
@@ -363,19 +344,11 @@ function renderRow(
       (input as HTMLInputElement).step = String(row.step ?? 1);
       ctrlEl.appendChild(input);
       // refreshKey 联动：任意行变更（含 aiProvider 切换）后重读显示值写回输入框（不落盘）
-      if (regRefresh && row.refreshKey !== undefined) {
-        const ref = row.refreshKey; // 闭包内窄化不保留，先提为局部常量
-        regRefresh(() => {
-          const snap = snapshot();
-          const fresh = typeof ref === 'function' ? ref(snap) : String((snap as any)[ref]);
-          const setDisplay = (input as any).__setDisplayValue as ((v: string) => void) | undefined;
-          if (setDisplay) setDisplay(String(fresh ?? ''));
-        });
-      }
+      regRefreshDisplay(regRefresh, row.refreshKey, input);
       break;
     }
     case 'select': {
-      const acc = bindValue<string>(row.binding as unknown as AnyBinding);
+      const acc = bindValue<string>(row.binding as unknown as RowBinding<string>);
       // 下拉结构单源（R.selectTriggerHtml 触发器 + R.selectItemHtml 菜单项；旋转样式 styles.css .bz-select-car 单源）
       const options = row.options;
       const labelOf = (v: string) => (options.find((o) => o.value === v) || { label: v }).label;
@@ -418,7 +391,7 @@ function renderRow(
       break;
     }
     case 'slider': {
-      const acc = bindValue<number>(row.binding as unknown as AnyBinding);
+      const acc = bindValue<number>(row.binding as unknown as RowBinding<number>);
       // 滑杆结构单源（R.sliderHtml：range + 轻量读数 span），行为留本层
       const cur = acc.read() ?? row.min ?? 0;
       ctrlEl.innerHTML = R.sliderHtml(row.min, row.max, row.step ?? 1, cur);
@@ -434,7 +407,7 @@ function renderRow(
       break;
     }
     case 'path': {
-      const acc = bindValue<string | string[]>(row.binding as unknown as AnyBinding);
+      const acc = bindValue<string | string[]>(row.binding as unknown as RowBinding<string | string[]>);
       const multi = row.mode === 'multi';
       const fallbackFn = (row as { fallbackValue?: () => string }).fallbackValue;
       ctrlEl.appendChild(makePathRowCtrl({
@@ -482,7 +455,7 @@ function renderRow(
     case 'choiceCards': {
       // 卡组结构单源（R.cardpickHtml：bz-sp-cardpick 卡 = mini 预览 + 名称；空值回退首个选项同 select 口径）。
       // options.layout + layoutKey：布局绑定的主题行只渲当前布局配套的单卡——主题不通用（拍板）。
-      const acc = bindValue<string>(row.binding as unknown as AnyBinding);
+      const acc = bindValue<string>(row.binding as unknown as RowBinding<string>);
       const layoutKey = (row as { layoutKey?: string }).layoutKey;
       const curLayout = layoutKey ? String((snapshot() as any)[layoutKey] ?? '') : '';
       const opts2 = row.options.filter((o) => {
