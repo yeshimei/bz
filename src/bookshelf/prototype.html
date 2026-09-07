@@ -2,20 +2,23 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>书库 · 原型预览（与 src/bookshelf/styles.css 共用同一份 CSS）</title>
+<title>书库 · 原型预览（真行为单源）</title>
 <!--
-  ┌────────────────────────────────────────────────────────────────────┐
-  │ 本文件 = 书库域 UI 的评审壳（书脊墙 1:1，issue 218 → 226 定稿）。    │
-  │ 组件样式零内联，全部来自（与 build-css SOURCES 同序）：              │
-  │   ../core/styles.css → ../core/ui/tokens.css                        │
-  │   → ../core/ui/components.css → ../reading-report/styles.css        │
-  │   → ./styles.css                                                    │
-  │ 方向铁律（issue 230）：先在这里改/评审 → 同步 styles.css / ui.ts；   │
-  │ 禁止拿域现状反向改写本文件。                                        │
-  │ 移动端判定：真实端 = 视口 ≤768 的 @media（书库无独立移动布局）；     │
-  │ 评审壳 = 右下手机框内嵌本页 ？mob=1 窄视口 iframe（396×780 命中      │
-  │ 同一份 @media 规则，壳内零复制移动端样式）。                        │
-  └────────────────────────────────────────────────────────────────────┘
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ 本文件 = 书库域 UI 的评审壳（行为单源版，issue 245/ADR-0106）。           │
+  │ 组件样式零内联，全部来自（与 build-css SOURCES 同序）：                    │
+  │   ../core/styles.css → ../core/ui/tokens.css → ../core/ui/components.css │
+  │   → ../reading-report/styles.css → ./styles.css                          │
+  │ markup 单源（ADR-0104）：面板/标签/排序/书脊墙/空态/借书卡 HTML 出自       │
+  │   ./prototype-render.js（src/bookshelf/render.ts 构建）。                 │
+  │ 行为单源（issue 245/ADR-0106）：交互逻辑全部是插件同款 ui.ts/index.ts      │
+  │   /data.ts/reading-report 依赖链——经 ./prototype-behavior.js              │
+  │   （src/bookshelf/fake-sim.ts 构建，alias obsidian→公共假层）在下方两个     │
+  │   iframe 视图里跑真行为；桌面 iframe 920px = 桌面布局；移动 iframe 396px    │
+  │   = @media ≤768 移动布局。数据 = localStorage（fake vault 种子：md 笔记    │
+  │   frontmatter + weave-data.json + 封面图，每次启动无条件重灌）。            │
+  │ 壳内只允许：外景容器样式、评审徽牌、演示钩子与自检。                        │
+  └────────────────────────────────────────────────────────────────────────┘
 -->
 <link rel="stylesheet" href="../core/styles.css">
 <link rel="stylesheet" href="../core/ui/tokens.css">
@@ -25,47 +28,39 @@
 <style>
   /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 56px; padding: 32px 24px;
+  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 32px 24px;
     background: #d6d2c6; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
-  /* 模拟 Obsidian 宿主变量（core/styles.css 取值用；插件内由主题提供） */
+  /* 模拟 Obsidian 宿主变量（core/styles.css 的弹层/菜单取值用；插件内由主题提供） */
   body {
     --background-primary: #fbf9f3; --text-normal: #171512; --text-muted: #8b8474; --text-faint: #b3ab99;
     --text-error: #b3564d; --background-modifier-hover: rgba(23,21,18,.06); --color-green: #3d8f5d;
   }
   * { scrollbar-width: none; } *::-webkit-scrollbar { display: none; }
 
-  /* 桌面面板外景（组件本体 1180×760 来自 styles.css） */
-  .demo-dt { flex: none; }
+  /* 桌面外景（真行为 iframe：面板 append iframe body，宽度决定布局；
+     .bz-bs-panel 以 max-width:calc(100vw-32px)/max-height:92vh 自适应外景） */
+  .demo-dt { flex: none; width: 920px; height: 640px; }
+  /* 移动外景：396px iframe → 视口 ≤768 命中 fake Platform.isMobile 与 @media 移动布局 */
+  .demo-mob { width: 396px; height: 780px; border-radius: 26px; overflow: hidden; flex: none;
+    border: 1px solid #9a948a; box-shadow: 0 8px 30px rgba(0,0,0,.2); background: #1d1510; }
+  .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
 
-  /* 移动端手机框：内嵌本页 ?mob=1（窄视口 iframe 命中 styles.css 的 @media ≤768 规则） */
-  .demo-mob { width: 396px; height: 780px; position: relative; overflow: hidden; flex: none;
-    border: 1px solid #9a948a; border-radius: 26px; background: #1d1510; box-shadow: 0 8px 30px rgba(0,0,0,.2); }
-  .demo-mob iframe { width: 100%; height: 100%; border: none; display: block; }
-
-  /* ?mob=1 直开：本页即移动端视口，只渲染全屏面板 */
-  body.mob-root { display: block; padding: 0; background: #1d1510; }
-
-  /* 评审徽牌（演示壳自用）；面板全 token 自给（皮肤层全量覆盖 --bz-*），亮暗无差 */
+  /* 评审徽牌（演示壳自用） */
   .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #5c564a; display: flex; gap: 10px; align-items: center;
     background: rgba(255,255,255,.92); border: 1px solid #c9c2b2; padding: 3px 8px; z-index: 900; }
   .vbadge button { border: none; background: none; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; }
-  .vbadge select { font: 11px 'Microsoft YaHei'; border: 1px solid #c9c2b2; background: #fff; color: #5c564a; }
-  /* 暗态演示外景（壳自用）：模拟 Obsidian 暗色宿主 */
-  body.theme-dark { background: #14110d; }
-  body.theme-dark .vbadge { background: rgba(30, 26, 20, 0.92); border-color: #4a4238; color: #c9bfa8; }
-  body.theme-dark .vbadge button { color: #d98873; }
-  body.theme-dark .vbadge select { background: #26211a; border-color: #4a4238; color: #c9bfa8; }
-  body.theme-dark .demo-mob { border-color: #4a4238; }
+  .vbadge .ok { color: #3d8f5d; }
+  .vbadge .bad { color: #b3564d; }
 </style>
 </head>
 <body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark；书库面板皮肤自给，壳内补一类兜底 -->
-  <div id="dtHost" class="demo-dt"></div>
-  <div id="mobHost" class="demo-mob"><iframe id="mobFrame" title="移动端预览（?mob=1 窄视口）"></iframe></div>
+  <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="书库·桌面"></iframe></div>
+  <div id="mobHost" class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="书库·移动"></iframe></div>
 
-  <div class="vbadge">书库 · 原型预览（共用 styles.css）· 真实 164 册
-    <button id="themeBtn" title="模拟 Obsidian 亮暗主题（跟随主题皮肤下热切换面板）">切暗色</button>
-    <select id="skinSel" title="面板皮肤（每肤配亮暗变体，主题切模式）"></select>
+  <div class="vbadge">书库 · 真行为单源预览（桌面=真 ui.ts 跑在 920px，移动=396px）· 真实 164 册
     <button id="mobToggle">隐藏移动端</button>
+    <button id="reset">重置演示数据</button>
+    <span id="stResult"></span>
   </div>
 
 <script src="./prototype-icons.js"></script>
@@ -73,352 +68,241 @@
 <script src="./prototype-render.js"></script>
 <script>
 (function () {
-  /* ==================== 运行模式：?mob=1 = 本页即移动端视口（iframe 内容） ====================
-     markup 单源（ADR-0104）：面板/标签/排序/书脊墙/空态/借书卡/筛选排序管道全部出自
-     render.ts（经 prototype-render.js 挂 window.BZR_bookshelf）——本壳只留演示层：
-     演示数据、皮肤/亮暗切换、自绘弹窗壳与 toast、评审钩子与自检。 */
-  const R = window.BZR_bookshelf;
-  const esc2 = R.esc;
-  const iconSpan = R.iconSpan;
-
-  const param = (k) => { const m = location.search.match(new RegExp('[?&]' + k + '=([^&]+)')); return m ? m[1] : ''; };
-  const MOB = location.search.includes('mob=1');
-
-  /* ==================== 壳基座：mountIcons（内联 SVG，对齐 core/ui icons.ts） ==================== */
-  const ICONS = window.BS_ICONS || {};
-  function mountIcons(root) {
-    if (!root) return;
-    root.querySelectorAll('i[data-lucide]').forEach((el) => {
-      const d = ICONS[el.dataset.lucide];
-      if (d && !el.firstChild) {
-        el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
-      }
-    });
-  }
-  const HOOKS = { mountIcons };
-
-  /* ==================== 演示数据 + 面板状态（state.ts M 同构；view 恒 shelf） ==================== */
-  const items = window.BS.ITEMS.map((x) => ({ ...x }));
-  const itemById = (id) => items.find((i) => i.id === id);
-  const M = { side: 'all', catFilter: 'all', sortMode: 'recent', searchKeyword: '', view: 'shelf' };
-  const getDisplayItems = () => R.getDisplayItems(items, { side: M.side, catFilter: M.catFilter, q: M.searchKeyword, sortMode: M.sortMode });
-
-  /* ==================== 面板皮肤（五肤×亮暗模式；?skin=/?theme= 评审直达） ==================== */
-  const SKIN_IDS = ['nordic', 'noir', 'kraft', 'velvet', 'mono'];
-  const SKIN_NAMES = { nordic: '雪松白', noir: '黑金夜曲', kraft: '牛皮手帐', velvet: '丝绒剧院', mono: '极简黑白' };
-  const normalizeSkin = (v) => SKIN_IDS.includes(v) ? v : 'nordic';
-  let skin = normalizeSkin(param('skin'));
-  let theme = param('theme') === 'dark' ? 'dark' : 'light';
-  const skinClass = () => `bz-bs-skin-${skin} bz-bs-mode-${theme}`;
-  let panelEl = null;
-  const ALL_SKIN = [...SKIN_IDS.map((id) => `bz-bs-skin-${id}`), 'bz-bs-mode-light', 'bz-bs-mode-dark'];
-  function paintSkin() {
-    const cls = skinClass();
-    if (panelEl) { panelEl.classList.remove(...ALL_SKIN); panelEl.classList.add(...cls.split(' ')); }
-    document.querySelectorAll('.bz-bs-d-popup').forEach((p) => { p.classList.remove(...ALL_SKIN); p.classList.add(...cls.split(' ')); });
-    const sel = document.getElementById('skinSel');
-    if (sel && sel.value !== skin) sel.value = skin;
-    const frame = document.getElementById('mobFrame');
-    if (frame) frame.src = `./prototype.html?mob=1&skin=${skin}&theme=${theme}`; // 移动端 = 同页窄视口，换肤/换模式重载 iframe
-    const btn = document.getElementById('themeBtn');
-    if (btn) btn.textContent = theme === 'dark' ? '切亮色' : '切暗色';
-  }
-  function applySkin(v) { skin = normalizeSkin(v); paintSkin(); }
-  function applyTheme(v) {
-    theme = v === 'dark' ? 'dark' : 'light';
-    document.body.classList.toggle('theme-dark', theme === 'dark');
-    document.body.classList.toggle('theme-light', theme !== 'dark');
-    paintSkin();
-  }
-
-  /* ==================== 渲染（render.ts 胶水：各回各的挂点） ==================== */
-  function panelRoot() { return MOB ? document.querySelector('.bz-panel-overlay') : document.getElementById('dtHost'); }
-  function renderAll() {
-    const root = panelRoot();
-    if (!root) return;
-    const labels = root.querySelector('#bz-bs-labels');
-    if (labels) labels.innerHTML = R.labelsHtml(items, M.side, M.catFilter);
-    const seg = root.querySelector('#bz-bs-sortseg');
-    if (seg) seg.innerHTML = R.sortSegHtml(M.sortMode);
-    const shelf = root.querySelector('#bz-bs-shelf');
-    if (!shelf) return;
-    R.renderWallInto(shelf, {
-      hint: root.querySelector('#bz-bs-hint'),
-      all: items, list: getDisplayItems(), q: M.searchKeyword,
-      emptyFolder: '书库', emptyTag: 'book',
-      hooks: HOOKS,
-    });
-  }
-
-  /* ==================== 面板骨架（render.ts panelHtml；插件侧 bsSkinClass 读设置，壳走 ?skin=/?theme=） ==================== */
-  function buildPanel(host) {
-    host.innerHTML = R.panelHtml(skinClass());
-    const overlay = host.classList.contains('bz-panel-overlay') ? host : host.querySelector('.bz-panel-overlay') || host;
-    panelEl = host.querySelector('.bz-bs-panel');
-    wirePanel(overlay);
-    mountIcons(host);
-    renderAll();
-  }
-
-  /* ==================== 借书卡详情（render.ts detailBodyHtml；壳同构自绘弹窗壳） ====================
-     插件 = uiModal（mask.bz-overlay-mask > popup.bz-overlay-popup + 皮肤类 > .bz-dialog-body）；壳同构自绘。
-     封面：插件走 vault resource URL；壳无 vault 资源 → 分类色 SVG data URI 代真。 */
-  function demoCoverUri(it) {
-    const c = R.catColor(it.category || '未分类');
-    const t = String(it.title || '');
-    const mid = Math.ceil(t.length / 2);
-    const lines = t.length <= 7 ? [t] : [t.slice(0, mid), t.slice(mid)];
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="210"><rect width="150" height="210" fill="${c.bg}"/><rect x="9" y="9" width="132" height="192" fill="none" stroke="${c.fg}" stroke-opacity=".4"/>` +
-      lines.map((ln, i) => `<text x="75" y="${104 + (i - (lines.length - 1) / 2) * 26}" text-anchor="middle" font-family="Songti SC,SimSun,serif" font-size="17" fill="${c.fg}">${esc2(ln)}</text>`).join('') +
-      `<text x="75" y="186" text-anchor="middle" font-family="Songti SC,SimSun,serif" font-size="10" fill="${c.fg}" fill-opacity=".75">${esc2(it.author || '')}</text></svg>`;
-    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-  }
-  let detailEl = null;
-  function closeBookDetail() { if (detailEl) { detailEl.remove(); detailEl = null; } }
-  function openBookDetail(it) {
-    closeBookDetail();
-    const cu = it.cover ? demoCoverUri(it) : null;
-    const mask = document.createElement('div');
-    mask.className = 'bz-overlay-mask';
-    mask.innerHTML = `<div class="bz-overlay-popup bz-bs-d-popup ${skinClass()}"><div class="bz-dialog-body">
-    <div class="bz-bs-detail">${R.detailBodyHtml(it, cu)}</div>
-    </div></div>`;
-    document.body.appendChild(mask);
-    detailEl = mask;
-    mountIcons(mask);
-    mask.querySelector('[data-bs-d-close]').addEventListener('click', closeBookDetail);
-    mask.addEventListener('mousedown', (e) => { if (e.target === mask) closeBookDetail(); });
-  }
-
-  /* ==================== 事件（ui.ts 单一委托同构：标签 / 排序 / 书脊详情 / 检索） ==================== */
-  function wirePanel(root) {
-    root.addEventListener('click', (e) => {
-      const t = e.target;
-      // 移动端关闭出口 = 点「书库」匾收面板（桌面不响应，点面板外/Esc 关）
-      if (t.closest('[data-bs-plaque]')) {
-        if (!MOB) return;
-        const host = document.querySelector('.bz-panel-overlay');
-        host.style.display = 'none';
-        let reopen = document.getElementById('bsReopen');
-        if (!reopen) {
-          reopen = document.createElement('button');
-          reopen.id = 'bsReopen';
-          reopen.textContent = '重新打开面板';
-          reopen.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:900;padding:10px 18px;border:1px solid #888;background:#26211a;color:#eee;border-radius:6px;font:13px "Microsoft YaHei"';
-          reopen.onclick = () => { host.style.display = ''; reopen.remove(); };
-          document.body.appendChild(reopen);
-        }
-        toast('评审壳：插件内此处 closeOverlay()');
-        return;
-      }
-      if (e.target === root && MOB) { toast('评审壳：插件内此处关闭面板'); return; }
-      const side = t.closest('[data-bs-side]');
-      if (side) {
-        const id = side.dataset.bsSide || 'all';
-        if (id === 'all') { M.side = 'all'; M.catFilter = 'all'; }
-        else M.side = M.side === id ? 'all' : id;
-        renderAll();
-        return;
-      }
-      const cat = t.closest('[data-bs-cat]');
-      if (cat) {
-        const name = cat.dataset.bsCat || 'all';
-        M.catFilter = name !== 'all' && M.catFilter === name ? 'all' : name;
-        renderAll();
-        return;
-      }
-      const sortBtn = t.closest('[data-bs-sort]');
-      if (sortBtn) {
-        M.sortMode = sortBtn.dataset.bsSort || 'recent';
-        renderAll();
-        return;
-      }
-      if (t.closest('[data-rr-goto-shelf]')) { M.view = 'shelf'; paintViews(); return; }
-      const spine = t.closest('[data-bs-id]');
-      if (spine && M.view === 'shelf') {
-        const epub = spine.dataset.bsEpub === '1';
-        const it = items.find((x) => epub ? x.epubVaultPath === spine.dataset.bsId : x.id === spine.dataset.bsId);
-        if (it) openBookDetail(it);
-        return;
-      }
-    });
-    const searchInput = root.querySelector('#bz-bs-dsearch');
-    let deb = null;
-    searchInput.addEventListener('input', () => {
-      clearTimeout(deb);
-      deb = setTimeout(() => { M.searchKeyword = searchInput.value.trim(); renderAll(); }, 200);
-    });
-  }
-  function paintViews() {
-    const root = panelRoot();
-    if (!root) return;
-    root.querySelector('.bz-bs-view-shelf')?.classList.toggle('active', M.view === 'shelf');
-    root.querySelector('.bz-bs-view-report')?.classList.toggle('active', M.view === 'report');
-  }
-
-  /* ==================== toast（插件 = core notice；壳自绘） ==================== */
-  let toastEl = null, toastTimer = 0;
-  function toast(msg) {
-    if (toastEl) toastEl.remove();
-    clearTimeout(toastTimer);
-    toastEl = document.createElement('div');
-    toastEl.style.cssText = 'position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:960;background:#171512;color:#f0ece4;font-size:12.5px;padding:10px 16px;box-shadow:0 6px 18px rgba(0,0,0,.3)';
-    toastEl.textContent = msg;
-    document.body.appendChild(toastEl);
-    toastTimer = setTimeout(() => { if (toastEl) { toastEl.remove(); toastEl = null; } }, 2600);
-  }
-
-  /* ==================== Esc（ui.ts escManager 同语义简化：详情 → 关面板提示） ==================== */
-  document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape') return;
-    if (detailEl) return closeBookDetail();
+  /* ==================== 壳基座（仅外景）：两个真行为 iframe ====================
+   * 行为全部在 iframe 内跑真 ui.ts（prototype-behavior.js）；本页只做：
+   *  - 重置演示数据（清 fake vault 本域键后重载；fake-sim 每次启动无条件重灌种子）
+   *  - 演示钩子（?demo=…）与自检（?selftest=1）：经 iframe contentWindow 访问真 DOM
+   */
+  const dtFrame = () => document.querySelector('#dtHost iframe');
+  const mobFrame = () => document.querySelector('#mobHost iframe');
+  const dtDoc = () => dtFrame().contentDocument;
+  const mobDoc = () => mobFrame().contentDocument;
+  // 轮询现取 contentDocument：iframe 加载前后 document 引用会替换（about:blank → 真实文档），
+  // 不能缓存旧引用等面板——每次现查，跨文档访问本身同源安全。
+  const waitFrame = (getDoc, sel) => new Promise((res, rej) => {
+    const started = Date.now();
+    const tries = () => {
+      try {
+        const doc = getDoc();
+        if (doc && doc.querySelector(sel)) return res(doc);
+        if (Date.now() - started > 25000) return rej(new Error('iframe 面板超时：' + sel));
+        setTimeout(tries, 150);
+      } catch (e) { setTimeout(tries, 150); }
+    };
+    tries();
+  });
+  // 条件轮询（现取求值；报告分片渲染等异步面用）
+  const waitCond = (fn, what, timeout = 12000) => new Promise((res, rej) => {
+    const started = Date.now();
+    const tries = () => {
+      try {
+        const v = fn();
+        if (v) return res(v);
+        if (Date.now() - started > timeout) return rej(new Error('等待超时：' + what));
+        setTimeout(tries, 120);
+      } catch (e) { rej(e); }
+    };
+    tries();
   });
 
-  /* ==================== 启动（桌面：外景直挂面板；mob=1：插件同构 overlay > 全屏面板） ==================== */
-  if (MOB) {
-    document.body.classList.add('mob-root');
-    document.getElementById('dtHost')?.remove();
-    document.getElementById('mobHost')?.remove();
-    document.querySelector('.vbadge')?.remove();
-    const overlay = document.createElement('div');
-    overlay.className = 'bz-panel-overlay';
-    document.body.appendChild(overlay);
-    buildPanel(overlay);
-    overlay.querySelector('.bz-bs-plaque').title = '关闭';
-  } else {
-    buildPanel(document.getElementById('dtHost'));
+  document.querySelector('#mobToggle').addEventListener('click', () => {
+    const m = document.querySelector('#mobHost');
+    const hidden = m.style.display === 'none';
+    m.style.display = hidden ? '' : 'none';
+    document.querySelector('#mobToggle').textContent = hidden ? '隐藏移动端' : '显示移动端';
+  });
 
-    const frame = document.getElementById('mobFrame');
-    frame.src = `./prototype.html?mob=1&skin=${skin}&theme=${theme}`;
-    const mobBtn = document.getElementById('mobToggle');
-    mobBtn.onclick = () => {
-      const mob = document.getElementById('mobHost');
-      mob.style.display = mob.style.display === 'none' ? '' : 'none';
-      mobBtn.textContent = mob.style.display === 'none' ? '显示移动端' : '隐藏移动端';
-    };
-    const sel = document.getElementById('skinSel');
-    sel.innerHTML = SKIN_IDS.map((id) => `<option value="${id}"${skin === id ? ' selected' : ''}>${SKIN_NAMES[id]}</option>`).join('');
-    sel.onchange = () => applySkin(sel.value);
-    document.getElementById('themeBtn').onclick = () => applyTheme(theme === 'dark' ? 'light' : 'dark');
-    applyTheme(theme); // ?theme= 直达（body 类 + 徽牌钮文案 + 面板肤）
-  }
+  document.querySelector('#reset').addEventListener('click', () => {
+    // fake vault 本域键清仓（书库 md + weave-data.json + 封面图；不动其他域的 bz-sim 数据）
+    const rm = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith('bz-sim:书库/') || k.startsWith('bz-sim:CONFIG/BOOK/') || k.startsWith('bz-sim-meta:书库/')
+        || k === 'bz-sim:CONFIG/STORAGE/weave-data.json')) rm.push(k);
+    }
+    rm.forEach((k) => localStorage.removeItem(k));
+    location.reload();
+  });
 
-  /* ==================== 演示钩子（?demo=detail|unread） ==================== */
+  /* ==================== 演示钩子（?demo=detail|unread：桌面 iframe 直达） ==================== */
   if (location.search.includes('demo=')) {
-    const d = param('demo');
-    setTimeout(() => {
-      if (d === 'detail') document.querySelector('#bz-bs-shelf [data-bs-id]')?.click();
-      if (d === 'unread') document.querySelector('[data-bs-side="unread"]')?.click();
-    }, 150);
+    const d = new URLSearchParams(location.search).get('demo');
+    waitFrame(dtDoc, '.bz-bs-panel').then((doc) => {
+      setTimeout(() => {
+        if (d === 'detail') doc.querySelector('#bz-bs-shelf [data-bs-id]')?.click();
+        if (d === 'unread') doc.querySelector('[data-bs-side="unread"]')?.click();
+      }, 600);
+    }).catch(() => {});
   }
 
-  /* ==================== 自检（?selftest=1；桌面与 ?mob=1 各跑一份） ==================== */
+  /* ==================== 自检（?selftest=1）：真行为 DOM 断言（经 iframe） ==================== */
   if (location.search.includes('selftest')) {
+    const R = window.BZR_bookshelf;
+    const ITEMS = window.BS?.ITEMS || [];
     window.__st = { pass: 0, fail: [] };
     const t = (name, cond) => cond ? window.__st.pass++ : window.__st.fail.push(name);
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-    const $ = (s) => document.querySelector(s);
-    const spines = () => document.querySelectorAll('#bz-bs-shelf .bz-bs-spine');
     (async () => {
+      const res = document.querySelector('#stResult');
       try {
-        t('真实164册', items.length === 164);
-        t('状态9/151/4', items.filter((x) => x.status === '在读').length === 9 && items.filter((x) => x.status === '已读').length === 151 && items.filter((x) => x.status === '未读').length === 4);
-        t('标签行全馆164', $('[data-bs-side="all"] .n').textContent === '164');
-        t('在墙计数提示', $('#bz-bs-hint').textContent === '164 册在墙');
-        t('书脊164条', spines().length === 164);
-        const dividers = [...document.querySelectorAll('#bz-bs-shelf .bz-bs-divider')];
+        const dd = await waitFrame(dtDoc, '.bz-bs-panel');
+        const md = await waitFrame(mobDoc, '.bz-bs-panel');
+        res.textContent = '…';
+        const dt = (sel) => dd.querySelector(sel);
+        const mob = (sel) => md.querySelector(sel);
+        const spines = (doc) => doc.querySelectorAll('#bz-bs-shelf .bz-bs-spine');
+        const itemById = (id) => ITEMS.find((i) => i.id === id);
+        // 完整鼠标事件序列（mousedown+mouseup+click 带真实坐标）：纯 .click() 会被遮罩判定吞
+        const clickReal = (el) => {
+          if (!el) return;
+          const r = el.getBoundingClientRect();
+          const mk = (type) => new MouseEvent(type, { clientX: r.left + 10, clientY: r.top + 10, bubbles: true, cancelable: true });
+          el.dispatchEvent(mk('mousedown'));
+          el.dispatchEvent(mk('mouseup'));
+          el.dispatchEvent(mk('click'));
+        };
+        const view = { side: 'all', catFilter: 'all', q: '', sortMode: 'recent' };
+        const pipe = (v) => R.getDisplayItems(ITEMS, v);
+        // CSS 链生效断言（防 view 页相对路径再犯：404 的表不进 styleSheets）：
+        // 外链表 5 张全载 + components.css 的 .bz-panel-overlay 基准（position:fixed）+ tokens 变量在位
+        const cssState = (doc) => ({
+          sheets: [...doc.styleSheets].filter((s) => s.href).length,
+          overlayPos: (() => {
+            const el = doc.querySelector('.bz-panel-overlay');
+            try { return el ? getComputedStyle(el).position : ''; } catch { return ''; }
+          })(),
+          tokens: getComputedStyle(doc.body).getPropertyValue('--bz-overlay').trim(),
+        });
+        const csDt = cssState(dd);
+        const csMd = cssState(md);
+        t('桌面CSS五链生效', csDt.sheets === 5 && csDt.overlayPos === 'fixed' && csDt.tokens !== '');
+        t('移动CSS五链生效', csMd.sheets === 5 && csMd.overlayPos === 'fixed' && csMd.tokens !== '');
+
+        // 首扫：等真 rebuildItems 完成（B8 加载态占位 → 整墙）
+        await waitCond(() => spines(dd).length === ITEMS.length, '桌面整墙', 15000);
+
+        t('桌面面板开', !!dt('.bz-bs-panel'));
+        t('移动面板开', !!mob('.bz-bs-panel'));
+        t('真实164册', spines(dd).length === 164);
+        t('标签行全馆164', dt('[data-bs-side="all"] .n').textContent === '164');
+        t('在墙计数提示', dt('#bz-bs-hint').textContent === '164 册在墙');
+        const dividers = [...dd.querySelectorAll('#bz-bs-shelf .bz-bs-divider')];
         const catDivs = new Set(dividers.map((d) => d.textContent).filter((x) => x !== '倒 叠 区'));
         t('分区隔板15类+倒叠区', catDivs.size === 15 && dividers.filter((d) => d.textContent === '倒 叠 区').length === 1);
-        t('分类标签15张', document.querySelectorAll('[data-bs-cat]').length === 15);
-        t('倒叠区4册', [...document.querySelectorAll('#bz-bs-shelf .bz-bs-divider')].some((d) => d.textContent === '倒 叠 区') && items.filter((x) => x.status === '未读').every((x) => document.querySelector(`#bz-bs-shelf [data-bs-id="${x.id}"]`)));
-        t('已读盖讫印', document.querySelectorAll('#bz-bs-shelf .bz-bs-spine.read .stamp').length === 151);
-        t('在读垂书签带', document.querySelectorAll('#bz-bs-shelf .bz-bs-spine.reading .ribbon').length === 9);
-        t('EPUB书脊标记', document.querySelectorAll('#bz-bs-shelf [data-bs-epub="1"]').length === 2);
-        t('书脊厚度22~64', [...spines()].every((s) => { const w = parseFloat(s.style.width); return w >= 22 && w <= 64; }));
-        t('书脊高度150~230', [...spines()].every((s) => { const h = parseFloat(s.style.height); return h >= 150 && h <= 230; }));
-        t('双列拆题存在', document.querySelectorAll('#bz-bs-shelf .bz-bs-spine-title .t-sub').length > 0);
+        t('分类标签15张', dd.querySelectorAll('[data-bs-cat]').length === 15);
+        t('倒叠区含全部未读', ITEMS.filter((x) => x.status === '未读').every((x) => dt(`#bz-bs-shelf [data-bs-id="${CSS.escape(x.id)}"]`)));
+        t('已读盖讫印', dd.querySelectorAll('#bz-bs-shelf .bz-bs-spine.read .stamp').length === 151);
+        t('在读垂书签带', dd.querySelectorAll('#bz-bs-shelf .bz-bs-spine.reading .ribbon').length === 9);
+        t('EPUB书脊标记', dd.querySelectorAll('#bz-bs-shelf [data-bs-epub="1"]').length === 2);
+        t('书脊厚度22~64', [...spines(dd)].every((s) => { const w = parseFloat(s.style.width); return w >= 22 && w <= 64; }));
+        t('书脊高度150~230', [...spines(dd)].every((s) => { const h = parseFloat(s.style.height); return h >= 150 && h <= 230; }));
+        t('双列拆题存在', dd.querySelectorAll('#bz-bs-shelf .bz-bs-spine-title .t-sub').length > 0);
+        t('报告视图容器默认隐藏', !dt('.bz-bs-view-report.active') && !!dt('.bz-bs-view-report'));
+        t('关闭面板无关钮残留', !dt('.bz-bs-mob-close'));
 
-        $('[data-bs-side="reading"]').click();
-        t('在读筛选9条', spines().length === 9 && $('#bz-bs-hint').textContent === '9 册在墙');
-        t('筛选时未选标签弱化', document.querySelectorAll('.bz-bs-taglabel.off').length > 0);
-        $('[data-bs-side="reading"]').click();
-        t('再点回全馆', spines().length === 164);
+        // 状态筛选（真事件委托：ui.ts overlay click 单一委托）
+        dt('[data-bs-side="reading"]').click();
+        await sleep(60);
+        t('在读筛选9条', spines(dd).length === 9 && dt('#bz-bs-hint').textContent === '9 册在墙');
+        t('筛选时未选标签弱化', dd.querySelectorAll('.bz-bs-taglabel.off').length > 0);
+        dd.querySelector('[data-bs-side="reading"]').click(); // renderAll 重建标签 DOM，须重新取节点
+        await sleep(60);
+        t('再点回全馆', spines(dd).length === 164);
 
-        const catLabel = [...document.querySelectorAll('[data-bs-cat]')].find((c) => c.dataset.bsCat === '推理');
+        // 分类筛选（与状态正交；再点回全馆）
+        let catLabel = [...dd.querySelectorAll('[data-bs-cat]')].find((c) => c.dataset.bsCat === '推理');
         catLabel.click();
-        t('分类筛选=推理区', [...document.querySelectorAll('#bz-bs-shelf .bz-bs-divider')].every((d) => d.textContent === '推理 区' || d.textContent === '倒 叠 区'));
-        t('分类筛选数=管道值', spines().length === getDisplayItems().length);
-        [...document.querySelectorAll('[data-bs-cat]')].find((c) => c.dataset.bsCat === '推理').click(); // renderAll 会重建 DOM，须重新取节点
-        t('分类再点回全馆', spines().length === 164);
+        await sleep(60);
+        t('分类筛选=推理区', [...dd.querySelectorAll('#bz-bs-shelf .bz-bs-divider')].every((d) => d.textContent === '推理 区' || d.textContent === '倒 叠 区'));
+        t('分类筛选数=管道值', spines(dd).length === pipe({ ...view, catFilter: '推理' }).length);
+        [...dd.querySelectorAll('[data-bs-cat]')].find((c) => c.dataset.bsCat === '推理').click();
+        await sleep(60);
+        t('分类再点回全馆', spines(dd).length === 164);
 
-        const q = $('#bz-bs-dsearch');
+        // 检索（ui.ts 200ms 防抖）
+        const q = dt('#bz-bs-dsearch');
         q.value = '红楼梦'; q.dispatchEvent(new Event('input'));
-        await sleep(260);
-        t('搜索红楼梦1条(EPUB)', spines().length === 1 && spines()[0].dataset.bsEpub === '1');
+        await sleep(320);
+        t('搜索红楼梦1条(EPUB)', spines(dd).length === 1 && spines(dd)[0].dataset.bsEpub === '1');
         q.value = '不存在的书xyz'; q.dispatchEvent(new Event('input'));
-        await sleep(260);
-        t('搜索空态+search-x', !!$('.bz-bs-wall-empty .bz-empty') && !!$('.bz-bs-wall-empty i[data-lucide="search-x"]'));
+        await sleep(320);
+        t('搜索空态+图标', !!dt('.bz-bs-wall-empty .bz-empty') && !!dt('.bz-bs-wall-empty .bz-empty-ic svg'));
         q.value = ''; q.dispatchEvent(new Event('input'));
-        await sleep(260);
+        await sleep(320);
 
-        $('[data-bs-sort="title"]').click();
-        const sorted0 = getDisplayItems()[0];
-        const zone0 = document.querySelector(`#bz-bs-shelf [data-bs-id="${CSS.escape(sorted0.id)}"]`)?.closest('.bz-bs-zone');
-        t('书名排序区内首位', !!zone0 && zone0.querySelector('.bz-bs-spine').dataset.bsId === sorted0.id);
-        $('[data-bs-sort="recent"]').click();
+        // 排序（书名档；分区口径下区内首位 = 管道值首位）
+        dt('[data-bs-sort="title"]').click();
+        await sleep(60);
+        const sorted0 = R.itemId(pipe({ ...view, sortMode: 'title' })[0]);
+        const zone0 = dt(`#bz-bs-shelf [data-bs-id="${CSS.escape(sorted0)}"]`)?.closest('.bz-bs-zone');
+        t('书名排序区内首位', !!zone0 && zone0.querySelector('.bz-bs-spine').dataset.bsId === sorted0);
+        dd.querySelector('[data-bs-sort="recent"]').click();
+        await sleep(60);
 
-        const first = spines()[0];
+        // 借书卡（ui.ts openBookDetail + core uiModal；封面走假 vault resource URL）
+        const first = spines(dd)[0];
         first.click();
-        t('借书卡开', !!$('.bz-bs-d-popup .bz-bs-detail'));
-        t('借书卡标题一致', $('.bz-bs-d-title').textContent === itemById(first.dataset.bsId).title);
-        t('进度百分数', $('.bz-bs-d-prognum').textContent === Math.round(itemById(first.dataset.bsId).progress) + '%');
-        t('借书卡✕钮在位', !!$('.bz-bs-d-x'));
-        $('.bz-bs-d-x').click();
-        await sleep(30);
-        t('借书卡点✕关', !$('.bz-bs-d-popup'));
+        await sleep(80);
+        const firstIt = itemById(first.dataset.bsId);
+        t('借书卡开', !!dt('.bz-bs-d-popup .bz-bs-detail'));
+        t('借书卡标题一致', dt('.bz-bs-d-title').textContent === firstIt.title);
+        t('进度百分数', dt('.bz-bs-d-prognum').textContent === Math.round(firstIt.progress) + '%');
+        t('借书卡✕钮在位', !!dt('.bz-bs-d-x'));
+        dd.querySelector('.bz-bs-d-x').click();
+        await sleep(60);
+        t('借书卡点✕关', !dt('.bz-bs-d-popup'));
 
-        if (MOB) {
-          t('移动端@media全屏命中', Math.abs(panelEl.getBoundingClientRect().width - document.documentElement.clientWidth) < 1);
-          t('移动端借书卡全屏规则在位', !!document.querySelector('.bz-bs-panel'));
-          const head = $('.bz-bs-header');
-          t('头行一行横滑(overflow+隐藏滚动条)', !!head && getComputedStyle(head).overflowX === 'auto' && getComputedStyle(head).scrollbarWidth === 'none' && head.scrollWidth > head.clientWidth);
-          t('顶部安全区避让(匾额≥44px)', $('.bz-bs-plaque').getBoundingClientRect().top >= 44);
-          t('状态签+分类带并入头行单行', getComputedStyle($('.bz-bs-labels')).display === 'contents' && getComputedStyle($('.bz-bs-cats')).display === 'contents');
-          $('#bz-bs-shelf [data-bs-id]').click();
-          const pop = $('.bz-bs-d-popup');
-          t('移动借书卡留边不全屏', !!pop && pop.getBoundingClientRect().width <= document.documentElement.clientWidth - 24);
-          t('移动借书卡✕钮在位', !!$('.bz-bs-d-x'));
-          $('.bz-overlay-mask').dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-          await sleep(30);
-          t('移动借书卡点遮罩关', !$('.bz-bs-d-popup'));
-          $('.bz-bs-plaque').click();
-          t('点书库匾收面板', document.querySelector('.bz-panel-overlay').style.display === 'none');
-          $('#bsReopen').click();
-          t('评审壳重开面板', document.querySelector('.bz-panel-overlay').style.display !== 'none');
-        } else {
-          t('报告视图容器隐藏', !$('.bz-bs-view-report.active') && !!$('.bz-bs-view-report'));
-          t('分类容器桌面contents隐身', getComputedStyle($('.bz-bs-cats')).display === 'contents');
-          t('关闭面板无关钮残留', !$('.bz-bs-mob-close'));
-          $('#dtHost .bz-bs-plaque').click();
-          t('桌面点匾额不关面板', !!$('#dtHost .bz-bs-panel'));
-          t('默认雪松白+亮模式', panelEl.classList.contains('bz-bs-skin-nordic') && panelEl.classList.contains('bz-bs-mode-light'));
-          applyTheme('dark');
-          t('切暗=雪松白夜变体', panelEl.classList.contains('bz-bs-skin-nordic') && panelEl.classList.contains('bz-bs-mode-dark') && document.body.classList.contains('theme-dark'));
-          applyTheme('light');
-          t('切回亮模式', panelEl.classList.contains('bz-bs-mode-light'));
-          applySkin('noir');
-          t('锁黑金夜曲+亮变体类', panelEl.classList.contains('bz-bs-skin-noir') && panelEl.classList.contains('bz-bs-mode-light'));
-          applyTheme('dark');
-          t('黑金夜曲随主题切夜', panelEl.classList.contains('bz-bs-skin-noir') && panelEl.classList.contains('bz-bs-mode-dark'));
-          applySkin('nordic');
-          applyTheme('light');
-          t('复原雪松白亮', panelEl.classList.contains('bz-bs-skin-nordic') && panelEl.classList.contains('bz-bs-mode-light'));
-        }
+        // 桌面点匾额不关面板（isMobileEnv 假判定 = 920 视口 false）
+        dt('[data-bs-plaque]').click();
+        await sleep(40);
+        t('桌面点匾额不关面板', !!dt('.bz-bs-panel'));
+
+        // 报告视图（真 openReportView → reading-report 分片渲染 → 返回书库）
+        dtFrame().contentWindow.BZW_bookshelf.openReport();
+        await waitCond(() => dd.querySelector('.bz-bs-view-report.active'), '报告视图激活');
+        await waitCond(() => dd.querySelector('.bz-rr-content .bz-rr-bar-row, .bz-rr-content [data-rr-year]'), '报告分片渲染');
+        t('报告视图渲染数据', (dd.querySelector('.bz-rr-content').textContent || '').length > 200);
+        dd.querySelector('[data-rr-goto-shelf]').click();
+        await sleep(80);
+        t('报告返回书库', !!dt('.bz-bs-view-shelf.active') && !dt('.bz-bs-view-report.active'));
+
+        // ---------- 移动 iframe（396 视口：@media 布局 + 真 isMobileEnv 出口） ----------
+        t('移动164册', spines(md).length === 164);
+        t('移动端@media全屏命中', Math.abs(mob('.bz-bs-panel').getBoundingClientRect().width - md.documentElement.clientWidth) < 2);
+        const head = mob('.bz-bs-header');
+        t('头行一行横滑(overflow+隐藏滚动条)', !!head && getComputedStyle(head).overflowX === 'auto' && getComputedStyle(head).scrollbarWidth === 'none' && head.scrollWidth > head.clientWidth);
+        t('顶部安全区避让(匾额≥44px)', mob('.bz-bs-plaque').getBoundingClientRect().top >= 44);
+        t('状态签+分类带并入头行单行', getComputedStyle(mob('.bz-bs-labels')).display === 'contents' && getComputedStyle(mob('.bz-bs-cats')).display === 'contents');
+
+        // 移动借书卡（core uiModal 窄卡）
+        mob('#bz-bs-shelf [data-bs-id]').click();
+        await sleep(80);
+        const pop = mob('.bz-bs-d-popup');
+        t('移动借书卡留边不全屏', !!pop && pop.getBoundingClientRect().width <= md.documentElement.clientWidth - 24);
+        t('移动借书卡✕钮在位', !!mob('.bz-bs-d-x'));
+        clickReal(md.querySelector('.bz-overlay-mask'));
+        await sleep(60);
+        t('移动借书卡点遮罩关', !mob('.bz-bs-d-popup'));
+
+        // 移动点匾额 = 真 closeOverlay（插件「点书库匾收面板」语义；旧壳只能藏 DOM）
+        mob('[data-bs-plaque]').click();
+        await sleep(80);
+        t('移动点书库匾收面板', !mob('.bz-bs-panel') && !md.querySelector('.bz-panel-overlay'));
+        // 真重开（index.ts openBookshelf toggle 语义经 contentWindow）
+        mobFrame().contentWindow.BZW_bookshelf.openBookshelf();
+        await waitCond(() => spines(md).length === 164, '移动重开整墙', 15000);
+        t('移动面板重开', spines(md).length === 164);
 
         document.title = window.__st.fail.length
           ? 'SELFTEST FAIL ' + window.__st.fail.join(',')
           : `SELFTEST OK ${window.__st.pass}/${window.__st.pass + window.__st.fail.length}`;
-      } catch (err) { document.title = 'SELFTEST ERR ' + (err && err.message || err); }
+        res.textContent = window.__st.fail.length ? '自检失败' : `自检通过 ${window.__st.pass}`;
+        res.className = window.__st.fail.length ? 'bad' : 'ok';
+      } catch (err) {
+        document.title = 'SELFTEST ERR ' + (err && err.message || err);
+        res.textContent = '自检异常';
+        res.className = 'bad';
+      }
     })();
   }
 })();
