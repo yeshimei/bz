@@ -10932,6 +10932,15 @@ ${n.content.slice(0, 2e3)}
     return {
       groups: [
         {
+          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "reviewSkin" }, options: [{ value: "default", label: "三区队列", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板主题", binding: { key: "reviewSkinTheme" }, layoutKey: "reviewSkin", options: [{ value: "sage", label: "苔绿", layout: "default", prevClass: "bz-sp-prev-sage" }] }
+          ]
+        },
+        {
           icon: "bell",
           name: "检查提醒",
           rows: [
@@ -11716,25 +11725,57 @@ ${n.content.slice(0, 2e3)}
   function sliderHtml(min, max, step, value) {
     return `<div class="bz-sp-slider-row"><input type="range"${min !== void 0 ? ` min="${min}"` : ""}${max !== void 0 ? ` max="${max}"` : ""} step="${step != null ? step : 1}" value="${value}"><span class="bz-sp-slider-val">${value}</span></div>`;
   }
-  function pathChipsItemsHtml(chips) {
-    return chips.map((c) => {
-      const cls = c.muted ? "bz-sp-chip bz-sp-chip--muted" : c.locked ? "bz-sp-chip bz-sp-chip--locked" : "bz-sp-chip";
-      return `<span class="${cls}" data-sp-path="${esc(c.path)}"${c.label ? ` title="${esc(c.label)}"` : ""}>${esc(c.label)}` + (c.multi && !c.muted && !c.locked ? '<i class="x">✕</i>' : "") + `</span>`;
-    }).join("");
-  }
-  function pathAddBtnHtml(text) {
-    return `<button type="button" class="bz-sp-btn bz-sp-path-btn">${esc(text)}</button>`;
-  }
   function rowBtnHtml(label, cta) {
     return `<button type="button" class="bz-sp-btn${cta ? " bz-sp-btn--primary" : ""}">${esc(label)}</button>`;
   }
   function badgeHtml(label) {
     return `<span class="bz-badge">${esc(label)}</span>`;
   }
+  function miniHtml(kind, prev) {
+    const st = (extra) => ` style="${extra}"`;
+    const bg = st(`background:${prev.bg}`);
+    if (kind === "todo") {
+      const headCls = "m-head" + (prev.head === "stripe" ? " m-stripe" : "");
+      const headBg = prev.head === "stripe" ? prev.bg : prev.ink;
+      const headBorder = prev.head === "stripe" ? `border-bottom:2px solid ${prev.ink};` : "";
+      const lines = [[18, 16], [28, 24], [24, 32]].map(([w, top], i) => `<div class="m-line"${st(`top:${top}px;width:${w}px;background:${prev.ink};opacity:${i === 2 ? 0.35 : 0.55}`)}></div>`).join("");
+      return `<div class="bz-sp-mini"${bg}><div class="${headCls}"${st(`background:${headBg};${headBorder}`)}></div>${lines}<div class="m-chip"${st(`background:${prev.ac}`)}></div></div>`;
+    }
+    if (kind === "shelf") {
+      const books = (prev.books || []).map((c, i) => `<div class="m-book"${st(`left:${10 + i * 14}px;height:${[24, 32, 20][i]}px;background:${c};border-top:2px solid ${prev.ac}`)}></div>`).join("");
+      return `<div class="bz-sp-mini"${bg}><div class="m-ac"${st(`background:${prev.ac}`)}></div>${books}</div>`;
+    }
+    if (kind === "layout") {
+      const mk = (css) => `<div${st(`position:absolute;border-radius:2px;background:rgba(90,70,40,.22);${css}`)}></div>`;
+      let blocks = "";
+      if (prev.mode === "system") blocks = mk("left:4px;top:14px;width:14px;bottom:4px;") + mk("left:21px;top:14px;right:4px;height:26px;");
+      else if (prev.mode === "compact") blocks = mk("left:4px;top:14px;width:14px;bottom:4px;") + mk("left:21px;top:14px;width:26px;height:12px;") + mk("left:21px;top:28px;width:26px;height:12px;") + mk("left:50px;top:14px;width:10px;bottom:10px;");
+      else if (prev.mode === "iconrail") blocks = mk("left:2px;top:2px;bottom:2px;width:8px;") + mk("left:14px;top:4px;width:16px;bottom:4px;") + mk("left:34px;top:4px;right:4px;bottom:4px;");
+      else if (prev.mode === "outline") blocks = mk("left:4px;top:14px;right:24px;bottom:4px;") + mk("right:4px;top:14px;width:16px;height:20px;");
+      return `<div class="bz-sp-mini"${bg}><div class="m-head"${st("background:rgba(90,70,40,.28)")}></div>${blocks}</div>`;
+    }
+    if (kind === "skin") {
+      return `<div class="bz-sp-mini"${bg}><div${st(`position:absolute;inset:0 50% 0 0;background:${prev.light || "#f6f2e9"}`)}></div><div${st(`position:absolute;inset:0 0 0 50%;background:${prev.dark || "#242429"}`)}></div><div${st(`position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;background:${prev.ac || "var(--sp-accent)"};border:2px solid #fff;`)}></div></div>`;
+    }
+    if (kind === "themecard") {
+      return `<div class="bz-sp-mini"${bg}><div${st(`position:absolute;left:5px;top:50%;transform:translateY(-50%);width:5px;height:26px;border-radius:3px;background:${prev.ac};`)}></div></div>`;
+    }
+    if (kind === "poster") {
+      const mk = (css) => `<div${st(`position:absolute;${css}`)}></div>`;
+      return `<div class="bz-sp-mini"${bg}>` + mk(`left:6%;top:12%;width:44%;height:20%;background:${prev.ink || "#171512"};`) + mk(`left:86%;top:14%;width:8%;height:16%;background:${prev.ac || "#e8481f"};`) + mk(`left:6%;top:44%;width:88%;height:46%;background:rgba(23,21,18,.1);`) + mk(`left:38%;top:44%;width:2px;height:46%;background:rgba(23,21,18,.28);`) + mk(`left:66%;top:44%;width:2px;height:46%;background:rgba(23,21,18,.28);`) + `</div>`;
+    }
+    if (kind === "cat") {
+      const ears = ["ear l", "ear r"].map(() => `<div class="ear"${st(`background:transparent;border-bottom-color:${prev.fur}`)}></div>`).join("");
+      const eyes = ["eye l", "eye r"].map(() => `<div class="eye"${st("background:rgba(20,15,8,.75)")}></div>`).join("");
+      return `<div class="bz-sp-mini"${bg}><div class="m-cat">${ears}<div class="face"${st(`background:${prev.fur}`)}></div>` + (prev.patch ? `<div class="patch"${st(`background:${prev.patch}`)}></div>` : "") + eyes + `</div></div>`;
+    }
+    return `<div class="bz-sp-mini"${bg}></div>`;
+  }
   function cardpickHtml(cards) {
-    return `<div class="bz-sp-cardpick" role="radiogroup">` + cards.map(
-      (c) => `<button type="button" class="bz-sp-cardpick-card${c.on ? " is-on" : ""}" data-sp-card="${esc(c.value)}"><div class="bz-sp-mini${c.prevClass ? ` ${c.prevClass}` : ""}" aria-hidden="true"></div><span class="bz-sp-cardpick-name">${esc(c.label)}</span></button>`
-    ).join("") + `</div>`;
+    return `<div class="bz-sp-cardpick" role="radiogroup">` + cards.map((c) => {
+      const mini = c.kind ? miniHtml(c.kind, c.prev || {}) : `<div class="bz-sp-mini${c.prevClass ? ` ${c.prevClass}` : ""}" aria-hidden="true"></div>`;
+      return `<button type="button" class="bz-sp-cardpick-card${c.on ? " is-on" : ""}" data-sp-card="${esc(c.value)}">` + mini + `<span class="bz-sp-cardpick-name">${esc(c.label)}</span></button>`;
+    }).join("") + `</div>`;
   }
   function rowHtml(vm) {
     var _a2, _b2;
@@ -11742,19 +11783,20 @@ ${n.content.slice(0, 2e3)}
     if (vm.cls) cls.push(vm.cls);
     if (vm.isCards) cls.push("bz-sp-set-row--cards");
     if (vm.isCustom) cls.push("bz-sp-set-row--custom");
-    if (vm.isCustom) {
-      return `<div class="${cls.join(" ")}"><div class="bz-sp-custom-slot bz-sp-custom-slot--full">${(_a2 = vm.ctrlHtml) != null ? _a2 : ""}</div></div>`;
-    }
+    const open = `<div class="${cls.join(" ")}"${vm.key ? ` data-key="${esc(vm.key)}"` : ""}>`;
     const name = vm.name ? `<div class="bz-sp-set-name">${esc(vm.name)}</div>` : "";
     const desc = vm.desc ? `<div class="bz-sp-set-desc">${esc(vm.desc)}</div>` : "";
+    if (vm.isCustom) {
+      return `${open}<div class="bz-sp-set-info">${name}${desc}</div>${(_a2 = vm.ctrlHtml) != null ? _a2 : ""}</div>`;
+    }
     const note = vm.note ? `<div class="bz-sp-set-note">↳ ${esc(vm.note)}</div>` : "";
     const info = `<div class="bz-sp-set-info">${name}${desc}${note}</div>`;
     const ctrlCls = vm.isCards ? "bz-sp-set-cards" : "bz-sp-set-ctrl";
-    return `<div class="${cls.join(" ")}">${info}<div class="${ctrlCls}">${(_b2 = vm.ctrlHtml) != null ? _b2 : ""}</div></div>`;
+    return `${open}${info}<div class="${ctrlCls}">${(_b2 = vm.ctrlHtml) != null ? _b2 : ""}</div></div>`;
   }
   function groupCardHtml(icon, name, count) {
     const ic = icon ? iconSpan(icon, "bz-sp-group-icon") : "";
-    return `<div class="bz-sp-group"><div class="bz-sp-group-head">${ic}<span class="bz-sp-group-name">${esc(name)}</span><span class="bz-sp-group-count">${esc(count)}</span></div><div class="bz-sp-group-body"></div></div>`;
+    return `<section class="bz-sp-group"><div class="bz-sp-group-head">${ic}<span class="bz-sp-group-name">${esc(name)}</span><span class="bz-sp-group-count">${esc(count)}</span></div><div class="bz-sp-group-body"></div></section>`;
   }
   function pageHeadHtml(name, desc, tag) {
     return `<div class="bz-sp-page-head"><div><div class="bz-sp-page-title">${esc(name)}</div><div class="bz-sp-page-desc">${esc(desc)}</div></div><span class="bz-sp-page-tag">${esc(tag)}</span></div>`;
@@ -11769,38 +11811,14 @@ ${n.content.slice(0, 2e3)}
   });
 
   // src/settings-panel/layouts/jingwei/render.ts
-  function deskHeadHtml() {
-    return `<div class="bz-sp-head"><div class="bz-sp-crumb"><span class="bz-sp-head-title bz-sp-crumb-cur">设置</span></div><div class="bz-sp-search bz-sp-head-search">${iconSpan("search")}<input class="bz-input" placeholder="搜索域与设置项" autocomplete="off"></div><span class="bz-sp-head-tools"></span></div>`;
-  }
   function deskShellHtml() {
-    return `${deskHeadHtml()}<div class="bz-sp-desk-body"><div class="bz-sp-desk-side"><div class="bz-sp-nav"></div></div><div class="bz-sp-desk-main"><div class="bz-sp-pane"></div></div></div>`;
+    return `<div class="bz-sp-head"><div class="bz-sp-crumb"><span class="bz-sp-head-title bz-sp-crumb-cur">设置</span></div><div class="bz-sp-search bz-sp-head-search">${iconSpan("search")}<input class="bz-input" placeholder="搜索域与设置项" autocomplete="off"></div><span class="bz-sp-head-tools"></span></div><div class="bz-sp-desk-body"><aside class="bz-sp-desk-side"><div class="bz-sp-nav"></div></aside><main class="bz-sp-desk-main"><div class="bz-sp-pane"></div></main></div>`;
   }
   function navSecHtml(title, itemsHtml) {
     return `<div class="bz-sp-nav-sec"><div class="bz-sp-nav-sec-t">${esc(title)}</div>${itemsHtml}</div>`;
   }
   function navItemHtml(opts) {
-    return `<button type="button" class="bz-sp-nav-item${opts.on ? " on" : ""}" data-sp-domain="${esc(opts.id)}"><i data-lucide="${esc(opts.icon)}" class="bz-ic bz-sp-nav-ic"></i><span class="bz-sp-nav-name">${esc(opts.name)}</span><span class="bz-sp-nav-count">${esc(opts.count)}</span></button>`;
-  }
-  function mobHeadHtml() {
-    return `<div class="bz-sp-head"><span class="bz-sp-head-title">设置</span><span class="bz-sp-head-tools"></span></div>`;
-  }
-  function mobShellHtml() {
-    return `${mobHeadHtml()}<div class="bz-sp-mob-search"><span class="bz-input-wrap">${iconSpan("search")}<input class="bz-input" placeholder="搜索设置、域…" autocomplete="off"></span></div><div class="bz-sp-mob-list"></div>`;
-  }
-  function mobItemHtml(opts) {
-    return `<button type="button" class="bz-sp-mob-item" data-sp-domain="${esc(opts.id)}"><span class="bz-sp-mob-ic"><i data-lucide="${esc(opts.icon)}" class="bz-ic"></i></span><span class="bz-sp-mob-t"><span class="bz-sp-mob-name">${esc(opts.name)}</span><span class="bz-sp-mob-desc">${esc(opts.desc)}</span></span><span class="bz-sp-mob-chev">${iconSpan("chevron-right")}</span></button>`;
-  }
-  function mobRowHitHtml(opts) {
-    return `<button type="button" class="bz-sp-mob-item" data-sp-domain="${esc(opts.id)}"><span class="bz-sp-mob-ic"><i data-lucide="${esc(opts.icon)}" class="bz-ic"></i></span><span class="bz-sp-mob-t"><span class="bz-sp-mob-name">${esc(opts.name)}</span><span class="bz-sp-mob-desc">${esc(opts.desc)}</span></span><span class="bz-sp-mob-kind">设置</span></button>`;
-  }
-  function mobSecHtml(title) {
-    return `<div class="bz-sp-mob-sec">${esc(title)}</div>`;
-  }
-  function mobEmptyHtml(query) {
-    return `<div class="bz-sp-mob-empty">没有匹配「${esc(query)}」的设置或域</div>`;
-  }
-  function mobModalShellHtml(icon, title) {
-    return `<div class="bz-sp-mob-modal-head"><span class="bz-sp-mob-modal-ic"><i data-lucide="${esc(icon)}" class="bz-ic"></i></span><h3 class="bz-sp-mob-modal-title">${esc(title)}</h3></div><div class="bz-sp-settings-body bz-sp-mob-modal-body"></div>`;
+    return `<button type="button" class="bz-sp-nav-item${opts.on ? " on" : ""}" data-sp-domain="${esc(opts.id)}">${iconSpan(opts.icon, "bz-ic bz-sp-nav-ic")}<span class="bz-sp-nav-name">${esc(opts.name)}</span><span class="bz-sp-nav-count">${esc(opts.count)}</span></button>`;
   }
   var init_render3 = __esm({
     "src/settings-panel/layouts/jingwei/render.ts"() {
@@ -11840,19 +11858,44 @@ ${n.content.slice(0, 2e3)}
   function makeCtx(rowEl, refreshVisibility) {
     return { rowEl, refreshVisibility };
   }
-  function pathChipsVm(opts) {
-    const multi = opts.mode === "multi";
-    if (!opts.current.length && opts.fallbackChip) {
-      return [{ path: "", label: opts.fallbackChip, locked: true }];
-    }
-    if (!opts.current.length) {
-      return [{ path: "", label: multi ? "未选择" : "未设置", muted: true }];
-    }
-    return opts.current.map((p) => ({
-      path: p,
-      label: p === "" ? "（库根目录）" : p,
-      multi
-    }));
+  function makeInput(opts) {
+    const holder = document.createElement("div");
+    holder.innerHTML = textInputHtml({
+      value: opts.value,
+      type: opts.type,
+      mono: opts.mono,
+      num: opts.num,
+      secret: opts.secret,
+      placeholder: opts.placeholder,
+      min: opts.min,
+      max: opts.max
+    });
+    const input = holder.firstElementChild;
+    let timer = null;
+    let dirty2 = false;
+    const commit = () => {
+      if (timer !== null) {
+        window.clearTimeout(timer);
+        timer = null;
+      }
+      if (!dirty2) return;
+      opts.onCommit(input.value);
+    };
+    input.addEventListener("input", () => {
+      dirty2 = true;
+      if (timer !== null) window.clearTimeout(timer);
+      timer = window.setTimeout(commit, 800);
+    });
+    input.addEventListener("blur", commit);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") commit();
+    });
+    ;
+    input.__setDisplayValue = (v) => {
+      dirty2 = false;
+      if (input.value !== v) input.value = v;
+    };
+    return input;
   }
   function makePathRowCtrl(opts) {
     const readValue = () => {
@@ -11884,46 +11927,79 @@ ${n.content.slice(0, 2e3)}
         }
       });
     };
-    const renderAll5 = () => {
-      ctrl.innerHTML = pathChipsItemsHtml(pathChipsVm({ mode: opts.mode, current: current2, fallbackChip: opts.fallbackChip })) + pathAddBtnHtml(opts.buttonText || (opts.mode === "multi" ? "添加…" : "选择…"));
-      ctrl.querySelectorAll(".bz-sp-chip").forEach((chip) => {
-        var _a2;
-        const path = (_a2 = chip.dataset.spPath) != null ? _a2 : "";
-        const muted = chip.classList.contains("bz-sp-chip--muted");
-        const locked = chip.classList.contains("bz-sp-chip--locked");
-        if (!muted) chip.addEventListener("click", openPicker);
-        if (locked) chip.title = "未单独设置时的实际生效目录（点击可改为显式设置）";
-        const x = chip.querySelector(".x");
-        if (x) {
+    const multi = opts.mode === "multi";
+    const addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.className = "bz-sp-btn bz-sp-path-btn";
+    addBtn.textContent = opts.buttonText || (multi ? "添加…" : "选择…");
+    addBtn.addEventListener("click", openPicker);
+    const renderChips = () => {
+      ctrl.querySelectorAll(".bz-chip").forEach((c) => c.remove());
+      if (!current2.length && opts.fallbackChip) {
+        const fb = document.createElement("span");
+        fb.className = "bz-sp-chip bz-sp-chip--locked";
+        fb.title = "未单独设置时的实际生效目录（点击可改为显式设置）";
+        fb.textContent = opts.fallbackChip;
+        fb.addEventListener("click", openPicker);
+        ctrl.appendChild(fb);
+      }
+      for (const path of current2) {
+        const label = path === "" ? "（库根目录）" : path;
+        const chip = document.createElement("span");
+        chip.className = "bz-sp-chip";
+        chip.title = label;
+        chip.textContent = label;
+        chip.addEventListener("click", openPicker);
+        if (multi) {
+          const x = document.createElement("i");
+          x.className = "x";
+          x.textContent = "✕";
           x.addEventListener("click", (ev) => {
             ev.stopPropagation();
             void apply(current2.filter((p) => p !== path));
           });
+          chip.appendChild(x);
         }
-      });
-      ctrl.querySelector(".bz-sp-path-btn").addEventListener("click", openPicker);
+        ctrl.appendChild(chip);
+      }
+      if (!current2.length && !opts.fallbackChip) {
+        const m = document.createElement("span");
+        m.className = "bz-sp-chip bz-sp-chip--muted";
+        m.textContent = multi ? "未选择" : "未设置";
+        ctrl.appendChild(m);
+      }
+      if (!addBtn.isConnected) ctrl.appendChild(addBtn);
     };
-    renderAll5();
+    const renderAll5 = () => renderChips();
+    ctrl.appendChild(addBtn);
+    renderChips();
     return ctrl;
   }
   function renderRow(row, refresh, regRefresh) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h;
-    const ctx = makeCtx(document.createElement("div"), refresh);
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
     const rowName = row.name;
-    const vm = {
+    const bindKey = (_a2 = row.binding) == null ? void 0 : _a2.key;
+    const isCustom = row.type === "custom";
+    const isCardsRow = row.type === "choiceCards";
+    const holder = document.createElement("div");
+    holder.innerHTML = rowHtml({
+      key: bindKey || rowName || "",
       cls: row.isChild ? "child" : void 0,
+      isCards: isCardsRow,
+      isCustom,
       name: rowName,
       desc: row.desc,
       note: row.note
-    };
-    const el = document.createElement("div");
+    });
+    const el = holder.firstElementChild;
+    const ctx = makeCtx(el, refresh);
     ctx.rowEl = el;
+    const ctrlEl = isCustom ? el : el.querySelector(isCardsRow ? ".bz-sp-set-cards" : ".bz-sp-set-ctrl");
     switch (row.type) {
       case "toggle": {
         const acc = bindValue(row.binding);
-        vm.ctrlHtml = toggleHtml(acc.read() === true);
-        el.innerHTML = rowHtml(vm);
-        const sw = el.querySelector(".bz-sw");
+        ctrlEl.innerHTML = toggleHtml(acc.read() === true);
+        const sw = ctrlEl.querySelector(".bz-sw");
         sw.addEventListener("click", () => {
           var _a3;
           const v = !sw.classList.contains("on");
@@ -11936,80 +12012,38 @@ ${n.content.slice(0, 2e3)}
         });
         break;
       }
-      case "text":
-      case "number": {
+      case "text": {
         const acc = bindValue(row.binding);
-        const isNum = row.type === "number";
-        const numRow = row;
         const ph = typeof row.placeholder === "function" ? row.placeholder(snapshot()) : row.placeholder;
-        const value = String((_a2 = acc.read()) != null ? _a2 : "");
-        vm.ctrlHtml = textInputHtml({
-          value,
-          type: isNum ? "number" : "text",
+        const input = makeInput({
+          value: (_b2 = acc.read()) != null ? _b2 : "",
           mono: !!row.mono,
-          num: !!row.num || isNum,
+          num: !!row.num,
           secret: !!row.secret,
           placeholder: ph,
-          min: numRow.min,
-          max: numRow.max,
-          step: isNum ? (_b2 = numRow.step) != null ? _b2 : 1 : void 0
-        });
-        el.innerHTML = rowHtml(vm);
-        const input = el.querySelector("input.bz-input");
-        let timer = null;
-        let dirty2 = false;
-        const commit = () => {
-          var _a3;
-          if (timer !== null) {
-            window.clearTimeout(timer);
-            timer = null;
-          }
-          if (!dirty2) return;
-          const raw = input.value;
-          if (isNum) {
-            if (raw.trim() === "") return;
-            let v = Number(raw);
-            if (Number.isNaN(v)) v = 0;
-            if (numRow.min !== void 0 && v < numRow.min) v = numRow.min;
-            if (numRow.max !== void 0 && v > numRow.max) v = numRow.max;
-            input.value = String(v);
+          onCommit: (v) => {
+            var _a3;
             acc.write(v);
-          } else {
-            acc.write(raw);
+            void acc.persist();
+            (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
           }
-          void acc.persist();
-          (_a3 = row.onChange) == null ? void 0 : _a3.call(
-            row,
-            isNum ? Number(input.value) : raw,
-            ctx
-          );
-        };
-        input.addEventListener("input", () => {
-          dirty2 = true;
-          if (timer !== null) window.clearTimeout(timer);
-          timer = window.setTimeout(commit, 800);
         });
-        input.addEventListener("blur", commit);
-        input.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") commit();
-        });
+        ctrlEl.appendChild(input);
         if (regRefresh && row.refreshKey !== void 0) {
           const ref = row.refreshKey;
           regRefresh(() => {
             const snap = snapshot();
             const fresh = typeof ref === "function" ? ref(snap) : String(snap[ref]);
-            dirty2 = false;
-            const f = String(fresh != null ? fresh : "");
-            if (input.value !== f) input.value = f;
+            const setDisplay = input.__setDisplayValue;
+            if (setDisplay) setDisplay(String(fresh != null ? fresh : ""));
           });
         }
         break;
       }
       case "textarea": {
         const acc = bindValue(row.binding);
-        vm.ctrlHtml = textareaHtml((_c = acc.read()) != null ? _c : "", row.placeholder);
-        el.innerHTML = rowHtml(vm);
-        const ta = el.querySelector("textarea");
+        ctrlEl.innerHTML = textareaHtml((_c = acc.read()) != null ? _c : "", row.placeholder);
+        const ta = ctrlEl.querySelector("textarea");
         let timer = null;
         let dirty2 = false;
         const commit = () => {
@@ -12036,19 +12070,50 @@ ${n.content.slice(0, 2e3)}
         }
         break;
       }
+      case "number": {
+        const acc = bindValue(row.binding);
+        const ph = typeof row.placeholder === "function" ? row.placeholder(snapshot()) : row.placeholder;
+        const input = makeInput({
+          value: String((_d = acc.read()) != null ? _d : ""),
+          type: "number",
+          num: true,
+          placeholder: ph,
+          min: row.min,
+          max: row.max,
+          onCommit: (raw) => {
+            var _a3;
+            if (raw.trim() === "") return;
+            let v = Number(raw);
+            if (Number.isNaN(v)) v = 0;
+            if (row.min !== void 0 && v < row.min) v = row.min;
+            if (row.max !== void 0 && v > row.max) v = row.max;
+            acc.write(v);
+            void acc.persist();
+            (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
+          }
+        });
+        input.step = String((_e = row.step) != null ? _e : 1);
+        ctrlEl.appendChild(input);
+        if (regRefresh && row.refreshKey !== void 0) {
+          const ref = row.refreshKey;
+          regRefresh(() => {
+            const snap = snapshot();
+            const fresh = typeof ref === "function" ? ref(snap) : String(snap[ref]);
+            const setDisplay = input.__setDisplayValue;
+            if (setDisplay) setDisplay(String(fresh != null ? fresh : ""));
+          });
+        }
+        break;
+      }
       case "select": {
         const acc = bindValue(row.binding);
         const options2 = row.options;
         const labelOf = (v) => (options2.find((o) => o.value === v) || { label: v }).label;
-        const curOf = () => {
-          var _a3;
-          return String((_a3 = acc.read()) != null ? _a3 : "") || options2[0] && options2[0].value || "";
-        };
-        vm.ctrlHtml = selectTriggerHtml(labelOf(curOf()));
-        el.innerHTML = rowHtml(vm);
-        const sel = el.querySelector(".bz-select");
+        ctrlEl.innerHTML = selectTriggerHtml(labelOf(String((_f = acc.read()) != null ? _f : "") || options2[0] && options2[0].value || ""));
+        const sel = ctrlEl.querySelector(".bz-select");
         const vspan = sel.querySelector(".bz-select-val");
         sel.addEventListener("click", () => {
+          var _a3;
           if (sel.querySelector(".bz-select-menu")) return;
           const group = sel.closest(".bz-sp-group");
           if (group) {
@@ -12056,8 +12121,8 @@ ${n.content.slice(0, 2e3)}
             group.style.zIndex = "10";
           }
           const closeMenu2 = () => {
-            var _a3;
-            (_a3 = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a3.remove();
+            var _a4;
+            (_a4 = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a4.remove();
             if (group) {
               group.style.overflow = "";
               group.style.zIndex = "";
@@ -12070,33 +12135,32 @@ ${n.content.slice(0, 2e3)}
           setTimeout(() => document.addEventListener("click", h));
           const menu = document.createElement("div");
           menu.className = "bz-select-menu";
-          const curNow = curOf();
+          const curNow = String((_a3 = acc.read()) != null ? _a3 : "") || options2[0] && options2[0].value || "";
           menu.innerHTML = options2.map((o) => selectItemHtml(o.label, o.value === curNow)).join("");
-          mountIcons(menu);
-          const items = menu.querySelectorAll(".bz-select-item");
-          options2.forEach((o, i) => {
-            items[i].addEventListener("click", (ev) => {
-              var _a3;
+          menu.querySelectorAll(".bz-select-item").forEach((it, i) => {
+            const o = options2[i];
+            it.addEventListener("click", (ev) => {
+              var _a4;
               ev.stopPropagation();
               closeMenu2();
               vspan.textContent = labelOf(o.value);
               acc.write(o.value);
               void acc.persist();
-              (_a3 = row.onChange) == null ? void 0 : _a3.call(row, o.value, ctx);
+              (_a4 = row.onChange) == null ? void 0 : _a4.call(row, o.value, ctx);
               refresh();
             });
           });
           sel.appendChild(menu);
+          mountIcons(menu);
         });
         break;
       }
       case "slider": {
         const acc = bindValue(row.binding);
-        const cur = (_e = (_d = acc.read()) != null ? _d : row.min) != null ? _e : 0;
-        vm.ctrlHtml = sliderHtml(row.min, row.max, row.step, cur);
-        el.innerHTML = rowHtml(vm);
-        const range = el.querySelector('input[type="range"]');
-        const em = el.querySelector(".bz-sp-slider-val");
+        const cur = (_h = (_g = acc.read()) != null ? _g : row.min) != null ? _h : 0;
+        ctrlEl.innerHTML = sliderHtml(row.min, row.max, (_i = row.step) != null ? _i : 1, cur);
+        const range = ctrlEl.querySelector('input[type="range"]');
+        const em = ctrlEl.querySelector(".bz-sp-slider-val");
         range.addEventListener("input", () => {
           var _a3;
           em.textContent = range.value;
@@ -12111,10 +12175,10 @@ ${n.content.slice(0, 2e3)}
         const acc = bindValue(row.binding);
         const multi = row.mode === "multi";
         const fallbackFn = row.fallbackValue;
-        const ctrl = makePathRowCtrl({
+        ctrlEl.appendChild(makePathRowCtrl({
           name: row.name,
           mode: row.mode,
-          value: multi ? Array.isArray(acc.read()) ? [...acc.read()] : [] : String((_f = acc.read()) != null ? _f : ""),
+          value: multi ? Array.isArray(acc.read()) ? [...acc.read()] : [] : String((_j = acc.read()) != null ? _j : ""),
           pickerTitle: row.pickerTitle,
           pickerDesc: row.pickerDesc,
           buttonText: row.buttonText,
@@ -12133,41 +12197,35 @@ ${n.content.slice(0, 2e3)}
             }
             return Array.isArray(res) ? res : void 0;
           }
-        });
-        vm.ctrlHtml = "";
-        el.innerHTML = rowHtml(vm);
-        el.querySelector(".bz-sp-set-ctrl").appendChild(ctrl);
+        }));
         break;
       }
       case "button": {
-        vm.ctrlHtml = rowBtnHtml(row.buttonText, row.cta);
-        el.innerHTML = rowHtml(vm);
-        el.querySelector(".bz-sp-btn").addEventListener("click", () => row.onClick(ctx));
+        ctrlEl.innerHTML = rowBtnHtml(row.buttonText, row.cta);
+        const b2 = ctrlEl.querySelector(".bz-sp-btn");
+        b2.addEventListener("click", () => row.onClick(ctx));
         break;
       }
       case "info": {
-        vm.ctrlHtml = badgeHtml(row.name);
-        el.innerHTML = rowHtml(vm);
+        ctrlEl.innerHTML = badgeHtml(row.name);
         break;
       }
       case "choiceCards": {
         const acc = bindValue(row.binding);
         const layoutKey = row.layoutKey;
-        const curLayout = layoutKey ? String((_g = snapshot()[layoutKey]) != null ? _g : "") : "";
+        const curLayout = layoutKey ? String((_k = snapshot()[layoutKey]) != null ? _k : "") : "";
         const opts2 = row.options.filter((o) => {
           const lo = o.layout;
           return !lo || !layoutKey || lo === curLayout;
         });
-        const cur = String((_h = acc.read()) != null ? _h : "") || opts2[0] && opts2[0].value || "";
-        vm.isCards = true;
-        vm.ctrlHtml = cardpickHtml(opts2.map((o) => ({
+        const cur = String((_l = acc.read()) != null ? _l : "") || opts2[0] && opts2[0].value || "";
+        ctrlEl.innerHTML = cardpickHtml(opts2.map((o) => ({
           value: o.value,
           label: o.label,
           on: o.value === cur,
           prevClass: o.prevClass
         })));
-        el.innerHTML = rowHtml(vm);
-        const wrap = el.querySelector(".bz-sp-cardpick");
+        const wrap = ctrlEl.querySelector(".bz-sp-cardpick");
         wrap.querySelectorAll(".bz-sp-cardpick-card").forEach((c) => {
           c.addEventListener("click", () => {
             var _a3, _b3, _c2;
@@ -12182,9 +12240,9 @@ ${n.content.slice(0, 2e3)}
         break;
       }
       case "custom": {
-        vm.isCustom = true;
-        el.innerHTML = rowHtml(vm);
-        const slot = el.querySelector(".bz-sp-custom-slot--full");
+        const slot = document.createElement("div");
+        slot.className = "bz-sp-custom-slot bz-sp-custom-slot--full";
+        el.appendChild(slot);
         try {
           row.render(slot, ctx);
         } catch (e) {
@@ -12194,18 +12252,19 @@ ${n.content.slice(0, 2e3)}
           const onRefresh = row.onRefresh;
           regRefresh(() => onRefresh(ctx));
         }
-        return el;
+        break;
       }
       default:
-        return el;
+        break;
     }
     return el;
   }
   function renderGroup(container, group, refresh, regRefresh) {
-    const card = document.createElement("div");
-    card.innerHTML = groupCardHtml(group.icon, group.name, `${group.rows.length} 项`);
-    const body = card.querySelector(".bz-sp-group-body");
+    const cardHolder = document.createElement("div");
+    cardHolder.innerHTML = groupCardHtml(group.icon, group.name, `${group.rows.length} 项`);
+    const card = cardHolder.firstElementChild;
     const count = card.querySelector(".bz-sp-group-count");
+    const body = card.querySelector(".bz-sp-group-body");
     const rowEls = [];
     group.rows.forEach((r) => {
       const rowEl = renderRow(r, refresh, regRefresh);
@@ -12276,10 +12335,10 @@ ${n.content.slice(0, 2e3)}
   var init_renderer = __esm({
     "src/settings-panel/renderer.ts"() {
       init_settings_provider();
-      init_icons();
       init_dir_picker();
       init_notice();
       init_render4();
+      init_ui();
     }
   });
 
@@ -17333,6 +17392,15 @@ ${countsToText(s.missing)}
     const warnReload = makeReloadWarnOnce();
     return {
       groups: [
+        {
+          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "encryptSkin" }, options: [{ value: "default", label: "三栏", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板主题", binding: { key: "encryptSkinTheme" }, layoutKey: "encryptSkin", options: [{ value: "steel", label: "钢灰", layout: "default", prevClass: "bz-sp-prev-steel" }] }
+          ]
+        },
         {
           icon: "key-round",
           name: "生成",
@@ -22608,6 +22676,15 @@ ${entry.content.trim()}`;
     return {
       groups: [
         {
+          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "diarySkin" }, options: [{ value: "default", label: "纸页", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板主题", binding: { key: "diarySkinTheme" }, layoutKey: "diarySkin", options: [{ value: "ivory", label: "象牙白", layout: "default", prevClass: "bz-sp-prev-ivory" }] }
+          ]
+        },
+        {
           icon: "folder-open",
           name: "目录",
           rows: [
@@ -22921,6 +22998,15 @@ ${entry.content.trim()}`;
   function diaryWallSettingsSchema() {
     return {
       groups: [
+        {
+          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "diaryWallSkin" }, options: [{ value: "default", label: "媒体墙", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板主题", binding: { key: "diaryWallSkinTheme" }, layoutKey: "diaryWallSkin", options: [{ value: "gallery", label: "画廊白", layout: "default", prevClass: "bz-sp-prev-gallery" }] }
+          ]
+        },
         mobileFullscreenGroup("diaryWallMobileDefaultFullscreen", { desc: "" })
       ]
     };
@@ -24371,6 +24457,31 @@ ${entry.content.trim()}`;
   function belongingSettingsSchema() {
     return {
       groups: [
+        {
+          // 外观组与待办同构（上布局行下主题行）；占位单卡（用户拍板 C）：当前仅 P20 大字报 × 暖白，
+          // 布局/主题扩展待将来开模——键与联动契约已按可扩展形态立好
+          icon: "palette",
+          name: "外观",
+          rows: [
+            {
+              type: "choiceCards",
+              name: "面板布局",
+              binding: { key: "belSkin" },
+              options: [
+                { value: "poster", label: "大字报", prevClass: "bz-sp-prev-poster" }
+              ]
+            },
+            {
+              type: "choiceCards",
+              name: "面板主题",
+              binding: { key: "belSkinTheme" },
+              layoutKey: "belSkin",
+              options: [
+                { value: "warmwhite", label: "暖白", layout: "poster", prevClass: "bz-sp-prev-warmwhite" }
+              ]
+            }
+          ]
+        },
         {
           icon: "eye",
           name: "显示",
@@ -27746,6 +27857,15 @@ ${sample}`,
     return {
       groups: [
         {
+          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "literatureSkin" }, options: [{ value: "default", label: "索引卡", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板主题", binding: { key: "literatureSkinTheme" }, layoutKey: "literatureSkin", options: [{ value: "manila", label: "牛皮纸", layout: "default", prevClass: "bz-sp-prev-manila" }] }
+          ]
+        },
+        {
           icon: "folder-open",
           name: "目录与分类",
           rows: [
@@ -29739,101 +29859,53 @@ ${sample}`,
     overlayEl.className = "bz-panel-overlay";
     overlayEl.style.display = "none";
     overlayEl.innerHTML = `
-
     <div class="bz-panel-frame bz-clip-frame bz-panel-mtop">
-
       <!-- 桌面三栏 -->
-
       <div class="bz-clip-desk">
-
         <div class="bz-panel-head bz-panel-head--tall">
-
           <div class="bz-panel-title">剪藏本</div>
-
           <div class="bz-panel-head-sp"></div>
-
           <div class="bz-clip-issue" data-clip-issue></div>
-
           <div class="bz-clip-head-search bz-search">${iconSpan2("search")}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点…"></div>
-
         </div>
-
         <div class="bz-clip-desk-body">
-
           <div class="bz-rail bz-rail--wide bz-clip-rail">
-
             <div class="bz-clip-rail-label">SITE 站点</div>
-
             <div class="bz-rail-scroll" data-clip-rail></div>
-
             <div class="bz-clip-rail-foot" data-clip-rail-foot></div>
-
           </div>
-
           <div class="bz-clip-mid">
-
             <div class="bz-clip-toc-head">目录</div>
-
             <div class="bz-clip-list" data-clip-list></div>
-
           </div>
-
           <div class="bz-clip-read" data-clip-read-pane tabindex="0">
-
             <div class="bz-clip-read-scroll"><div class="bz-clip-read-body" data-clip-reader></div></div>
-
           </div>
-
         </div>
-
       </div>
-
       <!-- 移动双屏 -->
-
       <div class="bz-clip-mob" data-clip-mob>
-
         <div class="bz-clip-mob-top">
-
           <div class="bz-clip-mob-title">剪藏本</div>
-
           <button class="bz-icon-btn bz-icon-btn--lg" data-clip-mob-search title="搜索">${iconSpan2("search")}</button>
-
           <button class="bz-icon-btn bz-icon-btn--lg bz-icon-btn--close" data-clip-mob-close title="关闭">${iconSpan2("x")}</button>
-
         </div>
-
         <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
-
           <input class="bz-input" type="text" data-clip-mob-input placeholder="搜索标题、摘要、站点、标签">
-
         </div>
-
         <div class="bz-mobstrip" data-clip-mob-sources></div>
-
         <div class="bz-clip-mob-list" data-clip-mob-list></div>
-
       </div>
-
       <!-- 移动详情 overlay（屏2） -->
-
       <div class="bz-clip-mob-detail bz-panel-mtop" data-clip-mob-detail style="display:none">
-
         <div class="bz-clip-mob-detail-top">
-
           <button class="bz-icon-btn bz-icon-btn--lg" data-clip-mob-back title="返回">${iconSpan2("arrow-left")}</button>
-
           <div class="bz-clip-mob-detail-title" data-clip-mob-title></div>
-
           <button class="bz-clip-mob-save" data-clip-mob-save title="保存到剪藏本">${iconSpan2("download", "bz-ic--sm")}</button>
-
         </div>
-
         <div class="bz-clip-mob-detail-body" data-clip-mob-detail-body></div>
-
       </div>
-
     </div>
-
   `;
     mountIcons(overlayEl);
     document.body.appendChild(overlayEl);
@@ -30021,17 +30093,11 @@ ${sample}`,
     const badge = icon === "feed" ? `<span class="bz-rail-badge" style="--bz-rail-tint:${color || "#58a6ff"}">${escapeHtml2(sub || label.slice(0, 1))}</span>` : icon === "bili" ? `<span class="bz-rail-badge bili">${escapeHtml2(sub || label.slice(0, 1))}</span>` : icon === "clip" ? `<span class="bz-rail-ic">${iconSpan2("scissors")}</span>` : `<span class="bz-rail-ic${sel.kind === "all" ? " bz-rail-ic--accent" : ""}">${icon ? iconSpan2(icon) : ""}</span>`;
     const count = `<span class="bz-rail-count">${unread > 0 ? `<b>${unread}</b>` : unread}/${total}</span>`;
     return `
-
     <div class="bz-rail-item${active2 ? " on" : ""}" data-src='${escapeHtml2(JSON.stringify(sel))}' title="${escapeHtml2(label)}">
-
       ${badge}
-
       <span class="bz-rail-name">${escapeHtml2(label)}</span>
-
       <span class="bz-clip-lead"></span>
-
       ${count}
-
     </div>`;
   }
   function renderRail() {
@@ -30132,19 +30198,12 @@ ${sample}`,
       M5.cur = list[0];
     }
     listEl.innerHTML = list.map((a, i) => `
-
     <div class="bz-clip-item bz-clip-item--${a.st}${M5.cur && M5.cur.id === a.id ? " on" : ""}" data-id="${escapeHtml2(a.id)}">
-
       <span class="bz-clip-no">${String(i + 1).padStart(2, "0")}</span>
-
       <div class="bz-clip-item-main">
-
         <div class="bz-clip-item-t"><span>${escapeHtml2(a.title)}</span></div>
-
         <div class="bz-clip-item-meta">${escapeHtml2(siteShort(a.srcName))} · ${relTime2(a.timeTs)}</div>
-
       </div>
-
     </div>`).join("");
     bindItemMenus();
   }
@@ -30271,27 +30330,16 @@ ${sample}`,
     }
     const openNoteFoot = a.origin === "clip" && a.notePath ? `<div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-open-note>打开笔记 ${iconSpan2("external-link", "bz-ic--xs")}</span></div>` : "";
     readerEl.innerHTML = `
-
     <div class="bz-clip-art-title">${escapeHtml2(a.title)}</div>
-
     <div class="bz-clip-art-meta">
-
       <span>${escapeHtml2(a.timeText || relTime2(a.timeTs))}</span>
-
       <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${escapeHtml2(siteShort(a.srcName))}</span></span>
-
       <span class="bz-clip-art-state">${stLabel}</span>
-
     </div>
-
     <div class="bz-clip-art-fs" data-clip-fs></div>
-
     ${a.summary ? `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan2("sparkles", "bz-ic--xs")}摘要</span>${escapeHtml2(a.summary)}</div>` : ""}
-
     <div class="bz-clip-art-md" data-clip-md>${paras || `<p class="dim">${escapeHtml2(a.origin === "clip" ? "（笔记暂无正文）" : "正文已清空（已处理条目）")}</p>`}</div>
-
     ${openNoteFoot}
-
   `;
     mountIcons(readerEl);
     bindImgFallback(readerEl);
@@ -30551,15 +30599,10 @@ ${sample}`,
   }
   function mobSrcChipHtml(sel, label, unread, active2, icon, sub) {
     return `
-
     <div class="bz-mobstrip-chip${active2 ? " is-on" : ""}" data-src='${escapeHtml2(JSON.stringify(sel))}'>
-
       ${icon === "feed" ? `<span class="bz-clip-favchip sm">${escapeHtml2(sub || label.slice(0, 1))}</span>` : ""}
-
       <span>${escapeHtml2(label)}</span>
-
       ${unread ? `<span class="bz-badge bz-badge--brand">${unread}</span>` : ""}
-
     </div>`;
   }
   function renderMobSources() {
@@ -30598,15 +30641,10 @@ ${sample}`,
       return;
     }
     mobListEl.innerHTML = list.map((a) => `
-
     <div class="bz-clip-mob-item" data-id="${escapeHtml2(a.id)}">
-
       <div class="bz-clip-item-t">${dotHtml(a.st)}<span>${escapeHtml2(a.title)}</span></div>
-
       ${a.summary ? `<div class="bz-clip-item-sum">${escapeHtml2(a.summary)}</div>` : ""}
-
       <div class="bz-clip-item-meta"><span>${escapeHtml2(a.srcName)}</span><span class="bz-clip-item-time">${relTime2(a.timeTs)}</span></div>
-
     </div>`).join("");
     const cards = mobListEl.querySelectorAll("[data-id]");
     cards.forEach((card) => {
@@ -30643,17 +30681,11 @@ ${sample}`,
     const paras = a.body ? paragraphsHtml(a.body) : "";
     const detailBody = mobDetailEl.querySelector("[data-clip-mob-detail-body]");
     detailBody.innerHTML = `
-
     <div class="bz-clip-mob-d-title">${escapeHtml2(a.title)}</div>
-
     <div class="bz-clip-mob-d-meta"><span class="bz-clip-favchip">${escapeHtml2(a.srcName.slice(0, 1))}</span><span>${escapeHtml2(a.srcName)}</span><span class="bz-clip-mob-d-time">${escapeHtml2(a.timeText || relTime2(a.timeTs))}</span></div>
-
     <div class="bz-clip-art-flag ${flagCls}">${iconSpan2(a.st === "saved" ? "check" : a.st === "reading" ? "book-open" : "mail", "bz-ic--xs")}${stLabel}</div>
-
     ${a.summary ? `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan2("sparkles", "bz-ic--xs")}摘要</span>${escapeHtml2(a.summary)}</div>` : ""}
-
     <div class="bz-clip-art-md">${paras || `<p class="dim">${escapeHtml2(a.origin === "clip" ? "（剪藏笔记正文请在 Obsidian 中打开）" : "正文已清空")}</p>`}</div>
-
   `;
     mountIcons(detailBody);
     bindImgFallback(detailBody);
@@ -30661,6 +30693,15 @@ ${sample}`,
   function clipbookSettingsSchema() {
     return {
       groups: [
+        {
+          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "clipbookSkin" }, options: [{ value: "default", label: "编辑部", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板主题", binding: { key: "clipbookSkinTheme" }, layoutKey: "clipbookSkin", options: [{ value: "newsprint", label: "新闻纸", layout: "default", prevClass: "bz-sp-prev-newsprint" }] }
+          ]
+        },
         {
           icon: "folder-open",
           name: "基础",
@@ -31030,6 +31071,15 @@ ${sample}`,
   function favoritesSettingsSchema() {
     return {
       groups: [
+        {
+          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "favoritesSkin" }, options: [{ value: "default", label: "标签工作台", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板主题", binding: { key: "favoritesSkinTheme" }, layoutKey: "favoritesSkin", options: [{ value: "linen", label: "亚麻", layout: "default", prevClass: "bz-sp-prev-linen" }] }
+          ]
+        },
         mobileFullscreenGroup("favoritesMobileDefaultFullscreen", { desc: "" })
       ]
     };
@@ -31638,6 +31688,31 @@ GitHub 仓库：${ghInfo.title}
     return {
       groups: [
         {
+          // 外观组（issue 246）：布局行收编真键 cinemaStyle——午夜场上岸单卡（gaz/booth 未实现不暴露，
+          // 非法值域内回落午夜场，重开面板生效）；主题行占位，域消费待皮肤设计时接入
+          icon: "palette",
+          name: "外观",
+          rows: [
+            {
+              type: "choiceCards",
+              name: "面板布局",
+              binding: { key: "cinemaStyle" },
+              options: [
+                { value: "midnight", label: "午夜场", prevClass: "bz-sp-prev-panel" }
+              ]
+            },
+            {
+              type: "choiceCards",
+              name: "面板主题",
+              binding: { key: "cinemaSkinTheme" },
+              layoutKey: "cinemaStyle",
+              options: [
+                { value: "nightfall", label: "夜幕", layout: "midnight", prevClass: "bz-sp-prev-nightfall" }
+              ]
+            }
+          ]
+        },
+        {
           icon: "folder-open",
           name: "目录",
           rows: [
@@ -31798,6 +31873,27 @@ GitHub 仓库：${ghInfo.title}
     return {
       groups: [
         {
+          // 外观组（issue 246 收编）：bookshelfSkin 五肤×亮暗（issue 235 拍板）；无布局维度走单行组
+          // （小橘先例）；onChange 热切换已开面板；退役肤值读取回落雪松白（normalizeSkin）
+          icon: "palette",
+          name: "外观",
+          rows: [
+            {
+              type: "choiceCards",
+              name: "面板主题",
+              binding: { key: "bookshelfSkin" },
+              options: [
+                { value: "nordic", label: "雪松白", prevClass: "bz-skinprev-bs-nordic" },
+                { value: "noir", label: "黑金夜曲", prevClass: "bz-skinprev-bs-noir" },
+                { value: "kraft", label: "牛皮手帐", prevClass: "bz-skinprev-bs-kraft" },
+                { value: "velvet", label: "丝绒剧院", prevClass: "bz-skinprev-bs-velvet" },
+                { value: "mono", label: "极简黑白", prevClass: "bz-skinprev-bs-mono" }
+              ],
+              onChange: (v) => applyBookshelfSkin(v)
+            }
+          ]
+        },
+        {
           icon: "folder-open",
           name: "目录",
           rows: [
@@ -31815,22 +31911,6 @@ GitHub 仓库：${ghInfo.title}
           icon: "eye",
           name: "显示",
           rows: [
-            {
-              // 面板皮肤（issue 235 五肤×亮暗）：choiceCards「看脸选」；每肤配亮暗两套变体，
-              // Obsidian 主题切模式（bz-bs-mode-*）；默认雪松白；onChange 热切换已开面板；
-              // 存量退役肤值（dark/wabi/bauhaus/blueprint/neon）读取时回落雪松白（normalizeSkin）
-              type: "choiceCards",
-              name: "面板皮肤",
-              binding: { key: "bookshelfSkin" },
-              options: [
-                { value: "nordic", label: "雪松白", prevClass: "bz-skinprev-bs-nordic" },
-                { value: "noir", label: "黑金夜曲", prevClass: "bz-skinprev-bs-noir" },
-                { value: "kraft", label: "牛皮手帐", prevClass: "bz-skinprev-bs-kraft" },
-                { value: "velvet", label: "丝绒剧院", prevClass: "bz-skinprev-bs-velvet" },
-                { value: "mono", label: "极简黑白", prevClass: "bz-skinprev-bs-mono" }
-              ],
-              onChange: (v) => applyBookshelfSkin(v)
-            },
             {
               type: "select",
               name: "默认筛选",
@@ -36086,6 +36166,15 @@ ${text}`;
     return {
       groups: [
         {
+          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "secondbrainSkin" }, options: [{ value: "default", label: "对话", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板主题", binding: { key: "secondbrainSkinTheme" }, layoutKey: "secondbrainSkin", options: [{ value: "graphite", label: "石墨", layout: "default", prevClass: "bz-sp-prev-graphite" }] }
+          ]
+        },
+        {
           icon: "folder-open",
           name: "基础",
           rows: [
@@ -37312,6 +37401,15 @@ ${text}`;
     return {
       groups: [
         {
+          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "pomodoroSkin" }, options: [{ value: "default", label: "计时盘", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板主题", binding: { key: "pomodoroSkinTheme" }, layoutKey: "pomodoroSkin", options: [{ value: "tomato", label: "番茄", layout: "default", prevClass: "bz-sp-prev-tomato" }] }
+          ]
+        },
+        {
           icon: "timer",
           name: "时间方案",
           rows: [
@@ -38390,12 +38488,12 @@ ${text}`;
   var schemaLoaders, DOMAINS2, NAV_SECS, schemaRowCache, loadedCounts, listableDomains, navBadges, SettingsPanelUI;
   var init_ui12 = __esm({
     "src/settings-panel/ui.ts"() {
+      init_fake_obsidian();
       init_dom();
       init_esc_manager();
       init_mobile();
       init_settings_provider();
       init_domain_icons();
-      init_icons();
       init_renderer();
       init_notice();
       init_app();
@@ -38560,7 +38658,7 @@ ${text}`;
             close: () => this.hide()
           });
         }
-        /* ---------- 桌面：B 侧栏工作台（头行 + 左导航 + 右内嵌渲染；markup 出纯层 deskShellHtml） ---------- */
+        /* ---------- 桌面：B 侧栏工作台（头行 + 左导航 + 右内嵌渲染） ---------- */
         buildDesktop(popup) {
           var _a2;
           popup.classList.add("bz-sp-desk");
@@ -38572,6 +38670,7 @@ ${text}`;
           const searchIn = popup.querySelector(".bz-sp-search .bz-input");
           const renderNav = (q2) => {
             const query = q2.trim();
+            nav.innerHTML = "";
             const visible = listableDomains();
             const matches = (d) => !query || d.name.includes(query) || d.desc.includes(query) || (schemaRowCache.get(d.id) || []).some((r) => r.name.includes(query));
             const secs = NAV_SECS.map((sec) => ({
@@ -38580,28 +38679,37 @@ ${text}`;
             }));
             const rest = visible.filter((d) => !NAV_SECS.some((sec) => sec.ids.indexOf(d.id) >= 0) && matches(d));
             if (rest.length) secs.push({ title: "其他", domains: rest });
-            nav.innerHTML = secs.filter((sec) => sec.domains.length).map((sec) => navSecHtml(sec.title, sec.domains.map((d) => navItemHtml({
-              id: d.id,
-              icon: d.icon,
-              name: d.name,
-              count: badgeOf(d),
-              on: d.id === this.activeDomainId && !query
-            })).join(""))).join("");
+            for (const sec of secs) {
+              if (!sec.domains.length) continue;
+              let itemsHtml = "";
+              sec.domains.forEach((d) => {
+                itemsHtml += navItemHtml({
+                  id: d.id,
+                  icon: d.icon,
+                  name: d.name,
+                  count: badgeOf(d),
+                  on: d.id === this.activeDomainId && !query
+                });
+              });
+              nav.insertAdjacentHTML("beforeend", navSecHtml(sec.title, itemsHtml));
+            }
             mountIcons(nav);
             nav.querySelectorAll(".bz-sp-nav-item").forEach((b) => {
+              const id = b.dataset.spDomain;
               b.addEventListener("click", () => {
-                var _a3, _b2;
-                this.activeDomainId = (_a3 = b.dataset.spDomain) != null ? _a3 : "global";
+                this.activeDomainId = id;
                 renderNav(searchIn.value);
-                void this.renderDomain(pane, (_b2 = DOMAINS2.find((x) => x.id === this.activeDomainId)) != null ? _b2 : DOMAINS2[0]);
+                void this.renderDomain(pane, DOMAINS2.find((x) => x.id === id));
               });
             });
-            const kw = query;
-            pane.querySelectorAll(".bz-sp-set-row").forEach((row) => {
-              row.classList.toggle("hit", !!kw && row.textContent.includes(kw));
-            });
           };
-          searchIn.addEventListener("input", () => renderNav(searchIn.value));
+          searchIn.addEventListener("input", () => {
+            renderNav(searchIn.value);
+            const q2 = searchIn.value.trim();
+            popup.querySelectorAll(".bz-sp-settings-body .bz-sp-set-row").forEach((row) => {
+              row.classList.toggle("hit", !!q2 && !!row.textContent && row.textContent.includes(q2));
+            });
+          });
           renderNav("");
           this.rerenderList = () => renderNav(searchIn.value);
           void this.renderDomain(pane, (_a2 = DOMAINS2.find((x) => x.id === this.activeDomainId)) != null ? _a2 : DOMAINS2[0]);
@@ -38649,11 +38757,16 @@ ${text}`;
         emptyEl(icon, title, desc) {
           return uiEmpty({ icon, title, desc });
         }
-        /** 加载态（spinner + 文案；markup 出纯层 loadingHtml） */
+        /** 加载态（spinner + 文案） */
         loadingEl() {
-          const wrap = document.createElement("div");
-          wrap.innerHTML = loadingHtml();
-          return wrap.firstElementChild;
+          const loading2 = document.createElement("div");
+          loading2.className = "bz-sp-loading";
+          const sp = document.createElement("span");
+          sp.className = "bz-spinner";
+          const tx = document.createElement("span");
+          tx.textContent = "加载设置…";
+          loading2.append(sp, tx);
+          return loading2;
         }
         /**
          * 渲染某域设置到容器：内嵌渲染器（与 ⚙️ 弹窗同数据源）。
@@ -38663,10 +38776,9 @@ ${text}`;
           const runId = ++this.renderSeq;
           this.renderHandles = [];
           pane.innerHTML = "";
-          const paneWrap = document.createElement("div");
-          paneWrap.innerHTML = pageHeadHtml(domain.name, domain.desc, "");
-          const pageHead = paneWrap.firstElementChild;
-          const pageTag = pageHead.querySelector(".bz-sp-page-tag");
+          const headHolder = document.createElement("div");
+          headHolder.innerHTML = pageHeadHtml(domain.name, domain.desc, "");
+          const pageHead = headHolder.firstElementChild;
           pane.appendChild(pageHead);
           if (domain.noSettings || !domain.schemaLoader) {
             pane.appendChild(this.emptyEl(
@@ -38679,7 +38791,7 @@ ${text}`;
           const body = document.createElement("div");
           body.className = "bz-sp-settings-body";
           pane.appendChild(body);
-          body.appendChild(this.loadingEl());
+          body.innerHTML = loadingHtml();
           try {
             const schema = await domain.schemaLoader();
             if (runId !== this.renderSeq) return;
@@ -38698,7 +38810,7 @@ ${text}`;
             const count = visibleItemCount(schema);
             navBadges.set(domain.id, count > 0 ? String(count) : "·");
             this.refreshNavBadges();
-            pageTag.textContent = `${count} 项 · ${schema.groups.length} 组`;
+            pageHead.querySelector(".bz-sp-page-tag").textContent = `${count} 项 · ${schema.groups.length} 组`;
             if (visibleGroups === 0 && groupEls.length > 0) {
               body.appendChild(this.emptyEl(
                 "smartphone",
@@ -38720,13 +38832,23 @@ ${text}`;
         /* ---------- 移动端：M1 命令面板（头行 + 搜索 + 域列表 → 域设置弹窗） ---------- */
         buildMobile(popup) {
           popup.classList.add("bz-sp-mobile");
-          popup.innerHTML = mobShellHtml();
-          mountIcons(popup);
+          popup.innerHTML = `
+      <div class="bz-sp-head">
+        <span class="bz-sp-head-title">设置</span>
+        <span class="bz-sp-head-tools"></span>
+      </div>
+      <div class="bz-sp-mob-search">
+        <span class="bz-input-wrap"><i class="bz-ic"></i><input class="bz-input" placeholder="搜索设置、域…" /></span>
+      </div>
+      <div class="bz-sp-mob-list"></div>
+    `;
           const tools = popup.querySelector(".bz-sp-head-tools");
           tools.appendChild(uiIconBtn({ icon: "x", lg: true, title: "关闭", className: "bz-sp-mob-close", onClick: () => this.hide() }));
           const list = popup.querySelector(".bz-sp-mob-list");
           const searchWrap = popup.querySelector(".bz-sp-mob-search");
           const searchIn = popup.querySelector(".bz-sp-mob-search .bz-input");
+          const searchIcon = popup.querySelector(".bz-sp-mob-search .bz-ic");
+          setIcon(searchIcon, "search");
           const clearBtn = uiIconBtn({ icon: "x", title: "清除", className: "bz-sp-mob-clear" });
           searchWrap.appendChild(clearBtn);
           clearBtn.addEventListener("click", () => {
@@ -38738,6 +38860,7 @@ ${text}`;
           const render2 = (q2) => {
             const query = q2.trim();
             searchWrap.classList.toggle("hasval", !!query);
+            list.innerHTML = "";
             if (!query) {
               const visible = listableDomains();
               const secs = NAV_SECS.map((sec) => ({
@@ -38746,14 +38869,16 @@ ${text}`;
               }));
               const rest = visible.filter((d) => !NAV_SECS.some((sec) => sec.ids.indexOf(d.id) >= 0));
               if (rest.length) secs.push({ title: "其他", domains: rest });
-              list.innerHTML = secs.filter((sec) => sec.domains.length).map((sec) => mobSecHtml(sec.title) + sec.domains.map((d) => mobItemHtml({
-                id: d.id,
-                icon: d.icon,
-                name: d.name,
-                desc: d.desc
-              })).join("")).join("");
-              mountIcons(list);
-              bindList();
+              for (const sec of secs) {
+                if (!sec.domains.length) continue;
+                const secEl = document.createElement("div");
+                secEl.className = "bz-sp-mob-sec";
+                secEl.textContent = sec.title;
+                list.appendChild(secEl);
+                sec.domains.forEach((d) => {
+                  list.appendChild(mobItem(d));
+                });
+              }
               return;
             }
             const doms = listableDomains().filter((d) => d.name.includes(query) || d.desc.includes(query));
@@ -38769,31 +38894,64 @@ ${text}`;
             });
             let html = "";
             if (doms.length) {
-              html += mobSecHtml(`域（${doms.length}）`);
+              html += `<div class="bz-sp-mob-sec">域（${doms.length}）</div>`;
               doms.forEach((d) => {
-                html += mobItemHtml({ id: d.id, icon: d.icon, name: d.name, desc: d.desc });
+                html += mobItem(d).outerHTML;
               });
             }
             if (rows.length) {
-              html += mobSecHtml(`设置项（${rows.length}）`);
+              html += `<div class="bz-sp-mob-sec">设置项（${rows.length}）</div>`;
               rows.forEach((r) => {
-                html += mobRowHitHtml({ id: r.domain.id, icon: r.icon, name: r.name, desc: `${r.domain.name} · ${r.desc}` });
+                const item = document.createElement("button");
+                item.type = "button";
+                item.className = "bz-sp-mob-item";
+                const ic = document.createElement("span");
+                ic.className = "bz-sp-mob-ic";
+                ic.appendChild(uiIcon(r.icon));
+                const t = document.createElement("span");
+                t.className = "bz-sp-mob-t";
+                const nm = document.createElement("span");
+                nm.className = "bz-sp-mob-name";
+                nm.textContent = r.name;
+                const ds = document.createElement("span");
+                ds.className = "bz-sp-mob-desc";
+                ds.textContent = `${r.domain.name} · ${r.desc}`;
+                t.append(nm, ds);
+                const kind = document.createElement("span");
+                kind.className = "bz-sp-mob-kind";
+                kind.textContent = "设置";
+                item.append(ic, t, kind);
+                item.addEventListener("click", () => void this.openMobileDomain(r.domain));
+                html += item.outerHTML;
               });
             }
             if (!doms.length && !rows.length) {
-              html = mobEmptyHtml(query);
+              html = `<div class="bz-sp-mob-empty">没有匹配「${query}」的设置或域</div>`;
             }
             list.innerHTML = html;
-            mountIcons(list);
-            bindList();
           };
-          const bindList = () => {
-            list.querySelectorAll("[data-sp-domain]").forEach((it) => {
-              it.addEventListener("click", () => {
-                const d = DOMAINS2.find((x) => x.id === it.dataset.spDomain);
-                if (d) void this.openMobileDomain(d);
-              });
-            });
+          const mobItem = (d) => {
+            const item = document.createElement("button");
+            item.type = "button";
+            item.className = "bz-sp-mob-item";
+            const ic = document.createElement("span");
+            ic.className = "bz-sp-mob-ic";
+            ic.appendChild(uiIcon(d.icon));
+            const t = document.createElement("span");
+            t.className = "bz-sp-mob-t";
+            const nm = document.createElement("span");
+            nm.className = "bz-sp-mob-name";
+            nm.textContent = d.name;
+            const ds = document.createElement("span");
+            ds.className = "bz-sp-mob-desc";
+            ds.textContent = d.desc;
+            t.append(nm, ds);
+            const chev = document.createElement("span");
+            chev.className = "bz-sp-mob-chev";
+            chev.appendChild(uiIcon("chevron-right"));
+            item.append(ic, t, chev);
+            item.addEventListener("click", () => void this.openMobileDomain(d));
+            return item;
           };
           searchIn.addEventListener("input", () => render2(searchIn.value));
           render2("");
@@ -38811,12 +38969,21 @@ ${text}`;
           popup.style.width = "min(calc(100vw - 32px), 560px)";
           popup.style.maxHeight = "82vh";
           topifyZ(mask, popup);
-          popup.innerHTML = mobModalShellHtml(domain.icon, domain.name);
-          mountIcons(popup);
-          const head = popup.querySelector(".bz-sp-mob-modal-head");
+          const head = document.createElement("div");
+          head.className = "bz-sp-mob-modal-head";
+          const ic = document.createElement("span");
+          ic.className = "bz-sp-mob-modal-ic";
+          ic.appendChild(uiIcon(domain.icon));
+          const title = document.createElement("h3");
+          title.className = "bz-sp-mob-modal-title";
+          title.textContent = domain.name;
+          head.append(ic, title);
           const x = uiIconBtn({ icon: "x", lg: true, title: "关闭" });
           head.appendChild(x);
-          const body = popup.querySelector(".bz-sp-mob-modal-body");
+          popup.appendChild(head);
+          const body = document.createElement("div");
+          body.className = "bz-sp-settings-body bz-sp-mob-modal-body";
+          popup.appendChild(body);
           const close = () => {
             escHandle5 == null ? void 0 : escHandle5.unregister();
             mask.remove();
