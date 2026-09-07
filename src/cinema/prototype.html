@@ -2,21 +2,25 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>影院 · 原型预览（午夜场完整功能版 · 与 src/cinema/styles.css 共用同一份 CSS）</title>
+<title>影院 · 原型预览（真行为单源）</title>
 <!--
-  ┌────────────────────────────────────────────────────────────────────┐
-  │ 本文件 = 影院域 UI 的评审壳。组件样式零内联，全部来自（与            │
-  │ build-css SOURCES 同序的 core 链 +）同目录 ./styles.css。            │
-  │ 改样式只改 styles.css，刷新本页即见，插件构建自动带走。              │
-  │ markup 单源（ADR-0104/0105）：午夜场组件 HTML 全部出自 render.ts     │
-  │ （经 prototype-render.js 挂 window.BZR_cinema）——本壳只留演示层：    │
-  │ 演示数据、主题/风格切换、自绘 toast、评审钩子 ?style=/selftest。     │
-  │                                                                    │
-  │ 午夜场 = 完整功能版：主列表 / 详情弹窗 / 添加·编辑表单 / 右键菜单 /   │
-  │ 长按抽屉 / 删除确认 / AI 荐片页（含等待·失败·换一批）/ 观影分析页     │
-  │ （19 板块真实统计）/ 设置弹窗 / toast / 空态。                        │
-  │ 数据：50 部真实 vault 导出，增删改写 localStorage 持久化。            │
-  └────────────────────────────────────────────────────────────────────┘
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ 本文件 = 影院域 UI 的评审壳（行为单源版，issue 245/ADR-0106）。           │
+  │ 组件样式零内联，全部来自（与 build-css SOURCES 同序）：                    │
+  │   ../core/styles.css → ../core/ui/tokens.css → ../core/ui/components.css │
+  │   → ./styles.css                                                        │
+  │ markup 单源（ADR-0104/0105）：午夜场 HTML 出自 ./prototype-render.js       │
+  │   （src/cinema/render.ts 构建）。                                        │
+  │ 行为单源（issue 245/ADR-0106）：交互逻辑全部是插件同款 ui.ts 依赖链——      │
+  │   经 ./prototype-behavior.js（src/cinema/fake-sim.ts 构建，               │
+  │   alias obsidian→公共假层）在下方两个 iframe 视图里跑真行为；              │
+  │   桌面 iframe 宽视口 = 桌面布局（900×620 面板居中）；移动 iframe 396×780 = │
+  │   Platform 视口判定 → 移动布局。数据 = 我的/影视/*.md 笔记（localStorage   │
+  │   文件系统，跨 iframe storage 桥同步——完整模拟插件「外部变更自动刷新」）。  │
+  │ 壳内只允许：外景容器样式、评审徽牌、演示钩子与自检。                        │
+  │ 旧自绘壳（三风格切换/场刊/放映室探索稿/AI mock 池）随行为单源退役：         │
+  │   真行为层本批只上岸午夜场（cinemaStyleOf 非法值回落 midnight）。           │
+  └────────────────────────────────────────────────────────────────────────┘
 -->
 <link rel="stylesheet" href="../core/styles.css">
 <link rel="stylesheet" href="../core/ui/tokens.css">
@@ -24,576 +28,361 @@
 <link rel="stylesheet" href="./styles.css">
 <style>
   /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{min-height:100vh;padding:0 24px 56px;background:#e3e0d8;font-family:system-ui,'Segoe UI','Microsoft YaHei',sans-serif}
-  body.theme-dark{background:#1e1b18}
-  body.theme-light{background:#e3e0d8}
-  *{scrollbar-width:none}*::-webkit-scrollbar{display:none}
-  .demo-bar{position:sticky;top:0;z-index:99;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-    padding:10px 14px;margin:0 -24px 18px;background:#d9d5c9ee;border-bottom:1px solid #bdb7a5;
-    backdrop-filter:blur(6px);font-size:12px;color:#6b6558}
-  body.theme-dark .demo-bar{background:#262219ee;border-bottom-color:#3a362c;color:#8a8271}
-  .demo-bar b{font-size:13px;letter-spacing:.12em;color:#4a4436}
-  body.theme-dark .demo-bar b{color:#cfc7b2}
-  .demo-bar .sp{flex:1}
-  .demo-btn{border:1px solid #b5ad99;background:none;border-radius:7px;padding:5px 12px;font-size:12px;color:#6b6558;cursor:pointer;font-family:inherit}
-  body.theme-dark .demo-btn{border-color:#3a362c;color:#8a8271}
-  .demo-btn.on{background:#4a4436;border-color:#4a4436;color:#f4efe4}
-  body.theme-dark .demo-btn.on{background:#cfc7b2;border-color:#cfc7b2;color:#262219}
-  .demo-sec{display:none}
-  .demo-sec.on{display:block}
-  .demo-sec-title{font-size:12px;letter-spacing:.2em;color:#8a8271;margin:0 0 10px 2px}
-  body.theme-dark .demo-sec-title{color:#6d6656}
-  .demo-pair{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
-  .demo-dt{flex:none}
-  .mob-wrap{flex:none}
-  .mob-label{font-size:11px;letter-spacing:.2em;color:#98917f;margin:0 0 8px 4px}
-  body.theme-dark .mob-label{color:#6d6656}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 32px 24px;
+    background: #dcd8cd; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+  /* 模拟 Obsidian 宿主变量（core/styles.css 的右键菜单/底部抽屉取值用；插件内由主题提供） */
+  body {
+    --background-primary: #fbf9f3; --text-normal: #171512; --text-muted: #8b8474; --text-faint: #b3ab99;
+    --text-error: #b3564d; --background-modifier-hover: rgba(23,21,18,.06); --color-green: #3d8f5d;
+  }
+  * { scrollbar-width: none; } *::-webkit-scrollbar { display: none; }
+
+  /* 桌面外景（真行为 iframe：面板 append iframe body，宽度决定布局） */
+  .demo-dt { flex: none; width: 920px; height: 640px; }
+  /* 移动外景：396px iframe → Platform 视口判定移动布局（396×780 面板满幅） */
+  .demo-mob { width: 396px; height: 780px; border-radius: 26px; overflow: hidden; flex: none;
+    border: 1px solid #b8b0a0; box-shadow: 0 8px 30px rgba(0,0,0,.16); background: #f5f2ec; }
+  .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
+
+  /* 评审徽牌（演示壳自用） */
+  .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #8b8474; display: flex; gap: 10px; align-items: center;
+    background: rgba(255,255,255,.92); border: 1px solid #c9c2b2; padding: 3px 8px; z-index: 900; }
+  .vbadge button { border: none; background: none; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; }
+  .vbadge .ok { color: #3d8f5d; }
+  .vbadge .bad { color: #b3564d; }
 </style>
 </head>
-<body>
-<div class="demo-bar">
-  <b>影院 · 域内评审壳</b>
-  <span id="styleBtns"></span>
-  <span class="sp"></span>
-  <button class="demo-btn" id="resetBtn" title="清空演示数据的本地改动">还原数据</button>
-  <button class="demo-btn" id="themeBtn">暗 / 亮</button>
-</div>
-<div id="secs"></div>
+<body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark，壳内必须补一类才不透明 -->
+  <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="影院·桌面"></iframe></div>
+  <div id="mobHost" class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="影院·移动"></iframe></div>
+
+  <div class="vbadge">影院 · 真行为单源预览（桌面=真 ui.ts 跑在 920px，移动=396px）
+    <button id="mobToggle">隐藏移动端</button>
+    <button id="reset">重置演示数据</button>
+    <span id="stResult"></span>
+  </div>
 
 <script src="./prototype-icons.js"></script>
 <script src="./prototype-data.js"></script>
 <script src="./prototype-render.js"></script>
 <script>
-/* ==================== 演示壳（markup 单源：午夜场组件 HTML 全出自 window.BZR_cinema） ==================== */
-const R = window.BZR_cinema;
+(function () {
+  /* ==================== 壳基座（仅外景）：两个真行为 iframe + storage 桥 ====================
+   * 行为全部在 iframe 内跑真 ui.ts（prototype-behavior.js）；本页只做：
+   *  - 数据基座（CINEMA_DATA 经父页全局供 fake-sim 种子读）
+   *  - 重置演示数据（清 localStorage bz-sim:* 后重载 iframe）
+   *  - 自检（?selftest=1）：经 iframe contentDocument 访问真 DOM 断言
+   */
+  const DATA = window.CINEMA_DATA || [];
 
-/* ---------- 壳基座：mountIcons（内联 SVG，对齐 core/ui icons.ts） ---------- */
-const CN_ICONS = window.CN_ICONS || {};
-function mountIcons(root) {
-  if (!root) return;
-  root.querySelectorAll('i[data-lucide]').forEach((el) => {
-    const d = CN_ICONS[el.dataset.lucide];
-    if (d && !el.firstChild) {
-      el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+  const resetSim = () => {
+    const kill = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('bz-sim:')) kill.push(k);
     }
+    kill.forEach((k) => localStorage.removeItem(k));
+    // 旧自绘壳数据键一并清（防误读旧壳残留）
+    ['bz-cinema-proto-db', 'bz-cinema-proto', 'bz-cinema-proto-set', 'bz-cinema-proto-theme'].forEach((k) => localStorage.removeItem(k));
+  };
+
+  const dtFrame = () => document.querySelector('#dtHost iframe');
+  const mobFrame = () => document.querySelector('#mobHost iframe');
+  const dtDoc = () => dtFrame().contentDocument;
+  const mobDoc = () => mobFrame().contentDocument;
+  // 轮询现取 contentDocument：iframe 加载前后 document 引用会替换（about:blank → 真实文档），
+  // 不能缓存旧引用等面板——每次现查，跨文档访问本身同源安全。
+  const waitFrame = (getDoc) => new Promise((res, rej) => {
+    const started = Date.now();
+    const tries = () => {
+      try {
+        const doc = getDoc();
+        if (doc && doc.querySelector('section.bz-cinema--midnight')) return res(doc);
+        if (Date.now() - started > 25000) return rej(new Error('iframe 面板超时'));
+        setTimeout(tries, 150);
+      } catch (e) { setTimeout(tries, 150); }
+    };
+    tries();
   });
-}
-/* SVG 直拼（仅场刊/放映室探索稿还在用；午夜场 markup 一律 data-lucide 占位） */
-const SVG = {
-  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>',
-  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M12 5v14"/></svg>',
-  ai:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/><path d="M19 15l.9 2.4L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.6L19 15z"/></svg>',
-  stat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16v-5M12 16V8M17 16v-3"/></svg>',
-};
-const CINEMA_STYLES = [
-  { id: 'midnight', label: '午夜场', en: 'MIDNIGHT' },
-  { id: 'gazette',  label: '场刊',   en: 'GAZETTE'  },
-  { id: 'booth',    label: '放映室', en: 'BOOTH'    },
-];
-const GROUPS = ['电影', '剧集', '动漫', '纪录片', '公开课', '其他'];
-const GROUP_SUBS = { 电影: [], 剧集: ['国产剧','美剧','英剧','德剧','日剧','韩剧','哥伦比亚剧'], 动漫: ['日漫','国漫','美漫'], 纪录片: [], 公开课: ['公开课','TED'], 其他: [] };
-const TYPE_C = { 电影:'#e6951d', 剧集:'#3d7bd6', 动漫:'#d64d8f', 纪录片:'#45a35c', 公开课:'#9b6dd4', 其他:'#8a8578' };
-const ST_C = { '想看': '#98917f', '在看': '#d97c1d', '已看': '#4a9a5c' };
-const ST = { '想看': ['待映', '#9a917c'], '在看': ['放映中', '#d97c1d'], '已看': ['已放映', '#4a9a5c'] };
-const escL = s => (s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const stars = s => { if (!s) return ''; const n = Math.round(s / 2); return '★'.repeat(n) + '☆'.repeat(5 - n); };
-const nowStr = () => { const d = new Date(), p = n => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; };
 
-/* ---------- 数据层：真实 50 部，增删改持久化 localStorage ---------- */
-let DB;
-try { DB = JSON.parse(localStorage.getItem('bz-cinema-proto-db')) || null; } catch { DB = null; }
-if (!Array.isArray(DB) || !DB.length) DB = JSON.parse(JSON.stringify(window.CINEMA_DATA));
-const saveDB = () => localStorage.setItem('bz-cinema-proto-db', JSON.stringify(DB));
-const byKey = k => DB.find(x => R.itemKey(x) === k);
-const byName = n => DB.find(x => x.name === n);
-const SET_KEY = 'bz-cinema-proto-set';
-let SET = { cols: 5, sort: 'date', st: '', mobFull: false };
-try { const raw = JSON.parse(localStorage.getItem(SET_KEY)) || {}; if (raw.sort === 'watch') raw.sort = 'date'; Object.assign(SET, raw); } catch {}
-const saveSet = () => localStorage.setItem(SET_KEY, JSON.stringify(SET));
-let GRID_COLS = Math.min(12, Math.max(2, parseInt(SET.cols, 10) || 5));
-
-/* ==================== 午夜场（markup 单源消费；状态与插件 M 同构） ==================== */
-const MM = { view: 'list', g: '全部', st: null, sort: SET.sort || 'date', q: '', ai: { phase: 'idle', results: null, err: '', base: '' } };
-let lpFired = false, lpTimer = 0;
-const day = w => (w || '').slice(0, 10);
-
-function midList() { let a = DB.filter(x => (MM.g === '全部' || x.group === MM.g) && (!MM.st || x.status === MM.st));
-  if (MM.q) { const t = MM.q.toLowerCase(); a = a.filter(x => (x.name + (x.director || '') + (x.actors || '') + (x.review || '')).toLowerCase().includes(t)); }
-  if (MM.sort === 'date') a = [...a].sort((a, b) => (b.watchDate || '').localeCompare(a.watchDate || ''));
-  else if (MM.sort === 'rating') a = [...a].sort((a, b) => (b.rating || 0) - (a.rating || 0));
-  return a; }
-function midTitle() { return (MM.g + (MM.st ? ` · ${MM.st}` : '')); }
-function midViewSnapshot() {
-  return { view: MM.view, typeFilter: MM.g === '全部' ? null : MM.g, statusFilter: MM.st, sortMode: MM.sort, searchKeyword: MM.q }; }
-function midAiInput() {
-  const running = MM.ai.phase === 'wait', err = MM.ai.phase === 'err' ? MM.ai.err : null;
-  const results = MM.ai.phase === 'result' ? MM.ai.results : null;
-  return { running, waitMsg: MM.ai.base ? `正在找与《${MM.ai.base}》同类…` : 'AI 正在分析你的观影口味…',
-    error: err, results, pref: '剧情 · 高分文艺片 · ' + (MM.ai.base ? '与《' + MM.ai.base + '》同类' : '是枝裕和 / 文德斯') + ' · 役所广司',
-    inLibrary: n => !!byName(n) || !!(results || []).find(r => r.inLib && R.aiRecName(r) === n) }; }
-function midInput() {
-  return { items: DB, list: midList(), view: midViewSnapshot(), cols: GRID_COLS, title: midTitle(),
-    watchedCount: DB.filter(x => x.status === '已看').length,
-    aiHtml: R.aiPageHtml(midAiInput()), aiCount: MM.ai.phase === 'result' ? MM.ai.results.length : null,
-    statHtml: statPageHTML(), poster: it => it.poster || null }; }
-/* 长按（移动端 m-grid 卡片；markup 单源后每次渲染重建，须随 midRefresh 重挂——与插件 renderAll 同构） */
-function attachLongPress(root) {
-  root.querySelectorAll('.m-grid .pcard').forEach(c => {
-    c.addEventListener('pointerdown', () => { const it = byKey(c.dataset.cinemaKey); if (!it) return;
-      lpFired = false;
-      lpTimer = setTimeout(() => { lpFired = true; openSheet(root, it); }, 450); });
-    ['pointerup','pointerleave','pointercancel'].forEach(ev => c.addEventListener(ev, () => clearTimeout(lpTimer)));
-    c.addEventListener('click', e => { if (lpFired) { e.stopImmediatePropagation(); lpFired = false; } });
-    c.addEventListener('contextmenu', ev => ev.preventDefault()); });
-}
-function midRefresh(root) {
-  if (root.classList.contains('mob')) { R.renderMidnightMob(root, midInput()); attachLongPress(root); }
-  else R.renderMidnightDesk(root, midInput());
-  mountIcons(root); }
-
-/* ---------- 弹窗基座（壳自绘 .cn-ovl；内容出自纯层） / toast ---------- */
-function ovl(root, html, opts = {}) {
-  const host = document.createElement('div');
-  host.className = 'bz-cinema--midnight'; host.style.display = 'contents';
-  root.appendChild(host);
-  const el = document.createElement('div'); el.className = 'cn-ovl'; el.innerHTML = html;
-  host.appendChild(el); mountIcons(el);
-  const close = () => el.remove();
-  el.addEventListener('click', e => { if (e.target === el && !opts.sticky) close(); });
-  return { el, close }; }
-function toast(root, msg) { const host = document.createElement('div');
-  host.className = 'bz-cinema--midnight'; host.style.display = 'contents';
-  root.appendChild(host);
-  const t = document.createElement('div'); t.className = 'cn-toast'; t.textContent = msg; host.appendChild(t);
-  mountIcons(root);
-  setTimeout(() => t.remove(), 1800); }
-
-/* ---------- 右键菜单 / 长按抽屉（动作接线 = 演示语义；行 markup 出自纯层） ---------- */
-function itemActs(root, it) {
-  const a = [{ icon: 'eye', label: '打开详情', run: () => openDetail(root, it) }];
-  if (it.status !== '在看') a.push({ icon: 'play', label: '标记在看', run: () => markStatus(root, it, '在看') });
-  if (it.status !== '已看') a.push({ icon: 'check', label: '标记已看', run: () => markStatus(root, it, '已看') });
-  a.push({ icon: 'bot', label: '找同类', run: () => { MM.view = 'ai'; MM.ai = { phase: 'idle', results: null, err: '', base: it.name }; midAll(root); } },
-    { icon: 'globe', label: '在豆瓣打开', run: () => window.open(it.doubanUrl || 'https://movie.douban.com/search?q=' + encodeURIComponent(it.name), '_blank') },
-    { icon: 'pencil', label: '编辑', run: () => openForm(root, it) },
-    { icon: 'trash-2', label: '删除', danger: true, run: () => openConfirm(root, it) });
-  return a; }
-function markStatus(root, it, target) {
-  it.status = target; it.rating = target === '已看' ? (it.rating || 5) : (target === '在看' ? 0 : it.rating);
-  it.watchDate = nowStr(); if (target !== '已看') it.review = null;
-  saveDB(); toast(root, `已把「${it.name}」标记为${target}`); midAll(root); }
-function openMenu(root, it, x, y) {
-  document.querySelectorAll('.cn-menu').forEach(m => m.remove());
-  const acts = itemActs(root, it);
-  const host = root.closest('.bz-cinema--midnight') || root;
-  const el = document.createElement('div'); el.className = 'cn-menu';
-  el.innerHTML = R.actionRowsHtml(acts, 'cn-menu-item');
-  host.appendChild(el); mountIcons(el);
-  const mw = el.offsetWidth, mh = el.offsetHeight, W = host.clientWidth, H = host.clientHeight;
-  el.style.left = Math.min(x, W - mw - 8) + 'px'; el.style.top = Math.min(y, H - mh - 8) + 'px';
-  el.addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (!b) return; el.remove(); acts[b.dataset.i].run(); });
-  setTimeout(() => document.addEventListener('click', function h() { el.remove(); document.removeEventListener('click', h); }), 0); }
-function openSheet(root, it) {
-  document.querySelectorAll('.cn-sheet,.cn-sheet-mask').forEach(x => x.remove());
-  const acts = itemActs(root, it);
-  const host = root.closest('.bz-cinema--midnight') || root;
-  const mask = document.createElement('div'); mask.className = 'cn-sheet-mask';
-  const el = document.createElement('div'); el.className = 'cn-sheet';
-  el.innerHTML = R.sheetHeadHtml(it, it.poster || null) + R.actionRowsHtml(acts, 'cn-sheet-item');
-  host.appendChild(mask); host.appendChild(el); mountIcons(el);
-  const closeAll = () => { mask.remove(); el.remove(); };
-  mask.addEventListener('click', closeAll);
-  el.addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (!b) return; closeAll(); acts[b.dataset.i].run(); }); }
-
-/* ---------- 详情弹窗（内容 = 纯层 detailModalHtml） ---------- */
-function openDetail(root, it) {
-  const { el, close } = ovl(root, R.detailModalHtml(it, it.poster || null));
-  el.querySelector('.j-close').addEventListener('click', close);
-  el.querySelector('.j-edit').addEventListener('click', () => { close(); openForm(root, it); });
-  el.querySelector('.j-del').addEventListener('click', () => { close(); openConfirm(root, it); });
-  el.querySelector('.j-similar').addEventListener('click', () => { close(); MM.view = 'ai'; MM.ai = { phase: 'idle', results: null, err: '', base: it.name }; midAll(root); }); }
-
-/* ---------- 添加 / 编辑表单（内容 = 纯层 formModalHtml；保存接线 = 演示语义） ---------- */
-function openForm(root, it) {
-  const editing = !!it;
-  const initTag = it ? it.typeTag : '电影', initSt = it ? it.status : '想看';
-  const ratingVal = it && it.rating ? it.rating : 5;
-  const { el, close } = ovl(root, R.formModalHtml({ editing, name: it ? it.name : '', typeTag: initTag, stText: initSt, rating: ratingVal, review: it ? it.review || '' : '' }));
-  const cur = { tag: initTag, st: initSt };
-  el.querySelectorAll('[data-f-tag]').forEach(b => b.addEventListener('click', () => { cur.tag = b.dataset.fTag;
-    el.querySelectorAll('[data-f-tag]').forEach(x => x.classList.toggle('is-on', x === b)); }));
-  el.querySelectorAll('[data-f-st]').forEach(b => b.addEventListener('click', () => { cur.st = b.dataset.fSt;
-    el.querySelectorAll('[data-f-st]').forEach(x => x.classList.toggle('is-on', x === b));
-    el.querySelector('.j-rating').style.display = cur.st === '已看' ? '' : 'none';
-    el.querySelector('.j-review').style.display = cur.st === '已看' ? '' : 'none'; }));
-  const range = el.querySelector('.j-range');
-  range.addEventListener('input', () => { el.querySelector('.j-rval').textContent = Number(range.value).toFixed(1); });
-  el.querySelector('.j-close').addEventListener('click', close);
-  el.querySelector('.j-save').addEventListener('click', () => {
-    const name = el.querySelector('.j-name').value.trim();
-    if (!name) { toast(root, '请输入名称'); return; }
-    if (editing && name !== it.name && byName(name)) { toast(root, '已存在同名影视，请换个名称'); return; }
-    if (!editing && byName(name)) { toast(root, '已存在同名影视，请换个名称'); return; }
-    const stChanged = !editing || it.status !== cur.st;
-    const date = stChanged ? nowStr() : (it.watchDate || nowStr());
-    const rating = cur.st === '已看' ? parseFloat(range.value) : (cur.st === '在看' ? 0 : null);
-    const review = cur.st === '已看' ? el.querySelector('.j-review-t').value.trim() : null;
-    if (editing) { Object.assign(it, { name, typeTag: cur.tag, status: cur.st, rating, watchDate: date, review }); toast(root, `已保存「${name}」`); }
-    else { DB.unshift({ name, typeTag: cur.tag, group: groupOfTag(cur.tag), status: cur.st, rating, watchDate: date, review,
-      poster: null, genre: null, director: null, actors: null, region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null });
-      toast(root, `已添加「${name}」`); }
-    saveDB(); close(); midAll(root); }); }
-function groupOfTag(t) { for (const g of GROUPS) { if (g === '其他') break; if (GROUP_SUBS[g].includes(t) || g === t) return g; } return '其他'; }
-
-/* ---------- 删除确认（内容 = 纯层 confirmModalHtml） ---------- */
-function openConfirm(root, it) {
-  const { el, close } = ovl(root, R.confirmModalHtml(it), { sticky: true });
-  el.querySelector('.j-cancel').addEventListener('click', close);
-  el.querySelector('.j-del').addEventListener('click', () => { DB.splice(DB.indexOf(it), 1); saveDB(); close();
-    toast(root, `已删除「${it.name}」`); midAll(root); }); }
-
-/* ---------- 设置弹窗（内容 = 纯层 setModalHtml；写 localStorage 持久化） ---------- */
-function openSet(root) {
-  const { el, close } = ovl(root, R.setModalHtml({ sort: SET.sort, stf: SET.st, cols: GRID_COLS, mobFull: SET.mobFull,
-    folderPath: 'E:\\Obsidian\\叫我包仔\\我的\\影视' }));
-  el.querySelector('.j-close').addEventListener('click', close);
-  el.querySelector('.j-sw').addEventListener('click', e => e.target.classList.toggle('on'));
-  el.querySelector('.j-save').addEventListener('click', () => {
-    SET.sort = el.querySelector('.j-sort').value; SET.st = el.querySelector('.j-stf').value;
-    GRID_COLS = Math.min(12, Math.max(2, parseInt(el.querySelector('.j-cols').value, 10) || 5)); SET.cols = GRID_COLS;
-    SET.mobFull = el.querySelector('.j-sw').classList.contains('on');
-    MM.sort = SET.sort; MM.st = SET.st || null;
-    saveSet(); close(); toast(root, '设置已保存'); midAll(root); }); }
-
-/* ---------- AI 荐片（页内容 = 纯层 aiPageHtml；结果池 = 演示 mock） ---------- */
-const SIM_POOL = [
-  { name: '完美的日子', year: '2023', meta: '维姆·文德斯 · 剧情 · 日本', reason: '你反复把高分给了「在日常里看见光」的影片，这部几乎是为你的口味定制的。', inLib: true },
-  { name: '驾驶我的车', year: '2021', meta: '滨口龙介 · 剧情 · 日本', reason: '片长与耐心俱佳的文本戏，与你高分的《心灵捕手》共享「对谈即疗愈」的气质。' },
-  { name: '四月三周两天', year: '2007', meta: '克里丝蒂安·蒙吉 · 剧情 · 罗马尼亚', reason: '你偏爱写实主义长镜头，蒙吉的铁棍节奏大概率命中。' },
-  { name: '海边的曼彻斯特', year: '2016', meta: '肯尼斯·罗纳根 · 剧情 · 美国', reason: '丧而不煽的剧本，符合你「失望榜」里反鸡汤的一贯审美。' },
-  { name: '一一', year: '2000', meta: '杨德昌 · 剧情 · 台湾', reason: '家庭史诗+城市观察，你的导演 TOP10 里杨德昌系浓度极高。' },
-  { name: '燃烧', year: '2018', meta: '李沧东 · 剧情 · 韩国', reason: '暧昧多义的改编文本，与你高分的《燃烧女子的肖像》同属「留白系」。' },
-  { name: '无人知晓', year: '2004', meta: '是枝裕和 · 剧情 · 日本', reason: '是枝裕和早期冷处理杰作，与你收藏的多部是枝作品同源。' },
-  { name: '大象席地而坐', year: '2018', meta: '胡波 · 剧情 · 中国大陆', reason: '四个小时的生活泥沼，你近期观影节奏显示能吃下这种长度。' },
-];
-function midAll(root) { /* 从任一端触发 → 桌面/移动双壳同刷（演示页两壳并存；插件单壳按端渲染其一） */
-  document.querySelectorAll('[data-cinema-root]').forEach(sec => { if (sec.dataset.cinemaRoot === 'midnight') midRefresh(sec); }); }
-function aiAct(root, btn) {
-  if (btn.classList.contains('rec-add')) {
-    const r = MM.ai.results[Number(btn.dataset.recAdd)]; if (!r) return;
-    DB.unshift({ name: R.aiRecName(r), typeTag: '电影', group: '电影', status: '想看', rating: null, watchDate: nowStr(), review: null,
-      poster: null, genre: null, director: null, actors: null, region: null, year: r.year, doubanRating: null, doubanUrl: null, synopsis: null });
-    saveDB(); toast(root, `已把「${R.aiRecName(r)}」加入想看`); midAll(root); return; }
-  MM.ai.phase = 'wait'; midAll(root);
-  setTimeout(() => { MM.ai.phase = 'result';
-    MM.ai.results = [...SIM_POOL].sort(() => Math.random() - 0.5).slice(0, 5); midAll(root); }, 1200); }
-
-/* ---------- 午夜场事件（sec 级委托一次；与插件 ui.ts bindMidnight 同构） ---------- */
-function midnightBind(root) {
-  root.addEventListener('click', e => {
-    const t = e.target;
-    const aiBtn = t.closest('[data-cinema-ai-start],[data-rec-add]');
-    if (aiBtn) { aiAct(root, aiBtn); return; }
-    const clear = t.closest('[data-cinema-clear]');
-    if (clear) { MM.g = '全部'; MM.st = null; MM.q = ''; midAll(root); return; }
-    const tool = t.closest('.j-tool');
-    if (tool && tool.dataset.tool) { MM.view = MM.view === tool.dataset.tool ? 'list' : tool.dataset.tool; midAll(root); return; }
-    const mb = t.closest('.j-mai,.j-mstat,.j-mgear,.j-mclose');
-    if (mb) { if (mb.classList.contains('j-mgear')) { openSet(root); } else {
-        const v = mb.classList.contains('j-mai') ? 'ai' : 'stat';
-        MM.view = MM.view === v ? 'list' : v; } midAll(root); return; }
-    const back = t.closest('.j-back');
-    if (back) { MM.view = 'list'; midAll(root); return; }
-    const railBtn = t.closest('[data-g],[data-s]');
-    if (railBtn) { MM.view = 'list';
-      if (railBtn.dataset.g) { MM.g = railBtn.dataset.g; MM.st = null; }
-      else { MM.st = MM.st === railBtn.dataset.s ? null : railBtn.dataset.s; }
-      midAll(root); return; }
-    const chip = t.closest('.chip');
-    if (chip) { if (chip.dataset.c) { MM.g = chip.dataset.c === 'all' ? '全部' : chip.dataset.c; MM.st = null; }
-      else { MM.st = MM.st === chip.dataset.s ? null : chip.dataset.s; }
-      midAll(root); return; }
-    const sortBtn = t.closest('.j-sort button');
-    if (sortBtn && sortBtn.dataset.k) { MM.sort = sortBtn.dataset.k; midAll(root); return; }
-    const add = t.closest('[data-cinema-add]');
-    if (add) { openForm(root, null); return; }
-    const cardEl = t.closest('.pcard');
-    if (cardEl) { const it = byKey(cardEl.dataset.cinemaKey); if (it) openDetail(root, it); }
+  document.querySelector('#mobToggle').addEventListener('click', () => {
+    const m = document.querySelector('#mobHost');
+    const hidden = m.style.display === 'none';
+    m.style.display = hidden ? '' : 'none';
+    document.querySelector('#mobToggle').textContent = hidden ? '隐藏移动端' : '显示移动端';
   });
-  root.addEventListener('contextmenu', e => { const cardEl = e.target.closest('.pcard'); if (!cardEl) return;
-    e.preventDefault(); const it = byKey(cardEl.dataset.cinemaKey); if (!it) return;
-    const host = cardEl.closest('.bz-cinema--midnight');
-    const h = host.getBoundingClientRect();
-    openMenu(root, it, e.clientX - h.left + 4, e.clientY - h.top + 4); });
-  /* 搜索（防抖 300ms，保焦点；与插件 onSearchInput 同语义） */
-  /* 搜索（防抖 300ms，保焦点；与插件 onSearchInput 同语义） */
-  root.addEventListener('input', e => {
-    const t = e.target;
-    if (t.classList.contains('j-q') || t.classList.contains('j-mq')) {
-      const isMob = t.classList.contains('j-mq');
-      clearTimeout(lpTimer);
-      setTimeout(() => { MM.q = t.value.trim(); MM.view = 'list'; midAll(root);
-        if (isMob) { const el2 = root.querySelector('.j-mq'); if (el2) { el2.focus(); el2.setSelectionRange(el2.value.length, el2.value.length); } } }, 300);
-    } else if (t.classList.contains('j-range')) {
-      const out = root.querySelector('.j-rval');
-      if (out) out.textContent = Number(t.value).toFixed(1);
-    } }); }
 
-/* ==================== 观影分析页（演示统计；插件侧单源为 analysis.ts buildStatPageHtml） ==================== */
-function statPageHTML() {
-  const watched = DB.filter(x => x.status === '已看');
-  const rated = watched.filter(x => x.rating);
-  const avg = arr => arr.length ? arr.reduce((s, x) => s + x, 0) / arr.length : 0;
-  const tally = (list) => { const m = {}; list.filter(Boolean).forEach(k => { m[k] = (m[k] || 0) + 1; }); return m; };
-  const topEntries = (m, n) => Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, n);
-  const bar = (entries, opt = {}) => { const max = Math.max(1, ...entries.map(e => e[1]));
-    return entries.length ? entries.map(([k, v]) => `<div class="bar-row"><span class="bar-label">${escL(k)}</span><span class="bar-track"><span class="bar-fill" style="width:${Math.round(v / max * 100)}%;${opt.color ? 'background:' + opt.color : ''}"></span></span><span class="bar-num">${v}</span></div>`).join('') : '<div class="cn-empty">暂无数据</div>'; };
-  const soft = (entries) => { const max = Math.max(1, ...entries.map(e => e[1]));
-    return entries.length ? entries.map(([k, v]) => `<div class="soft-row"><span class="bar-label">${escL(k)}</span><span class="soft-track"><span class="soft-fill" style="width:${Math.round(v / max * 100)}%"></span></span><span class="bar-num">${v}</span></div>`).join('') : '<div class="cn-empty">暂无数据</div>'; };
-  const sec = (title, body) => `<div class="sec"><div class="sec-title"><i data-lucide="bar-chart-3" class="bz-ic"></i>${escL(title)}</div>${body}</div>`;
-  const empty = '<div class="cn-empty">暂无数据</div>';
-  const wd = watched.map(x => ({ ...x, d: day(x.watchDate) })).filter(x => x.d);
-  const yearM = tally(wd.map(x => x.d.slice(0, 4)));
-  const monthM = tally(wd.map(x => x.d.slice(5, 7)));
-  const weekM = tally(wd.map(x => '日一二三四五六'[new Date(x.d.replace(/-/g, '/')).getDay()]));
-  const buckets = { '1-2': 0, '2-4': 0, '4-6': 0, '6-8': 0, '8-9': 0, '9-10': 0 };
-  rated.forEach(x => { const r = x.rating; const k = r < 2 ? '1-2' : r < 4 ? '2-4' : r < 6 ? '4-6' : r < 8 ? '6-8' : r < 9 ? '8-9' : '9-10'; buckets[k]++; });
-  const genreM = tally(watched.flatMap(x => (x.genre || '').split(' / ')).map(s => s.trim()).filter(Boolean));
-  const countryM = tally(watched.flatMap(x => (x.region || '').split(' / ')).map(s => s.trim()).filter(Boolean));
-  const dirM = tally(watched.flatMap(x => (x.director || '').split(' / ')).map(s => s.trim()).filter(Boolean));
-  const actM = tally(watched.flatMap(x => (x.actors || '').split(' / ')).map(s => s.trim()).filter(Boolean));
-  const diffList = rated.filter(x => x.doubanRating).map(x => ({ name: x.name, me: x.rating, db: parseFloat(x.doubanRating) }));
-  const avgDiff = avg(diffList.map(x => x.me - x.db));
-  const cmpRow = x => `<div class="top-row"><span class="top-name">${escL(x.name)}</span><span class="top-val">我 ${x.me.toFixed(1)} / 豆 ${x.db.toFixed(1)}</span></div>`;
-  const topRated = [...rated].sort((a, b) => b.rating - a.rating).slice(0, 10);
-  const wantList = DB.filter(x => x.status === '想看');
-  const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
-  const weekNames = ['一','二','三','四','五','六','日'];
-  return `<div class="stat-cards">
-    <div class="stat-card"><div class="v">${DB.length}</div><div class="k">馆藏总数</div></div>
-    <div class="stat-card"><div class="v">${watched.length}</div><div class="k">已放映</div></div>
-    <div class="stat-card"><div class="v">${avg(rated.map(x => x.rating)) ? avg(rated.map(x => x.rating)).toFixed(1) : '—'}</div><div class="k">平均评分</div></div>
-    <div class="stat-card"><div class="v">${avgDiff ? (avgDiff >= 0 ? '+' : '') + avgDiff.toFixed(1) : '—'}</div><div class="k">个人−豆瓣</div></div>
-  </div>
-  ${sec('类型分布', soft(topEntries(tally(watched.map(x => x.group)), 8)))}
-  ${sec('年度观影趋势', bar(topEntries(yearM).sort((a, b) => a[0].localeCompare(b[0]))))}
-  ${sec('月度观影分布', bar(months.map(m => [m + '月', monthM[m] || 0])))}
-  ${sec('观影节奏', bar(weekNames.map(n => ['周' + n, weekM[n] || 0])))}
-  ${sec('个人评分分布', bar(Object.entries(buckets)))}
-  ${sec('题材偏好 TOP10', soft(topEntries(genreM, 10)))}
-  ${sec('制片国家/地区 TOP10', soft(topEntries(countryM, 10)))}
-  ${sec('最爱导演 TOP10', soft(topEntries(dirM, 10)))}
-  ${sec('最爱主演 TOP10', soft(topEntries(actM, 10)))}
-  ${sec('打分习惯（个人−豆瓣）', `<div class="kv-inline"><span>平均差值 <b>${avgDiff ? (avgDiff >= 0 ? '+' : '') + avgDiff.toFixed(1) : '—'}</b>（个人−豆瓣）</span></div>` + (diffList.length ? diffList.slice(0, 5).map(cmpRow).join('') : empty))}
-  ${sec('我的高分 TOP10', topRated.length ? topRated.map((x, i) => `<div class="top-row"><span class="top-no">${i + 1}</span><span class="top-name">${escL(x.name)}</span><span class="top-val">${x.rating.toFixed(1)}</span></div>`).join('') : empty)}
-  ${sec('想看清单（' + wantList.length + '）', wantList.length ? wantList.slice(0, 10).map((x, i) => `<div class="top-row"><span class="top-no">${i + 1}</span><span class="top-name">${escL(x.name)}${x.doubanRating ? ' · 豆瓣 ' + escL(x.doubanRating) : ''}</span></div>`).join('') : empty)}`;
-}
+  document.querySelector('#reset').addEventListener('click', () => {
+    resetSim();
+    location.reload();
+  });
 
-/* ==================== 场刊 / 放映室（探索稿演示，沿用旧稿；不属 markup 单源范围） ==================== */
-const G = { g: '全部', q: '' }, B = { g: '全部', st: null, sort: 'watch', q: '' };
-function DATA0() { return window.CINEMA_DATA; } /* 场刊/放映室仍用原始导出快照 */
-function featureHTML(x, big) { if (!x) return '<div style="padding:30px 0;color:var(--ink-3);font-size:13px">本期无片目</div>';
-  const quote = x.review || x.synopsis || '（本期待稿）';
-  return `<div class="f-card"><div class="f-poster">${x.poster ? `<img src="${x.poster}" onerror="this.outerHTML='<div class=\\'ph\\'>${escL(x.name[0])}</div>'">` : `<div class="ph">${escL(x.name[0])}</div>`}</div>
-    <div style="flex:1;min-width:0"><div class="f-h">${escL(x.name)}</div>
-      <div class="f-meta"><b>${escL(x.director || '—')}</b> · ${escL(x.year || '')} · ${escL((x.genre || '').split(' / ')[0] || x.group)}${x.region ? ` · ${escL(x.region.split(' / ')[0])}` : ''}</div>
-      <div class="f-stars">${x.rating ? stars(x.rating) + `<span class="num">${x.rating.toFixed(1)}</span>${x.doubanRating ? `<span class="db">豆瓣 ${escL(x.doubanRating)}</span>` : ''}` : `<span style="font-size:12px;color:var(--ink-3);letter-spacing:.2em">${escL(x.status)}</span>`}</div></div></div>
-    <div class="f-quote">${escL(quote.slice(0, big ? 110 : 64))}${quote.length > (big ? 110 : 64) ? '……' : ''}</div>`; }
-function billRow(x, i) { const r = x.rating;
-  return `<div class="b-row"><span class="b-no">${String(i).padStart(2, '0')}</span>
-    ${x.poster ? `<img class="b-poster" loading="lazy" src="${x.poster}" onerror="this.outerHTML='<div class=\\'b-ph\\'>${escL(x.name[0])}</div>'">` : `<div class="b-ph">${escL(x.name[0])}</div>`}
-    <div class="b-mid"><div class="b-name">${escL(x.name)}</div><div class="b-sub">${escL(x.year || '')} · ${escL(x.director || x.group)} · <span style="color:${TYPE_C[x.group]}">${escL(x.group)}</span></div></div>
-    <div class="b-rate${r ? '' : ' none'}">${r ? `<span class="v">${r.toFixed(1)}</span><span class="s">${stars(r)}</span>` : `<span class="v">${escL(x.status)}</span>`}</div></div>`; }
-function gazetteShell() {
-  return { desk: `<section class="bz-cinema--gazette">
-    <div class="gaz-head"><div class="gaz-row"><h1>影院场刊</h1><span class="en">CINEMA GAZETTE</span><span class="issue j-issue"></span>
-      <div class="acts"><button>AI 荐片</button><button>观影分析</button></div></div>
-      <div class="gaz-bar"><div class="j-tabs"></div><span class="cnt j-cnt"></span>
-        <label class="search">${SVG.search}<input class="j-q" placeholder="检索片目…"></label></div></div>
-    <div class="gaz-body"><div class="feature j-feature"></div><div class="bill"><div class="b-kicker">排 片 表</div><div class="j-bill"></div></div></div>
-  </section>`,
-  mob: `<section class="mob bz-cinema--gazette">
-    <div class="m-gaz"><div class="row"><h1>影院场刊</h1><span class="en">GAZETTE</span><span class="issue j-missue"></span></div>
-      <div class="m-bar j-mtabs"></div><label class="m-search">${SVG.search}<input class="j-mq" placeholder="检索片目…"></label></div>
-    <div class="m-scroll"><div class="m-feature j-mfeature"></div><div class="m-list j-mlist"></div></div>
-  </section>` }; }
-function gazetteRefresh(sec) { const a = DATA0().slice().sort((x, y) => (y.rating || 0) - (x.rating || 0)).filter(x => G.g === '全部' || x.group === G.g);
-  const feat = a[0], rest = a.slice(1);
-  const tabs = `<button class="tab${G.g === '全部' ? ' is-on' : ''}" data-g="全部">全部</button>` + GROUPS.map(x => `<button class="tab${G.g === x ? ' is-on' : ''}" data-g="${x}">${x}</button>`).join('');
-  sec.querySelector('.j-issue').textContent = `总第 ${DATA0().length} 期 · 2026 年 9 月`;
-  sec.querySelector('.j-missue').textContent = `第 ${DATA0().length} 期`;
-  sec.querySelector('.j-cnt').textContent = `本期收录 ${a.length} 部`;
-  sec.querySelector('.j-feature').innerHTML = `<div class="f-kicker">本 期 特 稿</div>` + featureHTML(feat, true);
-  sec.querySelector('.j-bill').innerHTML = rest.map((x, i) => billRow(x, i + 1)).join('');
-  sec.querySelector('.j-mfeature').innerHTML = `<div class="f-kicker">特 稿</div>` + featureHTML(feat, false);
-  sec.querySelector('.j-mlist').innerHTML = rest.map((x, i) => billRow(x, i + 1)).join('');
-  sec.querySelector('.j-tabs').innerHTML = tabs; sec.querySelector('.j-mtabs').innerHTML = tabs; }
-function gazetteBind(sec) { sec.addEventListener('click', e => { const b = e.target.closest('.tab'); if (!b) return; G.g = b.dataset.g; gazetteRefresh(sec); });
-  sec.querySelectorAll('.j-q,.j-mq').forEach(el => el.addEventListener('input', ev => { G.q = ev.target.value; gazetteRefresh(sec); })); }
-function boothShell() { const { gc, sc } = (() => { const gc2 = { '全部': DATA0().length }, sc2 = { '想看': 0, '在看': 0, '已看': 0 };
-  DATA0().forEach(x => { gc2[x.group] = (gc2[x.group] || 0) + 1; sc2[x.status]++; }); return { gc: gc2, sc: sc2 }; })();
-  const railRow = (on, attr, tape, name, n) => `<button class="rail-item${on ? ' is-on' : ''}" ${attr}>${tape}${name}<span class="n">${n}</span></button>`;
-  return { desk: `<section class="bz-cinema--booth">
-    <div class="clapper"><div class="stripe"></div><div class="row">
-      <div class="cell"><div class="k">SCENE 场次</div><div class="v j-scene">ALL / 全部</div></div>
-      <div class="cell"><div class="k">TAKE 片数</div><div class="v j-take"></div></div>
-      <div class="cell grow">${SVG.search}<input class="j-q" placeholder="检索片目 / 导演…">
-        <div class="seg j-sort"><button data-k="watch" class="is-on">最近</button><button data-k="added">先后</button><button data-k="rating">评分</button></div>
-        <button class="add">＋ 收录影片</button></div></div></div>
-    <div class="d-body"><aside class="d-rail">
-      <div class="rail-brand"><h1>片仓</h1><div class="en">FILM VAULT</div></div>
-      <div class="rail-sec"><div class="rail-label">· 分类</div><div class="j-groups">${railRow(B.g === '全部' && !B.st, 'data-g="全部"', '<span class="tape" style="background:var(--amber)"></span>', '全部', gc['全部']) +
-        GROUPS.map(x => railRow(B.g === x && !B.st, `data-g="${x}"`, `<span class="tape" style="background:${TYPE_C[x]}"></span>`, x, gc[x] || 0)).join('')}</div>
-        <div class="rail-label">· 状态</div><div class="j-status">${['想看', '在看', '已看'].map(x => railRow(B.st === x, `data-s="${x}"`, `<span class="tape" style="background:${ST[x][1]}"></span>`, ST[x][0], sc[x])).join('')}</div></div>
-      <div class="rail-foot"><button class="rail-item">${SVG.ai}AI 荐片</button><button class="rail-item">${SVG.stat}放映统计</button></div></aside>
-      <div class="d-scroll"><div class="film j-film"></div></div></div>
-  </section>`,
-  mob: `<section class="mob bz-cinema--booth">
-    <div class="m-clap"><div class="stripe"></div><div class="row"><h1>片仓</h1><span class="n j-mtake"></span><button class="add">${SVG.plus}</button></div></div>
-    <div class="m-chips j-chips"></div><label class="m-search">${SVG.search}<input class="j-mq" placeholder="检索片目…"></label>
-    <div class="m-scroll"><div class="film j-mfim"></div></div>
-  </section>` }; }
-function boothItems() { let a = DATA0().filter(x => (B.g === '全部' || x.group === B.g) && (!B.st || x.status === B.st));
-  if (B.q) { const t = B.q.toLowerCase(); a = a.filter(x => (x.name + (x.director || '')).toLowerCase().includes(t)); }
-  if (B.sort === 'watch') a = [...a].sort((a, b) => (b.watchDate || '').localeCompare(a.watchDate || ''));
-  else if (B.sort === 'rating') a = [...a].sort((a, b) => (b.rating || 0) - (a.rating || 0));
-  return a; }
-function boothFrame(x) { const [stT, stC] = ST[x.status], r = x.rating;
-  return `<div class="frame">${x.poster ? `<img class="f-poster" loading="lazy" src="${x.poster}" onerror="this.outerHTML='<div class=\\'f-ph\\'>${escL(x.name[0])}</div>'">` : `<div class="f-ph">${escL(x.name[0])}</div>`}
-    <div class="f-mid"><div class="f-name">${escL(x.name)}</div>
-      <div class="f-meta"><span class="gd" style="background:${TYPE_C[x.group]}"></span>${escL(x.year || '—')} · ${escL(x.director || x.group)} · ${escL(x.genre || '')}${x.watchDate ? ` · 观于 ${escL(x.watchDate.slice(0, 10))}` : ''}</div></div>
-    <div class="f-score">${r ? `<div class="v">${r.toFixed(1)}</div><div class="s">${stars(r)}</div>` : `<div class="v" style="color:var(--ink-3);font-size:14px">—</div><div class="s">未评分</div>`}</div>
-    <span class="stamp" style="color:${stC}">${stT}</span></div>`; }
-function boothRefresh(sec) { const a = boothItems();
-  sec.querySelector('.j-scene').textContent = (B.g === '全部' ? 'ALL' : B.g) + (B.st ? ` / ${B.st}` : '');
-  sec.querySelector('.j-take').textContent = String(a.length).padStart(2, '0');
-  sec.querySelector('.j-film').innerHTML = a.map(boothFrame).join('');
-  sec.querySelector('.j-mtake').textContent = `TAKE ${String(a.length).padStart(2, '0')}`;
-  sec.querySelector('.j-mfim').innerHTML = a.map(boothFrame).join('');
-  sec.querySelector('.j-chips').innerHTML =
-    `<button class="chip${B.g === '全部' && !B.st ? ' is-on' : ''}" data-c="all">全部</button>` +
-    GROUPS.map(x => `<button class="chip${B.g === x && !B.st ? ' is-on' : ''}" data-c="${x}">${x}</button>`).join('') +
-    ['想看', '在看', '已看'].map(x => `<button class="chip${B.st === x ? ' is-on' : ''}" data-s="${x}">${ST[x][0]}</button>`).join(''); }
-function boothBind(sec) {
-  sec.addEventListener('click', e => { const b = e.target.closest('[data-g],[data-s]'); if (!b) return;
-    if (b.dataset.g) { B.g = b.dataset.g; B.st = null; } else { B.st = B.st === b.dataset.s ? null : b.dataset.s; }
-    sec.querySelectorAll('.rail-item').forEach(i => i.classList.toggle('is-on',
-      (i.dataset.g === B.g && !i.dataset.s) || (i.dataset.s && i.dataset.s === B.st)));
-    boothRefresh(sec); });
-  sec.querySelector('.j-sort').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
-    B.sort = b.dataset.k; sec.querySelectorAll('.j-sort button').forEach(x => x.classList.toggle('is-on', x === b)); boothRefresh(sec); });
-  sec.querySelector('.j-chips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return;
-    if (b.dataset.c) { B.g = b.dataset.c === 'all' ? '全部' : b.dataset.c; B.st = null; } else { B.st = B.st === b.dataset.s ? null : b.dataset.s; }
-    boothRefresh(sec); });
-  sec.querySelectorAll('.j-q,.j-mq').forEach(el => el.addEventListener('input', ev => { B.q = ev.target.value; boothRefresh(sec); })); }
+  /* ==================== 自检（?selftest=1）：真行为 DOM 断言（经 iframe） ==================== */
+  if (location.search.includes('selftest')) {
+    window.__st = { pass: 0, fail: [] };
+    const t = (name, cond) => cond ? window.__st.pass++ : window.__st.fail.push(name);
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    (async () => {
+      const res = document.querySelector('#stResult');
+      try {
+        // 数据基线检查：种子应是 50 部、无自检测试片、且各片评分口径与种子一致
+        // （状态流转跑崩在还原前 → 下次启动也能识别为脏）。脏则重置重载一次。
+        // headless 验收每次全新 profile 天然干净；浏览器手动重复跑 selftest 也能自清理。
+        const countSimMd = () => {
+          let n = 0;
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith('bz-sim:我的/影视/') && k.endsWith('.md')) n++;
+          }
+          return n;
+        };
+        const seedRating = (x) => (x.status === '想看' ? '-1' : x.status === '在看' ? '0' : x.rating == null ? '' : String(x.rating));
+        const seedDirty = () => {
+          for (const x of DATA) {
+            if (!x || !x.name) continue;
+            const raw = localStorage.getItem('bz-sim:我的/影视/《' + x.name + '》.md');
+            if (raw == null) return true;
+            const m = /^评分:[ \t]*(.*)$/m.exec(raw);
+            if (!m || m[1].trim() !== seedRating(x)) return true;
+          }
+          return false;
+        };
+        const dirty = countSimMd() !== DATA.length || !!localStorage.getItem('bz-sim:我的/影视/《测试影片》.md') || seedDirty();
+        if (dirty && !location.search.includes('reset=1')) {
+          resetSim();
+          location.search = '?selftest=1&reset=1';
+          return;
+        }
+        const dd = await waitFrame(dtDoc);
+        const md = await waitFrame(mobDoc);
+        res.textContent = '…';
+        const dt = (sel) => dd.querySelector(sel);
+        const mob = (sel) => md.querySelector(sel);
+        const dtCards = () => dd.querySelectorAll('.d-scroll .pcard').length;
+        const mobCards = () => md.querySelectorAll('.m-grid .pcard').length;
+        const firstDeskName = () => dt('.d-scroll .pcard .pname')?.textContent || '';
+        const cardByName = (doc, name) => [...doc.querySelectorAll('.pcard')].find((c) => c.querySelector('.pname')?.textContent === name);
+        const badgeOf = (card) => card?.querySelector('.badge')?.textContent || null;
+        const fmField = (name, field) => {
+          const raw = localStorage.getItem('bz-sim:我的/影视/《' + name + '》.md') || '';
+          const m = new RegExp('^' + field + ':[ \\t]*(.*)$', 'm').exec(raw);
+          return m ? m[1].trim() : null;
+        };
+        // 带真实坐标的完整鼠标序列（右键菜单项/确认钮：纯 .click() 可能被外点关闭逻辑吞掉）
+        const clickReal = (el) => {
+          if (!el) return;
+          const r = el.getBoundingClientRect();
+          const mk = (type) => new MouseEvent(type, { clientX: r.left + 10, clientY: r.top + 10, bubbles: true, cancelable: true });
+          el.dispatchEvent(mk('mousedown'));
+          el.dispatchEvent(mk('mouseup'));
+          el.dispatchEvent(mk('click'));
+        };
+        const ctxCard = (card) => {
+          const r = card.getBoundingClientRect();
+          card.dispatchEvent(new MouseEvent('contextmenu', { clientX: r.left + 10, clientY: r.top + 10, bubbles: true, cancelable: true }));
+        };
+        // 期望值（与 data.ts 同口径从种子现算，不硬编码）
+        const watched = DATA.filter((x) => x.status === '已看').length;
+        const movies = DATA.filter((x) => x.group === '电影').length;
+        const dateVal = (x) => { const t2 = new Date(x.watchDate || '').getTime(); return isNaN(t2) ? 0 : t2; };
+        const topRated = [...DATA].filter((x) => x.status === '已看' && x.rating > 0)
+          .sort((a, b) => b.rating - a.rating || dateVal(b) - dateVal(a))[0];
+        const topDate = DATA.reduce((m, x) => (dateVal(x) > dateVal(m) ? x : m), DATA[0]);
+        const searchKw = '肖申克';
+        const searchHit = DATA.filter((x) => ((x.name || '') + (x.typeTag || '') + (x.review || '') + (x.director || '') + (x.actors || '')).includes(searchKw)).length;
 
-/* ==================== 壳：渲染 / 切换 / 主题 ==================== */
-const BUILD = { midnight: { build: buildMidnight },
-  gazette: { shell: gazetteShell, refresh: gazetteRefresh, bind: gazetteBind },
-  booth: { shell: boothShell, refresh: boothRefresh, bind: boothBind } };
-function buildMidnight(sec) {
-  sec.innerHTML = `<div class="demo-sec-title"></div><div class="demo-pair"><div class="demo-dt">${R.midnightDeskHtml()}</div>
-    <div class="mob-wrap"><div class="mob-label">移动端 · 396×780</div>${R.midnightMobHtml()}</div></div>`;
-  sec.querySelectorAll('[data-cinema-root]').forEach(root => { midnightBind(root); midRefresh(root); });
-  sec.querySelector('.demo-sec-title').textContent = '风格 午夜场 MIDNIGHT · 桌面 900×620 · 完整功能版'; }
-function buildStyle(id) {
-  const sec = document.getElementById('sec-' + id);
-  if (BUILD[id].build) { BUILD[id].build(sec); return; }
-  const b = BUILD[id], parts = b.shell();
-  sec.innerHTML = `<div class="demo-sec-title"></div><div class="demo-pair"><div class="demo-dt">${parts.desk}</div>
-    <div class="mob-wrap"><div class="mob-label">移动端 · 396×780</div>${parts.mob}</div></div>`;
-  b.bind(sec); b.refresh(sec);
-  const st = CINEMA_STYLES.find(s => s.id === id);
-  sec.querySelector('.demo-sec-title').textContent = `风格 ${st.label} ${st.en} · 桌面 900×620`; }
-function syncChrome() {
-  document.querySelectorAll('#styleBtns .demo-btn').forEach(b => b.classList.toggle('on', b.dataset.style === state.style));
-  document.querySelectorAll('.demo-sec').forEach(s => s.classList.toggle('on', s.id === 'sec-' + state.style));
-  const cur = CINEMA_STYLES.find(s => s.id === state.style);
-  document.title = `影院 · ${cur.label} · 原型预览`;
-  localStorage.setItem('bz-cinema-proto', JSON.stringify({ style: state.style })); }
-(function chrome() {
-  document.getElementById('styleBtns').innerHTML = CINEMA_STYLES.map(s => `<button class="demo-btn" data-style="${s.id}">${s.label}</button>`).join('');
-  document.getElementById('styleBtns').addEventListener('click', e => { const b = e.target.closest('[data-style]'); if (!b) return;
-    state.style = b.dataset.style; syncChrome(); });
-  document.getElementById('themeBtn').addEventListener('click', () => {
-    const dark = document.body.classList.toggle('theme-dark');
-    document.body.classList.toggle('theme-light', !dark);
-    localStorage.setItem('bz-cinema-proto-theme', dark ? 'dark' : 'light'); });
-  document.getElementById('resetBtn').addEventListener('click', () => {
-    localStorage.removeItem('bz-cinema-proto-db'); location.reload(); });
+        t('桌面面板开', !!dt('section.bz-cinema--midnight') && !!dt('.d-rail'));
+        t('移动面板开', !!mob('section.mob.bz-cinema--midnight') && !!mob('.m-head'));
+        // view 页 CSS 四链生效（belongings 壳曾写错 ../../ 深度致 404、DOM 自检抓不到——此断言防再犯）
+        const cssAlive = (doc) => {
+          const sec = doc.querySelector('section.bz-cinema--midnight');
+          const bg = getComputedStyle(sec).backgroundColor;
+          let sheets = 0;
+          for (const s of doc.styleSheets) { try { if (s.cssRules.length > 0) sheets++; } catch { /* 跨域忽略 */ } }
+          return bg !== 'rgba(0, 0, 0, 0)' && sheets >= 4;
+        };
+        t('view页CSS四链生效', cssAlive(dd) && cssAlive(md));
+        t('桌面50卡', dtCards() === DATA.length);
+        t('移动50卡', mobCards() === DATA.length);
+        t('侧栏类型7行', dd.querySelectorAll('.j-groups [data-g]').length === 7);
+        t('侧栏状态3行', dd.querySelectorAll('.j-status [data-s]').length === 3);
+        t('rail计数=数据口径', dt('.j-groups [data-g="全部"] .n')?.textContent === String(DATA.length)
+          && dt('.j-status [data-s="已看"] .n')?.textContent === String(watched));
+        t('移动chips10枚', md.querySelectorAll('.j-chips .chip').length === 10);
+
+        // 组筛选（桌面）
+        dt('[data-g="电影"]').click();
+        await sleep(80);
+        t('电影筛选' + movies + '卡', dtCards() === movies && dt('.d-head .j-title')?.textContent === '电影');
+        dt('[data-g="全部"]').click();
+        await sleep(80);
+        t('回全部' + DATA.length + '卡', dtCards() === DATA.length);
+
+        // 状态筛选（移动 chips）
+        mob('.chip[data-s="已看"]').click();
+        await sleep(80);
+        t('移动已看筛选', mobCards() === watched && mob('.j-mtitle')?.textContent === '全部 · 已看');
+        mob('.chip[data-c="all"]').click();
+        await sleep(80);
+        t('chips回全部', mobCards() === DATA.length);
+
+        // 排序三档（桌面）
+        dt('.j-sort [data-k="rating"]').click();
+        await sleep(80);
+        t('评分排序首位=' + topRated.name, firstDeskName() === topRated.name && dt('.j-sort [data-k="rating"]').classList.contains('is-on'));
+        dt('.j-sort [data-k="created"]').click();
+        await sleep(80);
+        t('创建排序首位=导出首部', firstDeskName() === DATA[0].name);
+        dt('.j-sort [data-k="date"]').click();
+        await sleep(80);
+        t('日期排序首位=' + topDate.name, firstDeskName() === topDate.name && dt('.j-sort [data-k="date"]').classList.contains('is-on'));
+
+        // 搜索（桌面，防抖 300ms）
+        const q = dt('.j-q');
+        q.value = searchKw; q.dispatchEvent(new Event('input', { bubbles: true }));
+        await sleep(600);
+        t('搜索' + searchKw + searchHit + '部', dtCards() === searchHit && dt('.d-head .j-cnt')?.textContent === '· ' + searchHit + ' 部');
+        q.value = ''; q.dispatchEvent(new Event('input', { bubbles: true }));
+        await sleep(600);
+
+        // AI 荐片降级（桌面）：无密钥 → requestUrl/配置层报错 → 页内错误态不崩
+        dt('[data-tool="ai"]').click();
+        await sleep(80);
+        t('AI页待机', dt('.sp-title')?.textContent === 'AI 荐片' && !!dt('[data-cinema-ai-start]'));
+        dt('[data-cinema-ai-start]').click();
+        await sleep(500);
+        t('AI降级错误页不崩', !!dt('.ai-err-ic') && dt('.ai-title')?.textContent === 'AI 分析失败'
+          && dt('[data-cinema-ai-start]')?.textContent.includes('重试'));
+        dt('.j-back').click();
+        await sleep(80);
+        t('AI页返回列表', !!dt('.d-head'));
+
+        // 观影分析页（桌面，analysis.ts 真统计）
+        dt('[data-tool="stat"]').click();
+        await sleep(80);
+        t('分析页19板块', dt('.sp-title')?.textContent === '观影分析' && dd.querySelectorAll('.stat-card').length === 4
+          && dd.querySelectorAll('.sec').length === 19 && dt('.sp-cnt')?.textContent === '· ' + watched + ' 部已看');
+        dt('.j-back').click();
+        await sleep(80);
+
+        // 表单（桌面）：14 类型 choice + 状态切已看 → 添加「测试影片」
+        dt('[data-cinema-add]').click();
+        await sleep(80);
+        t('表单14类型choice', dd.querySelectorAll('.f-choice-btn[data-f-tag]').length === 14
+          && dt('.cn-modal .cn-modal-title')?.textContent === '添加影视');
+        dt('.cn-modal .j-name').value = '测试影片';
+        dt('.cn-modal [data-f-st="已看"]').click();
+        await sleep(50);
+        t('切已看显评分影评', dt('.cn-modal .j-rating').style.display !== 'none' && dt('.cn-modal .j-review').style.display !== 'none');
+        dt('.cn-modal .j-save').click();
+        await sleep(600);
+        t('新增写库51卡', dtCards() === DATA.length + 1 && !!localStorage.getItem('bz-sim:我的/影视/《测试影片》.md'));
+        t('新增置顶', firstDeskName() === '测试影片');
+        t('新增frontmatter', fmField('测试影片', '评分') === '5');
+        await sleep(900); // storage 桥 → 移动端防抖自动刷新
+        t('新增同步到移动', mobCards() === DATA.length + 1);
+
+        // 右键菜单（桌面）：已看卡 5 项（无标记动作项）
+        ctxCard(cardByName(dd, '测试影片'));
+        await sleep(100);
+        t('右键菜单5项(已看)', dd.querySelectorAll('.cn-menu .cn-menu-item').length === 5
+          && ![...dd.querySelectorAll('.cn-menu .cn-menu-item')].some((b) => b.textContent.includes('标记')));
+
+        // 状态流转（桌面，种子想看片：想看 → 在看 → 已看；跑完还原 frontmatter 保自检可重复）
+        const wantName = (DATA.find((x) => x.status === '想看') || {}).name;
+        const wantKey = 'bz-sim:我的/影视/《' + wantName + '》.md';
+        const wantOrig = localStorage.getItem(wantKey);
+        ctxCard(cardByName(dd, wantName));
+        await sleep(100);
+        t('右键菜单7项(想看)', dd.querySelectorAll('.cn-menu .cn-menu-item').length === 7);
+        clickReal([...dd.querySelectorAll('.cn-menu .cn-menu-item')].find((b) => b.textContent.includes('标记在看')));
+        await sleep(500);
+        t('流转在看徽标', badgeOf(cardByName(dd, wantName)) === '在看' && fmField(wantName, '评分') === '0');
+        ctxCard(cardByName(dd, wantName));
+        await sleep(100);
+        t('在看态无标记在看项', ![...dd.querySelectorAll('.cn-menu .cn-menu-item')].some((b) => b.textContent.includes('标记在看')));
+        clickReal([...dd.querySelectorAll('.cn-menu .cn-menu-item')].find((b) => b.textContent.includes('标记已看')));
+        await sleep(500);
+        t('流转已看收徽标', badgeOf(cardByName(dd, wantName)) === null && fmField(wantName, '评分') === '5');
+
+        // 长按抽屉（移动，450ms 阈值）
+        const lpCard = mob('.m-grid .pcard');
+        lpCard.dispatchEvent(new Event('pointerdown'));
+        await sleep(650);
+        t('长按抽屉开', !!mob('.cn-sheet') && !!mob('.cn-sheet-name') && mob('.cn-sheet').querySelectorAll('.cn-sheet-item').length >= 4);
+        mob('.cn-sheet-mask').click();
+        await sleep(80);
+        t('抽屉遮罩关闭', !mob('.cn-sheet'));
+
+        // 设置弹窗（移动 j-mgear）：5 行 + 保存走真 saveSettings 通道
+        mob('.j-mgear').click();
+        await sleep(80);
+        t('设置弹窗5行', !!mob('.cn-modal') && mob('.cn-modal').querySelectorAll('.set-row').length === 5);
+        mob('.cn-modal .j-cols').value = '7';
+        mob('.cn-modal .j-save').click();
+        await sleep(300);
+        t('设置保存落盘', (localStorage.getItem('bz-sim:__settings') || '').includes('"cinemaGridColumns":"7"') && !mob('.cn-modal'));
+
+        // 详情弹窗 + 删除（桌面，确认三段式 + 回收站删除）
+        cardByName(dd, '测试影片').click();
+        await sleep(80);
+        const dm = dt('.cn-ovl .cn-modal');
+        t('详情弹窗', !!dm && dm.querySelector('.dm-title')?.textContent === '测试影片');
+        dm.querySelector('.j-del').click();
+        await sleep(80);
+        const confirm = dt('.cn-confirm');
+        t('删除确认三段式', !!confirm && confirm.querySelector('.cn-confirm-title')?.textContent === '删除影视'
+          && confirm.textContent.includes('回收站'));
+        clickReal(confirm.querySelector('.j-del'));
+        await sleep(600);
+        t('删除后50卡', dtCards() === DATA.length && !localStorage.getItem('bz-sim:我的/影视/《测试影片》.md'));
+        await sleep(900);
+        t('删除同步到移动', mobCards() === DATA.length);
+
+        // ESC 分层（桌面）：先关弹窗后关面板；重开走真 openCinema（toggle 语义）
+        dt('[data-cinema-add]').click();
+        await sleep(80);
+        dd.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        await sleep(80);
+        t('ESC先关弹窗', !!dt('section.bz-cinema--midnight') && !dt('.cn-modal'));
+        dd.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        await sleep(80);
+        t('ESC再关面板', !dt('section.bz-cinema--midnight'));
+        dd.defaultView.BZW_cinema.openCinema();
+        await sleep(300);
+        t('桌面重开面板', !!dt('section.bz-cinema--midnight') && !!dt('.d-head'));
+
+        // 移动专属：AI 钮再点回列表（落域适配）+ ✕ 关闭 + 重开
+        mob('.j-mai').click();
+        await sleep(80);
+        t('移动AI页', mob('.j-mview').classList.contains('sp-body'));
+        mob('.j-mai').click();
+        await sleep(80);
+        t('再点回列表', mob('.j-mview').classList.contains('m-scroll'));
+        mob('.j-mclose').click();
+        await sleep(80);
+        t('移动✕关闭', !mob('section.mob.bz-cinema--midnight'));
+        md.defaultView.BZW_cinema.openCinema();
+        await sleep(300);
+        t('移动重开面板', !!mob('section.mob.bz-cinema--midnight') && mobCards() === DATA.length);
+
+        // 还原流转过的种子想看片（disk 层面；自检可重复——基线计数不受影响）
+        if (wantOrig != null) localStorage.setItem(wantKey, wantOrig);
+
+        document.title = window.__st.fail.length
+          ? 'SELFTEST FAIL ' + window.__st.fail.join(',')
+          : `SELFTEST OK ${window.__st.pass}/${window.__st.pass + window.__st.fail.length}`;
+        res.textContent = window.__st.fail.length ? '自检失败' : `自检通过 ${window.__st.pass}`;
+        res.className = window.__st.fail.length ? 'bad' : 'ok';
+      } catch (err) {
+        document.title = 'SELFTEST ERR ' + (err && err.message || err);
+        res.textContent = '自检异常';
+        res.className = 'bad';
+      }
+    })();
+  }
 })();
-const state = { style: 'midnight' };
-(function init() {
-  const secs = document.getElementById('secs');
-  secs.innerHTML = CINEMA_STYLES.map(s => `<section class="demo-sec" id="sec-${s.id}"></section>`).join('');
-  CINEMA_STYLES.forEach(s => buildStyle(s.id));
-  const q = new URLSearchParams(location.search);
-  if (CINEMA_STYLES.some(s => s.id === q.get('style'))) state.style = q.get('style');
-  else { const saved = JSON.parse(localStorage.getItem('bz-cinema-proto') || '{}');
-    if (CINEMA_STYLES.some(s => s.id === saved.style)) state.style = saved.style; }
-  const themeQ = q.get('theme') || localStorage.getItem('bz-cinema-proto-theme');
-  document.body.classList.add(themeQ === 'dark' ? 'theme-dark' : 'theme-light');
-  syncChrome();
-})();
-document.addEventListener('keydown', e => { if (e.key === 'Escape') {
-  document.querySelectorAll('.cn-menu,.cn-sheet,.cn-sheet-mask,.cn-ovl').forEach(o => o.remove()); } });
-
-/* ==================== 自检（?selftest=1；headless dump-dom 取 <title> 判读） ==================== */
-if (location.search.includes('selftest')) {
-  window.__st = { pass: 0, fail: [] };
-  const t = (name, cond) => cond ? window.__st.pass++ : window.__st.fail.push(name);
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  const sec = document.getElementById('sec-midnight');
-  const desk = sec.querySelector('section.bz-cinema--midnight:not(.mob)');
-  const mob = sec.querySelector('section.mob.bz-cinema--midnight');
-  (async () => {
-    try {
-      t('desk壳骨架', !!desk && !!desk.querySelector('.d-rail') && !!desk.querySelector('.j-view'));
-      t('mob壳骨架', !!mob && !!mob.querySelector('.m-head') && !!mob.querySelector('.j-mview'));
-      t('侧栏类型7行', desk.querySelectorAll('.j-groups .rail-item').length === GROUPS.length + 1);
-      t('侧栏状态3行', desk.querySelectorAll('.j-status .rail-item').length === 3);
-      t('desk卡片=全库', desk.querySelectorAll('.grid .pcard').length === DB.length);
-      t('稳定键在位', [...desk.querySelectorAll('.pcard')].every((c) => !!byKey(c.dataset.cinemaKey)));
-      t('chips=全部+类型+状态', mob.querySelectorAll('.j-chips .chip').length === 1 + GROUPS.length + 3);
-      mob.querySelector('.chip[data-s="已看"]').click();
-      t('状态筛选联动', mob.querySelectorAll('.m-grid .pcard').length === DB.filter(x => x.status === '已看').length && mob.querySelector('.j-mtitle').textContent === '全部 · 已看');
-      mob.querySelector('.chip[data-c="all"]').click();
-      t('chips回全部', mob.querySelectorAll('.m-grid .pcard').length === DB.length);
-      const badges = [...desk.querySelectorAll('.grid .pcard .badge')].map(b => b.textContent);
-      t('未看徽标文字(串/数兼容)', badges.length === DB.filter(x => x.status !== '已看').length && badges.every(b => b === '想看' || b === '在看'));
-      t('已看卡无徽标', [...desk.querySelectorAll('.grid .pcard')].filter(c => c.querySelector('.badge') === null).length === DB.filter(x => x.status === '已看').length);
-      t('rail状态计数=数据口径', (() => { const want = DB.filter(x => x.status === '想看').length, watching = DB.filter(x => x.status === '在看').length, watched = DB.filter(x => x.status === '已看').length;
-        const rail = [...desk.querySelectorAll('[data-s] .n, [data-s] b, [data-s]')].map(e => e.textContent);
-        return rail.includes(String(want)) && rail.includes(String(watching)) && rail.includes(String(watched)); })());
-      desk.querySelector('.grid .pcard').click();
-      const dm = desk.querySelector('.cn-ovl .cn-modal');
-      t('详情弹窗(单源)', !!dm && !!dm.querySelector('.dm-title') && !!dm.querySelector('.j-similar'));
-      if (dm) dm.querySelector('.j-close').click();
-      desk.querySelector('.j-add').click();
-      const fm = desk.querySelector('.cn-ovl .cn-modal');
-      t('表单弹窗(单源)', !!fm && fm.querySelectorAll('.f-choice-btn[data-f-tag]').length === 14);
-      if (fm) fm.querySelector('.j-close').click();
-      desk.querySelector('.j-tool[data-tool="stat"]').click();
-      t('分析页板装进sp-body', !!desk.querySelector('.j-view .sp-body .stat-cards'));
-      desk.querySelector('.j-back').click();
-      desk.querySelector('.j-tool[data-tool="ai"]').click();
-      t('AI待机页', !!desk.querySelector('.j-view .ai-guide') && !!desk.querySelector('.j-view .j-ai-start'));
-      desk.querySelector('.j-ai-start').click();
-      await sleep(1500);
-      t('AI结果5条(单源rec-card)', desk.querySelectorAll('.j-view .rec-card').length === 5);
-      t('desk无设置钮(桌面专属)', desk.querySelector('.j-mgear') === null);
-      t('mob设置钮(单源m-tool)', !!mob.querySelector('.j-mgear'));
-      mob.querySelector('.j-mgear').click();
-      const sm = mob.querySelector('.cn-ovl .cn-modal');
-      t('设置弹窗(单源set-row)', !!sm && sm.querySelectorAll('.set-row').length === 5);
-      document.title = window.__st.fail.length
-        ? 'SELFTEST FAIL ' + window.__st.fail.join(',')
-        : `SELFTEST OK ${window.__st.pass}/${window.__st.pass + window.__st.fail.length}`;
-    } catch (err) { document.title = 'SELFTEST ERR ' + ((err && err.stack || String(err)).split('\n').slice(0, 2).join(' | ')); }
-  })();
-}
 </script>
 </body>
 </html>

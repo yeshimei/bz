@@ -32,7 +32,7 @@ function scheduleReload(changedRel) {
       try { await buildPreview(); } catch (e) { console.error('[preview-live] 预览包重出失败：', e.message); return; }
     }
     if (changedRel.endsWith('/fake-sim.ts') || changedRel.endsWith('/fake-obsidian.ts')) {
-      try { await buildPreview(['belongings']); } catch (e) { console.error('[preview-live] 行为包重出失败：', e.message); return; }
+      try { await buildPreview(['belongings', 'cinema']); } catch (e) { console.error('[preview-live] 行为包重出失败：', e.message); return; }
     }
     for (const res of clients) res.write('data: reload\n\n');
     console.log(`[preview-live] ${changedRel} 变化 → 已推送刷新`);
