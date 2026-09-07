@@ -66,7 +66,9 @@ const chipOf = (key: string) => document.querySelector(`[data-bel-chips] .bz-chi
 const chipCnts = () => [...document.querySelectorAll('[data-bel-chips] .bz-chip .bz-chip-cnt')].map((e) => e.textContent);
 const heroTitle = () => document.querySelector('[data-bel-herotitle]') as HTMLElement | null;
 const heroSub = () => document.querySelector('[data-bel-herosub]') as HTMLElement | null;
-const yearSel = () => document.querySelector('[data-bel-year]') as HTMLSelectElement | null;
+const yearSel = () => document.querySelector('[data-bel-year]') as HTMLElement | null;
+const yearLabel = () => yearSel()!.querySelector('.bz-bel-select-label')!.textContent;
+const yearOpts = () => [...document.querySelectorAll('[data-bel-yearmenu] .bz-bel-dropopt')] as HTMLElement[];
 const searchInp = () => document.querySelector('[data-bel-search]') as HTMLInputElement | null;
 const detailMask = () => document.querySelector('.bz-bel-detail-mask') as HTMLElement | null;
 const detailBox = () => document.querySelector('.bz-bel-detail') as HTMLElement | null;
@@ -590,20 +592,22 @@ describe('归物本筛选（状态 chips / 年份 / 搜索）', () => {
     }
   });
 
-  it('年份下拉：option 全部年份/年份（降序）+ change 筛选；年份×状态组合空态', async () => {
+  it('年份下拉：自绘海报菜单选项（全部年份/年份降序）+ 点选筛选；年份×状态组合空态', async () => {
     seed(vault, {
       item_1: makeItem({ id: 'item_1', name: '甲', purchase_date: '2024-06-01T12:00:00' }),
       item_2: makeItem({ id: 'item_2', name: '乙', purchase_date: '2023-05-01T12:00:00' }),
     });
     await open(vault);
-    const sel = yearSel()!;
-    expect(sel.options.length).toBe(3);
-    expect(sel.options[1].value).toBe('2024');
-    expect(sel.options[2].value).toBe('2023');
-    sel.value = '2024';
-    sel.dispatchEvent(new Event('change'));
+    // 自绘海报菜单：选项行由 renderPanelView 回填，点选项 = 选年份
+    const opts = yearOpts();
+    expect(opts.length).toBe(3);
+    expect(opts[1].dataset.v).toBe('2024');
+    expect(opts[2].dataset.v).toBe('2023');
+    expect(yearLabel()).toBe('全部年份');
+    opts[1].click();
     expect(cells()).toHaveLength(1);
     expect(cells()[0].textContent).toContain('甲');
+    expect(yearLabel()).toBe('2024');
     // 年份×状态组合 → 无匹配空态（筛选/搜索语境文案）
     clickChip('idle');
     expect(cells()).toHaveLength(0);
@@ -616,9 +620,7 @@ describe('归物本筛选（状态 chips / 年份 / 搜索）', () => {
       item_2: makeItem({ id: 'item_2', name: '乙', purchase_date: '2023-05-01T12:00:00' }),
     });
     await open(vault);
-    const sel = yearSel()!;
-    sel.value = '2024';
-    sel.dispatchEvent(new Event('change'));
+    yearOpts()[1].click(); // 2024
     expect(cells()).toHaveLength(1);
     // 外部清掉 2024 年条目 → modify 自动刷新
     const db = JSON.parse(vault.files.get(DATA_PATH)!);
@@ -630,7 +632,7 @@ describe('归物本筛选（状态 chips / 年份 / 搜索）', () => {
     // 修复：悬空年份重置回全部（列表不恒空、下拉显示与筛选状态一致）
     expect(cells()).toHaveLength(1);
     expect(cells()[0].textContent).toContain('乙');
-    expect(yearSel()!.value).toBe('');
+    expect(yearLabel()).toBe('全部年份');
   });
 
   it('搜索防抖 180ms：标题/分类/描述命中；无匹配文案；清空恢复', async () => {
@@ -718,7 +720,7 @@ describe('归物本筛选（状态 chips / 年份 / 搜索）', () => {
     expect(heroSub()!.textContent).toBe('归物本 — 0 件在列 · FILTERED VIEW');
   });
 
-  it('移动排序下拉：data-bel-mobsortsel 三档（同年份样式），change 生效且桌面段同步', async () => {
+  it('移动排序下拉：data-bel-mobsortsel 三档（自绘海报菜单），点选生效且桌面段同步', async () => {
     Platform.isMobile = true;
     try {
       seed(vault, {
@@ -726,14 +728,14 @@ describe('归物本筛选（状态 chips / 年份 / 搜索）', () => {
         item_2: makeItem({ id: 'item_2', name: '乙', purchase_price: 500 }),
       });
       await open(vault);
-      const sel = panel()!.querySelector('[data-bel-mobsortsel]') as HTMLSelectElement;
+      const sel = panel()!.querySelector('[data-bel-mobsortsel]') as HTMLElement;
       expect(sel).not.toBeNull();
-      expect(sel.options.length).toBe(3);
-      expect(sel.value).toBe('recent');
+      const opts = [...panel()!.querySelectorAll('[data-bel-mobsortmenu] .bz-bel-dropopt')] as HTMLElement[];
+      expect(opts.length).toBe(3);
+      expect(sel.querySelector('.bz-bel-select-label')!.textContent).toBe('最近购入');
       // 独立 seg 段不回归
       expect(panel()!.querySelector('.bz-bel-mobsort')).toBeNull();
-      sel.value = 'price';
-      sel.dispatchEvent(new Event('change'));
+      opts.find((o) => o.dataset.v === 'price')!.click();
       await tick(50);
       // 价格降序生效：乙(500) 在甲(100) 前
       const names = [...content()!.querySelectorAll('.bz-bel-name')].map((e) => e.textContent);

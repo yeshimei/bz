@@ -145,13 +145,26 @@
       const kpi = t.closest('[data-bel-statclick]');
       if (kpi) { M.status = M.status === 'asset' ? null : 'asset'; renderAll(); return; }
     });
-    const yearSel = p.q('[data-bel-year]');
-    yearSel.addEventListener('change', () => { M.year = yearSel.value; renderAll(); });
-    // 移动排序下拉（同年份样式；双向同步）
-    const mobSortSel = p.q('[data-bel-mobsortsel]');
-    mobSortSel.innerHTML = R.sortOptionsHtml();
-    mobSortSel.value = M.sort;
-    mobSortSel.addEventListener('change', () => { M.sort = mobSortSel.value; renderAll(); });
+    // 年份/移动排序下拉（自绘海报菜单；开合+点选+外点收起，与 ui.ts 同语义）
+    el.addEventListener('click', (e) => {
+      const trig = e.target.closest('[data-bel-year],[data-bel-mobsortsel]');
+      if (trig) {
+        const wrap = trig.parentElement;
+        const wasOpen = wrap.classList.contains('is-open');
+        el.querySelectorAll('.bz-bel-yearsel.is-open').forEach((w) => w.classList.remove('is-open'));
+        if (!wasOpen) wrap.classList.add('is-open');
+        return;
+      }
+      const opt = e.target.closest('.bz-bel-dropopt');
+      if (opt) {
+        el.querySelectorAll('.bz-bel-yearsel.is-open').forEach((w) => w.classList.remove('is-open'));
+        const v = opt.dataset.v ?? '';
+        if (opt.closest('[data-bel-yearmenu]')) M.year = v; else M.sort = v;
+        renderAll();
+        return;
+      }
+      el.querySelectorAll('.bz-bel-yearsel.is-open').forEach((w) => w.classList.remove('is-open'));
+    });
     const bindSearch = (inp) => {
       inp.addEventListener('input', () => {
         clearTimeout(inp._belDeb);
@@ -629,7 +642,8 @@
 
         t('chips 无图标', document.querySelectorAll('#dtHost [data-bel-chips] .bz-chip i, #dtHost [data-bel-chips] .bz-chip svg').length === 0);
         t('移动chips五枚无资产', document.querySelectorAll('#mobHost [data-bel-mobstatus] .bz-mobstrip-chip').length === 5 && !document.querySelector('#mobHost [data-bel-mobstatus] [data-bel-st="asset"]'));
-        t('移动排序下拉3项', document.querySelectorAll('#mobHost [data-bel-mobsortsel] option').length === 3 && document.querySelector('#mobHost [data-bel-mobsortsel]').value === 'recent');
+        t('移动排序下拉3项', document.querySelectorAll('#mobHost [data-bel-mobsortmenu] .bz-bel-dropopt').length === 3 && document.querySelector('#mobHost [data-bel-mobsortsel] .bz-bel-select-label').textContent === '最近购入');
+        t('年份下拉开合+点选', (() => { const w = document.querySelector('#dtHost .bz-bel-yearsel'); w.querySelector('[data-bel-year]').click(); const open = w.classList.contains('is-open'); const y26 = [...w.querySelectorAll('.bz-bel-dropopt')].find((o) => o.dataset.v === '2026'); if (y26) y26.click(); const ok = open && !w.classList.contains('is-open'); w.querySelector('[data-bel-year]').click(); [...w.querySelectorAll('.bz-bel-dropopt')].find((o) => o.dataset.v === '').click(); return ok; })());
         t('使用中徽章图标=check-circle', !!document.querySelector('#dtHost .bz-bel-tag--using i[data-lucide="check-circle"]'));
 
         document.querySelector('#dtHost [data-bel-add]').click();

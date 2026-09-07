@@ -35,6 +35,7 @@ export const ICON = {
   del: 'trash-2',
   empty: 'package',
   chevR: 'chevron-right',
+  chevD: 'chevron-down',
 };
 
 /** 状态（数据四态精确串；key = 稳定英文标识） */
@@ -256,12 +257,12 @@ export function panelHtml(): string {
     <div class="bz-toolrow bz-bel-toolrow">
       <div class="bz-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类…"></div>
       <div class="bz-bel-yearsel">
-        <select class="bz-bel-select" data-bel-year></select>
-        ${iconSpan(ICON.chevR, 'bz-bel-select-chev')}
+        <div class="bz-bel-select" data-bel-year role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">全部年份</span>${iconSpan(ICON.chevD, 'bz-bel-select-chev')}</div>
+        <div class="bz-bel-dropmenu" data-bel-yearmenu role="listbox"></div>
       </div>
       <div class="bz-bel-yearsel bz-bel-mobsortsel-wrap">
-        <select class="bz-bel-select" data-bel-mobsortsel></select>
-        ${iconSpan(ICON.chevR, 'bz-bel-select-chev')}
+        <div class="bz-bel-select" data-bel-mobsortsel role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">最近购入</span>${iconSpan(ICON.chevD, 'bz-bel-select-chev')}</div>
+        <div class="bz-bel-dropmenu" data-bel-mobsortmenu role="listbox"></div>
       </div>
       <div class="bz-bel-sort" data-bel-sort></div>
       <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${iconSpan(ICON.add, 'bz-ic--sm')} 记一笔</button>
@@ -299,14 +300,15 @@ export function mobChipsHtml(items: BelongingsItem[], view: BelViewState): strin
   }).join('');
 }
 
-/** 年份下拉 options（不含选中态回填——调用方对 select.value 赋值） */
+/** 年份下拉选项行（自绘菜单；cur 项挂 is-cur，点击方取 data-v） */
 export function yearsOptionsHtml(items: BelongingsItem[], cur: string): string {
-  return '<option value="">全部年份</option>' + yearsAvailable(items).map((y) => `<option value="${y}"${cur === y ? ' selected' : ''}>${y}</option>`).join('');
+  return '<div class="bz-bel-dropopt' + (cur === '' ? ' is-cur' : '') + '" data-v="" role="option">全部年份</div>'
+    + yearsAvailable(items).map((y) => `<div class="bz-bel-dropopt${cur === y ? ' is-cur' : ''}" data-v="${y}" role="option">${y}</div>`).join('');
 }
 
-/** 移动排序下拉 options（同年份下拉样式；与桌面 seg 双向同步，用户拍板） */
-export function sortOptionsHtml(): string {
-  return SORT_OPTS.map((o) => `<option value="${o.v}">${o.label}</option>`).join('');
+/** 移动排序下拉选项行（同年份下拉海报皮；与桌面 seg 双向同步，用户拍板） */
+export function sortOptionsHtml(cur: string): string {
+  return SORT_OPTS.map((o) => `<div class="bz-bel-dropopt${cur === o.v ? ' is-cur' : ''}" data-v="${o.v}" role="option">${o.label}</div>`).join('');
 }
 
 /** 桌面排序三档 segmented（bz-segmented 库皮；data-k 挂 v） */
@@ -529,10 +531,11 @@ export function renderPanelView(root: HTMLElement, items: BelongingsItem[], view
   const mob = q('[data-bel-mobstatus]');
   if (mob) mob.innerHTML = mobChipsHtml(items, view);
   view.year = resolveYear(items, view.year);
-  const yearSel = q<HTMLSelectElement>('[data-bel-year]');
+  const yearSel = q('[data-bel-year]');
   if (yearSel) {
-    yearSel.innerHTML = yearsOptionsHtml(items, view.year);
-    yearSel.value = view.year;
+    (yearSel.querySelector('.bz-bel-select-label') as HTMLElement | null)!.textContent = view.year || '全部年份';
+    const menu = q('[data-bel-yearmenu]');
+    if (menu) menu.innerHTML = yearsOptionsHtml(items, view.year);
   }
   const wrap = q('[data-bel-kpis]');
   if (wrap) wrap.innerHTML = kpisHtml(items);
@@ -542,8 +545,13 @@ export function renderPanelView(root: HTMLElement, items: BelongingsItem[], view
   if (mobStats) mobStats.textContent = mobStatsText(items);
   const sortHost = q('[data-bel-sort]');
   if (sortHost) sortHost.innerHTML = segmentedHtml(view.sort);
-  const mobSortSel = q<HTMLSelectElement>('[data-bel-mobsortsel]');
-  if (mobSortSel && mobSortSel.options.length) mobSortSel.value = view.sort;
+  const mobSortSel = q('[data-bel-mobsortsel]');
+  if (mobSortSel) {
+    (mobSortSel.querySelector('.bz-bel-select-label') as HTMLElement | null)!.textContent =
+      (SORT_OPTS.find((o) => o.v === view.sort) ?? SORT_OPTS[0]).label;
+    const menu = q('[data-bel-mobsortmenu]');
+    if (menu) menu.innerHTML = sortOptionsHtml(view.sort);
+  }
 
   const content = q('[data-bel-content]');
   if (!content) return;

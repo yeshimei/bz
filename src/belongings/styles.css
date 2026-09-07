@@ -109,17 +109,35 @@
   border-radius: 0; background: transparent; font-size: 14px;
 }
 .bz-bel-toolrow .bz-search .bz-input:focus { outline: none; border-bottom-color: var(--bz-bel-accent); }
-/* 年份下拉 = 同款下划线（自绘 chev 保留：appearance:none 无原生箭头） */
+/* 年份/排序下拉 = 同款下划线触发器 + 自绘海报菜单（原生 select 弹层系统皮与整体不搭，退役） */
 .bz-bel-yearsel { position: relative; flex-shrink: 0; }
 .bz-bel-select {
-  appearance: none; -webkit-appearance: none;
-  border: none; border-bottom: 2px solid var(--bz-bel-ink);
+  display: flex; align-items: center;
+  border-bottom: 2px solid var(--bz-bel-ink);
   background: transparent; border-radius: 0; box-shadow: none;
   height: 32px; padding: 0 24px 0 2px; font-size: 14px; color: var(--bz-text-1);
-  font-family: inherit; outline: none; cursor: pointer; min-width: 104px;
+  font-family: inherit; cursor: pointer; min-width: 104px; user-select: none;
 }
-.bz-bel-select:hover { background: var(--bz-bel-dim); }
-.bz-bel-select-chev { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; color: var(--bz-text-3); pointer-events: none; }
+.bz-bel-select:hover, .bz-bel-select:focus-visible { background: var(--bz-bel-dim); outline: none; }
+.bz-bel-select-chev { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; color: var(--bz-text-3); pointer-events: none; transition: transform 0.15s ease; }
+.bz-bel-yearsel.is-open .bz-bel-select-chev { transform: translateY(-50%) rotate(180deg); }
+/* 弹出菜单 = .bz-bel-menu 同款海报皮：纸面墨框方角 + 硬投影；hover 墨底纸字、当前项赤橙 */
+.bz-bel-dropmenu {
+  display: none; position: absolute; left: 0; top: calc(100% + 6px);
+  min-width: 100%; max-height: 264px; overflow-y: auto;
+  background: var(--bz-bel-paper);
+  border: 2px solid var(--bz-bel-ink); border-radius: 0;
+  box-shadow: 6px 6px 0 rgba(23, 21, 18, 0.22);
+  z-index: 3; /* 面板内浮层：后置定位卡片会盖住同层菜单，小值抬一层（窗口层仍归 topifyZ） */
+}
+.bz-bel-yearsel.is-open .bz-bel-dropmenu { display: block; }
+.bz-bel-dropopt {
+  padding: 9px 14px; font-size: 13px; letter-spacing: 1px;
+  color: var(--bz-text-1); cursor: pointer; white-space: nowrap;
+}
+.bz-bel-dropopt:hover { background: var(--bz-bel-ink); color: var(--bz-bel-paper); }
+.bz-bel-dropopt.is-cur { color: var(--bz-bel-accent); font-weight: 600; }
+.bz-bel-dropopt.is-cur:hover { background: var(--bz-bel-accent); color: var(--bz-bel-paper); }
 /* 记一笔 = p20 .btn：墨底纸字、hover 转赤橙（桌面工具行 + 移动底部同款） */
 .bz-bel-addbtn,
 .bz-bel-mobadd {

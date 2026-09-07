@@ -569,7 +569,8 @@ var BZR_belongings = (() => {
     close: "x",
     del: "trash-2",
     empty: "package",
-    chevR: "chevron-right"
+    chevR: "chevron-right",
+    chevD: "chevron-down"
   };
   var STATUS = {
     using: { label: "使用中", key: "using", ic: "check-circle" },
@@ -746,12 +747,12 @@ var BZR_belongings = (() => {
     <div class="bz-toolrow bz-bel-toolrow">
       <div class="bz-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类…"></div>
       <div class="bz-bel-yearsel">
-        <select class="bz-bel-select" data-bel-year></select>
-        ${iconSpan(ICON.chevR, "bz-bel-select-chev")}
+        <div class="bz-bel-select" data-bel-year role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">全部年份</span>${iconSpan(ICON.chevD, "bz-bel-select-chev")}</div>
+        <div class="bz-bel-dropmenu" data-bel-yearmenu role="listbox"></div>
       </div>
       <div class="bz-bel-yearsel bz-bel-mobsortsel-wrap">
-        <select class="bz-bel-select" data-bel-mobsortsel></select>
-        ${iconSpan(ICON.chevR, "bz-bel-select-chev")}
+        <div class="bz-bel-select" data-bel-mobsortsel role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">最近购入</span>${iconSpan(ICON.chevD, "bz-bel-select-chev")}</div>
+        <div class="bz-bel-dropmenu" data-bel-mobsortmenu role="listbox"></div>
       </div>
       <div class="bz-bel-sort" data-bel-sort></div>
       <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${iconSpan(ICON.add, "bz-ic--sm")} 记一笔</button>
@@ -784,10 +785,10 @@ var BZR_belongings = (() => {
     }).join("");
   }
   function yearsOptionsHtml(items, cur) {
-    return '<option value="">全部年份</option>' + yearsAvailable(items).map((y) => `<option value="${y}"${cur === y ? " selected" : ""}>${y}</option>`).join("");
+    return '<div class="bz-bel-dropopt' + (cur === "" ? " is-cur" : "") + '" data-v="" role="option">全部年份</div>' + yearsAvailable(items).map((y) => `<div class="bz-bel-dropopt${cur === y ? " is-cur" : ""}" data-v="${y}" role="option">${y}</div>`).join("");
   }
-  function sortOptionsHtml() {
-    return SORT_OPTS.map((o) => `<option value="${o.v}">${o.label}</option>`).join("");
+  function sortOptionsHtml(cur) {
+    return SORT_OPTS.map((o) => `<div class="bz-bel-dropopt${cur === o.v ? " is-cur" : ""}" data-v="${o.v}" role="option">${o.label}</div>`).join("");
   }
   function segmentedHtml(sort) {
     return `<div class="bz-segmented" role="radiogroup" aria-label="排序">${SORT_OPTS.map((o) => `<button type="button" class="bz-segmented-btn${sort === o.v ? " is-on" : ""}" data-k="${o.v}" role="radio" aria-checked="${sort === o.v}">${o.label}</button>`).join("")}</div>`;
@@ -937,6 +938,7 @@ var BZR_belongings = (() => {
     return specs;
   }
   function renderPanelView(root, items, view, hooks) {
+    var _a;
     const q = (sel) => root.querySelector(sel);
     const title = q("[data-bel-herotitle]");
     if (title) title.textContent = heroTitleText(view);
@@ -949,8 +951,9 @@ var BZR_belongings = (() => {
     view.year = resolveYear(items, view.year);
     const yearSel = q("[data-bel-year]");
     if (yearSel) {
-      yearSel.innerHTML = yearsOptionsHtml(items, view.year);
-      yearSel.value = view.year;
+      yearSel.querySelector(".bz-bel-select-label").textContent = view.year || "全部年份";
+      const menu = q("[data-bel-yearmenu]");
+      if (menu) menu.innerHTML = yearsOptionsHtml(items, view.year);
     }
     const wrap = q("[data-bel-kpis]");
     if (wrap) wrap.innerHTML = kpisHtml(items);
@@ -961,7 +964,11 @@ var BZR_belongings = (() => {
     const sortHost = q("[data-bel-sort]");
     if (sortHost) sortHost.innerHTML = segmentedHtml(view.sort);
     const mobSortSel = q("[data-bel-mobsortsel]");
-    if (mobSortSel && mobSortSel.options.length) mobSortSel.value = view.sort;
+    if (mobSortSel) {
+      mobSortSel.querySelector(".bz-bel-select-label").textContent = ((_a = SORT_OPTS.find((o) => o.v === view.sort)) != null ? _a : SORT_OPTS[0]).label;
+      const menu = q("[data-bel-mobsortmenu]");
+      if (menu) menu.innerHTML = sortOptionsHtml(view.sort);
+    }
     const content = q("[data-bel-content]");
     if (!content) return;
     const list = filtered(items, view);
