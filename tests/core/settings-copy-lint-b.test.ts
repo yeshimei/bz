@@ -18,6 +18,12 @@ const WHITELIST = new Set<string>([
   // 组 B 无豁免项：迁移时已按 ticket 100 对齐文案——「标签数量」原描述「如 "3-6" 表示 3 到 6 个」
   // 含引号/符号违规，已改自然句「生成的标签个数写成区间，如 3-6」；favorites 移动端原文案
   // 「（≤768px；关=常规卡）」符号文案随域组 A 收敛口径统一为多数派（settings-copy-lint-a 注释）。
+  // issue 246（2026-09-08）：外观组行名「布局/主题」为用户拍板范式，两字精确，豁免 title-length
+  // （口径同 settings-copy-lint-a）。
+  'clipbook#布局:title-length',
+  'clipbook#主题:title-length',
+  'favorites#布局:title-length',
+  'favorites#主题:title-length',
 ]);
 
 const TARGETS = [

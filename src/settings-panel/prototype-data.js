@@ -80,6 +80,15 @@
       ] },
     ] },
     diary: { name: '日记本', icon: 'notebook-pen', desc: '日记目录、显示与默认视图', groups: [
+      // 外观组（issue 246 范式铺开；占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+      { icon: 'palette', name: '外观', rows: [
+        { t: 'choiceCards', n: '布局', k: 'diarySkin', kind: 'layout', opts: [
+          { v: 'default', l: '纸页', prev: { mode: 'system' }, theme: 'ivory' },
+        ] },
+        { t: 'choiceCards', n: '主题', k: 'diarySkinTheme', kind: 'skin', layoutKey: 'diarySkin', opts: [
+          { v: 'ivory', l: '象牙白', layout: 'default', prev: { light: '#f6f2e9', dark: '#1d1b18', ac: '#3d8f5d' } },
+        ] },
+      ] },
       { icon: 'folder-open', name: '目录', rows: [
         { t: 'path', mode: 'single', n: '日记目录', d: '存放日记文件的文件夹路径', k: 'diaryDirectory' },
         { t: 'path', mode: 'single', n: '影视目录', d: '日记与回忆墙归类用的影视文件夹，与影院设置的影视文件夹相互独立', k: 'movieDirectory' },
@@ -105,7 +114,16 @@
         { t: 'button', n: '日记解析检测', d: '扫描所有日记文件，定位未能解析的行，可一键修复标题格式问题', btn: '检测日记解析', cta: true, demo: 'diaryRepair' },
       ] },
     ] },
-    'diary-wall': { name: '回忆墙', icon: 'images', desc: '回忆墙媒体视图（只读）', desktopZero: true, groups: [
+    'diary-wall': { name: '回忆墙', icon: 'images', desc: '回忆墙媒体视图（只读）', groups: [
+      // 外观组（issue 246 占位单卡）；桌面零设置标记随外观组摘除
+      { icon: 'palette', name: '外观', rows: [
+        { t: 'choiceCards', n: '布局', k: 'diaryWallSkin', kind: 'layout', opts: [
+          { v: 'default', l: '媒体墙', prev: { mode: 'system' }, theme: 'gallery' },
+        ] },
+        { t: 'choiceCards', n: '主题', k: 'diaryWallSkinTheme', kind: 'skin', layoutKey: 'diaryWallSkin', opts: [
+          { v: 'gallery', l: '画廊白', layout: 'default', prev: { light: '#f7f5f0', dark: '#191919', ac: '#b8863b' } },
+        ] },
+      ] },
       { icon: 'smartphone', name: '移动端', m: true, rows: [
         { t: 'toggle', n: '移动端默认全屏', k: 'diaryWallMobileDefaultFullscreen' },
       ] },
@@ -162,6 +180,15 @@
       ] },
     ] },
     clipbook: { name: '剪藏本', icon: 'scissors', desc: '未读流与剪藏笔记', groups: [
+      // 外观组（issue 246 占位单卡）
+      { icon: 'palette', name: '外观', rows: [
+        { t: 'choiceCards', n: '布局', k: 'clipbookSkin', kind: 'layout', opts: [
+          { v: 'default', l: '编辑部', prev: { mode: 'system' }, theme: 'newsprint' },
+        ] },
+        { t: 'choiceCards', n: '主题', k: 'clipbookSkinTheme', kind: 'skin', layoutKey: 'clipbookSkin', opts: [
+          { v: 'newsprint', l: '新闻纸', layout: 'default', prev: { light: '#fbfaf7', dark: '#171512', ac: '#b3402a' } },
+        ] },
+      ] },
       { icon: 'folder-open', name: '基础', rows: [
         { t: 'path', mode: 'single', n: '剪藏目录', d: '存放网页剪藏文章的文件夹', k: 'articleDirectory' },
         { t: 'number', n: '面板宽度记忆', d: '桌面拖拽面板边缘缩放后自动记忆，0 为未拖过', k: 'clipbookPanelWidth', min: 0, step: 10 },
@@ -182,12 +209,31 @@
         { t: 'toggle', n: '移动端默认全屏', k: 'clipbookMobileDefaultFullscreen' },
       ] },
     ] },
-    favorites: { name: '收藏本', icon: 'star', desc: '收藏条目', desktopZero: true, groups: [
+    favorites: { name: '收藏本', icon: 'star', desc: '收藏条目', groups: [
+      // 外观组（issue 246 占位单卡）；桌面零设置标记随外观组摘除
+      { icon: 'palette', name: '外观', rows: [
+        { t: 'choiceCards', n: '布局', k: 'favoritesSkin', kind: 'layout', opts: [
+          { v: 'default', l: '标签工作台', prev: { mode: 'system' }, theme: 'linen' },
+        ] },
+        { t: 'choiceCards', n: '主题', k: 'favoritesSkinTheme', kind: 'skin', layoutKey: 'favoritesSkin', opts: [
+          { v: 'linen', l: '亚麻', layout: 'default', prev: { light: '#fffcf6', dark: '#1d1b18', ac: '#c95a28' } },
+        ] },
+      ] },
       { icon: 'smartphone', name: '移动端', m: true, rows: [
         { t: 'toggle', n: '移动端默认全屏', k: 'favoritesMobileDefaultFullscreen' },
       ] },
     ] },
     cinema: { name: '影院', icon: 'clapperboard', desc: '影视目录与海报', groups: [
+      // 外观组（issue 246）：布局行收编真键 cinemaStyle——午夜场上岸单卡（gaz/booth 未实现不暴露，
+      // 非法值域内回落午夜场）；主题行占位
+      { icon: 'palette', name: '外观', rows: [
+        { t: 'choiceCards', n: '布局', k: 'cinemaStyle', kind: 'layout', opts: [
+          { v: 'midnight', l: '午夜场', prev: { mode: 'system' }, theme: 'nightfall' },
+        ] },
+        { t: 'choiceCards', n: '主题', k: 'cinemaSkinTheme', kind: 'skin', layoutKey: 'cinemaStyle', opts: [
+          { v: 'nightfall', l: '夜幕', layout: 'midnight', prev: { light: '#15171e', dark: '#0d0f14', ac: '#e8b04a' } },
+        ] },
+      ] },
       { icon: 'folder-open', name: '目录', rows: [
         { t: 'path', mode: 'single', n: '影视文件夹', d: '影院读取的影视文件夹，日记本设置的影视目录仅用于归类', k: 'cinemaFolderPath' },
       ] },
@@ -201,22 +247,21 @@
       ] },
     ] },
     bookshelf: { name: '书库', icon: 'book-open', desc: '藏书封面墙', groups: [
-      { icon: 'folder-open', name: '目录', rows: [
-        { t: 'path', mode: 'single', n: '书库文件夹', d: '存放书籍笔记的文件夹，留空用 vault 根下的「书库」', k: 'bookshelfFolderPath' },
-      ] },
-      { icon: 'eye', name: '显示', rows: [
-        { t: 'choiceCards', n: '面板皮肤', k: 'bookshelfSkin', kind: 'shelf', opts: [
+      // 外观组（issue 246 收编）：bookshelfSkin 五肤×亮暗（issue 235 拍板，演示数据从十肤对齐收敛）；
+      // 无布局维度走单行组（小橘先例），插件端 onChange 热切换
+      { icon: 'palette', name: '外观', rows: [
+        { t: 'choiceCards', n: '主题', k: 'bookshelfSkin', kind: 'shelf', opts: [
           { v: 'nordic', l: '雪松白', prev: { bg: '#eef0ee', ink: '#44514a', ac: '#7da192', books: ['#8fae9f', '#c2d4c8', '#5d7268'] } },
-          { v: 'dark', l: '暗木书房', prev: { bg: '#3d3126', ink: '#d8c9b4', ac: '#c99a5b', books: ['#8a6a45', '#5d452f', '#a9865d'] } },
           { v: 'noir', l: '黑金夜曲', prev: { bg: '#1d1a16', ink: '#d9c9a3', ac: '#d4af37', books: ['#8a7648', '#3a342a', '#b8a05e'] } },
-          { v: 'wabi', l: '侘寂素麻', prev: { bg: '#d9d2c4', ink: '#6b6152', ac: '#a08662', books: ['#b3a68e', '#8f8471', '#c9bda6'] } },
-          { v: 'bauhaus', l: '包豪斯', prev: { bg: '#f2ede4', ink: '#1d1d1f', ac: '#d94f3d', books: ['#d94f3d', '#2b4a8a', '#e8b23a'] } },
-          { v: 'blueprint', l: '工程蓝图', prev: { bg: '#2c4a6e', ink: '#cfe0f0', ac: '#8ec5e8', books: ['#4a7099', '#365f8a', '#6e93b8'] } },
-          { v: 'neon', l: '霓虹夜馆', prev: { bg: '#241a33', ink: '#e0ccf0', ac: '#b46ee8', books: ['#6e3a99', '#3d2b52', '#8a5ac0'] } },
           { v: 'kraft', l: '牛皮手帐', prev: { bg: '#b58a5a', ink: '#4a3420', ac: '#7a5230', books: ['#8a6a42', '#6b4e2e', '#a08050'] } },
           { v: 'velvet', l: '丝绒剧院', prev: { bg: '#4a1f2b', ink: '#e0c2cc', ac: '#c98a9e', books: ['#6e2a3d', '#8a3a52', '#5a2434'] } },
           { v: 'mono', l: '极简黑白', prev: { bg: '#f2f2f2', ink: '#1d1d1d', ac: '#1d1d1d', books: ['#3a3a3a', '#8a8a8a', '#c0c0c0'] } },
         ] },
+      ] },
+      { icon: 'folder-open', name: '目录', rows: [
+        { t: 'path', mode: 'single', n: '书库文件夹', d: '存放书籍笔记的文件夹，留空用 vault 根下的「书库」', k: 'bookshelfFolderPath' },
+      ] },
+      { icon: 'eye', name: '显示', rows: [
         { t: 'select', n: '默认筛选', d: '打开面板时侧栏选中的状态', k: 'bookshelfDefaultSide', opts: [{ v: 'all', l: '全部' }, { v: 'reading', l: '在读' }, { v: 'unread', l: '未读' }, { v: 'done', l: '已读' }] },
         { t: 'select', n: '默认排序', d: '打开面板时书脊按所选规则排序', k: 'bookshelfSortMode', opts: [{ v: 'recent', l: '最近读完' }, { v: 'time', l: '时长最长' }, { v: 'title', l: '书名' }] },
       ] },
@@ -225,6 +270,15 @@
       ] },
     ] },
     review: { name: '复习计划', icon: 'repeat-2', desc: '间隔重复与做题', groups: [
+      // 外观组（issue 246 占位单卡）
+      { icon: 'palette', name: '外观', rows: [
+        { t: 'choiceCards', n: '布局', k: 'reviewSkin', kind: 'layout', opts: [
+          { v: 'default', l: '三区队列', prev: { mode: 'system' }, theme: 'sage' },
+        ] },
+        { t: 'choiceCards', n: '主题', k: 'reviewSkinTheme', kind: 'skin', layoutKey: 'reviewSkin', opts: [
+          { v: 'sage', l: '苔绿', layout: 'default', prev: { light: '#f4f1e8', dark: '#1a1d18', ac: '#3d8f5d' } },
+        ] },
+      ] },
       { icon: 'bell', name: '检查提醒', rows: [
         { t: 'toggle', n: '到期提醒', d: '有笔记到期待复习时自动弹出提醒', k: 'enableAutoNotify' },
         { t: 'toggle', n: '新笔记加入提醒', d: '新笔记被自动加入时弹出提示，多条合并成一条', k: 'reviewAutoAddNotice' },
@@ -257,6 +311,15 @@
       ] },
     ] },
     secondbrain: { name: '第二大脑', icon: 'brain', desc: '嵌入检索与对话', groups: [
+      // 外观组（issue 246 占位单卡）
+      { icon: 'palette', name: '外观', rows: [
+        { t: 'choiceCards', n: '布局', k: 'secondbrainSkin', kind: 'layout', opts: [
+          { v: 'default', l: '对话', prev: { mode: 'system' }, theme: 'graphite' },
+        ] },
+        { t: 'choiceCards', n: '主题', k: 'secondbrainSkinTheme', kind: 'skin', layoutKey: 'secondbrainSkin', opts: [
+          { v: 'graphite', l: '石墨', layout: 'default', prev: { light: '#f0f0f2', dark: '#17181c', ac: '#5b8a9e' } },
+        ] },
+      ] },
       { icon: 'folder-open', name: '基础', rows: [
         { t: 'text', n: 'Ollama 本地 URL', k: 'secondBrainOllamaUrl' },
         { t: 'text', n: '远程 Ollama URL（移动端）', k: 'secondBrainRemoteOllamaUrl' },
@@ -292,6 +355,15 @@
       ] },
     ] },
     literature: { name: '文献盒', icon: 'list-video', desc: '文献笔记与术语录入', groups: [
+      // 外观组（issue 246 占位单卡）
+      { icon: 'palette', name: '外观', rows: [
+        { t: 'choiceCards', n: '布局', k: 'literatureSkin', kind: 'layout', opts: [
+          { v: 'default', l: '索引卡', prev: { mode: 'system' }, theme: 'manila' },
+        ] },
+        { t: 'choiceCards', n: '主题', k: 'literatureSkinTheme', kind: 'skin', layoutKey: 'literatureSkin', opts: [
+          { v: 'manila', l: '牛皮纸', layout: 'default', prev: { light: '#f0e6d2', dark: '#1d1a14', ac: '#a08662' } },
+        ] },
+      ] },
       { icon: 'folder-open', name: '目录与分类', rows: [
         { t: 'path', mode: 'single', n: '文献目录', d: '文献笔记所在文件夹，列表实时扫描该目录', k: 'literatureDirectory' },
         { t: 'textarea', n: '领域词表', d: '逗号分隔的领域词；留空 = AI 自由写领域', k: 'literatureDomainList', ph: '物理,医学,计算机,经济,文史哲…' },
@@ -321,6 +393,15 @@
       ] },
     ] },
     pomodoro: { name: '番茄钟', icon: 'timer', desc: '专注计时与休息', groups: [
+      // 外观组（issue 246 占位单卡）
+      { icon: 'palette', name: '外观', rows: [
+        { t: 'choiceCards', n: '布局', k: 'pomodoroSkin', kind: 'layout', opts: [
+          { v: 'default', l: '计时盘', prev: { mode: 'system' }, theme: 'tomato' },
+        ] },
+        { t: 'choiceCards', n: '主题', k: 'pomodoroSkinTheme', kind: 'skin', layoutKey: 'pomodoroSkin', opts: [
+          { v: 'tomato', l: '番茄', layout: 'default', prev: { light: '#fbf6f0', dark: '#1d1512', ac: '#d95550' } },
+        ] },
+      ] },
       { icon: 'timer', name: '时间方案', rows: [
         { t: 'select', n: '预设方案', d: '选择现成的工作与休息时长组合', k: 'pomodoroPreset', opts: [
           { v: 'classic', l: '经典标准（25/5/15）' }, { v: 'neuro', l: '神经专注（30/7/20）' }, { v: 'flow', l: '深度心流（50/10/25）' },
@@ -347,6 +428,15 @@
       ] },
     ] },
     encrypt: { name: '保险库', icon: 'lock', desc: '密码、加密笔记与加密日记', groups: [
+      // 外观组（issue 246 占位单卡）
+      { icon: 'palette', name: '外观', rows: [
+        { t: 'choiceCards', n: '布局', k: 'encryptSkin', kind: 'layout', opts: [
+          { v: 'default', l: '三栏', prev: { mode: 'system' }, theme: 'steel' },
+        ] },
+        { t: 'choiceCards', n: '主题', k: 'encryptSkinTheme', kind: 'skin', layoutKey: 'encryptSkin', opts: [
+          { v: 'steel', l: '钢灰', layout: 'default', prev: { light: '#e8e9eb', dark: '#14161a', ac: '#6e7b8a' } },
+        ] },
+      ] },
       { icon: 'key-round', name: '生成', rows: [
         { t: 'text', n: '密码生成字符集', d: '随机生成密码时使用的字符集', k: 'passwordCharset' },
         { t: 'number', n: '密码生成长度', d: '随机生成密码的字符个数', k: 'passwordLength', min: 4, max: 128, step: 1 },
@@ -439,6 +529,7 @@
     showTagCount: true, useFileDateTime: false, diaryTagShowEmoji: true, diaryContentRenderMode: 'markdown',
     diaryTagSortMode: 'fixed', diaryDefaultDateFilter: 'all', diaryDefaultSelectedTag: '', diaryJumpToEditAfterSave: false,
     diaryMobileDefaultFullscreen: true, diaryWallMobileDefaultFullscreen: true,
+    diarySkin: 'default', diarySkinTheme: 'ivory', diaryWallSkin: 'default', diaryWallSkinTheme: 'gallery',
     todoSkin: 'paper', todoSkinTheme: 'warmwhite', memoSortMode: 'priority', memoShowArchivedByDefault: false, memoDueFormat: 'relative',
     memoDefaultPriority: 'minor', memoDefaultScene: '', memoScenarios: '剪藏,工作,学习,生活,代码,公开课',
     autoPopupOnStart: true, openNoteReminder: true, todoMobileDefaultFullscreen: false,
@@ -446,26 +537,33 @@
     articleDirectory: '归档/网页剪藏', clipbookPanelWidth: 1306, clipbookPanelHeight: 806, clipbookMidWidth: 272,
     autoSummaryEnabled: true, autoSummaryLength: 'standard', autoSummaryTagsEnabled: true, autoSummaryTagCount: '3-6',
     autoSummaryTiming: 'immediate', clipbookMobileDefaultFullscreen: true,
-    favoritesMobileDefaultFullscreen: false,
+    clipbookSkin: 'default', clipbookSkinTheme: 'newsprint',
+    favoritesSkin: 'default', favoritesSkinTheme: 'linen', favoritesMobileDefaultFullscreen: false,
+    cinemaStyle: 'midnight', cinemaSkinTheme: 'nightfall',
     cinemaFolderPath: '我的/影视', cinemaSortMode: 'date', cinemaStatusFilter: '', cinemaGridColumns: '6', cinemaMobileDefaultFullscreen: false,
     bookshelfFolderPath: '', bookshelfSkin: 'nordic', bookshelfDefaultSide: 'all', bookshelfSortMode: 'recent', bookshelfMobileDefaultFullscreen: false,
     enableAutoNotify: true, reviewAutoAddNotice: true, forceQuizForReview: true, enableMultipleChoice: false,
+    reviewSkin: 'default', reviewSkinTheme: 'sage',
     questionsPerNote: '', shuffleQuestions: true, difficulty: 'random', reviewDailyLimit: 0, reviewIntervalScale: 1,
     reviewRThreshold: 0.9, reviewEnableFit: false, reviewFitEveryN: 10, reviewWatchedFolders: ['我的/日记'],
     reviewExcludedNotes: ['我的/日记/2025/旧笔记'], reviewTreeBadge: true, reviewMobileDefaultFullscreen: false,
     secondBrainOllamaUrl: 'http://127.0.0.1:11434', secondBrainRemoteOllamaUrl: '', secondBrainEmbeddingModel: 'nomic-embed-text',
+    secondbrainSkin: 'default', secondbrainSkinTheme: 'graphite',
     secondBrainAllowPaths: '我的', secondBrainEnabled: true, linkAgentEnabled: true, linkAgentTopK: '8', linkAgentMaxLinks: '0',
     linkAgentNotify: true, linkAgentAutoClean: true, linkAgentRespectRelated: true, linkAgentScopes: '我的',
     secondBrainTopK: '8', secondBrainChatTopK: '8', secondBrainChunkMinLength: '200', secondBrainContextLimit: '2000',
     secondBrainDebounceDelay: '300', secondBrainCursorPollInterval: '1500', secondBrainMaxHistory: '10', secondBrainMobileDefaultFullscreen: false,
     literatureDirectory: '文献盒', literatureDomainList: '', literatureProgressDetail: false, literatureKeepVideo: false,
+    literatureSkin: 'default', literatureSkinTheme: 'manila',
     literatureQuality: '1080', literatureStopOnFailure: false, literatureOutputDir: '', literatureCompress: true, literatureCrf: 23,
     literatureFfmpegPath: '', literatureFfprobePath: '', literaturePythonPath: '', literatureWhisperModel: 'small',
     literatureCacheDir: '', literatureCacheRetentionDays: 14, literatureMobileDefaultFullscreen: false,
     pomodoroPreset: 'classic', pomodoroWorkMin: '25', pomodoroShortBreakMin: '5', pomodoroLongBreakMin: '15',
     pomodoroLongBreakInterval: '4', pomodoroForceFocus: false, pomodoroAutoCycle: false, pomodoroAutoSkipBreak: false,
     pomodoroSound: true, pomodoroAutoPauseOnHide: true, pomodoroVolume: 100, pomodoroRestoreMode: 'background', pomodoroMobileDefaultFullscreen: false,
+    pomodoroSkin: 'default', pomodoroSkinTheme: 'tomato',
     passwordCharset: 'A-Za-z0-9!@#', passwordLength: '20', securityMode: true, encryptSecurityMode: true,
+    encryptSkin: 'default', encryptSkinTheme: 'steel',
     encryptRoot: 'CONFIG/.ENCRYPT', encryptPreviewEnabled: true, encryptPreviewSize: '384', encryptPreviewQuality: '0.5',
     encryptAutoLoadOriginal: false, encryptMobileDefaultFullscreen: false,
     smartcatUserName: '包仔', smartcatEmbeddingModel: '', smartcatChunkLimitChars: 800, memoryDirectories: '我的/日记',

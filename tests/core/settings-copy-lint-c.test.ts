@@ -22,6 +22,18 @@ const WHITELIST = new Set<string>([
   'review#每篇笔记出题数量:desc-symbol',
   // 第二大脑「启用」标题：2 字短标题为既有用户约定（测试以 dataset.name 锁定），行为不动，豁免长度。
   'secondbrain#启用:title-length',
+  // issue 246（2026-09-08）：外观组行名「布局/主题」为用户拍板范式，两字精确，豁免 title-length
+  // （口径同 settings-copy-lint-a）。
+  'cinema#布局:title-length',
+  'cinema#主题:title-length',
+  'review#布局:title-length',
+  'review#主题:title-length',
+  'pomodoro#布局:title-length',
+  'pomodoro#主题:title-length',
+  'encrypt#布局:title-length',
+  'encrypt#主题:title-length',
+  'secondbrain#布局:title-length',
+  'secondbrain#主题:title-length',
 ]);
 
 const TARGETS = [

@@ -448,11 +448,12 @@ describe('归物本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     setSettingsSaver(async () => {});
   });
 
-  it('桌面端：显示组暴露「默认状态筛选」select（五态，直绑 belongingsDefaultStatus）', () => {
+  it('桌面端：外观组后显示组暴露「默认状态筛选」select（五态，直绑 belongingsDefaultStatus；issue 246）', () => {
     const schema = belongingSettingsSchema();
-    expect(schema.groups).toHaveLength(2);
-    expect(schema.groups[0].name).toBe('显示');
-    const row = schema.groups[0].rows[0] as any;
+    expect(schema.groups).toHaveLength(3);
+    expect(schema.groups[0].name).toBe('外观');
+    expect(schema.groups[1].name).toBe('显示');
+    const row = schema.groups[1].rows[0] as any;
     expect(row.type).toBe('select');
     expect(row.name).toBe('默认状态筛选');
     expect(row.binding).toMatchObject({ key: 'belongingsDefaultStatus' });
@@ -464,8 +465,8 @@ describe('归物本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     try {
       MockPlatform.isMobile = true;
       const schema = belongingSettingsSchema();
-      expect(schema.groups[1].visibleWhen!(settings as any)).toBe(true);
-      const row = schema.groups[1].rows[0] as any;
+      expect(schema.groups[2].visibleWhen!(settings as any)).toBe(true);
+      const row = schema.groups[2].rows[0] as any;
       expect(row.name).toBe('移动端默认全屏');
       expect(row.binding).toMatchObject({ key: 'belongingsMobileDefaultFullscreen' });
     } finally {
@@ -484,13 +485,19 @@ describe('收藏本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     setSettingsSaver(async () => {});
   });
 
-  it('桌面端：显示组随 favoritesTimeFormat 退役（ADR-0101），仅剩移动端组', () => {
+  it('桌面端：外观组（issue 246 占位）落域后 = 外观 + 移动端两组；退役键不回归', () => {
     const schema = favoritesSettingsSchema();
-    expect(schema.groups).toHaveLength(1);
-    expect(schema.groups[0].name).toBe('移动端');
-    const rows = schema.groups[0].rows as any[];
-    expect(rows.find((r) => r.binding?.key === 'favoritesTimeFormat')).toBeUndefined();
-    expect(rows.find((r) => r.binding?.key === 'favoritesSortKey')).toBeUndefined();
+    expect(schema.groups).toHaveLength(2);
+    expect(schema.groups[0].name).toBe('外观');
+    expect(schema.groups[1].name).toBe('移动端');
+    const allRows = schema.groups.flatMap((g) => g.rows) as any[];
+    expect(allRows.find((r) => r.binding?.key === 'favoritesTimeFormat')).toBeUndefined();
+    expect(allRows.find((r) => r.binding?.key === 'favoritesSortKey')).toBeUndefined();
+    // 外观组契约：布局/主题占位单卡（issue 246）
+    const [layout, theme] = schema.groups[0].rows as any[];
+    expect(layout.binding).toMatchObject({ key: 'favoritesSkin' });
+    expect(theme.binding).toMatchObject({ key: 'favoritesSkinTheme' });
+    expect(theme.layoutKey).toBe('favoritesSkin');
   });
 
   it('移动端：schema 暴露「移动端默认全屏」toggle，直绑 favoritesMobileDefaultFullscreen', () => {
@@ -498,8 +505,8 @@ describe('收藏本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     try {
       MockPlatform.isMobile = true;
       const schema = favoritesSettingsSchema();
-      expect(schema.groups[0].visibleWhen!(settings as any)).toBe(true);
-      const row = schema.groups[0].rows[0] as any;
+      expect(schema.groups[1].visibleWhen!(settings as any)).toBe(true);
+      const row = schema.groups[1].rows[0] as any;
       expect(row.name).toBe('移动端默认全屏');
       expect(row.binding).toMatchObject({ key: 'favoritesMobileDefaultFullscreen' });
     } finally {

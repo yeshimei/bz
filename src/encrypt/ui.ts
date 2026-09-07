@@ -338,6 +338,15 @@ export function encryptSettingsSchema(): SettingsSchema {
   return {
     groups: [
       {
+        // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+        icon: 'palette',
+        name: '外观',
+        rows: [
+          { type: 'choiceCards', name: '布局', binding: { key: 'encryptSkin' }, options: [{ value: 'default', label: '三栏', prevClass: 'bz-sp-prev-panel' }] },
+          { type: 'choiceCards', name: '主题', binding: { key: 'encryptSkinTheme' }, layoutKey: 'encryptSkin', options: [{ value: 'steel', label: '钢灰', layout: 'default', prevClass: 'bz-sp-prev-steel' }] },
+        ],
+      },
+      {
         icon: 'key-round',
         name: '生成',
         rows: [

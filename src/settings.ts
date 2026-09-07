@@ -193,6 +193,28 @@ export default interface BzSettings {
   belSkin: string;
   /** 🎨 归物本主题（与布局一一对应，poster ↔ warmwhite 恒定纸面） */
   belSkinTheme: string;
+  /** 🎨 外观组占位键（issue 246 范式铺开）：各面板域布局/主题各一档（布局值统一 default），
+   *  由设置页 choiceCards 行读写（可看可选可落盘）；域 UI 消费在各域真做皮肤时接入（届时挂 onChange 热切换） */
+  diarySkin: string;
+  diarySkinTheme: string;
+  diaryWallSkin: string;
+  diaryWallSkinTheme: string;
+  clipbookSkin: string;
+  clipbookSkinTheme: string;
+  favoritesSkin: string;
+  favoritesSkinTheme: string;
+  /** 🎨 影院主题占位（布局=cinemaStyle 真键，非法值域内回落午夜场） */
+  cinemaSkinTheme: string;
+  reviewSkin: string;
+  reviewSkinTheme: string;
+  secondbrainSkin: string;
+  secondbrainSkinTheme: string;
+  literatureSkin: string;
+  literatureSkinTheme: string;
+  pomodoroSkin: string;
+  pomodoroSkinTheme: string;
+  encryptSkin: string;
+  encryptSkinTheme: string;
   // 旧 cinemaPageSize（每批加载数量）已删除：全仓无消费点（列表一次全量渲染），死配置随审计清理
 
 
@@ -623,6 +645,26 @@ export const DEFAULT_SETTINGS: BzSettings = {
   belongingsDefaultStatus: '',
   belSkin: 'poster',
   belSkinTheme: 'warmwhite',
+  // 外观组占位键默认值（issue 246；布局统一 default，主题各域一名，与原型 VALUES 同值）
+  diarySkin: 'default',
+  diarySkinTheme: 'ivory',
+  diaryWallSkin: 'default',
+  diaryWallSkinTheme: 'gallery',
+  clipbookSkin: 'default',
+  clipbookSkinTheme: 'newsprint',
+  favoritesSkin: 'default',
+  favoritesSkinTheme: 'linen',
+  cinemaSkinTheme: 'nightfall',
+  reviewSkin: 'default',
+  reviewSkinTheme: 'sage',
+  secondbrainSkin: 'default',
+  secondbrainSkinTheme: 'graphite',
+  literatureSkin: 'default',
+  literatureSkinTheme: 'manila',
+  pomodoroSkin: 'default',
+  pomodoroSkinTheme: 'tomato',
+  encryptSkin: 'default',
+  encryptSkinTheme: 'steel',
   favoritesMobileDefaultFullscreen: true,
   favoritesSortKey: 'created',
   cinemaMobileDefaultFullscreen: true,

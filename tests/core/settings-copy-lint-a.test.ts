@@ -12,7 +12,13 @@ import { belongingSettingsSchema } from '../../src/belongings/ui';
 
 const WHITELIST = new Set<string>([
   // 组 A 无豁免项：迁移时已按 ticket 100 对齐文案（移动端组统一为多数派文案，belongings/favorites
-  // 原符号文案「（≤768px；关=常规卡）」随统一收敛；如后续迁移发现存量违规再按 id 添加并注明）。
+  // 原符号文案「（≤768px；关=常规卡）」随统一收敛）。
+  // issue 246（2026-09-08）：外观组行名「布局/主题」为用户拍板范式（组卡语境下两字精确），
+  // 各域统一豁免 title-length；插件端待办同款行名跟进时同此口径。
+  'diary#布局:title-length',
+  'diary#主题:title-length',
+  'belongings#布局:title-length',
+  'belongings#主题:title-length',
 ]);
 
 const TARGETS = [

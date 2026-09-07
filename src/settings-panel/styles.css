@@ -180,6 +180,86 @@
     linear-gradient(90deg, #f5f2ec 0 50%, #171512 50% 100%);
   border-radius: 3px;
 }
+/* 通用面板缩略（issue 246 占位域布局卡共用：头行横条 + 左栏 + 内容块，中性棕） */
+.bz-sp-mini.bz-sp-prev-panel {
+  background:
+    linear-gradient(rgba(90, 70, 40, 0.25), rgba(90, 70, 40, 0.25)) 0 0 / 100% 20% no-repeat,
+    linear-gradient(rgba(90, 70, 40, 0.2), rgba(90, 70, 40, 0.2)) 6% 28% / 20% 62% no-repeat,
+    linear-gradient(rgba(90, 70, 40, 0.2), rgba(90, 70, 40, 0.2)) 32% 28% / 62% 42% no-repeat,
+    linear-gradient(rgba(90, 70, 40, 0.13), rgba(90, 70, 40, 0.13)) 32% 76% / 62% 16% no-repeat;
+  border-radius: 3px;
+}
+/* ── issue 246 占位主题预览（chenhun 同构图异色：亮暗双块 + 域色圆点；示意值，域做真皮肤时替换） ── */
+/* 日记本·象牙白 */
+.bz-sp-mini.bz-sp-prev-ivory {
+  background:
+    radial-gradient(circle at 50% 50%, #3d8f5d 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #f6f2e9 0 50%, #1d1b18 50% 100%);
+  border-radius: 3px;
+}
+/* 回忆墙·画廊白 */
+.bz-sp-mini.bz-sp-prev-gallery {
+  background:
+    radial-gradient(circle at 50% 50%, #b8863b 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #f7f5f0 0 50%, #191919 50% 100%);
+  border-radius: 3px;
+}
+/* 剪藏本·新闻纸 */
+.bz-sp-mini.bz-sp-prev-newsprint {
+  background:
+    radial-gradient(circle at 50% 50%, #b3402a 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #fbfaf7 0 50%, #171512 50% 100%);
+  border-radius: 3px;
+}
+/* 收藏本·亚麻 */
+.bz-sp-mini.bz-sp-prev-linen {
+  background:
+    radial-gradient(circle at 50% 50%, #c95a28 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #fffcf6 0 50%, #1d1b18 50% 100%);
+  border-radius: 3px;
+}
+/* 影院·夜幕 */
+.bz-sp-mini.bz-sp-prev-nightfall {
+  background:
+    radial-gradient(circle at 50% 50%, #e8b04a 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #15171e 0 50%, #0d0f14 50% 100%);
+  border-radius: 3px;
+}
+/* 复习计划·苔绿 */
+.bz-sp-mini.bz-sp-prev-sage {
+  background:
+    radial-gradient(circle at 50% 50%, #3d8f5d 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #f4f1e8 0 50%, #1a1d18 50% 100%);
+  border-radius: 3px;
+}
+/* 第二大脑·石墨 */
+.bz-sp-mini.bz-sp-prev-graphite {
+  background:
+    radial-gradient(circle at 50% 50%, #5b8a9e 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #f0f0f2 0 50%, #17181c 50% 100%);
+  border-radius: 3px;
+}
+/* 文献盒·牛皮纸 */
+.bz-sp-mini.bz-sp-prev-manila {
+  background:
+    radial-gradient(circle at 50% 50%, #a08662 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #f0e6d2 0 50%, #1d1a14 50% 100%);
+  border-radius: 3px;
+}
+/* 番茄钟·番茄 */
+.bz-sp-mini.bz-sp-prev-tomato {
+  background:
+    radial-gradient(circle at 50% 50%, #d95550 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #fbf6f0 0 50%, #1d1512 50% 100%);
+  border-radius: 3px;
+}
+/* 保险库·钢灰 */
+.bz-sp-mini.bz-sp-prev-steel {
+  background:
+    radial-gradient(circle at 50% 50%, #6e7b8a 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #e8e9eb 0 50%, #14161a 50% 100%);
+  border-radius: 3px;
+}
 
 /* ═══════════ 滚动条全隐藏（面板作用域内） ═══════════ */
 .bz-sp-desk *,

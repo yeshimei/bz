@@ -832,6 +832,15 @@ export function secondBrainSettingsSchema(): SettingsSchema {
   return {
     groups: [
       {
+        // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+        icon: 'palette',
+        name: '外观',
+        rows: [
+          { type: 'choiceCards', name: '布局', binding: { key: 'secondbrainSkin' }, options: [{ value: 'default', label: '对话', prevClass: 'bz-sp-prev-panel' }] },
+          { type: 'choiceCards', name: '主题', binding: { key: 'secondbrainSkinTheme' }, layoutKey: 'secondbrainSkin', options: [{ value: 'graphite', label: '石墨', layout: 'default', prevClass: 'bz-sp-prev-graphite' }] },
+        ],
+      },
+      {
         icon: 'folder-open',
         name: '基础',
         rows: [

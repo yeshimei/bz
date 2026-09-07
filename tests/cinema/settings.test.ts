@@ -48,12 +48,18 @@ describe('cinema 设置 schema', () => {
     expect(DEFAULT_SETTINGS.cinemaSortMode).toBe('date');
     expect(DEFAULT_SETTINGS.cinemaStatusFilter).toBe('');
     expect(DEFAULT_SETTINGS.cinemaGridColumns).toBe('5');
-    // 风格扩展口（issue 236 / ADR-0103）：键在、默认午夜场；schema 暂不出行（仅一风格无选择意义）
+    // 风格扩展口（issue 236 / ADR-0103）：键在、默认午夜场；issue 246 起外观组布局行暴露单卡
+    // （午夜场上岸单卡，gaz/booth 未实现不暴露，非法值域内回落午夜场）
     expect(DEFAULT_SETTINGS.cinemaStyle).toBe('midnight');
-    const styleRow = schema.groups.flatMap((g) => g.rows).find((r: any) => (r.binding as any)?.key === 'cinemaStyle');
-    expect(styleRow).toBeUndefined();
-    // 组序：目录 → 显示 → 移动端（移动端组置尾惯例）
-    expect(schema.groups.map((g) => g.name)).toEqual(['目录', '显示', '移动端']);
+    const styleRow = schema.groups.find((g) => g.name === '外观')!.rows.find((r: any) => (r.binding as any)?.key === 'cinemaStyle') as any;
+    expect(styleRow.type).toBe('choiceCards');
+    expect(styleRow.options.map((o: any) => o.value)).toEqual(['midnight']);
+    // 主题行占位（issue 246）：cinemaSkinTheme 绑 layoutKey=cinemaStyle
+    const themeRow = schema.groups[0].rows[1] as any;
+    expect(themeRow.binding).toMatchObject({ key: 'cinemaSkinTheme' });
+    expect(themeRow.layoutKey).toBe('cinemaStyle');
+    // 组序：外观 → 目录 → 显示 → 移动端（移动端组置尾惯例）
+    expect(schema.groups.map((g) => g.name)).toEqual(['外观', '目录', '显示', '移动端']);
   });
 
   it('网格每行列数：默认 5；非法/非正数回退默认（issue 208）', () => {
