@@ -73,7 +73,8 @@ describe('render 纯度守卫（ADR-0104）', () => {
       const out = path.join(ROOT, 'src', domain, 'prototype-render.js');
       expect(fs.existsSync(out), `${out} 缺失——跑 node scripts/build-preview.mjs`).toBe(true);
       const text = fs.readFileSync(out, 'utf8');
-      expect(text).toContain(`BZR_${domain}`);
+      // 连字符域名的 globalName 合法标识符形态（settings-panel → BZR_settings_panel，与 build-preview 同步）
+      expect(text).toContain(`BZR_${domain.replace(/-/g, '_')}`);
     }
   });
 });

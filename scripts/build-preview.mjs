@@ -21,7 +21,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 /** 单源域清单（belongings 试点；bookshelf/favorites/home 待拍板后接入。
  *  与 tests/core/render-purity.test.ts 守卫同一份清单，勿在测试里另抄） */
-export const PREVIEW_DOMAINS = ["belongings", "bookshelf"];
+export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "settings-panel"];
 
 export async function buildPreview(domains = PREVIEW_DOMAINS) {
   for (const d of domains) {
@@ -29,17 +29,19 @@ export async function buildPreview(domains = PREVIEW_DOMAINS) {
     if (!fs.existsSync(entry)) {
       throw new Error(`预览入口缺失：src/${d}/render.ts（清单见 PREVIEW_DOMAINS）`);
     }
+    // 连字符域名的 globalName 须为合法标识符（settings-panel → BZR_settings_panel）
+    const globalName = `BZR_${d.replace(/-/g, "_")}`;
     await esbuild.build({
       entryPoints: [entry],
       bundle: true,
       format: "iife",
-      globalName: `BZR_${d}`,
+      globalName,
       outfile: path.join(ROOT, "src", d, "prototype-render.js"),
       target: "es2018",
       charset: "utf8",
       logLevel: "warning",
       banner: {
-        js: `/* 构建产物（勿手改）：node scripts/build-preview.mjs — src/${d}/render.ts → window.BZR_${d}（评审壳预览包，ADR-0104） */`,
+        js: `/* 构建产物（勿手改）：node scripts/build-preview.mjs — src/${d}/render.ts → window.${globalName}（评审壳预览包，ADR-0104） */`,
       },
     });
     console.log(`✓ src/${d}/prototype-render.js ← render.ts`);

@@ -1,24 +1,31 @@
 /**
- * 设置面板自绘渲染器（settings-panel，ADR-0080）
+ * 设置面板自绘渲染器（settings-panel，ADR-0080；ADR-0104 markup 单源迁移）
  * 数据 = 各域真实 schema（xxxSettingsSchema() 行声明，与 ⚙️ 弹窗同源）；
- * 视觉 = 新体系组件库（src/core/ui：按钮/输入/开关/下拉/滑条/chip/徽标），
- * 行/分组卡骨架仍为域布局（.bz-sp-set-row/.bz-sp-group，取值 tokens.css）。
+ * markup = 渲染纯层（./render：控件级工厂 + 行/组骨架，原型与插件同一份——
+ * 本文件只做「schema 行 → 纯数据视图 → 纯层串」的投影与事件绑定/落盘），
+ * 视觉 tokens 取值域 styles.css（.bz-sp-set-row/.bz-sp-group 契约类）。
  * 绑定逻辑照抄 core/settings-schema.ts：键直绑（getSettings/saveSettings）/
  * 三函数逃生口 / visibleWhen 求值 / onChange 回调 / text 防抖落盘。
  *
  * 与 core/settings-schema.ts 渲染器的关键差异：
  * 1. 行渲染完全不使用 Obsidian Setting 组件——路径行也是自绘（chips + 选择按钮 +
- *    openPathPicker 选择器），不再出现「设置行里再套一层原生设置行」的嵌套；
+ *    openDirPicker 选择器），不再出现「设置行里再套一层原生设置行」的嵌套；
  * 2. custom 行走自绘卡片行骨架（custom 内容渲染进控件区，插槽占满整行），
- *    兼容现有各域 custom 插槽内的 new Setting() 代码（它们渲染进本面板的
- *    .bz-sp-settings-body 时同样被自绘容器包裹）。
- * 3. 图标一律 lucide（setIcon/组件库），禁止 emoji 当图标（ui-kit-manual §5）。
+ *    兼容现有各域 custom 插槽内的 new Setting() 代码；
+ * 3. 图标：纯层出 `<i data-lucide>` 占位，渲染完成后 mountIcons 一次性物化；
+ *    运行期动态节点（下拉菜单勾标）就地 setIcon。
  */
 import { getSettings, saveSettings } from '../core/settings-provider';
 import type { SettingsSchema, SettingsRow, SettingsSnapshot, SettingsRowContext } from '../core/settings-schema';
 import { setIcon } from 'obsidian';
+import { mountIcons } from '../core/ui/icons';
 import { openDirPicker } from './dir-picker';
 import { notice } from '../core/notice';
+import {
+  toggleHtml, selectTriggerHtml, selectItemHtml, textInputHtml, textareaHtml,
+  sliderHtml, pathChipsItemsHtml, pathAddBtnHtml, rowBtnHtml, badgeHtml, cardpickHtml,
+  rowHtml, groupCardHtml, type SpRowVm,
+} from './render';
 
 /** 快照读取（visibleWhen 求值输入；键直绑行从 getSettings 读，三函数行由外部提供） */
 function snapshot(): SettingsSnapshot {
@@ -60,69 +67,34 @@ function makeCtx(rowEl: HTMLElement, refreshVisibility: () => void): SettingsRow
   return { rowEl, refreshVisibility };
 }
 
-/* ==================== 行控件（全部消费组件库共享类） ==================== */
+/* ==================== 路径行（纯层 chips 串 + 事件层重渲） ==================== */
 
-/** 文本/数字输入：.bz-input 共享底 + 行内布局修饰（mono/num/secret 尺寸见域样式）。
- *  行为层独有：防抖落盘 + 失焦/回车提交 + refreshKey 程序化刷新（不置脏，防 blur 假写）。 */
-function makeInput(opts: {
-  value: string;
-  type?: 'text' | 'number';
-  mono?: boolean;
-  num?: boolean;
-  secret?: boolean;
-  placeholder?: string;
-  min?: number;
-  max?: number;
-  onCommit: (v: string) => void;
-}): HTMLInputElement {
-  const input = document.createElement('input');
-  input.type = opts.type === 'number' ? 'number' : 'text';
-  const cls = ['bz-input'];
-  if (opts.mono) cls.push('mono');
-  if (opts.num) cls.push('num');
-  if (opts.secret) cls.push('secret');
-  input.className = cls.join(' ');
-  input.value = opts.value;
-  if (opts.placeholder) input.placeholder = opts.placeholder;
-  if (opts.min !== undefined) input.min = String(opts.min);
-  if (opts.max !== undefined) input.max = String(opts.max);
-  // 防抖落盘（对齐 TEXT_COMMIT_DELAY=800 + 失焦/回车）
-  let timer: number | null = null;
-  let dirty = false; // 用户是否实际编辑过（refreshKey 程序化 setValue 不置脏，防 blur 假写覆盖）
-  const commit = () => {
-    if (timer !== null) {
-      window.clearTimeout(timer);
-      timer = null;
-    }
-    if (!dirty) return; // 未编辑（仅程序化刷新显示值）不落盘
-    opts.onCommit(input.value);
-  };
-  input.addEventListener('input', () => {
-    dirty = true;
-    if (timer !== null) window.clearTimeout(timer);
-    timer = window.setTimeout(commit, 800);
-  });
-  input.addEventListener('blur', commit);
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') commit();
-  });
-  // refreshKey 联动刷新显示值的入口：程序化写值（不置脏——清 dirty 防后续 blur 假写覆盖）
-  ;(input as any).__setDisplayValue = (v: string) => {
-    dirty = false;
-    if (input.value !== v) input.value = v;
-  };
-  return input;
+/** 路径行 chips 视图（纯层 pathChipsHtml 输入）：绑定值清单 + 回落/空态投影 */
+function pathChipsVm(opts: {
+  mode: 'single' | 'multi';
+  current: string[];
+  fallbackChip?: string;
+}): Array<{ path: string; label: string; locked?: boolean; muted?: boolean; multi?: boolean }> {
+  const multi = opts.mode === 'multi';
+  if (!opts.current.length && opts.fallbackChip) {
+    return [{ path: '', label: opts.fallbackChip, locked: true }];
+  }
+  if (!opts.current.length) {
+    return [{ path: '', label: multi ? '未选择' : '未设置', muted: true }];
+  }
+  return opts.current.map((p) => ({
+    path: p,
+    label: p === '' ? '（库根目录）' : p,
+    multi,
+  }));
 }
 
-/* ==================== 路径行（共享 chips + 选择按钮） ==================== */
-
 /**
- * 路径行控件区：chips（已选目录，✕ 移除、文本点击重开选择器）+ 选择按钮（空态显示）。
- * 与 core/path-picker 的 renderPathSettingRow 行为对齐（ticket 133 形态）：
- * - 空态只显示「选择…/添加…」按钮（无「未选择」灰字）；
- * - 已选态按钮移出 DOM，chips 文本点击重开选择器、✕ 清除；
- * - 选择器确定 / ✕ 移除后统一回调 onChange（支持返回 Promise 改写）。
- * 视觉：组件库 uiChip（.bz-chip，removable → 选中语义色）+ uiBtn。
+ * 路径行控件区：chips（已选目录，✕ 移除、文本点击重开选择器）+ 选择按钮（恒显，并存——
+ * 旧 ticket 133「已选态移出按钮」口径废止）。与 core/path-picker 的 renderPathSettingRow 行为对齐：
+ * - 选择器确定 / ✕ 移除后统一回调 onChange（支持返回 Promise 改写，异步解析后重渲）；
+ * - fallbackChip = 绑定值为空时的回落展示（锁定态，仅显示实际生效目录不落盘）。
+ * markup 全部出自纯层 pathChipsHtml/pathAddBtnHtml（重渲 = 重设 ctrl.innerHTML + 重绑）。
  */
 export function makePathRowCtrl(opts: {
   name: string;
@@ -170,59 +142,31 @@ export function makePathRowCtrl(opts: {
     });
   };
 
-  const multi = opts.mode === 'multi';
-  const addBtn = document.createElement('button');
-  addBtn.type = 'button';
-  addBtn.className = 'bz-sp-btn bz-sp-path-btn';
-  addBtn.textContent = opts.buttonText || (multi ? '添加…' : '选择…');
-  addBtn.addEventListener('click', openPicker);
-
-  const renderChips = () => {
-    ctrl.querySelectorAll('.bz-chip').forEach((c) => c.remove());
-    // 回落 chip（可选）：绑定值为空时展示「实际生效目录」锁定态 chip（不可移除；点击重开选择器改显式值）
-    if (!current.length && opts.fallbackChip) {
-      const fb = document.createElement('span');
-      fb.className = 'bz-sp-chip bz-sp-chip--locked';
-      fb.title = '未单独设置时的实际生效目录（点击可改为显式设置）';
-      fb.textContent = opts.fallbackChip;
-      fb.addEventListener('click', openPicker);
-      ctrl.appendChild(fb);
-    }
-    for (const path of current) {
-      const label = path === '' ? '（库根目录）' : path;
-      const chip = document.createElement('span');
-      chip.className = 'bz-sp-chip';
-      chip.title = label;
-      chip.textContent = label;
-      chip.addEventListener('click', openPicker); // 文本点击重开选择器
-      if (multi) {
-        const x = document.createElement('i');
-        x.className = 'x';
-        x.textContent = '✕';
+  const renderAll = (): void => {
+    ctrl.innerHTML = pathChipsItemsHtml(pathChipsVm({ mode: opts.mode, current, fallbackChip: opts.fallbackChip })) +
+      pathAddBtnHtml(opts.buttonText || (opts.mode === 'multi' ? '添加…' : '选择…'));
+    // chips 文本点击重开选择器；✕ 移除（multi）；回落锁定 chip 点击重开选择器
+    ctrl.querySelectorAll<HTMLElement>('.bz-sp-chip').forEach((chip) => {
+      const path = chip.dataset.spPath ?? '';
+      const muted = chip.classList.contains('bz-sp-chip--muted');
+      const locked = chip.classList.contains('bz-sp-chip--locked');
+      if (!muted) chip.addEventListener('click', openPicker);
+      if (locked) chip.title = '未单独设置时的实际生效目录（点击可改为显式设置）';
+      const x = chip.querySelector<HTMLElement>('.x');
+      if (x) {
         x.addEventListener('click', (ev) => {
           ev.stopPropagation();
           void apply(current.filter((p) => p !== path));
         });
-        chip.appendChild(x);
       }
-      ctrl.appendChild(chip);
-    }
-    if (!current.length && !opts.fallbackChip) {
-      const m = document.createElement('span');
-      m.className = 'bz-sp-chip bz-sp-chip--muted';
-      m.textContent = multi ? '未选择' : '未设置';
-      ctrl.appendChild(m);
-    }
-    // 选择按钮恒显（拍板原型：chip 与「选择…」并存，已选态不再移出 DOM——旧 ticket 133 口径废止）
-    if (!addBtn.isConnected) ctrl.appendChild(addBtn);
+    });
+    (ctrl.querySelector('.bz-sp-path-btn') as HTMLElement).addEventListener('click', openPicker);
   };
-  const renderAll = () => renderChips();
-  ctrl.appendChild(addBtn);
-  renderChips();
+  renderAll();
   return ctrl;
 }
 
-/* ==================== 行渲染 ==================== */
+/* ==================== 行渲染（schema 行 → 纯层视图 → 串 + 绑定） ==================== */
 
 /** 渲染单行（返回行元素；isChild 仅挂 child 语义类，样式不缩进——issue 186 全部行左缘对齐） */
 function renderRow(
@@ -230,66 +174,25 @@ function renderRow(
   refresh: () => void,
   regRefresh?: (fn: () => void) => void
 ): HTMLElement {
-  const el = document.createElement('div');
-  el.className = 'bz-sp-set-row' + ((row as { isChild?: boolean }).isChild ? ' child' : '');
-  const ctx = makeCtx(el, refresh);
+  const ctx = makeCtx(document.createElement('div'), refresh);
   const rowName = (row as { name?: string }).name;
-
-  // custom 行：内容插槽自带标题/描述（各域 custom 内 new Setting().setName/setDesc），
-  // 若面板再渲染 info 区会导致标题描述出现两遍（ticket：设置面板内容重复 a/c）。
-  // 故 custom 行不渲染 info 区，控件区直接占满整行。
-  // choiceCards 行（issue 210）：纵向形态——行头仅 name（无 desc，拍板无描述）+ 全宽卡片组。
-  const isCustom = row.type === 'custom';
-  const isCardsRow = row.type === 'choiceCards';
-  if (isCardsRow) el.classList.add('bz-sp-set-row--cards');
-  if (isCardsRow && rowName) {
-    const name = document.createElement('div');
-    name.className = 'bz-sp-set-name';
-    name.textContent = rowName;
-    el.appendChild(name);
-  }
-  let ctrl: HTMLElement | null = null;
-  if (!isCustom && !isCardsRow) {
-    const info = document.createElement('div');
-    info.className = 'bz-sp-set-info';
-    if (rowName) {
-      const name = document.createElement('div');
-      name.className = 'bz-sp-set-name';
-      name.textContent = rowName;
-      info.appendChild(name);
-    }
-    if ((row as { desc?: string }).desc) {
-      const desc = document.createElement('div');
-      desc.className = 'bz-sp-set-desc';
-      desc.textContent = (row as { desc?: string }).desc!;
-      info.appendChild(desc);
-    }
-    // note（拍板原型）：『↳』前缀灰字补充提示，渲染于描述之下
-    const noteText = (row as { note?: string }).note;
-    if (noteText) {
-      const nt = document.createElement('div');
-      nt.className = 'bz-sp-set-note';
-      nt.textContent = '↳ ' + noteText;
-      info.appendChild(nt);
-    }
-    el.appendChild(info);
-
-    ctrl = document.createElement('div');
-    ctrl.className = 'bz-sp-set-ctrl';
-    el.appendChild(ctrl);
-  }
-  // 非 custom 分支全部挂到 ctrl（isCustom 时这些分支不可达；断言避免 TS 报 null 窄化）
-  const ctrlEl = ctrl as HTMLElement;
+  const vm: SpRowVm = {
+    cls: (row as { isChild?: boolean }).isChild ? 'child' : undefined,
+    name: rowName,
+    desc: (row as { desc?: string }).desc,
+    note: (row as { note?: string }).note,
+  };
+  /** 各分支填 vm.ctrlHtml / 特殊标志；统一出串后 innerHTML + 绑定 */
+  const el = document.createElement('div');
+  // 行上下文的 rowEl 即本行元素（switch 内 custom 分支渲染插槽时已可用）
+  (ctx as { rowEl: HTMLElement }).rowEl = el;
 
   switch (row.type) {
     case 'toggle': {
       const acc = bindValue<boolean>(row.binding as unknown as AnyBinding);
-      // 开关照原型逐字（button.bz-sw；组件库 uiSwitch 退役——观感 1:1 由域样式段承载）
-      const sw = document.createElement('button');
-      sw.type = 'button';
-      sw.className = 'bz-sw' + (acc.read() === true ? ' on' : '');
-      sw.setAttribute('role', 'switch');
-      sw.setAttribute('aria-checked', String(acc.read() === true));
+      vm.ctrlHtml = toggleHtml(acc.read() === true);
+      el.innerHTML = rowHtml(vm);
+      const sw = el.querySelector<HTMLElement>('.bz-sw')!;
       sw.addEventListener('click', () => {
         const v = !sw.classList.contains('on');
         sw.classList.toggle('on', v);
@@ -299,45 +202,85 @@ function renderRow(
         row.onChange?.(v, ctx);
         refresh();
       });
-      ctrlEl.appendChild(sw);
       break;
     }
-    case 'text': {
-      const acc = bindValue<string>(row.binding as unknown as AnyBinding);
+    case 'text':
+    case 'number': {
+      const acc = bindValue<string | number>(row.binding as unknown as AnyBinding);
+      const isNum = row.type === 'number';
+      const numRow = row as { min?: number; max?: number; step?: number };
       const ph = typeof row.placeholder === 'function' ? row.placeholder(snapshot()) : row.placeholder;
-      const input = makeInput({
-        value: acc.read() ?? '',
+      const value: string = String(acc.read() ?? '');
+      vm.ctrlHtml = textInputHtml({
+        value,
+        type: isNum ? 'number' : 'text',
         mono: !!(row as { mono?: boolean }).mono,
-        num: !!(row as { num?: boolean }).num,
+        num: !!(row as { num?: boolean }).num || isNum,
         secret: !!(row as { secret?: boolean }).secret,
         placeholder: ph,
-        onCommit: (v) => {
-          acc.write(v);
-          void acc.persist();
-          row.onChange?.(v, ctx);
-        },
+        min: numRow.min,
+        max: numRow.max,
+        step: isNum ? (numRow.step ?? 1) : undefined,
       });
-      ctrlEl.appendChild(input);
+      el.innerHTML = rowHtml(vm);
+      const input = el.querySelector<HTMLInputElement>('input.bz-input')!;
+      // 防抖落盘（对齐 TEXT_COMMIT_DELAY=800 + 失焦/回车）+ 程序化刷新不置脏（防 blur 假写）
+      let timer: number | null = null;
+      let dirty = false;
+      const commit = () => {
+        if (timer !== null) {
+          window.clearTimeout(timer);
+          timer = null;
+        }
+        if (!dirty) return; // 未编辑（仅程序化刷新显示值）不落盘
+        const raw = input.value;
+        if (isNum) {
+          // 空串不写不删键（对齐 core 渲染器 parseClampedNumber 空→null→不写语义）：
+          // 显式「0」才触发删键回落默认；空串仅清显示
+          if (raw.trim() === '') return;
+          let v = Number(raw);
+          if (Number.isNaN(v)) v = 0;
+          if (numRow.min !== undefined && v < numRow.min) v = numRow.min;
+          if (numRow.max !== undefined && v > numRow.max) v = numRow.max;
+          input.value = String(v);
+          acc.write(v);
+        } else {
+          acc.write(raw);
+        }
+        void acc.persist();
+        (row.onChange as unknown as ((v: string | number, c: SettingsRowContext) => void) | undefined)?.(
+          isNum ? Number(input.value) : raw, ctx
+        );
+      };
+      input.addEventListener('input', () => {
+        dirty = true;
+        if (timer !== null) window.clearTimeout(timer);
+        timer = window.setTimeout(commit, 800);
+      });
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') commit();
+      });
       // refreshKey 联动：任意行变更（含 aiProvider 切换）后重读显示值写回输入框（不落盘）
       if (regRefresh && row.refreshKey !== undefined) {
         const ref = row.refreshKey; // 闭包内窄化不保留，先提为局部常量
         regRefresh(() => {
           const snap = snapshot();
           const fresh = typeof ref === 'function' ? ref(snap) : String((snap as any)[ref]);
-          const setDisplay = (input as any).__setDisplayValue as ((v: string) => void) | undefined;
-          if (setDisplay) setDisplay(String(fresh ?? ''));
+          dirty = false;
+          const f = String(fresh ?? '');
+          if (input.value !== f) input.value = f;
         });
       }
       break;
     }
     case 'textarea': {
       const acc = bindValue<string>(row.binding as unknown as AnyBinding);
-      const ta = document.createElement('textarea');
-      ta.className = 'bz-input bz-sp-textarea';
-      ta.value = acc.read() ?? '';
-      if (row.placeholder) ta.placeholder = row.placeholder;
+      vm.ctrlHtml = textareaHtml(acc.read() ?? '', row.placeholder);
+      el.innerHTML = rowHtml(vm);
+      const ta = el.querySelector<HTMLTextAreaElement>('textarea')!;
       let timer: number | null = null;
-      let dirty = false; // refreshKey 程序化写值不置脏（防 blur 假写覆盖，同 makeInput）
+      let dirty = false; // refreshKey 程序化写值不置脏（防 blur 假写覆盖）
       const commit = () => {
         if (timer !== null) window.clearTimeout(timer);
         if (!dirty) return;
@@ -350,7 +293,6 @@ function renderRow(
         timer = window.setTimeout(commit, 800);
       });
       ta.addEventListener('blur', commit);
-      ctrlEl.appendChild(ta);
       // refreshKey 联动：任意行变更后重读显示值写回（不落盘）
       if (regRefresh && row.refreshKey !== undefined) {
         const ref = row.refreshKey;
@@ -364,58 +306,15 @@ function renderRow(
       }
       break;
     }
-    case 'number': {
-      const acc = bindValue<number>(row.binding as unknown as AnyBinding);
-      const ph = typeof row.placeholder === 'function' ? row.placeholder(snapshot()) : row.placeholder;
-      const input = makeInput({
-        value: String(acc.read() ?? ''),
-        type: 'number',
-        num: true,
-        placeholder: ph,
-        min: row.min,
-        max: row.max,
-        onCommit: (raw) => {
-          // 空串不写不删键（对齐 core 渲染器 parseClampedNumber 空→null→不写语义）：
-          // 显式「0」才触发删键回落默认（见 setProviderValue 0=删键）；空串仅清显示
-          if (raw.trim() === '') return;
-          let v = Number(raw);
-          if (Number.isNaN(v)) v = 0;
-          if (row.min !== undefined && v < row.min) v = row.min;
-          if (row.max !== undefined && v > row.max) v = row.max;
-          acc.write(v);
-          void acc.persist();
-          row.onChange?.(v, ctx);
-        },
-      });
-      (input as HTMLInputElement).step = String(row.step ?? 1);
-      ctrlEl.appendChild(input);
-      // refreshKey 联动：任意行变更（含 aiProvider 切换）后重读显示值写回输入框（不落盘）
-      if (regRefresh && row.refreshKey !== undefined) {
-        const ref = row.refreshKey; // 闭包内窄化不保留，先提为局部常量
-        regRefresh(() => {
-          const snap = snapshot();
-          const fresh = typeof ref === 'function' ? ref(snap) : String((snap as any)[ref]);
-          const setDisplay = (input as any).__setDisplayValue as ((v: string) => void) | undefined;
-          if (setDisplay) setDisplay(String(fresh ?? ''));
-        });
-      }
-      break;
-    }
     case 'select': {
       const acc = bindValue<string>(row.binding as unknown as AnyBinding);
-      // 下拉照原型逐字（触发器 + 菜单挂触发器内；组卡 overflow 展开期间放开并提层）
-      const sel = document.createElement('div');
-      sel.className = 'bz-select';
-      const vspan = document.createElement('span');
-      vspan.className = 'bz-select-val';
-      const car = document.createElement('span');
-      car.className = 'bz-ic bz-select-car';
-      setIcon(car, 'chevron-right');
-      car.style.transform = 'rotate(90deg)';
-      sel.append(vspan, car);
       const options = row.options;
       const labelOf = (v: string) => (options.find((o) => o.value === v) || { label: v }).label;
-      vspan.textContent = labelOf(String(acc.read() ?? '') || (options[0] && options[0].value) || '');
+      const curOf = () => String(acc.read() ?? '') || (options[0] && options[0].value) || '';
+      vm.ctrlHtml = selectTriggerHtml(labelOf(curOf()));
+      el.innerHTML = rowHtml(vm);
+      const sel = el.querySelector<HTMLElement>('.bz-select')!;
+      const vspan = sel.querySelector<HTMLElement>('.bz-select-val')!;
       sel.addEventListener('click', () => {
         if (sel.querySelector('.bz-select-menu')) return;
         // 组卡 overflow:hidden 会裁剪伸出的菜单——展开期间放开并提层
@@ -430,20 +329,17 @@ function renderRow(
           if (!sel.contains(ev.target as Node)) closeMenu();
         };
         setTimeout(() => document.addEventListener('click', h));
+        // 菜单 = 纯层 selectItemHtml 串 + 就地物化勾标
         const menu = document.createElement('div');
         menu.className = 'bz-select-menu';
-        const curNow = String(acc.read() ?? '') || (options[0] && options[0].value) || '';
-        for (const o of options) {
-          const it = document.createElement('button');
-          it.type = 'button';
-          it.className = 'bz-select-item' + (o.value === curNow ? ' is-on' : '');
-          const sp = document.createElement('span');
-          sp.textContent = o.label;
-          const ck = document.createElement('span');
-          ck.className = 'bz-ic bz-select-item-ck';
-          setIcon(ck, 'check');
-          it.append(sp, ck);
-          it.addEventListener('click', (ev) => {
+        const curNow = curOf();
+        menu.innerHTML = options
+          .map((o) => selectItemHtml(o.label, o.value === curNow))
+          .join('');
+        mountIcons(menu);
+        const items = menu.querySelectorAll<HTMLElement>('.bz-select-item');
+        options.forEach((o, i) => {
+          items[i].addEventListener('click', (ev) => {
             ev.stopPropagation();
             closeMenu();
             vspan.textContent = labelOf(o.value);
@@ -452,28 +348,18 @@ function renderRow(
             row.onChange?.(o.value, ctx);
             refresh();
           });
-          menu.appendChild(it);
-        }
+        });
         sel.appendChild(menu);
       });
-      ctrlEl.appendChild(sel);
       break;
     }
     case 'slider': {
       const acc = bindValue<number>(row.binding as unknown as AnyBinding);
-      // 滑杆照原型逐字（轻量读数 span；组件库 uiRange 退役）
       const cur = acc.read() ?? row.min ?? 0;
-      const wrap = document.createElement('div');
-      wrap.className = 'bz-sp-slider-row';
-      const range = document.createElement('input');
-      range.type = 'range';
-      if (row.min !== undefined) range.min = String(row.min);
-      if (row.max !== undefined) range.max = String(row.max);
-      range.step = String(row.step ?? 1);
-      range.value = String(cur);
-      const em = document.createElement('span');
-      em.className = 'bz-sp-slider-val';
-      em.textContent = String(cur);
+      vm.ctrlHtml = sliderHtml(row.min, row.max, row.step, cur);
+      el.innerHTML = rowHtml(vm);
+      const range = el.querySelector<HTMLInputElement>('input[type="range"]')!;
+      const em = el.querySelector<HTMLElement>('.bz-sp-slider-val')!;
       range.addEventListener('input', () => {
         em.textContent = range.value;
         const v = Number(range.value);
@@ -481,15 +367,13 @@ function renderRow(
         void acc.persist();
         row.onChange?.(v, ctx);
       });
-      wrap.append(range, em);
-      ctrlEl.appendChild(wrap);
       break;
     }
     case 'path': {
       const acc = bindValue<string | string[]>(row.binding as unknown as AnyBinding);
       const multi = row.mode === 'multi';
       const fallbackFn = (row as { fallbackValue?: () => string }).fallbackValue;
-      ctrlEl.appendChild(makePathRowCtrl({
+      const ctrl = makePathRowCtrl({
         name: row.name,
         mode: row.mode,
         value: multi
@@ -516,28 +400,25 @@ function renderRow(
           }
           return Array.isArray(res) ? res : undefined;
         },
-      }));
+      });
+      vm.ctrlHtml = ''; // 控件 DOM 直接挂（makePathRowCtrl 内部已走纯层串）
+      el.innerHTML = rowHtml(vm);
+      el.querySelector<HTMLElement>('.bz-sp-set-ctrl')!.appendChild(ctrl);
       break;
     }
     case 'button': {
-      // 按钮照原型逐字（bz-sp-btn；cta → accent 实底）
-      const b2 = document.createElement('button');
-      b2.type = 'button';
-      b2.className = 'bz-sp-btn' + (row.cta ? ' bz-sp-btn--primary' : '');
-      b2.textContent = row.buttonText;
-      b2.addEventListener('click', () => row.onClick(ctx));
-      ctrlEl.appendChild(b2);
+      vm.ctrlHtml = rowBtnHtml(row.buttonText, row.cta);
+      el.innerHTML = rowHtml(vm);
+      el.querySelector<HTMLElement>('.bz-sp-btn')!.addEventListener('click', () => row.onClick(ctx));
       break;
     }
     case 'info': {
-      const badge = document.createElement('span');
-      badge.className = 'bz-badge';
-      badge.textContent = row.name;
-      ctrlEl.appendChild(badge);
+      vm.ctrlHtml = badgeHtml(row.name);
+      el.innerHTML = rowHtml(vm);
       break;
     }
     case 'choiceCards': {
-      // 视觉卡片单选照原型逐字（bz-sp-cardpick：预览 div + 名称；空值回退首个选项同 select 口径）。
+      // 视觉卡片单选（纯层 cardpickHtml 串；空值回退首个选项同 select 口径）。
       // options.layout + layoutKey：布局绑定的主题行只渲当前布局配套的单卡——主题不通用（拍板）。
       const acc = bindValue<string>(row.binding as unknown as AnyBinding);
       const layoutKey = (row as { layoutKey?: string }).layoutKey;
@@ -547,40 +428,34 @@ function renderRow(
         return !lo || !layoutKey || lo === curLayout;
       });
       const cur = String(acc.read() ?? '') || (opts2[0] && opts2[0].value) || '';
-      const wrap = document.createElement('div');
-      wrap.className = 'bz-sp-cardpick';
-      wrap.setAttribute('role', 'radiogroup');
-      for (const o of opts2) {
-        const c = document.createElement('button');
-        c.type = 'button';
-        c.className = 'bz-sp-cardpick-card' + (o.value === cur ? ' is-on' : '');
-        const prev = document.createElement('div');
-        prev.className = 'bz-sp-mini' + (o.prevClass ? ` ${o.prevClass}` : '');
-        prev.setAttribute('aria-hidden', 'true');
-        const lb = document.createElement('span');
-        lb.className = 'bz-sp-cardpick-name';
-        lb.textContent = o.label;
-        c.append(prev, lb);
+      vm.isCards = true;
+      vm.ctrlHtml = cardpickHtml(opts2.map((o) => ({
+        value: o.value,
+        label: o.label,
+        on: o.value === cur,
+        prevClass: o.prevClass,
+      })));
+      el.innerHTML = rowHtml(vm);
+      const wrap = el.querySelector<HTMLElement>('.bz-sp-cardpick')!;
+      wrap.querySelectorAll<HTMLElement>('.bz-sp-cardpick-card').forEach((c) => {
         c.addEventListener('click', () => {
           wrap.querySelectorAll('.is-on').forEach((x) => x.classList.remove('is-on'));
           c.classList.add('is-on');
-          acc.write(o.value);
+          acc.write(c.dataset.spCard ?? '');
           void acc.persist();
-          row.onChange?.(o.value, ctx);
+          row.onChange?.(c.dataset.spCard ?? '', ctx);
           refresh();
         });
-        wrap.appendChild(c);
-      }
-      el.appendChild(wrap);
+      });
       break;
     }
     case 'custom': {
       // custom 行：内容插槽自带标题/描述（各域 new Setting().setName/setDesc），面板不再渲染 info 区
       // （否则标题描述两遍）；插槽直接占满整行，custom 内容（含原生 Setting 行）渲染进插槽，
       // 原生设置行在面板内同样被自绘容器包裹（视觉由本面板容器收敛）。
-      const slot = document.createElement('div');
-      slot.className = 'bz-sp-custom-slot bz-sp-custom-slot--full';
-      el.appendChild(slot);
+      vm.isCustom = true;
+      el.innerHTML = rowHtml(vm);
+      const slot = el.querySelector<HTMLElement>('.bz-sp-custom-slot--full')!;
       try {
         row.render(slot, ctx);
       } catch (e) {
@@ -591,15 +466,15 @@ function renderRow(
         const onRefresh = (row as { onRefresh: (c: SettingsRowContext) => void }).onRefresh;
         regRefresh(() => onRefresh(ctx));
       }
-      break;
+      return el;
     }
     default:
-      break;
+      return el;
   }
   return el;
 }
 
-/** 渲染整组（分组卡片：图标块 + 名称 + 项数徽标；行渲染见 renderRow） */
+/** 渲染整组（分组卡：纯层 groupCardHtml 骨架 + 逐行 append；项数徽标动态计算） */
 function renderGroup(
   container: HTMLElement,
   group: { name: string; icon?: string; rows: SettingsRow[] },
@@ -607,41 +482,16 @@ function renderGroup(
   regRefresh?: (fn: () => void) => void
 ): HTMLElement {
   const card = document.createElement('div');
-  card.className = 'bz-sp-group';
-
-  const head = document.createElement('div');
-  head.className = 'bz-sp-group-head';
-  if (group.icon) {
-    // 分组卡图标：schema 的 lucide 图标名经 setIcon 渲染（与 ⚙️ 弹窗 createSettingsGroup 同机制）
-    const ic = document.createElement('span');
-    ic.className = 'bz-sp-group-icon';
-    try {
-      setIcon(ic, group.icon);
-    } catch {
-      /* 未知图标名静默跳过 */
-    }
-    head.appendChild(ic);
-  }
-  const gname = document.createElement('span');
-  gname.className = 'bz-sp-group-name';
-  gname.textContent = group.name;
-  head.appendChild(gname);
-  // 项数徽标：动态计算（可见非 button 行数；button 行是操作行不计数，与 ⚙️ 弹窗 refreshSettingsGroupCounts 口径一致）
-  const count = document.createElement('span');
-  count.className = 'bz-sp-group-count';
-  count.textContent = `${group.rows.length} 项`;
-  head.appendChild(count);
-  card.appendChild(head);
-
-  const body = document.createElement('div');
-  body.className = 'bz-sp-group-body';
+  // 项数徽标初值：全部行数（渲染后 updateCount 按可见行重算；button 操作行不计）
+  card.innerHTML = groupCardHtml(group.icon, group.name, `${group.rows.length} 项`);
+  const body = card.querySelector<HTMLElement>('.bz-sp-group-body')!;
+  const count = card.querySelector<HTMLElement>('.bz-sp-group-count')!;
   const rowEls: HTMLElement[] = [];
   group.rows.forEach((r) => {
     const rowEl = renderRow(r, refresh, regRefresh);
     rowEls.push(rowEl);
     body.appendChild(rowEl);
   });
-  card.appendChild(body);
   container.appendChild(card);
 
   /** 重算项数徽标：排除隐藏行（含 group 整体隐藏时恒 0）与 button 操作行 */
@@ -716,6 +566,9 @@ export function renderPanelSchema(container: HTMLElement, schema: SettingsSchema
       }
     });
   });
+
+  // 纯层 `<i data-lucide>` 占位一次性物化（分组卡图标等；未知图标静默忽略）
+  mountIcons(container);
 
   return { refresh };
 }
