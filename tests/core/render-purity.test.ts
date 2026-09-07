@@ -5,7 +5,8 @@
  * render.ts 是「原型 × 插件」markup 单源，会被 esbuild 打成 prototype-render.js
  * 供评审壳双击加载——import 图必须绝对干净：禁 obsidian / moment / core 服务 /
  * 组件库 barrel（会拖入 obsidian 连带把预览包打包炸或撑爆）。
- * 允许的跨域依赖逐文件列名在 ALLOWED_EXTERNAL（当前仅 core/ui/str 零依赖工具）。
+ * 允许的跨域依赖逐文件列名在 ALLOWED_EXTERNAL（core/ui/str 零依赖工具、
+ * core/domain-icons 零依赖常量表）。
  * 域清单与 scripts/build-preview.mjs 同源（PREVIEW_DOMAINS），勿在此另抄。
  */
 import { describe, it, expect } from 'vitest';
@@ -14,7 +15,7 @@ import path from 'node:path';
 import { PREVIEW_DOMAINS } from '../../scripts/build-preview.mjs';
 
 const ROOT = process.cwd();
-const ALLOWED_EXTERNAL = ['../core/ui/str'];
+const ALLOWED_EXTERNAL = ['../core/ui/str', '../core/domain-icons'];
 
 /** 解析相对说明符 → 文件路径（带 .ts / /index.ts 消歧；解析失败回传补 .ts 便于报错） */
 function resolveSpec(fromFile: string, spec: string): string {

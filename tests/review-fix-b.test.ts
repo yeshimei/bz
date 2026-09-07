@@ -138,7 +138,7 @@ describe('批 B-5：图标单一事实源尾差', () => {
   });
 
   it('home 入口 icon 全量迁移：iconOf() 引 DOMAIN_ICONS，无残留字面量（issue 232b 收敛后 13 条）', () => {
-    const src = repo('src/home/domains.ts');
+    const src = repo('src/home/shared.ts'); // issue 243：域清单收编渲染纯层共享层，domains.ts 仅 re-export
     expect((src.match(/icon: iconOf\(/g) ?? []).length).toBe(13);
     expect(src).not.toMatch(/icon: '/);
     // 异名映射：wall→diary-wall、settings→settings-panel

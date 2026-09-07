@@ -9,9 +9,13 @@
   │ 组件样式零内联，全部来自（与 build-css SOURCES 同序）：              │
   │   ../core/styles.css → ../core/ui/tokens.css                        │
   │   → ../core/ui/components.css → ./styles.css                        │
-  │ 视觉基准：.zcode/ui-prototypes/home-10/p16-full.html（活动河全域    │
-  │ 入口版）；先改这里评审 → 同步 styles.css / ui.ts。                  │
-  │ 移动端判定：真实端 = 面板容器 ≤768（容器查询）；评审壳 = .demo-mob。│
+  │ markup 单源（issue 243/ADR-0104）：面板骨架/周历/入口行/时间线河卡/  │
+  │ 明天预告卡 HTML 与规则口径（点评/彩点/计数文案）全部出自             │
+  │ ./prototype-render.js（由 src/home/render.ts 构建，与插件 ui.ts      │
+  │ 消费同一份）——壳内只留演示层：演示快照数据、演示事件绑定、自检。     │
+  │ 移动端判定：真实端 = 面板容器 ≤768（容器查询 + 面板自身 @media）；   │
+  │ 评审壳 = 右下手机框内嵌本页 ?mob=1 窄视口 iframe（396×780 命中       │
+  │ 同一份规则，壳内零复制移动端样式）。                                  │
   └────────────────────────────────────────────────────────────────────┘
 -->
 <link rel="stylesheet" href="../core/styles.css">
@@ -28,31 +32,41 @@
   /* 桌面面板外景（组件本体 880×580 来自 styles.css） */
   .demo-dt { flex: none; }
 
-  /* 移动端手机框：面板（全屏态 100vw/100vh）缩进 396×780 演示框；
-     面板自身 = 容器（styles.css container-type），396px 触发 @container 单列化 */
+  /* 移动端手机框：内嵌本页 ?mob=1（窄视口 iframe 命中 styles.css 的 @media/@container ≤768 规则） */
   .demo-mob { width: 396px; height: 780px; position: relative; overflow: hidden; flex: none;
     border: 1px solid #b8b0a0; border-radius: 26px; background: #f5f2ec; box-shadow: 0 8px 30px rgba(0,0,0,.16); }
-  .demo-mob .bz-home-panel { width: 100% !important; height: 100% !important;
-    max-width: none !important; max-height: none !important; border: none; box-shadow: none; }
+  .demo-mob iframe { width: 100%; height: 100%; border: none; display: block; }
+
+  /* ?mob=1 直开：本页即移动端视口，只渲染全屏面板 */
+  body.mob-root { display: block; padding: 0; background: #f5f2ec; }
 
   /* 评审徽牌（演示壳自用） */
   .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #8b8474; display: flex; gap: 10px; align-items: center;
     background: rgba(255,255,255,.92); border: 1px solid #c9c2b2; padding: 3px 8px; z-index: 900; }
+  .vbadge button { border: none; background: none; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; }
 </style>
 </head>
 <body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark，壳内必须补一类才不透明 -->
   <div id="dtHost" class="demo-dt"></div>
-  <div id="mobHost" class="demo-mob"></div>
+  <div id="mobHost" class="demo-mob"><iframe id="mobFrame" title="移动端预览（?mob=1 窄视口）"></iframe></div>
 
-  <div class="vbadge">内容首页 · 原型预览（活动河全域入口版 · 共用 styles.css）</div>
+  <div class="vbadge">内容首页 · 原型预览（活动河全域入口版 · 共用 styles.css）
+    <button id="mobToggle">隐藏移动端</button>
+  </div>
 
 <script src="./prototype-icons.js"></script>
+<script src="./prototype-render.js"></script>
 <script>
 (function () {
-  /* ==================== 壳基座：转义 / 图标 / mountIcons（对齐 core/ui icons.ts） ==================== */
-  const ESC_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
-  const esc2 = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const icon = (name, extra) => `<i data-lucide="${name}" class="bz-ic${extra ? ' ' + extra : ''}"></i>`;
+  /* ==================== 渲染单源：window.BZR_home（构建产物，勿手改） ====================
+   * markup / 规则口径全部来自 src/home/render.ts（issue 243/ADR-0104），与插件 ui.ts
+   * 消费同一份；本壳只留演示层。重新生成：node scripts/build-preview.mjs。 */
+  const R = window.BZR_home;
+
+  const param = (k) => { const m = location.search.match(new RegExp('[?&]' + k + '=([^&]+)')); return m ? m[1] : ''; };
+  const MOB = location.search.includes('mob=1');
+
+  /* ==================== 壳基座：mountIcons（prototype-icons.js 内联 SVG——壳层差异表） ==================== */
   const ICONS = window.BZ_HOME_ICONS || {};
   function mountIcons(root) {
     if (!root) return;
@@ -64,165 +78,143 @@
     });
   }
 
-  /* ==================== 与 ui.ts 同构的常量 / 演示数据（river 真实口径的样本快照） ==================== */
-  const DOMAINS = [
-    { id: 'diary', name: '日记本', sub: '写今天的闪念', icon: 'diary', dot: '#e67341' },
-    { id: 'cinema', name: '影院', sub: '影视想看与在看', icon: 'cinema', dot: '#e6951d' },
-    { id: 'review', name: '复习计划', sub: '到期卡片队列', icon: 'review', dot: '#7c5cd6' },
-    { id: 'pomodoro', name: '番茄钟', sub: '累计在册', icon: 'pomodoro', dot: '#e5534b' },
-    { id: 'favorites', name: '收藏本', sub: '收藏条目', icon: 'favorites', dot: '#f0b429' },
-    { id: 'clipping', name: '剪藏本', sub: '未读流与剪藏', icon: 'clipping', dot: '#2f9e5f' },
-    { id: 'literature', name: '文献盒', sub: '笔记与录入', icon: 'literature', dot: '#c2559d' },
-    { id: 'bookshelf', name: '书库', sub: '在读 9 · 读完 151', icon: 'bookshelf', dot: '#3d7bd6' },
-    { id: 'wall', name: '回忆墙', sub: '522 格', icon: 'wall', dot: '#7c8cf8' },
-    { id: 'belongings', name: '归物本', sub: '登记 65 件', icon: 'belongings', dot: '#45a35c' },
-    { id: 'attach', name: '移动附件', sub: '工具', icon: 'attach', dot: '#8a8f99' },
-    { id: 'encrypt', name: '保险库', sub: '••• 上锁', icon: 'encrypt', dot: '#8a8f99' },
-    { id: 'settings', name: '设置', sub: '20 域', icon: 'settings', dot: '#8a8f99' },
-  ];
-  const DOT_OF = Object.fromEntries(DOMAINS.map((d) => [d.id, d.dot]));
-  const NAME_OF = Object.fromEntries(DOMAINS.map((d) => [d.id, d.name]));
-  const ICON_OF = Object.fromEntries(DOMAINS.map((d) => [d.id, d.icon]));
-  // river 规则彩点（与 river.ts buildDots 同口径的演示快照）
-  const DOTS = { diary: 'warn', review: 'hot', memo: 'off', pomodoro: 'off', cinema: 'off', bookshelf: 'ok' };
-  // 与 river.ts riverCountText 同口径的演示计数
-  const COUNTS = {
-    diary: '522 篇', review: '9 张 · 逾期 1', cinema: '想看 25 · 在看 4', bookshelf: null,
-    clipping: '未读 55 篇', favorites: '48 条', belongings: '登记 65 件', wall: '522 格',
+  /* ==================== 演示数据（river.ts collectRiver 输出形状的真实快照） ==================== */
+  const DAY = (dateStr, events, summary) => ({
+    dateStr, events,
+    summary: Object.assign({ diary: 0, movies: 0, books: 0, todoDone: 0, todoCreated: 0, pomodoros: 0, pomodoroMinutes: 0 }, summary || {}),
+    firstTs: events.length ? events[0].ts : null,
+  });
+  const WK = ['日', '一', '二', '三', '四', '五', '六'];
+  const mkDay = (dateStr, events, summary) => {
+    const d = new Date(dateStr + ' 12:00:00');
+    return { dateStr, label: dateStr.slice(5), dayOfMonth: d.getDate(), weekday: WK[d.getDay()], hit: events.length > 0 };
   };
-  // 演示时间线（collectRecap 输出形状）：按日组织，周历可点切换（仅 06/07 有数据，其余天空态）
-  const DAYS = {
-    '09-07': [
-      { domain: 'bookshelf', timeLabel: '07:42', text: '《三体》读到 62%' },
-      { domain: 'todo', timeLabel: '09:10', text: '完成『给 obsidian 提 issue』' },
-      { domain: 'clipping', timeLabel: '12:31', text: '剪藏 3 篇' },
-      { domain: 'cinema', timeLabel: '21:05', text: '标记《百年孤独》已看 · ★★★★☆' },
-      { domain: 'diary', timeLabel: '22:40', text: '新增 4 条', warn: true },
+  const E_TODAY = [
+    { domain: 'bookshelf', ts: T(2026, 9, 7, 7, 42), timeLabel: '07:42', text: '《三体》读到 62%' },
+    { domain: 'todo', ts: T(2026, 9, 7, 9, 10), timeLabel: '09:10', text: '完成『给 obsidian 提 issue』' },
+    { domain: 'clipping', ts: T(2026, 9, 7, 12, 31), timeLabel: '12:31', text: '剪藏 3 篇' },
+    { domain: 'cinema', ts: T(2026, 9, 7, 21, 5), timeLabel: '21:05', text: '标记《百年孤独》已看 · ★★★★☆' },
+    { domain: 'diary', ts: T(2026, 9, 7, 22, 40), timeLabel: '22:40', text: '新增 4 条' },
+  ];
+  const E_YESTERDAY = [
+    { domain: 'cinema', ts: T(2026, 9, 6, 10, 15), timeLabel: '10:15', text: '《沙丘 2》加入片单' },
+    { domain: 'pomodoro', ts: T(2026, 9, 6, 14, 2), timeLabel: '14:02–14:27', text: '专注《周报》 · 25 分钟' },
+    { domain: 'todo', ts: T(2026, 9, 6, 20, 44), timeLabel: '20:44', text: '完成『清理收件箱』' },
+  ];
+  function T(y, mo, d, h, mi) { return new Date(y, mo - 1, d, h, mi).getTime(); }
+  const WEEK_DATES = ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04', '2026-09-05', '2026-09-06', '2026-09-07'];
+  const DATA = {
+    today: DAY('2026-09-07', E_TODAY),
+    yesterday: DAY('2026-09-06', E_YESTERDAY),
+    days: [
+      DAY('2026-09-07', E_TODAY), DAY('2026-09-06', E_YESTERDAY),
+      DAY('2026-09-05', []), DAY('2026-09-04', []), DAY('2026-09-03', []), DAY('2026-09-02', []), DAY('2026-09-01', []),
     ],
-    '09-06': [
-      { domain: 'cinema', timeLabel: '10:15', text: '《沙丘 2》加入片单' },
-      { domain: 'pomodoro', timeLabel: '14:02–14:27', text: '专注《周报》 · 25 分钟' },
-      { domain: 'todo', timeLabel: '20:44', text: '完成『清理收件箱』' },
-    ],
+    week: WEEK_DATES.map((d) => mkDay(d, d === '2026-09-07' ? E_TODAY : d === '2026-09-06' ? E_YESTERDAY : [])),
+    streak: { diaryStreak: 5, diaryWrittenToday: false },
+    counts: {
+      diaryTotal: 522, reviewTotal: 9, reviewOverdue: 1, reviewDueTomorrow: 0,
+      cinemaWant: 25, cinemaWatching: 4, bookshelfReading: 9, bookshelfFinished: 151,
+      clippingUnread: 55, favoritesTotal: 48, belongingsTotal: 65,
+    },
   };
-  const NOTES = {
-    '09-07': { 0: '今天第一笔动静在 07:42，比昨天早了 48 分钟，好开头。', 4: '晚上效率回来了——但日记还空着，×5 连击在等你。' },
-    '09-06': {},
-  };
-  const PREVIEWS = [
-    { h: '还有 1 张逾期卡', b: '逾期是唯一会随时间变贵的债。约 4 分钟一张，还掉最划算。', go: 'review', goLabel: '去还卡 →' },
-    { h: '剪藏还压 55 篇', b: '挑 1 篇放进明早：通勤读一篇，保持进出平衡。', go: 'clipping', goLabel: '挑一篇放明早 →' },
-    { h: '日记连击 ×5 待续', b: '写三行也算数。今晚补上，明天它自己接着长。', go: 'diary', goLabel: '去写日记 →' },
-  ];
+  /* 视图状态（与 ui.ts riverView 同构：null = 今天） */
+  let curView = null;
+  const viewDate = () => curView ?? DATA.today.dateStr;
 
-  /* ==================== 与 ui.ts 同构的 HTML 构建器 ==================== */
-  function dotCls(id) { return DOTS[id] ?? 'off'; }
-  function countText(d) {
-    if (d.id in COUNTS && COUNTS[d.id] !== null) return COUNTS[d.id];
-    if (d.id === 'bookshelf') return d.sub;
-    return d.sub;
-  }
-
-  function entriesHtml() {
-    return DOMAINS.map((d) =>
-          '<div role="button" tabindex="0" class="bz-home-erow" data-go="' + d.id + '">'
-          + '<span class="bz-home-dot bz-home-dot--' + dotCls(d.id) + '"></span>'
-          + '<span class="bz-home-eic" style="color:' + DOT_OF[d.id] + '">' + icon(d.icon) + '</span>'
-          + '<span class="bz-home-enm">' + esc2(d.name) + '</span>'
-          + '<span class="bz-home-ect">' + esc2(countText(d)) + '</span>'
-          + '<span class="bz-home-ego">→</span></div>').join('');
-  }
-
-  function flowHtml(day) {
-    const events = DAYS[day] || [];
-    const notes = NOTES[day] || {};
-    const title = '<div class="bz-home-sec-t">时 间 线 · ' + (day === '09-07' ? '今 天' : day) + '</div>';
-    const body = events.map((e, i) => {
-      const note = notes[i];
-      const dmId = e.domain === 'todo' ? 'memo' : e.domain;
-      return '<div class="bz-home-ev' + (e.warn ? ' bz-home-ev--warn' : '') + '">'
-        + '<span class="bz-home-ev-tm">' + esc2(e.timeLabel) + '</span>'
-        + '<div class="bz-home-ev-bd"><div class="bz-home-ev-tx">'
-        + '<span class="bz-home-ev-dm" style="background:' + (DOT_OF[dmId] || '#8a8f99') + '">' + icon(ICON_OF[dmId]) + esc2(NAME_OF[dmId] || e.domain) + '</span>'
-        + esc2(e.text) + '</div>'
-        + (note ? '<div class="bz-home-ev-note">' + esc2(note) + '</div>' : '')
-        + '</div></div>';
-    }).join('');
-    if (!events.length) {
-      return title + '<div class="bz-home-flow-empty">这一天还没有留下痕迹。</div>';
-    }
-    return title + '<div class="bz-home-timeline">' + body + '</div>';
-  }
-
-  function nextHtml() {
-    return '<div class="bz-home-sec-t bz-home-sec-t--ai">明 天 预 告</div>'
-      + PREVIEWS.map((pr) =>
-          '<div role="button" tabindex="0" class="bz-home-pr" data-go="' + pr.go + '">'
-          + '<div class="bz-home-pr-h">' + esc2(pr.h) + '</div><div>' + esc2(pr.b) + '</div>'
-          + '<span class="bz-home-pr-go">' + esc2(pr.goLabel) + '</span></div>').join('');
-  }
-
-  function tilesHtml() {
-    return '<div class="bz-home-m-tiles">'
-      + DOMAINS.map((d) =>
-          '<div role="button" tabindex="0" class="bz-home-m-tile" data-go="' + d.id + '">'
-          + '<span class="bz-home-dot bz-home-dot--' + dotCls(d.id) + '"></span>'
-          + '<span class="bz-home-eic" style="color:' + DOT_OF[d.id] + '">' + icon(d.icon) + '</span>'
-          + '<span class="bz-home-enm">' + esc2(d.name) + '</span>'
-          + '<span class="bz-home-ect">' + esc2(countText(d)) + '</span></div>').join('')
-      + '</div>';
-  }
-
-  /* ==================== 双端装配（面板骨架与 ui.ts createOverlay 同构） ==================== */
-  function panelHtml() {
-    return `
-      <div class="bz-home-head">
-        <h1 class="bz-home-title">首页</h1>
-        <div class="bz-home-week" data-week>${weekHtml('09-07')}</div>
-        <span class="bz-home-date">2026-09-07 周一 · 21:36</span>
-        <div role="button" tabindex="0" class="bz-home-close" title="关闭" aria-label="关闭">${icon('x')}</div>
-      </div>
-      <div class="bz-home-body">
-        <div class="bz-home-grid">
-          <div class="bz-home-entries">${entriesHtml()}</div>
-          <div class="bz-home-flow">${flowHtml(curDay)}</div>
-          <div class="bz-home-next">${nextHtml()}</div>
-          <div class="bz-home-tiles">${tilesHtml()}</div>
-        </div>
-      </div>`;
-  }
-
-  // 周历（09-01 周一 ~ 09-07 周日）：hit=有动静的日子；sel=当前查看日
-  let curDay = '09-07';
-  const WK_DAYS = [
-    { d: '09-01', n: 1, wd: '一', hit: false }, { d: '09-02', n: 2, wd: '二', hit: true },
-    { d: '09-03', n: 3, wd: '三', hit: false }, { d: '09-04', n: 4, wd: '四', hit: true },
-    { d: '09-05', n: 5, wd: '五', hit: false }, { d: '09-06', n: 6, wd: '六', hit: true },
-    { d: '09-07', n: 7, wd: '日', hit: true },
-  ];
-  function weekHtml(sel) {
-    // 倒排：最新在前；今天显示「今」不写数字
-    return WK_DAYS.slice().reverse().map((w) =>
-      '<div role="button" tabindex="0" class="bz-home-wk' + (w.hit ? ' bz-home-wk--hit' : '') + (w.d === sel ? ' bz-home-wk--sel' : '') + '" data-day="' + w.d + '">'
-      + '<i></i><span class="bz-home-wk-n">' + (w.d === '09-07' ? '今' : w.n) + '</span></div>').join('');
+  /* ==================== 装配（面板骨架 = render.panelFrameHtml；数据区灌单源 markup） ==================== */
+  function renderAllInto(host) {
+    host.querySelector('[data-home-date]').textContent = '2026-09-07 周一 · 21:36';
+    host.querySelector('[data-home-week]').innerHTML = R.weekHtml(DATA.week, DATA.today.dateStr, viewDate());
+    host.querySelector('[data-home-entries]').innerHTML = R.entriesHtml(DATA);
+    host.querySelector('[data-home-flow]').innerHTML = R.flowHtml(DATA, viewDate());
+    host.querySelector('[data-home-next]').innerHTML = R.nextHtml(DATA);
+    host.querySelector('[data-home-tiles]').innerHTML = R.tilesHtml(DATA);
+    mountIcons(host);
   }
   function mount(host) {
-    host.innerHTML = '<div class="bz-panel-frame bz-home-panel bz-panel-mtop">' + panelHtml() + '</div>';
-    mountIcons(host);
-    // 周历切天：重渲双端时间线 + 选中态
+    host.innerHTML = R.panelFrameHtml();
+    renderAllInto(host);
+    // 周历切天：重渲时间线 + 选中态（只动双端，不重采）
     host.addEventListener('click', (e) => {
-      const wk = e.target.closest('[data-day]');
+      const wk = e.target.closest('[data-home-weekday]');
       if (!wk) return;
-      curDay = wk.dataset.day;
-      document.querySelectorAll('#dtHost, #mobHost').forEach((h) => {
-        h.querySelectorAll('[data-day]').forEach((b) => b.classList.toggle('bz-home-wk--sel', b.dataset.day === curDay));
-        h.querySelectorAll('.bz-home-flow').forEach((f) => { f.innerHTML = flowHtml(curDay); });
+      curView = wk.dataset.homeWeekday || null;
+      document.querySelectorAll('.bz-home-panel').forEach((p) => {
+        p.querySelectorAll('[data-home-weekday]').forEach((b) => b.classList.toggle('bz-home-wk--sel', b.dataset.homeWeekday === viewDate()));
+        const flow = p.querySelector('[data-home-flow]');
+        if (flow) { flow.innerHTML = R.flowHtml(DATA, viewDate()); mountIcons(flow); }
       });
     });
   }
-  mount(document.getElementById('dtHost'));
-  mount(document.getElementById('mobHost'));
+
+  if (MOB) {
+    /* ?mob=1：本页即移动端视口，只渲染全屏面板（iframe 内容自跑一份演示态） */
+    document.getElementById('dtHost')?.remove();
+    document.getElementById('mobHost')?.remove();
+    document.querySelector('.vbadge')?.remove();
+    document.body.classList.add('mob-root');
+    mount(document.body);
+  } else {
+    mount(document.getElementById('dtHost'));
+    const frame = document.getElementById('mobFrame');
+    frame.src = './prototype.html?mob=1';
+    const mobBtn = document.getElementById('mobToggle');
+    mobBtn.onclick = () => {
+      const mob = document.getElementById('mobHost');
+      mob.style.display = mob.style.display === 'none' ? '' : 'none';
+      mobBtn.textContent = mob.style.display === 'none' ? '显示移动端' : '隐藏移动端';
+    };
+  }
+
+  /* ==================== 自检（?selftest=1；桌面与 ?mob=1 各跑一份） ==================== */
+  if (location.search.includes('selftest')) {
+    window.__st = { pass: 0, fail: [] };
+    const t = (name, cond) => cond ? window.__st.pass++ : window.__st.fail.push(name);
+    const $ = (s) => document.querySelector(s);
+    const panel = () => $('.bz-home-panel');
+    (async () => {
+      try {
+        await new Promise((r) => setTimeout(r, 50));
+        const rows = () => document.querySelectorAll('.bz-home-erow');
+        t('入口行13域', rows().length === 13);
+        t('入口行计数=单源口径', rows()[2].querySelector('.bz-home-ect').textContent === '9 张 · 逾期 1');
+        t('书库行计数', [...rows()].find((r) => r.dataset.homeGo === 'bookshelf').querySelector('.bz-home-ect').textContent === '在读 9 · 读完 151');
+        t('时间线5条痕迹', document.querySelectorAll('.bz-home-timeline .bz-home-ev').length === 5);
+        t('规则点评2条', document.querySelectorAll('.bz-home-ev-note').length === 2);
+        t('首条点评=比昨天晚1287分（跨天时差口径）', $('.bz-home-ev-note').textContent.indexOf('晚了 1287 分钟') >= 0);
+        t('末条挂连击提醒+warn行', [...document.querySelectorAll('.bz-home-ev')].pop().className.indexOf('bz-home-ev--warn') >= 0);
+        t('预告3卡', document.querySelectorAll('.bz-home-pr').length === 3);
+        t('预告首卡=逾期卡', $('.bz-home-pr-h').textContent === '还有 1 张逾期卡');
+        t('彩点 warn/hot/ok 各在其位', $('.bz-home-erow .bz-home-dot--warn') && $('.bz-home-erow .bz-home-dot--hot') && $('.bz-home-erow .bz-home-dot--ok'));
+        t('周历7格+今天显示今', document.querySelectorAll('.bz-home-wk').length === 7 && [...document.querySelectorAll('.bz-home-wk-n')].some((n) => n.textContent === '今'));
+        t('选中格=今天', $('.bz-home-wk--sel .bz-home-wk-n').textContent === '今');
+        t('关闭钮在位', !!$('[data-home-close] i[data-lucide="x"]'));
+        t('移动瓦片在 DOM（桌面隐藏）', document.querySelectorAll('.bz-home-m-tile').length === 13);
+
+        // 周历切天交互
+        [...document.querySelectorAll('.bz-home-wk')].find((b) => b.dataset.homeWeekday === '2026-09-06').click();
+        t('切昨天后时间线3条', document.querySelectorAll('.bz-home-timeline .bz-home-ev').length === 3);
+        t('切昨天标题带日期', $('.bz-home-sec-t').textContent.indexOf('09-06') >= 0);
+        t('切天后无点评（仅今天点评）', document.querySelectorAll('.bz-home-ev-note').length === 0);
+        [...document.querySelectorAll('.bz-home-wk')].find((b) => b.dataset.homeWeekday === '2026-09-07').click();
+        t('切回今天5条+点评2条', document.querySelectorAll('.bz-home-timeline .bz-home-ev').length === 5 && document.querySelectorAll('.bz-home-ev-note').length === 2);
+
+        if (MOB) {
+          t('移动端@media全屏命中', Math.abs(panel().getBoundingClientRect().width - document.documentElement.clientWidth) < 1);
+          t('关闭钮在头行（移动范式）', !!panel().querySelector('.bz-home-head [data-home-close]'));
+        } else {
+          t('移动瓦片桌面隐藏', getComputedStyle($('.bz-home-tiles')).display === 'none');
+        }
+
+        document.title = window.__st.fail.length
+          ? 'SELFTEST FAIL ' + window.__st.fail.join(',')
+          : `SELFTEST OK ${window.__st.pass}/${window.__st.pass + window.__st.fail.length}`;
+      } catch (err) { document.title = 'SELFTEST ERR ' + (err && err.message || err); }
+    })();
+  }
 })();
 </script>
+
 </body>
 </html>
