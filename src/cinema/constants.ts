@@ -1,4 +1,3 @@
-import { tryGetSettings } from '../core/settings-provider';
 /**
  * 影院（cinema）域常量：类型/状态/评分（复刻自 movie 域，独立成域不共享）
  */
@@ -92,9 +91,4 @@ export const CINEMA_STYLES: { id: CinemaStyle; label: string; en: string }[] = [
   { id: 'gazette', label: '场刊', en: 'GAZETTE' },
   { id: 'booth', label: '放映室', en: 'BOOTH' },
 ];
-
-/** 当前风格（设置 cinemaStyle；非法值回默认午夜场；重开面板生效） */
-export function cinemaStyleOf(): CinemaStyle {
-  const raw = (tryGetSettings() as Record<string, unknown>).cinemaStyle;
-  return raw === 'gazette' || raw === 'booth' ? raw : 'midnight';
-}
+// 当前风格取值 cinemaStyleOf() 在 ui.ts（读设置属行为层；本文件保持纯常量，ADR-0104 纯度守卫）。
