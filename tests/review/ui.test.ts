@@ -100,10 +100,10 @@ describe('UIManager 三区队列', () => {
     seed(vault);
     const { ui } = await makeUI(vault);
     await ui.showMain();
-    // issue 201 头行对齐待办：品牌块 + ⚙设置直达钮（关闭钮原有）
+    // 品牌块保留；⚙设置直达钮两端退役（issue 254 迭代拍板：设置走插件设置页）
     expect(document.querySelector('.bz-panel-head .bz-panel-brand')).toBeTruthy();
-    expect(document.querySelector('.bz-panel-head [data-act="settings"]')).toBeTruthy();
-    // 关闭钮对齐待办：不挂 bz-win-close（core 规则非真全屏隐藏之）→ 桌面常显
+    expect(document.querySelector('.bz-panel-head [data-act="settings"]')).toBeNull();
+    // 关闭钮不挂 bz-win-close；桌面由域内 ≥769px 规则隐藏（点遮罩/ESC 关），移动保留
     expect(document.querySelector('.bz-panel-head [data-act="close"]')!.classList.contains('bz-win-close')).toBe(false);
     const cols = document.querySelectorAll('.bz-q-col');
     expect(cols.length).toBe(3);
@@ -139,7 +139,7 @@ describe('UIManager 三区队列', () => {
     expect(sub.textContent).toMatch(/\d+月\d+日 周[日一二三四五六]/);
     expect(sub.previousElementSibling!.classList.contains('bz-panel-head-pipe')).toBe(true);
     expect(head.querySelector('.bz-panel-head-sp')).not.toBeNull();
-    // 关闭钮在共享钮组内，不挂 bz-win-close（issue 201：core 规则非真全屏隐藏之，桌面/移动常显）
+    // 关闭钮在共享钮组内，不挂 bz-win-close；桌面 ≥769px 域内规则隐藏（issue 254 迭代），标记保持不挂
     const closeBtn = head.querySelector('.bz-panel-head-btns [data-act="close"]')!;
     expect(closeBtn).not.toBeNull();
     expect(closeBtn.classList.contains('bz-win-close')).toBe(false);
@@ -158,23 +158,8 @@ describe('UIManager 三区队列', () => {
     expect(cols.length).toBe(1);
     expect(document.querySelector('.bz-q-col-head .name')!.textContent).toBe('已完成');
     expect(document.querySelectorAll('.bz-q-card').length).toBe(1); // D
-    ui.destroy();
-  });
-
-  it('搜索防抖：输入过滤队列（名称）', async () => {
-    vi.useFakeTimers();
-    const vault = new MockVault();
-    seed(vault);
-    const { ui } = await makeUI(vault);
-    await ui.showMain();
-    const input = document.getElementById('bz-q-search') as HTMLInputElement;
-    input.value = 'C';
-    input.dispatchEvent(new Event('input'));
-    await vi.advanceTimersByTimeAsync(200);
-    const cards = [...document.querySelectorAll<HTMLButtonElement>('.bz-q-card')];
-    expect(cards.length).toBe(1);
-    expect(cards[0].textContent).toContain('C');
-    vi.useRealTimers();
+    // issue 254 迭代：归档态左下角变「返回队列」提醒钮（点击经同一 data-act="arch" 切回）
+    expect(document.querySelector('.bz-q-fitem.is-back')?.textContent).toContain('返回队列');
     ui.destroy();
   });
 
@@ -391,14 +376,13 @@ describe('UIManager 三区队列', () => {
 
   // ================= item 6/8/10/11 新增回归 =================
 
-  it('item 11：搜索框为普通输入框（无 / kbd 快捷键提示）', async () => {
+  it('item 11：搜索框已退役（issue 254 迭代拍板）', async () => {
     const vault = new MockVault();
     seed(vault);
     const { ui } = await makeUI(vault);
     await ui.showMain();
-    expect(document.querySelector('.bz-search .bz-kbd')).toBeNull();
-    expect(document.querySelector('.bz-search .bz-input')).not.toBeNull();
-    expect(document.getElementById('bz-q-search')).not.toBeNull();
+    expect(document.querySelector('.bz-search')).toBeNull();
+    expect(document.getElementById('bz-q-search')).toBeNull();
     ui.destroy();
   });
 
@@ -534,7 +518,7 @@ describe('UIManager 三区队列', () => {
     const strip = document.querySelector('.bz-q-strip')!;
     expect(strip.querySelector('.bz-q-strip-dot')!.classList.contains('ok')).toBe(true);
     expect(strip.querySelector('.bz-q-strip strong')!.textContent).toBe('已完成复习');
-    expect(strip.textContent).toContain('回到队列');
+    expect(strip.querySelector('.bz-q-strip-txt')).toBeNull(); // issue 254 迭代：归档条只留绿点+标题，指引文案退役
     expect(strip.querySelector('[data-act="begin"]')).toBeNull(); // 归档态无开始本轮钮
     ui.destroy();
   });

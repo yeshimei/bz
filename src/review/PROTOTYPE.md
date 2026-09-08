@@ -27,7 +27,7 @@ node scripts/_selftest-cdp.mjs         # headless 自检（Edge + CDP，读 docu
 
 | render.ts | 两侧用途 |
 |---|---|
-| `queueViewHtml / cardHtml / sortColumn` | 三区队列整视图（头行/工具行/开始本轮条/三区列/底部信息行/空态宿主）；列内排序 置顶→R升序→到期（V1 拍板） |
+| `queueViewHtml / cardHtml / sortColumn` | 三区队列整视图（头行/开始本轮条/三区列/底部信息行/空态宿主）；列内排序 置顶→R升序→到期（V1 拍板） |
 | `sprintHeadHtml / sprintLoadingHtml / sprintQuestionHtml / sprintBodyHtml / sprintAsideHtml / sprintResultHtml / sprintSummaryHtml` | 整窗冲刺全部视图（题卡/本轮队列/结果卡/结算） |
 | `difficultyDialogHtml / reviewBarHtml` | 难度弹窗 / 悬浮迷你评级条 |
 | `dueLabelOf / isPlayable / currentRPct / stageTagHtml / stageNum / todayLabel / esc / icon / markHtml` | 到期/阶段/保留率口径唯一实现（事件绑定两侧各自实现：插件 ui.ts ↔ 壳真跑同一份 ui.ts） |
@@ -35,7 +35,7 @@ node scripts/_selftest-cdp.mjs         # headless 自检（Edge + CDP，读 docu
 ## 自检（?selftest=1，41 断言）
 
 双 iframe 开面板、三区计数（3/3/6）、列内排序（R 升序首位/置顶首位）、待重做红 tag、
-提前卡 .no、归档切换（绿点「已完成复习」+ 挂起卡在 done 列）、搜索过滤、**完整做题轮**
+提前卡 .no、归档切换（绿点「已完成复习」+ 挂起卡在 done 列）、**完整做题轮**
 （开始本轮 → 待重做重做 + 6 篇 12 题全对——题目按种子题库查正确答案作答 → 结果卡 →
 结算屏 → 回队列 → 重做解除/逾期归零/短档重排今日/长档入未来）。结果写 `document.title`
 （`SELFTEST OK 41/41`）。

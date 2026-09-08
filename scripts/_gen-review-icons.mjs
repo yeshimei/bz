@@ -4,7 +4,7 @@ import fs from 'node:fs';
 
 const need = [
   'repeat-2', 'settings', 'x', 'search', 'folder', 'bar-chart-3', 'skip-forward', 'flag',
-  'file-text', 'check', 'inbox', 'history', 'trash-2', 'chevron-down', 'plus', 'clock',
+  'file-text', 'check', 'inbox', 'history', 'trash-2', 'chevron-down', 'plus', 'clock', 'undo-2',
 ];
 const sources = [
   'src/belongings/prototype-icons.js',
