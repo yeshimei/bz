@@ -30,6 +30,7 @@ var BZR_clipbook = (() => {
     mobDetailHtml: () => mobDetailHtml,
     mobFoldHtml: () => mobFoldHtml,
     mobListHtml: () => mobListHtml,
+    mobNoHitHtml: () => mobNoHitHtml,
     mobTocHtml: () => mobTocHtml,
     panelHtml: () => panelHtml,
     paragraphsHtml: () => paragraphsHtml,
@@ -107,8 +108,8 @@ var BZR_clipbook = (() => {
       <div class="bz-clip-mob" data-clip-mob>
         <div class="bz-clip-mob-top">
           <div class="bz-clip-mob-title">剪藏本</div>
-          <button class="bz-icon-btn bz-icon-btn--lg" data-clip-mob-search title="搜索">${iconSpan(ICO.search)}</button>
-          <button class="bz-icon-btn bz-icon-btn--lg bz-icon-btn--close" data-clip-mob-close title="关闭">${iconSpan(ICO.x)}</button>
+          <span class="bz-clip-mob-act" data-clip-mob-search role="button">搜索</span>
+          <span class="bz-clip-mob-act" data-clip-mob-close role="button">关闭</span>
         </div>
         <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
           <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点…">
@@ -118,9 +119,9 @@ var BZR_clipbook = (() => {
       <!-- 移动详情 overlay（屏2） -->
       <div class="bz-clip-mob-detail bz-panel-mtop" data-clip-mob-detail style="display:none">
         <div class="bz-clip-mob-detail-top">
-          <button class="bz-icon-btn bz-icon-btn--lg" data-clip-mob-back title="返回">${iconSpan(ICO.arrow)}</button>
+          <span class="bz-clip-mob-d-back" data-clip-mob-back role="button">‹ 返回</span>
           <div class="bz-clip-mob-detail-title" data-clip-mob-title></div>
-          <button class="bz-clip-mob-save" data-clip-mob-save title="保存到剪藏本">${iconSpan(ICO.download, "bz-ic--sm")}</button>
+          <span class="bz-clip-mob-save" data-clip-mob-save role="button">存为剪藏</span>
         </div>
         <div class="bz-clip-mob-detail-body" data-clip-mob-detail-body></div>
       </div>
@@ -204,48 +205,53 @@ var BZR_clipbook = (() => {
   function mobListHtml(list, timeOf) {
     return list.map((a) => `
     <div class="bz-clip-mob-item ${a.st}" data-id="${esc(a.id)}">
-      <div class="bz-clip-item-t">${dotHtml(a.st)}<span>${esc(a.title)}</span></div>
-      <div class="bz-clip-item-meta"><span class="bz-clip-item-time">${esc(timeOf(a))}</span></div>
+      <span class="bz-clip-mob-dot ${a.st}"></span>
+      <span class="bz-clip-mob-ttl">${esc(a.title)}</span>
+      ${a.st === "reading" ? '<span class="bz-clip-mob-tag">在读</span>' : ""}
+      <span class="bz-clip-mob-time">${esc(timeOf(a))}</span>
     </div>`).join("");
   }
-  function mobChHeadHtml(site, unread, savedN, total) {
-    const cnt = unread > 0 || savedN > 0 ? `${unread > 0 ? `<b>${unread}</b> 未读` : ""}${unread > 0 && savedN > 0 ? " · " : ""}${savedN > 0 ? `${savedN} 已收` : ""} / ${total}` : `${total} 则`;
+  function mobChHeadHtml(site, unread, savedN) {
+    const cntTxt = unread > 0 || savedN > 0 ? `${unread > 0 ? `${unread} 未读` : ""}${unread > 0 && savedN > 0 ? " · " : ""}${savedN > 0 ? `${savedN} 已收` : ""}` : "";
     return `
     <div class="bz-clip-mob-ch-hd" data-src='${esc(JSON.stringify({ kind: "site", site }))}' title="${esc(site)}">
       <span class="bz-clip-mob-ch-name">${esc(site)}</span>
-      <span class="bz-clip-mob-ch-meta">${cnt}</span>
+      <span class="bz-clip-mob-ch-n">${cntTxt}</span>
       <span class="bz-clip-mob-ch-rule"></span>
     </div>`;
   }
-  function mobFoldHtml(n) {
+  function mobFoldHtml(n, open) {
     return `
-    <div class="bz-clip-mob-fold" data-fold role="button" aria-expanded="false">
+    <div class="bz-clip-mob-fold${open ? " on" : ""}" data-fold role="button" aria-expanded="${open}">
       <span class="bz-clip-mob-fold-rule"></span>
-      <span class="bz-clip-mob-fold-lab" data-fold-lab>已收 <b>${n}</b> 篇</span>
-      <span class="bz-clip-mob-fold-ar">▾</span>
+      <span class="bz-clip-mob-fold-lab">${open ? "收起" : `已收 <b>${n}</b> 篇`}</span>
+      <span class="bz-clip-mob-fold-ar"></span>
       <span class="bz-clip-mob-fold-rule"></span>
     </div>`;
   }
-  function mobTocHtml(chapters, searching) {
+  function mobTocHtml(chapters, searching, expanded) {
     return chapters.map((ch) => {
-      const fold = !searching && ch.savedN > 0 ? mobFoldHtml(ch.savedN) : "";
+      const open = expanded.has(ch.site);
+      const fold = !searching && ch.savedN > 0 ? mobFoldHtml(ch.savedN, open) : "";
+      const arch = ch.archHtml ? searching || open ? `<div class="bz-clip-mob-arch">${ch.archHtml}</div>` : `<div class="bz-clip-mob-arch" hidden>${ch.archHtml}</div>` : "";
       return `
       <div class="bz-clip-mob-ch">
-        ${mobChHeadHtml(ch.site, ch.unread, ch.savedN, ch.activeN + ch.savedN)}
-        <div class="bz-clip-mob-ch-items">${ch.activeHtml}${fold}${ch.archHtml ? `<div class="bz-clip-mob-arch">${ch.archHtml}</div>` : ""}</div>
+        ${mobChHeadHtml(ch.site, ch.unread, ch.savedN)}
+        <div class="bz-clip-mob-ch-items">${ch.activeHtml}${fold}${arch}</div>
       </div>`;
     }).join("");
   }
+  function mobNoHitHtml(text) {
+    return `<div class="bz-clip-mob-no-hit">${esc(text)}</div>`;
+  }
   function mobDetailHtml(a, opts) {
-    const flag = stateFlag(a.st);
-    const openNote = a.origin === "clip" && a.notePath ? `<div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-open-note>打开笔记 ${iconSpan(ICO.external, "bz-ic--xs")}</span></div>` : "";
     return `
+    <div class="bz-clip-mob-d-kicker"><span>${esc(siteShort(a.srcName))} · ${esc(opts.time)}</span><span>${esc(opts.seq)}</span></div>
     <div class="bz-clip-mob-d-title">${esc(a.title)}</div>
-    <div class="bz-clip-mob-d-meta"><span class="bz-clip-favchip">${esc(a.srcName.slice(0, 1))}</span><span>${esc(a.srcName)}</span><span class="bz-clip-mob-d-time">${esc(opts.time)}</span></div>
-    <div class="bz-clip-art-flag ${flag.cls}">${iconSpan(flag.icon, "bz-ic--xs")}${stateLabel(a.st)}</div>
-    ${a.summary ? summaryHtml(a.summary) : ""}
-    <div class="bz-clip-art-md">${opts.paras || `<p class="dim">${esc(a.origin === "clip" ? "（剪藏笔记正文请在 Obsidian 中打开）" : "正文已清空")}</p>`}</div>
-    ${openNote}
+    <span class="bz-clip-mob-d-flag ${a.st}">${stateLabel(a.st)}</span>
+    <hr class="bz-clip-mob-d-rule">
+    <div class="bz-clip-mob-d-md">${opts.paras || `<p>${esc(a.origin === "clip" ? "（剪藏笔记正文请在 Obsidian 中打开）" : "正文已清空")}</p>`}</div>
+    <div class="bz-clip-mob-d-foot"><span class="bz-clip-mob-d-next" data-clip-mob-next>↓ 读下一则</span><span class="bz-clip-mob-d-fch">${esc(siteShort(a.srcName))}</span></div>
   `;
   }
   return __toCommonJS(render_exports);

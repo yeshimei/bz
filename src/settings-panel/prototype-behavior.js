@@ -24277,8 +24277,8 @@ ${bodyText.substring(0, 6e3)}`;
       <div class="bz-clip-mob" data-clip-mob>
         <div class="bz-clip-mob-top">
           <div class="bz-clip-mob-title">剪藏本</div>
-          <button class="bz-icon-btn bz-icon-btn--lg" data-clip-mob-search title="搜索">${iconSpan(ICO.search)}</button>
-          <button class="bz-icon-btn bz-icon-btn--lg bz-icon-btn--close" data-clip-mob-close title="关闭">${iconSpan(ICO.x)}</button>
+          <span class="bz-clip-mob-act" data-clip-mob-search role="button">搜索</span>
+          <span class="bz-clip-mob-act" data-clip-mob-close role="button">关闭</span>
         </div>
         <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
           <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点…">
@@ -24288,9 +24288,9 @@ ${bodyText.substring(0, 6e3)}`;
       <!-- 移动详情 overlay（屏2） -->
       <div class="bz-clip-mob-detail bz-panel-mtop" data-clip-mob-detail style="display:none">
         <div class="bz-clip-mob-detail-top">
-          <button class="bz-icon-btn bz-icon-btn--lg" data-clip-mob-back title="返回">${iconSpan(ICO.arrow)}</button>
+          <span class="bz-clip-mob-d-back" data-clip-mob-back role="button">‹ 返回</span>
           <div class="bz-clip-mob-detail-title" data-clip-mob-title></div>
-          <button class="bz-clip-mob-save" data-clip-mob-save title="保存到剪藏本">${iconSpan(ICO.download, "bz-ic--sm")}</button>
+          <span class="bz-clip-mob-save" data-clip-mob-save role="button">存为剪藏</span>
         </div>
         <div class="bz-clip-mob-detail-body" data-clip-mob-detail-body></div>
       </div>
@@ -24305,14 +24305,6 @@ ${bodyText.substring(0, 6e3)}`;
     const t = String(site || "");
     for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
     return `hsl(${h % 360}, 42%, 52%)`;
-  }
-  function dotHtml(st) {
-    return `<span class="bz-clip-dot ${st}"></span>`;
-  }
-  function stateFlag(st) {
-    if (st === "saved") return { icon: ICO.check, cls: "ok" };
-    if (st === "reading") return { icon: ICO.book, cls: "warn" };
-    return { icon: ICO.mail, cls: "info" };
   }
   function stateLabel(st) {
     return st === "saved" ? "已保存" : st === "reading" ? "在读" : st === "read" ? "已读" : "未读";
@@ -24374,48 +24366,53 @@ ${bodyText.substring(0, 6e3)}`;
   function mobListHtml(list, timeOf) {
     return list.map((a) => `
     <div class="bz-clip-mob-item ${a.st}" data-id="${esc(a.id)}">
-      <div class="bz-clip-item-t">${dotHtml(a.st)}<span>${esc(a.title)}</span></div>
-      <div class="bz-clip-item-meta"><span class="bz-clip-item-time">${esc(timeOf(a))}</span></div>
+      <span class="bz-clip-mob-dot ${a.st}"></span>
+      <span class="bz-clip-mob-ttl">${esc(a.title)}</span>
+      ${a.st === "reading" ? '<span class="bz-clip-mob-tag">在读</span>' : ""}
+      <span class="bz-clip-mob-time">${esc(timeOf(a))}</span>
     </div>`).join("");
   }
-  function mobChHeadHtml(site, unread, savedN, total) {
-    const cnt = unread > 0 || savedN > 0 ? `${unread > 0 ? `<b>${unread}</b> 未读` : ""}${unread > 0 && savedN > 0 ? " · " : ""}${savedN > 0 ? `${savedN} 已收` : ""} / ${total}` : `${total} 则`;
+  function mobChHeadHtml(site, unread, savedN) {
+    const cntTxt = unread > 0 || savedN > 0 ? `${unread > 0 ? `${unread} 未读` : ""}${unread > 0 && savedN > 0 ? " · " : ""}${savedN > 0 ? `${savedN} 已收` : ""}` : "";
     return `
     <div class="bz-clip-mob-ch-hd" data-src='${esc(JSON.stringify({ kind: "site", site }))}' title="${esc(site)}">
       <span class="bz-clip-mob-ch-name">${esc(site)}</span>
-      <span class="bz-clip-mob-ch-meta">${cnt}</span>
+      <span class="bz-clip-mob-ch-n">${cntTxt}</span>
       <span class="bz-clip-mob-ch-rule"></span>
     </div>`;
   }
-  function mobFoldHtml(n) {
+  function mobFoldHtml(n, open) {
     return `
-    <div class="bz-clip-mob-fold" data-fold role="button" aria-expanded="false">
+    <div class="bz-clip-mob-fold${open ? " on" : ""}" data-fold role="button" aria-expanded="${open}">
       <span class="bz-clip-mob-fold-rule"></span>
-      <span class="bz-clip-mob-fold-lab" data-fold-lab>已收 <b>${n}</b> 篇</span>
-      <span class="bz-clip-mob-fold-ar">▾</span>
+      <span class="bz-clip-mob-fold-lab">${open ? "收起" : `已收 <b>${n}</b> 篇`}</span>
+      <span class="bz-clip-mob-fold-ar"></span>
       <span class="bz-clip-mob-fold-rule"></span>
     </div>`;
   }
-  function mobTocHtml(chapters, searching) {
+  function mobTocHtml(chapters, searching, expanded) {
     return chapters.map((ch) => {
-      const fold = !searching && ch.savedN > 0 ? mobFoldHtml(ch.savedN) : "";
+      const open = expanded.has(ch.site);
+      const fold = !searching && ch.savedN > 0 ? mobFoldHtml(ch.savedN, open) : "";
+      const arch = ch.archHtml ? searching || open ? `<div class="bz-clip-mob-arch">${ch.archHtml}</div>` : `<div class="bz-clip-mob-arch" hidden>${ch.archHtml}</div>` : "";
       return `
       <div class="bz-clip-mob-ch">
-        ${mobChHeadHtml(ch.site, ch.unread, ch.savedN, ch.activeN + ch.savedN)}
-        <div class="bz-clip-mob-ch-items">${ch.activeHtml}${fold}${ch.archHtml ? `<div class="bz-clip-mob-arch">${ch.archHtml}</div>` : ""}</div>
+        ${mobChHeadHtml(ch.site, ch.unread, ch.savedN)}
+        <div class="bz-clip-mob-ch-items">${ch.activeHtml}${fold}${arch}</div>
       </div>`;
     }).join("");
   }
+  function mobNoHitHtml(text) {
+    return `<div class="bz-clip-mob-no-hit">${esc(text)}</div>`;
+  }
   function mobDetailHtml(a, opts) {
-    const flag = stateFlag(a.st);
-    const openNote2 = a.origin === "clip" && a.notePath ? `<div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-open-note>打开笔记 ${iconSpan(ICO.external, "bz-ic--xs")}</span></div>` : "";
     return `
+    <div class="bz-clip-mob-d-kicker"><span>${esc(siteShort(a.srcName))} · ${esc(opts.time)}</span><span>${esc(opts.seq)}</span></div>
     <div class="bz-clip-mob-d-title">${esc(a.title)}</div>
-    <div class="bz-clip-mob-d-meta"><span class="bz-clip-favchip">${esc(a.srcName.slice(0, 1))}</span><span>${esc(a.srcName)}</span><span class="bz-clip-mob-d-time">${esc(opts.time)}</span></div>
-    <div class="bz-clip-art-flag ${flag.cls}">${iconSpan(flag.icon, "bz-ic--xs")}${stateLabel(a.st)}</div>
-    ${a.summary ? summaryHtml(a.summary) : ""}
-    <div class="bz-clip-art-md">${opts.paras || `<p class="dim">${esc(a.origin === "clip" ? "（剪藏笔记正文请在 Obsidian 中打开）" : "正文已清空")}</p>`}</div>
-    ${openNote2}
+    <span class="bz-clip-mob-d-flag ${a.st}">${stateLabel(a.st)}</span>
+    <hr class="bz-clip-mob-d-rule">
+    <div class="bz-clip-mob-d-md">${opts.paras || `<p>${esc(a.origin === "clip" ? "（剪藏笔记正文请在 Obsidian 中打开）" : "正文已清空")}</p>`}</div>
+    <div class="bz-clip-mob-d-foot"><span class="bz-clip-mob-d-next" data-clip-mob-next>↓ 读下一则</span><span class="bz-clip-mob-d-fch">${esc(siteShort(a.srcName))}</span></div>
   `;
   }
   var ICO;
@@ -27735,6 +27732,7 @@ ${sample}`,
     deskSearchEl = null;
     expandedMobArch.clear();
     mobItemById = /* @__PURE__ */ new Map();
+    mobItemOrder = [];
     resetClipbookState();
   }
   function buildDom(app2) {
@@ -27804,7 +27802,18 @@ ${sample}`,
       searchKw = mobInput.value.trim();
       renderMobToc();
     });
-    mobCloseBtn.addEventListener("click", () => closePanel3());
+    mobCloseBtn.addEventListener("click", () => {
+      const barOpen = mobSearchbarEl ? mobSearchbarEl.style.display !== "none" : false;
+      if (searchKw || barOpen || expandedMobArch.size) {
+        searchKw = "";
+        expandedMobArch.clear();
+        if (mobInput) mobInput.value = "";
+        if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
+        renderMobToc();
+      } else {
+        closePanel3();
+      }
+    });
     mobBackBtn.addEventListener("click", () => {
       M5.mobDetailOpen = false;
       mobDetailEl.style.display = "none";
@@ -27814,7 +27823,12 @@ ${sample}`,
       void doSave(M5.cur);
     });
     mobDetailEl.addEventListener("click", (e) => {
-      if (e.target.closest("[data-clip-open-note]") && M5.cur) openNote(M5.cur);
+      if (!e.target.closest("[data-clip-mob-next]") || !M5.cur) return;
+      const grp = mobItemOrder.filter((x) => x.srcName === M5.cur.srcName);
+      const idx = grp.indexOf(M5.cur);
+      const next = grp[idx + 1];
+      if (next) openMobDetail(next.id);
+      else mobBackBtn.click();
     });
     escKey = "bz-clipbook";
     escHandle2 = escManager.register(escKey, {
@@ -28384,6 +28398,7 @@ ${sample}`,
     const timeOf = (a) => relTime2(a.timeTs);
     const chapters = [];
     const byId = /* @__PURE__ */ new Map();
+    const order = [];
     for (const row of aggregateSites(arts, clipNotes, savedUrls, M5.clipUrls)) {
       const full = queryBySource(arts, M5.sidecar, M5.clipUrls, clipNotes, { kind: "site", site: row.site }, M5.upInfo).filter(matchesSearch);
       if (!full.length) continue;
@@ -28397,18 +28412,18 @@ ${sample}`,
         activeHtml: mobListHtml(active2, timeOf),
         archHtml: arch.length ? mobListHtml(arch, timeOf) : ""
       });
-      [...active2, ...arch].forEach((a) => byId.set(a.id, a));
+      [...active2, ...arch].forEach((a) => {
+        byId.set(a.id, a);
+        order.push(a);
+      });
     }
     mobItemById = byId;
+    mobItemOrder = order;
     if (!chapters.length) {
-      mobListEl.classList.remove("searching");
-      mobListEl.innerHTML = "";
-      mobListEl.appendChild(uiEmpty({ icon: "inbox", title: "暂无内容" }));
+      mobListEl.innerHTML = mobNoHitHtml(searching ? "查无此条" : "暂无剪藏内容");
       return;
     }
-    mobListEl.classList.toggle("searching", searching);
-    mobListEl.innerHTML = mobTocHtml(chapters, searching);
-    restoreMobFolds();
+    mobListEl.innerHTML = mobTocHtml(chapters, searching, expandedMobArch);
     mobListEl.querySelectorAll("[data-id]").forEach((card) => {
       const art = byId.get(String(card.dataset.id || ""));
       if (!art) return;
@@ -28426,25 +28441,7 @@ ${sample}`,
       if (actions.length) attachItemActions(hd, actions, { sheetTitle: String(sel.site), menuClass: "bz-clip-menu-editorial" });
     });
   }
-  function restoreMobFolds() {
-    if (!mobListEl || !expandedMobArch.size) return;
-    mobListEl.querySelectorAll(".bz-clip-mob-ch").forEach((chEl) => {
-      const hd = chEl.querySelector("[data-src]");
-      if (!hd) return;
-      let sel = null;
-      try {
-        sel = JSON.parse(hd.dataset.src || "null");
-      } catch (e) {
-        return;
-      }
-      if (!sel || sel.kind !== "site" || !expandedMobArch.has(String(sel.site))) return;
-      const fold = chEl.querySelector("[data-fold]");
-      if (fold) setFoldOpen(fold, true);
-    });
-  }
   function toggleMobArch(foldEl) {
-    const open = !foldEl.classList.contains("open");
-    setFoldOpen(foldEl, open);
     const ch = foldEl.closest(".bz-clip-mob-ch");
     const hd = ch ? ch.querySelector("[data-src]") : null;
     let site = "";
@@ -28455,18 +28452,20 @@ ${sample}`,
         site = "";
       }
     }
+    const arch = ch ? ch.querySelector(".bz-clip-mob-arch") : null;
+    const opening2 = !!arch && arch.hidden;
+    if (arch) arch.hidden = !opening2;
+    foldEl.classList.toggle("on", opening2);
+    foldEl.setAttribute("aria-expanded", String(opening2));
+    const lab = foldEl.querySelector(".bz-clip-mob-fold-lab");
+    if (lab) {
+      const n = arch ? arch.childElementCount : 0;
+      lab.innerHTML = opening2 ? "收起" : `已收 <b>${n}</b> 篇`;
+    }
     if (site) {
-      if (open) expandedMobArch.add(site);
+      if (opening2) expandedMobArch.add(site);
       else expandedMobArch.delete(site);
     }
-  }
-  function setFoldOpen(foldEl, open) {
-    foldEl.classList.toggle("open", open);
-    foldEl.setAttribute("aria-expanded", String(open));
-    const lab = foldEl.querySelector("[data-fold-lab]");
-    if (!lab) return;
-    const n = foldEl.nextElementSibling ? foldEl.nextElementSibling.childElementCount : 0;
-    lab.innerHTML = open ? "收起" : `已收 <b>${n}</b> 篇`;
   }
   function openMobDetail(id) {
     let a = currentList().find((x) => x.id === id);
@@ -28482,18 +28481,18 @@ ${sample}`,
   function renderMobDetail() {
     if (!mobDetailEl || !M5.cur) return;
     const a = M5.cur;
-    if (mobTitleEl) mobTitleEl.textContent = `${a.srcName} · ${a.typeLabel || a.site}`;
+    if (mobTitleEl) mobTitleEl.textContent = `${a.srcName} · 目录`;
     if (mobSaveBtnEl) {
       const saved = a.st === "saved";
       mobSaveBtnEl.style.display = a.origin !== "news" ? "none" : "";
       mobSaveBtnEl.classList.toggle("saved", saved);
-      mobSaveBtnEl.title = saved ? "已保存到剪藏本" : "保存到剪藏本";
-      mobSaveBtnEl.innerHTML = iconSpan(saved ? "check" : "download", "bz-ic--sm");
-      mountIcons(mobSaveBtnEl);
+      mobSaveBtnEl.textContent = saved ? "已存" : "存为剪藏";
     }
     const paras = a.body ? paragraphsHtml2(a.body) : "";
+    const idx = mobItemOrder.indexOf(a);
+    const seq = idx >= 0 ? `第 ${idx + 1} 则 / ${mobItemOrder.length}` : "";
     const detailBody = mobDetailEl.querySelector("[data-clip-mob-detail-body]");
-    detailBody.innerHTML = mobDetailHtml(a, { time: a.timeText || relTime2(a.timeTs), paras });
+    detailBody.innerHTML = mobDetailHtml(a, { time: a.timeText || relTime2(a.timeTs), paras, seq });
     mountIcons(detailBody);
     bindImgFallback(detailBody);
   }
@@ -28586,7 +28585,7 @@ ${sample}`,
       }
     });
   }
-  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle2, escRegistered, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, AUTO_READING_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, autoReadingTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById;
+  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle2, escRegistered, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, AUTO_READING_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, autoReadingTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder;
   var init_ui7 = __esm({
     "src/clipbook/ui.ts"() {
       init_app();
@@ -28643,6 +28642,7 @@ ${sample}`,
       searchKw = "";
       expandedMobArch = /* @__PURE__ */ new Set();
       mobItemById = /* @__PURE__ */ new Map();
+      mobItemOrder = [];
     }
   });
 
