@@ -12,8 +12,7 @@
  * - ticket 172 per-provider 配置三行（模型/上下文/max token）：模型行 custom（内嵌「获取模型名」
  *   按钮，行级联动 onRefresh）；上下文/最大输出 token 为标准 number 行（三函数 binding +
  *   refreshKey 随「AI 服务商」切换联动刷新，不再走 custom 套原生 Setting——统一两渲染器视觉）；
- * - issue 187 新增「采样参数」组（温度/top_p/频率惩罚/存在惩罚，string 键数字项，'' = 不发字段），
- *   同期删除全局 aiMaxTokens 孤儿键（请求链不再读）；
+ * - issue 187 曾新增「采样参数」组，2026-09-08 拍板整体退役（UI 组 + 请求透传 + 设置键一并移除）；
  * - 存储路径行 onCommit 的 warning 提示文案逐字保留（f1 防错提示，正文不带 emoji，铁律 7）；
  * - 区块标题 DOM 契约 .bz-setting-section-title 不破（无 icon 分组 = 区块标题平铺形态）。
  * - ticket 100 文案修正（键名/行为不动）：两个 API Key 行标题收短为「DeepSeek 密钥」「OpenCode 密钥」，
@@ -90,13 +89,8 @@ function providerModelCustomRow(): SettingsRow {
       const setting = new Setting(body).setName(label);
       if (desc) setting.setDesc(desc);
       let input: { setValue: (v: string) => unknown } | null = null;
-      setting.addText((t) => {
-        input = t;
-        t.setValue(providerValue('model'));
-        t.setPlaceholder('默认模型');
-        t.onChange((v) => setProviderValue('aiModelOverrides', v));
-      });
-      // ticket 173「获取模型名」：行内嵌按钮（输入框右侧）——拉取当前服务商模型列表弹选择器回填
+      // ticket 173「获取模型名」：行内嵌按钮（按钮在左、输入框在右——2026-09-08 拍板换位，
+      // 输入框右缘与上方行输入框列对齐）；点击拉取当前服务商模型列表弹选择器回填
       setting.addButton((b) => {
         b.setButtonText('获取模型名').onClick(() => {
           void (async () => {
@@ -134,6 +128,12 @@ function providerModelCustomRow(): SettingsRow {
             }
           })();
         });
+      });
+      setting.addText((t) => {
+        input = t;
+        t.setValue(providerValue('model'));
+        t.setPlaceholder('默认模型');
+        t.onChange((v) => setProviderValue('aiModelOverrides', v));
       });
       // 保存输入框引用供 onRefresh 用（行级闭包挂到包装容器）
       (body as any).__providerInput = input;
@@ -233,47 +233,7 @@ function aiGroupRows(): SettingsRow[] {
   return rows;
 }
 
-/** 采样参数组（issue 187）：四键 string 键数字项，'' = 不发该字段（API 默认） */
-function samplingGroup(): SettingsSchema['groups'][number] {
-  return {
-    icon: 'sliders-horizontal',
-    name: '采样参数',
-    rows: [
-      {
-        type: 'text',
-        name: '采样温度',
-        desc: '采样温度，留空用 API 默认',
-        binding: { key: 'aiTemperature' as never },
-        num: true,
-        placeholder: 'API 默认',
-      },
-      {
-        type: 'text',
-        name: '核采样上限',
-        desc: '核采样概率上限，留空用 API 默认',
-        binding: { key: 'aiTopP' as never },
-        num: true,
-        placeholder: 'API 默认',
-      },
-      {
-        type: 'text',
-        name: '频率惩罚',
-        desc: '降低重复内容的倾向，留空用 API 默认',
-        binding: { key: 'aiFrequencyPenalty' as never },
-        num: true,
-        placeholder: 'API 默认',
-      },
-      {
-        type: 'text',
-        name: '存在惩罚',
-        desc: '鼓励引入新内容的倾向，留空用 API 默认',
-        binding: { key: 'aiPresencePenalty' as never },
-        num: true,
-        placeholder: 'API 默认',
-      },
-    ],
-  };
-}
+/** 采样参数组已于 2026-09-08 拍板退役（原 issue 187 四键：温度/top_p/频率惩罚/存在惩罚） */
 
 /** AI 设置组（issue 186：设置面板拆独立域；⚙️ 主设置页与本域共用同一组定义） */
 export function aiSettingsSchema(): SettingsSchema {
@@ -284,7 +244,6 @@ export function aiSettingsSchema(): SettingsSchema {
         name: 'AI',
         rows: aiGroupRows(),
       },
-      samplingGroup(),
     ],
   };
 }

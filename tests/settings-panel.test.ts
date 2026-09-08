@@ -97,7 +97,7 @@ describe('设置面板（settings-panel）', () => {
     }
     expect(badges[0]).toBe('1'); // 通用：数据存储路径 1 项（外观已独立「设置」域）
     expect(badges[1]).toBe('2'); // 设置：布局 + 主题两张卡片行（拍板 P1：外观独立域）
-    expect(badges[2]).toBe('8'); // AI：服务商+模型名称+上下文+最大输出+采样 4 项（aiProvider 未设 → 密钥行门控隐藏）
+    expect(badges[2]).toBe('4'); // AI：服务商+模型名称+上下文+最大输出（采样参数组已退役；aiProvider 未设 → 密钥行门控隐藏）
     expect(badges[3]).toBe('14'); // 日记本（index 3）：issue 246 补外观组两卡
     expect(badges[4]).toBe('2'); // 回忆墙（index 4）：issue 246 补外观组两卡 → 桌面回归列表
     expect(badges[5]).toBe('9'); // 待办（index 5）：issue 210 补面板皮肤卡片行后 9 项
@@ -162,11 +162,10 @@ describe('设置面板（settings-panel）', () => {
     ) as HTMLElement;
     expect(aiItem).toBeTruthy();
     aiItem.click();
-    await waitGroups(popup, 2);
+    await waitGroups(popup, 1);
     groups = popup.querySelectorAll('.bz-sp-group');
-    expect(groups.length).toBe(2); // AI + 采样参数（issue 187）
+    expect(groups.length).toBe(1); // 仅 AI 组（采样参数组已退役）
     expect(groups[0].querySelector('.bz-sp-group-name')!.textContent).toBe('AI');
-    expect(groups[1].querySelector('.bz-sp-group-name')!.textContent).toBe('采样参数');
     expect(popup.querySelectorAll('.bz-sp-set-row').length).toBeGreaterThan(0);
     ui.cleanup();
   });
@@ -244,7 +243,7 @@ describe('设置面板（settings-panel）', () => {
     aiItem.click();
     await waitGroups(popup, 1);
     icons = [...popup.querySelectorAll('.bz-sp-group-icon')].map((i) => i.getAttribute('data-icon'));
-    expect(icons).toEqual(['sparkles', 'sliders-horizontal']);
+    expect(icons).toEqual(['sparkles']); // 采样参数组已退役，仅 AI 单组
     ui.cleanup();
   });
 
@@ -493,8 +492,12 @@ describe('设置面板（settings-panel）', () => {
     const chip1 = row1.querySelector('.bz-sp-chip--locked') as HTMLElement;
     expect(chip1, '空值时显示回落目录锁定 chip').toBeTruthy();
     expect(chip1.textContent).toContain('旧书库');
-    // 选择按钮仍在（可改为显式设置）
-    expect(row1.querySelector('.bz-sp-path-btn')).toBeTruthy();
+    // 有 chip 即无按钮（2026-09-08 拍板：按钮仅空态在场）；chip 点击重开选择器
+    expect(row1.querySelector('.bz-sp-path-btn')).toBeNull();
+    chip1.click();
+    expect(document.querySelector('.bz-sp-picker-mask'), '回落 chip 点击打开 dir-picker').toBeTruthy();
+    (document.querySelector('.bz-sp-picker-foot .bz-sp-btn') as HTMLElement).click(); // 取消关闭
+    expect(document.querySelector('.bz-sp-picker-mask')).toBeNull();
     ui1.cleanup();
     delete (panelState as any).libraryFolderPath;
 
@@ -526,6 +529,8 @@ describe('设置面板（settings-panel）', () => {
     ) as HTMLElement;
     expect(row3.querySelector('.bz-sp-chip--locked')).toBeNull();
     expect(row3.textContent).toContain('我的书');
+    // 显式值 chip 在场同样隐藏按钮（chip 点击重开选择器）
+    expect(row3.querySelector('.bz-sp-path-btn')).toBeNull();
     ui3.cleanup();
     delete (panelState as any).bookshelfFolderPath;
   });
@@ -534,11 +539,11 @@ describe('设置面板（settings-panel）', () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
-    // 默认域 = 通用：数据存储路径 path 行（空态 = muted「未设置」占位 chip + 选择按钮）
+    // 默认域 = 通用：数据存储路径 path 行（空态 = 仅选择按钮，灰字占位 chip 已退役）
     expect(await waitGroups(popup, 1)).toBe(true);
     const chips = popup.querySelector('.bz-sp-chips') as HTMLElement;
     expect(chips).toBeTruthy();
-    expect(chips.querySelector('.bz-sp-chip--muted')?.textContent).toBe('未设置');
+    expect(chips.querySelector('.bz-sp-chip--muted')).toBeNull();
     // 打开 dir-picker（目录聚合走 MockVault；轮询至目录扫描完成——加载占位行同为
     // .bz-sp-picker-row 但无点击行为，须等到真实目录行（库根目录）出现）
     chips.querySelector('.bz-sp-path-btn')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -734,8 +739,8 @@ describe('设置面板（settings-panel）', () => {
     const firstIc = popup.querySelector('.bz-sp-mob-item .bz-sp-mob-ic .bz-ic');
     expect(firstIc).toBeTruthy();
     expect(firstIc!.getAttribute('data-icon')).toBe('settings');
-    // 搜索有清除按钮（输入后显示）
-    expect(popup.querySelector('.bz-sp-mob-clear')).toBeTruthy();
+    // 搜索清除按钮已退役（2026-09-08 拍板）：胶囊内仅图标 + 输入框
+    expect(popup.querySelector('.bz-sp-mob-clear')).toBeNull();
     ui.cleanup();
   });
 
@@ -759,11 +764,11 @@ describe('设置面板（settings-panel）', () => {
     expect(modal).toBeTruthy();
     // 弹窗内真实设置分组
     expect(modal!.querySelectorAll('.bz-sp-group').length).toBeGreaterThanOrEqual(2);
-    // 弹窗头行：图标方块（lucide）+ 域名 + 关闭钮；无分隔线（原型 m1-modal-head：无 border）
+    // 弹窗头行：整宽头行仅标题（图标块/关闭钮已退役——遮罩点击与 ESC 关闭）；无分隔线（原型 m1-modal-head：无 border）
     const modalHead = modal!.querySelector('.bz-sp-mob-modal-head')!;
     expect((modalHead as HTMLElement).style.borderBottom).toBe('');
     expect(modalHead.querySelector('.bz-sp-mob-modal-title')!.textContent).toBe('番茄钟');
-    expect(modalHead.querySelector('.bz-sp-mob-modal-ic .bz-ic[data-icon="timer"]')).toBeTruthy();
+    expect(modalHead.querySelector('.bz-sp-mob-modal-ic')).toBeNull();
     const modalMask = modal!.previousElementSibling as HTMLElement;
     expect(modalMask.classList.contains('bz-overlay-mask')).toBe(true);
     modalMask.dispatchEvent(new MouseEvent('click', { bubbles: true }));

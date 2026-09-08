@@ -24,8 +24,8 @@ describe('mainSettingsSchema：主设置页两区块', () => {
   const schema = mainSettingsSchema();
 
   it('ticket 170：两区块升级为分组卡片（带 icon），标题不带 emoji 前缀（emoji 由分组卡图标呈现，防两遍）', () => {
-    expect(schema.groups.map((g) => g.name)).toEqual(['AI', '采样参数', '数据存储路径']);
-    expect(schema.groups.map((g) => g.icon)).toEqual(['sparkles', 'sliders-horizontal', 'folder-open']);
+    expect(schema.groups.map((g) => g.name)).toEqual(['AI', '数据存储路径']);
+    expect(schema.groups.map((g) => g.icon)).toEqual(['sparkles', 'folder-open']);
   });
 
   it('AI 区块：服务商下拉 + 每家注册表提供商密钥行 + 自定义两行 + per-provider 配置三行（ticket 171/172；issue 187 删自定义模型行）', () => {
@@ -99,7 +99,7 @@ describe('mainSettingsSchema：主设置页两区块', () => {
   });
 
   it('数据存储路径区块：path 单选行（键直绑）+ onCommit 提示文案逐字冻结', () => {
-    const row = schema.groups[2].rows[0] as {
+    const row = schema.groups[1].rows[0] as {
       type: string;
       mode: string;
       name: string;

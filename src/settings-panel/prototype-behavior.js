@@ -8047,13 +8047,12 @@ var BZW_settings_panel = (() => {
         }
         ctrl.appendChild(chip);
       }
-      if (!current2.length && !opts.fallbackChip) {
-        const m = document.createElement("span");
-        m.className = "bz-sp-chip bz-sp-chip--muted";
-        m.textContent = multi ? "未选择" : "未设置";
-        ctrl.appendChild(m);
+      const empty = !current2.length && !opts.fallbackChip;
+      if (empty) {
+        if (!addBtn.isConnected) ctrl.appendChild(addBtn);
+      } else {
+        addBtn.remove();
       }
-      if (!addBtn.isConnected) ctrl.appendChild(addBtn);
     };
     const renderAll4 = () => renderChips();
     ctrl.appendChild(addBtn);
@@ -8316,6 +8315,9 @@ var BZW_settings_panel = (() => {
           row.render(slot, ctx);
         } catch (e) {
           notice(`自定义设置行渲染失败：${e instanceof Error ? e.message : String(e)}`, "error");
+        }
+        if (rowName || row.desc) {
+          slot.querySelectorAll(".setting-item-info").forEach((n) => n.remove());
         }
         if (regRefresh && row.onRefresh) {
           const onRefresh = row.onRefresh;
@@ -8787,7 +8789,7 @@ var BZW_settings_panel = (() => {
          *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
          *  既有调用（不传这两项）行为零变化 */
         async prompt(promptText, model = this.defaultModel, options2 = {}) {
-          var _a2, _b2;
+          var _a2;
           const mergedOptions = this._mergeOptions(options2);
           const provider = await getAIProvider(mergedOptions.provider);
           const s = getQ3Settings();
@@ -8804,18 +8806,6 @@ var BZW_settings_panel = (() => {
           for (const k of Object.keys(mo)) {
             if (k === "max_tokens") continue;
             body[k] = mo[k];
-          }
-          for (const [key, settingsKey] of [
-            ["temperature", "aiTemperature"],
-            ["top_p", "aiTopP"],
-            ["frequency_penalty", "aiFrequencyPenalty"],
-            ["presence_penalty", "aiPresencePenalty"]
-          ]) {
-            if (body[key] !== void 0) continue;
-            const raw = String((_b2 = s[settingsKey]) != null ? _b2 : "").trim();
-            if (raw === "") continue;
-            const n = Number(raw);
-            if (Number.isFinite(n)) body[key] = n;
           }
           const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
           const onDelta = typeof mergedOptions.onDelta === "function" ? mergedOptions.onDelta : void 0;
@@ -9165,12 +9155,6 @@ var BZW_settings_panel = (() => {
         const setting = new Setting(body).setName(label);
         if (desc) setting.setDesc(desc);
         let input = null;
-        setting.addText((t) => {
-          input = t;
-          t.setValue(providerValue("model"));
-          t.setPlaceholder("默认模型");
-          t.onChange((v) => setProviderValue("aiModelOverrides", v));
-        });
         setting.addButton((b) => {
           b.setButtonText("获取模型名").onClick(() => {
             void (async () => {
@@ -9206,6 +9190,12 @@ var BZW_settings_panel = (() => {
               }
             })();
           });
+        });
+        setting.addText((t) => {
+          input = t;
+          t.setValue(providerValue("model"));
+          t.setPlaceholder("默认模型");
+          t.onChange((v) => setProviderValue("aiModelOverrides", v));
         });
         body.__providerInput = input;
       },
@@ -9287,46 +9277,6 @@ var BZW_settings_panel = (() => {
     );
     return rows;
   }
-  function samplingGroup() {
-    return {
-      icon: "sliders-horizontal",
-      name: "采样参数",
-      rows: [
-        {
-          type: "text",
-          name: "采样温度",
-          desc: "采样温度，留空用 API 默认",
-          binding: { key: "aiTemperature" },
-          num: true,
-          placeholder: "API 默认"
-        },
-        {
-          type: "text",
-          name: "核采样上限",
-          desc: "核采样概率上限，留空用 API 默认",
-          binding: { key: "aiTopP" },
-          num: true,
-          placeholder: "API 默认"
-        },
-        {
-          type: "text",
-          name: "频率惩罚",
-          desc: "降低重复内容的倾向，留空用 API 默认",
-          binding: { key: "aiFrequencyPenalty" },
-          num: true,
-          placeholder: "API 默认"
-        },
-        {
-          type: "text",
-          name: "存在惩罚",
-          desc: "鼓励引入新内容的倾向，留空用 API 默认",
-          binding: { key: "aiPresencePenalty" },
-          num: true,
-          placeholder: "API 默认"
-        }
-      ]
-    };
-  }
   function aiSettingsSchema() {
     return {
       groups: [
@@ -9334,8 +9284,7 @@ var BZW_settings_panel = (() => {
           icon: "sparkles",
           name: "AI",
           rows: aiGroupRows()
-        },
-        samplingGroup()
+        }
       ]
     };
   }
@@ -40881,24 +40830,16 @@ ${text}`;
         <span class="bz-sp-head-tools"></span>
       </div>
       <div class="bz-sp-mob-search">
-        <span class="bz-input-wrap"><i class="bz-ic"></i><input class="bz-input" placeholder="搜索设置、域…" /></span>
+        <i class="bz-ic"></i><input class="bz-input" placeholder="搜索设置、域…" />
       </div>
       <div class="bz-sp-mob-list"></div>
     `;
           const tools = popup.querySelector(".bz-sp-head-tools");
           tools.appendChild(uiIconBtn({ icon: "x", lg: true, title: "关闭", className: "bz-sp-mob-close", onClick: () => this.hide() }));
           const list = popup.querySelector(".bz-sp-mob-list");
-          const searchWrap = popup.querySelector(".bz-sp-mob-search");
           const searchIn = popup.querySelector(".bz-sp-mob-search .bz-input");
           const searchIcon = popup.querySelector(".bz-sp-mob-search .bz-ic");
           setIcon(searchIcon, "search");
-          const clearBtn = uiIconBtn({ icon: "x", title: "清除", className: "bz-sp-mob-clear" });
-          searchWrap.appendChild(clearBtn);
-          clearBtn.addEventListener("click", () => {
-            searchIn.value = "";
-            render2("");
-            searchIn.focus();
-          });
           const render2 = (q2) => {
             const query = q2.trim();
             list.innerHTML = "";
@@ -41014,15 +40955,10 @@ ${text}`;
           topifyZ(mask, popup);
           const head = document.createElement("div");
           head.className = "bz-sp-mob-modal-head";
-          const ic = document.createElement("span");
-          ic.className = "bz-sp-mob-modal-ic";
-          ic.appendChild(uiIcon(domain.icon));
           const title = document.createElement("h3");
           title.className = "bz-sp-mob-modal-title";
           title.textContent = domain.name;
-          head.append(ic, title);
-          const x = uiIconBtn({ icon: "x", lg: true, title: "关闭" });
-          head.appendChild(x);
+          head.appendChild(title);
           popup.appendChild(head);
           const body = document.createElement("div");
           body.className = "bz-sp-settings-body bz-sp-mob-modal-body";
@@ -41032,7 +40968,6 @@ ${text}`;
             mask.remove();
             popup.remove();
           };
-          x.addEventListener("click", close);
           mask.addEventListener("click", (e) => {
             if (e.target === mask) close();
           });
