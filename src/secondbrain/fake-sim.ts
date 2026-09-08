@@ -27,12 +27,15 @@ import { setAISettingsProvider } from '../core/ai';
 import { SecondBrainPanel } from './panel';
 import { ChatPanel } from './chat-panel';
 import { ReferencePanel } from './reference-panel';
+import { MobilePanel } from './mobile-panel';
+import { IS_MOBILE } from './config';
 
 /**
  * SimVectorStore：VectorStore 的数据面假实现（ADR-0106；真 VectorStore 的 refresh
  * 运维语义要求白名单内存在真实 vault 笔记，演示快照无法满足——白名单空会按 ticket 103
  * 语义清库）。UI 行为层消费面（meta/initialLoad/isIndexReady/isRefreshing/
- * hasPendingChanges/refresh/rebuildAll/vectors/search）逐一鸭子类型实现：
+ * hasPendingChanges/refresh/rebuildAll/vectors/search + 移动抽屉面 initMobile/
+ * searchMobile/notes）逐一鸭子类型实现：
  *   - search = 演示快照上的真实文本匹配（标题+段落包含计分），与真降级链同形态；
  *   - refresh/rebuildAll = 模拟进度文案（onboard 进度视图全真渲染）。
  */
@@ -60,6 +63,14 @@ class SimVectorStore {
   hasPendingChanges(): boolean {
     return false;
   }
+  /** 移动端检索面（mobile-panel 消费）：与桌面 search 同一演示匹配链 */
+  async searchMobile(query: string, topK = 20): Promise<Array<{ path: string; chunk: string; score: number }>> {
+    return this.search(query, topK);
+  }
+  /** mobile-panel AI tab 欢迎语消费面（store.notes 键数） */
+  get notes(): Record<string, { mtime: number; chunks: { text: string }[] }> {
+    return this.meta.notes;
+  }
   async refresh(cb?: (msg: string) => void): Promise<void> {
     if (this.refreshPromise) return this.refreshPromise;
     this.refreshPromise = (async () => {
@@ -77,6 +88,10 @@ class SimVectorStore {
       await new Promise((r) => setTimeout(r, 280));
     }
     cb?.('✅ 向量化完成：演示快照（全量重嵌）');
+  }
+  /** 移动端初始化（index.ts IS_MOBILE 分支调用；演示快照已就绪，无事可做） */
+  async initMobile(): Promise<string | null> {
+    return null;
   }
   /** 演示检索：标题+段落包含计分（真 search 的降级文本匹配同形态输出） */
   async search(query: string, topK = 20): Promise<Array<{ path: string; chunk: string; score: number }>> {
@@ -133,6 +148,7 @@ let store: SimVectorStore | null = null;
 let panel: SecondBrainPanel | null = null;
 let chat: ChatPanel | null = null;
 let reference: ReferencePanel | null = null;
+let mobile: MobilePanel | null = null;
 
 /** 演示问句 → 策划回答（fetch 拦截用；关键词覆盖推荐问法与常见说法） */
 const DEMO_ANSWERS: Array<[string[], string]> = [
@@ -261,16 +277,27 @@ export async function openPanel(): Promise<void> {
   await panel.open();
 }
 
-/** 打开 AI 对话（命令 bz-secondbrain-chat 同语义） */
+/** 打开 AI 对话（命令 bz-secondbrain-chat 同语义；移动端与 index.ts 同分发→抽屉 AI tab） */
 export async function openChat(): Promise<void> {
   const s = await ensureStore();
+  if (IS_MOBILE) {
+    mobile ??= new MobilePanel(simApp as never, s as never);
+    mobile.switchTab('chat');
+    mobile.show();
+    return;
+  }
   if (!chat) chat = new ChatPanel(s as never, simApp as never);
   chat.show();
 }
 
-/** 打开灵感参考（命令 bz-secondbrain-open/reference 同语义） */
+/** 打开灵感参考（命令 bz-secondbrain-open/reference 同语义；移动端→抽屉参考 tab） */
 export async function openRef(): Promise<void> {
   const s = await ensureStore();
+  if (IS_MOBILE) {
+    mobile ??= new MobilePanel(simApp as never, s as never);
+    mobile.show();
+    return;
+  }
   if (!reference || !reference.alive) reference = new ReferencePanel(simApp as never, s as never);
   reference.fw.show();
 }
