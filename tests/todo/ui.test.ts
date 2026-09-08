@@ -1085,17 +1085,25 @@ describe('待办面板皮肤（issue 210）', () => {
     document.body.innerHTML = '';
   });
 
-  it('设置 schema：面板皮肤卡片行在「显示」组最顶部（默认风格已下线，仅两风格）', async () => {
+  it('设置 schema：外观组置顶（布局占位单卡 + 面板主题两肤，layoutKey 联动同范式）', async () => {
     const { app } = seedVault();
     const { todoSettingsSchema } = await import('../../src/todo/settings');
     const schema = todoSettingsSchema();
+    expect(schema.groups[0].name).toBe('外观');
+    const [layout, theme] = schema.groups[0].rows as any[];
+    expect(layout.type).toBe('choiceCards');
+    expect(layout.binding).toMatchObject({ key: 'todoLayout' });
+    expect(layout.options).toHaveLength(1);
+    expect(layout.options[0].value).toBe('default');
+    expect(theme.type).toBe('choiceCards');
+    expect(theme.name).toBe('面板主题');
+    expect(theme.binding).toMatchObject({ key: 'todoSkin' });
+    expect(theme.layoutKey).toBe('todoLayout');
+    expect(theme.options.map((o: any) => o.value)).toEqual(['paper', 'editorial']);
+    expect(theme.options.every((o: any) => o.layout === 'default')).toBe(true);
+    // 显示组不再含皮肤行
     const show = schema.groups.find((g) => g.name === '显示');
-    expect(show).toBeTruthy();
-    const row = show!.rows[0] as any;
-    expect(row.type).toBe('choiceCards');
-    expect(row.name).toBe('面板皮肤');
-    expect(row.binding.key).toBe('todoSkin');
-    expect(row.options.map((o: any) => o.value)).toEqual(['paper', 'editorial']);
+    expect(show!.rows.some((r: any) => r.name === '面板皮肤')).toBe(false);
     void app;
   });
 
