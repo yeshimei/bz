@@ -68,8 +68,7 @@
   <div class="grid" id="grid"></div>
 
   <div class="footnote">
-    <b>真行为单源</b>＝评审壳双 iframe 直跑插件同款 ui.ts（桌面 920px / 移动 396px，@container 定布局），数据在 localStorage；自检加 <code>?selftest=1</code>。<br>
-    <b>schema 评审壳</b>＝设置面板三件套（原型即真理源，域侧 1:1 复刻）。评审双端 × 亮暗各过一遍，绿了再走 build 门禁。
+    <b>真行为单源</b>＝评审壳双 iframe 直跑插件同款 ui.ts（桌面 920px / 移动 396px，@container 定布局），数据在 localStorage；自检加 <code>?selftest=1</code>。八域（含设置面板 2026-09-08 翻回 ui.ts 真理）全部三层共享，评审双端 × 亮暗各过一遍，绿了再走 build 门禁。
   </div>
 
 <script>
@@ -82,9 +81,9 @@
     { id: 'favorites',      name: '收藏本',   kind: 'behavior', desc: '收藏条目。C5 亚麻纸：磁贴单行横滑 + 标签工作台。' },
     { id: 'home',           name: '内容首页', kind: 'behavior', desc: '统计域卡首页。活动河七天窗口 + 周历切天。' },
     { id: 'password-vault', name: '密码本',   kind: 'behavior', desc: '密码条目工作台。v1 金色三栏：平台聚合 + 账号卡 + 金印锁屏，安全机制真码运行；演示库主密码 demo。' },
-    { id: 'settings-panel', name: '设置',     kind: 'schema',   desc: '设置面板。schema 驱动 + 外观组（面板布局/面板主题）范式，原型即真理源。' },
+    { id: 'settings-panel', name: '设置',     kind: 'behavior', desc: '设置面板。schema 驱动 + 外观组（面板布局/面板主题）范式，全域设置一份源码两端跑（ui.ts 真理）。' },
   ];
-  var KIND_LABEL = { behavior: '真行为单源', schema: 'schema 评审壳' };
+  var KIND_LABEL = { behavior: '真行为单源' };
   document.getElementById('grid').innerHTML = DOMAINS.map(function (d) {
     return '<a class="card" href="src/' + d.id + '/prototype.html">' +
       '<div><div class="name">' + d.name + '</div><div class="id">' + d.id + '</div></div>' +
