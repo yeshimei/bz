@@ -39,6 +39,11 @@ export function readFrontmatter(filePath) {
       const key = kvMatch[1].trim();
       let value = kvMatch[2].trim();
 
+      // 剥包裹引号：formatYamlValue 写入时给含空格/冒号的值加引号
+      // （豆瓣链接/海报路径必带，读不剥则 hasDoubanInfo 协议校验永远失配 → 无限重抓）
+      const quoted = value.match(/^"(.*)"$/) || value.match(/^'(.*)'$/);
+      if (quoted) value = quoted[1];
+
       // 类型转换
       if (value === '' || value === 'null' || value === 'undefined') {
         value = null;
@@ -64,11 +69,13 @@ export function hasPoster(filePath) {
 }
 
 /**
- * 检查笔记是否已有豆瓣信息（豆瓣链接字段非空）
+ * 检查笔记是否已有豆瓣信息（豆瓣链接为合法 http(s) 链接才算齐）
+ * 含协议校验：与 bz 插件 data.ts doubanUrl 正则同口径（ADR-0111 三方单口径），
+ * 脏值笔记会被重新抓取并以合法链接覆盖（自愈）
  */
 export function hasDoubanInfo(filePath) {
   const fm = readFrontmatter(filePath);
-  return !!(fm['豆瓣链接'] && String(fm['豆瓣链接']).trim());
+  return /^https?:\/\//.test(String(fm['豆瓣链接'] ?? ''));
 }
 
 /**
