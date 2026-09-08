@@ -5,14 +5,13 @@
  * 同日一次（日期粒度天然节流）；完全静默，无任何通知。
  */
 import type { App } from 'obsidian';
+import { localNow } from '../core/ui/str';
 import type { CinemaItem } from './state';
 import { M } from './state';
 
 /** 今日日期串（YYYY-MM-DD，本地时区）——「同日一次」节流的比较基准 */
 export function todayStr(): string {
-  const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  return localNow().slice(0, 10);
 }
 
 /** 纯判定：该条目是否需要触碰（有海报 ∧ 缺豆瓣链接 ∧ 检查标记非今日） */

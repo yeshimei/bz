@@ -12,9 +12,16 @@ import { searchDouban, downloadImage, fetchSubjectInfo } from './douban-client.j
  * 对单个笔记执行海报抓取管道
  * @param {string} notePath 笔记的绝对路径
  * @param {object} config 配置对象
+ * @param {object} [deps] 依赖注入（仅测试用：注入假豆瓣客户端）
  * @returns {Promise<boolean>} 是否成功抓取
  */
-export async function fetchPosterForNote(notePath, config) {
+export async function fetchPosterForNote(notePath, config, deps = {}) {
+  const { searchDouban: searchFn, downloadImage: downloadFn, fetchSubjectInfo: fetchInfoFn } = {
+    searchDouban,
+    downloadImage,
+    fetchSubjectInfo,
+    ...deps,
+  };
   const posterFolder = path.join(config.vaultPath, config.posterFolder);
 
   // 检查笔记是否存在
@@ -37,7 +44,7 @@ export async function fetchPosterForNote(notePath, config) {
   // 搜索豆瓣
   let result;
   try {
-    result = await searchDouban(name);
+    result = await searchFn(name);
   } catch (err) {
     console.error(`[失败] 搜索《${name}》时出错: ${err.message}`);
     return false;
@@ -68,7 +75,7 @@ export async function fetchPosterForNote(notePath, config) {
     // 下载海报
     try {
       console.log(`[下载] 正在下载高清海报...`);
-      await downloadImage(result.posterUrl, posterPath);
+      await downloadFn(result.posterUrl, posterPath);
     } catch (err) {
       console.error(`[失败] 下载海报时出错: ${err.message}`);
       return false;
@@ -86,7 +93,7 @@ export async function fetchPosterForNote(notePath, config) {
   // 顺便获取豆瓣信息写入YAML
   console.log(`[搜索] 正在获取《${name}》的豆瓣信息...`);
   try {
-    const info = await fetchSubjectInfo(result.detailUrl);
+    const info = await fetchInfoFn(result.detailUrl);
     if (info) {
       const fields = {};
       if (info.rating) fields['豆瓣评分'] = info.rating;
