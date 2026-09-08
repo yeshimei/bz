@@ -47,6 +47,7 @@ const SOURCES = [
   "src/pomodoro/styles.css",
   "src/attach/styles.css",
   "src/encrypt/styles.css",
+  "src/password-vault/styles.css",
   "src/settings-panel/styles.css",
   "src/belongings/styles.css",
   "src/cinema/styles.css",

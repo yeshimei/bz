@@ -1,6 +1,6 @@
 # ADR-0085：保险箱（encrypt）与保险库（password-vault）合并为统一保险库
 
-- 状态：已采纳
+- 状态：已采纳（2026-09-09 起部分被 ADR-0109 取代：password-vault 拆回独立域「密码本」，单命令/单面板结论不再成立；数据同库与 encrypt 面板本体不变）
 - 日期：2026-09-03
 - 关联：ADR-0004（命令裸注册三段式）、ADR-0015（保险箱数据合并：kind=password-vault SafeNote）、ADR-0016（平铺点前缀密文布局）、ADR-0017（加密日记=kind=diary-entry SafeNote）、ADR-0019（移动端全屏）、ADR-0064/0080（设置 schema / 设置面板收纳）、ADR-0078（密码本 UI 切换保险库域）、ADR-0079（fav 字段）、铁律 6（UI 分层）
 - 票：`issues/183-vault-merge.md`

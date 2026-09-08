@@ -328,10 +328,10 @@ function finishProgress(h: NoticeHandle | null, done: number, msg: string) {
 
 
 
-/** 保险库设置 schema（ticket 131；ADR-0064；ADR-0085 统一收纳保险库 + 密码生成/安全）：
- *  存储/预览/安全/移动端 + 密码「生成/安全」两组。全部配置项为启动快照
- *  （控制器构造时读取），改动需重载插件后生效——warnReload 收敛为 makeReloadWarnOnce（onCommit/
- *  onChange 一次性提示）。置于模块顶层供文案 lint 直接引用。 */
+/** 保险库设置 schema（ticket 131；ADR-0064；ADR-0085 统一收纳保险库；ADR-0109 密码「生成」组
+ *  归还密码本域 schema——password-vault/settings.ts）。存储/预览/安全/移动端 + 外观。
+ *  全部配置项为启动快照（控制器构造时读取），改动需重载插件后生效——warnReload 收敛为
+ *  makeReloadWarnOnce（onCommit/onChange 一次性提示）。置于模块顶层供文案 lint 直接引用。 */
 export function encryptSettingsSchema(): SettingsSchema {
   const warnReload = makeReloadWarnOnce();
   return {
@@ -343,29 +343,6 @@ export function encryptSettingsSchema(): SettingsSchema {
         rows: [
           { type: 'choiceCards', name: '面板布局', binding: { key: 'encryptSkin' }, options: [{ value: 'default', label: '三栏', prevClass: 'bz-sp-prev-panel' }] },
           { type: 'choiceCards', name: '面板主题', binding: { key: 'encryptSkinTheme' }, layoutKey: 'encryptSkin', options: [{ value: 'steel', label: '钢灰', layout: 'default', prevClass: 'bz-sp-prev-steel' }] },
-        ],
-      },
-      {
-        icon: 'key-round',
-        name: '生成',
-        rows: [
-          {
-            type: 'text',
-            name: '密码生成字符集',
-            desc: '随机生成密码时使用的字符集',
-            binding: { key: 'passwordCharset' },
-            onCommit: warnReload,
-          },
-          {
-            type: 'number',
-            name: '密码生成长度',
-            desc: '随机生成密码的字符个数',
-            binding: numStrBinding('passwordLength', 16),
-            min: 4,
-            max: 128,
-            step: 1,
-            onCommit: warnReload,
-          },
         ],
       },
       {

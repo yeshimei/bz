@@ -41,6 +41,7 @@ export const DOMAIN_ICONS: Readonly<Record<string, string>> = {
   pomodoro: 'timer',
   attach: 'folder-down',
   encrypt: 'lock',
+  'password-vault': 'key',
   smartcat: 'cat',
   literature: 'list-video',
   // 命令专属域

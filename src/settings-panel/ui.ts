@@ -85,6 +85,7 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   secondbrain: async () => (await import('../secondbrain/panel')).secondBrainSettingsSchema(),
   pomodoro: async () => (await import('../pomodoro/ui')).pomodoroSettingsSchema(),
   encrypt: async () => (await import('../encrypt/ui')).encryptSettingsSchema(),
+  'password-vault': async () => (await import('../password-vault/settings')).passwordVaultSettingsSchema(),
   literature: async () => (await import('../literature/ui')).literatureSettingsSchema(),
   smartcat: async () => {
     const { loadSmartCatData } = await import('../smartcat/data');
@@ -130,6 +131,7 @@ export const DOMAINS: DomainDef[] = [
   { id: 'pomodoro', name: '番茄钟', icon: DOMAIN_ICONS.pomodoro, desc: '专注计时与休息', schemaLoader: schemaLoaders.pomodoro },
   { id: 'attach', name: '附件搬移', icon: DOMAIN_ICONS.attach, desc: '附件整理', noSettings: true },
   { id: 'encrypt', name: '保险库', icon: DOMAIN_ICONS.encrypt, desc: '密码、加密笔记与加密日记', schemaLoader: schemaLoaders.encrypt },
+  { id: 'password-vault', name: '密码本', icon: DOMAIN_ICONS['password-vault'], desc: '密码条目与生成器', schemaLoader: schemaLoaders['password-vault'] },
   { id: 'smartcat', name: '小橘陪伴猫', icon: DOMAIN_ICONS.smartcat, desc: '桌面宠物陪伴', schemaLoader: schemaLoaders.smartcat },
   { id: 'literature', name: '文献盒', icon: DOMAIN_ICONS.literature, desc: '文献笔记与术语录入', schemaLoader: schemaLoaders.literature },
 ];
@@ -140,7 +142,7 @@ export const NAV_SECS: Array<{ title: string; ids: string[] }> = [
   { title: '基础', ids: ['global', 'appearance', 'ai'] },
   { title: '记录', ids: ['diary', 'diary-wall', 'todo', 'belongings', 'clipping', 'favorites'] },
   { title: '媒体与知识', ids: ['cinema', 'bookshelf', 'review', 'secondbrain', 'literature'] },
-  { title: '工具', ids: ['pomodoro', 'encrypt', 'smartcat'] },
+  { title: '工具', ids: ['pomodoro', 'encrypt', 'password-vault', 'smartcat'] },
 ];
 
 /** 已加载域的 schema 行缓存（移动端搜索「设置项」段用：域名 → 行名/描述列表） */

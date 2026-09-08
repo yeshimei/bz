@@ -1,6 +1,6 @@
 # AGENTS.md — 包仔（bz）Obsidian 插件
 
-独立 Obsidian 插件，21 功能域（详见领域清单）。**项目语言：中文**。
+独立 Obsidian 插件，22 功能域（详见领域清单）。**项目语言：中文**。
 
 ## 命令与构建
 - `pnpm install` / `pnpm run dev` / `pnpm run build` / `pnpm test` / `pnpm exec tsc --noEmit`（依赖用 pnpm，勿用 npm）
@@ -35,6 +35,7 @@
 | pomodoro | pomodoro.json |
 | attach | 搬附件 |
 | encrypt（保险库，ADR-0085） | `CONFIG/.ENCRYPT/` |
+| password-vault（密码本，ADR-0109 拆回） | `CONFIG/.ENCRYPT/`（kind=password-vault SafeNote，与 encrypt 共锁同库） |
 | bookshelf（书架墙） | `书库/*.md`、EPUB（library 已退役并入） |
 | cinema（影院） | `我的/影视/*.md`（movie 已退役并入，ADR-0087） |
 | home（内容首页） | 各域只读快照 |
