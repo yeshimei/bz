@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { collectMissingPosterNotes, sortByBirthtime, createProcessor } from '../watcher.js';
+import { collectIncompleteNotes, sortByBirthtime, createProcessor } from '../watcher.js';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-describe('collectMissingPosterNotes', () => {
+describe('collectIncompleteNotes', () => {
   let tmpDir;
 
   beforeEach(() => {
@@ -18,19 +18,21 @@ describe('collectMissingPosterNotes', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it('只返回缺海报的 .md（有海报/非 md/子目录跳过）', () => {
+  it('返回待补的 .md（缺海报或缺豆瓣链接都算；齐全/非 md/子目录跳过）', () => {
     fs.writeFileSync(path.join(tmpDir, '无海报.md'), '---\ntags:\n  - 电影\n---\n');
-    fs.writeFileSync(path.join(tmpDir, '有海报.md'), '---\ntags:\n  - 电影\n海报: CONFIG/MOVIE POSTER/a.jpg\n---\n');
+    fs.writeFileSync(path.join(tmpDir, '只有海报.md'), '---\ntags:\n  - 电影\n海报: CONFIG/MOVIE POSTER/a.jpg\n---\n');
+    fs.writeFileSync(path.join(tmpDir, '只有链接.md'), '---\ntags:\n  - 电影\n豆瓣链接: https://movie.douban.com/subject/1/\n---\n');
+    fs.writeFileSync(path.join(tmpDir, '齐全.md'), '---\ntags:\n  - 电影\n海报: CONFIG/MOVIE POSTER/a.jpg\n豆瓣链接: https://movie.douban.com/subject/1/\n---\n');
     fs.writeFileSync(path.join(tmpDir, 'readme.txt'), 'hi');
     fs.mkdirSync(path.join(tmpDir, '子目录'));
     fs.writeFileSync(path.join(tmpDir, '子目录', '嵌套.md'), '---\n---\n');
 
-    const missing = collectMissingPosterNotes(tmpDir).map((p) => path.basename(p));
-    assert.deepEqual(missing, ['无海报.md']);
+    const missing = collectIncompleteNotes(tmpDir).map((p) => path.basename(p)).sort();
+    assert.deepEqual(missing, ['只有海报.md', '只有链接.md', '无海报.md']);
   });
 
   it('文件夹不存在时返回空数组', () => {
-    assert.deepEqual(collectMissingPosterNotes(path.join(tmpDir, '不存在')), []);
+    assert.deepEqual(collectIncompleteNotes(path.join(tmpDir, '不存在')), []);
   });
 });
 

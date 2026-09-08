@@ -40,6 +40,7 @@ tags:
 上映日期: 2014-11-07
 豆瓣评分: 9.4
 豆瓣链接: https://movie.douban.com/subject/1889243/
+豆瓣检查: 2026-09-08
 简介: 近未来的地球黄沙遍野。
 ---`));
     const app = makeApp(vault);
@@ -60,6 +61,7 @@ tags:
     expect(it.year).toBe('2014');
     expect(it.doubanRating).toBe('9.4');
     expect(it.doubanUrl).toBe('https://movie.douban.com/subject/1889243/');
+    expect(it.doubanCheck).toBe('2026-09-08');
     expect(it.synopsis).toBe('近未来的地球黄沙遍野。');
   });
 
@@ -74,6 +76,8 @@ tags:
     expect(byName['A'].status).toBe(0); // STATUS_WANT
     expect(byName['B'].status).toBe(1); // STATUS_WATCHING
     expect(byName['C'].status).toBe(2); // STATUS_WATCHED
+    // 无 豆瓣检查 字段 → null（触碰协议的「从未检查」态）
+    expect(byName['A'].doubanCheck).toBeNull();
   });
 
   it('无 frontmatter 跳过；无 tag 跳过', () => {
@@ -147,7 +151,7 @@ describe('cinema 排序与筛选', () => {
       name, typeTag: '电影', group: '电影',
       watchDate: null, rating: null, status: 2, poster: null, review: null,
       genre: null, director: null, actors: null, region: null, year: null,
-      doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null,
+      doubanRating: null, doubanUrl: null, doubanCheck: null, synopsis: null, duration: null, seasonText: null,
     });
     const t0 = 1000;
     const old = mk('旧片', t0, 9000); // 先创建，后被编辑 → mtime 最大
