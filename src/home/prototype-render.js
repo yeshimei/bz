@@ -85,6 +85,7 @@ var BZR_home = (() => {
     pomodoro: "timer",
     attach: "folder-down",
     encrypt: "lock",
+    "password-vault": "key",
     smartcat: "cat",
     literature: "list-video",
     // 命令专属域
@@ -92,7 +93,7 @@ var BZR_home = (() => {
   };
 
   // src/home/shared.ts
-  var ICON_KEY = { wall: "diary-wall", settings: "settings-panel" };
+  var ICON_KEY = { wall: "diary-wall", settings: "settings-panel", vault: "password-vault" };
   var iconOf = (id) => {
     var _a;
     return DOMAIN_ICONS[(_a = ICON_KEY[id]) != null ? _a : id];
@@ -112,6 +113,8 @@ var BZR_home = (() => {
     { id: "belongings", commandId: "bz-belongings-open", name: "归物本", sub: "物品登记", icon: iconOf("belongings") },
     { id: "attach", commandId: "bz-attach-move", name: "移动附件", sub: "附件归位", icon: iconOf("attach") },
     { id: "encrypt", commandId: "bz-encrypt-open", name: "保险库", sub: "密码·加密笔记·日记", icon: iconOf("encrypt") },
+    // 密码本（password-vault 域，ADR-0109 拆回独立域；id 沿用合并前磁贴 id，旧钉选自动复活）
+    { id: "vault", commandId: "bz-password-vault-open", name: "密码本", sub: "密码与密钥", icon: iconOf("vault") },
     { id: "settings", commandId: "bz-settings-panel-open", name: "设置", sub: "全域设置", icon: iconOf("settings") }
   ];
   var DOMAIN_MAP = new Map(DOMAINS.map((d) => [d.id, d]));
@@ -130,6 +133,7 @@ var BZR_home = (() => {
     belongings: "#45a35c",
     attach: "#8a8f99",
     encrypt: "#8a8f99",
+    vault: "#c9a227",
     smartcat: "#e67341",
     settings: "#8a8f99"
   };
