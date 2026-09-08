@@ -37,6 +37,8 @@ export interface FlowDialogOptions {
   title?: string;
   message: string;
   actions: FlowDialogAction[];
+  /** 追加到弹窗根的皮肤类（挂 body，供域自绘皮：如剪藏本编辑部对话框） */
+  className?: string;
 }
 
 /** 按钮规格（数据层产物；label 为原文，DOM 层拼 HTML 时统一 escapeHtml） */
@@ -128,6 +130,7 @@ export function openFlowDialog(opts: FlowDialogOptions): Promise<string | undefi
 
     const popup = document.createElement('div');
     popup.id = '__shared_confirm_popup__';
+    if (opts.className) popup.classList.add(opts.className);
     // UX 整改 37：读屏语义——弹窗容器为 dialog 模态
     popup.setAttribute('role', 'dialog');
     popup.setAttribute('aria-modal', 'true');
