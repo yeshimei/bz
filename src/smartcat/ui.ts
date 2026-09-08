@@ -11,7 +11,6 @@ import { registerAlwaysOnTop } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
 import { closeSettingsModal, openSettingsModal } from '../core/settings-modal';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
-import { renderPathSettingRow } from '../core/path-picker';
 import { normalizeMemoryDirectories } from './config';
 import type { GroupDecl, SettingsSchema } from '../core/settings-schema';
 import type { Appearance } from './types';
@@ -242,33 +241,17 @@ export function smartcatSettingsSchema(opts: {
     name: '外观',
     rows: [
       {
-        type: 'custom',
-        render: (body) => {
-          const config = opts.getConfig();
-          const grid = document.createElement('div');
-          grid.className = 'bz-sc-skin-grid';
-          for (const skin of SKINS) {
-            const item = document.createElement('button');
-            item.className = 'bz-sc-skin-item' + (skin === config.appearance ? ' active' : '');
-            item.dataset.skin = skin;
-            const swatch = document.createElement('span');
-            swatch.className = 'bz-sc-skin-swatch bz-sc-skin-swatch-' + skin;
-            const name = document.createElement('span');
-            name.className = 'bz-sc-skin-name';
-            name.textContent = skinLabel(skin);
-            item.appendChild(swatch);
-            item.appendChild(name);
-            item.addEventListener('click', async () => {
-              if (opts.getConfig().appearance === skin) return;
-              opts.getConfig().appearance = skin;
-              for (const n of Array.from(grid.querySelectorAll('.bz-sc-skin-item'))) n.classList.toggle('active', n === item);
-              await opts.saveConfig(opts.getConfig());
-              opts.onAppearanceChanged?.(skin);
-            });
-            grid.appendChild(item);
-          }
-          body.appendChild(grid);
+        // 皮肤选择（choiceCards 标准行，custom 自绘格子已退役）：色块视觉由域 CSS 提供
+        // （prevClass → .bz-sc-prev-<skin>，面板 mini 与 ⚙️ 卡片两渲染器同类）
+        type: 'choiceCards',
+        name: '面板皮肤',
+        binding: {
+          get: () => opts.getConfig().appearance,
+          set: (v) => { opts.getConfig().appearance = v; },
+          save: () => opts.saveConfig(opts.getConfig()),
         },
+        options: SKINS.map((skin) => ({ value: skin, label: skinLabel(skin), prevClass: `bz-sc-prev-${skin}` })),
+        onChange: (v) => opts.onAppearanceChanged?.(v),
       },
     ],
   };
@@ -338,24 +321,24 @@ export function smartcatSettingsSchema(opts: {
         icon: 'folder-open',
         name: '记忆目录',
         rows: [
+          // 通用 path 行（multi chips，两渲染器统一实现——custom 套 renderPathSettingRow 已退役）
           {
-            type: 'custom',
-            render: (body) => {
-              renderPathSettingRow({
-                parent: body,
-                name: '记忆目录',
-                desc: '这些文件夹内的笔记会进入小橘的记忆库（日记按时间段拆条）；移除目录会清掉对应记忆',
-                mode: 'multi',
-                value: normalizeMemoryDirectories((tryGetSettings() as any).memoryDirectories),
-                pickerTitle: '选择记忆目录',
-                pickerDesc: '选择小橘读取笔记的文件夹（可多选）',
-                onChange: (list) => {
-                  const next = normalizeMemoryDirectories(list);
-                  (getSettings() as any).memoryDirectories = next;
-                  void saveSettings();
-                  opts.onMemoryDirectoriesChanged?.(next);
-                },
-              });
+            type: 'path',
+            mode: 'multi',
+            name: '记忆目录',
+            desc: '文件夹内的笔记会进入小橘的记忆库，移除目录会清掉对应记忆',
+            binding: {
+              get: () => normalizeMemoryDirectories((tryGetSettings() as any).memoryDirectories),
+              set: () => {},
+              save: () => {},
+            },
+            pickerTitle: '选择记忆目录',
+            pickerDesc: '选择小橘读取笔记的文件夹（可多选）',
+            onChange: (list) => {
+              const next = normalizeMemoryDirectories(list);
+              (getSettings() as any).memoryDirectories = next;
+              void saveSettings();
+              opts.onMemoryDirectoriesChanged?.(next);
             },
           },
         ],

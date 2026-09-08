@@ -17,6 +17,8 @@ import { secondBrainSettingsSchema } from '../../src/secondbrain/panel';
 import { smartcatSettingsSchema } from '../../src/smartcat/ui';
 
 const WHITELIST = new Set<string>([
+  // secondbrain 本机局域网 IP：desc 为探测到的 IP/接口列表（ticket 122 自查信息本体，符号不可避免）
+  'secondbrain#本机局域网 IP:*',
   // 复习「每篇笔记出题数量」desc「固定每篇笔记出题的数量，留空/0=自动」：f8-quiz 用户拍板文案
   //（「留空/0=自动」语义），既有 UI 测试锁定该描述子串（review/ui.test.ts），改动需主会话评审——局部豁免。
   'review#每篇笔记出题数量:desc-symbol',

@@ -13,7 +13,6 @@
  * - UP 名单列表：组内只留「管理」按钮行（计数在 desc），增删/配置在独立 UP 主弹窗
  *   （renderSettingsInto 自建 overlay，形态不变）。
  */
-import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
 import { numStrBinding } from '../core/settings-common';
 import { createOverlay } from '../core/dom';
@@ -113,7 +112,7 @@ function setRowDesc(ctx: SettingsRowContext, text: string): void {
 // 内容经 renderSettingsInto 渲染进自建 overlay（bz-up-manager-mask/-popup id 与
 // z 序 10100/10101 不变；不换 openSettingsModal——其单例 toggle 语义会顶掉底层剪藏设置弹窗）。
 
-/** UP 弹窗 schema 构建入参（lint 注册时以最小参数调用即可——custom 行无 name/desc） */
+/** UP 弹窗 schema 构建入参（lint 注册时以最小参数调用即可） */
 export interface UpManagerSchemaOptions {
   ups: string[];
   upInfo: Record<string, BilibiliUpInfo>;
@@ -127,15 +126,12 @@ interface UpManagerBox {
   cookieInput: string;
   ups: string[];
   upInfo: Record<string, BilibiliUpInfo>;
-  /** 列表区重绘（renderUpList 登记；添加/移除后调用） */
-  listRefresh: () => void;
 }
 
 /**
- * UP 主名单管理弹窗 schema（ticket 131 声明式；渲染进自建 overlay）：
- * 「添加 UP 主」「B 站 Cookie（可选）」为多控件复合行（文本+按钮、动态 desc），列表区为
- * 自定义列表 DOM——declarative 十类行均无法等价表达（渲染器缺口，custom 插槽兜底），
- * 故三行全部走 custom 插槽；组壳（分组卡片）由 schema 声明。
+ * UP 主名单管理弹窗 schema（全面声明行；原 custom 三行——添加复合行/Cookie 复合行/自绘名单已退役）：
+ * 添加行与 Cookie 行 = text + 行内按钮（actions，渲染器统一实现）；名单 = 通用 list 行
+ * （头像/主副文案/移除，items 函数形式每次移除后以字盒为基底重建）。
  */
 export function upManagerSettingsSchema(opts: UpManagerSchemaOptions): SettingsSchema {
   const box: UpManagerBox = {
@@ -143,7 +139,6 @@ export function upManagerSettingsSchema(opts: UpManagerSchemaOptions): SettingsS
     cookieInput: String(opts.cookie || ''),
     ups: [...opts.ups],
     upInfo: { ...opts.upInfo },
-    listRefresh: () => {},
   };
   return {
     groups: [
@@ -151,9 +146,61 @@ export function upManagerSettingsSchema(opts: UpManagerSchemaOptions): SettingsS
         icon: 'users',
         name: 'UP 主名单',
         rows: [
-          { type: 'custom', render: (body) => renderAddUpRow(body, box, opts.onChanged) },
-          { type: 'custom', render: (body) => renderCookieRow(body, box, opts.onChanged) },
-          { type: 'custom', render: (body, ctx) => renderUpList(body, box, opts.onChanged, ctx) },
+          {
+            type: 'text',
+            name: '添加 UP 主',
+            desc: '粘贴主页链接或视频链接，自动解析后入库',
+            placeholder: '粘贴链接或 UID',
+            binding: {
+              get: () => box.inputValue,
+              set: (v) => { box.inputValue = v; },
+              save: () => {},
+            },
+            actions: [{
+              text: '添加',
+              cta: true,
+              onClick: (value) => addUpUid(value, box, opts),
+            }],
+          },
+          {
+            type: 'text',
+            name: 'B 站 Cookie 可选',
+            desc: cookieDesc(box.cookieInput),
+            placeholder: '粘贴 buvid3 或 SESSDATA 等 Cookie',
+            binding: {
+              get: () => box.cookieInput,
+              set: (v) => { box.cookieInput = v; },
+              save: () => {},
+            },
+            actions: [
+              { text: '保存', onClick: (value) => saveCookie(value || '', box, opts) },
+              { text: '清除', onClick: () => saveCookie('', box, opts) },
+            ],
+          },
+          {
+            type: 'list',
+            name: '名单列表',
+            desc: '已跟踪的 UP 主，移除后不再抓取其投稿',
+            items: () => box.ups.map((uid) => ({
+              key: uid,
+              label: upDisplayName(uid, box.upInfo[uid]),
+              sub: `UID ${uid}`,
+              imageUrl: box.upInfo[uid]?.avatar,
+            })),
+            emptyText: '暂无跟踪 UP 主，在上方粘贴主页链接或视频链接添加',
+            onChange: (keys) => {
+              void (async () => {
+                const removed = box.ups.filter((u) => !keys.includes(u));
+                for (const uid of removed) {
+                  await removeBilibiliUp(uid);
+                  box.ups = box.ups.filter((u) => u !== uid);
+                  delete box.upInfo[uid];
+                  notice(`已移除 UP 主 ${uid}`, 'success');
+                }
+                if (removed.length > 0) opts.onChanged();
+              })();
+            },
+          },
         ],
       },
     ],
@@ -165,133 +212,37 @@ function upDisplayName(uid: string, info?: BilibiliUpInfo): string {
   return info && info.name ? info.name : `UP ${uid}`;
 }
 
-/** 顶部添加行：文本输入（粘贴链接/UID）+ 添加按钮（解析入库） */
-function renderAddUpRow(body: HTMLElement, box: UpManagerBox, onChanged: () => void): void {
-  new Setting(body)
-    .setName('添加 UP 主')
-    .setDesc('粘贴主页链接（space.bilibili.com/123456）或视频链接自动解析 UID')
-    .addText((text) => {
-      text.setPlaceholder('粘贴链接或 UID');
-      text.onChange((v) => { box.inputValue = v; });
-    })
-    .addButton((btn) =>
-      btn.setButtonText('添加').setCta().onClick(() => {
-        void (async () => {
-          const raw = (box.inputValue || '').trim();
-          if (!raw) return;
-          const uid = await resolveUidFromInput(raw);
-          if (!uid) {
-            notice('无法识别 UID，请粘贴 space.bilibili.com/<uid> 主页链接', 'error');
-            return;
-          }
-          const added = await addBilibiliUp(uid);
-          if (!added) {
-            notice('该 UP 主已在名单中', 'info');
-            return;
-          }
-          box.inputValue = '';
-          box.ups.push(uid);
-          box.listRefresh();
-          onChanged();
-          notice(`已添加 UP 主 ${uid}`, 'success');
-        })();
-      })
-    );
+/** Cookie 行描述（当前配置态联动；ticket 127 风控引导精简为自然句，32 字内过文案 lint） */
+function cookieDesc(current: string): string {
+  return `遇到风控时需粘贴登录后的 Cookie。当前${current ? '已配置' : '未配置'}`;
 }
 
-/** B 站 Cookie 配置区（ticket 127）：接口 412/-352 风控引导，保存/清除落盘，desc 随状态联动 */
-function renderCookieRow(body: HTMLElement, box: UpManagerBox, onChanged: () => void): void {
-  const cookieDesc = () =>
-    `接口返回 412/-352（风控）时需要「登录后」的 Cookie：浏览器登录并打开 bilibili.com → F12 → Cookie → 复制含 SESSDATA 的整段粘贴（当前${box.cookieInput ? '已配置' : '未配置，走自动引导'}）`;
-  const row = new Setting(body)
-    .setName('B 站 Cookie（可选）')
-    .setDesc(cookieDesc());
-  row.addText((text) => {
-    text.setPlaceholder('粘贴 buvid3/SESSDATA 等 Cookie');
-    text.setValue(box.cookieInput);
-    text.onChange((v) => { box.cookieInput = v; });
-  });
-  row.addButton((btn) =>
-    btn.setButtonText('保存').onClick(() => {
-      void (async () => {
-        await writeBilibiliCookie(box.cookieInput);
-        row.setDesc(cookieDesc());
-        onChanged();
-        notice('B 站 Cookie 已保存', 'success');
-      })();
-    })
-  );
-  row.addButton((btn) =>
-    btn.setButtonText('清除').onClick(() => {
-      void (async () => {
-        await writeBilibiliCookie('');
-        box.cookieInput = '';
-        row.setDesc(cookieDesc());
-        onChanged();
-        notice('已清除 B 站 Cookie（回自动引导）', 'success');
-      })();
-    })
-  );
+/** 添加动作：解析 UID 入库（去重），回填字盒并联动外部刷新 */
+async function addUpUid(raw: string | undefined, box: UpManagerBox, opts: UpManagerSchemaOptions): Promise<void> {
+  const input = String(raw || '').trim();
+  if (!input) return;
+  const uid = await resolveUidFromInput(input);
+  if (!uid) {
+    notice('无法识别 UID，请粘贴 space.bilibili.com 内的主页链接', 'error');
+    return;
+  }
+  const added = await addBilibiliUp(uid);
+  if (!added) {
+    notice('该 UP 主已在名单中', 'info');
+    return;
+  }
+  box.inputValue = '';
+  box.ups = [...box.ups, uid];
+  opts.onChanged();
+  notice(`已添加 UP 主 ${uid}`, 'success');
 }
 
-/** 名单列表区：空态 / 行（头像 + 名字 + uid + 移除）；移除走 news.json 写回 + 组内概要刷新 */
-function renderUpList(body: HTMLElement, box: UpManagerBox, onChanged: () => void, ctx: SettingsRowContext): void {
-  const listEl = document.createElement('div');
-  listEl.dataset.upManagerList = '1';
-  body.appendChild(listEl);
-  const refresh = () => {
-    listEl.innerHTML = '';
-    if (box.ups.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'bz-up-manager-empty';
-      empty.textContent = '暂无跟踪 UP 主，在上方粘贴主页链接或视频链接添加';
-      listEl.appendChild(empty);
-      return;
-    }
-    for (const uid of box.ups) {
-      const info = box.upInfo[uid];
-      const row = document.createElement('div');
-      row.className = 'bz-up-manager-row';
-      row.dataset.upRow = '1';
-      if (info && info.avatar) {
-        const img = document.createElement('img');
-        img.className = 'bz-up-manager-avatar';
-        img.src = info.avatar;
-        img.alt = '';
-        img.onerror = () => img.remove(); // 头像加载失败不占位
-        row.appendChild(img);
-      }
-      const text = document.createElement('div');
-      text.className = 'bz-up-manager-text';
-      const name = document.createElement('div');
-      name.className = 'bz-up-manager-name';
-      name.textContent = upDisplayName(uid, info);
-      const uidEl = document.createElement('div');
-      uidEl.className = 'bz-up-manager-uid';
-      uidEl.textContent = `UID ${uid}`;
-      text.appendChild(name);
-      text.appendChild(uidEl);
-      row.appendChild(text);
-      const del = document.createElement('button');
-      del.className = 'bz-up-manager-remove';
-      del.textContent = '移除';
-      del.onclick = () => {
-        void (async () => {
-          await removeBilibiliUp(uid);
-          box.ups = box.ups.filter((u) => u !== uid);
-          delete box.upInfo[uid];
-          refresh();
-          onChanged();
-          ctx.refreshVisibility();
-          notice(`已移除 UP 主 ${uid}`, 'success');
-        })();
-      };
-      row.appendChild(del);
-      listEl.appendChild(row);
-    }
-  };
-  box.listRefresh = refresh;
-  refresh();
+/** Cookie 保存/清除动作：落盘 + 字盒同步 + 描述态由渲染器回填（onChanged 刷外部计数） */
+async function saveCookie(value: string, box: UpManagerBox, opts: UpManagerSchemaOptions): Promise<void> {
+  await writeBilibiliCookie(value);
+  box.cookieInput = value;
+  opts.onChanged();
+  notice(value ? 'B 站 Cookie 已保存' : '已清除 B 站 Cookie，回自动引导', 'success');
 }
 
 /** 打开 UP 主名单管理弹窗：自建 overlay + 声明式内容（ticket 131；z 序与叠加行为零变化） */

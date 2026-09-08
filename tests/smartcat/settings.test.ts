@@ -102,30 +102,30 @@ describe('外观平铺色块选择器', () => {
     });
   }
 
-  it('13 皮肤平铺渲染，active 跟随当前配置；色块类名齐全', () => {
+  it('13 皮肤 choiceCards 渲染，is-on 跟随当前配置；色块类名齐全', () => {
     const hooks = { saves: [] as any[], appearances: [] as string[] };
     openWith(baseConfig(), hooks);
-    const items = Array.from(document.querySelectorAll('.bz-sc-skin-grid .bz-sc-skin-item'));
+    const items = Array.from(document.querySelectorAll('.bz-cardpick-card'));
     expect(items.length).toBe(13);
-    const active = document.querySelector('.bz-sc-skin-grid .bz-sc-skin-item.active') as HTMLElement;
-    expect(active.dataset.skin).toBe('orange');
-    // 每个色块都有对应皮肤色类（swatch-<skin>）
-    const swatches = Array.from(document.querySelectorAll('.bz-sc-skin-swatch'));
+    const active = document.querySelector('.bz-cardpick-card.is-on') as HTMLElement;
+    expect(active.dataset.value).toBe('orange');
+    // 每个色块都有对应皮肤色类（bz-sc-prev-<skin> 挂预览容器）
+    const swatches = Array.from(document.querySelectorAll('[class*="bz-sc-prev-"]'));
     expect(swatches.length).toBe(13);
-    expect(document.querySelectorAll('[class*="bz-sc-skin-swatch-fire"]').length).toBe(1);
+    expect(document.querySelectorAll('.bz-sc-prev-fire').length).toBe(1);
   });
 
-  it('点击色块：写盘新外观 + active 迁移 + 即时换肤回调', async () => {
+  it('点击色块：写盘新外观 + is-on 迁移 + 即时换肤回调', async () => {
     const hooks = { saves: [] as any[], appearances: [] as string[] };
     openWith(baseConfig(), hooks);
-    const fire = document.querySelector('.bz-sc-skin-item[data-skin="fire"]') as HTMLElement;
+    const fire = document.querySelector('.bz-cardpick-card[data-value="fire"]') as HTMLElement;
     fire.click();
     await new Promise((r) => setTimeout(r, 5));
     expect(hooks.saves.length).toBe(1);
     expect(hooks.saves[0].appearance).toBe('fire');
     expect(hooks.appearances).toEqual(['fire']);
-    const active = document.querySelector('.bz-sc-skin-grid .bz-sc-skin-item.active') as HTMLElement;
-    expect(active.dataset.skin).toBe('fire');
+    const active = document.querySelector('.bz-cardpick-card.is-on') as HTMLElement;
+    expect(active.dataset.value).toBe('fire');
     // 点击当前皮肤不重复写盘
     (active as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 5));
@@ -139,15 +139,15 @@ describe('外观平铺色块选择器', () => {
     openWith(baseConfig(), hooks);
     expect(document.querySelector('.bz-sc-personality-panel')).toBeNull();
     expect(document.querySelector('.setting-item[data-name="重置成长"]')).toBeNull();
-    expect(document.querySelector('.bz-sc-skin-grid')).not.toBeNull();
-    // 移动端：同样无人格面板与重置行，皮肤网格仍在
+    expect(document.querySelector('.bz-cardpick-card')).not.toBeNull();
+    // 移动端：同样无人格面板与重置行，皮肤卡片仍在
     closeSettingsModal();
     document.body.innerHTML = '';
     Platform.isMobile = true;
     openWith(baseConfig(), hooks);
     expect(document.querySelector('.bz-sc-personality-panel')).toBeNull();
     expect(document.querySelector('.setting-item[data-name="重置成长"]')).toBeNull();
-    expect(document.querySelector('.bz-sc-skin-grid')).not.toBeNull();
+    expect(document.querySelector('.bz-cardpick-card')).not.toBeNull();
   });
 
   it('设置弹窗无彩色条形类元素（.bz-sc-personality-panel / .bz-sc-trait-row 不出现）', () => {
@@ -217,7 +217,7 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
         count: g.querySelector('.bz-settings-group-count')!.textContent,
       }));
     expect(heads).toEqual([
-      { icon: 'palette', name: '外观', count: '0 项' },
+      { icon: 'palette', name: '外观', count: '1 项' },
       // 「打开数据面板」为 button 操作行（bz-setting-action-row 豁免徽标计数，ticket 131 声明式语义）
       { icon: 'bar-chart-3', name: '可视化', count: '0 项' },
       { icon: 'message-circle', name: '互动', count: '4 项' },
@@ -232,8 +232,8 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
       { icon: 'link', name: '关联', count: '2 项' },
       { icon: 'eye', name: '显示', count: '1 项' },
     ]);
-    // 外观组内为色块网格（无 Setting 行，不计徽标），可视化组内仅「打开数据面板」
-    expect(popup.querySelector('.bz-settings-group-body .bz-sc-skin-grid')).not.toBeNull();
+    // 外观组内为色块卡组（choiceCards 标准行），可视化组内仅「打开数据面板」
+    expect(popup.querySelector('.bz-settings-group-body .bz-cardpick-card')).not.toBeNull();
     expect(popup.querySelector('.bz-settings-group-body .bz-sc-personality-panel')).toBeNull();
     // 弹窗宽度 560（分组卡片方案）
     expect(popup.style.maxWidth).toBe('560px');
