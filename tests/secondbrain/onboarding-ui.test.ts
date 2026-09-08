@@ -555,7 +555,7 @@ describe('第二大脑对话弹窗（ticket 108 改居中弹窗）', () => {
     expect(popup).not.toBeNull();
     expect(popup!.style.display).toBe('flex');
     expect(document.getElementById('bz-sb-chat-mask')!.style.display).toBe('block');
-    expect(popup!.querySelectorAll('button').length).toBe(2); // 发送钮 + 头部「清空对话」（ticket 141；仍无关闭钮，靠遮罩+ESC）
+    expect(popup!.querySelectorAll('button').length).toBe(8); // 发送 + 清空 + 6 推荐问法 chips（issue 251；仍无关闭钮，靠遮罩+ESC）
 
     chat.close();
     expect(popup!.style.display).toBe('none');

@@ -1,6 +1,6 @@
 # 原型先行 · UI 开发通用指导
 
-域 UI 的唯一真理源是**与插件共用的实现源码**：`styles.css`（样式）、`render.ts`（markup/口径）、`ui.ts`（行为，经公共假层，ADR-0106，六域全覆盖）。`prototype.html` 评审壳与插件是同一份代码的两个运行端——改源码一处两侧生效，无「同步/追赶」环节；两侧表现不一致 = 缺陷，修复改源码（或假层），禁止任一侧私改遮盖。迭代遵循「改源码 → 原型评审 → 构建」单向流程，评审以双击 `prototype.html` 实跑为准，禁止目测调参。六域（belongings/bookshelf/cinema/favorites/home/settings-panel）已全部行为单源。
+域 UI 的唯一真理源是**与插件共用的实现源码**：`styles.css`（样式）、`render.ts`（markup/口径）、`ui.ts`（行为，经公共假层，ADR-0106，八域全覆盖）。`prototype.html` 评审壳与插件是同一份代码的两个运行端——改源码一处两侧生效，无「同步/追赶」环节；两侧表现不一致 = 缺陷，修复改源码（或假层），禁止任一侧私改遮盖。迭代遵循「改源码 → 原型评审 → 构建」单向流程，评审以双击 `prototype.html` 实跑为准，禁止目测调参。八域（belongings/bookshelf/cinema/clipbook/favorites/home/password-vault/settings-panel）已全部行为单源。
 
 ## 总则
 
