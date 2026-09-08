@@ -16,7 +16,9 @@ if (!edge) {
 }
 const port = 9333 + Math.floor(Math.random() * 200);
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'bz-review-st-'));
-const url = 'file:///D:/Obsidian/.dsh-worktrees/review-single-source-251/src/review/prototype.html?selftest=1';
+// 目标页默认取本仓库内壳（跨 worktree 复用），可用 argv[2] 覆盖完整 URL
+const shellUrl = new URL('../src/review/prototype.html', import.meta.url);
+const url = process.argv[2] || shellUrl.href + '?selftest=1';
 
 const proc = spawn(edge, [
   '--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`,
