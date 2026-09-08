@@ -9,7 +9,7 @@ import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { initPanel, showPanel, closePanel, unloadPanel, __autoReadingDelayForTests } from '../../src/clipbook/ui';
+import { initPanel, showPanel, closePanel, unloadPanel } from '../../src/clipbook/ui';
 import { M } from '../../src/clipbook/state';
 import { openClipbook, unloadClipbook } from '../../src/clipbook';
 import { setClipDir } from './helpers';
@@ -396,7 +396,7 @@ describe('clipbook UI 桌面三栏', () => {
     closePanel();
   });
 
-  it('issue 214：目录未读在前（在读条目让位，组内保持最新在前）', async () => {
+  it('去在读（issue 248 追）：目录全为未读，源序展示（reading 侧写不再派生）', async () => {
     const vault = boot();
     const app = getApp();
     const raw = JSON.parse((app.vault as any).files.get('CONFIG/STORAGE/news.json'));
@@ -412,15 +412,14 @@ describe('clipbook UI 桌面三栏', () => {
     openClipbook(getApp());
     await vi.waitFor(() => expect(M.open).toBe(true));
     await vi.waitFor(() => expect(document.querySelectorAll('.bz-clip-item').length).toBe(2));
-    const first = document.querySelector('.bz-clip-item') as HTMLElement;
-    expect(first.textContent).toContain('未读旧文');
-    expect(first.classList.contains('bz-clip-item--unread')).toBe(true);
-    const second = [...document.querySelectorAll('.bz-clip-item')][1] as HTMLElement;
-    expect(second.classList.contains('bz-clip-item--reading')).toBe(true);
+    const items = [...document.querySelectorAll('.bz-clip-item')] as HTMLElement[];
+    expect(items[0].textContent).toContain('在读新文'); // 无「在读」让位语义，均未读按源序
+    expect(items[0].classList.contains('bz-clip-item--unread')).toBe(true);
+    expect(items[1].classList.contains('bz-clip-item--unread')).toBe(true);
     closePanel();
   });
 
-  it('issue 214：阅读面——站点并入 meta、去底部原文链接；news 右键含「查看原文」；剪藏条目有「打开笔记」文字脚', async () => {
+  it('issue 214：阅读面——站点并入 meta、去底部原文链接；news 右键动作（去查看原文）；剪藏条目有「打开笔记」文字脚', async () => {
     await openDesktop();
     const reader = document.querySelector('[data-clip-reader]') as HTMLElement;
     // meta 行：时间 + 站点短名（橘，首篇 = B站 UP 影视飓风）+ 状态右缘；无 favicon/类型胶囊（issue 214 原型对齐）
@@ -432,11 +431,11 @@ describe('clipbook UI 桌面三栏', () => {
     // 底部动作退役：无原文链接；news 无打开笔记脚
     expect(reader.querySelector('.bz-clip-art-origin')).toBeNull();
     expect(reader.querySelector('[data-clip-open-note]')).toBeNull();
-    // 动作归宿：右键菜单含「查看原文」
+    // 动作归宿：右键菜单不含「查看原文」（issue 248 追：入口退役，原文靠长按/桌面本地打开）
     const item = document.querySelector('.bz-clip-item') as HTMLElement;
     item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
     await vi.waitFor(() => expect(document.querySelector('.bz-item-menu')).toBeTruthy());
-    expect((document.querySelector('.bz-item-menu') as HTMLElement).textContent).toContain('查看原文');
+    expect((document.querySelector('.bz-item-menu') as HTMLElement).textContent).not.toContain('查看原文');
     // 编辑部换肤靠根挂类生效（菜单挂 body，域内后代选择器不可达）
     expect(document.querySelector('.bz-item-menu')!.classList.contains('bz-clip-menu-editorial')).toBe(true);
     // 剪藏条目：文末「打开笔记」文字脚（data-clip-open-note 保留）
@@ -448,32 +447,8 @@ describe('clipbook UI 桌面三栏', () => {
     closePanel();
   });
 
-  // ================= issue 224：自动落在读后让位重排（桌面 + 移动同序） =================
 
-  it('issue 224：桌面——点击文章自动落在读后，目录让位到未读之后', async () => {
-    const vault = boot();
-    const app = getApp();
-    const raw = JSON.parse((app.vault as any).files.get('CONFIG/STORAGE/news.json'));
-    raw.articles = [
-      { platform: '果壳科学人', title: '甲-最新', url: 'https://guokr.com/a', date: '2026-09-06 08:00:00', body: 'b1' },
-      { platform: '果壳科学人', title: '乙-次新', url: 'https://guokr.com/b', date: '2026-09-05 08:00:00', body: 'b2' },
-      { platform: '果壳科学人', title: '丙-最旧', url: 'https://guokr.com/c', date: '2026-09-04 08:00:00', body: 'b3' },
-    ];
-    (app.vault as any).files.set('CONFIG/STORAGE/news.json', JSON.stringify(raw));
-    __autoReadingDelayForTests(300);
-    openClipbook(getApp());
-    await vi.waitFor(() => expect(M.articles.length).toBe(3));
-    const titles = () => [...document.querySelectorAll('.bz-clip-item .bz-clip-item-t span')].map((e) => e.textContent);
-    expect(titles()).toEqual(['甲-最新', '乙-次新', '丙-最旧']);
-    (document.querySelectorAll('.bz-clip-item')[0] as HTMLElement).click();
-    expect(M.cur?.title).toContain('甲-最新');
-    // 停留超阈值 → 自动落「在读」→ 目录重排让位（甲沉底，乙/丙前移）
-    await vi.waitFor(() => expect(M.cur?.st).toBe('reading'), { timeout: 3000 });
-    await vi.waitFor(() => expect(titles()).toEqual(['乙-次新', '丙-最旧', '甲-最新']));
-    closePanel();
-  });
-
-  it('issue 224：移动列表与桌面目录同序——在读条目让位未读（原时间序钉死原位）', async () => {
+  it('去在读（issue 248 追）：overrides.reading 不再派生状态——两篇均未读按源序展示', async () => {
     const vault = boot();
     const app = getApp();
     const raw = JSON.parse((app.vault as any).files.get('CONFIG/STORAGE/news.json'));
@@ -490,7 +465,7 @@ describe('clipbook UI 桌面三栏', () => {
     await vi.waitFor(() => expect(M.articles.length).toBe(2));
     // 目录化后：常显 active 段直属于 ch-items（已收折叠段 arch 内条目不计入）
     const mobTitles = () => [...document.querySelectorAll('[data-clip-mob-list] .bz-clip-mob-ch-items > .bz-clip-mob-item .bz-clip-mob-ttl')].map((e) => e.textContent);
-    expect(mobTitles()).toEqual(['未读旧文', '在读新文']);
+    expect(mobTitles()).toEqual(['在读新文', '未读旧文']); // 去在读后无让位语义，按源序
     closePanel();
   });
 });

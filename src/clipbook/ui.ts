@@ -39,11 +39,12 @@ import type { SettingsSchema } from '../core/settings-schema';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { ensureAutoSummary, stopAutoSummary, regenerateSummary } from '../auto-summary';
 import { dataSourceGroupRows } from './news-sources-group';
+import { articleKeyOf } from './constants';
 import { readDataSourceState, type DataSourceState } from './news-source-settings';
 import { batchSizeRow } from '../core/settings-common';
 import type { ClipArticle } from './types';
 import { toParagraphs, stripClipChrome } from './md';
-import { queryBySource, aggregateSites } from './store';
+import { queryBySource, aggregateSites, clipArticle } from './store';
 import {
   panelHtml, railItemHtml, railFootHtml, tocListHtml, paragraphsHtml as paragraphsMarkup,
   clipLoadingHtml, readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, mobNoHitHtml, type MobChapter, siteTint,
@@ -52,7 +53,7 @@ import {
 import { M, resetClipbookState } from './state';
 import { readNewsAndSidecar, clipDir } from './loader';
 import {
-  flowSave, flowMarkRead, flowToggleReading, flowDeleteNews, setReadingSession, pauseReadingSession,
+  flowSave, flowMarkRead, flowDeleteNews, setReadingSession, pauseReadingSession,
   flowMarkAllRead, flowUndoHandled, flowUndoDeleteNews,
 } from './flow';
 import type { ClipNote } from './scan';
@@ -79,7 +80,6 @@ let loaded = false; // C5：本次会话是否已成功装载过（false = 首�
 
 // ================= 增强包常量与状态 =================
 const SEARCH_DEBOUNCE_MS = 180; // 对齐保险库/待办
-let AUTO_READING_MS = 10000; // 右栏停留超 10s 自动落「在读」（测试可缩短）
 const PANEL_MIN_W = 760; // 桌面缩放钳制（三栏骨架最小可读宽度）
 const PANEL_MIN_H = 520;
 const PANEL_MAX_W = 1600;
@@ -87,17 +87,11 @@ const PANEL_MAX_H = 1000;
 /** 剪藏正文缓存（notePath → 剥 frontmatter 后正文；clipping:file-* 目录事件失效） */
 const clipBodyCache = new Map<string, string>();
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-let autoReadingTimer: ReturnType<typeof setTimeout> | null = null;
 let panelResizeDetach: { detach: () => void; flush: () => void } | null = null;
 let panelSplit: { el: HTMLElement; restore: () => void; flush: () => void; detach: () => void } | null = null;
 /** 分割线钳制：中栏（目录）最小宽 / 右栏（阅读）最小宽（对齐 PANEL_MIN_W 下整体不溢出） */
 const SPLIT_MIN_MID = 220;
 const SPLIT_MIN_READ = 320;
-
-/** 测试钩子：缩短自动落「在读」的停留阈值（真机恒 10s） */
-export function __autoReadingDelayForTests(ms: number): void {
-  AUTO_READING_MS = ms;
-}
 
 // ================= 生命周期 =================
 /** 幂等初始化面板 DOM（首开建结构 + 装载 + 订阅；重复调用只切可见性） */
@@ -170,7 +164,6 @@ export async function revealClipArticle(notePath: string): Promise<void> {
 /** 关闭面板（隐藏 overlay；DOM 保留——重开零扫描复用缓存；unloadPanel 才移除） */
 export function closePanel(): void {
   pauseReadingSession();
-  disarmAutoReading();
   panelResizeDetach?.flush(); // 关面板即落盘面板尺寸（review P2：恢复旧 flushPendingSize 语义）
   panelSplit?.flush(); // 关面板即落盘分割线宽度（同上语义）
   M.open = false;
@@ -187,7 +180,6 @@ export function unloadPanel(): void {
     escHandle = null;
     escRegistered = false;
   }
-  disarmAutoReading();
   if (searchDebounceTimer !== null) {
     clearTimeout(searchDebounceTimer);
     searchDebounceTimer = null;
@@ -545,6 +537,7 @@ function buildRailActions(label: string, source: SrcFilter): ItemAction[] {
 /** 批量已读：确认框写明 N 篇 → 单次读改写落盘 */
 async function markAllRead(label: string, items: ClipArticle[]): Promise<void> {
   const ok = await openFlowDialog({
+    className: 'bz-clip-dialog-editorial',
     title: '全部标为已读',
     message: `将把「${label}」的 ${items.length} 篇未读全部标为已读。`,
     actions: [
@@ -653,14 +646,6 @@ function buildItemActions(a: ClipArticle): ItemAction[] {
     out.push({ icon: 'download', label: '保存到剪藏本', title: '保存为正式剪藏', onClick: () => void doSave(a) });
   }
   out.push({ icon: 'check', label: '标记为已读', title: '不再出现在收件流', onClick: () => void doMarkRead(a) });
-  if (a.st === 'reading') {
-    out.push({ icon: 'book-open', label: '取消在读', onClick: () => void doToggleReading(a) });
-  } else {
-    out.push({ icon: 'book-open', label: '标记在读', onClick: () => void doToggleReading(a) });
-  }
-  if (a.url) {
-    out.push({ icon: 'globe', label: '查看原文', sub: a.domain || undefined, onClick: () => openExternal(a.url) });
-  }
   out.push({ icon: 'trash-2', label: '删除', kind: 'danger', title: '从收件流删除', onClick: () => deleteNewsItem(a) });
   return out;
 }
@@ -704,7 +689,6 @@ function renderReader(): void {
     return;
   }
   setReadingSession(a.id);
-  armAutoReading(a);
   // 正文（enh 包 3）：news 现算；clip 懒加载 cachedRead → 剥 frontmatter → 段落化，按 path 缓存
   let paras = '';
   if (a.origin === 'clip') {
@@ -788,38 +772,7 @@ function mountFontSizeSeg(): void {
   holder.appendChild(seg.el);
 }
 
-// ---- 阅读动线（enh 包 6）：自动落「在读」+ ←→/jk 切换 ----
-
-/** 右栏停留超 AUTO_READING_MS 自动落「在读」（可手动覆盖：手动标已读/取消后 st 变化即不生效） */
-function armAutoReading(a: ClipArticle): void {
-  disarmAutoReading();
-  if (!M.open || a.origin !== 'news' || a.st !== 'unread') return;
-  autoReadingTimer = setTimeout(() => {
-    autoReadingTimer = null;
-    void autoMarkReading(a.id);
-  }, AUTO_READING_MS);
-}
-
-function disarmAutoReading(): void {
-  if (autoReadingTimer) {
-    clearTimeout(autoReadingTimer);
-    autoReadingTimer = null;
-  }
-}
-
-async function autoMarkReading(id: string): Promise<void> {
-  if (!M.open || !M.cur || M.cur.id !== id) return;
-  const cur = currentList().find((x) => x.id === id);
-  if (!cur || cur.origin !== 'news' || cur.st !== 'unread') return; // 已被手动处理 → 不抢
-  await flowToggleReading(cur);
-  await readNewsAndSidecar();
-  const next = currentList().find((x) => x.id === id);
-  if (next) M.cur = next;
-  renderList();
-  renderRail();
-  renderReader();
-  renderMobToc(); // issue 224：移动目录同刷（落在读后让位重排需重绘）
-}
+// ---- 阅读动线（去在读后：无自动落读；条目切换靠 ←→/jk 与显式「标记为已读」动作） ----
 
 /** ←→/jk 条目切换（右栏聚焦时；列表顺序即阅读顺序，与目录展示同序） */
 function stepArticle(delta: number): void {
@@ -882,15 +835,9 @@ async function undoMarkRead(rawBefore: any): Promise<void> {
   await refreshAfterAction();
 }
 
-async function doToggleReading(a: ClipArticle | null): Promise<void> {
-  if (!a || a.origin !== 'news') return;
-  const next = await flowToggleReading(a);
-  notice(next === 'reading' ? '已标记在读' : '已取消在读', 'success');
-  await refreshAfterAction();
-}
-
 async function deleteNewsItem(a: ClipArticle): Promise<void> {
   const ok = await openFlowDialog({
+    className: 'bz-clip-dialog-editorial',
     title: '删除条目',
     message: `确定从收件流删除「${a.title}」吗？删除后可在通知中撤销。`,
     actions: [
@@ -914,6 +861,7 @@ async function undoDeleteNews(rawBefore: any): Promise<void> {
 
 async function deleteClipNote(a: ClipArticle): Promise<void> {
   const ok = await openFlowDialog({
+    className: 'bz-clip-dialog-editorial',
     title: '删除剪藏',
     message: `确定删除剪藏「${a.title}」吗？文件将移入系统回收站。`,
     actions: [
@@ -955,15 +903,6 @@ function openNote(a: ClipArticle): void {
   if (!a.notePath) return;
   getApp().workspace.openLinkText(a.notePath, '', false, { active: true });
   closePanel();
-}
-
-function openExternal(url: string): void {
-  const app = getApp();
-  try {
-    (app as any).openUrl ? (app as any).openUrl(url) : window.open(url, '_blank');
-  } catch (e) {
-    notice('无法打开链接', 'error');
-  }
 }
 
 async function copyText(text: string, okMsg: string): Promise<void> {
@@ -1039,14 +978,29 @@ function renderMobToc(): void {
   const chapters: MobChapter[] = [];
   const byId = new Map<string, ClipArticle>();
   const order: ClipArticle[] = [];
-  // 章 = site（aggregateSites 与桌面 rail 同源口径：剪藏全量 + 未读 news 面，总数降序）
+  // 章 = site：基座沿用 aggregateSites（剪藏全量 + 未读 news 面）；已读骨架（read:true，保留期内；
+  // 超龄已由 loader retention 清理）并入同站「已收」折叠段——纯已读站补独立章，30 天内可回看。
+  // 承接排重与站点行同口径：read 骨架若 url 命中剪藏（clipByUrl/savedArchive）由 clip 承接，不双显。
+  const ctx = { overrides: M.sidecar.articleOverrides || {}, clipByUrl: M.clipUrls, upInfo: M.upInfo || {}, savedKeys: savedUrls };
+  const readBySite = new Map<string, ClipArticle[]>();
+  for (const n of arts) {
+    if (n.read !== true) continue;
+    if (n.url && (savedUrls.has(String(n.url)) || M.clipUrls.has(String(n.url)))) continue;
+    const ca = clipArticle(n, ctx);
+    const k = String(ca.site || '').trim() || '未知';
+    const arr = readBySite.get(k);
+    if (arr) arr.push(ca); else readBySite.set(k, [ca]);
+  }
+  const rowSites = new Set<string>();
   for (const row of aggregateSites(arts, clipNotes, savedUrls, M.clipUrls)) {
     const full = queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, { kind: 'site', site: row.site }, M.upInfo)
       .filter(matchesSearch);
-    if (!full.length) continue;
+    const readSkels = (readBySite.get(row.site) || []).filter(matchesSearch);
+    if (!full.length && !readSkels.length) continue;
+    rowSites.add(row.site);
     const active = full.filter((a) => a.st !== 'saved')
       .sort((x, y) => (x.st === 'unread' ? 0 : 1) - (y.st === 'unread' ? 0 : 1)); // 未读在前，组内保序
-    const arch = full.filter((a) => a.st === 'saved');
+    const arch = [...full.filter((a) => a.st === 'saved'), ...readSkels];
     chapters.push({
       site: row.site,
       unread: active.filter((a) => a.st === 'unread').length,
@@ -1057,6 +1011,15 @@ function renderMobToc(): void {
     });
     [...active, ...arch].forEach((a) => { byId.set(a.id, a); order.push(a); });
   }
+  for (const [site, list] of readBySite) {
+    if (rowSites.has(site)) continue;
+    const hit = list.filter(matchesSearch);
+    if (!hit.length) continue;
+    chapters.push({ site, unread: 0, activeN: 0, savedN: hit.length, activeHtml: '', archHtml: mobListHtml(hit, timeOf) });
+    hit.forEach((a) => { byId.set(a.id, a); order.push(a); });
+  }
+  // 章序：总数降序 → 未读降序 → 名 zh 序（与桌面 rail 口径同向）
+  chapters.sort((x, y) => (y.activeN + y.savedN) - (x.activeN + x.savedN) || y.unread - x.unread || x.site.localeCompare(y.site, 'zh'));
   mobItemById = byId;
   mobItemOrder = order;
   if (!chapters.length) {
@@ -1114,6 +1077,19 @@ function openMobDetail(id: string): void {
   if (mobDetailEl) mobDetailEl.style.display = 'flex';
   const body = mobDetailEl ? (mobDetailEl.querySelector('[data-clip-mob-detail-body]') as HTMLElement | null) : null;
   if (body) body.scrollTop = 0; // issue 206：进详情从开头读
+  markReadOnOpen(a); // 打开即已读（不打断当前详情正文；返回目录时该条已让位沉入已收折叠段）
+}
+
+/** 打开即已读（m3 拍板去在读）：移动打开一条未处理 news → 静默标已读（无 toast/撤销）；
+ *  同步内存 read 位——返回目录重渲即让位沉入「已收」折叠段，无需等再次打开目录。 */
+function markReadOnOpen(a: ClipArticle): void {
+  if (!a || a.origin !== 'news' || a.st !== 'unread') return;
+  const raw = a.raw || M.articles.find((n) => articleKeyOf(n) === a.id);
+  if (!raw || raw.read === true) return;
+  void (async () => {
+    await flowMarkRead(a);
+    raw.read = true; // 内存同步（正文保留给本次详情会话；磁盘 body 已按保留策略清空）
+  })();
 }
 
 function renderMobDetail(): void {
