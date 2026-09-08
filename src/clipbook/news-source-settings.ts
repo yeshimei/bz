@@ -22,14 +22,19 @@ export interface DataSourceState {
   totalArticles: number;
 }
 
+/** 空数据源状态（news.json 缺失/损坏时的回退值；schema 构建与测试共用） */
+export function emptyDataSourceState(exists = false): DataSourceState {
+  return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', lastFetchAt: null, totalArticles: 0 };
+}
+
 /** 读数据源状态（检测 + sources + 名单 + UP 资料 + B站配置 + 最近抓取时间） */
 export async function readDataSourceState(): Promise<DataSourceState> {
   const res = await readNewsData();
   if (res.missing) {
-    return { exists: false, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', lastFetchAt: null, totalArticles: 0 };
+    return emptyDataSourceState(false);
   }
   if (!res.ok) {
-    return { exists: true, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', lastFetchAt: null, totalArticles: 0 };
+    return emptyDataSourceState(true);
   }
   let lastFetchAt: string | null = null;
   for (const a of res.data.articles) {
