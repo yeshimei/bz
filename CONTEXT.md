@@ -340,6 +340,9 @@ _Avoid_: 手改根 styles.css、往根 styles.css 直接追加样式、styles/&l
 **待办面板皮肤 (Todo Skin, ADR-0095)**: 待办面板三选一外观（设置键 `todoSkin`：default/paper 纸感手账/editorial 编辑部），待办设置「显示」组最顶部以 `choiceCards` 视觉卡片行选择（issue 210，预览+名称无编号无描述）。机制 = 面板根挂 `.bz-todo-skin-*` 作用域就近覆盖 `--bz-*` token + 少量结构覆盖；皮肤固定明度不随 Obsidian 明暗；二级弹窗不跟随；`applyTodoSkin` 支持已开面板热切换。组件库 `uiCardChoice`（.bz-cardpick）供其他域视觉选择复用。
 _Avoid_: 域内复制组件库类族、新域自绘面板壳/头行、域内另起按钮/输入基线、手写 emoji 图标（一律 lucide 经 setIcon）
 
+**剪藏本移动目录 (Clipbook Mob Toc, ADR-0107)**: 剪藏本移动端第一屏目录化（issue 248）——章 = site（aggregateSites 桌面 rail 同源口径），未读/在读常显、「已收 N 篇」折叠成点线行可展开（检索态命中全平铺不折叠）；源横滑条（mobstrip）退役（UP/剪藏本聚合入口并入目录，源级「全部标为已读」迁章头长按）；推翻 issue 214「移动端标准皮肤不动」——移动双屏同族编辑部皮（--clip-* 纸墨），章头吸顶，触控热区/刘海安全区保留。折叠展开态模块级记忆（详情往返不丢，面板重开复位）。
+_Avoid_: 移动端源横滑条（chip 导航）、移动端回退标准皮肤
+
 **统一行操作 (Unified Item Actions)**: 跨域列表卡片统一手势组件（`src/core/item-actions.ts`）——列表**不注入任何常驻或 hover 图标排**；桌面端=**右键**弹跟手菜单（preventDefault 拦原生菜单，鼠标长按不触发），移动/触屏端=**长按**弹底部抽屉（遮罩+顶部条目信息+动作逐行）。能力：keepOpen（动作后抽屉保持+refreshItemSheet 原地重建动作与头部）、附属浮层（companion，抽屉之上的域内弹窗点击不误关抽屉）、危险项红色、强调色整行。动作项布局统一：图标左对齐 → 文案 → 小字右对齐。已接入域：待办、日记本、剪藏本（clipbook）、收藏本、归物本（含 4 状态流转+数据文件监听自动刷新）、书库（保留双击转跳书籍，md/EPUB 通用）、复习计划（保留双击打开笔记；开始复习难度弹窗为 companion）、保险库（双击预览保留）。
 _Avoid_: hover 操作条、行内图标排、行内按钮组（指列表卡片时）
 

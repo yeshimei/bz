@@ -46,7 +46,7 @@ import { toParagraphs, stripClipChrome } from './md';
 import { queryBySource, aggregateSites } from './store';
 import {
   panelHtml, railItemHtml, railFootHtml, tocListHtml, paragraphsHtml as paragraphsMarkup,
-  clipLoadingHtml, readerHtml, mobChipHtml, mobListHtml, mobDetailHtml, siteShort, siteTint,
+  clipLoadingHtml, readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, type MobChapter, siteTint,
   iconSpan, type SrcSelJson,
 } from './render';
 import { M, resetClipbookState } from './state';
@@ -64,7 +64,6 @@ let railFootEl: HTMLElement | null = null;
 let listEl: HTMLElement | null = null;
 let readerEl: HTMLElement | null = null;
 let readPaneEl: HTMLElement | null = null; // .bz-clip-read（键盘导航/打开笔记委托的常驻容器）
-let mobSourcesEl: HTMLElement | null = null;
 let mobListEl: HTMLElement | null = null;
 let mobDetailEl: HTMLElement | null = null;
 let mobTitleEl: HTMLElement | null = null;
@@ -217,10 +216,11 @@ export function unloadPanel(): void {
   railFootEl = null;
   listEl = null;
   mobListEl = null;
-  mobSourcesEl = null;
   mobDetailEl = null;
   mobSearchbarEl = null;
   deskSearchEl = null;
+  expandedMobArch.clear(); // 面板重开折叠态复位（会话内详情往返不丢）
+  mobItemById = new Map();
   resetClipbookState();
 }
 
@@ -240,7 +240,6 @@ function buildDom(app: any): void {
   listEl = overlayEl.querySelector('[data-clip-list]');
   readerEl = overlayEl.querySelector('[data-clip-reader]');
   readPaneEl = overlayEl.querySelector('[data-clip-read-pane]');
-  mobSourcesEl = overlayEl.querySelector('[data-clip-mob-sources]');
   mobListEl = overlayEl.querySelector('[data-clip-mob-list]');
   mobDetailEl = overlayEl.querySelector('[data-clip-mob-detail]');
   mobTitleEl = overlayEl.querySelector('[data-clip-mob-title]');
@@ -288,12 +287,11 @@ function buildDom(app: any): void {
     const show = mobSearchbarEl!.style.display === 'none';
     mobSearchbarEl!.style.display = show ? '' : 'none';
     if (show) mobInput!.focus();
-    else { mobInput!.value = ''; setSearchKw(''); renderMobList(); }
+    else { mobInput!.value = ''; setSearchKw(''); renderMobToc(); }
   });
   mobInput!.addEventListener('input', () => {
     searchKw = mobInput!.value.trim();
-    renderMobList();
-    renderMobSources(); // issue 206：移动搜索态源 chip 计数同步联动（对齐桌面）
+    renderMobToc(); // 搜索态：命中全平铺（含已收），折叠不生效
   });
   // 移动：关闭 / 返回
   mobCloseBtn!.addEventListener('click', () => closePanel());
@@ -305,6 +303,10 @@ function buildDom(app: any): void {
   // 移动：头栏保存钮
   mobSaveBtnEl!.addEventListener('click', () => {
     void doSave(M.cur);
+  });
+  // 移动详情「打开笔记」文字脚（issue 248，对齐桌面 openNote）
+  mobDetailEl!.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).closest('[data-clip-open-note]') && M.cur) openNote(M.cur);
   });
 
   // ESC
@@ -335,14 +337,10 @@ function buildDom(app: any): void {
     });
     midEl.insertAdjacentElement('afterend', panelSplit.el);
   }
-  // 移动源胶囊点击（委托，含搜索态；再点已选源回「全部未读」，issue 208）
-  mobSourcesEl!.addEventListener('click', (e) => {
-    const chip = (e.target as HTMLElement).closest('[data-src]') as HTMLElement | null;
-    if (!chip) return;
-    toggleSource(JSON.parse(chip.dataset.src || 'null'));
-  });
-  // 移动列表点击 → 详情
+  // 移动目录点击：折叠行收展 / 条目进详情（fold 优先判断——fold 行无 data-id；源横滑条已退役，issue 248）
   mobListEl!.addEventListener('click', (e) => {
+    const fold = (e.target as HTMLElement).closest('[data-fold]') as HTMLElement | null;
+    if (fold) { toggleMobArch(fold); return; }
     const item = (e.target as HTMLElement).closest('[data-id]') as HTMLElement | null;
     if (!item) return;
     openMobDetail(item.dataset.id || '');
@@ -375,6 +373,10 @@ function toggleSource(src: any): void {
 /** 读当前搜索词（state 扩展占位——直接模块级变量） */
 let searchKw = '';
 function setSearchKw(kw: string): void { searchKw = kw; }
+/** 已展开「已收」的章（site）集合（issue 248：详情往返不丢折叠态；面板重开复位） */
+const expandedMobArch = new Set<string>();
+/** 移动目录全量条目索引（issue 248：arch 内剪藏条目点开详情——currentList 只是当前源 news 流） */
+let mobItemById = new Map<string, ClipArticle>();
 
 // ================= 装载后全量渲染 =================
 function renderAll(): void {
@@ -383,8 +385,7 @@ function renderAll(): void {
   renderRail();
   renderList();
   renderReader();
-  renderMobSources();
-  renderMobList();
+  renderMobToc();
   if (M.mobDetailOpen && M.cur) {
     // 详情保持打开态（数据刷新后重绘正文）
     renderMobDetail();
@@ -798,7 +799,7 @@ async function autoMarkReading(id: string): Promise<void> {
   renderList();
   renderRail();
   renderReader();
-  renderMobList(); // issue 224：移动列表同刷（落在读后让位重排需重绘）
+  renderMobToc(); // issue 224：移动目录同刷（落在读后让位重排需重绘）
 }
 
 /** ←→/jk 条目切换（右栏聚焦时；列表顺序即阅读顺序，与目录展示同序） */
@@ -1008,62 +1009,102 @@ function rememberSplitWidth(w: number): void {
   void saveSettings();
 }
 
-// ================= 渲染：移动 =================
-function renderMobSources(): void {
-  if (!mobSourcesEl) return;
-  const arts = M.articles;
-  const searching = !!searchKw;
-  const countOf = (source: SrcFilter): number =>
-    queryBySource(arts, M.sidecar, M.clipUrls, M.clipNotes || [], source, M.upInfo).filter(matchesSearch).length;
-  let html = mobChipHtml({ kind: 'all' }, '全部未读', countOf({ kind: 'all' }), M.sel.kind === 'all', 'radio');
-  // 站点 chip 动态聚合（issue 222 对齐桌面 rail：site 属性分类，平台 chip 退役；
-  // 聚合口径同桌面 = 剪藏全量 + 未读 news 面，排序总数降序）
-  for (const row of aggregateSites(arts, M.clipNotes || [], new Set((M.sidecar.savedArchive || []).map((x) => x.url)), M.clipUrls)) {
-    const cnt = countOf({ kind: 'site', site: row.site });
-    if (searching && cnt === 0) continue; // 搜索态零命中 chip 隐藏（非搜索态站点恒可浏览）
-    html += mobChipHtml({ kind: 'site', site: row.site }, row.site, cnt, M.sel.kind === 'site' && M.sel.site === row.site, 'feed', row.site.slice(0, 1));
-  }
-  // B站 UP chip（C2：Map 按 author/uid 去重——原同 UP N 条未读渲染 N 个同名 chip；C6：upInfo 回填名）
-  const mobUps = new Map<string, string>();
-  for (const a of arts) {
-    if (a.read || a.platform !== 'B站' || !a.author) continue;
-    const uid = String(a.author);
-    const backfilled = M.upInfo?.[uid]?.name;
-    if (!mobUps.has(uid)) mobUps.set(uid, backfilled ? String(backfilled) : uid);
-  }
-  for (const [uid, name] of mobUps) {
-    const cnt = countOf({ kind: 'inbox', platform: 'B站', up: uid });
-    if (cnt === 0 && !searching) continue;
-    html += mobChipHtml({ kind: 'inbox', platform: 'B站', up: uid }, name, cnt, M.sel.kind === 'inbox' && M.sel.platform === 'B站' && M.sel.up === uid, 'bili', name.slice(0, 1));
-  }
-  html += mobChipHtml({ kind: 'clip' }, '剪藏本', countOf({ kind: 'clip' }), M.sel.kind === 'clip', 'clip');
-  mobSourcesEl.innerHTML = html;
-}
-
-function renderMobList(): void {
+// ================= 渲染：移动（issue 248 目录化：site 章 + 已收折叠） =================
+function renderMobToc(): void {
   if (!mobListEl) return;
-  // issue 224：未读在前、组内最新在前（与桌面目录同序）——原时间序让落在读的条目
-  // 永远钉在原位，用户感知「变为在读但不往下排」；markup 单源 render.ts（issue 247）
-  const list = sortedView();
-  if (!list.length) {
+  const arts = M.articles;
+  const clipNotes = M.clipNotes || [];
+  const savedUrls = new Set((M.sidecar.savedArchive || []).map((x) => x.url));
+  const searching = !!searchKw;
+  const timeOf = (a: ClipArticle): string => relTime(a.timeTs);
+  const chapters: MobChapter[] = [];
+  const byId = new Map<string, ClipArticle>();
+  // 章 = site（aggregateSites 与桌面 rail 同源口径：剪藏全量 + 未读 news 面，总数降序）
+  for (const row of aggregateSites(arts, clipNotes, savedUrls, M.clipUrls)) {
+    const full = queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, { kind: 'site', site: row.site }, M.upInfo)
+      .filter(matchesSearch);
+    if (!full.length) continue;
+    const active = full.filter((a) => a.st !== 'saved')
+      .sort((x, y) => (x.st === 'unread' ? 0 : 1) - (y.st === 'unread' ? 0 : 1)); // 未读在前，组内保序
+    const arch = full.filter((a) => a.st === 'saved');
+    chapters.push({
+      site: row.site,
+      unread: active.filter((a) => a.st === 'unread').length,
+      activeN: active.length,
+      savedN: arch.length,
+      activeHtml: mobListHtml(active, timeOf),
+      archHtml: arch.length ? mobListHtml(arch, timeOf) : '',
+    });
+    [...active, ...arch].forEach((a) => byId.set(a.id, a));
+  }
+  mobItemById = byId;
+  if (!chapters.length) {
+    mobListEl.classList.remove('searching');
     mobListEl.innerHTML = '';
     mobListEl.appendChild(uiEmpty({ icon: 'inbox', title: '暂无内容' }));
     return;
   }
-  mobListEl.innerHTML = mobListHtml(list, (a) => relTime(a.timeTs));
-  // 移动长按抽屉（enh 包 2）：动作构建器与桌面右键同源（buildItemActions）——
-  // 一处接入两端全量对齐（手册 §8.2：不得在移动端隐藏功能）；单击进详情走容器委托不受影响
-  const cards = mobListEl.querySelectorAll<HTMLElement>('[data-id]');
-  cards.forEach((card) => {
-    const art = list.find((x) => x.id === card.dataset.id);
+  mobListEl.classList.toggle('searching', searching);
+  mobListEl.innerHTML = mobTocHtml(chapters, searching);
+  restoreMobFolds();
+  // 移动长按抽屉（enh 包 2）：条目动作与桌面右键同源（buildItemActions）——一处接入两端全量对齐；
+  // 章头挂源级「全部标为已读」（rail 源行动同源，issue 248 源条退役后的迁移位）
+  mobListEl.querySelectorAll<HTMLElement>('[data-id]').forEach((card) => {
+    const art = byId.get(String(card.dataset.id || ''));
     if (!art) return;
     attachItemActions(card, buildItemActions(art), { sheetHead: buildSheetHead(art) });
   });
+  mobListEl.querySelectorAll<HTMLElement>('.bz-clip-mob-ch-hd').forEach((hd) => {
+    let sel: any = null;
+    try { sel = JSON.parse(hd.dataset.src || 'null'); } catch (e) { return; }
+    if (!sel || sel.kind !== 'site') return;
+    const actions = buildRailActions(String(sel.site), { kind: 'site', site: String(sel.site) });
+    if (actions.length) attachItemActions(hd, actions, { sheetTitle: String(sel.site), menuClass: 'bz-clip-menu-editorial' });
+  });
+}
+
+/** 重渲染后按展开集合恢复折叠行 .open（详情往返后仍展开） */
+function restoreMobFolds(): void {
+  if (!mobListEl || !expandedMobArch.size) return;
+  mobListEl.querySelectorAll<HTMLElement>('.bz-clip-mob-ch').forEach((chEl) => {
+    const hd = chEl.querySelector('[data-src]') as HTMLElement | null;
+    if (!hd) return;
+    let sel: any = null;
+    try { sel = JSON.parse(hd.dataset.src || 'null'); } catch (e) { return; }
+    if (!sel || sel.kind !== 'site' || !expandedMobArch.has(String(sel.site))) return;
+    const fold = chEl.querySelector('[data-fold]') as HTMLElement | null;
+    if (fold) setFoldOpen(fold, true);
+  });
+}
+
+/** 折叠行开合：翻转 .open、同步 aria/文案；site 记入 expandedMobArch（跨重渲染保持） */
+function toggleMobArch(foldEl: HTMLElement): void {
+  const open = !foldEl.classList.contains('open');
+  setFoldOpen(foldEl, open);
+  const ch = foldEl.closest('.bz-clip-mob-ch');
+  const hd = ch ? ch.querySelector('[data-src]') : null;
+  let site = '';
+  if (hd) {
+    try { site = String((JSON.parse((hd as HTMLElement).dataset.src || 'null')).site || ''); } catch (e) { site = ''; }
+  }
+  if (site) {
+    if (open) expandedMobArch.add(site); else expandedMobArch.delete(site);
+  }
+}
+
+function setFoldOpen(foldEl: HTMLElement, open: boolean): void {
+  foldEl.classList.toggle('open', open);
+  foldEl.setAttribute('aria-expanded', String(open));
+  const lab = foldEl.querySelector('[data-fold-lab]') as HTMLElement | null;
+  if (!lab) return;
+  const n = foldEl.nextElementSibling ? foldEl.nextElementSibling.childElementCount : 0;
+  lab.innerHTML = open ? '收起' : `已收 <b>${n}</b> 篇`;
 }
 
 function openMobDetail(id: string): void {
-  const list = currentList();
-  const a = list.find((x) => x.id === id);
+  // 目录含全站（含已收剪藏段）：currentList 只是当前源视图，未命中回退目录全量索引（issue 248）
+  let a = currentList().find((x) => x.id === id);
+  if (!a) a = mobItemById.get(id);
   if (!a) return;
   M.cur = a;
   M.mobDetailOpen = true;
