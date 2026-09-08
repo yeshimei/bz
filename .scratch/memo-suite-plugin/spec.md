@@ -1049,3 +1049,7 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 ### 第二大脑定稿原型三界面落域：UI 抛弃式重写 + markup 单源（issue 251 / ADR-0110，2026-09-09）
 
 > 用户拍板「原型是真理，完全抛弃 secondbrain 域 UI 与样式设计」。桌面三界面（主面板 P1 布局 × P2 米白红棕主题 / AI 对话 / 灵感参考窄窗）按 .zcode/ui-prototypes/secondbrain-final/ 重写：render.ts 纯层承载全部 markup 与统计纯函数（panel.ts 收编 computeStats/buildSourceTree/fmtCompact，schema re-export 保 settings-panel 兼容）；styles.css 除移动抽屉段外全量重写（面板固定浅色不随暗色，favorites 先例）；行为逻辑逐行保留（对话流式/取消/持久化、参考密度/悬停预览/长按拖出/幽灵卡竞态防护、onboard 三形态/树展开记忆）。真身运维维度（索引健康/存储占用）并入底部状态行；对话引用卡会话内展示不落盘（chatHistory 结构零改动）；移动抽屉本批不动。fake-sim + prototype.html 行为单源评审壳（FakeVectorStore/Fake AI/FakeVault），build-preview 双清单登记。数据零迁移。
+
+### 影院豆瓣盲区补全：打开触碰协议 + 工具补全分支（issue 252 / ADR-0111，2026-09-09）
+
+> 用户需求「每次打开影院界面自动重跑没获取到豆瓣信息的」经拷问定形：痛点实为工具扫描盲区（只认缺海报，17 条有海报缺豆瓣链接的笔记永不重试）。拍板：口径=缺豆瓣链接（海报是抓取模式开关非完成标志）；插件打开面板对「有海报∧缺链接∧豆瓣检查≠今日」笔记写日期粒度 `豆瓣检查` 字段（同日一次、完全静默）经既有 chokidar 通道入队；工具扩扫描口径（缺海报或缺链接）+ 补全分支（有海报跳过下载与 embed，仅搜索+详情补字段，杜绝孤儿海报与重复 embed）；插件不碰豆瓣网络（ADR-0006/0007 维持）、不新增命令。工具侧独立发版（npm publish + install -g + pm2 restart）。CONTEXT.md「海报抓取」词条与影院 frontmatter 契约已同步更新。

@@ -1,14 +1,14 @@
 /**
  * 影视文件夹监听核心（watcher 模式，2.1.0）：
- * 扫描缺海报笔记 → 按创建时间倒序（最新创建先抓）→ 串行抓取，每个完成后等 interval 防限流。
+ * 扫描待补笔记（缺海报或缺豆瓣链接）→ 按创建时间倒序（最新创建先抓）→ 串行抓取，每个完成后等 interval 防限流。
  * 纯函数与调度器分离，便于 node --test 单测。
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { hasPoster } from './note-processor.js';
+import { hasPoster, hasDoubanInfo } from './note-processor.js';
 
-/** 扫描文件夹（depth 0）下所有缺海报的 .md，返回绝对路径数组 */
-export function collectMissingPosterNotes(folderPath) {
+/** 扫描文件夹（depth 0）下所有待补的 .md（缺海报或缺豆瓣链接），返回绝对路径数组 */
+export function collectIncompleteNotes(folderPath) {
   if (!fs.existsSync(folderPath)) return [];
   const results = [];
   let entries;
@@ -28,7 +28,7 @@ export function collectMissingPosterNotes(folderPath) {
     }
     if (!st.isFile()) continue;
     try {
-      if (!hasPoster(full)) results.push(full);
+      if (!hasPoster(full) || !hasDoubanInfo(full)) results.push(full);
     } catch {
       /* 读取失败的文件跳过 */
     }
