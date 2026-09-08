@@ -22820,6 +22820,360 @@ ${entry.content.trim()}`;
     }
   });
 
+  // src/clipbook/constants.ts
+  function articleKeyOf(a) {
+    if (a && a.url) return "url:" + String(a.url);
+    return "td:" + String(a && a.title || "") + "|" + String(a && a.date || "");
+  }
+  function excerpt(body, max = 90) {
+    const s = String(body || "").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/[#>*`_~-]/g, "").replace(/\s+/g, " ").trim();
+    if (!s) return "";
+    return s.length > max ? s.slice(0, max) + "…" : s;
+  }
+  function localDayKey(ts = Date.now()) {
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${pad22(d.getMonth() + 1)}-${pad22(d.getDate())}`;
+  }
+  function localDatetime(ts = Date.now()) {
+    const d = new Date(ts);
+    const hms = `${pad22(d.getHours())}:${pad22(d.getMinutes())}:${pad22(d.getSeconds())}`;
+    return `${localDayKey(ts)} ${hms}`;
+  }
+  function toDatetime(dateStr) {
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").substring(0, 19);
+      return d.toISOString().replace("T", " ").substring(0, 19);
+    } catch (e) {
+      return (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").substring(0, 19);
+    }
+  }
+  function pad22(n) {
+    return String(n).padStart(2, "0");
+  }
+  var init_constants3 = __esm({
+    "src/clipbook/constants.ts"() {
+    }
+  });
+
+  // src/clipbook/news-data.ts
+  function getNewsFilePath() {
+    return storageFile("news.json");
+  }
+  function emptyData() {
+    return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", sources: { ...DEFAULT_SOURCES } };
+  }
+  function parseBilibiliUpInfo(raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+    const out = {};
+    for (const [uid, v] of Object.entries(raw)) {
+      if (!v || typeof v !== "object") continue;
+      const info = {};
+      if (v.name) info.name = String(v.name);
+      if (v.avatar) info.avatar = String(v.avatar).replace(/^http:/, "https:");
+      out[uid] = info;
+    }
+    return out;
+  }
+  function parseBilibiliMaxItems(raw) {
+    const n = Math.floor(Number(raw));
+    return Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
+  }
+  function parseBilibiliCookie(raw) {
+    return typeof raw === "string" ? raw.trim() : "";
+  }
+  function wrapArrayToNewsData(articles) {
+    const data = emptyData();
+    data.articles = Array.isArray(articles) ? articles : [];
+    return data;
+  }
+  function mergeStatsInto(data, oldStats) {
+    if (statsHasData(data.stats)) return data;
+    const s = oldStats && typeof oldStats === "object" ? oldStats : null;
+    if (!s) return data;
+    return {
+      ...data,
+      stats: {
+        totalRead: Number(s.totalRead) || 0,
+        totalSaved: Number(s.totalSaved) || 0,
+        totalSkipped: Number(s.totalSkipped) || 0,
+        byPlatform: s.byPlatform && typeof s.byPlatform === "object" ? s.byPlatform : {},
+        byDate: s.byDate && typeof s.byDate === "object" ? s.byDate : {}
+      }
+    };
+  }
+  function statsHasData(stats) {
+    if (!stats || typeof stats !== "object") return false;
+    return (Number(stats.totalRead) || 0) > 0 || (Number(stats.totalSaved) || 0) > 0 || (Number(stats.totalSkipped) || 0) > 0 || (stats.byPlatform && Object.keys(stats.byPlatform).length > 0) === true || (stats.byDate && Object.keys(stats.byDate).length > 0) === true;
+  }
+  function parseNewsFileContent(raw) {
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      return null;
+    }
+    if (Array.isArray(parsed)) return wrapArrayToNewsData(parsed);
+    if (parsed && typeof parsed === "object") {
+      const obj = parsed;
+      return {
+        articles: Array.isArray(obj.articles) ? obj.articles : [],
+        stats: obj.stats && typeof obj.stats === "object" ? obj.stats : DEFAULT_STATS(),
+        bilibiliUps: Array.isArray(obj.bilibiliUps) ? obj.bilibiliUps.map((u) => String(u != null ? u : "").trim()).filter(Boolean) : [],
+        bilibiliUpInfo: parseBilibiliUpInfo(obj.bilibiliUpInfo),
+        bilibiliMaxItems: parseBilibiliMaxItems(obj.bilibiliMaxItems),
+        bilibiliCookie: parseBilibiliCookie(obj.bilibiliCookie),
+        sources: obj.sources && typeof obj.sources === "object" ? { ...DEFAULT_SOURCES, ...obj.sources } : { ...DEFAULT_SOURCES }
+      };
+    }
+    return null;
+  }
+  async function readNewsData() {
+    const missing = !getApp().vault.getAbstractFileByPath(getNewsFilePath());
+    let corrupt = false;
+    const parsed = await jsonFileStore(getNewsFilePath(), {
+      defaultValue: () => emptyData(),
+      onCorrupt: () => {
+        corrupt = true;
+        return false;
+      }
+    }).read().catch(() => null);
+    if (parsed === null || corrupt) return { ok: false, missing: false, data: emptyData() };
+    const content = parseNewsFileContent(JSON.stringify(parsed));
+    if (!content) return { ok: false, missing: false, data: emptyData() };
+    return { ok: true, missing, data: content };
+  }
+  async function writeNewsData(data) {
+    try {
+      await jsonFileStore(getNewsFilePath()).write(data);
+    } catch (e) {
+    }
+  }
+  async function writeNewsDataMerged(intent) {
+    var _a2;
+    const res = await readNewsData();
+    const base = res.ok ? res.data : emptyData();
+    const next = { ...base };
+    if (intent.set.articles || ((_a2 = intent.removeArticleKeys) == null ? void 0 : _a2.length)) {
+      const patchList = intent.set.articles || [];
+      const removeKeys = new Set(intent.removeArticleKeys || []);
+      const patchByKey = /* @__PURE__ */ new Map();
+      for (const a of patchList) patchByKey.set(articleKeyOf(a), a);
+      const merged = [];
+      const seen = /* @__PURE__ */ new Set();
+      for (const a of base.articles || []) {
+        const k = articleKeyOf(a);
+        if (removeKeys.has(k)) continue;
+        seen.add(k);
+        merged.push(patchByKey.has(k) ? patchByKey.get(k) : a);
+      }
+      for (const a of patchList) {
+        const k = articleKeyOf(a);
+        if (!seen.has(k)) {
+          merged.push(a);
+          seen.add(k);
+        }
+      }
+      next.articles = merged;
+    }
+    for (const seg of ["stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources"]) {
+      if (intent.set[seg] !== void 0) {
+        next[seg] = intent.set[seg];
+      }
+    }
+    await writeNewsData(next);
+  }
+  function parseUidFromText(text) {
+    const t = String(text || "").trim();
+    if (!t) return null;
+    const pure = t.match(/^\d{1,10}$/);
+    if (pure) return pure[0];
+    const space = t.match(/space\.bilibili\.com[\/:]*(\d+)/i);
+    if (space) return space[1];
+    return null;
+  }
+  function parseBvidFromText(text) {
+    const t = String(text || "").trim();
+    const m = t.match(/bilibili\.com\/video\/(BV[0-9A-Za-z]+)/i);
+    return m ? m[1] : null;
+  }
+  async function resolveUidFromInput(text) {
+    var _a2;
+    const local = parseUidFromText(text);
+    if (local) return local;
+    const bvid = parseBvidFromText(text);
+    if (!bvid) return null;
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 1e4);
+      const resp = await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, {
+        method: "GET",
+        signal: ctrl.signal
+      });
+      clearTimeout(timer);
+      if (!resp.ok) return null;
+      const json = await resp.json();
+      const mid = json && json.data && json.data.owner ? String((_a2 = json.data.owner.mid) != null ? _a2 : "") : "";
+      return mid || null;
+    } catch (e) {
+      return null;
+    }
+  }
+  async function migrateLegacyStats(data) {
+    if (statsHasData(data.stats)) return data;
+    const app2 = getApp();
+    const af = app2.vault.getAbstractFileByPath(STATS_JSON_PATH);
+    if (!af) return data;
+    try {
+      const raw = await app2.vault.read(af);
+      const old = JSON.parse(raw);
+      const merged = mergeStatsInto(data, old);
+      return merged === data ? data : merged;
+    } catch (e) {
+      return data;
+    }
+  }
+  function applyRetention(articles, savedDays, skippedDays, now = Date.now()) {
+    const DAY = 24 * 60 * 60 * 1e3;
+    const kept = [];
+    for (const a of articles) {
+      if (!a || a.read !== true) {
+        kept.push(a);
+        continue;
+      }
+      const state3 = a.state === "saved" ? "saved" : "skipped";
+      const days = state3 === "saved" ? savedDays : skippedDays;
+      if (!Number.isFinite(days) || days <= 0) {
+        kept.push(a);
+        continue;
+      }
+      const t = new Date(a.fetchedAt || a.date || "").getTime();
+      if (!Number.isFinite(t)) {
+        kept.push(a);
+        continue;
+      }
+      if (now - t > days * DAY) continue;
+      kept.push(a);
+    }
+    return kept;
+  }
+  function normalizeRetentionDays(v) {
+    const n = Number(String(v || "").trim());
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
+  var STATS_JSON_PATH, DEFAULT_SOURCES, DEFAULT_STATS;
+  var init_news_data = __esm({
+    "src/clipbook/news-data.ts"() {
+      init_app();
+      init_storage();
+      init_constants3();
+      STATS_JSON_PATH = "CONFIG/STORAGE/news-stats.json";
+      DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true };
+      DEFAULT_STATS = () => ({ totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} });
+    }
+  });
+
+  // src/clipbook/write-queue.ts
+  function enqueueNewsWrite(op) {
+    return enqueueFileTask(getNewsFilePath(), op);
+  }
+  var init_write_queue = __esm({
+    "src/clipbook/write-queue.ts"() {
+      init_storage();
+      init_news_data();
+    }
+  });
+
+  // src/clipbook/news-source-settings.ts
+  var news_source_settings_exports = {};
+  __export(news_source_settings_exports, {
+    addBilibiliUp: () => addBilibiliUp,
+    emptyDataSourceState: () => emptyDataSourceState,
+    readDataSourceState: () => readDataSourceState,
+    removeBilibiliUp: () => removeBilibiliUp,
+    writeBilibiliCookie: () => writeBilibiliCookie,
+    writeBilibiliMaxItems: () => writeBilibiliMaxItems,
+    writeSources: () => writeSources
+  });
+  function emptyDataSourceState(exists = false) {
+    return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", lastFetchAt: null, totalArticles: 0 };
+  }
+  async function readDataSourceState() {
+    const res = await readNewsData();
+    if (res.missing) {
+      return emptyDataSourceState(false);
+    }
+    if (!res.ok) {
+      return emptyDataSourceState(true);
+    }
+    let lastFetchAt = null;
+    for (const a of res.data.articles) {
+      if (a && a.fetchedAt && (!lastFetchAt || String(a.fetchedAt) > lastFetchAt)) lastFetchAt = String(a.fetchedAt);
+    }
+    return {
+      exists: true,
+      sources: { ...res.data.sources },
+      bilibiliUps: [...res.data.bilibiliUps],
+      bilibiliUpInfo: { ...res.data.bilibiliUpInfo },
+      bilibiliMaxItems: res.data.bilibiliMaxItems,
+      bilibiliCookie: res.data.bilibiliCookie,
+      lastFetchAt,
+      totalArticles: res.data.articles.length
+    };
+  }
+  async function writeSources(sources) {
+    await enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return;
+      await writeNewsDataMerged({ set: { sources: { ...sources } } });
+    });
+  }
+  async function addBilibiliUp(uid) {
+    const id = String(uid || "").trim();
+    if (!id) return false;
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return false;
+      if (res.data.bilibiliUps.includes(id)) return false;
+      await writeNewsDataMerged({ set: { bilibiliUps: [...res.data.bilibiliUps, id] } });
+      return true;
+    });
+  }
+  async function writeBilibiliMaxItems(v) {
+    const n = Math.floor(Number(v));
+    const maxItems = Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
+    await enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return;
+      await writeNewsDataMerged({ set: { bilibiliMaxItems: maxItems } });
+    });
+  }
+  async function writeBilibiliCookie(cookie) {
+    const c = String(cookie || "").trim();
+    await enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return;
+      await writeNewsDataMerged({ set: { bilibiliCookie: c } });
+    });
+  }
+  async function removeBilibiliUp(uid) {
+    await enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok || res.missing) return;
+      const info = { ...res.data.bilibiliUpInfo };
+      delete info[uid];
+      await writeNewsDataMerged({
+        set: { bilibiliUps: res.data.bilibiliUps.filter((u) => u !== uid), bilibiliUpInfo: info }
+      });
+    });
+  }
+  var init_news_source_settings = __esm({
+    "src/clipbook/news-source-settings.ts"() {
+      init_news_data();
+      init_write_queue();
+    }
+  });
+
   // src/auto-summary/parser.ts
   function unquote(v) {
     if (v.startsWith('"') && v.endsWith('"') || v.startsWith("'") && v.endsWith("'")) return v.slice(1, -1);
@@ -23269,435 +23623,107 @@ ${bodyText.substring(0, 6e3)}`;
     }
   });
 
-  // src/clipbook/constants.ts
-  function articleKeyOf(a) {
-    if (a && a.url) return "url:" + String(a.url);
-    return "td:" + String(a && a.title || "") + "|" + String(a && a.date || "");
-  }
-  function excerpt(body, max = 90) {
-    const s = String(body || "").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/[#>*`_~-]/g, "").replace(/\s+/g, " ").trim();
-    if (!s) return "";
-    return s.length > max ? s.slice(0, max) + "…" : s;
-  }
-  function localDayKey(ts = Date.now()) {
-    const d = new Date(ts);
-    return `${d.getFullYear()}-${pad22(d.getMonth() + 1)}-${pad22(d.getDate())}`;
-  }
-  function localDatetime(ts = Date.now()) {
-    const d = new Date(ts);
-    const hms = `${pad22(d.getHours())}:${pad22(d.getMinutes())}:${pad22(d.getSeconds())}`;
-    return `${localDayKey(ts)} ${hms}`;
-  }
-  function toDatetime(dateStr) {
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").substring(0, 19);
-      return d.toISOString().replace("T", " ").substring(0, 19);
-    } catch (e) {
-      return (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").substring(0, 19);
-    }
-  }
-  function pad22(n) {
-    return String(n).padStart(2, "0");
-  }
-  var init_constants3 = __esm({
-    "src/clipbook/constants.ts"() {
-    }
-  });
-
-  // src/clipbook/news-data.ts
-  function getNewsFilePath() {
-    return storageFile("news.json");
-  }
-  function emptyData() {
-    return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", sources: { ...DEFAULT_SOURCES } };
-  }
-  function parseBilibiliUpInfo(raw) {
-    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
-    const out = {};
-    for (const [uid, v] of Object.entries(raw)) {
-      if (!v || typeof v !== "object") continue;
-      const info = {};
-      if (v.name) info.name = String(v.name);
-      if (v.avatar) info.avatar = String(v.avatar).replace(/^http:/, "https:");
-      out[uid] = info;
-    }
-    return out;
-  }
-  function parseBilibiliMaxItems(raw) {
-    const n = Math.floor(Number(raw));
-    return Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
-  }
-  function parseBilibiliCookie(raw) {
-    return typeof raw === "string" ? raw.trim() : "";
-  }
-  function wrapArrayToNewsData(articles) {
-    const data = emptyData();
-    data.articles = Array.isArray(articles) ? articles : [];
-    return data;
-  }
-  function mergeStatsInto(data, oldStats) {
-    if (statsHasData(data.stats)) return data;
-    const s = oldStats && typeof oldStats === "object" ? oldStats : null;
-    if (!s) return data;
-    return {
-      ...data,
-      stats: {
-        totalRead: Number(s.totalRead) || 0,
-        totalSaved: Number(s.totalSaved) || 0,
-        totalSkipped: Number(s.totalSkipped) || 0,
-        byPlatform: s.byPlatform && typeof s.byPlatform === "object" ? s.byPlatform : {},
-        byDate: s.byDate && typeof s.byDate === "object" ? s.byDate : {}
-      }
-    };
-  }
-  function statsHasData(stats) {
-    if (!stats || typeof stats !== "object") return false;
-    return (Number(stats.totalRead) || 0) > 0 || (Number(stats.totalSaved) || 0) > 0 || (Number(stats.totalSkipped) || 0) > 0 || (stats.byPlatform && Object.keys(stats.byPlatform).length > 0) === true || (stats.byDate && Object.keys(stats.byDate).length > 0) === true;
-  }
-  function parseNewsFileContent(raw) {
-    let parsed;
-    try {
-      parsed = JSON.parse(raw);
-    } catch (e) {
-      return null;
-    }
-    if (Array.isArray(parsed)) return wrapArrayToNewsData(parsed);
-    if (parsed && typeof parsed === "object") {
-      const obj = parsed;
-      return {
-        articles: Array.isArray(obj.articles) ? obj.articles : [],
-        stats: obj.stats && typeof obj.stats === "object" ? obj.stats : DEFAULT_STATS(),
-        bilibiliUps: Array.isArray(obj.bilibiliUps) ? obj.bilibiliUps.map((u) => String(u != null ? u : "").trim()).filter(Boolean) : [],
-        bilibiliUpInfo: parseBilibiliUpInfo(obj.bilibiliUpInfo),
-        bilibiliMaxItems: parseBilibiliMaxItems(obj.bilibiliMaxItems),
-        bilibiliCookie: parseBilibiliCookie(obj.bilibiliCookie),
-        sources: obj.sources && typeof obj.sources === "object" ? { ...DEFAULT_SOURCES, ...obj.sources } : { ...DEFAULT_SOURCES }
-      };
-    }
-    return null;
-  }
-  async function readNewsData() {
-    const missing = !getApp().vault.getAbstractFileByPath(getNewsFilePath());
-    let corrupt = false;
-    const parsed = await jsonFileStore(getNewsFilePath(), {
-      defaultValue: () => emptyData(),
-      onCorrupt: () => {
-        corrupt = true;
-        return false;
-      }
-    }).read().catch(() => null);
-    if (parsed === null || corrupt) return { ok: false, missing: false, data: emptyData() };
-    const content = parseNewsFileContent(JSON.stringify(parsed));
-    if (!content) return { ok: false, missing: false, data: emptyData() };
-    return { ok: true, missing, data: content };
-  }
-  async function writeNewsData(data) {
-    try {
-      await jsonFileStore(getNewsFilePath()).write(data);
-    } catch (e) {
-    }
-  }
-  async function writeNewsDataMerged(intent) {
-    var _a2;
-    const res = await readNewsData();
-    const base = res.ok ? res.data : emptyData();
-    const next = { ...base };
-    if (intent.set.articles || ((_a2 = intent.removeArticleKeys) == null ? void 0 : _a2.length)) {
-      const patchList = intent.set.articles || [];
-      const removeKeys = new Set(intent.removeArticleKeys || []);
-      const patchByKey = /* @__PURE__ */ new Map();
-      for (const a of patchList) patchByKey.set(articleKeyOf(a), a);
-      const merged = [];
-      const seen = /* @__PURE__ */ new Set();
-      for (const a of base.articles || []) {
-        const k = articleKeyOf(a);
-        if (removeKeys.has(k)) continue;
-        seen.add(k);
-        merged.push(patchByKey.has(k) ? patchByKey.get(k) : a);
-      }
-      for (const a of patchList) {
-        const k = articleKeyOf(a);
-        if (!seen.has(k)) {
-          merged.push(a);
-          seen.add(k);
-        }
-      }
-      next.articles = merged;
-    }
-    for (const seg of ["stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources"]) {
-      if (intent.set[seg] !== void 0) {
-        next[seg] = intent.set[seg];
-      }
-    }
-    await writeNewsData(next);
-  }
-  function parseUidFromText(text) {
-    const t = String(text || "").trim();
-    if (!t) return null;
-    const pure = t.match(/^\d{1,10}$/);
-    if (pure) return pure[0];
-    const space = t.match(/space\.bilibili\.com[\/:]*(\d+)/i);
-    if (space) return space[1];
-    return null;
-  }
-  function parseBvidFromText(text) {
-    const t = String(text || "").trim();
-    const m = t.match(/bilibili\.com\/video\/(BV[0-9A-Za-z]+)/i);
-    return m ? m[1] : null;
-  }
-  async function resolveUidFromInput(text) {
-    var _a2;
-    const local = parseUidFromText(text);
-    if (local) return local;
-    const bvid = parseBvidFromText(text);
-    if (!bvid) return null;
-    try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 1e4);
-      const resp = await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, {
-        method: "GET",
-        signal: ctrl.signal
-      });
-      clearTimeout(timer);
-      if (!resp.ok) return null;
-      const json = await resp.json();
-      const mid = json && json.data && json.data.owner ? String((_a2 = json.data.owner.mid) != null ? _a2 : "") : "";
-      return mid || null;
-    } catch (e) {
-      return null;
-    }
-  }
-  async function migrateLegacyStats(data) {
-    if (statsHasData(data.stats)) return data;
-    const app2 = getApp();
-    const af = app2.vault.getAbstractFileByPath(STATS_JSON_PATH);
-    if (!af) return data;
-    try {
-      const raw = await app2.vault.read(af);
-      const old = JSON.parse(raw);
-      const merged = mergeStatsInto(data, old);
-      return merged === data ? data : merged;
-    } catch (e) {
-      return data;
-    }
-  }
-  function applyRetention(articles, savedDays, skippedDays, now = Date.now()) {
-    const DAY = 24 * 60 * 60 * 1e3;
-    const kept = [];
-    for (const a of articles) {
-      if (!a || a.read !== true) {
-        kept.push(a);
-        continue;
-      }
-      const state3 = a.state === "saved" ? "saved" : "skipped";
-      const days = state3 === "saved" ? savedDays : skippedDays;
-      if (!Number.isFinite(days) || days <= 0) {
-        kept.push(a);
-        continue;
-      }
-      const t = new Date(a.fetchedAt || a.date || "").getTime();
-      if (!Number.isFinite(t)) {
-        kept.push(a);
-        continue;
-      }
-      if (now - t > days * DAY) continue;
-      kept.push(a);
-    }
-    return kept;
-  }
-  function normalizeRetentionDays(v) {
-    const n = Number(String(v || "").trim());
-    return Number.isFinite(n) && n > 0 ? n : null;
-  }
-  var STATS_JSON_PATH, DEFAULT_SOURCES, DEFAULT_STATS;
-  var init_news_data = __esm({
-    "src/clipbook/news-data.ts"() {
-      init_app();
-      init_storage();
-      init_constants3();
-      STATS_JSON_PATH = "CONFIG/STORAGE/news-stats.json";
-      DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true };
-      DEFAULT_STATS = () => ({ totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} });
-    }
-  });
-
-  // src/clipbook/write-queue.ts
-  function enqueueNewsWrite(op) {
-    return enqueueFileTask(getNewsFilePath(), op);
-  }
-  var init_write_queue = __esm({
-    "src/clipbook/write-queue.ts"() {
-      init_storage();
-      init_news_data();
-    }
-  });
-
-  // src/clipbook/news-source-settings.ts
-  async function readDataSourceState() {
-    const res = await readNewsData();
-    if (res.missing) {
-      return { exists: false, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", lastFetchAt: null, totalArticles: 0 };
-    }
-    if (!res.ok) {
-      return { exists: true, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", lastFetchAt: null, totalArticles: 0 };
-    }
-    let lastFetchAt = null;
-    for (const a of res.data.articles) {
-      if (a && a.fetchedAt && (!lastFetchAt || String(a.fetchedAt) > lastFetchAt)) lastFetchAt = String(a.fetchedAt);
-    }
-    return {
-      exists: true,
-      sources: { ...res.data.sources },
-      bilibiliUps: [...res.data.bilibiliUps],
-      bilibiliUpInfo: { ...res.data.bilibiliUpInfo },
-      bilibiliMaxItems: res.data.bilibiliMaxItems,
-      bilibiliCookie: res.data.bilibiliCookie,
-      lastFetchAt,
-      totalArticles: res.data.articles.length
-    };
-  }
-  async function writeSources(sources) {
-    await enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return;
-      await writeNewsDataMerged({ set: { sources: { ...sources } } });
-    });
-  }
-  async function addBilibiliUp(uid) {
-    const id = String(uid || "").trim();
-    if (!id) return false;
-    return enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return false;
-      if (res.data.bilibiliUps.includes(id)) return false;
-      await writeNewsDataMerged({ set: { bilibiliUps: [...res.data.bilibiliUps, id] } });
-      return true;
-    });
-  }
-  async function writeBilibiliMaxItems(v) {
-    const n = Math.floor(Number(v));
-    const maxItems = Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
-    await enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return;
-      await writeNewsDataMerged({ set: { bilibiliMaxItems: maxItems } });
-    });
-  }
-  async function writeBilibiliCookie(cookie) {
-    const c = String(cookie || "").trim();
-    await enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return;
-      await writeNewsDataMerged({ set: { bilibiliCookie: c } });
-    });
-  }
-  async function removeBilibiliUp(uid) {
-    await enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok || res.missing) return;
-      const info = { ...res.data.bilibiliUpInfo };
-      delete info[uid];
-      await writeNewsDataMerged({
-        set: { bilibiliUps: res.data.bilibiliUps.filter((u) => u !== uid), bilibiliUpInfo: info }
-      });
-    });
-  }
-  var init_news_source_settings = __esm({
-    "src/clipbook/news-source-settings.ts"() {
-      init_news_data();
-      init_write_queue();
-    }
-  });
-
   // src/clipbook/news-sources-group.ts
-  function buildNewsSourcesGroup(groupBody, refreshVisibility) {
-    const loading2 = new Setting(groupBody).setName("数据源状态").setDesc("读取中…");
-    void readDataSourceState().then((state3) => {
-      loading2.settingEl.remove();
-      renderDataSourceGroup(groupBody, state3, refreshVisibility);
-    });
-  }
-  function renderDataSourceGroup(groupBody, state3, refreshVisibility) {
-    if (!state3.exists) {
-      renderInstallGuide(groupBody);
-      refreshVisibility();
-      return;
-    }
-    renderSourceSwitches(groupBody, state3.sources, refreshVisibility);
-    renderUpSection(groupBody, state3.bilibiliUps, state3.bilibiliUpInfo, state3.sources.bilibili, state3.bilibiliMaxItems, state3.bilibiliCookie, refreshVisibility);
-    renderRetention(groupBody, refreshVisibility);
-    refreshVisibility();
-  }
-  function renderInstallGuide(groupBody) {
-    const guide = new Setting(groupBody).setName("尚未启用新闻数据源").setDesc("聚合讯数据由外部「数据源守护」进程（obsidian-news）抓取入库。安装并启动后此处会显示数据源设置。");
-    guide.addButton(
-      (btn) => btn.setButtonText("复制安装命令").onClick(() => {
-        const cmd = "npm install -g @jwbz/obsidian-news && obsidian-news start";
-        navigator.clipboard.writeText(cmd).then(
-          () => notice("安装命令已复制", "success"),
-          () => notice("复制失败，请手动复制", "error")
-        );
-      })
-    );
-  }
-  function renderSourceSwitches(groupBody, sources, refreshVisibility) {
-    const items = [
-      { key: "zhihu", name: "知乎日报", desc: "抓取知乎日报每日文章" },
-      { key: "guokr", name: "果壳科学人", desc: "抓取果壳科学人最新文章" },
-      { key: "bilibili", name: "B站 UP 主", desc: "抓取名单内 UP 主的视频投稿" }
-    ];
-    for (const it of items) {
-      new Setting(groupBody).setName(it.name).setDesc(it.desc).addToggle((toggle) => {
-        toggle.setValue(!!sources[it.key]).onChange(async (v) => {
-          const next = { ...sources, [it.key]: v };
-          await writeSources(next);
-          if (it.key === "bilibili") {
-            const section = groupBody.querySelector("[data-up-section]");
-            if (section) section.style.display = v ? "" : "none";
-            refreshVisibility();
-          }
-          notice(`已${v ? "开启" : "关闭"}${it.name}`, "success");
-        });
-      });
-    }
-  }
-  function upDisplayName(uid, info) {
-    return info && info.name ? info.name : `UP ${uid}`;
-  }
-  function renderUpSection(groupBody, ups, upInfo, bilibiliEnabled, maxItems, cookie, refreshVisibility) {
-    const section = document.createElement("div");
-    section.dataset.upSection = "1";
-    section.style.display = bilibiliEnabled ? "" : "none";
-    groupBody.appendChild(section);
-    const build2 = () => {
-      section.innerHTML = "";
-      const row = new Setting(section).setName("UP 主名单").setDesc(ups.length > 0 ? `已跟踪 ${ups.length} 位` : "暂未跟踪 UP 主");
-      row.addButton(
-        (btn) => btn.setButtonText("管理").setCta().onClick(() => {
-          openUpManagerModal({
-            ups,
-            upInfo,
-            cookie,
-            onChanged: async () => {
-              const fresh = await readDataSourceState();
-              ups = fresh.bilibiliUps;
-              upInfo = fresh.bilibiliUpInfo;
-              cookie = fresh.bilibiliCookie;
-              build2();
-              refreshVisibility();
-            }
-          });
-        })
-      );
-      new Setting(section).setName("B站抓取条数").setDesc("每位 UP 主抓取最近多少条动态（不走 24 小时窗口），默认 10，范围 1-50").addText(
-        (text) => text.setValue(String(maxItems)).onChange(async (v) => {
-          await writeBilibiliMaxItems(v);
-          notice("B 站抓取条数已保存", "success");
-        })
-      );
+  function dataSourceGroupRows(init2) {
+    const box = {
+      ...init2,
+      sources: { ...init2.sources },
+      bilibiliUps: [...init2.bilibiliUps],
+      bilibiliUpInfo: { ...init2.bilibiliUpInfo }
     };
-    build2();
+    if (!box.exists) {
+      return [
+        { type: "info", name: "尚未启用新闻数据源", desc: "聚合讯数据由外部「数据源守护」进程（obsidian-news）抓取入库。安装并启动后此处会显示数据源设置。" },
+        { type: "button", name: "安装数据源", buttonText: "复制安装命令", cta: true, onClick: () => {
+          const cmd = "npm install -g @jwbz/obsidian-news && obsidian-news start";
+          navigator.clipboard.writeText(cmd).then(
+            () => notice("安装命令已复制", "success"),
+            () => notice("复制失败，请手动复制", "error")
+          );
+        } }
+      ];
+    }
+    const bilibiliOn = () => box.sources.bilibili === true;
+    const sourceBinding = (key) => ({
+      get: () => box.sources[key] === true,
+      set: (v) => {
+        box.sources[key] = v;
+      },
+      save: () => writeSources({ ...box.sources })
+    });
+    const upListDesc = () => box.bilibiliUps.length > 0 ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主，添加与移除在管理弹窗` : "暂未跟踪 UP 主，添加与移除在管理弹窗";
+    return [
+      {
+        type: "toggle",
+        name: "知乎日报",
+        desc: "抓取知乎日报每日文章",
+        binding: sourceBinding("zhihu"),
+        onChange: (v) => notice(`已${v ? "开启" : "关闭"}知乎日报`, "success")
+      },
+      {
+        type: "toggle",
+        name: "果壳科学人",
+        desc: "抓取果壳科学人最新文章",
+        binding: sourceBinding("guokr"),
+        onChange: (v) => notice(`已${v ? "开启" : "关闭"}果壳科学人`, "success")
+      },
+      {
+        type: "toggle",
+        name: "B站 UP 主",
+        desc: "抓取名单内 UP 主的视频投稿",
+        binding: sourceBinding("bilibili"),
+        onChange: (v) => notice(`已${v ? "开启" : "关闭"}B站 UP 主`, "success")
+      },
+      {
+        type: "button",
+        name: "UP 主名单",
+        desc: upListDesc(),
+        buttonText: "管理",
+        cta: true,
+        visibleWhen: bilibiliOn,
+        onClick: (ctx) => openUpManagerModal({
+          ups: [...box.bilibiliUps],
+          upInfo: { ...box.bilibiliUpInfo },
+          cookie: box.bilibiliCookie,
+          onChanged: async () => {
+            const fresh = await readDataSourceState();
+            box.bilibiliUps = [...fresh.bilibiliUps];
+            box.bilibiliUpInfo = { ...fresh.bilibiliUpInfo };
+            box.bilibiliCookie = fresh.bilibiliCookie;
+            setRowDesc(ctx, upListDesc());
+            ctx.refreshVisibility();
+          }
+        })
+      },
+      {
+        type: "number",
+        name: "B站抓取条数",
+        desc: "每位 UP 主抓取最近动态的条数上限，默认 10",
+        min: 1,
+        max: 50,
+        step: 1,
+        visibleWhen: bilibiliOn,
+        binding: {
+          get: () => box.bilibiliMaxItems,
+          set: (v) => {
+            box.bilibiliMaxItems = v;
+          },
+          save: () => writeBilibiliMaxItems(box.bilibiliMaxItems)
+        }
+      },
+      {
+        type: "number",
+        name: "文章保留天数",
+        desc: "已读与跳过文章的数据超期自动清理，默认 30 天",
+        min: 1,
+        step: 1,
+        binding: numStrBinding("newsRetentionUnsavedDays", 30)
+      }
+    ];
+  }
+  function setRowDesc(ctx, text) {
+    const el = ctx.rowEl.querySelector(".bz-sp-set-desc") || ctx.rowEl.querySelector(".setting-item-description");
+    if (el) el.textContent = text;
   }
   function upManagerSettingsSchema(opts) {
     const box = {
@@ -23721,6 +23747,9 @@ ${bodyText.substring(0, 6e3)}`;
         }
       ]
     };
+  }
+  function upDisplayName(uid, info) {
+    return info && info.name ? info.name : `UP ${uid}`;
   }
   function renderAddUpRow(body, box, onChanged) {
     new Setting(body).setName("添加 UP 主").setDesc("粘贴主页链接（space.bilibili.com/123456）或视频链接自动解析 UID").addText((text) => {
@@ -23877,21 +23906,10 @@ ${bodyText.substring(0, 6e3)}`;
     });
     handle = handleReg;
   }
-  function renderRetention(groupBody, refreshVisibility) {
-    const binding = numStrBinding("newsRetentionUnsavedDays", 30);
-    new Setting(groupBody).setName("未保存文章保留天数").setDesc("已读/跳过文章的数据超期自动清理，默认 30 天").addText(
-      (text) => text.setValue(String(binding.get())).onChange(async (v) => {
-        const n = Number(v);
-        if (Number.isFinite(n) && n > 0) binding.set(n);
-        await saveSettings();
-      })
-    );
-  }
   var init_news_sources_group = __esm({
     "src/clipbook/news-sources-group.ts"() {
       init_fake_obsidian();
       init_notice();
-      init_settings_provider();
       init_settings_common();
       init_dom();
       init_esc_manager();
@@ -28336,7 +28354,7 @@ ${sample}`,
     mountIcons(detailBody);
     bindImgFallback(detailBody);
   }
-  function clipbookSettingsSchema() {
+  function clipbookSettingsSchema(dataSource) {
     return {
       groups: [
         {
@@ -28401,16 +28419,15 @@ ${sample}`,
         {
           icon: "radio",
           name: "数据源",
-          rows: [
-            { type: "custom", render: (body, ctx) => buildNewsSourcesGroup(body, ctx.refreshVisibility) }
-          ]
+          rows: dataSourceGroupRows(dataSource)
         },
         mobileFullscreenGroup("clipbookMobileDefaultFullscreen", { desc: "" })
       ]
     };
   }
-  function openSettings(app2) {
-    const schema = clipbookSettingsSchema();
+  async function openSettings(app2) {
+    const dataSource = await readDataSourceState();
+    const schema = clipbookSettingsSchema(dataSource);
     openSettingsModal({
       title: "剪藏本设置",
       maxWidth: 560,
@@ -28442,6 +28459,7 @@ ${sample}`,
       init_settings_provider();
       init_auto_summary();
       init_news_sources_group();
+      init_news_source_settings();
       init_settings_common();
       init_md();
       init_store2();
@@ -40543,7 +40561,12 @@ ${text}`;
         "diary-wall": async () => (await Promise.resolve().then(() => (init_settings(), settings_exports))).diaryWallSettingsSchema(),
         todo: async () => (await Promise.resolve().then(() => (init_settings2(), settings_exports2))).todoSettingsSchema(),
         belongings: async () => (await Promise.resolve().then(() => (init_ui5(), ui_exports3))).belongingSettingsSchema(),
-        clipping: async () => (await Promise.resolve().then(() => (init_ui7(), ui_exports5))).clipbookSettingsSchema(),
+        // 数据源组为声明行（外部 news.json 状态），先读盘预载再建 schema
+        clipping: async () => {
+          const { readDataSourceState: readDataSourceState2 } = await Promise.resolve().then(() => (init_news_source_settings(), news_source_settings_exports));
+          const state3 = await readDataSourceState2();
+          return (await Promise.resolve().then(() => (init_ui7(), ui_exports5))).clipbookSettingsSchema(state3);
+        },
         favorites: async () => (await Promise.resolve().then(() => (init_ui8(), ui_exports6))).favoritesSettingsSchema(),
         cinema: async () => (await Promise.resolve().then(() => (init_settings3(), settings_exports3))).cinemaSettingsSchema(),
         bookshelf: async () => (await Promise.resolve().then(() => (init_settings4(), settings_exports4))).bookshelfSettingsSchema(),
