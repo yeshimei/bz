@@ -106,10 +106,10 @@ describe('桌面搜索（enh 包 1）', () => {
 });
 
 describe('移动端长按抽屉（enh 包 2）', () => {
-  it('renderMobList 每卡挂 attachItemActions（.bz-item-card），动作与桌面同源', async () => {
+  it('renderMobToc 每卡挂 attachItemActions（.bz-item-card），动作与桌面同源（含已收折叠段内卡片，issue 248）', async () => {
     await openDesktop();
     const cards = [...document.querySelectorAll('.bz-clip-mob-item')] as HTMLElement[];
-    expect(cards.length).toBe(2);
+    expect(cards.length).toBeGreaterThanOrEqual(2);
     for (const card of cards) {
       expect(card.classList.contains('bz-item-card')).toBe(true);
     }
