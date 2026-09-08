@@ -12,6 +12,7 @@ import { describe, it, expect } from 'vitest';
 import { lintTargets } from './settings-copy-lint-engine';
 import { clipbookSettingsSchema } from '../../src/clipbook/ui';
 import { upManagerSettingsSchema } from '../../src/clipbook/news-sources-group';
+import { emptyDataSourceState } from '../../src/clipbook/news-source-settings';
 import { favoritesSettingsSchema } from '../../src/favorites/ui';
 
 const WHITELIST = new Set<string>([
@@ -22,7 +23,7 @@ const WHITELIST = new Set<string>([
 
 const TARGETS = [
   // clipbook 融合域 schema 取代旧 clippingSettingsSchema（ADR-0085）
-  { source: 'clipbook', schema: clipbookSettingsSchema() },
+  { source: 'clipbook', schema: clipbookSettingsSchema(emptyDataSourceState(true)) },
   // up-manager 三行全为 custom 插槽（复合控件行 + 动态 desc），无行 name/desc 可 lint
   { source: 'up-manager', schema: upManagerSettingsSchema({ ups: [], upInfo: {}, cookie: '', onChanged: () => {} }) },
   { source: 'favorites', schema: favoritesSettingsSchema() },

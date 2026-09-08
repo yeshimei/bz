@@ -8168,13 +8168,16 @@ ${bodyText.substring(0, 6e3)}`;
   });
 
   // src/clipbook/news-source-settings.ts
+  function emptyDataSourceState(exists = false) {
+    return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", lastFetchAt: null, totalArticles: 0 };
+  }
   async function readDataSourceState() {
     const res = await readNewsData();
     if (res.missing) {
-      return { exists: false, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", lastFetchAt: null, totalArticles: 0 };
+      return emptyDataSourceState(false);
     }
     if (!res.ok) {
-      return { exists: true, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", lastFetchAt: null, totalArticles: 0 };
+      return emptyDataSourceState(true);
     }
     let lastFetchAt = null;
     for (const a of res.data.articles) {
@@ -8245,93 +8248,106 @@ ${bodyText.substring(0, 6e3)}`;
   });
 
   // src/clipbook/news-sources-group.ts
-  function buildNewsSourcesGroup(groupBody, refreshVisibility) {
-    const loading2 = new Setting(groupBody).setName("数据源状态").setDesc("读取中…");
-    void readDataSourceState().then((state) => {
-      loading2.settingEl.remove();
-      renderDataSourceGroup(groupBody, state, refreshVisibility);
-    });
-  }
-  function renderDataSourceGroup(groupBody, state, refreshVisibility) {
-    if (!state.exists) {
-      renderInstallGuide(groupBody);
-      refreshVisibility();
-      return;
-    }
-    renderSourceSwitches(groupBody, state.sources, refreshVisibility);
-    renderUpSection(groupBody, state.bilibiliUps, state.bilibiliUpInfo, state.sources.bilibili, state.bilibiliMaxItems, state.bilibiliCookie, refreshVisibility);
-    renderRetention(groupBody, refreshVisibility);
-    refreshVisibility();
-  }
-  function renderInstallGuide(groupBody) {
-    const guide = new Setting(groupBody).setName("尚未启用新闻数据源").setDesc("聚合讯数据由外部「数据源守护」进程（obsidian-news）抓取入库。安装并启动后此处会显示数据源设置。");
-    guide.addButton(
-      (btn) => btn.setButtonText("复制安装命令").onClick(() => {
-        const cmd = "npm install -g @jwbz/obsidian-news && obsidian-news start";
-        navigator.clipboard.writeText(cmd).then(
-          () => notice("安装命令已复制", "success"),
-          () => notice("复制失败，请手动复制", "error")
-        );
-      })
-    );
-  }
-  function renderSourceSwitches(groupBody, sources, refreshVisibility) {
-    const items = [
-      { key: "zhihu", name: "知乎日报", desc: "抓取知乎日报每日文章" },
-      { key: "guokr", name: "果壳科学人", desc: "抓取果壳科学人最新文章" },
-      { key: "bilibili", name: "B站 UP 主", desc: "抓取名单内 UP 主的视频投稿" }
-    ];
-    for (const it of items) {
-      new Setting(groupBody).setName(it.name).setDesc(it.desc).addToggle((toggle) => {
-        toggle.setValue(!!sources[it.key]).onChange(async (v) => {
-          const next = { ...sources, [it.key]: v };
-          await writeSources(next);
-          if (it.key === "bilibili") {
-            const section = groupBody.querySelector("[data-up-section]");
-            if (section) section.style.display = v ? "" : "none";
-            refreshVisibility();
-          }
-          notice(`已${v ? "开启" : "关闭"}${it.name}`, "success");
-        });
-      });
-    }
-  }
-  function upDisplayName(uid, info) {
-    return info && info.name ? info.name : `UP ${uid}`;
-  }
-  function renderUpSection(groupBody, ups, upInfo, bilibiliEnabled, maxItems, cookie, refreshVisibility) {
-    const section = document.createElement("div");
-    section.dataset.upSection = "1";
-    section.style.display = bilibiliEnabled ? "" : "none";
-    groupBody.appendChild(section);
-    const build = () => {
-      section.innerHTML = "";
-      const row = new Setting(section).setName("UP 主名单").setDesc(ups.length > 0 ? `已跟踪 ${ups.length} 位` : "暂未跟踪 UP 主");
-      row.addButton(
-        (btn) => btn.setButtonText("管理").setCta().onClick(() => {
-          openUpManagerModal({
-            ups,
-            upInfo,
-            cookie,
-            onChanged: async () => {
-              const fresh = await readDataSourceState();
-              ups = fresh.bilibiliUps;
-              upInfo = fresh.bilibiliUpInfo;
-              cookie = fresh.bilibiliCookie;
-              build();
-              refreshVisibility();
-            }
-          });
-        })
-      );
-      new Setting(section).setName("B站抓取条数").setDesc("每位 UP 主抓取最近多少条动态（不走 24 小时窗口），默认 10，范围 1-50").addText(
-        (text) => text.setValue(String(maxItems)).onChange(async (v) => {
-          await writeBilibiliMaxItems(v);
-          notice("B 站抓取条数已保存", "success");
-        })
-      );
+  function dataSourceGroupRows(init) {
+    const box = {
+      ...init,
+      sources: { ...init.sources },
+      bilibiliUps: [...init.bilibiliUps],
+      bilibiliUpInfo: { ...init.bilibiliUpInfo }
     };
-    build();
+    if (!box.exists) {
+      return [
+        { type: "info", name: "尚未启用新闻数据源", desc: "聚合讯数据由外部「数据源守护」进程（obsidian-news）抓取入库。安装并启动后此处会显示数据源设置。" },
+        { type: "button", name: "安装数据源", buttonText: "复制安装命令", cta: true, onClick: () => {
+          const cmd = "npm install -g @jwbz/obsidian-news && obsidian-news start";
+          navigator.clipboard.writeText(cmd).then(
+            () => notice("安装命令已复制", "success"),
+            () => notice("复制失败，请手动复制", "error")
+          );
+        } }
+      ];
+    }
+    const bilibiliOn = () => box.sources.bilibili === true;
+    const sourceBinding = (key) => ({
+      get: () => box.sources[key] === true,
+      set: (v) => {
+        box.sources[key] = v;
+      },
+      save: () => writeSources({ ...box.sources })
+    });
+    const upListDesc = () => box.bilibiliUps.length > 0 ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主，添加与移除在管理弹窗` : "暂未跟踪 UP 主，添加与移除在管理弹窗";
+    return [
+      {
+        type: "toggle",
+        name: "知乎日报",
+        desc: "抓取知乎日报每日文章",
+        binding: sourceBinding("zhihu"),
+        onChange: (v) => notice(`已${v ? "开启" : "关闭"}知乎日报`, "success")
+      },
+      {
+        type: "toggle",
+        name: "果壳科学人",
+        desc: "抓取果壳科学人最新文章",
+        binding: sourceBinding("guokr"),
+        onChange: (v) => notice(`已${v ? "开启" : "关闭"}果壳科学人`, "success")
+      },
+      {
+        type: "toggle",
+        name: "B站 UP 主",
+        desc: "抓取名单内 UP 主的视频投稿",
+        binding: sourceBinding("bilibili"),
+        onChange: (v) => notice(`已${v ? "开启" : "关闭"}B站 UP 主`, "success")
+      },
+      {
+        type: "button",
+        name: "UP 主名单",
+        desc: upListDesc(),
+        buttonText: "管理",
+        cta: true,
+        visibleWhen: bilibiliOn,
+        onClick: (ctx) => openUpManagerModal({
+          ups: [...box.bilibiliUps],
+          upInfo: { ...box.bilibiliUpInfo },
+          cookie: box.bilibiliCookie,
+          onChanged: async () => {
+            const fresh = await readDataSourceState();
+            box.bilibiliUps = [...fresh.bilibiliUps];
+            box.bilibiliUpInfo = { ...fresh.bilibiliUpInfo };
+            box.bilibiliCookie = fresh.bilibiliCookie;
+            setRowDesc(ctx, upListDesc());
+            ctx.refreshVisibility();
+          }
+        })
+      },
+      {
+        type: "number",
+        name: "B站抓取条数",
+        desc: "每位 UP 主抓取最近动态的条数上限，默认 10",
+        min: 1,
+        max: 50,
+        step: 1,
+        visibleWhen: bilibiliOn,
+        binding: {
+          get: () => box.bilibiliMaxItems,
+          set: (v) => {
+            box.bilibiliMaxItems = v;
+          },
+          save: () => writeBilibiliMaxItems(box.bilibiliMaxItems)
+        }
+      },
+      {
+        type: "number",
+        name: "文章保留天数",
+        desc: "已读与跳过文章的数据超期自动清理，默认 30 天",
+        min: 1,
+        step: 1,
+        binding: numStrBinding("newsRetentionUnsavedDays", 30)
+      }
+    ];
+  }
+  function setRowDesc(ctx, text) {
+    const el = ctx.rowEl.querySelector(".bz-sp-set-desc") || ctx.rowEl.querySelector(".setting-item-description");
+    if (el) el.textContent = text;
   }
   function upManagerSettingsSchema(opts) {
     const box = {
@@ -8355,6 +8371,9 @@ ${bodyText.substring(0, 6e3)}`;
         }
       ]
     };
+  }
+  function upDisplayName(uid, info) {
+    return info && info.name ? info.name : `UP ${uid}`;
   }
   function renderAddUpRow(body, box, onChanged) {
     new Setting(body).setName("添加 UP 主").setDesc("粘贴主页链接（space.bilibili.com/123456）或视频链接自动解析 UID").addText((text) => {
@@ -8511,21 +8530,10 @@ ${bodyText.substring(0, 6e3)}`;
     });
     handle = handleReg;
   }
-  function renderRetention(groupBody, refreshVisibility) {
-    const binding = numStrBinding("newsRetentionUnsavedDays", 30);
-    new Setting(groupBody).setName("未保存文章保留天数").setDesc("已读/跳过文章的数据超期自动清理，默认 30 天").addText(
-      (text) => text.setValue(String(binding.get())).onChange(async (v) => {
-        const n = Number(v);
-        if (Number.isFinite(n) && n > 0) binding.set(n);
-        await saveSettings();
-      })
-    );
-  }
   var init_news_sources_group = __esm({
     "src/clipbook/news-sources-group.ts"() {
       init_fake_obsidian();
       init_notice();
-      init_settings_provider();
       init_settings_common();
       init_dom();
       init_esc_manager();
@@ -12981,7 +12989,7 @@ ${sample}`,
     mountIcons(detailBody);
     bindImgFallback(detailBody);
   }
-  function clipbookSettingsSchema() {
+  function clipbookSettingsSchema(dataSource) {
     return {
       groups: [
         {
@@ -13046,16 +13054,15 @@ ${sample}`,
         {
           icon: "radio",
           name: "数据源",
-          rows: [
-            { type: "custom", render: (body, ctx) => buildNewsSourcesGroup(body, ctx.refreshVisibility) }
-          ]
+          rows: dataSourceGroupRows(dataSource)
         },
         mobileFullscreenGroup("clipbookMobileDefaultFullscreen", { desc: "" })
       ]
     };
   }
-  function openSettings(app) {
-    const schema = clipbookSettingsSchema();
+  async function openSettings(app) {
+    const dataSource = await readDataSourceState();
+    const schema = clipbookSettingsSchema(dataSource);
     openSettingsModal({
       title: "剪藏本设置",
       maxWidth: 560,
@@ -13087,6 +13094,7 @@ ${sample}`,
       init_settings_provider();
       init_auto_summary();
       init_news_sources_group();
+      init_news_source_settings();
       init_settings_common();
       init_md();
       init_store();
