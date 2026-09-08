@@ -11,7 +11,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { articleKeyOf, excerpt } from '../../src/clipbook/constants';
 import { readClipbookData, emptySidecar } from '../../src/clipbook/data';
-import { clipArticle, clipFromNote, queryBySource, clipUrlSet, aggregateSites } from '../../src/clipbook/store';
+import { clipArticle, clipFromNote, queryBySource, queryBySourceFull, bucketByState, clipUrlSet, aggregateSites } from '../../src/clipbook/store';
 
 beforeEach(() => {
   resetObsidianMocks();
@@ -249,5 +249,57 @@ describe('clipbook site 聚合与站点源（issue 222）', () => {
     // 空站点名归「未知」桶可查
     const unk = queryBySource([], emptySidecar(), new Set(), notes, { kind: 'site', site: '未知' });
     expect(unk).toHaveLength(2);
+  });
+});
+
+// ===== ADR-0108：会话目录全量查询 + 分桶（冻结序数据层）=====
+describe('会话冻结序数据层（ADR-0108）', () => {
+  const arts = () => [
+    { url: 'https://x.com/u', title: '未读X', platform: '果壳科学人', date: '2026-09-01 10:00:00' },
+    { url: 'https://x.com/r', title: '已读骨架', platform: '果壳科学人', date: '2026-08-01 10:00:00', read: true, state: 'skipped' },
+    { url: 'https://x.com/s', title: '已存骨架', platform: '果壳科学人', date: '2026-08-02 10:00:00', read: true, state: 'saved' },
+    { url: 'https://x.com/clipped', title: '承接news', platform: '果壳科学人', date: '2026-08-03 10:00:00', read: true, state: 'saved' },
+  ];
+  const notes = () => [
+    { path: '归档/网页剪藏/承接.md', title: '承接剪藏', url: 'https://x.com/clipped', site: '果壳科学人', created: 1754193600000 },
+    { path: '归档/网页剪藏/知乎藏.md', title: '知乎剪藏', url: 'https://zhihu.com/k', site: '知乎日报', created: 1754193600000 },
+  ];
+
+  it('queryBySourceFull site：保留未承接 read 骨架；承接 news 由剪藏代表不双显；clip 入 saved 桶', () => {
+    const sidecar = emptySidecar();
+    const full = queryBySourceFull(arts(), sidecar, clipUrlSet(notes()), notes(), { kind: 'site', site: '果壳科学人' });
+    const b = bucketByState(full);
+    expect(b.unread.map((a) => a.title)).toEqual(['未读X']);            // 未读常显
+    expect(b.read.map((a) => a.title)).toEqual(['已读骨架']);           // 未承接已读骨架
+    expect(b.saved.map((a) => a.title).sort()).toEqual(['已存骨架', '承接剪藏']); // state=saved 承接判定进已收；承接 news 不双显 → 剪藏代表
+    expect(full.some((a) => a.title === '承接news')).toBe(false);      // 承接 news 本身剔除
+  });
+
+  it('queryBySourceFull site：已存骨架（state=saved 未承接）仍进 saved 桶可回看', () => {
+    const sidecar = emptySidecar();
+    const full = queryBySourceFull(arts(), sidecar, new Set(), [], { kind: 'site', site: '果壳科学人' });
+    const b = bucketByState(full);
+    expect(b.saved.some((a) => a.title === '已存骨架')).toBe(true);
+  });
+
+  it('queryBySourceFull all：未读 + 未承接已读骨架（承接不混入 all 面）', () => {
+    const sidecar = emptySidecar();
+    const full = queryBySourceFull(arts(), sidecar, clipUrlSet(notes()), notes(), { kind: 'all' });
+    const b = bucketByState(full);
+    expect(b.unread.map((a) => a.title)).toEqual(['未读X']);
+    expect(b.read.map((a) => a.title)).toEqual(['已读骨架']);  // 未承接骨架进已读；已存/承接不在 all 面重读
+    expect(b.saved.some((a) => a.title === '已存骨架')).toBe(true);
+  });
+
+  it('bucketByState：clip 条目（origin=clip）st=saved 归已收桶；时间序桶内保序', () => {
+    const list = [
+      clipFromNote({ path: 'a.md', title: '藏', url: 'u', site: 'S', created: 100 }),
+      clipArticle({ url: 'https://n/1', title: '读', platform: '果壳科学人', date: '2026-01-01', read: true, state: 'skipped' }, {}),
+      clipArticle({ url: 'https://n/2', title: '未', platform: '果壳科学人', date: '2026-01-02' }, {}),
+    ];
+    const b = bucketByState(list);
+    expect(b.saved.map((a) => a.title)).toEqual(['藏']);
+    expect(b.read.map((a) => a.title)).toEqual(['读']);
+    expect(b.unread.map((a) => a.title)).toEqual(['未']);
   });
 });

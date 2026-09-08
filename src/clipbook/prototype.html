@@ -173,18 +173,22 @@
         t('首条序号 01', items()[0]?.querySelector('.bz-clip-no')?.textContent === '01');
         const firstTitle = items()[0]?.querySelector('.bz-clip-item-t')?.textContent || '';
         items()[0].click();
-        await sleep(120);
+        await sleep(150);
         t('点击后阅读面标题联动', dt('[data-clip-reader] .bz-clip-art-title')?.textContent === firstTitle);
+        // ADR-0108：桌面打开即已读——首条原位灰显（重渲后列表仍含该条）
+        t('打开即已读：首条灰显在原位', items().some((i) => i.classList.contains('bz-clip-item--read')));
 
         // —— 4. 右键菜单（编辑部皮肤：变量挂菜单根，白底墨边须真渲染）
-        items()[0].dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
+        // 打开即已读后 items()[0] 已 read，右键目标取仍未读的 items()[1]（标读计数断言不受污染）
+        const ctxCard = items().find((i) => !i.classList.contains('bz-clip-item--read')) || items()[0];
+        ctxCard.dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
         await sleep(150);
         const menu = dd.querySelector('.bz-item-menu.bz-clip-menu-editorial');
         t('右键菜单开（编辑部类）', !!menu);
         if (menu) {
           const mbg = getComputedStyle(menu).backgroundColor;
           t('菜单纸白底（皮肤变量生效）', mbg === 'rgb(250, 248, 243)');
-          t('菜单含保存/已读/原文', menu.textContent.includes('保存到剪藏本') && menu.textContent.includes('标记为已读') && menu.textContent.includes('查看原文'));
+          t('菜单含保存/已读/删除', menu.textContent.includes('保存到剪藏本') && menu.textContent.includes('标记为已读') && menu.textContent.includes('删除'));
         }
         // 菜单点「标记为已读」（右键浮层 capture 层需完整鼠标序列）
         const clickReal = (el) => {
@@ -202,6 +206,8 @@
         t('标为已读落盘', db().filter((a) => a.read).length === readBefore + 1);
         t('撤销通知在场', !!dd.querySelector('.bz-notice'));
         t('菜单已关', !dd.querySelector('.bz-item-menu'));
+        // ADR-0108：显式标读后会话内原位保留（灰显 read 类仍在目录）——重开面板才沉段
+        t('标读后目录原位保留（灰显 read 类）', items().some((i) => i.classList.contains('bz-clip-item--read')));
 
         // —— 5. 搜索（180ms 防抖后过滤；条目数变少且全部命中关键词）
         const searchInput = dt('[data-clip-desk-search]');
@@ -215,11 +221,11 @@
         searchInput.dispatchEvent(new Event('input', { bubbles: true }));
         await sleep(420);
 
-        // —— 6. 移动双屏：面板开 + 列表 + 详情屏2
+        // —— 6. 移动章目录（m3/m3+ADR-0108）：章 = site + 已读/已收双折叠行
         t('移动面板开（mob 双屏）', !!mob('.bz-clip-mob'));
         const mobItems = () => [...md.querySelectorAll('[data-clip-mob-list] .bz-clip-mob-item')];
-        t('移动列表非空', mobItems().length > 0);
-        t('移动源胶囊非空', md.querySelectorAll('[data-clip-mob-sources] .bz-mobstrip-chip').length > 0);
+        t('移动章目录非空（章头在场）', md.querySelectorAll('[data-clip-mob-list] .bz-clip-mob-ch').length > 0);
+        t('移动列表条目非空', mobItems().length > 0);
         mobItems()[0].click();
         await sleep(150);
         t('移动详情屏2开', md.querySelector('[data-clip-mob-detail]')?.style.display !== 'none' && !!mob('[data-clip-mob-detail-body] .bz-clip-mob-d-title'));

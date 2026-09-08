@@ -257,8 +257,8 @@ describe('误标/误删可撤销（enh 包 5）', () => {
   });
 });
 
-describe('阅读动线（标已读前进 / 键盘切换）', () => {
-  it('标已读后前进到同位置下一篇', async () => {
+describe('阅读动线（冻结序：标已读原位保留 / 键盘切换）', () => {
+  it('标已读后条目原位保留灰显（ADR-0108：会话内不重排；显式标读也等重开面板才沉段）', async () => {
     await openDesktop();
     expect(M.cur!.id).toBe('url:https://bilibili.com/video/BV1'); // 倒序后首篇
     const item = document.querySelector('.bz-clip-item') as HTMLElement;
@@ -266,7 +266,11 @@ describe('阅读动线（标已读前进 / 键盘切换）', () => {
     const readBtn = [...menu.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.includes('标记为已读')) as HTMLElement;
     readBtn.click();
     await drainNewsWritesForTests();
-    await vi.waitFor(() => expect(M.cur!.id).toBe('url:https://guokr.com/1')); // 前进到同位置下一篇
+    // 冻结序：条目原位保留（内存位已置，灰显）；cur 不前进——重开面板才重排沉段
+    await vi.waitFor(() => expect(M.cur!.id).toBe('url:https://bilibili.com/video/BV1'));
+    // 列表仍含该条（原位灰显，会话内不消失）
+    const titles = [...document.querySelectorAll('.bz-clip-item')].map((e) => e.textContent);
+    expect(titles.some((t) => t!.includes('影视飓风视频'))).toBe(true);
   });
 
   it('右栏聚焦 ←/→/j/k 切换条目', async () => {

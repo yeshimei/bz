@@ -210,6 +210,66 @@ export function queryBySource(
   return out.filter((a) => a.st !== 'saved').sort((a, b) => b.timeTs - a.timeTs);
 }
 
+/**
+ * 会话目录全量查询（ADR-0108 冻结序专用）：与 queryBySource 同源口径，但**保留**未承接的
+ * 已处理骨架（read）与已收藏（saved），供会话快照按 st 分桶（unread · 已读段 · 已收段）。
+ * 承接排重与 queryBySource/readBySite 同口径：news.url 命中剪藏（clipByUrl ∨ savedArchive）时
+ * 由剪藏笔记代表，news 侧剔除（不双显）。site 源合并该站剪藏全量；all/inbox 不含剪藏。
+ * 排序语义与 queryBySource 对齐（timeTs 降序）；剪藏本源不在此路径（维持原样平铺）。
+ */
+export function queryBySourceFull(
+  articles: any[],
+  sidecar: ClipbookData,
+  clipByUrl: Set<string>,
+  clipNotes: any[],
+  source: { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' } | { kind: 'site'; site: string },
+  upInfoMap: Record<string, any> = {}
+): ClipArticle[] {
+  if (source.kind === 'clip') {
+    return (clipNotes || []).map((n) => clipFromNote(n));
+  }
+  const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
+  const isClippedNews = (a: any): boolean =>
+    !!a && !!a.url && (savedKeys.has(String(a.url)) || clipByUrl.has(String(a.url)));
+  const mapNews = (a: any) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap });
+  let news: any[] = [];
+  let clips: ClipArticle[] = [];
+  if (source.kind === 'all') {
+    news = (articles || []).filter((a) => !isClippedNews(a));
+  } else if (source.kind === 'site') {
+    const s = normSite(source.site);
+    news = (articles || []).filter((a) => !isClippedNews(a) && normSite(siteName(a)) === s);
+    clips = (clipNotes || []).filter((n) => normSite(String((n && n.site) || '')) === s).map((n) => clipFromNote(n));
+  } else {
+    const isBili = source.platform === 'B站';
+    news = (articles || []).filter((a) => {
+      if (isClippedNews(a)) return false;
+      const p = platformOf(a);
+      if (p !== source.platform) return false;
+      if (isBili && source.up && String(a.author || '') !== source.up) return false;
+      return true;
+    });
+  }
+  return [...news.map(mapNews), ...clips].sort((x, y) => y.timeTs - x.timeTs);
+}
+
+/**
+ * 会话目录分桶（ADR-0108）：全量查询结果按派生状态切三段——
+ * unread（常显段，会话内新标读靠快照序留位、渲染层灰显）/ read（已读段）/ saved（已收段）。
+ * 纯数据层（无 DOM），桶内保序（时间降序）。
+ */
+export function bucketByState(list: ClipArticle[]): { unread: ClipArticle[]; read: ClipArticle[]; saved: ClipArticle[] } {
+  const unread: ClipArticle[] = [];
+  const read: ClipArticle[] = [];
+  const saved: ClipArticle[] = [];
+  for (const a of list) {
+    if (a.st === 'saved') saved.push(a);
+    else if (a.st === 'read') read.push(a);
+    else unread.push(a);
+  }
+  return { unread, read, saved };
+}
+
 
 
 

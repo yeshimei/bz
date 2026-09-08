@@ -8741,6 +8741,44 @@ ${bodyText.substring(0, 6e3)}`;
     }
     return out.filter((a) => a.st !== "saved").sort((a, b) => b.timeTs - a.timeTs);
   }
+  function queryBySourceFull(articles, sidecar, clipByUrl, clipNotes, source, upInfoMap = {}) {
+    if (source.kind === "clip") {
+      return (clipNotes || []).map((n) => clipFromNote(n));
+    }
+    const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
+    const isClippedNews = (a) => !!a && !!a.url && (savedKeys.has(String(a.url)) || clipByUrl.has(String(a.url)));
+    const mapNews = (a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap });
+    let news = [];
+    let clips = [];
+    if (source.kind === "all") {
+      news = (articles || []).filter((a) => !isClippedNews(a));
+    } else if (source.kind === "site") {
+      const s = normSite(source.site);
+      news = (articles || []).filter((a) => !isClippedNews(a) && normSite(siteName(a)) === s);
+      clips = (clipNotes || []).filter((n) => normSite(String(n && n.site || "")) === s).map((n) => clipFromNote(n));
+    } else {
+      const isBili = source.platform === "B站";
+      news = (articles || []).filter((a) => {
+        if (isClippedNews(a)) return false;
+        const p = platformOf(a);
+        if (p !== source.platform) return false;
+        if (isBili && source.up && String(a.author || "") !== source.up) return false;
+        return true;
+      });
+    }
+    return [...news.map(mapNews), ...clips].sort((x, y) => y.timeTs - x.timeTs);
+  }
+  function bucketByState(list) {
+    const unread = [];
+    const read = [];
+    const saved = [];
+    for (const a of list) {
+      if (a.st === "saved") saved.push(a);
+      else if (a.st === "read") read.push(a);
+      else unread.push(a);
+    }
+    return { unread, read, saved };
+  }
   function normSite(s) {
     const t = String(s || "").trim();
     return t || "未知";
@@ -8883,6 +8921,20 @@ ${bodyText.substring(0, 6e3)}`;
       </div>
     </div>`).join("");
   }
+  function deskFoldRowHtml(kind, n, open) {
+    const label = kind === "read" ? "已读" : "已收";
+    const lab = open ? "收起" : `${label} <b>${n}</b> 篇`;
+    return `
+    <div class="bz-clip-desk-fold${open ? " on" : ""}" data-desk-fold="${kind}" role="button" aria-expanded="${open}">
+      <span class="bz-clip-desk-fold-rule"></span>
+      <span class="bz-clip-desk-fold-lab">${lab}</span>
+      <span class="bz-clip-desk-fold-ar"></span>
+      <span class="bz-clip-desk-fold-rule"></span>
+    </div>`;
+  }
+  function foldBodyHtml(html, open) {
+    return html ? `<div class="bz-clip-desk-fold-body"${open ? "" : " hidden"}>${html}</div>` : "";
+  }
   function inlineHtml(text) {
     let out = "";
     let last = 0;
@@ -8933,8 +8985,12 @@ ${bodyText.substring(0, 6e3)}`;
       <span class="bz-clip-mob-time">${esc(timeOf(a))}</span>
     </div>`).join("");
   }
-  function mobChHeadHtml(site, unread, savedN) {
-    const cntTxt = unread > 0 || savedN > 0 ? `${unread > 0 ? `${unread} 未读` : ""}${unread > 0 && savedN > 0 ? " · " : ""}${savedN > 0 ? `${savedN} 已收` : ""}` : "";
+  function mobChHeadHtml(site, unread, readN, savedN) {
+    const seg = [];
+    if (unread > 0) seg.push(`${unread} 未读`);
+    if (readN > 0) seg.push(`${readN} 已读`);
+    if (savedN > 0) seg.push(`${savedN} 已收`);
+    const cntTxt = seg.join(" · ");
     return `
     <div class="bz-clip-mob-ch-hd" data-src='${esc(JSON.stringify({ kind: "site", site }))}' title="${esc(site)}">
       <span class="bz-clip-mob-ch-name">${esc(site)}</span>
@@ -8942,24 +8998,31 @@ ${bodyText.substring(0, 6e3)}`;
       <span class="bz-clip-mob-ch-rule"></span>
     </div>`;
   }
-  function mobFoldHtml(n, open) {
+  function mobFoldHtml(kind, n, open) {
+    const label = kind === "read" ? "已读" : "已收";
     return `
-    <div class="bz-clip-mob-fold${open ? " on" : ""}" data-fold role="button" aria-expanded="${open}">
+    <div class="bz-clip-mob-fold${open ? " on" : ""}" data-fold data-fold-kind="${kind}" role="button" aria-expanded="${open}">
       <span class="bz-clip-mob-fold-rule"></span>
-      <span class="bz-clip-mob-fold-lab">${open ? "收起" : `已收 <b>${n}</b> 篇`}</span>
+      <span class="bz-clip-mob-fold-lab">${open ? "收起" : `${label} <b>${n}</b> 篇`}</span>
       <span class="bz-clip-mob-fold-ar"></span>
       <span class="bz-clip-mob-fold-rule"></span>
     </div>`;
   }
+  function mobFoldBodyHtml(kind, html, open) {
+    return html ? open ? `<div class="bz-clip-mob-arch" data-arch-kind="${kind}">${html}</div>` : `<div class="bz-clip-mob-arch" data-arch-kind="${kind}" hidden>${html}</div>` : "";
+  }
   function mobTocHtml(chapters, searching, expanded) {
     return chapters.map((ch) => {
-      const open = expanded.has(ch.site);
-      const fold = !searching && ch.savedN > 0 ? mobFoldHtml(ch.savedN, open) : "";
-      const arch = ch.archHtml ? searching || open ? `<div class="bz-clip-mob-arch">${ch.archHtml}</div>` : `<div class="bz-clip-mob-arch" hidden>${ch.archHtml}</div>` : "";
+      const readOpen = expanded.has("read:" + ch.site);
+      const savedOpen = expanded.has("saved:" + ch.site);
+      const foldRead = !searching && ch.readN > 0 ? mobFoldHtml("read", ch.readN, readOpen) : "";
+      const foldSaved = !searching && ch.savedN > 0 ? mobFoldHtml("saved", ch.savedN, savedOpen) : "";
+      const readBody = mobFoldBodyHtml("read", ch.readHtml, searching || readOpen);
+      const savedBody = mobFoldBodyHtml("saved", ch.savedHtml, searching || savedOpen);
       return `
       <div class="bz-clip-mob-ch">
-        ${mobChHeadHtml(ch.site, ch.unread, ch.savedN)}
-        <div class="bz-clip-mob-ch-items">${ch.activeHtml}${fold}${arch}</div>
+        ${mobChHeadHtml(ch.site, ch.unread, ch.readN, ch.savedN)}
+        <div class="bz-clip-mob-ch-items">${ch.activeHtml}${foldRead}${readBody}${foldSaved}${savedBody}</div>
       </div>`;
     }).join("");
   }
@@ -12171,6 +12234,7 @@ ${sample}`,
     overlayEl.style.display = "flex";
     panelSplit == null ? void 0 : panelSplit.restore();
     M.open = true;
+    beginSession();
     if (dirty || !loaded) void loadIfNeeded();
     else renderAll();
   }
@@ -12181,6 +12245,7 @@ ${sample}`,
     loadPromise = readNewsAndSidecar().then(() => {
       dirty = false;
       loaded = true;
+      beginSession();
       renderAll();
     }).catch((e) => {
       console.error("[剪藏本] 装载失败", e);
@@ -12459,19 +12524,68 @@ ${sample}`,
     if (s.kind === "inbox") return { kind: "inbox", platform: s.platform, up: s.up || void 0 };
     return { kind: "all" };
   }
+  function currentSrc() {
+    return srcList();
+  }
   function currentList() {
-    return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], srcList(), M.upInfo);
+    return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], currentSrc(), M.upInfo);
+  }
+  function epochReset() {
+    dirEpoch++;
+    snapEpochs.clear();
+  }
+  function srcKey(src) {
+    if (src.kind === "all") return "all";
+    if (src.kind === "clip") return "clip";
+    if (src.kind === "site") return "site:" + src.site;
+    return `inbox:${src.platform}:${src.up || ""}`;
+  }
+  function snapDirFor(src) {
+    const key = srcKey(src);
+    const cur = dirSnap.get(key);
+    if (cur && snapEpochs.get(key) === dirEpoch) return cur;
+    const b = bucketByState(queryBySourceFull(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo));
+    const snap = { unread: b.unread.map((a) => a.id), read: b.read.map((a) => a.id), saved: b.saved.map((a) => a.id) };
+    dirSnap.set(key, snap);
+    snapEpochs.set(key, dirEpoch);
+    return snap;
+  }
+  function resolveSnap(snap, src) {
+    const live2 = /* @__PURE__ */ new Map();
+    for (const a of queryBySourceFull(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo)) live2.set(a.id, a);
+    const pick = (ids) => ids.map((id) => live2.get(id)).filter((a) => !!a);
+    return { unread: pick(snap.unread), read: pick(snap.read), saved: pick(snap.saved) };
+  }
+  function dirFor(src) {
+    return resolveSnap(snapDirFor(src), src);
+  }
+  function deskFlat() {
+    const b = dirFor(currentSrc());
+    return [...b.unread, ...b.read, ...b.saved];
+  }
+  function deskFoldIsOpen(kind, n, savedN, snapUnreadN) {
+    const key = srcKey(currentSrc()) + "#" + kind;
+    if (deskFoldTouched.has(key)) return deskFoldOpen.has(key);
+    if (snapUnreadN > 0 || n <= 0) return false;
+    if (kind === "saved") return true;
+    return savedN <= 0;
+  }
+  function toggleDeskFold(kind) {
+    const key = srcKey(currentSrc()) + "#" + kind;
+    deskFoldTouched.add(key);
+    if (deskFoldOpen.has(key)) deskFoldOpen.delete(key);
+    else deskFoldOpen.add(key);
+    renderList();
+  }
+  function beginSession() {
+    epochReset();
+    deskFoldOpen.clear();
+    deskFoldTouched.clear();
   }
   function matchesSearch(a) {
     const kw = (searchKw || "").toLowerCase();
     if (!kw) return true;
     return a.title.toLowerCase().includes(kw) || a.summary.toLowerCase().includes(kw) || a.site.toLowerCase().includes(kw) || a.srcName.toLowerCase().includes(kw) || a.author.toLowerCase().includes(kw) || a.tags.some((t) => t.toLowerCase().includes(kw));
-  }
-  function listWithSearch() {
-    return currentList().filter(matchesSearch);
-  }
-  function sortedView() {
-    return [...listWithSearch()].sort((a, b) => (a.st === "unread" ? 0 : 1) - (b.st === "unread" ? 0 : 1));
   }
   function renderRail() {
     var _a, _b, _c, _d;
@@ -12554,18 +12668,65 @@ ${sample}`,
   }
   function renderList() {
     if (!listEl) return;
-    const list = sortedView();
-    if (list.length === 0) {
+    const src = currentSrc();
+    if (src.kind === "clip") {
+      const list = queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo).filter((a) => !searchKw || matchesSearch(a));
+      if (!list.length) {
+        listEl.innerHTML = "";
+        listEl.appendChild(uiEmpty({ icon: "scissors", title: "剪藏本为空" }));
+        M.cur = null;
+        if (readerEl) renderReader();
+        return;
+      }
+      if (!list.some((a) => a.id === (M.cur && M.cur.id))) M.cur = list[0];
+      listEl.innerHTML = tocListHtml(list, M.cur ? M.cur.id : null, (a) => relTime(a.timeTs));
+      M.list = list;
+      bindItemMenus();
+      return;
+    }
+    const flat = deskFlat();
+    if (!flat.length) {
       listEl.innerHTML = "";
       listEl.appendChild(uiEmpty({ icon: "inbox", title: "这个源暂无内容" }));
       M.cur = null;
       if (readerEl) renderReader();
       return;
     }
-    if (!list.some((a) => a.id === (M.cur && M.cur.id))) {
-      M.cur = list[0];
+    if (!flat.some((a) => a.id === (M.cur && M.cur.id))) {
+      M.cur = flat[0];
     }
-    listEl.innerHTML = tocListHtml(list, M.cur ? M.cur.id : null, (a) => relTime(a.timeTs));
+    const timeOf = (a) => relTime(a.timeTs);
+    const curId = M.cur ? M.cur.id : null;
+    if (searchKw) {
+      const hit = flat.filter(matchesSearch);
+      if (!hit.length) {
+        listEl.innerHTML = "";
+        listEl.appendChild(uiEmpty({ icon: "search-x", title: "查无此条" }));
+        M.cur = null;
+        if (readerEl) renderReader();
+        M.list = [];
+        return;
+      }
+      listEl.innerHTML = tocListHtml(hit, curId, timeOf);
+      M.list = hit;
+      bindItemMenus();
+      return;
+    }
+    const b = dirFor(src);
+    const snapUnreadN = b.unread.length;
+    let html = tocListHtml(b.unread, curId, timeOf);
+    if (b.read.length) {
+      const open = deskFoldIsOpen("read", b.read.length, b.saved.length, snapUnreadN);
+      html += deskFoldRowHtml("read", b.read.length, open);
+      html += foldBodyHtml(tocListHtml(b.read, curId, timeOf), open);
+    }
+    if (b.saved.length) {
+      const open = deskFoldIsOpen("saved", b.saved.length, b.saved.length, snapUnreadN);
+      html += deskFoldRowHtml("saved", b.saved.length, open);
+      html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf), open);
+    }
+    listEl.innerHTML = html;
+    M.list = flat;
     bindItemMenus();
   }
   function relTime(ts) {
@@ -12578,11 +12739,11 @@ ${sample}`,
   }
   function bindItemMenus() {
     if (!listEl) return;
+    const all = M.list;
     const cards = listEl.querySelectorAll(".bz-clip-item");
     cards.forEach((card) => {
-      const a = M.list.find((x) => x.id === card.dataset.id) || M.cur;
-      const art = currentList().find((x) => x.id === card.dataset.id);
-      if (!art) return;
+      const art = all.find((x) => x.id === card.dataset.id) || M.cur;
+      if (!art || art.id !== card.dataset.id) return;
       const actions = buildItemActions(art);
       attachItemActions(card, actions, { sheetHead: buildSheetHead(art), menuClass: "bz-clip-menu-editorial" });
       card.addEventListener("click", (e) => {
@@ -12590,7 +12751,12 @@ ${sample}`,
         selectArticle(art.id);
       });
     });
-    M.list = sortedView();
+    listEl.querySelectorAll("[data-desk-fold]").forEach((row) => {
+      row.addEventListener("click", () => {
+        const kind = row.getAttribute("data-desk-fold") || "saved";
+        toggleDeskFold(kind);
+      });
+    });
   }
   function buildSheetHead(a) {
     const head = document.createElement("div");
@@ -12717,7 +12883,7 @@ ${sample}`,
     readerEl.classList.toggle("fs-lg", fs === "large");
   }
   function stepArticle(delta) {
-    const list = sortedView();
+    const list = dirFor(currentSrc()).unread;
     if (!list.length) return;
     const idx = M.cur ? list.findIndex((x) => x.id === M.cur.id) : -1;
     const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
@@ -12729,11 +12895,11 @@ ${sample}`,
     if (sc) sc.scrollTop = 0;
   }
   function selectArticle(id) {
-    const list = currentList();
-    const a = list.find((x) => x.id === id);
+    const a = deskFlat().find((x) => x.id === id);
     if (!a) return;
     const changed = !M.cur || M.cur.id !== a.id;
     M.cur = a;
+    markReadOnOpen(a);
     renderList();
     renderReader();
     renderMobDetail();
@@ -12832,13 +12998,13 @@ ${sample}`,
     }
   }
   async function refreshAfterAction() {
-    const prevIdx = M.cur ? currentList().findIndex((x) => x.id === M.cur.id) : -1;
+    const prevIdx = M.cur ? deskFlat().findIndex((x) => x.id === M.cur.id) : -1;
     await readNewsAndSidecar();
-    const list = currentList();
-    if (M.cur && list.some((x) => x.id === M.cur.id)) {
-      M.cur = list.find((x) => x.id === M.cur.id) || M.cur;
-    } else if (list.length) {
-      M.cur = list[Math.min(Math.max(prevIdx, 0), list.length - 1)];
+    const flat = deskFlat();
+    if (M.cur && flat.some((x) => x.id === M.cur.id)) {
+      M.cur = flat.find((x) => x.id === M.cur.id) || M.cur;
+    } else if (flat.length) {
+      M.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
     } else {
       M.cur = null;
     }
@@ -12879,49 +13045,39 @@ ${sample}`,
     const chapters = [];
     const byId = /* @__PURE__ */ new Map();
     const order = [];
-    const ctx = { overrides: M.sidecar.articleOverrides || {}, clipByUrl: M.clipUrls, upInfo: M.upInfo || {}, savedKeys: savedUrls };
-    const readBySite = /* @__PURE__ */ new Map();
-    for (const n of arts) {
-      if (n.read !== true) continue;
-      if (n.url && (savedUrls.has(String(n.url)) || M.clipUrls.has(String(n.url)))) continue;
-      const ca = clipArticle(n, ctx);
-      const k = String(ca.site || "").trim() || "未知";
-      const arr = readBySite.get(k);
-      if (arr) arr.push(ca);
-      else readBySite.set(k, [ca]);
+    const siteSet = /* @__PURE__ */ new Set();
+    for (const a of arts) {
+      const s = String(a && (a.site || a.platform) || "").trim() || "未知";
+      siteSet.add(s);
     }
-    const rowSites = /* @__PURE__ */ new Set();
-    for (const row of aggregateSites(arts, clipNotes, savedUrls, M.clipUrls)) {
-      const full = queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, { kind: "site", site: row.site }, M.upInfo).filter(matchesSearch);
-      const readSkels = (readBySite.get(row.site) || []).filter(matchesSearch);
-      if (!full.length && !readSkels.length) continue;
-      rowSites.add(row.site);
-      const active = full.filter((a) => a.st !== "saved").sort((x, y) => (x.st === "unread" ? 0 : 1) - (y.st === "unread" ? 0 : 1));
-      const arch = [...full.filter((a) => a.st === "saved"), ...readSkels];
+    for (const n of clipNotes || []) {
+      const s = String(n && n.site || "").trim() || "未知";
+      siteSet.add(s);
+    }
+    for (const site of siteSet) {
+      const snap = snapDirFor({ kind: "site", site });
+      const b = resolveSnap(snap, { kind: "site", site });
+      const unread = b.unread.filter(matchesSearch);
+      const read = b.read.filter(matchesSearch);
+      const saved = b.saved.filter(matchesSearch);
+      if (!unread.length && !read.length && !saved.length) continue;
+      const unreadN = unread.filter((a) => a.st === "unread").length;
       chapters.push({
-        site: row.site,
-        unread: active.filter((a) => a.st === "unread").length,
-        activeN: active.length,
-        savedN: arch.length,
-        activeHtml: mobListHtml(active, timeOf),
-        archHtml: arch.length ? mobListHtml(arch, timeOf) : ""
+        site,
+        unread: unreadN,
+        activeN: unread.length,
+        readN: read.length,
+        savedN: saved.length,
+        activeHtml: mobListHtml(unread, timeOf),
+        readHtml: read.length ? mobListHtml(read, timeOf) : "",
+        savedHtml: saved.length ? mobListHtml(saved, timeOf) : ""
       });
-      [...active, ...arch].forEach((a) => {
+      [...unread, ...read, ...saved].forEach((a) => {
         byId.set(a.id, a);
         order.push(a);
       });
     }
-    for (const [site, list] of readBySite) {
-      if (rowSites.has(site)) continue;
-      const hit = list.filter(matchesSearch);
-      if (!hit.length) continue;
-      chapters.push({ site, unread: 0, activeN: 0, savedN: hit.length, activeHtml: "", archHtml: mobListHtml(hit, timeOf) });
-      hit.forEach((a) => {
-        byId.set(a.id, a);
-        order.push(a);
-      });
-    }
-    chapters.sort((x, y) => y.activeN + y.savedN - (x.activeN + x.savedN) || y.unread - x.unread || x.site.localeCompare(y.site, "zh"));
+    chapters.sort((x, y) => y.activeN + y.readN + y.savedN - (x.activeN + x.readN + x.savedN) || y.unread - x.unread || x.site.localeCompare(y.site, "zh"));
     mobItemById = byId;
     mobItemOrder = order;
     if (!chapters.length) {
@@ -12957,7 +13113,9 @@ ${sample}`,
         site = "";
       }
     }
-    const arch = ch ? ch.querySelector(".bz-clip-mob-arch") : null;
+    const kind = foldEl.getAttribute("data-fold-kind") || "saved";
+    const key = `${kind}:${site}`;
+    const arch = ch ? ch.querySelector(`[data-arch-kind="${kind}"]`) : null;
     const opening = !!arch && arch.hidden;
     if (arch) arch.hidden = !opening;
     foldEl.classList.toggle("on", opening);
@@ -12965,11 +13123,12 @@ ${sample}`,
     const lab = foldEl.querySelector(".bz-clip-mob-fold-lab");
     if (lab) {
       const n = arch ? arch.childElementCount : 0;
-      lab.innerHTML = opening ? "收起" : `已收 <b>${n}</b> 篇`;
+      const label = kind === "read" ? "已读" : "已收";
+      lab.innerHTML = opening ? "收起" : `${label} <b>${n}</b> 篇`;
     }
     if (site) {
-      if (opening) expandedMobArch.add(site);
-      else expandedMobArch.delete(site);
+      if (opening) expandedMobArch.add(key);
+      else expandedMobArch.delete(key);
     }
   }
   function openMobDetail(id) {
@@ -12988,10 +13147,14 @@ ${sample}`,
     if (!a || a.origin !== "news" || a.st !== "unread") return;
     const raw = a.raw || M.articles.find((n) => articleKeyOf(n) === a.id);
     if (!raw || raw.read === true) return;
-    void (async () => {
-      await flowMarkRead(a);
-      raw.read = true;
-    })();
+    raw.read = true;
+    void flowMarkRead(a).then(() => {
+      if (M.open && !M.mobDetailOpen) {
+        renderList();
+        renderRail();
+      }
+    }).catch(() => {
+    });
   }
   function renderMobDetail() {
     if (!mobDetailEl || !M.cur) return;
@@ -13105,7 +13268,7 @@ ${sample}`,
       }
     });
   }
-  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle, escRegistered, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder;
+  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle, escRegistered, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched;
   var init_ui3 = __esm({
     "src/clipbook/ui.ts"() {
       init_app();
@@ -13162,6 +13325,11 @@ ${sample}`,
       expandedMobArch = /* @__PURE__ */ new Set();
       mobItemById = /* @__PURE__ */ new Map();
       mobItemOrder = [];
+      dirEpoch = 0;
+      dirSnap = /* @__PURE__ */ new Map();
+      snapEpochs = /* @__PURE__ */ new Map();
+      deskFoldOpen = /* @__PURE__ */ new Set();
+      deskFoldTouched = /* @__PURE__ */ new Set();
     }
   });
 

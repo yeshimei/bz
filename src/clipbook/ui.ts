@@ -44,11 +44,11 @@ import { readDataSourceState, type DataSourceState } from './news-source-setting
 import { batchSizeRow } from '../core/settings-common';
 import type { ClipArticle } from './types';
 import { toParagraphs, stripClipChrome } from './md';
-import { queryBySource, aggregateSites, clipArticle } from './store';
+import { queryBySource, queryBySourceFull, aggregateSites, clipArticle, bucketByState } from './store';
 import {
   panelHtml, railItemHtml, railFootHtml, tocListHtml, paragraphsHtml as paragraphsMarkup,
   clipLoadingHtml, readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, mobNoHitHtml, type MobChapter, siteTint,
-  iconSpan, type SrcSelJson,
+  iconSpan, type SrcSelJson, deskFoldRowHtml, foldBodyHtml,
 } from './render';
 import { M, resetClipbookState } from './state';
 import { readNewsAndSidecar, clipDir } from './loader';
@@ -105,7 +105,8 @@ export function initPanel(app: any, showNow = false): void {
   else void loadIfNeeded();
 }
 
-/** 显示面板（幂等：数据就绪直接渲染；未装载先装载） */
+/** 显示面板（幂等：数据就绪直接渲染；未装载先装载）。
+ *  ADR-0108：每次打开面板 = 新会话（重排点）——快照重建使已读/已收条目按当前状态重新落段。 */
 export function showPanel(): void {
   if (!overlayEl) {
     // DOM 已被卸载清空（极端时序）→ 重建
@@ -114,20 +115,22 @@ export function showPanel(): void {
   overlayEl!.style.display = 'flex';
   panelSplit?.restore(); // 分割线尺寸记忆（容器可见后 restore 才能按实际宽度钳制）
   M.open = true;
+  beginSession();
   // C5/ADR-0063：已装载且无目录事件（!dirty）直接用内存缓存渲染——零扫描瞬时显示；
   // 首开未装载或有变更才异步重读
   if (dirty || !loaded) void loadIfNeeded();
   else renderAll();
 }
 
-/** 装载（防重入 + 首载后保留内存面，目录事件增量走 reloadIfOpen） */
+/** 装载（防重入 + 首载后保留内存面，目录事件增量走 reloadIfOpen）。
+ *  装载完成 = 数据基线更新（新会话）：目录事件引入新剪藏/新 news 后按当前状态重排快照。 */
 let loadPromise: Promise<void> | null = null;
 function loadIfNeeded(): Promise<void> {
   if (loading) return loadPromise || Promise.resolve();
   if (!M.open && overlayEl) return Promise.resolve();
   loading = true;
   loadPromise = readNewsAndSidecar()
-    .then(() => { dirty = false; loaded = true; renderAll(); })
+    .then(() => { dirty = false; loaded = true; beginSession(); renderAll(); })
     .catch((e) => { console.error('[剪藏本] 装载失败', e); notice('剪藏本数据读取失败', 'error'); })
     .finally(() => { loading = false; loadPromise = null; });
   return loadPromise;
@@ -429,8 +432,91 @@ function srcList(): SrcFilter {
   return { kind: 'all' };
 }
 
+function currentSrc(): SrcFilter {
+  return srcList();
+}
+
 function currentList(): ClipArticle[] {
-  return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], srcList(), M.upInfo);
+  return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], currentSrc(), M.upInfo);
+}
+
+// ================= 会话目录快照（ADR-0108 冻结序） =================
+// 打开面板（装载会话）时按源拍一次「目录序」——只记 **id 序 + 分桶分区**，不存对象（避免
+// 标读后拿到陈旧 st）。渲染时按 id 现取 ClipArticle（读最新态：灰显/绿显由当前 st 决定）。
+// 会话内任何状态流转不重排（快照分区固定不动）；唯一重排点 = 重开面板（新会话 / epoch++）。
+type DirSnap = { unread: string[]; read: string[]; saved: string[] };
+let dirEpoch = 0;                                   // 会话世代（重开面板 +1 = 重排点）
+let dirSnap = new Map<string, DirSnap>();           // srcKey → 会话快照（id 序 + 分区）
+let snapEpochs = new Map<string, number>();         // srcKey → 快照所处世代
+/** 桌面折叠开合记忆（read/saved 两段独立；key = `${srcKey}#read|saved`） */
+const deskFoldOpen = new Set<string>();
+/** 手动碰过（开或收）的折叠 key——默认自动展开规则不覆盖手动态 */
+const deskFoldTouched = new Set<string>();
+
+function epochReset(): void { dirEpoch++; snapEpochs.clear(); }
+
+/** 源 → 稳定 key（rail 切换/折叠态记忆） */
+function srcKey(src: SrcFilter): string {
+  if (src.kind === 'all') return 'all';
+  if (src.kind === 'clip') return 'clip';
+  if (src.kind === 'site') return 'site:' + src.site;
+  return `inbox:${src.platform}:${src.up || ''}`;
+}
+
+/** 会话内取某源目录快照（世代不符重建 = 重开面板即重排；会话内复用不动） */
+function snapDirFor(src: SrcFilter): DirSnap {
+  const key = srcKey(src);
+  const cur = dirSnap.get(key);
+  if (cur && snapEpochs.get(key) === dirEpoch) return cur;
+  const b = bucketByState(queryBySourceFull(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo));
+  const snap: DirSnap = { unread: b.unread.map((a) => a.id), read: b.read.map((a) => a.id), saved: b.saved.map((a) => a.id) };
+  dirSnap.set(key, snap);
+  snapEpochs.set(key, dirEpoch);
+  return snap;
+}
+
+/** 按 id 现取条目（快照 → 当前对象）：缺失即返回靠匹配 vt（id 已删就丢） */
+function resolveSnap(snap: DirSnap, src: SrcFilter): { unread: ClipArticle[]; read: ClipArticle[]; saved: ClipArticle[] } {
+  const live = new Map<string, ClipArticle>();
+  for (const a of queryBySourceFull(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo)) live.set(a.id, a);
+  const pick = (ids: string[]) => ids.map((id) => live.get(id)).filter((a): a is ClipArticle => !!a);
+  return { unread: pick(snap.unread), read: pick(snap.read), saved: pick(snap.saved) };
+}
+
+/** 当前源会话目录解析（快照序现取三段；剪藏本源无冻结语义，走 queryBySource 平铺） */
+function dirFor(src: SrcFilter): { unread: ClipArticle[]; read: ClipArticle[]; saved: ClipArticle[] } {
+  return resolveSnap(snapDirFor(src), src);
+}
+
+/** 桌面目录全量平铺（菜单/打开条目查找用；顺序 = 快照三段拼接） */
+function deskFlat(): ClipArticle[] {
+  const b = dirFor(currentSrc());
+  return [...b.unread, ...b.read, ...b.saved];
+}
+
+/** 桌面折叠开合判定（手动碰过 → 以 deskFoldOpen 为准；否则默认态：打开目录即无未读 → 默认展开「已收」，
+ *  已收空则展开「已读」——兜底不空场；n = 该段条数，savedN = 已收段条数，snapUnreadN = 快照未读数） */
+function deskFoldIsOpen(kind: 'read' | 'saved', n: number, savedN: number, snapUnreadN: number): boolean {
+  const key = srcKey(currentSrc()) + '#' + kind;
+  if (deskFoldTouched.has(key)) return deskFoldOpen.has(key);
+  if (snapUnreadN > 0 || n <= 0) return false;
+  if (kind === 'saved') return true;                       // 打开即无未读 → 默认展已收
+  return savedN <= 0;                                      // 已收空 → 展已读兜底
+}
+
+/** 点击桌面折叠行（toggle 后翻转手动态并重渲目录） */
+function toggleDeskFold(kind: 'read' | 'saved'): void {
+  const key = srcKey(currentSrc()) + '#' + kind;
+  deskFoldTouched.add(key);
+  if (deskFoldOpen.has(key)) deskFoldOpen.delete(key); else deskFoldOpen.add(key);
+  renderList();
+}
+
+/** 会话边界（ADR-0108）：每次打开面板 = 新会话 = 重排点——递增世代使全部快照失效、折叠默认态复位 */
+function beginSession(): void {
+  epochReset();
+  deskFoldOpen.clear();
+  deskFoldTouched.clear();
 }
 
 /** 搜索谓词（中栏列表过滤与 rail 计数共用——issue 206：搜索时各源统计联动） */
@@ -445,14 +531,6 @@ function matchesSearch(a: ClipArticle): boolean {
     a.tags.some((t) => t.toLowerCase().includes(kw));
 }
 
-function listWithSearch(): ClipArticle[] {
-  return currentList().filter(matchesSearch);
-}
-
-/** 编辑部目录序（issue 214）：未读在前、组内保持最新在前（稳定排序）；仅桌面目录消费，移动端维持最新在前 */
-function sortedView(): ClipArticle[] {
-  return [...listWithSearch()].sort((a, b) => (a.st === 'unread' ? 0 : 1) - (b.st === 'unread' ? 0 : 1));
-}
 
 // ================= 渲染：左 rail =================
 function renderRail(): void {
@@ -558,10 +636,35 @@ async function markAllRead(label: string, items: ClipArticle[]): Promise<void> {
 }
 
 // ================= 渲染：中栏列表 =================
+/**
+ * 桌面中栏目录（ADR-0108 会话冻结序）：
+ *  - 剪藏本源（src.kind==='clip'）：无未读/已读生命周期，维持原样平铺（Q8）；
+ *  - news 面源（all/site/inbox）：未读常显（会话快照 unread 桶现取——会话内新标读原位灰显，
+ *    计数即时减）+「已读 N 篇」折叠段（快照 read 桶）+「已收 N 篇」折叠段（快照 saved 桶）。
+ *  - 折叠默认收起；目录无未读时默认展开「已收」（已收空则展开「已读」）——桌面兜底不空场。
+ *  - 搜索态：命中平铺（无折叠行），与移动端检索语义一致。
+ */
 function renderList(): void {
   if (!listEl) return;
-  const list = sortedView();
-  if (list.length === 0) {
+  const src = currentSrc();
+  if (src.kind === 'clip') {
+    // 剪藏本源：全量平铺（冻结序不适用；read/saved 均无语义）
+    const list = queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo).filter((a) => !searchKw || matchesSearch(a));
+    if (!list.length) {
+      listEl.innerHTML = '';
+      listEl.appendChild(uiEmpty({ icon: 'scissors', title: '剪藏本为空' }));
+      M.cur = null;
+      if (readerEl) renderReader();
+      return;
+    }
+    if (!list.some((a) => a.id === (M.cur && M.cur.id))) M.cur = list[0];
+    listEl.innerHTML = tocListHtml(list, M.cur ? M.cur.id : null, (a) => relTime(a.timeTs));
+    M.list = list;
+    bindItemMenus();
+    return;
+  }
+  const flat = deskFlat();
+  if (!flat.length) {
     listEl.innerHTML = '';
     listEl.appendChild(uiEmpty({ icon: 'inbox', title: '这个源暂无内容' }));
     // G：切到空源清当前阅读——M.cur 残留上一源文章会被 renderReader/mob 详情再渲染
@@ -569,14 +672,45 @@ function renderList(): void {
     if (readerEl) renderReader();
     return;
   }
-  // 保持阅读项在列表内（不在则取第一条）
-  if (!list.some((a) => a.id === (M.cur && M.cur.id))) {
-    M.cur = list[0];
+  // 保持阅读项在目录内（不在则取未读段首条）
+  if (!flat.some((a) => a.id === (M.cur && M.cur.id))) {
+    M.cur = flat[0];
   }
-  // 编辑部目录（issue 214 原型对齐）：序号 + 标题 + 「站点 · 时间」一行；摘要不入目录
-  // （markup 单源 render.ts，issue 247）
-  listEl.innerHTML = tocListHtml(list, M.cur ? M.cur.id : null, (a) => relTime(a.timeTs));
-  // 卡片右键/长按（item-actions 复用）
+  const timeOf = (a: ClipArticle) => relTime(a.timeTs);
+  const curId = M.cur ? M.cur.id : null;
+  // 搜索态：命中平铺（不分段，折叠行不渲染）
+  if (searchKw) {
+    const hit = flat.filter(matchesSearch);
+    if (!hit.length) {
+      listEl.innerHTML = '';
+      listEl.appendChild(uiEmpty({ icon: 'search-x', title: '查无此条' }));
+      M.cur = null; // G：零命中 = 空目录语义（清阅读残留）
+      if (readerEl) renderReader();
+      M.list = [];
+      return;
+    }
+    listEl.innerHTML = tocListHtml(hit, curId, timeOf);
+    M.list = hit;
+    bindItemMenus();
+    return;
+  }
+  const b = dirFor(src);
+  const snapUnreadN = b.unread.length; // 快照桶大小 = 打开目录时未读数（会话内读完不触发闪开）
+  let html = tocListHtml(b.unread, curId, timeOf);
+  // 已读段（快照 read 桶；默认收起——打开即无未读且已收空时自动展开兜底）
+  if (b.read.length) {
+    const open = deskFoldIsOpen('read', b.read.length, b.saved.length, snapUnreadN);
+    html += deskFoldRowHtml('read', b.read.length, open);
+    html += foldBodyHtml(tocListHtml(b.read, curId, timeOf), open);
+  }
+  // 已收段（快照 saved 桶；打开即无未读默认展开）
+  if (b.saved.length) {
+    const open = deskFoldIsOpen('saved', b.saved.length, b.saved.length, snapUnreadN);
+    html += deskFoldRowHtml('saved', b.saved.length, open);
+    html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf), open);
+  }
+  listEl.innerHTML = html;
+  M.list = flat; // 菜单/点击查找全目录
   bindItemMenus();
 }
 
@@ -589,14 +723,15 @@ function relTime(ts: number): string {
   }
 }
 
-/** 给中栏卡片挂右键/长按菜单（item-actions：桌面 contextmenu / 触屏长按抽屉） */
+/** 给中栏卡片挂右键/长按菜单（item-actions：桌面 contextmenu / 触屏长按抽屉）。
+ *  art 从目录全量（M.list = 快照三段现取拼接）查——折叠段（已读/已收）条目同样可打开/菜单。 */
 function bindItemMenus(): void {
   if (!listEl) return;
+  const all = M.list;
   const cards = listEl.querySelectorAll<HTMLElement>('.bz-clip-item');
   cards.forEach((card) => {
-    const a = M.list.find((x) => x.id === card.dataset.id) || M.cur;
-    const art = currentList().find((x) => x.id === card.dataset.id);
-    if (!art) return;
+    const art = all.find((x) => x.id === card.dataset.id) || M.cur;
+    if (!art || art.id !== card.dataset.id) return;
     const actions = buildItemActions(art);
     // menuClass：菜单挂 body（域内后代选择器不可达），编辑部皮肤靠根挂类生效（同 todo 皮肤先例）
     attachItemActions(card, actions, { sheetHead: buildSheetHead(art), menuClass: 'bz-clip-menu-editorial' });
@@ -606,8 +741,13 @@ function bindItemMenus(): void {
       selectArticle(art.id);
     });
   });
-  // 记录当前列表缓存（右键菜单取用；与桌面目录展示同序）
-  M.list = sortedView();
+  // 桌面折叠行点击开合（已读/已收两段独立；renderList 重建 DOM 后重挂）
+  listEl.querySelectorAll<HTMLElement>('[data-desk-fold]').forEach((row) => {
+    row.addEventListener('click', () => {
+      const kind = (row.getAttribute('data-desk-fold') as 'read' | 'saved') || 'saved';
+      toggleDeskFold(kind);
+    });
+  });
 }
 
 function buildSheetHead(a: ClipArticle): HTMLElement {
@@ -759,9 +899,9 @@ function applyReaderFontSize(): void {
 
 // ---- 阅读动线（去在读后：无自动落读；条目切换靠 ←→/jk 与显式「标记为已读」动作） ----
 
-/** ←→/jk 条目切换（右栏聚焦时；列表顺序即阅读顺序，与目录展示同序） */
+/** ←→/jk 条目切换（右栏聚焦时；阅读顺序 = 未读桶快照序，与目录常显同序） */
 function stepArticle(delta: number): void {
-  const list = sortedView();
+  const list = dirFor(currentSrc()).unread;
   if (!list.length) return;
   const idx = M.cur ? list.findIndex((x) => x.id === M.cur!.id) : -1;
   const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
@@ -787,11 +927,12 @@ function resetReadScroll(): void {
 }
 
 function selectArticle(id: string): void {
-  const list = currentList();
-  const a = list.find((x) => x.id === id);
+  const a = deskFlat().find((x) => x.id === id);
   if (!a) return;
   const changed = !M.cur || M.cur.id !== a.id;
   M.cur = a;
+  // ADR-0108 Q5：桌面也「打开即已读」——与移动同动线（含 ←→/jk 步进）；会话内原位灰显
+  markReadOnOpen(a);
   renderList();
   renderReader();
   renderMobDetail();
@@ -901,17 +1042,17 @@ async function copyText(text: string, okMsg: string): Promise<void> {
 
 /**
  * 动作后刷新（数据面 + 列表 + rail 计数 + 阅读区）。
- * 阅读动线（enh 包 6b）：条目被处理/删除后前进到同位置下一篇（原位补位，不打断扫读）；
- * 仍在列表（如「在读」切换）则保持选中并刷新引用。
+ * ADR-0108 冻结序：标读/收藏后条目**原位保留**（快照不动），M.cur 保持当前条目、不跳位；
+ * 仅条目真消失（删除/剪藏目录删除）才补位到同位置下一条。
  */
 async function refreshAfterAction(): Promise<void> {
-  const prevIdx = M.cur ? currentList().findIndex((x) => x.id === M.cur!.id) : -1;
+  const prevIdx = M.cur ? deskFlat().findIndex((x) => x.id === M.cur!.id) : -1;
   await readNewsAndSidecar();
-  const list = currentList();
-  if (M.cur && list.some((x) => x.id === M.cur!.id)) {
-    M.cur = list.find((x) => x.id === M.cur!.id) || M.cur;
-  } else if (list.length) {
-    M.cur = list[Math.min(Math.max(prevIdx, 0), list.length - 1)];
+  const flat = deskFlat();
+  if (M.cur && flat.some((x) => x.id === M.cur!.id)) {
+    M.cur = flat.find((x) => x.id === M.cur!.id) || M.cur; // 保留原位（可能 st 已变，刷新引用）
+  } else if (flat.length) {
+    M.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
   } else {
     M.cur = null;
   }
@@ -952,7 +1093,7 @@ function rememberSplitWidth(w: number): void {
   void saveSettings();
 }
 
-// ================= 渲染：移动（m3 目录索引：site 章 + 已收折叠） =================
+// ================= 渲染：移动（m3 目录索引：site 章 + 已读/已收双折叠，ADR-0108） =================
 function renderMobToc(): void {
   if (!mobListEl) return;
   const arts = M.articles;
@@ -963,48 +1104,40 @@ function renderMobToc(): void {
   const chapters: MobChapter[] = [];
   const byId = new Map<string, ClipArticle>();
   const order: ClipArticle[] = [];
-  // 章 = site：基座沿用 aggregateSites（剪藏全量 + 未读 news 面）；已读骨架（read:true，保留期内；
-  // 超龄已由 loader retention 清理）并入同站「已收」折叠段——纯已读站补独立章，30 天内可回看。
-  // 承接排重与站点行同口径：read 骨架若 url 命中剪藏（clipByUrl/savedArchive）由 clip 承接，不双显。
-  const ctx = { overrides: M.sidecar.articleOverrides || {}, clipByUrl: M.clipUrls, upInfo: M.upInfo || {}, savedKeys: savedUrls };
-  const readBySite = new Map<string, ClipArticle[]>();
-  for (const n of arts) {
-    if (n.read !== true) continue;
-    if (n.url && (savedUrls.has(String(n.url)) || M.clipUrls.has(String(n.url)))) continue;
-    const ca = clipArticle(n, ctx);
-    const k = String(ca.site || '').trim() || '未知';
-    const arr = readBySite.get(k);
-    if (arr) arr.push(ca); else readBySite.set(k, [ca]);
+  // 章 = site：会话快照（ADR-0108）三桶现取——未读常显（会话内新标读原位灰显）/ 已读段 / 已收段。
+  // 承接排重与桌面同源：url 命中剪藏（clipByUrl/savedArchive）的 news 由 clip 承接 → st=saved 进已收，
+  // 已读骨架不双显（clipArticle 承接判定一致）。
+  const siteSet = new Set<string>();
+  for (const a of arts) {
+    const s = String((a && (a.site || a.platform)) || '').trim() || '未知';
+    siteSet.add(s);
   }
-  const rowSites = new Set<string>();
-  for (const row of aggregateSites(arts, clipNotes, savedUrls, M.clipUrls)) {
-    const full = queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, { kind: 'site', site: row.site }, M.upInfo)
-      .filter(matchesSearch);
-    const readSkels = (readBySite.get(row.site) || []).filter(matchesSearch);
-    if (!full.length && !readSkels.length) continue;
-    rowSites.add(row.site);
-    const active = full.filter((a) => a.st !== 'saved')
-      .sort((x, y) => (x.st === 'unread' ? 0 : 1) - (y.st === 'unread' ? 0 : 1)); // 未读在前，组内保序
-    const arch = [...full.filter((a) => a.st === 'saved'), ...readSkels];
+  for (const n of clipNotes || []) {
+    const s = String((n && n.site) || '').trim() || '未知';
+    siteSet.add(s);
+  }
+  for (const site of siteSet) {
+    const snap = snapDirFor({ kind: 'site', site });
+    const b = resolveSnap(snap, { kind: 'site', site });
+    const unread = b.unread.filter(matchesSearch);
+    const read = b.read.filter(matchesSearch);
+    const saved = b.saved.filter(matchesSearch);
+    if (!unread.length && !read.length && !saved.length) continue;
+    const unreadN = unread.filter((a) => a.st === 'unread').length; // 章头未读数（搜索命中口径 + 会话内标读即时减）
     chapters.push({
-      site: row.site,
-      unread: active.filter((a) => a.st === 'unread').length,
-      activeN: active.length,
-      savedN: arch.length,
-      activeHtml: mobListHtml(active, timeOf),
-      archHtml: arch.length ? mobListHtml(arch, timeOf) : '',
+      site,
+      unread: unreadN,
+      activeN: unread.length,
+      readN: read.length,
+      savedN: saved.length,
+      activeHtml: mobListHtml(unread, timeOf),
+      readHtml: read.length ? mobListHtml(read, timeOf) : '',
+      savedHtml: saved.length ? mobListHtml(saved, timeOf) : '',
     });
-    [...active, ...arch].forEach((a) => { byId.set(a.id, a); order.push(a); });
-  }
-  for (const [site, list] of readBySite) {
-    if (rowSites.has(site)) continue;
-    const hit = list.filter(matchesSearch);
-    if (!hit.length) continue;
-    chapters.push({ site, unread: 0, activeN: 0, savedN: hit.length, activeHtml: '', archHtml: mobListHtml(hit, timeOf) });
-    hit.forEach((a) => { byId.set(a.id, a); order.push(a); });
+    [...unread, ...read, ...saved].forEach((a) => { byId.set(a.id, a); order.push(a); });
   }
   // 章序：总数降序 → 未读降序 → 名 zh 序（与桌面 rail 口径同向）
-  chapters.sort((x, y) => (y.activeN + y.savedN) - (x.activeN + x.savedN) || y.unread - x.unread || x.site.localeCompare(y.site, 'zh'));
+  chapters.sort((x, y) => (y.activeN + y.readN + y.savedN) - (x.activeN + x.readN + x.savedN) || y.unread - x.unread || x.site.localeCompare(y.site, 'zh'));
   mobItemById = byId;
   mobItemOrder = order;
   if (!chapters.length) {
@@ -1028,7 +1161,7 @@ function renderMobToc(): void {
   });
 }
 
-/** 折叠行开合（原型 .c-fold 行为）：arch.hidden 翻转 + fold.on（箭头/文案）；site 记入 expandedMobArch（跨重渲染保持） */
+/** 折叠行开合（原型 .c-fold 行为）：kind 段 arch.hidden 翻转 + fold.on；`${kind}:${site}` 记入展开记忆（跨重渲染保持） */
 function toggleMobArch(foldEl: HTMLElement): void {
   const ch = foldEl.closest('.bz-clip-mob-ch');
   const hd = ch ? ch.querySelector('[data-src]') : null;
@@ -1036,7 +1169,9 @@ function toggleMobArch(foldEl: HTMLElement): void {
   if (hd) {
     try { site = String((JSON.parse((hd as HTMLElement).dataset.src || 'null')).site || ''); } catch (e) { site = ''; }
   }
-  const arch = ch ? (ch.querySelector('.bz-clip-mob-arch') as HTMLElement | null) : null;
+  const kind = (foldEl.getAttribute('data-fold-kind') as 'read' | 'saved') || 'saved';
+  const key = `${kind}:${site}`;
+  const arch = ch ? (ch.querySelector(`[data-arch-kind="${kind}"]`) as HTMLElement | null) : null;
   const opening = !!arch && arch.hidden;
   if (arch) arch.hidden = !opening;
   foldEl.classList.toggle('on', opening);
@@ -1044,10 +1179,11 @@ function toggleMobArch(foldEl: HTMLElement): void {
   const lab = foldEl.querySelector('.bz-clip-mob-fold-lab') as HTMLElement | null;
   if (lab) {
     const n = arch ? arch.childElementCount : 0;
-    lab.innerHTML = opening ? '收起' : `已收 <b>${n}</b> 篇`;
+    const label = kind === 'read' ? '已读' : '已收';
+    lab.innerHTML = opening ? '收起' : `${label} <b>${n}</b> 篇`;
   }
   if (site) {
-    if (opening) expandedMobArch.add(site); else expandedMobArch.delete(site);
+    if (opening) expandedMobArch.add(key); else expandedMobArch.delete(key);
   }
 }
 
@@ -1065,16 +1201,18 @@ function openMobDetail(id: string): void {
   markReadOnOpen(a); // 打开即已读（不打断当前详情正文；返回目录时该条已让位沉入已收折叠段）
 }
 
-/** 打开即已读（m3 拍板去在读）：移动打开一条未处理 news → 静默标已读（无 toast/撤销）；
- *  同步内存 read 位——返回目录重渲即让位沉入「已收」折叠段，无需等再次打开目录。 */
+/** 打开即已读（m3 去在读 + ADR-0108 桌面接入）：打开一条未处理 news → 静默标已读（无 toast/撤销）。
+ *  内存 read 位**同步**置（目录即时灰显、rail 计数即时减），落盘走串行队列（正文磁盘清空，
+ *  内存 raw 保留给本次会话阅读）。会话内该条按快照原位留灰，重开面板才重排沉段。 */
 function markReadOnOpen(a: ClipArticle): void {
   if (!a || a.origin !== 'news' || a.st !== 'unread') return;
   const raw = a.raw || M.articles.find((n) => articleKeyOf(n) === a.id);
   if (!raw || raw.read === true) return;
-  void (async () => {
-    await flowMarkRead(a);
-    raw.read = true; // 内存同步（正文保留给本次详情会话；磁盘 body 已按保留策略清空）
-  })();
+  raw.read = true; // 同步内存位（防重入 + 即时视觉/计数）
+  void flowMarkRead(a).then(() => {
+    // 落盘完成无需额外动作；若期间未重渲（极短窗口），补一次目录/徽标刷新收敛灰显
+    if (M.open && !M.mobDetailOpen) { renderList(); renderRail(); }
+  }).catch(() => { /* 落盘失败保持静默（下次装载还原） */ });
 }
 
 function renderMobDetail(): void {
