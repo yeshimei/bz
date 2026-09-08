@@ -56,6 +56,31 @@ http.createServer((req, res) => {
     req.on('close', () => clients.delete(res));
     return;
   }
+  // 根路径 = 单源域导航首页（动态生成：PREVIEW_DOMAINS ∪ BEHAVIOR_DOMAINS）
+  if (url.pathname === '/' || url.pathname === '/index.html') {
+    const domains = [...new Set([...BEHAVIOR_DOMAINS, ...PREVIEW_DOMAINS])];
+    const items = domains
+      .map((d) => {
+        const has = fs.existsSync(path.join(ROOT, 'src', d, 'prototype.html'));
+        return `<a class="card${has ? '' : ' off'}" href="/src/${d}/prototype.html"><b>${d}</b><span>${has ? 'prototype.html' : '无评审壳'}</span></a>`;
+      })
+      .join('\n');
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+    res.end(`<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>原型预览 · 单源域导航</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:#e9e7e1;font-family:system-ui,'Segoe UI','Microsoft YaHei',sans-serif;color:#211d16;padding:44px 24px}
+.wrap{max-width:820px;margin:0 auto}
+h1{font-size:21px}.sub{font-size:12.5px;color:#8b857a;margin:8px 0 24px;line-height:1.7}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+a.card{display:flex;flex-direction:column;gap:4px;background:#fbfaf7;border:1px solid #ddd6c8;border-radius:11px;padding:13px 15px;text-decoration:none;color:inherit;transition:.15s}
+a.card:hover{transform:translateY(-2px);box-shadow:0 8px 20px #00000014;border-color:#a33d2a}
+a.card b{font-size:14px}a.card span{font-size:10.5px;color:#a39b8c}
+a.card.off{opacity:.45}
+</style></head><body><div class="wrap"><h1>原型预览 · 行为单源域导航</h1>
+<div class="sub">SSE 热刷新已注入各评审壳：改 ${'src/<域>/**'} 的 .ts/.css/.html 自动重出产物并刷新。快捷键返回本页：浏览器后退。</div>
+<div class="grid">\n${items}\n</div></div></body></html>`);
+    return;
+  }
   let file = path.normalize(path.join(ROOT, decodeURIComponent(url.pathname)));
   if (!file.startsWith(ROOT)) { res.writeHead(403).end(); return; }
   if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');

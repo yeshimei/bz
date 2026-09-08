@@ -92,11 +92,22 @@
   place-items: center;
   flex: none;
 }
+.bz-sb-head-title {
+  min-width: 0;
+}
 .bz-sb-head-title h3 {
   font-size: 16px;
   font-weight: 700;
   margin: 0;
   color: var(--sb-ink);
+  white-space: nowrap;
+}
+.bz-sb-panel .bz-sb-cnt,
+.bz-sb-chat-modal .bz-sb-cnt {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .bz-sb-panel .bz-sb-cnt {
   font-size: 12px;
@@ -910,8 +921,10 @@
   background: var(--sb-acc-soft);
 }
 @media (max-width: 768px) {
+  /* createOverlay 以内联样式设宽，移动端窄视口须同级 !important 覆写 */
   .bz-sb-chat-modal {
-    width: calc(100vw - 24px);
+    width: calc(100vw - 24px) !important;
+    max-width: none !important;
     height: calc(100vh - 24px);
   }
   .bz-sb-chat-model {
@@ -922,33 +935,64 @@
 /* ==================== 灵感参考窄窗（FloatWindow 容器重皮） ==================== */
 
 .bz-sb-float-win {
+  /* 几何（旧版逐项保留：FloatWindow 的贴边/收起/复位行为依赖此定位语义） */
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  /* z 动态发号（ADR-0067） */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.25s ease, opacity 0.15s ease;
+  /* 定稿配色 */
   background: var(--sb-bg);
-  border: 1px solid var(--sb-line2);
-  border-radius: 13px;
-  box-shadow: 0 18px 48px #00000038;
+  border-left: 1px solid var(--sb-line2);
+  box-shadow: -4px 0 18px rgba(0, 0, 0, 0.12);
   color: var(--sb-ink);
 }
 .bz-sb-float-enter {
-  animation: bz-sb-float-in 0.22s ease;
+  animation: bz-sb-float-in 0.22s ease-out;
 }
 @keyframes bz-sb-float-in {
   from {
+    transform: translateX(100%);
     opacity: 0;
-    transform: translateY(8px);
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }
 .bz-sb-float-head {
-  background: var(--sb-card);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 12px;
   border-bottom: 1px solid var(--sb-line);
+  background: var(--sb-card);
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+}
+.bz-sb-float-head:active {
+  cursor: grabbing;
 }
 .bz-sb-float-title {
-  color: var(--sb-ink);
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
   font-weight: 700;
+  color: var(--sb-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .bz-sb-float-headright {
   display: flex;
   align-items: center;
   gap: 4px;
+  flex-shrink: 0;
 }
 .bz-sb-float-btn {
   width: 26px;
@@ -956,6 +1000,7 @@
   border-radius: 7px;
   border: none;
   background: none;
+  box-shadow: none;
   color: var(--sb-mut);
   cursor: pointer;
   display: grid;
@@ -963,6 +1008,7 @@
   font-size: 13px;
   line-height: 1;
   padding: 0;
+  margin: 0;
 }
 .bz-sb-float-btn:hover {
   color: var(--sb-acc);
@@ -973,11 +1019,31 @@
   background: var(--sb-acc);
 }
 .bz-sb-float-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   background: var(--sb-bg);
 }
+/* 收起边条标识：展开态隐藏，收起态唯一可见（ticket 108 语义） */
 .bz-sb-float-strip {
-  background: var(--sb-card);
-  border-color: var(--sb-line2);
+  font-size: 15px;
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.bz-sb-float-win.bz-sb-float-hidden .bz-sb-float-strip {
+  opacity: 1;
+}
+.bz-sb-float-win.bz-sb-float-hidden .bz-sb-float-title,
+.bz-sb-float-win.bz-sb-float-hidden .bz-sb-float-headright,
+.bz-sb-float-win.bz-sb-float-hidden .bz-sb-float-body {
+  opacity: 0;
+  pointer-events: none;
+}
+.bz-sb-float-win.bz-sb-float-max {
+  box-shadow: none;
 }
 
 /* ==================== 参考列表 / 卡片 / 悬停预览 ==================== */

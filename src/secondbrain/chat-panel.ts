@@ -57,6 +57,8 @@ export class ChatPanel {
       maskId: 'bz-sb-chat-mask',
       popupId: 'bz-sb-chat-panel',
       onMaskClick: () => this.close(),
+      width: '760px', // createOverlay 以内联样式设宽（优先级高于类规则），必须在此定尺寸
+      maxWidth: 760,
     });
     this.mask = mask;
     this.popup = popup;
