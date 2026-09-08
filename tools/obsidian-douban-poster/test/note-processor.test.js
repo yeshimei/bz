@@ -6,6 +6,7 @@ import os from 'node:os';
 import {
   extractMovieName,
   hasPoster,
+  hasDoubanInfo,
   readFrontmatter,
   updateFrontmatter,
   insertPosterEmbed,
@@ -52,6 +53,51 @@ describe('hasPoster', () => {
     const file = path.join(tmpDir, 'test.md');
     fs.writeFileSync(file, '---\ntags:\n  - 电影\n海报: CONFIG/MOVIE POSTER/img.jpg\n---\n');
     assert.equal(hasPoster(file), true);
+  });
+});
+
+describe('hasDoubanInfo', () => {
+  let tmpDir;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'douban-info-test-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('合法 http(s) 链接返回true', () => {
+    const file = path.join(tmpDir, 'a.md');
+    fs.writeFileSync(file, '---\n豆瓣链接: https://movie.douban.com/subject/1889243/\n---\n');
+    assert.equal(hasDoubanInfo(file), true);
+    const file2 = path.join(tmpDir, 'b.md');
+    fs.writeFileSync(file2, '---\n豆瓣链接: http://movie.douban.com/subject/1/\n---\n');
+    assert.equal(hasDoubanInfo(file2), true);
+  });
+
+  it('带引号的合法链接返回true（工具写入形态，读写往返）', () => {
+    const file = path.join(tmpDir, 'q.md');
+    fs.writeFileSync(file, '---\n豆瓣链接: "https://movie.douban.com/subject/1889243/"\n---\n');
+    assert.equal(hasDoubanInfo(file), true);
+  });
+
+  it('字段缺失/为空返回false', () => {
+    const file = path.join(tmpDir, 'a.md');
+    fs.writeFileSync(file, '---\n评分: 8\n---\n');
+    assert.equal(hasDoubanInfo(file), false);
+    const file2 = path.join(tmpDir, 'b.md');
+    fs.writeFileSync(file2, '---\n豆瓣链接: \n---\n');
+    assert.equal(hasDoubanInfo(file2), false);
+  });
+
+  it('非 URL 脏值返回false（2.3.0 协议口径，与插件 doubanUrl 一致）', () => {
+    const file = path.join(tmpDir, 'a.md');
+    fs.writeFileSync(file, '---\n豆瓣链接: 随手记的字符串\n---\n');
+    assert.equal(hasDoubanInfo(file), false);
+    const file2 = path.join(tmpDir, 'b.md');
+    fs.writeFileSync(file2, '---\n豆瓣链接: www.douban.com/subject/1/\n---\n');
+    assert.equal(hasDoubanInfo(file2), false);
   });
 });
 

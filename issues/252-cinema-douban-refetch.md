@@ -36,3 +36,11 @@
 - 同日再开不触碰；跨天失败条目再触；补齐成功的笔记不再触碰。
 - 全程无新海报文件、无重复 embed。
 - 门禁全绿：pnpm test + tsc --noEmit + 自审 + diff 审查 + 构建验证（工具侧 node --test 全绿）。
+
+## 审查修复批（2026-09-09，合并后两轴 review 全部发现闭环）
+
+- **口径单源封口**：工具 `hasDoubanInfo` 从「非空」收紧为合法 http(s) 链接校验（与插件 `doubanUrl` 正则同口径）；连带修复 `readFrontmatter` 不剥包裹引号的读写往返缺陷（否则协议校验对工具自写历史链接永久失配 → 无限重抓）。ADR-0111 决策 1 已补记。
+- **pipeline 补全分支可测化**：`fetchPosterForNote` 增依赖注入参数（仅测试用），新增 `test/pipeline.test.js` 5 用例（齐全跳过/补全不下载不换 embed/脏值自愈/完整抓取/搜索无结果）——验收第 3 条自此有自动化佐证。
+- **todayStr 复用**：改 `localNow().slice(0, 10)`（core/ui/str），删自写补零拼装。
+- **smoke.test.ts 销项**：契约零改动（无新命令/设置/域结构），smoke 无可同步项，豁免；触碰链路由 `index.test.ts` 打开面板断言覆盖（`openCinema` + `openCinemaAnalysis` 两条入口均有用例）。
+- **票面补记**：`openCinemaAnalysis` 面板未开分支同样挂触碰（审查认定的合理延伸，本段补录）。
