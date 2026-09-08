@@ -470,7 +470,7 @@ export class SettingsPanelUI {
         <span class="bz-sp-head-tools"></span>
       </div>
       <div class="bz-sp-mob-search">
-        <span class="bz-input-wrap"><i class="bz-ic"></i><input class="bz-input" placeholder="搜索设置、域…" /></span>
+        <i class="bz-ic"></i><input class="bz-input" placeholder="搜索设置、域…" />
       </div>
       <div class="bz-sp-mob-list"></div>
     `;
@@ -480,17 +480,9 @@ export class SettingsPanelUI {
     tools.appendChild(uiIconBtn({ icon: 'x', lg: true, title: '关闭', className: 'bz-sp-mob-close', onClick: () => this.hide() }));
 
     const list = popup.querySelector('.bz-sp-mob-list')!;
-    const searchWrap = popup.querySelector('.bz-sp-mob-search') as HTMLElement;
     const searchIn = popup.querySelector('.bz-sp-mob-search .bz-input') as HTMLInputElement;
     const searchIcon = popup.querySelector('.bz-sp-mob-search .bz-ic') as HTMLElement;
     setIcon(searchIcon, 'search');
-    const clearBtn = uiIconBtn({ icon: 'x', title: '清除', className: 'bz-sp-mob-clear' });
-    searchWrap.appendChild(clearBtn);
-    clearBtn.addEventListener('click', () => {
-      searchIn.value = '';
-      render('');
-      searchIn.focus();
-    });
 
     const render = (q: string) => {
       const query = q.trim();
@@ -615,18 +607,13 @@ export class SettingsPanelUI {
     popup.style.borderBottom = '0';
     topifyZ(mask, popup);
 
-    // 弹窗头行：图标方块 + 名称 + 关闭钮（图标为 lucide，非 emoji）
+    // 弹窗头行：整宽头行仅标题（对齐面板头行范式；关闭走遮罩点击 / ESC）
     const head = document.createElement('div');
     head.className = 'bz-sp-mob-modal-head';
-    const ic = document.createElement('span');
-    ic.className = 'bz-sp-mob-modal-ic';
-    ic.appendChild(uiIcon(domain.icon));
     const title = document.createElement('h3');
     title.className = 'bz-sp-mob-modal-title';
     title.textContent = domain.name;
-    head.append(ic, title);
-    const x = uiIconBtn({ icon: 'x', lg: true, title: '关闭' });
-    head.appendChild(x);
+    head.appendChild(title);
     popup.appendChild(head);
 
     const body = document.createElement('div');
@@ -638,7 +625,6 @@ export class SettingsPanelUI {
       mask.remove();
       popup.remove();
     };
-    x.addEventListener('click', close);
     mask.addEventListener('click', (e) => {
       if (e.target === mask) close();
     });

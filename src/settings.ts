@@ -53,14 +53,6 @@ export default interface BzSettings {
   aiContextOverrides: Record<string, number>;
   /** 📏 每提供商最大输出 token 覆盖（键 = provider id）：未填用注册表 defaultMaxTokens（=模型最大输出） */
   aiMaxTokensOverrides: Record<string, number>;
-  /** 🌡️ 采样温度（string 键数字项，'' = 不发该字段用 API 默认；issue 187） */
-  aiTemperature: string;
-  /** 🎯 top_p 采样（string 键数字项，'' = 不发该字段用 API 默认；issue 187） */
-  aiTopP: string;
-  /** 🎯 频率惩罚（string 键数字项，'' = 不发该字段用 API 默认；issue 187） */
-  aiFrequencyPenalty: string;
-  /** 🎯 存在惩罚（string 键数字项，'' = 不发该字段用 API 默认；issue 187） */
-  aiPresencePenalty: string;
 
   // ===== 📂 数据存储路径（ADR-0009 共享数据路径）=====
   /** 共享 JSON 数据目录（memo/belongings/passwords/favorites/review/quiz/闪念 meta+vec 统一存放） */
@@ -484,10 +476,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
   aiModelOverrides: {},
   aiContextOverrides: {},
   aiMaxTokensOverrides: {},
-  aiTemperature: '', // '' = 不发该字段（API 默认）
-  aiTopP: '',
-  aiFrequencyPenalty: '',
-  aiPresencePenalty: '',
 
   // 共享数据路径（ADR-0009）
   storagePath: 'CONFIG/STORAGE',

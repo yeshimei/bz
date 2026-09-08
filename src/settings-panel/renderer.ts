@@ -113,8 +113,8 @@ function makeInput(opts: {
 /**
  * 路径行控件区：chips（已选目录，✕ 移除、文本点击重开选择器）+ 选择按钮（空态显示）。
  * 与 core/path-picker 的 renderPathSettingRow 行为对齐（ticket 133 形态）：
- * - 空态只显示「选择…/添加…」按钮（无「未选择」灰字）；
- * - 已选态按钮移出 DOM，chips 文本点击重开选择器、✕ 清除；
+ * - 空态只显示「选择…/添加…」按钮（无灰字占位 chip）；
+ * - 有文件夹 chip（显式值或回落 chip）时按钮移出 DOM，chip 文本点击重开选择器、✕ 清除；
  * - 选择器确定 / ✕ 移除后统一回调 onChange（支持返回 Promise 改写）。
  * 视觉：组件库 uiChip（.bz-chip，removable → 选中语义色）+ uiBtn。
  */
@@ -202,14 +202,13 @@ export function makePathRowCtrl(opts: {
       }
       ctrl.appendChild(chip);
     }
-    if (!current.length && !opts.fallbackChip) {
-      const m = document.createElement('span');
-      m.className = 'bz-sp-chip bz-sp-chip--muted';
-      m.textContent = multi ? '未选择' : '未设置';
-      ctrl.appendChild(m);
+    const empty = !current.length && !opts.fallbackChip;
+    // 空态只显示「选择…/添加…」按钮（「未设置/未选择」灰字 chip 已退役——2026-09-08 拍板）
+    if (empty) {
+      if (!addBtn.isConnected) ctrl.appendChild(addBtn);
+    } else {
+      addBtn.remove();
     }
-    // 选择按钮恒显（拍板原型：chip 与「选择…」并存，已选态不再移出 DOM——旧 ticket 133 口径废止）
-    if (!addBtn.isConnected) ctrl.appendChild(addBtn);
   };
   const renderAll = () => renderChips();
   ctrl.appendChild(addBtn);
@@ -493,6 +492,11 @@ function renderRow(
         row.render(slot, ctx);
       } catch (e) {
         notice(`自定义设置行渲染失败：${e instanceof Error ? e.message : String(e)}`, 'error');
+      }
+      // 行级 name/desc 在场时移除内层原生 Setting 的 info 区（AI 模型名称行等内外两层同名同描述——
+      // 留面板层 info，标题/描述只出一遍；clipbook 等行级无 name 的 custom 不受影响）
+      if (rowName || (row as { desc?: string }).desc) {
+        slot.querySelectorAll('.setting-item-info').forEach((n) => n.remove());
       }
       // custom 行 onRefresh：与 core 渲染器对齐（模型行等切 provider 后联动刷新内部输入框显示值）
       if (regRefresh && (row as { onRefresh?: (c: SettingsRowContext) => void }).onRefresh) {

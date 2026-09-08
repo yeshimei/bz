@@ -12,7 +12,8 @@
 .bz-sp-desk,
 .bz-sp-mobile,
 .bz-sp-mob-modal,
-.bz-sp-picker-mask {
+.bz-sp-picker-mask,
+#bz-up-manager-popup, #bz-model-picker-popup {
   --sp-bg: #f6f2e9;
   --sp-panel: #fffcf6;
   --sp-line: #e5dfcf;
@@ -34,7 +35,8 @@
 .theme-dark .bz-sp-desk,
 .theme-dark .bz-sp-mobile,
 .theme-dark .bz-sp-mob-modal,
-.theme-dark .bz-sp-picker-mask {
+.theme-dark .bz-sp-picker-mask,
+.theme-dark #bz-up-manager-popup, #bz-model-picker-popup {
   --sp-bg: #1b1b1f;
   --sp-panel: #242429;
   --sp-line: #35353c;
@@ -87,7 +89,7 @@
   padding: 8px 14px;
   color: var(--sp-ink-3);
 }
-.bz-sp-picker-search input { flex: 1; border: 0; outline: 0; background: transparent; font-size: 12.5px; color: var(--sp-ink); font-family: inherit; }
+.bz-sp-picker-search input { flex: 1; border: 0; outline: 0; background: transparent; font-size: 12.5px; color: var(--sp-ink); font-family: inherit; text-align: center; }
 .bz-sp-picker-crumb {
   display: flex;
   align-items: center;
@@ -120,7 +122,6 @@
   position: relative;
 }
 .bz-sp-picker-row:hover { background: var(--sp-accent-soft); }
-.bz-sp-picker-row.sel { box-shadow: inset 3px 0 0 var(--sp-accent); }
 .bz-sp-picker-row .bz-ic { width: 14px; height: 14px; color: var(--sp-ink-3); flex: none; }
 .bz-sp-picker-row.sel .bz-ic { color: var(--sp-accent); }
 .bz-sp-picker-row.sel span:first-of-type { color: var(--sp-accent); font-weight: 600; }
@@ -477,6 +478,8 @@
 }
 .bz-sp-group-body .bz-sp-set-row:first-child { border-top: 0; }
 .bz-sp-set-row:hover { background: var(--sp-accent-soft); }
+/* custom 行（整行插槽，行体高）不参与整条 hover 变色 */
+.bz-sp-set-row--custom:hover { background: transparent; }
 .bz-sp-set-info { min-width: 0; }
 .bz-sp-set-name { font-size: 13px; color: var(--sp-ink); }
 .bz-sp-set-desc { font-size: 11.5px; color: var(--sp-ink-2); margin-top: 2px; }
@@ -533,7 +536,8 @@
   background: var(--sp-accent);
   border-color: var(--sp-accent);
 }
-/* on 态旋钮位移：38 轨道 - 18 旋钮 - 2px×2 边距 = 16px（左右对称留边） */
+/* on 态旋钮：transform 单机制（与核心 components.css 同机制同属性，38 轨 - 18 钮 - 2px×2 边距 = 16px）。
+   切勿再引入 left 位移——left + transform 分属两机制，同时在场会叠加把旋钮推出轨道（2026-09-08 二修） */
 .bz-sp-desk .bz-sw.on::after,
 .bz-sp-mobile .bz-sw.on::after,
 .bz-sp-mob-modal .bz-sw.on::after {
@@ -653,6 +657,18 @@
   border-color: var(--sp-accent);
   box-shadow: 0 0 0 3px var(--sp-accent-soft);
 }
+/* 搜索胶囊内 input 裸化：胶囊自带描边底色，纸底样式让位（0,3,0 压上块 0,2,0） */
+.bz-sp-desk .bz-sp-head-search .bz-input,
+.bz-sp-mobile .bz-sp-mob-search .bz-input,
+.bz-sp-desk .bz-sp-head-search .bz-input:focus,
+.bz-sp-mobile .bz-sp-mob-search .bz-input:focus {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  height: auto;
+  width: 100%;
+  box-shadow: none;
+}
 .bz-sp-textarea {
   width: 240px;
   min-height: 52px;
@@ -661,10 +677,18 @@
 }
 .bz-sp-desk .bz-input.num,
 .bz-sp-mobile .bz-input.num,
-.bz-sp-mob-modal .bz-input.num { text-align: right; width: 90px; }
+.bz-sp-mob-modal .bz-input.num { width: 90px; }
 .bz-sp-desk .bz-input.mono,
 .bz-sp-mobile .bz-input.mono,
 .bz-sp-mob-modal .bz-input.mono { font-family: ui-monospace, Consolas, monospace; }
+/* 控件长度收敛（2026-09-08 拍板「短一些」）：核心 .bz-input 240px / .bz-select 随内容生长，面板内统一 180px 档；
+   搜索胶囊 input（上方裸化块 width:100%）与数字 90px 档不受此影响 */
+.bz-sp-desk .bz-sp-set-ctrl .bz-input,
+.bz-sp-mobile .bz-sp-set-ctrl .bz-input,
+.bz-sp-mob-modal .bz-sp-set-ctrl .bz-input,
+.bz-sp-desk .bz-sp-set-ctrl .bz-select,
+.bz-sp-mobile .bz-sp-set-ctrl .bz-select,
+.bz-sp-mob-modal .bz-sp-set-ctrl .bz-select { width: 180px; max-width: 100%; }
 
 /* 滑杆行 + 读数徽标 */
 .bz-sp-slider-row { display: flex; align-items: center; gap: 10px; }
@@ -776,7 +800,6 @@
   font-family: inherit;
 }
 .bz-sp-mob-search .bz-input:focus { box-shadow: none !important; }
-.bz-sp-mob-clear { flex: none; }
 .bz-sp-mob-list {
   flex: 1;
   min-height: 0;
@@ -847,6 +870,8 @@
   color: var(--sp-ink-3);
   font-size: 12.5px;
 }
+/* 移动端头行无搜索框顶位，工具（关闭钮）自行推到右缘 */
+.bz-sp-mobile .bz-sp-head .bz-sp-head-tools { margin-left: auto; }
 .bz-sp-mob-close {
   border: 1px solid var(--sp-line) !important;
   background: var(--sp-panel) !important;
@@ -876,23 +901,12 @@
   background: var(--sp-panel);
   flex-shrink: 0;
 }
-.bz-sp-mob-modal-ic {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  background: var(--sp-bg);
-  border: 1px solid var(--sp-line);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--sp-ink-2);
-  flex: none;
-}
-.bz-sp-mob-modal-title { font-size: 16px; font-weight: 700; margin: 0; color: var(--sp-ink); }
+.bz-sp-mob-modal-title { font-size: 15px; font-weight: 700; margin: 0; color: var(--sp-ink); }
 .bz-sp-mob-modal-body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 14px 16px 20px;
   font-size: 13px;
 }
@@ -901,7 +915,7 @@
   margin-bottom: 14px;
 }
 .bz-sp-mob-modal-body .bz-sp-set-row { padding: 10px 14px; }
-.bz-sp-mob-modal-body .bz-sp-set-ctrl { max-width: 56%; }
+.bz-sp-mob-modal-body .bz-sp-set-ctrl { max-width: 56%; min-width: 0; }
 
 /* ═══════════ 域内图标基础尺寸（svg 自带 bz-ic；span 包装与 svg 自身都覆盖） ═══════════ */
 .bz-sp-desk .bz-ic,
@@ -924,13 +938,14 @@
   height: 15px;
   display: block;
 }
-.bz-sp-mob-ic .bz-ic,
-.bz-sp-mob-modal-ic .bz-ic { width: 16px; height: 16px; }
+.bz-sp-mob-ic .bz-ic { width: 16px; height: 16px; }
 
 /* ═══════════ 域内自绘控件（原型演示与 renderer 共用；容器前缀防 reset 压制） ═══════════ */
+/* .bz-sp-picker-mask = dir-picker 弹层自挂 scope（挂 body，不在面板三根之内），取消/选用按钮同皮 */
 .bz-sp-desk .bz-sp-btn,
 .bz-sp-mobile .bz-sp-btn,
-.bz-sp-mob-modal .bz-sp-btn {
+.bz-sp-mob-modal .bz-sp-btn,
+.bz-sp-picker-mask .bz-sp-btn {
   font-family: inherit;
   font-size: 12.5px;
   background: var(--sp-panel);
@@ -945,10 +960,12 @@
 }
 .bz-sp-desk .bz-sp-btn:hover,
 .bz-sp-mobile .bz-sp-btn:hover,
-.bz-sp-mob-modal .bz-sp-btn:hover { background: var(--sp-accent-soft); }
+.bz-sp-mob-modal .bz-sp-btn:hover,
+.bz-sp-picker-mask .bz-sp-btn:hover { background: var(--sp-accent-soft); }
 .bz-sp-desk .bz-sp-btn--primary,
 .bz-sp-mobile .bz-sp-btn--primary,
-.bz-sp-mob-modal .bz-sp-btn--primary {
+.bz-sp-mob-modal .bz-sp-btn--primary,
+.bz-sp-picker-mask .bz-sp-btn--primary {
   background: var(--sp-accent);
   border-color: transparent;
   color: var(--sp-on-accent);
@@ -956,7 +973,129 @@
 }
 .bz-sp-desk .bz-sp-btn--primary:hover,
 .bz-sp-mobile .bz-sp-btn--primary:hover,
-.bz-sp-mob-modal .bz-sp-btn--primary:hover { background: var(--sp-accent); opacity: 0.92; }
+.bz-sp-mob-modal .bz-sp-btn--primary:hover,
+.bz-sp-picker-mask .bz-sp-btn--primary:hover { background: var(--sp-accent); opacity: 0.92; }
+
+/* custom 插槽内原生 Setting 的按钮（AI「获取模型名」等）与 UP 主名单管理弹窗按钮并入同一观感 */
+.bz-sp-desk .bz-sp-custom-slot .setting-item button,
+.bz-sp-mobile .bz-sp-custom-slot .setting-item button,
+.bz-sp-mob-modal .bz-sp-custom-slot .setting-item button,
+#bz-up-manager-popup .setting-item button ,
+#bz-model-picker-popup .setting-item button {
+  font-family: inherit;
+  font-size: 12.5px;
+  background: var(--sp-panel);
+  border: 1px solid var(--sp-line);
+  color: var(--sp-ink);
+  border-radius: 7px;
+  padding: 5px 12px;
+  height: auto;
+  box-shadow: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.bz-sp-desk .bz-sp-custom-slot .setting-item button:hover,
+.bz-sp-mobile .bz-sp-custom-slot .setting-item button:hover,
+.bz-sp-mob-modal .bz-sp-custom-slot .setting-item button:hover,
+#bz-up-manager-popup .setting-item button:hover ,
+#bz-model-picker-popup .setting-item button:hover { background: var(--sp-accent-soft); }
+
+/* custom 插槽内原生 Setting 行（剪藏数据源组、复习排除名单等）与 UP 弹窗（挂 body 自建
+   overlay）对齐面板行范式：信息左/控件右一行；插件端 Obsidian 行同样被本规则收敛同皮 */
+.bz-sp-desk .bz-sp-custom-slot .setting-item,
+.bz-sp-mobile .bz-sp-custom-slot .setting-item,
+.bz-sp-mob-modal .bz-sp-custom-slot .setting-item,
+#bz-up-manager-popup .setting-item ,
+#bz-model-picker-popup .setting-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0;
+  background: transparent;
+  border: 0;
+}
+.bz-sp-desk .bz-sp-custom-slot .setting-item-info,
+.bz-sp-mobile .bz-sp-custom-slot .setting-item-info,
+.bz-sp-mob-modal .bz-sp-custom-slot .setting-item-info,
+#bz-up-manager-popup .setting-item-info ,
+#bz-model-picker-popup .setting-item-info { flex: 1; min-width: 0; }
+.bz-sp-desk .bz-sp-custom-slot .setting-item-name,
+.bz-sp-mobile .bz-sp-custom-slot .setting-item-name,
+.bz-sp-mob-modal .bz-sp-custom-slot .setting-item-name,
+#bz-up-manager-popup .setting-item-name ,
+#bz-model-picker-popup .setting-item-name { font-size: 13px; font-weight: 600; color: var(--sp-ink); }
+.bz-sp-desk .bz-sp-custom-slot .setting-item-description,
+.bz-sp-mobile .bz-sp-custom-slot .setting-item-description,
+.bz-sp-mob-modal .bz-sp-custom-slot .setting-item-description,
+#bz-up-manager-popup .setting-item-description ,
+#bz-model-picker-popup .setting-item-description { font-size: 11.5px; color: var(--sp-ink-2); margin-top: 3px; line-height: 1.45; }
+.bz-sp-desk .bz-sp-custom-slot .setting-item-control,
+.bz-sp-mobile .bz-sp-custom-slot .setting-item-control,
+.bz-sp-mob-modal .bz-sp-custom-slot .setting-item-control,
+#bz-up-manager-popup .setting-item-control ,
+#bz-model-picker-popup .setting-item-control { display: flex; align-items: center; gap: 8px; flex: none; flex-wrap: wrap; justify-content: flex-end; }
+/* 控件内文本输入（插件端 Obsidian addText 无 bz-input 类）：纸底描边同 bz-input */
+.bz-sp-desk .bz-sp-custom-slot .setting-item-control input[type="text"],
+.bz-sp-mobile .bz-sp-custom-slot .setting-item-control input[type="text"],
+.bz-sp-mob-modal .bz-sp-custom-slot .setting-item-control input[type="text"],
+#bz-up-manager-popup .setting-item-control input[type="text"] ,
+#bz-model-picker-popup .setting-item-control input[type="text"] {
+  font-family: inherit;
+  font-size: 12.5px;
+  background: var(--sp-input-bg);
+  border: 1px solid var(--sp-line);
+  border-radius: 7px;
+  color: var(--sp-ink);
+  box-shadow: none;
+  width: 180px;
+  max-width: 100%;
+}
+.bz-sp-desk .bz-sp-custom-slot input[type="checkbox"],
+.bz-sp-mobile .bz-sp-custom-slot input[type="checkbox"],
+.bz-sp-mob-modal .bz-sp-custom-slot input[type="checkbox"],
+/* custom 插槽/子弹窗内原生 checkbox（Setting addToggle）：appearance:none 整形成与 .bz-sw 同款
+   胶囊开关（38×22 轨 + 18 圆钮，旋钮走 background-position 位移，不依赖 input 伪元素支持） */
+.bz-sp-desk .bz-sp-custom-slot input[type="checkbox"],
+.bz-sp-mobile .bz-sp-custom-slot input[type="checkbox"],
+.bz-sp-mob-modal .bz-sp-custom-slot input[type="checkbox"],
+#bz-up-manager-popup input[type="checkbox"] ,
+#bz-model-picker-popup input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 38px;
+  height: 22px;
+  margin: 0;
+  border: 0;
+  border-radius: 999px;
+  background-color: var(--sp-ctl-off);
+  background-image: radial-gradient(circle, var(--sp-knob) 8px, transparent 9px);
+  background-repeat: no-repeat;
+  background-size: 18px 18px;
+  background-position: 2px center;
+  cursor: pointer;
+  flex: none;
+  vertical-align: middle;
+  transition: background-position 0.15s, background-color 0.15s;
+}
+.bz-sp-desk .bz-sp-custom-slot input[type="checkbox"]:checked,
+.bz-sp-mobile .bz-sp-custom-slot input[type="checkbox"]:checked,
+.bz-sp-mob-modal .bz-sp-custom-slot input[type="checkbox"]:checked,
+#bz-up-manager-popup input[type="checkbox"]:checked ,
+#bz-model-picker-popup input[type="checkbox"]:checked {
+  background-color: var(--sp-accent);
+  background-position: calc(100% - 20px) center;
+}
+
+/* UP 主名单管理弹窗（剪藏域自建 overlay）壳色同皮 */
+#bz-up-manager-popup, #bz-model-picker-popup {
+  background: var(--sp-panel);
+  border: 1px solid var(--sp-line);
+  border-radius: 14px;
+}
+#bz-up-manager-popup .bz-settings-title ,
+#bz-model-picker-popup .bz-settings-title { font-size: 14px; font-weight: 700; color: var(--sp-ink); }
 
 .bz-sp-desk .bz-sp-chip,
 .bz-sp-mobile .bz-sp-chip,
@@ -975,13 +1114,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.bz-sp-desk .bz-sp-chip--muted,
-.bz-sp-mobile .bz-sp-chip--muted,
-.bz-sp-mob-modal .bz-sp-chip--muted {
-  border-style: dashed;
-  color: var(--sp-ink-3);
-  background: transparent;
 }
 .bz-sp-chip--locked {
   border-style: dashed;
@@ -1028,11 +1160,8 @@
   position: absolute;
   border-radius: 50%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-  transition: left 0.15s;
+  transition: transform 0.15s;
 }
-.bz-sp-desk .bz-sw.on::after,
-.bz-sp-mobile .bz-sw.on::after,
-.bz-sp-mob-modal .bz-sw.on::after { left: 18px; }
 
 /* choiceCards 全宽卡组（上下结构行的卡容器） */
 .bz-sp-set-cards { display: flex; flex-wrap: wrap; gap: 10px; }
