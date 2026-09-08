@@ -79,6 +79,8 @@
 .bz-q-tag.is-future { color: var(--bz-text-3); }
 /* item 6：R 阈值提前复习卡（开始本轮同口径纳入） */
 .bz-q-tag.is-early { background: color-mix(in srgb, var(--bz-info) 14%, transparent); color: var(--bz-info); }
+/* issue 253（V1 原型拍板）：待重做旗标显性化——红 tag 提示该篇首次评级∈{忘了,困难} */
+.bz-q-tag.is-redo { background: color-mix(in srgb, var(--bz-danger) 18%, transparent); color: var(--bz-danger); font-weight: 600; }
 /* item 10：空态宿主（uiEmpty 组件库类不重复定义，仅限宽居中） */
 .bz-q-empty-wrap { align-items: center; justify-content: center; }
 .bz-q-hint { font-size: 12px; color: var(--bz-text-3); text-align: center; padding: 18px 8px; }

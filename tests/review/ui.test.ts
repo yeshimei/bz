@@ -14,6 +14,8 @@ import { UIManager, isPlayable, isDueToday } from '../../src/review/ui';
 import { SprintSession } from '../../src/review/sprint';
 import { reviewApp } from '../../src/review/app';
 
+const DAY0 = 86400e3;
+
 function makeApp(vault: MockVault) {
   return mockAppWithVault(vault);
 }
@@ -461,6 +463,79 @@ describe('UIManager 三区队列', () => {
     (document.querySelector('[data-act="watch-help"]') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 10));
     expect(document.querySelector('.flow-dialog, [class*=dialog]')).not.toBeNull(); // 路 2：说明弹窗
+    ui.destroy();
+  });
+
+  // ==================== issue 253（V1 原型为真理）增量 ====================
+
+  it('issue 253：待重做旗标挂红 tag（V1 显性化）', async () => {
+    const vault = new MockVault();
+    const now = Date.now();
+    vault.files.set('R.md', 'x');
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      {
+        id: '1', filePath: 'R.md', name: 'R', reviewStart: new Date(now).toISOString(), stage: 5, phase: 'ladder',
+        stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 1, averageConfidence: 0,
+        nextReviewDate: new Date(now + DAY0 * 5).toISOString(), lastReviewed: new Date(now - DAY0).toISOString(),
+        lastDifficulty: 'hard', completed: false, pendingRedo: true,
+      },
+    ]));
+    const { ui } = await makeUI(vault);
+    await ui.showMain();
+    const card = document.querySelector('.bz-q-col.future .bz-q-card')!;
+    expect(card.querySelector('.bz-q-tag.is-redo')!.textContent).toBe('待重做');
+    ui.destroy();
+  });
+
+  it('issue 253：列内排序 R 升序、阶梯无 R 靠后（V1 拍板：置顶→R升序→到期）', async () => {
+    const vault = new MockVault();
+    const now = Date.now();
+    vault.files.set('A.md', 'x');
+    vault.files.set('B.md', 'x');
+    vault.files.set('C.md', 'x');
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      // 阶梯逾期（无 R，排序最后）
+      { id: '1', filePath: 'A.md', name: 'A阶梯', reviewStart: new Date(now).toISOString(), stage: 5, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 1, averageConfidence: 0, nextReviewDate: new Date(now - DAY0).toISOString(), lastReviewed: new Date(now - 2 * DAY0).toISOString(), lastDifficulty: 'good', completed: false },
+      // FSRS 逾期 R 高（stability 大 → R 高，排低 R 之后）
+      { id: '2', filePath: 'B.md', name: 'B高R', reviewStart: new Date(now).toISOString(), stage: 9, phase: 'fsrs', stability: 200, difficulty: 0.3, reviewHistory: [], totalReviews: 2, averageConfidence: 0, nextReviewDate: new Date(now - DAY0).toISOString(), lastReviewed: new Date(now - DAY0).toISOString(), lastDifficulty: 'easy', completed: false },
+      // FSRS 逾期 R 低（stability 小 → 排首位）
+      { id: '3', filePath: 'C.md', name: 'C低R', reviewStart: new Date(now).toISOString(), stage: 9, phase: 'fsrs', stability: 5, difficulty: 0.3, reviewHistory: [], totalReviews: 2, averageConfidence: 0, nextReviewDate: new Date(now - DAY0).toISOString(), lastReviewed: new Date(now - 5 * DAY0).toISOString(), lastDifficulty: 'good', completed: false },
+    ]));
+    const { ui } = await makeUI(vault);
+    await ui.showMain();
+    const titles = [...document.querySelectorAll('.bz-q-col.danger .bz-q-card-title')].map((e) => e.textContent);
+    expect(titles).toEqual(['C', 'B', 'A']); // 卡片题 = 文件 basename（loadItems 覆写 name） // R 升序，阶梯无 R 靠后
+    ui.destroy();
+  });
+
+  it('issue 253：置顶卡未来列排序首位（仅列表置顶，ADR-0077 × V1 排序）', async () => {
+    const vault = new MockVault();
+    const now = Date.now();
+    vault.files.set('A.md', 'x');
+    vault.files.set('B.md', 'x');
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      { id: '1', filePath: 'A.md', name: 'A普通', reviewStart: new Date(now).toISOString(), stage: 1, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now + DAY0).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+      { id: '2', filePath: 'B.md', name: 'B置顶', reviewStart: new Date(now).toISOString(), stage: 1, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now + DAY0 * 2).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false, pinned: true },
+    ]));
+    const { ui } = await makeUI(vault);
+    await ui.showMain();
+    const titles = [...document.querySelectorAll('.bz-q-col.future .bz-q-card-title')].map((e) => e.textContent);
+    expect(titles).toEqual(['B', 'A']); // 置顶优先于到期时间；题 = basename // 置顶优先于到期时间
+    ui.destroy();
+  });
+
+  it('issue 253：归档态状态条 = 绿点「已完成复习」（V1 拍板，旧态误用红点「开始本轮」）', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const { ui } = await makeUI(vault);
+    await ui.showMain();
+    (document.querySelector('[data-act="arch"]') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 0));
+    const strip = document.querySelector('.bz-q-strip')!;
+    expect(strip.querySelector('.bz-q-strip-dot')!.classList.contains('ok')).toBe(true);
+    expect(strip.querySelector('.bz-q-strip strong')!.textContent).toBe('已完成复习');
+    expect(strip.textContent).toContain('回到队列');
+    expect(strip.querySelector('[data-act="begin"]')).toBeNull(); // 归档态无开始本轮钮
     ui.destroy();
   });
 });

@@ -68,11 +68,11 @@ describe('批 B-3：触控热区收编 core .bz-touch-target', () => {
     expect(repo('src/favorites/layouts/board/render.ts')).toMatch(/bz-fav-mob-close bz-touch-target/); // issue 242 markup 单源 render.ts（ADR-0101 关闭钮挂 44px 档）
     // --sm（原 -4px）：番茄钟控制钮、复习评级条
     expect(repo('src/pomodoro/ui.ts')).toMatch(/pomodoro-btn pomodoro-btn-primary bz-touch-target--sm/);
-    expect(repo('src/review/ui.ts')).toContain('bz-review-bar-btn bz-touch-target--sm');
+    expect(repo('src/review/render.ts')).toContain('bz-review-bar-btn bz-touch-target--sm'); // issue 253 markup 单源 render.ts
     // --lg（原 -8px）：加密空态钮/复制账号钮、复习信息行（home 活动河改版后无盒装钮/迷你 chips）
     expect(repo('src/encrypt/vault-pw-view.ts')).toContain('bz-pwv-empty-add bz-touch-target--lg');
     expect(repo('src/encrypt/vault-pw-view.ts')).toContain('copyac bz-touch-target--lg');
-    expect(repo('src/review/ui.ts')).toContain('bz-q-fitem bz-touch-target--lg');
+    expect(repo('src/review/render.ts')).toContain('bz-q-fitem bz-touch-target--lg'); // issue 253 markup 单源 render.ts
     // --xl（原 -12px）：回忆墙四类元素、加密移动关闭/返回钮、复习三个关闭钮
     expect(repo('src/diary-wall/ui.ts')).toContain('bz-diary-wall-icon-btn bz-touch-target--xl');
     expect(repo('src/encrypt/ui.ts')).toContain('bz-vault-mobclose bz-touch-target--xl');
