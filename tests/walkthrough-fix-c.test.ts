@@ -178,7 +178,8 @@ describe('批 C-11：clipbook 死色收编 color-mix 语义变量', () => {
     expect(css).toMatch(/\.bz-clip-art-flag\.info\s*\{[^}]*color-mix\(in srgb, var\(--bz-info\) 13%, transparent\)/);
     expect(css).toMatch(/\.bz-clip-art-flag\.warn\s*\{[^}]*color-mix\(in srgb, var\(--bz-warning\) 13%, transparent\)/);
     expect(css).toMatch(/\.bz-clip-art-flag\.ok\s*\{[^}]*color-mix\(in srgb, var\(--bz-success\) 12%, transparent\)/);
-    expect(css).toMatch(/\.bz-clip-mob-save\.saved\s*\{[^}]*color-mix\(in srgb, var\(--bz-success\) 16%, transparent\)/);
+    // m3 逐字落域后保存钮为原型文字钮（存为剪藏/已存），已存 = 灰字降权，无底色（原 icon 钮 color-mix 规则退役）
+    expect(css).toMatch(/\.bz-clip-mob-save\.saved\s*\{\s*color: var\(--clip-dim\);\s*\}/);
     expect(css).not.toMatch(/rgba\(88,166,255|rgba\(217,161,60|rgba\(63,185,106/);
   });
 
