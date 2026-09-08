@@ -29,6 +29,8 @@ var BZR_settings_panel = (() => {
     iconSpan: () => iconSpan,
     loadingHtml: () => loadingHtml,
     miniHtml: () => miniHtml,
+    mobItemHtml: () => mobItemHtml,
+    mobShellHtml: () => mobShellHtml,
     navItemHtml: () => navItemHtml,
     navSecHtml: () => navSecHtml,
     pageHeadHtml: () => pageHeadHtml,
@@ -172,6 +174,13 @@ var BZR_settings_panel = (() => {
   }
   function navItemHtml(opts) {
     return `<button type="button" class="bz-sp-nav-item${opts.on ? " on" : ""}" data-sp-domain="${esc(opts.id)}">${iconSpan(opts.icon, "bz-ic bz-sp-nav-ic")}<span class="bz-sp-nav-name">${esc(opts.name)}</span><span class="bz-sp-nav-count">${esc(opts.count)}</span></button>`;
+  }
+  function mobShellHtml() {
+    return `<div class="bz-sp-mob-viewport"><section class="bz-sp-mob-page bz-sp-mob-page--home"><div class="bz-sp-head"><span class="bz-sp-head-title">设置</span><span class="bz-sp-head-tools" data-sp-mob-tools="home"></span></div><div class="bz-sp-mob-search">${iconSpan("search")}<input class="bz-input" placeholder="搜索设置、域…" autocomplete="off"></div><div class="bz-sp-mob-list"></div></section><section class="bz-sp-mob-page bz-sp-mob-page--domain"><div class="bz-sp-head"><span class="bz-sp-mob-nav" data-sp-mob-back></span><span class="bz-sp-mob-title"></span><span class="bz-sp-head-tools" data-sp-mob-tools="domain"></span></div><div class="bz-sp-settings-body bz-sp-mob-page-body"></div></section></div>`;
+  }
+  function mobItemHtml(opts) {
+    const tail = opts.kind ? `<span class="bz-sp-mob-kind">${esc(opts.kind)}</span>` : `<span class="bz-sp-mob-chev">${iconSpan("chevron-right")}</span>`;
+    return `<button type="button" class="bz-sp-mob-item" data-sp-domain="${esc(opts.id)}"><span class="bz-sp-mob-ic">${iconSpan(opts.icon)}</span><span class="bz-sp-mob-t"><span class="bz-sp-mob-name">${esc(opts.name)}</span><span class="bz-sp-mob-desc">${esc(opts.desc)}</span></span>${tail}</button>`;
   }
   return __toCommonJS(render_exports);
 })();

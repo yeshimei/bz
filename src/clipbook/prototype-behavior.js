@@ -5454,10 +5454,6 @@ var BZW_clipbook = (() => {
   function isMobileEnv() {
     return typeof Platform !== "undefined" && !!Platform.isMobile;
   }
-  function applyMobileWindowFullscreen(popup, enabled) {
-    if (!popup) return;
-    popup.classList.toggle("bz-win-mfs", isMobileEnv() && !!enabled);
-  }
   var init_mobile = __esm({
     "src/core/mobile.ts"() {
       init_fake_obsidian();
@@ -7686,26 +7682,6 @@ ${bodyText.substring(0, 6e3)}`;
   });
 
   // src/core/settings-common.ts
-  function mobileFullscreenRow(key, opts) {
-    const desc = (opts == null ? void 0 : opts.desc) || void 0;
-    return {
-      type: "toggle",
-      name: "移动端默认全屏",
-      desc,
-      binding: { key },
-      visibleWhen: (_snapshot) => isMobileEnv()
-    };
-  }
-  function mobileFullscreenGroup(key, opts) {
-    return {
-      icon: "smartphone",
-      name: "移动端",
-      // 组级门控（ticket 131 域迁移补正）：现状各域是 `if (isMobileEnv())` 才挂整行、桌面端完全无痕；
-      // 仅行级 visibleWhen 会残留空卡片壳，且 DOM 存在性空态判定会被隐藏行抑制（归物本/收藏本桌面空态丢失）。
-      visibleWhen: (_snapshot) => isMobileEnv(),
-      rows: [mobileFullscreenRow(key, opts)]
-    };
-  }
   function numStrBinding(key, def) {
     return {
       get: () => {
@@ -7722,7 +7698,6 @@ ${bodyText.substring(0, 6e3)}`;
   }
   var init_settings_common = __esm({
     "src/core/settings-common.ts"() {
-      init_mobile();
       init_notice();
       init_settings_provider();
     }
@@ -10318,7 +10293,6 @@ ${sample}`,
             { type: "number", name: "缓存保留天数", desc: "超过该天数的缓存自动清理", binding: { key: "literatureCacheRetentionDays" }, min: 1, step: 1 }
           ]
         },
-        mobileFullscreenGroup("literatureMobileDefaultFullscreen", { desc: "" }),
         {
           icon: "wrench",
           name: "维护",
@@ -10344,7 +10318,6 @@ ${sample}`,
       init_mobile();
       init_settings_provider();
       init_settings_modal();
-      init_settings_common();
       init_item_actions();
       init_list_patch();
       init_flow_dialog();
@@ -10552,11 +10525,10 @@ ${sample}`,
           });
           q(p, "#lit-btn-close").onclick = () => this.hideMain();
         }
-        /** 打开主面板（文献笔记列表）：移动端默认全屏、抬顶、刷新列表 + 旧笔记自动补全 */
+        /** 打开主面板（文献笔记列表）：抬顶、刷新列表 + 旧笔记自动补全 */
         showMain() {
           this.createMainUI();
           if (!this.popup || !this.mask) return;
-          applyMobileWindowFullscreen(this.popup, tryGetSettings().literatureMobileDefaultFullscreen === true);
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
@@ -11032,11 +11004,10 @@ ${sample}`,
           q(p, "#lit-btn-video-close").onclick = () => this.hideVideo();
         }
         /** 打开视频录入面板（任务队列）；prefill 存在则叠开添加弹窗（聚合讯「保存至文献」入口，ADR-0068）。
-         *  移动端默认全屏（ticket 139：主面板/历史弹窗同款三件事对齐）。 */
+         */
         showVideoEntry(prefill) {
           var _a, _b;
           if (!this.videoPopup || !this.videoMask) return;
-          applyMobileWindowFullscreen(this.videoPopup, tryGetSettings().literatureMobileDefaultFullscreen === true);
           topifyZ(this.videoMask, this.videoPopup);
           this.videoMask.style.display = "block";
           this.videoPopup.style.display = "flex";
@@ -11508,7 +11479,6 @@ ${sample}`,
         /** 历史独立弹窗（ADR-0070）：视频面板之上叠开，遮罩 + ✕/ESC/点遮罩关闭 */
         showHistory() {
           if (!this.historyPopup || !this.historyMask) return;
-          applyMobileWindowFullscreen(this.historyPopup, tryGetSettings().literatureMobileDefaultFullscreen === true);
           topifyZ(this.historyMask, this.historyPopup);
           this.historyMask.style.display = "block";
           this.historyPopup.style.display = "flex";
@@ -12359,7 +12329,6 @@ ${sample}`,
     });
     escRegistered = true;
     const frameEl = overlayEl.querySelector(".bz-clip-frame");
-    applyMobileWindowFullscreen(frameEl, mobileFullscreenDefault());
     if (!isMobileEnv()) {
       panelResizeDetach = uiResizable(frameEl, {
         minW: PANEL_MIN_W,
@@ -12389,10 +12358,6 @@ ${sample}`,
       if (!item) return;
       openMobDetail(item.dataset.id || "");
     });
-  }
-  function mobileFullscreenDefault() {
-    const s = tryGetSettings();
-    return (s == null ? void 0 : s.clipbookMobileDefaultFullscreen) !== false;
   }
   function selectSource(src) {
     M.sel = {
@@ -13055,8 +13020,7 @@ ${sample}`,
           icon: "radio",
           name: "数据源",
           rows: dataSourceGroupRows(dataSource)
-        },
-        mobileFullscreenGroup("clipbookMobileDefaultFullscreen", { desc: "" })
+        }
       ]
     };
   }
@@ -13095,7 +13059,6 @@ ${sample}`,
       init_auto_summary();
       init_news_sources_group();
       init_news_source_settings();
-      init_settings_common();
       init_md();
       init_store();
       init_render();
@@ -13332,7 +13295,6 @@ ${sample}`,
   var settingsStore = {
     storagePath: "CONFIG/STORAGE",
     articleDirectory: CLIP_DIR,
-    clipbookMobileDefaultFullscreen: false,
     clipbookReaderFontSize: "medium",
     newsRetentionUnsavedDays: 30,
     clipbookPanelWidth: 0,
