@@ -268,7 +268,6 @@
   font-size: var(--bz-font-label);
   font-family: inherit;
   line-height: var(--bz-leading-tight);
-  width: 240px;
   transition: border-color var(--bz-dur-fast) ease, box-shadow var(--bz-dur-fast) ease;
 }
 .bz-input::placeholder { color: var(--bz-text-3); }
