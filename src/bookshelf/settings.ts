@@ -11,21 +11,23 @@ export function bookshelfSettingsSchema(): SettingsSchema {
   return {
     groups: [
       {
-        // 外观组（issue 246 收编）：bookshelfSkin 五肤×亮暗（issue 235 拍板）；无布局维度走单行组
-        // （小橘先例）；onChange 热切换已开面板；退役肤值读取回落雪松白（normalizeSkin）
+        // 外观组（标准化：布局行占位单卡 + 主题=bookshelfSkin 五肤，layoutKey 联动同范式；
+        // onChange 热切换已开面板；退役肤值读取回落雪松白（normalizeSkin））
         icon: 'palette',
         name: '外观',
         rows: [
+          { type: 'choiceCards', name: '面板布局', binding: { key: 'bookshelfLayout' }, options: [{ value: 'default', label: '书架墙', prevClass: 'bz-sp-prev-panel' }] },
           {
             type: 'choiceCards',
             name: '面板主题',
             binding: { key: 'bookshelfSkin' },
+            layoutKey: 'bookshelfLayout',
             options: [
-              { value: 'nordic', label: '雪松白', prevClass: 'bz-skinprev-bs-nordic' },
-              { value: 'noir', label: '黑金夜曲', prevClass: 'bz-skinprev-bs-noir' },
-              { value: 'kraft', label: '牛皮手帐', prevClass: 'bz-skinprev-bs-kraft' },
-              { value: 'velvet', label: '丝绒剧院', prevClass: 'bz-skinprev-bs-velvet' },
-              { value: 'mono', label: '极简黑白', prevClass: 'bz-skinprev-bs-mono' },
+              { value: 'nordic', label: '雪松白', layout: 'default', prevClass: 'bz-skinprev-bs-nordic' },
+              { value: 'noir', label: '黑金夜曲', layout: 'default', prevClass: 'bz-skinprev-bs-noir' },
+              { value: 'kraft', label: '牛皮手帐', layout: 'default', prevClass: 'bz-skinprev-bs-kraft' },
+              { value: 'velvet', label: '丝绒剧院', layout: 'default', prevClass: 'bz-skinprev-bs-velvet' },
+              { value: 'mono', label: '极简黑白', layout: 'default', prevClass: 'bz-skinprev-bs-mono' },
             ],
             onChange: (v) => applyBookshelfSkin(v),
           },

@@ -49,12 +49,18 @@ describe('bookshelf 设置 schema（issue 194）', () => {
   it('组序：外观 → 目录 → 显示；外观组皮肤行 + 显示组两行键与选项集契约（issue 246 收编、issue 218 排序三档）', () => {
     const schema = bookshelfSettingsSchema();
     expect(schema.groups.map((g) => g.name)).toEqual(['外观', '目录', '显示']);
-    // 外观组（issue 246 收编）：主题行 choiceCards 五选一，默认雪松白，onChange 热切换
+    // 外观组（标准化）：布局占位单卡 + 主题行 choiceCards 五选一（layoutKey 联动），onChange 热切换
     const look = schema.groups[0];
-    expect(look.rows).toHaveLength(1);
-    const skin = look.rows[0] as any;
+    expect(look.rows).toHaveLength(2);
+    const [layout, skin] = look.rows as any[];
+    expect(layout.type).toBe('choiceCards');
+    expect(layout.binding).toMatchObject({ key: 'bookshelfLayout' });
+    expect(layout.options).toHaveLength(1);
+    expect(layout.options[0].value).toBe('default');
     expect(skin.type).toBe('choiceCards');
     expect(skin.name).toBe('面板主题');
+    expect(skin.layoutKey).toBe('bookshelfLayout');
+    expect(skin.options.every((o: any) => o.layout === 'default')).toBe(true);
     expect(skin.binding).toMatchObject({ key: 'bookshelfSkin' });
     expect(skin.options.map((o: any) => o.value)).toEqual(['nordic', 'noir', 'kraft', 'velvet', 'mono']);
     expect(skin.options.every((o: any) => typeof o.prevClass === 'string')).toBe(true);

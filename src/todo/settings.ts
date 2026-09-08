@@ -19,20 +19,29 @@ export function todoSettingsSchema(): SettingsSchema {
   return {
     groups: [
       {
-        icon: 'eye',
-        name: '显示',
+        // 外观组（标准化：与其他域同范式置顶——布局行占位单卡，主题=todoSkin 两肤；
+        // 布局维度待皮肤设计时接入）
+        icon: 'palette',
+        name: '外观',
         rows: [
+          { type: 'choiceCards', name: '面板布局', binding: { key: 'todoLayout' }, options: [{ value: 'default', label: '清单', prevClass: 'bz-sp-prev-panel' }] },
           {
-            // 面板皮肤（issue 210）：设置页最顶部的视觉卡片选择（无编号无描述，拍板形态）
             type: 'choiceCards',
-            name: '面板皮肤',
+            name: '面板主题',
             binding: { key: 'todoSkin' },
+            layoutKey: 'todoLayout',
             options: [
-              { value: 'paper', label: '纸感手账', prevClass: 'bz-skinprev-paper' },
-              { value: 'editorial', label: '编辑部', prevClass: 'bz-skinprev-editorial' },
+              { value: 'paper', label: '纸感手账', layout: 'default', prevClass: 'bz-skinprev-paper' },
+              { value: 'editorial', label: '编辑部', layout: 'default', prevClass: 'bz-skinprev-editorial' },
             ],
             onChange: (v) => applyTodoSkin(v),
           },
+        ],
+      },
+      {
+        icon: 'eye',
+        name: '显示',
+        rows: [
           {
             type: 'select',
             name: '默认排序方式',

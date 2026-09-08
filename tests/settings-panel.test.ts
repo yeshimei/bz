@@ -100,7 +100,7 @@ describe('设置面板（settings-panel）', () => {
     expect(badges[2]).toBe('4'); // AI：服务商+模型名称+上下文+最大输出（采样参数组已退役；aiProvider 未设 → 密钥行门控隐藏）
     expect(badges[3]).toBe('14'); // 日记本（index 3）：issue 246 补外观组两卡
     expect(badges[4]).toBe('2'); // 回忆墙（index 4）：issue 246 补外观组两卡 → 桌面回归列表
-    expect(badges[5]).toBe('9'); // 待办（index 5）：issue 210 补面板皮肤卡片行后 9 项
+    expect(badges[5]).toBe('10'); // 待办（index 5）：外观组标准化（布局占位卡+主题两卡替换原皮肤单卡）后 10 项
     expect(badges[6]).toBe('3'); // 归物本（index 6）：外观组布局/主题两卡 + 默认状态筛选，桌面 3 项
     expect(badges[8]).toBe('2'); // 收藏本（index 8）：issue 246 补外观组两卡 → 桌面回归列表
     // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）

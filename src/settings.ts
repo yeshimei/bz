@@ -72,6 +72,7 @@ export default interface BzSettings {
   todoPanelHeight: number;
   /** 🎨 待办面板皮肤（issue 210）：paper（纸感手账）/ editorial（编辑部）；未知值按纸感渲染（issue 210 四轮：默认风格下线） */
   todoSkin: string;
+  todoLayout: string;
   /** 🏷️ 场景列表（逗号分隔，空则内置默认：剪藏,工作,学习,生活,代码,公开课） */
   memoScenarios: string;
   /** 🔀 默认排序方式：priority（紧急优先）/ due（仅到期）/ created（创建时间） */
@@ -163,6 +164,7 @@ export default interface BzSettings {
   bookshelfSortMode: string;
   /** 📚 书架墙：面板皮肤（issue 216；nordic=雪松白默认，十选一，设置面板 choiceCards） */
   bookshelfSkin: string;
+  bookshelfLayout: string;
 
   // ===== 🎬 影院（cinema 域；ADR-0087 起接管旧影视域）=====
   /** 📁 影视文件夹（影院域数据源；缺省回落「我的/影视」。与日记本设置的「影视目录」
@@ -480,6 +482,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   todoPanelWidth: 0,
   todoPanelHeight: 0,
   todoSkin: 'paper',
+  todoLayout: 'default',
 
   // 日记本
   diaryDirectory: '我的/日记',
@@ -529,6 +532,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   bookshelfDefaultSide: 'all',
   bookshelfSortMode: 'date',
   bookshelfSkin: 'nordic',
+  bookshelfLayout: 'default',
 
   // 影院（cinema；ADR-0087 起接管影视；缺省回落默认目录，旧 movieFolderPath 键已退役）
   cinemaFolderPath: '我的/影视',
