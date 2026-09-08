@@ -518,13 +518,6 @@ button.todo-btn-close,
 button.news-close-btn {
   display: none !important;
 }
-.bz-win-mfs button.bz-win-close,
-.bz-win-mfs button.bz-icon-btn--close,
-.bz-win-mfs button.todo-btn-close,
-.bz-win-mfs button.news-close-btn {
-  display: flex !important;
-}
-
 /* ==================== core 层样式收敛（ticket 60 延伸：notice/settings-modal/confirm/dom） ==================== */
 /* 通知 toast（原 core/notice.ts NOTICE_CSS，ADR-0010） */
 #bz-notice-container {
@@ -1021,43 +1014,6 @@ button.news-close-btn {
 }
 .bz-settings-group-body .setting-item:last-child {
   margin-bottom: 0;
-}
-
-/* ==================== 移动端主窗口默认全屏（ticket 68，ADR-0019） ==================== */
-/* 统一 ≤768px 两态（废止原 480/640/768 乱断点）：开=真全屏（.bz-win-mfs）/ 关=常规卡（各域 ≤768 基规则） */
-@media (max-width: 768px) {
-  /* 真全屏：覆盖整个视口、去圆角、去变换/动画（各域桌面定位统一覆写） */
-  .bz-win-mfs {
-    width: 100vw !important;
-    height: 100vh !important;
-    max-width: 100vw !important;
-    max-height: 100vh !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: auto !important;
-    bottom: auto !important;
-    transform: none !important;
-    animation: none !important;
-  }
-  /* 真全屏头部避让顶部安全区：多数窗口首子元素即头部行 */
-  .bz-win-mfs > div:first-child {
-    padding-top: max(34px, env(safe-area-inset-top)) !important;
-  }
-  /* news 自垫例外：真全屏时弹窗自身垫顶（与各域统一 34px 顶距），首子不再垫（首子是绝对定位关闭钮） */
-  .news-popup.bz-win-mfs {
-    padding-top: max(34px, env(safe-area-inset-top)) !important;
-  }
-  .news-popup.bz-win-mfs > div:first-child {
-    padding-top: 0 !important;
-  }
-  /* 域设置弹窗真全屏（smartcat 2026-08-23 合并一套接入）：内容区放开 65vh 上限、flex 撑满 */
-  .bz-win-mfs .bz-settings-content {
-    max-height: none !important;
-    flex: 1 1 auto;
-    min-height: 0;
-  }
 }
 
 /* ==================== 统一右键菜单 / 长按抽屉（core/item-actions，手势统一） ==================== */
@@ -2357,13 +2313,11 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-range--lg::-webkit-slider-thumb { width: 18px; height: 18px; }
 .bz-range--lg::-moz-range-thumb { width: 18px; height: 18px; }
 
-/* ═══════════ 移动端全屏面板顶距 .bz-panel-mtop ═══════════
-   全站统一避让档：≤768px 真全屏面板根部顶部留 44px，避让 Obsidian 移动端头部
+/* ═══════════ 移动端面板顶距 .bz-panel-mtop ═══════════
+   全站统一避让档：≤768px 面板根部顶部留 44px，避让 Obsidian 移动端头部
    （取 max(44px, 安全区) 兼顾刘海屏）；桌面不生效。
-   挂在全屏面板根节点（panel/frame）上，同时归零首子元素顶距——core
-   `.bz-win-mfs > div:first-child` 的 34px 垫顶与域内头行自带的 safe-area
-   垫顶由本类统一接管，接入域不得再在头行重复写避让（防双份顶距）。
-   非恒全屏面板（如番茄钟）随 .bz-win-mfs 开关同挂摘（classList.toggle）。 */
+   挂在面板根节点（panel/frame）上，同时归零首子元素顶距——域内头行自带的
+   safe-area 垫顶由本类统一接管，接入域不得再在头行重复写避让（防双份顶距）。 */
 @media (max-width: 768px) {
   .bz-panel-mtop { padding-top: max(44px, env(safe-area-inset-top, 0px)) !important; }
   .bz-panel-mtop > div:first-child { padding-top: 0 !important; }
@@ -3985,7 +3939,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 
 @media (max-width: 768px) {
-    /* 主窗口常规卡由内联基样式承担；真全屏统一走 .bz-win-mfs（ticket 68） */
+    /* 主窗口常规卡由内联基样式承担 */
     /* 头排内边距由「主窗口头部行统一规范」统一承担（16/24/10，全平台一致，ticket 68 后续） */
 
     #diary-tag-container {
@@ -4049,7 +4003,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 
 @media (max-width: 480px) {
-    /* 原强制真全屏规则已废止（ticket 68：全屏统一走 .bz-win-mfs） */
+    /* 原强制真全屏规则已废止 */
     #diary-tag-filter .diary-popup-header h3 {
         font-size: 16px !important;
     }
@@ -7395,9 +7349,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
     .pomodoro-hour-bar { width: 8px; border-radius: 3px 3px 0 0; background: var(--background-modifier-border); min-height: 2px; }
     .pomodoro-hour-bar-on { background: var(--interactive-accent); opacity: 0.7; }
 
-/* ==================== 移动端全屏态（.bz-panel-mtop 随 mfs 开关同挂摘） ====================
-   全屏时顶距工具类统一避让 Obsidian 移动端头（44px）；右上角设置钮为绝对定位，
-   不随文档流下移，需同步下移到避让区之下（常规小卡态无此钮规则，维持 16px） */
+/* ==================== 移动端顶距避让（.bz-panel-mtop 无条件挂载） ====================
+   ≤768px 顶距工具类统一避让 Obsidian 移动端头（44px）；右上角设置钮为绝对定位，
+   不随文档流下移，需同步下移到避让区之下（无避让态无此钮规则，维持 16px） */
 @media (max-width: 768px) {
     #pomodoro-popup.bz-panel-mtop #pomodoro-btn-settings { top: calc(max(44px, env(safe-area-inset-top, 0px)) + 12px); }
 }
@@ -7939,7 +7893,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* ═══════════ tokens：S1 亚麻暖白（亮皮，默认） ═══════════ */
 .bz-sp-desk,
 .bz-sp-mobile,
-.bz-sp-mob-modal,
+.bz-sp-mobile,
 .bz-sp-picker-mask,
 #bz-up-manager-popup, #bz-model-picker-popup {
   --sp-bg: #f6f2e9;
@@ -7962,7 +7916,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* ═══════════ tokens：S3 炭黑夜航（暗皮，跟随 Obsidian 暗色） ═══════════ */
 .theme-dark .bz-sp-desk,
 .theme-dark .bz-sp-mobile,
-.theme-dark .bz-sp-mob-modal,
+.theme-dark .bz-sp-mobile,
 .theme-dark .bz-sp-picker-mask,
 .theme-dark #bz-up-manager-popup, #bz-model-picker-popup {
   --sp-bg: #1b1b1f;
@@ -8193,13 +8147,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* ═══════════ 滚动条全隐藏（面板作用域内） ═══════════ */
 .bz-sp-desk *,
 .bz-sp-mobile *,
-.bz-sp-mob-modal * {
+.bz-sp-mobile * {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 .bz-sp-desk *::-webkit-scrollbar,
 .bz-sp-mobile *::-webkit-scrollbar,
-.bz-sp-mob-modal *::-webkit-scrollbar {
+.bz-sp-mobile *::-webkit-scrollbar {
   display: none;
   width: 0;
   height: 0;
@@ -8424,10 +8378,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 设置子项层级降级（enh-sweep-a）：isChild 行弱化、hover 恢复 */
 .bz-sp-desk .bz-sp-set-row.child,
 .bz-sp-mobile .bz-sp-set-row.child,
-.bz-sp-mob-modal .bz-sp-set-row.child { opacity: 0.6; }
+.bz-sp-mobile .bz-sp-set-row.child { opacity: 0.6; }
 .bz-sp-desk .bz-sp-set-row.child:hover,
 .bz-sp-mobile .bz-sp-set-row.child:hover,
-.bz-sp-mob-modal .bz-sp-set-row.child:hover { opacity: 1; }
+.bz-sp-mobile .bz-sp-set-row.child:hover { opacity: 1; }
 
 /* custom 插槽：占满整行（内嵌原生 Setting 行由容器收敛） */
 .bz-sp-custom-slot--full { width: 100%; }
@@ -8442,7 +8396,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 开关 .bz-sw：S1 赤橙 / S3 琥珀 */
 .bz-sp-desk .bz-sw,
 .bz-sp-mobile .bz-sw,
-.bz-sp-mob-modal .bz-sw {
+.bz-sp-mobile .bz-sw {
   width: 38px;
   height: 22px;
   background: var(--sp-ctl-off);
@@ -8451,7 +8405,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sp-desk .bz-sw::after,
 .bz-sp-mobile .bz-sw::after,
-.bz-sp-mob-modal .bz-sw::after {
+.bz-sp-mobile .bz-sw::after {
   width: 18px;
   height: 18px;
   background: var(--sp-knob);
@@ -8460,7 +8414,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sp-desk .bz-sw.on,
 .bz-sp-mobile .bz-sw.on,
-.bz-sp-mob-modal .bz-sw.on {
+.bz-sp-mobile .bz-sw.on {
   background: var(--sp-accent);
   border-color: var(--sp-accent);
 }
@@ -8468,12 +8422,12 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
    切勿再引入 left 位移——left + transform 分属两机制，同时在场会叠加把旋钮推出轨道（2026-09-08 二修） */
 .bz-sp-desk .bz-sw.on::after,
 .bz-sp-mobile .bz-sw.on::after,
-.bz-sp-mob-modal .bz-sw.on::after {
+.bz-sp-mobile .bz-sw.on::after {
   transform: translateX(16px);
 }
 .bz-sp-desk .bz-sw:focus-visible,
 .bz-sp-mobile .bz-sw:focus-visible,
-.bz-sp-mob-modal .bz-sw:focus-visible {
+.bz-sp-mobile .bz-sw:focus-visible {
   outline: 2px solid var(--sp-accent);
   outline-offset: 2px;
 }
@@ -8481,7 +8435,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 下拉 .bz-select：纸底描边触发器 + 面板同皮菜单（菜单挂触发器内，scope 生效） */
 .bz-sp-desk .bz-select,
 .bz-sp-mobile .bz-select,
-.bz-sp-mob-modal .bz-select {
+.bz-sp-mobile .bz-select {
   position: relative;
   display: flex;
   align-items: center;
@@ -8500,17 +8454,17 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sp-desk .bz-select-val,
 .bz-sp-mobile .bz-select-val,
-.bz-sp-mob-modal .bz-select-val {
+.bz-sp-mobile .bz-select-val {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .bz-sp-desk .bz-select:hover,
 .bz-sp-mobile .bz-select:hover,
-.bz-sp-mob-modal .bz-select:hover { border-color: var(--sp-ink-3); }
+.bz-sp-mobile .bz-select:hover { border-color: var(--sp-ink-3); }
 .bz-sp-desk .bz-select-menu,
 .bz-sp-mobile .bz-select-menu,
-.bz-sp-mob-modal .bz-select-menu {
+.bz-sp-mobile .bz-select-menu {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
@@ -8528,7 +8482,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sp-desk .bz-select-item,
 .bz-sp-mobile .bz-select-item,
-.bz-sp-mob-modal .bz-select-item {
+.bz-sp-mobile .bz-select-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -8546,7 +8500,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sp-desk .bz-select-item-ck,
 .bz-sp-mobile .bz-select-item-ck,
-.bz-sp-mob-modal .bz-select-item-ck {
+.bz-sp-mobile .bz-select-item-ck {
   margin-left: auto;
   opacity: 0;
   width: 12px;
@@ -8555,13 +8509,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sp-desk .bz-select-item.is-on .bz-select-item-ck,
 .bz-sp-mobile .bz-select-item.is-on .bz-select-item-ck,
-.bz-sp-mob-modal .bz-select-item.is-on .bz-select-item-ck { opacity: 1; }
+.bz-sp-mobile .bz-select-item.is-on .bz-select-item-ck { opacity: 1; }
 .bz-sp-desk .bz-select-item:hover,
 .bz-sp-mobile .bz-select-item:hover,
-.bz-sp-mob-modal .bz-select-item:hover { background: var(--sp-accent-soft); }
+.bz-sp-mobile .bz-select-item:hover { background: var(--sp-accent-soft); }
 .bz-sp-desk .bz-select-item.is-on,
 .bz-sp-mobile .bz-select-item.is-on,
-.bz-sp-mob-modal .bz-select-item.is-on {
+.bz-sp-mobile .bz-select-item.is-on {
   color: var(--sp-accent);
   background: var(--sp-accent-soft);
   font-weight: 600;
@@ -8570,7 +8524,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 输入 .bz-input / textarea：纸底描边 + focus 光圈 */
 .bz-sp-desk .bz-input,
 .bz-sp-mobile .bz-input,
-.bz-sp-mob-modal .bz-input {
+.bz-sp-mobile .bz-input {
   background: var(--sp-input-bg);
   border: 1px solid var(--sp-line);
   border-radius: 7px;
@@ -8581,7 +8535,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sp-desk .bz-input:focus,
 .bz-sp-mobile .bz-input:focus,
-.bz-sp-mob-modal .bz-input:focus {
+.bz-sp-mobile .bz-input:focus {
   border-color: var(--sp-accent);
   box-shadow: 0 0 0 3px var(--sp-accent-soft);
 }
@@ -8605,18 +8559,18 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sp-desk .bz-input.num,
 .bz-sp-mobile .bz-input.num,
-.bz-sp-mob-modal .bz-input.num { width: 90px; }
+.bz-sp-mobile .bz-input.num { width: 90px; }
 .bz-sp-desk .bz-input.mono,
 .bz-sp-mobile .bz-input.mono,
-.bz-sp-mob-modal .bz-input.mono { font-family: ui-monospace, Consolas, monospace; }
+.bz-sp-mobile .bz-input.mono { font-family: ui-monospace, Consolas, monospace; }
 /* 控件长度收敛（2026-09-08 拍板「短一些」）：核心 .bz-input 240px / .bz-select 随内容生长，面板内统一 180px 档；
    搜索胶囊 input（上方裸化块 width:100%）与数字 90px 档不受此影响 */
 .bz-sp-desk .bz-sp-set-ctrl .bz-input,
 .bz-sp-mobile .bz-sp-set-ctrl .bz-input,
-.bz-sp-mob-modal .bz-sp-set-ctrl .bz-input,
+.bz-sp-mobile .bz-sp-set-ctrl .bz-input,
 .bz-sp-desk .bz-sp-set-ctrl .bz-select,
 .bz-sp-mobile .bz-sp-set-ctrl .bz-select,
-.bz-sp-mob-modal .bz-sp-set-ctrl .bz-select { width: 180px; max-width: 100%; }
+.bz-sp-mobile .bz-sp-set-ctrl .bz-select { width: 180px; max-width: 100%; }
 
 /* 滑杆行 + 读数徽标 */
 .bz-sp-slider-row { display: flex; align-items: center; gap: 10px; }
@@ -8624,10 +8578,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* choiceCards 自绘卡（原型逐字类）：预览 div（.bz-sp-mini）+ 名称；预览视觉由各域 prevClass 承载 */
 .bz-sp-desk .bz-sp-cardpick,
 .bz-sp-mobile .bz-sp-cardpick,
-.bz-sp-mob-modal .bz-sp-cardpick { display: flex; flex-wrap: wrap; gap: 10px; }
+.bz-sp-mobile .bz-sp-cardpick { display: flex; flex-wrap: wrap; gap: 10px; }
 .bz-sp-desk .bz-sp-cardpick-card,
 .bz-sp-mobile .bz-sp-cardpick-card,
-.bz-sp-mob-modal .bz-sp-cardpick-card {
+.bz-sp-mobile .bz-sp-cardpick-card {
   background: var(--sp-panel);
   border: 1.5px solid var(--sp-line);
   border-radius: 10px;
@@ -8641,20 +8595,20 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sp-desk .bz-sp-cardpick-card.is-on,
 .bz-sp-mobile .bz-sp-cardpick-card.is-on,
-.bz-sp-mob-modal .bz-sp-cardpick-card.is-on {
+.bz-sp-mobile .bz-sp-cardpick-card.is-on {
   border-color: var(--sp-accent);
   box-shadow: 0 0 0 2px var(--sp-accent-soft);
 }
 .bz-sp-desk .bz-sp-cardpick-name,
 .bz-sp-mobile .bz-sp-cardpick-name,
-.bz-sp-mob-modal .bz-sp-cardpick-name { font-size: 10.5px; color: var(--sp-ink-2); }
+.bz-sp-mobile .bz-sp-cardpick-name { font-size: 10.5px; color: var(--sp-ink-2); }
 .bz-sp-desk .bz-sp-cardpick-card.is-on .bz-sp-cardpick-name,
 .bz-sp-mobile .bz-sp-cardpick-card.is-on .bz-sp-cardpick-name,
-.bz-sp-mob-modal .bz-sp-cardpick-card.is-on .bz-sp-cardpick-name { color: var(--sp-accent); font-weight: 600; }
+.bz-sp-mobile .bz-sp-cardpick-card.is-on .bz-sp-cardpick-name { color: var(--sp-accent); font-weight: 600; }
 /* 迷你预览容器（原型 .bz-sp-mini 几何；底图/细节由 prevClass 各域样式绘制） */
 .bz-sp-desk .bz-sp-mini,
 .bz-sp-mobile .bz-sp-mini,
-.bz-sp-mob-modal .bz-sp-mini {
+.bz-sp-mobile .bz-sp-mini {
   width: 64px;
   height: 44px;
   border-radius: 5px;
@@ -8689,7 +8643,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 @keyframes bz-sp-spin { to { transform: rotate(360deg); } }
 
-/* ═══════════ 移动端：M1 命令面板（真全屏，同皮） ═══════════ */
+/* ═══════════ 移动端：全屏推入式两页（首页列表 ⇆ 域设置页） ═══════════ */
 .bz-sp-mobile {
   display: flex;
   flex-direction: column !important;
@@ -8704,6 +8658,49 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   color: var(--sp-ink);
   overflow: hidden !important;
 }
+.bz-sp-mob-viewport {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+.bz-sp-mob-page {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--sp-bg);
+  transition: transform 0.22s ease;
+}
+/* 首页常驻；推入时视差左移。域页初始停在视口右外，推入滑入 */
+.bz-sp-mob-page--home { transform: translateX(0); }
+.bz-sp-mob-pushed .bz-sp-mob-page--home { transform: translateX(-30%); }
+.bz-sp-mob-page--domain { transform: translateX(100%); box-shadow: -12px 0 24px rgba(0, 0, 0, 0.08); }
+.bz-sp-mob-pushed .bz-sp-mob-page--domain { transform: translateX(0); }
+
+/* 域页头行：返回钮 + 域名 + 工具位 */
+.bz-sp-mob-nav { display: flex; align-items: center; }
+.bz-sp-mob-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--sp-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 域页设置正文（滚动区；分组卡与行样式与桌面同源，仅内边距收紧） */
+.bz-sp-mob-page-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 14px 16px 20px;
+  font-size: 13px;
+}
+.bz-sp-mob-page-body .bz-sp-group { box-shadow: none; margin-bottom: 14px; }
+.bz-sp-mob-page-body .bz-sp-set-row { padding: 10px 14px; }
+.bz-sp-mob-page-body .bz-sp-set-ctrl { max-width: 56%; min-width: 0; }
+
 .bz-sp-mob-search {
   display: flex;
   align-items: center;
@@ -8807,48 +8804,19 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border-radius: 8px !important;
 }
 .bz-sp-mob-close:hover { color: var(--sp-accent) !important; }
-
-/* ═══════════ 移动端域设置弹窗（同皮子面板） ═══════════ */
-.bz-sp-mob-modal {
-  display: flex;
-  flex-direction: column !important;
-  background: var(--sp-bg);
-  border: 1px solid var(--sp-line);
-  border-radius: 14px;
-  box-shadow: var(--sp-shadow);
-  color: var(--sp-ink);
-  overflow: hidden;
-  font-size: 13px;
+.bz-sp-mob-back-btn {
+  border: 1px solid var(--sp-line) !important;
+  background: var(--sp-panel) !important;
+  color: var(--sp-ink-2) !important;
+  border-radius: 8px !important;
+  margin-right: -4px;
 }
-.bz-sp-mob-modal-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--sp-line);
-  background: var(--sp-panel);
-  flex-shrink: 0;
-}
-.bz-sp-mob-modal-title { font-size: 15px; font-weight: 700; margin: 0; color: var(--sp-ink); }
-.bz-sp-mob-modal-body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 14px 16px 20px;
-  font-size: 13px;
-}
-.bz-sp-mob-modal-body .bz-sp-group {
-  box-shadow: none;
-  margin-bottom: 14px;
-}
-.bz-sp-mob-modal-body .bz-sp-set-row { padding: 10px 14px; }
-.bz-sp-mob-modal-body .bz-sp-set-ctrl { max-width: 56%; min-width: 0; }
+.bz-sp-mob-back-btn:hover { color: var(--sp-accent) !important; }
 
 /* ═══════════ 域内图标基础尺寸（svg 自带 bz-ic；span 包装与 svg 自身都覆盖） ═══════════ */
 .bz-sp-desk .bz-ic,
 .bz-sp-mobile .bz-ic,
-.bz-sp-mob-modal .bz-ic {
+.bz-sp-mobile .bz-ic {
   width: 15px;
   height: 15px;
   flex: none;
@@ -8872,7 +8840,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* .bz-sp-picker-mask = dir-picker 弹层自挂 scope（挂 body，不在面板三根之内），取消/选用按钮同皮 */
 .bz-sp-desk .bz-sp-btn,
 .bz-sp-mobile .bz-sp-btn,
-.bz-sp-mob-modal .bz-sp-btn,
+.bz-sp-mobile .bz-sp-btn,
 .bz-sp-picker-mask .bz-sp-btn {
   font-family: inherit;
   font-size: 12.5px;
@@ -8888,11 +8856,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sp-desk .bz-sp-btn:hover,
 .bz-sp-mobile .bz-sp-btn:hover,
-.bz-sp-mob-modal .bz-sp-btn:hover,
+.bz-sp-mobile .bz-sp-btn:hover,
 .bz-sp-picker-mask .bz-sp-btn:hover { background: var(--sp-accent-soft); }
 .bz-sp-desk .bz-sp-btn--primary,
 .bz-sp-mobile .bz-sp-btn--primary,
-.bz-sp-mob-modal .bz-sp-btn--primary,
+.bz-sp-mobile .bz-sp-btn--primary,
 .bz-sp-picker-mask .bz-sp-btn--primary {
   background: var(--sp-accent);
   border-color: transparent;
@@ -8901,13 +8869,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sp-desk .bz-sp-btn--primary:hover,
 .bz-sp-mobile .bz-sp-btn--primary:hover,
-.bz-sp-mob-modal .bz-sp-btn--primary:hover,
+.bz-sp-mobile .bz-sp-btn--primary:hover,
 .bz-sp-picker-mask .bz-sp-btn--primary:hover { background: var(--sp-accent); opacity: 0.92; }
 
 /* custom 插槽内原生 Setting 的按钮（AI「获取模型名」等）与 UP 主名单管理弹窗按钮并入同一观感 */
 .bz-sp-desk .bz-sp-custom-slot .setting-item button,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item button,
-.bz-sp-mob-modal .bz-sp-custom-slot .setting-item button,
+.bz-sp-mobile .bz-sp-custom-slot .setting-item button,
 #bz-up-manager-popup .setting-item button ,
 #bz-model-picker-popup .setting-item button {
   font-family: inherit;
@@ -8926,7 +8894,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sp-desk .bz-sp-custom-slot .setting-item button:hover,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item button:hover,
-.bz-sp-mob-modal .bz-sp-custom-slot .setting-item button:hover,
+.bz-sp-mobile .bz-sp-custom-slot .setting-item button:hover,
 #bz-up-manager-popup .setting-item button:hover ,
 #bz-model-picker-popup .setting-item button:hover { background: var(--sp-accent-soft); }
 
@@ -8934,7 +8902,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
    overlay）对齐面板行范式：信息左/控件右一行；插件端 Obsidian 行同样被本规则收敛同皮 */
 .bz-sp-desk .bz-sp-custom-slot .setting-item,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item,
-.bz-sp-mob-modal .bz-sp-custom-slot .setting-item,
+.bz-sp-mobile .bz-sp-custom-slot .setting-item,
 #bz-up-manager-popup .setting-item ,
 #bz-model-picker-popup .setting-item {
   display: flex;
@@ -8946,28 +8914,28 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sp-desk .bz-sp-custom-slot .setting-item-info,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-info,
-.bz-sp-mob-modal .bz-sp-custom-slot .setting-item-info,
+.bz-sp-mobile .bz-sp-custom-slot .setting-item-info,
 #bz-up-manager-popup .setting-item-info ,
 #bz-model-picker-popup .setting-item-info { flex: 1; min-width: 0; }
 .bz-sp-desk .bz-sp-custom-slot .setting-item-name,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-name,
-.bz-sp-mob-modal .bz-sp-custom-slot .setting-item-name,
+.bz-sp-mobile .bz-sp-custom-slot .setting-item-name,
 #bz-up-manager-popup .setting-item-name ,
 #bz-model-picker-popup .setting-item-name { font-size: 13px; font-weight: 600; color: var(--sp-ink); }
 .bz-sp-desk .bz-sp-custom-slot .setting-item-description,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-description,
-.bz-sp-mob-modal .bz-sp-custom-slot .setting-item-description,
+.bz-sp-mobile .bz-sp-custom-slot .setting-item-description,
 #bz-up-manager-popup .setting-item-description ,
 #bz-model-picker-popup .setting-item-description { font-size: 11.5px; color: var(--sp-ink-2); margin-top: 3px; line-height: 1.45; }
 .bz-sp-desk .bz-sp-custom-slot .setting-item-control,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-control,
-.bz-sp-mob-modal .bz-sp-custom-slot .setting-item-control,
+.bz-sp-mobile .bz-sp-custom-slot .setting-item-control,
 #bz-up-manager-popup .setting-item-control ,
 #bz-model-picker-popup .setting-item-control { display: flex; align-items: center; gap: 8px; flex: none; flex-wrap: wrap; justify-content: flex-end; }
 /* 控件内文本输入（插件端 Obsidian addText 无 bz-input 类）：纸底描边同 bz-input */
 .bz-sp-desk .bz-sp-custom-slot .setting-item-control input[type="text"],
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-control input[type="text"],
-.bz-sp-mob-modal .bz-sp-custom-slot .setting-item-control input[type="text"],
+.bz-sp-mobile .bz-sp-custom-slot .setting-item-control input[type="text"],
 #bz-up-manager-popup .setting-item-control input[type="text"] ,
 #bz-model-picker-popup .setting-item-control input[type="text"] {
   font-family: inherit;
@@ -8982,12 +8950,12 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sp-desk .bz-sp-custom-slot input[type="checkbox"],
 .bz-sp-mobile .bz-sp-custom-slot input[type="checkbox"],
-.bz-sp-mob-modal .bz-sp-custom-slot input[type="checkbox"],
+.bz-sp-mobile .bz-sp-custom-slot input[type="checkbox"],
 /* custom 插槽/子弹窗内原生 checkbox（Setting addToggle）：appearance:none 整形成与 .bz-sw 同款
    胶囊开关（38×22 轨 + 18 圆钮，旋钮走 background-position 位移，不依赖 input 伪元素支持） */
 .bz-sp-desk .bz-sp-custom-slot input[type="checkbox"],
 .bz-sp-mobile .bz-sp-custom-slot input[type="checkbox"],
-.bz-sp-mob-modal .bz-sp-custom-slot input[type="checkbox"],
+.bz-sp-mobile .bz-sp-custom-slot input[type="checkbox"],
 #bz-up-manager-popup input[type="checkbox"] ,
 #bz-model-picker-popup input[type="checkbox"] {
   appearance: none;
@@ -9009,7 +8977,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sp-desk .bz-sp-custom-slot input[type="checkbox"]:checked,
 .bz-sp-mobile .bz-sp-custom-slot input[type="checkbox"]:checked,
-.bz-sp-mob-modal .bz-sp-custom-slot input[type="checkbox"]:checked,
+.bz-sp-mobile .bz-sp-custom-slot input[type="checkbox"]:checked,
 #bz-up-manager-popup input[type="checkbox"]:checked ,
 #bz-model-picker-popup input[type="checkbox"]:checked {
   background-color: var(--sp-accent);
@@ -9027,7 +8995,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 .bz-sp-desk .bz-sp-chip,
 .bz-sp-mobile .bz-sp-chip,
-.bz-sp-mob-modal .bz-sp-chip {
+.bz-sp-mobile .bz-sp-chip {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -9073,7 +9041,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 开关：胶囊 + 圆点滑块（left 过渡） */
 .bz-sp-desk .bz-sw,
 .bz-sp-mobile .bz-sw,
-.bz-sp-mob-modal .bz-sw {
+.bz-sp-mobile .bz-sw {
   appearance: none;
   -webkit-appearance: none;
   position: relative;
@@ -9083,7 +9051,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sp-desk .bz-sw::after,
 .bz-sp-mobile .bz-sw::after,
-.bz-sp-mob-modal .bz-sw::after {
+.bz-sp-mobile .bz-sw::after {
   content: "";
   position: absolute;
   border-radius: 50%;
@@ -9913,10 +9881,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-panel-overlay > .bz-cinema--midnight.mob,
 .bz-panel-overlay > .bz-cinema--gazette.mob,
 .bz-panel-overlay > .bz-cinema--booth.mob { margin: auto; }
-/* 移动端真全屏（.bz-win-mfs）：去演示框边（尺寸/圆角由 core !important 接管） */
-.bz-cinema--midnight.mob.bz-win-mfs,
-.bz-cinema--gazette.mob.bz-win-mfs,
-.bz-cinema--booth.mob.bz-win-mfs { border: 0 !important; box-shadow: none !important; }
 /* ==================== 书库域样式（src/bookshelf/styles.css） ====================
    书脊墙 1:1 复刻（issue 218；原型 .zcode/ui-prototypes/bookshelf-10/p4-full.html）：
    小号木匾「书库 · LIBRARY」+ 纸质统计标签行（同行居左；issue 226 匾额复位+逐肤换脸）
@@ -11926,9 +11890,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-sb-panel {
     width: 95vw;
     max-height: 90vh;
-  }
-  .bz-sb-panel.bz-win-mfs {
-    max-height: 100vh;
   }
 }
 
