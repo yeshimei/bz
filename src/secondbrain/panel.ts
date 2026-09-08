@@ -1,198 +1,53 @@
 /**
- * 第二大脑主面板（ticket 103 建；ticket 107 首用引导；ticket 108 打磨；ticket 109 统计卡精简）
- * 统一入口弹窗：统计卡片 / 内容规模明细 / 来源分布树形 / 近 12 周趋势 / 最近向量化。
- * - ticket 108 打磨项：
- *   ① 存储占用=meta+向量合计单值（hover 明细）；上次索引与最近向量化行用共享 formatRelativeTime；
- *   ② 来源分布改树形逐级展开（名称左对齐，▸/▾ 递归下钻子目录）；
- *   ③ ticket 108 曾新增白名单覆盖率/内容规模/最厚笔记 Top5/一致性健康四项，其中覆盖率卡与 Top5 区块已按 ticket 109 移除（语义重复/需求砍掉）；
- *   ④ 每次打开自动增量索引：有待处理变更 → 全屏进度视图接管，完成后再进统计；无变更直接统计；
- *   ⑤ 概括走统一 AI 通道（主设置页服务商）；缓存并入 secondbrain.json panel 段（ticket 120），设置页清除入口移除。
- *     （ticket 141：「AI 生成概括」入口与调用链整体移除——与「对话」区分，对话保留；
- *      panel 段数据结构冻结保留，旧缓存仅不再消费/回显）
- * - 引导/进度视图三用：首次初始化（空库，带按钮）/ 自动增量（待处理块，纯进度）/ 重新索引（设置页确认后）。
- * - ticket 114：初始向量化进行中关页重开 → 恢复实时进度视图（原缺陷：重开回引导态且按钮
- *   因 initializing 守卫静默失效，看起来「点击没有任何反应」）；重复点击不再吞掉，接回进度。
- * - ticket 141：ESC 迁 escManager 层级（原私挂 document keydown 废弃）——⚙️ 设置弹窗叠开时
- *   其层级后注册在上，ESC 先关设置再关面板。
- * - 样式全部收敛 src/secondbrain/styles.css（bz-sb-panel-* / bz-sb-onboard-* / bz-sb-dist-*）。
+ * 第二大脑主面板 · 行为层（issue 251 / ADR-0110）
+ *
+ * UI 按定稿原型（.zcode/ui-prototypes/secondbrain-final/，P1 布局 × P2 米白红棕主题）
+ * 抛弃式重写：全部 markup 出自 render.ts 纯层（ADR-0104），本文件只留生命周期、
+ * 形态分派、事件绑定与 core 服务接线。行为逻辑逐行保留：open 形态分派（重建意图/
+ * 空库引导/进度恢复/待处理增量/统计态）、onboard 三形态、进度回调解析、自动增量
+ * 刷新、来源树展开会话记忆、最近向量化点击打开。
+ *
+ * 落域适配（原型不出，ADR-0110 §4）：真身运维维度并入——统计带第六卡=存储占用、
+ * 底部状态行=上次索引 · 索引一致性（向量行数 vs 块数） · 自动建链数；AI 库摘要卡
+ * 读 secondbrain.json panel 段（生成入口已随 ticket 141 移除，有值渲染无值隐藏）。
+ *
+ * 设置 schema（secondBrainSettingsSchema/openSecondBrainSettings）逐字保留于本文件
+ * 模块顶层：settings-panel 域动态 import 本路径（tests/settings-panel.test.ts /
+ * copy-lint 同锚），文案与键零变化。统计纯函数收编 render.ts，此处 re-export 兼容旧引用。
  */
 import type { App } from 'obsidian';
-import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
 import { topifyZ } from '../core/z-order';
 import { isMobileEnv } from '../core/mobile';
-import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
-import { openSettingsModal, closeSettingsModal } from '../core/settings-modal';
-import type { SettingsSchema } from '../core/settings-schema';
-import { escapeHtml, formatRelativeTime } from '../core/utils';
+import { mountIcons } from '../core/ui';
 import { openFlowDialog } from '../core/flow-dialog';
 import { escManager } from '../core/esc-manager';
 import { getApp } from '../core/app';
+import { formatRelativeTime } from '../core/utils';
+import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
+import { openSettingsModal, closeSettingsModal } from '../core/settings-modal';
+import type { SettingsSchema } from '../core/settings-schema';
 import { buildConfig, IS_MOBILE } from './config';
-import type { VectorStore, SecondBrainMeta } from './vector-store';
+import type { VectorStore } from './vector-store';
 import { parsePathList, formatPathList } from './whitelist';
 import { getLanIPs, formatRemoteOllamaUrl, pickPrimaryLanIp } from './local-ip';
+import { loadStore } from './store-file';
+import {
+  panelShellHtml,
+  panelCardsHtml,
+  panelTrendHtml,
+  panelDistHtml,
+  panelRecentHtml,
+  panelSummaryHtml,
+  panelLogHtml,
+  sbSourceColor,
+  computeStats,
+  buildSourceTree,
+  fmtCompact,
+} from './render';
 
-// ==================== 统计聚合（纯函数，可测） ====================
-
-export interface SourceDistItem {
-  name: string;
-  notes: number;
-  chunks: number;
-}
-
-export interface RecentNote {
-  path: string;
-  mtime: number;
-  chunks: number;
-}
-
-export interface SecondBrainStats {
-  chunkCount: number;
-  noteCount: number;
-  dim: number;
-  metaBytes: number;
-  vecBytes: number;
-  lastIndexedAt: number | null;
-  bySource: SourceDistItem[];
-  recent: RecentNote[];
-  /** 近 12 周（含本周）每周向量化笔记数，旧→新 */
-  trend12w: number[];
-  /** 内容规模（ticket 108）：总字符数 / 平均块长 / 平均每篇块数 */
-  totalChars: number;
-  avgChunkLen: number;
-  avgChunksPerNote: number;
-}
-
-/** 来源分布树节点（ticket 108）：dir 末段为 name，聚合整棵子树计数，children 按 chunks 降序 */
-export interface SourceTreeNode {
-  name: string;
-  path: string;
-  notes: number;
-  chunks: number;
-  children: SourceTreeNode[];
-}
-
-function topLevelDir(path: string): string {
-  const i = path.indexOf('/');
-  return i === -1 ? '（根目录）' : path.slice(0, i);
-}
-
-/**
- * 由 meta.notes 构建来源目录树（纯函数）：每级节点聚合其下全部笔记/块数，
- * 子节点按 chunks 降序；根节点=白名单顶层目录。
- */
-export function buildSourceTree(meta: SecondBrainMeta): SourceTreeNode[] {
-  const roots = new Map<string, SourceTreeNode>();
-  const childOf = new Map<string, SourceTreeNode[]>(); // dirPath → children
-  const nodeOf = new Map<string, SourceTreeNode>();
-
-  const ensureDir = (dir: string): SourceTreeNode => {
-    let node = nodeOf.get(dir);
-    if (node) return node;
-    const segs = dir.split('/').filter(Boolean);
-    node = {
-      name: segs[segs.length - 1] || dir,
-      path: dir,
-      notes: 0,
-      chunks: 0,
-      children: [],
-    };
-    nodeOf.set(dir, node);
-    if (segs.length === 1) {
-      roots.set(dir, node);
-    } else {
-      const parent = ensureDir(segs.slice(0, -1).join('/'));
-      const siblings = childOf.get(parent.path) || [];
-      siblings.push(node);
-      childOf.set(parent.path, siblings);
-    }
-    return node;
-  };
-
-  for (const [path, entry] of Object.entries(meta.notes)) {
-    // 根目录文件（无 '/'）归入「（根目录）」；注意 lastIndexOf=-1 时不能 slice(0,-1) 切掉末字符
-    const idx = path.lastIndexOf('/');
-    const dir = idx === -1 ? '（根目录）' : path.slice(0, idx);
-    // 逐级向上聚合：每一级目录节点都计入其下全部笔记与块（树形口径，ticket 108）
-    let cursor: SourceTreeNode | null = ensureDir(dir);
-    while (cursor) {
-      cursor.notes++;
-      cursor.chunks += entry.chunks.length;
-      const segs = cursor.path.split('/').filter(Boolean);
-      if (segs.length <= 1) break; // 到达顶层（含「（根目录）」）即止
-      cursor = nodeOf.get(segs.slice(0, -1).join('/')) ?? null;
-    }
-  }
-
-  // 物化父子连接：ensureDir 期间子节点挂到 childOf[父 path]，此处回填到各节点 .children
-  for (const node of nodeOf.values()) {
-    node.children = childOf.get(node.path) || [];
-  }
-
-  const sortChildren = (arr: SourceTreeNode[]): void => {
-    arr.sort((a, b) => b.chunks - a.chunks);
-    for (const c of arr) sortChildren(c.children);
-  };
-  const rootsArr = [...roots.values()];
-  sortChildren(rootsArr);
-  return rootsArr;
-}
-
-/** 数值缩写（ticket 109）：≥10,000 显示 K/M（19.7K / 1.2M），万以下原样千分位；精确值走卡片 title hover */
-export function fmtCompact(n: number): string {
-  const trim = (s: string) => s.replace(/\.0$/, '');
-  if (n >= 1_000_000_000) return `${trim((n / 1_000_000_000).toFixed(1))}B`;
-  if (n >= 1_000_000) return `${trim((n / 1_000_000).toFixed(1))}M`;
-  if (n >= 10_000) return `${trim((n / 1000).toFixed(1))}K`;
-  return n.toLocaleString();
-}
-
-/** 由 meta.notes 聚合全部统计（本地计算，秒开） */
-export function computeStats(meta: SecondBrainMeta, now = Date.now()): Omit<SecondBrainStats, 'metaBytes' | 'vecBytes'> {
-  const bySource = new Map<string, SourceDistItem>();
-  let chunkCount = 0;
-  let totalChars = 0;
-  const recent: RecentNote[] = [];
-  // 12 周桶：桶 0=最早，桶 11=本周
-  const weekMs = 7 * 24 * 3600 * 1000;
-  const thisWeekStart = Math.floor(now / weekMs) * weekMs;
-  const trend12w = new Array<number>(12).fill(0);
-
-  for (const [path, entry] of Object.entries(meta.notes)) {
-    const chunks = entry.chunks.length;
-    chunkCount += chunks;
-    let chars = 0;
-    for (const c of entry.chunks) chars += c.text.length;
-    totalChars += chars;
-    const dir = topLevelDir(path);
-    const item = bySource.get(dir) || { name: dir, notes: 0, chunks: 0 };
-    item.notes++;
-    item.chunks += chunks;
-    bySource.set(dir, item);
-    recent.push({ path, mtime: entry.mtime, chunks });
-    const bucket = 11 - Math.floor((thisWeekStart - entry.mtime) / weekMs);
-    if (bucket >= 0 && bucket <= 11) trend12w[bucket]++;
-  }
-
-  recent.sort((a, b) => b.mtime - a.mtime);
-  const bySourceArr = [...bySource.values()].sort((a, b) => b.chunks - a.chunks);
-  const noteCount = Object.keys(meta.notes).length;
-  return {
-    chunkCount,
-    noteCount,
-    dim: meta._dim || 0,
-    lastIndexedAt: recent[0]?.mtime ?? null,
-    bySource: bySourceArr,
-    recent: recent.slice(0, 10),
-    trend12w,
-    totalChars,
-    avgChunkLen: chunkCount ? Math.round(totalChars / chunkCount) : 0,
-    avgChunksPerNote: noteCount ? Math.round((chunkCount / noteCount) * 10) / 10 : 0,
-  };
-}
-
-// ==================== 概括缓存（已随 ticket 141 移除；panel 段数据结构冻结保留于 store-file） ====================
+export { computeStats, buildSourceTree, fmtCompact } from './render';
+export type { SecondBrainStats, SourceDistItem, RecentNote, SourceTreeNode } from './render';
 
 // ==================== 主面板弹窗 ====================
 
@@ -212,8 +67,6 @@ export class SecondBrainPanel {
   private refreshing = false;
   /** 初始向量化视图进行中标记（ticket 114：runInitialIndexView 持有；进行中重复点击接回进度视图而非静默失效） */
   private initializing = false;
-  /** 头部功能钮（📚💬）——引导期收起 */
-  private funcBtns: HTMLButtonElement[] = [];
   /** 来源分布树已展开的目录（ticket 108，会话内记忆） */
   private expandedDirs = new Set<string>();
   /** 设置页「重新索引」意图标记（ticket 108：确认后打开面板即自动全量重建） */
@@ -310,7 +163,7 @@ export class SecondBrainPanel {
     const content = document.getElementById('bz-sb-content');
     if (onboard) onboard.style.display = 'none';
     if (content) content.style.display = 'flex';
-    for (const b of this.funcBtns) b.classList.remove('bz-sb-btn-hidden');
+    for (const b of this.popup?.querySelectorAll('.bz-sb-panel-func') ?? []) b.classList.remove('bz-sb-btn-hidden');
     if (!skipRefresh && !this.refreshing) void this.autoRefreshThenRender();
   }
 
@@ -327,12 +180,12 @@ export class SecondBrainPanel {
     if (btn) {
       btn.style.display = 'block';
       btn.disabled = false;
-      btn.textContent = '🚀 开始向量化';
+      btn.textContent = '开始向量化';
     }
     if (box) box.style.display = 'none';
     if (onboard) onboard.style.display = 'flex';
     if (content) content.style.display = 'none';
-    for (const b of this.funcBtns) b.classList.add('bz-sb-btn-hidden');
+    for (const b of this.popup?.querySelectorAll('.bz-sb-panel-func') ?? []) b.classList.add('bz-sb-btn-hidden');
   }
 
   /** 进入纯进度形态（自动运行，无按钮；title 由调用方给定） */
@@ -353,7 +206,7 @@ export class SecondBrainPanel {
     if (resetStatus && status) status.textContent = '准备中…';
     if (onboard) onboard.style.display = 'flex';
     if (content) content.style.display = 'none';
-    for (const b of this.funcBtns) b.classList.add('bz-sb-btn-hidden');
+    for (const b of this.popup?.querySelectorAll('.bz-sb-panel-func') ?? []) b.classList.add('bz-sb-btn-hidden');
   }
 
   /** 进度回调解析：把 store.updateProgress 文案换算成进度条（面板销毁后不再写 DOM） */
@@ -400,9 +253,7 @@ export class SecondBrainPanel {
   /** 全量重建（ticket 108「重新索引」）：清空 → 整库重嵌 → 统计；失败给原因可重试 */
   private async runRebuild(): Promise<void> {
     this.enterProgressView('正在重建向量数据库');
-    const btn = document.getElementById('bz-sb-init-btn') as HTMLButtonElement | null;
     const status = document.getElementById('bz-sb-init-status');
-    const box = document.getElementById('bz-sb-init-progress');
     this.initializing = true;
     try {
       await this.store.rebuildAll(this.progressObserver());
@@ -410,159 +261,78 @@ export class SecondBrainPanel {
         this.showContent(true);
         await this.renderStats();
       } else {
+        const box = document.getElementById('bz-sb-init-progress');
         if (box) box.style.display = 'flex';
         if (status) status.textContent = '重建未完成：请确认 Ollama 服务与 Embedding 模型可用后重试';
-        if (btn) {
-          btn.style.display = 'block';
-          btn.disabled = false;
-          btn.textContent = '🚀 重试重建';
-          btn.onclick = () => void this.runRebuild();
-        }
+        this.revealInitBtn('重试重建');
       }
     } catch (e: any) {
       console.warn('[secondbrain] 全量重建失败', e);
       if (status?.isConnected) {
         status.textContent = '重建失败：' + (e?.message || e);
-        if (btn) {
-          btn.style.display = 'block';
-          btn.disabled = false;
-          btn.textContent = '🚀 重试重建';
-          btn.onclick = () => void this.runRebuild();
-        }
+        this.revealInitBtn('重试重建');
       }
     } finally {
       this.initializing = false;
     }
   }
 
+  /** 组装弹窗 DOM（markup 全部出自 render.ts；本方法只绑定事件） */
   private createUI(): void {
     if (this.mask && document.body.contains(this.mask)) return;
+
     const mask = document.createElement('div');
     mask.className = 'bz-sb-panel-mask';
     mask.onclick = () => this.close();
 
     const popup = document.createElement('div');
     popup.className = 'bz-sb-panel';
+    popup.innerHTML = panelShellHtml();
 
-    // 头部：标题 + 功能(📚💬) + ⚙️
-    const head = document.createElement('div');
-    head.className = 'bz-win-head bz-sb-panel-head';
-    const title = document.createElement('h3');
-    title.textContent = '🧠 第二大脑';
-    const btns = document.createElement('div');
-    btns.className = 'bz-sb-panel-btns';
-    const mkBtn = (cls: string, label: string, tip: string, onclick: () => void) => {
-      const b = document.createElement('button');
-      b.className = cls;
-      b.textContent = label;
-      b.setAttribute('aria-label', tip);
-      b.onclick = onclick;
-      btns.appendChild(b);
-      return b;
-    };
-    const refBtn = mkBtn('bz-sb-panel-func', '📚', '打开侧边栏', () => {
-      this.close();
-      this.opts.onOpenReference();
-    });
-    const chatBtn = mkBtn('bz-sb-panel-func', '💬', '打开对话', () => {
+    // 头行：AI 对话 / 灵感参考 / ⚙️（引导期 func 钮整体收起，ticket 107）
+    popup.querySelector('#bz-sb-open-chat')?.addEventListener('click', () => {
       this.close();
       this.opts.onOpenChat();
     });
-    this.funcBtns = [refBtn, chatBtn]; // 引导期整体收起（ticket 107）
-    mkBtn('bz-sb-panel-gear', '⚙️', '第二大脑设置', () => this.openSettings());
+    popup.querySelector('#bz-sb-open-ref')?.addEventListener('click', () => {
+      this.close();
+      this.opts.onOpenReference();
+    });
+    popup.querySelector('#bz-sb-open-settings')?.addEventListener('click', () => this.openSettings());
 
-    head.appendChild(title);
-    head.appendChild(btns);
-    popup.appendChild(head);
+    // 底部操作：手动增量 / 全量重建（flow 确认，同设置页「重新索引」语义）
+    popup.querySelector('#bz-sb-incr')?.addEventListener('click', () => {
+      if (this.refreshing || this.initializing) return;
+      void this.runIncremental();
+    });
+    popup.querySelector('#bz-sb-rebuild')?.addEventListener('click', () => {
+      void openFlowDialog({
+        title: '重新索引',
+        message: '将清空现有向量索引，按当前白名单全部重嵌入（约等于首次初始化全量跑一遍）。期间参考侧边栏与对话的向量检索会降级为文本匹配。确定继续吗？',
+        actions: [
+          { label: '取消', value: 'cancel' },
+          { label: '开始重建', value: 'ok', cta: true },
+        ],
+      }).then((v) => {
+        if (v === 'ok') void this.runRebuild();
+      });
+    });
 
-    // 内容区
-    const body = document.createElement('div');
-    body.className = 'bz-sb-panel-body';
+    // 引导态按钮
+    const initBtn = popup.querySelector('#bz-sb-init-btn') as HTMLButtonElement | null;
+    if (initBtn) initBtn.onclick = () => void this.startInitialIndex();
 
-    // 内容态包裹层（引导态整层隐藏；初始双隐，open().render() 后二选一显示）
-    const content = document.createElement('div');
-    content.className = 'bz-sb-panel-content';
-    content.id = 'bz-sb-content';
-    content.style.display = 'none';
+    // 来源树展开：父容器一次性委托（重渲 innerHTML 不丢监听）
+    popup.querySelector('#bz-sb-dist')?.addEventListener('click', (e) => {
+      const row = (e.target as HTMLElement).closest('.bz-sb-dist-row--dir') as HTMLElement | null;
+      if (!row) return;
+      const path = row.dataset.path;
+      if (!path) return;
+      if (this.expandedDirs.has(path)) this.expandedDirs.delete(path);
+      else this.expandedDirs.add(path);
+      this.renderDist();
+    });
 
-    const cards = document.createElement('div');
-    cards.className = 'bz-sb-cards';
-    cards.id = 'bz-sb-cards';
-    content.appendChild(cards);
-
-    const trendBox = document.createElement('div');
-    trendBox.className = 'bz-sb-section';
-    trendBox.innerHTML = `<div class="bz-sb-section-title">近 12 周向量化趋势</div><div id="bz-sb-trend" class="bz-sb-trend"></div>`;
-    content.appendChild(trendBox);
-
-    // ticket 108 新维度：内容规模（总字数/平均块长/平均每篇块数）
-    const scaleBox = document.createElement('div');
-    scaleBox.className = 'bz-sb-section';
-    scaleBox.innerHTML = `<div class="bz-sb-section-title">内容规模</div><div id="bz-sb-scale" class="bz-sb-scale"></div>`;
-    content.appendChild(scaleBox);
-
-    const distBox = document.createElement('div');
-    distBox.className = 'bz-sb-section';
-    distBox.innerHTML = `<div class="bz-sb-section-title">来源分布</div><div id="bz-sb-dist" class="bz-sb-dist"></div>`;
-    content.appendChild(distBox);
-
-    const recentBox = document.createElement('div');
-    recentBox.className = 'bz-sb-section';
-    recentBox.innerHTML = `<div class="bz-sb-section-title">最近向量化</div><div id="bz-sb-recent" class="bz-sb-recent"></div>`;
-    content.appendChild(recentBox);
-
-    // 「AI 生成概括」区块已随 ticket 141 整体移除（panel 段数据结构冻结保留）
-
-    body.appendChild(content);
-
-    // 引导态（ticket 107）：本地无向量数据时的首次初始化入口
-    const onboard = document.createElement('div');
-    onboard.className = 'bz-sb-onboard';
-    onboard.id = 'bz-sb-onboard';
-    onboard.style.display = 'none';
-
-    const obIcon = document.createElement('div');
-    obIcon.className = 'bz-sb-onboard-icon';
-    obIcon.textContent = '🧠';
-    const obTitle = document.createElement('div');
-    obTitle.className = 'bz-sb-onboard-title';
-    obTitle.id = 'bz-sb-progress-title'; // 引导/增量/重建三形态共用的标题位（ticket 108）
-    obTitle.textContent = '初始化向量数据库';
-    const obDesc = document.createElement('div');
-    obDesc.className = 'bz-sb-onboard-desc';
-    obDesc.id = 'bz-sb-onboard-desc';
-    obDesc.textContent =
-      '第二大脑还没有你的笔记索引。点击下方按钮后，会把白名单目录内的笔记分块并向量化' +
-      '（通过 Ollama 本地生成，数据不出本机），建成可检索的知识库——之后参考侧边栏、AI 对话与这里的统计才会可用。' +
-      '首次向量化需要手动触发一次，完成后笔记变更会自动增量同步。';
-    const initBtn = document.createElement('button');
-    initBtn.className = 'bz-sb-init-btn';
-    initBtn.id = 'bz-sb-init-btn';
-    initBtn.textContent = '🚀 开始向量化';
-    initBtn.onclick = () => void this.startInitialIndex();
-    const progress = document.createElement('div');
-    progress.className = 'bz-sb-init-progress';
-    progress.id = 'bz-sb-init-progress';
-    const bar = document.createElement('div');
-    bar.className = 'bz-sb-init-bar';
-    const fill = document.createElement('span');
-    fill.className = 'bz-sb-init-fill';
-    fill.id = 'bz-sb-init-fill';
-    bar.appendChild(fill);
-    const status = document.createElement('div');
-    status.className = 'bz-sb-init-status';
-    status.id = 'bz-sb-init-status';
-    progress.appendChild(bar);
-    progress.appendChild(status);
-
-    onboard.appendChild(obIcon);
-    onboard.appendChild(obTitle);
-    onboard.appendChild(obDesc);
-    onboard.appendChild(initBtn);
-    onboard.appendChild(progress);
-    body.appendChild(onboard);
-
-    popup.appendChild(body);
     document.body.appendChild(mask);
     document.body.appendChild(popup);
     // ESC 层级在 open()/close() 成对注册注销（[l2-sb]/ticket 141：escManager 统一管理，不私挂 document keydown）
@@ -620,19 +390,19 @@ export class SecondBrainPanel {
           '没有成功向量化任何内容：请确认 Ollama 服务与 Embedding 模型可用' +
           (IS_MOBILE ? '（移动端需配置「远程 Ollama URL」）' : '') +
           '后重试';
-        this.revealInitBtn('🚀 重试初始化');
+        this.revealInitBtn('重试初始化');
       } else if (sawWarning) {
         status.textContent = '白名单目录内没有可索引的 Markdown 笔记：请检查 ⚙️ 设置中的「白名单目录」';
-        this.revealInitBtn('🚀 重试初始化');
+        this.revealInitBtn('重试初始化');
       } else {
         status.textContent = '未发现可索引的笔记内容';
-        this.revealInitBtn('🚀 重试初始化');
+        this.revealInitBtn('重试初始化');
       }
     } catch (e: any) {
       console.warn('[secondbrain] 初始向量化失败', e);
       if (status.isConnected) {
         status.textContent = '初始化失败：' + (e?.message || e);
-        this.revealInitBtn('🚀 重试初始化');
+        this.revealInitBtn('重试初始化');
       }
     } finally {
       this.initializing = false;
@@ -663,7 +433,10 @@ export class SecondBrainPanel {
     btn.onclick = () => void this.startInitialIndex();
   }
 
+  /** 内容态统计渲染：markup 出 render.ts，本方法只算数与注入 */
   private async renderStats(): Promise<void> {
+    const popup = this.popup;
+    if (!popup || !popup.isConnected) return;
     const CONFIG = buildConfig();
     let metaBytes = 0;
     let vecBytes = 0;
@@ -675,107 +448,114 @@ export class SecondBrainPanel {
     } catch {}
     const stats = { ...computeStats(this.store.meta), metaBytes, vecBytes };
 
-    // ---- 卡片行（ticket 109：六张精简版一行放下；≥1 万数值 K/M 缩写，hover 精确值） ----
-    const cards = document.getElementById('bz-sb-cards');
+    // 索引健康：向量行数 vs 块总数（dim>0 才有行数概念）
+    const vecRows = stats.dim && vecBytes > 0 ? this.store.vectors.length / stats.dim : 0;
+    const healthy = vecRows === 0 || vecRows === stats.chunkCount;
+    const fmtBytes = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`);
+
+    // 来源序（色板位次）——树/最近列表共用
+    const order = new Map(stats.bySource.map((s, i) => [s.name, i]));
+    const colorOf = (name: string) => sbSourceColor(name, order);
+
+    // 头行：计数 + 健康 pill
+    const cnt = popup.querySelector('#bz-sb-cnt');
+    if (cnt) cnt.textContent = `${fmtCompact(stats.noteCount)} 篇 · ${fmtCompact(stats.chunkCount)} 段已入脑`;
+    const pill = popup.querySelector('#bz-sb-pill-txt');
+    if (pill) pill.textContent = healthy ? '索引健康' : `索引偏差 ${Math.abs(vecRows - stats.chunkCount)} 行`;
+    popup.querySelector('.bz-sb-pill-dot')?.classList.toggle('bz-sb-pill-dot--warn', !healthy);
+
+    // 统计带六卡（原型口径 + 真身存储卡；hover 精确值）
+    const cards = popup.querySelector('#bz-sb-cards');
     if (cards) {
-      const fmtBytes = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`);
-      // 索引健康：向量行数 vs 块总数（dim>0 才有行数概念）
-      const vecRows = stats.dim && vecBytes > 0 ? (this.store.vectors.length / stats.dim) : 0;
-      const healthy = vecRows === 0 || vecRows === stats.chunkCount;
-      const items: Array<[string, string, string]> = [
-        ['向量块', fmtCompact(stats.chunkCount), `共 ${stats.chunkCount.toLocaleString()} 个向量块`],
-        ['覆盖笔记', fmtCompact(stats.noteCount), `共 ${stats.noteCount.toLocaleString()} 篇笔记`],
-        ['嵌入维度', stats.dim > 0 ? `${stats.dim} 维` : '—', `嵌入模型 ${CONFIG.EMBEDDING_MODEL} · 维度变更需重建索引`],
-        ['索引健康', healthy ? '✓ 一致' : `⚠ 偏差 ${Math.abs(vecRows - stats.chunkCount)} 行`, `向量 ${vecRows} 行 / 块 ${stats.chunkCount} 个`],
-        ['存储占用', stats.vecBytes ? fmtBytes(metaBytes + vecBytes) : '—', `meta ${fmtBytes(metaBytes)} + 向量 ${fmtBytes(vecBytes)}`],
-        ['上次索引', stats.lastIndexedAt ? formatRelativeTime(stats.lastIndexedAt) : '—', stats.lastIndexedAt ? new Date(stats.lastIndexedAt).toLocaleString() : ''],
-      ];
-      cards.innerHTML = items
-        .map(
-          ([k, v, tip]) =>
-            `<div class="bz-sb-card"${tip ? ` title="${tip}"` : ''}><div class="bz-sb-card-value${k === '索引健康' && !healthy ? ' bz-sb-card-value--warn' : ''}">${v}</div><div class="bz-sb-card-label">${k}</div></div>`
-        )
-        .join('');
+      cards.innerHTML = panelCardsHtml([
+        { v: fmtCompact(stats.noteCount), k: '笔记', tip: `共 ${stats.noteCount.toLocaleString()} 篇笔记`, acc: true },
+        { v: fmtCompact(stats.chunkCount), k: '段落', tip: `共 ${stats.chunkCount.toLocaleString()} 个向量块`, acc: true },
+        { v: fmtCompact(stats.totalChars), k: '字符', tip: `共 ${stats.totalChars.toLocaleString()} 字` },
+        { v: stats.dim > 0 ? `${stats.dim} 维` : '—', k: '向量维度', tip: `嵌入模型 ${CONFIG.EMBEDDING_MODEL} · 维度变更需重建索引` },
+        { v: `${stats.avgChunkLen} 字`, k: '平均段长', tip: `平均每篇 ${stats.avgChunksPerNote} 段` },
+        { v: vecBytes ? fmtBytes(metaBytes + vecBytes) : '—', k: '存储占用', tip: `meta ${fmtBytes(metaBytes)} + 向量 ${fmtBytes(vecBytes)}` },
+      ]);
     }
 
-    const trend = document.getElementById('bz-sb-trend');
+    // 近 12 周趋势
+    const trend = popup.querySelector('#bz-sb-trend');
     if (trend) {
-      const max = Math.max(...stats.trend12w, 1);
-      trend.innerHTML = stats.trend12w
-        .map((n) => `<div class="bz-sb-trend-col" style="height:${Math.max(4, Math.round((n / max) * 64))}px" aria-label="${n} 篇"></div>`)
-        .join('');
+      trend.innerHTML = panelTrendHtml(stats.trend12w);
+      const sum = popup.querySelector('#bz-sb-trend-sum');
+      if (sum) sum.textContent = stats.trend12w.reduce((a, b) => a + b, 0) + ' 篇';
     }
 
-    // ---- 内容规模（ticket 108） ----
-    const scale = document.getElementById('bz-sb-scale');
-    if (scale) {
-      scale.innerHTML = [
-        ['总字数', stats.totalChars.toLocaleString()],
-        ['平均块长', `${stats.avgChunkLen} 字`],
-        ['平均每篇块数', String(stats.avgChunksPerNote)],
-      ]
-        .map(([k, v]) => `<div class="bz-sb-scale-item"><div class="bz-sb-scale-value">${v}</div><div class="bz-sb-scale-label">${k}</div></div>`)
-        .join('');
-    }
+    // 来源分布树（展开集会话内记忆）
+    this.renderDist();
 
-    // ---- 来源分布（树形逐级展开，ticket 108） ----
-    const dist = document.getElementById('bz-sb-dist');
-    if (dist) {
-      const tree = buildSourceTree(this.store.meta);
-      const rootMax = Math.max(1, ...tree.map((n) => n.chunks));
-      const rows = dist.querySelectorAll('.bz-sb-dist-row-inner');
-      dist.innerHTML = '';
-      const renderNode = (node: SourceTreeNode, depth: number, container: HTMLElement) => {
-        const hasChildren = node.children.length > 0;
-        const open = this.expandedDirs.has(node.path);
-        const row = document.createElement('div');
-        row.className = 'bz-sb-dist-row';
-        if (depth > 0) row.style.paddingLeft = `${10 + depth * 16}px`; // 树形缩进（功能性几何内联）
-        row.innerHTML = `
-          <span class="bz-sb-dist-caret ${hasChildren ? '' : 'bz-sb-dist-caret--leaf'}">${hasChildren ? (open ? '▾' : '▸') : ''}</span>
-          <span class="bz-sb-dist-name">${escapeHtml(node.name)}</span>
-          <span class="bz-sb-dist-bar"><span class="bz-sb-dist-fill" style="width:${Math.round((node.chunks / rootMax) * 100)}%"></span></span>
-          <span class="bz-sb-dist-num">${node.notes} 篇 / ${node.chunks} 段</span>`;
-        if (hasChildren) {
-          row.onclick = () => {
-            if (this.expandedDirs.has(node.path)) this.expandedDirs.delete(node.path);
-            else this.expandedDirs.add(node.path);
-            this.renderStats(); // 重渲树（其余统计不变，开销可接受）
-          };
-        }
-        container.appendChild(row);
-        if (open) {
-          for (const child of node.children) renderNode(child, depth + 1, container);
-        }
-      };
-      for (const root of tree) renderNode(root, 0, dist);
-    }
-
-    // ---- 最近向量化（相对日期，ticket 108） ----
-    const recentEl = document.getElementById('bz-sb-recent');
+    // 最近向量化（点击打开文件——真身行为保留）
+    const recentEl = popup.querySelector('#bz-sb-recent');
     if (recentEl) {
-      recentEl.innerHTML = '';
-      if (stats.recent.length === 0) {
-        recentEl.innerHTML = '<div class="bz-sb-empty">⚠️ 没有符合条件的文件</div>';
+      recentEl.innerHTML = panelRecentHtml(
+        stats.recent.map((r) => ({
+          path: r.path,
+          name: r.path.split('/').pop() || r.path,
+          chunks: r.chunks,
+          when: formatRelativeTime(r.mtime),
+          color: colorOf(topLevelName(r.path)),
+        }))
+      );
+      const recentN = popup.querySelector('#bz-sb-recent-n');
+      if (recentN) recentN.textContent = `最新 ${stats.recent.length} 条`;
+    }
+
+    // 底部状态行：上次索引 · 索引一致性 · 存储明细
+    const log = popup.querySelector('#bz-sb-log');
+    if (log) {
+      log.innerHTML = panelLogHtml([
+        { text: `上次索引 ${stats.lastIndexedAt ? formatRelativeTime(stats.lastIndexedAt) : '—'}` },
+        { text: healthy ? '索引一致' : `向量 ${Math.round(vecRows)} 行 / 块 ${stats.chunkCount} 个`, warn: !healthy },
+        { text: vecBytes ? `占用 ${fmtBytes(metaBytes + vecBytes)}` : '暂无向量文件' },
+      ]);
+    }
+
+    mountIcons(popup);
+    void this.loadSummaryAndLinks();
+  }
+
+  /** 来源树渲染（renderStats 与展开点击共用；展开集会话内记忆） */
+  private renderDist(): void {
+    const popup = this.popup;
+    const dist = popup?.querySelector('#bz-sb-dist') as HTMLElement | null;
+    if (!popup || !dist) return;
+    const tree = buildSourceTree(this.store.meta);
+    const order = new Map(computeStats(this.store.meta).bySource.map((s, i) => [s.name, i]));
+    const colorOf = (name: string) => sbSourceColor(name, order);
+    const rootMax = Math.max(1, ...tree.map((n) => n.chunks));
+    dist.innerHTML = panelDistHtml(tree, this.expandedDirs, colorOf, rootMax);
+    const distN = popup.querySelector('#bz-sb-dist-n');
+    if (distN) distN.textContent = `${tree.length} 个来源`;
+    mountIcons(dist);
+  }
+
+  /** AI 库摘要 + 自动建链数（secondbrain.json panel/link 段，异步回填；生成入口已移除，旧值仍可展示） */
+  private async loadSummaryAndLinks(): Promise<void> {
+    try {
+      const store = await loadStore(this.app);
+      const popup = this.popup;
+      if (!popup || !popup.isConnected) return;
+      const summary = store.panel?.summary || '';
+      const aiCard = popup.querySelector('#bz-sb-ai-card') as HTMLElement | null;
+      const aiTxt = popup.querySelector('#bz-sb-ai-txt');
+      if (aiCard) aiCard.style.display = summary ? '' : 'none';
+      if (aiTxt && summary) {
+        aiTxt.innerHTML = panelSummaryHtml(summary, store.panel?.generatedAt ? formatRelativeTime(store.panel.generatedAt) : '');
       }
-      for (const r of stats.recent) {
-        const row = document.createElement('div');
-        row.className = 'bz-sb-recent-row';
-        const name = document.createElement('span');
-        name.className = 'bz-sb-recent-name';
-        name.textContent = r.path.split('/').pop() || r.path;
-        const time = document.createElement('span');
-        time.className = 'bz-sb-recent-time';
-        time.textContent = `${formatRelativeTime(r.mtime)} · ${r.chunks} 段`;
-        time.title = new Date(r.mtime).toLocaleString();
-        row.appendChild(name);
-        row.appendChild(time);
-        row.onclick = () => {
-          const f = this.app.vault.getAbstractFileByPath(r.path);
-          if (f) this.app.workspace.getLeaf(false).openFile(f as any);
-        };
-        recentEl.appendChild(row);
+      const linkedTotal = Object.keys(store.link?.state || {}).length;
+      const log = popup.querySelector('#bz-sb-log');
+      if (log && linkedTotal) {
+        log.insertAdjacentHTML(
+          'beforeend',
+          `<span class="bz-sb-log-sep">·</span>${panelLogHtml([{ text: `自动建链 ${linkedTotal} 条` }])}`
+        );
       }
+    } catch {
+      /* 读库失败不阻断统计展示 */
     }
   }
 
@@ -783,6 +563,12 @@ export class SecondBrainPanel {
   private openSettings(): void {
     openSecondBrainSettings(this.app);
   }
+}
+
+/** 最近向量化行的来源名（顶层目录，色板键） */
+function topLevelName(path: string): string {
+  const i = path.indexOf('/');
+  return i === -1 ? '（根目录）' : path.slice(0, i);
 }
 
 // ==================== ⚙️ 域设置弹窗（主面板 / 窄窗共用） ====================

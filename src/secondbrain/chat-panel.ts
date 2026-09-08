@@ -1,32 +1,35 @@
 /**
- * 第二大脑 AI 对话（ticket 103 建；ticket 108 改居中弹窗；ticket 141 UX 批次）
- * - 形态：普通弹窗（core createOverlay，遮罩+ESC 关闭）；
- *   此前为右侧窄窗形态，🤖 入口随参考窄窗按钮精简一并移除；
- *   （ticket 141：头部新增「清空对话」小按钮——flow 确认后清空历史并写盘，关闭仍靠遮罩+ESC）
- * - DeepSeek 复选框删除：统一走主设置页「🤖 AI」服务商（ticket 108）；
- * - RAG 提示词逐字对齐 QA L1718：每问独立检索 CHAT_TOP_K 条，context 格式 `[path] (xx%)\nchunk`；
- *   历史仅 UI 展示 + 裁剪 MAX_HISTORY×2 条，不进 prompt；
- * - assistant 消息 markdown 渲染（失败回退纯文本），user 消息纯文本。
- * - ticket 141：
- *   ① 输入改多行 textarea（Enter 发送 / Shift+Enter 换行，isComposing 组合态回车不发送——
- *      与 smartcat 聊天输入同款交互；高度自增、CSS 钳制上限 5 行）；
- *   ② 请求可取消：发送钮原地切「停止」，AbortController 经 AI.ask 透传 core/ai 中止 fetch；
- *   ③ 流式增量渲染（onDelta 增量纯文本 → 完成后整段 markdown 重渲；中止丢弃未完成回复）；
- *   ④ 历史持久化：secondbrain.json chatHistory 段（上限 100 条，每轮问答写盘，打开读回渲染）。
+ * 第二大脑 AI 对话（ticket 103 建；ticket 108 居中弹窗；ticket 141 UX 批次；issue 251 定稿原型重写）
+ *
+ * UI 按定稿原型重写（.zcode/ui-prototypes/secondbrain-final/chat.html）：头行模型徽标 +
+ * 消息气泡（user 墨底右对齐 / assistant 白卡）+ 检索中态（呼吸点）+ 引用卡列表 + 推荐问法
+ * 常驻 chips。markup 出 render.ts 纯层；本文件只留行为。
+ *
+ * 行为逐行保留：DeepSeek 统一走主设置页 AI 服务商；RAG 提示词逐字对齐 QA L1718（每问独立
+ * 检索 CHAT_TOP_K 条，context 格式 `[path] (xx%)\nchunk`）；历史仅 UI 展示 + 裁剪
+ * MAX_HISTORY×2 条不进 prompt；多行 textarea（Enter 发送 / Shift+Enter 换行 / isComposing
+ * 组合态不发送）；请求可取消（发送钮原地切「停止」，AbortController 中止）；流式增量渲染
+ * （onDelta 增量纯文本 → 完成后整段 markdown 重渲）；历史持久化 secondbrain.json
+ * chatHistory 段（上限 100 条）。
+ *
+ * 落域适配（ADR-0110 §4）：检索命中（path+score）以引用卡渲染——仅会话内展示不落盘，
+ * chatHistory 段 {role, content} 结构零改动（历史读回无引用卡）；引用卡点击 = 打开对应笔记。
  */
 import type { App } from 'obsidian';
 import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { openFlowDialog } from '../core/flow-dialog';
+import { mountIcons } from '../core/ui';
 import { buildConfig } from './config';
 import { renderMarkdown } from './ui-tools';
 import { AI } from './ai';
 import { appendChatHistory, clearChatHistory, loadChatHistory, type ChatHistoryEntry } from './store-file';
+import { chatShellHtml, chatUserMsgHtml, chatAiMsgHtml, chatThinkingHtml, chatCitesHtml, sbSourceColor, computeStats } from './render';
 import type { SearchHit, VectorStore } from './vector-store';
 
 /** 欢迎语（首次进入 / 清空后共用一份文案） */
-function welcomeText(): string {
-  return `你好！每次提问会独立检索 ${buildConfig().CHAT_TOP_K} 条笔记辅助回答。`;
+function welcomeText(topK: number): string {
+  return `你好！每次提问会独立检索 ${topK} 条笔记辅助回答。`;
 }
 
 export class ChatPanel {
@@ -49,7 +52,7 @@ export class ChatPanel {
     this.store = store;
 
     const CONFIG = buildConfig();
-    // 弹窗外壳（z-index 动态发号，ADR-0067），与 smartcat 对话弹窗同款先例
+    // 弹窗外壳（z-index 动态发号，ADR-0067）
     const { mask, popup } = createOverlay({
       maskId: 'bz-sb-chat-mask',
       popupId: 'bz-sb-chat-panel',
@@ -58,35 +61,14 @@ export class ChatPanel {
     this.mask = mask;
     this.popup = popup;
     this.popup.classList.add('bz-sb-chat-modal');
+    this.popup.innerHTML = chatShellHtml(CONFIG.CHAT_TOP_K, CONFIG.DEEPSEEK_MODEL);
+    mountIcons(this.popup); // data-lucide 占位物化
 
-    // 头部：标题 + 「清空对话」小按钮（ticket 141）
-    const head = document.createElement('div');
-    head.className = 'bz-win-head bz-sb-chat-head';
-    const title = document.createElement('h3');
-    title.textContent = '🤖 AI 助手';
-    const clearBtn = document.createElement('button');
-    clearBtn.className = 'bz-sb-chat-clear';
-    clearBtn.textContent = '清空对话';
-    clearBtn.addEventListener('click', () => void this.confirmClear());
-    head.appendChild(title);
-    head.appendChild(clearBtn);
+    this.messagesDiv = this.popup.querySelector('#bz-sb-chat-messages') as HTMLElement;
+    this.input = this.popup.querySelector('#bz-sb-chat-input') as HTMLTextAreaElement;
+    this.sendBtn = this.popup.querySelector('#bz-sb-chat-send') as HTMLButtonElement;
 
-    // 消息区
-    this.messagesDiv = document.createElement('div');
-    this.messagesDiv.className = 'bz-sb-chat-messages bz-sb-scroll-y';
-
-    // 输入区（DeepSeek 开关已随统一 AI 通道移除；ticket 141 单行 input → 多行 textarea）
-    const inputArea = document.createElement('div');
-    inputArea.className = 'bz-sb-chat-input-area';
-    const inputRow = document.createElement('div');
-    inputRow.className = 'bz-sb-chat-input-row';
-    this.input = document.createElement('textarea');
-    this.input.className = 'bz-sb-chat-input';
-    this.input.rows = 1;
-    this.input.placeholder = `检索 ${CONFIG.CHAT_TOP_K} 条笔记辅助回答...`;
-    this.sendBtn = document.createElement('button');
-    this.sendBtn.className = 'bz-sb-chat-send';
-    this.sendBtn.textContent = '发送';
+    this.popup.querySelector('#bz-sb-chat-clear')?.addEventListener('click', () => void this.confirmClear());
     this.sendBtn.addEventListener('click', () => {
       if (this.inFlight) {
         this.inFlight.abort(); // 「停止」态：中止当前请求
@@ -105,13 +87,25 @@ export class ChatPanel {
       // Shift+Enter 换行：走 textarea 默认行为，不拦截
     });
     this.input.addEventListener('input', () => this.autoGrowInput());
-    inputRow.appendChild(this.input);
-    inputRow.appendChild(this.sendBtn);
-    inputArea.appendChild(inputRow);
 
-    this.popup.appendChild(head);
-    this.popup.appendChild(this.messagesDiv);
-    this.popup.appendChild(inputArea);
+    // 推荐问法（定稿原型常驻 chips）：点击即问
+    this.popup.querySelector('#bz-sb-chat-chips')?.addEventListener('click', (e) => {
+      const chip = (e.target as HTMLElement).closest('.bz-sb-chat-chip') as HTMLElement | null;
+      if (!chip || this.inFlight) return;
+      this.input.value = chip.dataset.q || '';
+      void this.sendChatMessage();
+    });
+
+    // 引用卡点击 = 打开对应笔记（会话内检索命中）
+    this.messagesDiv.addEventListener('click', (e) => {
+      const cite = (e.target as HTMLElement).closest('.bz-sb-chat-cite') as HTMLElement | null;
+      if (!cite) return;
+      const path = cite.dataset.path;
+      const f = path ? this.app.vault.getAbstractFileByPath(path) : null;
+      if (f) void this.app.workspace.getLeaf(false).openFile(f as any);
+      else if (path) this.appendAiNote('文件不存在或已被移动');
+    });
+
     document.body.appendChild(mask);
     document.body.appendChild(popup);
 
@@ -121,7 +115,7 @@ export class ChatPanel {
       close: () => this.close(),
     });
 
-    this.addChatMessage('assistant', welcomeText());
+    this.addChatMessage('assistant', welcomeText(CONFIG.CHAT_TOP_K));
     this.restorePersistedHistory(); // 打开读回持久化历史（ticket 141）
   }
 
@@ -154,13 +148,17 @@ export class ChatPanel {
   }
 
   /** 历史仅 UI 展示用；裁剪 MAX_HISTORY×2 条，不进 prompt（每问独立检索） */
-  addChatMessage(role: 'user' | 'assistant', content: string): void {
+  addChatMessage(role: 'user' | 'assistant', content: string, hits?: SearchHit[]): HTMLElement {
     const div = document.createElement('div');
     div.className = `bz-sb-chat-msg ${role}`;
     if (role === 'assistant') {
-      renderMarkdown(div, content, this.app); // 失败时内部回退 textContent
+      div.innerHTML = chatAiMsgHtml();
+      const bubble = div.querySelector('.bz-sb-chat-bubble') as HTMLElement;
+      renderMarkdown(bubble, content, this.app); // 失败时内部回退 textContent
+      if (hits?.length) bubble.insertAdjacentHTML('beforeend', chatCitesHtml(this.citeRows(hits)));
     } else {
-      div.textContent = content;
+      div.innerHTML = chatUserMsgHtml();
+      (div.querySelector('.bz-sb-chat-bubble') as HTMLElement).textContent = content;
     }
     this.messagesDiv.appendChild(div);
     this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
@@ -169,11 +167,30 @@ export class ChatPanel {
     if (this.history.length > CONFIG.MAX_HISTORY * 2) {
       this.history = this.history.slice(-CONFIG.MAX_HISTORY * 2);
     }
+    return div;
+  }
+
+  /** 引用卡行（来源色点按来源分布序取色板） */
+  private citeRows(hits: SearchHit[]): Array<{ path: string; pct: number; color: string }> {
+    const order = new Map(computeStats(this.store.meta).bySource.map((s, i) => [s.name, i]));
+    return hits.slice(0, 5).map((h) => ({
+      path: h.path,
+      pct: Math.round(h.score * 100),
+      color: sbSourceColor(h.path.split('/')[0] || '（根目录）', order),
+    }));
+  }
+
+  /** 轻量 assistant 提示（不进历史；用于错误/停止等纯 UI 文案之外的补充说明） */
+  private appendAiNote(text: string): void {
+    const note = document.createElement('div');
+    note.className = 'bz-sb-ref-empty';
+    note.textContent = text;
+    this.messagesDiv.appendChild(note);
   }
 
   // ==================== ticket 141：多行输入 / 取消 / 流式 / 历史持久化 ====================
 
-  /** textarea 自增高度：随内容长高，CSS max-height 钳制上限 5 行，超出内部滚动 */
+  /** textarea 自增高度：随内容长高，CSS max-height 钳制上限，超出内部滚动 */
   private autoGrowInput(): void {
     this.input.style.height = 'auto';
     this.input.style.height = this.input.scrollHeight + 'px';
@@ -208,20 +225,25 @@ export class ChatPanel {
     this.addChatMessage('user', userMsg);
     this.persistHistory([{ role: 'user', content: userMsg }]);
 
+    const CONFIG = buildConfig();
     const controller = new AbortController();
     const seq = ++this.seq;
     this.inFlight = controller;
     this.sendBtn.disabled = false;
-    this.sendBtn.textContent = '停止';
+    this.sendBtn.setAttribute('data-state', 'stop');
+    this.sendBtn.title = '停止';
 
-    // 流式占位气泡：增量纯文本；完成后整段按 markdown 重渲
+    // 检索中态（定稿原型）：呼吸点占位 → 检索完成转流式输出
     const live = document.createElement('div');
     live.className = 'bz-sb-chat-msg assistant';
-    let acc = '';
+    live.innerHTML = chatAiMsgHtml();
+    (live.querySelector('.bz-sb-chat-bubble') as HTMLElement).innerHTML = chatThinkingHtml(CONFIG.CHAT_TOP_K);
     this.messagesDiv.appendChild(live);
+    this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
+    let acc = '';
     try {
-      const CONFIG = buildConfig();
       const results: SearchHit[] = await this.store.search(userMsg, CONFIG.CHAT_TOP_K);
+      if (seq !== this.seq) return; // 已清空/销毁
       const context =
         results.length > 0
           ? results.map((r) => `[${r.path}] (${Math.round(r.score * 100)}%)\n${r.chunk}`).join('\n\n')
@@ -232,13 +254,14 @@ export class ChatPanel {
         signal: controller.signal,
         onDelta: (delta) => {
           acc += delta;
-          live.textContent = acc;
+          const bubble = live.querySelector('.bz-sb-chat-bubble');
+          if (bubble) bubble.textContent = acc;
           this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
         },
       });
       live.remove();
       if (seq === this.seq) {
-        this.addChatMessage('assistant', answer);
+        this.addChatMessage('assistant', answer, results); // 引用卡仅会话内展示（ADR-0110 §4）
         this.persistHistory([{ role: 'assistant', content: answer }]);
       }
     } catch (e: any) {
@@ -253,7 +276,8 @@ export class ChatPanel {
       if (seq === this.seq) {
         this.inFlight = null;
         this.sendBtn.disabled = false;
-        this.sendBtn.textContent = '发送';
+        this.sendBtn.removeAttribute('data-state');
+        this.sendBtn.title = '发送';
       } else if (this.inFlight === controller) {
         this.inFlight = null;
       }
@@ -275,10 +299,11 @@ export class ChatPanel {
     this.inFlight?.abort();
     this.inFlight = null;
     this.sendBtn.disabled = false;
-    this.sendBtn.textContent = '发送';
+    this.sendBtn.removeAttribute('data-state');
+    this.sendBtn.title = '发送';
     this.history = [];
     this.messagesDiv.innerHTML = '';
-    this.addChatMessage('assistant', welcomeText());
+    this.addChatMessage('assistant', welcomeText(buildConfig().CHAT_TOP_K));
     try {
       await clearChatHistory(this.app);
     } catch (e) {

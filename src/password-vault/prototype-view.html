@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>密码本 · 真行为实例</title>
+<!--
+  本页 = 密码本行为单源评审壳的 iframe 视图（issue 251/ADR-0106，范式随 clipbook 适配）。
+  它不实现任何密码本交互——只把真行为层跑起来：
+    - 载入同一份 CSS（core + 域，与插件同源；注意只有一级 ../——两级曾致 404 全裸奔）
+    - 载入 prototype-behavior.js（真 ui.ts 依赖链，alias obsidian→fake）
+    - boot + openPanel：面板 append 到本页 body（iframe 即全屏视口），
+      宽度决定桌面/移动布局（桌面 1060 居中卡本体 / ≤768 移动全屏单列，styles.css 判定）
+  宿主差异（数据/图标/视口）由 fake-obsidian / prototype-icons.js 提供。
+  演示库主密码：demo（种子由真加密链离线生成，见 prototype-data.js 头注释）。
+-->
+<link rel="stylesheet" href="../core/styles.css">
+<link rel="stylesheet" href="../core/ui/tokens.css">
+<link rel="stylesheet" href="../core/ui/components.css">
+<link rel="stylesheet" href="./styles.css">
+<script src="./prototype-icons.js"></script>
+<script src="./prototype-data.js"></script>
+<script src="./prototype-behavior.js"></script>
+<style>
+  /* iframe 内全屏面板：清掉 body 边距，让 .bz-password-vault 遮罩铺满 */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+  body { background: #e3e0d8; }
+  /* 模拟 Obsidian 宿主变量（域 token --pwv-* 与 core 弹层/通知取值用；插件内由主题提供） */
+  body {
+    --background-primary: #fbf9f3; --background-secondary: #f2efe6; --background-modifier-hover: rgba(23,21,18,.06);
+    --background-modifier-border: rgba(23,21,18,.12); --background-modifier-cover: rgba(30,26,18,.42);
+    --text-normal: #171512; --text-muted: #8b8474; --text-faint: #b3ab99;
+    --text-error: #b3564d; --color-green: #3d8f5d; --color-orange: #d08b2c;
+    --interactive-accent: #b8913e; --font-monospace: 'Cascadia Mono', Consolas, monospace;
+    --input-shadow: none; --interactive-normal: #fff; --shadow-s: 0 1px 3px rgba(0,0,0,.1);
+  }
+</style>
+</head>
+<body class="theme-light">
+<script>
+  (function () {
+    var B = window.BZW_password_vault;
+    B.bootPasswordVaultSim();
+    B.openPanel();
+  })();
+</script>
+</body>
+</html>
