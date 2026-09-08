@@ -23129,20 +23129,29 @@ ${entry.content.trim()}`;
     return {
       groups: [
         {
+          // 外观组（标准化：与其他域同范式置顶——布局行占位单卡，主题=todoSkin 两肤；
+          // 布局维度待皮肤设计时接入）
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "todoLayout" }, options: [{ value: "default", label: "清单", prevClass: "bz-sp-prev-panel" }] },
+            {
+              type: "choiceCards",
+              name: "面板主题",
+              binding: { key: "todoSkin" },
+              layoutKey: "todoLayout",
+              options: [
+                { value: "paper", label: "纸感手账", layout: "default", prevClass: "bz-skinprev-paper" },
+                { value: "editorial", label: "编辑部", layout: "default", prevClass: "bz-skinprev-editorial" }
+              ],
+              onChange: (v) => applyTodoSkin(v)
+            }
+          ]
+        },
+        {
           icon: "eye",
           name: "显示",
           rows: [
-            {
-              // 面板皮肤（issue 210）：设置页最顶部的视觉卡片选择（无编号无描述，拍板形态）
-              type: "choiceCards",
-              name: "面板皮肤",
-              binding: { key: "todoSkin" },
-              options: [
-                { value: "paper", label: "纸感手账", prevClass: "bz-skinprev-paper" },
-                { value: "editorial", label: "编辑部", prevClass: "bz-skinprev-editorial" }
-              ],
-              onChange: (v) => applyTodoSkin(v)
-            },
             {
               type: "select",
               name: "默认排序方式",
@@ -31868,21 +31877,23 @@ GitHub 仓库：${ghInfo.title}
     return {
       groups: [
         {
-          // 外观组（issue 246 收编）：bookshelfSkin 五肤×亮暗（issue 235 拍板）；无布局维度走单行组
-          // （小橘先例）；onChange 热切换已开面板；退役肤值读取回落雪松白（normalizeSkin）
+          // 外观组（标准化：布局行占位单卡 + 主题=bookshelfSkin 五肤，layoutKey 联动同范式；
+          // onChange 热切换已开面板；退役肤值读取回落雪松白（normalizeSkin））
           icon: "palette",
           name: "外观",
           rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "bookshelfLayout" }, options: [{ value: "default", label: "书架墙", prevClass: "bz-sp-prev-panel" }] },
             {
               type: "choiceCards",
               name: "面板主题",
               binding: { key: "bookshelfSkin" },
+              layoutKey: "bookshelfLayout",
               options: [
-                { value: "nordic", label: "雪松白", prevClass: "bz-skinprev-bs-nordic" },
-                { value: "noir", label: "黑金夜曲", prevClass: "bz-skinprev-bs-noir" },
-                { value: "kraft", label: "牛皮手帐", prevClass: "bz-skinprev-bs-kraft" },
-                { value: "velvet", label: "丝绒剧院", prevClass: "bz-skinprev-bs-velvet" },
-                { value: "mono", label: "极简黑白", prevClass: "bz-skinprev-bs-mono" }
+                { value: "nordic", label: "雪松白", layout: "default", prevClass: "bz-skinprev-bs-nordic" },
+                { value: "noir", label: "黑金夜曲", layout: "default", prevClass: "bz-skinprev-bs-noir" },
+                { value: "kraft", label: "牛皮手帐", layout: "default", prevClass: "bz-skinprev-bs-kraft" },
+                { value: "velvet", label: "丝绒剧院", layout: "default", prevClass: "bz-skinprev-bs-velvet" },
+                { value: "mono", label: "极简黑白", layout: "default", prevClass: "bz-skinprev-bs-mono" }
               ],
               onChange: (v) => applyBookshelfSkin(v)
             }

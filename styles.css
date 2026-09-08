@@ -1920,7 +1920,6 @@ button.news-close-btn {
   font-size: var(--bz-font-label);
   font-family: inherit;
   line-height: var(--bz-leading-tight);
-  width: 240px;
   transition: border-color var(--bz-dur-fast) ease, box-shadow var(--bz-dur-fast) ease;
 }
 .bz-input::placeholder { color: var(--bz-text-3); }
@@ -8419,7 +8418,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   display: flex;
   align-items: center;
   gap: 8px;
-  max-width: 62%;
 }
 .bz-sp-set-row--cards { flex-direction: column; align-items: stretch; gap: 8px; }
 .bz-sp-set-row--cards > .bz-sp-set-name { font-weight: 600; }
@@ -8482,14 +8480,12 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* 下拉 .bz-select：纸底描边触发器 + 面板同皮菜单（菜单挂触发器内，scope 生效） */
 .bz-sp-desk .bz-select,
-.bz-sp-mobile .bz-select,
 .bz-sp-mobile .bz-select {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  min-width: 210px;
   max-width: 280px;
   padding: 6px 10px;
   background: var(--sp-input-bg);
@@ -8611,14 +8607,12 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-sp-desk .bz-input.mono,
 .bz-sp-mobile .bz-input.mono,
 .bz-sp-mobile .bz-input.mono { font-family: ui-monospace, Consolas, monospace; }
-/* 控件长度收敛（2026-09-08 拍板「短一些」）：核心 .bz-input 240px / .bz-select 随内容生长，面板内统一 180px 档；
-   搜索胶囊 input（上方裸化块 width:100%）与数字 90px 档不受此影响 */
+/* 控件长度：面板内 input/select 不定宽（跟随 .bz-select 随内容生长 / input 自身默认），
+   max-width: 100% 防长文案撑破行；搜索胶囊 input（上方裸化块 width:100%）与数字 90px 档不受影响 */
 .bz-sp-desk .bz-sp-set-ctrl .bz-input,
 .bz-sp-mobile .bz-sp-set-ctrl .bz-input,
-.bz-sp-mobile .bz-sp-set-ctrl .bz-input,
 .bz-sp-desk .bz-sp-set-ctrl .bz-select,
-.bz-sp-mobile .bz-sp-set-ctrl .bz-select,
-.bz-sp-mobile .bz-sp-set-ctrl .bz-select { width: 180px; max-width: 100%; }
+.bz-sp-mobile .bz-sp-set-ctrl .bz-select { max-width: 100%; }
 
 /* 滑杆行 + 读数徽标 */
 .bz-sp-slider-row { display: flex; align-items: center; gap: 10px; }
@@ -8747,7 +8741,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sp-mob-page-body .bz-sp-group { box-shadow: none; margin-bottom: 14px; }
 .bz-sp-mob-page-body .bz-sp-set-row { padding: 10px 14px; }
-.bz-sp-mob-page-body .bz-sp-set-ctrl { max-width: 56%; min-width: 0; }
+.bz-sp-mob-page-body .bz-sp-set-ctrl { min-width: 0; }
 
 .bz-sp-mob-search {
   display: flex;
