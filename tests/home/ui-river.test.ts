@@ -1,6 +1,6 @@
 /**
  * 内容首页（home 域）UI 测试（issue 232 活动河改版）：
- * 面板装配（头行/三栏/移动瓦片）、16 域入口行、时间线空态、预告三卡、点行直达、ESC/遮罩关闭。
+ * 面板装配（头行/三栏/移动瓦片）、全域入口行、时间线空态、预告三卡、点行直达、ESC/遮罩关闭。
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -90,6 +90,20 @@ describe('home 活动河 UI（issue 232）', () => {
     expect(app.__executed).toEqual(['bz-cinema-open']);
     expect(document.querySelector('.bz-home-overlay')).toBeNull();
     expect(H.river).toBeNull(); // 关闭清采集态
+  });
+
+  it('第二大脑磁贴（issue 251）：入口行在册、图标物化、点行直达主面板命令', async () => {
+    const app = recApp(vault);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 20));
+    const row = document.querySelector('[data-home-go="secondbrain"]') as HTMLElement;
+    expect(row).toBeTruthy();
+    expect(row.querySelector('.bz-ic')).toBeTruthy();
+    expect((row.querySelector('.bz-ic') as HTMLElement).dataset.icon).toBe('brain'); // mock setIcon 记录图标名
+    expect(row.textContent).toContain('第二大脑');
+    row.click();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(app.__executed).toEqual(['bz-secondbrain-panel']);
   });
 
   it('周历：7 格动静历渲染；点昨天格时间线切天、选中格同步', async () => {
