@@ -80,10 +80,23 @@ export function bootPasswordVaultSim(): void {
   injectSettings();
 }
 
+/** 锁屏演示提示（壳侧注入：真锁屏 markup 单源不掺演示文案，演示外景注记归 fake-sim） */
+function injectLockHint(): void {
+  document.querySelectorAll<HTMLElement>('.bz-password-vault-lock').forEach((lock) => {
+    if (lock.querySelector('.bz-pwv-sim-hint')) return;
+    const hint = document.createElement('div');
+    hint.className = 'bz-pwv-sim-hint';
+    hint.style.cssText = 'margin-top:12px;font-size:12px;color:#9a917d;letter-spacing:.5px;';
+    hint.textContent = '演示库主密码：demo（小写；两端各自解锁）';
+    lock.appendChild(hint);
+  });
+}
+
 /** 打开密码本（插件 index.openPasswordVault 同名语义：首开建面板 + show，之后 show） */
 export function openPanel(): void {
   if (!simApp) bootPasswordVaultSim();
   openPasswordVault(simApp as never);
+  injectLockHint();
 }
 
 /** 卸载（自检/重置演示数据前清态用） */
