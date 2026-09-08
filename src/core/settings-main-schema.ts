@@ -18,7 +18,7 @@
  * - ticket 100 文案修正（键名/行为不动）：两个 API Key 行标题收短为「DeepSeek 密钥」「OpenCode 密钥」，
  *   全部描述改写为约 20 字自然句、去符号花样（原描述含括号/斜杠/域名/超长枚举，lint 不过）。
  */
-import { Setting } from 'obsidian';
+
 import { AI_PROVIDER_REGISTRY, getProviderDescriptor } from './ai';
 import { notice } from './notice';
 import { tryGetSettings, saveSettings } from './settings-provider';
@@ -75,77 +75,50 @@ function setProviderValue(mapKey: OverrideMapKey, raw: string): void {
   void saveSettings();
 }
 
-/** 「模型名称」per-provider 行（ticket 172/173）：custom 渲染（内嵌「获取模型名」按钮——
- *  原生 Setting 的 addText + addButton 组合，标准行无同行按钮原语），onRefresh 随切换联动 */
+/** 「模型名称」per-provider 行（ticket 172/173）：声明式 text + 行内「获取模型名」按钮
+ *  （actions，渲染器统一实现——custom 插槽已退役）；refreshKey 随服务商切换联动回填 */
 function providerModelCustomRow(): SettingsRow {
-  const label = '模型名称';
-  const desc = '留空用该服务商默认模型';
   return {
-    type: 'custom',
-    name: label,
-    desc,
-    visibleWhen: () => true, // 常显（随 provider 联动内容）
-    render: (body: HTMLElement, ctx: SettingsRowContext) => {
-      const setting = new Setting(body).setName(label);
-      if (desc) setting.setDesc(desc);
-      let input: { setValue: (v: string) => unknown } | null = null;
-      // ticket 173「获取模型名」：行内嵌按钮（按钮在左、输入框在右——2026-09-08 拍板换位，
-      // 输入框右缘与上方行输入框列对齐）；点击拉取当前服务商模型列表弹选择器回填
-      setting.addButton((b) => {
-        b.setButtonText('获取模型名').onClick(() => {
-          void (async () => {
-            if (b.disabled) return; // 加载中防连点
-            b.setDisabled(true);
-            b.setButtonText('获取中…');
-            try {
-              await saveSettings(); // 先落盘防抖中的手输值，再读当前状态拉取
-              const providerId = String((tryGetSettings() as any).aiProvider || 'opencode-go');
-              const desc = providerDescriptorOf(providerId);
-              const models = await fetchProviderModels(providerId);
-              // 打开弹窗前模型行仍可能被 provider 切换刷新——以当前 provider 为准
-              const curProvider = String((tryGetSettings() as any).aiProvider || 'opencode-go');
-              if (curProvider !== providerId) {
-                notice('服务商已切换，请重新获取', 'warning');
-                return;
-              }
-              openModelPicker({
-                providerLabel: desc.label,
-                current: providerValue('model'),
-                models,
-                onPick: (m) => {
-                  // 与输入框 onChange 同口径（issue 187：setProviderValue 已统一 custom → aiCustomModel）
-                  setProviderValue('aiModelOverrides', m.id);
-                  ctx.refreshVisibility();
-                  if (input) input.setValue(m.id);
-                  notice(`模型已设为 ${m.id}`, 'success');
-                },
-              });
-            } catch (e) {
-              notice(e instanceof Error ? e.message : String(e), 'error');
-            } finally {
-              b.setDisabled(false);
-              b.setButtonText('获取模型名');
-            }
-          })();
-        });
-      });
-      setting.addText((t) => {
-        input = t;
-        t.setValue(providerValue('model'));
-        t.setPlaceholder('默认模型');
-        t.onChange((v) => setProviderValue('aiModelOverrides', v));
-      });
-      // 保存输入框引用供 onRefresh 用（行级闭包挂到包装容器）
-      (body as any).__providerInput = input;
-      void ctx;
+    type: 'text',
+    name: '模型名称',
+    desc: '留空用该服务商默认模型',
+    placeholder: '默认模型',
+    binding: {
+      get: () => providerValue('model'),
+      set: (v) => setProviderValue('aiModelOverrides', v),
+      save: () => {},
     },
-    // onRefresh 由渲染器在 reevaluate 时调用：重读当前 provider 值写回输入框
-    onRefresh: (ctx: SettingsRowContext) => {
-      const input = (ctx.rowEl as any).__providerInput;
-      if (input && typeof input.setValue === 'function') {
-        input.setValue(providerValue('model'));
-      }
-    },
+    refreshKey: () => providerValue('model'),
+    actions: [{
+      text: '获取模型名',
+      onClick: async (_value, ctx) => {
+        try {
+          await saveSettings(); // 先落盘防抖中的手输值，再读当前状态拉取
+          const providerId = String((tryGetSettings() as any).aiProvider || 'opencode-go');
+          const desc = providerDescriptorOf(providerId);
+          const models = await fetchProviderModels(providerId);
+          // 拉取期间模型行仍可能被 provider 切换刷新——以当前 provider 为准
+          const curProvider = String((tryGetSettings() as any).aiProvider || 'opencode-go');
+          if (curProvider !== providerId) {
+            notice('服务商已切换，请重新获取', 'warning');
+            return;
+          }
+          openModelPicker({
+            providerLabel: desc.label,
+            current: providerValue('model'),
+            models,
+            onPick: (m) => {
+              // 与输入框 onChange 同口径（issue 187：setProviderValue 已统一 custom → aiCustomModel）
+              setProviderValue('aiModelOverrides', m.id);
+              ctx.refreshVisibility();
+              notice(`模型已设为 ${m.id}`, 'success');
+            },
+          });
+        } catch (e) {
+          notice(e instanceof Error ? e.message : String(e), 'error');
+        }
+      },
+    }],
   } as SettingsRow;
 }
 

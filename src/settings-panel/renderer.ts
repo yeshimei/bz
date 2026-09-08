@@ -218,6 +218,32 @@ export function makePathRowCtrl(opts: {
 
 /* ==================== 行渲染 ==================== */
 
+/** 文本/数字行行内附加按钮：先插按钮再插输入框（2026-09-08 拍板：按钮在左、输入框右缘对齐）；
+ *  onClick 传当前输入值，完成后重读绑定回填显示（不置脏）+ 刷新显隐——供「填入/回填」类动作 */
+function mountTextActions(
+  ctrlEl: HTMLElement,
+  input: HTMLInputElement,
+  acc: { read: () => unknown },
+  actions: Array<{ text: string; cta?: boolean; onClick: (value: string | undefined, ctx: SettingsRowContext) => void | Promise<void> }> | undefined,
+  ctx: SettingsRowContext,
+  refresh: () => void
+): void {
+  for (const a of actions ?? []) {
+    const holder = document.createElement('div');
+    holder.innerHTML = R.rowBtnHtml(a.text, a.cta);
+    const btn = holder.firstElementChild as HTMLElement;
+    btn.addEventListener('click', () => {
+      void (async () => {
+        await a.onClick(input.value, ctx);
+        const setDisplay = (input as any).__setDisplayValue as ((v: string) => void) | undefined;
+        if (setDisplay) setDisplay(String(acc.read() ?? ''));
+        refresh();
+      })();
+    });
+    ctrlEl.appendChild(btn);
+  }
+}
+
 /** 渲染单行（返回行元素；isChild 仅挂 child 语义类，样式不缩进——issue 186 全部行左缘对齐） */
 function renderRow(
   row: SettingsRow,
@@ -280,6 +306,7 @@ function renderRow(
           row.onChange?.(v, ctx);
         },
       });
+      mountTextActions(ctrlEl, input, acc, (row as { actions?: unknown }).actions as never, ctx, refresh);
       ctrlEl.appendChild(input);
       // refreshKey 联动：任意行变更（含 aiProvider 切换）后重读显示值写回输入框（不落盘）
       regRefreshDisplay(regRefresh, row.refreshKey, input);
@@ -341,6 +368,7 @@ function renderRow(
         },
       });
       (input as HTMLInputElement).step = String(row.step ?? 1);
+      mountTextActions(ctrlEl, input, acc, row.actions as never, ctx, refresh);
       ctrlEl.appendChild(input);
       // refreshKey 联动：任意行变更（含 aiProvider 切换）后重读显示值写回输入框（不落盘）
       regRefreshDisplay(regRefresh, row.refreshKey, input);
@@ -403,6 +431,14 @@ function renderRow(
         void acc.persist();
         row.onChange?.(v, ctx);
       });
+      // 行内附加按钮（滑条右侧，如「试听」）
+      for (const a of row.actions ?? []) {
+        const holder = document.createElement('div');
+        holder.innerHTML = R.rowBtnHtml(a.text, a.cta);
+        const btn = holder.firstElementChild as HTMLElement;
+        btn.addEventListener('click', () => void a.onClick(undefined, ctx));
+        ctrlEl.appendChild(btn);
+      }
       break;
     }
     case 'path': {
@@ -447,8 +483,38 @@ function renderRow(
       break;
     }
     case 'info': {
-      // 徽标结构单源（R.badgeHtml）
+      // 徽标结构单源（R.badgeHtml）；actions 在场时附操作按钮
       ctrlEl.innerHTML = R.badgeHtml(row.name);
+      for (const a of row.actions ?? []) {
+        const holder = document.createElement('div');
+        holder.innerHTML = R.rowBtnHtml(a.text, a.cta);
+        const btn = holder.firstElementChild as HTMLElement;
+        btn.addEventListener('click', () => void a.onClick(undefined, ctx));
+        ctrlEl.appendChild(btn);
+      }
+      break;
+    }
+    case 'list': {
+      // 通用列表行（chips 自绘 DOM 收口）：条目 = 头像可选 + 主文案 + 副文案 + 移除按钮；
+      // items 函数形式在每次移除后重读重建（域侧以磁盘/字盒为基底），空数组回退 emptyText
+      const renderItems = () => {
+        const items = typeof row.items === 'function' ? row.items() : row.items;
+        ctrlEl.innerHTML = items.length > 0
+          ? R.listHtml(items, row.removeLabel)
+          : (row.emptyText ? R.listEmptyHtml(row.emptyText) : '');
+        ctrlEl.querySelectorAll<HTMLElement>('.bz-setlist-item').forEach((itemEl) => {
+          const key = itemEl.dataset.key ?? '';
+          itemEl.querySelector('.bz-setlist-remove')?.addEventListener('click', () => {
+            void (async () => {
+              const cur = (typeof row.items === 'function' ? row.items() : row.items).map((x) => x.key);
+              await row.onChange?.(cur.filter((k) => k !== key), ctx);
+              renderItems();
+              refresh();
+            })();
+          });
+        });
+      };
+      renderItems();
       break;
     }
     case 'choiceCards': {

@@ -155,7 +155,8 @@ describe('enh-sweep-c：lucide 收尾', () => {
     expect(src('src/review/sprint.ts')).toContain('data-lucide="check"');
     expect(src('src/review/sprint.ts')).toContain('data-lucide="x"');
     expect(src('src/review/sprint.ts')).not.toMatch(/bz-mark ok \$\{size\}">✓/);
-    expect(src('src/review/settings-schema.ts')).toContain("setIcon(removeIc, 'x')");
-    expect(src('src/review/settings-schema.ts')).not.toContain("textContent = '✕'");
+    // 排除名单已收敛为通用 list 行（.bz-setlist-remove 文本按钮）；无文本符号 ✕ 回潮
+    expect(src('src/review/settings-schema.ts')).toContain("type: 'list'");
+    expect(src('src/review/settings-schema.ts')).not.toContain("✕");
   });
 });
