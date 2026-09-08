@@ -464,6 +464,55 @@ describe('bz ui 组件库', () => {
         if (orig) Object.defineProperty(proto, 'scrollWidth', orig); else delete (proto as any).scrollWidth;
       }
     });
+    it('溢出兜底：菜单右缘超视口时左移收进（right = 溢出量）', () => {
+      // jsdom 无布局：仅对 .bz-select-menu mock getBoundingClientRect，
+      // left 随已写入的 style.right 动态变化（模拟整体左移后的真实几何）
+      const widthSpy = vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1024);
+      const proto = Element.prototype as unknown as Record<string, PropertyDescriptor>;
+      const orig = Object.getOwnPropertyDescriptor(proto, 'getBoundingClientRect');
+      Object.defineProperty(proto, 'getBoundingClientRect', {
+        configurable: true,
+        value(this: HTMLElement) {
+          if (!this.classList.contains('bz-select-menu')) return { left: 0, right: 0, top: 0, bottom: 0, width: 0, height: 0 } as DOMRect;
+          const shift = parseInt(this.style.right || '0', 10) || 0;
+          const left = 1024 - 174 - shift; // 初始右缘超视口 174-2
+          return { left, right: left + 300, top: 0, bottom: 0, width: 300, height: 100 } as DOMRect;
+        },
+      });
+      try {
+        const { el } = uiSelect({ options: selOpts, value: 'a', onChange: () => {} });
+        el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        const menu = el.querySelector('.bz-select-menu') as HTMLElement;
+        expect(menu.style.right).toBe('128px');
+      } finally {
+        widthSpy.mockRestore();
+        if (orig) Object.defineProperty(proto, 'getBoundingClientRect', orig); else delete (proto as any).getBoundingClientRect;
+      }
+    });
+    it('溢出兜底：左移会顶穿左缘的极窄视口放弃位移（right 复位）', () => {
+      const widthSpy = vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1024);
+      const proto = Element.prototype as unknown as Record<string, PropertyDescriptor>;
+      const orig = Object.getOwnPropertyDescriptor(proto, 'getBoundingClientRect');
+      Object.defineProperty(proto, 'getBoundingClientRect', {
+        configurable: true,
+        value(this: HTMLElement) {
+          if (!this.classList.contains('bz-select-menu')) return { left: 0, right: 0, top: 0, bottom: 0, width: 0, height: 0 } as DOMRect;
+          const shift = parseInt(this.style.right || '0', 10) || 0;
+          const left = 50 - shift; // 初始右缘超视口，但左缘只有 50px 位移余量不足
+          return { left, right: left + 300, top: 0, bottom: 0, width: 300, height: 100 } as DOMRect;
+        },
+      });
+      try {
+        const { el } = uiSelect({ options: selOpts, value: 'a', onChange: () => {} });
+        el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        const menu = el.querySelector('.bz-select-menu') as HTMLElement;
+        expect(menu.style.right).toBe('');
+      } finally {
+        widthSpy.mockRestore();
+        if (orig) Object.defineProperty(proto, 'getBoundingClientRect', orig); else delete (proto as any).getBoundingClientRect;
+      }
+    });
+
     it('onOpenChange 开合回调', () => {
       const fn = vi.fn();
       const { el } = uiSelect({ options: selOpts, value: 'a', onChange: () => {}, onOpenChange: fn });
