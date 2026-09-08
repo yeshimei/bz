@@ -26570,9 +26570,8 @@ ${bodyText.substring(0, 6e3)}`;
           <button class="bz-icon-btn bz-icon-btn--lg bz-icon-btn--close" data-clip-mob-close title="关闭">${iconSpan(ICO.x)}</button>
         </div>
         <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
-          <input class="bz-input" type="text" data-clip-mob-input placeholder="搜索标题、摘要、站点、标签">
+          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点…">
         </div>
-        <div class="bz-mobstrip" data-clip-mob-sources></div>
         <div class="bz-clip-mob-list" data-clip-mob-list></div>
       </div>
       <!-- 移动详情 overlay（屏2） -->
@@ -26661,30 +26660,51 @@ ${bodyText.substring(0, 6e3)}`;
     ${openNoteFoot}
   `;
   }
-  function mobChipHtml(sel, label, unread, active2, icon, sub) {
-    return `
-    <div class="bz-mobstrip-chip${active2 ? " is-on" : ""}" data-src='${esc(JSON.stringify(sel))}'>
-      ${icon === "feed" ? `<span class="bz-clip-favchip sm">${esc(sub || label.slice(0, 1))}</span>` : ""}
-      <span>${esc(label)}</span>
-      ${unread ? `<span class="bz-badge bz-badge--brand">${unread}</span>` : ""}
-    </div>`;
-  }
   function mobListHtml(list, timeOf) {
     return list.map((a) => `
-    <div class="bz-clip-mob-item" data-id="${esc(a.id)}">
+    <div class="bz-clip-mob-item ${a.st}" data-id="${esc(a.id)}">
       <div class="bz-clip-item-t">${dotHtml(a.st)}<span>${esc(a.title)}</span></div>
-      ${a.summary ? `<div class="bz-clip-item-sum">${esc(a.summary)}</div>` : ""}
-      <div class="bz-clip-item-meta"><span>${esc(a.srcName)}</span><span class="bz-clip-item-time">${esc(timeOf(a))}</span></div>
+      <div class="bz-clip-item-meta"><span class="bz-clip-item-time">${esc(timeOf(a))}</span></div>
     </div>`).join("");
+  }
+  function mobChHeadHtml(site, unread, savedN, total) {
+    const cnt = unread > 0 || savedN > 0 ? `${unread > 0 ? `<b>${unread}</b> 未读` : ""}${unread > 0 && savedN > 0 ? " · " : ""}${savedN > 0 ? `${savedN} 已收` : ""} / ${total}` : `${total} 则`;
+    return `
+    <div class="bz-clip-mob-ch-hd" data-src='${esc(JSON.stringify({ kind: "site", site }))}' title="${esc(site)}">
+      <span class="bz-clip-mob-ch-name">${esc(site)}</span>
+      <span class="bz-clip-mob-ch-meta">${cnt}</span>
+      <span class="bz-clip-mob-ch-rule"></span>
+    </div>`;
+  }
+  function mobFoldHtml(n) {
+    return `
+    <div class="bz-clip-mob-fold" data-fold role="button" aria-expanded="false">
+      <span class="bz-clip-mob-fold-rule"></span>
+      <span class="bz-clip-mob-fold-lab" data-fold-lab>已收 <b>${n}</b> 篇</span>
+      <span class="bz-clip-mob-fold-ar">▾</span>
+      <span class="bz-clip-mob-fold-rule"></span>
+    </div>`;
+  }
+  function mobTocHtml(chapters, searching) {
+    return chapters.map((ch) => {
+      const fold = !searching && ch.savedN > 0 ? mobFoldHtml(ch.savedN) : "";
+      return `
+      <div class="bz-clip-mob-ch">
+        ${mobChHeadHtml(ch.site, ch.unread, ch.savedN, ch.activeN + ch.savedN)}
+        <div class="bz-clip-mob-ch-items">${ch.activeHtml}${fold}${ch.archHtml ? `<div class="bz-clip-mob-arch">${ch.archHtml}</div>` : ""}</div>
+      </div>`;
+    }).join("");
   }
   function mobDetailHtml(a, opts) {
     const flag = stateFlag(a.st);
+    const openNote2 = a.origin === "clip" && a.notePath ? `<div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-open-note>打开笔记 ${iconSpan(ICO.external, "bz-ic--xs")}</span></div>` : "";
     return `
     <div class="bz-clip-mob-d-title">${esc(a.title)}</div>
     <div class="bz-clip-mob-d-meta"><span class="bz-clip-favchip">${esc(a.srcName.slice(0, 1))}</span><span>${esc(a.srcName)}</span><span class="bz-clip-mob-d-time">${esc(opts.time)}</span></div>
     <div class="bz-clip-art-flag ${flag.cls}">${iconSpan(flag.icon, "bz-ic--xs")}${stateLabel(a.st)}</div>
     ${a.summary ? summaryHtml(a.summary) : ""}
     <div class="bz-clip-art-md">${opts.paras || `<p class="dim">${esc(a.origin === "clip" ? "（剪藏笔记正文请在 Obsidian 中打开）" : "正文已清空")}</p>`}</div>
+    ${openNote2}
   `;
   }
   var ICO;
@@ -29999,10 +30019,11 @@ ${sample}`,
     railFootEl = null;
     listEl = null;
     mobListEl = null;
-    mobSourcesEl = null;
     mobDetailEl = null;
     mobSearchbarEl = null;
     deskSearchEl = null;
+    expandedMobArch.clear();
+    mobItemById = /* @__PURE__ */ new Map();
     resetClipbookState();
   }
   function buildDom(app2) {
@@ -30017,7 +30038,6 @@ ${sample}`,
     listEl = overlayEl.querySelector("[data-clip-list]");
     readerEl = overlayEl.querySelector("[data-clip-reader]");
     readPaneEl = overlayEl.querySelector("[data-clip-read-pane]");
-    mobSourcesEl = overlayEl.querySelector("[data-clip-mob-sources]");
     mobListEl = overlayEl.querySelector("[data-clip-mob-list]");
     mobDetailEl = overlayEl.querySelector("[data-clip-mob-detail]");
     mobTitleEl = overlayEl.querySelector("[data-clip-mob-title]");
@@ -30066,13 +30086,12 @@ ${sample}`,
       else {
         mobInput.value = "";
         setSearchKw("");
-        renderMobList();
+        renderMobToc();
       }
     });
     mobInput.addEventListener("input", () => {
       searchKw = mobInput.value.trim();
-      renderMobList();
-      renderMobSources();
+      renderMobToc();
     });
     mobCloseBtn.addEventListener("click", () => closePanel3());
     mobBackBtn.addEventListener("click", () => {
@@ -30082,6 +30101,9 @@ ${sample}`,
     });
     mobSaveBtnEl.addEventListener("click", () => {
       void doSave(M5.cur);
+    });
+    mobDetailEl.addEventListener("click", (e) => {
+      if (e.target.closest("[data-clip-open-note]") && M5.cur) openNote(M5.cur);
     });
     escKey = "bz-clipbook";
     escHandle2 = escManager.register(escKey, {
@@ -30109,12 +30131,12 @@ ${sample}`,
       });
       midEl.insertAdjacentElement("afterend", panelSplit.el);
     }
-    mobSourcesEl.addEventListener("click", (e) => {
-      const chip = e.target.closest("[data-src]");
-      if (!chip) return;
-      toggleSource(JSON.parse(chip.dataset.src || "null"));
-    });
     mobListEl.addEventListener("click", (e) => {
+      const fold = e.target.closest("[data-fold]");
+      if (fold) {
+        toggleMobArch(fold);
+        return;
+      }
       const item = e.target.closest("[data-id]");
       if (!item) return;
       openMobDetail(item.dataset.id || "");
@@ -30145,8 +30167,7 @@ ${sample}`,
     renderRail();
     renderList();
     renderReader();
-    renderMobSources();
-    renderMobList();
+    renderMobToc();
     if (M5.mobDetailOpen && M5.cur) {
       renderMobDetail();
     }
@@ -30476,7 +30497,7 @@ ${sample}`,
     renderList();
     renderRail();
     renderReader();
-    renderMobList();
+    renderMobToc();
   }
   function stepArticle(delta) {
     const list = sortedView();
@@ -30643,52 +30664,102 @@ ${sample}`,
     s.clipbookMidWidth = w;
     void saveSettings();
   }
-  function renderMobSources() {
-    var _a2, _b2;
-    if (!mobSourcesEl) return;
-    const arts = M5.articles;
-    const searching = !!searchKw;
-    const countOf = (source) => queryBySource(arts, M5.sidecar, M5.clipUrls, M5.clipNotes || [], source, M5.upInfo).filter(matchesSearch).length;
-    let html = mobChipHtml({ kind: "all" }, "全部未读", countOf({ kind: "all" }), M5.sel.kind === "all", "radio");
-    for (const row of aggregateSites(arts, M5.clipNotes || [], new Set((M5.sidecar.savedArchive || []).map((x) => x.url)), M5.clipUrls)) {
-      const cnt = countOf({ kind: "site", site: row.site });
-      if (searching && cnt === 0) continue;
-      html += mobChipHtml({ kind: "site", site: row.site }, row.site, cnt, M5.sel.kind === "site" && M5.sel.site === row.site, "feed", row.site.slice(0, 1));
-    }
-    const mobUps = /* @__PURE__ */ new Map();
-    for (const a of arts) {
-      if (a.read || a.platform !== "B站" || !a.author) continue;
-      const uid = String(a.author);
-      const backfilled = (_b2 = (_a2 = M5.upInfo) == null ? void 0 : _a2[uid]) == null ? void 0 : _b2.name;
-      if (!mobUps.has(uid)) mobUps.set(uid, backfilled ? String(backfilled) : uid);
-    }
-    for (const [uid, name] of mobUps) {
-      const cnt = countOf({ kind: "inbox", platform: "B站", up: uid });
-      if (cnt === 0 && !searching) continue;
-      html += mobChipHtml({ kind: "inbox", platform: "B站", up: uid }, name, cnt, M5.sel.kind === "inbox" && M5.sel.platform === "B站" && M5.sel.up === uid, "bili", name.slice(0, 1));
-    }
-    html += mobChipHtml({ kind: "clip" }, "剪藏本", countOf({ kind: "clip" }), M5.sel.kind === "clip", "clip");
-    mobSourcesEl.innerHTML = html;
-  }
-  function renderMobList() {
+  function renderMobToc() {
     if (!mobListEl) return;
-    const list = sortedView();
-    if (!list.length) {
+    const arts = M5.articles;
+    const clipNotes = M5.clipNotes || [];
+    const savedUrls = new Set((M5.sidecar.savedArchive || []).map((x) => x.url));
+    const searching = !!searchKw;
+    const timeOf = (a) => relTime2(a.timeTs);
+    const chapters = [];
+    const byId = /* @__PURE__ */ new Map();
+    for (const row of aggregateSites(arts, clipNotes, savedUrls, M5.clipUrls)) {
+      const full = queryBySource(arts, M5.sidecar, M5.clipUrls, clipNotes, { kind: "site", site: row.site }, M5.upInfo).filter(matchesSearch);
+      if (!full.length) continue;
+      const active2 = full.filter((a) => a.st !== "saved").sort((x, y) => (x.st === "unread" ? 0 : 1) - (y.st === "unread" ? 0 : 1));
+      const arch = full.filter((a) => a.st === "saved");
+      chapters.push({
+        site: row.site,
+        unread: active2.filter((a) => a.st === "unread").length,
+        activeN: active2.length,
+        savedN: arch.length,
+        activeHtml: mobListHtml(active2, timeOf),
+        archHtml: arch.length ? mobListHtml(arch, timeOf) : ""
+      });
+      [...active2, ...arch].forEach((a) => byId.set(a.id, a));
+    }
+    mobItemById = byId;
+    if (!chapters.length) {
+      mobListEl.classList.remove("searching");
       mobListEl.innerHTML = "";
       mobListEl.appendChild(uiEmpty({ icon: "inbox", title: "暂无内容" }));
       return;
     }
-    mobListEl.innerHTML = mobListHtml(list, (a) => relTime2(a.timeTs));
-    const cards = mobListEl.querySelectorAll("[data-id]");
-    cards.forEach((card) => {
-      const art = list.find((x) => x.id === card.dataset.id);
+    mobListEl.classList.toggle("searching", searching);
+    mobListEl.innerHTML = mobTocHtml(chapters, searching);
+    restoreMobFolds();
+    mobListEl.querySelectorAll("[data-id]").forEach((card) => {
+      const art = byId.get(String(card.dataset.id || ""));
       if (!art) return;
       attachItemActions(card, buildItemActions(art), { sheetHead: buildSheetHead2(art) });
     });
+    mobListEl.querySelectorAll(".bz-clip-mob-ch-hd").forEach((hd) => {
+      let sel = null;
+      try {
+        sel = JSON.parse(hd.dataset.src || "null");
+      } catch (e) {
+        return;
+      }
+      if (!sel || sel.kind !== "site") return;
+      const actions = buildRailActions(String(sel.site), { kind: "site", site: String(sel.site) });
+      if (actions.length) attachItemActions(hd, actions, { sheetTitle: String(sel.site), menuClass: "bz-clip-menu-editorial" });
+    });
+  }
+  function restoreMobFolds() {
+    if (!mobListEl || !expandedMobArch.size) return;
+    mobListEl.querySelectorAll(".bz-clip-mob-ch").forEach((chEl) => {
+      const hd = chEl.querySelector("[data-src]");
+      if (!hd) return;
+      let sel = null;
+      try {
+        sel = JSON.parse(hd.dataset.src || "null");
+      } catch (e) {
+        return;
+      }
+      if (!sel || sel.kind !== "site" || !expandedMobArch.has(String(sel.site))) return;
+      const fold = chEl.querySelector("[data-fold]");
+      if (fold) setFoldOpen(fold, true);
+    });
+  }
+  function toggleMobArch(foldEl) {
+    const open = !foldEl.classList.contains("open");
+    setFoldOpen(foldEl, open);
+    const ch = foldEl.closest(".bz-clip-mob-ch");
+    const hd = ch ? ch.querySelector("[data-src]") : null;
+    let site = "";
+    if (hd) {
+      try {
+        site = String(JSON.parse(hd.dataset.src || "null").site || "");
+      } catch (e) {
+        site = "";
+      }
+    }
+    if (site) {
+      if (open) expandedMobArch.add(site);
+      else expandedMobArch.delete(site);
+    }
+  }
+  function setFoldOpen(foldEl, open) {
+    foldEl.classList.toggle("open", open);
+    foldEl.setAttribute("aria-expanded", String(open));
+    const lab = foldEl.querySelector("[data-fold-lab]");
+    if (!lab) return;
+    const n = foldEl.nextElementSibling ? foldEl.nextElementSibling.childElementCount : 0;
+    lab.innerHTML = open ? "收起" : `已收 <b>${n}</b> 篇`;
   }
   function openMobDetail(id) {
-    const list = currentList();
-    const a = list.find((x) => x.id === id);
+    let a = currentList().find((x) => x.id === id);
+    if (!a) a = mobItemById.get(id);
     if (!a) return;
     M5.cur = a;
     M5.mobDetailOpen = true;
@@ -30804,7 +30875,7 @@ ${sample}`,
       }
     });
   }
-  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobSourcesEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle2, escRegistered, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, AUTO_READING_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, autoReadingTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw;
+  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle2, escRegistered, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, AUTO_READING_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, autoReadingTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById;
   var init_ui7 = __esm({
     "src/clipbook/ui.ts"() {
       init_app();
@@ -30832,7 +30903,6 @@ ${sample}`,
       listEl = null;
       readerEl = null;
       readPaneEl = null;
-      mobSourcesEl = null;
       mobListEl = null;
       mobDetailEl = null;
       mobTitleEl = null;
@@ -30860,6 +30930,8 @@ ${sample}`,
       SPLIT_MIN_READ = 320;
       loadPromise = null;
       searchKw = "";
+      expandedMobArch = /* @__PURE__ */ new Set();
+      mobItemById = /* @__PURE__ */ new Map();
     }
   });
 

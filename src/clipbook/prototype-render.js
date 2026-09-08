@@ -26,9 +26,11 @@ var BZR_clipbook = (() => {
     dotHtml: () => dotHtml,
     esc: () => esc,
     iconSpan: () => iconSpan,
-    mobChipHtml: () => mobChipHtml,
+    mobChHeadHtml: () => mobChHeadHtml,
     mobDetailHtml: () => mobDetailHtml,
+    mobFoldHtml: () => mobFoldHtml,
     mobListHtml: () => mobListHtml,
+    mobTocHtml: () => mobTocHtml,
     panelHtml: () => panelHtml,
     paragraphsHtml: () => paragraphsHtml,
     railFootHtml: () => railFootHtml,
@@ -109,9 +111,8 @@ var BZR_clipbook = (() => {
           <button class="bz-icon-btn bz-icon-btn--lg bz-icon-btn--close" data-clip-mob-close title="关闭">${iconSpan(ICO.x)}</button>
         </div>
         <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
-          <input class="bz-input" type="text" data-clip-mob-input placeholder="搜索标题、摘要、站点、标签">
+          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点…">
         </div>
-        <div class="bz-mobstrip" data-clip-mob-sources></div>
         <div class="bz-clip-mob-list" data-clip-mob-list></div>
       </div>
       <!-- 移动详情 overlay（屏2） -->
@@ -200,30 +201,51 @@ var BZR_clipbook = (() => {
     ${openNoteFoot}
   `;
   }
-  function mobChipHtml(sel, label, unread, active, icon, sub) {
-    return `
-    <div class="bz-mobstrip-chip${active ? " is-on" : ""}" data-src='${esc(JSON.stringify(sel))}'>
-      ${icon === "feed" ? `<span class="bz-clip-favchip sm">${esc(sub || label.slice(0, 1))}</span>` : ""}
-      <span>${esc(label)}</span>
-      ${unread ? `<span class="bz-badge bz-badge--brand">${unread}</span>` : ""}
-    </div>`;
-  }
   function mobListHtml(list, timeOf) {
     return list.map((a) => `
-    <div class="bz-clip-mob-item" data-id="${esc(a.id)}">
+    <div class="bz-clip-mob-item ${a.st}" data-id="${esc(a.id)}">
       <div class="bz-clip-item-t">${dotHtml(a.st)}<span>${esc(a.title)}</span></div>
-      ${a.summary ? `<div class="bz-clip-item-sum">${esc(a.summary)}</div>` : ""}
-      <div class="bz-clip-item-meta"><span>${esc(a.srcName)}</span><span class="bz-clip-item-time">${esc(timeOf(a))}</span></div>
+      <div class="bz-clip-item-meta"><span class="bz-clip-item-time">${esc(timeOf(a))}</span></div>
     </div>`).join("");
+  }
+  function mobChHeadHtml(site, unread, savedN, total) {
+    const cnt = unread > 0 || savedN > 0 ? `${unread > 0 ? `<b>${unread}</b> 未读` : ""}${unread > 0 && savedN > 0 ? " · " : ""}${savedN > 0 ? `${savedN} 已收` : ""} / ${total}` : `${total} 则`;
+    return `
+    <div class="bz-clip-mob-ch-hd" data-src='${esc(JSON.stringify({ kind: "site", site }))}' title="${esc(site)}">
+      <span class="bz-clip-mob-ch-name">${esc(site)}</span>
+      <span class="bz-clip-mob-ch-meta">${cnt}</span>
+      <span class="bz-clip-mob-ch-rule"></span>
+    </div>`;
+  }
+  function mobFoldHtml(n) {
+    return `
+    <div class="bz-clip-mob-fold" data-fold role="button" aria-expanded="false">
+      <span class="bz-clip-mob-fold-rule"></span>
+      <span class="bz-clip-mob-fold-lab" data-fold-lab>已收 <b>${n}</b> 篇</span>
+      <span class="bz-clip-mob-fold-ar">▾</span>
+      <span class="bz-clip-mob-fold-rule"></span>
+    </div>`;
+  }
+  function mobTocHtml(chapters, searching) {
+    return chapters.map((ch) => {
+      const fold = !searching && ch.savedN > 0 ? mobFoldHtml(ch.savedN) : "";
+      return `
+      <div class="bz-clip-mob-ch">
+        ${mobChHeadHtml(ch.site, ch.unread, ch.savedN, ch.activeN + ch.savedN)}
+        <div class="bz-clip-mob-ch-items">${ch.activeHtml}${fold}${ch.archHtml ? `<div class="bz-clip-mob-arch">${ch.archHtml}</div>` : ""}</div>
+      </div>`;
+    }).join("");
   }
   function mobDetailHtml(a, opts) {
     const flag = stateFlag(a.st);
+    const openNote = a.origin === "clip" && a.notePath ? `<div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-open-note>打开笔记 ${iconSpan(ICO.external, "bz-ic--xs")}</span></div>` : "";
     return `
     <div class="bz-clip-mob-d-title">${esc(a.title)}</div>
     <div class="bz-clip-mob-d-meta"><span class="bz-clip-favchip">${esc(a.srcName.slice(0, 1))}</span><span>${esc(a.srcName)}</span><span class="bz-clip-mob-d-time">${esc(opts.time)}</span></div>
     <div class="bz-clip-art-flag ${flag.cls}">${iconSpan(flag.icon, "bz-ic--xs")}${stateLabel(a.st)}</div>
     ${a.summary ? summaryHtml(a.summary) : ""}
     <div class="bz-clip-art-md">${opts.paras || `<p class="dim">${esc(a.origin === "clip" ? "（剪藏笔记正文请在 Obsidian 中打开）" : "正文已清空")}</p>`}</div>
+    ${openNote}
   `;
   }
   return __toCommonJS(render_exports);
