@@ -283,10 +283,10 @@ function buildDom(app: any): void {
     if (e.key === 'ArrowLeft' || e.key === 'k') { e.preventDefault(); stepArticle(-1); }
     else if (e.key === 'ArrowRight' || e.key === 'j') { e.preventDefault(); stepArticle(1); }
   });
-  // 移动：搜索切换（原型顶栏「搜索」文字钮）
+  // 移动：搜索切换（原型顶栏「搜索」文字钮；显式 block/none——CSS 无默认 display，由骨架 inline none 兜底）
   mobSearchBtn!.addEventListener('click', () => {
     const show = mobSearchbarEl!.style.display === 'none';
-    mobSearchbarEl!.style.display = show ? '' : 'none';
+    mobSearchbarEl!.style.display = show ? 'block' : 'none';
     if (show) mobInput!.focus();
     else { mobInput!.value = ''; setSearchKw(''); renderMobToc(); }
   });
@@ -296,7 +296,7 @@ function buildDom(app: any): void {
   });
   // 「关闭」（原型语义）：清搜索并收全部；无任何待复位态 = 退出面板（移动面板无其它关闭入口）
   mobCloseBtn!.addEventListener('click', () => {
-    const barOpen = mobSearchbarEl ? mobSearchbarEl.style.display !== 'none' : false;
+    const barOpen = mobSearchbarEl ? mobSearchbarEl.style.display === 'block' : false;
     if (searchKw || barOpen || expandedMobArch.size) {
       searchKw = '';
       expandedMobArch.clear();
@@ -317,11 +317,11 @@ function buildDom(app: any): void {
   mobSaveBtnEl!.addEventListener('click', () => {
     void doSave(M.cur);
   });
-  // 移动详情「读下一则」（原型脚；同章内下一则，章末回目录）
+  // 移动详情「读下一则」（原型脚；同章内下一则，章末回目录）——按 id 定位（目录条目为重建实例，indexOf 恒 -1）
   mobDetailEl!.addEventListener('click', (e) => {
     if (!(e.target as HTMLElement).closest('[data-clip-mob-next]') || !M.cur) return;
     const grp = mobItemOrder.filter((x) => x.srcName === M.cur!.srcName);
-    const idx = grp.indexOf(M.cur);
+    const idx = grp.findIndex((x) => x.id === M.cur!.id);
     const next = grp[idx + 1];
     if (next) openMobDetail(next.id); else (mobBackBtn as HTMLElement).click();
   });
