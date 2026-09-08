@@ -418,7 +418,7 @@ describe('设置面板（settings-panel）', () => {
     const cases: Array<[string, string, string, () => Promise<SettingsSchema>]> = [
       ['日记本', 'diarySkin', 'diarySkinTheme', async () => (await import('../src/diary/ui/panel')).diarySettingsSchema()],
       ['回忆墙', 'diaryWallSkin', 'diaryWallSkinTheme', async () => (await import('../src/diary-wall/settings')).diaryWallSettingsSchema()],
-      ['剪藏本', 'clipbookSkin', 'clipbookSkinTheme', async () => (await import('../src/clipbook/ui')).clipbookSettingsSchema()],
+      ['剪藏本', 'clipbookSkin', 'clipbookSkinTheme', async () => (await import('../src/clipbook/ui')).clipbookSettingsSchema((await import('../src/clipbook/news-source-settings')).emptyDataSourceState(true))],
       ['收藏本', 'favoritesSkin', 'favoritesSkinTheme', async () => (await import('../src/favorites/ui')).favoritesSettingsSchema()],
       ['复习计划', 'reviewSkin', 'reviewSkinTheme', async () => (await import('../src/review/settings-schema')).reviewSettingsSchema({ app: getApp(), dataManager: {} as never })],
       ['第二大脑', 'secondbrainSkin', 'secondbrainSkinTheme', async () => (await import('../src/secondbrain/panel')).secondBrainSettingsSchema()],

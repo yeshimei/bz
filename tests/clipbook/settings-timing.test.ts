@@ -4,6 +4,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { clipbookSettingsSchema } from '../../src/clipbook/ui';
+import { emptyDataSourceState } from '../../src/clipbook/news-source-settings';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { MockVault } from '../mock-vault';
@@ -11,7 +12,7 @@ import { ensureAutoSummary, isAutoSummaryInitialized, unloadAutoSummary } from '
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 
 function timingRow(): { onChange?: (v: string, ctx?: unknown) => void } {
-  const schema = clipbookSettingsSchema();
+  const schema = clipbookSettingsSchema(emptyDataSourceState(true));
   const group = schema.groups.find((g) => g.name === '智能')!;
   const row: any = group.rows.find((r: any) => r.name === '摘要时机');
   expect(row).toBeTruthy();

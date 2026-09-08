@@ -67,7 +67,12 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   'diary-wall': async () => (await import('../diary-wall/settings')).diaryWallSettingsSchema(),
   todo: async () => (await import('../todo/settings')).todoSettingsSchema(),
   belongings: async () => (await import('../belongings/ui')).belongingSettingsSchema(),
-  clipping: async () => (await import('../clipbook/ui')).clipbookSettingsSchema(),
+  // 数据源组为声明行（外部 news.json 状态），先读盘预载再建 schema
+  clipping: async () => {
+    const { readDataSourceState } = await import('../clipbook/news-source-settings');
+    const state = await readDataSourceState();
+    return (await import('../clipbook/ui')).clipbookSettingsSchema(state);
+  },
   favorites: async () => (await import('../favorites/ui')).favoritesSettingsSchema(),
   cinema: async () => (await import('../cinema/settings')).cinemaSettingsSchema(),
   bookshelf: async () => (await import('../bookshelf/settings')).bookshelfSettingsSchema(),
