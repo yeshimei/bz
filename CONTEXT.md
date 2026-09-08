@@ -90,10 +90,10 @@ _Avoid_: 与 markdown 读书笔记（读 `我的/读书笔记` 笔记文件建�
 **EPUB 想法编辑**: 修改/删除 EPUB 划线想法时 bz **直接改 weave-data.json**（ADR-0013 的唯一写例外，不动其他结构；写前重读最新文档）。用户决策：不走 Weave 命令桥。
 _Avoid_: 把「想法编辑」当成 bz 直写的一般能力——只此两处写入口，其余仍只读
 
-**影院 (Cinema, ADR-0087 接管影视)**: `src/cinema/` 域，命令 `bz-cinema-open`/`bz-cinema-add`/`bz-cinema-analysis`（影视分析报告，ADR-0090 直达影院面板分析页）。目录 = cinemaFolderPath（显式配置）→ 回落「我的/影视」；frontmatter 契约（tags 类型 / 评分 -1 想看 0 在看 >0 已看 / 观影日期 / 影评 / 海报 / 豆瓣字段 / 片长 / 季集）与旧 movie 域及外部 douban-poster watcher 完全一致。**ADR-0087 承接**：poster 抓取轮询（src/cinema/poster-watch.ts，添加后 progress「正在获取海报和豆瓣信息…」→ 外部 watcher 写入 frontmatter → vault modify 自动刷新链替换占位）、找同类 AI（详情弹窗按钮 → 页内结果）、补发 `movie:` 域事件（created/status/rated/review/deleted，smartcat 行为流观察依赖，载荷对齐 MovieActionEvent 契约）。AI 页标题由 M.aiTitle 区分「AI 荐片」与「找同类 ·《X》」。设置收敛设置面板「影院」tab。
+**影院 (Cinema, ADR-0087 接管影视)**: `src/cinema/` 域，命令 `bz-cinema-open`/`bz-cinema-add`/`bz-cinema-analysis`（影视分析报告，ADR-0090 直达影院面板分析页）。目录 = cinemaFolderPath（显式配置）→ 回落「我的/影视」；frontmatter 契约（tags 类型 / 评分 -1 想看 0 在看 >0 已看 / 观影日期 / 影评 / 海报 / 豆瓣字段 / 豆瓣检查 / 片长 / 季集）与旧 movie 域及外部 douban-poster watcher 完全一致。**ADR-0087 承接**：poster 抓取轮询（src/cinema/poster-watch.ts，添加后 progress「正在获取海报和豆瓣信息…」→ 外部 watcher 写入 frontmatter → vault modify 自动刷新链替换占位）、找同类 AI（详情弹窗按钮 → 页内结果）、补发 `movie:` 域事件（created/status/rated/review/deleted，smartcat 行为流观察依赖，载荷对齐 MovieActionEvent 契约）。AI 页标题由 M.aiTitle 区分「AI 荐片」与「找同类 ·《X》」。设置收敛设置面板「影院」tab。
 
-**海报抓取 (Poster Fetch)**: 由独立守护进程（PM2 托管 `douban-poster watch`，ADR-0007）完成：监听影视文件夹新建/改动（10s 防抖）→ 全目录遍历缺「海报」字段的笔记 → 按创建时间倒序入队 → 每 15s 串行抓取「豆瓣搜索 → 高清海报下载 → 13 个 frontmatter 字段补全 → 正文海报 embed」。与 bz 插件完全分离：插件不含抓取逻辑，设置页仅提供安装与运行指引；脚本源码在 `tools/obsidian-douban-poster/`（npm 包 `@jwbz/obsidian-douban-poster`）。
-_Avoid_: 抓海报、豆瓣补全、poster fetch
+**海报抓取 (Poster Fetch)**: 由独立守护进程（PM2 托管 `douban-poster watch`，ADR-0007）完成：监听影视文件夹新建/改动（10s 防抖）→ 全目录遍历缺「海报」**或缺「豆瓣链接」**的笔记（ADR-0111 扩口径修盲区）→ 按创建时间倒序入队 → 每 15s 串行抓取「豆瓣搜索 → 高清海报下载 → 13 个 frontmatter 字段补全 → 正文海报 embed」；**已有海报的笔记走补全分支**：跳过海报下载与 embed 插入，仅搜索+详情请求补豆瓣字段（杜绝孤儿海报与重复 embed）。与 bz 插件完全分离：插件不含抓取逻辑、不碰豆瓣网络；插件侧触发走**打开触碰协议**（ADR-0111）：每次打开影院面板，对「有海报、缺豆瓣链接」且「豆瓣检查」非当日的笔记写入 `豆瓣检查: YYYY-MM-DD`（日期粒度，同日一次，完全静默），经文件变化被守护进程捞起。设置页仅提供安装与运行指引；脚本源码在 `tools/obsidian-douban-poster/`（npm 包 `@jwbz/obsidian-douban-poster`）。
+_Avoid_: 抓海报、豆瓣补全、poster fetch；把「海报」当成抓取完成的标志——它是抓取模式开关（有海报=只补信息），完成标志是「豆瓣链接」
 
 **桌面端专属能力 (Desktop-only Capability)**: 依赖 Node.js 外部进程（child_process）、移动端（Capacitor）不可用的功能。门禁：`window.require('child_process')` 为 null 即非桌面端；移动端不注册事件监听，设置项置灰标注「仅桌面端可用」，不静默降级。（当前实例：文献盒批量处理等外部工具；海报抓取已移出插件，由独立守护进程承担）
 

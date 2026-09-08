@@ -5004,6 +5004,7 @@ var BZW_cinema = (() => {
       year: fm["上映日期"] ? String(fm["上映日期"]).slice(0, 4) : null,
       doubanRating: fm["豆瓣评分"] !== void 0 && fm["豆瓣评分"] !== "" ? String(fm["豆瓣评分"]) : null,
       doubanUrl: /^https?:\/\//.test(String((_q = fm["豆瓣链接"]) != null ? _q : "")) ? String(fm["豆瓣链接"]) : null,
+      doubanCheck: fm["豆瓣检查"] ? String(fm["豆瓣检查"]) : null,
       synopsis: (_s = (_r = fm["简介"]) == null ? void 0 : _r.toString()) != null ? _s : null,
       // 片长/季集：原独立观影报告的两项统计源字段（ADR-0090 并入内嵌分析页）
       duration: (_u = (_t = fm["片长"]) == null ? void 0 : _t.toString()) != null ? _u : null,
@@ -6603,7 +6604,7 @@ ${item.review ? `影评: ${item.review}
     var _a;
     const group = (_a = getGroupForTag(p.tag)) != null ? _a : "其他";
     const st = p.st === "想看" ? STATUS_WANT : p.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED;
-    const it = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null };
+    const it = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, doubanRating: null, doubanUrl: null, doubanCheck: null, synopsis: null, duration: null, seasonText: null };
     try {
       if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
         panelToast(sec, "已存在同名影视，请换个名称");
@@ -6913,6 +6914,32 @@ ${item.review ? `影评: ${item.review}
     });
   }
 
+  // src/cinema/douban-sweep.ts
+  function todayStr() {
+    const d = /* @__PURE__ */ new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+  function needsDoubanTouch(it, today) {
+    return !!(it.poster && !it.doubanUrl && it.doubanCheck !== today);
+  }
+  async function sweepDoubanBacklog(app) {
+    const today = todayStr();
+    let touched = 0;
+    for (const it of M.items) {
+      if (!it.file || !needsDoubanTouch(it, today)) continue;
+      try {
+        await app.fileManager.processFrontMatter(it.file, (fm) => {
+          fm["豆瓣检查"] = today;
+        });
+        touched++;
+      } catch (error) {
+        console.warn("豆瓣检查触碰失败:", it.file.path, error);
+      }
+    }
+    return touched;
+  }
+
   // src/cinema/index.ts
   var initialized = false;
   var autoRefreshRegistered = false;
@@ -6960,6 +6987,7 @@ ${item.review ? `影评: ${item.review}
     }
     applyDefaultView();
     createOverlay(app);
+    void sweepDoubanBacklog(app);
   }
 
   // src/cinema/fake-sim.ts
