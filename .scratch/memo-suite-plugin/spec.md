@@ -1053,3 +1053,12 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 ### 影院豆瓣盲区补全：打开触碰协议 + 工具补全分支（issue 252 / ADR-0111，2026-09-09）
 
 > 用户需求「每次打开影院界面自动重跑没获取到豆瓣信息的」经拷问定形：痛点实为工具扫描盲区（只认缺海报，17 条有海报缺豆瓣链接的笔记永不重试）。拍板：口径=缺豆瓣链接（海报是抓取模式开关非完成标志）；插件打开面板对「有海报∧缺链接∧豆瓣检查≠今日」笔记写日期粒度 `豆瓣检查` 字段（同日一次、完全静默）经既有 chokidar 通道入队；工具扩扫描口径（缺海报或缺链接）+ 补全分支（有海报跳过下载与 embed，仅搜索+详情补字段，杜绝孤儿海报与重复 embed）；插件不碰豆瓣网络（ADR-0006/0007 维持）、不新增命令。工具侧独立发版（npm publish + install -g + pm2 restart）。CONTEXT.md「海报抓取」词条与影院 frontmatter 契约已同步更新。
+
+### 复习计划域 UI 单源收编：V1 原型增量落地（issue 253，2026-09-09）
+
+> 第二批复习原型（review-sprint-variants，五版现行布局变体含做题界面）用户圈选 V1 基线复刻版拍板「落域、单源、原型是真理」。复习计划成为 ADR-0104/0106 范式第七域：render.ts 渲染纯层收编三区队列/整窗冲刺/难度弹窗/悬浮评级条全部 markup（ui.ts −246 行、sprint.ts −179 行，纯度守卫纳管）；fake-sim + fake/fake-obsidian + prototype.html 双 iframe 评审壳真跑插件同款 ui.ts/sprint.ts/app.ts/quiz-core 依赖链——出题 AI 以 fake requestUrl canned 回放（按 generator prompt 特征识别、回放 RVW.SEED.quizBank），seed 日期相对当下永不过期；headless selftest 41/41 含完整做题轮（重做+6 篇 12 题全对→结算→重排）。V1 增量落地：卡片「待重做」红 tag、归档态绿点「已完成复习」、列内排序 置顶→R 升序→到期。顺修真 bug：底行统计图标 `chart` 不在 Obsidian lucide 表（生产一直空白）改 `bar-chart-3`（asar 实证）。扫源守卫（review-fix-b/enh-sweep-c）改指向 render.ts。观察项留档：挂起（missing）归 done 列属 ticket 098 语义；逾期低 R 卡也挂「提前」tag；阶梯短档通过重排回今日属正常调度。
+
+
+### 复习计划移动端三区自然展开 + 列头吸顶（issue 254，2026-09-09）
+
+> 用户报障移动端「已逾期/今天到期/未来」三窗口各自内滚，经 grill-with-docs 四轮拷问拍板：≤768px 三区列与归档「已完成」单列去内滚、按内容自然长高（空区缩一行列头）；`.bz-q-cols` 仍为唯一滚动宿主（工具行/统计条钉上方）；区列头 sticky 吸顶（下一区列头顶走上一区、不透明底防透卡）；桌面端不动。纯 styles.css 移动端块改动，坑=`.bz-q-col.done` 基线 flex:1.4 特异性高须同提；selftest 41→44（移动端 CSS 生效断言），44/44 + 全量 4199 + tsc 绿；产物仅 styles.css（main.js 含并行会话在途源码不随本票提交）。不立 ADR、不动 CONTEXT 词条（可逆 CSS 单点改，三要件不满足）。
