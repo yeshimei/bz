@@ -6916,9 +6916,7 @@ ${item.review ? `影评: ${item.review}
 
   // src/cinema/douban-sweep.ts
   function todayStr() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    return localNow().slice(0, 10);
   }
   function needsDoubanTouch(it, today) {
     return !!(it.poster && !it.doubanUrl && it.doubanCheck !== today);
