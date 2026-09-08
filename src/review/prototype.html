@@ -210,6 +210,11 @@
         t('桌面面板开', !!dt('.bz-q-view'));
         t('移动面板开', !!mobAll('.bz-q-view').length);
         t('三区列在位', dts('.bz-q-col').length === 3 && mobAll('.bz-q-col').length === 3);
+        // issue 254：移动端三区正常展开——列不内滚（flex:none + overflow visible）、列区为唯一滚动宿主、区列头吸顶
+        const mcsCol = md.defaultView.getComputedStyle(md.querySelector('.bz-q-col.danger'));
+        t('移动列自然展开（不内滚）', mcsCol.flex === '0 0 auto' && mcsCol.overflowY === 'visible');
+        t('移动列区=唯一滚动宿主', md.defaultView.getComputedStyle(md.querySelector('.bz-q-cols')).overflowY === 'auto');
+        t('移动列头吸顶', md.defaultView.getComputedStyle(md.querySelector('.bz-q-col-head')).position === 'sticky');
         const colNames = dts('.bz-q-col-head .name').map((e) => e.textContent);
         t('列名=已逾期/今天到期/未来', JSON.stringify(colNames) === JSON.stringify(['已逾期', '今天到期', '未来']));
 
