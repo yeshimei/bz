@@ -4501,10 +4501,6 @@ var BZW_belongings = (() => {
   function isMobileEnv() {
     return typeof Platform !== "undefined" && !!Platform.isMobile;
   }
-  function applyMobileWindowFullscreen(popup, enabled) {
-    if (!popup) return;
-    popup.classList.toggle("bz-win-mfs", isMobileEnv() && !!enabled);
-  }
 
   // src/core/utils.ts
   var import_moment = __toESM(require_moment());
@@ -6617,7 +6613,7 @@ var BZW_belongings = (() => {
      *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
      *  既有调用（不传这两项）行为零变化 */
     async prompt(promptText, model = this.defaultModel, options = {}) {
-      var _a, _b;
+      var _a;
       const mergedOptions = this._mergeOptions(options);
       const provider = await getAIProvider(mergedOptions.provider);
       const s = getQ3Settings();
@@ -6634,18 +6630,6 @@ var BZW_belongings = (() => {
       for (const k of Object.keys(mo)) {
         if (k === "max_tokens") continue;
         body[k] = mo[k];
-      }
-      for (const [key, settingsKey] of [
-        ["temperature", "aiTemperature"],
-        ["top_p", "aiTopP"],
-        ["frequency_penalty", "aiFrequencyPenalty"],
-        ["presence_penalty", "aiPresencePenalty"]
-      ]) {
-        if (body[key] !== void 0) continue;
-        const raw = String((_b = s[settingsKey]) != null ? _b : "").trim();
-        if (raw === "") continue;
-        const n = Number(raw);
-        if (Number.isFinite(n)) body[key] = n;
       }
       const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
       const onDelta = typeof mergedOptions.onDelta === "function" ? mergedOptions.onDelta : void 0;
@@ -6969,7 +6953,6 @@ var BZW_belongings = (() => {
     }
   }
   async function openPanelInner() {
-    var _a;
     const st = tryGetSettings().belongingsDefaultStatus;
     M.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
     M.db = await loadDatabase();
@@ -6980,17 +6963,13 @@ var BZW_belongings = (() => {
     topifyZ(overlay);
     M.overlay = overlay;
     M.renderFn = () => renderAll();
-    applyMobileWindowFullscreen(
-      overlay.querySelector(".bz-bel-panel"),
-      ((_a = tryGetSettings()) == null ? void 0 : _a.belongingsMobileDefaultFullscreen) === true
-    );
     mountIcons(overlay);
     ensureBelongingsEsc();
     const closeDrops = () => {
       overlay.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => w.classList.remove("is-open"));
     };
     const onDocClick = (e) => {
-      var _a2;
+      var _a;
       const t = e.target;
       const trig = t.closest("[data-bel-year],[data-bel-mobsortsel]");
       if (trig) {
@@ -7003,7 +6982,7 @@ var BZW_belongings = (() => {
       const opt = t.closest(".bz-bel-dropopt");
       if (opt) {
         closeDrops();
-        const v = (_a2 = opt.dataset.v) != null ? _a2 : "";
+        const v = (_a = opt.dataset.v) != null ? _a : "";
         if (opt.closest("[data-bel-yearmenu]")) M.year = v;
         else M.sort = v;
         renderAll();
@@ -7619,8 +7598,7 @@ var BZW_belongings = (() => {
   function injectSettings() {
     setSettingsProvider(
       () => ({
-        belongingsDefaultStatus: "",
-        belongingsMobileDefaultFullscreen: false
+        belongingsDefaultStatus: ""
       })
     );
   }

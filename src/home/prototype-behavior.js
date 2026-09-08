@@ -5303,6 +5303,13 @@ var BZW_home = (() => {
         const border = (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.borderRightWidth) || 0);
         m.style.minWidth = `${m.clientWidth + delta - border}px`;
       }
+      const vw = window.innerWidth || document.documentElement.clientWidth;
+      const rect = m.getBoundingClientRect();
+      const over = Math.ceil(rect.right - vw) + 2;
+      if (over > 0) {
+        m.style.right = `${over}px`;
+        if (m.getBoundingClientRect().left < 2) m.style.right = "";
+      }
     };
     const setValue = (v) => {
       current2 = v;
@@ -9910,10 +9917,6 @@ ${n.content.slice(0, 2e3)}
   function isMobileEnv() {
     return typeof Platform !== "undefined" && !!Platform.isMobile;
   }
-  function applyMobileWindowFullscreen(popup, enabled) {
-    if (!popup) return;
-    popup.classList.toggle("bz-win-mfs", isMobileEnv() && !!enabled);
-  }
   var init_mobile = __esm({
     "src/core/mobile.ts"() {
       init_fake_obsidian();
@@ -10847,73 +10850,8 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
-  // src/core/settings-common.ts
-  function mobileFullscreenRow(key, opts) {
-    const desc = (opts == null ? void 0 : opts.desc) || void 0;
-    return {
-      type: "toggle",
-      name: "移动端默认全屏",
-      desc,
-      binding: { key },
-      visibleWhen: (_snapshot) => isMobileEnv()
-    };
-  }
-  function mobileFullscreenGroup(key, opts) {
-    return {
-      icon: "smartphone",
-      name: "移动端",
-      // 组级门控（ticket 131 域迁移补正）：现状各域是 `if (isMobileEnv())` 才挂整行、桌面端完全无痕；
-      // 仅行级 visibleWhen 会残留空卡片壳，且 DOM 存在性空态判定会被隐藏行抑制（归物本/收藏本桌面空态丢失）。
-      visibleWhen: (_snapshot) => isMobileEnv(),
-      rows: [mobileFullscreenRow(key, opts)]
-    };
-  }
-  function batchSizeRow(key, opts) {
-    return {
-      type: "number",
-      name: "每批加载数量",
-      desc: "滚动加载时每批显示的条目数",
-      binding: numStrBinding(key, 20),
-      min: 1,
-      step: 1,
-      onCommit: opts == null ? void 0 : opts.onCommit
-    };
-  }
-  function numStrBinding(key, def) {
-    return {
-      get: () => {
-        const raw = tryGetSettings()[key];
-        if (raw === "" || raw === null || raw === void 0) return def;
-        const n = Number(raw);
-        return Number.isFinite(n) && n > 0 ? n : def;
-      },
-      set: (v) => {
-        getSettings()[key] = String(v);
-      },
-      save: () => saveSettings()
-    };
-  }
-  function makeReloadWarnOnce() {
-    let reloadWarned = false;
-    return () => {
-      if (reloadWarned) return;
-      reloadWarned = true;
-      notice(RELOAD_SETTINGS_NOTICE, "info");
-    };
-  }
-  var RELOAD_SETTINGS_NOTICE;
-  var init_settings_common = __esm({
-    "src/core/settings-common.ts"() {
-      init_mobile();
-      init_notice();
-      init_settings_provider();
-      RELOAD_SETTINGS_NOTICE = "设置已保存，重载插件后生效";
-    }
-  });
-
   // src/review/settings-schema.ts
   function reviewSettingsSchema(deps) {
-    let renderExcludeRows = null;
     return {
       groups: [
         {
@@ -11051,50 +10989,24 @@ ${n.content.slice(0, 2e3)}
                 })();
               }
             },
-            // 排除名单 chips 区（ticket 57 管理 UI；DOM id/类名零变化；交互后经 renderExcludeRows 重渲染）
+            // 排除名单（通用 list 行，chips 自绘 DOM 已退役）：单条解除 = 移除按钮，逐条清理
             {
-              type: "custom",
-              render: (body) => {
-                const setting = new Setting(body).setName("排除名单").setDesc("不参与监听自动加入的笔记，可在此单条解除");
-                setting.settingEl.classList.add("bz-review-exclude-row");
-                const excludeBox = document.createElement("div");
-                excludeBox.id = "review-excluded-list";
-                setting.controlEl.appendChild(excludeBox);
-                renderExcludeRows = () => {
-                  excludeBox.innerHTML = "";
-                  const notes = getSettings().reviewExcludedNotes || [];
-                  if (!notes.length) {
-                    excludeBox.appendChild(uiEmpty({ title: "暂无排除笔记" }));
-                    return;
-                  }
-                  notes.forEach((path) => {
-                    const chip = document.createElement("span");
-                    chip.className = "bz-review-exclude-chip";
-                    const name = document.createElement("span");
-                    name.className = "bz-review-exclude-name";
-                    name.textContent = path;
-                    name.title = path;
-                    const remove = document.createElement("button");
-                    remove.className = "bz-review-exclude-remove bz-touch-target--xl";
-                    remove.setAttribute("aria-label", `解除排除 ${path}`);
-                    const removeIc = document.createElement("span");
-                    removeIc.className = "bz-ic";
-                    setIcon(removeIc, "x");
-                    remove.appendChild(removeIc);
-                    remove.onclick = () => {
-                      void (async () => {
-                        const { ReviewWatcher: ReviewWatcher2 } = await Promise.resolve().then(() => (init_watch(), watch_exports));
-                        await new ReviewWatcher2(deps.app, deps.dataManager).removeExcludedNote(path);
-                        renderExcludeRows == null ? void 0 : renderExcludeRows();
-                        notice("已解除排除", "success");
-                      })();
-                    };
-                    chip.appendChild(name);
-                    chip.appendChild(remove);
-                    excludeBox.appendChild(chip);
-                  });
-                };
-                renderExcludeRows();
+              type: "list",
+              name: "排除名单",
+              desc: "不参与监听自动加入的笔记，可在此单条解除",
+              items: () => (getSettings().reviewExcludedNotes || []).map((path) => ({ key: path, label: path })),
+              emptyText: "暂无排除笔记",
+              removeLabel: "解除",
+              onChange: (keys) => {
+                void (async () => {
+                  const prev = getSettings().reviewExcludedNotes || [];
+                  const removed = prev.filter((p) => !keys.includes(p));
+                  if (removed.length === 0) return;
+                  const { ReviewWatcher: ReviewWatcher2 } = await Promise.resolve().then(() => (init_watch(), watch_exports));
+                  const watcher = new ReviewWatcher2(deps.app, deps.dataManager);
+                  for (const path of removed) await watcher.removeExcludedNote(path);
+                  notice("已解除排除", "success");
+                })();
               }
             }
           ]
@@ -11105,19 +11017,14 @@ ${n.content.slice(0, 2e3)}
           rows: [
             { type: "toggle", name: "文件树标记", desc: "在文件树中为复习笔记着色并标到期时间", binding: { key: "reviewTreeBadge" } }
           ]
-        },
-        // ticket 170：所有域移动端组统一无描述
-        mobileFullscreenGroup("reviewMobileDefaultFullscreen", { desc: "" })
+        }
       ]
     };
   }
   var init_settings_schema = __esm({
     "src/review/settings-schema.ts"() {
-      init_fake_obsidian();
       init_notice();
       init_settings_provider();
-      init_settings_common();
-      init_ui();
     }
   });
 
@@ -11779,12 +11686,31 @@ ${n.content.slice(0, 2e3)}
           });
         }
       };
+      const actions = row.actions;
+      if (actions) {
+        for (const a of actions) {
+          setting.addButton((b) => {
+            if (a.cta) b.setCta();
+            b.setButtonText(a.text).onClick(() => {
+              void (async () => {
+                var _a4;
+                await a.onClick(last, ctx);
+                if (currentText && currentText.setValue) {
+                  dirty2 = false;
+                  currentText.setValue(String((_a4 = acc.read()) != null ? _a4 : ""));
+                }
+                reevaluate();
+              })();
+            });
+          });
+        }
+      }
       if (row.type === "text") setting.addText(addInto);
       else if (row.type === "textarea") setting.addTextArea(addInto);
       else setting.addText(addInto);
     };
     const renderRow2 = (body, rowArg, parentToggleKey) => {
-      var _a3;
+      var _a3, _b2, _c;
       const ctx = { rowEl: body, refreshVisibility: reevaluate };
       let row = rowArg;
       if (row.isChild && parentToggleKey) {
@@ -11913,6 +11839,12 @@ ${n.content.slice(0, 2e3)}
               (_a5 = row.onChange) == null ? void 0 : _a5.call(row, v, ctx);
             });
           });
+          for (const a of (_b2 = row.actions) != null ? _b2 : []) {
+            setting.addButton((b) => {
+              if (a.cta) b.setCta();
+              b.setButtonText(a.text).onClick(() => void a.onClick(void 0, ctx));
+            });
+          }
           return;
         }
         case "button": {
@@ -11930,6 +11862,79 @@ ${n.content.slice(0, 2e3)}
           const setting = new Setting(body).setName(row.name);
           if (row.desc) setting.setDesc(row.desc);
           if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          for (const a of (_c = row.actions) != null ? _c : []) {
+            setting.addButton((b) => {
+              if (a.cta) b.setCta();
+              b.setButtonText(a.text).onClick(() => void a.onClick(void 0, ctx));
+            });
+          }
+          return;
+        }
+        case "list": {
+          const wrap = document.createElement("div");
+          wrap.className = "bz-setlist-wrap";
+          body.appendChild(wrap);
+          const setting = new Setting(wrap).setName(row.name);
+          if (row.desc) setting.setDesc(row.desc);
+          if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
+          const box = document.createElement("div");
+          box.className = "bz-setlist";
+          wrap.appendChild(box);
+          const readItems = () => typeof row.items === "function" ? row.items() : row.items;
+          const renderItems = () => {
+            const items = readItems();
+            box.innerHTML = "";
+            if (items.length === 0) {
+              if (row.emptyText) {
+                const empty = document.createElement("div");
+                empty.className = "bz-setlist-empty";
+                empty.textContent = row.emptyText;
+                box.appendChild(empty);
+              }
+              return;
+            }
+            for (const it of items) {
+              const item = document.createElement("div");
+              item.className = "bz-setlist-item";
+              item.dataset.key = it.key;
+              if (it.imageUrl) {
+                const img = document.createElement("img");
+                img.className = "bz-setlist-avatar";
+                img.src = it.imageUrl;
+                img.alt = "";
+                img.onerror = () => img.remove();
+                item.appendChild(img);
+              }
+              const text = document.createElement("div");
+              text.className = "bz-setlist-text";
+              const name = document.createElement("div");
+              name.className = "bz-setlist-name";
+              name.textContent = it.label;
+              text.appendChild(name);
+              if (it.sub) {
+                const sub = document.createElement("div");
+                sub.className = "bz-setlist-sub";
+                sub.textContent = it.sub;
+                text.appendChild(sub);
+              }
+              item.appendChild(text);
+              const remove = document.createElement("button");
+              remove.className = "bz-setlist-remove bz-touch-target--xl";
+              remove.textContent = row.removeLabel || "移除";
+              remove.onclick = () => {
+                void (async () => {
+                  var _a4;
+                  const remaining = readItems().map((x) => x.key).filter((k) => k !== it.key);
+                  await ((_a4 = row.onChange) == null ? void 0 : _a4.call(row, remaining, ctx));
+                  renderItems();
+                  reevaluate();
+                })();
+              };
+              item.appendChild(remove);
+              box.appendChild(item);
+            }
+          };
+          renderItems();
           return;
         }
         case "text":
@@ -12203,6 +12208,15 @@ ${n.content.slice(0, 2e3)}
   function rowBtnHtml(label, cta) {
     return `<button type="button" class="bz-sp-btn${cta ? " bz-sp-btn--primary" : ""}">${esc(label)}</button>`;
   }
+  function listHtml(items, removeLabel = "移除") {
+    if (items.length === 0) return "";
+    return items.map(
+      (it) => `<div class="bz-setlist-item" data-key="${esc(it.key)}">` + (it.imageUrl ? `<img class="bz-setlist-avatar" src="${esc(it.imageUrl)}" alt="">` : "") + `<div class="bz-setlist-text"><div class="bz-setlist-name">${esc(it.label)}</div>` + (it.sub ? `<div class="bz-setlist-sub">${esc(it.sub)}</div>` : "") + `</div><button type="button" class="bz-setlist-remove bz-touch-target--xl">${esc(removeLabel)}</button></div>`
+    ).join("");
+  }
+  function listEmptyHtml(text) {
+    return `<div class="bz-setlist-empty">${esc(text)}</div>`;
+  }
   function badgeHtml(label) {
     return `<span class="bz-badge">${esc(label)}</span>`;
   }
@@ -12294,6 +12308,13 @@ ${n.content.slice(0, 2e3)}
   }
   function navItemHtml(opts) {
     return `<button type="button" class="bz-sp-nav-item${opts.on ? " on" : ""}" data-sp-domain="${esc(opts.id)}">${iconSpan(opts.icon, "bz-ic bz-sp-nav-ic")}<span class="bz-sp-nav-name">${esc(opts.name)}</span><span class="bz-sp-nav-count">${esc(opts.count)}</span></button>`;
+  }
+  function mobShellHtml() {
+    return `<div class="bz-sp-mob-viewport"><section class="bz-sp-mob-page bz-sp-mob-page--home"><div class="bz-sp-head"><span class="bz-sp-head-title">设置</span><span class="bz-sp-head-tools" data-sp-mob-tools="home"></span></div><div class="bz-sp-mob-search">${iconSpan("search")}<input class="bz-input" placeholder="搜索设置、域…" autocomplete="off"></div><div class="bz-sp-mob-list"></div></section><section class="bz-sp-mob-page bz-sp-mob-page--domain"><div class="bz-sp-head"><span class="bz-sp-mob-nav" data-sp-mob-back></span><span class="bz-sp-mob-title"></span><span class="bz-sp-head-tools" data-sp-mob-tools="domain"></span></div><div class="bz-sp-settings-body bz-sp-mob-page-body"></div></section></div>`;
+  }
+  function mobItemHtml(opts) {
+    const tail = opts.kind ? `<span class="bz-sp-mob-kind">${esc(opts.kind)}</span>` : `<span class="bz-sp-mob-chev">${iconSpan("chevron-right")}</span>`;
+    return `<button type="button" class="bz-sp-mob-item" data-sp-domain="${esc(opts.id)}"><span class="bz-sp-mob-ic">${iconSpan(opts.icon)}</span><span class="bz-sp-mob-t"><span class="bz-sp-mob-name">${esc(opts.name)}</span><span class="bz-sp-mob-desc">${esc(opts.desc)}</span></span>${tail}</button>`;
   }
   var init_render3 = __esm({
     "src/settings-panel/layouts/jingwei/render.ts"() {
@@ -12441,8 +12462,25 @@ ${n.content.slice(0, 2e3)}
     renderChips();
     return ctrl;
   }
+  function mountTextActions(ctrlEl, input, acc, actions, ctx, refresh) {
+    for (const a of actions != null ? actions : []) {
+      const holder = document.createElement("div");
+      holder.innerHTML = rowBtnHtml(a.text, a.cta);
+      const btn = holder.firstElementChild;
+      btn.addEventListener("click", () => {
+        void (async () => {
+          var _a2;
+          await a.onClick(input.value, ctx);
+          const setDisplay = input.__setDisplayValue;
+          if (setDisplay) setDisplay(String((_a2 = acc.read()) != null ? _a2 : ""));
+          refresh();
+        })();
+      });
+      ctrlEl.appendChild(btn);
+    }
+  }
   function renderRow(row, refresh, regRefresh) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n;
     const rowName = row.name;
     const bindKey = (_a2 = row.binding) == null ? void 0 : _a2.key;
     const isCustom = row.type === "custom";
@@ -12494,6 +12532,7 @@ ${n.content.slice(0, 2e3)}
             (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
           }
         });
+        mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh);
         ctrlEl.appendChild(input);
         regRefreshDisplay(regRefresh, row.refreshKey, input);
         break;
@@ -12551,6 +12590,7 @@ ${n.content.slice(0, 2e3)}
           }
         });
         input.step = String((_e = row.step) != null ? _e : 1);
+        mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh);
         ctrlEl.appendChild(input);
         regRefreshDisplay(regRefresh, row.refreshKey, input);
         break;
@@ -12619,6 +12659,13 @@ ${n.content.slice(0, 2e3)}
           void acc.persist();
           (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
         });
+        for (const a of (_j = row.actions) != null ? _j : []) {
+          const holder2 = document.createElement("div");
+          holder2.innerHTML = rowBtnHtml(a.text, a.cta);
+          const btn = holder2.firstElementChild;
+          btn.addEventListener("click", () => void a.onClick(void 0, ctx));
+          ctrlEl.appendChild(btn);
+        }
         break;
       }
       case "path": {
@@ -12628,7 +12675,7 @@ ${n.content.slice(0, 2e3)}
         ctrlEl.appendChild(makePathRowCtrl({
           name: row.name,
           mode: row.mode,
-          value: multi ? Array.isArray(acc.read()) ? [...acc.read()] : [] : String((_j = acc.read()) != null ? _j : ""),
+          value: multi ? Array.isArray(acc.read()) ? [...acc.read()] : [] : String((_k = acc.read()) != null ? _k : ""),
           pickerTitle: row.pickerTitle,
           pickerDesc: row.pickerDesc,
           buttonText: row.buttonText,
@@ -12658,17 +12705,45 @@ ${n.content.slice(0, 2e3)}
       }
       case "info": {
         ctrlEl.innerHTML = badgeHtml(row.name);
+        for (const a of (_l = row.actions) != null ? _l : []) {
+          const holder2 = document.createElement("div");
+          holder2.innerHTML = rowBtnHtml(a.text, a.cta);
+          const btn = holder2.firstElementChild;
+          btn.addEventListener("click", () => void a.onClick(void 0, ctx));
+          ctrlEl.appendChild(btn);
+        }
+        break;
+      }
+      case "list": {
+        const renderItems = () => {
+          const items = typeof row.items === "function" ? row.items() : row.items;
+          ctrlEl.innerHTML = items.length > 0 ? listHtml(items, row.removeLabel) : row.emptyText ? listEmptyHtml(row.emptyText) : "";
+          ctrlEl.querySelectorAll(".bz-setlist-item").forEach((itemEl) => {
+            var _a3, _b3;
+            const key = (_a3 = itemEl.dataset.key) != null ? _a3 : "";
+            (_b3 = itemEl.querySelector(".bz-setlist-remove")) == null ? void 0 : _b3.addEventListener("click", () => {
+              void (async () => {
+                var _a4;
+                const cur = (typeof row.items === "function" ? row.items() : row.items).map((x) => x.key);
+                await ((_a4 = row.onChange) == null ? void 0 : _a4.call(row, cur.filter((k) => k !== key), ctx));
+                renderItems();
+                refresh();
+              })();
+            });
+          });
+        };
+        renderItems();
         break;
       }
       case "choiceCards": {
         const acc = bindValue(row.binding);
         const layoutKey = row.layoutKey;
-        const curLayout = layoutKey ? String((_k = snapshot()[layoutKey]) != null ? _k : "") : "";
+        const curLayout = layoutKey ? String((_m = snapshot()[layoutKey]) != null ? _m : "") : "";
         const opts2 = row.options.filter((o) => {
           const lo = o.layout;
           return !lo || !layoutKey || lo === curLayout;
         });
-        const cur = String((_l = acc.read()) != null ? _l : "") || opts2[0] && opts2[0].value || "";
+        const cur = String((_n = acc.read()) != null ? _n : "") || opts2[0] && opts2[0].value || "";
         ctrlEl.innerHTML = cardpickHtml(opts2.map((o) => ({
           value: o.value,
           label: o.label,
@@ -13059,69 +13134,46 @@ ${n.content.slice(0, 2e3)}
     void saveSettings();
   }
   function providerModelCustomRow() {
-    const label = "模型名称";
-    const desc = "留空用该服务商默认模型";
     return {
-      type: "custom",
-      name: label,
-      desc,
-      visibleWhen: () => true,
-      // 常显（随 provider 联动内容）
-      render: (body, ctx) => {
-        const setting = new Setting(body).setName(label);
-        if (desc) setting.setDesc(desc);
-        let input = null;
-        setting.addButton((b) => {
-          b.setButtonText("获取模型名").onClick(() => {
-            void (async () => {
-              if (b.disabled) return;
-              b.setDisabled(true);
-              b.setButtonText("获取中…");
-              try {
-                await saveSettings();
-                const providerId = String(tryGetSettings().aiProvider || "opencode-go");
-                const desc2 = providerDescriptorOf(providerId);
-                const models = await fetchProviderModels(providerId);
-                const curProvider = String(tryGetSettings().aiProvider || "opencode-go");
-                if (curProvider !== providerId) {
-                  notice("服务商已切换，请重新获取", "warning");
-                  return;
-                }
-                openModelPicker({
-                  providerLabel: desc2.label,
-                  current: providerValue("model"),
-                  models,
-                  onPick: (m) => {
-                    setProviderValue("aiModelOverrides", m.id);
-                    ctx.refreshVisibility();
-                    if (input) input.setValue(m.id);
-                    notice(`模型已设为 ${m.id}`, "success");
-                  }
-                });
-              } catch (e) {
-                notice(e instanceof Error ? e.message : String(e), "error");
-              } finally {
-                b.setDisabled(false);
-                b.setButtonText("获取模型名");
-              }
-            })();
-          });
-        });
-        setting.addText((t) => {
-          input = t;
-          t.setValue(providerValue("model"));
-          t.setPlaceholder("默认模型");
-          t.onChange((v) => setProviderValue("aiModelOverrides", v));
-        });
-        body.__providerInput = input;
-      },
-      // onRefresh 由渲染器在 reevaluate 时调用：重读当前 provider 值写回输入框
-      onRefresh: (ctx) => {
-        const input = ctx.rowEl.__providerInput;
-        if (input && typeof input.setValue === "function") {
-          input.setValue(providerValue("model"));
+      type: "text",
+      name: "模型名称",
+      desc: "留空用该服务商默认模型",
+      placeholder: "默认模型",
+      binding: {
+        get: () => providerValue("model"),
+        set: (v) => setProviderValue("aiModelOverrides", v),
+        save: () => {
         }
-      }
+      },
+      refreshKey: () => providerValue("model"),
+      actions: [{
+        text: "获取模型名",
+        onClick: async (_value, ctx) => {
+          try {
+            await saveSettings();
+            const providerId = String(tryGetSettings().aiProvider || "opencode-go");
+            const desc = providerDescriptorOf(providerId);
+            const models = await fetchProviderModels(providerId);
+            const curProvider = String(tryGetSettings().aiProvider || "opencode-go");
+            if (curProvider !== providerId) {
+              notice("服务商已切换，请重新获取", "warning");
+              return;
+            }
+            openModelPicker({
+              providerLabel: desc.label,
+              current: providerValue("model"),
+              models,
+              onPick: (m) => {
+                setProviderValue("aiModelOverrides", m.id);
+                ctx.refreshVisibility();
+                notice(`模型已设为 ${m.id}`, "success");
+              }
+            });
+          } catch (e) {
+            notice(e instanceof Error ? e.message : String(e), "error");
+          }
+        }
+      }]
     };
   }
   function providerNumberConfigRow(kind) {
@@ -13235,7 +13287,6 @@ ${n.content.slice(0, 2e3)}
   var STORAGE_PATH_COMMIT_NOTICE;
   var init_settings_main_schema = __esm({
     "src/core/settings-main-schema.ts"() {
-      init_fake_obsidian();
       init_ai();
       init_notice();
       init_settings_provider();
@@ -14597,6 +14648,49 @@ ${countsToText(s.missing)}
   }
   var init_schema = __esm({
     "src/settings-panel/schema.ts"() {
+    }
+  });
+
+  // src/core/settings-common.ts
+  function batchSizeRow(key, opts) {
+    return {
+      type: "number",
+      name: "每批加载数量",
+      desc: "滚动加载时每批显示的条目数",
+      binding: numStrBinding(key, 20),
+      min: 1,
+      step: 1,
+      onCommit: opts == null ? void 0 : opts.onCommit
+    };
+  }
+  function numStrBinding(key, def) {
+    return {
+      get: () => {
+        const raw = tryGetSettings()[key];
+        if (raw === "" || raw === null || raw === void 0) return def;
+        const n = Number(raw);
+        return Number.isFinite(n) && n > 0 ? n : def;
+      },
+      set: (v) => {
+        getSettings()[key] = String(v);
+      },
+      save: () => saveSettings()
+    };
+  }
+  function makeReloadWarnOnce() {
+    let reloadWarned = false;
+    return () => {
+      if (reloadWarned) return;
+      reloadWarned = true;
+      notice(RELOAD_SETTINGS_NOTICE, "info");
+    };
+  }
+  var RELOAD_SETTINGS_NOTICE;
+  var init_settings_common = __esm({
+    "src/core/settings-common.ts"() {
+      init_notice();
+      init_settings_provider();
+      RELOAD_SETTINGS_NOTICE = "设置已保存，重载插件后生效";
     }
   });
 
@@ -17392,8 +17486,7 @@ ${countsToText(s.missing)}
             { type: "number", name: "预览质量", desc: "JPEG 图像压缩质量", binding: numStrBinding("encryptPreviewQuality", 0.5), min: 0.1, max: 1, step: 0.1, onCommit: warnReload, isChild: true },
             { type: "toggle", name: "预览自动加载原图", desc: "打开预览自动解密原图", binding: { key: "encryptAutoLoadOriginal" }, onChange: warnReload, isChild: true }
           ]
-        },
-        mobileFullscreenGroup("encryptMobileDefaultFullscreen", { desc: "" })
+        }
       ]
     };
   }
@@ -17411,7 +17504,6 @@ ${countsToText(s.missing)}
       init_ui();
       init_settings_provider();
       init_settings_modal();
-      init_mobile();
       init_settings_common();
       init_data6();
       init_preview();
@@ -17652,7 +17744,6 @@ ${countsToText(s.missing)}
         // ---------- 显示/隐藏 ----------
         show() {
           if (!this._initialized) this.ensureElements();
-          applyMobileWindowFullscreen(this.popup, tryGetSettings().encryptMobileDefaultFullscreen === true);
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
@@ -22635,7 +22726,6 @@ ${entry.content.trim()}`;
             { type: "toggle", name: "保存后进入编辑", desc: "保存日记后直接进入编辑模式", binding: { key: "diaryJumpToEditAfterSave" } }
           ]
         },
-        mobileFullscreenGroup("diaryMobileDefaultFullscreen", { desc: "" }),
         {
           icon: "wrench",
           name: "维护",
@@ -22814,7 +22904,6 @@ ${entry.content.trim()}`;
     topifyZ(mask != null ? mask : void 0, popup != null ? popup : void 0);
     if (popup) popup.style.visibility = "visible";
     if (mask) mask.style.visibility = "visible";
-    applyMobileWindowFullscreen(popup, tryGetSettings().diaryMobileDefaultFullscreen === true);
     if (state.ui.scrollContainer) setTimeout(updateSticky, 100);
   }
   function registerEscapeListener() {
@@ -22889,7 +22978,6 @@ ${entry.content.trim()}`;
       init_esc_manager();
       init_domain_bus();
       init_settings_provider();
-      init_mobile();
       init_settings_modal();
       init_settings_common();
       init_config();
@@ -22927,14 +23015,12 @@ ${entry.content.trim()}`;
             { type: "choiceCards", name: "面板布局", binding: { key: "diaryWallSkin" }, options: [{ value: "default", label: "媒体墙", prevClass: "bz-sp-prev-panel" }] },
             { type: "choiceCards", name: "面板主题", binding: { key: "diaryWallSkinTheme" }, layoutKey: "diaryWallSkin", options: [{ value: "gallery", label: "画廊白", layout: "default", prevClass: "bz-sp-prev-gallery" }] }
           ]
-        },
-        mobileFullscreenGroup("diaryWallMobileDefaultFullscreen", { desc: "" })
+        }
       ]
     };
   }
   var init_settings = __esm({
     "src/diary-wall/settings.ts"() {
-      init_settings_common();
     }
   });
 
@@ -23149,16 +23235,13 @@ ${entry.content.trim()}`;
               }
             }
           ]
-        },
-        // ticket 170 铁律：移动端组不写描述（对齐其余 14 域）
-        mobileFullscreenGroup("todoMobileDefaultFullscreen")
+        }
       ]
     };
   }
   var init_settings2 = __esm({
     "src/todo/settings.ts"() {
       init_settings_provider();
-      init_settings_common();
       init_data5();
       init_ui4();
     }
@@ -24418,8 +24501,7 @@ ${entry.content.trim()}`;
               ]
             }
           ]
-        },
-        mobileFullscreenGroup("belongingsMobileDefaultFullscreen", { desc: "" })
+        }
       ]
     };
   }
@@ -24464,7 +24546,6 @@ ${entry.content.trim()}`;
     }
   }
   async function openPanelInner() {
-    var _a2;
     const st = tryGetSettings().belongingsDefaultStatus;
     M4.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
     M4.db = await loadDatabase();
@@ -24475,17 +24556,13 @@ ${entry.content.trim()}`;
     topifyZ(overlay2);
     M4.overlay = overlay2;
     M4.renderFn = () => renderAll();
-    applyMobileWindowFullscreen(
-      overlay2.querySelector(".bz-bel-panel"),
-      ((_a2 = tryGetSettings()) == null ? void 0 : _a2.belongingsMobileDefaultFullscreen) === true
-    );
     mountIcons(overlay2);
     ensureBelongingsEsc();
     const closeDrops = () => {
       overlay2.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => w.classList.remove("is-open"));
     };
     const onDocClick = (e) => {
-      var _a3;
+      var _a2;
       const t = e.target;
       const trig = t.closest("[data-bel-year],[data-bel-mobsortsel]");
       if (trig) {
@@ -24498,7 +24575,7 @@ ${entry.content.trim()}`;
       const opt = t.closest(".bz-bel-dropopt");
       if (opt) {
         closeDrops();
-        const v = (_a3 = opt.dataset.v) != null ? _a3 : "";
+        const v = (_a2 = opt.dataset.v) != null ? _a2 : "";
         if (opt.closest("[data-bel-yearmenu]")) M4.year = v;
         else M4.sort = v;
         renderAll();
@@ -25111,7 +25188,6 @@ ${entry.content.trim()}`;
       init_esc_manager();
       init_mobile();
       init_settings_provider();
-      init_settings_common();
       init_flow_dialog();
       init_ui();
       init_item_actions();
@@ -26051,9 +26127,7 @@ ${bodyText.substring(0, 6e3)}`;
       inputValue: "",
       cookieInput: String(opts.cookie || ""),
       ups: [...opts.ups],
-      upInfo: { ...opts.upInfo },
-      listRefresh: () => {
-      }
+      upInfo: { ...opts.upInfo }
     };
     return {
       groups: [
@@ -26061,9 +26135,70 @@ ${bodyText.substring(0, 6e3)}`;
           icon: "users",
           name: "UP 主名单",
           rows: [
-            { type: "custom", render: (body) => renderAddUpRow(body, box, opts.onChanged) },
-            { type: "custom", render: (body) => renderCookieRow(body, box, opts.onChanged) },
-            { type: "custom", render: (body, ctx) => renderUpList(body, box, opts.onChanged, ctx) }
+            {
+              type: "text",
+              name: "添加 UP 主",
+              desc: "粘贴主页链接或视频链接，自动解析后入库",
+              placeholder: "粘贴链接或 UID",
+              binding: {
+                get: () => box.inputValue,
+                set: (v) => {
+                  box.inputValue = v;
+                },
+                save: () => {
+                }
+              },
+              actions: [{
+                text: "添加",
+                cta: true,
+                onClick: (value) => addUpUid(value, box, opts)
+              }]
+            },
+            {
+              type: "text",
+              name: "B 站 Cookie 可选",
+              desc: cookieDesc(box.cookieInput),
+              placeholder: "粘贴 buvid3 或 SESSDATA 等 Cookie",
+              binding: {
+                get: () => box.cookieInput,
+                set: (v) => {
+                  box.cookieInput = v;
+                },
+                save: () => {
+                }
+              },
+              actions: [
+                { text: "保存", onClick: (value) => saveCookie(value || "", box, opts) },
+                { text: "清除", onClick: () => saveCookie("", box, opts) }
+              ]
+            },
+            {
+              type: "list",
+              name: "名单列表",
+              desc: "已跟踪的 UP 主，移除后不再抓取其投稿",
+              items: () => box.ups.map((uid) => {
+                var _a2;
+                return {
+                  key: uid,
+                  label: upDisplayName(uid, box.upInfo[uid]),
+                  sub: `UID ${uid}`,
+                  imageUrl: (_a2 = box.upInfo[uid]) == null ? void 0 : _a2.avatar
+                };
+              }),
+              emptyText: "暂无跟踪 UP 主，在上方粘贴主页链接或视频链接添加",
+              onChange: (keys) => {
+                void (async () => {
+                  const removed = box.ups.filter((u) => !keys.includes(u));
+                  for (const uid of removed) {
+                    await removeBilibiliUp(uid);
+                    box.ups = box.ups.filter((u) => u !== uid);
+                    delete box.upInfo[uid];
+                    notice(`已移除 UP 主 ${uid}`, "success");
+                  }
+                  if (removed.length > 0) opts.onChanged();
+                })();
+              }
+            }
           ]
         }
       ]
@@ -26072,125 +26207,32 @@ ${bodyText.substring(0, 6e3)}`;
   function upDisplayName(uid, info) {
     return info && info.name ? info.name : `UP ${uid}`;
   }
-  function renderAddUpRow(body, box, onChanged) {
-    new Setting(body).setName("添加 UP 主").setDesc("粘贴主页链接（space.bilibili.com/123456）或视频链接自动解析 UID").addText((text) => {
-      text.setPlaceholder("粘贴链接或 UID");
-      text.onChange((v) => {
-        box.inputValue = v;
-      });
-    }).addButton(
-      (btn) => btn.setButtonText("添加").setCta().onClick(() => {
-        void (async () => {
-          const raw = (box.inputValue || "").trim();
-          if (!raw) return;
-          const uid = await resolveUidFromInput(raw);
-          if (!uid) {
-            notice("无法识别 UID，请粘贴 space.bilibili.com/<uid> 主页链接", "error");
-            return;
-          }
-          const added = await addBilibiliUp(uid);
-          if (!added) {
-            notice("该 UP 主已在名单中", "info");
-            return;
-          }
-          box.inputValue = "";
-          box.ups.push(uid);
-          box.listRefresh();
-          onChanged();
-          notice(`已添加 UP 主 ${uid}`, "success");
-        })();
-      })
-    );
+  function cookieDesc(current2) {
+    return `遇到风控时需粘贴登录后的 Cookie。当前${current2 ? "已配置" : "未配置"}`;
   }
-  function renderCookieRow(body, box, onChanged) {
-    const cookieDesc = () => `接口返回 412/-352（风控）时需要「登录后」的 Cookie：浏览器登录并打开 bilibili.com → F12 → Cookie → 复制含 SESSDATA 的整段粘贴（当前${box.cookieInput ? "已配置" : "未配置，走自动引导"}）`;
-    const row = new Setting(body).setName("B 站 Cookie（可选）").setDesc(cookieDesc());
-    row.addText((text) => {
-      text.setPlaceholder("粘贴 buvid3/SESSDATA 等 Cookie");
-      text.setValue(box.cookieInput);
-      text.onChange((v) => {
-        box.cookieInput = v;
-      });
-    });
-    row.addButton(
-      (btn) => btn.setButtonText("保存").onClick(() => {
-        void (async () => {
-          await writeBilibiliCookie(box.cookieInput);
-          row.setDesc(cookieDesc());
-          onChanged();
-          notice("B 站 Cookie 已保存", "success");
-        })();
-      })
-    );
-    row.addButton(
-      (btn) => btn.setButtonText("清除").onClick(() => {
-        void (async () => {
-          await writeBilibiliCookie("");
-          box.cookieInput = "";
-          row.setDesc(cookieDesc());
-          onChanged();
-          notice("已清除 B 站 Cookie（回自动引导）", "success");
-        })();
-      })
-    );
+  async function addUpUid(raw, box, opts) {
+    const input = String(raw || "").trim();
+    if (!input) return;
+    const uid = await resolveUidFromInput(input);
+    if (!uid) {
+      notice("无法识别 UID，请粘贴 space.bilibili.com 内的主页链接", "error");
+      return;
+    }
+    const added = await addBilibiliUp(uid);
+    if (!added) {
+      notice("该 UP 主已在名单中", "info");
+      return;
+    }
+    box.inputValue = "";
+    box.ups = [...box.ups, uid];
+    opts.onChanged();
+    notice(`已添加 UP 主 ${uid}`, "success");
   }
-  function renderUpList(body, box, onChanged, ctx) {
-    const listEl2 = document.createElement("div");
-    listEl2.dataset.upManagerList = "1";
-    body.appendChild(listEl2);
-    const refresh = () => {
-      listEl2.innerHTML = "";
-      if (box.ups.length === 0) {
-        const empty = document.createElement("div");
-        empty.className = "bz-up-manager-empty";
-        empty.textContent = "暂无跟踪 UP 主，在上方粘贴主页链接或视频链接添加";
-        listEl2.appendChild(empty);
-        return;
-      }
-      for (const uid of box.ups) {
-        const info = box.upInfo[uid];
-        const row = document.createElement("div");
-        row.className = "bz-up-manager-row";
-        row.dataset.upRow = "1";
-        if (info && info.avatar) {
-          const img = document.createElement("img");
-          img.className = "bz-up-manager-avatar";
-          img.src = info.avatar;
-          img.alt = "";
-          img.onerror = () => img.remove();
-          row.appendChild(img);
-        }
-        const text = document.createElement("div");
-        text.className = "bz-up-manager-text";
-        const name = document.createElement("div");
-        name.className = "bz-up-manager-name";
-        name.textContent = upDisplayName(uid, info);
-        const uidEl = document.createElement("div");
-        uidEl.className = "bz-up-manager-uid";
-        uidEl.textContent = `UID ${uid}`;
-        text.appendChild(name);
-        text.appendChild(uidEl);
-        row.appendChild(text);
-        const del = document.createElement("button");
-        del.className = "bz-up-manager-remove";
-        del.textContent = "移除";
-        del.onclick = () => {
-          void (async () => {
-            await removeBilibiliUp(uid);
-            box.ups = box.ups.filter((u) => u !== uid);
-            delete box.upInfo[uid];
-            refresh();
-            onChanged();
-            ctx.refreshVisibility();
-            notice(`已移除 UP 主 ${uid}`, "success");
-          })();
-        };
-        row.appendChild(del);
-        listEl2.appendChild(row);
-      }
-    };
-    box.listRefresh = refresh;
-    refresh();
+  async function saveCookie(value, box, opts) {
+    await writeBilibiliCookie(value);
+    box.cookieInput = value;
+    opts.onChanged();
+    notice(value ? "B 站 Cookie 已保存" : "已清除 B 站 Cookie，回自动引导", "success");
   }
   function openUpManagerModal(opts) {
     let handle = null;
@@ -26229,7 +26271,6 @@ ${bodyText.substring(0, 6e3)}`;
   }
   var init_news_sources_group = __esm({
     "src/clipbook/news-sources-group.ts"() {
-      init_fake_obsidian();
       init_notice();
       init_settings_common();
       init_dom();
@@ -28004,7 +28045,6 @@ ${sample}`,
             { type: "number", name: "缓存保留天数", desc: "超过该天数的缓存自动清理", binding: { key: "literatureCacheRetentionDays" }, min: 1, step: 1 }
           ]
         },
-        mobileFullscreenGroup("literatureMobileDefaultFullscreen", { desc: "" }),
         {
           icon: "wrench",
           name: "维护",
@@ -28030,7 +28070,6 @@ ${sample}`,
       init_mobile();
       init_settings_provider();
       init_settings_modal();
-      init_settings_common();
       init_item_actions();
       init_list_patch();
       init_flow_dialog();
@@ -28238,11 +28277,10 @@ ${sample}`,
           });
           q(p, "#lit-btn-close").onclick = () => this.hideMain();
         }
-        /** 打开主面板（文献笔记列表）：移动端默认全屏、抬顶、刷新列表 + 旧笔记自动补全 */
+        /** 打开主面板（文献笔记列表）：抬顶、刷新列表 + 旧笔记自动补全 */
         showMain() {
           this.createMainUI();
           if (!this.popup || !this.mask) return;
-          applyMobileWindowFullscreen(this.popup, tryGetSettings().literatureMobileDefaultFullscreen === true);
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
@@ -28718,11 +28756,10 @@ ${sample}`,
           q(p, "#lit-btn-video-close").onclick = () => this.hideVideo();
         }
         /** 打开视频录入面板（任务队列）；prefill 存在则叠开添加弹窗（聚合讯「保存至文献」入口，ADR-0068）。
-         *  移动端默认全屏（ticket 139：主面板/历史弹窗同款三件事对齐）。 */
+         */
         showVideoEntry(prefill) {
           var _a2, _b2;
           if (!this.videoPopup || !this.videoMask) return;
-          applyMobileWindowFullscreen(this.videoPopup, tryGetSettings().literatureMobileDefaultFullscreen === true);
           topifyZ(this.videoMask, this.videoPopup);
           this.videoMask.style.display = "block";
           this.videoPopup.style.display = "flex";
@@ -29194,7 +29231,6 @@ ${sample}`,
         /** 历史独立弹窗（ADR-0070）：视频面板之上叠开，遮罩 + ✕/ESC/点遮罩关闭 */
         showHistory() {
           if (!this.historyPopup || !this.historyMask) return;
-          applyMobileWindowFullscreen(this.historyPopup, tryGetSettings().literatureMobileDefaultFullscreen === true);
           topifyZ(this.historyMask, this.historyPopup);
           this.historyMask.style.display = "block";
           this.historyPopup.style.display = "flex";
@@ -30045,7 +30081,6 @@ ${sample}`,
     });
     escRegistered = true;
     const frameEl = overlayEl.querySelector(".bz-clip-frame");
-    applyMobileWindowFullscreen(frameEl, mobileFullscreenDefault());
     if (!isMobileEnv()) {
       panelResizeDetach = uiResizable(frameEl, {
         minW: PANEL_MIN_W,
@@ -30075,10 +30110,6 @@ ${sample}`,
       if (!item) return;
       openMobDetail(item.dataset.id || "");
     });
-  }
-  function mobileFullscreenDefault() {
-    const s = tryGetSettings();
-    return (s == null ? void 0 : s.clipbookMobileDefaultFullscreen) !== false;
   }
   function selectSource(src) {
     M5.sel = {
@@ -30741,8 +30772,7 @@ ${sample}`,
           icon: "radio",
           name: "数据源",
           rows: dataSourceGroupRows(dataSource)
-        },
-        mobileFullscreenGroup("clipbookMobileDefaultFullscreen", { desc: "" })
+        }
       ]
     };
   }
@@ -30781,7 +30811,6 @@ ${sample}`,
       init_auto_summary();
       init_news_sources_group();
       init_news_source_settings();
-      init_settings_common();
       init_md();
       init_store2();
       init_render7();
@@ -31065,8 +31094,7 @@ ${sample}`,
             { type: "choiceCards", name: "面板布局", binding: { key: "favoritesSkin" }, options: [{ value: "default", label: "标签工作台", prevClass: "bz-sp-prev-panel" }] },
             { type: "choiceCards", name: "面板主题", binding: { key: "favoritesSkinTheme" }, layoutKey: "favoritesSkin", options: [{ value: "linen", label: "亚麻", layout: "default", prevClass: "bz-sp-prev-linen" }] }
           ]
-        },
-        mobileFullscreenGroup("favoritesMobileDefaultFullscreen", { desc: "" })
+        }
       ]
     };
   }
@@ -31093,7 +31121,6 @@ ${sample}`,
     _ai = ai;
   }
   function openPanel2(app2, dm, ai) {
-    var _a2;
     initFavoritesUI(app2, dm, ai);
     if (M6.overlay) {
       closePanel4();
@@ -31106,10 +31133,6 @@ ${sample}`,
     topifyZ(overlay2);
     M6.overlay = overlay2;
     M6.renderFn = () => renderAll3();
-    applyMobileWindowFullscreen(
-      overlay2.querySelector(".bz-fav-panel"),
-      ((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesMobileDefaultFullscreen) === true
-    );
     mountIcons(overlay2);
     ensureFavoritesEsc();
     overlay2.addEventListener("click", (e) => {
@@ -31629,8 +31652,6 @@ GitHub 仓库：${ghInfo.title}
       init_z_order();
       init_esc_manager();
       init_mobile();
-      init_settings_provider();
-      init_settings_common();
       init_flow_dialog();
       init_app();
       init_ui();
@@ -31734,8 +31755,7 @@ GitHub 仓库：${ghInfo.title}
               step: 1
             }
           ]
-        },
-        mobileFullscreenGroup("cinemaMobileDefaultFullscreen", { desc: "" })
+        }
       ]
     };
   }
@@ -31800,8 +31820,6 @@ GitHub 仓库：${ghInfo.title}
       init_notice();
       init_dom();
       init_flow_dialog();
-      init_mobile();
-      init_settings_provider();
       init_ui();
       init_ui9();
       init_notes();
@@ -31912,14 +31930,12 @@ GitHub 仓库：${ghInfo.title}
               ]
             }
           ]
-        },
-        mobileFullscreenGroup("bookshelfMobileDefaultFullscreen")
+        }
       ]
     };
   }
   var init_settings4 = __esm({
     "src/bookshelf/settings.ts"() {
-      init_settings_common();
       init_data2();
       init_ui9();
     }
@@ -36112,6 +36128,15 @@ ${text}`;
       avgChunksPerNote: noteCount ? Math.round(chunkCount / noteCount * 10) / 10 : 0
     };
   }
+  function lanIpDesc() {
+    if (isMobileEnv()) return "";
+    const lanIPs = getLanIPs();
+    if (lanIPs.length === 0) {
+      return "未能探测本机局域网 IP，请确认电脑已联网，移动端远程地址需手动填写电脑的局域网 IP";
+    }
+    const primary = pickPrimaryLanIp(lanIPs);
+    return `本机当前局域网 IP 为 ${lanIPs.map((l) => `${l.ip}，${l.iface}`).join("；")}。移动端连不上时，把远程地址填为${primary ? ` ${formatRemoteOllamaUrl(primary.ip)}` : "此处 IP"}`;
+  }
   function secondBrainSettingsSchema() {
     let reloadWarned = false;
     const warnReload = () => {
@@ -36119,7 +36144,6 @@ ${text}`;
       reloadWarned = true;
       notice("第二大脑设置已保存，重载插件后生效", "info");
     };
-    let remoteUrlText = null;
     const trimStore = (key) => (v) => {
       getSettings()[key] = v.trim();
     };
@@ -36156,54 +36180,53 @@ ${text}`;
           name: "基础",
           rows: [
             { type: "text", name: "Ollama 本地 URL", binding: { key: "secondBrainOllamaUrl" }, onChange: trimStore("secondBrainOllamaUrl") },
-            // 远程 Ollama URL（移动端）：custom 持输入框引用（「填入远程 URL」按钮覆盖后即时回显）
+            // 远程 Ollama URL（移动端）：声明 text 行 + 行内「填入远程 URL」按钮（actions 统一实现，
+            // 动作完成后渲染器重读绑定回填显示——custom 输入框引用持快手已退役）
             {
-              type: "custom",
-              render: (body) => {
-                new Setting(body).setName("远程 Ollama URL（移动端）").addText((t) => {
-                  var _a2;
-                  remoteUrlText = t;
-                  t.setValue(String((_a2 = tryGetSettings().secondBrainRemoteOllamaUrl) != null ? _a2 : "")).onChange(
-                    (v) => trimStore("secondBrainRemoteOllamaUrl")(v)
-                  );
-                });
-              }
-            },
-            // ticket 122：本机局域网 IP（移动端连不上的自查路径；仅桌面端探测显示）
-            {
-              type: "custom",
-              render: (body) => {
-                if (!isMobileEnv()) {
+              type: "text",
+              name: "移动端远程地址",
+              desc: "手机上连本地向量库走这个地址",
+              binding: { key: "secondBrainRemoteOllamaUrl" },
+              onChange: (v) => trimStore("secondBrainRemoteOllamaUrl")(v),
+              actions: [{
+                text: "填入远程 URL",
+                cta: true,
+                onClick: () => {
                   const lanIPs = getLanIPs();
                   const primary = pickPrimaryLanIp(lanIPs);
-                  const ipDesc = lanIPs.length > 0 ? `本机当前局域网 IP：${lanIPs.map((l) => `${l.ip}（${l.iface}）`).join("、")}。移动端连不上时，把上方远程 URL 填为此处 IP` : "未能探测本机局域网 IP（请确认电脑已联网），移动端远程 URL 需手动填写电脑的局域网 IP";
-                  new Setting(body).setName("本机局域网 IP（电脑）").setDesc(ipDesc).addButton(
-                    (btn) => btn.setButtonText("填入远程 URL").setCta().onClick(() => {
-                      if (!primary) {
-                        notice("未探测到本机局域网 IP，请手动填写");
-                        return;
-                      }
-                      const target = formatRemoteOllamaUrl(primary.ip);
-                      void openFlowDialog({
-                        title: "填入远程 Ollama URL",
-                        message: `将「远程 Ollama URL（移动端）」覆盖为 ${target}？`,
-                        actions: [
-                          { label: "取消", value: "cancel" },
-                          { label: "覆盖", value: "ok", cta: true }
-                        ]
-                      }).then((v) => {
-                        if (v === "ok") {
-                          getSettings().secondBrainRemoteOllamaUrl = target;
-                          void saveSettings();
-                          remoteUrlText == null ? void 0 : remoteUrlText.setValue(target);
-                        }
-                      });
-                    })
-                  );
-                } else {
-                  new Setting(body).setName("本机局域网 IP 提示").setDesc("移动端连不上远程向量库时，请在电脑上打开第二大脑设置，查看「本机局域网 IP（电脑）」并核对上方远程 URL");
+                  if (!primary) {
+                    notice("未探测到本机局域网 IP，请手动填写");
+                    return;
+                  }
+                  const target = formatRemoteOllamaUrl(primary.ip);
+                  return openFlowDialog({
+                    title: "填入远程 Ollama URL",
+                    message: `将「移动端远程地址」覆盖为 ${target}？`,
+                    actions: [
+                      { label: "取消", value: "cancel" },
+                      { label: "覆盖", value: "ok", cta: true }
+                    ]
+                  }).then((v) => {
+                    if (v === "ok") {
+                      getSettings().secondBrainRemoteOllamaUrl = target;
+                      void saveSettings();
+                    }
+                  });
                 }
-              }
+              }]
+            },
+            // 本机局域网 IP（展示行，actions 已并上侧「填入远程 URL」按钮；custom 双分支已退役）
+            {
+              type: "info",
+              name: "本机局域网 IP",
+              visibleWhen: () => !isMobileEnv(),
+              desc: lanIpDesc()
+            },
+            {
+              type: "info",
+              name: "局域网 IP 提示",
+              visibleWhen: () => isMobileEnv(),
+              desc: "连不上远程库时，在电脑上查看本机 IP 并核对上方地址"
             },
             { type: "text", name: "Embedding 模型", binding: { key: "secondBrainEmbeddingModel" }, onChange: trimStore("secondBrainEmbeddingModel") },
             // 白名单目录（ticket 128 统一选择器：chips + 选择按钮；存储格式冻结——英文逗号分隔字符串）
@@ -36325,8 +36348,6 @@ ${text}`;
           icon: "layout-dashboard",
           name: "面板",
           rows: [
-            // 移动端默认全屏（无描述——保持省略；仅移动端可见）
-            mobileFullscreenRow("secondBrainMobileDefaultFullscreen", { desc: "" }),
             // 重新索引（ticket 108）：确认已 flow 化（openFlowDialog），此处仅保留按钮与文案
             {
               type: "button",
@@ -36360,13 +36381,11 @@ ${text}`;
   var SecondBrainPanel;
   var init_panel2 = __esm({
     "src/secondbrain/panel.ts"() {
-      init_fake_obsidian();
       init_notice();
       init_z_order();
-      init_settings_provider();
       init_mobile();
+      init_settings_provider();
       init_settings_modal();
-      init_settings_common();
       init_utils();
       init_flow_dialog();
       init_esc_manager();
@@ -36403,7 +36422,6 @@ ${text}`;
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
-          applyMobileWindowFullscreen(this.popup, tryGetSettings().secondBrainMobileDefaultFullscreen === true);
           await this.render();
         }
         close() {
@@ -36617,9 +36635,6 @@ ${text}`;
           });
           this.funcBtns = [refBtn, chatBtn];
           mkBtn("bz-sb-panel-gear", "⚙️", "第二大脑设置", () => this.openSettings());
-          if (isMobileEnv() && tryGetSettings().secondBrainMobileDefaultFullscreen === true) {
-            mkBtn("bz-win-close", "❌", "关闭", () => this.close());
-          }
           head.appendChild(title);
           head.appendChild(btns);
           popup.appendChild(head);
@@ -37449,25 +37464,24 @@ ${text}`;
             { type: "toggle", name: "自动跳过休息", desc: "专注结束后直接进入下一个专注", binding: { key: "pomodoroAutoSkipBreak" }, onChange: () => render() },
             { type: "toggle", name: "声音提醒", desc: "阶段切换时播放提示音", binding: soundToggle, onChange: () => render() },
             { type: "toggle", name: "后台自动暂停", desc: "窗口隐藏时暂停，恢复可见后自动继续", binding: autoPauseToggle, onChange: () => render() },
-            // 提示音音量 + 「试听」：slider 行不支持同行附加按钮 → custom 插槽保行为（原 Setting 链逐字；
-            // 名称/描述在插槽内部声明，schema 行不声明 name/desc——lint 引擎跳过 custom 行）
+            // 提示音音量 + 「试听」：行内附加按钮（actions，渲染器统一实现——custom 插槽已退役）
             {
-              type: "custom",
-              render: (body) => {
-                new Setting(body).setName("提示音音量").setDesc("提示音大小，默认最大").addSlider((sl) => {
-                  var _a2;
-                  sl.setLimits(0, 100, 5).setValue((_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100).setDynamicTooltip();
-                  sl.onChange(async (v) => {
-                    getSettings().pomodoroVolume = v;
-                    await saveSettings();
-                  });
-                }).addButton(
-                  (b) => b.setButtonText("试听").onClick(() => {
-                    var _a2;
-                    playSound("focus-start", (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100);
-                  })
-                );
-              }
+              type: "slider",
+              name: "提示音音量",
+              desc: "提示音大小，默认最大",
+              binding: { get: () => {
+                var _a2;
+                return (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100;
+              }, set: (v) => {
+                getSettings().pomodoroVolume = v;
+              }, save: () => saveSettings() },
+              min: 0,
+              max: 100,
+              step: 5,
+              actions: [{ text: "试听", onClick: () => {
+                var _a2;
+                return playSound("focus-start", (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100);
+              } }]
             },
             {
               type: "select",
@@ -37480,8 +37494,7 @@ ${text}`;
               ]
             }
           ]
-        },
-        mobileFullscreenGroup("pomodoroMobileDefaultFullscreen", { desc: "" })
+        }
       ]
     };
   }
@@ -37573,8 +37586,7 @@ ${text}`;
       }
     }
     const popupEl2 = maskEl ? maskEl.querySelector("#pomodoro-popup") : null;
-    applyMobileWindowFullscreen(popupEl2, tryGetSettings().pomodoroMobileDefaultFullscreen === true);
-    popupEl2 == null ? void 0 : popupEl2.classList.toggle("bz-panel-mtop", tryGetSettings().pomodoroMobileDefaultFullscreen === true);
+    popupEl2 == null ? void 0 : popupEl2.classList.add("bz-panel-mtop");
   }
   async function ensurePomodoro(app2) {
     appRef2 = app2;
@@ -37643,11 +37655,9 @@ ${text}`;
   var init_ui10 = __esm({
     "src/pomodoro/ui.ts"() {
       init_fake_obsidian();
-      init_fake_obsidian();
       init_esc_manager();
       init_z_order();
       init_settings_provider();
-      init_mobile();
       init_notice();
       init_settings_modal();
       init_settings_common();
@@ -38130,8 +38140,7 @@ ${text}`;
       }
     };
   }
-  function showChatPanel(panels, fullscreenEnabled) {
-    applyMobileWindowFullscreen(panels.chatPopup, fullscreenEnabled);
+  function showChatPanel(panels) {
     panels.mask.style.display = "block";
     panels.chatPopup.style.display = "flex";
     panels.chatInput.focus();
@@ -38176,33 +38185,21 @@ ${text}`;
       name: "外观",
       rows: [
         {
-          type: "custom",
-          render: (body) => {
-            const config = opts.getConfig();
-            const grid = document.createElement("div");
-            grid.className = "bz-sc-skin-grid";
-            for (const skin of SKINS) {
-              const item = document.createElement("button");
-              item.className = "bz-sc-skin-item" + (skin === config.appearance ? " active" : "");
-              item.dataset.skin = skin;
-              const swatch = document.createElement("span");
-              swatch.className = "bz-sc-skin-swatch bz-sc-skin-swatch-" + skin;
-              const name = document.createElement("span");
-              name.className = "bz-sc-skin-name";
-              name.textContent = skinLabel(skin);
-              item.appendChild(swatch);
-              item.appendChild(name);
-              item.addEventListener("click", async () => {
-                var _a2;
-                if (opts.getConfig().appearance === skin) return;
-                opts.getConfig().appearance = skin;
-                for (const n of Array.from(grid.querySelectorAll(".bz-sc-skin-item"))) n.classList.toggle("active", n === item);
-                await opts.saveConfig(opts.getConfig());
-                (_a2 = opts.onAppearanceChanged) == null ? void 0 : _a2.call(opts, skin);
-              });
-              grid.appendChild(item);
-            }
-            body.appendChild(grid);
+          // 皮肤选择（choiceCards 标准行，custom 自绘格子已退役）：色块视觉由域 CSS 提供
+          // （prevClass → .bz-sc-prev-<skin>，面板 mini 与 ⚙️ 卡片两渲染器同类）
+          type: "choiceCards",
+          name: "面板皮肤",
+          binding: {
+            get: () => opts.getConfig().appearance,
+            set: (v) => {
+              opts.getConfig().appearance = v;
+            },
+            save: () => opts.saveConfig(opts.getConfig())
+          },
+          options: SKINS.map((skin) => ({ value: skin, label: skinLabel(skin), prevClass: `bz-sc-prev-${skin}` })),
+          onChange: (v) => {
+            var _a2;
+            return (_a2 = opts.onAppearanceChanged) == null ? void 0 : _a2.call(opts, v);
           }
         }
       ]
@@ -38225,26 +38222,6 @@ ${text}`;
         ]
       }
     ] : [];
-    const mobileGroup = {
-      icon: "smartphone",
-      name: "移动端",
-      visibleWhen: () => isMobileEnv(),
-      rows: [
-        {
-          type: "toggle",
-          name: "移动端默认全屏",
-          // ticket 170：所有域移动端组统一无描述
-          binding: {
-            get: () => opts.settingsKeys.mobileFullscreen,
-            set: (v) => {
-              opts.settingsKeys.mobileFullscreen = v;
-            },
-            save: () => opts.setMobileFullscreen(opts.settingsKeys.mobileFullscreen)
-          },
-          visibleWhen: () => isMobileEnv()
-        }
-      ]
-    };
     return {
       groups: [
         lookGroup,
@@ -38289,25 +38266,27 @@ ${text}`;
           icon: "folder-open",
           name: "记忆目录",
           rows: [
+            // 通用 path 行（multi chips，两渲染器统一实现——custom 套 renderPathSettingRow 已退役）
             {
-              type: "custom",
-              render: (body) => {
-                renderPathSettingRow({
-                  parent: body,
-                  name: "记忆目录",
-                  desc: "这些文件夹内的笔记会进入小橘的记忆库（日记按时间段拆条）；移除目录会清掉对应记忆",
-                  mode: "multi",
-                  value: normalizeMemoryDirectories(tryGetSettings().memoryDirectories),
-                  pickerTitle: "选择记忆目录",
-                  pickerDesc: "选择小橘读取笔记的文件夹（可多选）",
-                  onChange: (list) => {
-                    var _a2;
-                    const next = normalizeMemoryDirectories(list);
-                    getSettings().memoryDirectories = next;
-                    void saveSettings();
-                    (_a2 = opts.onMemoryDirectoriesChanged) == null ? void 0 : _a2.call(opts, next);
-                  }
-                });
+              type: "path",
+              mode: "multi",
+              name: "记忆目录",
+              desc: "文件夹内的笔记会进入小橘的记忆库，移除目录会清掉对应记忆",
+              binding: {
+                get: () => normalizeMemoryDirectories(tryGetSettings().memoryDirectories),
+                set: () => {
+                },
+                save: () => {
+                }
+              },
+              pickerTitle: "选择记忆目录",
+              pickerDesc: "选择小橘读取笔记的文件夹（可多选）",
+              onChange: (list) => {
+                var _a2;
+                const next = normalizeMemoryDirectories(list);
+                getSettings().memoryDirectories = next;
+                void saveSettings();
+                (_a2 = opts.onMemoryDirectoriesChanged) == null ? void 0 : _a2.call(opts, next);
               }
             }
           ]
@@ -38347,9 +38326,8 @@ ${text}`;
           rows: [
             { type: "toggle", name: "显示行为日志", desc: "在数据面板中显示行为日志页签", binding: bindBehaviorOn("showBehaviorLog") }
           ]
-        },
+        }
         // ticket 162：移动端组挪到面板末尾（原位于记忆与存储之间）
-        mobileGroup
       ]
     };
   }
@@ -38360,7 +38338,6 @@ ${text}`;
       onClose: opts.onClose,
       schema: smartcatSettingsSchema(opts)
     });
-    applyMobileWindowFullscreen(document.getElementById("bz-settings-modal-popup"), !!opts.settingsKeys.mobileFullscreen);
   }
   function skinLabel(skin) {
     const labels = {
@@ -38386,10 +38363,8 @@ ${text}`;
       init_dom();
       init_z_order();
       init_esc_manager();
-      init_mobile();
       init_settings_modal();
       init_settings_provider();
-      init_path_picker();
       init_config5();
       CAT_CONTAINER_ID = "smart-companion-cat";
       SKINS = ["orange", "gray", "black", "white", "calico", "neon", "galaxy", "liquidMetal", "fire", "crystal", "cyberpunk", "rainbow", "hologram"];
@@ -38484,7 +38459,6 @@ ${text}`;
   var schemaLoaders, DOMAINS2, NAV_SECS, schemaRowCache, loadedCounts, listableDomains, navBadges, SettingsPanelUI;
   var init_ui12 = __esm({
     "src/settings-panel/ui.ts"() {
-      init_fake_obsidian();
       init_dom();
       init_esc_manager();
       init_mobile();
@@ -38553,12 +38527,7 @@ ${text}`;
             getConfig: () => data.config,
             saveConfig,
             settingsKeys: {
-              enabled: tryGetSettings().smartcatEnabled !== false,
-              mobileFullscreen: tryGetSettings().smartcatMobileDefaultFullscreen === true
-            },
-            setMobileFullscreen: async (v) => {
-              getSettings().smartcatMobileDefaultFullscreen = v;
-              await saveSettings();
+              enabled: tryGetSettings().smartcatEnabled !== false
             }
           });
         }
@@ -38614,6 +38583,8 @@ ${text}`;
           this.renderSeq = 0;
           /** 列表重绘回调（桌面导航/移动列表各自注册；preload 解析出零项域后剔除重绘） */
           this.rerenderList = null;
+          /** 移动端推入状态：home = 首页列表；domain = 已推入域设置页 */
+          this.mobPushed = false;
         }
         /**
          * 打开面板；domainId 可选（增强包：待办场景菜单「在设置中编辑」直达）——
@@ -38626,7 +38597,7 @@ ${text}`;
             topifyZ(this.mask, this.popup);
             this.mask.style.display = "block";
             this.popup.style.display = "flex";
-            if (deep && isMobileEnv()) void this.openMobileDomain(deep);
+            if (deep && isMobileEnv()) void this.pushDomain(deep);
             return;
           }
           this.build(deep);
@@ -38641,10 +38612,9 @@ ${text}`;
           });
           this.mask = mask;
           this.popup = popup;
-          applyMobileWindowFullscreen(popup, tryGetSettings().settingsPanelMobileDefaultFullscreen === true);
           if (isMobileEnv()) {
             this.buildMobile(popup);
-            if (deep) void this.openMobileDomain(deep);
+            if (deep) void this.pushDomain(deep);
           } else {
             this.buildDesktop(popup);
           }
@@ -38656,7 +38626,11 @@ ${text}`;
           topifyZ(mask, popup);
           this.escHandle = escManager.register("bz-settings-panel", {
             isVisible: () => !!this.mask && this.mask.style.display === "block",
-            close: () => this.hide()
+            close: () => {
+              var _a2;
+              if ((_a2 = this.popup) == null ? void 0 : _a2.classList.contains("bz-sp-mob-pushed")) this.popDomain();
+              else this.hide();
+            }
           });
         }
         /* ---------- 桌面：B 侧栏工作台（头行 + 左导航 + 右内嵌渲染） ---------- */
@@ -38751,14 +38725,17 @@ ${text}`;
          * 渲染某域设置到容器：内嵌渲染器（与 ⚙️ 弹窗同数据源）。
          * 无 schema 的域显示空态。
          */
-        async renderDomain(pane, domain) {
+        async renderDomain(pane, domain, opts = {}) {
           const runId = ++this.renderSeq;
           this.renderHandles = [];
           pane.innerHTML = "";
-          const headHolder = document.createElement("div");
-          headHolder.innerHTML = pageHeadHtml(domain.name, domain.desc, "");
-          const pageHead = headHolder.firstElementChild;
-          pane.appendChild(pageHead);
+          let pageHead = null;
+          if (opts.withHead !== false) {
+            const headHolder = document.createElement("div");
+            headHolder.innerHTML = pageHeadHtml(domain.name, domain.desc, "");
+            pageHead = headHolder.firstElementChild;
+            pane.appendChild(pageHead);
+          }
           if (domain.noSettings || !domain.schemaLoader) {
             pane.appendChild(this.emptyEl(
               "settings",
@@ -38783,7 +38760,9 @@ ${text}`;
             const count = visibleItemCount(schema);
             navBadges.set(domain.id, count > 0 ? String(count) : "·");
             this.refreshNavBadges();
-            pageHead.querySelector(".bz-sp-page-tag").textContent = `${count} 项 · ${schema.groups.length} 组`;
+            if (pageHead) {
+              pageHead.querySelector(".bz-sp-page-tag").textContent = `${count} 项 · ${schema.groups.length} 组`;
+            }
             if (visibleGroups === 0 && groupEls.length > 0) {
               body.appendChild(this.emptyEl(
                 "smartphone",
@@ -38802,192 +38781,86 @@ ${text}`;
             notice(`加载「${domain.name}」设置失败：${e.message}`, "error");
           }
         }
-        /* ---------- 移动端：M1 命令面板（头行 + 搜索 + 域列表 → 域设置弹窗） ---------- */
+        /* ---------- 移动端：全屏推入式两页（首页搜索 + 域列表 → 推入域设置页） ---------- */
         buildMobile(popup) {
           popup.classList.add("bz-sp-mobile");
-          popup.innerHTML = `
-      <div class="bz-sp-head">
-        <span class="bz-sp-head-title">设置</span>
-        <span class="bz-sp-head-tools"></span>
-      </div>
-      <div class="bz-sp-mob-search">
-        <i class="bz-ic"></i><input class="bz-input" placeholder="搜索设置、域…" />
-      </div>
-      <div class="bz-sp-mob-list"></div>
-    `;
-          const tools = popup.querySelector(".bz-sp-head-tools");
-          tools.appendChild(uiIconBtn({ icon: "x", lg: true, title: "关闭", className: "bz-sp-mob-close", onClick: () => this.hide() }));
+          popup.innerHTML = mobShellHtml();
+          this.mobPushed = false;
+          const homeTools = popup.querySelector('[data-sp-mob-tools="home"]');
+          homeTools.appendChild(uiIconBtn({ icon: "x", lg: true, title: "关闭", className: "bz-sp-mob-close", onClick: () => this.hide() }));
+          const domainTools = popup.querySelector('[data-sp-mob-tools="domain"]');
+          domainTools.appendChild(uiIconBtn({ icon: "x", lg: true, title: "关闭", className: "bz-sp-mob-close", onClick: () => this.hide() }));
+          const back = popup.querySelector("[data-sp-mob-back]");
+          back.appendChild(uiIconBtn({ icon: "arrow-left", lg: true, title: "返回", className: "bz-sp-mob-back-btn", onClick: () => this.popDomain() }));
+          mountIcons(popup);
           const list = popup.querySelector(".bz-sp-mob-list");
           const searchIn = popup.querySelector(".bz-sp-mob-search .bz-input");
-          const searchIcon = popup.querySelector(".bz-sp-mob-search .bz-ic");
-          setIcon(searchIcon, "search");
           const render2 = (q2) => {
             const query = q2.trim();
             list.innerHTML = "";
             if (!query) {
-              const visible = listableDomains();
-              const secs = groupDomains(visible);
+              const secs = groupDomains(listableDomains());
               for (const sec of secs) {
                 if (!sec.domains.length) continue;
                 const secEl = document.createElement("div");
                 secEl.className = "bz-sp-mob-sec";
                 secEl.textContent = sec.title;
                 list.appendChild(secEl);
-                sec.domains.forEach((d) => {
-                  list.appendChild(mobItem(d));
+                sec.domains.forEach((d) => list.insertAdjacentHTML("beforeend", mobItemHtml({ id: d.id, icon: d.icon, name: d.name, desc: d.desc })));
+              }
+            } else {
+              const doms = listableDomains().filter((d) => d.name.includes(query) || d.desc.includes(query));
+              const rows = [];
+              schemaRowCache.forEach((rowsOf, did) => {
+                const d = DOMAINS2.find((x) => x.id === did);
+                if (!d) return;
+                rowsOf.forEach((r) => {
+                  if (r.name.includes(query) || r.desc && r.desc.includes(query)) rows.push({ domain: d, name: r.name, desc: r.desc || d.name });
+                });
+              });
+              let html = "";
+              if (doms.length) {
+                html += `<div class="bz-sp-mob-sec">域（${doms.length}）</div>`;
+                doms.forEach((d) => {
+                  html += mobItemHtml({ id: d.id, icon: d.icon, name: d.name, desc: d.desc });
                 });
               }
-              return;
+              if (rows.length) {
+                html += `<div class="bz-sp-mob-sec">设置项（${rows.length}）</div>`;
+                rows.forEach((r) => {
+                  html += mobItemHtml({ id: r.domain.id, icon: r.domain.icon, name: r.name, desc: `${r.domain.name} · ${r.desc}`, kind: "设置" });
+                });
+              }
+              if (!doms.length && !rows.length) html = `<div class="bz-sp-mob-empty">没有匹配「${query}」的设置或域</div>`;
+              list.innerHTML = html;
             }
-            const doms = listableDomains().filter((d) => d.name.includes(query) || d.desc.includes(query));
-            const rows = [];
-            schemaRowCache.forEach((rowsOf, did) => {
-              const d = DOMAINS2.find((x) => x.id === did);
-              if (!d) return;
-              rowsOf.forEach((r) => {
-                if (r.name.includes(query) || r.desc && r.desc.includes(query)) {
-                  rows.push({ icon: d.icon, name: r.name, desc: r.desc || d.name, domain: d });
-                }
-              });
+            list.querySelectorAll(".bz-sp-mob-item").forEach((b) => {
+              const d = DOMAINS2.find((x) => x.id === b.dataset.spDomain);
+              if (d) b.addEventListener("click", () => void this.pushDomain(d));
             });
-            let html = "";
-            if (doms.length) {
-              html += `<div class="bz-sp-mob-sec">域（${doms.length}）</div>`;
-              doms.forEach((d) => {
-                html += mobItem(d).outerHTML;
-              });
-            }
-            if (rows.length) {
-              html += `<div class="bz-sp-mob-sec">设置项（${rows.length}）</div>`;
-              rows.forEach((r) => {
-                const item = document.createElement("button");
-                item.type = "button";
-                item.className = "bz-sp-mob-item";
-                const ic = document.createElement("span");
-                ic.className = "bz-sp-mob-ic";
-                ic.appendChild(uiIcon(r.icon));
-                const t = document.createElement("span");
-                t.className = "bz-sp-mob-t";
-                const nm = document.createElement("span");
-                nm.className = "bz-sp-mob-name";
-                nm.textContent = r.name;
-                const ds = document.createElement("span");
-                ds.className = "bz-sp-mob-desc";
-                ds.textContent = `${r.domain.name} · ${r.desc}`;
-                t.append(nm, ds);
-                const kind = document.createElement("span");
-                kind.className = "bz-sp-mob-kind";
-                kind.textContent = "设置";
-                item.append(ic, t, kind);
-                item.addEventListener("click", () => void this.openMobileDomain(r.domain));
-                html += item.outerHTML;
-              });
-            }
-            if (!doms.length && !rows.length) {
-              html = `<div class="bz-sp-mob-empty">没有匹配「${query}」的设置或域</div>`;
-            }
-            list.innerHTML = html;
-          };
-          const mobItem = (d) => {
-            const item = document.createElement("button");
-            item.type = "button";
-            item.className = "bz-sp-mob-item";
-            const ic = document.createElement("span");
-            ic.className = "bz-sp-mob-ic";
-            ic.appendChild(uiIcon(d.icon));
-            const t = document.createElement("span");
-            t.className = "bz-sp-mob-t";
-            const nm = document.createElement("span");
-            nm.className = "bz-sp-mob-name";
-            nm.textContent = d.name;
-            const ds = document.createElement("span");
-            ds.className = "bz-sp-mob-desc";
-            ds.textContent = d.desc;
-            t.append(nm, ds);
-            const chev = document.createElement("span");
-            chev.className = "bz-sp-mob-chev";
-            chev.appendChild(uiIcon("chevron-right"));
-            item.append(ic, t, chev);
-            item.addEventListener("click", () => void this.openMobileDomain(d));
-            return item;
+            mountIcons(list);
           };
           searchIn.addEventListener("input", () => render2(searchIn.value));
           render2("");
-          this.rerenderList = () => render2(searchIn.value);
-        }
-        /** 移动端：域设置 → 居中弹窗内嵌渲染（子面板一律弹窗，遮罩点击关闭） */
-        async openMobileDomain(domain) {
-          const mask = document.createElement("div");
-          mask.className = "bz-overlay-mask";
-          mask.style.display = "block";
-          const popup = document.createElement("div");
-          popup.className = "bz-overlay-popup bz-sp-mob-modal";
-          popup.style.display = "flex";
-          popup.style.top = "auto";
-          popup.style.left = "0";
-          popup.style.right = "0";
-          popup.style.bottom = "0";
-          popup.style.transform = "none";
-          popup.style.width = "100%";
-          popup.style.maxWidth = "100%";
-          popup.style.maxHeight = "88%";
-          popup.style.borderRadius = "16px 16px 0 0";
-          popup.style.borderBottom = "0";
-          topifyZ(mask, popup);
-          const head = document.createElement("div");
-          head.className = "bz-sp-mob-modal-head";
-          const title = document.createElement("h3");
-          title.className = "bz-sp-mob-modal-title";
-          title.textContent = domain.name;
-          head.appendChild(title);
-          popup.appendChild(head);
-          const body = document.createElement("div");
-          body.className = "bz-sp-settings-body bz-sp-mob-modal-body";
-          popup.appendChild(body);
-          const close = () => {
-            escHandle5 == null ? void 0 : escHandle5.unregister();
-            mask.remove();
-            popup.remove();
+          this.rerenderList = () => {
+            if (!this.mobPushed) render2(searchIn.value);
           };
-          mask.addEventListener("click", (e) => {
-            if (e.target === mask) close();
-          });
-          document.body.appendChild(mask);
-          document.body.appendChild(popup);
-          let escHandle5 = null;
-          escHandle5 = escManager.register("bz-settings-panel-domain", {
-            isVisible: () => popup.isConnected,
-            close
-          });
-          if (domain.noSettings || !domain.schemaLoader) {
-            body.appendChild(this.emptyEl(
-              "settings",
-              `${domain.name} · 暂无设置项`,
-              "该域没有可在此配置的设置"
-            ));
-            return;
-          }
-          body.innerHTML = loadingHtml();
-          const openSeq = ++this.renderSeq;
-          try {
-            const schema = await domain.schemaLoader();
-            if (openSeq !== this.renderSeq) {
-              close();
-              return;
-            }
-            body.innerHTML = "";
-            renderPanelSchema(body, schema);
-            cacheRowsFor(domain.id, schema);
-            const count = visibleItemCount(schema);
-            navBadges.set(domain.id, count > 0 ? String(count) : "·");
-          } catch (e) {
-            body.innerHTML = "";
-            body.appendChild(this.emptyEl(
-              "alert-circle",
-              "加载失败",
-              e.message
-            ));
-          }
+        }
+        /** 推入域设置页（全屏页切换；返回/ESC 弹回首页） */
+        async pushDomain(domain) {
+          const popup = this.popup;
+          this.mobPushed = true;
+          popup.querySelector(".bz-sp-mob-title").textContent = domain.name;
+          popup.classList.add("bz-sp-mob-pushed");
+          const body = popup.querySelector(".bz-sp-mob-page-body");
+          await this.renderDomain(body, domain, { withHead: false });
+        }
+        /** 弹回首页（作废进行中的域渲染；下次推入重渲） */
+        popDomain() {
+          var _a2;
+          this.mobPushed = false;
+          this.renderSeq++;
+          (_a2 = this.popup) == null ? void 0 : _a2.classList.remove("bz-sp-mob-pushed");
         }
         hide() {
           if (this.mask) this.mask.style.display = "none";
@@ -39442,7 +39315,6 @@ ${text}`;
       init_esc_manager();
       init_settings_provider();
       init_utils();
-      init_mobile();
       init_ui();
       init_item_actions();
       init_fsrs();
@@ -39509,7 +39381,6 @@ ${text}`;
         async showMain() {
           this.createMainUI();
           if (!this.mask || !this.popup) return;
-          applyMobileWindowFullscreen(this.popup, tryGetSettings().reviewMobileDefaultFullscreen === true);
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";

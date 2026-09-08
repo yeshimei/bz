@@ -6408,12 +6408,31 @@ var BZW_clipbook = (() => {
           });
         }
       };
+      const actions = row.actions;
+      if (actions) {
+        for (const a of actions) {
+          setting.addButton((b) => {
+            if (a.cta) b.setCta();
+            b.setButtonText(a.text).onClick(() => {
+              void (async () => {
+                var _a3;
+                await a.onClick(last, ctx);
+                if (currentText && currentText.setValue) {
+                  dirty2 = false;
+                  currentText.setValue(String((_a3 = acc.read()) != null ? _a3 : ""));
+                }
+                reevaluate();
+              })();
+            });
+          });
+        }
+      }
       if (row.type === "text") setting.addText(addInto);
       else if (row.type === "textarea") setting.addTextArea(addInto);
       else setting.addText(addInto);
     };
     const renderRow = (body, rowArg, parentToggleKey) => {
-      var _a2;
+      var _a2, _b, _c;
       const ctx = { rowEl: body, refreshVisibility: reevaluate };
       let row = rowArg;
       if (row.isChild && parentToggleKey) {
@@ -6542,6 +6561,12 @@ var BZW_clipbook = (() => {
               (_a4 = row.onChange) == null ? void 0 : _a4.call(row, v, ctx);
             });
           });
+          for (const a of (_b = row.actions) != null ? _b : []) {
+            setting.addButton((b) => {
+              if (a.cta) b.setCta();
+              b.setButtonText(a.text).onClick(() => void a.onClick(void 0, ctx));
+            });
+          }
           return;
         }
         case "button": {
@@ -6559,6 +6584,79 @@ var BZW_clipbook = (() => {
           const setting = new Setting(body).setName(row.name);
           if (row.desc) setting.setDesc(row.desc);
           if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          for (const a of (_c = row.actions) != null ? _c : []) {
+            setting.addButton((b) => {
+              if (a.cta) b.setCta();
+              b.setButtonText(a.text).onClick(() => void a.onClick(void 0, ctx));
+            });
+          }
+          return;
+        }
+        case "list": {
+          const wrap = document.createElement("div");
+          wrap.className = "bz-setlist-wrap";
+          body.appendChild(wrap);
+          const setting = new Setting(wrap).setName(row.name);
+          if (row.desc) setting.setDesc(row.desc);
+          if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
+          const box = document.createElement("div");
+          box.className = "bz-setlist";
+          wrap.appendChild(box);
+          const readItems = () => typeof row.items === "function" ? row.items() : row.items;
+          const renderItems = () => {
+            const items = readItems();
+            box.innerHTML = "";
+            if (items.length === 0) {
+              if (row.emptyText) {
+                const empty = document.createElement("div");
+                empty.className = "bz-setlist-empty";
+                empty.textContent = row.emptyText;
+                box.appendChild(empty);
+              }
+              return;
+            }
+            for (const it of items) {
+              const item = document.createElement("div");
+              item.className = "bz-setlist-item";
+              item.dataset.key = it.key;
+              if (it.imageUrl) {
+                const img = document.createElement("img");
+                img.className = "bz-setlist-avatar";
+                img.src = it.imageUrl;
+                img.alt = "";
+                img.onerror = () => img.remove();
+                item.appendChild(img);
+              }
+              const text = document.createElement("div");
+              text.className = "bz-setlist-text";
+              const name = document.createElement("div");
+              name.className = "bz-setlist-name";
+              name.textContent = it.label;
+              text.appendChild(name);
+              if (it.sub) {
+                const sub = document.createElement("div");
+                sub.className = "bz-setlist-sub";
+                sub.textContent = it.sub;
+                text.appendChild(sub);
+              }
+              item.appendChild(text);
+              const remove = document.createElement("button");
+              remove.className = "bz-setlist-remove bz-touch-target--xl";
+              remove.textContent = row.removeLabel || "移除";
+              remove.onclick = () => {
+                void (async () => {
+                  var _a3;
+                  const remaining = readItems().map((x) => x.key).filter((k) => k !== it.key);
+                  await ((_a3 = row.onChange) == null ? void 0 : _a3.call(row, remaining, ctx));
+                  renderItems();
+                  reevaluate();
+                })();
+              };
+              item.appendChild(remove);
+              box.appendChild(item);
+            }
+          };
+          renderItems();
           return;
         }
         case "text":
@@ -8329,9 +8427,7 @@ ${bodyText.substring(0, 6e3)}`;
       inputValue: "",
       cookieInput: String(opts.cookie || ""),
       ups: [...opts.ups],
-      upInfo: { ...opts.upInfo },
-      listRefresh: () => {
-      }
+      upInfo: { ...opts.upInfo }
     };
     return {
       groups: [
@@ -8339,9 +8435,70 @@ ${bodyText.substring(0, 6e3)}`;
           icon: "users",
           name: "UP 主名单",
           rows: [
-            { type: "custom", render: (body) => renderAddUpRow(body, box, opts.onChanged) },
-            { type: "custom", render: (body) => renderCookieRow(body, box, opts.onChanged) },
-            { type: "custom", render: (body, ctx) => renderUpList(body, box, opts.onChanged, ctx) }
+            {
+              type: "text",
+              name: "添加 UP 主",
+              desc: "粘贴主页链接或视频链接，自动解析后入库",
+              placeholder: "粘贴链接或 UID",
+              binding: {
+                get: () => box.inputValue,
+                set: (v) => {
+                  box.inputValue = v;
+                },
+                save: () => {
+                }
+              },
+              actions: [{
+                text: "添加",
+                cta: true,
+                onClick: (value) => addUpUid(value, box, opts)
+              }]
+            },
+            {
+              type: "text",
+              name: "B 站 Cookie 可选",
+              desc: cookieDesc(box.cookieInput),
+              placeholder: "粘贴 buvid3 或 SESSDATA 等 Cookie",
+              binding: {
+                get: () => box.cookieInput,
+                set: (v) => {
+                  box.cookieInput = v;
+                },
+                save: () => {
+                }
+              },
+              actions: [
+                { text: "保存", onClick: (value) => saveCookie(value || "", box, opts) },
+                { text: "清除", onClick: () => saveCookie("", box, opts) }
+              ]
+            },
+            {
+              type: "list",
+              name: "名单列表",
+              desc: "已跟踪的 UP 主，移除后不再抓取其投稿",
+              items: () => box.ups.map((uid) => {
+                var _a;
+                return {
+                  key: uid,
+                  label: upDisplayName(uid, box.upInfo[uid]),
+                  sub: `UID ${uid}`,
+                  imageUrl: (_a = box.upInfo[uid]) == null ? void 0 : _a.avatar
+                };
+              }),
+              emptyText: "暂无跟踪 UP 主，在上方粘贴主页链接或视频链接添加",
+              onChange: (keys) => {
+                void (async () => {
+                  const removed = box.ups.filter((u) => !keys.includes(u));
+                  for (const uid of removed) {
+                    await removeBilibiliUp(uid);
+                    box.ups = box.ups.filter((u) => u !== uid);
+                    delete box.upInfo[uid];
+                    notice(`已移除 UP 主 ${uid}`, "success");
+                  }
+                  if (removed.length > 0) opts.onChanged();
+                })();
+              }
+            }
           ]
         }
       ]
@@ -8350,125 +8507,32 @@ ${bodyText.substring(0, 6e3)}`;
   function upDisplayName(uid, info) {
     return info && info.name ? info.name : `UP ${uid}`;
   }
-  function renderAddUpRow(body, box, onChanged) {
-    new Setting(body).setName("添加 UP 主").setDesc("粘贴主页链接（space.bilibili.com/123456）或视频链接自动解析 UID").addText((text) => {
-      text.setPlaceholder("粘贴链接或 UID");
-      text.onChange((v) => {
-        box.inputValue = v;
-      });
-    }).addButton(
-      (btn) => btn.setButtonText("添加").setCta().onClick(() => {
-        void (async () => {
-          const raw = (box.inputValue || "").trim();
-          if (!raw) return;
-          const uid = await resolveUidFromInput(raw);
-          if (!uid) {
-            notice("无法识别 UID，请粘贴 space.bilibili.com/<uid> 主页链接", "error");
-            return;
-          }
-          const added = await addBilibiliUp(uid);
-          if (!added) {
-            notice("该 UP 主已在名单中", "info");
-            return;
-          }
-          box.inputValue = "";
-          box.ups.push(uid);
-          box.listRefresh();
-          onChanged();
-          notice(`已添加 UP 主 ${uid}`, "success");
-        })();
-      })
-    );
+  function cookieDesc(current) {
+    return `遇到风控时需粘贴登录后的 Cookie。当前${current ? "已配置" : "未配置"}`;
   }
-  function renderCookieRow(body, box, onChanged) {
-    const cookieDesc = () => `接口返回 412/-352（风控）时需要「登录后」的 Cookie：浏览器登录并打开 bilibili.com → F12 → Cookie → 复制含 SESSDATA 的整段粘贴（当前${box.cookieInput ? "已配置" : "未配置，走自动引导"}）`;
-    const row = new Setting(body).setName("B 站 Cookie（可选）").setDesc(cookieDesc());
-    row.addText((text) => {
-      text.setPlaceholder("粘贴 buvid3/SESSDATA 等 Cookie");
-      text.setValue(box.cookieInput);
-      text.onChange((v) => {
-        box.cookieInput = v;
-      });
-    });
-    row.addButton(
-      (btn) => btn.setButtonText("保存").onClick(() => {
-        void (async () => {
-          await writeBilibiliCookie(box.cookieInput);
-          row.setDesc(cookieDesc());
-          onChanged();
-          notice("B 站 Cookie 已保存", "success");
-        })();
-      })
-    );
-    row.addButton(
-      (btn) => btn.setButtonText("清除").onClick(() => {
-        void (async () => {
-          await writeBilibiliCookie("");
-          box.cookieInput = "";
-          row.setDesc(cookieDesc());
-          onChanged();
-          notice("已清除 B 站 Cookie（回自动引导）", "success");
-        })();
-      })
-    );
+  async function addUpUid(raw, box, opts) {
+    const input = String(raw || "").trim();
+    if (!input) return;
+    const uid = await resolveUidFromInput(input);
+    if (!uid) {
+      notice("无法识别 UID，请粘贴 space.bilibili.com 内的主页链接", "error");
+      return;
+    }
+    const added = await addBilibiliUp(uid);
+    if (!added) {
+      notice("该 UP 主已在名单中", "info");
+      return;
+    }
+    box.inputValue = "";
+    box.ups = [...box.ups, uid];
+    opts.onChanged();
+    notice(`已添加 UP 主 ${uid}`, "success");
   }
-  function renderUpList(body, box, onChanged, ctx) {
-    const listEl2 = document.createElement("div");
-    listEl2.dataset.upManagerList = "1";
-    body.appendChild(listEl2);
-    const refresh = () => {
-      listEl2.innerHTML = "";
-      if (box.ups.length === 0) {
-        const empty = document.createElement("div");
-        empty.className = "bz-up-manager-empty";
-        empty.textContent = "暂无跟踪 UP 主，在上方粘贴主页链接或视频链接添加";
-        listEl2.appendChild(empty);
-        return;
-      }
-      for (const uid of box.ups) {
-        const info = box.upInfo[uid];
-        const row = document.createElement("div");
-        row.className = "bz-up-manager-row";
-        row.dataset.upRow = "1";
-        if (info && info.avatar) {
-          const img = document.createElement("img");
-          img.className = "bz-up-manager-avatar";
-          img.src = info.avatar;
-          img.alt = "";
-          img.onerror = () => img.remove();
-          row.appendChild(img);
-        }
-        const text = document.createElement("div");
-        text.className = "bz-up-manager-text";
-        const name = document.createElement("div");
-        name.className = "bz-up-manager-name";
-        name.textContent = upDisplayName(uid, info);
-        const uidEl = document.createElement("div");
-        uidEl.className = "bz-up-manager-uid";
-        uidEl.textContent = `UID ${uid}`;
-        text.appendChild(name);
-        text.appendChild(uidEl);
-        row.appendChild(text);
-        const del = document.createElement("button");
-        del.className = "bz-up-manager-remove";
-        del.textContent = "移除";
-        del.onclick = () => {
-          void (async () => {
-            await removeBilibiliUp(uid);
-            box.ups = box.ups.filter((u) => u !== uid);
-            delete box.upInfo[uid];
-            refresh();
-            onChanged();
-            ctx.refreshVisibility();
-            notice(`已移除 UP 主 ${uid}`, "success");
-          })();
-        };
-        row.appendChild(del);
-        listEl2.appendChild(row);
-      }
-    };
-    box.listRefresh = refresh;
-    refresh();
+  async function saveCookie(value, box, opts) {
+    await writeBilibiliCookie(value);
+    box.cookieInput = value;
+    opts.onChanged();
+    notice(value ? "B 站 Cookie 已保存" : "已清除 B 站 Cookie，回自动引导", "success");
   }
   function openUpManagerModal(opts) {
     let handle = null;
@@ -8507,7 +8571,6 @@ ${bodyText.substring(0, 6e3)}`;
   }
   var init_news_sources_group = __esm({
     "src/clipbook/news-sources-group.ts"() {
-      init_fake_obsidian();
       init_notice();
       init_settings_common();
       init_dom();

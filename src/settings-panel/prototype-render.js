@@ -27,6 +27,8 @@ var BZR_settings_panel = (() => {
     esc: () => esc,
     groupCardHtml: () => groupCardHtml,
     iconSpan: () => iconSpan,
+    listEmptyHtml: () => listEmptyHtml,
+    listHtml: () => listHtml,
     loadingHtml: () => loadingHtml,
     miniHtml: () => miniHtml,
     mobItemHtml: () => mobItemHtml,
@@ -87,6 +89,15 @@ var BZR_settings_panel = (() => {
   }
   function rowBtnHtml(label, cta) {
     return `<button type="button" class="bz-sp-btn${cta ? " bz-sp-btn--primary" : ""}">${esc(label)}</button>`;
+  }
+  function listHtml(items, removeLabel = "移除") {
+    if (items.length === 0) return "";
+    return items.map(
+      (it) => `<div class="bz-setlist-item" data-key="${esc(it.key)}">` + (it.imageUrl ? `<img class="bz-setlist-avatar" src="${esc(it.imageUrl)}" alt="">` : "") + `<div class="bz-setlist-text"><div class="bz-setlist-name">${esc(it.label)}</div>` + (it.sub ? `<div class="bz-setlist-sub">${esc(it.sub)}</div>` : "") + `</div><button type="button" class="bz-setlist-remove bz-touch-target--xl">${esc(removeLabel)}</button></div>`
+    ).join("");
+  }
+  function listEmptyHtml(text) {
+    return `<div class="bz-setlist-empty">${esc(text)}</div>`;
   }
   function badgeHtml(label) {
     return `<span class="bz-badge">${esc(label)}</span>`;
