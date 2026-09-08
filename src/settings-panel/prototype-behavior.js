@@ -27790,7 +27790,7 @@ ${sample}`,
     });
     mobSearchBtn.addEventListener("click", () => {
       const show = mobSearchbarEl.style.display === "none";
-      mobSearchbarEl.style.display = show ? "" : "none";
+      mobSearchbarEl.style.display = show ? "block" : "none";
       if (show) mobInput.focus();
       else {
         mobInput.value = "";
@@ -27803,7 +27803,7 @@ ${sample}`,
       renderMobToc();
     });
     mobCloseBtn.addEventListener("click", () => {
-      const barOpen = mobSearchbarEl ? mobSearchbarEl.style.display !== "none" : false;
+      const barOpen = mobSearchbarEl ? mobSearchbarEl.style.display === "block" : false;
       if (searchKw || barOpen || expandedMobArch.size) {
         searchKw = "";
         expandedMobArch.clear();
@@ -27825,7 +27825,7 @@ ${sample}`,
     mobDetailEl.addEventListener("click", (e) => {
       if (!e.target.closest("[data-clip-mob-next]") || !M5.cur) return;
       const grp = mobItemOrder.filter((x) => x.srcName === M5.cur.srcName);
-      const idx = grp.indexOf(M5.cur);
+      const idx = grp.findIndex((x) => x.id === M5.cur.id);
       const next = grp[idx + 1];
       if (next) openMobDetail(next.id);
       else mobBackBtn.click();

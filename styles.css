@@ -6735,6 +6735,17 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-clip-read-body.fs-lg .bz-clip-art-md { font-size: var(--bz-font-emphasis); }
 /* 字号分段行（右栏 meta 下方右对齐；消费组件库 .bz-segmented 基线） */
 .bz-clip-art-fs { display: flex; justify-content: flex-end; margin-bottom: var(--bz-space-md); }
+/* 字号分段编辑部皮：基线圆角浅灰卡在纸墨皮肤里突兀（belongings 皮肤覆写同范式；
+   基线 .bz-segmented-btn 自带 !important，覆写须同级；选择器钉死桌面阅读面不波及其他 segmented） */
+.bz-clip-art-fs .bz-segmented { gap: 0; padding: 0; background: transparent; border: 1px solid var(--clip-ink); border-radius: 0; }
+.bz-clip-art-fs .bz-segmented-btn {
+  height: auto; padding: 3px 11px; border-radius: 0; border-right: 1px solid var(--clip-line);
+  font-family: var(--clip-serif); font-size: 11.5px; letter-spacing: 2px; font-weight: 500;
+  color: var(--clip-ink-2) !important; box-shadow: none !important;
+}
+.bz-clip-art-fs .bz-segmented-btn:last-child { border-right: none; }
+.bz-clip-art-fs .bz-segmented-btn:hover { background: var(--clip-cream) !important; color: var(--clip-ink) !important; }
+.bz-clip-art-fs .bz-segmented-btn.is-on { background: var(--clip-ink) !important; color: var(--clip-paper) !important; font-weight: 600; }
 /* 剪藏条目「打开笔记」编辑部文字脚（issue 214：文末唯一保留动作，文字链非按钮） */
 .bz-clip-art-foot { margin-top: 20px; padding-top: 14px; border-top: 2px solid var(--clip-ink); display: flex; gap: 18px; }
 .bz-clip-art-foot span {
@@ -6771,7 +6782,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-clip-mob-title { flex: 1; font-family: var(--clip-serif); font-size: 19px; font-weight: 700; letter-spacing: 5px; color: var(--clip-ink); white-space: nowrap; }
 .bz-clip-mob-act { font-family: var(--clip-serif); font-size: 11px; letter-spacing: 1.5px; color: var(--clip-dim); cursor: pointer; padding: 6px 1px; }
 .bz-clip-mob-act:hover { color: var(--clip-accent); }
-.bz-clip-mob-searchbar { display: none; padding: 10px 18px 0; flex-shrink: 0; }
+.bz-clip-mob-searchbar { padding: 10px 18px 0; flex-shrink: 0; }
 .bz-clip-mob-searchbar .bz-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--clip-line); border-radius: 0; padding: 4px 0 5px; font-family: var(--clip-serif); font-size: 12.5px; font-style: italic; color: var(--clip-ink); outline: none; box-shadow: none; }
 .bz-clip-mob-searchbar .bz-input::placeholder { color: var(--clip-muted); }
 .bz-clip-mob-searchbar .bz-input:focus { border-bottom-color: var(--clip-accent); }
