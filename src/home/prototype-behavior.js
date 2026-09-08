@@ -6547,6 +6547,7 @@ var BZW_home = (() => {
         pomodoro: "timer",
         attach: "folder-down",
         encrypt: "lock",
+        "password-vault": "key",
         smartcat: "cat",
         literature: "list-video",
         // 命令专属域
@@ -17415,29 +17416,6 @@ ${countsToText(s.missing)}
           rows: [
             { type: "choiceCards", name: "面板布局", binding: { key: "encryptSkin" }, options: [{ value: "default", label: "三栏", prevClass: "bz-sp-prev-panel" }] },
             { type: "choiceCards", name: "面板主题", binding: { key: "encryptSkinTheme" }, layoutKey: "encryptSkin", options: [{ value: "steel", label: "钢灰", layout: "default", prevClass: "bz-sp-prev-steel" }] }
-          ]
-        },
-        {
-          icon: "key-round",
-          name: "生成",
-          rows: [
-            {
-              type: "text",
-              name: "密码生成字符集",
-              desc: "随机生成密码时使用的字符集",
-              binding: { key: "passwordCharset" },
-              onCommit: warnReload
-            },
-            {
-              type: "number",
-              name: "密码生成长度",
-              desc: "随机生成密码的字符个数",
-              binding: numStrBinding("passwordLength", 16),
-              min: 4,
-              max: 128,
-              step: 1,
-              onCommit: warnReload
-            }
           ]
         },
         {
@@ -37910,6 +37888,31 @@ ${text}`;
     }
   });
 
+  // src/password-vault/settings.ts
+  var settings_exports5 = {};
+  __export(settings_exports5, {
+    passwordVaultSettingsSchema: () => passwordVaultSettingsSchema
+  });
+  function passwordVaultSettingsSchema() {
+    const warnReload = makeReloadWarnOnce();
+    return {
+      groups: [
+        { icon: "key-round", name: "生成", rows: [
+          { type: "text", name: "密码生成字符集", desc: "随机生成密码时使用的字符集", binding: { key: "passwordCharset" }, onCommit: warnReload },
+          { type: "number", name: "密码生成长度", desc: "随机生成密码的字符个数", binding: numStrBinding("passwordLength", 16), min: 4, max: 128, step: 1, onCommit: warnReload }
+        ] },
+        { icon: "shield", name: "安全", rows: [
+          { type: "toggle", name: "安全模式", desc: "关闭窗口立即自动上锁", binding: { key: "securityMode" }, onChange: warnReload }
+        ] }
+      ]
+    };
+  }
+  var init_settings5 = __esm({
+    "src/password-vault/settings.ts"() {
+      init_settings_common();
+    }
+  });
+
   // src/smartcat/config.ts
   function defaultConfig() {
     return {
@@ -38737,6 +38740,7 @@ ${text}`;
         secondbrain: async () => (await Promise.resolve().then(() => (init_panel2(), panel_exports2))).secondBrainSettingsSchema(),
         pomodoro: async () => (await Promise.resolve().then(() => (init_ui10(), ui_exports7))).pomodoroSettingsSchema(),
         encrypt: async () => (await Promise.resolve().then(() => (init_ui3(), ui_exports2))).encryptSettingsSchema(),
+        "password-vault": async () => (await Promise.resolve().then(() => (init_settings5(), settings_exports5))).passwordVaultSettingsSchema(),
         literature: async () => (await Promise.resolve().then(() => (init_ui6(), ui_exports4))).literatureSettingsSchema(),
         smartcat: async () => {
           const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data11(), data_exports));
@@ -38777,6 +38781,7 @@ ${text}`;
         { id: "pomodoro", name: "番茄钟", icon: DOMAIN_ICONS.pomodoro, desc: "专注计时与休息", schemaLoader: schemaLoaders.pomodoro },
         { id: "attach", name: "附件搬移", icon: DOMAIN_ICONS.attach, desc: "附件整理", noSettings: true },
         { id: "encrypt", name: "保险库", icon: DOMAIN_ICONS.encrypt, desc: "密码、加密笔记与加密日记", schemaLoader: schemaLoaders.encrypt },
+        { id: "password-vault", name: "密码本", icon: DOMAIN_ICONS["password-vault"], desc: "密码条目与生成器", schemaLoader: schemaLoaders["password-vault"] },
         { id: "smartcat", name: "小橘陪伴猫", icon: DOMAIN_ICONS.smartcat, desc: "桌面宠物陪伴", schemaLoader: schemaLoaders.smartcat },
         { id: "literature", name: "文献盒", icon: DOMAIN_ICONS.literature, desc: "文献笔记与术语录入", schemaLoader: schemaLoaders.literature }
       ];
@@ -38784,7 +38789,7 @@ ${text}`;
         { title: "基础", ids: ["global", "appearance", "ai"] },
         { title: "记录", ids: ["diary", "diary-wall", "todo", "belongings", "clipping", "favorites"] },
         { title: "媒体与知识", ids: ["cinema", "bookshelf", "review", "secondbrain", "literature"] },
-        { title: "工具", ids: ["pomodoro", "encrypt", "smartcat"] }
+        { title: "工具", ids: ["pomodoro", "encrypt", "password-vault", "smartcat"] }
       ];
       schemaRowCache = /* @__PURE__ */ new Map();
       loadedCounts = /* @__PURE__ */ new Map();
@@ -41048,7 +41053,7 @@ ${text}`;
   // src/home/shared.ts
   init_str();
   init_domain_icons();
-  var ICON_KEY = { wall: "diary-wall", settings: "settings-panel" };
+  var ICON_KEY = { wall: "diary-wall", settings: "settings-panel", vault: "password-vault" };
   var iconOf = (id) => {
     var _a2;
     return DOMAIN_ICONS[(_a2 = ICON_KEY[id]) != null ? _a2 : id];
@@ -41068,6 +41073,8 @@ ${text}`;
     { id: "belongings", commandId: "bz-belongings-open", name: "归物本", sub: "物品登记", icon: iconOf("belongings") },
     { id: "attach", commandId: "bz-attach-move", name: "移动附件", sub: "附件归位", icon: iconOf("attach") },
     { id: "encrypt", commandId: "bz-encrypt-open", name: "保险库", sub: "密码·加密笔记·日记", icon: iconOf("encrypt") },
+    // 密码本（password-vault 域，ADR-0109 拆回独立域；id 沿用合并前磁贴 id，旧钉选自动复活）
+    { id: "vault", commandId: "bz-password-vault-open", name: "密码本", sub: "密码与密钥", icon: iconOf("vault") },
     { id: "settings", commandId: "bz-settings-panel-open", name: "设置", sub: "全域设置", icon: iconOf("settings") }
   ];
   var DOMAIN_MAP2 = new Map(DOMAINS.map((d) => [d.id, d]));
@@ -41086,6 +41093,7 @@ ${text}`;
     belongings: "#45a35c",
     attach: "#8a8f99",
     encrypt: "#8a8f99",
+    vault: "#c9a227",
     smartcat: "#e67341",
     settings: "#8a8f99"
   };
