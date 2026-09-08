@@ -192,7 +192,23 @@ export function tocListHtml(list: ClipArticle[], curId: string | null, timeOf: (
 /** 图片段来源解析回调签名（实现留行为层：外链直用 / vault 嵌链走资源路径） */
 export type ImgResolver = (src: string) => string | null;
 
-/** 正文段落 markup（md.ts 段落化结果 → p/quote/img；图片 src 经 resolver 解析，拒载丢段） */
+/** 行内 markup：md.ts 保留的链接记号 → 锚点（data-clip-ext 供行为层接管打开），余文照常 esc */
+export function inlineHtml(text: string): string {
+  let out = '';
+  let last = 0;
+  const re = /\[([^\]]+)\]\(([^)\s]+)\)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    out += esc(text.slice(last, m.index));
+    out += `<a class="bz-clip-md-link" href="${esc(m[2])}" data-clip-ext target="_blank" rel="noopener noreferrer">${esc(m[1])}</a>`;
+    last = m.index + m[0].length;
+  }
+  out += esc(text.slice(last));
+  return out;
+}
+
+/** 正文段落 markup（md.ts 段落化结果 → p/quote/img；图片 src 经 resolver 解析，拒载丢段；
+ *  p/quote 行内链接成锚） */
 export function paragraphsHtml(paras: ClipParagraph[], resolveImg: ImgResolver): string {
   return paras.map((p) => {
     if (p.type === 'img') {
@@ -200,8 +216,8 @@ export function paragraphsHtml(paras: ClipParagraph[], resolveImg: ImgResolver):
       return src ? `<img class="bz-clip-art-img" src="${esc(src)}" alt="文章配图" loading="lazy">` : '';
     }
     return p.type === 'quote'
-      ? `<blockquote>${esc(p.text)}</blockquote>`
-      : `<p>${esc(p.text)}</p>`;
+      ? `<blockquote>${inlineHtml(p.text)}</blockquote>`
+      : `<p>${inlineHtml(p.text)}</p>`;
   }).join('');
 }
 
@@ -215,8 +231,8 @@ export function clipLoadingHtml(): string {
   return `<p class="dim">正在读取剪藏正文…</p>`;
 }
 
-/** 桌面阅读面（原 ui.ts renderReader 模板平移）：meta 行（时间 · 站点橘 · 状态右缘）
- *  + 字号分段挂位 + 摘要 + 正文 + 剪藏「打开笔记」文字脚（issue 214 文末唯一保留动作）。 */
+/** 桌面阅读面（原 ui.ts renderReader 模板平移）：meta 行（时间 · 站点橘）
+ *  + 摘要 + 正文（行内链接成锚）+ 剪藏「打开笔记」文字脚（issue 214 文末唯一保留动作）。 */
 export function readerHtml(a: ClipArticle, opts: { time: string; paras: string }): string {
   const openNoteFoot = a.origin === 'clip' && a.notePath
     ? `<div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-open-note>打开笔记 ${iconSpan(ICO.external, 'bz-ic--xs')}</span></div>`
@@ -226,9 +242,7 @@ export function readerHtml(a: ClipArticle, opts: { time: string; paras: string }
     <div class="bz-clip-art-meta">
       <span>${esc(opts.time)}</span>
       <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${esc(siteShort(a.srcName))}</span></span>
-      <span class="bz-clip-art-state">${stateLabel(a.st)}</span>
     </div>
-    <div class="bz-clip-art-fs" data-clip-fs></div>
     ${a.summary ? summaryHtml(a.summary) : ''}
     <div class="bz-clip-art-md" data-clip-md>${opts.paras || `<p class="dim">${esc(a.origin === 'clip' ? '（笔记暂无正文）' : '正文已清空（已处理条目）')}</p>`}</div>
     ${openNoteFoot}
@@ -313,12 +327,11 @@ export function mobNoHitHtml(text: string): string {
   return `<div class="bz-clip-mob-no-hit">${esc(text)}</div>`;
 }
 
-/** 移动详情正文（屏2，m3 原型逐字）：期次行(站·时间 + 第 n 则/总数) / 大标题 / 状态方章(纯字) / 细线 / 正文 / 读下一则脚 */
+/** 移动详情正文（屏2，m3 原型逐字）：期次行(站·时间 + 第 n 则/总数) / 大标题 / 细线 / 正文（行内链接成锚）/ 读下一则脚 */
 export function mobDetailHtml(a: ClipArticle, opts: { time: string; paras: string; seq: string }): string {
   return `
     <div class="bz-clip-mob-d-kicker"><span>${esc(siteShort(a.srcName))} · ${esc(opts.time)}</span><span>${esc(opts.seq)}</span></div>
     <div class="bz-clip-mob-d-title">${esc(a.title)}</div>
-    <span class="bz-clip-mob-d-flag ${a.st}">${stateLabel(a.st)}</span>
     <hr class="bz-clip-mob-d-rule">
     <div class="bz-clip-mob-d-md">${opts.paras || `<p>${esc(a.origin === 'clip' ? '（剪藏笔记正文请在 Obsidian 中打开）' : '正文已清空')}</p>`}</div>
     <div class="bz-clip-mob-d-foot"><span class="bz-clip-mob-d-next" data-clip-mob-next>↓ 读下一则</span><span class="bz-clip-mob-d-fch">${esc(siteShort(a.srcName))}</span></div>

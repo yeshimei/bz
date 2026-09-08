@@ -26,6 +26,7 @@ var BZR_clipbook = (() => {
     dotHtml: () => dotHtml,
     esc: () => esc,
     iconSpan: () => iconSpan,
+    inlineHtml: () => inlineHtml,
     mobChHeadHtml: () => mobChHeadHtml,
     mobDetailHtml: () => mobDetailHtml,
     mobFoldHtml: () => mobFoldHtml,
@@ -172,13 +173,26 @@ var BZR_clipbook = (() => {
       </div>
     </div>`).join("");
   }
+  function inlineHtml(text) {
+    let out = "";
+    let last = 0;
+    const re = /\[([^\]]+)\]\(([^)\s]+)\)/g;
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      out += esc(text.slice(last, m.index));
+      out += `<a class="bz-clip-md-link" href="${esc(m[2])}" data-clip-ext target="_blank" rel="noopener noreferrer">${esc(m[1])}</a>`;
+      last = m.index + m[0].length;
+    }
+    out += esc(text.slice(last));
+    return out;
+  }
   function paragraphsHtml(paras, resolveImg) {
     return paras.map((p) => {
       if (p.type === "img") {
         const src = resolveImg(p.text);
         return src ? `<img class="bz-clip-art-img" src="${esc(src)}" alt="文章配图" loading="lazy">` : "";
       }
-      return p.type === "quote" ? `<blockquote>${esc(p.text)}</blockquote>` : `<p>${esc(p.text)}</p>`;
+      return p.type === "quote" ? `<blockquote>${inlineHtml(p.text)}</blockquote>` : `<p>${inlineHtml(p.text)}</p>`;
     }).join("");
   }
   function summaryHtml(summary) {
@@ -194,9 +208,7 @@ var BZR_clipbook = (() => {
     <div class="bz-clip-art-meta">
       <span>${esc(opts.time)}</span>
       <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${esc(siteShort(a.srcName))}</span></span>
-      <span class="bz-clip-art-state">${stateLabel(a.st)}</span>
     </div>
-    <div class="bz-clip-art-fs" data-clip-fs></div>
     ${a.summary ? summaryHtml(a.summary) : ""}
     <div class="bz-clip-art-md" data-clip-md>${opts.paras || `<p class="dim">${esc(a.origin === "clip" ? "（笔记暂无正文）" : "正文已清空（已处理条目）")}</p>`}</div>
     ${openNoteFoot}
@@ -248,7 +260,6 @@ var BZR_clipbook = (() => {
     return `
     <div class="bz-clip-mob-d-kicker"><span>${esc(siteShort(a.srcName))} · ${esc(opts.time)}</span><span>${esc(opts.seq)}</span></div>
     <div class="bz-clip-mob-d-title">${esc(a.title)}</div>
-    <span class="bz-clip-mob-d-flag ${a.st}">${stateLabel(a.st)}</span>
     <hr class="bz-clip-mob-d-rule">
     <div class="bz-clip-mob-d-md">${opts.paras || `<p>${esc(a.origin === "clip" ? "（剪藏笔记正文请在 Obsidian 中打开）" : "正文已清空")}</p>`}</div>
     <div class="bz-clip-mob-d-foot"><span class="bz-clip-mob-d-next" data-clip-mob-next>↓ 读下一则</span><span class="bz-clip-mob-d-fch">${esc(siteShort(a.srcName))}</span></div>

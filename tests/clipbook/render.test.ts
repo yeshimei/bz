@@ -76,13 +76,14 @@ describe('clipbook render 纯层（issue 247）', () => {
     expect(html).toContain('果壳 · 昨天 14:00');
   });
 
-  it('段落化：引文块 / 图片段（解析失败丢段）/ 普通段', () => {
+  it('段落化：引文块 / 图片段（解析失败丢段）/ 普通段 / 行内链接成锚', () => {
     const html = paragraphsHtml(
       [
         { type: 'p', text: '第一段' },
         { type: 'quote', text: '引文' },
         { type: 'img', text: 'https://x.com/a.png' },
         { type: 'img', text: '![[本地图.png]]' },
+        { type: 'p', text: '🔗 观看：[标题文字](https://b23.tv/abc)（时长 16:27）' },
       ],
       (src) => (src.startsWith('https') ? src : null),
     );
@@ -90,17 +91,21 @@ describe('clipbook render 纯层（issue 247）', () => {
     expect(html).toContain('<blockquote>引文</blockquote>');
     expect(html).toContain('src="https://x.com/a.png"');
     expect(html).not.toContain('本地图'); // 拒载段不产 markup
+    // 行内链接成锚（data-clip-ext 供行为层接管打开）
+    expect(html).toContain('href="https://b23.tv/abc"');
+    expect(html).toContain('data-clip-ext');
+    expect(html).toContain('>标题文字</a>');
   });
 
-  it('阅读面：状态文字 + 摘要块 + 剪藏「打开笔记」文字脚（news 无）', () => {
+  it('阅读面：状态章退役 + 摘要块 + 剪藏「打开笔记」文字脚（news 无）', () => {
     const clip = art({ origin: 'clip', st: 'saved', notePath: '归档/网页剪藏/A.md' });
     const htmlClip = readerHtml(clip, { time: '08-29', paras: '<p>正文</p>' });
-    expect(htmlClip).toContain('已保存');
+    expect(htmlClip).not.toContain('bz-clip-art-state'); // 标题下未读等状态章已去
+    expect(htmlClip).not.toContain('data-clip-fs'); // 字号分段退役，改设置面板项
     expect(htmlClip).toContain('data-clip-open-note');
     expect(htmlClip).toContain('bz-clip-art-sum');
     const news = art({ st: 'unread' });
     const htmlNews = readerHtml(news, { time: '昨天', paras: '' });
-    expect(htmlNews).toContain('未读');
     expect(htmlNews).not.toContain('data-clip-open-note');
     expect(htmlNews).toContain('正文已清空（已处理条目）');
   });
@@ -147,15 +152,14 @@ describe('clipbook render 纯层（issue 247）', () => {
     expect(mobTocHtml([{ site: 'B站', unread: 1, activeN: 1, savedN: 0, activeHtml: 'x', archHtml: '' }], false, new Set())).not.toContain('bz-clip-mob-fold');
     expect(mobNoHitHtml('查无此条')).toContain('bz-clip-mob-no-hit');
     expect(mobNoHitHtml('查无此条')).toContain('查无此条');
-    // 详情屏2（原型）：kicker / 状态方章（纯字无 icon）/ 读下一则脚
+    // 详情屏2（原型）：kicker / 大标题（状态方章已退役）/ 读下一则脚
     const det = mobDetailHtml(art({ st: 'reading' }), { time: '昨天', paras: '<p>x</p>', seq: '第 2 则 / 6' });
-    expect(det).toContain('bz-clip-mob-d-flag reading');
-    expect(det).toContain('在读');
+    expect(det).not.toContain('bz-clip-mob-d-flag');
     expect(det).toContain('第 2 则 / 6');
     expect(det).toContain('data-clip-mob-next');
     expect(det).toContain('bz-clip-mob-d-kicker');
-    expect(det).not.toContain('data-lucide'); // 状态章与正文无图标（原型纯文字）
-    expect(mobDetailHtml(art({ st: 'saved' }), { time: '', paras: '', seq: '' })).toContain('已保存');
+    expect(det).not.toContain('data-lucide'); // 正文无图标（原型纯文字）
+    expect(mobDetailHtml(art({ st: 'saved' }), { time: '', paras: '', seq: '' })).not.toContain('已保存'); // 状态方章已去
     expect(mobDetailHtml(art({ origin: 'clip', st: 'saved', notePath: '归档/网页剪藏/A.md' }), { time: '', paras: '', seq: '' })).not.toContain('data-clip-open-note'); // 打开笔记走长按（原型屏2 无此脚）
     expect(clipLoadingHtml()).toContain('正在读取剪藏正文');
     expect(stateLabel('reading')).toBe('在读');

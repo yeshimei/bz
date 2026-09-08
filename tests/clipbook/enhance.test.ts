@@ -286,23 +286,10 @@ describe('阅读动线（标已读前进 / 键盘切换）', () => {
 });
 
 describe('阅读字号三档（enh 包 7）', () => {
-  it('小/中/大分段切换 → 落设置 saveSettings + 正文 class 跟随', async () => {
-    const { settings, saveSpy } = await openDesktop();
-    const segBtns = [...document.querySelectorAll('[data-clip-fs] .bz-segmented-btn')] as HTMLElement[];
-    expect(segBtns.map((b) => b.textContent)).toEqual(['小', '中', '大']);
-    const body = document.querySelector('.bz-clip-read-body') as HTMLElement;
-    // 默认中档
-    expect(body.classList.contains('fs-sm')).toBe(false);
-    expect(body.classList.contains('fs-lg')).toBe(false);
-    // 切「大」
-    (segBtns.find((b) => b.textContent === '大') as HTMLElement).click();
-    expect(body.classList.contains('fs-lg')).toBe(true);
-    expect(settings.clipbookReaderFontSize).toBe('large');
-    // 切「小」
-    (segBtns.find((b) => b.textContent === '小') as HTMLElement).click();
-    expect(body.classList.contains('fs-sm')).toBe(true);
-    expect(settings.clipbookReaderFontSize).toBe('small');
-    await vi.waitFor(() => expect(saveSpy).toHaveBeenCalled());
+  it('分段控件已退役（改设置面板项），阅读面无 data-clip-fs', async () => {
+    await openDesktop();
+    expect(document.querySelector('[data-clip-fs]')).toBeNull();
+    expect(document.querySelector('.bz-clip-read-body .bz-segmented')).toBeNull();
   });
 
   it('记忆档位打开即生效（large → fs-lg）', async () => {
@@ -310,6 +297,13 @@ describe('阅读字号三档（enh 包 7）', () => {
     const body = document.querySelector('.bz-clip-read-body') as HTMLElement;
     expect(body.classList.contains('fs-lg')).toBe(true);
     expect(body.classList.contains('fs-sm')).toBe(false);
+  });
+
+  it('默认中档无 fs 类', async () => {
+    await openDesktop();
+    const body = document.querySelector('.bz-clip-read-body') as HTMLElement;
+    expect(body.classList.contains('fs-sm')).toBe(false);
+    expect(body.classList.contains('fs-lg')).toBe(false);
   });
 });
 

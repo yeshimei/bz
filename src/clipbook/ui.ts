@@ -27,7 +27,7 @@
  */
 import { getApp } from '../core/app';
 import { notice, notifyUndo } from '../core/notice';
-import { uiSegmented, uiEmpty, uiResizable, uiVSplitter, mountIcons } from '../core/ui';
+import { uiEmpty, uiResizable, uiVSplitter, mountIcons } from '../core/ui';
 import { formatRelativeTime } from '../core/utils';
 import { isMobileEnv } from '../core/mobile';
 import { escManager } from '../core/esc-manager';
@@ -36,7 +36,7 @@ import { attachItemActions, closeItemMenu, type ItemAction } from '../core/item-
 import { openFlowDialog } from '../core/flow-dialog';
 import { openSettingsModal } from '../core/settings-modal';
 import type { SettingsSchema } from '../core/settings-schema';
-import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
+import { saveSettings, tryGetSettings } from '../core/settings-provider';
 import { ensureAutoSummary, stopAutoSummary, regenerateSummary } from '../auto-summary';
 import { dataSourceGroupRows } from './news-sources-group';
 import { articleKeyOf } from './constants';
@@ -266,12 +266,14 @@ function buildDom(app: any): void {
       renderRail();
     }, SEARCH_DEBOUNCE_MS);
   });
-  // 右栏常驻委托（enh 包 3/6c）：「打开笔记」点击 + ←→/jk 条目切换（字号分段内按键不劫持）
+  // 右栏常驻委托（enh 包 3/6c）：正文外链（md 锚点 data-clip-ext）+「打开笔记」点击 + ←→/jk 条目切换
   readPaneEl!.addEventListener('click', (e) => {
-    if ((e.target as HTMLElement).closest('[data-clip-open-note]') && M.cur) openNote(M.cur);
+    const t = e.target as HTMLElement;
+    const ext = t.closest('a[data-clip-ext]') as HTMLAnchorElement | null;
+    if (ext) { e.preventDefault(); try { window.open(ext.href, '_blank'); } catch { /* jsdom 无 window.open */ } return; }
+    if (t.closest('[data-clip-open-note]') && M.cur) openNote(M.cur);
   });
   readPaneEl!.addEventListener('keydown', (e) => {
-    if ((e.target as HTMLElement).closest('.bz-segmented')) return; // 字号分段方向键归组件库
     if (e.key === 'ArrowLeft' || e.key === 'k') { e.preventDefault(); stepArticle(-1); }
     else if (e.key === 'ArrowRight' || e.key === 'j') { e.preventDefault(); stepArticle(1); }
   });
@@ -310,8 +312,12 @@ function buildDom(app: any): void {
     void doSave(M.cur);
   });
   // 移动详情「读下一则」（原型脚；同章内下一则，章末回目录）——按 id 定位（目录条目为重建实例，indexOf 恒 -1）
+  // 点压缩制前先放行正文外链（data-clip-ext，与桌面右栏同一打开链）
   mobDetailEl!.addEventListener('click', (e) => {
-    if (!(e.target as HTMLElement).closest('[data-clip-mob-next]') || !M.cur) return;
+    const t = e.target as HTMLElement;
+    const ext = t.closest('a[data-clip-ext]') as HTMLAnchorElement | null;
+    if (ext) { e.preventDefault(); try { window.open(ext.href, '_blank'); } catch { /* jsdom 无 window.open */ } return; }
+    if (!t.closest('[data-clip-mob-next]') || !M.cur) return;
     const grp = mobItemOrder.filter((x) => x.srcName === M.cur!.srcName);
     const idx = grp.findIndex((x) => x.id === M.cur!.id);
     const next = grp[idx + 1];
@@ -701,7 +707,6 @@ function renderReader(): void {
   readerEl.innerHTML = readerHtml(a, { time: a.timeText || relTime(a.timeTs), paras });
   mountIcons(readerEl);
   bindImgFallback(readerEl);
-  mountFontSizeSeg();
   if (a.origin === 'clip') void loadClipBody(a);
 }
 
@@ -737,7 +742,9 @@ export function invalidateClipBodyCache(path: string): void {
   clipBodyCache.delete(String(path || ''));
 }
 
-// ---- 阅读字号三档（enh 包 7：小/中/大，settings 记忆） ----
+// ---- 阅读字号三档（enh 包 7：小/中/大）----
+// 档位由设置面板「剪藏本 · 基础 · 阅读字号」驱动（阅读面内分段控件已退役），此处只负责落类
+
 function readerFontSize(): 'small' | 'medium' | 'large' {
   const v = String((tryGetSettings() as any)?.clipbookReaderFontSize || '');
   return v === 'small' || v === 'large' ? (v as 'small' | 'large') : 'medium';
@@ -748,28 +755,6 @@ function applyReaderFontSize(): void {
   const fs = readerFontSize();
   readerEl.classList.toggle('fs-sm', fs === 'small');
   readerEl.classList.toggle('fs-lg', fs === 'large');
-}
-
-function mountFontSizeSeg(): void {
-  const holder = readerEl ? (readerEl.querySelector('[data-clip-fs]') as HTMLElement | null) : null;
-  if (!holder) return;
-  const seg = uiSegmented<string>({
-    options: [
-      { value: 'small', label: '小' },
-      { value: 'medium', label: '中' },
-      { value: 'large', label: '大' },
-    ],
-    value: readerFontSize(),
-    label: '阅读字号',
-    onChange: (v) => {
-      const s = getSettings() as any;
-      s.clipbookReaderFontSize = v;
-      void saveSettings();
-      applyReaderFontSize();
-    },
-  });
-  seg.el.classList.add('bz-segmented--sm');
-  holder.appendChild(seg.el);
 }
 
 // ---- 阅读动线（去在读后：无自动落读；条目切换靠 ←→/jk 与显式「标记为已读」动作） ----
@@ -1132,6 +1117,11 @@ export function clipbookSettingsSchema(dataSource: DataSourceState): SettingsSch
         icon: 'folder-open',
         name: '基础',
         rows: [
+          { type: 'select', name: '阅读字号', desc: '桌面阅读面正文字号', binding: { key: 'clipbookReaderFontSize' }, options: [
+            { value: 'small', label: '小' },
+            { value: 'medium', label: '中' },
+            { value: 'large', label: '大' },
+          ], onChange: () => applyReaderFontSize() },
           { type: 'path', mode: 'single', name: '剪藏目录', desc: '存放网页剪藏文章的文件夹', binding: { key: 'articleDirectory' } },
           { type: 'number', name: '面板宽度记忆', desc: '桌面拖拽面板边缘缩放后自动记忆，0 为未拖过', binding: { key: 'clipbookPanelWidth' }, min: 0, step: 10 },
           { type: 'number', name: '面板高度记忆', desc: '桌面拖拽面板边缘缩放后自动记忆，0 为未拖过', binding: { key: 'clipbookPanelHeight' }, min: 0, step: 10 },

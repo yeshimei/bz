@@ -422,9 +422,9 @@ describe('clipbook UI 桌面三栏', () => {
   it('issue 214：阅读面——站点并入 meta、去底部原文链接；news 右键动作（去查看原文）；剪藏条目有「打开笔记」文字脚', async () => {
     await openDesktop();
     const reader = document.querySelector('[data-clip-reader]') as HTMLElement;
-    // meta 行：时间 + 站点短名（橘，首篇 = B站 UP 影视飓风）+ 状态右缘；无 favicon/类型胶囊（issue 214 原型对齐）
+    // meta 行：时间 + 站点短名（橘，首篇 = B站 UP 影视飓风）；无 favicon/类型胶囊（issue 214 原型对齐）
     expect(reader.querySelector('.bz-clip-art-meta .bz-clip-art-site-name')!.textContent).toBe('影视飓风');
-    expect(reader.querySelector('.bz-clip-art-state')!.textContent).toMatch(/未读|在读|已读|已保存/);
+    expect(reader.querySelector('.bz-clip-art-state')).toBeNull(); // 标题下状态章（未读标识）已去
     expect(reader.querySelector('.bz-clip-favchip')).toBeNull();
     expect(reader.querySelector('.bz-clip-art-type')).toBeNull();
     expect(reader.firstElementChild!.classList.contains('bz-clip-art-title')).toBe(true);
