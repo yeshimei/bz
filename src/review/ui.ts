@@ -1,9 +1,8 @@
 /**
- * 复习计划 UI（2026-09-04 拍板形态重写：三区队列面板）
+ * 复习计划 UI（2026-09-04 拍板形态重写：三区队列面板；issue 253 起 markup 单源自 render.ts）
  *
  * 用户拍板（原型 rp1x 评审结论）：
  *  - 桌面右上角无设置按钮；「归档 / 统计」改为非按钮 → 沉到面板底部一条弱化信息行
- *    （「已完成 N 篇 · 点此查看归档」「累计复习 X 次 · 连续 Y 天 · 点此看分布」）
  *  - 移动端无设置按钮（顶栏仅 ✕）；归档/统计同走移动归档钮 + 统计弹窗
  *  - 全部 emoji 换 lucide 图标
  *  - 三区列：已逾期 / 今天到期 / 未来；只有到期（逾期/今天）条目可点击开始答题（sprint）
@@ -12,9 +11,15 @@
  *    .bz-panel-overlay/.bz-panel-frame（ADR-0094）；内容区三区队列渲染
  *  - 整窗冲刺由 SprintSession 驱动，宿主为 #review-entries-container 内容区
  *
- * 公共面（对外契约不变）：UIManager / reviewSettingsSchema（re-export）
+ * issue 253（V1 原型为真理，评审壳行为单源化）：
+ *  - markup 全部出自 ./render（queueViewHtml / 冲刺视图 / 难度弹窗 / 评级条），本文件只做
+ *    生命周期/事件委托/数据流；评审壳经 prototype-behavior.js 跑同一份 ui.ts
+ *  - V1 增量落地：卡片「待重做」红 tag 显性化；归档态状态条改绿点「已完成复习」；
+ *    列内排序 置顶 → R 升序 → 到期（render.sortColumn）
+ *
+ * 公共面（对外契约不变）：UIManager / reviewSettingsSchema（re-export）/ isPlayable / isDueToday
  */
-import { type App, TFile } from 'obsidian';
+import { type App, type TFile } from 'obsidian';
 import { topifyZ, allocZ } from '../core/z-order';
 import { notice, notifyUndo, notifySaveError } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
@@ -23,11 +28,15 @@ import { tryGetSettings } from '../core/settings-provider';
 import { escapeHtml } from '../core/utils';
 import { uiEmpty, mountIcons } from '../core/ui';
 import { unregisterSheetCompanion } from '../core/item-actions';
-import { FSRS, DEFAULT_W, LADDER_MAX, TOTAL_STAGES } from './fsrs';
+import { DEFAULT_W } from './fsrs';
 import type { ReviewItem } from './data';
 import { ReviewDataManager } from './data';
-import { computeStats } from './stats';
-import { partitionQueue, roundQueue, isDueToday, isEarlyDue } from './queue';
+import {
+  queueViewHtml, sprintHeadHtml, sprintLoadingHtml, sprintQuestionHtml, sprintBodyHtml,
+  sprintResultHtml, sprintSummaryHtml, difficultyDialogHtml, reviewBarHtml,
+  isPlayable as isPlayableRender,
+} from './render';
+import { isDueToday } from './queue';
 import { SprintSession } from './sprint';
 import type { SprintMode } from './sprint';
 import type { QuizQuestion } from './quiz-core/manager';
@@ -36,29 +45,13 @@ import type { QuizMasterUI } from './quiz-core/session';
 export { reviewSettingsSchema } from './settings-schema';
 // item 6：isDueToday 下沉 queue.ts 纯函数（ui 保留 re-export 签名兼容）
 export { isDueToday };
+// issue 253：isPlayable 实现迁 render.ts（ui 保留 re-export 签名兼容）
+export { isPlayableRender as isPlayable };
 
-/** 到期标签工具 */
-function dueLabelOf(item: ReviewItem): { label: string; cls: string } {
-  if (item.isMissing) return { label: '文件缺失', cls: 'is-missing' };
-  if (item.isCompleted) return { label: '已完成', cls: 'is-done' };
-  if (!item.nextReviewDate) return { label: '待定', cls: 'is-future' };
-  const diff = new Date(item.nextReviewDate).getTime() - Date.now();
-  if (diff > 0) {
-    const days = Math.floor(diff / 86400000);
-    const hours = Math.floor((diff % 86400000) / 3600000);
-    if (days > 0) return { label: `${days} 天后`, cls: 'is-future' };
-    if (hours > 0) return { label: `${hours} 小时后`, cls: 'is-future' };
-    return { label: `${Math.max(1, Math.floor(diff / 60000))} 分钟后`, cls: 'is-future' };
-  }
-  return { label: '已逾期', cls: 'is-overdue' };
-}
+/** 到期可做题判定（render 实现；本文件内部沿用旧名） */
+const isPlayable = isPlayableRender;
 
-/** 是否可做题（到期：逾期/今天；已完成/挂起/未来 → 不可） */
-export function isPlayable(item: ReviewItem): boolean {
-  if (item.isMissing || item.isCompleted || item.completed) return false;
-  if (!item.nextReviewDate) return false;
-  return new Date(item.nextReviewDate).getTime() <= Date.now();
-}
+// issue 253：到期标签/可做题判定等纯口径随 markup 一并迁 render.ts（dueLabelOf/isPlayable/stageTagHtml/stageNum）
 
 export class UIManager {
   app: App;
@@ -220,7 +213,7 @@ export class UIManager {
     await this.refreshPanel();
   }
 
-  // ================= 队列视图 HTML =================
+  // ================= 队列视图 HTML（markup 单源：render.queueViewHtml，issue 253） =================
 
   /** R 阈值提前复习判定（item 6：与开始本轮同口径；wSource=拟合权重） */
   private rThreshold(): number {
@@ -228,158 +221,12 @@ export class UIManager {
     return Number(s?.reviewRThreshold) || 0.9;
   }
 
-  private isEarly(it: ReviewItem): boolean {
-    return isEarlyDue(it, this.rThreshold(), this.wSource());
-  }
-
   private queueViewHtml(items: ReviewItem[], searchText: string): string {
-    const kw = searchText.trim().toLowerCase();
-    const vis = kw ? items.filter((i) => i.name.toLowerCase().includes(kw)) : items;
-    // item 6：三区列走 partitionQueue 纯函数（与开始本轮 roundQueue 同源口径；提前卡落「今天」列）
-    const rt = this.rThreshold();
-    const w = this.wSource();
-    const col = partitionQueue(items, rt, w);
-    const visCol = partitionQueue(vis, rt, w);
-    const over = visCol.overdue;
-    const today = visCol.today;
-    const future = visCol.future;
-    const done = visCol.done;
-
-    // item 8：今日全清（开始本轮集合为空 = 逾期/今日/提前全无）→ 绿点 +「今日已清空」+ 隐藏主按钮
-    const round = roundQueue(items, this.rThreshold(), this.wSource());
-    const clearToday = !round.length;
-    const futureCount = col.future.length;
-
-    const head = `
-      <div class="bz-panel-head">
-        <div class="bz-panel-brand">${this.icon('repeat-2', 'bz-ic--sm')}</div>
-        <div class="bz-panel-title">复习计划</div>
-        <div class="bz-panel-head-pipe"></div>
-        <div class="bz-panel-head-sub">${this.todayLabel()}</div>
-        <span class="bz-panel-head-sp"></span>
-        <div class="bz-panel-head-btns">
-          <button class="bz-icon-btn" data-act="settings" title="打开复习计划设置">${this.icon('settings', '')}</button>
-          <!-- issue 201 对齐待办：关闭钮不挂 bz-win-close（core 规则非真全屏隐藏之），桌面/移动常显同待办 -->
-          <button class="bz-icon-btn" data-act="close" title="关闭">${this.icon('x')}</button>
-      </div>
-      </div>
-      <div class="bz-q-tools">
-        <div class="bz-search${searchText ? ' typing' : ''}">${this.icon('search', '')}<input class="bz-input" type="text" id="bz-q-search" placeholder="搜索笔记…" value="${escapeHtml(searchText)}"></div>
-      </div>`;
-
-    // item 10：空库 → 头行 + 清空条 + 空态宿主（uiEmpty 于 renderEntries 挂载并绑两条路动作）
-    if (!items.length) {
-      const strip = `
-      <div class="bz-q-strip">
-        <span class="bz-q-strip-dot ok"></span>
-        <strong>今日已清空</strong>
-        <span class="bz-q-strip-txt">还没有任何复习条目</span>
-      </div>`;
-      return `<div class="bz-q-view">${head}${strip}<div class="bz-q-cols bz-q-empty-wrap"><div data-empty-host></div></div></div>`;
-    }
-
-    const strip = clearToday
-      ? `<div class="bz-q-strip">
-        <span class="bz-q-strip-dot ok"></span>
-        <strong>今日已清空</strong>
-        <span class="bz-q-strip-txt">${futureCount ? `未来还有 ${futureCount} 篇待复习` : '没有待复习条目'}</span>
-      </div>`
-      : `<div class="bz-q-strip">
-        <span class="bz-q-strip-dot"></span>
-        <strong>开始本轮</strong>
-        <span class="bz-q-strip-txt">${this.showArchived ? '查看已完成复习' : `今日 ${col.today.length} 篇到期 · 逾期 ${col.overdue.length} 篇顺延`}</span>
-        ${this.showArchived ? '' : `<button class="bz-btn bz-btn--primary" data-act="begin">开始本轮</button>`}
-      </div>`;
-
-    const body = this.showArchived
-      ? `<div class="bz-q-cols"><div class="bz-q-col done">${this.colHead(done.length, '已完成')}${this.cardsOf(done)}</div></div>`
-      : `<div class="bz-q-cols">
-          <div class="bz-q-col danger">${this.colHead(col.overdue.length, '已逾期')}${this.cardsOf(over)}</div>
-          <div class="bz-q-col warn">${this.colHead(col.today.length, '今天到期')}${this.cardsOf(today)}</div>
-          <div class="bz-q-col future">${this.colHead(future.length, '未来')}${this.cardsOf(future)}</div>
-        </div>`;
-
-    // 底部信息行：整行可点（归档 → 切换归档；统计 → 打开分布），无引导小字
-    // item 13：「累计复习 X 次」→「累计 X 天 · 连续 Y 天」（X=去重同日天数，computeStats.totalReviews）
-    const stats = computeStats(items);
-    const footer = `
-      <div class="bz-q-footer">
-        <span class="bz-q-fitem bz-touch-target--lg" data-act="arch" title="查看已完成复习">
-          ${this.icon('folder')}<span class="lbl">已完成 <b>${done.length}</b> 篇</span>
-        </span>
-        <i class="sep"></i>
-        <span class="bz-q-fitem bz-touch-target--lg" data-act="stats" title="查看复习统计分布">
-          ${this.icon('chart')}<span class="lbl">累计 <b>${stats.totalReviews}</b> 天 · 连续 <b>${stats.streak}</b> 天</span>
-        </span>
-      </div>`;
-
-    return `<div class="bz-q-view">${head}${strip}${body}${footer}</div>`;
-  }
-
-  private colHead(count: number, name: string): string {
-    return `<div class="bz-q-col-head"><span class="cnt">${count}</span><span class="name">${name}</span></div>`;
-  }
-
-  private cardsOf(items: ReviewItem[]): string {
-    if (!items.length) return `<div class="bz-q-hint">没有条目</div>`;
-    return items.map((it) => this.cardHtml(it)).join('');
-  }
-
-  private cardHtml(it: ReviewItem): string {
-    const due = dueLabelOf(it);
-    const canPlay = isPlayable(it) && !it.isMissing;
-    const title = it.isCompleted ? `<s>${escapeHtml(it.name)}</s>` : escapeHtml(it.name);
-    const cls = [
-      'bz-q-card',
-      it.isOverdue ? 'danger' : '',
-      it.isCompleted ? 'done' : '',
-      canPlay ? '' : 'no',
-      it.isMissing ? 'missing' : '',
-    ].join(' ').trim();
-    const tags = [
-      it.isMissing ? `<span class="bz-q-tag is-missing">文件缺失</span>` : `<span class="bz-q-tag ${due.cls}">${due.label}</span>`,
-      // item 6：R<阈值提前复习卡挂「提前」tag（与开始本轮同口径，落「今天」列）
-      !it.isMissing && this.isEarly(it) ? `<span class="bz-q-tag is-early">提前</span>` : '',
-      this.stageTagHtml(it),
-    ].join('');
-    return `
-      <div class="${cls}" data-id="${it.id}" role="button" tabindex="0" aria-disabled="${canPlay ? 'false' : 'true'}">
-        <div class="bz-q-card-top"><span class="bz-q-card-title">${title}</span><span class="bz-q-card-stage">${it.isMissing ? '挂起' : this.stageNum(it)}</span></div>
-        <div class="bz-q-card-meta">${tags}</div>
-      </div>`;
-  }
-
-  private stageTagHtml(it: ReviewItem): string {
-    if (it.completed) return '<span class="bz-q-tag is-done">已完成</span>';
-    if (it.phase === 'fsrs') {
-      const r = this.currentRPct(it);
-      if (r !== null) {
-        const cls = r >= 90 ? 'r-high' : r >= 70 ? 'r-mid' : 'r-low';
-        return `<span class="bz-q-tag is-r ${cls}">R=${r}%</span>`;
-      }
-      return `<span class="bz-q-tag is-r">FSRS</span>`;
-    }
-    return `<span class="bz-q-tag is-stage">阶段 ${it.currentStage ?? it.stage + 1}/${TOTAL_STAGES}</span>`;
-  }
-
-  private stageNum(it: ReviewItem): string {
-    if (it.phase === 'fsrs') return `FSRS Lv.${it.stage - LADDER_MAX + 1}`;
-    return `${it.currentStage ?? it.stage + 1}/${TOTAL_STAGES}`;
-  }
-
-  private currentRPct(it: ReviewItem): number | null {
-    if (it.phase !== 'fsrs' || !it.stability || !it.lastReviewed) return null;
-    const t = (Date.now() - new Date(it.lastReviewed).getTime()) / 86400000;
-    if (!(t > 0)) return null;
-    // R 展示与调度排期同口径：读拟合权重（wSource 由 ensureReview 注入 reviewApp.currentW）
-    const fsrs = new FSRS(this.wSource());
-    return Math.round(fsrs.R(t, it.stability) * 100);
-  }
-
-  private todayLabel(): string {
-    const d = new Date();
-    const week = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
-    return `${d.getMonth() + 1}月${d.getDate()}日 周${week}`;
+    return queueViewHtml(items, searchText, {
+      showArchived: this.showArchived,
+      rThreshold: this.rThreshold(),
+      w: this.wSource(),
+    });
   }
 
   // ================= 队列事件 =================
@@ -523,7 +370,7 @@ export class UIManager {
     await showStatsModal(this.app, this.dataManager);
   }
 
-  // ================= 难度弹窗（评分命令用，保留旧实现） =================
+  // ================= 难度弹窗（评分命令用；markup 单源 render.difficultyDialogHtml） =================
 
   showDifficultyDialog(item: ReviewItem, onSelect?: (diff: string) => void): void {
     const old = document.querySelector('.difficulty-dialog');
@@ -531,14 +378,7 @@ export class UIManager {
     const div = document.createElement('div');
     div.className = 'difficulty-dialog';
     div.style.zIndex = String(allocZ());
-    div.innerHTML = `
-      <h4>标记复习：${escapeHtml(item.name)}</h4>
-      <button class="diff-btn" data-diff="again">忘了（Again）</button>
-      <button class="diff-btn" data-diff="hard">困难（Hard）</button>
-      <button class="diff-btn" data-diff="good">一般（Good）</button>
-      <button class="diff-btn" data-diff="easy">简单（Easy）</button>
-      <button class="diff-btn diff-btn-cancel" data-diff="cancel">取消</button>
-    `;
+    div.innerHTML = difficultyDialogHtml(item);
     document.body.appendChild(div);
     div.style.display = 'block';
     div.querySelectorAll('.diff-btn').forEach((btn) => {
@@ -641,14 +481,6 @@ export class UIManager {
     const leaf = this.app.workspace.getLeaf(false);
     await leaf.openFile(file as TFile);
   }
-
-  // ================= 工具 =================
-
-  /** lucide 占位 HTML（默认挂 .bz-q-ic 域内尺寸钩子；extra 传空则只用 .bz-ic 基类，
-   *  如 .bz-search 内的搜索图标走组件库定位/尺寸）。渲染后组件库 mountIcons 统一替换 */
-  private icon(name: string, extra = 'bz-q-ic'): string {
-    return `<span class="bz-ic${extra ? ' ' + extra : ''}" data-lucide="${name}"></span>`;
-  }
 }
 
 /** 抽屉动作轻类型（避免引 core 类型依赖闭环） */
@@ -661,15 +493,8 @@ interface ItemActionLite {
 
 // ================= 普通复习悬浮迷你评级条（item 4） =================
 
-/** 评级条四档语义（复用既有 again/hard/good/easy；同 RATING_NAMES 口径） */
-const BAR_RATINGS: Array<{ rating: 'again' | 'hard' | 'good' | 'easy'; label: string; cls: string }> = [
-  { rating: 'again', label: '忘了', cls: 'again' },
-  { rating: 'hard', label: '困难', cls: 'hard' },
-  { rating: 'good', label: '一般', cls: 'good' },
-  { rating: 'easy', label: '简单', cls: 'easy' },
-];
-
-/** 屏幕底部挂悬浮迷你评级条（reviewLoop 存续期间）。返回句柄供收起（close 幂等）。 */
+/** 屏幕底部挂悬浮迷你评级条（reviewLoop 存续期间）。返回句柄供收起（close 幂等）。
+ *  issue 253：markup 单源 render.reviewBarHtml（四档语义/评级 class 契约不变）。 */
 export function mountFloatingRatingBar(opts: {
   name: string;
   index: number;
@@ -680,14 +505,7 @@ export function mountFloatingRatingBar(opts: {
   const el = document.createElement('div');
   el.className = 'bz-review-bar';
   el.style.zIndex = String(allocZ());
-  const btns = BAR_RATINGS.map(
-    (r) => `<button class="bz-review-bar-btn bz-touch-target--sm is-${r.cls}" data-rating="${r.rating}">${r.label}</button>`
-  ).join('');
-  el.innerHTML = `
-    <span class="bz-review-bar-info">${escapeHtml(opts.name.replace(/^《|》$/g, ''))}<i>(${opts.index}/${opts.total})</i></span>
-    <span class="bz-review-bar-act">${btns}
-      <button class="bz-review-bar-btn bz-touch-target--sm is-skip" data-rating="skip">${'跳过'}</button>
-    </span>`;
+  el.innerHTML = reviewBarHtml(opts);
   let closed = false;
   const close = (): void => {
     if (closed) return;

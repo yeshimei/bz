@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>复习计划 · 真行为实例</title>
+<!--
+  本页 = 复习计划行为单源评审壳的 iframe 视图（issue 253/ADR-0106）。
+  它不实现任何复习交互——只把真行为层跑起来：
+    - 载入同一份 CSS（core + 域，与插件同源）
+    - 载入 prototype-behavior.js（真 ui.ts/sprint.ts/app.ts 依赖链，alias obsidian→fake）
+    - bootReviewSim + openReviewPanel：面板 append 到本页 body（iframe 即全屏视口），
+      宽度决定桌面/移动布局（styles.css @media ≤768 判定，与插件 Platform.isMobile 同阈值）
+  宿主差异（数据/图标/AI canned）由 fake-obsidian / prototype-icons.js / 父页 RVW.SEED 提供。
+-->
+<link rel="stylesheet" href="../core/styles.css">
+<link rel="stylesheet" href="../core/ui/tokens.css">
+<link rel="stylesheet" href="../core/ui/components.css">
+<link rel="stylesheet" href="./styles.css">
+<script src="./prototype-icons.js"></script>
+<script src="./prototype-behavior.js"></script>
+<style>
+  /* iframe 内全屏面板：清掉 body 边距，让 #review-mask 遮罩铺满 */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+  body { background: #eae6dc; }
+  /* 模拟 Obsidian 宿主变量（core 弹层/菜单/flow-dialog 取值用；插件内由主题提供） */
+  body {
+    --background-primary: #fbf9f3; --text-normal: #171512; --text-muted: #8b8474; --text-faint: #b3ab99;
+    --text-error: #b3564d; --background-modifier-hover: rgba(23,21,18,.06); --color-green: #3d8f5d;
+    --background-modifier-border: rgba(23,21,18,.12); --input-shadow: none;
+    --interactive-normal: #fff; --interactive-accent: #3d8f5d; --shadow-s: 0 1px 3px rgba(0,0,0,.1);
+  }
+  * { scrollbar-width: none; } *::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body class="theme-light">
+<script>
+  (function () {
+    var B = window.BZW_review;
+    B.bootReviewSim();
+    B.openReviewPanel();
+  })();
+</script>
+</body>
+</html>

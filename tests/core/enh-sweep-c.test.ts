@@ -155,9 +155,9 @@ describe('enh-sweep-c：lucide 收尾', () => {
   });
 
   it('review：对错标记与排除名单关闭钮去文本符号（lucide check/x）', () => {
-    expect(src('src/review/sprint.ts')).toContain('data-lucide="check"');
-    expect(src('src/review/sprint.ts')).toContain('data-lucide="x"');
-    expect(src('src/review/sprint.ts')).not.toMatch(/bz-mark ok \$\{size\}">✓/);
+    expect(src('src/review/render.ts')).toContain('data-lucide="check"');
+    expect(src('src/review/render.ts')).toContain('data-lucide="x"');
+    expect(src('src/review/render.ts')).not.toMatch(/bz-mark ok \$\{size\}">✓/);
     // 排除名单已收敛为通用 list 行（.bz-setlist-remove 文本按钮）；无文本符号 ✕ 回潮
     expect(src('src/review/settings-schema.ts')).toContain("type: 'list'");
     expect(src('src/review/settings-schema.ts')).not.toContain("✕");
