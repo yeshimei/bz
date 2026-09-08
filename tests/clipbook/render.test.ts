@@ -7,7 +7,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   panelHtml, railItemHtml, railFootHtml, tocListHtml, paragraphsHtml, summaryHtml,
-  readerHtml, mobChipHtml, mobListHtml, mobDetailHtml, clipLoadingHtml,
+  readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, mobFoldHtml, mobChHeadHtml, clipLoadingHtml,
   siteShort, siteTint, stateFlag, stateLabel,
 } from '../../src/clipbook/render';
 import type { ClipArticle } from '../../src/clipbook/render';
@@ -105,13 +105,45 @@ describe('clipbook render 纯层（issue 247）', () => {
     expect(htmlNews).toContain('正文已清空（已处理条目）');
   });
 
-  it('移动端：chip 气泡 / 详情状态章映射 / 加载占位', () => {
-    const chip = mobChipHtml({ kind: 'site', site: '果壳' }, '果壳', 4, true, 'feed', '果');
-    expect(chip).toContain('bz-mobstrip-chip is-on');
-    expect(chip).toContain('bz-badge--brand">4<');
+  it('移动端：章头计数 / 折叠行 / 章目录组装 / 详情状态章映射 / 加载占位', () => {
+    const hd = mobChHeadHtml('果壳科学人', 2, 3, 5);
+    expect(hd).toContain('bz-clip-mob-ch-hd');
+    expect(hd).toContain('data-src=');
+    expect(hd).toContain('<b>2</b> 未读 · 3 已收 / 5');
+    expect(mobChHeadHtml('孤站', 0, 0, 1)).toContain('1 则');
+    const fold = mobFoldHtml(6);
+    expect(fold).toContain('bz-clip-mob-fold');
+    expect(fold).toContain('data-fold');
+    expect(fold).toContain('已收 <b>6</b> 篇');
+    expect(fold).toContain('aria-expanded="false"');
+    // 非搜索：常显 + 折叠行 + arch 段（arch 显隐由 CSS .open/容器 .searching 驱动）
+    const toc = mobTocHtml([
+      { site: '果壳科学人', unread: 2, activeN: 2, savedN: 1,
+        activeHtml: mobListHtml([art({ title: '未读甲' }), art({ title: '在读乙', st: 'reading', id: 'u2' })], () => '昨天'),
+        archHtml: mobListHtml([art({ title: '已收丙', st: 'saved', id: 'u3' })], () => '08-29') },
+    ], false);
+    expect(toc).toContain('bz-clip-mob-ch');
+    expect(toc).toContain('bz-clip-mob-arch');
+    expect(toc).toContain('bz-clip-mob-fold');
+    expect(toc).toContain('未读甲');
+    expect(toc).toContain('已收丙');
+    // 搜索态：折叠行不渲染（命中全平铺）
+    const tocS = mobTocHtml([
+      { site: '果壳科学人', unread: 0, activeN: 1, savedN: 1,
+        activeHtml: mobListHtml([art({ title: '甲' })], () => '昨天'),
+        archHtml: mobListHtml([art({ title: '乙', st: 'saved', id: 'u2' })], () => '08-29') },
+    ], true);
+    expect(tocS).not.toContain('bz-clip-mob-fold');
+    expect(tocS).toContain('bz-clip-mob-arch');
+    expect(tocS).toContain('乙');
+    // 无已收：不产折叠行与空 arch 段
+    expect(mobTocHtml([{ site: 'B站', unread: 1, activeN: 1, savedN: 0, activeHtml: 'x', archHtml: '' }], false)).not.toContain('bz-clip-mob-fold');
     expect(mobDetailHtml(art({ st: 'reading' }), { time: '', paras: '' })).toContain('bz-clip-art-flag warn');
     expect(mobDetailHtml(art({ st: 'saved' }), { time: '', paras: '' })).toContain('bz-clip-art-flag ok');
     expect(mobDetailHtml(art({ st: 'unread' }), { time: '', paras: '' })).toContain('bz-clip-art-flag info');
+    // 剪藏条目详情含「打开笔记」脚（news 无）
+    expect(mobDetailHtml(art({ origin: 'clip', st: 'saved', notePath: '归档/网页剪藏/A.md' }), { time: '', paras: '' })).toContain('data-clip-open-note');
+    expect(mobDetailHtml(art({ st: 'unread' }), { time: '', paras: '' })).not.toContain('data-clip-open-note');
     expect(clipLoadingHtml()).toContain('正在读取剪藏正文');
     expect(stateLabel('reading')).toBe('在读');
     expect(stateFlag('saved')).toEqual({ icon: 'check', cls: 'ok' });

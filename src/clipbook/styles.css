@@ -1,294 +1,356 @@
-/* ==================== 剪藏本域样式（src/clipbook/styles.css） ==================== */
-/* 剪藏本融合域（ADR-0082 / issue 177）：桌面三栏 + 移动双屏工作台。
-   issue 214：桌面端换肤「编辑部印刷风」（p1-final 定稿原型；左栏 = 10 版对照拍板 V1 点线索引）——
-   域内主题变量挂 .bz-clip-frame 子树（cinema 先例：自绘主题不动共享层）；
-   基线部件（panel 壳/头行/搜索/空态/分段/右键菜单结构）仍消费组件库类，
-   仅在本域子树内做皮肤级覆写；移动端双屏维持标准组件库皮肤不动。 */
-
-/* ---- 域主题：纸面 / 墨色 / 橘强调 / 细线 / 衬线（取值对齐 p1-final 原型） ----
-   变量选择器并挂菜单根 .bz-item-menu.bz-clip-menu-editorial——右键菜单挂 body
-   （域内后代选择器不可达），不在 .bz-clip-frame 子树内；变量缺定义时菜单里
-   var(--clip-*) 计算值无效，背景/边框/悬停色全透明裸奔（issue 222 修复轮）。
-   todo 皮肤先例 = 变量定义在菜单根也携带的单类上，此处同口径。 */
-.bz-clip-frame,
-.bz-item-menu.bz-clip-menu-editorial {
-  --clip-paper: #faf8f3;
-  --clip-ink: #1c1a17;
-  --clip-ink-2: #3d3a34;
-  --clip-body: #33302a;
-  --clip-dim: #6b6458;
-  --clip-accent: #c2410c;
-  --clip-accent-soft: #e8965a;
-  --clip-line: #e4ddd0;
-  --clip-line-soft: #eee8dc;
-  --clip-cream: #f3efe6;
-  --clip-cream-2: #f5ecdf;
-  --clip-muted: #b3aa9a;
-  --clip-no: #d9d1c2;
-  --clip-serif: Georgia, "Noto Serif SC", "SimSun", serif;
-}
-
-.bz-clip-frame {
-  width: 1180px; max-width: calc(100vw - 40px); height: 760px; max-height: 92vh;
-  background: var(--clip-paper);
-  color: var(--clip-ink);
-}
-
-/* ==================== 桌面端（编辑部印刷风） ==================== */
-.bz-clip-desk { display: flex; flex-direction: column; height: 100%; min-height: 0; }
-
-/* ---- 头行：报细线（2px 墨色底线）；左 = serif 刊名，右 = 期号 + 检索（去 ⚙/✕，关闭 = 点遮罩/ESC） ---- */
-.bz-clip-desk .bz-panel-head { border-bottom: 2px solid var(--clip-ink); }
-.bz-clip-desk .bz-panel-title { font-family: var(--clip-serif); font-size: 21px; letter-spacing: 8px; font-weight: 700; color: var(--clip-ink); }
-.bz-clip-issue { font-size: 12px; color: var(--clip-muted); letter-spacing: 1px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-/* 头行检索：编辑部下划线检索（issue 214 原型对齐：搜索在头行右缘，不在 rail） */
-.bz-clip-head-search { position: relative; width: 250px; }
-.bz-clip-head-search .bz-ic { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; color: var(--clip-muted); }
-.bz-clip-head-search .bz-input {
-  width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--clip-line);
-  border-radius: 0; padding: 4px 2px 5px 22px; font-size: 12.5px; font-style: italic; color: var(--clip-ink);
-}
-.bz-clip-head-search .bz-input:focus { border-bottom-color: var(--clip-accent); box-shadow: none; }
-
-.bz-clip-desk-body { flex: 1; display: flex; min-height: 0; }
-
-/* ---- 左 rail：V1 点线索引（栏头 + 衬线名 + 点线引导 + 未读/总数；选中 = 行首墨方块 + 橘名） ---- */
-.bz-clip-rail { width: 190px; border-right: 1px solid var(--clip-line); }
-.bz-clip-rail-label {
-  flex-shrink: 0; padding: 22px 22px 12px;
-  font-size: 11px; letter-spacing: 3px; color: var(--clip-muted);
-}
-/* bili 徽标紫单一事实源（批 C-11 契约；编辑部皮肤下徽标槽隐藏，规则保留防换肤回切失色） */
-.bz-clip-rail .bz-rail-badge.bili { --bz-rail-tint: #8b7cf6; }
-/* 徽标/图标槽隐藏（V1 纯文字；DOM 槽位保留给共享结构与测试） */
-.bz-clip-rail .bz-rail-badge,
-.bz-clip-rail .bz-rail-ic { display: none; }
-.bz-clip-rail .bz-rail-item {
-  display: flex; align-items: baseline; gap: 8px;
-  padding: 10px 18px 10px 22px; border-radius: 0;
-  border: none; background: transparent; position: relative;
-}
-.bz-clip-rail .bz-rail-item:hover { background: var(--clip-cream); }
-.bz-clip-rail .bz-rail-item.on { background: transparent; }
-.bz-clip-rail .bz-rail-item.on::before {
-  content: ''; position: absolute; left: 8px; top: 50%;
-  width: 7px; height: 7px; transform: translateY(-50%);
-  background: var(--clip-accent);
-}
-.bz-clip-rail .bz-rail-name {
-  flex: 0 1 auto; min-width: 0;
-  font-family: var(--clip-serif); font-size: 14px; letter-spacing: .5px;
-  color: var(--clip-ink-2);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.bz-clip-rail .bz-rail-item.on .bz-rail-name { color: var(--clip-accent); font-weight: 700; }
-.bz-clip-lead { flex: 1 1 12px; min-width: 10px; border-bottom: 1px dotted #c9c0b0; transform: translateY(-3px); }
-.bz-clip-rail .bz-rail-count { margin-left: auto; font-size: 10.5px; color: var(--clip-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.bz-clip-rail .bz-rail-count b { color: var(--clip-accent); font-weight: 700; }
-.bz-clip-rail .bz-rail-item.on .bz-rail-count b { color: var(--clip-accent-soft); }
-/* rail 脚注：今日已读（报脚式细线 + 橘大数字） */
-.bz-clip-rail-foot {
-  flex-shrink: 0; margin: 0 18px; padding: 14px 2px 16px; border-top: 1px solid var(--clip-line);
-  font-size: 10.5px; color: var(--clip-muted); line-height: 1.9;
-}
-.bz-clip-rail-foot b { color: var(--clip-accent); font-size: 14px; }
-
-/* ---- 中栏：目录（serif 栏头 + 序号制条目：序号 + 标题 + 「站点 · 时间」） ---- */
-.bz-clip-mid { width: 360px; flex-shrink: 0; border-right: 1px solid var(--clip-line); display: flex; flex-direction: column; min-height: 0; }
-.bz-clip-toc-head {
-  flex-shrink: 0; padding: 18px 24px 12px;
-  font-family: var(--clip-serif); font-size: 17px; font-weight: 700; letter-spacing: 3px; color: var(--clip-ink);
-}
-.bz-clip-list { flex: 1; overflow-y: auto; padding: 0 0 var(--bz-space-sm); }
-.bz-clip-item {
-  display: flex; gap: 14px; align-items: baseline;
-  padding: 13px 24px; border-radius: 0; cursor: pointer;
-  border: 1px solid transparent; border-top-color: var(--clip-line-soft); position: relative;
-}
-.bz-clip-item:first-child { border-top-color: transparent; }
-.bz-clip-item:hover { background: var(--clip-cream); }
-.bz-clip-item.on { background: var(--clip-cream-2); border-color: transparent; box-shadow: inset 3px 0 0 var(--clip-accent); }
-/* 序号 = 大号衬线数字；未读唯一视觉 = 序号颜色（未读橘 / 在读琥珀 / 其余灰） */
-.bz-clip-no {
-  flex-shrink: 0; min-width: 26px;
-  font-family: Georgia, var(--clip-serif); font-size: 20px; font-weight: 700;
-  color: var(--clip-no); line-height: 1.25; font-variant-numeric: tabular-nums;
-}
-.bz-clip-item--unread .bz-clip-no { color: var(--clip-accent); }
-.bz-clip-item--reading .bz-clip-no { color: var(--bz-warning); }
-.bz-clip-item-main { flex: 1; min-width: 0; }
-.bz-clip-item-t {
-  font-size: var(--bz-font-body); font-weight: var(--bz-weight-semibold);
-  color: var(--clip-ink); line-height: var(--bz-leading-normal);
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-}
-.bz-clip-item:not(.bz-clip-item--unread) .bz-clip-item-t { font-weight: 400; color: var(--clip-dim); }
-/* meta 一行：「站点 · 时间」（原型对齐，左对齐不散排） */
-.bz-clip-item-meta { margin-top: 5px; font-size: 11px; color: var(--clip-muted); letter-spacing: .5px; }
-/* 空态 = uiEmpty（.bz-empty）工厂；域内只补满高居中（列表/阅读滚动容器内撑满） */
-.bz-clip-list .bz-empty,
-.bz-clip-read-body .bz-empty { height: 100%; }
-
-/* ---- 右栏：阅读面（serif 标题 / meta 细线 / 首字下沉 / 两端对齐） ---- */
-.bz-clip-read { flex: 1; min-width: 0; display: flex; flex-direction: column; background: transparent; }
-.bz-clip-read-scroll { flex: 1; overflow-y: auto; padding: 28px 44px 40px; }
-.bz-clip-read-body { max-width: 560px; margin: 0 auto; }
-/* meta 一行：时间 · 站点（橘） · 状态（右缘灰）——原型对齐，无图标无底色 */
-.bz-clip-art-meta {
-  display: flex; align-items: baseline; gap: 14px;
-  font-size: 11.5px; color: var(--clip-muted);
-  padding-bottom: 16px; margin-bottom: 18px; border-bottom: 1px solid var(--clip-line);
-}
-.bz-clip-art-site { display: inline-flex; align-items: baseline; }
-.bz-clip-art-site-name { color: var(--clip-accent); font-weight: var(--bz-weight-semibold); letter-spacing: .5px; }
-.bz-clip-art-state { margin-left: auto; letter-spacing: 2px; }
-/* 移动端详情仍用彩色状态章与首字 chip（标准皮肤） */
-.bz-clip-favchip {
-  width: 16px; height: 16px; border-radius: var(--bz-radius-xs); flex-shrink: 0;
-  display: inline-flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
-  background: var(--bz-success);
-}
-/* .sm 14px 框为装饰性 favicon 回退字chip，字号不抬档（例外见收尾报告） */
-.bz-clip-favchip.sm { width: 14px; height: 14px; font-size: 8px; }
-.bz-clip-art-title {
-  font-family: var(--clip-serif); font-size: 24px; font-weight: var(--bz-weight-bold);
-  line-height: 1.42; margin-bottom: 12px; color: var(--clip-ink);
-}
-.bz-clip-art-flag { display: inline-flex; align-items: center; gap: 4px; font-size: var(--bz-font-caption); font-weight: var(--bz-weight-semibold); border-radius: var(--bz-radius-xs); padding: 2px 8px; }
-.bz-clip-art-flag .bz-ic { width: 11px; height: 11px; }
-.bz-clip-art-flag.info { color: var(--bz-info); background: color-mix(in srgb, var(--bz-info) 13%, transparent); }
-.bz-clip-art-flag.warn { color: var(--bz-warning); background: color-mix(in srgb, var(--bz-warning) 13%, transparent); }
-.bz-clip-art-flag.ok { color: var(--bz-success); background: color-mix(in srgb, var(--bz-success) 12%, transparent); }
-/* 摘要块：奶油底 + 橘细左线（衬线小标） */
-.bz-clip-art-sum {
-  background: var(--clip-cream); border-left: 3px solid var(--clip-accent);
-  border-radius: 0; padding: var(--bz-space-md);
-  font-size: var(--bz-font-meta); line-height: 1.7; color: var(--clip-ink-2); margin-bottom: var(--bz-space-lg);
-}
-.bz-clip-art-sum-h { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--clip-accent); margin-bottom: 4px; font-family: var(--clip-serif); letter-spacing: 2px; }
-.bz-clip-art-sum-h .bz-ic { width: 11px; height: 11px; }
-/* 正文：两端对齐 + 首段首字下沉（编辑部印刷排版） */
-.bz-clip-art-md { font-size: var(--bz-font-body); line-height: 2.05; color: var(--clip-body); text-align: justify; }
-.bz-clip-art-md p { margin: 0 0 var(--bz-space-md); }
-.bz-clip-art-md > p:first-of-type::first-letter {
-  font-family: Georgia, var(--clip-serif); font-size: 300%; float: left;
-  line-height: 1; padding: 4px 8px 0 0; font-weight: 700; color: var(--clip-accent);
-}
-/* 正文图片段（issue 206：md 图/嵌链独立成段渲染，加载失败由 JS 摘除） */
-.bz-clip-art-md img.bz-clip-art-img {
-  display: block; max-width: 100%; height: auto;
-  border-radius: var(--bz-radius-sm); margin: 2px 0 var(--bz-space-md);
-}
-.bz-clip-art-md blockquote { border-left: 3px solid var(--clip-accent); background: var(--clip-cream); border-radius: 0; padding: 8px var(--bz-space-md); margin: var(--bz-space-sm) 0; color: var(--clip-ink-2); font-size: var(--bz-font-label); }
-.bz-clip-art-md p.dim { color: var(--clip-muted); text-align: left; }
-/* 阅读字号三档（enh 包 7）：小/中/大 = meta/body（默认）/emphasis 档 */
-.bz-clip-read-body.fs-sm .bz-clip-art-md { font-size: var(--bz-font-meta); }
-.bz-clip-read-body.fs-lg .bz-clip-art-md { font-size: var(--bz-font-emphasis); }
-/* 字号分段行（右栏 meta 下方右对齐；消费组件库 .bz-segmented 基线） */
-.bz-clip-art-fs { display: flex; justify-content: flex-end; margin-bottom: var(--bz-space-md); }
-/* 剪藏条目「打开笔记」编辑部文字脚（issue 214：文末唯一保留动作，文字链非按钮） */
-.bz-clip-art-foot { margin-top: 20px; padding-top: 14px; border-top: 2px solid var(--clip-ink); display: flex; gap: 18px; }
-.bz-clip-art-foot span {
-  color: var(--clip-accent); font-weight: var(--bz-weight-semibold); letter-spacing: 1px;
-  font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; line-height: 1.6;
-}
-.bz-clip-art-foot span:hover { color: var(--clip-accent-soft); }
-.bz-clip-art-foot .bz-ic { width: 12px; height: 12px; }
-
-/* ---- 右键菜单编辑部换肤（issue 214 三轮）：菜单挂 body，域内后代选择器不可达——
-        经 item-actions menuClass 在菜单根挂 .bz-clip-menu-editorial（同 todo 皮肤先例） ---- */
-.bz-item-menu.bz-clip-menu-editorial {
-  background: var(--clip-paper); border: 1px solid var(--clip-ink); border-top: 3px solid var(--clip-ink);
-  border-radius: 0; box-shadow: 5px 5px 0 rgba(28, 26, 23, .16); min-width: 148px; padding: 0;
-}
-.bz-clip-menu-editorial .bz-item-menu-icon { display: none; }
-.bz-clip-menu-editorial .bz-item-menu-item {
-  font-family: var(--clip-serif); letter-spacing: 2px; border-radius: 0;
-  padding: 10px 18px; gap: 10px; font-size: 13px; color: var(--clip-ink-2);
-}
-.bz-clip-menu-editorial .bz-item-menu-item:hover { background: var(--clip-ink); color: var(--clip-paper); }
-.bz-clip-menu-editorial .bz-item-menu-item--danger { color: #b3261e; }
-.bz-clip-menu-editorial .bz-item-menu-item--danger:hover { background: #b3261e; color: var(--clip-paper); }
-
-/* ---- 右键菜单头（item-actions 抽屉头） ---- */
-.bz-clip-sheet-head { padding: 2px 0 6px; }
-.bz-clip-sheet-title { font-size: var(--bz-font-body); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); line-height: 1.5; }
-.bz-clip-sheet-sum { font-size: var(--bz-font-meta); color: var(--bz-text-2); margin-top: 4px; }
-
-/* ==================== 移动端（isMobileEnv 分支构建；双屏，标准组件库皮肤不动） ==================== */
-.bz-clip-mob { display: none; flex-direction: column; height: 100%; min-height: 0; }
-.bz-clip-mob-top {
-  display: flex; align-items: center; gap: var(--bz-space-sm);
-  padding: var(--bz-space-sm) var(--bz-space-md); flex-shrink: 0;
-  border-bottom: 1px solid var(--bz-border);
-}
-.bz-clip-mob-title { flex: 1; font-size: 15px; font-weight: var(--bz-weight-semibold); }
-.bz-clip-mob-searchbar { padding: var(--bz-space-sm) var(--bz-space-md); flex-shrink: 0; }
-.bz-clip-mob-searchbar .bz-input { width: 100%; }
-/* 移动源横滑条（= .bz-mobstrip 族，ADR-0094；未读气泡 = .bz-badge--brand），域内零补 */
-.bz-clip-mob-list { flex: 1; overflow-y: auto; padding: var(--bz-space-xs) var(--bz-space-sm) var(--bz-space-lg); }
-.bz-clip-mob-item {
-  padding: 11px var(--bz-space-md); border-radius: var(--bz-radius-md);
-  border: 1px solid transparent; cursor: pointer;
-}
-.bz-clip-mob-item:hover { background: var(--bz-surface-hover); }
-.bz-clip-mob-item .bz-clip-item-t { -webkit-line-clamp: 2; }
-.bz-clip-item-sum {
-  font-size: var(--bz-font-meta); color: var(--bz-text-2); line-height: var(--bz-leading-normal);
-  margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-}
-/* 移动条目 meta（站点/时间散排 + 状态点：桌面目录为序号制一行制，不消费这些类） */
-.bz-clip-mob-item .bz-clip-item-meta { display: flex; align-items: center; gap: var(--bz-space-sm); margin-top: 6px; font-size: var(--bz-font-caption); color: var(--bz-text-3); }
-.bz-clip-mob-item .bz-clip-item-time { margin-left: auto; }
-
-/* 移动详情（屏2 overlay） */
-.bz-clip-mob-detail {
-  position: absolute; inset: 0; background: var(--bz-surface-0);
-  display: flex; flex-direction: column; z-index: 2;
-}
-.bz-clip-mob-detail-top {
-  display: flex; align-items: center; gap: var(--bz-space-sm);
-  padding: var(--bz-space-sm) var(--bz-space-sm); flex-shrink: 0;
-  border-bottom: 1px solid var(--bz-border);
-}
-.bz-clip-mob-detail-title {
-  flex: 1; text-align: center; font-size: var(--bz-font-meta); color: var(--bz-text-2);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.bz-clip-mob-save {
-  display: flex; align-items: center; justify-content: center;
-  width: 34px; height: 30px; border-radius: var(--bz-radius-sm);
-  background: var(--bz-brand); color: var(--bz-on-overlay); border: none; cursor: pointer;
-}
-.bz-clip-mob-save .bz-ic { width: 15px; height: 15px; }
-.bz-clip-mob-save:hover { background: var(--bz-brand-hover); }
-.bz-clip-mob-save.saved { background: color-mix(in srgb, var(--bz-success) 16%, transparent); color: var(--bz-success); }
-.bz-clip-mob-detail-body { flex: 1; overflow-y: auto; padding: var(--bz-space-lg) var(--bz-space-lg) 30px; }
-.bz-clip-mob-d-title { font-size: 17px; font-weight: var(--bz-weight-bold); line-height: 1.5; margin-bottom: 6px; }
-.bz-clip-mob-d-meta { display: flex; align-items: center; gap: 6px; font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-bottom: var(--bz-space-sm); }
-.bz-clip-mob-d-time { margin-left: auto; }
-.bz-clip-mob-d-meta .bz-clip-art-flag { margin: 0 0 var(--bz-space-sm); }
-/* 移动条目状态点（桌面序号制退役圆点，移动保留） */
-.bz-clip-dot { flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; margin-top: 7px; }
-.bz-clip-dot.unread { background: var(--bz-info); }
-.bz-clip-dot.reading { background: var(--bz-warning); }
-.bz-clip-dot.saved { background: var(--bz-success); }
-
-/* 桌面端在窄视口隐藏（移动真全屏场景：overlay 内部是 frame 相对定位） */
-@media (min-width: 769px) {
-  .bz-clip-mob, .bz-clip-mob-detail { display: none !important; }
-}
-@media (max-width: 768px) {
-  .bz-clip-desk { display: none; }
-  .bz-clip-mob { display: flex; } /* 移动详情屏2 的 absolute 定位上下文由 .bz-panel-frame 自带 */
-  /* 刘海屏安全区（enh 包 9）：底部避让由列表/详情自身垫；顶部避让由 frame/detail 根节点
-     .bz-panel-mtop 统一接管（44px，components.css），顶栏不再重复垫顶 */
-  .bz-clip-mob-list { padding-bottom: max(var(--bz-space-lg), env(safe-area-inset-bottom, 0px)); }
-  .bz-clip-mob-detail-body { padding-bottom: calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
-  /* 触控热区（enh 包 10）：来源条/保存钮等可点小元素抬到 ≥44px 档（设计手册 §8.2） */
-  .bz-clip-mob .bz-mobstrip-chip { min-height: 44px; padding: 8px 16px; }
-  .bz-clip-mob-save { width: 44px; height: 44px; }
-  .bz-clip-mob-top .bz-icon-btn--lg,
-  .bz-clip-mob-detail-top .bz-icon-btn--lg { width: 44px; height: 44px; }
-}
+/* ==================== 剪藏本域样式（src/clipbook/styles.css） ==================== */
+/* 剪藏本融合域（ADR-0082 / issue 177）：桌面三栏 + 移动双屏工作台。
+   issue 214：桌面端换肤「编辑部印刷风」（p1-final 定稿原型；左栏 = 10 版对照拍板 V1 点线索引）——
+   域内主题变量挂 .bz-clip-frame 子树（cinema 先例：自绘主题不动共享层）；
+   基线部件（panel 壳/头行/搜索/空态/分段/右键菜单结构）仍消费组件库类，
+   仅在本域子树内做皮肤级覆写；移动端双屏维持标准组件库皮肤不动。 */
+
+/* ---- 域主题：纸面 / 墨色 / 橘强调 / 细线 / 衬线（取值对齐 p1-final 原型） ----
+   变量选择器并挂菜单根 .bz-item-menu.bz-clip-menu-editorial——右键菜单挂 body
+   （域内后代选择器不可达），不在 .bz-clip-frame 子树内；变量缺定义时菜单里
+   var(--clip-*) 计算值无效，背景/边框/悬停色全透明裸奔（issue 222 修复轮）。
+   todo 皮肤先例 = 变量定义在菜单根也携带的单类上，此处同口径。 */
+.bz-clip-frame,
+.bz-item-menu.bz-clip-menu-editorial {
+  --clip-paper: #faf8f3;
+  --clip-ink: #1c1a17;
+  --clip-ink-2: #3d3a34;
+  --clip-body: #33302a;
+  --clip-dim: #6b6458;
+  --clip-accent: #c2410c;
+  --clip-accent-soft: #e8965a;
+  --clip-line: #e4ddd0;
+  --clip-line-soft: #eee8dc;
+  --clip-cream: #f3efe6;
+  --clip-cream-2: #f5ecdf;
+  --clip-muted: #b3aa9a;
+  --clip-no: #d9d1c2;
+  --clip-serif: Georgia, "Noto Serif SC", "SimSun", serif;
+}
+
+.bz-clip-frame {
+  width: 1180px; max-width: calc(100vw - 40px); height: 760px; max-height: 92vh;
+  background: var(--clip-paper);
+  color: var(--clip-ink);
+}
+
+/* ==================== 桌面端（编辑部印刷风） ==================== */
+.bz-clip-desk { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+
+/* ---- 头行：报细线（2px 墨色底线）；左 = serif 刊名，右 = 期号 + 检索（去 ⚙/✕，关闭 = 点遮罩/ESC） ---- */
+.bz-clip-desk .bz-panel-head { border-bottom: 2px solid var(--clip-ink); }
+.bz-clip-desk .bz-panel-title { font-family: var(--clip-serif); font-size: 21px; letter-spacing: 8px; font-weight: 700; color: var(--clip-ink); }
+.bz-clip-issue { font-size: 12px; color: var(--clip-muted); letter-spacing: 1px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* 头行检索：编辑部下划线检索（issue 214 原型对齐：搜索在头行右缘，不在 rail） */
+.bz-clip-head-search { position: relative; width: 250px; }
+.bz-clip-head-search .bz-ic { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; color: var(--clip-muted); }
+.bz-clip-head-search .bz-input {
+  width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--clip-line);
+  border-radius: 0; padding: 4px 2px 5px 22px; font-size: 12.5px; font-style: italic; color: var(--clip-ink);
+}
+.bz-clip-head-search .bz-input:focus { border-bottom-color: var(--clip-accent); box-shadow: none; }
+
+.bz-clip-desk-body { flex: 1; display: flex; min-height: 0; }
+
+/* ---- 左 rail：V1 点线索引（栏头 + 衬线名 + 点线引导 + 未读/总数；选中 = 行首墨方块 + 橘名） ---- */
+.bz-clip-rail { width: 190px; border-right: 1px solid var(--clip-line); }
+.bz-clip-rail-label {
+  flex-shrink: 0; padding: 22px 22px 12px;
+  font-size: 11px; letter-spacing: 3px; color: var(--clip-muted);
+}
+/* bili 徽标紫单一事实源（批 C-11 契约；编辑部皮肤下徽标槽隐藏，规则保留防换肤回切失色） */
+.bz-clip-rail .bz-rail-badge.bili { --bz-rail-tint: #8b7cf6; }
+/* 徽标/图标槽隐藏（V1 纯文字；DOM 槽位保留给共享结构与测试） */
+.bz-clip-rail .bz-rail-badge,
+.bz-clip-rail .bz-rail-ic { display: none; }
+.bz-clip-rail .bz-rail-item {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 10px 18px 10px 22px; border-radius: 0;
+  border: none; background: transparent; position: relative;
+}
+.bz-clip-rail .bz-rail-item:hover { background: var(--clip-cream); }
+.bz-clip-rail .bz-rail-item.on { background: transparent; }
+.bz-clip-rail .bz-rail-item.on::before {
+  content: ''; position: absolute; left: 8px; top: 50%;
+  width: 7px; height: 7px; transform: translateY(-50%);
+  background: var(--clip-accent);
+}
+.bz-clip-rail .bz-rail-name {
+  flex: 0 1 auto; min-width: 0;
+  font-family: var(--clip-serif); font-size: 14px; letter-spacing: .5px;
+  color: var(--clip-ink-2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bz-clip-rail .bz-rail-item.on .bz-rail-name { color: var(--clip-accent); font-weight: 700; }
+.bz-clip-lead { flex: 1 1 12px; min-width: 10px; border-bottom: 1px dotted #c9c0b0; transform: translateY(-3px); }
+.bz-clip-rail .bz-rail-count { margin-left: auto; font-size: 10.5px; color: var(--clip-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bz-clip-rail .bz-rail-count b { color: var(--clip-accent); font-weight: 700; }
+.bz-clip-rail .bz-rail-item.on .bz-rail-count b { color: var(--clip-accent-soft); }
+/* rail 脚注：今日已读（报脚式细线 + 橘大数字） */
+.bz-clip-rail-foot {
+  flex-shrink: 0; margin: 0 18px; padding: 14px 2px 16px; border-top: 1px solid var(--clip-line);
+  font-size: 10.5px; color: var(--clip-muted); line-height: 1.9;
+}
+.bz-clip-rail-foot b { color: var(--clip-accent); font-size: 14px; }
+
+/* ---- 中栏：目录（serif 栏头 + 序号制条目：序号 + 标题 + 「站点 · 时间」） ---- */
+.bz-clip-mid { width: 360px; flex-shrink: 0; border-right: 1px solid var(--clip-line); display: flex; flex-direction: column; min-height: 0; }
+.bz-clip-toc-head {
+  flex-shrink: 0; padding: 18px 24px 12px;
+  font-family: var(--clip-serif); font-size: 17px; font-weight: 700; letter-spacing: 3px; color: var(--clip-ink);
+}
+.bz-clip-list { flex: 1; overflow-y: auto; padding: 0 0 var(--bz-space-sm); }
+.bz-clip-item {
+  display: flex; gap: 14px; align-items: baseline;
+  padding: 13px 24px; border-radius: 0; cursor: pointer;
+  border: 1px solid transparent; border-top-color: var(--clip-line-soft); position: relative;
+}
+.bz-clip-item:first-child { border-top-color: transparent; }
+.bz-clip-item:hover { background: var(--clip-cream); }
+.bz-clip-item.on { background: var(--clip-cream-2); border-color: transparent; box-shadow: inset 3px 0 0 var(--clip-accent); }
+/* 序号 = 大号衬线数字；未读唯一视觉 = 序号颜色（未读橘 / 在读琥珀 / 其余灰） */
+.bz-clip-no {
+  flex-shrink: 0; min-width: 26px;
+  font-family: Georgia, var(--clip-serif); font-size: 20px; font-weight: 700;
+  color: var(--clip-no); line-height: 1.25; font-variant-numeric: tabular-nums;
+}
+.bz-clip-item--unread .bz-clip-no { color: var(--clip-accent); }
+.bz-clip-item--reading .bz-clip-no { color: var(--bz-warning); }
+.bz-clip-item-main { flex: 1; min-width: 0; }
+.bz-clip-item-t {
+  font-size: var(--bz-font-body); font-weight: var(--bz-weight-semibold);
+  color: var(--clip-ink); line-height: var(--bz-leading-normal);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.bz-clip-item:not(.bz-clip-item--unread) .bz-clip-item-t { font-weight: 400; color: var(--clip-dim); }
+/* meta 一行：「站点 · 时间」（原型对齐，左对齐不散排） */
+.bz-clip-item-meta { margin-top: 5px; font-size: 11px; color: var(--clip-muted); letter-spacing: .5px; }
+/* 空态 = uiEmpty（.bz-empty）工厂；域内只补满高居中（列表/阅读滚动容器内撑满） */
+.bz-clip-list .bz-empty,
+.bz-clip-read-body .bz-empty { height: 100%; }
+
+/* ---- 右栏：阅读面（serif 标题 / meta 细线 / 首字下沉 / 两端对齐） ---- */
+.bz-clip-read { flex: 1; min-width: 0; display: flex; flex-direction: column; background: transparent; }
+.bz-clip-read-scroll { flex: 1; overflow-y: auto; padding: 28px 44px 40px; }
+.bz-clip-read-body { max-width: 560px; margin: 0 auto; }
+/* meta 一行：时间 · 站点（橘） · 状态（右缘灰）——原型对齐，无图标无底色 */
+.bz-clip-art-meta {
+  display: flex; align-items: baseline; gap: 14px;
+  font-size: 11.5px; color: var(--clip-muted);
+  padding-bottom: 16px; margin-bottom: 18px; border-bottom: 1px solid var(--clip-line);
+}
+.bz-clip-art-site { display: inline-flex; align-items: baseline; }
+.bz-clip-art-site-name { color: var(--clip-accent); font-weight: var(--bz-weight-semibold); letter-spacing: .5px; }
+.bz-clip-art-state { margin-left: auto; letter-spacing: 2px; }
+/* 移动端详情仍用彩色状态章与首字 chip（标准皮肤） */
+.bz-clip-favchip {
+  width: 16px; height: 16px; border-radius: var(--bz-radius-xs); flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
+  background: var(--bz-success);
+}
+/* .sm 14px 框为装饰性 favicon 回退字chip，字号不抬档（例外见收尾报告） */
+.bz-clip-favchip.sm { width: 14px; height: 14px; font-size: 8px; }
+.bz-clip-art-title {
+  font-family: var(--clip-serif); font-size: 24px; font-weight: var(--bz-weight-bold);
+  line-height: 1.42; margin-bottom: 12px; color: var(--clip-ink);
+}
+.bz-clip-art-flag { display: inline-flex; align-items: center; gap: 4px; font-size: var(--bz-font-caption); font-weight: var(--bz-weight-semibold); border-radius: var(--bz-radius-xs); padding: 2px 8px; }
+.bz-clip-art-flag .bz-ic { width: 11px; height: 11px; }
+.bz-clip-art-flag.info { color: var(--bz-info); background: color-mix(in srgb, var(--bz-info) 13%, transparent); }
+.bz-clip-art-flag.warn { color: var(--bz-warning); background: color-mix(in srgb, var(--bz-warning) 13%, transparent); }
+.bz-clip-art-flag.ok { color: var(--bz-success); background: color-mix(in srgb, var(--bz-success) 12%, transparent); }
+/* 摘要块：奶油底 + 橘细左线（衬线小标） */
+.bz-clip-art-sum {
+  background: var(--clip-cream); border-left: 3px solid var(--clip-accent);
+  border-radius: 0; padding: var(--bz-space-md);
+  font-size: var(--bz-font-meta); line-height: 1.7; color: var(--clip-ink-2); margin-bottom: var(--bz-space-lg);
+}
+.bz-clip-art-sum-h { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--clip-accent); margin-bottom: 4px; font-family: var(--clip-serif); letter-spacing: 2px; }
+.bz-clip-art-sum-h .bz-ic { width: 11px; height: 11px; }
+/* 正文：两端对齐 + 首段首字下沉（编辑部印刷排版） */
+.bz-clip-art-md { font-size: var(--bz-font-body); line-height: 2.05; color: var(--clip-body); text-align: justify; }
+.bz-clip-art-md p { margin: 0 0 var(--bz-space-md); }
+.bz-clip-art-md > p:first-of-type::first-letter {
+  font-family: Georgia, var(--clip-serif); font-size: 300%; float: left;
+  line-height: 1; padding: 4px 8px 0 0; font-weight: 700; color: var(--clip-accent);
+}
+/* 正文图片段（issue 206：md 图/嵌链独立成段渲染，加载失败由 JS 摘除） */
+.bz-clip-art-md img.bz-clip-art-img {
+  display: block; max-width: 100%; height: auto;
+  border-radius: var(--bz-radius-sm); margin: 2px 0 var(--bz-space-md);
+}
+.bz-clip-art-md blockquote { border-left: 3px solid var(--clip-accent); background: var(--clip-cream); border-radius: 0; padding: 8px var(--bz-space-md); margin: var(--bz-space-sm) 0; color: var(--clip-ink-2); font-size: var(--bz-font-label); }
+.bz-clip-art-md p.dim { color: var(--clip-muted); text-align: left; }
+/* 阅读字号三档（enh 包 7）：小/中/大 = meta/body（默认）/emphasis 档 */
+.bz-clip-read-body.fs-sm .bz-clip-art-md { font-size: var(--bz-font-meta); }
+.bz-clip-read-body.fs-lg .bz-clip-art-md { font-size: var(--bz-font-emphasis); }
+/* 字号分段行（右栏 meta 下方右对齐；消费组件库 .bz-segmented 基线） */
+.bz-clip-art-fs { display: flex; justify-content: flex-end; margin-bottom: var(--bz-space-md); }
+/* 剪藏条目「打开笔记」编辑部文字脚（issue 214：文末唯一保留动作，文字链非按钮） */
+.bz-clip-art-foot { margin-top: 20px; padding-top: 14px; border-top: 2px solid var(--clip-ink); display: flex; gap: 18px; }
+.bz-clip-art-foot span {
+  color: var(--clip-accent); font-weight: var(--bz-weight-semibold); letter-spacing: 1px;
+  font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; line-height: 1.6;
+}
+.bz-clip-art-foot span:hover { color: var(--clip-accent-soft); }
+.bz-clip-art-foot .bz-ic { width: 12px; height: 12px; }
+
+/* ---- 右键菜单编辑部换肤（issue 214 三轮）：菜单挂 body，域内后代选择器不可达——
+        经 item-actions menuClass 在菜单根挂 .bz-clip-menu-editorial（同 todo 皮肤先例） ---- */
+.bz-item-menu.bz-clip-menu-editorial {
+  background: var(--clip-paper); border: 1px solid var(--clip-ink); border-top: 3px solid var(--clip-ink);
+  border-radius: 0; box-shadow: 5px 5px 0 rgba(28, 26, 23, .16); min-width: 148px; padding: 0;
+}
+.bz-clip-menu-editorial .bz-item-menu-icon { display: none; }
+.bz-clip-menu-editorial .bz-item-menu-item {
+  font-family: var(--clip-serif); letter-spacing: 2px; border-radius: 0;
+  padding: 10px 18px; gap: 10px; font-size: 13px; color: var(--clip-ink-2);
+}
+.bz-clip-menu-editorial .bz-item-menu-item:hover { background: var(--clip-ink); color: var(--clip-paper); }
+.bz-clip-menu-editorial .bz-item-menu-item--danger { color: #b3261e; }
+.bz-clip-menu-editorial .bz-item-menu-item--danger:hover { background: #b3261e; color: var(--clip-paper); }
+
+/* ---- 右键菜单头（item-actions 抽屉头） ---- */
+.bz-clip-sheet-head { padding: 2px 0 6px; }
+.bz-clip-sheet-title { font-size: var(--bz-font-body); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); line-height: 1.5; }
+.bz-clip-sheet-sum { font-size: var(--bz-font-meta); color: var(--bz-text-2); margin-top: 4px; }
+
+/* ==================== 移动端（issue 248/ADR-0107：编辑部皮，site 章目录 + 已收折叠） ====================
+   推翻 issue 214「移动端标准组件库皮肤不动」：双屏同族纸墨语言（消费 .bz-clip-frame 的 --clip-*），
+   直角细线 / 衬线 / 橘章印；触控热区与刘海安全区仍保留（enh 包 9/10）。 */
+.bz-clip-mob { display: none; flex-direction: column; height: 100%; min-height: 0; background: var(--clip-paper); }
+/* 顶栏：刊名 + 检索/关闭（编辑器文字钮）；关闭钮全局 --close 隐藏规则下真全屏作用域恢复显示 */
+.bz-clip-mob-top {
+  display: flex; align-items: center; gap: 2px;
+  padding: 10px 14px 8px; flex-shrink: 0;
+  border-bottom: 1px solid var(--clip-ink);
+}
+.bz-clip-mob-title {
+  flex: 1; font-family: var(--clip-serif); font-size: 18px; font-weight: 700;
+  letter-spacing: 5px; color: var(--clip-ink); white-space: nowrap;
+}
+.bz-clip-mob-top .bz-icon-btn {
+  width: 34px; height: 34px; border-radius: 0; color: var(--clip-dim) !important;
+}
+.bz-clip-mob-top .bz-icon-btn:hover { background: var(--clip-cream) !important; color: var(--clip-ink) !important; }
+.bz-clip-mob-top button.bz-icon-btn--close { display: inline-flex !important; }
+.bz-clip-mob-searchbar { padding: 9px 14px 4px; flex-shrink: 0; }
+.bz-clip-mob-searchbar .bz-input {
+  width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--clip-line);
+  border-radius: 0; padding: 4px 2px 6px; font-size: 13px; font-style: italic; color: var(--clip-ink);
+}
+.bz-clip-mob-searchbar .bz-input:focus { border-bottom-color: var(--clip-accent); box-shadow: none; }
+/* 章目录流（滚动宿主 = 章容器；吸顶章头 top:0 相对本滚动容器） */
+.bz-clip-mob-list { flex: 1; overflow-y: auto; padding: 0 16px 8px; }
+.bz-clip-mob-ch-hd {
+  position: sticky; top: 0; z-index: 1; background: var(--clip-paper);
+  display: flex; align-items: baseline; gap: 8px; min-height: 44px;
+  padding: 12px 0 8px; cursor: default;
+}
+.bz-clip-mob-ch-name { font-family: var(--clip-serif); font-size: 14px; font-weight: 700; letter-spacing: 2.5px; color: var(--clip-ink); white-space: nowrap; }
+.bz-clip-mob-ch-name::before { content: ''; display: inline-block; width: 3px; height: 11px; background: var(--clip-accent); margin-right: 8px; }
+.bz-clip-mob-ch-meta { font-size: 10.5px; color: var(--clip-faint, var(--clip-muted)); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bz-clip-mob-ch-meta b { color: var(--clip-accent); font-weight: 700; }
+.bz-clip-mob-ch-rule { flex: 1; border: none; border-bottom: 1px solid var(--clip-line); margin-left: 4px; }
+.bz-clip-mob-ch:not(:first-child) .bz-clip-mob-ch-hd { border-top: 1px solid var(--clip-line-soft); }
+.bz-clip-mob-ch-items { padding-bottom: 6px; }
+/* 章内条目：目录行（dot + 衬线标题 + 右侧时间；点线分目） */
+.bz-clip-mob-item { cursor: pointer; padding: 10px 0; border-bottom: 1px dotted var(--clip-line-soft); min-height: 40px; }
+.bz-clip-mob-item:last-child { border-bottom: none; }
+.bz-clip-mob-item .bz-clip-item-t { display: flex; align-items: flex-start; gap: 8px; }
+.bz-clip-mob-item .bz-clip-item-t span {
+  flex: 1; font-family: var(--clip-serif); font-size: 15px; line-height: 1.5; color: var(--clip-ink-2);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.bz-clip-mob-item.saved .bz-clip-item-t span { color: var(--clip-faint, var(--clip-muted)); }
+.bz-clip-mob-item .bz-clip-item-meta { margin: 2px 0 0 15px; display: flex; }
+.bz-clip-mob-item .bz-clip-item-time { font-size: 10.5px; color: var(--clip-muted); font-variant-numeric: tabular-nums; }
+/* 折叠行（已收 N）：点线夹计数，.open 展开相邻 arch 段 */
+.bz-clip-mob-fold {
+  display: flex; align-items: center; gap: 10px; padding: 9px 0 8px; cursor: pointer;
+  min-height: 44px; user-select: none;
+}
+.bz-clip-mob-fold:hover .bz-clip-mob-fold-lab { color: var(--clip-accent); }
+.bz-clip-mob-fold-rule { flex: 1; border: none; border-bottom: 1px dotted var(--clip-line); }
+.bz-clip-mob-fold-lab { font-family: var(--clip-serif); font-size: 11px; letter-spacing: 1.5px; color: var(--clip-dim); white-space: nowrap; }
+.bz-clip-mob-fold-lab b { color: var(--clip-accent); font-weight: 700; }
+.bz-clip-mob-fold-ar { font-size: 12px; color: var(--clip-muted); transition: transform .18s ease; }
+.bz-clip-mob-fold.open .bz-clip-mob-fold-ar { transform: rotate(180deg); color: var(--clip-accent); }
+.bz-clip-mob-fold.open .bz-clip-mob-fold-lab { color: var(--clip-dim); }
+/* arch 段：默认折叠；fold.open 相邻展开；搜索态容器 .searching 恒展开 */
+.bz-clip-mob-arch { display: none; }
+.bz-clip-mob-fold.open + .bz-clip-mob-arch { display: block; }
+.bz-clip-mob-list.searching .bz-clip-mob-arch { display: block; }
+.bz-clip-mob-arch .bz-clip-mob-item { padding-left: 4px; }
+/* 状态点（编辑部皮：未读 = 橘实点 / 在读 = 空心圈 / 已收 = 灰虚） */
+.bz-clip-dot { flex-shrink: 0; width: 7px; height: 7px; border-radius: 0; margin-top: 7px; }
+.bz-clip-dot.unread { background: var(--clip-accent); }
+.bz-clip-dot.reading { background: transparent; border: 1.5px solid var(--clip-accent); width: 5px; height: 5px; }
+.bz-clip-dot.saved { background: var(--clip-muted); opacity: .4; }
+
+/* ---- 移动详情（屏2 overlay；编辑部纸页） ---- */
+.bz-clip-mob-detail {
+  position: absolute; inset: 0; background: var(--clip-paper);
+  display: flex; flex-direction: column; z-index: 2;
+}
+.bz-clip-mob-detail-top {
+  display: flex; align-items: center; gap: 2px;
+  padding: 8px 12px; flex-shrink: 0; border-bottom: 2px solid var(--clip-ink);
+}
+.bz-clip-mob-detail-top .bz-icon-btn {
+  width: 38px; height: 34px; border-radius: 0; color: var(--clip-dim) !important;
+}
+.bz-clip-mob-detail-top .bz-icon-btn:hover { background: var(--clip-cream) !important; color: var(--clip-ink) !important; }
+.bz-clip-mob-detail-title {
+  flex: 1; text-align: center; font-family: var(--clip-serif); font-size: 11.5px; letter-spacing: 2px;
+  color: var(--clip-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.bz-clip-mob-save {
+  display: flex; align-items: center; justify-content: center;
+  width: 38px; height: 30px; border-radius: 0;
+  background: transparent; color: var(--clip-ink); border: 1px solid var(--clip-ink); cursor: pointer;
+}
+.bz-clip-mob-save .bz-ic { width: 15px; height: 15px; }
+.bz-clip-mob-save:hover { background: var(--clip-cream); }
+/* C-11 收编契约保留：saved 钮基线 = success 淡底（守卫断言此规则；编辑部换肤覆写见下） */
+.bz-clip-mob-save.saved { background: color-mix(in srgb, var(--bz-success) 16%, transparent); color: var(--bz-success); }
+.bz-clip-mob-detail .bz-clip-mob-save.saved { border-color: var(--clip-accent); color: var(--clip-accent); background: transparent; }
+.bz-clip-mob-detail-body { flex: 1; overflow-y: auto; padding: 24px 22px 30px; }
+.bz-clip-mob-d-title { font-family: var(--clip-serif); font-size: 22px; font-weight: 700; line-height: 1.45; margin-bottom: 8px; color: var(--clip-ink); }
+.bz-clip-mob-d-meta { display: flex; align-items: center; gap: 6px; font-size: 11px; font-family: var(--clip-serif); letter-spacing: .5px; color: var(--clip-dim); margin-bottom: 6px; }
+.bz-clip-mob-d-time { margin-left: auto; }
+/* 详情内状态章（编辑部方章覆写桌面彩色章：未读/在读 = 橘细框，已收 = 灰虚框） */
+.bz-clip-mob-detail .bz-clip-art-flag {
+  display: inline-flex; align-items: center; gap: 4px; border-radius: 0;
+  padding: 2px 9px; font-size: 10.5px; letter-spacing: 2px; font-family: var(--clip-serif);
+  border: 1px solid var(--clip-line); background: transparent; color: var(--clip-dim); margin: 0 0 16px;
+}
+.bz-clip-mob-detail .bz-clip-art-flag.info,
+.bz-clip-mob-detail .bz-clip-art-flag.warn { border-color: var(--clip-accent); color: var(--clip-accent); background: transparent; }
+.bz-clip-mob-detail .bz-clip-art-flag.ok { border-color: var(--clip-line); color: var(--clip-muted); }
+.bz-clip-mob-detail .bz-clip-art-flag .bz-ic { width: 11px; height: 11px; }
+/* 详情正文（纸页衬线；字号/行距覆写桌面阅读面） */
+.bz-clip-mob-detail .bz-clip-art-md { font-family: var(--clip-serif); font-size: 15px; line-height: 1.95; }
+.bz-clip-mob-detail .bz-clip-art-sum { margin-top: 14px; }
+/* 详情「打开笔记」文字脚共用桌面 art-foot 纸墨样式（202 行起）；间距给足 */
+.bz-clip-mob-detail .bz-clip-art-foot { margin-top: 26px; }
+
+/* 桌面端在窄视口隐藏（移动真全屏场景：overlay 内部是 frame 相对定位） */
+@media (min-width: 769px) {
+  .bz-clip-mob, .bz-clip-mob-detail { display: none !important; }
+}
+@media (max-width: 768px) {
+  .bz-clip-desk { display: none; }
+  .bz-clip-mob { display: flex; } /* 移动详情屏2 的 absolute 定位上下文由 .bz-panel-frame 自带 */
+  /* 刘海屏安全区（enh 包 9）：底部避让由列表/详情自身垫；顶部避让由 frame/detail 根节点
+     .bz-panel-mtop 统一接管（44px，components.css），顶栏不再重复垫顶 */
+  .bz-clip-mob-list { padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)); }
+  .bz-clip-mob-detail-body { padding-bottom: calc(30px + env(safe-area-inset-bottom, 0px)); }
+  /* 触控热区（enh 包 10）：章头/折叠行/保存钮/顶栏钮抬到 ≥44px 档（设计手册 §8.2） */
+  .bz-clip-mob-save { width: 44px; height: 44px; }
+  .bz-clip-mob-top .bz-icon-btn,
+  .bz-clip-mob-top .bz-icon-btn--lg,
+  .bz-clip-mob-detail-top .bz-icon-btn,
+  .bz-clip-mob-detail-top .bz-icon-btn--lg { width: 44px; height: 44px; }
+}
