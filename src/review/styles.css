@@ -11,7 +11,8 @@
    （居中定位/宽高/动画）。配色走 --bz-* token。 */
 #review-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 94%; max-width: 900px; max-height: 84vh; animation: slideUp 0.3s ease-out; }
 @media (max-width: 768px) {
-  #review-popup { animation: none !important; width: 100%; max-width: 100%; max-height: 100%; }
+  /* 移动端全屏（issue 254 迭代）：钉满视口，不受内容高度收缩（原 max-height:100% 短内容时缩成悬浮卡） */
+  #review-popup { animation: none !important; top: 0; left: 0; transform: none; width: 100%; max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; }
 }
 /* 内容区：队列视图与冲刺视图共用宿主（overflow:hidden 由视图内部接管滚动，
    原死的 ::webkit-scrollbar 规则已删——队列/冲刺滚动条隐藏见 .bz-q-view） */
@@ -29,11 +30,6 @@
    头行接组件库 .bz-panel-head 族（issue 198 批 D）：.bz-panel-title + 日期副题
    （.bz-panel-head-sub）/ .bz-panel-head-sp / .bz-panel-head-btns（见 review/ui.ts）。
    关闭钮保留 .bz-win-close（core 门控：非真全屏隐藏），域内不再自绘头行样式。 */
-
-/* 工具行：搜索（共享 .bz-search + .bz-input；域内限宽不铺满 + typing 激活态描边） */
-.bz-q-tools { display: flex; align-items: center; padding: 4px 20px 6px; flex-shrink: 0; }
-.bz-q-tools .bz-search { flex: 0 1 300px; }
-.bz-search.typing .bz-input { border-color: var(--bz-brand); }
 
 /* 开始本轮条（item 8：今日全清 → 绿点 +「今日已清空」+ 隐藏主按钮） */
 .bz-q-strip { display: flex; align-items: center; gap: 8px; padding: 6px 20px 10px; flex-shrink: 0; }
@@ -91,6 +87,14 @@
 .bz-q-fitem .bz-q-ic { width: 12px; height: 12px; }
 .bz-q-fitem .lbl b { color: var(--bz-text-2); font-weight: 600; }
 .bz-q-fitem:hover .lbl, .bz-q-fitem:hover b { color: var(--bz-text-1); }
+/* 归档态「返回队列」提醒钮（issue 254 迭代）：品牌色示意可点回跳 */
+.bz-q-fitem.is-back { color: var(--bz-brand); font-weight: 600; }
+.bz-q-fitem.is-back .lbl:hover { color: var(--bz-brand); }
+/* 桌面去头行钮（issue 254 迭代拍板）：✕ 桌面隐藏（点遮罩/ESC 关，ui.ts 既有），
+   仅移动端全屏保留；⚠ 须锁 #review-popup 作用域——本文件构建后全局聚合，裸 .bz-panel-head 会误伤他域 */
+@media (min-width: 769px) {
+  #review-popup .bz-panel-head [data-act="close"] { display: none; }
+}
 .bz-q-footer .sep { width: 1px; height: 12px; background: var(--bz-border); }
 
 /* ==================== 整窗冲刺（bz-sprint-*） ==================== */
@@ -152,7 +156,7 @@
 .bz-sq-head b { font-size: 12px; color: var(--bz-text-1); }
 .bz-sq-list { flex: 1; overflow-y: auto; }
 .bz-sq-item { padding: 6px 8px; border-radius: 6px; background: var(--bz-surface-2); border: 1px solid var(--bz-border); margin-bottom: 5px; }
-.bz-sq-item .nm { font-size: 12px; color: var(--bz-text-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bz-sq-item .nm { font-size: 12px; color: var(--bz-text-1); word-break: break-word; } /* 标题不截断（issue 254 迭代）：换行完整展示 */
 .bz-sq-item.doing { border-color: var(--bz-brand); }
 .bz-sq-item.passed { opacity: .8; }
 .bz-sq-item.passed .nm s { color: var(--bz-text-3); }
@@ -189,7 +193,6 @@
   .bz-q-cols { flex-direction: column; gap: 10px; overflow-y: auto; }
   .bz-q-col, .bz-q-col.done { flex: none; overflow-y: visible; min-height: 0; }
   .bz-q-col-head { position: sticky; top: 0; z-index: 1; background: var(--bz-surface-1); }
-  .bz-q-tools { padding: 4px 14px 6px; }
   .bz-q-strip { padding: 6px 14px 10px; }
   .bz-q-cols { padding: 0 14px 12px; }
   .bz-q-footer { padding: 8px 14px 12px; }

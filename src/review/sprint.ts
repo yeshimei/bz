@@ -581,7 +581,8 @@ export class SprintSession {
 
   /** 顶部/队列共同动作（跳过此篇 / 退出按钮） */
   private bindTop(): void {
-    this.opts.host.querySelector('[data-action="quit"]')?.addEventListener('click', () => this.requestQuit());
+    // ✕ 一击直退（issue 254 迭代拍板：放弃确认弹窗退役，未完成篇目按既有 quit 路径结算）；ESC 仍走 requestQuit 确认
+    this.opts.host.querySelector('[data-action="quit"]')?.addEventListener('click', () => this.finish('quit'));
     this.opts.host.querySelector('[data-action="skip"]')?.addEventListener('click', () => this.skipCurrent());
   }
 }

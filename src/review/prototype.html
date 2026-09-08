@@ -241,19 +241,16 @@
         await sleep(300);
         t('归档列切换', dts('.bz-q-col').length === 1 && dt('.bz-q-col-head .name')?.textContent === '已完成');
         t('归档状态条=已完成复习（V1）', dt('.bz-q-strip')?.textContent.includes('已完成复习') && !!dt('.bz-q-strip-dot.ok'));
+        // issue 254 迭代：头行⚙退役；归档态左下角变「返回队列」提醒钮（点击即回）
+        t('头行⚙已退役', !dt('[data-act="settings"]'));
+        t('归档态左下角=返回队列提醒', !!dt('.bz-q-fitem.is-back') && dt('.bz-q-fitem.is-back')?.textContent.includes('返回队列'));
         t('归档3条（已完成2+挂起1）', Number(dt('.bz-q-col-head .cnt')?.textContent) === 3);
         const frdCard = dts('.bz-q-card').find((c) => c.textContent.includes('弗洛伊德'));
         t('挂起卡=文件缺失+挂起（done 列）', !!frdCard && !!frdCard.querySelector('.is-missing') && frdCard.querySelector('.bz-q-card-stage').textContent === '挂起');
         dt('[data-act="arch"]').click();
         await sleep(300);
 
-        // 搜索（防抖 180ms）
-        const q = dt('#bz-q-search');
-        q.value = '松果体'; q.dispatchEvent(new Event('input'));
-        await sleep(400);
-        t('搜索过滤=仅松果体', dts('.bz-q-card').length === 1 && dts('.bz-q-col-head .cnt').map((e) => e.textContent).join(',') === '0,1,0');
-        q.value = ''; q.dispatchEvent(new Event('input'));
-        await sleep(400);
+        // 搜索框已退役（issue 254 迭代）
 
         /* ===== 全流程做题：开始本轮 → 待重做重做(2题) + 本轮6篇(12题) 全对 → 结算 → 回队列 ===== */
         const bank = window.RVW.SEED.quizBank;

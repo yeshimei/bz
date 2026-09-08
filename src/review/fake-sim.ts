@@ -39,16 +39,27 @@ declare global {
 const REVIEW_KEY = 'bz-sim:CONFIG/STORAGE/review.json';
 const QUIZ_KEY = 'bz-sim:CONFIG/STORAGE/quiz.json';
 
+function readStore(key: string): unknown {
+  try {
+    return JSON.parse(localStorage.getItem(key) || 'null');
+  } catch {
+    return null;
+  }
+}
+
 function seedDatabase(): void {
   // 自身 window 优先（同文档场景）；iframe 场景读父页（评审壳持有 RVW）
   const src = window.RVW || ((window.parent as Window)?.RVW ?? null);
   const seed = src?.SEED || {};
 
-  // 已种子过（用户改过数据）不覆盖——保持评审壳内操作可持久
-  if (!localStorage.getItem(REVIEW_KEY) && seed.reviewItems?.length) {
+  // 空缺或空数据都重新播种（无种子启动会把空态落库，卡死幂等播种成永久空面板）；
+  // 非空数据视为用户改动，不覆盖——保持评审壳内操作可持久
+  const review = readStore(REVIEW_KEY);
+  if ((!Array.isArray(review) || review.length === 0) && seed.reviewItems?.length) {
     localStorage.setItem(REVIEW_KEY, JSON.stringify(seed.reviewItems));
   }
-  if (!localStorage.getItem(QUIZ_KEY) && seed.quizBank) {
+  const quiz = readStore(QUIZ_KEY) as { notes?: Record<string, unknown[]> } | null;
+  if ((!quiz?.notes || Object.keys(quiz.notes).length === 0) && seed.quizBank) {
     localStorage.setItem(QUIZ_KEY, JSON.stringify({ notes: seed.quizBank }));
   }
   for (const [path, content] of Object.entries(seed.notes || {})) {
