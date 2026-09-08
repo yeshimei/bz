@@ -20,6 +20,8 @@ import { FloatWindow } from './float-window';
 import { buildConfig } from './config';
 import { getCurrentContext } from './context';
 import { jumpToChunk, renderMarkdown, makeDraggable, makeResizable } from './ui-tools';
+import { refCardHtml, refStateHtml } from './render';
+import { mountIcons } from '../core/ui';
 import type { SearchHit, VectorStore } from './vector-store';
 
 export class ReferencePanel {
@@ -55,7 +57,7 @@ export class ReferencePanel {
     // 密度切换钮（窄窗标题栏功能位，ticket 108）
     this.denseBtn = document.createElement('button');
     this.denseBtn.className = 'bz-sb-float-btn';
-    this.denseBtn.textContent = '📑';
+    this.denseBtn.innerHTML = '<i data-lucide="file-text"></i>';
     this.denseBtn.title = '切换：仅标题 / 标题+内容';
 
     if (existingWin) {
@@ -66,6 +68,7 @@ export class ReferencePanel {
       this.fw = new FloatWindow('灵感参考', { headerRight: this.denseBtn, onClose: () => this.destroyResources() });
     }
     this.denseBtn.addEventListener('click', () => this.toggleDensity());
+    mountIcons(this.denseBtn);
 
     this.resultsDiv = document.createElement('div');
     this.resultsDiv.className = 'bz-sb-ref-list bz-sb-scroll-y';
@@ -110,7 +113,8 @@ export class ReferencePanel {
   toggleDensity(): void {
     this.denseMode = !this.denseMode;
     this.resultsDiv.classList.toggle('bz-sb-ref-dense', this.denseMode);
-    this.denseBtn.textContent = this.denseMode ? '📃' : '📑';
+    this.denseBtn.innerHTML = `<i data-lucide="${this.denseMode ? 'list-tree' : 'file-text'}"></i>`;
+    mountIcons(this.denseBtn);
     this.denseBtn.title = this.denseMode ? '切换：标题+内容' : '切换：仅标题';
   }
 
@@ -153,18 +157,12 @@ export class ReferencePanel {
   private showListState(text: string): void {
     this.cancelPendingCardStates(); // 旧卡未决态不跨重建存活
     this.resultsDiv.innerHTML = '';
-    const div = document.createElement('div');
-    div.className = 'bz-sb-ref-empty';
-    div.textContent = text;
-    this.resultsDiv.appendChild(div);
+    this.resultsDiv.insertAdjacentHTML('beforeend', refStateHtml(text));
   }
 
   /** [46] 降级脚注：不打断结果列表，在列表末追加一行说明 */
   private appendListHint(text: string): void {
-    const div = document.createElement('div');
-    div.className = 'bz-sb-ref-empty';
-    div.textContent = text;
-    this.resultsDiv.appendChild(div);
+    this.resultsDiv.insertAdjacentHTML('beforeend', refStateHtml(text));
   }
 
   renderResults(results: SearchHit[]): void {
@@ -198,25 +196,12 @@ export class ReferencePanel {
     const panel = this;
     const card = document.createElement('div');
     card.className = 'bz-sb-ref-card';
-
-    const topRow = document.createElement('div');
-    topRow.className = 'bz-sb-ref-card-top';
-    const pathDiv = document.createElement('div');
-    pathDiv.className = 'bz-sb-ref-card-path';
-    pathDiv.textContent = item.path.replace(/^.*[\\/]/, '').replace(/\.md$/i, '');
-    const badge = document.createElement('span');
-    badge.className = 'bz-sb-ref-card-score';
-    badge.textContent = `${Math.round(item.score * 100)}%`;
-    topRow.appendChild(pathDiv);
-    topRow.appendChild(badge);
-
+    // markup 出 render.ts 纯层（issue 251）：名称行 + 匹配度 + 分数条 + 正文容器
+    card.innerHTML = refCardHtml(item.path.replace(/^.*[\\/]/, '').replace(/\.md$/i, ''), Math.round(item.score * 100), '#a33d2a');
+    const topRow = card.querySelector('.bz-sb-ref-card-top') as HTMLElement;
     // 正文 markdown 预渲染（列表态收起，浮出态展开）
-    const bodyDiv = document.createElement('div');
-    bodyDiv.className = 'bz-sb-ref-card-body';
+    const bodyDiv = card.querySelector('.bz-sb-ref-card-body') as HTMLElement;
     renderMarkdown(bodyDiv, item.chunk, panel.app);
-
-    card.appendChild(topRow);
-    card.appendChild(bodyDiv);
     panel.resultsDiv.appendChild(card);
 
     const isFloating = () => card.classList.contains('bz-sb-ref-card--float');

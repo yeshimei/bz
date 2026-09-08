@@ -1044,3 +1044,7 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
   双 iframe 评审壳跑真 ui.ts，selftest 28/28 含 CSS 生效断言。
 - **生成物入库**：CLIP_ICONS 19 枚（域表并集 + lucide-static 补缺）、CLIP_DATA 真实库脱敏快照
   （63 未读 + 10 骨架 + 8 篇剪藏）。契约零改动，数据零迁移。
+
+### 第二大脑定稿原型三界面落域：UI 抛弃式重写 + markup 单源（issue 251 / ADR-0110，2026-09-09）
+
+> 用户拍板「原型是真理，完全抛弃 secondbrain 域 UI 与样式设计」。桌面三界面（主面板 P1 布局 × P2 米白红棕主题 / AI 对话 / 灵感参考窄窗）按 .zcode/ui-prototypes/secondbrain-final/ 重写：render.ts 纯层承载全部 markup 与统计纯函数（panel.ts 收编 computeStats/buildSourceTree/fmtCompact，schema re-export 保 settings-panel 兼容）；styles.css 除移动抽屉段外全量重写（面板固定浅色不随暗色，favorites 先例）；行为逻辑逐行保留（对话流式/取消/持久化、参考密度/悬停预览/长按拖出/幽灵卡竞态防护、onboard 三形态/树展开记忆）。真身运维维度（索引健康/存储占用）并入底部状态行；对话引用卡会话内展示不落盘（chatHistory 结构零改动）；移动抽屉本批不动。fake-sim + prototype.html 行为单源评审壳（FakeVectorStore/Fake AI/FakeVault），build-preview 双清单登记。数据零迁移。

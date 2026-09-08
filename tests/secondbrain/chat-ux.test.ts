@@ -131,7 +131,7 @@ describe('第二大脑对话：请求可取消（ticket 141）', () => {
 
     chat.input.value = '会取消的问题';
     chat.sendBtn.click();
-    await until(() => chat.sendBtn.textContent === '停止');
+    await until(() => chat.sendBtn.getAttribute('data-state') === 'stop'); // 图标钮：态走 data-state（issue 251）
     expect(chat.sendBtn.disabled).toBe(false); // 停止态可点击
 
     // 请求中 Enter 不触发新一轮（user 气泡不重复）
@@ -139,7 +139,7 @@ describe('第二大脑对话：请求可取消（ticket 141）', () => {
     expect(chat.messagesDiv.querySelectorAll('.bz-sb-chat-msg.user')).toHaveLength(1);
 
     chat.sendBtn.click(); // 停止
-    await until(() => chat.sendBtn.textContent === '发送');
+    await until(() => chat.sendBtn.getAttribute('data-state') === null);
     expect(chat.messagesDiv.textContent).toContain('已停止生成。');
     expect(chat.messagesDiv.textContent).not.toContain('出错了');
 
@@ -156,7 +156,7 @@ describe('第二大脑对话：请求可取消（ticket 141）', () => {
     chat.input.value = '测试问题';
     await chat.sendChatMessage();
     await until(() => chat.messagesDiv.textContent!.includes('出错了：服务商不可用'));
-    expect(chat.sendBtn.textContent).toBe('发送');
+    expect(chat.sendBtn.getAttribute('data-state')).toBeNull();
     expect(chat.sendBtn.disabled).toBe(false);
     chat.destroy();
   });
@@ -191,7 +191,7 @@ describe('第二大脑对话：流式增量渲染（ticket 141）', () => {
     // 占位气泡被最终 markdown 消息取代（mock MarkdownRenderer 直接 textContent = md）
     const msgs = chat.messagesDiv.querySelectorAll('.bz-sb-chat-msg.assistant');
     expect(msgs[msgs.length - 1].textContent).toContain('完整回答正文');
-    expect(chat.sendBtn.textContent).toBe('发送');
+    expect(chat.sendBtn.getAttribute('data-state')).toBeNull();
     // 一轮问答写盘两条
     await until(async () => (await persisted()).length === 2);
     chat.destroy();
