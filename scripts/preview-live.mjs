@@ -59,22 +59,38 @@ http.createServer((req, res) => {
   // 根路径 = 单源域导航首页（动态生成：PREVIEW_DOMAINS ∪ BEHAVIOR_DOMAINS）
   if (url.pathname === '/' || url.pathname === '/index.html') {
     const domains = [...new Set([...BEHAVIOR_DOMAINS, ...PREVIEW_DOMAINS])];
+    // 域 → 中文名/一句话说明（新域未登记时回退显示 id）
+    const META = {
+      belongings: ['归物本', '物品档案 · P20 大字报版式'],
+      bookshelf: ['书架墙', '书库浏览 · 状态分架'],
+      cinema: ['影院', '影视管理 · 豆瓣契约'],
+      clipbook: ['剪藏本', '未读流 + 网页归档'],
+      favorites: ['收藏本', '软木板 · 标签工作台'],
+      home: ['首页', '内容首页 · 活动河'],
+      'password-vault': ['保险库', '密码/加密资产 · 共锁同库'],
+      review: ['复习计划', '三区队列 + 做题冲刺'],
+      secondbrain: ['第二大脑', '卡片网络 · AI 对话'],
+      'settings-panel': ['设置面板', '全域设置 · 行为单源'],
+    };
     const items = domains
       .map((d) => {
         const has = fs.existsSync(path.join(ROOT, 'src', d, 'prototype.html'));
-        return `<a class="card${has ? '' : ' off'}" href="/src/${d}/prototype.html"><b>${d}</b><span>${has ? 'prototype.html' : '无评审壳'}</span></a>`;
+        const [name, desc] = META[d] || [d, ''];
+        return `<a class="card${has ? '' : ' off'}" href="/src/${d}/prototype.html"><b>${name}</b><span class="id">${d}</span>${desc ? `<span class="desc">${desc}</span>` : ''}</a>`;
       })
       .join('\n');
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
     res.end(`<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>原型预览 · 单源域导航</title><style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{min-height:100vh;background:#e9e7e1;font-family:system-ui,'Segoe UI','Microsoft YaHei',sans-serif;color:#211d16;padding:44px 24px}
-.wrap{max-width:820px;margin:0 auto}
+.wrap{max-width:860px;margin:0 auto}
 h1{font-size:21px}.sub{font-size:12.5px;color:#8b857a;margin:8px 0 24px;line-height:1.7}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
-a.card{display:flex;flex-direction:column;gap:4px;background:#fbfaf7;border:1px solid #ddd6c8;border-radius:11px;padding:13px 15px;text-decoration:none;color:inherit;transition:.15s}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(236px,1fr));gap:12px}
+a.card{display:flex;flex-direction:column;gap:3px;background:#fbfaf7;border:1px solid #ddd6c8;border-radius:11px;padding:13px 15px;text-decoration:none;color:inherit;transition:.15s}
 a.card:hover{transform:translateY(-2px);box-shadow:0 8px 20px #00000014;border-color:#a33d2a}
-a.card b{font-size:14px}a.card span{font-size:10.5px;color:#a39b8c}
+a.card b{font-size:15px}
+a.card .id{font-size:10px;color:#b0a897;font-family:Consolas,monospace;letter-spacing:.02em}
+a.card .desc{font-size:11.5px;color:#6d675c;margin-top:3px;line-height:1.5}
 a.card.off{opacity:.45}
 </style></head><body><div class="wrap"><h1>原型预览 · 行为单源域导航</h1>
 <div class="sub">SSE 热刷新已注入各评审壳：改 ${'src/<域>/**'} 的 .ts/.css/.html 自动重出产物并刷新。快捷键返回本页：浏览器后退。</div>
