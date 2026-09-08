@@ -27,8 +27,7 @@ import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { uiEmpty, uiProgress } from '../core/ui';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
-import { applyMobileWindowFullscreen } from '../core/mobile';
-import { mobileFullscreenGroup, makeReloadWarnOnce, numStrBinding } from '../core/settings-common';
+import { makeReloadWarnOnce, numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { SafeManager, base64ToBytes, bytesToBase64, type SafeNote, type SafeAttachment, type HealthReport, type HealthItem, type LockAttachmentInput } from './data';
 import { compressImage, videoFrame } from './preview';
@@ -332,7 +331,7 @@ function finishProgress(h: NoticeHandle | null, done: number, msg: string) {
 /** 保险库设置 schema（ticket 131；ADR-0064；ADR-0085 统一收纳保险库 + 密码生成/安全）：
  *  存储/预览/安全/移动端 + 密码「生成/安全」两组。全部配置项为启动快照
  *  （控制器构造时读取），改动需重载插件后生效——warnReload 收敛为 makeReloadWarnOnce（onCommit/
- *  onChange 一次性提示）。置于模块顶层供文案 lint 直接引用。移动端组走通用预设（mobileFullscreenGroup）。 */
+ *  onChange 一次性提示）。置于模块顶层供文案 lint 直接引用。 */
 export function encryptSettingsSchema(): SettingsSchema {
   const warnReload = makeReloadWarnOnce();
   return {
@@ -417,7 +416,6 @@ export function encryptSettingsSchema(): SettingsSchema {
           { type: 'toggle', name: '预览自动加载原图', desc: '打开预览自动解密原图', binding: { key: 'encryptAutoLoadOriginal' }, onChange: warnReload, isChild: true },
         ],
       },
-      mobileFullscreenGroup('encryptMobileDefaultFullscreen', { desc: '' }),
     ],
   };
 }
@@ -684,7 +682,6 @@ export class UIManager {
   // ---------- 显示/隐藏 ----------
   show() {
     if (!this._initialized) this.ensureElements();
-    applyMobileWindowFullscreen(this.popup, tryGetSettings().encryptMobileDefaultFullscreen === true);
     topifyZ(this.mask!, this.popup!); // ADR-0067：显示即发号，谁后显示谁在上
     this.mask!.style.display = 'block';
     this.popup!.style.display = 'flex';

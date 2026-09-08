@@ -29,7 +29,6 @@ const BASE_SETTINGS = {
   autoPopupOnStart: true,
   openNoteReminder: true,
   cinemaFolderPath: '我的/影视',
-  todoMobileDefaultFullscreen: false,
 };
 
 /** 动态日期（相对今天）：到期判定不随运行日历漂移 */

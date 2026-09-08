@@ -373,7 +373,7 @@ function makeUi(vaultFixture: SmartCatData) {
   vault.create(getSmartcatFilePath(), JSON.stringify(vaultFixture));
   const app = mockAppWithVault(vault);
   setApp(app);
-  setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false }) as any);
+  setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', smartcatEnabled: true }) as any);
   return { app, vault };
 }
 

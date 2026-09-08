@@ -31,9 +31,8 @@ describe('enh-sweep-c：.bz-panel-mtop 移动全屏顶距', () => {
     expect(s).toContain('.bz-panel-mtop > div:first-child');
   });
 
-  it('全屏面板根节点接线：8 域挂载点 + 番茄钟随 mfs 开关同挂摘', () => {
+  it('全屏面板根节点接线：各域挂载点（markup 单源）', () => {
     expect(src('src/home/layouts/river/render.ts')).toContain('bz-home-panel bz-panel-mtop'); // issue 243 markup 单源 render.ts
-    expect(src('src/cinema/ui.ts')).toContain('applyMobileWindowFullscreen(root'); // ADR-0103 风格壳：mfs 挂 style 根（首子垫顶由 core .bz-win-mfs 规则承担）
     expect(src('src/favorites/layouts/board/render.ts')).toContain('bz-fav-panel bz-fav-scope'); // issue 242 markup 单源 render.ts（bz-panel-mtop 随移动端挂载）
     expect(src('src/belongings/layouts/poster/render.ts')).toContain('bz-bel-panel bz-panel-frame bz-panel-mtop'); // issue 237 markup 单源 render.ts
     const clip = src('src/clipbook/render.ts'); // issue 247 markup 单源 render.ts
@@ -42,7 +41,7 @@ describe('enh-sweep-c：.bz-panel-mtop 移动全屏顶距', () => {
     expect(src('src/encrypt/ui.ts')).toContain("classList.add('bz-panel-mtop')");
     expect(src('src/review/ui.ts')).toContain("classList.add('bz-panel-mtop')");
     expect(src('src/diary-wall/ui.ts')).toContain("'bz-diary-wall-mob bz-panel-mtop'");
-    expect(src('src/pomodoro/ui.ts')).toContain("classList.toggle('bz-panel-mtop'");
+    // 番茄钟原「随 mfs 开关同挂摘」接线已随「移动端默认全屏」特性全链退役
   });
 
   it('接入域头行不再自带 safe-area 垫顶（顶距由工具类统一接管，防双份）', () => {

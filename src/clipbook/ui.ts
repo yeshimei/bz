@@ -29,7 +29,7 @@ import { getApp } from '../core/app';
 import { notice, notifyUndo } from '../core/notice';
 import { uiSegmented, uiEmpty, uiResizable, uiVSplitter, mountIcons } from '../core/ui';
 import { formatRelativeTime } from '../core/utils';
-import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
+import { isMobileEnv } from '../core/mobile';
 import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
 import { attachItemActions, closeItemMenu, type ItemAction } from '../core/item-actions';
@@ -39,7 +39,7 @@ import type { SettingsSchema } from '../core/settings-schema';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { ensureAutoSummary, stopAutoSummary, regenerateSummary } from '../auto-summary';
 import { buildNewsSourcesGroup } from './news-sources-group';
-import { batchSizeRow, mobileFullscreenGroup } from '../core/settings-common';
+import { batchSizeRow } from '../core/settings-common';
 import type { ClipArticle } from './types';
 import { toParagraphs, stripClipChrome } from './md';
 import { queryBySource, aggregateSites } from './store';
@@ -314,7 +314,6 @@ function buildDom(app: any): void {
   });
   escRegistered = true;
   const frameEl = overlayEl.querySelector('.bz-clip-frame') as HTMLElement;
-  applyMobileWindowFullscreen(frameEl, mobileFullscreenDefault());
   // 桌面面板拖拽缩放 + 尺寸记忆（enh 包 8 → ADR-0094 persist 选项）：仅桌面写内联宽高——
   // 内联样式优先级高于移动端媒体查询的满屏规则；恢复/防抖落盘/收尾补存全由 uiResizable 承担
   // （挂载时 load 恢复并钳制、onChange 后防抖 300ms 调 save、detach 未落尾值立即补存）；
@@ -347,12 +346,6 @@ function buildDom(app: any): void {
     if (!item) return;
     openMobDetail(item.dataset.id || '');
   });
-}
-
-/** 移动端默认全屏（读设置；缺省对齐 clipping 默认 true） */
-function mobileFullscreenDefault(): boolean {
-  const s = tryGetSettings() as any;
-  return s?.clipbookMobileDefaultFullscreen !== false;
 }
 
 function selectSource(src: any): void {
@@ -1160,7 +1153,6 @@ export function clipbookSettingsSchema(): SettingsSchema {
           { type: 'custom', render: (body: HTMLElement, ctx: any) => buildNewsSourcesGroup(body, ctx.refreshVisibility) },
         ],
       },
-      mobileFullscreenGroup('clipbookMobileDefaultFullscreen', { desc: '' }),
     ],
   };
 }

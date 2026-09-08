@@ -415,7 +415,3 @@
 .bz-panel-overlay > .bz-cinema--midnight.mob,
 .bz-panel-overlay > .bz-cinema--gazette.mob,
 .bz-panel-overlay > .bz-cinema--booth.mob { margin: auto; }
-/* 移动端真全屏（.bz-win-mfs）：去演示框边（尺寸/圆角由 core !important 接管） */
-.bz-cinema--midnight.mob.bz-win-mfs,
-.bz-cinema--gazette.mob.bz-win-mfs,
-.bz-cinema--booth.mob.bz-win-mfs { border: 0 !important; box-shadow: none !important; }

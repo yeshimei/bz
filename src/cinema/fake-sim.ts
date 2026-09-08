@@ -113,7 +113,6 @@ const settingsStore: Record<string, unknown> = {
   cinemaSortMode: 'date',
   cinemaStatusFilter: '',
   cinemaGridColumns: '5',
-  cinemaMobileDefaultFullscreen: false,
 };
 
 /** 设置注入（settings-provider + core/ai 共用同一 store；AI 无密钥 → 荐片走页内降级） */

@@ -14,7 +14,7 @@ import { defaultSmartCatData, touchPresence, getAbsenceDays, DAY_MS, getSmartcat
 import { ensureSmartCat, unloadSmartCat, openSmartCatChat, __getSmartcatInternals } from '../../src/smartcat/index';
 import type { SmartCatData } from '../../src/smartcat/types';
 
-let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
+let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
 
 function baseData(): SmartCatData {
   return defaultSmartCatData();
@@ -39,7 +39,7 @@ function makeApp() {
 beforeEach(() => {
   resetObsidianMocks();
   document.body.innerHTML = '';
-  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
+  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
   unloadSmartCat();
 });
 

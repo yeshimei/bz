@@ -128,7 +128,7 @@ describe('读书笔记弹窗（md 书）', () => {
     MockPlatform.isMobile = false;
     vault = new MockVault();
     setApp(makeApp(vault));
-    setSettingsProvider(() => ({ bookTag: 'book', bookshelfMobileDefaultFullscreen: true }) as any);
+    setSettingsProvider(() => ({ bookTag: 'book' }) as any);
   });
 
   afterEach(() => {
@@ -260,14 +260,6 @@ describe('读书笔记弹窗（md 书）', () => {
     // 删除后重开壳（刷新列表）
     expect(notesPopup()).not.toBeNull();
     expect(notesPopup()!.textContent).toContain('没有找到高亮或批注');
-  });
-
-  it('移动端默认全屏：bookshelfMobileDefaultFullscreen 开 → 笔记弹窗挂 bz-win-mfs', async () => {
-    vault.files.set('书库/活着.md', NOTE_MD);
-    MockPlatform.isMobile = true;
-    showBookNotes(makeApp(vault), '书库/活着.md');
-    await new Promise((r) => setTimeout(r, 30));
-    expect(notesPopup()!.classList.contains('bz-win-mfs')).toBe(true);
   });
 
   it('closeBookNoteModals / unloadBookshelf：不留孤儿弹窗（audit H 迁移面）', async () => {

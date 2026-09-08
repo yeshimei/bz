@@ -12,4 +12,5 @@
 export * from './shared';
 export {
   deskShellHtml, navSecHtml, navItemHtml,
+  mobShellHtml, mobItemHtml,
 } from './layouts/jingwei/render';

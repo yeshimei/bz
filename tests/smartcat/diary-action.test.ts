@@ -19,7 +19,7 @@ import {
   __setDiarySettleMsForTests, __getDiaryTimersForTests, __getDiaryTrackedForTests,
 } from '../../src/smartcat/index';
 
-let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
+let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
 
 function makeApp() {
   const vault = new MockVault();
@@ -71,7 +71,7 @@ function dateOffset(offset: number): string {
 beforeEach(() => {
   resetObsidianMocks();
   document.body.innerHTML = '';
-  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
+  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
   unloadSmartCat();
   __setDiarySettleMsForTests(60); // 注入短计时（unload 会复位，须在 unload 之后设置）
 });

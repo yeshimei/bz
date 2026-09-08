@@ -5,7 +5,6 @@
  * 命令 bz-diary-wall-open 由 main.ts COMMANDS 裸注册（ADR-0004），onunload 调 unloadDiaryWall。
  * 数据：只读 `我的/日记/*.md`（复用 src/diary/parser.ts，旧域不改写），
  *       媒体走 vault getResourcePath（src/diary-wall/data.ts）。
- * 设置：diaryWallMobileDefaultFullscreen（src/settings.ts）+ diaryWallSettingsSchema（src/diary-wall/settings.ts）。
  *
  * 接口契约（main.ts 依赖）：
  * - ensureDiaryWall(app)  懒加载幂等初始化
@@ -13,7 +12,6 @@
  * - unloadDiaryWall()     卸载清理（幂等）
  */
 import type { App } from 'obsidian';
-import { tryGetSettings } from '../core/settings-provider';
 import { DiaryWallAppController } from './ui';
 
 let initialized = false;
@@ -21,9 +19,7 @@ let controller: DiaryWallAppController | null = null;
 
 function getController(): DiaryWallAppController {
   if (!controller) {
-    // 移动端默认全屏（ADR-0019 同款键；DEFAULT_SETTINGS 兜底缺字段）
-    const mobileDefaultFullscreen = tryGetSettings()?.diaryWallMobileDefaultFullscreen === true;
-    controller = DiaryWallAppController.getInstance({ mobileDefaultFullscreen });
+    controller = DiaryWallAppController.getInstance();
   }
   return controller;
 }

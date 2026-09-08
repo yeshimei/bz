@@ -67,7 +67,6 @@ function makeApp(fixture: SmartCatData) {
     storagePath: 'CONFIG/STORAGE',
     smartcatEnabled: true,
     // 2026-08-23 合并一套：数据面板跟随聊天/设置面板共用的开关（原 dashboard 独立键已删）
-    smartcatMobileDefaultFullscreen: false,
   }) as any);
   return { app, vault };
 }
@@ -260,7 +259,6 @@ describe('openSmartcatDashboard UI', () => {
     setSettingsProvider(() => ({
       storagePath: 'CONFIG/STORAGE',
       smartcatEnabled: true,
-      smartcatMobileDefaultFullscreen: false,
       memoryDirectories: ['我的/日记', '我的/信'],
     }) as any);
     await openSmartcatDashboard(app as any);
@@ -405,7 +403,7 @@ describe('openSmartcatDashboard UI', () => {
     const vault = new MockVault();
     const app = mockAppWithVault(vault);
     setApp(app);
-    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', smartcatMobileDefaultFullscreen: false }) as any);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as any);
     await openSmartcatDashboard(app as any);
     const popup = document.getElementById('smartcat-dashboard-panel')!;
     expect(popup.textContent).toContain('平常心'); // 默认 PAD 50/50/50 → 中性档

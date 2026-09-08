@@ -21,7 +21,6 @@ import { openFlowDialog } from '../core/flow-dialog';
 import { escManager } from '../core/esc-manager';
 import { tryGetSettings } from '../core/settings-provider';
 import { escapeHtml } from '../core/utils';
-import { applyMobileWindowFullscreen } from '../core/mobile';
 import { uiEmpty, mountIcons } from '../core/ui';
 import { unregisterSheetCompanion } from '../core/item-actions';
 import { FSRS, DEFAULT_W, LADDER_MAX, TOTAL_STAGES } from './fsrs';
@@ -134,7 +133,6 @@ export class UIManager {
   async showMain(): Promise<void> {
     this.createMainUI();
     if (!this.mask || !this.popup) return;
-    applyMobileWindowFullscreen(this.popup, tryGetSettings().reviewMobileDefaultFullscreen === true);
     topifyZ(this.mask, this.popup);
     this.mask.style.display = 'block';
     this.popup.style.display = 'flex';

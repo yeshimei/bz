@@ -33,12 +33,12 @@ describe('enh-sweep-a：死键清理', () => {
       'showHighlights',
       'showThinks',
       'showReview',
+      // 「移动端默认全屏」特性已全链退役，clipbook 键一并删除
+      'clipbookMobileDefaultFullscreen',
     ];
     for (const k of dead) {
       expect(k in DEFAULT_SETTINGS, `${k} 不在默认值中`).toBe(false);
     }
-    // 实际生效键仍在：clipbook 融合域的移动端全屏键
-    expect(DEFAULT_SETTINGS.clipbookMobileDefaultFullscreen).toBe(true);
     // 接口层同步：settings.ts 源文件不再声明死键（双删而非只删默认值）
     const settingsSrc = readRepoFile('../src/settings.ts');
     for (const k of dead) {

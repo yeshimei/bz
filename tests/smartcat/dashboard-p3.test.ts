@@ -16,7 +16,6 @@ const mockSettings: Record<string, any> = {
   behaviorMaxCount: 2000,
   enableAutoLinking: true,
   linkWindowDays: 7,
-  smartcatMobileDefaultFullscreen: false,
 };
 vi.mock('../../src/core/settings-provider', () => ({
   tryGetSettings: () => mockSettings,
@@ -36,7 +35,6 @@ vi.mock('../../src/smartcat/data', async (importOriginal) => {
 
 // mock mobile / esc-manager / notice
 vi.mock('../../src/core/mobile', () => ({
-  applyMobileWindowFullscreen: vi.fn(),
   isMobileEnv: () => false,
 }));
 vi.mock('../../src/core/esc-manager', () => ({

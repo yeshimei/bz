@@ -2,7 +2,7 @@
 /**
  * 书架墙默认视图接线 + 设置 schema 测试（issue 194）
  * - applyDefaultView：每次冷开读设置（openBookshelf/openReportView 两路径先调用），非法值回落；
- * - schema：目录 + 显示（默认筛选/默认排序）+ 移动端三组契约。
+ * - schema：外观 + 目录 + 显示组契约（移动端默认全屏组已随特性退役删除）。
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { M, resetBookshelfState, applyDefaultView } from '../../src/bookshelf/state';
@@ -46,9 +46,9 @@ describe('bookshelf applyDefaultView（issue 194）', () => {
 });
 
 describe('bookshelf 设置 schema（issue 194）', () => {
-  it('组序：外观 → 目录 → 显示 → 移动端；外观组皮肤行 + 显示组两行键与选项集契约（issue 246 收编、issue 218 排序三档）', () => {
+  it('组序：外观 → 目录 → 显示；外观组皮肤行 + 显示组两行键与选项集契约（issue 246 收编、issue 218 排序三档）', () => {
     const schema = bookshelfSettingsSchema();
-    expect(schema.groups.map((g) => g.name)).toEqual(['外观', '目录', '显示', '移动端']);
+    expect(schema.groups.map((g) => g.name)).toEqual(['外观', '目录', '显示']);
     // 外观组（issue 246 收编）：主题行 choiceCards 五选一，默认雪松白，onChange 热切换
     const look = schema.groups[0];
     expect(look.rows).toHaveLength(1);

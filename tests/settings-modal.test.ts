@@ -8,7 +8,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { openSettingsModal, closeSettingsModal, createSettingsGroup } from '../src/core/settings-modal';
 import { setApp } from '../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../src/core/settings-provider';
-import { mobileFullscreenGroup } from '../src/core/settings-common';
 import { belongingSettingsSchema } from '../src/belongings/ui';
 import { favoritesSettingsSchema } from '../src/favorites/ui';
 import { MockVault } from './mock-vault';
@@ -71,15 +70,35 @@ describe('core settings-modal 机制', () => {
     expect(popup.querySelector('.setting-item')).toBeNull();
   });
 
-  it('schema 仅含移动端组：桌面端整组隐藏 → 显示空态；移动端显示开关行（ticket 131）', () => {
-    setSettingsProvider(() => ({ diaryMobileDefaultFullscreen: false } as any));
+  it('visibleWhen 门控：桌面端隐藏 → 显示空态；移动端显示内容行（ticket 131）', () => {
+    setSettingsProvider(() => ({} as any));
     setSettingsSaver(async () => {});
+    const gate = (isMobile: boolean) => isMobile;
     const prevMobile = MockPlatform.isMobile;
     try {
       MockPlatform.isMobile = false;
       openSettingsModal({
         title: '仅移动端组',
-        schema: { groups: [mobileFullscreenGroup('diaryMobileDefaultFullscreen')] },
+        schema: {
+          groups: [
+            {
+              name: '测试组',
+              icon: 'smartphone',
+              rows: [
+                {
+                  type: 'custom',
+                  render: (body) => {
+                    const s = document.createElement('div');
+                    s.className = 'setting-item';
+                    s.dataset.name = '测试项';
+                    body.appendChild(s);
+                  },
+                },
+              ],
+              visibleWhen: () => gate(MockPlatform.isMobile),
+            },
+          ],
+        },
         emptyText: '桌面空态',
       });
       let popup = document.getElementById('bz-settings-modal-popup')!;
@@ -89,15 +108,31 @@ describe('core settings-modal 机制', () => {
       MockPlatform.isMobile = true;
       openSettingsModal({
         title: '仅移动端组',
-        schema: { groups: [mobileFullscreenGroup('diaryMobileDefaultFullscreen')] },
+        schema: {
+          groups: [
+            {
+              name: '测试组',
+              icon: 'smartphone',
+              rows: [
+                {
+                  type: 'custom',
+                  render: (body) => {
+                    const s = document.createElement('div');
+                    s.className = 'setting-item';
+                    s.dataset.name = '测试项';
+                    body.appendChild(s);
+                  },
+                },
+              ],
+              visibleWhen: () => gate(MockPlatform.isMobile),
+            },
+          ],
+        },
         emptyText: '桌面空态',
       });
       popup = document.getElementById('bz-settings-modal-popup')!;
       expect(popup.querySelector('.bz-settings-empty')).toBeNull();
-      const mfs = [...popup.querySelectorAll('.setting-item')].find(
-        (el) => (el as HTMLElement).dataset.name === '移动端默认全屏'
-      );
-      expect(mfs).toBeTruthy();
+      expect(popup.querySelector('[data-name="测试项"]')).toBeTruthy();
       closeSettingsModal();
     } finally {
       MockPlatform.isMobile = prevMobile;
@@ -437,8 +472,8 @@ describe('分组卡片（2026-08 用户拍板方案 A：先落日记本）', () 
 
 describe('归物本设置 schema（⚙️ 收敛设置面板，ticket 177）', () => {
   // 旧 ⚙️/🔀 头行按钮已随重设计移除：设置全收敛进设置面板（settings-panel schemaLoader）。
-  // 此处直测 schema 契约：显示组（issue 194 补默认状态筛选）+ 移动端「移动端默认全屏」组
-  // （与设置面板内嵌渲染同源）。
+  // 此处直测 schema 契约：显示组（issue 194 补默认状态筛选）。
+  // 「移动端默认全屏」组已随特性全链退役删除。
   let settings: Record<string, unknown>;
   beforeEach(() => {
     resetObsidianMocks();
@@ -450,8 +485,8 @@ describe('归物本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
 
   it('桌面端：外观组后显示组暴露「默认状态筛选」select（五态，直绑 belongingsDefaultStatus；issue 246）', () => {
     const schema = belongingSettingsSchema();
-    // bef5b76 起外观组（面板布局/面板主题占位单卡）插在首位：3 组 = 外观/显示/移动
-    expect(schema.groups).toHaveLength(3);
+    // 移动端默认全屏组退役后：2 组 = 外观/显示
+    expect(schema.groups).toHaveLength(2);
     expect(schema.groups[0].name).toBe('外观');
     expect(schema.groups[1].name).toBe('显示');
     const row = schema.groups[1].rows[0] as any;
@@ -459,20 +494,6 @@ describe('归物本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     expect(row.name).toBe('默认状态筛选');
     expect(row.binding).toMatchObject({ key: 'belongingsDefaultStatus' });
     expect(row.options.map((o: any) => o.value)).toEqual(['', 'using', 'idle', 'sold', 'discard']);
-  });
-
-  it('移动端：schema 暴露「移动端默认全屏」toggle，直绑 belongingsMobileDefaultFullscreen', () => {
-    const prevMobile = MockPlatform.isMobile;
-    try {
-      MockPlatform.isMobile = true;
-      const schema = belongingSettingsSchema();
-      expect(schema.groups[2].visibleWhen!(settings as any)).toBe(true);
-      const row = schema.groups[2].rows[0] as any;
-      expect(row.name).toBe('移动端默认全屏');
-      expect(row.binding).toMatchObject({ key: 'belongingsMobileDefaultFullscreen' });
-    } finally {
-      MockPlatform.isMobile = prevMobile;
-    }
   });
 });
 
@@ -486,11 +507,11 @@ describe('收藏本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     setSettingsSaver(async () => {});
   });
 
-  it('桌面端：外观组（issue 246 占位）落域后 = 外观 + 移动端两组；退役键不回归', () => {
+  it('桌面端：外观组（issue 246 占位）落域后 = 单外观组；退役键不回归', () => {
     const schema = favoritesSettingsSchema();
-    expect(schema.groups).toHaveLength(2);
+    // 移动端默认全屏组退役后：仅剩外观组
+    expect(schema.groups).toHaveLength(1);
     expect(schema.groups[0].name).toBe('外观');
-    expect(schema.groups[1].name).toBe('移动端');
     const allRows = schema.groups.flatMap((g) => g.rows) as any[];
     expect(allRows.find((r) => r.binding?.key === 'favoritesTimeFormat')).toBeUndefined();
     expect(allRows.find((r) => r.binding?.key === 'favoritesSortKey')).toBeUndefined();
@@ -499,19 +520,5 @@ describe('收藏本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
     expect(layout.binding).toMatchObject({ key: 'favoritesSkin' });
     expect(theme.binding).toMatchObject({ key: 'favoritesSkinTheme' });
     expect(theme.layoutKey).toBe('favoritesSkin');
-  });
-
-  it('移动端：schema 暴露「移动端默认全屏」toggle，直绑 favoritesMobileDefaultFullscreen', () => {
-    const prevMobile = MockPlatform.isMobile;
-    try {
-      MockPlatform.isMobile = true;
-      const schema = favoritesSettingsSchema();
-      expect(schema.groups[1].visibleWhen!(settings as any)).toBe(true);
-      const row = schema.groups[1].rows[0] as any;
-      expect(row.name).toBe('移动端默认全屏');
-      expect(row.binding).toMatchObject({ key: 'favoritesMobileDefaultFullscreen' });
-    } finally {
-      MockPlatform.isMobile = prevMobile;
-    }
   });
 });

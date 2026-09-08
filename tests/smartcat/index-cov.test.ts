@@ -26,7 +26,7 @@ import { CAT_CONTAINER_ID } from '../../src/smartcat/ui';
 import { isoWeekKey } from '../../src/smartcat/rhythm';
 import { DAY_MS, defaultSmartCatData, getSmartcatFilePath } from '../../src/smartcat/data';
 
-let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
+let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
 
 function makeApp() {
   const vault = new MockVault();
@@ -79,7 +79,7 @@ let origFetch: typeof fetch;
 beforeEach(() => {
   resetObsidianMocks();
   document.body.innerHTML = '';
-  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
+  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
   unloadSmartCat();
   resetAIProviderCache();
   setAISettingsProvider(() => settings);

@@ -362,7 +362,7 @@ describe('dashboard 缺席状态卡 + 读侧依恋视图', () => {
   beforeEach(() => {
     resetObsidianMocks();
     document.body.innerHTML = '';
-    settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
+    settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
   });
 
   afterEach(() => {

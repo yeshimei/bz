@@ -59,7 +59,7 @@ describe('设置面板（settings-panel）', () => {
     unloadSettingsPanel();
     (escManager as any).handlers = new Map();
     // 共享单例 state（每次 getSettings 返回同一对象——否则 select 等写入落到临时对象丢失）
-    panelState = { settingsPanelMobileDefaultFullscreen: true, belSkin: 'poster', belSkinTheme: 'warmwhite' } as any;
+    panelState = { belSkin: 'poster', belSkinTheme: 'warmwhite' } as any;
     setSettingsProvider(() => panelState as any);
     // 注入 app（review schema 构造经 getApp；mock 与其它域测试一致）
     setApp({ vault: new MockVault(), workspace: { getLeaf: () => ({ openFile: vi.fn() }) } } as any);
@@ -674,8 +674,7 @@ describe('设置面板（settings-panel）', () => {
     let names: (string | null)[];
     for (;;) {
       names = [...popup.querySelectorAll('.bz-sp-mob-name')].map((b) => b.textContent);
-      const badges = [...popup.querySelectorAll('.bz-sp-mob-item .bz-sp-mob-count, .bz-sp-mob-item .bz-sp-nav-count')].map((b) => b.textContent);
-      if (Date.now() > deadline0 || (names.length === 16 && !badges.includes('·'))) break;
+      if (Date.now() > deadline0 || names.length === 17) break;
       await new Promise((r) => setTimeout(r, 30));
     }
     // 只看域名（mob-name），避免描述包含误判
@@ -724,7 +723,6 @@ describe('设置面板（settings-panel）', () => {
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     expect(popup.classList.contains('bz-sp-mobile')).toBe(true);
-    expect(popup.classList.contains('bz-win-mfs')).toBe(true);
     // 头行：标题「设置」无 emoji + 关闭图标钮（lucide x）
     const headTitle = popup.querySelector('.bz-sp-head-title')!;
     expect(headTitle.textContent).toBe('设置');
@@ -744,7 +742,7 @@ describe('设置面板（settings-panel）', () => {
     ui.cleanup();
   });
 
-  it('移动端：点域 → 居中弹窗内嵌渲染真实 schema', async () => {
+  it('移动端：点域 → 推入域设置页（全屏页切换，返回弹回）', async () => {
     mobileFlag = true;
     const ui = new SettingsPanelUI();
     ui.open();
@@ -755,24 +753,19 @@ describe('设置面板（settings-panel）', () => {
     expect(pomoItem).toBeTruthy();
     pomoItem.click();
     const deadline = Date.now() + 2000;
-    let modal: Element | null = null;
-    while (Date.now() < deadline) {
-      modal = document.querySelector('.bz-sp-mob-modal');
-      if (modal && modal.querySelectorAll('.bz-sp-group').length >= 2) break;
+    for (;;) {
+      if (Date.now() > deadline) break;
+      if (popup.classList.contains('bz-sp-mob-pushed') &&
+          popup.querySelectorAll('.bz-sp-mob-page-body .bz-sp-group').length >= 2) break;
       await new Promise((r) => setTimeout(r, 30));
     }
-    expect(modal).toBeTruthy();
-    // 弹窗内真实设置分组
-    expect(modal!.querySelectorAll('.bz-sp-group').length).toBeGreaterThanOrEqual(2);
-    // 弹窗头行：整宽头行仅标题（图标块/关闭钮已退役——遮罩点击与 ESC 关闭）；无分隔线（原型 m1-modal-head：无 border）
-    const modalHead = modal!.querySelector('.bz-sp-mob-modal-head')!;
-    expect((modalHead as HTMLElement).style.borderBottom).toBe('');
-    expect(modalHead.querySelector('.bz-sp-mob-modal-title')!.textContent).toBe('番茄钟');
-    expect(modalHead.querySelector('.bz-sp-mob-modal-ic')).toBeNull();
-    const modalMask = modal!.previousElementSibling as HTMLElement;
-    expect(modalMask.classList.contains('bz-overlay-mask')).toBe(true);
-    modalMask.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(document.querySelector('.bz-sp-mob-modal')).toBeNull();
+    // 推入态：域页头行标题 = 域名；页内渲染真实设置分组
+    expect(popup.classList.contains('bz-sp-mob-pushed')).toBe(true);
+    expect(popup.querySelector('.bz-sp-mob-title')!.textContent).toBe('番茄钟');
+    expect(popup.querySelectorAll('.bz-sp-mob-page-body .bz-sp-group').length).toBeGreaterThanOrEqual(2);
+    // 返回钮弹回首页（推入态摘除）
+    (popup.querySelector('.bz-sp-mob-back-btn') as HTMLElement).click();
+    expect(popup.classList.contains('bz-sp-mob-pushed')).toBe(false);
     ui.cleanup();
   });
 
@@ -794,18 +787,15 @@ describe('设置面板（settings-panel）', () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
-    // 先点开 AI 域（index 1）填充其行缓存（弹窗内出现分组为加载完成标志）
+    // 先点开 AI 域填充其行缓存（推入页出现分组为加载完成标志），再返回首页
     const items = popup.querySelectorAll('.bz-sp-mob-item');
     (items[1] as HTMLElement).click(); // AI（issue 186 独立域）
     const deadline = Date.now() + 2000;
     while (Date.now() < deadline) {
-      if (document.querySelector('.bz-sp-mob-modal .bz-sp-group')) break;
+      if (popup.querySelector('.bz-sp-mob-page-body .bz-sp-group')) break;
       await new Promise((r) => setTimeout(r, 30));
     }
-    // 关闭弹窗
-    const modal = document.querySelector('.bz-sp-mob-modal');
-    const modalMask = modal ? modal.previousElementSibling as HTMLElement : null;
-    if (modalMask) modalMask.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    (popup.querySelector('.bz-sp-mob-back-btn') as HTMLElement).click();
     // 搜「AI」→ 域段（AI）+ 设置项段
     const search = popup.querySelector('.bz-sp-mob-search .bz-input') as HTMLInputElement;
     search.value = 'AI';

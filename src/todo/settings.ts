@@ -1,12 +1,11 @@
 /**
  * 待办（todo）域设置 schema（接入设置面板；窗口内无设置按钮，收敛进 Obsidian 设置面板）
  * 设置键全部绑定旧 memo 既有键（memoScenarios/memoSortMode/…）——并存期与旧 memo 共享
- * 设置、删旧域后零迁移；唯一新键 todoMobileDefaultFullscreen 是本域面板的移动全屏开关。
+ * 设置、删旧域后零迁移。
  * 提醒组：启动自动弹出 / 打开笔记提醒已由本域提醒后台承担（todo/reminder.ts，
  * 落点=待办面板；memo→todo 接管迁移第 3 项提前实施），旧 memo 侧对应入口已改道移除。
  */
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { mobileFullscreenGroup } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { TodoData } from './data';
 import { applyTodoSkin } from './ui';
@@ -127,8 +126,6 @@ export function todoSettingsSchema(): SettingsSchema {
           },
         ],
       },
-      // ticket 170 铁律：移动端组不写描述（对齐其余 14 域）
-      mobileFullscreenGroup('todoMobileDefaultFullscreen'),
     ],
   };
 }

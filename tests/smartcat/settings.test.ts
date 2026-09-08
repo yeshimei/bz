@@ -3,7 +3,6 @@
  * 1) 移动端长按开设置 → 关闭（遮罩）→ 拖拽恢复（回归：onClose 复位 isSettingsOpen 交互锁）；
  * 2) 外观平铺色块选择器（13 皮肤、active 跟随、点击落盘并即时换肤）；
  * 3) 人格成长可视化与重置成长已移除（ticket 123 UI 拍板），设置弹窗无相关元素；
- * 4) 设置弹窗移动端全屏跟随 smartcatMobileDefaultFullscreen（与聊天/数据面板同一开关）；
  * 5) 「打开数据面板」行替换原「每周懂你报告」（周报移入数据面板「报告」页签）；
  * 6) 分组卡片结构（2026-08 方案 A：外观/可视化/互动/记忆 + 移动端）与文案规范（标题无括号、
  *    描述一句话无禁用符号），旧标题行同步移除。
@@ -18,7 +17,7 @@ import { openSmartcatSettings } from '../../src/smartcat/ui';
 import { CAT_CONTAINER_ID } from '../../src/smartcat/ui';
 import { closeSettingsModal } from '../../src/core/settings-modal';
 
-let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
+let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
 
 function makeApp() {
   const vault = new MockVault();
@@ -50,7 +49,7 @@ const baseConfig = () => ({
 beforeEach(() => {
   resetObsidianMocks();
   document.body.innerHTML = '';
-  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
+  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
   unloadSmartCat();
 });
 
@@ -92,14 +91,13 @@ describe('移动端长按设置 → 关闭 → 拖拽恢复', () => {
 });
 
 describe('外观平铺色块选择器', () => {
-  function openWith(config: any, hooks: { saves: any[]; appearances: string[] }, keys?: { mobileFullscreen: boolean }) {
+  function openWith(config: any, hooks: { saves: any[]; appearances: string[] }) {
     openSmartcatSettings({
       getConfig: () => config,
       saveConfig: async (c) => {
         hooks.saves.push(JSON.parse(JSON.stringify(c)));
       },
-      settingsKeys: { enabled: true, mobileFullscreen: keys?.mobileFullscreen ?? false },
-      setMobileFullscreen: async () => {},
+      settingsKeys: { enabled: true },
       onAppearanceChanged: (skin) => hooks.appearances.push(skin),
     });
   }
@@ -161,26 +159,6 @@ describe('外观平铺色块选择器', () => {
     expect(document.querySelector('.bz-sc-trait-fill')).toBeNull();
   });
 
-  it('设置弹窗移动端全屏跟随 smartcatMobileDefaultFullscreen（与聊天/数据面板同一开关）', () => {
-    const hooks = { saves: [] as any[], appearances: [] as string[] };
-    const config = baseConfig();
-    // 移动端 + 开关开 → 弹窗挂 bz-win-mfs
-    Platform.isMobile = true;
-    openWith(config, hooks, { mobileFullscreen: true });
-    expect(document.getElementById('bz-settings-modal-popup')!.classList.contains('bz-win-mfs')).toBe(true);
-    // 开关关 → 不挂类（常规卡）
-    closeSettingsModal();
-    document.body.innerHTML = '';
-    openWith(config, hooks, { mobileFullscreen: false });
-    expect(document.getElementById('bz-settings-modal-popup')!.classList.contains('bz-win-mfs')).toBe(false);
-    // 桌面端恒不挂类
-    closeSettingsModal();
-    document.body.innerHTML = '';
-    Platform.isMobile = false;
-    openWith(config, hooks, { mobileFullscreen: true });
-    expect(document.getElementById('bz-settings-modal-popup')!.classList.contains('bz-win-mfs')).toBe(false);
-  });
-
   it('「打开数据面板」行替换原「每周懂你报告」；点击关弹窗并回调', async () => {
     const hooks = { saves: [] as any[], appearances: [] as string[] };
     let dashboardOpened = 0;
@@ -190,8 +168,7 @@ describe('外观平铺色块选择器', () => {
       saveConfig: async (c) => {
         hooks.saves.push(JSON.parse(JSON.stringify(c)));
       },
-      settingsKeys: { enabled: true, mobileFullscreen: false },
-      setMobileFullscreen: async () => {},
+      settingsKeys: { enabled: true },
       onOpenDashboard: () => {
         dashboardOpened++;
         closeSettingsModal();
@@ -220,8 +197,7 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
       saveConfig: async (c) => {
         hooks.saves.push(JSON.parse(JSON.stringify(c)));
       },
-      settingsKeys: { enabled: true, mobileFullscreen: false },
-      setMobileFullscreen: async () => {},
+      settingsKeys: { enabled: true },
       onOpenDashboard: () => {},
       onAppearanceChanged: (skin) => hooks.appearances.push(skin),
     });
@@ -281,18 +257,6 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
     }
   });
 
-  it('移动端多出「移动端」组（smartphone 图标，1 项）', () => {
-    const hooks = { saves: [] as any[], appearances: [] as string[] };
-    Platform.isMobile = true;
-    openWith(baseConfig(), hooks);
-    const mobileGroup = [...document.querySelectorAll('.bz-settings-group')].find(
-      (g) => g.querySelector('.bz-settings-group-name')!.textContent === '移动端'
-    )! as HTMLElement;
-    expect(mobileGroup).not.toBeUndefined();
-    expect(mobileGroup.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon')).toBe('smartphone');
-    expect(mobileGroup.querySelector('.bz-settings-group-count')!.textContent).toBe('1 项');
-  });
-
   it('可视化组仅有「打开数据面板」1 项、无人格面板', () => {
     const hooks = { saves: [] as any[], appearances: [] as string[] };
     Platform.isMobile = false;
@@ -301,8 +265,7 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
       saveConfig: async (c) => {
         hooks.saves.push(JSON.parse(JSON.stringify(c)));
       },
-      settingsKeys: { enabled: true, mobileFullscreen: false },
-      setMobileFullscreen: async () => {},
+      settingsKeys: { enabled: true },
       onOpenDashboard: () => {},
       onAppearanceChanged: (skin) => hooks.appearances.push(skin),
     });

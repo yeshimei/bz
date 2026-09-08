@@ -13,8 +13,6 @@ import { notice } from '../core/notice';
 import { longPress } from '../core/dom';
 import { openFlowDialog } from '../core/flow-dialog';
 import { escManager } from '../core/esc-manager';
-import { applyMobileWindowFullscreen } from '../core/mobile';
-import { tryGetSettings } from '../core/settings-provider';
 import { uiModal, uiEmpty } from '../core/ui';
 import { bsSkinClass } from './ui';
 import { parseBookNotes, jumpToHighlight, updateComment, deleteHighlight } from './notes';
@@ -235,14 +233,13 @@ export function closeBookNoteModals(): void {
 
 // ---------- 共用外壳与渲染 ----------
 
-/** 读书笔记弹窗外壳（组件库 uiModal：头行标题+关闭；移动端默认全屏跟随书架墙键） */
+/** 读书笔记弹窗外壳（组件库 uiModal：头行标题+关闭） */
 function openNotesShell(title: string): { popup: HTMLElement; close: () => void } {
   const body = document.createElement('div');
   body.className = 'bz-bs-notes';
   const list = document.createElement('div');
   list.className = 'bz-bs-notes-body';
   body.appendChild(list);
-  const fullscreen = (tryGetSettings() as Record<string, unknown>).bookshelfMobileDefaultFullscreen === true;
   const { popup, close } = uiModal({
     content: body,
     maxWidth: 700,
@@ -255,7 +252,6 @@ function openNotesShell(title: string): { popup: HTMLElement; close: () => void 
       if (epubNotesClose === close) epubNotesClose = null;
     },
   });
-  applyMobileWindowFullscreen(popup, fullscreen);
   return { popup, close };
 }
 

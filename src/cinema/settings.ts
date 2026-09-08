@@ -2,7 +2,7 @@
  * 影院（cinema）域设置 schema（接入设置面板；窗口内无设置按钮，收敛进 Obsidian 设置面板）
  * issue 194：补「显示」组——默认排序/默认状态筛选（打开面板时读，非法值回落，见 index.ts readDefaultView）。
  */
-import { mobileFullscreenGroup, numStrBinding } from '../core/settings-common';
+import { numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 
 export function cinemaSettingsSchema(): SettingsSchema {
@@ -79,7 +79,6 @@ export function cinemaSettingsSchema(): SettingsSchema {
           },
         ],
       },
-      mobileFullscreenGroup('cinemaMobileDefaultFullscreen', { desc: '' }),
     ],
   };
 }

@@ -51,7 +51,6 @@ function injectSettings(): void {
     () =>
       ({
         belongingsDefaultStatus: '',
-        belongingsMobileDefaultFullscreen: false,
       }) as never
   );
 }

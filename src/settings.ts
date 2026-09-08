@@ -129,7 +129,6 @@ export default interface BzSettings {
   newsRetentionUnsavedDays: string;
   // ===== 📚 剪藏本（clipbook 融合域，ADR-0082；与旧 clipping/news 并存）=====
   /** 移动端默认全屏（剪藏本融合面板） */
-  clipbookMobileDefaultFullscreen: boolean;
   /** 阅读字号档位：small/medium/large（右栏正文三档，默认 medium） */
   clipbookReaderFontSize: string;
   /** 剪藏本面板桌面尺寸记忆（ADR-0084；0=未拖过，打开走默认 1180×760） */
@@ -157,7 +156,6 @@ export default interface BzSettings {
    * 读书报告内嵌化后语义仍成立：书架墙面板与读书笔记弹窗（notes-ui）共用此键；
    * 报告随面板同控（独立报告弹窗已退役，不再单独消费）。
    */
-  bookshelfMobileDefaultFullscreen: boolean;
   /** 📚 书架墙：默认筛选（all=全部/reading=在读/unread=未读/done=已读；打开面板时侧栏选中态，
    *  非法值回落 all。issue 194） */
   bookshelfDefaultSide: string;
@@ -339,13 +337,9 @@ export default interface BzSettings {
   // 只决定每次打开的初始形态；默认值=行为保持（原移动端即全屏→开，原居中卡→关）。
   // 阅读报告跟随书架墙键（2026-08 用户拍板，不设独立开关）。
   /** 日记本：移动端默认全屏（默认开——原 ≤480px 即全屏，480-768 原抽屉形态） */
-  diaryMobileDefaultFullscreen: boolean;
   /** 待办（todo 新域）：移动端默认全屏（默认关——与旧备忘录一致） */
-  todoMobileDefaultFullscreen: boolean;
   /** 归物本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
-  belongingsMobileDefaultFullscreen: boolean;
   /** 收藏本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
-  favoritesMobileDefaultFullscreen: boolean;
   /** 收藏本：列表排序键（created=创建时间最新优先 / title=标题；toolbar 排序循环钮读写。
    *  ADR-0083 重设计去 domain 键——循环仅 created/title 两档；旧 domain 值兼容回落 created。
    *  排序选择持久化于 data.json 而非 favorites.json——favorites.json 顶层是纯条目数组，
@@ -353,17 +347,11 @@ export default interface BzSettings {
    *  且违背「既有结构不改」铁律；排序键落设置与 memoSortMode 同惯例） */
   favoritesSortKey: string;
   // 旧 favoritesTimeFormat（卡片日期显示）已删（ADR-0101）：固定相对时间
-  // 旧 libraryMobileDefaultFullscreen（书库）已删；读书报告内嵌化后独立报告弹窗退役，报告随书架墙面板同控 bookshelfMobileDefaultFullscreen
   /** 影院：移动端默认全屏（默认开——原 JS 内联强制全屏；ADR-0087 起影视报告同控此键） */
-  cinemaMobileDefaultFullscreen: boolean;
   /** 复习计划：移动端默认全屏（默认开——原 JS 内联强制全屏） */
-  reviewMobileDefaultFullscreen: boolean;
   /** 番茄钟：移动端默认全屏（默认关——原移动端 320px 居中卡） */
-  pomodoroMobileDefaultFullscreen: boolean;
   /** 保险箱：移动端默认全屏（默认开——原 JS 内联强制全屏） */
-  encryptMobileDefaultFullscreen: boolean;
   /** 文献盒：移动端默认全屏（默认关——95% 居中卡，ADR-0065） */
-  literatureMobileDefaultFullscreen: boolean;
   /** 文献盒：步骤进度详细度（默认开——当前步骤+耗时+百分比+步骤时间线；关=仅步骤徽章，ADR-0066） */
   literatureProgressDetail: boolean;
   /** 文献盒：处理完是否保留视频原件（默认保留；关=只出文献笔记不落视频，ADR-0066） */
@@ -403,7 +391,6 @@ export default interface BzSettings {
    * 2026-08-23 合并一套（用户拍板）：聊天/设置/数据面板三窗共用本开关；
    * 原独立键 smartcatDashboardMobileDefaultFullscreen（ticket 071）删除，旧值残留忽略。
    */
-  smartcatMobileDefaultFullscreen: boolean;
   /** 小橘记忆库向量化模型（'' = 跟随第二大脑嵌入模型；改动需重建记忆向量索引） */
   smartcatEmbeddingModel: string;
   /** 小橘记忆库分块字符上限（200–6000；默认 800——中文语义检索粒度优先，改动后新入库条目生效） */
@@ -437,11 +424,9 @@ export default interface BzSettings {
 
   // ===== 🧠 第二大脑 =====
   /** 第二大脑主面板：移动端默认全屏（默认开——总览信息密度高；ticket 103） */
-  secondBrainMobileDefaultFullscreen: boolean;
 
   // ===== ⚙️ 设置面板（ADR-0080） =====
   /** 设置面板主窗口：移动端默认全屏（默认开；主面板全屏 + 关闭按钮，子面板一律弹窗） */
-  settingsPanelMobileDefaultFullscreen: boolean;
   /** 设置面板布局：'jingwei' = 经纬（左栏右域经纬分明；当前唯一布局） */
   settingsPanelLayout: string;
   /** 设置面板主题：'chenhun' = 晨昏（亮如晨、暗如夜，跟随 Obsidian 自动切合；当前唯一主题） */
@@ -449,7 +434,6 @@ export default interface BzSettings {
 
   // ===== 🖼️ 回忆墙（diary-wall 域，ADR-0081）=====
   /** 回忆墙：移动端默认全屏（默认开——回忆墙为媒体优先瀑布流，移动端真全屏设计） */
-  diaryWallMobileDefaultFullscreen: boolean;
 }
 
 export const DEFAULT_SETTINGS: BzSettings = {
@@ -522,7 +506,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
   autoSummaryTiming: 'immediate',
   newsRetentionUnsavedDays: '30',
   // clipbook（ADR-0082）：移动端默认全屏对齐 clipping 默认开
-  clipbookMobileDefaultFullscreen: true,
   // clipbook：右栏阅读字号三档（small/medium/large）
   clipbookReaderFontSize: 'medium',
   // clipbook：面板桌面尺寸记忆（ADR-0084；0=未拖过）
@@ -543,7 +526,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
 
   // 书架墙（bookshelf；空 = 未配置，运行时回落旧 libraryFolderPath 存量值——零感知迁移）
   bookshelfFolderPath: '',
-  bookshelfMobileDefaultFullscreen: true,
   bookshelfDefaultSide: 'all',
   bookshelfSortMode: 'date',
   bookshelfSkin: 'nordic',
@@ -627,9 +609,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
 
   // 移动端主窗口默认全屏（ticket 68：默认值=行为保持——原移动端即全屏→开，原居中卡→关；
   // 阅读报告跟随书架墙键，不设独立键）
-  diaryMobileDefaultFullscreen: true,
-  todoMobileDefaultFullscreen: false,
-  belongingsMobileDefaultFullscreen: true,
   belongingsDefaultStatus: '',
   belSkin: 'poster',
   belSkinTheme: 'warmwhite',
@@ -653,13 +632,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   pomodoroSkinTheme: 'tomato',
   encryptSkin: 'default',
   encryptSkinTheme: 'steel',
-  favoritesMobileDefaultFullscreen: true,
   favoritesSortKey: 'created',
-  cinemaMobileDefaultFullscreen: true,
-  reviewMobileDefaultFullscreen: true,
-  pomodoroMobileDefaultFullscreen: false,
-  encryptMobileDefaultFullscreen: true,
-  literatureMobileDefaultFullscreen: false,
   // 文献盒处理设置（键名随域更名 literature*；ticket 136 默认值=既存行为不动，零迁移）
   literatureProgressDetail: true,
   literatureKeepVideo: true,
@@ -676,17 +649,13 @@ export const DEFAULT_SETTINGS: BzSettings = {
   literatureWhisperModel: 'small',
   literatureCacheDir: '',
   literatureCacheRetentionDays: 7,
-  secondBrainMobileDefaultFullscreen: true,
   // 设置面板（ADR-0080）：移动端默认全屏（默认开）；布局默认经纬；主题默认晨昏（跟随亮暗）
-  settingsPanelMobileDefaultFullscreen: true,
   settingsPanelLayout: 'jingwei',
   settingsPanelSkin: 'chenhun',
   // 回忆墙（diary-wall 域，ADR-0081）：移动端默认全屏（默认开——媒体优先瀑布流真全屏）
-  diaryWallMobileDefaultFullscreen: true,
 
   // 小橘陪伴猫（smartcat 域；移动端默认全屏键聊天/设置/数据面板共用，2026-08-23 合并一套）
   smartcatEnabled: true,
-  smartcatMobileDefaultFullscreen: false,
   smartcatEmbeddingModel: '',
   smartcatChunkLimitChars: 800,
   // 小橘对我的称呼（ticket 163）：默认包仔——把记忆流/行为流喂给 AI 时「你/用户」替换为此称呼

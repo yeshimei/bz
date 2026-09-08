@@ -193,31 +193,6 @@ describe('UIManager 三区队列', () => {
     ui.destroy();
   });
 
-  it('移动端默认全屏：showMain 后 popup 挂 bz-win-mfs；开关关不挂；桌面恒不挂', async () => {
-    const vault = new MockVault();
-    seed(vault);
-    // 移动端 + 默认开
-    MockPlatform.isMobile = true;
-    setSettingsProvider(() => ({ reviewMobileDefaultFullscreen: true }) as any);
-    let { ui } = await makeUI(vault);
-    await ui.showMain();
-    expect(document.getElementById('review-popup')!.classList.contains('bz-win-mfs')).toBe(true);
-    ui.destroy();
-    // 移动端 + 关
-    setSettingsProvider(() => ({ reviewMobileDefaultFullscreen: false }) as any);
-    ({ ui } = await makeUI(vault));
-    await ui.showMain();
-    expect(document.getElementById('review-popup')!.classList.contains('bz-win-mfs')).toBe(false);
-    ui.destroy();
-    // 桌面恒不挂
-    MockPlatform.isMobile = false;
-    setSettingsProvider(() => ({ reviewMobileDefaultFullscreen: true }) as any);
-    ({ ui } = await makeUI(vault));
-    await ui.showMain();
-    expect(document.getElementById('review-popup')!.classList.contains('bz-win-mfs')).toBe(false);
-    ui.destroy();
-  });
-
   it('isPlayable：到期可做；未来/挂起/已完成不可', () => {
     const now = new Date();
     const base = {

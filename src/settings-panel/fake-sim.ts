@@ -39,7 +39,6 @@ const SEED_SETTINGS: Record<string, unknown> = {
   movieDirectory: '我的/影视',
   settingsPanelLayout: 'jingwei',
   settingsPanelSkin: 'chenhun',
-  settingsPanelMobileDefaultFullscreen: false,
   todoSkin: 'paper',
   bookshelfSkin: 'nordic',
   belSkin: 'poster',

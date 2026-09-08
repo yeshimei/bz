@@ -15,7 +15,7 @@ import { TFile } from 'obsidian';
 import { notify, notice, notifySaveError } from '../core/notice';
 import { emitDomainEvent } from '../core/domain-bus';
 import { escManager } from '../core/esc-manager';
-import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
+import { isMobileEnv } from '../core/mobile';
 import { topifyZ } from '../core/dom';
 import { tryGetSettings } from '../core/settings-provider';
 import { mountIcons } from '../core/ui';
@@ -626,9 +626,6 @@ export function createOverlay(app: App): void {
   M.renderFn = () => renderAll(app);
   const root = overlay.querySelector<HTMLElement>('[data-cinema-root]');
   if (!root) return;
-  if (mobile) {
-    applyMobileWindowFullscreen(root, (tryGetSettings() as Record<string, unknown>).cinemaMobileDefaultFullscreen === true);
-  }
   // 点遮罩 = 关闭主面板（桌面；移动全屏无遮罩）
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) closeOverlay();

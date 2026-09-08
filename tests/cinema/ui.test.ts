@@ -516,13 +516,12 @@ tags: [电影]
 
   // ======================= 移动端（mob 壳） =======================
 
-  it('移动端：mob 壳渲染（m-head 添加/AI/分析/关闭 + chips 10 + m-grid）+ 真全屏挂 .bz-win-mfs', () => {
-    setSettingsProvider(() => ({ cinemaMobileDefaultFullscreen: true } as any));
+  it('移动端：mob 壳渲染（m-head 添加/AI/分析/关闭 + chips 10 + m-grid）', () => {
+    setSettingsProvider(() => ({  } as any));
     const { app } = seedMobile();
     createOverlay(app);
     const root = document.querySelector('section.mob.bz-cinema--midnight') as HTMLElement;
     expect(root).toBeTruthy();
-    expect(root.classList.contains('bz-win-mfs')).toBe(true);
     expect(root.querySelectorAll('.m-acts .m-tool').length).toBe(3); // AI/分析/关闭（设置钮退役，添加钮为 .add）
     expect(root.querySelector('.j-mclose')).toBeTruthy(); // 落域适配：移动关闭钮
     expect(root.querySelectorAll('.m-chips .chip').length).toBe(10);

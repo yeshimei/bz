@@ -259,14 +259,15 @@ describe('bz 骨架冒烟', () => {
     expect('libraryFolderPath' in s).toBe(false);
     expect('libraryMobileDefaultFullscreen' in s).toBe(false);
     expect('bookTag' in s).toBe(false);
-    expect(s.bookshelfMobileDefaultFullscreen).toBe(true);
+    // 「移动端默认全屏」特性全链退役：bookshelf 键一并删除
+    expect('bookshelfMobileDefaultFullscreen' in s).toBe(false);
     expect(s.secondBrainOllamaUrl).toBe('http://localhost:11434');
     expect(s.secondBrainEmbeddingModel).toBe('bge-m3');
     // enh-sweep-a：远程 Ollama URL 默认留空（空 = 未配置远程，不再写死内网 IP）
     expect(s.secondBrainRemoteOllamaUrl).toBe('');
     expect(s.passwordLength).toBe('16');
-    // clipbook（ADR-0082）：移动端默认全屏对齐 clipping 默认开
-    expect(s.clipbookMobileDefaultFullscreen).toBe(true);
+    // 「移动端默认全屏」特性全链退役：clipbook 键一并删除
+    expect('clipbookMobileDefaultFullscreen' in s).toBe(false);
     // issue 222：目录栏宽度记忆（分割线拖宽），0 = 未拖过走 CSS 默认 360px
     expect(s.clipbookMidWidth).toBe(0);
     // issue 224：保留天数两键合一——旧 newsRetentionSavedDays/SkippedDays 退役，

@@ -205,30 +205,6 @@ describe('⚙️ 日记本设置弹窗控件写回', () => {
     closeSettingsModal();
   });
 
-  it('移动端组仅移动端渲染；「移动端默认全屏」开关写回并在显示时挂全屏类', async () => {
-    MockPlatform.isMobile = true;
-    settingsObj.diaryMobileDefaultFullscreen = false;
-    openModal();
-    const names = [...document.querySelectorAll('#bz-settings-modal-popup .setting-item')].map(
-      (el) => (el as HTMLElement).dataset.name
-    );
-    expect(names).toContain('移动端默认全屏');
-    const [mfs] = settingControl('移动端默认全屏');
-    mfs.trigger(true);
-    await new Promise((r) => setTimeout(r, 0));
-    expect(settingsObj.diaryMobileDefaultFullscreen).toBe(true);
-    closeSettingsModal();
-
-    // 显示面板：开关开 + 移动端 → 挂 bz-win-mfs 全屏类
-    await showDiaryPanel();
-    expect(document.getElementById('diary-tag-filter')!.classList.contains('bz-win-mfs')).toBe(true);
-
-    // 关闭开关 + 桌面端 → 摘类
-    MockPlatform.isMobile = false;
-    settingsObj.diaryMobileDefaultFullscreen = false;
-    await showDiaryPanel();
-    expect(document.getElementById('diary-tag-filter')!.classList.contains('bz-win-mfs')).toBe(false);
-  });
 });
 
 describe('ESC 分层关闭', () => {

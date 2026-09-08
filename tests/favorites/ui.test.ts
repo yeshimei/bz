@@ -117,7 +117,6 @@ async function setup(): Promise<Ctx> {
     storagePath: 'CONFIG/STORAGE',
     favoritesStoragePath: 'CONFIG/STORAGE',
     favoritesSortKey: 'created',
-    favoritesMobileDefaultFullscreen: true,
     aiProvider: 'opencode-go',
     opencodeGoApiKey: 'sk-test',
   };

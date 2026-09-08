@@ -20,7 +20,7 @@ import {
   __setNoteSettleMsForTests, __getNoteTimersForTests, __getNoteTrackedForTests,
 } from '../../src/smartcat/index';
 
-let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
+let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
 
 function makeApp() {
   const vault = new MockVault();
@@ -49,7 +49,7 @@ const readBehavior = (): any[] => __getSmartcatInternals().data.memory.behaviorS
 beforeEach(() => {
   resetObsidianMocks();
   document.body.innerHTML = '';
-  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
+  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
   unloadSmartCat();
   __setNoteSettleMsForTests(60); // 注入短计时（unload 会复位，须在 unload 之后设置）
 });

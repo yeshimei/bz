@@ -35,8 +35,7 @@ const TARGETS = [
     schema: smartcatSettingsSchema({
       getConfig: () => ({}) as any,
       saveConfig: async () => {},
-      settingsKeys: { enabled: true, mobileFullscreen: false },
-      setMobileFullscreen: async () => {},
+      settingsKeys: { enabled: true },
     }),
   },
 ];

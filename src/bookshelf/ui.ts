@@ -16,7 +16,7 @@ import type { App } from 'obsidian';
 import { TFile } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { allocZ } from '../core/z-order';
-import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
+import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { uiModal, mountIcons } from '../core/ui';
 import { renderReadingReport, cancelReadingReport, handleReportInteraction } from '../reading-report';
@@ -216,14 +216,11 @@ export function createOverlay(app: App): void {
   const overlay = document.createElement('div');
   overlay.className = 'bz-panel-overlay';
   overlay.style.zIndex = String(allocZ());
-  const fullscreen = (tryGetSettings() as Record<string, unknown>).bookshelfMobileDefaultFullscreen === true;
-
   overlay.innerHTML = panelHtml(bsSkinClass());
 
   document.body.appendChild(overlay);
   M.currentOverlay = overlay;
   M.renderFn = () => renderAll();
-  applyMobileWindowFullscreen(overlay.querySelector('.bz-bs-panel') as HTMLElement, fullscreen);
 
   // 单一委托：匾额关闭（移动端）/ 标签筛选 / 排序 / 报告视图交互 / 书脊详情
   overlay.addEventListener('click', (e) => {
