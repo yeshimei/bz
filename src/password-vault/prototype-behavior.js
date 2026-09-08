@@ -12758,9 +12758,20 @@ var BZW_password_vault = (() => {
     setApp(app);
     injectSettings();
   }
+  function injectLockHint() {
+    document.querySelectorAll(".bz-password-vault-lock").forEach((lock) => {
+      if (lock.querySelector(".bz-pwv-sim-hint")) return;
+      const hint = document.createElement("div");
+      hint.className = "bz-pwv-sim-hint";
+      hint.style.cssText = "margin-top:12px;font-size:12px;color:#9a917d;letter-spacing:.5px;";
+      hint.textContent = "演示库主密码：demo（小写；两端各自解锁）";
+      lock.appendChild(hint);
+    });
+  }
   function openPanel() {
     if (!simApp) bootPasswordVaultSim();
     openPasswordVault(simApp);
+    injectLockHint();
   }
   function unload() {
     unloadPasswordVault();
