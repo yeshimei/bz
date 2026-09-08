@@ -7472,7 +7472,7 @@ var BZW_secondbrain = (() => {
   function panelLogHtml(parts) {
     return parts.map((p) => `<span class="bz-sb-log-item${p.warn ? " bz-sb-log-item--warn" : ""}">${escapeHtml2(p.text)}</span>`).join('<span class="bz-sb-log-sep">·</span>');
   }
-  function chatShellHtml(topK, model) {
+  function chatShellHtml(topK) {
     return `
   <div class="bz-sb-chat-head">
     <div class="bz-sb-glyph bz-sb-chat-glyph">${ic("brain", 17)}</div>
@@ -7481,7 +7481,6 @@ var BZW_secondbrain = (() => {
       <div class="bz-sb-cnt">以库为底作答 · 单次检索 ${topK} 条相关段落</div>
     </div>
     <div class="bz-sb-head-sp"></div>
-    <div class="bz-sb-chat-model">${ic("sparkles", 11)}${escapeHtml2(model)}</div>
     <button class="bz-sb-chat-clear bz-sb-fbtn" id="bz-sb-chat-clear">${ic("history", 13)}清空对话</button>
   </div>
   <div class="bz-sb-chat-messages bz-sb-scroll-y" id="bz-sb-chat-messages"></div>
@@ -9332,7 +9331,7 @@ var BZW_secondbrain = (() => {
           this.mask = mask;
           this.popup = popup;
           this.popup.classList.add("bz-sb-chat-modal");
-          this.popup.innerHTML = chatShellHtml(CONFIG.CHAT_TOP_K, CONFIG.DEEPSEEK_MODEL);
+          this.popup.innerHTML = chatShellHtml(CONFIG.CHAT_TOP_K);
           mountIcons(this.popup);
           this.messagesDiv = this.popup.querySelector("#bz-sb-chat-messages");
           this.input = this.popup.querySelector("#bz-sb-chat-input");

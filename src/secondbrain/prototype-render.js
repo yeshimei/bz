@@ -250,7 +250,7 @@ var BZR_secondbrain = (() => {
     return parts.map((p) => `<span class="bz-sb-log-item${p.warn ? " bz-sb-log-item--warn" : ""}">${escapeHtml(p.text)}</span>`).join('<span class="bz-sb-log-sep">·</span>');
   }
   var CHAT_CHIPS = ["为什么会遗忘", "享乐适应", "怎么高效记笔记", "睡不好怎么补救", "闪电", "王阳明"];
-  function chatShellHtml(topK, model) {
+  function chatShellHtml(topK) {
     return `
   <div class="bz-sb-chat-head">
     <div class="bz-sb-glyph bz-sb-chat-glyph">${ic("brain", 17)}</div>
@@ -259,7 +259,6 @@ var BZR_secondbrain = (() => {
       <div class="bz-sb-cnt">以库为底作答 · 单次检索 ${topK} 条相关段落</div>
     </div>
     <div class="bz-sb-head-sp"></div>
-    <div class="bz-sb-chat-model">${ic("sparkles", 11)}${escapeHtml(model)}</div>
     <button class="bz-sb-chat-clear bz-sb-fbtn" id="bz-sb-chat-clear">${ic("history", 13)}清空对话</button>
   </div>
   <div class="bz-sb-chat-messages bz-sb-scroll-y" id="bz-sb-chat-messages"></div>

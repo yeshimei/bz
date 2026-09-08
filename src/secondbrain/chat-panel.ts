@@ -63,7 +63,7 @@ export class ChatPanel {
     this.mask = mask;
     this.popup = popup;
     this.popup.classList.add('bz-sb-chat-modal');
-    this.popup.innerHTML = chatShellHtml(CONFIG.CHAT_TOP_K, CONFIG.DEEPSEEK_MODEL);
+    this.popup.innerHTML = chatShellHtml(CONFIG.CHAT_TOP_K);
     mountIcons(this.popup); // data-lucide 占位物化
 
     this.messagesDiv = this.popup.querySelector('#bz-sb-chat-messages') as HTMLElement;
