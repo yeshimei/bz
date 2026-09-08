@@ -6195,6 +6195,13 @@ var BZW_settings_panel = (() => {
         const border = (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.borderRightWidth) || 0);
         m.style.minWidth = `${m.clientWidth + delta - border}px`;
       }
+      const vw = window.innerWidth || document.documentElement.clientWidth;
+      const rect = m.getBoundingClientRect();
+      const over = Math.ceil(rect.right - vw) + 2;
+      if (over > 0) {
+        m.style.right = `${over}px`;
+        if (m.getBoundingClientRect().left < 2) m.style.right = "";
+      }
     };
     const setValue = (v) => {
       current2 = v;
