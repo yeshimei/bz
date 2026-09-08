@@ -54,8 +54,10 @@ import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/sta
 import { openLiteraturePanel, openTermNote, unloadLiterature } from './literature';
 // 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 右键菜单）
 import { openAttachMove, ensureAttachFileMenu, ATTACH_COMMAND_ID } from './attach';
-// 统一保险库（encrypt 域，ADR-0085：密码/加密笔记/加密日记三资产单一面板；旧 password-vault 命令已删）
+// 统一保险库（encrypt 域，ADR-0085：密码/加密笔记/加密日记三资产单一面板）
 import { openEncrypt, encryptCurrentNote, copyVaultPassword, unloadEncrypt, mountEncryptStatusBar, unmountEncryptStatusBar } from './encrypt';
+// 密码本（password-vault 域，ADR-0109 自统一保险库拆回独立域；ADR-0078 成型版，共享保险箱锁与数据）
+import { openPasswordVault, unloadPasswordVault } from './password-vault';
 // 内容首页（home 域，ticket 177；旧入口页 launcher 已退役删除，ADR-0093）
 import { openHome, unloadHome } from './home';
 // 今日回顾（recap 域，方向一 R2）：当天五域痕迹聚合只读面板
@@ -146,6 +148,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-encrypt-lock', name: '加密当前笔记', icon: 'lock-keyhole', callback: () => encryptCurrentNote(getApp()) },
   // 快速取密（fuzzy 选择器直取密码 → 剪贴板 60s 自动清空，不打开主面板）
   { id: 'bz-encrypt-copy-password', name: '快速复制密码', icon: 'key-round', callback: () => copyVaultPassword(getApp()) },
+  // 密码本（password-vault 域，ADR-0109 拆回独立域：ADR-0078 成型版 UI，与保险库共享锁与数据）
+  { id: 'bz-password-vault-open', name: '密码本', icon: DOMAIN_ICONS['password-vault'], callback: () => openPasswordVault(getApp()) },
   // 小橘陪伴猫（smartcat 域）
   { id: 'bz-smartcat-open', name: '小橘', icon: DOMAIN_ICONS.smartcat, callback: () => openSmartCat(getApp()) },
   // f7：去 message-circle 重复（第二大脑对话保留）→ messages-square
@@ -256,6 +260,7 @@ export default class BzPlugin extends Plugin {
     unloadHome();
     unloadRecap();
     unloadEncrypt();
+    unloadPasswordVault();
     unloadSmartCat();
     // 设置面板（ADR-0080：DOM 清理 + esc 注销）
     unloadSettingsPanel();

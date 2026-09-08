@@ -60,8 +60,8 @@ _Avoid_: 新闻抓取、新闻爬虫、news watcher 进程
 
 **摘要时机 (Summary Timing)**: 自动摘要详设（ticket 124，Q14）——autoSummaryTiming 设置：immediate（默认，保存后立刻：create+file-open 双监听）/ lazy（懒触发：仅打开文件时补全，不监听 create）。_Avoid_: 摘要触发模式
 
-**保险库 (Vault, encrypt 域；ADR-0085 统一)**: bz 的**统一加密资产库**——密码条目 + 加密笔记 + 加密日记三类资产共居一个加密容器（同一加密清单 `.safe.enc` + 平铺密文镜像，ADR-0015/0016/0017）。数据层在 encrypt 域：`SafeManager` 单例（主密码只存内存、共享解锁态），`src/password/crypto.ts` CryptoService。**2026-09 统一（ADR-0085/issue 183）**：原「保险箱（encrypt 加密笔记面板）」与「保险库（password-vault 密码工作台）」两套 UI 域合并为 encrypt 单一域单一面板——命令 `bz-encrypt-open`（名称「保险库」）打开三栏工作台（概览 + 密码 / 加密笔记 / 加密日记三类资产视图，分类色：密码=金、笔记=松石、日记=靛蓝；P1 资产档案库视觉）。`bz-encrypt-lock`（加密当前笔记）、状态栏（🔒/🔓 保险库）、设置面板「保险库」条目（生成/安全 + 存储/预览/移动端）同域承载。健康扫描覆盖全部 kind 条目（含密码整表镜像）。密码管理入口由此命令承载（旧 `bz-password-vault-open` 已删）。
-_Avoid_: 保险箱（旧 encrypt UI 域称，已并）、密码本（旧 password UI 域，命令已断）、密码库（未用称）
+**保险库 (Vault, encrypt 域；ADR-0085 统一，ADR-0109 密码本拆回)**: bz 的**加密资产库**——密码条目 + 加密笔记 + 加密日记三类资产共居一个加密容器（同一加密清单 `.safe.enc` + 平铺密文镜像，ADR-0015/0016/0017）。数据层在 encrypt 域：`SafeManager` 单例（主密码只存内存、共享解锁态），`src/core/crypto.ts` CryptoService。**2026-09 统一（ADR-0085/issue 183）**：原「保险箱（encrypt 加密笔记面板）」与「保险库（password-vault 密码工作台）」两套 UI 域合并为 encrypt 单一域单一面板——命令 `bz-encrypt-open`（名称「保险库」）打开三栏工作台（概览 + 密码 / 加密笔记 / 加密日记三类资产视图，分类色：密码=金、笔记=松石、日记=靛蓝；P1 资产档案库视觉）。`bz-encrypt-lock`（加密当前笔记）、状态栏（🔒/🔓 保险库）、设置面板「保险库」条目（安全 + 存储/预览/移动端/外观）同域承载。健康扫描覆盖全部 kind 条目（含密码整表镜像）。**2026-09 拆回（ADR-0109/issue 250）**：密码本自统一保险库拆回独立域 `src/password-vault`（v1 成型版 UI 原样恢复，命令 `bz-password-vault-open`「密码本」）——两域共锁同库、`encrypt:changed`/`password-vault:changed` 双向同步；生成/安全设置键归位密码本 schema；encrypt 面板密码资产视图暂存待摘除（摘除后保险库=加密笔记+日记两资产）。
+_Avoid_: 保险箱（旧 encrypt UI 域称）、密码库（未用称）
 
 **收藏本 (Favorites)**: 通用链接收藏管理（GitHub 🐙/桌面软件 💻/网站 🌐/大模型 🧠 等 9 类固定标签），数据 `CONFIG/STORAGE/favorites.json`；大模型条目带余额查询（5 分钟缓存）。**ADR-0083（2026-09-03）重设计为 P1「标签工作台」**：整宽头行仅「收藏本」标题（⚙️ 收敛设置面板）+ 左标签栏（全部 🗂 + 9 类标签 emoji + 计数，选中品牌实底）+ 右内容区（主头行 当前标签/N 条收藏/主按钮「添加收藏」→ 工具栏 常驻搜索+排序循环 ⇅ → 卡片流）；置顶=左侧 3px 品牌橙竖条；桌面**点卡片行/右键 = 行操作浮层**、移动点行 = 底部详情抽屉（动作序：打开 → 置顶 → 跳转笔记 → 刷新余额 → 编辑 → 归档 → 删除；余额纯展示 + 5 分钟缓存）；添加/编辑共用弹窗（标签多选胶囊 + 置顶 + 关联笔记 + LLM 余额配置区，选「大模型」展开；AI 整理保留：GitHub 真实仓库信息 + 不覆盖手写 + 逐字校验）；移动端头行右上 ＋添加 → ⇅排序 → 🔍搜索（默认隐藏可展开）→ ✕，标签横滑 chips，**无悬浮 FAB**；归档冷存（ADR-0074）保留、删除撤销保留；全 lucide 图标（标签 emoji 属数据保留）；样式全消费组件库 token（`src/core/ui/`），域内仅布局。**ticket 188（2026-09-04）增强包**：归档撤销（notifyUndo 回写）+ 左栏「已归档」视图（取消归档/删除）+ 搜索无结果提示归档命中数；搜索覆盖 URL + 卡片 meta 行尾弱化域名徽章；标题框贴 URL 自动搬入链接框并回焦；脏表单基线纳入 标签/置顶/关联笔记；保存先落盘、余额查询后台化不阻塞；关联笔记输入接 vault 笔记候选补全（`bz-fav-notepop`）；头行图标钮间距 ≥8px + 移动端 `--bz-icon-btn-lg` 档。**2026-08 UX 整改拍板（已被 ADR-0083 取代）**：旧「标题单击直开/双击防双开/长按抽屉」交互随 P1 重设计退役——现为点卡行/右键弹操作浮层、移动点行弹抽屉；AI 整理回填不覆盖手填字段（未配置 AI 直接拦截）保留。
 _Avoid_: GitHub 收藏管理（旧口径，实际已泛化到全部链接类型）
@@ -199,10 +199,13 @@ _Avoid_: 方案、模式（指预设时）
 **附件 (Attachment)**: vault 内被笔记引用的非 .md 文件（图片/音视频/PDF/压缩包等）；只要当前笔记引用了它（wikilink 嵌入或 Markdown 链接）即算。.md 笔记与外链不计。
 _Avoid_: 资源文件、素材、媒体文件（指附件时）
 
-### 保险库域（encrypt；ADR-0085 统一保险箱 × 密码本）
+### 保险库域（encrypt；ADR-0085 统一，ADR-0109 密码本拆回独立域）
 
-**保险库容器 (Vault Container)**: bz 的加密容器整体——加密清单 + 密文镜像的集合，密码/加密笔记/加密日记三类资产同库。作用是把用户选中的整篇笔记及其双链图片/视频附件**移出 vault**（原路径消失，Obsidian 内"直接不见"），以密文落盘到 `encryptRoot`；密码整表 JSON 亦存为本库一条镜像（kind=password-vault）。复用 `src/password/crypto.ts` 的 `CryptoService` 与主密码范式。区别于既有「加密条目(🔐 仅隐藏)」——那是伪加密，本域是真·密文。密文镜像采用**平铺点前缀布局**（ADR-0016）：`encryptRoot`（默认 `CONFIG/.ENCRYPT`）内所有密文文件 `.随机名.enc` 平铺，Obsidian 侧栏不可见，防误删；还原/删除靠清单映射。
-_Avoid_: 保险箱（对外已并称保险库）、加密罐、保险柜、安全箱（指本域时）
+**保险库容器 (Vault Container)**: bz 的加密容器整体——加密清单 + 密文镜像的集合，密码/加密笔记/加密日记三类资产同库。作用是把用户选中的整篇笔记及其双链图片/视频附件**移出 vault**（原路径消失，Obsidian 内"直接不见"），以密文落盘到 `encryptRoot`；密码整表 JSON 亦存为本库一条镜像（kind=password-vault）。复用 `src/core/crypto.ts` 的 `CryptoService` 与主密码范式。区别于既有「加密条目(🔐 仅隐藏)」——那是伪加密，本域是真·密文。密文镜像采用**平铺点前缀布局**（ADR-0016）：`encryptRoot`（默认 `CONFIG/.ENCRYPT`）内所有密文文件 `.随机名.enc` 平铺，Obsidian 侧栏不可见，防误删；还原/删除靠清单映射。
+_Avoid_: 保险箱（对外旧称）、加密罐、保险柜、安全箱（指本域时）
+
+**密码本 (Password Vault, password-vault 域)**: 密码条目管理 UI 域（ADR-0078 五版原型评审后的 v1「保险库」成型版，ADR-0109 自统一保险库拆回）——金色三栏工作台（平台导航/账号列表/详情）+ 移动端列表/详情/FAB + 自绘右键菜单/抽屉/确认/toast/金色印章锁屏；条目 8 字段（id/platform/url/account/password/note/createdAt/fav）。命令 `bz-password-vault-open`；数据 = 保险库容器 `kind=password-vault` SafeNote（与 encrypt **共锁同库**，`password-vault:changed`/`encrypt:changed` 双向同步）；生成器设置复用全局键 passwordCharset/passwordLength + securityMode（设置面板「密码本」条目）。
+_Avoid_: 保险库（指密码本域时——encrypt 域已占用该名）、密码库
 
 **加密清单 (Safe Manifest)**: `<encryptRoot>/.safe.enc`——整库唯一加密配置文件（点前缀，侧栏隐藏），记录每篇加密笔记的原路径、状态、正文/附件镜像引用与文件密钥（主密钥包裹）。清单本身整体 AES-GCM 加密，内部字段（含原路径）在解锁前不可见。
 _Avoid_: 配置文件、清单文件（泛指时）

@@ -65,6 +65,10 @@ const SEED_SETTINGS: Record<string, unknown> = {
   pomodoroSkinTheme: 'tomato',
   encryptSkin: 'default',
   encryptSkinTheme: 'steel',
+  // 密码本（issue 250）：生成/安全三键与 src/settings.ts DEFAULT 同值
+  passwordCharset: '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+',
+  passwordLength: '16',
+  securityMode: false,
 };
 
 /**

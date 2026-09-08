@@ -58,7 +58,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-clipbook-open',
   // 自动摘要（enh-autosum 包 1）：当前剪藏笔记手动重跑 AI 摘要
   'bz-auto-summary-redo',
-  // 统一保险库（encrypt 域，ADR-0085）：密码/笔记/日记合一；旧 bz-password-vault-open 已删
+  // 统一保险库（encrypt 域，ADR-0085）：密码/笔记/日记合一
+  // 密码本（password-vault 域，ADR-0109 拆回独立域恢复 bz-password-vault-open）
   // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图
   'bz-diary-wall-open',
   'bz-favorites-open', 'bz-favorites-add',
@@ -77,6 +78,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-attach-move',
   // 统一保险库（ADR-0085）：密码/加密笔记/加密日记 + 加密当前笔记 + 快速复制密码
   'bz-encrypt-open', 'bz-encrypt-lock', 'bz-encrypt-copy-password',
+  // 密码本（password-vault 域，ADR-0109 拆回独立域）
+  'bz-password-vault-open',
   'bz-smartcat-open', 'bz-smartcat-chat', 'bz-smartcat-hide', 'bz-smartcat-dashboard',
   // 设置面板（ADR-0080）
   'bz-settings-panel-open',
@@ -186,6 +189,7 @@ describe('bz 骨架冒烟', () => {
       ['bz-literature-open', 'literature'],
       ['bz-attach-move', 'attach'],
       ['bz-encrypt-open', 'encrypt'],
+      ['bz-password-vault-open', 'password-vault'],
       ['bz-smartcat-open', 'smartcat'],
       ['bz-diary-open', 'diary'],
       // 批 B 补缺入表：回忆墙（images）/ 设置面板（settings-2）
@@ -298,7 +302,7 @@ describe('bz 骨架冒烟', () => {
     expect(() => registeredCommands.find((c: any) => c.id === 'bz-review-add').callback()).not.toThrow();
     expect(() => registeredCommands.find((c: any) => c.id === 'bz-reading-report-open').callback()).not.toThrow();
   }, 15000);
-  it('全部 31 命令回调冒烟：逐个调用覆盖各域懒加载入口（含日记本 init 两个命令）', async () => {
+  it('全部 32 命令回调冒烟：逐个调用覆盖各域懒加载入口（含日记本 init 两个命令）', async () => {
     const plugin = await createPlugin(makeMockApp());
     const failures: string[] = [];
     for (const c of registeredCommands) {
@@ -312,7 +316,7 @@ describe('bz 骨架冒烟', () => {
     }
     expect(failures, `失败命令:
 ${failures.join('\n')}`).toEqual([]);
-    expect(registeredCommands.length).toBeGreaterThanOrEqual(31);
+    expect(registeredCommands.length).toBeGreaterThanOrEqual(32);
   }, 15000);
   it('事件常驻域 onload 注册（autoSummary 开关 / 引用同步无条件常驻 issue 187 / secondBrain 懒加载分支）', async () => {
     delete diskData['bz'];

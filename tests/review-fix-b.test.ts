@@ -139,13 +139,13 @@ describe('批 B-5：图标单一事实源尾差', () => {
     expect(DOMAIN_ICONS['settings-panel']).toBe('settings-2');
   });
 
-  it('home 入口 icon 全量迁移：iconOf() 引 DOMAIN_ICONS，无残留字面量（issue 232b 收敛后 13 条）', () => {
+  it('home 入口 icon 全量迁移：iconOf() 引 DOMAIN_ICONS，无残留字面量（issue 232b 收敛后 13 条；issue 250 补密码本 14 条）', () => {
     const src = repo('src/home/shared.ts'); // issue 243：域清单收编渲染纯层共享层，domains.ts 仅 re-export
-    expect((src.match(/icon: iconOf\(/g) ?? []).length).toBe(13);
+    expect((src.match(/icon: iconOf\(/g) ?? []).length).toBe(14);
     expect(src).not.toMatch(/icon: '/);
-    // 异名映射：wall→diary-wall、settings→settings-panel
+    // 异名映射：wall→diary-wall、settings→settings-panel、vault→password-vault
     for (const d of DOMAINS) {
-      const key = d.id === 'wall' ? 'diary-wall' : d.id === 'settings' ? 'settings-panel' : d.id;
+      const key = d.id === 'wall' ? 'diary-wall' : d.id === 'settings' ? 'settings-panel' : d.id === 'vault' ? 'password-vault' : d.id;
       expect(d.icon, `磁贴 ${d.id}`).toBe(DOMAIN_ICONS[key]);
     }
   });

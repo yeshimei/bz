@@ -21,8 +21,8 @@ export { DOMAIN_ICONS };
 
 /* ---------- 域清单（原 domains.ts 收编；domains.ts re-export 兼容旧引用） ---------- */
 
-/** 磁贴 id → 事实源键（wall/settings 与域 id 异名，其余同键） */
-const ICON_KEY: Record<string, string> = { wall: 'diary-wall', settings: 'settings-panel' };
+/** 磁贴 id → 事实源键（wall/settings/vault 与域 id 异名，其余同键） */
+const ICON_KEY: Record<string, string> = { wall: 'diary-wall', settings: 'settings-panel', vault: 'password-vault' };
 /** 图标一律取 core/domain-icons 单一事实源（终局 review 批 B：17 条字面量迁移，值不变） */
 const iconOf = (id: string): string => DOMAIN_ICONS[ICON_KEY[id] ?? id];
 
@@ -53,6 +53,8 @@ export const DOMAINS: HomeDomain[] = [
   { id: 'belongings', commandId: 'bz-belongings-open', name: '归物本', sub: '物品登记', icon: iconOf('belongings') },
   { id: 'attach', commandId: 'bz-attach-move', name: '移动附件', sub: '附件归位', icon: iconOf('attach') },
   { id: 'encrypt', commandId: 'bz-encrypt-open', name: '保险库', sub: '密码·加密笔记·日记', icon: iconOf('encrypt') },
+  // 密码本（password-vault 域，ADR-0109 拆回独立域；id 沿用合并前磁贴 id，旧钉选自动复活）
+  { id: 'vault', commandId: 'bz-password-vault-open', name: '密码本', sub: '密码与密钥', icon: iconOf('vault') },
   { id: 'settings', commandId: 'bz-settings-panel-open', name: '设置', sub: '全域设置', icon: iconOf('settings') },
 ];
 
@@ -74,6 +76,7 @@ export const DOMAIN_DOT: Record<string, string> = {
   belongings: '#45a35c',
   attach: '#8a8f99',
   encrypt: '#8a8f99',
+  vault: '#c9a227',
   smartcat: '#e67341',
   settings: '#8a8f99',
 };
@@ -301,7 +304,7 @@ export function riverCountText(id: string, data: RiverData): string | null {
     case 'wall':
       return `${c.diaryTotal} 格`;
     default:
-      return null; // recap/literature/reading-report/attach/encrypt/smartcat/settings/pomodoro 走域副题
+      return null; // recap/literature/reading-report/attach/encrypt/vault/smartcat/settings/pomodoro 走域副题
   }
 }
 
