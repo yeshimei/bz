@@ -46,7 +46,7 @@ import { toParagraphs, stripClipChrome } from './md';
 import { queryBySource, aggregateSites } from './store';
 import {
   panelHtml, railItemHtml, railFootHtml, tocListHtml, paragraphsHtml as paragraphsMarkup,
-  clipLoadingHtml, readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, type MobChapter, siteTint,
+  clipLoadingHtml, readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, mobNoHitHtml, type MobChapter, siteTint,
   iconSpan, type SrcSelJson,
 } from './render';
 import { M, resetClipbookState } from './state';
@@ -221,6 +221,7 @@ export function unloadPanel(): void {
   deskSearchEl = null;
   expandedMobArch.clear(); // 面板重开折叠态复位（会话内详情往返不丢）
   mobItemById = new Map();
+  mobItemOrder = [];
   resetClipbookState();
 }
 
@@ -282,7 +283,7 @@ function buildDom(app: any): void {
     if (e.key === 'ArrowLeft' || e.key === 'k') { e.preventDefault(); stepArticle(-1); }
     else if (e.key === 'ArrowRight' || e.key === 'j') { e.preventDefault(); stepArticle(1); }
   });
-  // 移动：搜索切换
+  // 移动：搜索切换（原型顶栏「搜索」文字钮）
   mobSearchBtn!.addEventListener('click', () => {
     const show = mobSearchbarEl!.style.display === 'none';
     mobSearchbarEl!.style.display = show ? '' : 'none';
@@ -293,20 +294,36 @@ function buildDom(app: any): void {
     searchKw = mobInput!.value.trim();
     renderMobToc(); // 搜索态：命中全平铺（含已收），折叠不生效
   });
-  // 移动：关闭 / 返回
-  mobCloseBtn!.addEventListener('click', () => closePanel());
+  // 「关闭」（原型语义）：清搜索并收全部；无任何待复位态 = 退出面板（移动面板无其它关闭入口）
+  mobCloseBtn!.addEventListener('click', () => {
+    const barOpen = mobSearchbarEl ? mobSearchbarEl.style.display !== 'none' : false;
+    if (searchKw || barOpen || expandedMobArch.size) {
+      searchKw = '';
+      expandedMobArch.clear();
+      if (mobInput) mobInput.value = '';
+      if (mobSearchbarEl) mobSearchbarEl.style.display = 'none';
+      renderMobToc();
+    } else {
+      closePanel();
+    }
+  });
+  // 移动：返回（详情屏2 → 屏1，原型文字钮）
   mobBackBtn!.addEventListener('click', () => {
     M.mobDetailOpen = false;
     mobDetailEl!.style.display = 'none';
     renderAll();
   });
-  // 移动：头栏保存钮
+  // 移动：头栏保存钮（文字钮「存为剪藏 / 已存」）
   mobSaveBtnEl!.addEventListener('click', () => {
     void doSave(M.cur);
   });
-  // 移动详情「打开笔记」文字脚（issue 248，对齐桌面 openNote）
+  // 移动详情「读下一则」（原型脚；同章内下一则，章末回目录）
   mobDetailEl!.addEventListener('click', (e) => {
-    if ((e.target as HTMLElement).closest('[data-clip-open-note]') && M.cur) openNote(M.cur);
+    if (!(e.target as HTMLElement).closest('[data-clip-mob-next]') || !M.cur) return;
+    const grp = mobItemOrder.filter((x) => x.srcName === M.cur!.srcName);
+    const idx = grp.indexOf(M.cur);
+    const next = grp[idx + 1];
+    if (next) openMobDetail(next.id); else (mobBackBtn as HTMLElement).click();
   });
 
   // ESC
@@ -377,6 +394,8 @@ function setSearchKw(kw: string): void { searchKw = kw; }
 const expandedMobArch = new Set<string>();
 /** 移动目录全量条目索引（issue 248：arch 内剪藏条目点开详情——currentList 只是当前源 news 流） */
 let mobItemById = new Map<string, ClipArticle>();
+/** 移动目录全量条目序（toc 展示序，详情「第 X 则 / N」与「读下一则」用） */
+let mobItemOrder: ClipArticle[] = [];
 
 // ================= 装载后全量渲染 =================
 function renderAll(): void {
@@ -1009,7 +1028,7 @@ function rememberSplitWidth(w: number): void {
   void saveSettings();
 }
 
-// ================= 渲染：移动（issue 248 目录化：site 章 + 已收折叠） =================
+// ================= 渲染：移动（m3 目录索引：site 章 + 已收折叠） =================
 function renderMobToc(): void {
   if (!mobListEl) return;
   const arts = M.articles;
@@ -1019,6 +1038,7 @@ function renderMobToc(): void {
   const timeOf = (a: ClipArticle): string => relTime(a.timeTs);
   const chapters: MobChapter[] = [];
   const byId = new Map<string, ClipArticle>();
+  const order: ClipArticle[] = [];
   // 章 = site（aggregateSites 与桌面 rail 同源口径：剪藏全量 + 未读 news 面，总数降序）
   for (const row of aggregateSites(arts, clipNotes, savedUrls, M.clipUrls)) {
     const full = queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, { kind: 'site', site: row.site }, M.upInfo)
@@ -1035,20 +1055,17 @@ function renderMobToc(): void {
       activeHtml: mobListHtml(active, timeOf),
       archHtml: arch.length ? mobListHtml(arch, timeOf) : '',
     });
-    [...active, ...arch].forEach((a) => byId.set(a.id, a));
+    [...active, ...arch].forEach((a) => { byId.set(a.id, a); order.push(a); });
   }
   mobItemById = byId;
+  mobItemOrder = order;
   if (!chapters.length) {
-    mobListEl.classList.remove('searching');
-    mobListEl.innerHTML = '';
-    mobListEl.appendChild(uiEmpty({ icon: 'inbox', title: '暂无内容' }));
+    mobListEl.innerHTML = mobNoHitHtml(searching ? '查无此条' : '暂无剪藏内容');
     return;
   }
-  mobListEl.classList.toggle('searching', searching);
-  mobListEl.innerHTML = mobTocHtml(chapters, searching);
-  restoreMobFolds();
+  mobListEl.innerHTML = mobTocHtml(chapters, searching, expandedMobArch);
   // 移动长按抽屉（enh 包 2）：条目动作与桌面右键同源（buildItemActions）——一处接入两端全量对齐；
-  // 章头挂源级「全部标为已读」（rail 源行动同源，issue 248 源条退役后的迁移位）
+  // 章头挂源级「全部标为已读」（rail 源行动同源，源条退役后的迁移位）
   mobListEl.querySelectorAll<HTMLElement>('[data-id]').forEach((card) => {
     const art = byId.get(String(card.dataset.id || ''));
     if (!art) return;
@@ -1063,46 +1080,31 @@ function renderMobToc(): void {
   });
 }
 
-/** 重渲染后按展开集合恢复折叠行 .open（详情往返后仍展开） */
-function restoreMobFolds(): void {
-  if (!mobListEl || !expandedMobArch.size) return;
-  mobListEl.querySelectorAll<HTMLElement>('.bz-clip-mob-ch').forEach((chEl) => {
-    const hd = chEl.querySelector('[data-src]') as HTMLElement | null;
-    if (!hd) return;
-    let sel: any = null;
-    try { sel = JSON.parse(hd.dataset.src || 'null'); } catch (e) { return; }
-    if (!sel || sel.kind !== 'site' || !expandedMobArch.has(String(sel.site))) return;
-    const fold = chEl.querySelector('[data-fold]') as HTMLElement | null;
-    if (fold) setFoldOpen(fold, true);
-  });
-}
-
-/** 折叠行开合：翻转 .open、同步 aria/文案；site 记入 expandedMobArch（跨重渲染保持） */
+/** 折叠行开合（原型 .c-fold 行为）：arch.hidden 翻转 + fold.on（箭头/文案）；site 记入 expandedMobArch（跨重渲染保持） */
 function toggleMobArch(foldEl: HTMLElement): void {
-  const open = !foldEl.classList.contains('open');
-  setFoldOpen(foldEl, open);
   const ch = foldEl.closest('.bz-clip-mob-ch');
   const hd = ch ? ch.querySelector('[data-src]') : null;
   let site = '';
   if (hd) {
     try { site = String((JSON.parse((hd as HTMLElement).dataset.src || 'null')).site || ''); } catch (e) { site = ''; }
   }
+  const arch = ch ? (ch.querySelector('.bz-clip-mob-arch') as HTMLElement | null) : null;
+  const opening = !!arch && arch.hidden;
+  if (arch) arch.hidden = !opening;
+  foldEl.classList.toggle('on', opening);
+  foldEl.setAttribute('aria-expanded', String(opening));
+  const lab = foldEl.querySelector('.bz-clip-mob-fold-lab') as HTMLElement | null;
+  if (lab) {
+    const n = arch ? arch.childElementCount : 0;
+    lab.innerHTML = opening ? '收起' : `已收 <b>${n}</b> 篇`;
+  }
   if (site) {
-    if (open) expandedMobArch.add(site); else expandedMobArch.delete(site);
+    if (opening) expandedMobArch.add(site); else expandedMobArch.delete(site);
   }
 }
 
-function setFoldOpen(foldEl: HTMLElement, open: boolean): void {
-  foldEl.classList.toggle('open', open);
-  foldEl.setAttribute('aria-expanded', String(open));
-  const lab = foldEl.querySelector('[data-fold-lab]') as HTMLElement | null;
-  if (!lab) return;
-  const n = foldEl.nextElementSibling ? foldEl.nextElementSibling.childElementCount : 0;
-  lab.innerHTML = open ? '收起' : `已收 <b>${n}</b> 篇`;
-}
-
 function openMobDetail(id: string): void {
-  // 目录含全站（含已收剪藏段）：currentList 只是当前源视图，未命中回退目录全量索引（issue 248）
+  // 目录含全站（含已收剪藏段）：currentList 只是当前源视图，未命中回退目录全量索引
   let a = currentList().find((x) => x.id === id);
   if (!a) a = mobItemById.get(id);
   if (!a) return;
@@ -1117,21 +1119,21 @@ function openMobDetail(id: string): void {
 function renderMobDetail(): void {
   if (!mobDetailEl || !M.cur) return;
   const a = M.cur;
-  if (mobTitleEl) mobTitleEl.textContent = `${a.srcName} · ${a.typeLabel || a.site}`;
-  // 保存钮态
+  // 屏2 顶部：居中「站名 · 目录」（原型 .d-ch）
+  if (mobTitleEl) mobTitleEl.textContent = `${a.srcName} · 目录`;
+  // 保存钮（原型文字钮「存为剪藏 / 已存」；剪藏来源隐藏——doSave 对 origin!=='news' 静默 return）
   if (mobSaveBtnEl) {
     const saved = a.st === 'saved';
-    // C9：剪藏来源条目不显示保存钮（doSave 对 origin!=='news' 静默 return——原为点了无反馈的假按钮）
     mobSaveBtnEl.style.display = a.origin !== 'news' ? 'none' : '';
     mobSaveBtnEl.classList.toggle('saved', saved);
-    mobSaveBtnEl.title = saved ? '已保存到剪藏本' : '保存到剪藏本';
-    mobSaveBtnEl.innerHTML = iconSpan(saved ? 'check' : 'download', 'bz-ic--sm');
-    mountIcons(mobSaveBtnEl);
+    mobSaveBtnEl.textContent = saved ? '已存' : '存为剪藏';
   }
   const paras = a.body ? paragraphsHtml(a.body) : '';
-  // 详情正文 markup 单源 render.ts（issue 247）
+  const idx = mobItemOrder.indexOf(a);
+  const seq = idx >= 0 ? `第 ${idx + 1} 则 / ${mobItemOrder.length}` : '';
+  // 详情正文 markup 单源 render.ts（m3 原型屏2）
   const detailBody = mobDetailEl.querySelector('[data-clip-mob-detail-body]') as HTMLElement;
-  detailBody.innerHTML = mobDetailHtml(a, { time: a.timeText || relTime(a.timeTs), paras });
+  detailBody.innerHTML = mobDetailHtml(a, { time: a.timeText || relTime(a.timeTs), paras, seq });
   mountIcons(detailBody);
   bindImgFallback(detailBody);
 }

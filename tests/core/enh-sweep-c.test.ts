@@ -74,8 +74,12 @@ describe('enh-sweep-c：触控热区扫尾', () => {
     }
   });
 
-  it('clipbook 移动详情返回钮 44px 档（原仅覆盖列表顶栏）', () => {
-    expect(css('clipbook')).toMatch(/\.bz-clip-mob-detail-top \.bz-icon-btn--lg[^}]*44px/);
+  it('clipbook 移动端动作钮已原型文字化（m3 逐字：无 icon-btn / 无 44px 抬升档）', () => {
+    const c = css('clipbook');
+    expect(c).not.toMatch(/\.bz-clip-mob-detail-top \.bz-icon-btn/);
+    expect(c).not.toMatch(/\.bz-clip-mob-top \.bz-icon-btn/);
+    expect(c).toMatch(/\.bz-clip-mob-act\s*\{/); // 顶栏「搜索/关闭」文字钮
+    expect(c).toMatch(/\.bz-clip-mob-save\s*\{/); // 详情「存为剪藏」文字钮
   });
 
   it('横滑标签 44px 档（favorites issue 219b 磁贴行取代；cinema 午夜场走 1:1 探索稿 .m-chips 原生档、旧 .bz-cinema-panel 死段已随纯清理批退役；belongings 用户拍板缩小让位）', () => {
