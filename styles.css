@@ -6681,7 +6681,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-clip-read { flex: 1; min-width: 0; display: flex; flex-direction: column; background: transparent; }
 .bz-clip-read-scroll { flex: 1; overflow-y: auto; padding: 28px 44px 40px; }
 .bz-clip-read-body { max-width: 560px; margin: 0 auto; }
-/* meta 一行：时间 · 站点（橘） · 状态（右缘灰）——原型对齐，无图标无底色 */
+/* meta 一行：时间 · 站点（橘）——原型对齐，无图标无底色；状态章已退役（打开即已读让位后语义冗余） */
 .bz-clip-art-meta {
   display: flex; align-items: baseline; gap: 14px;
   font-size: 11.5px; color: var(--clip-muted);
@@ -6689,8 +6689,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-clip-art-site { display: inline-flex; align-items: baseline; }
 .bz-clip-art-site-name { color: var(--clip-accent); font-weight: var(--bz-weight-semibold); letter-spacing: .5px; }
-.bz-clip-art-state { margin-left: auto; letter-spacing: 2px; }
-/* 移动端详情仍用彩色状态章与首字 chip（标准皮肤） */
+/* 移动端来源首字 chip（标准皮肤） */
 .bz-clip-favchip {
   width: 16px; height: 16px; border-radius: var(--bz-radius-xs); flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
@@ -6730,22 +6729,15 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-clip-art-md blockquote { border-left: 3px solid var(--clip-accent); background: var(--clip-cream); border-radius: 0; padding: 8px var(--bz-space-md); margin: var(--bz-space-sm) 0; color: var(--clip-ink-2); font-size: var(--bz-font-label); }
 .bz-clip-art-md p.dim { color: var(--clip-muted); text-align: left; }
-/* 阅读字号三档（enh 包 7）：小/中/大 = meta/body（默认）/emphasis 档 */
+/* 阅读字号三档（enh 包 7）：小/中/大 = meta/body（默认）/emphasis 档；档位由设置面板「基础 · 阅读字号」驱动 */
 .bz-clip-read-body.fs-sm .bz-clip-art-md { font-size: var(--bz-font-meta); }
 .bz-clip-read-body.fs-lg .bz-clip-art-md { font-size: var(--bz-font-emphasis); }
-/* 字号分段行（右栏 meta 下方右对齐；消费组件库 .bz-segmented 基线） */
-.bz-clip-art-fs { display: flex; justify-content: flex-end; margin-bottom: var(--bz-space-md); }
-/* 字号分段编辑部皮：基线圆角浅灰卡在纸墨皮肤里突兀（belongings 皮肤覆写同范式；
-   基线 .bz-segmented-btn 自带 !important，覆写须同级；选择器钉死桌面阅读面不波及其他 segmented） */
-.bz-clip-art-fs .bz-segmented { gap: 0; padding: 0; background: transparent; border: 1px solid var(--clip-ink); border-radius: 0; }
-.bz-clip-art-fs .bz-segmented-btn {
-  height: auto; padding: 3px 11px; border-radius: 0; border-right: 1px solid var(--clip-line);
-  font-family: var(--clip-serif); font-size: 11.5px; letter-spacing: 2px; font-weight: 500;
-  color: var(--clip-ink-2) !important; box-shadow: none !important;
+/* 正文行内链接（md.ts 保留链接记号 → render 成锚；编辑部风 = 橘字细下划线，行为层 data-clip-ext 接管打开） */
+.bz-clip-art-md a.bz-clip-md-link, .bz-clip-mob-d-md a.bz-clip-md-link {
+  color: var(--clip-accent); text-decoration: underline; text-decoration-thickness: 1px;
+  text-underline-offset: 3px; cursor: pointer;
 }
-.bz-clip-art-fs .bz-segmented-btn:last-child { border-right: none; }
-.bz-clip-art-fs .bz-segmented-btn:hover { background: var(--clip-cream) !important; color: var(--clip-ink) !important; }
-.bz-clip-art-fs .bz-segmented-btn.is-on { background: var(--clip-ink) !important; color: var(--clip-paper) !important; font-weight: 600; }
+.bz-clip-art-md a.bz-clip-md-link:hover { color: var(--clip-accent-soft); }
 /* 剪藏条目「打开笔记」编辑部文字脚（issue 214：文末唯一保留动作，文字链非按钮） */
 .bz-clip-art-foot { margin-top: 20px; padding-top: 14px; border-top: 2px solid var(--clip-ink); display: flex; gap: 18px; }
 .bz-clip-art-foot span {
@@ -6833,8 +6825,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-clip-mob-detail-body { flex: 1; overflow-y: auto; padding: 26px 22px 32px; }
 .bz-clip-mob-d-kicker { font-family: var(--clip-serif); font-size: 11px; letter-spacing: 3px; color: var(--clip-muted); display: flex; justify-content: space-between; }
 .bz-clip-mob-d-title { font-family: var(--clip-serif); font-size: 22px; font-weight: 700; line-height: 1.45; margin: 10px 0 14px; color: var(--clip-ink); }
-.bz-clip-mob-d-flag { display: inline-block; border: 1px solid var(--clip-line); padding: 2px 9px; font-size: 10.5px; letter-spacing: 2px; color: var(--clip-dim); font-family: var(--clip-serif); margin-bottom: 16px; }
-.bz-clip-mob-d-flag.unread, .bz-clip-mob-d-flag.reading { border-color: var(--clip-accent); color: var(--clip-accent); }
 .bz-clip-mob-d-rule { border: none; border-top: 1px solid var(--clip-line); margin: 2px 0 16px; }
 .bz-clip-mob-d-md { font-family: var(--clip-serif); font-size: 15px; line-height: 1.95; color: var(--clip-body); text-align: justify; }
 .bz-clip-mob-d-md p { margin-bottom: 14px; }
