@@ -91,6 +91,16 @@ export function uiSelect<T extends string>(opts: BzSelectOpts<T>): {
       const border = (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.borderRightWidth) || 0);
       m.style.minWidth = `${m.clientWidth + delta - border}px`;
     }
+    // 溢出兜底：菜单贴视口右缘时 width:max-content 的加宽仍可能向右外溢
+    // （宿主对绝对定位盒的锚定/钳宽行为不一致），实测右缘溢出量后整体左移收进；
+    // 左移又顶穿左缘的极窄视口则放弃位移，交由选项 ellipsis 吸收。
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+    const rect = m.getBoundingClientRect();
+    const over = Math.ceil(rect.right - vw) + 2;
+    if (over > 0) {
+      m.style.right = `${over}px`;
+      if (m.getBoundingClientRect().left < 2) m.style.right = '';
+    }
   };
   const setValue = (v: T) => {
     current = v;
