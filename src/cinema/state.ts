@@ -24,8 +24,6 @@ export interface CinemaItem {
   year: string | null;
   doubanRating: string | null;
   doubanUrl: string | null;
-  /** 豆瓣检查标记（frontmatter「豆瓣检查」，YYYY-MM-DD；打开触碰协议用，ADR-0111） */
-  doubanCheck: string | null;
   synopsis: string | null;
   /** 片长原文（frontmatter「片长」，如「118分钟」；分析页片长画像用，ADR-0090 并入） */
   duration: string | null;

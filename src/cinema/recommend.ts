@@ -14,7 +14,7 @@ import { STATUS_WANT, STATUS_WATCHED } from './constants';
 import type { CinemaItem } from './state';
 import { M } from './state';
 import { refreshDataAndView } from './data';
-import { watchPosterFetch } from './poster-watch';
+import { enqueueDoubanFetch } from './douban-queue';
 
 /** 类型 → 默认 tag（加入想看用） */
 const GROUP_DEFAULT_TAG: Record<string, string> = {
@@ -127,9 +127,8 @@ tags:
     notice(`已加入想看：${trimmedName}`, 'success');
     // 事件补发（smartcat 行为流观察；ADR-0087 cinema 接管）：created want
     emitDomainEvent('movie', { kind: 'created', name: trimmedName, status: 'want', rating: null, review: null });
-    // poster 占位 → progress 通知轮询等外部 watcher 写入海报
-    const handle = notify('正在获取海报和豆瓣信息…', { type: 'progress' });
-    watchPosterFetch(app, f, handle);
+    // 入抓取队列（ADR-0113）：卡片 loading 反馈，无通知
+    enqueueDoubanFetch(f, trimmedName);
     refreshDataAndView(app);
   } catch (e) {
     notifySaveError(e, '加入想看');

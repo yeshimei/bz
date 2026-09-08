@@ -61,7 +61,7 @@ export async function requestUrl(): Promise<never> {
 
 // ==================== TFile（posterUrl instanceof 判定 + 文件元信息面） ====================
 
-/** 最小 TFile：path/name/basename/extension/stat——data.ts / ui.ts / poster-watch 消费面 */
+/** 最小 TFile：path/name/basename/extension/stat——data.ts / ui.ts / douban-queue 消费面 */
 export class TFile {
   path = '';
   name = '';
