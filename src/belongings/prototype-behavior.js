@@ -4557,6 +4557,7 @@ var BZW_belongings = (() => {
       };
       const popup = document.createElement("div");
       popup.id = "__shared_confirm_popup__";
+      if (opts.className) popup.classList.add(opts.className);
       popup.setAttribute("role", "dialog");
       popup.setAttribute("aria-modal", "true");
       popup.innerHTML = parts.html;
