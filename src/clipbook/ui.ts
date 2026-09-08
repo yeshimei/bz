@@ -38,7 +38,8 @@ import { openSettingsModal } from '../core/settings-modal';
 import type { SettingsSchema } from '../core/settings-schema';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { ensureAutoSummary, stopAutoSummary, regenerateSummary } from '../auto-summary';
-import { buildNewsSourcesGroup } from './news-sources-group';
+import { dataSourceGroupRows } from './news-sources-group';
+import { readDataSourceState, type DataSourceState } from './news-source-settings';
 import { batchSizeRow } from '../core/settings-common';
 import type { ClipArticle } from './types';
 import { toParagraphs, stripClipChrome } from './md';
@@ -1095,7 +1096,8 @@ function renderMobDetail(): void {
 }
 
 // ================= 设置 schema（ADR-0064 声明式；settings-panel 域清单挂载） =================
-export function clipbookSettingsSchema(): SettingsSchema {
+/** 数据源组依赖外部 news.json（异步读盘），入口先 await readDataSourceState() 预载状态再建 schema */
+export function clipbookSettingsSchema(dataSource: DataSourceState): SettingsSchema {
   return {
     groups: [
       {
@@ -1149,17 +1151,17 @@ export function clipbookSettingsSchema(): SettingsSchema {
       {
         icon: 'radio',
         name: '数据源',
-        rows: [
-          { type: 'custom', render: (body: HTMLElement, ctx: any) => buildNewsSourcesGroup(body, ctx.refreshVisibility) },
-        ],
+        rows: dataSourceGroupRows(dataSource),
       },
     ],
   };
 }
 
 /** 打开剪藏本设置弹窗（域内 ⚙️ 无头行按钮——设置面板域已聚合；入口仅设置面板与命令） */
-export function openSettings(app: any): void {
-  const schema = clipbookSettingsSchema();
+export async function openSettings(app: any): Promise<void> {
+  // 数据源组声明行依赖 news.json 状态，先读盘再建 schema（加载间隙由弹窗打开时机吸收）
+  const dataSource = await readDataSourceState();
+  const schema = clipbookSettingsSchema(dataSource);
   // 适配 core/settings-modal 签名（title/maxWidth/schema/onClose）
   openSettingsModal({
     title: '剪藏本设置',
