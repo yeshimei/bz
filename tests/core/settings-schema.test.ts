@@ -31,9 +31,9 @@ describe('mainSettingsSchema：主设置页两区块', () => {
   it('AI 区块：服务商下拉 + 每家注册表提供商密钥行 + 自定义两行 + per-provider 配置三行（ticket 171/172；issue 187 删自定义模型行）', () => {
     const rows = schema.groups[0].rows;
     // 行序 = 服务商下拉 + 注册表非 custom 提供商密钥行（每行 text）+ 自定义端点/密钥（text×2）
-    //         + per-provider 配置三行（模型 custom；上下文/最大输出 token 标准 number）
+    //         + per-provider 配置三行（声明式重写后模型行同为标准 text + actions；上下文/最大输出 token number）
     const nonCustom = AI_PROVIDER_REGISTRY.filter((p) => p.id !== 'custom');
-    const types = ['select', ...nonCustom.map(() => 'text'), 'text', 'text', 'custom', 'number', 'number'];
+    const types = ['select', ...nonCustom.map(() => 'text'), 'text', 'text', 'text', 'number', 'number'];
     expect(rows.map((r) => r.type)).toEqual(types);
     // 密钥行标题来自注册表 apiKeyLabel（含 deepseek/opencode-go，顺序与注册表一致）
     const names = rows.map((r) => (r as { name: string }).name);
@@ -61,7 +61,7 @@ describe('mainSettingsSchema：主设置页两区块', () => {
     }>;
     expect(customEndpoint.binding).toEqual({ key: 'aiCustomEndpoint' });
     expect(customKey.binding).toEqual({ key: 'aiCustomApiKey' });
-    // per-provider 配置三行：模型行 custom（无 key 直绑，常显）；上下文/最大输出 token 标准 number 行
+    // per-provider 配置三行：模型行标准 text（三函数绑定 + actions 行内按钮，常显）；上下文/最大输出 token number 行
     const [modelRow, ctxRow, maxTokensRow] = rest.slice(nonCustom.length + 2) as Array<{
       name: string;
       type: string;
@@ -69,8 +69,9 @@ describe('mainSettingsSchema：主设置页两区块', () => {
       visibleWhen?: (s: SettingsSnapshot) => boolean;
     }>;
     expect([modelRow.name, ctxRow.name, maxTokensRow.name]).toEqual(['模型名称', '上下文窗口', '最大输出 token']);
-    expect([modelRow.type, ctxRow.type, maxTokensRow.type]).toEqual(['custom', 'number', 'number']);
-    expect(modelRow.visibleWhen!(snapOf({ aiProvider: 'deepseek' }))).toBe(true); // 常显
+    expect([modelRow.type, ctxRow.type, maxTokensRow.type]).toEqual(['text', 'number', 'number']);
+    expect(modelRow.visibleWhen).toBeUndefined(); // 常显（无 visibleWhen）
+    expect((modelRow as any).actions?.map((a: { text: string }) => a.text)).toEqual(['获取模型名']); // 行内按钮
     // 标准 number 行：三函数 binding（读写当前 provider 覆盖）+ 无 key 直绑
     expect('key' in ctxRow.binding!).toBe(false);
     expect('get' in ctxRow.binding!).toBe(true);

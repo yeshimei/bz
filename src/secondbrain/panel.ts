@@ -799,6 +799,19 @@ export class SecondBrainPanel {
  * - 「本机局域网 IP」行为态（探测 IP 动态 desc + 「填入远程 URL」确认覆盖 + 输入框即时回显）
  *   走 custom 插槽保行为；「重新索引」确认已 flow 化（openFlowDialog）不动。
  * 置于模块顶层供文案 lint 直接引用。 */
+
+/** 本机局域网 IP 描述（schema 构建期探测；「填入远程 URL」动作实时重探）。
+ *  含 IP/接口符号，copy-lint-c 白名单豁免——IP 列表是本行的信息本体（ticket 122 自查路径）。 */
+function lanIpDesc(): string {
+  if (isMobileEnv()) return ''; // 移动端整行隐藏（visibleWhen），不做 os 探测
+  const lanIPs = getLanIPs();
+  if (lanIPs.length === 0) {
+    return '未能探测本机局域网 IP，请确认电脑已联网，移动端远程地址需手动填写电脑的局域网 IP';
+  }
+  const primary = pickPrimaryLanIp(lanIPs);
+  return `本机当前局域网 IP 为 ${lanIPs.map((l) => `${l.ip}，${l.iface}`).join('；')}。移动端连不上时，把远程地址填为${primary ? ` ${formatRemoteOllamaUrl(primary.ip)}` : '此处 IP'}`;
+}
+
 export function secondBrainSettingsSchema(): SettingsSchema {
   // [f2-sb] 重载提示：以下开关均为启动快照配置（监听注册发生在域初始化），一次弹窗会话只提示一次（文案冻结）
   let reloadWarned = false;
@@ -808,7 +821,6 @@ export function secondBrainSettingsSchema(): SettingsSchema {
     notice('第二大脑设置已保存，重载插件后生效', 'info');
   };
   // 远程 Ollama URL 输入框引用（「填入远程 URL」按钮确认覆盖后即时回显）
-  let remoteUrlText: { setValue(v: string): void } | null = null;
   /** text 行 trim 落盘（沿用原 onChange 口径：v.trim() 写内存，防抖落盘读内存值） */
   const trimStore = (key: string) => (v: string) => {
     (getSettings() as any)[key] = v.trim();
@@ -845,63 +857,54 @@ export function secondBrainSettingsSchema(): SettingsSchema {
         name: '基础',
         rows: [
           { type: 'text', name: 'Ollama 本地 URL', binding: { key: 'secondBrainOllamaUrl' }, onChange: trimStore('secondBrainOllamaUrl') },
-          // 远程 Ollama URL（移动端）：custom 持输入框引用（「填入远程 URL」按钮覆盖后即时回显）
+          // 远程 Ollama URL（移动端）：声明 text 行 + 行内「填入远程 URL」按钮（actions 统一实现，
+          // 动作完成后渲染器重读绑定回填显示——custom 输入框引用持快手已退役）
           {
-            type: 'custom',
-            render: (body) => {
-              new Setting(body)
-                .setName('远程 Ollama URL（移动端）')
-                .addText((t) => {
-                  remoteUrlText = t;
-                  t.setValue(String((tryGetSettings() as any).secondBrainRemoteOllamaUrl ?? '')).onChange((v) =>
-                    trimStore('secondBrainRemoteOllamaUrl')(v)
-                  );
-                });
-            },
-          },
-          // ticket 122：本机局域网 IP（移动端连不上的自查路径；仅桌面端探测显示）
-          {
-            type: 'custom',
-            render: (body) => {
-              if (!isMobileEnv()) {
+            type: 'text',
+            name: '移动端远程地址',
+            desc: '手机上连本地向量库走这个地址',
+            binding: { key: 'secondBrainRemoteOllamaUrl' },
+            onChange: (v) => trimStore('secondBrainRemoteOllamaUrl')(v),
+            actions: [{
+              text: '填入远程 URL',
+              cta: true,
+              onClick: () => {
                 const lanIPs = getLanIPs();
                 const primary = pickPrimaryLanIp(lanIPs);
-                const ipDesc =
-                  lanIPs.length > 0
-                    ? `本机当前局域网 IP：${lanIPs.map((l) => `${l.ip}（${l.iface}）`).join('、')}。移动端连不上时，把上方远程 URL 填为此处 IP`
-                    : '未能探测本机局域网 IP（请确认电脑已联网），移动端远程 URL 需手动填写电脑的局域网 IP';
-                new Setting(body)
-                  .setName('本机局域网 IP（电脑）')
-                  .setDesc(ipDesc)
-                  .addButton((btn) =>
-                    btn.setButtonText('填入远程 URL').setCta().onClick(() => {
-                      if (!primary) {
-                        notice('未探测到本机局域网 IP，请手动填写');
-                        return;
-                      }
-                      const target = formatRemoteOllamaUrl(primary.ip);
-                      void openFlowDialog({
-                        title: '填入远程 Ollama URL',
-                        message: `将「远程 Ollama URL（移动端）」覆盖为 ${target}？`,
-                        actions: [
-                          { label: '取消', value: 'cancel' },
-                          { label: '覆盖', value: 'ok', cta: true },
-                        ],
-                      }).then((v) => {
-                        if (v === 'ok') {
-                          (getSettings() as any).secondBrainRemoteOllamaUrl = target;
-                          void saveSettings();
-                          remoteUrlText?.setValue(target); // 输入框即时回显新值
-                        }
-                      });
-                    })
-                  );
-              } else {
-                new Setting(body)
-                  .setName('本机局域网 IP 提示')
-                  .setDesc('移动端连不上远程向量库时，请在电脑上打开第二大脑设置，查看「本机局域网 IP（电脑）」并核对上方远程 URL');
-              }
-            },
+                if (!primary) {
+                  notice('未探测到本机局域网 IP，请手动填写');
+                  return;
+                }
+                const target = formatRemoteOllamaUrl(primary.ip);
+                // 返回 Promise：渲染器等确认框 resolve 后再回填输入框显示值
+                return openFlowDialog({
+                  title: '填入远程 Ollama URL',
+                  message: `将「移动端远程地址」覆盖为 ${target}？`,
+                  actions: [
+                    { label: '取消', value: 'cancel' },
+                    { label: '覆盖', value: 'ok', cta: true },
+                  ],
+                }).then((v) => {
+                  if (v === 'ok') {
+                    (getSettings() as any).secondBrainRemoteOllamaUrl = target;
+                    void saveSettings();
+                  }
+                });
+              },
+            }],
+          },
+          // 本机局域网 IP（展示行，actions 已并上侧「填入远程 URL」按钮；custom 双分支已退役）
+          {
+            type: 'info',
+            name: '本机局域网 IP',
+            visibleWhen: () => !isMobileEnv(),
+            desc: lanIpDesc(),
+          },
+          {
+            type: 'info',
+            name: '局域网 IP 提示',
+            visibleWhen: () => isMobileEnv(),
+            desc: '连不上远程库时，在电脑上查看本机 IP 并核对上方地址',
           },
           { type: 'text', name: 'Embedding 模型', binding: { key: 'secondBrainEmbeddingModel' }, onChange: trimStore('secondBrainEmbeddingModel') },
           // 白名单目录（ticket 128 统一选择器：chips + 选择按钮；存储格式冻结——英文逗号分隔字符串）

@@ -535,30 +535,11 @@ export function pomodoroSettingsSchema(): SettingsSchema {
           { type: 'toggle', name: '自动跳过休息', desc: '专注结束后直接进入下一个专注', binding: { key: 'pomodoroAutoSkipBreak' }, onChange: () => render() },
           { type: 'toggle', name: '声音提醒', desc: '阶段切换时播放提示音', binding: soundToggle, onChange: () => render() },
           { type: 'toggle', name: '后台自动暂停', desc: '窗口隐藏时暂停，恢复可见后自动继续', binding: autoPauseToggle, onChange: () => render() },
-          // 提示音音量 + 「试听」：slider 行不支持同行附加按钮 → custom 插槽保行为（原 Setting 链逐字；
-          // 名称/描述在插槽内部声明，schema 行不声明 name/desc——lint 引擎跳过 custom 行）
-          {
-            type: 'custom',
-            render: (body) => {
-              new Setting(body)
-                .setName('提示音音量')
-                .setDesc('提示音大小，默认最大')
-                .addSlider((sl) => {
-                  sl.setLimits(0, 100, 5)
-                    .setValue((tryGetSettings() as any).pomodoroVolume ?? 100)
-                    .setDynamicTooltip();
-                  sl.onChange(async (v) => {
-                    (getSettings() as any).pomodoroVolume = v;
-                    await saveSettings();
-                  });
-                })
-                .addButton((b) =>
-                  b.setButtonText('试听').onClick(() => {
-                    playSound('focus-start', (tryGetSettings() as any).pomodoroVolume ?? 100);
-                  })
-                );
-            },
-          },
+          // 提示音音量 + 「试听」：行内附加按钮（actions，渲染器统一实现——custom 插槽已退役）
+          { type: 'slider', name: '提示音音量', desc: '提示音大小，默认最大',
+            binding: { get: () => (tryGetSettings() as any).pomodoroVolume ?? 100, set: (v) => { (getSettings() as any).pomodoroVolume = v; }, save: () => saveSettings() },
+            min: 0, max: 100, step: 5,
+            actions: [{ text: '试听', onClick: () => playSound('focus-start', (tryGetSettings() as any).pomodoroVolume ?? 100) }] },
           {
             type: 'select',
             name: '打开时恢复方式',

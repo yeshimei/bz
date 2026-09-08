@@ -4,23 +4,20 @@
  * 检查提醒/做题家/复习节奏/记忆算法/自动化/界面 + 移动端六组卡片。
  * 做题家子项显隐（原 quizBox style.display）收敛为 visibleWhen 声明式联动；
  * 监听文件夹走通用 path 行（multi chips，落盘外部 binding 自管：新增先确认存量收编、
- * 移除连带清理排除记录）；排除名单 chips 区走 custom 插槽。
+ * 移除连带清理排除记录）；排除名单走通用 list 行（chips 自绘 DOM 已退役）。
  * deps 仅在交互回调（custom/path onChange）经闭包引用，工厂构建无副作用。
  *
  * settings-panel 桌面侧栏经 reviewSettingsSchema 消费（入口契约保持自 review/ui re-export）。
  */
-import { Setting, setIcon, type App } from 'obsidian';
+import type { App } from 'obsidian';
 import { notice } from '../core/notice';
 import { getSettings, saveSettings } from '../core/settings-provider';
 import { mobileFullscreenGroup } from '../core/settings-common';
-import { uiEmpty } from '../core/ui';
 import type { SettingsSchema } from '../core/settings-schema';
 import type { ReviewItem } from './data';
 import type { ReviewDataManager } from './data';
 
 export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataManager }): SettingsSchema {
-  // 排除名单 custom 行的 chips 重渲染句柄（原 renderExcludeRows；交互后调用）
-  let renderExcludeRows: (() => void) | null = null;
   // enableAutoNotify 常驻轮询在 main.ts onload 注册、运行时按设置实时读值（app.ts checkOverdueAndNotify
   // 门控），设置弹窗 toggle 只需落盘，渲染器键直绑自动完成，无需额外副作用回调。
   return {
@@ -160,51 +157,24 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
               })();
             },
           },
-          // 排除名单 chips 区（ticket 57 管理 UI；DOM id/类名零变化；交互后经 renderExcludeRows 重渲染）
+          // 排除名单（通用 list 行，chips 自绘 DOM 已退役）：单条解除 = 移除按钮，逐条清理
           {
-            type: 'custom',
-            render: (body) => {
-              const setting = new Setting(body).setName('排除名单').setDesc('不参与监听自动加入的笔记，可在此单条解除');
-              setting.settingEl.classList.add('bz-review-exclude-row');
-              const excludeBox = document.createElement('div');
-              excludeBox.id = 'review-excluded-list';
-              setting.controlEl.appendChild(excludeBox);
-              renderExcludeRows = () => {
-                excludeBox.innerHTML = '';
-                const notes = (getSettings() as any).reviewExcludedNotes || [];
-                if (!notes.length) {
-                  // 空态走组件库 uiEmpty（ADR-0094 收编 .bz-review-exclude-empty）
-                  excludeBox.appendChild(uiEmpty({ title: '暂无排除笔记' }));
-                  return;
-                }
-                notes.forEach((path: string) => {
-                  const chip = document.createElement('span');
-                  chip.className = 'bz-review-exclude-chip';
-                  const name = document.createElement('span');
-                  name.className = 'bz-review-exclude-name';
-                  name.textContent = path;
-                  name.title = path;
-                  const remove = document.createElement('button');
-                  remove.className = 'bz-review-exclude-remove bz-touch-target--xl';
-                  remove.setAttribute('aria-label', `解除排除 ${path}`);
-                  const removeIc = document.createElement('span');
-                  removeIc.className = 'bz-ic';
-                  setIcon(removeIc, 'x'); // 收尾扫尾：✕ 文本符号退役，换 lucide
-                  remove.appendChild(removeIc);
-                  remove.onclick = () => {
-                    void (async () => {
-                      const { ReviewWatcher } = await import('./watch');
-                      await new ReviewWatcher(deps.app, deps.dataManager).removeExcludedNote(path);
-                      renderExcludeRows?.();
-                      notice('已解除排除', 'success');
-                    })();
-                  };
-                  chip.appendChild(name);
-                  chip.appendChild(remove);
-                  excludeBox.appendChild(chip);
-                });
-              };
-              renderExcludeRows();
+            type: 'list',
+            name: '排除名单',
+            desc: '不参与监听自动加入的笔记，可在此单条解除',
+            items: () => ((getSettings() as any).reviewExcludedNotes || []).map((path: string) => ({ key: path, label: path })),
+            emptyText: '暂无排除笔记',
+            removeLabel: '解除',
+            onChange: (keys) => {
+              void (async () => {
+                const prev: string[] = (getSettings() as any).reviewExcludedNotes || [];
+                const removed = prev.filter((p) => !keys.includes(p));
+                if (removed.length === 0) return;
+                const { ReviewWatcher } = await import('./watch');
+                const watcher = new ReviewWatcher(deps.app, deps.dataManager);
+                for (const path of removed) await watcher.removeExcludedNote(path);
+                notice('已解除排除', 'success');
+              })();
             },
           },
         ],
