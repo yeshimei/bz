@@ -771,52 +771,6 @@ var BZW_clipbook = (() => {
   });
 
   // src/core/ui/segmented.ts
-  function uiSegmented(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-segmented" + (opts.className ? " " + opts.className : "");
-    el.setAttribute("role", "radiogroup");
-    el.setAttribute("aria-label", opts.label || "");
-    const btns = /* @__PURE__ */ new Map();
-    opts.options.forEach((o) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "bz-segmented-btn" + (o.value === opts.value ? " is-on" : "");
-      b.textContent = o.label;
-      b.setAttribute("role", "radio");
-      b.setAttribute("aria-checked", String(o.value === opts.value));
-      b.addEventListener("click", () => {
-        setValue(o.value);
-        opts.onChange(o.value);
-      });
-      b.addEventListener("keydown", (e) => {
-        var _a;
-        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
-        e.preventDefault();
-        const vals = opts.options.map((x) => x.value);
-        const curIdx = vals.indexOf(current());
-        const delta = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : -1;
-        const nextIdx = (curIdx + delta + vals.length) % vals.length;
-        setValue(vals[nextIdx]);
-        opts.onChange(vals[nextIdx]);
-        (_a = btns.get(vals[nextIdx])) == null ? void 0 : _a.focus();
-      });
-      btns.set(o.value, b);
-      el.appendChild(b);
-    });
-    let cur = opts.value;
-    function current() {
-      return cur;
-    }
-    function setValue(v) {
-      cur = v;
-      btns.forEach((b, k) => {
-        const on = k === v;
-        b.classList.toggle("is-on", on);
-        b.setAttribute("aria-checked", String(on));
-      });
-    }
-    return { el, setValue };
-  }
   var init_segmented = __esm({
     "src/core/ui/segmented.ts"() {
     }
@@ -8604,11 +8558,15 @@ ${bodyText.substring(0, 6e3)}`;
     return out;
   }
   function cleanLine(s) {
-    let t = s;
-    t = t.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1");
+    const links = [];
+    let t = s.replace(/\[[^\]]*\]\([^)\s]+[^)]*\)/g, (m) => {
+      links.push(m);
+      return `\0${links.length - 1}\0`;
+    });
     t = t.replace(/^#{1,6}\s*/, "");
     t = t.replace(/[*_`~]/g, "");
     t = t.replace(/^[-•]\s+/, "");
+    t = t.replace(/\u0000(\d+)\u0000/g, (_, i) => links[Number(i)]);
     return t.trim();
   }
   function toParagraphs(body) {
@@ -8901,9 +8859,6 @@ ${bodyText.substring(0, 6e3)}`;
     for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
     return `hsl(${h % 360}, 42%, 52%)`;
   }
-  function stateLabel(st) {
-    return st === "saved" ? "已保存" : st === "reading" ? "在读" : st === "read" ? "已读" : "未读";
-  }
   function railItemHtml(sel, label, unread, total, icon, color, active, sub) {
     const badge = icon === "feed" ? `<span class="bz-rail-badge" style="--bz-rail-tint:${color || "#58a6ff"}">${esc(sub || label.slice(0, 1))}</span>` : icon === "bili" ? `<span class="bz-rail-badge bili">${esc(sub || label.slice(0, 1))}</span>` : icon === "clip" ? `<span class="bz-rail-ic">${iconSpan("scissors")}</span>` : `<span class="bz-rail-ic${sel.kind === "all" ? " bz-rail-ic--accent" : ""}">${icon ? iconSpan(icon) : ""}</span>`;
     const count = `<span class="bz-rail-count">${unread > 0 ? `<b>${unread}</b>` : unread}/${total}</span>`;
@@ -8928,13 +8883,26 @@ ${bodyText.substring(0, 6e3)}`;
       </div>
     </div>`).join("");
   }
+  function inlineHtml(text) {
+    let out = "";
+    let last = 0;
+    const re = /\[([^\]]+)\]\(([^)\s]+)\)/g;
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      out += esc(text.slice(last, m.index));
+      out += `<a class="bz-clip-md-link" href="${esc(m[2])}" data-clip-ext target="_blank" rel="noopener noreferrer">${esc(m[1])}</a>`;
+      last = m.index + m[0].length;
+    }
+    out += esc(text.slice(last));
+    return out;
+  }
   function paragraphsHtml(paras, resolveImg) {
     return paras.map((p) => {
       if (p.type === "img") {
         const src = resolveImg(p.text);
         return src ? `<img class="bz-clip-art-img" src="${esc(src)}" alt="文章配图" loading="lazy">` : "";
       }
-      return p.type === "quote" ? `<blockquote>${esc(p.text)}</blockquote>` : `<p>${esc(p.text)}</p>`;
+      return p.type === "quote" ? `<blockquote>${inlineHtml(p.text)}</blockquote>` : `<p>${inlineHtml(p.text)}</p>`;
     }).join("");
   }
   function summaryHtml(summary) {
@@ -8950,9 +8918,7 @@ ${bodyText.substring(0, 6e3)}`;
     <div class="bz-clip-art-meta">
       <span>${esc(opts.time)}</span>
       <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${esc(siteShort(a.srcName))}</span></span>
-      <span class="bz-clip-art-state">${stateLabel(a.st)}</span>
     </div>
-    <div class="bz-clip-art-fs" data-clip-fs></div>
     ${a.summary ? summaryHtml(a.summary) : ""}
     <div class="bz-clip-art-md" data-clip-md>${opts.paras || `<p class="dim">${esc(a.origin === "clip" ? "（笔记暂无正文）" : "正文已清空（已处理条目）")}</p>`}</div>
     ${openNoteFoot}
@@ -9004,7 +8970,6 @@ ${bodyText.substring(0, 6e3)}`;
     return `
     <div class="bz-clip-mob-d-kicker"><span>${esc(siteShort(a.srcName))} · ${esc(opts.time)}</span><span>${esc(opts.seq)}</span></div>
     <div class="bz-clip-mob-d-title">${esc(a.title)}</div>
-    <span class="bz-clip-mob-d-flag ${a.st}">${stateLabel(a.st)}</span>
     <hr class="bz-clip-mob-d-rule">
     <div class="bz-clip-mob-d-md">${opts.paras || `<p>${esc(a.origin === "clip" ? "（剪藏笔记正文请在 Obsidian 中打开）" : "正文已清空")}</p>`}</div>
     <div class="bz-clip-mob-d-foot"><span class="bz-clip-mob-d-next" data-clip-mob-next>↓ 读下一则</span><span class="bz-clip-mob-d-fch">${esc(siteShort(a.srcName))}</span></div>
@@ -12341,10 +12306,19 @@ ${sample}`,
       }, SEARCH_DEBOUNCE_MS);
     });
     readPaneEl.addEventListener("click", (e) => {
-      if (e.target.closest("[data-clip-open-note]") && M.cur) openNote(M.cur);
+      const t = e.target;
+      const ext = t.closest("a[data-clip-ext]");
+      if (ext) {
+        e.preventDefault();
+        try {
+          window.open(ext.href, "_blank");
+        } catch (e2) {
+        }
+        return;
+      }
+      if (t.closest("[data-clip-open-note]") && M.cur) openNote(M.cur);
     });
     readPaneEl.addEventListener("keydown", (e) => {
-      if (e.target.closest(".bz-segmented")) return;
       if (e.key === "ArrowLeft" || e.key === "k") {
         e.preventDefault();
         stepArticle(-1);
@@ -12388,7 +12362,17 @@ ${sample}`,
       void doSave(M.cur);
     });
     mobDetailEl.addEventListener("click", (e) => {
-      if (!e.target.closest("[data-clip-mob-next]") || !M.cur) return;
+      const t = e.target;
+      const ext = t.closest("a[data-clip-ext]");
+      if (ext) {
+        e.preventDefault();
+        try {
+          window.open(ext.href, "_blank");
+        } catch (e2) {
+        }
+        return;
+      }
+      if (!t.closest("[data-clip-mob-next]") || !M.cur) return;
       const grp = mobItemOrder.filter((x) => x.srcName === M.cur.srcName);
       const idx = grp.findIndex((x) => x.id === M.cur.id);
       const next = grp[idx + 1];
@@ -12692,7 +12676,6 @@ ${sample}`,
     readerEl.innerHTML = readerHtml(a, { time: a.timeText || relTime(a.timeTs), paras });
     mountIcons(readerEl);
     bindImgFallback(readerEl);
-    mountFontSizeSeg();
     if (a.origin === "clip") void loadClipBody(a);
   }
   async function loadClipBody(a) {
@@ -12732,27 +12715,6 @@ ${sample}`,
     const fs = readerFontSize();
     readerEl.classList.toggle("fs-sm", fs === "small");
     readerEl.classList.toggle("fs-lg", fs === "large");
-  }
-  function mountFontSizeSeg() {
-    const holder = readerEl ? readerEl.querySelector("[data-clip-fs]") : null;
-    if (!holder) return;
-    const seg = uiSegmented({
-      options: [
-        { value: "small", label: "小" },
-        { value: "medium", label: "中" },
-        { value: "large", label: "大" }
-      ],
-      value: readerFontSize(),
-      label: "阅读字号",
-      onChange: (v) => {
-        const s = getSettings();
-        s.clipbookReaderFontSize = v;
-        void saveSettings();
-        applyReaderFontSize();
-      }
-    });
-    seg.el.classList.add("bz-segmented--sm");
-    holder.appendChild(seg.el);
   }
   function stepArticle(delta) {
     const list = sortedView();
@@ -13065,6 +13027,11 @@ ${sample}`,
           icon: "folder-open",
           name: "基础",
           rows: [
+            { type: "select", name: "阅读字号", desc: "桌面阅读面正文字号", binding: { key: "clipbookReaderFontSize" }, options: [
+              { value: "small", label: "小" },
+              { value: "medium", label: "中" },
+              { value: "large", label: "大" }
+            ], onChange: () => applyReaderFontSize() },
             { type: "path", mode: "single", name: "剪藏目录", desc: "存放网页剪藏文章的文件夹", binding: { key: "articleDirectory" } },
             { type: "number", name: "面板宽度记忆", desc: "桌面拖拽面板边缘缩放后自动记忆，0 为未拖过", binding: { key: "clipbookPanelWidth" }, min: 0, step: 10 },
             { type: "number", name: "面板高度记忆", desc: "桌面拖拽面板边缘缩放后自动记忆，0 为未拖过", binding: { key: "clipbookPanelHeight" }, min: 0, step: 10 },

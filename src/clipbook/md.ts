@@ -4,7 +4,7 @@
  *
  * 输入 news body / 剪藏正文原样（可能含 markdown 图片/链接/列表/空行、Obsidian 嵌链）；
  * 输出「引文块 / 普通段 / 图片段」三分的段落流（issue 206：图片不再丢弃，独立成段保序），
- * 去 markdown 记号，供渲染器按语义上样式。图片段 text 存原始来源：
+ * 去 markdown 记号（链接记号除外，保留给渲染层成锚），供渲染器按语义上样式。图片段 text 存原始来源：
  * `![alt](url)` 存 url；`![[path]]` 存原 token——渲染层统一解析（外链直用 / vault 内嵌 getResourcePath）。
  */
 import type { ClipParagraph } from './types';
@@ -36,13 +36,18 @@ function splitImageTokens(line: string): Piece[] {
   return out;
 }
 
-/** 行内文本清洗（去链接记号保文字/标题/强调/列表前缀；图片 token 已拆出不再经过） */
+/** 行内文本清洗（标题/强调/列表前缀仍剥；图片 token 已拆出不再经过）。
+ *  链接记号保留（渲染层成锚点跳转）：先摘下占位再剥强调——URL 含 _~ 不被误伤，末尾原样还回 */
 function cleanLine(s: string): string {
-  let t = s;
-  t = t.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1'); // 链接保文字
+  const links: string[] = [];
+  let t = s.replace(/\[[^\]]*\]\([^)\s]+[^)]*\)/g, (m: string) => {
+    links.push(m);
+    return `\u0000${links.length - 1}\u0000`;
+  });
   t = t.replace(/^#{1,6}\s*/, ''); // 标题
   t = t.replace(/[*_`~]/g, '');
   t = t.replace(/^[-•]\s+/, ''); // 列表
+  t = t.replace(/\u0000(\d+)\u0000/g, (_, i: string) => links[Number(i)]);
   return t.trim();
 }
 

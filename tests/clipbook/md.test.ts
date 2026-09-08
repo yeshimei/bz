@@ -12,12 +12,17 @@ describe('clipbook/md toParagraphs', () => {
     expect(toParagraphs('  \n\n  ')).toEqual([]);
   });
 
-  it('普通段落按空行切分并去 md 记号', () => {
+  it('普通段落按空行切分并去 md 记号（链接记号保留）', () => {
     const out = toParagraphs('第一段 **粗体** 文字。\n\n第二段[链接文字](https://x.com)结尾。');
     expect(out).toEqual([
       { type: 'p', text: '第一段 粗体 文字。' },
-      { type: 'p', text: '第二段链接文字结尾。' },
+      { type: 'p', text: '第二段[链接文字](https://x.com)结尾。' },
     ]);
+  });
+
+  it('链接先摘后还原：URL 含 _ ~ 不被强调剥离误伤', () => {
+    const out = toParagraphs('看[a_b](https://x.com/a_b?q=1) **粗**');
+    expect(out).toEqual([{ type: 'p', text: '看[a_b](https://x.com/a_b?q=1) 粗' }]);
   });
 
   it('> 引文段判定 quote 且去 > 记号', () => {
