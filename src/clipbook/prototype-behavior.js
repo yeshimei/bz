@@ -5850,6 +5850,7 @@ var BZW_clipbook = (() => {
       };
       const popup = document.createElement("div");
       popup.id = "__shared_confirm_popup__";
+      if (opts.className) popup.classList.add(opts.className);
       popup.setAttribute("role", "dialog");
       popup.setAttribute("aria-modal", "true");
       popup.innerHTML = parts.html;
@@ -8683,18 +8684,15 @@ ${bodyText.substring(0, 6e3)}`;
     return String(body || "").trim();
   }
   function clipArticle(a, opts) {
-    const overrides = opts.overrides || {};
     const clipByUrl = opts.clipByUrl || /* @__PURE__ */ new Set();
     const upInfo = opts.upInfo || {};
     const savedKeys = opts.savedKeys || /* @__PURE__ */ new Set();
     const key = articleKeyOf(a);
-    const ov = overrides[key];
     const platform = platformOf(a);
     const newsSaved = a.state === "saved";
     const archived = savedKeys.has(String(a.url || ""));
     const clipped = !!a.url && clipByUrl.has(String(a.url));
     const saved = newsSaved || archived || clipped;
-    const reading = !!ov && ov.reading === true;
     const title = String(a.title || "(无标题)");
     const body = cleanBody(a.body);
     const isBili = platform === "B站";
@@ -8707,7 +8705,7 @@ ${bodyText.substring(0, 6e3)}`;
       timeText = "";
       timeTs = Date.now();
     }
-    const st = saved ? "saved" : reading ? "reading" : "unread";
+    const st = saved ? "saved" : a.read === true ? "read" : "unread";
     return {
       id: key,
       origin: "news",
@@ -12075,24 +12073,6 @@ ${sample}`,
     await markHandledAndBump(raw, "skipped");
     emitReadEvt(raw, "skipped");
   }
-  async function flowToggleReading(article) {
-    const raw = article && article.raw;
-    if (!raw) return "unread";
-    const key = articleKeyOf(raw);
-    let st = "reading";
-    await updateClipbookData((sidecar) => {
-      const cur = sidecar.articleOverrides[key];
-      const next = { ...sidecar.articleOverrides };
-      if (cur && cur.reading === true) {
-        delete next[key];
-        st = "unread";
-      } else {
-        next[key] = { reading: true };
-      }
-      return { ...sidecar, articleOverrides: next };
-    });
-    return st;
-  }
   async function flowDeleteNews(article) {
     const raw = article && article.raw;
     if (!raw) return;
@@ -12201,7 +12181,6 @@ ${sample}`,
   // src/clipbook/ui.ts
   var ui_exports = {};
   __export(ui_exports, {
-    __autoReadingDelayForTests: () => __autoReadingDelayForTests,
     clipbookSettingsSchema: () => clipbookSettingsSchema,
     closePanel: () => closePanel,
     initPanel: () => initPanel,
@@ -12212,9 +12191,6 @@ ${sample}`,
     showPanel: () => showPanel,
     unloadPanel: () => unloadPanel
   });
-  function __autoReadingDelayForTests(ms) {
-    AUTO_READING_MS = ms;
-  }
   function initPanel(app, showNow = false) {
     M.appRef = app;
     M.dir = clipDir();
@@ -12271,7 +12247,6 @@ ${sample}`,
   }
   function closePanel() {
     pauseReadingSession();
-    disarmAutoReading();
     panelResizeDetach == null ? void 0 : panelResizeDetach.flush();
     panelSplit == null ? void 0 : panelSplit.flush();
     M.open = false;
@@ -12289,7 +12264,6 @@ ${sample}`,
       escHandle = null;
       escRegistered = false;
     }
-    disarmAutoReading();
     if (searchDebounceTimer !== null) {
       clearTimeout(searchDebounceTimer);
       searchDebounceTimer = null;
@@ -12581,6 +12555,7 @@ ${sample}`,
   }
   async function markAllRead(label, items) {
     const ok = await openFlowDialog({
+      className: "bz-clip-dialog-editorial",
       title: "全部标为已读",
       message: `将把「${label}」的 ${items.length} 篇未读全部标为已读。`,
       actions: [
@@ -12671,14 +12646,6 @@ ${sample}`,
       out.push({ icon: "download", label: "保存到剪藏本", title: "保存为正式剪藏", onClick: () => void doSave(a) });
     }
     out.push({ icon: "check", label: "标记为已读", title: "不再出现在收件流", onClick: () => void doMarkRead(a) });
-    if (a.st === "reading") {
-      out.push({ icon: "book-open", label: "取消在读", onClick: () => void doToggleReading(a) });
-    } else {
-      out.push({ icon: "book-open", label: "标记在读", onClick: () => void doToggleReading(a) });
-    }
-    if (a.url) {
-      out.push({ icon: "globe", label: "查看原文", sub: a.domain || void 0, onClick: () => openExternal(a.url) });
-    }
     out.push({ icon: "trash-2", label: "删除", kind: "danger", title: "从收件流删除", onClick: () => deleteNewsItem(a) });
     return out;
   }
@@ -12715,7 +12682,6 @@ ${sample}`,
       return;
     }
     setReadingSession(a.id);
-    armAutoReading(a);
     let paras = "";
     if (a.origin === "clip") {
       const cached = a.notePath ? clipBodyCache.get(a.notePath) : void 0;
@@ -12788,33 +12754,6 @@ ${sample}`,
     seg.el.classList.add("bz-segmented--sm");
     holder.appendChild(seg.el);
   }
-  function armAutoReading(a) {
-    disarmAutoReading();
-    if (!M.open || a.origin !== "news" || a.st !== "unread") return;
-    autoReadingTimer = setTimeout(() => {
-      autoReadingTimer = null;
-      void autoMarkReading(a.id);
-    }, AUTO_READING_MS);
-  }
-  function disarmAutoReading() {
-    if (autoReadingTimer) {
-      clearTimeout(autoReadingTimer);
-      autoReadingTimer = null;
-    }
-  }
-  async function autoMarkReading(id) {
-    if (!M.open || !M.cur || M.cur.id !== id) return;
-    const cur = currentList().find((x) => x.id === id);
-    if (!cur || cur.origin !== "news" || cur.st !== "unread") return;
-    await flowToggleReading(cur);
-    await readNewsAndSidecar();
-    const next = currentList().find((x) => x.id === id);
-    if (next) M.cur = next;
-    renderList();
-    renderRail();
-    renderReader();
-    renderMobToc();
-  }
   function stepArticle(delta) {
     const list = sortedView();
     if (!list.length) return;
@@ -12856,14 +12795,9 @@ ${sample}`,
     notice("已撤销：条目恢复未读", "success");
     await refreshAfterAction();
   }
-  async function doToggleReading(a) {
-    if (!a || a.origin !== "news") return;
-    const next = await flowToggleReading(a);
-    notice(next === "reading" ? "已标记在读" : "已取消在读", "success");
-    await refreshAfterAction();
-  }
   async function deleteNewsItem(a) {
     const ok = await openFlowDialog({
+      className: "bz-clip-dialog-editorial",
       title: "删除条目",
       message: `确定从收件流删除「${a.title}」吗？删除后可在通知中撤销。`,
       actions: [
@@ -12884,6 +12818,7 @@ ${sample}`,
   }
   async function deleteClipNote(a) {
     const ok = await openFlowDialog({
+      className: "bz-clip-dialog-editorial",
       title: "删除剪藏",
       message: `确定删除剪藏「${a.title}」吗？文件将移入系统回收站。`,
       actions: [
@@ -12925,14 +12860,6 @@ ${sample}`,
     if (!a.notePath) return;
     getApp().workspace.openLinkText(a.notePath, "", false, { active: true });
     closePanel();
-  }
-  function openExternal(url) {
-    const app = getApp();
-    try {
-      app.openUrl ? app.openUrl(url) : window.open(url, "_blank");
-    } catch (e) {
-      notice("无法打开链接", "error");
-    }
   }
   async function copyText(text, okMsg) {
     try {
@@ -12990,11 +12917,25 @@ ${sample}`,
     const chapters = [];
     const byId = /* @__PURE__ */ new Map();
     const order = [];
+    const ctx = { overrides: M.sidecar.articleOverrides || {}, clipByUrl: M.clipUrls, upInfo: M.upInfo || {}, savedKeys: savedUrls };
+    const readBySite = /* @__PURE__ */ new Map();
+    for (const n of arts) {
+      if (n.read !== true) continue;
+      if (n.url && (savedUrls.has(String(n.url)) || M.clipUrls.has(String(n.url)))) continue;
+      const ca = clipArticle(n, ctx);
+      const k = String(ca.site || "").trim() || "未知";
+      const arr = readBySite.get(k);
+      if (arr) arr.push(ca);
+      else readBySite.set(k, [ca]);
+    }
+    const rowSites = /* @__PURE__ */ new Set();
     for (const row of aggregateSites(arts, clipNotes, savedUrls, M.clipUrls)) {
       const full = queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, { kind: "site", site: row.site }, M.upInfo).filter(matchesSearch);
-      if (!full.length) continue;
+      const readSkels = (readBySite.get(row.site) || []).filter(matchesSearch);
+      if (!full.length && !readSkels.length) continue;
+      rowSites.add(row.site);
       const active = full.filter((a) => a.st !== "saved").sort((x, y) => (x.st === "unread" ? 0 : 1) - (y.st === "unread" ? 0 : 1));
-      const arch = full.filter((a) => a.st === "saved");
+      const arch = [...full.filter((a) => a.st === "saved"), ...readSkels];
       chapters.push({
         site: row.site,
         unread: active.filter((a) => a.st === "unread").length,
@@ -13008,6 +12949,17 @@ ${sample}`,
         order.push(a);
       });
     }
+    for (const [site, list] of readBySite) {
+      if (rowSites.has(site)) continue;
+      const hit = list.filter(matchesSearch);
+      if (!hit.length) continue;
+      chapters.push({ site, unread: 0, activeN: 0, savedN: hit.length, activeHtml: "", archHtml: mobListHtml(hit, timeOf) });
+      hit.forEach((a) => {
+        byId.set(a.id, a);
+        order.push(a);
+      });
+    }
+    chapters.sort((x, y) => y.activeN + y.savedN - (x.activeN + x.savedN) || y.unread - x.unread || x.site.localeCompare(y.site, "zh"));
     mobItemById = byId;
     mobItemOrder = order;
     if (!chapters.length) {
@@ -13068,6 +13020,16 @@ ${sample}`,
     if (mobDetailEl) mobDetailEl.style.display = "flex";
     const body = mobDetailEl ? mobDetailEl.querySelector("[data-clip-mob-detail-body]") : null;
     if (body) body.scrollTop = 0;
+    markReadOnOpen(a);
+  }
+  function markReadOnOpen(a) {
+    if (!a || a.origin !== "news" || a.st !== "unread") return;
+    const raw = a.raw || M.articles.find((n) => articleKeyOf(n) === a.id);
+    if (!raw || raw.read === true) return;
+    void (async () => {
+      await flowMarkRead(a);
+      raw.read = true;
+    })();
   }
   function renderMobDetail() {
     if (!mobDetailEl || !M.cur) return;
@@ -13176,7 +13138,7 @@ ${sample}`,
       }
     });
   }
-  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle, escRegistered, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, AUTO_READING_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, autoReadingTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder;
+  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle, escRegistered, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder;
   var init_ui3 = __esm({
     "src/clipbook/ui.ts"() {
       init_app();
@@ -13191,6 +13153,7 @@ ${sample}`,
       init_settings_provider();
       init_auto_summary();
       init_news_sources_group();
+      init_constants();
       init_news_source_settings();
       init_md();
       init_store();
@@ -13217,14 +13180,12 @@ ${sample}`,
       dirty = false;
       loaded = false;
       SEARCH_DEBOUNCE_MS = 180;
-      AUTO_READING_MS = 1e4;
       PANEL_MIN_W = 760;
       PANEL_MIN_H = 520;
       PANEL_MAX_W = 1600;
       PANEL_MAX_H = 1e3;
       clipBodyCache = /* @__PURE__ */ new Map();
       searchDebounceTimer = null;
-      autoReadingTimer = null;
       panelResizeDetach = null;
       panelSplit = null;
       SPLIT_MIN_MID = 220;
