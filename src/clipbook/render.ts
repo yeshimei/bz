@@ -91,9 +91,8 @@ export function panelHtml(): string {
           <button class="bz-icon-btn bz-icon-btn--lg bz-icon-btn--close" data-clip-mob-close title="关闭">${iconSpan(ICO.x)}</button>
         </div>
         <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
-          <input class="bz-input" type="text" data-clip-mob-input placeholder="搜索标题、摘要、站点、标签">
+          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点…">
         </div>
-        <div class="bz-mobstrip" data-clip-mob-sources></div>
         <div class="bz-clip-mob-list" data-clip-mob-list></div>
       </div>
       <!-- 移动详情 overlay（屏2） -->
@@ -236,36 +235,84 @@ export function readerHtml(a: ClipArticle, opts: { time: string; paras: string }
   `;
 }
 
-// ==================== 移动端（双屏） ====================
+// ==================== 移动端（双屏；issue 248 目录化 = site 章 + 已收折叠） ====================
 
-/** 移动源胶囊（.bz-mobstrip 行；未读气泡 = bz-badge--brand） */
-export function mobChipHtml(sel: SrcSelJson, label: string, unread: number, active: boolean, icon: string | null, sub?: string): string {
-  return `
-    <div class="bz-mobstrip-chip${active ? ' is-on' : ''}" data-src='${esc(JSON.stringify(sel))}'>
-      ${icon === 'feed' ? `<span class="bz-clip-favchip sm">${esc(sub || label.slice(0, 1))}</span>` : ''}
-      <span>${esc(label)}</span>
-      ${unread ? `<span class="bz-badge bz-badge--brand">${unread}</span>` : ''}
-    </div>`;
-}
-
-/** 移动列表（issue 224：未读在前、组内最新在前，与桌面目录同序；摘要两行 + 状态点） */
+/** 移动条目（章内行；issue 248 目录化去摘要：dot + 标题 + 时间，站名已由章头承载）。
+ *  st 类挂行级（saved 整行降灰）；供 active（未读/在读）与 arch（已收）两段共用渲染。 */
 export function mobListHtml(list: ClipArticle[], timeOf: (a: ClipArticle) => string): string {
   return list.map((a) => `
-    <div class="bz-clip-mob-item" data-id="${esc(a.id)}">
+    <div class="bz-clip-mob-item ${a.st}" data-id="${esc(a.id)}">
       <div class="bz-clip-item-t">${dotHtml(a.st)}<span>${esc(a.title)}</span></div>
-      ${a.summary ? `<div class="bz-clip-item-sum">${esc(a.summary)}</div>` : ''}
-      <div class="bz-clip-item-meta"><span>${esc(a.srcName)}</span><span class="bz-clip-item-time">${esc(timeOf(a))}</span></div>
+      <div class="bz-clip-item-meta"><span class="bz-clip-item-time">${esc(timeOf(a))}</span></div>
     </div>`).join('');
 }
 
-/** 移动详情正文（屏2）：标题 / 首字 chip 来源行 / 状态章 / 摘要 / 正文 */
+/** 移动章目录一章（ui.ts 组装：active/arch 段串由 mobListHtml 渲染后显式传入，纯层不持状态） */
+export interface MobChapter {
+  /** 章名（site） */
+  site: string;
+  /** 未读 news 条数（章头计数；搜索态 = 命中口径由调用方折算） */
+  unread: number;
+  /** 常显段（未读/在读）条数 */
+  activeN: number;
+  /** 已收段（saved 语义）条数 */
+  savedN: number;
+  /** 常显段条目串 */
+  activeHtml: string;
+  /** 已收段条目串 */
+  archHtml: string;
+}
+
+/** 章头（吸顶；data-src 承载 site 源——章头长按批量已读复用 buildRailActions，菜单头同 rail 源行动） */
+export function mobChHeadHtml(site: string, unread: number, savedN: number, total: number): string {
+  const cnt = unread > 0 || savedN > 0
+    ? `${unread > 0 ? `<b>${unread}</b> 未读` : ''}${unread > 0 && savedN > 0 ? ' · ' : ''}${savedN > 0 ? `${savedN} 已收` : ''} / ${total}`
+    : `${total} 则`;
+  return `
+    <div class="bz-clip-mob-ch-hd" data-src='${esc(JSON.stringify({ kind: 'site', site }))}' title="${esc(site)}">
+      <span class="bz-clip-mob-ch-name">${esc(site)}</span>
+      <span class="bz-clip-mob-ch-meta">${cnt}</span>
+      <span class="bz-clip-mob-ch-rule"></span>
+    </div>`;
+}
+
+/** 已收折叠行（点线 + 计数 + 三角；.open 态展开相邻 .bz-clip-mob-arch） */
+export function mobFoldHtml(n: number): string {
+  return `
+    <div class="bz-clip-mob-fold" data-fold role="button" aria-expanded="false">
+      <span class="bz-clip-mob-fold-rule"></span>
+      <span class="bz-clip-mob-fold-lab" data-fold-lab>已收 <b>${n}</b> 篇</span>
+      <span class="bz-clip-mob-fold-ar">▾</span>
+      <span class="bz-clip-mob-fold-rule"></span>
+    </div>`;
+}
+
+/** 章目录整列（issue 248/m3）：章序由调用方定（aggregateSites：总数降序 → 未读降序 → 名 zh 序）。
+ *  searching = 折叠不生效（命中全平铺，arch 段恒显，容器 .searching 类驱动）；否则 arch 默认折叠，
+ *  fold.open 时相邻 arch 段展开（CSS 兄弟选择器）。 */
+export function mobTocHtml(chapters: MobChapter[], searching: boolean): string {
+  return chapters.map((ch) => {
+    const fold = !searching && ch.savedN > 0 ? mobFoldHtml(ch.savedN) : '';
+    return `
+      <div class="bz-clip-mob-ch">
+        ${mobChHeadHtml(ch.site, ch.unread, ch.savedN, ch.activeN + ch.savedN)}
+        <div class="bz-clip-mob-ch-items">${ch.activeHtml}${fold}${ch.archHtml ? `<div class="bz-clip-mob-arch">${ch.archHtml}</div>` : ''}</div>
+      </div>`;
+  }).join('');
+}
+
+/** 移动详情正文（屏2）：标题 / 首字 chip 来源行 / 状态章 / 摘要 / 正文 / 剪藏「打开笔记」文字脚（issue 248，对齐桌面阅读脚） */
 export function mobDetailHtml(a: ClipArticle, opts: { time: string; paras: string }): string {
   const flag = stateFlag(a.st);
+  const openNote = a.origin === 'clip' && a.notePath
+    ? `<div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-open-note>打开笔记 ${iconSpan(ICO.external, 'bz-ic--xs')}</span></div>`
+    : '';
   return `
     <div class="bz-clip-mob-d-title">${esc(a.title)}</div>
     <div class="bz-clip-mob-d-meta"><span class="bz-clip-favchip">${esc(a.srcName.slice(0, 1))}</span><span>${esc(a.srcName)}</span><span class="bz-clip-mob-d-time">${esc(opts.time)}</span></div>
     <div class="bz-clip-art-flag ${flag.cls}">${iconSpan(flag.icon, 'bz-ic--xs')}${stateLabel(a.st)}</div>
     ${a.summary ? summaryHtml(a.summary) : ''}
     <div class="bz-clip-art-md">${opts.paras || `<p class="dim">${esc(a.origin === 'clip' ? '（剪藏笔记正文请在 Obsidian 中打开）' : '正文已清空')}</p>`}</div>
+    ${openNote}
   `;
 }
