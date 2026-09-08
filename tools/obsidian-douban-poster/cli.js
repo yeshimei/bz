@@ -44,7 +44,7 @@ function runPm2(args) {
 switch (command) {
   case 'watch': {
     const { default: chokidar } = await import('chokidar');
-    const { collectMissingPosterNotes, sortByBirthtime, createProcessor } = await import('./watcher.js');
+    const { collectIncompleteNotes, sortByBirthtime, createProcessor } = await import('./watcher.js');
     const movieFolder = path.join(config.vaultPath, config.movieFolder);
     // 抓取间隔（ms）：每个完成后等 15s，避免豆瓣接口限流
     const FETCH_INTERVAL = 15000;
@@ -62,11 +62,11 @@ switch (command) {
       },
     });
 
-    // 全目录扫描：缺海报的笔记入队（按创建时间倒序，最新创建的先抓）
+    // 全目录扫描：缺海报或缺豆瓣链接的笔记入队（按创建时间倒序，最新创建的先抓）
     function scan() {
-      const missing = sortByBirthtime(collectMissingPosterNotes(movieFolder));
+      const missing = sortByBirthtime(collectIncompleteNotes(movieFolder));
       if (missing.length === 0) return;
-      console.log(`[扫描] 发现 ${missing.length} 个缺海报的笔记，加入队列`);
+      console.log(`[扫描] 发现 ${missing.length} 个待补笔记（缺海报或缺豆瓣链接），加入队列`);
       processor.pushMany(missing);
     }
 
@@ -84,7 +84,7 @@ switch (command) {
       depth: 0,
     });
 
-    // 创建/改动均触发扫描（扫描幂等：已有海报的笔记自动跳过）
+    // 创建/改动均触发扫描（扫描幂等：海报和豆瓣信息都齐全的笔记自动跳过）
     watcher.on('add', (filePath) => {
       if (!filePath.endsWith('.md')) return;
       scheduleScan();

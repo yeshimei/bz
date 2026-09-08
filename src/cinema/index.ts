@@ -9,6 +9,7 @@ import { M, resetCinemaState, DEFAULT_FOLDER } from './state';
 import { rebuildItems } from './data';
 import { createOverlay, closeOverlay, registerEscapeHandler, renderAll, openAddModalDirect } from './ui';
 import { stopAllPosterWatch } from './poster-watch';
+import { sweepDoubanBacklog } from './douban-sweep';
 
 let initialized = false;
 let autoRefreshRegistered = false;
@@ -69,6 +70,8 @@ export function openCinema(app: App): void {
   }
   applyDefaultView();
   createOverlay(app);
+  // 豆瓣盲区补全触碰（ADR-0111）：打开即扫，静默后台
+  void sweepDoubanBacklog(app);
 }
 
 /**
@@ -83,6 +86,7 @@ export function openCinemaAnalysis(app: App): void {
   else {
     applyDefaultView();
     createOverlay(app);
+    void sweepDoubanBacklog(app);
   }
 }
 

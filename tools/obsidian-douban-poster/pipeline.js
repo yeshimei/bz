@@ -24,7 +24,8 @@ export async function fetchPosterForNote(notePath, config) {
   }
 
   // 海报 + 豆瓣信息都齐全才跳过；只有海报（信息不全）时重跑补全
-  if (hasPoster(notePath) && hasDoubanInfo(notePath)) {
+  const hasPosterAlready = hasPoster(notePath);
+  if (hasPosterAlready && hasDoubanInfo(notePath)) {
     console.log(`[跳过] ${path.basename(notePath)} 已有海报和豆瓣信息`);
     return false;
   }
@@ -48,33 +49,39 @@ export async function fetchPosterForNote(notePath, config) {
 
   console.log(`[找到] ${result.title} (${result.detailUrl})`);
 
-  // 确保海报文件夹存在
-  if (!fs.existsSync(posterFolder)) {
-    fs.mkdirSync(posterFolder, { recursive: true });
+  // 已有海报 → 补全分支：跳过下载与 embed 插入，只补豆瓣信息
+  // （重下海报会换时间戳新文件名：旧文件成孤儿、正文 embed 去重只认相同路径必重复）
+  if (!hasPosterAlready) {
+    // 确保海报文件夹存在
+    if (!fs.existsSync(posterFolder)) {
+      fs.mkdirSync(posterFolder, { recursive: true });
+    }
+
+    // 生成海报文件名
+    const ext = result.posterUrl.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)?.[1] || 'jpg';
+    const safeName = name.replace(/[/\\:*?"<>|]/g, '_');
+    const timestamp = Date.now();
+    const posterFileName = `${safeName}_${timestamp}.${ext}`;
+    const posterPath = path.join(posterFolder, posterFileName);
+    const posterRelativePath = `${config.posterFolder}/${posterFileName}`;
+
+    // 下载海报
+    try {
+      console.log(`[下载] 正在下载高清海报...`);
+      await downloadImage(result.posterUrl, posterPath);
+    } catch (err) {
+      console.error(`[失败] 下载海报时出错: ${err.message}`);
+      return false;
+    }
+    console.log(`[完成] 海报已保存: ${posterRelativePath}`);
+
+    // 更新笔记
+    updateFrontmatterFields(notePath, { '海报': posterRelativePath });
+    insertPosterEmbed(notePath, posterRelativePath);
+    console.log(`[完成] 海报已写入: ${path.basename(notePath)}`);
+  } else {
+    console.log(`[补全] 已有海报，只补豆瓣信息: ${path.basename(notePath)}`);
   }
-
-  // 生成海报文件名
-  const ext = result.posterUrl.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)?.[1] || 'jpg';
-  const safeName = name.replace(/[/\\:*?"<>|]/g, '_');
-  const timestamp = Date.now();
-  const posterFileName = `${safeName}_${timestamp}.${ext}`;
-  const posterPath = path.join(posterFolder, posterFileName);
-  const posterRelativePath = `${config.posterFolder}/${posterFileName}`;
-
-  // 下载海报
-  try {
-    console.log(`[下载] 正在下载高清海报...`);
-    await downloadImage(result.posterUrl, posterPath);
-  } catch (err) {
-    console.error(`[失败] 下载海报时出错: ${err.message}`);
-    return false;
-  }
-  console.log(`[完成] 海报已保存: ${posterRelativePath}`);
-
-  // 更新笔记
-  updateFrontmatterFields(notePath, { '海报': posterRelativePath });
-  insertPosterEmbed(notePath, posterRelativePath);
-  console.log(`[完成] 海报已写入: ${path.basename(notePath)}`);
 
   // 顺便获取豆瓣信息写入YAML
   console.log(`[搜索] 正在获取《${name}》的豆瓣信息...`);
