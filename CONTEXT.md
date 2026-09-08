@@ -204,7 +204,7 @@ _Avoid_: 资源文件、素材、媒体文件（指附件时）
 **保险库容器 (Vault Container)**: bz 的加密容器整体——加密清单 + 密文镜像的集合，密码/加密笔记/加密日记三类资产同库。作用是把用户选中的整篇笔记及其双链图片/视频附件**移出 vault**（原路径消失，Obsidian 内"直接不见"），以密文落盘到 `encryptRoot`；密码整表 JSON 亦存为本库一条镜像（kind=password-vault）。复用 `src/core/crypto.ts` 的 `CryptoService` 与主密码范式。区别于既有「加密条目(🔐 仅隐藏)」——那是伪加密，本域是真·密文。密文镜像采用**平铺点前缀布局**（ADR-0016）：`encryptRoot`（默认 `CONFIG/.ENCRYPT`）内所有密文文件 `.随机名.enc` 平铺，Obsidian 侧栏不可见，防误删；还原/删除靠清单映射。
 _Avoid_: 保险箱（对外旧称）、加密罐、保险柜、安全箱（指本域时）
 
-**密码本 (Password Vault, password-vault 域)**: 密码条目管理 UI 域（ADR-0078 五版原型评审后的 v1「保险库」成型版，ADR-0109 自统一保险库拆回）——金色三栏工作台（平台导航/账号列表/详情）+ 移动端列表/详情/FAB + 自绘右键菜单/抽屉/确认/toast/金色印章锁屏；条目 8 字段（id/platform/url/account/password/note/createdAt/fav）。命令 `bz-password-vault-open`；数据 = 保险库容器 `kind=password-vault` SafeNote（与 encrypt **共锁同库**，`password-vault:changed`/`encrypt:changed` 双向同步）；生成器设置复用全局键 passwordCharset/passwordLength + securityMode（设置面板「密码本」条目）。
+**密码本 (Password Vault, password-vault 域)**: 密码条目管理 UI 域（ADR-0078 五版原型评审后的 v1「保险库」成型版，ADR-0109 自统一保险库拆回，ADR-0110 接入三层单源）——金色三栏工作台（平台导航/账号列表/详情）+ 移动端列表/详情/FAB + 自绘右键菜单/抽屉/确认/toast/金色印章锁屏；条目 8 字段（id/platform/url/account/password/note/createdAt/fav）。命令 `bz-password-vault-open`；数据 = 保险库容器 `kind=password-vault` SafeNote（与 encrypt **共锁同库**，`password-vault:changed`/`encrypt:changed` 双向同步）；生成器设置复用全局键 passwordCharset/passwordLength + securityMode（设置面板「密码本」条目）。**行为单源八域之一（ADR-0110）**：markup 出自 `render.ts`、行为真 `ui.ts` 打进评审壳（`prototype.html` 双 iframe，演示库主密码 demo，密文由真加密链离线生成）。
 _Avoid_: 保险库（指密码本域时——encrypt 域已占用该名）、密码库
 
 **加密清单 (Safe Manifest)**: `<encryptRoot>/.safe.enc`——整库唯一加密配置文件（点前缀，侧栏隐藏），记录每篇加密笔记的原路径、状态、正文/附件镜像引用与文件密钥（主密钥包裹）。清单本身整体 AES-GCM 加密，内部字段（含原路径）在解锁前不可见。
