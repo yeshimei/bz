@@ -9,9 +9,8 @@ import { escManager } from '../../core/esc-manager';
 import type { EscHandle } from '../../core/esc-manager';
 import { onDomainEvent } from '../../core/domain-bus';
 import { getSettings, tryGetSettings } from '../../core/settings-provider';
-import { applyMobileWindowFullscreen } from '../../core/mobile';
 import { openSettingsModal } from '../../core/settings-modal';
-import { batchSizeRow, mobileFullscreenGroup } from '../../core/settings-common';
+import { batchSizeRow } from '../../core/settings-common';
 import type { SettingsSchema } from '../../core/settings-schema';
 import { applyDirectories, getPrimaryTagsConfig, getPrimaryTagsInDisplayOrder, getTagEmoji } from '../config';
 import { applyUiSettings, getDefaultDateFilterSetting, getDefaultSelectedTagSetting } from './ui-settings';
@@ -232,7 +231,6 @@ export function diarySettingsSchema(): SettingsSchema {
           { type: 'toggle', name: '保存后进入编辑', desc: '保存日记后直接进入编辑模式', binding: { key: 'diaryJumpToEditAfterSave' } },
         ],
       },
-      mobileFullscreenGroup('diaryMobileDefaultFullscreen', { desc: '' }),
       {
         icon: 'wrench', name: '维护',
         rows: [
@@ -472,8 +470,6 @@ export async function showDiaryPanel(plugin?: { registerEvent: (ref: unknown) =>
   topifyZ(mask ?? undefined, popup ?? undefined); // ADR-0067：显示即发号
   if (popup) popup.style.visibility = 'visible';
   if (mask) mask.style.visibility = 'visible';
-  // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡（每次显示均执行）
-  applyMobileWindowFullscreen(popup, tryGetSettings().diaryMobileDefaultFullscreen === true);
   if (state.ui.scrollContainer) setTimeout(updateSticky, 100);
 }
 

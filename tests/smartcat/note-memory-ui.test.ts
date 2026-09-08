@@ -30,8 +30,7 @@ function openWith(memoryDirectories: string[], hooks: { changed: string[][]; sav
   openSmartcatSettings({
     getConfig: () => baseConfig(),
     saveConfig: async () => {},
-    settingsKeys: { enabled: true, mobileFullscreen: false },
-    setMobileFullscreen: async () => {},
+    settingsKeys: { enabled: true },
     onMemoryDirectoriesChanged: (dirs) => hooks.changed.push([...dirs]),
   });
 }

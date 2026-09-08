@@ -165,7 +165,6 @@ function injectSettings(): void {
         bookshelfSkin: skin,
         bookshelfDefaultSide: 'all',
         bookshelfSortMode: 'recent',
-        bookshelfMobileDefaultFullscreen: false,
       }) as never
   );
 }

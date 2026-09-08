@@ -19,7 +19,7 @@ import {
   __getSmartcatInternals, __getNewsPendingSavesForTests, __setNewsSaveTimeoutForTests,
 } from '../../src/smartcat/index';
 
-let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
+let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
 
 function makeApp() {
   const vault = new MockVault();
@@ -50,7 +50,7 @@ const readStream = (): any[] => __getSmartcatInternals().data.memory.memoryStrea
 beforeEach(() => {
   resetObsidianMocks();
   document.body.innerHTML = '';
-  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
+  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
   unloadSmartCat();
 });
 

@@ -3,7 +3,6 @@
  * 数据与旧 library 域同源：bookshelfFolderPath 缺省回落 libraryFolderPath（同一批书两域同显）；
  * 空值时 chips 区显示实际生效目录（fallbackValue → data.resolveFolderPath，回落链已内置）。
  */
-import { mobileFullscreenGroup } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { resolveFolderPath } from './data';
 import { applyBookshelfSkin } from './ui';
@@ -75,7 +74,6 @@ export function bookshelfSettingsSchema(): SettingsSchema {
           },
         ],
       },
-      mobileFullscreenGroup('bookshelfMobileDefaultFullscreen'),
     ],
   };
 }

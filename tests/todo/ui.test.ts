@@ -25,7 +25,6 @@ const SETTINGS = {
   memoDueFormat: 'relative',
   memoAutoArchive: true,
   cinemaFolderPath: '我的/影视',
-  todoMobileDefaultFullscreen: false,
 };
 
 /** 动态日期（相对今天）：测试不随运行日历漂移（「今日」口径 / 30 天时间界依赖） */
@@ -1005,16 +1004,6 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
     expect(settings.memoScenarios).toBe('剪藏,工作,学习,生活,代码,公开课');
   });
 
-  it('设置 schema：移动端组不写描述（对齐其余域铁律）', async () => {
-    const { app } = seedVault();
-    const { todoSettingsSchema } = await import('../../src/todo/settings');
-    const schema = todoSettingsSchema();
-    const mob = schema.groups.find((g) => g.name === '移动端');
-    expect(mob).toBeTruthy();
-    expect((mob!.rows[0] as any).name).toBe('移动端默认全屏');
-    expect((mob!.rows[0] as any).desc).toBeUndefined();
-    void app;
-  });
 });
 
 describe('待办×番茄联动（专注这个）', () => {

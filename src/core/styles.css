@@ -134,13 +134,6 @@ button.todo-btn-close,
 button.news-close-btn {
   display: none !important;
 }
-.bz-win-mfs button.bz-win-close,
-.bz-win-mfs button.bz-icon-btn--close,
-.bz-win-mfs button.todo-btn-close,
-.bz-win-mfs button.news-close-btn {
-  display: flex !important;
-}
-
 /* ==================== core 层样式收敛（ticket 60 延伸：notice/settings-modal/confirm/dom） ==================== */
 /* 通知 toast（原 core/notice.ts NOTICE_CSS，ADR-0010） */
 #bz-notice-container {
@@ -637,43 +630,6 @@ button.news-close-btn {
 }
 .bz-settings-group-body .setting-item:last-child {
   margin-bottom: 0;
-}
-
-/* ==================== 移动端主窗口默认全屏（ticket 68，ADR-0019） ==================== */
-/* 统一 ≤768px 两态（废止原 480/640/768 乱断点）：开=真全屏（.bz-win-mfs）/ 关=常规卡（各域 ≤768 基规则） */
-@media (max-width: 768px) {
-  /* 真全屏：覆盖整个视口、去圆角、去变换/动画（各域桌面定位统一覆写） */
-  .bz-win-mfs {
-    width: 100vw !important;
-    height: 100vh !important;
-    max-width: 100vw !important;
-    max-height: 100vh !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: auto !important;
-    bottom: auto !important;
-    transform: none !important;
-    animation: none !important;
-  }
-  /* 真全屏头部避让顶部安全区：多数窗口首子元素即头部行 */
-  .bz-win-mfs > div:first-child {
-    padding-top: max(34px, env(safe-area-inset-top)) !important;
-  }
-  /* news 自垫例外：真全屏时弹窗自身垫顶（与各域统一 34px 顶距），首子不再垫（首子是绝对定位关闭钮） */
-  .news-popup.bz-win-mfs {
-    padding-top: max(34px, env(safe-area-inset-top)) !important;
-  }
-  .news-popup.bz-win-mfs > div:first-child {
-    padding-top: 0 !important;
-  }
-  /* 域设置弹窗真全屏（smartcat 2026-08-23 合并一套接入）：内容区放开 65vh 上限、flex 撑满 */
-  .bz-win-mfs .bz-settings-content {
-    max-height: none !important;
-    flex: 1 1 auto;
-    min-height: 0;
-  }
 }
 
 /* ==================== 统一右键菜单 / 长按抽屉（core/item-actions，手势统一） ==================== */

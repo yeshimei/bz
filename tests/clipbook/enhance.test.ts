@@ -41,7 +41,7 @@ function boot(settingsPatch: Record<string, any> = {}): { vault: MockVault; sett
   const vault = seedVault();
   const app = mockAppWithVault(vault);
   setApp(app);
-  const settings = { storagePath: 'CONFIG/STORAGE', articleDirectory: '归档/网页剪藏', clipbookMobileDefaultFullscreen: false, ...settingsPatch };
+  const settings = { storagePath: 'CONFIG/STORAGE', articleDirectory: '归档/网页剪藏', ...settingsPatch };
   const saveSpy = vi.fn(async () => {});
   setSettingsProvider(() => settings as any);
   setSettingsSaver(saveSpy);

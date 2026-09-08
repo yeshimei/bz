@@ -19,14 +19,12 @@
  * 跨域服务保留（不属面板 UI）：notice/flow-dialog/esc-manager/mobile/z-order/settings-provider。
  * 契约保留：favorites.json 零迁移（llmConfig、balance 系、linkedNote 字段读不炸写不产）；
  *   smartcat 事件载荷（add/edit/delete/archive + favoritesEditChanges）；置顶/归档/删除撤销；
- *   命令 ID 与 favoritesMobileDefaultFullscreen 键不动。
+ *   命令 ID 不动。
  */
 import { notice, notify, notifyUndo, notifySaveError } from '../core/notice';
 import { topifyZ } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
-import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
-import { tryGetSettings } from '../core/settings-provider';
-import { mobileFullscreenGroup } from '../core/settings-common';
+import { isMobileEnv } from '../core/mobile';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { getApp } from '../core/app';
 import { mountIcons } from '../core/ui';
@@ -85,7 +83,6 @@ export function favoritesSettingsSchema(): SettingsSchema {
           { type: 'choiceCards', name: '面板主题', binding: { key: 'favoritesSkinTheme' }, layoutKey: 'favoritesSkin', options: [{ value: 'linen', label: '亚麻', layout: 'default', prevClass: 'bz-sp-prev-linen' }] },
         ],
       },
-      mobileFullscreenGroup('favoritesMobileDefaultFullscreen', { desc: '' }),
     ],
   };
 }
@@ -140,10 +137,6 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
   M.overlay = overlay;
   M.renderFn = () => renderAll();
 
-  applyMobileWindowFullscreen(
-    overlay.querySelector('.bz-fav-panel') as HTMLElement,
-    (tryGetSettings() as any)?.favoritesMobileDefaultFullscreen === true
-  );
   mountIcons(overlay); // 头行关闭钮等 innerHTML 模板里的图标占位
 
   // ESC（主面板 + 浮层栈：菜单 → 抽屉 → 表单 → 面板）

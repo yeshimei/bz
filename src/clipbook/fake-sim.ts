@@ -106,7 +106,6 @@ function seedDatabase(): void {
 const settingsStore: Record<string, unknown> = {
   storagePath: 'CONFIG/STORAGE',
   articleDirectory: CLIP_DIR,
-  clipbookMobileDefaultFullscreen: false,
   clipbookReaderFontSize: 'medium',
   newsRetentionUnsavedDays: 30,
   clipbookPanelWidth: 0,

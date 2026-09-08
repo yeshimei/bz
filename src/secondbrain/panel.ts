@@ -20,10 +20,9 @@ import type { App } from 'obsidian';
 import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
 import { topifyZ } from '../core/z-order';
+import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
-import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal, closeSettingsModal } from '../core/settings-modal';
-import { mobileFullscreenRow } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { openFlowDialog } from '../core/flow-dialog';
@@ -238,7 +237,6 @@ export class SecondBrainPanel {
     topifyZ(this.mask!, this.popup!); // ADR-0067：显示即发号，谁后显示谁在上
     this.mask!.style.display = 'block';
     this.popup!.style.display = 'flex';
-    applyMobileWindowFullscreen(this.popup, tryGetSettings().secondBrainMobileDefaultFullscreen === true);
     // 先等初始 load 完成再定形态（防启动竞态把已有索引误判为空库）
     await this.render();
   }
@@ -446,7 +444,7 @@ export class SecondBrainPanel {
     const popup = document.createElement('div');
     popup.className = 'bz-sb-panel';
 
-    // 头部：标题 + 功能(📚💬) + ⚙️ + ✕(仅移动全屏)
+    // 头部：标题 + 功能(📚💬) + ⚙️
     const head = document.createElement('div');
     head.className = 'bz-win-head bz-sb-panel-head';
     const title = document.createElement('h3');
@@ -472,9 +470,6 @@ export class SecondBrainPanel {
     });
     this.funcBtns = [refBtn, chatBtn]; // 引导期整体收起（ticket 107）
     mkBtn('bz-sb-panel-gear', '⚙️', '第二大脑设置', () => this.openSettings());
-    if (isMobileEnv() && tryGetSettings().secondBrainMobileDefaultFullscreen === true) {
-      mkBtn('bz-win-close', '❌', '关闭', () => this.close());
-    }
 
     head.appendChild(title);
     head.appendChild(btns);
@@ -1015,8 +1010,6 @@ export function secondBrainSettingsSchema(): SettingsSchema {
         icon: 'layout-dashboard',
         name: '面板',
         rows: [
-          // 移动端默认全屏（无描述——保持省略；仅移动端可见）
-          mobileFullscreenRow('secondBrainMobileDefaultFullscreen', { desc: '' }),
           // 重新索引（ticket 108）：确认已 flow 化（openFlowDialog），此处仅保留按钮与文案
           {
             type: 'button',

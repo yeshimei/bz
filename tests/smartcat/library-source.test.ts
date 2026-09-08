@@ -268,7 +268,7 @@ describe('snapshotDomains 首次快照（library）', () => {
 });
 
 // ===== 短路 + 防抖集成（照 news-action.test.ts 范式）=====
-let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
+let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
 
 function makeApp() {
   const vault = new MockVault();
@@ -320,7 +320,7 @@ async function bootWithWeave(books: Record<string, any>) {
 beforeEach(() => {
   resetObsidianMocks();
   document.body.innerHTML = '';
-  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
+  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
   unloadSmartCat();
   __setLibraryDebounceMsForTests(5 * 60 * 1000); // 复位默认窗口
 });

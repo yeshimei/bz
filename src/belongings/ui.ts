@@ -15,7 +15,7 @@
  *   emoji-icon-map 全量映射（issue 231 拍板全转），未入表 emoji 原样兜底。
  *
  * 契约保留：belongings.json 零迁移；smartcat 事件（add/edit/status/delete + belongingsEditChanges）；
- *   belongingsDefaultStatus / belongingsMobileDefaultFullscreen 设置键；命令路径 openForm（面板未开可弹）；
+ *   belongingsDefaultStatus 设置键；命令路径 openForm（面板未开可弹）；
  *   自动刷新（数据文件 modify，自写短路）；主题变化重渲染；ESC 分层（详情→表单→主面板）；
  *   脏表单 confirmDiscard；notifyUndo 撤销；topifyZ 动态发号（ADR-0067）。
  * 视觉换血按 ADR-0097 判例：.bz-bel--poster 域内 token 作用域覆盖 + .bz-bel-* 装饰类，
@@ -25,9 +25,8 @@ import { notice, notifyUndo, notifySaveError } from '../core/notice';
 import { topifyZ } from '../core/z-order';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
-import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
+import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
-import { mobileFullscreenGroup } from '../core/settings-common';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { mountIcons, uiSuggest, uiIconSpan } from '../core/ui';
 import { openItemMenu, openItemSheet, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, closeItemMenu, type ItemAction, resetItemMenuClickGuard } from '../core/item-actions';
@@ -135,7 +134,6 @@ export function belongingSettingsSchema(): SettingsSchema {
           },
         ],
       },
-      mobileFullscreenGroup('belongingsMobileDefaultFullscreen', { desc: '' }),
     ],
   };
 }
@@ -211,10 +209,6 @@ async function openPanelInner(): Promise<void> {
   topifyZ(overlay); // ADR-0067：显示即发号（原静态 z-index:100000 已删）
   M.overlay = overlay;
   M.renderFn = () => renderAll();
-  applyMobileWindowFullscreen(
-    overlay.querySelector('.bz-bel-panel') as HTMLElement,
-    (tryGetSettings() as any)?.belongingsMobileDefaultFullscreen === true
-  );
   mountIcons(overlay);
 
   // ESC（主面板 + 表单/详情多窗口径；表单也可能先于面板打开——命令路径）

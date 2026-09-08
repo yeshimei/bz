@@ -31,7 +31,7 @@ import moment from 'moment';
 import { notice, notify, notifyUndo, notifySaveError } from '../core/notice';
 import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
-import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
+import { isMobileEnv } from '../core/mobile';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { uiModal, uiIcon, uiChoice, uiBtn, uiBtnRow, uiResizable, uiEmpty, mountIcons, uiSuggest } from '../core/ui';
 import { openFlowDialog } from '../core/flow-dialog';
@@ -339,7 +339,6 @@ export function openTodoPanel(app: App, opts?: { notePath?: string }): void {
     return;
   }
   TodoData.init(tryGetSettings() as any);
-  const fullscreen = (tryGetSettings() as any).todoMobileDefaultFullscreen === true;
   // 设置播种（P2）：「默认排序方式」（与 memo 共用 memoSortMode 键）与「默认显示归档」
   // 在面板打开时初始化——此前恒「紧急优先」+ 折叠，两项设置对 todo 面板不生效
   const sortSetting = (tryGetSettings() as any).memoSortMode;
@@ -397,7 +396,6 @@ export function openTodoPanel(app: App, opts?: { notePath?: string }): void {
   M.renderFn = () => renderAll();
 
   const panelEl = overlay.querySelector('.bz-todo-panel') as HTMLElement;
-  applyMobileWindowFullscreen(panelEl, fullscreen);
   applyTodoSkin((tryGetSettings() as any).todoSkin);
   mountIcons(overlay);
 

@@ -1630,11 +1630,11 @@ describe('归物本自动刷新 / 事件载荷 / schema / XSS', () => {
     expect(events[2]).toEqual({ kind: 'delete', title: '键盘' });
   });
 
-  it('belongingSettingsSchema：外观组（布局/主题占位单卡）+ 显示组 + 移动端组；桌面移动组门控 false / 移动 true', () => {
+  it('belongingSettingsSchema：外观组（布局/主题占位单卡）+ 显示组', () => {
     const settings = { belongingsDataFolder: 'CONFIG/STORAGE' };
     setSettingsProvider(() => settings as any);
     const schema = belongingSettingsSchema();
-    expect(schema.groups).toHaveLength(3);
+    expect(schema.groups).toHaveLength(2);
     // 外观组（用户拍板 C 占位单卡）：布局/主题两行 choiceCards，主题行绑 layoutKey=belSkin
     const look = schema.groups[0];
     expect(look.name).toBe('外观');
@@ -1656,21 +1656,6 @@ describe('归物本自动刷新 / 事件载荷 / schema / XSS', () => {
     const vrow = view.rows[0] as any;
     expect(vrow.type).toBe('select');
     expect(vrow.binding).toMatchObject({ key: 'belongingsDefaultStatus' });
-    // 移动端组：桌面整组隐藏 / 移动可见
-    const g = schema.groups[2];
-    expect(g.name).toBe('移动端');
-    expect(g.visibleWhen!(settings as any)).toBe(false);
-    expect(g.rows).toHaveLength(1);
-    const row = g.rows[0] as any;
-    expect(row.type).toBe('toggle');
-    expect(row.name).toBe('移动端默认全屏');
-    expect(row.binding).toMatchObject({ key: 'belongingsMobileDefaultFullscreen' });
-    Platform.isMobile = true;
-    try {
-      expect(g.visibleWhen!(settings as any)).toBe(true);
-    } finally {
-      Platform.isMobile = false;
-    }
   });
 
   it('XSS：名称含 <img onerror> 按纯文本渲染，不产生 img 元素；动作项按文本构造', async () => {

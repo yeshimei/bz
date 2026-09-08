@@ -10,7 +10,7 @@ import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { emitDomainEvent } from '../../src/core/domain-bus';
 import { ensureSmartCat, unloadSmartCat, __getSmartcatInternals } from '../../src/smartcat/index';
 
-let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
+let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
 
 function makeApp() {
   const vault = new MockVault();
@@ -34,7 +34,7 @@ const settle = () => new Promise((r) => setTimeout(r, 100));
 beforeEach(() => {
   resetObsidianMocks();
   document.body.innerHTML = '';
-  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
+  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
   unloadSmartCat();
 });
 

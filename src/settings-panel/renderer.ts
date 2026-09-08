@@ -587,7 +587,7 @@ export function renderPanelSchema(container: HTMLElement, schema: SettingsSchema
   schema.groups.forEach((g) => {
     const card = renderGroup(container, g, refresh, (fn) => valueRefreshes.push(fn));
     card.dataset.spGroup = g.name;
-    // 组级 visibleWhen（如 mobileFullscreenGroup 的 isMobileEnv 门控）：false 整组隐藏
+    // 组级 visibleWhen 门控：false 整组隐藏
     const groupVw = (g as { visibleWhen?: (s: SettingsSnapshot) => boolean }).visibleWhen;
     if (groupVw) {
       card.dataset.spGroupCond = '1';

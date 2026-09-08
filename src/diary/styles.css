@@ -135,7 +135,7 @@
 
 
 @media (max-width: 768px) {
-    /* 主窗口常规卡由内联基样式承担；真全屏统一走 .bz-win-mfs（ticket 68） */
+    /* 主窗口常规卡由内联基样式承担 */
     /* 头排内边距由「主窗口头部行统一规范」统一承担（16/24/10，全平台一致，ticket 68 后续） */
 
     #diary-tag-container {
@@ -199,7 +199,7 @@
 }
 
 @media (max-width: 480px) {
-    /* 原强制真全屏规则已废止（ticket 68：全屏统一走 .bz-win-mfs） */
+    /* 原强制真全屏规则已废止 */
     #diary-tag-filter .diary-popup-header h3 {
         font-size: 16px !important;
     }

@@ -114,7 +114,7 @@ afterEach(() => {
 });
 
 async function openAndWait() {
-  const c = DiaryWallAppController.getInstance({ mobileDefaultFullscreen: false });
+  const c = DiaryWallAppController.getInstance();
   await c.openManager();
   await waitFor(() => !!document.querySelector('.bz-diary-wall-day-head'));
   return c;

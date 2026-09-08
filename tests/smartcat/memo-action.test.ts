@@ -12,7 +12,7 @@ import { emitDomainEvent } from '../../src/core/domain-bus';
 import { ensureSmartCat, unloadSmartCat, maybeMemoDueScan, __getSmartcatInternals } from '../../src/smartcat/index';
 import type { MemoEditSnapshot } from '../../src/smartcat/memo-source';
 
-let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
+let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
 
 function makeApp() {
   const vault = new MockVault();
@@ -39,7 +39,7 @@ const DAY1 = new Date(2026, 7, 25, 9, 0);
 beforeEach(() => {
   resetObsidianMocks();
   document.body.innerHTML = '';
-  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
+  settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
   unloadSmartCat();
 });
 

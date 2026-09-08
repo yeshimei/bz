@@ -3,8 +3,7 @@
  *
  * 布局（照搬原型）：
  * - 全屏/居中卡弹窗：桌面 = 980px 宽 82vh 居中卡（根容器遮罩 flex 居中）；
- *   移动端 = 真全屏（≤768px，根容器自带全屏 + 安全区避让；另支持 config.mobileDefaultFullscreen
- *   挂 .bz-win-mfs 统一真全屏类——设置键 diaryWallMobileDefaultFullscreen 由设置代理处理）。
+ *   移动端 = 真全屏（≤768px，根容器自带全屏 + 安全区避让。
  * - 头部行：品牌「日记本」+ 范围/计数 + 按钮组（pen-line 写日记、search 搜索、calendar 按年月跳转、x 关闭——lucide 线条图标）。
  * - 类型 chips 行：主标签胶囊（日记📖/摄影📸/骑行🚴/猫🐱…，emoji 为数据语义），可点选筛选，带计数；「加密」锁定态（lock 线条图标虚线）。
  * - 主体两栏：左 = 固定章节栏（年份分组 + 月份列表，每项带缩略图胶卷小图，滚动自动高亮当前月份，点击平滑滚动定位）；
@@ -38,19 +37,12 @@ import { openItemMenu, closeItemMenu, resetItemMenuClickGuard, type ItemAction }
 import { escapeHtml } from '../core/utils';
 import { onDomainEvent } from '../core/domain-bus';
 import { notice } from '../core/notice';
-import { applyMobileWindowFullscreen } from '../core/mobile';
 import { getApp } from '../core/app';
 import { DIARY_DIRECTORY, MOVIE_DIRECTORY, LETTER_DIRECTORY, BOOK_DIRECTORY, getSubTagsOfPrimary, getPrimaryTagsInDisplayOrder, getTagEmoji } from './config';
 import { loadWallEntries, mediaSrc, groupByMonth, pickOnThisDay, extractMedia, extractSegments, stripMediaLinks, type WallEntry, type WallMedia } from './data';
 import { railThumbKey, getRailThumb, putRailThumb, makeImageThumb, makeVideoThumb } from './thumb-cache';
 // TODO(自包含)：以下 diary 域入口在「删除日记本域」时改为回忆墙自己的实现
 import { openAddDialog } from '../diary/ui/dialogs';
-
-/** UI 配置（设置代理传入） */
-export interface DiaryWallUIConfig {
-  /** 移动端默认真全屏（对应设置键 diaryWallMobileDefaultFullscreen；openManager 时决定挂不挂 .bz-win-mfs） */
-  mobileDefaultFullscreen: boolean;
-}
 
 /**
  * 媒体类型 → lucide 图标（灯箱加载失败提示用；媒体块本体不显示图标——用户要求去掉）。
@@ -158,9 +150,9 @@ export function pickCurrentMonth(heads: { date: string; relTop: number }[]): str
 export class DiaryWallAppController {
   static instance: DiaryWallAppController | null = null;
 
-  static getInstance(config: DiaryWallUIConfig): DiaryWallAppController {
+  static getInstance(): DiaryWallAppController {
     if (!DiaryWallAppController.instance) {
-      DiaryWallAppController.instance = new DiaryWallAppController(config);
+      DiaryWallAppController.instance = new DiaryWallAppController();
     }
     return DiaryWallAppController.instance;
   }
@@ -271,7 +263,7 @@ export class DiaryWallAppController {
   /** 增强 #8：加密媒体解密结果缓存（noteId|kind|name → dataURL promise；失败也缓存避免重复解密风暴） */
   private encMediaCache = new Map<string, Promise<string | null>>();
 
-  constructor(private config: DiaryWallUIConfig) {}
+  constructor() {}
 
   // ---------- 创建 DOM（桌面 + 移动双实例，幂等） ----------
   ensureElements() {
@@ -2252,9 +2244,6 @@ export class DiaryWallAppController {
 
   show() {
     if (!this._initialized) this.ensureElements();
-    // 移动端默认全屏：开关开=挂 .bz-win-mfs 真全屏类（幂等），关=常规卡
-    applyMobileWindowFullscreen(this.root!.querySelector('.bz-diary-wall-desk') as HTMLElement, this.config.mobileDefaultFullscreen);
-    applyMobileWindowFullscreen(this.root!.querySelector('.bz-diary-wall-mob') as HTMLElement, this.config.mobileDefaultFullscreen);
     this.root!.style.display = 'flex';
     topifyZ(this.root!); // ADR-0067
     this.subscribeVaultModify();

@@ -9,7 +9,7 @@
  * 数据经 loadSmartCatData 现读现渲染（与常驻猫实例解耦，smartcatEnabled=false 也可看）；
  * 面板只读，唯二例外（092 方向二 v4 裁决：人工修正信号保留）——洞察行的「固定/废弃」按钮，
  * 经常驻实例通道原位修正 + 统一 dataSaver 落盘（pinned / supersededBy='manual'；P1-29）；其余一律不写。UI 走 bz 主窗口规范：
- * createOverlay + .bz-win-head + applyMobileWindowFullscreen + escManager；视觉样式全部静态进域内
+ * createOverlay + .bz-win-head + escManager；视觉样式全部静态进域内
  * styles.css（铁律 9，内联仅限显隐与动态高度/宽度）。命令入口：bz-smartcat-dashboard（main.ts COMMANDS 表）。
  * 097 升级（纯展示层+口径统一，不改任何数据写入逻辑）：A1 成长轨迹归因徽标/LLM 引用原文；
  * A2 安静陪伴 chip；A3 情绪页标注覆盖率小字；B1 感情卡依恋切 lazyAttachment 读侧视图与总览口径对齐；
@@ -23,7 +23,6 @@ import { MarkdownRenderer, Component } from 'obsidian';
 import { notice } from '../core/notice';
 import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
-import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { loadSmartCatData, getSmartcatFilePath } from './data';
 import { readMemorySidecarFile, readBehaviorSidecarFile } from './memory';
@@ -1254,10 +1253,6 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
 
   // ticket 129：行为页签滚动触底自动加载（body 是唯一滚动容器；行为页签激活才追加）
   body.addEventListener('scroll', onBehaviorBodyScroll);
-
-  // 移动端默认全屏（ticket 68 规范三件事之二：打开路径必经处应用；
-  //  2026-08-23 合并一套：跟随聊天/设置面板共用的 smartcatMobileDefaultFullscreen 开关）
-  applyMobileWindowFullscreen(popup, tryGetSettings().smartcatMobileDefaultFullscreen === true);
 
   mask.style.display = 'block';
   popup.style.display = 'flex';

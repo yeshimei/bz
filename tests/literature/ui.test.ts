@@ -67,7 +67,6 @@ function makeApp(vault: MockVault) {
 const BASE_SETTINGS: Record<string, any> = {
   literatureDirectory: '文献盒',
   literatureDomainList: '',
-  literatureMobileDefaultFullscreen: false,
   literatureProgressDetail: true,
   literatureKeepVideo: true,
   literatureQuality: 'highest',
@@ -592,7 +591,7 @@ describe('文献盒 UI（ticket 136）', () => {
     expect(hList.querySelector('.bz-bili-status')).toBeNull(); // 无成功徽标
     // 清空历史（设置面板按钮行触发）
     const schema = literatureSettingsSchema({ onClearHistory: () => (ui as any).confirmClearHistory() });
-    (schema.groups[5].rows[0] as any).onClick({});
+    (schema.groups[4].rows[0] as any).onClick({});
     await vi.waitFor(() => expect(document.getElementById('__shared_confirm_ok__')).toBeTruthy());
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     await vi.waitFor(async () => {
@@ -833,15 +832,14 @@ ${summary ?? ''}`);
 
   // ==================== 设置 schema 与设置弹窗 ====================
 
-  it('literatureSettingsSchema：六组键齐全（issue 246 补外观组）；清空历史 button 行回调', () => {
+  it('literatureSettingsSchema：五组键齐全（issue 246 补外观组）；清空历史 button 行回调', () => {
     const schema = literatureSettingsSchema({ onClearHistory: () => {} });
-    expect(schema.groups).toHaveLength(6);
+    expect(schema.groups).toHaveLength(5);
     expect(schema.groups[0].name).toBe('外观');
     expect(schema.groups[1].name).toBe('目录与分类');
     expect(schema.groups[2].name).toBe('视频处理');
     expect(schema.groups[3].name).toBe('工具');
-    expect(schema.groups[4].name).toBe('移动端');
-    expect(schema.groups[5].name).toBe('维护');
+    expect(schema.groups[4].name).toBe('维护');
     // 外观组两行契约（issue 246 占位单卡）
     const [layout, theme] = schema.groups[0].rows as any[];
     expect(layout.binding).toMatchObject({ key: 'literatureSkin' });
@@ -855,7 +853,7 @@ ${summary ?? ''}`);
     // 清空历史回调
     const cleared = vi.fn();
     const schema2 = literatureSettingsSchema({ onClearHistory: cleared });
-    const row = schema2.groups[5].rows[0] as any;
+    const row = schema2.groups[4].rows[0] as any;
     expect(row.type).toBe('button');
     expect(row.buttonText).toBe('清空历史');
     row.onClick({});
@@ -984,15 +982,6 @@ ${summary ?? ''}`);
     expect(document.getElementById('lit-btn-video-close')!.textContent).toBe('❌');
     ui.showHistory();
     expect(document.getElementById('lit-history-close')!.textContent).toBe('❌');
-  });
-
-  it('移动端全屏：showVideoEntry 挂 bz-win-mfs（三件事补齐视频面板，ticket 139）', () => {
-    ui.destroy();
-    (Platform as any).isMobile = true;
-    settings.literatureMobileDefaultFullscreen = true;
-    ui = new UIManager(app);
-    ui.showVideoEntry();
-    expect(document.getElementById('literature-video-popup')!.classList.contains('bz-win-mfs')).toBe(true);
   });
 
   it('术语输入框 Enter 直接生成（ticket 139）', async () => {

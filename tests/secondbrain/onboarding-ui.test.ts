@@ -91,7 +91,6 @@ function sbSettings() {
     secondBrainChunkMinLength: '10',
     secondBrainAllowPaths: '我的',
     secondBrainRemoteOllamaUrl: '',
-    secondBrainMobileDefaultFullscreen: false,
   };
 }
 

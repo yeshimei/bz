@@ -912,8 +912,7 @@ function openChat(): void {
     });
   }
   if (!panels) return;
-  const s = getSettings() as any;
-  showChatPanel(panels, s.smartcatMobileDefaultFullscreen === true);
+  showChatPanel(panels);
   renderChatHistory();
   if (interaction) {
     interaction.isChatOpen = true;
@@ -942,16 +941,11 @@ function openSettings(): void {
     },
     settingsKeys: {
       enabled: true,
-      mobileFullscreen: (getSettings() as any).smartcatMobileDefaultFullscreen === true,
     },
     // 平铺色块换肤即时生效
     onAppearanceChanged: (appearance) => {
       const c = mountCatContainer();
       if (c) applyAppearance(c, appearance);
-    },
-    setMobileFullscreen: async (v) => {
-      (getSettings() as any).smartcatMobileDefaultFullscreen = v;
-      await saveSettings();
     },
     // ADR-0069：记忆目录变更 → 同步增量同步器（移除目录清理条目/新增目录补扫）。
     // 审查 P0：全清也必须先走 syncDirectories([]) 回删名下条目（UI 承诺「移除目录会清掉对应记忆」），

@@ -3,15 +3,12 @@
  * 铁律 9 收敛：13 皮肤的全部视觉（渐变/辉光/动画）静态进 styles.css
  * （.bz-sc-skin-orange 等类），本模块只切换类；猫容器 id 保留 #smart-companion-cat（外部约定）。
  * 面板（聊天/设置）走 bz 主窗口规范：createOverlay + escManager + .bz-win-head +
- * applyMobileWindowFullscreen + openSettingsModal（用户拍板：面板样式统一 bz；
- * 2026-08-23 二次拍板：聊天/设置/数据面板桌面与移动合并一套——同一组件、
- * 同一个「移动端默认全屏」开关（smartcatMobileDefaultFullscreen），聊天头行不放 ⚙️，
- * 设置统一由小橘本体长按打开）。
+ * openSettingsModal（用户拍板：面板样式统一 bz；2026-08-23 二次拍板：聊天/设置/数据
+ * 面板桌面与移动合并一套组件，聊天头行不放 ⚙️，设置统一由小橘本体长按打开）。
  */
 import { createOverlay } from '../core/dom';
 import { registerAlwaysOnTop } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
-import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { closeSettingsModal, openSettingsModal } from '../core/settings-modal';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { renderPathSettingRow } from '../core/path-picker';
@@ -98,8 +95,7 @@ export interface SmartcatPanels {
 
 /**
  * 创建聊天面板（bz 主窗口规范：createOverlay + .bz-win-head + ❌关闭 + ESC）
- * 2026-08-23 用户拍板：头行不放 ⚙️ 设置图标——设置统一由小橘本体长按打开；
- * 移动端默认全屏由 index 每次打开调用 applyMobileWindowFullscreen。
+ * 2026-08-23 用户拍板：头行不放 ⚙️ 设置图标——设置统一由小橘本体长按打开。
  */
 export function createChatPanel(opts: {
   onSend: (message: string) => void;
@@ -180,9 +176,8 @@ export function createChatPanel(opts: {
   };
 }
 
-/** 打开聊天面板（每次打开应用移动端全屏设置） */
-export function showChatPanel(panels: SmartcatPanels, fullscreenEnabled: boolean): void {
-  applyMobileWindowFullscreen(panels.chatPopup, fullscreenEnabled);
+/** 打开聊天面板 */
+export function showChatPanel(panels: SmartcatPanels): void {
   panels.mask.style.display = 'block';
   panels.chatPopup.style.display = 'flex';
   panels.chatInput.focus();
@@ -200,15 +195,12 @@ export function hideChatPanel(panels: SmartcatPanels): void {
  * （get/set/save——save 落盘顺序与落盘目标逐字保持现状）。
  * - 外观组 13 皮肤色块网格 = custom 插槽（无 Setting 行，不计徽标）；
  * - 「打开数据面板」= button 行（onOpenDashboard 缺省时不挂组）；
- * - 「移动端默认全屏」走 settingsKeys + setMobileFullscreen 外部绑定（非 BzSettings 键，手写组
- *   并带 smartcat 专属 desc）；组序 ticket 162 起移动端组位于面板末尾。
  * - ticket 100 文案修正：行为流/关联窗口数字范围去括号改写自然句（键名/行为不动）。
  * 置于模块顶层供文案 lint 直接引用；opts 仅在渲染/交互时经闭包引用，工厂构建无副作用。 */
 export function smartcatSettingsSchema(opts: {
   getConfig: () => any;
   saveConfig: (config: any) => Promise<void>;
-  settingsKeys: { enabled: boolean; mobileFullscreen: boolean };
-  setMobileFullscreen: (v: boolean) => Promise<void>;
+  settingsKeys: { enabled: boolean };
   /** 记忆目录变更回调（ADR-0069：index 注入——增量同步目录移除清理/新增补扫） */
   onMemoryDirectoriesChanged?: (dirs: string[]) => void;
   onOpenDashboard?: () => void;
@@ -302,26 +294,6 @@ export function smartcatSettingsSchema(opts: {
       ]
     : [];
   // ===== 移动端组（settingsKeys 外部绑定；desc 为 smartcat 专属文案逐字对齐现状）=====
-  const mobileGroup: GroupDecl = {
-    icon: 'smartphone',
-    name: '移动端',
-    visibleWhen: () => isMobileEnv(),
-    rows: [
-      {
-        type: 'toggle',
-        name: '移动端默认全屏',
-        // ticket 170：所有域移动端组统一无描述
-        binding: {
-          get: () => opts.settingsKeys.mobileFullscreen,
-          set: (v: boolean) => {
-            opts.settingsKeys.mobileFullscreen = v;
-          },
-          save: () => opts.setMobileFullscreen(opts.settingsKeys.mobileFullscreen),
-        },
-        visibleWhen: () => isMobileEnv(),
-      },
-    ],
-  };
   return {
     groups: [
       lookGroup,
@@ -425,7 +397,6 @@ export function smartcatSettingsSchema(opts: {
         ],
       },
       // ticket 162：移动端组挪到面板末尾（原位于记忆与存储之间）
-      mobileGroup,
     ],
   };
 }
@@ -446,21 +417,20 @@ const DEFAULT_BEHAVIOR = {
 } as const;
 
 /**
- * 打开 smartcat 域设置弹窗（bz openSettingsModal；分组卡片方案 A：外观/可视化/互动/记忆 +
- * 移动端全屏，2026-08 用户拍板）。
- * 2026-08-23 合并一套：① 弹窗与聊天面板共用同一「移动端默认全屏」开关（打开即应用）；
+ * 打开 smartcat 域设置弹窗（bz openSettingsModal；分组卡片方案 A：外观/可视化/互动/记忆，
+ * 2026-08 用户拍板）。
+ * 2026-08-23 合并一套：① 弹窗与聊天面板桌面与移动共用同一组件（原「移动端默认全屏」开关
+ * 已随该特性退役删除）；
  * ② 「每周懂你报告」入口换成「打开数据面板」（周报全文移入数据面板「报告」页签）；
  * ③ 人格成长可视化与重置成长已移除（ticket 123 UI 拍板），数据层面保留。
  * 分组：外观 palette（13 皮肤色块平铺）、可视化 bar-chart-3（数据面板）、
  * 互动 message-circle（自言自语间隔/说话概率/主动关心）、记忆 archive（记忆量/上下文/打分）、
- * 存储与记忆 database / 关联 link / 显示 eye（P3 ticket 123）；
- * 移动端 smartphone 组仅 isMobileEnv 显示。
+ * 存储与记忆 database / 关联 link / 显示 eye（P3 ticket 123）。
  */
 export function openSmartcatSettings(opts: {
   getConfig: () => any;
   saveConfig: (config: any) => Promise<void>;
-  settingsKeys: { enabled: boolean; mobileFullscreen: boolean };
-  setMobileFullscreen: (v: boolean) => Promise<void>;
+  settingsKeys: { enabled: boolean };
   /** 弹窗关闭回调（遮罩/✕/ESC）：index 用它复位 interaction.isSettingsOpen 交互锁 */
   onClose?: () => void;
   /** 「打开数据面板」按钮回调（index 注入：关设置弹窗 → openSmartcatDashboard） */
@@ -476,8 +446,6 @@ export function openSmartcatSettings(opts: {
     onClose: opts.onClose,
     schema: smartcatSettingsSchema(opts),
   });
-  // 设置弹窗跟随同一「移动端默认全屏」开关（与聊天面板一套；桌面端 applyMobileWindowFullscreen 内部直接摘类）
-  applyMobileWindowFullscreen(document.getElementById('bz-settings-modal-popup'), !!opts.settingsKeys.mobileFullscreen);
 }
 
 function skinLabel(skin: Appearance): string {

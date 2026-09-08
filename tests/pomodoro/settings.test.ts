@@ -90,13 +90,9 @@ describe('⚙️ 设置弹窗', () => {
     await openPomodoro(app);
     el('pomodoro-btn-settings').click();
     expect(el('bz-settings-modal-popup')).not.toBeNull();
-    // ticket 131：移动端组行挂在整组隐藏的组下（bz-setting-hidden）——14 个设置项 = 除移动端组外的全部行
-    // （classic 下自定义三行隐藏但仍留 DOM，声明式联动保留结构；行级隐藏不计入此处口径）
+    // 「移动端默认全屏」组已随特性退役删除：全部设置项均可见
     const allItems = [...document.querySelectorAll('#bz-settings-modal-popup .setting-item')];
-    expect(allItems.length).toBe(15);
-    expect(
-      allItems.filter((el) => !(el as HTMLElement).closest('.bz-settings-group')!.classList.contains('bz-setting-hidden')).length
-    ).toBe(14);
+    expect(allItems.length).toBe(14);
     expect(itemByName('预设方案')).not.toBeUndefined();
     expect(itemByName('长休息间隔')).not.toBeUndefined();
     expect(itemByName('声音提醒')).not.toBeUndefined();

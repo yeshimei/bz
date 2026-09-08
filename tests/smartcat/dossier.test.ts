@@ -371,7 +371,7 @@ function makeUiApp(fixture: SmartCatData, memoJson?: string) {
   if (memoJson !== undefined) vault.create('CONFIG/STORAGE/memo.json', memoJson);
   const app = mockAppWithVault(vault);
   setApp(app);
-  setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false }) as any);
+  setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', smartcatEnabled: true }) as any);
   return app;
 }
 

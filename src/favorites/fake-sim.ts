@@ -9,8 +9,7 @@
  *     同名全局（iframe 场景 window.parent.FAV），首启写入 fake vault 的 favorites.json
  *     （数组形态，与插件 data 同构）；存储路径走 config.getStoragePath() 真实现（默认
  *     CONFIG/STORAGE/favorites.json）；
- *   - 设置注入：setSettingsProvider（真 settings-provider 实现可用，注入默认值——
- *     favoritesMobileDefaultFullscreen，键与插件 data.json 同形）；
+ *   - 设置注入：setSettingsProvider（真 settings-provider 实现，注入与插件 data.json 同形的默认键）；
  *   - 依赖注入：favorites 的 ui 入口带三参（app/dm/ai，插件侧由 index.ts 域外接线），
  *     本文件 boot 时构造 FakeApp + DataManager（真 data.ts）+ FavoritesAIService（真 ai.ts）
  *     并 initFavoritesUI 注入，openPanel 闭包代传——插件侧 index.ts 的接线形态在壳内等价重现。
@@ -68,9 +67,7 @@ function seedDatabase(): void {
 function injectSettings(): void {
   setSettingsProvider(
     () =>
-      ({
-        favoritesMobileDefaultFullscreen: false,
-      }) as never
+      ({} as Record<string, never>) as never
   );
 }
 

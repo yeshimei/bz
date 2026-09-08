@@ -12,7 +12,6 @@
 import { Setting, setIcon, type App } from 'obsidian';
 import { notice } from '../core/notice';
 import { getSettings, saveSettings } from '../core/settings-provider';
-import { mobileFullscreenGroup } from '../core/settings-common';
 import { uiEmpty } from '../core/ui';
 import type { SettingsSchema } from '../core/settings-schema';
 import type { ReviewItem } from './data';
@@ -216,8 +215,6 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
           { type: 'toggle', name: '文件树标记', desc: '在文件树中为复习笔记着色并标到期时间', binding: { key: 'reviewTreeBadge' } },
         ],
       },
-      // ticket 170：所有域移动端组统一无描述
-      mobileFullscreenGroup('reviewMobileDefaultFullscreen', { desc: '' }),
     ],
   };
 }

@@ -24,9 +24,6 @@
  *   { kind:'term-generated', term, title }) → 关闭面板。预览阶段不产生任何文件（ticket 138 §2.1）。
  * - 设置面板：主面板 ⚙️ → openSettingsModal（五组声明式 schema，见 literatureSettingsSchema）。
  *
- * 移动端默认全屏（ticket 68 三件事）：主面板 + 历史弹窗 + 视频录入面板三处 applyMobileWindowFullscreen
- * （ticket 139 补齐视频面板）。
- *
  * ticket 139 交互修订：📝/🎬 打开子面板不再隐藏主面板（topifyZ 叠开，关闭子面板回列表）；
  * 文件事件增量刷新走 core patchKeyedCards 只动对应卡片（不再全列表重建，滚动不跳顶）；
  * 打开文献笔记即收起文献盒全部窗口；失败原因行内白话化（humanizeError，原文见 title）；
@@ -45,10 +42,9 @@
  */
 import { setIcon, type App } from 'obsidian';
 import type { SettingsSchema } from '../core/settings-schema';
-import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
+import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
-import { mobileFullscreenGroup } from '../core/settings-common';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { patchKeyedCards } from '../core/list-patch';
 import { openFlowDialog } from '../core/flow-dialog';
@@ -197,7 +193,6 @@ interface LiteratureNoteEntry {
 /**
  * 文献盒设置 schema（ticket 136 §7，声明式五组，参考 diarySettingsSchema）：
  * 「目录与分类」folder-open / 「视频处理」settings-2 / 「工具」wrench /
- * mobileFullscreenGroup（移动端仅显示）/ 「维护」wrench（清空历史 button 行 + 确认弹窗由调用方接）。
  */
 export function literatureSettingsSchema(opts?: { onClearHistory?: () => void | Promise<void> }): SettingsSchema {
   return {
@@ -240,7 +235,6 @@ export function literatureSettingsSchema(opts?: { onClearHistory?: () => void | 
           { type: 'number', name: '缓存保留天数', desc: '超过该天数的缓存自动清理', binding: { key: 'literatureCacheRetentionDays' }, min: 1, step: 1 },
         ],
       },
-      mobileFullscreenGroup('literatureMobileDefaultFullscreen', { desc: '' }),
       {
         icon: 'wrench', name: '维护',
         rows: [
@@ -455,11 +449,10 @@ export class UIManager {
     q<HTMLButtonElement>(p, '#lit-btn-close')!.onclick = () => this.hideMain();
   }
 
-  /** 打开主面板（文献笔记列表）：移动端默认全屏、抬顶、刷新列表 + 旧笔记自动补全 */
+  /** 打开主面板（文献笔记列表）：抬顶、刷新列表 + 旧笔记自动补全 */
   showMain(): void {
     this.createMainUI(); // 自愈（ticket 138 §1.2）：DOM 丢失时重建，单击即开、幂等
     if (!this.popup || !this.mask) return;
-    applyMobileWindowFullscreen(this.popup, tryGetSettings().literatureMobileDefaultFullscreen === true);
     topifyZ(this.mask, this.popup); // ADR-0067：显示即发号，谁后显示谁在上
     this.mask.style.display = 'block';
     this.popup.style.display = 'flex';
@@ -955,10 +948,8 @@ export class UIManager {
   }
 
   /** 打开视频录入面板（任务队列）；prefill 存在则叠开添加弹窗（聚合讯「保存至文献」入口，ADR-0068）。
-   *  移动端默认全屏（ticket 139：主面板/历史弹窗同款三件事对齐）。 */
-  showVideoEntry(prefill?: { url: string; title?: string | null; uploader?: string | null }): void {
+   */  showVideoEntry(prefill?: { url: string; title?: string | null; uploader?: string | null }): void {
     if (!this.videoPopup || !this.videoMask) return;
-    applyMobileWindowFullscreen(this.videoPopup, tryGetSettings().literatureMobileDefaultFullscreen === true);
     topifyZ(this.videoMask, this.videoPopup);
     this.videoMask.style.display = 'block';
     this.videoPopup.style.display = 'flex';
@@ -1442,7 +1433,6 @@ export class UIManager {
   /** 历史独立弹窗（ADR-0070）：视频面板之上叠开，遮罩 + ✕/ESC/点遮罩关闭 */
   showHistory(): void {
     if (!this.historyPopup || !this.historyMask) return;
-    applyMobileWindowFullscreen(this.historyPopup, tryGetSettings().literatureMobileDefaultFullscreen === true);
     topifyZ(this.historyMask, this.historyPopup);
     this.historyMask.style.display = 'block';
     this.historyPopup.style.display = 'flex';

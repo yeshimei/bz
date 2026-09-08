@@ -8,10 +8,6 @@ import { describe, it, expect } from 'vitest';
 import { Platform } from '../mock-obsidian-entry';
 import { mainSettingsSchema, STORAGE_PATH_COMMIT_NOTICE } from '../../src/core/settings-main-schema';
 import { AI_PROVIDER_REGISTRY } from '../../src/core/ai';
-import {
-  mobileFullscreenGroup,
-  mobileFullscreenRow,
-} from '../../src/core/settings-common';
 import { parseClampedNumber } from '../../src/core/settings-schema';
 import type { SettingsSchema, SettingsSnapshot, SettingsKeyOfType } from '../../src/core/settings-schema';
 
@@ -117,66 +113,14 @@ describe('mainSettingsSchema：主设置页两区块', () => {
   });
 });
 
-describe('settings-common：移动端默认全屏预设', () => {
-  it('行结构：toggle + 键直绑 + 名称冻结；ticket 170 起所有域统一无描述', () => {
-    const row = mobileFullscreenRow('diaryMobileDefaultFullscreen') as unknown as Record<string, unknown>;
-    expect(row.type).toBe('toggle');
-    expect(row.name).toBe('移动端默认全屏');
-    expect(row.binding).toEqual({ key: 'diaryMobileDefaultFullscreen' });
-    expect(row.desc).toBeUndefined();
-  });
-
-  it('visibleWhen：桌面端隐藏、移动端显示（Platform.isMobile 口径）', () => {
-    const row = mobileFullscreenRow('todoMobileDefaultFullscreen') as {
-      visibleWhen: (s: SettingsSnapshot) => boolean;
-    };
-    const prev = Platform.isMobile;
-    try {
-      Platform.isMobile = false;
-      expect(row.visibleWhen(snapOf({}))).toBe(false);
-      Platform.isMobile = true;
-      expect(row.visibleWhen(snapOf({}))).toBe(true);
-    } finally {
-      Platform.isMobile = prev;
-    }
-  });
-
-  it('desc 覆盖：传非空字符串 = 覆盖；传空串或不传 = 无描述（ticket 170 全域统一）', () => {
-    const overridden = mobileFullscreenRow('belongingsMobileDefaultFullscreen', {
-      desc: '移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）',
-    }) as { desc?: string };
-    expect(overridden.desc).toBe('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）');
-    const empty = mobileFullscreenRow('secondBrainMobileDefaultFullscreen', { desc: '' }) as { desc?: string };
-    expect(empty.desc).toBeUndefined();
-    const none = mobileFullscreenRow('todoMobileDefaultFullscreen') as { desc?: string };
-    expect(none.desc).toBeUndefined();
-  });
-
-  it('组预设：移动端卡片（icon smartphone），内挂单行；组级门控 = 仅移动端整组可见', () => {
-    const g = mobileFullscreenGroup('pomodoroMobileDefaultFullscreen');
-    expect(g.icon).toBe('smartphone');
-    expect(g.name).toBe('移动端');
-    expect(g.rows.length).toBe(1);
-    expect((g.rows[0] as { name: string }).name).toBe('移动端默认全屏');
-    const gv = g.visibleWhen as (s: SettingsSnapshot) => boolean;
-    const prev = Platform.isMobile;
-    try {
-      Platform.isMobile = false;
-      expect(gv(snapOf({}))).toBe(false);
-      Platform.isMobile = true;
-      expect(gv(snapOf({}))).toBe(true);
-    } finally {
-      Platform.isMobile = prev;
-    }
-  });
-
-  it('SettingsKeyOfType 收窄：布尔行接受布尔键（类型层样例，运行时核对键名）', () => {
-    const boolKey: SettingsKeyOfType<boolean> = 'encryptMobileDefaultFullscreen';
+describe('SettingsKeyOfType 键收窄样例', () => {
+  it('布尔行接受布尔键（类型层样例，运行时核对键名）', () => {
+    const boolKey: SettingsKeyOfType<boolean> = 'showTagCount';
     const strKey: SettingsKeyOfType<string> = 'bookshelfFolderPath';
     const numKey: SettingsKeyOfType<number> = 'reviewDailyLimit';
     const listKey: SettingsKeyOfType<string[]> = 'reviewWatchedFolders';
     expect([boolKey, strKey, numKey, listKey]).toEqual([
-      'encryptMobileDefaultFullscreen',
+      'showTagCount',
       'bookshelfFolderPath',
       'reviewDailyLimit',
       'reviewWatchedFolders',

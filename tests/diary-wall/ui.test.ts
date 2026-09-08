@@ -120,8 +120,8 @@ afterEach(() => {
 });
 
 /** 打开并等待数据渲染完成（loadAndRender 为异步 fire-and-forget） */
-async function openAndWait(opts = { mobileDefaultFullscreen: false }) {
-  const c = DiaryWallAppController.getInstance(opts);
+async function openAndWait() {
+  const c = DiaryWallAppController.getInstance();
   await c.openManager();
   await waitFor(() => !!document.querySelector('.bz-diary-wall-day-head'));
   return c;
@@ -267,7 +267,7 @@ describe('回忆墙 UI', () => {
     const emptyApp = mockAppWithVault(emptyVault);
     setApp(emptyApp);
     (await import('../../src/diary/app')).setApp(emptyApp);
-    const c = DiaryWallAppController.getInstance({ mobileDefaultFullscreen: false });
+    const c = DiaryWallAppController.getInstance();
     await c.openManager();
     await waitFor(() => !!document.querySelector('.bz-diary-wall-empty'));
     const empty = document.querySelector('.bz-diary-wall-empty')!;
@@ -299,7 +299,7 @@ describe('回忆墙 UI', () => {
   });
 
   it('cleanup 移除根容器并置空单例', async () => {
-    const c = DiaryWallAppController.getInstance({ mobileDefaultFullscreen: false });
+    const c = DiaryWallAppController.getInstance();
     await c.openManager();
     await waitFor(() => !!document.querySelector('.bz-diary-wall-day-head'));
     expect(document.querySelector('.bz-diary-wall')).toBeTruthy();
@@ -613,7 +613,7 @@ describe('回忆墙 UI', () => {
 
   it('二级标签：点击带子标签的主标签显示子标签行', async () => {
     // mock 数据：两条 🀄（四川 子标签）+ 一条 📖（普通日记）——点子标签「四川」后应只剩四川条目
-    const c = DiaryWallAppController.getInstance({ mobileDefaultFullscreen: false });
+    const c = DiaryWallAppController.getInstance();
     const v2 = new MockVault();
     v2.files.set('我的/日记/2026-08-19.md', '# 🀄 23:02\n![[IMG_x.jpg]]\n');
     v2.files.set('我的/日记/2026-06-11.md', '# 🀄 21:29\n![[IMG_y.jpg]]\n');

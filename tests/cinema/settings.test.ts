@@ -58,8 +58,8 @@ describe('cinema 设置 schema', () => {
     const themeRow = schema.groups[0].rows[1] as any;
     expect(themeRow.binding).toMatchObject({ key: 'cinemaSkinTheme' });
     expect(themeRow.layoutKey).toBe('cinemaStyle');
-    // 组序：外观 → 目录 → 显示 → 移动端（移动端组置尾惯例）
-    expect(schema.groups.map((g) => g.name)).toEqual(['外观', '目录', '显示', '移动端']);
+    // 组序：外观 → 目录 → 显示（移动端组已随特性退役删除）
+    expect(schema.groups.map((g) => g.name)).toEqual(['外观', '目录', '显示']);
   });
 
   it('网格每行列数：默认 5；非法/非正数回退默认（issue 208）', () => {
