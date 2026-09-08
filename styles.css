@@ -7330,10 +7330,14 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-summary-streak { font-size: 12.5px; color: var(--bz-text-2); }
 .bz-summary-streak b { color: var(--bz-success); font-weight: 700; }
 
-/* 移动端（≤768px）：三区列纵排为分组滚动列表 */
+/* 移动端（≤768px）：三区列纵排正常展开（issue 254 拍板）——不内滚、按内容自然长高，
+   .bz-q-cols 仍是唯一滚动宿主（工具行/统计条钉在上方）；空区缩成一行列头；
+   区列头吸顶（下一区列头滚上来顶走，不透明底防卡片透出）；归档「已完成」单列同规则。
+   注意 .bz-q-col.done 基线 flex:1.4 特异性更高，放开内滚须与其同提。 */
 @media (max-width: 768px) {
   .bz-q-cols { flex-direction: column; gap: 10px; overflow-y: auto; }
-  .bz-q-col { min-height: 0; }
+  .bz-q-col, .bz-q-col.done { flex: none; overflow-y: visible; min-height: 0; }
+  .bz-q-col-head { position: sticky; top: 0; z-index: 1; background: var(--bz-surface-1); }
   .bz-q-tools { padding: 4px 14px 6px; }
   .bz-q-strip { padding: 6px 14px 10px; }
   .bz-q-cols { padding: 0 14px 12px; }
