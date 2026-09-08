@@ -7,7 +7,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   panelHtml, railItemHtml, railFootHtml, tocListHtml, paragraphsHtml, summaryHtml,
-  readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, mobFoldHtml, mobChHeadHtml, clipLoadingHtml,
+  readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, mobFoldHtml, mobChHeadHtml, mobNoHitHtml, clipLoadingHtml,
   siteShort, siteTint, stateFlag, stateLabel,
 } from '../../src/clipbook/render';
 import type { ClipArticle } from '../../src/clipbook/render';
@@ -105,49 +105,63 @@ describe('clipbook render 纯层（issue 247）', () => {
     expect(htmlNews).toContain('正文已清空（已处理条目）');
   });
 
-  it('移动端：章头计数 / 折叠行 / 章目录组装 / 详情状态章映射 / 加载占位', () => {
-    const hd = mobChHeadHtml('果壳科学人', 2, 3, 5);
+  it('移动端：章头计数 / 折叠行(hidden 驱动) / 章目录组装 / 详情屏2 / 加载占位', () => {
+    const hd = mobChHeadHtml('果壳科学人', 2, 3);
     expect(hd).toContain('bz-clip-mob-ch-hd');
     expect(hd).toContain('data-src=');
-    expect(hd).toContain('<b>2</b> 未读 · 3 已收 / 5');
-    expect(mobChHeadHtml('孤站', 0, 0, 1)).toContain('1 则');
-    const fold = mobFoldHtml(6);
+    expect(hd).toContain('<span class="bz-clip-mob-ch-n">2 未读 · 3 已收</span>'); // 计数无 /total（原型口径）
+    expect(mobChHeadHtml('孤站', 0, 0)).not.toContain('未读');
+    const fold = mobFoldHtml(6, false);
     expect(fold).toContain('bz-clip-mob-fold');
     expect(fold).toContain('data-fold');
     expect(fold).toContain('已收 <b>6</b> 篇');
     expect(fold).toContain('aria-expanded="false"');
-    // 非搜索：常显 + 折叠行 + arch 段（arch 显隐由 CSS .open/容器 .searching 驱动）
-    const toc = mobTocHtml([
+    expect(mobFoldHtml(6, true)).toContain('bz-clip-mob-fold on');
+    expect(mobFoldHtml(6, true)).toContain('收起');
+    const ch = (expanded: Set<string>) => mobTocHtml([
       { site: '果壳科学人', unread: 2, activeN: 2, savedN: 1,
         activeHtml: mobListHtml([art({ title: '未读甲' }), art({ title: '在读乙', st: 'reading', id: 'u2' })], () => '昨天'),
         archHtml: mobListHtml([art({ title: '已收丙', st: 'saved', id: 'u3' })], () => '08-29') },
-    ], false);
+    ], false, expanded);
+    const toc = ch(new Set());
     expect(toc).toContain('bz-clip-mob-ch');
     expect(toc).toContain('bz-clip-mob-arch');
+    expect(toc).toContain('bz-clip-mob-arch" hidden'); // 默认折叠 = hidden 属性（原型）
     expect(toc).toContain('bz-clip-mob-fold');
     expect(toc).toContain('未读甲');
     expect(toc).toContain('已收丙');
-    // 搜索态：折叠行不渲染（命中全平铺）
+    const tocOpen = ch(new Set(['果壳科学人']));
+    expect(tocOpen).not.toContain('bz-clip-mob-arch" hidden');
+    expect(tocOpen).toContain('收起');
+    // 搜索态：折叠行不渲染（命中全平铺，arch 不 hidden）
     const tocS = mobTocHtml([
       { site: '果壳科学人', unread: 0, activeN: 1, savedN: 1,
         activeHtml: mobListHtml([art({ title: '甲' })], () => '昨天'),
         archHtml: mobListHtml([art({ title: '乙', st: 'saved', id: 'u2' })], () => '08-29') },
-    ], true);
+    ], true, new Set());
     expect(tocS).not.toContain('bz-clip-mob-fold');
     expect(tocS).toContain('bz-clip-mob-arch');
+    expect(tocS).not.toContain('bz-clip-mob-arch" hidden');
     expect(tocS).toContain('乙');
     // 无已收：不产折叠行与空 arch 段
-    expect(mobTocHtml([{ site: 'B站', unread: 1, activeN: 1, savedN: 0, activeHtml: 'x', archHtml: '' }], false)).not.toContain('bz-clip-mob-fold');
-    expect(mobDetailHtml(art({ st: 'reading' }), { time: '', paras: '' })).toContain('bz-clip-art-flag warn');
-    expect(mobDetailHtml(art({ st: 'saved' }), { time: '', paras: '' })).toContain('bz-clip-art-flag ok');
-    expect(mobDetailHtml(art({ st: 'unread' }), { time: '', paras: '' })).toContain('bz-clip-art-flag info');
-    // 剪藏条目详情含「打开笔记」脚（news 无）
-    expect(mobDetailHtml(art({ origin: 'clip', st: 'saved', notePath: '归档/网页剪藏/A.md' }), { time: '', paras: '' })).toContain('data-clip-open-note');
-    expect(mobDetailHtml(art({ st: 'unread' }), { time: '', paras: '' })).not.toContain('data-clip-open-note');
+    expect(mobTocHtml([{ site: 'B站', unread: 1, activeN: 1, savedN: 0, activeHtml: 'x', archHtml: '' }], false, new Set())).not.toContain('bz-clip-mob-fold');
+    expect(mobNoHitHtml('查无此条')).toContain('bz-clip-mob-no-hit');
+    expect(mobNoHitHtml('查无此条')).toContain('查无此条');
+    // 详情屏2（原型）：kicker / 状态方章（纯字无 icon）/ 读下一则脚
+    const det = mobDetailHtml(art({ st: 'reading' }), { time: '昨天', paras: '<p>x</p>', seq: '第 2 则 / 6' });
+    expect(det).toContain('bz-clip-mob-d-flag reading');
+    expect(det).toContain('在读');
+    expect(det).toContain('第 2 则 / 6');
+    expect(det).toContain('data-clip-mob-next');
+    expect(det).toContain('bz-clip-mob-d-kicker');
+    expect(det).not.toContain('data-lucide'); // 状态章与正文无图标（原型纯文字）
+    expect(mobDetailHtml(art({ st: 'saved' }), { time: '', paras: '', seq: '' })).toContain('已保存');
+    expect(mobDetailHtml(art({ origin: 'clip', st: 'saved', notePath: '归档/网页剪藏/A.md' }), { time: '', paras: '', seq: '' })).not.toContain('data-clip-open-note'); // 打开笔记走长按（原型屏2 无此脚）
     expect(clipLoadingHtml()).toContain('正在读取剪藏正文');
     expect(stateLabel('reading')).toBe('在读');
     expect(stateFlag('saved')).toEqual({ icon: 'check', cls: 'ok' });
-    expect(mobListHtml([art({})], () => '刚刚')).toContain('bz-clip-mob-item');
+    expect(mobListHtml([art({ st: 'unread' })], () => '刚刚')).toContain('bz-clip-mob-item unread');
+    expect(mobListHtml([art({ st: 'unread' })], () => '刚刚')).toContain('bz-clip-mob-ttl');
     expect(railFootHtml(7)).toContain('<b>7</b>');
     expect(summaryHtml('摘')).toContain('bz-clip-art-sum-h');
   });

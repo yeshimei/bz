@@ -134,7 +134,7 @@ describe('clipbook UI 桌面三栏', () => {
     await vi.waitFor(() => expect(M.mobDetailOpen).toBe(true));
     const saveBtn = document.querySelector('[data-clip-mob-save]') as HTMLElement;
     expect(saveBtn).toBeTruthy();
-    expect(saveBtn.title).toBe('保存到剪藏本');
+    expect(saveBtn.textContent).toBe('存为剪藏'); // 文字钮（m3 原型）
     closePanel();
   });
 
@@ -488,8 +488,8 @@ describe('clipbook UI 桌面三栏', () => {
     }));
     openClipbook(getApp());
     await vi.waitFor(() => expect(M.articles.length).toBe(2));
-    // 目录化后（issue 248）：常显 active 段直属于 ch-items（已收折叠段 arch 内条目不计入）
-    const mobTitles = () => [...document.querySelectorAll('[data-clip-mob-list] .bz-clip-mob-ch-items > .bz-clip-mob-item .bz-clip-item-t span:not(.bz-clip-dot)')].map((e) => e.textContent);
+    // 目录化后：常显 active 段直属于 ch-items（已收折叠段 arch 内条目不计入）
+    const mobTitles = () => [...document.querySelectorAll('[data-clip-mob-list] .bz-clip-mob-ch-items > .bz-clip-mob-item .bz-clip-mob-ttl')].map((e) => e.textContent);
     expect(mobTitles()).toEqual(['未读旧文', '在读新文']);
     closePanel();
   });
@@ -530,26 +530,28 @@ describe('移动章目录（issue 248：site 章 + 已收折叠）', () => {
     const fold = [...document.querySelectorAll('[data-clip-mob-list] [data-fold]')].find((f) => f.textContent!.includes('已收 1 篇')) as HTMLElement;
     expect(fold).toBeTruthy();
     expect(fold.getAttribute('aria-expanded')).toBe('false');
-    // 展开
+    // 展开（原型 .c-fold.on + arch.hidden 翻转）
     fold.click();
-    expect(fold.classList.contains('open')).toBe(true);
+    expect(fold.classList.contains('on')).toBe(true);
     expect(fold.getAttribute('aria-expanded')).toBe('true');
-    expect((fold.querySelector('[data-fold-lab]') as HTMLElement).textContent).toBe('收起');
-    // 展开段点剪藏条目 → 详情（arch 内 clip 可进，issue 248 全量索引）
-    const clipCard = [...document.querySelectorAll('[data-clip-mob-list] .bz-clip-mob-item')].find((c) => c.textContent!.includes('旧剪藏')) as HTMLElement;
+    expect((fold.querySelector('.bz-clip-mob-fold-lab') as HTMLElement).textContent).toBe('收起');
+    const arch = fold.closest('.bz-clip-mob-ch')!.querySelector('.bz-clip-mob-arch') as HTMLElement;
+    expect(arch.hidden).toBe(false);
+    // 展开段点剪藏条目 → 详情（arch 内 clip 可进，全量索引）
+    const clipCard = [...arch.querySelectorAll('.bz-clip-mob-item')].find((c) => c.textContent!.includes('旧剪藏')) as HTMLElement;
     clipCard.click();
     await vi.waitFor(() => expect(M.mobDetailOpen).toBe(true));
     expect(document.querySelector('[data-clip-mob-detail] .bz-clip-mob-d-title')!.textContent).toContain('旧剪藏');
-    expect(document.querySelector('[data-clip-mob-detail] [data-clip-open-note]')).toBeTruthy(); // clip 条目详情带打开笔记脚
-    // 返回 → 折叠态保持展开
+    expect(document.querySelector('[data-clip-mob-detail] .bz-clip-mob-d-kicker')).toBeTruthy(); // 原型期次行
+    // 返回 → 折叠态保持展开（expanded 记忆重渲 .on）
     (document.querySelector('[data-clip-mob-back]') as HTMLElement).click();
     await vi.waitFor(() => expect(M.mobDetailOpen).toBe(false));
-    const fold2 = [...document.querySelectorAll('[data-clip-mob-list] [data-fold]')].find((f) => f.textContent!.includes('收起')) as HTMLElement;
+    const fold2 = [...document.querySelectorAll('[data-clip-mob-list] [data-fold]')].find((f) => f.classList.contains('on')) as HTMLElement;
     expect(fold2).toBeTruthy();
-    expect(fold2.classList.contains('open')).toBe(true);
+    expect((fold2.querySelector('.bz-clip-mob-fold-lab') as HTMLElement).textContent).toBe('收起');
     // 再点收起
     fold2.click();
-    expect(fold2.classList.contains('open')).toBe(false);
+    expect(fold2.classList.contains('on')).toBe(false);
     expect(fold2.getAttribute('aria-expanded')).toBe('false');
     closePanel();
   });
