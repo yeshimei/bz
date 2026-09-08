@@ -23,12 +23,15 @@ var BZR_clipbook = (() => {
   __export(render_exports, {
     ICO: () => ICO,
     clipLoadingHtml: () => clipLoadingHtml,
+    deskFoldRowHtml: () => deskFoldRowHtml,
     dotHtml: () => dotHtml,
     esc: () => esc,
+    foldBodyHtml: () => foldBodyHtml,
     iconSpan: () => iconSpan,
     inlineHtml: () => inlineHtml,
     mobChHeadHtml: () => mobChHeadHtml,
     mobDetailHtml: () => mobDetailHtml,
+    mobFoldBodyHtml: () => mobFoldBodyHtml,
     mobFoldHtml: () => mobFoldHtml,
     mobListHtml: () => mobListHtml,
     mobNoHitHtml: () => mobNoHitHtml,
@@ -173,6 +176,20 @@ var BZR_clipbook = (() => {
       </div>
     </div>`).join("");
   }
+  function deskFoldRowHtml(kind, n, open) {
+    const label = kind === "read" ? "已读" : "已收";
+    const lab = open ? "收起" : `${label} <b>${n}</b> 篇`;
+    return `
+    <div class="bz-clip-desk-fold${open ? " on" : ""}" data-desk-fold="${kind}" role="button" aria-expanded="${open}">
+      <span class="bz-clip-desk-fold-rule"></span>
+      <span class="bz-clip-desk-fold-lab">${lab}</span>
+      <span class="bz-clip-desk-fold-ar"></span>
+      <span class="bz-clip-desk-fold-rule"></span>
+    </div>`;
+  }
+  function foldBodyHtml(html, open) {
+    return html ? `<div class="bz-clip-desk-fold-body"${open ? "" : " hidden"}>${html}</div>` : "";
+  }
   function inlineHtml(text) {
     let out = "";
     let last = 0;
@@ -223,8 +240,12 @@ var BZR_clipbook = (() => {
       <span class="bz-clip-mob-time">${esc(timeOf(a))}</span>
     </div>`).join("");
   }
-  function mobChHeadHtml(site, unread, savedN) {
-    const cntTxt = unread > 0 || savedN > 0 ? `${unread > 0 ? `${unread} 未读` : ""}${unread > 0 && savedN > 0 ? " · " : ""}${savedN > 0 ? `${savedN} 已收` : ""}` : "";
+  function mobChHeadHtml(site, unread, readN, savedN) {
+    const seg = [];
+    if (unread > 0) seg.push(`${unread} 未读`);
+    if (readN > 0) seg.push(`${readN} 已读`);
+    if (savedN > 0) seg.push(`${savedN} 已收`);
+    const cntTxt = seg.join(" · ");
     return `
     <div class="bz-clip-mob-ch-hd" data-src='${esc(JSON.stringify({ kind: "site", site }))}' title="${esc(site)}">
       <span class="bz-clip-mob-ch-name">${esc(site)}</span>
@@ -232,24 +253,31 @@ var BZR_clipbook = (() => {
       <span class="bz-clip-mob-ch-rule"></span>
     </div>`;
   }
-  function mobFoldHtml(n, open) {
+  function mobFoldHtml(kind, n, open) {
+    const label = kind === "read" ? "已读" : "已收";
     return `
-    <div class="bz-clip-mob-fold${open ? " on" : ""}" data-fold role="button" aria-expanded="${open}">
+    <div class="bz-clip-mob-fold${open ? " on" : ""}" data-fold data-fold-kind="${kind}" role="button" aria-expanded="${open}">
       <span class="bz-clip-mob-fold-rule"></span>
-      <span class="bz-clip-mob-fold-lab">${open ? "收起" : `已收 <b>${n}</b> 篇`}</span>
+      <span class="bz-clip-mob-fold-lab">${open ? "收起" : `${label} <b>${n}</b> 篇`}</span>
       <span class="bz-clip-mob-fold-ar"></span>
       <span class="bz-clip-mob-fold-rule"></span>
     </div>`;
   }
+  function mobFoldBodyHtml(kind, html, open) {
+    return html ? open ? `<div class="bz-clip-mob-arch" data-arch-kind="${kind}">${html}</div>` : `<div class="bz-clip-mob-arch" data-arch-kind="${kind}" hidden>${html}</div>` : "";
+  }
   function mobTocHtml(chapters, searching, expanded) {
     return chapters.map((ch) => {
-      const open = expanded.has(ch.site);
-      const fold = !searching && ch.savedN > 0 ? mobFoldHtml(ch.savedN, open) : "";
-      const arch = ch.archHtml ? searching || open ? `<div class="bz-clip-mob-arch">${ch.archHtml}</div>` : `<div class="bz-clip-mob-arch" hidden>${ch.archHtml}</div>` : "";
+      const readOpen = expanded.has("read:" + ch.site);
+      const savedOpen = expanded.has("saved:" + ch.site);
+      const foldRead = !searching && ch.readN > 0 ? mobFoldHtml("read", ch.readN, readOpen) : "";
+      const foldSaved = !searching && ch.savedN > 0 ? mobFoldHtml("saved", ch.savedN, savedOpen) : "";
+      const readBody = mobFoldBodyHtml("read", ch.readHtml, searching || readOpen);
+      const savedBody = mobFoldBodyHtml("saved", ch.savedHtml, searching || savedOpen);
       return `
       <div class="bz-clip-mob-ch">
-        ${mobChHeadHtml(ch.site, ch.unread, ch.savedN)}
-        <div class="bz-clip-mob-ch-items">${ch.activeHtml}${fold}${arch}</div>
+        ${mobChHeadHtml(ch.site, ch.unread, ch.readN, ch.savedN)}
+        <div class="bz-clip-mob-ch-items">${ch.activeHtml}${foldRead}${readBody}${foldSaved}${savedBody}</div>
       </div>`;
     }).join("");
   }

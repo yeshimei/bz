@@ -386,13 +386,15 @@ describe('clipbook UI 桌面三栏', () => {
     expect(items.length).toBeGreaterThan(0);
     for (const it of items) {
       expect(it.querySelector('.bz-clip-no')).toBeTruthy();
-      expect(it.className).toMatch(/bz-clip-item--(unread|reading|saved)/);
+      expect(it.className).toMatch(/bz-clip-item--(unread|reading|saved|read)/); // ADR-0108：折叠段含 read 条目
       expect(it.querySelector('.bz-clip-dot')).toBeNull();
       // 原型对齐：摘要不入目录，meta 一行「站点 · 时间」
       expect(it.querySelector('.bz-clip-item-sum')).toBeNull();
       expect(it.querySelector('.bz-clip-item-meta')!.textContent).toMatch(/·/);
     }
+    // 首条 = 未读常显段（已读知乎在「已读」折叠段内，不在首位）
     expect(items[0].querySelector('.bz-clip-no')!.textContent).toBe('01');
+    expect(items[0].classList.contains('bz-clip-item--unread')).toBe(true);
     closePanel();
   });
 
@@ -542,6 +544,144 @@ describe('移动章目录（issue 248：site 章 + 已收折叠）', () => {
     input.value = '绝不命中xyz';
     input.dispatchEvent(new Event('input', { bubbles: true }));
     await vi.waitFor(() => expect(document.querySelectorAll('[data-clip-mob-list] .bz-clip-mob-ch').length).toBe(0));
+    closePanel();
+  });
+});
+
+describe('会话冻结序（ADR-0108：桌面打开即已读 + 原位保留 + 重开面板才重排 + 双折叠段）', () => {
+  /** 站点种子：果壳 = 未读 2 + 已读骨架 1（30 天内回看）+ 承接剪藏 1；知乎独立未读 1 */
+  function seedFrozen(): MockVault {
+    const vault = new MockVault();
+    vault.files.set('CONFIG/STORAGE/news.json', JSON.stringify({
+      articles: [
+        { platform: '果壳科学人', title: '果壳未读甲', url: 'https://guokr.com/fa', author: '果壳', date: '2026-09-02 08:00:00', body: '正文甲' },
+        { platform: '果壳科学人', title: '果壳未读乙', url: 'https://guokr.com/fb', author: '果壳', date: '2026-09-01 08:00:00', body: '正文乙' },
+        { platform: '果壳科学人', title: '果壳已读旧', url: 'https://guokr.com/old', author: '果壳', date: '2026-08-20 08:00:00', read: true, state: 'skipped' },
+        { platform: '知乎日报', title: '知乎未读', url: 'https://zhihu.com/z1', date: '2026-09-03 08:00:00', body: '正文知' },
+      ],
+      stats: { totalRead: 1, totalSaved: 0, totalSkipped: 1, byPlatform: {}, byDate: {} },
+      bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '',
+      sources: { zhihu: true, guokr: true, bilibili: true },
+    }));
+    vault.files.set('归档/网页剪藏/果壳承接.md', '---\nurl: "https://guokr.com/keep"\ncreated: 2026-08-10 10:00:00\nsite: "果壳科学人"\n---\n已承接剪藏正文');
+    return vault;
+  }
+
+  async function openFrozen(): Promise<void> {
+    try { unloadClipbook(); } catch (e) { /* 幂等 */ }
+    resetObsidianMocks();
+    const vault = seedFrozen();
+    const app = mockAppWithVault(vault);
+    setApp(app);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', articleDirectory: '归档/网页剪藏' } as any));
+    openClipbook(getApp());
+    await vi.waitFor(() => expect(M.open).toBe(true));
+    await vi.waitFor(() => expect(M.articles.length).toBe(4));
+  }
+
+  it('桌面：打开即已读——打开一条未读后原位保留（不消失、不重排），rail 徽标计数即时减', async () => {
+    await openFrozen();
+    // 初始目录（全部未读源）：知乎/果壳未读，未读在前
+    const first = [...document.querySelectorAll('.bz-clip-item')].find((c) => c.textContent!.includes('知乎未读')) as HTMLElement;
+    expect(first).toBeTruthy();
+    first.click(); // 打开 → 桌面也「打开即已读」（Q5）
+    await vi.waitFor(() => expect(M.cur!.id).toBe('url:https://zhihu.com/z1'));
+    // 原位保留：条目仍在目录（灰显类 read），rail 未读计数即时 4 → 3
+    await vi.waitFor(() => {
+      const cards = [...document.querySelectorAll('.bz-clip-item')] as HTMLElement[];
+      const mine = cards.find((c) => c.textContent!.includes('知乎未读'));
+      expect(mine).toBeTruthy();
+      expect(mine!.classList.contains('bz-clip-item--read')).toBe(true); // 已读灰显在原位
+      expect(M.cur!.id).toBe('url:https://zhihu.com/z1'); // 不跳位
+    });
+    // rail「全部未读」计数：3/4（读 1 后即时减）
+    const allRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('全部未读')) as HTMLElement;
+    expect(allRow.querySelector('.bz-rail-count')!.textContent).toBe('3/4');
+    closePanel();
+  });
+
+  it('桌面：已读/已收折叠段——打开含已读+承接的站点源，已读沉折叠、承接进已收；折叠行开合', async () => {
+    await openFrozen();
+    const siteRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('果壳科学人')) as HTMLElement;
+    siteRow.click();
+    await vi.waitFor(() => expect(M.sel.kind).toBe('site'));
+    await vi.waitFor(() => expect(document.querySelectorAll('[data-desk-fold]').length).toBe(2)); // 已读 + 已收
+    // 未读常显两则
+    const titles = [...document.querySelectorAll('.bz-clip-list .bz-clip-item:not(.bz-clip-desk-fold-body *)')].map((e) => e.textContent);
+    expect(titles.some((t) => t!.includes('果壳未读甲'))).toBe(true);
+    // 折叠行文案：已读 1 篇 / 已收 1 篇（默认收起）
+    const foldLabs = [...document.querySelectorAll('.bz-clip-desk-fold-lab')].map((e) => e.innerHTML);
+    expect(foldLabs.some((t) => t!.includes('已读 <b>1</b> 篇'))).toBe(true);
+    expect(foldLabs.some((t) => t!.includes('已收 <b>1</b> 篇'))).toBe(true);
+    // 点击已读折叠行展开 → body 出现（已读骨架灰显条目）；toggle 重渲 DOM，须重查元素
+    const foldRead = [...document.querySelectorAll('[data-desk-fold="read"]')][0] as HTMLElement;
+    foldRead.click();
+    await vi.waitFor(() => {
+      const cur = [...document.querySelectorAll('[data-desk-fold="read"]')][0] as HTMLElement;
+      return expect(cur.getAttribute('aria-expanded')).toBe('true');
+    });
+    const readBody = document.querySelector('.bz-clip-desk-fold-body:not([hidden])') as HTMLElement;
+    expect(readBody.textContent).toContain('果壳已读旧');
+    // 再点收起
+    ([...document.querySelectorAll('[data-desk-fold="read"]')][0] as HTMLElement).click();
+    await vi.waitFor(() => {
+      const cur = [...document.querySelectorAll('[data-desk-fold="read"]')][0] as HTMLElement;
+      return expect(cur.getAttribute('aria-expanded')).toBe('false');
+    });
+    closePanel();
+  });
+
+  it('桌面：无未读目录默认展开「已收」（已收空则已读）——只读已读站打开即有内容不空场', async () => {
+    await openFrozen();
+    // 构造只读站（无未读、无承接）：先把知乎未读也标读（同会话标读原位保留，不动桶）
+    // 直接验证展开规则：点开「果壳科学人」后把两未读标读（会话内不沉段），重开面板 → 新会话快照重排
+    const siteRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('果壳科学人')) as HTMLElement;
+    siteRow.click();
+    await vi.waitFor(() => expect(M.sel.kind).toBe('site'));
+    // 逐条右键标读（显式动作同原位；重开面板才让位）；标读后 refresh 重建 DOM，须重查元素
+    for (const t of ['果壳未读甲', '果壳未读乙']) {
+      const card = [...document.querySelectorAll('.bz-clip-item')].find((c) => c.textContent!.includes(t)) as HTMLElement;
+      card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+      await vi.waitFor(() => expect(document.querySelector('.bz-item-menu')).toBeTruthy());
+      const menu = document.querySelector('.bz-item-menu') as HTMLElement;
+      const readBtn = [...menu.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.includes('标记为已读')) as HTMLElement;
+      readBtn.click();
+      await vi.waitFor(() => {
+        const cur = [...document.querySelectorAll('.bz-clip-item')].find((c) => c.textContent!.includes(t)) as HTMLElement;
+        return expect(cur.classList.contains('bz-clip-item--read')).toBe(true); // 原位灰显
+      });
+    }
+    // 关闭 → 重开面板（新会话）→ 重排：目录无未读 → 默认展开「已收」（承接剪藏）不空场
+    closePanel();
+    showPanel();
+    await vi.waitFor(() => expect(M.open).toBe(true));
+    await vi.waitFor(() => expect(M.sel.kind).toBe('site')); // 选中源保留
+    const openBodies = [...document.querySelectorAll('.bz-clip-desk-fold-body:not([hidden])')] as HTMLElement[];
+        const savedOpen = openBodies.find((b) => b.textContent!.includes('果壳承接'));
+    expect(savedOpen).toBeTruthy(); // 已收有货默认展开
+    closePanel();
+  });
+
+  it('移动：打开即已读后返回目录原位灰显（不沉折叠段）；重开面板才沉「已读」段', async () => {
+    // 移动目录：seedFrozen 站集合 = 果壳（未读2+已读骨架1+承接剪藏1）/ 知乎（未读1）
+    // 桌面环境直接复用（renderMobToc 独立于 Platform，DOM 同渲染）
+    await openFrozen();
+    // 打开果壳未读甲 → 打开即已读（m3 语义保持）
+    const mobTitle = [...document.querySelectorAll('.bz-clip-mob-item')].find((c) => c.textContent!.includes('果壳未读甲')) as HTMLElement;
+    expect(mobTitle).toBeTruthy();
+    mobTitle.click();
+    await vi.waitFor(() => expect(M.mobDetailOpen).toBe(true));
+    expect(M.cur!.id).toContain('guokr.com/fa');
+    // 返回目录 → 未读甲原位灰显（仍常显，不进已读折叠段）
+    (document.querySelector('[data-clip-mob-back]') as HTMLElement).click();
+    await vi.waitFor(() => expect(M.mobDetailOpen).toBe(false));
+    const backTitles = [...document.querySelectorAll('.bz-clip-mob-item')].map((e) => e.textContent);
+    expect(backTitles.some((t) => t!.includes('果壳未读甲'))).toBe(true); // 仍在常显
+    const readCard = [...document.querySelectorAll('.bz-clip-mob-item')].find((c) => c.textContent!.includes('果壳未读甲')) as HTMLElement;
+    expect(readCard.classList.contains('read')).toBe(true); // 灰显
+    // 已读折叠段（快照 read 桶）此时只含装载时已读的骨架，不含刚读的甲
+    const foldRead = [...document.querySelectorAll('[data-fold-kind="read"]')][0] as HTMLElement;
+    expect(foldRead).toBeTruthy();
     closePanel();
   });
 });

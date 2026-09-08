@@ -130,6 +130,30 @@
 .bz-clip-list .bz-empty,
 .bz-clip-read-body .bz-empty { height: 100%; }
 
+/* ---- 桌面折叠段（ADR-0108：已读/已收双折叠，点线语言与移动端 .c-fold 同族） ---- */
+.bz-clip-desk-fold {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 24px 4px; cursor: pointer; user-select: none;
+}
+.bz-clip-desk-fold:hover .bz-clip-desk-fold-lab { color: var(--clip-accent); }
+.bz-clip-desk-fold-rule { flex: 1; border: none; border-bottom: 1px dotted var(--clip-line); }
+.bz-clip-desk-fold-lab {
+  font-family: var(--clip-serif); font-size: 11px; letter-spacing: 2px;
+  color: var(--clip-dim); white-space: nowrap;
+}
+.bz-clip-desk-fold-lab b { color: var(--clip-accent); font-weight: 700; }
+.bz-clip-desk-fold-ar {
+  flex-shrink: 0; width: 0; height: 0;
+  border: 4px solid transparent; border-top-color: var(--clip-muted);
+  border-bottom: none; margin-top: -2px; transition: transform .18s ease;
+}
+.bz-clip-desk-fold.on .bz-clip-desk-fold-ar { transform: rotate(180deg); border-top-color: var(--clip-accent); }
+.bz-clip-desk-fold.on .bz-clip-desk-fold-lab { color: var(--clip-dim); }
+.bz-clip-desk-fold-body[hidden] { display: none; }
+/* 折叠段条目与常显同构但弱化（序号灰小号、行距略收；已读/已收字色由 .bz-clip-item 状态类兜底） */
+.bz-clip-desk-fold-body .bz-clip-item { padding: 10px 24px 10px 44px; }
+.bz-clip-desk-fold-body .bz-clip-no { min-width: 0; font-size: 15px; color: var(--clip-muted); }
+
 /* ---- 右栏：阅读面（serif 标题 / meta 细线 / 首字下沉 / 两端对齐） ---- */
 .bz-clip-read { flex: 1; min-width: 0; display: flex; flex-direction: column; background: transparent; }
 .bz-clip-read-scroll { flex: 1; overflow-y: auto; padding: 28px 44px 40px; }

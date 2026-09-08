@@ -187,6 +187,26 @@ export function tocListHtml(list: ClipArticle[], curId: string | null, timeOf: (
     </div>`).join('');
 }
 
+// ==================== 中栏目录折叠段（ADR-0108：已读/已收双折叠，桌面新增） ====================
+
+/** 桌面折叠行（编辑部风点线：隔线 + 「已读 N 篇 / 已收 N 篇」衬线小标；展开态文案切「收起」同移动）。data-desk-fold 供行为层 toggle */
+export function deskFoldRowHtml(kind: 'read' | 'saved', n: number, open: boolean): string {
+  const label = kind === 'read' ? '已读' : '已收';
+  const lab = open ? '收起' : `${label} <b>${n}</b> 篇`;
+  return `
+    <div class="bz-clip-desk-fold${open ? ' on' : ''}" data-desk-fold="${kind}" role="button" aria-expanded="${open}">
+      <span class="bz-clip-desk-fold-rule"></span>
+      <span class="bz-clip-desk-fold-lab">${lab}</span>
+      <span class="bz-clip-desk-fold-ar"></span>
+      <span class="bz-clip-desk-fold-rule"></span>
+    </div>`;
+}
+
+/** 桌面折叠段体（未展开 = hidden；纯结构，视觉由 styles.css） */
+export function foldBodyHtml(html: string, open: boolean): string {
+  return html ? `<div class="bz-clip-desk-fold-body"${open ? '' : ' hidden'}>${html}</div>` : '';
+}
+
 // ==================== 右栏阅读面 ====================
 
 /** 图片段来源解析回调签名（实现留行为层：外链直用 / vault 嵌链走资源路径） */
@@ -263,27 +283,35 @@ export function mobListHtml(list: ClipArticle[], timeOf: (a: ClipArticle) => str
     </div>`).join('');
 }
 
-/** 移动章目录一章（ui.ts 组装：active/arch 段串由 mobListHtml 渲染后显式传入，纯层不持状态） */
+/** 移动章目录一章（ui.ts 组装：active/read/saved 段串由 mobListHtml 渲染后显式传入，纯数据层不持状态）。
+
+ *  段语义（ADR-0108）：章内未读常显；「已读」= 本会话快照时已读骨架（折叠可开）；「已收」= 已剪藏/收藏承接（折叠）。 */
 export interface MobChapter {
   /** 章名（site） */
   site: string;
   /** 未读 news 条数（章头计数；搜索态 = 命中口径由调用方折算） */
   unread: number;
-  /** 常显段（未读/在读）条数 */
+  /** 常显段（未读）条数 */
   activeN: number;
+  /** 已读段条数 */
+  readN: number;
   /** 已收段（saved 语义）条数 */
   savedN: number;
   /** 常显段条目串 */
   activeHtml: string;
+  /** 已读段条目串 */
+  readHtml: string;
   /** 已收段条目串 */
-  archHtml: string;
+  savedHtml: string;
 }
 
-/** 章头（m3 原型 .ch-hd：橘竖条章名 + 未读·已收计数 + 细线拖尾；data-src 承载 site 源——长按批量已读） */
-export function mobChHeadHtml(site: string, unread: number, savedN: number): string {
-  const cntTxt = unread > 0 || savedN > 0
-    ? `${unread > 0 ? `${unread} 未读` : ''}${unread > 0 && savedN > 0 ? ' · ' : ''}${savedN > 0 ? `${savedN} 已收` : ''}`
-    : '';
+/** 章头（m3 原型 .ch-hd：橘竖条章名 + 未读·已读·已收计数 + 细线拖尾；data-src 承载该源——长按批量已读） */
+export function mobChHeadHtml(site: string, unread: number, readN: number, savedN: number): string {
+  const seg: string[] = [];
+  if (unread > 0) seg.push(`${unread} 未读`);
+  if (readN > 0) seg.push(`${readN} 已读`);
+  if (savedN > 0) seg.push(`${savedN} 已收`);
+  const cntTxt = seg.join(' · ');
   return `
     <div class="bz-clip-mob-ch-hd" data-src='${esc(JSON.stringify({ kind: 'site', site }))}' title="${esc(site)}">
       <span class="bz-clip-mob-ch-name">${esc(site)}</span>
@@ -292,32 +320,42 @@ export function mobChHeadHtml(site: string, unread: number, savedN: number): str
     </div>`;
 }
 
-/** 已收折叠行（m3 原型 .c-fold：点线夹「已收 N 篇」；open 态 = 已展开 + 箭头翻转；三角纯 CSS 无字号依赖） */
-export function mobFoldHtml(n: number, open: boolean): string {
+/** 折叠行（m3 原型 .c-fold：四线夹「已读/已收 N 篇」；open 态 = 已展开 + 箭头翻转；data-fold-kind 区分段） */
+export function mobFoldHtml(kind: 'read' | 'saved', n: number, open: boolean): string {
+  const label = kind === 'read' ? '已读' : '已收';
   return `
-    <div class="bz-clip-mob-fold${open ? ' on' : ''}" data-fold role="button" aria-expanded="${open}">
+    <div class="bz-clip-mob-fold${open ? ' on' : ''}" data-fold data-fold-kind="${kind}" role="button" aria-expanded="${open}">
       <span class="bz-clip-mob-fold-rule"></span>
-      <span class="bz-clip-mob-fold-lab">${open ? '收起' : `已收 <b>${n}</b> 篇`}</span>
+      <span class="bz-clip-mob-fold-lab">${open ? '收起' : `${label} <b>${n}</b> 篇`}</span>
       <span class="bz-clip-mob-fold-ar"></span>
       <span class="bz-clip-mob-fold-rule"></span>
     </div>`;
 }
 
-/** 章目录整列（m3 原型 render 逐字：章内 未读/在读常显 → 折叠行 → 已收段；arch 显隐 = hidden 属性）。
- *  searching = 折叠不生效（命中全平铺，无折叠行）；expanded = 已展开的 site 集合（行为层持有，显式入参）。 */
+/** 折叠段 body（吸附 active 段后）；缩 setOpen 语义由 mobTocHtml 显式传入 expanded 集合（行为层持有，显式入参）。
+ *  段 key = `${kind}:${site}`（read/saved 两段独立记忆）。 */
+export function mobFoldBodyHtml(kind: 'read' | 'saved', html: string, open: boolean): string {
+  return html
+    ? (open
+      ? `<div class="bz-clip-mob-arch" data-arch-kind="${kind}">${html}</div>`
+      : `<div class="bz-clip-mob-arch" data-arch-kind="${kind}" hidden>${html}</div>`)
+    : '';
+}
+
+/** 章目录整列（m3 原型 render 逐字：章内 未读常显 → 已读折叠 → 已收折叠；段显隐 = hidden 属性）。
+ *  searching = 折叠不生效（命中平铺，无折叠行）；expanded = 已展开的段 key 集合（${kind}:${site}）。 */
 export function mobTocHtml(chapters: MobChapter[], searching: boolean, expanded: Set<string>): string {
   return chapters.map((ch) => {
-    const open = expanded.has(ch.site);
-    const fold = !searching && ch.savedN > 0 ? mobFoldHtml(ch.savedN, open) : '';
-    const arch = ch.archHtml
-      ? (searching || open
-        ? `<div class="bz-clip-mob-arch">${ch.archHtml}</div>`
-        : `<div class="bz-clip-mob-arch" hidden>${ch.archHtml}</div>`)
-      : '';
+    const readOpen = expanded.has('read:' + ch.site);
+    const savedOpen = expanded.has('saved:' + ch.site);
+    const foldRead = !searching && ch.readN > 0 ? mobFoldHtml('read', ch.readN, readOpen) : '';
+    const foldSaved = !searching && ch.savedN > 0 ? mobFoldHtml('saved', ch.savedN, savedOpen) : '';
+    const readBody = mobFoldBodyHtml('read', ch.readHtml, searching || readOpen);
+    const savedBody = mobFoldBodyHtml('saved', ch.savedHtml, searching || savedOpen);
     return `
       <div class="bz-clip-mob-ch">
-        ${mobChHeadHtml(ch.site, ch.unread, ch.savedN)}
-        <div class="bz-clip-mob-ch-items">${ch.activeHtml}${fold}${arch}</div>
+        ${mobChHeadHtml(ch.site, ch.unread, ch.readN, ch.savedN)}
+        <div class="bz-clip-mob-ch-items">${ch.activeHtml}${foldRead}${readBody}${foldSaved}${savedBody}</div>
       </div>`;
   }).join('');
 }
