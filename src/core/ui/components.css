@@ -2150,3 +2150,51 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   color: var(--bz-text-1);
   font-weight: var(--bz-weight-medium);
 }
+
+/* ═══════════ 通用列表行 .bz-setlist（core ListRow / 设置面板 ListRow 同构） ═══════════ */
+.bz-setlist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0;
+}
+.bz-setlist-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 4px 8px;
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-surface-2);
+}
+.bz-setlist-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.bz-setlist-text {
+  min-width: 0;
+  flex: 1;
+}
+.bz-setlist-name {
+  font-size: var(--bz-font-meta);
+  color: var(--bz-text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-setlist-sub {
+  font-size: var(--bz-font-meta);
+  color: var(--bz-text-3);
+  line-height: 1.4;
+}
+.bz-setlist-remove {
+  flex-shrink: 0;
+}
+.bz-setlist-empty {
+  padding: 10px 8px;
+  font-size: var(--bz-font-meta);
+  color: var(--bz-text-3);
+}

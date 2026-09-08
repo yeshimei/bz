@@ -77,7 +77,8 @@ describe('批 B-3：触控热区收编 core .bz-touch-target', () => {
     expect(repo('src/diary-wall/ui.ts')).toContain('bz-diary-wall-icon-btn bz-touch-target--xl');
     expect(repo('src/encrypt/ui.ts')).toContain('bz-vault-mobclose bz-touch-target--xl');
     expect(repo('src/encrypt/ui.ts')).toContain('back bz-touch-target--xl');
-    expect(repo('src/review/settings-schema.ts')).toContain('bz-review-exclude-remove bz-touch-target--xl');
+    // 排除名单已收敛为通用 list 行：移除按钮类由 core 渲染器统一挂（含触控档）
+    expect(repo('src/core/settings-schema.ts')).toContain("remove.className = 'bz-setlist-remove bz-touch-target--xl'");
     expect(repo('src/review/stats-ui.ts')).toContain('bz-win-close bz-touch-target--xl');
     expect(repo('src/review/stats-ui.ts')).toContain('bz-review-history-close bz-touch-target--xl');
   });

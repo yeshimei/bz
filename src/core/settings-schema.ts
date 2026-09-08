@@ -90,6 +90,17 @@ interface TextualCommit {
   refreshKey?: string | ((snapshot: SettingsSnapshot) => string);
 }
 
+/** 行内附加按钮（text/number/slider/info 行通用）：颠覆 custom 插槽的「文本+按钮」「滑条+按钮」复合行。
+ *  text/number 行 onClick 的 value = 当前输入值；slider/info 行为 undefined。
+ *  渲染序：两端一致为「按钮在输入框左侧」（2026-09-08 拍板：输入框右缘与同行列对齐）；
+ *  onClick 完成后渲染器重读本行绑定值回填显示（不落盘），供「填入/拉取回填」类动作即时回显。 */
+export interface RowAction {
+  text: string;
+  /** 强调色按钮 */
+  cta?: boolean;
+  onClick: (value: string | undefined, ctx: SettingsRowContext) => void | Promise<void>;
+}
+
 interface TextRow extends RowBase, TextualCommit {
   type: 'text';
   name: string;
@@ -100,6 +111,8 @@ interface TextRow extends RowBase, TextualCommit {
   onChange?: (value: string, ctx: SettingsRowContext) => void;
   /** 数字型文本行修饰：右对齐已退役（2026-09-08 左对齐拍板），现仅窄框宽度档（设置面板渲染器消费） */
   num?: boolean;
+  /** 行内附加按钮（渲染于输入框左侧） */
+  actions?: RowAction[];
 }
 
 interface TextAreaRow extends RowBase, TextualCommit {
@@ -123,6 +136,8 @@ export interface NumberRow extends RowBase, TextualCommit {
   /** 占位提示；函数形式 = 随快照联动（ticket 172） */
   placeholder?: string | ((snapshot: SettingsSnapshot) => string);
   onChange?: (value: number, ctx: SettingsRowContext) => void;
+  /** 行内附加按钮（渲染于输入框左侧） */
+  actions?: RowAction[];
 }
 
 interface SelectRow extends RowBase {
@@ -142,6 +157,8 @@ interface SliderRow extends RowBase {
   max: number;
   step?: number;
   onChange?: (value: number, ctx: SettingsRowContext) => void;
+  /** 行内附加按钮（渲染于滑条右侧，如「试听」） */
+  actions?: RowAction[];
 }
 
 interface PathRow extends RowBase {
@@ -180,10 +197,31 @@ interface ButtonRow extends RowBase {
   onClick: (ctx: SettingsRowContext) => void;
 }
 
-/** 纯展示行（名称 + 描述，无控件；如影视「海报抓取」指引行） */
+/** 纯展示行（名称 + 描述，无控件；如影视「海报抓取」指引行）；actions 供展示行附带操作按钮 */
 interface InfoRow extends RowBase {
   type: 'info';
   name: string;
+  actions?: RowAction[];
+}
+
+/** 列表行条目：key 为移除判定身份，label 主文案，sub 副文案（灰字），imageUrl 头像（加载失败不占位） */
+export interface SettingsListItem {
+  key: string;
+  label: string;
+  sub?: string;
+  imageUrl?: string;
+}
+
+/** 通用列表行（推翻UP名单/排除名单等 chips 自绘 DOM）：移除按钮逐条触发 onChange 传回剩余键集。
+ *  items 支持函数形式（每次移除后重读重建，域侧以磁盘/字盒为基底）；空数组渲染 emptyText 空态。 */
+interface ListRow extends RowBase {
+  type: 'list';
+  name: string;
+  items: SettingsListItem[] | (() => SettingsListItem[]);
+  emptyText?: string;
+  /** 移除按钮文案（默认「移除」） */
+  removeLabel?: string;
+  onChange?: (keys: string[], ctx: SettingsRowContext) => void;
 }
 
 /** 非常规内容唯一出口：render 插槽（内容渲染进独立包装容器，visibleWhen 作用于包装容器） */
@@ -218,7 +256,8 @@ export type SettingsRow =
   | ButtonRow
   | InfoRow
   | CustomRow
-  | ChoiceCardsRow;
+  | ChoiceCardsRow
+  | ListRow;
 
 /** 分组声明：有 icon = 分组卡片（createSettingsGroup）；无 icon = 区块标题 + 平铺行
  *  （主设置页 ADR-0009 单页形态，DOM 契约 .bz-setting-section-title 不破）。 */
@@ -446,6 +485,26 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
         });
       }
     };
+    // 行内附加按钮（先注册 → 渲染于输入框左侧，2026-09-08 拍板换位的对齐口径）：
+    // onClick 完成后重读本行绑定值回填显示（不置脏）+ 重求值——供「填入/拉取回填」类动作即时回显
+    const actions = (row as TextRow | NumberRow).actions;
+    if (actions) {
+      for (const a of actions) {
+        setting.addButton((b) => {
+          if (a.cta) b.setCta();
+          b.setButtonText(a.text).onClick(() => {
+            void (async () => {
+              await a.onClick(last, ctx);
+              if (currentText && currentText.setValue) {
+                dirty = false;
+                currentText.setValue(String(acc.read() ?? ''));
+              }
+              reevaluate();
+            })();
+          });
+        });
+      }
+    }
     if (row.type === 'text') setting.addText(addInto);
     else if (row.type === 'textarea') setting.addTextArea(addInto);
     else setting.addText(addInto);
@@ -591,6 +650,13 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
             row.onChange?.(v, ctx);
           });
         });
+        // 行内附加按钮（滑条右侧，如「试听」）
+        for (const a of row.actions ?? []) {
+          setting.addButton((b) => {
+            if (a.cta) b.setCta();
+            b.setButtonText(a.text).onClick(() => void a.onClick(undefined, ctx));
+          });
+        }
         return;
       }
       case 'button': {
@@ -605,10 +671,84 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
         return;
       }
       case 'info': {
-        // 纯展示：仅名称 + 描述，无控件
+        // 纯展示：名称 + 描述（actions 在场时附操作按钮）
         const setting = new Setting(body).setName(row.name);
         if (row.desc) setting.setDesc(row.desc);
         if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+        for (const a of row.actions ?? []) {
+          setting.addButton((b) => {
+            if (a.cta) b.setCta();
+            b.setButtonText(a.text).onClick(() => void a.onClick(undefined, ctx));
+          });
+        }
+        return;
+      }
+      case 'list': {
+        // 通用列表行（chips 自绘 DOM 收口）：条目 = 头像可选 + 主文案 + 副文案 + 移除按钮；
+        // 包装容器作 visibleWhen 宿主；items 函数形式在每次移除后重读重建（域侧以磁盘为基底）
+        const wrap = document.createElement('div');
+        wrap.className = 'bz-setlist-wrap';
+        body.appendChild(wrap);
+        const setting = new Setting(wrap).setName(row.name);
+        if (row.desc) setting.setDesc(row.desc);
+        if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
+        const box = document.createElement('div');
+        box.className = 'bz-setlist';
+        wrap.appendChild(box);
+        const readItems = () => (typeof row.items === 'function' ? row.items() : row.items);
+        const renderItems = (): void => {
+          const items = readItems();
+          box.innerHTML = '';
+          if (items.length === 0) {
+            if (row.emptyText) {
+              const empty = document.createElement('div');
+              empty.className = 'bz-setlist-empty';
+              empty.textContent = row.emptyText;
+              box.appendChild(empty);
+            }
+            return;
+          }
+          for (const it of items) {
+            const item = document.createElement('div');
+            item.className = 'bz-setlist-item';
+            item.dataset.key = it.key;
+            if (it.imageUrl) {
+              const img = document.createElement('img');
+              img.className = 'bz-setlist-avatar';
+              img.src = it.imageUrl;
+              img.alt = '';
+              img.onerror = () => img.remove(); // 头像加载失败不占位
+              item.appendChild(img);
+            }
+            const text = document.createElement('div');
+            text.className = 'bz-setlist-text';
+            const name = document.createElement('div');
+            name.className = 'bz-setlist-name';
+            name.textContent = it.label;
+            text.appendChild(name);
+            if (it.sub) {
+              const sub = document.createElement('div');
+              sub.className = 'bz-setlist-sub';
+              sub.textContent = it.sub;
+              text.appendChild(sub);
+            }
+            item.appendChild(text);
+            const remove = document.createElement('button');
+            remove.className = 'bz-setlist-remove bz-touch-target--xl';
+            remove.textContent = row.removeLabel || '移除';
+            remove.onclick = () => {
+              void (async () => {
+                const remaining = readItems().map((x) => x.key).filter((k) => k !== it.key);
+                await row.onChange?.(remaining, ctx);
+                renderItems();
+                reevaluate();
+              })();
+            };
+            item.appendChild(remove);
+            box.appendChild(item);
+          }
+        };
+        renderItems();
         return;
       }
       case 'text':
