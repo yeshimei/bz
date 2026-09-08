@@ -25,6 +25,13 @@ export const Platform = {
   isMobile: typeof window !== 'undefined' && window.innerWidth <= 768,
 };
 
+// config.ts 的 IS_MOBILE 兜底读 globalThis.obsidian?.Platform——真插件里由宿主提供，
+// 评审壳 iframe（920 桌面 / 396 手机框）在此注入同款形状，index.ts 的移动端分发
+// （MobilePanel 抽屉 / initMobile）才能跟视口走，而不是永远落桌面分支。
+if (typeof globalThis !== 'undefined') {
+  (globalThis as any).obsidian = (globalThis as any).obsidian || { Platform };
+}
+
 // ==================== 图标（表 = prototype-icons.js 的 window.SB_ICONS） ====================
 
 declare global {
