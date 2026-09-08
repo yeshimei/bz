@@ -100,7 +100,7 @@ describe('主面板 markup', () => {
 
 describe('对话 markup', () => {
   it('骨架含输入/发送/清空锚点与推荐词', () => {
-    const html = chatShellHtml(20, 'deepseek-v4-flash');
+    const html = chatShellHtml(20);
     expect(html).toContain('id="bz-sb-chat-input"');
     expect(html).toContain('id="bz-sb-chat-send"');
     expect(html).toContain('id="bz-sb-chat-clear"');
