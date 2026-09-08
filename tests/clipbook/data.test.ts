@@ -58,10 +58,10 @@ describe('clipbook/store 派生', () => {
     expect(a.srcName).toBe('果壳科学人');
   });
 
-  it('clipArticle：reading 侧写 → reading', () => {
+  it('去在读（issue 248 追）：reading 侧写不再派生状态 → unread', () => {
     const ov = { [articleKeyOf(base())]: { reading: true } };
     const a = clipArticle(base(), { overrides: ov });
-    expect(a.st).toBe('reading');
+    expect(a.st).toBe('unread');
   });
 
   it('clipArticle：saved 三通道（news state / 归档 / url 命中剪藏）', () => {
@@ -86,7 +86,7 @@ describe('clipbook/store 派生', () => {
     const sidecar = { ...emptySidecar(), articleOverrides: { 'url:u1': { reading: true } } };
     const list = queryBySource(arts, sidecar, new Set(['https://clip.ed/1']), [], { kind: 'all' });
     expect(list.map((a) => a.url)).toEqual(['u1']);
-    expect(list[0].st).toBe('reading'); // reading 侧写保留在流内
+    expect(list[0].st).toBe('unread'); // 去在读：reading 侧写不再派生状态
   });
 
   it('queryBySource：平台源 + UP 过滤', () => {

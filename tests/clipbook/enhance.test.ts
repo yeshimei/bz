@@ -11,7 +11,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { openClipbook, unloadClipbook } from '../../src/clipbook';
-import { reloadIfOpen, invalidateClipBodyCache, __autoReadingDelayForTests, revealClipArticle, closePanel } from '../../src/clipbook/ui';
+import { reloadIfOpen, invalidateClipBodyCache, revealClipArticle, closePanel } from '../../src/clipbook/ui';
 import { M } from '../../src/clipbook/state';
 import { drainNewsWritesForTests } from '../../src/clipbook/write-queue';
 
@@ -65,12 +65,10 @@ async function openContextMenuOn(target: HTMLElement): Promise<HTMLElement> {
 }
 
 beforeEach(() => {
-  __autoReadingDelayForTests(10000);
 });
 
 afterEach(() => {
   try { unloadClipbook(); } catch (e) { /* 幂等 */ }
-  __autoReadingDelayForTests(10000);
   MockPlatform.isMobile = false;
   document.body.innerHTML = '';
 });
@@ -259,19 +257,7 @@ describe('误标/误删可撤销（enh 包 5）', () => {
   });
 });
 
-describe('阅读动线（enh 包 6）', () => {
-  it('右栏停留超阈值自动落「在读」（可手动覆盖：手动处理后不生效）', async () => {
-    __autoReadingDelayForTests(30);
-    const { vault } = await openDesktop();
-    // M.cur = 列表第一条（issue 206 倒序后 = 影视飓风视频 09:00）
-    expect(M.cur!.id).toBe('url:https://bilibili.com/video/BV1');
-    await new Promise((r) => setTimeout(r, 130));
-    await drainNewsWritesForTests();
-    const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/clipbook.json')!);
-    const ovs = Object.values(raw.articleOverrides) as Array<{ reading?: boolean }>;
-    expect(ovs.some((o) => o && o.reading === true)).toBe(true);
-  });
-
+describe('阅读动线（标已读前进 / 键盘切换）', () => {
   it('标已读后前进到同位置下一篇', async () => {
     await openDesktop();
     expect(M.cur!.id).toBe('url:https://bilibili.com/video/BV1'); // 倒序后首篇

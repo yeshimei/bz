@@ -255,8 +255,10 @@
 .bz-clip-mob-dot { flex-shrink: 0; width: 6px; height: 6px; background: var(--clip-accent); }
 .bz-clip-mob-dot.reading { background: transparent; border: 1.5px solid var(--clip-accent); width: 5px; height: 5px; }
 .bz-clip-mob-dot.saved { background: var(--clip-muted); opacity: .4; }
+.bz-clip-mob-dot.read { background: var(--clip-muted); opacity: .4; }
 .bz-clip-mob-ttl { flex: 1; font-family: var(--clip-serif); font-size: 15px; line-height: 1.5; color: var(--clip-ink-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .bz-clip-mob-item.saved .bz-clip-mob-ttl { color: var(--clip-muted); }
+.bz-clip-mob-item.read .bz-clip-mob-ttl { color: var(--clip-muted); }
 .bz-clip-mob-time { flex-shrink: 0; font-size: 10.5px; color: var(--clip-muted); font-variant-numeric: tabular-nums; align-self: flex-start; margin-top: 4px; }
 .bz-clip-mob-tag { flex-shrink: 0; font-size: 10.5px; border: 1px solid var(--clip-accent); color: var(--clip-accent); padding: 1px 5px; letter-spacing: 1.5px; align-self: flex-start; margin-top: 3px; font-family: var(--clip-serif); }
 /* 已收折叠行（原型 .c-fold：点线夹计数；三角 = 纯 CSS 下三角，.on 翻转） */
@@ -305,3 +307,32 @@
   .bz-clip-mob-list { padding-bottom: max(22px, env(safe-area-inset-bottom, 0px)); }
   .bz-clip-mob-detail-body { padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px)); }
 }
+
+/* ---- 删除/确认流程框编辑部皮（issue 248 追，flow-dialog className 挂根）：
+   弹窗挂 body 且 core 用 id 选择器，域组合 id+域类提特异性覆盖；纸墨值直接写死（body 外无 --clip 链） ---- */
+#__shared_confirm_popup__.bz-clip-dialog-editorial {
+  background: #faf8f3;
+  border: 1px solid #1c1a17;
+  border-radius: 0;
+  box-shadow: 6px 6px 0 rgba(28, 26, 23, .16);
+  padding: 22px 26px;
+}
+#__shared_confirm_popup__.bz-clip-dialog-editorial h4 {
+  font-family: Georgia, "Noto Serif SC", "Songti SC", "SimSun", serif;
+  letter-spacing: 3px; font-size: 16px; font-weight: 700; color: #1c1a17; margin-bottom: 10px;
+}
+#__shared_confirm_popup__.bz-clip-dialog-editorial p { color: #6b6458; font-size: 14px; }
+#__shared_confirm_popup__.bz-clip-dialog-editorial .confirm-actions { gap: 10px; }
+#__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_cancel__ {
+  border-radius: 0; background: transparent; border: 1px solid #1c1a17; color: #3d3a34;
+  font-family: Georgia, "Noto Serif SC", "Songti SC", "SimSun", serif;
+  font-size: 13px; letter-spacing: 1px; padding: 8px 20px; flex: 0 1 auto;
+}
+#__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_cancel__:hover { background: #efe9dd; }
+#__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_ok__ {
+  border-radius: 0; background: #1c1a17; color: #faf8f3;
+  font-family: Georgia, "Noto Serif SC", "Songti SC", "SimSun", serif;
+  font-size: 13px; letter-spacing: 2px; font-weight: 700; padding: 8px 20px; flex: 0 1 auto;
+}
+#__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_ok__:hover { background: #c2410c; }
+
