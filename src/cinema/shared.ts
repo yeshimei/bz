@@ -88,10 +88,11 @@ export function posterInner(item: CinemaItem, url: string | null): string {
   return `<img loading="lazy" src="${esc(url)}" onerror="this.outerHTML='<div class=\\'ph\\'>${esc(item.name[0] ?? '')}</div>'">`;
 }
 
-/** 片卡 HTML（desk 网格与 mob 长按网格同一张卡；data-cinema-key = CM3 稳定键） */
-export function pcardHtml(it: CinemaItem, posterUrl: string | null): string {
+/** 片卡 HTML（desk 网格与 mob 长按网格同一张卡；data-cinema-key = CM3 稳定键）；
+ *  fetching=后台抓取中 → 海报区遮罩 spinner（ADR-0113） */
+export function pcardHtml(it: CinemaItem, posterUrl: string | null, fetching = false): string {
   const r = it.rating;
-  return `<div class="pcard" data-cinema-key="${esc(itemKey(it))}"><div class="pw">${posterInner(it, posterUrl)}
+  return `<div class="pcard" data-cinema-key="${esc(itemKey(it))}"><div class="pw">${posterInner(it, posterUrl)}${fetching ? '<div class="pw-fetch"><span class="pw-spin"></span></div>' : ''}
     ${(() => { const st = statusNum(it.status); return st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : ''; })()}</div>
     <div class="pname">${esc(it.name)}</div>
     <div class="pmeta">${esc(it.year || '')}${it.year && it.director ? ' · ' : ''}${esc(it.director || '')}</div>

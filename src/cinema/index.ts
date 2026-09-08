@@ -8,8 +8,7 @@ import { onDomainEvent } from '../core/domain-bus';
 import { M, resetCinemaState, DEFAULT_FOLDER } from './state';
 import { rebuildItems } from './data';
 import { createOverlay, closeOverlay, registerEscapeHandler, renderAll, openAddModalDirect } from './ui';
-import { stopAllPosterWatch } from './poster-watch';
-import { sweepDoubanBacklog } from './douban-sweep';
+import { shutdownDoubanQueue, sweepDoubanFetch } from './douban-queue';
 
 let initialized = false;
 let autoRefreshRegistered = false;
@@ -70,8 +69,8 @@ export function openCinema(app: App): void {
   }
   applyDefaultView();
   createOverlay(app);
-  // 豆瓣盲区补全触碰（ADR-0111）：打开即扫，静默后台
-  void sweepDoubanBacklog(app);
+  // 豆瓣抓取队列（ADR-0113）：打开即扫未齐条目，入队串行补抓
+  sweepDoubanFetch(app);
 }
 
 /**
@@ -86,7 +85,7 @@ export function openCinemaAnalysis(app: App): void {
   else {
     applyDefaultView();
     createOverlay(app);
-    void sweepDoubanBacklog(app);
+    sweepDoubanFetch(app);
   }
 }
 
@@ -100,7 +99,7 @@ export function addCinemaItem(app: App): void {
 export function unloadCinema(): void {
   initialized = false;
   autoRefreshRegistered = false;
-  stopAllPosterWatch(); // 摘除海报轮询 interval（卸载后不再读文件/写通知）
+  shutdownDoubanQueue(); // 杀活动抓取子进程、清队列状态（卸载后会话语义重置）
   if (M.currentOverlay) {
     M.currentOverlay.remove();
     M.currentOverlay = null;
