@@ -4911,10 +4911,6 @@ var BZW_bookshelf = (() => {
   function isMobileEnv() {
     return typeof Platform !== "undefined" && !!Platform.isMobile;
   }
-  function applyMobileWindowFullscreen(popup, enabled) {
-    if (!popup) return;
-    popup.classList.toggle("bz-win-mfs", isMobileEnv() && !!enabled);
-  }
 
   // src/core/ui/icon.ts
   function uiIcon(name, extraClass = "") {
@@ -7502,12 +7498,10 @@ var BZW_bookshelf = (() => {
     const overlay = document.createElement("div");
     overlay.className = "bz-panel-overlay";
     overlay.style.zIndex = String(allocZ());
-    const fullscreen = tryGetSettings().bookshelfMobileDefaultFullscreen === true;
     overlay.innerHTML = panelHtml(bsSkinClass());
     document.body.appendChild(overlay);
     M.currentOverlay = overlay;
     M.renderFn = () => renderAll();
-    applyMobileWindowFullscreen(overlay.querySelector(".bz-bs-panel"), fullscreen);
     overlay.addEventListener("click", (e) => {
       const t = e.target;
       if (e.target === overlay) {
@@ -7763,8 +7757,7 @@ var BZW_bookshelf = (() => {
         bookTag: "book",
         bookshelfSkin: skin,
         bookshelfDefaultSide: "all",
-        bookshelfSortMode: "recent",
-        bookshelfMobileDefaultFullscreen: false
+        bookshelfSortMode: "recent"
       })
     );
   }

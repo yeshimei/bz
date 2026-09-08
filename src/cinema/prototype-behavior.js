@@ -4668,7 +4668,7 @@ var BZW_cinema = (() => {
      *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
      *  既有调用（不传这两项）行为零变化 */
     async prompt(promptText, model = this.defaultModel, options = {}) {
-      var _a, _b;
+      var _a;
       const mergedOptions = this._mergeOptions(options);
       const provider = await getAIProvider(mergedOptions.provider);
       const s = getQ3Settings();
@@ -4685,18 +4685,6 @@ var BZW_cinema = (() => {
       for (const k of Object.keys(mo)) {
         if (k === "max_tokens") continue;
         body[k] = mo[k];
-      }
-      for (const [key, settingsKey] of [
-        ["temperature", "aiTemperature"],
-        ["top_p", "aiTopP"],
-        ["frequency_penalty", "aiFrequencyPenalty"],
-        ["presence_penalty", "aiPresencePenalty"]
-      ]) {
-        if (body[key] !== void 0) continue;
-        const raw = String((_b = s[settingsKey]) != null ? _b : "").trim();
-        if (raw === "") continue;
-        const n = Number(raw);
-        if (Number.isFinite(n)) body[key] = n;
       }
       const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
       const onDelta = typeof mergedOptions.onDelta === "function" ? mergedOptions.onDelta : void 0;
@@ -5436,10 +5424,6 @@ var BZW_cinema = (() => {
   // src/core/mobile.ts
   function isMobileEnv() {
     return typeof Platform !== "undefined" && !!Platform.isMobile;
-  }
-  function applyMobileWindowFullscreen(popup, enabled) {
-    if (!popup) return;
-    popup.classList.toggle("bz-win-mfs", isMobileEnv() && !!enabled);
   }
 
   // src/core/ui/icons.ts
@@ -6882,9 +6866,6 @@ ${item.review ? `影评: ${item.review}
     M.renderFn = () => renderAll(app);
     const root = overlay.querySelector("[data-cinema-root]");
     if (!root) return;
-    if (mobile) {
-      applyMobileWindowFullscreen(root, tryGetSettings().cinemaMobileDefaultFullscreen === true);
-    }
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) closeOverlay();
     });
@@ -7027,8 +7008,7 @@ ${item.review ? `影评: ${item.review}
     cinemaFolderPath: FOLDER,
     cinemaSortMode: "date",
     cinemaStatusFilter: "",
-    cinemaGridColumns: "5",
-    cinemaMobileDefaultFullscreen: false
+    cinemaGridColumns: "5"
   };
   function injectSettings() {
     setSettingsProvider(() => settingsStore);

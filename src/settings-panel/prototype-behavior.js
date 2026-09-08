@@ -7383,12 +7383,31 @@ var BZW_settings_panel = (() => {
           });
         }
       };
+      const actions = row.actions;
+      if (actions) {
+        for (const a of actions) {
+          setting.addButton((b) => {
+            if (a.cta) b.setCta();
+            b.setButtonText(a.text).onClick(() => {
+              void (async () => {
+                var _a4;
+                await a.onClick(last, ctx);
+                if (currentText && currentText.setValue) {
+                  dirty2 = false;
+                  currentText.setValue(String((_a4 = acc.read()) != null ? _a4 : ""));
+                }
+                reevaluate();
+              })();
+            });
+          });
+        }
+      }
       if (row.type === "text") setting.addText(addInto);
       else if (row.type === "textarea") setting.addTextArea(addInto);
       else setting.addText(addInto);
     };
     const renderRow2 = (body, rowArg, parentToggleKey) => {
-      var _a3;
+      var _a3, _b2, _c;
       const ctx = { rowEl: body, refreshVisibility: reevaluate };
       let row = rowArg;
       if (row.isChild && parentToggleKey) {
@@ -7517,6 +7536,12 @@ var BZW_settings_panel = (() => {
               (_a5 = row.onChange) == null ? void 0 : _a5.call(row, v, ctx);
             });
           });
+          for (const a of (_b2 = row.actions) != null ? _b2 : []) {
+            setting.addButton((b) => {
+              if (a.cta) b.setCta();
+              b.setButtonText(a.text).onClick(() => void a.onClick(void 0, ctx));
+            });
+          }
           return;
         }
         case "button": {
@@ -7534,6 +7559,79 @@ var BZW_settings_panel = (() => {
           const setting = new Setting(body).setName(row.name);
           if (row.desc) setting.setDesc(row.desc);
           if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          for (const a of (_c = row.actions) != null ? _c : []) {
+            setting.addButton((b) => {
+              if (a.cta) b.setCta();
+              b.setButtonText(a.text).onClick(() => void a.onClick(void 0, ctx));
+            });
+          }
+          return;
+        }
+        case "list": {
+          const wrap = document.createElement("div");
+          wrap.className = "bz-setlist-wrap";
+          body.appendChild(wrap);
+          const setting = new Setting(wrap).setName(row.name);
+          if (row.desc) setting.setDesc(row.desc);
+          if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
+          const box = document.createElement("div");
+          box.className = "bz-setlist";
+          wrap.appendChild(box);
+          const readItems = () => typeof row.items === "function" ? row.items() : row.items;
+          const renderItems = () => {
+            const items = readItems();
+            box.innerHTML = "";
+            if (items.length === 0) {
+              if (row.emptyText) {
+                const empty = document.createElement("div");
+                empty.className = "bz-setlist-empty";
+                empty.textContent = row.emptyText;
+                box.appendChild(empty);
+              }
+              return;
+            }
+            for (const it of items) {
+              const item = document.createElement("div");
+              item.className = "bz-setlist-item";
+              item.dataset.key = it.key;
+              if (it.imageUrl) {
+                const img = document.createElement("img");
+                img.className = "bz-setlist-avatar";
+                img.src = it.imageUrl;
+                img.alt = "";
+                img.onerror = () => img.remove();
+                item.appendChild(img);
+              }
+              const text = document.createElement("div");
+              text.className = "bz-setlist-text";
+              const name = document.createElement("div");
+              name.className = "bz-setlist-name";
+              name.textContent = it.label;
+              text.appendChild(name);
+              if (it.sub) {
+                const sub = document.createElement("div");
+                sub.className = "bz-setlist-sub";
+                sub.textContent = it.sub;
+                text.appendChild(sub);
+              }
+              item.appendChild(text);
+              const remove = document.createElement("button");
+              remove.className = "bz-setlist-remove bz-touch-target--xl";
+              remove.textContent = row.removeLabel || "移除";
+              remove.onclick = () => {
+                void (async () => {
+                  var _a4;
+                  const remaining = readItems().map((x) => x.key).filter((k) => k !== it.key);
+                  await ((_a4 = row.onChange) == null ? void 0 : _a4.call(row, remaining, ctx));
+                  renderItems();
+                  reevaluate();
+                })();
+              };
+              item.appendChild(remove);
+              box.appendChild(item);
+            }
+          };
+          renderItems();
           return;
         }
         case "text":
@@ -7824,6 +7922,15 @@ var BZW_settings_panel = (() => {
   function rowBtnHtml(label, cta) {
     return `<button type="button" class="bz-sp-btn${cta ? " bz-sp-btn--primary" : ""}">${esc(label)}</button>`;
   }
+  function listHtml(items, removeLabel = "移除") {
+    if (items.length === 0) return "";
+    return items.map(
+      (it) => `<div class="bz-setlist-item" data-key="${esc(it.key)}">` + (it.imageUrl ? `<img class="bz-setlist-avatar" src="${esc(it.imageUrl)}" alt="">` : "") + `<div class="bz-setlist-text"><div class="bz-setlist-name">${esc(it.label)}</div>` + (it.sub ? `<div class="bz-setlist-sub">${esc(it.sub)}</div>` : "") + `</div><button type="button" class="bz-setlist-remove bz-touch-target--xl">${esc(removeLabel)}</button></div>`
+    ).join("");
+  }
+  function listEmptyHtml(text) {
+    return `<div class="bz-setlist-empty">${esc(text)}</div>`;
+  }
   function badgeHtml(label) {
     return `<span class="bz-badge">${esc(label)}</span>`;
   }
@@ -8069,8 +8176,25 @@ var BZW_settings_panel = (() => {
     renderChips();
     return ctrl;
   }
+  function mountTextActions(ctrlEl, input, acc, actions, ctx, refresh) {
+    for (const a of actions != null ? actions : []) {
+      const holder = document.createElement("div");
+      holder.innerHTML = rowBtnHtml(a.text, a.cta);
+      const btn = holder.firstElementChild;
+      btn.addEventListener("click", () => {
+        void (async () => {
+          var _a2;
+          await a.onClick(input.value, ctx);
+          const setDisplay = input.__setDisplayValue;
+          if (setDisplay) setDisplay(String((_a2 = acc.read()) != null ? _a2 : ""));
+          refresh();
+        })();
+      });
+      ctrlEl.appendChild(btn);
+    }
+  }
   function renderRow(row, refresh, regRefresh) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n;
     const rowName = row.name;
     const bindKey = (_a2 = row.binding) == null ? void 0 : _a2.key;
     const isCustom = row.type === "custom";
@@ -8122,6 +8246,7 @@ var BZW_settings_panel = (() => {
             (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
           }
         });
+        mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh);
         ctrlEl.appendChild(input);
         regRefreshDisplay(regRefresh, row.refreshKey, input);
         break;
@@ -8179,6 +8304,7 @@ var BZW_settings_panel = (() => {
           }
         });
         input.step = String((_e = row.step) != null ? _e : 1);
+        mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh);
         ctrlEl.appendChild(input);
         regRefreshDisplay(regRefresh, row.refreshKey, input);
         break;
@@ -8247,6 +8373,13 @@ var BZW_settings_panel = (() => {
           void acc.persist();
           (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
         });
+        for (const a of (_j = row.actions) != null ? _j : []) {
+          const holder2 = document.createElement("div");
+          holder2.innerHTML = rowBtnHtml(a.text, a.cta);
+          const btn = holder2.firstElementChild;
+          btn.addEventListener("click", () => void a.onClick(void 0, ctx));
+          ctrlEl.appendChild(btn);
+        }
         break;
       }
       case "path": {
@@ -8256,7 +8389,7 @@ var BZW_settings_panel = (() => {
         ctrlEl.appendChild(makePathRowCtrl({
           name: row.name,
           mode: row.mode,
-          value: multi ? Array.isArray(acc.read()) ? [...acc.read()] : [] : String((_j = acc.read()) != null ? _j : ""),
+          value: multi ? Array.isArray(acc.read()) ? [...acc.read()] : [] : String((_k = acc.read()) != null ? _k : ""),
           pickerTitle: row.pickerTitle,
           pickerDesc: row.pickerDesc,
           buttonText: row.buttonText,
@@ -8286,17 +8419,45 @@ var BZW_settings_panel = (() => {
       }
       case "info": {
         ctrlEl.innerHTML = badgeHtml(row.name);
+        for (const a of (_l = row.actions) != null ? _l : []) {
+          const holder2 = document.createElement("div");
+          holder2.innerHTML = rowBtnHtml(a.text, a.cta);
+          const btn = holder2.firstElementChild;
+          btn.addEventListener("click", () => void a.onClick(void 0, ctx));
+          ctrlEl.appendChild(btn);
+        }
+        break;
+      }
+      case "list": {
+        const renderItems = () => {
+          const items = typeof row.items === "function" ? row.items() : row.items;
+          ctrlEl.innerHTML = items.length > 0 ? listHtml(items, row.removeLabel) : row.emptyText ? listEmptyHtml(row.emptyText) : "";
+          ctrlEl.querySelectorAll(".bz-setlist-item").forEach((itemEl) => {
+            var _a3, _b3;
+            const key = (_a3 = itemEl.dataset.key) != null ? _a3 : "";
+            (_b3 = itemEl.querySelector(".bz-setlist-remove")) == null ? void 0 : _b3.addEventListener("click", () => {
+              void (async () => {
+                var _a4;
+                const cur = (typeof row.items === "function" ? row.items() : row.items).map((x) => x.key);
+                await ((_a4 = row.onChange) == null ? void 0 : _a4.call(row, cur.filter((k) => k !== key), ctx));
+                renderItems();
+                refresh();
+              })();
+            });
+          });
+        };
+        renderItems();
         break;
       }
       case "choiceCards": {
         const acc = bindValue(row.binding);
         const layoutKey = row.layoutKey;
-        const curLayout = layoutKey ? String((_k = snapshot()[layoutKey]) != null ? _k : "") : "";
+        const curLayout = layoutKey ? String((_m = snapshot()[layoutKey]) != null ? _m : "") : "";
         const opts2 = row.options.filter((o) => {
           const lo = o.layout;
           return !lo || !layoutKey || lo === curLayout;
         });
-        const cur = String((_l = acc.read()) != null ? _l : "") || opts2[0] && opts2[0].value || "";
+        const cur = String((_n = acc.read()) != null ? _n : "") || opts2[0] && opts2[0].value || "";
         ctrlEl.innerHTML = cardpickHtml(opts2.map((o) => ({
           value: o.value,
           label: o.label,
@@ -9153,69 +9314,46 @@ var BZW_settings_panel = (() => {
     void saveSettings();
   }
   function providerModelCustomRow() {
-    const label = "模型名称";
-    const desc = "留空用该服务商默认模型";
     return {
-      type: "custom",
-      name: label,
-      desc,
-      visibleWhen: () => true,
-      // 常显（随 provider 联动内容）
-      render: (body, ctx) => {
-        const setting = new Setting(body).setName(label);
-        if (desc) setting.setDesc(desc);
-        let input = null;
-        setting.addButton((b) => {
-          b.setButtonText("获取模型名").onClick(() => {
-            void (async () => {
-              if (b.disabled) return;
-              b.setDisabled(true);
-              b.setButtonText("获取中…");
-              try {
-                await saveSettings();
-                const providerId = String(tryGetSettings().aiProvider || "opencode-go");
-                const desc2 = providerDescriptorOf(providerId);
-                const models = await fetchProviderModels(providerId);
-                const curProvider = String(tryGetSettings().aiProvider || "opencode-go");
-                if (curProvider !== providerId) {
-                  notice("服务商已切换，请重新获取", "warning");
-                  return;
-                }
-                openModelPicker({
-                  providerLabel: desc2.label,
-                  current: providerValue("model"),
-                  models,
-                  onPick: (m) => {
-                    setProviderValue("aiModelOverrides", m.id);
-                    ctx.refreshVisibility();
-                    if (input) input.setValue(m.id);
-                    notice(`模型已设为 ${m.id}`, "success");
-                  }
-                });
-              } catch (e) {
-                notice(e instanceof Error ? e.message : String(e), "error");
-              } finally {
-                b.setDisabled(false);
-                b.setButtonText("获取模型名");
-              }
-            })();
-          });
-        });
-        setting.addText((t) => {
-          input = t;
-          t.setValue(providerValue("model"));
-          t.setPlaceholder("默认模型");
-          t.onChange((v) => setProviderValue("aiModelOverrides", v));
-        });
-        body.__providerInput = input;
-      },
-      // onRefresh 由渲染器在 reevaluate 时调用：重读当前 provider 值写回输入框
-      onRefresh: (ctx) => {
-        const input = ctx.rowEl.__providerInput;
-        if (input && typeof input.setValue === "function") {
-          input.setValue(providerValue("model"));
+      type: "text",
+      name: "模型名称",
+      desc: "留空用该服务商默认模型",
+      placeholder: "默认模型",
+      binding: {
+        get: () => providerValue("model"),
+        set: (v) => setProviderValue("aiModelOverrides", v),
+        save: () => {
         }
-      }
+      },
+      refreshKey: () => providerValue("model"),
+      actions: [{
+        text: "获取模型名",
+        onClick: async (_value, ctx) => {
+          try {
+            await saveSettings();
+            const providerId = String(tryGetSettings().aiProvider || "opencode-go");
+            const desc = providerDescriptorOf(providerId);
+            const models = await fetchProviderModels(providerId);
+            const curProvider = String(tryGetSettings().aiProvider || "opencode-go");
+            if (curProvider !== providerId) {
+              notice("服务商已切换，请重新获取", "warning");
+              return;
+            }
+            openModelPicker({
+              providerLabel: desc.label,
+              current: providerValue("model"),
+              models,
+              onPick: (m) => {
+                setProviderValue("aiModelOverrides", m.id);
+                ctx.refreshVisibility();
+                notice(`模型已设为 ${m.id}`, "success");
+              }
+            });
+          } catch (e) {
+            notice(e instanceof Error ? e.message : String(e), "error");
+          }
+        }
+      }]
     };
   }
   function providerNumberConfigRow(kind) {
@@ -9329,7 +9467,6 @@ var BZW_settings_panel = (() => {
   var STORAGE_PATH_COMMIT_NOTICE;
   var init_settings_main_schema = __esm({
     "src/core/settings-main-schema.ts"() {
-      init_fake_obsidian();
       init_ai();
       init_notice();
       init_settings_provider();
@@ -23701,9 +23838,7 @@ ${bodyText.substring(0, 6e3)}`;
       inputValue: "",
       cookieInput: String(opts.cookie || ""),
       ups: [...opts.ups],
-      upInfo: { ...opts.upInfo },
-      listRefresh: () => {
-      }
+      upInfo: { ...opts.upInfo }
     };
     return {
       groups: [
@@ -23711,9 +23846,70 @@ ${bodyText.substring(0, 6e3)}`;
           icon: "users",
           name: "UP 主名单",
           rows: [
-            { type: "custom", render: (body) => renderAddUpRow(body, box, opts.onChanged) },
-            { type: "custom", render: (body) => renderCookieRow(body, box, opts.onChanged) },
-            { type: "custom", render: (body, ctx) => renderUpList(body, box, opts.onChanged, ctx) }
+            {
+              type: "text",
+              name: "添加 UP 主",
+              desc: "粘贴主页链接或视频链接，自动解析后入库",
+              placeholder: "粘贴链接或 UID",
+              binding: {
+                get: () => box.inputValue,
+                set: (v) => {
+                  box.inputValue = v;
+                },
+                save: () => {
+                }
+              },
+              actions: [{
+                text: "添加",
+                cta: true,
+                onClick: (value) => addUpUid(value, box, opts)
+              }]
+            },
+            {
+              type: "text",
+              name: "B 站 Cookie 可选",
+              desc: cookieDesc(box.cookieInput),
+              placeholder: "粘贴 buvid3 或 SESSDATA 等 Cookie",
+              binding: {
+                get: () => box.cookieInput,
+                set: (v) => {
+                  box.cookieInput = v;
+                },
+                save: () => {
+                }
+              },
+              actions: [
+                { text: "保存", onClick: (value) => saveCookie(value || "", box, opts) },
+                { text: "清除", onClick: () => saveCookie("", box, opts) }
+              ]
+            },
+            {
+              type: "list",
+              name: "名单列表",
+              desc: "已跟踪的 UP 主，移除后不再抓取其投稿",
+              items: () => box.ups.map((uid) => {
+                var _a2;
+                return {
+                  key: uid,
+                  label: upDisplayName(uid, box.upInfo[uid]),
+                  sub: `UID ${uid}`,
+                  imageUrl: (_a2 = box.upInfo[uid]) == null ? void 0 : _a2.avatar
+                };
+              }),
+              emptyText: "暂无跟踪 UP 主，在上方粘贴主页链接或视频链接添加",
+              onChange: (keys) => {
+                void (async () => {
+                  const removed = box.ups.filter((u) => !keys.includes(u));
+                  for (const uid of removed) {
+                    await removeBilibiliUp(uid);
+                    box.ups = box.ups.filter((u) => u !== uid);
+                    delete box.upInfo[uid];
+                    notice(`已移除 UP 主 ${uid}`, "success");
+                  }
+                  if (removed.length > 0) opts.onChanged();
+                })();
+              }
+            }
           ]
         }
       ]
@@ -23722,125 +23918,32 @@ ${bodyText.substring(0, 6e3)}`;
   function upDisplayName(uid, info) {
     return info && info.name ? info.name : `UP ${uid}`;
   }
-  function renderAddUpRow(body, box, onChanged) {
-    new Setting(body).setName("添加 UP 主").setDesc("粘贴主页链接（space.bilibili.com/123456）或视频链接自动解析 UID").addText((text) => {
-      text.setPlaceholder("粘贴链接或 UID");
-      text.onChange((v) => {
-        box.inputValue = v;
-      });
-    }).addButton(
-      (btn) => btn.setButtonText("添加").setCta().onClick(() => {
-        void (async () => {
-          const raw = (box.inputValue || "").trim();
-          if (!raw) return;
-          const uid = await resolveUidFromInput(raw);
-          if (!uid) {
-            notice("无法识别 UID，请粘贴 space.bilibili.com/<uid> 主页链接", "error");
-            return;
-          }
-          const added = await addBilibiliUp(uid);
-          if (!added) {
-            notice("该 UP 主已在名单中", "info");
-            return;
-          }
-          box.inputValue = "";
-          box.ups.push(uid);
-          box.listRefresh();
-          onChanged();
-          notice(`已添加 UP 主 ${uid}`, "success");
-        })();
-      })
-    );
+  function cookieDesc(current2) {
+    return `遇到风控时需粘贴登录后的 Cookie。当前${current2 ? "已配置" : "未配置"}`;
   }
-  function renderCookieRow(body, box, onChanged) {
-    const cookieDesc = () => `接口返回 412/-352（风控）时需要「登录后」的 Cookie：浏览器登录并打开 bilibili.com → F12 → Cookie → 复制含 SESSDATA 的整段粘贴（当前${box.cookieInput ? "已配置" : "未配置，走自动引导"}）`;
-    const row = new Setting(body).setName("B 站 Cookie（可选）").setDesc(cookieDesc());
-    row.addText((text) => {
-      text.setPlaceholder("粘贴 buvid3/SESSDATA 等 Cookie");
-      text.setValue(box.cookieInput);
-      text.onChange((v) => {
-        box.cookieInput = v;
-      });
-    });
-    row.addButton(
-      (btn) => btn.setButtonText("保存").onClick(() => {
-        void (async () => {
-          await writeBilibiliCookie(box.cookieInput);
-          row.setDesc(cookieDesc());
-          onChanged();
-          notice("B 站 Cookie 已保存", "success");
-        })();
-      })
-    );
-    row.addButton(
-      (btn) => btn.setButtonText("清除").onClick(() => {
-        void (async () => {
-          await writeBilibiliCookie("");
-          box.cookieInput = "";
-          row.setDesc(cookieDesc());
-          onChanged();
-          notice("已清除 B 站 Cookie（回自动引导）", "success");
-        })();
-      })
-    );
+  async function addUpUid(raw, box, opts) {
+    const input = String(raw || "").trim();
+    if (!input) return;
+    const uid = await resolveUidFromInput(input);
+    if (!uid) {
+      notice("无法识别 UID，请粘贴 space.bilibili.com 内的主页链接", "error");
+      return;
+    }
+    const added = await addBilibiliUp(uid);
+    if (!added) {
+      notice("该 UP 主已在名单中", "info");
+      return;
+    }
+    box.inputValue = "";
+    box.ups = [...box.ups, uid];
+    opts.onChanged();
+    notice(`已添加 UP 主 ${uid}`, "success");
   }
-  function renderUpList(body, box, onChanged, ctx) {
-    const listEl2 = document.createElement("div");
-    listEl2.dataset.upManagerList = "1";
-    body.appendChild(listEl2);
-    const refresh = () => {
-      listEl2.innerHTML = "";
-      if (box.ups.length === 0) {
-        const empty = document.createElement("div");
-        empty.className = "bz-up-manager-empty";
-        empty.textContent = "暂无跟踪 UP 主，在上方粘贴主页链接或视频链接添加";
-        listEl2.appendChild(empty);
-        return;
-      }
-      for (const uid of box.ups) {
-        const info = box.upInfo[uid];
-        const row = document.createElement("div");
-        row.className = "bz-up-manager-row";
-        row.dataset.upRow = "1";
-        if (info && info.avatar) {
-          const img = document.createElement("img");
-          img.className = "bz-up-manager-avatar";
-          img.src = info.avatar;
-          img.alt = "";
-          img.onerror = () => img.remove();
-          row.appendChild(img);
-        }
-        const text = document.createElement("div");
-        text.className = "bz-up-manager-text";
-        const name = document.createElement("div");
-        name.className = "bz-up-manager-name";
-        name.textContent = upDisplayName(uid, info);
-        const uidEl = document.createElement("div");
-        uidEl.className = "bz-up-manager-uid";
-        uidEl.textContent = `UID ${uid}`;
-        text.appendChild(name);
-        text.appendChild(uidEl);
-        row.appendChild(text);
-        const del = document.createElement("button");
-        del.className = "bz-up-manager-remove";
-        del.textContent = "移除";
-        del.onclick = () => {
-          void (async () => {
-            await removeBilibiliUp(uid);
-            box.ups = box.ups.filter((u) => u !== uid);
-            delete box.upInfo[uid];
-            refresh();
-            onChanged();
-            ctx.refreshVisibility();
-            notice(`已移除 UP 主 ${uid}`, "success");
-          })();
-        };
-        row.appendChild(del);
-        listEl2.appendChild(row);
-      }
-    };
-    box.listRefresh = refresh;
-    refresh();
+  async function saveCookie(value, box, opts) {
+    await writeBilibiliCookie(value);
+    box.cookieInput = value;
+    opts.onChanged();
+    notice(value ? "B 站 Cookie 已保存" : "已清除 B 站 Cookie，回自动引导", "success");
   }
   function openUpManagerModal(opts) {
     let handle = null;
@@ -23879,7 +23982,6 @@ ${bodyText.substring(0, 6e3)}`;
   }
   var init_news_sources_group = __esm({
     "src/clipbook/news-sources-group.ts"() {
-      init_fake_obsidian();
       init_notice();
       init_settings_common();
       init_dom();
@@ -31625,7 +31727,6 @@ ${n.content.slice(0, 2e3)}
 
   // src/review/settings-schema.ts
   function reviewSettingsSchema(deps) {
-    let renderExcludeRows = null;
     return {
       groups: [
         {
@@ -31763,50 +31864,24 @@ ${n.content.slice(0, 2e3)}
                 })();
               }
             },
-            // 排除名单 chips 区（ticket 57 管理 UI；DOM id/类名零变化；交互后经 renderExcludeRows 重渲染）
+            // 排除名单（通用 list 行，chips 自绘 DOM 已退役）：单条解除 = 移除按钮，逐条清理
             {
-              type: "custom",
-              render: (body) => {
-                const setting = new Setting(body).setName("排除名单").setDesc("不参与监听自动加入的笔记，可在此单条解除");
-                setting.settingEl.classList.add("bz-review-exclude-row");
-                const excludeBox = document.createElement("div");
-                excludeBox.id = "review-excluded-list";
-                setting.controlEl.appendChild(excludeBox);
-                renderExcludeRows = () => {
-                  excludeBox.innerHTML = "";
-                  const notes = getSettings().reviewExcludedNotes || [];
-                  if (!notes.length) {
-                    excludeBox.appendChild(uiEmpty({ title: "暂无排除笔记" }));
-                    return;
-                  }
-                  notes.forEach((path) => {
-                    const chip = document.createElement("span");
-                    chip.className = "bz-review-exclude-chip";
-                    const name = document.createElement("span");
-                    name.className = "bz-review-exclude-name";
-                    name.textContent = path;
-                    name.title = path;
-                    const remove = document.createElement("button");
-                    remove.className = "bz-review-exclude-remove bz-touch-target--xl";
-                    remove.setAttribute("aria-label", `解除排除 ${path}`);
-                    const removeIc = document.createElement("span");
-                    removeIc.className = "bz-ic";
-                    setIcon(removeIc, "x");
-                    remove.appendChild(removeIc);
-                    remove.onclick = () => {
-                      void (async () => {
-                        const { ReviewWatcher: ReviewWatcher2 } = await Promise.resolve().then(() => (init_watch(), watch_exports));
-                        await new ReviewWatcher2(deps.app, deps.dataManager).removeExcludedNote(path);
-                        renderExcludeRows == null ? void 0 : renderExcludeRows();
-                        notice("已解除排除", "success");
-                      })();
-                    };
-                    chip.appendChild(name);
-                    chip.appendChild(remove);
-                    excludeBox.appendChild(chip);
-                  });
-                };
-                renderExcludeRows();
+              type: "list",
+              name: "排除名单",
+              desc: "不参与监听自动加入的笔记，可在此单条解除",
+              items: () => (getSettings().reviewExcludedNotes || []).map((path) => ({ key: path, label: path })),
+              emptyText: "暂无排除笔记",
+              removeLabel: "解除",
+              onChange: (keys) => {
+                void (async () => {
+                  const prev = getSettings().reviewExcludedNotes || [];
+                  const removed = prev.filter((p) => !keys.includes(p));
+                  if (removed.length === 0) return;
+                  const { ReviewWatcher: ReviewWatcher2 } = await Promise.resolve().then(() => (init_watch(), watch_exports));
+                  const watcher = new ReviewWatcher2(deps.app, deps.dataManager);
+                  for (const path of removed) await watcher.removeExcludedNote(path);
+                  notice("已解除排除", "success");
+                })();
               }
             }
           ]
@@ -31823,10 +31898,8 @@ ${n.content.slice(0, 2e3)}
   }
   var init_settings_schema2 = __esm({
     "src/review/settings-schema.ts"() {
-      init_fake_obsidian();
       init_notice();
       init_settings_provider();
-      init_ui();
     }
   });
 
@@ -37889,6 +37962,15 @@ ${text}`;
       avgChunksPerNote: noteCount ? Math.round(chunkCount / noteCount * 10) / 10 : 0
     };
   }
+  function lanIpDesc() {
+    if (isMobileEnv()) return "";
+    const lanIPs = getLanIPs();
+    if (lanIPs.length === 0) {
+      return "未能探测本机局域网 IP，请确认电脑已联网，移动端远程地址需手动填写电脑的局域网 IP";
+    }
+    const primary = pickPrimaryLanIp(lanIPs);
+    return `本机当前局域网 IP 为 ${lanIPs.map((l) => `${l.ip}，${l.iface}`).join("；")}。移动端连不上时，把远程地址填为${primary ? ` ${formatRemoteOllamaUrl(primary.ip)}` : "此处 IP"}`;
+  }
   function secondBrainSettingsSchema() {
     let reloadWarned = false;
     const warnReload = () => {
@@ -37896,7 +37978,6 @@ ${text}`;
       reloadWarned = true;
       notice("第二大脑设置已保存，重载插件后生效", "info");
     };
-    let remoteUrlText = null;
     const trimStore = (key) => (v) => {
       getSettings()[key] = v.trim();
     };
@@ -37933,54 +38014,53 @@ ${text}`;
           name: "基础",
           rows: [
             { type: "text", name: "Ollama 本地 URL", binding: { key: "secondBrainOllamaUrl" }, onChange: trimStore("secondBrainOllamaUrl") },
-            // 远程 Ollama URL（移动端）：custom 持输入框引用（「填入远程 URL」按钮覆盖后即时回显）
+            // 远程 Ollama URL（移动端）：声明 text 行 + 行内「填入远程 URL」按钮（actions 统一实现，
+            // 动作完成后渲染器重读绑定回填显示——custom 输入框引用持快手已退役）
             {
-              type: "custom",
-              render: (body) => {
-                new Setting(body).setName("远程 Ollama URL（移动端）").addText((t) => {
-                  var _a2;
-                  remoteUrlText = t;
-                  t.setValue(String((_a2 = tryGetSettings().secondBrainRemoteOllamaUrl) != null ? _a2 : "")).onChange(
-                    (v) => trimStore("secondBrainRemoteOllamaUrl")(v)
-                  );
-                });
-              }
-            },
-            // ticket 122：本机局域网 IP（移动端连不上的自查路径；仅桌面端探测显示）
-            {
-              type: "custom",
-              render: (body) => {
-                if (!isMobileEnv()) {
+              type: "text",
+              name: "移动端远程地址",
+              desc: "手机上连本地向量库走这个地址",
+              binding: { key: "secondBrainRemoteOllamaUrl" },
+              onChange: (v) => trimStore("secondBrainRemoteOllamaUrl")(v),
+              actions: [{
+                text: "填入远程 URL",
+                cta: true,
+                onClick: () => {
                   const lanIPs = getLanIPs();
                   const primary = pickPrimaryLanIp(lanIPs);
-                  const ipDesc = lanIPs.length > 0 ? `本机当前局域网 IP：${lanIPs.map((l) => `${l.ip}（${l.iface}）`).join("、")}。移动端连不上时，把上方远程 URL 填为此处 IP` : "未能探测本机局域网 IP（请确认电脑已联网），移动端远程 URL 需手动填写电脑的局域网 IP";
-                  new Setting(body).setName("本机局域网 IP（电脑）").setDesc(ipDesc).addButton(
-                    (btn) => btn.setButtonText("填入远程 URL").setCta().onClick(() => {
-                      if (!primary) {
-                        notice("未探测到本机局域网 IP，请手动填写");
-                        return;
-                      }
-                      const target = formatRemoteOllamaUrl(primary.ip);
-                      void openFlowDialog({
-                        title: "填入远程 Ollama URL",
-                        message: `将「远程 Ollama URL（移动端）」覆盖为 ${target}？`,
-                        actions: [
-                          { label: "取消", value: "cancel" },
-                          { label: "覆盖", value: "ok", cta: true }
-                        ]
-                      }).then((v) => {
-                        if (v === "ok") {
-                          getSettings().secondBrainRemoteOllamaUrl = target;
-                          void saveSettings();
-                          remoteUrlText == null ? void 0 : remoteUrlText.setValue(target);
-                        }
-                      });
-                    })
-                  );
-                } else {
-                  new Setting(body).setName("本机局域网 IP 提示").setDesc("移动端连不上远程向量库时，请在电脑上打开第二大脑设置，查看「本机局域网 IP（电脑）」并核对上方远程 URL");
+                  if (!primary) {
+                    notice("未探测到本机局域网 IP，请手动填写");
+                    return;
+                  }
+                  const target = formatRemoteOllamaUrl(primary.ip);
+                  return openFlowDialog({
+                    title: "填入远程 Ollama URL",
+                    message: `将「移动端远程地址」覆盖为 ${target}？`,
+                    actions: [
+                      { label: "取消", value: "cancel" },
+                      { label: "覆盖", value: "ok", cta: true }
+                    ]
+                  }).then((v) => {
+                    if (v === "ok") {
+                      getSettings().secondBrainRemoteOllamaUrl = target;
+                      void saveSettings();
+                    }
+                  });
                 }
-              }
+              }]
+            },
+            // 本机局域网 IP（展示行，actions 已并上侧「填入远程 URL」按钮；custom 双分支已退役）
+            {
+              type: "info",
+              name: "本机局域网 IP",
+              visibleWhen: () => !isMobileEnv(),
+              desc: lanIpDesc()
+            },
+            {
+              type: "info",
+              name: "局域网 IP 提示",
+              visibleWhen: () => isMobileEnv(),
+              desc: "连不上远程库时，在电脑上查看本机 IP 并核对上方地址"
             },
             { type: "text", name: "Embedding 模型", binding: { key: "secondBrainEmbeddingModel" }, onChange: trimStore("secondBrainEmbeddingModel") },
             // 白名单目录（ticket 128 统一选择器：chips + 选择按钮；存储格式冻结——英文逗号分隔字符串）
@@ -38135,7 +38215,6 @@ ${text}`;
   var SecondBrainPanel;
   var init_panel2 = __esm({
     "src/secondbrain/panel.ts"() {
-      init_fake_obsidian();
       init_notice();
       init_z_order();
       init_mobile();
@@ -39425,25 +39504,24 @@ ${text}`;
             { type: "toggle", name: "自动跳过休息", desc: "专注结束后直接进入下一个专注", binding: { key: "pomodoroAutoSkipBreak" }, onChange: () => render() },
             { type: "toggle", name: "声音提醒", desc: "阶段切换时播放提示音", binding: soundToggle, onChange: () => render() },
             { type: "toggle", name: "后台自动暂停", desc: "窗口隐藏时暂停，恢复可见后自动继续", binding: autoPauseToggle, onChange: () => render() },
-            // 提示音音量 + 「试听」：slider 行不支持同行附加按钮 → custom 插槽保行为（原 Setting 链逐字；
-            // 名称/描述在插槽内部声明，schema 行不声明 name/desc——lint 引擎跳过 custom 行）
+            // 提示音音量 + 「试听」：行内附加按钮（actions，渲染器统一实现——custom 插槽已退役）
             {
-              type: "custom",
-              render: (body) => {
-                new Setting(body).setName("提示音音量").setDesc("提示音大小，默认最大").addSlider((sl) => {
-                  var _a2;
-                  sl.setLimits(0, 100, 5).setValue((_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100).setDynamicTooltip();
-                  sl.onChange(async (v) => {
-                    getSettings().pomodoroVolume = v;
-                    await saveSettings();
-                  });
-                }).addButton(
-                  (b) => b.setButtonText("试听").onClick(() => {
-                    var _a2;
-                    playSound("focus-start", (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100);
-                  })
-                );
-              }
+              type: "slider",
+              name: "提示音音量",
+              desc: "提示音大小，默认最大",
+              binding: { get: () => {
+                var _a2;
+                return (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100;
+              }, set: (v) => {
+                getSettings().pomodoroVolume = v;
+              }, save: () => saveSettings() },
+              min: 0,
+              max: 100,
+              step: 5,
+              actions: [{ text: "试听", onClick: () => {
+                var _a2;
+                return playSound("focus-start", (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100);
+              } }]
             },
             {
               type: "select",
@@ -39616,7 +39694,6 @@ ${text}`;
   var dataManager2, state2, history, loaded2, maskEl, escHandle3, timerId, appRef2, autoPauseMain, visibilityHandler, lastStatsKey, initInflight, openInflight;
   var init_ui11 = __esm({
     "src/pomodoro/ui.ts"() {
-      init_fake_obsidian();
       init_fake_obsidian();
       init_esc_manager();
       init_z_order();
@@ -40148,33 +40225,21 @@ ${text}`;
       name: "外观",
       rows: [
         {
-          type: "custom",
-          render: (body) => {
-            const config = opts.getConfig();
-            const grid = document.createElement("div");
-            grid.className = "bz-sc-skin-grid";
-            for (const skin of SKINS) {
-              const item = document.createElement("button");
-              item.className = "bz-sc-skin-item" + (skin === config.appearance ? " active" : "");
-              item.dataset.skin = skin;
-              const swatch = document.createElement("span");
-              swatch.className = "bz-sc-skin-swatch bz-sc-skin-swatch-" + skin;
-              const name = document.createElement("span");
-              name.className = "bz-sc-skin-name";
-              name.textContent = skinLabel(skin);
-              item.appendChild(swatch);
-              item.appendChild(name);
-              item.addEventListener("click", async () => {
-                var _a2;
-                if (opts.getConfig().appearance === skin) return;
-                opts.getConfig().appearance = skin;
-                for (const n of Array.from(grid.querySelectorAll(".bz-sc-skin-item"))) n.classList.toggle("active", n === item);
-                await opts.saveConfig(opts.getConfig());
-                (_a2 = opts.onAppearanceChanged) == null ? void 0 : _a2.call(opts, skin);
-              });
-              grid.appendChild(item);
-            }
-            body.appendChild(grid);
+          // 皮肤选择（choiceCards 标准行，custom 自绘格子已退役）：色块视觉由域 CSS 提供
+          // （prevClass → .bz-sc-prev-<skin>，面板 mini 与 ⚙️ 卡片两渲染器同类）
+          type: "choiceCards",
+          name: "面板皮肤",
+          binding: {
+            get: () => opts.getConfig().appearance,
+            set: (v) => {
+              opts.getConfig().appearance = v;
+            },
+            save: () => opts.saveConfig(opts.getConfig())
+          },
+          options: SKINS.map((skin) => ({ value: skin, label: skinLabel(skin), prevClass: `bz-sc-prev-${skin}` })),
+          onChange: (v) => {
+            var _a2;
+            return (_a2 = opts.onAppearanceChanged) == null ? void 0 : _a2.call(opts, v);
           }
         }
       ]
@@ -40241,25 +40306,27 @@ ${text}`;
           icon: "folder-open",
           name: "记忆目录",
           rows: [
+            // 通用 path 行（multi chips，两渲染器统一实现——custom 套 renderPathSettingRow 已退役）
             {
-              type: "custom",
-              render: (body) => {
-                renderPathSettingRow({
-                  parent: body,
-                  name: "记忆目录",
-                  desc: "这些文件夹内的笔记会进入小橘的记忆库（日记按时间段拆条）；移除目录会清掉对应记忆",
-                  mode: "multi",
-                  value: normalizeMemoryDirectories(tryGetSettings().memoryDirectories),
-                  pickerTitle: "选择记忆目录",
-                  pickerDesc: "选择小橘读取笔记的文件夹（可多选）",
-                  onChange: (list) => {
-                    var _a2;
-                    const next = normalizeMemoryDirectories(list);
-                    getSettings().memoryDirectories = next;
-                    void saveSettings();
-                    (_a2 = opts.onMemoryDirectoriesChanged) == null ? void 0 : _a2.call(opts, next);
-                  }
-                });
+              type: "path",
+              mode: "multi",
+              name: "记忆目录",
+              desc: "文件夹内的笔记会进入小橘的记忆库，移除目录会清掉对应记忆",
+              binding: {
+                get: () => normalizeMemoryDirectories(tryGetSettings().memoryDirectories),
+                set: () => {
+                },
+                save: () => {
+                }
+              },
+              pickerTitle: "选择记忆目录",
+              pickerDesc: "选择小橘读取笔记的文件夹（可多选）",
+              onChange: (list) => {
+                var _a2;
+                const next = normalizeMemoryDirectories(list);
+                getSettings().memoryDirectories = next;
+                void saveSettings();
+                (_a2 = opts.onMemoryDirectoriesChanged) == null ? void 0 : _a2.call(opts, next);
               }
             }
           ]
@@ -40338,7 +40405,6 @@ ${text}`;
       init_esc_manager();
       init_settings_modal();
       init_settings_provider();
-      init_path_picker();
       init_config5();
       CAT_CONTAINER_ID = "smart-companion-cat";
       SKINS = ["orange", "gray", "black", "white", "calico", "neon", "galaxy", "liquidMetal", "fire", "crystal", "cyberpunk", "rainbow", "hologram"];

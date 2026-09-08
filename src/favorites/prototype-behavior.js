@@ -4136,9 +4136,6 @@ var BZW_favorites = (() => {
     }
     return _provider();
   }
-  function tryGetSettings() {
-    return _provider ? _provider() : {};
-  }
 
   // src/favorites/config.ts
   var CONFIG = {
@@ -5061,7 +5058,7 @@ var BZW_favorites = (() => {
      *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
      *  既有调用（不传这两项）行为零变化 */
     async prompt(promptText, model = this.defaultModel, options = {}) {
-      var _a, _b;
+      var _a;
       const mergedOptions = this._mergeOptions(options);
       const provider = await getAIProvider(mergedOptions.provider);
       const s = getQ3Settings();
@@ -5078,18 +5075,6 @@ var BZW_favorites = (() => {
       for (const k of Object.keys(mo)) {
         if (k === "max_tokens") continue;
         body[k] = mo[k];
-      }
-      for (const [key, settingsKey] of [
-        ["temperature", "aiTemperature"],
-        ["top_p", "aiTopP"],
-        ["frequency_penalty", "aiFrequencyPenalty"],
-        ["presence_penalty", "aiPresencePenalty"]
-      ]) {
-        if (body[key] !== void 0) continue;
-        const raw = String((_b = s[settingsKey]) != null ? _b : "").trim();
-        if (raw === "") continue;
-        const n = Number(raw);
-        if (Number.isFinite(n)) body[key] = n;
       }
       const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
       const onDelta = typeof mergedOptions.onDelta === "function" ? mergedOptions.onDelta : void 0;
@@ -5298,10 +5283,6 @@ var BZW_favorites = (() => {
   // src/core/mobile.ts
   function isMobileEnv() {
     return typeof Platform !== "undefined" && !!Platform.isMobile;
-  }
-  function applyMobileWindowFullscreen(popup, enabled) {
-    if (!popup) return;
-    popup.classList.toggle("bz-win-mfs", isMobileEnv() && !!enabled);
   }
 
   // src/core/utils.ts
@@ -5679,7 +5660,6 @@ var BZW_favorites = (() => {
     _ai = ai;
   }
   function openPanel(app, dm, ai) {
-    var _a;
     initFavoritesUI(app, dm, ai);
     if (M.overlay) {
       closePanel();
@@ -5692,10 +5672,6 @@ var BZW_favorites = (() => {
     topifyZ(overlay);
     M.overlay = overlay;
     M.renderFn = () => renderAll();
-    applyMobileWindowFullscreen(
-      overlay.querySelector(".bz-fav-panel"),
-      ((_a = tryGetSettings()) == null ? void 0 : _a.favoritesMobileDefaultFullscreen) === true
-    );
     mountIcons(overlay);
     ensureFavoritesEsc();
     overlay.addEventListener("click", (e) => {
@@ -6229,9 +6205,7 @@ GitHub 仓库：${ghInfo.title}
   }
   function injectSettings() {
     setSettingsProvider(
-      () => ({
-        favoritesMobileDefaultFullscreen: false
-      })
+      () => ({})
     );
   }
   function bootFavoritesSim() {
