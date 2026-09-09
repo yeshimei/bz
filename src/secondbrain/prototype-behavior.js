@@ -65,6 +65,9 @@ var BZW_secondbrain = (() => {
       Platform = {
         isMobile: typeof window !== "undefined" && window.innerWidth <= 768
       };
+      if (typeof globalThis !== "undefined") {
+        globalThis.obsidian = globalThis.obsidian || { Platform };
+      }
       MarkdownRenderer = {
         async render(_app2, md, el) {
           const html = String(md).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\n/g, "<br>");
@@ -7469,7 +7472,7 @@ var BZW_secondbrain = (() => {
   function panelLogHtml(parts) {
     return parts.map((p) => `<span class="bz-sb-log-item${p.warn ? " bz-sb-log-item--warn" : ""}">${escapeHtml2(p.text)}</span>`).join('<span class="bz-sb-log-sep">·</span>');
   }
-  function chatShellHtml(topK, model) {
+  function chatShellHtml(topK) {
     return `
   <div class="bz-sb-chat-head">
     <div class="bz-sb-glyph bz-sb-chat-glyph">${ic("brain", 17)}</div>
@@ -7478,7 +7481,6 @@ var BZW_secondbrain = (() => {
       <div class="bz-sb-cnt">以库为底作答 · 单次检索 ${topK} 条相关段落</div>
     </div>
     <div class="bz-sb-head-sp"></div>
-    <div class="bz-sb-chat-model">${ic("sparkles", 11)}${escapeHtml2(model)}</div>
     <button class="bz-sb-chat-clear bz-sb-fbtn" id="bz-sb-chat-clear">${ic("history", 13)}清空对话</button>
   </div>
   <div class="bz-sb-chat-messages bz-sb-scroll-y" id="bz-sb-chat-messages"></div>
@@ -9329,7 +9331,7 @@ var BZW_secondbrain = (() => {
           this.mask = mask;
           this.popup = popup;
           this.popup.classList.add("bz-sb-chat-modal");
-          this.popup.innerHTML = chatShellHtml(CONFIG.CHAT_TOP_K, CONFIG.DEEPSEEK_MODEL);
+          this.popup.innerHTML = chatShellHtml(CONFIG.CHAT_TOP_K);
           mountIcons(this.popup);
           this.messagesDiv = this.popup.querySelector("#bz-sb-chat-messages");
           this.input = this.popup.querySelector("#bz-sb-chat-input");
@@ -17017,6 +17019,8 @@ ${text}`;
   init_panel();
   init_chat_panel();
   init_reference_panel();
+  init_mobile_panel();
+  init_config();
   var SimVectorStore = class {
     constructor() {
       this.dim = 1024;
@@ -17037,6 +17041,14 @@ ${text}`;
     hasPendingChanges() {
       return false;
     }
+    /** 移动端检索面（mobile-panel 消费）：与桌面 search 同一演示匹配链 */
+    async searchMobile(query, topK = 20) {
+      return this.search(query, topK);
+    }
+    /** mobile-panel AI tab 欢迎语消费面（store.notes 键数） */
+    get notes() {
+      return this.meta.notes;
+    }
     async refresh(cb) {
       if (this.refreshPromise) return this.refreshPromise;
       this.refreshPromise = (async () => {
@@ -17054,6 +17066,10 @@ ${text}`;
         await new Promise((r) => setTimeout(r, 280));
       }
       cb == null ? void 0 : cb("✅ 向量化完成：演示快照（全量重嵌）");
+    }
+    /** 移动端初始化（index.ts IS_MOBILE 分支调用；演示快照已就绪，无事可做） */
+    async initMobile() {
+      return null;
     }
     /** 演示检索：标题+段落包含计分（真 search 的降级文本匹配同形态输出） */
     async search(query, topK = 20) {
@@ -17093,6 +17109,7 @@ ${text}`;
   var panel2 = null;
   var chat2 = null;
   var reference2 = null;
+  var mobile2 = null;
   var DEMO_ANSWERS = [
     [
       ["遗忘", "记不住", "记忆"],
@@ -17211,11 +17228,22 @@ ${text}`;
   }
   async function openChat() {
     const s = await ensureStore();
+    if (IS_MOBILE) {
+      mobile2 != null ? mobile2 : mobile2 = new MobilePanel(simApp, s);
+      mobile2.switchTab("chat");
+      mobile2.show();
+      return;
+    }
     if (!chat2) chat2 = new ChatPanel(s, simApp);
     chat2.show();
   }
   async function openRef() {
     const s = await ensureStore();
+    if (IS_MOBILE) {
+      mobile2 != null ? mobile2 : mobile2 = new MobilePanel(simApp, s);
+      mobile2.show();
+      return;
+    }
     if (!reference2 || !reference2.alive) reference2 = new ReferencePanel(simApp, s);
     reference2.fw.show();
   }

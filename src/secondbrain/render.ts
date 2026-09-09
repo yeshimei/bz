@@ -326,8 +326,8 @@ export function panelLogHtml(parts: Array<{ text: string; warn?: boolean }>): st
 /** 推荐问法（静态引导集，原型常驻 chips） */
 export const CHAT_CHIPS = ['为什么会遗忘', '享乐适应', '怎么高效记笔记', '睡不好怎么补救', '闪电', '王阳明'];
 
-/** 对话弹窗骨架（头行/消息区/输入区） */
-export function chatShellHtml(topK: number, model: string): string {
+/** 对话弹窗骨架（头行/消息区/输入区；模型徽标已按用户要求摘除——头部只留清空对话） */
+export function chatShellHtml(topK: number): string {
   return `
   <div class="bz-sb-chat-head">
     <div class="bz-sb-glyph bz-sb-chat-glyph">${ic('brain', 17)}</div>
@@ -336,7 +336,6 @@ export function chatShellHtml(topK: number, model: string): string {
       <div class="bz-sb-cnt">以库为底作答 · 单次检索 ${topK} 条相关段落</div>
     </div>
     <div class="bz-sb-head-sp"></div>
-    <div class="bz-sb-chat-model">${ic('sparkles', 11)}${escapeHtml(model)}</div>
     <button class="bz-sb-chat-clear bz-sb-fbtn" id="bz-sb-chat-clear">${ic('history', 13)}清空对话</button>
   </div>
   <div class="bz-sb-chat-messages bz-sb-scroll-y" id="bz-sb-chat-messages"></div>

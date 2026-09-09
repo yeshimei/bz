@@ -21,7 +21,11 @@
 <script src="./prototype-behavior.js"></script>
 <style>
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  /* 主面板超高时 iframe 内滚动（与插件「面板随视图滚动」同语义）；chat/ref 均为
+     fixed 定位弹层，不受影响 */
+  html { overflow: hidden; }
+  body { overflow-y: auto; overflow-x: hidden; }
   body { background: #e9e7e1; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
   /* 模拟 Obsidian 宿主变量（core 弹层/菜单取值用；插件内由主题提供） */
   body {
