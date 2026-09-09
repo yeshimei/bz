@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>第二大脑 · 原型预览（真行为单源）</title>
+<!--
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ 本文件 = 第二大脑域 UI 的评审壳（行为单源版，issue 251 / ADR-0106/0110）。│
+  │ 组件样式零内联，全部来自（与 build-css SOURCES 同序）：                    │
+  │   ../core/styles.css → ../core/ui/tokens.css → ../core/ui/components.css │
+  │   → ./styles.css                                                        │
+  │ 行为单源：三界面交互全部是插件同款行为文件——经 ./prototype-behavior.js     │
+  │   （src/secondbrain/fake-sim.ts 构建，alias obsidian→公共假层）在 iframe   │
+  │   视图里跑真行为；三个 tab = prototype-view.html?iface=panel|chat|ref，    │
+  │   每 tab 桌面（920）+ 手机框（396）双实例：396 窄视口命中假 Platform      │
+  │   ≤768 判定与 @media，openChat/openRef 真分发到 MobilePanel 抽屉          │
+  │   （书库 issue 233 同款壳范式）。                                         │
+  │ 数据 = CONFIG/STORAGE/secondbrain.json 种子（localStorage 文件系统；       │
+  │   真实库快照精简同构，65 篇样本 + 真实库摘要/建链/上一场对话）。            │
+  │ AI = fake-sim 拦截 /chat/completions 返回策划 SSE 流（core/ai 流式解析、   │
+  │   onDelta、取消全真跑）；向量检索走真降级文本匹配链。                      │
+  │ 移动端抽屉样式本批不动（无移动原型，ADR-0110 §4）——手机框呈现的是插件      │
+  │   当前真实移动渲染（旧抽屉皮），待移动原型轮换血。                         │
+  │ 壳内只允许：外景容器样式、评审徽牌、演示钩子与自检。                        │
+  └────────────────────────────────────────────────────────────────────────┘
+-->
+<link rel="stylesheet" href="../../src/core/styles.css">
+<link rel="stylesheet" href="../../src/core/ui/tokens.css">
+<link rel="stylesheet" href="../../src/core/ui/components.css">
+<link rel="stylesheet" href="../../src/secondbrain/styles.css">
+<style>
+  /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 26px 24px;
+    background: #dcd8cd; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+  body {
+    --background-primary: #fbfaf7; --text-normal: #211d16; --text-muted: #8b8474; --text-faint: #b3ab99;
+    --text-error: #b3564d; --background-modifier-hover: rgba(33,29,22,.06); --color-green: #3d8f5d;
+  }
+  * { scrollbar-width: none; } *::-webkit-scrollbar { display: none; }
+
+  /* 界面切换 tab（评审导航） */
+  .tabs { display: flex; gap: 8px; }
+  .tab { font-size: 12.5px; padding: 6px 16px; border-radius: 99px; border: 1px solid #b8b0a0; background: rgba(255,255,255,.85);
+    color: #544e42; cursor: pointer; user-select: none; }
+  .tab.on { background: #211d16; color: #fbfaf7; border-color: #211d16; }
+  /* 桌面外景（真行为 iframe：面板 append iframe body；主面板超高时 iframe 内滚动，
+     与插件「面板随视图滚动」同语义） */
+  .demo-dt { flex: none; width: 920px; height: 860px; }
+  /* 移动外景：396px iframe → 视口 ≤768 命中假 Platform.isMobile 与 @media 移动布局 */
+  .demo-mob { width: 396px; height: 780px; border-radius: 26px; overflow: hidden; flex: none;
+    border: 1px solid #9a948a; box-shadow: 0 8px 30px rgba(0,0,0,.2); background: #1d1510; }
+  /* 尺寸只由 .demo-dt/.demo-mob 给（.demo-frame 若再写 width/height:100% 会以同特异性
+     后者胜出，把外景塌回 iframe 默认 300×150——本轮实测踩过） */
+  .demo-frame { border: 0; display: block; background: #e9e7e1; }
+  .frame-host { display: none; }
+  .frame-host.on { display: flex; flex-direction: column; align-items: center; gap: 26px; }
+
+  .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #8b8474; display: flex; gap: 10px; align-items: center;
+    background: rgba(255,255,255,.92); border: 1px solid #c9c2b2; padding: 3px 8px; z-index: 900; }
+  .vbadge button { border: none; background: none; color: #a33d2a; font: 11px 'Microsoft YaHei'; cursor: pointer; }
+</style>
+</head>
+<body class="theme-light">
+  <div class="tabs">
+    <button class="tab on" data-iface="panel">主面板</button>
+    <button class="tab" data-iface="chat">AI 对话</button>
+    <button class="tab" data-iface="ref">灵感参考</button>
+  </div>
+
+  <div class="frame-host on" data-host="panel">
+    <iframe class="demo-frame demo-dt" src="./prototype-view.html?iface=panel" title="第二大脑·主面板·桌面"></iframe>
+    <iframe class="demo-frame demo-mob" src="./prototype-view.html?iface=panel" title="第二大脑·主面板·移动"></iframe>
+  </div>
+  <div class="frame-host" data-host="chat">
+    <iframe class="demo-frame demo-dt" src="./prototype-view.html?iface=chat" title="第二大脑·AI 对话·桌面"></iframe>
+    <iframe class="demo-frame demo-mob" src="./prototype-view.html?iface=chat" title="第二大脑·AI 对话·移动"></iframe>
+  </div>
+  <div class="frame-host" data-host="ref">
+    <iframe class="demo-frame demo-dt" src="./prototype-view.html?iface=ref" title="第二大脑·灵感参考·桌面"></iframe>
+    <iframe class="demo-frame demo-mob" src="./prototype-view.html?iface=ref" title="第二大脑·灵感参考·移动"></iframe>
+  </div>
+
+  <div class="vbadge">第二大脑 · 真行为单源预览（桌面 920 / 移动 396，插件同款行为文件跑在种子库上）
+    <button id="mobToggle">隐藏移动端</button>
+    <button id="reset">重置演示数据</button>
+    <span id="stResult"></span>
+  </div>
+
+<script src="./prototype-icons.js"></script>
+<script src="./prototype-data.js"></script>
+<script>
+(function () {
+  /* ==================== 壳基座（仅外景）：tab 切换 + 种子重置 + 自检 ==================== */
+  const hosts = document.querySelectorAll('.frame-host');
+  document.querySelector('.tabs').addEventListener('click', (e) => {
+    const tab = e.target.closest('.tab');
+    if (!tab) return;
+    document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('on', t === tab));
+    hosts.forEach((h) => h.classList.toggle('on', h.dataset.host === tab.dataset.iface));
+  });
+
+  document.querySelector('#mobToggle').addEventListener('click', () => {
+    const mobs = document.querySelectorAll('.demo-mob');
+    const hide = mobs[0].style.display !== 'none';
+    mobs.forEach((m) => (m.style.display = hide ? 'none' : ''));
+    document.querySelector('#mobToggle').textContent = hide ? '显示移动端' : '隐藏移动端';
+  });
+
+  document.querySelector('#reset').addEventListener('click', () => {
+    const kill = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith('bz-sb-sim:') || k === 'sb-chat-v1')) kill.push(k);
+    }
+    kill.forEach((k) => localStorage.removeItem(k));
+    location.reload();
+  });
+
+  // 自检走 CDP：node _cdp-selftest.mjs 逐页打开 prototype-view.html?iface=X&selftest=1
+  // 轮询 document.title（书架-10 先例；file:// 跨 iframe 访问受限，自检不跨 frame）。
+})();
+</script>
+</body>
+</html>

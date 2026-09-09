@@ -71,7 +71,7 @@ describe('render 纯度守卫（ADR-0104）', () => {
 
   it('预览包已构建且在库（双击原型零依赖依赖它）', () => {
     for (const domain of PREVIEW_DOMAINS) {
-      const out = path.join(ROOT, 'src', domain, 'prototype-render.js');
+      const out = path.join(ROOT, 'prototypes', domain, 'prototype-render.js');
       expect(fs.existsSync(out), `${out} 缺失——跑 node scripts/build-preview.mjs`).toBe(true);
       const text = fs.readFileSync(out, 'utf8');
       // 连字符域名的 globalName 合法标识符形态（settings-panel → BZR_settings_panel，与 build-preview 同步）
