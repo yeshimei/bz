@@ -29,7 +29,7 @@
  * - 条目动作（issue 198 批次 A 收敛）：桌面右键 = core item-actions 跟手菜单（.bz-item-menu）；
  *   移动端单击 = 共享 .bz-sheet 底部抽屉（动作集与菜单不合并，维持域内现状）。
  */
-import { Component, MarkdownRenderer, type EventRef, type IconName } from 'obsidian';
+import { Component, MarkdownRenderer, type App, type EventRef, type IconName } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
 import { uiIcon, uiSearch } from '../core/ui';
@@ -125,6 +125,19 @@ const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
 /** issue 218：长文跨栏卡阈值——正文 ≥ 此字符数整卡跨瀑布全宽、卡内分栏（~800 字单列已明显坠长） */
 const WIDE_TEXT_MIN_CHARS = 800;
 
+/** 搜索输入防抖（停顿后才触发过滤） */
+const SEARCH_DEBOUNCE_MS = 250;
+/** 条目双击判定窗口（窗口内两次点击 = 双击跳转） */
+const DBLCLICK_WINDOW_MS = 300;
+/** 灯箱移动端滑动切图的水平位移阈值（垂直滚动不受影响） */
+const LB_SWIPE_THRESHOLD_PX = 40;
+/** 滚动高亮当前月份判定：节头相对墙顶 ≤ 此像素视为已过线 */
+const RAIL_HIGHLIGHT_EPSILON_PX = 8;
+/** DW6：章节跳转 smooth 滚动落定后的几何校正延时 */
+const SCROLL_FIX_DELAY_MS = 480;
+/** DW3：vault modify 自动刷新防抖 */
+const MODIFY_REFRESH_DEBOUNCE_MS = 400;
+
 /**
  * 滚动高亮的当前月份选取（纯函数，可单测）：
  * 取最后一个 relTop ≤ 8 的节头所属月份（relTop 为相对墙体的视口相对量，与滚动距离无关——
@@ -134,7 +147,7 @@ const WIDE_TEXT_MIN_CHARS = 800;
 export function pickCurrentMonth(heads: { date: string; relTop: number }[]): string | null {
   let current: string | null = null;
   for (const h of heads) {
-    if (h.relTop <= 8) current = h.date.slice(0, 7);
+    if (h.relTop <= RAIL_HIGHLIGHT_EPSILON_PX) current = h.date.slice(0, 7);
     else break;
   }
   return current;
@@ -263,8 +276,6 @@ export class DiaryWallAppController {
   /** 增强 #8：加密媒体解密结果缓存（noteId|kind|name → dataURL promise；失败也缓存避免重复解密风暴） */
   private encMediaCache = new Map<string, Promise<string | null>>();
 
-  constructor() {}
-
   // ---------- 创建 DOM（桌面 + 移动双实例，幂等） ----------
   ensureElements() {
     if (this._initialized) return;
@@ -278,20 +289,20 @@ export class DiaryWallAppController {
     // 桌面实例（面板卡，无关闭按钮——靠 mask + ESC）
     const desk = document.createElement('div');
     desk.className = 'bz-diary-wall-desk';
-    desk.innerHTML = this.deskHTML();
+    desk.innerHTML = this.panelHTML();
     this.mountSearch(desk);
     this.root.appendChild(desk);
     this.desk = this.bindRefs(desk);
     // 移动实例（真全屏）
     const mob = document.createElement('div');
     mob.className = 'bz-diary-wall-mob bz-panel-mtop';
-    mob.innerHTML = this.mobHTML();
+    mob.innerHTML = this.panelHTML();
     this.mountSearch(mob);
     this.root.appendChild(mob);
     this.mob = this.bindRefs(mob);
 
-    this.bindPanel(this.desk, false);
-    this.bindPanel(this.mob, true);
+    this.bindPanel(this.desk);
+    this.bindPanel(this.mob);
     this.decorateIcons(desk);
     this.decorateIcons(mob);
     this.bindLightbox();
@@ -336,17 +347,8 @@ export class DiaryWallAppController {
     };
   }
 
-  private deskHTML(): string {
-    return this.panelHTML();
-  }
-
-  private mobHTML(): string {
-    // 移动端与桌面共用面板骨架（真全屏由 CSS ≤768px 控制；头部带显式关闭按钮）
-    return this.panelHTML();
-  }
-
   /**
-   * 面板骨架（桌面/移动共用——两份 HTML 原本一字不差）。
+   * 面板骨架（桌面/移动共用——真全屏由 CSS ≤768px 控制，两份 HTML 一字不差）。
    * 增强包 #4：头行/灯箱按钮 emoji 换 lucide（ensureElements 后 decorateIcons 按 data-act 注入 uiIcon）；
    * 增强包 #10：年月跳转提为头部显式按钮（data-act="date-picker"，品牌行点击入口保留）；
    * 增强包 #1：灯箱加左右切换按钮（连看）。
@@ -417,7 +419,7 @@ export class DiaryWallAppController {
   }
 
   // ---------- 交互绑定 ----------
-  private bindPanel(ui: typeof this.desk, mobile: boolean) {
+  private bindPanel(ui: typeof this.desk) {
     // 关闭
     ui.head.querySelector('[data-act="close"]')?.addEventListener('click', () => this.hide());
     // 按日期筛选：品牌行点击 + 头部显式「按年月跳转」按钮（增强 #10）共用一个动作
@@ -452,7 +454,7 @@ export class DiaryWallAppController {
         this._searchTimer = null;
         this.searchKeyword = ui.searchBox.value;
         this.renderAll();
-      }, 250);
+      }, SEARCH_DEBOUNCE_MS);
     });
     // ESC 在搜索框内：只清空/失焦（不关面板）
     ui.searchBox.addEventListener('keydown', (e) => {
@@ -464,7 +466,6 @@ export class DiaryWallAppController {
         ui.searchBox.blur();
       }
     });
-    void mobile;
   }
 
   /** 灯箱通用绑定（双实例各一份；增强 #1：左右按钮 + 触摸滑动连看） */
@@ -483,7 +484,7 @@ export class DiaryWallAppController {
         e.stopPropagation();
         this.stepLightbox(1);
       });
-      // 移动端滑动切图：水平位移 ≥40px 判定（垂直滚动不受影响）
+      // 移动端滑动切图：水平位移 ≥ LB_SWIPE_THRESHOLD_PX 判定（垂直滚动不受影响）
       let touchX: number | null = null;
       ui.lb.addEventListener(
         'touchstart',
@@ -498,7 +499,7 @@ export class DiaryWallAppController {
           if (touchX === null) return;
           const dx = (e.changedTouches[0]?.clientX ?? touchX) - touchX;
           touchX = null;
-          if (Math.abs(dx) >= 40) this.stepLightbox(dx < 0 ? 1 : -1);
+          if (Math.abs(dx) >= LB_SWIPE_THRESHOLD_PX) this.stepLightbox(dx < 0 ? 1 : -1);
         },
         { passive: true }
       );
@@ -647,7 +648,7 @@ export class DiaryWallAppController {
       this.selTag = '加密';
       await this.mergeEncryptedEntries();
       this.renderAll();
-    } catch (e) {
+    } catch {
       notice('解密失败：主密码可能不正确，密文未受影响', 'error');
     }
   }
@@ -692,7 +693,7 @@ export class DiaryWallAppController {
         const dateCmp = b.date.localeCompare(a.date);
         return dateCmp !== 0 ? dateCmp : b.time.localeCompare(a.time);
       });
-    } catch (e) {
+    } catch {
       /* 加密域未初始化/设置未注入：视为无加密条目（降级链，不阻断） */
     }
   }
@@ -744,59 +745,75 @@ export class DiaryWallAppController {
     if (memories.length) ui.wall.appendChild(this.mkMemories(memories));
     // 章节栏（仅桌面）：壳 = .bz-rail 族（ADR-0094），月份行 = .bz-rail-item(.on) 形制
     if (!mobile) {
-      const scroll = document.createElement('div');
-      scroll.className = 'bz-rail-scroll';
-      const title = document.createElement('div');
-      title.className = 'bz-diary-wall-rail-title';
-      title.textContent = '章 节';
-      scroll.appendChild(title);
-      // 章节栏月份 = groupByMonth(list) 的 key，倒序（对齐数据层契约）
-      const byMonth = groupByMonth(list);
-      const months = [...byMonth.keys()].sort().reverse();
-      // 增强 #2：年份分组——跨年处插年份分隔标签（data-month 仍存完整 YYYY-MM，定位逻辑不动）
-      let lastYear = '';
-      months.forEach((mk) => {
-        const yr = mk.slice(0, 4);
-        if (yr !== lastYear) {
-          lastYear = yr;
-          const yLabel = document.createElement('div');
-          yLabel.className = 'bz-diary-wall-rail-year';
-          yLabel.textContent = yr;
-          scroll.appendChild(yLabel);
-        }
-        const it = document.createElement('div');
-        it.className = 'bz-rail-item bz-diary-wall-month';
-        it.dataset.month = mk;
-        const name = document.createElement('span');
-        name.className = 'bz-rail-name';
-        name.textContent = `${Number(mk.slice(5))}月`;
-        const cnt = document.createElement('span');
-        cnt.className = 'bz-rail-count';
-        cnt.textContent = `${byMonth.get(mk)!.length} 条`;
-        it.append(name, cnt);
-        // 胶卷缩略图条（issue 210）：只收图片/视频条目（文字/纯音频不占格——
-        // 旧版 emoji/图标格什么都不显示），一行最多 5 格；图片 lazy+async，
-        // 视频进视口才 preload=metadata 读首帧（setupRailLazy），修开墙全量解码卡顿
-        const strip = document.createElement('div');
-        strip.className = 'bz-diary-wall-month-strip';
-        byMonth
-          .get(mk)!
-          .map((e) => ({ e, m: e.media.find((x) => x.kind === 'img' || x.kind === 'video') }))
-          .filter((x) => x.m)
-          .slice(0, 5)
-          .forEach(({ e, m }) => strip.appendChild(this.thumbEl(m!, e)));
-        if (!strip.children.length) strip.style.display = 'none';
-        it.appendChild(strip);
-        // DW8：点击滚动由 bindPanel 的 rail 委托统一处理（此处原逐月再绑一次 → 双触发 smooth 滚动）
-        scroll.appendChild(it);
-      });
-      ui.rail.appendChild(scroll);
+      ui.rail.appendChild(this.mkRailScroll(list));
       // issue 210：章节栏视频缩略懒加载（进视口才读首帧，修「开墙全量解码」卡顿）
       this.setupRailLazy(ui.rail, 'desk');
     }
-    // 瀑布：按日期分节
     // 条目 → 数据索引表（右键委托用）：list 是本次渲染的过滤后列表，widx 即其在 list 中的下标
     this._wallEntries = list;
+    this.renderMasonry(ui, mobile, list);
+    this.setupLazy(ui.wall, mobile ? 'mob' : 'desk');
+    this.bindWallContext(ui.wall, mobile ? 'mob' : 'desk');
+    if (!mobile && ui.rail.children.length > 0) {
+      this.setupRailHighlight(ui.wall, ui.rail, 'desk');
+    }
+  }
+
+  /**
+   * 章节栏构建（仅桌面调用）：标题 + 年份分组月份行（含胶卷缩略条）。
+   * 月份 = groupByMonth(list) 的 key 倒序（对齐数据层契约）。
+   */
+  private mkRailScroll(list: WallEntry[]): HTMLElement {
+    const scroll = document.createElement('div');
+    scroll.className = 'bz-rail-scroll';
+    const title = document.createElement('div');
+    title.className = 'bz-diary-wall-rail-title';
+    title.textContent = '章 节';
+    scroll.appendChild(title);
+    const byMonth = groupByMonth(list);
+    const months = [...byMonth.keys()].sort().reverse();
+    // 增强 #2：年份分组——跨年处插年份分隔标签（data-month 仍存完整 YYYY-MM，定位逻辑不动）
+    let lastYear = '';
+    months.forEach((mk) => {
+      const yr = mk.slice(0, 4);
+      if (yr !== lastYear) {
+        lastYear = yr;
+        const yLabel = document.createElement('div');
+        yLabel.className = 'bz-diary-wall-rail-year';
+        yLabel.textContent = yr;
+        scroll.appendChild(yLabel);
+      }
+      const it = document.createElement('div');
+      it.className = 'bz-rail-item bz-diary-wall-month';
+      it.dataset.month = mk;
+      const name = document.createElement('span');
+      name.className = 'bz-rail-name';
+      name.textContent = `${Number(mk.slice(5))}月`;
+      const cnt = document.createElement('span');
+      cnt.className = 'bz-rail-count';
+      cnt.textContent = `${byMonth.get(mk)!.length} 条`;
+      it.append(name, cnt);
+      // 胶卷缩略图条（issue 210）：只收图片/视频条目（文字/纯音频不占格——
+      // 旧版 emoji/图标格什么都不显示），一行最多 5 格；图片 lazy+async，
+      // 视频进视口才 preload=metadata 读首帧（setupRailLazy），修开墙全量解码卡顿
+      const strip = document.createElement('div');
+      strip.className = 'bz-diary-wall-month-strip';
+      byMonth
+        .get(mk)!
+        .map((e) => ({ e, m: e.media.find((x) => x.kind === 'img' || x.kind === 'video') }))
+        .filter((x) => x.m)
+        .slice(0, 5)
+        .forEach(({ e, m }) => strip.appendChild(this.thumbEl(m!, e)));
+      if (!strip.children.length) strip.style.display = 'none';
+      it.appendChild(strip);
+      // DW8：点击滚动由 bindPanel 的 rail 委托统一处理（此处原逐月再绑一次 → 双触发 smooth 滚动）
+      scroll.appendChild(it);
+    });
+    return scroll;
+  }
+
+  /** 瀑布流：按日期分节渲染（节头 sticky + 当日 masonry 容器；媒体卡/文字卡） */
+  private renderMasonry(ui: typeof this.desk, mobile: boolean, list: WallEntry[]) {
     // issue 217 F8：日期 → 条目表一次预聚合（旧实现每节 list.filter，O(n²)）
     const byDate = new Map<string, WallEntry[]>();
     list.forEach((e) => {
@@ -856,7 +873,7 @@ export class DiaryWallAppController {
           row.append(t, em);
           const tx = document.createElement('div');
           tx.className = 'bz-diary-wall-text-tx bz-diary-wall-md' + (isLongText ? ' bz-diary-wall-wide-md' : '');
-          if ((e.encrypted || e.tags.includes('加密')) && !this.lockedVisible) {
+          if (this.isEncHidden(e)) {
             tx.textContent = '（已加密）';
           } else {
             void this.renderText(tx, e.text, e);
@@ -884,11 +901,6 @@ export class DiaryWallAppController {
       }
       widx++;
     });
-    this.setupLazy(ui.wall, mobile ? 'mob' : 'desk');
-    this.bindWallContext(ui.wall, mobile ? 'mob' : 'desk');
-    if (!mobile && ui.rail.children.length > 0) {
-      this.setupRailHighlight(ui.wall, ui.rail, 'desk');
-    }
   }
 
   /** 文字卡（时间 + emoji + markdown 正文；加密未解锁显示占位）——纯文字条目与段序渲染共用 */
@@ -907,7 +919,7 @@ export class DiaryWallAppController {
     row.append(t, em);
     const tx = document.createElement('div');
     tx.className = 'bz-diary-wall-text-tx bz-diary-wall-md';
-    if ((e.encrypted || e.tags.includes('加密')) && !this.lockedVisible) {
+    if (this.isEncHidden(e)) {
       tx.textContent = '（已加密）';
     } else {
       void this.renderText(tx, text, e);
@@ -951,9 +963,9 @@ export class DiaryWallAppController {
     // 双击跳转（300ms 内两次点击）
     let lastClick = 0;
     item.addEventListener('click', (ev) => {
-      if ((e.encrypted || e.tags.includes('加密')) && !this.lockedVisible) return;
+      if (this.isEncHidden(e)) return;
       const now = Date.now();
-      if (now - lastClick < 300) {
+      if (now - lastClick < DBLCLICK_WINDOW_MS) {
         lastClick = 0;
         void this.jumpTo(e);
         return;
@@ -979,7 +991,7 @@ export class DiaryWallAppController {
         const idx = Number(item.dataset.widx);
         const e = this._wallEntries[idx];
         if (!e || Number.isNaN(idx)) return;
-        if ((e.encrypted || e.tags.includes('加密')) && !this.lockedVisible) return;
+        if (this.isEncHidden(e)) return;
         ev.preventDefault();
         ev.stopPropagation();
         ev.stopImmediatePropagation();
@@ -1024,7 +1036,7 @@ export class DiaryWallAppController {
         notice('找不到原文', 'error');
         return;
       }
-      await jumpToEntry(entry as any);
+      await jumpToEntry(entry);
       this.hide(); // 跳转后关回忆墙（对齐 diary 面板行为）
     } catch (err) {
       notice('跳转失败', 'error');
@@ -1102,6 +1114,11 @@ export class DiaryWallAppController {
   /** 特殊条目（影视/信/书）：整文件即条目，无日记 md 块语义（对齐 diary 面板 !special 语义） */
   private isSpecialWallEntry(e: WallEntry): boolean {
     return e.kind === 'movie' || e.kind === 'letter' || e.kind === 'book';
+  }
+
+  /** 加密条目锁定态（encrypted 标志或「加密」标签，且保险箱未解锁）：正文显示占位、不响应动作 */
+  private isEncHidden(e: WallEntry): boolean {
+    return (e.encrypted || e.tags.includes('加密')) && !this.lockedVisible;
   }
 
   /**
@@ -1344,7 +1361,7 @@ export class DiaryWallAppController {
     wrap.addEventListener('dblclick', (e) => {
       e.stopPropagation();
       if (mobile) return;
-      if ((entry.encrypted || entry.tags.includes('加密')) && !this.lockedVisible) return;
+      if (this.isEncHidden(entry)) return;
       if (this.lbVisible()) this.closeLightbox();
       void this.jumpTo(entry);
     });
@@ -1379,7 +1396,7 @@ export class DiaryWallAppController {
       const b64 = await safe.decryptAttachmentOriginal(att);
       if (!b64) return null;
       return `data:${mimeOfMediaName(k.name)};base64,${b64}`;
-    } catch (e) {
+    } catch {
       return null; // 加密域未初始化/密码本未注入：保持占位不阻断
     }
   }
@@ -1680,7 +1697,7 @@ export class DiaryWallAppController {
       if (!h) return;
       const t2 = wall.scrollTop + (this.flowTopOf(h, wall.getBoundingClientRect()) - 6);
       if (Math.abs(t2 - wall.scrollTop) > 2) wall.scrollTo({ top: Math.max(0, t2) });
-    }, 480);
+    }, SCROLL_FIX_DELAY_MS);
   }
 
   /**
@@ -1930,16 +1947,11 @@ export class DiaryWallAppController {
    * 改标签：接 diary showTagPicker。
    * 提速：优先在 diary state 里按 filename+lineNumber 定位真实条目（回忆墙与 diary 同源解析，行号一致），
    * 找到即弹窗，**不做全量 loadAll**（原实现每次改标签都全量重读日记，数据多时很慢）；
-   * 仅当 diary state 无该条目时才 loadAll 一次并重试。
+   * 仅当 diary state 无该条目时才 loadAll 一次并重试（收口在 findDiaryEntry）。
    */
-  private editTags(e: WallEntry) {
-    void this.openTagPicker(e, false);
-  }
-
-  private async openTagPicker(e: WallEntry, afterLoad: boolean) {
+  private async editTags(e: WallEntry) {
     try {
-      // P1 审查修复：反查收口到 findDiaryEntry（filename+lineNumber，必要时全量加载一次后重试）
-      const entry = await this.findDiaryEntry(e, afterLoad);
+      const entry = await this.findDiaryEntry(e);
       if (entry && entry.id) {
         const { showTagPicker } = await import('../diary/ui/dialogs') as typeof import('../diary/ui/dialogs');
         showTagPicker(entry.id);
@@ -2048,7 +2060,7 @@ export class DiaryWallAppController {
     try {
       const { loadAll } = await import('../diary/store') as typeof import('../diary/store');
       await loadAll();
-    } catch (e) {
+    } catch {
       /* 忽略：diary 未初始化时降级 */
     }
   }
@@ -2061,104 +2073,112 @@ export class DiaryWallAppController {
       ui.sheetTime.textContent = `${e.date}  ${e.time}  ·  ${e.tags.join(' ')}`;
       // issue 217 S6：抽屉预览去媒体嵌入语法（![[xxx.jpg]] 原样外露）
       ui.sheetContent.textContent = stripMediaLinks(e.content) || '（仅媒体）';
-      const mbox = ui.sheetMedia;
-      mbox.innerHTML = '';
-      e.media.forEach((k) => {
-        const mt = document.createElement('div');
-        mt.className = 'bz-diary-wall-sheet-thumb';
-        const src = this.mediaSrcFor(e, k.name);
-        if (k.kind === 'img') {
-          const img = document.createElement('img');
-          img.alt = k.name;
-          // 增强 #8：加密条目缩略图也走按需解密
-          if (e.encrypted) {
-            void this.encMediaUrl(e.noteId || '', k).then((url) => {
-              if (url && img.isConnected) img.src = url;
-            });
-          } else if (src) {
-            img.src = src;
-          }
-          mt.appendChild(img);
-        } else {
-          mt.appendChild(uiIcon(k.kind === 'video' ? ACTION_ICON.play : ACTION_ICON.music));
-        }
-        mt.addEventListener('click', () => this.openLightbox(k, e));
-        mbox.appendChild(mt);
-      });
-      const acts = ui.sheetActions;
-      acts.innerHTML = '';
-      // 动作行 = 共享 .bz-sheet-act（icon + 文案 + 右侧小字；danger/accent 语义档）
-      const mk = (icon: string, label: string, sub: string | null, mod: string | null, fn: () => void) => {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'bz-sheet-act' + (mod ? ' ' + mod : '');
-        const ic = document.createElement('span');
-        ic.className = 'bz-sheet-act-ic';
-        ic.appendChild(uiIcon(icon));
-        b.appendChild(ic);
-        b.appendChild(document.createTextNode(label));
-        if (sub) {
-          const subEl = document.createElement('span');
-          subEl.className = 'bz-sheet-act-sub';
-          subEl.textContent = sub;
-          b.appendChild(subEl);
-        }
-        b.addEventListener('click', fn);
-        acts.appendChild(b);
-      };
-      mk(ACTION_ICON.open, '打开', null, null, () => {
-        this.closeSheet();
-        void this.jumpTo(e);
-      });
-      // 增强 #7：普通日记条目抽屉同口径提供「在日记本中查看」
-      if (!e.encrypted && !e.tags.includes('加密') && !this.isSpecialWallEntry(e)) {
-        mk(ACTION_ICON.openInDiary, '在日记本中查看', null, null, () => {
-          this.closeSheet();
-          void this.openInDiary();
-        });
-      }
-      mk(ACTION_ICON.copyLink, '复制双链', null, null, () => {
-        this.closeSheet();
-        void this.copyLink(e);
-      });
-      mk(ACTION_ICON.copyContent, '复制正文', `${(e.content || '').trim().length} 字`, null, () => {
-        this.closeSheet();
-        void this.copyContent(e);
-      });
-      if (e.media.length) {
-        mk(ACTION_ICON.attachment, '附件', `${e.media.length} 个媒体`, null, () => {
-          this.closeSheet();
-          notice(`附件：${e.media.map((m) => m.name).join('、')}`);
-        });
-      }
-      // P1 审查修复：特殊条目（影视/信/书）不给「加密/删除」，与右键菜单同口径
-      const special = this.isSpecialWallEntry(e);
-      if (!e.encrypted && !e.tags.includes('加密')) {
-        mk(ACTION_ICON.editTags, '改标签', null, null, () => {
-          this.closeSheet();
-          this.editTags(e);
-        });
-        if (!special) {
-          mk(ACTION_ICON.encrypt, '加密', null, 'bz-sheet-act--accent', () => {
-            this.closeSheet();
-            void this.encryptEntryAction(e);
-          });
-        }
-      } else {
-        mk(ACTION_ICON.decrypt, '解密', null, 'bz-sheet-act--accent', () => {
-          this.closeSheet();
-          void this.decryptEntryAction(e);
-        });
-      }
-      if (!special) {
-        mk(ACTION_ICON.remove, '删除', null, 'bz-sheet-act--danger', () => {
-          this.closeSheet();
-          void this.deleteEntryAction(e);
-        });
-      }
+      this.fillSheetMedia(ui, e);
+      this.fillSheetActions(ui, e);
       ui.sheet.classList.add('bz-sheet--show');
       ui.sheetMask.classList.add('open');
     });
+  }
+
+  /** 抽屉媒体缩略（点击进灯箱；加密条目缩略图走按需解密——增强 #8） */
+  private fillSheetMedia(ui: typeof this.desk, e: WallEntry) {
+    const mbox = ui.sheetMedia;
+    mbox.innerHTML = '';
+    e.media.forEach((k) => {
+      const mt = document.createElement('div');
+      mt.className = 'bz-diary-wall-sheet-thumb';
+      const src = this.mediaSrcFor(e, k.name);
+      if (k.kind === 'img') {
+        const img = document.createElement('img');
+        img.alt = k.name;
+        if (e.encrypted) {
+          void this.encMediaUrl(e.noteId || '', k).then((url) => {
+            if (url && img.isConnected) img.src = url;
+          });
+        } else if (src) {
+          img.src = src;
+        }
+        mt.appendChild(img);
+      } else {
+        mt.appendChild(uiIcon(k.kind === 'video' ? ACTION_ICON.play : ACTION_ICON.music));
+      }
+      mt.addEventListener('click', () => this.openLightbox(k, e));
+      mbox.appendChild(mt);
+    });
+  }
+
+  /** 抽屉动作行 = 共享 .bz-sheet-act（icon + 文案 + 右侧小字；danger/accent 语义档） */
+  private fillSheetActions(ui: typeof this.desk, e: WallEntry) {
+    const acts = ui.sheetActions;
+    acts.innerHTML = '';
+    const mk = (icon: string, label: string, sub: string | null, mod: string | null, fn: () => void) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'bz-sheet-act' + (mod ? ' ' + mod : '');
+      const ic = document.createElement('span');
+      ic.className = 'bz-sheet-act-ic';
+      ic.appendChild(uiIcon(icon));
+      b.appendChild(ic);
+      b.appendChild(document.createTextNode(label));
+      if (sub) {
+        const subEl = document.createElement('span');
+        subEl.className = 'bz-sheet-act-sub';
+        subEl.textContent = sub;
+        b.appendChild(subEl);
+      }
+      b.addEventListener('click', fn);
+      acts.appendChild(b);
+    };
+    mk(ACTION_ICON.open, '打开', null, null, () => {
+      this.closeSheet();
+      void this.jumpTo(e);
+    });
+    // 增强 #7：普通日记条目抽屉同口径提供「在日记本中查看」
+    if (!e.encrypted && !e.tags.includes('加密') && !this.isSpecialWallEntry(e)) {
+      mk(ACTION_ICON.openInDiary, '在日记本中查看', null, null, () => {
+        this.closeSheet();
+        void this.openInDiary();
+      });
+    }
+    mk(ACTION_ICON.copyLink, '复制双链', null, null, () => {
+      this.closeSheet();
+      void this.copyLink(e);
+    });
+    mk(ACTION_ICON.copyContent, '复制正文', `${(e.content || '').trim().length} 字`, null, () => {
+      this.closeSheet();
+      void this.copyContent(e);
+    });
+    if (e.media.length) {
+      mk(ACTION_ICON.attachment, '附件', `${e.media.length} 个媒体`, null, () => {
+        this.closeSheet();
+        notice(`附件：${e.media.map((m) => m.name).join('、')}`);
+      });
+    }
+    // P1 审查修复：特殊条目（影视/信/书）不给「加密/删除」，与右键菜单同口径
+    const special = this.isSpecialWallEntry(e);
+    if (!e.encrypted && !e.tags.includes('加密')) {
+      mk(ACTION_ICON.editTags, '改标签', null, null, () => {
+        this.closeSheet();
+        this.editTags(e);
+      });
+      if (!special) {
+        mk(ACTION_ICON.encrypt, '加密', null, 'bz-sheet-act--accent', () => {
+          this.closeSheet();
+          void this.encryptEntryAction(e);
+        });
+      }
+    } else {
+      mk(ACTION_ICON.decrypt, '解密', null, 'bz-sheet-act--accent', () => {
+        this.closeSheet();
+        void this.decryptEntryAction(e);
+      });
+    }
+    if (!special) {
+      mk(ACTION_ICON.remove, '删除', null, 'bz-sheet-act--danger', () => {
+        this.closeSheet();
+        void this.deleteEntryAction(e);
+      });
+    }
   }
 
   private closeSheet() {
@@ -2321,7 +2341,7 @@ export class DiaryWallAppController {
         this._modifyTimer = null;
         if (this.root?.style.display !== 'flex') return;
         void this.loadAndRender();
-      }, 400);
+      }, MODIFY_REFRESH_DEBOUNCE_MS);
     });
   }
 
@@ -2506,7 +2526,7 @@ export class DiaryWallAppController {
   }
 
   /** App 实例（生产由主实现注入；测试 setApp——diary/app.ts 单例，与 diary 域同口径） */
-  private app(): any {
+  private app(): App {
     return getApp();
   }
 

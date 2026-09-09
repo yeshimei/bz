@@ -5,14 +5,14 @@
  * 提醒组：启动自动弹出 / 打开笔记提醒已由本域提醒后台承担（todo/reminder.ts，
  * 落点=待办面板；memo→todo 接管迁移第 3 项提前实施），旧 memo 侧对应入口已改道移除。
  */
-import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
+import { getSettings, saveSettings } from '../core/settings-provider';
 import type { SettingsSchema } from '../core/settings-schema';
 import { TodoData } from './data';
 import { applyTodoSkin } from './ui';
 
 /** 场景变更后即时生效：重建数据层场景列表（打开中的面板下次渲染即用） */
 function todoReloadScenes() {
-  TodoData.init(getSettings() as any);
+  TodoData.init(getSettings());
 }
 
 export function todoSettingsSchema(): SettingsSchema {

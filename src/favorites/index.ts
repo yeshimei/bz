@@ -5,7 +5,7 @@
  */
 import type { App } from 'obsidian';
 import { FavoritesApp } from './app';
-import { openForm, unloadFavoritesUI } from './ui';
+import { unloadFavoritesUI } from './ui';
 
 /** 幂等初始化（懒加载；app.init 自身幂等，instance 重置由 unloadFavorites 负责） */
 export function ensureFavorites(): void {

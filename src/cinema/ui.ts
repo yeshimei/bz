@@ -12,7 +12,7 @@
  */
 import type { App } from 'obsidian';
 import { TFile } from 'obsidian';
-import { notify, notice, notifySaveError } from '../core/notice';
+import { notice, notifySaveError } from '../core/notice';
 import { emitDomainEvent } from '../core/domain-bus';
 import { escManager } from '../core/esc-manager';
 import { isMobileEnv } from '../core/mobile';
@@ -21,7 +21,7 @@ import { tryGetSettings } from '../core/settings-provider';
 import { mountIcons } from '../core/ui';
 import {
   STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, DEFAULT_RATING,
-  getGroupForTag, type CinemaStyle,
+  getGroupForTag,
 } from './constants';
 import { M, type CinemaItem, type CinemaSortMode } from './state';
 import { rebuildItems, getDisplayItems } from './data';
@@ -38,12 +38,6 @@ import {
 } from './render';
 
 // ---------- 小工具 ----------
-
-/** 当前风格（设置 cinemaStyle；非法值回默认午夜场；重开面板生效。读设置属行为层，ADR-0104） */
-function cinemaStyleOf(): CinemaStyle {
-  const raw = (tryGetSettings() as Record<string, unknown>).cinemaStyle;
-  return raw === 'gazette' || raw === 'booth' ? raw : 'midnight';
-}
 
 // ---------- 海报 ----------
 
@@ -614,7 +608,6 @@ function bindMidnight(sec: HTMLElement, app: App): void {
 export function createOverlay(app: App): void {
   const overlay = document.createElement('div');
   overlay.className = 'bz-panel-overlay';
-  cinemaStyleOf(); // 风格单源（gazette/booth 延后，issue 236：本批仅午夜场上岸）
   const mobile = isMobileEnv();
   overlay.innerHTML = mobile ? midnightMobHtml() : midnightDeskHtml();
 

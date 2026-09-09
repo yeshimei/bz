@@ -374,12 +374,18 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
     markSettingSplitRows(container);
   };
 
-  /** 文本类行（text/textarea/number）：原 main.ts textSetting 语义逐字收口 */
-  const renderTextualRow = (body: HTMLElement, row: TextRow | TextAreaRow | NumberRow): void => {
-    const ctx: SettingsRowContext = { rowEl: body, refreshVisibility: reevaluate };
+  /** 行 Setting 统一构建：名称 + 可选描述 + visibleWhen 显隐登记（七类行共用样板收口） */
+  const newRowSetting = (body: HTMLElement, row: RowBase & { name: string }): Setting => {
     const setting = new Setting(body).setName(row.name);
     if (row.desc) setting.setDesc(row.desc);
     if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+    return setting;
+  };
+
+  /** 文本类行（text/textarea/number）：原 main.ts textSetting 语义逐字收口 */
+  const renderTextualRow = (body: HTMLElement, row: TextRow | TextAreaRow | NumberRow): void => {
+    const ctx: SettingsRowContext = { rowEl: body, refreshVisibility: reevaluate };
+    const setting = newRowSetting(body, row);
 
     const isNumber = row.type === 'number';
     const acc: ValueAccess<string | number> = isNumber
@@ -580,9 +586,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
       }
       case 'toggle': {
         const acc = bindValue(row.binding);
-        const setting = new Setting(body).setName(row.name);
-        if (row.desc) setting.setDesc(row.desc);
-        if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+        const setting = newRowSetting(body, row);
         setting.addToggle((t) =>
           t.setValue(acc.read() === true).onChange(async (v) => {
             acc.write(v);
@@ -596,9 +600,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
       }
       case 'select': {
         const acc = bindValue(row.binding);
-        const setting = new Setting(body).setName(row.name);
-        if (row.desc) setting.setDesc(row.desc);
-        if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+        const setting = newRowSetting(body, row);
         setting.addDropdown((dd) => {
           for (const opt of row.options) dd.addOption(opt.value, opt.label);
           // 空值回退首个选项（对齐原 diary 行 `s[field] || options[0][0]` 口径，防 undefined 值 setValue 抛错）
@@ -616,9 +618,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
       case 'choiceCards': {
         // 视觉卡片单选（issue 210）：与 select 同绑定通道；空值回退首个选项（同 select 口径）
         const acc = bindValue(row.binding);
-        const setting = new Setting(body).setName(row.name);
-        if (row.desc) setting.setDesc(row.desc);
-        if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+        const setting = newRowSetting(body, row);
         const pick = uiCardChoice({
           value: String(acc.read() ?? '') || row.options[0].value,
           options: row.options,
@@ -635,9 +635,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
       }
       case 'slider': {
         const acc = bindValue(row.binding);
-        const setting = new Setting(body).setName(row.name);
-        if (row.desc) setting.setDesc(row.desc);
-        if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+        const setting = newRowSetting(body, row);
         setting.addSlider((sl) => {
           sl.setLimits(row.min, row.max, row.step ?? 1);
           sl.setValue(Number(acc.read()) || 0);
@@ -660,9 +658,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
         return;
       }
       case 'button': {
-        const setting = new Setting(body).setName(row.name);
-        if (row.desc) setting.setDesc(row.desc);
-        if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+        const setting = newRowSetting(body, row);
         setting.addButton((b) => {
           if (row.cta) b.setCta();
           b.setButtonText(row.buttonText).onClick(() => row.onClick(ctx));
@@ -672,9 +668,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
       }
       case 'info': {
         // 纯展示：名称 + 描述（actions 在场时附操作按钮）
-        const setting = new Setting(body).setName(row.name);
-        if (row.desc) setting.setDesc(row.desc);
-        if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+        const setting = newRowSetting(body, row);
         for (const a of row.actions ?? []) {
           setting.addButton((b) => {
             if (a.cta) b.setCta();

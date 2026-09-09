@@ -19,9 +19,10 @@ import { getEmbedding, checkRemoteOllama } from '../secondbrain/ollama';
 import { EMOTION_VAD, emotionToVAD, vadAffinity } from './cognitive';
 import { isSupersededInsight, resolveTheme, buildReflectCandidates, applySupersede } from './insight-version';
 import type { SmartCatData, MemoryStreamEntry, CloudScoringMode, StructuredMeta, BehaviorItem, BehaviorSummary } from './types';
-import { resolveRouting, type RoutingRule } from './routing';
+import { resolveRouting } from './routing';
 import { trimBehaviorStream } from './behavior-trim';
 import { buildBehaviorWording } from './behavior-wording';
+import type BzSettings from '../settings';
 import { tryGetSettings } from '../core/settings-provider';
 import { bytesEqual } from '../core/utils';
 
@@ -40,6 +41,15 @@ export const MEMORY_CONFIG = {
   decay: 0.982,
 } as const;
 
+/** 反思/情绪追标失败退避参数（指数递增：5min 起步 ×2 → 30min 封顶；两通道独立但参数一致） */
+const BACKOFF_INITIAL_MS = 5 * 60 * 1000;
+const BACKOFF_MAX_MS = 30 * 60 * 1000;
+
+/** 流条目 id（前缀含分隔下划线 + 时间戳 + 随机段；格式冻结——短索引/去重/引用链均依赖既有前缀 memory_/insight_/beh_） */
+function newEntryId(prefix: string): string {
+  return `${prefix}${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
 /**
  * 巩固参数（ticket 162 精简）：反思只看「自上次反思记忆流新增 ≥N 条」（无时间间隔闸），证据池
  * 全量进 prompt（仅按重要度排序，不截断）；行为小结为反思前置步骤（1 条，不占素材额度）；
@@ -49,17 +59,17 @@ export const MEMORY_CONFIG = {
  * 纯读取函数，测试可经 settings-provider mock 控制返回值。
  */
 export function getConsolidationConfig() {
-  let s: Record<string, unknown> = {};
-  try { s = (tryGetSettings() as any) ?? {}; } catch { /* 测试/早期调用安全 */ }
-  const num = (key: string, fallback: number): number => {
-    const v = Number((s as any)?.[key]);
+  let s: Partial<BzSettings> = {};
+  try { s = tryGetSettings() ?? {}; } catch { /* 测试/早期调用安全 */ }
+  const num = (raw: unknown, fallback: number): number => {
+    const v = Number(raw);
     return Number.isFinite(v) && v >= 0 ? v : fallback;
   };
   return {
-    reflectMinNew: num('smartcatReflectMinNew', 20),
-    refExcerptLimit: num('smartcatRefExcerptLimit', 400),
+    reflectMinNew: num(s.smartcatReflectMinNew, 20),
+    refExcerptLimit: num(s.smartcatRefExcerptLimit, 400),
     // ticket 163：洞察条数上限（默认 3；下限 1——0 无意义，防设置误填）
-    maxInsights: Math.max(1, num('smartcatReflectMaxInsights', 3)),
+    maxInsights: Math.max(1, num(s.smartcatReflectMaxInsights, 3)),
   };
 }
 
@@ -68,9 +78,8 @@ export function getConsolidationConfig() {
 /** 小橘对用户的称呼（BzSettings smartcatUserName；未配置/空 → 默认「包仔」） */
 export function getUserNickname(): string {
   try {
-    const s = (tryGetSettings() as any) ?? {};
-    const v = typeof s.smartcatUserName === 'string' ? s.smartcatUserName.trim() : '';
-    return v || '包仔';
+    const v = tryGetSettings()?.smartcatUserName;
+    return (typeof v === 'string' && v.trim()) || '包仔';
   } catch {
     return '包仔'; // 测试/早期调用安全
   }
@@ -312,10 +321,10 @@ export class MemorySystem {
   private reflecting = false;
   /** 反思失败退避（空转守卫：AI 未配置/调用失败后 5 分钟不重试，指数递增至 30 分钟） */
   private reflectBackoffUntil = 0;
-  private reflectBackoffMs = 5 * 60 * 1000;
+  private reflectBackoffMs = BACKOFF_INITIAL_MS;
   /** 情绪追标独立退避（H3/096：与反思退避分离——追标失败不拖累反思节奏，反之亦然；5min 起步同款指数封顶） */
   private emotionBackfillBackoffUntil = 0;
-  private emotionBackfillBackoffMs = 5 * 60 * 1000;
+  private emotionBackfillBackoffMs = BACKOFF_INITIAL_MS;
   /** 语义模式状态：null=未探测 */
   private ollamaAvailable: boolean | null = null;
   private dim = 0;
@@ -478,7 +487,7 @@ export class MemorySystem {
       // 人类文案匹配，机读 `source:action name` 会让正性钩子静默失联
       const pseudoDesc = newOpts.structured?.snapshot?.summary || this.buildDescription(newOpts.structured) || behavior?.description || '';
       const pseudo: MemoryStreamEntry = {
-        id: behavior?.id ?? `memory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: behavior?.id ?? newEntryId('memory_'),
         created: behavior?.timestamp ?? new Date().toISOString(),
         lastAccessed: behavior?.timestamp ?? new Date().toISOString(),
         description: pseudoDesc,
@@ -512,7 +521,7 @@ export class MemorySystem {
     }
 
     const memory: MemoryStreamEntry = {
-      id: `memory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: newEntryId('memory_'),
       created: new Date().toISOString(),
       lastAccessed: new Date().toISOString(),
       description,
@@ -556,7 +565,7 @@ export class MemorySystem {
       description = `${source}:${action}`;
     }
     const item: BehaviorItem = {
-      id: `beh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: newEntryId('beh_'),
       timestamp: new Date().toISOString(),
       type: action,
       source,
@@ -565,7 +574,7 @@ export class MemorySystem {
     };
     this.behaviorStream.push(item);
     // 滚动窗口清理（使用 settings 的配置值，缺省走默认值）
-    const s = tryGetSettings() as any;
+    const s = tryGetSettings();
     const maxDays = s?.behaviorMaxDays ?? 60;
     const maxCount = s?.behaviorMaxCount ?? 10000;
     const trimmed = trimBehaviorStream(this.behaviorStream, { maxDays, maxCount });
@@ -617,7 +626,7 @@ export class MemorySystem {
       if (!keep) return null;
     }
     const memory: MemoryStreamEntry = {
-      id: `memory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: newEntryId('memory_'),
       created: new Date().toISOString(),
       lastAccessed: new Date().toISOString(),
       description,
@@ -656,7 +665,7 @@ export class MemorySystem {
   /** 构造洞察条目（纯构造不入流；P1-26 批量原子写与 addInsight 的唯一构造点，防两处字段漂移） */
   private makeInsightMemory(description: string, evidenceIds: string[], importance = 0.75, emotion?: string, source = 'reflection', theme?: string): MemoryStreamEntry {
     const memory: MemoryStreamEntry = {
-      id: `insight_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: newEntryId('insight_'),
       created: new Date().toISOString(),
       lastAccessed: new Date().toISOString(),
       description,
@@ -676,7 +685,7 @@ export class MemorySystem {
    *  纯构造不入流；P1-26 批量原子写与 digest 的唯一构造点。 */
   private makeDigestObservation(text: string, evidenceIds: string[]): MemoryStreamEntry {
     return {
-      id: `memory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: newEntryId('memory_'),
       created: new Date().toISOString(),
       lastAccessed: new Date().toISOString(),
       description: text,
@@ -717,7 +726,8 @@ export class MemorySystem {
    *  ADR-0036：credibility 本地 = ruleCredibility（来源档位表）；LLM 返回第 3 项可覆盖（省 token——未返回仍按来源档位）。 */
   async scoreImportanceAndEmotion(description: string, opts: { manuallyMarked?: boolean; source?: string } = {}): Promise<{ importance: number; emotion?: string; credibility: number }> {
     const local = { importance: this.ruleImportance(description, opts), emotion: this.detectEmotion(description), credibility: ruleCredibility(opts.source, description) };
-    const mode = (this.dataProvider().config as any)?.cloudScoring ?? 'smart';
+    // 旧数据 config 缺 cloudScoring 字段 → ?? 'smart' 兜底（与 normalizeConfig 口径一致）
+    const mode = this.dataProvider().config.cloudScoring ?? 'smart';
     if (!this.shouldCloudScore(description, opts.source, mode as CloudScoringMode)) return local;
     try {
       if (await isAIConfigured()) {
@@ -1127,7 +1137,7 @@ export class MemorySystem {
       }
       if (!written) return false; // 全部无效：不落盘也不退避（下次反思窗口再试）
       this.emotionBackfillBackoffUntil = 0; // 成功重置独立退避
-      this.emotionBackfillBackoffMs = 5 * 60 * 1000;
+      this.emotionBackfillBackoffMs = BACKOFF_INITIAL_MS;
       this.markMemoryDirty();
       await this.dataSaver(this.dataProvider());
       return true;
@@ -1140,7 +1150,7 @@ export class MemorySystem {
   /** 追标失败退避（指数递增 5min→30min 封顶；字段独立于反思退避——两边互不拖累） */
   private backoffEmotionBackfill(): void {
     this.emotionBackfillBackoffUntil = Date.now() + this.emotionBackfillBackoffMs;
-    this.emotionBackfillBackoffMs = Math.min(this.emotionBackfillBackoffMs * 2, 30 * 60 * 1000);
+    this.emotionBackfillBackoffMs = Math.min(this.emotionBackfillBackoffMs * 2, BACKOFF_MAX_MS);
   }
 
   /** 反思调度（每 30s 检查一次；记忆流新增 ≥阈值即反思，ticket 162；睡前巩固 digest 同循环；ticket 075：memo 到期扫描挂 tick 钩子） */
@@ -1195,7 +1205,7 @@ export class MemorySystem {
   /** 反思失败：指数退避（5min → 10min → 20min → 30min 封顶），期间不再触发也不再落盘 */
   private backoffReflection(): void {
     this.reflectBackoffUntil = Date.now() + this.reflectBackoffMs;
-    this.reflectBackoffMs = Math.min(this.reflectBackoffMs * 2, 30 * 60 * 1000);
+    this.reflectBackoffMs = Math.min(this.reflectBackoffMs * 2, BACKOFF_MAX_MS);
   }
 
   async maybeReflect(): Promise<boolean> {
@@ -1314,7 +1324,7 @@ export class MemorySystem {
       return;
     }
     this.reflectBackoffUntil = 0; // 成功重置退避（含 30min 封顶期）
-    this.reflectBackoffMs = 5 * 60 * 1000;
+    this.reflectBackoffMs = BACKOFF_INITIAL_MS;
     // P1-26 半批重复归纳修复：本批洞察先整批构造入流、单次 dataSaver 成功后才推进游标；
     // 任一步失败整批回滚不入流、游标不推并进入退避（下轮整体重来，不残留半批重复）
     const entries = insights.map((ins) => {
@@ -1504,7 +1514,7 @@ export class MemorySystem {
       existing.lastAccessed = existing.lastAccessed || created; // R7：缺省 = created，不因更新回写
     } else {
       const entry: MemoryStreamEntry = {
-        id: `memory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: newEntryId('memory_'),
         created,
         lastAccessed: created, // R7：lastAccessed 初值 = created（老日记靠语义命中，不靠 recency 霸榜）
         description,
@@ -1781,7 +1791,7 @@ export function promoteToMemory(
   }
 
   const memory: MemoryStreamEntry = {
-    id: `memory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    id: newEntryId('memory_'),
     created: behavior.timestamp,
     lastAccessed: new Date().toISOString(),
     description,
@@ -1906,7 +1916,7 @@ export function linkRelatedMemories(
   data: SmartCatData,
   linkWindowDays?: number,
 ): number {
-  const settings = tryGetSettings() as any;
+  const settings = tryGetSettings();
   // P2-1: 自动关联发现开关关闭时直接返回
   if (settings?.enableAutoLinking === false) return 0;
   const windowDays = linkWindowDays ?? settings?.linkWindowDays ?? 7;
@@ -2235,13 +2245,13 @@ export function contentHashOf(text: string): string {
 
 /** 分块字符上限（设置面板可调，默认 800——中文语义检索精度优先；非法/未配置回退 800） */
 export function chunkLimitChars(): number {
-  const v = Number((tryGetSettings() as any)?.smartcatChunkLimitChars);
+  const v = Number(tryGetSettings()?.smartcatChunkLimitChars);
   return Number.isFinite(v) && v >= 200 && v <= 6000 ? v : 800;
 }
 
 /** 向量化模型覆盖（'' = 跟随第二大脑设置；改模型需重建向量索引） */
 export function embeddingModelOverride(): string {
-  return String((tryGetSettings() as any)?.smartcatEmbeddingModel ?? '').trim();
+  return String(tryGetSettings()?.smartcatEmbeddingModel ?? '').trim();
 }
 
 /**

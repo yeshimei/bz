@@ -1,7 +1,6 @@
 /**
  * clipbook（剪藏本融合域，ADR-0082 / issue 177）：常量。
  */
-import type { ClipArticle, RailKind } from './types';
 
 /** 稳定标识键（对齐 news/data.ts articleKeyOf：url 优先，其次 title+date） */
 export function articleKeyOf(a: any): string {

@@ -14,9 +14,9 @@
  * - saveToClip 写剪藏笔记 + 发 news:read/saved 域事件（smartcat 行为流三跳依赖）。
  */
 import { readNewsData, writeNewsDataMerged } from './news-data';
-import type { ClipArticle, ClipOrigin, ClipState } from './types';
+import type { ClipArticle, ClipState } from './types';
 import { articleKeyOf, excerpt } from './constants';
-import { updateClipbookData, type ClipbookData } from './data';
+import type { ClipbookData } from './data';
 import { enqueueNewsWrite } from './write-queue';
 
 

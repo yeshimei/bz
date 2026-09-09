@@ -1,10 +1,9 @@
 /**
  * 内容监控（移植自 SmartCat.js ContentMonitor + InteractionManager 的笔记读取辅助）
- * getApp 经 core/app；无需 window。recentMonologues 原版无写入方（恒空）——保留接口。
+ * getApp 经 core/app；无需 window。
  */
 import { getApp } from '../core/app';
 import { eventSystem } from './state';
-import { EVENTS } from './types';
 
 export interface BookDescriptionOptions {
   title?: string;

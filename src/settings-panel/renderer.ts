@@ -36,9 +36,12 @@ function makeCtx(rowEl: HTMLElement, refreshVisibility: () => void): SettingsRow
 
 /* ==================== 行控件（全部消费组件库共享类） ==================== */
 
+/** refreshKey 联动的程序化显示值写回入口（makeInput 挂入；WeakMap 替代元素挂属性） */
+const displaySetters = new WeakMap<HTMLInputElement, (v: string) => void>();
+
 /**
  * refreshKey 联动注册（makeInput 系共用）：任意行变更后重读显示值，
- * 经 __setDisplayValue 写回输入框（不落盘、不置脏）。
+ * 经程序化写回输入框（不落盘、不置脏）。
  */
 function regRefreshDisplay(
   regRefresh: ((fn: () => void) => void) | undefined,
@@ -49,8 +52,7 @@ function regRefreshDisplay(
   regRefresh(() => {
     const snap = snapshot();
     const fresh = typeof ref === 'function' ? ref(snap) : String((snap as any)[ref]);
-    const setDisplay = (input as any).__setDisplayValue as ((v: string) => void) | undefined;
-    if (setDisplay) setDisplay(String(fresh ?? ''));
+    displaySetters.get(input)?.(String(fresh ?? ''));
   });
 }
 
@@ -101,10 +103,10 @@ function makeInput(opts: {
     if (e.key === 'Enter') commit();
   });
   // refreshKey 联动刷新显示值的入口：程序化写值（不置脏——清 dirty 防后续 blur 假写覆盖）
-  ;(input as any).__setDisplayValue = (v: string) => {
+  displaySetters.set(input, (v: string) => {
     dirty = false;
     if (input.value !== v) input.value = v;
-  };
+  });
   return input;
 }
 
@@ -145,11 +147,11 @@ export function makePathRowCtrl(opts: {
     if (res && typeof (res as { then?: unknown }).then === 'function') {
       return Promise.resolve(res as Promise<void | string[]>).then((final) => {
         current = Array.isArray(final) ? final : list;
-        renderAll();
+        renderChips();
       });
     }
     current = Array.isArray(res) ? res : list;
-    renderAll();
+    renderChips();
   };
 
   const openPicker = () => {
@@ -210,7 +212,6 @@ export function makePathRowCtrl(opts: {
       addBtn.remove();
     }
   };
-  const renderAll = () => renderChips();
   ctrl.appendChild(addBtn);
   renderChips();
   return ctrl;
@@ -235,8 +236,7 @@ function mountTextActions(
     btn.addEventListener('click', () => {
       void (async () => {
         await a.onClick(input.value, ctx);
-        const setDisplay = (input as any).__setDisplayValue as ((v: string) => void) | undefined;
-        if (setDisplay) setDisplay(String(acc.read() ?? ''));
+        displaySetters.get(input)?.(String(acc.read() ?? ''));
         refresh();
       })();
     });
@@ -614,10 +614,13 @@ function renderGroup(
     // 功能性显隐（铁律 8 允许）：0 项组隐藏徽标（对齐 ⚙️ 弹窗 refreshSettingsGroupCounts）
     count.style.display = n > 0 ? '' : 'none';
   };
-  (card as any).__bzSpUpdateCount = updateCount;
+  groupCountUpdaters.set(card, updateCount);
   updateCount();
   return card;
 }
+
+/** 分组项数徽标重算回调（renderGroup 挂入；refresh 内统一执行） */
+const groupCountUpdaters = new WeakMap<HTMLElement, () => void>();
 
 /**
  * 渲染 schema 到容器（与 ⚙️ 同数据源）。
@@ -643,8 +646,7 @@ export function renderPanelSchema(container: HTMLElement, schema: SettingsSchema
     });
     // 行/组显隐变化后重算各分组项数徽标（动态计算；button 操作行与隐藏行不计）
     container.querySelectorAll<HTMLElement>('.bz-sp-group').forEach((card) => {
-      const upd = (card as any).__bzSpUpdateCount as (() => void) | undefined;
-      if (typeof upd === 'function') upd();
+      groupCountUpdaters.get(card)?.();
     });
     // refreshKey：重读绑定值写回已渲染输入框（如 per-provider 输入随 aiProvider 切换联动）
     for (const fn of valueRefreshes) fn();

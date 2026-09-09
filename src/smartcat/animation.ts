@@ -310,8 +310,8 @@ export class SmartCatAnimation {
     this.isBusy = true;
     this.clearOneShot();
     this.body.classList.add('bz-sc-anim');
-    (this.body as any).style.setProperty('--bz-sc-anim-name', animationName);
-    (this.body as any).style.setProperty('--bz-sc-anim-dur', duration + 'ms');
+    this.body.style.setProperty('--bz-sc-anim-name', animationName);
+    this.body.style.setProperty('--bz-sc-anim-dur', duration + 'ms');
     void this.body.offsetWidth;
     const t = setTimeout(() => {
       this.isBusy = false;
@@ -331,13 +331,13 @@ export class SmartCatAnimation {
     const elements = part === 'ears' ? this.ears : part === 'eyes' ? this.eyes : part === 'tail' ? [this.tail] : part === 'head' ? [this.face] : [this.body];
     elements.forEach((element) => {
       element.classList.add('bz-sc-anim');
-      (element as any).style.setProperty('--bz-sc-anim-name', animationName);
-      (element as any).style.setProperty('--bz-sc-anim-dur', duration + 'ms');
+      element.style.setProperty('--bz-sc-anim-name', animationName);
+      element.style.setProperty('--bz-sc-anim-dur', duration + 'ms');
       void (element as HTMLElement).offsetWidth;
       const t = setTimeout(() => {
         element.classList.remove('bz-sc-anim');
-        (element as any).style.removeProperty('--bz-sc-anim-name');
-        (element as any).style.removeProperty('--bz-sc-anim-dur');
+        element.style.removeProperty('--bz-sc-anim-name');
+        element.style.removeProperty('--bz-sc-anim-dur');
       }, duration);
       this.pendingTimeouts.push(t);
     });
@@ -351,8 +351,8 @@ export class SmartCatAnimation {
     parts.forEach(({ part, animation }) => {
       this.getActionElements(part).forEach((element) => {
         element.classList.add('bz-sc-anim');
-        (element as any).style.setProperty('--bz-sc-anim-name', animation);
-        (element as any).style.setProperty('--bz-sc-anim-dur', duration + 'ms');
+        element.style.setProperty('--bz-sc-anim-name', animation);
+        element.style.setProperty('--bz-sc-anim-dur', duration + 'ms');
         void (element as HTMLElement).offsetWidth;
         applied.push(element);
       });
@@ -360,8 +360,8 @@ export class SmartCatAnimation {
     const t = setTimeout(() => {
       applied.forEach((element) => {
         element.classList.remove('bz-sc-anim');
-        (element as any).style.removeProperty('--bz-sc-anim-name');
-        (element as any).style.removeProperty('--bz-sc-anim-dur');
+        element.style.removeProperty('--bz-sc-anim-name');
+        element.style.removeProperty('--bz-sc-anim-dur');
       });
       this.isBusy = false;
     }, duration);
@@ -425,15 +425,15 @@ export class SmartCatAnimation {
     const elements = this.getActionElements(action.part);
     elements.forEach((element) => {
       element.classList.add('bz-sc-anim');
-      (element as any).style.setProperty('--bz-sc-anim-name', action.animation);
-      (element as any).style.setProperty('--bz-sc-anim-dur', action.duration + 'ms');
+      element.style.setProperty('--bz-sc-anim-name', action.animation);
+      element.style.setProperty('--bz-sc-anim-dur', action.duration + 'ms');
       void (element as HTMLElement).offsetWidth;
     });
     const t = setTimeout(() => {
       elements.forEach((element) => {
         element.classList.remove('bz-sc-anim');
-        (element as any).style.removeProperty('--bz-sc-anim-name');
-        (element as any).style.removeProperty('--bz-sc-anim-dur');
+        element.style.removeProperty('--bz-sc-anim-name');
+        element.style.removeProperty('--bz-sc-anim-dur');
       });
       this.isBusy = false;
     }, action.duration);

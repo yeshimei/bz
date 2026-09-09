@@ -28,11 +28,6 @@ export function applyDirectories(settings: {
   BOOK_DIRECTORY = settings.bookDirectory || '书库';
 }
 
-/** 获取当前标签配置 */
-export function getPrimaryTagsConfig(): Record<string, TagConfig> {
-  return PRIMARY_TAGS_CONFIG;
-}
-
 /** 加密分类标签名（ADR-0017；写块标题、筛选/计数、排序用） */
 export const ENCRYPT_TAG = '加密';
 
@@ -144,24 +139,4 @@ export function getTagEmoji(tag: string): string {
 export function getSubTagsOfPrimary(primaryTag: string): SubTagConfig[] | null {
   const config = PRIMARY_TAGS_CONFIG[primaryTag];
   return config && config.subTags ? config.subTags : null;
-}
-
-/** 判断一个标签是否是二级标签 */
-export function isSubTag(tag: string): boolean {
-  for (const [, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
-    if (config.subTags && config.subTags.some((sub) => sub.tag === tag)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/** 获取二级标签所属的主标签 */
-export function getParentPrimaryTag(subTag: string): string | null {
-  for (const [primary, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
-    if (config.subTags && config.subTags.some((sub) => sub.tag === subTag)) {
-      return primary;
-    }
-  }
-  return null;
 }

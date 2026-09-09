@@ -130,7 +130,7 @@ export function readQuietMode(editingData: any): QuietModeState {
 
 /** 读当日温和问候登记日键（editingData.gentleGreeting.day；无登记 → 空串） */
 export function readGentleGreetingDay(editingData: any): string {
-  const day = (editingData?.gentleGreeting as any)?.day;
+  const day = editingData?.gentleGreeting?.day;
   return typeof day === 'string' ? day : '';
 }
 

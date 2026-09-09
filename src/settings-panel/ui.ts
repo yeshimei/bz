@@ -12,7 +12,6 @@
  * - 桌面导航徽标动态计算（无设置=— / 其余初始=·，schema 加载后回填设置项总数）。
  * - 通用域/AI 域 → generalSettingsSchema()/aiSettingsSchema()（issue 186：AI 自全局拆出独立成域）。
  */
-import type { App } from 'obsidian';
 import { createOverlay, topifyZ } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { isMobileEnv } from '../core/mobile';
@@ -101,7 +100,7 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
       getConfig: () => data.config,
       saveConfig,
       settingsKeys: {
-        enabled: (tryGetSettings() as any).smartcatEnabled !== false,
+        enabled: (tryGetSettings() as Record<string, unknown>).smartcatEnabled !== false,
       },
     });
   },

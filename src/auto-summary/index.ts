@@ -160,7 +160,6 @@ function scheduleRegister(app: any): void {
     if (workspaceRef && typeof workspaceRef.on === 'function') {
       openListenerRef = workspaceRef.on('file-open', (file: any) => queueProcess(app, ai, file));
     }
-    console.log(`[自动摘要] 👁️ 监听 ${getWatchDir()}` + (timing === 'lazy' ? '（懒触发：仅打开时）' : ''));
   }, 2000);
 }
 

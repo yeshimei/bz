@@ -15,7 +15,7 @@ import { topifyZ, allocZ } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
 import { escapeHtml, formatRelativeTime } from '../core/utils';
 import type { ReviewDataManager, ReviewItem } from './data';
-import { computeStats, loadDistribution, historyOf, RATING_NAMES, RATING_COLORS } from './stats';
+import { computeStats, loadDistribution, historyOf, dateKey, RATING_NAMES, RATING_COLORS } from './stats';
 import { FSRS, DEFAULT_W } from './fsrs';
 import { uiIcon } from '../core/ui';
 
@@ -90,8 +90,8 @@ function statInlineHTML(items: string[]): string {
     <span style="font-size:.74rem;color:var(--text-muted);background:var(--background-primary);border:1px solid var(--background-modifier-border);border-radius:8px;padding:3px 10px;">${s}</span>`).join('')}</div>`;
 }
 
-/** 排名列表行（对齐影视 topListHTML；点击 → 独立复习历史弹窗） */
-function rankListHTML(items: Array<{ name: string; sub: string; meta: string }>, onClick: (i: number) => void): string {
+/** 排名列表行（对齐影视 topListHTML；点击行为由渲染方事件委托处理） */
+function rankListHTML(items: Array<{ name: string; sub: string; meta: string }>): string {
   if (!items.length) return emptyHTML();
   const badges = ['#FFF3C4', '#D8F3DC', '#D6E4FF'];
   return items.map((it, i) => {
@@ -209,14 +209,15 @@ function buildStatsHTML(app: App, dm: ReviewDataManager, items: ReviewItem[], st
 
   // 复习负载：今日/明日 + 未来 14 天分布 + 日历热力图
   const dist = loadDistribution(items, 14);
-  const todayKey = new Date();
-  const tmrKey = new Date(); tmrKey.setDate(tmrKey.getDate() + 1);
-  const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  const todayCnt = dist.find((d) => d.date === fmt(todayKey))?.count || 0;
-  const tmrCnt = dist.find((d) => d.date === fmt(tmrKey))?.count || 0;
+  const tmr = new Date();
+  tmr.setDate(tmr.getDate() + 1);
+  const todayKey = dateKey(new Date());
+  const tmrKey = dateKey(tmr);
+  const todayCnt = dist.find((d) => d.date === todayKey)?.count || 0;
+  const tmrCnt = dist.find((d) => d.date === tmrKey)?.count || 0;
   const maxDist = Math.max(1, ...dist.map((d) => d.count));
   const distBars = dist.map((d) => ({
-    label: d.date === fmt(todayKey) ? '今' : `+${dist.indexOf(d)}`,
+    label: d.date === todayKey ? '今' : `+${dist.indexOf(d)}`,
     value: d.count,
   }));
   const loadHTML = sectionHTML('复习负载',
@@ -243,7 +244,7 @@ function buildStatsHTML(app: App, dm: ReviewDataManager, items: ReviewItem[], st
     };
   });
   const timelineHTML = sectionHTML('复习时间线',
-    rankListHTML(tlItems, () => {}) + '<div style="font-size:.68rem;color:var(--text-faint);text-align:center;padding-top:8px;">点击笔记查看复习历史</div>',
+    rankListHTML(tlItems) + '<div style="font-size:.68rem;color:var(--text-faint);text-align:center;padding-top:8px;">点击笔记查看复习历史</div>',
     '#FADDE1');
 
   // 最近 7 天

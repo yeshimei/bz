@@ -5,7 +5,7 @@
  * 纯数据层：不触 DOM、不弹 toast（报错文案抛给调用方，由设置页按钮统一提示）。
  */
 import { requestUrl } from 'obsidian';
-import { AI_PROVIDER_REGISTRY, getProviderDescriptor } from './ai';
+import { getProviderDescriptor } from './ai';
 import type { AIProviderDescriptor } from './ai';
 import { tryGetSettings } from './settings-provider';
 

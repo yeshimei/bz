@@ -6,7 +6,6 @@
  * 设置读写仍走既有声明式 schema 与 settings-provider。
  */
 import type { App } from 'obsidian';
-import { getApp } from '../core/app';
 import { SettingsPanelUI } from './ui';
 
 let initialized = false;

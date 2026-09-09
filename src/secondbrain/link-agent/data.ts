@@ -310,9 +310,10 @@ export function parseJudgeOutput(text: string, maxId: number): JudgePick[] {
   const seen = new Set<number>();
   for (const item of parsed) {
     if (!item || typeof item !== 'object') continue;
-    const id = (item as any).id;
-    const reason = (item as any).reason;
-    if (!Number.isInteger(id) || id < 1 || id > maxId) continue;
+    const rec = item as Record<string, unknown>;
+    const id = rec.id;
+    const reason = rec.reason;
+    if (typeof id !== 'number' || !Number.isInteger(id) || id < 1 || id > maxId) continue;
     if (typeof reason !== 'string' || !reason.trim()) continue;
     if (seen.has(id)) continue;
     seen.add(id);

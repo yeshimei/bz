@@ -44,6 +44,9 @@ import { aiSuggestCategory } from './ai';
 
 const THEME_CLASSES = new Set(['theme-dark', 'theme-light']);
 
+/** 搜索防抖（对齐剪藏本/保险库/待办） */
+const SEARCH_DEBOUNCE_MS = 180;
+
 // ==================== 模块状态 ====================
 
 interface BelState {
@@ -279,13 +282,14 @@ async function openPanelInner(): Promise<void> {
   // 搜索（B3：防抖定时器在面板关闭后仍会触发——首行守卫 overlay 存活；渲染序列含 hero，
   // 副题「N 件在列」计数随搜索刷新）
   const bindSearch = (inp: HTMLInputElement) => {
+    let deb: ReturnType<typeof setTimeout> | undefined;
     inp.addEventListener('input', () => {
-      clearTimeout((inp as any)._belDeb);
-      (inp as any)._belDeb = setTimeout(() => {
+      clearTimeout(deb);
+      deb = setTimeout(() => {
         if (!M.overlay) return;
         M.q = inp.value.trim();
         renderAll();
-      }, 180);
+      }, SEARCH_DEBOUNCE_MS);
     });
   };
   bindSearch(overlay.querySelector('[data-bel-search]') as HTMLInputElement);

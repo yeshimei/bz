@@ -37,7 +37,6 @@ import {
   loadLinkState,
   matchesScope,
   mergeRelated,
-  normalizeRelatedEntry,
   parseRelatedEntries,
   parseJudgeOutput,
   planRemovals,
@@ -47,7 +46,6 @@ import {
   upsertLinkState,
   isUnderFolder,
 } from './data';
-
 /** embedding 可达性探测超时（spec：短超时 ~1.5s） */
 export const LINK_PROBE_TIMEOUT_MS = 1500;
 
@@ -150,11 +148,15 @@ export async function probeEmbeddingReachable(baseUrl?: string): Promise<boolean
   }
 }
 
+/** encrypt 根目录（设置 encryptRoot 可配，缺省 CONFIG/.ENCRYPT；尾斜杠归一） */
+function encryptRoot(): string {
+  const s = tryGetSettings() as any;
+  return String(s.encryptRoot || 'CONFIG/.ENCRYPT').replace(/\/+$/, '');
+}
+
 /** encryptRoot 内的文件一律跳过（spec「错误处理与边界」） */
 function isEncryptLockedPath(app: App, path: string): boolean {
-  const s = tryGetSettings() as any;
-  const root = String(s.encryptRoot || 'CONFIG/.ENCRYPT').replace(/\/+$/, '');
-  return isUnderFolder(root, path);
+  return isUnderFolder(encryptRoot(), path);
 }
 
 export class LinkAgent {
@@ -615,7 +617,7 @@ export class LinkAgent {
     // 有清单但锁定态无法区分「已删除」与「已加密移入」→ 整体跳过本次（encrypt 域锁定文件一律跳过）
     let encryptedPaths: Set<string> | null = null;
     try {
-      const root = String((tryGetSettings() as any).encryptRoot || 'CONFIG/.ENCRYPT').replace(/\/+$/, '');
+      const root = encryptRoot();
       let safeExists = false;
       try {
         const existsFn = (this.app.vault.adapter as any)?.exists;

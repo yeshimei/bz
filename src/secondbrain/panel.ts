@@ -557,11 +557,6 @@ export class SecondBrainPanel {
       /* 读库失败不阻断统计展示 */
     }
   }
-
-  /** ⚙️ 域设置弹窗（共享实现见 openSecondBrainSettings） */
-  private openSettings(): void {
-    openSecondBrainSettings(this.app);
-  }
 }
 
 /** 最近向量化行的来源名（顶层目录，色板键） */
