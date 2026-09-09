@@ -325,6 +325,19 @@
   display: inline-block;
   margin-bottom: 8px;
 }
+/* 视频内嵌（MarkdownRenderer 渲染 ![[mp4]]）：占满预览宽，原生 <video> 直接播放 */
+.bz-kb-cliprow:has(video) {
+  display: block;
+  padding: 0;
+  border-style: solid;
+  overflow: hidden;
+}
+.bz-kb-cliprow video {
+  width: 100%;
+  display: block;
+  border-radius: 8px;
+  background: #000;
+}
 
 .bz-kb-rels { display: flex; flex-wrap: wrap; gap: 7px; }
 
