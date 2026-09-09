@@ -17,7 +17,7 @@ if (!edge) {
 const port = 9333 + Math.floor(Math.random() * 200);
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'bz-review-st-'));
 // 目标页默认取本仓库内壳（跨 worktree 复用），可用 argv[2] 覆盖完整 URL
-const shellUrl = new URL('../src/review/prototype.html', import.meta.url);
+const shellUrl = new URL('../prototypes/review/prototype.html', import.meta.url);
 const url = process.argv[2] || shellUrl.href + '?selftest=1';
 
 const proc = spawn(edge, [

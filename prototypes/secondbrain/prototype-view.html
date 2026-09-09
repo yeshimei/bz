@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>第二大脑 · 真行为实例</title>
+<!--
+  本页 = 第二大脑行为单源评审壳的 iframe 视图（issue 251 / ADR-0106 / ADR-0110）。
+  它不实现任何交互——只把真行为层跑起来：
+    - 载入同一份 CSS（core + 域，与插件同源）
+    - 载入 prototype-behavior.js（真 panel/chat-panel/reference-panel 依赖链，alias obsidian→fake）
+    - 按 URL 参数 iface 打开对应界面：panel（默认）/ chat / ref
+  宿主差异（数据/图标/AI）由 fake/fake-obsidian / prototype-data.js / fake-sim 的 fetch 拦截提供；
+  面板固定米白浅色（ADR-0110 §3），不随主题翻转。
+-->
+<link rel="stylesheet" href="../../src/core/styles.css">
+<link rel="stylesheet" href="../../src/core/ui/tokens.css">
+<link rel="stylesheet" href="../../src/core/ui/components.css">
+<link rel="stylesheet" href="../../src/secondbrain/styles.css">
+<script src="./prototype-icons.js"></script>
+<script src="./prototype-data.js"></script>
+<script src="./prototype-behavior.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  /* 主面板超高时 iframe 内滚动（与插件「面板随视图滚动」同语义）；chat/ref 均为
+     fixed 定位弹层，不受影响 */
+  html { overflow: hidden; }
+  body { overflow-y: auto; overflow-x: hidden; }
+  body { background: #e9e7e1; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+  /* 模拟 Obsidian 宿主变量（core 弹层/菜单取值用；插件内由主题提供） */
+  body {
+    --background-primary: #fbfaf7; --text-normal: #211d16; --text-muted: #8b8474; --text-faint: #c4bcae;
+    --text-error: #b3564d; --background-modifier-hover: rgba(33,29,22,.06); --color-green: #3d8f5d;
+    --background-modifier-border: rgba(33,29,22,.12); --input-shadow: none;
+    --interactive-normal: #fff; --interactive-accent: #a33d2a; --shadow-s: 0 1px 3px rgba(0,0,0,.1);
+  }
+</style>
+</head>
+<body class="theme-light">
+<script>
+  (function () {
+    var B = window.BZW_secondbrain;
+    var params = new URLSearchParams(location.search);
+    var iface = params.get('iface') || 'panel';
+    B.bootSecondBrainSim();
+    if (iface === 'chat') B.openChat();
+    else if (iface === 'ref') {
+      B.openRef().then(function () {
+        // 演示态：注入当前编辑上下文，驱动真检索链（getCurrentContext → search → 渲染）
+        B.demoReferenceQuery('冥想正念练习三个月之后，我对情绪的觉察发生了什么变化？');
+      });
+    } else B.openPanel();
+
+    // 自检（?selftest=1，书架先例）：本页 DOM 断言（无跨 iframe 访问，双击亦可跑），结果写 document.title
+    if (params.get('selftest') === '1') {
+      var t0 = Date.now();
+      var wait = function (fn, ms) {
+        return new Promise(function (res, rej) {
+          var tick = function () {
+            var v = false;
+            try { v = fn(); } catch (e) {}
+            if (v) return res(v);
+            if (Date.now() - t0 > (ms || 20000)) return rej(new Error('wait 超时'));
+            setTimeout(tick, 150);
+          };
+          tick();
+        });
+      };
+      var results = [];
+      var assert = function (name, ok) { results.push((ok ? '✓' : '✗') + name); if (!ok) throw new Error(name); };
+      var run = function () {
+        var chain = Promise.resolve();
+        if (iface === 'panel') {
+          chain = chain.then(function () {
+            // renderStats 在自动增量刷新完成后才填卡——等统计带就绪而非容器显示
+            return wait(function () { return document.querySelectorAll('#bz-sb-cards .bz-sb-card').length === 6; }, 30000);
+          }).then(function () {
+            assert('统计6卡', document.querySelectorAll('#bz-sb-cards .bz-sb-card').length === 6);
+            assert('趋势12柱', document.querySelectorAll('#bz-sb-trend .bz-sb-trend-col').length === 12);
+            assert('来源树', document.querySelectorAll('#bz-sb-dist .bz-sb-dist-row').length >= 4);
+            assert('最近列表', document.querySelectorAll('#bz-sb-recent .bz-sb-recent-row').length >= 6);
+            assert('摘要卡', (document.getElementById('bz-sb-ai-txt') || {}).textContent !== '' || document.getElementById('bz-sb-ai-card').style.display === 'none');
+            document.querySelector('#bz-sb-dist .bz-sb-dist-row--dir').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            return wait(function () { return document.querySelectorAll('#bz-sb-dist .bz-sb-dist-row').length > 4; }).then(function () { assert('树展开', true); });
+          });
+        } else if (iface === 'chat') {
+          chain = chain.then(function () {
+            return wait(function () { return document.querySelectorAll('#bz-sb-chat-messages .bz-sb-chat-msg').length >= 2; });
+          }).then(function () {
+            assert('初载历史2条', true);
+            document.querySelector('.bz-sb-chat-chip').click();
+            return wait(function () { return document.querySelectorAll('#bz-sb-chat-messages .bz-sb-chat-cite').length >= 1; }, 30000);
+          }).then(function () {
+            assert('问答+引用卡', true);
+            assert('markdown渲染', document.querySelectorAll('#bz-sb-chat-messages .bz-sb-chat-msg.assistant b, #bz-sb-chat-messages .bz-sb-chat-msg.assistant strong').length >= 0);
+          });
+        } else if (iface === 'ref') {
+          chain = chain.then(function () {
+            return wait(function () { return document.querySelectorAll('.bz-sb-ref-list .bz-sb-ref-card').length >= 1; }, 30000);
+          }).then(function () {
+            assert('参考列表', document.querySelectorAll('.bz-sb-ref-list .bz-sb-ref-card').length >= 1);
+            var btn = document.querySelector('.bz-sb-float-btn');
+            btn.click();
+            return wait(function () { return document.querySelector('.bz-sb-ref-list').classList.contains('bz-sb-ref-dense'); });
+          }).then(function () {
+            assert('密度切换', document.querySelector('.bz-sb-ref-list').classList.contains('bz-sb-ref-dense'));
+          });
+        }
+        return chain;
+      };
+      run().then(function () {
+        document.title = 'SB-SELFTEST PASS ' + results.length + '/' + results.length + ' ' + results.join(' ');
+      }).catch(function (e) {
+        document.title = 'SB-SELFTEST FAIL ' + iface + ': ' + e.message + ' [' + results.join(' ') + ']';
+      });
+    }
+  })();
+</script>
+</body>
+</html>
