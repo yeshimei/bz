@@ -134,7 +134,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     await vi.waitFor(() => expect(popup.querySelector('.bz-kb-sc')!.textContent).toContain('还没有文献笔记'));
   });
 
-  it('部壹文献列表：词条/影像 + 领域 + LIT 编号，最近创建降序；行点击开预览（全文段落 + related + 提炼成卡）', async () => {
+  it('部壹文献列表：词条/影像 + 领域 + LIT 编号，最近创建降序；行点击开预览（全文段落 + 关联；无操作按钮）', async () => {
     vault.files.set('文献盒/视频C.md', noteMd({
       title: '视频C', type: 'video', domain: '物理', date: '2026-09-01 10:00:00',
       body: '段落一。\n\n段落二。', related: ['卡片盒/旧卡A'],
@@ -150,10 +150,12 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(sheet.textContent).toContain('段落一');
     expect(sheet.textContent).toContain('段落二');
     expect(sheet.textContent).toContain('旧卡A');
-    expect(sheet.querySelector('[data-kb-act=card-new]')).toBeTruthy();
+    // 预览只读：提炼成卡/先放回去按钮已移除（关闭走壳头 ✕ / ESC）
+    expect(sheet.querySelector('[data-kb-act=card-new]')).toBeNull();
+    expect(sheet.querySelector('.bz-kb-sheet-close')).toBeTruthy();
   });
 
-  it('提炼成卡：候选同域优先带推荐；落卡写卡片盒（category/related/why）+ 源文献 related 互链 + 部贰新落', async () => {
+  it('提炼成卡（预览按钮已移除，编辑器编程触达保行为覆盖）：候选同域优先带推荐；落卡写卡片盒 + 源文献 related 互链 + 部贰新落', async () => {
     vault.files.set('文献盒/无助.md', noteMd({
       title: '无助竟是大脑本能', type: 'video', domain: '心理', date: '2026-08-29 10:00:00',
       body: '塞里格曼修正理论。', related: ['卡片盒/习得性无助'],
@@ -162,9 +164,8 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     vault.files.set('卡片盒/工作记忆.md', cardMd({ title: '工作记忆', category: '认知' }));
     ui.showMain();
     await vi.waitFor(() => expect(document.querySelectorAll('.bz-kb-lexrow').length).toBe(1));
-    (document.querySelector('.bz-kb-lexrow[data-kb-act=lit-peek]') as HTMLElement).click();
-    await vi.waitFor(() => expect(document.querySelector('[data-kb-act=card-new]')).toBeTruthy());
-    (document.querySelector('[data-kb-act=card-new]') as HTMLElement).click();
+    // 预览入口按钮已移除（快改批）：直接打开编辑器，保 saveCard 行为覆盖
+    await (ui as any).openCardEditor((ui as any).allNotes[0]);
     await vi.waitFor(() => expect(document.querySelector('[data-kb-role=why]')).toBeTruthy());
     const olds = Array.from(document.querySelectorAll<HTMLElement>('[data-kb-old]')).map((b) => b.textContent);
     expect(olds[0]).toContain('习得性无助');
