@@ -320,9 +320,128 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     await (ui as any).onTermGenerate();
     (document.getElementById('lit-term-save') as HTMLElement).click();
     await vi.waitFor(() => expect(noteGen.generateTermNote).toHaveBeenCalled());
-    expect(noteGen.generateTermNote).toHaveBeenCalledWith({ term: '褪黑素', summary: 'AI 简介', domain: '心理' });
+    // ADR-0116：未填来源 → source 显式 null（数据契约），键不落盘由 note-gen 层保证
+    expect(noteGen.generateTermNote).toHaveBeenCalledWith({ term: '褪黑素', summary: 'AI 简介', domain: '心理', source: null });
     expect(openFile).toHaveBeenCalled();
     await vi.waitFor(() => expect(seen).toEqual(['褪黑素']));
+  });
+
+  // ==================== 术语来源（ADR-0116） ====================
+
+  it('来源行 UI + kb 作用域：术语/添加弹层挂 .kb（纸墨皮背景修复）；URL 回车 → 外部 chip + meta 第 4 行 + 落 source', async () => {
+    const termPopup = document.getElementById('knowledge-term-popup')!;
+    const addPopup = document.getElementById('knowledge-add-popup')!;
+    // issue 257：术语/添加弹层缺 .kb（纸墨皮变量作用域）→ var(--panel) 失效背景透明；历史/视频窗本就有 kb
+    expect(termPopup.classList.contains('kb')).toBe(true);
+    expect(addPopup.classList.contains('kb')).toBe(true);
+    expect(document.getElementById('knowledge-video-popup')!.classList.contains('kb')).toBe(true);
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(termPopup.style.display).toBe('flex'));
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '心流';
+    const srcInput = document.getElementById('lit-term-src') as HTMLInputElement;
+    srcInput.value = 'https://b23.tv/abcDEF，'; // 粘贴常带中文标点——净化在落库前
+    srcInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    const chip = document.getElementById('lit-term-src-chip')!;
+    expect(chip.style.display).toBe('inline-flex');
+    expect(chip.textContent).toContain('外 部');
+    expect(chip.textContent).toContain('b23.tv/abcDEF');
+    expect(srcInput.style.display).toBe('none'); // 输入框让位给 chip
+    await (ui as any).onTermGenerate();
+    await vi.waitFor(() => expect(document.getElementById('lit-term-preview')!.style.display).toBe('flex'));
+    // 属性卡第 4 行「来源」：URL 已净化尾标点
+    expect(document.getElementById('lit-term-meta-srcrow')!.style.display).not.toBe('none');
+    expect(document.getElementById('lit-term-meta-src')!.textContent).toBe('https://b23.tv/abcDEF');
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(noteGen.generateTermNote).toHaveBeenCalled());
+    expect(noteGen.generateTermNote).toHaveBeenCalledWith({
+      term: '心流', summary: 'AI 简介', domain: '心理',
+      source: { kind: 'external', url: 'https://b23.tv/abcDEF' },
+    });
+  });
+
+  it('来源=内部笔记：搜索联想点选 → 「内 部」chip（title 存全路径）；✕ 清除还原输入框', async () => {
+    vault.files.set('我的/心流体验.md', '正文');
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    const srcInput = document.getElementById('lit-term-src') as HTMLInputElement;
+    srcInput.value = '心流';
+    srcInput.dispatchEvent(new Event('input', { bubbles: true }));
+    await vi.waitFor(() => expect(document.querySelector('.bz-popover-item')).toBeTruthy());
+    const hit = Array.from(document.querySelectorAll<HTMLElement>('.bz-popover-item')).find((b) => b.textContent!.includes('心流体验'));
+    expect(hit).toBeTruthy();
+    hit!.click();
+    const chip = document.getElementById('lit-term-src-chip')!;
+    expect(chip.style.display).toBe('inline-flex');
+    expect(chip.textContent).toContain('内 部');
+    expect(chip.textContent).toContain('心流体验');
+    expect(chip.title).toBe('我的/心流体验.md');
+    (chip.querySelector('[data-term-src-clear]') as HTMLElement).click();
+    expect(document.getElementById('lit-term-src-chip')!.style.display).toBe('none');
+    expect(srcInput.style.display).not.toBe('none');
+    expect(srcInput.value).toBe('');
+  });
+
+  it('命令入口预填：showTermEntry 带内部来源 → chip 即现 + 自动生成后 meta 行展示 + 落 source note', async () => {
+    ui.showTermEntry('松果体', { kind: 'note', path: '我的/心流体验.md' });
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    const chip = document.getElementById('lit-term-src-chip')!;
+    expect(chip.style.display).toBe('inline-flex');
+    expect(chip.textContent).toContain('内 部');
+    await vi.waitFor(() => expect(document.getElementById('lit-term-preview')!.style.display).toBe('flex'));
+    expect(document.getElementById('lit-term-meta-src')!.textContent).toBe('心流体验');
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(noteGen.generateTermNote).toHaveBeenCalled());
+    expect(noteGen.generateTermNote).toHaveBeenCalledWith({
+      term: '松果体', summary: 'AI 简介', domain: '心理',
+      source: { kind: 'note', path: '我的/心流体验.md' },
+    });
+    // 关闭后再开（按钮入口无来源）→ 来源清空，不复带上次
+    ui.hideTermEntry();
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    expect(document.getElementById('lit-term-src-chip')!.style.display).toBe('none');
+  });
+
+  it('部壹预览：术语外部来源出可点「来源」（标题优先、openUrl 打开）；内部来源不在部壹预览展示', async () => {
+    vault.files.set('文献盒/心流B.md', '---\ntitle: "心流B"\ntype: term\ndomain: "心理"\ndate: "2026-08-30 10:00:00"\nsource: "https://zhuanlan.zhihu.com/p/123"\nsourceTitle: "什么是心流"\n---\n\n正文一段。');
+    vault.files.set('文献盒/术语C.md', '---\ntitle: "术语C"\ntype: term\ndomain: "数学"\ndate: "2026-08-30 10:00:00"\nsource: "[[我的/心流体验.md|心流体验]]"\n---\n\n正文。');
+    ui.showMain();
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-kb-lexrow').length).toBe(2));
+    // 内部来源笔记：预览不展示来源块
+    const rowC = Array.from(document.querySelectorAll<HTMLElement>('.bz-kb-lexrow')).find((r) => r.textContent!.includes('术语C'))!;
+    rowC.click();
+    await vi.waitFor(() => expect(document.querySelector('.bz-kb-ovl')!).toBeTruthy());
+    expect(document.querySelector('.bz-kb-sheet')!.querySelector('[data-lit-src-url]')).toBeNull();
+    (document.querySelector('[data-kb-close]') as HTMLElement).click();
+    // 外部来源：可点链接（标题优先显示）
+    const rowB = Array.from(document.querySelectorAll<HTMLElement>('.bz-kb-lexrow')).find((r) => r.textContent!.includes('心流B'))!;
+    rowB.click();
+    await vi.waitFor(() => expect(document.querySelector('.bz-kb-sheet')!.querySelector('[data-lit-src-url]')).toBeTruthy());
+    const link = document.querySelector('[data-lit-src-url]') as HTMLAnchorElement;
+    expect(link.dataset.litSrcUrl).toBe('https://zhuanlan.zhihu.com/p/123');
+    expect(link.textContent).toBe('什么是心流'); // 标题优先于 URL
+    link.click();
+    await vi.waitFor(() => expect(app.openUrl).toHaveBeenCalledWith('https://zhuanlan.zhihu.com/p/123'));
+  });
+
+  // ==================== 移动端主窗全屏（ADR-0116） ====================
+
+  it('移动端：主窗挂 bz-panel-mtop 真全屏 + 头栏 ✕ 关闭出口（点 ✕ → hideMain）；桌面不渲染 ✕', async () => {
+    const deskPopup = document.getElementById('knowledge-popup')!;
+    expect(deskPopup.classList.contains('bz-panel-mtop')).toBe(false);
+    expect(deskPopup.querySelector('.bz-kb-mclose')).toBeNull(); // 桌面态无 ✕
+    ui.destroy();
+    (Platform as any).isMobile = true;
+    ui = new UIManager(app);
+    const popup = document.getElementById('knowledge-popup')!;
+    expect(popup.classList.contains('bz-panel-mtop')).toBe(true);
+    ui.showMain();
+    await vi.waitFor(() => expect(popup.style.display).toBe('flex'));
+    const close = popup.querySelector<HTMLElement>('.bz-kb-mclose')!;
+    expect(close).toBeTruthy();
+    close.click();
+    expect(popup.style.display).toBe('none');
+    (Platform as any).isMobile = false;
   });
 
   // ==================== 设置 schema / ESC ====================

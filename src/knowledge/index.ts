@@ -50,17 +50,23 @@ export function openKnowledgeAddTask(app: App, prefill?: { url: string; title?: 
  * 术语生成入口（bz-knowledge-note-term 命令回调）：打开「文字录入」面板（ticket 136 §6）。
  * 显式 term 预填输入框；为空时读取当前激活 Markdown 编辑器选区预填（选中词），
  * 无选区则空输入框手动填。
+ * 来源预填（ADR-0116）：命令入口带当前活动笔记上下文（选中词场景十有八九出自正在读的这篇）——
+ * 以该笔记为可选「来源」（内部笔记方向），可一键清除；主窗「文字录入」按钮入口不带上下文、不预填。
  */
 export function openTermNote(app: App, term?: string): void {
   ensureKnowledge(app);
   let t = term?.trim();
+  let src: { kind: 'note'; path: string } | undefined;
+  // ticket 138 §1.1：getActiveViewOfType 内部做 view instanceof type，右值必须是类（MarkdownView），
+  // 传字符串会在真实 Obsidian 抛 TypeError（测试 mock 掩盖）；选区空则 undefined → 空输入框手填。
+  // 显式 term（程序化入口）不读视图也不带来源；命令入口（无参）才取「当前笔记」作来源预填候选（ADR-0116）。
   if (!t) {
-    // ticket 138 §1.1：getActiveViewOfType 内部做 view instanceof type，右值必须是类（MarkdownView），
-    // 传字符串会在真实 Obsidian 抛 TypeError（测试 mock 掩盖）；选区空则 undefined → 空输入框手填
     const view = app.workspace.getActiveViewOfType(MarkdownView);
     t = view?.editor?.getSelection()?.trim() || undefined;
+    const file = view?.file;
+    if (file && (file as any).extension === 'md') src = { kind: 'note', path: file.path };
   }
-  uiManager?.showTermEntry(t);
+  uiManager?.showTermEntry(t, src);
 }
 
 /** 卸载（main.ts onunload 调用；幂等空清理） */
