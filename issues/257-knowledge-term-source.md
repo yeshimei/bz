@@ -29,3 +29,9 @@ ADR-0116。知识盒术语录入（文字录入·术语）增加一个可选输�
 - 桌面端：无 ✕、无全屏变化；全量门禁绿
 
 评审原型：无新原型（域 UI 唯一真理 = 实现源码）；设计经 grill-with-docs 三轮拍板（工件：ADR-0116 + 本文档）。
+
+## 补记（同日快速原型批）：来源链接与标题净化
+
+- `normalizeSourceUrl`：落库前剥追踪参数——B 站视频页只留 `p`/`t` 内容性参数（`spm_id_from`/`vd_source` 等全剥）；b23.tv 短链 query 整段剥；其余站点剥 `utm_*`/`spm_*` 前缀与黑名单键（share_*/seid/unique_k/refer/scene 等）；hash 保留；幂等
+- `cleanSourceTitle`：实体解码 + 空白折叠 + 剥站点尾巴（`标题 _哔哩哔哩_bilibili`、`- 知乎/知乎专栏/知乎日报`）
+- chip/属性卡/落库（source/sourceTitle 键）全部走净化入口，落盘的 frontmatter 即干净可读

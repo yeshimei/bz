@@ -24,7 +24,7 @@ import { KnowledgeData, normalizeLooseTime } from './data';
 import type { KnowledgeTask } from './types';
 import { BatchRunner, type BatchEvents } from './processor';
 import { backfillNotes, generateTermDraft, generateTermNote, summarizeTermSummary } from './note-gen';
-import { cleanUrlText, isUrlLikeSourceText, noteSourceName, type TermSource } from './source';
+import { cleanSourceTitle, isUrlLikeSourceText, normalizeSourceUrl, noteSourceName, type TermSource } from './source';
 
 interface StatusMeta { label: string; cls: string; }
 const STATUS_META: Record<KnowledgeTask['status'], StatusMeta> = {
@@ -1545,7 +1545,7 @@ export class UIManager {
         if (raw && isUrlLikeSourceText(raw)) {
           // URL 字样整串 → 直接落外部 chip（回车即确认）；非 URL 交给联想层选中回填
           e.preventDefault();
-          this.termSrcSet({ kind: 'external', url: cleanUrlText(raw) }, srcInput);
+          this.termSrcSet({ kind: 'external', url: normalizeSourceUrl(raw) }, srcInput);
         }
       });
       // 联想源：vault 全部 .md（现值过滤、上限 12）；空输入不弹空壳
@@ -1622,7 +1622,7 @@ export class UIManager {
     this.termSrcTimer = null;
     const raw = (input.value || '').trim();
     if (!raw || !isUrlLikeSourceText(raw)) return;
-    this.termSrcSet({ kind: 'external', url: cleanUrlText(raw) }, input);
+    this.termSrcSet({ kind: 'external', url: normalizeSourceUrl(raw) }, input);
   }
 
   /** 落来源：记录 + chip 渲染 + meta 行同步；外部来源异步抓标题（失败静默降级为纯链接） */
@@ -1637,7 +1637,7 @@ export class UIManager {
     try {
       const t = await fetchPageTitle(src.url);
       if (!t || this.termSource !== src) return; // 期间已被清除/更换 → 丢弃
-      src.title = t;
+      src.title = cleanSourceTitle(t); // 剥站点尾巴（_哔哩哔哩_bilibili / - 知乎 系）+ 实体解码
       const inp = this.termPopup ? q<HTMLInputElement>(this.termPopup, '#lit-term-src') : null;
       this.renderTermSrcChip(inp);
       this.termSrcRefreshMeta();
