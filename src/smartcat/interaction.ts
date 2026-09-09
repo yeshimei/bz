@@ -144,8 +144,8 @@ export class InteractionManager {
 
   private setupMovement(): void {
     const c = this.catContainer;
-    c.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false } as any);
-    c.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false } as any);
+    c.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
+    c.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
     c.addEventListener('touchend', this.handleTouchEnd.bind(this));
     c.addEventListener('mousedown', this.handleMouseDown.bind(this));
   }
@@ -524,8 +524,8 @@ export class MobileInputAdapter {
   private initialize(): void {
     document.addEventListener('focusin', this.boundFocusIn);
     document.addEventListener('focusout', this.boundFocusOut);
-    if ((window as any).visualViewport) {
-      (window as any).visualViewport.addEventListener('resize', this.boundVisualResize);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', this.boundVisualResize);
     }
   }
 
@@ -560,7 +560,7 @@ export class MobileInputAdapter {
   private handleFocusOut(event: Event): void {
     if (!this.isInputActive) return;
     // 焦点仍在自家面板内（输入框之间跳转）→ 不复原
-    const related = (event as any).relatedTarget;
+    const related = (event as FocusEvent).relatedTarget;
     if (related && this.shouldHandleElement(related) && this.isWithinOwnPanel(related)) return;
     if (this.focusOutTimer) clearTimeout(this.focusOutTimer);
     this.focusOutTimer = setTimeout(() => {
@@ -577,7 +577,7 @@ export class MobileInputAdapter {
       this.savedPosition = { left: this.catContainer.style.left, top: this.catContainer.style.top };
     }
     const safeMargin = 20;
-    const viewportHeight = (window as any).visualViewport ? (window as any).visualViewport.height : window.innerHeight;
+    const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     const catRect = this.catContainer.getBoundingClientRect();
     const catHeight = catRect.height;
     const safeTop = Math.max(10, viewportHeight - catHeight - safeMargin);
@@ -609,8 +609,8 @@ export class MobileInputAdapter {
   destroy(): void {
     document.removeEventListener('focusin', this.boundFocusIn);
     document.removeEventListener('focusout', this.boundFocusOut);
-    if ((window as any).visualViewport) {
-      (window as any).visualViewport.removeEventListener('resize', this.boundVisualResize);
+    if (window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', this.boundVisualResize);
     }
     if (this.focusOutTimer) {
       clearTimeout(this.focusOutTimer);

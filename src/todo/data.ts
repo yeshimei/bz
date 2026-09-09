@@ -105,7 +105,7 @@ export const TodoData = {
   async addItem(item: TodoItem) {
     return enqueueFileTask(this.todoFilePath, async () => {
       const data = await this.read();
-      data.unshift(item as any);
+      data.unshift(item);
       await this.write(data);
     });
   },
@@ -117,9 +117,9 @@ export const TodoData = {
       if (idx === -1) throw new Error('条目不存在');
       const old = data[idx];
       // 如果新数据包含 title 但未提供 url，则自动提取
-      if ((newData as any).title !== undefined && (newData as any).url === undefined) {
-        const { url } = extractUrlAndDisplay((newData as any).title);
-        (newData as any).url = url;
+      if (newData.title !== undefined && newData.url === undefined) {
+        const { url } = extractUrlAndDisplay(newData.title);
+        newData.url = url;
       }
       data[idx] = {
         ...old,
@@ -133,7 +133,7 @@ export const TodoData = {
 
   async completeItem(id: string) {
     const now = moment().format('YYYY-MM-DD HH:mm:ss');
-    await this.updateItem(id, { completed: now } as any);
+    await this.updateItem(id, { completed: now });
   },
 
   /** 删除条目；返回被删条目的原索引（未找到返回 -1），供撤销时插回原位 */
@@ -154,7 +154,7 @@ export const TodoData = {
     return enqueueFileTask(this.todoFilePath, async () => {
       const data = await this.read();
       const at = idx !== undefined && idx >= 0 && idx <= data.length ? idx : 0;
-      data.splice(at, 0, item as any);
+      data.splice(at, 0, item);
       await this.write(data);
     });
   },

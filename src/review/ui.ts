@@ -36,7 +36,7 @@ import {
   sprintResultHtml, sprintSummaryHtml, difficultyDialogHtml, reviewBarHtml,
   isPlayable as isPlayableRender,
 } from './render';
-import { isDueToday } from './queue';
+import { DEFAULT_R_THRESHOLD, isDueToday } from './queue';
 import { SprintSession } from './sprint';
 import type { SprintMode } from './sprint';
 import type { QuizQuestion } from './quiz-core/manager';
@@ -211,7 +211,7 @@ export class UIManager {
   /** R 阈值提前复习判定（item 6：与开始本轮同口径；wSource=拟合权重） */
   private rThreshold(): number {
     const s = tryGetSettings() as any;
-    return Number(s?.reviewRThreshold) || 0.9;
+    return Number(s?.reviewRThreshold) || DEFAULT_R_THRESHOLD;
   }
 
   private queueViewHtml(items: ReviewItem[]): string {
@@ -278,7 +278,6 @@ export class UIManager {
 
   /** 配置监听文件夹说明（空库引导动作；设置面板路径指路） */
   private async showWatchHelp(): Promise<void> {
-    const { openFlowDialog } = await import('../core/flow-dialog');
     await openFlowDialog({
       title: '配置监听文件夹',
       message: '打开 设置 → 复习计划 → 监听文件夹，添加文件夹后，其中新建的笔记会自动加入复习计划；已存在的笔记可在添加时选择一并加入。',

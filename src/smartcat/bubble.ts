@@ -234,7 +234,7 @@ export class BubbleManager {
       }
     };
     bubble.addEventListener('click', handleBubbleClick);
-    bubble.addEventListener('touchstart', handleBubbleClick, { passive: false } as any);
+    bubble.addEventListener('touchstart', handleBubbleClick, { passive: false });
   }
 
   /** 单击：固定气泡（pin 绿框动画），再点移除 */

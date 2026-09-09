@@ -871,33 +871,3 @@ export function generateReadingNotesInteractionAnalysis(bookNotes: BookNoteEntry
   </div>
   `;
 }
-
-/** 生成互动趋势图表（简化版） */
-export function generateInteractionTrendChart(interactionAnalysis: any): string {
-  return `
-  <div style="background: var(--background-secondary); padding: 15px; border-radius: 8px;">
-  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center;">
-  <div>
-  <div style="font-size: 1.2em; font-weight: bold; color: ${CHART_METRIC_VIOLET};">${interactionAnalysis.totalHighlights}</div>
-  <div style="font-size: 0.8em; color: var(--text-muted);">划线</div>
-  </div>
-  <div>
-  <div style="font-size: 1.2em; font-weight: bold; color: ${CHART_METRIC_AQUA};">${interactionAnalysis.totalThinks}</div>
-  <div style="font-size: 0.8em; color: var(--text-muted);">想法</div>
-  </div>
-  <div>
-  <div style="font-size: 1.2em; font-weight: bold; color: ${CHART_METRIC_MINT};">${interactionAnalysis.totalDialogue}</div>
-  <div style="font-size: 0.8em; color: var(--text-muted);">讨论</div>
-  </div>
-  <div>
-  <div style="font-size: 1.2em; font-weight: bold; color: ${CHART_METRIC_CORAL};">${interactionAnalysis.totalOutlinks}</div>
-  <div style="font-size: 0.8em; color: var(--text-muted);">链接</div>
-  </div>
-  </div>
-  
-  <div style="margin-top: 15px; font-size: 0.9em; color: var(--text-muted); text-align: center;">
-  互动密度：每本书平均 ${interactionAnalysis.avgHighlightsPerBook} 条划线
-  </div>
-  </div>
-  `;
-}

@@ -6,7 +6,6 @@ import { notice, notify } from '../core/notice';
 import type { NoticeHandle } from '../core/notice';
 import { getApp } from '../core/app';
 import { getSettings } from '../core/settings-provider';
-import { escapeHtml } from '../core/utils';
 import { FSRS, FSRS_FIRST_TEXTS, scheduleNext } from './fsrs';
 import type { Rating } from './fsrs';
 import type { ReviewItem } from './data';
@@ -14,7 +13,7 @@ import { ReviewDataManager } from './data';
 import { loadFittedParams, saveFittedParams } from './data';
 import { fitFromItems, mergeFittedW } from './fit';
 import { DEFAULT_W } from './fsrs';
-import { isEarlyDue, roundQueue } from './queue';
+import { DEFAULT_R_THRESHOLD, isEarlyDue, roundQueue } from './queue';
 import { computeStats } from './stats';
 
 /** item 5：普通复习离篇宽限期（ms）——持续离篇超过此时长才算中断；测试可注入 */
@@ -66,6 +65,20 @@ export const reviewApp = {
   async getQuiz(): Promise<any> {
     if (this._quizOverride) return this._quizOverride;
     return (await import('./quiz-core')).quizUI;
+  },
+
+  /** 做题家就绪兜底：已初始化但缺 AI → 幂等 ensureQuiz 补建（ensureQuiz 就地写 quizUI.ai，同一单例引用生效） */
+  async quizWithAI(): Promise<any> {
+    const quiz = await this.getQuiz();
+    if (quiz && !quiz.ai) {
+      try {
+        const { ensureQuiz } = await import('./quiz-core');
+        ensureQuiz(getApp());
+      } catch {
+        /* ignore */
+      }
+    }
+    return quiz;
   },
 
   ensure(app: App): void {
@@ -163,7 +176,7 @@ export const reviewApp = {
     if (now < nextReview) {
       // dueItems 的 R 阈值「提前逾期」口径放行（queue.isEarlyDue 同一纯函数，item 6 口径统一）——
       // 否则开始本轮纳入的条目评级会被此处整体拒掉（通过不刷新排期、答错不挂待重做）
-      const rThreshold = Number((getSettings() as any).reviewRThreshold) || 0.9;
+      const rThreshold = Number((getSettings() as any).reviewRThreshold) || DEFAULT_R_THRESHOLD;
       if (!isEarlyDue(item, rThreshold, this.currentW())) {
         const diff = nextReview.getTime() - now.getTime();
         const mins = Math.ceil(diff / 60000);
@@ -234,18 +247,9 @@ export const reviewApp = {
     void this.maybeRunFit(getApp());
   },
 
-  /** 跳转逾期（做题决定难度：开启 → 做题复习；关闭 → 普通复习跳转笔记） */
   /** 跳转逾期（bz-review-start/overdue 命令入口）：完整复习流程 = startRoundSprint */
   async autoJumpOverdue(): Promise<void> {
     await this.startRoundSprint();
-  },
-
-  /** 准确率 → 难度评级 */
-  accuracyToRating(accuracy: number): Rating {
-    if (accuracy >= 90) return 'easy';
-    if (accuracy >= 70) return 'good';
-    if (accuracy >= 50) return 'hard';
-    return 'again';
   },
 
   /** 待重做条目（文件存在、未完成；按进入顺序 = lastReviewed 升序 FIFO） */
@@ -299,15 +303,7 @@ export const reviewApp = {
   async startSingleSprint(item: ReviewItem): Promise<void> {
     const app = getApp();
     this.ensure(app);
-    const quiz: any = await this.getQuiz();
-    if (quiz && !quiz.ai) {
-      try {
-        const { ensureQuiz } = await import('./quiz-core');
-        ensureQuiz(app);
-      } catch {
-        /* ignore */
-      }
-    }
+    const quiz: any = await this.quizWithAI();
     if (!quiz || !quiz.ai) {
       // 做题家不可用（无 AI）：降级为普通复习（打开笔记等自评）
       notify('做题家未初始化，改用普通复习', { type: 'warning', dedupeKey: 'review-quiz-ai' });
@@ -325,15 +321,7 @@ export const reviewApp = {
     let items = await this.dataManager!.loadItems();
     const pend = this.pendingRedoItems(items);
     if (pend.length && getSettings().forceQuizForReview) {
-      const quiz: any = await this.getQuiz();
-      if (quiz && !quiz.ai) {
-        try {
-          const { ensureQuiz } = await import('./quiz-core');
-          ensureQuiz(app);
-        } catch {
-          /* ignore */
-        }
-      }
+      const quiz: any = await this.quizWithAI();
       if (quiz && quiz.ai) {
         await this.runSprintSession(pend, 'redo');
         // 重做会话结束后重新读盘：pendingRedo 已清的 = 通过集（会话内 updateItem 落盘）
@@ -350,7 +338,7 @@ export const reviewApp = {
 
     // item 6/9：开始本轮与三区列同口径（roundQueue 纯函数）——
     // 逾期 ∪ R 阈值提前 ∪ 今日到期（今日到期时刻未到 = 允许提前开始今天全部）
-    const rThreshold = Number((getSettings() as any).reviewRThreshold) || 0.9;
+    const rThreshold = Number((getSettings() as any).reviewRThreshold) || DEFAULT_R_THRESHOLD;
     const round = roundQueue(items, rThreshold, this.currentW());
     if (!round.length) {
       notice('没有逾期笔记', 'success');
@@ -373,17 +361,9 @@ export const reviewApp = {
     }
     let quiz: any = null;
     try {
-      quiz = await this.getQuiz();
+      quiz = await this.quizWithAI();
     } catch {
       /* ignore */
-    }
-    if (quiz && !quiz.ai) {
-      try {
-        const { ensureQuiz } = await import('./quiz-core');
-        ensureQuiz(app);
-      } catch {
-        /* ignore */
-      }
     }
     if (!quiz || !quiz.ai) {
       notify('做题家未初始化，已改用普通复习', { type: 'warning', dedupeKey: 'review-quiz-ai' });
@@ -397,7 +377,7 @@ export const reviewApp = {
 
   /** 当前逾期条目（item 6：改用 roundQueue 同口径——逾期 ∪ R 阈值提前 ∪ 今日到期） */
   dueItems(items: ReviewItem[]): ReviewItem[] {
-    const rThreshold = Number((getSettings() as any).reviewRThreshold) || 0.9;
+    const rThreshold = Number((getSettings() as any).reviewRThreshold) || DEFAULT_R_THRESHOLD;
     return roundQueue(items, rThreshold, this.currentW());
   },
 

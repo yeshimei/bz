@@ -3,7 +3,7 @@
  * 检测 news.json 存在性、读/写 sources 开关与 bilibiliUps 名单、最近抓取时间。
  * 纯数据层（无 DOM），供 src/clipbook/news-sources-group.ts 设置组调用。
  */
-import { readNewsData, writeNewsDataMerged, NEWS_JSON_PATH, DEFAULT_SOURCES, type BilibiliUpInfo } from './news-data';
+import { readNewsData, writeNewsDataMerged, DEFAULT_SOURCES, type BilibiliUpInfo } from './news-data';
 import { enqueueNewsWrite } from './write-queue';
 
 export interface DataSourceState {

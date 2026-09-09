@@ -66,15 +66,7 @@ const ICON = {
   settings: 'settings',
   empty: 'inbox',
   pos: 'pin',
-  clear: 'x',
-  external: 'external-link',
-  book: 'book-open',
-  check: 'check',
-  restore: 'rotate-ccw',
-  postpone1: 'calendar-plus',
-  postpone3: 'calendar-clock',
   star: 'star',
-  copy: 'copy',
   edit: 'pencil',
   del: 'trash-2',
   course: 'graduation-cap',
@@ -115,7 +107,7 @@ function dueTagClass(status: string): string {
   return 'bz-todo-tag-future';
 }
 function dueText(item: TodoItem): string {
-  const mode = (tryGetSettings() as any).memoDueFormat === 'absolute' ? 'absolute' : 'relative';
+  const mode = tryGetSettings().memoDueFormat === 'absolute' ? 'absolute' : 'relative';
   return formatDueText(item.due!, mode);
 }
 
@@ -127,7 +119,7 @@ function isTodayStr(s: string): boolean {
 /** composer/编辑器场景缺省兜底：设置 memoDefaultScene（合法时）否则第一个场景 */
 function fallbackScene(): string {
   const scenes = TodoData.getScenarios();
-  const s = (tryGetSettings() as any).memoDefaultScene;
+  const s = tryGetSettings().memoDefaultScene;
   return s && scenes.includes(s) ? s : scenes[0];
 }
 
@@ -231,9 +223,6 @@ function unsubscribeMemoSync(): void {
 
 // ---------- 视图判定（过滤 + 排序） ----------
 
-function dueStatusOf(it: TodoItem): string | null {
-  return getDueStatus(it.due);
-}
 /** 到期排序优先级：overdue 0 / today 1 / future 2 / 无 3 */
 function dueRank(it: TodoItem): number {
   if (!it.due) return 3;
@@ -324,7 +313,7 @@ export function applyTodoSkin(skin: unknown): void {
 
 /** 当前皮肤类名（issue 210）：uiModal 弹窗（编辑器/添加场景/重命名）与面板共用同套皮肤 */
 function skinClass(): string {
-  const s = (tryGetSettings() as any).todoSkin;
+  const s = tryGetSettings().todoSkin;
   return s === 'paper' || s === 'editorial' ? `bz-todo-skin-${s}` : '';
 }
 
@@ -338,12 +327,12 @@ export function openTodoPanel(app: App, opts?: { notePath?: string }): void {
     closeTodoPanel();
     return;
   }
-  TodoData.init(tryGetSettings() as any);
+  TodoData.init(tryGetSettings());
   // 设置播种（P2）：「默认排序方式」（与 memo 共用 memoSortMode 键）与「默认显示归档」
   // 在面板打开时初始化——此前恒「紧急优先」+ 折叠，两项设置对 todo 面板不生效
-  const sortSetting = (tryGetSettings() as any).memoSortMode;
+  const sortSetting = tryGetSettings().memoSortMode;
   M.sortMode = sortSetting === 'priority' || sortSetting === 'due' || sortSetting === 'created' ? sortSetting : 'priority';
-  M.showDone = (tryGetSettings() as any).memoShowArchivedByDefault === true;
+  M.showDone = tryGetSettings().memoShowArchivedByDefault === true;
   M.showEarlierDone = false; // 「更早 N 条」每次打开重新收起
   M.pinnedNewId = null;
 
@@ -396,7 +385,7 @@ export function openTodoPanel(app: App, opts?: { notePath?: string }): void {
   M.renderFn = () => renderAll();
 
   const panelEl = overlay.querySelector('.bz-todo-panel') as HTMLElement;
-  applyTodoSkin((tryGetSettings() as any).todoSkin);
+  applyTodoSkin(tryGetSettings().todoSkin);
   mountIcons(overlay);
 
   // 排序三档（浮岛 segmented，issue 199：滑动白卡指示器；桌面工具行；移动不显示）
@@ -413,8 +402,7 @@ export function openTodoPanel(app: App, opts?: { notePath?: string }): void {
     onChange: (v) => {
       M.sortMode = v;
       // 同步写入默认排序（与 memo 共用 memoSortMode 键）
-      const s = getSettings() as any;
-      s.memoSortMode = v;
+      getSettings().memoSortMode = v;
       void saveSettings();
       renderAll();
     },
@@ -431,7 +419,7 @@ export function openTodoPanel(app: App, opts?: { notePath?: string }): void {
       maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
       persist: {
         load: () => {
-          const s = tryGetSettings() as any;
+          const s = tryGetSettings();
           const w = Number(s?.todoPanelWidth) || 0;
           const h = Number(s?.todoPanelHeight) || 0;
           // 无记忆/越界旧值回 null → 面板走 CSS 默认尺寸（720×580）
@@ -439,8 +427,7 @@ export function openTodoPanel(app: App, opts?: { notePath?: string }): void {
           return { w, h };
         },
         save: (w, h) => {
-          const s = tryGetSettings() as any;
-          if (!s) return;
+          const s = tryGetSettings();
           s.todoPanelWidth = w;
           s.todoPanelHeight = h;
           void saveSettings();
@@ -913,7 +900,7 @@ async function completeItem(it: TodoItem): Promise<void> {
 
 async function restoreItem(it: TodoItem): Promise<void> {
   try {
-    await TodoData.updateItem(it.id, { completed: null } as any);
+    await TodoData.updateItem(it.id, { completed: null });
     emitDomainEvent('memo', { kind: 'restored', title: it.title });
     notice('已恢复未完成', 'success');
   } catch (e) {
@@ -930,7 +917,7 @@ async function postponeItem(id: string, days: number): Promise<void> {
   d.setDate(d.getDate() + days);
   const next = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   try {
-    await TodoData.updateItem(id, { due: next } as any);
+    await TodoData.updateItem(id, { due: next });
     emitDomainEvent('memo', { kind: 'postponed', title: it.title, due: next });
     notice(`已延后 ${days} 天`, 'success');
   } catch (e) {
@@ -945,7 +932,7 @@ async function togglePrio(id: string): Promise<void> {
   if (!it) return;
   const to = it.priority === 'important' ? 'minor' : 'important';
   try {
-    await TodoData.updateItem(id, { priority: to } as any);
+    await TodoData.updateItem(id, { priority: to });
     emitDomainEvent('memo', { kind: 'priority', title: it.title, to });
     notice(to === 'important' ? '已转为重要' : '已转为次要', 'success');
   } catch (e) {
@@ -1102,13 +1089,8 @@ export function openEditor(item: TodoItem | null): void {
   const isEdit = !!item;
   const scenes = TodoData.getScenarios();
   const editing = item ?? null;
-  // 默认场景：设置 memoDefaultScene 或第一个
-  let defaultScene: string;
-  if (editing) defaultScene = editing.scene;
-  else {
-    const s = (tryGetSettings() as any).memoDefaultScene;
-    defaultScene = s && scenes.includes(s) ? s : scenes[0];
-  }
+  // 默认场景：编辑态用条目自身场景；新建走 fallbackScene（设置 memoDefaultScene 或第一个）
+  const defaultScene = editing ? editing.scene : fallbackScene();
   const isClip = defaultScene === '剪藏';
   const isCode = defaultScene === '代码';
   const isCourse = defaultScene === '公开课';
@@ -1213,7 +1195,7 @@ export function openEditor(item: TodoItem | null): void {
       { value: 'minor', label: '次要' },
       { value: 'important', label: '重要' },
     ],
-    value: editing ? editing.priority : (tryGetSettings() as any).memoDefaultPriority || 'minor',
+    value: editing ? editing.priority : tryGetSettings().memoDefaultPriority || 'minor',
     float: true, // 浮岛 segmented（issue 199 拍板）
     label: '优先级',
     onChange: () => { /* 值由保存时读取 */ },
@@ -1376,7 +1358,7 @@ export function openEditor(item: TodoItem | null): void {
             courseName,
             coursePath,
             url: url ?? editing.url,
-          } as any);
+          });
           emitDomainEvent('memo', { kind: 'edited', old: { title: editing.title }, next: { title: finalTitle, scene, priority, due } });
           notice('已保存', 'success');
         } else {
@@ -1451,11 +1433,11 @@ function openAddSceneDialog(): void {
     if (/[,，]/.test(name)) { notice('场景名不能包含逗号'); return; }
     const scenes = TodoData.getScenarios();
     if (scenes.includes(name)) { notice('场景已存在'); return; }
-    const settings = getSettings() as any;
+    const settings = getSettings();
     const next = [...scenes, name].join(',');
     settings.memoScenarios = next;
     void saveSettings().then(async () => {
-      TodoData.init(getSettings() as any);
+      TodoData.init(getSettings());
       notice(`已添加场景「${name}」`, 'success');
       close();
       await refresh();
@@ -1496,10 +1478,9 @@ function openTodoInSettings(): void {
 
 /** 场景列表写回设置串（与旧 memo 共用 memoScenarios 键）→ 重建数据层 → 刷新 */
 function commitScenarios(next: string[], okMsg: string): Promise<void> {
-  const settings = getSettings() as any;
-  settings.memoScenarios = next.join(',');
+  getSettings().memoScenarios = next.join(',');
   return saveSettings().then(async () => {
-    TodoData.init(getSettings() as any);
+    TodoData.init(getSettings());
     notice(okMsg, 'success');
     await refresh();
   });
@@ -1561,7 +1542,7 @@ async function deleteSceneConfirm(scene: string): Promise<void> {
   if (DEFAULT_SCENARIOS.includes(scene)) { notice('默认场景不支持删除'); return; }
   const scenes = TodoData.getScenarios();
   const others = scenes.filter((s) => s !== scene);
-  const defSetting = (tryGetSettings() as any).memoDefaultScene;
+  const defSetting = tryGetSettings().memoDefaultScene;
   const target = defSetting && others.includes(defSetting) ? defSetting : others[0];
   if (!target) { notice('至少保留一个场景'); return; }
   const count = M.items.filter((i) => i.scene === scene).length;

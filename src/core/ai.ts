@@ -290,21 +290,29 @@ export function resetAIProviderCache(): void {
   _aiProviderCache = null;
 }
 
+/** 对象形态 override（调用方直给完整配置，如脚本内指定第三方端点/key） */
+interface AIOverrideObject {
+  endpoint?: string;
+  apiKey?: string;
+  model?: string;
+  extraHeaders?: Record<string, string>;
+  contextWindow?: number;
+  defaultMaxTokens?: number;
+}
+
 /** 解析 AI provider（override 优先级最高），逻辑与 Q3 getAIProvider 逐字一致（ticket 170 起查注册表） */
-export async function getAIProvider(
-  override?: string | { endpoint?: string; apiKey?: string; model?: string; extraHeaders?: Record<string, string> }
-): Promise<AIProvider> {
+export async function getAIProvider(override?: string | AIOverrideObject): Promise<AIProvider> {
   if (!override && _aiProviderCache) return _aiProviderCache;
   const s = getQ3Settings();
   // 调用方直接给完整配置（如脚本内指定第三方端点/key）
-  if (override && typeof override === 'object' && (override as any).apiKey) {
+  if (override && typeof override === 'object' && override.apiKey) {
     return {
-      endpoint: String((override as any).endpoint || 'https://api.deepseek.com').replace(/\/+$/, ''),
-      apiKey: (override as any).apiKey,
-      model: (override as any).model || undefined,
-      extraHeaders: (override as any).extraHeaders || undefined,
-      contextWindow: (override as any).contextWindow,
-      defaultMaxTokens: (override as any).defaultMaxTokens,
+      endpoint: String(override.endpoint || 'https://api.deepseek.com').replace(/\/+$/, ''),
+      apiKey: override.apiKey,
+      model: override.model || undefined,
+      extraHeaders: override.extraHeaders || undefined,
+      contextWindow: override.contextWindow,
+      defaultMaxTokens: override.defaultMaxTokens,
     };
   }
   const name = (typeof override === 'string' && override) || s.aiProvider || 'opencode-go';

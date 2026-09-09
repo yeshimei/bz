@@ -21,7 +21,6 @@
  * 编辑部印刷风视觉拍板定稿（issue 214，p1-final 原型）：本文件只做 markup 平移，任何视觉值不动。
  */
 import { esc, iconSpan } from '../core/ui/str';
-import { toParagraphs } from './md';
 import type { ClipArticle, ClipParagraph } from './types';
 
 /** esc/iconSpan 再导出：行为层与评审壳演示 markup 同源 */

@@ -115,19 +115,26 @@ const fmtElapsed = (ms: number): string => {
   return h > 0 ? `${h}:${String(m % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}` : `${m}:${String(s % 60).padStart(2, '0')}`;
 };
 
+/** 本地时间戳「YYYY-MM-DD HH:mm:ss」（卡片 date / 术语卡日期展示共用） */
+function dateStamp(): string {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
 /** 文献目录（设置缺省「文献盒」，去首尾斜杠） */
 function litDirOf(s: Partial<BzSettings> | undefined): string {
-  const raw = s && (s as any).knowledgeDirectory ? String((s as any).knowledgeDirectory) : '文献盒';
+  const raw = s && s.knowledgeDirectory ? String(s.knowledgeDirectory) : '文献盒';
   return raw.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
 }
 /** 卡片目录（缺省「卡片盒」） */
 function cardboxDirOf(s: Partial<BzSettings> | undefined): string {
-  const raw = s && (s as any).knowledgeCardboxDirectory ? String((s as any).knowledgeCardboxDirectory) : '卡片盒';
+  const raw = s && s.knowledgeCardboxDirectory ? String(s.knowledgeCardboxDirectory) : '卡片盒';
   return raw.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
 }
 /** 主题目录（缺省「主题盒」） */
 function topicDirOf(s: Partial<BzSettings> | undefined): string {
-  const raw = s && (s as any).knowledgeTopicDirectory ? String((s as any).knowledgeTopicDirectory) : '主题盒';
+  const raw = s && s.knowledgeTopicDirectory ? String(s.knowledgeTopicDirectory) : '主题盒';
   return raw.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
 }
 
@@ -265,7 +272,6 @@ export class UIManager {
   popup: HTMLElement | null = null;
   contentEl: HTMLElement | null = null;
   part: 'z1' | 'z2' | 'z3' = 'z1';
-  noteView: { path: string; title: string } | null = null;
   private allNotes: KnowledgeNoteEntry[] = [];
   private allCards: CardEntry[] = [];
   private allTopics: TopicEntry[] = [];
@@ -372,12 +378,12 @@ export class UIManager {
     const t = (e.target as HTMLElement).closest('[data-kb-act]') as HTMLElement | null;
     if (!t) return;
     const act = t.getAttribute('data-kb-act');
-    if (act === 'part') { this.part = (t.getAttribute('data-part') as 'z1' | 'z2' | 'z3') || 'z1'; this.noteView = null; void this.refreshCurrent(); this.syncPartButtons(); }
+    if (act === 'part') { this.part = (t.getAttribute('data-part') as 'z1' | 'z2' | 'z3') || 'z1'; void this.refreshCurrent(); this.syncPartButtons(); }
     else if (act === 'term-entry') this.showTermEntry();
     else if (act === 'video-entry') this.showVideoEntry();
     else if (act === 'lit-peek') { const p = t.getAttribute('data-path') || ''; const n = this.allNotes.find((x) => x.path === p); if (n) void this.openLitPreview(n); }
     else if (act === 'topic-open') { const p = t.getAttribute('data-path') || ''; const n = this.allTopics.find((x) => x.path === p); if (n) void this.openTopicNote(n); }
-    else if (act === 'topics-back') { this.noteView = null; this.renderTopics(); }
+    else if (act === 'topics-back') { this.renderTopics(); }
     else if (act === 'kb-close') this.hideMain(); // 移动端全屏主窗出口（ADR-0116：手机无 ESC/遮罩边缘）
   }
 
@@ -473,7 +479,6 @@ export class UIManager {
 
   private renderLiterature(): void {
     if (!this.contentEl) return;
-    this.noteView = null;
     const rows = this.allNotes.map((n, i) => {
       const no = String(i + 1).padStart(2, '0');
       const kind = n.type === 'video' ? '影 像' : '词 条';
@@ -574,21 +579,8 @@ export class UIManager {
         <button class="bz-kb-ghost" data-kb-close>取消</button>
       </div>
       <div class="bz-kb-note" style="font-size:11px;margin-top:14px">落卡后它躺在卡片盒，随时被任何笔记引用——不强迫挂进哪篇，也不强迫复习。</div>`));
-    // openSheet→closeSheet 会清编辑态，故状态在挂载后置入
+    // openSheet→closeSheet 会清编辑态，故状态在挂载后置入（输入/旧卡选择监听由 openSheet 统一挂）
     this.editor = { source: n, pick: null, why: whySug, title: n.title };
-    const titleInput = this.popup?.querySelector('[data-kb-role=cardtitle]') as HTMLInputElement | null;
-    if (titleInput) titleInput.addEventListener('input', () => { if (this.editor) this.editor.title = titleInput.value; this.syncSaveBtn(); });
-    const whyInput = this.popup?.querySelector('[data-kb-role=why]') as HTMLInputElement | null;
-    if (whyInput) whyInput.addEventListener('input', () => { if (this.editor) this.editor.why = whyInput.value; this.syncSaveBtn(); });
-    this.popup?.querySelectorAll('[data-kb-old]').forEach((b) => {
-      b.addEventListener('click', () => {
-        if (!this.editor) return;
-        this.editor.pick = (b as HTMLElement).getAttribute('data-kb-old');
-        this.popup?.querySelectorAll('[data-kb-old]').forEach((x) => x.classList.toggle('is-on', x === b));
-        this.syncSaveBtn();
-      });
-    });
-    this.syncSaveBtn();
   }
 
   private syncSaveBtn(): void {
@@ -605,7 +597,7 @@ export class UIManager {
     const src = this.editor.source;
     const why = this.editor.why.trim();
     let base = this.editor.title.trim() || src.title;
-    const stamp = this.cardDateStamp();
+    const stamp = dateStamp();
     try {
       let idx = 2;
       while (app.vault.getAbstractFileByPath(`${dir}/${base}.md`)) { base = `${this.editor.title.trim() || src.title} ${idx}`; idx++; }
@@ -630,12 +622,6 @@ export class UIManager {
     } catch (e: any) {
       notice('落卡失败：' + (e?.message ?? String(e)), 'error');
     }
-  }
-
-  private cardDateStamp(): string {
-    const d = new Date();
-    const p = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
   }
 
   /** 部贰卡片扫描（存量零迁移：领域读序 domain → category → 未分类） */
@@ -666,7 +652,6 @@ export class UIManager {
 
   private renderCards(): void {
     if (!this.contentEl) return;
-    this.noteView = null;
     this.cardsShown = Math.max(this.cardsShown, 80);
     const shown = this.allCards.slice(0, this.cardsShown);
     const rows = shown.map((c) => `<div class="bz-kb-lexrow" style="cursor:default">
@@ -710,7 +695,6 @@ export class UIManager {
 
   private renderTopics(): void {
     if (!this.contentEl) return;
-    this.noteView = null;
     const rows = this.allTopics.map((t) => {
       const rel = formatRelativeTime(String(t.created || ''));
       return `<div class="bz-kb-lexrow" data-kb-act="topic-open" data-path="${esc(t.path)}">
@@ -730,7 +714,6 @@ export class UIManager {
     const app = getApp();
     let md = '';
     try { md = await app.vault.read(t.file); } catch { md = ''; }
-    this.noteView = { path: t.path, title: t.title };
     if (!this.contentEl) return;
     this.contentEl.innerHTML = `<div class="bz-kb-pd">
       <button class="bz-kb-back" data-kb-act="topics-back">← 部叁 · 主题笔记</button>
@@ -822,7 +805,6 @@ export class UIManager {
   private closeSheet(): void {
     this.popup?.querySelectorAll('.bz-kb-ovl').forEach((x) => x.remove());
     this.editor = null;
-    this._previewNote = null;
   }
   private sheetWrap(title: string, body: string): string {
     return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc(title)}</span><button class="bz-kb-sheet-close" data-kb-close title="关闭">✕</button></div><div class="bz-kb-sheet-body">${body}</div>`;
@@ -863,9 +845,10 @@ export class UIManager {
     this.allTopics = this.allTopics.filter((t) => t.path !== path);
   }
   private invalidateCached(_path: string): void {
-    this.loadedLitDir = this.loadedLitDir ? '' : this.loadedLitDir;
-    this.loadedCardDir = this.loadedCardDir ? '' : this.loadedCardDir;
-    this.loadedTopicDir = this.loadedTopicDir ? '' : this.loadedTopicDir;
+    // 任一缓存目录标记清零即可迫使 refreshCurrent 重扫（modifies 单条难精确定位到部）
+    this.loadedLitDir = '';
+    this.loadedCardDir = '';
+    this.loadedTopicDir = '';
   }
 
   private attachFileListener(): void {
@@ -1463,12 +1446,6 @@ export class UIManager {
 
   // ==================== 术语生成面板（文字录入；142 简洁版 + 155 总结） ====================
 
-  private termDateStamp(): string {
-    const d = new Date();
-    const p = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-  }
-
   createTermUI(): void {
     const mask = document.createElement('div');
     mask.id = 'knowledge-term-mask';
@@ -1759,7 +1736,7 @@ export class UIManager {
     const domainEl = q<HTMLElement>(this.termPopup, '#lit-term-meta-domain');
     if (domainEl) domainEl.textContent = draft.domain || '—';
     const dateEl = q<HTMLElement>(this.termPopup, '#lit-term-meta-date');
-    if (dateEl) dateEl.textContent = this.termDateStamp();
+    if (dateEl) dateEl.textContent = dateStamp();
     const contentEl = q<HTMLElement>(this.termPopup, '#lit-term-content');
     if (contentEl) contentEl.textContent = draft.summary;
     this.setTermPreviewVisible(true);

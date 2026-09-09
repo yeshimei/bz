@@ -7,7 +7,7 @@ import {
   calculateReadingStats, formatReadingTime, formatSessionDuration,
   calculateCompletionRate, analyzeTrendDirection, calculateFocusScore,
   calculateConsistencyDays, analyzeReadingSessions, analyzeReadingHabits,
-  analyzeSessionDurationDistribution, processHeatmapData, calculateIntensityLevel,
+  processHeatmapData, calculateIntensityLevel,
   analyzeFocusConsistency, calculateOverallFocusScore, calculateEfficiencyScore,
   calculateThinkRatio, calculateInteractionScore, calculateCategoryDiversity,
   calculateBalanceScore, getSuggestedCategories, analyzeInteractionPattern,
@@ -146,16 +146,6 @@ describe('会话分析', () => {
     const r = analyzeReadingHabits(Array.from({ length: 6 }, () => ({ start: '2025-01-01T08:00:00', duration: 300 })));
     expect(r.readingPattern).toBe('碎片化阅读 (短时间多次)');
     expect(r.peakTime).toBe('早晨时段最活跃');
-  });
-
-  it('analyzeSessionDurationDistribution：四档', () => {
-    const r = analyzeSessionDurationDistribution([
-      { duration: 300 }, { duration: 1200 }, { duration: 2400 }, { duration: 4000 },
-    ]);
-    expect(r.durationDistribution.short.count).toBe(1);
-    expect(r.durationDistribution.medium.count).toBe(1);
-    expect(r.durationDistribution.long.count).toBe(1);
-    expect(r.durationDistribution.extended.count).toBe(1);
   });
 });
 

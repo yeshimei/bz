@@ -171,7 +171,6 @@ function emptyYearlyStats() {
   };
 }
 
-
 /** 计算阅读统计数据 */
 export function calculateReadingStats(books: BookNoteEntry[]): ReadingStats {
   const stats: ReadingStats = {
@@ -395,47 +394,6 @@ export function analyzeReadingHabits(sessions: any[]) {
     focusLevel: `${focusLevel} (${focusPercentage}%长时间会话)`,
     peakTime: peakLabels[peakTime],
     timeDistribution,
-  };
-}
-
-/** 分析会话时长分布 */
-export function analyzeSessionDurationDistribution(sessions: any[]) {
-  const durationDistribution: Record<string, { count: number; percentage: string | number }> = {
-    short: { count: 0, percentage: 0 },    // 0-10分钟
-    medium: { count: 0, percentage: 0 },   // 10-30分钟
-    long: { count: 0, percentage: 0 },     // 30-60分钟
-    extended: { count: 0, percentage: 0 }, // 60分钟以上
-  };
-
-  let totalDuration = 0;
-  let maxDuration = 0;
-
-  sessions.forEach((session) => {
-    const durationMinutes = session.duration / 60;
-    totalDuration += session.duration;
-    maxDuration = Math.max(maxDuration, session.duration);
-
-    if (durationMinutes < 10) {
-      durationDistribution.short.count++;
-    } else if (durationMinutes < 30) {
-      durationDistribution.medium.count++;
-    } else if (durationMinutes < 60) {
-      durationDistribution.long.count++;
-    } else {
-      durationDistribution.extended.count++;
-    }
-  });
-
-  Object.keys(durationDistribution).forEach((key) => {
-    durationDistribution[key].percentage = sessions.length > 0 ? ((durationDistribution[key].count / sessions.length) * 100).toFixed(1) : 0;
-  });
-
-  return {
-    durationDistribution,
-    totalSessions: sessions.length,
-    totalDuration,
-    avgDuration: sessions.length > 0 ? totalDuration / sessions.length : 0,
-    maxDuration,
   };
 }
 
@@ -780,12 +738,12 @@ function analyzeSessionFocus(sessions: any[]) {
   const totalDuration = sessions.reduce((sum, session) => sum + session.duration, 0);
   const avgDuration = totalDuration / totalSessions;
 
-  const distribution = [
-    { type: 'short', max: 600, count: 0 },      // <10分钟
-    { type: 'light', max: 1800, count: 0 },     // 10-30分钟
-    { type: 'medium', max: 3600, count: 0 },    // 30-60分钟
-    { type: 'deep', max: 7200, count: 0 },      // 1-2小时
-    { type: 'intense', max: Infinity, count: 0 }, // >2小时
+  const distribution: { type: string; max: number; count: number; percentage: number }[] = [
+    { type: 'short', max: 600, count: 0, percentage: 0 },      // <10分钟
+    { type: 'light', max: 1800, count: 0, percentage: 0 },     // 10-30分钟
+    { type: 'medium', max: 3600, count: 0, percentage: 0 },    // 30-60分钟
+    { type: 'deep', max: 7200, count: 0, percentage: 0 },      // 1-2小时
+    { type: 'intense', max: Infinity, count: 0, percentage: 0 }, // >2小时
   ];
 
   sessions.forEach((session) => {
@@ -799,7 +757,7 @@ function analyzeSessionFocus(sessions: any[]) {
   });
 
   distribution.forEach((cat) => {
-    (cat as any).percentage = totalSessions > 0 ? Math.round((cat.count / totalSessions) * 100) : 0;
+    cat.percentage = totalSessions > 0 ? Math.round((cat.count / totalSessions) * 100) : 0;
   });
 
   return {

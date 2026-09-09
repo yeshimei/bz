@@ -909,3 +909,13 @@ etrieve 增 lexicalQuery（词法降级免「情绪/时段」噪音）。④ **�
 - ✅ **测试**：store-file.test.ts 9 例（四旧合并组装/vec 改名/幂等/空库不落盘/段容错/损坏留档/并发 50+50 mutate 不丢段/link 段打通）
 - 📄 文档：issues/120 立项；spec v1.5 数据设计改单文件；CONTEXT 词条；AGENTS 领域清单表（secondbrain.json + secondbrain.vec）；PROGRESS 本条目
 - ⏳ 待办：合并 master 后构建部署（main.js/styles.css 同步）；vault 遗留 ai_completion_meta.json + ai_completion_vectors.vec 本地删除（用户拍板）
+
+## 2026-09-10 全域重构+大扫除完成（issue 259，rules-books 规则驱动）
+**状态：worktree 全量 4195 测试（262 文件）+ tsc 0 错误；7 组并行代理目录互斥开发；净 −229 行（72 文件 +729/−958）**
+
+- ✅ 规则依据 `.scratch/agent-rules-books` mini 三册（Refactoring/Clean Code/APHoSD）；行为保持纯重构：文案/命令ID/DOM/类名/css/数据格式零变更，render.ts 仅删 1 行死导入
+- ✅ 死代码 ~250 行（diary-wall 拷贝残留死导出 3、reading-report 死导出 2、smartcat/todo/clipbook/cinema/review/secondbrain 死函数/死 state/死 ICON 键、全库死导入 ~40 个）
+- ✅ `as any` 收敛 ~80 处（smartcat 95→51、todo 21 处真实类型、ai.ts override 7 处、settings-panel WeakMap）；Obsidian API 边界与 unknown 存量防御按规则保留
+- ✅ 重复收口：encrypt 确认框 5→1 `askConfirm`、diary-wall `isEncHidden` 5 处、review `quizWithAI` 3 处、smartcat `consumeLibraryDiff` 5 段、core 设置行样板 ×7 `newRowSetting`
+- ✅ 长函数拆解：encrypt renderDesktop(~125行)→4、diary-wall renderWall(165行)/openSheet(105行)；缝线不明显的（openEditor 330行、renderRow 330行 switch、doRefresh 210行）按停止条件原地保留
+- 📄 issues/259 完整报告（含 5 项留拍板）；测试偶发假失败 1 例复跑全绿（vitest 配置已载明的 CPU 争抢型，非改动致败）

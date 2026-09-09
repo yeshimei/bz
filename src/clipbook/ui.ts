@@ -31,7 +31,6 @@ import { uiEmpty, uiResizable, uiVSplitter, mountIcons } from '../core/ui';
 import { formatRelativeTime } from '../core/utils';
 import { isMobileEnv } from '../core/mobile';
 import { escManager } from '../core/esc-manager';
-import { topifyZ } from '../core/dom';
 import { attachItemActions, closeItemMenu, type ItemAction } from '../core/item-actions';
 import { openFlowDialog } from '../core/flow-dialog';
 import { openSettingsModal } from '../core/settings-modal';
@@ -41,14 +40,13 @@ import { ensureAutoSummary, stopAutoSummary, regenerateSummary } from '../auto-s
 import { dataSourceGroupRows } from './news-sources-group';
 import { articleKeyOf } from './constants';
 import { readDataSourceState, type DataSourceState } from './news-source-settings';
-import { batchSizeRow } from '../core/settings-common';
 import type { ClipArticle } from './types';
 import { toParagraphs, stripClipChrome } from './md';
 import { queryBySource, queryBySourceFull, aggregateSites, clipArticle, bucketByState } from './store';
 import {
   panelHtml, railItemHtml, railFootHtml, tocListHtml, paragraphsHtml as paragraphsMarkup,
   clipLoadingHtml, readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, mobNoHitHtml, type MobChapter, siteTint,
-  iconSpan, type SrcSelJson, deskFoldRowHtml, foldBodyHtml,
+  deskFoldRowHtml, foldBodyHtml,
 } from './render';
 import { M, resetClipbookState } from './state';
 import { readNewsAndSidecar, clipDir } from './loader';
@@ -73,7 +71,6 @@ let mobSearchbarEl: HTMLElement | null = null;
 let deskSearchEl: HTMLInputElement | null = null; // 桌面搜索输入
 let escKey = '';
 let escHandle: { unregister(): void } | null = null;
-let escRegistered = false;
 let loading = false;
 let dirty = false; // 数据变化待刷标志（目录事件回调期）
 let loaded = false; // C5：本次会话是否已成功装载过（false = 首开必须装载）
@@ -181,7 +178,6 @@ export function unloadPanel(): void {
   if (escHandle) {
     try { escHandle.unregister(); } catch (e) { /* 忽略 */ }
     escHandle = null;
-    escRegistered = false;
   }
   if (searchDebounceTimer !== null) {
     clearTimeout(searchDebounceTimer);
@@ -333,7 +329,6 @@ function buildDom(app: any): void {
     isVisible: () => !!overlayEl && overlayEl.style.display !== 'none',
     close: () => closePanel(),
   });
-  escRegistered = true;
   const frameEl = overlayEl.querySelector('.bz-clip-frame') as HTMLElement;
   // 桌面面板拖拽缩放 + 尺寸记忆（enh 包 8 → ADR-0094 persist 选项）：仅桌面写内联宽高——
   // 内联样式优先级高于移动端媒体查询的满屏规则；恢复/防抖落盘/收尾补存全由 uiResizable 承担
@@ -424,16 +419,13 @@ function renderHeadIssue(): void {
 /** 源过滤条件（queryBySource 入参别名；issue 222 加 site 源） */
 type SrcFilter = { kind: 'all' } | { kind: 'inbox'; platform: string; up?: string } | { kind: 'clip' } | { kind: 'site'; site: string };
 
-function srcList(): SrcFilter {
+/** 当前源过滤条件（M.sel → queryBySource 入参） */
+function currentSrc(): SrcFilter {
   const s = M.sel;
   if (s.kind === 'clip') return { kind: 'clip' };
   if (s.kind === 'site') return { kind: 'site', site: s.site };
   if (s.kind === 'inbox') return { kind: 'inbox', platform: s.platform, up: s.up || undefined };
   return { kind: 'all' };
-}
-
-function currentSrc(): SrcFilter {
-  return srcList();
 }
 
 function currentList(): ClipArticle[] {
@@ -907,16 +899,6 @@ function stepArticle(delta: number): void {
   const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
   const next = list[nextIdx];
   if (next && (!M.cur || next.id !== M.cur.id)) selectArticle(next.id);
-}
-
-// ---- 站点首字 chip（favicon 高清解析链已随 issue 214 阅读面极简化退役；chip 仍服务移动端） ----
-
-/** 首字 chip（加载期占位 / 移动端来源标识） */
-function favChipEl(site: string): HTMLElement {
-  const el = document.createElement('span');
-  el.className = 'bz-clip-favchip';
-  el.textContent = String(site || '剪').slice(0, 1) || '剪';
-  return el;
 }
 
 // ================= 动作 =================
