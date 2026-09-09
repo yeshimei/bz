@@ -1431,11 +1431,7 @@ export class SafeManager {
     const idx = this.manifest.notes.findIndex((n) => n.id === noteId);
     if (idx === -1) return;
     const note = this.manifest.notes[idx];
-    if (note.contentRef) await this.deleteSafeFile(note.contentRef);
-    for (const a of note.attachments) {
-      await this.deleteSafeFile(a.blobRef);
-      if (a.hasPreview) await this.deleteSafeFile(a.previewRef);
-    }
+    await this.deleteNoteMirrors(note);
     this.manifest.notes.splice(idx, 1);
     await this.saveManifest();
   }

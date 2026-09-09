@@ -21,7 +21,7 @@ let uiManager: UIManager | null = null;
 export function ensureKnowledge(app: App): void {
   if (initialized) return;
   try {
-    KnowledgeData.init({ storagePath: (tryGetSettings() as any)?.storagePath });
+    KnowledgeData.init({ storagePath: tryGetSettings()?.storagePath });
     uiManager = new UIManager(app);
     initialized = true;
   } catch (e) {

@@ -13,7 +13,7 @@ import {
   generateReadingTrendsAnalysis, generateMobileFriendlyTrendChart, generateReadingHeatmap,
   generateHeatmapGrid, generateMonthHeatmap, generateHeatmapCell, generateReadingFocusAnalysis,
   generateReadingCategoryAnalysis, generateReadingNotesInteractionAnalysis,
-  generateInteractionTrendChart, generateBarRows, generateMonthBarColumns, heatmapMonthTitle,
+  generateBarRows, generateMonthBarColumns, heatmapMonthTitle,
 } from '../../src/reading-report/report';
 import { calculateReadingStats, processHeatmapData } from '../../src/reading-report/stats';
 import {
@@ -288,16 +288,6 @@ describe('report 生成函数', () => {
     // 环形图升级拍板：互动分布 → 水平条形行
     expect(html).toContain('互动分布');
     expect(html).toContain('bz-rr-bar-row');
-  });
-
-  it('generateInteractionTrendChart', () => {
-    const trend = generateInteractionTrendChart({
-      totalHighlights: 23, totalThinks: 3, totalDialogue: 5, totalOutlinks: 9, avgHighlightsPerBook: 4.6,
-    });
-    expect(trend).toContain('划线');
-    expect(trend).toContain('想法');
-    expect(trend).toContain('讨论');
-    expect(trend).toContain('互动密度：每本书平均 4.6 条划线');
   });
 
   it('generateFullStatsReport：聚合全部分段', () => {

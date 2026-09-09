@@ -8,7 +8,6 @@
  * 旧 schema（有 stream 字段或 version < 2）加载时重置为空新结构。
  */
 import type { App } from 'obsidian';
-import { tryGetSettings } from '../core/settings-provider';
 import { jsonFileStore, storageDir } from '../core/storage';
 import { defaultConfig, normalizeConfig } from './config';
 import { randomOceanSeed, characterSeed, DEFAULT_TRAITS, DEFAULT_OCEAN } from './character';

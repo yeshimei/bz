@@ -411,7 +411,7 @@ const TAB_LABELS: Record<PaneKey, string> = {
 
 /** 根据设置决定可见页签（showBehaviorLog=false 时隐藏行为页签） */
 function getVisiblePaneKeys(): PaneKey[] {
-  const s = tryGetSettings() as any;
+  const s = tryGetSettings();
   const keys: PaneKey[] = ['overview', 'emotion', 'personality', 'memory', 'report'];
   if (s?.showBehaviorLog !== false) keys.push('behavior');
   return keys;
@@ -419,8 +419,8 @@ function getVisiblePaneKeys(): PaneKey[] {
 
 /** memo.json 路径（跟随共享 storagePath；loadMemoTitlesByDay 与 C1 自动刷新监听共用） */
 function memoDataPath(): string {
-  const s = tryGetSettings() as any;
-  const dir = ((s && s.storagePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
+  const s = tryGetSettings();
+  const dir = (s?.storagePath || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
   return `${dir}/memo.json`;
 }
 
@@ -629,8 +629,8 @@ function renderPersonality(pane: HTMLElement, data: SmartCatData): void {
   const ocean = g?.ocean;
   const oceanCard = card('人格底色（OCEAN 出生种子，落盘后固定）');
   if (ocean) {
-    for (const [k, label] of Object.entries(OCEAN_LABELS)) {
-      oceanCard.body.appendChild(barRow(label, (ocean as any)[k] ?? 0.5));
+    for (const key of Object.keys(OCEAN_LABELS) as (keyof OceanProfile)[]) {
+      oceanCard.body.appendChild(barRow(OCEAN_LABELS[key], ocean[key] ?? 0.5));
     }
   } else {
     oceanCard.body.appendChild(emptyHint('尚无 OCEAN 数据。'));
@@ -644,7 +644,7 @@ function renderPersonality(pane: HTMLElement, data: SmartCatData): void {
     for (const [group, keys] of Object.entries(TRAIT_GROUPS)) {
       traitCard.body.appendChild(el('div', 'bz-sc-dash-group-title', TRAIT_GROUP_LABELS[group] || group));
       for (const key of keys as readonly (keyof CharacterTraits)[]) {
-        traitCard.body.appendChild(barRow(TRAIT_LABELS[key] || key, (traits as any)[key] ?? 0));
+        traitCard.body.appendChild(barRow(TRAIT_LABELS[key] || key, traits[key] ?? 0));
       }
     }
   } else {
@@ -711,7 +711,7 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
   pane.innerHTML = '';
   const stream = data.memory?.memoryStream || [];
   // ticket 163：来源分布按「记忆目录」的追查目录分行（标签随设置走，日记目录条目 source=diary 已在来源表）
-  const dirs = normalizeMemoryDirectories((tryGetSettings() as any).memoryDirectories);
+  const dirs = normalizeMemoryDirectories(tryGetSettings()?.memoryDirectories);
   const refl = data.memory?.reflection || ({} as SmartCatData['memory']['reflection']);
 
   // 统计
@@ -1099,7 +1099,7 @@ interface DashboardState {
   tabs: Partial<Record<PaneKey, HTMLElement>>;
   activeTab: PaneKey;
   visibleKeys: PaneKey[];
-  escHandle: { unregister: () => void };
+  escHandle: { unregister: () => void } | null;
   /** 当日备忘标题表（「一起的日子」关键时刻用；打开/刷新时现读） */
   memoTitles: Map<string, string[]>;
   /** C1 自动刷新：vault modify 事件引用（close 全量 offref 清理；幂等重开先 close 不泄漏） */
@@ -1244,7 +1244,7 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
   // 当日备忘标题表现读（094「一起的日子」关键时刻；失败静默空表）
   const memoTitles = await loadMemoTitlesByDay(app);
   dashState = {
-    app, mask, popup, body, panes, tabs, activeTab: 'overview', visibleKeys, escHandle: null as any,
+    app, mask, popup, body, panes, tabs, activeTab: 'overview', visibleKeys, escHandle: null,
     memoTitles, eventRefs: [], debounceTimer: null, lastData: null,
     behaviorFilter: null, behaviorShown: BEHAVIOR_BATCH_SIZE, behaviorListEl: null, behaviorLoadMoreBtn: null,
   };

@@ -28,8 +28,6 @@ export interface TodoState {
   completeTimers: Map<string, ReturnType<typeof setTimeout>>;
   /** UI 重渲染回调（ADR-0002：store 层无 DOM，UI 注册） */
   renderFn: (() => void) | null;
-  /** 当前编辑条目 id（null = 新建） */
-  editingId: string | null;
 }
 
 export const M: TodoState = {
@@ -44,7 +42,6 @@ export const M: TodoState = {
   pinnedNewId: null,
   completeTimers: new Map(),
   renderFn: null,
-  editingId: null,
 };
 
 /** 测试/重建用：整体重置模块状态 */
@@ -61,5 +58,4 @@ export function resetTodoState(): void {
   M.completeTimers.forEach((t) => clearTimeout(t));
   M.completeTimers.clear();
   M.renderFn = null;
-  M.editingId = null;
 }

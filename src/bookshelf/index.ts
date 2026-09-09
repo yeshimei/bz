@@ -6,7 +6,6 @@
  * bz-reading-report-open（home 报告磁贴/剪藏本深链/本域报告入口同一去向）调用。
  */
 import type { App, EventRef } from 'obsidian';
-import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
 import { M, resetBookshelfState, applyDefaultView } from './state';
 import { resolveFolderPath, rebuildItems, WEAVE_DATA_FILE } from './data';

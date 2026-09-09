@@ -51,15 +51,17 @@ export interface ReportRenderOptions {
   onBack?: () => void;
 }
 
+/** requestIdleCallback 超时兜底（防止长空闲期饿死分片渲染） */
+const IDLE_CALLBACK_TIMEOUT_MS = 50;
+
 /**
  * 让出主线程（ticket 40）：分片渲染/大数据步骤之间插帧，大库不再数秒冻结。
  * requestIdleCallback 优先（带超时兜底），不可用时退化为 setTimeout(0)。
  */
 function yieldToMainThread(): Promise<void> {
   return new Promise((resolve) => {
-    const ric = (window as any).requestIdleCallback;
-    if (typeof ric === 'function') {
-      ric(() => resolve(), { timeout: 50 });
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(() => resolve(), { timeout: IDLE_CALLBACK_TIMEOUT_MS });
     } else {
       window.setTimeout(resolve, 0);
     }

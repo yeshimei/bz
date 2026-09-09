@@ -99,7 +99,7 @@ export const KnowledgeData = {
 
   /** 惰性 store 获取：init 前调用时按当前设置补建（消除 init 前 _store 空指针） */
   _ensureStore(): JsonFileStore<any[]> {
-    if (!this._store) this.init({ storagePath: (tryGetSettings() as any)?.storagePath });
+    if (!this._store) this.init({ storagePath: tryGetSettings()?.storagePath });
     return this._store!;
   },
 

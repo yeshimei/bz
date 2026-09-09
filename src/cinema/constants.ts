@@ -63,6 +63,5 @@ export function getStarString(rating: number): string {
 
 // ======================= 风格框架（issue 236 / ADR-0103） =======================
 
-/** 面板风格 id（当前仅午夜场上岸；gazette/booth 为 styles.css 预留段，设置项见 settings.ts） */
-export type CinemaStyle = 'midnight' | 'gazette' | 'booth';
-// 当前风格取值 cinemaStyleOf() 在 ui.ts（读设置属行为层；本文件保持纯常量，ADR-0104 纯度守卫）。
+// 当前仅午夜场上岸（gazette/booth 为 styles.css 预留段，设置项见 settings.ts）；
+// 未来多风格时在此定义风格 id 联合类型（读设置取值属行为层，ADR-0104 纯度守卫）。

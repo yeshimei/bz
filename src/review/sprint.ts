@@ -33,7 +33,7 @@ import {
 /** 答对后亮绿到自动进下一题的延时（ticket 156 用户拍板 0.8s） */
 export const CORRECT_JUMP_DELAY_MS = 800;
 
-/** 评级映射（app.accuracyToRating 同口径：≥90 简单 / ≥70 一般 / ≥50 困难 / <50 忘了） */
+/** 评级映射（≥90 简单 / ≥70 一般 / ≥50 困难 / <50 忘了） */
 export function accuracyToRating(accuracy: number): 'easy' | 'good' | 'hard' | 'again' {
   if (accuracy >= 90) return 'easy';
   if (accuracy >= 70) return 'good';
@@ -284,7 +284,6 @@ export class SprintSession {
     this.cur = nextIdx;
     const entry = this.entries[nextIdx];
     entry.state = 'doing';
-    this.renderTop(); // 顶部骨架（含本轮队列）
     this.showLoading(entry);
 
     const questions = await this.opts.fetchQuestions(entry.item);
@@ -472,11 +471,6 @@ export class SprintSession {
   }
 
   // ================= 视图构建（markup 单源：render.ts，issue 253） =================
-
-  /** 顶部头行（队列视图 / 冲刺共用外层结构由宿主渲染，本会话只接管内容区） */
-  private renderTop(): void {
-    // 内容区由宿主清空后本会话自绘全部（含顶部）。为与队列互斥，宿主仅给空容器。
-  }
 
   private showLoading(entry: SprintEntry): void {
     this.view = 'loading';

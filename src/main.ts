@@ -67,7 +67,6 @@ import { ensureAutoSummary, unloadAutoSummary, redoSummaryForActiveFile } from '
 // 日记本（diary-notebook 合并）
 import { setApp as setDiaryApp } from './diary/app';
 import { applyDirectories } from './diary/config';
-import { loadAll } from './diary/store';
 import { state as diaryState } from './diary/state';
 import { applyUiSettings, init as diaryInit, showDiaryPanel, unregisterEscLayer } from './diary/ui/panel';
 // 小橘陪伴猫（smartcat 域：桌面宠物 + AI 陪伴；AI 走 bz core/ai，数据单 json smartcat.json）

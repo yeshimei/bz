@@ -164,7 +164,6 @@ export async function processFile(app: any, ai: AIService, file: any, opts: Proc
       if (missing.length === 0) return; // 字段齐全，无需处理
     }
 
-    console.log(`[自动摘要] 补全缺失字段(${missing.join('/')}): ${file.basename}`);
     // 开始调用 AI：动态通知（进行中 → 原地更新为结果；去重键按文件区分，连续剪藏各弹各）；
     // quiet（批量队列驱动）不发单文件进度——由队列聚合通知承载（enh 包 2）
     const startName = fm && fm.title ? fm.title : file.basename;
@@ -247,7 +246,6 @@ export async function processFile(app: any, ai: AIService, file: any, opts: Proc
     } else if (h) {
       h.hide();
     }
-    console.log(`[自动摘要] ✅ 完成: ${targetFile.basename}`);
   } catch (e) {
     if (h) h.hide();
     console.error(`[自动摘要] 处理失败: ${file.basename}`, e);

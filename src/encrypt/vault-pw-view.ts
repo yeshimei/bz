@@ -129,6 +129,10 @@ export type PwAccountAct = 'copy-ac' | 'copy-pw' | 'eye' | 'edit' | 'fav' | 'del
 /** 账号卡明文展示自动回遮时长（防偷看：显示密码 ~15 秒后自动回掩码） */
 export const PW_REVEAL_AUTO_MASK_MS = 15_000;
 
+/** 默认生成字符集（与旧密码本同款；encrypt 域唯一定义，ui.ts/index.ts 复用） */
+export const DEFAULT_PW_CHARSET =
+  '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+';
+
 export class VaultPwView {
   private dm: PasswordVaultDataManager;
   private host: PwViewHost;
@@ -141,7 +145,7 @@ export class VaultPwView {
   constructor(dm: PasswordVaultDataManager, host: PwViewHost, cfg: { charset?: string; length?: string | number }) {
     this.dm = dm;
     this.host = host;
-    this.charset = cfg.charset || '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+';
+    this.charset = cfg.charset || DEFAULT_PW_CHARSET;
     this.length = parseInt(String(cfg.length)) || 16;
   }
 
@@ -550,8 +554,7 @@ export class VaultPwView {
 
   // ---------- lucide 图标 ----------
   private ic(name: string, size = 14): string {
-    const p = (name: string): string => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ''}</svg>`;
-    return p(name);
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ''}</svg>`;
   }
 
   /** 空态（组件库 uiEmpty = .bz-empty 基线）；add = 附「新增密码」金色 CTA（金库主题色，域内样式） */

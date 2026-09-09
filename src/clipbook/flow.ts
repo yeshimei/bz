@@ -21,7 +21,6 @@ import type { NewsReadEvent } from '../smartcat/news-source';
 import { writeClipNote } from './save';
 import { articleKeyOf } from './constants';
 import { updateClipbookData } from './data';
-import { readNewsAndSidecar } from './loader';
 import { enqueueNewsWrite } from './write-queue';
 
 // ---------- 阅读会话计时（对齐 ticket 076：当前显示条目 + 累计可视毫秒） ----------

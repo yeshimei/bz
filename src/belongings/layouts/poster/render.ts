@@ -5,9 +5,9 @@
  */
 import { esc, iconSpan } from '../../../core/ui/str';
 import {
-  ICON, STATUS, STATUS_ORDER, STATUS_LABELS, SORT_OPTS,
-  money, moneyShort, statusKeyOf, statusOf,
-  isExited, daysUsed, dailyCostOf, inStock, stockCount, totalAssets, avgDailyCost, statusCount,
+  ICON, STATUS, STATUS_ORDER, SORT_OPTS,
+  moneyShort, statusKeyOf,
+  isExited, daysUsed, dailyCostOf, stockCount, totalAssets, avgDailyCost, statusCount,
   yearsAvailable, resolveYear,
   itemEmHtml, catNameOf,
   filtered, heroTitleText, heroSubText,

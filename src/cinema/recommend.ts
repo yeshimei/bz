@@ -6,11 +6,11 @@
  * - ADR-0087：自旧 movie 迁入 runSimilarRecommend/buildSimilarPrompt（找同类）
  */
 import type { App } from 'obsidian';
-import { notice, notify, notifySaveError } from '../core/notice';
+import { notice, notifySaveError } from '../core/notice';
 import { localNow } from '../core/ui/str';
 import { createAI } from '../core/ai';
 import { emitDomainEvent } from '../core/domain-bus';
-import { STATUS_WANT, STATUS_WATCHED } from './constants';
+import { STATUS_WATCHED } from './constants';
 import type { CinemaItem } from './state';
 import { M } from './state';
 import { refreshDataAndView } from './data';
