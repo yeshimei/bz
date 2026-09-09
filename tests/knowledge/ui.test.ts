@@ -222,23 +222,32 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     vault.files.set('卡片盒/C.md', cardMd({ title: 'C' }));
     ui.showMain();
     (document.querySelector('[data-part=z2]') as HTMLElement).click();
-    await vi.waitFor(() => expect(document.querySelector('.bz-kb-sc')!.textContent).toContain('提 炼 层'));
-    expect(document.querySelector('.bz-kb-sc')!.textContent).toContain('3 张');
+    await vi.waitFor(() => expect(document.querySelector('[data-kb-act=card-peek]')).toBeTruthy());
+    expect(document.querySelectorAll('[data-kb-act=card-peek]').length).toBe(3);
     expect(document.querySelector('.bz-kb-sc')!.textContent).toContain('复习中 · 到期由闹钟安排');
     expect(document.querySelector('.bz-kb-sc')!.textContent).toContain('未入复习');
   });
 
-  it('部叁：主题笔记展示（列表 + 只读渲染 + 返回），文案标明关联机制探索中', async () => {
+  it('部叁：主题笔记展示（列表 + 三部统一预览弹层），文案标明关联机制探索中', async () => {
     vault.files.set('主题盒/认知觉醒.md', '# 本能脑\n\n[[书库/认知觉醒]] 块引用正文');
     ui.showMain();
     (document.querySelector('[data-part=z3]') as HTMLElement).click();
     await vi.waitFor(() => expect(document.querySelector('.bz-kb-sc')!.textContent).toContain('认知觉醒'));
-    expect(document.querySelector('.bz-kb-sc')!.textContent).toContain('仅做展示');
     (document.querySelector('[data-kb-act=topic-open]') as HTMLElement).click();
-    await vi.waitFor(() => expect(document.querySelector('.bz-kb-noteview')).toBeTruthy());
-    expect(document.querySelector('.bz-kb-noteview')!.textContent).toContain('本能脑');
-    (document.querySelector('[data-kb-act=topics-back]') as HTMLElement).click();
-    await vi.waitFor(() => expect(document.querySelector('.bz-kb-sc')!.textContent).toContain('一篇普通笔记'));
+    await vi.waitFor(() => expect(document.getElementById('bz-kb-preview-body')).toBeTruthy());
+    expect(document.querySelector('.bz-kb-sheet')!.textContent).toContain('主题预览');
+    expect(document.getElementById('bz-kb-preview-body')!.textContent).toContain('本能脑');
+  });
+
+  it('三部统一预览：卡片行点击开同款弹层（卡片预览）', async () => {
+    vault.files.set('卡片盒/A.md', cardMd({ title: 'A', domain: '历史' }));
+    ui.showMain();
+    (document.querySelector('[data-part=z2]') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.querySelector('[data-kb-act=card-peek]')).toBeTruthy());
+    (document.querySelector('[data-kb-act=card-peek]') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('bz-kb-preview-body')).toBeTruthy());
+    expect(document.querySelector('.bz-kb-sheet')!.textContent).toContain('卡片预览');
+    expect(document.querySelector('.bz-kb-sheet')!.querySelector('[data-lit-src-url]')).toBeNull();
   });
 
   it('录入入口：术语面板 / 视频面板叠开', async () => {
