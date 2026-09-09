@@ -5095,7 +5095,7 @@ var BZW_settings_panel = (() => {
         encrypt: "lock",
         "password-vault": "key",
         smartcat: "cat",
-        literature: "list-video",
+        knowledge: "list-video",
         // 命令专属域
         "settings-panel": "settings-2"
       };
@@ -10182,7 +10182,7 @@ var BZW_settings_panel = (() => {
       { file: storageFile("review-fit.json"), label: "复习拟合参数" },
       { file: storageFile("home.json"), label: "内容首页" },
       { file: storageFile("smartcat.json"), label: "小橘" },
-      { file: storageFile("literature.json"), label: "文献盒" },
+      { file: storageFile("knowledge.json"), label: "知识盒" },
       { file: storageFile("secondbrain.json"), label: "第二大脑" },
       { file: storageFile("quiz.json"), label: "复习做题" },
       { file: `${resolveWeaveDataPath(app2)}/${WEAVE_DATA_FILE}`, label: "EPUB 阅读数据（书库）" }
@@ -10572,7 +10572,6 @@ ${countsToText(s.missing)}
       year: fm["上映日期"] ? String(fm["上映日期"]).slice(0, 4) : null,
       doubanRating: fm["豆瓣评分"] !== void 0 && fm["豆瓣评分"] !== "" ? String(fm["豆瓣评分"]) : null,
       doubanUrl: /^https?:\/\//.test(String((_q = fm["豆瓣链接"]) != null ? _q : "")) ? String(fm["豆瓣链接"]) : null,
-      doubanCheck: fm["豆瓣检查"] ? String(fm["豆瓣检查"]) : null,
       synopsis: (_s = (_r = fm["简介"]) == null ? void 0 : _r.toString()) != null ? _s : null,
       // 片长/季集：原独立观影报告的两项统计源字段（ADR-0090 并入内嵌分析页）
       duration: (_u = (_t = fm["片长"]) == null ? void 0 : _t.toString()) != null ? _u : null,
@@ -24856,15 +24855,31 @@ ${body}`;
       init_storage();
       init_settings_provider();
       init_utils();
+      init_app();
       TIME_RE = /^\d{1,3}:\d{1,2}(:\d{1,2}(\.\d{1,3})?)?$/;
       KnowledgeData = {
         filePath: "",
         _store: null,
+        /** 旧数据文件 literature.json → knowledge.json 一次性迁移（ADR-0112：只复制不改写，旧文件保留在原处） */
+        _legacyMigrated: false,
         /** 初始化（幂等）：固化文件路径与 store。未调用时 read/write 按当前设置惰性补齐（统一数据读写重构） */
         init(settings) {
           const folder = (settings.storagePath || "CONFIG/STORAGE").trim().replace(/\/+$/, "");
-          this.filePath = folder + "/literature.json";
+          this.filePath = folder + "/knowledge.json";
           this._store = jsonFileStore(this.filePath);
+        },
+        /** 一次性迁移：knowledge.json 不存在而 literature.json 存在时原样复制一份（任务历史零丢失，ADR-0112） */
+        async migrateLegacy() {
+          if (this._legacyMigrated) return;
+          this._legacyMigrated = true;
+          try {
+            const app2 = getApp();
+            if (app2.vault.getAbstractFileByPath(this.filePath)) return;
+            const legacyPath = this.filePath.replace(/knowledge\.json$/, "literature.json");
+            const legacy = app2.vault.getAbstractFileByPath(legacyPath);
+            if (legacy) await app2.vault.create(this.filePath, await app2.vault.read(legacy));
+          } catch (e) {
+          }
         },
         /** 惰性 store 获取：init 前调用时按当前设置补建（消除 init 前 _store 空指针） */
         _ensureStore() {
@@ -24889,11 +24904,12 @@ ${body}`;
         },
         /** 全量读取并统一字段形状（缺省补默认值，旧/手改数据零迁移） */
         async loadTasks() {
+          await this.migrateLegacy();
           return this._mutate(async (raw) => {
             let needWrite = false;
             const tasks = raw.map((item) => {
               if (!item.id) {
-                item.id = generateId("literature-task");
+                item.id = generateId("knowledge-task");
                 needWrite = true;
               }
               return {
@@ -24924,7 +24940,7 @@ ${body}`;
         addTask(input) {
           var _a2, _b2, _c, _d, _e;
           const task = {
-            id: generateId("literature-task"),
+            id: generateId("knowledge-task"),
             url: normalizeUrl2(input.url),
             start: ((_a2 = input.start) == null ? void 0 : _a2.trim()) || null,
             end: ((_b2 = input.end) == null ? void 0 : _b2.trim()) || null,
@@ -24977,88 +24993,6 @@ ${body}`;
           });
         }
       };
-    }
-  });
-
-  // src/core/list-patch.ts
-  function keyedChildren(container, keyAttr) {
-    const map = /* @__PURE__ */ new Map();
-    const attr = "data-" + keyAttr;
-    for (const el of Array.from(container.children)) {
-      if (el.nodeType !== 1) continue;
-      if (!el.hasAttribute(attr)) continue;
-      const key = el.dataset[keyAttr];
-      if (key != null && !map.has(key)) map.set(key, el);
-    }
-    return map;
-  }
-  function firstKeyedChild(container, keyAttr, exclude) {
-    const attr = "data-" + keyAttr;
-    for (const el of Array.from(container.children)) {
-      if (el === exclude) continue;
-      if (el.nodeType === 1 && el.hasAttribute(attr)) return el;
-    }
-    return null;
-  }
-  function patchKeyedCards(opts) {
-    const { container, keyAttr, keys, render: render2 } = opts;
-    const old = keyedChildren(container, keyAttr);
-    const changed = opts.changedKeys;
-    const used = /* @__PURE__ */ new Set();
-    let added = 0;
-    let moved = 0;
-    let updated = 0;
-    const ensure = (key) => {
-      const existing = old.get(key);
-      if (existing && !used.has(key)) {
-        used.add(key);
-        if (changed && !changed.has(key)) return existing;
-        const fresh2 = render2(key);
-        if (!fresh2) return existing;
-        if (fresh2.outerHTML !== existing.outerHTML) {
-          existing.replaceWith(fresh2);
-          updated++;
-          return fresh2;
-        }
-        return existing;
-      }
-      const fresh = render2(key);
-      if (fresh) added++;
-      return fresh;
-    };
-    let anchor = null;
-    for (const key of keys) {
-      const el = ensure(key);
-      if (!el) continue;
-      if (anchor) {
-        if (el.previousElementSibling !== anchor) {
-          anchor.after(el);
-          moved++;
-        }
-      } else {
-        const first = firstKeyedChild(container, keyAttr, el);
-        if (first) {
-          if (el.previousElementSibling !== first) {
-            container.insertBefore(el, first);
-            moved++;
-          }
-        } else if (!el.isConnected) {
-          container.appendChild(el);
-          moved++;
-        }
-      }
-      anchor = el;
-    }
-    let removed = 0;
-    for (const [key, el] of old) {
-      if (used.has(key)) continue;
-      el.remove();
-      removed++;
-    }
-    return { added, removed, moved, updated };
-  }
-  var init_list_patch = __esm({
-    "src/core/list-patch.ts"() {
     }
   });
 
@@ -25720,6 +25654,7 @@ ${sample}`,
   var ui_exports4 = {};
   __export(ui_exports4, {
     UIManager: () => UIManager2,
+    appendRelatedLine: () => appendRelatedLine,
     humanizeError: () => humanizeError,
     knowledgeSettingsSchema: () => knowledgeSettingsSchema
   });
@@ -25745,7 +25680,7 @@ ${sample}`,
       return "语音转写失败：未找到 Python——设置里「Python 路径」填 python（一般装了 Python 即可），或运行 where python 查绝对路径填入";
     }
     if (/未配置 pythonPath/i.test(s)) {
-      return "语音转写未配置：文献盒设置「Python 路径」填 python 即可（一般装了 Python 就能用，走系统 PATH），或填绝对路径（Windows 在命令提示符运行 where python 可查）";
+      return "语音转写未配置：知识盒设置「Python 路径」填 python 即可（一般装了 Python 就能用，走系统 PATH），或填绝对路径（Windows 在命令提示符运行 where python 可查）";
     }
     if (/pip install faster-whisper|faster-whisper 环境已安装/i.test(s)) {
       return "语音转写失败：faster-whisper 未安装，请在目标 Python 中运行 pip install faster-whisper";
@@ -25780,6 +25715,14 @@ ${sample}`,
     const raw = s && s.knowledgeDirectory ? String(s.knowledgeDirectory) : "文献盒";
     return raw.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
   }
+  function cardboxDirOf(s) {
+    const raw = s && s.knowledgeCardboxDirectory ? String(s.knowledgeCardboxDirectory) : "卡片盒";
+    return raw.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  }
+  function topicDirOf(s) {
+    const raw = s && s.knowledgeTopicDirectory ? String(s.knowledgeTopicDirectory) : "主题盒";
+    return raw.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  }
   function parseDateRaw(raw) {
     const s = String(raw != null ? raw : "").trim();
     if (!s) return NaN;
@@ -25787,6 +25730,33 @@ ${sample}`,
     if (!isNaN(d1.valueOf())) return d1.valueOf();
     const d2 = new Date(s);
     return d2.valueOf();
+  }
+  function stripFrontmatter(text) {
+    const m = text.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
+    return text.slice(m ? m[0].length : 0).replace(/^\r?\n+/, "");
+  }
+  function appendRelatedLine(text, link) {
+    var _a2;
+    const lines = text.split(/\r?\n/);
+    if (((_a2 = lines[0]) == null ? void 0 : _a2.trim()) !== "---") return text;
+    let close = -1;
+    let relatedAt = -1;
+    for (let i = 1; i < lines.length; i++) {
+      if (lines[i].trim() === "---") {
+        close = i;
+        break;
+      }
+      if (/^related:/.test(lines[i])) relatedAt = i;
+    }
+    if (close === -1) return text;
+    if (relatedAt === -1) {
+      lines.splice(close, 0, "related:", `  - "${link}"`);
+    } else {
+      let end = relatedAt + 1;
+      while (end < close && /^\s*-\s/.test(lines[end])) end++;
+      lines.splice(end, 0, `  - "${link}"`);
+    }
+    return lines.join("\n");
   }
   function knowledgeSettingsSchema(opts) {
     return {
@@ -25796,7 +25766,7 @@ ${sample}`,
           icon: "palette",
           name: "外观",
           rows: [
-            { type: "choiceCards", name: "面板布局", binding: { key: "knowledgeSkin" }, options: [{ value: "default", label: "索引卡", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板布局", binding: { key: "knowledgeSkin" }, options: [{ value: "default", label: "词条", prevClass: "bz-sp-prev-panel" }] },
             { type: "choiceCards", name: "面板主题", binding: { key: "knowledgeSkinTheme" }, layoutKey: "knowledgeSkin", options: [{ value: "manila", label: "牛皮纸", layout: "default", prevClass: "bz-sp-prev-manila" }] }
           ]
         },
@@ -25804,7 +25774,9 @@ ${sample}`,
           icon: "folder-open",
           name: "目录与分类",
           rows: [
-            { type: "path", mode: "single", name: "文献目录", desc: "文献笔记所在文件夹，列表实时扫描该目录", binding: { key: "knowledgeDirectory" } },
+            { type: "path", mode: "single", name: "文献目录", desc: "文献笔记所在文件夹，部壹扫描该目录", binding: { key: "knowledgeDirectory" } },
+            { type: "path", mode: "single", name: "卡片目录", desc: "你自己写的卡片笔记所在文件夹，部贰扫描该目录，提炼成卡落在这里", binding: { key: "knowledgeCardboxDirectory" } },
+            { type: "path", mode: "single", name: "主题目录", desc: "主题笔记所在文件夹，部叁展示该目录（仅展示，不影响写作）", binding: { key: "knowledgeTopicDirectory" } },
             { type: "textarea", name: "领域词表", desc: "逗号分隔的领域词；留空 = AI 自由写领域", binding: { key: "knowledgeDomainList" }, placeholder: "物理,医学,计算机,经济,文史哲…" }
           ]
         },
@@ -25827,7 +25799,7 @@ ${sample}`,
           rows: [
             { type: "text", name: "ffmpeg 路径", desc: "视频处理用；留空跟随工具配置", binding: { key: "knowledgeFfmpegPath" }, placeholder: "如 ffmpeg 或 D:/tools/ffmpeg.exe" },
             { type: "text", name: "ffprobe 路径", desc: "探测视频元数据用；留空跟随工具配置", binding: { key: "knowledgeFfprobePath" }, placeholder: "如 ffprobe 或 D:/tools/ffprobe.exe" },
-            { type: "text", name: "Python 路径", desc: "装了 Python 一般填 python 即可（走系统 PATH）；或填绝对路径（命令提示符运行 where python 可查）；留空跟随工具配置", binding: { key: "knowledgePythonPath" }, placeholder: "如 python 或 D:/tools/python.exe" },
+            { type: "text", name: "Python 路径", desc: "装了 Python 一般填 python 即可（走系统 PATH）；或填绝对路径；留空跟随工具配置", binding: { key: "knowledgePythonPath" }, placeholder: "如 python 或 D:/tools/python.exe" },
             { type: "text", name: "Whisper 模型", desc: "转写模型档位（tiny/base/small/medium/large）", binding: { key: "knowledgeWhisperModel" }, placeholder: "如 small" },
             { type: "text", name: "缓存目录", desc: "剪辑产物与转写稿缓存；留空 = 系统临时目录", binding: { key: "knowledgeCacheDir" }, placeholder: "如 D:/bili-dl-cache" },
             { type: "number", name: "缓存保留天数", desc: "超过该天数的缓存自动清理", binding: { key: "knowledgeCacheRetentionDays" }, min: 1, step: 1 }
@@ -25857,9 +25829,7 @@ ${sample}`,
       init_fake_obsidian();
       init_mobile();
       init_settings_provider();
-      init_settings_modal();
       init_item_actions();
-      init_list_patch();
       init_flow_dialog();
       init_notice();
       init_utils();
@@ -25870,10 +25840,10 @@ ${sample}`,
       init_processor2();
       init_note_gen();
       STATUS_META = {
-        pending: { label: "待处理", cls: "bz-bili-pending" },
-        processing: { label: "处理中", cls: "bz-bili-processing" },
-        success: { label: "成功", cls: "bz-bili-success" },
-        failed: { label: "失败", cls: "bz-bili-failed" }
+        pending: { label: "待处理", cls: "bz-kb-pending" },
+        processing: { label: "处理中", cls: "bz-kb-processing" },
+        success: { label: "成功", cls: "bz-kb-success" },
+        failed: { label: "失败", cls: "bz-kb-failed" }
       };
       STEP_DONE_MAP = {
         "AI 生成文献笔记中": "已生成文献笔记",
@@ -25887,27 +25857,22 @@ ${sample}`,
       };
       UIManager2 = class {
         constructor(app2) {
-          // ---- 主面板（文献笔记列表）----
+          // ---- 主壳（三部）----
           this.mask = null;
           this.popup = null;
-          this.list = null;
+          this.contentEl = null;
+          this.part = "z1";
+          this.noteView = null;
           this.allNotes = [];
-          this.filteredNotes = [];
-          this.selectedDomain = null;
-          this.searchKeyword = "";
-          this.currentDisplayCount = 0;
-          this.allLoaded = false;
-          this.isLoadingMore = false;
-          /** 最后加载的文献目录（变更检测：设置改了目录 → 清缓存全量重载，ticket 136 §3） */
-          this.loadedDir = "";
-          /** 已补全过旧笔记的目录（防每次打开重复跑 AI，ADR-0073） */
+          this.allCards = [];
+          this.allTopics = [];
+          this.cardsShown = 0;
+          this.editor = null;
+          this.sessionNewPaths = /* @__PURE__ */ new Set();
+          this.loadedLitDir = "";
+          this.loadedCardDir = "";
+          this.loadedTopicDir = "";
           this.backfilledDir = "";
-          this.searchDebounceTimer = null;
-          this.refreshTimer = null;
-          this.pendingRefreshPaths = /* @__PURE__ */ new Set();
-          this.pendingDeletePaths = /* @__PURE__ */ new Set();
-          this.fileListenerRefs = [];
-          this.fileListenerAttached = false;
           // ---- 视频录入面板（任务队列）----
           this.videoMask = null;
           this.videoPopup = null;
@@ -25921,22 +25886,22 @@ ${sample}`,
           // ---- 术语生成面板 ----
           this.termMask = null;
           this.termPopup = null;
-          /** 当前术语预览（面板当前展示值，纯内存；确认前不落盘，ticket 138 §2.1） */
           this.termPreview = null;
           this.termGenerating = false;
-          /** 总结中（ticket 155：底部按钮对预览正文做 AI 精简） */
           this.termSummarizing = false;
-          /** 本轮是否已有生成结果（ticket 155：有则输入行按钮文案为「重新生成」） */
           this.termHasDraft = false;
           this.editingId = null;
           this.onKeydown = () => {
           };
-          /** 运行中终止按钮文案（ticket 146 单钮态机）：整批=「终止」；仅失败项续跑=「终止整批」；空闲=null */
           this.batchAbortLabel = null;
-          /** 运行中行内进度态（task.id → 时间线/百分比/启动时刻） */
           this.runState = /* @__PURE__ */ new Map();
-          /** 耗时秒针（整批期间每秒刷新处理中行的耗时） */
           this.runTimer = null;
+          this.fileListenerRefs = [];
+          this.fileListenerAttached = false;
+          this.refreshTimer = null;
+          this.pendingRefreshPaths = /* @__PURE__ */ new Set();
+          this.pendingDeletePaths = /* @__PURE__ */ new Set();
+          this._previewNote = null;
           this.app = app2;
           this.createMainUI();
           this.createVideoUI();
@@ -25953,168 +25918,121 @@ ${sample}`,
           };
           document.addEventListener("keydown", this.onKeydown);
         }
-        // ==================== 主面板（文献笔记列表） ====================
+        // ==================== 主壳（三部） ====================
         createMainUI() {
+          var _a2;
           if (this.mask && this.mask.isConnected || this.popup && this.popup.isConnected) return;
           const mask = document.createElement("div");
-          mask.id = "literature-mask";
-          mask.className = "bz-lit-mask";
+          mask.id = "knowledge-mask";
+          mask.className = "bz-kb-mask";
           mask.style.display = "none";
           mask.onclick = () => this.hideMain();
           const popup = document.createElement("div");
-          popup.id = "literature-popup";
-          popup.className = "bz-lit-window";
+          popup.id = "knowledge-popup";
+          popup.className = "bz-kb-window kb";
           popup.style.display = "none";
-          const header = document.createElement("div");
-          header.className = "bz-win-head";
-          header.innerHTML = `
-      <h3 class="bz-lit-title">文献盒</h3>
-      <div class="bz-lit-head-btns">
-        <button id="lit-btn-text" title="文字录入：术语生成文献笔记">📝</button>
-        <button id="lit-btn-video" title="视频录入：添加转文献任务并批处理">🎬</button>
-        <button id="lit-btn-search" title="切换搜索框">🔍</button>
-        <button id="lit-btn-settings" title="设置">⚙️</button>
-        <button id="lit-btn-close" class="bz-win-close" title="关闭">❌</button>
-      </div>`;
-          popup.appendChild(header);
-          const barBox = document.createElement("div");
-          barBox.className = "bz-lit-filterbar";
-          const siteBar = document.createElement("div");
-          siteBar.id = "literature-sitebar";
-          siteBar.className = "bz-lit-sitebar";
-          barBox.appendChild(siteBar);
-          popup.appendChild(barBox);
-          const searchContainer = document.createElement("div");
-          searchContainer.id = "literature-search-container";
-          searchContainer.className = "bz-lit-search";
-          searchContainer.style.display = "none";
-          const searchBox = document.createElement("div");
-          searchBox.className = "bz-lit-search-box";
-          const searchIc = document.createElement("span");
-          searchIc.className = "bz-lit-search-ic";
-          searchIc.textContent = "🔍";
-          const searchInput = document.createElement("input");
-          searchInput.id = "literature-search-input";
-          searchInput.type = "text";
-          searchInput.addEventListener("input", (e) => {
-            const keyword = e.target.value.trim();
-            if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
-            this.searchDebounceTimer = setTimeout(() => {
-              this.searchKeyword = keyword;
-              this.applyFilter();
-            }, 300);
-          });
-          searchBox.appendChild(searchIc);
-          searchBox.appendChild(searchInput);
-          searchContainer.appendChild(searchBox);
-          popup.appendChild(searchContainer);
-          const list = document.createElement("div");
-          list.id = "literature-list";
-          list.className = "bz-lit-list";
-          popup.appendChild(list);
+          popup.innerHTML = `
+      <div class="bz-kb-head">
+        <div class="bz-kb-parts">
+          <button class="bz-kb-part is-on" data-kb-act="part" data-part="z1">部壹 · 文献</button>
+          <button class="bz-kb-part" data-kb-act="part" data-part="z2">部贰 · 卡片</button>
+          <button class="bz-kb-part" data-kb-act="part" data-part="z3">部叁 · 主题</button>
+        </div>
+        <div class="bz-kb-brand">
+          <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
+          <div class="bz-kb-title">知 识 盒</div>
+          <div class="bz-kb-phon">[ zhī shí hé ] · 检索归第二大脑 · 知识盒只整理关联</div>
+        </div>
+      </div>
+      <div class="bz-kb-sc" id="kb-sc"></div>`;
           document.body.appendChild(mask);
           document.body.appendChild(popup);
           this.mask = mask;
           this.popup = popup;
-          this.list = list;
-          this._bindMainHeaderEvents();
-          list.addEventListener("scroll", () => {
-            if (this.isLoadingMore || this.allLoaded) return;
-            const { scrollTop, scrollHeight, clientHeight } = list;
-            if (scrollTop + clientHeight >= scrollHeight - 50) {
-              this.isLoadingMore = true;
-              this.renderList(false);
-              this.isLoadingMore = false;
-            }
-          });
+          this.contentEl = q(popup, "#kb-sc");
+          popup.addEventListener("click", (e) => this.onShellClick(e));
+          (_a2 = this.contentEl) == null ? void 0 : _a2.addEventListener("scroll", () => this.onContentScroll());
           this.attachFileListener();
         }
-        _bindMainHeaderEvents() {
-          const p = this.popup;
-          if (!p) return;
-          q(p, "#lit-btn-search").onclick = () => {
-            const container = q(p, "#literature-search-container");
-            if (!container) return;
-            const isHidden = container.style.display === "none" || getComputedStyle(container).display === "none";
-            container.style.display = isHidden ? "block" : "none";
-            if (isHidden) {
-              const input = q(p, "#literature-search-input");
-              if (input) setTimeout(() => input.focus(), 100);
-            } else {
-              const input = q(p, "#literature-search-input");
-              if (input) {
-                input.value = "";
-                this.searchKeyword = "";
-                if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
-                this.applyFilter();
-              }
-            }
-          };
-          q(p, "#lit-btn-text").onclick = () => {
-            this.showTermEntry();
-          };
-          q(p, "#lit-btn-video").onclick = () => {
-            this.showVideoEntry();
-          };
-          q(p, "#lit-btn-settings").onclick = () => openSettingsModal({
-            title: "文献盒设置",
-            maxWidth: 560,
-            schema: knowledgeSettingsSchema({ onClearHistory: () => this.confirmClearHistory() }),
-            // 目录设置变更 → 主面板清缓存全量重载（ticket 136 §3）；refreshPanel 亦有兜底检测
-            onClose: () => this.reloadIfDirChanged()
-          });
-          q(p, "#lit-btn-close").onclick = () => this.hideMain();
+        /** 主壳点击委托（部切换 / 录入入口 / 文献行 / 主题行 / 返回） */
+        onShellClick(e) {
+          const t = e.target.closest("[data-kb-act]");
+          if (!t) return;
+          const act = t.getAttribute("data-kb-act");
+          if (act === "part") {
+            this.part = t.getAttribute("data-part") || "z1";
+            this.noteView = null;
+            void this.refreshCurrent();
+            this.syncPartButtons();
+          } else if (act === "term-entry") this.showTermEntry();
+          else if (act === "video-entry") this.showVideoEntry();
+          else if (act === "lit-peek") {
+            const p = t.getAttribute("data-path") || "";
+            const n = this.allNotes.find((x) => x.path === p);
+            if (n) void this.openLitPreview(n);
+          } else if (act === "topic-open") {
+            const p = t.getAttribute("data-path") || "";
+            const n = this.allTopics.find((x) => x.path === p);
+            if (n) void this.openTopicNote(n);
+          } else if (act === "topics-back") {
+            this.noteView = null;
+            this.renderTopics();
+          }
         }
-        /** 打开主面板（文献笔记列表）：抬顶、刷新列表 + 旧笔记自动补全 */
+        syncPartButtons() {
+          if (!this.popup) return;
+          this.popup.querySelectorAll(".bz-kb-part").forEach((b) => {
+            b.classList.toggle("is-on", b.getAttribute("data-part") === this.part);
+          });
+        }
         showMain() {
           this.createMainUI();
-          if (!this.popup || !this.mask) return;
+          if (!this.popup || !this.mask || !this.contentEl) return;
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
-          void this.refreshPanel();
+          void this.refreshCurrent();
           void this.runBackfill();
         }
         hideMain() {
           if (this.mask) this.mask.style.display = "none";
           if (this.popup) this.popup.style.display = "none";
         }
-        /** 主面板全量刷新（目录变更检测 → 重扫 → 重建筛选 → 渲染），公开供测试触达 */
-        async refreshPanel() {
-          if (!this.list) return;
-          const dir = litDirOf(tryGetSettings());
-          if (this.loadedDir && this.loadedDir !== dir) {
-            this.resetNoteCache();
-            this.loadedDir = "";
-            this.backfilledDir = "";
+        /** 当前部数据 + 渲染（目录变更检测 → 清缓存重扫） */
+        async refreshCurrent() {
+          if (!this.contentEl) return;
+          const s = tryGetSettings();
+          if (this.part === "z1") {
+            const dir = litDirOf(s);
+            if (this.loadedLitDir && this.loadedLitDir !== dir) this.allNotes = [];
+            await this.loadLiterature(dir);
+            this.renderLiterature();
+          } else if (this.part === "z2") {
+            const dir = cardboxDirOf(s);
+            if (this.loadedCardDir && this.loadedCardDir !== dir) this.allCards = [];
+            await this.loadCards(dir);
+            this.cardsShown = 0;
+            this.renderCards();
+          } else {
+            const dir = topicDirOf(s);
+            if (this.loadedTopicDir && this.loadedTopicDir !== dir) this.allTopics = [];
+            await this.loadTopics(dir);
+            this.renderTopics();
           }
-          if (this.allNotes.length === 0) this.showListLoading();
-          await this.loadNotes();
-          if (!this.list) return;
-          this.rebuildDomainBar();
-          this.applyFilter();
         }
-        /** 列表加载中占位（renderList(true) 重建时自然清掉；ticket 139） */
-        showListLoading() {
-          if (!this.list) return;
-          this.list.innerHTML = "";
-          const loading2 = document.createElement("div");
-          loading2.className = "bz-lit-loading bz-lit-empty";
-          loading2.textContent = "正在扫描文献目录…";
-          this.list.appendChild(loading2);
-        }
-        /** 扫描「文献目录」下全部 .md（含嵌套子目录——与 backfillNotes 前缀匹配口径一致，P3-5；
-        *  metadataCache 解析 frontmatter；不含文件本体 I/O） */
-        async loadNotes() {
+        /** 部壹文献扫描：文献目录下全部 .md（含子目录），metadataCache 解析 frontmatter */
+        async loadLiterature(dir) {
           const app2 = getApp();
-          const dir = litDirOf(tryGetSettings());
+          this.loadedLitDir = dir;
           const prefix = dir + "/";
           const mdFiles = (app2.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
-          let entries = [];
-          entries = (await Promise.all(mdFiles.map((f) => this.parseNoteFile(f)))).filter((e) => e !== null);
+          const entries = [];
+          for (const f of mdFiles) {
+            const e = await this.parseNoteFile(f);
+            if (e) entries.push(e);
+          }
           entries.sort((a, b) => b.created - a.created || a.path.localeCompare(b.path));
           this.allNotes = entries;
-          this.loadedDir = dir;
         }
         async parseNoteFile(file) {
           const app2 = getApp();
@@ -26126,7 +26044,7 @@ ${sample}`,
             let created = parseDateRaw(date);
             if (isNaN(created)) {
               try {
-                const st = await file.stat;
+                const st = file.stat;
                 created = st && st.ctime ? new Date(st.ctime).valueOf() : 0;
               } catch (e) {
                 created = 0;
@@ -26148,40 +26066,389 @@ ${sample}`,
             return null;
           }
         }
-        /** 清理主面板缓存（目录变更 / 清缓存场景）：列表/筛选态/搜索回显/待结算防抖 */
-        resetNoteCache() {
-          this.allNotes = [];
-          this.filteredNotes = [];
-          this.currentDisplayCount = 0;
-          this.allLoaded = false;
-          this.selectedDomain = null;
-          this.searchKeyword = "";
-          if (this.searchDebounceTimer) {
-            clearTimeout(this.searchDebounceTimer);
-            this.searchDebounceTimer = null;
+        renderLiterature() {
+          if (!this.contentEl) return;
+          this.noteView = null;
+          const rows = this.allNotes.map((n, i) => {
+            const no = String(i + 1).padStart(2, "0");
+            const kind = n.type === "video" ? "影 像" : "词 条";
+            return `<div class="bz-kb-lexrow" data-kb-act="lit-peek" data-path="${esc2(n.path)}">
+        <div class="bz-kb-hw"><span class="bz-kb-w">${esc2(n.title)}</span><span class="bz-kb-pos ${n.type === "video" ? "hot" : ""}">${kind}</span><span class="bz-kb-dom">${esc2(n.domain || "未分类")}</span></div>
+        <div class="bz-kb-tail"><span class="bz-kb-meta">LIT-${no} · ${esc2(n.date || "")}</span></div>
+      </div>`;
+          }).join("");
+          this.contentEl.innerHTML = `
+      <div class="bz-kb-pd">
+        <div class="bz-kb-sec">录 入 · 素 材 层 进 货 口（两 种 来 源，全 交 给 AI）</div>
+        <div class="bz-kb-entryrow">
+          <button class="bz-kb-entrybtn" data-kb-act="term-entry"><b>文字录入 · 术语</b><span>想到一个概念，AI 当场生成术语卡预览，确认后写入文献盒</span></button>
+          <button class="bz-kb-entrybtn" data-kb-act="video-entry"><b>视频录入 · 任务</b><span>B 站链接丢进来：下载、转写、AI 生成文献笔记，全自动</span></button>
+        </div>
+        <div class="bz-kb-sec" style="margin-top:20px">文 献 · 等 被 主 题 笔 记 引 用 、 被 提 炼</div>
+        ${rows || '<div class="bz-kb-empty">「文献目录」还没有文献笔记——从上面的两种录入开始。</div>'}
+      </div>`;
+        }
+        /** 部壹文献预览弹层：全文段落 + related + 提炼成卡 */
+        async openLitPreview(n) {
+          const app2 = getApp();
+          let raw = "";
+          try {
+            raw = await app2.vault.read(n.file);
+          } catch (e) {
+            raw = "";
           }
-          if (this.refreshTimer) {
-            clearTimeout(this.refreshTimer);
-            this.refreshTimer = null;
+          const body = stripFrontmatter(raw);
+          const blocks = body.split(/\r?\n\r?\n+/).map((b) => b.trim()).filter(Boolean);
+          const paras = [];
+          let videoEmbed = "";
+          for (const b of blocks) {
+            const vm = b.match(/^!\[\[(.+?\.(?:mp4|webm|mkv))\]\]$/);
+            if (vm) {
+              videoEmbed = vm[1];
+              continue;
+            }
+            paras.push(b);
           }
-          this.pendingRefreshPaths.clear();
-          this.pendingDeletePaths.clear();
-          if (this.popup) {
-            const input = q(this.popup, "#literature-search-input");
-            if (input) input.value = "";
+          const rels = await this.noteRels(n);
+          const parasHtml = paras.map((p) => `<p>${esc2(p)}</p>`).join("") || "<p>（无正文）</p>";
+          const clipHtml = videoEmbed ? `<div class="bz-kb-cliprow">视频片段 · ${esc2(shortNoteName(videoEmbed))}</div>` : "";
+          const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink">${esc2(n.url)}</div>` : "";
+          this.openSheet(this.sheetWrap(`文献预览 · ${n.type === "video" ? "影像" : "词条"}`, `
+      <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc2(n.title)}</span>
+        <span class="bz-kb-pos ${n.type === "video" ? "hot" : ""}">${n.type === "video" ? "影 像" : "词 条"}</span>
+        <span class="bz-kb-dom">${esc2(n.domain || "未分类")}</span></div>
+      <div class="bz-kb-tail"><span class="bz-kb-meta">${esc2(n.date || "")}</span></div>
+      <div class="bz-kb-paras">${parasHtml}</div>
+      ${clipHtml}
+      ${rels.length ? `<div class="bz-kb-sec">来 源 小 纸 条（related，落卡时自动带）</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc2(r)}</span>`).join("")}</div>` : ""}
+      ${srcHtml}
+      <div style="margin-top:18px;display:flex;gap:10px">
+        <button class="bz-kb-bigbtn" data-kb-act="card-new">提炼成卡</button>
+        <button class="bz-kb-ghost" data-kb-close>先放回去</button>
+      </div>`));
+          this._previewNote = n;
+        }
+        /** 提炼成卡编辑弹层（原型唯一真理：词头可改 / 源链+领域自动带 / 连一张旧卡 / 为什么相关） */
+        async openCardEditor(n) {
+          var _a2, _b2, _c;
+          await this.ensureCards();
+          const dom = n.domain || "未分类";
+          const sameDom = this.allCards.filter((c) => c.domain === dom).map((c) => c.title);
+          const others = this.allCards.map((c) => c.title).filter((t) => !sameDom.includes(t));
+          const olds = [...sameDom.slice(0, 5)];
+          for (const t of others) {
+            if (olds.length >= 6) break;
+            olds.push(t);
+          }
+          if (olds.length === 0) olds.push(n.title);
+          const whySug = `《${n.title}》与这张旧卡讨论同一主题——读后补全了机制细节，整理为显式连接。`;
+          const oldsHtml = olds.map((o, i) => `<button class="bz-kb-old" data-kb-old="${esc2(o)}">${esc2(o)}${i === 0 ? '<span class="bz-kb-rec">推荐</span>' : ""}</button>`).join("");
+          this.openSheet(this.sheetWrap("提炼成卡 → 卡片盒", `
+      <div class="bz-kb-f"><div class="bz-kb-flb">词 头（可 改）</div>
+        <input type="text" data-kb-role="cardtitle" value="${esc2(n.title)}"></div>
+      <div class="bz-kb-f"><div class="bz-kb-flb">来 源 小 纸 条（自 动 带，不 用 手 填）</div>
+        <div class="bz-kb-srcline"><span class="bz-kb-srchip"><b>源</b>${esc2(n.path)}</span>
+        <span class="bz-kb-srchip"><b>领域</b>〔${esc2(dom)}〕自动继承</span></div></div>
+      <div class="bz-kb-f"><div class="bz-kb-flb">连 一 张 旧 卡（铁律：不 解 释 的 链 接 不 产 生 知 识）</div>
+        <div class="bz-kb-olds">${oldsHtml}</div></div>
+      <div class="bz-kb-f"><div class="bz-kb-flb">为 什 么 相 关（一 句 话，可 改）</div>
+        <input type="text" data-kb-role="why" value="${esc2(whySug)}"></div>
+      <div style="margin-top:18px;display:flex;gap:10px">
+        <button class="bz-kb-bigbtn" data-kb-act="card-save" disabled>落 卡</button>
+        <button class="bz-kb-ghost" data-kb-close>取消</button>
+      </div>
+      <div class="bz-kb-note" style="font-size:11px;margin-top:14px">落卡后它躺在卡片盒，随时被任何笔记引用——不强迫挂进哪篇，也不强迫复习。</div>`));
+          this.editor = { source: n, pick: null, why: whySug, title: n.title };
+          const titleInput = (_a2 = this.popup) == null ? void 0 : _a2.querySelector("[data-kb-role=cardtitle]");
+          if (titleInput) titleInput.addEventListener("input", () => {
+            if (this.editor) this.editor.title = titleInput.value;
+            this.syncSaveBtn();
+          });
+          const whyInput = (_b2 = this.popup) == null ? void 0 : _b2.querySelector("[data-kb-role=why]");
+          if (whyInput) whyInput.addEventListener("input", () => {
+            if (this.editor) this.editor.why = whyInput.value;
+            this.syncSaveBtn();
+          });
+          (_c = this.popup) == null ? void 0 : _c.querySelectorAll("[data-kb-old]").forEach((b) => {
+            b.addEventListener("click", () => {
+              var _a3;
+              if (!this.editor) return;
+              this.editor.pick = b.getAttribute("data-kb-old");
+              (_a3 = this.popup) == null ? void 0 : _a3.querySelectorAll("[data-kb-old]").forEach((x) => x.classList.toggle("is-on", x === b));
+              this.syncSaveBtn();
+            });
+          });
+          this.syncSaveBtn();
+        }
+        syncSaveBtn() {
+          var _a2;
+          const btn = (_a2 = this.popup) == null ? void 0 : _a2.querySelector("[data-kb-act=card-save]");
+          if (btn && this.editor) btn.disabled = !(this.editor.pick && this.editor.why.trim());
+        }
+        /** 落卡：写卡片盒笔记（category=领域、related=源文献）+ 源文献 related 追加新卡（互链） */
+        async saveCard() {
+          var _a2;
+          if (!this.editor || !this.editor.pick || !this.editor.why.trim()) return;
+          const app2 = getApp();
+          const s = tryGetSettings();
+          const dir = cardboxDirOf(s);
+          const src = this.editor.source;
+          const why = this.editor.why.trim();
+          let base = this.editor.title.trim() || src.title;
+          const stamp = this.cardDateStamp();
+          try {
+            let idx = 2;
+            while (app2.vault.getAbstractFileByPath(`${dir}/${base}.md`)) {
+              base = `${this.editor.title.trim() || src.title} ${idx}`;
+              idx++;
+            }
+            const path = `${dir}/${base}.md`;
+            try {
+              if (!app2.vault.getFolderByPath(dir)) await app2.vault.createFolder(dir);
+            } catch (e) {
+            }
+            const md = ["---", "tags: []", `category: ${src.domain || "未分类"}`, "related:", `  - "[[${src.path}|${src.title}]]"`, `date: "${stamp}"`, "---", "", why, ""].join("\n");
+            await app2.vault.create(path, md);
+            const srcFile = app2.vault.getAbstractFileByPath(src.path);
+            if (srcFile) {
+              const text = await app2.vault.read(srcFile);
+              const linkText = `[[${path.replace(/\.md$/i, "")}|${base}]]`;
+              const updated = appendRelatedLine(text, linkText);
+              if (updated !== text) await app2.vault.modify(srcFile, updated);
+            }
+            this.allCards.unshift({ file: null, path, title: base, domain: src.domain || "未分类", review: false, created: Date.now() });
+            this.sessionNewPaths.add(path);
+            this.editor = null;
+            this.closeSheet();
+            notice("已落卡 卡片盒/" + base + ".md · 它随时被任何笔记引用", "success");
+            if (this.part === "z2") {
+              this.cardsShown = 0;
+              this.renderCards();
+            }
+          } catch (e) {
+            notice("落卡失败：" + ((_a2 = e == null ? void 0 : e.message) != null ? _a2 : String(e)), "error");
           }
         }
-        /** 设置弹窗关闭/打开时比较文献目录：变了 → 清缓存全量重载（ticket 136 §3） */
-        reloadIfDirChanged() {
-          if (!this.popup || !this.popup.isConnected) return;
-          const dir = litDirOf(tryGetSettings());
-          if (this.loadedDir && this.loadedDir !== dir) {
-            this.resetNoteCache();
-            this.loadedDir = "";
-            void this.refreshPanel();
+        cardDateStamp() {
+          const d = /* @__PURE__ */ new Date();
+          const p = (n) => String(n).padStart(2, "0");
+          return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+        }
+        /** 部贰卡片扫描（存量零迁移：领域读序 domain → category → 未分类） */
+        async loadCards(dir) {
+          var _a2;
+          const app2 = getApp();
+          this.loadedCardDir = dir;
+          const prefix = dir + "/";
+          const mdFiles = (app2.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
+          const out = [];
+          for (const f of mdFiles) {
+            try {
+              const cache = app2.metadataCache.getFileCache(f);
+              const fm = cache && cache.frontmatter || {};
+              let created = 0;
+              try {
+                created = ((_a2 = f.stat) == null ? void 0 : _a2.ctime) ? new Date(f.stat.ctime).valueOf() : 0;
+              } catch (e) {
+                created = 0;
+              }
+              out.push({
+                file: f,
+                path: f.path,
+                title: fm && fm.title ? String(fm.title) : f.basename,
+                domain: fm && fm.domain ? String(fm.domain) : fm && fm.category ? String(fm.category) : "未分类",
+                review: fm && fm.reviewStart != null,
+                created
+              });
+            } catch (e) {
+            }
+          }
+          out.sort((a, b) => b.created - a.created || a.path.localeCompare(b.path));
+          this.allCards = out;
+        }
+        renderCards() {
+          if (!this.contentEl) return;
+          this.noteView = null;
+          this.cardsShown = Math.max(this.cardsShown, 80);
+          const shown = this.allCards.slice(0, this.cardsShown);
+          const rows = shown.map((c) => `<div class="bz-kb-lexrow" style="cursor:default">
+      <div class="bz-kb-hw"><span class="bz-kb-w">${esc2(c.title)}</span>${this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ""}<span class="bz-kb-dom">${esc2(c.domain)}</span></div>
+      <div class="bz-kb-tail"><span>${c.review ? "复习中 · 到期由闹钟安排" : "未入复习"}</span><span style="margin-left:auto">连 1 张旧卡</span></div>
+    </div>`).join("");
+          const rest = this.allCards.length - shown.length;
+          this.contentEl.innerHTML = `<div class="bz-kb-pd">
+      <div class="bz-kb-sec">卡 片 · 提 炼 层（只 许 你 写 · ${this.allCards.length} 张）</div>
+      ${rows || '<div class="bz-kb-empty">卡片目录还没有卡片——在部壹文献预览里「提炼成卡」。</div>'}
+      ${rest > 0 ? `<div class="bz-kb-empty" data-kb-act="cards-more">↓ 还有 ${rest} 张，滚动或点此加载</div>` : ""}
+    </div>`;
+        }
+        moreCards() {
+          if (this.cardsShown >= this.allCards.length) return;
+          this.cardsShown += 80;
+          this.renderCards();
+        }
+        onContentScroll() {
+          const sc = this.contentEl;
+          if (!sc || this.part !== "z2") return;
+          if (sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 60) this.moreCards();
+        }
+        /** 部叁主题扫描（仅展示） */
+        async loadTopics(dir) {
+          const app2 = getApp();
+          this.loadedTopicDir = dir;
+          const prefix = dir + "/";
+          const mdFiles = (app2.vault.getFiles() || []).filter((f) => f.path.startsWith(prefix) && f.extension === "md");
+          const out = mdFiles.map((f) => {
+            var _a2;
+            let created = 0;
+            try {
+              created = ((_a2 = f.stat) == null ? void 0 : _a2.mtime) ? new Date(f.stat.mtime).valueOf() : 0;
+            } catch (e) {
+              created = 0;
+            }
+            return { file: f, path: f.path, title: f.basename, where: dir, created };
+          });
+          out.sort((a, b) => b.created - a.created || a.path.localeCompare(b.path));
+          this.allTopics = out;
+        }
+        renderTopics() {
+          if (!this.contentEl) return;
+          this.noteView = null;
+          const rows = this.allTopics.map((t) => {
+            const rel = formatRelativeTime(String(t.created || ""));
+            return `<div class="bz-kb-lexrow" data-kb-act="topic-open" data-path="${esc2(t.path)}">
+      <div class="bz-kb-hw"><span class="bz-kb-w">${esc2(t.title)}</span><span class="bz-kb-dom">${esc2(t.where)}</span></div>
+      <div class="bz-kb-tail"><span class="bz-kb-meta">${rel === "无效日期" ? "" : esc2(rel)}</span><span style="margin-left:auto">一篇普通笔记 →</span></div>
+    </div>`;
+          }).join("");
+          this.contentEl.innerHTML = `<div class="bz-kb-pd">
+      <div class="bz-kb-sec">主 题 笔 记 · 展 示（真 实 存 量）</div>
+      ${rows || '<div class="bz-kb-empty">主题目录还没有笔记。</div>'}
+      <div class="bz-kb-note" style="font-size:11px;margin-top:14px">主题笔记就是普通笔记，你自己写自己组织；写作与检索发生在 Obsidian + 第二大脑（灵感参考 / AI 对话）。主题与其他盒的关联机制方向探索中——当前版本仅做展示。</div>
+    </div>`;
+        }
+        /** 主题笔记只读渲染（MarkdownRenderer；mock/失败回退纯文本） */
+        async openTopicNote(t) {
+          var _a2;
+          const app2 = getApp();
+          let md = "";
+          try {
+            md = await app2.vault.read(t.file);
+          } catch (e) {
+            md = "";
+          }
+          this.noteView = { path: t.path, title: t.title };
+          if (!this.contentEl) return;
+          this.contentEl.innerHTML = `<div class="bz-kb-pd">
+      <button class="bz-kb-back" data-kb-act="topics-back">← 部叁 · 主题笔记</button>
+      <div class="bz-kb-ntitle">${esc2(t.title)}</div>
+      <div class="bz-kb-nmeta"><span class="bz-kb-dom">${esc2(t.where)}</span><span class="bz-kb-meta">${esc2(formatRelativeTime(String(t.created || "")) === "无效日期" ? "" : formatRelativeTime(String(t.created || "")))}</span></div>
+      <div class="bz-kb-noteview" id="kb-noteview"></div>
+    </div>`;
+          const el = q(this.contentEl, "#kb-noteview");
+          if (!el) return;
+          try {
+            const MR = MarkdownRenderer;
+            if (MR && typeof MR.render === "function") {
+              await MR.render(md, this.app, el, t.path);
+              if (!((_a2 = el.textContent) == null ? void 0 : _a2.trim()) || el.textContent.includes("[object Object]")) el.textContent = md;
+            } else {
+              el.textContent = md;
+            }
+          } catch (e) {
+            el.textContent = md;
           }
         }
-        /** 旧笔记自动补全（note-gen 已实现；AI 未配置跳过并提示一句）；每目录至多跑一次 */
+        async ensureCards() {
+          const dir = cardboxDirOf(tryGetSettings());
+          if (!this.loadedCardDir || this.loadedCardDir !== dir || this.allCards.length === 0) await this.loadCards(dir);
+        }
+        /** 读文献笔记 frontmatter related 展示名列表（预览「来源小纸条」；行扫描实现） */
+        async noteRels(n) {
+          var _a2;
+          try {
+            const app2 = getApp();
+            const text = await app2.vault.read(n.file);
+            const lines = text.split(/\r?\n/);
+            if (((_a2 = lines[0]) == null ? void 0 : _a2.trim()) !== "---") return [];
+            const out = [];
+            let inRelated = false;
+            for (let i = 1; i < lines.length; i++) {
+              const line = lines[i];
+              if (line.trim() === "---") break;
+              if (/^related:/.test(line)) {
+                inRelated = true;
+                continue;
+              }
+              if (inRelated) {
+                if (/^\s+-\s/.test(line)) {
+                  const mm = line.match(/^\s*-\s*"?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]"?\s*$/);
+                  if (mm) out.push(mm[2] || mm[1]);
+                } else if (line.trim() !== "") {
+                  break;
+                }
+              }
+            }
+            return out;
+          } catch (e) {
+            return [];
+          }
+        }
+        /** 弹层（面板内覆盖） */
+        openSheet(html) {
+          this.closeSheet();
+          if (!this.popup) return;
+          const ovl = document.createElement("div");
+          ovl.className = "bz-kb-ovl";
+          ovl.innerHTML = `<div class="bz-kb-sheet">${html}</div>`;
+          ovl.addEventListener("click", (e) => {
+            var _a2, _b2;
+            const t = e.target.closest("[data-kb-act],[data-kb-close]");
+            if (e.target === ovl || t && t.hasAttribute("data-kb-close")) {
+              this.closeSheet();
+              return;
+            }
+            if (!t) return;
+            const act = t.getAttribute("data-kb-act");
+            if (act === "card-new") {
+              const w = ((_b2 = (_a2 = t.closest(".bz-kb-sheet")) == null ? void 0 : _a2.querySelector(".bz-kb-hw .bz-kb-w")) == null ? void 0 : _b2.textContent) || "";
+              const n = this.allNotes.find((x) => x.title === w);
+              if (n) void this.openCardEditor(n);
+            } else if (act === "card-save") {
+              void this.saveCard();
+            }
+          });
+          this.popup.appendChild(ovl);
+          const titleInput = ovl.querySelector("[data-kb-role=cardtitle]");
+          if (titleInput) titleInput.addEventListener("input", () => {
+            if (this.editor) this.editor.title = titleInput.value;
+            this.syncSaveBtn();
+          });
+          const whyInput = ovl.querySelector("[data-kb-role=why]");
+          if (whyInput) whyInput.addEventListener("input", () => {
+            if (this.editor) this.editor.why = whyInput.value;
+            this.syncSaveBtn();
+          });
+          ovl.querySelectorAll("[data-kb-old]").forEach((b) => {
+            b.addEventListener("click", () => {
+              if (!this.editor) return;
+              this.editor.pick = b.getAttribute("data-kb-old");
+              ovl.querySelectorAll("[data-kb-old]").forEach((x) => x.classList.toggle("is-on", x === b));
+              this.syncSaveBtn();
+            });
+          });
+          this.syncSaveBtn();
+        }
+        closeSheet() {
+          var _a2;
+          (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-kb-ovl").forEach((x) => x.remove());
+          this.editor = null;
+          this._previewNote = null;
+        }
+        sheetWrap(title, body) {
+          return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc2(title)}</span><button class="bz-kb-sheet-close" data-kb-close title="关闭">✕</button></div><div class="bz-kb-sheet-body">${body}</div>`;
+        }
+        /** 旧笔记自动补全（note-gen；AI 未配置跳过并提示一句）；每目录至多跑一次 */
         async runBackfill() {
           const dir = litDirOf(tryGetSettings());
           if (this.backfilledDir === dir) return;
@@ -26191,268 +26458,11 @@ ${sample}`,
             if (res && res.aiSkipped) {
               notice("AI 未配置：部分旧笔记缺少领域分类，已跳过补全（配置 AI 后重新打开面板可补全）", "info");
             }
-            if (res && res.filled > 0) await this.refreshPanel();
+            if (res && res.filled > 0 && this.part === "z1") await this.refreshCurrent();
           } catch (e) {
           }
         }
-        /** 领域筛选行（剪藏本 rebuildSiteBar 同款：全部 (N) + 各领域按钮带数量，按 count 降序） */
-        rebuildDomainBar() {
-          const container = this.popup ? q(this.popup, "#literature-sitebar") : null;
-          if (!container) return;
-          const counts = /* @__PURE__ */ new Map();
-          for (const n of this.allNotes) {
-            const d = n.domain || "未分类";
-            counts.set(d, (counts.get(d) || 0) + 1);
-          }
-          const sorted = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).map(([d]) => d);
-          container.innerHTML = "";
-          const allBtn = document.createElement("button");
-          allBtn.className = "bz-lit-filter-btn" + (this.selectedDomain ? "" : " active");
-          allBtn.textContent = `全部 (${this.allNotes.length})`;
-          const allIc = document.createElement("span");
-          allIc.className = "bz-lit-filter-ic";
-          setIcon(allIc, "layout-grid");
-          allBtn.prepend(allIc);
-          allBtn.onclick = () => {
-            this.selectedDomain = null;
-            this.applyFilter();
-          };
-          container.appendChild(allBtn);
-          for (const d of sorted) {
-            const btn = document.createElement("button");
-            btn.className = "bz-lit-filter-btn" + (this.selectedDomain === d ? " active" : "");
-            btn.dataset.domain = d;
-            btn.textContent = `${d} (${counts.get(d)})`;
-            btn.onclick = () => {
-              this.selectedDomain = this.selectedDomain === d ? null : d;
-              this.applyFilter();
-            };
-            container.appendChild(btn);
-          }
-        }
-        /** 纯筛选重算（不动渲染与懒加载计数）：领域筛选（叠加）→ 搜索（标题/简介） */
-        refilter() {
-          let list = this.allNotes;
-          if (this.selectedDomain) list = list.filter((n) => (n.domain || "未分类") === this.selectedDomain);
-          if (this.searchKeyword) {
-            const kw = this.searchKeyword.toLowerCase();
-            list = list.filter((n) => n.title.toLowerCase().includes(kw) || n.summary.toLowerCase().includes(kw));
-          }
-          this.filteredNotes = list;
-        }
-        /** 用户主动筛选/搜索：计数复位从头渲染（回顶是预期行为） */
-        applyFilter() {
-          this.refilter();
-          this.currentDisplayCount = 0;
-          this.allLoaded = false;
-          this.rebuildDomainBar();
-          this.renderList(true);
-        }
-        /**
-         * 文件事件增量路径（ticket 139）：不重建整个列表 DOM（滚动跳顶根因），
-         * core patchKeyedCards 只增/删/移/换差异卡片；changedPaths 为内容需重建的 key。
-         */
-        patchList(changedPaths = /* @__PURE__ */ new Set()) {
-          if (!this.list) return;
-          this.currentDisplayCount = Math.min(this.currentDisplayCount, this.filteredNotes.length);
-          const keys = this.filteredNotes.slice(0, this.currentDisplayCount).map((n) => n.path);
-          patchKeyedCards({
-            container: this.list,
-            keyAttr: "path",
-            keys,
-            render: (p) => {
-              const n = this.filteredNotes.find((x) => x.path === p);
-              return n ? this.renderNoteCard(n) : null;
-            },
-            changedKeys: changedPaths
-          });
-          this.allLoaded = this.currentDisplayCount >= this.filteredNotes.length;
-          this.syncListHints();
-        }
-        /** 空态 / 懒加载尾部提示与增量 patch 后的列表状态同步（全量 renderList 亦复用收尾） */
-        syncListHints() {
-          if (!this.list) return;
-          let empty = q(this.list, ".bz-lit-empty");
-          let tail = q(this.list, ".bz-lit-tail");
-          if (this.filteredNotes.length === 0) {
-            if (tail) tail.remove();
-            if (!empty) {
-              empty = document.createElement("div");
-              empty.className = "bz-lit-empty";
-              empty.textContent = this.selectedDomain || this.searchKeyword ? "没有符合条件的文献笔记" : `「${this.loadedDir || litDirOf(tryGetSettings())}」还没有文献笔记`;
-              this.list.appendChild(empty);
-            }
-            return;
-          }
-          if (empty) empty.remove();
-          if (this.allLoaded) {
-            if (!tail) {
-              tail = document.createElement("div");
-              tail.className = "bz-lit-tail";
-              tail.textContent = "已显示所有笔记";
-            }
-            this.list.appendChild(tail);
-          } else if (tail) {
-            tail.remove();
-          }
-        }
-        /** 渲染列表（懒加载：reset 重建，否则追加下一批 ~20 条） */
-        renderList(reset = false) {
-          if (!this.list) return;
-          if (reset) {
-            this.list.innerHTML = "";
-            this.currentDisplayCount = 0;
-            this.allLoaded = false;
-          }
-          if (this.filteredNotes.length === 0) {
-            if (this.currentDisplayCount === 0) {
-              const empty = document.createElement("div");
-              empty.className = "bz-lit-empty";
-              empty.textContent = this.selectedDomain || this.searchKeyword ? "没有符合条件的文献笔记" : `「${this.loadedDir || litDirOf(tryGetSettings())}」还没有文献笔记`;
-              this.list.appendChild(empty);
-            }
-            return;
-          }
-          if (this.allLoaded && !reset) return;
-          const start = this.currentDisplayCount;
-          const end = Math.min(start + 20, this.filteredNotes.length);
-          const batch = this.filteredNotes.slice(start, end);
-          for (const n of batch) this.list.appendChild(this.renderNoteCard(n));
-          this.currentDisplayCount = end;
-          if (this.currentDisplayCount >= this.filteredNotes.length) {
-            this.allLoaded = true;
-            const hint = document.createElement("div");
-            hint.className = "bz-lit-tail";
-            hint.textContent = "已显示所有笔记";
-            this.list.appendChild(hint);
-          }
-        }
-        /** 文献笔记卡片：标题 + 领域徽标 + 简介两行省略 + 日期；双击打开 + 抽屉（类型徽章已移除，ticket 138 §3.2） */
-        renderNoteCard(n) {
-          const card = document.createElement("div");
-          card.className = "bz-lit-card";
-          card.dataset.path = n.path;
-          const domainBadge = n.domain ? `<span class="bz-lit-badge bz-lit-badge-domain">${esc2(n.domain)}</span>` : "";
-          let dateText = "";
-          if (n.date) {
-            const rel = formatRelativeTime(n.date);
-            dateText = rel === "无效日期" ? n.date : rel;
-          }
-          card.innerHTML = `
-      <div class="bz-lit-card-title-row">
-        <span class="bz-lit-card-title">${esc2(n.title || "无标题")}</span>
-        ${domainBadge}
-      </div>
-      <div class="bz-lit-card-summary">${esc2(n.summary || "（无简介）")}</div>
-      <div class="bz-lit-card-date">${esc2(dateText)}</div>`;
-          let lastClick = 0;
-          card.addEventListener("click", (e) => {
-            const now = Date.now();
-            if (lastClick && now - lastClick < 300) {
-              e.stopPropagation();
-              e.preventDefault();
-              this.openNote(n.path);
-            }
-            lastClick = now;
-          });
-          attachItemActions(card, this.buildNoteActions(n), { sheetHead: this.buildNoteSheetHead(n) });
-          return card;
-        }
-        buildNoteSheetHead(n) {
-          const head = document.createElement("div");
-          head.className = "bz-lit-sheet-head";
-          const title = document.createElement("div");
-          title.className = "bz-lit-card-title";
-          title.textContent = n.title || "无标题";
-          const summary = document.createElement("div");
-          summary.className = "bz-lit-card-summary";
-          summary.textContent = n.summary || "（无简介）";
-          head.appendChild(title);
-          head.appendChild(summary);
-          return head;
-        }
-        buildNoteActions(n) {
-          const actions = [
-            { icon: "book-open", label: "打开", title: "打开文献笔记", onClick: () => this.openNote(n.path) },
-            { icon: "link", label: "复制双链", title: "复制双链", onClick: () => void this.copyWikilink(n) }
-          ];
-          if (n.url) {
-            let sub = "";
-            try {
-              sub = new URL(n.url).hostname;
-            } catch (e) {
-            }
-            actions.push({ icon: "globe", label: "复制原文链接", sub: sub || void 0, title: "复制原文链接", onClick: () => void this.copyText(n.url) });
-          }
-          actions.push({ icon: "trash-2", label: "删除", kind: "danger", title: "删除文献笔记", onClick: () => void this.confirmDeleteNote(n) });
-          return actions;
-        }
-        async confirmDeleteNote(n) {
-          var _a2;
-          const v = await openFlowDialog({
-            title: "删除文献笔记",
-            message: `将删除「${n.title}」；视频转文献历史中指向该笔记的记录会同步移除。
-此操作不可撤销。`,
-            actions: [
-              { label: "取消", value: "cancel" },
-              { label: "删除", value: "ok", danger: true }
-            ]
-          });
-          if (v !== "ok") return;
-          const app2 = getApp();
-          try {
-            this.removeNoteByPath(n.path);
-            await app2.vault.delete(n.file);
-            await this.cleanupTaskRecordsForNote(n.path);
-            this.rebuildDomainBar();
-            notice(`已删除「${n.title}」`, "success");
-          } catch (e) {
-            notice("删除失败：" + ((_a2 = e == null ? void 0 : e.message) != null ? _a2 : String(e)), "error");
-          }
-        }
-        /** 删除视频笔记时同步清理 literature.json 里指向该笔记的任务记录（避免悬挂 notePath，ticket 136 §3） */
-        async cleanupTaskRecordsForNote(path) {
-          const tasks = await KnowledgeData.loadTasks();
-          for (const t of tasks) {
-            if (t.notePath === path) await KnowledgeData.deleteTask(t.id);
-          }
-        }
-        // ---- 主面板增量刷新（knowledge:file-* 四通道 300ms 防抖，照抄剪藏本 attachFileListener） ----
-        removeNoteByPath(path) {
-          const idx = this.allNotes.findIndex((n) => n.path === path);
-          if (idx === -1) return;
-          this.allNotes.splice(idx, 1);
-          this.refilter();
-          this.patchList();
-          this.rebuildDomainBar();
-        }
-        /** 单文件增量解析（create/modify/rename 新路径；parseNoteFile 无文件本体 I/O，代价低廉） */
-        async refreshSingleNote(path) {
-          const app2 = getApp();
-          const file = app2.vault.getAbstractFileByPath(path);
-          if (!file) {
-            this.removeNoteByPath(path);
-            return;
-          }
-          if (file.extension !== "md") return;
-          const entry = await this.parseNoteFile(file);
-          if (entry) {
-            const isNew = !this.allNotes.some((n) => n.path === path);
-            const idx = this.allNotes.findIndex((n) => n.path === path);
-            if (idx >= 0) this.allNotes[idx] = entry;
-            else this.allNotes.push(entry);
-            this.allNotes.sort((a, b) => b.created - a.created || a.path.localeCompare(b.path));
-            this.refilter();
-            if (isNew) {
-              const fi = this.filteredNotes.findIndex((n) => n.path === path);
-              if (fi >= 0 && (fi < this.currentDisplayCount || this.currentDisplayCount === 0)) this.currentDisplayCount++;
-            }
-            this.patchList(/* @__PURE__ */ new Set([path]));
-            this.rebuildDomainBar();
-          } else {
-            this.removeNoteByPath(path);
-          }
-        }
+        // ---- 主面板增量刷新（knowledge:file-* 四通道 300ms 防抖） ----
         scheduleRefreshFlush() {
           if (this.refreshTimer) clearTimeout(this.refreshTimer);
           this.refreshTimer = setTimeout(async () => {
@@ -26460,54 +26470,67 @@ ${sample}`,
             const modifies = Array.from(this.pendingRefreshPaths);
             this.pendingDeletePaths.clear();
             this.pendingRefreshPaths.clear();
-            for (const p of deletes) this.removeNoteByPath(p);
-            for (const p of modifies) await this.refreshSingleNote(p);
-            this.refreshTimer = null;
+            for (const p of deletes) this.removeCached(p);
+            for (const p of modifies) this.invalidateCached(p);
+            if (this.popup && this.popup.style.display === "flex") await this.refreshCurrent();
           }, 300);
+        }
+        removeCached(path) {
+          this.allNotes = this.allNotes.filter((n) => n.path !== path);
+          this.allCards = this.allCards.filter((c) => c.path !== path);
+          this.allTopics = this.allTopics.filter((t) => t.path !== path);
+        }
+        invalidateCached(_path) {
+          this.loadedLitDir = this.loadedLitDir ? "" : this.loadedLitDir;
+          this.loadedCardDir = this.loadedCardDir ? "" : this.loadedCardDir;
+          this.loadedTopicDir = this.loadedTopicDir ? "" : this.loadedTopicDir;
         }
         attachFileListener() {
           if (this.fileListenerAttached) return;
-          const inDir = (path) => path.startsWith(litDirOf(tryGetSettings()) + "/");
-          const fileModifyHandler = (p) => {
-            if (inDir(p)) {
+          const inAnyDir = (path) => {
+            const s = tryGetSettings();
+            return path.startsWith(litDirOf(s) + "/") || path.startsWith(cardboxDirOf(s) + "/") || path.startsWith(topicDirOf(s) + "/");
+          };
+          const modifyHandler = (p) => {
+            if (inAnyDir(p)) {
               this.pendingRefreshPaths.add(p);
               this.scheduleRefreshFlush();
             }
           };
-          const fileDeleteHandler = (evt) => {
-            if (inDir(evt.path)) {
+          const deleteHandler = (evt) => {
+            if (inAnyDir(evt.path)) {
               this.pendingDeletePaths.add(evt.path);
               this.scheduleRefreshFlush();
             }
           };
-          const fileRenameHandler = (evt) => {
-            if (inDir(evt.oldPath)) this.pendingDeletePaths.add(evt.oldPath);
-            if (!evt.movedOut && inDir(evt.newPath)) this.pendingRefreshPaths.add(evt.newPath);
+          const renameHandler = (evt) => {
+            if (inAnyDir(evt.oldPath)) this.pendingDeletePaths.add(evt.oldPath);
+            if (!evt.movedOut && inAnyDir(evt.newPath)) this.pendingRefreshPaths.add(evt.newPath);
             this.scheduleRefreshFlush();
           };
           this.fileListenerRefs = [
-            onDomainEvent("knowledge:file-created", (evt) => fileModifyHandler(evt.path)),
-            onDomainEvent("knowledge:file-modified", (evt) => fileModifyHandler(evt.path)),
-            onDomainEvent("knowledge:file-deleted", fileDeleteHandler),
-            onDomainEvent("knowledge:file-renamed", fileRenameHandler)
+            onDomainEvent("knowledge:file-created", (evt) => modifyHandler(evt.path)),
+            onDomainEvent("knowledge:file-modified", (evt) => modifyHandler(evt.path)),
+            onDomainEvent("knowledge:file-deleted", deleteHandler),
+            onDomainEvent("knowledge:file-renamed", renameHandler)
           ];
           this.fileListenerAttached = true;
         }
-        // ==================== 视频录入面板（任务队列，原 bili-tasks 搬入） ====================
+        // ==================== 视频录入面板（任务队列） ====================
         createVideoUI() {
           const mask = document.createElement("div");
-          mask.id = "literature-video-mask";
-          mask.className = "bz-lit-mask";
+          mask.id = "knowledge-video-mask";
+          mask.className = "bz-kb-mask";
           mask.style.display = "none";
           mask.onclick = () => this.hideVideo();
           const popup = document.createElement("div");
-          popup.id = "literature-video-popup";
-          popup.className = "bz-lit-window";
+          popup.id = "knowledge-video-popup";
+          popup.className = "bz-kb-window kb";
           popup.style.display = "none";
           const header = document.createElement("div");
-          header.className = "bz-win-head";
+          header.className = "bz-kb-vhead";
           header.innerHTML = `
-      <h3 class="bz-lit-title">视频录入</h3>
+      <h3 class="bz-kb-vtitle">视频录入</h3>
       <div class="bz-lit-head-btns">
         <button id="lit-btn-video-add" title="添加转文献任务">➕</button>
         <button id="lit-btn-video-run" class="bz-lit-run-btn" title="批量处理（桌面端）">▶️</button>
@@ -26515,8 +26538,8 @@ ${sample}`,
         <button id="lit-btn-video-close" class="bz-win-close" title="关闭">❌</button>
       </div>`;
           const list = document.createElement("div");
-          list.id = "literature-video-list";
-          list.className = "bz-lit-list";
+          list.id = "knowledge-video-list";
+          list.className = "bz-kb-list";
           popup.appendChild(header);
           popup.appendChild(list);
           document.body.appendChild(mask);
@@ -26543,8 +26566,7 @@ ${sample}`,
           q(p, "#lit-btn-video-history").onclick = () => this.showHistory();
           q(p, "#lit-btn-video-close").onclick = () => this.hideVideo();
         }
-        /** 打开视频录入面板（任务队列）；prefill 存在则叠开添加弹窗（聚合讯「保存至文献」入口，ADR-0068）。
-         */
+        /** 打开视频录入面板；prefill 存在则叠开添加弹窗（聚合讯「保存至文献」入口） */
         showVideoEntry(prefill) {
           var _a2, _b2;
           if (!this.videoPopup || !this.videoMask) return;
@@ -26552,9 +26574,7 @@ ${sample}`,
           this.videoMask.style.display = "block";
           this.videoPopup.style.display = "flex";
           void this.refreshVideoPanel();
-          if (prefill) {
-            this.showAddDialog({ url: prefill.url, title: (_a2 = prefill.title) != null ? _a2 : null, uploader: (_b2 = prefill.uploader) != null ? _b2 : null });
-          }
+          if (prefill) this.showAddDialog({ url: prefill.url, title: (_a2 = prefill.title) != null ? _a2 : null, uploader: (_b2 = prefill.uploader) != null ? _b2 : null });
         }
         hideVideo() {
           if (this.videoMask) this.videoMask.style.display = "none";
@@ -26569,14 +26589,14 @@ ${sample}`,
           if (running2) {
             const idx = active2.findIndex((t) => t.status === "processing");
             const banner = document.createElement("div");
-            banner.className = "bz-bili-banner";
+            banner.className = "bz-kb-banner";
             banner.textContent = idx >= 0 ? `⏳ 正在处理 第 ${idx + 1}/${active2.length} 部…` : "⏳ 正在准备处理…";
             this.videoList.appendChild(banner);
           }
           this._syncStatusCounts(active2);
           if (active2.length === 0) {
             const empty = document.createElement("div");
-            empty.className = "bz-bili-empty";
+            empty.className = "bz-kb-empty";
             empty.textContent = "暂无转文献任务。点击 ➕ 添加视频链接与起止时间，回到桌面端即可批量处理。";
             this.videoList.appendChild(empty);
             this._syncRunButton(active2);
@@ -26585,7 +26605,6 @@ ${sample}`,
           for (const t of active2) this.videoList.appendChild(this.renderRow(t));
           this._syncRunButton(active2);
         }
-        /** 头部状态计数（ADR-0070）：待处理/处理中/失败 非零项，一眼看清队列健康度 */
         _syncStatusCounts(tasks) {
           const el = this.videoPopup ? q(this.videoPopup, "#lit-video-counts") : null;
           if (!el) return;
@@ -26596,11 +26615,7 @@ ${sample}`,
           if (count("failed")) parts.push(`${count("failed")} 失败`);
           el.textContent = parts.join(" · ");
         }
-        /**
-         * ticket 146 单钮态机（去独立 ⏹ 按钮；ticket 148 起按钮纯 emoji、文字移到 title hover）：
-         * 空闲 = 「▶️」（无工作禁用；完成有失败仍在 → 可再点续跑）；运行中 = 该按钮即终止控制「⏹」——
-         * 整批 title「中止批量处理」/ 仅失败项续跑 title「中止整批（处理失败任务中）」；移动端整钮隐藏（isMobileEnv）。
-         */
+        /** 单钮态机：空闲「▶️」/运行中「⏹」（终止靠 title hover 区分），移动端整钮隐藏 */
         _syncRunButton(tasks) {
           if (!this.videoPopup) return;
           const run = q(this.videoPopup, "#lit-btn-video-run");
@@ -26621,24 +26636,24 @@ ${sample}`,
         renderRow(task) {
           var _a2;
           const card = document.createElement("div");
-          card.className = "bz-bili-task-card";
+          card.className = "bz-kb-taskcard";
           card.dataset.id = task.id;
           const meta = (_a2 = STATUS_META[task.status]) != null ? _a2 : STATUS_META.pending;
           const timeText = task.start && task.end ? `${task.start} ~ ${task.end}` : "整片";
-          const linkLine = task.title ? `<a class="bz-bili-title" href="${esc2(task.url)}" title="${esc2(task.url)}">${esc2(task.title)}</a>` : `<span class="bz-bili-url" title="${esc2(task.url)}">${esc2(shortUrlText(task.url))}</span>`;
+          const linkLine = task.title ? `<a class="bz-kb-tlink" href="${esc2(task.url)}" title="${esc2(task.url)}">${esc2(task.title)}</a>` : `<span class="bz-kb-turl" title="${esc2(task.url)}">${esc2(shortUrlText(task.url))}</span>`;
           const upText = task.uploader ? ` · UP主 ${esc2(task.uploader)}` : "";
           card.innerHTML = `
-      <div class="bz-bili-row">
-        <span class="bz-bili-status ${meta.cls}">${meta.label}</span>
+      <div class="bz-kb-trow">
+        <span class="bz-kb-status ${meta.cls}">${meta.label}</span>
         ${linkLine}
       </div>
-      <div class="bz-bili-meta">${timeText}${upText}${task.remark ? " · " + esc2(task.remark) : ""}</div>
-      ${task.status === "processing" ? this.runState.has(task.id) ? '<div class="bz-bili-progress-box"></div>' : task.reason ? `<div class="bz-bili-progress">${esc2(task.reason)}</div>` : "" : ""}
-      ${task.status === "failed" && task.reason ? `<div class="bz-bili-progress bz-bili-progress-error" title="${esc2(task.reason)}">${esc2(humanizeError(task.reason))}</div>` : ""}
-      ${task.status === "success" && task.notePath ? `<div class="bz-bili-note">📄 ${esc2(task.notePath)}</div>` : ""}`;
+      <div class="bz-kb-tmeta">${timeText}${upText}${task.remark ? " · " + esc2(task.remark) : ""}</div>
+      ${task.status === "processing" ? this.runState.has(task.id) ? '<div class="bz-kb-progress-box"></div>' : task.reason ? `<div class="bz-kb-progress">${esc2(task.reason)}</div>` : "" : ""}
+      ${task.status === "failed" && task.reason ? `<div class="bz-kb-progress bz-kb-progress-error" title="${esc2(task.reason)}">${esc2(humanizeError(task.reason))}</div>` : ""}
+      ${task.status === "success" && task.notePath ? `<div class="bz-kb-notepath">📄 ${esc2(task.notePath)}</div>` : ""}`;
           const actions = this.buildCardActions(task);
           if (actions.length) attachItemActions(card, actions);
-          const titleLink = q(card, ".bz-bili-title");
+          const titleLink = q(card, ".bz-kb-tlink");
           if (titleLink) titleLink.onclick = (e) => {
             e.stopPropagation();
             this._openExternal(titleLink.href || task.url);
@@ -26655,44 +26670,41 @@ ${sample}`,
             if (task.notePath) actions.push({ icon: "book-open", label: "打开文献笔记", onClick: () => this.openNote(task.notePath) });
             if (task.videoPath) actions.push({ icon: "copy", label: "复制视频路径", onClick: () => void this.copyText(task.videoPath) });
             actions.push({ icon: "pencil", label: "编辑", onClick: () => this.showAddDialog(task) });
-          } else if (task.status === "failed") {
-            actions.push({ icon: "pencil", label: "编辑", onClick: () => this.showAddDialog(task) });
-          } else if (task.status === "pending") {
+          } else if (task.status === "failed" || task.status === "pending") {
             actions.push({ icon: "pencil", label: "编辑", onClick: () => this.showAddDialog(task) });
           }
           actions.push({ icon: "trash-2", label: "删除", kind: "danger", onClick: () => void this.confirmDelete(task) });
           return actions;
         }
-        /** 行内进度定点更新（不等 storage 落库——[bz-step]/[bz-p] 一到立即刷 DOM，修「UI 滞后于 JSON」） */
+        /** 行内进度定点更新（不等 storage 落库，一到立即刷 DOM） */
         updateRowProgress(id) {
           if (!this.videoList) return;
           const st = this.runState.get(id);
-          const card = q(this.videoList, `.bz-bili-task-card[data-id="${id}"]`);
+          const card = q(this.videoList, `.bz-kb-taskcard[data-id="${id}"]`);
           if (!card || !st) return;
-          let box = q(card, ".bz-bili-progress-box");
+          let box = q(card, ".bz-kb-progress-box");
           if (!box) {
             box = document.createElement("div");
-            box.className = "bz-bili-progress-box";
-            const meta = q(card, ".bz-bili-meta");
+            box.className = "bz-kb-progress-box";
+            const meta = q(card, ".bz-kb-tmeta");
             if (meta) meta.after(box);
             else card.appendChild(box);
           }
           if (tryGetSettings().knowledgeProgressDetail === false) {
             const cur = st.steps[st.steps.length - 1] || "处理中…";
-            box.innerHTML = `<div class="bz-bili-progress">${esc2(cur)}</div>`;
+            box.innerHTML = `<div class="bz-kb-progress">${esc2(cur)}</div>`;
             return;
           }
           const segs = st.steps.map(
-            (s, i) => i === st.steps.length - 1 ? `<span class="bz-bili-step-cur">${esc2(s)}</span>` : `<span class="bz-bili-step-done">✓ ${esc2(stepDoneLabel(s))}</span>`
+            (s, i) => i === st.steps.length - 1 ? `<span class="bz-kb-step-cur">${esc2(s)}</span>` : `<span class="bz-kb-step-done">✓ ${esc2(stepDoneLabel(s))}</span>`
           );
           const pct = st.phase === "download" ? st.pct : null;
-          const bar = pct != null ? `<div class="bz-bili-progress-track"><div class="bz-bili-progress-fill" style="width:${Math.min(100, Math.max(0, pct))}%"></div></div>` : "";
+          const bar = pct != null ? `<div class="bz-kb-progress-track"><div class="bz-kb-progress-fill" style="width:${Math.min(100, Math.max(0, pct))}%"></div></div>` : "";
           box.innerHTML = `
-      <div class="bz-bili-steps">${segs.join('<span class="bz-bili-step-arrow">→</span>')}${pct != null ? ` <span class="bz-bili-step-pct">${Math.round(pct)}%</span>` : ""}</div>
+      <div class="bz-kb-steps">${segs.join('<span class="bz-kb-step-arrow">→</span>')}${pct != null ? ` <span class="bz-kb-step-pct">${Math.round(pct)}%</span>` : ""}</div>
       ${bar}
-      <div class="bz-bili-elapsed">⌛ ${fmtElapsed(Date.now() - st.startAt)}</div>`;
+      <div class="bz-kb-elapsed">⌛ ${fmtElapsed(Date.now() - st.startAt)}</div>`;
         }
-        /** 整批耗时秒针：每秒刷新处理中行的耗时显示 */
         startRunTimer() {
           this.clearRunTimer();
           this.runTimer = setInterval(() => {
@@ -26721,7 +26733,6 @@ ${sample}`,
           const ui2 = this;
           ui2.startRunTimer();
           const events = {
-            // 步骤/进度事件：更新内存态 + 行内定点刷新（不整表重读，UI 与工具输出同步）
             onTaskProgress: (t, stepText, progress) => {
               let st = ui2.runState.get(t.id);
               if (!st) {
@@ -26735,12 +26746,10 @@ ${sample}`,
               }
               ui2.updateRowProgress(t.id);
             },
-            // 解析信息落库（ADR-0067）：标题/UP主 就位 → 整表刷新，行内切换为「文字+链接」形态
-            onTaskInfo: (t) => {
+            onTaskInfo: () => {
               void ui2.refreshVideoPanel();
             },
-            onTaskDone: (t) => {
-              ui2.runState.delete(t.id);
+            onTaskDone: () => {
               void ui2.refreshVideoPanel();
             },
             onBatchDone: (summary) => {
@@ -26789,7 +26798,6 @@ ${sample}`,
           await this.refreshVideoPanel();
           await this.refreshHistory();
         }
-        /** 清空历史（⚙️ 设置面板入口，ADR-0070）：确认后移除全部归档记录 */
         async confirmClearHistory() {
           const v = await openFlowDialog({
             title: "清空历史",
@@ -26807,12 +26815,12 @@ ${sample}`,
         createAddDialog() {
           var _a2;
           const addMask = document.createElement("div");
-          addMask.id = "literature-add-mask";
-          addMask.className = "bz-lit-mask";
+          addMask.id = "knowledge-add-mask";
+          addMask.className = "bz-kb-mask";
           addMask.style.display = "none";
           addMask.onclick = () => this.hideAddDialog();
           const popup = document.createElement("div");
-          popup.id = "literature-add-popup";
+          popup.id = "knowledge-add-popup";
           popup.className = "bz-lit-dialog";
           popup.style.display = "none";
           popup.innerHTML = `
@@ -26904,7 +26912,6 @@ ${sample}`,
           const urlInput = q(this.addPopup, "#lit-add-url");
           if (urlInput) setTimeout(() => urlInput.focus(), 100);
         }
-        /** 整片/剪辑分段开关：active 高亮 + 时间输入区显隐（ticket 139） */
         _setAddRangeMode(mode) {
           if (!this.addPopup) return;
           const box = q(this.addPopup, "#lit-add-range");
@@ -26985,19 +26992,19 @@ ${sample}`,
         // ==================== 历史弹窗 ====================
         createHistoryUI() {
           const mask = document.createElement("div");
-          mask.id = "literature-history-mask";
-          mask.className = "bz-lit-mask";
+          mask.id = "knowledge-history-mask";
+          mask.className = "bz-kb-mask";
           mask.style.display = "none";
           mask.onclick = () => this.hideHistory();
           const popup = document.createElement("div");
-          popup.id = "literature-history-popup";
-          popup.className = "bz-lit-window";
+          popup.id = "knowledge-history-popup";
+          popup.className = "bz-kb-window kb";
           popup.style.display = "none";
           const toolbar = document.createElement("div");
-          toolbar.className = "bz-lit-toolbar";
+          toolbar.className = "bz-kb-vhead";
           const counts = document.createElement("span");
           counts.id = "lit-history-counts";
-          counts.className = "bz-lit-counts";
+          counts.className = "bz-kb-vmeta";
           const headBtns = document.createElement("div");
           headBtns.className = "bz-lit-head-btns";
           headBtns.innerHTML = `
@@ -27005,8 +27012,8 @@ ${sample}`,
           toolbar.appendChild(counts);
           toolbar.appendChild(headBtns);
           const list = document.createElement("div");
-          list.id = "literature-history-list";
-          list.className = "bz-lit-list";
+          list.id = "knowledge-history-list";
+          list.className = "bz-kb-list";
           popup.appendChild(toolbar);
           popup.appendChild(list);
           document.body.appendChild(mask);
@@ -27016,7 +27023,6 @@ ${sample}`,
           this.historyList = list;
           q(popup, "#lit-history-close").onclick = () => this.hideHistory();
         }
-        /** 历史独立弹窗（ADR-0070）：视频面板之上叠开，遮罩 + ✕/ESC/点遮罩关闭 */
         showHistory() {
           if (!this.historyPopup || !this.historyMask) return;
           topifyZ(this.historyMask, this.historyPopup);
@@ -27028,7 +27034,6 @@ ${sample}`,
           if (this.historyMask) this.historyMask.style.display = "none";
           if (this.historyPopup) this.historyPopup.style.display = "none";
         }
-        /** 历史列表（ADR-0070）：无条带无成功徽标；同一视频的多条文献笔记归并在一张卡片内分组列出 */
         async refreshHistory() {
           if (!this.historyList) return;
           const tasks = await KnowledgeData.loadTasks();
@@ -27039,7 +27044,7 @@ ${sample}`,
           if (countsEl) countsEl.textContent = `🕘 历史 · 共 ${rows.length} 条`;
           if (rows.length === 0) {
             const empty = document.createElement("div");
-            empty.className = "bz-bili-empty";
+            empty.className = "bz-kb-empty";
             empty.textContent = "暂无历史记录。成功的任务完成时会自动归档到这里。";
             this.historyList.appendChild(empty);
             return;
@@ -27063,24 +27068,22 @@ ${sample}`,
           });
           for (const g of sortedGroups) this.historyList.appendChild(this.renderHistoryGroup(g));
         }
-        /** 历史分组卡片：标题链接 + UP主名（ticket 143：去掉「UP主」前缀与「N 条笔记」计数）；
-         *  每条任务一行「📄 笔记名（去目录去 .md）⏱ 相对时间（formatRelativeTime）」 */
         renderHistoryGroup(group) {
           const head = group[0];
           const card = document.createElement("div");
-          card.className = "bz-bili-task-card bz-bili-hgroup";
+          card.className = "bz-kb-taskcard bz-kb-hgroup";
           card.dataset.url = head.url || "";
           const href = head.url ? `href="${esc2(head.url)}"` : "";
-          const upText = head.uploader ? `<span class="bz-bili-hup">${esc2(head.uploader)}</span>` : "";
+          const upText = head.uploader ? `<span class="bz-kb-hup">${esc2(head.uploader)}</span>` : "";
           card.innerHTML = `
-      <div class="bz-bili-row">
-        ${head.title ? `<a class="bz-bili-title" ${href} title="${esc2(head.url || "")}">${esc2(head.title)}</a>` : `<span class="bz-bili-url" title="${esc2(head.url || "")}">${esc2(shortUrlText(head.url || ""))}</span>`}
+      <div class="bz-kb-trow">
+        ${head.title ? `<a class="bz-kb-tlink" ${href} title="${esc2(head.url || "")}">${esc2(head.title)}</a>` : `<span class="bz-kb-turl" title="${esc2(head.url || "")}">${esc2(shortUrlText(head.url || ""))}</span>`}
         ${upText}
       </div>`;
           for (const task of group) {
             const line = document.createElement("div");
-            line.className = "bz-bili-hnote";
-            line.innerHTML = `📄 ${esc2(shortNoteName(task.notePath || ""))}<span class="bz-bili-hnote-time">⏱ ${esc2(formatRelativeTime(task.processedAt || task.created || ""))}</span>`;
+            line.className = "bz-kb-hnote";
+            line.innerHTML = `📄 ${esc2(shortNoteName(task.notePath || ""))}<span class="bz-kb-hnote-time">⏱ ${esc2(formatRelativeTime(task.processedAt || task.created || ""))}</span>`;
             line.addEventListener("click", () => {
               if (task.notePath) this.openNote(task.notePath);
             });
@@ -27091,15 +27094,14 @@ ${sample}`,
             attachItemActions(line, actions);
             card.appendChild(line);
           }
-          const link = q(card, ".bz-bili-title");
+          const link = q(card, ".bz-kb-tlink");
           if (link && head.url) link.onclick = (e) => {
             e.stopPropagation();
             this._openExternal(head.url);
           };
           return card;
         }
-        // ==================== 术语生成面板（文字录入，ticket 136 §6；142 简洁版拍板） ====================
-        /** 当前时间戳（Y-m-d H:i:s，与落盘 frontmatter date 同款格式；预览「日期」只读展示） */
+        // ==================== 术语生成面板（文字录入；142 简洁版 + 155 总结） ====================
         termDateStamp() {
           const d = /* @__PURE__ */ new Date();
           const p = (n) => String(n).padStart(2, "0");
@@ -27108,12 +27110,12 @@ ${sample}`,
         createTermUI() {
           var _a2;
           const mask = document.createElement("div");
-          mask.id = "literature-term-mask";
-          mask.className = "bz-lit-mask";
+          mask.id = "knowledge-term-mask";
+          mask.className = "bz-kb-mask";
           mask.style.display = "none";
           mask.onclick = () => this.hideTermEntry();
           const popup = document.createElement("div");
-          popup.id = "literature-term-popup";
+          popup.id = "knowledge-term-popup";
           popup.className = "bz-lit-dialog bz-lit-term-dialog";
           popup.style.display = "none";
           const body = document.createElement("div");
@@ -27154,8 +27156,6 @@ ${sample}`,
             }
           });
         }
-        /** 打开术语生成面板；term 预填输入框（命令入口带编辑器选中词；主面板入口不带）。
-         *  ticket 155：带词入口（选中文字打开）自动触发生成，无需再点按钮。 */
         showTermEntry(term) {
           if (!this.termPopup || !this.termMask) return;
           this.termPreview = null;
@@ -27187,7 +27187,6 @@ ${sample}`,
           const save2 = q(this.termPopup, "#lit-term-save");
           if (save2) save2.disabled = loading2;
         }
-        /** 总结按钮禁用/进行中态（ticket 155）；生成按钮同步禁用防并发 */
         setTermSummarizing(s) {
           if (!this.termPopup) return;
           const regen = q(this.termPopup, "#lit-term-regenerate");
@@ -27208,9 +27207,6 @@ ${sample}`,
             notice("生成失败：" + msg, "error");
           }
         }
-        /** 生成/重新生成（输入行按钮）：调 generateTermDraft 纯 AI 预览（不落盘）→ 只读填充预览。
-         *  ticket 142：预览无输入框不可编辑，重跑直接覆盖上一轮预览；
-         *  ticket 155：成功后 termHasDraft 置位，输入行按钮文案变「重新生成」。 */
         async onTermGenerate() {
           var _a2, _b2;
           if (!this.termPopup || this.termGenerating) return;
@@ -27231,7 +27227,6 @@ ${sample}`,
             this.setTermGenLoading(false);
           }
         }
-        /** 总结（ticket 155）：对当前预览正文再做一次 AI 精简并回填内容卡（术语/领域不变，所见即所得落入确认写入）。 */
         async onTermSummarize() {
           if (!this.termPopup || this.termSummarizing || this.termGenerating) return;
           if (!this.termPreview || !this.termPreview.body.trim()) {
@@ -27252,7 +27247,6 @@ ${sample}`,
             this.setTermSummarizing(false);
           }
         }
-        /** 填充预览（只读：属性卡/内容卡按 AI 草稿回填，纯内存不写盘；术语输入框不变，ticket 142） */
         presentTermPreview(draft) {
           var _a2, _b2;
           this.termPreview = { domain: draft.domain, body: draft.summary };
@@ -27269,11 +27263,6 @@ ${sample}`,
           if (contentEl) contentEl.textContent = draft.summary;
           this.setTermPreviewVisible(true);
         }
-        /**
-         * 确认写入（ticket 138 §2.1 + 终审 P1-4）：须先有 AI 预览（无预览直接确认 → 提示先生成）；
-         * generateTermNote 传面板当前 term/this.termPreview（只读预览即最终值，所见即所得不重跑 AI）→
-         * 自动打开新笔记 → term-generated 域事件 → 关闭面板。
-         */
         async onTermConfirm() {
           var _a2, _b2;
           if (!this.termPopup || this.termGenerating) return;
@@ -27302,7 +27291,6 @@ ${sample}`,
             this.setTermGenLoading(false);
           }
         }
-        /** 关闭术语面板（遮罩 / ESC）；预览纯内存，无草稿文件可删（ticket 138 §2.1） */
         hideTermEntry() {
           this.termPreview = null;
           if (this.termMask) this.termMask.style.display = "none";
@@ -27321,15 +27309,6 @@ ${sample}`,
             notice("文献笔记不存在：" + path, "error");
           }
         }
-        async copyWikilink(n) {
-          const link = `[[${n.path}|${n.title}]]`;
-          try {
-            await navigator.clipboard.writeText(link);
-            notice("已复制双链引用：" + link, "success");
-          } catch (e) {
-            notice("复制失败", "error");
-          }
-        }
         async copyText(text) {
           try {
             await navigator.clipboard.writeText(text);
@@ -27338,7 +27317,6 @@ ${sample}`,
             notice("复制失败", "error");
           }
         }
-        /** 外部浏览器打开（app.openUrl 优先，Electron shell 兜底，与收藏本同路径） */
         _openExternal(url) {
           const app2 = getApp();
           try {
@@ -27352,10 +27330,6 @@ ${sample}`,
         destroy() {
           this.clearRunTimer();
           this.runState.clear();
-          if (this.searchDebounceTimer) {
-            clearTimeout(this.searchDebounceTimer);
-            this.searchDebounceTimer = null;
-          }
           if (this.refreshTimer) {
             clearTimeout(this.refreshTimer);
             this.refreshTimer = null;
@@ -27375,7 +27349,7 @@ ${sample}`,
           }
           this.mask = null;
           this.popup = null;
-          this.list = null;
+          this.contentEl = null;
           this.videoMask = null;
           this.videoPopup = null;
           this.videoList = null;
@@ -27392,10 +27366,10 @@ ${sample}`,
   });
 
   // src/knowledge/index.ts
-  var literature_exports = {};
-  __export(literature_exports, {
+  var knowledge_exports = {};
+  __export(knowledge_exports, {
     ensureKnowledge: () => ensureKnowledge,
-    openLiteratureAddTask: () => openLiteratureAddTask,
+    openKnowledgeAddTask: () => openKnowledgeAddTask,
     openKnowledgePanel: () => openKnowledgePanel,
     openTermNote: () => openTermNote,
     unloadKnowledge: () => unloadKnowledge
@@ -27416,7 +27390,7 @@ ${sample}`,
     ensureKnowledge(app2);
     uiManager == null ? void 0 : uiManager.showMain();
   }
-  function openLiteratureAddTask(app2, prefill) {
+  function openKnowledgeAddTask(app2, prefill) {
     ensureKnowledge(app2);
     uiManager == null ? void 0 : uiManager.showVideoEntry(prefill);
   }
@@ -27436,7 +27410,7 @@ ${sample}`,
     initialized3 = false;
   }
   var initialized3, uiManager;
-  var init_literature = __esm({
+  var init_knowledge = __esm({
     "src/knowledge/index.ts"() {
       init_fake_obsidian();
       init_settings_provider();
@@ -27509,8 +27483,8 @@ ${sample}`,
     if (!raw) return false;
     const isBili = raw.platform === "B站" && !!String(raw.url || "").trim();
     if (isBili) {
-      const { openLiteratureAddTask: openLiteratureAddTask2 } = await Promise.resolve().then(() => (init_literature(), literature_exports));
-      openLiteratureAddTask2(getApp(), { url: raw.url, title: raw.title || null, uploader: raw.author || null });
+      const { openKnowledgeAddTask: openKnowledgeAddTask2 } = await Promise.resolve().then(() => (init_knowledge(), knowledge_exports));
+      openKnowledgeAddTask2(getApp(), { url: raw.url, title: raw.title || null, uploader: raw.author || null });
       await markHandledAndBump(raw, "saved");
       notice("已转入文献盒", "success");
       return true;
@@ -34694,9 +34668,8 @@ ${n.content.slice(0, 2e3)}
     <div class="bz-sb-pill"><i class="bz-sb-pill-dot"></i><span id="bz-sb-pill-txt">索引健康</span></div>
     <div class="bz-sb-head-sp"></div>
     <div class="bz-sb-panel-btns">
-      <button class="bz-sb-panel-func bz-sb-fbtn" id="bz-sb-open-chat">${ic("message-square", 14)}AI 对话</button>
-      <button class="bz-sb-panel-func bz-sb-fbtn" id="bz-sb-open-ref">${ic("radar", 14)}灵感参考</button>
-      <button class="bz-sb-panel-gear bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-open-settings" aria-label="第二大脑设置">${ic("settings", 14)}</button>
+      <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-open-chat" aria-label="AI 对话" title="AI 对话">${ic("message-square", 14)}</button>
+      <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-open-ref" aria-label="灵感参考" title="灵感参考">${ic("radar", 14)}</button>
     </div>
   </div>
   <div class="bz-sb-panel-body">
@@ -34725,8 +34698,8 @@ ${n.content.slice(0, 2e3)}
         </div>
       </div>
       <div class="bz-sb-foot">
-        <button class="bz-sb-fbtn bz-sb-fbtn--primary" id="bz-sb-incr">${ic("refresh-cw", 14)}增量更新</button>
-        <button class="bz-sb-fbtn" id="bz-sb-rebuild">${ic("database", 14)}全量重建</button>
+        <button class="bz-sb-fbtn bz-sb-fbtn--primary" id="bz-sb-incr" aria-label="增量更新">${ic("refresh-cw", 14)}<span class="bz-sb-fbtn-txt">增量更新</span></button>
+        <button class="bz-sb-fbtn" id="bz-sb-rebuild" aria-label="全量重建">${ic("database", 14)}<span class="bz-sb-fbtn-txt">全量重建</span></button>
         <div class="bz-sb-log" id="bz-sb-log"></div>
       </div>
     </div>
@@ -34862,14 +34835,14 @@ ${n.content.slice(0, 2e3)}
   });
 
   // src/secondbrain/chunk.ts
-  function stripFrontmatter(text) {
+  function stripFrontmatter2(text) {
     return text.replace(FRONTMATTER_RE, "");
   }
   function noteTitleFromPath(path) {
     return path.slice(path.lastIndexOf("/") + 1).replace(/\.md$/i, "");
   }
   function embedChunks(content, title, minChunk = 50) {
-    const body = stripFrontmatter(content);
+    const body = stripFrontmatter2(content);
     const chunks = smartChunk(body, minChunk);
     if (chunks.length === 0 && body.trim().length > 0) chunks.push(body.trim().slice(0, CHUNK_SIZE));
     if (chunks.length > 0 && title) chunks[0] = title + "\n" + chunks[0];
@@ -36835,11 +36808,14 @@ ${userMsg}`;
     "src/secondbrain/mobile-panel.ts"() {
       init_esc_manager();
       init_notice();
+      init_ui();
       init_config3();
       init_z_order();
       init_context();
       init_ui_tools();
       init_ai3();
+      init_render11();
+      init_store_file();
       SNAP_MID = 45;
       SNAP_HIGH = 75;
       COLLAPSE_THRESHOLD = 18;
@@ -36868,12 +36844,14 @@ ${userMsg}`;
           topbar.className = "bz-sb-mb-topbar";
           this.pillRef = document.createElement("button");
           this.pillRef.className = "bz-sb-mb-pill active";
-          this.pillRef.textContent = "📚";
           this.pillRef.title = "参考";
+          this.pillRef.setAttribute("aria-label", "参考");
+          this.pillRef.innerHTML = '<i data-lucide="radar"></i>';
           this.pillChat = document.createElement("button");
           this.pillChat.className = "bz-sb-mb-pill";
-          this.pillChat.textContent = "🤖";
           this.pillChat.title = "AI";
+          this.pillChat.setAttribute("aria-label", "AI");
+          this.pillChat.innerHTML = '<i data-lucide="message-square"></i>';
           const dragStrip = document.createElement("div");
           dragStrip.className = "bz-sb-mb-drag-strip";
           const dragDot = document.createElement("div");
@@ -36883,6 +36861,7 @@ ${userMsg}`;
           topbar.appendChild(dragStrip);
           topbar.appendChild(this.pillChat);
           this.sheet.appendChild(topbar);
+          mountIcons(topbar);
           this.body = document.createElement("div");
           this.body.className = "bz-sb-mb-body bz-sb-scroll-y";
           this.sheet.appendChild(this.body);
@@ -36965,6 +36944,12 @@ ${userMsg}`;
               void this.refreshResults(q2);
             }
           }
+          void loadChatHistory(app2).then((entries) => {
+            if (!entries.length) return;
+            this.chatHistory = entries.slice(-buildConfig().MAX_HISTORY * 2);
+            if (this.mode === "chat") this.renderBody();
+          }).catch(() => {
+          });
         }
         get alive() {
           return !!this.sheet.isConnected;
@@ -37070,6 +37055,12 @@ ${userMsg}`;
             topRow.appendChild(pathDiv);
             topRow.appendChild(scoreDiv);
             card.appendChild(topRow);
+            const bar = document.createElement("div");
+            bar.className = "bz-sb-mb-card-bar";
+            const barFill = document.createElement("span");
+            barFill.style.width = `${Math.round(item.score * 100)}%`;
+            bar.appendChild(barFill);
+            card.appendChild(bar);
             const chunkDiv = document.createElement("div");
             chunkDiv.className = "bz-sb-mb-card-chunk";
             card.appendChild(chunkDiv);
@@ -37113,7 +37104,7 @@ ${userMsg}`;
             });
           }
         }
-        /** AI tab：重建 DOM 并重放历史；空历史显示欢迎语（QA L2103-2162） */
+        /** AI tab：桌面同构重排（issue 251 移动对齐）——标签气泡 + 推荐问法 + 带聚焦态输入行 */
         renderChatTab() {
           const CONFIG2 = buildConfig();
           const chat2 = document.createElement("div");
@@ -37123,20 +37114,43 @@ ${userMsg}`;
           chat2.appendChild(this.chatMessagesDiv);
           const inputArea = document.createElement("div");
           inputArea.className = "bz-sb-mb-chat-input-area";
+          const inputRow = document.createElement("div");
+          inputRow.className = "bz-sb-mb-chat-input-row";
+          const lens = document.createElement("span");
+          lens.className = "bz-sb-mb-chat-lens";
+          lens.innerHTML = '<i data-lucide="sparkles"></i>';
           const input = document.createElement("input");
           input.className = "bz-sb-mb-chat-input";
           input.type = "text";
-          input.placeholder = "检索笔记后回答...";
+          input.placeholder = "向第二大脑提问，回车发送…";
           const sendBtn = document.createElement("button");
           sendBtn.className = "bz-sb-mb-chat-send";
-          sendBtn.textContent = "发送";
-          inputArea.appendChild(input);
-          inputArea.appendChild(sendBtn);
+          sendBtn.setAttribute("aria-label", "发送");
+          sendBtn.title = "发送";
+          sendBtn.innerHTML = '<i data-lucide="send"></i>';
+          inputRow.appendChild(lens);
+          inputRow.appendChild(input);
+          inputRow.appendChild(sendBtn);
+          inputArea.appendChild(inputRow);
+          const chips = document.createElement("div");
+          chips.className = "bz-sb-mb-chat-chips";
+          for (const q2 of CHAT_CHIPS) {
+            const chip = document.createElement("button");
+            chip.className = "bz-sb-mb-chat-chip";
+            chip.textContent = q2;
+            chip.addEventListener("click", () => {
+              if (sendBtn.disabled) return;
+              input.value = q2;
+              void send();
+            });
+            chips.appendChild(chip);
+          }
+          inputArea.appendChild(chips);
           chat2.appendChild(inputArea);
           this.body.appendChild(chat2);
           for (const msg of this.chatHistory) this.appendChatMsg(msg.role, msg.content);
           if (!this.chatHistory.length) {
-            this.appendChatMsg("assistant", `已加载 ${Object.keys(this.store.notes).length} 篇笔记`);
+            this.appendChatMsg("assistant", `你好！每次提问会独立检索 ${Object.keys(this.store.notes).length} 篇笔记作答。`);
           }
           const send = async () => {
             const text = input.value.trim();
@@ -37144,8 +37158,9 @@ ${userMsg}`;
             input.value = "";
             this.appendChatMsg("user", text);
             this.chatHistory.push({ role: "user", content: text });
+            void appendChatHistory([{ role: "user", content: text }], this.app).catch(() => {
+            });
             sendBtn.disabled = true;
-            sendBtn.textContent = "···";
             try {
               const results = await this.store.searchMobile(text, CONFIG2.CHAT_TOP_K);
               const ctx = results.length > 0 ? results.map((r) => `[${r.path}] (${Math.round(r.score * 100)}%)
@@ -37160,6 +37175,8 @@ ${text}`;
               const answer = await AI.ask(prompt);
               this.appendChatMsg("assistant", answer);
               this.chatHistory.push({ role: "assistant", content: answer });
+              void appendChatHistory([{ role: "assistant", content: answer }], this.app).catch(() => {
+              });
               if (this.chatHistory.length > CONFIG2.MAX_HISTORY * 2) {
                 this.chatHistory = this.chatHistory.slice(-CONFIG2.MAX_HISTORY * 2);
               }
@@ -37167,24 +37184,32 @@ ${text}`;
               this.appendChatMsg("assistant", "出错了：" + ((e == null ? void 0 : e.message) || e));
             } finally {
               sendBtn.disabled = false;
-              sendBtn.textContent = "发送";
             }
           };
           sendBtn.addEventListener("click", () => void send());
           input.addEventListener("keydown", (e) => {
             if (e.key === "Enter") void send();
           });
+          mountIcons(chat2);
         }
         appendChatMsg(role, content) {
           if (!this.chatMessagesDiv) return;
           const div = document.createElement("div");
           div.className = `bz-sb-mb-chat-msg ${role}`;
+          const who = document.createElement("div");
+          who.className = "bz-sb-mb-chat-who";
+          who.innerHTML = `<i data-lucide="${role === "user" ? "send" : "brain"}"></i>${role === "user" ? "刚问" : "第二大脑"}`;
+          const bubble = document.createElement("div");
+          bubble.className = "bz-sb-mb-chat-bubble";
           if (role === "assistant") {
-            renderMarkdown2(div, content, this.app);
+            renderMarkdown2(bubble, content, this.app);
           } else {
-            div.textContent = content;
+            bubble.textContent = content;
           }
+          div.appendChild(who);
+          div.appendChild(bubble);
           this.chatMessagesDiv.appendChild(div);
+          mountIcons(div);
           this.chatMessagesDiv.scrollTop = this.chatMessagesDiv.scrollHeight;
         }
         /** 完全关闭（区别于收起）：清理监听与定时器后移除 DOM */
@@ -38835,7 +38860,7 @@ ${text}`;
         }
         /** 组装弹窗 DOM（markup 全部出自 render.ts；本方法只绑定事件） */
         createUI() {
-          var _a2, _b2, _c, _d, _e, _f;
+          var _a2, _b2, _c, _d, _e;
           if (this.mask && document.body.contains(this.mask)) return;
           const mask = document.createElement("div");
           mask.className = "bz-sb-panel-mask";
@@ -38851,12 +38876,11 @@ ${text}`;
             this.close();
             this.opts.onOpenReference();
           });
-          (_c = popup.querySelector("#bz-sb-open-settings")) == null ? void 0 : _c.addEventListener("click", () => this.openSettings());
-          (_d = popup.querySelector("#bz-sb-incr")) == null ? void 0 : _d.addEventListener("click", () => {
+          (_c = popup.querySelector("#bz-sb-incr")) == null ? void 0 : _c.addEventListener("click", () => {
             if (this.refreshing || this.initializing) return;
             void this.runIncremental();
           });
-          (_e = popup.querySelector("#bz-sb-rebuild")) == null ? void 0 : _e.addEventListener("click", () => {
+          (_d = popup.querySelector("#bz-sb-rebuild")) == null ? void 0 : _d.addEventListener("click", () => {
             void openFlowDialog({
               title: "重新索引",
               message: "将清空现有向量索引，按当前白名单全部重嵌入（约等于首次初始化全量跑一遍）。期间参考侧边栏与对话的向量检索会降级为文本匹配。确定继续吗？",
@@ -38870,7 +38894,7 @@ ${text}`;
           });
           const initBtn = popup.querySelector("#bz-sb-init-btn");
           if (initBtn) initBtn.onclick = () => void this.startInitialIndex();
-          (_f = popup.querySelector("#bz-sb-dist")) == null ? void 0 : _f.addEventListener("click", (e) => {
+          (_e = popup.querySelector("#bz-sb-dist")) == null ? void 0 : _e.addEventListener("click", (e) => {
             const row = e.target.closest(".bz-sb-dist-row--dir");
             if (!row) return;
             const path = row.dataset.path;
@@ -40925,7 +40949,7 @@ ${text}`;
         pomodoro: async () => (await Promise.resolve().then(() => (init_ui11(), ui_exports8))).pomodoroSettingsSchema(),
         encrypt: async () => (await Promise.resolve().then(() => (init_ui3(), ui_exports2))).encryptSettingsSchema(),
         "password-vault": async () => (await Promise.resolve().then(() => (init_settings5(), settings_exports5))).passwordVaultSettingsSchema(),
-        literature: async () => (await Promise.resolve().then(() => (init_ui6(), ui_exports4))).knowledgeSettingsSchema(),
+        knowledge: async () => (await Promise.resolve().then(() => (init_ui6(), ui_exports4))).knowledgeSettingsSchema(),
         smartcat: async () => {
           const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data11(), data_exports));
           const { smartcatSettingsSchema: smartcatSettingsSchema2 } = await Promise.resolve().then(() => (init_ui12(), ui_exports9));
@@ -40967,12 +40991,12 @@ ${text}`;
         { id: "encrypt", name: "保险库", icon: DOMAIN_ICONS.encrypt, desc: "密码、加密笔记与加密日记", schemaLoader: schemaLoaders.encrypt },
         { id: "password-vault", name: "密码本", icon: DOMAIN_ICONS["password-vault"], desc: "密码条目与生成器", schemaLoader: schemaLoaders["password-vault"] },
         { id: "smartcat", name: "小橘陪伴猫", icon: DOMAIN_ICONS.smartcat, desc: "桌面宠物陪伴", schemaLoader: schemaLoaders.smartcat },
-        { id: "literature", name: "文献盒", icon: DOMAIN_ICONS.knowledge, desc: "文献笔记与术语录入", schemaLoader: schemaLoaders.literature }
+        { id: "knowledge", name: "知识盒", icon: DOMAIN_ICONS.knowledge, desc: "文献录入 · 卡片 · 主题", schemaLoader: schemaLoaders.knowledge }
       ];
       NAV_SECS = [
         { title: "基础", ids: ["global", "appearance", "ai"] },
         { title: "记录", ids: ["diary", "diary-wall", "todo", "belongings", "clipping", "favorites"] },
-        { title: "媒体与知识", ids: ["cinema", "bookshelf", "review", "secondbrain", "literature"] },
+        { title: "媒体与知识", ids: ["cinema", "bookshelf", "review", "secondbrain", "knowledge"] },
         { title: "工具", ids: ["pomodoro", "encrypt", "password-vault", "smartcat"] }
       ];
       schemaRowCache = /* @__PURE__ */ new Map();

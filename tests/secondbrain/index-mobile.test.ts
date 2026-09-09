@@ -83,7 +83,7 @@ describe('secondbrain/index 移动端对话入口（ticket 31）', () => {
     const sheet = document.querySelector('.bz-sb-mb-sheet');
     expect(sheet).not.toBeNull(); // 底部抽屉已建
     const pills = [...sheet!.querySelectorAll('.bz-sb-mb-pill')];
-    const chatPill = pills.find((p) => p.textContent === '🤖') as HTMLElement;
+    const chatPill = pills.find((p) => p.getAttribute('aria-label') === 'AI') as HTMLElement; // pill 已图标化（lucide），锚点走 aria-label
     expect(chatPill).toBeTruthy();
     expect(chatPill.classList.contains('active')).toBe(true); // AI tab 已激活
     expect((sheet as HTMLElement).classList.contains('bz-sb-mb-open')).toBe(true); // 已展开

@@ -315,5 +315,12 @@ export function demoReferenceQuery(query: string): void {
     getValue: () => query,
   };
   (simApp!.workspace as { activeEditor: unknown }).activeEditor = { editor };
-  void openRef().then(() => reference?.refreshWithDebounce());
+  void openRef().then(() => {
+    // 移动端抽屉无 ReferencePanel 实例：直接喂演示检索（否则要等光标轮询一拍）
+    if (IS_MOBILE) {
+      void mobile?.refreshResults(query);
+      return;
+    }
+    void reference?.refreshWithDebounce();
+  });
 }
