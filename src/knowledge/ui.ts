@@ -494,7 +494,7 @@ export class UIManager {
       </div>`;
   }
 
-  /** 部壹文献预览弹层：全文段落 + related + 提炼成卡 */
+  /** 部壹文献预览弹层：全文段落 + related 关联 + 来源（只读；关闭走 ✕/ESC） */
   private async openLitPreview(n: KnowledgeNoteEntry): Promise<void> {
     const app = getApp();
     let raw = '';
@@ -525,11 +525,7 @@ export class UIManager {
       ${clipHtml}
       ${rels.length ? `<div class="bz-kb-sec">关 联（related，Obsidian 双链）</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc(r)}</span>`).join('')}</div>` : ''}
       ${srcHtml}
-      ${termSrcHtml}
-      <div style="margin-top:18px;display:flex;gap:10px">
-        <button class="bz-kb-bigbtn" data-kb-act="card-new">提炼成卡</button>
-        <button class="bz-kb-ghost" data-kb-close>先放回去</button>
-      </div>`));
+      ${termSrcHtml}`));
     this._previewNote = n;
     const srcLink = this.popup ? q<HTMLElement>(this.popup, '[data-lit-src-url]') : null;
     if (srcLink) {
