@@ -13246,7 +13246,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-lit-term-dialog { width: min(480px, 92vw); }
 
 /* 术语弹层完整皮（issue 258，原型 knowledge-box-c 纸墨词典风）：
-   衬线标题栏+✕ / 宽字距字段标签 / 试试示例 / 琥珀左边条说明行（ticket 142 极简版按用户复核回补） */
+   衬线标题栏+✕ / 术语与来源同款行内标签行（快改批：说明行与试试示例已删） */
 .bz-lit-sheet-head { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
 .bz-lit-sheet-title { font-family: 'Noto Serif SC', SimSun, serif; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: var(--ink); }
 .bz-lit-sheet-close {
@@ -13266,27 +13266,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   justify-content: center;
 }
 .bz-lit-sheet-close:hover { background: var(--chip); color: var(--ink); }
-.bz-lit-term-field { margin-top: 12px; min-width: 0; }
-.bz-lit-term-field input { width: 100%; }
-.bz-lit-term-lb { font-size: 10px; letter-spacing: 0.26em; color: var(--ink3); margin-bottom: 7px; }
-.bz-lit-term-hint { font-size: 11.5px; color: var(--ink3); margin-top: 8px; line-height: 1.7; }
-.bz-lit-term-hint a { color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
-.bz-lit-term-note {
-  margin-top: 12px;
-  padding: 10px 14px;
-  border-left: 3px solid var(--amber);
-  background: var(--card);
-  border-radius: 0 8px 8px 0;
-  font-size: 12px;
-  line-height: 1.8;
-  color: var(--ink2);
-}
 .bz-lit-term-body > .bz-lit-term-actions { margin-top: 16px; }
 
-/* 术语来源行（ADR-0116）：独立行 + 小标签「来源」；chip 形态（内/外徽标 + 名称 + ✕ 清） */
-.bz-lit-term-srcrow { position: relative; display: flex; align-items: center; gap: 10px; margin-top: 9px; min-width: 0; }
-.bz-lit-term-srcrow > .bz-lit-term-meta-k { flex: none; font-size: 11.5px; }
-.bz-lit-term-srcrow input { flex: 1; min-width: 0; }
+/* 术语弹层行（ADR-0116/快改批）：术语与来源同款——行首小标签 + 控件；chip 形态（内/外徽标 + 名称 + ✕ 清） */
+.bz-lit-term-row { position: relative; display: flex; align-items: center; gap: 10px; margin-top: 9px; min-width: 0; }
+.bz-lit-term-row:first-of-type { margin-top: 12px; }
+.bz-lit-term-row > .bz-lit-term-meta-k { flex: none; font-size: 11.5px; }
+.bz-lit-term-row input { flex: 1; min-width: 0; }
 .bz-lit-srcchip {
   display: inline-flex;
   align-items: center;
