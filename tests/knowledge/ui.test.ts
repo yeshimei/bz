@@ -380,6 +380,28 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     });
   });
 
+  it('来源链接净化：B 站追踪参数剥除（spm_id_from/vd_source），chip/属性卡/落库均为干净 URL（issue 257 补记）', async () => {
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '心流';
+    const srcInput = document.getElementById('lit-term-src') as HTMLInputElement;
+    srcInput.value = 'https://www.bilibili.com/video/BV1awbg6XELn/?spm_id_from=333.1391.0.0&vd_source=15205b8944be621a94fb0bf0efdb81f3';
+    srcInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    const chip = document.getElementById('lit-term-src-chip')!;
+    expect(chip.style.display).toBe('inline-flex');
+    expect(chip.title).toBe('https://www.bilibili.com/video/BV1awbg6XELn/');
+    expect(chip.textContent).toContain('BV1awbg6XELn');
+    await (ui as any).onTermGenerate();
+    await vi.waitFor(() => expect(document.getElementById('lit-term-preview')!.style.display).toBe('flex'));
+    expect(document.getElementById('lit-term-meta-src')!.textContent).toBe('https://www.bilibili.com/video/BV1awbg6XELn/');
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(noteGen.generateTermNote).toHaveBeenCalled());
+    expect(noteGen.generateTermNote).toHaveBeenCalledWith({
+      term: '心流', summary: 'AI 简介', domain: '心理',
+      source: { kind: 'external', url: 'https://www.bilibili.com/video/BV1awbg6XELn/' },
+    });
+  });
+
   it('来源=内部笔记：搜索联想点选 → 「内 部」chip（title 存全路径）；✕ 清除还原输入框', async () => {
     vault.files.set('我的/心流体验.md', '正文');
     ui.showTermEntry();
