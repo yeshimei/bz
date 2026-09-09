@@ -172,6 +172,7 @@ var BZR_review = (() => {
   }
 
   // src/review/queue.ts
+  var DEFAULT_R_THRESHOLD = 0.9;
   function isDueToday(item) {
     if (!item.nextReviewDate) return false;
     return dateKey(new Date(item.nextReviewDate)) === dateKey(/* @__PURE__ */ new Date());
@@ -185,7 +186,7 @@ var BZR_review = (() => {
   function active(i) {
     return !i.isCompleted && !i.completed && !i.isMissing;
   }
-  function partitionQueue(items, rThreshold = 0.9, w = DEFAULT_W) {
+  function partitionQueue(items, rThreshold = DEFAULT_R_THRESHOLD, w = DEFAULT_W) {
     const overdue = [];
     const today = [];
     const future = [];
