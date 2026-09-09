@@ -289,7 +289,7 @@ export class SecondBrainPanel {
     popup.className = 'bz-sb-panel';
     popup.innerHTML = panelShellHtml();
 
-    // 头行：AI 对话 / 灵感参考 / ⚙️（引导期 func 钮整体收起，ticket 107）
+    // 头行：AI 对话 / 灵感参考（图标钮；⚙️ 已摘——设置走设置面板；引导期 func 钮整体收起，ticket 107）
     popup.querySelector('#bz-sb-open-chat')?.addEventListener('click', () => {
       this.close();
       this.opts.onOpenChat();
@@ -298,7 +298,6 @@ export class SecondBrainPanel {
       this.close();
       this.opts.onOpenReference();
     });
-    popup.querySelector('#bz-sb-open-settings')?.addEventListener('click', () => this.openSettings());
 
     // 底部操作：手动增量 / 全量重建（flow 确认，同设置页「重新索引」语义）
     popup.querySelector('#bz-sb-incr')?.addEventListener('click', () => {

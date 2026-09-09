@@ -16,21 +16,19 @@
 import type { App } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { notice } from '../core/notice';
+import { mountIcons } from '../core/ui';
 import { buildConfig } from './config';
 import { topifyZ } from '../core/z-order';
 import { getCurrentContext } from './context';
 import { jumpToChunk, renderMarkdown } from './ui-tools';
 import { AI } from './ai';
+import { CHAT_CHIPS } from './render';
+import { appendChatHistory, loadChatHistory, type ChatHistoryEntry } from './store-file';
 import type { SearchHit, VectorStore } from './vector-store';
 
 const SNAP_MID = 45;
 const SNAP_HIGH = 75;
 const COLLAPSE_THRESHOLD = 18;
-
-interface ChatHistoryItem {
-  role: 'user' | 'assistant';
-  content: string;
-}
 
 export class MobilePanel {
   store: VectorStore;
@@ -40,7 +38,7 @@ export class MobilePanel {
   app: App;
   mode: 'ref' | 'chat' = 'ref';
   collapsed = false;
-  chatHistory: ChatHistoryItem[] = [];
+  chatHistory: ChatHistoryEntry[] = [];
   refResults: SearchHit[] = [];
   /** 检索失败提示（ticket 141：不再吞错成「暂无相关笔记」，与桌面参考面板同款文案与形态；成功检索后清空） */
   refError: string | null = null;
@@ -73,12 +71,14 @@ export class MobilePanel {
 
     this.pillRef = document.createElement('button');
     this.pillRef.className = 'bz-sb-mb-pill active';
-    this.pillRef.textContent = '📚';
     this.pillRef.title = '参考';
+    this.pillRef.setAttribute('aria-label', '参考');
+    this.pillRef.innerHTML = '<i data-lucide="radar"></i>';
     this.pillChat = document.createElement('button');
     this.pillChat.className = 'bz-sb-mb-pill';
-    this.pillChat.textContent = '🤖';
     this.pillChat.title = 'AI';
+    this.pillChat.setAttribute('aria-label', 'AI');
+    this.pillChat.innerHTML = '<i data-lucide="message-square"></i>';
 
     const dragStrip = document.createElement('div');
     dragStrip.className = 'bz-sb-mb-drag-strip';
@@ -90,6 +90,7 @@ export class MobilePanel {
     topbar.appendChild(dragStrip);
     topbar.appendChild(this.pillChat);
     this.sheet.appendChild(topbar);
+    mountIcons(topbar); // pill 图标物化（lucide，与桌面头行同源）
 
     this.body = document.createElement('div');
     this.body.className = 'bz-sb-mb-body bz-sb-scroll-y';
@@ -191,6 +192,15 @@ export class MobilePanel {
         void this.refreshResults(q);
       }
     }
+
+    // 历史读回（与桌面对话同源：secondbrain.json chatHistory 段；移动端此前只留内存）
+    void loadChatHistory(app)
+      .then((entries) => {
+        if (!entries.length) return;
+        this.chatHistory = entries.slice(-buildConfig().MAX_HISTORY * 2);
+        if (this.mode === 'chat') this.renderBody(); // 清了重渲，避免追加双份
+      })
+      .catch(() => {});
   }
 
   get alive(): boolean {
@@ -308,6 +318,14 @@ export class MobilePanel {
       topRow.appendChild(scoreDiv);
       card.appendChild(topRow);
 
+      // 分数条（桌面参考卡同款语言）
+      const bar = document.createElement('div');
+      bar.className = 'bz-sb-mb-card-bar';
+      const barFill = document.createElement('span');
+      barFill.style.width = `${Math.round(item.score * 100)}%`;
+      bar.appendChild(barFill);
+      card.appendChild(bar);
+
       // 正文懒渲染：首次展开才渲染 markdown
       const chunkDiv = document.createElement('div');
       chunkDiv.className = 'bz-sb-mb-card-chunk';
@@ -356,7 +374,7 @@ export class MobilePanel {
     }
   }
 
-  /** AI tab：重建 DOM 并重放历史；空历史显示欢迎语（QA L2103-2162） */
+  /** AI tab：桌面同构重排（issue 251 移动对齐）——标签气泡 + 推荐问法 + 带聚焦态输入行 */
   renderChatTab(): void {
     const CONFIG = buildConfig();
     const chat = document.createElement('div');
@@ -366,25 +384,49 @@ export class MobilePanel {
     this.chatMessagesDiv.className = 'bz-sb-mb-chat-messages bz-sb-scroll-y';
     chat.appendChild(this.chatMessagesDiv);
 
-    // DeepSeek 复选框已随统一 AI 通道移除（ticket 108：对话统一走主设置页「🤖 AI」）
-
+    // 输入行（桌面同款：聚焦描边一行式，lens + 输入 + 圆形发送钮）
     const inputArea = document.createElement('div');
     inputArea.className = 'bz-sb-mb-chat-input-area';
+    const inputRow = document.createElement('div');
+    inputRow.className = 'bz-sb-mb-chat-input-row';
+    const lens = document.createElement('span');
+    lens.className = 'bz-sb-mb-chat-lens';
+    lens.innerHTML = '<i data-lucide="sparkles"></i>';
     const input = document.createElement('input');
     input.className = 'bz-sb-mb-chat-input';
     input.type = 'text';
-    input.placeholder = '检索笔记后回答...';
+    input.placeholder = '向第二大脑提问，回车发送…';
     const sendBtn = document.createElement('button');
     sendBtn.className = 'bz-sb-mb-chat-send';
-    sendBtn.textContent = '发送';
-    inputArea.appendChild(input);
-    inputArea.appendChild(sendBtn);
+    sendBtn.setAttribute('aria-label', '发送');
+    sendBtn.title = '发送';
+    sendBtn.innerHTML = '<i data-lucide="send"></i>';
+    inputRow.appendChild(lens);
+    inputRow.appendChild(input);
+    inputRow.appendChild(sendBtn);
+    inputArea.appendChild(inputRow);
+
+    // 推荐问法（桌面同款常驻 chips）：点击即问
+    const chips = document.createElement('div');
+    chips.className = 'bz-sb-mb-chat-chips';
+    for (const q of CHAT_CHIPS) {
+      const chip = document.createElement('button');
+      chip.className = 'bz-sb-mb-chat-chip';
+      chip.textContent = q;
+      chip.addEventListener('click', () => {
+        if (sendBtn.disabled) return;
+        input.value = q;
+        void send();
+      });
+      chips.appendChild(chip);
+    }
+    inputArea.appendChild(chips);
     chat.appendChild(inputArea);
     this.body.appendChild(chat);
 
     for (const msg of this.chatHistory) this.appendChatMsg(msg.role, msg.content);
     if (!this.chatHistory.length) {
-      this.appendChatMsg('assistant', `已加载 ${Object.keys(this.store.notes).length} 篇笔记`);
+      this.appendChatMsg('assistant', `你好！每次提问会独立检索 ${Object.keys(this.store.notes).length} 篇笔记作答。`);
     }
 
     const send = async () => {
@@ -393,8 +435,8 @@ export class MobilePanel {
       input.value = '';
       this.appendChatMsg('user', text);
       this.chatHistory.push({ role: 'user', content: text });
+      void appendChatHistory([{ role: 'user', content: text }], this.app).catch(() => {});
       sendBtn.disabled = true;
-      sendBtn.textContent = '···';
       try {
         const results = await this.store.searchMobile(text, CONFIG.CHAT_TOP_K);
         const ctx =
@@ -406,6 +448,7 @@ export class MobilePanel {
         const answer = await AI.ask(prompt);
         this.appendChatMsg('assistant', answer);
         this.chatHistory.push({ role: 'assistant', content: answer });
+        void appendChatHistory([{ role: 'assistant', content: answer }], this.app).catch(() => {});
         if (this.chatHistory.length > CONFIG.MAX_HISTORY * 2) {
           this.chatHistory = this.chatHistory.slice(-CONFIG.MAX_HISTORY * 2);
         }
@@ -413,25 +456,34 @@ export class MobilePanel {
         this.appendChatMsg('assistant', '出错了：' + (e?.message || e));
       } finally {
         sendBtn.disabled = false;
-        sendBtn.textContent = '发送';
       }
     };
     sendBtn.addEventListener('click', () => void send());
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') void send();
     });
+    mountIcons(chat);
   }
 
   appendChatMsg(role: 'user' | 'assistant', content: string): void {
     if (!this.chatMessagesDiv) return;
+    // 桌面同款标签气泡：who 行（刚问 / 第二大脑）+ 气泡本体
     const div = document.createElement('div');
     div.className = `bz-sb-mb-chat-msg ${role}`;
+    const who = document.createElement('div');
+    who.className = 'bz-sb-mb-chat-who';
+    who.innerHTML = `<i data-lucide="${role === 'user' ? 'send' : 'brain'}"></i>${role === 'user' ? '刚问' : '第二大脑'}`;
+    const bubble = document.createElement('div');
+    bubble.className = 'bz-sb-mb-chat-bubble';
     if (role === 'assistant') {
-      renderMarkdown(div, content, this.app); // 失败时内部回退 textContent
+      renderMarkdown(bubble, content, this.app); // 失败时内部回退 textContent
     } else {
-      div.textContent = content;
+      bubble.textContent = content;
     }
+    div.appendChild(who);
+    div.appendChild(bubble);
     this.chatMessagesDiv.appendChild(div);
+    mountIcons(div);
     this.chatMessagesDiv.scrollTop = this.chatMessagesDiv.scrollHeight;
   }
 

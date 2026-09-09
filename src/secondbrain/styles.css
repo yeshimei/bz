@@ -597,22 +597,42 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* 窄面板兜底 */
+/* 窄面板兜底 → 整体滚动（ADR-0114，双固定）：panel-content 是唯一滚动容器，
+   头行在其外天然吸顶；操作行 sticky 吸底；中间卡片全部自然高展开 */
 @media (max-width: 768px) {
   .bz-sb-panel {
     width: calc(100vw - 24px);
     height: calc(100vh - 24px);
+  }
+  .bz-sb-panel-content {
+    overflow-y: auto;
+    scrollbar-width: none;
+    /* 底部操作行 absolute 出血定底（不占流），留出等高内边距防末尾内容被盖 */
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+  .bz-sb-panel-content::-webkit-scrollbar {
+    display: none;
+  }
+  /* 头行精简：索引健康签 + 副题小字（ADR-0114 迭代） */
+  .bz-sb-panel .bz-sb-pill,
+  .bz-sb-panel .bz-sb-cnt {
+    display: none;
   }
   .bz-sb-cards {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .bz-sb-grid {
     grid-template-columns: minmax(0, 1fr);
-    overflow: auto;
-    scrollbar-width: none;
+    flex: none;
   }
-  .bz-sb-grid::-webkit-scrollbar {
-    display: none;
+  .bz-sb-section-recent,
+  .bz-sb-recent,
+  .bz-sb-ai {
+    flex: none;
+  }
+  .bz-sb-recent,
+  .bz-sb-ai-txt {
+    overflow: visible;
   }
   .bz-sb-section-trend {
     height: 100px;
@@ -620,6 +640,19 @@
   }
   .bz-sb-foot {
     flex-wrap: wrap;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    background: var(--sb-bg);
+    border-top: 1px solid var(--sb-line);
+    border-radius: 0 0 13px 13px;
+    margin: 0;
+    padding: 10px 20px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .bz-sb-foot .bz-sb-fbtn-txt {
+    display: none;
   }
 }
 
@@ -1253,6 +1286,12 @@
   color: var(--sb-mut);
   font-size: 14px;
   cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.bz-sb-mb-pill svg {
+  width: 15px;
+  height: 15px;
 }
 .bz-sb-mb-pill.active {
   background: var(--sb-acc);
@@ -1374,28 +1413,54 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
   padding: 4px 0 10px;
 }
+/* 桌面同款标签气泡：容器透明，who 行 + 气泡本体 */
 .bz-sb-mb-chat-msg {
+  display: flex;
+  flex-direction: column;
   max-width: 94%;
+}
+.bz-sb-mb-chat-msg.user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+.bz-sb-mb-chat-msg.assistant {
+  align-self: flex-start;
+}
+.bz-sb-mb-chat-who {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--sb-faint);
+  margin-bottom: 4px;
+}
+.bz-sb-mb-chat-msg.user .bz-sb-mb-chat-who {
+  flex-direction: row-reverse;
+}
+.bz-sb-mb-chat-who svg {
+  width: 10px;
+  height: 10px;
+}
+.bz-sb-mb-chat-bubble {
+  border-radius: 10px;
   padding: 8px 12px;
-  border-radius: 12px;
+  min-width: 0;
   font-size: 13px;
   line-height: 1.6;
   word-break: break-word;
 }
-.bz-sb-mb-chat-msg.user {
-  align-self: flex-end;
+.bz-sb-mb-chat-msg.user .bz-sb-mb-chat-bubble {
   background: var(--sb-dark);
   color: #fbfaf7;
 }
-.bz-sb-mb-chat-msg.assistant {
-  align-self: flex-start;
+.bz-sb-mb-chat-msg.assistant .bz-sb-mb-chat-bubble {
   background: var(--sb-card);
   border: 1px solid var(--sb-line);
   color: var(--sb-ink);
-  box-shadow: 0 1px 4px #00000008;
 }
 .bz-sb-mb-chat-msg p {
   margin: 0 0 6px;
@@ -1413,43 +1478,104 @@
   padding-bottom: 6px;
 }
 .bz-sb-mb-chat-input-area {
-  display: flex;
-  align-items: stretch;
-  gap: 7px;
   flex-shrink: 0;
-  padding-bottom: 2px;
+}
+.bz-sb-mb-chat-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  background: var(--sb-card);
+  border: 1px solid var(--sb-line2);
+  border-radius: 10px;
+  padding: 7px 8px 7px 12px;
+}
+.bz-sb-mb-chat-input-row:focus-within {
+  border-color: var(--sb-acc);
+}
+.bz-sb-mb-chat-lens {
+  color: var(--sb-faint);
+  display: grid;
+  place-items: center;
+  padding-bottom: 6px;
+}
+.bz-sb-mb-chat-input-row:focus-within .bz-sb-mb-chat-lens {
+  color: var(--sb-acc);
+}
+.bz-sb-mb-chat-lens svg {
+  width: 13px;
+  height: 13px;
 }
 .bz-sb-mb-chat-input {
   flex: 1;
   min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  font: inherit;
   font-size: 13.5px;
-  padding: 9px 13px;
-  border: 1.5px solid var(--sb-line2);
-  border-radius: 12px;
-  background: var(--sb-card);
   color: var(--sb-ink);
+  padding: 0;
 }
 .bz-sb-mb-chat-input::placeholder {
   color: var(--sb-faint);
 }
-.bz-sb-mb-chat-input:focus {
-  outline: none;
-  border-color: var(--sb-acc);
-}
+/* 与参考 tab 同语言：红棕主色圆形发送钮 */
 .bz-sb-mb-chat-send {
-  flex-shrink: 0;
-  font-size: 12.5px;
-  padding: 0 15px;
+  flex: none;
+  width: 30px;
+  height: 30px;
   border: none;
-  border-radius: 12px;
-  background: var(--sb-dark);
+  border-radius: 50%;
+  background: var(--sb-acc);
   color: #fbfaf7;
+  display: grid;
+  place-items: center;
   cursor: pointer;
   transition: 0.2s;
 }
+.bz-sb-mb-chat-send svg {
+  width: 13px;
+  height: 13px;
+}
 .bz-sb-mb-chat-send:hover {
-  background: var(--sb-acc);
+  background: var(--sb-dark);
 }
 .bz-sb-mb-chat-send:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
+}
+/* 推荐问法（桌面同款常驻 chips） */
+.bz-sb-mb-chat-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.bz-sb-mb-chat-chip {
+  font-size: 11px;
+  color: #6b6455;
+  border: 1px solid var(--sb-line2);
+  background: var(--sb-card);
+  border-radius: 99px;
+  padding: 3px 10px;
+  cursor: pointer;
+  user-select: none;
+}
+.bz-sb-mb-chat-chip:hover {
+  border-color: var(--sb-acc);
+  color: var(--sb-acc);
+  background: var(--sb-acc-soft);
+}
+/* 参考卡分数条（桌面参考卡同款语言） */
+.bz-sb-mb-card-bar {
+  margin-top: 6px;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--sb-line);
+  overflow: hidden;
+}
+.bz-sb-mb-card-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--sb-acc);
 }
