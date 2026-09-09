@@ -5004,7 +5004,6 @@ var BZW_cinema = (() => {
       year: fm["上映日期"] ? String(fm["上映日期"]).slice(0, 4) : null,
       doubanRating: fm["豆瓣评分"] !== void 0 && fm["豆瓣评分"] !== "" ? String(fm["豆瓣评分"]) : null,
       doubanUrl: /^https?:\/\//.test(String((_q = fm["豆瓣链接"]) != null ? _q : "")) ? String(fm["豆瓣链接"]) : null,
-      doubanCheck: fm["豆瓣检查"] ? String(fm["豆瓣检查"]) : null,
       synopsis: (_s = (_r = fm["简介"]) == null ? void 0 : _r.toString()) != null ? _s : null,
       // 片长/季集：原独立观影报告的两项统计源字段（ADR-0090 并入内嵌分析页）
       duration: (_u = (_t = fm["片长"]) == null ? void 0 : _t.toString()) != null ? _u : null,
@@ -5465,52 +5464,166 @@ var BZW_cinema = (() => {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
   }
 
-  // src/cinema/poster-watch.ts
-  var POSTER_POLL_MS = 2e3;
-  var POSTER_POLL_MAX = 150;
-  var activeStops = /* @__PURE__ */ new Set();
-  function watchPosterFetch(app, file, handle) {
-    let stopped = false;
-    let polls = 0;
-    let timer = 0;
-    const stop = () => {
-      stopped = true;
-      window.clearInterval(timer);
-      activeStops.delete(stop);
-    };
-    activeStops.add(stop);
-    const finish = () => {
-      handle.setMessage("海报和豆瓣信息获取完成");
-      handle.setType("success");
-    };
-    const fail = () => {
-      handle.setMessage("海报获取超时：请确认海报守护进程已运行");
-      handle.setType("error");
-    };
-    const check = async () => {
+  // src/cinema/douban-queue.ts
+  var FETCH_GAP_MS = 15e3;
+  var FETCH_TIMEOUT_MS = 3 * 60 * 1e3;
+  var queue = [];
+  var pending = /* @__PURE__ */ new Set();
+  var attempted = /* @__PURE__ */ new Set();
+  var failedNames = [];
+  var pumping = false;
+  var cliPath = null;
+  var cliUnavailableNotified = false;
+  var spawnFn = null;
+  var gapMs = FETCH_GAP_MS;
+  var activeKill = null;
+  function getChildProcess() {
+    const w = window;
+    if (!w.require) return null;
+    try {
+      return w.require("child_process");
+    } catch (e) {
+      return null;
+    }
+  }
+  function resolveCli() {
+    if (cliPath !== null) return cliPath;
+    const cp = getChildProcess();
+    if (!cp) {
+      cliPath = "";
+      return "";
+    }
+    try {
+      const npmRoot = cp.execSync("npm root -g", { encoding: "utf-8", timeout: 1e4 }).trim();
+      const fs = window.require("fs");
+      const path = window.require("path");
+      const candidate = path.join(npmRoot, "@jwbz", "obsidian-douban-poster", "cli.js");
+      if (fs.existsSync(candidate)) {
+        cliPath = candidate;
+        return cliPath;
+      }
+    } catch (e) {
+    }
+    cliPath = "";
+    if (!cliUnavailableNotified) {
+      cliUnavailableNotified = true;
+      notice("豆瓣抓取不可用：未找到全局安装的 douban-poster（npm i -g @jwbz/obsidian-douban-poster 后重载插件）", "error");
+    }
+    return "";
+  }
+  async function defaultSpawn(cliJs, notePath) {
+    var _a;
+    const cp = getChildProcess();
+    if (!cp) return;
+    const nodeProcess = globalThis.process;
+    const child = cp.spawn(nodeProcess.execPath, [cliJs, "fetch", notePath], {
+      windowsHide: true,
+      stdio: "ignore",
+      env: { ...(_a = nodeProcess.env) != null ? _a : {}, ELECTRON_RUN_AS_NODE: "1" }
+    });
+    activeKill = () => {
       try {
-        const content = await app.vault.read(file);
-        const m = content.match(/^海报:[ \t]*(\S.*)$/m);
-        return !!(m && m[1].trim());
+        child.kill();
       } catch (e) {
-        return false;
       }
     };
-    const tick = async () => {
-      if (stopped) return;
-      polls += 1;
-      if (await check()) {
-        stop();
+    await waitForExit(child, FETCH_TIMEOUT_MS, () => child.kill());
+    activeKill = null;
+  }
+  function waitForExit(child, timeoutMs, kill) {
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        resolve();
+      };
+      const killer = setTimeout(() => {
+        kill();
         finish();
-        return;
+      }, timeoutMs);
+      child.on("close", () => {
+        clearTimeout(killer);
+        finish();
+      });
+      child.on("error", () => {
+        clearTimeout(killer);
+        finish();
+      });
+    });
+  }
+  function fieldValue(content, key) {
+    const m = content.match(new RegExp(`^${key}:[ \\t]*(.*)$`, "m"));
+    if (!m) return null;
+    const v = m[1].trim().replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1").trim();
+    return v || null;
+  }
+  async function fetchComplete(app, file) {
+    if (!app) return false;
+    try {
+      const content = await app.vault.read(file);
+      const poster = fieldValue(content, "海报");
+      const url = fieldValue(content, "豆瓣链接");
+      return !!(poster && url && /^https?:\/\//.test(url));
+    } catch (e) {
+      return false;
+    }
+  }
+  function isFetching(path) {
+    return !!(path && pending.has(path));
+  }
+  function enqueueDoubanFetch(file, name) {
+    if (!file) return;
+    if (!resolveCli()) return;
+    const key = file.path;
+    if (attempted.has(key)) return;
+    attempted.add(key);
+    pending.add(key);
+    queue.push({ file, name });
+    void pump();
+  }
+  function sweepDoubanFetch(_app2) {
+    for (const it of M.items) {
+      if (!it.file) continue;
+      if (!it.poster || !it.doubanUrl) enqueueDoubanFetch(it.file, it.name);
+    }
+  }
+  async function pump() {
+    var _a, _b;
+    if (pumping) return;
+    pumping = true;
+    try {
+      let first = true;
+      while (queue.length > 0) {
+        const entry = queue.shift();
+        if (!first) await sleep(gapMs);
+        first = false;
+        const ok = await runOne(entry);
+        pending.delete(entry.file.path);
+        if (!ok) failedNames.push(entry.name);
+        if (M.currentOverlay) (_b = (_a = M).renderFn) == null ? void 0 : _b.call(_a);
       }
-      if (polls >= POSTER_POLL_MAX) {
-        stop();
-        fail();
-      }
-    };
-    void tick();
-    timer = window.setInterval(() => void tick(), POSTER_POLL_MS);
+    } finally {
+      pumping = false;
+    }
+    if (failedNames.length > 0) {
+      notice(`以下影片豆瓣信息获取失败：${failedNames.join("、")}（重启 Obsidian 后会自动重试）`, "error");
+      failedNames.length = 0;
+    }
+  }
+  async function runOne(entry) {
+    const cli = resolveCli();
+    if (!cli) return false;
+    const spawn = spawnFn != null ? spawnFn : defaultSpawn;
+    try {
+      await spawn(cli, entry.file.path);
+    } catch (e) {
+      return false;
+    }
+    return fetchComplete(M.appRef, entry.file);
+  }
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   // src/cinema/recommend.ts
@@ -5609,8 +5722,7 @@ tags:
       const f = await app.vault.create(filePath, content);
       notice(`已加入想看：${trimmedName}`, "success");
       emitDomainEvent("movie", { kind: "created", name: trimmedName, status: "want", rating: null, review: null });
-      const handle = notify("正在获取海报和豆瓣信息…", { type: "progress" });
-      watchPosterFetch(app, f, handle);
+      enqueueDoubanFetch(f, trimmedName);
       refreshDataAndView(app);
     } catch (e) {
       notifySaveError(e, "加入想看");
@@ -6026,9 +6138,9 @@ tags:
     if (!url) return ph;
     return `<img loading="lazy" src="${esc(url)}" onerror="this.outerHTML='<div class=\\'ph\\'>${esc((_b = item.name[0]) != null ? _b : "")}</div>'">`;
   }
-  function pcardHtml(it, posterUrl2) {
+  function pcardHtml(it, posterUrl2, fetching = false) {
     const r = it.rating;
-    return `<div class="pcard" data-cinema-key="${esc(itemKey(it))}"><div class="pw">${posterInner(it, posterUrl2)}
+    return `<div class="pcard" data-cinema-key="${esc(itemKey(it))}"><div class="pw">${posterInner(it, posterUrl2)}${fetching ? '<div class="pw-fetch"><span class="pw-spin"></span></div>' : ""}
     ${(() => {
       const st = statusNum(it.status);
       return st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : "";
@@ -6253,7 +6365,10 @@ tags:
     } else if (v.view === "stat") {
       view.innerHTML = spHeadHtml("观影分析", `· ${inp.watchedCount} 部已看`) + `<div class="sp-body">${inp.statHtml}</div>`;
     } else {
-      const body = inp.list.length ? `<div class="d-scroll"><div class="grid" style="grid-template-columns:repeat(${inp.cols},1fr)">${inp.list.map((it) => pcardHtml(it, inp.poster(it))).join("")}</div></div>` : emptyPageHtml(viewFiltered(v));
+      const body = inp.list.length ? `<div class="d-scroll"><div class="grid" style="grid-template-columns:repeat(${inp.cols},1fr)">${inp.list.map((it) => {
+        var _a, _b;
+        return pcardHtml(it, inp.poster(it), (_b = (_a = inp.fetching) == null ? void 0 : _a.call(inp, it)) != null ? _b : false);
+      }).join("")}</div></div>` : emptyPageHtml(viewFiltered(v));
       view.innerHTML = listHeadHtml(inp) + listToolsHtml(v) + body;
     }
   }
@@ -6268,7 +6383,10 @@ tags:
     if (mv) {
       if (v.view === "list") {
         mv.className = "m-scroll j-mview";
-        mv.innerHTML = `<div class="m-grid">${inp.list.map((it) => pcardHtml(it, inp.poster(it))).join("")}</div>`;
+        mv.innerHTML = `<div class="m-grid">${inp.list.map((it) => {
+          var _a, _b;
+          return pcardHtml(it, inp.poster(it), (_b = (_a = inp.fetching) == null ? void 0 : _a.call(inp, it)) != null ? _b : false);
+        }).join("")}</div>`;
       } else if (v.view === "ai") {
         mv.className = "sp-body j-mview";
         mv.innerHTML = inp.aiHtml;
@@ -6604,7 +6722,7 @@ ${item.review ? `影评: ${item.review}
     var _a;
     const group = (_a = getGroupForTag(p.tag)) != null ? _a : "其他";
     const st = p.st === "想看" ? STATUS_WANT : p.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED;
-    const it = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, doubanRating: null, doubanUrl: null, doubanCheck: null, synopsis: null, duration: null, seasonText: null };
+    const it = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null };
     try {
       if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
         panelToast(sec, "已存在同名影视，请换个名称");
@@ -6613,10 +6731,7 @@ ${item.review ? `影评: ${item.review}
       M.items.unshift(it);
       await persistItem(it, app);
       emitDomainEvent("movie", { kind: "created", name: p.name, status: st === STATUS_WANT ? "want" : st === STATUS_WATCHING ? "watching" : "watched", rating: p.rating, review: p.review || null });
-      if (it.file) {
-        const handle = notify("正在获取海报和豆瓣信息…", { type: "progress" });
-        watchPosterFetch(app, it.file, handle);
-      }
+      if (it.file) enqueueDoubanFetch(it.file, it.name);
       close();
       panelToast(sec, `已添加「${p.name}」`);
       renderAll(app);
@@ -6718,7 +6833,11 @@ ${item.review ? `影评: ${item.review}
       aiHtml: aiPageHtml(aiInput()),
       aiCount: M.aiResult && M.aiResult.length ? M.aiResult.length : null,
       statHtml: buildAnalysisHTML(),
-      poster: (it) => posterUrl(it, app)
+      poster: (it) => posterUrl(it, app),
+      fetching: (it) => {
+        var _a;
+        return isFetching((_a = it.file) == null ? void 0 : _a.path);
+      }
     };
   }
   function onSearchInput(app, sec, isMob, raw) {
@@ -6754,7 +6873,10 @@ ${item.review ? `影评: ${item.review}
     const cnt = head.querySelector(".j-cnt");
     if (cnt) cnt.textContent = `· ${list.length} 部`;
     const grid = body.querySelector(".grid");
-    if (grid) grid.innerHTML = list.map((it) => pcardHtml(it, posterUrl(it, app))).join("");
+    if (grid) grid.innerHTML = list.map((it) => {
+      var _a;
+      return pcardHtml(it, posterUrl(it, app), isFetching((_a = it.file) == null ? void 0 : _a.path));
+    }).join("");
     mountIcons(sec);
   }
   function bindMidnight(sec, app) {
@@ -6914,30 +7036,6 @@ ${item.review ? `影评: ${item.review}
     });
   }
 
-  // src/cinema/douban-sweep.ts
-  function todayStr() {
-    return localNow().slice(0, 10);
-  }
-  function needsDoubanTouch(it, today) {
-    return !!(it.poster && !it.doubanUrl && it.doubanCheck !== today);
-  }
-  async function sweepDoubanBacklog(app) {
-    const today = todayStr();
-    let touched = 0;
-    for (const it of M.items) {
-      if (!it.file || !needsDoubanTouch(it, today)) continue;
-      try {
-        await app.fileManager.processFrontMatter(it.file, (fm) => {
-          fm["豆瓣检查"] = today;
-        });
-        touched++;
-      } catch (error) {
-        console.warn("豆瓣检查触碰失败:", it.file.path, error);
-      }
-    }
-    return touched;
-  }
-
   // src/cinema/index.ts
   var initialized = false;
   var autoRefreshRegistered = false;
@@ -6985,7 +7083,7 @@ ${item.review ? `影评: ${item.review}
     }
     applyDefaultView();
     createOverlay(app);
-    void sweepDoubanBacklog(app);
+    sweepDoubanFetch(app);
   }
 
   // src/cinema/fake-sim.ts

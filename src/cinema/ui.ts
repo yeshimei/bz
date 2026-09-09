@@ -481,6 +481,7 @@ function midnightInput(app: App): MidnightRenderInput {
     aiCount: M.aiResult && M.aiResult.length ? M.aiResult.length : null,
     statHtml: buildAnalysisHTML(),
     poster: (it) => posterUrl(it, app),
+    fetching: (it) => isFetching(it.file?.path),
   };
 }
 

@@ -31,8 +31,8 @@ const pending = new Set<string>();
 const attempted = new Set<string>();
 const failedNames: string[] = [];
 let pumping = false;
-/** CLI 绝对路径缓存：'' = 探测过但不可用 */
-let cliPath: string | '' = '';
+/** CLI 绝对路径缓存：null = 未探测，'' = 探测过但不可用 */
+let cliPath: string | null = null;
 let cliUnavailableNotified = false;
 /** 测试注入 */
 let spawnFn: FetchSpawn | null = null;
@@ -52,21 +52,20 @@ function getChildProcess(): any | null {
 
 /** 探测全局安装的 douban-poster CLI；不可用返回 ''（桌面缺安装提示一次，移动端静默禁用） */
 function resolveCli(): string {
-  if (cliPath) return cliPath;
-  if (cliPath === '') return '';
+  if (cliPath !== null) return cliPath;
   const cp = getChildProcess();
   if (!cp) {
     cliPath = '';
     return '';
   }
   try {
-    const npmRoot = cp.execSync('npm root -g', { encoding: 'utf-8' }).trim();
+    const npmRoot = cp.execSync('npm root -g', { encoding: 'utf-8', timeout: 10000 }).trim();
     const fs = (window as any).require('fs');
     const path = (window as any).require('path');
     const candidate = path.join(npmRoot, '@jwbz', 'obsidian-douban-poster', 'cli.js');
     if (fs.existsSync(candidate)) {
       cliPath = candidate;
-      return cliPath;
+      return candidate;
     }
   } catch {
     /* 探测失败按不可用处理 */
@@ -128,15 +127,22 @@ export function waitForExit(
   });
 }
 
+/** frontmatter 字段值读取（行级；剥包裹引号，空值/纯引号如 `""` 返回 null） */
+function fieldValue(content: string, key: string): string | null {
+  const m = content.match(new RegExp(`^${key}:[ \\t]*(.*)$`, 'm'));
+  if (!m) return null;
+  const v = m[1].trim().replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1').trim();
+  return v || null;
+}
+
 /** 字段验证：海报与豆瓣链接都非空才算抓齐（搜索无结果/限流半途而废 → 失败） */
 async function fetchComplete(app: App | null, file: TFile): Promise<boolean> {
   if (!app) return false;
   try {
     const content = await app.vault.read(file);
-    // 值可能被 YAML 加引号（含冒号/空格），引号不算内容
-    const poster = content.match(/^海报:[ \t]*\S/m);
-    const url = content.match(/^豆瓣链接:[ \t]*"?https?:\/\//m);
-    return !!(poster && url);
+    const poster = fieldValue(content, '海报');
+    const url = fieldValue(content, '豆瓣链接');
+    return !!(poster && url && /^https?:\/\//.test(url));
   } catch {
     return false;
   }
@@ -192,7 +198,7 @@ async function pump(): Promise<void> {
     pumping = false;
   }
   if (failedNames.length > 0) {
-    notice(`以下影片豆瓣信息获取失败：${failedNames.join('、')}（可稍后重开影院面板重试）`, 'error');
+    notice(`以下影片豆瓣信息获取失败：${failedNames.join('、')}（重启 Obsidian 后会自动重试）`, 'error');
     failedNames.length = 0;
   }
 }
