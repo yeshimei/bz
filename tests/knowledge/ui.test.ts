@@ -155,29 +155,34 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(sheet.querySelector('.bz-kb-sheet-close')).toBeTruthy();
   });
 
-  it('影像文献预览：![[mp4]] 经 MarkdownRenderer 渲染内嵌（mock 无媒体 → 回退占位文案）', async () => {
+  it('影像文献预览：正文经 MarkdownRenderer 渲染（含 ![[mp4]] 内嵌）；原文链接可点外开', async () => {
     vault.files.set('文献盒/带片C.md', noteMd({
       title: '带片C', type: 'video', domain: '物理', date: '2026-09-02 10:00:00',
+      url: 'https://www.bilibili.com/video/BV1demo/',
       body: '段落零。\n\n![[CONFIG/APPENDIX/带片C.mp4]]',
     }));
     ui.showMain();
     await vi.waitFor(() => expect(document.querySelectorAll('.bz-kb-lexrow').length).toBe(1));
     mockMarkdownRenderer.render.mockClear();
     (document.querySelector('.bz-kb-lexrow[data-kb-act=lit-peek]') as HTMLElement).click();
-    await vi.waitFor(() => expect(document.querySelector('.bz-kb-ovl')!).toBeTruthy());
-    await vi.waitFor(() => expect(document.getElementById('bz-kb-video-slot')).toBeTruthy());
-    // 内嵌渲染调用带源路径（Obsidian 原生解析 ![[mp4]] 出可播放 <video>）
+    await vi.waitFor(() => expect(document.getElementById('bz-kb-preview-body')).toBeTruthy());
+    // 整个正文交给 MarkdownRenderer（内嵌 mp4 语法随正文进入渲染管线），带源路径
     expect(mockMarkdownRenderer.render).toHaveBeenCalledWith(
       expect.anything(),
-      expect.stringContaining('CONFIG/APPENDIX/带片C.mp4'),
+      expect.stringContaining('![[CONFIG/APPENDIX/带片C.mp4]]'),
       expect.anything(),
       '文献盒/带片C.md',
       expect.anything(),
     );
-    // mock 渲染不产媒体元素 → 回退占位文案（真 Obsidian 渲染 <video> 时占位被替换）
-    const slot = document.getElementById('bz-kb-video-slot')!;
-    expect(slot.querySelector('video')).toBeNull();
-    expect(slot.textContent).toContain('视频片段');
+    // mock 渲染只产纯文本（无元素）→ 回退纯文本段落兜底（真 Obsidian 渲染出 <video>/排版）
+    const bodyEl = document.getElementById('bz-kb-preview-body')!;
+    expect(bodyEl.textContent).toContain('段落零');
+    expect(bodyEl.querySelector('p')).toBeTruthy();
+    // 视频 url → 「原文」可点链接（openUrl 外开）
+    const link = document.querySelector('[data-lit-src-url]') as HTMLElement;
+    expect(link?.getAttribute('data-lit-src-url')).toBe('https://www.bilibili.com/video/BV1demo/');
+    link.click();
+    await vi.waitFor(() => expect(app.openUrl).toHaveBeenCalledWith('https://www.bilibili.com/video/BV1demo/'));
   });
 
   it('提炼成卡（预览按钮已移除，编辑器编程触达保行为覆盖）：候选同域优先带推荐；落卡写卡片盒 + 源文献 related 互链 + 部贰新落', async () => {
