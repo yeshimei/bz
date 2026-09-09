@@ -7389,9 +7389,8 @@ var BZW_secondbrain = (() => {
     <div class="bz-sb-pill"><i class="bz-sb-pill-dot"></i><span id="bz-sb-pill-txt">索引健康</span></div>
     <div class="bz-sb-head-sp"></div>
     <div class="bz-sb-panel-btns">
-      <button class="bz-sb-panel-func bz-sb-fbtn" id="bz-sb-open-chat">${ic("message-square", 14)}AI 对话</button>
-      <button class="bz-sb-panel-func bz-sb-fbtn" id="bz-sb-open-ref">${ic("radar", 14)}灵感参考</button>
-      <button class="bz-sb-panel-gear bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-open-settings" aria-label="第二大脑设置">${ic("settings", 14)}</button>
+      <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-open-chat" aria-label="AI 对话" title="AI 对话">${ic("message-square", 14)}</button>
+      <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-open-ref" aria-label="灵感参考" title="灵感参考">${ic("radar", 14)}</button>
     </div>
   </div>
   <div class="bz-sb-panel-body">
@@ -7420,8 +7419,8 @@ var BZW_secondbrain = (() => {
         </div>
       </div>
       <div class="bz-sb-foot">
-        <button class="bz-sb-fbtn bz-sb-fbtn--primary" id="bz-sb-incr">${ic("refresh-cw", 14)}增量更新</button>
-        <button class="bz-sb-fbtn" id="bz-sb-rebuild">${ic("database", 14)}全量重建</button>
+        <button class="bz-sb-fbtn bz-sb-fbtn--primary" id="bz-sb-incr" aria-label="增量更新">${ic("refresh-cw", 14)}<span class="bz-sb-fbtn-txt">增量更新</span></button>
+        <button class="bz-sb-fbtn" id="bz-sb-rebuild" aria-label="全量重建">${ic("database", 14)}<span class="bz-sb-fbtn-txt">全量重建</span></button>
         <div class="bz-sb-log" id="bz-sb-log"></div>
       </div>
     </div>
@@ -9566,11 +9565,14 @@ ${userMsg}`;
     "src/secondbrain/mobile-panel.ts"() {
       init_esc_manager();
       init_notice();
+      init_ui();
       init_config();
       init_z_order();
       init_context();
       init_ui_tools();
       init_ai2();
+      init_render();
+      init_store_file();
       SNAP_MID = 45;
       SNAP_HIGH = 75;
       COLLAPSE_THRESHOLD = 18;
@@ -9599,12 +9601,14 @@ ${userMsg}`;
           topbar.className = "bz-sb-mb-topbar";
           this.pillRef = document.createElement("button");
           this.pillRef.className = "bz-sb-mb-pill active";
-          this.pillRef.textContent = "📚";
           this.pillRef.title = "参考";
+          this.pillRef.setAttribute("aria-label", "参考");
+          this.pillRef.innerHTML = '<i data-lucide="radar"></i>';
           this.pillChat = document.createElement("button");
           this.pillChat.className = "bz-sb-mb-pill";
-          this.pillChat.textContent = "🤖";
           this.pillChat.title = "AI";
+          this.pillChat.setAttribute("aria-label", "AI");
+          this.pillChat.innerHTML = '<i data-lucide="message-square"></i>';
           const dragStrip = document.createElement("div");
           dragStrip.className = "bz-sb-mb-drag-strip";
           const dragDot = document.createElement("div");
@@ -9614,6 +9618,7 @@ ${userMsg}`;
           topbar.appendChild(dragStrip);
           topbar.appendChild(this.pillChat);
           this.sheet.appendChild(topbar);
+          mountIcons(topbar);
           this.body = document.createElement("div");
           this.body.className = "bz-sb-mb-body bz-sb-scroll-y";
           this.sheet.appendChild(this.body);
@@ -9696,6 +9701,12 @@ ${userMsg}`;
               void this.refreshResults(q);
             }
           }
+          void loadChatHistory(app).then((entries) => {
+            if (!entries.length) return;
+            this.chatHistory = entries.slice(-buildConfig().MAX_HISTORY * 2);
+            if (this.mode === "chat") this.renderBody();
+          }).catch(() => {
+          });
         }
         get alive() {
           return !!this.sheet.isConnected;
@@ -9801,6 +9812,12 @@ ${userMsg}`;
             topRow.appendChild(pathDiv);
             topRow.appendChild(scoreDiv);
             card.appendChild(topRow);
+            const bar = document.createElement("div");
+            bar.className = "bz-sb-mb-card-bar";
+            const barFill = document.createElement("span");
+            barFill.style.width = `${Math.round(item.score * 100)}%`;
+            bar.appendChild(barFill);
+            card.appendChild(bar);
             const chunkDiv = document.createElement("div");
             chunkDiv.className = "bz-sb-mb-card-chunk";
             card.appendChild(chunkDiv);
@@ -9844,7 +9861,7 @@ ${userMsg}`;
             });
           }
         }
-        /** AI tab：重建 DOM 并重放历史；空历史显示欢迎语（QA L2103-2162） */
+        /** AI tab：桌面同构重排（issue 251 移动对齐）——标签气泡 + 推荐问法 + 带聚焦态输入行 */
         renderChatTab() {
           const CONFIG = buildConfig();
           const chat3 = document.createElement("div");
@@ -9854,20 +9871,43 @@ ${userMsg}`;
           chat3.appendChild(this.chatMessagesDiv);
           const inputArea = document.createElement("div");
           inputArea.className = "bz-sb-mb-chat-input-area";
+          const inputRow = document.createElement("div");
+          inputRow.className = "bz-sb-mb-chat-input-row";
+          const lens = document.createElement("span");
+          lens.className = "bz-sb-mb-chat-lens";
+          lens.innerHTML = '<i data-lucide="sparkles"></i>';
           const input = document.createElement("input");
           input.className = "bz-sb-mb-chat-input";
           input.type = "text";
-          input.placeholder = "检索笔记后回答...";
+          input.placeholder = "向第二大脑提问，回车发送…";
           const sendBtn = document.createElement("button");
           sendBtn.className = "bz-sb-mb-chat-send";
-          sendBtn.textContent = "发送";
-          inputArea.appendChild(input);
-          inputArea.appendChild(sendBtn);
+          sendBtn.setAttribute("aria-label", "发送");
+          sendBtn.title = "发送";
+          sendBtn.innerHTML = '<i data-lucide="send"></i>';
+          inputRow.appendChild(lens);
+          inputRow.appendChild(input);
+          inputRow.appendChild(sendBtn);
+          inputArea.appendChild(inputRow);
+          const chips = document.createElement("div");
+          chips.className = "bz-sb-mb-chat-chips";
+          for (const q of CHAT_CHIPS) {
+            const chip = document.createElement("button");
+            chip.className = "bz-sb-mb-chat-chip";
+            chip.textContent = q;
+            chip.addEventListener("click", () => {
+              if (sendBtn.disabled) return;
+              input.value = q;
+              void send();
+            });
+            chips.appendChild(chip);
+          }
+          inputArea.appendChild(chips);
           chat3.appendChild(inputArea);
           this.body.appendChild(chat3);
           for (const msg of this.chatHistory) this.appendChatMsg(msg.role, msg.content);
           if (!this.chatHistory.length) {
-            this.appendChatMsg("assistant", `已加载 ${Object.keys(this.store.notes).length} 篇笔记`);
+            this.appendChatMsg("assistant", `你好！每次提问会独立检索 ${Object.keys(this.store.notes).length} 篇笔记作答。`);
           }
           const send = async () => {
             const text = input.value.trim();
@@ -9875,8 +9915,9 @@ ${userMsg}`;
             input.value = "";
             this.appendChatMsg("user", text);
             this.chatHistory.push({ role: "user", content: text });
+            void appendChatHistory([{ role: "user", content: text }], this.app).catch(() => {
+            });
             sendBtn.disabled = true;
-            sendBtn.textContent = "···";
             try {
               const results = await this.store.searchMobile(text, CONFIG.CHAT_TOP_K);
               const ctx = results.length > 0 ? results.map((r) => `[${r.path}] (${Math.round(r.score * 100)}%)
@@ -9891,6 +9932,8 @@ ${text}`;
               const answer = await AI.ask(prompt);
               this.appendChatMsg("assistant", answer);
               this.chatHistory.push({ role: "assistant", content: answer });
+              void appendChatHistory([{ role: "assistant", content: answer }], this.app).catch(() => {
+              });
               if (this.chatHistory.length > CONFIG.MAX_HISTORY * 2) {
                 this.chatHistory = this.chatHistory.slice(-CONFIG.MAX_HISTORY * 2);
               }
@@ -9898,24 +9941,32 @@ ${text}`;
               this.appendChatMsg("assistant", "出错了：" + ((e == null ? void 0 : e.message) || e));
             } finally {
               sendBtn.disabled = false;
-              sendBtn.textContent = "发送";
             }
           };
           sendBtn.addEventListener("click", () => void send());
           input.addEventListener("keydown", (e) => {
             if (e.key === "Enter") void send();
           });
+          mountIcons(chat3);
         }
         appendChatMsg(role, content) {
           if (!this.chatMessagesDiv) return;
           const div = document.createElement("div");
           div.className = `bz-sb-mb-chat-msg ${role}`;
+          const who = document.createElement("div");
+          who.className = "bz-sb-mb-chat-who";
+          who.innerHTML = `<i data-lucide="${role === "user" ? "send" : "brain"}"></i>${role === "user" ? "刚问" : "第二大脑"}`;
+          const bubble = document.createElement("div");
+          bubble.className = "bz-sb-mb-chat-bubble";
           if (role === "assistant") {
-            renderMarkdown(div, content, this.app);
+            renderMarkdown(bubble, content, this.app);
           } else {
-            div.textContent = content;
+            bubble.textContent = content;
           }
+          div.appendChild(who);
+          div.appendChild(bubble);
           this.chatMessagesDiv.appendChild(div);
+          mountIcons(div);
           this.chatMessagesDiv.scrollTop = this.chatMessagesDiv.scrollHeight;
         }
         /** 完全关闭（区别于收起）：清理监听与定时器后移除 DOM */
@@ -16753,7 +16804,7 @@ ${text}`;
         }
         /** 组装弹窗 DOM（markup 全部出自 render.ts；本方法只绑定事件） */
         createUI() {
-          var _a2, _b2, _c, _d, _e, _f;
+          var _a2, _b2, _c, _d, _e;
           if (this.mask && document.body.contains(this.mask)) return;
           const mask = document.createElement("div");
           mask.className = "bz-sb-panel-mask";
@@ -16769,12 +16820,11 @@ ${text}`;
             this.close();
             this.opts.onOpenReference();
           });
-          (_c = popup.querySelector("#bz-sb-open-settings")) == null ? void 0 : _c.addEventListener("click", () => this.openSettings());
-          (_d = popup.querySelector("#bz-sb-incr")) == null ? void 0 : _d.addEventListener("click", () => {
+          (_c = popup.querySelector("#bz-sb-incr")) == null ? void 0 : _c.addEventListener("click", () => {
             if (this.refreshing || this.initializing) return;
             void this.runIncremental();
           });
-          (_e = popup.querySelector("#bz-sb-rebuild")) == null ? void 0 : _e.addEventListener("click", () => {
+          (_d = popup.querySelector("#bz-sb-rebuild")) == null ? void 0 : _d.addEventListener("click", () => {
             void openFlowDialog({
               title: "重新索引",
               message: "将清空现有向量索引，按当前白名单全部重嵌入（约等于首次初始化全量跑一遍）。期间参考侧边栏与对话的向量检索会降级为文本匹配。确定继续吗？",
@@ -16788,7 +16838,7 @@ ${text}`;
           });
           const initBtn = popup.querySelector("#bz-sb-init-btn");
           if (initBtn) initBtn.onclick = () => void this.startInitialIndex();
-          (_f = popup.querySelector("#bz-sb-dist")) == null ? void 0 : _f.addEventListener("click", (e) => {
+          (_e = popup.querySelector("#bz-sb-dist")) == null ? void 0 : _e.addEventListener("click", (e) => {
             const row = e.target.closest(".bz-sb-dist-row--dir");
             if (!row) return;
             const path = row.dataset.path;
@@ -17255,7 +17305,13 @@ ${text}`;
       getValue: () => query
     };
     simApp.workspace.activeEditor = { editor };
-    void openRef().then(() => reference2 == null ? void 0 : reference2.refreshWithDebounce());
+    void openRef().then(() => {
+      if (IS_MOBILE) {
+        void (mobile2 == null ? void 0 : mobile2.refreshResults(query));
+        return;
+      }
+      void (reference2 == null ? void 0 : reference2.refreshWithDebounce());
+    });
   }
   return __toCommonJS(fake_sim_exports);
 })();

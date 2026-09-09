@@ -5016,7 +5016,17 @@ var BZW_cinema = (() => {
     for (const file of files) {
       try {
         const item = parseMovieFile(file, app);
-        if (item) newItems.push(item);
+        if (item) {
+          newItems.push(item);
+          continue;
+        }
+        if (!app.metadataCache.getFileCache(file)) {
+          const kept = M.items.find((p) => {
+            var _a;
+            return ((_a = p.file) == null ? void 0 : _a.path) === file.path;
+          });
+          if (kept) newItems.push(kept);
+        }
       } catch (error) {
         console.warn("处理影视文件失败:", file.path, error);
       }
@@ -5474,8 +5484,11 @@ var BZW_cinema = (() => {
   var pumping = false;
   var cliPath = null;
   var cliUnavailableNotified = false;
+  var nodePath = null;
+  var nodeUnavailableNotified = false;
   var spawnFn = null;
   var gapMs = FETCH_GAP_MS;
+  var refreshDelayMs = 1500;
   var activeKill = null;
   function getChildProcess() {
     const w = window;
@@ -5500,7 +5513,7 @@ var BZW_cinema = (() => {
       const candidate = path.join(npmRoot, "@jwbz", "obsidian-douban-poster", "cli.js");
       if (fs.existsSync(candidate)) {
         cliPath = candidate;
-        return cliPath;
+        return candidate;
       }
     } catch (e) {
     }
@@ -5511,15 +5524,35 @@ var BZW_cinema = (() => {
     }
     return "";
   }
-  async function defaultSpawn(cliJs, notePath) {
-    var _a;
+  function resolveNode() {
+    if (nodePath !== null) return nodePath;
     const cp = getChildProcess();
-    if (!cp) return;
-    const nodeProcess = globalThis.process;
-    const child = cp.spawn(nodeProcess.execPath, [cliJs, "fetch", notePath], {
+    if (!cp) {
+      nodePath = "";
+      return "";
+    }
+    try {
+      const out = cp.execSync("node -p process.execPath", { encoding: "utf-8", timeout: 1e4 }).trim();
+      if (out) {
+        nodePath = out;
+        return out;
+      }
+    } catch (e) {
+    }
+    nodePath = "";
+    if (!nodeUnavailableNotified) {
+      nodeUnavailableNotified = true;
+      notice("豆瓣抓取不可用：未找到系统 Node.js（安装 node 后重载 Obsidian）", "error");
+    }
+    return "";
+  }
+  async function defaultSpawn(cliJs, notePath) {
+    const cp = getChildProcess();
+    const node = resolveNode();
+    if (!cp || !node) throw new Error("spawn 环境不可用");
+    const child = cp.spawn(node, [cliJs, "fetch", notePath], {
       windowsHide: true,
-      stdio: "ignore",
-      env: { ...(_a = nodeProcess.env) != null ? _a : {}, ELECTRON_RUN_AS_NODE: "1" }
+      stdio: "ignore"
     });
     activeKill = () => {
       try {
@@ -5529,6 +5562,14 @@ var BZW_cinema = (() => {
     };
     await waitForExit(child, FETCH_TIMEOUT_MS, () => child.kill());
     activeKill = null;
+  }
+  function absPath(app, path) {
+    try {
+      const adapter = (app == null ? void 0 : app.vault).adapter;
+      if (adapter == null ? void 0 : adapter.getFullPath) return adapter.getFullPath(path);
+    } catch (e) {
+    }
+    return path;
   }
   function waitForExit(child, timeoutMs, kill) {
     return new Promise((resolve) => {
@@ -5573,23 +5614,28 @@ var BZW_cinema = (() => {
     return !!(path && pending.has(path));
   }
   function enqueueDoubanFetch(file, name) {
-    if (!file) return;
-    if (!resolveCli()) return;
+    if (!file) return false;
+    if (!resolveCli() || !resolveNode()) return false;
     const key = file.path;
-    if (attempted.has(key)) return;
+    if (attempted.has(key)) return false;
     attempted.add(key);
     pending.add(key);
     queue.push({ file, name });
     void pump();
+    return true;
   }
   function sweepDoubanFetch(_app2) {
+    var _a, _b;
+    let added = 0;
     for (const it of M.items) {
       if (!it.file) continue;
-      if (!it.poster || !it.doubanUrl) enqueueDoubanFetch(it.file, it.name);
+      if (!it.poster || !it.doubanUrl) {
+        if (enqueueDoubanFetch(it.file, it.name)) added++;
+      }
     }
+    if (added > 0 && M.currentOverlay) (_b = (_a = M).renderFn) == null ? void 0 : _b.call(_a);
   }
   async function pump() {
-    var _a, _b;
     if (pumping) return;
     pumping = true;
     try {
@@ -5601,7 +5647,7 @@ var BZW_cinema = (() => {
         const ok = await runOne(entry);
         pending.delete(entry.file.path);
         if (!ok) failedNames.push(entry.name);
-        if (M.currentOverlay) (_b = (_a = M).renderFn) == null ? void 0 : _b.call(_a);
+        refreshAfterFetch();
       }
     } finally {
       pumping = false;
@@ -5611,12 +5657,24 @@ var BZW_cinema = (() => {
       failedNames.length = 0;
     }
   }
+  function refreshAfterFetch() {
+    var _a, _b;
+    if (!M.currentOverlay || !M.appRef) return;
+    rebuildItems(M.appRef);
+    (_b = (_a = M).renderFn) == null ? void 0 : _b.call(_a);
+    setTimeout(() => {
+      var _a2, _b2;
+      if (!M.currentOverlay || !M.appRef) return;
+      rebuildItems(M.appRef);
+      (_b2 = (_a2 = M).renderFn) == null ? void 0 : _b2.call(_a2);
+    }, refreshDelayMs);
+  }
   async function runOne(entry) {
     const cli = resolveCli();
     if (!cli) return false;
     const spawn = spawnFn != null ? spawnFn : defaultSpawn;
     try {
-      await spawn(cli, entry.file.path);
+      await spawn(cli, absPath(M.appRef, entry.file.path));
     } catch (e) {
       return false;
     }
