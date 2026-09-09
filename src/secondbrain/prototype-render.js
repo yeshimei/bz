@@ -166,9 +166,8 @@ var BZR_secondbrain = (() => {
     <div class="bz-sb-pill"><i class="bz-sb-pill-dot"></i><span id="bz-sb-pill-txt">索引健康</span></div>
     <div class="bz-sb-head-sp"></div>
     <div class="bz-sb-panel-btns">
-      <button class="bz-sb-panel-func bz-sb-fbtn" id="bz-sb-open-chat">${ic("message-square", 14)}AI 对话</button>
-      <button class="bz-sb-panel-func bz-sb-fbtn" id="bz-sb-open-ref">${ic("radar", 14)}灵感参考</button>
-      <button class="bz-sb-panel-gear bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-open-settings" aria-label="第二大脑设置">${ic("settings", 14)}</button>
+      <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-open-chat" aria-label="AI 对话" title="AI 对话">${ic("message-square", 14)}</button>
+      <button class="bz-sb-panel-func bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-open-ref" aria-label="灵感参考" title="灵感参考">${ic("radar", 14)}</button>
     </div>
   </div>
   <div class="bz-sb-panel-body">
@@ -197,8 +196,8 @@ var BZR_secondbrain = (() => {
         </div>
       </div>
       <div class="bz-sb-foot">
-        <button class="bz-sb-fbtn bz-sb-fbtn--primary" id="bz-sb-incr">${ic("refresh-cw", 14)}增量更新</button>
-        <button class="bz-sb-fbtn" id="bz-sb-rebuild">${ic("database", 14)}全量重建</button>
+        <button class="bz-sb-fbtn bz-sb-fbtn--primary" id="bz-sb-incr" aria-label="增量更新">${ic("refresh-cw", 14)}<span class="bz-sb-fbtn-txt">增量更新</span></button>
+        <button class="bz-sb-fbtn" id="bz-sb-rebuild" aria-label="全量重建">${ic("database", 14)}<span class="bz-sb-fbtn-txt">全量重建</span></button>
         <div class="bz-sb-log" id="bz-sb-log"></div>
       </div>
     </div>

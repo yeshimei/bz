@@ -4752,14 +4752,14 @@ var BZW_settings_panel = (() => {
     el.className = "bz-notice bz-notice--" + (isProgress ? "progress" : type) + " bz-notice--in-" + variant;
     el.setAttribute("role", "status");
     el.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
-    const icon = document.createElement("div");
-    icon.className = "bz-notice-icon";
+    const icon2 = document.createElement("div");
+    icon2.className = "bz-notice-icon";
     if (isProgress) {
-      icon.innerHTML = SPINNER_SVG;
+      icon2.innerHTML = SPINNER_SVG;
     } else {
-      icon.textContent = ICONS[type];
+      icon2.textContent = ICONS[type];
     }
-    el.appendChild(icon);
+    el.appendChild(icon2);
     const body = document.createElement("div");
     body.className = "bz-notice-body";
     if (opts && opts.title) {
@@ -4779,7 +4779,7 @@ var BZW_settings_panel = (() => {
       progressEl.className = "bz-notice-progress";
       el.appendChild(progressEl);
     }
-    const n = { el, timer: null, msgEl, progressEl, iconEl: icon, variant, isProgress, persistent: false };
+    const n = { el, timer: null, msgEl, progressEl, iconEl: icon2, variant, isProgress, persistent: false };
     const actions = [];
     if (opts && opts.action) actions.push(opts.action);
     if (opts && opts.actions) {
@@ -5489,16 +5489,16 @@ var BZW_settings_panel = (() => {
     group.className = "bz-settings-group";
     const head = document.createElement("div");
     head.className = "bz-settings-group-head";
-    const icon = document.createElement("span");
-    icon.className = "bz-settings-group-icon";
-    setIcon(icon, opts.icon);
+    const icon2 = document.createElement("span");
+    icon2.className = "bz-settings-group-icon";
+    setIcon(icon2, opts.icon);
     const name = document.createElement("span");
     name.className = "bz-settings-group-name";
     name.textContent = opts.name;
     const count = document.createElement("span");
     count.className = "bz-settings-group-count";
     count.textContent = "0 项";
-    head.append(icon, name, count);
+    head.append(icon2, name, count);
     const body = document.createElement("div");
     body.className = "bz-settings-group-body";
     group.append(head, body);
@@ -5864,9 +5864,9 @@ var BZW_settings_panel = (() => {
     const el = document.createElement("div");
     el.className = "bz-empty";
     if (opts.icon) {
-      const ic = uiIcon(opts.icon);
-      ic.classList.add("bz-empty-ic");
-      el.appendChild(ic);
+      const ic2 = uiIcon(opts.icon);
+      ic2.classList.add("bz-empty-ic");
+      el.appendChild(ic2);
     }
     const t = document.createElement("div");
     t.className = "bz-empty-title";
@@ -6710,13 +6710,13 @@ var BZW_settings_panel = (() => {
         b.setAttribute("role", "option");
         const on = raw === cur;
         if (on) b.classList.add("is-on");
-        const icon = (_a3 = opts.iconOf) == null ? void 0 : _a3.call(opts, raw);
-        if (icon) {
-          const ic = document.createElement("span");
-          ic.className = "bz-suggest-ic";
-          if (typeof icon === "string") ic.textContent = icon;
-          else ic.appendChild(icon);
-          b.appendChild(ic);
+        const icon2 = (_a3 = opts.iconOf) == null ? void 0 : _a3.call(opts, raw);
+        if (icon2) {
+          const ic2 = document.createElement("span");
+          ic2.className = "bz-suggest-ic";
+          if (typeof icon2 === "string") ic2.textContent = icon2;
+          else ic2.appendChild(icon2);
+          b.appendChild(ic2);
         }
         const label = document.createElement("span");
         label.textContent = opts.labelOf ? opts.labelOf(raw) : raw;
@@ -7810,10 +7810,10 @@ var BZW_settings_panel = (() => {
         const rowBtn = document.createElement("button");
         rowBtn.type = "button";
         rowBtn.className = "bz-sp-picker-row" + (selected.has(d) ? " sel" : "");
-        const ic = document.createElement("span");
-        ic.className = "bz-ic";
-        setIcon(ic, "folder-open");
-        rowBtn.appendChild(ic);
+        const ic2 = document.createElement("span");
+        ic2.className = "bz-ic";
+        setIcon(ic2, "folder-open");
+        rowBtn.appendChild(ic2);
         const nm = document.createElement("span");
         nm.textContent = parts[parts.length - 1] || "（库根目录）";
         rowBtn.appendChild(nm);
@@ -7998,9 +7998,9 @@ var BZW_settings_panel = (() => {
     const ctrlCls = vm.isCards ? "bz-sp-set-cards" : "bz-sp-set-ctrl";
     return `${open}${info}<div class="${ctrlCls}">${(_b2 = vm.ctrlHtml) != null ? _b2 : ""}</div></div>`;
   }
-  function groupCardHtml(icon, name, count) {
-    const ic = icon ? iconSpan(icon, "bz-sp-group-icon") : "";
-    return `<section class="bz-sp-group"><div class="bz-sp-group-head">${ic}<span class="bz-sp-group-name">${esc(name)}</span><span class="bz-sp-group-count">${esc(count)}</span></div><div class="bz-sp-group-body"></div></section>`;
+  function groupCardHtml(icon2, name, count) {
+    const ic2 = icon2 ? iconSpan(icon2, "bz-sp-group-icon") : "";
+    return `<section class="bz-sp-group"><div class="bz-sp-group-head">${ic2}<span class="bz-sp-group-name">${esc(name)}</span><span class="bz-sp-group-count">${esc(count)}</span></div><div class="bz-sp-group-body"></div></section>`;
   }
   function pageHeadHtml(name, desc, tag) {
     return `<div class="bz-sp-page-head"><div><div class="bz-sp-page-title">${esc(name)}</div><div class="bz-sp-page-desc">${esc(desc)}</div></div><span class="bz-sp-page-tag">${esc(tag)}</span></div>`;
@@ -10572,6 +10572,7 @@ ${countsToText(s.missing)}
       year: fm["上映日期"] ? String(fm["上映日期"]).slice(0, 4) : null,
       doubanRating: fm["豆瓣评分"] !== void 0 && fm["豆瓣评分"] !== "" ? String(fm["豆瓣评分"]) : null,
       doubanUrl: /^https?:\/\//.test(String((_q = fm["豆瓣链接"]) != null ? _q : "")) ? String(fm["豆瓣链接"]) : null,
+      doubanCheck: fm["豆瓣检查"] ? String(fm["豆瓣检查"]) : null,
       synopsis: (_s = (_r = fm["简介"]) == null ? void 0 : _r.toString()) != null ? _s : null,
       // 片长/季集：原独立观影报告的两项统计源字段（ADR-0090 并入内嵌分析页）
       duration: (_u = (_t = fm["片长"]) == null ? void 0 : _t.toString()) != null ? _u : null,
@@ -21987,10 +21988,10 @@ ${entry.content.trim()}`;
       return null;
     }
     const category = splitEmojiCategory(String((_a2 = obj == null ? void 0 : obj.category) != null ? _a2 : "")).name.trim();
-    const icon = String((_b2 = obj == null ? void 0 : obj.icon) != null ? _b2 : "").trim();
+    const icon2 = String((_b2 = obj == null ? void 0 : obj.icon) != null ? _b2 : "").trim();
     if (!category || category.length > 16) return null;
-    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(icon) || !AI_ICON_MENU.includes(icon)) return null;
-    return { category, icon };
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(icon2) || !AI_ICON_MENU.includes(icon2)) return null;
+    return { category, icon: icon2 };
   }
   async function aiSuggestCategory(name, history2) {
     const ai = createAI();
@@ -24324,8 +24325,8 @@ ${bodyText.substring(0, 6e3)}`;
     for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
     return `hsl(${h % 360}, 42%, 52%)`;
   }
-  function railItemHtml(sel, label, unread, total, icon, color, active2, sub) {
-    const badge = icon === "feed" ? `<span class="bz-rail-badge" style="--bz-rail-tint:${color || "#58a6ff"}">${esc(sub || label.slice(0, 1))}</span>` : icon === "bili" ? `<span class="bz-rail-badge bili">${esc(sub || label.slice(0, 1))}</span>` : icon === "clip" ? `<span class="bz-rail-ic">${iconSpan("scissors")}</span>` : `<span class="bz-rail-ic${sel.kind === "all" ? " bz-rail-ic--accent" : ""}">${icon ? iconSpan(icon) : ""}</span>`;
+  function railItemHtml(sel, label, unread, total, icon2, color, active2, sub) {
+    const badge = icon2 === "feed" ? `<span class="bz-rail-badge" style="--bz-rail-tint:${color || "#58a6ff"}">${esc(sub || label.slice(0, 1))}</span>` : icon2 === "bili" ? `<span class="bz-rail-badge bili">${esc(sub || label.slice(0, 1))}</span>` : icon2 === "clip" ? `<span class="bz-rail-ic">${iconSpan("scissors")}</span>` : `<span class="bz-rail-ic${sel.kind === "all" ? " bz-rail-ic--accent" : ""}">${icon2 ? iconSpan(icon2) : ""}</span>`;
     const count = `<span class="bz-rail-count">${unread > 0 ? `<b>${unread}</b>` : unread}/${total}</span>`;
     return `
     <div class="bz-rail-item${active2 ? " on" : ""}" data-src='${esc(JSON.stringify(sel))}' title="${esc(label)}">
@@ -28846,8 +28847,8 @@ ${sample}`,
     <p>${esc(it.description || "（这张卡只写了个名字）")}</p>
     <div class="bz-fav-ft"><span class="bz-fav-tags-row">${(it.tags || []).map((t) => {
       const h = hueOf(t);
-      const ic = (TAGS.find((x) => x.label === t) || { ic: "" }).ic;
-      return `<span class="bz-fav-tagb" style="background:hsl(${h} 70% 95%);color:hsl(${h} 45% 42%)">${ic ? iconSpan(ic, "bz-ic--xs") : ""}<span>${esc(t)}</span></span>`;
+      const ic2 = (TAGS.find((x) => x.label === t) || { ic: "" }).ic;
+      return `<span class="bz-fav-tagb" style="background:hsl(${h} 70% 95%);color:hsl(${h} 45% 42%)">${ic2 ? iconSpan(ic2, "bz-ic--xs") : ""}<span>${esc(t)}</span></span>`;
     }).join("")}</span>
       <span>${esc(relTime3(it.created))}</span></div>
   </div>`;
@@ -28934,7 +28935,7 @@ ${sample}`,
 </div>`;
   }
   function chipsHtml2(items, view, mobile2) {
-    const mk = (label, ic, cnt, active2, grey = false) => `<button class="bz-fav-chip${active2 ? " bz-fav-on" : ""}${grey ? " bz-fav-chip--grey" : ""}" data-fav-tag="${esc(label)}">${ic ? iconSpan(ic, "bz-ic--xs") : ""}<span>${esc(label)} ${cnt}</span></button>`;
+    const mk = (label, ic2, cnt, active2, grey = false) => `<button class="bz-fav-chip${active2 ? " bz-fav-on" : ""}${grey ? " bz-fav-chip--grey" : ""}" data-fav-tag="${esc(label)}">${ic2 ? iconSpan(ic2, "bz-ic--xs") : ""}<span>${esc(label)} ${cnt}</span></button>`;
     const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${iconSpan(ICON5.add, "bz-ic--xs")}<span>新收藏</span></button>`;
     const chips = mk("全部", "", visibleItems(items).length, !view.archived && view.tag === null) + mk("已归档", "archive", archivedItems(items).length, view.archived, true) + TAGS.map((t) => {
       const n = tagCount(items, t.label);
@@ -31383,6 +31384,310 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/review/render.ts
+  function esc3(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ESC[c]);
+  }
+  function icon(name, extra = "bz-q-ic") {
+    return `<span class="bz-ic${extra ? " " + extra : ""}" data-lucide="${name}"></span>`;
+  }
+  function markHtml(kind, size = "") {
+    if (kind === "ok") return `<span class="bz-mark ok ${size}"><i data-lucide="check"></i></span>`;
+    return `<span class="bz-mark bad ${size}"><i data-lucide="x"></i></span>`;
+  }
+  function todayLabel(now = /* @__PURE__ */ new Date()) {
+    const week = ["日", "一", "二", "三", "四", "五", "六"][now.getDay()];
+    return `${now.getMonth() + 1}月${now.getDate()}日 周${week}`;
+  }
+  function dueLabelOf(item, now = Date.now()) {
+    if (item.isMissing) return { label: "文件缺失", cls: "is-missing" };
+    if (item.isCompleted) return { label: "已完成", cls: "is-done" };
+    if (!item.nextReviewDate) return { label: "待定", cls: "is-future" };
+    const diff = new Date(item.nextReviewDate).getTime() - now;
+    if (diff > 0) {
+      const days = Math.floor(diff / 864e5);
+      const hours = Math.floor(diff % 864e5 / 36e5);
+      if (days > 0) return { label: `${days} 天后`, cls: "is-future" };
+      if (hours > 0) return { label: `${hours} 小时后`, cls: "is-future" };
+      return { label: `${Math.max(1, Math.floor(diff / 6e4))} 分钟后`, cls: "is-future" };
+    }
+    return { label: "已逾期", cls: "is-overdue" };
+  }
+  function isPlayable(item, now = Date.now()) {
+    if (item.isMissing || item.isCompleted || item.completed) return false;
+    if (!item.nextReviewDate) return false;
+    return new Date(item.nextReviewDate).getTime() <= now;
+  }
+  function currentRPct(item, w = DEFAULT_W, now = Date.now()) {
+    if (item.phase !== "fsrs" || !item.stability || !item.lastReviewed) return null;
+    const t = (now - new Date(item.lastReviewed).getTime()) / 864e5;
+    if (!(t > 0)) return null;
+    return Math.round(new FSRS(w).R(t, item.stability) * 100);
+  }
+  function stageNum(item) {
+    var _a2;
+    if (item.isMissing) return "挂起";
+    if (item.phase === "fsrs") {
+      const LADDER_MAX2 = 9;
+      return `FSRS Lv.${item.stage - LADDER_MAX2 + 1}`;
+    }
+    return `${(_a2 = item.currentStage) != null ? _a2 : item.stage + 1}/${TOTAL_STAGES}`;
+  }
+  function stageTagHtml(item, w = DEFAULT_W, now = Date.now()) {
+    var _a2;
+    if (item.completed) return '<span class="bz-q-tag is-done">已完成</span>';
+    if (item.phase === "fsrs") {
+      const r = currentRPct(item, w, now);
+      if (r !== null) {
+        const cls = r >= 90 ? "r-high" : r >= 70 ? "r-mid" : "r-low";
+        return `<span class="bz-q-tag is-r ${cls}">R=${r}%</span>`;
+      }
+      return `<span class="bz-q-tag is-r">FSRS</span>`;
+    }
+    return `<span class="bz-q-tag is-stage">阶段 ${(_a2 = item.currentStage) != null ? _a2 : item.stage + 1}/${TOTAL_STAGES}</span>`;
+  }
+  function sortColumn(items, now = Date.now()) {
+    return items.slice().sort((a, b) => {
+      var _a2, _b2;
+      if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
+      const ra = a.phase === "fsrs" && a.stability ? (_a2 = currentRPct(a, DEFAULT_W, now)) != null ? _a2 : 999 : 999;
+      const rb = b.phase === "fsrs" && b.stability ? (_b2 = currentRPct(b, DEFAULT_W, now)) != null ? _b2 : 999 : 999;
+      if (ra !== rb) return ra - rb;
+      return new Date(a.nextReviewDate || 0).getTime() - new Date(b.nextReviewDate || 0).getTime();
+    });
+  }
+  function colHead(count, name) {
+    return `<div class="bz-q-col-head"><span class="cnt">${count}</span><span class="name">${name}</span></div>`;
+  }
+  function cardHtml2(item, ctx = {}) {
+    var _a2, _b2, _c;
+    const now = (_a2 = ctx.now) != null ? _a2 : Date.now();
+    const w = (_b2 = ctx.w) != null ? _b2 : DEFAULT_W;
+    const due = dueLabelOf(item, now);
+    const canPlay = isPlayable(item, now) && !item.isMissing;
+    const title = item.isCompleted ? `<s>${esc3(item.name)}</s>` : esc3(item.name);
+    const cls = [
+      "bz-q-card",
+      item.isOverdue ? "danger" : "",
+      item.isCompleted ? "done" : "",
+      canPlay ? "" : "no",
+      item.isMissing ? "missing" : ""
+    ].join(" ").trim();
+    const tags = [
+      item.isMissing ? `<span class="bz-q-tag is-missing">文件缺失</span>` : `<span class="bz-q-tag ${due.cls}">${due.label}</span>`,
+      // R 阈值提前复习卡挂「提前」tag（与开始本轮同口径，落「今天」列）
+      !item.isMissing && isEarlyDue(item, (_c = ctx.rThreshold) != null ? _c : 0.9, w) ? `<span class="bz-q-tag is-early">提前</span>` : "",
+      // V1 原型拍板（issue 253）：待重做旗标显性化——挂红 tag 提示「这题忘了要重做」
+      item.pendingRedo && !item.isCompleted ? `<span class="bz-q-tag is-redo">待重做</span>` : "",
+      stageTagHtml(item, w, now)
+    ].join("");
+    return `
+      <div class="${cls}" data-id="${item.id}" role="button" tabindex="0" aria-disabled="${canPlay ? "false" : "true"}">
+        <div class="bz-q-card-top"><span class="bz-q-card-title">${title}</span><span class="bz-q-card-stage">${item.isMissing ? "挂起" : stageNum(item)}</span></div>
+        <div class="bz-q-card-meta">${tags}</div>
+      </div>`;
+  }
+  function cardsOf(items, ctx) {
+    if (!items.length) return `<div class="bz-q-hint">没有条目</div>`;
+    return items.map((it) => cardHtml2(it, ctx)).join("");
+  }
+  function queueViewHtml(items, ctx = {}) {
+    var _a2, _b2, _c;
+    const now = (_a2 = ctx.now) != null ? _a2 : Date.now();
+    const w = (_b2 = ctx.w) != null ? _b2 : DEFAULT_W;
+    const rt = (_c = ctx.rThreshold) != null ? _c : 0.9;
+    const full = { ...ctx, now, w, rThreshold: rt };
+    const col = partitionQueue(items, rt, w);
+    const head = `
+      <div class="bz-panel-head">
+        <div class="bz-panel-brand">${icon("repeat-2", "bz-ic--sm")}</div>
+        <div class="bz-panel-title">复习计划</div>
+        <div class="bz-panel-head-pipe"></div>
+        <div class="bz-panel-head-sub">${todayLabel(new Date(now))}</div>
+        <span class="bz-panel-head-sp"></span>
+        <div class="bz-panel-head-btns">
+          <!-- ⚙设置直达钮两端退役（issue 254 迭代拍板，设置走插件设置页）；✕ 桌面隐藏
+              （styles.css ≥769px 规则，点遮罩/ESC 关），仅移动端全屏保留 -->
+          <button class="bz-icon-btn" data-act="close" title="关闭">${icon("x")}</button>
+      </div>
+      </div>`;
+    if (!items.length) {
+      const strip2 = `
+      <div class="bz-q-strip">
+        <span class="bz-q-strip-dot ok"></span>
+        <strong>今日已清空</strong>
+        <span class="bz-q-strip-txt">还没有任何复习条目</span>
+      </div>`;
+      return `<div class="bz-q-view">${head}${strip2}<div class="bz-q-cols bz-q-empty-wrap"><div data-empty-host></div></div></div>`;
+    }
+    const clearToday = col.overdue.length + col.today.length === 0;
+    const futureCount = col.future.length;
+    const strip = ctx.showArchived ? `<div class="bz-q-strip">
+        <span class="bz-q-strip-dot ok"></span>
+        <strong>已完成复习</strong>
+      </div>` : clearToday ? `<div class="bz-q-strip">
+        <span class="bz-q-strip-dot ok"></span>
+        <strong>今日已清空</strong>
+        <span class="bz-q-strip-txt">${futureCount ? `未来还有 ${futureCount} 篇待复习` : "没有待复习条目"}</span>
+      </div>` : `<div class="bz-q-strip">
+        <span class="bz-q-strip-dot"></span>
+        <strong>开始本轮</strong>
+        <span class="bz-q-strip-txt">今日 ${col.today.length} 篇到期 · 逾期 ${col.overdue.length} 篇顺延</span>
+        <button class="bz-btn bz-btn--primary" data-act="begin">开始本轮</button>
+      </div>`;
+    const body = ctx.showArchived ? `<div class="bz-q-cols"><div class="bz-q-col done">${colHead(col.done.length, "已完成")}${cardsOf(sortColumn(col.done, now), full)}</div></div>` : `<div class="bz-q-cols">
+          <div class="bz-q-col danger">${colHead(col.overdue.length, "已逾期")}${cardsOf(sortColumn(col.overdue, now), full)}</div>
+          <div class="bz-q-col warn">${colHead(col.today.length, "今天到期")}${cardsOf(sortColumn(col.today, now), full)}</div>
+          <div class="bz-q-col future">${colHead(col.future.length, "未来")}${cardsOf(sortColumn(col.future, now), full)}</div>
+        </div>`;
+    const stats = computeStats(items);
+    const archItem = ctx.showArchived ? `<span class="bz-q-fitem bz-touch-target--lg is-back" data-act="arch" title="点此返回队列">
+        ${icon("undo-2")}<span class="lbl">返回队列</span>
+      </span>` : `<span class="bz-q-fitem bz-touch-target--lg" data-act="arch" title="查看已完成复习">
+        ${icon("folder")}<span class="lbl">已完成 <b>${col.done.length}</b> 篇</span>
+      </span>`;
+    const footer = `
+      <div class="bz-q-footer">
+        ${archItem}
+        <i class="sep"></i>
+        <span class="bz-q-fitem bz-touch-target--lg" data-act="stats" title="查看复习统计分布">
+          ${icon("bar-chart-3")}<span class="lbl">累计 <b>${stats.totalReviews}</b> 天 · 连续 <b>${stats.streak}</b> 天</span>
+        </span>
+      </div>`;
+    return `<div class="bz-q-view">${head}${strip}${body}${footer}</div>`;
+  }
+  function sprintHeadHtml() {
+    return `
+      <div class="bz-sprint-head">
+        <div class="t">
+          <div class="bz-sprint-title">做题冲刺</div>
+        </div>
+        <div class="tools">
+          <button class="bz-icon-btn" data-action="skip" title="跳过此篇（不评级，移到队尾）">${icon("skip-forward", "bz-sprint-ic")}</button>
+          <button class="bz-icon-btn" data-action="quit" title="回面板">${icon("x", "bz-sprint-ic")}</button>
+        </div>
+      </div>`;
+  }
+  function sprintLoadingHtml() {
+    return `<div class="bz-sprint-loading"><span class="spinner"></span>正在获取题目…</div>`;
+  }
+  function sprintOptsHtml(q2, answered, sel, lastCorrect) {
+    return q2.options.map((opt, i) => {
+      const isSel = sel.includes(i);
+      let extra = "";
+      if (answered) {
+        if (q2.correctIndices.includes(i)) extra = " is-correct";
+        else if (isSel) extra = " is-wrong";
+      } else if (isSel) extra = " is-sel";
+      const m = answered && q2.correctIndices.includes(i) ? markHtml("ok") : answered && isSel && !q2.correctIndices.includes(i) ? markHtml("bad") : "";
+      return `
+          <div class="bz-sprint-opt${extra}${answered ? " is-disabled" : ""}" data-i="${i}" role="button" tabindex="${answered ? "-1" : "0"}" aria-disabled="${answered ? "true" : "false"}">
+            <span class="k">${"ABCD"[i]}</span>
+            <span class="t">${esc3(opt)}</span>
+            <span class="m">${m}</span>
+          </div>`;
+    }).join("");
+  }
+  function sprintQuestionHtml(entry, question, st) {
+    const single = question.correctIndices.length === 1;
+    const total = entry.questions.length;
+    const done = entry.doneCount;
+    const optsHtml = sprintOptsHtml(question, st.answered, st.sel, st.lastCorrect);
+    const needSubmit = !single && !st.answered;
+    const lastWrong = st.answered && !st.lastCorrect && !st.remaining;
+    const nextBtn = st.answered && !st.lastCorrect && st.remaining ? `<button class="bz-btn bz-btn--primary" data-action="next">下一题 →</button>` : lastWrong ? `<button class="bz-btn bz-btn--primary" data-action="note">${icon("flag", "bz-sprint-ic")} 结束并结算</button>` : "";
+    const submit = needSubmit ? `<button class="bz-btn bz-btn--primary bz-sprint-submit" data-action="submit">提交答案</button>` : "";
+    const explain = st.answered && !st.lastCorrect && question.explain ? `<div class="bz-sprint-explain">${esc3(question.explain)}</div>` : "";
+    return `
+      <div class="bz-sprint-qtop">
+        <span class="bz-sprint-progress">${done + 1}/${total}</span>
+      </div>
+      <div class="bz-sprint-qcard">
+        <div class="bz-sprint-qtype">${single ? "单选" : "多选"}</div>
+        <div class="bz-sprint-qtext">${esc3(question.question)}</div>
+        <div class="bz-sprint-opts">${optsHtml}</div>
+        ${explain}
+        ${submit}
+        ${nextBtn ? `<div class="bz-sprint-qfoot">${nextBtn}</div>` : ""}
+      </div>`;
+  }
+  function sprintAsideHtml(entries) {
+    const rows = entries.map((e) => {
+      const name = esc3(e.name);
+      if (e.state === "passed") return `<div class="bz-sq-item passed"><span class="nm"><s>${name}</s></span></div>`;
+      if (e.state === "failed") return `<div class="bz-sq-item failed"><span class="nm">${name}</span></div>`;
+      if (e.state === "doing") return `<div class="bz-sq-item doing"><span class="nm">${name}</span></div>`;
+      return `<div class="bz-sq-item"><span class="nm">${name}</span></div>`;
+    }).join("");
+    return `
+      <div class="bz-sq-head"><b>本轮队列</b></div>
+      <div class="bz-sq-list">${rows || '<div class="bz-empty"><div class="bz-empty-title">队列完毕</div></div>'}</div>`;
+  }
+  function sprintBodyHtml(mainHtml, entries) {
+    return `
+      <div class="bz-sprint-body">
+        <div class="bz-sprint-main">${mainHtml}</div>
+        <aside class="bz-sprint-queue">${sprintAsideHtml(entries)}</aside>
+      </div>`;
+  }
+  function sprintResultHtml(p) {
+    const total = p.acc + p.wrong;
+    const inner = p.passed ? `
+        <div class="bz-result-ic">${markHtml("ok", "lg")}</div>
+        <div class="bz-result-name">${esc3(p.name)}</div>
+        <div class="bz-result-score">${p.acc}<span class="sl">/${total}</span></div>
+        <span class="bz-result-rating pass">${p.ratingLine}</span>
+        <button class="bz-btn bz-btn--primary bz-btn--block" data-action="next">${p.nextLabel}</button>
+        ${p.showEnd ? `<button class="bz-btn bz-btn--ghost bz-btn--block" data-action="end">结束这次复习</button>` : ""}` : `
+        <div class="bz-result-ic bad">${markHtml("bad", "lg")}</div>
+        <div class="bz-result-name">${esc3(p.name)}</div>
+        <div class="bz-result-score">${p.acc}<span class="sl">/${total}</span></div>
+        <span class="bz-result-rating fail">${p.ratingLine}</span>
+        <button class="bz-btn bz-btn--danger bz-btn--block" data-action="note">${icon("file-text", "bz-sprint-ic")} 复习此笔记 · 打开原文</button>`;
+    return `<div class="bz-result">${inner}</div>`;
+  }
+  function sprintSummaryHtml(p) {
+    return `
+      <div class="bz-summary">
+        <div class="bz-summary-title">本轮复习完成</div>
+        <div class="bz-summary-stats">
+          <div class="st"><b>${p.total}</b><span>复习篇数</span></div>
+          <div class="st"><b>${p.passed}</b><span>通过</span></div>
+          <div class="st ${p.failed ? "warn" : ""}"><b>${p.failed}</b><span>未通过</span></div>
+        </div>
+        ${p.streak > 0 ? `<div class="bz-summary-streak">连续复习 <b>${p.streak}</b> 天</div>` : ""}
+        <button class="bz-btn bz-btn--primary bz-btn--block" data-action="done">完成 · 回到复习计划</button>
+      </div>`;
+  }
+  function difficultyDialogHtml(item) {
+    return `
+      <h4>标记复习：${esc3(item.name)}</h4>
+      <button class="diff-btn" data-diff="again">忘了（Again）</button>
+      <button class="diff-btn" data-diff="hard">困难（Hard）</button>
+      <button class="diff-btn" data-diff="good">一般（Good）</button>
+      <button class="diff-btn" data-diff="easy">简单（Easy）</button>
+      <button class="diff-btn diff-btn-cancel" data-diff="cancel">取消</button>
+    `;
+  }
+  function reviewBarHtml(p) {
+    const names = { again: "忘了", hard: "困难", good: "一般", easy: "简单" };
+    const btns = ["again", "hard", "good", "easy"].map((r) => `<button class="bz-review-bar-btn bz-touch-target--sm is-${r}" data-rating="${r}">${names[r]}</button>`).join("");
+    return `
+    <span class="bz-review-bar-info">${esc3(p.name.replace(/^《|》$/g, ""))}<i>(${p.index}/${p.total})</i></span>
+    <span class="bz-review-bar-act">${btns}
+      <button class="bz-review-bar-btn bz-touch-target--sm is-skip" data-rating="skip">${"跳过"}</button>
+    </span>`;
+  }
+  var ESC;
+  var init_render10 = __esm({
+    "src/review/render.ts"() {
+      init_fsrs();
+      init_queue();
+      init_stats2();
+      ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    }
+  });
+
   // src/review/sprint.ts
   function accuracyToRating(accuracy) {
     if (accuracy >= 90) return "easy";
@@ -31397,7 +31702,7 @@ ${n.content.slice(0, 2e3)}
       init_flow_dialog();
       init_ui();
       init_esc_manager();
-      init_utils();
+      init_render10();
       CORRECT_JUMP_DELAY_MS2 = 800;
       SprintSession = class {
         constructor(opts) {
@@ -31737,37 +32042,17 @@ ${n.content.slice(0, 2e3)}
           }
           await this.runNext();
         }
-        // ================= 视图构建（单套 DOM，CSS 适配移动） =================
+        // ================= 视图构建（markup 单源：render.ts，issue 253） =================
         /** 顶部头行（队列视图 / 冲刺共用外层结构由宿主渲染，本会话只接管内容区） */
         renderTop() {
         }
-        sprintHead(extraRight = "") {
-          return `
-      <div class="bz-sprint-head">
-        <div class="t">
-          <div class="bz-sprint-title">做题冲刺</div>
-        </div>
-        <div class="tools">
-          ${extraRight}
-          <button class="bz-icon-btn" data-action="skip" title="跳过此篇（不评级，移到队尾）">${this.icon("skip-forward")}</button>
-          <button class="bz-icon-btn" data-action="quit" title="回面板">${this.icon("x")}</button>
-        </div>
-      </div>`;
-        }
         showLoading(entry) {
           this.view = "loading";
-          this.opts.host.innerHTML = `
-      ${this.sprintHead()}
-      <div class="bz-sprint-loading"><span class="spinner"></span>正在获取题目…</div>`;
+          this.opts.host.innerHTML = `${sprintHeadHtml()}${sprintLoadingHtml()}`;
           this.bindTop();
         }
-        questionHeader(entry) {
-          const total = entry.questions.length;
-          const done = this.q.doneCount;
-          return `
-      <div class="bz-sprint-qtop">
-        <span class="bz-sprint-progress">${done + 1}/${total}</span>
-      </div>`;
+        asideStates() {
+          return this.entries.map((e) => ({ name: e.item.name.replace(/^《|》$/g, ""), state: e.state }));
         }
         renderQuestion() {
           var _a2, _b2, _c, _d, _e;
@@ -31775,44 +32060,13 @@ ${n.content.slice(0, 2e3)}
           const q2 = this.q;
           const question = this.currentQuestion();
           if (!question) return;
-          const single = question.correctIndices.length === 1;
-          const optsHtml = question.options.map((opt, i) => {
-            const isSel = q2.sel.has(i);
-            let extra = "";
-            if (q2.answered) {
-              if (question.correctIndices.includes(i)) extra = " is-correct";
-              else if (isSel) extra = " is-wrong";
-            } else if (isSel) extra = " is-sel";
-            return `
-          <div class="bz-sprint-opt${extra}${q2.answered ? " is-disabled" : ""}" data-i="${i}" role="button" tabindex="${q2.answered ? "-1" : "0"}" aria-disabled="${q2.answered ? "true" : "false"}">
-            <span class="k">${"ABCD"[i]}</span>
-            <span class="t">${escapeHtml2(opt)}</span>
-            <span class="m">${q2.answered && question.correctIndices.includes(i) ? this.mark("ok") : q2.answered && isSel ? this.mark("bad") : ""}</span>
-          </div>`;
-          }).join("");
-          const needSubmit = !single && !q2.answered;
-          const lastWrong = q2.answered && !q2.lastCorrect && !q2.list.length;
-          const nextBtn = q2.answered && !q2.lastCorrect && q2.list.length ? `<button class="bz-btn bz-btn--primary" data-action="next">下一题 →</button>` : lastWrong ? `<button class="bz-btn bz-btn--primary" data-action="note">${this.icon("flag")} 结束并结算</button>` : "";
-          const submit = needSubmit ? `<button class="bz-btn bz-btn--primary bz-sprint-submit" data-action="submit">提交答案</button>` : "";
-          const explain = q2.answered && !q2.lastCorrect && question.explain ? `<div class="bz-sprint-explain">${escapeHtml2(question.explain)}</div>` : "";
-          const html = `
-      ${this.sprintHead()}
-      <div class="bz-sprint-body">
-        <div class="bz-sprint-main">
-          ${this.questionHeader(entry)}
-          <div class="bz-sprint-qcard">
-            <div class="bz-sprint-qtype">${single ? "单选" : "多选"}</div>
-            <div class="bz-sprint-qtext">${escapeHtml2(question.question)}</div>
-            <div class="bz-sprint-opts">${optsHtml}</div>
-            ${explain}
-            ${submit}
-            ${nextBtn ? `<div class="bz-sprint-qfoot">${nextBtn}</div>` : ""}
-          </div>
-        </div>
-        <aside class="bz-sprint-queue">${this.queueHtml()}</aside>
-      </div>`;
+          const main = sprintQuestionHtml(
+            { questions: entry.questions, doneCount: q2.doneCount },
+            question,
+            { answered: q2.answered, sel: [...q2.sel], lastCorrect: q2.lastCorrect, remaining: q2.list.length }
+          );
           this.view = "question";
-          this.opts.host.innerHTML = html;
+          this.opts.host.innerHTML = `${sprintHeadHtml()}${sprintBodyHtml(main, this.asideStates())}`;
           mountIcons(this.opts.host);
           this.bindTop();
           (_a2 = this.opts.host.querySelector('[data-action="submit"]')) == null ? void 0 : _a2.addEventListener("click", () => this.submitMulti());
@@ -31832,18 +32086,6 @@ ${n.content.slice(0, 2e3)}
           });
           (_e = (_d = this.opts).onProgress) == null ? void 0 : _e.call(_d);
         }
-        queueHtml() {
-          const rows = this.entries.map((e) => {
-            const name = escapeHtml2(e.item.name.replace(/^《|》$/g, ""));
-            if (e.state === "passed") return `<div class="bz-sq-item passed"><span class="nm"><s>${name}</s></span></div>`;
-            if (e.state === "failed") return `<div class="bz-sq-item failed"><span class="nm">${name}</span></div>`;
-            if (e.state === "doing") return `<div class="bz-sq-item doing"><span class="nm">${name}</span></div>`;
-            return `<div class="bz-sq-item"><span class="nm">${name}</span></div>`;
-          }).join("");
-          return `
-      <div class="bz-sq-head"><b>本轮队列</b></div>
-      <div class="bz-sq-list">${rows || '<div class="bz-empty"><div class="bz-empty-title">队列完毕</div></div>'}</div>`;
-        }
         renderResult(entry) {
           var _a2, _b2, _c, _d, _e;
           const total = entry.acc + entry.wrong;
@@ -31851,29 +32093,22 @@ ${n.content.slice(0, 2e3)}
           const rating = accuracyToRating(acc);
           const passed = rating === "easy" || rating === "good";
           const remain = this.remainingCount;
-          const name = escapeHtml2(entry.item.name.replace(/^《|》$/g, ""));
+          const name = entry.item.name.replace(/^《|》$/g, "");
           const nextLabel = this.mode === "single" ? "完成 · 回面板" : remain > 0 ? `下一篇 · ${this.nextPendingName()}` : "完成本轮 · 结算";
-          const ratingLine = this.mode === "redo" ? `${RATING_NAMES2[rating]} · 已解除待重做` : `${RATING_NAMES2[rating]} · 下次 ${escapeHtml2(entry.passNote || "已排期")}`;
-          const inner = passed ? `
-        <div class="bz-result-ic">${this.mark("ok", "lg")}</div>
-        <div class="bz-result-name">${name}</div>
-        <div class="bz-result-score">${entry.acc}<span class="sl">/${total}</span></div>
-        <span class="bz-result-rating pass">${ratingLine}</span>
-        <button class="bz-btn bz-btn--primary bz-btn--block" data-action="next">${nextLabel}</button>
-        ${remain > 0 ? `<button class="bz-btn bz-btn--ghost bz-btn--block" data-action="end">结束这次复习</button>` : ""}` : `
-        <div class="bz-result-ic bad">${this.mark("bad", "lg")}</div>
-        <div class="bz-result-name">${name}</div>
-        <div class="bz-result-score">${entry.acc}<span class="sl">/${total}</span></div>
-        <span class="bz-result-rating fail">${RATING_NAMES2[rating]} · 待重做</span>
-        <button class="bz-btn bz-btn--danger bz-btn--block" data-action="note">${this.icon("file-text")} 复习此笔记 · 打开原文</button>`;
+          const ratingLine = this.mode === "redo" ? `${RATING_NAMES2[rating]} · 已解除待重做` : `${RATING_NAMES2[rating]} · 下次 ${entry.passNote || "已排期"}`;
           this.view = "result";
-          const html = `
-      ${this.sprintHead()}
-      <div class="bz-sprint-body">
-        <div class="bz-sprint-main"><div class="bz-result">${inner}</div></div>
-        <aside class="bz-sprint-queue">${this.queueHtml()}</aside>
-      </div>`;
-          this.opts.host.innerHTML = html;
+          this.opts.host.innerHTML = `${sprintHeadHtml()}${sprintBodyHtml(
+            sprintResultHtml({
+              name,
+              acc: entry.acc,
+              wrong: entry.wrong,
+              passed,
+              ratingLine: passed ? ratingLine : `${RATING_NAMES2[rating]} · 待重做`,
+              nextLabel,
+              showEnd: remain > 0 && this.mode !== "single"
+            }),
+            this.asideStates()
+          )}`;
           mountIcons(this.opts.host);
           this.bindTop();
           (_a2 = this.opts.host.querySelector('[data-action="next"]')) == null ? void 0 : _a2.addEventListener("click", () => void this.handleResult("next"));
@@ -31883,7 +32118,7 @@ ${n.content.slice(0, 2e3)}
         }
         nextPendingName() {
           const nx = this.entries.find((e) => e.state === "pending");
-          return nx ? escapeHtml2(nx.item.name.replace(/^《|》$/g, "").slice(0, 12)) : "";
+          return nx ? nx.item.name.replace(/^《|》$/g, "").slice(0, 12) : "";
         }
         showSummary() {
           var _a2, _b2;
@@ -31892,19 +32127,7 @@ ${n.content.slice(0, 2e3)}
           const failed = this.failedCount;
           const total = passed + failed;
           const streak = (_a2 = this.opts.streakDays) != null ? _a2 : 0;
-          const html = `
-      ${this.sprintHead()}
-      <div class="bz-summary">
-        <div class="bz-summary-title">本轮复习完成</div>
-        <div class="bz-summary-stats">
-          <div class="st"><b>${total}</b><span>复习篇数</span></div>
-          <div class="st"><b>${passed}</b><span>通过</span></div>
-          <div class="st ${failed ? "warn" : ""}"><b>${failed}</b><span>未通过</span></div>
-        </div>
-        ${streak > 0 ? `<div class="bz-summary-streak">连续复习 <b>${streak}</b> 天</div>` : ""}
-        <button class="bz-btn bz-btn--primary bz-btn--block" data-action="done">完成 · 回到复习计划</button>
-      </div>`;
-          this.opts.host.innerHTML = html;
+          this.opts.host.innerHTML = `${sprintHeadHtml()}${sprintSummaryHtml({ total, passed, failed, streak })}`;
           mountIcons(this.opts.host);
           this.bindTop();
           (_b2 = this.opts.host.querySelector('[data-action="done"]')) == null ? void 0 : _b2.addEventListener("click", () => this.finish("done"));
@@ -31912,16 +32135,8 @@ ${n.content.slice(0, 2e3)}
         /** 顶部/队列共同动作（跳过此篇 / 退出按钮） */
         bindTop() {
           var _a2, _b2;
-          (_a2 = this.opts.host.querySelector('[data-action="quit"]')) == null ? void 0 : _a2.addEventListener("click", () => this.requestQuit());
+          (_a2 = this.opts.host.querySelector('[data-action="quit"]')) == null ? void 0 : _a2.addEventListener("click", () => this.finish("quit"));
           (_b2 = this.opts.host.querySelector('[data-action="skip"]')) == null ? void 0 : _b2.addEventListener("click", () => this.skipCurrent());
-        }
-        // ================= 图标/工具 =================
-        icon(name) {
-          return `<span class="bz-ic bz-sprint-ic" data-lucide="${name}"></span>`;
-        }
-        mark(kind, size = "") {
-          if (kind === "ok") return `<span class="bz-mark ok ${size}"><i data-lucide="check"></i></span>`;
-          return `<span class="bz-mark bad ${size}"><i data-lucide="x"></i></span>`;
         }
       };
       RATING_NAMES2 = { easy: "轻松", good: "一般", hard: "困难", again: "忘了" };
@@ -32440,37 +32655,11 @@ ${n.content.slice(0, 2e3)}
     mountFloatingRatingBar: () => mountFloatingRatingBar,
     reviewSettingsSchema: () => reviewSettingsSchema
   });
-  function dueLabelOf(item) {
-    if (item.isMissing) return { label: "文件缺失", cls: "is-missing" };
-    if (item.isCompleted) return { label: "已完成", cls: "is-done" };
-    if (!item.nextReviewDate) return { label: "待定", cls: "is-future" };
-    const diff = new Date(item.nextReviewDate).getTime() - Date.now();
-    if (diff > 0) {
-      const days = Math.floor(diff / 864e5);
-      const hours = Math.floor(diff % 864e5 / 36e5);
-      if (days > 0) return { label: `${days} 天后`, cls: "is-future" };
-      if (hours > 0) return { label: `${hours} 小时后`, cls: "is-future" };
-      return { label: `${Math.max(1, Math.floor(diff / 6e4))} 分钟后`, cls: "is-future" };
-    }
-    return { label: "已逾期", cls: "is-overdue" };
-  }
-  function isPlayable(item) {
-    if (item.isMissing || item.isCompleted || item.completed) return false;
-    if (!item.nextReviewDate) return false;
-    return new Date(item.nextReviewDate).getTime() <= Date.now();
-  }
   function mountFloatingRatingBar(opts) {
     const el = document.createElement("div");
     el.className = "bz-review-bar";
     el.style.zIndex = String(allocZ());
-    const btns = BAR_RATINGS.map(
-      (r) => `<button class="bz-review-bar-btn bz-touch-target--sm is-${r.cls}" data-rating="${r.rating}">${r.label}</button>`
-    ).join("");
-    el.innerHTML = `
-    <span class="bz-review-bar-info">${escapeHtml2(opts.name.replace(/^《|》$/g, ""))}<i>(${opts.index}/${opts.total})</i></span>
-    <span class="bz-review-bar-act">${btns}
-      <button class="bz-review-bar-btn bz-touch-target--sm is-skip" data-rating="skip">${"跳过"}</button>
-    </span>`;
+    el.innerHTML = reviewBarHtml(opts);
     let closed = false;
     const close = () => {
       if (closed) return;
@@ -32488,7 +32677,7 @@ ${n.content.slice(0, 2e3)}
     document.body.appendChild(el);
     return { close };
   }
-  var UIManager3, BAR_RATINGS;
+  var isPlayable2, UIManager3;
   var init_ui10 = __esm({
     "src/review/ui.ts"() {
       init_z_order();
@@ -32496,14 +32685,14 @@ ${n.content.slice(0, 2e3)}
       init_flow_dialog();
       init_esc_manager();
       init_settings_provider();
-      init_utils();
       init_ui();
       init_item_actions();
       init_fsrs();
-      init_stats2();
+      init_render10();
       init_queue();
       init_sprint();
       init_settings_schema2();
+      isPlayable2 = isPlayable;
       UIManager3 = class {
         constructor(app2, dataManager3) {
           /** R 展示口径权重源（item 12：与调度排期同读拟合权重；ensureReview 注入 reviewApp.currentW，缺省回退默认） */
@@ -32517,8 +32706,6 @@ ${n.content.slice(0, 2e3)}
           /** 冲刺入口 in-flight 防抖（双击/并发触发只放行一次，防双开会话双倍 AI 调用） */
           this.sprintStarting = false;
           this.showArchived = false;
-          this.searchTimer = null;
-          this.searchText = "";
           this.escHandle = null;
           this.app = app2;
           this.dataManager = dataManager3;
@@ -32578,10 +32765,6 @@ ${n.content.slice(0, 2e3)}
           this.sprint = null;
           sprint == null ? void 0 : sprint.destroy();
           this.hideMain();
-          if (this.searchTimer !== null) {
-            window.clearTimeout(this.searchTimer);
-            this.searchTimer = null;
-          }
           if (this.escHandle) {
             this.escHandle.unregister();
             this.escHandle = null;
@@ -32597,15 +32780,14 @@ ${n.content.slice(0, 2e3)}
         async refreshPanel() {
           if (this.sprint) return;
           const items = await this.dataManager.loadItems();
-          this.renderEntries(items, this.searchText);
+          this.renderEntries(items);
         }
         /** 渲染队列视图（冲刺态不响应） */
-        renderEntries(items, searchText = "") {
+        renderEntries(items) {
           if (this.sprint) return;
           const container = this.entriesContainer;
           if (!container) return;
-          this.searchText = searchText;
-          container.innerHTML = this.queueViewHtml(items, searchText);
+          container.innerHTML = this.queueViewHtml(items);
           if (!items.length) {
             const host = container.querySelector("[data-empty-host]");
             if (host) {
@@ -32642,173 +32824,35 @@ ${n.content.slice(0, 2e3)}
           active2 == null ? void 0 : active2.destroy();
           await this.refreshPanel();
         }
-        // ================= 队列视图 HTML =================
+        // ================= 队列视图 HTML（markup 单源：render.queueViewHtml，issue 253） =================
         /** R 阈值提前复习判定（item 6：与开始本轮同口径；wSource=拟合权重） */
         rThreshold() {
           const s = tryGetSettings();
           return Number(s == null ? void 0 : s.reviewRThreshold) || 0.9;
         }
-        isEarly(it) {
-          return isEarlyDue(it, this.rThreshold(), this.wSource());
-        }
-        queueViewHtml(items, searchText) {
-          const kw = searchText.trim().toLowerCase();
-          const vis = kw ? items.filter((i) => i.name.toLowerCase().includes(kw)) : items;
-          const rt = this.rThreshold();
-          const w = this.wSource();
-          const col = partitionQueue(items, rt, w);
-          const visCol = partitionQueue(vis, rt, w);
-          const over = visCol.overdue;
-          const today = visCol.today;
-          const future = visCol.future;
-          const done = visCol.done;
-          const round = roundQueue(items, this.rThreshold(), this.wSource());
-          const clearToday = !round.length;
-          const futureCount = col.future.length;
-          const head = `
-      <div class="bz-panel-head">
-        <div class="bz-panel-brand">${this.icon("repeat-2", "bz-ic--sm")}</div>
-        <div class="bz-panel-title">复习计划</div>
-        <div class="bz-panel-head-pipe"></div>
-        <div class="bz-panel-head-sub">${this.todayLabel()}</div>
-        <span class="bz-panel-head-sp"></span>
-        <div class="bz-panel-head-btns">
-          <button class="bz-icon-btn" data-act="settings" title="打开复习计划设置">${this.icon("settings", "")}</button>
-          <!-- issue 201 对齐待办：关闭钮不挂 bz-win-close（core 规则非真全屏隐藏之），桌面/移动常显同待办 -->
-          <button class="bz-icon-btn" data-act="close" title="关闭">${this.icon("x")}</button>
-      </div>
-      </div>
-      <div class="bz-q-tools">
-        <div class="bz-search${searchText ? " typing" : ""}">${this.icon("search", "")}<input class="bz-input" type="text" id="bz-q-search" placeholder="搜索笔记…" value="${escapeHtml2(searchText)}"></div>
-      </div>`;
-          if (!items.length) {
-            const strip2 = `
-      <div class="bz-q-strip">
-        <span class="bz-q-strip-dot ok"></span>
-        <strong>今日已清空</strong>
-        <span class="bz-q-strip-txt">还没有任何复习条目</span>
-      </div>`;
-            return `<div class="bz-q-view">${head}${strip2}<div class="bz-q-cols bz-q-empty-wrap"><div data-empty-host></div></div></div>`;
-          }
-          const strip = clearToday ? `<div class="bz-q-strip">
-        <span class="bz-q-strip-dot ok"></span>
-        <strong>今日已清空</strong>
-        <span class="bz-q-strip-txt">${futureCount ? `未来还有 ${futureCount} 篇待复习` : "没有待复习条目"}</span>
-      </div>` : `<div class="bz-q-strip">
-        <span class="bz-q-strip-dot"></span>
-        <strong>开始本轮</strong>
-        <span class="bz-q-strip-txt">${this.showArchived ? "查看已完成复习" : `今日 ${col.today.length} 篇到期 · 逾期 ${col.overdue.length} 篇顺延`}</span>
-        ${this.showArchived ? "" : `<button class="bz-btn bz-btn--primary" data-act="begin">开始本轮</button>`}
-      </div>`;
-          const body = this.showArchived ? `<div class="bz-q-cols"><div class="bz-q-col done">${this.colHead(done.length, "已完成")}${this.cardsOf(done)}</div></div>` : `<div class="bz-q-cols">
-          <div class="bz-q-col danger">${this.colHead(col.overdue.length, "已逾期")}${this.cardsOf(over)}</div>
-          <div class="bz-q-col warn">${this.colHead(col.today.length, "今天到期")}${this.cardsOf(today)}</div>
-          <div class="bz-q-col future">${this.colHead(future.length, "未来")}${this.cardsOf(future)}</div>
-        </div>`;
-          const stats = computeStats(items);
-          const footer = `
-      <div class="bz-q-footer">
-        <span class="bz-q-fitem bz-touch-target--lg" data-act="arch" title="查看已完成复习">
-          ${this.icon("folder")}<span class="lbl">已完成 <b>${done.length}</b> 篇</span>
-        </span>
-        <i class="sep"></i>
-        <span class="bz-q-fitem bz-touch-target--lg" data-act="stats" title="查看复习统计分布">
-          ${this.icon("chart")}<span class="lbl">累计 <b>${stats.totalReviews}</b> 天 · 连续 <b>${stats.streak}</b> 天</span>
-        </span>
-      </div>`;
-          return `<div class="bz-q-view">${head}${strip}${body}${footer}</div>`;
-        }
-        colHead(count, name) {
-          return `<div class="bz-q-col-head"><span class="cnt">${count}</span><span class="name">${name}</span></div>`;
-        }
-        cardsOf(items) {
-          if (!items.length) return `<div class="bz-q-hint">没有条目</div>`;
-          return items.map((it) => this.cardHtml(it)).join("");
-        }
-        cardHtml(it) {
-          const due = dueLabelOf(it);
-          const canPlay = isPlayable(it) && !it.isMissing;
-          const title = it.isCompleted ? `<s>${escapeHtml2(it.name)}</s>` : escapeHtml2(it.name);
-          const cls = [
-            "bz-q-card",
-            it.isOverdue ? "danger" : "",
-            it.isCompleted ? "done" : "",
-            canPlay ? "" : "no",
-            it.isMissing ? "missing" : ""
-          ].join(" ").trim();
-          const tags = [
-            it.isMissing ? `<span class="bz-q-tag is-missing">文件缺失</span>` : `<span class="bz-q-tag ${due.cls}">${due.label}</span>`,
-            // item 6：R<阈值提前复习卡挂「提前」tag（与开始本轮同口径，落「今天」列）
-            !it.isMissing && this.isEarly(it) ? `<span class="bz-q-tag is-early">提前</span>` : "",
-            this.stageTagHtml(it)
-          ].join("");
-          return `
-      <div class="${cls}" data-id="${it.id}" role="button" tabindex="0" aria-disabled="${canPlay ? "false" : "true"}">
-        <div class="bz-q-card-top"><span class="bz-q-card-title">${title}</span><span class="bz-q-card-stage">${it.isMissing ? "挂起" : this.stageNum(it)}</span></div>
-        <div class="bz-q-card-meta">${tags}</div>
-      </div>`;
-        }
-        stageTagHtml(it) {
-          var _a2;
-          if (it.completed) return '<span class="bz-q-tag is-done">已完成</span>';
-          if (it.phase === "fsrs") {
-            const r = this.currentRPct(it);
-            if (r !== null) {
-              const cls = r >= 90 ? "r-high" : r >= 70 ? "r-mid" : "r-low";
-              return `<span class="bz-q-tag is-r ${cls}">R=${r}%</span>`;
-            }
-            return `<span class="bz-q-tag is-r">FSRS</span>`;
-          }
-          return `<span class="bz-q-tag is-stage">阶段 ${(_a2 = it.currentStage) != null ? _a2 : it.stage + 1}/${TOTAL_STAGES}</span>`;
-        }
-        stageNum(it) {
-          var _a2;
-          if (it.phase === "fsrs") return `FSRS Lv.${it.stage - LADDER_MAX + 1}`;
-          return `${(_a2 = it.currentStage) != null ? _a2 : it.stage + 1}/${TOTAL_STAGES}`;
-        }
-        currentRPct(it) {
-          if (it.phase !== "fsrs" || !it.stability || !it.lastReviewed) return null;
-          const t = (Date.now() - new Date(it.lastReviewed).getTime()) / 864e5;
-          if (!(t > 0)) return null;
-          const fsrs = new FSRS(this.wSource());
-          return Math.round(fsrs.R(t, it.stability) * 100);
-        }
-        todayLabel() {
-          const d = /* @__PURE__ */ new Date();
-          const week = ["日", "一", "二", "三", "四", "五", "六"][d.getDay()];
-          return `${d.getMonth() + 1}月${d.getDate()}日 周${week}`;
+        queueViewHtml(items) {
+          return queueViewHtml(items, {
+            showArchived: this.showArchived,
+            rThreshold: this.rThreshold(),
+            w: this.wSource()
+          });
         }
         // ================= 队列事件 =================
         bindQueueEvents(container, items) {
-          var _a2, _b2, _c, _d, _e, _f, _g;
+          var _a2, _b2, _c, _d, _e, _f;
           (_a2 = container.querySelector('[data-act="close"]')) == null ? void 0 : _a2.addEventListener("click", () => this.hideMain());
-          (_b2 = container.querySelector('[data-act="settings"]')) == null ? void 0 : _b2.addEventListener("click", () => {
-            this.hideMain();
-            void Promise.resolve().then(() => (init_settings_panel(), settings_panel_exports)).then((m) => m.openSettingsPanel(this.app, "review"));
-          });
-          (_c = container.querySelector('[data-act="begin"]')) == null ? void 0 : _c.addEventListener("click", () => void this.beginRound());
-          (_d = container.querySelector('[data-act="arch"]')) == null ? void 0 : _d.addEventListener("click", () => {
+          (_b2 = container.querySelector('[data-act="begin"]')) == null ? void 0 : _b2.addEventListener("click", () => void this.beginRound());
+          (_c = container.querySelector('[data-act="arch"]')) == null ? void 0 : _c.addEventListener("click", () => {
             this.showArchived = !this.showArchived;
             void this.refreshPanel();
           });
-          (_e = container.querySelector('[data-act="stats"]')) == null ? void 0 : _e.addEventListener("click", () => void this.openStats());
-          (_f = container.querySelector('[data-act="add-current"]')) == null ? void 0 : _f.addEventListener("click", () => void this.addCurrentNote());
-          (_g = container.querySelector('[data-act="watch-help"]')) == null ? void 0 : _g.addEventListener("click", () => void this.showWatchHelp());
-          const search = container.querySelector("#bz-q-search");
-          if (search) {
-            search.addEventListener("input", () => {
-              if (this.searchTimer !== null) window.clearTimeout(this.searchTimer);
-              this.searchTimer = window.setTimeout(() => {
-                this.searchTimer = null;
-                this.searchText = search.value;
-                void this.refreshPanel();
-              }, 180);
-            });
-          }
+          (_d = container.querySelector('[data-act="stats"]')) == null ? void 0 : _d.addEventListener("click", () => void this.openStats());
+          (_e = container.querySelector('[data-act="add-current"]')) == null ? void 0 : _e.addEventListener("click", () => void this.addCurrentNote());
+          (_f = container.querySelector('[data-act="watch-help"]')) == null ? void 0 : _f.addEventListener("click", () => void this.showWatchHelp());
           container.querySelectorAll(".bz-q-card[data-id]:not(.no)").forEach((card) => {
             const activate = () => {
               const it = items.find((x) => x.id === card.dataset.id);
-              if (it && isPlayable(it)) void this.beginSingle(it);
+              if (it && isPlayable2(it)) void this.beginSingle(it);
             };
             card.addEventListener("click", activate);
             card.addEventListener("keydown", (e) => {
@@ -32896,21 +32940,14 @@ ${n.content.slice(0, 2e3)}
           const { showStatsModal: showStatsModal2 } = await Promise.resolve().then(() => (init_stats_ui(), stats_ui_exports));
           await showStatsModal2(this.app, this.dataManager);
         }
-        // ================= 难度弹窗（评分命令用，保留旧实现） =================
+        // ================= 难度弹窗（评分命令用；markup 单源 render.difficultyDialogHtml） =================
         showDifficultyDialog(item, onSelect) {
           const old = document.querySelector(".difficulty-dialog");
           if (old) old.remove();
           const div = document.createElement("div");
           div.className = "difficulty-dialog";
           div.style.zIndex = String(allocZ());
-          div.innerHTML = `
-      <h4>标记复习：${escapeHtml2(item.name)}</h4>
-      <button class="diff-btn" data-diff="again">忘了（Again）</button>
-      <button class="diff-btn" data-diff="hard">困难（Hard）</button>
-      <button class="diff-btn" data-diff="good">一般（Good）</button>
-      <button class="diff-btn" data-diff="easy">简单（Easy）</button>
-      <button class="diff-btn diff-btn-cancel" data-diff="cancel">取消</button>
-    `;
+          div.innerHTML = difficultyDialogHtml(item);
           document.body.appendChild(div);
           div.style.display = "block";
           div.querySelectorAll(".diff-btn").forEach((btn) => {
@@ -33009,19 +33046,7 @@ ${n.content.slice(0, 2e3)}
           const leaf = this.app.workspace.getLeaf(false);
           await leaf.openFile(file);
         }
-        // ================= 工具 =================
-        /** lucide 占位 HTML（默认挂 .bz-q-ic 域内尺寸钩子；extra 传空则只用 .bz-ic 基类，
-         *  如 .bz-search 内的搜索图标走组件库定位/尺寸）。渲染后组件库 mountIcons 统一替换 */
-        icon(name, extra = "bz-q-ic") {
-          return `<span class="bz-ic${extra ? " " + extra : ""}" data-lucide="${name}"></span>`;
-        }
       };
-      BAR_RATINGS = [
-        { rating: "again", label: "忘了", cls: "again" },
-        { rating: "hard", label: "困难", cls: "hard" },
-        { rating: "good", label: "一般", cls: "good" },
-        { rating: "easy", label: "简单", cls: "easy" }
-      ];
     }
   });
 
@@ -34548,6 +34573,264 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/secondbrain/render.ts
+  function topLevelDir(path) {
+    const i = path.indexOf("/");
+    return i === -1 ? "（根目录）" : path.slice(0, i);
+  }
+  function fmtCompact(n) {
+    const trim = (s) => s.replace(/\.0$/, "");
+    if (n >= 1e9) return `${trim((n / 1e9).toFixed(1))}B`;
+    if (n >= 1e6) return `${trim((n / 1e6).toFixed(1))}M`;
+    if (n >= 1e4) return `${trim((n / 1e3).toFixed(1))}K`;
+    return n.toLocaleString();
+  }
+  function computeStats2(meta, now = Date.now()) {
+    var _a2, _b2;
+    const bySource = /* @__PURE__ */ new Map();
+    let chunkCount = 0;
+    let totalChars = 0;
+    const recent2 = [];
+    const weekMs = 7 * 24 * 3600 * 1e3;
+    const thisWeekStart = Math.floor(now / weekMs) * weekMs;
+    const trend12w = new Array(12).fill(0);
+    for (const [path, entry] of Object.entries(meta.notes)) {
+      const chunks = entry.chunks.length;
+      chunkCount += chunks;
+      let chars = 0;
+      for (const c of entry.chunks) chars += c.text.length;
+      totalChars += chars;
+      const dir = topLevelDir(path);
+      const item = bySource.get(dir) || { name: dir, notes: 0, chunks: 0 };
+      item.notes++;
+      item.chunks += chunks;
+      bySource.set(dir, item);
+      recent2.push({ path, mtime: entry.mtime, chunks });
+      const bucket = 11 - Math.floor((thisWeekStart - entry.mtime) / weekMs);
+      if (bucket >= 0 && bucket <= 11) trend12w[bucket]++;
+    }
+    recent2.sort((a, b) => b.mtime - a.mtime);
+    const bySourceArr = [...bySource.values()].sort((a, b) => b.chunks - a.chunks);
+    const noteCount = Object.keys(meta.notes).length;
+    return {
+      chunkCount,
+      noteCount,
+      dim: meta._dim || 0,
+      lastIndexedAt: (_b2 = (_a2 = recent2[0]) == null ? void 0 : _a2.mtime) != null ? _b2 : null,
+      bySource: bySourceArr,
+      recent: recent2.slice(0, 10),
+      trend12w,
+      totalChars,
+      avgChunkLen: chunkCount ? Math.round(totalChars / chunkCount) : 0,
+      avgChunksPerNote: noteCount ? Math.round(chunkCount / noteCount * 10) / 10 : 0
+    };
+  }
+  function buildSourceTree(meta) {
+    var _a2;
+    const roots = /* @__PURE__ */ new Map();
+    const childOf = /* @__PURE__ */ new Map();
+    const nodeOf = /* @__PURE__ */ new Map();
+    const ensureDir = (dir) => {
+      let node = nodeOf.get(dir);
+      if (node) return node;
+      const segs = dir.split("/").filter(Boolean);
+      node = {
+        name: segs[segs.length - 1] || dir,
+        path: dir,
+        notes: 0,
+        chunks: 0,
+        children: []
+      };
+      nodeOf.set(dir, node);
+      if (segs.length === 1) {
+        roots.set(dir, node);
+      } else {
+        const parent = ensureDir(segs.slice(0, -1).join("/"));
+        const siblings = childOf.get(parent.path) || [];
+        siblings.push(node);
+        childOf.set(parent.path, siblings);
+      }
+      return node;
+    };
+    for (const [path, entry] of Object.entries(meta.notes)) {
+      const idx = path.lastIndexOf("/");
+      const dir = idx === -1 ? "（根目录）" : path.slice(0, idx);
+      let cursor = ensureDir(dir);
+      while (cursor) {
+        cursor.notes++;
+        cursor.chunks += entry.chunks.length;
+        const segs = cursor.path.split("/").filter(Boolean);
+        if (segs.length <= 1) break;
+        cursor = (_a2 = nodeOf.get(segs.slice(0, -1).join("/"))) != null ? _a2 : null;
+      }
+    }
+    for (const node of nodeOf.values()) {
+      node.children = childOf.get(node.path) || [];
+    }
+    const sortChildren = (arr) => {
+      arr.sort((a, b) => b.chunks - a.chunks);
+      for (const c of arr) sortChildren(c.children);
+    };
+    const rootsArr = [...roots.values()];
+    sortChildren(rootsArr);
+    return rootsArr;
+  }
+  function sbSourceColor(name, order) {
+    const i = order.get(name);
+    if (i === void 0) return SB_FALLBACK;
+    return SB_PALETTE[i % SB_PALETTE.length];
+  }
+  function escapeHtml3(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  }
+  function panelShellHtml() {
+    return `
+  <div class="bz-sb-head">
+    <div class="bz-sb-glyph">${ic("brain", 19)}</div>
+    <div class="bz-sb-head-title">
+      <h3>第二大脑</h3>
+      <div class="bz-sb-cnt" id="bz-sb-cnt"></div>
+    </div>
+    <div class="bz-sb-pill"><i class="bz-sb-pill-dot"></i><span id="bz-sb-pill-txt">索引健康</span></div>
+    <div class="bz-sb-head-sp"></div>
+    <div class="bz-sb-panel-btns">
+      <button class="bz-sb-panel-func bz-sb-fbtn" id="bz-sb-open-chat">${ic("message-square", 14)}AI 对话</button>
+      <button class="bz-sb-panel-func bz-sb-fbtn" id="bz-sb-open-ref">${ic("radar", 14)}灵感参考</button>
+      <button class="bz-sb-panel-gear bz-sb-fbtn bz-sb-fbtn--icon" id="bz-sb-open-settings" aria-label="第二大脑设置">${ic("settings", 14)}</button>
+    </div>
+  </div>
+  <div class="bz-sb-panel-body">
+    <div class="bz-sb-panel-content" id="bz-sb-content" style="display:none">
+      <div class="bz-sb-cards" id="bz-sb-cards"></div>
+      <div class="bz-sb-grid">
+        <div class="bz-sb-col">
+          <div class="bz-sb-section bz-sb-section-trend">
+            <div class="bz-sb-ct">${ic("activity", 13)}近 12 周向量化<span class="bz-sb-ct-n" id="bz-sb-trend-sum"></span></div>
+            <div id="bz-sb-trend" class="bz-sb-trend"></div>
+          </div>
+          <div class="bz-sb-section bz-sb-section-recent">
+            <div class="bz-sb-ct">${ic("history", 13)}最近向量化<span class="bz-sb-ct-n" id="bz-sb-recent-n"></span></div>
+            <div id="bz-sb-recent" class="bz-sb-recent"></div>
+          </div>
+        </div>
+        <div class="bz-sb-col">
+          <div class="bz-sb-section bz-sb-section-dist">
+            <div class="bz-sb-ct">${ic("layers", 13)}来源分布<span class="bz-sb-ct-n" id="bz-sb-dist-n"></span></div>
+            <div id="bz-sb-dist" class="bz-sb-dist"></div>
+          </div>
+          <div class="bz-sb-section bz-sb-ai" id="bz-sb-ai-card">
+            <div class="bz-sb-ct bz-sb-ai-ct">${ic("sparkles", 13)}库摘要<span class="bz-sb-ct-n" id="bz-sb-ai-when"></span></div>
+            <div class="bz-sb-ai-txt" id="bz-sb-ai-txt"></div>
+          </div>
+        </div>
+      </div>
+      <div class="bz-sb-foot">
+        <button class="bz-sb-fbtn bz-sb-fbtn--primary" id="bz-sb-incr">${ic("refresh-cw", 14)}增量更新</button>
+        <button class="bz-sb-fbtn" id="bz-sb-rebuild">${ic("database", 14)}全量重建</button>
+        <div class="bz-sb-log" id="bz-sb-log"></div>
+      </div>
+    </div>
+    <div class="bz-sb-onboard" id="bz-sb-onboard" style="display:none">
+      <div class="bz-sb-onboard-icon">${ic("brain", 34)}</div>
+      <div class="bz-sb-onboard-title" id="bz-sb-progress-title">初始化向量数据库</div>
+      <div class="bz-sb-onboard-desc" id="bz-sb-onboard-desc"></div>
+      <button class="bz-sb-init-btn" id="bz-sb-init-btn">开始向量化</button>
+      <div class="bz-sb-init-progress" id="bz-sb-init-progress">
+        <div class="bz-sb-init-bar"><span class="bz-sb-init-fill" id="bz-sb-init-fill"></span></div>
+        <div class="bz-sb-init-status" id="bz-sb-init-status">准备中…</div>
+      </div>
+    </div>
+  </div>`;
+  }
+  function panelCardsHtml(items) {
+    return items.map(
+      (it) => `<div class="bz-sb-card${it.acc ? " bz-sb-card--acc" : ""}"${it.tip ? ` title="${escapeHtml3(it.tip)}"` : ""}><div class="bz-sb-card-value${it.warn ? " bz-sb-card-value--warn" : ""}">${it.v}</div><div class="bz-sb-card-label">${escapeHtml3(it.k)}</div></div>`
+    ).join("");
+  }
+  function panelTrendHtml(trend) {
+    const max = Math.max(...trend, 1);
+    return trend.map((n, i) => {
+      const label = i === 11 ? "本周" : i === 5 || i === 0 ? `${11 - i}周` : "";
+      const weeksAgo = 11 - i;
+      return `<div class="bz-sb-trend-col${i === 11 ? " bz-sb-trend-col--last" : ""}" title="${weeksAgo === 0 ? "本周" : `${weeksAgo} 周前`}：${n} 篇" aria-label="${n} 篇"><div class="bz-sb-trend-bar" style="height:${Math.max(2, Math.round(n / max * 62))}px"></div><span>${label}</span></div>`;
+    }).join("");
+  }
+  function panelDistHtml(nodes, expanded, colorOf2, maxChunks, depth = 0) {
+    return nodes.map((node) => {
+      const hasChildren = node.children.length > 0;
+      const open = expanded.has(node.path);
+      const row = `<div class="bz-sb-dist-row${hasChildren ? " bz-sb-dist-row--dir" : ""}" data-path="${escapeHtml3(node.path)}" style="padding-left:${10 + depth * 16}px"><span class="bz-sb-dist-caret${hasChildren ? "" : " bz-sb-dist-caret--leaf"}">${hasChildren ? ic("chevron-right", 12) : ""}</span><span class="bz-sb-dist-name">${escapeHtml3(node.name)}</span><span class="bz-sb-dist-bar"><span class="bz-sb-dist-fill" style="width:${Math.round(node.chunks / maxChunks * 100)}%;background:${colorOf2(node.name)}"></span></span><span class="bz-sb-dist-num">${node.notes} 篇 / ${node.chunks} 段</span></div>`;
+      const kids = hasChildren && open ? panelDistHtml(node.children, expanded, colorOf2, maxChunks, depth + 1) : "";
+      return row + kids;
+    }).join("");
+  }
+  function panelRecentHtml(rows) {
+    if (!rows.length) return '<div class="bz-sb-empty">没有符合条件的文件</div>';
+    return rows.map(
+      (r) => `<div class="bz-sb-recent-row" data-path="${escapeHtml3(r.path)}"><span class="bz-sb-dot" style="background:${r.color}"></span><span class="bz-sb-recent-name">${escapeHtml3(r.name)}</span><span class="bz-sb-recent-time">${r.chunks} 段 · ${escapeHtml3(r.when)}</span></div>`
+    ).join("");
+  }
+  function panelSummaryHtml(text, when) {
+    if (!text) return "";
+    return `<div class="bz-sb-ai-txt">${escapeHtml3(text)}</div>` + (when ? `<div class="bz-sb-ai-when">${escapeHtml3(when)}</div>` : "");
+  }
+  function panelLogHtml(parts) {
+    return parts.map((p) => `<span class="bz-sb-log-item${p.warn ? " bz-sb-log-item--warn" : ""}">${escapeHtml3(p.text)}</span>`).join('<span class="bz-sb-log-sep">·</span>');
+  }
+  function chatShellHtml(topK) {
+    return `
+  <div class="bz-sb-chat-head">
+    <div class="bz-sb-glyph bz-sb-chat-glyph">${ic("brain", 17)}</div>
+    <div class="bz-sb-head-title">
+      <h3>AI 对话</h3>
+      <div class="bz-sb-cnt">以库为底作答 · 单次检索 ${topK} 条相关段落</div>
+    </div>
+    <div class="bz-sb-head-sp"></div>
+    <button class="bz-sb-chat-clear bz-sb-fbtn" id="bz-sb-chat-clear">${ic("history", 13)}清空对话</button>
+  </div>
+  <div class="bz-sb-chat-messages bz-sb-scroll-y" id="bz-sb-chat-messages"></div>
+  <div class="bz-sb-chat-input-area">
+    <div class="bz-sb-chat-input-row">
+      <span class="bz-sb-chat-lens">${ic("sparkles", 15)}</span>
+      <textarea class="bz-sb-chat-input" id="bz-sb-chat-input" rows="1" placeholder="向第二大脑提问，回车发送…"></textarea>
+      <button class="bz-sb-chat-send" id="bz-sb-chat-send" aria-label="发送">${ic("send", 14)}</button>
+    </div>
+    <div class="bz-sb-chat-chips" id="bz-sb-chat-chips">
+      ${CHAT_CHIPS.map((c) => `<button class="bz-sb-chat-chip" data-q="${escapeHtml3(c)}">${escapeHtml3(c)}</button>`).join("")}
+    </div>
+  </div>`;
+  }
+  function chatUserMsgHtml() {
+    return `<div class="bz-sb-chat-who">${ic("send", 10)}刚问</div><div class="bz-sb-chat-bubble"></div>`;
+  }
+  function chatAiMsgHtml() {
+    return `<div class="bz-sb-chat-who">${ic("brain", 10)}第二大脑</div><div class="bz-sb-chat-bubble"></div>`;
+  }
+  function chatThinkingHtml(topK) {
+    return `<div class="bz-sb-chat-thinking"><span class="bz-sb-chat-thinking-dots"><i></i><i></i><i></i></span>正在检索 ${topK} 条相关段落…</div>`;
+  }
+  function chatCitesHtml(hits) {
+    if (!hits.length) return "";
+    return `<div class="bz-sb-chat-cites">` + hits.map(
+      (h) => `<button class="bz-sb-chat-cite" data-path="${escapeHtml3(h.path)}"><span class="bz-sb-chat-cite-score">${h.pct}%</span><span class="bz-sb-dot" style="background:${h.color}"></span><span class="bz-sb-chat-cite-name">${escapeHtml3(h.path.replace(/^.*[\\/]/, "").replace(/\.md$/i, ""))}</span></button>`
+    ).join("") + `</div>`;
+  }
+  function refCardHtml(name, pct, color) {
+    return `<div class="bz-sb-ref-card-top"><div class="bz-sb-ref-card-path">${escapeHtml3(name)}</div><span class="bz-sb-ref-card-score">${pct}%</span></div><div class="bz-sb-ref-card-bar"><span class="bz-sb-ref-card-bar-fill" style="width:${pct}%;background:${color}"></span></div><div class="bz-sb-ref-card-body"></div>`;
+  }
+  function refStateHtml(text) {
+    return `<div class="bz-sb-ref-empty">${escapeHtml3(text)}</div>`;
+  }
+  var SB_PALETTE, SB_FALLBACK, ic, CHAT_CHIPS;
+  var init_render11 = __esm({
+    "src/secondbrain/render.ts"() {
+      SB_PALETTE = ["#0f766e", "#6366f1", "#d97706", "#db2777", "#0e7490", "#7c3aed", "#b45309", "#be185d"];
+      SB_FALLBACK = "#a39b8c";
+      ic = (name, size = 15) => `<i data-lucide="${name}" style="width:${size}px;height:${size}px"></i>`;
+      CHAT_CHIPS = ["为什么会遗忘", "享乐适应", "怎么高效记笔记", "睡不好怎么补救", "闪电", "王阳明"];
+    }
+  });
+
   // src/secondbrain/binary.ts
   var MobileBuffer;
   var init_binary = __esm({
@@ -35906,6 +36189,8 @@ ${n.content.slice(0, 2e3)}
       init_config3();
       init_context();
       init_ui_tools();
+      init_render11();
+      init_ui();
       ReferencePanel = class {
         constructor(app2, store2, existingWin) {
           this.lastQuery = "";
@@ -35930,7 +36215,7 @@ ${n.content.slice(0, 2e3)}
           this.store = store2;
           this.denseBtn = document.createElement("button");
           this.denseBtn.className = "bz-sb-float-btn";
-          this.denseBtn.textContent = "📑";
+          this.denseBtn.innerHTML = '<i data-lucide="file-text"></i>';
           this.denseBtn.title = "切换：仅标题 / 标题+内容";
           if (existingWin) {
             this.fw = existingWin;
@@ -35939,6 +36224,7 @@ ${n.content.slice(0, 2e3)}
             this.fw = new FloatWindow("灵感参考", { headerRight: this.denseBtn, onClose: () => this.destroyResources() });
           }
           this.denseBtn.addEventListener("click", () => this.toggleDensity());
+          mountIcons(this.denseBtn);
           this.resultsDiv = document.createElement("div");
           this.resultsDiv.className = "bz-sb-ref-list bz-sb-scroll-y";
           this.fw.body.appendChild(this.resultsDiv);
@@ -35974,7 +36260,8 @@ ${n.content.slice(0, 2e3)}
         toggleDensity() {
           this.denseMode = !this.denseMode;
           this.resultsDiv.classList.toggle("bz-sb-ref-dense", this.denseMode);
-          this.denseBtn.textContent = this.denseMode ? "📃" : "📑";
+          this.denseBtn.innerHTML = `<i data-lucide="${this.denseMode ? "list-tree" : "file-text"}"></i>`;
+          mountIcons(this.denseBtn);
           this.denseBtn.title = this.denseMode ? "切换：标题+内容" : "切换：仅标题";
         }
         refreshWithDebounce() {
@@ -36014,17 +36301,11 @@ ${n.content.slice(0, 2e3)}
         showListState(text) {
           this.cancelPendingCardStates();
           this.resultsDiv.innerHTML = "";
-          const div = document.createElement("div");
-          div.className = "bz-sb-ref-empty";
-          div.textContent = text;
-          this.resultsDiv.appendChild(div);
+          this.resultsDiv.insertAdjacentHTML("beforeend", refStateHtml(text));
         }
         /** [46] 降级脚注：不打断结果列表，在列表末追加一行说明 */
         appendListHint(text) {
-          const div = document.createElement("div");
-          div.className = "bz-sb-ref-empty";
-          div.textContent = text;
-          this.resultsDiv.appendChild(div);
+          this.resultsDiv.insertAdjacentHTML("beforeend", refStateHtml(text));
         }
         renderResults(results) {
           var _a2;
@@ -36055,21 +36336,10 @@ ${n.content.slice(0, 2e3)}
           const panel2 = this;
           const card = document.createElement("div");
           card.className = "bz-sb-ref-card";
-          const topRow = document.createElement("div");
-          topRow.className = "bz-sb-ref-card-top";
-          const pathDiv = document.createElement("div");
-          pathDiv.className = "bz-sb-ref-card-path";
-          pathDiv.textContent = item.path.replace(/^.*[\\/]/, "").replace(/\.md$/i, "");
-          const badge = document.createElement("span");
-          badge.className = "bz-sb-ref-card-score";
-          badge.textContent = `${Math.round(item.score * 100)}%`;
-          topRow.appendChild(pathDiv);
-          topRow.appendChild(badge);
-          const bodyDiv = document.createElement("div");
-          bodyDiv.className = "bz-sb-ref-card-body";
+          card.innerHTML = refCardHtml(item.path.replace(/^.*[\\/]/, "").replace(/\.md$/i, ""), Math.round(item.score * 100), "#a33d2a");
+          const topRow = card.querySelector(".bz-sb-ref-card-top");
+          const bodyDiv = card.querySelector(".bz-sb-ref-card-body");
           renderMarkdown2(bodyDiv, item.chunk, panel2.app);
-          card.appendChild(topRow);
-          card.appendChild(bodyDiv);
           panel2.resultsDiv.appendChild(card);
           const isFloating = () => card.classList.contains("bz-sb-ref-card--float");
           card.addEventListener("mouseenter", () => {
@@ -36292,8 +36562,8 @@ ${n.content.slice(0, 2e3)}
   });
 
   // src/secondbrain/chat-panel.ts
-  function welcomeText() {
-    return `你好！每次提问会独立检索 ${buildConfig().CHAT_TOP_K} 条笔记辅助回答。`;
+  function welcomeText(topK) {
+    return `你好！每次提问会独立检索 ${topK} 条笔记辅助回答。`;
   }
   var ChatPanel;
   var init_chat_panel = __esm({
@@ -36301,10 +36571,12 @@ ${n.content.slice(0, 2e3)}
       init_dom();
       init_esc_manager();
       init_flow_dialog();
+      init_ui();
       init_config3();
       init_ui_tools();
       init_ai3();
       init_store_file();
+      init_render11();
       ChatPanel = class {
         constructor(store2, app2) {
           this.history = [];
@@ -36313,40 +36585,27 @@ ${n.content.slice(0, 2e3)}
           this.inFlight = null;
           /** 轮次序号：清空对话 / 销毁后，旧轮的回调不再写 UI 与历史 */
           this.seq = 0;
+          var _a2, _b2;
           this.app = app2;
           this.store = store2;
           const CONFIG2 = buildConfig();
           const { mask, popup } = createOverlay({
             maskId: "bz-sb-chat-mask",
             popupId: "bz-sb-chat-panel",
-            onMaskClick: () => this.close()
+            onMaskClick: () => this.close(),
+            width: "760px",
+            // createOverlay 以内联样式设宽（优先级高于类规则），必须在此定尺寸
+            maxWidth: 760
           });
           this.mask = mask;
           this.popup = popup;
           this.popup.classList.add("bz-sb-chat-modal");
-          const head = document.createElement("div");
-          head.className = "bz-win-head bz-sb-chat-head";
-          const title = document.createElement("h3");
-          title.textContent = "🤖 AI 助手";
-          const clearBtn = document.createElement("button");
-          clearBtn.className = "bz-sb-chat-clear";
-          clearBtn.textContent = "清空对话";
-          clearBtn.addEventListener("click", () => void this.confirmClear());
-          head.appendChild(title);
-          head.appendChild(clearBtn);
-          this.messagesDiv = document.createElement("div");
-          this.messagesDiv.className = "bz-sb-chat-messages bz-sb-scroll-y";
-          const inputArea = document.createElement("div");
-          inputArea.className = "bz-sb-chat-input-area";
-          const inputRow = document.createElement("div");
-          inputRow.className = "bz-sb-chat-input-row";
-          this.input = document.createElement("textarea");
-          this.input.className = "bz-sb-chat-input";
-          this.input.rows = 1;
-          this.input.placeholder = `检索 ${CONFIG2.CHAT_TOP_K} 条笔记辅助回答...`;
-          this.sendBtn = document.createElement("button");
-          this.sendBtn.className = "bz-sb-chat-send";
-          this.sendBtn.textContent = "发送";
+          this.popup.innerHTML = chatShellHtml(CONFIG2.CHAT_TOP_K);
+          mountIcons(this.popup);
+          this.messagesDiv = this.popup.querySelector("#bz-sb-chat-messages");
+          this.input = this.popup.querySelector("#bz-sb-chat-input");
+          this.sendBtn = this.popup.querySelector("#bz-sb-chat-send");
+          (_a2 = this.popup.querySelector("#bz-sb-chat-clear")) == null ? void 0 : _a2.addEventListener("click", () => void this.confirmClear());
           this.sendBtn.addEventListener("click", () => {
             if (this.inFlight) {
               this.inFlight.abort();
@@ -36362,19 +36621,27 @@ ${n.content.slice(0, 2e3)}
             }
           });
           this.input.addEventListener("input", () => this.autoGrowInput());
-          inputRow.appendChild(this.input);
-          inputRow.appendChild(this.sendBtn);
-          inputArea.appendChild(inputRow);
-          this.popup.appendChild(head);
-          this.popup.appendChild(this.messagesDiv);
-          this.popup.appendChild(inputArea);
+          (_b2 = this.popup.querySelector("#bz-sb-chat-chips")) == null ? void 0 : _b2.addEventListener("click", (e) => {
+            const chip = e.target.closest(".bz-sb-chat-chip");
+            if (!chip || this.inFlight) return;
+            this.input.value = chip.dataset.q || "";
+            void this.sendChatMessage();
+          });
+          this.messagesDiv.addEventListener("click", (e) => {
+            const cite = e.target.closest(".bz-sb-chat-cite");
+            if (!cite) return;
+            const path = cite.dataset.path;
+            const f = path ? this.app.vault.getAbstractFileByPath(path) : null;
+            if (f) void this.app.workspace.getLeaf(false).openFile(f);
+            else if (path) this.appendAiNote("文件不存在或已被移动");
+          });
           document.body.appendChild(mask);
           document.body.appendChild(popup);
           this.escHandle = escManager.register("bz-sb-chat-modal", {
             isVisible: () => this.popup.style.display === "flex" && !!this.popup.isConnected,
             close: () => this.close()
           });
-          this.addChatMessage("assistant", welcomeText());
+          this.addChatMessage("assistant", welcomeText(CONFIG2.CHAT_TOP_K));
           this.restorePersistedHistory();
         }
         get alive() {
@@ -36403,13 +36670,17 @@ ${n.content.slice(0, 2e3)}
           this.popup.remove();
         }
         /** 历史仅 UI 展示用；裁剪 MAX_HISTORY×2 条，不进 prompt（每问独立检索） */
-        addChatMessage(role, content) {
+        addChatMessage(role, content, hits) {
           const div = document.createElement("div");
           div.className = `bz-sb-chat-msg ${role}`;
           if (role === "assistant") {
-            renderMarkdown2(div, content, this.app);
+            div.innerHTML = chatAiMsgHtml();
+            const bubble = div.querySelector(".bz-sb-chat-bubble");
+            renderMarkdown2(bubble, content, this.app);
+            if (hits == null ? void 0 : hits.length) bubble.insertAdjacentHTML("beforeend", chatCitesHtml(this.citeRows(hits)));
           } else {
-            div.textContent = content;
+            div.innerHTML = chatUserMsgHtml();
+            div.querySelector(".bz-sb-chat-bubble").textContent = content;
           }
           this.messagesDiv.appendChild(div);
           this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
@@ -36418,9 +36689,26 @@ ${n.content.slice(0, 2e3)}
           if (this.history.length > CONFIG2.MAX_HISTORY * 2) {
             this.history = this.history.slice(-CONFIG2.MAX_HISTORY * 2);
           }
+          return div;
+        }
+        /** 引用卡行（来源色点按来源分布序取色板） */
+        citeRows(hits) {
+          const order = new Map(computeStats2(this.store.meta).bySource.map((s, i) => [s.name, i]));
+          return hits.slice(0, 5).map((h) => ({
+            path: h.path,
+            pct: Math.round(h.score * 100),
+            color: sbSourceColor(h.path.split("/")[0] || "（根目录）", order)
+          }));
+        }
+        /** 轻量 assistant 提示（不进历史；用于错误/停止等纯 UI 文案之外的补充说明） */
+        appendAiNote(text) {
+          const note = document.createElement("div");
+          note.className = "bz-sb-ref-empty";
+          note.textContent = text;
+          this.messagesDiv.appendChild(note);
         }
         // ==================== ticket 141：多行输入 / 取消 / 流式 / 历史持久化 ====================
-        /** textarea 自增高度：随内容长高，CSS max-height 钳制上限 5 行，超出内部滚动 */
+        /** textarea 自增高度：随内容长高，CSS max-height 钳制上限，超出内部滚动 */
         autoGrowInput() {
           this.input.style.height = "auto";
           this.input.style.height = this.input.scrollHeight + "px";
@@ -36451,18 +36739,23 @@ ${n.content.slice(0, 2e3)}
           this.autoGrowInput();
           this.addChatMessage("user", userMsg);
           this.persistHistory([{ role: "user", content: userMsg }]);
+          const CONFIG2 = buildConfig();
           const controller2 = new AbortController();
           const seq = ++this.seq;
           this.inFlight = controller2;
           this.sendBtn.disabled = false;
-          this.sendBtn.textContent = "停止";
+          this.sendBtn.setAttribute("data-state", "stop");
+          this.sendBtn.title = "停止";
           const live2 = document.createElement("div");
           live2.className = "bz-sb-chat-msg assistant";
-          let acc = "";
+          live2.innerHTML = chatAiMsgHtml();
+          live2.querySelector(".bz-sb-chat-bubble").innerHTML = chatThinkingHtml(CONFIG2.CHAT_TOP_K);
           this.messagesDiv.appendChild(live2);
+          this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
+          let acc = "";
           try {
-            const CONFIG2 = buildConfig();
             const results = await this.store.search(userMsg, CONFIG2.CHAT_TOP_K);
+            if (seq !== this.seq) return;
             const context = results.length > 0 ? results.map((r) => `[${r.path}] (${Math.round(r.score * 100)}%)
 ${r.chunk}`).join("\n\n") : "（未找到相关笔记）";
             const fullPrompt = `你是知识助手。参考笔记库中 ${results.length} 条检索结果回答问题。不相关可忽略。
@@ -36476,13 +36769,14 @@ ${userMsg}`;
               signal: controller2.signal,
               onDelta: (delta) => {
                 acc += delta;
-                live2.textContent = acc;
+                const bubble = live2.querySelector(".bz-sb-chat-bubble");
+                if (bubble) bubble.textContent = acc;
                 this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
               }
             });
             live2.remove();
             if (seq === this.seq) {
-              this.addChatMessage("assistant", answer);
+              this.addChatMessage("assistant", answer, results);
               this.persistHistory([{ role: "assistant", content: answer }]);
             }
           } catch (e) {
@@ -36497,7 +36791,8 @@ ${userMsg}`;
             if (seq === this.seq) {
               this.inFlight = null;
               this.sendBtn.disabled = false;
-              this.sendBtn.textContent = "发送";
+              this.sendBtn.removeAttribute("data-state");
+              this.sendBtn.title = "发送";
             } else if (this.inFlight === controller2) {
               this.inFlight = null;
             }
@@ -36519,10 +36814,11 @@ ${userMsg}`;
           (_a2 = this.inFlight) == null ? void 0 : _a2.abort();
           this.inFlight = null;
           this.sendBtn.disabled = false;
-          this.sendBtn.textContent = "发送";
+          this.sendBtn.removeAttribute("data-state");
+          this.sendBtn.title = "发送";
           this.history = [];
           this.messagesDiv.innerHTML = "";
-          this.addChatMessage("assistant", welcomeText());
+          this.addChatMessage("assistant", welcomeText(buildConfig().CHAT_TOP_K));
           try {
             await clearChatHistory(this.app);
           } catch (e) {
@@ -38064,106 +38360,9 @@ ${text}`;
     openSecondBrainSettings: () => openSecondBrainSettings,
     secondBrainSettingsSchema: () => secondBrainSettingsSchema
   });
-  function topLevelDir(path) {
+  function topLevelName(path) {
     const i = path.indexOf("/");
     return i === -1 ? "（根目录）" : path.slice(0, i);
-  }
-  function buildSourceTree(meta) {
-    var _a2;
-    const roots = /* @__PURE__ */ new Map();
-    const childOf = /* @__PURE__ */ new Map();
-    const nodeOf = /* @__PURE__ */ new Map();
-    const ensureDir = (dir) => {
-      let node = nodeOf.get(dir);
-      if (node) return node;
-      const segs = dir.split("/").filter(Boolean);
-      node = {
-        name: segs[segs.length - 1] || dir,
-        path: dir,
-        notes: 0,
-        chunks: 0,
-        children: []
-      };
-      nodeOf.set(dir, node);
-      if (segs.length === 1) {
-        roots.set(dir, node);
-      } else {
-        const parent = ensureDir(segs.slice(0, -1).join("/"));
-        const siblings = childOf.get(parent.path) || [];
-        siblings.push(node);
-        childOf.set(parent.path, siblings);
-      }
-      return node;
-    };
-    for (const [path, entry] of Object.entries(meta.notes)) {
-      const idx = path.lastIndexOf("/");
-      const dir = idx === -1 ? "（根目录）" : path.slice(0, idx);
-      let cursor = ensureDir(dir);
-      while (cursor) {
-        cursor.notes++;
-        cursor.chunks += entry.chunks.length;
-        const segs = cursor.path.split("/").filter(Boolean);
-        if (segs.length <= 1) break;
-        cursor = (_a2 = nodeOf.get(segs.slice(0, -1).join("/"))) != null ? _a2 : null;
-      }
-    }
-    for (const node of nodeOf.values()) {
-      node.children = childOf.get(node.path) || [];
-    }
-    const sortChildren = (arr) => {
-      arr.sort((a, b) => b.chunks - a.chunks);
-      for (const c of arr) sortChildren(c.children);
-    };
-    const rootsArr = [...roots.values()];
-    sortChildren(rootsArr);
-    return rootsArr;
-  }
-  function fmtCompact(n) {
-    const trim = (s) => s.replace(/\.0$/, "");
-    if (n >= 1e9) return `${trim((n / 1e9).toFixed(1))}B`;
-    if (n >= 1e6) return `${trim((n / 1e6).toFixed(1))}M`;
-    if (n >= 1e4) return `${trim((n / 1e3).toFixed(1))}K`;
-    return n.toLocaleString();
-  }
-  function computeStats2(meta, now = Date.now()) {
-    var _a2, _b2;
-    const bySource = /* @__PURE__ */ new Map();
-    let chunkCount = 0;
-    let totalChars = 0;
-    const recent2 = [];
-    const weekMs = 7 * 24 * 3600 * 1e3;
-    const thisWeekStart = Math.floor(now / weekMs) * weekMs;
-    const trend12w = new Array(12).fill(0);
-    for (const [path, entry] of Object.entries(meta.notes)) {
-      const chunks = entry.chunks.length;
-      chunkCount += chunks;
-      let chars = 0;
-      for (const c of entry.chunks) chars += c.text.length;
-      totalChars += chars;
-      const dir = topLevelDir(path);
-      const item = bySource.get(dir) || { name: dir, notes: 0, chunks: 0 };
-      item.notes++;
-      item.chunks += chunks;
-      bySource.set(dir, item);
-      recent2.push({ path, mtime: entry.mtime, chunks });
-      const bucket = 11 - Math.floor((thisWeekStart - entry.mtime) / weekMs);
-      if (bucket >= 0 && bucket <= 11) trend12w[bucket]++;
-    }
-    recent2.sort((a, b) => b.mtime - a.mtime);
-    const bySourceArr = [...bySource.values()].sort((a, b) => b.chunks - a.chunks);
-    const noteCount = Object.keys(meta.notes).length;
-    return {
-      chunkCount,
-      noteCount,
-      dim: meta._dim || 0,
-      lastIndexedAt: (_b2 = (_a2 = recent2[0]) == null ? void 0 : _a2.mtime) != null ? _b2 : null,
-      bySource: bySourceArr,
-      recent: recent2.slice(0, 10),
-      trend12w,
-      totalChars,
-      avgChunkLen: chunkCount ? Math.round(totalChars / chunkCount) : 0,
-      avgChunksPerNote: noteCount ? Math.round(chunkCount / noteCount * 10) / 10 : 0
-    };
   }
   function lanIpDesc() {
     if (isMobileEnv()) return "";
@@ -38421,15 +38620,19 @@ ${text}`;
       init_notice();
       init_z_order();
       init_mobile();
-      init_settings_provider();
-      init_settings_modal();
-      init_utils();
+      init_ui();
       init_flow_dialog();
       init_esc_manager();
       init_app();
+      init_utils();
+      init_settings_provider();
+      init_settings_modal();
       init_config3();
       init_whitelist();
       init_local_ip();
+      init_store_file();
+      init_render11();
+      init_render11();
       SecondBrainPanel = class {
         constructor(app2, store2, opts) {
           this.mask = null;
@@ -38439,8 +38642,6 @@ ${text}`;
           this.refreshing = false;
           /** 初始向量化视图进行中标记（ticket 114：runInitialIndexView 持有；进行中重复点击接回进度视图而非静默失效） */
           this.initializing = false;
-          /** 头部功能钮（📚💬）——引导期收起 */
-          this.funcBtns = [];
           /** 来源分布树已展开的目录（ticket 108，会话内记忆） */
           this.expandedDirs = /* @__PURE__ */ new Set();
           /** 设置页「重新索引」意图标记（ticket 108：确认后打开面板即自动全量重建） */
@@ -38519,15 +38720,17 @@ ${text}`;
           this.showContent();
         }
         showContent(skipRefresh = false) {
+          var _a2, _b2;
           const onboard = document.getElementById("bz-sb-onboard");
           const content = document.getElementById("bz-sb-content");
           if (onboard) onboard.style.display = "none";
           if (content) content.style.display = "flex";
-          for (const b of this.funcBtns) b.classList.remove("bz-sb-btn-hidden");
+          for (const b of (_b2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-sb-panel-func")) != null ? _b2 : []) b.classList.remove("bz-sb-btn-hidden");
           if (!skipRefresh && !this.refreshing) void this.autoRefreshThenRender();
         }
         /** 空库首次引导：说明 + 开始按钮（进度视图的 init 形态） */
         showInitGuidance() {
+          var _a2, _b2;
           const onboard = document.getElementById("bz-sb-onboard");
           const content = document.getElementById("bz-sb-content");
           const title = document.getElementById("bz-sb-progress-title");
@@ -38539,15 +38742,16 @@ ${text}`;
           if (btn) {
             btn.style.display = "block";
             btn.disabled = false;
-            btn.textContent = "🚀 开始向量化";
+            btn.textContent = "开始向量化";
           }
           if (box) box.style.display = "none";
           if (onboard) onboard.style.display = "flex";
           if (content) content.style.display = "none";
-          for (const b of this.funcBtns) b.classList.add("bz-sb-btn-hidden");
+          for (const b of (_b2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-sb-panel-func")) != null ? _b2 : []) b.classList.add("bz-sb-btn-hidden");
         }
         /** 进入纯进度形态（自动运行，无按钮；title 由调用方给定） */
         enterProgressView(titleText, resetStatus = true) {
+          var _a2, _b2;
           const onboard = document.getElementById("bz-sb-onboard");
           const content = document.getElementById("bz-sb-content");
           const title = document.getElementById("bz-sb-progress-title");
@@ -38564,7 +38768,7 @@ ${text}`;
           if (resetStatus && status) status.textContent = "准备中…";
           if (onboard) onboard.style.display = "flex";
           if (content) content.style.display = "none";
-          for (const b of this.funcBtns) b.classList.add("bz-sb-btn-hidden");
+          for (const b of (_b2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-sb-panel-func")) != null ? _b2 : []) b.classList.add("bz-sb-btn-hidden");
         }
         /** 进度回调解析：把 store.updateProgress 文案换算成进度条（面板销毁后不再写 DOM） */
         progressObserver() {
@@ -38606,9 +38810,7 @@ ${text}`;
         /** 全量重建（ticket 108「重新索引」）：清空 → 整库重嵌 → 统计；失败给原因可重试 */
         async runRebuild() {
           this.enterProgressView("正在重建向量数据库");
-          const btn = document.getElementById("bz-sb-init-btn");
           const status = document.getElementById("bz-sb-init-status");
-          const box = document.getElementById("bz-sb-init-progress");
           this.initializing = true;
           try {
             await this.store.rebuildAll(this.progressObserver());
@@ -38616,133 +38818,67 @@ ${text}`;
               this.showContent(true);
               await this.renderStats();
             } else {
+              const box = document.getElementById("bz-sb-init-progress");
               if (box) box.style.display = "flex";
               if (status) status.textContent = "重建未完成：请确认 Ollama 服务与 Embedding 模型可用后重试";
-              if (btn) {
-                btn.style.display = "block";
-                btn.disabled = false;
-                btn.textContent = "🚀 重试重建";
-                btn.onclick = () => void this.runRebuild();
-              }
+              this.revealInitBtn("重试重建");
             }
           } catch (e) {
             console.warn("[secondbrain] 全量重建失败", e);
             if (status == null ? void 0 : status.isConnected) {
               status.textContent = "重建失败：" + ((e == null ? void 0 : e.message) || e);
-              if (btn) {
-                btn.style.display = "block";
-                btn.disabled = false;
-                btn.textContent = "🚀 重试重建";
-                btn.onclick = () => void this.runRebuild();
-              }
+              this.revealInitBtn("重试重建");
             }
           } finally {
             this.initializing = false;
           }
         }
+        /** 组装弹窗 DOM（markup 全部出自 render.ts；本方法只绑定事件） */
         createUI() {
+          var _a2, _b2, _c, _d, _e, _f;
           if (this.mask && document.body.contains(this.mask)) return;
           const mask = document.createElement("div");
           mask.className = "bz-sb-panel-mask";
           mask.onclick = () => this.close();
           const popup = document.createElement("div");
           popup.className = "bz-sb-panel";
-          const head = document.createElement("div");
-          head.className = "bz-win-head bz-sb-panel-head";
-          const title = document.createElement("h3");
-          title.textContent = "🧠 第二大脑";
-          const btns = document.createElement("div");
-          btns.className = "bz-sb-panel-btns";
-          const mkBtn = (cls, label, tip, onclick) => {
-            const b = document.createElement("button");
-            b.className = cls;
-            b.textContent = label;
-            b.setAttribute("aria-label", tip);
-            b.onclick = onclick;
-            btns.appendChild(b);
-            return b;
-          };
-          const refBtn = mkBtn("bz-sb-panel-func", "📚", "打开侧边栏", () => {
-            this.close();
-            this.opts.onOpenReference();
-          });
-          const chatBtn = mkBtn("bz-sb-panel-func", "💬", "打开对话", () => {
+          popup.innerHTML = panelShellHtml();
+          (_a2 = popup.querySelector("#bz-sb-open-chat")) == null ? void 0 : _a2.addEventListener("click", () => {
             this.close();
             this.opts.onOpenChat();
           });
-          this.funcBtns = [refBtn, chatBtn];
-          mkBtn("bz-sb-panel-gear", "⚙️", "第二大脑设置", () => this.openSettings());
-          head.appendChild(title);
-          head.appendChild(btns);
-          popup.appendChild(head);
-          const body = document.createElement("div");
-          body.className = "bz-sb-panel-body";
-          const content = document.createElement("div");
-          content.className = "bz-sb-panel-content";
-          content.id = "bz-sb-content";
-          content.style.display = "none";
-          const cards = document.createElement("div");
-          cards.className = "bz-sb-cards";
-          cards.id = "bz-sb-cards";
-          content.appendChild(cards);
-          const trendBox = document.createElement("div");
-          trendBox.className = "bz-sb-section";
-          trendBox.innerHTML = `<div class="bz-sb-section-title">近 12 周向量化趋势</div><div id="bz-sb-trend" class="bz-sb-trend"></div>`;
-          content.appendChild(trendBox);
-          const scaleBox = document.createElement("div");
-          scaleBox.className = "bz-sb-section";
-          scaleBox.innerHTML = `<div class="bz-sb-section-title">内容规模</div><div id="bz-sb-scale" class="bz-sb-scale"></div>`;
-          content.appendChild(scaleBox);
-          const distBox = document.createElement("div");
-          distBox.className = "bz-sb-section";
-          distBox.innerHTML = `<div class="bz-sb-section-title">来源分布</div><div id="bz-sb-dist" class="bz-sb-dist"></div>`;
-          content.appendChild(distBox);
-          const recentBox = document.createElement("div");
-          recentBox.className = "bz-sb-section";
-          recentBox.innerHTML = `<div class="bz-sb-section-title">最近向量化</div><div id="bz-sb-recent" class="bz-sb-recent"></div>`;
-          content.appendChild(recentBox);
-          body.appendChild(content);
-          const onboard = document.createElement("div");
-          onboard.className = "bz-sb-onboard";
-          onboard.id = "bz-sb-onboard";
-          onboard.style.display = "none";
-          const obIcon = document.createElement("div");
-          obIcon.className = "bz-sb-onboard-icon";
-          obIcon.textContent = "🧠";
-          const obTitle = document.createElement("div");
-          obTitle.className = "bz-sb-onboard-title";
-          obTitle.id = "bz-sb-progress-title";
-          obTitle.textContent = "初始化向量数据库";
-          const obDesc = document.createElement("div");
-          obDesc.className = "bz-sb-onboard-desc";
-          obDesc.id = "bz-sb-onboard-desc";
-          obDesc.textContent = "第二大脑还没有你的笔记索引。点击下方按钮后，会把白名单目录内的笔记分块并向量化（通过 Ollama 本地生成，数据不出本机），建成可检索的知识库——之后参考侧边栏、AI 对话与这里的统计才会可用。首次向量化需要手动触发一次，完成后笔记变更会自动增量同步。";
-          const initBtn = document.createElement("button");
-          initBtn.className = "bz-sb-init-btn";
-          initBtn.id = "bz-sb-init-btn";
-          initBtn.textContent = "🚀 开始向量化";
-          initBtn.onclick = () => void this.startInitialIndex();
-          const progress = document.createElement("div");
-          progress.className = "bz-sb-init-progress";
-          progress.id = "bz-sb-init-progress";
-          const bar = document.createElement("div");
-          bar.className = "bz-sb-init-bar";
-          const fill = document.createElement("span");
-          fill.className = "bz-sb-init-fill";
-          fill.id = "bz-sb-init-fill";
-          bar.appendChild(fill);
-          const status = document.createElement("div");
-          status.className = "bz-sb-init-status";
-          status.id = "bz-sb-init-status";
-          progress.appendChild(bar);
-          progress.appendChild(status);
-          onboard.appendChild(obIcon);
-          onboard.appendChild(obTitle);
-          onboard.appendChild(obDesc);
-          onboard.appendChild(initBtn);
-          onboard.appendChild(progress);
-          body.appendChild(onboard);
-          popup.appendChild(body);
+          (_b2 = popup.querySelector("#bz-sb-open-ref")) == null ? void 0 : _b2.addEventListener("click", () => {
+            this.close();
+            this.opts.onOpenReference();
+          });
+          (_c = popup.querySelector("#bz-sb-open-settings")) == null ? void 0 : _c.addEventListener("click", () => this.openSettings());
+          (_d = popup.querySelector("#bz-sb-incr")) == null ? void 0 : _d.addEventListener("click", () => {
+            if (this.refreshing || this.initializing) return;
+            void this.runIncremental();
+          });
+          (_e = popup.querySelector("#bz-sb-rebuild")) == null ? void 0 : _e.addEventListener("click", () => {
+            void openFlowDialog({
+              title: "重新索引",
+              message: "将清空现有向量索引，按当前白名单全部重嵌入（约等于首次初始化全量跑一遍）。期间参考侧边栏与对话的向量检索会降级为文本匹配。确定继续吗？",
+              actions: [
+                { label: "取消", value: "cancel" },
+                { label: "开始重建", value: "ok", cta: true }
+              ]
+            }).then((v) => {
+              if (v === "ok") void this.runRebuild();
+            });
+          });
+          const initBtn = popup.querySelector("#bz-sb-init-btn");
+          if (initBtn) initBtn.onclick = () => void this.startInitialIndex();
+          (_f = popup.querySelector("#bz-sb-dist")) == null ? void 0 : _f.addEventListener("click", (e) => {
+            const row = e.target.closest(".bz-sb-dist-row--dir");
+            if (!row) return;
+            const path = row.dataset.path;
+            if (!path) return;
+            if (this.expandedDirs.has(path)) this.expandedDirs.delete(path);
+            else this.expandedDirs.add(path);
+            this.renderDist();
+          });
           document.body.appendChild(mask);
           document.body.appendChild(popup);
           this.mask = mask;
@@ -38792,19 +38928,19 @@ ${text}`;
               await this.renderStats();
             } else if (sawFail || sawCountedDone) {
               status.textContent = "没有成功向量化任何内容：请确认 Ollama 服务与 Embedding 模型可用" + (IS_MOBILE ? "（移动端需配置「远程 Ollama URL」）" : "") + "后重试";
-              this.revealInitBtn("🚀 重试初始化");
+              this.revealInitBtn("重试初始化");
             } else if (sawWarning) {
               status.textContent = "白名单目录内没有可索引的 Markdown 笔记：请检查 ⚙️ 设置中的「白名单目录」";
-              this.revealInitBtn("🚀 重试初始化");
+              this.revealInitBtn("重试初始化");
             } else {
               status.textContent = "未发现可索引的笔记内容";
-              this.revealInitBtn("🚀 重试初始化");
+              this.revealInitBtn("重试初始化");
             }
           } catch (e) {
             console.warn("[secondbrain] 初始向量化失败", e);
             if (status.isConnected) {
               status.textContent = "初始化失败：" + ((e == null ? void 0 : e.message) || e);
-              this.revealInitBtn("🚀 重试初始化");
+              this.revealInitBtn("重试初始化");
             }
           } finally {
             this.initializing = false;
@@ -38832,8 +38968,11 @@ ${text}`;
           btn.textContent = label;
           btn.onclick = () => void this.startInitialIndex();
         }
+        /** 内容态统计渲染：markup 出 render.ts，本方法只算数与注入 */
         async renderStats() {
-          var _a2, _b2, _c, _d;
+          var _a2, _b2, _c, _d, _e;
+          const popup = this.popup;
+          if (!popup || !popup.isConnected) return;
           const CONFIG2 = buildConfig();
           let metaBytes = 0;
           let vecBytes = 0;
@@ -38846,91 +38985,96 @@ ${text}`;
           } catch (e) {
           }
           const stats = { ...computeStats2(this.store.meta), metaBytes, vecBytes };
-          const cards = document.getElementById("bz-sb-cards");
+          const vecRows = stats.dim && vecBytes > 0 ? this.store.vectors.length / stats.dim : 0;
+          const healthy = vecRows === 0 || vecRows === stats.chunkCount;
+          const fmtBytes = (n) => n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`;
+          const order = new Map(stats.bySource.map((s, i) => [s.name, i]));
+          const colorOf2 = (name) => sbSourceColor(name, order);
+          const cnt = popup.querySelector("#bz-sb-cnt");
+          if (cnt) cnt.textContent = `${fmtCompact(stats.noteCount)} 篇 · ${fmtCompact(stats.chunkCount)} 段已入脑`;
+          const pill = popup.querySelector("#bz-sb-pill-txt");
+          if (pill) pill.textContent = healthy ? "索引健康" : `索引偏差 ${Math.abs(vecRows - stats.chunkCount)} 行`;
+          (_e = popup.querySelector(".bz-sb-pill-dot")) == null ? void 0 : _e.classList.toggle("bz-sb-pill-dot--warn", !healthy);
+          const cards = popup.querySelector("#bz-sb-cards");
           if (cards) {
-            const fmtBytes = (n) => n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`;
-            const vecRows = stats.dim && vecBytes > 0 ? this.store.vectors.length / stats.dim : 0;
-            const healthy = vecRows === 0 || vecRows === stats.chunkCount;
-            const items = [
-              ["向量块", fmtCompact(stats.chunkCount), `共 ${stats.chunkCount.toLocaleString()} 个向量块`],
-              ["覆盖笔记", fmtCompact(stats.noteCount), `共 ${stats.noteCount.toLocaleString()} 篇笔记`],
-              ["嵌入维度", stats.dim > 0 ? `${stats.dim} 维` : "—", `嵌入模型 ${CONFIG2.EMBEDDING_MODEL} · 维度变更需重建索引`],
-              ["索引健康", healthy ? "✓ 一致" : `⚠ 偏差 ${Math.abs(vecRows - stats.chunkCount)} 行`, `向量 ${vecRows} 行 / 块 ${stats.chunkCount} 个`],
-              ["存储占用", stats.vecBytes ? fmtBytes(metaBytes + vecBytes) : "—", `meta ${fmtBytes(metaBytes)} + 向量 ${fmtBytes(vecBytes)}`],
-              ["上次索引", stats.lastIndexedAt ? formatRelativeTime(stats.lastIndexedAt) : "—", stats.lastIndexedAt ? new Date(stats.lastIndexedAt).toLocaleString() : ""]
-            ];
-            cards.innerHTML = items.map(
-              ([k, v, tip]) => `<div class="bz-sb-card"${tip ? ` title="${tip}"` : ""}><div class="bz-sb-card-value${k === "索引健康" && !healthy ? " bz-sb-card-value--warn" : ""}">${v}</div><div class="bz-sb-card-label">${k}</div></div>`
-            ).join("");
+            cards.innerHTML = panelCardsHtml([
+              { v: fmtCompact(stats.noteCount), k: "笔记", tip: `共 ${stats.noteCount.toLocaleString()} 篇笔记`, acc: true },
+              { v: fmtCompact(stats.chunkCount), k: "段落", tip: `共 ${stats.chunkCount.toLocaleString()} 个向量块`, acc: true },
+              { v: fmtCompact(stats.totalChars), k: "字符", tip: `共 ${stats.totalChars.toLocaleString()} 字` },
+              { v: stats.dim > 0 ? `${stats.dim} 维` : "—", k: "向量维度", tip: `嵌入模型 ${CONFIG2.EMBEDDING_MODEL} · 维度变更需重建索引` },
+              { v: `${stats.avgChunkLen} 字`, k: "平均段长", tip: `平均每篇 ${stats.avgChunksPerNote} 段` },
+              { v: vecBytes ? fmtBytes(metaBytes + vecBytes) : "—", k: "存储占用", tip: `meta ${fmtBytes(metaBytes)} + 向量 ${fmtBytes(vecBytes)}` }
+            ]);
           }
-          const trend = document.getElementById("bz-sb-trend");
+          const trend = popup.querySelector("#bz-sb-trend");
           if (trend) {
-            const max = Math.max(...stats.trend12w, 1);
-            trend.innerHTML = stats.trend12w.map((n) => `<div class="bz-sb-trend-col" style="height:${Math.max(4, Math.round(n / max * 64))}px" aria-label="${n} 篇"></div>`).join("");
+            trend.innerHTML = panelTrendHtml(stats.trend12w);
+            const sum = popup.querySelector("#bz-sb-trend-sum");
+            if (sum) sum.textContent = stats.trend12w.reduce((a, b) => a + b, 0) + " 篇";
           }
-          const scale = document.getElementById("bz-sb-scale");
-          if (scale) {
-            scale.innerHTML = [
-              ["总字数", stats.totalChars.toLocaleString()],
-              ["平均块长", `${stats.avgChunkLen} 字`],
-              ["平均每篇块数", String(stats.avgChunksPerNote)]
-            ].map(([k, v]) => `<div class="bz-sb-scale-item"><div class="bz-sb-scale-value">${v}</div><div class="bz-sb-scale-label">${k}</div></div>`).join("");
-          }
-          const dist = document.getElementById("bz-sb-dist");
-          if (dist) {
-            const tree = buildSourceTree(this.store.meta);
-            const rootMax = Math.max(1, ...tree.map((n) => n.chunks));
-            const rows = dist.querySelectorAll(".bz-sb-dist-row-inner");
-            dist.innerHTML = "";
-            const renderNode = (node, depth, container) => {
-              const hasChildren = node.children.length > 0;
-              const open = this.expandedDirs.has(node.path);
-              const row = document.createElement("div");
-              row.className = "bz-sb-dist-row";
-              if (depth > 0) row.style.paddingLeft = `${10 + depth * 16}px`;
-              row.innerHTML = `
-          <span class="bz-sb-dist-caret ${hasChildren ? "" : "bz-sb-dist-caret--leaf"}">${hasChildren ? open ? "▾" : "▸" : ""}</span>
-          <span class="bz-sb-dist-name">${escapeHtml2(node.name)}</span>
-          <span class="bz-sb-dist-bar"><span class="bz-sb-dist-fill" style="width:${Math.round(node.chunks / rootMax * 100)}%"></span></span>
-          <span class="bz-sb-dist-num">${node.notes} 篇 / ${node.chunks} 段</span>`;
-              if (hasChildren) {
-                row.onclick = () => {
-                  if (this.expandedDirs.has(node.path)) this.expandedDirs.delete(node.path);
-                  else this.expandedDirs.add(node.path);
-                  this.renderStats();
-                };
-              }
-              container.appendChild(row);
-              if (open) {
-                for (const child of node.children) renderNode(child, depth + 1, container);
-              }
-            };
-            for (const root of tree) renderNode(root, 0, dist);
-          }
-          const recentEl = document.getElementById("bz-sb-recent");
+          this.renderDist();
+          const recentEl = popup.querySelector("#bz-sb-recent");
           if (recentEl) {
-            recentEl.innerHTML = "";
-            if (stats.recent.length === 0) {
-              recentEl.innerHTML = '<div class="bz-sb-empty">⚠️ 没有符合条件的文件</div>';
+            recentEl.innerHTML = panelRecentHtml(
+              stats.recent.map((r) => ({
+                path: r.path,
+                name: r.path.split("/").pop() || r.path,
+                chunks: r.chunks,
+                when: formatRelativeTime(r.mtime),
+                color: colorOf2(topLevelName(r.path))
+              }))
+            );
+            const recentN = popup.querySelector("#bz-sb-recent-n");
+            if (recentN) recentN.textContent = `最新 ${stats.recent.length} 条`;
+          }
+          const log = popup.querySelector("#bz-sb-log");
+          if (log) {
+            log.innerHTML = panelLogHtml([
+              { text: `上次索引 ${stats.lastIndexedAt ? formatRelativeTime(stats.lastIndexedAt) : "—"}` },
+              { text: healthy ? "索引一致" : `向量 ${Math.round(vecRows)} 行 / 块 ${stats.chunkCount} 个`, warn: !healthy },
+              { text: vecBytes ? `占用 ${fmtBytes(metaBytes + vecBytes)}` : "暂无向量文件" }
+            ]);
+          }
+          mountIcons(popup);
+          void this.loadSummaryAndLinks();
+        }
+        /** 来源树渲染（renderStats 与展开点击共用；展开集会话内记忆） */
+        renderDist() {
+          const popup = this.popup;
+          const dist = popup == null ? void 0 : popup.querySelector("#bz-sb-dist");
+          if (!popup || !dist) return;
+          const tree = buildSourceTree(this.store.meta);
+          const order = new Map(computeStats2(this.store.meta).bySource.map((s, i) => [s.name, i]));
+          const colorOf2 = (name) => sbSourceColor(name, order);
+          const rootMax = Math.max(1, ...tree.map((n) => n.chunks));
+          dist.innerHTML = panelDistHtml(tree, this.expandedDirs, colorOf2, rootMax);
+          const distN = popup.querySelector("#bz-sb-dist-n");
+          if (distN) distN.textContent = `${tree.length} 个来源`;
+          mountIcons(dist);
+        }
+        /** AI 库摘要 + 自动建链数（secondbrain.json panel/link 段，异步回填；生成入口已移除，旧值仍可展示） */
+        async loadSummaryAndLinks() {
+          var _a2, _b2, _c;
+          try {
+            const store2 = await loadStore(this.app);
+            const popup = this.popup;
+            if (!popup || !popup.isConnected) return;
+            const summary = ((_a2 = store2.panel) == null ? void 0 : _a2.summary) || "";
+            const aiCard = popup.querySelector("#bz-sb-ai-card");
+            const aiTxt = popup.querySelector("#bz-sb-ai-txt");
+            if (aiCard) aiCard.style.display = summary ? "" : "none";
+            if (aiTxt && summary) {
+              aiTxt.innerHTML = panelSummaryHtml(summary, ((_b2 = store2.panel) == null ? void 0 : _b2.generatedAt) ? formatRelativeTime(store2.panel.generatedAt) : "");
             }
-            for (const r of stats.recent) {
-              const row = document.createElement("div");
-              row.className = "bz-sb-recent-row";
-              const name = document.createElement("span");
-              name.className = "bz-sb-recent-name";
-              name.textContent = r.path.split("/").pop() || r.path;
-              const time = document.createElement("span");
-              time.className = "bz-sb-recent-time";
-              time.textContent = `${formatRelativeTime(r.mtime)} · ${r.chunks} 段`;
-              time.title = new Date(r.mtime).toLocaleString();
-              row.appendChild(name);
-              row.appendChild(time);
-              row.onclick = () => {
-                const f = this.app.vault.getAbstractFileByPath(r.path);
-                if (f) this.app.workspace.getLeaf(false).openFile(f);
-              };
-              recentEl.appendChild(row);
+            const linkedTotal = Object.keys(((_c = store2.link) == null ? void 0 : _c.state) || {}).length;
+            const log = popup.querySelector("#bz-sb-log");
+            if (log && linkedTotal) {
+              log.insertAdjacentHTML(
+                "beforeend",
+                `<span class="bz-sb-log-sep">·</span>${panelLogHtml([{ text: `自动建链 ${linkedTotal} 条` }])}`
+              );
             }
+          } catch (e) {
           }
         }
         /** ⚙️ 域设置弹窗（共享实现见 openSecondBrainSettings） */
@@ -39464,10 +39608,10 @@ ${text}`;
         phaseEl.dataset.label = label;
         phaseEl.innerHTML = "";
         if (state2.phase === "idle") {
-          const ic = document.createElement("span");
-          ic.className = "pomodoro-phase-icon";
-          setIcon(ic, "timer");
-          phaseEl.appendChild(ic);
+          const ic2 = document.createElement("span");
+          ic2.className = "pomodoro-phase-icon";
+          setIcon(ic2, "timer");
+          phaseEl.appendChild(ic2);
           phaseEl.appendChild(document.createTextNode(label));
         } else {
           phaseEl.textContent = label;
@@ -40988,8 +41132,8 @@ ${text}`;
           });
         }
         /** 空态构建（组件库 uiEmpty：图标 lucide + 标题 + 描述） */
-        emptyEl(icon, title, desc) {
-          return uiEmpty({ icon, title, desc });
+        emptyEl(icon2, title, desc) {
+          return uiEmpty({ icon: icon2, title, desc });
         }
         /**
          * 渲染某域设置到容器：内嵌渲染器（与 ⚙️ 弹窗同数据源）。
@@ -41161,12 +41305,6 @@ ${text}`;
   });
 
   // src/settings-panel/index.ts
-  var settings_panel_exports = {};
-  __export(settings_panel_exports, {
-    ensureSettingsPanel: () => ensureSettingsPanel,
-    openSettingsPanel: () => openSettingsPanel,
-    unloadSettingsPanel: () => unloadSettingsPanel
-  });
   function getUI() {
     if (!ui) {
       ui = new SettingsPanelUI();
@@ -41179,11 +41317,6 @@ ${text}`;
   }
   function openSettingsPanel(app2, domainId) {
     void ensureSettingsPanel(app2).then(() => getUI().open(domainId));
-  }
-  function unloadSettingsPanel() {
-    if (ui) ui.cleanup();
-    ui = null;
-    initialized7 = false;
   }
   var initialized7, ui;
   var init_settings_panel = __esm({
