@@ -51,8 +51,16 @@ const WHITELIST: Array<{ file: RegExp; reason: string; /** 防回归哨兵：预
     reason: 'secondbrain.vec 二进制写，不在 json 段写原语范围；写时机受 store-file 串行链约束',
   },
   {
-    file: /^src\/literature\/note-gen\.ts$/,
+    file: /^src\/knowledge\/note-gen\.ts$/,
     reason: '文献/笔记类用户文档写：视频转文献笔记生成与 frontmatter 回填（md 用户笔记，非插件私有数据）',
+  },
+  {
+    file: /^src\/knowledge\/ui\.ts$/,
+    reason: '知识盒提炼成卡（ADR-0112）：卡片盒 md 用户笔记写 + 源文献 frontmatter related 互链（用户文档写，一次性追加无读改写竞态面）',
+  },
+  {
+    file: /^src\/knowledge\/data\.ts$/,
+    reason: 'ADR-0112 数据文件更名一次性迁移：literature.json 原样复制为 knowledge.json（只复制不改写，旧文件保留）',
   },
   {
     file: /^src\/diary\/ui\/repair-modal\.ts$/,

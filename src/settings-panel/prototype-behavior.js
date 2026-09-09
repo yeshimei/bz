@@ -24831,7 +24831,7 @@ ${body}`;
     }
   });
 
-  // src/literature/data.ts
+  // src/knowledge/data.ts
   function normalizeLooseTime(t) {
     const s = (t != null ? t : "").trim();
     if (!s) return "";
@@ -24848,15 +24848,15 @@ ${body}`;
   function normalizeUrl2(raw) {
     return raw.trim();
   }
-  var import_moment6, TIME_RE, LiteratureData;
+  var import_moment6, TIME_RE, KnowledgeData;
   var init_data7 = __esm({
-    "src/literature/data.ts"() {
+    "src/knowledge/data.ts"() {
       import_moment6 = __toESM(require_moment());
       init_storage();
       init_settings_provider();
       init_utils();
       TIME_RE = /^\d{1,3}:\d{1,2}(:\d{1,2}(\.\d{1,3})?)?$/;
-      LiteratureData = {
+      KnowledgeData = {
         filePath: "",
         _store: null,
         /** 初始化（幂等）：固化文件路径与 store。未调用时 read/write 按当前设置惰性补齐（统一数据读写重构） */
@@ -25061,7 +25061,7 @@ ${body}`;
     }
   });
 
-  // src/literature/note-gen.ts
+  // src/knowledge/note-gen.ts
   function parseDomainList(raw) {
     return [...new Set(String(raw != null ? raw : "").split(/[,，、]/).map((s) => s.trim()).filter(Boolean))];
   }
@@ -25156,7 +25156,7 @@ ${body}`;
   async function generateVideoNote(opts) {
     const ai = createAI();
     const s = tryGetSettings();
-    const list = parseDomainList(s.literatureDomainList);
+    const list = parseDomainList(s.knowledgeDomainList);
     const chunks = chunkTranscript(opts.transcript);
     const metaRaw = await ai.json(
       `你是文献整理助手。基于下方 B站视频《${opts.videoTitle || "未命名"}》的转写文稿片段，生成文献笔记元数据。只输出 JSON，不要任何解释：
@@ -25202,7 +25202,7 @@ ${c}`,
       "---"
     ].join("\n");
     const body = [fm, whole, videoSection].filter(Boolean).join("\n\n");
-    return writeUniqueNote(String(s.literatureDirectory || "文献盒"), sanitizeMdTitle(title), body);
+    return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(title), body);
   }
   function termPrompt(term, list) {
     return `你是百科知识整理助手。为术语「${term}」生成一篇文献笔记。只输出 JSON，不要任何解释：
@@ -25211,7 +25211,7 @@ ${c}`,
   async function generateTermDraft(term) {
     const ai = createAI();
     const s = tryGetSettings();
-    const list = parseDomainList(s.literatureDomainList);
+    const list = parseDomainList(s.knowledgeDomainList);
     const t = String(term || "").trim();
     if (!t) throw new Error("术语为空");
     const raw = await ai.json(termPrompt(t, list));
@@ -25261,7 +25261,7 @@ ${t}`,
       "---"
     ].join("\n");
     const body = [fm, summary].filter(Boolean).join("\n\n");
-    return writeUniqueNote(String(s.literatureDirectory || "文献盒"), sanitizeMdTitle(term), body);
+    return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(term), body);
   }
   function parseFrontmatter3(content) {
     var _a2;
@@ -25300,7 +25300,7 @@ ${content || ""}`;
     const app2 = getApp();
     const s = tryGetSettings();
     const aiTimeoutMs = (_a2 = opts.aiTimeoutMs) != null ? _a2 : BACKFILL_AI_TIMEOUT_MS;
-    const dir = String(s.literatureDirectory || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    const dir = String(s.knowledgeDirectory || "文献盒").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
     const files = (app2.vault.getFiles() || []).filter((f) => f.path.startsWith(dir + "/") && f.path.endsWith(".md"));
     const needDomain = [];
     let filled = 0;
@@ -25327,7 +25327,7 @@ ${content || ""}`;
     let aiSkipped = false;
     if (needDomain.length) {
       const ai = createAI();
-      const list = parseDomainList(s.literatureDomainList);
+      const list = parseDomainList(s.knowledgeDomainList);
       for (const { file } of needDomain) {
         try {
           const latest = await app2.vault.read(file);
@@ -25357,7 +25357,7 @@ ${sample}`,
   }
   var BACKFILL_AI_TIMEOUT_MS;
   var init_note_gen = __esm({
-    "src/literature/note-gen.ts"() {
+    "src/knowledge/note-gen.ts"() {
       init_ai();
       init_app();
       init_settings_provider();
@@ -25365,7 +25365,7 @@ ${sample}`,
     }
   });
 
-  // src/literature/processor.ts
+  // src/knowledge/processor.ts
   function getChildProcess() {
     const w = window;
     if (!w.require) return null;
@@ -25420,7 +25420,7 @@ ${sample}`,
   }
   var INSTALL_HINT, STEP_RE, RESULT_RE, PROGRESS_RE, INFO_RE, AI_STEP_TEXT, NOTE_STEP_TEXT, BatchRunner;
   var init_processor2 = __esm({
-    "src/literature/processor.ts"() {
+    "src/knowledge/processor.ts"() {
       init_notice();
       init_domain_bus();
       init_settings_provider();
@@ -25437,7 +25437,7 @@ ${sample}`,
       BatchRunner = {
         running: false,
         aborted: false,
-        /** 遇错即停（设置 literatureStopOnFailure）：当前任务失败后中断整批，未开始项保持待处理 */
+        /** 遇错即停（设置 knowledgeStopOnFailure）：当前任务失败后中断整批，未开始项保持待处理 */
         stoppedFail: false,
         _child: null,
         _cp: null,
@@ -25462,7 +25462,7 @@ ${sample}`,
             this.running = false;
             return;
           }
-          const stopOnFailure = tryGetSettings().literatureStopOnFailure === true;
+          const stopOnFailure = tryGetSettings().knowledgeStopOnFailure === true;
           try {
             let success = 0;
             let failed = 0;
@@ -25511,21 +25511,21 @@ ${sample}`,
               end: (_b2 = task.end) != null ? _b2 : null,
               page: task.page && task.page > 0 ? task.page : null,
               options: {
-                quality: task.quality || s && s.literatureQuality || "highest",
-                keepVideo: !s || s.literatureKeepVideo !== false,
-                outputDir: nonEmpty(s && s.literatureOutputDir),
-                compress: !s || s.literatureCompress !== false,
-                crf: s && s.literatureCrf || 23,
+                quality: task.quality || s && s.knowledgeQuality || "highest",
+                keepVideo: !s || s.knowledgeKeepVideo !== false,
+                outputDir: nonEmpty(s && s.knowledgeOutputDir),
+                compress: !s || s.knowledgeCompress !== false,
+                crf: s && s.knowledgeCrf || 23,
                 vaultPath: getVaultBasePath(),
-                ffmpegPath: nonEmpty(s && s.literatureFfmpegPath),
-                ffprobePath: nonEmpty(s && s.literatureFfprobePath),
-                pythonPath: nonEmpty(s && s.literaturePythonPath),
-                whisperModel: nonEmpty(s && s.literatureWhisperModel),
-                cacheDir: nonEmpty(s && s.literatureCacheDir),
-                cacheRetentionDays: s && s.literatureCacheRetentionDays || 7
+                ffmpegPath: nonEmpty(s && s.knowledgeFfmpegPath),
+                ffprobePath: nonEmpty(s && s.knowledgeFfprobePath),
+                pythonPath: nonEmpty(s && s.knowledgePythonPath),
+                whisperModel: nonEmpty(s && s.knowledgeWhisperModel),
+                cacheDir: nonEmpty(s && s.knowledgeCacheDir),
+                cacheRetentionDays: s && s.knowledgeCacheRetentionDays || 7
               }
             });
-            void LiteratureData.updateTask(task.id, { status: "processing", reason: "启动中…", processedAt: null }).then(() => {
+            void KnowledgeData.updateTask(task.id, { status: "processing", reason: "启动中…", processedAt: null }).then(() => {
               task.status = "processing";
               task.reason = "启动中…";
               events.onTaskProgress({ ...task }, "启动中…");
@@ -25559,7 +25559,7 @@ ${sample}`,
                 if (m) {
                   const stepText = m[1].trim();
                   task.reason = stepText;
-                  void LiteratureData.updateTask(task.id, { reason: stepText });
+                  void KnowledgeData.updateTask(task.id, { reason: stepText });
                   events.onTaskProgress({ ...task }, stepText, null);
                   continue;
                 }
@@ -25586,7 +25586,7 @@ ${sample}`,
                       task.title = title;
                       task.uploader = uploader || task.uploader;
                       const patch = { title, uploader: task.uploader };
-                      void LiteratureData.updateTask(task.id, patch).then(() => {
+                      void KnowledgeData.updateTask(task.id, patch).then(() => {
                         events.onTaskInfo({ ...task });
                       });
                     }
@@ -25640,7 +25640,7 @@ ${sample}`,
          */
         async _aiStep(task, events, transcriptPath, videoPath, finish) {
           task.reason = AI_STEP_TEXT;
-          void LiteratureData.updateTask(task.id, { reason: AI_STEP_TEXT });
+          void KnowledgeData.updateTask(task.id, { reason: AI_STEP_TEXT });
           events.onTaskProgress({ ...task }, AI_STEP_TEXT);
           let transcript;
           try {
@@ -25671,7 +25671,7 @@ ${sample}`,
           }
           tryUnlink(transcriptPath);
           task.reason = NOTE_STEP_TEXT;
-          void LiteratureData.updateTask(task.id, { reason: NOTE_STEP_TEXT });
+          void KnowledgeData.updateTask(task.id, { reason: NOTE_STEP_TEXT });
           events.onTaskProgress({ ...task }, NOTE_STEP_TEXT);
           finish(true, null, notePath, videoPath);
         },
@@ -25688,7 +25688,7 @@ ${sample}`,
             task.archivedAt = task.processedAt;
           }
           try {
-            await LiteratureData.updateTask(task.id, {
+            await KnowledgeData.updateTask(task.id, {
               status: task.status,
               reason,
               notePath: task.notePath,
@@ -25705,9 +25705,9 @@ ${sample}`,
           }
           events.onTaskDone({ ...task });
           if (ok) {
-            emitDomainEvent("literature:tasks", { kind: "converted", id: task.id, url: task.url, notePath: task.notePath });
+            emitDomainEvent("knowledge:tasks", { kind: "converted", id: task.id, url: task.url, notePath: task.notePath });
           } else {
-            emitDomainEvent("literature:tasks", { kind: "failed", id: task.id, url: task.url, notePath: (_a2 = task.notePath) != null ? _a2 : null });
+            emitDomainEvent("knowledge:tasks", { kind: "failed", id: task.id, url: task.url, notePath: (_a2 = task.notePath) != null ? _a2 : null });
           }
           onEnd(ok);
         }
@@ -25715,12 +25715,12 @@ ${sample}`,
     }
   });
 
-  // src/literature/ui.ts
+  // src/knowledge/ui.ts
   var ui_exports4 = {};
   __export(ui_exports4, {
     UIManager: () => UIManager2,
     humanizeError: () => humanizeError,
-    literatureSettingsSchema: () => literatureSettingsSchema
+    knowledgeSettingsSchema: () => knowledgeSettingsSchema
   });
   function q(root, sel) {
     return root.querySelector(sel);
@@ -25776,7 +25776,7 @@ ${sample}`,
     return url.length > 28 ? url.slice(0, 28) + "…" : url;
   }
   function litDirOf(s) {
-    const raw = s && s.literatureDirectory ? String(s.literatureDirectory) : "文献盒";
+    const raw = s && s.knowledgeDirectory ? String(s.knowledgeDirectory) : "文献盒";
     return raw.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
   }
   function parseDateRaw(raw) {
@@ -25787,7 +25787,7 @@ ${sample}`,
     const d2 = new Date(s);
     return d2.valueOf();
   }
-  function literatureSettingsSchema(opts) {
+  function knowledgeSettingsSchema(opts) {
     return {
       groups: [
         {
@@ -25795,41 +25795,41 @@ ${sample}`,
           icon: "palette",
           name: "外观",
           rows: [
-            { type: "choiceCards", name: "面板布局", binding: { key: "literatureSkin" }, options: [{ value: "default", label: "索引卡", prevClass: "bz-sp-prev-panel" }] },
-            { type: "choiceCards", name: "面板主题", binding: { key: "literatureSkinTheme" }, layoutKey: "literatureSkin", options: [{ value: "manila", label: "牛皮纸", layout: "default", prevClass: "bz-sp-prev-manila" }] }
+            { type: "choiceCards", name: "面板布局", binding: { key: "knowledgeSkin" }, options: [{ value: "default", label: "索引卡", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板主题", binding: { key: "knowledgeSkinTheme" }, layoutKey: "knowledgeSkin", options: [{ value: "manila", label: "牛皮纸", layout: "default", prevClass: "bz-sp-prev-manila" }] }
           ]
         },
         {
           icon: "folder-open",
           name: "目录与分类",
           rows: [
-            { type: "path", mode: "single", name: "文献目录", desc: "文献笔记所在文件夹，列表实时扫描该目录", binding: { key: "literatureDirectory" } },
-            { type: "textarea", name: "领域词表", desc: "逗号分隔的领域词；留空 = AI 自由写领域", binding: { key: "literatureDomainList" }, placeholder: "物理,医学,计算机,经济,文史哲…" }
+            { type: "path", mode: "single", name: "文献目录", desc: "文献笔记所在文件夹，列表实时扫描该目录", binding: { key: "knowledgeDirectory" } },
+            { type: "textarea", name: "领域词表", desc: "逗号分隔的领域词；留空 = AI 自由写领域", binding: { key: "knowledgeDomainList" }, placeholder: "物理,医学,计算机,经济,文史哲…" }
           ]
         },
         {
           icon: "settings-2",
           name: "视频处理",
           rows: [
-            { type: "toggle", name: "详细进度提示", desc: "处理中显示当前步骤、耗时、百分比与步骤时间线；关闭则仅显示步骤徽章", binding: { key: "literatureProgressDetail" } },
-            { type: "toggle", name: "保留视频原件", desc: "转文献完成后保留视频文件；关闭则只生成文献笔记", binding: { key: "literatureKeepVideo" } },
-            { type: "select", name: "下载清晰度", desc: "以视频源可用档位为准，低档优先命中缓存", binding: { key: "literatureQuality" }, options: [{ value: "highest", label: "最高" }, { value: "1080", label: "1080P" }, { value: "720", label: "720P" }] },
-            { type: "toggle", name: "遇错即停", desc: "单条失败后停止处理剩余任务；关闭则失败后继续", binding: { key: "literatureStopOnFailure" } },
-            { type: "text", name: "输出目录", desc: "视频文件落地目录；留空跟随工具配置", binding: { key: "literatureOutputDir" }, placeholder: "如 D:/videos" },
-            { type: "toggle", name: "压缩", desc: "转文字前压缩视频，默认开启", binding: { key: "literatureCompress" } },
-            { type: "number", name: "压缩质量（CRF）", desc: "数值越小画质越高；范围 18-28", binding: { key: "literatureCrf" }, min: 18, max: 28, step: 1 }
+            { type: "toggle", name: "详细进度提示", desc: "处理中显示当前步骤、耗时、百分比与步骤时间线；关闭则仅显示步骤徽章", binding: { key: "knowledgeProgressDetail" } },
+            { type: "toggle", name: "保留视频原件", desc: "转文献完成后保留视频文件；关闭则只生成文献笔记", binding: { key: "knowledgeKeepVideo" } },
+            { type: "select", name: "下载清晰度", desc: "以视频源可用档位为准，低档优先命中缓存", binding: { key: "knowledgeQuality" }, options: [{ value: "highest", label: "最高" }, { value: "1080", label: "1080P" }, { value: "720", label: "720P" }] },
+            { type: "toggle", name: "遇错即停", desc: "单条失败后停止处理剩余任务；关闭则失败后继续", binding: { key: "knowledgeStopOnFailure" } },
+            { type: "text", name: "输出目录", desc: "视频文件落地目录；留空跟随工具配置", binding: { key: "knowledgeOutputDir" }, placeholder: "如 D:/videos" },
+            { type: "toggle", name: "压缩", desc: "转文字前压缩视频，默认开启", binding: { key: "knowledgeCompress" } },
+            { type: "number", name: "压缩质量（CRF）", desc: "数值越小画质越高；范围 18-28", binding: { key: "knowledgeCrf" }, min: 18, max: 28, step: 1 }
           ]
         },
         {
           icon: "terminal",
           name: "工具",
           rows: [
-            { type: "text", name: "ffmpeg 路径", desc: "视频处理用；留空跟随工具配置", binding: { key: "literatureFfmpegPath" }, placeholder: "如 ffmpeg 或 D:/tools/ffmpeg.exe" },
-            { type: "text", name: "ffprobe 路径", desc: "探测视频元数据用；留空跟随工具配置", binding: { key: "literatureFfprobePath" }, placeholder: "如 ffprobe 或 D:/tools/ffprobe.exe" },
-            { type: "text", name: "Python 路径", desc: "装了 Python 一般填 python 即可（走系统 PATH）；或填绝对路径（命令提示符运行 where python 可查）；留空跟随工具配置", binding: { key: "literaturePythonPath" }, placeholder: "如 python 或 D:/tools/python.exe" },
-            { type: "text", name: "Whisper 模型", desc: "转写模型档位（tiny/base/small/medium/large）", binding: { key: "literatureWhisperModel" }, placeholder: "如 small" },
-            { type: "text", name: "缓存目录", desc: "剪辑产物与转写稿缓存；留空 = 系统临时目录", binding: { key: "literatureCacheDir" }, placeholder: "如 D:/bili-dl-cache" },
-            { type: "number", name: "缓存保留天数", desc: "超过该天数的缓存自动清理", binding: { key: "literatureCacheRetentionDays" }, min: 1, step: 1 }
+            { type: "text", name: "ffmpeg 路径", desc: "视频处理用；留空跟随工具配置", binding: { key: "knowledgeFfmpegPath" }, placeholder: "如 ffmpeg 或 D:/tools/ffmpeg.exe" },
+            { type: "text", name: "ffprobe 路径", desc: "探测视频元数据用；留空跟随工具配置", binding: { key: "knowledgeFfprobePath" }, placeholder: "如 ffprobe 或 D:/tools/ffprobe.exe" },
+            { type: "text", name: "Python 路径", desc: "装了 Python 一般填 python 即可（走系统 PATH）；或填绝对路径（命令提示符运行 where python 可查）；留空跟随工具配置", binding: { key: "knowledgePythonPath" }, placeholder: "如 python 或 D:/tools/python.exe" },
+            { type: "text", name: "Whisper 模型", desc: "转写模型档位（tiny/base/small/medium/large）", binding: { key: "knowledgeWhisperModel" }, placeholder: "如 small" },
+            { type: "text", name: "缓存目录", desc: "剪辑产物与转写稿缓存；留空 = 系统临时目录", binding: { key: "knowledgeCacheDir" }, placeholder: "如 D:/bili-dl-cache" },
+            { type: "number", name: "缓存保留天数", desc: "超过该天数的缓存自动清理", binding: { key: "knowledgeCacheRetentionDays" }, min: 1, step: 1 }
           ]
         },
         {
@@ -25852,7 +25852,7 @@ ${sample}`,
   }
   var STATUS_META, STEP_DONE_MAP, fmtElapsed, UIManager2;
   var init_ui6 = __esm({
-    "src/literature/ui.ts"() {
+    "src/knowledge/ui.ts"() {
       init_fake_obsidian();
       init_mobile();
       init_settings_provider();
@@ -26058,7 +26058,7 @@ ${sample}`,
           q(p, "#lit-btn-settings").onclick = () => openSettingsModal({
             title: "文献盒设置",
             maxWidth: 560,
-            schema: literatureSettingsSchema({ onClearHistory: () => this.confirmClearHistory() }),
+            schema: knowledgeSettingsSchema({ onClearHistory: () => this.confirmClearHistory() }),
             // 目录设置变更 → 主面板清缓存全量重载（ticket 136 §3）；refreshPanel 亦有兜底检测
             onClose: () => this.reloadIfDirChanged()
           });
@@ -26411,12 +26411,12 @@ ${sample}`,
         }
         /** 删除视频笔记时同步清理 literature.json 里指向该笔记的任务记录（避免悬挂 notePath，ticket 136 §3） */
         async cleanupTaskRecordsForNote(path) {
-          const tasks = await LiteratureData.loadTasks();
+          const tasks = await KnowledgeData.loadTasks();
           for (const t of tasks) {
-            if (t.notePath === path) await LiteratureData.deleteTask(t.id);
+            if (t.notePath === path) await KnowledgeData.deleteTask(t.id);
           }
         }
-        // ---- 主面板增量刷新（literature:file-* 四通道 300ms 防抖，照抄剪藏本 attachFileListener） ----
+        // ---- 主面板增量刷新（knowledge:file-* 四通道 300ms 防抖，照抄剪藏本 attachFileListener） ----
         removeNoteByPath(path) {
           const idx = this.allNotes.findIndex((n) => n.path === path);
           if (idx === -1) return;
@@ -26485,10 +26485,10 @@ ${sample}`,
             this.scheduleRefreshFlush();
           };
           this.fileListenerRefs = [
-            onDomainEvent("literature:file-created", (evt) => fileModifyHandler(evt.path)),
-            onDomainEvent("literature:file-modified", (evt) => fileModifyHandler(evt.path)),
-            onDomainEvent("literature:file-deleted", fileDeleteHandler),
-            onDomainEvent("literature:file-renamed", fileRenameHandler)
+            onDomainEvent("knowledge:file-created", (evt) => fileModifyHandler(evt.path)),
+            onDomainEvent("knowledge:file-modified", (evt) => fileModifyHandler(evt.path)),
+            onDomainEvent("knowledge:file-deleted", fileDeleteHandler),
+            onDomainEvent("knowledge:file-renamed", fileRenameHandler)
           ];
           this.fileListenerAttached = true;
         }
@@ -26560,7 +26560,7 @@ ${sample}`,
           if (this.videoPopup) this.videoPopup.style.display = "none";
         }
         async refreshVideoPanel() {
-          const tasks = await LiteratureData.loadTasks();
+          const tasks = await KnowledgeData.loadTasks();
           if (!this.videoList) return;
           this.videoList.innerHTML = "";
           const active2 = tasks.filter((t) => !t.archived);
@@ -26676,7 +26676,7 @@ ${sample}`,
             if (meta) meta.after(box);
             else card.appendChild(box);
           }
-          if (tryGetSettings().literatureProgressDetail === false) {
+          if (tryGetSettings().knowledgeProgressDetail === false) {
             const cur = st.steps[st.steps.length - 1] || "处理中…";
             box.innerHTML = `<div class="bz-bili-progress">${esc2(cur)}</div>`;
             return;
@@ -26710,7 +26710,7 @@ ${sample}`,
             return;
           }
           if (BatchRunner.running) return;
-          const tasks = await LiteratureData.loadTasks();
+          const tasks = await KnowledgeData.loadTasks();
           const work = tasks.filter((t) => !t.archived && (t.status === "pending" || t.status === "failed"));
           if (work.length === 0) {
             notice("没有待处理或失败的任务", "info");
@@ -26784,7 +26784,7 @@ ${sample}`,
             ]
           });
           if (v !== "ok") return;
-          await LiteratureData.deleteTask(task.id);
+          await KnowledgeData.deleteTask(task.id);
           await this.refreshVideoPanel();
           await this.refreshHistory();
         }
@@ -26799,7 +26799,7 @@ ${sample}`,
             ]
           });
           if (v !== "ok") return;
-          await LiteratureData.clearHistory();
+          await KnowledgeData.clearHistory();
           await this.refreshHistory();
         }
         // ==================== 添加任务弹窗 ====================
@@ -26970,9 +26970,9 @@ ${sample}`,
           try {
             const patch = { url, start: start || null, end: end || null, quality, page, title: vtitle || null, uploader: uploader || null };
             if (this.editingId) {
-              await LiteratureData.updateTask(this.editingId, patch);
+              await KnowledgeData.updateTask(this.editingId, patch);
             } else {
-              await LiteratureData.addTask(patch);
+              await KnowledgeData.addTask(patch);
             }
             notice("已保存");
             this.hideAddDialog();
@@ -27030,7 +27030,7 @@ ${sample}`,
         /** 历史列表（ADR-0070）：无条带无成功徽标；同一视频的多条文献笔记归并在一张卡片内分组列出 */
         async refreshHistory() {
           if (!this.historyList) return;
-          const tasks = await LiteratureData.loadTasks();
+          const tasks = await KnowledgeData.loadTasks();
           if (!this.historyList) return;
           this.historyList.innerHTML = "";
           const rows = tasks.filter((t) => t.archived);
@@ -27290,7 +27290,7 @@ ${sample}`,
           try {
             const path = await generateTermNote({ term, summary: this.termPreview.body, domain: this.termPreview.domain });
             this.openNote(path);
-            emitDomainEvent("literature:tasks", { kind: "term-generated", term, title: term });
+            emitDomainEvent("knowledge:tasks", { kind: "term-generated", term, title: term });
             this.termPreview = null;
             this.hideTermEntry();
             notice("已生成术语文献笔记：" + term, "success");
@@ -27390,20 +27390,20 @@ ${sample}`,
     }
   });
 
-  // src/literature/index.ts
+  // src/knowledge/index.ts
   var literature_exports = {};
   __export(literature_exports, {
-    ensureLiterature: () => ensureLiterature,
+    ensureKnowledge: () => ensureKnowledge,
     openLiteratureAddTask: () => openLiteratureAddTask,
-    openLiteraturePanel: () => openLiteraturePanel,
+    openKnowledgePanel: () => openKnowledgePanel,
     openTermNote: () => openTermNote,
-    unloadLiterature: () => unloadLiterature
+    unloadKnowledge: () => unloadKnowledge
   });
-  function ensureLiterature(app2) {
+  function ensureKnowledge(app2) {
     var _a2;
     if (initialized3) return;
     try {
-      LiteratureData.init({ storagePath: (_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath });
+      KnowledgeData.init({ storagePath: (_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath });
       uiManager = new UIManager2(app2);
       initialized3 = true;
     } catch (e) {
@@ -27411,17 +27411,17 @@ ${sample}`,
       uiManager = null;
     }
   }
-  function openLiteraturePanel(app2) {
-    ensureLiterature(app2);
+  function openKnowledgePanel(app2) {
+    ensureKnowledge(app2);
     uiManager == null ? void 0 : uiManager.showMain();
   }
   function openLiteratureAddTask(app2, prefill) {
-    ensureLiterature(app2);
+    ensureKnowledge(app2);
     uiManager == null ? void 0 : uiManager.showVideoEntry(prefill);
   }
   function openTermNote(app2, term) {
     var _a2, _b2;
-    ensureLiterature(app2);
+    ensureKnowledge(app2);
     let t = term == null ? void 0 : term.trim();
     if (!t) {
       const view = app2.workspace.getActiveViewOfType(MarkdownView);
@@ -27429,14 +27429,14 @@ ${sample}`,
     }
     uiManager == null ? void 0 : uiManager.showTermEntry(t);
   }
-  function unloadLiterature() {
+  function unloadKnowledge() {
     uiManager == null ? void 0 : uiManager.destroy();
     uiManager = null;
     initialized3 = false;
   }
   var initialized3, uiManager;
   var init_literature = __esm({
-    "src/literature/index.ts"() {
+    "src/knowledge/index.ts"() {
       init_fake_obsidian();
       init_settings_provider();
       init_data7();
@@ -40781,7 +40781,7 @@ ${text}`;
         pomodoro: async () => (await Promise.resolve().then(() => (init_ui11(), ui_exports8))).pomodoroSettingsSchema(),
         encrypt: async () => (await Promise.resolve().then(() => (init_ui3(), ui_exports2))).encryptSettingsSchema(),
         "password-vault": async () => (await Promise.resolve().then(() => (init_settings5(), settings_exports5))).passwordVaultSettingsSchema(),
-        literature: async () => (await Promise.resolve().then(() => (init_ui6(), ui_exports4))).literatureSettingsSchema(),
+        literature: async () => (await Promise.resolve().then(() => (init_ui6(), ui_exports4))).knowledgeSettingsSchema(),
         smartcat: async () => {
           const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data11(), data_exports));
           const { smartcatSettingsSchema: smartcatSettingsSchema2 } = await Promise.resolve().then(() => (init_ui12(), ui_exports9));
@@ -40823,7 +40823,7 @@ ${text}`;
         { id: "encrypt", name: "保险库", icon: DOMAIN_ICONS.encrypt, desc: "密码、加密笔记与加密日记", schemaLoader: schemaLoaders.encrypt },
         { id: "password-vault", name: "密码本", icon: DOMAIN_ICONS["password-vault"], desc: "密码条目与生成器", schemaLoader: schemaLoaders["password-vault"] },
         { id: "smartcat", name: "小橘陪伴猫", icon: DOMAIN_ICONS.smartcat, desc: "桌面宠物陪伴", schemaLoader: schemaLoaders.smartcat },
-        { id: "literature", name: "文献盒", icon: DOMAIN_ICONS.literature, desc: "文献笔记与术语录入", schemaLoader: schemaLoaders.literature }
+        { id: "literature", name: "文献盒", icon: DOMAIN_ICONS.knowledge, desc: "文献笔记与术语录入", schemaLoader: schemaLoaders.literature }
       ];
       NAV_SECS = [
         { title: "基础", ids: ["global", "appearance", "ai"] },
@@ -41235,8 +41235,8 @@ ${text}`;
     reviewSkinTheme: "sage",
     secondbrainSkin: "default",
     secondbrainSkinTheme: "graphite",
-    literatureSkin: "default",
-    literatureSkinTheme: "manila",
+    knowledgeSkin: "default",
+    knowledgeSkinTheme: "manila",
     pomodoroSkin: "default",
     pomodoroSkinTheme: "tomato",
     encryptSkin: "default",

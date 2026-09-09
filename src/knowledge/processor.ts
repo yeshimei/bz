@@ -21,9 +21,9 @@ import { notice } from '../core/notice';
 import { emitDomainEvent } from '../core/domain-bus';
 import { tryGetSettings } from '../core/settings-provider';
 import { getApp } from '../core/app';
-import { LiteratureData } from './data';
+import { KnowledgeData } from './data';
 import { generateVideoNote } from './note-gen';
-import type { LiteratureTask } from './types';
+import type { KnowledgeTask } from './types';
 
 /** 统一走全局 bili-dl（P2-2：移除修复期本机绝对路径 LOCAL_CLI_CANDIDATE；未安装由 INSTALL_HINT 引导） */
 const INSTALL_HINT = '请先运行 npm install -g @jwbz/bili-downloader';
@@ -43,7 +43,7 @@ export interface BatchSummary {
   success: number;
   failed: number;
   aborted: boolean;
-  /** 遇错即停（设置 literatureStopOnFailure 触发）：失败后不再处理剩余，未开始项保持待处理 */
+  /** 遇错即停（设置 knowledgeStopOnFailure 触发）：失败后不再处理剩余，未开始项保持待处理 */
   stopped: boolean;
 }
 
@@ -55,11 +55,11 @@ export interface BiliProgress {
 
 export interface BatchEvents {
   /** 任务行进度更新（步骤文案已写入 task.reason；progress 为 [bz-p] 行解析出的阶段百分比，无则 null） */
-  onTaskProgress(task: LiteratureTask, stepText: string, progress?: BiliProgress | null): void;
+  onTaskProgress(task: KnowledgeTask, stepText: string, progress?: BiliProgress | null): void;
   /** 解析信息落库回调（[bz-info] 行：title/uploader 已写入 task 与 storage，UI 整表刷新显示「文字+链接」） */
-  onTaskInfo(task: LiteratureTask): void;
+  onTaskInfo(task: KnowledgeTask): void;
   /** 任务终态（成功/失败），task 已持久化 */
-  onTaskDone(task: LiteratureTask): void;
+  onTaskDone(task: KnowledgeTask): void;
   /** 整批结束 */
   onBatchDone(summary: BatchSummary): void;
 }
@@ -125,7 +125,7 @@ type FinishOne = (ok: boolean, reason: string | null, notePath: string | null, v
 export const BatchRunner = {
   running: false,
   aborted: false,
-  /** 遇错即停（设置 literatureStopOnFailure）：当前任务失败后中断整批，未开始项保持待处理 */
+  /** 遇错即停（设置 knowledgeStopOnFailure）：当前任务失败后中断整批，未开始项保持待处理 */
   stoppedFail: false,
   _child: null as any,
   _cp: null as any,
@@ -140,7 +140,7 @@ export const BatchRunner = {
    * 失败项重跑时工具自动跳过已成功步骤、从出错步骤继续）。
    * 已成功（归档）项不动；默认失败后继续（遇错即停设置开启时失败后中断）。
    */
-  async runAll(tasks: LiteratureTask[], events: BatchEvents): Promise<void> {
+  async runAll(tasks: KnowledgeTask[], events: BatchEvents): Promise<void> {
     if (this.running) return;
     this.running = true;
     this.aborted = false;
@@ -152,7 +152,7 @@ export const BatchRunner = {
       this.running = false;
       return;
     }
-    const stopOnFailure = tryGetSettings().literatureStopOnFailure === true;
+    const stopOnFailure = tryGetSettings().knowledgeStopOnFailure === true;
     try {
       let success = 0;
       let failed = 0;
@@ -178,7 +178,7 @@ export const BatchRunner = {
   },
 
   /** 单部执行：spawn → 解析步骤/进度/信息/结果行 → CLI 终态 → 插件侧 AI 阶段 → 落库；Promise 在终态落库后 resolve */
-  _runOne(cp: any, task: LiteratureTask, events: BatchEvents, onEnd: (ok: boolean) => void): Promise<void> {
+  _runOne(cp: any, task: KnowledgeTask, events: BatchEvents, onEnd: (ok: boolean) => void): Promise<void> {
     return new Promise((resolve) => {
       // 文献盒设置项全量下发（ADR-0071）：CLI 不再读插件配置，taskJson 一次性带全；
       // 分P 序号（task.page，1 起）随任务 JSON 下发；vaultPath 供 CLI 计算视频相对路径。
@@ -197,21 +197,21 @@ export const BatchRunner = {
         end: task.end ?? null,
         page: task.page && task.page > 0 ? task.page : null,
         options: {
-          quality: (task.quality || (s && s.literatureQuality) || 'highest') as string,
-          keepVideo: !s || s.literatureKeepVideo !== false,
-          outputDir: nonEmpty(s && s.literatureOutputDir),
-          compress: !s || s.literatureCompress !== false,
-          crf: (s && s.literatureCrf) || 23,
+          quality: (task.quality || (s && s.knowledgeQuality) || 'highest') as string,
+          keepVideo: !s || s.knowledgeKeepVideo !== false,
+          outputDir: nonEmpty(s && s.knowledgeOutputDir),
+          compress: !s || s.knowledgeCompress !== false,
+          crf: (s && s.knowledgeCrf) || 23,
           vaultPath: getVaultBasePath(),
-          ffmpegPath: nonEmpty(s && s.literatureFfmpegPath),
-          ffprobePath: nonEmpty(s && s.literatureFfprobePath),
-          pythonPath: nonEmpty(s && s.literaturePythonPath),
-          whisperModel: nonEmpty(s && s.literatureWhisperModel),
-          cacheDir: nonEmpty(s && s.literatureCacheDir),
-          cacheRetentionDays: (s && s.literatureCacheRetentionDays) || 7,
+          ffmpegPath: nonEmpty(s && s.knowledgeFfmpegPath),
+          ffprobePath: nonEmpty(s && s.knowledgeFfprobePath),
+          pythonPath: nonEmpty(s && s.knowledgePythonPath),
+          whisperModel: nonEmpty(s && s.knowledgeWhisperModel),
+          cacheDir: nonEmpty(s && s.knowledgeCacheDir),
+          cacheRetentionDays: (s && s.knowledgeCacheRetentionDays) || 7,
         },
       });
-      void LiteratureData.updateTask(task.id, { status: 'processing', reason: '启动中…', processedAt: null }).then(() => {
+      void KnowledgeData.updateTask(task.id, { status: 'processing', reason: '启动中…', processedAt: null }).then(() => {
         task.status = 'processing';
         task.reason = '启动中…';
         events.onTaskProgress({ ...task }, '启动中…');
@@ -246,7 +246,7 @@ export const BatchRunner = {
             const stepText = m[1].trim();
             task.reason = stepText;
             // 步骤文案必须落库：refreshPanel 重读 storage 渲染，仅改内存会一直显示「启动中…」
-            void LiteratureData.updateTask(task.id, { reason: stepText });
+            void KnowledgeData.updateTask(task.id, { reason: stepText });
             events.onTaskProgress({ ...task }, stepText, null);
             continue;
           }
@@ -265,7 +265,7 @@ export const BatchRunner = {
           }
           // 解析信息行（ADR-0067）：标题/UP主 落库（面板行内「文字+链接」展示）。
           // 先落库再回调：UI onTaskInfo 整表刷新时能确定性读到新字段（避免读旧快照的竞态）。
-          // P3-2：不发射 literature:tasks 域事件——契约 §10 观察收敛为 converted/failed 两类，parsed 无订阅者
+          // P3-2：不发射 knowledge:tasks 域事件——契约 §10 观察收敛为 converted/failed 两类，parsed 无订阅者
           m = line.match(INFO_RE);
           if (m) {
             try {
@@ -275,8 +275,8 @@ export const BatchRunner = {
               if (title) {
                 task.title = title;
                 task.uploader = uploader || task.uploader;
-                const patch: Partial<LiteratureTask> = { title, uploader: task.uploader };
-                void LiteratureData.updateTask(task.id, patch).then(() => {
+                const patch: Partial<KnowledgeTask> = { title, uploader: task.uploader };
+                void KnowledgeData.updateTask(task.id, patch).then(() => {
                   events.onTaskInfo({ ...task });
                 });
               }
@@ -330,9 +330,9 @@ export const BatchRunner = {
    * 转录读取失败 / AI 失败（含 AI 未配置）→ 该任务 failed（reason 中文、不落半成品笔记），
    * 转录临时文件尽力清理；单部失败即整批语义与 CLI 失败一致（继续剩余 / 遇错即停）。
    */
-  async _aiStep(task: LiteratureTask, events: BatchEvents, transcriptPath: string | null, videoPath: string | null, finish: FinishOne): Promise<void> {
+  async _aiStep(task: KnowledgeTask, events: BatchEvents, transcriptPath: string | null, videoPath: string | null, finish: FinishOne): Promise<void> {
     task.reason = AI_STEP_TEXT;
-    void LiteratureData.updateTask(task.id, { reason: AI_STEP_TEXT });
+    void KnowledgeData.updateTask(task.id, { reason: AI_STEP_TEXT });
     events.onTaskProgress({ ...task }, AI_STEP_TEXT);
     // 读转录临时文件（缺失/读取失败 → 该任务 failed）
     let transcript: string;
@@ -366,13 +366,13 @@ export const BatchRunner = {
     // 读毕删除转录临时文件（尽力而为）
     tryUnlink(transcriptPath);
     task.reason = NOTE_STEP_TEXT;
-    void LiteratureData.updateTask(task.id, { reason: NOTE_STEP_TEXT });
+    void KnowledgeData.updateTask(task.id, { reason: NOTE_STEP_TEXT });
     events.onTaskProgress({ ...task }, NOTE_STEP_TEXT);
     finish(true, null, notePath, videoPath);
   },
 
   /** 终态落库 + 事件（resolve 于落库完成后）；成功 → 自动归档历史（archived+归档时间，ADR-0067） */
-  async _finish(task: LiteratureTask, events: BatchEvents, onEnd: (ok: boolean) => void, ok: boolean, reason: string | null, notePath: string | null, videoPath: string | null): Promise<void> {
+  async _finish(task: KnowledgeTask, events: BatchEvents, onEnd: (ok: boolean) => void, ok: boolean, reason: string | null, notePath: string | null, videoPath: string | null): Promise<void> {
     task.status = ok ? 'success' : 'failed';
     task.reason = reason;
     // 失败不清 notePath/videoPath：保留既有值（断点续跑时旧成果不丢）
@@ -383,7 +383,7 @@ export const BatchRunner = {
     // P2-1：任务处理中可能已被删除（抽屉「删除」对任意状态可用 / cleanupTaskRecordsForNote 连带删除），
     // 终态落库视为尽力而为：updateTask 抛「任务不存在」不中断批处理，事件与回调照常（计数沿用原 ok）
     try {
-      await LiteratureData.updateTask(task.id, {
+      await KnowledgeData.updateTask(task.id, {
         status: task.status,
         reason,
         notePath: task.notePath,
@@ -401,9 +401,9 @@ export const BatchRunner = {
     // 域事件（ADR-0071）：任务终态统一由处理器发射（smartcat 观察 converted；
     // failed 为占位语义——ticket 136 起 smartcat 不再订阅失败）
     if (ok) {
-      emitDomainEvent('literature:tasks', { kind: 'converted', id: task.id, url: task.url, notePath: task.notePath });
+      emitDomainEvent('knowledge:tasks', { kind: 'converted', id: task.id, url: task.url, notePath: task.notePath });
     } else {
-      emitDomainEvent('literature:tasks', { kind: 'failed', id: task.id, url: task.url, notePath: task.notePath ?? null });
+      emitDomainEvent('knowledge:tasks', { kind: 'failed', id: task.id, url: task.url, notePath: task.notePath ?? null });
     }
     onEnd(ok);
   },
