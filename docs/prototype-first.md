@@ -1,6 +1,6 @@
 # 原型先行 · UI 开发通用指导
 
-域 UI 的唯一真理源是**与插件共用的实现源码**：`styles.css`（样式）、`render.ts`（markup/口径）、`ui.ts`（行为，经公共假层，ADR-0106，八域全覆盖）。`prototype.html` 评审壳与插件是同一份代码的两个运行端——改源码一处两侧生效，无「同步/追赶」环节；两侧表现不一致 = 缺陷，修复改源码（或假层），禁止任一侧私改遮盖。迭代遵循「改源码 → 原型评审 → 构建」单向流程，评审以双击 `prototype.html` 实跑为准，禁止目测调参。八域（belongings/bookshelf/cinema/clipbook/favorites/home/password-vault/settings-panel）已全部行为单源。
+域 UI 的唯一真理源是**与插件共用的实现源码**：`styles.css`（样式）、`render.ts`（markup/口径）、`ui.ts`（行为，经公共假层，ADR-0106，行为域全覆盖）。`prototype.html` 评审壳与插件是同一份代码的两个运行端——改源码一处两侧生效，无「同步/追赶」环节；两侧表现不一致 = 缺陷，修复改源码（或假层），禁止任一侧私改遮盖。迭代遵循「改源码 → 原型评审 → 构建」单向流程，评审以双击 `prototype.html` 实跑为准，禁止目测调参。行为单源域以 `scripts/build-preview.mjs` 的 `BEHAVIOR_DOMAINS` 为准（belongings/bookshelf/cinema/clipbook/favorites/home/knowledge/password-vault/review/secondbrain/settings-panel）。
 
 ## 总则
 
@@ -48,6 +48,16 @@
 1. **改源码**：样式改 `styles.css`；结构/交互/markup 改 `render.ts`（改后重出 `prototype-render.js`）；**行为逻辑改 `ui.ts`（改后重出 `prototype-behavior.js`）**；演示外景/自检改 `prototype.html`。禁止手改任何构建产物，禁止往 `ui.ts` 手写 markup。
 2. **评审**：双击 `prototype.html`，两端 × 亮暗各过一遍。1:1 复刻以浏览器实跑为准，**禁止目测调参**（残留规则污染 computed）。
 3. **构建**：`pnpm test` + `tsc --noEmit` + `pnpm run build`。
+
+## 快速原型模式（2026-09-10 用户拍板）
+
+用户说「**走快速原型**」时，UI 迭代走轻量闭环，不套全量门禁：
+
+1. **worktree**：从最新 master 开 worktree（`../.dsh-worktrees/<名>`），在其中起 `node scripts/preview-live.mjs` 服务迭代（改 `.ts` 自动重出行为/预览包并推浏览器刷新，改 `.css/.html` 推刷新）。
+2. **迭代期三不**：不构建（不 `pnpm run build`/不部署）、不提交、不跑全量门禁——服务热重载即评审，反复改到用户满意。
+3. **测试口径**：只改样式和 UI → 不测试；涉及功能代码（ui.ts/data 等行为链）→ 只跑当前域测试文件（如 `pnpm exec vitest run tests/knowledge`）。
+4. **收尾（用户说「同步」）**：恢复全流程——worktree `git merge master` 同步底 → 全量 `pnpm test` + `tsc --noEmit` → 提交 → 合并回主仓库 → 主仓库 `pnpm run build` 部署（提交产物）→ 清 worktree。
+5. 种子数据改动在浏览器里不生效 = localStorage 种子标记未清：点评审壳「重置演示数据」或清 `bz-sim:*` 后刷新。
 
 ## 一致性守卫（自动化强制）
 
