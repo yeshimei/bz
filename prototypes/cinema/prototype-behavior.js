@@ -37,9 +37,9 @@ var BZW_cinema = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -6458,10 +6458,6 @@ tags:
   }
 
   // src/cinema/ui.ts
-  function cinemaStyleOf() {
-    const raw = tryGetSettings().cinemaStyle;
-    return raw === "gazette" || raw === "booth" ? raw : "midnight";
-  }
   function posterUrl(item, app) {
     if (!item.poster) return null;
     const f = app.vault.getAbstractFileByPath(item.poster);
@@ -7038,7 +7034,6 @@ ${item.review ? `影评: ${item.review}
   function createOverlay(app) {
     const overlay = document.createElement("div");
     overlay.className = "bz-panel-overlay";
-    cinemaStyleOf();
     const mobile = isMobileEnv();
     overlay.innerHTML = mobile ? midnightMobHtml() : midnightDeskHtml();
     document.body.appendChild(overlay);

@@ -40,9 +40,9 @@ var BZW_settings_panel = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -7297,12 +7297,16 @@ var BZW_settings_panel = (() => {
       refreshSettingsGroupCounts(container);
       markSettingSplitRows(container);
     };
-    const renderTextualRow = (body, row) => {
-      var _a3;
-      const ctx = { rowEl: body, refreshVisibility: reevaluate };
+    const newRowSetting = (body, row) => {
       const setting = new Setting(body).setName(row.name);
       if (row.desc) setting.setDesc(row.desc);
       if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+      return setting;
+    };
+    const renderTextualRow = (body, row) => {
+      var _a3;
+      const ctx = { rowEl: body, refreshVisibility: reevaluate };
+      const setting = newRowSetting(body, row);
       const isNumber = row.type === "number";
       const acc = isNumber ? bindValue(row.binding) : bindValue(row.binding);
       const changeCb = row.onChange;
@@ -7466,9 +7470,7 @@ var BZW_settings_panel = (() => {
         }
         case "toggle": {
           const acc = bindValue(row.binding);
-          const setting = new Setting(body).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          const setting = newRowSetting(body, row);
           setting.addToggle(
             (t) => t.setValue(acc.read() === true).onChange(async (v) => {
               var _a4;
@@ -7482,9 +7484,7 @@ var BZW_settings_panel = (() => {
         }
         case "select": {
           const acc = bindValue(row.binding);
-          const setting = new Setting(body).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          const setting = newRowSetting(body, row);
           setting.addDropdown((dd) => {
             var _a4;
             for (const opt of row.options) dd.addOption(opt.value, opt.label);
@@ -7501,9 +7501,7 @@ var BZW_settings_panel = (() => {
         }
         case "choiceCards": {
           const acc = bindValue(row.binding);
-          const setting = new Setting(body).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          const setting = newRowSetting(body, row);
           const pick = uiCardChoice({
             value: String((_a3 = acc.read()) != null ? _a3 : "") || row.options[0].value,
             options: row.options,
@@ -7521,9 +7519,7 @@ var BZW_settings_panel = (() => {
         }
         case "slider": {
           const acc = bindValue(row.binding);
-          const setting = new Setting(body).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          const setting = newRowSetting(body, row);
           setting.addSlider((sl) => {
             var _a4;
             sl.setLimits(row.min, row.max, (_a4 = row.step) != null ? _a4 : 1);
@@ -7546,9 +7542,7 @@ var BZW_settings_panel = (() => {
           return;
         }
         case "button": {
-          const setting = new Setting(body).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          const setting = newRowSetting(body, row);
           setting.addButton((b) => {
             if (row.cta) b.setCta();
             b.setButtonText(row.buttonText).onClick(() => row.onClick(ctx));
@@ -7557,9 +7551,7 @@ var BZW_settings_panel = (() => {
           return;
         }
         case "info": {
-          const setting = new Setting(body).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          const setting = newRowSetting(body, row);
           for (const a of (_c = row.actions) != null ? _c : []) {
             setting.addButton((b) => {
               if (a.cta) b.setCta();
@@ -8055,10 +8047,10 @@ var BZW_settings_panel = (() => {
   function regRefreshDisplay(regRefresh, ref, input) {
     if (!regRefresh || ref === void 0) return;
     regRefresh(() => {
+      var _a2;
       const snap = snapshot();
       const fresh = typeof ref === "function" ? ref(snap) : String(snap[ref]);
-      const setDisplay = input.__setDisplayValue;
-      if (setDisplay) setDisplay(String(fresh != null ? fresh : ""));
+      (_a2 = displaySetters.get(input)) == null ? void 0 : _a2(String(fresh != null ? fresh : ""));
     });
   }
   function makeInput(opts) {
@@ -8093,11 +8085,10 @@ var BZW_settings_panel = (() => {
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") commit();
     });
-    ;
-    input.__setDisplayValue = (v) => {
+    displaySetters.set(input, (v) => {
       dirty2 = false;
       if (input.value !== v) input.value = v;
-    };
+    });
     return input;
   }
   function makePathRowCtrl(opts) {
@@ -8113,11 +8104,11 @@ var BZW_settings_panel = (() => {
       if (res && typeof res.then === "function") {
         return Promise.resolve(res).then((final) => {
           current2 = Array.isArray(final) ? final : list;
-          renderAll4();
+          renderChips();
         });
       }
       current2 = Array.isArray(res) ? res : list;
-      renderAll4();
+      renderChips();
     };
     const openPicker = () => {
       openDirPicker({
@@ -8172,7 +8163,6 @@ var BZW_settings_panel = (() => {
         addBtn.remove();
       }
     };
-    const renderAll4 = () => renderChips();
     ctrl.appendChild(addBtn);
     renderChips();
     return ctrl;
@@ -8184,10 +8174,9 @@ var BZW_settings_panel = (() => {
       const btn = holder.firstElementChild;
       btn.addEventListener("click", () => {
         void (async () => {
-          var _a2;
+          var _a2, _b2;
           await a.onClick(input.value, ctx);
-          const setDisplay = input.__setDisplayValue;
-          if (setDisplay) setDisplay(String((_a2 = acc.read()) != null ? _a2 : ""));
+          (_b2 = displaySetters.get(input)) == null ? void 0 : _b2(String((_a2 = acc.read()) != null ? _a2 : ""));
           refresh();
         })();
       });
@@ -8528,7 +8517,7 @@ var BZW_settings_panel = (() => {
       count.textContent = `${n} 项`;
       count.style.display = n > 0 ? "" : "none";
     };
-    card.__bzSpUpdateCount = updateCount;
+    groupCountUpdaters.set(card, updateCount);
     updateCount();
     return card;
   }
@@ -8547,8 +8536,8 @@ var BZW_settings_panel = (() => {
         el.style.display = cond(snapshot()) ? "" : "none";
       });
       container.querySelectorAll(".bz-sp-group").forEach((card) => {
-        const upd = card.__bzSpUpdateCount;
-        if (typeof upd === "function") upd();
+        var _a2;
+        (_a2 = groupCountUpdaters.get(card)) == null ? void 0 : _a2();
       });
       for (const fn of valueRefreshes) fn();
     };
@@ -8575,6 +8564,7 @@ var BZW_settings_panel = (() => {
     mountIcons(container);
     return { refresh };
   }
+  var displaySetters, groupCountUpdaters;
   var init_renderer = __esm({
     "src/settings-panel/renderer.ts"() {
       init_settings_provider();
@@ -8583,6 +8573,8 @@ var BZW_settings_panel = (() => {
       init_notice();
       init_render2();
       init_ui();
+      displaySetters = /* @__PURE__ */ new WeakMap();
+      groupCountUpdaters = /* @__PURE__ */ new WeakMap();
     }
   });
 
@@ -9547,6 +9539,21 @@ var BZW_settings_panel = (() => {
     }
     return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
   }
+  async function fetchPageTitle(url) {
+    try {
+      const r = await requestUrl({
+        url,
+        method: "GET",
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
+      });
+      if (r.status === 200) {
+        const m = r.text.match(/<title[^>]*>([^<]*)<\/title>/i);
+        if (m && m[1]) return m[1].trim();
+      }
+    } catch (e) {
+    }
+    return null;
+  }
   function bytesEqual(a, b) {
     if (a.length !== b.length) return false;
     for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
@@ -9562,14 +9569,6 @@ var BZW_settings_panel = (() => {
   });
 
   // src/core/flow-dialog.ts
-  var flow_dialog_exports = {};
-  __export(flow_dialog_exports, {
-    FLOW_DIALOG_CANCEL_ID: () => FLOW_DIALOG_CANCEL_ID,
-    FLOW_DIALOG_OK_ID: () => FLOW_DIALOG_OK_ID,
-    buildFlowDialogParts: () => buildFlowDialogParts,
-    confirmDiscard: () => confirmDiscard,
-    openFlowDialog: () => openFlowDialog
-  });
   function buildFlowDialogParts(title, message, actions) {
     let buttons;
     if (actions.length === 2) {
@@ -13670,11 +13669,7 @@ ${body}`.trim();
           const idx = this.manifest.notes.findIndex((n) => n.id === noteId);
           if (idx === -1) return;
           const note = this.manifest.notes[idx];
-          if (note.contentRef) await this.deleteSafeFile(note.contentRef);
-          for (const a of note.attachments) {
-            await this.deleteSafeFile(a.blobRef);
-            if (a.hasPreview) await this.deleteSafeFile(a.previewRef);
-          }
+          await this.deleteNoteMirrors(note);
           this.manifest.notes.splice(idx, 1);
           await this.saveManifest();
         }
@@ -14119,7 +14114,7 @@ ${body}`.trim();
       }
     });
   }
-  var PLATFORM_COLOR_MAP, PALETTE, DEFAULT_PW_STATE, PW_REVEAL_AUTO_MASK_MS, VaultPwView, ICON_PATHS;
+  var PLATFORM_COLOR_MAP, PALETTE, DEFAULT_PW_STATE, PW_REVEAL_AUTO_MASK_MS, DEFAULT_PW_CHARSET, VaultPwView, ICON_PATHS;
   var init_vault_pw_view = __esm({
     "src/encrypt/vault-pw-view.ts"() {
       init_dom();
@@ -14145,13 +14140,14 @@ ${body}`.trim();
         shownIds: {}
       };
       PW_REVEAL_AUTO_MASK_MS = 15e3;
+      DEFAULT_PW_CHARSET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+";
       VaultPwView = class {
         constructor(dm, host, cfg) {
           /** 明文自动回遮计时器（按条目 id；手动隐藏/上锁即撤） */
           this.revealTimers = {};
           this.dm = dm;
           this.host = host;
-          this.charset = cfg.charset || "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+";
+          this.charset = cfg.charset || DEFAULT_PW_CHARSET;
           this.length = parseInt(String(cfg.length)) || 16;
         }
         /** 收藏星内联图标（替代 ★ 文本符号；图标一律 lucide——ui-kit 手册铁律） */
@@ -14551,8 +14547,7 @@ ${body}`.trim();
         }
         // ---------- lucide 图标 ----------
         ic(name, size = 14) {
-          const p = (name2) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name2] || ""}</svg>`;
-          return p(name);
+          return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ""}</svg>`;
         }
         /** 空态（组件库 uiEmpty = .bz-empty 基线）；add = 附「新增密码」金色 CTA（金库主题色，域内样式） */
         emptyState(title, desc, opts) {
@@ -15180,7 +15175,7 @@ ${body}`.trim();
       ]
     };
   }
-  var DEFAULT_PW_CHARSET, CLIPBOARD_CLEAR_DELAY_MS, clipboardClearTimer, lastVisitedAsset, _UIManager, UIManager, _EncryptAppController, EncryptAppController;
+  var CLIPBOARD_CLEAR_DELAY_MS, clipboardClearTimer, lastVisitedAsset, _UIManager, UIManager, _EncryptAppController, EncryptAppController;
   var init_ui3 = __esm({
     "src/encrypt/ui.ts"() {
       init_fake_obsidian();
@@ -15201,7 +15196,6 @@ ${body}`.trim();
       init_vault_pw_view();
       init_pw_picker();
       init_vault_assets_view();
-      DEFAULT_PW_CHARSET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+";
       CLIPBOARD_CLEAR_DELAY_MS = 6e4;
       clipboardClearTimer = null;
       lastVisitedAsset = "pw";
@@ -15259,7 +15253,7 @@ ${body}`.trim();
               toast: (m, err) => this.toast(m, err),
               openPwEntryDialog: (edit, prefill) => this.openPwEntryDialog(edit, prefill),
               openPwPlatformEdit: (p) => this.openPwPlatformEdit(p),
-              askConfirm: (t, m, okLabel, cb) => this.askPwConfirm(t, m, okLabel, cb),
+              askConfirm: (t, m, okLabel, cb) => this.askConfirm(t, m, okLabel, cb),
               copySensitive: (t) => this.copySensitive(t),
               openExternal: (u) => this.openExternal(u),
               onPwChanged: () => this.renderAll(),
@@ -16029,84 +16023,106 @@ ${body}`.trim();
         }
         /** 桌面区渲染（中列表 + 右详情按资产分发） */
         renderDesktop() {
-          var _a2, _b2, _c, _d, _e;
-          const list = this.desk.list;
-          const detail = this.desk.detail;
-          const kw = this.pwState.searchKw;
-          list.innerHTML = "";
-          detail.innerHTML = "";
-          const titleEl = this.popup.querySelector("[data-vault-title]");
-          const subEl = this.popup.querySelector("[data-vault-sub]");
-          const c = this.counts();
+          var _a2;
+          this.desk.list.innerHTML = "";
+          this.desk.detail.innerHTML = "";
           if (this.asset !== "pw") {
             (_a2 = this.popup.querySelector('.bz-vault-bar [data-act="pw-fav"]')) == null ? void 0 : _a2.remove();
           }
           if (this.asset === "overview") {
-            titleEl.textContent = "保险库";
-            subEl.textContent = `${c.pw} 密码 · ${c.note} 笔记 · ${c.diary} 日记`;
-            const area = document.createElement("div");
-            area.className = "bz-vault-area";
-            area.innerHTML = overviewHTML(this.overviewStats());
-            area.querySelectorAll(".card[data-nav]").forEach(
-              (el) => el.addEventListener("click", () => this.setAssetFromNav(el.getAttribute("data-nav")))
-            );
-            (_b2 = area.querySelector('[data-hero="lock-note"]')) == null ? void 0 : _b2.addEventListener("click", () => {
-              var _a3;
-              return (_a3 = this.onLockCurrentNote) == null ? void 0 : _a3.call(this);
-            });
-            (_c = area.querySelector('[data-hero="add-pw"]')) == null ? void 0 : _c.addEventListener("click", () => this.openPwEntryDialog());
-            area.querySelectorAll('[data-hero="health"]').forEach(
-              (el) => el.addEventListener("click", () => void this.openHealthDialog())
-            );
-            (_d = area.querySelector('[data-hero="recent-all"]')) == null ? void 0 : _d.addEventListener("click", () => this.setAssetFromNav("pw"));
-            area.querySelectorAll(".bz-vault-minirow[data-recent]").forEach(
-              (el) => el.addEventListener("click", () => this.setAssetFromNav(el.getAttribute("data-recent")))
-            );
-            detail.appendChild(area);
+            this.renderDeskOverview();
             return;
           }
           if (this.asset === "pw") {
-            titleEl.textContent = "密码";
-            const plats = this.pwDataManager.platforms();
-            subEl.textContent = kw ? `${this.pwDataManager.search(kw).length} 条匹配` : `${plats.length} 平台 · ${c.pw} 账号`;
-            const barActs = this.popup.querySelector(".bz-vault-bar");
-            const hasPwFav = !!barActs.querySelector('[data-act="pw-fav"]');
-            if (!hasPwFav) {
-              const favBtn = document.createElement("button");
-              favBtn.className = "bz-vault-ic";
-              favBtn.dataset.act = "pw-fav";
-              favBtn.title = this.pwState.view === "fav" ? "全部平台" : "只看收藏";
-              favBtn.innerHTML = vIc(this.pwState.view === "fav" ? "star" : "star-outline", 15);
-              barActs.appendChild(favBtn);
-              favBtn.addEventListener("click", () => {
-                this.pwState.view = this.pwState.view === "fav" ? "all" : "fav";
-                this.renderAll();
-              });
-            } else {
-              const b = barActs.querySelector('[data-act="pw-fav"]');
-              b.title = this.pwState.view === "fav" ? "全部平台" : "只看收藏";
-              b.innerHTML = vIc(this.pwState.view === "fav" ? "star" : "star-outline", 15);
-            }
-            const listHead2 = document.createElement("div");
-            listHead2.className = "bz-vault-lc-head";
-            listHead2.innerHTML = `<div class="t">平台</div><button class="lc-add" data-lc-add="pw" title="新增密码">${vIc("plus", 13)} 新增密码</button>`;
-            (_e = listHead2.querySelector('[data-lc-add="pw"]')) == null ? void 0 : _e.addEventListener("click", () => this.openPwEntryDialog());
-            const listBody2 = document.createElement("div");
-            listBody2.className = "bz-vault-lc-body";
-            list.appendChild(listHead2);
-            list.appendChild(listBody2);
-            this.pwView.renderDeskList(listBody2, this.pwState, (p, a) => {
-              this.pwState.selPlatform = p;
-              this.pwState.selAccount = a;
-              this.renderDesktop();
-            });
-            this.pwView.renderDeskDetail(detail, this.pwState);
+            this.renderDeskPw();
             return;
           }
           const kind = this.asset;
+          this.renderDeskNotes(kind);
+        }
+        /** 顶栏标题/副标题（各资产渲染器共用出口） */
+        setVaultHead(title, sub) {
+          this.popup.querySelector("[data-vault-title]").textContent = title;
+          this.popup.querySelector("[data-vault-sub]").textContent = sub;
+        }
+        /** 桌面概览：hero 计数 + 统计卡 + 最近 + 体检摘要（点击跳资产/动作） */
+        renderDeskOverview() {
+          var _a2, _b2, _c;
+          const c = this.counts();
+          this.setVaultHead("保险库", `${c.pw} 密码 · ${c.note} 笔记 · ${c.diary} 日记`);
+          const detail = this.desk.detail;
+          const area = document.createElement("div");
+          area.className = "bz-vault-area";
+          area.innerHTML = overviewHTML(this.overviewStats());
+          area.querySelectorAll(".card[data-nav]").forEach(
+            (el) => el.addEventListener("click", () => this.setAssetFromNav(el.getAttribute("data-nav")))
+          );
+          (_a2 = area.querySelector('[data-hero="lock-note"]')) == null ? void 0 : _a2.addEventListener("click", () => {
+            var _a3;
+            return (_a3 = this.onLockCurrentNote) == null ? void 0 : _a3.call(this);
+          });
+          (_b2 = area.querySelector('[data-hero="add-pw"]')) == null ? void 0 : _b2.addEventListener("click", () => this.openPwEntryDialog());
+          area.querySelectorAll('[data-hero="health"]').forEach(
+            (el) => el.addEventListener("click", () => void this.openHealthDialog())
+          );
+          (_c = area.querySelector('[data-hero="recent-all"]')) == null ? void 0 : _c.addEventListener("click", () => this.setAssetFromNav("pw"));
+          area.querySelectorAll(".bz-vault-minirow[data-recent]").forEach(
+            (el) => el.addEventListener("click", () => this.setAssetFromNav(el.getAttribute("data-recent")))
+          );
+          detail.appendChild(area);
+        }
+        /** 桌面密码资产：平台列表 + 账号详情 + 顶栏收藏切换钮 */
+        renderDeskPw() {
+          var _a2;
+          const list = this.desk.list;
+          const detail = this.desk.detail;
+          const kw = this.pwState.searchKw;
+          const c = this.counts();
+          this.setVaultHead("密码", kw ? `${this.pwDataManager.search(kw).length} 条匹配` : `${this.pwDataManager.platforms().length} 平台 · ${c.pw} 账号`);
+          const barActs = this.popup.querySelector(".bz-vault-bar");
+          const favBtn = barActs.querySelector('[data-act="pw-fav"]');
+          const favIcon = vIc(this.pwState.view === "fav" ? "star" : "star-outline", 15);
+          const favTitle = this.pwState.view === "fav" ? "全部平台" : "只看收藏";
+          if (!favBtn) {
+            const btn = document.createElement("button");
+            btn.className = "bz-vault-ic";
+            btn.dataset.act = "pw-fav";
+            btn.title = favTitle;
+            btn.innerHTML = favIcon;
+            barActs.appendChild(btn);
+            btn.addEventListener("click", () => {
+              this.pwState.view = this.pwState.view === "fav" ? "all" : "fav";
+              this.renderAll();
+            });
+          } else {
+            favBtn.title = favTitle;
+            favBtn.innerHTML = favIcon;
+          }
+          const listHead = document.createElement("div");
+          listHead.className = "bz-vault-lc-head";
+          listHead.innerHTML = `<div class="t">平台</div><button class="lc-add" data-lc-add="pw" title="新增密码">${vIc("plus", 13)} 新增密码</button>`;
+          (_a2 = listHead.querySelector('[data-lc-add="pw"]')) == null ? void 0 : _a2.addEventListener("click", () => this.openPwEntryDialog());
+          const listBody = document.createElement("div");
+          listBody.className = "bz-vault-lc-body";
+          list.appendChild(listHead);
+          list.appendChild(listBody);
+          this.pwView.renderDeskList(listBody, this.pwState, (p, a) => {
+            this.pwState.selPlatform = p;
+            this.pwState.selAccount = a;
+            this.renderDesktop();
+          });
+          this.pwView.renderDeskDetail(detail, this.pwState);
+        }
+        /** 桌面加密笔记/日记：列表 + 详情（异步解密日记正文预览） */
+        renderDeskNotes(kind) {
+          const list = this.desk.list;
+          const detail = this.desk.detail;
+          const kw = this.pwState.searchKw;
           let notes = [...this.dataManager.manifest.notes].filter((n) => kind === "diary" ? n.kind === "diary-entry" : n.kind !== "diary-entry" && n.kind !== "password-vault").sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-          titleEl.textContent = kind === "note" ? "加密笔记" : "加密日记";
-          subEl.textContent = kind === "note" ? `${notes.length} 篇 · 原路径已移出` : `${notes.length} 篇 · 日记面板「加密」分类移入`;
+          this.setVaultHead(
+            kind === "note" ? "加密笔记" : "加密日记",
+            kind === "note" ? `${notes.length} 篇 · 原路径已移出` : `${notes.length} 篇 · 日记面板「加密」分类移入`
+          );
           if (kw) {
             const lower = kw.toLowerCase();
             notes = notes.filter((n) => (n.title || "").toLowerCase().includes(lower) || (n.path || "").toLowerCase().includes(lower));
@@ -16471,7 +16487,8 @@ ${body}`.trim();
           });
           document.body.appendChild(mask);
         }
-        askPwConfirm(title, message, okLabel, onYes) {
+        /** 流程确认框（取消 / 确认 cta）：密码资产与笔记/日记动作共用 */
+        askConfirm(title, message, okLabel, onYes) {
           void openFlowDialog({
             title,
             message,
@@ -16634,12 +16651,16 @@ ${body}`.trim();
             body.appendChild(el);
           }
         }
-        openNoteMobPage(note, kind) {
-          var _a2, _b2;
+        /** 移动端二级页骨架：顶栏（返回 + 标题 + ⋮）+ 内容体；back/menu 绑定由调用方接 */
+        createMobPage(titleHtml) {
           const page = document.createElement("div");
           page.className = "bz-vault-mobpage";
-          page.innerHTML = `<div class="head"><button class="back bz-touch-target--xl" data-mob-back>${vIc("chevron-left", 16)}</button><div class="t">${kind === "note" ? "加密笔记" : "加密日记"}</div><button class="ic" data-mob-menu>${vIc("more-h", 16)}</button></div><div class="body"></div>`;
-          const body = page.querySelector(".body");
+          page.innerHTML = `<div class="head"><button class="back bz-touch-target--xl" data-mob-back>${vIc("chevron-left", 16)}</button><div class="t">${titleHtml}</div><button class="ic" data-mob-menu>${vIc("more-h", 16)}</button></div><div class="body"></div>`;
+          return { page, body: page.querySelector(".body") };
+        }
+        openNoteMobPage(note, kind) {
+          var _a2, _b2;
+          const { page, body } = this.createMobPage(kind === "note" ? "加密笔记" : "加密日记");
           body.innerHTML = noteDetailHTML(note, kind);
           const bind = (a, fn) => {
             var _a3;
@@ -16670,9 +16691,7 @@ ${body}`.trim();
         }
         openPwMobPage(p) {
           var _a2, _b2;
-          const page = document.createElement("div");
-          page.className = "bz-vault-mobpage";
-          page.innerHTML = `<div class="head"><button class="back bz-touch-target--xl" data-mob-back>${vIc("chevron-left", 16)}</button><div class="t">${escapeHtml2(p.platform)}</div><button class="ic" data-mob-menu>${vIc("more-h", 16)}</button></div><div class="body"></div>`;
+          const { page } = this.createMobPage(escapeHtml2(p.platform));
           this.pwView.renderMobPlatformPage(page.querySelector(".body"), p, this.pwState);
           (_a2 = page.querySelector("[data-mob-back]")) == null ? void 0 : _a2.addEventListener("click", () => page.remove());
           (_b2 = page.querySelector("[data-mob-menu]")) == null ? void 0 : _b2.addEventListener("click", () => this.pwView.openPlatformSheet(p.platform));
@@ -16680,10 +16699,7 @@ ${body}`.trim();
         }
         openPwAccountPage(d, st) {
           var _a2, _b2;
-          const page = document.createElement("div");
-          page.className = "bz-vault-mobpage";
-          page.innerHTML = `<div class="head"><button class="back bz-touch-target--xl" data-mob-back>${vIc("chevron-left", 16)}</button><div class="t">${escapeHtml2(d.platform)}</div><button class="ic" data-mob-menu>${vIc("more-h", 16)}</button></div><div class="body"></div>`;
-          const body = page.querySelector(".body");
+          const { page, body } = this.createMobPage(escapeHtml2(d.platform));
           this.pwView.renderDeskDetail(body, { ...st, selPlatform: d.platform, selAccount: d.id });
           (_a2 = page.querySelector("[data-mob-back]")) == null ? void 0 : _a2.addEventListener("click", () => page.remove());
           (_b2 = page.querySelector("[data-mob-menu]")) == null ? void 0 : _b2.addEventListener("click", () => this.pwView.openAccountSheet(d));
@@ -16695,36 +16711,30 @@ ${body}`.trim();
         }
         // ---------- 加密笔记/日记销毁/还原 ----------
         confirmDeleteNote(note) {
-          void openFlowDialog({
-            title: "删除加密笔记",
-            message: `将永久删除「${note.title}」的正文与全部附件密文，不可恢复。确定删除？`,
-            actions: [
-              { label: "取消", value: "cancel" },
-              { label: "永久删除", value: "ok", cta: true }
-            ]
-          }).then((v) => {
-            if (v !== "ok") return;
-            void this.dataManager.removeNote(note.id).then(() => {
-              if (this._selNoteId === note.id) this._selNoteId = null;
-              this.renderList();
-              this.toast(`已删除加密笔记「${note.title}」`);
-            }).catch((e) => this.toast("删除失败：" + e.message, true));
-          });
+          this.askConfirm(
+            "删除加密笔记",
+            `将永久删除「${note.title}」的正文与全部附件密文，不可恢复。确定删除？`,
+            "永久删除",
+            () => {
+              void this.dataManager.removeNote(note.id).then(() => {
+                if (this._selNoteId === note.id) this._selNoteId = null;
+                this.renderList();
+                this.toast(`已删除加密笔记「${note.title}」`);
+              }).catch((e) => this.toast("删除失败：" + e.message, true));
+            }
+          );
         }
         /** 日记还原回日记（复用 diary reclassifyEntry 语义：还原块 merge 回原日期 md） */
         confirmRestoreDiary(note) {
-          void openFlowDialog({
-            title: "还原回日记",
-            message: `将「${note.title}」的正文与附件还原到 ${note.path} 的时间序位置？`,
-            actions: [
-              { label: "取消", value: "cancel" },
-              { label: "还原", value: "ok", cta: true }
-            ]
-          }).then((v) => {
-            if (v !== "ok") return;
-            const h = progressNotify("还原日记 " + note.title);
-            void this.restoreDiaryEntry(note, h);
-          });
+          this.askConfirm(
+            "还原回日记",
+            `将「${note.title}」的正文与附件还原到 ${note.path} 的时间序位置？`,
+            "还原",
+            () => {
+              const h = progressNotify("还原日记 " + note.title);
+              void this.restoreDiaryEntry(note, h);
+            }
+          );
         }
         /** 实际执行日记还原（调 SafeManager.restoreDiaryEntry——diary 域同款语义） */
         async restoreDiaryEntry(note, h) {
@@ -16759,61 +16769,55 @@ ${body}`.trim();
           }).catch(() => this.toast("正文解密失败", true));
         }
         confirmDestroyDiary(note) {
-          void openFlowDialog({
-            title: "彻底销毁日记",
-            message: `将永久销毁「${note.title}」的密文（含附件）。此操作不可撤销，确定继续吗？`,
-            actions: [
-              { label: "取消", value: "cancel" },
-              { label: "永久销毁", value: "ok", cta: true }
-            ]
-          }).then((v) => {
-            if (v !== "ok") return;
-            void this.dataManager.removeNote(note.id).then(() => {
-              delete this._diaryPlain[note.id];
-              if (this._selNoteId === note.id) this._selNoteId = null;
-              this.renderList();
-              this.toast(`已销毁「${note.title}」`);
-            }).catch((e) => this.toast("销毁失败：" + e.message, true));
-          });
+          this.askConfirm(
+            "彻底销毁日记",
+            `将永久销毁「${note.title}」的密文（含附件）。此操作不可撤销，确定继续吗？`,
+            "永久销毁",
+            () => {
+              void this.dataManager.removeNote(note.id).then(() => {
+                delete this._diaryPlain[note.id];
+                if (this._selNoteId === note.id) this._selNoteId = null;
+                this.renderList();
+                this.toast(`已销毁「${note.title}」`);
+              }).catch((e) => this.toast("销毁失败：" + e.message, true));
+            }
+          );
         }
         confirmRestore(note) {
-          void openFlowDialog({
-            title: "还原",
-            message: `将「${note.title}」的原文${note.attachments.length ? "与 " + note.attachments.length + " 个原质量附件" : ""}还原到原路径？`,
-            actions: [
-              { label: "取消", value: "cancel" },
-              { label: "还原", value: "ok", cta: true }
-            ]
-          }).then((v) => {
-            if (v !== "ok") return;
-            const h = progressNotify("还原 " + note.title);
-            void this.dataManager.restoreNote(note.id, (p) => updateProgress2(h, p.done, p.total, p.current)).then(({ conflicts, removed, manifestSaveFailed }) => {
-              const total = note.attachments.length + 1;
-              if (removed) {
-                finishProgress(h, total, "还原完成");
-                this.hide();
-                this.openRestoredNote(note);
-              } else if (manifestSaveFailed) {
-                finishProgress(h, total, "文件已还原（清单保存失败）");
-                notice(
-                  "笔记与附件已还原到原位置，但保险库清单保存失败（磁盘异常）；下次解锁后重试还原将自动完成清理",
-                  "warning"
-                );
-              } else {
-                finishProgress(h, total, "还原未完成（" + conflicts.length + " 个目标有冲突）");
-                const cap = (p) => p.length > 48 ? p.slice(0, 48) + "…" : p;
-                const paths = conflicts.map(cap).join("、");
-                notice(
-                  `还原中止：${conflicts.length} 个目标被占用或不可用（${paths}），未写入任何文件，条目保留在保险库`,
-                  "warning"
-                );
-              }
-              void this.renderList();
-            }).catch((e) => {
-              if (h) h.hide();
-              notifyActionError(e, "还原");
-            });
-          });
+          this.askConfirm(
+            "还原",
+            `将「${note.title}」的原文${note.attachments.length ? "与 " + note.attachments.length + " 个原质量附件" : ""}还原到原路径？`,
+            "还原",
+            () => {
+              const h = progressNotify("还原 " + note.title);
+              void this.dataManager.restoreNote(note.id, (p) => updateProgress2(h, p.done, p.total, p.current)).then(({ conflicts, removed, manifestSaveFailed }) => {
+                const total = note.attachments.length + 1;
+                if (removed) {
+                  finishProgress(h, total, "还原完成");
+                  this.hide();
+                  this.openRestoredNote(note);
+                } else if (manifestSaveFailed) {
+                  finishProgress(h, total, "文件已还原（清单保存失败）");
+                  notice(
+                    "笔记与附件已还原到原位置，但保险库清单保存失败（磁盘异常）；下次解锁后重试还原将自动完成清理",
+                    "warning"
+                  );
+                } else {
+                  finishProgress(h, total, "还原未完成（" + conflicts.length + " 个目标有冲突）");
+                  const cap = (p) => p.length > 48 ? p.slice(0, 48) + "…" : p;
+                  const paths = conflicts.map(cap).join("、");
+                  notice(
+                    `还原中止：${conflicts.length} 个目标被占用或不可用（${paths}），未写入任何文件，条目保留在保险库`,
+                    "warning"
+                  );
+                }
+                void this.renderList();
+              }).catch((e) => {
+                if (h) h.hide();
+                notifyActionError(e, "还原");
+              });
+            }
+          );
         }
         /** 还原成功后打开该笔记（Obsidian 当前叶子页打开） */
         openRestoredNote(note) {
@@ -17265,7 +17269,7 @@ ${body}`.trim();
         autoLoadOriginal: !!s.encryptAutoLoadOriginal,
         securityMode: !!s.encryptSecurityMode,
         // ADR-0085：密码资产并入保险库；生成器沿用全局键（旧密码本同源）
-        pwCharset: s.passwordCharset || "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+",
+        pwCharset: s.passwordCharset || DEFAULT_PW_CHARSET,
         pwLength: String(parseInt(s.passwordLength) || 16)
       };
       controller = EncryptAppController.getInstance(config);
@@ -20737,8 +20741,7 @@ ${entry.content.trim()}`;
         showEarlierDone: false,
         pinnedNewId: null,
         completeTimers: /* @__PURE__ */ new Map(),
-        renderFn: null,
-        editingId: null
+        renderFn: null
       };
     }
   });
@@ -20752,7 +20755,7 @@ ${entry.content.trim()}`;
     const v = skin === "editorial" ? "editorial" : "paper";
     panel2.classList.add(`bz-todo-skin-${v}`);
   }
-  var import_moment5, ICON3, SCENE_PSEUDO_ICONS;
+  var import_moment5, ICON2, SCENE_PSEUDO_ICONS;
   var init_ui4 = __esm({
     "src/todo/ui.ts"() {
       import_moment5 = __toESM(require_moment());
@@ -20769,7 +20772,7 @@ ${entry.content.trim()}`;
       init_data3();
       init_due();
       init_state4();
-      ICON3 = {
+      ICON2 = {
         brand: "list-checks",
         close: "x",
         search: "search",
@@ -20778,15 +20781,7 @@ ${entry.content.trim()}`;
         settings: "settings",
         empty: "inbox",
         pos: "pin",
-        clear: "x",
-        external: "external-link",
-        book: "book-open",
-        check: "check",
-        restore: "rotate-ccw",
-        postpone1: "calendar-plus",
-        postpone3: "calendar-clock",
         star: "star",
-        copy: "copy",
         edit: "pencil",
         del: "trash-2",
         course: "graduation-cap",
@@ -20800,9 +20795,9 @@ ${entry.content.trim()}`;
         sceneToday: "sun"
       };
       SCENE_PSEUDO_ICONS = {
-        全部: { icon: ICON3.sceneAll },
-        今日: { icon: ICON3.sceneToday },
-        重要: { icon: ICON3.star, cls: "bz-ic--warning" }
+        全部: { icon: ICON2.sceneAll },
+        今日: { icon: ICON2.sceneToday },
+        重要: { icon: ICON2.star, cls: "bz-ic--warning" }
       };
     }
   });
@@ -21657,7 +21652,7 @@ ${entry.content.trim()}`;
     return `<div class="bz-bel-detail">
     <div class="bz-bel-detail-head">
       <div class="bz-bel-detail-title">${esc(it.name)}</div>
-      <button class="bz-icon-btn" data-bd-close title="关闭">${iconSpan(ICON4.close)}</button>
+      <button class="bz-icon-btn" data-bd-close title="关闭">${iconSpan(ICON3.close)}</button>
     </div>
     <div class="bz-bel-detail-idrow">
       <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
@@ -21678,7 +21673,7 @@ ${entry.content.trim()}`;
     <div class="bz-btn-row bz-bel-detail-btns">
       <div class="bz-bel-form-spacer"></div>
       <button type="button" class="bz-btn bz-btn--ghost" data-bd-edit>${iconSpan("pencil", "bz-ic--sm")} 编辑</button>
-      <button type="button" class="bz-btn bz-btn--primary bz-bel-delbtn" data-bd-del>${iconSpan(ICON4.del, "bz-ic--sm")} 删除</button>
+      <button type="button" class="bz-btn bz-btn--primary bz-bel-delbtn" data-bd-del>${iconSpan(ICON3.del, "bz-ic--sm")} 删除</button>
     </div>
   </div>`;
   }
@@ -21757,14 +21752,14 @@ ${entry.content.trim()}`;
     specs.push({ icon: "trash-2", label: "删除", act: "del", danger: true });
     return specs;
   }
-  var ICON4, STATUS, STATUS_ORDER, STATUS_LABELS, SORT_OPTS;
+  var ICON3, STATUS, STATUS_ORDER, STATUS_LABELS, SORT_OPTS;
   var init_shared3 = __esm({
     "src/belongings/shared.ts"() {
       init_str();
       init_emoji_icon_map();
       init_emoji_icon_map();
       init_str();
-      ICON4 = {
+      ICON3 = {
         add: "plus",
         search: "search",
         close: "x",
@@ -21809,26 +21804,26 @@ ${entry.content.trim()}`;
           <div class="bz-bel-mobhead-t">归物本</div>
           <div class="bz-bel-mobhead-sub" data-bel-mobstats></div>
         </div>
-        <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON4.close)}</button>
+        <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON3.close)}</button>
       </div>
     </div>
     <div class="bz-bel-chips" data-bel-chips></div>
     <div class="bz-toolrow bz-bel-toolrow">
-      <div class="bz-search">${iconSpan(ICON4.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类…"></div>
+      <div class="bz-search">${iconSpan(ICON3.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类…"></div>
       <div class="bz-bel-yearsel">
-        <div class="bz-bel-select" data-bel-year role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">全部年份</span>${iconSpan(ICON4.chevD, "bz-bel-select-chev")}</div>
+        <div class="bz-bel-select" data-bel-year role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">全部年份</span>${iconSpan(ICON3.chevD, "bz-bel-select-chev")}</div>
         <div class="bz-bel-dropmenu" data-bel-yearmenu role="listbox"></div>
       </div>
       <div class="bz-bel-yearsel bz-bel-mobsortsel-wrap">
-        <div class="bz-bel-select" data-bel-mobsortsel role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">最近购入</span>${iconSpan(ICON4.chevD, "bz-bel-select-chev")}</div>
+        <div class="bz-bel-select" data-bel-mobsortsel role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">最近购入</span>${iconSpan(ICON3.chevD, "bz-bel-select-chev")}</div>
         <div class="bz-bel-dropmenu" data-bel-mobsortmenu role="listbox"></div>
       </div>
       <div class="bz-bel-sort" data-bel-sort></div>
-      <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${iconSpan(ICON4.add, "bz-ic--sm")} 记一笔</button>
+      <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${iconSpan(ICON3.add, "bz-ic--sm")} 记一笔</button>
     </div>
     <div class="bz-mobstrip" data-bel-mobstatus></div>
     <div class="bz-bel-content" data-bel-content></div>
-    <button class="bz-btn bz-btn--md bz-bel-mobadd" data-bel-add>${iconSpan(ICON4.add, "bz-ic--sm")} 记一笔</button>
+    <button class="bz-btn bz-btn--md bz-bel-mobadd" data-bel-add>${iconSpan(ICON3.add, "bz-ic--sm")} 记一笔</button>
   </div>
 </div>`;
   }
@@ -21875,7 +21870,7 @@ ${entry.content.trim()}`;
     return `投入 ${moneyShort(totalAssets(items))} · 日均 ${avgDailyCost(items).toFixed(2)}`;
   }
   function emptyHtml(noMatch) {
-    return `<div class="bz-empty">${iconSpan(ICON4.empty, "bz-empty-ic")}<div class="bz-empty-title">${noMatch ? "没有符合条件的物品" : "这里还没有物品"}</div><div class="bz-empty-desc">${noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"}</div></div>`;
+    return `<div class="bz-empty">${iconSpan(ICON3.empty, "bz-empty-ic")}<div class="bz-empty-title">${noMatch ? "没有符合条件的物品" : "这里还没有物品"}</div><div class="bz-empty-desc">${noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"}</div></div>`;
   }
   function cellHtml(it, idx) {
     var _a2;
@@ -22326,13 +22321,14 @@ ${entry.content.trim()}`;
       }
     });
     const bindSearch = (inp) => {
+      let deb;
       inp.addEventListener("input", () => {
-        clearTimeout(inp._belDeb);
-        inp._belDeb = setTimeout(() => {
+        clearTimeout(deb);
+        deb = setTimeout(() => {
           if (!M4.overlay) return;
           M4.q = inp.value.trim();
           renderAll();
-        }, 180);
+        }, SEARCH_DEBOUNCE_MS);
       });
     };
     bindSearch(overlay2.querySelector("[data-bel-search]"));
@@ -22878,7 +22874,7 @@ ${entry.content.trim()}`;
       return (_a3 = mask.querySelector("#bm-name")) == null ? void 0 : _a3.focus();
     }, 100);
   }
-  var THEME_CLASSES, M4, dropDocClick, DEFAULT_STATUS_VALUES, mainEscRegistered, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, _belBaseline;
+  var THEME_CLASSES, SEARCH_DEBOUNCE_MS, M4, dropDocClick, DEFAULT_STATUS_VALUES, mainEscRegistered, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, _belBaseline;
   var init_ui5 = __esm({
     "src/belongings/ui.ts"() {
       init_notice();
@@ -22896,6 +22892,7 @@ ${entry.content.trim()}`;
       init_render6();
       init_ai2();
       THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
+      SEARCH_DEBOUNCE_MS = 180;
       M4 = {
         overlay: null,
         db: null,
@@ -23471,7 +23468,6 @@ ${bodyText.substring(0, 6e3)}`;
         if (tagsEnabled !== false && (!fm || !Array.isArray(fm.tags) || fm.tags.length === 0)) missing.push("tags");
         if (missing.length === 0) return;
       }
-      console.log(`[自动摘要] 补全缺失字段(${missing.join("/")}): ${file.basename}`);
       const startName = fm && fm.title ? fm.title : file.basename;
       const key = dedupeKeyFor(file);
       if (!opts.quiet) {
@@ -23536,7 +23532,6 @@ ${bodyText.substring(0, 6e3)}`;
       } else if (h) {
         h.hide();
       }
-      console.log(`[自动摘要] ✅ 完成: ${targetFile.basename}`);
     } catch (e) {
       if (h) h.hide();
       console.error(`[自动摘要] 处理失败: ${file.basename}`, e);
@@ -23648,7 +23643,6 @@ ${bodyText.substring(0, 6e3)}`;
       if (workspaceRef && typeof workspaceRef.on === "function") {
         openListenerRef = workspaceRef.on("file-open", (file) => queueProcess(app2, ai, file));
       }
-      console.log(`[自动摘要] 👁️ 监听 ${getWatchDir()}` + (timing === "lazy" ? "（懒触发：仅打开时）" : ""));
     }, 2e3);
   }
   function ensureAutoSummary(app2) {
@@ -24509,10 +24503,7 @@ ${bodyText.substring(0, 6e3)}`;
     M5.cur = null;
     M5.list = [];
     M5.upInfo = {};
-    M5.ctxOpen = false;
     M5.mobDetailOpen = false;
-    M5.mobSearchOpen = false;
-    M5.searchKeyword = "";
   }
   var M5;
   var init_state5 = __esm({
@@ -24531,11 +24522,8 @@ ${bodyText.substring(0, 6e3)}`;
         cur: null,
         list: [],
         upInfo: {},
-        ctxOpen: false,
         mobDetailOpen: false,
-        mobSearchOpen: false,
-        isMobile: false,
-        searchKeyword: ""
+        isMobile: false
       };
     }
   });
@@ -24996,6 +24984,90 @@ ${body}`;
     }
   });
 
+  // src/knowledge/source.ts
+  function noteSourceName(path, name) {
+    const explicit = String(name != null ? name : "").trim();
+    if (explicit) return explicit;
+    const base = String(path != null ? path : "").replace(/\\/g, "/").split("/").pop() || "";
+    return base.replace(/\.md$/i, "") || String(path != null ? path : "");
+  }
+  function isUrlLikeSourceText(text) {
+    const s = String(text != null ? text : "").trim();
+    if (!s || /\s/.test(s)) return false;
+    if (/^https?:\/\/\S+$/i.test(s)) return true;
+    return URL_LIKE_RE.test(s);
+  }
+  function cleanUrlText(text) {
+    return String(text != null ? text : "").trim().replace(/[，。！？；、,;.!?…'"’”\])}>】」』]+$/, "");
+  }
+  function normalizeSourceUrl(input) {
+    const s = cleanUrlText(input);
+    const m = s.match(/^(https?:\/\/)([^/?#]+)([^?#]*)(\?[^#]*)?(#.*)?$/i);
+    if (!m) return s;
+    const [, scheme, host, path, query, hash] = m;
+    const bare = host.toLowerCase().replace(/^www\./, "");
+    if (bare === "b23.tv") return scheme + host + path;
+    if (bare.endsWith("bilibili.com") && /^\/video\//.test(path)) {
+      const keep = (query != null ? query : "").slice(1).split("&").filter((kv) => /^(p|t)=/.test(kv));
+      return scheme + host + path + (keep.length ? "?" + keep.join("&") : "");
+    }
+    if (!query) return s;
+    const kept = query.slice(1).split("&").filter(Boolean).filter((kv) => {
+      const k = kv.split("=")[0].toLowerCase();
+      return !k.startsWith("utm_") && !k.startsWith("spm_") && !TRACK_KEYS.has(k);
+    });
+    return scheme + host + path + (kept.length ? "?" + kept.join("&") : "") + (hash != null ? hash : "");
+  }
+  function decodeHtmlEntities(s) {
+    return s.replace(/&quot;/gi, '"').replace(/&#0?39;/g, "'").replace(/&apos;/gi, "'").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&");
+  }
+  function cleanSourceTitle(raw) {
+    let t = decodeHtmlEntities(String(raw != null ? raw : "")).replace(/\s+/g, " ").trim();
+    t = t.replace(/\s*[_\-–—|｜]\s*哔哩哔哩(?:_bilibili)?\s*$/i, "");
+    t = t.replace(/\s*[_\-–—|｜]\s*bilibili\s*$/i, "");
+    t = t.replace(/\s*[-–—|｜]\s*知乎(?:日报|专栏)?\s*$/, "");
+    return t.trim();
+  }
+  function serializeTermSource(src) {
+    var _a2;
+    if (!src) return null;
+    if (src.kind === "external") {
+      const url = normalizeSourceUrl(src.url);
+      if (!url) return null;
+      const out = { source: url };
+      const title = src.title ? cleanSourceTitle(src.title) : "";
+      if (title) out.sourceTitle = title;
+      return out;
+    }
+    const path = String((_a2 = src.path) != null ? _a2 : "").trim();
+    if (!path) return null;
+    const name = noteSourceName(path, src.name);
+    return { source: `[[${path}|${name}]]` };
+  }
+  var URL_LIKE_RE, TRACK_KEYS;
+  var init_source = __esm({
+    "src/knowledge/source.ts"() {
+      URL_LIKE_RE = /^(?:[\w-]+\.)+[A-Za-z]{2,}(?::\d+)?(?:[/?#][^\s]*)?$/;
+      TRACK_KEYS = /* @__PURE__ */ new Set([
+        "vd_source",
+        "vd_src",
+        "seid",
+        "unique_k",
+        "from",
+        "share_source",
+        "share_medium",
+        "share_token",
+        "share_plat",
+        "share_to",
+        "share_from",
+        "share_times",
+        "gcid",
+        "refer",
+        "scene"
+      ]);
+    }
+  });
+
   // src/knowledge/note-gen.ts
   function parseDomainList(raw) {
     return [...new Set(String(raw != null ? raw : "").split(/[,，、]/).map((s) => s.trim()).filter(Boolean))];
@@ -25192,10 +25264,15 @@ ${t}`,
       "type: term",
       `domain: ${quoteYaml(domain)}`,
       `term: ${quoteYaml(term)}`,
-      `date: ${quoteYaml(nowStamp())}`,
-      "---"
-    ].join("\n");
-    const body = [fm, summary].filter(Boolean).join("\n\n");
+      `date: ${quoteYaml(nowStamp())}`
+    ];
+    const src = serializeTermSource(opts.source);
+    if (src) {
+      fm.push(`source: ${quoteYaml(src.source)}`);
+      if (src.sourceTitle) fm.push(`sourceTitle: ${quoteYaml(src.sourceTitle)}`);
+    }
+    fm.push("---");
+    const body = [fm.join("\n"), summary].filter(Boolean).join("\n\n");
     return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(term), body);
   }
   function parseFrontmatter3(content) {
@@ -25296,6 +25373,7 @@ ${sample}`,
       init_ai();
       init_app();
       init_settings_provider();
+      init_source();
       BACKFILL_AI_TIMEOUT_MS = 25e3;
     }
   });
@@ -25711,6 +25789,11 @@ ${sample}`,
     if (m) return m[0];
     return url.length > 28 ? url.slice(0, 28) + "…" : url;
   }
+  function dateStamp() {
+    const d = /* @__PURE__ */ new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  }
   function litDirOf(s) {
     const raw = s && s.knowledgeDirectory ? String(s.knowledgeDirectory) : "文献盒";
     return raw.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
@@ -25833,12 +25916,14 @@ ${sample}`,
       init_flow_dialog();
       init_notice();
       init_utils();
+      init_suggest();
       init_z_order();
       init_domain_bus();
       init_app();
       init_data7();
       init_processor2();
       init_note_gen();
+      init_source();
       STATUS_META = {
         pending: { label: "待处理", cls: "bz-kb-pending" },
         processing: { label: "处理中", cls: "bz-kb-processing" },
@@ -25862,7 +25947,6 @@ ${sample}`,
           this.popup = null;
           this.contentEl = null;
           this.part = "z1";
-          this.noteView = null;
           this.allNotes = [];
           this.allCards = [];
           this.allTopics = [];
@@ -25890,6 +25974,10 @@ ${sample}`,
           this.termGenerating = false;
           this.termSummarizing = false;
           this.termHasDraft = false;
+          this.termSource = null;
+          // 术语来源（ADR-0116；null = 未填）
+          this.termSrcSuggest = null;
+          this.termSrcTimer = null;
           this.editingId = null;
           this.onKeydown = () => {
           };
@@ -25930,18 +26018,29 @@ ${sample}`,
           const popup = document.createElement("div");
           popup.id = "knowledge-popup";
           popup.className = "bz-kb-window kb";
+          if (isMobileEnv()) popup.classList.add("bz-panel-mtop");
           popup.style.display = "none";
-          popup.innerHTML = `
-      <div class="bz-kb-head">
-        <div class="bz-kb-parts">
+          const partBtns = `
           <button class="bz-kb-part is-on" data-kb-act="part" data-part="z1">部壹 · 文献</button>
           <button class="bz-kb-part" data-kb-act="part" data-part="z2">部贰 · 卡片</button>
-          <button class="bz-kb-part" data-kb-act="part" data-part="z3">部叁 · 主题</button>
+          <button class="bz-kb-part" data-kb-act="part" data-part="z3">部叁 · 主题</button>`;
+          popup.innerHTML = isMobileEnv() ? `
+      <div class="bz-kb-head">
+        <div class="bz-kb-brand">
+          <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
+          <div class="bz-kb-title">知 识 盒</div>
+        </div>
+        <button class="bz-kb-mclose" data-kb-act="kb-close" title="关闭知识盒">✕</button>
+      </div>
+      <div class="bz-kb-parts">${partBtns}
+      </div>
+      <div class="bz-kb-sc" id="kb-sc"></div>` : `
+      <div class="bz-kb-head">
+        <div class="bz-kb-parts">${partBtns}
         </div>
         <div class="bz-kb-brand">
           <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
           <div class="bz-kb-title">知 识 盒</div>
-          <div class="bz-kb-phon">[ zhī shí hé ] · 检索归第二大脑 · 知识盒只整理关联</div>
         </div>
       </div>
       <div class="bz-kb-sc" id="kb-sc"></div>`;
@@ -25961,7 +26060,6 @@ ${sample}`,
           const act = t.getAttribute("data-kb-act");
           if (act === "part") {
             this.part = t.getAttribute("data-part") || "z1";
-            this.noteView = null;
             void this.refreshCurrent();
             this.syncPartButtons();
           } else if (act === "term-entry") this.showTermEntry();
@@ -25969,15 +26067,16 @@ ${sample}`,
           else if (act === "lit-peek") {
             const p = t.getAttribute("data-path") || "";
             const n = this.allNotes.find((x) => x.path === p);
-            if (n) void this.openLitPreview(n);
+            if (n) void this.openPreview(n);
+          } else if (act === "card-peek") {
+            const p = t.getAttribute("data-path") || "";
+            const c = this.allCards.find((x) => x.path === p);
+            if (c) void this.openPreview(c, "card");
           } else if (act === "topic-open") {
             const p = t.getAttribute("data-path") || "";
-            const n = this.allTopics.find((x) => x.path === p);
-            if (n) void this.openTopicNote(n);
-          } else if (act === "topics-back") {
-            this.noteView = null;
-            this.renderTopics();
-          }
+            const tp = this.allTopics.find((x) => x.path === p);
+            if (tp) void this.openPreview({ file: tp.file, path: tp.path, title: tp.title, domain: tp.where }, "topic");
+          } else if (act === "kb-close") this.hideMain();
         }
         syncPartButtons() {
           if (!this.popup) return;
@@ -26058,6 +26157,8 @@ ${sample}`,
               domain: fm && fm.domain ? String(fm.domain) : "",
               summary: fm && fm.summary ? String(fm.summary) : "",
               url: fm && fm.url ? String(fm.url) : "",
+              source: fm && fm.source ? String(fm.source) : "",
+              sourceTitle: fm && fm.sourceTitle ? String(fm.sourceTitle) : "",
               date,
               created
             };
@@ -26068,7 +26169,6 @@ ${sample}`,
         }
         renderLiterature() {
           if (!this.contentEl) return;
-          this.noteView = null;
           const rows = this.allNotes.map((n, i) => {
             const no = String(i + 1).padStart(2, "0");
             const kind = n.type === "video" ? "影 像" : "词 条";
@@ -26079,17 +26179,16 @@ ${sample}`,
           }).join("");
           this.contentEl.innerHTML = `
       <div class="bz-kb-pd">
-        <div class="bz-kb-sec">录 入 · 素 材 层 进 货 口（两 种 来 源，全 交 给 AI）</div>
         <div class="bz-kb-entryrow">
-          <button class="bz-kb-entrybtn" data-kb-act="term-entry"><b>文字录入 · 术语</b><span>想到一个概念，AI 当场生成术语卡预览，确认后写入文献盒</span></button>
-          <button class="bz-kb-entrybtn" data-kb-act="video-entry"><b>视频录入 · 任务</b><span>B 站链接丢进来：下载、转写、AI 生成文献笔记，全自动</span></button>
+          <button class="bz-kb-entrybtn" data-kb-act="term-entry"><b>文字录入 · 术语</b><span>想到一个概念，当场落成一张术语卡</span></button>
+          <button class="bz-kb-entrybtn" data-kb-act="video-entry"><b>视频录入 · 任务</b><span>丢进来一个 B 站链接，文献笔记自动长出来</span></button>
         </div>
-        <div class="bz-kb-sec" style="margin-top:20px">文 献 · 等 被 主 题 笔 记 引 用 、 被 提 炼</div>
         ${rows || '<div class="bz-kb-empty">「文献目录」还没有文献笔记——从上面的两种录入开始。</div>'}
       </div>`;
         }
-        /** 部壹文献预览弹层：全文段落 + related + 提炼成卡 */
-        async openLitPreview(n) {
+        /** 三部共用预览弹层（文献/卡片/主题同一样式）：正文真 Markdown 渲染（视频 ![[mp4]] 内嵌可播）+ 关联 + 可点来源（只读；关闭走 ✕/ESC） */
+        async openPreview(n, kind = "lit") {
+          var _a2;
           const app2 = getApp();
           let raw = "";
           try {
@@ -26098,39 +26197,42 @@ ${sample}`,
             raw = "";
           }
           const body = stripFrontmatter(raw);
-          const blocks = body.split(/\r?\n\r?\n+/).map((b) => b.trim()).filter(Boolean);
-          const paras = [];
-          let videoEmbed = "";
-          for (const b of blocks) {
-            const vm = b.match(/^!\[\[(.+?\.(?:mp4|webm|mkv))\]\]$/);
-            if (vm) {
-              videoEmbed = vm[1];
-              continue;
-            }
-            paras.push(b);
-          }
+          const parasHtml = body.split(/\r?\n\r?\n+/).map((b) => b.trim()).filter(Boolean).map((b) => `<p>${esc2(b)}</p>`).join("") || "<p>（无正文）</p>";
           const rels = await this.noteRels(n);
-          const parasHtml = paras.map((p) => `<p>${esc2(p)}</p>`).join("") || "<p>（无正文）</p>";
-          const clipHtml = videoEmbed ? `<div class="bz-kb-cliprow">视频片段 · ${esc2(shortNoteName(videoEmbed))}</div>` : "";
-          const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink">${esc2(n.url)}</div>` : "";
-          this.openSheet(this.sheetWrap(`文献预览 · ${n.type === "video" ? "影像" : "词条"}`, `
+          const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc2(n.url)}" href="#">${esc2(n.url)}</a></div>` : n.source && !n.source.startsWith("[[") ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc2(n.source)}" href="#">${esc2(n.sourceTitle || n.source)}</a></div>` : "";
+          const head = kind === "card" ? { title: "卡片预览 · 卡片盒", badge: "卡 片", hot: false } : kind === "topic" ? { title: "主题预览 · 主题笔记", badge: "主 题", hot: false } : { title: `文献预览 · ${n.type === "video" ? "影像" : "词条"}`, badge: n.type === "video" ? "影 像" : "词 条", hot: n.type === "video" };
+          this.openSheet(this.sheetWrap(head.title, `
       <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc2(n.title)}</span>
-        <span class="bz-kb-pos ${n.type === "video" ? "hot" : ""}">${n.type === "video" ? "影 像" : "词 条"}</span>
+        <span class="bz-kb-pos ${head.hot ? "hot" : ""}">${head.badge}</span>
         <span class="bz-kb-dom">${esc2(n.domain || "未分类")}</span></div>
       <div class="bz-kb-tail"><span class="bz-kb-meta">${esc2(n.date || "")}</span></div>
-      <div class="bz-kb-paras">${parasHtml}</div>
-      ${clipHtml}
-      ${rels.length ? `<div class="bz-kb-sec">来 源 小 纸 条（related，落卡时自动带）</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc2(r)}</span>`).join("")}</div>` : ""}
-      ${srcHtml}
-      <div style="margin-top:18px;display:flex;gap:10px">
-        <button class="bz-kb-bigbtn" data-kb-act="card-new">提炼成卡</button>
-        <button class="bz-kb-ghost" data-kb-close>先放回去</button>
-      </div>`));
+      <div class="bz-kb-paras" id="bz-kb-preview-body">${parasHtml}</div>
+      ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc2(r)}</span>`).join("")}</div>` : ""}
+      ${srcHtml}`));
           this._previewNote = n;
+          const bodyEl2 = this.popup ? q(this.popup, "#bz-kb-preview-body") : null;
+          if (bodyEl2 && body) {
+            try {
+              const comp = new Component();
+              await MarkdownRenderer.render(this.app, body, bodyEl2, n.path, comp);
+              comp.unload();
+            } catch (e) {
+            }
+            if (!bodyEl2.querySelector("*") || !((_a2 = bodyEl2.textContent) == null ? void 0 : _a2.trim())) {
+              bodyEl2.innerHTML = parasHtml;
+            }
+          }
+          const srcLinks = this.popup ? this.popup.querySelectorAll("[data-lit-src-url]") : [];
+          srcLinks.forEach((a) => {
+            a.addEventListener("click", (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              this._openExternal(a.getAttribute("data-lit-src-url") || "");
+            });
+          });
         }
-        /** 提炼成卡编辑弹层（原型唯一真理：词头可改 / 源链+领域自动带 / 连一张旧卡 / 为什么相关） */
+        /** 提炼成卡编辑弹层（原型唯一真理：词头可改 / 源文献+领域自动带，落 related 双链互链 / 连一张旧卡 / 为什么相关） */
         async openCardEditor(n) {
-          var _a2, _b2, _c;
           await this.ensureCards();
           const dom = n.domain || "未分类";
           const sameDom = this.allCards.filter((c) => c.domain === dom).map((c) => c.title);
@@ -26146,7 +26248,7 @@ ${sample}`,
           this.openSheet(this.sheetWrap("提炼成卡 → 卡片盒", `
       <div class="bz-kb-f"><div class="bz-kb-flb">词 头（可 改）</div>
         <input type="text" data-kb-role="cardtitle" value="${esc2(n.title)}"></div>
-      <div class="bz-kb-f"><div class="bz-kb-flb">来 源 小 纸 条（自 动 带，不 用 手 填）</div>
+      <div class="bz-kb-f"><div class="bz-kb-flb">来 源 与 领 域（自 动 带，落 related 双链）</div>
         <div class="bz-kb-srcline"><span class="bz-kb-srchip"><b>源</b>${esc2(n.path)}</span>
         <span class="bz-kb-srchip"><b>领域</b>〔${esc2(dom)}〕自动继承</span></div></div>
       <div class="bz-kb-f"><div class="bz-kb-flb">连 一 张 旧 卡（铁律：不 解 释 的 链 接 不 产 生 知 识）</div>
@@ -26159,26 +26261,6 @@ ${sample}`,
       </div>
       <div class="bz-kb-note" style="font-size:11px;margin-top:14px">落卡后它躺在卡片盒，随时被任何笔记引用——不强迫挂进哪篇，也不强迫复习。</div>`));
           this.editor = { source: n, pick: null, why: whySug, title: n.title };
-          const titleInput = (_a2 = this.popup) == null ? void 0 : _a2.querySelector("[data-kb-role=cardtitle]");
-          if (titleInput) titleInput.addEventListener("input", () => {
-            if (this.editor) this.editor.title = titleInput.value;
-            this.syncSaveBtn();
-          });
-          const whyInput = (_b2 = this.popup) == null ? void 0 : _b2.querySelector("[data-kb-role=why]");
-          if (whyInput) whyInput.addEventListener("input", () => {
-            if (this.editor) this.editor.why = whyInput.value;
-            this.syncSaveBtn();
-          });
-          (_c = this.popup) == null ? void 0 : _c.querySelectorAll("[data-kb-old]").forEach((b) => {
-            b.addEventListener("click", () => {
-              var _a3;
-              if (!this.editor) return;
-              this.editor.pick = b.getAttribute("data-kb-old");
-              (_a3 = this.popup) == null ? void 0 : _a3.querySelectorAll("[data-kb-old]").forEach((x) => x.classList.toggle("is-on", x === b));
-              this.syncSaveBtn();
-            });
-          });
-          this.syncSaveBtn();
         }
         syncSaveBtn() {
           var _a2;
@@ -26195,7 +26277,7 @@ ${sample}`,
           const src = this.editor.source;
           const why = this.editor.why.trim();
           let base = this.editor.title.trim() || src.title;
-          const stamp = this.cardDateStamp();
+          const stamp = dateStamp();
           try {
             let idx = 2;
             while (app2.vault.getAbstractFileByPath(`${dir}/${base}.md`)) {
@@ -26228,11 +26310,6 @@ ${sample}`,
           } catch (e) {
             notice("落卡失败：" + ((_a2 = e == null ? void 0 : e.message) != null ? _a2 : String(e)), "error");
           }
-        }
-        cardDateStamp() {
-          const d = /* @__PURE__ */ new Date();
-          const p = (n) => String(n).padStart(2, "0");
-          return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
         }
         /** 部贰卡片扫描（存量零迁移：领域读序 domain → category → 未分类） */
         async loadCards(dir) {
@@ -26268,16 +26345,14 @@ ${sample}`,
         }
         renderCards() {
           if (!this.contentEl) return;
-          this.noteView = null;
           this.cardsShown = Math.max(this.cardsShown, 80);
           const shown = this.allCards.slice(0, this.cardsShown);
-          const rows = shown.map((c) => `<div class="bz-kb-lexrow" style="cursor:default">
+          const rows = shown.map((c) => `<div class="bz-kb-lexrow" data-kb-act="card-peek" data-path="${esc2(c.path)}">
       <div class="bz-kb-hw"><span class="bz-kb-w">${esc2(c.title)}</span>${this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ""}<span class="bz-kb-dom">${esc2(c.domain)}</span></div>
       <div class="bz-kb-tail"><span>${c.review ? "复习中 · 到期由闹钟安排" : "未入复习"}</span><span style="margin-left:auto">连 1 张旧卡</span></div>
     </div>`).join("");
           const rest = this.allCards.length - shown.length;
           this.contentEl.innerHTML = `<div class="bz-kb-pd">
-      <div class="bz-kb-sec">卡 片 · 提 炼 层（只 许 你 写 · ${this.allCards.length} 张）</div>
       ${rows || '<div class="bz-kb-empty">卡片目录还没有卡片——在部壹文献预览里「提炼成卡」。</div>'}
       ${rest > 0 ? `<div class="bz-kb-empty" data-kb-act="cards-more">↓ 还有 ${rest} 张，滚动或点此加载</div>` : ""}
     </div>`;
@@ -26313,57 +26388,22 @@ ${sample}`,
         }
         renderTopics() {
           if (!this.contentEl) return;
-          this.noteView = null;
           const rows = this.allTopics.map((t) => {
             const rel = formatRelativeTime(String(t.created || ""));
             return `<div class="bz-kb-lexrow" data-kb-act="topic-open" data-path="${esc2(t.path)}">
       <div class="bz-kb-hw"><span class="bz-kb-w">${esc2(t.title)}</span><span class="bz-kb-dom">${esc2(t.where)}</span></div>
-      <div class="bz-kb-tail"><span class="bz-kb-meta">${rel === "无效日期" ? "" : esc2(rel)}</span><span style="margin-left:auto">一篇普通笔记 →</span></div>
+      <div class="bz-kb-tail"><span class="bz-kb-meta">${rel === "无效日期" ? "" : esc2(rel)}</span></div>
     </div>`;
           }).join("");
           this.contentEl.innerHTML = `<div class="bz-kb-pd">
-      <div class="bz-kb-sec">主 题 笔 记 · 展 示（真 实 存 量）</div>
       ${rows || '<div class="bz-kb-empty">主题目录还没有笔记。</div>'}
-      <div class="bz-kb-note" style="font-size:11px;margin-top:14px">主题笔记就是普通笔记，你自己写自己组织；写作与检索发生在 Obsidian + 第二大脑（灵感参考 / AI 对话）。主题与其他盒的关联机制方向探索中——当前版本仅做展示。</div>
     </div>`;
-        }
-        /** 主题笔记只读渲染（MarkdownRenderer；mock/失败回退纯文本） */
-        async openTopicNote(t) {
-          var _a2;
-          const app2 = getApp();
-          let md = "";
-          try {
-            md = await app2.vault.read(t.file);
-          } catch (e) {
-            md = "";
-          }
-          this.noteView = { path: t.path, title: t.title };
-          if (!this.contentEl) return;
-          this.contentEl.innerHTML = `<div class="bz-kb-pd">
-      <button class="bz-kb-back" data-kb-act="topics-back">← 部叁 · 主题笔记</button>
-      <div class="bz-kb-ntitle">${esc2(t.title)}</div>
-      <div class="bz-kb-nmeta"><span class="bz-kb-dom">${esc2(t.where)}</span><span class="bz-kb-meta">${esc2(formatRelativeTime(String(t.created || "")) === "无效日期" ? "" : formatRelativeTime(String(t.created || "")))}</span></div>
-      <div class="bz-kb-noteview" id="kb-noteview"></div>
-    </div>`;
-          const el = q(this.contentEl, "#kb-noteview");
-          if (!el) return;
-          try {
-            const MR = MarkdownRenderer;
-            if (MR && typeof MR.render === "function") {
-              await MR.render(md, this.app, el, t.path);
-              if (!((_a2 = el.textContent) == null ? void 0 : _a2.trim()) || el.textContent.includes("[object Object]")) el.textContent = md;
-            } else {
-              el.textContent = md;
-            }
-          } catch (e) {
-            el.textContent = md;
-          }
         }
         async ensureCards() {
           const dir = cardboxDirOf(tryGetSettings());
           if (!this.loadedCardDir || this.loadedCardDir !== dir || this.allCards.length === 0) await this.loadCards(dir);
         }
-        /** 读文献笔记 frontmatter related 展示名列表（预览「来源小纸条」；行扫描实现） */
+        /** 读笔记 frontmatter related 展示名列表（预览「关联」区；行扫描实现） */
         async noteRels(n) {
           var _a2;
           try {
@@ -26443,7 +26483,6 @@ ${sample}`,
           var _a2;
           (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-kb-ovl").forEach((x) => x.remove());
           this.editor = null;
-          this._previewNote = null;
         }
         sheetWrap(title, body) {
           return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc2(title)}</span><button class="bz-kb-sheet-close" data-kb-close title="关闭">✕</button></div><div class="bz-kb-sheet-body">${body}</div>`;
@@ -26481,9 +26520,9 @@ ${sample}`,
           this.allTopics = this.allTopics.filter((t) => t.path !== path);
         }
         invalidateCached(_path) {
-          this.loadedLitDir = this.loadedLitDir ? "" : this.loadedLitDir;
-          this.loadedCardDir = this.loadedCardDir ? "" : this.loadedCardDir;
-          this.loadedTopicDir = this.loadedTopicDir ? "" : this.loadedTopicDir;
+          this.loadedLitDir = "";
+          this.loadedCardDir = "";
+          this.loadedTopicDir = "";
         }
         attachFileListener() {
           if (this.fileListenerAttached) return;
@@ -26821,7 +26860,7 @@ ${sample}`,
           addMask.onclick = () => this.hideAddDialog();
           const popup = document.createElement("div");
           popup.id = "knowledge-add-popup";
-          popup.className = "bz-lit-dialog";
+          popup.className = "bz-lit-dialog kb";
           popup.style.display = "none";
           popup.innerHTML = `
       <div id="lit-add-mode" class="bz-lit-mode-tag" style="display:none;">编辑任务</div>
@@ -27102,11 +27141,6 @@ ${sample}`,
           return card;
         }
         // ==================== 术语生成面板（文字录入；142 简洁版 + 155 总结） ====================
-        termDateStamp() {
-          const d = /* @__PURE__ */ new Date();
-          const p = (n) => String(n).padStart(2, "0");
-          return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-        }
         createTermUI() {
           var _a2;
           const mask = document.createElement("div");
@@ -27116,14 +27150,27 @@ ${sample}`,
           mask.onclick = () => this.hideTermEntry();
           const popup = document.createElement("div");
           popup.id = "knowledge-term-popup";
-          popup.className = "bz-lit-dialog bz-lit-term-dialog";
+          popup.className = "bz-lit-dialog bz-lit-term-dialog kb";
           popup.style.display = "none";
           const body = document.createElement("div");
           body.className = "bz-lit-term-body";
           body.innerHTML = `
-      <div class="bz-lit-term-inputrow">
+      <div class="bz-lit-sheet-head">
+        <span class="bz-lit-sheet-title">文字录入 · 术语</span>
+        <button type="button" class="bz-lit-sheet-close" data-term-close title="关闭">✕</button>
+      </div>
+      <div class="bz-lit-term-row">
+        <span class="bz-lit-term-meta-k">术语</span>
         <input id="lit-term-input" type="text" autocomplete="off">
+      </div>
+      <div class="bz-lit-term-row">
+        <span class="bz-lit-term-meta-k">来源</span>
+        <input id="lit-term-src" type="text" autocomplete="off">
+        <span id="lit-term-src-chip" class="bz-lit-srcchip" style="display:none;"></span>
+      </div>
+      <div class="bz-lit-term-actions">
         <button id="lit-term-generate" class="bz-lit-accent-btn">生成</button>
+        <button id="lit-term-cancel" class="bz-lit-ghost-btn">取消</button>
       </div>
       <div id="lit-term-preview" style="display:none;">
         <div class="bz-lit-term-card">
@@ -27131,6 +27178,7 @@ ${sample}`,
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">术语</span><span id="lit-term-meta-term" class="bz-lit-term-meta-v"></span></div>
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">领域</span><span id="lit-term-meta-domain" class="bz-lit-term-meta-v"></span></div>
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">日期</span><span id="lit-term-meta-date" class="bz-lit-term-meta-v"></span></div>
+            <div class="bz-lit-term-meta-row" id="lit-term-meta-srcrow" style="display:none;"><span class="bz-lit-term-meta-k">来源</span><span id="lit-term-meta-src" class="bz-lit-term-meta-v bz-lit-srcopen" data-term-src-open="1"></span></div>
           </div>
         </div>
         <div class="bz-lit-term-card">
@@ -27147,6 +27195,7 @@ ${sample}`,
           this.termMask = mask;
           this.termPopup = popup;
           q(popup, "#lit-term-generate").onclick = () => void this.onTermGenerate();
+          q(popup, "#lit-term-cancel").onclick = () => this.hideTermEntry();
           q(popup, "#lit-term-regenerate").onclick = () => void this.onTermSummarize();
           q(popup, "#lit-term-save").onclick = () => void this.onTermConfirm();
           (_a2 = q(popup, "#lit-term-input")) == null ? void 0 : _a2.addEventListener("keydown", (e) => {
@@ -27155,13 +27204,59 @@ ${sample}`,
               void this.onTermGenerate();
             }
           });
+          const srcInput = q(popup, "#lit-term-src");
+          if (srcInput) {
+            srcInput.addEventListener("input", () => {
+              if (this.termSrcTimer) clearTimeout(this.termSrcTimer);
+              this.termSrcTimer = setTimeout(() => this.termSrcTryCommit(srcInput), 450);
+            });
+            srcInput.addEventListener("keydown", (e) => {
+              if (e.key !== "Enter") return;
+              const raw = (srcInput.value || "").trim();
+              if (raw && isUrlLikeSourceText(raw)) {
+                e.preventDefault();
+                this.termSrcSet({ kind: "external", url: normalizeSourceUrl(raw) }, srcInput);
+              }
+            });
+            this.termSrcSuggest = uiSuggest({
+              anchor: srcInput,
+              max: 12,
+              iconOf: () => "📄",
+              labelOf: (p) => noteSourceName(p),
+              source: () => {
+                if (!srcInput.value.trim()) return [];
+                return (getApp().vault.getFiles() || []).filter((f) => f.extension === "md").map((f) => f.path);
+              },
+              onPick: (p) => this.termSrcSet({ kind: "note", path: p }, srcInput)
+            });
+          }
+          popup.addEventListener("click", (e) => {
+            const t = e.target.closest("[data-term-close],[data-term-src-clear],[data-term-src-open]");
+            if (!t) return;
+            e.stopPropagation();
+            if (t.hasAttribute("data-term-close")) {
+              this.hideTermEntry();
+            } else if (t.hasAttribute("data-term-src-clear")) {
+              const input = q(popup, "#lit-term-src");
+              this.termSrcClear(input);
+            } else if (this.termSource) {
+              if (this.termSource.kind === "note") this.openNote(this.termSource.path);
+              else this._openExternal(this.termSource.url);
+            }
+          });
         }
-        showTermEntry(term) {
+        /**
+         * 打开术语录入弹层；term 预填（命令带选中词时自动生成）；src 预填来源（ADR-0116——
+         * 仅命令入口带当前笔记，主窗按钮入口不预填）。
+         */
+        showTermEntry(term, src) {
           if (!this.termPopup || !this.termMask) return;
           this.termPreview = null;
           this.termHasDraft = false;
           const input = q(this.termPopup, "#lit-term-input");
           if (input) input.value = (term != null ? term : "").trim();
+          this.termSrcReset(q(this.termPopup, "#lit-term-src"));
+          if (src) this.termSrcSet(src, q(this.termPopup, "#lit-term-src"));
           this.setTermPreviewVisible(false);
           this.setTermGenLoading(false);
           topifyZ(this.termMask, this.termPopup);
@@ -27169,6 +27264,86 @@ ${sample}`,
           this.termPopup.style.display = "flex";
           if (input && !input.value) setTimeout(() => input.focus(), 100);
           if (input && input.value) void this.onTermGenerate();
+        }
+        /** 来源状态清空（chip 收起、输入框复位、计时器/联想层归零）——每次打开弹层即全新 */
+        termSrcReset(input) {
+          if (this.termSrcTimer) {
+            clearTimeout(this.termSrcTimer);
+            this.termSrcTimer = null;
+          }
+          this.termSource = null;
+          if (input) {
+            input.value = "";
+            input.style.display = "";
+          }
+          this.renderTermSrcChip(input);
+          this.termSrcRefreshMeta();
+        }
+        termSrcClear(input) {
+          this.termSrcReset(input);
+          if (input) setTimeout(() => input.focus(), 0);
+        }
+        /** 输入惰性提交：整串 URL 字样 → 外部 chip；其余文本等联想点选（不自动认领） */
+        termSrcTryCommit(input) {
+          this.termSrcTimer = null;
+          const raw = (input.value || "").trim();
+          if (!raw || !isUrlLikeSourceText(raw)) return;
+          this.termSrcSet({ kind: "external", url: normalizeSourceUrl(raw) }, input);
+        }
+        /** 落来源：记录 + chip 渲染 + meta 行同步；外部来源异步抓标题（失败静默降级为纯链接） */
+        termSrcSet(src, input) {
+          this.termSource = src;
+          this.renderTermSrcChip(input);
+          this.termSrcRefreshMeta();
+          if (src.kind === "external") void this.termSrcFetchTitle(src);
+        }
+        async termSrcFetchTitle(src) {
+          try {
+            const t = await fetchPageTitle(src.url);
+            if (!t || this.termSource !== src) return;
+            src.title = cleanSourceTitle(t);
+            const inp = this.termPopup ? q(this.termPopup, "#lit-term-src") : null;
+            this.renderTermSrcChip(inp);
+            this.termSrcRefreshMeta();
+          } catch (e) {
+          }
+        }
+        /** chip 渲染：有来源 → 徽标（内/外）+ 名称 + ✕；无 → 输入框可见 */
+        renderTermSrcChip(input) {
+          const popup = this.termPopup;
+          if (!popup) return;
+          const chip = q(popup, "#lit-term-src-chip");
+          if (!chip) return;
+          const src = this.termSource;
+          if (!src) {
+            chip.style.display = "none";
+            chip.textContent = "";
+            if (input) input.style.display = "";
+            return;
+          }
+          const isNote = src.kind === "note";
+          const label = isNote ? noteSourceName(src.path) : src.title || shortUrlText(src.url);
+          chip.title = isNote ? src.path : src.url;
+          chip.style.display = "inline-flex";
+          chip.innerHTML = `<b>${isNote ? "内 部" : "外 部"}</b><span>${esc2(label)}</span><button type="button" data-term-src-clear title="清除来源" aria-label="清除来源">✕</button>`;
+          if (input) input.style.display = "none";
+        }
+        /** 预览属性卡第 4 行「来源」：有来源显行（可点开），无来源隐行 */
+        termSrcRefreshMeta() {
+          const popup = this.termPopup;
+          if (!popup) return;
+          const row = q(popup, "#lit-term-meta-srcrow");
+          const val = q(popup, "#lit-term-meta-src");
+          if (!row || !val) return;
+          const src = this.termSource;
+          if (!src) {
+            row.style.display = "none";
+            val.textContent = "";
+            return;
+          }
+          row.style.display = "";
+          val.textContent = src.kind === "note" ? noteSourceName(src.path) : src.title || src.url;
+          val.title = src.kind === "note" ? src.path : src.url;
         }
         setTermPreviewVisible(v) {
           if (!this.termPopup) return;
@@ -27248,7 +27423,7 @@ ${sample}`,
           }
         }
         presentTermPreview(draft) {
-          var _a2, _b2;
+          var _a2, _b2, _c;
           this.termPreview = { domain: draft.domain, body: draft.summary };
           this.termHasDraft = true;
           if (!this.termPopup) return;
@@ -27258,10 +27433,12 @@ ${sample}`,
           const domainEl = q(this.termPopup, "#lit-term-meta-domain");
           if (domainEl) domainEl.textContent = draft.domain || "—";
           const dateEl = q(this.termPopup, "#lit-term-meta-date");
-          if (dateEl) dateEl.textContent = this.termDateStamp();
+          if (dateEl) dateEl.textContent = dateStamp();
           const contentEl = q(this.termPopup, "#lit-term-content");
           if (contentEl) contentEl.textContent = draft.summary;
           this.setTermPreviewVisible(true);
+          const prev = q(this.termPopup, "#lit-term-preview");
+          (_c = prev == null ? void 0 : prev.scrollIntoView) == null ? void 0 : _c.call(prev, { behavior: "smooth", block: "nearest" });
         }
         async onTermConfirm() {
           var _a2, _b2;
@@ -27278,7 +27455,13 @@ ${sample}`,
           this.termGenerating = true;
           this.setTermGenLoading(true);
           try {
-            const path = await generateTermNote({ term, summary: this.termPreview.body, domain: this.termPreview.domain });
+            const path = await generateTermNote({
+              term,
+              summary: this.termPreview.body,
+              domain: this.termPreview.domain,
+              source: this.termSource
+              // 术语来源随确认时刻的值落库（ADR-0116）
+            });
             this.openNote(path);
             emitDomainEvent("knowledge:tasks", { kind: "term-generated", term, title: term });
             this.termPreview = null;
@@ -27293,6 +27476,8 @@ ${sample}`,
         }
         hideTermEntry() {
           this.termPreview = null;
+          const srcInput = this.termPopup ? q(this.termPopup, "#lit-term-src") : null;
+          this.termSrcReset(srcInput);
           if (this.termMask) this.termMask.style.display = "none";
           if (this.termPopup) this.termPopup.style.display = "none";
         }
@@ -27328,8 +27513,18 @@ ${sample}`,
           }
         }
         destroy() {
+          var _a2;
           this.clearRunTimer();
           this.runState.clear();
+          if (this.termSrcTimer) {
+            clearTimeout(this.termSrcTimer);
+            this.termSrcTimer = null;
+          }
+          try {
+            (_a2 = this.termSrcSuggest) == null ? void 0 : _a2.detach();
+          } catch (e) {
+          }
+          this.termSrcSuggest = null;
           if (this.refreshTimer) {
             clearTimeout(this.refreshTimer);
             this.refreshTimer = null;
@@ -27398,11 +27593,14 @@ ${sample}`,
     var _a2, _b2;
     ensureKnowledge(app2);
     let t = term == null ? void 0 : term.trim();
+    let src;
     if (!t) {
       const view = app2.workspace.getActiveViewOfType(MarkdownView);
       t = ((_b2 = (_a2 = view == null ? void 0 : view.editor) == null ? void 0 : _a2.getSelection()) == null ? void 0 : _b2.trim()) || void 0;
+      const file = view == null ? void 0 : view.file;
+      if (file && file.extension === "md") src = { kind: "note", path: file.path };
     }
-    uiManager == null ? void 0 : uiManager.showTermEntry(t);
+    uiManager == null ? void 0 : uiManager.showTermEntry(t, src);
   }
   function unloadKnowledge() {
     uiManager == null ? void 0 : uiManager.destroy();
@@ -27700,7 +27898,6 @@ ${sample}`,
       } catch (e) {
       }
       escHandle2 = null;
-      escRegistered = false;
     }
     if (searchDebounceTimer !== null) {
       clearTimeout(searchDebounceTimer);
@@ -27776,7 +27973,7 @@ ${sample}`,
         setSearchKw(deskSearchEl ? deskSearchEl.value.trim() : "");
         renderList();
         renderRail();
-      }, SEARCH_DEBOUNCE_MS);
+      }, SEARCH_DEBOUNCE_MS2);
     });
     readPaneEl.addEventListener("click", (e) => {
       const t = e.target;
@@ -27857,7 +28054,6 @@ ${sample}`,
       isVisible: () => !!overlayEl && overlayEl.style.display !== "none",
       close: () => closePanel3()
     });
-    escRegistered = true;
     const frameEl = overlayEl.querySelector(".bz-clip-frame");
     if (!isMobileEnv()) {
       panelResizeDetach = uiResizable(frameEl, {
@@ -27925,15 +28121,12 @@ ${sample}`,
     const d = /* @__PURE__ */ new Date();
     el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M5.articles.length} 期`;
   }
-  function srcList() {
+  function currentSrc() {
     const s = M5.sel;
     if (s.kind === "clip") return { kind: "clip" };
     if (s.kind === "site") return { kind: "site", site: s.site };
     if (s.kind === "inbox") return { kind: "inbox", platform: s.platform, up: s.up || void 0 };
     return { kind: "all" };
-  }
-  function currentSrc() {
-    return srcList();
   }
   function currentList() {
     return queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], currentSrc(), M5.upInfo);
@@ -28676,7 +28869,7 @@ ${sample}`,
       }
     });
   }
-  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle2, escRegistered, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched;
+  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle2, loading, dirty, loaded, SEARCH_DEBOUNCE_MS2, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched;
   var init_ui7 = __esm({
     "src/clipbook/ui.ts"() {
       init_app();
@@ -28713,11 +28906,10 @@ ${sample}`,
       deskSearchEl = null;
       escKey = "";
       escHandle2 = null;
-      escRegistered = false;
       loading = false;
       dirty = false;
       loaded = false;
-      SEARCH_DEBOUNCE_MS = 180;
+      SEARCH_DEBOUNCE_MS2 = 180;
       PANEL_MIN_W = 760;
       PANEL_MIN_H = 520;
       PANEL_MAX_W = 1600;
@@ -28832,15 +29024,15 @@ ${sample}`,
   }
   function actionSpecs2(it) {
     const acts = [];
-    if ((it.url || "").trim()) acts.push({ icon: ICON5.open, label: "打开", act: "open" });
+    if ((it.url || "").trim()) acts.push({ icon: ICON4.open, label: "打开", act: "open" });
     acts.push({
-      icon: it.pinned ? ICON5.pinOff : ICON5.pin,
+      icon: it.pinned ? ICON4.pinOff : ICON4.pin,
       label: it.pinned ? "取消置顶" : "置顶",
       act: "pin"
     });
-    acts.push({ icon: ICON5.edit, label: "编辑", act: "edit" });
-    acts.push(it.archived ? { icon: ICON5.unarchive, label: "取消归档", act: "unarchive" } : { icon: ICON5.archive, label: "归档", act: "archive" });
-    acts.push({ icon: ICON5.del, label: "删除", act: "del", danger: true });
+    acts.push({ icon: ICON4.edit, label: "编辑", act: "edit" });
+    acts.push(it.archived ? { icon: ICON4.unarchive, label: "取消归档", act: "unarchive" } : { icon: ICON4.archive, label: "归档", act: "archive" });
+    acts.push({ icon: ICON4.del, label: "删除", act: "del", danger: true });
     return acts;
   }
   function ctxMenuHtml(acts) {
@@ -28873,18 +29065,18 @@ ${sample}`,
     <div class="bz-fav-fld bz-fav-inline"><span class="bz-fav-sw${it && it.pinned ? " bz-fav-on" : ""}" id="fz-pin"></span><span class="bz-fav-fld-desc">置顶后恒排最前</span></div>
     <div class="bz-fav-err" id="fz-err"></div>
     <div class="bz-fav-btns">
-      <button type="button" id="fz-ai" class="bz-fav-ai-btn">${iconSpan(ICON5.ai, "bz-ic--xs")} <span>AI 整理</span></button>
+      <button type="button" id="fz-ai" class="bz-fav-ai-btn">${iconSpan(ICON4.ai, "bz-ic--xs")} <span>AI 整理</span></button>
       <button type="button" data-fz-cancel>取消</button>
       <button type="button" id="fz-save" class="bz-fav-pri">${editing ? "更新" : "保存"}</button>
     </div>
   </div>`;
   }
-  var ICON5;
+  var ICON4;
   var init_shared4 = __esm({
     "src/favorites/shared.ts"() {
       init_str();
       init_config();
-      ICON5 = {
+      ICON4 = {
         close: "x",
         add: "plus",
         open: "external-link",
@@ -28903,14 +29095,14 @@ ${sample}`,
   function panelHtml4(mobile2) {
     const mob = mobile2 ? " bz-fav-mob bz-panel-mtop" : "";
     return `<div class="bz-fav-panel bz-fav-scope${mob}">
-  <div class="bz-fav-head"><h1>收藏本</h1><button class="bz-fav-mob-close bz-touch-target bz-touch-target--xl" data-fav-close title="关闭">${iconSpan(ICON5.close, "bz-ic--xs")}</button></div>
+  <div class="bz-fav-head"><h1>收藏本</h1><button class="bz-fav-mob-close bz-touch-target bz-touch-target--xl" data-fav-close title="关闭">${iconSpan(ICON4.close, "bz-ic--xs")}</button></div>
   <div class="bz-fav-tags" data-fav-tags></div>
   <div class="bz-fav-board" data-fav-content></div>
 </div>`;
   }
   function chipsHtml2(items, view, mobile2) {
     const mk = (label, ic2, cnt, active2, grey = false) => `<button class="bz-fav-chip${active2 ? " bz-fav-on" : ""}${grey ? " bz-fav-chip--grey" : ""}" data-fav-tag="${esc(label)}">${ic2 ? iconSpan(ic2, "bz-ic--xs") : ""}<span>${esc(label)} ${cnt}</span></button>`;
-    const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${iconSpan(ICON5.add, "bz-ic--xs")}<span>新收藏</span></button>`;
+    const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${iconSpan(ICON4.add, "bz-ic--xs")}<span>新收藏</span></button>`;
     const chips = mk("全部", "", visibleItems(items).length, !view.archived && view.tag === null) + mk("已归档", "archive", archivedItems(items).length, view.archived, true) + TAGS.map((t) => {
       const n = tagCount(items, t.label);
       return n ? mk(t.label, t.ic, n, !view.archived && view.tag === t.label) : "";
@@ -30361,7 +30553,7 @@ GitHub 仓库：${ghInfo.title}
   function active(i) {
     return !i.isCompleted && !i.completed && !i.isMissing;
   }
-  function partitionQueue(items, rThreshold = 0.9, w = DEFAULT_W) {
+  function partitionQueue(items, rThreshold = DEFAULT_R_THRESHOLD, w = DEFAULT_W) {
     const overdue = [];
     const today = [];
     const future = [];
@@ -30385,10 +30577,12 @@ GitHub 仓库：${ghInfo.title}
       return isEarlyDue(i, rThreshold, w);
     });
   }
+  var DEFAULT_R_THRESHOLD;
   var init_queue = __esm({
     "src/review/queue.ts"() {
       init_fsrs();
       init_stats2();
+      DEFAULT_R_THRESHOLD = 0.9;
     }
   });
 
@@ -30557,7 +30751,6 @@ ${truncated}`;
           var _a2;
           const prompt = this.buildPrompt(noteContent, enableMultipleChoice, questionsPerNote, difficulty);
           const result = await aiService.json(prompt);
-          console.log("AI 原始响应:", result);
           const parsed = this.extractJSON(result);
           if (!((_a2 = parsed.questions) == null ? void 0 : _a2.length)) throw new Error("AI 未返回有效题目数组。");
           for (const q2 of parsed.questions) {
@@ -30612,7 +30805,6 @@ ${n.content.slice(0, 2e3)}
         async generateBatch(notes, aiService, enableMultipleChoice, questionsPerNote, difficulty) {
           const prompt = this.buildBatchPrompt(notes, enableMultipleChoice, questionsPerNote, difficulty);
           const result = await aiService.json(prompt);
-          console.log("AI 批量响应:", result);
           const parsed = this.extractJSON(result);
           const out = {};
           for (const [noteId, qs] of Object.entries(parsed)) {
@@ -31852,7 +32044,6 @@ ${n.content.slice(0, 2e3)}
           this.cur = nextIdx;
           const entry = this.entries[nextIdx];
           entry.state = "doing";
-          this.renderTop();
           this.showLoading(entry);
           const questions = await this.opts.fetchQuestions(entry.item);
           if (this.finished) return;
@@ -32017,9 +32208,6 @@ ${n.content.slice(0, 2e3)}
           await this.runNext();
         }
         // ================= 视图构建（markup 单源：render.ts，issue 253） =================
-        /** 顶部头行（队列视图 / 冲刺共用外层结构由宿主渲染，本会话只接管内容区） */
-        renderTop() {
-        }
         showLoading(entry) {
           this.view = "loading";
           this.opts.host.innerHTML = `${sprintHeadHtml()}${sprintLoadingHtml()}`;
@@ -32356,7 +32544,7 @@ ${n.content.slice(0, 2e3)}
     return `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">${items.map((s) => `
     <span style="font-size:.74rem;color:var(--text-muted);background:var(--background-primary);border:1px solid var(--background-modifier-border);border-radius:8px;padding:3px 10px;">${s}</span>`).join("")}</div>`;
   }
-  function rankListHTML(items, onClick) {
+  function rankListHTML(items) {
     if (!items.length) return emptyHTML();
     const badges = ["#FFF3C4", "#D8F3DC", "#D6E4FF"];
     return items.map((it, i) => {
@@ -32453,15 +32641,15 @@ ${n.content.slice(0, 2e3)}
       "#FFE5CC"
     );
     const dist = loadDistribution(items, 14);
-    const todayKey = /* @__PURE__ */ new Date();
-    const tmrKey = /* @__PURE__ */ new Date();
-    tmrKey.setDate(tmrKey.getDate() + 1);
-    const fmt2 = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    const todayCnt = ((_a2 = dist.find((d) => d.date === fmt2(todayKey))) == null ? void 0 : _a2.count) || 0;
-    const tmrCnt = ((_b2 = dist.find((d) => d.date === fmt2(tmrKey))) == null ? void 0 : _b2.count) || 0;
+    const tmr = /* @__PURE__ */ new Date();
+    tmr.setDate(tmr.getDate() + 1);
+    const todayKey = dateKey(/* @__PURE__ */ new Date());
+    const tmrKey = dateKey(tmr);
+    const todayCnt = ((_a2 = dist.find((d) => d.date === todayKey)) == null ? void 0 : _a2.count) || 0;
+    const tmrCnt = ((_b2 = dist.find((d) => d.date === tmrKey)) == null ? void 0 : _b2.count) || 0;
     const maxDist = Math.max(1, ...dist.map((d) => d.count));
     const distBars = dist.map((d) => ({
-      label: d.date === fmt2(todayKey) ? "今" : `+${dist.indexOf(d)}`,
+      label: d.date === todayKey ? "今" : `+${dist.indexOf(d)}`,
       value: d.count
     }));
     const loadHTML = sectionHTML(
@@ -32488,8 +32676,7 @@ ${n.content.slice(0, 2e3)}
     });
     const timelineHTML = sectionHTML(
       "复习时间线",
-      rankListHTML(tlItems, () => {
-      }) + '<div style="font-size:.68rem;color:var(--text-faint);text-align:center;padding-top:8px;">点击笔记查看复习历史</div>',
+      rankListHTML(tlItems) + '<div style="font-size:.68rem;color:var(--text-faint);text-align:center;padding-top:8px;">点击笔记查看复习历史</div>',
       "#FADDE1"
     );
     const daily7 = stats.daily7.map((d) => ({ label: d.date.slice(5).replace("-", "/"), value: d.count }));
@@ -32802,7 +32989,7 @@ ${n.content.slice(0, 2e3)}
         /** R 阈值提前复习判定（item 6：与开始本轮同口径；wSource=拟合权重） */
         rThreshold() {
           const s = tryGetSettings();
-          return Number(s == null ? void 0 : s.reviewRThreshold) || 0.9;
+          return Number(s == null ? void 0 : s.reviewRThreshold) || DEFAULT_R_THRESHOLD;
         }
         queueViewHtml(items) {
           return queueViewHtml(items, {
@@ -32859,8 +33046,7 @@ ${n.content.slice(0, 2e3)}
         }
         /** 配置监听文件夹说明（空库引导动作；设置面板路径指路） */
         async showWatchHelp() {
-          const { openFlowDialog: openFlowDialog2 } = await Promise.resolve().then(() => (init_flow_dialog(), flow_dialog_exports));
-          await openFlowDialog2({
+          await openFlowDialog({
             title: "配置监听文件夹",
             message: "打开 设置 → 复习计划 → 监听文件夹，添加文件夹后，其中新建的笔记会自动加入复习计划；已存在的笔记可在添加时选择一并加入。",
             actions: [{ label: "知道了", value: "ok", cta: true }]
@@ -33317,6 +33503,18 @@ ${n.content.slice(0, 2e3)}
           if (this._quizOverride) return this._quizOverride;
           return (await Promise.resolve().then(() => (init_quiz_core(), quiz_core_exports))).quizUI;
         },
+        /** 做题家就绪兜底：已初始化但缺 AI → 幂等 ensureQuiz 补建（ensureQuiz 就地写 quizUI.ai，同一单例引用生效） */
+        async quizWithAI() {
+          const quiz = await this.getQuiz();
+          if (quiz && !quiz.ai) {
+            try {
+              const { ensureQuiz: ensureQuiz2 } = await Promise.resolve().then(() => (init_quiz_core(), quiz_core_exports));
+              ensureQuiz2(getApp());
+            } catch (e) {
+            }
+          }
+          return quiz;
+        },
         ensure(app2) {
           if (!this.dataManager) this.dataManager = new ReviewDataManager(app2);
         },
@@ -33402,7 +33600,7 @@ ${n.content.slice(0, 2e3)}
           const now = /* @__PURE__ */ new Date();
           const nextReview = item.nextReviewDate ? new Date(item.nextReviewDate) : /* @__PURE__ */ new Date(0);
           if (now < nextReview) {
-            const rThreshold = Number(getSettings().reviewRThreshold) || 0.9;
+            const rThreshold = Number(getSettings().reviewRThreshold) || DEFAULT_R_THRESHOLD;
             if (!isEarlyDue(item, rThreshold, this.currentW())) {
               const diff = nextReview.getTime() - now.getTime();
               const mins = Math.ceil(diff / 6e4);
@@ -33460,17 +33658,9 @@ ${n.content.slice(0, 2e3)}
           }
           void this.maybeRunFit(getApp());
         },
-        /** 跳转逾期（做题决定难度：开启 → 做题复习；关闭 → 普通复习跳转笔记） */
         /** 跳转逾期（bz-review-start/overdue 命令入口）：完整复习流程 = startRoundSprint */
         async autoJumpOverdue() {
           await this.startRoundSprint();
-        },
-        /** 准确率 → 难度评级 */
-        accuracyToRating(accuracy) {
-          if (accuracy >= 90) return "easy";
-          if (accuracy >= 70) return "good";
-          if (accuracy >= 50) return "hard";
-          return "again";
         },
         /** 待重做条目（文件存在、未完成；按进入顺序 = lastReviewed 升序 FIFO） */
         pendingRedoItems(items) {
@@ -33518,14 +33708,7 @@ ${n.content.slice(0, 2e3)}
         async startSingleSprint(item) {
           const app2 = getApp();
           this.ensure(app2);
-          const quiz = await this.getQuiz();
-          if (quiz && !quiz.ai) {
-            try {
-              const { ensureQuiz: ensureQuiz2 } = await Promise.resolve().then(() => (init_quiz_core(), quiz_core_exports));
-              ensureQuiz2(app2);
-            } catch (e) {
-            }
-          }
+          const quiz = await this.quizWithAI();
           if (!quiz || !quiz.ai) {
             notify("做题家未初始化，改用普通复习", { type: "warning", dedupeKey: "review-quiz-ai" });
             await this.reviewLoop([item], 0);
@@ -33540,14 +33723,7 @@ ${n.content.slice(0, 2e3)}
           let items = await this.dataManager.loadItems();
           const pend = this.pendingRedoItems(items);
           if (pend.length && getSettings().forceQuizForReview) {
-            const quiz2 = await this.getQuiz();
-            if (quiz2 && !quiz2.ai) {
-              try {
-                const { ensureQuiz: ensureQuiz2 } = await Promise.resolve().then(() => (init_quiz_core(), quiz_core_exports));
-                ensureQuiz2(app2);
-              } catch (e) {
-              }
-            }
+            const quiz2 = await this.quizWithAI();
             if (quiz2 && quiz2.ai) {
               await this.runSprintSession(pend, "redo");
               const fresh = await this.dataManager.loadItems();
@@ -33560,7 +33736,7 @@ ${n.content.slice(0, 2e3)}
               notify("做题家未初始化，跳过待重做队列", { type: "warning", dedupeKey: "review-quiz-ai" });
             }
           }
-          const rThreshold = Number(getSettings().reviewRThreshold) || 0.9;
+          const rThreshold = Number(getSettings().reviewRThreshold) || DEFAULT_R_THRESHOLD;
           const round = roundQueue(items, rThreshold, this.currentW());
           if (!round.length) {
             notice("没有逾期笔记", "success");
@@ -33581,15 +33757,8 @@ ${n.content.slice(0, 2e3)}
           }
           let quiz = null;
           try {
-            quiz = await this.getQuiz();
+            quiz = await this.quizWithAI();
           } catch (e) {
-          }
-          if (quiz && !quiz.ai) {
-            try {
-              const { ensureQuiz: ensureQuiz2 } = await Promise.resolve().then(() => (init_quiz_core(), quiz_core_exports));
-              ensureQuiz2(app2);
-            } catch (e) {
-            }
           }
           if (!quiz || !quiz.ai) {
             notify("做题家未初始化，已改用普通复习", { type: "warning", dedupeKey: "review-quiz-ai" });
@@ -33600,7 +33769,7 @@ ${n.content.slice(0, 2e3)}
         },
         /** 当前逾期条目（item 6：改用 roundQueue 同口径——逾期 ∪ R 阈值提前 ∪ 今日到期） */
         dueItems(items) {
-          const rThreshold = Number(getSettings().reviewRThreshold) || 0.9;
+          const rThreshold = Number(getSettings().reviewRThreshold) || DEFAULT_R_THRESHOLD;
           return roundQueue(items, rThreshold, this.currentW());
         },
         /**
@@ -37409,9 +37578,10 @@ ${text}`;
     const seen = /* @__PURE__ */ new Set();
     for (const item of parsed) {
       if (!item || typeof item !== "object") continue;
-      const id = item.id;
-      const reason = item.reason;
-      if (!Number.isInteger(id) || id < 1 || id > maxId) continue;
+      const rec = item;
+      const id = rec.id;
+      const reason = rec.reason;
+      if (typeof id !== "number" || !Number.isInteger(id) || id < 1 || id > maxId) continue;
       if (typeof reason !== "string" || !reason.trim()) continue;
       if (seen.has(id)) continue;
       seen.add(id);
@@ -37453,10 +37623,12 @@ ${text}`;
       clearTimeout(timer);
     }
   }
-  function isEncryptLockedPath(app2, path) {
+  function encryptRoot() {
     const s = tryGetSettings();
-    const root = String(s.encryptRoot || "CONFIG/.ENCRYPT").replace(/\/+$/, "");
-    return isUnderFolder2(root, path);
+    return String(s.encryptRoot || "CONFIG/.ENCRYPT").replace(/\/+$/, "");
+  }
+  function isEncryptLockedPath(app2, path) {
+    return isUnderFolder2(encryptRoot(), path);
   }
   var LINK_PROBE_TIMEOUT_MS, LINK_BATCH_DELAY_MS, LINK_BATCH_NOTICE_KEY, LINK_ERROR_NOTICE_KEY, JUDGE_PROMPT_PREFIX, CANDIDATE_POOL_MIN, LINK_QUERY_MAX_CHARS, LinkAgent;
   var init_pipeline = __esm({
@@ -37884,7 +38056,7 @@ ${text}`;
           if (!(cache == null ? void 0 : cache.getFileCache)) return 0;
           let encryptedPaths = null;
           try {
-            const root = String(tryGetSettings().encryptRoot || "CONFIG/.ENCRYPT").replace(/\/+$/, "");
+            const root = encryptRoot();
             let safeExists = false;
             try {
               const existsFn = (_a2 = this.app.vault.adapter) == null ? void 0 : _a2.exists;
@@ -39100,10 +39272,6 @@ ${text}`;
             }
           } catch (e) {
           }
-        }
-        /** ⚙️ 域设置弹窗（共享实现见 openSecondBrainSettings） */
-        openSettings() {
-          openSecondBrainSettings(this.app);
         }
       };
     }

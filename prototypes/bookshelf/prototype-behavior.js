@@ -37,9 +37,9 @@ var BZW_bookshelf = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -5890,15 +5890,15 @@ var BZW_bookshelf = (() => {
     const totalDuration = sessions.reduce((sum, session) => sum + session.duration, 0);
     const avgDuration = totalDuration / totalSessions;
     const distribution = [
-      { type: "short", max: 600, count: 0 },
+      { type: "short", max: 600, count: 0, percentage: 0 },
       // <10分钟
-      { type: "light", max: 1800, count: 0 },
+      { type: "light", max: 1800, count: 0, percentage: 0 },
       // 10-30分钟
-      { type: "medium", max: 3600, count: 0 },
+      { type: "medium", max: 3600, count: 0, percentage: 0 },
       // 30-60分钟
-      { type: "deep", max: 7200, count: 0 },
+      { type: "deep", max: 7200, count: 0, percentage: 0 },
       // 1-2小时
-      { type: "intense", max: Infinity, count: 0 }
+      { type: "intense", max: Infinity, count: 0, percentage: 0 }
       // >2小时
     ];
     sessions.forEach((session) => {
@@ -7184,11 +7184,11 @@ var BZW_bookshelf = (() => {
   <div style="font-size: 1.2em; margin-bottom: 8px; color: var(--text-normal);">统计失败</div>
   <div>读取书库时出错，请查看控制台获取详情</div>
 </div>`;
+  var IDLE_CALLBACK_TIMEOUT_MS = 50;
   function yieldToMainThread() {
     return new Promise((resolve) => {
-      const ric = window.requestIdleCallback;
-      if (typeof ric === "function") {
-        ric(() => resolve(), { timeout: 50 });
+      if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(() => resolve(), { timeout: IDLE_CALLBACK_TIMEOUT_MS });
       } else {
         window.setTimeout(resolve, 0);
       }

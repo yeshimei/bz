@@ -40,9 +40,9 @@ var BZW_home = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -7053,7 +7053,7 @@ var BZW_home = (() => {
   function active(i) {
     return !i.isCompleted && !i.completed && !i.isMissing;
   }
-  function partitionQueue(items, rThreshold = 0.9, w = DEFAULT_W) {
+  function partitionQueue(items, rThreshold = DEFAULT_R_THRESHOLD, w = DEFAULT_W) {
     const overdue = [];
     const today = [];
     const future = [];
@@ -7077,10 +7077,12 @@ var BZW_home = (() => {
       return isEarlyDue(i, rThreshold, w);
     });
   }
+  var DEFAULT_R_THRESHOLD;
   var init_queue = __esm({
     "src/review/queue.ts"() {
       init_fsrs();
       init_stats();
+      DEFAULT_R_THRESHOLD = 0.9;
     }
   });
 
@@ -7613,14 +7615,6 @@ var BZW_home = (() => {
   });
 
   // src/core/flow-dialog.ts
-  var flow_dialog_exports = {};
-  __export(flow_dialog_exports, {
-    FLOW_DIALOG_CANCEL_ID: () => FLOW_DIALOG_CANCEL_ID,
-    FLOW_DIALOG_OK_ID: () => FLOW_DIALOG_OK_ID,
-    buildFlowDialogParts: () => buildFlowDialogParts,
-    confirmDiscard: () => confirmDiscard,
-    openFlowDialog: () => openFlowDialog
-  });
   function buildFlowDialogParts(title, message, actions) {
     let buttons;
     if (actions.length === 2) {
@@ -7692,18 +7686,6 @@ var BZW_home = (() => {
       }
       const focusBtn = document.getElementById(parts.focusId);
       if (focusBtn) focusBtn.focus();
-    });
-  }
-  function confirmDiscard(proceed, message) {
-    void openFlowDialog({
-      title: "放弃未保存的内容？",
-      message: message || "弹窗内有未保存的输入，关闭后将丢失",
-      actions: [
-        { label: "放弃", value: "ok" },
-        { label: "继续编辑", value: "cancel" }
-      ]
-    }).then((v) => {
-      if (v === "ok") proceed();
     });
   }
   var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
@@ -7883,7 +7865,6 @@ ${truncated}`;
           var _a;
           const prompt = this.buildPrompt(noteContent, enableMultipleChoice, questionsPerNote, difficulty);
           const result = await aiService.json(prompt);
-          console.log("AI 原始响应:", result);
           const parsed = this.extractJSON(result);
           if (!((_a = parsed.questions) == null ? void 0 : _a.length)) throw new Error("AI 未返回有效题目数组。");
           for (const q of parsed.questions) {
@@ -7938,7 +7919,6 @@ ${n.content.slice(0, 2e3)}
         async generateBatch(notes, aiService, enableMultipleChoice, questionsPerNote, difficulty) {
           const prompt = this.buildBatchPrompt(notes, enableMultipleChoice, questionsPerNote, difficulty);
           const result = await aiService.json(prompt);
-          console.log("AI 批量响应:", result);
           const parsed = this.extractJSON(result);
           const out = {};
           for (const [noteId, qs] of Object.entries(parsed)) {
@@ -9595,7 +9575,6 @@ ${n.content.slice(0, 2e3)}
           this.cur = nextIdx;
           const entry = this.entries[nextIdx];
           entry.state = "doing";
-          this.renderTop();
           this.showLoading(entry);
           const questions = await this.opts.fetchQuestions(entry.item);
           if (this.finished) return;
@@ -9760,9 +9739,6 @@ ${n.content.slice(0, 2e3)}
           await this.runNext();
         }
         // ================= 视图构建（markup 单源：render.ts，issue 253） =================
-        /** 顶部头行（队列视图 / 冲刺共用外层结构由宿主渲染，本会话只接管内容区） */
-        renderTop() {
-        }
         showLoading(entry) {
           this.view = "loading";
           this.opts.host.innerHTML = `${sprintHeadHtml()}${sprintLoadingHtml()}`;
@@ -10099,7 +10075,7 @@ ${n.content.slice(0, 2e3)}
     return `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">${items.map((s) => `
     <span style="font-size:.74rem;color:var(--text-muted);background:var(--background-primary);border:1px solid var(--background-modifier-border);border-radius:8px;padding:3px 10px;">${s}</span>`).join("")}</div>`;
   }
-  function rankListHTML(items, onClick) {
+  function rankListHTML(items) {
     if (!items.length) return emptyHTML();
     const badges = ["#FFF3C4", "#D8F3DC", "#D6E4FF"];
     return items.map((it, i) => {
@@ -10196,15 +10172,15 @@ ${n.content.slice(0, 2e3)}
       "#FFE5CC"
     );
     const dist = loadDistribution(items, 14);
-    const todayKey = /* @__PURE__ */ new Date();
-    const tmrKey = /* @__PURE__ */ new Date();
-    tmrKey.setDate(tmrKey.getDate() + 1);
-    const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    const todayCnt = ((_a = dist.find((d) => d.date === fmt(todayKey))) == null ? void 0 : _a.count) || 0;
-    const tmrCnt = ((_b = dist.find((d) => d.date === fmt(tmrKey))) == null ? void 0 : _b.count) || 0;
+    const tmr = /* @__PURE__ */ new Date();
+    tmr.setDate(tmr.getDate() + 1);
+    const todayKey = dateKey(/* @__PURE__ */ new Date());
+    const tmrKey = dateKey(tmr);
+    const todayCnt = ((_a = dist.find((d) => d.date === todayKey)) == null ? void 0 : _a.count) || 0;
+    const tmrCnt = ((_b = dist.find((d) => d.date === tmrKey)) == null ? void 0 : _b.count) || 0;
     const maxDist = Math.max(1, ...dist.map((d) => d.count));
     const distBars = dist.map((d) => ({
-      label: d.date === fmt(todayKey) ? "今" : `+${dist.indexOf(d)}`,
+      label: d.date === todayKey ? "今" : `+${dist.indexOf(d)}`,
       value: d.count
     }));
     const loadHTML = sectionHTML(
@@ -10231,8 +10207,7 @@ ${n.content.slice(0, 2e3)}
     });
     const timelineHTML = sectionHTML(
       "复习时间线",
-      rankListHTML(tlItems, () => {
-      }) + '<div style="font-size:.68rem;color:var(--text-faint);text-align:center;padding-top:8px;">点击笔记查看复习历史</div>',
+      rankListHTML(tlItems) + '<div style="font-size:.68rem;color:var(--text-faint);text-align:center;padding-top:8px;">点击笔记查看复习历史</div>',
       "#FADDE1"
     );
     const daily7 = stats.daily7.map((d) => ({ label: d.date.slice(5).replace("-", "/"), value: d.count }));
@@ -10545,7 +10520,7 @@ ${n.content.slice(0, 2e3)}
         /** R 阈值提前复习判定（item 6：与开始本轮同口径；wSource=拟合权重） */
         rThreshold() {
           const s = tryGetSettings();
-          return Number(s == null ? void 0 : s.reviewRThreshold) || 0.9;
+          return Number(s == null ? void 0 : s.reviewRThreshold) || DEFAULT_R_THRESHOLD;
         }
         queueViewHtml(items) {
           return queueViewHtml(items, {
@@ -10602,8 +10577,7 @@ ${n.content.slice(0, 2e3)}
         }
         /** 配置监听文件夹说明（空库引导动作；设置面板路径指路） */
         async showWatchHelp() {
-          const { openFlowDialog: openFlowDialog2 } = await Promise.resolve().then(() => (init_flow_dialog(), flow_dialog_exports));
-          await openFlowDialog2({
+          await openFlowDialog({
             title: "配置监听文件夹",
             message: "打开 设置 → 复习计划 → 监听文件夹，添加文件夹后，其中新建的笔记会自动加入复习计划；已存在的笔记可在添加时选择一并加入。",
             actions: [{ label: "知道了", value: "ok", cta: true }]
@@ -11060,6 +11034,18 @@ ${n.content.slice(0, 2e3)}
           if (this._quizOverride) return this._quizOverride;
           return (await Promise.resolve().then(() => (init_quiz_core(), quiz_core_exports))).quizUI;
         },
+        /** 做题家就绪兜底：已初始化但缺 AI → 幂等 ensureQuiz 补建（ensureQuiz 就地写 quizUI.ai，同一单例引用生效） */
+        async quizWithAI() {
+          const quiz = await this.getQuiz();
+          if (quiz && !quiz.ai) {
+            try {
+              const { ensureQuiz: ensureQuiz2 } = await Promise.resolve().then(() => (init_quiz_core(), quiz_core_exports));
+              ensureQuiz2(getApp());
+            } catch (e) {
+            }
+          }
+          return quiz;
+        },
         ensure(app) {
           if (!this.dataManager) this.dataManager = new ReviewDataManager(app);
         },
@@ -11145,7 +11131,7 @@ ${n.content.slice(0, 2e3)}
           const now = /* @__PURE__ */ new Date();
           const nextReview = item.nextReviewDate ? new Date(item.nextReviewDate) : /* @__PURE__ */ new Date(0);
           if (now < nextReview) {
-            const rThreshold = Number(getSettings().reviewRThreshold) || 0.9;
+            const rThreshold = Number(getSettings().reviewRThreshold) || DEFAULT_R_THRESHOLD;
             if (!isEarlyDue(item, rThreshold, this.currentW())) {
               const diff = nextReview.getTime() - now.getTime();
               const mins = Math.ceil(diff / 6e4);
@@ -11203,17 +11189,9 @@ ${n.content.slice(0, 2e3)}
           }
           void this.maybeRunFit(getApp());
         },
-        /** 跳转逾期（做题决定难度：开启 → 做题复习；关闭 → 普通复习跳转笔记） */
         /** 跳转逾期（bz-review-start/overdue 命令入口）：完整复习流程 = startRoundSprint */
         async autoJumpOverdue() {
           await this.startRoundSprint();
-        },
-        /** 准确率 → 难度评级 */
-        accuracyToRating(accuracy) {
-          if (accuracy >= 90) return "easy";
-          if (accuracy >= 70) return "good";
-          if (accuracy >= 50) return "hard";
-          return "again";
         },
         /** 待重做条目（文件存在、未完成；按进入顺序 = lastReviewed 升序 FIFO） */
         pendingRedoItems(items) {
@@ -11261,14 +11239,7 @@ ${n.content.slice(0, 2e3)}
         async startSingleSprint(item) {
           const app = getApp();
           this.ensure(app);
-          const quiz = await this.getQuiz();
-          if (quiz && !quiz.ai) {
-            try {
-              const { ensureQuiz: ensureQuiz2 } = await Promise.resolve().then(() => (init_quiz_core(), quiz_core_exports));
-              ensureQuiz2(app);
-            } catch (e) {
-            }
-          }
+          const quiz = await this.quizWithAI();
           if (!quiz || !quiz.ai) {
             notify("做题家未初始化，改用普通复习", { type: "warning", dedupeKey: "review-quiz-ai" });
             await this.reviewLoop([item], 0);
@@ -11283,14 +11254,7 @@ ${n.content.slice(0, 2e3)}
           let items = await this.dataManager.loadItems();
           const pend = this.pendingRedoItems(items);
           if (pend.length && getSettings().forceQuizForReview) {
-            const quiz2 = await this.getQuiz();
-            if (quiz2 && !quiz2.ai) {
-              try {
-                const { ensureQuiz: ensureQuiz2 } = await Promise.resolve().then(() => (init_quiz_core(), quiz_core_exports));
-                ensureQuiz2(app);
-              } catch (e) {
-              }
-            }
+            const quiz2 = await this.quizWithAI();
             if (quiz2 && quiz2.ai) {
               await this.runSprintSession(pend, "redo");
               const fresh = await this.dataManager.loadItems();
@@ -11303,7 +11267,7 @@ ${n.content.slice(0, 2e3)}
               notify("做题家未初始化，跳过待重做队列", { type: "warning", dedupeKey: "review-quiz-ai" });
             }
           }
-          const rThreshold = Number(getSettings().reviewRThreshold) || 0.9;
+          const rThreshold = Number(getSettings().reviewRThreshold) || DEFAULT_R_THRESHOLD;
           const round = roundQueue(items, rThreshold, this.currentW());
           if (!round.length) {
             notice("没有逾期笔记", "success");
@@ -11324,15 +11288,8 @@ ${n.content.slice(0, 2e3)}
           }
           let quiz = null;
           try {
-            quiz = await this.getQuiz();
+            quiz = await this.quizWithAI();
           } catch (e) {
-          }
-          if (quiz && !quiz.ai) {
-            try {
-              const { ensureQuiz: ensureQuiz2 } = await Promise.resolve().then(() => (init_quiz_core(), quiz_core_exports));
-              ensureQuiz2(app);
-            } catch (e) {
-            }
           }
           if (!quiz || !quiz.ai) {
             notify("做题家未初始化，已改用普通复习", { type: "warning", dedupeKey: "review-quiz-ai" });
@@ -11343,7 +11300,7 @@ ${n.content.slice(0, 2e3)}
         },
         /** 当前逾期条目（item 6：改用 roundQueue 同口径——逾期 ∪ R 阈值提前 ∪ 今日到期） */
         dueItems(items) {
-          const rThreshold = Number(getSettings().reviewRThreshold) || 0.9;
+          const rThreshold = Number(getSettings().reviewRThreshold) || DEFAULT_R_THRESHOLD;
           return roundQueue(items, rThreshold, this.currentW());
         },
         /**

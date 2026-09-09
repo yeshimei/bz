@@ -37,9 +37,9 @@ var BZW_belongings = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -6888,6 +6888,7 @@ var BZW_belongings = (() => {
 
   // src/belongings/ui.ts
   var THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
+  var SEARCH_DEBOUNCE_MS = 180;
   var M = {
     overlay: null,
     db: null,
@@ -7035,13 +7036,14 @@ var BZW_belongings = (() => {
       }
     });
     const bindSearch = (inp) => {
+      let deb;
       inp.addEventListener("input", () => {
-        clearTimeout(inp._belDeb);
-        inp._belDeb = setTimeout(() => {
+        clearTimeout(deb);
+        deb = setTimeout(() => {
           if (!M.overlay) return;
           M.q = inp.value.trim();
           renderAll();
-        }, 180);
+        }, SEARCH_DEBOUNCE_MS);
       });
     };
     bindSearch(overlay.querySelector("[data-bel-search]"));
