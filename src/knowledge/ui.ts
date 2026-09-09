@@ -494,63 +494,57 @@ export class UIManager {
       </div>`;
   }
 
-  /** 部壹文献预览弹层：全文段落 + related 关联 + 来源（只读；关闭走 ✕/ESC） */
+  /** 部壹文献预览弹层：正文真 Markdown 渲染（视频 ![[mp4]] 内嵌可播）+ related 关联 + 可点来源（只读；关闭走 ✕/ESC） */
   private async openLitPreview(n: KnowledgeNoteEntry): Promise<void> {
     const app = getApp();
     let raw = '';
     try { raw = await app.vault.read(n.file); } catch { raw = ''; }
     const body = stripFrontmatter(raw);
-    const blocks = body.split(/\r?\n\r?\n+/).map((b) => b.trim()).filter(Boolean);
-    const paras: string[] = [];
-    let videoEmbed = '';
-    for (const b of blocks) {
-      const vm = b.match(/^!\[\[(.+?\.(?:mp4|webm|mkv))\]\]$/);
-      if (vm) { videoEmbed = vm[1]; continue; }
-      paras.push(b);
-    }
+    // 纯文本段落 = 渲染兜底（MarkdownRenderer 失败/没吃进内容时用）
+    const parasHtml = body
+      .split(/\r?\n\r?\n+/)
+      .map((b) => b.trim())
+      .filter(Boolean)
+      .map((b) => `<p>${esc(b)}</p>`)
+      .join('') || '<p>（无正文）</p>';
     const rels = await this.noteRels(n);
-    const parasHtml = paras.map((p) => `<p>${esc(p)}</p>`).join('') || '<p>（无正文）</p>';
-    // 视频片段：先占位，弹层挂载后经 MarkdownRenderer 渲染 ![[…]] 内嵌（Obsidian 原生 <video> 可播放）
-    const clipHtml = videoEmbed ? `<div class="bz-kb-cliprow" id="bz-kb-video-slot">视频片段 · ${esc(shortNoteName(videoEmbed))}</div>` : '';
-    const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink">${esc(n.url)}</div>` : '';
-    // 术语外部来源（ADR-0116）：source 键为 URL（非 [[双链]]）时展示可点「来源」；内部笔记来源只在术语面板 meta 行呈现
-    const termSrcHtml = n.source && !n.source.startsWith('[[')
-      ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.source)}" href="#">${esc(n.sourceTitle || n.source)}</a></div>`
-      : '';
+    // 来源/原文（可点外开）：视频文献 url 键 → 「原文」；术语外部 source 键 → 「来源」（内部笔记来源只在术语面板 meta 行呈现）
+    const srcHtml = n.url
+      ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.url)}" href="#">${esc(n.url)}</a></div>`
+      : n.source && !n.source.startsWith('[[')
+        ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.source)}" href="#">${esc(n.sourceTitle || n.source)}</a></div>`
+        : '';
     this.openSheet(this.sheetWrap(`文献预览 · ${n.type === 'video' ? '影像' : '词条'}`, `
       <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc(n.title)}</span>
         <span class="bz-kb-pos ${n.type === 'video' ? 'hot' : ''}">${n.type === 'video' ? '影 像' : '词 条'}</span>
         <span class="bz-kb-dom">${esc(n.domain || '未分类')}</span></div>
       <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || '')}</span></div>
-      <div class="bz-kb-paras">${parasHtml}</div>
-      ${clipHtml}
+      <div class="bz-kb-paras" id="bz-kb-preview-body">${parasHtml}</div>
       ${rels.length ? `<div class="bz-kb-sec">关 联（related，Obsidian 双链）</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc(r)}</span>`).join('')}</div>` : ''}
-      ${srcHtml}
-      ${termSrcHtml}`));
+      ${srcHtml}`));
     this._previewNote = n;
-    // 视频内嵌：Obsidian 原生渲染 ![[mp4]] 为可播放 <video>（diary-wall/encrypt 同款签名）；
-    // mock/失败/未产出媒体元素 → 回退占位文案
-    if (videoEmbed) {
-      const slot = this.popup ? q<HTMLElement>(this.popup, '#bz-kb-video-slot') : null;
-      if (slot) {
-        try {
-          const comp = new Component();
-          await MarkdownRenderer.render(this.app, `![[${videoEmbed}]]`, slot, n.path, comp);
-          comp.unload();
-        } catch { /* 渲染失败保占位文案 */ }
-        if (!slot.querySelector('video, .internal-embed, source')) {
-          slot.textContent = `视频片段 · ${shortNoteName(videoEmbed)}`;
-        }
+    // 正文真 Markdown 渲染：加粗/列表/标题/引用原生出，视频 ![[mp4]] 内嵌为可播放 <video>；
+    // 渲染失败/没产出元素（mock、历史挂起）→ 回退纯文本段落
+    const bodyEl = this.popup ? q<HTMLElement>(this.popup, '#bz-kb-preview-body') : null;
+    if (bodyEl && body) {
+      try {
+        const comp = new Component();
+        await MarkdownRenderer.render(this.app, body, bodyEl, n.path, comp);
+        comp.unload();
+      } catch { /* 渲染失败回退纯文本 */ }
+      if (!bodyEl.querySelector('*') || !bodyEl.textContent?.trim()) {
+        bodyEl.innerHTML = parasHtml;
       }
     }
-    const srcLink = this.popup ? q<HTMLElement>(this.popup, '[data-lit-src-url]') : null;
-    if (srcLink) {
-      srcLink.addEventListener('click', (e) => {
+    // 来源/原文链接统一外开
+    const srcLinks = this.popup ? this.popup.querySelectorAll('[data-lit-src-url]') : [];
+    srcLinks.forEach((a) => {
+      a.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        this._openExternal(srcLink.getAttribute('data-lit-src-url') || '');
+        this._openExternal(a.getAttribute('data-lit-src-url') || '');
       });
-    }
+    });
   }
   private _previewNote: KnowledgeNoteEntry | null = null;
 

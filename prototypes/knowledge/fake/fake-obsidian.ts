@@ -90,11 +90,51 @@ export class TFolder {}
 export class TAbstractFile {}
 
 export class MarkdownRenderer {
-  static render(): Promise<void> {
-    return Promise.resolve();
-  }
-  static renderMarkdown(): Promise<string> {
-    return Promise.resolve('');
+  /** 演示级 Markdown 渲染：视频 ![[mp4]] 内嵌为可播放 <video>（统一映射壳内 demo 片段）+ 基础排版 */
+  static async render(_app: unknown, markdown: string, el: HTMLElement, _sourcePath?: string, _component?: unknown): Promise<void> {
+    const md = String(markdown ?? '');
+    const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+    const inline = (s: string): string => {
+      let t = esc(s);
+      t = t.replace(/!\[\[([^\]]+)\]\]/g, (_m, p1: string) =>
+        /\.(mp4|webm|mkv)$/i.test(p1)
+          ? '<video controls preload="metadata" src="./assets/demo.mp4"></video>'
+          : `<span class="bz-kb-cite">${p1}</span>`);
+      t = t.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_m, p1: string, p2: string) => `<span class="bz-kb-cite">${p2 || p1}</span>`);
+      t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+      t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+      return t;
+    };
+    const out: string[] = [];
+    let list: 'ul' | 'ol' | null = null;
+    const closeList = () => { if (list) { out.push(`</${list}>`); list = null; } };
+    for (const rawLine of md.split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (!line) { closeList(); continue; }
+      const fullEmbed = /^!\[\[([^\]]+)\]\]$/.exec(line);
+      if (fullEmbed) {
+        closeList();
+        if (/\.(mp4|webm|mkv)$/i.test(fullEmbed[1])) {
+          out.push('<video controls preload="metadata" src="./assets/demo.mp4"></video>');
+        } else {
+          out.push(`<p><span class="bz-kb-cite">${esc(fullEmbed[1])}</span></p>`);
+        }
+        continue;
+      }
+      const h = /^(#{1,3})\s+(.*)$/.exec(line);
+      if (h) { closeList(); out.push(`<h${h[1].length}>${inline(h[2])}</h${h[1].length}>`); continue; }
+      if (/^>\s?/.test(line)) { closeList(); out.push(`<blockquote>${inline(line.replace(/^>\s?/, ''))}</blockquote>`); continue; }
+      const ul = /^[-*]\s+(.*)$/.exec(line);
+      if (ul) { if (list !== 'ul') { closeList(); out.push('<ul>'); list = 'ul'; } out.push(`<li>${inline(ul[1])}</li>`); continue; }
+      const ol = /^\d+[.、]\s+(.*)$/.exec(line);
+      if (ol) { if (list !== 'ol') { closeList(); out.push('<ol>'); list = 'ol'; } out.push(`<li>${inline(ol[1])}</li>`); continue; }
+      if (line === '---') { closeList(); out.push('<hr>'); continue; }
+      closeList();
+      out.push(`<p>${inline(line)}</p>`);
+    }
+    closeList();
+    el.innerHTML = out.join('\n');
   }
 }
 

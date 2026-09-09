@@ -4089,11 +4089,84 @@ var BZW_knowledge = (() => {
     return { status: 200, text: JSON.stringify({ choices: [{ message: { content } }] }) };
   }
   var MarkdownRenderer = class {
-    static render() {
-      return Promise.resolve();
-    }
-    static renderMarkdown() {
-      return Promise.resolve("");
+    /** 演示级 Markdown 渲染：视频 ![[mp4]] 内嵌为可播放 <video>（统一映射壳内 demo 片段）+ 基础排版 */
+    static async render(_app2, markdown, el, _sourcePath, _component) {
+      const md = String(markdown != null ? markdown : "");
+      const esc2 = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+      const inline = (s) => {
+        let t = esc2(s);
+        t = t.replace(/!\[\[([^\]]+)\]\]/g, (_m, p1) => /\.(mp4|webm|mkv)$/i.test(p1) ? '<video controls preload="metadata" src="./assets/demo.mp4"></video>' : `<span class="bz-kb-cite">${p1}</span>`);
+        t = t.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_m, p1, p2) => `<span class="bz-kb-cite">${p2 || p1}</span>`);
+        t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+        t = t.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+        t = t.replace(/`([^`]+)`/g, "<code>$1</code>");
+        return t;
+      };
+      const out = [];
+      let list = null;
+      const closeList = () => {
+        if (list) {
+          out.push(`</${list}>`);
+          list = null;
+        }
+      };
+      for (const rawLine of md.split(/\r?\n/)) {
+        const line = rawLine.trim();
+        if (!line) {
+          closeList();
+          continue;
+        }
+        const fullEmbed = /^!\[\[([^\]]+)\]\]$/.exec(line);
+        if (fullEmbed) {
+          closeList();
+          if (/\.(mp4|webm|mkv)$/i.test(fullEmbed[1])) {
+            out.push('<video controls preload="metadata" src="./assets/demo.mp4"></video>');
+          } else {
+            out.push(`<p><span class="bz-kb-cite">${esc2(fullEmbed[1])}</span></p>`);
+          }
+          continue;
+        }
+        const h = /^(#{1,3})\s+(.*)$/.exec(line);
+        if (h) {
+          closeList();
+          out.push(`<h${h[1].length}>${inline(h[2])}</h${h[1].length}>`);
+          continue;
+        }
+        if (/^>\s?/.test(line)) {
+          closeList();
+          out.push(`<blockquote>${inline(line.replace(/^>\s?/, ""))}</blockquote>`);
+          continue;
+        }
+        const ul = /^[-*]\s+(.*)$/.exec(line);
+        if (ul) {
+          if (list !== "ul") {
+            closeList();
+            out.push("<ul>");
+            list = "ul";
+          }
+          out.push(`<li>${inline(ul[1])}</li>`);
+          continue;
+        }
+        const ol = /^\d+[.、]\s+(.*)$/.exec(line);
+        if (ol) {
+          if (list !== "ol") {
+            closeList();
+            out.push("<ol>");
+            list = "ol";
+          }
+          out.push(`<li>${inline(ol[1])}</li>`);
+          continue;
+        }
+        if (line === "---") {
+          closeList();
+          out.push("<hr>");
+          continue;
+        }
+        closeList();
+        out.push(`<p>${inline(line)}</p>`);
+      }
+      closeList();
+      el.innerHTML = out.join("\n");
     }
   };
   var Component = class {
@@ -7207,8 +7280,9 @@ ${sample}`,
         ${rows || '<div class="bz-kb-empty">「文献目录」还没有文献笔记——从上面的两种录入开始。</div>'}
       </div>`;
     }
-    /** 部壹文献预览弹层：全文段落 + related 关联 + 来源（只读；关闭走 ✕/ESC） */
+    /** 部壹文献预览弹层：正文真 Markdown 渲染（视频 ![[mp4]] 内嵌可播）+ related 关联 + 可点来源（只读；关闭走 ✕/ESC） */
     async openLitPreview(n) {
+      var _a;
       const app = getApp();
       let raw = "";
       try {
@@ -7217,55 +7291,38 @@ ${sample}`,
         raw = "";
       }
       const body = stripFrontmatter(raw);
-      const blocks = body.split(/\r?\n\r?\n+/).map((b) => b.trim()).filter(Boolean);
-      const paras = [];
-      let videoEmbed = "";
-      for (const b of blocks) {
-        const vm = b.match(/^!\[\[(.+?\.(?:mp4|webm|mkv))\]\]$/);
-        if (vm) {
-          videoEmbed = vm[1];
-          continue;
-        }
-        paras.push(b);
-      }
+      const parasHtml = body.split(/\r?\n\r?\n+/).map((b) => b.trim()).filter(Boolean).map((b) => `<p>${esc(b)}</p>`).join("") || "<p>（无正文）</p>";
       const rels = await this.noteRels(n);
-      const parasHtml = paras.map((p) => `<p>${esc(p)}</p>`).join("") || "<p>（无正文）</p>";
-      const clipHtml = videoEmbed ? `<div class="bz-kb-cliprow" id="bz-kb-video-slot">视频片段 · ${esc(shortNoteName(videoEmbed))}</div>` : "";
-      const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink">${esc(n.url)}</div>` : "";
-      const termSrcHtml = n.source && !n.source.startsWith("[[") ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.source)}" href="#">${esc(n.sourceTitle || n.source)}</a></div>` : "";
+      const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.url)}" href="#">${esc(n.url)}</a></div>` : n.source && !n.source.startsWith("[[") ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.source)}" href="#">${esc(n.sourceTitle || n.source)}</a></div>` : "";
       this.openSheet(this.sheetWrap(`文献预览 · ${n.type === "video" ? "影像" : "词条"}`, `
       <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc(n.title)}</span>
         <span class="bz-kb-pos ${n.type === "video" ? "hot" : ""}">${n.type === "video" ? "影 像" : "词 条"}</span>
         <span class="bz-kb-dom">${esc(n.domain || "未分类")}</span></div>
       <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || "")}</span></div>
-      <div class="bz-kb-paras">${parasHtml}</div>
-      ${clipHtml}
+      <div class="bz-kb-paras" id="bz-kb-preview-body">${parasHtml}</div>
       ${rels.length ? `<div class="bz-kb-sec">关 联（related，Obsidian 双链）</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc(r)}</span>`).join("")}</div>` : ""}
-      ${srcHtml}
-      ${termSrcHtml}`));
+      ${srcHtml}`));
       this._previewNote = n;
-      if (videoEmbed) {
-        const slot = this.popup ? q(this.popup, "#bz-kb-video-slot") : null;
-        if (slot) {
-          try {
-            const comp = new Component();
-            await MarkdownRenderer.render(this.app, `![[${videoEmbed}]]`, slot, n.path, comp);
-            comp.unload();
-          } catch (e) {
-          }
-          if (!slot.querySelector("video, .internal-embed, source")) {
-            slot.textContent = `视频片段 · ${shortNoteName(videoEmbed)}`;
-          }
+      const bodyEl = this.popup ? q(this.popup, "#bz-kb-preview-body") : null;
+      if (bodyEl && body) {
+        try {
+          const comp = new Component();
+          await MarkdownRenderer.render(this.app, body, bodyEl, n.path, comp);
+          comp.unload();
+        } catch (e) {
+        }
+        if (!bodyEl.querySelector("*") || !((_a = bodyEl.textContent) == null ? void 0 : _a.trim())) {
+          bodyEl.innerHTML = parasHtml;
         }
       }
-      const srcLink = this.popup ? q(this.popup, "[data-lit-src-url]") : null;
-      if (srcLink) {
-        srcLink.addEventListener("click", (e) => {
+      const srcLinks = this.popup ? this.popup.querySelectorAll("[data-lit-src-url]") : [];
+      srcLinks.forEach((a) => {
+        a.addEventListener("click", (e) => {
           e.preventDefault();
           e.stopPropagation();
-          this._openExternal(srcLink.getAttribute("data-lit-src-url") || "");
+          this._openExternal(a.getAttribute("data-lit-src-url") || "");
         });
-      }
+      });
     }
     /** 提炼成卡编辑弹层（原型唯一真理：词头可改 / 源文献+领域自动带，落 related 双链互链 / 连一张旧卡 / 为什么相关） */
     async openCardEditor(n) {
@@ -8687,9 +8744,17 @@ related:
   - "[[卡片盒/认知行为疗法|认知行为疗法]]"
 ---
 
-CBTI 即针对失眠的认知行为疗法，是一种非药物治疗失眠的循证心理干预方法。其核心观点认为：失眠的持续与不良的睡眠认知和行为习惯密切相关，通过改变这些因素来重建健康的睡眠模式。
+CBTI 即针对失眠的认知行为疗法，是一种非药物治疗失眠的循证心理干预方法。其核心观点认为：失眠的持续与**不良的睡眠认知和行为习惯**密切相关，通过改变这些因素来重建健康的睡眠模式。
 
-CBTI 主要包括睡眠限制、刺激控制、认知重构、放松训练和睡眠卫生教育等模块。大量临床研究证实，CBTI 对慢性失眠具有显著且持久的疗效，被国际指南推荐为成人慢性失眠的一线治疗。`
+## 核心模块
+
+- **睡眠限制**——压缩卧床时间，提高睡眠效率
+- **刺激控制**——把床留给睡眠
+- 认知重构、放松训练与睡眠卫生教育
+
+> 大量临床研究证实：CBTI 对慢性失眠具有显著且持久的疗效，被国际指南推荐为成人慢性失眠的一线治疗。
+
+![[CONFIG/APPENDIX/CBTI演示.mp4]]`
     },
     {
       path: "文献盒/既视感.md",
