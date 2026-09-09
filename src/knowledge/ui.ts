@@ -523,7 +523,7 @@ export class UIManager {
       <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || '')}</span></div>
       <div class="bz-kb-paras">${parasHtml}</div>
       ${clipHtml}
-      ${rels.length ? `<div class="bz-kb-sec">来 源 小 纸 条（related，落卡时自动带）</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc(r)}</span>`).join('')}</div>` : ''}
+      ${rels.length ? `<div class="bz-kb-sec">关 联（related，Obsidian 双链）</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc(r)}</span>`).join('')}</div>` : ''}
       ${srcHtml}
       ${termSrcHtml}
       <div style="margin-top:18px;display:flex;gap:10px">
@@ -542,7 +542,7 @@ export class UIManager {
   }
   private _previewNote: KnowledgeNoteEntry | null = null;
 
-  /** 提炼成卡编辑弹层（原型唯一真理：词头可改 / 源链+领域自动带 / 连一张旧卡 / 为什么相关） */
+  /** 提炼成卡编辑弹层（原型唯一真理：词头可改 / 源文献+领域自动带，落 related 双链互链 / 连一张旧卡 / 为什么相关） */
   private async openCardEditor(n: KnowledgeNoteEntry): Promise<void> {
     await this.ensureCards();
     const dom = n.domain || '未分类';
@@ -556,7 +556,7 @@ export class UIManager {
     this.openSheet(this.sheetWrap('提炼成卡 → 卡片盒', `
       <div class="bz-kb-f"><div class="bz-kb-flb">词 头（可 改）</div>
         <input type="text" data-kb-role="cardtitle" value="${esc(n.title)}"></div>
-      <div class="bz-kb-f"><div class="bz-kb-flb">来 源 小 纸 条（自 动 带，不 用 手 填）</div>
+      <div class="bz-kb-f"><div class="bz-kb-flb">来 源 与 领 域（自 动 带，落 related 双链）</div>
         <div class="bz-kb-srcline"><span class="bz-kb-srchip"><b>源</b>${esc(n.path)}</span>
         <span class="bz-kb-srchip"><b>领域</b>〔${esc(dom)}〕自动继承</span></div></div>
       <div class="bz-kb-f"><div class="bz-kb-flb">连 一 张 旧 卡（铁律：不 解 释 的 链 接 不 产 生 知 识）</div>
@@ -751,7 +751,7 @@ export class UIManager {
     if (!this.loadedCardDir || this.loadedCardDir !== dir || this.allCards.length === 0) await this.loadCards(dir);
   }
 
-  /** 读文献笔记 frontmatter related 展示名列表（预览「来源小纸条」；行扫描实现） */
+  /** 读文献笔记 frontmatter related 展示名列表（预览「关联」区；行扫描实现） */
   private async noteRels(n: KnowledgeNoteEntry): Promise<string[]> {
     try {
       const app = getApp();
