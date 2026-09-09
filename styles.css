@@ -12850,28 +12850,28 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   margin-bottom: 10px;
 }
 
-.bz-kb-cliprow {
-  font-size: 11px;
-  color: var(--ink3);
-  border: 1px dashed var(--line);
-  border-radius: 8px;
-  padding: 6px 11px;
-  display: inline-block;
-  margin-bottom: 8px;
-}
-/* 视频内嵌（MarkdownRenderer 渲染 ![[mp4]]）：占满预览宽，原生 <video> 直接播放 */
-.bz-kb-cliprow:has(video) {
-  display: block;
-  padding: 0;
-  border-style: solid;
-  overflow: hidden;
-}
-.bz-kb-cliprow video {
+/* 正文真 Markdown 渲染（含视频 ![[mp4]] 内嵌）的排版补齐 */
+.bz-kb-paras video {
   width: 100%;
   display: block;
   border-radius: 8px;
   background: #000;
+  margin: 10px 0;
 }
+.bz-kb-paras h1, .bz-kb-paras h2, .bz-kb-paras h3 { margin: 14px 0 6px; line-height: 1.4; color: var(--ink); }
+.bz-kb-paras ul, .bz-kb-paras ol { margin: 8px 0 10px 1.4em; }
+.bz-kb-paras li { margin: 3px 0; font-size: 12.5px; line-height: 1.8; color: var(--ink); }
+.bz-kb-paras blockquote {
+  margin: 8px 0 10px;
+  padding: 6px 12px;
+  border-left: 3px solid var(--amber);
+  color: var(--ink2);
+  font-size: 12px;
+}
+.bz-kb-paras code { background: var(--chip); border-radius: 4px; padding: 1px 5px; font-size: 12px; }
+.bz-kb-paras a { color: var(--accent); }
+.bz-kb-paras hr { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
+.bz-kb-paras img { max-width: 100%; border-radius: 8px; }
 
 .bz-kb-rels { display: flex; flex-wrap: wrap; gap: 7px; }
 
