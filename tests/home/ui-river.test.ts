@@ -55,13 +55,14 @@ describe('home 活动河 UI（issue 232）', () => {
     unloadHome();
   });
 
-  it('面板装配：头行标题/日期 + 三栏容器 + 关闭钮；数据采集后 16 行入口全渲染', async () => {
+  it('面板装配：头行（周历+日期，标题已退役）+ 三栏容器 + 关闭钮；数据采集后全量入口行渲染', async () => {
     const app = recApp(vault);
     openHome(app);
     await new Promise((r) => setTimeout(r, 20));
     const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
     expect(overlay).toBeTruthy();
-    expect(overlay.querySelector('.bz-home-title')!.textContent).toBe('首页');
+    expect(overlay.querySelector('.bz-home-title')).toBeNull(); // 2026-09-09：标题桌面/移动都去掉
+    expect(overlay.querySelectorAll('[data-home-weekday]').length).toBe(7);
     expect(overlay.querySelector('[data-home-date]')!.textContent).toMatch(/\d{4}-\d{2}-\d{2} 周/);
     expect(overlay.querySelector('[data-home-close]')).toBeTruthy();
     expect(overlay.querySelectorAll('[data-home-go]').length).toBeGreaterThanOrEqual(DOMAINS.length);
