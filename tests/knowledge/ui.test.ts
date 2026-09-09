@@ -293,19 +293,38 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     await vi.waitFor(() => expect(document.getElementById('lit-history-counts')!.textContent).toContain('共 0 条'));
   });
 
-  // ==================== 术语面板（142/155 契约） ====================
+  // ==================== 术语面板（142/155 契约 + 258 完整词典皮） ====================
 
-  it('术语面板简洁版契约：无 label/placeholder；预填自动生成；属性卡+内容卡', async () => {
+  it('术语面板完整版契约：词典皮标题栏+✕ / 术 语标签 / 试试示例 / 取消 / 说明行；预填自动生成 + 属性卡内容卡', async () => {
     ui.showTermEntry('松果体');
     await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
     await vi.waitFor(() => expect(noteGen.generateTermDraft).toHaveBeenCalledWith('松果体'));
     await vi.waitFor(() => expect(document.getElementById('lit-term-preview')!.style.display).toBe('flex'));
     const popup = document.getElementById('knowledge-term-popup')!;
+    // issue 258 词典皮：衬线标题栏 + ✕；字段标签用 div.lb（无原生 label）；琥珀说明行
+    expect(popup.querySelector('.bz-lit-sheet-title')!.textContent).toBe('文字录入 · 术语');
+    expect(popup.querySelector('[data-term-close]')).toBeTruthy();
+    expect(popup.querySelector('.bz-lit-term-lb')!.textContent).toBe('术 语');
     expect(popup.querySelector('label')).toBeNull();
     expect((document.getElementById('lit-term-input') as HTMLInputElement).placeholder).toBe('');
+    expect(popup.querySelector('.bz-lit-term-note')!.textContent).toContain('纯预览');
+    expect(popup.querySelector('#lit-term-cancel')).toBeTruthy();
+    // 试试：点示例词回填输入框，不自动生成
+    (document.getElementById('lit-term-try') as HTMLElement).click();
+    expect((document.getElementById('lit-term-input') as HTMLInputElement).value).toBe('昼夜节律');
+    expect(noteGen.generateTermDraft).not.toHaveBeenCalledWith('昼夜节律');
+    // 预览属性卡 + 内容卡 + 写入去向说明（目录随设置）
     expect(popup.querySelector('#lit-term-meta-term')!.textContent).toBe('松果体');
     expect(popup.querySelector('#lit-term-meta-domain')!.textContent).toBe('心理');
     expect(popup.querySelector('#lit-term-content')!.textContent).toBe('AI 简介');
+    expect(document.getElementById('lit-term-note-save')!.textContent).toContain('文献盒/松果体.md');
+    // ✕ 与 取消 都能关弹层
+    (popup.querySelector('[data-term-close]') as HTMLElement).click();
+    expect(popup.style.display).toBe('none');
+    ui.showTermEntry();
+    await vi.waitFor(() => expect(popup.style.display).toBe('flex'));
+    (document.getElementById('lit-term-cancel') as HTMLElement).click();
+    expect(popup.style.display).toBe('none');
   });
 
   it('确认写入：按预览值落盘一次 + 打开笔记 + term-generated 事件；无预览提示先生成', async () => {
@@ -318,6 +337,8 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(getNoticeMessages().join('\n')).toContain('请先点击「生成」');
     vault.files.set('文献盒/松果体.md', '---\ntitle: 松果体\ntype: term\ndomain: 医学\n---\n\n简介');
     await (ui as any).onTermGenerate();
+    // issue 258：写入去向说明随术语与设置目录更新
+    expect(document.getElementById('lit-term-note-save')!.textContent).toContain('文献盒/褪黑素.md');
     (document.getElementById('lit-term-save') as HTMLElement).click();
     await vi.waitFor(() => expect(noteGen.generateTermNote).toHaveBeenCalled());
     // ADR-0116：未填来源 → source 显式 null（数据契约），键不落盘由 note-gen 层保证
