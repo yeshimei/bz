@@ -75,7 +75,16 @@ export function rebuildItems(app: App): CinemaItem[] {
   for (const file of files) {
     try {
       const item = parseMovieFile(file, app);
-      if (item) newItems.push(item);
+      if (item) {
+        newItems.push(item);
+        continue;
+      }
+      // 文件在但 metadataCache 尚未索引（新建后立即重建）→ 保留内存既有条目，
+      // 防刚添加的影片闪现后被整体替换掉（缓存就绪的下次重建会正常解析接管）
+      if (!app.metadataCache.getFileCache(file)) {
+        const kept = M.items.find((p) => p.file?.path === file.path);
+        if (kept) newItems.push(kept);
+      }
     } catch (error) {
       console.warn('处理影视文件失败:', file.path, error);
     }

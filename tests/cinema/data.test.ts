@@ -93,6 +93,37 @@ tags:
     const items = rebuildItems(app);
     items.forEach((i) => expect(i.group).toBe('剧集'));
   });
+
+  it('rebuildItems：metadataCache 未就绪（cache null）的文件保留内存既有条目，防新建闪失（issue 256）', () => {
+    const vault = new MockVault();
+    // 无 frontmatter 也无 embeds → mock cache 返回 null（≈ 真库中新建文件尚未被 metadataCache 索引）
+    vault.files.set('我的/影视/《缓存未就绪》.md', '正文');
+    const app = makeApp(vault);
+    const tfile = vault.getMarkdownFiles()[0];
+    const handItem: CinemaItem = {
+      file: tfile, name: '缓存未就绪', typeTag: '电影', group: '电影', watchDate: null, rating: null,
+      status: 2, poster: null, review: null, genre: null, director: null, actors: null,
+      region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null,
+    };
+    M.items.push(handItem);
+    const items = rebuildItems(app);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toBe(handItem);
+  });
+
+  it('rebuildItems：已索引但无效的文件（frontmatter 无 tags）不被保留分支救回', () => {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《无效》.md', '---\n评分: 8\n---');
+    const app = makeApp(vault);
+    const tfile = vault.getMarkdownFiles()[0];
+    M.items.push({
+      file: tfile, name: '无效', typeTag: '电影', group: '电影', watchDate: null, rating: null,
+      status: 2, poster: null, review: null, genre: null, director: null, actors: null,
+      region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null,
+    });
+    rebuildItems(app);
+    expect(M.items).toHaveLength(0);
+  });
 });
 
 describe('cinema 排序与筛选', () => {
