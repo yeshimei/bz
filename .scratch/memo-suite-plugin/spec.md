@@ -1066,3 +1066,7 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 ### 影院豆瓣抓取插件直调：守护退役 + 卡片 loading（issue 255 / ADR-0113，2026-09-09）
 
 > 触发=守护静默僵死 4 天（唐顿庄园两季受害，探针实证 touch 20s 零反应），ADR-0111 触碰协议上线当天失去消费方。用户拍板架构转向：插件内存队列 → 串行 spawn `douban-poster fetch <笔记>`（桌面端 child_process，15s 间隔、3 分钟硬超时）；完成信号=spawn 退出+字段验证；失败才聚合错误通知（含片名），进度零通知；卡片海报遮罩 spinner（内存 pending 清单驱动）；队列口径=缺海报或缺豆瓣链接（继承守护全责）；入队=面板打开扫描+新建落盘，同会话内存去重、每次会话首轮补抓一次；`豆瓣检查` 字段彻底退役不写（存量休眠），poster-watch 通知轮询整体退役；移动端队列禁用靠 PC 打开面板补抓。运维：pm2 delete douban-poster + save（部署后执行），全局包保留手动 CLI。
+
+### 直调队列上线三连败修复（issue 256 / ADR-0113 修订，2026-09-09）
+
+> 用户实测三症状：添加闪失（300ms 防抖重建时 metadataCache 未就绪冲掉新条目）/ 列表无 loading（sweep 入队无渲染触发+完成后只渲染不重建）/ 全部「爬取失败」（**runAsNode fuse 被禁——ELECTRON_RUN_AS_NODE 静默失效，spawn 出来的是 Obsidian 主程序秒退**；叠加 vault 相对路径被 CLI 按影片目录兜底双拼）。修复=执行器改系统 Node（`node -p process.execPath` 探测缓存）+ `adapter.getFullPath` 宿主绝对路径 + rebuildItems 未就绪保留内存条目 + sweep 入队即渲染 + 完成后立即/延迟双重建渲染；关面板不清队列（仅插件卸载清）。工具侧全局包 symlink 到 2.3.0（补全分支+引号剥离），真数据端到端冒烟通过。教训入 ADR：桌面外部进程一律探测系统 Node，vault 路径与宿主磁盘路径显式转换。

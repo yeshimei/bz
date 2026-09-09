@@ -1,6 +1,7 @@
 /**
- * 豆瓣抓取队列测试（ADR-0113 / issue 255）：
+ * 豆瓣抓取队列测试（ADR-0113 / issue 255 / issue 256 修订）：
  * sweep 入队口径 / 会话去重 / spawn 完成验证清 pending / 失败聚合通知 / 硬超时杀进程 / 移动端禁用
+ * issue 256：spawn 收宿主绝对路径（adapter.getFullPath）/ 完成后重建渲染 / 入口双探测（cli+node）
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { EventEmitter } from 'node:events';
@@ -19,19 +20,26 @@ import {
   FETCH_TIMEOUT_MS,
 } from '../../src/cinema/douban-queue';
 
-/** 等串行队列跑完（跨多个宏任务跳，25ms 足够 gapMs=0 的链路收敛） */
+/** 等串行队列跑完（跨多个宏任务跳，25ms 足够 gapMs=refreshDelayMs=0 的链路收敛） */
 const settle = () => new Promise((r) => setTimeout(r, 25));
+
+/** mock adapter 的绝对路径前缀（见 mock-vault getFullPath），spawn 收绝对路径需映射回相对取内容 */
+const toRel = (p: string) => p.replace(/^\/mock-vault-root\//, '');
 
 /** 假 spawn：成功形态——向笔记追加 海报/豆瓣链接 字段（模拟工具写回） */
 function makeSuccessSpawn(vault: MockVault) {
   const spawned: string[] = [];
   const spawn = async (_cli: string, notePath: string) => {
     spawned.push(notePath);
-    const content = vault.files.get(notePath) ?? '';
-    if (!/^海报:/m.test(content)) vault.files.set(notePath, `${content.replace(/\n*$/, '\n')}海报: CONFIG/MOVIE POSTER/a.jpg\n豆瓣链接: https://movie.douban.com/subject/1/\n`);
+    const rel = toRel(notePath);
+    const content = vault.files.get(rel) ?? '';
+    if (!/^海报:/m.test(content)) vault.files.set(rel, `${content.replace(/\n*$/, '\n')}海报: CONFIG/MOVIE POSTER/a.jpg\n豆瓣链接: https://movie.douban.com/subject/1/\n`);
   };
   return { spawned, spawn };
 }
+
+/** 测试注入基线：jsdom 无 window.require，node/CLI 路径必须注入；刷新延迟归零供 settle 消化 */
+const TEST_HOOKS = { cli: 'C:/fake/cli.js', node: 'C:/fake/node.exe', gapMs: 0, refreshDelayMs: 0 };
 
 describe('豆瓣抓取队列（douban-queue）', () => {
   beforeEach(() => {
@@ -47,20 +55,23 @@ describe('豆瓣抓取队列（douban-queue）', () => {
     vi.useRealTimers();
   });
 
-  it('sweep：缺海报或缺链接的条目入队（继承守护全责），齐全条目不碰', async () => {
+  it('sweep：缺海报或缺链接的条目入队（继承守护全责），齐全条目不碰；spawn 收宿主绝对路径', async () => {
     const vault = new MockVault();
     vault.files.set('我的/影视/《全缺》.md', '---\ntags: [电影]\n评分: 8\n---');
     vault.files.set('我的/影视/《有海报缺链接》.md', '---\ntags: [电影]\n评分: 8\n海报: CONFIG/MOVIE POSTER/a.jpg\n---');
     vault.files.set('我的/影视/《齐全》.md', '---\ntags: [电影]\n评分: 8\n海报: CONFIG/MOVIE POSTER/a.jpg\n豆瓣链接: https://movie.douban.com/subject/1/\n---');
     const app = mockAppWithVault(vault);
+    M.appRef = app;
     rebuildItems(app);
     const { spawned, spawn } = makeSuccessSpawn(vault);
-    configureFetchQueue({ cli: 'C:/fake/cli.js', spawn, gapMs: 0 });
+    configureFetchQueue({ ...TEST_HOOKS, spawn });
 
     sweepDoubanFetch(app);
     await settle();
 
     expect(spawned).toHaveLength(2);
+    // issue 256：相对路径会被 CLI 拼到影片目录下双拼——必须是 adapter 解析的宿主绝对路径
+    for (const p of spawned) expect(p).toMatch(/^\/mock-vault-root\//);
     expect(spawned.some((p) => p.includes('《全缺》'))).toBe(true);
     expect(spawned.some((p) => p.includes('《有海报缺链接》'))).toBe(true);
     expect(spawned.some((p) => p.includes('《齐全》'))).toBe(false);
@@ -74,7 +85,7 @@ describe('豆瓣抓取队列（douban-queue）', () => {
     const app = mockAppWithVault(vault);
     rebuildItems(app);
     const { spawned, spawn } = makeSuccessSpawn(vault);
-    configureFetchQueue({ cli: 'C:/fake/cli.js', spawn, gapMs: 0 });
+    configureFetchQueue({ ...TEST_HOOKS, spawn });
 
     sweepDoubanFetch(app);
     await settle();
@@ -90,15 +101,16 @@ describe('豆瓣抓取队列（douban-queue）', () => {
     const path = '我的/影视/《缺信息》.md';
     vault.files.set(path, '---\ntags: [电影]\n评分: 8\n海报: CONFIG/MOVIE POSTER/a.jpg\n---');
     const app = mockAppWithVault(vault);
+    M.appRef = app;
     rebuildItems(app);
     let release: () => void = () => {};
     const gate = new Promise<void>((r) => (release = r));
     configureFetchQueue({
-      cli: 'C:/fake/cli.js',
-      gapMs: 0,
+      ...TEST_HOOKS,
       spawn: async (_cli, notePath) => {
         await gate;
-        vault.files.set(notePath, `${vault.files.get(notePath) ?? ''}海报: CONFIG/MOVIE POSTER/a.jpg\n豆瓣链接: https://movie.douban.com/subject/1/\n`);
+        const rel = toRel(notePath);
+        vault.files.set(rel, `${vault.files.get(rel) ?? ''}海报: CONFIG/MOVIE POSTER/a.jpg\n豆瓣链接: https://movie.douban.com/subject/1/\n`);
       },
     });
 
@@ -112,13 +124,43 @@ describe('豆瓣抓取队列（douban-queue）', () => {
     expect(isFetching(path)).toBe(false);
   });
 
+  it('渲染联动：sweep 新增即渲染（loading 首帧可见）；完成后重建+渲染两次（立即退场+延迟上卡）', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《缺信息》.md', '---\ntags: [电影]\n评分: 8\n---');
+    const app = mockAppWithVault(vault);
+    M.appRef = app;
+    rebuildItems(app);
+    M.currentOverlay = document.createElement('div');
+    const renderFn = vi.fn();
+    M.renderFn = renderFn;
+    let release: () => void = () => {};
+    const gate = new Promise<void>((r) => (release = r));
+    configureFetchQueue({
+      ...TEST_HOOKS,
+      spawn: async (_cli, notePath) => {
+        await gate;
+        const rel = toRel(notePath);
+        vault.files.set(rel, `${vault.files.get(rel) ?? ''}海报: CONFIG/MOVIE POSTER/a.jpg\n豆瓣链接: https://movie.douban.com/subject/1/\n`);
+      },
+    });
+
+    sweepDoubanFetch(app);
+    // 入队即渲染：此前 renderFn 从未被调
+    expect(renderFn).toHaveBeenCalledTimes(1);
+
+    release();
+    await settle();
+    // 完成后：立即一次（loading 退场）+ refreshDelayMs=0 的延迟一次（海报/链接上卡）
+    expect(renderFn).toHaveBeenCalledTimes(3);
+  });
+
   it('spawn 成功但字段未到齐（搜索无结果）→ 失败聚合一条错误通知（含片名）', async () => {
     const vault = new MockVault();
     vault.files.set('我的/影视/《小众片A》.md', '---\ntags: [电影]\n评分: 8\n海报: CONFIG/MOVIE POSTER/a.jpg\n---');
     vault.files.set('我的/影视/《小众片B》.md', '---\ntags: [电影]\n评分: 8\n海报: CONFIG/MOVIE POSTER/a.jpg\n---');
     const app = mockAppWithVault(vault);
     rebuildItems(app);
-    configureFetchQueue({ cli: 'C:/fake/cli.js', spawn: async () => {}, gapMs: 0 });
+    configureFetchQueue({ ...TEST_HOOKS, spawn: async () => {} });
 
     sweepDoubanFetch(app);
     await settle();
@@ -141,6 +183,21 @@ describe('豆瓣抓取队列（douban-queue）', () => {
 
     expect(spawn).not.toHaveBeenCalled();
     expect(getNoticeMessages()).toEqual([]);
+  });
+
+  it('node 不可用（显式 \'\'）→ 入队静默跳过（缺 Node 环境不当抓取失败上报）', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《缺信息》.md', '---\ntags: [电影]\n评分: 8\n海报: CONFIG/MOVIE POSTER/a.jpg\n---');
+    const app = mockAppWithVault(vault);
+    rebuildItems(app);
+    const spawn = vi.fn();
+    // node '' 语义=探测过但不可用（jsdom 无 window.require ≈ 移动端/无 Node 静默禁用）
+    configureFetchQueue({ cli: 'C:/fake/cli.js', node: '', spawn, gapMs: 0, refreshDelayMs: 0 });
+
+    sweepDoubanFetch(app);
+    await settle();
+
+    expect(spawn).not.toHaveBeenCalled();
   });
 
   it('waitForExit：正常退出 clearTimeout 不杀；超时 kill 兜底并 resolve', async () => {
@@ -174,7 +231,7 @@ describe('豆瓣抓取队列·frontmatter 契约', () => {
   });
 
   it('enqueueDoubanFetch：file 为 null 静默跳过', () => {
-    configureFetchQueue({ cli: 'C:/fake/cli.js', spawn: async () => {}, gapMs: 0 });
+    configureFetchQueue({ ...TEST_HOOKS, spawn: async () => {} });
     expect(() => enqueueDoubanFetch(null, 'X')).not.toThrow();
   });
 

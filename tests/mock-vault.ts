@@ -21,6 +21,8 @@ export class MockVault {
       this.modifiedPaths.push(path);
     },
     exists: async (path: string): Promise<boolean> => this.files.has(path) || this.binaryFiles.has(path) || this.dirs.has(path),
+    /** 绝对路径解析（douban-queue spawn 用）；固定前缀便于测试映射回 vault 相对路径 */
+    getFullPath: (path: string): string => '/mock-vault-root/' + path,
     remove: async (path: string): Promise<void> => {
       this.files.delete(path);
       this.binaryFiles.delete(path);

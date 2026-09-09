@@ -128,12 +128,14 @@ describe('cinema 打开面板触发豆瓣抓取队列（ADR-0113）', () => {
     setSettingsProvider(() => ({} as any));
   });
 
-  /** 假 spawn：写回海报+豆瓣链接（模拟工具成功），记录调用 */
+  /** 假 spawn：写回海报+豆瓣链接（模拟工具成功），记录调用。
+   *  spawn 收到 adapter.getFullPath 绝对路径，映射回 vault 相对路径取内容 */
   function successSpawn(vault: MockVault) {
     const spawned: string[] = [];
     const spawn = async (_cli: string, notePath: string) => {
       spawned.push(notePath);
-      vault.files.set(notePath, `${vault.files.get(notePath) ?? ''}海报: CONFIG/MOVIE POSTER/a.jpg\n豆瓣链接: https://movie.douban.com/subject/1/\n`);
+      const rel = notePath.replace(/^\/mock-vault-root\//, '');
+      vault.files.set(rel, `${vault.files.get(rel) ?? ''}海报: CONFIG/MOVIE POSTER/a.jpg\n豆瓣链接: https://movie.douban.com/subject/1/\n`);
     };
     return { spawned, spawn };
   }
@@ -147,7 +149,7 @@ describe('cinema 打开面板触发豆瓣抓取队列（ADR-0113）', () => {
     );
     const app = makeApp(vault);
     const { spawned, spawn } = successSpawn(vault);
-    configureFetchQueue({ cli: 'C:/fake/cli.js', spawn, gapMs: 0 });
+    configureFetchQueue({ cli: 'C:/fake/cli.js', node: 'C:/fake/node.exe', spawn, gapMs: 0, refreshDelayMs: 0 });
     openCinema(app);
     await new Promise((r) => setTimeout(r, 25));
     expect(spawned).toHaveLength(1);
@@ -166,7 +168,7 @@ describe('cinema 打开面板触发豆瓣抓取队列（ADR-0113）', () => {
     );
     const app = makeApp(vault);
     const { spawned, spawn } = successSpawn(vault);
-    configureFetchQueue({ cli: 'C:/fake/cli.js', spawn, gapMs: 0 });
+    configureFetchQueue({ cli: 'C:/fake/cli.js', node: 'C:/fake/node.exe', spawn, gapMs: 0, refreshDelayMs: 0 });
     openCinemaAnalysis(app);
     await new Promise((r) => setTimeout(r, 25));
     expect(spawned).toHaveLength(1);
