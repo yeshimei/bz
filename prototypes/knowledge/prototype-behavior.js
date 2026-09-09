@@ -8244,12 +8244,11 @@ ${sample}`,
         <span class="bz-lit-sheet-title">文字录入 · 术语</span>
         <button type="button" class="bz-lit-sheet-close" data-term-close title="关闭">✕</button>
       </div>
-      <div class="bz-lit-term-field">
-        <div class="bz-lit-term-lb">术 语</div>
+      <div class="bz-lit-term-row">
+        <span class="bz-lit-term-meta-k">术语</span>
         <input id="lit-term-input" type="text" autocomplete="off">
       </div>
-      <div class="bz-lit-term-hint">试试：<a id="lit-term-try">昼夜节律</a></div>
-      <div class="bz-lit-term-srcrow">
+      <div class="bz-lit-term-row">
         <span class="bz-lit-term-meta-k">来源</span>
         <input id="lit-term-src" type="text" autocomplete="off">
         <span id="lit-term-src-chip" class="bz-lit-srcchip" style="display:none;"></span>
@@ -8258,7 +8257,6 @@ ${sample}`,
         <button id="lit-term-generate" class="bz-lit-accent-btn">生成</button>
         <button id="lit-term-cancel" class="bz-lit-ghost-btn">取消</button>
       </div>
-      <div class="bz-lit-term-note">生成是纯预览、不落盘；确认写入才产生文件。</div>
       <div id="lit-term-preview" style="display:none;">
         <div class="bz-lit-term-card">
           <div class="bz-lit-term-meta">
@@ -8275,7 +8273,6 @@ ${sample}`,
           <button id="lit-term-regenerate">总结</button>
           <button id="lit-term-save" class="bz-lit-accent-btn">确认写入</button>
         </div>
-        <div class="bz-lit-term-note" id="lit-term-note-save"></div>
       </div>`;
       popup.appendChild(body);
       document.body.appendChild(mask);
@@ -8284,13 +8281,6 @@ ${sample}`,
       this.termPopup = popup;
       q(popup, "#lit-term-generate").onclick = () => void this.onTermGenerate();
       q(popup, "#lit-term-cancel").onclick = () => this.hideTermEntry();
-      q(popup, "#lit-term-try").onclick = () => {
-        const input = q(popup, "#lit-term-input");
-        if (input) {
-          input.value = "昼夜节律";
-          input.focus();
-        }
-      };
       q(popup, "#lit-term-regenerate").onclick = () => void this.onTermSummarize();
       q(popup, "#lit-term-save").onclick = () => void this.onTermConfirm();
       (_a = q(popup, "#lit-term-input")) == null ? void 0 : _a.addEventListener("keydown", (e) => {
@@ -8531,11 +8521,6 @@ ${sample}`,
       if (dateEl) dateEl.textContent = this.termDateStamp();
       const contentEl = q(this.termPopup, "#lit-term-content");
       if (contentEl) contentEl.textContent = draft.summary;
-      const noteEl = q(this.termPopup, "#lit-term-note-save");
-      if (noteEl) {
-        const dir = litDirOf(tryGetSettings());
-        noteEl.textContent = `写入 → ${dir}/${term || "术语"}.md。它是「未消化」素材，等被主题笔记引用、被提炼。`;
-      }
       this.setTermPreviewVisible(true);
       const prev = q(this.termPopup, "#lit-term-preview");
       (_c = prev == null ? void 0 : prev.scrollIntoView) == null ? void 0 : _c.call(prev, { behavior: "smooth", block: "nearest" });
