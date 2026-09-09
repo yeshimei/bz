@@ -27,7 +27,8 @@ function scheduleReload(changedRel) {
     // css/html 由服务器直出，广播刷新即可。
     if (changedRel.endsWith('.ts')) {
       try {
-        await buildPreview([domain]);
+        // 渲染产物仅渲染清单域重出；行为域（如已摘渲染名单的 favorites）只重出行为包
+        if (PREVIEW_DOMAINS.includes(domain)) await buildPreview([domain]);
         if (BEHAVIOR_DOMAINS.includes(domain)) await buildBehavior(domain);
       } catch (e) { console.error('[preview-live] 产物重出失败：', e.message); return; }
     }
@@ -42,7 +43,9 @@ fs.watch(srcRoot, { recursive: true }, (_ev, filename) => {
   // .ts → 按域重出两包；css/html/原型三件套 .js → 直出广播（settings-panel 原型自足三件套无产物）
   const isSrc = rel.endsWith('.ts') || rel.endsWith('.css') || rel.endsWith('.html') || /\/prototype(\.app|\.data)?\.js$/.test(rel);
   if (!isSrc) return;
-  if (!PREVIEW_DOMAINS.includes(rel.split('/')[0])) return;
+  // 监听 = 渲染清单 ∪ 行为清单（favorites 等仅行为域：.ts 变化走行为包重出）
+  const domain = rel.split('/')[0];
+  if (!PREVIEW_DOMAINS.includes(domain) && !BEHAVIOR_DOMAINS.includes(domain)) return;
   scheduleReload(rel);
 });
 
@@ -110,6 +113,7 @@ a.card.off{opacity:.45}
     fs.createReadStream(file).pipe(res);
   }
 }).listen(PORT, () => {
+  const watched = [...new Set([...BEHAVIOR_DOMAINS, ...PREVIEW_DOMAINS])];
   console.log(`[preview-live] http://localhost:${PORT}/src/${PREVIEW_DOMAINS[0]}/prototype.html`);
-  console.log(`[preview-live] 监听：src/{${PREVIEW_DOMAINS.join(',')}}/** 的 .ts/.css/.html`);
+  console.log(`[preview-live] 监听：src/{${watched.join(',')}}/** 的 .ts/.css/.html`);
 });

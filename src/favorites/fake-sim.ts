@@ -80,13 +80,9 @@ export function bootFavoritesSim(): void {
   injectSettings();
 }
 
-function ensureBoot(): void {
-  bootFavoritesSim();
-}
-
 /** 打开主面板（真 openPanel 带 app/dm/ai 三参——boot 已构造，闭包代传；toggle 语义同插件） */
 export function openPanel(): void {
-  ensureBoot();
+  bootFavoritesSim();
   openPanelReal(_app as never, _dm as never, _ai as never);
 }
 

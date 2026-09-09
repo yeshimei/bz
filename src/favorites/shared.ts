@@ -5,8 +5,9 @@
  * 任何布局不得私有一份口径。布局差异层见 layouts/board/；域入口仍是 render.ts。
  * 原型 × 插件 markup 单源：
  *   - 插件侧：ui.ts 直接 import（事件绑定/core 服务/数据读写留 ui.ts）；
- *   - 评审壳侧：esbuild 打成 IIFE → 同目录 prototype-render.js（window.BZR_favorites），
- *     prototype.html 壳脚本消费同一批函数。
+ *   - 评审壳侧：经 fake-sim 启动器（ADR-0106）把真 ui.ts 依赖链打进
+ *     prototype-behavior.js（window.BZW_favorites），iframe 壳跑真行为消费同一批函数；
+ *     prototype-render.js 渲染产物已于 2026-09-09 退役（壳不再自绘）。
  *
  * 纯度契约（tests/core/render-purity.test.ts 守卫，违者门禁红）：
  *   - import 白名单：`../core/ui/str`（零依赖字符串工具）、`./config`、`./types`（type-only）；
