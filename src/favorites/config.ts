@@ -1,6 +1,6 @@
 /**
  * 收藏本配置（ticket 11 移植 + ticket 177 重构）：源码 收藏本.js L12-25。
- * 9 类固定标签（顺序即 UI 顺序）：数据 tags[] 存 label（如 'GitHub'），key 为稳定标识。
+ * 9 类固定标签（顺序即 UI 顺序）：数据 tags[] 存 label（如 'GitHub'）。
  * 归档冷存（ADR-0074）为数据层字段扩展，见 types.ts。
  */
 export const CONFIG = {
@@ -10,23 +10,22 @@ export const CONFIG = {
   STORAGE_FILE: 'favorites.json',
 };
 
-/** 标签定义（key 稳定；label 即数据本体 tags[] 存的值；ic 为 Obsidian 内置 lucide 图标名） */
+/** 标签定义（label 即数据本体 tags[] 存的值；ic 为 Obsidian 内置 lucide 图标名） */
 export interface FavTag {
-  key: string;
   label: string;
   ic: string;
 }
 
 export const TAGS: FavTag[] = [
-  { key: 'github', label: 'GitHub', ic: 'github' },
-  { key: 'software', label: '桌面软件', ic: 'app-window' },
-  { key: 'web', label: '网站', ic: 'globe' },
-  { key: 'ai', label: '大模型', ic: 'brain-circuit' },
-  { key: 'pi', label: 'pi', ic: 'keyboard' },
-  { key: 'claude', label: 'Claude', ic: 'bot' },
-  { key: 'skills', label: 'skills', ic: 'zap' },
-  { key: 'tavern', label: '酒馆', ic: 'beer' },
-  { key: 'harness', label: 'DeepSeek Harness', ic: 'waypoints' },
+  { label: 'GitHub', ic: 'github' },
+  { label: '桌面软件', ic: 'app-window' },
+  { label: '网站', ic: 'globe' },
+  { label: '大模型', ic: 'brain-circuit' },
+  { label: 'pi', ic: 'keyboard' },
+  { label: 'Claude', ic: 'bot' },
+  { label: 'skills', ic: 'zap' },
+  { label: '酒馆', ic: 'beer' },
+  { label: 'DeepSeek Harness', ic: 'waypoints' },
 ];
 
 

@@ -7,12 +7,8 @@ import type { App } from 'obsidian';
 import { FavoritesApp } from './app';
 import { openForm, unloadFavoritesUI } from './ui';
 
-let initialized = false;
-
-/** 幂等初始化（懒加载；app 由 open/add 回调持传，初始化本身不需要） */
+/** 幂等初始化（懒加载；app.init 自身幂等，instance 重置由 unloadFavorites 负责） */
 export function ensureFavorites(): void {
-  if (initialized) return;
-  initialized = true;
   void FavoritesApp.getInstance().init();
 }
 
@@ -32,6 +28,5 @@ export function addFavoriteItem(app: App): void {
 export function unloadFavorites(): void {
   unloadFavoritesUI();
   FavoritesApp.instance = null;
-  initialized = false;
 }
 

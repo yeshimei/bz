@@ -11,8 +11,8 @@
   │   ../core/styles.css → ../core/ui/tokens.css → ../core/ui/components.css │
   │   → ./styles.css                                                        │
   │ markup 单源（ADR-0104/0105）：面板/磁贴/卡片/菜单/抽屉/表单 HTML 出自       │
-  │   ./shared.ts + ./layouts/board/render.ts（构建产物 prototype-render.js   │
-  │   仍在 git，但壳不再自绘渲染——两侧 markup 均由真 ui.ts 消费同一份）。        │
+  │   ./shared.ts + ./layouts/board/render.ts（prototype-render.js 产物已于    │
+  │   2026-09-09 退役——壳不再自绘渲染，两侧 markup 均由真 ui.ts 消费同一份）。    │
   │ 行为单源（issue 245/ADR-0106）：交互逻辑全部是插件同款 ui.ts 依赖链——       │
   │   经 ./prototype-behavior.js（src/favorites/fake-sim.ts 构建，             │
   │   alias obsidian→公共假层）在下方两个 iframe 视图里跑真行为；                │
