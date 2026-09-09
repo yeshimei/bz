@@ -67,8 +67,6 @@ export class UIManager {
   /** 冲刺入口 in-flight 防抖（双击/并发触发只放行一次，防双开会话双倍 AI 调用） */
   private sprintStarting = false;
   showArchived = false;
-  private searchTimer: number | null = null;
-  searchText = '';
   private escHandle: { unregister: () => void } | null = null;
 
   constructor(app: App, dataManager: ReviewDataManager) {
@@ -144,10 +142,6 @@ export class UIManager {
     this.sprint = null;
     sprint?.destroy();
     this.hideMain();
-    if (this.searchTimer !== null) {
-      window.clearTimeout(this.searchTimer);
-      this.searchTimer = null;
-    }
     if (this.escHandle) {
       this.escHandle.unregister();
       this.escHandle = null;
@@ -165,16 +159,15 @@ export class UIManager {
   async refreshPanel(): Promise<void> {
     if (this.sprint) return;
     const items = await this.dataManager.loadItems();
-    this.renderEntries(items, this.searchText);
+    this.renderEntries(items);
   }
 
   /** 渲染队列视图（冲刺态不响应） */
-  renderEntries(items: ReviewItem[], searchText = ''): void {
+  renderEntries(items: ReviewItem[]): void {
     if (this.sprint) return;
     const container = this.entriesContainer;
     if (!container) return;
-    this.searchText = searchText;
-    container.innerHTML = this.queueViewHtml(items, searchText);
+    container.innerHTML = this.queueViewHtml(items);
     if (!items.length) {
       // item 10：空库两条路引导（组件库 uiEmpty 工厂）
       const host = container.querySelector('[data-empty-host]');
@@ -221,8 +214,8 @@ export class UIManager {
     return Number(s?.reviewRThreshold) || 0.9;
   }
 
-  private queueViewHtml(items: ReviewItem[], searchText: string): string {
-    return queueViewHtml(items, searchText, {
+  private queueViewHtml(items: ReviewItem[]): string {
+    return queueViewHtml(items, {
       showArchived: this.showArchived,
       rThreshold: this.rThreshold(),
       w: this.wSource(),
@@ -233,11 +226,7 @@ export class UIManager {
 
   private bindQueueEvents(container: HTMLElement, items: ReviewItem[]): void {
     container.querySelector('[data-act="close"]')?.addEventListener('click', () => this.hideMain());
-    // 设置直达（issue 201 头行对齐待办）：关面板 → 设置面板定位复习计划域（动态 import 防环引用）
-    container.querySelector('[data-act="settings"]')?.addEventListener('click', () => {
-      this.hideMain();
-      void import('../settings-panel').then((m) => m.openSettingsPanel(this.app, 'review'));
-    });
+    // ⚙设置直达钮已退役（issue 254 迭代拍板）：设置走插件设置页，头行不再深链 settings-panel
     container.querySelector('[data-act="begin"]')?.addEventListener('click', () => void this.beginRound());
     container.querySelector('[data-act="arch"]')?.addEventListener('click', () => {
       this.showArchived = !this.showArchived;
@@ -247,17 +236,7 @@ export class UIManager {
     // item 10：空态两条路（把当前笔记加入复习 / 监听文件夹配置说明）
     container.querySelector('[data-act="add-current"]')?.addEventListener('click', () => void this.addCurrentNote());
     container.querySelector('[data-act="watch-help"]')?.addEventListener('click', () => void this.showWatchHelp());
-    const search = container.querySelector<HTMLInputElement>('#bz-q-search');
-    if (search) {
-      search.addEventListener('input', () => {
-        if (this.searchTimer !== null) window.clearTimeout(this.searchTimer);
-        this.searchTimer = window.setTimeout(() => {
-          this.searchTimer = null;
-          this.searchText = search.value;
-          void this.refreshPanel();
-        }, 180);
-      });
-    }
+    // 搜索框已退役（issue 254 迭代拍板）
     // 卡片点击（到期条目 → 单条冲刺；.no = 未来/不可做，div 无 disabled 用类排除）
     container.querySelectorAll<HTMLElement>('.bz-q-card[data-id]:not(.no)').forEach((card) => {
       const activate = () => {

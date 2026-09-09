@@ -310,16 +310,13 @@ var BZR_review = (() => {
     if (!items.length) return `<div class="bz-q-hint">没有条目</div>`;
     return items.map((it) => cardHtml(it, ctx)).join("");
   }
-  function queueViewHtml(items, searchText, ctx = {}) {
+  function queueViewHtml(items, ctx = {}) {
     var _a, _b, _c;
     const now = (_a = ctx.now) != null ? _a : Date.now();
     const w = (_b = ctx.w) != null ? _b : DEFAULT_W;
     const rt = (_c = ctx.rThreshold) != null ? _c : 0.9;
     const full = { ...ctx, now, w, rThreshold: rt };
-    const kw = searchText.trim().toLowerCase();
-    const vis = kw ? items.filter((i) => i.name.toLowerCase().includes(kw)) : items;
     const col = partitionQueue(items, rt, w);
-    const visCol = partitionQueue(vis, rt, w);
     const head = `
       <div class="bz-panel-head">
         <div class="bz-panel-brand">${icon("repeat-2", "bz-ic--sm")}</div>
@@ -328,13 +325,10 @@ var BZR_review = (() => {
         <div class="bz-panel-head-sub">${todayLabel(new Date(now))}</div>
         <span class="bz-panel-head-sp"></span>
         <div class="bz-panel-head-btns">
-          <button class="bz-icon-btn" data-act="settings" title="打开复习计划设置">${icon("settings", "")}</button>
-          <!-- issue 201 对齐待办：关闭钮不挂 bz-win-close（core 规则非真全屏隐藏之），桌面/移动常显同待办 -->
+          <!-- ⚙设置直达钮两端退役（issue 254 迭代拍板，设置走插件设置页）；✕ 桌面隐藏
+              （styles.css ≥769px 规则，点遮罩/ESC 关），仅移动端全屏保留 -->
           <button class="bz-icon-btn" data-act="close" title="关闭">${icon("x")}</button>
       </div>
-      </div>
-      <div class="bz-q-tools">
-        <div class="bz-search${searchText ? " typing" : ""}">${icon("search", "")}<input class="bz-input" type="text" id="bz-q-search" placeholder="搜索笔记…" value="${esc(searchText)}"></div>
       </div>`;
     if (!items.length) {
       const strip2 = `
@@ -350,7 +344,6 @@ var BZR_review = (() => {
     const strip = ctx.showArchived ? `<div class="bz-q-strip">
         <span class="bz-q-strip-dot ok"></span>
         <strong>已完成复习</strong>
-        <span class="bz-q-strip-txt">查看归档 · 再点「已完成」回到队列</span>
       </div>` : clearToday ? `<div class="bz-q-strip">
         <span class="bz-q-strip-dot ok"></span>
         <strong>今日已清空</strong>
@@ -361,17 +354,20 @@ var BZR_review = (() => {
         <span class="bz-q-strip-txt">今日 ${col.today.length} 篇到期 · 逾期 ${col.overdue.length} 篇顺延</span>
         <button class="bz-btn bz-btn--primary" data-act="begin">开始本轮</button>
       </div>`;
-    const body = ctx.showArchived ? `<div class="bz-q-cols"><div class="bz-q-col done">${colHead(visCol.done.length, "已完成")}${cardsOf(sortColumn(visCol.done, now), full)}</div></div>` : `<div class="bz-q-cols">
-          <div class="bz-q-col danger">${colHead(visCol.overdue.length, "已逾期")}${cardsOf(sortColumn(visCol.overdue, now), full)}</div>
-          <div class="bz-q-col warn">${colHead(visCol.today.length, "今天到期")}${cardsOf(sortColumn(visCol.today, now), full)}</div>
-          <div class="bz-q-col future">${colHead(visCol.future.length, "未来")}${cardsOf(sortColumn(visCol.future, now), full)}</div>
+    const body = ctx.showArchived ? `<div class="bz-q-cols"><div class="bz-q-col done">${colHead(col.done.length, "已完成")}${cardsOf(sortColumn(col.done, now), full)}</div></div>` : `<div class="bz-q-cols">
+          <div class="bz-q-col danger">${colHead(col.overdue.length, "已逾期")}${cardsOf(sortColumn(col.overdue, now), full)}</div>
+          <div class="bz-q-col warn">${colHead(col.today.length, "今天到期")}${cardsOf(sortColumn(col.today, now), full)}</div>
+          <div class="bz-q-col future">${colHead(col.future.length, "未来")}${cardsOf(sortColumn(col.future, now), full)}</div>
         </div>`;
     const stats = computeStats(items);
+    const archItem = ctx.showArchived ? `<span class="bz-q-fitem bz-touch-target--lg is-back" data-act="arch" title="点此返回队列">
+        ${icon("undo-2")}<span class="lbl">返回队列</span>
+      </span>` : `<span class="bz-q-fitem bz-touch-target--lg" data-act="arch" title="查看已完成复习">
+        ${icon("folder")}<span class="lbl">已完成 <b>${col.done.length}</b> 篇</span>
+      </span>`;
     const footer = `
       <div class="bz-q-footer">
-        <span class="bz-q-fitem bz-touch-target--lg" data-act="arch" title="查看已完成复习">
-          ${icon("folder")}<span class="lbl">已完成 <b>${col.done.length}</b> 篇</span>
-        </span>
+        ${archItem}
         <i class="sep"></i>
         <span class="bz-q-fitem bz-touch-target--lg" data-act="stats" title="查看复习统计分布">
           ${icon("bar-chart-3")}<span class="lbl">累计 <b>${stats.totalReviews}</b> 天 · 连续 <b>${stats.streak}</b> 天</span>

@@ -3,7 +3,7 @@
    三界面：主面板 / AI 对话 / 灵感参考 —— 米白 #fbfaf7 × 红棕 #a33d2a，
    面板固定浅色自成一体，不随 .theme-dark 反色（favorites C5 同款先例）。
    markup 单源 render.ts；本文件为唯一样式源（bz-sb-* 前缀）。
-   移动端抽屉段（bz-sb-mb-*）自旧版原样保留：本批无移动原型，待后续落域。
+   移动端抽屉段（bz-sb-mb-*）同皮（issue 251 追加）：吸同一套 token。
    ============================================================ */
 
 .bz-sb-scroll-y {
@@ -18,11 +18,13 @@
   display: none !important;
 }
 
-/* ==================== 主题 token（三根容器同套） ==================== */
+/* ==================== 主题 token（根容器同套：三界面 + 移动抽屉/胶囊） ==================== */
 
 .bz-sb-panel,
 .bz-sb-chat-modal,
-.bz-sb-float-win {
+.bz-sb-float-win,
+.bz-sb-mb-sheet,
+.bz-sb-mb-mini {
   --sb-bg: #fbfaf7;
   --sb-card: #ffffff;
   --sb-ink: #211d16;
@@ -38,7 +40,8 @@
 }
 
 .bz-sb-panel button,
-.bz-sb-chat-modal button {
+.bz-sb-chat-modal button,
+.bz-sb-mb-sheet button {
   font-family: inherit;
 }
 
@@ -658,17 +661,6 @@
   font-weight: 700;
   margin: 0;
 }
-.bz-sb-chat-model {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 10.5px;
-  color: var(--sb-mut);
-  border: 1px solid var(--sb-line);
-  border-radius: 99px;
-  padding: 2.5px 9px;
-  white-space: nowrap;
-}
 .bz-sb-chat-clear {
   font-size: 12px;
 }
@@ -863,6 +855,10 @@
 }
 .bz-sb-chat-input {
   flex: 1;
+  /* min-width:0 破 textarea 固有宽度：否则 Obsidian 宿主下输入行被撑溢出、
+     输入框右缘贴死弹窗边框（用户报的「布局有问题」） */
+  min-width: 0;
+  width: 100%;
   border: none;
   outline: none;
   background: none;
@@ -926,9 +922,6 @@
     width: calc(100vw - 24px) !important;
     max-width: none !important;
     height: calc(100vh - 24px);
-  }
-  .bz-sb-chat-model {
-    display: none;
   }
 }
 
@@ -1212,9 +1205,10 @@
 }
 
 /* ============================================================
-   移动端底部抽屉（MobilePanel）—— 本批无移动原型，样式自旧版原样保留
+   移动端底部抽屉（MobilePanel）—— 同皮（issue 251 追加）
+   与三界面吸同一套 token：米白底 × 红棕点缀 × 深墨 user 气泡；
+   几何（45vh 吸附/拖拽/mini 胶囊）与 DOM 结构原样保留
    ============================================================ */
-/* ==================== 绉诲姩绔簳閮ㄦ娊灞?MobilePanel ==================== */
 .bz-sb-mb-sheet {
   position: fixed;
   left: 0;
@@ -1224,18 +1218,19 @@
   /* z 动态发号（ADR-0067）：expand() 时 topifyZ */
   display: flex;
   flex-direction: column;
-  background: var(--background-primary);
-  border-top: 1px solid var(--background-modifier-border);
+  background: var(--sb-bg);
+  border-top: 1px solid var(--sb-line2);
   border-radius: 16px 16px 0 0;
-  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 -6px 24px rgba(33, 29, 22, 0.14);
   transform: translateY(105%);
   transition: transform 0.25s ease;
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  color: var(--sb-ink);
 }
 .bz-sb-mb-sheet.bz-sb-mb-open {
   transform: translateY(0);
 }
-/* 鎷栨嫿璺熸墜鏈熼棿鍏宠繃娓★紙QA 鍚岃涔夛級 */
+/* 拖拽跟手期间关过渡（QA 同语义） */
 .bz-sb-mb-sheet.bz-sb-mb-dragging {
   transition: none;
 }
@@ -1243,7 +1238,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 14px 4px;
+  padding: 10px 14px 6px;
   flex-shrink: 0;
   touch-action: none;
 }
@@ -1252,16 +1247,17 @@
   min-width: 40px;
   height: 30px;
   padding: 0 11px;
-  border: none;
+  border: 1px solid var(--sb-line2);
   border-radius: 15px;
-  background: var(--background-secondary);
-  color: var(--text-muted);
+  background: var(--sb-card);
+  color: var(--sb-mut);
   font-size: 14px;
   cursor: pointer;
 }
 .bz-sb-mb-pill.active {
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
+  background: var(--sb-acc);
+  border-color: var(--sb-acc);
+  color: #fbfaf7;
 }
 .bz-sb-mb-drag-strip {
   flex: 1;
@@ -1275,7 +1271,7 @@
   width: 38px;
   height: 4px;
   border-radius: 2px;
-  background: var(--background-modifier-border);
+  background: var(--sb-line2);
 }
 .bz-sb-mb-body {
   flex: 1;
@@ -1288,9 +1284,9 @@
   padding: 22px 8px;
   text-align: center;
   font-size: 12.5px;
-  color: var(--text-muted);
+  color: var(--sb-mut);
 }
-/* 收起态底部 mini 胶囊（z 静态档 9000 已清——collapse() 显示时 topifyZ 发号，ADR-0067） */
+/* 收起态底部 mini 胶囊（collapse() 显示时 topifyZ 发号，ADR-0067） */
 .bz-sb-mb-mini {
   position: fixed;
   left: 50%;
@@ -1299,11 +1295,11 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 7px 16px;
+  padding: 8px 16px;
   border-radius: 999px;
-  background: var(--background-primary);
-  border: 1px solid var(--background-modifier-border);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  background: var(--sb-card);
+  border: 1px solid var(--sb-line2);
+  box-shadow: 0 4px 16px rgba(33, 29, 22, 0.16);
   cursor: pointer;
   transition: transform 0.25s ease;
 }
@@ -1314,18 +1310,18 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--interactive-accent);
+  background: var(--sb-acc);
 }
 .bz-sb-mb-mini-label {
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--sb-mut);
 }
-/* 鍙傝€?tab 鍗＄墖锛堢Щ鍔ㄧ绱у噾鐗堬級 */
+/* 参考 tab 卡片（紧凑版：白卡 + 红棕分数） */
 .bz-sb-mb-card {
-  background: var(--background-secondary);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 9px;
-  padding: 8px 10px;
+  background: var(--sb-card);
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  padding: 9px 11px;
   margin-bottom: 7px;
   cursor: pointer;
 }
@@ -1339,7 +1335,7 @@
   min-width: 0;
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-normal);
+  color: var(--sb-ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1347,7 +1343,8 @@
 .bz-sb-mb-card-score {
   flex-shrink: 0;
   font-size: 11px;
-  color: var(--interactive-accent);
+  font-weight: 700;
+  color: var(--sb-acc);
 }
 .bz-sb-mb-card-chunk {
   margin-top: 5px;
@@ -1355,17 +1352,17 @@
   overflow: hidden;
   font-size: 12.5px;
   line-height: 1.55;
-  color: var(--text-muted);
+  color: var(--sb-mut);
 }
 .bz-sb-mb-card-chunk.expanded {
   max-height: none;
   overflow-y: auto;
-  color: var(--text-normal);
+  color: var(--sb-ink2);
 }
 .bz-sb-mb-card-chunk p {
   margin: 0 0 4px;
 }
-/* AI tab锛堢Щ鍔ㄧ锛?*/
+/* AI tab（移动端）：桌面同语言——深墨 user 气泡 / 白卡 assistant */
 .bz-sb-mb-chat {
   flex: 1;
   min-height: 0;
@@ -1378,25 +1375,27 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 4px 0 8px;
+  padding: 4px 0 10px;
 }
 .bz-sb-mb-chat-msg {
   max-width: 94%;
-  padding: 7px 10px;
-  border-radius: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
   font-size: 13px;
-  line-height: 1.55;
+  line-height: 1.6;
   word-break: break-word;
 }
 .bz-sb-mb-chat-msg.user {
   align-self: flex-end;
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
+  background: var(--sb-dark);
+  color: #fbfaf7;
 }
 .bz-sb-mb-chat-msg.assistant {
   align-self: flex-start;
-  background: var(--background-secondary);
-  border: 1px solid var(--background-modifier-border);
+  background: var(--sb-card);
+  border: 1px solid var(--sb-line);
+  color: var(--sb-ink);
+  box-shadow: 0 1px 4px #00000008;
 }
 .bz-sb-mb-chat-msg p {
   margin: 0 0 6px;
@@ -1409,39 +1408,47 @@
   align-items: center;
   gap: 5px;
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--sb-mut);
   user-select: none;
   padding-bottom: 6px;
 }
 .bz-sb-mb-chat-input-area {
   display: flex;
-  gap: 6px;
+  align-items: stretch;
+  gap: 7px;
   flex-shrink: 0;
   padding-bottom: 2px;
 }
 .bz-sb-mb-chat-input {
   flex: 1;
   min-width: 0;
-  font-size: 14px;
-  padding: 8px 10px;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 8px;
-  background: var(--background-primary);
-  color: var(--text-normal);
+  font-size: 13.5px;
+  padding: 9px 13px;
+  border: 1.5px solid var(--sb-line2);
+  border-radius: 12px;
+  background: var(--sb-card);
+  color: var(--sb-ink);
+}
+.bz-sb-mb-chat-input::placeholder {
+  color: var(--sb-faint);
 }
 .bz-sb-mb-chat-input:focus {
   outline: none;
-  border-color: var(--interactive-accent);
+  border-color: var(--sb-acc);
 }
 .bz-sb-mb-chat-send {
   flex-shrink: 0;
-  font-size: 13px;
-  padding: 8px 14px;
+  font-size: 12.5px;
+  padding: 0 15px;
   border: none;
-  border-radius: 8px;
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
+  border-radius: 12px;
+  background: var(--sb-dark);
+  color: #fbfaf7;
   cursor: pointer;
+  transition: 0.2s;
+}
+.bz-sb-mb-chat-send:hover {
+  background: var(--sb-acc);
 }
 .bz-sb-mb-chat-send:disabled {
   opacity: 0.55;
