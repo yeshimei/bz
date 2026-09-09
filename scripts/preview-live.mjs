@@ -1,8 +1,9 @@
 /**
  * 原型热更新服务器（零依赖）：node scripts/preview-live.mjs [端口，默认 5177]
- * 服务仓库根目录；监听单源清单内各域的 styles.css / prototype.html / render 链 / ui 链，
- * render.ts/shared.ts 变化自动重出预览包+行为包，ui.ts/fake 链变化重出行为包，然后经 SSE 推浏览器 location.reload()。
- * 打开 http://localhost:5177/src/<域>/prototype.html 即得免刷新预览。
+ * 服务仓库根目录；监听两棵源树——src/<域>/（插件源码：styles.css/render.ts/ui.ts 链）与
+ * prototypes/<域>/（评审工件：壳 html/fake-sim.ts/fake 层），render.ts/shared.ts 变化自动
+ * 重出预览包+行为包，ui.ts/fake 链变化重出行为包，然后经 SSE 推浏览器 location.reload()。
+ * 打开 http://localhost:5177/prototypes/<域>/prototype.html 即得免刷新预览。
  */
 import http from 'node:http';
 import fs from 'node:fs';
@@ -14,20 +15,20 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.argv[2]) || 5177;
 const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml' };
 
-// 监听 src/<单源域>/ 下全部源码变化（含 layouts/** 嵌套与 fake 层）；构建产物 .js 不在监听之列
+// 监听两棵源树（相对仓库根的 rel 前缀区分）：src/ = 插件源码；prototypes/ = 评审工件
 const srcRoot = path.join(ROOT, 'src');
+const protoRoot = path.join(ROOT, 'prototypes');
 
 let reloadTimer = 0;
-function scheduleReload(changedRel) {
+function scheduleReload(changedRel, domain) {
   clearTimeout(reloadTimer);
   // 防抖：编辑器常连发多个事件
   reloadTimer = setTimeout(async () => {
-    const domain = changedRel.split('/')[0];
-    // .ts 是打包链源码（入口 render.ts/ui.ts 及其任意依赖）：两包都可能吃进，按域全部重出最稳；
-    // css/html 由服务器直出，广播刷新即可。
+    // .ts 是打包链源码（入口 render.ts/fake-sim.ts 及其任意依赖）：两包都可能吃进，按域全部重出最稳；
+    // css/html/产物 .js 由服务器直出，广播刷新即可。
     if (changedRel.endsWith('.ts')) {
       try {
-        // 渲染产物仅渲染清单域重出；行为域（如已摘渲染名单的 favorites）只重出行为包
+        // 渲染产物仅渲染清单域重出（entry 在 src/<域>/render.ts）；行为域（如已摘渲染名单的 favorites）只重出行为包
         if (PREVIEW_DOMAINS.includes(domain)) await buildPreview([domain]);
         if (BEHAVIOR_DOMAINS.includes(domain)) await buildBehavior(domain);
       } catch (e) { console.error('[preview-live] 产物重出失败：', e.message); return; }
@@ -37,17 +38,24 @@ function scheduleReload(changedRel) {
   }, 120);
 }
 
-fs.watch(srcRoot, { recursive: true }, (_ev, filename) => {
-  if (!filename) return;
-  const rel = filename.split(path.sep).join('/');
-  // .ts → 按域重出两包；css/html/原型三件套 .js → 直出广播（settings-panel 原型自足三件套无产物）
-  const isSrc = rel.endsWith('.ts') || rel.endsWith('.css') || rel.endsWith('.html') || /\/prototype(\.app|\.data)?\.js$/.test(rel);
-  if (!isSrc) return;
-  // 监听 = 渲染清单 ∪ 行为清单（favorites 等仅行为域：.ts 变化走行为包重出）
-  const domain = rel.split('/')[0];
-  if (!PREVIEW_DOMAINS.includes(domain) && !BEHAVIOR_DOMAINS.includes(domain)) return;
-  scheduleReload(rel);
-});
+function watchRoot(rootName, rootPath) {
+  fs.watch(rootPath, { recursive: true }, (_ev, filename) => {
+    if (!filename) return;
+    const rel = rootName + '/' + filename.split(path.sep).join('/');
+    // src 树：.ts/.css/.html/原型三件套 .js；prototypes 树：任意 .ts/.css/.html/.js（含重出产物，自动广播刷新）
+    const ext = rel.slice(rel.lastIndexOf('.'));
+    const isRelevant = rootName === 'prototypes'
+      ? /\.(ts|css|html|js)$/.test(ext)
+      : rel.endsWith('.ts') || rel.endsWith('.css') || rel.endsWith('.html') || /\/prototype(\.app|\.data)?\.js$/.test(rel);
+    if (!isRelevant) return;
+    // 监听 = 渲染清单 ∪ 行为清单（favorites 等仅行为域：.ts 变化走行为包重出）
+    const domain = rel.split('/')[1];
+    if (!PREVIEW_DOMAINS.includes(domain) && !BEHAVIOR_DOMAINS.includes(domain)) return;
+    scheduleReload(rel, domain);
+  });
+}
+watchRoot('src', srcRoot);
+watchRoot('prototypes', protoRoot);
 
 const clients = new Set();
 http.createServer((req, res) => {
@@ -77,9 +85,9 @@ http.createServer((req, res) => {
     };
     const items = domains
       .map((d) => {
-        const has = fs.existsSync(path.join(ROOT, 'src', d, 'prototype.html'));
+        const has = fs.existsSync(path.join(ROOT, 'prototypes', d, 'prototype.html'));
         const [name, desc] = META[d] || [d, ''];
-        return `<a class="card${has ? '' : ' off'}" href="/src/${d}/prototype.html"><b>${name}</b><span class="id">${d}</span>${desc ? `<span class="desc">${desc}</span>` : ''}</a>`;
+        return `<a class="card${has ? '' : ' off'}" href="/prototypes/${d}/prototype.html"><b>${name}</b><span class="id">${d}</span>${desc ? `<span class="desc">${desc}</span>` : ''}</a>`;
       })
       .join('\n');
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
@@ -96,7 +104,7 @@ a.card .id{font-size:10px;color:#b0a897;font-family:Consolas,monospace;letter-sp
 a.card .desc{font-size:11.5px;color:#6d675c;margin-top:3px;line-height:1.5}
 a.card.off{opacity:.45}
 </style></head><body><div class="wrap"><h1>原型预览 · 行为单源域导航</h1>
-<div class="sub">SSE 热刷新已注入各评审壳：改 ${'src/<域>/**'} 的 .ts/.css/.html 自动重出产物并刷新。快捷键返回本页：浏览器后退。</div>
+<div class="sub">SSE 热刷新已注入各评审壳：改 ${'src/<域>/** 或 prototypes/<域>/**'} 的 .ts/.css/.html 自动重出产物并刷新。快捷键返回本页：浏览器后退。</div>
 <div class="grid">\n${items}\n</div></div></body></html>`);
     return;
   }
@@ -114,6 +122,6 @@ a.card.off{opacity:.45}
   }
 }).listen(PORT, () => {
   const watched = [...new Set([...BEHAVIOR_DOMAINS, ...PREVIEW_DOMAINS])];
-  console.log(`[preview-live] http://localhost:${PORT}/src/${PREVIEW_DOMAINS[0]}/prototype.html`);
-  console.log(`[preview-live] 监听：src/{${watched.join(',')}}/** 的 .ts/.css/.html`);
+  console.log(`[preview-live] http://localhost:${PORT}/prototypes/${PREVIEW_DOMAINS[0]}/prototype.html`);
+  console.log(`[preview-live] 监听：src/ 与 prototypes/ 的 {${watched.join(',')}}/** 的 .ts/.css/.html`);
 });

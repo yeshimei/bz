@@ -16,24 +16,32 @@
 | `render.ts`（产物 `prototype-render.js`） | markup / 视图口径 | 原型 × 插件 |
 | `ui.ts`（产物 `prototype-behavior.js`，ADR-0106） | 交互行为 | 原型 × 插件 |
 
-改一处两侧自动生效，无二次同步。行为单源 = 原型直接运行插件同款 ui.ts：宿主差异由构建期 esbuild alias 换成公共假层 `fake/`——零依赖 core 服务（notice/flow-dialog 等）真身打进；setIcon/Platform 用假 obsidian 覆盖共用；数据/AI/设置写接口一致的假函数（localStorage 假库/抛错降级/注入默认值）。
+改一处两侧自动生效，无二次同步。行为单源 = 原型直接运行插件同款 ui.ts：宿主差异由构建期 esbuild alias 换成公共假层 `prototypes/<域>/fake/`——零依赖 core 服务（notice/flow-dialog 等）真身打进；setIcon/Platform 用假 obsidian 覆盖共用；数据/AI/设置写接口一致的假函数（localStorage 假库/抛错降级/注入默认值）。
 
-## 文件约定（`src/<域>/`）
+## 文件约定（2026-09-09 起分两处：域源码 `src/<域>/`，评审工件根级 `prototypes/<域>/`）
+
+`src/<域>/`（插件源码，构建/聚合入口依赖）：
 
 | 文件 | 作用 |
 |---|---|
-| `styles.css` | 唯一样式源（`bz-<域>-*` 前缀） |
+| `styles.css` | 唯一样式源（`bz-<域>-*` 前缀；评审壳经 `../../src/<域>/styles.css` 相对链引用同一份） |
 | `render.ts` | markup 单源（面板/弹窗/行操作序列） |
-| `prototype-render.js` | 构建产物（入库，勿手改） |
 | `ui.ts` | 行为单源：生命周期/事件委托/数据流（markup 只出自 render.ts） |
-| `fake-sim.ts` | 行为产物入口：种子数据 + 注入 + 导出面板入口（各域一份） |
-| `fake/fake-obsidian.ts` | 公共假 obsidian：Platform 视口判定 / setIcon 用 BLG_ICONS / FakeVault（localStorage + storage 桥） |
-| `prototype-behavior.js` | 行为产物（入库，勿手改） |
+| `layouts/<布局>/render.ts` | 布局差异层（有则） |
+
+`prototypes/<域>/`（评审工件；产物入库保双击零依赖）：
+
+| 文件 | 作用 |
+|---|---|
 | `prototype.html` | 评审壳：双 iframe（桌面 / 移动 396 各跑一份真行为）+ 自检 |
 | `prototype-view.html` | iframe 视图页：boot + 面板入口（各域一份） |
+| `fake-sim.ts` | 行为产物入口：种子数据 + 注入 + 导出面板入口（各域一份；import 上溯 `../../src/…`） |
+| `fake/fake-obsidian.ts` | 公共假 obsidian：Platform 视口判定 / setIcon（X_ICONS）/ FakeVault（localStorage + storage 桥） |
+| `prototype-render.js` / `prototype-behavior.js` | 构建产物（入库，勿手改；`render.ts`/`fake-sim.ts` 经 build-preview 打出） |
 | `prototype-data.js` / `prototype-icons.js` | 演示数据/图标（生成物） |
+| `PROTOTYPE.md` | 域评审文档（有则） |
 
-原型历史版本在 `.zcode/ui-prototypes/`（不入 git）；域内 `prototype.html` 始终是当前定稿。
+原型历史版本在 `.zcode/ui-prototypes/`（不入 git）；`prototypes/<域>/prototype.html` 始终是当前定稿。
 
 ## 流程（单向）
 
