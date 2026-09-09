@@ -6,7 +6,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { EventEmitter } from 'node:events';
 import { MockVault, mockAppWithVault, parseFrontmatter } from '../mock-vault';
 import { resetObsidianMocks, hasNotice, getNoticeMessages, clearNotices } from '../mock-obsidian-entry';
-import { M, resetCinemaState } from '../../src/cinema/state';
+import { M, resetCinemaState, type CinemaItem } from '../../src/cinema/state';
+import { pcardHtml } from '../../src/cinema/shared';
 import { rebuildItems } from '../../src/cinema/data';
 import {
   enqueueDoubanFetch,
@@ -175,5 +176,16 @@ describe('豆瓣抓取队列·frontmatter 契约', () => {
   it('enqueueDoubanFetch：file 为 null 静默跳过', () => {
     configureFetchQueue({ cli: 'C:/fake/cli.js', spawn: async () => {}, gapMs: 0 });
     expect(() => enqueueDoubanFetch(null, 'X')).not.toThrow();
+  });
+
+  it('pcardHtml fetching：海报遮罩 spinner 只在抓取中渲染', () => {
+    const it: CinemaItem = {
+      file: null, name: 'X', typeTag: '电影', group: '电影', watchDate: null, rating: null,
+      status: 2, poster: null, review: null, genre: null, director: null, actors: null,
+      region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null,
+      duration: null, seasonText: null,
+    };
+    expect(pcardHtml(it, null, true)).toContain('pw-fetch');
+    expect(pcardHtml(it, null, false)).not.toContain('pw-fetch');
   });
 });

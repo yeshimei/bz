@@ -38,3 +38,12 @@
 - 移动端无 loading、不报错；PC 打开面板可补抓移动端同步来的新片。
 - pm2 列表无 douban-poster；`douban-poster fetch` 手动 CLI 仍可用。
 - 门禁全绿：pnpm test + tsc --noEmit + 自审 + diff 审查 + 构建验证；工具侧 node --test 全绿。
+
+## 合并前审查修复批（2026-09-09）
+
+- **P0**：`cliPath` 初始值误设 `''`（探测过不可用）致 npm 探测死代码 → 改 `null`（未探测）。
+- **P0**：主渲染链 `layouts/midnight/render.ts` desk/mob 两处 `pcardHtml` 未传 fetching → `MidnightRenderInput` 增 `fetching?` 回调，ui.ts `midnightInput` 接 `isFetching`；spinner 覆盖主网格与移动网格。
+- **P1**：`fetchComplete` 改 `fieldValue` 行级读取（剥包裹引号、空引号 `""` 不误判完成）。
+- **P1**：行为包重出（首次构建因 node_modules 缺失败被管道吞，已补）。
+- **P1**：设置页「安装与运行指引」经查全仓无既有文案（历史词条陈旧），不新增——CLI 缺安装已有一次性错误通知引导，本项销项。
+- **P2**：失败通知措辞改「重启 Obsidian 后会自动重试」（与会话去重语义一致）；`execSync` 探测加 10s 超时；ADR-0113 决策 6 措辞对齐会话语义。
