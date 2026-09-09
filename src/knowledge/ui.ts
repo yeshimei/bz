@@ -1475,19 +1475,29 @@ export class UIManager {
     popup.style.display = 'none';
     const body = document.createElement('div');
     body.className = 'bz-lit-term-body';
-    // 简洁版：无标题、无 label、无 placeholder、无状态行；预览只读（属性卡+内容卡）
-    // ADR-0116：来源行（可选）——术语输入框下方独立一行，小标签「来源」，单框智能分流：
-    //   整串无空白的 URL 字样 → 外部链接 chip（异步抓标题）；其余输入联想 vault 笔记 → 内部笔记 chip
+    // 完整版（issue 258，原型 knowledge-box-c 纸墨词典皮）：标题栏+✕ /「术 语」字段标签 / 试试示例 /
+    // 来源行（ADR-0116）/ 生成+取消 / 琥珀说明行；预览态：属性卡+内容卡+总结/确认写入+写入去向说明。
+    // （ticket 142 曾削成极简版；用户复核拍板按原型风格做完整——交互契约不变，只补皮与引导。）
     body.innerHTML = `
-      <div class="bz-lit-term-inputrow">
-        <input id="lit-term-input" type="text" autocomplete="off">
-        <button id="lit-term-generate" class="bz-lit-accent-btn">生成</button>
+      <div class="bz-lit-sheet-head">
+        <span class="bz-lit-sheet-title">文字录入 · 术语</span>
+        <button type="button" class="bz-lit-sheet-close" data-term-close title="关闭">✕</button>
       </div>
+      <div class="bz-lit-term-field">
+        <div class="bz-lit-term-lb">术 语</div>
+        <input id="lit-term-input" type="text" autocomplete="off">
+      </div>
+      <div class="bz-lit-term-hint">试试：<a id="lit-term-try">昼夜节律</a></div>
       <div class="bz-lit-term-srcrow">
         <span class="bz-lit-term-meta-k">来源</span>
         <input id="lit-term-src" type="text" autocomplete="off">
         <span id="lit-term-src-chip" class="bz-lit-srcchip" style="display:none;"></span>
       </div>
+      <div class="bz-lit-term-actions">
+        <button id="lit-term-generate" class="bz-lit-accent-btn">生成</button>
+        <button id="lit-term-cancel" class="bz-lit-ghost-btn">取消</button>
+      </div>
+      <div class="bz-lit-term-note">生成是纯预览、不落盘；确认写入才产生文件。</div>
       <div id="lit-term-preview" style="display:none;">
         <div class="bz-lit-term-card">
           <div class="bz-lit-term-meta">
@@ -1504,6 +1514,7 @@ export class UIManager {
           <button id="lit-term-regenerate">总结</button>
           <button id="lit-term-save" class="bz-lit-accent-btn">确认写入</button>
         </div>
+        <div class="bz-lit-term-note" id="lit-term-note-save"></div>
       </div>`;
     popup.appendChild(body);
     document.body.appendChild(mask);
@@ -1511,6 +1522,11 @@ export class UIManager {
     this.termMask = mask;
     this.termPopup = popup;
     q<HTMLButtonElement>(popup, '#lit-term-generate')!.onclick = () => void this.onTermGenerate();
+    q<HTMLButtonElement>(popup, '#lit-term-cancel')!.onclick = () => this.hideTermEntry();
+    q<HTMLElement>(popup, '#lit-term-try')!.onclick = () => {
+      const input = q<HTMLInputElement>(popup, '#lit-term-input');
+      if (input) { input.value = '昼夜节律'; input.focus(); }
+    };
     q<HTMLButtonElement>(popup, '#lit-term-regenerate')!.onclick = () => void this.onTermSummarize();
     q<HTMLButtonElement>(popup, '#lit-term-save')!.onclick = () => void this.onTermConfirm();
     q<HTMLInputElement>(popup, '#lit-term-input')?.addEventListener('keydown', (e) => {
@@ -1545,12 +1561,14 @@ export class UIManager {
         onPick: (p: string) => this.termSrcSet({ kind: 'note', path: p }, srcInput),
       });
     }
-    // 委托：chip ✕ 清除 / meta 行点击打开（chip 与 meta 内容动态渲染，委托一次）
+    // 委托：标题栏 ✕ / chip ✕ 清除 / meta 行点击打开（动态渲染元素，委托一次）
     popup.addEventListener('click', (e) => {
-      const t = (e.target as HTMLElement).closest('[data-term-src-clear],[data-term-src-open]') as HTMLElement | null;
+      const t = (e.target as HTMLElement).closest('[data-term-close],[data-term-src-clear],[data-term-src-open]') as HTMLElement | null;
       if (!t) return;
       e.stopPropagation();
-      if (t.hasAttribute('data-term-src-clear')) {
+      if (t.hasAttribute('data-term-close')) {
+        this.hideTermEntry();
+      } else if (t.hasAttribute('data-term-src-clear')) {
         const input = q<HTMLInputElement>(popup, '#lit-term-src');
         this.termSrcClear(input);
       } else if (this.termSource) {
@@ -1746,7 +1764,15 @@ export class UIManager {
     if (dateEl) dateEl.textContent = this.termDateStamp();
     const contentEl = q<HTMLElement>(this.termPopup, '#lit-term-content');
     if (contentEl) contentEl.textContent = draft.summary;
+    // 写入去向说明（issue 258，原型 note 词令）：目录随设置、重名自动 _2 由落盘层兜底
+    const noteEl = q<HTMLElement>(this.termPopup, '#lit-term-note-save');
+    if (noteEl) {
+      const dir = litDirOf(tryGetSettings() as Partial<BzSettings> | undefined);
+      noteEl.textContent = `写入 → ${dir}/${term || '术语'}.md。它是「未消化」素材，等被主题笔记引用、被提炼。`;
+    }
     this.setTermPreviewVisible(true);
+    const prev = q<HTMLElement>(this.termPopup, '#lit-term-preview');
+    prev?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' }); // 移动端软键盘下让预览进入视口
   }
 
   private async onTermConfirm(): Promise<void> {
