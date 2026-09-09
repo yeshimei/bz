@@ -53,7 +53,7 @@ const SOURCES = [
   "src/cinema/styles.css",
   "src/bookshelf/styles.css",
   "src/reading-report/styles.css",
-  "src/literature/styles.css",
+  "src/knowledge/styles.css",
   "src/secondbrain/styles.css",
   "src/smartcat/styles.css",
   // 数据体检（checkup 域，D4）：全插件只读巡检面板
