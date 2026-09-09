@@ -7,7 +7,7 @@
 import type { App } from 'obsidian';
 import { MarkdownView } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
-import { LiteratureData } from './data';
+import { KnowledgeData } from './data';
 import { UIManager } from './ui';
 
 let initialized = false;
@@ -18,10 +18,10 @@ let uiManager: UIManager | null = null;
  * ticket 138 §1.2：initialized 在构造成功后置位；构造函数若在真实环境抛错（jsdom 掩盖），
  * 保持未初始化 → 下次命令自动重试，杜绝「构造失败后 uiManager 恒 null、面板永不再开」。
  */
-export function ensureLiterature(app: App): void {
+export function ensureKnowledge(app: App): void {
   if (initialized) return;
   try {
-    LiteratureData.init({ storagePath: (tryGetSettings() as any)?.storagePath });
+    KnowledgeData.init({ storagePath: (tryGetSettings() as any)?.storagePath });
     uiManager = new UIManager(app);
     initialized = true;
   } catch (e) {
@@ -30,9 +30,9 @@ export function ensureLiterature(app: App): void {
   }
 }
 
-/** 打开文献盒主面板（bz-literature-open 命令回调） */
-export function openLiteraturePanel(app: App): void {
-  ensureLiterature(app);
+/** 打开文献盒主面板（bz-knowledge-open 命令回调） */
+export function openKnowledgePanel(app: App): void {
+  ensureKnowledge(app);
   uiManager?.showMain();
 }
 
@@ -41,18 +41,18 @@ export function openLiteraturePanel(app: App): void {
  * 注意：该入口打开的是视频录入面板（任务队列 + 添加转文献任务弹窗），而非文献列表主面板；
  * prefill 含链接/标题/UP主 时输入框预填。层级/ESC 由面板自理，调用方不碰。
  */
-export function openLiteratureAddTask(app: App, prefill?: { url: string; title?: string | null; uploader?: string | null }): void {
-  ensureLiterature(app);
+export function openKnowledgeAddTask(app: App, prefill?: { url: string; title?: string | null; uploader?: string | null }): void {
+  ensureKnowledge(app);
   uiManager?.showVideoEntry(prefill);
 }
 
 /**
- * 术语生成入口（bz-literature-note-term 命令回调）：打开「文字录入」面板（ticket 136 §6）。
+ * 术语生成入口（bz-knowledge-note-term 命令回调）：打开「文字录入」面板（ticket 136 §6）。
  * 显式 term 预填输入框；为空时读取当前激活 Markdown 编辑器选区预填（选中词），
  * 无选区则空输入框手动填。
  */
 export function openTermNote(app: App, term?: string): void {
-  ensureLiterature(app);
+  ensureKnowledge(app);
   let t = term?.trim();
   if (!t) {
     // ticket 138 §1.1：getActiveViewOfType 内部做 view instanceof type，右值必须是类（MarkdownView），
@@ -64,7 +64,7 @@ export function openTermNote(app: App, term?: string): void {
 }
 
 /** 卸载（main.ts onunload 调用；幂等空清理） */
-export function unloadLiterature(): void {
+export function unloadKnowledge(): void {
   uiManager?.destroy();
   uiManager = null;
   initialized = false;

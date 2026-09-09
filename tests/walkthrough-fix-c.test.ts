@@ -218,22 +218,22 @@ describe('批 C-14：clipbook rail 徽标白字对比（底色加深一档；ADR
 
 describe('批 C-15/16：literature 遮罩与 B站状态徽标', () => {
   it('遮罩去毛玻璃：纯 var(--background-modifier-cover)，无 backdrop-filter', () => {
-    const css = repo('src/literature/styles.css');
-    const mask = rule(css, '.bz-lit-mask');
-    expect(mask, '缺 .bz-lit-mask 规则').not.toBeNull();
+    const css = repo('src/knowledge/styles.css');
+    const mask = rule(css, '.bz-kb-mask');
+    expect(mask, '缺 .bz-kb-mask 规则').not.toBeNull();
     expect(mask![1]).toContain('background: var(--background-modifier-cover)');
     expect(css).not.toMatch(/backdrop-filter/);
   });
 
   it('状态徽标 tint 底 + 深语义字（.bz-badge--* 模式），实底白字退役', () => {
-    const css = repo('src/literature/styles.css');
-    const status = rule(css, '.bz-bili-status');
-    expect(status, '缺 .bz-bili-status 规则').not.toBeNull();
+    const css = repo('src/knowledge/styles.css');
+    const status = rule(css, '.bz-kb-status');
+    expect(status, '缺 .bz-kb-status 规则').not.toBeNull();
     expect(status![1]).not.toMatch(/color:\s*#fff/);
-    expect(css).toMatch(/\.bz-bili-pending\s*\{[^}]*color: var\(--text-muted\)/);
-    expect(css).toMatch(/\.bz-bili-processing\s*\{[^}]*color-mix\(in srgb, var\(--interactive-accent\) 16%, transparent\)[^}]*color: var\(--interactive-accent\)/);
-    expect(css).toMatch(/\.bz-bili-success\s*\{[^}]*color-mix\(in srgb, var\(--color-green[^)]*\) 16%, transparent\)/);
-    expect(css).toMatch(/\.bz-bili-failed\s*\{[^}]*color-mix\(in srgb, var\(--text-error[^)]*\) 16%, transparent\)/);
+    expect(css).toMatch(/\.bz-kb-pending\s*\{[^}]*color: var\(--text-muted\)/);
+    expect(css).toMatch(/\.bz-kb-processing\s*\{[^}]*color-mix\(in srgb, var\(--interactive-accent\) 16%, transparent\)[^}]*color: var\(--interactive-accent\)/);
+    expect(css).toMatch(/\.bz-kb-success\s*\{[^}]*color-mix\(in srgb, var\(--color-green[^)]*\) 16%, transparent\)/);
+    expect(css).toMatch(/\.bz-kb-failed\s*\{[^}]*color-mix\(in srgb, var\(--text-error[^)]*\) 16%, transparent\)/);
   });
 });
 

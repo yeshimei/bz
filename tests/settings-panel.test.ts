@@ -138,8 +138,8 @@ describe('设置面板（settings-panel）', () => {
     expect(diary.icon).toBe('notebook-pen');
     expect(diary.icon).not.toBe(shelf.icon);
     expect(reading.icon).toBe('bar-chart-3');
-    // 术语统一（enh-sweep-a）：面板导航「文献笔记」→「文献盒」，与命令/磁贴同词
-    expect(DOMAINS.find((d) => d.id === 'literature')!.name).toBe('文献盒');
+    // 术语统一（ADR-0112）：面板导航「知识盒」，与命令/磁贴同词
+    expect(DOMAINS.find((d) => d.id === 'knowledge')!.name).toBe('知识盒');
     // 去黑话（enh-sweep-a）：描述不含「新域/ADR」类开发字样
     for (const d of DOMAINS) {
       expect(d.desc).not.toMatch(/新域|ADR-\d+/);
@@ -423,7 +423,7 @@ describe('设置面板（settings-panel）', () => {
       ['收藏本', 'favoritesSkin', 'favoritesSkinTheme', async () => (await import('../src/favorites/ui')).favoritesSettingsSchema()],
       ['复习计划', 'reviewSkin', 'reviewSkinTheme', async () => (await import('../src/review/settings-schema')).reviewSettingsSchema({ app: getApp(), dataManager: {} as never })],
       ['第二大脑', 'secondbrainSkin', 'secondbrainSkinTheme', async () => (await import('../src/secondbrain/panel')).secondBrainSettingsSchema()],
-      ['文献盒', 'literatureSkin', 'literatureSkinTheme', async () => (await import('../src/literature/ui')).literatureSettingsSchema()],
+      ['文献盒', 'knowledgeSkin', 'knowledgeSkinTheme', async () => (await import('../src/knowledge/ui')).knowledgeSettingsSchema()],
       ['番茄钟', 'pomodoroSkin', 'pomodoroSkinTheme', async () => (await import('../src/pomodoro/ui')).pomodoroSettingsSchema()],
       ['保险库', 'encryptSkin', 'encryptSkinTheme', async () => (await import('../src/encrypt/ui')).encryptSettingsSchema()],
     ];

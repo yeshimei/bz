@@ -46,7 +46,7 @@ export const DOMAINS: HomeDomain[] = [
   { id: 'favorites', commandId: 'bz-favorites-open', name: '收藏本', sub: '收藏条目', icon: iconOf('favorites') },
   { id: 'clipping', commandId: 'bz-clipbook-open', name: '剪藏本', sub: '未读流与剪藏', icon: iconOf('clipping') },
   // 文献盒（literature 域，ADR-0072）：文献笔记列表 + 视频/术语录入（补内容域曝光位）
-  { id: 'literature', commandId: 'bz-literature-open', name: '文献盒', sub: '文献笔记与录入', icon: iconOf('literature') },
+  { id: 'knowledge', commandId: 'bz-knowledge-open', name: '知识盒', sub: '文献录入 · 卡片 · 主题', icon: iconOf('knowledge') },
   // 旧书库（library）域退役：本卡由书架墙（bookshelf）承接（id 变更后旧 home.json 里钉选的 library 自动失效，可在编辑模式重钉）
   { id: 'bookshelf', commandId: 'bz-bookshelf-open', name: '书库', sub: '藏书与读书笔记', icon: iconOf('bookshelf') },
   { id: 'wall', commandId: 'bz-diary-wall-open', name: '回忆墙', sub: '相片墙浏览日记', icon: iconOf('wall') },
@@ -69,7 +69,7 @@ export const DOMAIN_DOT: Record<string, string> = {
   pomodoro: '#e5534b',
   favorites: '#f0b429',
   clipping: '#2f9e5f',
-  literature: '#c2559d',
+  knowledge: '#c2559d',
   bookshelf: '#3d7bd6',
   'reading-report': '#3fa7a0',
   wall: '#7c8cf8',

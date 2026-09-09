@@ -111,7 +111,7 @@ export async function generateVideoNote(opts: {
 }): Promise<string> {
   const ai = createAI();
   const s = tryGetSettings();
-  const list = parseDomainList(s.literatureDomainList);
+  const list = parseDomainList(s.knowledgeDomainList);
   const chunks = chunkTranscript(opts.transcript);
   // 元数据（一次 JSON 调用：标题/标签/简介/领域）
   const metaRaw = await ai.json(
@@ -163,7 +163,7 @@ ${c}`,
     '---',
   ].join('\n');
   const body = [fm, whole, videoSection].filter(Boolean).join('\n\n');
-  return writeUniqueNote(String(s.literatureDirectory || '文献盒'), sanitizeMdTitle(title), body);
+  return writeUniqueNote(String(s.knowledgeDirectory || '文献盒'), sanitizeMdTitle(title), body);
 }
 
 /** 术语 AI 简介提示词（预览/落盘共用同一指令，领域词表一致） */
@@ -180,7 +180,7 @@ function termPrompt(term: string, list: string[]): string {
 export async function generateTermDraft(term: string): Promise<{ summary: string; domain: string }> {
   const ai = createAI();
   const s = tryGetSettings();
-  const list = parseDomainList(s.literatureDomainList);
+  const list = parseDomainList(s.knowledgeDomainList);
   const t = String(term || '').trim();
   if (!t) throw new Error('术语为空');
   const raw = await ai.json(termPrompt(t, list));
@@ -238,7 +238,7 @@ export async function generateTermNote(opts: { term: string; summary?: string; d
     '---',
   ].join('\n');
   const body = [fm, summary].filter(Boolean).join('\n\n');
-  return writeUniqueNote(String(s.literatureDirectory || '文献盒'), sanitizeMdTitle(term), body);
+  return writeUniqueNote(String(s.knowledgeDirectory || '文献盒'), sanitizeMdTitle(term), body);
 }
 
 // ---------- 旧笔记自动补全（type 启发式 + domain AI） ----------
@@ -283,7 +283,7 @@ export async function backfillNotes(opts: { aiTimeoutMs?: number } = {}): Promis
   const app = getApp();
   const s = tryGetSettings();
   const aiTimeoutMs = opts.aiTimeoutMs ?? BACKFILL_AI_TIMEOUT_MS;
-  const dir = String(s.literatureDirectory || '文献盒').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  const dir = String(s.knowledgeDirectory || '文献盒').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
   const files = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(dir + '/') && f.path.endsWith('.md'));
   const needDomain: { file: any }[] = [];
   let filled = 0;
@@ -311,7 +311,7 @@ export async function backfillNotes(opts: { aiTimeoutMs?: number } = {}): Promis
     // createAI 不因缺 key 抛错；未配置在 ai.json() 时才抛（getAIProvider），由内层 catch 的
     // /API Key|AI 配置/ 识别为整体跳过（aiSkipped），单条失败/超时静默不阻塞。
     const ai = createAI();
-    const list = parseDomainList(s.literatureDomainList);
+    const list = parseDomainList(s.knowledgeDomainList);
     for (const { file } of needDomain) {
       try {
         // P1-2：现读最新内容（type 启发式补丁已写盘），domain 注入不会回滚 type

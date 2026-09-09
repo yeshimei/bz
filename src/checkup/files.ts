@@ -37,7 +37,7 @@ export function jsonScanTargets(app: App): JsonScanTarget[] {
     { file: storageFile('review-fit.json'), label: '复习拟合参数' },
     { file: storageFile('home.json'), label: '内容首页' },
     { file: storageFile('smartcat.json'), label: '小橘' },
-    { file: storageFile('literature.json'), label: '文献盒' },
+    { file: storageFile('knowledge.json'), label: '知识盒' },
     { file: storageFile('secondbrain.json'), label: '第二大脑' },
     { file: storageFile('quiz.json'), label: '复习做题' },
     { file: `${resolveWeaveDataPath(app)}/${WEAVE_DATA_FILE}`, label: 'EPUB 阅读数据（书库）' },

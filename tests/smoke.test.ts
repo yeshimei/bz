@@ -74,7 +74,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-review-again', 'bz-review-hard', 'bz-review-good', 'bz-review-easy',
   'bz-secondbrain-panel', 'bz-secondbrain-open', 'bz-secondbrain-chat', 'bz-secondbrain-rebuild-links', 'bz-secondbrain-link-all',
   'bz-pomodoro-open',
-  'bz-literature-open', 'bz-literature-note-term',
+  'bz-knowledge-open', 'bz-knowledge-note-term',
   'bz-attach-move',
   // 统一保险库（ADR-0085）：密码/加密笔记/加密日记 + 加密当前笔记 + 快速复制密码
   'bz-encrypt-open', 'bz-encrypt-lock', 'bz-encrypt-copy-password',
@@ -186,7 +186,7 @@ describe('bz 骨架冒烟', () => {
       ['bz-review-open', 'review'],
       ['bz-secondbrain-panel', 'secondbrain'],
       ['bz-pomodoro-open', 'pomodoro'],
-      ['bz-literature-open', 'literature'],
+      ['bz-knowledge-open', 'knowledge'],
       ['bz-attach-move', 'attach'],
       ['bz-encrypt-open', 'encrypt'],
       ['bz-password-vault-open', 'password-vault'],

@@ -11,7 +11,7 @@
  */
 import { tryGetSettings } from './settings-provider';
 
-export type FileDomainKind = 'diary' | 'flash' | 'cinema' | 'movie' | 'clipping' | 'poem' | 'letter' | 'literature';
+export type FileDomainKind = 'diary' | 'flash' | 'cinema' | 'movie' | 'clipping' | 'poem' | 'letter' | 'knowledge';
 
 /** 目录归一：trim + 反斜杠转正斜杠 + 去尾斜杠 */
 function normalizeDir(dir: string): string {
@@ -59,8 +59,8 @@ export function classifyFilePath(path: string | null | undefined): FileDomainKin
   // 信：settings.letterDirectory（「✉️ 信目录」）；缺键回退 '我的/信'
   // （出处：src/settings.ts DEFAULT_SETTINGS，同 src/diary/config.ts LETTER_DIRECTORY 初值）
   if (matchSettingDir(s.letterDirectory, p, '我的/信')) return 'letter';
-  // 文献盒：settings.literatureDirectory（「文献目录」）；缺键回退 '文献盒'（ADR-0072 迁出为新域）
-  if (matchSettingDir(s.literatureDirectory, p, '文献盒')) return 'literature';
+  // 文献盒：settings.knowledgeDirectory（「文献目录」）；缺键回退 '文献盒'（ADR-0072 迁出为新域）
+  if (matchSettingDir(s.knowledgeDirectory, p, '文献盒')) return 'knowledge';
   return null;
 }
 
