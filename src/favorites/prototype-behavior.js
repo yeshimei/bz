@@ -4145,15 +4145,15 @@ var BZW_favorites = (() => {
     STORAGE_FILE: "favorites.json"
   };
   var TAGS = [
-    { key: "github", label: "GitHub", ic: "github" },
-    { key: "software", label: "桌面软件", ic: "app-window" },
-    { key: "web", label: "网站", ic: "globe" },
-    { key: "ai", label: "大模型", ic: "brain-circuit" },
-    { key: "pi", label: "pi", ic: "keyboard" },
-    { key: "claude", label: "Claude", ic: "bot" },
-    { key: "skills", label: "skills", ic: "zap" },
-    { key: "tavern", label: "酒馆", ic: "beer" },
-    { key: "harness", label: "DeepSeek Harness", ic: "waypoints" }
+    { label: "GitHub", ic: "github" },
+    { label: "桌面软件", ic: "app-window" },
+    { label: "网站", ic: "globe" },
+    { label: "大模型", ic: "brain-circuit" },
+    { label: "pi", ic: "keyboard" },
+    { label: "Claude", ic: "bot" },
+    { label: "skills", ic: "zap" },
+    { label: "酒馆", ic: "beer" },
+    { label: "DeepSeek Harness", ic: "waypoints" }
   ];
   function getStorageDir(value) {
     let dir = (value || CONFIG.DEFAULT_STORAGE_PATH).trim().replace(/\/+$/, "");
@@ -6216,11 +6216,8 @@ GitHub 仓库：${ghInfo.title}
     seedDatabase();
     injectSettings();
   }
-  function ensureBoot() {
-    bootFavoritesSim();
-  }
   function openPanel2() {
-    ensureBoot();
+    bootFavoritesSim();
     openPanel(_app3, _dm2, _ai2);
   }
   return __toCommonJS(fake_sim_exports);

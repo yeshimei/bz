@@ -9,8 +9,11 @@
 // - 本脚本只写 src/**，不触碰 vault 插件目录——可在 worktree 内安全执行
 //   （esbuild.config.mjs 的主构建/部署仍按铁律只在主仓库跑）。
 //
-// 用法：node scripts/build-preview.mjs [域 ...]（无参 = 全量清单）。
+// 用法：node scripts/build-preview.mjs [域 ...]（无参 = 渲染清单全量；显式指定域时
+//   该域仅在渲染清单内才产渲染包，属行为域（BEHAVIOR_DOMAINS）则同步重出行为包）。
 // 新域接入：render.ts 落域后在这里加一行 + prototype.html 加 <script src="./prototype-render.js">。
+// favorites 2026-09-09 摘出（试点）：行为单源后壳不再消费 BZR 渲染产物（prototype-render.js
+//   退役），只留行为包重出；同款域可如法炮制。
 
 import esbuild from "esbuild";
 import fs from "node:fs";
@@ -22,7 +25,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // settings-panel 2026-09-08 拍板维持行为单源（样式/渲染/行为一份源码两端共用）；
 // 原型观感对齐以 35c4342 自足三件套为参照系——冲突在壳环境（core 链 vs 域内自绘）逐一调和，
 // 不回退双轨。
-export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "favorites", "home", "password-vault", "review", "secondbrain", "settings-panel"];
+export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "home", "password-vault", "review", "secondbrain", "settings-panel"];
 
 // 行为单源域（issue 245/ADR-0106 试点：belongings）：除渲染产物外，另产「行为产物」——
 // 以 fake-sim.ts 为入口、alias obsidian→belongings/fake/fake-obsidian，把真 ui.ts
@@ -87,7 +90,8 @@ export async function buildPreview(domains = PREVIEW_DOMAINS) {
 
 if (process.argv[1] && process.argv[1].endsWith("build-preview.mjs")) {
   const args = process.argv.slice(2);
-  const targets = args.length ? args : PREVIEW_DOMAINS;
+  // 渲染产物仅渲染清单内产（favorites 已退役渲染产物，显式指定也只重出行为包）
+  const targets = args.length ? args.filter((d) => PREVIEW_DOMAINS.includes(d)) : PREVIEW_DOMAINS;
   await buildPreview(targets);
   // 行为产物（试点域；显式指定域时同步构建其行为包）
   for (const d of BEHAVIOR_DOMAINS) {
