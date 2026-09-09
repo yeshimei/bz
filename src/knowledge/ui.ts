@@ -7,7 +7,7 @@
  * 添加弹窗校验、历史分组、ESC 分层、topifyZ、域事件刷新（knowledge:tasks / knowledge:file-*）。
  * 移除（ADR-0112 原型拍板）：领域筛选/搜索/双击打开/抽屉/面板内设置按钮（设置走设置面板域）。
  */
-import { MarkdownRenderer, type App } from 'obsidian';
+import { Component, MarkdownRenderer, type App } from 'obsidian';
 import type { SettingsSchema } from '../core/settings-schema';
 import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
@@ -510,7 +510,8 @@ export class UIManager {
     }
     const rels = await this.noteRels(n);
     const parasHtml = paras.map((p) => `<p>${esc(p)}</p>`).join('') || '<p>（无正文）</p>';
-    const clipHtml = videoEmbed ? `<div class="bz-kb-cliprow">视频片段 · ${esc(shortNoteName(videoEmbed))}</div>` : '';
+    // 视频片段：先占位，弹层挂载后经 MarkdownRenderer 渲染 ![[…]] 内嵌（Obsidian 原生 <video> 可播放）
+    const clipHtml = videoEmbed ? `<div class="bz-kb-cliprow" id="bz-kb-video-slot">视频片段 · ${esc(shortNoteName(videoEmbed))}</div>` : '';
     const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink">${esc(n.url)}</div>` : '';
     // 术语外部来源（ADR-0116）：source 键为 URL（非 [[双链]]）时展示可点「来源」；内部笔记来源只在术语面板 meta 行呈现
     const termSrcHtml = n.source && !n.source.startsWith('[[')
@@ -527,6 +528,21 @@ export class UIManager {
       ${srcHtml}
       ${termSrcHtml}`));
     this._previewNote = n;
+    // 视频内嵌：Obsidian 原生渲染 ![[mp4]] 为可播放 <video>（diary-wall/encrypt 同款签名）；
+    // mock/失败/未产出媒体元素 → 回退占位文案
+    if (videoEmbed) {
+      const slot = this.popup ? q<HTMLElement>(this.popup, '#bz-kb-video-slot') : null;
+      if (slot) {
+        try {
+          const comp = new Component();
+          await MarkdownRenderer.render(this.app, `![[${videoEmbed}]]`, slot, n.path, comp);
+          comp.unload();
+        } catch { /* 渲染失败保占位文案 */ }
+        if (!slot.querySelector('video, .internal-embed, source')) {
+          slot.textContent = `视频片段 · ${shortNoteName(videoEmbed)}`;
+        }
+      }
+    }
     const srcLink = this.popup ? q<HTMLElement>(this.popup, '[data-lit-src-url]') : null;
     if (srcLink) {
       srcLink.addEventListener('click', (e) => {

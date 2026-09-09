@@ -4096,6 +4096,12 @@ var BZW_knowledge = (() => {
       return Promise.resolve("");
     }
   };
+  var Component = class {
+    load() {
+    }
+    unload() {
+    }
+  };
   var KEY_PREFIX = "bz-sim:";
   function encodeSeedFile(content, stat) {
     var _a, _b, _c;
@@ -7224,7 +7230,7 @@ ${sample}`,
       }
       const rels = await this.noteRels(n);
       const parasHtml = paras.map((p) => `<p>${esc(p)}</p>`).join("") || "<p>（无正文）</p>";
-      const clipHtml = videoEmbed ? `<div class="bz-kb-cliprow">视频片段 · ${esc(shortNoteName(videoEmbed))}</div>` : "";
+      const clipHtml = videoEmbed ? `<div class="bz-kb-cliprow" id="bz-kb-video-slot">视频片段 · ${esc(shortNoteName(videoEmbed))}</div>` : "";
       const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink">${esc(n.url)}</div>` : "";
       const termSrcHtml = n.source && !n.source.startsWith("[[") ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.source)}" href="#">${esc(n.sourceTitle || n.source)}</a></div>` : "";
       this.openSheet(this.sheetWrap(`文献预览 · ${n.type === "video" ? "影像" : "词条"}`, `
@@ -7238,6 +7244,20 @@ ${sample}`,
       ${srcHtml}
       ${termSrcHtml}`));
       this._previewNote = n;
+      if (videoEmbed) {
+        const slot = this.popup ? q(this.popup, "#bz-kb-video-slot") : null;
+        if (slot) {
+          try {
+            const comp = new Component();
+            await MarkdownRenderer.render(this.app, `![[${videoEmbed}]]`, slot, n.path, comp);
+            comp.unload();
+          } catch (e) {
+          }
+          if (!slot.querySelector("video, .internal-embed, source")) {
+            slot.textContent = `视频片段 · ${shortNoteName(videoEmbed)}`;
+          }
+        }
+      }
       const srcLink = this.popup ? q(this.popup, "[data-lit-src-url]") : null;
       if (srcLink) {
         srcLink.addEventListener("click", (e) => {
