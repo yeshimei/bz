@@ -4829,7 +4829,7 @@ var BZW_cinema = (() => {
     if (matchSettingDir(s.movieDirectory, p, "我的/影视")) return "movie";
     if (isUnderDir("我的/现代诗", p)) return "poem";
     if (matchSettingDir(s.letterDirectory, p, "我的/信")) return "letter";
-    if (matchSettingDir(s.literatureDirectory, p, "文献盒")) return "literature";
+    if (matchSettingDir(s.knowledgeDirectory, p, "文献盒")) return "literature";
     return null;
   }
   function diaryDateFromPath(path) {

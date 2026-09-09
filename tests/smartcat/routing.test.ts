@@ -34,7 +34,7 @@ describe('路由规则表（ROUTING_RULES）', () => {
       // 书库
       'library:started', 'library:completed', 'library:progressed', 'library:highlight', 'library:thought', 'library:added', 'library:removed',
       // 文献盒（literature，ADR-0066/0072：ticket 136 起 converted + term-generated 两节点）
-      'literature:converted', 'literature:term-generated',
+      'knowledge:converted', 'knowledge:term-generated',
       // 反思
       'reflection:insight', 'reflection:digest',
       // 周报
@@ -143,7 +143,7 @@ describe('路由规则表（ROUTING_RULES）', () => {
     expect(rule.defaultEmotion).toBe('happy');
   });
 
-  it('resolveRouting：literature:converted 精确匹配 → behavior', () => {
+  it('resolveRouting：knowledge:converted 精确匹配 → behavior', () => {
     const rule = resolveRouting('literature', 'converted');
     expect(rule.stream).toBe('behavior');
   });
@@ -152,9 +152,9 @@ describe('路由规则表（ROUTING_RULES）', () => {
     expect(ROUTING_RULES['library:added'].stream).toBe('behavior');
   });
 
-  it('literature:converted / literature:term-generated → behavior（文献盒仅行为流，用户拍板，ADR-0066/0072）', () => {
-    expect(ROUTING_RULES['literature:converted'].stream).toBe('behavior');
-    expect(ROUTING_RULES['literature:term-generated'].stream).toBe('behavior');
+  it('knowledge:converted / knowledge:term-generated → behavior（文献盒仅行为流，用户拍板，ADR-0066/0072）', () => {
+    expect(ROUTING_RULES['knowledge:converted'].stream).toBe('behavior');
+    expect(ROUTING_RULES['knowledge:term-generated'].stream).toBe('behavior');
   });
 
   it('reflection:insight → memory, importance=0.90', () => {

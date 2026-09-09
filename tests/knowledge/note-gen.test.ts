@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * 文献笔记生成层测试（src/literature/note-gen.ts）：
+ * 文献笔记生成层测试（src/knowledge/note-gen.ts）：
  * parseDomainList / chunkTranscript / parseAiJson / parseFrontmatter / injectFrontmatter 纯函数，
  * generateVideoNote / generateTermDraft / generateTermNote 生成链路（AI 打桩 + MockVault 落盘断言），
  * 以及 backfillNotes 超时跳过继续（ticket 138 §1.3）。
@@ -21,7 +21,7 @@ import {
   summarizeTermSummary,
   generateTermNote,
   backfillNotes,
-} from '../../src/literature/note-gen';
+} from '../../src/knowledge/note-gen';
 
 // AI 打桩：createAI 返回固定 json/chat（元数据一次 JSON、分块润色逐块 chat，各可计数断言）
 const aiStub = vi.hoisted(() => ({
@@ -136,7 +136,7 @@ describe('generateVideoNote（视频文献：九键 frontmatter + 润色正文�
     vi.clearAllMocks();
     vault = new MockVault();
     setApp({ vault } as any);
-    setSettingsProvider(() => ({ literatureDirectory: '文献盒', literatureDomainList: '心理, 计算机' }) as any);
+    setSettingsProvider(() => ({ knowledgeDirectory: '文献盒', knowledgeDomainList: '心理, 计算机' }) as any);
   });
 
   afterEach(() => {
@@ -201,7 +201,7 @@ describe('generateTermDraft（纯 AI 预览，不落盘；ticket 138 §2.1 契�
     vi.clearAllMocks();
     vault = new MockVault();
     setApp({ vault } as any);
-    setSettingsProvider(() => ({ literatureDirectory: '文献盒', literatureDomainList: '心理, 计算机' }) as any);
+    setSettingsProvider(() => ({ knowledgeDirectory: '文献盒', knowledgeDomainList: '心理, 计算机' }) as any);
   });
 
   afterEach(() => {
@@ -229,7 +229,7 @@ describe('summarizeTermSummary（术语简介 AI 精简，ticket 155）', () => 
     vi.clearAllMocks();
     vault = new MockVault();
     setApp({ vault } as any);
-    setSettingsProvider(() => ({ literatureDirectory: '文献盒', literatureDomainList: '心理, 计算机' }) as any);
+    setSettingsProvider(() => ({ knowledgeDirectory: '文献盒', knowledgeDomainList: '心理, 计算机' }) as any);
     aiStub.chat.mockResolvedValue('精简后的一段话');
   });
 
@@ -262,7 +262,7 @@ describe('generateTermNote（术语文献：五键 frontmatter + 一段简介）
     vi.clearAllMocks();
     vault = new MockVault();
     setApp({ vault } as any);
-    setSettingsProvider(() => ({ literatureDirectory: '文献盒', literatureDomainList: '心理, 计算机' }) as any);
+    setSettingsProvider(() => ({ knowledgeDirectory: '文献盒', knowledgeDomainList: '心理, 计算机' }) as any);
   });
 
   afterEach(() => {
@@ -338,7 +338,7 @@ describe('backfillNotes（旧笔记自动补全；ticket 138 §1.3：单次 AI �
     vi.clearAllMocks();
     vault = new MockVault();
     setApp({ vault } as any);
-    setSettingsProvider(() => ({ literatureDirectory: '文献盒', literatureDomainList: '物理, 数学' }) as any);
+    setSettingsProvider(() => ({ knowledgeDirectory: '文献盒', knowledgeDomainList: '物理, 数学' }) as any);
   });
 
   afterEach(() => {

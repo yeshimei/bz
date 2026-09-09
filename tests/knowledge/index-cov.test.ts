@@ -1,14 +1,14 @@
 /**
- * 文献盒补充覆盖测试（src/literature/index.ts 未触达分支）：
- * openLiteratureAddTask（聚合讯「保存至文献」入口，ticket 134/ADR-0068）、
- * openTermNote（bz-literature-note-term 命令：MarkdownView 类右值 + 选区预填，ticket 138 §1.1）、
- * 与 unloadLiterature 卸载。
+ * 文献盒补充覆盖测试（src/knowledge/index.ts 未触达分支）：
+ * openKnowledgeAddTask（聚合讯「保存至文献」入口，ticket 134/ADR-0068）、
+ * openTermNote（bz-knowledge-note-term 命令：MarkdownView 类右值 + 选区预填，ticket 138 §1.1）、
+ * 与 unloadKnowledge 卸载。
  * ticket 136 改版：入口打开的是「视频录入」面板（任务队列 + 叠开添加弹窗），id 前缀改 literature-/lit-；
  * （原 bz-bili-open 网页版启动器用例已随网页版移除，ticket 136）
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { MarkdownView } from 'obsidian';
-import { openLiteratureAddTask, openTermNote, unloadLiterature } from '../../src/literature';
+import { openKnowledgeAddTask, openTermNote, unloadKnowledge } from '../../src/knowledge';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -22,11 +22,11 @@ const noteGen = vi.hoisted(() => ({
   generateTermNote: vi.fn().mockResolvedValue('文献盒/AI 简介.md'),
   backfillNotes: vi.fn().mockResolvedValue({ scanned: 0, filled: 0, aiSkipped: false }),
 }));
-vi.mock('../../src/literature/note-gen', () => noteGen);
+vi.mock('../../src/knowledge/note-gen', () => noteGen);
 
-describe('openLiteratureAddTask（聚合讯「保存至文献」入口，ticket 134/ADR-0068）', () => {
+describe('openKnowledgeAddTask（聚合讯「保存至文献」入口，ticket 134/ADR-0068）', () => {
   afterEach(() => {
-    unloadLiterature();
+    unloadKnowledge();
     document.body.innerHTML = '';
   });
 
@@ -35,13 +35,13 @@ describe('openLiteratureAddTask（聚合讯「保存至文献」入口，ticket 
     const vault = new MockVault();
     const app = mockAppWithVault(vault) as any;
     setApp(app);
-    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', literatureDirectory: '文献盒' }) as any);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', knowledgeDirectory: '文献盒' }) as any);
     setSettingsSaver(async () => {});
 
-    openLiteratureAddTask(app, { url: 'https://www.bilibili.com/video/BV1xx411c7mD', title: '某视频', uploader: 'UP主甲' });
+    openKnowledgeAddTask(app, { url: 'https://www.bilibili.com/video/BV1xx411c7mD', title: '某视频', uploader: 'UP主甲' });
 
-    await vi.waitFor(() => expect(document.getElementById('literature-video-popup')!.style.display).toBe('flex'));
-    await vi.waitFor(() => expect(document.getElementById('literature-add-popup')!.style.display).toBe('flex'));
+    await vi.waitFor(() => expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex'));
+    await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
     expect((document.getElementById('lit-add-url') as HTMLInputElement).value).toBe('https://www.bilibili.com/video/BV1xx411c7mD');
     expect((document.getElementById('lit-add-vtitle') as HTMLInputElement).value).toBe('某视频');
     expect((document.getElementById('lit-add-uploader') as HTMLInputElement).value).toBe('UP主甲');
@@ -55,19 +55,19 @@ describe('openLiteratureAddTask（聚合讯「保存至文献」入口，ticket 
     const vault = new MockVault();
     const app = mockAppWithVault(vault) as any;
     setApp(app);
-    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', literatureDirectory: '文献盒' }) as any);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', knowledgeDirectory: '文献盒' }) as any);
     setSettingsSaver(async () => {});
 
-    openLiteratureAddTask(app);
+    openKnowledgeAddTask(app);
 
-    await vi.waitFor(() => expect(document.getElementById('literature-video-popup')!.style.display).toBe('flex'));
-    expect(document.getElementById('literature-add-popup')!.style.display).toBe('none');
+    await vi.waitFor(() => expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex'));
+    expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('none');
   });
 });
 
-describe('openTermNote（bz-literature-note-term 命令：MarkdownView 类右值 + 选区预填，ticket 138 §1.1）', () => {
+describe('openTermNote（bz-knowledge-note-term 命令：MarkdownView 类右值 + 选区预填，ticket 138 §1.1）', () => {
   afterEach(() => {
-    unloadLiterature();
+    unloadKnowledge();
     document.body.innerHTML = '';
     noteGen.generateTermDraft.mockClear();
     noteGen.generateTermNote.mockClear();
@@ -80,7 +80,7 @@ describe('openTermNote（bz-literature-note-term 命令：MarkdownView 类右值
     const app = mockAppWithVault(vault) as any;
     app.workspace.getActiveViewOfType = vi.fn(() => viewOfType);
     setApp(app);
-    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', literatureDirectory: '文献盒' }) as any);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', knowledgeDirectory: '文献盒' }) as any);
     setSettingsSaver(async () => {});
     return app;
   }
@@ -90,7 +90,7 @@ describe('openTermNote（bz-literature-note-term 命令：MarkdownView 类右值
 
     openTermNote(app);
 
-    await vi.waitFor(() => expect(document.getElementById('literature-term-popup')!.style.display).toBe('flex'));
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
     expect(app.workspace.getActiveViewOfType).toHaveBeenCalledWith(MarkdownView); // 类右值（1.1 根因修复）
     expect((document.getElementById('lit-term-input') as HTMLInputElement).value).toBe('黑洞');
     // ticket 155：带词入口自动触发生成
@@ -102,7 +102,7 @@ describe('openTermNote（bz-literature-note-term 命令：MarkdownView 类右值
 
     openTermNote(app, '贝叶斯定理');
 
-    await vi.waitFor(() => expect(document.getElementById('literature-term-popup')!.style.display).toBe('flex'));
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
     expect(app.workspace.getActiveViewOfType).not.toHaveBeenCalled();
     expect((document.getElementById('lit-term-input') as HTMLInputElement).value).toBe('贝叶斯定理');
     await vi.waitFor(() => expect(noteGen.generateTermDraft).toHaveBeenCalledWith('贝叶斯定理'));
@@ -113,7 +113,7 @@ describe('openTermNote（bz-literature-note-term 命令：MarkdownView 类右值
 
     expect(() => openTermNote(app)).not.toThrow();
 
-    await vi.waitFor(() => expect(document.getElementById('literature-term-popup')!.style.display).toBe('flex'));
+    await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
     expect((document.getElementById('lit-term-input') as HTMLInputElement).value).toBe('');
     expect(noteGen.generateTermDraft).not.toHaveBeenCalled();
   });

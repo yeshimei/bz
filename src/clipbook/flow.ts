@@ -2,7 +2,7 @@
  * clipbook（剪藏本融合域，ADR-0082 / issue 177）：动作编排（保存/已读/在读/删除）。
  *
  * 语义对齐旧 news/reader.ts（saveToClip + markAsRead + recordStat + 域事件）：
- * - 保存（save）：B站视频 → 文献盒（ADR-0068，openLiteratureAddTask 不标已读）；
+ * - 保存（save）：B站视频 → 文献盒（ADR-0068，openKnowledgeAddTask 不标已读）；
  *   普通文章 → 写剪藏笔记（save.ts），成功后标 news 已处理（read+saved、删 body、
  *   stats +1、发 news:read/saved 域事件——smartcat 行为流三跳 + auto-summary 补全依赖）。
  * - 已读（skip）：标 news 已处理（read+skipped、删 body、stats +1、发 news:read）。
@@ -125,8 +125,8 @@ export async function flowSave(article: any): Promise<boolean> {
     // ADR-0068：B站视频保存改道文献盒（不写剪藏、不进行为流）。
     // enh 包 11：分流后回写已处理态（read+saved、清 body、统计 +1）——条目随即出收件流，
     // 防同一视频再次「保存到剪藏本」重复建任务；并给「已转入文献盒」明确反馈。
-    const { openLiteratureAddTask } = await import('../literature');
-    openLiteratureAddTask(getApp(), { url: raw.url, title: raw.title || null, uploader: raw.author || null });
+    const { openKnowledgeAddTask } = await import('../knowledge');
+    openKnowledgeAddTask(getApp(), { url: raw.url, title: raw.title || null, uploader: raw.author || null });
     await markHandledAndBump(raw, 'saved');
     notice('已转入文献盒', 'success');
     return true;

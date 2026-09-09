@@ -10,15 +10,16 @@ import moment from 'moment';
 import { enqueueFileTask, jsonFileStore, storageFile, type JsonFileStore } from '../core/storage';
 import { tryGetSettings } from '../core/settings-provider';
 import { generateId } from '../core/utils';
-import type { LiteratureTask, LiteratureTaskStatus } from './types';
+import { getApp } from '../core/app';
+import type { KnowledgeTask, KnowledgeTaskStatus } from './types';
 
-export interface LiteratureSettingsLike {
+export interface KnowledgeSettingsLike {
   /** ADR-0009 共享数据路径（优先），旧独立路径不涉及 */
   storagePath?: string;
 }
 
 /** 任务 CRUD 时输入的字段（id/status 系由管理器维护） */
-export interface LiteratureTaskInput {
+export interface KnowledgeTaskInput {
   url: string;
   start?: string | null;
   end?: string | null;
@@ -66,19 +67,34 @@ export function normalizeUrl(raw: string): string {
 }
 
 /** 状态是否终态（成功/失败） */
-export function isTerminal(status: LiteratureTaskStatus): boolean {
+export function isTerminal(status: KnowledgeTaskStatus): boolean {
   return status === 'success' || status === 'failed';
 }
 
-export const LiteratureData = {
+export const KnowledgeData = {
   filePath: '',
   _store: null as JsonFileStore<any[]> | null,
+  /** 旧数据文件 literature.json → knowledge.json 一次性迁移（ADR-0112：只复制不改写，旧文件保留在原处） */
+  _legacyMigrated: false,
 
   /** 初始化（幂等）：固化文件路径与 store。未调用时 read/write 按当前设置惰性补齐（统一数据读写重构） */
-  init(settings: LiteratureSettingsLike) {
+  init(settings: KnowledgeSettingsLike) {
     const folder = ((settings.storagePath || 'CONFIG/STORAGE') as string).trim().replace(/\/+$/, '');
-    this.filePath = folder + '/literature.json';
+    this.filePath = folder + '/knowledge.json';
     this._store = jsonFileStore<any[]>(this.filePath);
+  },
+
+  /** 一次性迁移：knowledge.json 不存在而 literature.json 存在时原样复制一份（任务历史零丢失，ADR-0112） */
+  async migrateLegacy(): Promise<void> {
+    if (this._legacyMigrated) return;
+    this._legacyMigrated = true;
+    try {
+      const app = getApp();
+      if (app.vault.getAbstractFileByPath(this.filePath)) return;
+      const legacyPath = this.filePath.replace(/knowledge\.json$/, 'literature.json');
+      const legacy = app.vault.getAbstractFileByPath(legacyPath);
+      if (legacy) await app.vault.create(this.filePath, await app.vault.read(legacy as any));
+    } catch { /* 迁移失败不阻塞读取（store 按空数组起盘，下次打开再试） */ }
   },
 
   /** 惰性 store 获取：init 前调用时按当前设置补建（消除 init 前 _store 空指针） */
@@ -105,13 +121,15 @@ export const LiteratureData = {
   },
 
   /** 全量读取并统一字段形状（缺省补默认值，旧/手改数据零迁移） */
-  async loadTasks(): Promise<LiteratureTask[]> {
+  async loadTasks(): Promise<KnowledgeTask[]> {
+    // 旧数据文件一次性迁移先行（literature.json → knowledge.json，ADR-0112）
+    await this.migrateLegacy();
     // 读改写整体入队：缺 id 补 id 的回写与并发任务写不互踩
     return this._mutate(async (raw) => {
       let needWrite = false;
       const tasks = raw.map((item: any) => {
         if (!item.id) {
-          item.id = generateId('literature-task');
+          item.id = generateId('knowledge-task');
           needWrite = true;
         }
         return {
@@ -119,7 +137,7 @@ export const LiteratureData = {
           url: item.url || '',
           start: item.start || null,
           end: item.end || null,
-          status: (item.status as LiteratureTaskStatus) || 'pending',
+          status: (item.status as KnowledgeTaskStatus) || 'pending',
           reason: item.reason || null,
           remark: item.remark || null,
           notePath: item.notePath || null,
@@ -132,7 +150,7 @@ export const LiteratureData = {
           archivedAt: item.archivedAt || null,
           quality: item.quality || null,
           page: Number.isInteger(item.page) && Number(item.page) > 0 ? Number(item.page) : null,
-        } as LiteratureTask;
+        } as KnowledgeTask;
       });
       if (needWrite) await this.write(raw);
       return tasks;
@@ -140,9 +158,9 @@ export const LiteratureData = {
   },
 
   /** 追加一条待处理任务（队列尾 = 处理顺序尾） */
-  addTask(input: LiteratureTaskInput): Promise<LiteratureTask> {
-    const task: LiteratureTask = {
-      id: generateId('literature-task'),
+  addTask(input: KnowledgeTaskInput): Promise<KnowledgeTask> {
+    const task: KnowledgeTask = {
+      id: generateId('knowledge-task'),
       url: normalizeUrl(input.url),
       start: input.start?.trim() || null,
       end: input.end?.trim() || null,
@@ -166,7 +184,7 @@ export const LiteratureData = {
     });
   },
 
-  updateTask(id: string, patch: Partial<LiteratureTask>): Promise<void> {
+  updateTask(id: string, patch: Partial<KnowledgeTask>): Promise<void> {
     return this._mutate(async (data) => {
       const idx = data.findIndex((d: any) => d.id === id);
       if (idx === -1) throw new Error('任务不存在');
