@@ -329,6 +329,59 @@ describe('generateTermNote（术语文献：五键 frontmatter + 一段简介）
     expect(content).toContain('domain: "物理"');
     expect(content).not.toContain('\n\n'); // 空正文不产生空段
   });
+
+  // ---- ADR-0116：术语来源（可选 source/sourceTitle 键） ----
+  it('来源=内部笔记 → source 写原生双链 [[路径|名]]（无 sourceTitle，不碰 related）', async () => {
+    const path = await generateTermNote({
+      term: '心流', summary: 's', domain: '心理',
+      source: { kind: 'note', path: '我的/日记/心流体验.md' },
+    });
+    const content = vault.files.get(path)!;
+    const fm = vaultParseFrontmatter(content)!;
+    expect(fm.source).toBe('[[我的/日记/心流体验.md|心流体验]]');
+    expect(fm.sourceTitle).toBeUndefined();
+    expect(fm.related).toBeUndefined(); // 来源≠关联：不落 related
+    expect(content).not.toContain('related:');
+  });
+
+  it('来源=内部笔记带显式名 → 双链取显式名', async () => {
+    const path = await generateTermNote({
+      term: '心流', summary: 's', domain: '心理',
+      source: { kind: 'note', path: '我的/日记/心流体验.md', name: '体验心流' },
+    });
+    const fm = vaultParseFrontmatter(vault.files.get(path)!)!;
+    expect(fm.source).toBe('[[我的/日记/心流体验.md|体验心流]]');
+  });
+
+  it('来源=外部链接 → source 落 URL 原文；带抓到的标题 → sourceTitle；键序在 date 之后', async () => {
+    const path = await generateTermNote({
+      term: '心流', summary: 's', domain: '心理',
+      source: { kind: 'external', url: 'https://zhuanlan.zhihu.com/p/123456', title: '心流是什么' },
+    });
+    const content = vault.files.get(path)!;
+    const fm = vaultParseFrontmatter(content)!;
+    expect(fm.source).toBe('https://zhuanlan.zhihu.com/p/123456');
+    expect(fm.sourceTitle).toBe('心流是什么');
+    expect(content).toContain('date:');
+    expect(content.indexOf('date:')).toBeLessThan(content.indexOf('source:')); // 五键顺序不变，来源追加在后
+  });
+
+  it('外部链接不带标题 → 只有 source 无 sourceTitle；URL 尾随标点（粘贴带入）落库前净化', async () => {
+    const path = await generateTermNote({
+      term: '心流', summary: 's', domain: '心理',
+      source: { kind: 'external', url: 'https://b23.tv/abcDEF，' },
+    });
+    const fm = vaultParseFrontmatter(vault.files.get(path)!)!;
+    expect(fm.source).toBe('https://b23.tv/abcDEF');
+    expect(fm.sourceTitle).toBeUndefined();
+  });
+
+  it('source 为 null/空值 → 不写来源键（五键原样）', async () => {
+    const path = await generateTermNote({ term: '心流', summary: 's', domain: '心理', source: null });
+    const content = vault.files.get(path)!;
+    expect(content).not.toContain('source:');
+    expect(content).not.toContain('sourceTitle:');
+  });
 });
 
 describe('backfillNotes（旧笔记自动补全；ticket 138 §1.3：单次 AI 超时跳过，不卡死整批）', () => {

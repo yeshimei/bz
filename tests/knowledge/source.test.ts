@@ -1,0 +1,80 @@
+// @vitest-environment node
+/**
+ * 术语来源纯函数测试（src/knowledge/source.ts，ADR-0116）：
+ * isUrlLikeSourceText（宽松域名判定）/ cleanUrlText / noteSourceName / serializeTermSource（落键唯一入口）。
+ * 纯数据层：无 DOM，node 环境直跑。
+ */
+import { describe, it, expect } from 'vitest';
+import {
+  isUrlLikeSourceText,
+  cleanUrlText,
+  noteSourceName,
+  serializeTermSource,
+} from '../../src/knowledge/source';
+
+describe('isUrlLikeSourceText（整串无空白 + URL/域名样式 → 外部链接；其余归笔记搜索）', () => {
+  it('http(s) 前缀 → 外部（含查询串/路径）', () => {
+    expect(isUrlLikeSourceText('https://b23.tv/abcDEF')).toBe(true);
+    expect(isUrlLikeSourceText('https://www.bilibili.com/video/BV1xx411c7mD?p=2')).toBe(true);
+    expect(isUrlLikeSourceText('http://example.cn/x')).toBe(true);
+  });
+
+  it('无协议但形如域名 → 外部（宽松域名字样：b23.tv 单标签+TLD、www 开头、多级域名）', () => {
+    expect(isUrlLikeSourceText('b23.tv/abcDEF')).toBe(true);
+    expect(isUrlLikeSourceText('www.bilibili.com/video/BV1xx')).toBe(true);
+    expect(isUrlLikeSourceText('zhuanlan.zhihu.com/p/123456')).toBe(true);
+    expect(isUrlLikeSourceText('blog.example.com.cn/archives/1')).toBe(true);
+  });
+
+  it('非 URL → 笔记搜索方向（BV 号不做平台特判、中文、含空白的文本、纯单标）', () => {
+    expect(isUrlLikeSourceText('BV1xx411c7mD')).toBe(false); // 无域名字样，拍板不做 B 站特判
+    expect(isUrlLikeSourceText('认知心理学')).toBe(false);
+    expect(isUrlLikeSourceText('A股 术语 是什么')).toBe(false); // 含空白整串保护
+    expect(isUrlLikeSourceText('localhost:8080')).toBe(false); // 无域名 TLD
+    expect(isUrlLikeSourceText('')).toBe(false);
+    expect(isUrlLikeSourceText('   ')).toBe(false);
+  });
+});
+
+describe('cleanUrlText（落库前净化：剥尾随中英文标点）', () => {
+  it('剥中文/英文句尾标点，保留路径内字符', () => {
+    expect(cleanUrlText('https://b23.tv/abcDEF，')).toBe('https://b23.tv/abcDEF');
+    expect(cleanUrlText('https://x.com/a?b=1。')).toBe('https://x.com/a?b=1');
+    expect(cleanUrlText('  https://x.com/a  ')).toBe('https://x.com/a');
+    expect(cleanUrlText('https://x.com/a?q=1,2')).toBe('https://x.com/a?q=1,2'); // 逗号在参数中不剥
+  });
+});
+
+describe('noteSourceName（内部笔记展示名：显式 name 优先，缺省取文件名）', () => {
+  it('路径取去目录去 .md 的文件名；显式名优先；反斜杠兼容', () => {
+    expect(noteSourceName('我的/日记/心流体验.md')).toBe('心流体验');
+    expect(noteSourceName('我的/日记/心流体验.md', '体验心流')).toBe('体验心流');
+    expect(noteSourceName('CONFIG\\APPENDIX\\v2.md')).toBe('v2');
+    expect(noteSourceName('', '标题甲')).toBe('标题甲');
+  });
+});
+
+describe('serializeTermSource（frontmatter 键值唯一入口）', () => {
+  it('内部笔记 → source=[[路径|名]]', () => {
+    expect(serializeTermSource({ kind: 'note', path: '我的/日记/心流体验.md' }))
+      .toEqual({ source: '[[我的/日记/心流体验.md|心流体验]]' });
+    expect(serializeTermSource({ kind: 'note', path: 'a/b.md', name: 'B' }))
+      .toEqual({ source: '[[a/b.md|B]]' });
+  });
+
+  it('外部链接 → source=URL 原文（净化尾标点）；带标题 → 追加 sourceTitle', () => {
+    expect(serializeTermSource({ kind: 'external', url: 'https://b23.tv/abc，' }))
+      .toEqual({ source: 'https://b23.tv/abc' });
+    expect(serializeTermSource({ kind: 'external', url: 'https://zhuanlan.zhihu.com/p/1', title: '标题' }))
+      .toEqual({ source: 'https://zhuanlan.zhihu.com/p/1', sourceTitle: '标题' });
+    expect(serializeTermSource({ kind: 'external', url: 'https://x.com', title: '  ' }))
+      .toEqual({ source: 'https://x.com' }); // 空白标题不落键
+  });
+
+  it('无来源 / 空值 → null（不写键）', () => {
+    expect(serializeTermSource(null)).toBeNull();
+    expect(serializeTermSource(undefined)).toBeNull();
+    expect(serializeTermSource({ kind: 'note', path: '  ' })).toBeNull();
+    expect(serializeTermSource({ kind: 'external', url: '' })).toBeNull();
+  });
+});

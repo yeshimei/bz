@@ -65,6 +65,27 @@
   text-align: center;
   position: relative;
 }
+/* 移动端全屏主窗的关闭出口（ADR-0116：手机无 ESC / 遮罩边缘可点）；仅移动端渲染该钮 */
+.bz-kb-mclose {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink2);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 8px;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.bz-kb-mclose:hover { background: var(--chip); color: var(--ink); }
 
 .bz-kb-parts {
   position: absolute;
@@ -692,6 +713,45 @@
 .bz-lit-term-body { display: flex; flex-direction: column; min-width: 0; }
 .bz-lit-term-dialog { width: min(480px, 92vw); }
 
+/* 术语来源行（ADR-0116）：独立行 + 小标签「来源」；chip 形态（内/外徽标 + 名称 + ✕ 清） */
+.bz-lit-term-srcrow { position: relative; display: flex; align-items: center; gap: 10px; margin-top: 9px; min-width: 0; }
+.bz-lit-term-srcrow > .bz-lit-term-meta-k { flex: none; font-size: 11.5px; }
+.bz-lit-term-srcrow input { flex: 1; min-width: 0; }
+.bz-lit-srcchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-width: 0;
+  border: 1px dashed var(--line);
+  background: var(--chip);
+  border-radius: 8px;
+  padding: 5px 8px 5px 9px;
+  font-size: 12px;
+  color: var(--ink);
+}
+.bz-lit-srcchip b { flex: none; font-size: 9.5px; color: var(--accent); letter-spacing: 0.14em; font-weight: 600; }
+.bz-lit-srcchip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bz-lit-srcchip button {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink3);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: inherit;
+}
+.bz-lit-srcchip button:hover { color: var(--red); background: var(--card); }
+/* 来源可点（术语预览 meta 行 / 部壹文献预览） */
+.bz-lit-srcopen { cursor: pointer; word-break: break-all; }
+.bz-lit-srcopen:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.bz-kb-cliplink .bz-lit-srcopen { color: var(--accent); }
+
 #lit-term-preview {
   display: none;
   flex-direction: column;
@@ -765,9 +825,12 @@
 }
 .bz-lit-counts { font-size: 12px; color: var(--ink2); }
 
-/* 移动端：面板全屏化（留安全区） */
+/* 移动端：主窗全屏化（ADR-0116「仅主窗口全屏」，弹层维持浮层）。
+   顶部避让（Obsidian 移动端头部 44px + 安全区）由全站统一档 .bz-panel-mtop
+   （components.css ≤768px padding-top: max(44px, safe-area) !important）接管，
+   本规则只负责铺满几何与底部安全区——不得重复写顶部避让（防双份顶距）。 */
 .bz-kb-window.bz-panel-mtop {
-  top: env(safe-area-inset-top, 0);
+  top: 0;
   left: 0;
   right: 0;
   bottom: env(safe-area-inset-bottom, 0);

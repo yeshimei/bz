@@ -3,7 +3,7 @@
  * 部壹·文献（两种录入进货 + 文献词典列表 + 预览/提炼成卡）、部贰·卡片（卡片盒扫描展示）、
  * 部叁·主题（主题笔记仅展示，写作与检索归 Obsidian + 第二大脑）。
  * 知识盒只整理关联：文献→卡片 = 连一张旧卡 + 一句为什么（related 键，源文献自动互链）。
- * 保留承继：术语生成面板（ticket 142/155 简洁版契约）、视频任务队列（ticket 146 单钮态机/148 纯 emoji）、
+ * 保留承继：术语生成面板（ticket 142/155 简洁版契约 + ADR-0116 可选「来源」行）、视频任务队列（ticket 146 单钮态机/148 纯 emoji）、
  * 添加弹窗校验、历史分组、ESC 分层、topifyZ、域事件刷新（knowledge:tasks / knowledge:file-*）。
  * 移除（ADR-0112 原型拍板）：领域筛选/搜索/双击打开/抽屉/面板内设置按钮（设置走设置面板域）。
  */
@@ -14,7 +14,8 @@ import { tryGetSettings } from '../core/settings-provider';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { openFlowDialog } from '../core/flow-dialog';
 import { notice } from '../core/notice';
-import { formatRelativeTime } from '../core/utils';
+import { fetchPageTitle, formatRelativeTime } from '../core/utils';
+import { uiSuggest } from '../core/ui/suggest';
 import { topifyZ } from '../core/z-order';
 import { emitDomainEvent, onDomainEvent } from '../core/domain-bus';
 import { getApp } from '../core/app';
@@ -23,6 +24,7 @@ import { KnowledgeData, normalizeLooseTime } from './data';
 import type { KnowledgeTask } from './types';
 import { BatchRunner, type BatchEvents } from './processor';
 import { backfillNotes, generateTermDraft, generateTermNote, summarizeTermSummary } from './note-gen';
+import { cleanUrlText, isUrlLikeSourceText, noteSourceName, type TermSource } from './source';
 
 interface StatusMeta { label: string; cls: string; }
 const STATUS_META: Record<KnowledgeTask['status'], StatusMeta> = {
@@ -174,6 +176,8 @@ interface KnowledgeNoteEntry {
   domain: string;
   summary: string;
   url: string;
+  source: string;      // 术语来源原文值（ADR-0116：URL 或 [[双链]]；视频文献无此键）
+  sourceTitle: string; // 外部来源抓到的页面标题（可选）
   date: string;
   created: number;
 }
@@ -289,6 +293,9 @@ export class UIManager {
   private termGenerating = false;
   private termSummarizing = false;
   private termHasDraft = false;
+  private termSource: TermSource | null = null; // 术语来源（ADR-0116；null = 未填）
+  private termSrcSuggest: ReturnType<typeof uiSuggest> | null = null;
+  private termSrcTimer: ReturnType<typeof setTimeout> | null = null;
 
   private editingId: string | null = null;
   private onKeydown: (e: KeyboardEvent) => void = () => {};
@@ -333,6 +340,7 @@ export class UIManager {
     const popup = document.createElement('div');
     popup.id = 'knowledge-popup';
     popup.className = 'bz-kb-window kb';
+    if (isMobileEnv()) popup.classList.add('bz-panel-mtop'); // 移动端主窗真全屏（ADR-0116，样式见 styles.css 尾部）
     popup.style.display = 'none';
     popup.innerHTML = `
       <div class="bz-kb-head">
@@ -346,6 +354,7 @@ export class UIManager {
           <div class="bz-kb-title">知 识 盒</div>
           <div class="bz-kb-phon">[ zhī shí hé ] · 检索归第二大脑 · 知识盒只整理关联</div>
         </div>
+        ${isMobileEnv() ? '<button class="bz-kb-mclose" data-kb-act="kb-close" title="关闭知识盒">✕</button>' : ''}
       </div>
       <div class="bz-kb-sc" id="kb-sc"></div>`;
     document.body.appendChild(mask);
@@ -369,6 +378,7 @@ export class UIManager {
     else if (act === 'lit-peek') { const p = t.getAttribute('data-path') || ''; const n = this.allNotes.find((x) => x.path === p); if (n) void this.openLitPreview(n); }
     else if (act === 'topic-open') { const p = t.getAttribute('data-path') || ''; const n = this.allTopics.find((x) => x.path === p); if (n) void this.openTopicNote(n); }
     else if (act === 'topics-back') { this.noteView = null; this.renderTopics(); }
+    else if (act === 'kb-close') this.hideMain(); // 移动端全屏主窗出口（ADR-0116：手机无 ESC/遮罩边缘）
   }
 
   private syncPartButtons(): void {
@@ -451,6 +461,8 @@ export class UIManager {
         domain: fm && fm.domain ? String(fm.domain) : '',
         summary: fm && fm.summary ? String(fm.summary) : '',
         url: fm && fm.url ? String(fm.url) : '',
+        source: fm && fm.source ? String(fm.source) : '',
+        sourceTitle: fm && fm.sourceTitle ? String(fm.sourceTitle) : '',
         date, created,
       };
     } catch (e) {
@@ -500,6 +512,10 @@ export class UIManager {
     const parasHtml = paras.map((p) => `<p>${esc(p)}</p>`).join('') || '<p>（无正文）</p>';
     const clipHtml = videoEmbed ? `<div class="bz-kb-cliprow">视频片段 · ${esc(shortNoteName(videoEmbed))}</div>` : '';
     const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink">${esc(n.url)}</div>` : '';
+    // 术语外部来源（ADR-0116）：source 键为 URL（非 [[双链]]）时展示可点「来源」；内部笔记来源只在术语面板 meta 行呈现
+    const termSrcHtml = n.source && !n.source.startsWith('[[')
+      ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.source)}" href="#">${esc(n.sourceTitle || n.source)}</a></div>`
+      : '';
     this.openSheet(this.sheetWrap(`文献预览 · ${n.type === 'video' ? '影像' : '词条'}`, `
       <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc(n.title)}</span>
         <span class="bz-kb-pos ${n.type === 'video' ? 'hot' : ''}">${n.type === 'video' ? '影 像' : '词 条'}</span>
@@ -509,11 +525,20 @@ export class UIManager {
       ${clipHtml}
       ${rels.length ? `<div class="bz-kb-sec">来 源 小 纸 条（related，落卡时自动带）</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc(r)}</span>`).join('')}</div>` : ''}
       ${srcHtml}
+      ${termSrcHtml}
       <div style="margin-top:18px;display:flex;gap:10px">
         <button class="bz-kb-bigbtn" data-kb-act="card-new">提炼成卡</button>
         <button class="bz-kb-ghost" data-kb-close>先放回去</button>
       </div>`));
     this._previewNote = n;
+    const srcLink = this.popup ? q<HTMLElement>(this.popup, '[data-lit-src-url]') : null;
+    if (srcLink) {
+      srcLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this._openExternal(srcLink.getAttribute('data-lit-src-url') || '');
+      });
+    }
   }
   private _previewNote: KnowledgeNoteEntry | null = null;
 
@@ -1170,7 +1195,7 @@ export class UIManager {
     addMask.onclick = () => this.hideAddDialog();
     const popup = document.createElement('div');
     popup.id = 'knowledge-add-popup';
-    popup.className = 'bz-lit-dialog';
+    popup.className = 'bz-lit-dialog kb'; // kb：纸墨皮变量作用域（缺此背景 var(--panel) 失效成透明，issue 257）
     popup.style.display = 'none';
     // 简洁版：无标题（编辑态右上角小标签）、链接 label + 整片/剪辑开关同行、分P 去括号、去 placeholder
     popup.innerHTML = `
@@ -1446,15 +1471,22 @@ export class UIManager {
     mask.onclick = () => this.hideTermEntry();
     const popup = document.createElement('div');
     popup.id = 'knowledge-term-popup';
-    popup.className = 'bz-lit-dialog bz-lit-term-dialog';
+    popup.className = 'bz-lit-dialog bz-lit-term-dialog kb'; // kb：纸墨皮变量作用域（缺此背景 var(--panel) 失效成透明，issue 257）
     popup.style.display = 'none';
     const body = document.createElement('div');
     body.className = 'bz-lit-term-body';
     // 简洁版：无标题、无 label、无 placeholder、无状态行；预览只读（属性卡+内容卡）
+    // ADR-0116：来源行（可选）——术语输入框下方独立一行，小标签「来源」，单框智能分流：
+    //   整串无空白的 URL 字样 → 外部链接 chip（异步抓标题）；其余输入联想 vault 笔记 → 内部笔记 chip
     body.innerHTML = `
       <div class="bz-lit-term-inputrow">
         <input id="lit-term-input" type="text" autocomplete="off">
         <button id="lit-term-generate" class="bz-lit-accent-btn">生成</button>
+      </div>
+      <div class="bz-lit-term-srcrow">
+        <span class="bz-lit-term-meta-k">来源</span>
+        <input id="lit-term-src" type="text" autocomplete="off">
+        <span id="lit-term-src-chip" class="bz-lit-srcchip" style="display:none;"></span>
       </div>
       <div id="lit-term-preview" style="display:none;">
         <div class="bz-lit-term-card">
@@ -1462,6 +1494,7 @@ export class UIManager {
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">术语</span><span id="lit-term-meta-term" class="bz-lit-term-meta-v"></span></div>
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">领域</span><span id="lit-term-meta-domain" class="bz-lit-term-meta-v"></span></div>
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">日期</span><span id="lit-term-meta-date" class="bz-lit-term-meta-v"></span></div>
+            <div class="bz-lit-term-meta-row" id="lit-term-meta-srcrow" style="display:none;"><span class="bz-lit-term-meta-k">来源</span><span id="lit-term-meta-src" class="bz-lit-term-meta-v bz-lit-srcopen" data-term-src-open="1"></span></div>
           </div>
         </div>
         <div class="bz-lit-term-card">
@@ -1483,14 +1516,63 @@ export class UIManager {
     q<HTMLInputElement>(popup, '#lit-term-input')?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { e.preventDefault(); void this.onTermGenerate(); }
     });
+    // 来源行事件（ADR-0116）
+    const srcInput = q<HTMLInputElement>(popup, '#lit-term-src');
+    if (srcInput) {
+      srcInput.addEventListener('input', () => {
+        if (this.termSrcTimer) clearTimeout(this.termSrcTimer);
+        this.termSrcTimer = setTimeout(() => this.termSrcTryCommit(srcInput), 450);
+      });
+      srcInput.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter') return;
+        const raw = (srcInput.value || '').trim();
+        if (raw && isUrlLikeSourceText(raw)) {
+          // URL 字样整串 → 直接落外部 chip（回车即确认）；非 URL 交给联想层选中回填
+          e.preventDefault();
+          this.termSrcSet({ kind: 'external', url: cleanUrlText(raw) }, srcInput);
+        }
+      });
+      // 联想源：vault 全部 .md（现值过滤、上限 12）；空输入不弹空壳
+      this.termSrcSuggest = uiSuggest({
+        anchor: srcInput,
+        max: 12,
+        iconOf: () => '📄',
+        labelOf: (p: string) => noteSourceName(p),
+        source: () => {
+          if (!srcInput.value.trim()) return [];
+          return (getApp().vault.getFiles() || []).filter((f: any) => f.extension === 'md').map((f: any) => f.path);
+        },
+        onPick: (p: string) => this.termSrcSet({ kind: 'note', path: p }, srcInput),
+      });
+    }
+    // 委托：chip ✕ 清除 / meta 行点击打开（chip 与 meta 内容动态渲染，委托一次）
+    popup.addEventListener('click', (e) => {
+      const t = (e.target as HTMLElement).closest('[data-term-src-clear],[data-term-src-open]') as HTMLElement | null;
+      if (!t) return;
+      e.stopPropagation();
+      if (t.hasAttribute('data-term-src-clear')) {
+        const input = q<HTMLInputElement>(popup, '#lit-term-src');
+        this.termSrcClear(input);
+      } else if (this.termSource) {
+        // meta 行点击：内部笔记 → 打开笔记；外部链接 → 系统浏览器
+        if (this.termSource.kind === 'note') this.openNote(this.termSource.path);
+        else this._openExternal(this.termSource.url);
+      }
+    });
   }
 
-  showTermEntry(term?: string): void {
+  /**
+   * 打开术语录入弹层；term 预填（命令带选中词时自动生成）；src 预填来源（ADR-0116——
+   * 仅命令入口带当前笔记，主窗按钮入口不预填）。
+   */
+  showTermEntry(term?: string, src?: TermSource | null): void {
     if (!this.termPopup || !this.termMask) return;
     this.termPreview = null;
     this.termHasDraft = false;
     const input = q<HTMLInputElement>(this.termPopup, '#lit-term-input');
     if (input) input.value = (term ?? '').trim();
+    this.termSrcReset(q<HTMLInputElement>(this.termPopup, '#lit-term-src'));
+    if (src) this.termSrcSet(src, q<HTMLInputElement>(this.termPopup, '#lit-term-src'));
     this.setTermPreviewVisible(false);
     this.setTermGenLoading(false);
     topifyZ(this.termMask, this.termPopup);
@@ -1498,6 +1580,87 @@ export class UIManager {
     this.termPopup.style.display = 'flex';
     if (input && !input.value) setTimeout(() => input.focus(), 100);
     if (input && input.value) void this.onTermGenerate();
+  }
+
+  /** 来源状态清空（chip 收起、输入框复位、计时器/联想层归零）——每次打开弹层即全新 */
+  private termSrcReset(input: HTMLInputElement | null): void {
+    if (this.termSrcTimer) { clearTimeout(this.termSrcTimer); this.termSrcTimer = null; }
+    this.termSource = null;
+    if (input) {
+      input.value = '';
+      input.style.display = '';
+    }
+    this.renderTermSrcChip(input);
+    this.termSrcRefreshMeta();
+  }
+
+  private termSrcClear(input: HTMLInputElement | null): void {
+    this.termSrcReset(input);
+    if (input) setTimeout(() => input.focus(), 0);
+  }
+
+  /** 输入惰性提交：整串 URL 字样 → 外部 chip；其余文本等联想点选（不自动认领） */
+  private termSrcTryCommit(input: HTMLInputElement): void {
+    this.termSrcTimer = null;
+    const raw = (input.value || '').trim();
+    if (!raw || !isUrlLikeSourceText(raw)) return;
+    this.termSrcSet({ kind: 'external', url: cleanUrlText(raw) }, input);
+  }
+
+  /** 落来源：记录 + chip 渲染 + meta 行同步；外部来源异步抓标题（失败静默降级为纯链接） */
+  private termSrcSet(src: TermSource, input: HTMLInputElement | null): void {
+    this.termSource = src;
+    this.renderTermSrcChip(input);
+    this.termSrcRefreshMeta();
+    if (src.kind === 'external') void this.termSrcFetchTitle(src);
+  }
+
+  private async termSrcFetchTitle(src: Extract<TermSource, { kind: 'external' }>): Promise<void> {
+    try {
+      const t = await fetchPageTitle(src.url);
+      if (!t || this.termSource !== src) return; // 期间已被清除/更换 → 丢弃
+      src.title = t;
+      const inp = this.termPopup ? q<HTMLInputElement>(this.termPopup, '#lit-term-src') : null;
+      this.renderTermSrcChip(inp);
+      this.termSrcRefreshMeta();
+    } catch { /* 抓标题失败静默：chip 保持纯链接 */ }
+  }
+
+  /** chip 渲染：有来源 → 徽标（内/外）+ 名称 + ✕；无 → 输入框可见 */
+  private renderTermSrcChip(input: HTMLInputElement | null): void {
+    const popup = this.termPopup;
+    if (!popup) return;
+    const chip = q<HTMLElement>(popup, '#lit-term-src-chip');
+    if (!chip) return;
+    const src = this.termSource;
+    if (!src) {
+      chip.style.display = 'none';
+      chip.textContent = '';
+      if (input) input.style.display = '';
+      return;
+    }
+    const isNote = src.kind === 'note';
+    const label = isNote ? noteSourceName(src.path) : src.title || shortUrlText(src.url);
+    chip.title = isNote ? src.path : src.url;
+    chip.style.display = 'inline-flex';
+    chip.innerHTML = `<b>${isNote ? '内 部' : '外 部'}</b><span>${esc(label)}</span><button type="button" data-term-src-clear title="清除来源" aria-label="清除来源">✕</button>`;
+    if (input) input.style.display = 'none';
+  }
+
+  /** 预览属性卡第 4 行「来源」：有来源显行（可点开），无来源隐行 */
+  private termSrcRefreshMeta(): void {
+    const popup = this.termPopup;
+    if (!popup) return;
+    const row = q<HTMLElement>(popup, '#lit-term-meta-srcrow');
+    const val = q<HTMLElement>(popup, '#lit-term-meta-src');
+    if (!row || !val) return;
+    const src = this.termSource;
+    if (!src) { row.style.display = 'none'; val.textContent = ''; return; }
+    row.style.display = '';
+    val.textContent = src.kind === 'note'
+      ? noteSourceName(src.path)
+      : src.title || src.url;
+    val.title = src.kind === 'note' ? src.path : src.url;
   }
 
   private setTermPreviewVisible(v: boolean): void {
@@ -1594,7 +1757,12 @@ export class UIManager {
     this.termGenerating = true;
     this.setTermGenLoading(true);
     try {
-      const path = await generateTermNote({ term, summary: this.termPreview.body, domain: this.termPreview.domain });
+      const path = await generateTermNote({
+        term,
+        summary: this.termPreview.body,
+        domain: this.termPreview.domain,
+        source: this.termSource, // 术语来源随确认时刻的值落库（ADR-0116）
+      });
       this.openNote(path);
       emitDomainEvent('knowledge:tasks', { kind: 'term-generated', term, title: term });
       this.termPreview = null;
@@ -1610,6 +1778,8 @@ export class UIManager {
 
   hideTermEntry(): void {
     this.termPreview = null;
+    const srcInput = this.termPopup ? q<HTMLInputElement>(this.termPopup, '#lit-term-src') : null;
+    this.termSrcReset(srcInput);
     if (this.termMask) this.termMask.style.display = 'none';
     if (this.termPopup) this.termPopup.style.display = 'none';
   }
@@ -1648,6 +1818,9 @@ export class UIManager {
   destroy(): void {
     this.clearRunTimer();
     this.runState.clear();
+    if (this.termSrcTimer) { clearTimeout(this.termSrcTimer); this.termSrcTimer = null; }
+    try { this.termSrcSuggest?.detach(); } catch { /* 忽略 */ }
+    this.termSrcSuggest = null;
     if (this.refreshTimer) { clearTimeout(this.refreshTimer); this.refreshTimer = null; }
     for (const unsub of this.fileListenerRefs) {
       try { unsub(); } catch { /* 忽略 */ }
