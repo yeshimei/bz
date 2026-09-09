@@ -36,7 +36,8 @@ export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook",
 // settings-panel 行为产物 ~1.7MB：全域 schema 闭包整体内联（各域 schema 改动后需重出该域行为包）
 // review 行为产物（issue 253）：quiz-core/app/fit/watch 闭包 + ⚙ 直达 settings-panel 内联；
 //   出题 AI 走 fake requestUrl canned 回放（prompt 特征识别 → RVW.SEED.quizBank）
-export const BEHAVIOR_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "favorites", "home", "password-vault", "review", "secondbrain", "settings-panel"];
+// knowledge 行为产物（issue 259）：真 ui.ts 依赖链 + fake requestUrl 罐头（术语生成/总结/领域判定）
+export const BEHAVIOR_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "favorites", "home", "knowledge", "password-vault", "review", "secondbrain", "settings-panel"];
 
 export async function buildBehavior(domain) {
   const entry = path.join(ROOT, "prototypes", domain, "fake-sim.ts");
