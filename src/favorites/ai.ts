@@ -5,7 +5,6 @@ import { requestUrl } from 'obsidian';
 import { createAI, getProviderDescriptor } from '../core/ai';
 import type { AIService } from '../core/ai';
 import { getSettings } from '../core/settings-provider';
-import type { FavoritesItem } from './types';
 
 // ==================== AI 服务 ====================
 export class FavoritesAIService {

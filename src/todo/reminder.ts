@@ -57,14 +57,14 @@ async function autoPopupOnStart(app: App): Promise<void> {
 /** 注册提醒后台（幂等；main.ts onLayoutReady 调用） */
 export function ensureTodoReminders(app: App): void {
   if (fileOpenRef) return;
-  const s = tryGetSettings() as any;
+  const s = tryGetSettings();
   // 启动自动弹出（开关注册时判定；关=不弹也不设定时）
   if (s?.autoPopupOnStart !== false) void autoPopupOnStart(app);
   // 打开笔记提醒（开关事件触发时判定——设置变更即时生效，无需重注册）
   fileOpenRef = app.workspace.on('file-open', (file: any) => {
     void (async () => {
       if (!file) return;
-      if ((tryGetSettings() as any)?.openNoteReminder === false) return;
+      if (tryGetSettings()?.openNoteReminder === false) return;
       const path = file.path as string;
       if (!path || remindedFiles.has(path)) return;
       const items = await TodoData.loadItems();

@@ -119,6 +119,9 @@ export function stripMediaLinks(content: string): string {
   }).trim();
 }
 
+/** 批量并发读取窗口（日记/影视/信/书共用：控制单批 vault.read 并发量） */
+const READ_BATCH_SIZE = 10;
+
 /** 日记文件名格式：YYYY-MM-DD.md */
 const DIARY_FILE_RE = /^(\d{4}-\d{2}-\d{2})\.md$/;
 
@@ -144,7 +147,7 @@ async function collectMdPaths(app: App, dirPath: string): Promise<string[]> {
     seen.add(dir);
     let listing: { files: string[]; folders: string[] };
     try {
-      listing = await (app.vault.adapter as any).list(dir);
+      listing = await app.vault.adapter.list(dir);
     } catch {
       continue; // 目录不存在：跳过
     }
@@ -164,7 +167,7 @@ async function mdFilesUnder(app: App, dirPath: string): Promise<TFile[]> {
   const mdFiles: TFile[] = [];
   for (const p of mdPaths) {
     const f = vault.getAbstractFileByPath(p);
-    if (f && !(f as any).children && (f as TFile).extension === 'md') mdFiles.push(f as TFile);
+    if (f && !('children' in f) && (f as TFile).extension === 'md') mdFiles.push(f as TFile);
   }
   return mdFiles;
 }
@@ -226,9 +229,8 @@ async function loadDiaryEntries(app: App, diaryDir: string): Promise<WallEntry[]
   const vault = app.vault;
   const mdFiles = await mdFilesUnder(app, diaryDir);
   const entries: WallEntry[] = [];
-  const BATCH = 10;
-  for (let i = 0; i < mdFiles.length; i += BATCH) {
-    const batch = mdFiles.slice(i, i + BATCH);
+  for (let i = 0; i < mdFiles.length; i += READ_BATCH_SIZE) {
+    const batch = mdFiles.slice(i, i + READ_BATCH_SIZE);
     const batchResults = await Promise.all(
       batch.map(async (file) => {
         const m = DIARY_FILE_RE.exec(file.name);
@@ -251,10 +253,9 @@ async function loadSpecialEntries(
   parse: (file: TFile, app: App) => Promise<DiaryEntry | null>
 ): Promise<WallEntry[]> {
   const mdFiles = await mdFilesUnder(app, dir);
-  const BATCH = 10;
   const entries: WallEntry[] = [];
-  for (let i = 0; i < mdFiles.length; i += BATCH) {
-    const batch = mdFiles.slice(i, i + BATCH);
+  for (let i = 0; i < mdFiles.length; i += READ_BATCH_SIZE) {
+    const batch = mdFiles.slice(i, i + READ_BATCH_SIZE);
     const batchResults = await Promise.all(
       batch.map(async (file) => {
         const e = await parse(file, app);
@@ -329,7 +330,7 @@ export function mediaSrc(app: App, mediaName: string, sourcePath?: string): stri
   const file =
     (app.metadataCache?.getFirstLinkpathDest?.(mediaName, basePath) as TFile | null) ??
     (app.vault.getAbstractFileByPath(mediaName) as TFile | null);
-  if (!file || (file as any).children) return ''; // 目录不是媒体文件
+  if (!file || 'children' in file) return ''; // 目录不是媒体文件
   try {
     return app.vault.getResourcePath(file as TFile);
   } catch {

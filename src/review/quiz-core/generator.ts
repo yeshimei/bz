@@ -75,7 +75,6 @@ ${truncated}`;
   async generate(noteContent: string, aiService: AIService, enableMultipleChoice: boolean, questionsPerNote: number, difficulty: string): Promise<QuizQuestion[]> {
     const prompt = this.buildPrompt(noteContent, enableMultipleChoice, questionsPerNote, difficulty);
     const result = await aiService.json(prompt);
-    console.log('AI 原始响应:', result);
     const parsed = this.extractJSON(result);
     if (!parsed.questions?.length) throw new Error('AI 未返回有效题目数组。');
     for (const q of parsed.questions) {
@@ -131,7 +130,6 @@ ${truncated}`;
   async generateBatch(notes: { id: string; content: string }[], aiService: AIService, enableMultipleChoice: boolean, questionsPerNote: number, difficulty: string): Promise<Record<string, QuizQuestion[]>> {
     const prompt = this.buildBatchPrompt(notes, enableMultipleChoice, questionsPerNote, difficulty);
     const result = await aiService.json(prompt);
-    console.log('AI 批量响应:', result);
     const parsed = this.extractJSON(result);
     // 返回 { noteId: questions[] } 的映射
     const out: Record<string, QuizQuestion[]> = {};

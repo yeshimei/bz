@@ -20,21 +20,21 @@ export { ensureFileSync, unloadFileSync } from './file-sync';
 
 /** main.ts 命令回调：打开待办面板（toggle：开着再点关闭） */
 export function openTodoPanel(app: App): void {
-  TodoData.init(tryGetSettings() as any);
+  TodoData.init(tryGetSettings());
   ensureTodo(app);
   uiOpenPanel(app);
 }
 
 /** main.ts 命令回调：直接打开创建弹窗（bz-todo-add） */
 export function addTodoItem(app: App): void {
-  TodoData.init(tryGetSettings() as any);
+  TodoData.init(tryGetSettings());
   ensureTodo(app);
   addTodo(app);
 }
 
 /** main.ts onLayoutReady：待办提醒后台（启动自动弹出 + 打开笔记提醒；落点=待办面板） */
 export function ensureTodoReminders(app: App): void {
-  TodoData.init(tryGetSettings() as any);
+  TodoData.init(tryGetSettings());
   ensureTodo(app);
   remindersEnsure(app);
 }

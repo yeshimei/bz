@@ -13,12 +13,8 @@
  * 由各端 mountIcons 物化。窗口缩放墙内标尺以 BsWallScale 显式传递（wallScale() 计算）。
  */
 import { esc, iconSpan } from '../core/ui/str';
-import {
-  STATUS_COLORS, SORT_LABEL,
-  EMPTY_BOOKS_ICON, EMPTY_SEARCH_ICON, EMPTY_FILTER_ICON, ICON,
-} from './constants';
+import { STATUS_COLORS } from './constants';
 import type { BookshelfItem, SideId, SortKey } from './state';
-
 
 // ---------- 小工具 ----------
 

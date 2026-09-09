@@ -12,7 +12,6 @@ import type { App, TFile } from 'obsidian';
 import { notice } from '../core/notice';
 import { longPress } from '../core/dom';
 import { openFlowDialog } from '../core/flow-dialog';
-import { escManager } from '../core/esc-manager';
 import { uiModal, uiEmpty } from '../core/ui';
 import { bsSkinClass } from './ui';
 import { parseBookNotes, jumpToHighlight, updateComment, deleteHighlight } from './notes';
@@ -477,6 +476,4 @@ export function openEpubEditCommentModal(
     },
   });
 }
-
-// ---------- 测试辅助/卸载 ----------
 

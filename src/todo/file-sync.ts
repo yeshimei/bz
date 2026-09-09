@@ -66,8 +66,7 @@ async function saveJSON(app: App, filePath: string, data: any): Promise<void> {
 
 /** 备忘录数据文件路径（ADR-0009 共享数据路径） */
 function getMemoPath(): string {
-  const s = tryGetSettings() as any;
-  return storageFile('memo.json', (s && s.storagePath) || 'CONFIG/STORAGE');
+  return storageFile('memo.json', tryGetSettings().storagePath || 'CONFIG/STORAGE');
 }
 
 /** 监听文件夹列表（issue 187：原 aiAgentWatchedFolders 键退役，固定默认范围） */

@@ -1,7 +1,7 @@
 /**
  * 第二大脑 UI 工具（ticket 103；对齐 QA 闪念.js L798-925）
  */
-import type { App } from 'obsidian';
+import type { App, TFile } from 'obsidian';
 import { MarkdownRenderer, Component } from 'obsidian';
 import { getApp } from '../core/app';
 
@@ -13,7 +13,7 @@ export function jumpToChunk(file: any, chunkText: string, highlight = false): vo
     if (!f) return;
     const leaf = app.workspace.getLeaf();
     leaf
-      .openFile(f as any)
+      .openFile(f as TFile)
       .then(() => {
         if (highlight) {
           const view = leaf.view as any;
@@ -42,7 +42,7 @@ export function jumpToChunk(file: any, chunkText: string, highlight = false): vo
 export function renderMarkdown(el: HTMLElement, md: string, app: App): void {
   try {
     const ctx = new Component();
-    Promise.resolve((MarkdownRenderer as any).render(app, md, el, '', ctx)).catch(() => {
+    Promise.resolve(MarkdownRenderer.render(app, md, el, '', ctx)).catch(() => {
       el.textContent = md;
     });
   } catch {

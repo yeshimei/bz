@@ -86,7 +86,7 @@ async function streamCompatFetch(endpoint: string, apiKey: string, body: any): P
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify(body),
       signal: ac.signal,
-    } as any), 'AI 请求');
+    }), 'AI 请求');
     if (!resp.ok) {
       let msg = `API ${resp.status}`;
       try {

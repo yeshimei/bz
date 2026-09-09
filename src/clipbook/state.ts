@@ -41,14 +41,8 @@ export interface ClipbookState {
   list: ClipArticle[];
   /** UP 头像资料（news.json bilibiliUpInfo） */
   upInfo: Record<string, { name?: string; avatar?: string }>;
-  /** 右侧菜单/浮层打开态（ESC 归属） */
-  ctxOpen: boolean;
   /** 移动详情打开态 */
   mobDetailOpen: boolean;
-  /** 移动搜索展开态 */
-  mobSearchOpen: boolean;
-  /** 移动端搜索关键词 */
-  searchKeyword: string;
   /** 移动端环境（初始化判定一次） */
   isMobile: boolean;
 }
@@ -71,11 +65,8 @@ export const M: ClipbookState = {
   cur: null,
   list: [],
   upInfo: {},
-  ctxOpen: false,
   mobDetailOpen: false,
-  mobSearchOpen: false,
   isMobile: false,
-  searchKeyword: '',
 };
 
 /** 卸载时复位（unload 幂等） */
@@ -92,8 +83,5 @@ export function resetClipbookState(): void {
   M.cur = null;
   M.list = [];
   M.upInfo = {};
-  M.ctxOpen = false;
   M.mobDetailOpen = false;
-  M.mobSearchOpen = false;
-  M.searchKeyword = '';
 }

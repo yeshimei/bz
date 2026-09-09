@@ -6,7 +6,7 @@
 import type { App } from 'obsidian';
 import { getSettings } from '../core/settings-provider';
 import { getApp } from '../core/app';
-import { EncryptAppController } from './ui';
+import { EncryptAppController, DEFAULT_PW_CHARSET } from './ui';
 import { vIc } from './vault-assets-view';
 
 let initialized = false;
@@ -23,8 +23,7 @@ function getController(): EncryptAppController {
       autoLoadOriginal: !!s.encryptAutoLoadOriginal,
       securityMode: !!s.encryptSecurityMode,
       // ADR-0085：密码资产并入保险库；生成器沿用全局键（旧密码本同源）
-      pwCharset:
-        s.passwordCharset || '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+',
+      pwCharset: s.passwordCharset || DEFAULT_PW_CHARSET,
       pwLength: String(parseInt(s.passwordLength) || 16),
     };
     controller = EncryptAppController.getInstance(config);

@@ -10,7 +10,6 @@
  * --background-modifier-cover token；面板聚焦 Space 切换开始/暂停；
  * startFocusForTask：待办「专注这个」联动（归属记入 state/history，弹窗/状态栏展示任务名）。
  */
-import { Setting } from 'obsidian';
 import type { App } from 'obsidian';
 import { setIcon } from 'obsidian';
 import { escManager } from '../core/esc-manager';

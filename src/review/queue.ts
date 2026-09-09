@@ -16,6 +16,9 @@ import type { ReviewItem } from './data';
 import { FSRS, DEFAULT_W } from './fsrs';
 import { dateKey } from './stats';
 
+/** R 阈值缺省值（设置 reviewRThreshold 未配置/非法时的回退；markReview 放行、开始本轮、三区列共用） */
+export const DEFAULT_R_THRESHOLD = 0.9;
+
 /** 是否今日到期（nextReviewDate 落在今日本地日内；与 isOverdue 正交的日历口径）。
  *  自 ui.ts 迁入（item 6 口径统一）：纯函数下沉 queue.ts，ui.ts re-export 保持签名。 */
 export function isDueToday(item: ReviewItem): boolean {
@@ -44,7 +47,11 @@ export interface QueueColumns {
   done: ReviewItem[];
 }
 
-export function partitionQueue(items: ReviewItem[], rThreshold = 0.9, w: number[] = DEFAULT_W): QueueColumns {
+export function partitionQueue(
+  items: ReviewItem[],
+  rThreshold: number = DEFAULT_R_THRESHOLD,
+  w: number[] = DEFAULT_W
+): QueueColumns {
   const overdue: ReviewItem[] = [];
   const today: ReviewItem[] = [];
   const future: ReviewItem[] = [];

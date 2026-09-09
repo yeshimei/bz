@@ -13,7 +13,6 @@ import { topifyZ, createSiteIcon } from '../core/dom';
 import { openFlowDialog } from '../core/flow-dialog';
 import { notice } from '../core/notice';
 import { attachItemActions, openItemSheet, type ItemAction } from '../core/item-actions';
-import type { IconName } from 'obsidian';
 import {
   PasswordVaultDataManager,
   type PasswordVaultEntry,
@@ -151,7 +150,6 @@ export class PasswordVaultUIManager {
     detail: HTMLElement;
     search: HTMLInputElement;
     count: HTMLElement;
-    shown: HTMLElement;
     title: HTMLElement;
     lock: HTMLElement;
     toast: HTMLElement;
@@ -199,7 +197,6 @@ export class PasswordVaultUIManager {
       detail: desk.querySelector('.bz-password-vault-detail')!,
       search: desk.querySelector('.bz-password-vault-search input')!,
       count: desk.querySelector('.bz-password-vault-count')!,
-      shown: desk.querySelector('.bz-password-vault-count')!,
       title: desk.querySelector('.bz-password-vault-listhead h1')!,
       lock: desk.querySelector('.bz-password-vault-lock')!,
       toast: desk.querySelector('.bz-password-vault-toast')!,
@@ -403,14 +400,9 @@ export class PasswordVaultUIManager {
 
   private renderLock() {
     const unlocked = this.dataManager.unlocked;
-    const mode = unlocked ? '' : 'open';
     this.root!.querySelectorAll('.bz-password-vault-lock').forEach((el) => {
-      (el as HTMLElement).classList.toggle('open', !!mode);
+      (el as HTMLElement).classList.toggle('open', !unlocked);
     });
-    if (unlocked) return;
-    // 首设/解锁标题与副文本
-    const first = !this.dataManager.unlocked; // 未解锁时无法知道首设；由 SafeManager.exists 判定（异步）
-    // 解锁态由 unlock 流程控制；这里只负责锁屏显示
   }
 
   /** 解锁成功后重载数据：锁屏打开时 load() 因未解锁而失败，pwData 为空，
@@ -438,7 +430,7 @@ export class PasswordVaultUIManager {
       const hits = this.dataManager
         .search(kw)
         .sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || '') * -1);
-      this.desk.shown.textContent = hits.length + ' 条匹配';
+      this.desk.count.textContent = hits.length + ' 条匹配';
       rows.innerHTML = '';
       if (!hits.length) {
         rows.innerHTML = emptyHtml('bz-password-vault-empty', '没有匹配的条目', '换个关键词，或清空搜索', { style: 'flex:1' });
@@ -464,7 +456,7 @@ export class PasswordVaultUIManager {
     // 非搜索：平台聚合行
     let plats = this.dataManager.platforms();
     if (this.view === 'fav') plats = plats.filter((p) => this.dataManager.hasFav(p.platform));
-    this.desk.shown.textContent = plats.length + ' 个平台';
+    this.desk.count.textContent = plats.length + ' 个平台';
     rows.innerHTML = '';
     if (!plats.length) {
       rows.innerHTML =
@@ -548,7 +540,7 @@ export class PasswordVaultUIManager {
       card.querySelectorAll('[data-act]').forEach((b) =>
         b.addEventListener('click', (e) => {
           e.stopPropagation();
-          void this.handleAccountAction(d, b.getAttribute('data-act') || '', 'desk');
+          void this.handleAccountAction(d, b.getAttribute('data-act') || '');
         })
       );
       // bz 统一右键菜单 / 长按抽屉（编辑/删除/收藏收在这里，无 ⋮ 按钮）
@@ -579,7 +571,7 @@ export class PasswordVaultUIManager {
     card.querySelectorAll('[data-act]').forEach((b) =>
       b.addEventListener('click', (e) => {
         e.stopPropagation();
-        void this.handleAccountAction(d, b.getAttribute('data-act') || '', 'desk');
+        void this.handleAccountAction(d, b.getAttribute('data-act') || '');
       })
     );
     attachItemActions(card, this.buildAccountActions(d), {
@@ -589,7 +581,7 @@ export class PasswordVaultUIManager {
   }
 
   /** 账号级动作分发（桌面卡片/详情/搜索态共用） */
-  private async handleAccountAction(d: PasswordVaultEntry, act: string, which: 'desk' | 'mob') {
+  private async handleAccountAction(d: PasswordVaultEntry, act: string) {
     const t = (m: string, err = false) => this.toast(m, err);
     if (act === 'copy-ac') {
       (await this.copy(d.account || '')) ? t('账号已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true);
@@ -715,7 +707,7 @@ export class PasswordVaultUIManager {
         const id = b.getAttribute('data-id') || '';
         const d = this.dataManager.pwData.find((x) => x.id === id);
         if (!d && a !== 'menu') return;
-        void this.handleAccountAction(d!, a, 'mob');
+        void this.handleAccountAction(d!, a);
       })
     );
     // 长按抽屉（编辑/删除/收藏收在这里，无 ⋮ 按钮）
@@ -747,7 +739,7 @@ export class PasswordVaultUIManager {
       b.addEventListener('click', (e) => {
         e.stopPropagation();
         const a = b.getAttribute('data-act') || '';
-        void this.handleAccountAction(d, a, 'mob');
+        void this.handleAccountAction(d, a);
       })
     );
     const seg = this.mob.pageBody.querySelector('.bz-password-vault-seg') as HTMLElement;
@@ -785,7 +777,6 @@ export class PasswordVaultUIManager {
     return head;
   }
 
-  // ---------- 动作定义（bz 统一右键菜单 / 长按抽屉，item-actions） ----------
   private buildAccountActions(d: PasswordVaultEntry): ItemAction[] {
     const t = (m: string, err = false) => this.toast(m, err);
     return [

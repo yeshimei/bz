@@ -15,7 +15,7 @@
  * 落域适配（ADR-0110 §4）：检索命中（path+score）以引用卡渲染——仅会话内展示不落盘，
  * chatHistory 段 {role, content} 结构零改动（历史读回无引用卡）；引用卡点击 = 打开对应笔记。
  */
-import type { App } from 'obsidian';
+import type { App, TFile } from 'obsidian';
 import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { openFlowDialog } from '../core/flow-dialog';
@@ -104,7 +104,7 @@ export class ChatPanel {
       if (!cite) return;
       const path = cite.dataset.path;
       const f = path ? this.app.vault.getAbstractFileByPath(path) : null;
-      if (f) void this.app.workspace.getLeaf(false).openFile(f as any);
+      if (f) void this.app.workspace.getLeaf(false).openFile(f as TFile);
       else if (path) this.appendAiNote('文件不存在或已被移动');
     });
 
