@@ -40,13 +40,14 @@
   --h-ai-line: #453e66;
 }
 
-/* ---- 头行（V5 周历头拍板）：标题 + 本周动静历（可点切天）+ 日期；关闭钮仅移动端显示 ---- */
+/* ---- 头行（V5 周历头拍板）：本周动静历（可点切天）+ 日期；关闭钮仅移动端显示。
+      标题 2026-09-09 用户拍板退役（桌面/移动都去掉） ---- */
 .bz-home-head { display: flex; align-items: center; gap: 16px; padding: 11px 18px 10px; border-bottom: 1px solid var(--h-line); flex: none; }
-.bz-home-title { font-size: 18px; font-weight: 800; letter-spacing: .1em; margin: 0; }
-.bz-home-week { display: flex; gap: 5px; }
-.bz-home-panel .bz-home-wk { width: 24px; border: 0; background: none; padding: 0; text-align: center; font-family: var(--h-mono); font-size: 9.5px; color: var(--h-dim); display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
+/* 2026-09-09 日历整体 ×1.2：格宽 24→29、条高 22→26、字 9.5→11.4、缝 5→6（用户拍板） */
+.bz-home-week { display: flex; gap: 6px; }
+.bz-home-panel .bz-home-wk { width: 29px; border: 0; background: none; padding: 0; text-align: center; font-family: var(--h-mono); font-size: 11.4px; color: var(--h-dim); display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
 .bz-home-wk .bz-home-wk-n { letter-spacing: 0; }
-.bz-home-wk i { display: block; height: 22px; border-radius: 6px; background: #efede3; }
+.bz-home-wk i { display: block; height: 26px; border-radius: 7px; background: #efede3; }
 .theme-dark .bz-home-wk i { background: #33312a; }
 .bz-home-panel .bz-home-wk:hover i { background: #e6e3d5; }
 .theme-dark .bz-home-wk:hover i { background: #3d3b32; }
@@ -81,7 +82,8 @@
 .bz-home-dot--hot { background: var(--h-red); }
 .bz-home-eic { display: inline-flex; flex: none; }
 .bz-home-eic .bz-ic { width: 17px; height: 17px; }
-.bz-home-enm { font-size: 12.5px; font-weight: 600; }
+/* 2026-09-09 去加粗：入口名/瓦片名不再加粗（用户拍板） */
+.bz-home-enm { font-size: 12.5px; font-weight: 400; }
 .bz-home-ect { margin-left: auto; font-size: 11px; color: var(--h-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .bz-home-ego { opacity: 0; color: var(--h-dim); font-size: 11px; }
 .bz-home-erow:hover .bz-home-ego { opacity: 1; }
@@ -123,24 +125,35 @@
 }
 
 @container (max-width: 768px) {
-  /* 单列（域快捷入口 → 时间线 → 预告），头行带关闭钮；日期隐藏（周历即日期） */
+  /* 单列（瓦片 → 时间线 → 预告），头行带关闭钮；日期隐藏（周历即日期） */
   .bz-home-date { display: none; }
   .bz-home-head { position: sticky; top: 0; z-index: 5; background: var(--h-bg); padding: 14px 16px 10px; }
-  .bz-home-title { font-size: 17px; font-weight: 800; letter-spacing: .08em; }
-  .bz-home-panel .bz-home-close { display: inline-flex; align-items: center; justify-content: center; flex: none; margin-left: auto; width: 30px; height: 30px; border: 1px solid var(--h-line); border-radius: 8px; background: var(--h-card); color: var(--h-ink); cursor: pointer; }
-  .bz-home-close .bz-ic { width: 13px; height: 13px; }
+  .bz-home-panel .bz-home-close { display: inline-flex; align-items: center; justify-content: center; flex: none; margin-left: auto; width: 36px; height: 36px; border: 1px solid var(--h-line); border-radius: 10px; background: var(--h-card); color: var(--h-ink); cursor: pointer; }
+  .bz-home-close .bz-ic { width: 16px; height: 16px; }
   .bz-home-body { padding: 12px 16px 24px; overflow-y: auto; }
   .bz-home-grid { display: flex; flex-direction: column; height: auto; margin-top: 0; }
   .bz-home-tiles { display: block; order: -1; }
   .bz-home-entries { display: none; }
   .bz-home-next { order: 0; margin-top: 18px; }
-  /* 时间线沉底 + 标题只在桌面显示 */
+  /* 时间线沉底 */
   .bz-home-flow { order: 1; margin-top: 18px; background: none; border: none; border-radius: 0; padding: 0; }
-  .bz-home-m-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  /* 2026-09-09 用户拍板：瓦片一行一个 + 移动端字体 ×1.5（基数见基座各规则） */
+  .bz-home-m-tiles { display: grid; grid-template-columns: 1fr; gap: 8px; }
   .bz-home-panel .bz-home-m-tile { display: flex; align-items: center; gap: 6px; background: var(--h-card); border: 1px solid var(--h-line); border-radius: 8px; padding: 7px 8px; cursor: pointer; font-family: inherit; color: inherit; text-align: left; min-width: 0; font-size: 100%; }
   .bz-home-panel .bz-home-m-tile:hover { border-color: var(--h-dim); }
   .bz-home-m-tile .bz-home-dot { width: 5px; height: 5px; }
   .bz-home-m-tile .bz-home-eic .bz-ic { width: 15px; height: 15px; }
-  .bz-home-m-tile .bz-home-enm { font-size: 11.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .bz-home-m-tile .bz-home-ect { margin-left: auto; font-size: 10.5px; white-space: nowrap; }
+  .bz-home-m-tile .bz-home-enm { font-size: 17.25px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bz-home-m-tile .bz-home-ect { margin-left: auto; font-size: 15.75px; white-space: nowrap; }
+  /* 周历/时间线/预告 同档 ×1.5（基数见基座规则；周历 11.4×1.5=17.1，时刻列加宽容纳 18px） */
+  .bz-home-panel .bz-home-wk { font-size: 17.1px; }
+  .bz-home-sec-t { font-size: 16.5px; }
+  .bz-home-ev-tm { font-size: 18px; width: 58px; }
+  .bz-home-ev-tx { font-size: 21.75px; }
+  .bz-home-ev-dm { font-size: 15.75px; padding: 2px 10px; margin-right: 10px; }
+  .bz-home-ev-note { font-size: 18px; }
+  .bz-home-flow-empty { font-size: 20.25px; }
+  .bz-home-pr { font-size: 19.5px; }
+  .bz-home-pr-h { font-size: 18.75px; }
+  .bz-home-pr-go { font-size: 17.25px; }
 }

@@ -16,7 +16,6 @@ export function panelFrameHtml(): string {
   return `
     <div class="bz-panel-frame bz-home-panel bz-panel-mtop">
       <div class="bz-home-head">
-        <h1 class="bz-home-title">首页</h1>
         <div class="bz-home-week" data-home-week></div>
         <span class="bz-home-date" data-home-date></span>
         <div role="button" tabindex="0" class="bz-home-close" data-home-close title="关闭" aria-label="关闭">${iconSpan('x')}</div>
