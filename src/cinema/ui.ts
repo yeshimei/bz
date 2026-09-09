@@ -28,7 +28,7 @@ import { rebuildItems, getDisplayItems } from './data';
 import { localNow } from '../core/ui/str';
 import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } from './recommend';
 import { buildAnalysisHTML } from './analysis';
-import { watchPosterFetch } from './poster-watch';
+import { enqueueDoubanFetch, isFetching } from './douban-queue';
 import {
   ICON, statusText, itemByKey, doubanSearchUrl,
   detailModalHtml, confirmModalHtml, formModalHtml,
@@ -359,11 +359,11 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App): void {
 
 interface FormPayload { name: string; tag: string; st: string; rating: number | null; date: string; review: string }
 
-/** 新增落盘（CM2：重名/落盘失败回退；created 域事件 + 海报守护接管） */
+/** 新增落盘（CM2：重名/落盘失败回退；created 域事件 + 抓取队列接管） */
 async function saveNew(sec: HTMLElement, p: FormPayload, app: App, close: () => void): Promise<void> {
   const group = getGroupForTag(p.tag) ?? '其他';
   const st = p.st === '想看' ? STATUS_WANT : p.st === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
-  const it: CinemaItem = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, doubanRating: null, doubanUrl: null, doubanCheck: null, synopsis: null, duration: null, seasonText: null };
+  const it: CinemaItem = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null };
   try {
     if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
       panelToast(sec, '已存在同名影视，请换个名称');
@@ -372,10 +372,7 @@ async function saveNew(sec: HTMLElement, p: FormPayload, app: App, close: () => 
     M.items.unshift(it);
     await persistItem(it, app);
     emitDomainEvent('movie', { kind: 'created', name: p.name, status: st === STATUS_WANT ? 'want' : st === STATUS_WATCHING ? 'watching' : 'watched', rating: p.rating, review: p.review || null });
-    if (it.file) {
-      const handle = notify('正在获取海报和豆瓣信息…', { type: 'progress' });
-      watchPosterFetch(app, it.file, handle);
-    }
+    if (it.file) enqueueDoubanFetch(it.file, it.name);
     close();
     panelToast(sec, `已添加「${p.name}」`);
     renderAll(app);
@@ -484,6 +481,7 @@ function midnightInput(app: App): MidnightRenderInput {
     aiCount: M.aiResult && M.aiResult.length ? M.aiResult.length : null,
     statHtml: buildAnalysisHTML(),
     poster: (it) => posterUrl(it, app),
+    fetching: (it) => isFetching(it.file?.path),
   };
 }
 
@@ -515,7 +513,7 @@ function refreshDeskList(app: App, sec: HTMLElement): void {
   const cnt = head.querySelector('.j-cnt');
   if (cnt) cnt.textContent = `· ${list.length} 部`;
   const grid = body.querySelector('.grid');
-  if (grid) grid.innerHTML = list.map((it) => pcardHtml(it, posterUrl(it, app))).join('');
+  if (grid) grid.innerHTML = list.map((it) => pcardHtml(it, posterUrl(it, app), isFetching(it.file?.path))).join('');
   mountIcons(sec);
 }
 

@@ -1,11 +1,11 @@
 /**
  * 影院（cinema）入口/目录回落 + 事件补发测试（ADR-0087 接管旧 movie 域）
  * - ensureCinema：cinemaFolderPath 显式配置生效；缺省回落「我的/影视」
- * - quickAddWant：发 movie:created(want) 域事件（smartcat 行为流依赖）+ progress 通知 + 建笔记
+ * - quickAddWant：发 movie:created(want) 域事件（smartcat 行为流依赖）+ 建笔记 + 入抓取队列
  * - runAIRecommend / 快速状态窗 / 删除等事件补发由 ui.test / recommend.test 覆盖
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { MockVault, mockAppWithVault, parseFrontmatter } from '../mock-vault';
+import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -14,7 +14,7 @@ import { getNoticeMessages, clearNotices } from '../mock-obsidian-entry';
 import { M, resetCinemaState } from '../../src/cinema/state';
 import { ensureCinema, unloadCinema, applyDefaultView, openCinema, openCinemaAnalysis } from '../../src/cinema';
 import { quickAddWant } from '../../src/cinema/recommend';
-import { todayStr } from '../../src/cinema/douban-sweep';
+import { configureFetchQueue, isFetching, shutdownDoubanQueue } from '../../src/cinema/douban-queue';
 
 function makeApp(vault: MockVault) {
   const app = mockAppWithVault(vault);
@@ -97,7 +97,7 @@ describe('cinema quickAddWant 事件补发（movie:created want）', () => {
     M.folderPath = '我的/影视';
   });
 
-  it('加入想看 → 建笔记 + 发 movie:created(want) 事件 + progress 通知', async () => {
+  it('加入想看 → 建笔记 + 发 movie:created(want) 事件（抓取走队列，进度零通知）', async () => {
     const seen: any[] = [];
     const off = onDomainEvent('movie', (evt) => seen.push(evt));
     const vault = new MockVault();
@@ -107,26 +107,38 @@ describe('cinema quickAddWant 事件补发（movie:created want）', () => {
     expect(seen).toHaveLength(1);
     expect(seen[0]).toMatchObject({ kind: 'created', name: '新片', status: 'want', rating: null });
     expect((vault.files as any).get('我的/影视/《新片》.md')).toContain('评分: -1');
-    // progress 通知（poster 占位轮询等待；进度通知不自动消失）
-    expect(document.querySelector('.bz-notice--progress')?.textContent).toContain('正在获取海报');
+    // 进度零通知（ADR-0113）：反馈只在卡片 loading，未配置 CLI 时队列静默禁用
+    expect(document.querySelector('.bz-notice--progress')).toBeNull();
     off();
   });
 });
 
-describe('cinema 打开面板触发豆瓣触碰（ADR-0111）', () => {
+describe('cinema 打开面板触发豆瓣抓取队列（ADR-0113）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     resetCinemaState();
     clearNotices();
+    shutdownDoubanQueue();
     document.body.innerHTML = '';
     M.folderPath = '我的/影视';
   });
   afterEach(() => {
     unloadCinema();
+    shutdownDoubanQueue();
     setSettingsProvider(() => ({} as any));
   });
 
-  it('openCinema → 有海报缺链接的笔记被写入当日 豆瓣检查（静默无通知）', async () => {
+  /** 假 spawn：写回海报+豆瓣链接（模拟工具成功），记录调用 */
+  function successSpawn(vault: MockVault) {
+    const spawned: string[] = [];
+    const spawn = async (_cli: string, notePath: string) => {
+      spawned.push(notePath);
+      vault.files.set(notePath, `${vault.files.get(notePath) ?? ''}海报: CONFIG/MOVIE POSTER/a.jpg\n豆瓣链接: https://movie.douban.com/subject/1/\n`);
+    };
+    return { spawned, spawn };
+  }
+
+  it('openCinema → 有海报缺链接的笔记入队抓取并清 pending（静默无通知）', async () => {
     setSettingsProvider(() => ({} as any));
     const vault = new MockVault();
     vault.files.set(
@@ -134,16 +146,18 @@ describe('cinema 打开面板触发豆瓣触碰（ADR-0111）', () => {
       '---\ntags: [电影]\n评分: 8\n海报: CONFIG/MOVIE POSTER/a.jpg\n---',
     );
     const app = makeApp(vault);
+    const { spawned, spawn } = successSpawn(vault);
+    configureFetchQueue({ cli: 'C:/fake/cli.js', spawn, gapMs: 0 });
     openCinema(app);
-    // sweep 是 fire-and-forget 异步：等微任务+宏任务清空后断言
-    await new Promise((r) => setTimeout(r, 0));
-    const fm = parseFrontmatter(vault.files.get('我的/影视/《缺信息》.md')!);
-    expect(fm!['豆瓣检查']).toBe(todayStr());
-    // 完全静默（ADR-0111 拍板）：触碰不发任何通知
+    await new Promise((r) => setTimeout(r, 25));
+    expect(spawned).toHaveLength(1);
+    expect(spawned[0]).toContain('《缺信息》');
+    expect(isFetching('我的/影视/《缺信息》.md')).toBe(false);
+    // 完全静默（ADR-0113 拍板）：抓取不发任何通知
     expect(getNoticeMessages()).toEqual([]);
   });
 
-  it('openCinemaAnalysis（面板未开分支）同样触发触碰', async () => {
+  it('openCinemaAnalysis（面板未开分支）同样触发入队', async () => {
     setSettingsProvider(() => ({} as any));
     const vault = new MockVault();
     vault.files.set(
@@ -151,9 +165,10 @@ describe('cinema 打开面板触发豆瓣触碰（ADR-0111）', () => {
       '---\ntags: [电影]\n评分: 8\n海报: CONFIG/MOVIE POSTER/a.jpg\n---',
     );
     const app = makeApp(vault);
+    const { spawned, spawn } = successSpawn(vault);
+    configureFetchQueue({ cli: 'C:/fake/cli.js', spawn, gapMs: 0 });
     openCinemaAnalysis(app);
-    await new Promise((r) => setTimeout(r, 0));
-    const fm = parseFrontmatter(vault.files.get('我的/影视/《缺信息》.md')!);
-    expect(fm!['豆瓣检查']).toBe(todayStr());
+    await new Promise((r) => setTimeout(r, 25));
+    expect(spawned).toHaveLength(1);
   });
 });

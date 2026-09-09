@@ -123,6 +123,8 @@ export interface MidnightRenderInput {
   statHtml: string;
   /** 海报资源解析（插件 vault resourcePath，壳给演示字段直读） */
   poster: (it: CinemaItem) => string | null;
+  /** 后台抓取中（插件 douban-queue pending 集合，壳给演示 false） */
+  fetching?: (it: CinemaItem) => boolean;
 }
 
 /** 列表视图头 + 工具行（d-head/d-tools；添加钮钩子 data-cinema-add） */
@@ -153,7 +155,7 @@ export function renderMidnightDesk(root: HTMLElement, inp: MidnightRenderInput):
     view.innerHTML = spHeadHtml('观影分析', `· ${inp.watchedCount} 部已看`) + `<div class="sp-body">${inp.statHtml}</div>`;
   } else {
     const body = inp.list.length
-      ? `<div class="d-scroll"><div class="grid" style="grid-template-columns:repeat(${inp.cols},1fr)">${inp.list.map((it) => pcardHtml(it, inp.poster(it))).join('')}</div></div>`
+      ? `<div class="d-scroll"><div class="grid" style="grid-template-columns:repeat(${inp.cols},1fr)">${inp.list.map((it) => pcardHtml(it, inp.poster(it), inp.fetching?.(it) ?? false)).join('')}</div></div>`
       : emptyPageHtml(viewFiltered(v));
     view.innerHTML = listHeadHtml(inp) + listToolsHtml(v) + body;
   }
@@ -171,7 +173,7 @@ export function renderMidnightMob(root: HTMLElement, inp: MidnightRenderInput): 
   if (mv) {
     if (v.view === 'list') {
       mv.className = 'm-scroll j-mview';
-      mv.innerHTML = `<div class="m-grid">${inp.list.map((it) => pcardHtml(it, inp.poster(it))).join('')}</div>`;
+      mv.innerHTML = `<div class="m-grid">${inp.list.map((it) => pcardHtml(it, inp.poster(it), inp.fetching?.(it) ?? false)).join('')}</div>`;
     } else if (v.view === 'ai') {
       mv.className = 'sp-body j-mview';
       mv.innerHTML = inp.aiHtml;

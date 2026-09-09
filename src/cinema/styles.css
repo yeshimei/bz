@@ -415,3 +415,9 @@
 .bz-panel-overlay > .bz-cinema--midnight.mob,
 .bz-panel-overlay > .bz-cinema--gazette.mob,
 .bz-panel-overlay > .bz-cinema--booth.mob { margin: auto; }
+
+/* ====================================================================
+   抓取中遮罩（issue 255 / ADR-0113；卡片海报区 loading，桌面/移动同卡）
+   ==================================================================== */
+.bz-cinema--midnight .pw-fetch{position:absolute;inset:0;z-index:3;display:grid;place-items:center;background:#0006}
+.bz-cinema--midnight .pw-spin{width:20px;height:20px;border:3px solid var(--chip);border-top-color:var(--gold);border-radius:50%;animation:cn-spin .8s linear infinite}
