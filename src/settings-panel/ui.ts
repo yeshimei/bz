@@ -86,7 +86,7 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   pomodoro: async () => (await import('../pomodoro/ui')).pomodoroSettingsSchema(),
   encrypt: async () => (await import('../encrypt/ui')).encryptSettingsSchema(),
   'password-vault': async () => (await import('../password-vault/settings')).passwordVaultSettingsSchema(),
-  literature: async () => (await import('../literature/ui')).literatureSettingsSchema(),
+  knowledge: async () => (await import('../knowledge/ui')).knowledgeSettingsSchema(),
   smartcat: async () => {
     const { loadSmartCatData } = await import('../smartcat/data');
     const { smartcatSettingsSchema } = await import('../smartcat/ui');
@@ -133,7 +133,7 @@ export const DOMAINS: DomainDef[] = [
   { id: 'encrypt', name: '保险库', icon: DOMAIN_ICONS.encrypt, desc: '密码、加密笔记与加密日记', schemaLoader: schemaLoaders.encrypt },
   { id: 'password-vault', name: '密码本', icon: DOMAIN_ICONS['password-vault'], desc: '密码条目与生成器', schemaLoader: schemaLoaders['password-vault'] },
   { id: 'smartcat', name: '小橘陪伴猫', icon: DOMAIN_ICONS.smartcat, desc: '桌面宠物陪伴', schemaLoader: schemaLoaders.smartcat },
-  { id: 'literature', name: '文献盒', icon: DOMAIN_ICONS.literature, desc: '文献笔记与术语录入', schemaLoader: schemaLoaders.literature },
+  { id: 'knowledge', name: '知识盒', icon: DOMAIN_ICONS.knowledge, desc: '文献录入 · 卡片 · 主题', schemaLoader: schemaLoaders.knowledge },
 ];
 
 /** 导航语义分组（拍板原型 P1：基础/记录/媒体与知识/工具 四组；不在表内的域归「其他」尾组）。
@@ -141,7 +141,7 @@ export const DOMAINS: DomainDef[] = [
 export const NAV_SECS: Array<{ title: string; ids: string[] }> = [
   { title: '基础', ids: ['global', 'appearance', 'ai'] },
   { title: '记录', ids: ['diary', 'diary-wall', 'todo', 'belongings', 'clipping', 'favorites'] },
-  { title: '媒体与知识', ids: ['cinema', 'bookshelf', 'review', 'secondbrain', 'literature'] },
+  { title: '媒体与知识', ids: ['cinema', 'bookshelf', 'review', 'secondbrain', 'knowledge'] },
   { title: '工具', ids: ['pomodoro', 'encrypt', 'password-vault', 'smartcat'] },
 ];
 

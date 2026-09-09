@@ -5,12 +5,12 @@
  * ②解析坏文件 → 原样留档 CONFIG/.CORRUPT + 降级初始化后域功能可用。
  */
 import { describe, it, expect } from 'vitest';
-import { LiteratureData } from '../../src/literature/data';
+import { KnowledgeData } from '../../src/knowledge/data';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { MockVault } from '../mock-vault';
 
-const PATH = 'CONFIG/STORAGE/literature.json';
+const PATH = 'CONFIG/STORAGE/knowledge.json';
 
 /** 当前用例的 vault（setup 里记录，供断言读盘） */
 let _vault: MockVault;
@@ -20,17 +20,17 @@ function setup(seed?: any[]) {
   if (seed) _vault.files.set(PATH, JSON.stringify(seed));
   setApp({ vault: _vault } as any);
   setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as any);
-  LiteratureData.init({ storagePath: 'CONFIG/STORAGE' });
+  KnowledgeData.init({ storagePath: 'CONFIG/STORAGE' });
   return _vault;
 }
 
-describe('literature.json D3 可靠写契约', () => {
+describe('knowledge.json D3 可靠写契约', () => {
   it('①并发事务：addTask（面板）与 updateTask（守护进程回写）交错，双方改动都落盘', async () => {
     setup([{ id: 't1', url: 'https://b23.tv/1', status: 'processing', created: '2026-01-01 00:00:00' }]);
 
     await Promise.all([
-      LiteratureData.addTask({ url: 'https://b23.tv/2' }), // 面板追加
-      LiteratureData.updateTask('t1', { status: 'success', videoPath: '文献盒/v1.mp4' }), // 守护进程回写
+      KnowledgeData.addTask({ url: 'https://b23.tv/2' }), // 面板追加
+      KnowledgeData.updateTask('t1', { status: 'success', videoPath: '文献盒/v1.mp4' }), // 守护进程回写
     ]);
 
     const raw = JSON.parse(_vault.files.get(PATH)!);
@@ -46,7 +46,7 @@ describe('literature.json D3 可靠写契约', () => {
       { id: 't3', url: 'u3', status: 'success', archived: true, created: '2026-01-01 00:00:00' },
     ]);
 
-    await Promise.all([LiteratureData.deleteTask('t2'), LiteratureData.clearHistory()]);
+    await Promise.all([KnowledgeData.deleteTask('t2'), KnowledgeData.clearHistory()]);
 
     const raw = JSON.parse(_vault.files.get(PATH)!);
     // 串行执行后：清历史删 archived（t1/t3），删任务删 t2 —— 终态为两次事务的先后叠加
@@ -59,14 +59,14 @@ describe('literature.json D3 可靠写契约', () => {
     const broken = '[{"id":"t1","url":'; // 半截 JSON
     _vault.files.set(PATH, broken);
 
-    const tasks = await LiteratureData.loadTasks(); // 留档 + 降级空列表，不抛
+    const tasks = await KnowledgeData.loadTasks(); // 留档 + 降级空列表，不抛
     expect(tasks).toEqual([]);
-    const backups = [..._vault.files.keys()].filter((p) => p.startsWith('CONFIG/.CORRUPT/literature.json.'));
+    const backups = [..._vault.files.keys()].filter((p) => p.startsWith('CONFIG/.CORRUPT/knowledge.json.'));
     expect(backups).toHaveLength(1);
-    expect(backups[0]).toMatch(/^CONFIG\/\.CORRUPT\/literature\.json\.\d{8}-\d{6}\.bak$/);
+    expect(backups[0]).toMatch(/^CONFIG\/\.CORRUPT\/knowledge\.json\.\d{8}-\d{6}\.bak$/);
     expect(_vault.files.get(backups[0])).toBe(broken); // 原文原样留档
     // 降级后域功能可用
-    const task = await LiteratureData.addTask({ url: 'https://b23.tv/9' });
+    const task = await KnowledgeData.addTask({ url: 'https://b23.tv/9' });
     expect(task.status).toBe('pending');
   });
 });

@@ -102,14 +102,14 @@ describe('批 B-3：触控热区收编 core .bz-touch-target', () => {
 
 describe('批 B-4：z-index 静态大数收口（ADR-0067）', () => {
   it('literature：遮罩/窗口/小型弹窗静态档清零（显示路径 topifyZ 发号已就位）', () => {
-    const css = repo('src/literature/styles.css');
+    const css = repo('src/knowledge/styles.css');
     expect(css).not.toMatch(/z-index:/); // 域内原本仅 3 处静态档，全清
-    for (const sel of ['.bz-lit-mask', '.bz-lit-window', '.bz-lit-dialog']) {
+    for (const sel of ['.bz-kb-mask', '.bz-kb-window', '.bz-lit-dialog']) {
       const rule = css.match(new RegExp(`${sel.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\s*\\{[^}]*\\}`));
       expect(rule, sel).toBeTruthy();
     }
     // 五处显示路径均动态发号（遮罩在前本体在后）
-    const ui = repo('src/literature/ui.ts');
+    const ui = repo('src/knowledge/ui.ts');
     expect(ui.match(/topifyZ\(/g)!.length).toBeGreaterThanOrEqual(5);
   });
 

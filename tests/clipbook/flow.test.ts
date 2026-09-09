@@ -15,8 +15,8 @@ import { getNewsFilePath, readNewsData } from '../../src/clipbook/news-data';
 import { drainNewsWritesForTests } from '../../src/clipbook/write-queue';
 import { flowSave, flowMarkAllRead, flowUndoHandled, flowUndoDeleteNews, flowDeleteNews } from '../../src/clipbook/flow';
 
-vi.mock('../../src/literature', () => ({ openLiteratureAddTask: vi.fn() }));
-const { openLiteratureAddTask } = await import('../../src/literature');
+vi.mock('../../src/knowledge', () => ({ openKnowledgeAddTask: vi.fn() }));
+const { openKnowledgeAddTask } = await import('../../src/knowledge');
 
 function seedDisk(articles: any[]): MockVault {
   const vault = new MockVault();
@@ -41,7 +41,7 @@ const diskJson = (vault: MockVault) => JSON.parse(vault.files.get(getNewsFilePat
 beforeEach(() => {
   resetObsidianMocks();
   setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', articleDirectory: '归档/网页剪藏' } as any));
-  vi.mocked(openLiteratureAddTask).mockClear();
+  vi.mocked(openKnowledgeAddTask).mockClear();
 });
 
 describe('B站保存分流回写（enh 包 11）', () => {
@@ -51,7 +51,7 @@ describe('B站保存分流回写（enh 包 11）', () => {
     ]);
     const ok = await flowSave({ raw: diskJson(vault).articles[0] });
     expect(ok).toBe(true);
-    expect(openLiteratureAddTask).toHaveBeenCalledTimes(1);
+    expect(openKnowledgeAddTask).toHaveBeenCalledTimes(1);
     await drainNewsWritesForTests();
     const disk = diskJson(vault);
     const a = disk.articles.find((x: any) => x.url === 'https://b23.tv/1');

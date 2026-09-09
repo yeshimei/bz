@@ -201,8 +201,8 @@ export default interface BzSettings {
   reviewSkinTheme: string;
   secondbrainSkin: string;
   secondbrainSkinTheme: string;
-  literatureSkin: string;
-  literatureSkinTheme: string;
+  knowledgeSkin: string;
+  knowledgeSkinTheme: string;
   pomodoroSkin: string;
   pomodoroSkinTheme: string;
   encryptSkin: string;
@@ -355,35 +355,37 @@ export default interface BzSettings {
   /** 保险箱：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   /** 文献盒：移动端默认全屏（默认关——95% 居中卡，ADR-0065） */
   /** 文献盒：步骤进度详细度（默认开——当前步骤+耗时+百分比+步骤时间线；关=仅步骤徽章，ADR-0066） */
-  literatureProgressDetail: boolean;
+  knowledgeProgressDetail: boolean;
   /** 文献盒：处理完是否保留视频原件（默认保留；关=只出文献笔记不落视频，ADR-0066） */
-  literatureKeepVideo: boolean;
+  knowledgeKeepVideo: boolean;
   /** 文献盒：下载清晰度（'highest'/'1080'/'720'，默认最高；透传工具 options.quality，ADR-0066） */
-  literatureQuality: string;
+  knowledgeQuality: string;
   /** 文献盒：遇错即停（默认关=失败后继续；开=单条失败后剩余保持待处理，ADR-0066） */
-  literatureStopOnFailure: boolean;
+  knowledgeStopOnFailure: boolean;
   /** 文献盒：输出目录覆盖（默认空=跟随工具配置 ~/.bilibili-dl.json 的 outputDir，ADR-0066） */
-  literatureOutputDir: string;
+  knowledgeOutputDir: string;
   /** 文献盒：压缩开关（默认开——用户拍板 ticket 136；透传工具 options.compress） */
-  literatureCompress: boolean;
+  knowledgeCompress: boolean;
   /** 文献盒：压缩质量 CRF（默认 23，范围 18-28；透传工具 options.crf，ticket 136） */
-  literatureCrf: number;
+  knowledgeCrf: number;
   /** 文献盒：文献目录（文献笔记落盘位置，默认 vault 根下「文献盒」；ticket 136/ADR-0072） */
-  literatureDirectory: string;
+  knowledgeCardboxDirectory: string;
+  knowledgeTopicDirectory: string;
+  knowledgeDirectory: string;
   /** 文献盒：领域词表（逗号分隔；空 = AI 自由写，ticket 136/ADR-0073） */
-  literatureDomainList: string;
+  knowledgeDomainList: string;
   /** 文献盒：ffmpeg 路径（原工具 rc ffmpegPath，ticket 136 全并进设置） */
-  literatureFfmpegPath: string;
+  knowledgeFfmpegPath: string;
   /** 文献盒：ffprobe 路径（原工具 rc ffprobePath） */
-  literatureFfprobePath: string;
+  knowledgeFfprobePath: string;
   /** 文献盒：Python 路径（faster-whisper，原工具 rc pythonPath） */
-  literaturePythonPath: string;
+  knowledgePythonPath: string;
   /** 文献盒：Whisper 模型（原工具 rc whisperModel） */
-  literatureWhisperModel: string;
+  knowledgeWhisperModel: string;
   /** 文献盒：缓存目录（原工具 rc cacheDir；留空=系统临时目录/bili-dl-cache） */
-  literatureCacheDir: string;
+  knowledgeCacheDir: string;
   /** 文献盒：缓存保留天数（原工具 rc cacheRetentionDays） */
-  literatureCacheRetentionDays: number;
+  knowledgeCacheRetentionDays: number;
 
   // ===== 🐱 小橘陪伴猫（smartcat 域：桌面宠物 + AI 陪伴）=====
   /** 小橘启用开关（l7A）：仅控制启动时自动加载（猫容器挂载/常驻行为），关闭后仍可从命令面板手动打开 */
@@ -630,29 +632,31 @@ export const DEFAULT_SETTINGS: BzSettings = {
   reviewSkinTheme: 'sage',
   secondbrainSkin: 'default',
   secondbrainSkinTheme: 'graphite',
-  literatureSkin: 'default',
-  literatureSkinTheme: 'manila',
+  knowledgeSkin: 'default',
+  knowledgeSkinTheme: 'manila',
   pomodoroSkin: 'default',
   pomodoroSkinTheme: 'tomato',
   encryptSkin: 'default',
   encryptSkinTheme: 'steel',
   favoritesSortKey: 'created',
   // 文献盒处理设置（键名随域更名 literature*；ticket 136 默认值=既存行为不动，零迁移）
-  literatureProgressDetail: true,
-  literatureKeepVideo: true,
-  literatureQuality: 'highest',
-  literatureStopOnFailure: false,
-  literatureOutputDir: '',
-  literatureCompress: true,
-  literatureCrf: 23,
-  literatureDirectory: '文献盒',
-  literatureDomainList: '',
-  literatureFfmpegPath: 'ffmpeg',
-  literatureFfprobePath: 'ffprobe',
-  literaturePythonPath: '',
-  literatureWhisperModel: 'small',
-  literatureCacheDir: '',
-  literatureCacheRetentionDays: 7,
+  knowledgeProgressDetail: true,
+  knowledgeKeepVideo: true,
+  knowledgeQuality: 'highest',
+  knowledgeStopOnFailure: false,
+  knowledgeOutputDir: '',
+  knowledgeCompress: true,
+  knowledgeCrf: 23,
+  knowledgeCardboxDirectory: '卡片盒',
+  knowledgeTopicDirectory: '主题盒',
+  knowledgeDirectory: '文献盒',
+  knowledgeDomainList: '',
+  knowledgeFfmpegPath: 'ffmpeg',
+  knowledgeFfprobePath: 'ffprobe',
+  knowledgePythonPath: '',
+  knowledgeWhisperModel: 'small',
+  knowledgeCacheDir: '',
+  knowledgeCacheRetentionDays: 7,
   // 设置面板（ADR-0080）：移动端默认全屏（默认开）；布局默认经纬；主题默认晨昏（跟随亮暗）
   settingsPanelLayout: 'jingwei',
   settingsPanelSkin: 'chenhun',

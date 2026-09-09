@@ -106,7 +106,7 @@ var BZR_home = (() => {
     { id: "favorites", commandId: "bz-favorites-open", name: "收藏本", sub: "收藏条目", icon: iconOf("favorites") },
     { id: "clipping", commandId: "bz-clipbook-open", name: "剪藏本", sub: "未读流与剪藏", icon: iconOf("clipping") },
     // 文献盒（literature 域，ADR-0072）：文献笔记列表 + 视频/术语录入（补内容域曝光位）
-    { id: "literature", commandId: "bz-literature-open", name: "文献盒", sub: "文献笔记与录入", icon: iconOf("literature") },
+    { id: "literature", commandId: "bz-knowledge-open", name: "文献盒", sub: "文献笔记与录入", icon: iconOf("literature") },
     // 旧书库（library）域退役：本卡由书架墙（bookshelf）承接（id 变更后旧 home.json 里钉选的 library 自动失效，可在编辑模式重钉）
     { id: "bookshelf", commandId: "bz-bookshelf-open", name: "书库", sub: "藏书与读书笔记", icon: iconOf("bookshelf") },
     // 第二大脑（secondbrain 域，issue 251）：主面板统一入口（检索/对话/灵感参考都从面板进）
