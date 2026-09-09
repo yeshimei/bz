@@ -15,6 +15,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.argv[2]) || 5177;
 const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml' };
 
+// 本机登记：未收拢进 prototypes/<域>/ 的评审原型（git 外，如 .zcode 下的单文件原型）——
+// 导航页出卡片、目录纳入监听（.ts/.css/.html/.js 变化直接广播刷新；不在构建清单 → 不触发产物重出）
+const EXTRA_PROTOTYPES = [
+  { id: 'knowledge', name: '知识盒', desc: '词典皮三部 · 文献 / 卡片 / 主题', href: '/.zcode/ui-prototypes/knowledge-box-c/index.html', dir: '.zcode/ui-prototypes/knowledge-box-c' },
+];
+
 // 监听两棵源树（相对仓库根的 rel 前缀区分）：src/ = 插件源码；prototypes/ = 评审工件
 const srcRoot = path.join(ROOT, 'src');
 const protoRoot = path.join(ROOT, 'prototypes');
@@ -56,6 +62,17 @@ function watchRoot(rootName, rootPath) {
 }
 watchRoot('src', srcRoot);
 watchRoot('prototypes', protoRoot);
+// 本机登记原型目录：纳入监听（knowledge 等不在构建清单，scheduleReload 只广播刷新不重出产物）
+for (const extra of EXTRA_PROTOTYPES) {
+  const dir = path.join(ROOT, extra.dir);
+  if (!fs.existsSync(dir)) continue;
+  fs.watch(dir, { recursive: true }, (_ev, filename) => {
+    if (!filename) return;
+    const rel = extra.dir + '/' + filename.split(path.sep).join('/');
+    if (!/\.(ts|css|html|js)$/.test(rel)) return;
+    scheduleReload(rel, extra.id);
+  });
+}
 
 const clients = new Set();
 http.createServer((req, res) => {
@@ -90,6 +107,13 @@ http.createServer((req, res) => {
         return `<a class="card${has ? '' : ' off'}" href="/prototypes/${d}/prototype.html"><b>${name}</b><span class="id">${d}</span>${desc ? `<span class="desc">${desc}</span>` : ''}</a>`;
       })
       .join('\n');
+    // 本机登记原型（未收拢域）：同样出卡，直链其实际路径
+    const extraItems = EXTRA_PROTOTYPES
+      .map((e) => {
+        const has = fs.existsSync(path.join(ROOT, e.dir, path.basename(e.href)));
+        return `<a class="card${has ? '' : ' off'}" href="${e.href}"><b>${e.name}</b><span class="id">${e.id}</span>${e.desc ? `<span class="desc">${e.desc}</span>` : ''}</a>`;
+      })
+      .join('\n');
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
     res.end(`<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>原型预览 · 单源域导航</title><style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -105,7 +129,7 @@ a.card .desc{font-size:11.5px;color:#6d675c;margin-top:3px;line-height:1.5}
 a.card.off{opacity:.45}
 </style></head><body><div class="wrap"><h1>原型预览 · 行为单源域导航</h1>
 <div class="sub">SSE 热刷新已注入各评审壳：改 ${'src/<域>/** 或 prototypes/<域>/**'} 的 .ts/.css/.html 自动重出产物并刷新。快捷键返回本页：浏览器后退。</div>
-<div class="grid">\n${items}\n</div></div></body></html>`);
+<div class="grid">\n${items}\n${extraItems}\n</div></div></body></html>`);
     return;
   }
   let file = path.normalize(path.join(ROOT, decodeURIComponent(url.pathname)));
@@ -122,6 +146,6 @@ a.card.off{opacity:.45}
   }
 }).listen(PORT, () => {
   const watched = [...new Set([...BEHAVIOR_DOMAINS, ...PREVIEW_DOMAINS])];
-  console.log(`[preview-live] http://localhost:${PORT}/prototypes/${PREVIEW_DOMAINS[0]}/prototype.html`);
-  console.log(`[preview-live] 监听：src/ 与 prototypes/ 的 {${watched.join(',')}}/** 的 .ts/.css/.html`);
+  console.log(`[preview-live] 导航首页 http://localhost:${PORT}/（单源域卡片 + 本机登记原型）`);
+  console.log(`[preview-live] 监听：src/ 与 prototypes/ 的 {${watched.join(',')}}/** 的 .ts/.css/.html；本机登记：${EXTRA_PROTOTYPES.map((e) => e.dir).join('、') || '无'}`);
 });
