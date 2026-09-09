@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>收藏本 · 原型预览（真行为单源）</title>
+<!--
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ 本文件 = 收藏本域 UI 的评审壳（行为单源版，issue 245/ADR-0106，            │
+  │ 范式随 belongings 试点）。                                               │
+  │ 组件样式零内联，全部来自（与 build-css SOURCES 同序）：                    │
+  │   ../core/styles.css → ../core/ui/tokens.css → ../core/ui/components.css │
+  │   → ./styles.css                                                        │
+  │ markup 单源（ADR-0104/0105）：面板/磁贴/卡片/菜单/抽屉/表单 HTML 出自       │
+  │   ./shared.ts + ./layouts/board/render.ts（prototype-render.js 产物已于    │
+  │   2026-09-09 退役——壳不再自绘渲染，两侧 markup 均由真 ui.ts 消费同一份）。    │
+  │ 行为单源（issue 245/ADR-0106）：交互逻辑全部是插件同款 ui.ts 依赖链——       │
+  │   经 ./prototype-behavior.js（src/favorites/fake-sim.ts 构建，             │
+  │   alias obsidian→公共假层）在下方两个 iframe 视图里跑真行为；                │
+  │   桌面 iframe 920px 宽视口 = 桌面 900×620 本体；移动 iframe 396px =        │
+  │   styles.css 移动全屏态。数据 = localStorage favorites.json（数组同构；     │
+  │   跨 iframe storage 桥共享数据源，favorites 的自动刷新接线在插件侧域外，    │
+  │   ui.ts 链上无 modify 订阅——跨实例刷新以「重开面板」语义验证）。             │
+  │ 壳内只允许：外景容器样式、评审徽牌、演示钩子与自检。                        │
+  └────────────────────────────────────────────────────────────────────────┘
+-->
+<link rel="stylesheet" href="../../src/core/styles.css">
+<link rel="stylesheet" href="../../src/core/ui/tokens.css">
+<link rel="stylesheet" href="../../src/core/ui/components.css">
+<link rel="stylesheet" href="../../src/favorites/styles.css">
+<style>
+  /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 32px 24px;
+    background: #e3e0d8; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+  /* 模拟 Obsidian 宿主变量（core/styles.css 的弹层/通知取值用；插件内由主题提供） */
+  body {
+    --background-primary: #fbf9f3; --text-normal: #171512; --text-muted: #8b8474; --text-faint: #b3ab99;
+    --text-error: #b3564d; --background-modifier-hover: rgba(23,21,18,.06); --color-green: #3d8f5d;
+  }
+  * { scrollbar-width: none; } *::-webkit-scrollbar { display: none; }
+
+  /* 桌面外景（真行为 iframe：面板 append iframe body，本体 900×620 来自 styles.css） */
+  .demo-dt { flex: none; width: 920px; height: 640px; }
+  /* 移动外景：396px iframe → 全屏态 100vw/100vh 即手机框尺寸 */
+  .demo-mob { width: 396px; height: 780px; border-radius: 26px; overflow: hidden; flex: none;
+    border: 1px solid #d8d1c0; box-shadow: 0 8px 30px rgba(0,0,0,.14); background: #f5f2ec; }
+  .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
+
+  /* 评审徽牌（演示壳自用） */
+  .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #9a917d; display: flex; gap: 10px; align-items: center;
+    background: rgba(255,255,255,.9); border: 1px solid #d8d1c0; padding: 3px 8px; z-index: 900; }
+  .vbadge button { border: none; background: none; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; }
+  .vbadge .ok { color: #3d8f5d; }
+  .vbadge .bad { color: #b3564d; }
+</style>
+</head>
+<body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark，壳内必须补一类才不透明 -->
+  <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="收藏本·桌面"></iframe></div>
+  <div id="mobHost" class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="收藏本·移动"></iframe></div>
+
+  <div class="vbadge">收藏本 · 真行为单源预览（桌面=真 ui.ts 跑在 920px，移动=396px）· 真实 51 条
+    <button id="mobToggle">隐藏移动端</button>
+    <button id="reset">重置演示数据</button>
+    <span id="stResult"></span>
+  </div>
+
+<script src="./prototype-icons.js"></script>
+<script src="./prototype-data.js"></script>
+<script>
+(function () {
+  /* ==================== 壳基座（仅外景）：两个真行为 iframe + 数据种子 ====================
+   * 行为全部在 iframe 内跑真 ui.ts（prototype-behavior.js）；本页只做：
+   *  - 数据种子（FAV.ITEMS 首启写 localStorage favorites.json，数组同构，见 fake-sim seedDatabase）
+   *  - 重置演示数据（清 localStorage 后重载 iframe）
+   *  - 自检（?selftest=1）：经 iframe contentWindow 访问真 DOM
+   */
+  const LS = 'bz-sim:CONFIG/STORAGE/favorites.json';
+  const seedOnce = () => {
+    if (localStorage.getItem(LS)) return;
+    localStorage.setItem(LS, JSON.stringify(window.FAV?.ITEMS || []));
+  };
+  seedOnce();
+
+  const dtFrame = () => document.querySelector('#dtHost iframe');
+  const mobFrame = () => document.querySelector('#mobHost iframe');
+  const dtDoc = () => dtFrame().contentDocument;
+  const mobDoc = () => mobFrame().contentDocument;
+  // 轮询现取 contentDocument：iframe 加载前后 document 引用会替换（about:blank → 真实文档），
+  // 不能缓存旧引用等面板——每次现查，跨文档访问本身同源安全。
+  const waitFrame = (getDoc, sel) => new Promise((res, rej) => {
+    const started = Date.now();
+    const tries = () => {
+      try {
+        const doc = getDoc();
+        if (doc && doc.querySelector(sel)) return res(doc);
+        if (Date.now() - started > 25000) return rej(new Error('iframe 面板超时'));
+        setTimeout(tries, 150);
+      } catch (e) { setTimeout(tries, 150); }
+    };
+    tries();
+  });
+
+  document.querySelector('#mobToggle').addEventListener('click', () => {
+    const m = document.querySelector('#mobHost');
+    const hidden = m.style.display === 'none';
+    m.style.display = hidden ? '' : 'none';
+    document.querySelector('#mobToggle').textContent = hidden ? '隐藏移动端' : '显示移动端';
+  });
+
+  document.querySelector('#reset').addEventListener('click', () => {
+    localStorage.removeItem(LS);
+    localStorage.removeItem('bz-fav-c5-shared-v1'); // 旧壳数据键一并清（防误读旧壳残留）
+    location.reload();
+  });
+
+  /* ==================== 自检（?selftest=1）：真行为 DOM 断言（经 iframe） ==================== */
+  if (location.search.includes('selftest')) {
+    window.__st = { pass: 0, fail: [] };
+    const t = (name, cond) => cond ? window.__st.pass++ : window.__st.fail.push(name);
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    (async () => {
+      const res = document.querySelector('#stResult');
+      try {
+        // 数据基线检查：种子应是 FAV.ITEMS 全量（51 条）。若残留上次运行（非基线数或含「测试收藏」）
+        // 则重置重载一次。headless 验收每次全新 profile 天然干净；浏览器手动重复跑 selftest 也能自清理。
+        const BASE = (window.FAV?.ITEMS || []).length;
+        const pre = (() => { try { return JSON.parse(localStorage.getItem(LS) || 'null'); } catch { return null; } })();
+        const dirty = !Array.isArray(pre) || pre.length !== BASE || pre.some((i) => i.title === '测试收藏');
+        if (dirty) {
+          if (!location.search.includes('reset=1')) {
+            localStorage.removeItem(LS);
+            seedOnce();
+            location.search = '?selftest=1&reset=1';
+            return;
+          }
+        }
+        const db = () => JSON.parse(localStorage.getItem(LS));
+        const dd = await waitFrame(dtDoc, '.bz-fav-panel');
+        const md = await waitFrame(mobDoc, '.bz-fav-panel');
+        res.textContent = '…';
+        const dt = (sel) => dd.querySelector(sel);
+        const mob = (sel) => md.querySelector(sel);
+        const dtCards = () => dd.querySelectorAll('[data-fav-content] .bz-fav-card').length;
+        const mobCards = () => md.querySelectorAll('[data-fav-content] .bz-fav-card').length;
+        const chipOf = (doc, label) => [...doc.querySelectorAll('[data-fav-tag]')].find((b) => b.dataset.favTag === label);
+        const firstCardTitle = (doc) => doc.querySelector('[data-fav-content] .bz-fav-card h3')?.textContent || '';
+        const alive0 = db().filter((i) => !i.archived);
+
+        t('桌面面板开', !!dt('.bz-fav-panel'));
+        t('移动面板开', !!mob('.bz-fav-panel'));
+        t('初始51条', db().length === BASE);
+        t('桌面卡数=非归档数', dtCards() === alive0.length);
+        t('移动卡数=非归档数', mobCards() === alive0.length);
+        t('磁贴首枚=全部', dt('[data-fav-tag]')?.dataset.favTag === '全部');
+        t('已归档贴纸在场', !!chipOf(dd, '已归档'));
+        t('新收藏chip在场', !!dt('[data-fav-add]'));
+        t('磁贴图标兑现', !!dt('[data-fav-tags] button svg')); // fake setIcon + FAV_ICONS 表生效
+        t('移动关闭钮在场', !!mob('[data-fav-close]'));
+        t('移动磁贴新收藏置首', mob('[data-fav-tags]')?.firstElementChild?.hasAttribute('data-fav-add') === true);
+
+        // 归档视图（磁贴切换，渲染同步）
+        chipOf(dd, '已归档').click();
+        await sleep(50);
+        t('归档视图卡数=归档数', dtCards() === db().filter((i) => i.archived).length);
+        t('归档卡带冷存类', !!dt('[data-fav-content] .bz-fav-card.bz-fav-arch'));
+        chipOf(dd, '已归档').click();
+        await sleep(50);
+        t('再点回全部', dtCards() === alive0.length);
+
+        // 标签筛选（磁贴；renderAll 会重绘磁贴行——chip 引用不可缓存，每次现取）
+        chipOf(dd, 'GitHub').click();
+        await sleep(50);
+        const ghOk = dtCards() > 0 && [...dd.querySelectorAll('[data-fav-content] .bz-fav-card')].every((c) => c.querySelector('.bz-fav-tags-row')?.textContent.includes('GitHub'));
+        t('GitHub筛选命中', ghOk);
+        chipOf(dd, 'GitHub').click();
+        await sleep(50);
+        t('再点取消筛选', dtCards() === alive0.length);
+
+        // 新增（桌面表单，真 saveForm 走 jsonFileStore 写队列）
+        dt('[data-fav-add]').click();
+        await sleep(80);
+        t('表单开', !!dd.querySelector('.bz-fav-form-mask .bz-fav-form'));
+        dd.querySelector('#fz-title').value = '测试收藏';
+        dd.querySelector('#fz-tags [data-tag="网站"]').click();
+        dd.querySelector('#fz-save').click();
+        await sleep(250);
+        const saved = db();
+        const nu = saved.find((i) => i.title === '测试收藏');
+        t('新增落盘', !!nu);
+        t('表单已关', !dd.querySelector('.bz-fav-form'));
+        t('新增卡在场', !!dt(`[data-fav-id="${nu.id}"]`));
+        t('新增卡标签徽记', dt(`[data-fav-id="${nu.id}"] .bz-fav-tags-row`)?.textContent.includes('网站') === true);
+
+        // 跨实例共享（storage 桥写同源 favorites.json；favorites 无 modify 订阅，
+        // 自动刷新接线在插件侧域外——以「重开面板」语义验证移动侧读到新数据）
+        mobFrame().contentWindow.BZW_favorites.closePanel();
+        mobFrame().contentWindow.BZW_favorites.openPanel();
+        await waitFrame(mobDoc, '.bz-fav-panel');
+        await sleep(250);
+        t('重开后移动同步51+1', mobCards() === alive0.length + 1);
+
+        // 右键菜单：置顶/取消置顶（真 runAction pin 落盘）
+        // 右键菜单/浮层 capture 层需完整鼠标事件序列（mousedown+mouseup+click 带真实坐标）
+        const clickReal = (el) => {
+          if (!el) return;
+          const r = el.getBoundingClientRect();
+          const mk = (type) => new MouseEvent(type, { clientX: r.left + 10, clientY: r.top + 10, bubbles: true, cancelable: true });
+          el.dispatchEvent(mk('mousedown'));
+          el.dispatchEvent(mk('mouseup'));
+          el.dispatchEvent(mk('click'));
+        };
+        dd.querySelector(`[data-fav-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
+        await sleep(100);
+        t('右键菜单开', !!dd.querySelector('.bz-fav-ctx'));
+        const pinBtn = [...dd.querySelectorAll('.bz-fav-ctx button')].find((b) => b.textContent.includes('置顶') && !b.textContent.includes('取消'));
+        clickReal(pinBtn);
+        await sleep(250);
+        t('置顶生效', db().find((i) => i.id === nu.id).pinned === true);
+        t('置顶卡挂金边类', !!dt(`[data-fav-id="${nu.id}"].bz-fav-pinc`));
+        t('置顶恒最前', firstCardTitle(dd) === '测试收藏');
+        dd.querySelector(`[data-fav-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
+        await sleep(100);
+        const unpinBtn = [...dd.querySelectorAll('.bz-fav-ctx button')].find((b) => b.textContent.includes('取消置顶'));
+        clickReal(unpinBtn);
+        await sleep(250);
+        t('取消置顶', db().find((i) => i.id === nu.id).pinned === false);
+
+        // 删除 + 撤销（真 flow-dialog 标准双动作 + 真 notice 撤销钮）
+        dd.querySelector(`[data-fav-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
+        await sleep(100);
+        const delItem = [...dd.querySelectorAll('.bz-fav-ctx button')].find((b) => b.textContent.includes('删除'));
+        t('删除菜单项在', !!delItem);
+        clickReal(delItem);
+        await sleep(150);
+        // 删除确认 = core flow-dialog 标准双动作（取消左/删除右：__shared_confirm_ok__）
+        const delBtn = dd.querySelector('#__shared_confirm_ok__');
+        t('删除确认框开', !!delBtn);
+        clickReal(delBtn);
+        await sleep(250);
+        t('删除生效', !db().some((i) => i.id === nu.id));
+        // 撤销（真 notice 的撤销钮在 iframe body 内）
+        const undoBtn = [...dd.querySelectorAll('.bz-notice-action')].pop();
+        if (undoBtn) undoBtn.click();
+        await sleep(250);
+        t('撤销恢复', !!db().some((i) => i.id === nu.id));
+
+        // 移动抽屉（真 openMobSheet；点遮罩本体关闭——与 core item-actions 抽屉的 touch 下拉关闭不同）
+        mob('[data-fav-content] [data-fav-id]').click();
+        await sleep(100);
+        t('移动抽屉开', !!md.querySelector('.bz-fav-sheet-mask.bz-fav-show'));
+        t('抽屉磁点+标题', !!md.querySelector('.bz-fav-sheet .bz-fav-sh-dot') && !!md.querySelector('.bz-fav-sheet .bz-fav-sh-title'));
+        t('抽屉动作列在场', md.querySelectorAll('.bz-fav-sheet .bz-fav-sh-acts button').length >= 4);
+        md.querySelector('.bz-fav-sheet-mask').click();
+        await sleep(80);
+        t('移动抽屉关', !md.querySelector('.bz-fav-sheet-mask'));
+
+        document.title = window.__st.fail.length
+          ? 'SELFTEST FAIL ' + window.__st.fail.join(',')
+          : `SELFTEST OK ${window.__st.pass}/${window.__st.pass + window.__st.fail.length}`;
+        res.textContent = window.__st.fail.length ? '自检失败' : `自检通过 ${window.__st.pass}`;
+        res.className = window.__st.fail.length ? 'bad' : 'ok';
+      } catch (err) {
+        document.title = 'SELFTEST ERR ' + (err && err.message || err);
+        res.textContent = '自检异常';
+        res.className = 'bad';
+      }
+    })();
+  }
+})();
+</script>
+</body>
+</html>

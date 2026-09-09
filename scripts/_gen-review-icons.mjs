@@ -1,5 +1,5 @@
 // 一次性图标表生成（issue 253）：从既有域图标表并集抽取复习域所需图标。
-// 运行：node scripts/_gen-review-icons.mjs（产物 src/review/prototype-icons.js 入库）。
+// 运行：node scripts/_gen-review-icons.mjs（产物 prototypes/review/prototype-icons.js 入库）。
 import fs from 'node:fs';
 
 const need = [
@@ -7,13 +7,13 @@ const need = [
   'file-text', 'check', 'inbox', 'history', 'trash-2', 'chevron-down', 'plus', 'clock', 'undo-2',
 ];
 const sources = [
-  'src/belongings/prototype-icons.js',
-  'src/clipbook/prototype-icons.js',
-  'src/cinema/prototype-icons.js',
-  'src/home/prototype-icons.js',
-  'src/settings-panel/prototype-icons.js',
-  'src/bookshelf/prototype-icons.js',
-  'src/favorites/prototype-icons.js',
+  'prototypes/belongings/prototype-icons.js',
+  'prototypes/clipbook/prototype-icons.js',
+  'prototypes/cinema/prototype-icons.js',
+  'prototypes/home/prototype-icons.js',
+  'prototypes/settings-panel/prototype-icons.js',
+  'prototypes/bookshelf/prototype-icons.js',
+  'prototypes/favorites/prototype-icons.js',
 ];
 const table = {};
 for (const f of sources) {
@@ -42,5 +42,5 @@ const out =
   '// 自动生成（issue 253）：既有域图标表并集抽取（复习域消费面：队列头行/底部行/冲刺/空态/抽屉）。\n' +
   '// 手改无效，重跑 node scripts/_gen-review-icons.mjs 覆盖。加载顺序：本文件先于 prototype-behavior.js。\n' +
   'window.RVW_ICONS = ' + JSON.stringify(table, null, 2) + ';\n';
-fs.writeFileSync('src/review/prototype-icons.js', out);
+fs.writeFileSync('prototypes/review/prototype-icons.js', out);
 console.log('written', Object.keys(table).length, 'icons; missing:', missing.join(',') || '(none)');

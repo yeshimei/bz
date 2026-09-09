@@ -1,12 +1,13 @@
 // scripts/build-preview.mjs — 域渲染纯层 → 评审壳预览包（issue 237/ADR-0104）
 //
 // 把 src/<域>/render.ts（零依赖 markup 单源）打成 IIFE 单文件
-// src/<域>/prototype-render.js，挂 window.BZR_<域>，供 prototype.html 壳脚本消费——
+// prototypes/<域>/prototype-render.js，挂 window.BZR_<域>，供 prototype.html 壳脚本消费——
 // 与插件 ui.ts 消费同一份 markup，改一处两侧生效。
+// 评审工件统一收在根级 prototypes/<域>/（2026-09-09 决策）；域源码留 src/<域>/。
 //
 // - 产物提交入 git：保「双击原型零依赖」（prototype-icons.js/prototype-data.js 同款先例）；
 // - 输出确定性（banner 静态、无时间戳），避免 git 状态噪音；
-// - 本脚本只写 src/**，不触碰 vault 插件目录——可在 worktree 内安全执行
+// - 本脚本只写 prototypes/** 与 src/**（重出产物），不触碰 vault 插件目录——可在 worktree 内安全执行
 //   （esbuild.config.mjs 的主构建/部署仍按铁律只在主仓库跑）。
 //
 // 用法：node scripts/build-preview.mjs [域 ...]（无参 = 渲染清单全量；显式指定域时
@@ -38,9 +39,9 @@ export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook",
 export const BEHAVIOR_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "favorites", "home", "password-vault", "review", "secondbrain", "settings-panel"];
 
 export async function buildBehavior(domain) {
-  const entry = path.join(ROOT, "src", domain, "fake-sim.ts");
+  const entry = path.join(ROOT, "prototypes", domain, "fake-sim.ts");
   if (!fs.existsSync(entry)) {
-    throw new Error(`行为入口缺失：src/${domain}/fake-sim.ts（清单见 BEHAVIOR_DOMAINS）`);
+    throw new Error(`行为入口缺失：prototypes/${domain}/fake-sim.ts（清单见 BEHAVIOR_DOMAINS）`);
   }
   const globalName = `BZW_${domain.replace(/-/g, "_")}`;
   await esbuild.build({
@@ -48,19 +49,19 @@ export async function buildBehavior(domain) {
     bundle: true,
     format: "iife",
     globalName,
-    outfile: path.join(ROOT, "src", domain, "prototype-behavior.js"),
+    outfile: path.join(ROOT, "prototypes", domain, "prototype-behavior.js"),
     target: "es2018",
     charset: "utf8",
     logLevel: "warning",
     alias: {
-      // 浏览器无 obsidian：替换为公共假层（接口与真实现一致，见 fake/fake-obsidian.ts）
-      obsidian: path.join(ROOT, "src", domain, "fake", "fake-obsidian.ts"),
+      // 浏览器无 obsidian：替换为公共假层（接口与真实现一致，见 prototypes/<域>/fake/fake-obsidian.ts）
+      obsidian: path.join(ROOT, "prototypes", domain, "fake", "fake-obsidian.ts"),
     },
     banner: {
-      js: `/* 构建产物（勿手改）：node scripts/build-preview.mjs — src/${domain}/fake-sim.ts → window.${globalName}（行为单源预览包，issue 245/ADR-0106） */`,
+      js: `/* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/${domain}/fake-sim.ts → window.${globalName}（行为单源预览包，issue 245/ADR-0106） */`,
     },
   });
-  console.log(`✓ src/${domain}/prototype-behavior.js ← fake-sim.ts（alias obsidian→fake）`);
+  console.log(`✓ prototypes/${domain}/prototype-behavior.js ← fake-sim.ts（alias obsidian→fake）`);
 }
 
 export async function buildPreview(domains = PREVIEW_DOMAINS) {
@@ -76,7 +77,7 @@ export async function buildPreview(domains = PREVIEW_DOMAINS) {
       bundle: true,
       format: "iife",
       globalName,
-      outfile: path.join(ROOT, "src", d, "prototype-render.js"),
+      outfile: path.join(ROOT, "prototypes", d, "prototype-render.js"),
       target: "es2018",
       charset: "utf8",
       logLevel: "warning",
@@ -84,7 +85,7 @@ export async function buildPreview(domains = PREVIEW_DOMAINS) {
         js: `/* 构建产物（勿手改）：node scripts/build-preview.mjs — src/${d}/render.ts → window.${globalName}（评审壳预览包，ADR-0104） */`,
       },
     });
-    console.log(`✓ src/${d}/prototype-render.js ← render.ts`);
+    console.log(`✓ prototypes/${d}/prototype-render.js ← src/${d}/render.ts`);
   }
 }
 

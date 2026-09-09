@@ -14,7 +14,7 @@ const favCss = () => repo('src/favorites/styles.css');
 const favUi = () => repo('src/favorites/ui.ts');
 const favShared = () => repo('src/favorites/shared.ts');
 const favRender = () => repo('src/favorites/layouts/board/render.ts');
-const favProto = () => repo('src/favorites/prototype.html');
+const favProto = () => repo('prototypes/favorites/prototype.html');
 
 describe('C1：域选择器脱离 core reset 同分顺序对抗 + 原型 core 链', () => {
   it('styles.css 磁贴/右键菜单 button 基础规则挂 .bz-fav-scope 前缀（(0,2,1)）', () => {
@@ -28,10 +28,10 @@ describe('C1：域选择器脱离 core reset 同分顺序对抗 + 原型 core �
 
   it('prototype.html link 链与 build-css SOURCES 同序（core 三份 → 域样式）', () => {
     const proto = favProto();
-    const stylesIdx = proto.indexOf('../core/styles.css');
-    const tokensIdx = proto.indexOf('../core/ui/tokens.css');
-    const componentsIdx = proto.indexOf('../core/ui/components.css');
-    const domainIdx = proto.indexOf('"./styles.css"');
+    const stylesIdx = proto.indexOf('../../src/core/styles.css');
+    const tokensIdx = proto.indexOf('../../src/core/ui/tokens.css');
+    const componentsIdx = proto.indexOf('../../src/core/ui/components.css');
+    const domainIdx = proto.indexOf('../../src/favorites/styles.css');
     for (const idx of [stylesIdx, tokensIdx, componentsIdx, domainIdx]) {
       expect(idx, '原型缺 link 链一环').toBeGreaterThan(-1);
     }
