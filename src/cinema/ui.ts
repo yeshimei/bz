@@ -10,13 +10,14 @@
  * 落域适配（ADR-0103 §5，原型不出）：移动头行补 ✕ 关闭钮；移动 ✦ 再点回列表。
  * 图标：lucide（纯层 data-lucide 占位 → mountIcons 统一 setIcon）；弹窗 ESC 走 escManager 层级。
  */
-import type { App } from 'obsidian';
+import type { App, IconName } from 'obsidian';
 import { TFile } from 'obsidian';
 import { notice, notifySaveError } from '../core/notice';
 import { emitDomainEvent } from '../core/domain-bus';
 import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { isMobileEnv } from '../core/mobile';
-import { topifyZ } from '../core/dom';
+import { topifyZ, longPress } from '../core/dom';
+import { openItemMenu, openItemSheet, closeItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
 import { tryGetSettings } from '../core/settings-provider';
 import { mountIcons } from '../core/ui';
 import {
@@ -32,7 +33,7 @@ import { enqueueDoubanFetch, isFetching } from './douban-queue';
 import {
   ICON, statusText, itemByKey, doubanSearchUrl,
   detailModalHtml, confirmModalHtml, formModalHtml,
-  aiPageHtml, actionRowsHtml, sheetHeadHtml, pcardHtml, type AiPageInput,
+  aiPageHtml, sheetHeadHtml, pcardHtml, type AiPageInput,
   midnightDeskHtml, midnightMobHtml, renderMidnightDesk, renderMidnightMob,
   type MidnightRenderInput,
 } from './render';
@@ -226,74 +227,53 @@ function panelToast(sec: HTMLElement | null, msg: string): void {
   setTimeout(() => t.remove(), 1800);
 }
 
-// ---------- 弹窗：右键菜单 / 长按抽屉 ----------
+// ---------- 弹窗：跟手菜单 / 长按抽屉（统一走 core/item-actions） ----------
+//
+// 手势与浮层实现全部交由共享层：桌面 contextmenu → core openItemMenu；移动端长按 →
+// core/dom.longPress → core openItemSheet。防穿透（长按松手补发的合成 click 会命中刚
+// 打开的遮罩把抽屉关掉，用户感知「长按没反应」）、下滑关闭、ESC、外部点击关闭、键盘导航
+// 均由 core 承载；本域只传动作集与皮肤类（观感见 styles.css 的皮肤段）。
 
-function closeMenus(): void {
-  M.currentOverlay?.querySelectorAll('.cn-menu').forEach((m) => m.remove());
-}
-function closeSheets(): void {
-  M.currentOverlay?.querySelectorAll('.cn-sheet,.cn-sheet-mask').forEach((x) => x.remove());
-}
+/** 浮层皮肤类（取色锚 cn-skin：core 浮层挂 body，不在面板树内，取不到午夜场调色板） */
+const MENU_SKIN = 'cn-skin cn-menu-skin';
+const SHEET_SKIN = 'cn-skin cn-sheet-skin';
 
-/** 桌面右键菜单（.cn-menu；坐标相对面板根；动作行 markup 单源 actionRowsHtml） */
-function openMenu(sec: HTMLElement, it: CinemaItem, app: App, x: number, y: number): void {
-  closeMenus();
-  const acts = itemActions(it, sec, app);
-  const el = document.createElement('div');
-  el.className = 'cn-menu';
-  el.innerHTML = actionRowsHtml(acts, 'cn-menu-item');
-  ovHost(sec).appendChild(el);
-  mountIcons(el);
-  const mw = el.offsetWidth, mh = el.offsetHeight, W = sec.clientWidth, H = sec.clientHeight;
-  el.style.left = Math.min(x, W - mw - 8) + 'px';
-  el.style.top = Math.min(y, H - mh - 8) + 'px';
-  el.addEventListener('click', (e) => {
-    const b = (e.target as HTMLElement).closest('[data-i]') as HTMLElement | null;
-    if (!b) return;
-    el.remove();
-    acts[Number(b.dataset.i)].run();
-  });
-  setTimeout(() => document.addEventListener('click', function h() { el.remove(); document.removeEventListener('click', h); }), 0);
+/** 域动作 → core ItemAction（icon 为 lucide 名，与 ItemAction.icon 同源） */
+function toItemActions(acts: MenuAct[]): ItemAction[] {
+  return acts.map((a) => ({
+    icon: a.icon as IconName,
+    label: a.label,
+    kind: a.danger ? 'danger' : undefined,
+    onClick: a.run,
+  }));
 }
 
-/** 移动端长按抽屉（.cn-sheet-mask + .cn-sheet，头=海报+名称+meta） */
-function openSheet(sec: HTMLElement, it: CinemaItem, app: App): void {
-  if (!sec.isConnected) return;
-  closeSheets();
-  const acts = itemActions(it, sec, app);
-  const url = posterUrl(it, app);
-  const mask = document.createElement('div');
-  mask.className = 'cn-sheet-mask';
-  const el = document.createElement('div');
-  el.className = 'cn-sheet';
-  el.innerHTML = sheetHeadHtml(it, url) + actionRowsHtml(acts, 'cn-sheet-item');
-  ovHost(sec).appendChild(mask);
-  ovHost(sec).appendChild(el);
-  mountIcons(el);
-  const closeAll = () => { mask.remove(); el.remove(); };
-  mask.addEventListener('click', closeAll);
-  el.addEventListener('click', (e) => {
-    const b = (e.target as HTMLElement).closest('[data-i]') as HTMLElement | null;
-    if (!b) return;
-    closeAll();
-    acts[Number(b.dataset.i)].run();
-  });
+/** 抽屉头部节点（海报 + 名称 + meta）：markup 单源 shared.sheetHeadHtml，core 侧要元素 */
+function sheetHeadEl(it: CinemaItem, url: string | null): HTMLElement {
+  const box = document.createElement('div');
+  box.innerHTML = sheetHeadHtml(it, url);
+  return (box.firstElementChild as HTMLElement) ?? box;
 }
 
-/** 长按绑定（m-grid 卡片每次重渲染重建后重挂；lpFired 吞长按后的终端 click 防双开） */
-let lpTimer: ReturnType<typeof setTimeout> | null = null;
-let lpFired = false;
+/** 移动端长按 → 底部抽屉（手势 core/dom.longPress；卡片每次重渲染重建后重挂）。 */
 function attachLongPress(sec: HTMLElement, app: App): void {
   sec.querySelectorAll<HTMLElement>('.m-grid .pcard').forEach((c) => {
-    c.addEventListener('pointerdown', () => {
+    // 原生长按菜单（保存图片/复制链接）让位给抽屉
+    c.addEventListener('contextmenu', (ev) => ev.preventDefault());
+    longPress(c, () => {
       const it = itemByKeyInState(c.dataset.cinemaKey);
       if (!it) return;
-      lpFired = false;
-      lpTimer = setTimeout(() => { lpFired = true; openSheet(sec, it, app); }, 450);
+      openSheet(sec, it, app);
     });
-    ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => c.addEventListener(ev, () => { if (lpTimer) clearTimeout(lpTimer); }));
-    c.addEventListener('click', (e) => { if (lpFired) { e.stopImmediatePropagation(); lpFired = false; } });
-    c.addEventListener('contextmenu', (ev) => ev.preventDefault());
+  });
+}
+
+/** 移动端抽屉：core openItemSheet（遮罩 + 底部滑入 + 头部信息 + 动作行，皮肤保午夜场观感） */
+function openSheet(sec: HTMLElement, it: CinemaItem, app: App): void {
+  if (!sec.isConnected) return;
+  openItemSheet(toItemActions(itemActions(it, sec, app)), {
+    sheetClass: SHEET_SKIN,
+    sheetHead: sheetHeadEl(it, posterUrl(it, app)),
   });
 }
 
@@ -594,18 +574,19 @@ function bindMidnight(sec: HTMLElement, app: App): void {
     }
   });
   sec.addEventListener('contextmenu', (e) => {
-    // 桌面壳专属：右键菜单是鼠标惯用件。移动壳必须分流——触屏长按会**同时**发
-    // pointerdown 与 contextmenu，不分流时 450ms 的抽屉刚开出来就被右键菜单盖住
-    // （.cn-menu z-index 60 > .cn-sheet 56），用户看到的是「长按弹右键菜单」。
-    // 移动端长按手势由 attachLongPress 承担，卡片的 contextmenu 在那里已 preventDefault 掉原生菜单。
+    // 桌面壳专属：右键菜单是鼠标惯用件。移动壳分流——触屏长按会同时发 pointerdown 与
+    // contextmenu，不分流就会多弹一个鼠标菜单盖在抽屉上；移动端长按手势走 core/dom.longPress。
     if (sec.classList.contains('mob')) return;
     const cardEl = (e.target as HTMLElement).closest('.pcard') as HTMLElement | null;
     if (!cardEl) return;
     e.preventDefault();
     const it = itemByKeyInState(cardEl.dataset.cinemaKey);
     if (!it) return;
-    const h = sec.getBoundingClientRect();
-    openMenu(sec, it, app, e.clientX - h.left + 4, e.clientY - h.top + 4);
+    // core 跟手菜单（防溢出定位/ESC/外部点击关闭/键盘导航由共享层承载）
+    openItemMenu(e.clientX, e.clientY, toItemActions(itemActions(it, sec, app)), true, MENU_SKIN);
+    // 右键时序会置位残余 click 抑制（Chromium：mousedown → contextmenu → mouseup 落在菜单外），
+    // 吞掉下一次左键（菜单项要点两次才生效）；右键无补发 click，直调后立即复位
+    resetItemMenuClickGuard();
   });
 }
 
@@ -660,6 +641,7 @@ export function renderAll(app: App): void {
 
 export function closeOverlay(): void {
   if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
+  closeItemMenu(); // 浮层（跟手菜单/抽屉）挂 body，不随面板移除 → 关面板时一并收掉
   if (M.currentOverlay) {
     M.currentOverlay.remove();
     M.currentOverlay = null;

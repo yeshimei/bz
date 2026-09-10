@@ -368,6 +368,28 @@ describe('移动端底部抽屉（Platform.isMobile = true）', () => {
     vi.useRealTimers();
   });
 
+  // 回归（2026-09-10 真机 + 真实触摸事件复现）：触屏兼容鼠标事件在 touchend 后补发的
+  // **mousedown** 命中「刚打开的遮罩」（遮罩此刻已覆盖指针位置）→ 被当成外部点击直接关掉抽屉。
+  // 它比合成 click 更早发生，故只挡 click 不够：真机表现＝长按后一松手抽屉就消失（用户感知「长按没反应」）。
+  it('触屏长按：松手补发的合成 mousedown 落在遮罩上也不关抽屉；静置窗口过后轻点遮罩仍可关', () => {
+    vi.useFakeTimers();
+    const card = makeCard();
+    attachItemActions(card, ACTIONS, SHEET_OPTS);
+    card.dispatchEvent(new MouseEvent('touchstart', { bubbles: true, clientX: 60, clientY: 60 }));
+    vi.advanceTimersByTime(550);
+    const mask = () => document.querySelector('.bz-item-sheet-mask') as HTMLElement;
+    expect(mask(), '长按应开抽屉').not.toBeNull();
+    // 松手：touchend → 合成 mousedown 命中遮罩（真机 Chromium 实测事件序列）
+    card.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+    mask().dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
+    expect(document.querySelector('.bz-item-sheet'), '合成 mousedown 不应关掉抽屉').not.toBeNull();
+    // 越过静置窗口 → 用户真实轻点遮罩应正常关闭
+    vi.advanceTimersByTime(500);
+    mask().dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
+    vi.useRealTimers();
+  });
+
   it('功能项区：项收进 .bz-item-sheet-body（内部滚动、最高 70vh、无滚动条由样式承载）', () => {
     vi.useFakeTimers();
     const card = makeCard();

@@ -31,7 +31,8 @@
  */
 import { Component, MarkdownRenderer, type App, type EventRef, type IconName } from 'obsidian';
 import { escManager } from '../core/esc-manager';
-import { topifyZ } from '../core/dom';
+import { topifyZ, longPress } from '../core/dom';
+import { isMobileEnv } from '../core/mobile';
 import { uiIcon, uiSearch } from '../core/ui';
 import { openItemMenu, closeItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
 import { escapeHtml, hash31, localDayKey, stripMdExt } from '../core/utils';
@@ -904,6 +905,23 @@ export class DiaryAppController {
         resetItemMenuClickGuard();
       },
       true
+    );
+    // 移动端长按条目 → 详情抽屉（统一手势 core/dom.longPress：与 core/item-actions 同源，
+    // 触屏滚动不受影响——被动监听 + 10px 移动取消）。移动端单击开抽屉的既有入口保留，
+    // 长按为新增入口；抽屉仍是 .bz-diary-sheet 详情壳（只统一手势，不换 core 动作抽屉，保观感）。
+    longPress(
+      wall,
+      (ev: any) => {
+        const item = (ev.target as HTMLElement)?.closest?.<HTMLElement>('.bz-diary-item');
+        if (!item) return;
+        const idx = Number(item.dataset.widx);
+        const e = this._wallEntries[idx];
+        if (!e || Number.isNaN(idx)) return;
+        if (this.isEncHidden(e)) return;
+        this.openSheet(e);
+      },
+      undefined,
+      (ev: any) => isMobileEnv() && !!(ev.target as HTMLElement)?.closest?.('.bz-diary-item')
     );
   }
 

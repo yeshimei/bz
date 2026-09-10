@@ -1,4 +1,4 @@
-/* 源指纹 233dea5a057da1f7 · 仓内输入 21 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 37f40dd8910813c9 · 仓内输入 21 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -5361,9 +5361,6 @@ var BZW_knowledge = (() => {
     }
     return null;
   }
-  function stripMdExt(name) {
-    return String(name || "").replace(/\.md$/i, "");
-  }
 
   // src/knowledge/data.ts
   var TIME_RE = /^\d{1,3}:\d{1,2}(:\d{1,2}(\.\d{1,3})?)?$/;
@@ -5663,6 +5660,7 @@ var BZW_knowledge = (() => {
     return false;
   }
   function onMouseDownCapture(ev) {
+    if (touchSettlePending) return;
     if (popupEl && popupEl.isConnected && !popupEl.contains(ev.target) && !inSheetCompanion(ev.target)) {
       closeItemMenu();
     }
@@ -6213,7 +6211,7 @@ var BZW_knowledge = (() => {
     const explicit = String(name != null ? name : "").trim();
     if (explicit) return explicit;
     const base = String(path != null ? path : "").replace(/\\/g, "/").split("/").pop() || "";
-    return stripMdExt(base) || String(path != null ? path : "");
+    return base.replace(/\.md$/i, "") || String(path != null ? path : "");
   }
   var URL_LIKE_RE = /^(?:[\w-]+\.)+[A-Za-z]{2,}(?::\d+)?(?:[/?#][^\s]*)?$/;
   function isUrlLikeSourceText(text) {
@@ -6938,11 +6936,11 @@ ${sample}`,
     return root.querySelector(sel);
   }
   function esc(s) {
-    return escapeHtml(String(s != null ? s : ""));
+    return String(s != null ? s : "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   }
   function shortNoteName(path) {
     const base = String(path || "").replace(/\\/g, "/").split("/").pop() || "";
-    return stripMdExt(base) || String(path || "");
+    return base.replace(/\.md$/i, "") || String(path || "");
   }
   function humanizeError(reason) {
     const s = String(reason != null ? reason : "").trim();
@@ -7403,7 +7401,7 @@ ${sample}`,
         const srcFile = app.vault.getAbstractFileByPath(src.path);
         if (srcFile) {
           const text = await app.vault.read(srcFile);
-          const linkText = `[[${stripMdExt(path)}|${base}]]`;
+          const linkText = `[[${path.replace(/\.md$/i, "")}|${base}]]`;
           const updated = appendRelatedLine(text, linkText);
           if (updated !== text) await app.vault.modify(srcFile, updated);
         }

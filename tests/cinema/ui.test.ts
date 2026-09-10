@@ -190,14 +190,17 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(M.items.some((i) => i.name === '想看片')).toBe(false);
   });
 
-  it('右键菜单（cn-menu）：动作集按状态显隐；「标记已看」写 frontmatter + 面板 toast', async () => {
+  // 桌面菜单已统一到 core/item-actions（.bz-item-menu，挂 document.body，皮肤 cn-menu-skin）
+  it('右键菜单（core 跟手菜单）：动作集按状态显隐；「标记已看」写 frontmatter + 面板 toast', async () => {
     const { app } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const menuSel = '.bz-item-menu.cn-menu-skin';
     pcardByName(root, '想看片').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
-    const menu = root.querySelector('.cn-menu') as HTMLElement;
+    const menu = document.querySelector(menuSel) as HTMLElement;
     expect(menu).toBeTruthy();
-    const labels = Array.from(menu.querySelectorAll('.cn-menu-item')).map((b) => b.textContent);
+    expect(menu.classList.contains('cn-skin')).toBe(true); // 取色锚（浮层挂 body，需自带午夜场调色板）
+    const labels = Array.from(menu.querySelectorAll('.bz-item-menu-item')).map((b) => b.textContent);
     expect(labels[0]).toContain('打开详情');
     expect(labels.some((l) => l?.includes('标记在看'))).toBe(true);
     expect(labels.some((l) => l?.includes('标记已看'))).toBe(true);
@@ -206,12 +209,12 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(labels.some((l) => l?.includes('删除'))).toBe(true);
     // 已看卡：无标记动作项
     pcardByName(root, '星际穿越').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
-    const labels2 = Array.from((root.querySelector('.cn-menu') as HTMLElement).querySelectorAll('.cn-menu-item')).map((b) => b.textContent);
+    const labels2 = Array.from((document.querySelector(menuSel) as HTMLElement).querySelectorAll('.bz-item-menu-item')).map((b) => b.textContent);
     expect(labels2.some((l) => l?.includes('标记在看'))).toBe(false);
     expect(labels2.some((l) => l?.includes('标记已看'))).toBe(false);
     // 想看卡点「标记已看」→ 评分默认 5 落盘 + cn-toast
     pcardByName(root, '想看片').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
-    clickEl(Array.from((root.querySelector('.cn-menu') as HTMLElement).querySelectorAll('.cn-menu-item')).find((b) => b.textContent?.includes('标记已看')));
+    clickEl(Array.from((document.querySelector(menuSel) as HTMLElement).querySelectorAll('.bz-item-menu-item')).find((b) => b.textContent?.includes('标记已看')));
     await vi.waitFor(() => expect(root.querySelector('.cn-toast')?.textContent).toContain('标记为已看'));
     const item = M.items.find((i) => i.name === '想看片')!;
     expect(item.status).toBe(2); // STATUS_WATCHED
@@ -576,29 +579,37 @@ tags: [电影]
     expect(root.querySelector('.j-mcnt')?.textContent).toBe('· 1');
   });
 
-  it('移动端长按 → cn-sheet 抽屉（头=名称+meta，动作项按状态）；遮罩点击关闭', () => {
+  // 抽屉已统一到 core/item-actions（.bz-item-sheet，挂 document.body，皮肤 cn-sheet-skin）；
+  // 手势 = core/dom.longPress（touchstart 被动监听，500ms）。
+  it('移动端长按 → core 底部抽屉（头=名称+meta，动作项按状态）；越过静置窗口后遮罩点击关闭', () => {
     vi.useFakeTimers();
     try {
       const { app } = seedMobile();
       createOverlay(app);
       const root = document.querySelector('section.mob.bz-cinema--midnight') as HTMLElement;
       const card = root.querySelector('.m-grid .pcard') as HTMLElement;
-      card.dispatchEvent(new Event('pointerdown'));
-      vi.advanceTimersByTime(500);
-      const sheet = root.querySelector('.cn-sheet') as HTMLElement;
+      card.dispatchEvent(new Event('touchstart', { bubbles: true }));
+      vi.advanceTimersByTime(600); // core longPress 500ms 阈值
+      const sheet = document.querySelector('.bz-item-sheet.cn-sheet-skin') as HTMLElement;
       expect(sheet).toBeTruthy();
+      expect(sheet.classList.contains('cn-skin')).toBe(true); // 取色锚（浮层挂 body，需自带午夜场调色板）
       expect(sheet.querySelector('.cn-sheet-name')).toBeTruthy();
-      expect(sheet.querySelectorAll('.cn-sheet-item').length).toBeGreaterThanOrEqual(4);
-      (root.querySelector('.cn-sheet-mask') as HTMLElement).click();
-      expect(root.querySelector('.cn-sheet')).toBeNull();
+      expect(sheet.querySelectorAll('.bz-item-sheet-item').length).toBeGreaterThanOrEqual(4);
+      // 长按松手会补发一次合成 click：core 的静置窗口（400ms）内吞掉，防「抽屉刚开就被自己关掉」。
+      // 窗口内点遮罩不生效 → 正是真机「长按没反应」的根因守卫。
+      (document.querySelector('.bz-item-sheet-mask') as HTMLElement).click();
+      expect(document.querySelector('.bz-item-sheet'), '静置窗口内遮罩点击应被吞').toBeTruthy();
+      vi.advanceTimersByTime(500); // 越过静置窗口
+      (document.querySelector('.bz-item-sheet-mask') as HTMLElement).click();
+      expect(document.querySelector('.bz-item-sheet')).toBeNull();
     } finally {
       vi.useRealTimers();
     }
   });
 
-  // 回归（2026-09-10 真机反馈）：触屏长按会同时发 pointerdown + contextmenu，桌面右键菜单
-  // 不分流就会盖在抽屉上（.cn-menu z-index 60 > .cn-sheet 56）→ 用户看到「长按弹右键菜单」。
-  it('移动端：长按+contextmenu 同发时只出抽屉，不出桌面右键菜单', () => {
+  // 回归（2026-09-10 真机反馈）：触屏长按会同时发 touchstart 与 contextmenu，桌面右键菜单
+  // 不分流就会多弹一个鼠标菜单；移动端长按只应出抽屉。
+  it('移动端：长按 + contextmenu 同发时只出抽屉，不出桌面跟手菜单', () => {
     vi.useFakeTimers();
     try {
       const { app } = seedMobile();
@@ -606,12 +617,12 @@ tags: [电影]
       const root = document.querySelector('section.mob.bz-cinema--midnight') as HTMLElement;
       const card = root.querySelector('.m-grid .pcard') as HTMLElement;
       const r = card.getBoundingClientRect();
-      // 真机触屏长按的真实事件序列：pointerdown →(450ms 定时器)→ contextmenu
-      card.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-      vi.advanceTimersByTime(500);
+      // 真机触屏长按的真实事件序列：touchstart →(500ms)→ contextmenu
+      card.dispatchEvent(new Event('touchstart', { bubbles: true }));
+      vi.advanceTimersByTime(600);
       card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: r.left + 20, clientY: r.top + 20 }));
-      expect(root.querySelector('.cn-sheet'), '抽屉应在').toBeTruthy();
-      expect(root.querySelector('.cn-menu'), '移动端不应出桌面右键菜单').toBeNull();
+      expect(document.querySelector('.bz-item-sheet'), '抽屉应在').toBeTruthy();
+      expect(document.querySelector('.bz-item-menu'), '移动端不应出桌面跟手菜单').toBeNull();
     } finally {
       vi.useRealTimers();
     }
