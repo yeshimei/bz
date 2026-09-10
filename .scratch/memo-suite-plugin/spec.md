@@ -365,7 +365,7 @@ otifyMemoAction（方法监听，一次动作一条）+ **每日到期扫描**�
 
 **域设置弹窗（⚙️，各功能主面板右上角）**：
 - **备忘录**（9 项，分组：提醒/显示/新建/场景列表）：autoPopupOnStart、openNoteReminder、memoSortMode、memoShowArchivedByDefault、memoDueFormat、memoDefaultPriority、memoDefaultScene、memoAutoArchive、memoScenarios
-- **日记本**（12 项）：diaryDirectory、movieDirectory、letterDirectory、diaryBatchSize、showTagCount、useFileDateTime、diaryTagShowEmoji（标签按钮 emoji）、diaryContentRenderMode（卡片内容 markdown/plain）、diaryTagSortMode（标签排序 fixed/count）、diaryDefaultDateFilter（打开面板默认日期筛选 all/this-month）、diaryDefaultSelectedTag（默认选中标签，空=全部）、diaryJumpToEditAfterSave（保存后立即进入编辑）
+- **日记本**（ADR-0115/issue 256 收编后 3 项）：diaryDirectory、letterDirectory、useFileDateTime；跨域读 2：影视→`cinemaFolderPath`（影院设置）、书库→bookshelf `resolveFolderPath()`（用户拍板「影视部分走影院的」）；原 12 项中其余 9 键随旧编辑域退役（data.json 残留值忽略）
 - **归物本**：1 项「移动端默认全屏」（仅移动端显示；桌面仍空态，见下跨域条目）
 - **剪藏本**：articleDirectory、articleBatchSize、autoSummaryEnabled
 - **密码本**：passwordCharset、passwordLength、securityMode
@@ -1078,3 +1078,7 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 ### 小橘行为流接线补齐 + 文案人性化（issue 261 / ADR-0118，2026-09-10）
 
 > 用户：「小橘的行为流补全，因为之前的代码都大改过，补全一下，文案重写，人性化的」。盘点确认 ADR-0069 为 review/quiz/attach 预先落好的 routing 规则与 behavior-wording 模板（`coverage-source.ts`）**从未接线**（仅测试引用，生产零引用）；issue 255（literature 更名 knowledge）只改 routing 键，`index.ts`/`knowledge-source.ts` 仍用 `literature`，路由落 `system:fallback`。补齐：review（started/added/removed/rated，emit 落 app.ts 方法内覆盖 sprint/reviewLoop 内部调用）与 attach（moved，runMove 成功后）经域事件接入行为流；literature→knowledge 全链对齐（source/entityType 改 `knowledge`，保留 `literature`/`bili`/`bili-downloader` 别名兼容存量；dashboard 来源标签补 `literature`/`review`/`quiz`/`attach`）；favorites 补 `archived`/`unarchived` 路由与文案。文案人性化：修「加入想看」→「加入了想看」、review rated →「你复习了《X》，自评「一般」」、knowledge 实体默认改「知识盒动态」。secondbrain 模板保留不接线（存量兼容）；diary `entry-added`/`entry-deleted`/`file-vacated` 有意不接（文件事件已覆盖防双记录）。门禁：tsc 0 错 + 全量 4207 用例绿。
+
+### 回忆墙升格日记本：旧编辑域退役 + 写链路迁入 + 单源原型化（issue 256 / ADR-0115，2026-09-10）
+
+> 用户拍板三件事一批做：删旧 `src/diary` 编辑域、`src/diary-wall`→`src/diary` 正名「日记本」、设置 12 键收编 3 键（diaryDirectory/letterDirectory/useFileDateTime）+ 2 跨域读（影视→影院、书库→书架墙）+ 回忆墙单源原型化。命令接手 `bz-diary-open`（notebook-pen）/`bz-diary-write`（域内注册），`bz-diary-wall-open` 退役；CSS 前缀与皮肤键 `diaryWall*`→`diary*`（占位键值零迁移）。写链路整体迁入（写弹窗/时间标签选择器/store 写层/守卫/修复引擎/加密编排），旧编辑面板（条目列表/筛选）退役，墙既有交互原样保留。单源原型化 bookshelf 范式全套（render.ts/fake-sim/fake-obsidian/双 iframe 壳/真实数据种子/PROTOTYPE.md），PREVIEW/BEHAVIOR 双清单登记。外围归一：home 双磁贴并一、settings-panel 条目与行为包、domain-icons、smoke.test、tests/diary-wall→tests/diary 并归、recap/smartcat import 改指新域。src 顺手修：diary/config.ts 跨域解析 safeResolve 兜底、store.ts 落盘 IO 收敛 enqueueFileTask 词法区（D3 直写守门）、cinema/settings.ts 文案过 lint。门禁：tsc 0 错 + 全量 4039 用例（252 文件）绿；合并 master（todo→memo 正名 + issue 261）解 7 处冲突。

@@ -1,6 +1,6 @@
 # 256 · 回忆墙升格日记本（旧 diary 编辑域退役 + 设置收编 + 单源原型化）
 
-- **状态**：拍板待落地（ADR-0115，2026-09-09 grill 两轮六问定形）
+- **状态**：已完成（2026-09-10；ADR-0115，2026-09-09 grill 两轮六问定形）
 - **背景**：旧 `src/diary` 域冻结多年，ADR-0081 v2 已为删域铺路（回忆墙 parser/config/types 自包含）。
   用户拍板三件事一批做：删旧域、回忆墙正名「日记本」、旧设置按消费面收编 + 回忆墙单源原型化。
 - **拍板**：
@@ -39,3 +39,18 @@
 - **门禁**：worktree（`../.dsh-worktrees/`，从最新 master 分叉 + merge master）→ pnpm test +
   tsc --noEmit + 自审 + diff 审查全绿 → 合并主仓 → 主仓 `pnpm run build` 部署（严禁 worktree 内
   构建）→ headless selftest 复现。
+
+## 实现记录（2026-09-10 回填）
+
+- 功能提交 `98cd6a4f`（201 文件，+47030/−10183）：删旧 src/diary、diary-wall 正名升格、写链路
+  迁入、设置收编、单源原型化、外围归一全量落地。
+- src 顺手修：`diary/config.ts` 跨域解析 safeResolve 兜底（设置提供者抛错不再整体崩）；
+  `diary/store.ts` 落盘 IO 收敛 enqueueFileTask 词法区（D3 直写守门契约内）；`cinema/settings.ts`
+  文案过 lint（去 ADR 黑话）。
+- master 同步（todo→memo 正名 issue 260 + issue 261 小橘接线）：merge commit `ea832139`，
+  7 处冲突——6 处内容冲突按拍板解（build-preview.mjs / main.ts / diary ui.ts / settings-panel
+  ui.ts / diary ui.test.ts / settings-panel.test.ts）+ `tests/diary/ui/coverage-extra2.test.ts`
+  modify/delete 保留删除（master 侧仅一行注释措辞变更）。
+- 门禁：tsc 0 错 + 全量 4039/4039（252 文件）绿。
+- 文档：AGENTS.md 领域清单（diary 两行合一、21 域）、CONTEXT.md「日记本」词条、PROGRESS.md、
+  spec.md 设置清单与实现记录段、prototype-first.md BEHAVIOR_DOMAINS 清单补 diary。
