@@ -1,6 +1,6 @@
 # AGENTS.md — 包仔（bz）Obsidian 插件
 
-独立 Obsidian 插件，21 功能域（详见领域清单）。**项目语言：中文**。
+独立 Obsidian 插件，21 功能域（详见领域清单）。**使用中文输出**。
 
 ## 命令与构建
 - `pnpm install` / `pnpm run dev` / `pnpm run build` / `pnpm test` / `pnpm exec tsc --noEmit`（依赖用 pnpm，勿用 npm）
@@ -22,25 +22,22 @@
 ## 领域清单（数据均在 CONFIG/STORAGE/）
 | 域 | 数据 |
 |---|---|
-| diary（日记本） | `我的/日记/*.md`（媒体优先界面 + 写链路，ADR-0115：回忆墙正名升格、旧编辑域退役并入） |
-| memo（备忘录） | memo.json（唯一属主，ADR-0092/0117：UI/写盘/引用同步/被动捕获全归本域） |
-| belongings | belongings.json |
-| clipbook（剪藏本，ADR-0082） | news.json（未读流）+ `归档/网页剪藏/*.md` + clipbook.json（侧写） |
-| favorites | favorites.json |
-| reading-report（读书分析） | metadataCache 统计（内嵌书架墙面板，ADR-0091） |
-| review（复习；quiz 已并入） | review.json |
+| diary（日记本） | `我的/日记/*.md` |
+| memo（备忘录） | memo.json |
+| belongings（归物本） | belongings.json |
+| clipbook（剪藏本） | news.json（未读流）+ `归档/网页剪藏/*.md` + clipbook.json（侧写） |
+| favorites（收藏夹） | favorites.json |
+| review（复习） | review.json |
 | secondbrain（第二大脑） | secondbrain.json + secondbrain.vec |
-| auto-summary | 剪藏 frontmatter |
-| pomodoro | pomodoro.json |
-| attach | 搬附件 |
-| encrypt（保险库，ADR-0085） | `CONFIG/.ENCRYPT/` |
-| password-vault（密码本，ADR-0109 拆回） | `CONFIG/.ENCRYPT/`（kind=password-vault SafeNote，与 encrypt 共锁同库） |
-| bookshelf（书架墙） | `书库/*.md`、EPUB（library 已退役并入） |
-| cinema（影院） | `我的/影视/*.md`（movie 已退役并入，ADR-0087） |
-| home（内容首页） | 各域只读快照 |
-| recap（今日回顾） | 五域当天痕迹只读聚合 |
-| checkup（数据体检） | 全插件数据只读巡检 |
-| literature（文献盒） | literature 笔记 |
+| auto-summary（自动摘要） | 剪藏 frontmatter |
+| pomodoro（番茄钟） | pomodoro.json |
+| attach（附件） | 搬附件 |
+| encrypt（保险库） | `CONFIG/.ENCRYPT/` |
+| password-vault（密码本） | `CONFIG/.ENCRYPT/`（kind=password-vault SafeNote，与 encrypt 共锁同库） |
+| bookshelf（书库） | `书库/*.md`、EPUB |
+| cinema（影院） | `我的/影视/*.md` |
+| home（首页） | 各域命令入口 |
+| literature（知识盒） |  |
 | settings-panel（设置面板） | 插件设置键（域内 schema.ts 定义） |
 | smartcat（小橘） | STORAGE/smartcat |
 
