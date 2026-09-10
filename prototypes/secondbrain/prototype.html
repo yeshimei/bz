@@ -12,7 +12,7 @@
   │ 行为单源：三界面交互全部是插件同款行为文件——经 ./prototype-behavior.js     │
   │   （src/secondbrain/fake-sim.ts 构建，alias obsidian→公共假层）在 iframe   │
   │   视图里跑真行为；三个 tab = prototype-view.html?iface=panel|chat|ref，    │
-  │   每 tab 桌面（920）+ 手机框（396）双实例：396 窄视口命中假 Platform      │
+  │   每 tab 桌面（920）+ 手机框（412）双实例：412 窄视口命中假 Platform      │
   │   ≤768 判定与 @media，openChat/openRef 真分发到 MobilePanel 抽屉          │
   │   （书库 issue 233 同款壳范式）。                                         │
   │ 数据 = CONFIG/STORAGE/secondbrain.json 种子（localStorage 文件系统；       │
@@ -28,6 +28,8 @@
 <link rel="stylesheet" href="../../src/core/ui/tokens.css">
 <link rel="stylesheet" href="../../src/core/ui/components.css">
 <link rel="stylesheet" href="../../src/secondbrain/styles.css">
+<link rel="stylesheet" href="../mob-1to1.css">
+<script src="../mob-1to1.js"></script>
 <style>
   /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -47,8 +49,8 @@
   /* 桌面外景（真行为 iframe：面板 append iframe body；主面板超高时 iframe 内滚动，
      与插件「面板随视图滚动」同语义） */
   .demo-dt { flex: none; width: 920px; height: 860px; }
-  /* 移动外景：396px iframe → 视口 ≤768 命中假 Platform.isMobile 与 @media 移动布局 */
-  .demo-mob { width: 396px; height: 780px; border-radius: 26px; overflow: hidden; flex: none;
+  /* 移动外景：412×915 iframe → 视口 ≤768 命中假 Platform.isMobile 与 @media 移动布局 */
+  .demo-mob { width: 412px; height: 915px; border-radius: 26px; overflow: hidden; flex: none;
     border: 1px solid #9a948a; box-shadow: 0 8px 30px rgba(0,0,0,.2); background: #1d1510; }
   /* 尺寸只由 .demo-dt/.demo-mob 给（.demo-frame 若再写 width/height:100% 会以同特异性
      后者胜出，把外景塌回 iframe 默认 300×150——本轮实测踩过） */
@@ -70,18 +72,18 @@
 
   <div class="frame-host on" data-host="panel">
     <iframe class="demo-frame demo-dt" src="./prototype-view.html?iface=panel" title="第二大脑·主面板·桌面"></iframe>
-    <iframe class="demo-frame demo-mob" src="./prototype-view.html?iface=panel" title="第二大脑·主面板·移动"></iframe>
+    <span class="demo-mob-wrap"><iframe class="demo-frame demo-mob" src="./prototype-view.html?iface=panel" title="第二大脑·主面板·移动"></iframe></span>
   </div>
   <div class="frame-host" data-host="chat">
     <iframe class="demo-frame demo-dt" src="./prototype-view.html?iface=chat" title="第二大脑·AI 对话·桌面"></iframe>
-    <iframe class="demo-frame demo-mob" src="./prototype-view.html?iface=chat" title="第二大脑·AI 对话·移动"></iframe>
+    <span class="demo-mob-wrap"><iframe class="demo-frame demo-mob" src="./prototype-view.html?iface=chat" title="第二大脑·AI 对话·移动"></iframe></span>
   </div>
   <div class="frame-host" data-host="ref">
     <iframe class="demo-frame demo-dt" src="./prototype-view.html?iface=ref" title="第二大脑·灵感参考·桌面"></iframe>
-    <iframe class="demo-frame demo-mob" src="./prototype-view.html?iface=ref" title="第二大脑·灵感参考·移动"></iframe>
+    <span class="demo-mob-wrap"><iframe class="demo-frame demo-mob" src="./prototype-view.html?iface=ref" title="第二大脑·灵感参考·移动"></iframe></span>
   </div>
 
-  <div class="vbadge">第二大脑 · 真行为单源预览（桌面 920 / 移动 396，插件同款行为文件跑在种子库上）
+  <div class="vbadge">第二大脑 · 真行为单源预览（桌面 920 / 移动 412，插件同款行为文件跑在种子库上）
     <button id="mobToggle">隐藏移动端</button>
     <button id="reset">重置演示数据</button>
     <span id="stResult"></span>
@@ -101,7 +103,8 @@
   });
 
   document.querySelector('#mobToggle').addEventListener('click', () => {
-    const mobs = document.querySelectorAll('.demo-mob');
+    // 隐藏/显示要动**占位层** .demo-mob-wrap（.demo-mob 是 iframe 自身，其它逻辑仍按它取 iframe）
+    const mobs = document.querySelectorAll('.demo-mob-wrap');
     const hide = mobs[0].style.display !== 'none';
     mobs.forEach((m) => (m.style.display = hide ? 'none' : ''));
     document.querySelector('#mobToggle').textContent = hide ? '显示移动端' : '隐藏移动端';

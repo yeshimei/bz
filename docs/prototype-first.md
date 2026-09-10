@@ -11,7 +11,7 @@
 | `src/<域>/styles.css` | 唯一样式源（`bz-<域>-*` 前缀；评审壳相对链引用同一份） |
 | `src/<域>/render.ts` | markup 单源（纯层：禁 obsidian/moment/core 服务、禁模块级可变状态，`render-purity.test.ts` 强制） |
 | `src/<域>/ui.ts` | 行为单源（生命周期/事件委托/数据流；禁手写 markup） |
-| `prototypes/<域>/prototype.html` + `prototype-view.html` | 评审壳：双 iframe（桌面 + 移动 396）跑真行为，可带 `?selftest=1` 自检 |
+| `prototypes/<域>/prototype.html` + `prototype-view.html` | 评审壳：双 iframe（桌面 920 + 移动 412×915 真机尺寸）跑真行为，可带 `?selftest=1` 自检 |
 | `prototypes/<域>/fake-sim.ts` + `fake/fake-obsidian.ts` | 行为产物入口与公共假层（localStorage 假 vault / 假 Platform / setIcon 图标表 / AI 罐头） |
 | `prototype-render.js` / `prototype-behavior.js` | 构建产物（入库保双击零依赖；勿手改） |
 
@@ -29,6 +29,10 @@
 
 - 图标：`<i data-lucide>` 是占位，innerHTML 渲染后必须 `mountIcons(容器)`；jsdom 里 mock `setIcon` 记 `dataset.icon`，断言用 `[data-icon]`。
 - 布局：overlay 弹性子项显式宽高；grid 用 `minmax(0,1fr)` + 卡片 `min-width:0`；头行固定、内容区 `flex:1; min-height:0; overflow:auto`；浮层与面板**同挂 scope 类**（否则 CSS 变量全丢）；自绘按钮带容器前缀（防 reset 压样式）。
-- 两端：桌面 + 移动（396px iframe / `Platform.isMobile`）任何改动都验；移动弹窗留边 `min(430px, 100vw - 32px)`。
+- 两端：桌面 + 移动（412×915 iframe / `Platform.isMobile`）任何改动都验；移动弹窗留边 `min(430px, 100vw - 32px)`。
+- **移动外景 = 小米13U 真机尺寸**（412×915 CSS px = 1440×3200 物理 px ÷ dpr 3.5；412 仍 ≤768 → 移动布局命中）；
+  13 个行为单源域共用 `prototypes/mob-1to1.css` + `mob-1to1.js`，把外景缩放到屏幕上的
+  70.2×155.9mm（= 真机屏幕实测尺寸）。缩放用 `transform`，绝不能改 iframe 的 `width/height`
+  （会连内部视口一起改，动到 `@media ≤768` 判据）。换显示器只需改 `mob-1to1.js` 的 `RULER_MM`。
 - 测试：UI 锚用 `bz-<域>-*` 类 / `data-*` 钩子；颜色断言读 `rgb()` 计算值。
 - 宿主差异（theme 切换 / 假数据 / 图标表 / Platform）全部收敛在 fake 层与评审壳，组件层禁止分叉。
