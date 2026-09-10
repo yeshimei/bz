@@ -36,7 +36,7 @@ export function numbersSegments(summary: RecapSummary, failed: RecapDomain[]): s
   if (!failed.includes('diary')) segs.push(`日记 ${summary.diary} 条`);
   if (!failed.includes('cinema')) segs.push(`影视 ${summary.movies} 部`);
   if (!failed.includes('bookshelf')) segs.push(`读完 ${summary.books} 本`);
-  if (!failed.includes('todo')) segs.push(`完成 ${summary.todoDone} 个待办`);
+  if (!failed.includes('memo')) segs.push(`完成 ${summary.memoDone} 个备忘录`);
   if (!failed.includes('pomodoro')) segs.push(`番茄 ${summary.pomodoros} 个 ${summary.pomodoroMinutes} 分钟`);
   return segs;
 }
@@ -47,7 +47,7 @@ export function numbersLine(summary: RecapSummary, failed: RecapDomain[]): strin
   return segs.length ? `今日数字：${segs.join(' · ')}` : '';
 }
 
-/** 降级模板总结（设计稿口径：「今天：日记 N 条、影视 N 部、读完 N 本、完成 N 个待办、番茄 N 个 M 分钟」） */
+/** 降级模板总结（设计稿口径：「今天：日记 N 条、影视 N 部、读完 N 本、完成 N 个备忘录、番茄 N 个 M 分钟」） */
 export function templateSummary(summary: RecapSummary, failed: RecapDomain[]): string {
   const segs = numbersSegments(summary, failed);
   return segs.length ? `今天：${segs.join('、')}` : '今天：暂时没有可用的记录';
@@ -71,7 +71,7 @@ export function buildSummaryPrompt(digest: string): string {
     '你是用户的私人日记助手「包仔」。根据下面这位用户今天的生活记录，写一段今日总结，直接说给用户本人听：',
     '- 口语化，像朋友聊天一样自然，温暖不油腻',
     '- 全程用第二人称「你」',
-    '- 150~300 字：可以点名今天看过的影视、读过的书、完成的待办、专注的时段，结尾给一句轻松的观察或祝愿',
+    '- 150~300 字：可以点名今天看过的影视、读过的书、完成的备忘录、专注的时段，结尾给一句轻松的观察或祝愿',
     '- 只输出总结正文：不要标题、不要列表、不要「以下是总结」之类的说明',
     '',
     digest,

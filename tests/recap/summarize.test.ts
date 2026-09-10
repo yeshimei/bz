@@ -52,9 +52,9 @@ const NOW_MS = NOW.getTime();
 const EMPTY_FAILED: never[] = [];
 
 const DATA: RecapData = {
-  summary: { diary: 2, movies: 1, books: 1, todoDone: 1, pomodoros: 1, pomodoroMinutes: 25 },
+  summary: { diary: 2, movies: 1, books: 1, memoDone: 1, pomodoros: 1, pomodoroMinutes: 25 },
   items: [
-    { domain: 'todo', ts: 1, timeLabel: '09:02', text: '完成『晨跑』' },
+    { domain: 'memo', ts: 1, timeLabel: '09:02', text: '完成『晨跑』' },
     { domain: 'cinema', ts: 2, timeLabel: '23:14', text: '标记《夜片》已看 · ★★★★☆' },
   ],
   failed: [],
@@ -81,10 +81,10 @@ describe('numbersSegments / numbersLine / templateSummary', () => {
       '日记 2 条',
       '影视 1 部',
       '读完 1 本',
-      '完成 1 个待办',
+      '完成 1 个备忘录',
       '番茄 1 个 25 分钟',
     ]);
-    expect(numbersSegments(DATA.summary, ['todo', 'pomodoro'])).toEqual([
+    expect(numbersSegments(DATA.summary, ['memo', 'pomodoro'])).toEqual([
       '日记 2 条',
       '影视 1 部',
       '读完 1 本',
@@ -93,18 +93,18 @@ describe('numbersSegments / numbersLine / templateSummary', () => {
 
   it('数字行「今日数字：…」· 分隔；模板「今天：…」、分隔（设计稿口径）', () => {
     expect(numbersLine(DATA.summary, EMPTY_FAILED)).toBe(
-      '今日数字：日记 2 条 · 影视 1 部 · 读完 1 本 · 完成 1 个待办 · 番茄 1 个 25 分钟'
+      '今日数字：日记 2 条 · 影视 1 部 · 读完 1 本 · 完成 1 个备忘录 · 番茄 1 个 25 分钟'
     );
     expect(templateSummary(DATA.summary, EMPTY_FAILED)).toBe(
-      '今天：日记 2 条、影视 1 部、读完 1 本、完成 1 个待办、番茄 1 个 25 分钟'
+      '今天：日记 2 条、影视 1 部、读完 1 本、完成 1 个备忘录、番茄 1 个 25 分钟'
     );
-    expect(templateSummary({ diary: 0, movies: 0, books: 0, todoDone: 0, pomodoros: 0, pomodoroMinutes: 0 }, EMPTY_FAILED)).toBe(
-      '今天：日记 0 条、影视 0 部、读完 0 本、完成 0 个待办、番茄 0 个 0 分钟'
+    expect(templateSummary({ diary: 0, movies: 0, books: 0, memoDone: 0, pomodoros: 0, pomodoroMinutes: 0 }, EMPTY_FAILED)).toBe(
+      '今天：日记 0 条、影视 0 部、读完 0 本、完成 0 个备忘录、番茄 0 个 0 分钟'
     );
   });
 
   it('五域全失败：数字行空串、模板给人话兜底', () => {
-    const all = ['diary', 'cinema', 'bookshelf', 'todo', 'pomodoro'] as const;
+    const all = ['diary', 'cinema', 'bookshelf', 'memo', 'pomodoro'] as const;
     expect(numbersLine(DATA.summary, [...all])).toBe('');
     expect(templateSummary(DATA.summary, [...all])).toBe('今天：暂时没有可用的记录');
   });
@@ -140,7 +140,7 @@ describe('sanitizeSummaryText / buildEntryContent / isRecapEntry', () => {
       RECAP_MARKER,
       '今天你过得很踏实。',
       '',
-      '今日数字：日记 2 条 · 影视 1 部 · 读完 1 本 · 完成 1 个待办 · 番茄 1 个 25 分钟',
+      '今日数字：日记 2 条 · 影视 1 部 · 读完 1 本 · 完成 1 个备忘录 · 番茄 1 个 25 分钟',
     ]);
     const tpl = buildEntryContent('今天：日记 2 条', DATA.summary, EMPTY_FAILED, { withNumbers: false });
     expect(tpl.split('\n')).toEqual([RECAP_MARKER, '今天：日记 2 条']);
@@ -217,7 +217,7 @@ describe('generateRecapContent', () => {
     mockedGetProvider.mockResolvedValue({} as never);
     const stub = aiStub(async () => 'x');
     mockedCreateAI.mockReturnValue(stub as never);
-    const r = await generateRecapContent({ ...DATA, failed: ['diary', 'cinema', 'bookshelf', 'todo', 'pomodoro'] });
+    const r = await generateRecapContent({ ...DATA, failed: ['diary', 'cinema', 'bookshelf', 'memo', 'pomodoro'] });
     expect(r.ok).toBe(false);
     expect(r.content).toBe('');
     expect((stub.chat as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(0);
@@ -259,7 +259,7 @@ describe('writeRecapEntry（diary 写入 API 集成）', () => {
     const content = dayContent();
     expect(content).toContain(RECAP_MARKER);
     expect(content).toContain('今天你过得很踏实。');
-    expect(content.trimEnd().endsWith('今日数字：日记 2 条 · 影视 1 部 · 读完 1 本 · 完成 1 个待办 · 番茄 1 个 25 分钟')).toBe(true);
+    expect(content.trimEnd().endsWith('今日数字：日记 2 条 · 影视 1 部 · 读完 1 本 · 完成 1 个备忘录 · 番茄 1 个 25 分钟')).toBe(true);
     expect(recapCountIn(content)).toBe(1);
     expect(await hasRecapEntry({ vault } as never, NOW_MS)).toBe(true);
   });

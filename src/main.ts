@@ -17,11 +17,11 @@ import { attachObsidianAdapter, detachObsidianAdapter } from './core/obsidian-ad
 import { renderSettingsInto } from './core/settings-schema';
 import { mainSettingsSchema } from './core/settings-main-schema';
 
-import BzSettings, { DEFAULT_SETTINGS } from './settings';
+import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys } from './settings';
 
-// 待办（todo 域，ADR-0092 备忘录域退役后 memo.json 唯一属主：UI/交互/写盘/引用同步归本域；
-// 被动捕获入口——启动自动弹出/file-open 提醒/侧栏图标——落点=待办面板）
-import { openTodoPanel, addTodoItem, unloadTodo, ensureTodoReminders, ensureFileSync, unloadFileSync } from './todo';
+// 备忘录（memo 域，ADR-0092 旧备忘录域退役后 memo.json 唯一属主，ADR-0117 正名：UI/交互/写盘/引用同步归本域；
+// 被动捕获入口——启动自动弹出/file-open 提醒/侧栏图标——落点=备忘录面板）
+import { openMemoPanel, addMemoItem, unloadMemo, ensureMemoReminders, ensureFileSync, unloadFileSync } from './memo';
 // 15 域（懒加载：首次命令/事件触发时 ensureXxx 幂等初始化）
 import { addBelongingsItem, openBelongings, unloadBelongings } from './belongings';
 // 剪藏本融合域（clipbook，ADR-0082/issue 177）：聚合讯+剪藏本合一
@@ -63,7 +63,7 @@ import { openHome, unloadHome } from './home';
 // 今日回顾（recap 域，方向一 R2）：当天五域痕迹聚合只读面板
 import { openRecap, unloadRecap } from './recap';
 import { ensureAutoSummary, unloadAutoSummary, redoSummaryForActiveFile } from './auto-summary';
-// ai-agent 域解散：引用同步拆入 todo/favorites 域无条件常驻（原 ensureAIAgent/unloadAIAgent 换线）
+// ai-agent 域解散：引用同步拆入 memo/favorites 域无条件常驻（原 ensureAIAgent/unloadAIAgent 换线）
 // 小橘陪伴猫（smartcat 域：桌面宠物 + AI 陪伴；AI 走 bz core/ai，数据单 json smartcat.json）
 import { ensureSmartCat, unloadSmartCat, openSmartCat, openSmartCatChat, hideSmartCat, openSmartcatDashboard } from './smartcat';
 // 设置面板（settings-panel 域，ADR-0080：全域设置聚合入口，桌面侧栏工作台 / 移动命令面板）
@@ -77,11 +77,11 @@ import { openDataCheckup, unloadDataCheckup } from './checkup';
 const COMMANDS: { id: string; name: string; icon: string; callback: () => void }[] = [
   // 内容首页（home 域，ticket 177）
   { id: 'bz-home-open', name: '内容首页', icon: DOMAIN_ICONS.home, callback: () => openHome(getApp()) },
-  // 今日回顾（recap 域，方向一 R2：当天日记/影视/读书/待办/番茄痕迹聚合面板）
+  // 今日回顾（recap 域，方向一 R2：当天日记/影视/读书/备忘录/番茄痕迹聚合面板）
   { id: 'bz-recap-today', name: '今日回顾', icon: DOMAIN_ICONS.recap, callback: () => openRecap(getApp()) },
-  // 待办（todo 域，ADR-0092 起为 memo.json 唯一属主）
-  { id: 'bz-todo-open', name: '待办', icon: DOMAIN_ICONS.todo, callback: () => openTodoPanel(getApp()) },
-  { id: 'bz-todo-add', name: '加待办', icon: 'clipboard-list', callback: () => addTodoItem(getApp()) },
+  // 备忘录（memo 域，ADR-0092 起为 memo.json 唯一属主）
+  { id: 'bz-memo-open', name: '备忘录', icon: DOMAIN_ICONS.memo, callback: () => openMemoPanel(getApp()) },
+  { id: 'bz-memo-add', name: '加备忘录', icon: 'clipboard-list', callback: () => addMemoItem(getApp()) },
   // 归物本
   { id: 'bz-belongings-add', name: '加物品', icon: 'archive', callback: () => addBelongingsItem(getApp()) },
   { id: 'bz-belongings-open', name: '归物本', icon: DOMAIN_ICONS.belongings, callback: () => openBelongings(getApp()) },
@@ -168,6 +168,8 @@ export default class BzPlugin extends Plugin {
 
   async onload() {
     const loaded = await this.loadData();
+    // issue 260 正名迁移：旧 todo* 面板设置键就地改名（读旧写新删旧）
+    migrateMemoSettingKeys(loaded);
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
     setApp(this.app);
     // AI 设置注入（Q3 的 _q3Settings 语义 → 插件设置）
@@ -191,8 +193,8 @@ export default class BzPlugin extends Plugin {
     // 附件搬移：文件右键菜单入口（md 笔记 →「搬移此笔记附件」，与命令同链路）
     ensureAttachFileMenu(this);
 
-    // ribbon 主入口：待办 + 日记本
-    this.addRibbonIcon('check-square', '待办', () => openTodoPanel(this.app));
+    // ribbon 主入口：备忘录 + 日记本（diary = ADR-0115 回忆墙升格，命令直挂不启动即 init）
+    this.addRibbonIcon('check-square', '备忘录', () => openMemoPanel(this.app));
     this.addRibbonIcon('notebook-pen', '日记本', () => openDiary(getApp()));
 
     // 番茄钟状态栏（ticket 29：常驻倒计时，点击打开弹窗）
@@ -206,11 +208,11 @@ export default class BzPlugin extends Plugin {
 
     // 事件常驻域按设置开关注册（懒加载架构）
     this.app.workspace.onLayoutReady(() => {
-      // 待办提醒后台：启动自动弹出 + 打开笔记提醒（落点=待办面板；设置键 autoPopupOnStart/openNoteReminder）
-      ensureTodoReminders(this.app);
+      // 备忘录提醒后台：启动自动弹出 + 打开笔记提醒（落点=备忘录面板；设置键 autoPopupOnStart/openNoteReminder）
+      ensureMemoReminders(this.app);
       if (this.settings.autoSummaryEnabled) ensureAutoSummary(this.app);
       // 引用同步无条件常驻（issue 187：原 aiAgentEnabled 开关随旧 AIAgent 退役——
-      // 待办/收藏本笔记 rename/delete 引用同步是数据完整性功能，不设开关）
+      // 备忘录/收藏本笔记 rename/delete 引用同步是数据完整性功能，不设开关）
       ensureFileSync(this.app);
       if (this.settings.secondBrainEnabled) ensureSecondBrainOnReady(this.app);
       // 复习计划：到期提醒开启时常驻（ticket 100——监听/染色/轮询统一启动；否则懒加载）；enableAutoNotify 缺省视为开
@@ -239,7 +241,7 @@ export default class BzPlugin extends Plugin {
     unmountPomodoroStatusBar();
     unmountEncryptStatusBar();
     unloadPomodoro();
-    unloadTodo();
+    unloadMemo();
     unloadFileSync();
     unloadHome();
     unloadRecap();

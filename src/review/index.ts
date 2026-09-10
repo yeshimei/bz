@@ -5,7 +5,7 @@
 import type { App } from 'obsidian';
 import { notice, notifyUndo, notifySaveError } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
-import { onDomainEvent } from '../core/domain-bus';
+import { onDomainEvent, emitDomainEvent } from '../core/domain-bus';
 import { ReviewDataManager } from './data';
 import { ReviewWatcher } from './watch';
 import { UIManager } from './ui';
@@ -144,6 +144,8 @@ export async function reviewRemoveCurrent(app: App): Promise<void> {
   }).then(async (v) => {
     if (v !== 'ok') return;
     await dataManager!.removeItem(file.path);
+    // 行为流（issue 261）：移出复习计划入小橘行为流（review:removed）
+    emitDomainEvent('review', { kind: 'removed', title: file.basename });
     notifyUndo(`已移出「${file.basename}」`, () => {
       void (async () => {
         try {

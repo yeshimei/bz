@@ -381,7 +381,7 @@ describe('通知系统', () => {
   describe('便捷模板（notifyUndo / notifySaveError / notifyActionError）', () => {
     it('notifyUndo：默认 delete 类型 + 「撤销」按钮，点击执行回滚并收起', async () => {
       let undone = false;
-      notifyUndo('已删除待办「X」', () => { undone = true; });
+      notifyUndo('已删除备忘录「X」', () => { undone = true; });
       const el = visibleNotices()[0];
       expect(el.classList.contains('bz-notice--delete')).toBe(true);
       const btn = el.querySelector('.bz-notice-action') as HTMLElement;

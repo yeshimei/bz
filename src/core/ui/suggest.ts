@@ -2,7 +2,7 @@
  * bz 组件库 · 输入联想（src/core/ui/suggest.ts）
  * uiSuggest：input 锚定的联想候选下拉（.bz-popover）。
  * 视觉 = 样式库 .bz-popover 族（不新造类）；交互 = 三域先例收敛
- *   （belongings 分类 / favorites 关联笔记 / todo 脚本·课程联想，issue 203）：
+ *   （belongings 分类 / favorites 关联笔记 / memo 脚本·课程联想，issue 203）：
  *   聚焦/输入惰性弹出（issue 202 拍板：默认不弹）→ 现值子串过滤（上限 max）
  *   → 点选/回车回填并回调 → 外点收起 → Esc 只收下拉不穿表单。
  * 前提：anchor 须位于 position:relative 容器内（如 .bz-field）——浮层

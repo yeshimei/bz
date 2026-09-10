@@ -1,9 +1,9 @@
 // @vitest-environment node
 /**
- * 待办（todo）截止日期工具测试（自 memo/due.ts 迁移，语义逐字保留）
+ * 备忘录（memo）截止日期工具测试（自 memo/due.ts 迁移，语义逐字保留）
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { getDueStatus, formatDueText } from '../../src/todo/due';
+import { getDueStatus, formatDueText } from '../../src/memo/due';
 import moment from 'moment';
 
 const fmt = (d: Date) => moment(d).format('YYYY-MM-DD HH:mm');

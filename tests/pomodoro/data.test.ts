@@ -332,7 +332,7 @@ describe('PomodoroDataManager', () => {
   });
 });
 
-describe('任务归属字段（增强包：待办「专注这个」联动持久化）', () => {
+describe('任务归属字段（增强包：备忘录「专注这个」联动持久化）', () => {
   const BASE_STATE = { phase: 'focus' as const, endTime: null, remaining: 600, paused: false, cycleFocusCount: 1 };
 
   it('load：state.task / history[].task 字符串非空保留', async () => {

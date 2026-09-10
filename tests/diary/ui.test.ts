@@ -322,7 +322,7 @@ describe('回忆墙 UI', () => {
       document.querySelectorAll<HTMLElement>('.bz-diary-desk .bz-diary-btns [data-act] .bz-ic')
     ).map((i) => i.dataset.icon);
     expect(icons).toEqual(['pen-line', 'search', 'calendar', 'settings', 'x']);
-    // 关闭钮对齐待办：不挂 bz-win-close（core 规则非真全屏隐藏之）→ 桌面常显
+    // 关闭钮对齐备忘录：不挂 bz-win-close（core 规则非真全屏隐藏之）→ 桌面常显
     const closeBtn = document.querySelector('.bz-diary-desk [data-act="close"]') as HTMLElement;
     expect(closeBtn.classList.contains('bz-win-close')).toBe(false);
   });

@@ -64,7 +64,7 @@ export interface ItemActionsOptions {
   sheetSub?: string;
   /** 长按触发过滤器：返回 false 的按压不弹浮层（如正文文字区——让位系统长按选字/复制） */
   longPressFilter?: (e: any) => boolean;
-  /** 桌面右键菜单附加类（issue 210：皮肤域传 bz-todo-skin-*，菜单随面板换肤） */
+  /** 桌面右键菜单附加类（issue 210：皮肤域传 bz-memo-skin-*，菜单随面板换肤） */
   menuClass?: string;
 }
 

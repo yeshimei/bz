@@ -6458,10 +6458,6 @@ tags:
   }
 
   // src/cinema/ui.ts
-  function cinemaStyleOf() {
-    const raw = tryGetSettings().cinemaStyle;
-    return raw === "gazette" || raw === "booth" ? raw : "midnight";
-  }
   function posterUrl(item, app) {
     if (!item.poster) return null;
     const f = app.vault.getAbstractFileByPath(item.poster);
@@ -7038,7 +7034,6 @@ ${item.review ? `影评: ${item.review}
   function createOverlay(app) {
     const overlay = document.createElement("div");
     overlay.className = "bz-panel-overlay";
-    cinemaStyleOf();
     const mobile = isMobileEnv();
     overlay.innerHTML = mobile ? midnightMobHtml() : midnightDeskHtml();
     document.body.appendChild(overlay);

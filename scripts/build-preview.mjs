@@ -26,7 +26,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // settings-panel 2026-09-08 拍板维持行为单源（样式/渲染/行为一份源码两端共用）；
 // 原型观感对齐以 35c4342 自足三件套为参照系——冲突在壳环境（core 链 vs 域内自绘）逐一调和，
 // 不回退双轨。
-export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "diary", "home", "password-vault", "review", "secondbrain", "settings-panel"];
+export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "diary", "home", "memo", "password-vault", "review", "secondbrain", "settings-panel"];
 
 // 行为单源域（issue 245/ADR-0106 试点：belongings）：除渲染产物外，另产「行为产物」——
 // 以 fake-sim.ts 为入口、alias obsidian→belongings/fake/fake-obsidian，把真 ui.ts
@@ -37,7 +37,7 @@ export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook",
 // review 行为产物（issue 253）：quiz-core/app/fit/watch 闭包 + ⚙ 直达 settings-panel 内联；
 //   出题 AI 走 fake requestUrl canned 回放（prompt 特征识别 → RVW.SEED.quizBank）
 // knowledge 行为产物（issue 259）：真 ui.ts 依赖链 + fake requestUrl 罐头（术语生成/总结/领域判定）
-export const BEHAVIOR_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "diary", "favorites", "home", "knowledge", "password-vault", "review", "secondbrain", "settings-panel"];
+export const BEHAVIOR_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "diary", "favorites", "home", "knowledge", "memo", "password-vault", "review", "secondbrain", "settings-panel"];
 
 export async function buildBehavior(domain) {
   const entry = path.join(ROOT, "prototypes", domain, "fake-sim.ts");

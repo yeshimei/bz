@@ -6888,6 +6888,7 @@ var BZW_belongings = (() => {
 
   // src/belongings/ui.ts
   var THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
+  var SEARCH_DEBOUNCE_MS = 180;
   var M = {
     overlay: null,
     db: null,
@@ -7035,13 +7036,14 @@ var BZW_belongings = (() => {
       }
     });
     const bindSearch = (inp) => {
+      let deb;
       inp.addEventListener("input", () => {
-        clearTimeout(inp._belDeb);
-        inp._belDeb = setTimeout(() => {
+        clearTimeout(deb);
+        deb = setTimeout(() => {
           if (!M.overlay) return;
           M.q = inp.value.trim();
           renderAll();
-        }, 180);
+        }, SEARCH_DEBOUNCE_MS);
       });
     };
     bindSearch(overlay.querySelector("[data-bel-search]"));

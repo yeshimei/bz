@@ -342,7 +342,7 @@ describe('pausedBy 暂停来源标记（P1-4：冻结 vs 手动）', () => {
   });
 });
 
-describe('任务归属（增强包：待办「专注这个」联动）', () => {
+describe('任务归属（增强包：备忘录「专注这个」联动）', () => {
   const TASK = '完成阅读报告';
   const withTask = (s: PomodoroState): PomodoroState => ({ ...s, task: TASK });
 

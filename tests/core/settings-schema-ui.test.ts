@@ -504,7 +504,7 @@ describe('主设置页 AI per-provider 配置三行（ticket 172）', () => {
 
 describe('choiceCards 行（issue 210）', () => {
   it('预览卡渲染进控件区 + 点击写键落盘 + 空值回退首个选项', () => {
-    state.todoSkin = '';
+    state.memoSkin = '';
     const container = document.createElement('div');
     renderSettingsInto(container, {
       groups: [
@@ -515,7 +515,7 @@ describe('choiceCards 行（issue 210）', () => {
             {
               type: 'choiceCards',
               name: '面板皮肤',
-              binding: { key: 'todoSkin' },
+              binding: { key: 'memoSkin' },
               options: [
                 { value: 'default', label: '默认', prevClass: 'bz-skinprev-default' },
                 { value: 'paper', label: '纸感手账', prevClass: 'bz-skinprev-paper' },
@@ -531,7 +531,7 @@ describe('choiceCards 行（issue 210）', () => {
     // 空值回退首个选项（同 select 口径）
     expect(cards[0].classList.contains('is-on')).toBe(true);
     (cards[1] as HTMLElement).click();
-    expect(state.todoSkin).toBe('paper');
+    expect(state.memoSkin).toBe('paper');
     expect(saver).toHaveBeenCalled();
     expect(cards[1].classList.contains('is-on')).toBe(true);
     expect(cards[0].classList.contains('is-on')).toBe(false);

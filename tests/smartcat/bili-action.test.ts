@@ -1,7 +1,8 @@
 /**
  * 文献盒动作观察集成（ADR-0066/0072 域事件派发）：emitDomainEvent('knowledge:tasks', evt) →
- * 小橘行为流（source 'literature'）；ticket 136 用户拍板只收 converted（视频转文献成功）与
- * term-generated（术语生成成功）两个节点——added/edited/failed 不进行为流（buildLiteratureStructured 返回 null）；
+ * 小橘行为流（source 'knowledge'；issue 261 起与现域名对齐，旧 'literature' 存量条目仍兼容渲染）；
+ * ticket 136 用户拍板只收 converted（视频转文献成功）与
+ * term-generated（术语生成成功）两个节点——added/edited/failed 不进行为流（buildKnowledgeStructured 返回 null）；
  * noteSource 关闭时不观察。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -41,17 +42,17 @@ beforeEach(() => {
 });
 
 describe('notifyLiteratureAction（文献盒动作观察，knowledge:tasks 域事件派发，ADR-0066/0072）', () => {
-  it('视频转文献成功（converted）→ 行为流条目，source=literature, action=converted, name=文献标题（notePath 提取）', async () => {
+  it('视频转文献成功（converted）→ 行为流条目，source=knowledge, action=converted, name=文献标题（notePath 提取）', async () => {
     const { app } = makeApp();
     await ensureSmartCat(app);
     emitDomainEvent('knowledge:tasks', { kind: 'converted', id: 't1', url: 'BV1xx411c7mD', notePath: '文献盒/从零开始学B站.md' });
     await settle();
     const beh: any[] = __getSmartcatInternals().data.memory.behaviorStream;
     const last = beh[beh.length - 1];
-    expect(last.source).toBe('literature');
+    expect(last.source).toBe('knowledge');
     expect(last.type).toBe('converted');
-    expect(last.description).toBe('literature:converted 从零开始学B站');
-    expect(last.metadata.entityType).toBe('literature');
+    expect(last.description).toBe('knowledge:converted 从零开始学B站');
+    expect(last.metadata.entityType).toBe('knowledge');
     expect(last.metadata.name).toBe('从零开始学B站');
     expect(last.metadata.extras).toEqual({ url: 'BV1xx411c7mD', notePath: '文献盒/从零开始学B站.md' });
   });
@@ -72,9 +73,9 @@ describe('notifyLiteratureAction（文献盒动作观察，knowledge:tasks 域�
     await settle();
     const beh: any[] = __getSmartcatInternals().data.memory.behaviorStream;
     const last = beh[beh.length - 1];
-    expect(last.source).toBe('literature');
+    expect(last.source).toBe('knowledge');
     expect(last.type).toBe('term-generated');
-    expect(last.metadata.entityType).toBe('literature');
+    expect(last.metadata.entityType).toBe('knowledge');
     expect(last.metadata.name).toBe('习得性无助');
     expect(last.metadata.extras).toEqual({ term: '习得性无助', title: '习得性无助' });
   });

@@ -100,7 +100,7 @@ describe('设置面板（settings-panel）', () => {
     expect(badges[1]).toBe('2'); // 设置：布局 + 主题两张卡片行（拍板 P1：外观独立域）
     expect(badges[2]).toBe('4'); // AI：服务商+模型名称+上下文+最大输出（采样参数组已退役；aiProvider 未设 → 密钥行门控隐藏）
     expect(badges[3]).toBe('5'); // 日记本（index 3）：ADR-0115 升格后 = 外观 2 + 目录 2 + 显示 1（维护组为按钮行，不计设置项）
-    expect(badges[4]).toBe('10'); // 待办（index 4）：外观组标准化（布局占位卡+主题两卡替换原皮肤单卡）后 10 项
+    expect(badges[4]).toBe('10'); // 备忘录（index 4，todo→memo 正名沿用待办 schema）：外观组标准化后 10 项
     expect(badges[5]).toBe('3'); // 归物本（index 5）：外观组布局/主题两卡 + 默认状态筛选，桌面 3 项
     expect(badges[7]).toBe('2'); // 收藏本（index 7）：issue 246 补外观组两卡 → 桌面回归列表
     // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）
@@ -110,7 +110,7 @@ describe('设置面板（settings-panel）', () => {
     expect(navIcons[1].getAttribute('data-icon')).toBe('palette'); // 设置（拍板 P1：外观独立域）
     expect(navIcons[2].getAttribute('data-icon')).toBe('sparkles'); // AI
     expect(navIcons[3].getAttribute('data-icon')).toBe('notebook-pen'); // 日记本（enh-sweep-a：与 ribbon/磁贴同款，错开书架墙 book-open）
-    expect(navIcons[4].getAttribute('data-icon')).toBe('check-square'); // 待办
+    expect(navIcons[4].getAttribute('data-icon')).toBe('check-square'); // 备忘录（todo→memo 正名，图标沿用）
     expect(navIcons[8].getAttribute('data-icon')).toBe('clapperboard'); // 影院（记录组 5 域后 index 8）
     // 拍板分组顺序（NAV_SECS）：…工具组 = 番茄钟/保险库/密码本/小橘陪伴猫
     expect(navIcons[13].getAttribute('data-icon')).toBe('timer'); // 番茄钟
@@ -414,7 +414,7 @@ describe('设置面板（settings-panel）', () => {
   });
 
   it('占位域外观组遍历锚点（issue 246）：9 域 schema 组[0] 均为外观组（布局 default + 域化主题，layoutKey 契约）', async () => {
-    // schema 层直接断言（渲染链已被上方待办/归物本/设置域锚点覆盖）；[域id, 布局键, 主题键, 加载器]
+    // schema 层直接断言（渲染链已被上方备忘录/归物本/设置域锚点覆盖）；[域id, 布局键, 主题键, 加载器]
     const cases: Array<[string, string, string, () => Promise<SettingsSchema>]> = [
       // ADR-0115：回忆墙升格并入日记本，双条目归一（diaryWallSkin* 键已退役）
       ['日记本', 'diarySkin', 'diarySkinTheme', async () => (await import('../src/diary/settings')).diarySettingsSchema()],
@@ -843,12 +843,12 @@ describe('设置面板（settings-panel）', () => {
 
 describe('choiceCards 视觉卡片行（issue 210）', () => {
   /** 局部设置单例（原 describe 的 panelState 在其闭包内，此处自管） */
-  const skinState: Record<string, unknown> = { todoSkin: 'default' };
+  const skinState: Record<string, unknown> = { memoSkin: 'default' };
   beforeEach(() => {
     resetObsidianMocks();
     mobileFlag = false;
     document.body.innerHTML = '';
-    skinState.todoSkin = 'default';
+    skinState.memoSkin = 'default';
     setSettingsProvider(() => skinState as any);
   });
 
@@ -868,7 +868,7 @@ describe('choiceCards 视觉卡片行（issue 210）', () => {
             {
               type: 'choiceCards',
               name: '面板皮肤',
-              binding: { key: 'todoSkin' },
+              binding: { key: 'memoSkin' },
               options: [
                 { value: 'default', label: '默认', prevClass: 'bz-skinprev-default' },
                 { value: 'paper', label: '纸感手账', prevClass: 'bz-skinprev-paper' },
@@ -889,7 +889,7 @@ describe('choiceCards 视觉卡片行（issue 210）', () => {
     expect(cards[0].classList.contains('is-on')).toBe(true);
     // 点击「纸感手账」：写键 + 落盘 + 选中态切换
     (cards[1] as HTMLElement).click();
-    expect(skinState.todoSkin).toBe('paper');
+    expect(skinState.memoSkin).toBe('paper');
     expect(saveSpy).toHaveBeenCalled();
     expect(cards[1].classList.contains('is-on')).toBe(true);
     expect(cards[0].classList.contains('is-on')).toBe(false);

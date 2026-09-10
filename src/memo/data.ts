@@ -1,5 +1,5 @@
 /**
- * 待办（todo）域数据层：memo.json 读写（与旧 memo 域共用同一数据文件）
+ * 备忘录（memo）域数据层：memo.json 读写（与旧 memo 域共用同一数据文件）
  * 自 memo/data.ts 迁移（对象单例 DataManager 语义逐字保留）：jsonStore 读写、
  * 字段归一补齐、条目 CRUD、场景解析、公开课笔记检索。
  * 纯数据层（无 DOM）；UI 层经 state/refresh 回调刷新。
@@ -9,9 +9,9 @@ import { jsonStore } from '../core/json-store';
 import { getApp } from '../core/app';
 import { generateId, extractUrlAndDisplay } from '../core/utils';
 import { enqueueFileTask, storageFile } from '../core/storage';
-import type { TodoItem } from './types';
+import type { MemoItem } from './types';
 
-export interface TodoSettingsLike {
+export interface MemoSettingsLike {
   /** ADR-0009 共享数据路径 */
   storagePath?: string;
   /** 场景列表（逗号分隔，空则内置默认；与旧 memo 共用 memoScenarios 键） */
@@ -41,7 +41,7 @@ function hasCourseTag(cache: any): boolean {
 }
 
 /** 条目字段归一（缺省补默认值，旧数据零迁移）——与旧 memo loadItems 逐字段等价 */
-export function normalizeItem(item: any): TodoItem {
+export function normalizeItem(item: any): MemoItem {
   return {
     id: item.id,
     title: item.title,
@@ -60,16 +60,16 @@ export function normalizeItem(item: any): TodoItem {
   };
 }
 
-export const TodoData = {
-  todoFilePath: '',
+export const MemoData = {
+  memoFilePath: '',
   scenarios: [] as string[],
   _store: null as ReturnType<typeof jsonStore> | null,
   cinemaFolderPath: '我的/影视',
 
-  init(settings: TodoSettingsLike) {
+  init(settings: MemoSettingsLike) {
     // memo.json 路径（ADR-0009 共享数据路径）
-    this.todoFilePath = storageFile('memo.json', settings.storagePath || 'CONFIG/STORAGE');
-    this._store = jsonStore(this.todoFilePath);
+    this.memoFilePath = storageFile('memo.json', settings.storagePath || 'CONFIG/STORAGE');
+    this._store = jsonStore(this.memoFilePath);
     // 场景：设置可编辑（逗号分隔），空则内置默认（与旧 memo 共用 memoScenarios 键）
     this.scenarios = parseScenarios(settings.memoScenarios);
     this.cinemaFolderPath = settings.cinemaFolderPath || '我的/影视';
@@ -85,8 +85,8 @@ export const TodoData = {
   /** 加载条目：读 + 缺 id 生成 + 字段归一（与旧 memo 一致：有缺 id 整写回补）。
    *  id 前缀用 generateId() 默认 'item'——与旧 memo 域同写 memo.json，保证两域对同文件
    *  的 id 形态完全一致（T5）。读改写整体入 per-path 串行队列（写竞态收敛，对照 memo/data.ts） */
-  async loadItems(): Promise<TodoItem[]> {
-    return enqueueFileTask(this.todoFilePath, async () => {
+  async loadItems(): Promise<MemoItem[]> {
+    return enqueueFileTask(this.memoFilePath, async () => {
       const raw = await this.read();
       let needWrite = false;
       const items = raw.map((item: any) => {
@@ -102,16 +102,16 @@ export const TodoData = {
     });
   },
 
-  async addItem(item: TodoItem) {
-    return enqueueFileTask(this.todoFilePath, async () => {
+  async addItem(item: MemoItem) {
+    return enqueueFileTask(this.memoFilePath, async () => {
       const data = await this.read();
       data.unshift(item);
       await this.write(data);
     });
   },
 
-  async updateItem(id: string, newData: Partial<TodoItem>) {
-    return enqueueFileTask(this.todoFilePath, async () => {
+  async updateItem(id: string, newData: Partial<MemoItem>) {
+    return enqueueFileTask(this.memoFilePath, async () => {
       const data = await this.read();
       const idx = data.findIndex((d: any) => d.id === id);
       if (idx === -1) throw new Error('条目不存在');
@@ -138,7 +138,7 @@ export const TodoData = {
 
   /** 删除条目；返回被删条目的原索引（未找到返回 -1），供撤销时插回原位 */
   async deleteItem(id: string): Promise<number> {
-    return enqueueFileTask(this.todoFilePath, async () => {
+    return enqueueFileTask(this.memoFilePath, async () => {
       const data = await this.read();
       const idx = data.findIndex((d: any) => d.id === id);
       if (idx !== -1) {
@@ -150,8 +150,8 @@ export const TodoData = {
   },
 
   /** 撤销删除：把删除前的条目快照插回原索引（越界/未传则头部插入，对齐 addItem 语义） */
-  async restoreItem(item: TodoItem, idx?: number) {
-    return enqueueFileTask(this.todoFilePath, async () => {
+  async restoreItem(item: MemoItem, idx?: number) {
+    return enqueueFileTask(this.memoFilePath, async () => {
       const data = await this.read();
       const at = idx !== undefined && idx >= 0 && idx <= data.length ? idx : 0;
       data.splice(at, 0, item);
@@ -162,7 +162,7 @@ export const TodoData = {
   /** 批量迁移条目场景（场景重命名/删除用）：scene === from → to，返回迁移条数。
    *  同源兼容：只改条目 scene 字段，写法与 memo 域读写同文件同形，memo 侧下次 loadItems 即读到 */
   async updateSceneBulk(from: string, to: string): Promise<number> {
-    return enqueueFileTask(this.todoFilePath, async () => {
+    return enqueueFileTask(this.memoFilePath, async () => {
       const data = await this.read();
       let n = 0;
       data.forEach((d: any) => {

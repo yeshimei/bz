@@ -71,10 +71,10 @@ describe('coverage-source：复习计划/题库/入口页/附件搬移', () => {
   });
 
   it('review:rated 带评分档位（四档文案）', () => {
-    for (const [rating, suffix] of [['again', '（忘了）'], ['hard', '（困难）'], ['good', '（一般）'], ['easy', '（简单）']] as const) {
+    for (const [rating, word] of [['again', '忘了'], ['hard', '困难'], ['good', '一般'], ['easy', '简单']] as const) {
       const s = buildReviewStructured('rated', '三体', rating)!;
       expect(s.extras).toEqual({ rating });
-      expect(wordingOf('review', s)).toBe(`你给《三体》完成了复习评分${suffix}`);
+      expect(wordingOf('review', s)).toBe(`你复习了《三体》，自评「${word}」`);
     }
   });
 

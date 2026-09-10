@@ -24,8 +24,7 @@ export const DOMAIN_ICONS: Readonly<Record<string, string>> = {
   // 域入口命令与面板导航共用
   home: 'layout-grid',
   recap: 'calendar-heart',
-  memo: 'sticky-note',
-  todo: 'check-square',
+  memo: 'check-square',
   belongings: 'package',
   clipping: 'scissors',
   favorites: 'star',

@@ -6,7 +6,7 @@
  *   - FakeApp 注入 core/app（vault + metadataCache——core/storage 的 jsonFileStore、
  *     recap 影院/书库扫描、review 数据层全部真实现跑在假 vault 上，见 fake/fake-obsidian.ts）；
  *   - 设置注入：setSettingsProvider 注入演示路径（与插件默认值同形）；
- *   - 种子数据：home 是只读聚合域，活动河横跨 recap（diary/cinema/bookshelf/todo/pomodoro）、
+ *   - 种子数据：home 是只读聚合域，活动河横跨 recap（diary/cinema/bookshelf/memo/pomodoro）、
  *     review、clipbook(news)、favorites、belongings——种子按相对「今天」生成一整套跨域
  *     演示数据灌进 fake vault 对应路径，面板永远有真实内容；跨天自动重灌（活动河口径
  *     以「今天」为锚，旧种子不重灌就会整体失真——与 belongings「编辑可持久」的差异在此）。
@@ -263,7 +263,7 @@ function seedBelongings(out: SeedFile[]): void {
   });
 }
 
-/** 待办（memo.json，recap 同源直读）：今日完成 2 + 新增 2，昨日完成 1 */
+/** 备忘录（memo.json，recap 同源直读）：今日完成 2 + 新增 2，昨日完成 1 */
 function seedMemo(out: SeedFile[]): void {
   const memo = [
     { id: 'memo_seed_1', title: '给 obsidian 提 issue', created: `${dstr(0)} 09:05`, completed: `${dstr(0)} 09:10` },
