@@ -1,4 +1,4 @@
-/* 源指纹 1062508ef06cfc1a · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 34ca461b617c4096 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
@@ -4297,6 +4297,79 @@ var BZW_review = (() => {
     }
   });
 
+  // src/core/utils.ts
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
+  }
+  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
+    const target = (0, import_moment2.default)(date);
+    if (!target.isValid()) return "无效日期";
+    let hasExplicitTime = true;
+    if (typeof date === "string") {
+      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
+    }
+    const nowMoment = (0, import_moment2.default)(now);
+    const diffSeconds = nowMoment.diff(target, "seconds");
+    function shouldShowTime() {
+      const timeStr = target.format("HH:mm");
+      if (timeStr !== "00:00") return true;
+      return hasExplicitTime;
+    }
+    if (diffSeconds < 0) {
+      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
+    }
+    if (diffSeconds < 60) return "刚刚";
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
+    const todayStart = (0, import_moment2.default)(now).startOf("day");
+    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
+      const hours = Math.floor(diffMinutes / 60);
+      return `${hours}小时前`;
+    }
+    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
+    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
+    if (target.isSame(yesterdayStart, "day")) {
+      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
+    }
+    if (target.isSame(beforeYesterdayStart, "day")) {
+      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
+    }
+    const weekStart = (0, import_moment2.default)(now).startOf("week");
+    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
+      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
+    }
+    const isThisYear = target.year() === nowMoment.year();
+    if (isThisYear) {
+      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
+    }
+    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
+  }
+  function stripMdExt(name) {
+    return String(name || "").replace(/\.md$/i, "");
+  }
+  function stripTitleMarks(s) {
+    return String(s || "").replace(/^《|》$/g, "");
+  }
+  function isUnderFolder(folder, path) {
+    const f = (folder || "").trim().replace(/\/+$/, "");
+    if (!f) return false;
+    return path === f || path.startsWith(f + "/");
+  }
+  var import_moment2;
+  var init_utils = __esm({
+    "src/core/utils.ts"() {
+      import_moment2 = __toESM(require_moment());
+      init_fake_obsidian();
+      init_app();
+    }
+  });
+
   // src/core/z-order.ts
   function syncAlwaysOnTop() {
     for (const el of alwaysOnTop) {
@@ -4667,68 +4740,6 @@ var BZW_review = (() => {
           }
         };
       })();
-    }
-  });
-
-  // src/core/utils.ts
-  function escapeHtml(str) {
-    return str.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
-  }
-  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
-    const target = (0, import_moment2.default)(date);
-    if (!target.isValid()) return "无效日期";
-    let hasExplicitTime = true;
-    if (typeof date === "string") {
-      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
-    }
-    const nowMoment = (0, import_moment2.default)(now);
-    const diffSeconds = nowMoment.diff(target, "seconds");
-    function shouldShowTime() {
-      const timeStr = target.format("HH:mm");
-      if (timeStr !== "00:00") return true;
-      return hasExplicitTime;
-    }
-    if (diffSeconds < 0) {
-      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
-    }
-    if (diffSeconds < 60) return "刚刚";
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
-    const todayStart = (0, import_moment2.default)(now).startOf("day");
-    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
-      const hours = Math.floor(diffMinutes / 60);
-      return `${hours}小时前`;
-    }
-    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
-    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
-    if (target.isSame(yesterdayStart, "day")) {
-      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
-    }
-    if (target.isSame(beforeYesterdayStart, "day")) {
-      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
-    }
-    const weekStart = (0, import_moment2.default)(now).startOf("week");
-    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
-      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
-    }
-    const isThisYear = target.year() === nowMoment.year();
-    if (isThisYear) {
-      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
-    }
-    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
-  }
-  var import_moment2;
-  var init_utils = __esm({
-    "src/core/utils.ts"() {
-      import_moment2 = __toESM(require_moment());
-      init_fake_obsidian();
-      init_app();
     }
   });
 
@@ -5161,6 +5172,7 @@ var BZW_review = (() => {
   var ReviewDataManager;
   var init_data = __esm({
     "src/review/data.ts"() {
+      init_utils();
       init_storage();
       init_settings_provider();
       init_fsrs();
@@ -5171,7 +5183,7 @@ var BZW_review = (() => {
         /** 加载条目（向后兼容旧字段；日期兼容 ISO 字符串与数字）。
          *  走模块级 getApp（reviewApp 为单例 dataManager，app 参数注入会绑定旧 app 导致跨测试/重开写错 vault） */
         async loadItems() {
-          var _a, _b;
+          var _a;
           const data = await jsonFileStore(getReviewFilePath()).read();
           const items = Array.isArray(data) ? data : [];
           const valid = [];
@@ -5180,10 +5192,10 @@ var BZW_review = (() => {
             if (!file) {
               item.file = null;
               item.isMissing = true;
-              item.name = item.name || ((_a = item.filePath.split("/").pop()) == null ? void 0 : _a.replace(/\.md$/, "")) || item.filePath;
+              item.name = item.name || stripMdExt(item.filePath.split("/").pop() || "") || item.filePath;
               item.isCompleted = item.completed || false;
               item.isOverdue = false;
-              item.currentStage = ((_b = item.stage) != null ? _b : (item.reviewStage || 1) - 1) + 1;
+              item.currentStage = ((_a = item.stage) != null ? _a : (item.reviewStage || 1) - 1) + 1;
               item.totalStages = TOTAL_STAGES;
               valid.push(item);
               continue;
@@ -9196,6 +9208,7 @@ ${n.content.slice(0, 2e3)}
   var CORRECT_JUMP_DELAY_MS2, SprintSession, RATING_NAMES2;
   var init_sprint = __esm({
     "src/review/sprint.ts"() {
+      init_utils();
       init_notice();
       init_flow_dialog();
       init_ui();
@@ -9546,7 +9559,7 @@ ${n.content.slice(0, 2e3)}
           this.bindTop();
         }
         asideStates() {
-          return this.entries.map((e) => ({ name: e.item.name.replace(/^《|》$/g, ""), state: e.state }));
+          return this.entries.map((e) => ({ name: stripTitleMarks(e.item.name), state: e.state }));
         }
         renderQuestion() {
           var _a, _b, _c, _d, _e;
@@ -9587,7 +9600,7 @@ ${n.content.slice(0, 2e3)}
           const rating = accuracyToRating(acc);
           const passed = rating === "easy" || rating === "good";
           const remain = this.remainingCount;
-          const name = entry.item.name.replace(/^《|》$/g, "");
+          const name = stripTitleMarks(entry.item.name);
           const nextLabel = this.mode === "single" ? "完成 · 回面板" : remain > 0 ? `下一篇 · ${this.nextPendingName()}` : "完成本轮 · 结算";
           const ratingLine = this.mode === "redo" ? `${RATING_NAMES2[rating]} · 已解除待重做` : `${RATING_NAMES2[rating]} · 下次 ${entry.passNote || "已排期"}`;
           this.view = "result";
@@ -9612,7 +9625,7 @@ ${n.content.slice(0, 2e3)}
         }
         nextPendingName() {
           const nx = this.entries.find((e) => e.state === "pending");
-          return nx ? nx.item.name.replace(/^《|》$/g, "").slice(0, 12) : "";
+          return nx ? stripTitleMarks(nx.item.name).slice(0, 12) : "";
         }
         showSummary() {
           var _a, _b;
@@ -10001,7 +10014,7 @@ ${n.content.slice(0, 2e3)}
       const lastTs = (_a2 = h[h.length - 1]) == null ? void 0 : _a2.timestamp;
       const cnt = h.length;
       return {
-        name: i.name.replace(/^《|》$/g, ""),
+        name: stripTitleMarks(i.name),
         sub: `${cnt} 次`,
         meta: lastTs ? formatRelativeTime(new Date(lastTs)) : ""
       };
@@ -10061,7 +10074,7 @@ ${n.content.slice(0, 2e3)}
       }
     }
     status.innerHTML = `
-    <div style="font-size:15px;font-weight:600;color:var(--text-normal);">${escapeHtml(item.name.replace(/^《|》$/g, ""))}</div>
+    <div style="font-size:15px;font-weight:600;color:var(--text-normal);">${escapeHtml(stripTitleMarks(item.name))}</div>
     <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${stageText} · 共 ${history.length} 次复习${curR || ""}</div>
   `;
     body.appendChild(status);
@@ -11264,12 +11277,10 @@ ${n.content.slice(0, 2e3)}
     ReviewWatcher: () => ReviewWatcher,
     __setAutoAddMergeMsForTests: () => __setAutoAddMergeMsForTests,
     __setRenameMergeMsForTests: () => __setRenameMergeMsForTests,
-    isUnderFolder: () => isUnderFolder
+    isUnderFolder: () => isUnderFolder2
   });
-  function isUnderFolder(folder, path) {
-    const f = (folder || "").trim().replace(/\/+$/, "");
-    if (!f) return false;
-    return path === f || path.startsWith(f + "/");
+  function isUnderFolder2(folder, path) {
+    return isUnderFolder(folder, path);
   }
   function __setAutoAddMergeMsForTests(ms) {
     REVIEW_AUTO_ADD_MERGE_MS = ms;
@@ -11280,6 +11291,7 @@ ${n.content.slice(0, 2e3)}
   var REVIEW_AUTO_ADD_MERGE_MS, RENAME_MERGE_MS, ReviewWatcher;
   var init_watch = __esm({
     "src/review/watch.ts"() {
+      init_utils();
       init_notice();
       init_flow_dialog();
       init_settings_provider();
@@ -11308,7 +11320,7 @@ ${n.content.slice(0, 2e3)}
           return Array.isArray(s == null ? void 0 : s.reviewExcludedNotes) ? s.reviewExcludedNotes : [];
         }
         isWatched(path) {
-          return this.watchedFolders.some((f) => isUnderFolder(f, path));
+          return this.watchedFolders.some((f) => isUnderFolder2(f, path));
         }
         isExcluded(path) {
           return this.excludedNotes.includes(path);
@@ -11423,7 +11435,7 @@ ${n.content.slice(0, 2e3)}
         }
         /** 未加入候选：目录内全部 md − 已加入 − 已排除（递归；挂起记录占位路径天然排除） */
         collectAutoaddCandidates(folder, items) {
-          return this.app.vault.getMarkdownFiles().map((f) => f.path).filter((p) => isUnderFolder(folder, p)).filter((p) => !items.some((i) => i.filePath === p)).filter((p) => !this.isExcluded(p));
+          return this.app.vault.getMarkdownFiles().map((f) => f.path).filter((p) => isUnderFolder2(folder, p)).filter((p) => !items.some((i) => i.filePath === p)).filter((p) => !this.isExcluded(p));
         }
         /** 选择监听文件夹后的存量收编确认（ticket 099）：确认 → 批量全部加入并返回 true；取消 → 什么都不做返回 false（不写排除名单） */
         async confirmBatchAddForFolder(folder) {
@@ -11442,7 +11454,7 @@ ${n.content.slice(0, 2e3)}
           let ok = 0;
           for (const p of candidates) {
             try {
-              await this.dataManager.addItem(p, p.split("/").pop().replace(/\.md$/, ""));
+              await this.dataManager.addItem(p, stripMdExt(p.split("/").pop()));
               ok++;
             } catch (e) {
             }
@@ -11461,7 +11473,7 @@ ${n.content.slice(0, 2e3)}
           if (idx !== -1) folders.splice(idx, 1);
           s.reviewWatchedFolders = folders;
           const before = Array.isArray(s.reviewExcludedNotes) ? [...s.reviewExcludedNotes] : [];
-          const kept = before.filter((p) => !isUnderFolder(folder, p));
+          const kept = before.filter((p) => !isUnderFolder2(folder, p));
           s.reviewExcludedNotes = kept;
           await saveSettings();
           return before.length - kept.length;
@@ -11524,7 +11536,7 @@ ${n.content.slice(0, 2e3)}
   }
   function pseudoMdFile(path) {
     const base = path.split("/").pop() || "";
-    return { path, basename: base.replace(/\.md$/, ""), extension: "md" };
+    return { path, basename: stripMdExt(base), extension: "md" };
   }
   function ensureReview(app) {
     if (initialized2) return;
@@ -11705,6 +11717,7 @@ ${n.content.slice(0, 2e3)}
   var initialized2, dataManager, uiManager, reviewWatcher, checkInterval, firstCheckTimer, unsubscribers;
   var init_review = __esm({
     "src/review/index.ts"() {
+      init_utils();
       init_notice();
       init_flow_dialog();
       init_domain_bus();
