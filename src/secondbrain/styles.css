@@ -1,7 +1,9 @@
 /* ============================================================
    第二大脑 · 定稿原型主题（issue 251 / ADR-0110）
-   三界面：主面板 / AI 对话 / 灵感参考 —— 米白 #fbfaf7 × 红棕 #a33d2a，
-   面板固定浅色自成一体，不随 .theme-dark 反色（favorites C5 同款先例）。
+   三界面：主面板 / AI 对话 / 灵感参考 —— 米白 #fbfaf7 × 红棕 #a33d2a。
+   暗色（issue 270，原「固定浅色不随 .theme-dark 反色」拍板作废）：
+   七根（三界面 + 移动抽屉/胶囊 + 浮动参考卡/hover 预览两个 body 逸出点）
+   同组 --sb-* 暗色覆盖，亮侧零改动（先例：cinema .cn-skin）。
    markup 单源 render.ts；本文件为唯一样式源（bz-sb-* 前缀）。
    移动端抽屉段（bz-sb-mb-*）同皮（issue 251 追加）：吸同一套 token。
    ============================================================ */
@@ -18,17 +20,22 @@
   display: none !important;
 }
 
-/* ==================== 主题 token（根容器同套：三界面 + 移动抽屉/胶囊） ==================== */
-
+/* ==================== 主题 token（根容器同套：三界面 + 移动抽屉/胶囊 + 双逸出点） ====================
+   双逸出点（reference-panel.ts 直挂 document.body，面板树外取不到继承）：
+   .bz-sb-ref-card--float 拖出的浮动参考卡、.bz-sb-ref-preview hover 预览——
+   类名自携 token 源（同 cinema .cn-skin 手法），在列时类摘除由浮窗根供给 */
 .bz-sb-panel,
 .bz-sb-chat-modal,
 .bz-sb-float-win,
 .bz-sb-mb-sheet,
-.bz-sb-mb-mini {
+.bz-sb-mb-mini,
+.bz-sb-ref-preview,
+.bz-sb-ref-card--float {
   --sb-bg: #fbfaf7;
   --sb-card: #ffffff;
   --sb-ink: #211d16;
   --sb-ink2: #544e42;
+  --sb-ink3: #6b6455; /* 次强功能字（功能钮/节题/chips） */
   --sb-mut: #a39b8c;
   --sb-faint: #c4bcae;
   --sb-line: #eae4d8;
@@ -37,12 +44,42 @@
   --sb-acc-soft: #fdf6f3;
   --sb-acc-line: #eeddd5;
   --sb-dark: #211d16;
+  --sb-track: #f3efe6; /* 轨道/行内 code 底（分数条/进度槽/pre） */
+  --sb-warn: #b45309;
+  --sb-on-acc: #fbfaf7; /* acc/深墨底上的字 */
 }
 
 .bz-sb-panel button,
 .bz-sb-chat-modal button,
 .bz-sb-mb-sheet button {
   font-family: inherit;
+}
+
+/* 暗色 token 组（issue 270）：七根同前缀整组覆盖，深炭棕底 × 红棕提亮档。
+   深墨锚 --sb-dark 转深红棕（user 气泡/主钮在暗底上仍成块），acc 提亮保对比 */
+.theme-dark .bz-sb-panel,
+.theme-dark .bz-sb-chat-modal,
+.theme-dark .bz-sb-float-win,
+.theme-dark .bz-sb-mb-sheet,
+.theme-dark .bz-sb-mb-mini,
+.theme-dark .bz-sb-ref-preview,
+.theme-dark .bz-sb-ref-card--float {
+  --sb-bg: #17150f;
+  --sb-card: #211d16;
+  --sb-ink: #ece7db;
+  --sb-ink2: #c9c1b1;
+  --sb-ink3: #a89f8d;
+  --sb-mut: #877f6e;
+  --sb-faint: #6b6353;
+  --sb-line: #322c21;
+  --sb-line2: #3e3627;
+  --sb-acc: #c4523d;
+  --sb-acc-soft: #2b1f19;
+  --sb-acc-line: #4a2d23;
+  --sb-dark: #3f231b;
+  --sb-track: #171410;
+  --sb-warn: #e08a2e;
+  --sb-on-acc: #fbfaf7;
 }
 
 /* ==================== 主面板弹窗（统一入口） ==================== */
@@ -163,7 +200,7 @@
   border-radius: var(--bz-radius-sm);
   border: 1px solid var(--sb-line2);
   background: var(--sb-card);
-  color: #6b6455;
+  color: var(--sb-ink3);
   font-size: 12.5px;
   display: inline-flex;
   align-items: center;
@@ -181,7 +218,7 @@
 .bz-sb-fbtn--primary {
   background: var(--sb-dark);
   border-color: var(--sb-dark);
-  color: #fbfaf7;
+  color: var(--sb-on-acc);
 }
 .bz-sb-fbtn--primary:hover {
   background: var(--sb-acc);
@@ -249,7 +286,7 @@
   color: var(--sb-acc);
 }
 .bz-sb-card-value--warn {
-  color: #b45309;
+  color: var(--sb-warn);
 }
 .bz-sb-card-label {
   font-size: 11.5px;
@@ -296,7 +333,7 @@
   flex: none;
   font-size: var(--bz-font-meta);
   font-weight: 600;
-  color: #6b6455;
+  color: var(--sb-ink3);
   letter-spacing: 0.04em;
   display: flex;
   align-items: center;
@@ -336,7 +373,8 @@
   min-height: 2px;
 }
 .bz-sb-trend-col--last .bz-sb-trend-bar {
-  background: linear-gradient(180deg, #544e42, #211d16);
+  /* 墨色柱 = ink2→dark 渐变收编（亮侧原 #544e42→#211d16 值等价），暗色随 token 翻转 */
+  background: linear-gradient(180deg, var(--sb-ink2), var(--sb-dark));
 }
 .bz-sb-trend-col span {
   font-size: 9.5px;
@@ -386,7 +424,7 @@
 }
 .bz-sb-dist-bar {
   height: 7px;
-  background: #f3efe6;
+  background: var(--sb-track);
   border-radius: 99px;
   overflow: hidden;
 }
@@ -508,7 +546,7 @@
   text-overflow: ellipsis;
 }
 .bz-sb-log-item--warn {
-  color: #b45309;
+  color: var(--sb-warn);
 }
 .bz-sb-log-sep {
   margin: 0 6px;
@@ -555,7 +593,7 @@
   border-radius: 10px;
   border: none;
   background: var(--sb-dark);
-  color: #fbfaf7;
+  color: var(--sb-on-acc);
   font-size: var(--bz-font-label);
   cursor: pointer;
   user-select: none;
@@ -579,7 +617,7 @@
 .bz-sb-init-bar {
   width: 100%;
   height: 8px;
-  background: #f3efe6;
+  background: var(--sb-track);
   border-radius: 99px;
   overflow: hidden;
 }
@@ -738,7 +776,7 @@
 }
 .bz-sb-chat-msg.user .bz-sb-chat-bubble {
   background: var(--sb-dark);
-  color: #fbfaf7;
+  color: var(--sb-on-acc);
   font-size: var(--bz-font-label);
   line-height: 1.65;
   white-space: pre-wrap;
@@ -766,13 +804,13 @@
   padding-left: 20px;
 }
 .bz-sb-chat-bubble code {
-  background: #f3efe6;
+  background: var(--sb-track);
   border-radius: var(--bz-radius-xs);
   padding: 0 5px;
   font-size: var(--bz-font-meta);
 }
 .bz-sb-chat-bubble pre {
-  background: #f3efe6;
+  background: var(--sb-track);
   border-radius: var(--bz-radius-sm);
   padding: 9px var(--bz-space-md);
   overflow: auto;
@@ -913,7 +951,7 @@
   border-radius: 50%;
   border: none;
   background: var(--sb-dark);
-  color: #fbfaf7;
+  color: var(--sb-on-acc);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -935,7 +973,7 @@
 }
 .bz-sb-chat-chip {
   font-size: 11.5px;
-  color: #6b6455;
+  color: var(--sb-ink3);
   border: 1px solid var(--sb-line2);
   background: var(--sb-card);
   border-radius: 99px;
@@ -1154,7 +1192,7 @@
 /* 分数条（定稿原型新元素） */
 .bz-sb-ref-card-bar {
   height: 3px;
-  background: #f3efe6;
+  background: var(--sb-track);
   border-radius: 99px;
   margin: 7px 0 2px;
   overflow: hidden;
@@ -1232,7 +1270,7 @@
 }
 .bz-sb-ref-preview-body pre,
 .bz-sb-ref-preview-body code {
-  background: #f3efe6;
+  background: var(--sb-track);
   border-radius: var(--bz-radius-xs);
   font-size: var(--bz-font-caption);
 }
@@ -1296,7 +1334,7 @@
 .bz-sb-mb-pill.active {
   background: var(--sb-acc);
   border-color: var(--sb-acc);
-  color: #fbfaf7;
+  color: var(--sb-on-acc);
 }
 .bz-sb-mb-drag-strip {
   flex: 1;
@@ -1455,7 +1493,7 @@
 }
 .bz-sb-mb-chat-msg.user .bz-sb-mb-chat-bubble {
   background: var(--sb-dark);
-  color: #fbfaf7;
+  color: var(--sb-on-acc);
 }
 .bz-sb-mb-chat-msg.assistant .bz-sb-mb-chat-bubble {
   background: var(--sb-card);
@@ -1527,7 +1565,7 @@
   border: none;
   border-radius: 50%;
   background: var(--sb-acc);
-  color: #fbfaf7;
+  color: var(--sb-on-acc);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -1552,7 +1590,7 @@
 }
 .bz-sb-mb-chat-chip {
   font-size: var(--bz-font-caption);
-  color: #6b6455;
+  color: var(--sb-ink3);
   border: 1px solid var(--sb-line2);
   background: var(--sb-card);
   border-radius: 99px;
@@ -1578,4 +1616,70 @@
   height: 100%;
   border-radius: 99px;
   background: var(--sb-acc);
+}
+
+/* ==================== 暗色装饰档（issue 270，全部 .theme-dark 前缀，亮侧零改动） ====================
+   token 组覆盖不到的一次性位：装饰渐变 / 一次性文字档 / 阴影 / 脉冲光圈 */
+
+/* 趋势柱与初始化进度：红棕渐变提亮档 */
+.theme-dark .bz-sb-panel .bz-sb-trend-bar {
+  background: linear-gradient(180deg, #b26b58, #c4523d);
+}
+.theme-dark .bz-sb-panel .bz-sb-init-fill {
+  background: linear-gradient(90deg, #b26b58, #c4523d);
+}
+/* AI 摘要卡暖纸渐变 → 暖褐渐变；一次性正文文字档提亮 */
+.theme-dark .bz-sb-panel .bz-sb-ai {
+  background: linear-gradient(135deg, #251d14, #271b15);
+}
+.theme-dark .bz-sb-panel .bz-sb-ai-txt {
+  color: #c9c1b1;
+}
+.theme-dark .bz-sb-chat-modal .bz-sb-chat-msg.assistant .bz-sb-chat-bubble {
+  color: #d8d1c2;
+}
+.theme-dark .bz-sb-ref-card-body {
+  color: #a89f8d; /* 列表内（浮窗树）与拖出浮动卡（自携 token 源）两处通用 */
+}
+
+/* 阴影加深：黑影在暗底不可见，统一抬深 */
+.theme-dark .bz-sb-panel,
+.theme-dark .bz-sb-chat-modal {
+  box-shadow: 0 24px 60px #00000080;
+}
+.theme-dark .bz-sb-float-win {
+  box-shadow: -4px 0 18px rgba(0, 0, 0, 0.5);
+}
+/* 最大化去阴影语义暗色保持（排在加深规则之后，同权后到覆盖） */
+.theme-dark .bz-sb-float-win.bz-sb-float-max {
+  box-shadow: none;
+}
+.theme-dark .bz-sb-ref-card--held {
+  box-shadow: 0 4px 14px #c4523d55;
+}
+.theme-dark .bz-sb-ref-card--float {
+  box-shadow: 0 16px 40px #00000080;
+}
+.theme-dark .bz-sb-ref-preview {
+  box-shadow: 0 18px 44px #00000080;
+}
+.theme-dark .bz-sb-mb-sheet {
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.55);
+}
+.theme-dark .bz-sb-mb-mini {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+}
+
+/* 健康脉冲光圈：acc 提亮档（@keyframes 不吃选择器作用域，走 animation-name 切换） */
+@keyframes bz-sb-pulse-dark {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 #c4523d55;
+  }
+  55% {
+    box-shadow: 0 0 0 5px #c4523d00;
+  }
+}
+.theme-dark .bz-sb-panel .bz-sb-pill-dot {
+  animation-name: bz-sb-pulse-dark;
 }
