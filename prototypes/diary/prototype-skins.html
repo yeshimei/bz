@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>日记本 · 原型变体对比</title>
+<!--
+  日记本原型「变体对比」外景壳（评审工件，非产品代码）。
+  ----------------------------------------------------------------------------
+  它只做三件事：选皮肤、选明暗、把 prototype-view.html 塞进 iframe。
+  真行为/真 markup 全在内景（同一份 prototype-behavior.js + render 链），
+  本页零日记本逻辑 —— 换肤即换一条 <link>，单源不被破坏。
+
+  变体清单（见 skins/*.css）：
+    现状   —— 不带 skin，即 src/diary/styles.css 原样
+    暖忆   —— skins/warm.css      暖纸杂志风（衬线 + 单行幽灵筛选条 + 暖投影）
+    留白   —— skins/quiet.css     静谧现代风（去盒子 + 大号轻日期 + 下划线筛选）
+    暗房   —— skins/darkroom.css  沉浸暗色影像风（媒体优先 + 胶片齿条 + 便签卡）
+-->
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+    background: #eceef1;
+    font: 13px/1.5 system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+    color: #2b3038;
+  }
+
+  /* ---------- 顶栏 ---------- */
+  header {
+    display: flex; align-items: center; gap: 18px;
+    padding: 10px 18px; flex: none;
+    background: #fff; border-bottom: 1px solid #dde1e6;
+    box-shadow: 0 1px 3px rgba(20,24,32,.05);
+    z-index: 10;
+  }
+  .brand { font-size: 13px; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+  .brand small { display: block; font-weight: 400; font-size: 10.5px; color: #8b939f; letter-spacing: .06em; }
+
+  .seg { display: inline-flex; background: #f0f2f5; border-radius: 9px; padding: 3px; gap: 2px; }
+  .seg button {
+    border: none; background: none; cursor: pointer; font: inherit;
+    padding: 5px 13px; border-radius: 7px; color: #5b636e; white-space: nowrap;
+    transition: background .15s, color .15s, box-shadow .15s;
+  }
+  .seg button:hover { color: #23262c; }
+  .seg button.on { background: #fff; color: #23262c; font-weight: 600; box-shadow: 0 1px 3px rgba(20,24,32,.12); }
+  .seg button .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+
+  .spacer { flex: 1; }
+  .hint { font-size: 11.5px; color: #98a0ab; white-space: nowrap; }
+
+  /* ---------- 舞台 ---------- */
+  main { flex: 1; min-height: 0; display: flex; overflow: auto; padding: 20px; }
+  .stage { margin: auto; }
+
+  /* 单视图：1120×860 内视口 */
+  .frame {
+    width: 1120px; height: 860px; border: 0; display: block;
+    background: #fff; border-radius: 14px;
+    box-shadow: 0 6px 18px -6px rgba(20,24,32,.18), 0 40px 90px -30px rgba(20,24,32,.35);
+  }
+
+  /* 并排对比：4 个 0.5 缩放视口，2×2 */
+  .grid { display: none; grid-template-columns: repeat(2, max-content); gap: 18px; }
+  .cell { display: flex; flex-direction: column; gap: 7px; }
+  .cell .cap { font-size: 12px; font-weight: 600; color: #4a525d; letter-spacing: .02em; }
+  .cell .cap span { font-weight: 400; color: #98a0ab; margin-left: 6px; font-size: 11px; }
+  .clip {
+    width: 560px; height: 430px; overflow: hidden; border-radius: 12px;
+    background: #fff; box-shadow: 0 4px 14px -5px rgba(20,24,32,.22);
+  }
+  .clip iframe {
+    width: 1120px; height: 860px; border: 0; display: block;
+    transform: scale(.5); transform-origin: top left;
+  }
+
+  body.compare .frame { display: none; }
+  body.compare .grid { display: grid; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">日记本 · 原型变体<small>ADR-0115 单源 · 换肤不动 markup/行为</small></div>
+
+  <div class="seg" id="variants">
+    <button data-skin="" class="on">现状</button>
+    <button data-skin="warm"><i class="dot" style="background:#e67341"></i>暖忆</button>
+    <button data-skin="quiet"><i class="dot" style="background:#8a93a3"></i>留白</button>
+    <button data-skin="darkroom"><i class="dot" style="background:#5b8dd9"></i>暗房</button>
+  </div>
+
+  <div class="seg" id="themes">
+    <button data-theme="light" class="on">明</button>
+    <button data-theme="dark">暗</button>
+  </div>
+
+  <div class="spacer"></div>
+  <label class="hint" style="cursor:pointer"><input type="checkbox" id="cmp" style="vertical-align:-1px;margin-right:5px">并排对比四版</label>
+  <div class="hint">切换即时生效 · 变体只改视觉层</div>
+</header>
+
+<main>
+  <div class="stage">
+    <iframe id="one" class="frame" title="日记本原型"></iframe>
+    <div class="grid" id="grid"></div>
+  </div>
+</main>
+
+<script>
+  var VARIANTS = [
+    { skin: '', cap: '现状', desc: 'src/diary/styles.css 原样' },
+    { skin: 'warm', cap: 'A 暖忆', desc: '暖纸 · 衬线 · 单行筛选条' },
+    { skin: 'quiet', cap: 'B 留白', desc: '去盒子 · 大号轻字 · 下划线筛选' },
+    { skin: 'darkroom', cap: 'C 暗房', desc: '沉浸暗色 · 媒体优先 · 胶片齿条' }
+  ];
+
+  var state = { skin: '', theme: 'light', compare: false };
+  var one = document.getElementById('one');
+  var grid = document.getElementById('grid');
+  var gridBuilt = false;
+
+  function url(skin, theme) {
+    return './prototype-view.html?skin=' + encodeURIComponent(skin) + '&theme=' + theme;
+  }
+
+  function render() {
+    if (!state.compare) {
+      one.src = url(state.skin, state.theme);
+      document.title = '日记本 · ' + (state.skin || '现状');
+      return;
+    }
+    // 并排：四版同屏（按需构建，避免常态 4×10MB 数据）
+    if (!gridBuilt) {
+      VARIANTS.forEach(function (v) {
+        var cell = document.createElement('div');
+        cell.className = 'cell';
+        var cap = document.createElement('div');
+        cap.className = 'cap';
+        cap.innerHTML = v.cap + '<span>' + v.desc + '</span>';
+        var clip = document.createElement('div');
+        clip.className = 'clip';
+        var f = document.createElement('iframe');
+        f.title = '日记本原型 · ' + v.cap;
+        clip.appendChild(f);
+        cell.appendChild(cap);
+        cell.appendChild(clip);
+        grid.appendChild(cell);
+      });
+      gridBuilt = true;
+    }
+    Array.prototype.forEach.call(grid.querySelectorAll('iframe'), function (f, i) {
+      f.src = url(VARIANTS[i].skin, state.theme);
+    });
+    document.title = '日记本 · 四版对比';
+  }
+
+  // 变体分段
+  document.getElementById('variants').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    this.querySelectorAll('button').forEach(function (x) { x.classList.remove('on'); });
+    b.classList.add('on');
+    state.skin = b.dataset.skin;
+    render();
+  });
+
+  // 明暗分段
+  document.getElementById('themes').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    this.querySelectorAll('button').forEach(function (x) { x.classList.remove('on'); });
+    b.classList.add('on');
+    state.theme = b.dataset.theme;
+    render();
+  });
+
+  // 并排开关
+  document.getElementById('cmp').addEventListener('change', function () {
+    state.compare = this.checked;
+    document.body.classList.toggle('compare', state.compare);
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>

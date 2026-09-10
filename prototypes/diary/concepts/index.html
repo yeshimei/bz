@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>日记本 · 五个方向的概念原型</title>
+<link rel="stylesheet" href="../../host-theme.css">
+<link rel="stylesheet" href="./base.css">
+<style>
+  body { overflow: auto; padding: 0; }
+  .hero { padding: 44px 40px 26px; border-bottom: 1px solid var(--c-line); }
+  .hero h1 { font-family: var(--c-serif); font-size: 30px; font-weight: 600; letter-spacing: .04em; margin-bottom: 12px; }
+  .hero p { font-size: 13.5px; color: var(--c-muted); max-width: 760px; line-height: 1.9; }
+  .hero .facts { margin-top: 18px; display: flex; gap: 26px; flex-wrap: wrap; }
+  .hero .facts div { font-size: 12px; color: var(--c-faint); letter-spacing: .06em; }
+  .hero .facts b { display: block; font-size: 21px; color: var(--c-ink); font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+
+  .list { padding: 28px 40px 70px; display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px; }
+  .card {
+    border: 1px solid var(--c-line); border-radius: 14px; padding: 22px 24px 20px;
+    background: var(--c-surface); display: flex; flex-direction: column; gap: 12px;
+    transition: border-color .16s, transform .16s, box-shadow .16s; text-decoration: none; color: inherit;
+  }
+  .card:hover { border-color: color-mix(in srgb, var(--c-accent) 55%, transparent); transform: translateY(-2px); box-shadow: 0 10px 30px -16px rgba(0,0,0,.4); }
+  .card .hd { display: flex; align-items: baseline; gap: 12px; }
+  .card .no {
+    font-family: var(--c-mono); font-size: 11px; color: var(--c-faint);
+    border: 1px solid var(--c-line); border-radius: 5px; padding: 1px 7px; letter-spacing: .1em;
+  }
+  .card h2 { font-family: var(--c-serif); font-size: 21px; font-weight: 600; letter-spacing: .08em; }
+  .card .tag { margin-left: auto; font-size: 11px; color: var(--c-accent); letter-spacing: .1em; }
+  .card .one { font-size: 13.5px; line-height: 1.8; color: var(--c-ink); }
+  .card dl { display: grid; grid-template-columns: 62px 1fr; gap: 5px 12px; font-size: 12.5px; line-height: 1.7; }
+  .card dt { color: var(--c-faint); letter-spacing: .06em; }
+  .card dd { color: var(--c-muted); }
+  .card .go {
+    margin-top: 2px; font-size: 12.5px; color: var(--c-accent); letter-spacing: .08em;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .foot { padding: 0 40px 60px; font-size: 12px; color: var(--c-faint); line-height: 1.9; max-width: 820px; }
+  .foot code { font-family: var(--c-mono); font-size: 11.5px; background: var(--c-surface); padding: 1px 6px; border-radius: 4px; }
+</style>
+</head>
+<body class="theme-light">
+<div class="hero">
+  <h1>日记本 · 五个方向的概念原型</h1>
+  <p>
+    上一轮给的是「同一套界面换四张皮」——那不是原型。这一轮是<strong>五套结构完全不同的设计</strong>：
+    信息架构、交互模型、版式语言各自独立，五者之间不存在「谁是谁的变体」。
+    全部吃同一份真实数据（真解析链），改动只落在展示层，不碰插件的 markup / 行为单源。
+  </p>
+  <div class="facts">
+    <div><b>484</b>条目</div>
+    <div><b>159</b>有记录的天</div>
+    <div><b>5</b>年跨度（2022-08 → 2026-08）</div>
+    <div><b>43%</b>是对谈（208 条）</div>
+    <div><b>4</b>类内容（日记/影视/书/信）</div>
+  </div>
+</div>
+
+<div class="list" id="list"></div>
+
+<div class="foot">
+  说明：概念稿只做版式与交互探索，不是可直接合并的实现。选定方向后，才把该方向的版式
+  落回 <code>src/diary/render.ts</code>（markup 单源）+ <code>ui.ts</code>（行为）+ <code>styles.css</code>，
+  走正常的 worktree → 门禁 → 合主仓流程。
+</div>
+
+<script>
+  var CONCEPTS = [
+    {
+      no: '01', file: '1-chronicle.html', name: '长卷', tag: '时间叙事',
+      one: '把日记还原成一条不间断的时间脊：从今天倒着走到 2022，单列纵向叙事，年份是巨大的章节页。',
+      why: '日记的第一性是「时间连续」，不是「一格格卡片」',
+      how: '滚动即回溯；右侧年尺导航；节点在脊上，媒体左右挂载',
+      vs: '现有是「按天分组 + 三列瀑布」，空间化、可跳读；长卷是线性的、沉浸的',
+    },
+    {
+      no: '02', file: '2-conversation.html', name: '对谈室', tag: '消息流',
+      one: '把日记当聊天记录：左会话列表 + 右气泡线程 + 底部输入条。对谈在左、独白在右。',
+      why: '数据真相——最大一类不是「日记」而是「对谈」，208 条占 43%',
+      how: '按天分会话；媒体作为附件贴进气泡；底部即写入口',
+      vs: '现有用相册式卡片墙承载「对话记录」，范式错配；对谈室给它消息流该有的样子',
+    },
+    {
+      no: '03', file: '3-atlas.html', name: '年历图谱', tag: '密度浏览',
+      one: '一屏十年：每年两块 6×2 月历热力图，色深=当天条数，角标=有媒体；点格出当日条目。',
+      why: '日记的另一种用法不是「读」，是「看自己怎么活的」',
+      how: '主区热力图 + 右栏统计（年度柱/标签 TOP/类型构成/最长连续）',
+      vs: '现有一次只能看到几天，看不见整体形状；图谱把断档、高产年一眼摊开',
+    },
+    {
+      no: '04', file: '4-flashback.html', name: '镜头', tag: '沉浸播放',
+      one: '没有列表：一屏只有一条，大图或大字排版，全屏沉浸（刻意暗色）；底部胶片条，键盘翻页。',
+      why: '日记的第三种用法是「偶遇」——让过去的自己找上门，而不是你去找它',
+      how: '那年今天 / 随机漫游 / 只看媒体 / 顺序，四种入口',
+      vs: '现有的卡片墙是检索模式，眼睛在挑；镜头是消费模式，大脑在接',
+    },
+    {
+      no: '05', file: '5-shelves.html', name: '四柜', tag: '类型原生',
+      one: '四种内容四种柜子，各自一套版式与材质：日记=暖纸页流 / 影视=暗色海报墙 / 书=米色封面架 / 信=信笺叠。',
+      why: '库里是四种性质完全不同的东西，一种版式通吃等于抹掉它们各自的阅读方式',
+      how: '顶部柜门切换即换材质（连背景都随柜变）',
+      vs: '现有把所有内容拍平成同一面卡片墙；四柜让海报是海报、信是信',
+    },
+  ];
+
+  var list = document.getElementById('list');
+  CONCEPTS.forEach(function (c) {
+    var a = document.createElement('a');
+    a.className = 'card';
+    a.href = './' + c.file;
+    a.innerHTML =
+      '<div class="hd"><span class="no">' + c.no + '</span><h2>' + c.name + '</h2><span class="tag">' + c.tag + '</span></div>' +
+      '<div class="one">' + c.one + '</div>' +
+      '<dl><dt>为什么</dt><dd>' + c.why + '</dd>' +
+      '<dt>怎么做</dt><dd>' + c.how + '</dd>' +
+      '<dt>差别</dt><dd>' + c.vs + '</dd></dl>' +
+      '<div class="go">打开这个方向 →</div>';
+    list.appendChild(a);
+  });
+</script>
+</body>
+</html>

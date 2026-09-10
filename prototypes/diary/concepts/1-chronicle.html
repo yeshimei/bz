@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>概念稿 1 · 长卷（连续时间轴）</title>
+<!--
+  ============================================================================
+  概念稿 1 ·「长卷」—— 连续时间轴
+  ----------------------------------------------------------------------------
+  范式主张：日记的第一性是「时间连续」，不是「一格格卡片」。
+
+  与现有实现的根本差别：
+  - 现有：按日分组 → 每天一个节头 → 三列瀑布卡片（空间化、平铺、可跳读）
+  - 本稿：**一整条不间断的时间脊** —— 从今天倒着走到 2016，单列纵向叙事。
+    滚动即「回溯」，年份是巨大的章节页，月份是脊上的刻度，媒体左右挂载。
+  - 没有 chips 墙、没有侧栏；筛选退到顶部一行极轻的类型开关 + 右侧年尺导航。
+
+  数据：../prototype-data.js（真实 vault 快照）→ concept-data.js（真解析链）
+  ============================================================================
+-->
+<link rel="stylesheet" href="../../host-theme.css">
+<link rel="stylesheet" href="./base.css">
+<style>
+  body { display: flex; flex-direction: column; }
+
+  /* ---------- 顶栏：极简，只留身份 + 类型开关 ---------- */
+  .top {
+    flex: none; display: flex; align-items: baseline; gap: 20px;
+    padding: 20px 34px 16px; border-bottom: 1px solid var(--c-line);
+    background: color-mix(in srgb, var(--c-bg) 86%, transparent);
+    backdrop-filter: blur(12px);
+  }
+  .top h1 { font-family: var(--c-serif); font-size: 22px; font-weight: 600; letter-spacing: .18em; }
+  .top .meta { font-size: 12px; color: var(--c-faint); letter-spacing: .06em; }
+  .top .meta b { color: var(--c-ink); font-weight: 600; }
+  .filters { margin-left: auto; display: flex; gap: 4px; }
+  .filters button {
+    font-size: 12px; padding: 5px 12px; border-radius: 99px; color: var(--c-muted);
+    letter-spacing: .04em; transition: background .15s, color .15s;
+  }
+  .filters button:hover { background: var(--c-hover); color: var(--c-ink); }
+  .filters button.on { background: var(--c-accent); color: var(--c-on-accent); }
+  .filters button i { display: block; width: 6px; height: 6px; border-radius: 50%; }
+
+  /* ---------- 主体：年尺 + 长卷 ---------- */
+  .wrap { flex: 1; min-height: 0; display: flex; }
+
+  .ruler {
+    flex: none; width: 74px; padding: 26px 0 40vh;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+    border-right: 1px solid var(--c-line);
+  }
+  .ruler button {
+    font-family: var(--c-mono); font-size: 11px; letter-spacing: .1em;
+    color: var(--c-faint); padding: 5px 14px 5px 0; position: relative;
+    transition: color .18s;
+  }
+  .ruler button::after {
+    content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 1px;
+    background: var(--c-line); transition: width .18s, background .18s;
+  }
+  .ruler button:hover { color: var(--c-ink); }
+  .ruler button.on { color: var(--c-accent); font-weight: 600; }
+  .ruler button.on::after { width: 18px; background: var(--c-accent); }
+  .ruler button .c { font-size: 9.5px; opacity: .55; margin-left: 5px; }
+
+  .scroll { flex: 1; overflow-y: auto; min-width: 0; }
+  .stream { max-width: 780px; margin: 0 auto; padding: 10px 40px 45vh; position: relative; }
+  /* 时间脊：x = padding(40) + 时间列(66) + 半格(5.5) + gap 前留白 → 121px
+     （节点 dot 的 left:76 是相对 .node，而 .node 起点在 stream 的 padding 之后，故此处须 +40） */
+  .stream::before {
+    content: ''; position: absolute; left: 121px; top: 0; bottom: 0;
+    width: 1px; background: linear-gradient(var(--c-line), var(--c-line) 92%, transparent);
+  }
+
+  /* ---------- 年份章节页 ---------- */
+  .chapter { position: relative; padding: 66px 0 6px; }
+  .chapter:first-child { padding-top: 26px; }
+  .chapter .row { display: flex; align-items: flex-end; gap: 18px; }
+  .chapter .y {
+    font-family: var(--c-serif); font-size: 62px; font-weight: 200;
+    letter-spacing: .02em; line-height: .82; color: var(--c-ink);
+  }
+  .chapter .rule { flex: 1; height: 1px; background: var(--c-line); margin-bottom: 8px; }
+  .chapter .n { font-size: 11px; letter-spacing: .16em; color: var(--c-faint); margin-bottom: 10px; }
+  .chapter .sub {
+    font-family: var(--c-serif); font-size: 13px; color: var(--c-muted);
+    padding: 8px 0 0 96px; letter-spacing: .04em;
+  }
+
+  /* ---------- 月份刻度 ---------- */
+  .mon { position: relative; padding: 30px 0 2px; }
+  .mon .lbl {
+    margin-left: 96px; font-family: var(--c-mono); font-size: 11px;
+    letter-spacing: .22em; color: var(--c-faint);
+  }
+  .mon::after {
+    content: ''; position: absolute; left: 81px; top: 38px; width: 11px; height: 1px;
+    background: var(--c-line);
+  }
+
+  /* ---------- 条目：脊左时间 / 脊右内容 ---------- */
+  .node {
+    position: relative; display: grid; grid-template-columns: 66px 1fr; gap: 30px;
+    padding: 15px 0 15px 0; content-visibility: auto; contain-intrinsic-size: auto 150px;
+  }
+  .node .t {
+    text-align: right; font-family: var(--c-mono); font-size: 11.5px;
+    color: var(--c-faint); padding-top: 3px; letter-spacing: .04em;
+    transition: color .15s;
+  }
+  .node:hover .t { color: var(--c-accent); }
+  /* 脊上的节点 */
+  .node .dot {
+    position: absolute; left: 76px; top: 22px; width: 11px; height: 11px;
+    border-radius: 50%; background: var(--c-bg); border: 2px solid var(--c-line);
+    transition: border-color .18s, transform .18s, background .18s;
+  }
+  .node:hover .dot { border-color: var(--c-accent); transform: scale(1.25); }
+  .node .dot.has-media { background: var(--c-accent); border-color: var(--c-accent); }
+
+  .body { min-width: 0; }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 7px; }
+  .tags .tg {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; letter-spacing: .04em; color: var(--c-muted);
+  }
+  .tags .tg i { width: 6px; height: 6px; border-radius: 50%; }
+  .tags .kind {
+    font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--c-faint); border: 1px solid var(--c-line); border-radius: 3px;
+    padding: 0 5px; line-height: 1.5;
+  }
+  .tags .em { font-size: 13px; }
+
+  .tx { font-size: 14.5px; line-height: 1.82; color: var(--c-ink); white-space: pre-wrap; word-break: break-word; }
+  .tx p { margin-bottom: .62em; }
+  .tx p:last-child { margin-bottom: 0; }
+  .tx strong { font-weight: 600; }
+  .tx .q { color: var(--c-muted); border-left: 2px solid var(--c-line); padding-left: 11px; display: block; }
+  /* 长文截断（保持长卷可导航；展开后还原全文） */
+  .tx.clamp { display: -webkit-box; -webkit-line-clamp: 8; -webkit-box-orient: vertical; overflow: hidden; }
+  .more-btn { font-size: 12px; color: var(--c-accent); margin-top: 7px; letter-spacing: .04em; }
+  .more-btn:hover { text-decoration: underline; }
+
+  /* 媒体：单张 = 杂志跨幅；多张 = 网格 */
+  .media { margin-top: 11px; display: grid; gap: 7px; }
+  .media.one { grid-template-columns: 1fr; }
+  .media.two { grid-template-columns: repeat(2, 1fr); }
+  .media.many { grid-template-columns: repeat(3, 1fr); }
+  .m {
+    position: relative; overflow: hidden; border-radius: 9px; cursor: zoom-in;
+    background: color-mix(in srgb, var(--c-ink) 5%, transparent);
+  }
+  .media.one .m { max-height: 440px; }
+  .media.two .m, .media.many .m { aspect-ratio: 1 / 1; }
+  .m img, .m video { width: 100%; height: 100%; object-fit: cover; }
+  .media.one .m img { max-height: 440px; object-fit: cover; }
+  .m .badge {
+    position: absolute; right: 7px; bottom: 7px; font-family: var(--c-mono); font-size: 10px;
+    background: rgba(0, 0, 0, .62); color: #fff; padding: 1px 6px; border-radius: 4px;
+  }
+  .m .play {
+    position: absolute; inset: 0; margin: auto; width: 42px; height: 42px; border-radius: 50%;
+    background: rgba(0, 0, 0, .5); color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 15px; pointer-events: none;
+  }
+  .more { font-size: 11px; color: var(--c-faint); margin-top: 7px; letter-spacing: .04em; }
+
+  /* ---------- 灯箱 ---------- */
+  .lb {
+    position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, .93);
+    display: none; align-items: center; justify-content: center; flex-direction: column; gap: 14px;
+  }
+  .lb.on { display: flex; }
+  .lb img, .lb video { max-width: 92vw; max-height: 82vh; object-fit: contain; border-radius: 6px; }
+  .lb .cap { color: rgba(255,255,255,.78); font-size: 13px; letter-spacing: .06em; }
+  .lb .x {
+    position: absolute; top: 22px; right: 26px; color: #fff; font-size: 22px;
+    width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,.12);
+  }
+</style>
+</head>
+<body class="theme-light">
+<div class="c-boot" id="boot"><i></i>正在装订长卷…</div>
+
+<header class="top">
+  <h1>长卷</h1>
+  <div class="meta" id="meta"></div>
+  <div class="filters" id="filters"></div>
+</header>
+
+<div class="wrap">
+  <nav class="ruler c-scroll" id="ruler"></nav>
+  <main class="scroll c-scroll" id="scroll"><div class="stream" id="stream"></div></main>
+</div>
+
+<div class="lb" id="lb"><button class="x" id="lbx">×</button><div id="lbbody"></div><div class="cap" id="lbcap"></div></div>
+
+<script src="../prototype-data.js"></script>
+<script src="./concept-data.js"></script>
+<script src="./concept-ui.js"></script>
+<script>
+(function () {
+  var C = CUI;
+  var ALL = [], SHOWN = [], KIND = 'all';
+
+  C.ready(function (M) {
+    ALL = M.entries;
+    document.getElementById('meta').innerHTML =
+      '<b>' + ALL.length + '</b> 条 · <b>' + M.days.length + '</b> 天 · 跨 <b>' + M.span.years + '</b> 年（' +
+      M.span.from + ' → ' + M.span.to + '）';
+
+    // 类型开关（四来源是天然的第一层切分）
+    var kinds = [['all', '全部', ALL.length]];
+    ['diary', 'movie', 'letter', 'book'].forEach(function (k) {
+      if (M.kindCounts[k]) kinds.push([k, C.KIND[k].label, M.kindCounts[k]]);
+    });
+    var f = document.getElementById('filters');
+    kinds.forEach(function (k) {
+      var b = C.h('button', { text: k[1] + ' ' + k[2] });
+      if (k[0] === 'all') b.classList.add('on');
+      b.onclick = function () {
+        Array.prototype.forEach.call(f.children, function (x) { x.classList.remove('on'); });
+        b.classList.add('on');
+        KIND = k[0];
+        render();
+      };
+      f.appendChild(b);
+    });
+
+    render();
+
+    // 年尺滚动高亮
+    var scroll = document.getElementById('scroll');
+    scroll.addEventListener('scroll', function () {
+      var marks = document.querySelectorAll('.chapter');
+      var y = scroll.scrollTop + 90, cur = null;
+      for (var i = 0; i < marks.length; i++) if (marks[i].offsetTop <= y) cur = marks[i].dataset.y;
+      Array.prototype.forEach.call(document.querySelectorAll('.ruler button'), function (b) {
+        b.classList.toggle('on', b.dataset.y === cur);
+      });
+    }, { passive: true });
+  });
+
+  function render() {
+    SHOWN = KIND === 'all' ? ALL : ALL.filter(function (e) { return e.kind === KIND; });
+    var stream = document.getElementById('stream');
+    stream.innerHTML = '';
+    var years = C.byYear(SHOWN);
+    years.forEach(function (g) {
+      // 年份章节
+      var ch = C.h('div.chapter', { 'data-y': g.year });
+      ch.innerHTML =
+        '<div class="row"><span class="y">' + g.year + '</span><span class="rule"></span>' +
+        '<span class="n">' + g.entries.length + ' 条</span></div>';
+      var dcount = {};
+      g.entries.forEach(function (e) { dcount[e.date] = 1; });
+      ch.appendChild(C.h('div.sub', { text: Object.keys(dcount).length + ' 天有记录' }));
+      stream.appendChild(ch);
+
+      // 月 → 条目
+      C.byMonth(g.entries).forEach(function (mg) {
+        var m = Number(mg.key.slice(5));
+        var mon = C.h('div.mon');
+        mon.appendChild(C.h('div.lbl', { text: m + ' 月' }));
+        stream.appendChild(mon);
+        mg.entries.forEach(function (e) { stream.appendChild(node(e)); });
+      });
+    });
+    buildRuler(years);
+  }
+
+  function node(e) {
+    var n = C.h('div.node', { id: 'n-' + e.id });
+    n.appendChild(C.h('div.t', { text: e.time }));
+    var ms = C.mediaStat(e);
+    n.appendChild(C.h('div.dot' + (ms.total ? '.has-media' : '')));
+
+    var b = C.h('div.body');
+    var tags = C.h('div.tags');
+    if (e.emoji) tags.appendChild(C.h('span.em', { text: e.emoji }));
+    e.tags.forEach(function (t) {
+      var s = C.h('span.tg');
+      s.appendChild(C.h('i', { style: 'background:' + C.tagColor(t) }));
+      s.appendChild(document.createTextNode(t));
+      tags.appendChild(s);
+    });
+    // kind 徽章只在「非日记」时给：日记的默认标签本身就是「日记」，并列显示是重复噪声
+    if (e.kind !== 'diary') tags.appendChild(C.h('span.kind', { text: C.KIND[e.kind].label }));
+    b.appendChild(tags);
+
+    var txt = e.text || '';
+    if (txt) {
+      var tx = C.h('div.tx');
+      tx.innerHTML = renderText(txt);
+      b.appendChild(tx);
+      if (txt.length > 320) {
+        tx.classList.add('clamp');
+        var mb = C.h('button.more-btn', { text: '展开全文' });
+        mb.onclick = function () { tx.classList.remove('clamp'); mb.remove(); };
+        b.appendChild(mb);
+      }
+    }
+
+    if (ms.total) b.appendChild(media(e));
+    n.appendChild(b);
+    return n;
+  }
+
+  function renderText(t) {
+    return t.split(/\n{2,}/).map(function (p) {
+      var s = C.esc(p).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      if (/^>/.test(p.trim())) return '<span class="q">' + s.replace(/^&gt;\s?/gm, '') + '</span>';
+      return '<p>' + s.replace(/\n/g, '<br>') + '</p>';
+    }).join('');
+  }
+
+  function media(e) {
+    var wrap = C.h('div.media');
+    var list = e.media.slice(0, 9);
+    wrap.className = 'media ' + (list.length === 1 ? 'one' : list.length === 2 ? 'two' : 'many');
+    list.forEach(function (md) {
+      var box = C.h('div.m');
+      var src = C.fixMedia(BZ_CONCEPT.url(md.name, e.filename));
+      if (md.kind === 'img') {
+        box.appendChild(C.img(src, md.name));
+        box.onclick = function () { lightbox('img', src, e); };
+      } else if (md.kind === 'video') {
+        var v = document.createElement('video');
+        v.src = src; v.muted = true; v.preload = 'metadata'; v.playsInline = true;
+        box.appendChild(v);
+        box.appendChild(C.h('div.play', { text: '▶' }));
+        box.onclick = function () { lightbox('video', src, e); };
+      } else {
+        box.appendChild(C.h('div.play', { text: '♪' }));
+        box.onclick = function () { lightbox('audio', src, e); };
+      }
+      wrap.appendChild(box);
+    });
+    if (e.media.length > 9) wrap.appendChild(C.h('div.more', { text: '另有 ' + (e.media.length - 9) + ' 个媒体' }));
+    return wrap;
+  }
+
+  function lightbox(kind, src, e) {
+    var lb = document.getElementById('lb'), body = document.getElementById('lbbody');
+    body.innerHTML = '';
+    if (kind === 'img') {
+      var i = document.createElement('img'); i.src = src; body.appendChild(i);
+    } else if (kind === 'video') {
+      var v = document.createElement('video'); v.src = src; v.controls = true; v.autoplay = true; v.playsInline = true; body.appendChild(v);
+    } else {
+      var a = document.createElement('audio'); a.src = src; a.controls = true; a.autoplay = true;
+      a.style.width = 'min(80vw, 620px)'; body.appendChild(a);
+    }
+    document.getElementById('lbcap').textContent = e.date + ' ' + e.time + ' · ' + e.tags.join(' ');
+    lb.classList.add('on');
+  }
+  document.getElementById('lbx').onclick = function () {
+    document.getElementById('lb').classList.remove('on');
+    document.getElementById('lbbody').innerHTML = '';
+  };
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape') document.getElementById('lbx').onclick();
+  });
+
+  function buildRuler(years) {
+    var r = document.getElementById('ruler');
+    r.innerHTML = '';
+    years.forEach(function (g) {
+      var b = C.h('button', { 'data-y': g.year });
+      b.innerHTML = g.year + '<span class="c">' + g.entries.length + '</span>';
+      b.onclick = function () {
+        var t = document.querySelector('.chapter[data-y="' + g.year + '"]');
+        if (t) document.getElementById('scroll').scrollTo({ top: t.offsetTop - 12, behavior: 'smooth' });
+      };
+      r.appendChild(b);
+    });
+  }
+})();
+</script>
+</body>
+</html>
