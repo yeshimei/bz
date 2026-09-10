@@ -9,6 +9,8 @@
  * markup 单源（issue 251/ADR-0110）：全部 HTML 出自 ./render.ts（本文件零模板串）。
  */
 import { escManager } from '../core/esc-manager';
+import { secureRandomPassword, armClipboardClear, copySensitiveText, cancelClipboardClear } from '../core/utils';
+import { getSafeManager } from '../encrypt';
 import { topifyZ, createSiteIcon } from '../core/dom';
 import { openFlowDialog } from '../core/flow-dialog';
 import { notice } from '../core/notice';
@@ -48,44 +50,7 @@ interface LockSecurity {
 const DEFAULT_CHARSET =
   '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+';
 
-/** 加密安全随机密码（拒绝采样，与密码本同款） */
-export function secureRandomPassword(length: number, charset: string): string {
-  const n = charset.length;
-  if (!(length > 0) || n === 0) return '';
-  const LIMIT = Math.floor(0x100000000 / n) * n;
-  let pwd = '';
-  while (pwd.length < length) {
-    const buf = new Uint32Array(length - pwd.length);
-    crypto.getRandomValues(buf);
-    for (let i = 0; i < buf.length && pwd.length < length; i++) {
-      if (buf[i] >= LIMIT) continue;
-      pwd += charset.charAt(buf[i] % n);
-    }
-  }
-  return pwd;
-}
-
-/** 复制敏感内容 + 60s 自动清空剪贴板 */
-const CLIPBOARD_CLEAR_DELAY_MS = 60_000;
-let clipboardClearTimer: ReturnType<typeof setTimeout> | null = null;
-export function armClipboardClear(): void {
-  if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
-  clipboardClearTimer = setTimeout(() => {
-    clipboardClearTimer = null;
-    try {
-      void navigator.clipboard.writeText('').catch(() => {});
-    } catch (e) {
-      /* 尽力而为 */
-    }
-  }, CLIPBOARD_CLEAR_DELAY_MS);
-}
-export function copySensitiveText(text: string): Promise<void> {
-  try {
-    return navigator.clipboard.writeText(text).then(() => armClipboardClear());
-  } catch (e) {
-    return Promise.reject(e);
-  }
-}
+// secureRandomPassword / armClipboardClear / copySensitiveText 收口 core/utils（批次 G 单源）
 
 /**
  * 给容器内所有 [data-avatar] 注入真实 favicon 图标（域名从 url 解析）：
@@ -1283,10 +1248,7 @@ export class PasswordVaultUIManager {
 
   // ---------- 卸载 ----------
   cleanup() {
-    if (clipboardClearTimer !== null) {
-      clearTimeout(clipboardClearTimer);
-      clipboardClearTimer = null;
-    }
+    cancelClipboardClear();
     if (this.searchTimer !== null) {
       clearTimeout(this.searchTimer);
       this.searchTimer = null;
@@ -1323,7 +1285,7 @@ export class PasswordVaultAppController {
   _initialized = false;
 
   constructor(config: PasswordVaultUIConfig) {
-    this.dataManager = new PasswordVaultDataManager();
+    this.dataManager = new PasswordVaultDataManager(getSafeManager());
     this.uiManager = new PasswordVaultUIManager(this.dataManager, config);
   }
 

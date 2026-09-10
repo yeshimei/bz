@@ -33,3 +33,38 @@ export function localNow(): string {
 export function iconSpan(name: string, extra = ''): string {
   return `<i data-lucide="${name}" class="bz-ic${extra ? ' ' + extra : ''}"></i>`;
 }
+
+// ==================== 属性转义 / 平台派色（encrypt×password-vault 双域收口，全域扫描 2026-09 批次 G） ====================
+
+/** 属性值 HTML 转义（data-* 属性上下文：& " < >，不转 '), 与 esc（元素文本上下文）互补 */
+export function escAttr(s: string): string {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+/** 已知平台品牌色映射（密码条目头像底色；encrypt/vault-pw-view 与 password-vault/render 同款） */
+export const PLATFORM_COLOR_MAP: Record<string, string> = {
+  github: '#5a5f73',
+  微信: '#3eb575',
+  支付宝: '#4f7cf7',
+  notion: '#111111',
+  哔哩哔哩: '#fb7299',
+  招商银行: '#d43d3d',
+  豆瓣: '#3fa34d',
+};
+
+/** 哈希回退调色板（8 色） */
+export const PALETTE = ['#7c6bd6', '#3e8e5a', '#c98a1e', '#4f7cf7', '#d43d3d', '#2a9d8f', '#b4551d', '#5a5f73'];
+
+/** 平台色：品牌色映射 + h*31 哈希回退（纯层内联散列，保持零依赖） */
+export function colorOf(platform: string): string {
+  const k = Object.keys(PLATFORM_COLOR_MAP).find((x) => (platform || '').toLowerCase().includes(x.toLowerCase()));
+  if (k) return PLATFORM_COLOR_MAP[k];
+  let h = 0;
+  const t = platform || '?';
+  for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0;
+  return PALETTE[h % PALETTE.length];
+}

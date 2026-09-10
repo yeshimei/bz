@@ -42,7 +42,7 @@
 
 /* ---- 头行（V5 周历头拍板）：本周动静历（可点切天）+ 日期；关闭钮仅移动端显示。
       标题 2026-09-09 用户拍板退役（桌面/移动都去掉） ---- */
-.bz-home-head { display: flex; align-items: center; gap: 16px; padding: 11px 18px 10px; border-bottom: 1px solid var(--h-line); flex: none; }
+.bz-home-head { display: flex; align-items: center; gap: var(--bz-space-lg); padding: 11px 18px 10px; border-bottom: 1px solid var(--h-line); flex: none; }
 /* 2026-09-09 日历整体 ×1.2：格宽 24→29、条高 22→26、字 9.5→11.4、缝 5→6（用户拍板） */
 .bz-home-week { display: flex; gap: 6px; }
 .bz-home-panel .bz-home-wk { width: 29px; border: 0; background: none; padding: 0; text-align: center; font-family: var(--h-mono); font-size: 11.4px; color: var(--h-dim); display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
@@ -58,9 +58,9 @@
 .bz-home-panel .bz-home-close { display: none; }
 
 /* ---- 三栏 grid（原型 .dt-grid） ---- */
-.bz-home-body { flex: 1; min-height: 0; overflow: hidden; padding: 8px 16px 14px; scrollbar-width: none; }
+.bz-home-body { flex: 1; min-height: 0; overflow: hidden; padding: var(--bz-space-sm) var(--bz-space-lg) 14px; scrollbar-width: none; }
 .bz-home-body::-webkit-scrollbar { display: none; }
-.bz-home-grid { display: grid; grid-template-columns: 232px minmax(0, 1fr) 224px; grid-template-rows: minmax(0, 1fr); gap: 20px; margin-top: 12px; height: 100%; }
+.bz-home-grid { display: grid; grid-template-columns: 232px minmax(0, 1fr) 224px; grid-template-rows: minmax(0, 1fr); gap: 20px; margin-top: var(--bz-space-md); height: 100%; }
 
 /* ---- 小节标题（原型 .sec-t） ---- */
 .bz-home-sec-t { font-size: var(--bz-font-caption); letter-spacing: .28em; color: var(--h-dim); margin: 0 0 10px; }
@@ -72,7 +72,7 @@
 .bz-home-entries .bz-ic, .bz-home-flow .bz-ic { width: 17px; height: 17px; }
 
 /* ---- 全部域入口行（原型 .erow） ---- */
-.bz-home-panel .bz-home-erow { display: flex; align-items: center; gap: 9px; padding: 7px 8px 7px 6px; border-radius: var(--bz-radius-sm); cursor: pointer; border: 0; border-bottom: 1px solid var(--h-line); background: none; font-family: inherit; color: inherit; width: 100%; text-align: left; font-size: 100%; }
+.bz-home-panel .bz-home-erow { display: flex; align-items: center; gap: 9px; padding: 7px var(--bz-space-sm) 7px 6px; border-radius: var(--bz-radius-sm); cursor: pointer; border: 0; border-bottom: 1px solid var(--h-line); background: none; font-family: inherit; color: inherit; width: 100%; text-align: left; font-size: 100%; }
 .bz-home-panel .bz-home-erow:hover { background: #f0eee4; }
 .theme-dark .bz-home-erow:hover { background: #2e2c25; }
 .bz-home-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--h-ok); flex: none; }
@@ -92,16 +92,16 @@
 
 /* ---- 时间线（原型 .flow/.ev） ---- */
 /* V4 拍板：时间线整体成白卡，卡内虚线轨道（随内容滚、与彩点同锚对齐） */
-.bz-home-flow { min-height: 0; overflow-y: auto; scrollbar-width: none; background: var(--h-card); border: 1px solid var(--h-line); border-radius: var(--bz-radius-md); padding: 6px 14px 8px 10px; }
+.bz-home-flow { min-height: 0; overflow-y: auto; scrollbar-width: none; background: var(--h-card); border: 1px solid var(--h-line); border-radius: var(--bz-radius-md); padding: 6px 14px var(--bz-space-sm) 10px; }
 .bz-home-timeline { position: relative; }
 .bz-home-timeline::before { content: ""; position: absolute; left: 9px; top: 14px; bottom: 10px; border-left: 2px dashed var(--h-line); }
-.bz-home-ev { display: flex; gap: 16px; position: relative; padding: 11px 0 11px 24px; }
+.bz-home-ev { display: flex; gap: var(--bz-space-lg); position: relative; padding: 11px 0 11px var(--bz-space-xl); }
 .bz-home-ev::before { content: ""; position: absolute; left: 6px; top: 20px; width: 8px; height: 8px; border-radius: 50%; background: var(--h-ok); box-shadow: 0 0 0 2.5px var(--h-card), 0 0 0 3.5px var(--h-line); } /* 圆心 10px = 虚线中线（left 9 + 1），白环+描边压住虚线（V4） */
 .bz-home-ev--warn::before { background: var(--h-amber); }
 .bz-home-ev-tm { font-family: var(--h-mono); font-size: var(--bz-font-meta); color: var(--h-dim); width: 44px; flex: none; padding-top: 3px; }
 .bz-home-ev-bd { flex: 1; min-width: 0; }
 .bz-home-ev-tx { font-size: 14.5px; line-height: 1.65; }
-.bz-home-ev-dm { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; color: #fff; padding: 1.5px 8px; border-radius: var(--bz-radius-sm); margin-right: 8px; vertical-align: 1.5px; }
+.bz-home-ev-dm { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; color: #fff; padding: 1.5px var(--bz-space-sm); border-radius: var(--bz-radius-sm); margin-right: var(--bz-space-sm); vertical-align: 1.5px; }
 .bz-home-ev-dm .bz-ic { width: 10px; height: 10px; }
 .bz-home-ev-note { margin-top: 6px; font-size: var(--bz-font-meta); color: var(--h-ai); line-height: 1.6; }
 .bz-home-ev-note::before { content: "✦ "; }
@@ -109,7 +109,7 @@
 .bz-home-flow-empty b { color: var(--h-ink); }
 
 /* ---- 明天预告（原型 .pr） ---- */
-.bz-home-panel .bz-home-pr { display: block; background: var(--h-ai-soft); border: 1px solid var(--h-ai-line); border-radius: 11px; padding: 13px 16px; margin-bottom: 10px; font-size: var(--bz-font-label); line-height: 1.75; cursor: pointer; text-align: left; font-family: inherit; color: inherit; width: 100%; }
+.bz-home-panel .bz-home-pr { display: block; background: var(--h-ai-soft); border: 1px solid var(--h-ai-line); border-radius: 11px; padding: 13px var(--bz-space-lg); margin-bottom: 10px; font-size: var(--bz-font-label); line-height: 1.75; cursor: pointer; text-align: left; font-family: inherit; color: inherit; width: 100%; }
 .bz-home-panel .bz-home-pr:hover { border-color: var(--h-ai); }
 .bz-home-pr-h { font-size: 12.5px; font-weight: 700; color: var(--h-ai); margin-bottom: 3px; }
 .bz-home-pr-h::before { content: "✦ "; }
@@ -129,10 +129,10 @@
 @container (max-width: 768px) {
   /* 单列（瓦片 → 时间线 → 预告），头行带关闭钮；日期隐藏（周历即日期） */
   .bz-home-date { display: none; }
-  .bz-home-head { position: sticky; top: 0; z-index: 5; background: var(--h-bg); padding: 14px 16px 10px; }
+  .bz-home-head { position: sticky; top: 0; z-index: 5; background: var(--h-bg); padding: 14px var(--bz-space-lg) 10px; }
   .bz-home-panel .bz-home-close { display: inline-flex; align-items: center; justify-content: center; flex: none; margin-left: auto; width: 36px; height: 36px; border: 1px solid var(--h-line); border-radius: 10px; background: var(--h-card); color: var(--h-ink); cursor: pointer; }
   .bz-home-close .bz-ic { width: 16px; height: 16px; }
-  .bz-home-body { padding: 12px 16px 24px; overflow-y: auto; }
+  .bz-home-body { padding: var(--bz-space-md) var(--bz-space-lg) var(--bz-space-xl); overflow-y: auto; }
   .bz-home-grid { display: flex; flex-direction: column; height: auto; margin-top: 0; }
   .bz-home-tiles { display: block; order: -1; }
   .bz-home-entries { display: none; }
@@ -140,8 +140,8 @@
   /* 时间线沉底 */
   .bz-home-flow { order: 1; margin-top: 18px; background: none; border: none; border-radius: 0; padding: 0; }
   /* 2026-09-09 用户拍板：瓦片一行一个 + 移动端字体 ×1.5（基数见基座各规则） */
-  .bz-home-m-tiles { display: grid; grid-template-columns: 1fr; gap: 8px; }
-  .bz-home-panel .bz-home-m-tile { display: flex; align-items: center; gap: 6px; background: var(--h-card); border: 1px solid var(--h-line); border-radius: var(--bz-radius-sm); padding: 7px 8px; cursor: pointer; font-family: inherit; color: inherit; text-align: left; min-width: 0; font-size: 100%; }
+  .bz-home-m-tiles { display: grid; grid-template-columns: 1fr; gap: var(--bz-space-sm); }
+  .bz-home-panel .bz-home-m-tile { display: flex; align-items: center; gap: 6px; background: var(--h-card); border: 1px solid var(--h-line); border-radius: var(--bz-radius-sm); padding: 7px var(--bz-space-sm); cursor: pointer; font-family: inherit; color: inherit; text-align: left; min-width: 0; font-size: 100%; }
   .bz-home-panel .bz-home-m-tile:hover { border-color: var(--h-dim); }
   .bz-home-m-tile .bz-home-dot { width: 5px; height: 5px; }
   .bz-home-m-tile .bz-home-eic .bz-ic { width: 15px; height: 15px; }
@@ -165,11 +165,11 @@
    故本块**不自带 token**，直接用面板的 --sp-* （面板根作用域提供，随亮/暗皮切换），
    缺省再回落 Obsidian token —— 观感与面板其它设置项一致。
    按端各一份：桌面端只出 desk 那套、移动端只出 mob 那套（见 entry-editor.ts）。 */
-.bz-home-ent-hint { margin: 0 0 8px; font-size: 11.5px; color: var(--sp-ink-3, var(--text-faint)); }
+.bz-home-ent-hint { margin: 0 0 var(--bz-space-sm); font-size: 11.5px; color: var(--sp-ink-3, var(--text-faint)); }
 .bz-home-ent-list { display: flex; flex-direction: column; }
 .bz-home-ent-row {
-  display: flex; align-items: center; gap: 8px;
-  padding: 7px 8px; border-radius: var(--bz-radius-sm);
+  display: flex; align-items: center; gap: var(--bz-space-sm);
+  padding: 7px var(--bz-space-sm); border-radius: var(--bz-radius-sm);
   border-bottom: 1px solid var(--sp-line-soft, var(--background-modifier-border));
   /* 触屏：纵向滚动归浏览器（短滑滚列表），横向不滚 → 长按拖拽不与滚动抢手势 */
   touch-action: pan-y;
@@ -206,7 +206,7 @@
 /* 移动端：面板内字号随面板档放大（面板移动端字号见 settings-panel/styles.css） */
 @media (max-width: 768px) {
   .bz-home-ent-hint { font-size: var(--bz-font-label); }
-  .bz-home-ent-row { padding: 10px 8px; }
+  .bz-home-ent-row { padding: 10px var(--bz-space-sm); }
   .bz-home-ent-nm { font-size: 16px; }
   .bz-home-ent-ic .bz-ic, .bz-home-ent-grip .bz-ic { width: 19px; height: 19px; }
   .bz-home-ent-btn { width: 34px; height: 34px; }

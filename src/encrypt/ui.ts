@@ -23,7 +23,7 @@ import {
   type ItemAction,
   type ItemActionsOptions,
 } from '../core/item-actions';
-import { escapeHtml, formatRelativeTime } from '../core/utils';
+import {  escapeHtml, formatRelativeTime , secureRandomPassword, cancelClipboardClear, armClipboardClear, copySensitiveText } from '../core/utils';
 import { uiEmpty, uiProgress } from '../core/ui';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
@@ -56,51 +56,8 @@ export interface EncryptUIConfig {
 /** 默认生成字符集（与旧密码本同款；实现居 vault-pw-view，此处再导出保持 ui.ts 公共面） */
 export { DEFAULT_PW_CHARSET };
 
-/** 加密安全随机密码（拒绝采样，与旧密码本同款） */
-export function secureRandomPassword(length: number, charset: string): string {
-  const n = charset.length;
-  if (!(length > 0) || n === 0) return '';
-  const LIMIT = Math.floor(0x100000000 / n) * n;
-  let pwd = '';
-  while (pwd.length < length) {
-    const buf = new Uint32Array(length - pwd.length);
-    crypto.getRandomValues(buf);
-    for (let i = 0; i < buf.length && pwd.length < length; i++) {
-      if (buf[i] >= LIMIT) continue;
-      pwd += charset.charAt(buf[i] % n);
-    }
-  }
-  return pwd;
-}
-
-/** 复制敏感内容 + 60s 自动清空剪贴板 */
-const CLIPBOARD_CLEAR_DELAY_MS = 60_000;
-let clipboardClearTimer: ReturnType<typeof setTimeout> | null = null;
-/** 取消未触发的自动清空（卸载清理用，防插件禁用后定时器仍写剪贴板） */
-export function cancelClipboardClear(): void {
-  if (clipboardClearTimer !== null) {
-    clearTimeout(clipboardClearTimer);
-    clipboardClearTimer = null;
-  }
-}
-export function armClipboardClear(): void {
-  if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
-  clipboardClearTimer = setTimeout(() => {
-    clipboardClearTimer = null;
-    try {
-      void navigator.clipboard.writeText('').catch(() => {});
-    } catch (e) {
-      /* 尽力而为 */
-    }
-  }, CLIPBOARD_CLEAR_DELAY_MS);
-}
-export function copySensitiveText(text: string): Promise<void> {
-  try {
-    return navigator.clipboard.writeText(text).then(() => armClipboardClear());
-  } catch (e) {
-    return Promise.reject(e);
-  }
-}
+// secureRandomPassword / cancelClipboardClear / armClipboardClear / copySensitiveText
+// 收口 core/utils（与 password-vault 同源共用单定时器，批次 G）
 
 /** 密码强度档（表单强度提示）：弱 / 中 / 强 */
 export type PwStrength = 'weak' | 'mid' | 'strong';

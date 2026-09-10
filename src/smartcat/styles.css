@@ -285,7 +285,7 @@
   flex-direction: column;
   justify-content: flex-end;
   align-items: center;
-  gap: 8px;
+  gap: var(--bz-space-sm);
   pointer-events: none;
   max-height: 300px;
   overflow: visible;
@@ -296,7 +296,7 @@
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   color: #2c3e50;
-  padding: 12px 16px;
+  padding: var(--bz-space-md) var(--bz-space-lg);
   border-radius: var(--bz-radius-lg);
   font-size: var(--bz-font-label);
   max-width: min(300px, calc(100vw - 16px));
@@ -372,7 +372,7 @@
 #chat-panel .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 16px;
+  padding: var(--bz-space-sm) var(--bz-space-lg);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -401,15 +401,15 @@
 }
 #chat-panel .chat-input-area {
   display: flex;
-  gap: 8px;
-  padding: 10px 16px;
+  gap: var(--bz-space-sm);
+  padding: 10px var(--bz-space-lg);
   border-top: 1px solid var(--background-modifier-border);
   align-items: center;
 }
 #chat-panel .chat-input {
   flex: 1;
   border-radius: 20px;
-  padding: 8px 14px;
+  padding: var(--bz-space-sm) 14px;
   font-size: var(--bz-font-body);
   resize: none;
   background: var(--background-secondary);
@@ -920,7 +920,7 @@
 /* 布局骨架（页签/滚动体）；弹窗尺寸与显隐由 createOverlay + 功能性内联承接 */
 .bz-sc-dash-tabs {
   display: flex;
-  gap: 4px;
+  gap: var(--bz-space-xs);
   padding: 0 20px;
   border-bottom: 1px solid var(--background-modifier-border);
 }
@@ -929,7 +929,7 @@
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
-  padding: 8px 0 7px;
+  padding: var(--bz-space-sm) 0 7px;
   font-size: var(--bz-font-label);
   color: var(--text-muted);
   cursor: pointer;
@@ -951,14 +951,14 @@
 .bz-sc-dash-card {
   background: var(--background-secondary);
   border-radius: 10px;
-  padding: 12px 14px;
+  padding: var(--bz-space-md) 14px;
   margin: 10px 0;
 }
 .bz-sc-dash-card-title {
   font-size: var(--bz-font-label);
   font-weight: 600;
   color: var(--text-normal);
-  margin-bottom: 8px;
+  margin-bottom: var(--bz-space-sm);
 }
 .bz-sc-dash-group-title {
   font-size: var(--bz-font-meta);
@@ -969,7 +969,7 @@
 .bz-sc-dash-hint {
   font-size: var(--bz-font-caption);
   color: var(--text-faint);
-  margin-top: 8px;
+  margin-top: var(--bz-space-sm);
   line-height: 1.5;
 }
 .bz-sc-dash-empty {
@@ -1007,7 +1007,7 @@
   background: var(--background-modifier-hover);
   font-size: var(--bz-font-meta);
   color: var(--text-muted);
-  margin-top: 8px;
+  margin-top: var(--bz-space-sm);
 }
 
 /* 数值条行（PAD/OCEAN/特质/信任等通用） */
@@ -1015,7 +1015,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 4px 0;
+  padding: var(--bz-space-xs) 0;
 }
 .bz-sc-dash-row-name {
   flex: 0 0 72px;
@@ -1072,19 +1072,19 @@
 .bz-sc-dash-trend-meta {
   font-size: var(--bz-font-caption);
   color: var(--text-faint);
-  margin-top: 4px;
+  margin-top: var(--bz-space-xs);
 }
 .bz-sc-dash-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--bz-space-sm);
 }
 .bz-sc-dash-stat {
   flex: 1 1 calc(25% - 8px);
   min-width: 76px;
   background: var(--background-primary);
   border-radius: var(--bz-radius-sm);
-  padding: 8px 6px;
+  padding: var(--bz-space-sm) 6px;
   text-align: center;
 }
 .bz-sc-dash-stat-num {
@@ -1102,7 +1102,7 @@
 /* 徽章 / 记忆列表 / 成长轨迹 */
 .bz-sc-dash-badge {
   display: inline-block;
-  padding: 1px 8px;
+  padding: 1px var(--bz-space-sm);
   border-radius: var(--bz-radius-full);
   font-size: var(--bz-font-caption);
   line-height: 1.6;
@@ -1134,12 +1134,12 @@
 }
 .bz-sc-dash-insight-actions {
   display: inline-flex;
-  gap: 4px;
+  gap: var(--bz-space-xs);
 }
 .bz-sc-dash-mini-btn {
   font-size: var(--bz-font-caption);
   line-height: 1.5;
-  padding: 0 8px;
+  padding: 0 var(--bz-space-sm);
   border-radius: var(--bz-radius-full);
   border: 1px solid var(--background-modifier-border);
   background: transparent;
@@ -1158,11 +1158,11 @@
 .bz-sc-dash-memory {
   background: var(--background-primary);
   border-radius: var(--bz-radius-sm);
-  padding: 8px 10px;
+  padding: var(--bz-space-sm) 10px;
 }
 .bz-sc-dash-memory-meta {
   display: flex;
-  gap: 8px;
+  gap: var(--bz-space-sm);
   align-items: center;
   flex-wrap: wrap;
   font-size: var(--bz-font-caption);
@@ -1181,8 +1181,8 @@
 .bz-sc-dash-trail-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 0;
+  gap: var(--bz-space-sm);
+  padding: var(--bz-space-xs) 0;
   font-size: var(--bz-font-meta);
 }
 
@@ -1194,7 +1194,7 @@
 }
 .bz-sc-dash-tl-item {
   position: relative;
-  padding: 4px 0 4px 16px;
+  padding: var(--bz-space-xs) 0 var(--bz-space-xs) var(--bz-space-lg);
   font-size: var(--bz-font-meta);
   line-height: 1.5;
 }
@@ -1220,7 +1220,7 @@
   align-items: flex-end;
   gap: 2px;
   height: 64px;
-  padding-top: 4px;
+  padding-top: var(--bz-space-xs);
 }
 .bz-sc-dash-rhythm-slot {
   flex: 1;
@@ -1256,7 +1256,7 @@
 .bz-sc-dash-dossier-summary {
   font-size: var(--bz-font-meta);
   color: var(--text-muted);
-  margin-bottom: 8px;
+  margin-bottom: var(--bz-space-sm);
 }
 .bz-sc-dash-dossier-tl {
   display: flex;
@@ -1276,7 +1276,7 @@
   margin-top: 10px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--bz-space-xs);
 }
 
 /* 数据面板 097（归因展示/安静期可见化/口径统一）：全部静态收敛本文件，bz-sc-dash- 前缀 */
@@ -1379,9 +1379,9 @@
 /* 加载更多按钮（批次追加；剩余条数显示） */
 .bz-sc-dash-load-more {
   display: block;
-  margin: 8px auto 2px;
+  margin: var(--bz-space-sm) auto 2px;
   font-size: var(--bz-font-meta);
-  padding: 4px 18px;
+  padding: var(--bz-space-xs) 18px;
   border-radius: var(--bz-radius-full);
   border: 1px solid var(--background-modifier-border);
   background: transparent;
@@ -1403,12 +1403,12 @@
 .bz-sc-dash-structured-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--bz-space-xs);
   margin-top: 3px;
 }
 .bz-sc-dash-structured-tags .bz-sc-dash-badge {
   font-size: 10px;
-  padding: 0 4px;
+  padding: 0 var(--bz-space-xs);
   background: rgba(var(--color-purple-rgb), 0.1);
   color: var(--color-purple);
 }
@@ -1416,6 +1416,6 @@
   font-size: var(--bz-font-caption);
   color: var(--text-faint);
   margin-top: 2px;
-  padding-left: 8px;
+  padding-left: var(--bz-space-sm);
   border-left: 2px solid var(--background-modifier-border);
 }

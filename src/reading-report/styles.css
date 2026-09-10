@@ -10,7 +10,7 @@
 
 .bz-rr-head {
   display: flex; align-items: center; justify-content: space-between; gap: var(--bz-space-sm);
-  padding: 10px var(--bz-space-lg) 8px; flex-shrink: 0;
+  padding: 10px var(--bz-space-lg) var(--bz-space-sm); flex-shrink: 0;
   border-bottom: 1px solid var(--bz-border);
 }
 .bz-rr-title {
@@ -24,7 +24,7 @@
 }
 .bz-rr-content {
   flex: 1; min-height: 0; overflow-y: auto;
-  padding: 4px var(--bz-space-lg) var(--bz-space-lg);
+  padding: var(--bz-space-xs) var(--bz-space-lg) var(--bz-space-lg);
 }
 
 .bz-rr-hm-cell {
@@ -57,7 +57,7 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--bz-space-sm);
   font-size: 0.85em;
   color: var(--text-muted);
 }
@@ -72,7 +72,7 @@
   align-items: center;
   gap: 10px;
   margin: 6px 0;
-  padding: 8px 10px;
+  padding: var(--bz-space-sm) 10px;
   background: var(--background-secondary);
   border-radius: 6px;
 }
@@ -125,8 +125,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: var(--bz-space-md);
+  margin-bottom: var(--bz-space-md);
 }
 
 .bz-rr-hm-title {
@@ -165,9 +165,9 @@
 .bz-rr-mwrap {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
+  gap: var(--bz-space-sm);
   overflow-x: auto;
-  padding: 8px 2px 0;
+  padding: var(--bz-space-sm) 2px 0;
 }
 
 .bz-rr-mcol {
@@ -176,7 +176,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: var(--bz-space-xs);
 }
 
 .bz-rr-mbar {
@@ -229,7 +229,7 @@
 .bz-rr-year-cols {
   display: none;
   margin-top: 10px;
-  padding: 12px 10px;
+  padding: var(--bz-space-md) 10px;
   border: 1px dashed var(--background-modifier-border);
   border-radius: var(--bz-radius-sm);
   background: var(--background-secondary);

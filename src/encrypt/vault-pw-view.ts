@@ -9,7 +9,8 @@
 import { escManager } from '../core/esc-manager';
 import { createSiteIcon } from '../core/dom';
 import { attachItemActions, openItemSheet, type ItemAction, type ItemActionsOptions } from '../core/item-actions';
-import { escapeHtml, formatRelativeTime, hash31 } from '../core/utils';
+import { escapeHtml, formatRelativeTime } from '../core/utils';
+import { colorOf, escAttr } from '../core/ui/str';
 import { uiEmpty } from '../core/ui';
 import { PasswordVaultDataManager, type PasswordVaultEntry, type PlatformGroup } from './vault-data';
 
@@ -27,37 +28,10 @@ export function dots(p: string): string {
   return '•'.repeat(Math.min((p || '').length, 18));
 }
 
-/** 平台色：品牌色映射 + 哈希回退（金库 UI 同款） */
-const PLATFORM_COLOR_MAP: Record<string, string> = {
-  github: '#5a5f73',
-  微信: '#3eb575',
-  支付宝: '#4f7cf7',
-  notion: '#111111',
-  哔哩哔哩: '#fb7299',
-  招商银行: '#d43d3d',
-  豆瓣: '#3fa34d',
-};
-const PALETTE = ['#7c6bd6', '#3e8e5a', '#c98a1e', '#4f7cf7', '#d43d3d', '#2a9d8f', '#b4551d', '#5a5f73'];
-export function colorOf(platform: string): string {
-  const k = Object.keys(PLATFORM_COLOR_MAP).find((x) => (platform || '').toLowerCase().includes(x.toLowerCase()));
-  if (k) return PLATFORM_COLOR_MAP[k];
-  const h = hash31(platform || '?');
-  return PALETTE[h % PALETTE.length];
-}
-
 /** 平台头像 HTML：品牌色字母底 + favicon 真实图标盖层（hydratePwAvatars 注入 <img>） */
 function avatarHTML(platform: string, url: string | null | undefined, cls = 'bz-pwv-avatar'): string {
   const ch = (platform || '?').slice(0, 1);
   return `<div class="${cls}" style="background:${colorOf(platform)}" data-pwv-avatar="1" data-url="${escAttr(url || '')}"><span>${escAttr(ch)}</span></div>`;
-}
-
-/** 属性值 HTML 转义 */
-function escAttr(s: string): string {
-  return String(s ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
 }
 
 /** 给容器内所有 [data-pwv-avatar] 注入真实 favicon（createSiteIcon）；失败保留字母回退 */
