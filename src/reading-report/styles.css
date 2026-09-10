@@ -244,8 +244,610 @@
 .bz-rr-author-card {
   cursor: pointer;
   transition: transform var(--bz-dur-fast) ease;
+  /* 内联收编（issue 270）：原行内 padding/radius/白字/排名锚点（背景渐变按名次运行时取色仍内联） */
+  padding: 15px;
+  border-radius: 8px;
+  color: white;
+  position: relative;
 }
 
 .bz-rr-author-card:hover {
   transform: translateY(-2px);
+}
+
+/* ============================================================
+ * 报告静态样式收编（issue 270）：report.ts 187 处内联 style 逐字迁入——
+ * 值不改只换挂载方式（仓库「逐字搬运」惯例）；数据驱动值（条宽/柱高/
+ * 等级色阶/排名渐变底）仍留内联。报告嵌于书架墙面板，本块随主题变量走。
+ * ============================================================ */
+
+/* ---------- 容器卡 / 次级面板 ---------- */
+
+/* 段落容器卡（background-primary + 墨边框；报告各分析段通用外壳） */
+.bz-rr-card {
+  background: var(--background-primary);
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid var(--background-modifier-border);
+  margin: 20px 0;
+}
+
+/* 紧凑档（阅读速度分析容器：原 padding 16 / radius 8 / margin 16） */
+.bz-rr-card--sm {
+  padding: 16px;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+/* 次级面板（background-secondary 无边框：概览时长块 / 速度等级块） */
+.bz-rr-panel {
+  background: var(--background-secondary);
+  padding: 20px;
+  border-radius: 10px;
+  margin: 20px 0;
+}
+
+.bz-rr-panel--sm {
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+/* ---------- 分块间距 / 空态 ---------- */
+
+.bz-rr-section {
+  margin: 25px 0;
+}
+
+.bz-rr-block {
+  margin: 20px 0;
+}
+
+.bz-rr-empty {
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.bz-rr-empty--pad {
+  padding: 40px 0;
+}
+
+.bz-rr-empty--pad-sm {
+  padding: 20px 0;
+}
+
+/* ---------- 网格（逐字收编：各段 minmax/gap/margin 原值一档一类） ---------- */
+
+.bz-rr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.bz-rr-year-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.bz-rr-author-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.bz-rr-trend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.bz-rr-hm-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.bz-rr-focus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.bz-rr-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.bz-rr-int-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.bz-rr-speed-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.bz-rr-cell-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* 专注度对比空占位块（原样保留结构） */
+.bz-rr-block-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+/* ---------- 渐变统计卡（hero：饱和渐变底 + 白字，两主题可读不加 dark 档） ---------- */
+
+.bz-rr-hero {
+  padding: 20px;
+  border-radius: 10px;
+  color: white;
+  text-align: center;
+}
+
+/* 紧凑档（速度分析：padding 16 / radius 8） */
+.bz-rr-hero--sm {
+  padding: 16px;
+  border-radius: 8px;
+}
+
+/* 中档（专注/分类：padding 15 / radius 8） */
+.bz-rr-hero--pad {
+  padding: 15px;
+  border-radius: 8px;
+}
+
+/* 纵排档（分类卡：min-height 80 + 纵向居中） */
+.bz-rr-hero--col {
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* 渐变底五档（值与 core/chart-palette.ts CHART_GRADIENT_* 逐字一致，勿单侧改动） */
+.bz-rr-hero--violet {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.bz-rr-hero--pink {
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+}
+
+.bz-rr-hero--aqua {
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+}
+
+.bz-rr-hero--mint {
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+}
+
+.bz-rr-hero--coral {
+  background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+}
+
+/* 卡内数字/标签（概览 2em / 专注 1.8em / 分类带截断 / 速度 px 档） */
+.bz-rr-hero-num {
+  font-size: 2em;
+  font-weight: bold;
+}
+
+.bz-rr-hero-num--lg {
+  font-size: 1.8em;
+  font-weight: bold;
+}
+
+.bz-rr-hero-num--cat {
+  font-size: 1.8em;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.bz-rr-hero-num--clamp {
+  font-size: 1.5em;
+  font-weight: bold;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bz-rr-hero-num--sm {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.bz-rr-hero-label {
+  font-size: 0.8em;
+  opacity: 0.9;
+}
+
+.bz-rr-hero-label--mt {
+  font-size: 0.8em;
+  opacity: 0.9;
+  margin-top: 5px;
+}
+
+.bz-rr-hero-label--sm {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 4px;
+}
+
+.bz-rr-hero-sub {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* ---------- 指标卡（次级底数字 + 标签；数字色走 .bz-rr-c-* 档） ---------- */
+
+.bz-rr-metric {
+  text-align: center;
+  padding: 15px;
+  background: var(--background-secondary);
+  border-radius: 8px;
+}
+
+/* 紧凑档（热力图统计卡：padding 12） */
+.bz-rr-metric--tight {
+  padding: 12px;
+}
+
+.bz-rr-metric-num {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.bz-rr-metric-num--lg {
+  font-size: 1.8em;
+  font-weight: bold;
+}
+
+.bz-rr-metric-num--xl {
+  font-size: 2em;
+  font-weight: bold;
+}
+
+.bz-rr-metric-label {
+  font-size: 0.9em;
+  color: var(--text-muted);
+}
+
+.bz-rr-metric-label--sm {
+  font-size: 0.8em;
+  color: var(--text-muted);
+}
+
+.bz-rr-metric-label--normal {
+  font-size: 0.85em;
+  color: var(--text-normal);
+}
+
+/* ---------- 指标数字强调色（亮档 = core/chart-palette.ts CHART_METRIC_* 逐字值；
+ * 暗底中调色偏暗，.theme-dark 统一 color-mix 提亮（渐变 hero 卡不受影响）） ---------- */
+
+.bz-rr-c-violet {
+  color: #667eea;
+}
+.bz-rr-c-aqua {
+  color: #4facfe;
+}
+.bz-rr-c-mint {
+  color: #43e97b;
+}
+.bz-rr-c-coral {
+  color: #ff6b6b;
+}
+.bz-rr-c-red {
+  color: #e74c3c;
+}
+.bz-rr-c-blue {
+  color: #3498db;
+}
+.bz-rr-c-purple {
+  color: #9b59b6;
+}
+.bz-rr-c-green {
+  color: #27ae60;
+}
+.bz-rr-c-orange {
+  color: #e67e22;
+}
+.bz-rr-c-sky {
+  color: #64d6f3;
+}
+
+.theme-dark .bz-rr-c-violet {
+  color: color-mix(in srgb, #667eea 60%, #ffffff);
+}
+.theme-dark .bz-rr-c-aqua {
+  color: color-mix(in srgb, #4facfe 60%, #ffffff);
+}
+.theme-dark .bz-rr-c-mint {
+  color: color-mix(in srgb, #43e97b 60%, #ffffff);
+}
+.theme-dark .bz-rr-c-coral {
+  color: color-mix(in srgb, #ff6b6b 60%, #ffffff);
+}
+.theme-dark .bz-rr-c-red {
+  color: color-mix(in srgb, #e74c3c 60%, #ffffff);
+}
+.theme-dark .bz-rr-c-blue {
+  color: color-mix(in srgb, #3498db 60%, #ffffff);
+}
+.theme-dark .bz-rr-c-purple {
+  color: color-mix(in srgb, #9b59b6 60%, #ffffff);
+}
+.theme-dark .bz-rr-c-green {
+  color: color-mix(in srgb, #27ae60 60%, #ffffff);
+}
+.theme-dark .bz-rr-c-orange {
+  color: color-mix(in srgb, #e67e22 60%, #ffffff);
+}
+.theme-dark .bz-rr-c-sky {
+  color: color-mix(in srgb, #64d6f3 75%, #ffffff);
+}
+
+/* 奖杯同属中调色（琥珀棕），暗底提亮一档 */
+.theme-dark .bz-rr-trophy {
+  color: color-mix(in srgb, #b45309 60%, #ffffff);
+}
+
+/* ---------- 统计概览（总时长 + 划线/想法/讨论/出链/均行） ---------- */
+
+.bz-rr-total {
+  font-size: 2.5em;
+  font-weight: bold;
+  color: var(--text-normal);
+  text-align: center;
+  margin: 20px 0;
+}
+
+.bz-rr-metric-row {
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+  margin-top: 30px;
+}
+
+/* ---------- 年度统计（年卡内文字档） ---------- */
+
+.bz-rr-year-title {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.bz-rr-year-time {
+  font-size: 0.8em;
+  opacity: 0.8;
+  margin-top: 3px;
+}
+
+/* ---------- 作者统计（卡内布局；渐变底按名次运行时取色仍内联） ---------- */
+
+.bz-rr-author-rank {
+  font-size: 2em;
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  opacity: 0.3;
+}
+
+.bz-rr-author-name {
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.bz-rr-author-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.bz-rr-author-time {
+  margin-top: 5px;
+  font-size: 0.9em;
+}
+
+/* ---------- 阅读速度分析 ---------- */
+
+.bz-rr-speed-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.bz-rr-speed-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-normal);
+}
+
+.bz-rr-speed-level {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.bz-rr-speed-track {
+  width: 100%;
+  height: 8px;
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+/* 填充档：渐变常量（CHART_SPEED_BAR_GRADIENT 值逐字一致），宽度数据驱动留内联 */
+.bz-rr-speed-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #4CAF50, #45a049);
+}
+
+.bz-rr-speed-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* 效率/类型/最佳速度/时长小卡（primary 底 + 边框） */
+.bz-rr-cell {
+  background: var(--background-primary);
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  text-align: center;
+}
+
+.bz-rr-cell-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.bz-rr-cell-num {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.bz-rr-cell-num--sm {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ---------- 专注度分布（行式条形） ---------- */
+
+.bz-rr-focus-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bz-rr-focus-row {
+  display: flex;
+  align-items: center;
+  background: var(--background-secondary);
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.bz-rr-focus-label {
+  width: 60px;
+  font-size: 0.85em;
+  color: var(--text-normal);
+  font-weight: bold;
+}
+
+.bz-rr-focus-mid {
+  flex: 1;
+  margin: 0 15px;
+}
+
+.bz-rr-focus-track {
+  width: 100%;
+  height: 8px;
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* 填充静态档；宽/底色按运行时档位循环取色留内联 */
+.bz-rr-focus-fill {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.bz-rr-focus-val {
+  width: 50px;
+  text-align: right;
+  font-size: 0.9em;
+  color: var(--text-muted);
+}
+
+/* ---------- 热力图月网格（段头/星期/格子布局） ---------- */
+
+.bz-rr-hm-month {
+  margin-bottom: 25px;
+}
+
+.bz-rr-hm-subhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.bz-rr-hm-subtitle {
+  font-weight: bold;
+  color: var(--text-normal);
+  font-size: 1.1em;
+}
+
+.bz-rr-hm-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  margin-bottom: 8px;
+}
+
+.bz-rr-hm-weekday {
+  text-align: center;
+  font-size: 0.75em;
+  color: var(--text-faint);
+  padding: 2px;
+}
+
+.bz-rr-hm-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  margin-right: -20px;
+}
+
+/* 空白格（future/nodata 主题中性底；数据格色阶运行时取色仍内联） */
+.bz-rr-hm-cell--off {
+  background: var(--background-secondary);
+}
+
+/* ---------- 月柱数字墨色（CHART_INK 值逐字一致：粉彩柱底两主题一致） ---------- */
+
+.bz-rr-mbar-num {
+  color: #3D4456;
+}
+
+/* ---------- 杂项（条形行包裹 / 段头占位） ---------- */
+
+.bz-rr-bar-wrap {
+  margin: 12px 0;
+}
+
+.bz-rr-sec-head {
+  font-weight: bold;
+  color: var(--text-normal);
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
