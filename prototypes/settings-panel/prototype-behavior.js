@@ -1,4 +1,4 @@
-/* 源指纹 baaf45c7edeafe97 · 仓内输入 202 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 51363ea716f4d9bf · 仓内输入 202 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/brief.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -7873,6 +7873,11 @@ var BZW_settings_panel = (() => {
   function esc(s) {
     return escapeHtml(String(s != null ? s : ""));
   }
+  function localNow() {
+    const d = /* @__PURE__ */ new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  }
   function iconSpan(name, extra = "") {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
   }
@@ -9559,6 +9564,41 @@ var BZW_settings_panel = (() => {
     for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
     return true;
   }
+  function localDayKey(ts = Date.now()) {
+    const d = ts instanceof Date ? ts : new Date(ts);
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
+  function stripMdExt(name) {
+    return String(name || "").replace(/\.md$/i, "");
+  }
+  function stripTitleMarks(s) {
+    return String(s || "").replace(/^《|》$/g, "");
+  }
+  function cmpZh(a, b) {
+    return String(a || "").localeCompare(String(b || ""), "zh");
+  }
+  function isUnderFolder(folder, path) {
+    const f = (folder || "").trim().replace(/\/+$/, "");
+    if (!f) return false;
+    return path === f || path.startsWith(f + "/");
+  }
+  function hash31(str) {
+    let h = 0;
+    const t = String(str || "");
+    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
+    return h >>> 0;
+  }
+  function yieldToMainThread(timeoutMs = 200) {
+    return new Promise((resolve2) => {
+      if (typeof window === "undefined") {
+        resolve2();
+        return;
+      }
+      const ric = window.requestIdleCallback;
+      if (typeof ric === "function") ric(() => resolve2(), { timeout: timeoutMs });
+      else window.setTimeout(resolve2, 0);
+    });
+  }
   var import_moment2;
   var init_utils = __esm({
     "src/core/utils.ts"() {
@@ -10084,9 +10124,7 @@ var BZW_settings_panel = (() => {
   }
   function toDateString(timestamp) {
     if (!Number.isFinite(timestamp) || !timestamp) return null;
-    const d = new Date(timestamp);
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    return localDayKey(timestamp);
   }
   function buildEpubItem(app, aggregate) {
     var _a2, _b2, _c;
@@ -10159,6 +10197,7 @@ var BZW_settings_panel = (() => {
     "src/bookshelf/data.ts"() {
       init_fake_obsidian();
       init_settings_provider();
+      init_utils();
       init_state();
       init_render4();
       WEAVE_PLUGIN_ID = "weave-epub-reader";
@@ -11056,7 +11095,7 @@ ${countsToText(s.missing)}
           tick: async (label) => {
             var _a3;
             (_a3 = opts.onProgress) == null ? void 0 : _a3.call(opts, { index: i, total, label });
-            await yieldToMainThread();
+            await yieldToMainThread2();
           },
           isCancelled: () => {
             var _a3;
@@ -11079,16 +11118,8 @@ ${countsToText(s.missing)}
     lastReport = report;
     return report;
   }
-  function yieldToMainThread() {
-    return new Promise((resolve2) => {
-      if (typeof window === "undefined") {
-        resolve2();
-        return;
-      }
-      const ric = window.requestIdleCallback;
-      if (typeof ric === "function") ric(() => resolve2(), { timeout: 200 });
-      else window.setTimeout(resolve2, 0);
-    });
+  function yieldToMainThread2() {
+    return yieldToMainThread();
   }
   function getLastCheckupReport() {
     return lastReport;
@@ -11196,6 +11227,7 @@ ${countsToText(s.missing)}
   var CHECK_LABELS, lastReport;
   var init_run = __esm({
     "src/checkup/run.ts"() {
+      init_utils();
       init_storage();
       init_files();
       init_checks_json();
@@ -12845,6 +12877,7 @@ ${countsToText(s.missing)}
   var init_due = __esm({
     "src/memo/due.ts"() {
       import_moment4 = __toESM(require_moment());
+      init_utils();
     }
   });
 
@@ -15059,14 +15092,14 @@ ${countsToText(s.missing)}
     if (!s) return "";
     return s.length > max ? s.slice(0, max) + "…" : s;
   }
-  function localDayKey(ts = Date.now()) {
+  function localDayKey2(ts = Date.now()) {
     const d = new Date(ts);
     return `${d.getFullYear()}-${pad22(d.getMonth() + 1)}-${pad22(d.getDate())}`;
   }
   function localDatetime(ts = Date.now()) {
     const d = new Date(ts);
     const hms = `${pad22(d.getHours())}:${pad22(d.getMinutes())}:${pad22(d.getSeconds())}`;
-    return `${localDayKey(ts)} ${hms}`;
+    return `${localDayKey2(ts)} ${hms}`;
   }
   function toDatetime(dateStr) {
     try {
@@ -16533,7 +16566,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function briefDayKey(b) {
     const p = Number(b && b.pubdate) || 0;
-    if (p > 0) return localDayKey(p * 1e3);
+    if (p > 0) return localDayKey2(p * 1e3);
     const d = String(b && (b.date || b.fetchedAt) || "").slice(0, 10);
     return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : "未知日期";
   }
@@ -16719,11 +16752,12 @@ ${bodyText.substring(0, 6e3)}`;
       if (a.url && byUrl.has(String(a.url))) continue;
       bump(siteName(a), true);
     }
-    return [...rows.values()].sort((x, y) => y.total - x.total || y.unread - x.unread || x.site.localeCompare(y.site, "zh"));
+    return [...rows.values()].sort((x, y) => y.total - x.total || y.unread - x.unread || cmpZh(x.site, y.site));
   }
   var PLATFORM_DOMAIN;
   var init_store = __esm({
     "src/clipbook/store.ts"() {
+      init_utils();
       init_news_data();
       init_constants3();
       init_write_queue();
@@ -17144,14 +17178,14 @@ ${bodyText.substring(0, 6e3)}`;
     const fm = cache && cache.frontmatter;
     if (!fm) return null;
     if (!fm.url || !fm.created) return null;
-    const title = file.basename || String(file.name || "").replace(/\.md$/, "");
+    const title = file.basename || stripMdExt(String(file.name || ""));
     let created = new Date(fm.created).valueOf();
     if (isNaN(created)) created = Date.now();
     let backlinkNames = [];
     try {
       const bl = (getBacklinks || (() => null))(file);
       if (bl && bl.data && typeof bl.data.size === "number" && bl.data.size > 0) {
-        backlinkNames = Array.from(bl.data.keys()).map((p) => String(p || "").split("/").pop() || "").map((n) => n.replace(/^《|》$/g, "").replace(/\.md$/, ""));
+        backlinkNames = Array.from(bl.data.keys()).map((p) => String(p || "").split("/").pop() || "").map((n) => stripTitleMarks(stripMdExt(n)));
       }
     } catch (e) {
     }
@@ -17192,6 +17226,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   var init_scan = __esm({
     "src/clipbook/scan.ts"() {
+      init_utils();
       init_app();
     }
   });
@@ -17655,7 +17690,7 @@ ${body}`;
     const explicit = String(name != null ? name : "").trim();
     if (explicit) return explicit;
     const base = String(path != null ? path : "").replace(/\\/g, "/").split("/").pop() || "";
-    return base.replace(/\.md$/i, "") || String(path != null ? path : "");
+    return stripMdExt(base) || String(path != null ? path : "");
   }
   function isUrlLikeSourceText(text) {
     const s = String(text != null ? text : "").trim();
@@ -17713,6 +17748,7 @@ ${body}`;
   var URL_LIKE_RE, TRACK_KEYS;
   var init_source = __esm({
     "src/knowledge/source.ts"() {
+      init_utils();
       URL_LIKE_RE = /^(?:[\w-]+\.)+[A-Za-z]{2,}(?::\d+)?(?:[/?#][^\s]*)?$/;
       TRACK_KEYS = /* @__PURE__ */ new Set([
         "vd_source",
@@ -18406,11 +18442,11 @@ ${sample}`,
     return root.querySelector(sel);
   }
   function esc2(s) {
-    return String(s != null ? s : "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    return escapeHtml2(String(s != null ? s : ""));
   }
   function shortNoteName(path) {
     const base = String(path || "").replace(/\\/g, "/").split("/").pop() || "";
-    return base.replace(/\.md$/i, "") || String(path || "");
+    return stripMdExt(base) || String(path || "");
   }
   function humanizeError(reason) {
     const s = String(reason != null ? reason : "").trim();
@@ -18960,7 +18996,7 @@ ${sample}`,
             const srcFile = app.vault.getAbstractFileByPath(src.path);
             if (srcFile) {
               const text = await app.vault.read(srcFile);
-              const linkText = `[[${path.replace(/\.md$/i, "")}|${base}]]`;
+              const linkText = `[[${stripMdExt(path)}|${base}]]`;
               const updated = appendRelatedLine(text, linkText);
               if (updated !== text) await app.vault.modify(srcFile, updated);
             }
@@ -20309,7 +20345,7 @@ ${sample}`,
   function markHandledAndBump(raw, action) {
     const key = articleKeyOf(raw);
     const platform = raw.platform || "未知";
-    const today = localDayKey();
+    const today = localDayKey2();
     return enqueueNewsWrite(async () => {
       const res = await readNewsData();
       if (!res.ok || res.missing) return;
@@ -20393,7 +20429,7 @@ ${sample}`,
     await enqueueNewsWrite(async () => {
       const res = await readNewsData();
       if (!res.ok || res.missing) return;
-      const today = localDayKey();
+      const today = localDayKey2();
       const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
       let bumped = 0;
       const list = (res.data.articles || []).map((a) => {
@@ -20429,7 +20465,7 @@ ${sample}`,
           else s.totalSkipped = Math.max(0, (Number(s.totalSkipped) || 0) - 1);
           const platform = a.platform || "未知";
           s.byPlatform[platform] = Math.max(0, (Number(s.byPlatform[platform]) || 0) - 1);
-          const day = localDayKey();
+          const day = localDayKey2();
           s.byDate[day] = Math.max(0, (Number(s.byDate[day]) || 0) - 1);
         }
         const restored = { ...a };
@@ -20921,9 +20957,7 @@ ${sample}`,
     railListEl.innerHTML = html;
     mountIcons(railListEl);
     if (railFootEl) {
-      const d = /* @__PURE__ */ new Date();
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      railFootEl.innerHTML = railFootHtml(((_d = (_c = M5.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[key]) || 0);
+      railFootEl.innerHTML = railFootHtml(((_d = (_c = M5.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0);
     }
     const rows = railListEl.querySelectorAll("[data-src]");
     rows.forEach((row) => {
@@ -21465,7 +21499,7 @@ ${sample}`,
         order.push(a);
       });
     }
-    chapters.sort((x, y) => y.activeN + y.readN + y.savedN - (x.activeN + x.readN + x.savedN) || y.unread - x.unread || x.site.localeCompare(y.site, "zh"));
+    chapters.sort((x, y) => y.activeN + y.readN + y.savedN - (x.activeN + x.readN + x.savedN) || y.unread - x.unread || cmpZh(x.site, y.site));
     mobItemById = byId;
     mobItemOrder = order;
     if (!chapters.length) {
@@ -21753,11 +21787,6 @@ ${sample}`,
   });
 
   // src/favorites/shared.ts
-  function localNow() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-  }
   function relTime2(s) {
     if (!s) return "";
     const d = new Date(s.replace(" ", "T"));
@@ -21881,6 +21910,7 @@ ${sample}`,
     "src/favorites/shared.ts"() {
       init_str();
       init_config();
+      init_str();
       ICON3 = {
         close: "x",
         add: "plus",
@@ -22675,6 +22705,7 @@ GitHub 仓库：${ghInfo.title}
   // src/reading-report/index.ts
   var init_reading_report = __esm({
     "src/reading-report/index.ts"() {
+      init_utils();
       init_notice();
       init_ui();
       init_data();
@@ -22702,6 +22733,7 @@ GitHub 仓库：${ghInfo.title}
   var init_notes_ui = __esm({
     "src/bookshelf/notes-ui.ts"() {
       init_notice();
+      init_utils();
       init_dom();
       init_flow_dialog();
       init_ui();
@@ -22959,6 +22991,7 @@ GitHub 仓库：${ghInfo.title}
   var ReviewDataManager;
   var init_data7 = __esm({
     "src/review/data.ts"() {
+      init_utils();
       init_storage();
       init_settings_provider();
       init_fsrs();
@@ -22969,7 +23002,7 @@ GitHub 仓库：${ghInfo.title}
         /** 加载条目（向后兼容旧字段；日期兼容 ISO 字符串与数字）。
          *  走模块级 getApp（reviewApp 为单例 dataManager，app 参数注入会绑定旧 app 导致跨测试/重开写错 vault） */
         async loadItems() {
-          var _a2, _b2;
+          var _a2;
           const data = await jsonFileStore(getReviewFilePath()).read();
           const items = Array.isArray(data) ? data : [];
           const valid = [];
@@ -22978,10 +23011,10 @@ GitHub 仓库：${ghInfo.title}
             if (!file) {
               item.file = null;
               item.isMissing = true;
-              item.name = item.name || ((_a2 = item.filePath.split("/").pop()) == null ? void 0 : _a2.replace(/\.md$/, "")) || item.filePath;
+              item.name = item.name || stripMdExt(item.filePath.split("/").pop() || "") || item.filePath;
               item.isCompleted = item.completed || false;
               item.isOverdue = false;
-              item.currentStage = ((_b2 = item.stage) != null ? _b2 : (item.reviewStage || 1) - 1) + 1;
+              item.currentStage = ((_a2 = item.stage) != null ? _a2 : (item.reviewStage || 1) - 1) + 1;
               item.totalStages = TOTAL_STAGES;
               valid.push(item);
               continue;
@@ -24125,12 +24158,10 @@ ${n.content.slice(0, 2e3)}
     ReviewWatcher: () => ReviewWatcher,
     __setAutoAddMergeMsForTests: () => __setAutoAddMergeMsForTests,
     __setRenameMergeMsForTests: () => __setRenameMergeMsForTests,
-    isUnderFolder: () => isUnderFolder
+    isUnderFolder: () => isUnderFolder2
   });
-  function isUnderFolder(folder, path) {
-    const f = (folder || "").trim().replace(/\/+$/, "");
-    if (!f) return false;
-    return path === f || path.startsWith(f + "/");
+  function isUnderFolder2(folder, path) {
+    return isUnderFolder(folder, path);
   }
   function __setAutoAddMergeMsForTests(ms) {
     REVIEW_AUTO_ADD_MERGE_MS = ms;
@@ -24141,6 +24172,7 @@ ${n.content.slice(0, 2e3)}
   var REVIEW_AUTO_ADD_MERGE_MS, RENAME_MERGE_MS, ReviewWatcher;
   var init_watch = __esm({
     "src/review/watch.ts"() {
+      init_utils();
       init_notice();
       init_flow_dialog();
       init_settings_provider();
@@ -24169,7 +24201,7 @@ ${n.content.slice(0, 2e3)}
           return Array.isArray(s == null ? void 0 : s.reviewExcludedNotes) ? s.reviewExcludedNotes : [];
         }
         isWatched(path) {
-          return this.watchedFolders.some((f) => isUnderFolder(f, path));
+          return this.watchedFolders.some((f) => isUnderFolder2(f, path));
         }
         isExcluded(path) {
           return this.excludedNotes.includes(path);
@@ -24284,7 +24316,7 @@ ${n.content.slice(0, 2e3)}
         }
         /** 未加入候选：目录内全部 md − 已加入 − 已排除（递归；挂起记录占位路径天然排除） */
         collectAutoaddCandidates(folder, items) {
-          return this.app.vault.getMarkdownFiles().map((f) => f.path).filter((p) => isUnderFolder(folder, p)).filter((p) => !items.some((i) => i.filePath === p)).filter((p) => !this.isExcluded(p));
+          return this.app.vault.getMarkdownFiles().map((f) => f.path).filter((p) => isUnderFolder2(folder, p)).filter((p) => !items.some((i) => i.filePath === p)).filter((p) => !this.isExcluded(p));
         }
         /** 选择监听文件夹后的存量收编确认（ticket 099）：确认 → 批量全部加入并返回 true；取消 → 什么都不做返回 false（不写排除名单） */
         async confirmBatchAddForFolder(folder) {
@@ -24303,7 +24335,7 @@ ${n.content.slice(0, 2e3)}
           let ok = 0;
           for (const p of candidates) {
             try {
-              await this.dataManager.addItem(p, p.split("/").pop().replace(/\.md$/, ""));
+              await this.dataManager.addItem(p, stripMdExt(p.split("/").pop()));
               ok++;
             } catch (e) {
             }
@@ -24322,7 +24354,7 @@ ${n.content.slice(0, 2e3)}
           if (idx !== -1) folders.splice(idx, 1);
           s.reviewWatchedFolders = folders;
           const before = Array.isArray(s.reviewExcludedNotes) ? [...s.reviewExcludedNotes] : [];
-          const kept = before.filter((p) => !isUnderFolder(folder, p));
+          const kept = before.filter((p) => !isUnderFolder2(folder, p));
           s.reviewExcludedNotes = kept;
           await saveSettings();
           return before.length - kept.length;
@@ -24669,6 +24701,7 @@ ${n.content.slice(0, 2e3)}
   var CORRECT_JUMP_DELAY_MS2, SprintSession, RATING_NAMES2;
   var init_sprint = __esm({
     "src/review/sprint.ts"() {
+      init_utils();
       init_notice();
       init_flow_dialog();
       init_ui();
@@ -25019,7 +25052,7 @@ ${n.content.slice(0, 2e3)}
           this.bindTop();
         }
         asideStates() {
-          return this.entries.map((e) => ({ name: e.item.name.replace(/^《|》$/g, ""), state: e.state }));
+          return this.entries.map((e) => ({ name: stripTitleMarks(e.item.name), state: e.state }));
         }
         renderQuestion() {
           var _a2, _b2, _c, _d, _e;
@@ -25060,7 +25093,7 @@ ${n.content.slice(0, 2e3)}
           const rating = accuracyToRating(acc);
           const passed = rating === "easy" || rating === "good";
           const remain = this.remainingCount;
-          const name = entry.item.name.replace(/^《|》$/g, "");
+          const name = stripTitleMarks(entry.item.name);
           const nextLabel = this.mode === "single" ? "完成 · 回面板" : remain > 0 ? `下一篇 · ${this.nextPendingName()}` : "完成本轮 · 结算";
           const ratingLine = this.mode === "redo" ? `${RATING_NAMES2[rating]} · 已解除待重做` : `${RATING_NAMES2[rating]} · 下次 ${entry.passNote || "已排期"}`;
           this.view = "result";
@@ -25085,7 +25118,7 @@ ${n.content.slice(0, 2e3)}
         }
         nextPendingName() {
           const nx = this.entries.find((e) => e.state === "pending");
-          return nx ? nx.item.name.replace(/^《|》$/g, "").slice(0, 12) : "";
+          return nx ? stripTitleMarks(nx.item.name).slice(0, 12) : "";
         }
         showSummary() {
           var _a2, _b2;
@@ -25474,7 +25507,7 @@ ${n.content.slice(0, 2e3)}
       const lastTs = (_a3 = h[h.length - 1]) == null ? void 0 : _a3.timestamp;
       const cnt = h.length;
       return {
-        name: i.name.replace(/^《|》$/g, ""),
+        name: stripTitleMarks(i.name),
         sub: `${cnt} 次`,
         meta: lastTs ? formatRelativeTime(new Date(lastTs)) : ""
       };
@@ -25534,7 +25567,7 @@ ${n.content.slice(0, 2e3)}
       }
     }
     status.innerHTML = `
-    <div style="font-size:15px;font-weight:600;color:var(--text-normal);">${escapeHtml2(item.name.replace(/^《|》$/g, ""))}</div>
+    <div style="font-size:15px;font-weight:600;color:var(--text-normal);">${escapeHtml2(stripTitleMarks(item.name))}</div>
     <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${stageText} · 共 ${history2.length} 次复习${curR || ""}</div>
   `;
     body.appendChild(status);
@@ -26045,7 +26078,7 @@ ${n.content.slice(0, 2e3)}
   }
   function pseudoMdFile(path) {
     const base = path.split("/").pop() || "";
-    return { path, basename: base.replace(/\.md$/, ""), extension: "md" };
+    return { path, basename: stripMdExt(base), extension: "md" };
   }
   function ensureReview(app) {
     if (initialized4) return;
@@ -26226,6 +26259,7 @@ ${n.content.slice(0, 2e3)}
   var initialized4, dataManager, uiManager2, reviewWatcher, checkInterval, firstCheckTimer, unsubscribers;
   var init_review = __esm({
     "src/review/index.ts"() {
+      init_utils();
       init_notice();
       init_flow_dialog();
       init_domain_bus();
@@ -27819,7 +27853,7 @@ ${n.content.slice(0, 2e3)}
     return text.replace(FRONTMATTER_RE, "");
   }
   function noteTitleFromPath(path) {
-    return path.slice(path.lastIndexOf("/") + 1).replace(/\.md$/i, "");
+    return stripMdExt(path.slice(path.lastIndexOf("/") + 1));
   }
   function embedChunks(content, title, minChunk = 50) {
     const body = stripFrontmatter2(content);
@@ -27863,6 +27897,7 @@ ${n.content.slice(0, 2e3)}
   var CHUNK_SIZE, SENTENCE_BOUNDARY, FRONTMATTER_RE;
   var init_chunk = __esm({
     "src/secondbrain/chunk.ts"() {
+      init_utils();
       CHUNK_SIZE = 256;
       SENTENCE_BOUNDARY = /[。！？!?\n]+/;
       FRONTMATTER_RE = /^---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/;
@@ -29136,6 +29171,7 @@ ${n.content.slice(0, 2e3)}
   var ReferencePanel;
   var init_reference_panel = __esm({
     "src/secondbrain/reference-panel.ts"() {
+      init_utils();
       init_notice();
       init_z_order();
       init_float_window();
@@ -29289,7 +29325,7 @@ ${n.content.slice(0, 2e3)}
           const panel2 = this;
           const card = document.createElement("div");
           card.className = "bz-sb-ref-card";
-          card.innerHTML = refCardHtml(item.path.replace(/^.*[\\/]/, "").replace(/\.md$/i, ""), Math.round(item.score * 100), "#a33d2a");
+          card.innerHTML = refCardHtml(stripMdExt(item.path.replace(/^.*[\\/]/, "")), Math.round(item.score * 100), "#a33d2a");
           const topRow = card.querySelector(".bz-sb-ref-card-top");
           const bodyDiv = card.querySelector(".bz-sb-ref-card-body");
           renderMarkdown(bodyDiv, item.chunk, panel2.app);
@@ -29786,6 +29822,7 @@ ${userMsg}`;
   var SNAP_MID, SNAP_HIGH, COLLAPSE_THRESHOLD, MobilePanel;
   var init_mobile_panel = __esm({
     "src/secondbrain/mobile-panel.ts"() {
+      init_utils();
       init_esc_manager();
       init_notice();
       init_ui();
@@ -30028,7 +30065,7 @@ ${userMsg}`;
             topRow.className = "bz-sb-mb-card-top";
             const pathDiv = document.createElement("div");
             pathDiv.className = "bz-sb-mb-card-path";
-            pathDiv.textContent = item.path.replace(/^.*[\\/]/, "").replace(/\.md$/i, "");
+            pathDiv.textContent = stripMdExt(item.path.replace(/^.*[\\/]/, ""));
             const scoreDiv = document.createElement("div");
             scoreDiv.className = "bz-sb-mb-card-score";
             scoreDiv.textContent = `${Math.round(item.score * 100)}%`;
@@ -30231,7 +30268,7 @@ ${text}`;
   }
   function matchesScope(scopes, path) {
     if (!scopes.length) return false;
-    return scopes.some((dir) => isUnderFolder2(dir, path));
+    return scopes.some((dir) => isUnderFolder3(dir, path));
   }
   function computeBackfillTargets(allPaths, opts) {
     const seen = /* @__PURE__ */ new Set();
@@ -30244,10 +30281,8 @@ ${text}`;
     }
     return out;
   }
-  function isUnderFolder2(folder, path) {
-    const f = (folder || "").trim().replace(/\/+$/, "");
-    if (!f) return false;
-    return path === f || path.startsWith(f + "/");
+  function isUnderFolder3(folder, path) {
+    return isUnderFolder(folder, path);
   }
   function computeHash(content) {
     let h = 2166136261;
@@ -30266,12 +30301,12 @@ ${text}`;
     return parseRelatedEntries(value).length > 0;
   }
   function toRelatedEntry(targetPath) {
-    return `[[${targetPath.replace(/\.md$/i, "")}]]`;
+    return `[[${stripMdExt(targetPath)}]]`;
   }
   function normalizeRelatedEntry(entry) {
     const m = String(entry != null ? entry : "").match(/\[\[\s*([^\][]+?)\s*(?:#[^\][]*)?(?:\|[^\][]*)?\]\]/);
     if (!m) return null;
-    const p = m[1].trim().replace(/\.md$/i, "");
+    const p = stripMdExt(m[1].trim());
     return p || null;
   }
   function mergeRelated(existing, additions, maxLinks = 0) {
@@ -30402,6 +30437,7 @@ ${text}`;
   }
   var init_data8 = __esm({
     "src/secondbrain/link-agent/data.ts"() {
+      init_utils();
       init_store_file();
       init_settings_provider();
     }
@@ -31983,8 +32019,7 @@ ${text}`;
   function colorOf(platform) {
     const k = Object.keys(PLATFORM_COLOR_MAP).find((x) => (platform || "").toLowerCase().includes(x.toLowerCase()));
     if (k) return PLATFORM_COLOR_MAP[k];
-    let h = 0;
-    for (let i = 0; i < (platform || "?").length; i++) h = h * 31 + (platform || "?").charCodeAt(i) >>> 0;
+    const h = hash31(platform || "?");
     return PALETTE[h % PALETTE.length];
   }
   function avatarHTML(platform, url, cls = "bz-pwv-avatar") {
@@ -35271,11 +35306,12 @@ ${text}`;
     return String(s.encryptRoot || "CONFIG/.ENCRYPT").replace(/\/+$/, "");
   }
   function isEncryptLockedPath(app, path) {
-    return isUnderFolder2(encryptRoot(), path);
+    return isUnderFolder3(encryptRoot(), path);
   }
   var LINK_PROBE_TIMEOUT_MS, LINK_BATCH_DELAY_MS, LINK_BATCH_NOTICE_KEY, LINK_ERROR_NOTICE_KEY, JUDGE_PROMPT_PREFIX, CANDIDATE_POOL_MIN, LINK_QUERY_MAX_CHARS, LinkAgent;
   var init_pipeline = __esm({
     "src/secondbrain/link-agent/pipeline.ts"() {
+      init_utils();
       init_notice();
       init_settings_provider();
       init_config3();
@@ -35726,11 +35762,10 @@ ${text}`;
             basenameCounts.set(b, (basenameCounts.get(b) || 0) + 1);
           }
           const isAlive = (target) => {
-            var _a3;
             const full = target.endsWith(".md") ? target : `${target}.md`;
             if (this.app.vault.getAbstractFileByPath(full)) return true;
             if (((encryptedPaths == null ? void 0 : encryptedPaths.has(full)) || (encryptedPaths == null ? void 0 : encryptedPaths.has(target))) === true) return true;
-            const base = ((_a3 = full.split("/").pop()) == null ? void 0 : _a3.replace(/\.md$/i, "")) || "";
+            const base = stripMdExt(full.split("/").pop() || "");
             return (basenameCounts.get(base) || 0) > 0;
           };
           let removedTotal = 0;
@@ -37200,10 +37235,7 @@ ${text}`;
 
   // src/pomodoro/stats.ts
   function dayKey(ts) {
-    const d = new Date(ts);
-    const m = pad2(d.getMonth() + 1);
-    const day = pad2(d.getDate());
-    return `${d.getFullYear()}-${m}-${day}`;
+    return localDayKey(ts);
   }
   function todayCount(history2, now) {
     const today = dayKey(now);
