@@ -52,6 +52,18 @@ describe('buildNotes（时间线规则点评）', () => {
     expect(buildNotes(d)[0].text).toContain('同一时间');
   });
 
+  it('跨天：昨天首动 09:00 / 今天首动 07:42 → 早了 78 分钟（回归锁）', () => {
+    // 真实数据的 firstTs 是绝对时间戳（今天 07:42 vs 昨天 09:00，跨天差 ~22.7h）——
+    // 曾直接相减 → 显示「晚了 1362 分钟」（2026-09-10 原型自检抓到并修复）
+    const d = emptyRiver();
+    const t = new Date(NOW); t.setHours(7, 42, 0, 0);
+    const y = new Date(NOW - DAY); y.setHours(9, 0, 0, 0);
+    d.today.firstTs = t.getTime();
+    d.today.events = [{ domain: 'diary', ts: t.getTime(), timeLabel: '07:42', text: 'x' }];
+    d.yesterday.firstTs = y.getTime();
+    expect(buildNotes(d)[0].text).toContain('早了 78 分钟');
+  });
+
   it('昨天无痕迹：报今天首动时刻', () => {
     const d = emptyRiver();
     const t = new Date(NOW); t.setHours(8, 5, 0, 0);

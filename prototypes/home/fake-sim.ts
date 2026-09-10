@@ -16,6 +16,7 @@
  *   复习 9 张（逾期 1、明天到期 0）· 剪藏未读 12 · 收藏在册 18 · 归物 12 件
  *   今日时间线 9 条（三体 07:42 → 影院已看 21:05），昨日 5 条（写周报初稿 09:00 → 日记 22:15）
  *   规则点评 2 条：首条「早了 78 分钟」（今日首动 07:42 vs 昨日首动 09:00）+ 末条日记连击提醒
+ *   番茄钟 state = 暂停中的专注（首页菜单因此显示「停止专注」；toggleFocusSim 停掉后变「开始专注」）
  */
 import { FakeApp, encodeSeedFile } from './fake/fake-obsidian';
 import { setApp } from '../../src/core/app';
@@ -23,7 +24,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { openHome as openHomeReal } from '../../src/home/index';
 
 /** 种子版本（种子形状变化时 +1，触发重灌） */
-const SEED_REV = 3;
+const SEED_REV = 6;
 const SEED_MARK = 'bz-sim:__home_seed';
 const KEY_PREFIX = 'bz-sim:';
 
@@ -273,16 +274,34 @@ function seedMemo(out: SeedFile[]): void {
     { id: 'memo_seed_5', title: '回复审稿意见', created: `${dstr(3)} 09:00`, completed: null },
   ];
   out.push({ path: 'CONFIG/STORAGE/memo.json', content: JSON.stringify(memo, null, 2) });
+
+  // home.json（v3：顺序 + 隐藏**都按端各一份**，2026-09-10 拍板「两端互不影响」）：
+  // desk 把书库提到首位（验证顺序）、hiddenDesk 拿掉密码本（验证桌面隐藏）；
+  // mob 留空 = 走默认顺序、hiddenMob 留空 = 移动端不藏任何域（密码本在列）。
+  // 于是「桌面 13 项 / 移动 14 项」同时成立 —— 移动端壳断言正是靠这对差异证明两端互不影响。
+  out.push({
+    path: 'CONFIG/STORAGE/home.json',
+    content: JSON.stringify({
+      version: 3,
+      desk: ['bookshelf', 'diary', 'memo', 'cinema', 'review', 'pomodoro', 'favorites', 'clipping', 'knowledge', 'secondbrain', 'belongings', 'encrypt', 'settings'],
+      mob: [],
+      hiddenDesk: ['vault'],
+      hiddenMob: [],
+    }, null, 2),
+  });
 }
 
-/** 番茄：今日 2 轮 + 昨日 1 轮（ts=完成时刻，时长 25 分钟） */
+/** 番茄：今日 2 轮 + 昨日 1 轮（ts=完成时刻，时长 25 分钟）；
+ *  state = **暂停中的专注**（remaining 15 分钟）——首页入口菜单的番茄钟文案是动态的
+ *  （专注中「停止专注」/ 否则「开始专注」），暂停态正好落前一支且不触发恢复通知/tick
+ *  （recover 只在 endTime 到点时才动，见 pomodoro/state.ts），演示壳因此能稳定看到两支文案。 */
 function seedPomodoro(out: SeedFile[]): void {
   out.push({
     path: 'CONFIG/STORAGE/pomodoro.json',
     content: JSON.stringify(
       {
         version: 1,
-        state: { phase: 'idle' },
+        state: { phase: 'focus', endTime: null, remaining: 900, paused: true, cycleFocusCount: 2, task: '周报' },
         history: [
           { task: '周报', duration: 1500, ts: at(0, '09:00') },
           { task: '读书笔记', duration: 1500, ts: at(0, '14:27') },
@@ -382,4 +401,15 @@ export function openHome(): void {
 export function resetHomeSim(): void {
   wipeSimKeys();
   localStorage.removeItem(SEED_MARK);
+}
+
+/**
+ * 自检用：直接跑**真** toggleFocus（= 首页入口菜单「开始/停止专注」命令的同一条链路），
+ * 用来验证「番茄钟文案随相位动态改写」的另一支（初始种子是专注中 → 这里停掉 → 变「开始专注」）。
+ * 演示壳的 FakeApp 无 commands（入口点击降级断言依赖它），故走这条显式复位口。
+ */
+export async function toggleFocusSim(): Promise<void> {
+  bootHomeSim();
+  const m = await import('../../src/pomodoro');
+  await m.toggleFocus(appRef as never);
 }

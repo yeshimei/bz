@@ -720,6 +720,41 @@ export async function startFocusForTask(app: App, taskTitle: string): Promise<vo
   applyAction('start'); // 内含通知/落盘/tick 生命周期/渲染（弹窗与状态栏的任务名同步刷新）
 }
 
+/**
+ * 是否处于「专注进行中」（计时中或暂停中）——只读内存态，**无副作用**（不加载数据、不触发恢复/通知）。
+ * 消费方：首页入口菜单的番茄钟动态文案（专注中显示「停止专注」，否则「开始专注」）。
+ * 插件启动即 ensurePomodoro（main.ts onload），故内存态与实际一致；
+ * 首页侧读之前会先 ensurePomodoro 兜底（原型/竞态时也拿得到真实相位）。
+ */
+export function isFocusing(): boolean {
+  return state.phase === 'focus' && (state.endTime !== null || state.paused);
+}
+
+/**
+ * 开始 / 停止专注切换（首页入口菜单命令用，2026-09-10）。
+ * 语义 = 面板「开始」与「重置」两颗钮的合并：
+ *  - 专注中（计时或暂停）→ 停止（reset 回 idle，不写 history）；
+ *  - 休息阶段（计时或暂停）→ 先跳过休息，再开专注；
+ *  - idle → 直接开专注。
+ * 强制专注（forceFocus）下 transition 会拦下 reset（返回同一 state 引用），此时只提示不改状态。
+ */
+export async function toggleFocus(app: App): Promise<void> {
+  await ensurePomodoro(app);
+  if (isFocusing()) {
+    const before = state;
+    applyAction('reset');
+    if (state === before) notice('强制专注模式中，请先在番茄钟面板操作', 'warning');
+    else notice('专注已停止');
+    return;
+  }
+  if (state.phase === 'short-break' || state.phase === 'long-break') {
+    state = transition(state, 'skip', Date.now(), durations(), options()).state;
+    void save();
+    render();
+  }
+  applyAction('start');
+}
+
 /** 卸载清理（T32 接入 onunload；测试重置） */
 export function unloadPomodoro(): void {
   if (timerId !== null) {

@@ -9,7 +9,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { openPomodoro, unloadPomodoro, ensurePomodoro, startFocusForTask } from '../../src/pomodoro';
+import { openPomodoro, unloadPomodoro, ensurePomodoro, startFocusForTask, toggleFocus, isFocusing } from '../../src/pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from '../../src/pomodoro/statusbar';
 import { getPomodoroFilePath, PomodoroDataManager } from '../../src/pomodoro/data';
 import { enqueueFileTask } from '../../src/core/storage';
@@ -795,5 +795,80 @@ describe('增强包：循环圆点 / 时段分布 / 通知动作 / Space / 备�
     expect(/#pomodoro-mask\s*\{[^}]*--background-modifier-cover/.test(css)).toBe(true);
     expect(/#pomodoro-mask\s*\{[^}]*rgba\(0,0,0,\s*0\.45\)/.test(css)).toBe(false);
     expect(css).toContain('.pomodoro-statusbar:hover');
+  });
+});
+
+/**
+ * isFocusing / toggleFocus（2026-09-10）：首页入口菜单的番茄钟文案是**动态**的
+ * （专注中显示「停止专注」，否则「开始专注」）——这条只读相位就是它的数据源。
+ */
+describe('isFocusing（首页入口菜单动态文案的只读相位）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+    document.body.innerHTML = '';
+    unloadPomodoro();
+    unmountPomodoroStatusBar();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(T0));
+  });
+  afterEach(() => {
+    unloadPomodoro();
+    unmountPomodoroStatusBar();
+    vi.useRealTimers();
+  });
+
+  /** 暂停中的专注（endTime=null → 不走「继续」恢复分支：无通知、无 tick） */
+  function pausedFocusData(): string {
+    return JSON.stringify({
+      version: 1,
+      state: { phase: 'focus', endTime: null, remaining: 900, paused: true, cycleFocusCount: 1, task: '周报' },
+      history: [],
+    });
+  }
+
+  it('未加载 / 空闲 → false；载入暂停中的专注 → true 且不弹「继续」通知', async () => {
+    const vault = new MockVault();
+    vault.files.set(getPomodoroFilePath(), pausedFocusData());
+    const app = makeApp(vault);
+    setApp(app);
+    expect(isFocusing()).toBe(false); // 尚未加载（内存态 = 初始 idle）
+    await ensurePomodoro(app);
+    expect(document.querySelector('.bz-notice')).toBeNull();
+    expect(isFocusing()).toBe(true);
+  });
+
+  it('toggleFocus：专注中 → 停止（false）；再 toggle → 开始（true）', async () => {
+    const vault = new MockVault();
+    vault.files.set(getPomodoroFilePath(), pausedFocusData());
+    const app = makeApp(vault);
+    setApp(app);
+    await ensurePomodoro(app);
+    expect(isFocusing()).toBe(true);
+
+    await toggleFocus(app);
+    expect(isFocusing()).toBe(false); // 停止专注
+
+    await toggleFocus(app);
+    expect(isFocusing()).toBe(true); // 重新开始
+  });
+
+  it('休息计时中 → 不算专注；toggle 跳过休息直接开专注', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      getPomodoroFilePath(),
+      JSON.stringify({
+        version: 1,
+        state: { phase: 'short-break', endTime: T0 + 60_000, remaining: 0, paused: false, cycleFocusCount: 1 },
+        history: [],
+      })
+    );
+    const app = makeApp(vault);
+    setApp(app);
+    await ensurePomodoro(app);
+    expect(isFocusing()).toBe(false);
+    await toggleFocus(app);
+    expect(isFocusing()).toBe(true);
   });
 });

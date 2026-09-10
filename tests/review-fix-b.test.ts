@@ -142,7 +142,10 @@ describe('批 B-5：图标单一事实源尾差', () => {
   it('home 入口 icon 全量迁移：iconOf() 引 DOMAIN_ICONS，无残留字面量（issue 232b 收敛后 13 条；issue 250 补密码本 14 条；issue 251 补第二大脑 15 条；ADR-0115 回忆墙磁贴并入日记本 → 14 条）', () => {
     const src = repo('src/home/shared.ts'); // issue 243：域清单收编渲染纯层共享层，domains.ts 仅 re-export
     expect((src.match(/icon: iconOf\(/g) ?? []).length).toBe(14);
-    expect(src).not.toMatch(/icon: '/);
+    // 断言只作用于 DOMAINS 块：DOMAIN_MENU（入口菜单动作）用的是 lucide 字面量名，
+    // 与「域图标必须走 iconOf 单一事实源」是两回事（2026-09-10 精确化）
+    const domainsBlock = src.slice(src.indexOf('export const DOMAINS'), src.indexOf('export const DOMAIN_MAP'));
+    expect(domainsBlock).not.toMatch(/icon: '/);
     // 异名映射：settings→settings-panel、vault→password-vault（wall 磁贴随 ADR-0115 并入 diary）
     for (const d of DOMAINS) {
       const key = d.id === 'settings' ? 'settings-panel' : d.id === 'vault' ? 'password-vault' : d.id;

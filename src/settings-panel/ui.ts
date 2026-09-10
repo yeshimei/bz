@@ -61,6 +61,8 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   },
   ai: async () => (await import('../core/settings-main-schema')).aiSettingsSchema(),
   appearance: async () => (await import('./schema')).appearanceSettingsSchema(),
+  // 内容首页（home 域，2026-09-10）：入口顺序与显隐 = 一个按钮开编辑弹窗
+  home: async () => (await import('../home/settings')).homeSettingsSchema(),
   diary: async () => (await import('../diary/settings')).diarySettingsSchema(),
   memo: async () => (await import('../memo/settings')).memoSettingsSchema(),
   belongings: async () => (await import('../belongings/ui')).belongingSettingsSchema(),
@@ -125,7 +127,7 @@ export const DOMAINS: DomainDef[] = [
   { id: 'review', name: '复习计划', icon: DOMAIN_ICONS.review, desc: '间隔重复与做题', schemaLoader: schemaLoaders.review },
   { id: 'secondbrain', name: '第二大脑', icon: DOMAIN_ICONS.secondbrain, desc: '嵌入检索与对话', schemaLoader: schemaLoaders.secondbrain },
   { id: 'auto-summary', name: '自动摘要', icon: DOMAIN_ICONS['auto-summary'], desc: '剪藏自动摘要', noSettings: true },
-  { id: 'home', name: '内容首页', icon: DOMAIN_ICONS.home, desc: '统计域卡首页', noSettings: true },
+  { id: 'home', name: '首页', icon: DOMAIN_ICONS.home, desc: '首页外观：入口顺序与显隐', schemaLoader: schemaLoaders.home },
   { id: 'pomodoro', name: '番茄钟', icon: DOMAIN_ICONS.pomodoro, desc: '专注计时与休息', schemaLoader: schemaLoaders.pomodoro },
   { id: 'attach', name: '附件搬移', icon: DOMAIN_ICONS.attach, desc: '附件整理', noSettings: true },
   { id: 'encrypt', name: '保险库', icon: DOMAIN_ICONS.encrypt, desc: '密码、加密笔记与加密日记', schemaLoader: schemaLoaders.encrypt },
@@ -137,10 +139,13 @@ export const DOMAINS: DomainDef[] = [
 /** 导航语义分组（拍板原型 P1：基础/记录/媒体与知识/工具 四组；不在表内的域归「其他」尾组）。
  *  id 口径 = DOMAINS 的 id（剪藏本在 DOMAINS 里叫 clipping）。导出供回归测试断言。 */
 export const NAV_SECS: Array<{ title: string; ids: string[] }> = [
-  { title: '基础', ids: ['global', 'appearance', 'ai'] },
-  { title: '记录', ids: ['diary', 'memo', 'belongings', 'clipping', 'favorites'] },
-  { title: '媒体与知识', ids: ['cinema', 'bookshelf', 'review', 'secondbrain', 'knowledge'] },
-  { title: '工具', ids: ['pomodoro', 'encrypt', 'password-vault', 'smartcat'] },
+  { title: '基础', ids: ['global', 'appearance', 'home'] },
+  { title: '智能', ids: ['ai', 'secondbrain'] },
+  { title: '记录', ids: ['diary', 'memo', 'belongings'] },
+  { title: '收集', ids: ['clipping', 'favorites'] },
+  { title: '媒体与阅读', ids: ['cinema', 'bookshelf', 'review', 'knowledge'] },
+  { title: '工具', ids: ['pomodoro', 'smartcat'] },
+  { title: '安全', ids: ['encrypt', 'password-vault'] },
 ];
 
 /** 已加载域的 schema 行缓存（移动端搜索「设置项」段用：域名 → 行名/描述列表） */
@@ -476,11 +481,10 @@ export class SettingsPanelUI {
     popup.innerHTML = R.mobShellHtml();
     this.mobPushed = false; // 面板重建（含上次关闭时停在推入页）从首页起
 
-    // 两页头行工具：首页/域页各一枚关闭钮；域页另有一枚返回（推回首页）
+    // 两页头行工具：**只有首页一枚关闭钮**；域页不设关闭（用户 2026-09-10 拍板——
+    // 域页已有一枚返回钮弹回首页，再叠一枚关闭会与它并排、误触率高；关面板走首页那枚）
     const homeTools = popup.querySelector('[data-sp-mob-tools="home"]') as HTMLElement;
     homeTools.appendChild(uiIconBtn({ icon: 'x', lg: true, title: '关闭', className: 'bz-sp-mob-close', onClick: () => this.hide() }));
-    const domainTools = popup.querySelector('[data-sp-mob-tools="domain"]') as HTMLElement;
-    domainTools.appendChild(uiIconBtn({ icon: 'x', lg: true, title: '关闭', className: 'bz-sp-mob-close', onClick: () => this.hide() }));
     const back = popup.querySelector('[data-sp-mob-back]') as HTMLElement;
     back.appendChild(uiIconBtn({ icon: 'arrow-left', lg: true, title: '返回', className: 'bz-sp-mob-back-btn', onClick: () => this.popDomain() }));
     mountIcons(popup); // 壳内图标占位物化（搜索/返回/关闭）

@@ -88,6 +88,8 @@
 .bz-home-ego { opacity: 0; color: var(--h-dim); font-size: 11px; }
 .bz-home-erow:hover .bz-home-ego { opacity: 1; }
 
+/* ---- 拖拽排序已撤：入口顺序/显隐统一在「设置 → 首页入口」弹窗里打理（2026-09-10 用户拍板） ---- */
+
 /* ---- 时间线（原型 .flow/.ev） ---- */
 /* V4 拍板：时间线整体成白卡，卡内虚线轨道（随内容滚、与彩点同锚对齐） */
 .bz-home-flow { min-height: 0; overflow-y: auto; scrollbar-width: none; background: var(--h-card); border: 1px solid var(--h-line); border-radius: 12px; padding: 6px 14px 8px 10px; }
@@ -157,3 +159,76 @@
   .bz-home-pr-h { font-size: 18.75px; }
   .bz-home-pr-go { font-size: 17.25px; }
 }
+
+/* ==================== 「外观 → 首页入口」内联编辑器（设置面板内，2026-09-10 用户拍板） ====================
+   演进：浮层弹窗（自带 --h-* 一套 token）→ **面板内联**（settings.ts 的 custom 行插槽）。
+   故本块**不自带 token**，直接用面板的 --sp-* （面板根作用域提供，随亮/暗皮切换），
+   缺省再回落 Obsidian token —— 观感与面板其它设置项一致。
+   按端各一份：桌面端只出 desk 那套、移动端只出 mob 那套（见 entry-editor.ts）。 */
+.bz-home-ent-hint { margin: 0 0 8px; font-size: 11.5px; color: var(--sp-ink-3, var(--text-faint)); }
+.bz-home-ent-list { display: flex; flex-direction: column; }
+.bz-home-ent-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 8px; border-radius: 8px;
+  border-bottom: 1px solid var(--sp-line-soft, var(--background-modifier-border));
+  /* 触屏：纵向滚动归浏览器（短滑滚列表），横向不滚 → 长按拖拽不与滚动抢手势 */
+  touch-action: pan-y;
+}
+.bz-home-ent-row:last-child { border-bottom: 0; }
+.bz-home-ent-row:hover { background: var(--sp-line-soft, var(--background-modifier-hover)); }
+.bz-home-ent-grip { display: inline-flex; color: var(--sp-ink-3, var(--text-faint)); cursor: grab; }
+.bz-home-ent-grip .bz-ic { width: 15px; height: 15px; }
+.bz-home-ent-ic { display: inline-flex; flex: none; }
+.bz-home-ent-ic .bz-ic { width: 16px; height: 16px; }
+.bz-home-ent-nm { font-size: 13px; color: var(--sp-ink, var(--text-normal)); }
+/* 行尾 ×/+：按钮默认样式全清（背景/边框/内阴影），只留图标与 hover 反馈 */
+.bz-home-ent-btn {
+  margin-left: auto; display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; padding: 0; flex: none;
+  border: none; border-radius: 7px; background: transparent; box-shadow: none;
+  color: var(--sp-ink-3, var(--text-faint)); cursor: pointer;
+}
+.bz-home-ent-btn:hover { background: var(--sp-line-soft, var(--background-modifier-hover)); color: var(--text-error); }
+.bz-home-ent-btn--add:hover { color: var(--color-green); }
+.bz-home-ent-btn .bz-ic { width: 15px; height: 15px; }
+/* 已移除（隐藏）的行：排在同一列表最下面，弱化但可辨；
+   不参与排序（拖柄隐掉，恢复只走 + 按钮）—— 排序下标只对可见行计数（见 shared.reorderTo） */
+.bz-home-ent-row--off { opacity: .72; }
+.bz-home-ent-row--off .bz-home-ent-grip { visibility: hidden; }
+/* 拖拽中的行：浮起 + 阴影（位移由 JS 写 transform） */
+.bz-home-ent-drag {
+  position: relative; z-index: 3;
+  background: var(--sp-panel, var(--background-primary));
+  border-radius: 8px; box-shadow: var(--sp-shadow, var(--shadow-s));
+  opacity: .95;
+}
+
+/* 移动端：面板内字号随面板档放大（面板移动端字号见 settings-panel/styles.css） */
+@media (max-width: 768px) {
+  .bz-home-ent-hint { font-size: 13px; }
+  .bz-home-ent-row { padding: 10px 8px; }
+  .bz-home-ent-nm { font-size: 16px; }
+  .bz-home-ent-ic .bz-ic, .bz-home-ent-grip .bz-ic { width: 19px; height: 19px; }
+  .bz-home-ent-btn { width: 34px; height: 34px; }
+  .bz-home-ent-btn .bz-ic { width: 19px; height: 19px; }
+}
+
+/* ==================== 长按抽屉盒头（移动端；core/item-actions 的 sheetHead 通道） ====================
+   2026-09-10 用户拍板版式：**上排 = 域彩色图标 + 域名（同一行）**，
+   **下排 = 入口行右侧那行灰字**（整行起于盒头左边，不缩进到图标右侧）。
+   灰字计数口径与列表同源（render.sheetHeadHtml 用 riverCountText，无计数文案回落域副题）。
+   字号（用户 2026-09-10 二次拍板：**标题/小字收小、下面功能项放大**）：
+     标题 17.25 · 灰字 15.75 · 功能项 18 · 功能图标 18。
+   抽屉只在移动端出现（openItemSheet 仅在 isMobileEnv 下调用），故只写一套数值，
+   不走「基础值 + 移动端 ×1.5」两段式。
+   作用域 = .bz-home-menu（ui.ts 经 sheetClass 传给抽屉；抽屉挂 body，不在 .bz-home-panel 内）。 */
+.bz-home-menu .bz-home-sheet-head { display: flex; flex-direction: column; gap: 7px; }
+.bz-home-menu .bz-home-sheet-top { display: flex; align-items: center; gap: 10px; }
+.bz-home-menu .bz-home-sheet-ic { display: inline-flex; flex: none; }
+.bz-home-menu .bz-home-sheet-ic .bz-ic { width: 22px; height: 22px; }
+.bz-home-menu .bz-home-sheet-nm { font-size: 17.25px; font-weight: 600; color: var(--text-normal); line-height: 1.3; }
+.bz-home-menu .bz-home-sheet-sub { font-size: 15.75px; color: var(--text-muted); }
+/* 功能项放大：特异性（0,3,1）高于 core 的 .bz-item-sheet button.bz-item-sheet-item（0,2,1），
+   不依赖样式表聚合顺序；图标随字号同步放大，行高留够触控热区 */
+.bz-item-sheet.bz-home-menu button.bz-item-sheet-item { font-size: 18px; padding: 11px 6px; }
+.bz-item-sheet.bz-home-menu .bz-item-sheet-icon svg { width: 18px; height: 18px; }
