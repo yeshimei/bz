@@ -27,7 +27,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: var(--bz-space-xl);
   box-sizing: border-box;
 }
 /* 桌面实例：居中工作台卡（非全屏） */
@@ -77,7 +77,7 @@
   background: var(--pwv-surface);
   color: var(--pwv-ink);
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 10px var(--bz-space-md);
   outline: none;
 }
 .bz-password-vault ::selection {
@@ -119,7 +119,7 @@
   border-right: 1px solid var(--pwv-line);
   display: flex;
   flex-direction: column;
-  padding: 20px 12px;
+  padding: 20px var(--bz-space-md);
 }
 .bz-password-vault-logo {
   display: flex;
@@ -157,7 +157,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 12px;
+  padding: 9px var(--bz-space-md);
   border-radius: 10px;
   font-size: 13.5px;
   color: var(--pwv-muted);
@@ -192,8 +192,8 @@
 .bz-password-vault-lockstate {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: var(--bz-space-sm);
+  padding: 10px var(--bz-space-md);
   font-size: var(--bz-font-meta);
   color: var(--pwv-muted);
   border-top: 1px solid var(--pwv-line);
@@ -213,7 +213,7 @@
   margin-left: auto;
   font-size: var(--bz-font-caption);
   color: var(--pwv-gold-ink);
-  padding: 3px 8px;
+  padding: 3px var(--bz-space-sm);
   border-radius: 6px;
 }
 .bz-password-vault-lockstate button:hover {
@@ -244,12 +244,12 @@
 .bz-password-vault-search {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--bz-space-sm);
   margin-top: 14px;
   background: var(--pwv-surface);
   border: 1px solid var(--pwv-line);
   border-radius: var(--bz-radius-md);
-  padding: 0 12px;
+  padding: 0 var(--bz-space-md);
 }
 .bz-password-vault-search svg {
   width: 15px;
@@ -276,13 +276,13 @@
 .bz-password-vault-rows {
   flex: 1;
   overflow-y: auto;
-  padding: 0 10px 16px;
+  padding: 0 10px var(--bz-space-lg);
 }
 .bz-password-vault-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 12px;
+  gap: var(--bz-space-md);
+  padding: var(--bz-space-md) var(--bz-space-md);
   border-radius: var(--bz-radius-md);
   cursor: pointer;
   transition: background var(--bz-dur-fast);
@@ -348,8 +348,8 @@
 .bz-password-vault-plrow {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 12px;
+  gap: var(--bz-space-md);
+  padding: var(--bz-space-md) var(--bz-space-md);
   border-radius: var(--bz-radius-md);
   cursor: pointer;
   transition: background var(--bz-dur-fast);
@@ -389,7 +389,7 @@
   color: var(--pwv-gold-ink);
   background: color-mix(in srgb, var(--interactive-accent) 16%, transparent);
   border-radius: var(--bz-radius-full);
-  padding: 2px 8px;
+  padding: 2px var(--bz-space-sm);
   min-width: 22px;
   text-align: center;
 }
@@ -415,7 +415,7 @@
 }
 /* 平台视图：账号卡列表 */
 .bz-password-vault-accts {
-  padding: 8px 26px 24px;
+  padding: var(--bz-space-sm) 26px var(--bz-space-xl);
   overflow-y: auto;
   flex: 1;
 }
@@ -423,7 +423,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 26px 8px;
+  padding: var(--bz-space-lg) 26px var(--bz-space-sm);
   border-bottom: 1px solid var(--pwv-line);
 }
 .bz-password-vault-accthead .t {
@@ -447,7 +447,7 @@
   border: 1px solid var(--pwv-line);
   border-radius: 14px;
   margin-bottom: 10px;
-  padding: 14px 16px;
+  padding: 14px var(--bz-space-lg);
   transition: border-color var(--bz-dur-fast);
 }
 .bz-password-vault-acctcard:hover {
@@ -472,7 +472,7 @@
 .bz-password-vault-acctcard .name .star {
   color: var(--pwv-warn);
   font-size: var(--bz-font-meta);
-  margin-left: 4px;
+  margin-left: var(--bz-space-xs);
 }
 .bz-password-vault-acctcard .copyac {
   display: inline-flex;
@@ -501,11 +501,11 @@
 .bz-password-vault-acctcard .pwrow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--bz-space-sm);
   background: var(--pwv-bg);
   border: 1px solid var(--pwv-line);
   border-radius: 11px;
-  padding: 9px 12px;
+  padding: 9px var(--bz-space-md);
 }
 .bz-password-vault-acctcard .pw {
   flex: 1;
@@ -541,7 +541,7 @@
 }
 .bz-password-vault-acctcard .note {
   margin-top: 10px;
-  padding: 10px 12px;
+  padding: 10px var(--bz-space-md);
   background: color-mix(in srgb, var(--interactive-accent) 7%, transparent);
   border-radius: 10px;
   font-size: 12.5px;
@@ -551,7 +551,7 @@
   word-break: break-all;
 }
 .bz-password-vault-acctcard .meta {
-  margin-top: 8px;
+  margin-top: var(--bz-space-sm);
   font-size: var(--bz-font-caption);
   color: var(--pwv-faint);
 }
@@ -570,7 +570,7 @@
 .bz-password-vault-seg .seghead {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--bz-space-sm);
   margin-bottom: 10px;
 }
 .bz-password-vault-seg .seghead .acc {
@@ -585,7 +585,7 @@
 .bz-password-vault-seg .seghead .acc .star {
   color: var(--pwv-warn);
   font-size: var(--bz-font-caption);
-  margin-left: 4px;
+  margin-left: var(--bz-space-xs);
 }
 .bz-password-vault-seg .seghead .copyac {
   display: inline-flex;
@@ -614,7 +614,7 @@
 .bz-password-vault-seg .pwdline {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--bz-space-sm);
   background: var(--pwv-bg);
   border: 1px solid var(--pwv-line);
   border-radius: 10px;
@@ -653,7 +653,7 @@
 }
 .bz-password-vault-seg .note {
   margin-top: 10px;
-  padding: 10px 12px;
+  padding: 10px var(--bz-space-md);
   background: color-mix(in srgb, var(--interactive-accent) 7%, transparent);
   border-radius: 10px;
   font-size: 12.5px;
@@ -663,7 +663,7 @@
   word-break: break-all;
 }
 .bz-password-vault-seg .segmeta {
-  margin-top: 8px;
+  margin-top: var(--bz-space-sm);
   font-size: var(--bz-font-caption);
   color: var(--pwv-faint);
 }
@@ -673,14 +673,14 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: var(--bz-space-lg);
 }
 .bz-password-vault-mobplathead > div {
   min-width: 0;
 }
 .bz-password-vault-mobplathead .bz-password-vault-btn {
   flex-shrink: 0;
-  padding: 8px 14px;
+  padding: var(--bz-space-sm) 14px;
   font-size: 12.5px;
 }
 /* 平台编辑弹窗 */
@@ -689,11 +689,11 @@
   font-size: var(--bz-font-meta);
   font-weight: 600;
   color: var(--pwv-muted);
-  margin: 12px 0 6px;
+  margin: var(--bz-space-md) 0 6px;
 }
 .bz-password-vault-platedit input {
   width: 100%;
-  padding: 11px 12px;
+  padding: 11px var(--bz-space-md);
   border-radius: 11px;
   font-size: 13.5px;
 }
@@ -711,7 +711,7 @@
   background: color-mix(in srgb, var(--interactive-accent) 16%, transparent);
   border-radius: var(--bz-radius-full);
   padding: 1px 7px;
-  margin-left: 4px;
+  margin-left: var(--bz-space-xs);
 }
 /* 右侧详情 */
 .bz-password-vault-detail {
@@ -741,7 +741,7 @@
   text-overflow: ellipsis;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--bz-space-sm);
   color: var(--pwv-ink);
 }
 .bz-password-vault-detailhead .ttl .url {
@@ -774,7 +774,7 @@
   color: var(--pwv-warn);
 }
 .bz-password-vault-body {
-  padding: 24px 26px;
+  padding: var(--bz-space-xl) 26px;
   overflow-y: auto;
   flex: 1;
 }
@@ -841,7 +841,7 @@
   background: var(--pwv-bg);
   border: 1px solid var(--pwv-line);
   border-radius: var(--bz-radius-md);
-  padding: 12px 14px;
+  padding: var(--bz-space-md) 14px;
   font-size: var(--bz-font-label);
   color: var(--pwv-muted);
   line-height: 1.6;
@@ -862,7 +862,7 @@
 .bz-password-vault-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--bz-space-sm);
   padding: 10px 18px;
   border-radius: 11px;
   font-size: 13.5px;
@@ -892,7 +892,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--bz-space-sm);
   color: var(--pwv-faint);
   padding: 40px;
   text-align: center;
@@ -911,7 +911,7 @@
   font-size: var(--bz-font-meta);
 }
 .bz-password-vault-empty .act {
-  margin-top: 8px;
+  margin-top: var(--bz-space-sm);
   padding: 9px 18px;
   border-radius: 10px;
   background: var(--pwv-gold-soft);
@@ -921,14 +921,14 @@
 }
 /* 生成器视图 */
 .bz-password-vault-gen {
-  padding: 24px 26px;
+  padding: var(--bz-space-xl) 26px;
   overflow-y: auto;
   flex: 1;
 }
 .bz-password-vault-gen .row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--bz-space-md);
   margin-bottom: 18px;
   flex-wrap: wrap;
 }
@@ -954,7 +954,7 @@
   flex-wrap: wrap;
 }
 .bz-password-vault-gen .chip {
-  padding: 5px 12px;
+  padding: 5px var(--bz-space-md);
   border-radius: var(--bz-radius-full);
   background: var(--pwv-surface2);
   font-size: var(--bz-font-meta);
@@ -970,11 +970,11 @@
   min-width: 200px;
 }
 .bz-password-vault-gen .result {
-  margin-top: 8px;
+  margin-top: var(--bz-space-sm);
   background: var(--pwv-bg);
   border: 1px solid var(--pwv-line);
   border-radius: 14px;
-  padding: 22px 24px;
+  padding: 22px var(--bz-space-xl);
   display: flex;
   align-items: center;
   gap: 14px;
@@ -990,7 +990,7 @@
 }
 .bz-password-vault-gen .strength {
   display: flex;
-  gap: 4px;
+  gap: var(--bz-space-xs);
   align-items: center;
   width: 100%;
 }
@@ -1032,7 +1032,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: calc(44px + env(safe-area-inset-top, 0px)) 16px 10px;
+  padding: calc(44px + env(safe-area-inset-top, 0px)) var(--bz-space-lg) 10px;
   background: var(--pwv-surface);
   border-bottom: 1px solid var(--pwv-line);
 }
@@ -1079,7 +1079,7 @@
   color: var(--pwv-ok);
   font-weight: 600;
   background: color-mix(in srgb, var(--color-green) 12%, transparent);
-  padding: 4px 9px;
+  padding: var(--bz-space-xs) 9px;
   border-radius: var(--bz-radius-full);
 }
 .bz-password-vault-mobbar .st.locked {
@@ -1106,12 +1106,12 @@
 .bz-password-vault-mobsearch {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 12px 16px 4px;
+  gap: var(--bz-space-sm);
+  margin: var(--bz-space-md) var(--bz-space-lg) var(--bz-space-xs);
   background: var(--pwv-surface);
   border: 1px solid var(--pwv-line);
   border-radius: var(--bz-radius-md);
-  padding: 0 12px;
+  padding: 0 var(--bz-space-md);
 }
 .bz-password-vault-mobsearch svg {
   width: 14px;
@@ -1133,12 +1133,12 @@
 .bz-password-vault-moblist {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 16px 96px;
+  padding: var(--bz-space-sm) var(--bz-space-lg) 96px;
 }
 .bz-password-vault-mobcard {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--bz-space-md);
   background: var(--pwv-surface);
   border: 1px solid var(--pwv-line);
   border-radius: var(--bz-radius-lg);
@@ -1216,7 +1216,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--bz-space-sm);
   color: var(--pwv-faint);
   padding: 40px;
   text-align: center;
@@ -1227,7 +1227,7 @@
   font-weight: 600;
 }
 .bz-password-vault-mobempty .act {
-  margin-top: 8px;
+  margin-top: var(--bz-space-sm);
   padding: 10px 20px;
   border-radius: var(--bz-radius-md);
   background: var(--pwv-gold-soft);
@@ -1272,8 +1272,8 @@
 .bz-password-vault-mobpage .head {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
+  gap: var(--bz-space-md);
+  padding: var(--bz-space-lg);
   background: var(--pwv-surface);
   border-bottom: 1px solid var(--pwv-line);
 }
@@ -1319,7 +1319,7 @@
 .bz-password-vault-mobbody {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 16px 40px;
+  padding: 20px var(--bz-space-lg) 40px;
 }
 .bz-password-vault-mf {
   display: flex;
@@ -1329,7 +1329,7 @@
   border: 1px solid var(--pwv-line);
   border-radius: 14px;
   padding: 13px 14px;
-  margin-bottom: 12px;
+  margin-bottom: var(--bz-space-md);
 }
 .bz-password-vault-mf .lab {
   font-size: var(--bz-font-caption);
@@ -1382,7 +1382,7 @@
   background: var(--pwv-surface);
   border: 1px solid var(--pwv-line);
   border-radius: 14px;
-  padding: 12px 14px;
+  padding: var(--bz-space-md) 14px;
   font-size: var(--bz-font-label);
   color: var(--pwv-muted);
   line-height: 1.6;
@@ -1425,7 +1425,7 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 10px 30px color-mix(in srgb, var(--interactive-accent) 40%, transparent);
-  margin-bottom: 8px;
+  margin-bottom: var(--bz-space-sm);
 }
 .bz-password-vault-lock .seal svg {
   width: 36px;
@@ -1446,21 +1446,21 @@
   width: min(280px, 80%);
   text-align: center;
   font-size: var(--bz-font-emphasis);
-  padding: 12px;
-  margin-top: 8px;
+  padding: var(--bz-space-md);
+  margin-top: var(--bz-space-sm);
 }
 .bz-password-vault-lock .err {
   font-size: var(--bz-font-meta);
   color: var(--pwv-bad);
   min-height: 16px;
-  margin-top: 8px;
+  margin-top: var(--bz-space-sm);
 }
 .bz-password-vault-lock .go {
   margin-top: 14px;
   background: var(--pwv-gold-soft);
   color: #fff;
   font-weight: 600;
-  padding: 12px 34px;
+  padding: var(--bz-space-md) 34px;
   border-radius: var(--bz-radius-md);
   box-shadow: 0 6px 18px color-mix(in srgb, var(--interactive-accent) 40%, transparent);
 }
@@ -1506,12 +1506,12 @@
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
   width: min(420px, 90%);
   max-width: 420px; /* 与确认/平台编辑弹窗 .pop2 .card 完全一致 */
-  padding: 24px;
+  padding: var(--bz-space-xl);
   max-height: 88%;
   overflow-y: auto;
 }
 .bz-password-vault-dialog h3 {
-  margin: 0 0 4px;
+  margin: 0 0 var(--bz-space-xs);
   font-size: var(--bz-font-title);
   font-weight: 700;
   color: var(--pwv-ink);
@@ -1526,11 +1526,11 @@
   font-size: var(--bz-font-meta);
   font-weight: 600;
   color: var(--pwv-muted);
-  margin: 12px 0 6px;
+  margin: var(--bz-space-md) 0 6px;
 }
 .bz-password-vault-dialog input {
   width: 100%;
-  padding: 11px 12px;
+  padding: 11px var(--bz-space-md);
   border-radius: 11px;
   font-size: 13.5px;
 }
@@ -1539,7 +1539,7 @@
 }
 .bz-password-vault-dialog .pwdrow input {
   width: 100%;
-  padding: 11px 12px;
+  padding: 11px var(--bz-space-md);
   border-radius: 11px;
   font-size: 13.5px;
 }
@@ -1585,7 +1585,7 @@
   font-size: var(--bz-font-meta);
   color: var(--pwv-bad);
   min-height: 16px;
-  margin-top: 8px;
+  margin-top: var(--bz-space-sm);
 }
 /* ============ 通用弹窗（确认容器） ============ */
 .bz-password-vault-pop2 {
@@ -1607,12 +1607,12 @@
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
   width: min(420px, 90%);
   max-width: 420px; /* 与创建弹窗 .bz-password-vault-dialog 完全一致，防 100% 撑满 */
-  padding: 24px;
+  padding: var(--bz-space-xl);
   max-height: 88%;
   overflow-y: auto;
 }
 .bz-password-vault-pop2 .card h3 {
-  margin: 0 0 8px;
+  margin: 0 0 var(--bz-space-sm);
   font-size: var(--bz-font-title);
   font-weight: 700;
   color: var(--pwv-ink);

@@ -256,3 +256,56 @@ export function yieldToMainThread(timeoutMs = 200): Promise<void> {
     else window.setTimeout(resolve, 0);
   });
 }
+
+// ==================== 敏感操作防护（encrypt×password-vault 双域收口，全域扫描 2026-09 批次 G） ====================
+
+/** 安全随机密码（crypto.getRandomValues 拒绝采样，与旧密码本同款） */
+export function secureRandomPassword(length: number, charset: string): string {
+  const n = charset.length;
+  if (!(length > 0) || n === 0) return '';
+  const LIMIT = Math.floor(0x100000000 / n) * n;
+  let pwd = '';
+  while (pwd.length < length) {
+    const buf = new Uint32Array(length - pwd.length);
+    crypto.getRandomValues(buf);
+    for (let i = 0; i < buf.length && pwd.length < length; i++) {
+      if (buf[i] >= LIMIT) continue;
+      pwd += charset.charAt(buf[i] % n);
+    }
+  }
+  return pwd;
+}
+
+/** 复制敏感内容 + 60s 自动清空剪贴板（模块级单定时器：双域并存共用一支，后复制重置前清空） */
+const CLIPBOARD_CLEAR_DELAY_MS = 60_000;
+let clipboardClearTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** 取消未触发的自动清空（卸载清理用，防插件禁用后定时器仍写剪贴板） */
+export function cancelClipboardClear(): void {
+  if (clipboardClearTimer !== null) {
+    clearTimeout(clipboardClearTimer);
+    clipboardClearTimer = null;
+  }
+}
+
+/** 对已写入敏感内容的剪贴板布防 60s 自动清空 */
+export function armClipboardClear(): void {
+  if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
+  clipboardClearTimer = setTimeout(() => {
+    clipboardClearTimer = null;
+    try {
+      void navigator.clipboard.writeText('').catch(() => {});
+    } catch (e) {
+      /* 尽力而为 */
+    }
+  }, CLIPBOARD_CLEAR_DELAY_MS);
+}
+
+/** 复制敏感内容并布防自动清空 */
+export function copySensitiveText(text: string): Promise<void> {
+  try {
+    return navigator.clipboard.writeText(text).then(() => armClipboardClear());
+  } catch (e) {
+    return Promise.reject(e);
+  }
+}

@@ -81,7 +81,7 @@
   display: flex;
   align-items: center;
   gap: 11px;
-  padding: 16px 20px 12px;
+  padding: var(--bz-space-lg) 20px var(--bz-space-md);
   border-bottom: 1px solid var(--sb-line);
 }
 .bz-sb-panel .bz-sb-glyph {
@@ -159,7 +159,7 @@
 /* 按钮：白底细边 / 暗墨主钮 / 图标钮 */
 .bz-sb-fbtn {
   height: 30px;
-  padding: 0 12px;
+  padding: 0 var(--bz-space-md);
   border-radius: var(--bz-radius-sm);
   border: 1px solid var(--sb-line2);
   background: var(--sb-card);
@@ -217,8 +217,8 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 12px 20px 16px;
-  gap: 12px;
+  padding: var(--bz-space-md) 20px var(--bz-space-lg);
+  gap: var(--bz-space-md);
 }
 
 /* 统计带：六张方卡 */
@@ -226,13 +226,13 @@
   flex: none;
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 8px;
+  gap: var(--bz-space-sm);
 }
 .bz-sb-card {
   background: var(--sb-card);
   border: 1px solid var(--sb-line);
   border-radius: 10px;
-  padding: 10px 12px 9px;
+  padding: 10px var(--bz-space-md) 9px;
   min-width: 0;
 }
 .bz-sb-card-value {
@@ -263,12 +263,12 @@
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-  gap: 12px;
+  gap: var(--bz-space-md);
 }
 .bz-sb-col {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--bz-space-md);
   min-height: 0;
   min-width: 0;
 }
@@ -276,7 +276,7 @@
   background: var(--sb-card);
   border: 1px solid var(--sb-line);
   border-radius: var(--bz-radius-md);
-  padding: 12px 14px;
+  padding: var(--bz-space-md) 14px;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -301,7 +301,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 8px;
+  margin-bottom: var(--bz-space-sm);
 }
 .bz-sb-ct-n {
   margin-left: auto;
@@ -317,14 +317,14 @@
   align-items: flex-end;
   gap: 5px;
   min-height: 62px;
-  padding-top: 4px;
+  padding-top: var(--bz-space-xs);
 }
 .bz-sb-trend-col {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: var(--bz-space-xs);
   height: 100%;
   justify-content: flex-end;
 }
@@ -358,7 +358,7 @@
   align-items: center;
   gap: 7px;
   border-radius: 7px;
-  padding: 3px 4px;
+  padding: 3px var(--bz-space-xs);
   font-size: var(--bz-font-meta);
 }
 .bz-sb-dist-row--dir {
@@ -419,7 +419,7 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 6px 4px;
+  padding: 6px var(--bz-space-xs);
   border-bottom: 1px dashed var(--sb-line);
   cursor: pointer;
   border-radius: 6px;
@@ -523,8 +523,8 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 24px 48px;
-  gap: 12px;
+  padding: var(--bz-space-xl) 48px;
+  gap: var(--bz-space-md);
 }
 .bz-sb-onboard-icon {
   width: 64px;
@@ -649,7 +649,7 @@
     border-top: 1px solid var(--sb-line);
     border-radius: 0 0 13px 13px;
     margin: 0;
-    padding: 10px 20px calc(12px + env(safe-area-inset-bottom, 0px));
+    padding: 10px 20px calc(var(--bz-space-md) + env(safe-area-inset-bottom, 0px));
   }
   .bz-sb-foot .bz-sb-fbtn-txt {
     display: none;
@@ -682,7 +682,7 @@
   display: flex;
   align-items: center;
   gap: 11px;
-  padding: 15px 20px 12px;
+  padding: 15px 20px var(--bz-space-md);
   border-bottom: 1px solid var(--sb-line);
 }
 .bz-sb-chat-glyph {
@@ -702,7 +702,7 @@
   min-height: 0;
   overflow-y: auto;
   scrollbar-width: none;
-  padding: 16px 24px 8px;
+  padding: var(--bz-space-lg) var(--bz-space-xl) var(--bz-space-sm);
   display: flex;
   flex-direction: column;
   gap: 13px;
@@ -723,7 +723,7 @@
   font-size: 10px;
   letter-spacing: 0.14em;
   color: var(--sb-faint);
-  margin-bottom: 4px;
+  margin-bottom: var(--bz-space-xs);
   display: flex;
   gap: 5px;
   align-items: center;
@@ -762,7 +762,7 @@
 }
 .bz-sb-chat-bubble ul,
 .bz-sb-chat-bubble ol {
-  margin: 4px 0 7px;
+  margin: var(--bz-space-xs) 0 7px;
   padding-left: 20px;
 }
 .bz-sb-chat-bubble code {
@@ -774,7 +774,7 @@
 .bz-sb-chat-bubble pre {
   background: #f3efe6;
   border-radius: var(--bz-radius-sm);
-  padding: 9px 12px;
+  padding: 9px var(--bz-space-md);
   overflow: auto;
   font-size: var(--bz-font-meta);
 }
@@ -861,17 +861,17 @@
 /* 输入区 */
 .bz-sb-chat-input-area {
   flex: none;
-  padding: 11px 24px 15px;
+  padding: 11px var(--bz-space-xl) 15px;
   border-top: 1px solid var(--sb-line);
 }
 .bz-sb-chat-input-row {
   display: flex;
   align-items: flex-end;
-  gap: 12px;
+  gap: var(--bz-space-md);
   background: var(--sb-card);
   border: 1.5px solid var(--sb-line2);
   border-radius: var(--bz-radius-md);
-  padding: 9px 12px 9px 15px;
+  padding: 9px var(--bz-space-md) 9px 15px;
   transition: border-color var(--bz-dur-base);
 }
 .bz-sb-chat-input-row:focus-within {
@@ -939,7 +939,7 @@
   border: 1px solid var(--sb-line2);
   background: var(--sb-card);
   border-radius: 99px;
-  padding: 4px 12px;
+  padding: var(--bz-space-xs) var(--bz-space-md);
   cursor: pointer;
   user-select: none;
   transition: var(--bz-dur-fast);
@@ -994,7 +994,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 9px 12px;
+  padding: 9px var(--bz-space-md);
   border-bottom: 1px solid var(--sb-line);
   background: var(--sb-card);
   cursor: grab;
@@ -1017,7 +1017,7 @@
 .bz-sb-float-headright {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--bz-space-xs);
   flex-shrink: 0;
 }
 .bz-sb-float-btn {
@@ -1082,7 +1082,7 @@
   display: none;
 }
 .bz-sb-ref-empty {
-  padding: 26px 16px;
+  padding: 26px var(--bz-space-lg);
   text-align: center;
   color: var(--sb-mut);
   font-size: var(--bz-font-meta);
@@ -1173,7 +1173,7 @@
   margin-top: 5px;
 }
 .bz-sb-ref-card-body p {
-  margin: 0 0 4px;
+  margin: 0 0 var(--bz-space-xs);
 }
 .bz-sb-ref-card-body p:last-child {
   margin-bottom: 0;
@@ -1200,7 +1200,7 @@
   border: 1px solid var(--sb-line2);
   border-radius: var(--bz-radius-md);
   box-shadow: 0 18px 44px #0000002e;
-  padding: 13px 16px;
+  padding: 13px var(--bz-space-lg);
   z-index: 1100;
   color: var(--sb-ink);
 }
@@ -1315,12 +1315,12 @@
 .bz-sb-mb-body {
   flex: 1;
   min-height: 0;
-  padding: 8px 12px 12px;
+  padding: var(--bz-space-sm) var(--bz-space-md) var(--bz-space-md);
   display: flex;
   flex-direction: column;
 }
 .bz-sb-mb-empty {
-  padding: 22px 8px;
+  padding: 22px var(--bz-space-sm);
   text-align: center;
   font-size: 12.5px;
   color: var(--sb-mut);
@@ -1334,7 +1334,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 8px 16px;
+  padding: var(--bz-space-sm) var(--bz-space-lg);
   border-radius: var(--bz-radius-full);
   background: var(--sb-card);
   border: 1px solid var(--sb-line2);
@@ -1368,7 +1368,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--bz-space-sm);
 }
 .bz-sb-mb-card-path {
   min-width: 0;
@@ -1399,7 +1399,7 @@
   color: var(--sb-ink2);
 }
 .bz-sb-mb-card-chunk p {
-  margin: 0 0 4px;
+  margin: 0 0 var(--bz-space-xs);
 }
 /* AI tab（移动端）：桌面同语言——深墨 user 气泡 / 白卡 assistant */
 .bz-sb-mb-chat {
@@ -1414,7 +1414,7 @@
   display: flex;
   flex-direction: column;
   gap: 9px;
-  padding: 4px 0 10px;
+  padding: var(--bz-space-xs) 0 10px;
 }
 /* 桌面同款标签气泡：容器透明，who 行 + 气泡本体 */
 .bz-sb-mb-chat-msg {
@@ -1436,7 +1436,7 @@
   font-size: 10px;
   letter-spacing: 0.14em;
   color: var(--sb-faint);
-  margin-bottom: 4px;
+  margin-bottom: var(--bz-space-xs);
 }
 .bz-sb-mb-chat-msg.user .bz-sb-mb-chat-who {
   flex-direction: row-reverse;
@@ -1447,7 +1447,7 @@
 }
 .bz-sb-mb-chat-bubble {
   border-radius: 10px;
-  padding: 8px 12px;
+  padding: var(--bz-space-sm) var(--bz-space-md);
   min-width: 0;
   font-size: var(--bz-font-label);
   line-height: 1.6;
@@ -1483,11 +1483,11 @@
 .bz-sb-mb-chat-input-row {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
+  gap: var(--bz-space-sm);
   background: var(--sb-card);
   border: 1px solid var(--sb-line2);
   border-radius: 10px;
-  padding: 7px 8px 7px 12px;
+  padding: 7px var(--bz-space-sm) 7px var(--bz-space-md);
 }
 .bz-sb-mb-chat-input-row:focus-within {
   border-color: var(--sb-acc);
@@ -1548,7 +1548,7 @@
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
-  margin-top: 8px;
+  margin-top: var(--bz-space-sm);
 }
 .bz-sb-mb-chat-chip {
   font-size: var(--bz-font-caption);

@@ -17,13 +17,13 @@
  * 值内嵌 markup 两侧零差异；data-* 钩子即两侧事件绑定与测试断言的共同契约，改钩子先改这里。
  * 本文件只做 markup 平移（自 ui.ts，issue 251），任何视觉值不动。
  */
-import { esc } from '../core/ui/str';
-import type { PasswordVaultEntry, PlatformGroup } from './data';
+import { colorOf, esc, escAttr } from '../core/ui/str';
+import type { PasswordVaultEntry, PlatformGroup } from '../encrypt/vault-data';
 
-/** esc 再导出：行为层与评审壳演示 markup 同源 */
-export { esc };
+/** esc/colorOf/escAttr 再导出：行为层与评审壳演示 markup 同源（收口 core/ui/str，批次 G） */
+export { esc, colorOf, escAttr };
 /** 条目类型再导出（type-only，编译期擦除——render 产物不拖数据层依赖链） */
-export type { PasswordVaultEntry, PlatformGroup } from './data';
+export type { PasswordVaultEntry, PlatformGroup } from '../encrypt/vault-data';
 
 // ==================== 常量与工具 ====================
 
@@ -46,25 +46,6 @@ export function fmtDate(iso: string): string {
 /** 密码掩码圆点 */
 export function dots(p: string): string {
   return '•'.repeat(Math.min((p || '').length, 18));
-}
-
-/** 平台色（原型同款：品牌色映射 + 哈希回退） */
-const PLATFORM_COLOR_MAP: Record<string, string> = {
-  github: '#5a5f73',
-  微信: '#3eb575',
-  支付宝: '#4f7cf7',
-  notion: '#111111',
-  哔哩哔哩: '#fb7299',
-  招商银行: '#d43d3d',
-  豆瓣: '#3fa34d',
-};
-const PALETTE = ['#7c6bd6', '#3e8e5a', '#c98a1e', '#4f7cf7', '#d43d3d', '#2a9d8f', '#b4551d', '#5a5f73'];
-export function colorOf(platform: string): string {
-  const k = Object.keys(PLATFORM_COLOR_MAP).find((x) => (platform || '').toLowerCase().includes(x.toLowerCase()));
-  if (k) return PLATFORM_COLOR_MAP[k];
-  let h = 0;
-  for (let i = 0; i < (platform || '?').length; i++) h = (h * 31 + (platform || '?').charCodeAt(i)) >>> 0;
-  return PALETTE[h % PALETTE.length];
 }
 
 /** SVG 图标（原型同款自绘，非 lucide 占位） */
@@ -91,15 +72,6 @@ export const ICONS = {
 
 /** 平台色（图标底色） */
 const AV_BG = (platform: string) => `background:${colorOf(platform)}`;
-
-/** 属性值 HTML 转义（avatarHTML 的 data-url 用） */
-export function escAttr(s: string): string {
-  return String(s ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
 
 /**
  * 平台头像 HTML：品牌色字母底 + favicon 真实图标盖层。

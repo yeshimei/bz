@@ -53,7 +53,7 @@
 }
 
 /* ---- 列表 ---- */
-.bz-memo-content { flex: 1; overflow-y: auto; padding: 4px var(--bz-space-md) var(--bz-space-md); display: flex; flex-direction: column; min-height: 0; }
+.bz-memo-content { flex: 1; overflow-y: auto; padding: var(--bz-space-xs) var(--bz-space-md) var(--bz-space-md); display: flex; flex-direction: column; min-height: 0; }
 .bz-memo-section-label {
   display: flex; align-items: center; gap: var(--bz-space-sm);
   font-size: var(--bz-font-caption); font-weight: var(--bz-weight-semibold);
@@ -159,7 +159,7 @@
 /* ---- 添加场景弹窗（issue 199：此前容器/提示零规则裸排） ---- */
 .bz-memo-addscene { display: flex; flex-direction: column; gap: var(--bz-space-md); margin-top: var(--bz-space-md); }
 .bz-memo-addscene .bz-input { width: 100%; }
-.bz-memo-addscene .bz-btn-row { margin-top: 4px; }
+.bz-memo-addscene .bz-btn-row { margin-top: var(--bz-space-xs); }
 .bz-memo-addscene-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); line-height: 1.5; }
 
 /* （issue 266 的「移动端专属头行新建钮」在 issue 268 退役：移动端新建入口归底部
@@ -289,7 +289,7 @@
   color: #fffdf6;
   font-weight: var(--bz-weight-bold);
   letter-spacing: 0.3em;
-  padding: 3px 8px 3px 11px;
+  padding: 3px var(--bz-space-sm) 3px 11px;
   border-radius: 3px;
   transform: rotate(-1.6deg);
   margin: var(--bz-space-sm) var(--bz-space-xs) var(--bz-space-md);
@@ -374,13 +374,13 @@
 .bz-memo-skin-paper .bz-panel-head-btns { display: none; }
 
 /* 工具行间距对齐原型（搜索框与排序之间 12px；用 margin——gap 覆盖在此环境不稳定） */
-.bz-memo-skin-paper .bz-memo-sort { margin-left: 12px; }
+.bz-memo-skin-paper .bz-memo-sort { margin-left: var(--bz-space-md); }
 
 /* 排序下拉（issue 268）：与搜索框同款墨边白底贴纸，收起态 + 展开菜单两态都进皮肤——
    组件库 .bz-select / .bz-select-menu 的默认取值（surface-4 底、细描边、6px 圆角）
    与纸感贴纸语汇不搭，故整组就地换装；菜单是 .bz-select 的绝对定位子节点。 */
 .bz-memo-skin-paper .bz-memo-sort .bz-select {
-  height: 32px; padding: 0 9px 0 12px; gap: 6px;
+  height: 32px; padding: 0 9px 0 var(--bz-space-md); gap: 6px;
   border: 2px solid var(--bz-skin-ink);
   border-radius: 11px;
   background: var(--bz-surface-2);
@@ -392,7 +392,7 @@
 .bz-memo-skin-paper .bz-memo-sort .bz-select.open { border-color: var(--bz-brand); box-shadow: 2px 2px 0 var(--bz-brand); }
 .bz-memo-skin-paper .bz-memo-sort .bz-select-car { color: var(--bz-text-1); width: 13px; height: 13px; }
 .bz-memo-skin-paper .bz-memo-sort .bz-select-menu {
-  margin-top: 2px; padding: 4px;
+  margin-top: 2px; padding: var(--bz-space-xs);
   background: #fffdf6;
   border: 2px solid var(--bz-skin-ink);
   border-radius: 11px;
@@ -593,7 +593,7 @@
 .bz-memo-skin-editorial .bz-memo-composer .bz-input:focus { border-bottom-color: var(--bz-brand); }
 /* 排序下拉（issue 268）：方角描边触发器 + 白底墨框菜单；选中项红字（编辑部红是唯一强调色）。 */
 .bz-memo-skin-editorial .bz-memo-sort .bz-select {
-  height: 32px; padding: 0 8px 0 10px; gap: 6px;
+  height: 32px; padding: 0 var(--bz-space-sm) 0 10px; gap: 6px;
   border: 1.5px solid var(--bz-skin-ink);
   border-radius: 3px;
   background: var(--bz-surface-1);
@@ -610,7 +610,7 @@
   box-shadow: 4px 4px 0 rgba(20, 20, 20, 0.16);
 }
 .bz-memo-skin-editorial .bz-memo-sort .bz-select-item {
-  border-radius: 0; padding: 8px 10px; letter-spacing: 0.08em; color: var(--bz-text-2);
+  border-radius: 0; padding: var(--bz-space-sm) 10px; letter-spacing: 0.08em; color: var(--bz-text-2);
   border-top: 1px solid var(--bz-border);
 }
 .bz-memo-skin-editorial .bz-memo-sort .bz-select-item:first-child { border-top: none; }
