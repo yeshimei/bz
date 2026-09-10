@@ -126,6 +126,25 @@
   text-indent: 0.5em;
 }
 
+/* 面板头品牌区（桌面：头部网格中列题字锁定；移动：块级头部通栏居中）——ink 随主题 + accent 点墨短线 */
+.bz-kb-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-self: center;
+  min-width: 0;
+  color: var(--ink);
+}
+.bz-kb-brand::after {
+  content: "";
+  width: 26px;
+  height: 2px;
+  margin-top: 7px;
+  border-radius: 1px;
+  background: var(--accent);
+  opacity: 0.6;
+}
+
 /* ===== 内容滚动区 ===== */
 .bz-kb-sc {
   flex: 1;
@@ -714,6 +733,33 @@
 }
 .bz-lit-accent-btn:disabled { background: var(--chip); color: var(--ink3); cursor: default; }
 
+/* 术语弹窗取消钮 ghost 档（与 .bz-lit-accent-btn 成对）：透底细边，hover 转芯片底；
+   成对选择器抬特异性，压过 .bz-lit-term-actions button:not(.bz-lit-accent-btn) 的 hover 描边档 */
+.bz-lit-ghost-btn,
+.bz-lit-term-actions button.bz-lit-ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--ink2);
+  border-radius: 9px;
+  padding: var(--bz-space-sm) var(--bz-space-lg);
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  font-family: inherit;
+  height: auto !important;
+  transition: border-color var(--bz-dur-fast), background var(--bz-dur-fast), color var(--bz-dur-fast);
+}
+.bz-lit-ghost-btn:hover,
+.bz-lit-term-actions button.bz-lit-ghost-btn:hover {
+  border-color: var(--accent);
+  background: var(--chip);
+  color: var(--ink);
+}
+.bz-lit-ghost-btn:disabled { border-color: var(--line); background: none; color: var(--ink3); cursor: default; }
+
 .bz-lit-term-body { display: flex; flex-direction: column; min-width: 0; }
 .bz-lit-term-dialog { width: min(480px, 92vw); }
 
@@ -843,6 +889,21 @@
   justify-content: center;
 }
 .bz-lit-head-btns button:hover { background: var(--chip) !important; }
+/* 批量处理钮（▶️/⏹ 单钮态机，桌面端专属）：头行图标组内的强调档——accent 软底衬符文，
+   禁用沉芯片底；成对选择器 + !important 压过同组 button 的透底档 */
+.bz-lit-head-btns button.bz-lit-run-btn {
+  background: color-mix(in srgb, var(--accent) 16%, transparent) !important;
+  color: var(--accent) !important;
+  transition: background var(--bz-dur-fast);
+}
+.bz-lit-head-btns button.bz-lit-run-btn:hover {
+  background: color-mix(in srgb, var(--accent) 30%, transparent) !important;
+}
+.bz-lit-head-btns button.bz-lit-run-btn:disabled {
+  background: var(--chip) !important;
+  color: var(--ink3) !important;
+  cursor: default;
+}
 .bz-lit-toolbar {
   flex: none;
   display: flex;
