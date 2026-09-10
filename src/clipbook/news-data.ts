@@ -85,6 +85,10 @@ export function normalizeBrief(raw: unknown): any | null {
   if (r.body) b.body = String(r.body);
   if (r.src) b.src = String(r.src);
   if (r.error) b.error = String(r.error);
+  // 运行期字段必须原样带出（issue 263 实测踩坑）：插件读盘→回写会整段重写 briefs，
+  // 白名单漏掉这两个键就会**永久丢失转录稿链接**（条目从此读不到转录稿、永远出不了稿）。
+  if (r.transcriptPath) b.transcriptPath = String(r.transcriptPath);
+  if (r.subtitleRejected) b.subtitleRejected = String(r.subtitleRejected);
   return b;
 }
 

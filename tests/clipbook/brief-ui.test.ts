@@ -176,7 +176,7 @@ describe('UP 主名单弹窗：新增「每日简报」组（ADR-0119）', () =>
     expect(schema.groups[0].name).toBe('UP 主名单');
     const g = schema.groups[1];
     expect(g.name).toBe('每日简报');
-    const names = g.rows.map((r) => r.name);
+    const names = g.rows.map((r: any) => r.name);
     expect(names).toContain('添加 UP 主');
     expect(names).toContain('深度总结名单');
     expect(g.rows.some((r) => r.type === 'list')).toBe(true);
