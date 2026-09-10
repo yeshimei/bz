@@ -373,3 +373,13 @@
 - [x] 精修：头行删「关闭/设置/按年月跳转」三枚（日期入口留品牌行）；章节栏视频格三条路径全清播放角标；开墙即高亮当前月；日期弹窗默认选中当前年 + 整块视觉重做（对齐域内 chips/节头语言）；章节栏「章 节」标题块移除
 - [x] 探索撤回：四版皮肤（铅印/毛玻璃/终端/印样）经用户评判「都不好看」，全数撤下、不留皮肤代码
 - [x] 门禁：tsc 0 错 + diary/core/smoke 52 文件 782 用例绿（新增 7 项回归：空帧判据 6 例 / 视频格无角标 / 时光条视频格 / 开墙高亮 / wall 顶垫为 0 / 日期弹窗默认年 + 变量作用域 / 章节栏无标题块）
+
+## Issue 265 — 模型选择器弹窗移动端错乱（黑底黑字）+ 面板 44px 错位
+
+**状态：已交付**（2026-09-10）
+
+- [x] 规格：`issues/265-model-picker-mobile-dark-skin.md`（纯样式 + 定位修复，无 ADR / 无 CONTEXT 词条）
+- [x] 修（两处真 bug）：① 暗色 token 选择器断链 —— `.theme-dark #bz-up-manager-popup, #bz-model-picker-popup` 逗号后丢 `.theme-dark` 前缀，该条无条件命中浅色块，深色下弹窗退回 Obsidian 原生变量（弹窗壳 `--background-primary` 黑底 + 行 hover `--background-modifier-hover` + 名称/来源 `--text-muted`）→ 黑底黑字；② 移动端定位 —— `.bz-sp-mobile` 只给 `height:100%` 未脱开 core `fixed+translate` 居中链，与 Obsidian 头部安全区叠加压出 44px 空白，且未挂全站顶距类
+- [x] 修法：token 选择器补齐前缀 + 删 `.bz-sp-mobile` 重复条；弹窗内部皮收口（头部描边/内容区/列表行 hover·选中/名称·来源/空态全挂 `--sp-*`）；移动端面板改 `inset:0` 真全屏 + 挂 `.bz-panel-mtop` 接管 44px；弹窗保持居中卡片（用户拍板），`max-height` 夹进上下安全区、宽放开 94vw
+- [x] 守卫：暗色 token 每条选择器须带 `.theme-dark ` 前缀（含两个弹窗 id）、皮收口段禁原生变量（静态源断言）；移动端面板挂 `bz-panel-mtop` 断言
+- [x] 门禁：tsc 0 错 + 全量 254 文件 4104 用例绿 + 主仓库构建部署
