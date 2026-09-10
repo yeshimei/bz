@@ -40,9 +40,9 @@ var BZW_home = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -11722,8 +11722,7 @@ ${n.content.slice(0, 2e3)}
     // 域入口命令与面板导航共用
     home: "layout-grid",
     recap: "calendar-heart",
-    memo: "sticky-note",
-    todo: "check-square",
+    memo: "check-square",
     belongings: "package",
     clipping: "scissors",
     favorites: "star",
@@ -11811,8 +11810,8 @@ ${n.content.slice(0, 2e3)}
     diary: 0,
     movies: 0,
     books: 0,
-    todoDone: 0,
-    todoCreated: 0,
+    memoDone: 0,
+    memoCreated: 0,
     pomodoros: 0,
     pomodoroMinutes: 0
   };
@@ -11884,7 +11883,7 @@ ${n.content.slice(0, 2e3)}
     return {
       diary: day.summary.diary > 0 ? "ok" : data.streak.diaryStreak > 0 ? "warn" : "off",
       review: data.counts.reviewOverdue > 0 ? "hot" : "off",
-      memo: day.summary.todoDone + day.summary.todoCreated > 0 ? "ok" : "off",
+      memo: day.summary.memoDone + day.summary.memoCreated > 0 ? "ok" : "off",
       pomodoro: day.summary.pomodoros > 0 ? "ok" : "off",
       cinema: hasEvent("cinema") ? "ok" : "off",
       bookshelf: hasEvent("bookshelf") ? "ok" : "off"
@@ -11916,9 +11915,6 @@ ${n.content.slice(0, 2e3)}
       default:
         return null;
     }
-  }
-  function memoIdOf(domain) {
-    return domain === "todo" ? "memo" : domain;
   }
 
   // src/recap/aggregate.ts
@@ -12425,7 +12421,7 @@ ${n.content.slice(0, 2e3)}
     diary: 0,
     movies: 0,
     books: 0,
-    todoDone: 0,
+    memoDone: 0,
     pomodoros: 0,
     pomodoroMinutes: 0
   };
@@ -12507,13 +12503,13 @@ ${n.content.slice(0, 2e3)}
         });
       }
     }
-    for (const t of sources.todos) {
+    for (const t of sources.memos) {
       const ts = clampToDay(t.ts, range);
       if (t.done) {
-        summary.todoDone++;
-        items.push({ domain: "todo", ts, timeLabel: fmtHM(ts), text: `完成『${t.title}』` });
+        summary.memoDone++;
+        items.push({ domain: "memo", ts, timeLabel: fmtHM(ts), text: `完成『${t.title}』` });
       } else {
-        items.push({ domain: "todo", ts, timeLabel: fmtHM(ts), text: `新增待办『${t.title}』` });
+        items.push({ domain: "memo", ts, timeLabel: fmtHM(ts), text: `新增备忘录『${t.title}』` });
       }
     }
     let seconds = 0;
@@ -12572,7 +12568,7 @@ ${n.content.slice(0, 2e3)}
       diaryTimes: [],
       movies: [],
       books: [],
-      todos: [],
+      memos: [],
       pomodoros: []
     };
     try {
@@ -12633,12 +12629,12 @@ ${n.content.slice(0, 2e3)}
         const title = typeof (it == null ? void 0 : it.title) === "string" ? it.title : "";
         if (!title) continue;
         const done = parseLocalDateTime(it.completed);
-        if (done !== null && inRange(done, range)) sources.todos.push({ title, done: true, ts: done });
+        if (done !== null && inRange(done, range)) sources.memos.push({ title, done: true, ts: done });
         const created = parseLocalDateTime(it.created);
-        if (created !== null && inRange(created, range)) sources.todos.push({ title, done: false, ts: created });
+        if (created !== null && inRange(created, range)) sources.memos.push({ title, done: false, ts: created });
       }
     } catch (e) {
-      failed.push("todo");
+      failed.push("memo");
     }
     try {
       const raw = await readJsonIfExists(app, storageFile("pomodoro.json"));
@@ -13280,7 +13276,7 @@ ${n.content.slice(0, 2e3)}
   var DAY_MS2 = 864e5;
   function toRiverDay(dateStr, summary, items) {
     const events = [...items].sort((a, b) => a.ts - b.ts);
-    const full = { ...summary, todoCreated: events.filter((e) => e.text.startsWith("新增待办")).length };
+    const full = { ...summary, memoCreated: events.filter((e) => e.text.startsWith("新增备忘录")).length };
     return { dateStr, events, summary: full, firstTs: events.length ? events[0].ts : null };
   }
   function settingDir2(keys, def) {
@@ -13465,7 +13461,7 @@ ${n.content.slice(0, 2e3)}
       var _a2, _b, _c, _d, _e;
       const note = notes.find((n) => n.index === i);
       const lastDiary = i === day.events.length - 1 && note && note.text.indexOf("日记") >= 0 ? " bz-home-ev--warn" : "";
-      const memoId = memoIdOf(e.domain);
+      const memoId = e.domain;
       const dmColor = (_a2 = DOMAIN_DOT[memoId]) != null ? _a2 : "#8a8f99";
       const dmName = (_c = (_b = DOMAIN_MAP.get(memoId)) == null ? void 0 : _b.name) != null ? _c : e.domain;
       const dmIcon = (_e = (_d = DOMAIN_MAP.get(memoId)) == null ? void 0 : _d.icon) != null ? _e : "";
