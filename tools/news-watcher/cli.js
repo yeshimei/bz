@@ -6,6 +6,7 @@
  * 用法:
  *   obsidian-news watch        前台运行抓取循环（启动即抓 + 每 30 分钟轮询）
  *   obsidian-news fetch        单轮抓取后退出（手动补抓/冒烟）
+ *   obsidian-news brief        只跑一轮「每日简报」调度（不抓文章；手动补跑简报用，ADR-0119）
  *   obsidian-news start        通过 pm2 启动（后台守护，推荐）
  *   obsidian-news stop         停止 pm2 进程
  *   obsidian-news status       查看 pm2 进程状态
@@ -55,6 +56,21 @@ switch (command) {
     break;
   }
 
+  case 'brief': {
+    // 只跑一轮每日简报调度（不抓文章）：给用户手动补跑用（ADR-0119）
+    const { dispatchBrief, readNewsData } = require('./watcher.js');
+    dispatchBrief(readNewsData())
+      .then((r) => {
+        console.log(r.spawned ? `[简报] 完成，新增 ${r.added} 条` : '[简报] 名单为空，跳过');
+        process.exit(0);
+      })
+      .catch((e) => {
+        console.error('[错误] 简报调度失败:', e.message);
+        process.exit(1);
+      });
+    break;
+  }
+
   case 'start': {
     console.log('[pm2] 启动 watcher...');
     runPm2(`start ${path.join(__dirname, 'cli.js')} --name ${PM2_NAME} -- watch`);
@@ -84,6 +100,7 @@ obsidian-news - 聚合讯数据源守护
 用法:
   obsidian-news watch        前台运行抓取循环（启动即抓 + 每 30 分钟轮询）
   obsidian-news fetch        单轮抓取后退出（手动补抓/冒烟）
+  obsidian-news brief        只跑一轮「每日简报」调度（不抓文章；手动补跑）
   obsidian-news start        通过 pm2 启动（后台守护，推荐）
   obsidian-news stop         停止 pm2 进程
   obsidian-news status       查看 pm2 进程状态
