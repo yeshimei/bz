@@ -14,9 +14,9 @@
   │ 行为单源（issue 245/ADR-0106）：交互逻辑全部是插件同款 ui.ts 依赖链——       │
   │   经 ./prototype-behavior.js（src/home/fake-sim.ts 构建，                 │
   │   alias obsidian→公共假层）在下方两个 iframe 视图里跑真行为；               │
-  │   桌面 iframe 920px = 桌面三栏；移动 iframe 412×827 = 小米13U 真机可视区   │
-  │   1440×3200 @dpr3.5 → 412×915；扣状态栏 24 + 底栏 48 + 手势区 16 = 827    │
-  │   徽牌「1:1 真机」= 物理尺寸对齐（412 CSS px → 屏宽 70.15mm，量一次校准） │
+  │   桌面 iframe 920px = 桌面三栏；移动 iframe 宽 412 = 小米13U 屏宽（真机）   │
+  │   1440×3200 @dpr3.5 → 412×915（满屏，默认）/ 827（扣状态栏24+底栏48+手势16）│
+  │   徽牌「1:1 真机」= 物理尺寸对齐（412 CSS px → 屏幕宽 70.15mm，可尺量校准）│
   │   @media/@container ≤768 移动布局。数据 = fake vault（localStorage 种子，  │
   │   相对「今天」生成、跨天自动重灌，见 fake-sim.ts）。                        │
   │ 壳内只允许：外景容器样式、评审徽牌、演示钩子与自检。                        │
@@ -35,18 +35,18 @@
 
   /* 桌面外景（真行为 iframe：overlay append iframe body，宽度决定布局） */
   .demo-dt { flex: none; width: 920px; height: 640px; }
-  /* 移动外景：412×827 iframe = 小米13U 真机可视区。
-   * 推导：物理 1440×3200（6.73" 522ppi）→ Android density 档 560dpi → dpr 3.5
-   *   → WebView 视口 412×915 CSS px（1440/3.5=411.4 ↑，3200/3.5=914.3 ↑）
-   *   → 扣 MIUI 状态栏 24 + Obsidian 底部工具栏 48 + 手势安全区 16 = 827
-   * 屏满（不扣底栏）= 875；三键导航再 -32。412 仍 ≤768 → 移动布局命中
+  /* 移动外景：宽恒 412 CSS px（= 1440 物理 px = 整屏宽，1440/3.5=411.4 ↑），高度两档：
+   *   满屏 915（WebView 全屏视口 = 整块屏幕，贴手机上对比用，默认）
+   *   内容区 827（再扣 MIUI 状态栏 24 + Obsidian 底栏 48 + 手势区 16，看实际可用区）
+   *   412 仍 ≤768 → 移动布局命中。
    *
-   * 1:1 真机（物理尺寸对齐，非 CSS 像素）：6.73" 20:9 → 屏宽 70.15mm，
-   *   而 412 CSS px 在桌面按参考像素（1px = 1/96 英寸）渲染 ≈ 109mm —— 约 1.55 倍。
-   *   故用 transform: scale 只缩视觉；iframe 内视口恒为 412×827 CSS px，
-   *   绝不改 width/height（改了就动到 @media ≤768 的判据）。占位交给外层 wrap。 */
-  .demo-mob-wrap { flex: none; width: calc(412px * var(--mob-scale, 1)); height: calc(827px * var(--mob-scale, 1)); }
-  .demo-mob { width: 412px; height: 827px; border-radius: 26px; overflow: hidden; flex: none;
+   * 1:1 真机（物理尺寸对齐，非 CSS 像素）：6.73" 20:9 → 屏宽 70.15mm / 屏高 155.88mm，
+   *   比例自洽：412 : 915 = 70.15 : 155.88 ✓（满屏档贴上去应完全重合）。
+   *   ⚠️ 基准是「屏幕」而非「整机」：整机 74.64×163.18mm，每边含约 2.2mm 边框，按边框对会偏 6%。
+   *   而 412 CSS px 在桌面按参考像素（1px = 1/96 英寸）渲染 ≈ 109mm —— 约 1.55 倍，
+   *   故用 transform: scale 只缩视觉，绝不改 iframe 宽度（改了就动到 @media ≤768 判据）。 */
+  .demo-mob-wrap { flex: none; width: calc(412px * var(--mob-scale, 1)); height: calc(var(--mob-h, 915px) * var(--mob-scale, 1)); }
+  .demo-mob { width: 412px; height: var(--mob-h, 915px); border-radius: 26px; overflow: hidden; flex: none;
     transform: scale(var(--mob-scale, 1)); transform-origin: top left;
     border: 1px solid #b8b0a0; box-shadow: 0 8px 30px rgba(0,0,0,.16); background: #f5f2ec; }
   .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
@@ -74,14 +74,15 @@
   <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="内容首页·桌面"></iframe></div>
 
   <div id="rulerBar" hidden>
-    <div class="ruler" title="外缘宽度 = 412 CSS px"></div>
-    <div class="ruler-row">量上面这条线的<b>外缘宽度</b>，填实际毫米数 → <input id="calibMm" type="number" step="0.5" min="10" placeholder="mm"><button id="calibGo">校准</button><button id="calibClear">清除</button></div>
-    <div class="ruler-row">或拿手机贴屏幕比对，拖到一样宽：<input id="scaleRange" type="range" min="0.3" max="1" step="0.001"><span class="si" id="scaleInfo"></span></div>
+    <div class="ruler" title="外缘宽度 = 412 CSS px（= 屏幕宽）"></div>
+    <div class="ruler-row">量这条线的<b>外缘宽度</b>（或拿手机贴屏幕比 <b>屏幕宽</b>，别量机身边框）→ <input id="calibMm" type="number" step="0.5" min="10" placeholder="mm"><button id="calibGo">校准</button><button id="calibClear">清除</button></div>
+    <div class="ruler-row">高度 <label><input type="checkbox" id="fullH" checked>满屏 915（整块屏幕）</label><span class="si">不勾 = 内容区 827（扣状态栏/底栏）</span></div>
+    <div class="ruler-row">微调 <input id="scaleRange" type="range" min="0.3" max="1" step="0.001"><span class="si" id="scaleInfo"></span></div>
   </div>
 
   <div id="mobHost" class="demo-mob-wrap"><div class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="内容首页·移动"></iframe></div></div>
 
-  <div class="vbadge">内容首页 · 真行为单源预览（桌面=真 ui.ts 跑在 920px，移动=412×827 小米13U）
+  <div class="vbadge">内容首页 · 真行为单源预览（桌面=真 ui.ts 跑在 920px，移动=412 宽 · 小米13U）
     <button id="mobToggle">隐藏移动端</button>
     <button id="one2one">1:1 真机</button>
     <button id="reset">重置演示数据</button>
@@ -137,19 +138,38 @@
    *   结果只由 L 决定、与当前倍数无关，故反复点校准数值恒定。
    *   （旧版让用户量「当前渲染出的框宽」再修正，属自己量自己 → 连点会累乘，已废弃。）
    */
-  const MOB_MM = 70.15;                                  // 小米13U 屏宽（mm）
+  const MOB_MM = 70.15;                                  // 小米13U 屏宽（mm，非整机 74.64）
+  const FULL_H = 915, CONTENT_H = 827;                   // 满屏（整块屏幕）/ 内容区（扣系统栏）
   const RULER_CSS = 412;                                 // 基准线 CSS 宽（= iframe 视口宽）
   const GUESS_SCALE = MOB_MM / (RULER_CSS * 25.4 / 96);  // ≈ 0.643（标准 96dpi 推算）
   const SCALE_KEY = 'bz-proto:home-mob-scale';           // 真机档倍数（仅 1:1 模式下写）
   const MODE_KEY = 'bz-proto:home-mob-1to1';             // 模式：'1' 真机 / '0' CSS
   const MM_KEY = 'bz-proto:home-mob-calmm';              // 基准线实测毫米数（校准锚点）
+  const H_KEY = 'bz-proto:home-mob-h';                   // 高度档：915 满屏 / 827 内容区
   const toggle1to1 = document.querySelector('#one2one');
   const rulerBar = document.querySelector('#rulerBar');
+  const fullH = document.querySelector('#fullH');
   const rangeEl = document.querySelector('#scaleRange');
   const scaleInfo = document.querySelector('#scaleInfo');
   let scaleNow = 1;
+  let hNow = FULL_H;
   const savedScale = () => { const v = parseFloat(localStorage.getItem(SCALE_KEY)); return Number.isFinite(v) && v > 0 && v !== 1 ? v : 0; };
   const calMm = () => { const v = parseFloat(localStorage.getItem(MM_KEY)); return Number.isFinite(v) && v > 0 ? v : 0; };
+  // 框的实测尺寸（mm）：宽 = s·L，高 = H·s·L/412（L = 基准线 412 CSS px 实测毫米数）
+  const refreshInfo = () => {
+    if (scaleNow === 1) { scaleInfo.textContent = ''; return; }
+    const L = calMm();
+    scaleInfo.textContent = L
+      ? `×${scaleNow.toFixed(3)}　框 ${(scaleNow * L).toFixed(1)}×${(hNow * scaleNow * L / RULER_CSS).toFixed(1)}mm`
+      : `×${scaleNow.toFixed(3)}（未校准，估算值）`;
+  };
+  const setH = (h) => {
+    hNow = h;
+    document.documentElement.style.setProperty('--mob-h', h + 'px');
+    localStorage.setItem(H_KEY, String(h));
+    fullH.checked = h === FULL_H;
+    refreshInfo();
+  };
   const setScale = (s) => {
     s = Math.min(4, Math.max(0.2, s));
     scaleNow = s;
@@ -160,10 +180,7 @@
     toggle1to1.textContent = on ? '回到 CSS 1:1' : '1:1 真机';
     rulerBar.hidden = !on;
     rangeEl.value = String(Math.min(1, Math.max(0.3, s)));
-    if (!on) { scaleInfo.textContent = ''; return; }
-    // 框在屏幕上的实测宽度 = scale × 基准线实测值（412·s × L/412 = s·L）
-    const L = calMm();
-    scaleInfo.textContent = L ? `×${s.toFixed(3)}　框宽约 ${(s * L).toFixed(1)}mm` : `×${s.toFixed(3)}（未校准，估算值）`;
+    refreshInfo();
   };
   toggle1to1.addEventListener('click', () => {
     setScale(scaleNow === 1 ? (savedScale() || GUESS_SCALE) : 1);
@@ -179,8 +196,10 @@
     setScale(GUESS_SCALE);
   });
   rangeEl.addEventListener('input', () => setScale(parseFloat(rangeEl.value)));
+  fullH.addEventListener('change', () => setH(fullH.checked ? FULL_H : CONTENT_H));
   { const mode = localStorage.getItem(MODE_KEY);        // null = 首次访问
     const on = mode === null ? true : mode === '1';     // 首次默认开真机档
+    setH(parseFloat(localStorage.getItem(H_KEY)) === CONTENT_H ? CONTENT_H : FULL_H);  // 默认满屏
     setScale(on ? (savedScale() || GUESS_SCALE) : 1); }
 
   document.querySelector('#reset').addEventListener('click', () => {
@@ -268,7 +287,7 @@
         dtFrame().contentWindow.BZW_home.openHome();
         await waitFrame(dtDoc, '.bz-home-entries .bz-home-erow');
 
-        // 移动端（412×827 iframe ≈ 小米13U 真机）：@media 全屏命中 + 瓦片置前 + 头行关闭钮 + 周历切天
+        // 移动端（412 宽 iframe ≈ 小米13U，高度 915 满屏/827 内容区可切）：@media 全屏命中 + 瓦片置前 + 头行关闭钮 + 周历切天
         t('移动端@media全屏命中', Math.abs(mob('.bz-home-panel').getBoundingClientRect().width - md.documentElement.clientWidth) < 1);
         t('移动瓦片13枚', md.querySelectorAll('.bz-home-m-tile').length === 13);
         t('移动入口行隐藏（瓦片替代，CSS display:none）', getComputedStyle(mob('.bz-home-entries')).display === 'none');
