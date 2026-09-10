@@ -112,9 +112,9 @@ describe('briefReaderHtml（阅读面）', () => {
     expect(h).toContain('data-clip-open-url');
   });
 
-  it('总结未生成 → 出占位提示', () => {
+  it('要点未生成 → 出占位提示', () => {
     const h = briefReaderHtml(art(), { ...base, points: '', transcript: '' });
-    expect(h).toContain('正在生成本期总结');
+    expect(h).toContain('正在生成本期要点');
   });
 
   it('失败条目：错误态 + 重跑入口（不出要点区）', () => {
@@ -123,7 +123,7 @@ describe('briefReaderHtml（阅读面）', () => {
     expect(h).toContain('本期抓取失败');
     expect(h).toContain('未配置 pythonPath');
     expect(h).toContain('data-clip-brief-retry');
-    expect(h).not.toContain('正在生成本期总结');
+    expect(h).not.toContain('正在生成本期要点');
   });
 });
 

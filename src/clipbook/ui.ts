@@ -132,7 +132,7 @@ function loadIfNeeded(): Promise<void> {
     .then(() => {
       dirty = false; loaded = true; beginSession(); renderAll();
       // 每日简报出稿（ADR-0119）：装载后补跑一次「待出稿」条目（守护已抓完、body 尚空者）；
-      // 无待出稿时零开销直接返回。产出后重读数据并刷新（一句话总结即时可见）。
+      // 无待出稿时零开销直接返回。产出后重读数据并刷新（要点即时可见）。
       void runBriefSummaries(M.briefs).then((r) => {
         if (r.done > 0 && M.open) void readNewsAndSidecar().then(() => renderAll());
       }).catch(() => { /* AI 失败已在条目上留 error，不打断面板 */ });
@@ -903,18 +903,18 @@ function fmtBriefDur(a: ClipArticle): string {
 
 /**
  * 失败条目重跑（ADR-0119 §11「可手动重跑」）：
- * - 转录稿仍在缓存 → 就地重跑 AI 总结；
+ * - 转录稿仍在缓存 → 就地重跑 AI 要点；
  * - 转录稿已过期/缺失 → **删除该条目**，守护下一轮视其为新 bvid 重新抓取（复用既有调度，不另造重抓通道）。
  */
 async function retryBrief(a: ClipArticle): Promise<void> {
   const raw = a.raw;
   if (!raw || !raw.bvid) return;
   if (readBriefTranscript(a)) {
-    notice('正在重新生成本期总结…', 'info');
+    notice('正在重新生成本期要点…', 'info');
     const r = await runBriefSummaries([{ ...raw, error: undefined }]);
     await refreshAfterAction();
-    if (r.done > 0) notice('本期总结已重新生成', 'success');
-    else notice('本期总结重跑未成功', 'error');
+    if (r.done > 0) notice('本期要点已重新生成', 'success');
+    else notice('本期要点重跑未成功', 'error');
     return;
   }
   await deleteBrief(String(raw.bvid));
@@ -933,7 +933,7 @@ function renderReader(): void {
     return;
   }
   setReadingSession(a.id);
-  // 每日简报（ADR-0119）：一句话总结 + 打开原视频 + 可展开转录稿（缓存保留期内）
+  // 每日简报（ADR-0119）：要点列表 + 打开原视频 + 可展开转录稿（缓存保留期内）
   if (a.origin === 'brief') {
     readerEl.innerHTML = briefReaderHtml(a, {
       time: a.timeText || relTime(a.timeTs),
@@ -1047,8 +1047,8 @@ async function doSave(a: ClipArticle | null): Promise<void> {
   await refreshAfterAction();
 }
 
-/** 简报保存（ADR-0119 §14）：写**专属目录**剪藏笔记（一句话总结正文 + 原视频 url 进 frontmatter），并标 saved。
- *  与 news 保存的分流差异：B站视频在 news 侧会分流文献盒（ADR-0068），简报不走该分流——它就是一篇总结笔记。 */
+/** 简报保存（ADR-0119 §14）：写**专属目录**剪藏笔记（要点正文 + 原视频 url 进 frontmatter），并标 saved。
+ *  与 news 保存的分流差异：B站视频在 news 侧会分流文献盒（ADR-0068），简报不走该分流——它就是一篇要点笔记。 */
 async function doSaveBrief(a: ClipArticle): Promise<void> {
   const raw = a.raw || {};
   if (raw.error) { notice('本期抓取失败，没有可保存的内容', 'warning'); return; }
