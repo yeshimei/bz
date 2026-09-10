@@ -2322,6 +2322,28 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   .bz-panel-mtop > div:first-child { padding-top: 0 !important; }
 }
 
+/* ═══════════ 移动端可视视口高度 --bz-vvh（issue 266） ═══════════
+   背景：`100vh` = 布局视口高度，**不随软键盘收缩**；键盘弹出时面板底部固定的
+   输入条（备忘录录入条 / 第二大脑问答框 / 小橘聊天框…）被顶到键盘底下。
+   本段**只提供变量资源**，不直接改任何面板的高度——面板几何归各域自己。
+   （核心层若用 `!important` 强行统改高度，会打坏两类锚定式面板：
+     knowledge 的 `.bz-kb-window` 是 `top/bottom: 安全区 + height: auto`，
+     clipbook 的 `.bz-clip-mob-detail` 是父级 `inset: 0` 的嵌套层——
+     两者都会被固定高度打断，故不做全域强改。）
+   接入方式（域内单行改造，范例见 src/memo/styles.css）：
+     .bz-<域>-panel { height: var(--bz-vvh, 100vh); }
+   取值链：JS（src/core/viewport.ts 的 bindMobileViewport）把
+   `visualViewport.height` 写进 `--bz-vvh`（含键盘占位，可精修到 px）；
+   JS 未注入时退回本段基线——现代内核用 `100dvh`（动态视口，本身已随键盘
+   收缩），老内核退回 `100vh`（= 与改造前一致，零劣化）。
+   作用域仅 ≤768px，桌面端零影响。 */
+@media (max-width: 768px) {
+  :root { --bz-vvh: 100vh; }
+  @supports (height: 100dvh) {
+    :root { --bz-vvh: 100dvh; }
+  }
+}
+
 /* ═══════════ 触控热区 .bz-touch-target（设计手册 §8.2） ═══════════
    触屏（pointer:coarse）下小元素 ::after 外扩命中区至 ≥44px，视觉不变
    （shadcn extend-touch-target 同款）。按元素原尺寸分档：32px 档钮用默认 -6px；
@@ -7333,14 +7355,35 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-memo-addscene .bz-btn-row { margin-top: 4px; }
 .bz-memo-addscene-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); line-height: 1.5; }
 
-/* ---- 移动端（≤768px）：真全屏 + 横滑场景条（共享 .bz-mobstrip） ---- */
+/* 头行移动端专属新建钮：桌面隐藏（移动端沿用核心层 .bz-icon-btn 的 inline-flex 显示）
+   用 min-width 媒体查询而非「裸规则 + 移动端再覆盖」：后者要赖「后写者赢」的顺序，
+   脆；本写法两条规则互斥，无顺序陷阱。769px 与全局移动档 `max-width:768px` 互补。 */
+@media (min-width: 769px) {
+  .bz-memo-head-new { display: none; }
+}
+
+/* ---- 移动端（≤768px）：真全屏 + 横滑场景条（共享 .bz-mobstrip）
+   头行钮组放回 / 头行新建钮 / 44px 触控档收在文件末尾的「移动端收口段
+   （issue 266）」——皮肤段 `.bz-memo-skin-* .bz-panel-head-btns{display:none}`
+   在本文件中位置更靠后（:349/:459），故覆盖规则必须排在它们之后。 ---- */
 @media (max-width: 768px) {
   .bz-memo-panel {
-    width: 100vw; height: 100vh; max-width: none; max-height: none;
+    width: 100vw; max-width: none;
+    /* 高度挂「随软键盘收缩的可视视口高度」（issue 266）：取值链见核心层
+       components.css 的 --bz-vvh 段——JS 写 px 精修（visualViewport），
+       未注入时退回 100dvh / 100vh 基线（末者与改造前一致，零劣化）。 */
+    height: var(--bz-vvh, 100vh); max-height: var(--bz-vvh, 100vh);
+    /* 顶部对齐（必须）：父层 .bz-panel-overlay（components.css）是
+       `align-items: center` 居中，遮罩自身仍是 100vh（fixed + inset:0 不随键盘
+       收缩）。若继续居中，高度缩短后的面板会上下对称内缩——底边
+       =(100vh+可视高)/2 仍在键盘之下，等于白修。改顶部对齐后底边 = 可视高
+       = 键盘上沿。 */
+    align-self: flex-start;
     border-radius: 0; border: none;
   }
   /* 顶部避让由根节点 .bz-panel-mtop 统一接管（44px，components.css），头行不再自垫 */
-  /* 场景栏桌面专属（移动端走 .bz-mobstrip 横滑条）；主头行同（移动端新建走底部录入条） */
+
+  /* 场景栏桌面专属（移动端走 .bz-mobstrip 横滑条）；主头行同（移动端新建走头行钮） */
   .bz-memo-body .bz-rail { display: none; }
   .bz-memo-main .bz-main-head { display: none; }
   .bz-memo-content { padding: var(--bz-space-sm) var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
@@ -7823,6 +7866,39 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-skinprev-editorial::after {
   content: ''; position: absolute; left: 16%; top: 18%; width: 46%; height: 16%;
   background: #141414;
+}
+
+/* ═══════════ 移动端收口段（issue 266）═══════════
+   位置要求：必须在下方两个皮肤段（`.bz-memo-skin-* .bz-panel-head-btns
+   { display: none }`，:349 / :459）**之后**——媒体查询不增特异性，同特异性
+   下靠「后写者赢」，故本段是文件最后一节。仅收口两件事，均限 ≤768px：
+   1) 头行钮组放回（皮肤段 display:none 的反制）
+   2) 头行关闭/新建钮抬到 32px 可视档（配合 markup 的 .bz-touch-target → 44px 命中区）
+   桌面端（>768px）零生效——桌面头行外观与本改动前逐像素一致。 */
+@media (max-width: 768px) {
+  /* 1) 头行钮组：皮肤段藏了整组，移动端真全屏必须放回，否则没有关闭入口。
+        核心层「非真全屏一律隐藏关闭按钮」（src/core/styles.css :130-136）只针对
+        .bz-icon-btn--close / .bz-win-close / .todo-btn-close / .news-close-btn
+        四类历史类名；本域关闭钮既挂 bz-icon-btn 又走 data-memo-head-close 钩子，
+        从不带 --close，故不受其约束，无需额外豁免。 */
+  .bz-memo-panel .bz-panel-head-btns,
+  .bz-memo-skin-paper .bz-panel-head-btns,
+  .bz-memo-skin-editorial .bz-panel-head-btns { display: flex; }
+
+  /* 2) 触控档：移动端抬到 32px 可视档（`--bz-icon-btn-lg`），配合 markup 上的
+        .bz-touch-target 在 pointer:coarse 下把命中区外扩到 44px
+        （32 + 6×2，components.css 的默认档，设计手册 §8.2）。
+        先例：归物本移动端关闭钮 `.bz-icon-btn--lg .bz-touch-target`
+        （src/belongings/layouts/poster/render.ts:36）。
+        桌面不动：本段仅 ≤768px，>768px 维持 22×26 基档 → 头行外观与改动前一致。 */
+  .bz-memo-panel .bz-memo-head-close,
+  .bz-memo-panel .bz-memo-head-new {
+    width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg);
+    flex-shrink: 0;
+    border-radius: var(--bz-radius-sm);
+  }
+  .bz-memo-panel .bz-memo-head-close .bz-ic,
+  .bz-memo-panel .bz-memo-head-new .bz-ic { width: 16px; height: 16px; }
 }
 /* ==================== 剪藏本域样式（src/clipbook/styles.css） ==================== */
 /* 剪藏本融合域（ADR-0082 / issue 177）：桌面三栏 + 移动双屏工作台。
