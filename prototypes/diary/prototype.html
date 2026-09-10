@@ -14,12 +14,14 @@
   │   render.ts（BZR_diary）；面板本体由真 ui.ts 消费同一份。                 │
   │ 行为单源（ADR-0106）：交互全部是插件同款 ui.ts/store.ts/dialogs.ts 依赖链│
   │   ——经 ./prototype-behavior.js（fake-sim.ts 构建，alias obsidian→假层）  │
-  │   在下方两个 iframe 里跑真行为：桌面 980px 卡 / 移动 396px 真全屏。       │
+  │   在下方两个 iframe 里跑真行为：桌面 980px 卡 / 移动 412px 真全屏。       │
   │ 数据 = localStorage fake vault（prototype-data.js：真实 vault 的 md 原文 │
   │   逐字快照，由真 parser/data 现场解析；assets/ = 真实媒体拷贝）。         │
   │ 壳内只允许：外景容器样式、评审徽牌、演示钩子与自检。                      │
   └────────────────────────────────────────────────────────────────────────┘
 -->
+<link rel="stylesheet" href="../mob-1to1.css">
+<script src="../mob-1to1.js"></script>
 <style>
   /* ===== 以下全部是演示壳，禁止放组件样式（颜色一律取宿主 token） ===== */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -29,8 +31,8 @@
 
   /* 桌面外景（真行为 iframe：面板 append iframe body，本体 980px 宽 82vh 卡来自 styles.css） */
   .demo-dt { flex: none; width: 1020px; height: 760px; }
-  /* 移动外景：396px iframe → 真全屏态（≤768 fake Platform.isMobile） */
-  .demo-mob { width: 396px; height: 780px; border-radius: 26px; overflow: hidden; flex: none;
+  /* 移动外景：412×915 iframe → 真全屏态（≤768 fake Platform.isMobile） */
+  .demo-mob { width: 412px; height: 915px; border-radius: 26px; overflow: hidden; flex: none;
     border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-l); background: var(--background-primary); }
   .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
 
@@ -48,9 +50,9 @@
 </head>
 <body class="theme-light"> <!-- 宿主类由 host-theme.css 定义（theme-light / theme-dark），下方脚本按切换钮改写 -->
   <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="日记本·桌面"></iframe></div>
-  <div id="mobHost" class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="日记本·移动"></iframe></div>
+  <div id="mobHost" class="demo-mob-wrap"><div class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="日记本·移动"></iframe></div></div>
 
-  <div class="vbadge">日记本 · 真行为单源预览（桌面=真 ui.ts 跑在 980px，移动=396px 真全屏）· 真实 vault 快照
+  <div class="vbadge">日记本 · 真行为单源预览（桌面=真 ui.ts 跑在 980px，移动=412×915 真全屏）· 真实 vault 快照
     <span class="themegrp" id="themeGrp">
       <button data-mode="light">明</button><button data-mode="dark">暗</button><button data-mode="auto">跟随系统</button>
     </span>
