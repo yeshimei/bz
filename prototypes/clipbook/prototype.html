@@ -64,6 +64,7 @@
 
   <div class="vbadge">剪藏本 · 真行为单源预览（桌面=真 ui.ts 跑在 1200px，移动=396px）· 真实库快照 63 未读
     <button id="mobToggle">隐藏移动端</button>
+    <button id="themeToggle">切到暗色</button>
     <button id="reset">重置演示数据</button>
     <span id="stResult"></span>
   </div>
@@ -101,6 +102,30 @@
     m.style.display = hidden ? '' : 'none';
     document.querySelector('#mobToggle').textContent = hidden ? '隐藏移动端' : '显示移动端';
   });
+
+  /* 明暗切换（2026-09-10 剪藏本加暗色）：宿主 body 与两个 iframe body 同步换 theme-dark/light */
+  const applyTheme = () => {
+    const dark = document.documentElement.classList.contains('theme-dark');
+    document.body.className = dark ? 'theme-dark' : 'theme-light';
+    for (const f of [dtFrame(), mobFrame()]) {
+      try { const d = f && f.contentDocument; if (d && d.body) d.body.className = dark ? 'theme-dark' : 'theme-light'; } catch { /* 未加载跳过 */ }
+    }
+    document.querySelector('#themeToggle').textContent = dark ? '切回浅色' : '切到暗色';
+    applyThemeStyle(dark);
+  };
+  const applyThemeStyle = (dark) => {
+    const s = document.querySelector('#darkExtras');
+    if (s) s.disabled = !dark;
+  };
+  document.querySelector('#themeToggle').addEventListener('click', () => {
+    document.documentElement.classList.toggle('theme-dark');
+    applyTheme();
+  });
+  // iframe 首载晚于壳脚本：加载完成后补一次主题（切入暗色后重置 iframe 也不会掉回浅色）
+  for (const id of ['#dtHost iframe', '#mobHost iframe']) {
+    const f = document.querySelector(id);
+    if (f) f.addEventListener('load', () => { try { applyTheme(); } catch { /* noop */ } });
+  }
 
   document.querySelector('#reset').addEventListener('click', () => {
     const kill = [];
@@ -164,13 +189,25 @@
         t('rail 全部未读行', railRows[0]?.textContent.includes('全部未读'));
         t('rail 站点行（果壳科学人）', railRows.some((r) => r.textContent.includes('果壳科学人')));
         t('rail 剪藏本行', railRows.some((r) => r.textContent.includes('剪藏本')));
+        // 每日简报源（2026-09-10：种子补入真实库 briefs 段后新增）
+        const briefRow = railRows.find((r) => r.textContent.includes('每日简报'));
+        t('rail 每日简报行', !!briefRow);
         t('rail 脚注今日已读', /今日已读/.test(dt('[data-clip-rail-foot]')?.textContent || ''));
+        // 选中态计数可读（2026-09-10 修复）：点站点行后「未读/总数」不应继承白字
+        const siteRow = railRows.find((r) => r.textContent.includes('果壳科学人'));
+        siteRow.classList.add('on');
+        const probed = getComputedStyle(siteRow.querySelector('.bz-rail-count')).color;
+        siteRow.className = siteRow.className.replace(' on', '');
+        t('rail 选中态计数非白字', probed !== 'rgb(255, 255, 255)' && probed !== 'rgba(255, 255, 255, 1)');
 
         // —— 3. 中栏目录：序号制 + 未读在前（首条带未读类）+ 点击阅读联动
         const items = () => [...dd.querySelectorAll('[data-clip-list] .bz-clip-item')];
         t('目录条目非空', items().length > 0);
         t('首条未读类', items()[0]?.classList.contains('bz-clip-item--unread'));
         t('首条序号 01', items()[0]?.querySelector('.bz-clip-no')?.textContent === '01');
+        // 2026-09-10 改版：目录标题不截断（无 -webkit-line-clamp）
+        const tClamp = getComputedStyle(items()[0].querySelector('.bz-clip-item-t')).getPropertyValue('-webkit-line-clamp');
+        t('目录标题不截断', !tClamp || tClamp === 'none');
         const firstTitle = items()[0]?.querySelector('.bz-clip-item-t')?.textContent || '';
         items()[0].click();
         await sleep(150);

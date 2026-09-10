@@ -1,5 +1,5 @@
 /* 由真实 vault 快照生成（.scratch/gen-clip-demo.py，issue 247）：63 未读 + 10 已处理骨架
-   + 8 篇剪藏笔记；正文截断、cookie/守护配置不入种子。手改无效——重跑生成脚本覆盖。 */
+   + 8 篇剪藏笔记 + 每日简报 briefs 全量；正文截断、cookie/守护配置不入种子。手改无效——重跑生成脚本覆盖。 */
 window.CLIP_DATA = {
  "NEWS": {
   "articles": [
@@ -337,42 +337,6 @@ window.CLIP_DATA = {
     "body": "最近江苏网友在吃一款产自云南的笋干零食时，居然开出了“隐藏款”：笋中间有一条完整的竹虫。\n\n再看包装袋，厂家已经特意注明：“源自生态竹林，虽尽量挑选，但无法避免有竹虫”。"
    },
    {
-    "platform": "知乎日报",
-    "title": "古代士兵的伙食如何？",
-    "url": "https://daily.zhihu.com/story/9792350",
-    "author": null,
-    "date": "2026-09-05",
-    "fetchedAt": "2026-09-04 23:06:13",
-    "body": "##\n\n![](https://picx.zhimg.com/v2-f6fc5bd1779c092ddbd08cec8a1d270e_l.jpg?source=8673f162)\n也说，一二三聊职场，四五六谈感情。\n[查看知乎原文](https://www.zhihu.com/qu…"
-   },
-   {
-    "platform": "知乎日报",
-    "title": "你觉得什么品种的蛇最吓人？",
-    "url": "https://daily.zhihu.com/story/9792352",
-    "author": null,
-    "date": "2026-09-05",
-    "fetchedAt": "2026-09-04 23:06:13",
-    "body": "##\n\n![](https://picx.zhimg.com/da8e974dc_l.jpg?source=8673f162)\n知乎用户，嗜猫事猫是猫\n[查看知乎原文](https://www.zhihu.com/question/560986567/answer/19534070…"
-   },
-   {
-    "platform": "知乎日报",
-    "title": "为什么科学已经证实天空上没有天堂，但信宗教的人依旧相信有神的存在？",
-    "url": "https://daily.zhihu.com/story/9792357",
-    "author": null,
-    "date": "2026-09-05",
-    "fetchedAt": "2026-09-04 23:06:13",
-    "body": "##\n\n![](https://picx.zhimg.com/v2-cef37bf0392e114344d6b861bb1ba938_l.jpg?source=8673f162)\n晴耕雨读的浣熊君，在知乎撂地的闲散科普创作者，争取每周双更\n[查看知乎原文](https://www.…"
-   },
-   {
-    "platform": "知乎日报",
-    "title": "祈雨等仪式活动为什么在古代社会中备受重视，如果不成功为何还会继续?",
-    "url": "https://daily.zhihu.com/story/9792367",
-    "author": null,
-    "date": "2026-09-05",
-    "fetchedAt": "2026-09-04 23:06:13",
-    "body": "##\n\n![](https://picx.zhimg.com/v2-cef37bf0392e114344d6b861bb1ba938_l.jpg?source=8673f162)\n晴耕雨读的浣熊君，在知乎撂地的闲散科普创作者，争取每周双更\n[查看知乎原文](https://www.…"
-   },
-   {
     "platform": "果壳科学人",
     "title": "好想让 AI 来取代我的老板，立刻！马上！",
     "url": "https://www.guokr.com/article/470126",
@@ -407,42 +371,6 @@ window.CLIP_DATA = {
     "date": "2026-09-05 22:15:13",
     "fetchedAt": "2026-09-05 14:17:58",
     "body": "生活里很多瞬间，我们都盼着：能不能不用弯腰、不用手，站着就把鞋穿好。早上出门手忙脚乱，怀里抱着孩子、手里拎满垃圾袋；长辈腰腿不便等等，弯腰系鞋带是件费劲事；孕妈妈肚子大，下蹲穿鞋格外吃力。\n\n**秋冬换衣服巨费劲的一步就是——穿鞋子、脱鞋子。**为了抗寒鞋子要么加绒加厚，摩擦力太强，使劲拉脚丫子才能穿脱，后鞋跟又硬需要弯下腰用手指垫进去，踩着手指穿脱，或是弯腰用鞋拔子。"
-   },
-   {
-    "platform": "知乎日报",
-    "title": "熊猫吃竹子是刻在基因中的习性吗？可以通过从小喂养其他食物改变吗？",
-    "url": "https://daily.zhihu.com/story/9792363",
-    "author": null,
-    "date": "2026-09-06",
-    "fetchedAt": "2026-09-05 23:02:23",
-    "body": "##\n\n![](https://picx.zhimg.com/v2-c4e076776b0834a7ca85c68c3bac6858_l.jpg?source=8673f162)\n瞻云，先让一部分知识有趣起来\n[查看知乎原文](https://www.zhihu.com/quest…"
-   },
-   {
-    "platform": "知乎日报",
-    "title": "为什么几千年作为蔬菜的甜菜，没有被发现能产糖？",
-    "url": "https://daily.zhihu.com/story/9792375",
-    "author": null,
-    "date": "2026-09-06",
-    "fetchedAt": "2026-09-05 23:02:23",
-    "body": "##\n\n![](https://pic1.zhimg.com/v2-c4e076776b0834a7ca85c68c3bac6858_l.jpg?source=8673f162)\n瞻云，先让一部分知识有趣起来\n[查看知乎原文](https://www.zhihu.com/quest…"
-   },
-   {
-    "platform": "知乎日报",
-    "title": "英语「China」是来自「秦」、「晋」，还是别的来源？",
-    "url": "https://daily.zhihu.com/story/9792385",
-    "author": null,
-    "date": "2026-09-06",
-    "fetchedAt": "2026-09-05 23:02:23",
-    "body": "##\n\n![](https://picx.zhimg.com/v2-fd3ed686ee613d2dcfbe980c0758fbbc_l.jpg?source=8673f162)\nCodeRyan，什么都看\n[查看知乎原文](https://www.zhihu.com/questi…"
-   },
-   {
-    "platform": "知乎日报",
-    "title": "古代士兵中箭后没有消炎药，伤口感染了还能扛过去吗？",
-    "url": "https://daily.zhihu.com/story/9792390",
-    "author": null,
-    "date": "2026-09-06",
-    "fetchedAt": "2026-09-05 23:02:23",
-    "body": "##\n\n![](https://pica.zhimg.com/v2-f6fc5bd1779c092ddbd08cec8a1d270e_l.jpg?source=8673f162)\n也说，一二三聊职场，四五六谈感情。\n[查看知乎原文](https://www.zhihu.com/qu…"
    },
    {
     "platform": "果壳科学人",
@@ -481,33 +409,6 @@ window.CLIP_DATA = {
     "body": "最近我们收到好多后台私信来问上次那台3D打印机还有没有好价，很多姐妹都反应不给孩子找点事干，那就是手机平板轮番上阵，眼睛废了、脑子空了、亲子关系也崩了。\n\n所以我们也是应大家的呼声，又去找品牌方谈了一次，还是上次的价格给大家来次返场。**先预约下方直播条锁定直播好价，福利多多~品牌方也是诚意满满~**"
    },
    {
-    "platform": "知乎日报",
-    "title": "游戏晕3D是天生的还是后天的？",
-    "url": "https://daily.zhihu.com/story/9792400",
-    "author": null,
-    "date": "2026-09-07",
-    "fetchedAt": "2026-09-06 23:01:56",
-    "body": "##\n\n![](https://picx.zhimg.com/v2-4cdc8dc004835c64495966f8a36ec5f6_l.jpg?source=8673f162)\nbiokiwi，用生命科学的角度看世界！\n[查看知乎原文](https://www.zhihu.com…"
-   },
-   {
-    "platform": "知乎日报",
-    "title": "为什么牧羊犬能指挥羊群进退？",
-    "url": "https://daily.zhihu.com/story/9792407",
-    "author": null,
-    "date": "2026-09-07",
-    "fetchedAt": "2026-09-06 23:01:56",
-    "body": "##\n\n![](https://picx.zhimg.com/v2-b6e35fd79fc1349815c87d30842ac2c3_l.jpg?source=8673f162)\n云杉，知乎遗风，科研工作者，文理双修的战士。\n[查看知乎原文](https://www.zhihu.c…"
-   },
-   {
-    "platform": "知乎日报",
-    "title": "我发现很多农村教堂并没有发鸡蛋，那为什么还有那么多老头老太太去信？",
-    "url": "https://daily.zhihu.com/story/9792416",
-    "author": null,
-    "date": "2026-09-07",
-    "fetchedAt": "2026-09-06 23:01:56",
-    "body": "##\n\n![](https://picx.zhimg.com/v2-12e51112854d7c8390210b151ab1afd2_l.jpg?source=8673f162)\n骨瘦如柴姚日月，真正的秩序，不是建立在契约之上，而是建立在对失败的恐惧之上。\n[查看知乎原文](htt…"
-   },
-   {
     "platform": "果壳科学人",
     "title": "废塑料瓶摇身一变，竟成了香喷喷的饼干，这到底谁敢吃？",
     "url": "https://www.guokr.com/article/470133",
@@ -544,31 +445,112 @@ window.CLIP_DATA = {
     "body": "在摄影圈流传着一句话：“底大一级压死人”，说的是在其他条件相近时，传感器越大，成像质量就越高。\n\n的确，在很多时候，大就意味着有更大的性能空间，能容纳更多复杂功能。"
    },
    {
-    "platform": "B站",
-    "title": "动态视频｜影视飓风AI课免费更新啦",
-    "url": "https://www.bilibili.com/video/BV1VzgP6bEMu",
-    "author": "影视飓风",
-    "date": "2026-08-14 17:00:22",
-    "fetchedAt": "2026-09-07 19:52:03",
-    "body": "影视飓风 AI 课免费更新啦！这一次，我们邀请了AI 创作者 DiDi_OK，带来一节全新的DLC加餐内容。\n他的 AI 短片《牌子》1个人23 天完成，上线一周播放量破千万，并拿下 100 万元奖金。在这节课里，他会围绕真实项目进行AI创作全流程的分享，用他的经验来帮助你…\n\n![封面](https://i0.hdslb.com/bfs/archive/fe3bbaf5a0be6cdb58260e712fb80c2bdcd1b42f.jpg)"
+    "platform": "果壳科学人",
+    "title": "这两个系统先衰老的人，老得更快，死得也可能更早！",
+    "url": "https://www.guokr.com/article/470146",
+    "author": "果壳",
+    "date": "2026-09-08 05:15:02",
+    "fetchedAt": "2026-09-07 21:28:06",
+    "body": "人们常说“一天天老去”，但科学发现，衰老并不是像时钟一样稳定地滴答前行。它更像一场悄悄积蓄的暴雨，平时不易察觉，却会在某个年龄节点突然倾盆而下。\n\n比如，许多人在 45 岁之后会明显感觉到：**记忆力开始走下坡路，精力就像旧手机的电量，不仅掉得快，还常常充不满，而一些原本遥远的慢性病，也在此时悄然冒头。**"
    },
    {
     "platform": "B站",
-    "title": "动态视频｜帧率涨了，那价格呢？OSMO 360 II上手",
-    "url": "https://www.bilibili.com/video/BV1gqgp6kE2Q",
+    "title": "对话汉斯·季默！如何用一段旋律创造一个电影宇宙？",
+    "url": "https://www.bilibili.com/video/BV1awbg6XELn",
     "author": "影视飓风",
-    "date": "2026-08-13 20:00:24",
-    "fetchedAt": "2026-09-07 19:52:03",
-    "body": "去年大疆发布的第一代全景相机，确实给了我们不小的惊喜。但即便强如大疆，也不可能年年都颠覆行业。那么今年的第二代产品，会不会带来更多实用性上的升级呢？我们一起来看看。如果你喜欢这期视频，请多多支持我们，并把视频分享给你的朋友们一起看看！\n\n![封面](https://i1.hdslb.com/bfs/archive/2e04a3adee63a54e3b97291e7fc9728bbbcade6c.jpg)"
+    "date": "2026-09-08 11:00:10",
+    "fetchedAt": "2026-09-08 03:44:04",
+    "body": "这一次，我们有幸采访到享誉全球的配乐大师汉斯・季默。他为150余部电影谱写配乐，用音符搭建出无数深入人心的银幕世界。我们将一起拆解由他创作的五段经典作品，聊一聊旋律背后的创作故事。如果你喜欢这期视频，请多多支持我们，并把视频分享给你的朋友们！\n\n![封面](https://i2.hdslb.com/bfs/archive/e10d02c5d1ae6cc411fa1fe1258a86967c178fcd.jpg)"
    },
    {
-    "platform": "B站",
-    "title": "外观大改，更强了吗？Insta360 X6上手",
-    "url": "https://www.bilibili.com/video/BV12TgV63ESW",
-    "author": "影视飓风",
-    "date": "2026-08-12 20:00:17",
-    "fetchedAt": "2026-09-07 19:52:03",
-    "body": "这次影石X6的外观算是这么多年改动最大的一次，也换上了新的传感器，有了一些更有意思的功能。我们想和你一起看看，这次的X6，到底是台什么样的全景相机？如果你喜欢这期视频，请多多支持我们，并把视频分享给你的朋友们一起看看！\n\n![封面](https://i2.hdslb.com/bfs/archive/1d01e3c46303c1633f8e09d2666509805142e15e.jpg)"
+    "platform": "果壳科学人",
+    "title": "超过30%的女性月经过多，有人脑子发“雾”就因为它",
+    "url": "https://www.guokr.com/article/470155",
+    "author": "果壳",
+    "date": "2026-09-08 18:15:01",
+    "fetchedAt": "2026-09-08 10:29:06",
+    "body": "青春期的性知识教育会介绍月经，但实际上，我们可能并不了解什么是正常的月经。比如，月经量多少才算正常？多少毫升？一次月经要用多少卫生巾？\n\n你答不上来，恰恰说明这个问题长期被忽视了。今年2月，《柳叶刀》子刊发表的一篇社论文章呼吁关注女性月经过多问题。**研究估计，约30%到50%的育龄女性有月经过多的症状，并且这个数字可能被低估，因为人们对月经过多认识不足，同时在讨论月经这件事上仍然存在羞耻感。**"
+   },
+   {
+    "platform": "果壳科学人",
+    "title": "狂开45家 咨询量翻3倍！这家社区版长寿小店，击中了谁的痛点？",
+    "url": "https://www.guokr.com/article/470156",
+    "author": "果壳",
+    "date": "2026-09-08 19:15:10",
+    "fetchedAt": "2026-09-08 11:29:06",
+    "body": "当健康赛道都在为**“客流下滑”忧虑时，一个全新的增长奇点却悄然浮现。**\n\n近期，**一家名为“氧气熊猫”、主打社区场景的“长寿小店”，在几乎没有广告投放的情况下，已在上海、杭州、苏州等城市核心社区** **连开近45家店。更令同行侧目的是，其相关合作咨询量在2026年二季度同比飙升了300%，而在这些意向合作者中，超半数来自细胞、医美等行业。**"
+   },
+   {
+    "platform": "果壳科学人",
+    "title": "OpenAI智能体劫持德国网站发布万余条信息；小米多款新品重磅亮相；最高人民法院首次发布AI司法裁判规则",
+    "url": "https://www.guokr.com/article/470157",
+    "author": "果壳",
+    "date": "2026-09-08 20:15:02",
+    "fetchedAt": "2026-09-08 12:29:06",
+    "body": "今天是9月8日，星期二。1522年的今天，麦哲伦-埃尔卡诺探险队的维多利亚号返回塞维利亚，完成人类首次环球航行。\n\n![](https://3-im.guokr.com/RnQ0Y0xXQzZ1RnREOTBWV3NmX1VpTGxKbUtJQWRvY3hhAQAAPgEAAEdJ.gif)重点新闻速览"
+   },
+   {
+    "platform": "果壳科学人",
+    "title": "不是消费降级吗？国民神车五菱宏光MINI，怎么没人买了呢？",
+    "url": "https://www.guokr.com/article/470158",
+    "author": "果壳",
+    "date": "2026-09-08 22:15:15",
+    "fetchedAt": "2026-09-08 14:29:06",
+    "body": "五菱宏光 MINI EV ，这台车大伙儿应该不陌生吧。\n\n![](https://3-im.guokr.com/Rmw5QUFodDVWdnNRZFc4THJRQzc4MFpITUNpb2RvY3g4BAAA0AIAAEpQ.jpg?imageView2/1/w/555/h/370)你猜猜，它现在一个月能卖多少台？"
+   },
+   {
+    "platform": "果壳科学人",
+    "title": "“崩老头”屹立在 AI 风口之上",
+    "url": "https://www.guokr.com/article/470160",
+    "author": "果壳",
+    "date": "2026-09-09 13:15:09",
+    "fetchedAt": "2026-09-09 05:15:25",
+    "body": "一个好久没联系的亲友突然管你借钱，你怎么判断是不是本人？\n\n通话？视频？以前也许行，但如今，最保险应对只有拒绝。"
+   },
+   {
+    "platform": "果壳科学人",
+    "title": "游客在山里撒了泡尿，为什么最后要出动直升机搬走325只雪羊？",
+    "url": "https://www.guokr.com/article/470162",
+    "author": "果壳",
+    "date": "2026-09-09 17:15:05",
+    "fetchedAt": "2026-09-09 09:15:26",
+    "body": "一架直升机从山谷上空飞过，下面用绳子吊着一个帆布袋，袋子里装着一只**戴着眼罩的野生雪羊（Oreamnos americanus）。**\n\n![](https://1-im.guokr.com/RmtzOUMybUZlQzN5V2plQTl3MnpKMDR4eWlMaWRvY3iKAgAAzAMAAEpQ.jpg?imageView2/1/w/555/h/829)2018年到2020年间，在美国华盛顿州的奥林匹…"
+   },
+   {
+    "platform": "果壳科学人",
+    "title": "反差出圈！国产“青春舱”内地卖不动，港岛爆单？消费真相太现实",
+    "url": "https://www.guokr.com/article/470165",
+    "author": "果壳",
+    "date": "2026-09-09 18:15:07",
+    "fetchedAt": "2026-09-09 10:29:12",
+    "body": "香港九龙尖沙咀，MarseilleQuince总部，数台长寿设备持续运转，想要“留住当打之年”的高净值人群往来不绝。\n\n据悉，其多款设备来自上海的长寿科技企业瑞健未来Rlab。与此同时，**港岛富豪圈正有越来越多人将同品牌的“轻享款”氧舱搬回家。**"
+   },
+   {
+    "platform": "果壳科学人",
+    "title": "AI攻克纳维-斯托克斯千禧年难题；Meta发布个人AI智能体Muse；Cybercab乘客端意外出现虚拟控制杆",
+    "url": "https://www.guokr.com/article/470166",
+    "author": "果壳",
+    "date": "2026-09-09 20:15:06",
+    "fetchedAt": "2026-09-09 12:15:26",
+    "body": "今天是9月9日，星期三。1940年的今天，贝尔实验室通过电传打字机向纽约的复数计算器发送指令，实现首次计算机远程操作。\n\n![](https://3-im.guokr.com/RnQ0Y0xXQzZ1RnREOTBWV3NmX1VpTGxKbUtJQWRvY3hhAQAAPgEAAEdJ.gif)重点新闻速览"
+   },
+   {
+    "platform": "果壳科学人",
+    "title": "OpenAI智能体一周末攻克千禧难题，纽约大学教授质问：你是不是看过我的草稿？",
+    "url": "https://www.guokr.com/article/470167",
+    "author": "果壳",
+    "date": "2026-09-10 05:15:08",
+    "fetchedAt": "2026-09-09 21:15:27",
+    "body": "2000年，克雷数学研究所拿出700万美元，悬赏7道数学难题。**每解出一道，奖金100万。这7道题被称为千禧年大奖难题，是公认最难的数学问题。**\n\n**26年过去，只有一道被解开过。俄罗斯数学家佩雷尔曼2003年证明了庞加莱猜想，然后拒绝领奖，隐居至今。其余6道，纹丝不动。** **9月8日，第二道的答案来了。** **给出答案的不是哪位数学家，** **是OpenAI的一群AI智能体。**但数学突破只是这个故事的一半…"
+   },
+   {
+    "platform": "果壳科学人",
+    "title": "一个27岁的AI研究员从Anthropic辞职了，因为他担心AI会导致人类灭绝。",
+    "url": "https://www.guokr.com/article/470173",
+    "author": "果壳",
+    "date": "2026-09-10 13:15:09",
+    "fetchedAt": "2026-09-10 05:15:31",
+    "body": "昨天呢，我在X上看到了一条流量已经过了1亿的帖子。\n\n![](https://3-im.guokr.com/RmhuRGRpTmFRTGVMZy1oZzhMUXRpQklwRnNfc2RvY3g4BAAAIQIAAEpQ.jpg?imageView2/1/w/555/h/280)讲道理，我在X上已经很久很久没有见过这种流量的帖子了。"
    },
    {
     "platform": "果壳科学人",
@@ -680,7 +662,102 @@ window.CLIP_DATA = {
     "name": "亿点点不一样",
     "avatar": "https://i1.hdslb.com/bfs/face/9a2c23800387d9c871f3b5dd3620dc1c3c50d2f9.jpg"
    }
-  }
+  },
+  "briefs": [
+   {
+    "bvid": "BV1rHYx6fEzy",
+    "title": "走向灭亡！Anthropic 员工警告人类或将被ASI灭绝，Tibo 宣布或将暂停开放 ChatGPT Pro 订阅！| AI日报0909",
+    "url": "https://www.bilibili.com/video/BV1rHYx6fEzy",
+    "upMid": "3706929260006322",
+    "upName": "黑鸦Heya",
+    "duration": 173,
+    "pubdate": 1788951454,
+    "date": "2026-09-09 18:57:34",
+    "fetchedAt": "2026-09-10 13:51:15",
+    "src": "subtitle",
+    "read": false,
+    "state": "unread",
+    "body": "## Anthropic 与 AI 风险警告\n\n- codex 负责人 Tibo 称需求前所未有，或暂停新的 ChatGPT Pro 订阅。\n- 该暂停尚未发生，有用户称 Tibo 是在推销 ChatGPT 订阅。\n- Anthropic 研究员 Jacob Coxson 辞职，称两家公司竞相迈向超级智能。\n- 他呼吁探索实验室间放缓协议，必要时暂停提升模型能力。\n- Anthropic 负责人 Evan Hubinger 称 AI 十年内致人类灭绝概率超 10%。\n- 他表示当前模型风险仍低，主要担忧来自未来递归自我改进的超级智能。\n\n## 模型与产品动态\n\n- DeepSeek 计划 2026 年 9 月 10 日前后发布 V4.1 Flash，9 月 8 日已开测。\n- 测试显示 V4.1 Flash 在性能、费用、速度上超过 V4 Pro。\n- 上线后至 V4.1 Pro 推出前，V4 Pro 请求全部路由至 V4.1 Flash 并按新单价计费。\n- 路透社称 DeepSeek 已聘中信证券筹备上海科创板上市，今年启动进程。\n- 腾讯混元开源 1.5B 语音生成与编辑基础模型，权重与代码已公开。\n- Claude 发布平台降本指南，官方测试最高可降约七成成本。\n- OpenAI 推出面向小企业的 ChatGPT 插件合集，收录 16 款插件。\n- 千问上线大学生和教师专属优惠，高级套餐每月 9.9 元。\n\n## 投资与合作\n\n- 谷歌宣布未来两年在芬兰投资 130 亿欧元，为其欧洲最大单笔投资。\n- 投资用于数字基础设施和清洁能源，支撑搜索和 Gemini 等核心服务。\n- 三星电子宣布与 Miró AI 达成战略合作，基于 Mil Large 等服务。"
+   },
+   {
+    "bvid": "BV1utY46yEvG",
+    "title": "突发：DeepSeek V4 Pro 落幕！ DeepSeek 官宣将正式发布 V4.1 Flash 取而代之！",
+    "url": "https://www.bilibili.com/video/BV1utY46yEvG",
+    "upMid": "3706929260006322",
+    "upName": "黑鸦Heya",
+    "duration": 28,
+    "pubdate": 1788939561,
+    "date": "2026-09-09 15:39:21",
+    "fetchedAt": "2026-09-10 13:51:15",
+    "src": "transcript",
+    "read": false,
+    "state": "unread",
+    "body": "## DeepSeek V4.1 Flash 发布计划\n- DeepSeek 计划于北京时间 2026 年 9 月 10 日前后发布 V4.1 Flash\n- 该模型已于 9 月 8 日开启测试\n- 官方称内外多方测试显示 V4.1 Flash 多项指标超过 V4 Pro\n- 超越指标包括性能、费用、速度和任务总用时\n\n## V4 Pro 的过渡安排\n- V4.1 Flash 上线后，V4 Pro 请求将全部路由至 V4.1 Flash\n- 该调整持续至 V4.1 Pro 推出前\n- 计费按 V4.1 Flash 单价执行"
+   },
+   {
+    "bvid": "BV17dbV65EJt",
+    "title": "双日凌空！DeepSeek V4.1 Flash引爆全球！小米MiMo-X新模型随Desktop突袭公测！OpenAI学术声誉雪崩！| AI日报0908",
+    "url": "https://www.bilibili.com/video/BV17dbV65EJt",
+    "upMid": "3706929260006322",
+    "upName": "黑鸦Heya",
+    "duration": 120,
+    "pubdate": 1788866356,
+    "date": "2026-09-08 19:19:16",
+    "fetchedAt": "2026-09-10 13:51:15",
+    "src": "transcript",
+    "read": false,
+    "state": "unread",
+    "body": "## DeepSeek V4.1 Flash 内测\n- DeepSeek 宣布 V4.1 Flash 中间版本开启内测\n- 采用新模型结构，原生多模态、更强更快更便宜\n- 模型名设为 DeepSeek V4.1 Flash Expires on 0910\n- 每账号限流 20 并发，计费与 V4 Flash 相同\n\n## 小米 MiMo 桌面端公测\n- 小米 MiMo Desktop 客户端正式开放邀测\n- 审核通过者限时限量免费体验 MiMo X Pro Preview\n- 同时可体验 MiMo X Flash Preview\n- 支持多格式输入与多 Agent 协作，优先开放平台用户\n\n## OpenAI 学术争议与行业动态\n- 数学家 Buckmaster 与 Anthropic 研究员 Alpuk 公布 AI 辅助验证成果\n- Buckmaster 称 OpenAI 内部模型已证明相关方程有限时间爆破\n- OpenAI 研究员 Bubac 提议单独撰文不列 Alpuk 署名，双方争执\n- Mistral 完成 30 亿欧元融资，三星领投，估值超 210 亿欧元\n- Firmace 与 OpenAI 达成多年合作，租用马来西亚两处 AI Factory 算力"
+   },
+   {
+    "bvid": "BV1ZSb36zE9G",
+    "title": "突发！DeepSeek V4.1 Flash 中间版本开启测试“deepseek-v4.1-flash-expires-on-0910”",
+    "url": "https://www.bilibili.com/video/BV1ZSb36zE9G",
+    "upMid": "3706929260006322",
+    "upName": "橘鸦Juya",
+    "duration": 39,
+    "pubdate": 1788853752,
+    "date": "2026-09-08 15:49:12",
+    "fetchedAt": "2026-09-10 14:22:23",
+    "src": "transcript",
+    "read": false,
+    "state": "unread",
+    "body": ""
+   },
+   {
+    "bvid": "BV1SdbN63E7Q",
+    "title": "巨头工作战爆发！阿里Qoder AI员工军团上线！腾讯升级 Hy4 preview！| AI日报0907",
+    "url": "https://www.bilibili.com/video/BV1SdbN63E7Q",
+    "upMid": "3706929260006322",
+    "upName": "黑鸦Heya",
+    "duration": 57,
+    "pubdate": 1788777592,
+    "date": "2026-09-07 18:39:52",
+    "fetchedAt": "2026-09-10 14:22:23",
+    "src": "transcript",
+    "read": false,
+    "state": "unread",
+    "body": ""
+   },
+   {
+    "bvid": "BV1Snt26pEqT",
+    "title": "头皮发麻！OpenAI 承认旗下 Agent 结党营私暗中造反！Astra 余波未平，OpenAI 暗示大的将至！| AI日报0905",
+    "url": "https://www.bilibili.com/video/BV1Snt26pEqT",
+    "upMid": "3706929260006322",
+    "upName": "黑鸦Heya",
+    "duration": 45,
+    "pubdate": 1788608337,
+    "date": "2026-09-05 19:38:57",
+    "fetchedAt": "2026-09-10 14:22:23",
+    "src": "transcript",
+    "read": false,
+    "state": "unread",
+    "body": ""
+   }
+  ],
+  "briefUps": [
+   "3706929260006322"
+  ]
  },
  "SIDECAR": {
   "articleOverrides": {
@@ -690,34 +767,16 @@ window.CLIP_DATA = {
    "url:https://daily.zhihu.com/story/9792286": {
     "reading": true
    },
-   "url:https://www.bilibili.com/video/BV1gqgp6kE2Q": {
-    "reading": true
-   },
    "url:https://www.guokr.com/article/470127": {
     "reading": true
    },
    "url:https://www.guokr.com/article/470126": {
     "reading": true
    },
-   "url:https://www.bilibili.com/video/BV12TgV63ESW": {
-    "reading": true
-   },
    "url:https://www.guokr.com/article/470124": {
     "reading": true
    },
    "url:https://www.guokr.com/article/470125": {
-    "reading": true
-   },
-   "url:https://daily.zhihu.com/story/9792350": {
-    "reading": true
-   },
-   "url:https://daily.zhihu.com/story/9792352": {
-    "reading": true
-   },
-   "url:https://daily.zhihu.com/story/9792367": {
-    "reading": true
-   },
-   "url:https://daily.zhihu.com/story/9792357": {
     "reading": true
    },
    "url:https://www.guokr.com/article/470123": {
@@ -741,19 +800,10 @@ window.CLIP_DATA = {
    "url:https://daily.zhihu.com/story/9792338": {
     "reading": true
    },
-   "url:https://daily.zhihu.com/story/9792363": {
-    "reading": true
-   },
    "url:https://www.guokr.com/article/470110": {
     "reading": true
    },
    "url:https://www.guokr.com/article/470109": {
-    "reading": true
-   },
-   "url:https://daily.zhihu.com/story/9792375": {
-    "reading": true
-   },
-   "url:https://daily.zhihu.com/story/9792385": {
     "reading": true
    }
   },

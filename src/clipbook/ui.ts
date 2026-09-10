@@ -933,12 +933,11 @@ function renderReader(): void {
     return;
   }
   setReadingSession(a.id);
-  // 每日简报（ADR-0119）：要点列表 + 打开原视频 + 可展开转录稿（缓存保留期内）
+  // 每日简报（ADR-0119）：要点列表 + 打开原视频（转录稿段已按用户 2026-09-10 拍板退役）
   if (a.origin === 'brief') {
     readerEl.innerHTML = briefReaderHtml(a, {
       time: a.timeText || relTime(a.timeTs),
       points: a.body ? briefPointsHtml(a.body) : '',
-      transcript: readBriefTranscript(a),
       durationLabel: fmtBriefDur(a),
     });
     mountIcons(readerEl);

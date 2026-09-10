@@ -28,8 +28,10 @@ import { closePanel as closePanelReal } from '../../src/clipbook/ui';
 
 /** 剪藏目录（与插件默认值同值；种子与扫描共用） */
 const CLIP_DIR = '归档/网页剪藏';
-/** 种子标记：存在 = 已种子过（用户在评审壳里的增删改保留，不被覆盖） */
-const SEED_MARK = 'bz-sim:__clipbook-seed-v1';
+/** 种子标记：存在 = 已种子过（用户在评审壳里的增删改保留，不被覆盖）
+ *  v1 → v2（2026-09-10）：种子补入「每日简报」briefs 段，旧标记下已种子过的浏览器
+ *  不会重跑种子 → 简报源空态。升版本号强制重种子（评审数据本就是快照，可接受覆盖）。 */
+const SEED_MARK = 'bz-sim:__clipbook-seed-v2';
 /** 设置持久键（设置保存经 saveSettings 通道写入 localStorage；自检可断言） */
 const SETTINGS_KEY = 'bz-sim:__settings';
 
@@ -50,8 +52,31 @@ interface SeedArticle {
   state?: string;
 }
 
+/** 每日简报条目（ADR-0119；与插件 news.json `briefs` 段字段同名） */
+interface SeedBrief {
+  bvid: string;
+  title?: string;
+  url?: string;
+  upMid?: string;
+  upName?: string;
+  duration?: number;
+  pubdate?: number;
+  date?: string;
+  fetchedAt?: string;
+  src?: string;
+  read?: boolean;
+  state?: string;
+  body?: string;
+  error?: string;
+}
+
 interface SeedData {
-  NEWS: { articles: SeedArticle[]; upInfo?: Record<string, { name?: string; avatar?: string }> };
+  NEWS: {
+    articles: SeedArticle[];
+    upInfo?: Record<string, { name?: string; avatar?: string }>;
+    briefs?: SeedBrief[];
+    briefUps?: string[];
+  };
   SIDECAR: { articleOverrides: Record<string, { reading?: boolean }>; savedArchive: Array<{ url: string; title: string; savedAt: string }>; order: string[] };
   NOTES: Array<{ path: string; md: string }>;
 }
@@ -91,6 +116,9 @@ function seedDatabase(): void {
     bilibiliMaxItems: 10,
     bilibiliCookie: '',
     sources: { zhihu: true, guokr: true, bilibili: true },
+    // 每日简报（ADR-0119）：真实库快照的 briefs 段；缺失退化为空数组（面板简报源显示空态）
+    briefs: src.NEWS.briefs || [],
+    briefUps: src.NEWS.briefUps || [],
   }));
   seedVaultFile(SIDECAR_PATH, JSON.stringify(src.SIDECAR));
   const base = 1700000000000;

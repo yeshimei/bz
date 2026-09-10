@@ -40,7 +40,58 @@
 
 /* ---- 头行：报细线（2px 墨色底线）；左 = serif 刊名，右 = 期号 + 检索（去 ⚙/✕，关闭 = 点遮罩/ESC） ---- */
 .bz-clip-desk .bz-panel-head { border-bottom: 2px solid var(--clip-ink); }
-.bz-clip-desk .bz-panel-title { font-family: var(--clip-serif); font-size: 21px; letter-spacing: 8px; font-weight: 700; color: var(--clip-ink); }
+/* 刊名：字号收小（21→17px）、**去粗**（2026-09-10 用户拍板）——细骨衬线更贴编辑部印刷气质。
+   ⚠️ 必须 flex:none + nowrap：.bz-panel-title 是 .bz-panel-head 的 flex 子项，
+   默认 flex-shrink:1 会被压缩——8px 字距 + 中文全角宽度撑破可用宽时，
+   「剪藏本」会被折断成两行（用户截图实证）。任何未设宽度上限的头行左元素都要防这一手。 */
+.bz-clip-desk .bz-panel-title {
+  font-family: var(--clip-serif); font-size: 17px; letter-spacing: 8px; font-weight: 400;
+  color: var(--clip-ink);
+  flex: none; white-space: nowrap;
+}
+/* 刊名「翻页光晕」（2026-09-10 用户选 H）：标题后一枚橘色竖条缓慢呼吸——
+   光标停驻 / 书页目光停顿的意象，表「这里在阅读」而非「这是个工具」。
+   纯 CSS ::after 实现，不改 markup（render.ts 标题仍是裸文本节点，单源不受影响）。
+   动画只有 opacity + scaleY（合成器友好），不影响头行布局与字距。 */
+.bz-clip-desk .bz-panel-title::after {
+  content: ''; display: inline-block;
+  /* 高度/位移随字号缩放（17px 刊名 → 14px 条）：
+     2026-09-10 用户拍板「再往下一点」——vertical-align 从 -1px 放到 -3px，
+     条顶对齐字面下半、条底探出基线，像排版光标停驻在行末。 */
+  width: 2px; height: 14px;
+  /* 父级 letter-spacing:8px 会被 ::after 继承（字距加在字符后），
+     故此处用 margin-right 抵消：实际视觉间距 = 8px - 8px + 5px = 5px */
+  margin-left: 5px; margin-right: -8px;
+  background: var(--clip-accent);
+  transform-origin: center;
+  vertical-align: -3px;
+  /* will-change 提出到独立合成层：避免呼吸动画与文字重绘互相拖累 */
+  will-change: opacity, transform;
+  animation: bz-clip-caret 1.2s ease-in-out infinite;
+}
+@keyframes bz-clip-caret {
+  0%, 100% { opacity: 1; transform: scaleY(1); }
+  50% { opacity: .35; transform: scaleY(.7); }
+}
+/* 弱动效降级版（幅度更小、周期更长）；不用嵌套 @media 内的 keyframes——支持面窄且反直觉，
+   改为顶层独立名字，媒体查询里只换 animation-name/duration。 */
+@keyframes bz-clip-caret-soft {
+  0%, 100% { opacity: 1; transform: scaleY(1); }
+  50% { opacity: .6; transform: scaleY(.85); }
+}
+/* 无障碍：reduced-motion 降级——
+   ⚠️ 不用 animation:none 一刀切：Windows 关闭「窗口动画」时 Chromium 恒报
+   prefers-reduced-motion: reduce（本机 MinAnimate=0 实证），会把装饰动画一起杀掉，
+   表现为「代码写了却没动」（core/styles.css:387 进度圈同款坑）。
+   降级改为**放缓 + 减幅**：呼吸保留但周期拉长到 2.4s、幅度压到 0.85，
+   既尊重「减少动态」的诉求，又保留状态可见性。 */
+@media (prefers-reduced-motion: reduce) {
+  .bz-clip-desk .bz-panel-title::after,
+  .bz-clip-mob-title::after {
+    animation-name: bz-clip-caret-soft;
+    animation-duration: 2.4s;
+  }
+}
 .bz-clip-issue { font-size: 12px; color: var(--clip-muted); letter-spacing: 1px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 /* 头行检索：编辑部下划线检索（issue 214 原型对齐：搜索在头行右缘，不在 rail） */
 .bz-clip-head-search { position: relative; flex: 0 0 250px; width: 250px; }
@@ -83,6 +134,10 @@
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .bz-clip-rail .bz-rail-item.on .bz-rail-name { color: var(--clip-accent); font-weight: 700; }
+/* 选中态计数可读性修复（2026-09-10）：共享层 .bz-rail-item.on .bz-rail-count { color: inherit } 让
+   计数继承 .on 的 brand 前景（白），编辑部下 .on 无底色 → 总数「12/23」的 23 白字不可见。
+   域内拉回为中性 muted；未读数 b 保持橘（软橘）。 */
+.bz-clip-rail .bz-rail-item.on .bz-rail-count { color: var(--clip-muted); opacity: 1; }
 .bz-clip-lead { flex: 1 1 12px; min-width: 10px; border-bottom: 1px dotted #c9c0b0; transform: translateY(-3px); }
 .bz-clip-rail .bz-rail-count { margin-left: auto; font-size: 10.5px; color: var(--clip-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .bz-clip-rail .bz-rail-count b { color: var(--clip-accent); font-weight: 700; }
@@ -121,7 +176,7 @@
 .bz-clip-item-t {
   font-size: var(--bz-font-body); font-weight: var(--bz-weight-semibold);
   color: var(--clip-ink); line-height: var(--bz-leading-normal);
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  word-break: break-word;
 }
 .bz-clip-item:not(.bz-clip-item--unread) .bz-clip-item-t { font-weight: 400; color: var(--clip-dim); }
 /* meta 一行：「站点 · 时间」（原型对齐，左对齐不散排） */
@@ -250,7 +305,21 @@
 .bz-clip-mob { display: none; flex-direction: column; height: 100%; min-height: 0; background: var(--clip-paper); }
 /* 顶栏（原型 .top）：刊名 + 「搜索 / 关闭」小字动作；关闭 = 清搜索并收起（无搜索态 = 退出面板） */
 .bz-clip-mob-top { display: flex; align-items: baseline; padding: 16px 18px 12px; gap: 12px; flex-shrink: 0; border-bottom: 1px solid var(--clip-ink); }
-.bz-clip-mob-title { flex: 1; font-family: var(--clip-serif); font-size: 28.5px; font-weight: 700; letter-spacing: 5px; color: var(--clip-ink); white-space: nowrap; }
+/* 移动端刊名：与桌面同款（2026-09-10 用户拍板「移动端也实现同样的款式」）——
+   去粗（700→400）+ 追加同款橘色呼吸光标。
+   字号 28.5px 为移动端 ×1.5 口径下的既有值（桌面 17px × 1.5 ≈ 25.5，此处沿用原值不另调）。 */
+.bz-clip-mob-title { flex: 1; font-family: var(--clip-serif); font-size: 28.5px; font-weight: 400; letter-spacing: 5px; color: var(--clip-ink); white-space: nowrap; }
+.bz-clip-mob-title::after {
+  content: ''; display: inline-block;
+  width: 3px; height: 22px;
+  /* 同桌面：抵消 letter-spacing:5px 的继承，实际视觉间距 = 5px - 5px + 7px = 7px */
+  margin-left: 7px; margin-right: -5px;
+  background: var(--clip-accent);
+  transform-origin: center;
+  vertical-align: -5px;
+  will-change: opacity, transform;
+  animation: bz-clip-caret 1.2s ease-in-out infinite;
+}
 .bz-clip-mob-act { font-family: var(--clip-serif); font-size: 16.5px; letter-spacing: 1.5px; color: var(--clip-dim); cursor: pointer; padding: 6px 1px; }
 .bz-clip-mob-act:hover { color: var(--clip-accent); }
 .bz-clip-mob-searchbar { padding: 10px 18px 0; flex-shrink: 0; }
@@ -276,7 +345,7 @@
 .bz-clip-mob-dot.reading { background: transparent; border: 2px solid var(--clip-accent); width: 6px; height: 6px; }
 .bz-clip-mob-dot.saved { background: var(--clip-muted); opacity: .4; }
 .bz-clip-mob-dot.read { background: var(--clip-muted); opacity: .4; }
-.bz-clip-mob-ttl { flex: 1; font-family: var(--clip-serif); font-size: 22.5px; line-height: 1.5; color: var(--clip-ink-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.bz-clip-mob-ttl { flex: 1; font-family: var(--clip-serif); font-size: 22.5px; line-height: 1.5; color: var(--clip-ink-2); word-break: break-word; }
 .bz-clip-mob-item.saved .bz-clip-mob-ttl { color: var(--clip-muted); }
 .bz-clip-mob-item.read .bz-clip-mob-ttl { color: var(--clip-muted); }
 .bz-clip-mob-time { flex-shrink: 0; font-size: 15.75px; color: var(--clip-muted); font-variant-numeric: tabular-nums; align-self: flex-start; margin-top: 5px; }
@@ -381,14 +450,7 @@
 .bz-clip-day-n { font-size: 11px; color: var(--clip-accent); }
 .bz-clip-day-rule { flex: 1; height: 1px; background: var(--clip-rule, rgba(28,26,23,.16)); align-self: center; }
 
-/* 中栏：条目来源小标（字幕 / 转写；失败为 ✗） */
-.bz-clip-item-tag {
-  flex: 0 0 auto; align-self: flex-start; margin-top: 2px;
-  font-family: var(--clip-serif); font-size: 11px; letter-spacing: 1px;
-  color: var(--clip-ink-3, #8a8275); border: 1px solid currentColor;
-  padding: 0 4px; line-height: 16px;
-}
-.bz-clip-item--err .bz-clip-item-tag { color: #c2410c; }
+/* 中栏：失败条目（原行首「字幕/转写」小标已按用户 2026-09-10 拍板退役，仅留错误色） */
 .bz-clip-item--err .bz-clip-item-t { color: #c2410c; }
 
 /* 右栏：要点正文（h3 小节 + ul 要点；不走文章首字下沉） */
@@ -410,20 +472,41 @@
   padding: var(--bz-space-md); font-size: var(--bz-font-meta); color: #8a3a12;
 }
 
-/* 右栏：可展开完整转录稿（缓存保留期内；过期后该段自动消失） */
-.bz-clip-brief-tr {
-  margin: var(--bz-space-lg) 0; border-top: 1px solid var(--clip-rule, rgba(28,26,23,.16));
-  padding-top: var(--bz-space-md);
+/* 右栏：可展开完整转录稿段已按用户 2026-09-10 拍板退役（.bz-clip-brief-tr 系列删除） */
+
+/* ==================== 暗色皮（2026-09-10 用户需求） ====================
+   范式同 home / cinema：浅色为基准，暗色在 .theme-dark 下覆写同一组 --clip-* token，
+   域内所有引用自动跟随；下文少数硬编码色值（细线 / 菜单阴影 / 菜单危险色）另行单项覆写。 */
+.theme-dark .bz-clip-frame,
+.theme-dark .bz-item-menu.bz-clip-menu-editorial {
+  --clip-paper: #1b1a17;
+  --clip-ink: #ece8dd;
+  --clip-ink-2: #cdc7b8;
+  --clip-body: #b8b2a4;
+  --clip-dim: #928b7c;
+  --clip-accent: #e8794a;
+  --clip-accent-soft: #f0a077;
+  --clip-line: #363329;
+  --clip-line-soft: #2c2a23;
+  --clip-cream: #232220;
+  --clip-cream-2: #2a2823;
+  --clip-soft: #2e2b25;
+  --clip-muted: #7d7668;
+  --clip-no: #4a463c;
 }
-.bz-clip-brief-tr > summary {
-  cursor: pointer; list-style: none;
-  font-family: var(--clip-serif); font-size: 12px; letter-spacing: 2px; color: var(--clip-ink-2);
-}
-.bz-clip-brief-tr > summary::-webkit-details-marker { display: none; }
-.bz-clip-brief-tr > summary::before { content: '＋ '; color: var(--clip-accent); }
-.bz-clip-brief-tr[open] > summary::before { content: '－ '; }
-.bz-clip-brief-tr-body {
-  margin-top: var(--bz-space-md); max-height: 340px; overflow: auto;
-  font-size: var(--bz-font-meta); line-height: 1.9; color: var(--clip-ink-2);
-  white-space: pre-wrap; word-break: break-word;
-}
+/* 选中态点线：纸白值在暗底上过亮，换中性暗线 */
+.theme-dark .bz-clip-lead { border-bottom-color: #46423a; }
+/* 右键菜单：墨色阴影在暗底换成纯黑；危险色提亮保证对比 */
+.theme-dark .bz-item-menu.bz-clip-menu-editorial { box-shadow: 5px 5px 0 rgba(0, 0, 0, .5); }
+.theme-dark .bz-clip-menu-editorial .bz-item-menu-item--danger { color: #e8776b; }
+.theme-dark .bz-clip-menu-editorial .bz-item-menu-item--danger:hover { background: #b3261e; color: #faf8f3; }
+/* 失败态：浅底橘红在暗底不可读，提亮前景 + 暗化底 */
+.theme-dark .bz-clip-item--err .bz-clip-item-t { color: #ef7d5a; }
+.theme-dark .bz-clip-brief-err { background: #2a211b; color: #f0a077; border-left-color: #b3261e; }
+/* 删除确认弹窗皮：挂 body 无 --clip 链（值写死），暗色单项覆写 */
+.theme-dark #__shared_confirm_popup__.bz-clip-dialog-editorial { background: #1b1a17; border-color: #ece8dd; box-shadow: 6px 6px 0 rgba(0, 0, 0, .5); }
+.theme-dark #__shared_confirm_popup__.bz-clip-dialog-editorial h4 { color: #ece8dd; }
+.theme-dark #__shared_confirm_popup__.bz-clip-dialog-editorial p { color: #928b7c; }
+.theme-dark #__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_cancel__ { border-color: #ece8dd; color: #cdc7b8; }
+.theme-dark #__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_cancel__:hover { background: #2e2b25; }
+.theme-dark #__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_ok__ { background: #ece8dd; color: #1b1a17; }
