@@ -363,3 +363,13 @@
 - [x] 规格：`issues/256-diary-wall-promoted-diary.md`（spec.md「回忆墙升格日记本」节同步；ADR-0115）
 - [x] 实现：src/diary-wall→src/diary 正名升格；写链路迁入（写弹窗/时间标签选择器/store 写层/守卫/修复引擎/加密编排）；旧编辑面板退役；设置 12 键收编 3 键 + 2 跨域读；单源原型化全套（render.ts/fake-sim/fake-obsidian/双 iframe 壳/PROTOTYPE.md）+ 双清单登记；外围归一（home 磁贴合一/settings-panel/domain-icons/smoke.test/tests 并归/recap/smartcat）
 - [x] 门禁：tsc 0 错 + 全量 252 文件 4039 用例绿；merge master（todo→memo 正名/issue 261）解 7 处冲突
+
+## Issue 262 — 日记本 UI 精修批（取帧根治 + 交互细节 + 视觉收口）
+
+**状态：已交付**（2026-09-10）
+
+- [x] 规格：`issues/262-diary-ui-polish.md`（spec.md「日记本 UI 精修批」节同步；可逆域内改动，无 ADR / 无 CONTEXT 词条）
+- [x] 修（真 bug，全部先实测定位）：① 章节栏视频缩略图全黑 —— 取首帧等 `loadeddata` 帧未合成即 drawImage → 48×48 纯黑且写入 IndexedDB 永久命中；改等 `canplay`，连带空帧判据（逐通道极差）、seek 换落点重试、缓存换库 `-v2` 并删旧库、取帧改直挂 URL 流式 + 跨源才走 blob 且限 48MB（旧实现整片 fetch，单条实测 16.9MB）；② 日期筛选弹窗无背景色 —— `--dw-*` 只声明在 `.bz-diary`，弹窗挂 body 在根外；token 选择器组补 `.bz-diary-datefilter`；③ 日节头粘顶空隙 —— sticky 包含块是滚动容器内容框，`.bz-diary-wall` 顶垫 4px→0
+- [x] 精修：头行删「关闭/设置/按年月跳转」三枚（日期入口留品牌行）；章节栏视频格三条路径全清播放角标；开墙即高亮当前月；日期弹窗默认选中当前年 + 整块视觉重做（对齐域内 chips/节头语言）；章节栏「章 节」标题块移除
+- [x] 探索撤回：四版皮肤（铅印/毛玻璃/终端/印样）经用户评判「都不好看」，全数撤下、不留皮肤代码
+- [x] 门禁：tsc 0 错 + diary/core/smoke 52 文件 782 用例绿（新增 7 项回归：空帧判据 6 例 / 视频格无角标 / 时光条视频格 / 开墙高亮 / wall 顶垫为 0 / 日期弹窗默认年 + 变量作用域 / 章节栏无标题块）

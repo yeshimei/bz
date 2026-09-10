@@ -3,7 +3,8 @@
  *
  * 评审壳预览构建（build-preview.mjs 的 esbuild alias）把 fake-sim.ts 依赖链上的
  * `obsidian` 包替换为本文件。日记本链 = 墙 ui.ts + 写链路（store/dialogs/entry-actions/
- * encrypt）+ 域内 config/parser/data + settings-panel 动态闭包（⚙️ 直达）——obsidian 出口
+ * encrypt）+ 域内 config/parser/data ——obsidian 出口（issue 262 后头行「设置」按钮退役，
+ * 仅剩的 `import('../settings-panel')` 已随之删除，该域闭包不再进本包，见 PROTOTYPE.md）
  * 覆盖面与 prototypes/settings-panel/fake 同量级，另加墙体所需的四件：
  *   - vault.delete             → 写层「整文件删除」分支（删除条目后该日期清空时调）
  *   - vault.getResourcePath    → 媒体 URL（清单 = window.DIARY.ASSETS，assets/ 实际拷入的
@@ -87,7 +88,7 @@ export class Component {
   }
 }
 
-// ==================== 壳类（settings-panel 全域 schema 闭包顶层求值防护） ====================
+// ==================== 壳类（防全域 schema 闭包顶层求值崩；issue 262 后该闭包已不进包，保留作兜底） ====================
 
 export class Notice {
   constructor(_msg?: string, _duration?: number) {}

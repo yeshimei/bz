@@ -9,12 +9,11 @@ import { esc } from '../core/ui/str';
 import type { WallEntry, WallMedia } from './types';
 
 // ===== 头行/灯箱按钮 → lucide 图标名（ui 侧经 core/ui uiIcon 挂载） =====
+// 注意：日期筛选入口是【品牌行】div[data-act="date-picker"]（非 button，不注图标），
+// 故此处无 date-picker 词条；关闭/设置按钮已按用户要求从头行移除（关闭走 ESC 与点遮罩）。
 export const ACT_ICON: Record<string, string> = {
   add: 'pen-line',
   search: 'search',
-  'date-picker': 'calendar',
-  settings: 'settings',
-  close: 'x',
   'lb-close': 'x',
   'lb-prev': 'chevron-left',
   'lb-next': 'chevron-right',
@@ -59,6 +58,9 @@ export function mimeOfMediaName(name: string): string {
 /**
  * 面板壳 markup：头行（品牌 + 按钮组）/ chips 行 / 二级标签行 / 搜索行 / 两栏主体
  * （章节栏 + 瀑布）/ 灯箱 / 底部抽屉。按钮全部空壳挂 data-act，图标由 ui 侧 decorateIcons 注入。
+ *
+ * 头行按钮组只留「写日记 / 搜索」：关闭、设置、按年月跳转三枚按钮已按用户 2026-09-10 要求移除。
+ * 日期筛选入口仍由品牌行承担（点「日记本」标题即开筛选弹窗，title 已注明）。
  */
 export function wallPanelHTML(): string {
   return `
@@ -70,10 +72,6 @@ export function wallPanelHTML(): string {
         <div class="bz-diary-btns">
           <button class="bz-diary-icon-btn bz-touch-target--xl" data-act="add" title="写日记"></button>
           <button class="bz-diary-icon-btn bz-touch-target--xl" data-act="search" title="搜索"></button>
-          <button class="bz-diary-icon-btn bz-touch-target--xl" data-act="date-picker" title="按年月跳转"></button>
-          <button class="bz-diary-icon-btn bz-touch-target--xl" data-act="settings" title="打开日记本设置"></button>
-          <!-- issue 201 对齐待办：关闭钮不挂 bz-win-close（core 规则非真全屏隐藏之），桌面/移动常显同待办 -->
-          <button class="bz-diary-icon-btn bz-touch-target--xl" data-act="close" title="关闭"></button>
         </div>
       </div>
       <div class="bz-diary-chiprow"></div>
