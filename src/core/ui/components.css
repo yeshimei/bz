@@ -670,6 +670,28 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   .bz-panel-mtop > div:first-child { padding-top: 0 !important; }
 }
 
+/* ═══════════ 移动端可视视口高度 --bz-vvh（issue 266） ═══════════
+   背景：`100vh` = 布局视口高度，**不随软键盘收缩**；键盘弹出时面板底部固定的
+   输入条（备忘录录入条 / 第二大脑问答框 / 小橘聊天框…）被顶到键盘底下。
+   本段**只提供变量资源**，不直接改任何面板的高度——面板几何归各域自己。
+   （核心层若用 `!important` 强行统改高度，会打坏两类锚定式面板：
+     knowledge 的 `.bz-kb-window` 是 `top/bottom: 安全区 + height: auto`，
+     clipbook 的 `.bz-clip-mob-detail` 是父级 `inset: 0` 的嵌套层——
+     两者都会被固定高度打断，故不做全域强改。）
+   接入方式（域内单行改造，范例见 src/memo/styles.css）：
+     .bz-<域>-panel { height: var(--bz-vvh, 100vh); }
+   取值链：JS（src/core/viewport.ts 的 bindMobileViewport）把
+   `visualViewport.height` 写进 `--bz-vvh`（含键盘占位，可精修到 px）；
+   JS 未注入时退回本段基线——现代内核用 `100dvh`（动态视口，本身已随键盘
+   收缩），老内核退回 `100vh`（= 与改造前一致，零劣化）。
+   作用域仅 ≤768px，桌面端零影响。 */
+@media (max-width: 768px) {
+  :root { --bz-vvh: 100vh; }
+  @supports (height: 100dvh) {
+    :root { --bz-vvh: 100dvh; }
+  }
+}
+
 /* ═══════════ 触控热区 .bz-touch-target（设计手册 §8.2） ═══════════
    触屏（pointer:coarse）下小元素 ::after 外扩命中区至 ≥44px，视觉不变
    （shadcn extend-touch-target 同款）。按元素原尺寸分档：32px 档钮用默认 -6px；
