@@ -46,9 +46,9 @@ const SEED_SETTINGS: Record<string, unknown> = {
   belSkin: 'poster',
   belSkinTheme: 'warmwhite',
   diarySkin: 'default',
-  diarySkinTheme: 'ivory',
-  diaryWallSkin: 'default',
-  diaryWallSkinTheme: 'gallery',
+  // 主题值随 ADR-0115 正名 ivory→gallery（旧值已不在 schema options 里，留着会让卡「无选中态」）；
+  // 旧 diaryWallSkin/Theme 双键同期退役，不再播种子
+  diarySkinTheme: 'gallery',
   clipbookSkin: 'default',
   clipbookSkinTheme: 'newsprint',
   favoritesSkin: 'default',
@@ -65,6 +65,10 @@ const SEED_SETTINGS: Record<string, unknown> = {
   pomodoroSkinTheme: 'tomato',
   encryptSkin: 'default',
   encryptSkinTheme: 'steel',
+  // 首页（home 域，2026-09-10 外观组）：与 src/settings.ts DEFAULT 同值 —— 主题行按 homeLayout
+  // 联动过滤，布局键不设则主题单卡被滤空（同 diarySkin 口径），评审壳必须给种子才看得到「米白」
+  homeLayout: 'default',
+  homeSkin: 'cream',
   // 密码本（issue 250）：生成/安全三键与 src/settings.ts DEFAULT 同值
   passwordCharset: '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+',
   passwordLength: '16',

@@ -57,8 +57,9 @@ export function setIcon(container: HTMLElement, iconId: string): void {
   svg.setAttribute('stroke-width', '2');
   svg.setAttribute('stroke-linecap', 'round');
   svg.setAttribute('stroke-linejoin', 'round');
-  // 表里存的是内层 path/circle/polyline 片段——注入 innerHTML（内容为受控图标表）
-  svg.innerHTML = d;
+  // 表里存的是内层 path/circle/polyline 片段——注入 innerHTML（内容为受控图标表）。
+  // trim：片段两侧空白会在 svg 里留文本节点，进而污染容器 textContent（自检断言按文本比对时踩过）
+  svg.innerHTML = d.trim();
   // Obsidian setIcon 会保留容器已有 class；span.bz-ic 场景由调用方控制外观
   container.replaceChildren(svg);
 }

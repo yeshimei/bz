@@ -3,6 +3,9 @@
  * 服务仓库根目录；监听两棵源树——src/<域>/（插件源码：styles.css/render.ts/ui.ts 链）与
  * prototypes/<域>/（评审工件：壳 html/fake-sim.ts/fake 层），render.ts/shared.ts 变化自动
  * 重出预览包+行为包，ui.ts/fake 链变化重出行为包，然后经 SSE 推浏览器 location.reload()。
+ * 变化的 .ts 按**产物输入清单**（`#preview-inputs=`）反查依赖域重出：产物是跨域打包的
+ * （settings-panel 的包内联 src/home/settings.ts；src/core/** 每包都有），
+ * 只重出「变化文件所在域」会让内联它的壳静默停在旧版（2026-09-10 两次实例）。
  * 打开 http://localhost:5177/prototypes/<域>/prototype.html 即得免刷新预览。
  *
  * 另供 /__vault-media/<文件名>：按 basename 从【真实 vault】按需取流（支持 Range，
@@ -105,6 +108,48 @@ function serveVaultMedia(req, res, rawName) {
 const srcRoot = path.join(ROOT, 'src');
 const protoRoot = path.join(ROOT, 'prototypes');
 
+/**
+ * 产物 → 输入清单索引（rel 路径 → 含它的域名集合）。
+ *
+ * 为什么需要：产物是**跨域打包**的 —— 例：`src/home/settings.ts`（首页域）被内联进
+ * `settings-panel` 的包（面板经 schemaLoaders 懒加载各域 schema），`src/core/**` 更是每包都有。
+ * 只按「变化文件所在域」重出，就会漏掉所有把它内联进去的域 → **壳静默停在旧版**
+ * （2026-09-10 两次实例：首页入口弹窗改了设置壳不更新、回忆墙退役首页不更新）。
+ * 产物头部两行里就有 `#preview-inputs=[…]`（build-preview 写入），据此**反查真正的依赖域**。
+ */
+let inputIndex = null; // rel → Set<domain>；每次重出后置空重建（产物输入集可能变）
+/** banner 里的输入清单（与 tests/preview-freshness.test.ts 同一正则口径） */
+const INPUTS_RE = /\/\*#preview-inputs=(\[[^\n]*\])\*\//;
+function buildInputIndex() {
+  const idx = new Map();
+  const domains = [...new Set([...BEHAVIOR_DOMAINS, ...PREVIEW_DOMAINS])];
+  for (const d of domains) {
+    for (const f of ['prototype-behavior.js', 'prototype-render.js']) {
+      const abs = path.join(protoRoot, d, f);
+      let head;
+      try { head = fs.readFileSync(abs, 'utf8').slice(0, 400000); } catch { continue; } // 该域没有这包
+      // 解析口径与新鲜度守卫一致（tests/preview-freshness.test.ts 的同名正则）：
+      // banner 是一整行 `/*#preview-inputs=[…]*/`，不能靠「切到行尾」——会把 `*/` 带进去让 JSON.parse 抛错
+      const m = head.match(INPUTS_RE);
+      if (!m) continue;
+      let list;
+      try { list = JSON.parse(m[1]); } catch { continue; }
+      for (const rel of list) {
+        if (!idx.has(rel)) idx.set(rel, new Set());
+        idx.get(rel).add(d);
+      }
+    }
+  }
+  return idx;
+}
+/** 某源码文件变化时，真正需要重出的域名（查产物输入清单；新文件查不到则回落路径域名） */
+function dependentDomains(rel, pathDomain) {
+  if (!inputIndex) inputIndex = buildInputIndex();
+  const hit = inputIndex.get(rel);
+  if (hit && hit.size) return hit;
+  return PREVIEW_DOMAINS.includes(pathDomain) || BEHAVIOR_DOMAINS.includes(pathDomain) ? new Set([pathDomain]) : new Set();
+}
+
 let reloadTimer = 0;
 const pendingEvents = new Map(); // rel → domain（防抖窗口内累积，防「.ts 与 css/html 同拍只认后者」漏重出）
 function scheduleReload(changedRel, domain) {
@@ -112,10 +157,14 @@ function scheduleReload(changedRel, domain) {
   clearTimeout(reloadTimer);
   // 防抖：编辑器常连发多个事件
   reloadTimer = setTimeout(async () => {
-    // .ts 是打包链源码（入口 render.ts/fake-sim.ts 及其任意依赖）：两包都可能吃进；窗口内出现的 .ts 全部按域重出；
+    // .ts 是打包链源码：**按产物输入清单反查依赖域**（跨域内联，见 dependentDomains 注释），
+    // 而不是按「变化文件所在目录」——否则设置壳这种「内联了别域源码」的包永远不更新。
     // css/html/产物 .js 由服务器直出，广播刷新即可。
     const tsDomains = new Set();
-    for (const [rel, dom] of pendingEvents) if (rel.endsWith('.ts')) tsDomains.add(dom);
+    for (const [rel, dom] of pendingEvents) {
+      if (!rel.endsWith('.ts')) continue;
+      for (const d of dependentDomains(rel, dom)) tsDomains.add(d);
+    }
     pendingEvents.clear();
     if (tsDomains.size) {
       try {
@@ -124,6 +173,7 @@ function scheduleReload(changedRel, domain) {
           if (PREVIEW_DOMAINS.includes(dom)) await buildPreview([dom]);
           if (BEHAVIOR_DOMAINS.includes(dom)) await buildBehavior(dom);
         }
+        inputIndex = null; // 输入集可能已变（新增/删除 import）→ 索引重建
       } catch (e) { console.error('[preview-live] 产物重出失败：', e.message); return; }
     }
     for (const res of clients) res.write('data: reload\n\n');

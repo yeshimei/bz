@@ -96,27 +96,30 @@ describe('设置面板（settings-panel）', () => {
       await new Promise((r) => setTimeout(r, 30));
       badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
     }
+    // 2026-09-10 侧栏重新分细组（基础/智能/记录/收集/媒体与阅读/工具/安全 七组）→ 下标整体重排
     expect(badges[0]).toBe('1'); // 通用：数据存储路径 1 项（外观已独立「设置」域）
     expect(badges[1]).toBe('2'); // 设置：布局 + 主题两张卡片行（拍板 P1：外观独立域）
-    expect(badges[2]).toBe('4'); // AI：服务商+模型名称+上下文+最大输出（采样参数组已退役；aiProvider 未设 → 密钥行门控隐藏）
-    expect(badges[3]).toBe('5'); // 日记本（index 3）：ADR-0115 升格后 = 外观 2 + 目录 2 + 显示 1（维护组为按钮行，不计设置项）
-    expect(badges[4]).toBe('10'); // 备忘录（index 4，todo→memo 正名沿用待办 schema）：外观组标准化后 10 项
-    expect(badges[5]).toBe('3'); // 归物本（index 5）：外观组布局/主题两卡 + 默认状态筛选，桌面 3 项
-    expect(badges[7]).toBe('2'); // 收藏本（index 7）：issue 246 补外观组两卡 → 桌面回归列表
+    expect(badges[2]).toBe('3'); // 首页：外观组布局/主题两卡 + 入口内联编辑器 1 行（2026-09-10 补外观组）
+    expect(badges[3]).toBe('4'); // AI：服务商+模型名称+上下文+最大输出（采样参数组已退役；aiProvider 未设 → 密钥行门控隐藏）
+    expect(badges[5]).toBe('5'); // 日记本：ADR-0115 升格后 = 外观 2 + 目录 2 + 显示 1（维护组为按钮行，不计设置项）
+    expect(badges[6]).toBe('10'); // 备忘录（todo→memo 正名沿用待办 schema）：外观组标准化后 10 项
+    expect(badges[7]).toBe('3'); // 归物本：外观组布局/主题两卡 + 默认状态筛选，桌面 3 项
+    expect(badges[9]).toBe('2'); // 收藏本：issue 246 补外观组两卡 → 桌面回归列表
     // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）
     const navIcons = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-ic')];
-    expect(navIcons.length).toBe(17); // issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17
+    expect(navIcons.length).toBe(18); // issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17；2026-09-10 内容首页域补入口设置 → 18
     expect(navIcons[0].getAttribute('data-icon')).toBe('settings'); // 通用
     expect(navIcons[1].getAttribute('data-icon')).toBe('palette'); // 设置（拍板 P1：外观独立域）
-    expect(navIcons[2].getAttribute('data-icon')).toBe('sparkles'); // AI
-    expect(navIcons[3].getAttribute('data-icon')).toBe('notebook-pen'); // 日记本（enh-sweep-a：与 ribbon/磁贴同款，错开书架墙 book-open）
-    expect(navIcons[4].getAttribute('data-icon')).toBe('check-square'); // 备忘录（todo→memo 正名，图标沿用）
-    expect(navIcons[8].getAttribute('data-icon')).toBe('clapperboard'); // 影院（记录组 5 域后 index 8）
-    // 拍板分组顺序（NAV_SECS）：…工具组 = 番茄钟/保险库/密码本/小橘陪伴猫
-    expect(navIcons[13].getAttribute('data-icon')).toBe('timer'); // 番茄钟
-    expect(navIcons[14].getAttribute('data-icon')).toBe('lock'); // 保险库
-    expect(navIcons[15].getAttribute('data-icon')).toBe('key'); // 密码本（issue 250 拆回独立域）
-    expect(navIcons[16].getAttribute('data-icon')).toBe('cat'); // 小橘陪伴猫（issue 194 转可见）
+    expect(navIcons[2].getAttribute('data-icon')).toBe('layout-grid'); // 首页（基础组第三位，2026-09-10 侧栏重分组）
+    expect(navIcons[3].getAttribute('data-icon')).toBe('sparkles'); // AI（智能组首位）
+    expect(navIcons[5].getAttribute('data-icon')).toBe('notebook-pen'); // 日记本（enh-sweep-a：与 ribbon/磁贴同款，错开书架墙 book-open）
+    expect(navIcons[6].getAttribute('data-icon')).toBe('check-square'); // 备忘录（todo→memo 正名，图标沿用）
+    expect(navIcons[10].getAttribute('data-icon')).toBe('clapperboard'); // 影院（媒体与阅读组首位）
+    // 拍板分组顺序（NAV_SECS）：…工具组 = 番茄钟/小橘陪伴猫；安全组 = 保险库/密码本
+    expect(navIcons[14].getAttribute('data-icon')).toBe('timer'); // 番茄钟（工具组首位）
+    expect(navIcons[15].getAttribute('data-icon')).toBe('cat'); // 小橘陪伴猫（工具组，issue 194 转可见）
+    expect(navIcons[16].getAttribute('data-icon')).toBe('lock'); // 保险库（安全组）
+    expect(navIcons[17].getAttribute('data-icon')).toBe('key'); // 密码本（安全组，issue 250 拆回独立域）
     // 无 emoji 图标残留（头行/列表/徽标全文本或 lucide）
     expect(popup.textContent).not.toMatch(EMOJI_RE);
     ui.cleanup();
@@ -636,12 +639,12 @@ describe('设置面板（settings-panel）', () => {
     for (;;) {
       names = [...popup.querySelectorAll('.bz-sp-nav-name')].map((b) => b.textContent);
       const badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
-      if (Date.now() > deadline0 || (names.length === 17 && !badges.includes('·'))) break;
+      if (Date.now() > deadline0 || (names.length === 18 && !badges.includes('·'))) break;
       await new Promise((r) => setTimeout(r, 30));
     }
     // 只看域名（nav-name），避免描述包含（如剪藏本「网页剪藏与聚合讯」）误判
-    expect(names).toHaveLength(17); // issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17
-    expect(names.slice(0, 3)).toEqual(['通用', '设置', 'AI']); // 基础组：通用 → 设置 → AI
+    expect(names).toHaveLength(18); // issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17；2026-09-10 内容首页域转可见 → 18
+    expect(names.slice(0, 3)).toEqual(['通用', '设置', '首页']); // 基础组（2026-09-10 七组重排）：通用 → 设置 → 首页
     // 无设置域（聚合讯/阅读报告/自动摘要/附件搬移）一律不出现；小橘陪伴猫有 schema（issue 194 转可见）
     for (const n of ['聚合讯', '阅读报告', '做题家', '自动摘要', '附件搬移']) {
       expect(names).not.toContain(n);
@@ -674,12 +677,12 @@ describe('设置面板（settings-panel）', () => {
     let names: (string | null)[];
     for (;;) {
       names = [...popup.querySelectorAll('.bz-sp-mob-name')].map((b) => b.textContent);
-      if (Date.now() > deadline0 || names.length === 17) break;
+      if (Date.now() > deadline0 || names.length === 18) break;
       await new Promise((r) => setTimeout(r, 30));
     }
     // 只看域名（mob-name），避免描述包含误判
-    expect(names).toHaveLength(17); // 拍板 P1 补「设置」域 → 17；issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17
-    expect(names.slice(0, 3)).toEqual(['通用', '设置', 'AI']);
+    expect(names).toHaveLength(18); // 拍板 P1 补「设置」域 → 17；issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17；2026-09-10 内容首页域转可见 → 18
+    expect(names.slice(0, 3)).toEqual(['通用', '设置', '首页']); // 基础组（2026-09-10 七组重排）：通用 → 设置 → 首页
     expect(names).not.toContain('聚合讯');
     expect(names).toContain('小橘陪伴猫'); // 有 schema，issue 194 转可见
     expect(names).toContain('日记本'); // ADR-0115：回忆墙升格日记本，单条目在列
@@ -732,7 +735,7 @@ describe('设置面板（settings-panel）', () => {
     expect(popup.textContent).not.toMatch(EMOJI_RE);
     // 无设置项的域不在列表显示（用户拍板）；issue 194 小橘陪伴猫转可见 → 15
     // 拍板 P1 补「设置」域 → 加载前列表 17；issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17
-    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(17);
+    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(18); // 2026-09-10 内容首页域转可见
     // 移动列表图标为 lucide（tile 内 svg 容器）
     const firstIc = popup.querySelector('.bz-sp-mob-item .bz-sp-mob-ic .bz-ic');
     expect(firstIc).toBeTruthy();

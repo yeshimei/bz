@@ -193,6 +193,9 @@ export default interface BzSettings {
   pomodoroSkinTheme: string;
   encryptSkin: string;
   encryptSkinTheme: string;
+  /** 🎨 内容首页外观占位（issue 246 同范式）：布局=活动河单卡，主题=米白单卡 */
+  homeLayout: string;
+  homeSkin: string;
   // 旧 cinemaPageSize（每批加载数量）已删除：全仓无消费点（列表一次全量渲染），死配置随审计清理
 
 
@@ -629,6 +632,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   pomodoroSkinTheme: 'tomato',
   encryptSkin: 'default',
   encryptSkinTheme: 'steel',
+  homeLayout: 'default',
+  homeSkin: 'cream',
   favoritesSortKey: 'created',
   // 文献盒处理设置（键名随域更名 literature*；ticket 136 默认值=既存行为不动，零迁移）
   knowledgeProgressDetail: true,

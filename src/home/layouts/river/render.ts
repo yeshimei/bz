@@ -4,7 +4,7 @@
  * 本文件只写「活动河三栏」这一布局的排布 markup。
  */
 import {
-  esc, iconSpan, DOMAINS, DOMAIN_MAP, DOMAIN_DOT,
+  esc, iconSpan, DOMAIN_MAP, domainColor, visibleDomains,
   buildDots, buildNotes, buildPreviews, dotOf, riverCountText,
   type RiverData, type RiverWeekDay,
 } from '../../shared';
@@ -55,14 +55,18 @@ export function weekHtml(week: RiverWeekDay[], todayDateStr: string, selDate: st
 
 /* ---------- 全部域入口行 ---------- */
 
-export function entriesHtml(data: RiverData): string {
+/**
+ * 全部域入口行。order = 该端持久化顺序、hidden = 隐藏域（两者都空 = 默认全量顺序，
+ * 见 shared.visibleDomains）；本层只负责按序渲染可见域，顺序/显隐的编辑在设置弹窗里。
+ */
+export function entriesHtml(data: RiverData, order?: readonly string[], hidden?: readonly string[]): string {
   const dotsMap = buildDots(data);
-  return DOMAINS.map((d) => {
+  return visibleDomains(order, hidden).map((d) => {
     const dot = dotOf(dotsMap, d.id);
     const ct = riverCountText(d.id, data) ?? d.sub;
     return '<div role="button" tabindex="0" class="bz-home-erow" data-home-go="' + d.id + '">'
       + '<span class="bz-home-dot bz-home-dot--' + dot + '"></span>'
-      + '<span class="bz-home-eic" style="color:' + (DOMAIN_DOT[d.id] ?? '#8a8f99') + '">' + iconSpan(d.icon) + '</span>'
+      + '<span class="bz-home-eic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span>'
       + '<span class="bz-home-enm">' + esc(d.name) + '</span>'
       + '<span class="bz-home-ect">' + esc(ct) + '</span>'
       + '<span class="bz-home-ego">→</span></div>';
@@ -79,7 +83,7 @@ export function flowHtml(data: RiverData, view: string): string {
     const note = notes.find((n) => n.index === i);
     const lastDiary = i === day.events.length - 1 && note && note.text.indexOf('日记') >= 0 ? ' bz-home-ev--warn' : '';
     const memoId = e.domain;
-    const dmColor = DOMAIN_DOT[memoId] ?? '#8a8f99';
+    const dmColor = domainColor(memoId);
     const dmName = DOMAIN_MAP.get(memoId)?.name ?? e.domain;
     const dmIcon = DOMAIN_MAP.get(memoId)?.icon ?? '';
     return '<div class="bz-home-ev' + lastDiary + '">'
@@ -105,17 +109,18 @@ export function nextHtml(data: RiverData): string {
       ).join('');
 }
 
-/* ---------- 移动端全部域两列瓦片（桌面隐藏；单列顺序 时间线 → 预告 → 瓦片） ---------- */
+/* ---------- 移动端全部域单列瓦片（桌面隐藏；单列顺序 时间线 → 预告 → 瓦片） ----------
+ * order = 移动端持久化顺序、hidden = 隐藏域（与桌面各排各的） */
 
-export function tilesHtml(data: RiverData): string {
+export function tilesHtml(data: RiverData, order?: readonly string[], hidden?: readonly string[]): string {
   const dotsMap = buildDots(data);
   return '<div class="bz-home-m-tiles">'
-    + DOMAINS.map((d) => {
+    + visibleDomains(order, hidden).map((d) => {
         const dot = dotOf(dotsMap, d.id);
         const ct = riverCountText(d.id, data) ?? d.sub;
         return '<div role="button" tabindex="0" class="bz-home-m-tile" data-home-go="' + d.id + '">'
           + '<span class="bz-home-dot bz-home-dot--' + dot + '"></span>'
-          + '<span class="bz-home-eic" style="color:' + (DOMAIN_DOT[d.id] ?? '#8a8f99') + '">' + iconSpan(d.icon) + '</span>'
+          + '<span class="bz-home-eic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span>'
           + '<span class="bz-home-enm">' + esc(d.name) + '</span>'
           + '<span class="bz-home-ect">' + esc(ct) + '</span></div>';
       }).join('')

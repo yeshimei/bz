@@ -66,6 +66,11 @@ export interface ItemActionsOptions {
   longPressFilter?: (e: any) => boolean;
   /** 桌面右键菜单附加类（issue 210：皮肤域传 bz-memo-skin-*，菜单随面板换肤） */
   menuClass?: string;
+  /**
+   * 移动端抽屉附加类（与 menuClass 对称：同一套皮肤类可同时传给两端）。
+   * 用途 = 让域按自己的排版口径微调抽屉（如 home 把盒头/功能项字号调成面板档）。
+   */
+  sheetClass?: string;
 }
 
 /** 浮层与视口边距（px，桌面跟手菜单用） */
@@ -373,7 +378,7 @@ export function openItemSheet(actions: ItemAction[], opts?: ItemActionsOptions, 
   const mask = document.createElement('div');
   mask.className = 'bz-item-sheet-mask';
   const sheet = document.createElement('div');
-  sheet.className = 'bz-item-sheet';
+  sheet.className = 'bz-item-sheet' + (opts?.sheetClass ? ' ' + opts.sheetClass : '');
   if (opts?.sheetHead) {
     const head = document.createElement('div');
     head.className = 'bz-item-sheet-head';

@@ -261,6 +261,13 @@
     linear-gradient(90deg, #e8e9eb 0 50%, #14161a 50% 100%);
   border-radius: 3px;
 }
+/* 内容首页·米白（2026-09-10 补：构图同晨昏，域色取首页 AI 紫 #7a5ce0） */
+.bz-sp-mini.bz-sp-prev-cream {
+  background:
+    radial-gradient(circle at 50% 50%, #7a5ce0 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, #fafaf7 0 50%, #1d1b18 50% 100%);
+  border-radius: 3px;
+}
 
 /* ═══════════ 滚动条全隐藏（面板作用域内） ═══════════ */
 .bz-sp-desk *,

@@ -49,16 +49,16 @@ import {
   runSecondBrainLinkAll,
   unloadSecondBrain,
 } from './secondbrain';
-import { openPomodoro, unloadPomodoro, ensurePomodoro } from './pomodoro';
+import { openPomodoro, unloadPomodoro, ensurePomodoro, toggleFocus } from './pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // 知识盒（knowledge 域，ADR-0072 自 bili-downloader 迁出、ADR-0112 三部重构；网页版已移除，见 tools/bili-downloader）
-import { openKnowledgePanel, openTermNote, unloadKnowledge } from './knowledge';
+import { openKnowledgePanel, openTermNote, openKnowledgeAddTask, unloadKnowledge } from './knowledge';
 // 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 右键菜单）
 import { openAttachMove, ensureAttachFileMenu, ATTACH_COMMAND_ID } from './attach';
 // 统一保险库（encrypt 域，ADR-0085：密码/加密笔记/加密日记三资产单一面板）
 import { openEncrypt, encryptCurrentNote, copyVaultPassword, unloadEncrypt, mountEncryptStatusBar, unmountEncryptStatusBar } from './encrypt';
 // 密码本（password-vault 域，ADR-0109 自统一保险库拆回独立域；ADR-0078 成型版，共享保险箱锁与数据）
-import { openPasswordVault, unloadPasswordVault } from './password-vault';
+import { openPasswordVault, unloadPasswordVault, copyGeneratedPassword } from './password-vault';
 // 内容首页（home 域，ticket 177；旧入口页 launcher 已退役删除，ADR-0093）
 import { openHome, unloadHome } from './home';
 // 今日回顾（recap 域，方向一 R2）：当天五域痕迹聚合只读面板
@@ -134,9 +134,13 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-secondbrain-link-all', name: '为未关联笔记批量补链', icon: 'link-2', callback: () => runSecondBrainLinkAll(getApp()) },
   // 番茄钟（ticket 26-32 新域）
   { id: 'bz-pomodoro-open', name: '番茄钟', icon: DOMAIN_ICONS.pomodoro, callback: () => openPomodoro(getApp()) },
+  // 开始/停止专注（2026-09-10：首页入口菜单联动，一把切换，等价面板「开始 / 重置」两颗钮）
+  { id: 'bz-pomodoro-focus-toggle', name: '开始/停止专注', icon: 'play', callback: () => void toggleFocus(getApp()) },
   // 知识盒（knowledge 域，ADR-0112 三部：部壹文献录入与提炼 · 部贰卡片 · 部叁主题展示）
   { id: 'bz-knowledge-open', name: '知识盒', icon: DOMAIN_ICONS.knowledge, callback: () => openKnowledgePanel(getApp()) },
   { id: 'bz-knowledge-note-term', name: '术语生成文献笔记', icon: 'book-type', callback: () => openTermNote(getApp()) },
+  // 视频生成文献笔记（2026-09-10：首页入口菜单联动，打开视频录入面板——链接/标题由面板内填或预填）
+  { id: 'bz-knowledge-note-video', name: '视频生成文献笔记', icon: 'list-video', callback: () => openKnowledgeAddTask(getApp()) },
   // 附件搬移（ticket 65 新域：移动当前笔记附件到指定文件夹，fileManager 自动更新内部链接）
   { id: ATTACH_COMMAND_ID, name: '移动附件', icon: DOMAIN_ICONS.attach, callback: () => openAttachMove(getApp()) },
   // 保险箱（encrypt 域：移出式清单容器加密；原名「加密保险箱」，ticket 68 更名仅文案）
@@ -146,6 +150,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-encrypt-copy-password', name: '快速复制密码', icon: 'key-round', callback: () => copyVaultPassword(getApp()) },
   // 密码本（password-vault 域，ADR-0109 拆回独立域：ADR-0078 成型版 UI，与保险库共享锁与数据）
   { id: 'bz-password-vault-open', name: '密码本', icon: DOMAIN_ICONS['password-vault'], callback: () => openPasswordVault(getApp()) },
+  // 快速生成密码（2026-09-10：首页入口菜单联动，按设置的长度/字符集生成即复制，60s 后清空剪贴板，不开面板）
+  { id: 'bz-password-vault-gen', name: '快速生成密码', icon: 'key-round', callback: () => void copyGeneratedPassword(getApp()) },
   // 小橘陪伴猫（smartcat 域）
   { id: 'bz-smartcat-open', name: '小橘', icon: DOMAIN_ICONS.smartcat, callback: () => openSmartCat(getApp()) },
   // f7：去 message-circle 重复（第二大脑对话保留）→ messages-square

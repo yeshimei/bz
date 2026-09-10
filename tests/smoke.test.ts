@@ -74,12 +74,18 @@ const EXPECTED_COMMAND_IDS = [
   'bz-review-again', 'bz-review-hard', 'bz-review-good', 'bz-review-easy',
   'bz-secondbrain-panel', 'bz-secondbrain-open', 'bz-secondbrain-chat', 'bz-secondbrain-rebuild-links', 'bz-secondbrain-link-all',
   'bz-pomodoro-open',
+  // 开始/停止专注（2026-09-10：首页入口菜单联动）
+  'bz-pomodoro-focus-toggle',
   'bz-knowledge-open', 'bz-knowledge-note-term',
+  // 视频生成文献笔记（2026-09-10：首页入口菜单联动）
+  'bz-knowledge-note-video',
   'bz-attach-move',
   // 统一保险库（ADR-0085）：密码/加密笔记/加密日记 + 加密当前笔记 + 快速复制密码
   'bz-encrypt-open', 'bz-encrypt-lock', 'bz-encrypt-copy-password',
   // 密码本（password-vault 域，ADR-0109 拆回独立域）
   'bz-password-vault-open',
+  // 快速生成密码（2026-09-10：首页入口菜单联动）
+  'bz-password-vault-gen',
   'bz-smartcat-open', 'bz-smartcat-chat', 'bz-smartcat-hide', 'bz-smartcat-dashboard',
   // 设置面板（ADR-0080）
   'bz-settings-panel-open',
