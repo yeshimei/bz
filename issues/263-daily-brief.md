@@ -1,8 +1,8 @@
 # 263 — 每日简报（B 站 UP 视频 字幕/转写 → AI 要点）
 
-- status: spec（需求已拍板，未实现）
+- status: done（实现已交付并部署；待用户启用名单后跑端到端）
 - type: §1 feature（新源 + 新数据段 + bili-dl 新能力）
-- 分支: 待定（实现时 `daily-brief-263`，worktree 从最新 master 分叉）
+- 分支: `daily-brief-263`（worktree 从 master 386884b4 分叉，已合并回 master 6741285b 并删除）
 - 依据: ADR-0119；ADR-0008（守护）/0060（news.json 段）/0082（剪藏本段契约）/0011（bili-dl 去 AI）；ticket 147（文献盒「CLI 出转录稿 → 插件产笔记」先例）
 
 ## 背景
@@ -120,8 +120,31 @@
 - 场景 H：插件写 `briefs` 后守护下一轮抓取不抹掉该段。
 - 门禁：`pnpm test` + `pnpm exec tsc --noEmit` + 数据层测试（`news-data` 解析/合并 + brief 去重）+ UI 层测试 + smoke.test.ts。
 
+## 交付记录（2026-09-10，已合并 master 6741285b 并部署）
+
+**实现摘要**（24 文件，+2358/−59）：
+
+- **工具侧** `tools/bili-downloader/`：`getUpVideos`（`x/space/wbi/arc/search`，wbi 签名；`length` 是 `"MM:SS"` 字符串需转秒）、`getCid`（**`data` 是裸数组**，历史 `data.pages` 形态亦兼容）、`getSubtitle`（中文轨优先——B 站 `lan` 实际值是 `ai-zh` **不以 zh 开头**，先精确后含 zh）、`checkSubtitlePlausible`（时长越界/字速不可能两闸）、`runBrief`（ups 发现 + items 直传；单轮上限 3 条；单条失败不阻断；转录稿统一落缓存 `resume-brief-<bvid>.txt` 以便按 `cacheRetentionDays` 回收）。新增 `--brief` CLI 分支（b64 传输）。
+- **守护** `tools/news-watcher/`：`resolveBiliDl`（env `BILI_DL_BIN` → 仓库内同级 cli.js → PATH）、`runBiliDlBrief`（spawn + 解析 `[bz-result]`，异常全收敛）、`dispatchBrief`（读名单/known → spawn → 条目登记进 `briefs`；**与文章入库解耦**——无新文章时同样跑）、`readNewsData` 保留两段、CLI 加 `brief` 子命令。
+- **插件** `src/clipbook/`：`news-data` 两段 + `normalizeBrief`/`parseBriefs`/`applyBriefRetention` + `writeNewsDataMerged` 增 `briefs` 键并集与 `removeBriefKeys`；`store` 增 `clipBrief`/`queryBriefs`/`groupBriefsByDay`/`writeBriefState`/`writeBriefPatch`/`deleteBrief`；新 `brief.ts`（待出稿扫描 + 提示词 + `createAI()` + 失败留错误条目）；`render` 增日节头/按天目录/要点轻渲染/阅读面；`ui` 增 rail 源、列表与阅读分支、打开即已读与保存分流、装载后触发出稿；`save` 增目录覆盖；设置增 `dailyBriefDir` 与弹窗「每日简报」组。
+
+**实现期发现（已回写 ADR-0119 修订节）**：
+
+1. 「该 UP 无字幕」是评估缺陷——**未带 Cookie**。带 Cookie 抽样 12 条：可信字幕 3 / 内容错配 6 / 无字幕 3。故字幕必须过校验，转写是主力路径（9/12）。
+2. 同一 `cid` 两次调用可能返回**不同**字幕（已实测两例）。校验规则因此不可省。
+3. `x/player/pagelist` 的 `data` 是**裸数组**（非 `{pages:[]}`）。
+4. 字幕轨 `lan` 值为 `ai-zh`，`/^zh/i` 匹配不到（曾因此误选英文轨，被单测抓出）。
+5. 转录稿必须落**受保留期管理**的缓存目录（不能落系统临时目录，插件可能数小时后才读）。
+
+**门禁**：`pnpm test` 254 文件 / 4098 例全绿；`tsc --noEmit` 无错；bili-dl `node --test` 68 例；news-watcher `node --test` 26 例；主仓库 `pnpm run build` 成功并部署（main.js 含新代码、styles.css 含新样式）。
+**顺带修复**：过程中被项目两条铁律拦下并改正——① 设置文案 lint（描述不得含全角括号，8–32 字）；② 可读性 lint（禁用 9–10px 字号）。
+
+**前置修复（已完成，环境侧）**：`~/.bilibili-cookies.json` 的登录 Cookie 已写入 vault 的 `news.json` `bilibiliCookie` 段（原文件已备份为 `news.json.bak-20260910-133731`）；PM2 `news-watcher` 已重建并**关闭 watch**（原 watch 使插件每次构建都重启守护，实测累计 4508 次；`pm2 save` 已固化）。重建后守护已能正常抓 B 站源。
+
 ## 待定项（实现时确认）
 
-- rail 源「每日简报」在左栏的**排序位置**（现暂列于「剪藏本聚合」之后）。
-- 简报条目是否纳入 smartcat 行为流（打开/保存是否产观察）。
-- 是否需要在「每日简报」源提供「手动重跑单条 / 整批」的命令（现仅右键/长按动作入口）。
+- rail 源「每日简报」在左栏的**排序位置**：现按「日常查阅入口」定位，紧随「全部未读」，其后才是站点行（可随时调整）。
+- 简报条目是否纳入 smartcat 行为流（打开/保存是否产观察）——**本期未接**，剪藏本既有 news 事件通道不含简报。
+- 简报源的「全部标为已读」批量动作**本期不做**（`flowMarkAllRead` 只认 `articles` 段，简报在 `briefs` 段；已在 `buildRailActions` 显式早返回，避免误批量 news 条目）。
+- 是否给 whisper 转写加 `initial_prompt`（本机 faster-whisper 输出**繁体中文**，加「以下是普通话的句子。」可显著转为简体）——这是 bili-dl 的**共享行为**（文献盒同链路），改动会影响既有功能，故未擅自改。
+- 「实时进度」：插件侧出稿为装载后一次性补跑，长批（首轮回溯 10 条）期间无逐条进度反馈。
