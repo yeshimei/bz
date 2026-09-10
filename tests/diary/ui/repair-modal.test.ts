@@ -3,7 +3,7 @@
  * 进度扫描 → 可修项（预览 + 一键修复写回 + 重扫归零）、不可修项（跳转定位到行）、正常态。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { setApp } from '../../../src/diary/app';
+import { setApp } from '../../../src/core/app';
 import { applyDirectories, resetTagsConfig } from '../../../src/diary/config';
 import { openDiaryRepairModal } from '../../../src/diary/ui/repair-modal';
 import { resetObsidianMocks, clearNotices, hasNotice } from '../../mock-obsidian-entry';

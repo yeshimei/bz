@@ -86,31 +86,16 @@ export default interface BzSettings {
   /** 🕒 到期时间格式：relative（今天 14:00 到期）/ absolute（MM/DD HH:mm 到期） */
   memoDueFormat: string;
 
-  // ===== 📖 日记本（12 项，diary-notebook 合并）=====
+  // ===== 📖 日记本（ADR-0115：旧 12 键按消费面收编为 3 键 + 2 跨域读；退役键 data.json 残留值忽略）=====
   /** 📂 日记目录 */
   diaryDirectory: string;
-  /** 🎬 影视目录（日记本/回忆墙归类用；与影院设置的「影视文件夹」cinemaFolderPath 相互独立，互不联动） */
-  movieDirectory: string;
   /** ✉️ 信目录 */
   letterDirectory: string;
-  /** 📊 显示标签计数 */
-  showTagCount: boolean;
-  /** 🕒 使用文件日期作为默认日期 */
+  /** 🕒 写日记默认日期取自文件（否则当前时间） */
   useFileDateTime: boolean;
-  /** 📄 每批加载数量（滚动加载每批显示的条目数） */
-  diaryBatchSize: string;
-  /** 😀 标签按钮显示 emoji（筛选栏与写日记弹窗，关=纯文字） */
-  diaryTagShowEmoji: boolean;
-  /** 📝 卡片内容渲染方式：markdown / plain（纯文本） */
-  diaryContentRenderMode: string;
-  /** 🔀 标签排序：fixed（内置配置顺序）/ count（条目数量降序） */
-  diaryTagSortMode: string;
-  /** 📅 打开面板默认日期筛选：all（全部）/ this-month（本月） */
-  diaryDefaultDateFilter: string;
-  /** 🏷️ 默认选中标签（空=全部；填主标签名则打开面板即选中该标签） */
-  diaryDefaultSelectedTag: string;
-  /** ✏️ 保存后立即进入编辑（关=保存后仅关闭弹窗） */
-  diaryJumpToEditAfterSave: boolean;
+  // 跨域读：影视目录走影院域 cinemaFolderPath、书库目录走书架墙域 resolveFolderPath（ADR-0115，
+  // 用户拍板「影视部分走影院的」）；退役：movieDirectory/showTagCount/diaryBatchSize/diaryTagShowEmoji/
+  // diaryContentRenderMode/diaryTagSortMode/diaryDefaultDateFilter/diaryDefaultSelectedTag/diaryJumpToEditAfterSave
 
 
   // ===== 📰 剪藏本（自动摘要开关 + ticket 124 详设/数据源）=====
@@ -167,8 +152,8 @@ export default interface BzSettings {
   bookshelfLayout: string;
 
   // ===== 🎬 影院（cinema 域；ADR-0087 起接管旧影视域）=====
-  /** 📁 影视文件夹（影院域数据源；缺省回落「我的/影视」。与日记本设置的「影视目录」
-   *  movieDirectory 相互独立——后者仅日记/回忆墙归类用，同指「我的/影视」也不联动） */
+  /** 📁 影视文件夹（影院域数据源；缺省回落「我的/影视」。目录唯一真理跨域化（ADR-0115）：
+   *  日记本域的影视目录经 resolveCinemaFolderPath 实时读本键，两域同源联动 */
   cinemaFolderPath: string;
   /** 🎬 影院：默认排序（date=最近观看/created=按创建/rating=按评分；打开面板时选中态，
    *  非法值回落 date。issue 194） */
@@ -186,11 +171,10 @@ export default interface BzSettings {
   /** 🎨 归物本主题（与布局一一对应，poster ↔ warmwhite 恒定纸面） */
   belSkinTheme: string;
   /** 🎨 外观组占位键（issue 246 范式铺开）：各面板域布局/主题各一档（布局值统一 default），
-   *  由设置页 choiceCards 行读写（可看可选可落盘）；域 UI 消费在各域真做皮肤时接入（届时挂 onChange 热切换） */
+   *  由设置页 choiceCards 行读写（可看可选可落盘）；域 UI 消费在各域真做皮肤时接入（届时挂 onChange 热切换）。
+   *  日记本键沿用 diarySkin/diarySkinTheme（ADR-0115 正名；旧 diaryWallSkin/Theme 占位键退役，值零迁移） */
   diarySkin: string;
   diarySkinTheme: string;
-  diaryWallSkin: string;
-  diaryWallSkinTheme: string;
   clipbookSkin: string;
   clipbookSkinTheme: string;
   favoritesSkin: string;
@@ -436,8 +420,6 @@ export default interface BzSettings {
   /** 设置面板主题：'chenhun' = 晨昏（亮如晨、暗如夜，跟随 Obsidian 自动切合；当前唯一主题） */
   settingsPanelSkin: string;
 
-  // ===== 🖼️ 回忆墙（diary-wall 域，ADR-0081）=====
-  /** 回忆墙：移动端默认全屏（默认开——回忆墙为媒体优先瀑布流，移动端真全屏设计） */
 }
 
 export const DEFAULT_SETTINGS: BzSettings = {
@@ -486,21 +468,10 @@ export const DEFAULT_SETTINGS: BzSettings = {
   todoSkin: 'paper',
   todoLayout: 'default',
 
-  // 日记本
+  // 日记本（ADR-0115：3 键；影视/书库目录跨域读，退役键见接口注释）
   diaryDirectory: '我的/日记',
-  movieDirectory: '我的/影视',
   letterDirectory: '我的/信',
-  showTagCount: true,
   useFileDateTime: false,
-  diaryBatchSize: '20',
-  diaryTagShowEmoji: true,
-  diaryContentRenderMode: 'markdown',
-  diaryTagSortMode: 'fixed',
-  diaryDefaultDateFilter: 'all',
-  diaryDefaultSelectedTag: '',
-  diaryJumpToEditAfterSave: true,
-
-
 
   // 剪藏本
   articleDirectory: '归档/网页剪藏',
@@ -618,11 +589,10 @@ export const DEFAULT_SETTINGS: BzSettings = {
   belongingsDefaultStatus: '',
   belSkin: 'poster',
   belSkinTheme: 'warmwhite',
-  // 外观组占位键默认值（issue 246；布局统一 default，主题各域一名，与原型 VALUES 同值）
+  // 外观组占位键默认值（issue 246；布局统一 default，主题各域一名，与原型 VALUES 同值）；
+  // 日记本主题默认画廊白（ADR-0115 正名沿用 diarySkinTheme 键，默认值随墙语义 ivory→gallery）
   diarySkin: 'default',
-  diarySkinTheme: 'ivory',
-  diaryWallSkin: 'default',
-  diaryWallSkinTheme: 'gallery',
+  diarySkinTheme: 'gallery',
   clipbookSkin: 'default',
   clipbookSkinTheme: 'newsprint',
   favoritesSkin: 'default',
@@ -660,8 +630,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 设置面板（ADR-0080）：移动端默认全屏（默认开）；布局默认经纬；主题默认晨昏（跟随亮暗）
   settingsPanelLayout: 'jingwei',
   settingsPanelSkin: 'chenhun',
-  // 回忆墙（diary-wall 域，ADR-0081）：移动端默认全屏（默认开——媒体优先瀑布流真全屏）
-
   // 小橘陪伴猫（smartcat 域；移动端默认全屏键聊天/设置/数据面板共用，2026-08-23 合并一套）
   smartcatEnabled: true,
   smartcatEmbeddingModel: '',

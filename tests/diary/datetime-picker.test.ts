@@ -5,7 +5,7 @@
  */
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { moment } from 'obsidian';
-import { setApp } from '../../src/diary/app';
+import { setApp } from '../../src/core/app';
 import { applyDirectories, resetTagsConfig } from '../../src/diary/config';
 import { createDateTimeControl, resetDateTimeControl } from '../../src/diary/ui/datetime-picker';
 import { createAddDialog, openAddDialog } from '../../src/diary/ui/dialogs';

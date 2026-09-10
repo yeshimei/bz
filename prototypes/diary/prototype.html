@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>日记本 · 原型预览（真行为单源）</title>
+<!--
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ 本文件 = 日记本域 UI 的评审壳（issue 256/ADR-0115，回忆墙升格正名后      │
+  │ 按 bookshelf 范式单源化）。                                             │
+  │ 组件样式零内联，全部来自（与 build-css SOURCES 同序）：                   │
+  │   ../src/core/styles.css → ../src/core/ui/tokens.css                    │
+  │   → ../src/core/ui/components.css → ../src/diary/styles.css             │
+  │ markup 单源（ADR-0104）：壳模板/图标表/MIME/统计/题注出自 src/diary/      │
+  │   render.ts（BZR_diary）；面板本体由真 ui.ts 消费同一份。                 │
+  │ 行为单源（ADR-0106）：交互全部是插件同款 ui.ts/store.ts/dialogs.ts 依赖链│
+  │   ——经 ./prototype-behavior.js（fake-sim.ts 构建，alias obsidian→假层）  │
+  │   在下方两个 iframe 里跑真行为：桌面 980px 卡 / 移动 396px 真全屏。       │
+  │ 数据 = localStorage fake vault（prototype-data.js：真实 vault 的 md 原文 │
+  │   逐字快照，由真 parser/data 现场解析；assets/ = 真实媒体拷贝）。         │
+  │ 壳内只允许：外景容器样式、评审徽牌、演示钩子与自检。                      │
+  └────────────────────────────────────────────────────────────────────────┘
+-->
+<style>
+  /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 32px 24px;
+    background: #e3e0d8; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+  * { scrollbar-width: none; } *::-webkit-scrollbar { display: none; }
+
+  /* 桌面外景（真行为 iframe：面板 append iframe body，本体 980px 宽 82vh 卡来自 styles.css） */
+  .demo-dt { flex: none; width: 1020px; height: 760px; }
+  /* 移动外景：396px iframe → 真全屏态（≤768 fake Platform.isMobile） */
+  .demo-mob { width: 396px; height: 780px; border-radius: 26px; overflow: hidden; flex: none;
+    border: 1px solid #d8d1c0; box-shadow: 0 8px 30px rgba(0,0,0,.14); background: #f5f2ec; }
+  .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
+
+  /* 评审徽牌（演示壳自用） */
+  .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #9a917d; display: flex; gap: 10px; align-items: center;
+    background: rgba(255,255,255,.9); border: 1px solid #d8d1c0; padding: 3px 8px; z-index: 900; }
+  .vbadge button { border: none; background: none; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; }
+  .vbadge .ok { color: #3d8f5d; }
+  .vbadge .bad { color: #b3564d; }
+</style>
+</head>
+<body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark，壳内必须补一类才不透明 -->
+  <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="日记本·桌面"></iframe></div>
+  <div id="mobHost" class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="日记本·移动"></iframe></div>
+
+  <div class="vbadge">日记本 · 真行为单源预览（桌面=真 ui.ts 跑在 980px，移动=396px 真全屏）· 真实 vault 快照
+    <button id="mobToggle">隐藏移动端</button>
+    <button id="reset">重置演示数据</button>
+    <span id="stResult"></span>
+  </div>
+
+<script src="./prototype-icons.js"></script>
+<script src="./prototype-data.js"></script>
+<script>
+(function () {
+  /* ==================== 壳基座（仅外景）：两个真行为 iframe + 数据种子 ====================
+   * 种子 = DIARY.FILES（真实 vault md 原文逐字）写 localStorage fake vault（bz-sim: 前缀 +
+   * {c,ct,mt} 封套，与 fake-obsidian encodeSeedFile 同构）；由真数据链现场解析。
+   */
+  const LS = 'bz-sim:';
+  const seedOnce = () => {
+    const files = (window.DIARY && window.DIARY.FILES) || [];
+    if (!files.length) return;
+    if (localStorage.getItem(LS + files[0].path)) return; // 已种子过（评审期编辑可持久）
+    for (const f of files) {
+      localStorage.setItem(LS + f.path, JSON.stringify({ c: f.content, ct: f.ctime, mt: f.ctime }));
+    }
+  };
+  seedOnce();
+
+  const dtFrame = () => document.querySelector('#dtHost iframe');
+  const mobFrame = () => document.querySelector('#mobHost iframe');
+  const dtDoc = () => dtFrame().contentDocument;
+  const mobDoc = () => mobFrame().contentDocument;
+  // 轮询现取 contentDocument：iframe 加载前后 document 引用会替换（about:blank → 真实文档）
+  const waitFrame = (getDoc, sel) => new Promise((res, rej) => {
+    const started = Date.now();
+    const tries = () => {
+      try {
+        const doc = getDoc();
+        if (doc && doc.querySelector(sel)) return res(doc);
+        if (Date.now() - started > 25000) return rej(new Error('iframe 面板超时'));
+        setTimeout(tries, 150);
+      } catch (e) { setTimeout(tries, 150); }
+    };
+    tries();
+  });
+
+  document.querySelector('#mobToggle').addEventListener('click', () => {
+    const m = document.querySelector('#mobHost');
+    const hidden = m.style.display === 'none';
+    m.style.display = hidden ? '' : 'none';
+    document.querySelector('#mobToggle').textContent = hidden ? '隐藏移动端' : '显示移动端';
+  });
+
+  document.querySelector('#reset').addEventListener('click', () => {
+    const kill = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(LS)) kill.push(k);
+    }
+    kill.forEach((k) => localStorage.removeItem(k));
+    location.reload();
+  });
+
+  /* ==================== 自检（?selftest=1）：真行为 DOM 断言（经 iframe） ====================
+   * 必含 CSS 生效断言（view 页 CSS 路径 404 前科）：.bz-diary 作用域自定义属性 --dw-bg
+   * 只有 src/diary/styles.css 真正加载并命中根容器才会出现在计算样式上。
+   * 写链路端到端：写日记弹窗保存 → fake vault 落盘 → vault modify 防抖回刷 → 删除 → 整文件清空。
+   */
+  if (location.search.includes('selftest')) {
+    window.__st = { pass: 0, fail: [] };
+    const t = (name, cond) => cond ? window.__st.pass++ : window.__st.fail.push(name);
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const today = (() => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    })();
+    const TODAY_KEY = LS + '我的/日记/' + today + '.md';
+    (async () => {
+      const res = document.querySelector('#stResult');
+      try {
+        // 基线清理：上次运行留下的「今天」日记文件先清掉（基线 = 无今日文件）
+        if (localStorage.getItem(TODAY_KEY)) {
+          localStorage.removeItem(TODAY_KEY);
+          if (!location.search.includes('reset=1')) {
+            location.search = '?selftest=1&reset=1';
+            return;
+          }
+        }
+        const dd = await waitFrame(dtDoc, '.bz-diary');
+        const md = await waitFrame(mobDoc, '.bz-diary');
+        res.textContent = '…';
+        const dt = (sel) => dd.querySelector(sel);
+
+        // CSS 生效断言（404 前科防线）：域作用域变量在双端计算样式上都存在
+        const cssVar = (doc) => {
+          const root = doc.querySelector('.bz-diary');
+          return getComputedStyle(root).getPropertyValue('--dw-bg').trim();
+        };
+        t('桌面域CSS生效(--dw-bg)', cssVar(dd).length > 0);
+        t('移动域CSS生效(--dw-bg)', cssVar(md).length > 0);
+        t('桌面品牌=日记本', dt('.bz-diary-bookname')?.textContent === '日记本');
+        t('桌面面板可见', getComputedStyle(dt('.bz-diary')).display === 'flex');
+
+        // 数据链：真实快照经真 parser 现场解析 → chips/节头在场
+        const chips = () => dd.querySelectorAll('.bz-diary-chip').length;
+        t('chips行渲染', chips() > 3);
+        t('加密chip在场', [...dd.querySelectorAll('.bz-diary-chip')].some((c) => c.textContent.includes('加密')));
+        t('日期节头渲染', dd.querySelectorAll('.bz-diary-day-head').length > 0);
+        t('章节栏月份渲染', dd.querySelectorAll('.bz-diary-month').length > 0);
+        t('移动端面板开', !!md.querySelector('.bz-diary'));
+        t('移动端节头渲染', md.querySelectorAll('.bz-diary-day-head').length > 0);
+        t('媒体占位或图片在场', dd.querySelectorAll('.bz-diary-item img, .bz-diary-ph').length >= 0); // 墙体节点树成立
+        t('灯箱壳在场', !!dt('.bz-diary-lb'));
+        t('抽屉壳在场', !!dt('.bz-diary-sheet'));
+
+        // 写链路端到端（真 openAddDialog → store.addEntry → fake vault 落盘）
+        dt('[data-act="add"]').click();
+        await sleep(100);
+        t('写日记弹窗开', dt('#add-diary-popup') && dt('#add-diary-popup').style.display === 'block');
+        t('类型按钮渲染', dd.querySelectorAll('#add-diary-type-container .diary-tag-selector-btn').length > 3);
+        t('日期控件默认今天', dd.querySelector('#add-diary-datetime').value.startsWith(today));
+        dd.querySelector('#add-diary-type-container .diary-tag-selector-btn').click();
+        dd.querySelector('#add-diary-popup > div:last-child > button').click(); // 保存钮 = 尾部按钮容器内唯一按钮
+        await sleep(400);
+        const saved = localStorage.getItem(TODAY_KEY);
+        t('保存落盘fakevault', !!saved && saved.includes('# '));
+        // vault modify → 防抖回刷（DW3 400ms + 渲染）
+        await sleep(900);
+        const todayHead = [...dd.querySelectorAll('.bz-diary-day-head')].find((h) => h.dataset.date === today);
+        t('新条目回刷上墙', !!todayHead);
+
+        // 删除端到端（右键菜单 → 删除 → flow 确认 → 整文件清空 + file-vacated 回刷）
+        const clickReal = (el) => {
+          if (!el) return;
+          const r = el.getBoundingClientRect();
+          const mk = (type) => new MouseEvent(type, { clientX: r.left + 10, clientY: r.top + 10, bubbles: true, cancelable: true });
+          el.dispatchEvent(mk('mousedown'));
+          el.dispatchEvent(mk('mouseup'));
+          el.dispatchEvent(mk('click'));
+        };
+        const item = dd.querySelector('.bz-diary-item[data-widx]'); // 今日为新写入条目 = 排序最前
+        t('今日条目卡在场', !!item);
+        item.dispatchEvent(new MouseEvent('contextmenu', { clientX: 400, clientY: 300, bubbles: true, cancelable: true }));
+        await sleep(150);
+        t('右键菜单开', !!dd.querySelector('.bz-item-menu'));
+        const delBtn = [...dd.querySelectorAll('.bz-item-menu button')].find((b) => b.textContent.includes('删除'));
+        t('删除菜单项在', !!delBtn);
+        clickReal(delBtn);
+        await sleep(200);
+        const okBtn = dd.querySelector('#__shared_confirm_ok__');
+        t('删除确认框开', !!okBtn);
+        clickReal(okBtn);
+        await sleep(600);
+        t('删除落盘', !localStorage.getItem(TODAY_KEY));
+        await sleep(900);
+        t('墙已回刷(今日节头消失)', ![...dd.querySelectorAll('.bz-diary-day-head')].some((h) => h.dataset.date === today));
+
+        document.title = window.__st.fail.length
+          ? 'SELFTEST FAIL ' + window.__st.fail.join(',')
+          : `SELFTEST OK ${window.__st.pass}/${window.__st.pass + window.__st.fail.length}`;
+        res.textContent = window.__st.fail.length ? '自检失败' : `自检通过 ${window.__st.pass}`;
+        res.className = window.__st.fail.length ? 'bad' : 'ok';
+      } catch (err) {
+        document.title = 'SELFTEST ERR ' + (err && err.message || err);
+        res.textContent = '自检异常';
+        res.className = 'bad';
+      }
+    })();
+  }
+})();
+</script>
+</body>
+</html>

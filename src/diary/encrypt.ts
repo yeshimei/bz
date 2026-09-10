@@ -1,13 +1,13 @@
 /**
- * 日记加密编排层（diary 域，ADR-0017）
+ * 日记加密编排层（diary 域，ADR-0017；issue 256 随写链路迁入新 diary 域）
  * 复用保险箱 SafeManager：加密日记 = 保险箱里一篇 kind='diary-entry' 的 SafeNote。
  * - 加密：构建 `# emoji HH:mm\n正文` 块 + 收集正文引用的图片/视频附件 → lockNote 入库 →
- *         从 diaryDataMap 移除该条目（md 块由 diary 域自行摘除，lockNote 不删整 md）。
+ *         原块由 diary 域写层（store.removeDiaryEntries）摘除（lockNote 不删整 md）。
  * - 加载：从解锁的 SafeManager 读全部 diary-entry → 解密 → 解析成 DiaryEntry（带 encrypted/noteId 标记）。
  * - 降级/改分类：restoreDiaryEntry 还原附件 + 块 merge 回原 md + 取出即删。
  * 依赖方向（ADR-0002）：store(数据层) ← 本层 ← ui；不挂 window；import 保险箱域（显式跨域 import）。
  */
-import { getApp } from './app';
+import { getApp } from '../core/app';
 import { getSafeManager } from '../encrypt';
 import { collectNoteAttachmentPaths, kindOf } from '../encrypt/ui';
 import { bytesToBase64, type LockAttachmentInput } from '../encrypt/data';

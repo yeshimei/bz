@@ -60,8 +60,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-auto-summary-redo',
   // 统一保险库（encrypt 域，ADR-0085）：密码/笔记/日记合一
   // 密码本（password-vault 域，ADR-0109 拆回独立域恢复 bz-password-vault-open）
-  // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图
-  'bz-diary-wall-open',
+  // 日记本（diary 域，ADR-0115 由回忆墙升格）：日记数据的媒体优先视图 + 写日记入口
+  'bz-diary-open', 'bz-diary-write',
   'bz-favorites-open', 'bz-favorites-add',
   // 旧书库（library）域退役：bz-library-open/bz-book-notes-open 已删（读书笔记入书架墙详情弹窗）
   'bz-reading-report-open',
@@ -85,7 +85,6 @@ const EXPECTED_COMMAND_IDS = [
   'bz-settings-panel-open',
   // 数据体检（checkup 域，D4）
   'bz-data-checkup-open',
-  'bz-diary-open',
 ];
 
 /** 内存"磁盘"存储：模拟 Obsidian 插件的 data.json 持久层 */
@@ -116,8 +115,8 @@ describe('bz 骨架冒烟', () => {
     await createPlugin(makeMockApp());
 
     const ids = registeredCommands.map((c: any) => c.id);
-    // 含日记本 init 内注册的命令（bz-diary-write）
-    const expected = [...EXPECTED_COMMAND_IDS, 'bz-diary-write'];
+    // ADR-0115：日记本两命令（bz-diary-open / bz-diary-write）已入 COMMANDS 表，无域内注册增量
+    const expected = [...EXPECTED_COMMAND_IDS];
     expect(ids.sort()).toEqual(expected.sort());
     // 均未设置默认快捷键
     for (const c of registeredCommands) {
@@ -192,8 +191,8 @@ describe('bz 骨架冒烟', () => {
       ['bz-password-vault-open', 'password-vault'],
       ['bz-smartcat-open', 'smartcat'],
       ['bz-diary-open', 'diary'],
-      // 批 B 补缺入表：回忆墙（images）/ 设置面板（settings-2）
-      ['bz-diary-wall-open', 'diary-wall'],
+      ['bz-diary-write', 'diary'],
+      // 批 B 补缺入表：设置面板（settings-2）；回忆墙键随 ADR-0115 升格并入 diary
       ['bz-settings-panel-open', 'settings-panel'],
     ];
     for (const [id, domain] of domainCommands) {
@@ -212,22 +211,26 @@ describe('bz 骨架冒烟', () => {
     expect(byId('bz-review-open').icon).toBe('repeat-2');
   });
 
-  it('回忆墙（diary-wall，ADR-0081）：命令注册 + ensureDiaryWall 幂等可调用不抛错', async () => {
+  it('日记本（diary，ADR-0115 回忆墙升格）：命令注册 + ensureDiary 幂等可调用不抛错', async () => {
     const app = makeMockApp();
     await createPlugin(app);
 
-    // 命令已裸注册且名称/图标正确
-    const cmd = registeredCommands.find((c: any) => c.id === 'bz-diary-wall-open');
+    // 打开命令：已裸注册且名称/图标正确
+    const cmd = registeredCommands.find((c: any) => c.id === 'bz-diary-open');
     expect(cmd).toBeDefined();
-    expect(cmd.name).toBe('回忆墙');
-    expect(cmd.icon).toBe('images');
-    // 回调（openDiaryWall 异步 ensure 后 show）同步调用不抛
+    expect(cmd.name).toBe('日记本');
+    expect(cmd.icon).toBe('notebook-pen');
+    // 回调（openDiary 异步 ensure 后 show）同步调用不抛
     expect(() => cmd.callback()).not.toThrow();
-    // 幂等 ensureDiaryWall：mock app 下可调用且不抛（UI 层数据读取失败安全降级为空）
-    const { ensureDiaryWall, unloadDiaryWall } = await import('../src/diary-wall');
-    await expect(ensureDiaryWall(app as any)).resolves.toBeUndefined();
-    await expect(ensureDiaryWall(app as any)).resolves.toBeUndefined();
-    unloadDiaryWall();
+    // 写日记命令同表注册（旧域内注册已收编）
+    const writeCmd = registeredCommands.find((c: any) => c.id === 'bz-diary-write');
+    expect(writeCmd).toBeDefined();
+    expect(writeCmd.name).toBe('写日记');
+    // 幂等 ensureDiary：mock app 下可调用且不抛（UI 层数据读取失败安全降级为空）
+    const { ensureDiary, unloadDiary } = await import('../src/diary');
+    await expect(ensureDiary(app as any)).resolves.toBeUndefined();
+    await expect(ensureDiary(app as any)).resolves.toBeUndefined();
+    unloadDiary();
   });
 
   it('onunload 清理 toast 容器（UX 整改 l2-toast）', async () => {
@@ -336,8 +339,8 @@ ${failures.join('\n')}`).toEqual([]);
     const plugin = await createPlugin(makeMockApp());
     plugin.onunload();
 
-    // 含日记本 init 内注册的命令（bz-diary-write）
-    const expectedRemoved = [...EXPECTED_COMMAND_IDS, 'bz-diary-write'];
+    // ADR-0115：日记本两命令已入 COMMANDS 表，无域内注册增量
+    const expectedRemoved = [...EXPECTED_COMMAND_IDS];
     expect(removedCommands.sort()).toEqual(expectedRemoved.sort());
   });
 

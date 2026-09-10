@@ -77,6 +77,7 @@ http.createServer((req, res) => {
       cinema: ['影院', '影视管理 · 豆瓣契约'],
       clipbook: ['剪藏本', '未读流 + 网页归档'],
       favorites: ['收藏本', '软木板 · 标签工作台'],
+      diary: ['日记本', '媒体墙 · 章节导航（ADR-0115）'],
       home: ['首页', '内容首页 · 活动河'],
       knowledge: ['知识盒', '词典皮三部 · 文献 / 卡片 / 主题'],
       'password-vault': ['密码本', '密码条目 · 金印锁屏 · 演示库密码 demo'],

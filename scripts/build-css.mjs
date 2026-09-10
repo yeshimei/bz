@@ -37,7 +37,7 @@ const SOURCES = [
   "src/core/ui/tokens.css",
   "src/core/ui/components.css",
   "src/diary/styles.css",
-  "src/diary-wall/styles.css",
+  "src/diary/styles.css",
   "src/home/styles.css",
   "src/recap/styles.css",
   "src/todo/styles.css",

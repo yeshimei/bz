@@ -2,10 +2,12 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import {
   applyDirectories,
-  BATCH_SIZE,
   buildTagMaps,
+  BOOK_DIRECTORY,
   DIARY_DIRECTORY,
   emojiToTagMap,
+  LETTER_DIRECTORY,
+  MOVIE_DIRECTORY,
   getParentPrimaryTag,
   getSortedTagsForAddDialog,
   getSubTagsOfPrimary,
@@ -73,20 +75,23 @@ describe('标签辅助函数', () => {
 });
 
 describe('applyDirectories 设置应用', () => {
-  it('diaryBatchSize 生效', () => {
-    applyDirectories({ diaryBatchSize: '10' });
-    expect(BATCH_SIZE).toBe(10);
-  });
-
-  it('diaryBatchSize 缺省/非法回退默认 20', () => {
-    applyDirectories({});
-    expect(BATCH_SIZE).toBe(20);
-    applyDirectories({ diaryBatchSize: 'abc' });
-    expect(BATCH_SIZE).toBe(20);
-  });
-
-  it('diaryDirectory 生效', () => {
-    applyDirectories({ diaryDirectory: '日记2' });
+  it('diaryDirectory / letterDirectory 生效', () => {
+    applyDirectories({ diaryDirectory: '日记2', letterDirectory: '信件2' });
     expect(DIARY_DIRECTORY).toBe('日记2');
+    expect(LETTER_DIRECTORY).toBe('信件2');
+  });
+
+  it('缺省回退默认目录（我的/日记、我的/信）', () => {
+    applyDirectories({});
+    expect(DIARY_DIRECTORY).toBe('我的/日记');
+    expect(LETTER_DIRECTORY).toBe('我的/信');
+  });
+
+  it('影视/书库目录跨域解析并回退默认（本域无独立设置键）', () => {
+    applyDirectories({});
+    expect(typeof MOVIE_DIRECTORY).toBe('string');
+    expect(MOVIE_DIRECTORY.length).toBeGreaterThan(0);
+    expect(typeof BOOK_DIRECTORY).toBe('string');
+    expect(BOOK_DIRECTORY.length).toBeGreaterThan(0);
   });
 });

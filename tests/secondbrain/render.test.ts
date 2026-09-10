@@ -41,10 +41,14 @@ describe('fmtCompact', () => {
 describe('computeStats（口径冻结）', () => {
   it('聚合段落/字符/平均段长/12 周桶/来源分布', () => {
     const now = Date.now();
+    // 12 周桶按 epoch 周锚定（floor(now/week)），mtime=now 会随「周内位置」漂桶（周四 08:00 后必挂）——
+    // 种子改按周锚点确定性落桶：A 落当前桶 [11]，B 落上一桶 [10]
+    const weekMs = 7 * 24 * 3600 * 1000;
+    const thisWeekStart = Math.floor(now / weekMs) * weekMs;
     const s = computeStats(
       meta({
-        '卡片盒/A.md': { mtime: now, chunks: [{ text: 'aaaaaaaaaa' }] },
-        '归档/网页剪藏/B.md': { mtime: now - 8 * 86400000, chunks: [{ text: 'bbbb' }, { text: 'cc' }] },
+        '卡片盒/A.md': { mtime: thisWeekStart, chunks: [{ text: 'aaaaaaaaaa' }] },
+        '归档/网页剪藏/B.md': { mtime: thisWeekStart - 8 * 86400000, chunks: [{ text: 'bbbb' }, { text: 'cc' }] },
       }),
       now
     );
@@ -53,6 +57,7 @@ describe('computeStats（口径冻结）', () => {
     expect(s.totalChars).toBe(16);
     expect(s.bySource[0].name).toBe('归档');
     expect(s.trend12w[11]).toBe(1);
+    expect(s.trend12w[10]).toBe(1);
     expect(s.avgChunkLen).toBe(Math.round(16 / 3));
   });
 });

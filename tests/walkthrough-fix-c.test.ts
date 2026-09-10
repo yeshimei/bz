@@ -256,11 +256,11 @@ describe('批 C-19：settings-panel 移动列表项名归档', () => {
   });
 });
 
-describe('批 C-20：diary-wall 矮窗兜底', () => {
+describe('批 C-20：diary 矮窗兜底（ADR-0115 回忆墙升格日记本）', () => {
   it('桌面卡 max-height 压顶 + min-height 随视口收缩，矮窗不再溢出被裁', () => {
-    const css = repo('src/diary-wall/styles.css');
-    const desk = rule(css, '.bz-diary-wall-desk');
-    expect(desk, '缺 .bz-diary-wall-desk 规则').not.toBeNull();
+    const css = repo('src/diary/styles.css');
+    const desk = rule(css, '.bz-diary-desk');
+    expect(desk, '缺 .bz-diary-desk 规则').not.toBeNull();
     expect(desk![1]).toContain('max-height: calc(100vh - 48px)');
     expect(desk![1]).toContain('min-height: min(640px, calc(100vh - 48px))');
   });

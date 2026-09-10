@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>日记本 · 真行为实例</title>
+<!--
+  本页 = 日记本行为单源评审壳的 iframe 视图（issue 256/ADR-0115）。
+  它不实现任何日记本交互——只把真行为层跑起来：
+    - 载入同一份 CSS（core + 域，与插件同源、build-css SOURCES 同序）
+    - 载入 prototype-behavior.js（真 ui.ts/store.ts/dialogs.ts/data.ts 依赖链，
+      alias obsidian→fake）
+    - boot + openPanel：面板 append 到本页 body（iframe 即全屏视口），
+      桌面 980px 卡 / 移动 ≤768 真全屏（fake Platform.isMobile 按视口宽判定）
+  宿主差异（数据/媒体/图标/视口）由 fake-obsidian / prototype-icons.js / prototype-data.js 提供。
+  评审钩子：?theme=dark 暗模式直达。
+-->
+<link rel="stylesheet" href="../../src/core/styles.css">
+<link rel="stylesheet" href="../../src/core/ui/tokens.css">
+<link rel="stylesheet" href="../../src/core/ui/components.css">
+<link rel="stylesheet" href="../../src/diary/styles.css">
+<script src="./prototype-icons.js"></script>
+<script src="./prototype-data.js"></script>
+<script src="./prototype-behavior.js"></script>
+<style>
+  /* iframe 内全屏面板：清掉 body 边距，让根遮罩铺满 */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+  body { background: #eae6dc; }
+  /* 模拟 Obsidian 宿主变量（core 弹层/通知取值用；插件内由主题提供） */
+  body {
+    --background-primary: #fbf9f3; --text-normal: #171512; --text-muted: #8b8474; --text-faint: #b3ab99;
+    --text-error: #b3564d; --background-modifier-hover: rgba(23,21,18,.06); --color-green: #3d8f5d;
+    --background-modifier-border: rgba(23,21,18,.12); --input-shadow: none;
+    --interactive-normal: #fff; --interactive-accent: #7c4a2d; --interactive-accent-hover: #6a3f26;
+    --text-on-accent: #ffffff; --shadow-s: 0 1px 3px rgba(0,0,0,.1);
+    --background-modifier-cover: rgba(0,0,0,.35); --background-secondary: #f1ede3;
+    --text-accent: #7c4a2d; --font-ui-small: 13px;
+  }
+</style>
+</head>
+<body class="theme-light">
+<script>
+  (function () {
+    var B = window.BZW_diary;
+    B.bootDiarySim();
+    if (location.search.indexOf('theme=dark') >= 0) {
+      document.body.classList.remove('theme-light');
+      document.body.classList.add('theme-dark');
+    }
+    B.openPanel();
+  })();
+</script>
+</body>
+</html>

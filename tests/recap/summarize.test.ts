@@ -11,8 +11,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault } from '../mock-vault';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { DEFAULT_SETTINGS } from '../../src/settings';
-import { setApp as setDiaryApp } from '../../src/diary/app';
-import { setDiaryDataMap, state } from '../../src/diary/state';
+import { setApp as setDiaryApp } from '../../src/core/app';
+import { setDiaryDataMap } from '../../src/diary/store';
 import { resetTagsConfig } from '../../src/diary/config';
 import { parseFile } from '../../src/diary/parser';
 
@@ -69,10 +69,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   resetTagsConfig();
   setSettingsProvider(() => ({ ...DEFAULT_SETTINGS }));
-  state.data.originalDiaryEntries = [];
-  state.data.currentFilteredEntries = [];
+  // 旧 diary/state 筛选态已随写链路迁入 store：数据图复位即可
   setDiaryDataMap(null);
-  state.events.isInternalUpdate = false;
 });
 
 /* ---------- 纯函数 ---------- */

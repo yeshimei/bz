@@ -1,31 +1,39 @@
 /**
- * 日记本领域配置：目录常量、批量数、标签配置（emoji 编码）。
- * 原脚本 35-158 行；设置项「标签配置」已移除，标签表为内置默认 + 测试重置入口。
+ * 日记本（diary）域配置：目录常量、标签配置（emoji 编码）。
+ * 本域 = 原回忆墙升格正名（ADR-0115，issue 256）：唯一日记 UI + 写链路宿主。
+ * - 目录常量：DIARY_DIRECTORY（日记）/MOVIE_DIRECTORY（影视）/LETTER_DIRECTORY（信）/BOOK_DIRECTORY（书库）；
+ *   目录唯一真理跨域化：影视读影院域 resolveCinemaFolderPath、书库读书架墙域 resolveFolderPath
+ *   （用户拍板「影视部分走影院的」，本域不再有独立 movieDirectory/bookDirectory 设置键）；
+ * - 标签表与 emoji 双向映射、resetTagsConfig（测试/重置入口）、写弹窗标签序 getSortedTagsForAddDialog；
+ * - 标签表为内置默认 + 测试重置入口（设置项「标签配置」已移除）。
  */
 import type { SubTagConfig, TagConfig } from './types';
+import { resolveCinemaFolderPath } from '../cinema/state';
+import { resolveFolderPath as resolveBookshelfFolderPath } from '../bookshelf/data';
 
 // ===== 可变常量（设置应用时更新） =====
 export let DIARY_DIRECTORY = '我的/日记';
 export let MOVIE_DIRECTORY = '我的/影视';
 export let LETTER_DIRECTORY = '我的/信';
-export let BATCH_SIZE = 20;
+export let BOOK_DIRECTORY = '书库';
 
-/** 应用目录常量（设置变更时调用） */
-export function applyDirectories(settings: {
-  diaryDirectory?: string;
-  movieDirectory?: string;
-  letterDirectory?: string;
-  diaryBatchSize?: string;
-}) {
-  DIARY_DIRECTORY = settings.diaryDirectory || '我的/日记';
-  MOVIE_DIRECTORY = settings.movieDirectory || '我的/影视';
-  LETTER_DIRECTORY = settings.letterDirectory || '我的/信';
-  BATCH_SIZE = parseInt(settings.diaryBatchSize || '20', 10) || 20;
+/** 跨域目录解析兜底：对域设置未注入/抛错时回落本域默认，绝不让目录应用整体失败 */
+function safeResolve(resolver: () => string, fallback: string): string {
+  try {
+    const v = resolver();
+    return v && v.trim() ? v : fallback;
+  } catch (e) {
+    return fallback;
+  }
 }
 
-/** 获取当前标签配置 */
-export function getPrimaryTagsConfig(): Record<string, TagConfig> {
-  return PRIMARY_TAGS_CONFIG;
+/** 应用目录常量（设置变更时调用；四类内容的读取目录）。
+ *  影视/书库走跨域解析（实时读对域设置），仅日记/信两键归本域设置。 */
+export function applyDirectories(settings: { diaryDirectory?: string; letterDirectory?: string }) {
+  DIARY_DIRECTORY = settings.diaryDirectory || '我的/日记';
+  LETTER_DIRECTORY = settings.letterDirectory || '我的/信';
+  MOVIE_DIRECTORY = safeResolve(resolveCinemaFolderPath, '我的/影视');
+  BOOK_DIRECTORY = safeResolve(resolveBookshelfFolderPath, '书库');
 }
 
 /** 加密分类标签名（ADR-0017；写块标题、筛选/计数、排序用） */
@@ -33,7 +41,7 @@ export const ENCRYPT_TAG = '加密';
 
 /**
  * 主标签展示顺序（筛选栏）：配置固定顺序，但「加密」标签固定排在最后（用户决策）。
- * 用于筛选栏主标签按钮的遍历顺序（rebuildTags / createTagBar）。
+ * 用于筛选栏主标签按钮的遍历顺序（回忆墙 chips 行）。
  */
 export function getPrimaryTagsInDisplayOrder(): string[] {
   const tags = Object.keys(PRIMARY_TAGS_CONFIG);
@@ -107,12 +115,11 @@ const DEFAULT_TAGS_CONFIG: Record<string, TagConfig> = {
 
 let PRIMARY_TAGS_CONFIG: Record<string, TagConfig> = JSON.parse(JSON.stringify(DEFAULT_TAGS_CONFIG));
 
-// ===== emoji 映射表（构建于 state.data，与 config 同步） =====
+// ===== emoji 映射表（与 config 同步） =====
 export const tagToEmojiMap: Record<string, string> = {};
 export const emojiToTagMap: Record<string, string> = {};
 
-// ===== 模块加载时立即构建映射（原脚本 156 行「初始化时调用一次」；须在映射表声明之后，
-// 设置项「标签配置」移除后，此调用是唯一构建入口，不可删除） =====
+// ===== 模块加载时立即构建映射（须在映射表声明之后；此调用是唯一构建入口，不可删除） =====
 buildTagMaps();
 
 /** 构建标签↔emoji 双向映射 */
@@ -162,10 +169,8 @@ export function getParentPrimaryTag(subTag: string): string | null {
   return null;
 }
 
-// ===== 排序辅助 =====
-
 /**
- * 获取写日记弹窗中标签的排序列表：
+ * 获取写日记弹窗/标签选择器中标签的排序列表：
  * 有二级标签的主标签隐藏，只显示其二级标签（按配置顺序）
  */
 export function getSortedTagsForAddDialog(): string[] {
@@ -182,4 +187,3 @@ export function getSortedTagsForAddDialog(): string[] {
   }
   return result;
 }
-

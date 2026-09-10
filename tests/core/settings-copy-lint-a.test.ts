@@ -7,7 +7,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { lintTargets } from './settings-copy-lint-engine';
-import { diarySettingsSchema } from '../../src/diary/ui/panel';
+import { diarySettingsSchema } from '../../src/diary/settings';
 import { belongingSettingsSchema } from '../../src/belongings/ui';
 
 const WHITELIST = new Set<string>([

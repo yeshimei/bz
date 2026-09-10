@@ -73,8 +73,8 @@ describe('批 B-3：触控热区收编 core .bz-touch-target', () => {
     expect(repo('src/encrypt/vault-pw-view.ts')).toContain('bz-pwv-empty-add bz-touch-target--lg');
     expect(repo('src/encrypt/vault-pw-view.ts')).toContain('copyac bz-touch-target--lg');
     expect(repo('src/review/render.ts')).toContain('bz-q-fitem bz-touch-target--lg'); // issue 253 markup 单源 render.ts
-    // --xl（原 -12px）：回忆墙四类元素、加密移动关闭/返回钮、复习三个关闭钮
-    expect(repo('src/diary-wall/ui.ts')).toContain('bz-diary-wall-icon-btn bz-touch-target--xl');
+    // --xl（原 -12px）：日记本头行图标钮（ADR-0115 回忆墙升格，markup 单源 render.ts）、加密移动关闭/返回钮、复习三个关闭钮
+    expect(repo('src/diary/render.ts')).toContain('bz-diary-icon-btn bz-touch-target--xl');
     expect(repo('src/encrypt/ui.ts')).toContain('bz-vault-mobclose bz-touch-target--xl');
     expect(repo('src/encrypt/ui.ts')).toContain('back bz-touch-target--xl');
     // 排除名单已收敛为通用 list 行：移除按钮类由 core 渲染器统一挂（含触控档）
@@ -134,28 +134,27 @@ describe('批 B-4：z-index 静态大数收口（ADR-0067）', () => {
 });
 
 describe('批 B-5：图标单一事实源尾差', () => {
-  it('DOMAIN_ICONS 补缺：diary-wall=images、settings-panel=settings-2（值与原字面量一致）', () => {
-    expect(DOMAIN_ICONS['diary-wall']).toBe('images');
+  it('DOMAIN_ICONS 补缺：diary=notebook-pen、settings-panel=settings-2（ADR-0115：回忆墙键随升格退役）', () => {
+    expect(DOMAIN_ICONS.diary).toBe('notebook-pen');
     expect(DOMAIN_ICONS['settings-panel']).toBe('settings-2');
   });
 
-  it('home 入口 icon 全量迁移：iconOf() 引 DOMAIN_ICONS，无残留字面量（issue 232b 收敛后 13 条；issue 250 补密码本 14 条；issue 251 补第二大脑 15 条）', () => {
+  it('home 入口 icon 全量迁移：iconOf() 引 DOMAIN_ICONS，无残留字面量（issue 232b 收敛后 13 条；issue 250 补密码本 14 条；issue 251 补第二大脑 15 条；ADR-0115 回忆墙磁贴并入日记本 → 14 条）', () => {
     const src = repo('src/home/shared.ts'); // issue 243：域清单收编渲染纯层共享层，domains.ts 仅 re-export
-    expect((src.match(/icon: iconOf\(/g) ?? []).length).toBe(15);
+    expect((src.match(/icon: iconOf\(/g) ?? []).length).toBe(14);
     expect(src).not.toMatch(/icon: '/);
-    // 异名映射：wall→diary-wall、settings→settings-panel、vault→password-vault
+    // 异名映射：settings→settings-panel、vault→password-vault（wall 磁贴随 ADR-0115 并入 diary）
     for (const d of DOMAINS) {
-      const key = d.id === 'wall' ? 'diary-wall' : d.id === 'settings' ? 'settings-panel' : d.id === 'vault' ? 'password-vault' : d.id;
+      const key = d.id === 'settings' ? 'settings-panel' : d.id === 'vault' ? 'password-vault' : d.id;
       expect(d.icon, `磁贴 ${d.id}`).toBe(DOMAIN_ICONS[key]);
     }
   });
 
-  it('命令侧迁移：main.ts 两处字面量与 quote.ts bz-diary-write 引 DOMAIN_ICONS', () => {
+  it('命令侧迁移：main.ts 日记本两命令与设置面板引 DOMAIN_ICONS（旧 quote.ts 域内注册已收编入表）', () => {
     const main = repo('src/main.ts');
-    expect(main).toContain("icon: DOMAIN_ICONS['diary-wall']");
+    expect(main).toContain('icon: DOMAIN_ICONS.diary');
     expect(main).toContain("icon: DOMAIN_ICONS['settings-panel']");
-    const quote = repo('src/diary/ui/quote.ts');
-    expect(quote).toContain('icon: DOMAIN_ICONS.diary');
-    expect(quote).not.toMatch(/icon: '/);
+    // 回忆墙键随 ADR-0115 升格退役：命令表不再引用 diary-wall 图标
+    expect(main).not.toContain("DOMAIN_ICONS['diary-wall']");
   });
 });

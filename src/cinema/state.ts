@@ -3,9 +3,21 @@
  * 自 ADR-0087 起接管原 movie 域（旧 src/movie 已退役），数据仍是 `我的/影视/*.md`。
  */
 import type { App, TFile } from 'obsidian';
+import { tryGetSettings } from '../core/settings-provider';
 
 /** 影视目录默认值（cinemaFolderPath 未配置时回落；旧 movieFolderPath 键已退役） */
 export const DEFAULT_FOLDER = '我的/影视';
+
+/** 影视目录解析（目录唯一真理跨域化，ADR-0115）：cinemaFolderPath 显式配置优先，缺省回落默认。
+ *  日记本域经此函数读取影视目录（不再有独立的 movieDirectory 设置键），设置访问器未注入时回落默认。 */
+export function resolveCinemaFolderPath(): string {
+  try {
+    const s = tryGetSettings() as Record<string, unknown>;
+    return typeof s.cinemaFolderPath === 'string' && s.cinemaFolderPath.trim() ? s.cinemaFolderPath : DEFAULT_FOLDER;
+  } catch (e) {
+    return DEFAULT_FOLDER;
+  }
+}
 
 export interface CinemaItem {
   file: TFile | null;

@@ -1,6 +1,6 @@
 /**
- * 日记解析检测面板（ticket 121，ADR-0054）。
- * 手动驱动：仅经日记⚙️设置弹窗「检测日记解析」按钮打开；启动不自动触发（UX-9 toast 已移除）。
+ * 日记解析检测面板（ticket 121，ADR-0054；issue 256 随写链路迁入新 diary 域）。
+ * 手动驱动：仅经设置面板「日记本」页维护组「检测日记解析」按钮打开；启动不自动触发（UX-9 toast 已移除）。
  * 打开即逐文件扫描（进度条）→ 汇报两区：
  *  - 可自动修复：头行补空格/时间补零，展示修改前后，确认后一键批量写回（正文归位不改写）；
  *  - 不可自动修复：时间越界标题行/游离正文，点击打开文件并定位到行手工改。
@@ -9,7 +9,7 @@ import { createOverlay } from '../../core/dom';
 import { escManager } from '../../core/esc-manager';
 import { openFlowDialog } from '../../core/flow-dialog';
 import { notice } from '../../core/notice';
-import { getApp } from '../app';
+import { getApp } from '../../core/app';
 import { DIARY_DIRECTORY } from '../config';
 import { scanUnparsed, applyRepairs, type UnparsedScan } from '../repair';
 

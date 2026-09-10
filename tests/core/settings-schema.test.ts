@@ -116,12 +116,12 @@ describe('mainSettingsSchema：主设置页两区块', () => {
 
 describe('SettingsKeyOfType 键收窄样例', () => {
   it('布尔行接受布尔键（类型层样例，运行时核对键名）', () => {
-    const boolKey: SettingsKeyOfType<boolean> = 'showTagCount';
+    const boolKey: SettingsKeyOfType<boolean> = 'useFileDateTime';
     const strKey: SettingsKeyOfType<string> = 'bookshelfFolderPath';
     const numKey: SettingsKeyOfType<number> = 'reviewDailyLimit';
     const listKey: SettingsKeyOfType<string[]> = 'reviewWatchedFolders';
     expect([boolKey, strKey, numKey, listKey]).toEqual([
-      'showTagCount',
+      'useFileDateTime',
       'bookshelfFolderPath',
       'reviewDailyLimit',
       'reviewWatchedFolders',

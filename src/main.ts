@@ -27,9 +27,9 @@ import { addBelongingsItem, openBelongings, unloadBelongings } from './belonging
 // 剪藏本融合域（clipbook，ADR-0082/issue 177）：聚合讯+剪藏本合一
 import { openClipbook, unloadClipbook } from './clipbook';
 // 统一保险库（encrypt 域，ADR-0085）：密码管理已并入 encrypt，旧 password-vault 域已删除
-// 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图；复用 diary parser 读取，不改写旧数据
-import { openDiaryWall, unloadDiaryWall } from './diary-wall';
-import { applyDirectories as applyWallDirectories } from './diary-wall/config';
+// 日记本（diary 域，ADR-0115：原回忆墙升格正名，旧编辑域退役；媒体墙 + 写链路单一 UI）
+import { openDiary, openDiaryWrite, unloadDiary } from './diary';
+import { applyDirectories } from './diary/config';
 import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
 // 阅读数据分析报告（读书报告内嵌化：独立弹窗退役，unloadReadingReport 只作废在途渲染/toast）
 import { unloadReadingReport } from './reading-report';
@@ -64,11 +64,6 @@ import { openHome, unloadHome } from './home';
 import { openRecap, unloadRecap } from './recap';
 import { ensureAutoSummary, unloadAutoSummary, redoSummaryForActiveFile } from './auto-summary';
 // ai-agent 域解散：引用同步拆入 todo/favorites 域无条件常驻（原 ensureAIAgent/unloadAIAgent 换线）
-// 日记本（diary-notebook 合并）
-import { setApp as setDiaryApp } from './diary/app';
-import { applyDirectories } from './diary/config';
-import { state as diaryState } from './diary/state';
-import { applyUiSettings, init as diaryInit, showDiaryPanel, unregisterEscLayer } from './diary/ui/panel';
 // 小橘陪伴猫（smartcat 域：桌面宠物 + AI 陪伴；AI 走 bz core/ai，数据单 json smartcat.json）
 import { ensureSmartCat, unloadSmartCat, openSmartCat, openSmartCatChat, hideSmartCat, openSmartcatDashboard } from './smartcat';
 // 设置面板（settings-panel 域，ADR-0080：全域设置聚合入口，桌面侧栏工作台 / 移动命令面板）
@@ -95,8 +90,9 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 自动摘要（enh-autosum 包 1）：当前剪藏笔记手动重跑 AI 摘要（只重建摘要/标签，不动用户标题）
   { id: 'bz-auto-summary-redo', name: '重新生成当前剪藏摘要', icon: DOMAIN_ICONS['auto-summary'], callback: () => void redoSummaryForActiveFile(getApp()) },
 
-  // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图（真实图片/视频/音频瀑布流）
-  { id: 'bz-diary-wall-open', name: '回忆墙', icon: DOMAIN_ICONS['diary-wall'], callback: () => openDiaryWall(getApp()) },
+  // 日记本（diary 域，ADR-0115：原回忆墙升格正名；媒体墙即日记本唯一 UI）
+  { id: 'bz-diary-open', name: '日记本', icon: DOMAIN_ICONS.diary, callback: () => openDiary(getApp()) },
+  { id: 'bz-diary-write', name: '写日记', icon: DOMAIN_ICONS.diary, callback: () => openDiaryWrite(getApp()) },
   // 收藏本
   { id: 'bz-favorites-open', name: '收藏本', icon: DOMAIN_ICONS.favorites, callback: () => openFavoritesPanel(getApp()) },
   { id: 'bz-favorites-add', name: '加收藏', icon: 'bookmark', callback: () => addFavoriteItem(getApp()) },
@@ -161,13 +157,9 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-data-checkup-open', name: '数据体检', icon: 'stethoscope', callback: () => void openDataCheckup(getApp()) },
 ];
 
-/** 应用日记本设置到运行时常量（diary-notebook 原 applySettingsToRuntime） */
+/** 应用日记本设置到运行时常量（目录唯一真理跨域化：影视/书库由 diary/config 内部跨域解析） */
 export function applyDiarySettingsToRuntime(s: BzSettings) {
   applyDirectories(s);
-  applyUiSettings(s);
-  // P2 审查修复：回忆墙目录常量同步应用——此前无任何调用点，改日记/影视/信目录后
-  // 回忆墙仍读硬编码默认值（书库目录无设置键，回落默认 '书库'）
-  applyWallDirectories(s);
 }
 
 export default class BzPlugin extends Plugin {
@@ -185,8 +177,7 @@ export default class BzPlugin extends Plugin {
     setSettingsProvider(() => this.settings);
     // 设置保存通道（域设置弹窗写回后持久化）
     setSettingsSaver(() => this.saveSettings());
-    // 日记本注入（diary-notebook 合并）
-    setDiaryApp(this.app);
+    // 日记本目录常量（diary/config 内部跨域解析影视/书库目录）
     applyDiarySettingsToRuntime(this.settings);
     // 域事件总线地基：全插件唯一 vault 订阅点挂载（registerEvent 保证插件卸载时 Obsidian 自动清理引用）
     attachObsidianAdapter(this.app, (ref) => this.registerEvent(ref as any));
@@ -202,17 +193,13 @@ export default class BzPlugin extends Plugin {
 
     // ribbon 主入口：待办 + 日记本
     this.addRibbonIcon('check-square', '待办', () => openTodoPanel(this.app));
-    this.addRibbonIcon('notebook-pen', '日记本', () => showDiaryPanel(this));
+    this.addRibbonIcon('notebook-pen', '日记本', () => openDiary(getApp()));
 
     // 番茄钟状态栏（ticket 29：常驻倒计时，点击打开弹窗）
     mountPomodoroStatusBar(this.addStatusBarItem(), this.app);
 
     // 保险库状态栏（补丁2：锁状态提示，点击打开面板；解锁态由 encrypt Controller 接管刷新）
     mountEncryptStatusBar(this.addStatusBarItem());
-
-    // 日记本面板命令（统一 bz- 前缀；bz-diary-write 由 quote.ts init 内注册）
-    (this.app as any).commands.addCommand({ id: 'bz-diary-open', name: '日记本', icon: DOMAIN_ICONS.diary, callback: () => showDiaryPanel(this) });
-    this.registeredCommandIds.push('bz-diary-open');
 
     // 设置页
     this.addSettingTab(new BzSettingTab(this.app, this));
@@ -221,8 +208,6 @@ export default class BzPlugin extends Plugin {
     this.app.workspace.onLayoutReady(() => {
       // 待办提醒后台：启动自动弹出 + 打开笔记提醒（落点=待办面板；设置键 autoPopupOnStart/openNoteReminder）
       ensureTodoReminders(this.app);
-      // 日记本：启动即初始化（diary-notebook 原行为：onLayoutReady → init）
-      void diaryInit(this);
       if (this.settings.autoSummaryEnabled) ensureAutoSummary(this.app);
       // 引用同步无条件常驻（issue 187：原 aiAgentEnabled 开关随旧 AIAgent 退役——
       // 待办/收藏本笔记 rename/delete 引用同步是数据完整性功能，不设开关）
@@ -270,8 +255,8 @@ export default class BzPlugin extends Plugin {
     unloadSecondBrain();
     // 各域卸载清理补全（fix(main)：unload 函数均不内部触发 ensure，可无条件调用；
     // 未初始化域调用为幂等空清理，不引起无谓装载）
-    // 回忆墙（diary-wall 域，ADR-0081）：面板 DOM 清理 + 模块单例复位
-    unloadDiaryWall();
+    // 日记本（diary 域，ADR-0115）：面板 DOM 清理 + 模块单例复位
+    unloadDiary();
     unloadBelongings();
     unloadFavorites();
     unloadReview();
@@ -287,33 +272,19 @@ export default class BzPlugin extends Plugin {
     // 域事件总线收口：摘除 vault 订阅点 + 清空全部域事件订阅（总线为进程内单例，随插件卸载全量清空）
     detachObsidianAdapter();
     clearDomainEvents();
-    // 日记本清理（diary-notebook 原 onunload；escManager.destroy 已在上面统一调用）
+    // 日记本写链路弹窗 DOM 清理（写日记/标签选择器/滚轮时间选择器挂 body 的浮层）
     const diaryIds = [
-      'diary-tag-filter',
-      'diary-filter-mask',
-      'diary-search-container',
-      'diary-subtags-container',
       'add-diary-mask',
       'add-diary-popup',
       'diary-tag-selector-mask',
       'diary-tag-selector-popup',
       'unified-datetime-picker-mask',
-      'diary-date-filter-mask',
-      'diary-date-filter-popup',
       '__shared_confirm_mask__',
-      'diary-styles',
     ];
     for (const id of diaryIds) {
       const el = document.getElementById(id);
       if (el) el.remove();
     }
-    unregisterEscLayer();
-    try {
-      (this.app as any).commands.removeCommand('bz-diary-write');
-    } catch (e) {
-      /* 命令可能已被移除 */
-    }
-    diaryState.events.fileListenerAttached = false;
     // 卸载兜底（UX 整改 l2）：异步尾任务禁用前若 notify 重建过通知容器，此处再次清理
     cleanupNotices();
   }

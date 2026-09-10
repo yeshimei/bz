@@ -1,125 +1,110 @@
 /**
- * dialogs 层审查修复回归（P2 批次）：
- * - updateTags 定位失败：告警并 return，不盲写旧数据；
- * - 插卡后 currentDisplayCount 前移：滚动加载下一批不重复渲染尾部条目
- *   （saveNewEntry 与 updateTags 插入分支两处）。
+ * 写链路弹窗回归（ADR-0115 迁入后契约，jsdom）：
+ * - saveNewEntry：校验（未选类型/时间格式非法）与成功写盘 + 关弹窗；
+ * - 标签选择器保存：写层未命中告警不盲写；同刻唯一兜底定位成功改盘。
  */
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { setApp } from '../../src/diary/app';
+import { setApp } from '../../src/core/app';
 import { applyDirectories, resetTagsConfig } from '../../src/diary/config';
-import { setDiaryDataMap, state } from '../../src/diary/state';
-import { applyUiSettings } from '../../src/diary/ui/ui-settings';
-import { updateTags, createAddDialog, openAddDialog, saveNewEntry } from '../../src/diary/ui/dialogs';
+import { createAddDialog, createTagPicker, openAddDialog, saveNewEntry, showTagPicker } from '../../src/diary/ui/dialogs';
 import { clearNotices, getNoticeMessages } from '../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import type { DiaryEntry } from '../../src/diary/types';
 
 let vault: MockVault;
-
-function makeVault(files: Record<string, string>) {
-  vault = new MockVault();
-  for (const [p, c] of Object.entries(files)) vault.files.set(p, c);
-  setApp(mockAppWithVault(vault));
-  return vault;
-}
-
-function mkEntry(over: Partial<DiaryEntry>): DiaryEntry {
-  return {
-    date: '2024-01-01',
-    time: '08:00',
-    timeValue: 800,
-    tags: ['日记'],
-    emoji: '📖',
-    content: 'x',
-    filename: '2024-01-01',
-    lineNumber: 1,
-    ...over,
-  } as DiaryEntry;
-}
-
-/** 搭已渲染窗口：entriesContainer + scrollContainer + 两条已渲染条目 */
-function setupRenderedWindow() {
-  const entriesContainer = document.createElement('div');
-  entriesContainer.id = '__diary-entries-container__';
-  const scroll = document.createElement('div');
-  scroll.className = 'diary-scroll-container';
-  entriesContainer.appendChild(scroll);
-  document.body.appendChild(entriesContainer);
-  state.ui.entriesContainer = entriesContainer;
-  state.ui.scrollContainer = scroll;
-  state.data.currentDisplayCount = 2;
-}
 
 beforeEach(() => {
   document.body.innerHTML = '';
   clearNotices();
   resetTagsConfig();
   applyDirectories({});
-  applyUiSettings({ diaryJumpToEditAfterSave: false });
-  setDiaryDataMap(null);
-  state.data.originalDiaryEntries = [];
-  state.data.currentFilteredEntries = [];
-  state.data.selectedTags.clear();
-  state.data.currentDateFilter = null;
-  state.data.currentSearchKeyword = '';
-  state.ui.entriesContainer = null as any;
-  state.ui.scrollContainer = null as any;
-  state.ui.singleSelectedTagForDisplay = null;
-  state.events.isInternalUpdate = false;
   vi.restoreAllMocks();
+  vault = new MockVault();
+  setApp(mockAppWithVault(vault));
 });
 
-describe('updateTags 定位失败告警（P2 审查修复）', () => {
-  it('map 中无对应块：告警、不改内存标签、不落盘', async () => {
-    makeVault({ '我的/日记/2024-01-01.md': '# 📖 08:00\nx\n' });
-    const entry = mkEntry({ id: 'e1' });
-    state.data.originalDiaryEntries = [entry];
-    // map 中该日期为空 → targetEntry 定位失败（同 time 也非唯一）
-    setDiaryDataMap(new Map([['2024-01-01', []]]));
-    await updateTags('e1', ['随笔']);
-    const msgs = getNoticeMessages().join('\n');
-    expect(msgs).toContain('未能');
-    expect(msgs).toContain('标签没有修改');
-    // 内存标签未被改（UI 与磁盘一致），文件未被重写
-    expect(entry.tags).toEqual(['日记']);
-    expect(vault.files.get('我的/日记/2024-01-01.md')).toBe('# 📖 08:00\nx\n');
-  });
-});
+function openWriteDialog(datetime = '2024-01-01 10:30'): void {
+  createAddDialog();
+  openAddDialog();
+  (document.querySelector('#add-diary-datetime') as HTMLInputElement).value = datetime;
+}
 
-describe('插卡后 currentDisplayCount 前移（P2 审查修复）', () => {
-  it('updateTags 插入分支：插卡后计数 +1', async () => {
-    makeVault({ '我的/日记/2024-01-01.md': '# 📖 08:00\nx\n' });
-    const flat = mkEntry({ id: 'e1', tags: ['日记'] });
-    const mapEntry = mkEntry({ id: 'map-e1', tags: ['日记'] });
-    state.data.originalDiaryEntries = [flat];
-    setDiaryDataMap(new Map([['2024-01-01', [mapEntry]]]));
-    state.data.selectedTags = new Set(['随笔']);
-    setupRenderedWindow();
-    await updateTags('e1', ['随笔']);
-    expect(state.data.currentDisplayCount).toBe(3);
-    // 新卡片在 DOM 中（scrollContainer 内）
-    expect(state.ui.scrollContainer!.querySelector('#diary-entry-e1')).toBeTruthy();
-  });
+function pickType(label: string): void {
+  const btn = [...document.querySelectorAll<HTMLButtonElement>('#add-diary-type-container .diary-tag-selector-btn')].find(
+    (b) => b.dataset.tag === label
+  );
+  btn!.click();
+}
 
-  it('saveNewEntry：插卡后计数 +1，滚动下一批不重复渲染', async () => {
-    makeVault({ '我的/日记/2024-01-01.md': '' });
-    const past = mkEntry({ id: 'p1', date: '2023-12-31', time: '09:00', timeValue: 900, lineNumber: 0 });
-    state.data.originalDiaryEntries = [past];
-    state.data.currentFilteredEntries = [past];
-    setDiaryDataMap(new Map([['2023-12-31', [past]]]));
-    setupRenderedWindow();
-
-    createAddDialog();
-    openAddDialog();
-    // 选一个类型
-    const typeBtn = document.querySelector<HTMLElement>('#add-diary-type-container .diary-tag-selector-btn')!;
-    expect(typeBtn).toBeTruthy();
-    typeBtn.click();
+describe('saveNewEntry（写日记弹窗）', () => {
+  it('未选类型：提示并不落盘', async () => {
+    openWriteDialog();
     await saveNewEntry();
+    expect(getNoticeMessages().join('\n')).toContain('请至少选择一个类型');
+    expect(vault.files.has('我的/日记/2024-01-01.md')).toBe(false);
+  });
 
-    expect(state.data.currentDisplayCount).toBe(3);
-    // 新条目卡片已插入 DOM（窗口未预置旧卡 DOM，此处只应出现新卡这一张）
-    const cards = state.ui.scrollContainer!.querySelectorAll('.diary-entry-card');
-    expect(cards.length).toBe(1);
+  it('时间格式非法：提示并不落盘', async () => {
+    openWriteDialog('不是时间');
+    pickType('日记');
+    await saveNewEntry();
+    expect(getNoticeMessages().join('\n')).toContain('日期时间格式不正确');
+    expect(vault.files.has('我的/日记/2024-01-01.md')).toBe(false);
+  });
+
+  it('成功：emoji 序列标题落盘 + 弹窗关闭（面板刷新走域事件，此处不插卡）', async () => {
+    openWriteDialog('2024-01-01 10:30');
+    pickType('日记');
+    await saveNewEntry();
+    const disk = vault.files.get('我的/日记/2024-01-01.md')!;
+    expect(disk).toContain('# 📖 10:30');
+    expect((document.querySelector('#add-diary-popup') as HTMLElement).style.display).toBe('none');
+    expect(getNoticeMessages().join('\n')).toContain('已保存日记');
+  });
+});
+
+describe('showTagPicker（标签选择器，locator 定位）', () => {
+  it('写层未命中：告警「未能在日记数据中定位」且不改盘', async () => {
+    vault.files.set('我的/日记/2024-01-01.md', '# 📖 08:00\nA\n');
+    createTagPicker();
+    showTagPicker({ filename: '2024-01-01', date: '2024-01-01', time: '23:59', lineNumber: 99, tags: ['日记'] });
+    const popup = document.querySelector('#diary-tag-selector-popup') as HTMLElement;
+    const save = [...popup.querySelectorAll<HTMLButtonElement>('.diary-tag-selector-actions button')].find((b) => b.textContent === '保存')!;
+    const diaryBtn = popup.querySelector<HTMLButtonElement>('.diary-tag-selector-btn[data-tag="日记"]')!;
+    const rideBtn = popup.querySelector<HTMLButtonElement>('.diary-tag-selector-btn[data-tag="骑行"]')!;
+    expect(diaryBtn.classList.contains('diary-active')).toBe(true); // 当前标签已选中
+    diaryBtn.classList.remove('diary-active');
+    rideBtn.click();
+    save.click();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(getNoticeMessages().join('\n')).toContain('未能在日记数据中定位该条目');
+    expect(vault.files.get('我的/日记/2024-01-01.md')).toContain('# 📖 08:00');
+  });
+
+  it('同刻唯一兜底：行号失配仍按唯一时间命中改盘并发 tags-changed', async () => {
+    vault.files.set('我的/日记/2024-01-01.md', '# 📖 08:00\nA\n');
+    createTagPicker();
+    showTagPicker({ filename: '2024-01-01', date: '2024-01-01', time: '08:00', lineNumber: 99, tags: ['日记'] });
+    const popup = document.querySelector('#diary-tag-selector-popup') as HTMLElement;
+    const save = [...popup.querySelectorAll<HTMLButtonElement>('.diary-tag-selector-actions button')].find((b) => b.textContent === '保存')!;
+    // 选择器语义：保存时提交全部选中标签——原「日记」保持选中，追加「骑行」
+    popup.querySelector<HTMLButtonElement>('.diary-tag-selector-btn[data-tag="骑行"]')!.click();
+    save.click();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(vault.files.get('我的/日记/2024-01-01.md')).toContain('# 📖🚴 08:00');
+    expect(getNoticeMessages().join('\n')).not.toContain('未能在日记数据中定位');
+  });
+
+  it('删除按钮：locator 传给 showConfirm 并收起选择器', async () => {
+    vi.mock('../../src/diary/ui/entry-actions', () => ({ showConfirm: vi.fn() }));
+    const { showConfirm } = await import('../../src/diary/ui/entry-actions');
+    vault.files.set('我的/日记/2024-01-01.md', '# 📖 08:00\nA\n');
+    createTagPicker();
+    showTagPicker({ filename: '2024-01-01', date: '2024-01-01', time: '08:00', lineNumber: 1, tags: ['日记'] });
+    const popup = document.querySelector('#diary-tag-selector-popup') as HTMLElement;
+    const del = [...popup.querySelectorAll<HTMLButtonElement>('.diary-tag-selector-actions button')].find((b) => b.textContent === '删除')!;
+    del.click();
+    expect((document.querySelector('#diary-tag-selector-popup') as HTMLElement).style.display).toBe('none');
+    expect(showConfirm).toHaveBeenCalledTimes(1);
+    expect((showConfirm as any).mock.calls[0][0]).toMatchObject({ filename: '2024-01-01', time: '08:00', lineNumber: 1 });
   });
 });

@@ -199,7 +199,7 @@ function armTouchSettle(): void {
 
 /**
  * 复位 click 抑制（issue 198 review P1）：
- * 直调 openItemMenu(..., true) 的域（如 diary-wall 容器右键委托）在 Chromium 右键时序下，
+ * 直调 openItemMenu(..., true) 的域（如 diary 容器右键委托）在 Chromium 右键时序下，
  * 随后 mouseup 落在菜单外会经 onMouseUpCapture 置位残余抑制（residualClickArmed），
  * 吞掉用户下一次左键（含点菜单项，要点两次才生效）。右键无补发 click，抑制本就不需要——
  * 打开菜单后调用本函数把 suppressNextClick / residualClickArmed 一并复位。
