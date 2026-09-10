@@ -14,9 +14,9 @@
   │ 行为单源（issue 245/ADR-0106）：交互逻辑全部是插件同款 ui.ts 依赖链——       │
   │   经 ./prototype-behavior.js（src/home/fake-sim.ts 构建，                 │
   │   alias obsidian→公共假层）在下方两个 iframe 视图里跑真行为；               │
-  │   桌面 iframe 920px = 桌面三栏；移动 iframe 宽 412 = 小米13U 屏宽（真机）   │
-  │   1440×3200 @dpr3.5 → 412×915（满屏，默认）/ 827（扣状态栏24+底栏48+手势16）│
-  │   徽牌「1:1 真机」= 物理尺寸对齐（412 CSS px → 屏幕宽 70.2mm，基准 118mm 实测）│
+  │   桌面 iframe 920px = 桌面三栏；移动 iframe 412×915 = 小米13U 真机整屏     │
+  │   （1440×3200 @dpr3.5），按实测基准（412 CSS px = 118mm）缩放到实物大小：  │
+  │   412 CSS px → 屏幕宽 70.2mm · 高 155.9mm。尺寸固定，无任何调节 UI        │
   │   @media/@container ≤768 移动布局。数据 = fake vault（localStorage 种子，  │
   │   相对「今天」生成、跨天自动重灌，见 fake-sim.ts）。                        │
   │ 壳内只允许：外景容器样式、评审徽牌、演示钩子与自检。                        │
@@ -35,20 +35,14 @@
 
   /* 桌面外景（真行为 iframe：overlay append iframe body，宽度决定布局） */
   .demo-dt { flex: none; width: 920px; height: 640px; }
-  /* 移动外景：宽恒 412 CSS px（= 1440 物理 px = 整屏宽，1440/3.5=411.4 ↑）；高度自由可调
-   *   （滑块 650~1000 CSS px），另有两个快捷档：
-   *   满屏 915（WebView 全屏视口 = 整块屏幕，贴手机屏幕对比应完全重合，默认）
-   *   内容区 827（再扣 MIUI 状态栏 24 + Obsidian 底栏 48 + 手势区 16，看实际可用区）
-   *   412 仍 ≤768 → 移动布局命中。
-   *
-   * 1:1 真机（物理尺寸对齐，非 CSS 像素）：屏幕量得 70.2 × 156.0mm（与 6.73" 20:9 理论值
-   *   70.15×155.88 差 0.07%，互为印证）。比例自洽：412 : 915 = 70.2 : 155.9 ✓
-   *   （3200/3.5=914.3 上取整 915；满屏档贴上去应完全重合）。
-   *   ⚠️ 基准是「屏幕」而非「整机」：整机 74.64×163.18mm，每边含约 2.2mm 边框，按边框对会偏 6%。
-   *   本机尺量 412 CSS px 基准线 = 118mm（非理论的 109mm，缩放/PPI 所致）→ scale = 70.2/118 ≈ 0.595，
-   *   已固化为常量 REAL_SCALE；用 transform: scale 只缩视觉，绝不改 iframe 宽度（改了就动到 ≤768 判据）。 */
-  .demo-mob-wrap { flex: none; width: calc(412px * var(--mob-scale, 1)); height: calc(var(--mob-h, 915px) * var(--mob-scale, 1)); }
-  .demo-mob { width: 412px; height: var(--mob-h, 915px); border-radius: 26px; overflow: hidden; flex: none;
+  /* 移动外景 = 小米13U 真机尺寸，**固定**（无任何调节 UI）：
+   *   412 × 915 CSS px（= 1440 × 3200 物理 px ÷ dpr 3.5 = 整屏；412 仍 ≤768 → 移动布局命中）
+   *   屏幕上用 scale 缩到实物大小：屏幕实测 70.2 × 156.0mm，比例自洽 412:915 = 70.2:155.9 ✓
+   *   本机尺量 412 CSS px = 118mm（非理论 109mm，系统缩放/PPI 所致）→ scale = 70.2/118 ≈ 0.5949
+   *   ⚠️ 基准是「屏幕」而非「整机」（整机 74.64×163.18mm 含约 2.2mm 边框，按边框对会偏 6%）
+   *   transform: scale 只缩视觉，绝不改 iframe 尺寸（改了就动到 @media ≤768 判据） */
+  .demo-mob-wrap { flex: none; width: calc(412px * var(--mob-scale, 1)); height: calc(915px * var(--mob-scale, 1)); }
+  .demo-mob { width: 412px; height: 915px; border-radius: 26px; overflow: hidden; flex: none;
     transform: scale(var(--mob-scale, 1)); transform-origin: top left;
     border: 1px solid #b8b0a0; box-shadow: 0 8px 30px rgba(0,0,0,.16); background: #f5f2ec; }
   .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
@@ -57,14 +51,6 @@
   .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #8b8474; display: flex; gap: 10px; align-items: center;
     background: rgba(255,255,255,.92); border: 1px solid #c9c2b2; padding: 3px 8px; z-index: 900; }
   .vbadge button { border: none; background: none; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; }
-  /* 1:1 真机尺寸条：宽度已按实测基准固定（RULER_MM = 118mm，见脚本常量），测量 UI 全撤；
-     只剩高度可调（真机不同内容区高度/场景不同）。 */
-  #rulerBar { flex: none; max-width: 94vw; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center;
-    background: rgba(255,255,255,.94); border: 1px solid #c9c2b2; padding: 7px 14px; font-size: 11px; color: #8b8474; }
-  #rulerBar input[type="range"] { width: 148px; accent-color: #b3564d; vertical-align: middle; }
-  #rulerBar button { border: 1px solid #c9c2b2; background: #fff; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; border-radius: 3px; padding: 1px 7px; }
-  #rulerBar button.on { background: #b3564d; border-color: #b3564d; color: #fff; }
-  #rulerBar .si { color: #6b6455; }
   .vbadge .ok { color: #3d8f5d; }
   .vbadge .bad { color: #b3564d; }
 </style>
@@ -72,15 +58,10 @@
 <body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark，壳内必须补一类才不透明 -->
   <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="内容首页·桌面"></iframe></div>
 
-  <div id="rulerBar" hidden>
-    高度 <button id="hFull">满屏 915</button><button id="hContent">内容区 827</button><input id="hRange" type="range" min="650" max="1000" step="1" title="自由调（CSS px）"><span class="si" id="hInfo"></span><span class="si" id="scaleInfo"></span>
-  </div>
-
   <div id="mobHost" class="demo-mob-wrap"><div class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="内容首页·移动"></iframe></div></div>
 
   <div class="vbadge">内容首页 · 真行为单源预览（桌面=真 ui.ts 跑在 920px，移动=412 宽 · 小米13U）
     <button id="mobToggle">隐藏移动端</button>
-    <button id="one2one">1:1 真机</button>
     <button id="reset">重置演示数据</button>
     <span id="stResult"></span>
   </div>
@@ -131,57 +112,12 @@
    *   412 CSS px = 1440 物理 px = 整屏宽；满屏高 915 CSS px = 156.0mm。
    * 换算锚点 = 本机用尺子量「412 CSS px 基准线」的实测值 RULER_MM = 118mm：
    *   1 CSS px = 118/412 ≈ 0.2864mm → scale = 70.2/118 ≈ 0.5949 时框宽恰为 70.2mm。
-   * 宽度**已固定**（测量/微调 UI 全撤）；换显示器若偏差明显，只改 RULER_MM 一个常量。
+   * 尺寸**固定**、无任何调节 UI；换显示器若偏差明显，只改 RULER_MM 一个常量。
    */
-  const MOB_MM = 70.2;                        // 小米13U 屏幕宽（mm，实测；非整机 74.64）
-  const RULER_MM = 118;                       // 实测：412 CSS px 在本机屏幕上的物理宽度（mm）
-  const RULER_CSS = 412;                      // 基准 CSS 宽度（= iframe 视口宽）
-  const PX_MM = RULER_MM / RULER_CSS;         // 1 CSS px 的物理长度 ≈ 0.2864mm
-  const REAL_SCALE = MOB_MM / RULER_MM;       // ≈ 0.5949：真机档倍数（412 CSS px → 70.2mm）
-  const FULL_H = 915, CONTENT_H = 827;        // 满屏（整块屏幕）/ 内容区（扣状态栏+底栏+手势区）
-  const MODE_KEY = 'bz-proto:home-mob-1to1';  // 模式：'1' 真机 / '0' CSS
-  const H_KEY = 'bz-proto:home-mob-h';        // 高度（CSS px）
-  const toggle1to1 = document.querySelector('#one2one');
-  const rulerBar = document.querySelector('#rulerBar');
-  const hFull = document.querySelector('#hFull');
-  const hContent = document.querySelector('#hContent');
-  const hRange = document.querySelector('#hRange');
-  const hInfo = document.querySelector('#hInfo');
-  const scaleInfo = document.querySelector('#scaleInfo');
-  let scaleNow = 1;
-  let hNow = FULL_H;
-  /** 框内某长度（CSS px）→ 它在本机屏幕上的实际毫米数 */
-  const mm = (v) => (v * scaleNow * PX_MM).toFixed(1);
-  const refreshInfo = () => {
-    scaleInfo.textContent = scaleNow === 1 ? '' : `框 ${mm(RULER_CSS)}×${mm(hNow)}mm`;
-  };
-  const setH = (h) => {
-    h = Math.min(1400, Math.max(400, Math.round(h)));
-    hNow = h;
-    document.documentElement.style.setProperty('--mob-h', h + 'px');
-    localStorage.setItem(H_KEY, String(h));
-    hRange.value = String(Math.min(1000, Math.max(650, h)));
-    hFull.classList.toggle('on', h === FULL_H);
-    hContent.classList.toggle('on', h === CONTENT_H);
-    hInfo.textContent = h === FULL_H ? '满屏' : h === CONTENT_H ? '内容区' : `${h}px`;
-    refreshInfo();
-  };
-  const setScale = (on) => {
-    scaleNow = on ? REAL_SCALE : 1;
-    document.documentElement.style.setProperty('--mob-scale', String(scaleNow));
-    localStorage.setItem(MODE_KEY, on ? '1' : '0');
-    toggle1to1.textContent = on ? '回到 CSS 1:1' : '1:1 真机';
-    rulerBar.hidden = !on;
-    refreshInfo();
-  };
-  toggle1to1.addEventListener('click', () => setScale(scaleNow === 1));
-  hFull.addEventListener('click', () => setH(FULL_H));
-  hContent.addEventListener('click', () => setH(CONTENT_H));
-  hRange.addEventListener('input', () => setH(parseFloat(hRange.value)));
-  { const mode = localStorage.getItem(MODE_KEY);                      // null = 首次访问
-    const savedH = parseFloat(localStorage.getItem(H_KEY));
-    setH(Number.isFinite(savedH) && savedH > 0 ? savedH : FULL_H);    // 默认满屏 915
-    setScale(mode === null ? true : mode === '1'); }                  // 首次默认开真机档
+  const RULER_MM = 118;                 // 实测：412 CSS px 在本机屏幕上的物理宽度（mm）
+  const MOB_MM = 70.2;                  // 小米13U 屏幕宽（mm，实测；非整机 74.64）
+  // 固定 scale：把 412 CSS px 渲染成 70.2mm（≈ 0.5949），全程一次设定
+  document.documentElement.style.setProperty('--mob-scale', String(MOB_MM / RULER_MM));
 
   document.querySelector('#reset').addEventListener('click', () => {
     B.resetHomeSim();
