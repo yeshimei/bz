@@ -50,7 +50,7 @@
   box-shadow: 0 8px 30px rgba(0,0,0,.14);
 }
 .bz-fav-panel .bz-fav-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 20px; flex: none; position: relative; }
-.bz-fav-panel .bz-fav-head h1 { font-size: 14px; letter-spacing: 3px; color: var(--ink-title); font-weight: 700; margin: 0; }
+.bz-fav-panel .bz-fav-head h1 { font-size: var(--bz-font-body); letter-spacing: 3px; color: var(--ink-title); font-weight: 700; margin: 0; }
 /* 移动端：面板即原型 .phone 内容（全屏；显式视口宽高——overlay 弹性子项不定宽会被卡墙 max-content 撑爆） */
 .bz-fav-panel.bz-fav-mob { width: 100vw; height: 100vh; max-width: 100vw; padding: 16px 14px 0; }
 
@@ -93,7 +93,7 @@
 .bz-fav-board .bz-fav-empty { grid-column: 1 / -1; }
 .bz-fav-card {
   width: 184px; min-width: 0; background: var(--card); border-radius: 10px; padding: 24px 16px 13px; cursor: pointer; position: relative;
-  box-shadow: 0 4px 12px var(--card-shadow); transition: transform .15s, box-shadow .15s;
+  box-shadow: 0 4px 12px var(--card-shadow); transition: transform var(--bz-dur-fast), box-shadow var(--bz-dur-fast);
 }
 .bz-fav-card:hover { transform: translateY(-4px); box-shadow: 0 10px 22px var(--card-shadow-hi); }
 .bz-fav-card .bz-fav-tape {
@@ -106,9 +106,9 @@
   position: absolute; top: 10px; right: 10px; width: 12px; height: 12px; border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #fff 0 20%, var(--c) 75%); box-shadow: 0 1px 3px rgba(0,0,0,.2);
 }
-.bz-fav-card h3 { font-size: 14px; margin: 0 0 6px; color: var(--ink-strong); }
+.bz-fav-card h3 { font-size: var(--bz-font-body); margin: 0 0 6px; color: var(--ink-strong); }
 .bz-fav-card p {
-  font-size: 12px; line-height: 1.65; color: var(--ink-mut); margin: 0;
+  font-size: var(--bz-font-meta); line-height: 1.65; color: var(--ink-mut); margin: 0;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 .bz-fav-card .bz-fav-ft {
@@ -119,7 +119,7 @@
 .bz-fav-card .bz-fav-tagb { padding: 3px 8px; border-radius: 99px; font-size: 10.5px; line-height: 1; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
 .bz-fav-card.bz-fav-pinc { box-shadow: 0 4px 12px var(--card-shadow), 0 0 0 2px var(--gold); }
 .bz-fav-card.bz-fav-arch { opacity: .5; filter: grayscale(.5); }
-.bz-fav-empty { padding: 50px 0; text-align: center; color: var(--ink-faint); font-size: 13px; width: 100%; }
+.bz-fav-empty { padding: 50px 0; text-align: center; color: var(--ink-faint); font-size: var(--bz-font-label); width: 100%; }
 /* 移动端：双列网格（原型 .phone .m-board）；minmax(0,1fr) 防 line-clamp 卡片 max-content 撑爆轨道 */
 .bz-fav-panel.bz-fav-mob .bz-fav-board { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px 12px; align-items: start; }
 .bz-fav-panel.bz-fav-mob .bz-fav-card { width: auto; }
@@ -168,8 +168,8 @@
   flex: none; width: 12px; height: 12px; border-radius: 50%; margin-top: 4px;
   background: radial-gradient(circle at 35% 30%, #fff 0 20%, var(--c) 75%); box-shadow: 0 1px 3px rgba(0,0,0,.2);
 }
-.bz-fav-sheet .bz-fav-sh-title { font-size: 14px; color: var(--ink-strong); }
-.bz-fav-sheet .bz-fav-sh-meta { font-size: 11px; color: var(--ink-faint); margin-top: 3px; }
+.bz-fav-sheet .bz-fav-sh-title { font-size: var(--bz-font-body); color: var(--ink-strong); }
+.bz-fav-sheet .bz-fav-sh-meta { font-size: var(--bz-font-caption); color: var(--ink-faint); margin-top: 3px; }
 .bz-fav-sheet .bz-fav-sh-acts { display: flex; flex-direction: column; }
 .bz-fav-sheet .bz-fav-sh-acts button {
   display: flex; align-items: center; justify-content: flex-start; gap: 10px; border: none; background: none; cursor: pointer;
@@ -198,11 +198,11 @@
   width: min(430px, calc(100vw - 32px)); max-height: 86vh; overflow: auto; background: var(--pop); border-radius: 14px; padding: 20px 22px 18px;
   box-shadow: 0 16px 44px rgba(0,0,0,.32);
 }
-.bz-fav-form h2 { font-size: 15px; color: var(--pop-ink); margin: 0 0 14px; letter-spacing: 2px; }
+.bz-fav-form h2 { font-size: var(--bz-font-emphasis); color: var(--pop-ink); margin: 0 0 14px; letter-spacing: 2px; }
 .bz-fav-form .bz-fav-fld { margin-bottom: 12px; }
 .bz-fav-form .bz-fav-fld label { display: block; font-size: 11.5px; color: var(--pop-mut); margin-bottom: 5px; }
 .bz-fav-form input, .bz-fav-form textarea {
-  width: 100%; border: 1px solid var(--fld-bd); border-radius: 8px; background: var(--fld-bg); color: var(--fld-ink);
+  width: 100%; border: 1px solid var(--fld-bd); border-radius: var(--bz-radius-sm); background: var(--fld-bg); color: var(--fld-ink);
   font: 12.5px/1.6 var(--font-interface, 'Microsoft YaHei'); padding: 7px 10px; outline: none;
 }
 .bz-fav-form textarea { resize: vertical; min-height: 52px; }
@@ -215,21 +215,21 @@
 }
 .bz-fav-form .bz-fav-pick button.bz-fav-on { background: var(--acc); border-color: var(--acc); color: var(--on-acc); }
 .bz-fav-form .bz-fav-inline { display: flex; align-items: center; gap: 8px; }
-.bz-fav-form .bz-fav-fld-desc { font-size: 11px; color: var(--pop-faint); }
+.bz-fav-form .bz-fav-fld-desc { font-size: var(--bz-font-caption); color: var(--pop-faint); }
 .bz-fav-form .bz-fav-sw {
   position: relative; width: 32px; height: 18px; border-radius: 99px; background: #b9b2a2; cursor: pointer;
-  transition: background .15s; flex: none; display: inline-block;
+  transition: background var(--bz-dur-fast); flex: none; display: inline-block;
 }
 .bz-fav-form .bz-fav-sw::after {
   content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff;
-  box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: left .15s;
+  box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: left var(--bz-dur-fast);
 }
 .bz-fav-form .bz-fav-sw.bz-fav-on { background: var(--acc); }
 .bz-fav-form .bz-fav-sw.bz-fav-on::after { left: 16px; }
-.bz-fav-form .bz-fav-err { color: var(--danger); font-size: 12px; min-height: 16px; margin-bottom: 6px; }
+.bz-fav-form .bz-fav-err { color: var(--danger); font-size: var(--bz-font-meta); min-height: 16px; margin-bottom: 6px; }
 .bz-fav-form .bz-fav-btns { display: flex; justify-content: flex-end; gap: 9px; }
 .bz-fav-form .bz-fav-btns button {
-  cursor: pointer; font: 12.5px/1 var(--font-interface, 'Microsoft YaHei'); padding: 8px 16px; border-radius: 8px;
+  cursor: pointer; font: 12.5px/1 var(--font-interface, 'Microsoft YaHei'); padding: 8px 16px; border-radius: var(--bz-radius-sm);
   border: 1px solid var(--fld-bd); background: var(--fld-bg); color: var(--chip-ink);
 }
 .bz-fav-form .bz-fav-btns button.bz-fav-pri { background: var(--acc); border-color: var(--acc); color: var(--on-acc); }

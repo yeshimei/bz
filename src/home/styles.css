@@ -54,7 +54,7 @@
 .bz-home-wk.bz-home-wk--hit i { background: var(--h-ok); opacity: .8; }
 .bz-home-wk.bz-home-wk--sel i { background: var(--h-ink); }
 .bz-home-panel .bz-home-wk.bz-home-wk--sel { color: var(--h-ink); font-weight: 700; }
-.bz-home-date { margin-left: auto; font-size: 12px; color: var(--h-dim); font-family: var(--h-mono); letter-spacing: .1em; }
+.bz-home-date { margin-left: auto; font-size: var(--bz-font-meta); color: var(--h-dim); font-family: var(--h-mono); letter-spacing: .1em; }
 .bz-home-panel .bz-home-close { display: none; }
 
 /* ---- 三栏 grid（原型 .dt-grid） ---- */
@@ -63,7 +63,7 @@
 .bz-home-grid { display: grid; grid-template-columns: 232px minmax(0, 1fr) 224px; grid-template-rows: minmax(0, 1fr); gap: 20px; margin-top: 12px; height: 100%; }
 
 /* ---- 小节标题（原型 .sec-t） ---- */
-.bz-home-sec-t { font-size: 11px; letter-spacing: .28em; color: var(--h-dim); margin: 0 0 10px; }
+.bz-home-sec-t { font-size: var(--bz-font-caption); letter-spacing: .28em; color: var(--h-dim); margin: 0 0 10px; }
 .bz-home-sec-t .bz-home-n { letter-spacing: .05em; color: #a8a394; }
 .bz-home-sec-t--ai { color: var(--h-ai); }
 .bz-home-sec-t--ai::before { content: "✦ "; }
@@ -72,7 +72,7 @@
 .bz-home-entries .bz-ic, .bz-home-flow .bz-ic { width: 17px; height: 17px; }
 
 /* ---- 全部域入口行（原型 .erow） ---- */
-.bz-home-panel .bz-home-erow { display: flex; align-items: center; gap: 9px; padding: 7px 8px 7px 6px; border-radius: 8px; cursor: pointer; border: 0; border-bottom: 1px solid var(--h-line); background: none; font-family: inherit; color: inherit; width: 100%; text-align: left; font-size: 100%; }
+.bz-home-panel .bz-home-erow { display: flex; align-items: center; gap: 9px; padding: 7px 8px 7px 6px; border-radius: var(--bz-radius-sm); cursor: pointer; border: 0; border-bottom: 1px solid var(--h-line); background: none; font-family: inherit; color: inherit; width: 100%; text-align: left; font-size: 100%; }
 .bz-home-panel .bz-home-erow:hover { background: #f0eee4; }
 .theme-dark .bz-home-erow:hover { background: #2e2c25; }
 .bz-home-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--h-ok); flex: none; }
@@ -84,32 +84,32 @@
 .bz-home-eic .bz-ic { width: 17px; height: 17px; }
 /* 2026-09-09 去加粗：入口名/瓦片名不再加粗（用户拍板） */
 .bz-home-enm { font-size: 12.5px; font-weight: 400; }
-.bz-home-ect { margin-left: auto; font-size: 11px; color: var(--h-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.bz-home-ego { opacity: 0; color: var(--h-dim); font-size: 11px; }
+.bz-home-ect { margin-left: auto; font-size: var(--bz-font-caption); color: var(--h-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bz-home-ego { opacity: 0; color: var(--h-dim); font-size: var(--bz-font-caption); }
 .bz-home-erow:hover .bz-home-ego { opacity: 1; }
 
 /* ---- 拖拽排序已撤：入口顺序/显隐统一在「设置 → 首页入口」弹窗里打理（2026-09-10 用户拍板） ---- */
 
 /* ---- 时间线（原型 .flow/.ev） ---- */
 /* V4 拍板：时间线整体成白卡，卡内虚线轨道（随内容滚、与彩点同锚对齐） */
-.bz-home-flow { min-height: 0; overflow-y: auto; scrollbar-width: none; background: var(--h-card); border: 1px solid var(--h-line); border-radius: 12px; padding: 6px 14px 8px 10px; }
+.bz-home-flow { min-height: 0; overflow-y: auto; scrollbar-width: none; background: var(--h-card); border: 1px solid var(--h-line); border-radius: var(--bz-radius-md); padding: 6px 14px 8px 10px; }
 .bz-home-timeline { position: relative; }
 .bz-home-timeline::before { content: ""; position: absolute; left: 9px; top: 14px; bottom: 10px; border-left: 2px dashed var(--h-line); }
 .bz-home-ev { display: flex; gap: 16px; position: relative; padding: 11px 0 11px 24px; }
 .bz-home-ev::before { content: ""; position: absolute; left: 6px; top: 20px; width: 8px; height: 8px; border-radius: 50%; background: var(--h-ok); box-shadow: 0 0 0 2.5px var(--h-card), 0 0 0 3.5px var(--h-line); } /* 圆心 10px = 虚线中线（left 9 + 1），白环+描边压住虚线（V4） */
 .bz-home-ev--warn::before { background: var(--h-amber); }
-.bz-home-ev-tm { font-family: var(--h-mono); font-size: 12px; color: var(--h-dim); width: 44px; flex: none; padding-top: 3px; }
+.bz-home-ev-tm { font-family: var(--h-mono); font-size: var(--bz-font-meta); color: var(--h-dim); width: 44px; flex: none; padding-top: 3px; }
 .bz-home-ev-bd { flex: 1; min-width: 0; }
 .bz-home-ev-tx { font-size: 14.5px; line-height: 1.65; }
-.bz-home-ev-dm { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; color: #fff; padding: 1.5px 8px; border-radius: 8px; margin-right: 8px; vertical-align: 1.5px; }
+.bz-home-ev-dm { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; color: #fff; padding: 1.5px 8px; border-radius: var(--bz-radius-sm); margin-right: 8px; vertical-align: 1.5px; }
 .bz-home-ev-dm .bz-ic { width: 10px; height: 10px; }
-.bz-home-ev-note { margin-top: 6px; font-size: 12px; color: var(--h-ai); line-height: 1.6; }
+.bz-home-ev-note { margin-top: 6px; font-size: var(--bz-font-meta); color: var(--h-ai); line-height: 1.6; }
 .bz-home-ev-note::before { content: "✦ "; }
 .bz-home-flow-empty { padding: 26px 6px; font-size: 13.5px; color: var(--h-dim); line-height: 2.1; }
 .bz-home-flow-empty b { color: var(--h-ink); }
 
 /* ---- 明天预告（原型 .pr） ---- */
-.bz-home-panel .bz-home-pr { display: block; background: var(--h-ai-soft); border: 1px solid var(--h-ai-line); border-radius: 11px; padding: 13px 16px; margin-bottom: 10px; font-size: 13px; line-height: 1.75; cursor: pointer; text-align: left; font-family: inherit; color: inherit; width: 100%; }
+.bz-home-panel .bz-home-pr { display: block; background: var(--h-ai-soft); border: 1px solid var(--h-ai-line); border-radius: 11px; padding: 13px 16px; margin-bottom: 10px; font-size: var(--bz-font-label); line-height: 1.75; cursor: pointer; text-align: left; font-family: inherit; color: inherit; width: 100%; }
 .bz-home-panel .bz-home-pr:hover { border-color: var(--h-ai); }
 .bz-home-pr-h { font-size: 12.5px; font-weight: 700; color: var(--h-ai); margin-bottom: 3px; }
 .bz-home-pr-h::before { content: "✦ "; }
@@ -141,7 +141,7 @@
   .bz-home-flow { order: 1; margin-top: 18px; background: none; border: none; border-radius: 0; padding: 0; }
   /* 2026-09-09 用户拍板：瓦片一行一个 + 移动端字体 ×1.5（基数见基座各规则） */
   .bz-home-m-tiles { display: grid; grid-template-columns: 1fr; gap: 8px; }
-  .bz-home-panel .bz-home-m-tile { display: flex; align-items: center; gap: 6px; background: var(--h-card); border: 1px solid var(--h-line); border-radius: 8px; padding: 7px 8px; cursor: pointer; font-family: inherit; color: inherit; text-align: left; min-width: 0; font-size: 100%; }
+  .bz-home-panel .bz-home-m-tile { display: flex; align-items: center; gap: 6px; background: var(--h-card); border: 1px solid var(--h-line); border-radius: var(--bz-radius-sm); padding: 7px 8px; cursor: pointer; font-family: inherit; color: inherit; text-align: left; min-width: 0; font-size: 100%; }
   .bz-home-panel .bz-home-m-tile:hover { border-color: var(--h-dim); }
   .bz-home-m-tile .bz-home-dot { width: 5px; height: 5px; }
   .bz-home-m-tile .bz-home-eic .bz-ic { width: 15px; height: 15px; }
@@ -169,7 +169,7 @@
 .bz-home-ent-list { display: flex; flex-direction: column; }
 .bz-home-ent-row {
   display: flex; align-items: center; gap: 8px;
-  padding: 7px 8px; border-radius: 8px;
+  padding: 7px 8px; border-radius: var(--bz-radius-sm);
   border-bottom: 1px solid var(--sp-line-soft, var(--background-modifier-border));
   /* 触屏：纵向滚动归浏览器（短滑滚列表），横向不滚 → 长按拖拽不与滚动抢手势 */
   touch-action: pan-y;
@@ -180,7 +180,7 @@
 .bz-home-ent-grip .bz-ic { width: 15px; height: 15px; }
 .bz-home-ent-ic { display: inline-flex; flex: none; }
 .bz-home-ent-ic .bz-ic { width: 16px; height: 16px; }
-.bz-home-ent-nm { font-size: 13px; color: var(--sp-ink, var(--text-normal)); }
+.bz-home-ent-nm { font-size: var(--bz-font-label); color: var(--sp-ink, var(--text-normal)); }
 /* 行尾 ×/+：按钮默认样式全清（背景/边框/内阴影），只留图标与 hover 反馈 */
 .bz-home-ent-btn {
   margin-left: auto; display: inline-flex; align-items: center; justify-content: center;
@@ -199,13 +199,13 @@
 .bz-home-ent-drag {
   position: relative; z-index: 3;
   background: var(--sp-panel, var(--background-primary));
-  border-radius: 8px; box-shadow: var(--sp-shadow, var(--shadow-s));
+  border-radius: var(--bz-radius-sm); box-shadow: var(--sp-shadow, var(--shadow-s));
   opacity: .95;
 }
 
 /* 移动端：面板内字号随面板档放大（面板移动端字号见 settings-panel/styles.css） */
 @media (max-width: 768px) {
-  .bz-home-ent-hint { font-size: 13px; }
+  .bz-home-ent-hint { font-size: var(--bz-font-label); }
   .bz-home-ent-row { padding: 10px 8px; }
   .bz-home-ent-nm { font-size: 16px; }
   .bz-home-ent-ic .bz-ic, .bz-home-ent-grip .bz-ic { width: 19px; height: 19px; }

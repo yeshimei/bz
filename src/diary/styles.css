@@ -99,7 +99,7 @@
   display: flex;
   flex-direction: column;
   background: var(--dw-bg);
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   box-shadow: var(--dw-shadow-md);
   overflow: hidden;
   animation: bz-diary-slide-up 0.24s ease-out;
@@ -138,10 +138,10 @@
   color: var(--dw-ink);
 }
 .bz-diary-range {
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   color: var(--dw-muted);
   font-weight: 400;
-  transition: color 0.15s;
+  transition: color var(--bz-dur-fast);
 }
 .bz-diary-brand:hover .bz-diary-range {
   color: var(--dw-accent);
@@ -156,18 +156,18 @@
 .bz-diary .bz-diary-icon-btn {
   width: 22px;
   height: 26px;
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   background: none;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--bz-radius-xs);
   color: var(--dw-muted);
   cursor: pointer;
   padding: 0;
-  transition: background 0.15s;
+  transition: background var(--bz-dur-fast);
 }
 .bz-diary .bz-diary-icon-btn:hover {
   background: var(--dw-surface);
@@ -206,23 +206,23 @@
   align-items: center;
   gap: 4px;
   padding: 5px 10px;
-  border-radius: 999px;
+  border-radius: var(--bz-radius-full);
   background: var(--dw-surface);
   border: none;
   box-shadow: none;
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--dw-ink);
   cursor: pointer;
   font-family: inherit;
   line-height: 1.25;
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--bz-dur-fast), color var(--bz-dur-fast);
   white-space: nowrap;
 }
 .bz-diary .bz-diary-chip:hover {
   background: var(--dw-hover);
 }
 .bz-diary-chip-cnt {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--dw-faint);
 }
 .bz-diary .bz-diary-chip--on {
@@ -266,16 +266,16 @@
   align-items: center;
   gap: 3px;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: var(--bz-radius-full);
   background: var(--dw-surface);
   border: none;
   box-shadow: none;
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--dw-muted);
   cursor: pointer;
   font-family: inherit;
   line-height: 1.25;
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--bz-dur-fast), color var(--bz-dur-fast);
   white-space: nowrap;
 }
 .bz-diary .bz-diary-subchip:hover {
@@ -330,7 +330,7 @@
 /* 增强 #2：年份分组分隔标签（跨年处插入；月份项 data-month 不变，定位逻辑不动）。
    首个年份标签（现为栏内首个子元素）顶垫收窄——上方已有 .bz-rail-scroll 的 12px 内垫 */
 .bz-diary-rail-year {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   font-weight: 600;
   color: var(--dw-faint);
   padding: 12px 10px 2px;
@@ -351,11 +351,11 @@
 .bz-diary-month-thumb {
   width: 20px;
   height: 20px;
-  border-radius: 4px;
+  border-radius: var(--bz-radius-xs);
   flex: 0 0 auto;
   overflow: hidden;
   background: var(--dw-surface);
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -412,7 +412,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   font-weight: 600;
   color: var(--dw-ink);
   padding-bottom: 8px;
@@ -437,7 +437,7 @@
   background: var(--dw-surface);
   cursor: pointer;
   font-family: inherit;
-  transition: opacity 0.15s;
+  transition: opacity var(--bz-dur-fast);
 }
 .bz-diary .bz-diary-memory:hover {
   opacity: 0.85;
@@ -449,7 +449,7 @@
   align-items: center;
   justify-content: center;
   color: var(--dw-muted);
-  font-size: 20px;
+  font-size: var(--bz-font-display);
 }
 .bz-diary-memory-thumb img {
   width: 100%;
@@ -477,12 +477,12 @@
   position: absolute;
   left: 6px;
   bottom: 5px;
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   line-height: 1.4;
   color: #fff;
   background: rgba(0, 0, 0, 0.45);
   padding: 0 6px;
-  border-radius: 999px;
+  border-radius: var(--bz-radius-full);
 }
 /* 日期节头（sticky：滚动时吸顶显示日期 + 周几 + 统计） */
 .bz-diary-day-head {
@@ -496,16 +496,16 @@
   background: var(--dw-bg);
 }
 .bz-diary-day-date {
-  font-size: 17px;
+  font-size: var(--bz-font-title);
   font-weight: 600;
   color: var(--dw-ink);
 }
 .bz-diary-day-week {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--dw-muted);
 }
 .bz-diary-day-stat {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--dw-faint);
   margin-left: auto;
   display: flex;
@@ -645,7 +645,7 @@
   align-items: center;
   justify-content: center;
   font-size: 36px;
-  transition: opacity 0.2s;
+  transition: opacity var(--bz-dur-base);
 }
 /* 描述条（hover 浮现：emoji + 时间 + 媒体名） */
 .bz-diary-cap {
@@ -654,11 +654,11 @@
   right: 0;
   bottom: 0;
   padding: 18px 10px 7px;
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: #fff;
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
   opacity: 0;
-  transition: opacity 0.15s;
+  transition: opacity var(--bz-dur-fast);
 }
 .bz-diary-media:hover .bz-diary-cap {
   opacity: 1;
@@ -676,10 +676,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 17px;
+  font-size: var(--bz-font-title);
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.15s;
+  transition: opacity var(--bz-dur-fast);
 }
 .bz-diary-media:hover .bz-diary-play {
   opacity: 1;
@@ -690,10 +690,10 @@
   right: 6px;
   bottom: 6px;
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: var(--bz-radius-xs);
   background: rgba(0, 0, 0, 0.65);
   color: #fff;
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   font-family: var(--dw-mono);
 }
 
@@ -702,7 +702,7 @@
   background: var(--dw-surface);
   padding: 12px 14px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--bz-dur-fast);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -717,16 +717,16 @@
 }
 .bz-diary-text-t {
   font-family: var(--dw-mono);
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--dw-muted);
 }
 .bz-diary-text-em {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
 }
 /* issue 217 S5：`.bz-diary-tx`（媒体下挂正文）规则已随 213/214 版式删除（死规则）；
    正文卡允许选中复制（issue 217 小项：卡片全局 user-select:none 的文本区豁免） */
 .bz-diary-text-tx {
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   line-height: 1.6;
   color: var(--dw-ink);
   user-select: text;
@@ -784,12 +784,12 @@
   font-size: 0.9em;
   background: var(--dw-surface);
   padding: 1px 5px;
-  border-radius: 4px;
+  border-radius: var(--bz-radius-xs);
 }
 .bz-diary-md pre {
   margin: 0.5em 0;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   background: var(--dw-surface);
   overflow-x: auto;
 }
@@ -811,7 +811,7 @@
 }
 .bz-diary-md img {
   max-width: 100%;
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
 }
 .bz-diary-md table {
   border-collapse: collapse;
@@ -832,7 +832,7 @@
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  animation: bz-diary-fade-in 0.2s ease-out;
+  animation: bz-diary-fade-in var(--bz-dur-base) ease-out;
 }
 .bz-diary-lb--show {
   display: flex;
@@ -840,7 +840,7 @@
 .bz-diary-lb-media {
   max-width: 94vw;
   max-height: 84vh;
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   object-fit: contain;
 }
 .bz-diary-lb video.bz-diary-lb-media,
@@ -850,12 +850,12 @@
 }
 .bz-diary-lb audio.bz-diary-lb-media {
   height: 54px;
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
 }
 .bz-diary-lbcap {
   margin-top: 14px;
   color: rgba(255, 255, 255, 0.75);
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   max-width: 80vw;
   text-align: center;
   overflow: hidden;
@@ -887,7 +887,7 @@
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
   border: none;
-  font-size: 15px;
+  font-size: var(--bz-font-emphasis);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -911,7 +911,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s;
+  transition: background var(--bz-dur-fast);
 }
 .bz-diary .bz-diary-lbnav:hover {
   background: rgba(255, 255, 255, 0.25);
@@ -926,7 +926,7 @@
 .bz-diary-lb-pending {
   width: 120px;
   height: 120px;
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   background: rgba(255, 255, 255, 0.08);
 }
 .bz-diary-lberr {
@@ -965,7 +965,7 @@
   border-bottom: 1px solid var(--dw-line);
 }
 .bz-diary-sheet-emoji {
-  font-size: 20px;
+  font-size: var(--bz-font-display);
   line-height: 1;
 }
 .bz-diary-sheet-info {
@@ -973,7 +973,7 @@
   min-width: 0;
 }
 .bz-diary-sheet-content {
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   color: var(--dw-muted);
   line-height: 1.5;
   display: -webkit-box;
@@ -1022,25 +1022,25 @@
   opacity: 0.55;
 }
 .bz-diary-empty-title {
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   color: var(--dw-muted);
 }
 .bz-diary-empty-desc {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--dw-faint);
 }
 .bz-diary .bz-diary-empty-btn {
   margin-top: 10px;
   padding: 9px 22px;
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   border: none;
   background: var(--dw-accent);
   color: var(--dw-on-accent);
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
-  transition: opacity 0.15s;
+  transition: opacity var(--bz-dur-fast);
 }
 .bz-diary .bz-diary-empty-btn:hover {
   opacity: 0.88;
@@ -1137,7 +1137,7 @@
   background: var(--dw-bg);
   border-radius: 14px;
   box-shadow: var(--dw-shadow-md);
-  animation: bz-diary-slide-up 0.2s ease-out;
+  animation: bz-diary-slide-up var(--bz-dur-base) ease-out;
   padding-bottom: 16px;
 }
 /* 头行：规格同 .bz-diary-head / .bz-diary-day-head（左标题、右动作，发丝分隔线走 ::after） */
@@ -1159,13 +1159,13 @@
 }
 .bz-diary-datefilter-title {
   flex: 1;
-  font-size: 15px;
+  font-size: var(--bz-font-emphasis);
   font-weight: 600;
   color: var(--dw-ink);
 }
 /* 小节标签：与章节栏年份标签同规格（11px / faint / 字距 0.08em） */
 .bz-diary-datefilter-label {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   font-weight: 600;
   letter-spacing: 0.08em;
   color: var(--dw-faint);
@@ -1175,14 +1175,14 @@
    会清背景/字号/边框，前缀化（(0,2,0)）才能恢复（用户反馈过样式丢失） */
 .bz-diary-datefilter .bz-diary-datefilter-reset {
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: var(--bz-radius-full);
   border: none;
   background: none;
   box-shadow: none;
   color: var(--dw-muted);
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--bz-dur-fast), color var(--bz-dur-fast);
 }
 .bz-diary-datefilter .bz-diary-datefilter-reset:hover {
   background: var(--dw-surface);
@@ -1197,14 +1197,14 @@
   height: 26px;
   padding: 0;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--bz-radius-xs);
   background: none;
   box-shadow: none;
   color: var(--dw-muted);
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   line-height: 1;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--bz-dur-fast);
 }
 .bz-diary-datefilter .bz-diary-datefilter-close:hover {
   background: var(--dw-surface);
@@ -1222,15 +1222,15 @@
   gap: 4px;
   padding: 5px 10px;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--bz-radius-full);
   background: var(--dw-surface);
   box-shadow: none;
   color: var(--dw-ink);
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   line-height: 1.25;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--bz-dur-fast), color var(--bz-dur-fast);
 }
 .bz-diary-datefilter .bz-diary-datefilter-year:hover {
   background: var(--dw-hover);
@@ -1243,7 +1243,7 @@
   font-weight: 500;
 }
 .bz-diary-datefilter-year-cnt {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--dw-faint);
 }
 .bz-diary-datefilter .bz-diary-datefilter-year--on .bz-diary-datefilter-year-cnt {
@@ -1264,11 +1264,11 @@
   padding: 8px 10px;
   /* 常态也留 1px 透明边框：空月的虚线边框不撑高行，整格高度恒定 */
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   background: var(--dw-surface);
   box-shadow: none;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--bz-dur-fast);
 }
 .bz-diary-datefilter .bz-diary-datefilter-month:hover {
   background: var(--dw-hover);
@@ -1290,18 +1290,18 @@
   background: none;
 }
 .bz-diary-datefilter-month-name {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   font-weight: 500;
   color: var(--dw-ink);
 }
 .bz-diary-datefilter-month-cnt {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--dw-faint);
 }
 .bz-diary-datefilter-hint {
   padding: 4px 20px 20px;
   text-align: center;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--dw-faint);
 }
 @media (max-width: 768px) {
@@ -1323,10 +1323,10 @@
 /* 写日记弹窗 */
 #add-diary-mask {
   backdrop-filter: blur(2px);
-  animation: fadeIn 0.2s ease-out;
+  animation: fadeIn var(--bz-dur-base) ease-out;
 }
 .add-diary-popup {
-  animation: slideUp 0.3s ease-out;
+  animation: slideUp var(--bz-dur-slow) ease-out;
 }
 /* 焦点环统一走 core p3 focus-visible 规则：此处仅保留 border 高亮，避免输入聚焦双环 */
 #add-diary-datetime:focus,
@@ -1352,7 +1352,7 @@
 /* 标签选择器弹窗 */
 #diary-tag-selector-mask {
   backdrop-filter: blur(2px);
-  animation: fadeIn 0.2s ease-out;
+  animation: fadeIn var(--bz-dur-base) ease-out;
 }
 .diary-tag-selector-popup {
   position: fixed;
@@ -1360,7 +1360,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   background: var(--background-primary);
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   padding: 20px;
   display: none;
@@ -1368,7 +1368,7 @@
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;
-  animation: slideUp 0.3s ease-out;
+  animation: slideUp var(--bz-dur-slow) ease-out;
 }
 .diary-tag-selector-title {
   margin: 0 0 16px 0;
@@ -1387,9 +1387,9 @@
   border-radius: 10px;
   background: var(--background-secondary) !important;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   color: var(--text-normal);
-  transition: all 0.2s;
+  transition: all var(--bz-dur-base);
   box-shadow: none !important;
   border: none !important;
 }
@@ -1406,7 +1406,7 @@
   border-radius: 6px;
   border: none;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   font-weight: 500;
 }
 .diary-save-btn {
@@ -1440,7 +1440,7 @@
     padding: 16px;
   }
   .diary-tag-selector-title {
-    font-size: 15px;
+    font-size: var(--bz-font-emphasis);
     margin-bottom: 12px;
   }
   .diary-tag-selector-buttons {
@@ -1449,7 +1449,7 @@
     overflow: visible !important;
   }
   .diary-tag-selector-btn {
-    font-size: 13px;
+    font-size: var(--bz-font-label);
   }
   /* 移动端弹窗去纵向滚动条（滚动保持） */
   .diary-tag-selector-popup {
@@ -1486,7 +1486,7 @@
   height: 100%;
   background: var(--interactive-accent);
   border-radius: 3px;
-  transition: width 0.2s;
+  transition: width var(--bz-dur-base);
 }
 .bz-diary-repair-progress-text {
   margin-top: 6px;
@@ -1538,7 +1538,7 @@
   cursor: pointer;
   padding: 4px 12px;
   border: none;
-  border-radius: var(--radius-s, 4px);
+  border-radius: var(--radius-s, var(--bz-radius-xs));
   background: var(--interactive-accent);
   color: var(--text-on-accent, #fff);
   font-size: var(--font-ui-small);

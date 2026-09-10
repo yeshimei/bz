@@ -76,7 +76,7 @@
   flex-direction: column;
   overflow: hidden;
 }
-.bz-sp-picker-head { padding: 14px 18px 8px; font-size: 14px; font-weight: 700; color: var(--sp-ink); }
+.bz-sp-picker-head { padding: 14px 18px 8px; font-size: var(--bz-font-body); font-weight: 700; color: var(--sp-ink); }
 .bz-sp-picker-search {
   margin: 10px auto 8px;
   width: calc(100% - 28px);
@@ -116,7 +116,7 @@
   font-size: 12.5px;
   color: var(--sp-ink);
   padding: 6px 10px;
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   cursor: pointer;
   text-align: left;
   position: relative;
@@ -301,7 +301,7 @@
   box-shadow: var(--sp-shadow);
   background: var(--sp-bg);
   color: var(--sp-ink);
-  font-size: 13px;
+  font-size: var(--bz-font-label);
 }
 
 /* ═══════════ 顶栏（面包屑 + 搜索 + 工具位） ═══════════ */
@@ -319,7 +319,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   color: var(--sp-ink-2);
 }
 .bz-sp-crumb .bz-sp-crumb-cur {
@@ -386,7 +386,7 @@
   border: 0;
   background: transparent;
   border-radius: 9px;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   color: var(--sp-ink);
   cursor: pointer;
   text-align: left;
@@ -458,7 +458,7 @@
   align-items: center;
   gap: 8px;
   padding: 13px 18px 2px;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   font-weight: 600;
   color: var(--sp-ink);
 }
@@ -488,7 +488,7 @@
 /* custom 行（整行插槽，行体高）不参与整条 hover 变色 */
 .bz-sp-set-row--custom:hover { background: transparent; }
 .bz-sp-set-info { min-width: 0; }
-.bz-sp-set-name { font-size: 13px; color: var(--sp-ink); }
+.bz-sp-set-name { font-size: var(--bz-font-label); color: var(--sp-ink); }
 .bz-sp-set-desc { font-size: 11.5px; color: var(--sp-ink-2); margin-top: 2px; }
 .bz-sp-set-ctrl {
   margin-left: auto;
@@ -812,7 +812,7 @@
 /* 域页头行：返回钮 + 域名 + 工具位 */
 .bz-sp-mob-nav { display: flex; align-items: center; }
 .bz-sp-mob-title {
-  font-size: 15px;
+  font-size: var(--bz-font-emphasis);
   font-weight: 700;
   color: var(--sp-ink);
   overflow: hidden;
@@ -826,7 +826,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 14px 16px 20px;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
 }
 .bz-sp-mob-page-body .bz-sp-group { box-shadow: none; margin-bottom: 14px; }
 .bz-sp-mob-page-body .bz-sp-set-row { padding: 10px 14px; }
@@ -851,7 +851,7 @@
   outline: 0 !important;
   background: transparent;
   padding: 0;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   color: var(--sp-ink);
   font-family: inherit;
 }
@@ -877,7 +877,7 @@
   padding: 11px 12px;
   margin-bottom: 6px;
   border: 1px solid var(--sp-line);
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   background: var(--sp-panel);
   box-shadow: var(--sp-shadow);
   font-family: inherit;
@@ -932,14 +932,14 @@
   border: 1px solid var(--sp-line) !important;
   background: var(--sp-panel) !important;
   color: var(--sp-ink-2) !important;
-  border-radius: 8px !important;
+  border-radius: var(--bz-radius-sm) !important;
 }
 .bz-sp-mob-close:hover { color: var(--sp-accent) !important; }
 .bz-sp-mob-back-btn {
   border: 1px solid var(--sp-line) !important;
   background: var(--sp-panel) !important;
   color: var(--sp-ink-2) !important;
-  border-radius: 8px !important;
+  border-radius: var(--bz-radius-sm) !important;
   margin-right: -4px;
 }
 .bz-sp-mob-back-btn:hover { color: var(--sp-accent) !important; }
@@ -1052,7 +1052,7 @@
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-name,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-name,
 #bz-up-manager-popup .setting-item-name ,
-#bz-model-picker-popup .setting-item-name { font-size: 13px; font-weight: 600; color: var(--sp-ink); }
+#bz-model-picker-popup .setting-item-name { font-size: var(--bz-font-label); font-weight: 600; color: var(--sp-ink); }
 .bz-sp-desk .bz-sp-custom-slot .setting-item-description,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-description,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item-description,
@@ -1095,7 +1095,7 @@
   height: 22px;
   margin: 0;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--bz-radius-full);
   background-color: var(--sp-ctl-off);
   background-image: radial-gradient(circle, var(--sp-knob) 8px, transparent 9px);
   background-repeat: no-repeat;
@@ -1104,7 +1104,7 @@
   cursor: pointer;
   flex: none;
   vertical-align: middle;
-  transition: background-position 0.15s, background-color 0.15s;
+  transition: background-position var(--bz-dur-fast), background-color var(--bz-dur-fast);
 }
 .bz-sp-desk .bz-sp-custom-slot input[type="checkbox"]:checked,
 .bz-sp-mobile .bz-sp-custom-slot input[type="checkbox"]:checked,
@@ -1142,7 +1142,7 @@
   }
 }
 #bz-up-manager-popup .bz-settings-title ,
-#bz-model-picker-popup .bz-settings-title { font-size: 14px; font-weight: 700; color: var(--sp-ink); }
+#bz-model-picker-popup .bz-settings-title { font-size: var(--bz-font-body); font-weight: 700; color: var(--sp-ink); }
 
 /* 模型选择器弹窗内部皮收口（ticket 265）：壳体已接 --sp-*，但头部描边 / 内容区 /
    列表行 hover·选中 / 名称·来源小字仍在消费 Obsidian 原生变量（原生 hover 底 /
@@ -1220,9 +1220,9 @@
   appearance: none;
   -webkit-appearance: none;
   position: relative;
-  border-radius: 999px;
+  border-radius: var(--bz-radius-full);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--bz-dur-fast);
 }
 .bz-sp-desk .bz-sw::after,
 .bz-sp-mobile .bz-sw::after,
@@ -1231,7 +1231,7 @@
   position: absolute;
   border-radius: 50%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-  transition: transform 0.15s;
+  transition: transform var(--bz-dur-fast);
 }
 
 /* choiceCards 全宽卡组（上下结构行的卡容器） */

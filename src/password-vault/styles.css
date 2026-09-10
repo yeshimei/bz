@@ -161,7 +161,7 @@
   border-radius: 10px;
   font-size: 13.5px;
   color: var(--pwv-muted);
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--bz-dur-fast), color var(--bz-dur-fast);
   width: 100%;
   text-align: left;
 }
@@ -183,7 +183,7 @@
 }
 .bz-password-vault-navitem .cnt {
   margin-left: auto;
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--pwv-faint);
 }
 .bz-password-vault-nav .spacer {
@@ -194,7 +194,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--pwv-muted);
   border-top: 1px solid var(--pwv-line);
 }
@@ -211,7 +211,7 @@
 }
 .bz-password-vault-lockstate button {
   margin-left: auto;
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--pwv-gold-ink);
   padding: 3px 8px;
   border-radius: 6px;
@@ -232,13 +232,13 @@
   padding: 22px 22px 14px;
 }
 .bz-password-vault-listhead h1 {
-  font-size: 20px;
+  font-size: var(--bz-font-display);
   font-weight: 700;
   margin: 0 0 2px;
   color: var(--pwv-ink);
 }
 .bz-password-vault-listhead .sub {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--pwv-muted);
 }
 .bz-password-vault-search {
@@ -248,7 +248,7 @@
   margin-top: 14px;
   background: var(--pwv-surface);
   border: 1px solid var(--pwv-line);
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   padding: 0 12px;
 }
 .bz-password-vault-search svg {
@@ -269,7 +269,7 @@
   border-color: transparent;
 }
 .bz-password-vault-count {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--pwv-faint);
   padding: 0 22px 10px;
 }
@@ -283,9 +283,9 @@
   align-items: center;
   gap: 12px;
   padding: 12px 12px;
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--bz-dur-fast);
   border: 1px solid transparent;
   position: relative;
 }
@@ -322,7 +322,7 @@
 }
 .bz-password-vault-row .pl .star {
   color: var(--pwv-warn);
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
 }
 .bz-password-vault-row .ac {
   font-size: 11.5px;
@@ -333,7 +333,7 @@
   text-overflow: ellipsis;
 }
 .bz-password-vault-row .tm {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--pwv-faint);
   flex-shrink: 0;
 }
@@ -350,9 +350,9 @@
   align-items: center;
   gap: 12px;
   padding: 12px 12px;
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--bz-dur-fast);
   border: 1px solid transparent;
   position: relative;
 }
@@ -380,15 +380,15 @@
 }
 .bz-password-vault-plrow .pl .star {
   color: var(--pwv-warn);
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
 }
 .bz-password-vault-plcount {
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   font-weight: 700;
   color: var(--pwv-gold-ink);
   background: color-mix(in srgb, var(--interactive-accent) 16%, transparent);
-  border-radius: 999px;
+  border-radius: var(--bz-radius-full);
   padding: 2px 8px;
   min-width: 22px;
   text-align: center;
@@ -402,7 +402,7 @@
   text-overflow: ellipsis;
 }
 .bz-password-vault-plrow .tm {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--pwv-faint);
   flex-shrink: 0;
 }
@@ -427,7 +427,7 @@
   border-bottom: 1px solid var(--pwv-line);
 }
 .bz-password-vault-accthead .t {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--pwv-muted);
   letter-spacing: 0.06em;
 }
@@ -448,7 +448,7 @@
   border-radius: 14px;
   margin-bottom: 10px;
   padding: 14px 16px;
-  transition: border-color 0.15s;
+  transition: border-color var(--bz-dur-fast);
 }
 .bz-password-vault-acctcard:hover {
   border-color: var(--pwv-gold);
@@ -462,7 +462,7 @@
 .bz-password-vault-acctcard .name {
   flex: 1;
   min-width: 0;
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   font-weight: 600;
   font-family: var(--pwv-mono);
   white-space: nowrap;
@@ -471,23 +471,23 @@
 }
 .bz-password-vault-acctcard .name .star {
   color: var(--pwv-warn);
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   margin-left: 4px;
 }
 .bz-password-vault-acctcard .copyac {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   font-weight: 600;
   color: var(--pwv-muted);
   border: 1px solid var(--pwv-line);
   background: var(--pwv-bg);
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   padding: 5px 10px;
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 0.15s;
+  transition: all var(--bz-dur-fast);
 }
 .bz-password-vault-acctcard .copyac:hover {
   background: var(--pwv-gold-soft);
@@ -510,7 +510,7 @@
 .bz-password-vault-acctcard .pw {
   flex: 1;
   min-width: 0;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   font-family: var(--pwv-mono);
   white-space: nowrap;
   overflow: hidden;
@@ -523,12 +523,12 @@
 .bz-password-vault-acctcard .mini {
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--pwv-muted);
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--bz-dur-fast), color var(--bz-dur-fast);
   flex-shrink: 0;
 }
 .bz-password-vault-acctcard .mini:hover {
@@ -552,7 +552,7 @@
 }
 .bz-password-vault-acctcard .meta {
   margin-top: 8px;
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--pwv-faint);
 }
 .bz-password-vault-acctcard .meta a {
@@ -564,7 +564,7 @@
   margin-bottom: 10px;
   background: var(--pwv-surface);
   border: 1px solid var(--pwv-line);
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   padding: 13px 14px;
 }
 .bz-password-vault-seg .seghead {
@@ -575,7 +575,7 @@
 }
 .bz-password-vault-seg .seghead .acc {
   flex: 1;
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   font-weight: 600;
   font-family: var(--pwv-mono);
   white-space: nowrap;
@@ -584,23 +584,23 @@
 }
 .bz-password-vault-seg .seghead .acc .star {
   color: var(--pwv-warn);
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   margin-left: 4px;
 }
 .bz-password-vault-seg .seghead .copyac {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   font-weight: 600;
   color: var(--pwv-muted);
   border: 1px solid var(--pwv-line);
   background: var(--pwv-bg);
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   padding: 5px 10px;
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 0.15s;
+  transition: all var(--bz-dur-fast);
 }
 .bz-password-vault-seg .seghead .copyac:hover {
   background: var(--pwv-gold-soft);
@@ -624,7 +624,7 @@
   flex: 1;
   min-width: 0;
   font-family: var(--pwv-mono);
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -636,7 +636,7 @@
 .bz-password-vault-seg .mini {
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -664,7 +664,7 @@
 }
 .bz-password-vault-seg .segmeta {
   margin-top: 8px;
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--pwv-faint);
 }
 /* 移动端平台详情页头 */
@@ -686,7 +686,7 @@
 /* 平台编辑弹窗 */
 .bz-password-vault-platedit label {
   display: block;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   font-weight: 600;
   color: var(--pwv-muted);
   margin: 12px 0 6px;
@@ -705,11 +705,11 @@
 }
 /* 移动端平台卡片徽标 */
 .bz-password-vault-mobcard .pl .cnt {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   font-weight: 700;
   color: var(--pwv-gold-ink);
   background: color-mix(in srgb, var(--interactive-accent) 16%, transparent);
-  border-radius: 999px;
+  border-radius: var(--bz-radius-full);
   padding: 1px 7px;
   margin-left: 4px;
 }
@@ -745,7 +745,7 @@
   color: var(--pwv-ink);
 }
 .bz-password-vault-detailhead .ttl .url {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--pwv-gold-ink);
   text-decoration: none;
   cursor: pointer;
@@ -762,7 +762,7 @@
   justify-content: center;
   color: var(--pwv-faint);
   flex-shrink: 0;
-  font-size: 17px;
+  font-size: var(--bz-font-title);
 }
 .bz-password-vault-detailhead .star:hover {
   background: var(--pwv-surface2);
@@ -785,7 +785,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--pwv-faint);
@@ -802,13 +802,13 @@
   gap: 10px;
   background: var(--pwv-bg);
   border: 1px solid var(--pwv-line);
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   padding: 11px 14px;
 }
 .bz-password-vault-field .val {
   flex: 1;
   min-width: 0;
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -821,12 +821,12 @@
 .bz-password-vault-mini {
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--pwv-muted);
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--bz-dur-fast), color var(--bz-dur-fast);
   flex-shrink: 0;
 }
 .bz-password-vault-mini:hover {
@@ -840,9 +840,9 @@
 .bz-password-vault-note {
   background: var(--pwv-bg);
   border: 1px solid var(--pwv-line);
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   padding: 12px 14px;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   color: var(--pwv-muted);
   line-height: 1.6;
   white-space: pre-wrap;
@@ -869,7 +869,7 @@
   font-weight: 600;
   background: var(--pwv-surface2);
   color: var(--pwv-ink);
-  transition: opacity 0.15s;
+  transition: opacity var(--bz-dur-fast);
 }
 .bz-password-vault-btn svg {
   width: 15px;
@@ -903,12 +903,12 @@
   opacity: 0.5;
 }
 .bz-password-vault-empty .t {
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   color: var(--pwv-muted);
   font-weight: 600;
 }
 .bz-password-vault-empty .d {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
 }
 .bz-password-vault-empty .act {
   margin-top: 8px;
@@ -916,7 +916,7 @@
   border-radius: 10px;
   background: var(--pwv-gold-soft);
   color: #fff;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   font-weight: 600;
 }
 /* 生成器视图 */
@@ -933,7 +933,7 @@
   flex-wrap: wrap;
 }
 .bz-password-vault-gen .lab {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--pwv-muted);
   min-width: 56px;
 }
@@ -944,7 +944,7 @@
 }
 .bz-password-vault-gen .val {
   font-family: var(--pwv-mono);
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   color: var(--pwv-gold-ink);
   min-width: 36px;
 }
@@ -955,9 +955,9 @@
 }
 .bz-password-vault-gen .chip {
   padding: 5px 12px;
-  border-radius: 999px;
+  border-radius: var(--bz-radius-full);
   background: var(--pwv-surface2);
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--pwv-muted);
 }
 .bz-password-vault-gen .chip.on {
@@ -984,7 +984,7 @@
   flex: 1;
   min-width: 200px;
   font-family: var(--pwv-mono);
-  font-size: 20px;
+  font-size: var(--bz-font-display);
   letter-spacing: 0.06em;
   word-break: break-all;
 }
@@ -1010,7 +1010,7 @@
   background: var(--pwv-ok);
 }
 .bz-password-vault-gen .strlabel {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--pwv-muted);
   margin-top: 6px;
 }
@@ -1075,12 +1075,12 @@
   height: 17px;
 }
 .bz-password-vault-mobbar .st {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--pwv-ok);
   font-weight: 600;
   background: color-mix(in srgb, var(--color-green) 12%, transparent);
   padding: 4px 9px;
-  border-radius: 999px;
+  border-radius: var(--bz-radius-full);
 }
 .bz-password-vault-mobbar .st.locked {
   color: var(--pwv-faint);
@@ -1110,7 +1110,7 @@
   margin: 12px 16px 4px;
   background: var(--pwv-surface);
   border: 1px solid var(--pwv-line);
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   padding: 0 12px;
 }
 .bz-password-vault-mobsearch svg {
@@ -1124,7 +1124,7 @@
   background: none;
   flex: 1;
   padding: 10px 0;
-  font-size: 14px;
+  font-size: var(--bz-font-body);
 }
 .bz-password-vault-mobsearch input:focus {
   outline: none;
@@ -1141,7 +1141,7 @@
   gap: 12px;
   background: var(--pwv-surface);
   border: 1px solid var(--pwv-line);
-  border-radius: 16px;
+  border-radius: var(--bz-radius-lg);
   padding: 14px;
   margin-bottom: 10px;
   cursor: pointer;
@@ -1153,11 +1153,11 @@
 .bz-password-vault-mobcard .av {
   width: 40px;
   height: 40px;
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 17px;
+  font-size: var(--bz-font-title);
   color: #fff;
   flex-shrink: 0;
 }
@@ -1166,7 +1166,7 @@
   min-width: 0;
 }
 .bz-password-vault-mobcard .pl {
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -1174,10 +1174,10 @@
 }
 .bz-password-vault-mobcard .pl .star {
   color: var(--pwv-warn);
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
 }
 .bz-password-vault-mobcard .ac {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--pwv-muted);
   font-family: var(--pwv-mono);
   white-space: nowrap;
@@ -1200,7 +1200,7 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 8px 22px color-mix(in srgb, var(--interactive-accent) 45%, transparent);
-  transition: transform 0.15s;
+  transition: transform var(--bz-dur-fast);
   z-index: 6;
 }
 .bz-password-vault-fab:hover {
@@ -1222,17 +1222,17 @@
   text-align: center;
 }
 .bz-password-vault-mobempty .t {
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   color: var(--pwv-muted);
   font-weight: 600;
 }
 .bz-password-vault-mobempty .act {
   margin-top: 8px;
   padding: 10px 20px;
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   background: var(--pwv-gold-soft);
   color: #fff;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   font-weight: 600;
 }
 /* 移动详情页（次级页面）：遮罩 + 底部弹出面板（非全屏，遮罩点击关闭） */
@@ -1332,7 +1332,7 @@
   margin-bottom: 12px;
 }
 .bz-password-vault-mf .lab {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--pwv-faint);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1342,7 +1342,7 @@
 .bz-password-vault-mf .val {
   flex: 1;
   min-width: 0;
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   font-family: var(--pwv-mono);
   white-space: nowrap;
   overflow: hidden;
@@ -1383,7 +1383,7 @@
   border: 1px solid var(--pwv-line);
   border-radius: 14px;
   padding: 12px 14px;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   color: var(--pwv-muted);
   line-height: 1.6;
   white-space: pre-wrap;
@@ -1445,12 +1445,12 @@
 .bz-password-vault-lock input {
   width: min(280px, 80%);
   text-align: center;
-  font-size: 15px;
+  font-size: var(--bz-font-emphasis);
   padding: 12px;
   margin-top: 8px;
 }
 .bz-password-vault-lock .err {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--pwv-bad);
   min-height: 16px;
   margin-top: 8px;
@@ -1461,12 +1461,12 @@
   color: #fff;
   font-weight: 600;
   padding: 12px 34px;
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   box-shadow: 0 6px 18px color-mix(in srgb, var(--interactive-accent) 40%, transparent);
 }
 .bz-password-vault-lock .sec {
   margin-top: 26px;
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--pwv-faint);
   display: flex;
   align-items: center;
@@ -1512,18 +1512,18 @@
 }
 .bz-password-vault-dialog h3 {
   margin: 0 0 4px;
-  font-size: 17px;
+  font-size: var(--bz-font-title);
   font-weight: 700;
   color: var(--pwv-ink);
 }
 .bz-password-vault-dialog .sub {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--pwv-muted);
   margin-bottom: 18px;
 }
 .bz-password-vault-dialog label {
   display: block;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   font-weight: 600;
   color: var(--pwv-muted);
   margin: 12px 0 6px;
@@ -1582,7 +1582,7 @@
   box-shadow: 0 5px 14px color-mix(in srgb, var(--interactive-accent) 35%, transparent);
 }
 .bz-password-vault-dialog .err {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--pwv-bad);
   min-height: 16px;
   margin-top: 8px;
@@ -1613,7 +1613,7 @@
 }
 .bz-password-vault-pop2 .card h3 {
   margin: 0 0 8px;
-  font-size: 17px;
+  font-size: var(--bz-font-title);
   font-weight: 700;
   color: var(--pwv-ink);
 }
@@ -1656,13 +1656,13 @@
   background: var(--pwv-ink);
   color: var(--pwv-bg);
   padding: 9px 18px;
-  border-radius: 999px;
+  border-radius: var(--bz-radius-full);
   font-size: 12.5px;
   font-weight: 600;
   z-index: 70;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s;
+  transition: opacity var(--bz-dur-base);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 .bz-password-vault-toast.show {

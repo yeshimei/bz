@@ -19,7 +19,7 @@
   cursor: pointer;
   touch-action: none;
   user-select: none;
-  transition: all 0.3s ease;
+  transition: all var(--bz-dur-slow) ease;
 }
 #smart-companion-cat * {
   box-sizing: border-box;
@@ -243,7 +243,7 @@
   background: #4caf50;
   box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3), 0 0 10px 4px rgba(76, 175, 80, 0.2);
   opacity: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--bz-dur-slow) cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 3;
   pointer-events: none;
 }
@@ -263,7 +263,7 @@
   background: linear-gradient(135deg, #ff6b6b, #ee5a52);
   box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.3), 0 0 10px 4px rgba(255, 107, 107, 0.2);
   opacity: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--bz-dur-slow) cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 3;
   pointer-events: none;
 }
@@ -297,8 +297,8 @@
   backdrop-filter: blur(20px);
   color: #2c3e50;
   padding: 12px 16px;
-  border-radius: 16px;
-  font-size: 13px;
+  border-radius: var(--bz-radius-lg);
+  font-size: var(--bz-font-label);
   max-width: min(300px, calc(100vw - 16px));
   min-width: 175px;
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -309,7 +309,7 @@
   z-index: 1; /* 容器内局部小档（多气泡按 DOM 序堆叠，与原同值语义一致） */
   opacity: 0;
   transform: translateX(var(--bz-sc-shift, 0px)) translateY(10px) scale(0.95);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--bz-dur-slow) cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
 }
 #smart-companion-cat .cat-bubble.show {
@@ -334,7 +334,7 @@
 }
 #smart-companion-cat .cat-bubble.bz-sc-bubble-pinned {
   box-shadow: 3px 1px 5px rgba(0, 0, 0, 0.15), 0 0 0 2px #4CAF50;
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow var(--bz-dur-slow) ease;
 }
 /* 暗色模式适配（原 prefers-color-scheme: dark：气泡深色化） */
 @media (prefers-color-scheme: dark) {
@@ -382,7 +382,7 @@
   max-width: 85%;
   padding: 10px 14px;
   border-radius: 14px;
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
@@ -410,7 +410,7 @@
   flex: 1;
   border-radius: 20px;
   padding: 8px 14px;
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   resize: none;
   background: var(--background-secondary);
   color: var(--text-normal);
@@ -930,7 +930,7 @@
   border: none;
   border-bottom: 2px solid transparent;
   padding: 8px 0 7px;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   color: var(--text-muted);
   cursor: pointer;
 }
@@ -955,25 +955,25 @@
   margin: 10px 0;
 }
 .bz-sc-dash-card-title {
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   font-weight: 600;
   color: var(--text-normal);
   margin-bottom: 8px;
 }
 .bz-sc-dash-group-title {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   font-weight: 600;
   color: var(--text-muted);
   margin: 10px 0 2px;
 }
 .bz-sc-dash-hint {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--text-faint);
   margin-top: 8px;
   line-height: 1.5;
 }
 .bz-sc-dash-empty {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--text-faint);
   padding: 6px 0;
 }
@@ -991,21 +991,21 @@
 }
 .bz-sc-dash-hero-main { flex: 1; min-width: 0; }
 .bz-sc-dash-hero-state {
-  font-size: 17px;
+  font-size: var(--bz-font-title);
   font-weight: 600;
   color: var(--text-normal);
 }
 .bz-sc-dash-hero-sub {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--text-muted);
   margin-top: 2px;
 }
 .bz-sc-dash-chip {
   display: inline-block;
   padding: 2px 10px;
-  border-radius: 999px;
+  border-radius: var(--bz-radius-full);
   background: var(--background-modifier-hover);
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--text-muted);
   margin-top: 8px;
 }
@@ -1019,7 +1019,7 @@
 }
 .bz-sc-dash-row-name {
   flex: 0 0 72px;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -1029,48 +1029,48 @@
 .bz-sc-dash-row-bar {
   flex: 1;
   height: 8px;
-  border-radius: 4px;
+  border-radius: var(--bz-radius-xs);
   background: var(--background-modifier-border);
   overflow: hidden;
 }
 .bz-sc-dash-row-fill {
   height: 100%;
-  border-radius: 4px;
+  border-radius: var(--bz-radius-xs);
   background: var(--interactive-accent);
-  transition: width 0.3s ease;
+  transition: width var(--bz-dur-slow) ease;
 }
 .bz-sc-dash-fill-warm { background: linear-gradient(90deg, #f7a04b, #ef7d43); }
 .bz-sc-dash-row-val {
   flex: 0 0 34px;
   text-align: right;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
 .bz-sc-dash-row-count {
   flex: 0 0 44px;
   text-align: right;
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
 }
 
 /* 趋势文本 / 统计块网格 */
 .bz-sc-dash-trend-text {
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   line-height: 1.7;
   color: var(--text-normal);
 }
 /* 报告页签：懂你报告全文（2026-08-23 从设置弹窗移入，保留换行） */
 .bz-sc-dash-report-text {
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   line-height: 1.8;
   color: var(--text-normal);
   white-space: pre-wrap;
   word-break: break-word;
 }
 .bz-sc-dash-trend-meta {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--text-faint);
   margin-top: 4px;
 }
@@ -1083,7 +1083,7 @@
   flex: 1 1 calc(25% - 8px);
   min-width: 76px;
   background: var(--background-primary);
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   padding: 8px 6px;
   text-align: center;
 }
@@ -1094,7 +1094,7 @@
   font-variant-numeric: tabular-nums;
 }
 .bz-sc-dash-stat-label {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -1103,8 +1103,8 @@
 .bz-sc-dash-badge {
   display: inline-block;
   padding: 1px 8px;
-  border-radius: 999px;
-  font-size: 11px;
+  border-radius: var(--bz-radius-full);
+  font-size: var(--bz-font-caption);
   line-height: 1.6;
 }
 .bz-sc-dash-badge.observation {
@@ -1137,10 +1137,10 @@
   gap: 4px;
 }
 .bz-sc-dash-mini-btn {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   line-height: 1.5;
   padding: 0 8px;
-  border-radius: 999px;
+  border-radius: var(--bz-radius-full);
   border: 1px solid var(--background-modifier-border);
   background: transparent;
   color: var(--text-muted);
@@ -1157,7 +1157,7 @@
 }
 .bz-sc-dash-memory {
   background: var(--background-primary);
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   padding: 8px 10px;
 }
 .bz-sc-dash-memory-meta {
@@ -1165,12 +1165,12 @@
   gap: 8px;
   align-items: center;
   flex-wrap: wrap;
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--text-faint);
   margin-bottom: 3px;
 }
 .bz-sc-dash-memory-text {
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   line-height: 1.5;
   color: var(--text-normal);
   word-break: break-word;
@@ -1183,7 +1183,7 @@
   align-items: center;
   gap: 8px;
   padding: 4px 0;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
 }
 
 /* 情绪演变时间线（圆点色随情绪价正负） */
@@ -1195,7 +1195,7 @@
 .bz-sc-dash-tl-item {
   position: relative;
   padding: 4px 0 4px 16px;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   line-height: 1.5;
 }
 .bz-sc-dash-tl-item::before {
@@ -1254,7 +1254,7 @@
 
 /* 「一起的日子」（ticket 094：关系史时间线区块；样式收敛本域 styles.css） */
 .bz-sc-dash-dossier-summary {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--text-muted);
   margin-bottom: 8px;
 }
@@ -1316,13 +1316,13 @@
   align-items: center;
   gap: 6px;
   margin-bottom: 3px;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--text-muted);
 }
 .bz-sc-dash-behavior-type {
   background: rgba(var(--color-orange-rgb), 0.12);
   color: var(--color-orange);
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   padding: 1px 6px;
   border-radius: 3px;
 }
@@ -1367,7 +1367,7 @@
 /* 来源统计块可点击（筛选/还原）：hover 反馈 + active 高亮 */
 .bz-sc-dash-stat-click {
   cursor: pointer;
-  transition: box-shadow 0.15s ease, background 0.15s ease;
+  transition: box-shadow var(--bz-dur-fast) ease, background var(--bz-dur-fast) ease;
 }
 .bz-sc-dash-stat-click:hover {
   background: var(--background-modifier-hover);
@@ -1380,9 +1380,9 @@
 .bz-sc-dash-load-more {
   display: block;
   margin: 8px auto 2px;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   padding: 4px 18px;
-  border-radius: 999px;
+  border-radius: var(--bz-radius-full);
   border: 1px solid var(--background-modifier-border);
   background: transparent;
   color: var(--text-muted);
@@ -1395,7 +1395,7 @@
 
 /* 记忆流 structured 摘要 */
 .bz-sc-dash-structured-summary {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--text-faint);
   margin-top: 2px;
   font-style: italic;
@@ -1413,7 +1413,7 @@
   color: var(--color-purple);
 }
 .bz-sc-dash-snapshot-summary {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--text-faint);
   margin-top: 2px;
   padding-left: 8px;

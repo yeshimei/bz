@@ -35,7 +35,7 @@
 
 .bz-rr-hm-cell--data {
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--bz-dur-base) ease;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -79,7 +79,7 @@
 
 .bz-rr-bar-label {
   flex: 0 0 104px;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--text-normal);
   font-weight: 600;
   overflow: hidden;
@@ -95,7 +95,7 @@
 .bz-rr-bar-val {
   flex: 0 0 auto;
   text-align: right;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -182,12 +182,12 @@
 .bz-rr-mbar {
   width: 72%;
   min-height: 3px;
-  border-radius: 4px 4px 0 0;
+  border-radius: var(--bz-radius-xs) var(--bz-radius-xs) 0 0;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
 }
 
 .bz-rr-mlabel {
@@ -209,7 +209,7 @@
   color: white;
   text-align: center;
   cursor: pointer;
-  transition: transform 0.15s ease;
+  transition: transform var(--bz-dur-fast) ease;
 }
 
 .bz-rr-year-card:hover {
@@ -219,7 +219,7 @@
 .bz-rr-year-chev {
   margin-left: 6px;
   vertical-align: -2px;
-  transition: transform 0.2s ease;
+  transition: transform var(--bz-dur-base) ease;
 }
 
 .bz-rr-year-card.open .bz-rr-year-chev {
@@ -231,7 +231,7 @@
   margin-top: 10px;
   padding: 12px 10px;
   border: 1px dashed var(--background-modifier-border);
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   background: var(--background-secondary);
 }
 
@@ -243,7 +243,7 @@
 
 .bz-rr-author-card {
   cursor: pointer;
-  transition: transform 0.15s ease;
+  transition: transform var(--bz-dur-fast) ease;
 }
 
 .bz-rr-author-card:hover {

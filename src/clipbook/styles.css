@@ -45,7 +45,7 @@
    默认 flex-shrink:1 会被压缩——8px 字距 + 中文全角宽度撑破可用宽时，
    「剪藏本」会被折断成两行（用户截图实证）。任何未设宽度上限的头行左元素都要防这一手。 */
 .bz-clip-desk .bz-panel-title {
-  font-family: var(--clip-serif); font-size: 17px; letter-spacing: 8px; font-weight: 400;
+  font-family: var(--clip-serif); font-size: var(--bz-font-title); letter-spacing: 8px; font-weight: 400;
   color: var(--clip-ink);
   flex: none; white-space: nowrap;
 }
@@ -92,7 +92,7 @@
     animation-duration: 2.4s;
   }
 }
-.bz-clip-issue { font-size: 12px; color: var(--clip-muted); letter-spacing: 1px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bz-clip-issue { font-size: var(--bz-font-meta); color: var(--clip-muted); letter-spacing: 1px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 /* 头行检索：编辑部下划线检索（issue 214 原型对齐：搜索在头行右缘，不在 rail） */
 .bz-clip-head-search { position: relative; flex: 0 0 250px; width: 250px; }
 .bz-clip-head-search .bz-ic { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; color: var(--clip-muted); }
@@ -108,7 +108,7 @@
 .bz-clip-rail { width: 190px; border-right: 1px solid var(--clip-line); }
 .bz-clip-rail-label {
   flex-shrink: 0; padding: 22px 22px 12px;
-  font-size: 11px; letter-spacing: 3px; color: var(--clip-muted);
+  font-size: var(--bz-font-caption); letter-spacing: 3px; color: var(--clip-muted);
 }
 /* bili 徽标紫单一事实源（批 C-11 契约；编辑部皮肤下徽标槽隐藏，规则保留防换肤回切失色） */
 .bz-clip-rail .bz-rail-badge.bili { --bz-rail-tint: #8b7cf6; }
@@ -129,7 +129,7 @@
 }
 .bz-clip-rail .bz-rail-name {
   flex: 0 1 auto; min-width: 0;
-  font-family: var(--clip-serif); font-size: 14px; letter-spacing: .5px;
+  font-family: var(--clip-serif); font-size: var(--bz-font-body); letter-spacing: .5px;
   color: var(--clip-ink-2);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
@@ -147,13 +147,13 @@
   flex-shrink: 0; margin: 0 18px; padding: 14px 2px 16px; border-top: 1px solid var(--clip-line);
   font-size: 10.5px; color: var(--clip-muted); line-height: 1.9;
 }
-.bz-clip-rail-foot b { color: var(--clip-accent); font-size: 14px; }
+.bz-clip-rail-foot b { color: var(--clip-accent); font-size: var(--bz-font-body); }
 
 /* ---- 中栏：目录（serif 栏头 + 序号制条目：序号 + 标题 + 「站点 · 时间」） ---- */
 .bz-clip-mid { width: 360px; flex-shrink: 0; border-right: 1px solid var(--clip-line); display: flex; flex-direction: column; min-height: 0; }
 .bz-clip-toc-head {
   flex-shrink: 0; padding: 18px 24px 12px;
-  font-family: var(--clip-serif); font-size: 17px; font-weight: 700; letter-spacing: 3px; color: var(--clip-ink);
+  font-family: var(--clip-serif); font-size: var(--bz-font-title); font-weight: 700; letter-spacing: 3px; color: var(--clip-ink);
 }
 .bz-clip-list { flex: 1; overflow-y: auto; padding: 0 0 var(--bz-space-sm); }
 .bz-clip-item {
@@ -167,7 +167,7 @@
 /* 序号 = 大号衬线数字；未读唯一视觉 = 序号颜色（未读橘 / 在读琥珀 / 其余灰） */
 .bz-clip-no {
   flex-shrink: 0; min-width: 26px;
-  font-family: Georgia, var(--clip-serif); font-size: 20px; font-weight: 700;
+  font-family: Georgia, var(--clip-serif); font-size: var(--bz-font-display); font-weight: 700;
   color: var(--clip-no); line-height: 1.25; font-variant-numeric: tabular-nums;
 }
 .bz-clip-item--unread .bz-clip-no { color: var(--clip-accent); }
@@ -180,7 +180,7 @@
 }
 .bz-clip-item:not(.bz-clip-item--unread) .bz-clip-item-t { font-weight: 400; color: var(--clip-dim); }
 /* meta 一行：「站点 · 时间」（原型对齐，左对齐不散排） */
-.bz-clip-item-meta { margin-top: 5px; font-size: 11px; color: var(--clip-muted); letter-spacing: .5px; }
+.bz-clip-item-meta { margin-top: 5px; font-size: var(--bz-font-caption); color: var(--clip-muted); letter-spacing: .5px; }
 /* 空态 = uiEmpty（.bz-empty）工厂；域内只补满高居中（列表/阅读滚动容器内撑满） */
 .bz-clip-list .bz-empty,
 .bz-clip-read-body .bz-empty { height: 100%; }
@@ -193,7 +193,7 @@
 .bz-clip-desk-fold:hover .bz-clip-desk-fold-lab { color: var(--clip-accent); }
 .bz-clip-desk-fold-rule { flex: 1; border: none; border-bottom: 1px dotted var(--clip-line); }
 .bz-clip-desk-fold-lab {
-  font-family: var(--clip-serif); font-size: 11px; letter-spacing: 2px;
+  font-family: var(--clip-serif); font-size: var(--bz-font-caption); letter-spacing: 2px;
   color: var(--clip-dim); white-space: nowrap;
 }
 .bz-clip-desk-fold-lab b { color: var(--clip-accent); font-weight: 700; }
@@ -207,7 +207,7 @@
 .bz-clip-desk-fold-body[hidden] { display: none; }
 /* 折叠段条目与常显同构但弱化（序号灰小号、行距略收；已读/已收字色由 .bz-clip-item 状态类兜底） */
 .bz-clip-desk-fold-body .bz-clip-item { padding: 10px 24px 10px 44px; }
-.bz-clip-desk-fold-body .bz-clip-no { min-width: 0; font-size: 15px; color: var(--clip-muted); }
+.bz-clip-desk-fold-body .bz-clip-no { min-width: 0; font-size: var(--bz-font-emphasis); color: var(--clip-muted); }
 
 /* ---- 右栏：阅读面（serif 标题 / meta 细线 / 首字下沉 / 两端对齐） ---- */
 .bz-clip-read { flex: 1; min-width: 0; display: flex; flex-direction: column; background: transparent; }
@@ -225,7 +225,7 @@
 .bz-clip-favchip {
   width: 16px; height: 16px; border-radius: var(--bz-radius-xs); flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
+  font-size: var(--bz-font-caption); font-weight: var(--bz-weight-bold); color: var(--bz-on-overlay);
   background: var(--bz-success);
 }
 /* .sm 14px 框为装饰性 favicon 回退字chip，字号不抬档（例外见收尾报告） */
@@ -245,7 +245,7 @@
   border-radius: 0; padding: var(--bz-space-md);
   font-size: var(--bz-font-meta); line-height: 1.7; color: var(--clip-ink-2); margin-bottom: var(--bz-space-lg);
 }
-.bz-clip-art-sum-h { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--clip-accent); margin-bottom: 4px; font-family: var(--clip-serif); letter-spacing: 2px; }
+.bz-clip-art-sum-h { display: flex; align-items: center; gap: 4px; font-size: var(--bz-font-caption); color: var(--clip-accent); margin-bottom: 4px; font-family: var(--clip-serif); letter-spacing: 2px; }
 .bz-clip-art-sum-h .bz-ic { width: 11px; height: 11px; }
 /* 正文：两端对齐 + 首段首字下沉（编辑部印刷排版） */
 .bz-clip-art-md { font-size: var(--bz-font-body); line-height: 2.05; color: var(--clip-body); text-align: justify; }
@@ -274,7 +274,7 @@
 .bz-clip-art-foot { margin-top: 20px; padding-top: 14px; border-top: 2px solid var(--clip-ink); display: flex; gap: 18px; }
 .bz-clip-art-foot span {
   color: var(--clip-accent); font-weight: var(--bz-weight-semibold); letter-spacing: 1px;
-  font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; line-height: 1.6;
+  font-size: var(--bz-font-meta); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; line-height: 1.6;
 }
 .bz-clip-art-foot span:hover { color: var(--clip-accent-soft); }
 .bz-clip-art-foot .bz-ic { width: 12px; height: 12px; }
@@ -288,7 +288,7 @@
 .bz-clip-menu-editorial .bz-item-menu-icon { display: none; }
 .bz-clip-menu-editorial .bz-item-menu-item {
   font-family: var(--clip-serif); letter-spacing: 2px; border-radius: 0;
-  padding: 10px 18px; gap: 10px; font-size: 13px; color: var(--clip-ink-2);
+  padding: 10px 18px; gap: 10px; font-size: var(--bz-font-label); color: var(--clip-ink-2);
 }
 .bz-clip-menu-editorial .bz-item-menu-item:hover { background: var(--clip-ink); color: var(--clip-paper); }
 .bz-clip-menu-editorial .bz-item-menu-item--danger { color: #b3261e; }
@@ -419,18 +419,18 @@
   font-family: Georgia, "Noto Serif SC", "Songti SC", "SimSun", serif;
   letter-spacing: 3px; font-size: 16px; font-weight: 700; color: #1c1a17; margin-bottom: 10px;
 }
-#__shared_confirm_popup__.bz-clip-dialog-editorial p { color: #6b6458; font-size: 14px; }
+#__shared_confirm_popup__.bz-clip-dialog-editorial p { color: #6b6458; font-size: var(--bz-font-body); }
 #__shared_confirm_popup__.bz-clip-dialog-editorial .confirm-actions { gap: 10px; }
 #__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_cancel__ {
   border-radius: 0; background: transparent; border: 1px solid #1c1a17; color: #3d3a34;
   font-family: Georgia, "Noto Serif SC", "Songti SC", "SimSun", serif;
-  font-size: 13px; letter-spacing: 1px; padding: 8px 20px; flex: 0 1 auto;
+  font-size: var(--bz-font-label); letter-spacing: 1px; padding: 8px 20px; flex: 0 1 auto;
 }
 #__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_cancel__:hover { background: #efe9dd; }
 #__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_ok__ {
   border-radius: 0; background: #1c1a17; color: #faf8f3;
   font-family: Georgia, "Noto Serif SC", "Songti SC", "SimSun", serif;
-  font-size: 13px; letter-spacing: 2px; font-weight: 700; padding: 8px 20px; flex: 0 1 auto;
+  font-size: var(--bz-font-label); letter-spacing: 2px; font-weight: 700; padding: 8px 20px; flex: 0 1 auto;
 }
 #__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_ok__:hover { background: #c2410c; }
 
@@ -444,10 +444,10 @@
   padding: var(--bz-space-md) var(--bz-space-md) 6px;
 }
 .bz-clip-day-name {
-  font-family: var(--clip-serif); font-size: 12px; letter-spacing: 2px;
+  font-family: var(--clip-serif); font-size: var(--bz-font-meta); letter-spacing: 2px;
   color: var(--clip-ink-2); font-weight: 700;
 }
-.bz-clip-day-n { font-size: 11px; color: var(--clip-accent); }
+.bz-clip-day-n { font-size: var(--bz-font-caption); color: var(--clip-accent); }
 .bz-clip-day-rule { flex: 1; height: 1px; background: var(--clip-rule, rgba(28,26,23,.16)); align-self: center; }
 
 /* 中栏：失败条目（原行首「字幕/转写」小标已按用户 2026-09-10 拍板退役，仅留错误色） */
@@ -456,7 +456,7 @@
 /* 右栏：要点正文（h3 小节 + ul 要点；不走文章首字下沉） */
 .bz-clip-brief-points { font-size: var(--bz-font-body); line-height: 1.95; color: var(--clip-body); }
 .bz-clip-brief-h {
-  font-family: var(--clip-serif); font-size: 15px; font-weight: 700; letter-spacing: 1px;
+  font-family: var(--clip-serif); font-size: var(--bz-font-emphasis); font-weight: 700; letter-spacing: 1px;
   color: var(--clip-ink, #1c1a17); margin: var(--bz-space-lg) 0 6px;
   padding-left: 10px; border-left: 3px solid var(--clip-accent);
 }
