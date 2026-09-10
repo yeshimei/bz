@@ -26,6 +26,8 @@
 <link rel="stylesheet" href="../../src/core/ui/tokens.css">
 <link rel="stylesheet" href="../../src/core/ui/components.css">
 <link rel="stylesheet" href="../../src/home/styles.css">
+<link rel="stylesheet" href="../mob-1to1.css">
+<script src="../mob-1to1.js"></script>
 <style>
   /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -41,9 +43,7 @@
    *   本机尺量 412 CSS px = 118mm（非理论 109mm，系统缩放/PPI 所致）→ scale = 70.2/118 ≈ 0.5949
    *   ⚠️ 基准是「屏幕」而非「整机」（整机 74.64×163.18mm 含约 2.2mm 边框，按边框对会偏 6%）
    *   transform: scale 只缩视觉，绝不改 iframe 尺寸（改了就动到 @media ≤768 判据） */
-  .demo-mob-wrap { flex: none; width: calc(412px * var(--mob-scale, 1)); height: calc(915px * var(--mob-scale, 1)); }
   .demo-mob { width: 412px; height: 915px; border-radius: 26px; overflow: hidden; flex: none;
-    transform: scale(var(--mob-scale, 1)); transform-origin: top left;
     border: 1px solid #b8b0a0; box-shadow: 0 8px 30px rgba(0,0,0,.16); background: #f5f2ec; }
   .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
 
@@ -112,12 +112,9 @@
    *   412 CSS px = 1440 物理 px = 整屏宽；满屏高 915 CSS px = 156.0mm。
    * 换算锚点 = 本机用尺子量「412 CSS px 基准线」的实测值 RULER_MM = 118mm：
    *   1 CSS px = 118/412 ≈ 0.2864mm → scale = 70.2/118 ≈ 0.5949 时框宽恰为 70.2mm。
-   * 尺寸**固定**、无任何调节 UI；换显示器若偏差明显，只改 RULER_MM 一个常量。
+   * 尺寸**固定**、无任何调节 UI；缩放基准见 ../mob-1to1.js（全域唯一来源）。
    */
-  const RULER_MM = 118;                 // 实测：412 CSS px 在本机屏幕上的物理宽度（mm）
-  const MOB_MM = 70.2;                  // 小米13U 屏幕宽（mm，实测；非整机 74.64）
-  // 固定 scale：把 412 CSS px 渲染成 70.2mm（≈ 0.5949），全程一次设定
-  document.documentElement.style.setProperty('--mob-scale', String(MOB_MM / RULER_MM));
+  // --mob-scale 由 ../mob-1to1.js 注入（13 域共用同一份基准常量）
 
   document.querySelector('#reset').addEventListener('click', () => {
     B.resetHomeSim();

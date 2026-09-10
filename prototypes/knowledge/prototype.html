@@ -17,13 +17,15 @@
 <link rel="stylesheet" href="../../src/core/ui/tokens.css">
 <link rel="stylesheet" href="../../src/core/ui/components.css">
 <link rel="stylesheet" href="../../src/knowledge/styles.css">
+<link rel="stylesheet" href="../mob-1to1.css">
+<script src="../mob-1to1.js"></script>
 <style>
   /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 32px 24px;
     background: #e3e0d8; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
   .demo-dt { flex: none; width: 920px; height: 680px; border: 1px solid #d8d1c0; background: #f5f2ec; }
-  .demo-mob { width: 396px; height: 780px; border-radius: 26px; overflow: hidden; flex: none;
+  .demo-mob { width: 412px; height: 915px; border-radius: 26px; overflow: hidden; flex: none;
     border: 1px solid #d8d1c0; box-shadow: 0 8px 30px rgba(0,0,0,.14); background: #f5f2ec; }
   .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
 
@@ -54,9 +56,9 @@
 </head>
 <body class="theme-light">
   <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="知识盒·桌面"></iframe></div>
-  <div id="mobHost" class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="知识盒·移动"></iframe></div>
+  <div id="mobHost" class="demo-mob-wrap"><div class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="知识盒·移动"></iframe></div></div>
 
-  <div class="vbadge">知识盒 · 真行为单源预览（桌面 920px 主窗 / 移动 396px 真全屏+✕；术语生成走 fake AI 罐头）
+  <div class="vbadge">知识盒 · 真行为单源预览（桌面 920px 主窗 / 移动 412px 真全屏+✕；术语生成走 fake AI 罐头）
     <button id="annoToggle">标注</button>
     <button id="mobToggle">隐藏移动端</button>
     <button id="reset">重置演示数据</button>
