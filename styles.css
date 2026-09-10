@@ -13073,13 +13073,20 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* ---------- 午夜场 midnight（探索稿 p1-midnight.html） ---------- */
 
-.bz-cinema--midnight {
+/* 午夜场调色板：面板本体与「挂在 body 上的统一浮层皮肤」共用一份。
+   core/item-actions 的跟手菜单与底部抽屉挂 document.body，**不在** .bz-cinema--midnight
+   面板树内 → 取不到面板变量，故浮层皮肤元素同时带 .cn-skin 挂这份调色板（皮肤段见下方）。 */
+.bz-cinema--midnight,
+.cn-skin {
   --gold:#c9992f;--ink:#2c271d;--ink-2:#6d6656;--ink-3:#9a9280;--line:#ddd5c2;--panel:#fdfaf2;--chip:#f1ecdf;--star:#d9a441;
+}
+.theme-dark .bz-cinema--midnight,
+.theme-dark .cn-skin {
+  --gold:#e0aa4b;--ink:#ece5d3;--ink-2:#a89f8a;--ink-3:#7a7261;--line:#2e2a20;--panel:#161410;--chip:#221f17;--star:#e0aa4b;
+}
+.bz-cinema--midnight {
    width:900px;height:620px;flex:none;background:var(--panel);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;position:relative;
   box-shadow:0 14px 44px #0004,0 2px 8px #0002;border:1px solid var(--line);
-}
-.theme-dark .bz-cinema--midnight {
-  --gold:#e0aa4b;--ink:#ece5d3;--ink-2:#a89f8a;--ink-3:#7a7261;--line:#2e2a20;--panel:#161410;--chip:#221f17;--star:#e0aa4b;
 }
 .bz-cinema--midnight::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold) 30%,var(--gold) 70%,transparent);z-index:5}
 .bz-cinema--midnight .d-body{flex:1;display:flex;min-height:0}
@@ -13140,18 +13147,23 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--midnight .m-head h2{font-family:"Noto Serif SC",SimSun,serif;font-size:17px;letter-spacing:.1em;color:var(--ink);margin:0}
 .bz-cinema--midnight .m-head .cnt{font-size:11.5px;color:var(--ink-3)}
 .bz-cinema--midnight .m-acts{margin-left:auto;display:flex;gap:8px;align-items:center}
-/* 定尺方形图标钮（m-tool / m-head .add / cn-modal-x / sp-back）一律显式 padding:0：
-   它们是固定边长 + display:grid/place-items:center 的方形钮，尺寸自己说了算，
-   而宿主 app.css 的裸 button 基线带 padding（手机 4px 12px、**平板 .is-tablet
-   button:not(.clickable-icon) 给 4px 20px**）。不钉死时 border-box 盒子会被 padding
-   撑破——实测 30px 的 m-tool 在平板口径下变 34~42px，右侧钮组行就散了。
-   必须带 !important：宿主那条选择器特异性 (0,2,1) 高于本类 (0,2,0)，普通 padding:0
-   压不住（实测确认）；与 core `.bz-item-menu button.bz-item-menu-item` 抗宿主基线同款处置。 */
+/* 右上角钮组（m-acts：＋ / AI / 分析 / ✕）图标精确居中——两处必须钉死，只作用于本组：
+   ① 按钮 padding:0：宿主 app.css 裸 button 基线带 padding（手机 4px 12px、平板
+      `.is-tablet button:not(.clickable-icon)` 4px 20px），不钉死时 30px 的 border-box
+      会被撑到 34~42px，右侧钮组行就散了。带 !important 是因宿主那条特异性 (0,2,1)
+      高于本类 (0,2,0)，普通 padding:0 压不住（实测确认）。
+   ② .bz-ic 容器尺寸 = svg 尺寸：core 的 .bz-ic 是 width/height:1em，跟着宿主 button 的
+      font-size 走（壳里 13px、真机 --font-ui-small 17px），而本组 svg 被放大到 15/16px——
+      容器小于图标时 svg 从容器左上角溢出，实测图标中心偏右下 1~1.5px（真机 1em 更大时
+      反向偏左上）。把容器钉成与 svg 同尺寸即精确居中，且不再随宿主字号漂移。
+   注意：本段只管右上角这组；弹窗关闭钮/返回钮/chips/rail 等按钮的样式一律不动。 */
 .bz-cinema--midnight .m-tool{flex:none;width:30px;height:30px;padding:0 !important;border:1px solid var(--line);background:none;border-radius:10px;color:var(--ink-3);display:grid;place-items:center;cursor:pointer}
 .bz-cinema--midnight .m-tool:hover{color:var(--ink);background:var(--chip)}
 .bz-cinema--midnight .m-tool svg{width:15px;height:15px}
+.bz-cinema--midnight .m-tool .bz-ic{width:15px;height:15px}
 .bz-cinema--midnight .m-head .add{flex:none;width:30px;height:30px;padding:0 !important;border-radius:10px;background:var(--gold);color:#fff;border:0;display:grid;place-items:center;cursor:pointer}
 .bz-cinema--midnight .m-head .add svg{width:16px;height:16px}
+.bz-cinema--midnight .m-head .add .bz-ic{width:16px;height:16px}
 .bz-cinema--midnight .m-chips{flex:none;display:flex;gap:7px;overflow-x:auto;padding:4px 16px 10px;scrollbar-width:none}
 .bz-cinema--midnight .m-chips::-webkit-scrollbar{display:none}
 .bz-cinema--midnight .chip{flex:none;font-size:11.5px;padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);cursor:pointer;white-space:nowrap;font-family:inherit;display:flex;align-items:center;gap:5px}
@@ -13170,7 +13182,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--midnight .cn-modal{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 48px #0005,0 2px 10px #0003;padding:18px 20px;max-width:min(430px,100%);max-height:100%;overflow-y:auto;scrollbar-width:none;position:relative}
 .bz-cinema--midnight .cn-modal::-webkit-scrollbar{display:none}
 .bz-cinema--midnight .cn-modal-title{font-family:"Noto Serif SC",SimSun,serif;font-size:17px;font-weight:700;letter-spacing:.08em;color:var(--ink);margin-bottom:12px;padding-right:24px}
-.bz-cinema--midnight .cn-modal-x{position:absolute;top:12px;right:12px;width:26px;height:26px;padding:0 !important;border:0;background:none;border-radius:7px;color:var(--ink-3);cursor:pointer;display:grid;place-items:center}
+.bz-cinema--midnight .cn-modal-x{position:absolute;top:12px;right:12px;width:26px;height:26px;border:0;background:none;border-radius:7px;color:var(--ink-3);cursor:pointer;display:grid;place-items:center}
 .bz-cinema--midnight .cn-modal-x:hover{background:var(--chip);color:var(--ink)}
 .bz-cinema--midnight .cn-modal-x svg{width:13px;height:13px}
 /* 详情弹窗 */
@@ -13221,27 +13233,35 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--midnight .cn-confirm p{font-size:13px;color:var(--ink);margin-top:10px;line-height:1.6}
 .bz-cinema--midnight .cn-confirm-sub{font-size:11px;color:var(--ink-3);margin-top:8px}
 .bz-cinema--midnight .cn-confirm .dm-actions{justify-content:center;margin-top:16px}
-/* 右键菜单（面板内 absolute） */
-.bz-cinema--midnight .cn-menu{position:absolute;z-index:60;min-width:158px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px #0005;padding:5px}
-.bz-cinema--midnight .cn-menu-item{display:flex;align-items:center;justify-content:flex-start;gap:9px;width:100%;border:0;background:none;border-radius:7px;padding:8px 10px;font-size:12.5px;color:var(--ink-2);cursor:pointer;font-family:inherit;text-align:left}
-.bz-cinema--midnight .cn-menu-item:hover{background:var(--chip);color:var(--ink)}
-.bz-cinema--midnight .cn-menu-item svg{width:13px;height:13px;flex:none}
-.bz-cinema--midnight .cn-menu-item.danger{color:#b3402a}
-.bz-cinema--midnight .cn-menu-item.danger:hover{background:#b3402a14}
-/* 长按抽屉（移动） */
-.bz-cinema--midnight .cn-sheet-mask{position:absolute;inset:0;z-index:55;background:rgba(20,16,8,.4)}
-.bz-cinema--midnight .cn-sheet{position:absolute;left:0;right:0;bottom:0;z-index:56;background:var(--panel);border-radius:16px 16px 0 0;box-shadow:0 -8px 30px #0004;padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px))}
-.bz-cinema--midnight .cn-sheet-head{display:flex;gap:11px;align-items:center;padding:4px 2px 12px;border-bottom:1px solid var(--line)}
-.bz-cinema--midnight .cn-sheet-poster{width:38px;height:54px;border-radius:5px;object-fit:cover;border:1px solid var(--line);background:var(--chip);flex:none}
-.bz-cinema--midnight .cn-sheet-name{font-size:13.5px;font-weight:700;color:var(--ink)}
-.bz-cinema--midnight .cn-sheet-sub{font-size:11px;color:var(--ink-3);margin-top:3px}
-.bz-cinema--midnight .cn-sheet-item{display:flex;align-items:center;justify-content:flex-start;gap:11px;width:100%;border:0;background:none;border-radius:9px;padding:12px 10px;font-size:13px;color:var(--ink-2);cursor:pointer;font-family:inherit;text-align:left}
-.bz-cinema--midnight .cn-sheet-item:hover{background:var(--chip);color:var(--ink)}
-.bz-cinema--midnight .cn-sheet-item svg{width:15px;height:15px;flex:none}
-.bz-cinema--midnight .cn-sheet-item.danger{color:#b3402a}
+/* ---------- 统一浮层皮肤（core/item-actions：跟手菜单 .bz-item-menu / 底部抽屉 .bz-item-sheet） ----------
+   移动端抽屉与跟手菜单的**手势与实现**统一走共享层（core/dom.longPress + core/item-actions：
+   防穿透/下滑关闭/ESC/外部点击关闭/键盘导航全由 core 承载）；本域只提供皮肤类，保持午夜场观感。
+   取色：core 浮层挂 document.body，不在 .bz-cinema--midnight 面板树内，故皮肤类同时带 .cn-skin
+   （调色板见本文件开头）。
+   注意 hover/危险色必须带 !important：core 的 .bz-item-* 规则「抗 Obsidian 宿主 button 基线」
+   本就用了 !important，皮肤要覆盖它必须同权重并抬特异性。 */
+/* 桌面跟手菜单皮肤（menuClass: 'cn-skin cn-menu-skin'） */
+.bz-item-menu.cn-menu-skin{min-width:158px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px #0005;padding:5px}
+.bz-item-menu.cn-menu-skin button.bz-item-menu-item{gap:9px;padding:8px 10px;border-radius:7px;font-size:12.5px;color:var(--ink-2)}
+.bz-item-menu.cn-menu-skin button.bz-item-menu-item:hover{background:var(--chip) !important;color:var(--ink)}
+.bz-item-menu.cn-menu-skin button.bz-item-menu-item--danger{color:#b3402a !important}
+.bz-item-menu.cn-menu-skin button.bz-item-menu-item--danger .bz-item-menu-icon{color:#b3402a}
+/* 移动长按抽屉皮肤（sheetClass: 'cn-skin cn-sheet-skin'） */
+.bz-item-sheet.cn-sheet-skin{background:var(--panel);border-radius:16px 16px 0 0;box-shadow:0 -8px 30px #0004;padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px))}
+.bz-item-sheet.cn-sheet-skin .bz-item-sheet-head{padding:0;border-bottom:0;margin-bottom:0}
+.bz-item-sheet.cn-sheet-skin .cn-sheet-head{display:flex;gap:11px;align-items:center;padding:4px 2px 12px;border-bottom:1px solid var(--line)}
+.bz-item-sheet.cn-sheet-skin .cn-sheet-poster{width:38px;height:54px;border-radius:5px;object-fit:cover;border:1px solid var(--line);background:var(--chip);flex:none}
+.bz-item-sheet.cn-sheet-skin .cn-sheet-name{font-size:13.5px;font-weight:700;color:var(--ink)}
+.bz-item-sheet.cn-sheet-skin .cn-sheet-sub{font-size:11px;color:var(--ink-3);margin-top:3px}
+.bz-item-sheet.cn-sheet-skin button.bz-item-sheet-item{gap:11px;padding:12px 10px;border-radius:9px;font-size:13px;color:var(--ink-2)}
+.bz-item-sheet.cn-sheet-skin button.bz-item-sheet-item:hover{background:var(--chip) !important;color:var(--ink)}
+.bz-item-sheet.cn-sheet-skin .bz-item-sheet-icon{width:15px;height:15px}
+.bz-item-sheet.cn-sheet-skin .bz-item-sheet-icon svg{width:15px;height:15px}
+.bz-item-sheet.cn-sheet-skin button.bz-item-sheet-item--danger{color:#b3402a !important}
+.bz-item-sheet.cn-sheet-skin button.bz-item-sheet-item--danger .bz-item-sheet-icon{color:#b3402a}
 /* 子页面（AI 荐片 / 观影分析）公共头 */
 .bz-cinema--midnight .sp-head{flex:none;display:flex;align-items:center;gap:9px;padding:14px 20px 0}
-.bz-cinema--midnight .sp-back{width:28px;height:28px;padding:0 !important;border:1px solid var(--line);background:none;border-radius:8px;color:var(--ink-2);cursor:pointer;display:grid;place-items:center;flex:none}
+.bz-cinema--midnight .sp-back{width:28px;height:28px;border:1px solid var(--line);background:none;border-radius:8px;color:var(--ink-2);cursor:pointer;display:grid;place-items:center;flex:none}
 .bz-cinema--midnight .sp-back:hover{color:var(--ink);border-color:var(--gold)}
 .bz-cinema--midnight .sp-back svg{width:13px;height:13px}
 .bz-cinema--midnight .sp-title{font-family:"Noto Serif SC",SimSun,serif;font-size:18px;font-weight:700;letter-spacing:.1em;color:var(--ink)}
@@ -13481,6 +13501,18 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-panel-overlay > .bz-cinema--midnight.mob,
 .bz-panel-overlay > .bz-cinema--gazette.mob,
 .bz-panel-overlay > .bz-cinema--booth.mob { margin: auto; }
+
+/* 移动壳真全屏：不走 overlay 居中链（memo 同款，issue 266）。
+   overlay（components.css）是 100vh 布局视口（fixed+inset:0 不随键盘/原生栏收缩），
+   而面板高取 --bz-vvh（可视视口）。真机上 vvh < 100vh（Obsidian 移动端原生顶栏/底栏
+   占位在 webview 视口之外），margin:auto 居中会把面板上下对称内缩 → 顶部空出 44px
+   （用户真机反馈 2026-09-10）。改顶部对齐：底边落在可视视口下沿（键盘/原生栏之上），
+   与 memo 的 align-self:flex-start 完全同款。 */
+@media (max-width: 768px) {
+  .bz-panel-overlay > .bz-cinema--midnight.mob,
+  .bz-panel-overlay > .bz-cinema--gazette.mob,
+  .bz-panel-overlay > .bz-cinema--booth.mob { margin: 0; align-self: flex-start; }
+}
 
 /* ====================================================================
    抓取中遮罩（issue 255 / ADR-0113；卡片海报区 loading，桌面/移动同卡）
