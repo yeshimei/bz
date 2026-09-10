@@ -739,6 +739,9 @@ describe('设置面板（settings-panel）', () => {
     expect(firstIc!.getAttribute('data-icon')).toBe('settings');
     // 搜索清除按钮已退役（2026-09-08 拍板）：胶囊内仅图标 + 输入框
     expect(popup.querySelector('.bz-sp-mob-clear')).toBeNull();
+    // ticket 265：移动端真全屏定位挂 bz-panel-mtop（顶部避让 44px 交全站统一档接管，
+    // 修复面板顶部被 core 居中链 + 移动端头部安全区叠加压出的 44px 错位）
+    expect(popup.classList.contains('bz-panel-mtop'), '移动端面板挂全站顶距类').toBe(true);
     ui.cleanup();
   });
 

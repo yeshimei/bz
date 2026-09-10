@@ -158,3 +158,52 @@ describe('获取模型名按钮：拉取 → 选择器 → 回填', () => {
     }
   });
 });
+
+/**
+ * ticket 265 样式源守卫：模型选择器弹窗的暗色 token 选择器曾断链——
+ * `.theme-dark #bz-up-manager-popup, #bz-model-picker-popup {…}` 逗号后丢了
+ * `.theme-dark` 前缀，该条无条件命中浅色块，深色下弹窗退回 Obsidian 原生
+ * --background-primary/--text-muted → 黑底黑字。此处对样式源做静态断言，防回归。
+ */
+describe('模型选择器弹窗：双皮 token 选择器守卫（ticket 265）', () => {
+  it('暗色 token 块内 #bz-model-picker-popup 必须带 .theme-dark 前缀，且每条选择器齐全', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const css = fs.readFileSync(
+      path.join(process.cwd(), 'src/settings-panel/styles.css'),
+      'utf8'
+    );
+    // 取暗色 token 块（S3 炭黑夜航）的选择器串
+    const darkBlock = css.match(/\.theme-dark \.bz-sp-desk,[\s\S]*?\{/);
+    expect(darkBlock, '暗色 token 块存在').toBeTruthy();
+    const selector = darkBlock![0].replace(/\s*\{$/, '');
+    // 每一条都要带 .theme-dark 前缀（含 #bz-model-picker-popup / #bz-up-manager-popup）
+    const parts = selector.split(',').map((s) => s.trim()).filter(Boolean);
+    for (const p of parts) {
+      expect(p.startsWith('.theme-dark '), `「${p}」应带 .theme-dark 前缀`).toBe(true);
+    }
+    expect(parts.some((p) => p === '.theme-dark #bz-model-picker-popup')).toBe(true);
+    expect(parts.some((p) => p === '.theme-dark #bz-up-manager-popup')).toBe(true);
+  });
+
+  it('弹窗内部行不残留 Obsidian 原生变量（hover/选中/名称/来源均挂 --sp-*）', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const css = fs.readFileSync(
+      path.join(process.cwd(), 'src/settings-panel/styles.css'),
+      'utf8'
+    );
+    // 皮收口段：弹窗选择器下不得出现 --background-modifier-* / --text-muted 等原生变量
+    const start = css.indexOf('/* 模型选择器弹窗内部皮收口');
+    expect(start, '皮收口段存在').toBeGreaterThan(-1);
+    // 段尾 = 下一个顶层注释块起点
+    const nextComment = css.indexOf('\n/*', start + 1);
+    const seg = css.slice(start, nextComment === -1 ? undefined : nextComment);
+    expect(seg).toContain('#bz-model-picker-popup .bz-model-picker-row:hover');
+    expect(seg).toContain('#bz-model-picker-popup .bz-model-picker-row.is-current');
+    expect(seg).toContain('#bz-model-picker-popup .bz-model-picker-detail');
+    for (const native of ['--background-modifier-hover', '--background-modifier-active-hover', '--text-muted']) {
+      expect(seg.includes(native), `皮收口段不应再消费 ${native}`).toBe(false);
+    }
+  });
+});

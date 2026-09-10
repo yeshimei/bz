@@ -11,9 +11,9 @@
 /* ═══════════ tokens：S1 亚麻暖白（亮皮，默认） ═══════════ */
 .bz-sp-desk,
 .bz-sp-mobile,
-.bz-sp-mobile,
 .bz-sp-picker-mask,
-#bz-up-manager-popup, #bz-model-picker-popup {
+#bz-up-manager-popup,
+#bz-model-picker-popup {
   --sp-bg: #f6f2e9;
   --sp-panel: #fffcf6;
   --sp-line: #e5dfcf;
@@ -34,9 +34,9 @@
 /* ═══════════ tokens：S3 炭黑夜航（暗皮，跟随 Obsidian 暗色） ═══════════ */
 .theme-dark .bz-sp-desk,
 .theme-dark .bz-sp-mobile,
-.theme-dark .bz-sp-mobile,
 .theme-dark .bz-sp-picker-mask,
-.theme-dark #bz-up-manager-popup, #bz-model-picker-popup {
+.theme-dark #bz-up-manager-popup,
+.theme-dark #bz-model-picker-popup {
   --sp-bg: #1b1b1f;
   --sp-panel: #242429;
   --sp-line: #35353c;
@@ -757,20 +757,31 @@
 @keyframes bz-sp-spin { to { transform: rotate(360deg); } }
 
 /* ═══════════ 移动端：全屏推入式两页（首页列表 ⇆ 域设置页） ═══════════ */
+/* 真全屏定位（ticket 265）：core .bz-overlay-popup 的 fixed + top/left 50% +
+   translate(-50%,-50%) 居中链在移动端与 Obsidian 头部安全区叠加，面板顶部被压出
+   44px 空白、弹窗相对视口偏移。移动端改为 inset:0 铺满（脱开居中链），顶部避让
+   统一交 .bz-panel-mtop（max(44px, 安全区)）。 */
 .bz-sp-mobile {
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  transform: none !important;
   display: flex;
   flex-direction: column !important;
   width: 100% !important;
   max-width: 100% !important;
   height: 100% !important;
   max-height: 100% !important;
-  padding: 0 !important;
   border: 0;
   border-radius: 0;
   background: var(--sp-bg);
   color: var(--sp-ink);
   overflow: hidden !important;
 }
+/* 内边距清零：顶部避让由 .bz-panel-mtop（components.css，全站统一档）接管，
+   域内不再重复声明 44px（防双份顶距）；此处只清其余内边距 */
+.bz-sp-mobile.bz-panel-mtop { padding-right: 0; padding-bottom: 0; padding-left: 0; }
 .bz-sp-mob-viewport {
   flex: 1;
   min-height: 0;
@@ -1103,8 +1114,52 @@
   border: 1px solid var(--sp-line);
   border-radius: 14px;
 }
+/* 移动端（≤768px，ticket 265）：core 居中链（fixed + top/left 50% + translate）在移动端
+   与 Obsidian 头部安全区叠加 → 弹窗整体下移、顶部被裁。保持居中卡片形态不变，仅用
+   max-height 把卡片夹进「顶部安全区（44px）～底部安全区」之间，使居中落在可视区内；
+   宽度放开到 94vw（内联原给 90% / maxWidth 400px）。 */
+@media (max-width: 768px) {
+  #bz-model-picker-popup {
+    top: 50%;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+    width: 94vw !important;
+    max-width: 94vw !important;
+    max-height: calc(100vh - max(44px, env(safe-area-inset-top, 0px)) - max(12px, env(safe-area-inset-bottom, 0px)) - 24px);
+    border-radius: 14px;
+  }
+  /* 卡片高度按内容自适应（上限由上方 max-height 夹住），列表超出则内部滚动 */
+  #bz-model-picker-popup .bz-settings-content {
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
 #bz-up-manager-popup .bz-settings-title ,
 #bz-model-picker-popup .bz-settings-title { font-size: 14px; font-weight: 700; color: var(--sp-ink); }
+
+/* 模型选择器弹窗内部皮收口（ticket 265）：壳体已接 --sp-*，但头部描边 / 内容区 /
+   列表行 hover·选中 / 名称·来源小字仍在消费 Obsidian 原生变量（原生 hover 底 /
+   原生 muted 文字色等）——深色下即黑底黑字。此处全量改挂 --sp-*，与面板同皮。 */
+#bz-model-picker-popup .bz-settings-header {
+  border-bottom-color: var(--sp-line);
+}
+#bz-model-picker-popup .bz-settings-content {
+  background: var(--sp-panel);
+  color: var(--sp-ink);
+}
+#bz-model-picker-popup .bz-model-picker-row {
+  color: var(--sp-ink);
+}
+#bz-model-picker-popup .bz-model-picker-row:hover {
+  background: var(--sp-accent-soft);
+}
+#bz-model-picker-popup .bz-model-picker-row.is-current {
+  background: var(--sp-accent-soft);
+  color: var(--sp-accent);
+}
+#bz-model-picker-popup .bz-model-picker-name { color: inherit; }
+#bz-model-picker-popup .bz-model-picker-detail { color: var(--sp-ink-3); }
+#bz-model-picker-popup .bz-settings-empty { color: var(--sp-ink-2); }
 
 .bz-sp-desk .bz-sp-chip,
 .bz-sp-mobile .bz-sp-chip,
