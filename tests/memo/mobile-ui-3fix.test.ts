@@ -1,4 +1,4 @@
-// @vitest-environment node
+﻿// @vitest-environment node
 /* ============================================================
  * issue 266 守卫：移动端备忘录面板三处 UI 缺陷的样式源静态断言
  *
@@ -9,6 +9,9 @@
  *      （隐藏整个头行钮组）+ 移动端无恢复规则。
  *   B. 移动端真全屏头行没有新建备忘录入口 —— 移动端 `display:none` 掉了
  *      含新建钮的 `.bz-main-head`，新建只剩底部录入条（输入型，不是弹窗表单）。
+ *      **issue 268 用户评审拍板推翻本条实现**：头行不再补新建钮（设置钮一并撤除），
+ *      改由底部录入「添加」开创建弹窗 + 场景条尾部「添加场景」chip 承担；
+ *      A 条的关闭钮同时从 32px 抬到 38px 并换装皮肤形态（见 B 段断言）。
  *   C. 输入框不跟随软键盘 —— 移动端真全屏面板写死 `height: 100vh`，而 `100vh`
  *      等于布局视口高度、不随键盘收缩，底部录入条被键盘盖住。核心层新增
  *      `--bz-vvh` 变量资源（src/core/viewport.ts + components.css），由域内消费；
@@ -71,7 +74,7 @@ describe('issue 266 · A. 移动端真全屏关闭按钮必须可见可用', () 
     expect(css).toMatch(/\.bz-memo-skin-paper\s+\.bz-panel-head-btns\s*\{\s*display:\s*none/);
     expect(css).toMatch(/\.bz-memo-skin-editorial\s+\.bz-panel-head-btns\s*\{\s*display:\s*none/);
     // 移动端收口段必须放回钮组
-    const closing = css.slice(css.indexOf('移动端收口段（issue 266）'));
+    const closing = css.slice(css.lastIndexOf('移动端收口段'));
     expect(closing.length, '收口段存在').toBeGreaterThan(0);
     const block = mobileBlock(closing);
     expect(block).toMatch(/\.bz-memo-skin-paper\s+\.bz-panel-head-btns/);
@@ -79,43 +82,89 @@ describe('issue 266 · A. 移动端真全屏关闭按钮必须可见可用', () 
     expect(block).toMatch(/display:\s*flex/);
   });
 
-  it('关闭 / 新建钮在移动端抬到 32px 可视档 + .bz-touch-target 扩 44px 命中区', () => {
+  it('关闭钮在移动端定档 28px + 皮肤贴纸形态 + 44px 命中区', () => {
     const css = read('src/memo/styles.css');
-    const closing = css.slice(css.indexOf('移动端收口段（issue 266）'));
+    const closing = css.slice(css.lastIndexOf('移动端收口段'));
     const block = mobileBlock(closing);
-    expect(block).toMatch(/\.bz-memo-head-close[\s\S]{0,300}width:\s*var\(--bz-icon-btn-lg\)/);
-    expect(block).toMatch(/\.bz-memo-head-new[\s\S]{0,300}flex-shrink:\s*0/);
-    // 命中区靠核心层 .bz-touch-target（pointer:coarse 下默认外扩 -6px → 32+12 = 44px）
-    // 与归物本移动端关闭钮同款：src/belongings/layouts/poster/render.ts:36
+    // issue 269 两轮收小：268 的 38px → 34px → 28px（与头行品牌块 28×28 同尺寸）；图标 16px
+    expect(block).toMatch(/--bz-memo-close-box:\s*28px/);
+    expect(block).toMatch(/\.bz-memo-head-close[\s\S]{0,400}width:\s*var\(--bz-memo-close-box\)/);
+    expect(block).toMatch(/\.bz-memo-head-close \.bz-ic[\s\S]{0,80}width:\s*16px/);
+    // 28px 档 + -6px 外扩只有 40px，不足 44px → markup 必须挂 .bz-touch-target--lg（-8px → 44px）
     const ts = read('src/memo/render.ts');
-    expect(ts).toMatch(/bz-icon-btn bz-touch-target bz-memo-head-close/);
-    expect(ts).toMatch(/bz-icon-btn bz-touch-target bz-memo-head-new/);
+    expect(ts).toMatch(/bz-icon-btn bz-touch-target bz-touch-target--lg bz-memo-head-close/);
+    // 「符合风格」：纸感 = 墨框 + 硬偏移阴影；编辑部 = 方角细墨框
+    expect(block).toMatch(/\.bz-memo-panel\.bz-memo-skin-paper \.bz-memo-head-close\s*\{[\s\S]{0,320}box-shadow:\s*2px 2px 0 var\(--bz-skin-ink\)/);
+    expect(block).toMatch(/\.bz-memo-panel\.bz-memo-skin-editorial \.bz-memo-head-close\s*\{[\s\S]{0,220}border:\s*1\.5px solid var\(--bz-skin-ink\)/);
+    // 组件基线 .bz-icon-btn 把背景/描边/阴影全钉死在 !important，皮肤覆盖必须同权
+    expect(block).toMatch(/\.bz-memo-head-close\s*\{[\s\S]{0,240}background:[^;]*!important/);
+    expect(block).toMatch(/\.bz-memo-head-close\s*\{[\s\S]{0,240}border:[^;]*!important/);
+  });
+
+  it('顶距 44px 改挂头行自身（issue 269：斜纹条铺到面板顶边）', () => {
+    const css = read('src/memo/styles.css');
+    const closing = css.slice(css.lastIndexOf('移动端收口段'));
+    const block = mobileBlock(closing);
+    // 面板根垫顶归零（压核心层 .bz-panel-mtop 的 !important）
+    expect(block).toMatch(/\.bz-memo-panel\.bz-panel-mtop\s*\{\s*padding-top:\s*0\s*!important/);
+    // 同 44px 落到头行自身，头行高度改 auto（垫顶 + 内容 = 44+44，总高不变）。
+    // 选择器必须 (0,3,0)：核心层反制规则 `.bz-panel-mtop > div:first-child` 是 (0,2,1)
+    expect(block).toMatch(/\.bz-memo-panel\.bz-panel-mtop \.bz-panel-head\s*\{[\s\S]{0,200}height:\s*auto/);
+    expect(block).toMatch(/\.bz-memo-panel\.bz-panel-mtop \.bz-panel-head\s*\{[\s\S]{0,240}min-height:\s*calc\(44px \+ max\(44px,\s*env\(safe-area-inset-top/);
+    expect(block).toMatch(/\.bz-memo-panel\.bz-panel-mtop \.bz-panel-head\s*\{[\s\S]{0,320}padding-top:\s*max\(44px,\s*env\(safe-area-inset-top/);
+    expect(block).toMatch(/\.bz-memo-panel\.bz-panel-mtop \.bz-panel-head\s*\{[\s\S]{0,360}padding-top:[^;]*!important/);
+    // 头行高度不得被写死（写死 44px 会让垫顶把内容压出盒子）
+    expect(block).not.toMatch(/\.bz-panel-head\s*\{\s*height:\s*44px/);
+  });
+  it('移动场景条平铺 chip 也随皮肤换装（issue 269「平铺的场景也风格化」）', () => {
+    const css = read('src/memo/styles.css');
+    const paper = css.slice(css.indexOf('.bz-memo-skin-paper'));
+    const editorial = css.slice(css.indexOf('.bz-memo-skin-editorial'));
+    // 纸感：白底墨框贴纸；选中 = 品牌橙 + 墨框 + 硬阴影（与头行品牌块/主按钮同族）
+    expect(paper).toMatch(/\.bz-memo-skin-paper \.bz-mobstrip-chip\s*\{[\s\S]{0,220}border:\s*1\.5px solid var\(--bz-skin-ink\)/);
+    expect(paper).toMatch(/\.bz-memo-skin-paper \.bz-mobstrip-chip\.is-on\s*\{[\s\S]{0,260}box-shadow:\s*2px 2px 0 var\(--bz-skin-ink\)/);
+    // 编辑部：方角细墨框白底；选中 = 黑底白字（与编辑部弹窗平铺选择同档）
+    expect(editorial).toMatch(/\.bz-memo-skin-editorial \.bz-mobstrip-chip\s*\{[\s\S]{0,240}border-radius:\s*3px/);
+    expect(editorial).toMatch(/\.bz-memo-skin-editorial \.bz-mobstrip-chip\.is-on\s*\{[\s\S]{0,200}background:\s*var\(--bz-skin-ink\)/);
+    // 虚线动作 chip 必须排在通用 chip 段之后（同特异性 0,2,0 靠后写者赢，否则虚线被实框吃掉）
+    for (const [skin, name] of [['paper', '纸感'], ['editorial', '编辑部']]) {
+      const generic = css.indexOf(`.bz-memo-skin-${skin} .bz-mobstrip-chip {`);
+      const dashed = css.indexOf(`.bz-memo-skin-${skin} .bz-mobstrip-chip.bz-mobstrip-add {`);
+      expect(dashed, name + ' 虚线 chip 规则在场').toBeGreaterThan(-1);
+      expect(dashed, name + ' 虚线 chip 必须排在通用 chip 规则之后').toBeGreaterThan(generic);
+    }
   });
 });
 
-describe('issue 266 · B. 移动端真全屏头行补「新建备忘录」入口', () => {
-  it('头行新增移动端专属新建钮，复用既有 data-memo-newbtn 钩子', () => {
-    const ts = read('src/memo/render.ts');
-    expect(ts).toContain('bz-memo-head-new');
-    // 头行新建钮共用同一个钩子 → 复用 ui.ts 的 openEditor(null) 委托，零新增行为
-    const head = ts.slice(ts.indexOf('bz-panel-head-btns'), ts.indexOf('bz-memo-body'));
-    expect(head).toContain('data-memo-newbtn');
-  });
-
-  it('桌面隐藏 / 移动端显示 走互补媒体查询（不赖顺序）', () => {
+describe('issue 268 · B. 移动端头行只留关闭，设置/新建撤出', () => {
+  it('设置钮移动端 display:none（桌面本就由皮肤段整组收掉）', () => {
     const css = read('src/memo/styles.css');
-    // 桌面：min-width: 769px 藏起（与全局移动档 max-width:768px 互补）
-    expect(css).toMatch(/@media \(min-width: 769px\)\s*\{\s*\.bz-memo-head-new\s*\{\s*display:\s*none/);
-    // 移动端不写 display：沿用核心层 .bz-icon-btn 的 inline-flex，两条规则互斥无顺序陷阱
-    const mobileOnly = css.slice(0, css.indexOf('@media (min-width: 769px)'));
-    expect(mobileOnly).not.toContain('.bz-memo-head-new { display: none; }');
+    const closing = css.slice(css.lastIndexOf('移动端收口段'));
+    const block = mobileBlock(closing);
+    expect(block).toMatch(/\.bz-memo-head-settings\s*\{\s*display:\s*none/);
+    // 设置入口仍在（场景项菜单「在设置中编辑」）——撤的只是头行那一枚
+    const ts = read('src/memo/ui.ts');
+    expect(ts).toContain('openMemoInSettings');
+    expect(ts).toContain("label: '在设置中编辑'");
   });
 
-  it('行为仍只有一处接线（不改功能逻辑）', () => {
+  it('移动端专属新建钮 .bz-memo-head-new 退役（issue 266 引入 → 268 撤除）', () => {
+    const ts = read('src/memo/render.ts');
+    expect(ts).not.toContain('bz-memo-head-new');
+    const css = read('src/memo/styles.css');
+    expect(css).not.toContain('bz-memo-head-new');
+  });
+
+  it('移动端新建入口改由底部录入「添加」与场景条尾部「添加场景」承担', () => {
     const ts = read('src/memo/ui.ts');
-    const hits = ts.match(/data-memo-newbtn/g) || [];
-    expect(hits.length).toBe(1);
-    expect(ts).toContain('openEditor(null)');
+    // 底部「添加」：移动端分支开创建弹窗（桌面仍 addFromComposer 快速落盘）
+    expect(ts).toMatch(/submitComposer[\s\S]{0,260}isMobileEnv\(\)[\s\S]{0,120}addFromComposer\(\)/);
+    expect(ts).toMatch(/submitComposer[\s\S]{0,900}openEditor\(null,\s*\{/);
+    // 场景条尾部 chip：render 纯层出 markup，ui 渲染尾部拼接
+    const render = read('src/memo/render.ts');
+    expect(render).toContain('mobAddSceneChipHtml');
+    expect(render).toMatch(/bz-mobstrip-chip bz-mobstrip-add/);
+    expect(ts).toMatch(/mobChipHtml\(o, M\.activeScene === o\.scene\)\)\s*\.join\(''\)\s*\+\s*mobAddSceneChipHtml\(\)/);
   });
 });
 

@@ -1,7 +1,7 @@
 /**
  * 备忘录域文件同步（memo.json 引用同步；ADR-0092 自旧 memo 域迁入，语义逐行等价）
  *   rename → 同步引用路径/标题/notePath（memo.json）
- *   delete → 清空 linkedNote 关联
+ *   delete → 清空关联（linkedNote + notePath/notePosition）
  * sync 纯函数与队列/去抖为域内私有副本（勿跨域 import）；
  * rename 经域事件总线 'vault:md-renamed' 按 DEBOUNCE_DELAY 合并去抖回放保序，
  * delete 走 'vault:md-deleted' 即时通道（obsidian-adapter 恒发、仅 md，
@@ -37,11 +37,25 @@ function syncRename(
   return changed;
 }
 
-/** 笔记删除：清空关联 */
+/**
+ * 笔记删除：清空关联。
+ *
+ * 同时清 `linkedNote` 与 `notePath`/`notePosition`——**与 syncRename 的口径对齐**。
+ * 此前只清 linkedNote，但当前域从不写非空 linkedNote（新建/编辑器一律置 null，
+ * 见 ui.ts 的 addFromComposer/openEditor），真正在用的是 notePath（编辑器「定位到笔记」写的）：
+ * 于是删掉笔记后条目仍留着指向不存在文件的 notePath，卡片 meta 继续渲染「位置」tag
+ * （render.ts 的 data-memo-pos），点它 = jumpToNote 跳一个已删文件。
+ * rename 分支本就同步改 notePath，删除分支只清一半属实现遗漏（两分支口径不对称）。
+ */
 function syncDelete(items: SyncItem[], path: string): boolean {
   let changed = false;
   for (const item of items) {
     if (item.linkedNote === path) { item.linkedNote = null; changed = true; }
+    if (item.notePath === path) {
+      item.notePath = null;
+      item.notePosition = null;
+      changed = true;
+    }
   }
   return changed;
 }

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 备忘录（memo）UI 层测试：面板结构/场景栏/编辑器场景联动/添加场景弹窗/右键菜单/勾选完成
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -309,26 +309,50 @@ describe('memo 面板', () => {
     expect(document.querySelectorAll('.bz-memo-card')[0].textContent).toContain('ffmpeg 转写参数整理');
   });
 
-  it('排序三档 = 浮岛 segmented（issue 199）：float 轨道 + 滑动指示器节点，切换写回设置', async () => {
+  it('排序 = 组件库下拉（issue 268）：收起态单枚 + 展开菜单三档，切换写回设置', async () => {
     const { app, settings, saveSpy } = seedVault();
     openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-memo-sort] .bz-choice--float')).toBeTruthy();
+      expect(document.querySelector('[data-memo-sort] .bz-select')).toBeTruthy();
     });
-    const track = document.querySelector('[data-memo-sort] .bz-choice--float') as HTMLElement;
-    // 三档 + 白卡指示器节点 + 默认「紧急优先」选中
-    expect(track.querySelectorAll('.bz-choice-btn').length).toBe(3);
-    expect(track.querySelector('.bz-choice-seg')).toBeTruthy();
-    expect(track.querySelector('.bz-choice-btn.is-on')?.textContent).toBe('紧急优先');
-    // 点击「按创建」→ 写回 memoSortMode（与 memo 共用键）+ 落盘
-    ([...track.querySelectorAll('.bz-choice-btn')].find((b) => b.textContent === '按创建') as HTMLElement).click();
+    const sel = document.querySelector('[data-memo-sort] .bz-select') as HTMLElement;
+    // 收起态：只亮当前档文案 + 箭头（三档平铺退役 → 搜索框腾出宽度）
+    expect(sel.querySelector('.bz-select-val')?.textContent).toBe('紧急优先');
+    expect(sel.querySelector('.bz-select-car')).toBeTruthy();
+    expect(document.querySelector('[data-memo-sort] .bz-choice')).toBeNull();
+    // 点触发器展开菜单：三档 + 当前档选中
+    sel.click();
+    const menu = sel.querySelector('.bz-select-menu') as HTMLElement;
+    expect(menu).toBeTruthy();
+    const items = [...menu.querySelectorAll('.bz-select-item')] as HTMLElement[];
+    expect(items.map((b) => b.textContent)).toEqual(['紧急优先', '仅按到期', '按创建']);
+    expect(menu.querySelector('.bz-select-item.is-on')?.textContent).toBe('紧急优先');
+    // 点「按创建」→ 写回 memoSortMode（与 memo 共用键）+ 落盘 + 菜单收起 + 收起态文案跟随
+    items.find((b) => b.textContent === '按创建')!.click();
     expect(settings.memoSortMode).toBe('created');
     await vi.waitFor(() => {
       expect(saveSpy).toHaveBeenCalled();
     });
-    // 选中态迁移 + 面板排序生效
-    expect(track.querySelector('.bz-choice-btn.is-on')?.textContent).toBe('按创建');
+    expect(sel.querySelector('.bz-select-menu')).toBeNull();
+    expect(sel.querySelector('.bz-select-val')?.textContent).toBe('按创建');
     expect(M.sortMode).toBe('created');
+  });
+
+  it('排序下拉：点外部 / Escape 收起菜单（不误改值）', async () => {
+    const { app, settings } = seedVault();
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-memo-sort] .bz-select')).toBeTruthy();
+    });
+    const sel = document.querySelector('[data-memo-sort] .bz-select') as HTMLElement;
+    sel.click();
+    expect(sel.querySelector('.bz-select-menu')).toBeTruthy();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(sel.querySelector('.bz-select-menu')).toBeNull();
+    expect(settings.memoSortMode).toBe('priority'); // 未选就没有写回
+    sel.click();
+    document.body.click();
+    expect(sel.querySelector('.bz-select-menu')).toBeNull();
   });
 });
 
@@ -1192,5 +1216,173 @@ describe('备忘录面板皮肤（issue 210）', () => {
     const menu = document.querySelector('.bz-item-menu') as HTMLElement;
     expect(menu.classList.contains('bz-memo-skin-editorial')).toBe(true);
     expect(menu.classList.contains('bz-memo-skin-paper')).toBe(false);
+  });
+});
+
+/**
+ * issue 268 移动端三改（用户评审拍板）：
+ *  - 底部「添加」= 打开创建弹窗（已输入文字带进弹窗，保存成功才清草稿）——桌面仍快速落盘；
+ *  - 场景条尾部「添加场景」虚线 chip（平铺场景最后面，收藏本磁贴行同款）；
+ *  - 移动端头行只留关闭（设置/新建撤除，CSS 层见 tests/memo/mobile-ui-3fix.test.ts）。
+ */
+describe('memo 移动端（issue 268）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetMemoState();
+    document.body.innerHTML = '';
+    MockPlatform.isMobile = true;
+  });
+  afterEach(() => {
+    closeMemoPanel();
+    MockPlatform.isMobile = false;
+    document.body.innerHTML = '';
+  });
+
+  it('底部「添加」→ 打开创建弹窗，并把已输入文字带进内容框', async () => {
+    const { app, vault } = seedVault();
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-memo-composer-input]')).toBeTruthy();
+    });
+    const input = document.querySelector('[data-memo-composer-input]') as HTMLInputElement;
+    input.value = '移动端草稿一条';
+    (document.querySelector('[data-memo-composer-add]') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
+    });
+    // 未落盘：先弹窗补字段
+    expect(JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!).length).toBe(4);
+    expect((document.querySelector('.bz-memo-editor textarea') as HTMLTextAreaElement).value).toBe('移动端草稿一条');
+    // 弹窗保存 → 落盘 + 底部草稿清空（addItem 置首，同桌面 composer 口径）
+    (document.querySelector('.bz-memo-form-actions .bz-btn--primary') as HTMLElement).click();
+    await vi.waitFor(() => {
+      const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+      expect(raw.length).toBe(5);
+      expect(raw[0].title).toBe('移动端草稿一条');
+    });
+    expect(input.value).toBe('');
+  });
+
+  it('底部「添加」：内容为空也开弹窗；取消不清空草稿（保存成功才清）', async () => {
+    const { app } = seedVault();
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-memo-composer-add]')).toBeTruthy();
+    });
+    // 空内容 → 仍开弹窗（移动端头行已无新建钮，这枚就是新建入口）
+    (document.querySelector('[data-memo-composer-add]') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
+    });
+    expect((document.querySelector('.bz-memo-editor textarea') as HTMLTextAreaElement).value).toBe('');
+    // 取消（第一枚按钮）→ 弹窗关
+    (document.querySelector('.bz-memo-form-actions .bz-btn') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-editor')).toBeNull();
+    });
+    // 有草稿时取消：草稿仍留在底部录入框
+    const input = document.querySelector('[data-memo-composer-input]') as HTMLInputElement;
+    input.value = '留着别丢';
+    (document.querySelector('[data-memo-composer-add]') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
+    });
+    expect((document.querySelector('.bz-memo-editor textarea') as HTMLTextAreaElement).value).toBe('留着别丢');
+    (document.querySelector('.bz-memo-form-actions .bz-btn') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-editor')).toBeNull();
+    });
+    expect(input.value).toBe('留着别丢');
+  });
+
+  it('移动场景条：「添加场景」虚线 chip 挂在平铺场景的最后面，点击开添加场景弹窗', async () => {
+    const { app } = seedVault();
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-memo-mob-scenes] .bz-mobstrip-chip')).toBeTruthy();
+    });
+    const strip = document.querySelector('[data-memo-mob-scenes]') as HTMLElement;
+    const chips = [...strip.querySelectorAll('.bz-mobstrip-chip')] as HTMLElement[];
+    const add = chips[chips.length - 1];
+    expect(add.classList.contains('bz-mobstrip-add')).toBe(true);
+    expect(add.hasAttribute('data-memo-addscene')).toBe(true);
+    expect(add.textContent).toContain('添加场景');
+    // 动作 chip 不是场景：不带 data-memo-scene（场景数仍 9，自检口径不变）
+    expect(add.hasAttribute('data-memo-scene')).toBe(false);
+    expect(strip.querySelectorAll('[data-memo-scene]').length).toBe(9);
+    add.click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-addscene')).toBeTruthy();
+    });
+    expect((document.querySelector('.bz-memo-form-title') as HTMLElement).textContent).toBe('添加场景');
+  });
+
+  it('选中场景后点「添加」→ 弹窗里预选该场景（issue 269）', async () => {
+    const { app, vault } = seedVault();
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-memo-scene="代码"]')).toBeTruthy();
+    });
+    // 先切到「代码」场景（伪场景不参与：那是聚合视图）
+    (document.querySelector('[data-memo-scene="代码"]') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect((document.querySelector('[data-memo-main-title]') as HTMLElement).textContent).toBe('代码');
+    });
+    // 底部也先写点内容（移动端「添加」把草稿带进弹窗）
+    (document.querySelector('[data-memo-composer-input]') as HTMLInputElement).value = '代码场景一条';
+    (document.querySelector('[data-memo-composer-add]') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
+    });
+    // 场景平铺的选中项 = 当前场景（而非 memoDefaultScene/第一个）
+    const on = document.querySelector('.bz-memo-editor .bz-choice .bz-choice-btn.is-on') as HTMLElement;
+    expect(on.dataset.value).toBe('代码');
+    // 代码场景的联动：脚本名输入框已展开
+    expect((document.querySelector('.bz-memo-editor .bz-memo-extra-on input') as HTMLInputElement).placeholder).toBe('脚本名');
+    // 保存后落进该场景
+    (document.querySelector('.bz-memo-form-actions .bz-btn--primary') as HTMLElement).click();
+    await vi.waitFor(() => {
+      const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+      expect(raw.length).toBe(5);
+      expect(raw[0].scene).toBe('代码');
+    });
+  });
+
+  it('伪场景（全部/今日/重要）下点「添加」→ 弹窗回落默认场景（不预选聚合视图）', async () => {
+    const { app, settings } = seedVault();
+    settings.memoDefaultScene = '学习';
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-memo-scene="重要"]')).toBeTruthy();
+    });
+    (document.querySelector('[data-memo-scene="重要"]') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect((document.querySelector('[data-memo-main-title]') as HTMLElement).textContent).toBe('重要');
+    });
+    (document.querySelector('[data-memo-composer-add]') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
+    });
+    const on = document.querySelector('.bz-memo-editor .bz-choice .bz-choice-btn.is-on') as HTMLElement;
+    expect(on.dataset.value).toBe('学习'); // memoDefaultScene
+  });
+
+  it('桌面分支未受影响：底部「添加」仍直接落盘（不开弹窗）', async () => {
+    MockPlatform.isMobile = false;
+    const { app, vault } = seedVault();
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-memo-composer-input]')).toBeTruthy();
+    });
+    const input = document.querySelector('[data-memo-composer-input]') as HTMLInputElement;
+    input.value = '桌面快速落盘';
+    (document.querySelector('[data-memo-composer-add]') as HTMLElement).click();
+    await vi.waitFor(() => {
+      const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+      expect(raw.length).toBe(5);
+      expect(raw[0].title).toBe('桌面快速落盘');
+    });
+    expect(document.querySelector('.bz-memo-editor')).toBeNull();
+    expect(input.value).toBe('');
   });
 });

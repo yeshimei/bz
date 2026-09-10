@@ -82,6 +82,38 @@ describe('memo 引用同步', () => {
     expect(bz[1].linkedNote).toBe('卡片盒/B.md'); // 无关条目不动
   });
 
+  it('delete 事件同时清 notePath/notePosition（与 rename 口径对齐的遗漏修复）', async () => {
+    const { vault } = await setup();
+    // 当前域的真实形态：linkedNote 恒 null（新建/编辑器都写 null），关联靠 notePath
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
+      { id: 'm1', title: 'A', linkedNote: null, notePath: '卡片盒/A.md', notePosition: { line: 4, ch: 0 } },
+      { id: 'm2', title: 'B', linkedNote: null, notePath: '卡片盒/B.md', notePosition: { line: 9, ch: 2 } },
+    ], null, 2));
+
+    emitDomainEvent('vault:md-deleted', { path: '卡片盒/A.md' });
+    await flushQueue();
+
+    const bz = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    // 被删笔记的条目：位置引用整体清空（否则卡片仍渲染「位置」tag，点了跳已删文件）
+    expect(bz[0].notePath).toBeNull();
+    expect(bz[0].notePosition).toBeNull();
+    // 未删笔记的条目原样保留
+    expect(bz[1].notePath).toBe('卡片盒/B.md');
+    expect(bz[1].notePosition).toMatchObject({ line: 9, ch: 2 });
+  });
+
+  it('delete 事件：无引用命中时不写回（changed 恒 false 短路）', async () => {
+    const { vault } = await setup();
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
+      { id: 'm1', title: 'A', linkedNote: null, notePath: '卡片盒/A.md' },
+    ], null, 2));
+
+    emitDomainEvent('vault:md-deleted', { path: '卡片盒/无人引用.md' });
+    await flushQueue();
+
+    expect(memoWrites(vault)).toBe(0); // 无人引用 → 一次盘都不写
+  });
+
   it('watchedFolders 外不动：范围外改名不处理、从未写回', async () => {
     const { vault } = await setup();
     vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([

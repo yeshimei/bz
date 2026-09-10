@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 备忘录行为单源 · sim 启动入口（issue 260/ADR-0106，范式随 favorites 试点）
  *
  * 评审壳侧启动器：把真行为层（ui.ts 及其依赖链）在浏览器里跑起来。
@@ -25,6 +25,7 @@ import { attachObsidianAdapter } from '../../src/core/obsidian-adapter';
 import { ensureFileSync } from '../../src/memo/file-sync';
 import { ensureMemoReminders } from '../../src/memo/reminder';
 import { openMemoPanel, closeMemoPanel, applyMemoSkin } from '../../src/memo/ui';
+import { memoSettingsSchema } from '../../src/memo/settings';
 
 declare global {
 	interface Window {
@@ -34,6 +35,47 @@ declare global {
 
 /** fake vault 内 memo.json 路径（localStorage 键 = bz-sim: 前缀 + vault 路径） */
 const VAULT_KEY = 'bz-sim:CONFIG/STORAGE/memo.json';
+
+/**
+ * 演示设置的**跨 iframe 持久层**（issue 269）。
+ *
+ * 评审壳是**双 iframe**（桌面 920 / 移动 412×915），每个 iframe 各自加载一份本模块——
+ * 即两个互不相识的实例，`demoSettings` 是各自的**内存副本**：壳上按钮只调桌面实例的钩子，
+ * 移动实例那份仍是初值，于是「点皮肤，桌面变了移动没变」。
+ * 修法：皮肤/布局这类**外观选择**落 localStorage，两个实例 boot 时都读同一份——
+ * 谁改都一致，且刷新（SSE 热重载会整页 reload）后选择不丢。
+ * 数据类内容（memo.json）本就走 fake vault 的 localStorage，无需在此重复。
+ */
+const DEMO_KEY = 'bz-sim:demo-settings';
+
+/** 需要跨 iframe 共享的键（外观选择；不含与数据/行为相关的键） */
+const SHARED_KEYS = ['memoSkin', 'memoLayout'] as const;
+
+/** 读共享设置并盖到内存副本上（boot 时调用一次；坏数据静默忽略） */
+function loadSharedSettings(): void {
+	try {
+		const raw = localStorage.getItem(DEMO_KEY);
+		if (!raw) return;
+		const parsed = JSON.parse(raw) as Record<string, unknown> | null;
+		if (!parsed || typeof parsed !== 'object') return;
+		for (const k of SHARED_KEYS) {
+			if (parsed[k] !== undefined) demoSettings[k] = parsed[k];
+		}
+	} catch {
+		/* 坏 JSON / 存储不可用：保持内存初值，不影响其余演示面 */
+	}
+}
+
+/** 写共享设置（改外观时调用；写失败不抛——壳内评审不因存储问题中断） */
+function saveSharedSettings(): void {
+	try {
+		const out: Record<string, unknown> = {};
+		for (const k of SHARED_KEYS) out[k] = demoSettings[k];
+		localStorage.setItem(DEMO_KEY, JSON.stringify(out));
+	} catch {
+		/* 存储不可用：仅本实例生效（下次 boot 回初值），不抛 */
+	}
+}
 
 let _app: FakeApp | null = null;
 /** 可变演示设置：设置注入用同一对象引用，壳内改键即时生效（saveSettings 为壳内 no-op） */
@@ -81,12 +123,13 @@ function injectRuntime(): void {
 	ensureFileSync(app as never);
 }
 
-/** 壳入口：一次性启动（种子 + 注入；幂等） */
+/** 壳入口：一次性启动（种子 + 共享设置 + 注入；幂等） */
 export function bootMemoSim(): void {
 	const g = window as unknown as { __bzMemoSimBooted?: boolean };
 	if (g.__bzMemoSimBooted) return;
 	g.__bzMemoSimBooted = true;
 	seedDatabase();
+	loadSharedSettings(); // 跨 iframe 共享的外观选择（皮肤/布局）先落地，再注入 provider
 	injectRuntime();
 }
 
@@ -98,11 +141,94 @@ export function openPanel(): void {
 
 export { closeMemoPanel as closePanel };
 
-/** 皮肤演示（设置行 onChange 同款热切换）：改演示设置 + 真 applyMemoSkin */
-export function applySkin(skin: 'paper' | 'editorial'): void {
+/** 皮肤演示（设置行 onChange 同款热切换）：改演示设置（+ 共享落盘）+ 真 applyMemoSkin。
+ *  返回**归一后的值**（未知值按 applyMemoSkin 的兜底回落纸感）——壳按绝对目标下发两端时，
+ *  直接拿这个返回值回显按钮，不必再读回一次状态。 */
+export function applySkin(skin: 'paper' | 'editorial'): 'paper' | 'editorial' {
 	bootMemoSim();
-	demoSettings.memoSkin = skin;
-	applyMemoSkin(skin);
+	demoSettings.memoSkin = skin === 'editorial' ? 'editorial' : 'paper';
+	saveSharedSettings();
+	applyMemoSkin(demoSettings.memoSkin as 'paper' | 'editorial');
+	return demoSettings.memoSkin as 'paper' | 'editorial';
+}
+
+/** 当前皮肤（读演示设置；未知回落纸感——与 applyMemoSkin 的兜底同口径） */
+export function skinState(): 'paper' | 'editorial' {
+	return demoSettings.memoSkin === 'editorial' ? 'editorial' : 'paper';
+}
+
+/**
+ * 切到另一套皮肤，返回切换后的值（徽牌「皮肤」钮用）。
+ * 修 issue 269：旧实现是壳内自己判 `textContent.includes('编辑部')` 决定目标——
+ * 而标签「皮肤→编辑部」正好包含「编辑部」，于是目标恒为 paper，**点按永远不动**
+ * （初始即 paper → 切到 paper）。标签与目标方向写反的典型症状。
+ */
+export function toggleSkin(): 'paper' | 'editorial' {
+	const next: 'paper' | 'editorial' = skinState() === 'paper' ? 'editorial' : 'paper';
+	applySkin(next);
+	return next;
+}
+
+/** 皮肤清单（壳按绝对目标下发两端时用；与 `applyMemoSkin` 的可选值同源） */
+export function listSkins(): Array<{ value: 'paper' | 'editorial'; label: string }> {
+	return [
+		{ value: 'paper', label: '纸感手账' },
+		{ value: 'editorial', label: '编辑部' },
+	];
+}
+
+// ---------- 布局（issue 269：徽牌「皮肤」钮改「布局」切换；清单 = 域设置 schema 单源） ----------
+
+/**
+ * 面板布局清单：**单源 = 域设置 schema 的「面板布局」行**（`memoSettingsSchema`）。
+ * 壳上按钮不写死任何布局名——将来该行加第二布局（layouts/<x>/ 落地 + 卡组加一项），
+ * 徽牌按钮自动跟着可切，本文件与 prototype.html 都不用改。
+ * 现值：只有 `default`「清单」（场景工作台，即当前唯一实现）。
+ */
+export function listLayouts(): Array<{ value: string; label: string }> {
+	const row = memoSettingsSchema()
+		.groups.flatMap((g) => g.rows)
+		.find((r) => (r as { binding?: { key?: string } }).binding?.key === 'memoLayout');
+	const opts = (row as { options?: Array<{ value: string; label: string }> } | undefined)?.options ?? [];
+	return opts.map((o) => ({ value: o.value, label: o.label }));
+}
+
+/** 当前布局（读演示设置 memoLayout，非法/缺省回落清单） */
+function currentLayoutValue(): string {
+	const all = listLayouts();
+	const cur = String(demoSettings.memoLayout ?? '');
+	return all.some((o) => o.value === cur) ? cur : (all[0]?.value ?? '');
+}
+
+/** 布局回显包（徽牌按钮初绘用；count 供按钮标注「仅一套」） */
+export function layoutState(): { value: string; label: string; count: number } {
+	bootMemoSim();
+	const all = listLayouts();
+	const value = currentLayoutValue();
+	return { value, label: all.find((o) => o.value === value)?.label ?? value, count: all.length };
+}
+
+/** 切到下一个布局（只有一套时原地不动）：写演示设置（+ 共享落盘）+ 返回新状态供按钮回显。
+ *  布局落地前 memoLayout 尚无消费方（面板不因它变样），这正是「点了暂时没变化」的原因——
+ *  等第一套真布局实现（layouts/<x>/）在面板侧接线后，本钩子无需再改。 */
+export function cycleLayout(): { value: string; label: string; count: number } {
+	const all = listLayouts();
+	if (all.length === 0) return { value: '', label: '', count: 0 };
+	const i = Math.max(0, all.findIndex((o) => o.value === currentLayoutValue()));
+	const next = all[(i + 1) % all.length];
+	return setLayout(next.value);
+}
+
+/** 按**绝对值**落布局（壳按绝对目标下发两端：先算好 next 再两侧各调一次，
+ *  避免「逐实例各自 cycle」在两个实例状态不一致时各转各的、越切越偏）。 */
+export function setLayout(value: string): { value: string; label: string; count: number } {
+	bootMemoSim();
+	const all = listLayouts();
+	const hit = all.find((o) => o.value === value) ?? all[0];
+	if (!hit) return { value: '', label: '', count: 0 };
+	demoSettings.memoLayout = hit.value;
+	saveSharedSettings();
+	return { value: hit.value, label: hit.label, count: all.length };
 }
 
 /** 被动捕获演示：开 autoPopupOnStart 后注册真提醒后台（存在重要/到期未完成 → 300ms 后自动弹面板） */

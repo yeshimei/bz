@@ -102,13 +102,21 @@ export function mobChipHtml(o: { scene: string; dot: string }, active: boolean):
 	return `<button class="bz-mobstrip-chip${active ? ' is-on' : ''}" data-memo-scene="${esc(o.scene)}">${sceneLeadHtml(o, 'bz-mobstrip-dot')}${esc(sceneLabel(o.scene))}</button>`;
 }
 
+/** 移动场景条尾部「添加场景」chip（issue 268）：虚线空底 + tag 图标，挂在最后一个场景之后
+ *  （左栏 .bz-memo-side-add 同语义的另一形态；虚线磁贴范式同收藏本 .bz-fav-chip-add）。
+ *  动作不是场景：无 is-on / 无计数，data-memo-addscene 复用 ui.ts 既有委托。 */
+export function mobAddSceneChipHtml(): string {
+	return `<button class="bz-mobstrip-chip bz-mobstrip-add" data-memo-addscene title="添加场景">${iconSpan(MEMO_ICONS.addScene)}${esc('添加场景')}</button>`;
+}
+
 /** 面板壳首帧模板（.bz-panel-frame.bz-memo-panel；各槽位的渲染与行为接线在 ui.ts）
  *
- * 移动端头行（issue 266）：移动端真全屏只有这一条头行可用（.bz-main-head 在
- * ≤768px 按原型隐藏、新建入口原本只剩底部录入条），故头行补一枚移动端专属的
- * 新建按钮 `.bz-memo-head-new`——桌面隐藏（桌面走 .bz-main-head 里那枚
- * 「新建备忘录」大按钮）。两枚共用同一个 `data-memo-newbtn` 钩子，
- * 复用 ui.ts 里既有的事件委托（`openEditor(null)`），零新增行为。 */
+ * 头行钮组（issue 197 → 268 收敛）：品牌块 + 右侧「打开备忘录设置 / 关闭」图标钮。
+ * 皮肤段（.bz-memo-skin-*）在桌面把整组收掉（原型无此二钮）；移动端真全屏只放回
+ * **关闭**一枚（issue 268：设置与新建从移动端头行撤除——设置并入设置面板，
+ * 新建归底部录入「添加」与场景条尾部「添加场景」），并在收口段定档 28px 贴纸形态。
+ * 新建：移动端入口归底部录入「添加」（打开创建弹窗）与场景条尾部「添加场景」——
+ * issue 266 曾为此在头行补过一枚移动端专属新建钮，issue 268 随本次收敛退役。 */
 export function panelShellHtml(): string {
 	return `
     <div class="bz-panel-frame bz-memo-panel bz-panel-mtop">
@@ -117,9 +125,8 @@ export function panelShellHtml(): string {
         <div class="bz-panel-title">备忘录</div>
         <div class="bz-panel-head-sp"></div>
         <div class="bz-panel-head-btns">
-          <button class="bz-icon-btn" data-memo-head-settings title="打开备忘录设置">${iconSpan(MEMO_ICONS.settings)}</button>
-          <button class="bz-icon-btn bz-touch-target bz-memo-head-new" data-memo-newbtn title="新建备忘录">${iconSpan(MEMO_ICONS.add)}</button>
-          <button class="bz-icon-btn bz-touch-target bz-memo-head-close" data-memo-head-close title="关闭">${iconSpan(MEMO_ICONS.close)}</button>
+          <button class="bz-icon-btn bz-memo-head-settings" data-memo-head-settings title="打开备忘录设置">${iconSpan(MEMO_ICONS.settings)}</button>
+          <button class="bz-icon-btn bz-touch-target bz-touch-target--lg bz-memo-head-close" data-memo-head-close title="关闭">${iconSpan(MEMO_ICONS.close)}</button>
         </div>
       </div>
       <div class="bz-memo-body">
