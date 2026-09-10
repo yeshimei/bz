@@ -9,7 +9,7 @@
 import { describe, it, expect } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { ensureFileSync, unloadFileSync } from '../../src/todo/file-sync';
+import { ensureFileSync, unloadFileSync } from '../../src/memo/file-sync';
 import { emitDomainEvent, clearDomainEvents } from '../../src/core/domain-bus';
 import { MockVault } from '../mock-vault';
 

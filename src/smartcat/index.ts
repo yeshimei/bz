@@ -40,6 +40,7 @@ import { buildNewsReadStructured, buildNewsSavedStructured, type NewsReadEvent }
 import { buildFavoritesStructured, type FavoritesActionEvent } from './favorites-source';
 
 import { buildPomodoroStructured, type PomodoroActionEvent } from './pomodoro-source';
+import { buildReviewStructured, buildAttachMovedStructured, type ReviewRating } from './coverage-source';
 import { DOMAIN_FILES, snapshotDomains } from './domain-source';
 import { buildLibraryNoteText, type LibraryWeaveDiff } from './library-source';
 import { buildRhythmProfile, isActiveNow, describeRhythm, periodText, isoWeekKey } from './rhythm';
@@ -420,6 +421,9 @@ export async function ensureSmartCat(app: App): Promise<void> {
   // ADR-0069 行为流全量盘点补齐：日记分类调整（diary 域 dialogs 域事件）。
   // 剪藏删除观察已按用户拍板断开（2026-08-29）：vault delete 不再入行为流。
   busUnsubs.push(onDomainEvent<DiaryTagsEvent>('diary:tags-changed', (evt) => notifyDiaryTagsChanged(evt)));
+  // issue 261：ADR-0069 遗留接线补齐——复习计划（review 域）与附件搬移（attach 域）首次接入行为流
+  busUnsubs.push(onDomainEvent<ReviewActionEvent>('review', (evt) => notifyReviewAction(evt)));
+  busUnsubs.push(onDomainEvent<AttachActionEvent>('attach', (evt) => notifyAttachMoved(evt)));
 
   // 域 JSON 感知（2026-08-23 用户拍板：CONFIG/STORAGE 域数据 modify → 观察；懒启动探测）
   void onDomainActivity();
@@ -1326,7 +1330,7 @@ function notifyLiteratureAction(evt: KnowledgeActionEvent): void {
   if (!structured) return;
   // 同事件同 key 近 300ms 防重（双击保存等双入口场景）
   if (notifyDeduped(structured.action, literatureActionKey(evt))) return;
-  void memorySystem.addObservation('literature', { structured });
+  void memorySystem.addObservation('knowledge', { structured });
 }
 
 /** 文献盒事件防重键：converted=url+notePath（重试/重复转换不重复计）；term-generated=term（同词连点一次算一次） */
@@ -1344,6 +1348,41 @@ function notifyDiaryTagsChanged(evt: DiaryTagsEvent): void {
   const structured = buildDiaryTagsStructured(evt);
   if (!structured) return;
   void memorySystem.addObservation('diary', { structured });
+}
+
+// ------------- 复习计划 / 附件搬移观察（issue 261：ADR-0069 遗留接线补齐） -------------
+
+/** 复习计划动作事件（review 域经 emitDomainEvent('review', evt) 派发 → 总线订阅进入）。 */
+type ReviewActionEvent =
+  | { kind: 'started' }
+  | { kind: 'added'; title: string }
+  | { kind: 'removed'; title: string }
+  | { kind: 'rated'; title: string; rating: ReviewRating };
+
+/** 复习计划动作观察处理：构造 StructuredMeta 走行为流（review:started/added/removed/rated）。
+ *  未初始化 / noteSource 关 → 静默；载荷缺标题（added/removed/rated）→ 静默。 */
+function notifyReviewAction(evt: ReviewActionEvent): void {
+  if (!initialized || !memorySystem || !data?.config?.noteSource) return;
+  const structured = evt.kind === 'started'
+    ? buildReviewStructured('started')
+    : evt.kind === 'rated'
+      ? buildReviewStructured('rated', evt.title, evt.rating)
+      : buildReviewStructured(evt.kind, evt.title);
+  if (!structured) return;
+  // 同事件同 key 近 300ms 防重（双击/快捷命令与弹窗双入口）
+  const key = evt.kind === 'rated' ? `${evt.title}|${evt.rating}` : evt.kind === 'started' ? 'started' : evt.title;
+  if (notifyDeduped(evt.kind, key)) return;
+  void memorySystem.addObservation('review', { structured });
+}
+
+/** 附件搬移事件（attach 域经 emitDomainEvent('attach', evt) 派发 → 总线订阅进入）。 */
+type AttachActionEvent = { kind: 'moved'; count?: number };
+
+/** 附件搬移观察处理：构造 StructuredMeta 走行为流（attach:moved，带成功数）。 */
+function notifyAttachMoved(evt: AttachActionEvent): void {
+  if (!initialized || !memorySystem || !data?.config?.noteSource) return;
+  const structured = buildAttachMovedStructured(evt.count);
+  void memorySystem.addObservation('attach', { structured });
 }
 
 /** memo.json 路径（跟随共享 storagePath，同 smartcatStorageDir 目录规则） */

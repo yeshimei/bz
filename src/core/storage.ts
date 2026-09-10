@@ -60,8 +60,8 @@ export function storageFile(name: string, base?: string): string {
 
 /**
  * 同路径读改写事务串行队列（模块级）。
- * jsonFileStore 本身无锁：同一文件被多个 store 实例（如 memo UI 的 DataManager 与 todo UI 的
- * TodoData，同写 memo.json）并发「读→改→写」时，后写者会用陈旧基线覆盖先写者（丢写）。
+ * jsonFileStore 本身无锁：同一文件被多个 store 实例（如 memo UI 的 DataManager 与 memo UI 的
+ * MemoData，同写 memo.json）并发「读→改→写」时，后写者会用陈旧基线覆盖先写者（丢写）。
  * 把每个「读→改→写」整体作为 task 入队（键 = 文件路径），同类事务即互斥串行；
  * 前序任务失败不阻塞后续；队尾空闲时清理条目防 Map 无限增长。
  */

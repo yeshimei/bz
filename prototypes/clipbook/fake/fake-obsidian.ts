@@ -88,6 +88,9 @@ export class Setting {
  * 构建期 IIFE 内联动态导入，导出必须存在。knowledge/ui 以 typeof MR.render 守卫调用，
  * 缺实现走纯文本回退。
  */
+/** Component 桩：flow.ts 动态 import('../knowledge') 链（knowledge/ui）构建期需要导出存在（运行期不构造） */
+export class Component {}
+
 export class MarkdownView {
   file: TFile | null = null;
   getViewData(): string {

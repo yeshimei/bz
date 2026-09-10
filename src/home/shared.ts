@@ -87,7 +87,7 @@ export const ALL_DOMAIN_IDS: string[] = DOMAINS.map((d) => d.id);
 
 /* ---------- 活动河类型（原 river.ts 纯类型段收编；river.ts re-export 兼容） ---------- */
 
-/** 时间线一条痕迹（recap RecapItem 的域展宽版：todo 保留原名，前端图标/名称映射） */
+/** 时间线一条痕迹（recap RecapItem 的域展宽版：memo 保留原名，前端图标/名称映射） */
 export type RiverEvent = RecapItem;
 
 /** 日记连击态 */
@@ -126,14 +126,14 @@ export const EMPTY_COUNTS: RiverCounts = {
   belongingsTotal: 0,
 };
 
-/** 时间线摘要（recap RecapSummary + todoCreated：彩点规则的需要） */
+/** 时间线摘要（recap RecapSummary + memoCreated：彩点规则的需要） */
 export interface RiverSummary extends RecapSummary {
-  /** 今日新增待办条数（recap 摘要无此字段，由时间线「新增待办」条目数派生） */
-  todoCreated: number;
+  /** 今日新增备忘录条数（recap 摘要无此字段，由时间线「新增备忘录」条目数派生） */
+  memoCreated: number;
 }
 
 export const EMPTY_SUMMARY: RiverSummary = {
-  diary: 0, movies: 0, books: 0, todoDone: 0, todoCreated: 0, pomodoros: 0, pomodoroMinutes: 0,
+  diary: 0, movies: 0, books: 0, memoDone: 0, memoCreated: 0, pomodoros: 0, pomodoroMinutes: 0,
 };
 
 /** 一天的时间线（今天/昨天同构） */
@@ -265,14 +265,14 @@ export function buildPreviews(data: RiverData): RiverPreview[] {
 /** 入口行彩点状态：ok=今天有动静 / warn=提醒（日记连击）/ hot=逾期 / off=无动静 */
 export type RiverDot = 'ok' | 'warn' | 'hot' | 'off';
 
-/** 彩点规则（node 可测；与原型 buildDots 一致，映射到 home 域 id：todo/memo 同源） */
+/** 彩点规则（node 可测；与原型 buildDots 一致，映射到 home 域 id：memo/memo 同源） */
 export function buildDots(data: RiverData): Record<string, RiverDot> {
   const day = data.today;
   const hasEvent = (d: string): boolean => day.events.some((e) => e.domain === d);
   return {
     diary: day.summary.diary > 0 ? 'ok' : data.streak.diaryStreak > 0 ? 'warn' : 'off',
     review: data.counts.reviewOverdue > 0 ? 'hot' : 'off',
-    memo: day.summary.todoDone + day.summary.todoCreated > 0 ? 'ok' : 'off',
+    memo: day.summary.memoDone + day.summary.memoCreated > 0 ? 'ok' : 'off',
     pomodoro: day.summary.pomodoros > 0 ? 'ok' : 'off',
     cinema: hasEvent('cinema') ? 'ok' : 'off',
     bookshelf: hasEvent('bookshelf') ? 'ok' : 'off',
@@ -307,7 +307,3 @@ export function riverCountText(id: string, data: RiverData): string | null {
   }
 }
 
-/** 时间线域徽记 id（recap 记 todo，展示归 memo：todo/memo 同源） */
-export function memoIdOf(domain: string): string {
-  return domain === 'todo' ? 'memo' : domain;
-}

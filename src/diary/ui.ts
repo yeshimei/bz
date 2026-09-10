@@ -343,7 +343,7 @@ export class DiaryAppController {
     ui.head.querySelector('[data-act="add"]')?.addEventListener('click', () => this.openAddEntry());
     // 搜索：toggle 真搜索框
     ui.head.querySelector('[data-act="search"]')?.addEventListener('click', () => this.toggleSearch(ui));
-    // 设置直达（issue 201 头行对齐待办）：关面板 → 设置面板定位日记本域（动态 import 防环引用）
+    // 设置直达（issue 201 头行对齐备忘录）：关面板 → 设置面板定位日记本域（动态 import 防环引用）
     ui.head.querySelector('[data-act="settings"]')?.addEventListener('click', () => {
       this.hide();
       void import('../settings-panel').then((m) => m.openSettingsPanel(getApp(), 'diary'));

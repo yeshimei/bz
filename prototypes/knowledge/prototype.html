@@ -10,7 +10,7 @@
   │ 双 iframe 评审壳（旧 .zcode 静态演示页退役）。                             │
   │ 数据 = localStorage 种子（文献盒 4 篇 + 卡片盒 3 张 + 主题盒 1 篇，         │
   │ fake-sim 重播；壳「重置」清 bz-sim:*）；AI = fake requestUrl 罐头回放。     │
-  │ 壳内只允许：外景容器样式、评审徽牌、重置。                                 │
+  │ 壳内只允许：外景容器样式、评审徽牌、重置、标注工具（点元素复制片段给 AI）。    │
   └────────────────────────────────────────────────────────────────────────┘
 -->
 <link rel="stylesheet" href="../../src/core/styles.css">
@@ -30,6 +30,26 @@
   .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #9a917d; display: flex; gap: 10px; align-items: center;
     background: rgba(255,255,255,.9); border: 1px solid #d8d1c0; padding: 3px 8px; z-index: 900; }
   .vbadge button { border: none; background: none; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; }
+  .vbadge button.on { font-weight: 700; text-decoration: underline; }
+
+  /* ===== 评审工具：标注面板（仅外景，与组件无关） ===== */
+  #annoPanel { position: fixed; left: 16px; bottom: 12px; z-index: 901; width: 400px; max-height: 46vh; overflow: auto; display: none;
+    background: rgba(255,255,255,.97); border: 1px solid #d8d1c0; border-radius: 8px; padding: 10px 12px; font: 12px/1.7 'Microsoft YaHei'; color: #3d3a30; }
+  #annoPanel h4 { margin: 0 0 6px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+  #annoPanel h4 span button { margin-left: 6px; border: 1px solid #d8d1c0; background: #fff; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; border-radius: 4px; padding: 2px 8px; }
+  #annoList div { padding: 3px 0; border-bottom: 1px dashed #e4ddcc; word-break: break-all; }
+  #annoList b { color: #9a917d; font-weight: 400; margin-right: 4px; }
+  #annoList input { width: 100%; box-sizing: border-box; margin: 3px 0 2px; border: 1px dashed #d8d1c0; background: #fffdf8;
+    font: 12px 'Microsoft YaHei'; color: #3d3a30; padding: 3px 6px; border-radius: 4px; }
+  #annoToast { position: fixed; left: 50%; bottom: 58px; transform: translateX(-50%); z-index: 902; background: #3d3a30; color: #fff;
+    font: 12px 'Microsoft YaHei'; padding: 4px 14px; border-radius: 999px; opacity: 0; transition: opacity .25s; pointer-events: none; }
+  /* 鼠标旁的处理弹框：预选一键项 + 自定义输入 */
+  #annoPop { position: fixed; z-index: 950; display: none; width: 250px; background: #fff; border: 1px solid #d8d1c0; border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.16); padding: 8px; font: 12px 'Microsoft YaHei'; color: #3d3a30; }
+  #annoChips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+  #annoChips button { border: 1px solid #d8d1c0; background: #faf7f0; color: #3d3a30; font: 11px 'Microsoft YaHei'; padding: 2px 9px; border-radius: 999px; cursor: pointer; }
+  #annoChips button:hover { border-color: #b3564d; color: #b3564d; }
+  #annoPop input { width: 100%; box-sizing: border-box; border: 1px dashed #d8d1c0; background: #fffdf8; font: 12px 'Microsoft YaHei'; color: #3d3a30; padding: 4px 6px; border-radius: 4px; }
 </style>
 </head>
 <body class="theme-light">
@@ -37,8 +57,19 @@
   <div id="mobHost" class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="知识盒·移动"></iframe></div>
 
   <div class="vbadge">知识盒 · 真行为单源预览（桌面 920px 主窗 / 移动 396px 真全屏+✕；术语生成走 fake AI 罐头）
+    <button id="annoToggle">标注</button>
     <button id="mobToggle">隐藏移动端</button>
     <button id="reset">重置演示数据</button>
+  </div>
+
+  <div id="annoPanel">
+    <h4>标注（点元素记录，再在框里写要怎么改）<span><button id="annoCopy">复制全部</button><button id="annoClear">清空</button></span></h4>
+    <div id="annoList"></div>
+  </div>
+  <div id="annoToast"></div>
+  <div id="annoPop">
+    <div id="annoChips"></div>
+    <input id="annoInput" type="text" placeholder="或自己写要怎么改，回车确认">
   </div>
 
 <script>
@@ -59,6 +90,166 @@
     doomed.forEach((k) => localStorage.removeItem(k));
     location.reload();
   });
+})();
+
+/* ===== 评审工具：标注模式（点选 iframe 内元素 → 生成代码片段 → 复制给 AI） ===== */
+(function () {
+  const state = { on: false, items: [], hooks: new Map(), cur: null, prev: '' };
+  const toggle = document.querySelector('#annoToggle');
+  const panel = document.querySelector('#annoPanel');
+  const list = document.querySelector('#annoList');
+  const toastEl = document.querySelector('#annoToast');
+  const pop = document.querySelector('#annoPop');
+  const popInput = document.querySelector('#annoInput');
+  const chipsBox = document.querySelector('#annoChips');
+  const escHtml = (s) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  let noteTimer = 0, editIdx = -1;
+  const PRESETS = ['去掉', '居中', '字号大点', '字号小点', '加粗', '换文案'];
+  chipsBox.innerHTML = PRESETS.map((p) => '<button data-p="' + p + '">' + p + '</button>').join('');
+
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.style.opacity = 1;
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => { toastEl.style.opacity = 0; }, 1200);
+  }
+  function frameName(iframe) { return iframe.title.includes('移动') ? '移动端' : '桌面端'; }
+  /* 还原成「开标签 + 文本」片段（贴给 AI 即可检索定位）；剥掉高亮 outline，别混进片段 */
+  function snippet(el) {
+    const clone = el.cloneNode(false);
+    clone.style && clone.style.removeProperty('outline');
+    const open = clone.outerHTML;
+    const closeIdx = open.lastIndexOf('</');
+    const voidEl = closeIdx < 0;
+    const openTag = voidEl ? open : open.slice(0, closeIdx);
+    const text = (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+    return voidEl ? openTag : openTag + text + (text.length >= 80 ? '…' : '') + '</' + el.tagName.toLowerCase() + '>';
+  }
+  function buildText() {
+    return state.items.map((it, i) => {
+      const head = '【标注 ' + (i + 1) + ' · ' + it.frame + '】' + it.html;
+      return it.note ? head + '\n处理：' + it.note : head;
+    }).join('\n');
+  }
+  function copyAll(silent) {
+    if (!state.items.length) return;
+    const text = buildText();
+    const done = () => { if (!silent) toast('已复制 ' + state.items.length + ' 条，直接贴给 AI'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, () => fallbackCopy(text, done));
+    } else fallbackCopy(text, done);
+  }
+  function fallbackCopy(text, done) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    done();
+  }
+  function render() {
+    list.innerHTML = state.items.length
+      ? state.items.map((it, i) => '<div><b>' + (i + 1) + ' · ' + it.frame + '</b>' + escHtml(it.html) +
+          '<input type="text" data-idx="' + i + '" placeholder="要怎么处理？如：去掉 / 居中 / 字号大点" value="' + escHtml(it.note || '') + '"></div>').join('')
+      : '<div style="color:#9a917d">还没有标注。</div>';
+  }
+  /* 鼠标旁的处理弹框：预选一键项，或自定义输入后回车 */
+  function openPop(idx, x, y) {
+    editIdx = idx;
+    popInput.value = state.items[idx].note || '';
+    pop.style.display = 'block';
+    const w = 266, h = pop.offsetHeight || 92;
+    pop.style.left = Math.max(8, Math.min(x, window.innerWidth - w - 12)) + 'px';
+    pop.style.top = Math.max(8, Math.min(y + 14, window.innerHeight - h - 12)) + 'px';
+    popInput.focus();
+  }
+  function closePop() {
+    pop.style.display = 'none';
+    editIdx = -1;
+  }
+  function applyNote(text) {
+    if (editIdx >= 0 && editIdx < state.items.length) {
+      state.items[editIdx].note = text.trim();
+      render();
+      copyAll(false);
+    }
+    closePop();
+  }
+  chipsBox.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-p]');
+    if (b) applyNote(b.getAttribute('data-p'));
+  });
+  popInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') applyNote(popInput.value);
+    else if (e.key === 'Escape') closePop();
+  });
+  popInput.addEventListener('input', () => {
+    if (editIdx >= 0 && editIdx < state.items.length) state.items[editIdx].note = popInput.value;
+    clearTimeout(noteTimer);
+    noteTimer = setTimeout(() => copyAll(true), 600);
+  });
+  document.addEventListener('click', (e) => {
+    if (pop.style.display === 'block' && !pop.contains(e.target)) closePop();
+  }, true);
+  function attach(iframe) {
+    const doc = iframe.contentDocument;
+    if (!doc || state.hooks.has(iframe)) return;
+    const over = (e) => {
+      if (state.cur === e.target) return;
+      if (state.cur) state.cur.style.outline = state.prev;
+      state.cur = e.target;
+      state.prev = e.target.style.outline || '';
+      e.target.style.outline = '2px solid #b3564d';
+    };
+    const out = () => { if (state.cur) { state.cur.style.outline = state.prev; state.cur = null; } };
+    const click = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closePop();
+      state.items.push({ frame: frameName(iframe), html: snippet(e.target), note: '' });
+      render();
+      const r = iframe.getBoundingClientRect();
+      openPop(state.items.length - 1, r.left + e.clientX, r.top + e.clientY);
+    };
+    doc.addEventListener('mouseover', over);
+    doc.addEventListener('mouseout', out);
+    doc.addEventListener('click', click, true);
+    doc.documentElement.style.cursor = 'crosshair';
+    state.hooks.set(iframe, { doc, over, out, click });
+  }
+  function detach(iframe) {
+    const h = state.hooks.get(iframe);
+    if (!h) return;
+    h.doc.removeEventListener('mouseover', h.over);
+    h.doc.removeEventListener('mouseout', h.out);
+    h.doc.removeEventListener('click', h.click, true);
+    h.doc.documentElement.style.cursor = '';
+    state.hooks.delete(iframe);
+  }
+  toggle.addEventListener('click', () => {
+    state.on = !state.on;
+    toggle.classList.toggle('on', state.on);
+    panel.style.display = state.on ? 'block' : 'none';
+    document.querySelectorAll('iframe.demo-frame').forEach(state.on ? attach : detach);
+    if (state.on) toast('标注开启：点元素即记录');
+    else closePop();
+  });
+  /* 热重载/重置会换 iframe 文档：载入完成后若标注仍开着就重新挂上 */
+  document.querySelectorAll('iframe.demo-frame').forEach((f) => {
+    f.addEventListener('load', () => { if (state.on) attach(f); });
+  });
+  document.querySelector('#annoCopy').addEventListener('click', () => copyAll(false));
+  document.querySelector('#annoClear').addEventListener('click', () => { state.items = []; render(); closePop(); });
+  /* 面板里直接改「处理」：记下指令后静默更新剪贴板（防抖） */
+  list.addEventListener('input', (e) => {
+    const idx = e.target.getAttribute && e.target.getAttribute('data-idx');
+    if (idx == null || !(idx in state.items)) return;
+    state.items[Number(idx)].note = e.target.value;
+    clearTimeout(noteTimer);
+    noteTimer = setTimeout(() => copyAll(true), 600);
+  });
+  render();
 })();
 </script>
 </body>

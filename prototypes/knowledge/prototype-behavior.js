@@ -6992,6 +6992,11 @@ ${sample}`,
     const h = Math.floor(m / 60);
     return h > 0 ? `${h}:${String(m % 60).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}` : `${m}:${String(s % 60).padStart(2, "0")}`;
   };
+  function dateStamp() {
+    const d = /* @__PURE__ */ new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  }
   function litDirOf(s) {
     const raw = s && s.knowledgeDirectory ? String(s.knowledgeDirectory) : "文献盒";
     return raw.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
@@ -7046,7 +7051,6 @@ ${sample}`,
       this.popup = null;
       this.contentEl = null;
       this.part = "z1";
-      this.noteView = null;
       this.allNotes = [];
       this.allCards = [];
       this.allTopics = [];
@@ -7120,19 +7124,28 @@ ${sample}`,
       popup.className = "bz-kb-window kb";
       if (isMobileEnv()) popup.classList.add("bz-panel-mtop");
       popup.style.display = "none";
-      popup.innerHTML = `
-      <div class="bz-kb-head">
-        <div class="bz-kb-parts">
+      const partBtns = `
           <button class="bz-kb-part is-on" data-kb-act="part" data-part="z1">部壹 · 文献</button>
           <button class="bz-kb-part" data-kb-act="part" data-part="z2">部贰 · 卡片</button>
-          <button class="bz-kb-part" data-kb-act="part" data-part="z3">部叁 · 主题</button>
+          <button class="bz-kb-part" data-kb-act="part" data-part="z3">部叁 · 主题</button>`;
+      popup.innerHTML = isMobileEnv() ? `
+      <div class="bz-kb-head">
+        <div class="bz-kb-brand">
+          <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
+          <div class="bz-kb-title">知 识 盒</div>
+        </div>
+        <button class="bz-kb-mclose" data-kb-act="kb-close" title="关闭知识盒">✕</button>
+      </div>
+      <div class="bz-kb-parts">${partBtns}
+      </div>
+      <div class="bz-kb-sc" id="kb-sc"></div>` : `
+      <div class="bz-kb-head">
+        <div class="bz-kb-parts">${partBtns}
         </div>
         <div class="bz-kb-brand">
           <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
           <div class="bz-kb-title">知 识 盒</div>
-          <div class="bz-kb-phon">[ zhī shí hé ] · 检索归第二大脑 · 知识盒只整理关联</div>
         </div>
-        ${isMobileEnv() ? '<button class="bz-kb-mclose" data-kb-act="kb-close" title="关闭知识盒">✕</button>' : ""}
       </div>
       <div class="bz-kb-sc" id="kb-sc"></div>`;
       document.body.appendChild(mask);
@@ -7151,7 +7164,6 @@ ${sample}`,
       const act = t.getAttribute("data-kb-act");
       if (act === "part") {
         this.part = t.getAttribute("data-part") || "z1";
-        this.noteView = null;
         void this.refreshCurrent();
         this.syncPartButtons();
       } else if (act === "term-entry") this.showTermEntry();
@@ -7159,14 +7171,15 @@ ${sample}`,
       else if (act === "lit-peek") {
         const p = t.getAttribute("data-path") || "";
         const n = this.allNotes.find((x) => x.path === p);
-        if (n) void this.openLitPreview(n);
+        if (n) void this.openPreview(n);
+      } else if (act === "card-peek") {
+        const p = t.getAttribute("data-path") || "";
+        const c = this.allCards.find((x) => x.path === p);
+        if (c) void this.openPreview(c, "card");
       } else if (act === "topic-open") {
         const p = t.getAttribute("data-path") || "";
-        const n = this.allTopics.find((x) => x.path === p);
-        if (n) void this.openTopicNote(n);
-      } else if (act === "topics-back") {
-        this.noteView = null;
-        this.renderTopics();
+        const tp = this.allTopics.find((x) => x.path === p);
+        if (tp) void this.openPreview({ file: tp.file, path: tp.path, title: tp.title, domain: tp.where }, "topic");
       } else if (act === "kb-close") this.hideMain();
     }
     syncPartButtons() {
@@ -7260,7 +7273,6 @@ ${sample}`,
     }
     renderLiterature() {
       if (!this.contentEl) return;
-      this.noteView = null;
       const rows = this.allNotes.map((n, i) => {
         const no = String(i + 1).padStart(2, "0");
         const kind = n.type === "video" ? "影 像" : "词 条";
@@ -7271,17 +7283,15 @@ ${sample}`,
       }).join("");
       this.contentEl.innerHTML = `
       <div class="bz-kb-pd">
-        <div class="bz-kb-sec">录 入 · 素 材 层 进 货 口（两 种 来 源，全 交 给 AI）</div>
         <div class="bz-kb-entryrow">
-          <button class="bz-kb-entrybtn" data-kb-act="term-entry"><b>文字录入 · 术语</b><span>想到一个概念，AI 当场生成术语卡预览，确认后写入文献盒</span></button>
-          <button class="bz-kb-entrybtn" data-kb-act="video-entry"><b>视频录入 · 任务</b><span>B 站链接丢进来：下载、转写、AI 生成文献笔记，全自动</span></button>
+          <button class="bz-kb-entrybtn" data-kb-act="term-entry"><b>文字录入 · 术语</b><span>想到一个概念，当场落成一张术语卡</span></button>
+          <button class="bz-kb-entrybtn" data-kb-act="video-entry"><b>视频录入 · 任务</b><span>丢进来一个 B 站链接，文献笔记自动长出来</span></button>
         </div>
-        <div class="bz-kb-sec" style="margin-top:20px">文 献 · 等 被 主 题 笔 记 引 用 、 被 提 炼</div>
         ${rows || '<div class="bz-kb-empty">「文献目录」还没有文献笔记——从上面的两种录入开始。</div>'}
       </div>`;
     }
-    /** 部壹文献预览弹层：正文真 Markdown 渲染（视频 ![[mp4]] 内嵌可播）+ related 关联 + 可点来源（只读；关闭走 ✕/ESC） */
-    async openLitPreview(n) {
+    /** 三部共用预览弹层（文献/卡片/主题同一样式）：正文真 Markdown 渲染（视频 ![[mp4]] 内嵌可播）+ 关联 + 可点来源（只读；关闭走 ✕/ESC） */
+    async openPreview(n, kind = "lit") {
       var _a;
       const app = getApp();
       let raw = "";
@@ -7294,13 +7304,14 @@ ${sample}`,
       const parasHtml = body.split(/\r?\n\r?\n+/).map((b) => b.trim()).filter(Boolean).map((b) => `<p>${esc(b)}</p>`).join("") || "<p>（无正文）</p>";
       const rels = await this.noteRels(n);
       const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.url)}" href="#">${esc(n.url)}</a></div>` : n.source && !n.source.startsWith("[[") ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.source)}" href="#">${esc(n.sourceTitle || n.source)}</a></div>` : "";
-      this.openSheet(this.sheetWrap(`文献预览 · ${n.type === "video" ? "影像" : "词条"}`, `
+      const head = kind === "card" ? { title: "卡片预览 · 卡片盒", badge: "卡 片", hot: false } : kind === "topic" ? { title: "主题预览 · 主题笔记", badge: "主 题", hot: false } : { title: `文献预览 · ${n.type === "video" ? "影像" : "词条"}`, badge: n.type === "video" ? "影 像" : "词 条", hot: n.type === "video" };
+      this.openSheet(this.sheetWrap(head.title, `
       <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc(n.title)}</span>
-        <span class="bz-kb-pos ${n.type === "video" ? "hot" : ""}">${n.type === "video" ? "影 像" : "词 条"}</span>
+        <span class="bz-kb-pos ${head.hot ? "hot" : ""}">${head.badge}</span>
         <span class="bz-kb-dom">${esc(n.domain || "未分类")}</span></div>
       <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || "")}</span></div>
       <div class="bz-kb-paras" id="bz-kb-preview-body">${parasHtml}</div>
-      ${rels.length ? `<div class="bz-kb-sec">关 联（related，Obsidian 双链）</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc(r)}</span>`).join("")}</div>` : ""}
+      ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc(r)}</span>`).join("")}</div>` : ""}
       ${srcHtml}`));
       this._previewNote = n;
       const bodyEl = this.popup ? q(this.popup, "#bz-kb-preview-body") : null;
@@ -7326,7 +7337,6 @@ ${sample}`,
     }
     /** 提炼成卡编辑弹层（原型唯一真理：词头可改 / 源文献+领域自动带，落 related 双链互链 / 连一张旧卡 / 为什么相关） */
     async openCardEditor(n) {
-      var _a, _b, _c;
       await this.ensureCards();
       const dom = n.domain || "未分类";
       const sameDom = this.allCards.filter((c) => c.domain === dom).map((c) => c.title);
@@ -7355,26 +7365,6 @@ ${sample}`,
       </div>
       <div class="bz-kb-note" style="font-size:11px;margin-top:14px">落卡后它躺在卡片盒，随时被任何笔记引用——不强迫挂进哪篇，也不强迫复习。</div>`));
       this.editor = { source: n, pick: null, why: whySug, title: n.title };
-      const titleInput = (_a = this.popup) == null ? void 0 : _a.querySelector("[data-kb-role=cardtitle]");
-      if (titleInput) titleInput.addEventListener("input", () => {
-        if (this.editor) this.editor.title = titleInput.value;
-        this.syncSaveBtn();
-      });
-      const whyInput = (_b = this.popup) == null ? void 0 : _b.querySelector("[data-kb-role=why]");
-      if (whyInput) whyInput.addEventListener("input", () => {
-        if (this.editor) this.editor.why = whyInput.value;
-        this.syncSaveBtn();
-      });
-      (_c = this.popup) == null ? void 0 : _c.querySelectorAll("[data-kb-old]").forEach((b) => {
-        b.addEventListener("click", () => {
-          var _a2;
-          if (!this.editor) return;
-          this.editor.pick = b.getAttribute("data-kb-old");
-          (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll("[data-kb-old]").forEach((x) => x.classList.toggle("is-on", x === b));
-          this.syncSaveBtn();
-        });
-      });
-      this.syncSaveBtn();
     }
     syncSaveBtn() {
       var _a;
@@ -7391,7 +7381,7 @@ ${sample}`,
       const src = this.editor.source;
       const why = this.editor.why.trim();
       let base = this.editor.title.trim() || src.title;
-      const stamp = this.cardDateStamp();
+      const stamp = dateStamp();
       try {
         let idx = 2;
         while (app.vault.getAbstractFileByPath(`${dir}/${base}.md`)) {
@@ -7424,11 +7414,6 @@ ${sample}`,
       } catch (e) {
         notice("落卡失败：" + ((_a = e == null ? void 0 : e.message) != null ? _a : String(e)), "error");
       }
-    }
-    cardDateStamp() {
-      const d = /* @__PURE__ */ new Date();
-      const p = (n) => String(n).padStart(2, "0");
-      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
     }
     /** 部贰卡片扫描（存量零迁移：领域读序 domain → category → 未分类） */
     async loadCards(dir) {
@@ -7464,16 +7449,14 @@ ${sample}`,
     }
     renderCards() {
       if (!this.contentEl) return;
-      this.noteView = null;
       this.cardsShown = Math.max(this.cardsShown, 80);
       const shown = this.allCards.slice(0, this.cardsShown);
-      const rows = shown.map((c) => `<div class="bz-kb-lexrow" style="cursor:default">
+      const rows = shown.map((c) => `<div class="bz-kb-lexrow" data-kb-act="card-peek" data-path="${esc(c.path)}">
       <div class="bz-kb-hw"><span class="bz-kb-w">${esc(c.title)}</span>${this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ""}<span class="bz-kb-dom">${esc(c.domain)}</span></div>
       <div class="bz-kb-tail"><span>${c.review ? "复习中 · 到期由闹钟安排" : "未入复习"}</span><span style="margin-left:auto">连 1 张旧卡</span></div>
     </div>`).join("");
       const rest = this.allCards.length - shown.length;
       this.contentEl.innerHTML = `<div class="bz-kb-pd">
-      <div class="bz-kb-sec">卡 片 · 提 炼 层（只 许 你 写 · ${this.allCards.length} 张）</div>
       ${rows || '<div class="bz-kb-empty">卡片目录还没有卡片——在部壹文献预览里「提炼成卡」。</div>'}
       ${rest > 0 ? `<div class="bz-kb-empty" data-kb-act="cards-more">↓ 还有 ${rest} 张，滚动或点此加载</div>` : ""}
     </div>`;
@@ -7509,57 +7492,22 @@ ${sample}`,
     }
     renderTopics() {
       if (!this.contentEl) return;
-      this.noteView = null;
       const rows = this.allTopics.map((t) => {
         const rel = formatRelativeTime(String(t.created || ""));
         return `<div class="bz-kb-lexrow" data-kb-act="topic-open" data-path="${esc(t.path)}">
       <div class="bz-kb-hw"><span class="bz-kb-w">${esc(t.title)}</span><span class="bz-kb-dom">${esc(t.where)}</span></div>
-      <div class="bz-kb-tail"><span class="bz-kb-meta">${rel === "无效日期" ? "" : esc(rel)}</span><span style="margin-left:auto">一篇普通笔记 →</span></div>
+      <div class="bz-kb-tail"><span class="bz-kb-meta">${rel === "无效日期" ? "" : esc(rel)}</span></div>
     </div>`;
       }).join("");
       this.contentEl.innerHTML = `<div class="bz-kb-pd">
-      <div class="bz-kb-sec">主 题 笔 记 · 展 示（真 实 存 量）</div>
       ${rows || '<div class="bz-kb-empty">主题目录还没有笔记。</div>'}
-      <div class="bz-kb-note" style="font-size:11px;margin-top:14px">主题笔记就是普通笔记，你自己写自己组织；写作与检索发生在 Obsidian + 第二大脑（灵感参考 / AI 对话）。主题与其他盒的关联机制方向探索中——当前版本仅做展示。</div>
     </div>`;
-    }
-    /** 主题笔记只读渲染（MarkdownRenderer；mock/失败回退纯文本） */
-    async openTopicNote(t) {
-      var _a;
-      const app = getApp();
-      let md = "";
-      try {
-        md = await app.vault.read(t.file);
-      } catch (e) {
-        md = "";
-      }
-      this.noteView = { path: t.path, title: t.title };
-      if (!this.contentEl) return;
-      this.contentEl.innerHTML = `<div class="bz-kb-pd">
-      <button class="bz-kb-back" data-kb-act="topics-back">← 部叁 · 主题笔记</button>
-      <div class="bz-kb-ntitle">${esc(t.title)}</div>
-      <div class="bz-kb-nmeta"><span class="bz-kb-dom">${esc(t.where)}</span><span class="bz-kb-meta">${esc(formatRelativeTime(String(t.created || "")) === "无效日期" ? "" : formatRelativeTime(String(t.created || "")))}</span></div>
-      <div class="bz-kb-noteview" id="kb-noteview"></div>
-    </div>`;
-      const el = q(this.contentEl, "#kb-noteview");
-      if (!el) return;
-      try {
-        const MR = MarkdownRenderer;
-        if (MR && typeof MR.render === "function") {
-          await MR.render(md, this.app, el, t.path);
-          if (!((_a = el.textContent) == null ? void 0 : _a.trim()) || el.textContent.includes("[object Object]")) el.textContent = md;
-        } else {
-          el.textContent = md;
-        }
-      } catch (e) {
-        el.textContent = md;
-      }
     }
     async ensureCards() {
       const dir = cardboxDirOf(tryGetSettings());
       if (!this.loadedCardDir || this.loadedCardDir !== dir || this.allCards.length === 0) await this.loadCards(dir);
     }
-    /** 读文献笔记 frontmatter related 展示名列表（预览「关联」区；行扫描实现） */
+    /** 读笔记 frontmatter related 展示名列表（预览「关联」区；行扫描实现） */
     async noteRels(n) {
       var _a;
       try {
@@ -7639,7 +7587,6 @@ ${sample}`,
       var _a;
       (_a = this.popup) == null ? void 0 : _a.querySelectorAll(".bz-kb-ovl").forEach((x) => x.remove());
       this.editor = null;
-      this._previewNote = null;
     }
     sheetWrap(title, body) {
       return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc(title)}</span><button class="bz-kb-sheet-close" data-kb-close title="关闭">✕</button></div><div class="bz-kb-sheet-body">${body}</div>`;
@@ -7677,9 +7624,9 @@ ${sample}`,
       this.allTopics = this.allTopics.filter((t) => t.path !== path);
     }
     invalidateCached(_path) {
-      this.loadedLitDir = this.loadedLitDir ? "" : this.loadedLitDir;
-      this.loadedCardDir = this.loadedCardDir ? "" : this.loadedCardDir;
-      this.loadedTopicDir = this.loadedTopicDir ? "" : this.loadedTopicDir;
+      this.loadedLitDir = "";
+      this.loadedCardDir = "";
+      this.loadedTopicDir = "";
     }
     attachFileListener() {
       if (this.fileListenerAttached) return;
@@ -8298,11 +8245,6 @@ ${sample}`,
       return card;
     }
     // ==================== 术语生成面板（文字录入；142 简洁版 + 155 总结） ====================
-    termDateStamp() {
-      const d = /* @__PURE__ */ new Date();
-      const p = (n) => String(n).padStart(2, "0");
-      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-    }
     createTermUI() {
       var _a;
       const mask = document.createElement("div");
@@ -8595,7 +8537,7 @@ ${sample}`,
       const domainEl = q(this.termPopup, "#lit-term-meta-domain");
       if (domainEl) domainEl.textContent = draft.domain || "—";
       const dateEl = q(this.termPopup, "#lit-term-meta-date");
-      if (dateEl) dateEl.textContent = this.termDateStamp();
+      if (dateEl) dateEl.textContent = dateStamp();
       const contentEl = q(this.termPopup, "#lit-term-content");
       if (contentEl) contentEl.textContent = draft.summary;
       this.setTermPreviewVisible(true);

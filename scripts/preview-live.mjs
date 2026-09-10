@@ -20,21 +20,28 @@ const srcRoot = path.join(ROOT, 'src');
 const protoRoot = path.join(ROOT, 'prototypes');
 
 let reloadTimer = 0;
+const pendingEvents = new Map(); // rel → domain（防抖窗口内累积，防「.ts 与 css/html 同拍只认后者」漏重出）
 function scheduleReload(changedRel, domain) {
+  pendingEvents.set(changedRel, domain);
   clearTimeout(reloadTimer);
   // 防抖：编辑器常连发多个事件
   reloadTimer = setTimeout(async () => {
-    // .ts 是打包链源码（入口 render.ts/fake-sim.ts 及其任意依赖）：两包都可能吃进，按域全部重出最稳；
+    // .ts 是打包链源码（入口 render.ts/fake-sim.ts 及其任意依赖）：两包都可能吃进；窗口内出现的 .ts 全部按域重出；
     // css/html/产物 .js 由服务器直出，广播刷新即可。
-    if (changedRel.endsWith('.ts')) {
+    const tsDomains = new Set();
+    for (const [rel, dom] of pendingEvents) if (rel.endsWith('.ts')) tsDomains.add(dom);
+    pendingEvents.clear();
+    if (tsDomains.size) {
       try {
-        // 渲染产物仅渲染清单域重出（entry 在 src/<域>/render.ts）；行为域（如已摘渲染名单的 favorites）只重出行为包
-        if (PREVIEW_DOMAINS.includes(domain)) await buildPreview([domain]);
-        if (BEHAVIOR_DOMAINS.includes(domain)) await buildBehavior(domain);
+        for (const dom of tsDomains) {
+          // 渲染产物仅渲染清单域重出（entry 在 src/<域>/render.ts）；行为域（如已摘渲染名单的 favorites）只重出行为包
+          if (PREVIEW_DOMAINS.includes(dom)) await buildPreview([dom]);
+          if (BEHAVIOR_DOMAINS.includes(dom)) await buildBehavior(dom);
+        }
       } catch (e) { console.error('[preview-live] 产物重出失败：', e.message); return; }
     }
     for (const res of clients) res.write('data: reload\n\n');
-    console.log(`[preview-live] ${changedRel} 变化 → 已推送刷新`);
+    console.log(`[preview-live] ${tsDomains.size ? [...tsDomains].join('/') + ' 产物重出，' : ''}已推送刷新`);
   }, 120);
 }
 

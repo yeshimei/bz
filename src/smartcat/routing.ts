@@ -69,9 +69,11 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
   'news:skipped':    { stream: 'behavior' },
 
   // === 收藏本 ===
-  'favorites:added':   { stream: 'behavior' },
-  'favorites:edited':  { stream: 'behavior' },
-  'favorites:deleted': { stream: 'behavior' },
+  'favorites:added':     { stream: 'behavior' },
+  'favorites:edited':    { stream: 'behavior' },
+  'favorites:deleted':   { stream: 'behavior' },
+  'favorites:archived':  { stream: 'behavior' },
+  'favorites:unarchived': { stream: 'behavior' },
 
   // === 归物本 ===
   'belongings:added':   { stream: 'behavior' },

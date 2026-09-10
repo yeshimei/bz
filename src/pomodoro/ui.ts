@@ -8,7 +8,7 @@
  * 今日行总分钟数 + 近 7 天柱 title 扩分钟 + 今日 12 槽时段分布小方柱；
  * 循环位置 6px 方点行（替代「专注 2/4」文字）；lucide timer 图标替代 🍅；mask 遮罩走
  * --background-modifier-cover token；面板聚焦 Space 切换开始/暂停；
- * startFocusForTask：待办「专注这个」联动（归属记入 state/history，弹窗/状态栏展示任务名）。
+ * startFocusForTask：备忘录「专注这个」联动（归属记入 state/history，弹窗/状态栏展示任务名）。
  */
 import type { App } from 'obsidian';
 import { setIcon } from 'obsidian';
@@ -276,7 +276,7 @@ function renderCycleDots(d: Durations): void {
   });
 }
 
-/** 当前专注任务行（待办「专注这个」联动）：有归属显示标题（超长省略 + title 全文），无归属收起 */
+/** 当前专注任务行（备忘录「专注这个」联动）：有归属显示标题（超长省略 + title 全文），无归属收起 */
 function renderTaskLine(): void {
   const taskEl = document.getElementById('pomodoro-task');
   if (!taskEl) return;
@@ -692,7 +692,7 @@ export function closePomodoro(): void {
 }
 
 /**
- * 待办「专注这个」联动入口：直接开始一个专注番茄并把归属记到该待办（最小实现：只传任务标题）。
+ * 备忘录「专注这个」联动入口：直接开始一个专注番茄并把归属记到该备忘录（最小实现：只传任务标题）。
  * - 休息中（计时/暂停）→ 先跳过休息（skip 不记历史）再开始专注；
  * - 已有专注计时中 → 不重启，提示后返回；
  * - forceFocus 手动暂停维持与开始按钮同一锁定口径（P1-4）；

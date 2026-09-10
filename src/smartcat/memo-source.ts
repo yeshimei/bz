@@ -77,12 +77,12 @@ export function memoAddedText(
   if (d) kv.push(`截止：${dueMMDD(d)}`);
   const np = notePath && notePath.trim();
   if (np) kv.push(`笔记：${noteTail(np)}`);
-  return `你添加了待办「${title}」（${kv.join('，')}）`;
+  return `你添加了备忘录「${title}」（${kv.join('，')}）`;
 }
 
 /** 编辑 α 合并观察文案（一次保存一条）：
- *  标题变 → 主句「你编辑了待办「新标题」」+（其余变更列表，'，' 分隔）；仅标题变 → 「你改题为「新标题」」；
- *  标题没变 → 主句「你更新了待办「X」」+ '：' + 变更列表（'、' 分隔）；
+ *  标题变 → 主句「你编辑了备忘录「新标题」」+（其余变更列表，'，' 分隔）；仅标题变 → 「你改题为「新标题」」；
+ *  标题没变 → 主句「你更新了备忘录「X」」+ '：' + 变更列表（'、' 分隔）；
  *  无变更 → null（不产出）。变更项顺序：课程→场景→脚本→定位→截止→优先级（对齐 ticket 示例）。 */
 export function memoEditedText(old: MemoEditSnapshot, next: MemoEditSnapshot): string | null {
   const changes: string[] = [];
@@ -131,35 +131,35 @@ export function memoEditedText(old: MemoEditSnapshot, next: MemoEditSnapshot): s
   const nTitle = next.title && next.title.trim();
   if (oTitle !== nTitle) {
     if (!changes.length) return `你改题为「${nTitle}」`;
-    return `你编辑了待办「${nTitle}」（${changes.join('，')}）`;
+    return `你编辑了备忘录「${nTitle}」（${changes.join('，')}）`;
   }
   if (!changes.length) return null;
-  return `你更新了待办「${oTitle}」：${changes.join('、')}`;
+  return `你更新了备忘录「${oTitle}」：${changes.join('、')}`;
 }
 
 /** 完成观察文案 */
 export function memoCompletedText(title: string): string {
-  return `你完成了待办「${title}」`;
+  return `你完成了备忘录「${title}」`;
 }
 
 /** 恢复未完成观察文案 */
 export function memoRestoredText(title: string): string {
-  return `你把待办「${title}」恢复为未完成`;
+  return `你把备忘录「${title}」恢复为未完成`;
 }
 
 /** 延后观察文案（due = 延后后的新截止） */
 export function memoPostponedText(title: string, due: string): string {
-  return `你把待办「${title}」延后到了 ${dueMMDD(due)}`;
+  return `你把备忘录「${title}」延后到了 ${dueMMDD(due)}`;
 }
 
 /** 切换优先级观察文案 */
 export function memoPriorityText(title: string, to: MemoPriority): string {
-  return `你把待办「${title}」转为${priorityLabel(to)}`;
+  return `你把备忘录「${title}」转为${priorityLabel(to)}`;
 }
 
 /** 删除观察文案 */
 export function memoDeletedText(title: string): string {
-  return `你删除了待办「${title}」`;
+  return `你删除了备忘录「${title}」`;
 }
 
 /** 每日到期扫描候选（memo.json 条目精简形状：扫描只需最少字段） */
@@ -186,7 +186,7 @@ export function memoDueObservation(items: MemoDueLike[] | null | undefined, now:
   const total = dueToday.length;
   if (!total) return null;
   const shown = dueToday.slice(0, 5).map((it) => `${it.title}（${dueHHMM(it.due!)}）`).join('、');
-  const head = `你有 ${total} 个待办今天到期：${shown}`;
+  const head = `你有 ${total} 个备忘录今天到期：${shown}`;
   return total > 5 ? `${head}…等 ${total} 个` : head;
 }
 

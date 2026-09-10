@@ -948,7 +948,8 @@ const BEHAVIOR_SOURCE_LABELS: Record<string, string> = {
   chat: '聊天', diary: '日记', flash: '闪念', clipping: '剪藏', movie: '影视', memo: '备忘录',
   reading: '书库', library: '书库', pomodoro: '番茄钟', news: '聚合讯', favorites: '收藏本', belongings: '归物本',
   letter: '信', poem: '现代诗', reflection: '反省', 'weekly-report': '周报', dossier: '相处史',
-  knowledge: '知识盒', 'bili-downloader': '知识盒', // 文献盒（ADR-0072 迁出；bili-downloader 为旧存量来源遗留）
+  knowledge: '知识盒', 'bili-downloader': '知识盒', literature: '知识盒', // 文献盒（ADR-0072 迁出；bili-downloader/literature 为旧存量来源遗留）
+  review: '复习计划', quiz: '题库', attach: '附件搬移',
   secondbrain: '第二大脑', system: '系统',
 };
 

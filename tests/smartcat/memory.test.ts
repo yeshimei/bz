@@ -189,7 +189,7 @@ describe('观察可信度 credibility（085，ADR-0036）', () => {
     expect(ruleCredibility('letter', '一封信')).toBe(0.9);
     expect(ruleCredibility('poem', '一首诗')).toBe(0.9);
     // 中高 0.75：明确 UI 意图
-    expect(ruleCredibility('memo', '你添加了待办「买菜」')).toBe(0.75);
+    expect(ruleCredibility('memo', '你添加了备忘录「买菜」')).toBe(0.75);
     expect(ruleCredibility('favorites', '你收藏了《TypeScript 指南》')).toBe(0.75);
     expect(ruleCredibility('belongings', '你登记了新物品《耳机》')).toBe(0.75);
     // 中 0.6：行为动作（影视/番茄钟/书库书架·开始读·时长·done）
@@ -220,7 +220,7 @@ describe('观察可信度 credibility（085，ADR-0036）', () => {
     expect(ruleCredibility('news', '你跳过了《X》（平台）')).toBe(0.3);
     expect(ruleCredibility('domain:library', '你把《X》移出了书库')).toBe(0.3);
     expect(ruleCredibility('favorites', '你删除了收藏《X》')).toBeCloseTo(0.6, 10);
-    expect(ruleCredibility('memo', '你删除了待办「X」')).toBeCloseTo(0.6, 10);
+    expect(ruleCredibility('memo', '你删除了备忘录「X」')).toBeCloseTo(0.6, 10);
     expect(ruleCredibility('belongings', '你删除了物品《X》')).toBeCloseTo(0.6, 10);
     expect(ruleCredibility('movie', '你删除了《X》的影视记录')).toBeCloseTo(0.45, 10);
     expect(ruleCredibility('diary', '你删除了 2026-08-24 12:00 的日记')).toBeCloseTo(0.75, 10);
@@ -548,7 +548,7 @@ describe('云端打分范围（ADR-0025 追加决策：智能默认）', () => {
     expect(m.shouldCloudScore('你看了《X》，影评：还行', 'movie', 'smart')).toBe(false);
     // 智能：聊天/域 JSON/未知源 → 本地
     expect(m.shouldCloudScore('用户说：今天好累', 'chat', 'smart')).toBe(false);
-    expect(m.shouldCloudScore('你完成了一项待办', 'domain:memo', 'smart')).toBe(false);
+    expect(m.shouldCloudScore('你完成了一项备忘录', 'domain:memo', 'smart')).toBe(false);
     expect(m.shouldCloudScore('未知来源的内容', undefined, 'smart')).toBe(false);
   });
 

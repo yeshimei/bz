@@ -107,7 +107,7 @@ export function badgeHtml(label: string): string {
 export function miniHtml(kind: string | undefined, prev: Record<string, unknown>): string {
   const st = (extra: string): string => ` style="${extra}"`;
   const bg = st(`background:${prev.bg}`);
-  if (kind === 'todo') {
+  if (kind === 'memo') {
     const headCls = 'm-head' + (prev.head === 'stripe' ? ' m-stripe' : '');
     const headBg = prev.head === 'stripe' ? prev.bg : prev.ink;
     const headBorder = prev.head === 'stripe' ? `border-bottom:2px solid ${prev.ink};` : '';

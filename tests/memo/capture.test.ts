@@ -1,9 +1,9 @@
 /**
- * 待办捕获流三件回归（memo→todo 接管迁移第 3 项提前实施）：
- * 1. 启动弹出改道：todo 提醒后台落点=待办面板（memo 旧弹窗不再出现）；
- * 2. 打开笔记提醒改道：todo 面板打开并按笔记路径定位关联待办；
+ * 备忘录捕获流三件回归（memo→memo 接管迁移第 3 项提前实施）：
+ * 1. 启动弹出改道：memo 提醒后台落点=备忘录面板（memo 旧弹窗不再出现）；
+ * 2. 打开笔记提醒改道：memo 面板打开并按笔记路径定位关联备忘录；
  * 3. composer/编辑器剪藏场景剪贴板预填（URL/非 URL 分流 + fetchPageTitle 抓标题）。
- * 另含设置 schema 文案核对（提醒组归待办）。
+ * 另含设置 schema 文案核对（提醒组归备忘录）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import moment from 'moment';
@@ -11,15 +11,15 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { resetObsidianMocks, requestUrl } from '../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { M, resetTodoState } from '../../src/todo/state';
-import { openTodoPanel, closeTodoPanel, addTodo, openEditor } from '../../src/todo/ui';
-import { ensureTodoReminders, unloadTodo } from '../../src/todo';
+import { M, resetMemoState } from '../../src/memo/state';
+import { openMemoPanel, closeMemoPanel, addMemo, openEditor } from '../../src/memo/ui';
+import { ensureMemoReminders, unloadMemo } from '../../src/memo';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
-import { TodoData } from '../../src/todo/data';
+import { MemoData } from '../../src/memo/data';
 
 const BASE_SETTINGS = {
   storagePath: 'CONFIG/STORAGE',
-  todoFilePath: 'CONFIG/STORAGE',
+  memoFilePath: 'CONFIG/STORAGE',
   memoScenarios: '',
   memoSortMode: 'priority',
   memoDefaultPriority: 'minor',
@@ -86,7 +86,7 @@ function seed(vaultItems: Record<string, unknown>[], settingsOverride: Record<st
   setApp(app);
   setSettingsProvider(() => settings as any);
   setSettingsSaver(vi.fn(async () => {}));
-  TodoData.init(settings as any);
+  MemoData.init(settings as any);
   return {
     vault,
     app,
@@ -105,7 +105,7 @@ function mockClipboard(text: string): void {
 
 beforeEach(() => {
   resetObsidianMocks();
-  resetTodoState();
+  resetMemoState();
   document.body.innerHTML = '';
   mockClipboard('');
   requestUrl.mockReset();
@@ -113,24 +113,24 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  unloadTodo();
+  unloadMemo();
   document.body.innerHTML = '';
 });
 
-describe('启动弹出改道（落点=待办面板）', () => {
-  it('autoPopupOnStart 开且有重要未完成待办 → 300ms 后自动打开待办面板', async () => {
+describe('启动弹出改道（落点=备忘录面板）', () => {
+  it('autoPopupOnStart 开且有重要未完成备忘录 → 300ms 后自动打开备忘录面板', async () => {
     const { app } = seed([item({ id: 'a', priority: 'important' })]);
-    ensureTodoReminders(app);
+    ensureMemoReminders(app);
     await vi.waitFor(() => {
       expect(document.querySelector('.bz-panel-overlay')).toBeTruthy();
     }, { timeout: 1500 });
-    // 落点核对：待办工作台标题
-    expect((document.querySelector('.bz-panel-title') as HTMLElement).textContent).toBe('待办');
+    // 落点核对：备忘录工作台标题
+    expect((document.querySelector('.bz-panel-title') as HTMLElement).textContent).toBe('备忘录');
   }, 5000);
 
   it('到期未完成同样触发（today 状态）', async () => {
     const { app } = seed([item({ id: 'a', due: at(0, '09:00') })]);
-    ensureTodoReminders(app);
+    ensureMemoReminders(app);
     await vi.waitFor(() => {
       expect(document.querySelector('.bz-panel-overlay')).toBeTruthy();
     }, { timeout: 1500 });
@@ -138,48 +138,48 @@ describe('启动弹出改道（落点=待办面板）', () => {
 
   it('autoPopupOnStart=false → 不弹', async () => {
     const { app } = seed([item({ id: 'a', priority: 'important' })], { autoPopupOnStart: false });
-    ensureTodoReminders(app);
+    ensureMemoReminders(app);
     await new Promise((r) => setTimeout(r, 450));
     expect(document.querySelector('.bz-panel-overlay')).toBeNull();
   });
 
   it('无重要/到期条目（minor 无截止）→ 不弹', async () => {
     const { app } = seed([item({ id: 'a' })]);
-    ensureTodoReminders(app);
+    ensureMemoReminders(app);
     await new Promise((r) => setTimeout(r, 450));
     expect(document.querySelector('.bz-panel-overlay')).toBeNull();
   });
 });
 
-describe('打开笔记提醒改道（落点=待办面板 + 定位）', () => {
-  it('笔记有关联重要待办 → 打开待办面板且搜索框定位到笔记路径，列表只显关联条目', async () => {
+describe('打开笔记提醒改道（落点=备忘录面板 + 定位）', () => {
+  it('笔记有关联重要备忘录 → 打开备忘录面板且搜索框定位到笔记路径，列表只显关联条目', async () => {
     const { app } = seed([
-      item({ id: 'a', title: 'A 笔记的关联待办', priority: 'important', notePath: '笔记/A.md' }),
-      item({ id: 'b', title: '无关待办' }),
+      item({ id: 'a', title: 'A 笔记的关联备忘录', priority: 'important', notePath: '笔记/A.md' }),
+      item({ id: 'b', title: '无关备忘录' }),
     ]);
-    ensureTodoReminders(app);
+    ensureMemoReminders(app);
     await new Promise((r) => setTimeout(r, 400)); // 等启动弹出判定走完（无全局重要条目？a 是 important → 会先自动弹）
     // a 是全局重要条目：启动弹出先开面板，关闭后走 file-open 场景验证定位
-    closeTodoPanel();
+    closeMemoPanel();
     document.body.innerHTML = '';
-    resetTodoState();
-    ensureTodoReminders(app); // 幂等重挂（file-open 监听仍在）
+    resetMemoState();
+    ensureMemoReminders(app); // 幂等重挂（file-open 监听仍在）
     (app as any).workspace.emit('file-open', { path: '笔记/A.md' });
     await vi.waitFor(() => {
       expect(document.querySelector('.bz-panel-overlay')).toBeTruthy();
     });
-    const search = document.querySelector('[data-todo-search]') as HTMLInputElement;
+    const search = document.querySelector('[data-memo-search]') as HTMLInputElement;
     expect(search.value).toBe('笔记/A.md');
     await vi.waitFor(() => {
-      const cards = [...document.querySelectorAll('.bz-todo-card')];
+      const cards = [...document.querySelectorAll('.bz-memo-card')];
       expect(cards.length).toBe(1);
-      expect(cards[0].textContent).toContain('A 笔记的关联待办');
+      expect(cards[0].textContent).toContain('A 笔记的关联备忘录');
     });
   }, 5000);
 
-  it('无关联待办的笔记 → 不自动打开', async () => {
+  it('无关联备忘录的笔记 → 不自动打开', async () => {
     const { app, emitFileOpen } = seed([item({ id: 'a', title: '别家的事' })], { autoPopupOnStart: false });
-    ensureTodoReminders(app);
+    ensureMemoReminders(app);
     emitFileOpen('笔记/B.md');
     await new Promise((r) => setTimeout(r, 100));
     expect(document.querySelector('.bz-panel-overlay')).toBeNull();
@@ -190,7 +190,7 @@ describe('打开笔记提醒改道（落点=待办面板 + 定位）', () => {
       [item({ id: 'a', priority: 'important', notePath: '笔记/A.md' })],
       { autoPopupOnStart: false, openNoteReminder: false }
     );
-    ensureTodoReminders(app);
+    ensureMemoReminders(app);
     emitFileOpen('笔记/A.md');
     await new Promise((r) => setTimeout(r, 100));
     expect(document.querySelector('.bz-panel-overlay')).toBeNull();
@@ -201,12 +201,12 @@ describe('打开笔记提醒改道（落点=待办面板 + 定位）', () => {
       [item({ id: 'a', priority: 'important', notePath: '笔记/A.md' })],
       { autoPopupOnStart: false }
     );
-    ensureTodoReminders(app);
+    ensureMemoReminders(app);
     emitFileOpen('笔记/A.md');
     await vi.waitFor(() => {
       expect(document.querySelector('.bz-panel-overlay')).toBeTruthy();
     });
-    closeTodoPanel();
+    closeMemoPanel();
     emitFileOpen('笔记/A.md');
     await new Promise((r) => setTimeout(r, 100));
     expect(document.querySelector('.bz-panel-overlay')).toBeNull(); // 已提醒笔记跳过
@@ -217,14 +217,14 @@ describe('打开笔记提醒改道（落点=待办面板 + 定位）', () => {
       [item({ id: 'a', priority: 'important', notePath: '笔记/A.md' })],
       { autoPopupOnStart: false }
     );
-    ensureTodoReminders(app);
-    openTodoPanel(app);
+    ensureMemoReminders(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-card')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-card')).toBeTruthy();
     });
     emitFileOpen('笔记/A.md');
     await vi.waitFor(() => {
-      expect((document.querySelector('[data-todo-search]') as HTMLInputElement).value).toBe('笔记/A.md');
+      expect((document.querySelector('[data-memo-search]') as HTMLInputElement).value).toBe('笔记/A.md');
     });
     expect(document.querySelector('.bz-panel-overlay')).toBeTruthy(); // 面板未被关闭重开
   });
@@ -234,21 +234,21 @@ describe('打开笔记提醒改道（落点=待办面板 + 定位）', () => {
 describe('composer 剪藏场景剪贴板预填', () => {
   async function openWithScene(scene: string): Promise<{ input: HTMLInputElement }> {
     const { app } = seed([], { memoDefaultScene: scene });
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-composer-input]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-composer-input]')).toBeTruthy();
     });
-    return { input: document.querySelector('[data-todo-composer-input]') as HTMLInputElement };
+    return { input: document.querySelector('[data-memo-composer-input]') as HTMLInputElement };
   }
 
   it('「剪藏」场景聚焦：URL 剪贴板自动预填并轻提示；保存后标题用链接文本、url 落盘', async () => {
     const { app, vault } = seed([], { memoDefaultScene: '剪藏' });
     mockClipboard('https://example.com/a 页面说明');
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-composer-input]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-composer-input]')).toBeTruthy();
     });
-    const input = document.querySelector('[data-todo-composer-input]') as HTMLInputElement;
+    const input = document.querySelector('[data-memo-composer-input]') as HTMLInputElement;
     input.focus();
     await vi.waitFor(() => {
       expect(input.value).toBe('https://example.com/a');
@@ -274,11 +274,11 @@ describe('composer 剪藏场景剪贴板预填', () => {
     requestUrl.mockResolvedValue({ status: 200, text: '<html><title>示例页面标题</title></html>' });
     const { app, vault } = seed([], { memoDefaultScene: '剪藏' });
     mockClipboard('https://example.com/bare');
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-composer-input]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-composer-input]')).toBeTruthy();
     });
-    const input = document.querySelector('[data-todo-composer-input]') as HTMLInputElement;
+    const input = document.querySelector('[data-memo-composer-input]') as HTMLInputElement;
     input.focus();
     await vi.waitFor(() => {
       expect(input.value).toBe('https://example.com/bare');
@@ -296,11 +296,11 @@ describe('composer 剪藏场景剪贴板预填', () => {
   it('非 URL 剪贴板：不打扰（不填、不提示）', async () => {
     const { app } = seed([], { memoDefaultScene: '剪藏' });
     mockClipboard('随手记一笔，不是链接');
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-composer-input]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-composer-input]')).toBeTruthy();
     });
-    const input = document.querySelector('[data-todo-composer-input]') as HTMLInputElement;
+    const input = document.querySelector('[data-memo-composer-input]') as HTMLInputElement;
     input.focus();
     await new Promise((r) => setTimeout(r, 80));
     expect(input.value).toBe('');
@@ -314,11 +314,11 @@ describe('composer 剪藏场景剪贴板预填', () => {
     Object.defineProperty(navigator, 'clipboard', {
       value: { readText, configurable: true },
     });
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-composer-input]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-composer-input]')).toBeTruthy();
     });
-    const input = document.querySelector('[data-todo-composer-input]') as HTMLInputElement;
+    const input = document.querySelector('[data-memo-composer-input]') as HTMLInputElement;
     input.focus();
     // 聚焦确实触发了读取链路（防止 focus 未绑定导致的假绿）
     await vi.waitFor(() => {
@@ -333,11 +333,11 @@ describe('composer 剪藏场景剪贴板预填', () => {
   it('非剪藏场景聚焦：不读剪贴板不预填', async () => {
     const { app } = seed([], { memoDefaultScene: '工作' });
     mockClipboard('https://example.com/work');
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-composer-input]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-composer-input]')).toBeTruthy();
     });
-    const input = document.querySelector('[data-todo-composer-input]') as HTMLInputElement;
+    const input = document.querySelector('[data-memo-composer-input]') as HTMLInputElement;
     input.focus();
     await new Promise((r) => setTimeout(r, 80));
     expect(input.value).toBe('');
@@ -347,11 +347,11 @@ describe('composer 剪藏场景剪贴板预填', () => {
   it('已有输入时不覆盖用户内容', async () => {
     const { app } = seed([], { memoDefaultScene: '剪藏' });
     mockClipboard('https://example.com/keep');
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-composer-input]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-composer-input]')).toBeTruthy();
     });
-    const input = document.querySelector('[data-todo-composer-input]') as HTMLInputElement;
+    const input = document.querySelector('[data-memo-composer-input]') as HTMLInputElement;
     input.value = '我自己打的';
     input.focus();
     await new Promise((r) => setTimeout(r, 80));
@@ -364,21 +364,21 @@ describe('编辑器剪藏场景剪贴板预填（占位符形态，memo 弹窗�
   it('新建默认场景剪藏：打开即预填内容占位符=URL、标题占位符=链接文本；内容空保存走占位符兜底', async () => {
     const { app, vault } = seed([], { memoDefaultScene: '剪藏' });
     mockClipboard('https://example.com/editor 页面说明');
-    addTodo(app);
+    addMemo(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-editor')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
     });
-    const editor = document.querySelector('.bz-todo-editor') as HTMLElement;
+    const editor = document.querySelector('.bz-memo-editor') as HTMLElement;
     await vi.waitFor(() => {
       expect((editor.querySelector('textarea') as HTMLTextAreaElement).placeholder).toBe('https://example.com/editor');
     });
-    const titleInput = editor.querySelectorAll('.bz-todo-extra')[0].querySelector('input') as HTMLInputElement;
+    const titleInput = editor.querySelectorAll('.bz-memo-extra')[0].querySelector('input') as HTMLInputElement;
     expect(titleInput.placeholder).toBe('页面说明');
     // 内容留空直接保存 → 占位符兜底落盘（memo 同款语义）
     const saveBtn = [...editor.querySelectorAll('.bz-btn')].find((b) => b.textContent?.includes('添加')) as HTMLElement;
     saveBtn.click();
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-editor')).toBeNull();
+      expect(document.querySelector('.bz-memo-editor')).toBeNull();
     });
     const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
     expect(raw[0].title).toBe('页面说明');
@@ -389,14 +389,14 @@ describe('编辑器剪藏场景剪贴板预填（占位符形态，memo 弹窗�
   it('非 URL 剪贴板：占位符不预填', async () => {
     const { app } = seed([], { memoDefaultScene: '剪藏' });
     mockClipboard('普通文字');
-    addTodo(app);
+    addMemo(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-editor')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
     });
     await new Promise((r) => setTimeout(r, 80));
-    const editor = document.querySelector('.bz-todo-editor') as HTMLElement;
-    expect((editor.querySelector('textarea') as HTMLTextAreaElement).placeholder).toBe('输入待办内容...');
-    expect((editor.querySelectorAll('.bz-todo-extra')[0].querySelector('input') as HTMLInputElement).placeholder).toBe('标题（可选）');
+    const editor = document.querySelector('.bz-memo-editor') as HTMLElement;
+    expect((editor.querySelector('textarea') as HTMLTextAreaElement).placeholder).toBe('输入备忘录内容...');
+    expect((editor.querySelectorAll('.bz-memo-extra')[0].querySelector('input') as HTMLInputElement).placeholder).toBe('标题（可选）');
     void app;
   });
 
@@ -406,30 +406,30 @@ describe('编辑器剪藏场景剪贴板预填（占位符形态，memo 弹窗�
       { memoDefaultScene: '剪藏' }
     );
     mockClipboard('https://example.com/new 描述');
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
       expect(M.items.length).toBe(1);
     });
     openEditor(M.items[0]);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-editor')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
     });
     await new Promise((r) => setTimeout(r, 80));
-    const editor = document.querySelector('.bz-todo-editor') as HTMLElement;
+    const editor = document.querySelector('.bz-memo-editor') as HTMLElement;
     const content = editor.querySelector('textarea') as HTMLTextAreaElement;
     expect(content.value).toBe('既有剪藏'); // 回填内容不被剪贴板预填覆盖
-    expect(content.placeholder).toBe('输入待办内容...'); // 编辑模式不触发剪藏预填
+    expect(content.placeholder).toBe('输入备忘录内容...'); // 编辑模式不触发剪藏预填
     void vault;
   });
 
   it('切场景到剪藏触发预填；切走再切回不重复打扰内容', async () => {
     const { app } = seed([], { memoDefaultScene: '工作' });
     mockClipboard('https://example.com/switch 描述');
-    addTodo(app);
+    addMemo(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-editor')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
     });
-    const editor = document.querySelector('.bz-todo-editor') as HTMLElement;
+    const editor = document.querySelector('.bz-memo-editor') as HTMLElement;
     const clipBtn = [...editor.querySelectorAll('.bz-choice-btn')].find((b) => b.textContent === '剪藏') as HTMLElement;
     clipBtn.click();
     await vi.waitFor(() => {
@@ -439,15 +439,15 @@ describe('编辑器剪藏场景剪贴板预填（占位符形态，memo 弹窗�
   });
 });
 
-describe('设置 schema 文案核对（提醒组归待办）', () => {
-  it('todo schema：提醒组名「提醒」、desc 为待办面板口径', async () => {
+describe('设置 schema 文案核对（提醒组归备忘录）', () => {
+  it('memo schema：提醒组名「提醒」、desc 为备忘录面板口径', async () => {
     seed([]);
-    const { todoSettingsSchema } = await import('../../src/todo/settings');
-    const schema = todoSettingsSchema();
+    const { memoSettingsSchema } = await import('../../src/memo/settings');
+    const schema = memoSettingsSchema();
     const bell = schema.groups.find((g) => g.name === '提醒');
     expect(bell).toBeTruthy();
     const descs = bell!.rows.map((r) => (r as any).desc).join('\n');
-    expect(descs).toContain('待办面板');
-    expect(descs).not.toContain('备忘录');
+    expect(descs).toContain('备忘录面板');
+    expect(descs).not.toContain('待办');
   });
 });
