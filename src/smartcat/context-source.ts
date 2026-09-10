@@ -11,6 +11,7 @@
  *  - poem 现代诗 / letter 信：完整内容（reflection 反省观察 ticket 083 彻底移除——不再产任何反省观察）
  *  - 域事件（memo/pomodoro/news/quiz/review/favorites/belongings）：CONFIG/STORAGE JSON 监听感知
  */
+import { stripMdExt } from '../core/utils';
 import type { App, TAbstractFile } from 'obsidian';
 import { DIARY_DIRECTORY } from '../diary/config';
 import { smartcatStorageDir } from './data';
@@ -119,7 +120,7 @@ export async function observationText(app: App, file: TAbstractFile, kind: Activ
       const highlights = [...top.matchAll(/<span class="__comment cm-highlight"[^>]*>(.*?)<\/span>/g)].map((x) => x[1]).slice(0, 3);
       const dialogues = [...top.matchAll(/==dialogue==\s*\n([\s\S]*?)(?=\n==|$)/g)].map((x) => x[1].trim()).filter(Boolean).slice(0, 2);
       const review = top.match(/bookReview\s*[:：]\s*(.+)$/m)?.[1]?.trim();
-      const name = String((file as any).basename || '').replace(/\.md$/, '');
+      const name = stripMdExt(String((file as any).basename || ''));
       const parts: string[] = [];
       if (highlights.length) parts.push('划线：' + highlights.join('；').slice(0, 200));
       if (dialogues.length) parts.push('想法：' + dialogues.join('；').slice(0, 200));

@@ -6,6 +6,7 @@
  * formatDueText 支持 relative（默认，现语义）/ absolute（MM/DD HH:mm 固定格式）两种模式。
  */
 import moment from 'moment';
+import { localDayKey } from '../core/utils';
 
 /** 当前时刻（'YYYY-MM-DD HH:mm'，getDueStatus 内部用） */
 function getNowStr(): string {
@@ -14,7 +15,7 @@ function getNowStr(): string {
 
 /** 今日日期（YYYY-MM-DD） */
 function getTodayStr(): string {
-  return moment().format('YYYY-MM-DD');
+  return localDayKey();
 }
 
 export type DueStatus = 'overdue' | 'today' | 'future' | null;

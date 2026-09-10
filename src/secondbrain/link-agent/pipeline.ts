@@ -19,6 +19,7 @@
  *   手动命令 bz-secondbrain-rebuild-links 传 respectRelated:false 豁免（显式意图强制重跑）；
  * - 死链清理：关联范围（linkAgentScopes）各笔记 related 中指向不存在文件的条目移除；encrypt 锁定文件一律跳过。
  */
+import { stripMdExt } from '../../core/utils';
 import type { App, TFile } from 'obsidian';
 import { notice, notify, NoticeHandle } from '../../core/notice';
 import { tryGetSettings } from '../../core/settings-provider';
@@ -649,7 +650,7 @@ export class LinkAgent {
       const full = target.endsWith('.md') ? target : `${target}.md`;
       if (this.app.vault.getAbstractFileByPath(full)) return true;
       if ((encryptedPaths?.has(full) || encryptedPaths?.has(target)) === true) return true;
-      const base = full.split('/').pop()?.replace(/\.md$/i, '') || '';
+      const base = stripMdExt(full.split('/').pop() || '');
       return (basenameCounts.get(base) || 0) > 0;
     };
 

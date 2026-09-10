@@ -1,3 +1,4 @@
+import { stripMdExt } from '../core/utils';
 /**
  * 术语来源（ADR-0116）：术语录入的可选「来源」——内部笔记（Obsidian 原生双链）或外部链接（URL）。
  * 语义边界：related 是「关联」（卡片↔源文献的双向互链 + Obsidian 原生反向链接），不是出处；
@@ -14,7 +15,7 @@ export function noteSourceName(path: string, name?: string | null): string {
   const explicit = String(name ?? '').trim();
   if (explicit) return explicit;
   const base = String(path ?? '').replace(/\\/g, '/').split('/').pop() || '';
-  return base.replace(/\.md$/i, '') || String(path ?? '');
+  return stripMdExt(base) || String(path ?? '');
 }
 
 /**

@@ -21,6 +21,7 @@
 import type { App, TFile } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 import { storageFile } from '../core/storage';
+import { localDayKey } from '../core/utils';
 import { parseLocalDay } from '../home/weekly';
 import { parseFile, isEncryptedEntry } from '../diary/parser';
 import { parseMovieFile } from '../cinema/data';
@@ -272,11 +273,9 @@ async function readJsonIfExists(app: App, filePath: string): Promise<unknown | u
   return JSON.parse(await app.vault.read(f));
 }
 
-/** 本地时区日期串 'YYYY-MM-DD'（日记文件名口径） */
+/** 本地时区日期串 'YYYY-MM-DD'（日记文件名口径；core localDayKey 转发壳） */
 export function localDayStr(anchor: number): string {
-  const d = new Date(anchor);
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  return localDayKey(anchor);
 }
 
 /** 采集当天五域痕迹（各源独立容错，失败该域记入 failed 不炸整面板；全程只读不建文件/目录） */

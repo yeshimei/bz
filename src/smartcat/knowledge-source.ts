@@ -5,6 +5,7 @@
  * ticket 136 用户拍板：只收「视频转文献成功（converted）+ 术语生成成功（term-generated）」两个节点；
  * 添加任务/解析/编辑/失败事件返回 null（不进小橘）。行为流 = 轻量记录、不向量化（ticket 123 知识内容口径）。
  */
+import { stripMdExt } from '../core/utils';
 import type { StructuredMeta } from './types';
 
 /** 文献盒动作事件（literature 域 emitDomainEvent('knowledge:tasks', evt) 载荷；ADR-0066/0072） */
@@ -22,7 +23,7 @@ function bvOf(url: string): string {
 function titleOf(notePath: string | null | undefined): string {
   if (!notePath) return '';
   const base = String(notePath).replace(/\\/g, '/').split('/').pop() || '';
-  return base.replace(/\.md$/i, '');
+  return stripMdExt(base);
 }
 
 /** 文献盒事件 → StructuredMeta（converted/term-generated 之外返回 null——ticket 136 用户拍板只收这两类） */

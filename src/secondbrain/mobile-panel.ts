@@ -13,6 +13,7 @@
  *   提示词与桌面同构但「【参考内容】」简写「【参考】」（L2135-2161）
  * - store.initMobile() 三级检索初始化（L1928-1929）
  */
+import { stripMdExt } from '../core/utils';
 import type { App } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { notice } from '../core/notice';
@@ -310,7 +311,7 @@ export class MobilePanel {
       topRow.className = 'bz-sb-mb-card-top';
       const pathDiv = document.createElement('div');
       pathDiv.className = 'bz-sb-mb-card-path';
-      pathDiv.textContent = item.path.replace(/^.*[\\/]/, '').replace(/\.md$/i, '');
+      pathDiv.textContent = stripMdExt(item.path.replace(/^.*[\\/]/, ''));
       const scoreDiv = document.createElement('div');
       scoreDiv.className = 'bz-sb-mb-card-score';
       scoreDiv.textContent = `${Math.round(item.score * 100)}%`;

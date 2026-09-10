@@ -13,6 +13,7 @@
  *   writeNewsDataMerged，对 daemon 双写者不丢段）与 clipbook.json 侧写。
  * - saveToClip 写剪藏笔记 + 发 news:read/saved 域事件（smartcat 行为流三跳依赖）。
  */
+import { cmpZh } from '../core/utils';
 import { readNewsData, writeNewsDataMerged } from './news-data';
 import type { ClipArticle, ClipState } from './types';
 import { articleKeyOf, briefKeyOf, excerpt, localDayKey } from './constants';
@@ -499,5 +500,5 @@ export function aggregateSites(
     bump(siteName(a), true);
   }
   return [...rows.values()].sort((x, y) =>
-    y.total - x.total || y.unread - x.unread || x.site.localeCompare(y.site, 'zh'));
+    y.total - x.total || y.unread - x.unread || cmpZh(x.site, y.site));
 }

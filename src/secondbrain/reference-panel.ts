@@ -13,6 +13,7 @@
  *   vault modify(.md)/active-leaf-change/editor-change 自动刷新 +
  *   光标轮询 CURSOR_POLL_INTERVAL、防抖 DEBOUNCE_DELAY
  */
+import { stripMdExt } from '../core/utils';
 import type { App, TFile } from 'obsidian';
 import { notice } from '../core/notice';
 import { allocZ } from '../core/z-order';
@@ -197,7 +198,7 @@ export class ReferencePanel {
     const card = document.createElement('div');
     card.className = 'bz-sb-ref-card';
     // markup 出 render.ts 纯层（issue 251）：名称行 + 匹配度 + 分数条 + 正文容器
-    card.innerHTML = refCardHtml(item.path.replace(/^.*[\\/]/, '').replace(/\.md$/i, ''), Math.round(item.score * 100), '#a33d2a');
+    card.innerHTML = refCardHtml(stripMdExt(item.path.replace(/^.*[\\/]/, '')), Math.round(item.score * 100), '#a33d2a');
     const topRow = card.querySelector('.bz-sb-ref-card-top') as HTMLElement;
     // 正文 markdown 预渲染（列表态收起，浮出态展开）
     const bodyDiv = card.querySelector('.bz-sb-ref-card-body') as HTMLElement;

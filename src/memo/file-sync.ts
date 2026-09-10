@@ -7,6 +7,7 @@
  * delete 走 'vault:md-deleted' 即时通道（obsidian-adapter 恒发、仅 md，
  * 载荷见 src/core/obsidian-adapter.ts）。
  */
+import { stripMdExt } from '../core/utils';
 import type { App } from 'obsidian';
 import { notify } from '../core/notice';
 import { tryGetSettings } from '../core/settings-provider';
@@ -172,7 +173,7 @@ function createFileSyncAgent(app: App): void {
   /** 总线载荷 → 现有闭包期望的伪 TFile 形状（{path, basename, extension:'md'}，rename 另附 oldPath） */
   const pseudoFile = (path: string): any => ({
     path,
-    basename: (path.split('/').pop() || '').replace(/\.md$/, ''),
+    basename: stripMdExt(path.split('/').pop() || ''),
     extension: 'md',
   });
 
@@ -185,7 +186,7 @@ function createFileSyncAgent(app: App): void {
   _refs.push(onDomainEvent<{ oldPath: string; newPath: string }>('vault:md-renamed', (evt) => {
     const file = pseudoFile(evt.newPath);
     if (!isMd(file)) return;
-    const oldTitle = (evt.oldPath ?? '').split('/').pop()!.replace(/\.md$/, '');
+    const oldTitle = stripMdExt((evt.oldPath ?? '').split('/').pop()!);
     flushRenames({
       oldPath: evt.oldPath,
       newPath: evt.newPath,

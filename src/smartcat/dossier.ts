@@ -16,6 +16,7 @@ import { isoWeekKey } from './rhythm';
 import { weekWindow } from './report';
 import { callChatJson, isAIConfigured } from './api';
 import { USER_CONTENT_BOUNDARY } from './memory';
+import { localDayKey } from '../core/utils';
 
 // ---------------- 事件表 ----------------
 
@@ -126,11 +127,9 @@ export interface DossierTimelineRow {
 
 const TYPE_ORDER: readonly DossierEventType[] = ['book', 'diary', 'letter', 'poem', 'movie'];
 
-/** 本地日键 YYYY-MM-DD（陪伴天数/情绪变化日共用口径） */
+/** 本地日键 YYYY-MM-DD（陪伴天数/情绪变化日共用口径；core localDayKey 转发壳） */
 function dayKeyOf(t: number): string {
-  const d = new Date(t);
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  return localDayKey(t);
 }
 
 /** 观察去重日计数（陪伴天数；低活跃兜底口径，只看观察、不依赖反思/digest 产出） */

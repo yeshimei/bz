@@ -2,6 +2,7 @@
  * 复习计划入口（ticket 16 修正版：对齐源码 entry，含 4 快捷命令与完整事件监听）
  * 命令（review-*）由 main.ts 裸注册（含 review-mark-again/hard/good/easy）。
  */
+import { stripMdExt } from '../core/utils';
 import type { App } from 'obsidian';
 import { notice, notifyUndo, notifySaveError } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
@@ -37,7 +38,7 @@ function listenBus<E>(channel: string, cb: (evt: E) => void): void {
 /** 总线载荷 → watcher 方法签名所需的伪 TFile（仅路径派生字段，满足签名即可） */
 function pseudoMdFile(path: string): any {
   const base = path.split('/').pop() || '';
-  return { path, basename: base.replace(/\.md$/, ''), extension: 'md' };
+  return { path, basename: stripMdExt(base), extension: 'md' };
 }
 
 /** 幂等初始化（对齐源码 entry：UI 构建 + 事件监听 + 2s 后首查 + 60s 周期） */

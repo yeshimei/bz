@@ -13,7 +13,7 @@
 import { type App } from 'obsidian';
 import { topifyZ, allocZ } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
-import { escapeHtml, formatRelativeTime } from '../core/utils';
+import { escapeHtml, formatRelativeTime, stripTitleMarks } from '../core/utils';
 import type { ReviewDataManager, ReviewItem } from './data';
 import { computeStats, loadDistribution, historyOf, dateKey, RATING_NAMES, RATING_COLORS } from './stats';
 import { FSRS, DEFAULT_W } from './fsrs';
@@ -238,7 +238,7 @@ function buildStatsHTML(app: App, dm: ReviewDataManager, items: ReviewItem[], st
     const lastTs = h[h.length - 1]?.timestamp;
     const cnt = h.length;
     return {
-      name: i.name.replace(/^《|》$/g, ''),
+      name: stripTitleMarks(i.name),
       sub: `${cnt} 次`,
       meta: lastTs ? formatRelativeTime(new Date(lastTs)) : '',
     };
@@ -318,7 +318,7 @@ export async function showTimeline(app: App, dm: ReviewDataManager, item: Review
     }
   }
   status.innerHTML = `
-    <div style="font-size:15px;font-weight:600;color:var(--text-normal);">${escapeHtml(item.name.replace(/^《|》$/g, ''))}</div>
+    <div style="font-size:15px;font-weight:600;color:var(--text-normal);">${escapeHtml(stripTitleMarks(item.name))}</div>
     <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${stageText} · 共 ${history.length} 次复习${curR || ''}</div>
   `;
   body.appendChild(status);

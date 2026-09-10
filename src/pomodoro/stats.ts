@@ -5,7 +5,7 @@
  * 增强包：今日总分钟数（今日行）+ 今日 12 槽时段分布（2 小时一格小方柱）+ 近 7 天每日分钟数（柱 title）。
  */
 import type { HistoryEntry } from './state';
-import { pad2 } from '../core/utils';
+import { localDayKey } from '../core/utils';
 
 export interface DayCount {
   /** YYYY-MM-DD（本地时区） */
@@ -22,10 +22,7 @@ export interface HourBucket {
 }
 
 function dayKey(ts: number): string {
-  const d = new Date(ts);
-  const m = pad2(d.getMonth() + 1);
-  const day = pad2(d.getDate());
-  return `${d.getFullYear()}-${m}-${day}`;
+  return localDayKey(ts);
 }
 
 /** 今日完成番茄数 */

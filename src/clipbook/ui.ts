@@ -28,7 +28,7 @@
 import { getApp } from '../core/app';
 import { notice, notifyUndo } from '../core/notice';
 import { uiEmpty, uiResizable, uiVSplitter, mountIcons } from '../core/ui';
-import { formatRelativeTime } from '../core/utils';
+import { cmpZh, formatRelativeTime, localDayKey } from '../core/utils';
 import { isMobileEnv } from '../core/mobile';
 import { escManager } from '../core/esc-manager';
 import { attachItemActions, closeItemMenu, type ItemAction } from '../core/item-actions';
@@ -611,9 +611,7 @@ function renderRail(): void {
   mountIcons(railListEl);
   // rail 脚注（issue 214）：今日已读 N 篇（news.json stats.byDate，键 YYYY-MM-DD；缺省 0）
   if (railFootEl) {
-    const d = new Date();
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    railFootEl.innerHTML = railFootHtml(M.stats?.byDate?.[key] || 0);
+    railFootEl.innerHTML = railFootHtml(M.stats?.byDate?.[localDayKey()] || 0);
   }
   // rail 源行动作（enh 包 4）：右键/长按出「全部标为已读」等源级批量操作——
   // rail 是导航层，动作挂在源行而非条目卡，中栏「列表零操作」拍板不被破坏
@@ -1259,7 +1257,7 @@ function renderMobToc(): void {
     [...unread, ...read, ...saved].forEach((a) => { byId.set(a.id, a); order.push(a); });
   }
   // 章序：总数降序 → 未读降序 → 名 zh 序（与桌面 rail 口径同向）
-  chapters.sort((x, y) => (y.activeN + y.readN + y.savedN) - (x.activeN + x.readN + x.savedN) || y.unread - x.unread || x.site.localeCompare(y.site, 'zh'));
+  chapters.sort((x, y) => (y.activeN + y.readN + y.savedN) - (x.activeN + x.readN + x.savedN) || y.unread - x.unread || cmpZh(x.site, y.site));
   mobItemById = byId;
   mobItemOrder = order;
   if (!chapters.length) {

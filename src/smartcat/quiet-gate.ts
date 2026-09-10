@@ -24,6 +24,7 @@
  */
 import type { SmartCatData } from './types';
 import { DAY_MS } from './data';
+import { localDayKey as localDayKeyCore } from '../core/utils';
 
 // ---------------- 可调常量（晨起可调；不进设置面板，涌现不可配置） ----------------
 
@@ -134,11 +135,10 @@ export function readGentleGreetingDay(editingData: any): string {
   return typeof day === 'string' ? day : '';
 }
 
-/** 本地日键 YYYY-MM-DD（每日 1 次按用户本地日历日计，不用 UTC ISO 日） */
-export function localDayKey(t: number): string {
-  const d = new Date(t);
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+/** 本地日键 YYYY-MM-DD（每日 1 次按用户本地日历日计，不用 UTC ISO 日；core localDayKey 转发壳） */
+export function localDayKey(t: number | Date): string {
+
+  return localDayKeyCore(t);
 }
 
 /** 今日温和问候是否可用（纯函数）：当日尚未发过 → true */

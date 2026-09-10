@@ -9,6 +9,7 @@
  * - 「剪藏本」源模型：读全部剪藏（含目录空态/未配置态判定）。
  */
 
+import { stripMdExt, stripTitleMarks } from '../core/utils';
 import { getApp } from '../core/app';
 
 /** 剪藏解析条目（与阅读视图 ClipArticle.origin=clip 侧对齐的轻量结构） */
@@ -51,7 +52,7 @@ export function parseClipFile(file: any, getCache?: (f: any) => any, getBacklink
   if (!fm) return null;
   if (!fm.url || !fm.created) return null;
 
-  const title = file.basename || String(file.name || '').replace(/\.md$/, '');
+  const title = file.basename || stripMdExt(String(file.name || ''));
   let created = new Date(fm.created).valueOf();
   if (isNaN(created)) created = Date.now();
 
@@ -61,7 +62,7 @@ export function parseClipFile(file: any, getCache?: (f: any) => any, getBacklink
     if (bl && bl.data && typeof bl.data.size === 'number' && bl.data.size > 0) {
       backlinkNames = Array.from(bl.data.keys())
         .map((p: any) => String(p || '').split('/').pop() || '')
-        .map((n: string) => n.replace(/^《|》$/g, '').replace(/\.md$/, ''));
+        .map((n: string) => stripTitleMarks(stripMdExt(n)));
     }
   } catch (e) { /* 反链解析失败忽略 */ }
 

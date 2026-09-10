@@ -8,6 +8,7 @@
  * 保留的既有机制：l3 先渲染骨架占位、s1 用户字段生成点转义（innerHTML 均静态模板/已转义内容）、
  * 渲染中途取消不写已摘除 DOM（容器卸载/视图切走/面板关闭经 cancelReadingReport 作废在途渲染）。
  */
+import { yieldToMainThread as yieldToMainThreadCore } from '../core/utils';
 import type { App } from 'obsidian';
 import { notify } from '../core/notice';
 import { mountIcons, uiEmpty, uiBtn, uiBtnRow } from '../core/ui';
@@ -59,13 +60,7 @@ const IDLE_CALLBACK_TIMEOUT_MS = 50;
  * requestIdleCallback 优先（带超时兜底），不可用时退化为 setTimeout(0)。
  */
 function yieldToMainThread(): Promise<void> {
-  return new Promise((resolve) => {
-    if (typeof window.requestIdleCallback === 'function') {
-      window.requestIdleCallback(() => resolve(), { timeout: IDLE_CALLBACK_TIMEOUT_MS });
-    } else {
-      window.setTimeout(resolve, 0);
-    }
-  });
+  return yieldToMainThreadCore(IDLE_CALLBACK_TIMEOUT_MS);
 }
 
 /** 作废在途渲染 + 收起在途 progress toast（视图切走/面板关闭/卸载共用；幂等） */

@@ -34,7 +34,7 @@ import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
 import { uiIcon, uiSearch } from '../core/ui';
 import { openItemMenu, closeItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
-import { escapeHtml } from '../core/utils';
+import { escapeHtml, hash31, localDayKey, stripMdExt } from '../core/utils';
 import { onDomainEvent } from '../core/domain-bus';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
@@ -1013,8 +1013,7 @@ export class DiaryAppController {
 
   /** 本地今天 YYYY-MM-DD（那年今天口径用） */
   private todayStr(): string {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return localDayKey();
   }
 
   /**
@@ -1293,9 +1292,7 @@ export class DiaryAppController {
 
   /** 媒体宽高比稳定散列：按条目日期+媒体名派生（DW7——全局递增 seed 双实例/重渲染下漂移） */
   private mediaAspect(entry: WallEntry, name: string): string {
-    let h = 0;
-    const s = `${entry.date}|${name}`;
-    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    const h = hash31(`${entry.date}|${name}`);
     return h % 3 === 0 ? '1 / 1' : '4 / 3';
   }
 
@@ -1804,7 +1801,7 @@ export class DiaryAppController {
           notice('找不到原文，无法复制双链', 'error');
           return;
         }
-        await navigator.clipboard.writeText(`[[${e.filename.replace(/\.md$/, '')}]]`);
+        await navigator.clipboard.writeText(`[[${stripMdExt(e.filename)}]]`);
         notice('已复制双链引用', 'success');
         return;
       }

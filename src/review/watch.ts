@@ -6,17 +6,16 @@
  *  - 监听文件夹添加：选择弹窗后立即确认存量收编（取消=什么都不做，不再写排除名单，ticket 099）
  * 依赖方向：store 层（confirm 为 core，无其它域 DOM）；经 index.ts 事件接线；refresh 函数体延迟解析。
  */
+import { isUnderFolder as isUnderFolderCore, stripMdExt } from '../core/utils';
 import type { App, TFile } from 'obsidian';
 import { notice } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { tryGetSettings, saveSettings } from '../core/settings-provider';
 import { ReviewDataManager } from './data';
 
-/** 目录边界判定：path 恰为 folder 或位于其下（递归语义） */
+/** 目录边界判定：path 恰为 folder 或位于其下（递归语义；core isUnderFolder 转发壳） */
 export function isUnderFolder(folder: string, path: string): boolean {
-  const f = (folder || '').trim().replace(/\/+$/, '');
-  if (!f) return false;
-  return path === f || path.startsWith(f + '/');
+  return isUnderFolderCore(folder, path);
 }
 
 /** ticket 100：自动加入提醒合并窗口（3 秒；测试可注入短值） */
@@ -215,7 +214,7 @@ export class ReviewWatcher {
     let ok = 0;
     for (const p of candidates) {
       try {
-        await this.dataManager.addItem(p, p.split('/').pop()!.replace(/\.md$/, ''));
+        await this.dataManager.addItem(p, stripMdExt(p.split('/').pop()!));
         ok++;
       } catch {
         /* 并发已加入 → 跳过 */
