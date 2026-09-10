@@ -1,4 +1,4 @@
-/* 源指纹 193ef8317926e5db · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 05e61fc6dd72f987 · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -4555,12 +4555,88 @@ var BZW_diary = (() => {
     for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
     return h >>> 0;
   }
-  var import_moment2;
+  function secureRandomPassword(length, charset) {
+    const n = charset.length;
+    if (!(length > 0) || n === 0) return "";
+    const LIMIT2 = Math.floor(4294967296 / n) * n;
+    let pwd = "";
+    while (pwd.length < length) {
+      const buf = new Uint32Array(length - pwd.length);
+      crypto.getRandomValues(buf);
+      for (let i = 0; i < buf.length && pwd.length < length; i++) {
+        if (buf[i] >= LIMIT2) continue;
+        pwd += charset.charAt(buf[i] % n);
+      }
+    }
+    return pwd;
+  }
+  function cancelClipboardClear() {
+    if (clipboardClearTimer !== null) {
+      clearTimeout(clipboardClearTimer);
+      clipboardClearTimer = null;
+    }
+  }
+  function armClipboardClear() {
+    if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
+    clipboardClearTimer = setTimeout(() => {
+      clipboardClearTimer = null;
+      try {
+        void navigator.clipboard.writeText("").catch(() => {
+        });
+      } catch (e) {
+      }
+    }, CLIPBOARD_CLEAR_DELAY_MS);
+  }
+  function copySensitiveText(text) {
+    try {
+      return navigator.clipboard.writeText(text).then(() => armClipboardClear());
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+  var import_moment2, CLIPBOARD_CLEAR_DELAY_MS, clipboardClearTimer;
   var init_utils = __esm({
     "src/core/utils.ts"() {
       import_moment2 = __toESM(require_moment());
       init_fake_obsidian();
       init_app();
+      CLIPBOARD_CLEAR_DELAY_MS = 6e4;
+      clipboardClearTimer = null;
+    }
+  });
+
+  // src/core/ui/str.ts
+  function escapeHtml2(s) {
+    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
+  }
+  function esc(s) {
+    return escapeHtml2(String(s != null ? s : ""));
+  }
+  function escAttr(s) {
+    return String(s != null ? s : "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function colorOf(platform) {
+    const k = Object.keys(PLATFORM_COLOR_MAP).find((x) => (platform || "").toLowerCase().includes(x.toLowerCase()));
+    if (k) return PLATFORM_COLOR_MAP[k];
+    let h = 0;
+    const t = platform || "?";
+    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
+    return PALETTE[h % PALETTE.length];
+  }
+  var ESC_MAP, PLATFORM_COLOR_MAP, PALETTE;
+  var init_str = __esm({
+    "src/core/ui/str.ts"() {
+      ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+      PLATFORM_COLOR_MAP = {
+        github: "#5a5f73",
+        微信: "#3eb575",
+        支付宝: "#4f7cf7",
+        notion: "#111111",
+        哔哩哔哩: "#fb7299",
+        招商银行: "#d43d3d",
+        豆瓣: "#3fa34d"
+      };
+      PALETTE = ["#7c6bd6", "#3e8e5a", "#c98a1e", "#4f7cf7", "#d43d3d", "#2a9d8f", "#b4551d", "#5a5f73"];
     }
   });
 
@@ -8459,18 +8535,9 @@ var BZW_diary = (() => {
   function dots(p) {
     return "•".repeat(Math.min((p || "").length, 18));
   }
-  function colorOf(platform) {
-    const k = Object.keys(PLATFORM_COLOR_MAP).find((x) => (platform || "").toLowerCase().includes(x.toLowerCase()));
-    if (k) return PLATFORM_COLOR_MAP[k];
-    const h = hash31(platform || "?");
-    return PALETTE[h % PALETTE.length];
-  }
   function avatarHTML(platform, url, cls = "bz-pwv-avatar") {
     const ch = (platform || "?").slice(0, 1);
     return `<div class="${cls}" style="background:${colorOf(platform)}" data-pwv-avatar="1" data-url="${escAttr(url || "")}"><span>${escAttr(ch)}</span></div>`;
-  }
-  function escAttr(s) {
-    return String(s != null ? s : "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
   function hydratePwAvatars(scope) {
     scope.querySelectorAll("[data-pwv-avatar]").forEach((box) => {
@@ -8494,23 +8561,14 @@ var BZW_diary = (() => {
       }
     });
   }
-  var PLATFORM_COLOR_MAP, PALETTE, DEFAULT_PW_STATE, PW_REVEAL_AUTO_MASK_MS, DEFAULT_PW_CHARSET, VaultPwView, ICON_PATHS;
+  var DEFAULT_PW_STATE, PW_REVEAL_AUTO_MASK_MS, DEFAULT_PW_CHARSET, VaultPwView, ICON_PATHS;
   var init_vault_pw_view = __esm({
     "src/encrypt/vault-pw-view.ts"() {
       init_dom();
       init_item_actions();
       init_utils();
+      init_str();
       init_ui();
-      PLATFORM_COLOR_MAP = {
-        github: "#5a5f73",
-        微信: "#3eb575",
-        支付宝: "#4f7cf7",
-        notion: "#111111",
-        哔哩哔哩: "#fb7299",
-        招商银行: "#d43d3d",
-        豆瓣: "#3fa34d"
-      };
-      PALETTE = ["#7c6bd6", "#3e8e5a", "#c98a1e", "#4f7cf7", "#d43d3d", "#2a9d8f", "#b4551d", "#5a5f73"];
       DEFAULT_PW_STATE = {
         asset: "pw",
         view: "all",
@@ -9273,45 +9331,6 @@ var BZW_diary = (() => {
   function statusbarHtml(unlocked) {
     return `${vIc(unlocked ? "lock-open" : "lock", 12)} 保险库`;
   }
-  function secureRandomPassword(length, charset) {
-    const n = charset.length;
-    if (!(length > 0) || n === 0) return "";
-    const LIMIT2 = Math.floor(4294967296 / n) * n;
-    let pwd = "";
-    while (pwd.length < length) {
-      const buf = new Uint32Array(length - pwd.length);
-      crypto.getRandomValues(buf);
-      for (let i = 0; i < buf.length && pwd.length < length; i++) {
-        if (buf[i] >= LIMIT2) continue;
-        pwd += charset.charAt(buf[i] % n);
-      }
-    }
-    return pwd;
-  }
-  function cancelClipboardClear() {
-    if (clipboardClearTimer !== null) {
-      clearTimeout(clipboardClearTimer);
-      clipboardClearTimer = null;
-    }
-  }
-  function armClipboardClear() {
-    if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
-    clipboardClearTimer = setTimeout(() => {
-      clipboardClearTimer = null;
-      try {
-        void navigator.clipboard.writeText("").catch(() => {
-        });
-      } catch (e) {
-      }
-    }, CLIPBOARD_CLEAR_DELAY_MS);
-  }
-  function copySensitiveText(text) {
-    try {
-      return navigator.clipboard.writeText(text).then(() => armClipboardClear());
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  }
   function passwordStrength(pw) {
     if (!pw) return "weak";
     let score = 0;
@@ -9536,7 +9555,7 @@ var BZW_diary = (() => {
       ]
     };
   }
-  var CLIPBOARD_CLEAR_DELAY_MS, clipboardClearTimer, lastVisitedAsset, _UIManager, UIManager, _EncryptAppController, EncryptAppController;
+  var lastVisitedAsset, _UIManager, UIManager, _EncryptAppController, EncryptAppController;
   var init_ui2 = __esm({
     "src/encrypt/ui.ts"() {
       init_fake_obsidian();
@@ -9557,8 +9576,6 @@ var BZW_diary = (() => {
       init_vault_pw_view();
       init_pw_picker();
       init_vault_assets_view();
-      CLIPBOARD_CLEAR_DELAY_MS = 6e4;
-      clipboardClearTimer = null;
       lastVisitedAsset = "pw";
       _UIManager = class _UIManager {
         constructor(dataManager, config, pwDataManager) {
@@ -11730,14 +11747,8 @@ var BZW_diary = (() => {
   // src/bookshelf/state.ts
   init_settings_provider();
 
-  // src/core/ui/str.ts
-  var ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-  function escapeHtml2(s) {
-    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
-  }
-  function esc(s) {
-    return escapeHtml2(String(s != null ? s : ""));
-  }
+  // src/bookshelf/shared.ts
+  init_str();
 
   // src/bookshelf/constants.ts
   var STATUS_UNREAD = "未读";
@@ -11748,6 +11759,9 @@ var BZW_diary = (() => {
     [STATUS_READING]: "var(--bz-brand)",
     [STATUS_DONE]: "var(--bz-success)"
   };
+
+  // src/bookshelf/layouts/wall/render.ts
+  init_str();
 
   // src/bookshelf/data.ts
   function resolveFolderPath() {
@@ -12559,6 +12573,7 @@ ${String(review).trim()}`;
   }
 
   // src/diary/render.ts
+  init_str();
   var ACT_ICON = {
     add: "pen-line",
     search: "search",

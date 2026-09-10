@@ -7,7 +7,8 @@
 import type { App } from 'obsidian';
 import { getSettings } from '../core/settings-provider';
 import { notice } from '../core/notice';
-import { PasswordVaultAppController, copySensitiveText } from './ui';
+import { PasswordVaultAppController } from './ui';
+import { copySensitiveText } from '../core/utils';
 
 let initialized = false;
 let controller: PasswordVaultAppController | null = null;
