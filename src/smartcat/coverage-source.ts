@@ -1,10 +1,10 @@
 /**
  * ADR-0069 行为流全量盘点补齐——复习计划/题库/附件搬移 观察文案构造层（纯函数可测）。
  *
- * 这三域（review/quiz/attach）当前 UI 不经 emitDomainEvent 派发域事件、历史上从未接入
- * addObservation；本模块按 ADR「全面补齐」把文案构造先行落为纯函数（routing 已有对应 behavior
- * 规则：review:started/added/removed/rated、quiz:added/answered、attach:moved），
- * 域侧后续接线时只需 emitDomainEvent(域名, 载荷) + 订阅端调本层构造即可，文案口径集中此处。
+ * issue 261 接线：review 域（index/app）与 attach 域（ui.runMove）已 emitDomainEvent 派发
+ * review/attach 域事件，smartcat index 订阅端调本层构造入行为流（routing：review:started/
+ * added/removed/rated、quiz:added/answered、attach:moved）；quiz 已并入 review（quiz-core），
+ * 其构造层保留待其动作点接线。
  * 密码域/加密域为 ADR-0069 隐私豁免（routing exempt，不写任何流），不设文案构造。
  */
 import type { StructuredMeta } from './types';

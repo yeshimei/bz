@@ -59,7 +59,7 @@ registerEntity('news', {
 // ==================== movie（影视） ====================
 
 registerEntity('movie', {
-  want: (s) => `你把《${s.name || '未知电影'}》加入想看`,
+  want: (s) => `你把《${s.name || '未知电影'}》加入了想看`,
   watching: (s) => `你开始看《${s.name || '未知电影'}》`,
   watched: (s) => `你看完了《${s.name || '未知电影'}》`,
   rated: (s) => {
@@ -102,6 +102,7 @@ registerEntity('favorite', {
   edited: (s) => `你编辑了收藏《${s.name || '未命名'}》`,
   deleted: (s) => `你取消了收藏《${s.name || '未命名'}》`,
   archived: (s) => `你归档了《${s.name || '未命名'}》`,
+  unarchived: (s) => `你把《${s.name || '未命名'}》移出了归档`,
 }, ['favorites'], (s) => `收藏《${s.name || '未命名'}》有更新`);
 
 // ==================== belongings（归物本；实际 entityType=item，注册 belongings 别名） ====================
@@ -223,15 +224,15 @@ registerEntity('dossier', {
 
 WORDING['secondbrain:*'] = (s) => (s.name ? `你在第二大脑记录了「${s.name}」` : '你在第二大脑有新的记录');
 
-// ==================== literature（文献盒：视频转文献 + 术语生成，ADR-0066/0072） ====================
-// 遗留兼容（ADR-0072 迁出后）：旧实体 'bili'/'bili-downloader' 存量行为条目继续命中同套中文模板；
-// added 模板保留仅供旧存量条目渲染（ticket 136 起新增观察不再产 added）。
+// ==================== knowledge（知识盒：视频转文献 + 术语生成，ADR-0066/0072/0112） ====================
+// 遗留兼容（ADR-0072 迁出 + issue 255 更名）：旧实体 'literature'/'bili'/'bili-downloader'
+// 存量行为条目继续命中同套中文模板；added 模板保留仅供旧存量条目渲染。
 
-registerEntity('literature', {
+registerEntity('knowledge', {
   converted: (s) => `你把《${s.name || '一部视频'}》转成了文献`,
   'term-generated': (s) => `你为「${s.name || '一个术语'}」生成了一篇术语文献`,
   added: (s) => `你添加了转文献任务（${s.name || 'BV 视频'}）`,   // 遗留：旧 added 存量条目
-}, ['literature', 'bili', 'bili-downloader'], (s) => `文献动态：${s.name || '一部视频'}`);
+}, ['knowledge', 'literature', 'bili', 'bili-downloader'], (s) => `知识盒动态：${s.name || '一部视频'}`);
 
 // ==================== ADR-0069 行为流全量盘点补齐（新增实体模板） ====================
 
@@ -245,11 +246,12 @@ registerEntity('review', {
   removed: (s) => `你把《${s.name || '未命名'}》移出了复习计划`,
   rated: (s) => {
     const rating = s.extras?.rating ? String(s.extras.rating) : '';
-    const suffix = rating === 'again' ? '（忘了）'
-      : rating === 'hard' ? '（困难）'
-      : rating === 'good' ? '（一般）'
-      : rating === 'easy' ? '（简单）' : '';
-    return `你给《${s.name || '未命名'}》完成了复习评分${suffix}`;
+    const word = rating === 'again' ? '忘了'
+      : rating === 'hard' ? '困难'
+      : rating === 'good' ? '一般'
+      : rating === 'easy' ? '简单' : '';
+    const suffix = word ? `，自评「${word}」` : '';
+    return `你复习了《${s.name || '未命名'}》${suffix}`;
   },
 }, [], (s) => `复习计划《${s.name || '未命名'}》有更新`);
 

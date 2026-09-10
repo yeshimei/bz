@@ -18,6 +18,7 @@ import { notice, notify, notifyUndo } from '../core/notice';
 import { getSettings, saveSettings } from '../core/settings-provider';
 import { openPathPicker } from '../core/path-picker';
 import { uiModal, uiDialogActions } from '../core/ui';
+import { emitDomainEvent } from '../core/domain-bus';
 import { collectResources, planMoves, type MoveOp } from './data';
 
 /** 大批量阈值：附件数 ≥ 此值时用 progress 通知逐个更新 i/N */
@@ -115,6 +116,8 @@ export async function runMove(app: any, note: any, destFolder: string, only?: st
     }
     // 撤销搬移（误搬兜底）：点击「撤销」逆序 renameFile 回原路径，链接由 Obsidian 内建自动回改
     notifyUndo(summaryMsg, () => void undoMove(app, movedOps), { type: 'restore' });
+    // 行为流（issue 261）：搬移成功入小橘行为流（attach:moved，带实际成功数）
+    emitDomainEvent('attach', { kind: 'moved', count: movedOps.length });
     return { moved: movedOps.length, renamed: renamedCount, linksAuto };
   } catch (e) {
     console.error('[附件搬移] 失败:', e);
