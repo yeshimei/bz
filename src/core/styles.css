@@ -80,13 +80,13 @@
 .news-close-btn {
   width: 22px !important;
   height: 26px !important;
-  font-size: 14px !important;
+  font-size: var(--bz-font-body) !important;
   padding: 0 !important;
   margin: 0 !important;
   background: none !important;
   border: none !important;
   box-shadow: none !important;
-  border-radius: 4px !important;
+  border-radius: var(--bz-radius-xs) !important;
   color: var(--text-muted) !important;
   display: flex !important;
   align-items: center !important;
@@ -108,9 +108,9 @@
   width: 22px !important;
   height: 26px !important;
   padding: 0 !important;
-  font-size: 14px !important;
+  font-size: var(--bz-font-body) !important;
   border: none !important;
-  border-radius: 4px !important;
+  border-radius: var(--bz-radius-xs) !important;
   box-shadow: none !important;
   background: none !important;
   color: var(--text-muted) !important;
@@ -125,7 +125,7 @@ button.todo-btn-close,
 button.news-close-btn {
   width: 20px !important;
   height: 24px !important;
-  font-size: 12px !important;
+  font-size: var(--bz-font-meta) !important;
 }
 /* 非真全屏一律隐藏关闭按钮（含桌面端——用户拍板）：桌面/卡片态靠点遮罩与 ESC 关闭，真全屏时靠 ❌ 关闭 */
 button.bz-win-close,
@@ -171,27 +171,27 @@ button.news-close-btn {
   background: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   line-height: 1.5;
   color: var(--text-normal);
   cursor: pointer;
   overflow: hidden;
-  animation: bzNoticeIn 0.2s ease-out;
+  animation: bzNoticeIn var(--bz-dur-base) ease-out;
 }
 .bz-notice--leaving {
-  animation: bzNoticeOut 0.2s ease-in forwards;
+  animation: bzNoticeOut var(--bz-dur-base) ease-in forwards;
 }
 .bz-notice--leaving.bz-notice--out-pop {
-  animation: bzNoticeOutPop 0.2s ease-in forwards;
+  animation: bzNoticeOutPop var(--bz-dur-base) ease-in forwards;
 }
 .bz-notice--leaving.bz-notice--out-left {
-  animation: bzNoticeOutLeft 0.2s ease-in forwards;
+  animation: bzNoticeOutLeft var(--bz-dur-base) ease-in forwards;
 }
 .bz-notice--leaving.bz-notice--out-right {
-  animation: bzNoticeOutRight 0.2s ease-in forwards;
+  animation: bzNoticeOutRight var(--bz-dur-base) ease-in forwards;
 }
 .bz-notice--leaving.bz-notice--out-fade {
-  animation: bzNoticeOutFade 0.2s ease-in forwards;
+  animation: bzNoticeOutFade var(--bz-dur-base) ease-in forwards;
 }
 .bz-notice--in-pop {
   animation: bzNoticeInPop 0.25s ease-out;
@@ -218,7 +218,7 @@ button.news-close-btn {
   justify-content: center;
   font-size: 16px;
   line-height: 1;
-  animation: bzNoticeIconPop 0.3s ease-out;
+  animation: bzNoticeIconPop var(--bz-dur-slow) ease-out;
 }
 .bz-notice-icon svg {
   width: 18px;
@@ -252,7 +252,7 @@ button.news-close-btn {
   gap: 2px;
 }
 .bz-notice-title {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   font-weight: 600;
   color: var(--text-muted);
   letter-spacing: 0.02em;
@@ -266,11 +266,11 @@ button.news-close-btn {
   align-self: center;
   margin-top: 0;
   padding: 1px 8px;
-  border-radius: 4px;
+  border-radius: var(--bz-radius-xs);
   border: 1px solid transparent;
   background: transparent;
   color: var(--interactive-accent);
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
@@ -298,7 +298,7 @@ button.news-close-btn {
   );
   background-size: 16px 16px;
   animation: bzNoticeStripes 0.8s linear infinite;
-  transition: width 0.3s ease;
+  transition: width var(--bz-dur-slow) ease;
 }
 .bz-notice-progress--done {
   background: var(--color-green);
@@ -381,7 +381,7 @@ button.news-close-btn {
   .bz-notice--in-slide-right,
   .bz-notice--in-bounce,
   .bz-notice--in-shake {
-    animation: bzNoticeFade 0.15s ease-out;
+    animation: bzNoticeFade var(--bz-dur-fast) ease-out;
   }
   /* progress 转圈保留：加载指示属功能性动画，reduced-motion 下不降级
      （Windows 关闭动画效果时 Chromium 报 prefers-reduced-motion: reduce，若禁用则圆圈静态误导用户） */
@@ -401,14 +401,14 @@ button.news-close-btn {
 /* 设置弹窗移动端字号（原 core/settings-modal.ts SETTINGS_MODAL_CSS） */
 @media (max-width: 768px) {
     #bz-settings-modal-popup .setting-item-heading .setting-item-name {
-        font-size: 17px;
+        font-size: var(--bz-font-title);
         font-weight: 600;
     }
     #bz-settings-modal-popup .setting-item-name {
-        font-size: 14px;
+        font-size: var(--bz-font-body);
     }
     #bz-settings-modal-popup .setting-item-description {
-        font-size: 12px;
+        font-size: var(--bz-font-meta);
     }
 }
 
@@ -427,7 +427,7 @@ button.news-close-btn {
 #__shared_confirm_popup__ {
   position: relative;
   background: var(--background-primary);
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   padding: 24px;
   max-width: 400px;
@@ -445,7 +445,7 @@ button.news-close-btn {
 }
 #__shared_confirm_popup__ p {
   margin: 0 0 20px 0;
-  font-size: 15px;
+  font-size: var(--bz-font-emphasis);
   color: var(--text-muted);
   line-height: 1.5;
   word-wrap: break-word;
@@ -464,7 +464,7 @@ button.news-close-btn {
   border: none;
   background: var(--background-secondary);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   box-shadow: none;
   flex: 1;
 }
@@ -475,7 +475,7 @@ button.news-close-btn {
   background: var(--interactive-accent);
   color: var(--text-on-accent);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   font-weight: 500;
   box-shadow: none;
   flex: 1;
@@ -496,7 +496,7 @@ button.news-close-btn {
   left: 50%;
   transform: translate(-50%, -50%);
   background: var(--background-primary);
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   max-height: 80vh;
   display: flex;
@@ -510,12 +510,12 @@ button.news-close-btn {
   cursor: pointer;
   color: var(--text-muted);
   padding: 0;
-  border-radius: 4px;
+  border-radius: var(--bz-radius-xs);
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: none !important;
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   width: 22px;
   height: 26px;
 }
@@ -523,7 +523,7 @@ button.news-close-btn {
   background: var(--background-secondary);
 }
 .bz-icon-btn--close {
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   width: 21px;
   height: 25px;
 }
@@ -559,11 +559,11 @@ button.news-close-btn {
   padding: 28px 12px;
   text-align: center;
   color: var(--text-faint);
-  font-size: 14px;
+  font-size: var(--bz-font-body);
 }
 .bz-settings-empty-desc {
   margin-top: 6px;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--text-muted);
 }
 
@@ -572,7 +572,7 @@ button.news-close-btn {
 .bz-settings-group {
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   padding: 10px 14px 12px;
   margin-bottom: 12px;
 }
@@ -604,13 +604,13 @@ button.news-close-btn {
   height: 14px;
 }
 .bz-settings-group-name {
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   font-weight: 700;
   color: var(--text-normal);
 }
 .bz-settings-group-count {
   margin-left: auto;
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--text-faint);
   background: var(--background-modifier-hover);
   border-radius: 10px;
@@ -620,10 +620,10 @@ button.news-close-btn {
 /* 卡片内设置行：hover 只改背景色（用户拍板），不带动 padding/圆角跳动 */
 .bz-settings-group-body .setting-item {
   border-bottom: none;
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   padding: 8px 10px;
   margin: 0 -10px;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--bz-dur-fast) ease;
 }
 .bz-settings-group-body .setting-item:hover {
   background: var(--background-modifier-hover);
@@ -647,7 +647,7 @@ button.news-close-btn {
   position: fixed;
   min-width: 132px; padding: 4px;
   background: var(--background-primary);
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   animation: bz-menu-in 0.12s ease-out;
 }
@@ -656,7 +656,7 @@ button.news-close-btn {
   display: flex; align-items: center; gap: 6px;
   justify-content: flex-start !important; /* 抗 Obsidian 默认 button 居中 */
   width: 100%; padding: 6px 8px;
-  font-size: 13px; line-height: 1.4; color: var(--text-normal);
+  font-size: var(--bz-font-label); line-height: 1.4; color: var(--text-normal);
   background: transparent !important;
   border: none !important;
   border-radius: 6px !important;
@@ -686,17 +686,17 @@ button.news-close-btn {
    抗 Obsidian 按钮 !important 组/危险红/右对齐小字/入场动画全部失效） ---- */
 /* 头部标题/小字（sheetTitle 路径；sheetHead 路径走 .bz-item-sheet-entry 族） */
 .bz-item-sheet-title {
-  font-size: 14px; font-weight: 600; color: var(--text-normal);
+  font-size: var(--bz-font-body); font-weight: 600; color: var(--text-normal);
   line-height: 1.4; word-break: break-word;
 }
-.bz-item-sheet-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+.bz-item-sheet-sub { font-size: var(--bz-font-meta); color: var(--text-muted); margin-top: 3px; }
 /* 功能项一行行列出：左对齐、无背景色、无边框分割，小字号。
    高特异性 + !important 抗 Obsidian 默认 button 样式（灰底/边框/圆角）压盖 */
 .bz-item-sheet button.bz-item-sheet-item {
   display: flex; align-items: center; gap: 8px;
   justify-content: flex-start !important; /* 抗 Obsidian 默认 button 居中 */
   width: 100%; padding: 8px 6px;
-  font-size: 13px; line-height: 1.5; color: var(--text-normal);
+  font-size: var(--bz-font-label); line-height: 1.5; color: var(--text-normal);
   background: transparent !important;
   border: none !important;
   border-radius: 0 !important;
@@ -711,7 +711,7 @@ button.news-close-btn {
 /* 动作项右侧小字（次级/动态数据，如「123 字」）：右对齐、faint 弱化，不参与换行；仅移动端抽屉（桌面菜单不渲染小字） */
 .bz-item-sheet-item-sub {
   margin-left: auto;
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--text-faint);
   white-space: nowrap;
   overflow: hidden;
@@ -735,7 +735,7 @@ button.news-close-btn {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0, 0, 0, 0.4); /* z 动态发号（ADR-0067）：JS openItemSheet 创建时分配 */
   animation: bz-mask-in 0.18s ease-out;
-  transition: opacity 0.2s ease; /* 下滑关闭时同步淡出 */
+  transition: opacity var(--bz-dur-base) ease; /* 下滑关闭时同步淡出 */
 }
 .bz-item-sheet {
   position: fixed; left: 0; right: 0; bottom: 0;
@@ -771,14 +771,14 @@ button.news-close-btn {
 }
 .bz-item-sheet-entry-info {
   display: flex; align-items: center; gap: 8px;
-  font-size: 14px; color: var(--text-muted);
+  font-size: var(--bz-font-body); color: var(--text-muted);
 }
 /* emoji 与标题行放大：与列表卡片头部一字不差（20px emoji、16px 加粗时间） */
-.bz-item-sheet-emoji { font-size: 20px; line-height: 1; flex-shrink: 0; }
+.bz-item-sheet-emoji { font-size: var(--bz-font-display); line-height: 1; flex-shrink: 0; }
 .bz-item-sheet-time { font-size: 16px; font-weight: 600; color: var(--text-normal); }
 /* 头部内容：固定区域展示，超出三行省略（不滚动） */
 .bz-item-sheet-entry-content {
-  font-size: 14px; color: var(--text-normal);
+  font-size: var(--bz-font-body); color: var(--text-normal);
   line-height: 1.6; word-break: break-word;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -824,13 +824,13 @@ button.news-close-btn {
 }
 .bz-path-picker-title {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--bz-font-emphasis);
   font-weight: 700;
   color: var(--text-normal);
 }
 .bz-path-picker-desc {
   margin-top: 4px;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--text-muted);
   line-height: 1.55;
 }
@@ -839,8 +839,8 @@ button.news-close-btn {
   margin: 12px 16px 0;
   padding: 8px 10px;
   border: 1px solid var(--background-modifier-border);
-  border-radius: 8px;
-  font-size: 13px;
+  border-radius: var(--bz-radius-sm);
+  font-size: var(--bz-font-label);
   /* 与设置面板输入框同底色（--input-bg）：文件选择器配色与面板一致（用户拍板） */
   background: var(--input-bg, var(--background-primary));
   color: var(--text-normal);
@@ -858,8 +858,8 @@ button.news-close-btn {
   align-items: center;
   gap: 8px;
   padding: 9px 10px;
-  border-radius: 8px;
-  font-size: 13px;
+  border-radius: var(--bz-radius-sm);
+  font-size: var(--bz-font-label);
   color: var(--text-normal);
   cursor: pointer;
   user-select: none;
@@ -875,7 +875,7 @@ button.news-close-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--text-on-accent);
 }
 .bz-path-picker-row--sel .bz-path-picker-check { background: var(--interactive-accent); border-color: var(--interactive-accent); }
@@ -889,7 +889,7 @@ button.news-close-btn {
 .bz-path-picker-empty {
   padding: 24px 0;
   text-align: center;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   color: var(--text-muted);
 }
 .bz-path-picker-foot {
@@ -906,7 +906,7 @@ button.news-close-btn {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--text-muted);
 }
 .bz-path-picker-foot-btns {
@@ -915,10 +915,10 @@ button.news-close-btn {
   flex: 0 0 auto;
 }
 .bz-path-picker-btn {
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   padding: 6px 14px;
   border: 1px solid var(--background-modifier-border);
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   background: var(--background-secondary);
   color: var(--text-normal);
   cursor: pointer;
@@ -934,10 +934,10 @@ button.news-close-btn {
 /* ticket 133：设置行「选择…/添加…」紧凑次级按钮（空态专用；已选态按钮移出 DOM）——
    去 accent 主色、缩小内边距/字号，与 chips 同视觉重量 */
 .bz-path-picker-btn--slim {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   padding: 3px 10px;
   border: 1px solid var(--background-modifier-border);
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   background: var(--background-secondary);
   color: var(--text-normal);
   cursor: pointer;
@@ -960,10 +960,10 @@ button.news-close-btn {
   align-items: center;
   gap: 5px;
   padding: 3px 6px 3px 11px;
-  border-radius: 999px;
+  border-radius: var(--bz-radius-full);
   background: var(--background-modifier-hover);
   color: var(--text-normal);
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   max-width: 100%;
 }
 .bz-path-picker-chip-name {
@@ -981,12 +981,12 @@ button.news-close-btn {
   border-radius: 50%;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   line-height: 1;
 }
 .bz-path-picker-chip-x:hover { background: var(--background-secondary); color: var(--text-normal); }
 .bz-path-picker-chips-empty {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--text-faint);
 }
 /* 设置行控件区内 chips 容器（renderPathSettingRow；并入 .setting-item-control；
@@ -1069,6 +1069,6 @@ button.news-close-btn {
 }
 .bz-model-picker-detail {
   flex: 0 0 auto;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--text-muted);
 }

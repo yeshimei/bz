@@ -113,7 +113,7 @@
   white-space: nowrap;
 }
 .bz-sb-panel .bz-sb-cnt {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--sb-mut);
   margin-top: 1px;
   font-variant-numeric: tabular-nums;
@@ -122,7 +122,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--sb-acc);
   background: var(--sb-acc-soft);
   border: 1px solid var(--sb-acc-line);
@@ -160,7 +160,7 @@
 .bz-sb-fbtn {
   height: 30px;
   padding: 0 12px;
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   border: 1px solid var(--sb-line2);
   background: var(--sb-card);
   color: #6b6455;
@@ -171,7 +171,7 @@
   gap: 6px;
   cursor: pointer;
   user-select: none;
-  transition: 0.15s;
+  transition: var(--bz-dur-fast);
   white-space: nowrap;
 }
 .bz-sb-fbtn:hover {
@@ -236,7 +236,7 @@
   min-width: 0;
 }
 .bz-sb-card-value {
-  font-size: 20px;
+  font-size: var(--bz-font-display);
   font-weight: 700;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
@@ -275,7 +275,7 @@
 .bz-sb-section {
   background: var(--sb-card);
   border: 1px solid var(--sb-line);
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
@@ -294,7 +294,7 @@
 }
 .bz-sb-ct {
   flex: none;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   font-weight: 600;
   color: #6b6455;
   letter-spacing: 0.04em;
@@ -359,7 +359,7 @@
   gap: 7px;
   border-radius: 7px;
   padding: 3px 4px;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
 }
 .bz-sb-dist-row--dir {
   cursor: pointer;
@@ -398,7 +398,7 @@
   transition: width 0.5s cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 .bz-sb-dist-num {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--sb-mut);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -455,7 +455,7 @@
   padding: 18px 0;
   text-align: center;
   color: var(--sb-mut);
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
 }
 
 /* AI 库摘要卡 */
@@ -529,7 +529,7 @@
 .bz-sb-onboard-icon {
   width: 64px;
   height: 64px;
-  border-radius: 16px;
+  border-radius: var(--bz-radius-lg);
   background: var(--sb-acc-soft);
   border: 1px solid var(--sb-acc-line);
   color: var(--sb-acc);
@@ -537,7 +537,7 @@
   place-items: center;
 }
 .bz-sb-onboard-title {
-  font-size: 17px;
+  font-size: var(--bz-font-title);
   font-weight: 700;
   color: var(--sb-ink);
 }
@@ -556,10 +556,10 @@
   border: none;
   background: var(--sb-dark);
   color: #fbfaf7;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   cursor: pointer;
   user-select: none;
-  transition: 0.15s;
+  transition: var(--bz-dur-fast);
 }
 .bz-sb-init-btn:hover {
   background: var(--sb-acc);
@@ -592,7 +592,7 @@
   transition: width 0.4s ease;
 }
 .bz-sb-init-status {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--sb-mut);
   font-variant-numeric: tabular-nums;
 }
@@ -695,7 +695,7 @@
   margin: 0;
 }
 .bz-sb-chat-clear {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
 }
 .bz-sb-chat-modal .bz-sb-chat-messages {
   flex: 1;
@@ -732,14 +732,14 @@
   flex-direction: row-reverse;
 }
 .bz-sb-chat-bubble {
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   padding: 10px 15px;
   min-width: 0;
 }
 .bz-sb-chat-msg.user .bz-sb-chat-bubble {
   background: var(--sb-dark);
   color: #fbfaf7;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   line-height: 1.65;
   white-space: pre-wrap;
   word-break: break-word;
@@ -767,16 +767,16 @@
 }
 .bz-sb-chat-bubble code {
   background: #f3efe6;
-  border-radius: 4px;
+  border-radius: var(--bz-radius-xs);
   padding: 0 5px;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
 }
 .bz-sb-chat-bubble pre {
   background: #f3efe6;
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   padding: 9px 12px;
   overflow: auto;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
 }
 /* 引用卡列表（会话内展示） */
 .bz-sb-chat-cites {
@@ -796,8 +796,8 @@
   border-radius: 9px;
   padding: 6px 11px;
   cursor: pointer;
-  transition: 0.15s;
-  font-size: 12px;
+  transition: var(--bz-dur-fast);
+  font-size: var(--bz-font-meta);
   color: var(--sb-ink2);
   text-align: left;
 }
@@ -828,7 +828,7 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--sb-mut);
   padding: 2px 0;
 }
@@ -870,9 +870,9 @@
   gap: 12px;
   background: var(--sb-card);
   border: 1.5px solid var(--sb-line2);
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   padding: 9px 12px 9px 15px;
-  transition: border-color 0.2s;
+  transition: border-color var(--bz-dur-base);
 }
 .bz-sb-chat-input-row:focus-within {
   border-color: var(--sb-acc);
@@ -917,7 +917,7 @@
   display: grid;
   place-items: center;
   cursor: pointer;
-  transition: 0.2s;
+  transition: var(--bz-dur-base);
 }
 .bz-sb-chat-send:hover {
   background: var(--sb-acc);
@@ -942,7 +942,7 @@
   padding: 4px 12px;
   cursor: pointer;
   user-select: none;
-  transition: 0.15s;
+  transition: var(--bz-dur-fast);
 }
 .bz-sb-chat-chip:hover {
   border-color: var(--sb-acc);
@@ -970,7 +970,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: transform 0.25s ease, opacity 0.15s ease;
+  transition: transform 0.25s ease, opacity var(--bz-dur-fast) ease;
   /* 定稿配色 */
   background: var(--sb-bg);
   border-left: 1px solid var(--sb-line2);
@@ -1007,7 +1007,7 @@
 .bz-sb-float-title {
   flex: 1;
   min-width: 0;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   font-weight: 700;
   color: var(--sb-ink);
   white-space: nowrap;
@@ -1031,7 +1031,7 @@
   cursor: pointer;
   display: grid;
   place-items: center;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   line-height: 1;
   padding: 0;
   margin: 0;
@@ -1053,7 +1053,7 @@
 }
 /* 收起边条标识：展开态隐藏，收起态唯一可见（ticket 108 语义） */
 .bz-sb-float-strip {
-  font-size: 15px;
+  font-size: var(--bz-font-emphasis);
   line-height: 1;
   flex-shrink: 0;
   opacity: 0;
@@ -1085,7 +1085,7 @@
   padding: 26px 16px;
   text-align: center;
   color: var(--sb-mut);
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   line-height: 1.8;
 }
 .bz-sb-ref-card {
@@ -1095,7 +1095,7 @@
   margin-bottom: 7px;
   background: var(--sb-card);
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color var(--bz-dur-fast), box-shadow var(--bz-dur-fast);
   position: relative;
 }
 .bz-sb-ref-card:hover {
@@ -1198,26 +1198,26 @@
   max-width: calc(100vw - 16px);
   background: var(--sb-bg);
   border: 1px solid var(--sb-line2);
-  border-radius: 12px;
+  border-radius: var(--bz-radius-md);
   box-shadow: 0 18px 44px #0000002e;
   padding: 13px 16px;
   z-index: 1100;
   color: var(--sb-ink);
 }
 .bz-sb-ref-preview-path {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--sb-faint);
   margin-bottom: 3px;
   word-break: break-all;
 }
 .bz-sb-ref-preview-score {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   font-weight: 700;
   color: var(--sb-acc);
   margin-bottom: 7px;
 }
 .bz-sb-ref-preview-body {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   line-height: 1.7;
   color: var(--sb-ink2);
   max-height: 300px;
@@ -1233,8 +1233,8 @@
 .bz-sb-ref-preview-body pre,
 .bz-sb-ref-preview-body code {
   background: #f3efe6;
-  border-radius: 4px;
-  font-size: 11px;
+  border-radius: var(--bz-radius-xs);
+  font-size: var(--bz-font-caption);
 }
 
 /* ============================================================
@@ -1253,7 +1253,7 @@
   flex-direction: column;
   background: var(--sb-bg);
   border-top: 1px solid var(--sb-line2);
-  border-radius: 16px 16px 0 0;
+  border-radius: var(--bz-radius-lg) var(--bz-radius-lg) 0 0;
   box-shadow: 0 -6px 24px rgba(33, 29, 22, 0.14);
   transform: translateY(105%);
   transition: transform 0.25s ease;
@@ -1284,7 +1284,7 @@
   border-radius: 15px;
   background: var(--sb-card);
   color: var(--sb-mut);
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   cursor: pointer;
   display: grid;
   place-items: center;
@@ -1335,7 +1335,7 @@
   align-items: center;
   gap: 7px;
   padding: 8px 16px;
-  border-radius: 999px;
+  border-radius: var(--bz-radius-full);
   background: var(--sb-card);
   border: 1px solid var(--sb-line2);
   box-shadow: 0 4px 16px rgba(33, 29, 22, 0.16);
@@ -1352,7 +1352,7 @@
   background: var(--sb-acc);
 }
 .bz-sb-mb-mini-label {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--sb-mut);
 }
 /* 参考 tab 卡片（紧凑版：白卡 + 红棕分数） */
@@ -1372,7 +1372,7 @@
 }
 .bz-sb-mb-card-path {
   min-width: 0;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   font-weight: 600;
   color: var(--sb-ink);
   white-space: nowrap;
@@ -1381,7 +1381,7 @@
 }
 .bz-sb-mb-card-score {
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   font-weight: 700;
   color: var(--sb-acc);
 }
@@ -1449,7 +1449,7 @@
   border-radius: 10px;
   padding: 8px 12px;
   min-width: 0;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   line-height: 1.6;
   word-break: break-word;
 }
@@ -1472,7 +1472,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--sb-mut);
   user-select: none;
   padding-bottom: 6px;
@@ -1531,7 +1531,7 @@
   display: grid;
   place-items: center;
   cursor: pointer;
-  transition: 0.2s;
+  transition: var(--bz-dur-base);
 }
 .bz-sb-mb-chat-send svg {
   width: 13px;
@@ -1551,7 +1551,7 @@
   margin-top: 8px;
 }
 .bz-sb-mb-chat-chip {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: #6b6455;
   border: 1px solid var(--sb-line2);
   background: var(--sb-card);

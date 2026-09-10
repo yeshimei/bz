@@ -79,10 +79,10 @@
   border: 0;
   background: none;
   color: var(--ink2);
-  font-size: 15px;
+  font-size: var(--bz-font-emphasis);
   line-height: 1;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   font-family: inherit;
   display: inline-flex;
   align-items: center;
@@ -118,7 +118,7 @@
 
 .bz-kb-title {
   font-family: var(--font-interface-override, "Noto Serif SC", SimSun, serif);
-  font-size: 20px;
+  font-size: var(--bz-font-display);
   letter-spacing: 0.5em;
   font-weight: 700;
   color: var(--ink);
@@ -146,7 +146,7 @@
 .bz-kb-empty {
   padding: 26px 0;
   text-align: center;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--ink3);
   letter-spacing: 0.1em;
   line-height: 2;
@@ -166,10 +166,10 @@
 
 .bz-kb-w {
   font-family: var(--font-interface-override, "Noto Serif SC", SimSun, serif);
-  font-size: 15px;
+  font-size: var(--bz-font-emphasis);
   font-weight: 700;
   color: var(--ink);
-  transition: color 0.15s;
+  transition: color var(--bz-dur-fast);
   line-height: 1.4;
 }
 
@@ -222,13 +222,13 @@
   text-align: left;
   font-family: inherit;
   min-width: 0;
-  transition: border-color 0.15s;
+  transition: border-color var(--bz-dur-fast);
 }
 .bz-kb-entrybtn:hover { border-color: var(--accent); }
 .bz-kb-entrybtn b {
   display: block;
   font-family: var(--font-interface-override, "Noto Serif SC", SimSun, serif);
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   color: var(--ink);
   letter-spacing: 0.08em;
 }
@@ -284,11 +284,11 @@
   width: 26px;
   height: 26px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   background: none;
   color: var(--ink3);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   font-family: inherit;
 }
 .bz-kb-sheet-close:hover { background: var(--chip); }
@@ -313,7 +313,7 @@
 .bz-kb-paras video {
   width: 100%;
   display: block;
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   background: #000;
   margin: 10px 0;
 }
@@ -325,17 +325,17 @@
   padding: 6px 12px;
   border-left: 3px solid var(--amber);
   color: var(--ink2);
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
 }
-.bz-kb-paras code { background: var(--chip); border-radius: 4px; padding: 1px 5px; font-size: 12px; }
+.bz-kb-paras code { background: var(--chip); border-radius: var(--bz-radius-xs); padding: 1px 5px; font-size: var(--bz-font-meta); }
 .bz-kb-paras a { color: var(--accent); }
 .bz-kb-paras hr { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
-.bz-kb-paras img { max-width: 100%; border-radius: 8px; }
+.bz-kb-paras img { max-width: 100%; border-radius: var(--bz-radius-sm); }
 
 .bz-kb-rels { display: flex; flex-wrap: wrap; gap: 7px; }
 
 .bz-kb-cite {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--accent);
   border: 1px solid var(--line);
   border-radius: 99px;
@@ -358,9 +358,9 @@
   width: 100%;
   border: 1px solid var(--line);
   background: var(--card);
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   padding: 9px 12px;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   color: var(--ink);
   font-family: inherit;
   outline: none;
@@ -369,7 +369,7 @@
 
 .bz-kb-srcline { display: flex; gap: 6px; flex-wrap: wrap; }
 .bz-kb-srchip {
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   color: var(--accent);
   background: var(--chip);
   border-radius: 99px;
@@ -385,7 +385,7 @@
   border-radius: 99px;
   background: var(--card);
   color: var(--ink2);
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   padding: 5.5px 14px;
   cursor: pointer;
   font-family: inherit;
@@ -413,7 +413,7 @@
   color: #fff;
   border-radius: 9px;
   padding: 9px 20px;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   letter-spacing: 0.14em;
   cursor: pointer;
   font-family: inherit;
@@ -441,8 +441,8 @@
   padding: 10px 14px;
   border-left: 3px solid var(--amber);
   background: var(--card);
-  border-radius: 0 8px 8px 0;
-  font-size: 12px;
+  border-radius: 0 var(--bz-radius-sm) var(--bz-radius-sm) 0;
+  font-size: var(--bz-font-meta);
   line-height: 1.8;
   color: var(--ink2);
 }
@@ -456,7 +456,7 @@
   background: none;
   color: var(--accent);
   font-family: inherit;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   cursor: pointer;
   padding: 2px 0;
   letter-spacing: 0.1em;
@@ -474,7 +474,7 @@
 .bz-kb-nmeta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
 
 .bz-kb-noteview {
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   line-height: 2;
   color: var(--ink);
   text-align: justify;
@@ -485,7 +485,7 @@
   letter-spacing: 0.05em;
 }
 .bz-kb-noteview a { color: var(--accent); text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent); }
-.bz-kb-noteview img { max-width: 100%; border-radius: 8px; }
+.bz-kb-noteview img { max-width: 100%; border-radius: var(--bz-radius-sm); }
 .bz-kb-noteview .internal-embed { display: block; }
 
 /* ===== 视频录入面板 / 历史 / 通用弹窗（纸墨皮，承继旧契约） ===== */
@@ -507,7 +507,7 @@
   font-weight: 700;
 }
 
-.bz-kb-vmeta { font-size: 12px; color: var(--ink2); }
+.bz-kb-vmeta { font-size: var(--bz-font-meta); color: var(--ink2); }
 
 .bz-kb-list {
   flex: 1;
@@ -518,10 +518,10 @@
 }
 
 .bz-kb-banner {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--accent);
   background: var(--chip);
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   padding: 7px 13px;
   margin-bottom: 10px;
 }
@@ -551,7 +551,7 @@
 .bz-kb-status.bz-kb-failed { background: color-mix(in srgb, var(--text-error) 16%, transparent); color: var(--text-error); }
 
 .bz-kb-tlink {
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   color: var(--ink);
   min-width: 0;
   white-space: nowrap;
@@ -569,13 +569,13 @@
   text-overflow: ellipsis;
 }
 
-.bz-kb-tmeta { font-size: 11px; color: var(--ink3); margin-top: 5px; }
+.bz-kb-tmeta { font-size: var(--bz-font-caption); color: var(--ink3); margin-top: 5px; }
 
-.bz-kb-progress { font-size: 11px; color: var(--ink2); margin-top: 8px; line-height: 1.8; }
+.bz-kb-progress { font-size: var(--bz-font-caption); color: var(--ink2); margin-top: 8px; line-height: 1.8; }
 .bz-kb-progress-error { color: var(--red); }
 
 .bz-kb-progress-box { margin-top: 8px; }
-.bz-kb-steps { font-size: 11px; color: var(--ink2); line-height: 1.9; }
+.bz-kb-steps { font-size: var(--bz-font-caption); color: var(--ink2); line-height: 1.9; }
 .bz-kb-step-done { color: var(--green); }
 .bz-kb-step-cur { color: var(--accent); font-weight: 600; }
 .bz-kb-step-arrow { color: var(--ink3); }
@@ -587,7 +587,7 @@
   border-radius: 2px;
   overflow: hidden;
 }
-.bz-kb-progress-fill { height: 100%; background: var(--accent); transition: width 0.15s; }
+.bz-kb-progress-fill { height: 100%; background: var(--accent); transition: width var(--bz-dur-fast); }
 .bz-kb-elapsed { font-size: 10.5px; color: var(--ink3); margin-top: 4px; }
 .bz-kb-notepath {
   margin-top: 8px;
@@ -598,9 +598,9 @@
 }
 
 .bz-kb-hgroup { cursor: default; }
-.bz-kb-hup { font-size: 11px; color: var(--ink3); }
+.bz-kb-hup { font-size: var(--bz-font-caption); color: var(--ink3); }
 .bz-kb-hnote {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--ink2);
   padding: 6px 0 2px;
   border-top: 1px dashed var(--line);
@@ -647,10 +647,10 @@
 }
 
 .bz-lit-form-alert {
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--red);
   border: 1px dashed var(--red);
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   padding: 8px 12px;
   margin-bottom: 12px;
   line-height: 1.7;
@@ -669,21 +669,21 @@
   width: 100%;
   border: 1px solid var(--line);
   background: var(--card);
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   padding: 8px 11px;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   color: var(--ink);
   font-family: inherit;
   outline: none;
 }
 .bz-lit-dialog input:focus, .bz-lit-dialog select:focus { border-color: var(--accent); }
 
-.bz-lit-range-toggle { display: inline-flex; background: var(--chip); border-radius: 8px; padding: 2px; flex: none; }
+.bz-lit-range-toggle { display: inline-flex; background: var(--chip); border-radius: var(--bz-radius-sm); padding: 2px; flex: none; }
 .bz-lit-range-toggle button {
   border: 0;
   background: none;
   padding: 5px 13px;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   border-radius: 6px;
   color: var(--ink2);
   cursor: pointer;
@@ -706,7 +706,7 @@
   color: #fff;
   border-radius: 9px;
   padding: 8px 18px;
-  font-size: 13px;
+  font-size: var(--bz-font-label);
   letter-spacing: 0.12em;
   cursor: pointer;
   font-family: inherit;
@@ -720,18 +720,18 @@
 /* 术语弹层完整皮（issue 258，原型 knowledge-box-c 纸墨词典风）：
    衬线标题栏+✕ / 术语与来源同款行内标签行（快改批：说明行与试试示例已删） */
 .bz-lit-sheet-head { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
-.bz-lit-sheet-title { font-family: 'Noto Serif SC', SimSun, serif; font-size: 15px; font-weight: 700; letter-spacing: 0.12em; color: var(--ink); }
+.bz-lit-sheet-title { font-family: 'Noto Serif SC', SimSun, serif; font-size: var(--bz-font-emphasis); font-weight: 700; letter-spacing: 0.12em; color: var(--ink); }
 .bz-lit-sheet-close {
   margin-left: auto;
   width: 26px;
   height: 26px;
   padding: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   background: none;
   color: var(--ink3);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--bz-font-body);
   font-family: inherit;
   display: inline-flex;
   align-items: center;
@@ -753,9 +753,9 @@
   min-width: 0;
   border: 1px dashed var(--line);
   background: var(--chip);
-  border-radius: 8px;
+  border-radius: var(--bz-radius-sm);
   padding: 5px 8px 5px 9px;
-  font-size: 12px;
+  font-size: var(--bz-font-meta);
   color: var(--ink);
 }
 .bz-lit-srcchip b { flex: none; font-size: 9.5px; color: var(--accent); letter-spacing: 0.14em; font-weight: 600; }
@@ -768,10 +768,10 @@
   border: 0;
   background: none;
   color: var(--ink3);
-  font-size: 11px;
+  font-size: var(--bz-font-caption);
   line-height: 1;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: var(--bz-radius-xs);
   font-family: inherit;
 }
 .bz-lit-srcchip button:hover { color: var(--red); background: var(--card); }
@@ -795,7 +795,7 @@
 }
 
 .bz-lit-term-meta { display: flex; flex-direction: column; gap: 5px; }
-.bz-lit-term-meta-row { display: flex; gap: 10px; font-size: 12px; }
+.bz-lit-term-meta-row { display: flex; gap: 10px; font-size: var(--bz-font-meta); }
 .bz-lit-term-meta-k { color: var(--ink3); letter-spacing: 0.2em; flex: none; }
 .bz-lit-term-meta-v { color: var(--ink); }
 
@@ -836,8 +836,8 @@
   background: none !important;
   color: var(--ink2) !important;
   cursor: pointer;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: var(--bz-radius-sm);
+  font-size: var(--bz-font-body);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -851,7 +851,7 @@
   padding: 13px 18px 10px;
   border-bottom: 1px solid var(--line);
 }
-.bz-lit-counts { font-size: 12px; color: var(--ink2); }
+.bz-lit-counts { font-size: var(--bz-font-meta); color: var(--ink2); }
 
 /* 移动端：主窗全屏化（ADR-0116「仅主窗口全屏」，弹层维持浮层）。
    顶部避让（Obsidian 移动端头部 44px + 安全区）由全站统一档 .bz-panel-mtop
@@ -871,7 +871,7 @@
 
 /* 移动端头部（章回式定稿）：题字居中一行，部切换通栏三格挪出头部、双细线压底 */
 .bz-kb-window.bz-panel-mtop .bz-kb-head { display: block; border-bottom: 0; padding: 12px 16px 6px; }
-.bz-kb-window.bz-panel-mtop .bz-kb-title { font-size: 17px; }
+.bz-kb-window.bz-panel-mtop .bz-kb-title { font-size: var(--bz-font-title); }
 .bz-kb-window.bz-panel-mtop .bz-kb-mclose { top: 8px; right: 10px; }
 .bz-kb-window.bz-panel-mtop .bz-kb-parts { display: flex; flex-direction: row; gap: 0; border-bottom: 3px double var(--ink2); }
 .bz-kb-window.bz-panel-mtop .bz-kb-part { flex: 1; text-align: center; padding: 8px 0 9px; border-radius: 0; letter-spacing: 0.12em; }
