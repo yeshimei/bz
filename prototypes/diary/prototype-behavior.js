@@ -1,4 +1,4 @@
-/* 源指纹 1d7693ffeb504e61 · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 390c51d9c02946cc · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -4486,84 +4486,6 @@ var BZW_diary = (() => {
     }
   });
 
-  // src/core/utils.ts
-  function escapeHtml(str) {
-    return str.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
-  }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
-  }
-  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
-    const target = (0, import_moment2.default)(date);
-    if (!target.isValid()) return "无效日期";
-    let hasExplicitTime = true;
-    if (typeof date === "string") {
-      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
-    }
-    const nowMoment = (0, import_moment2.default)(now);
-    const diffSeconds = nowMoment.diff(target, "seconds");
-    function shouldShowTime() {
-      const timeStr = target.format("HH:mm");
-      if (timeStr !== "00:00") return true;
-      return hasExplicitTime;
-    }
-    if (diffSeconds < 0) {
-      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
-    }
-    if (diffSeconds < 60) return "刚刚";
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
-    const todayStart = (0, import_moment2.default)(now).startOf("day");
-    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
-      const hours = Math.floor(diffMinutes / 60);
-      return `${hours}小时前`;
-    }
-    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
-    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
-    if (target.isSame(yesterdayStart, "day")) {
-      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
-    }
-    if (target.isSame(beforeYesterdayStart, "day")) {
-      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
-    }
-    const weekStart = (0, import_moment2.default)(now).startOf("week");
-    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
-      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
-    }
-    const isThisYear = target.year() === nowMoment.year();
-    if (isThisYear) {
-      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
-    }
-    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
-  }
-  function localDayKey(ts = Date.now()) {
-    const d = ts instanceof Date ? ts : new Date(ts);
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-  }
-  function stripMdExt(name) {
-    return String(name || "").replace(/\.md$/i, "");
-  }
-  function hash31(str) {
-    let h = 0;
-    const t = String(str || "");
-    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
-    return h >>> 0;
-  }
-  var import_moment2;
-  var init_utils = __esm({
-    "src/core/utils.ts"() {
-      import_moment2 = __toESM(require_moment());
-      init_fake_obsidian();
-      init_app();
-    }
-  });
-
   // src/core/esc-manager.ts
   var escManager;
   var init_esc_manager = __esm({
@@ -5061,6 +4983,16 @@ var BZW_diary = (() => {
     }
   });
 
+  // src/core/mobile.ts
+  function isMobileEnv() {
+    return typeof Platform !== "undefined" && !!Platform.isMobile;
+  }
+  var init_mobile = __esm({
+    "src/core/mobile.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
   // src/core/ui/icon.ts
   function uiIcon(name, extraClass = "") {
     const i = document.createElement("span");
@@ -5375,16 +5307,6 @@ var BZW_diary = (() => {
     }
   });
 
-  // src/core/mobile.ts
-  function isMobileEnv() {
-    return typeof Platform !== "undefined" && !!Platform.isMobile;
-  }
-  var init_mobile = __esm({
-    "src/core/mobile.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
   // src/core/item-actions.ts
   function renderIcon(container, iconId) {
     try {
@@ -5405,6 +5327,7 @@ var BZW_diary = (() => {
     return false;
   }
   function onMouseDownCapture(ev) {
+    if (touchSettlePending) return;
     if (popupEl && popupEl.isConnected && !popupEl.contains(ev.target) && !inSheetCompanion(ev.target)) {
       closeItemMenu();
     }
@@ -5781,6 +5704,68 @@ var BZW_diary = (() => {
     }
   });
 
+  // src/core/utils.ts
+  function escapeHtml2(str) {
+    return str.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
+  }
+  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
+    const target = (0, import_moment2.default)(date);
+    if (!target.isValid()) return "无效日期";
+    let hasExplicitTime = true;
+    if (typeof date === "string") {
+      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
+    }
+    const nowMoment = (0, import_moment2.default)(now);
+    const diffSeconds = nowMoment.diff(target, "seconds");
+    function shouldShowTime() {
+      const timeStr = target.format("HH:mm");
+      if (timeStr !== "00:00") return true;
+      return hasExplicitTime;
+    }
+    if (diffSeconds < 0) {
+      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
+    }
+    if (diffSeconds < 60) return "刚刚";
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
+    const todayStart = (0, import_moment2.default)(now).startOf("day");
+    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
+      const hours = Math.floor(diffMinutes / 60);
+      return `${hours}小时前`;
+    }
+    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
+    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
+    if (target.isSame(yesterdayStart, "day")) {
+      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
+    }
+    if (target.isSame(beforeYesterdayStart, "day")) {
+      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
+    }
+    const weekStart = (0, import_moment2.default)(now).startOf("week");
+    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
+      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
+    }
+    const isThisYear = target.year() === nowMoment.year();
+    if (isThisYear) {
+      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
+    }
+    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
+  }
+  var import_moment2;
+  var init_utils = __esm({
+    "src/core/utils.ts"() {
+      import_moment2 = __toESM(require_moment());
+      init_fake_obsidian();
+      init_app();
+    }
+  });
+
   // src/core/flow-dialog.ts
   function buildFlowDialogParts(title, message, actions) {
     let buttons;
@@ -5799,9 +5784,9 @@ var BZW_diary = (() => {
     }
     const ctaIdx = actions.findIndex((a) => a.cta);
     const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const html = "<h4>" + escapeHtml(title || "确认") + "</h4><p>" + escapeHtml(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
+    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
       const clsAttr = b.className ? ' class="' + b.className + '"' : "";
-      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
     }).join("") + "</div>";
     return { html, buttons, focusId: buttons[focusIdx].id };
   }
@@ -8461,7 +8446,8 @@ var BZW_diary = (() => {
   function colorOf(platform) {
     const k = Object.keys(PLATFORM_COLOR_MAP).find((x) => (platform || "").toLowerCase().includes(x.toLowerCase()));
     if (k) return PLATFORM_COLOR_MAP[k];
-    const h = hash31(platform || "?");
+    let h = 0;
+    for (let i = 0; i < (platform || "?").length; i++) h = h * 31 + (platform || "?").charCodeAt(i) >>> 0;
     return PALETTE[h % PALETTE.length];
   }
   function avatarHTML(platform, url, cls = "bz-pwv-avatar") {
@@ -8941,7 +8927,7 @@ var BZW_diary = (() => {
           return empty;
         }
         esc(s) {
-          return escapeHtml(String(s != null ? s : ""));
+          return escapeHtml2(String(s != null ? s : ""));
         }
       };
       ICON_PATHS = {
@@ -9147,8 +9133,8 @@ var BZW_diary = (() => {
       const iconName = r.kind === "pw" ? "key" : r.kind === "note" ? "file-lock" : "book-lock";
       return `<div class="bz-vault-minirow" data-recent="${r.kind}">
             <span class="av" style="background:${color}">${vIc(iconName, 14)}</span>
-            <div class="mid"><div class="a">${escapeHtml(r.title)}</div><div class="b">${escapeHtml(r.sub)}</div></div>
-            <span class="tm">${escapeHtml(r.time)}</span></div>`;
+            <div class="mid"><div class="a">${escapeHtml2(r.title)}</div><div class="b">${escapeHtml2(r.sub)}</div></div>
+            <span class="tm">${escapeHtml2(r.time)}</span></div>`;
     }).join("") : '<div class="bz-empty"><span class="bz-empty-ic">' + vIc("lock", 28) + '</span><div class="bz-empty-title">还没有加密资产</div><div class="bz-empty-desc">录入密码、加密笔记或加密日记后，最近动态在这里显示</div></div>';
     return `
   <div class="bz-vault-hero">
@@ -9193,12 +9179,12 @@ var BZW_diary = (() => {
   function noteRowHTML(note, kind, active) {
     const color = ASSET_COLOR[kind];
     const iconName = kind === "note" ? "file-lock" : "book-lock";
-    const sub = kind === "note" ? `${note.attachments.length} 个附件 · ${escapeHtml(note.path)}` : (note.path.split("/").pop() || note.title) + (note.attachments.length ? ` · ${note.attachments.length} 个附件` : "");
+    const sub = kind === "note" ? `${note.attachments.length} 个附件 · ${escapeHtml2(note.path)}` : (note.path.split("/").pop() || note.title) + (note.attachments.length ? ` · ${note.attachments.length} 个附件` : "");
     return `
-    <div class="bz-vault-row ${active ? "on" : ""}" data-noteid="${escapeHtml(note.id)}" data-kind="${kind}">
+    <div class="bz-vault-row ${active ? "on" : ""}" data-noteid="${escapeHtml2(note.id)}" data-kind="${kind}">
       <span class="av" style="background:${color}">${vIc(iconName, 16)}</span>
-      <div class="mid"><div class="t1">${escapeHtml(note.title)}</div><div class="t2">${sub}</div></div>
-      <span class="tm">${escapeHtml(formatRelativeTime(note.createdAt))}</span>
+      <div class="mid"><div class="t1">${escapeHtml2(note.title)}</div><div class="t2">${sub}</div></div>
+      <span class="tm">${escapeHtml2(formatRelativeTime(note.createdAt))}</span>
     </div>`;
   }
   function noteDetailHTML(note, kind, plainPreview) {
@@ -9207,9 +9193,9 @@ var BZW_diary = (() => {
     const attChips = note.attachments.length ? note.attachments.slice(0, 6).map((a) => {
       const kb = a.blobSize ? Math.max(1, Math.round(a.blobSize / 1024)) : 0;
       const kindIc = vIc(a.kind === "video" ? "film" : "image", 12);
-      return `<span class="chip att">${kindIc} ${escapeHtml(a.path.split("/").pop() || a.path)}${kb ? ` · ${kb} KB` : ""}</span>`;
+      return `<span class="chip att">${kindIc} ${escapeHtml2(a.path.split("/").pop() || a.path)}${kb ? ` · ${kb} KB` : ""}</span>`;
     }).join("") + (note.attachments.length > 6 ? `<span class="chip">+${note.attachments.length - 6} 更多</span>` : "") : '<span class="chip">无附件</span>';
-    const pathLine = kind === "note" ? `${escapeHtml(note.path)} · 已移出` : `${escapeHtml(note.path)} · 已还原该段`;
+    const pathLine = kind === "note" ? `${escapeHtml2(note.path)} · 已移出` : `${escapeHtml2(note.path)} · 已还原该段`;
     const created = new Date(note.createdAt).toLocaleString("zh-CN", { hour12: false });
     const actionBtns = kind === "note" ? `<button class="bbtn teal" data-detail="preview">${vIc("eye", 14)} 预览</button>
          <button class="bbtn" data-detail="restore">${vIc("download", 14)} 还原到原路径</button>
@@ -9219,14 +9205,14 @@ var BZW_diary = (() => {
     return `
     <div class="bz-vault-dhead">
       <span class="big" style="background:${color}">${vIc(iconName, 21)}</span>
-      <div class="ttl"><h2>${escapeHtml(note.title)}</h2><div class="url">${pathLine}</div></div>
+      <div class="ttl"><h2>${escapeHtml2(note.title)}</h2><div class="url">${pathLine}</div></div>
       <div class="acts"><button class="ic" data-detail="menu" title="更多操作">${vIc("more-h", 15)}</button></div>
     </div>
     <div class="bz-vault-dcontent">
       ${kind === "note" ? `<div class="field"><div class="lab">附件镜像</div><div class="valrow chips">${attChips}</div></div>
-           <div class="field"><div class="lab">加密时间</div><div class="valrow"><span class="val">${escapeHtml(created)}</span></div></div>
-           <div class="note hint">原笔记正文已 100% 密文化；双击列表行可压缩预览（原图按需加载原层）。</div>` : `<div class="field"><div class="lab">正文预览</div><div class="note pre">${plainPreview ? escapeHtml(plainPreview).replace(/\n/g, "<br>") : "（未解密预览）"}</div></div>
-           <div class="field"><div class="lab">加密于</div><div class="valrow"><span class="val">${escapeHtml(created)}</span></div></div>`}
+           <div class="field"><div class="lab">加密时间</div><div class="valrow"><span class="val">${escapeHtml2(created)}</span></div></div>
+           <div class="note hint">原笔记正文已 100% 密文化；双击列表行可压缩预览（原图按需加载原层）。</div>` : `<div class="field"><div class="lab">正文预览</div><div class="note pre">${plainPreview ? escapeHtml2(plainPreview).replace(/\n/g, "<br>") : "（未解密预览）"}</div></div>
+           <div class="field"><div class="lab">加密于</div><div class="valrow"><span class="val">${escapeHtml2(created)}</span></div></div>`}
       <div class="bigbtns">${actionBtns}</div>
     </div>`;
   }
@@ -9430,7 +9416,7 @@ var BZW_diary = (() => {
   }
   function mediaHtml(a, dataUrl) {
     if (!a) return "";
-    const alt = escapeHtml(a.path || "");
+    const alt = escapeHtml2(a.path || "");
     const key = encodeURIComponent(a.path);
     const kindLabel = a.kind === "video" ? "视频" : "图";
     let inner;
@@ -10805,10 +10791,10 @@ var BZW_diary = (() => {
           mask.style.display = "flex";
           mask.innerHTML = `
       <div class="bz-vault-dlg">
-        <h3>编辑平台 · ${escapeHtml(platform)}</h3>
+        <h3>编辑平台 · ${escapeHtml2(platform)}</h3>
         <div class="sub">改名/改链接将应用到该平台全部账号</div>
-        <label>平台名 *</label><input data-pf="platform" value="${escapeHtml(platform === "(无平台)" ? "" : platform)}">
-        <label>链接（可选）</label><input data-pf="url" value="${escapeHtml((d == null ? void 0 : d.url) || "")}">
+        <label>平台名 *</label><input data-pf="platform" value="${escapeHtml2(platform === "(无平台)" ? "" : platform)}">
+        <label>链接（可选）</label><input data-pf="url" value="${escapeHtml2((d == null ? void 0 : d.url) || "")}">
         <div class="err" data-pf-err></div>
         <div class="btns"><button class="cancel" data-pf-act="cancel">取消</button><button class="save" data-pf-act="save">保存</button></div>
       </div>`;
@@ -11044,14 +11030,14 @@ var BZW_diary = (() => {
           if (kind === "diary") {
             void this.dataManager.decryptNoteBody(note).then((t) => {
               const pre = body.querySelector(".note.pre");
-              if (pre && t !== null) pre.innerHTML = escapeHtml(t).replace(/\n/g, "<br>");
+              if (pre && t !== null) pre.innerHTML = escapeHtml2(t).replace(/\n/g, "<br>");
             }).catch(() => {
             });
           }
         }
         openPwMobPage(p) {
           var _a, _b;
-          const { page } = this.createMobPage(escapeHtml(p.platform));
+          const { page } = this.createMobPage(escapeHtml2(p.platform));
           this.pwView.renderMobPlatformPage(page.querySelector(".body"), p, this.pwState);
           (_a = page.querySelector("[data-mob-back]")) == null ? void 0 : _a.addEventListener("click", () => page.remove());
           (_b = page.querySelector("[data-mob-menu]")) == null ? void 0 : _b.addEventListener("click", () => this.pwView.openPlatformSheet(p.platform));
@@ -11059,7 +11045,7 @@ var BZW_diary = (() => {
         }
         openPwAccountPage(d, st) {
           var _a, _b;
-          const { page, body } = this.createMobPage(escapeHtml(d.platform));
+          const { page, body } = this.createMobPage(escapeHtml2(d.platform));
           this.pwView.renderDeskDetail(body, { ...st, selPlatform: d.platform, selAccount: d.id });
           (_a = page.querySelector("[data-mob-back]")) == null ? void 0 : _a.addEventListener("click", () => page.remove());
           (_b = page.querySelector("[data-mob-menu]")) == null ? void 0 : _b.addEventListener("click", () => this.pwView.openAccountSheet(d));
@@ -11340,7 +11326,7 @@ var BZW_diary = (() => {
             } else if (missing) {
               const im = document.createElement("img");
               im.className = "bz-encrypt-preview-media";
-              im.alt = escapeHtml(a.path || "");
+              im.alt = escapeHtml2(a.path || "");
               im.src = url;
               missing.replaceWith(im);
             }
@@ -11724,18 +11710,17 @@ var BZW_diary = (() => {
   // src/bookshelf/data.ts
   init_fake_obsidian();
   init_settings_provider();
-  init_utils();
 
   // src/bookshelf/state.ts
   init_settings_provider();
 
   // src/core/ui/str.ts
   var ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-  function escapeHtml2(s) {
+  function escapeHtml(s) {
     return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
   }
   function esc(s) {
-    return escapeHtml2(String(s != null ? s : ""));
+    return escapeHtml(String(s != null ? s : ""));
   }
 
   // src/bookshelf/constants.ts
@@ -11896,23 +11881,22 @@ var BZW_diary = (() => {
   init_fake_obsidian();
   init_esc_manager();
   init_dom();
+  init_mobile();
   init_ui();
   init_item_actions();
-  init_utils();
   init_domain_bus();
   init_notice();
   init_app();
 
   // src/diary/parser.ts
   init_fake_obsidian();
-  var HEADING_REGEX = /^#\s*((?:\S+)+)\s+(\d{2}:\d{2})/u;
   function parseFile(content, dateStr, onUnparsed) {
     const entries = [];
     const lines = content.split("\n");
     let currentEntry = null;
     let contentLines = [];
     let unparsedLines = 0;
-    const headingRegex = HEADING_REGEX;
+    const headingRegex = /^#\s*((?:\S+)+)\s+(\d{2}:\d{2})/u;
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const headingMatch = line.match(headingRegex);
@@ -12677,7 +12661,6 @@ ${String(review).trim()}`;
   init_settings_provider();
 
   // src/diary/store.ts
-  init_utils();
   init_notice();
   init_domain_bus();
   init_storage();
@@ -12838,7 +12821,7 @@ ${String(review).trim()}`;
     return res.entry;
   }
   async function findDiaryEntry(filename, lineNumber) {
-    const dateStr = filename.includes("/") ? stripMdExt(filename.split("/").pop()) : filename;
+    const dateStr = filename.includes("/") ? filename.split("/").pop().replace(/\.md$/, "") : filename;
     const lookup = (map) => {
       var _a;
       const entries = map == null ? void 0 : map.get(dateStr);
@@ -12859,7 +12842,6 @@ ${String(review).trim()}`;
   }
 
   // src/diary/encrypt.ts
-  init_utils();
   init_app();
   init_encrypt();
   init_ui2();
@@ -12914,6 +12896,7 @@ ${entry.content.trim()}`;
     };
   }
   async function loadEncryptedEntries() {
+    var _a;
     const safe = getSafeManager();
     if (!safe.unlocked || !safe.manifest) return [];
     const out = [];
@@ -12922,7 +12905,7 @@ ${entry.content.trim()}`;
       try {
         const plain = await safe.getDiaryEntryPlain(note.id);
         if (plain === null || plain === void 0) continue;
-        const date = stripMdExt(note.path.split("/").pop() || "");
+        const date = ((_a = note.path.split("/").pop()) == null ? void 0 : _a.replace(/\.md$/, "")) || "";
         const entry = parseDiaryBlock(plain, date, note.id);
         if (entry) out.push(entry);
       } catch (e) {
@@ -14574,6 +14557,24 @@ ${entry.content.trim()}`;
         },
         true
       );
+      longPress(
+        wall,
+        (ev) => {
+          var _a, _b;
+          const item = (_b = (_a = ev.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, ".bz-diary-item");
+          if (!item) return;
+          const idx = Number(item.dataset.widx);
+          const e = this._wallEntries[idx];
+          if (!e || Number.isNaN(idx)) return;
+          if (this.isEncHidden(e)) return;
+          this.openSheet(e);
+        },
+        void 0,
+        (ev) => {
+          var _a, _b;
+          return isMobileEnv() && !!((_b = (_a = ev.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, ".bz-diary-item"));
+        }
+      );
     }
     /** 双击跳转原文（普通日记走 entry-actions 标题锚点；加密/影视/信/书分流） */
     async jumpTo(e) {
@@ -14669,7 +14670,8 @@ ${entry.content.trim()}`;
     }
     /** 本地今天 YYYY-MM-DD（那年今天口径用） */
     todayStr() {
-      return localDayKey();
+      const d = /* @__PURE__ */ new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     }
     /**
      * 增强 #5：那年今天时光条——mmdd 命中的历史媒体条目横滑条（wall 首屏顶部，独立块不打断瀑布流；
@@ -14920,7 +14922,9 @@ ${entry.content.trim()}`;
     }
     /** 媒体宽高比稳定散列：按条目日期+媒体名派生（DW7——全局递增 seed 双实例/重渲染下漂移） */
     mediaAspect(entry, name) {
-      const h = hash31(`${entry.date}|${name}`);
+      let h = 0;
+      const s = `${entry.date}|${name}`;
+      for (let i = 0; i < s.length; i++) h = h * 31 + s.charCodeAt(i) >>> 0;
       return h % 3 === 0 ? "1 / 1" : "4 / 3";
     }
     /**
@@ -15383,7 +15387,7 @@ ${entry.content.trim()}`;
             notice("找不到原文，无法复制双链", "error");
             return;
           }
-          await navigator.clipboard.writeText(`[[${stripMdExt(e.filename)}]]`);
+          await navigator.clipboard.writeText(`[[${e.filename.replace(/\.md$/, "")}]]`);
           notice("已复制双链引用", "success");
           return;
         }

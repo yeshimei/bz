@@ -14,7 +14,7 @@ import { resolve } from 'node:path';
 import { setApp } from '../../src/core/app';
 import { applyDirectories } from '../../src/diary/config';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, Platform } from '../mock-obsidian-entry';
 import { DiaryAppController } from '../../src/diary/ui';
 
 // mock data 模块的 mediaSrc（MockVault 无 getResourcePath，返回稳定 vault 内 URL；
@@ -117,6 +117,7 @@ afterEach(() => {
   // 单例跨用例清理：unregister ESC + 移除 DOM（幂等；cleanup 用例自身已清理）
   DiaryAppController.instance?.cleanup();
   DiaryAppController.instance = null;
+  Platform.isMobile = false;
   document.body.innerHTML = '';
 });
 
@@ -126,6 +127,16 @@ async function openAndWait() {
   await c.openManager();
   await waitFor(() => !!document.querySelector('.bz-diary-day-head'));
   return c;
+}
+
+/** 触屏按压（core/dom.longPress 手势）：touchstart → 停留 ms → touchend；越过 500ms 即长按。
+ *  jsdom 不自动合成 click，故短按不会误走「单击开抽屉」路径，断言只反映长按入口本身 */
+async function touchPress(el: HTMLElement, ms: number): Promise<void> {
+  const ts = new TouchEvent('touchstart', { bubbles: true, cancelable: true });
+  Object.defineProperty(ts, 'touches', { value: [{ clientX: 10, clientY: 10 }] });
+  el.dispatchEvent(ts);
+  await new Promise((r) => setTimeout(r, ms));
+  el.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
 }
 
 describe('回忆墙 UI', () => {
@@ -636,6 +647,24 @@ describe('回忆墙 UI', () => {
     expect(item).toBeTruthy();
     item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(mob.querySelector('.bz-sheet--show')).toBeTruthy();
+  });
+
+  it('长按条目 → 底部抽屉（统一手势 core/dom.longPress）：桌面长按不开、移动端短按不开、移动端长按开；抽屉仍是 .bz-diary-sheet 详情壳', async () => {
+    await openAndWait();
+    const mob = document.querySelector('.bz-diary-mob')!;
+    const item = mob.querySelector('.bz-diary-item') as HTMLElement;
+    expect(item).toBeTruthy();
+    // 桌面（Platform.isMobile=false）：手势过滤不放行
+    await touchPress(item, 550);
+    expect(mob.querySelector('.bz-sheet--show')).toBeNull();
+    // 移动端短按（未到 500ms）：不开
+    Platform.isMobile = true;
+    await touchPress(item, 100);
+    expect(mob.querySelector('.bz-sheet--show')).toBeNull();
+    // 移动端长按：开详情抽屉（只统一手势，不换成 core 动作抽屉 .bz-item-sheet，保观感）
+    await touchPress(item, 550);
+    expect(mob.querySelector('.bz-diary-sheet.bz-sheet--show')).toBeTruthy();
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
   });
 
   it('稀疏铺满：单条日文字条跨列占满整行（sparse-1）', async () => {

@@ -1,4 +1,4 @@
-/* 源指纹 f78e1501300932f5 · 仓内输入 206 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 5ad0d9ecefbfc305 · 仓内输入 206 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/brief.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -4260,149 +4260,6 @@ var BZW_memo = (() => {
     }
   });
 
-  // src/core/utils.ts
-  function escapeHtml(str) {
-    return str.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
-  }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
-  }
-  function generateId(prefix) {
-    prefix = prefix || "item";
-    return prefix + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
-  }
-  function extractUrlAndDisplay(c) {
-    const m1 = c.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-    if (m1) return { url: m1[2], display: m1[1] };
-    const m2 = c.match(/(https?:\/\/\S+)/i);
-    if (m2) {
-      const u = m2[1], d = c.replace(u, "").trim();
-      return { url: u, display: d || u };
-    }
-    return { url: null, display: c };
-  }
-  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
-    const target = (0, import_moment2.default)(date);
-    if (!target.isValid()) return "无效日期";
-    let hasExplicitTime = true;
-    if (typeof date === "string") {
-      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
-    }
-    const nowMoment = (0, import_moment2.default)(now);
-    const diffSeconds = nowMoment.diff(target, "seconds");
-    function shouldShowTime() {
-      const timeStr = target.format("HH:mm");
-      if (timeStr !== "00:00") return true;
-      return hasExplicitTime;
-    }
-    if (diffSeconds < 0) {
-      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
-    }
-    if (diffSeconds < 60) return "刚刚";
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
-    const todayStart = (0, import_moment2.default)(now).startOf("day");
-    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
-      const hours = Math.floor(diffMinutes / 60);
-      return `${hours}小时前`;
-    }
-    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
-    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
-    if (target.isSame(yesterdayStart, "day")) {
-      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
-    }
-    if (target.isSame(beforeYesterdayStart, "day")) {
-      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
-    }
-    const weekStart = (0, import_moment2.default)(now).startOf("week");
-    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
-      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
-    }
-    const isThisYear = target.year() === nowMoment.year();
-    if (isThisYear) {
-      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
-    }
-    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
-  }
-  function getCurrentNoteInfo() {
-    const f = getApp().workspace.getActiveFile();
-    return f ? { path: f.path, name: f.basename } : null;
-  }
-  function getCurrentCursorPosition() {
-    const ws = getApp().workspace;
-    const ed = ws.activeEditor && ws.activeEditor.editor;
-    return ed ? { line: ed.getCursor().line, ch: ed.getCursor().ch } : null;
-  }
-  async function fetchPageTitle(url) {
-    try {
-      const r = await requestUrl({
-        url,
-        method: "GET",
-        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
-      });
-      if (r.status === 200) {
-        const m = r.text.match(/<title[^>]*>([^<]*)<\/title>/i);
-        if (m && m[1]) return m[1].trim();
-      }
-    } catch (e) {
-    }
-    return null;
-  }
-  function bytesEqual(a, b) {
-    if (a.length !== b.length) return false;
-    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
-    return true;
-  }
-  function localDayKey(ts = Date.now()) {
-    const d = ts instanceof Date ? ts : new Date(ts);
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-  }
-  function stripMdExt(name) {
-    return String(name || "").replace(/\.md$/i, "");
-  }
-  function stripTitleMarks(s) {
-    return String(s || "").replace(/^《|》$/g, "");
-  }
-  function cmpZh(a, b) {
-    return String(a || "").localeCompare(String(b || ""), "zh");
-  }
-  function isUnderFolder(folder, path) {
-    const f = (folder || "").trim().replace(/\/+$/, "");
-    if (!f) return false;
-    return path === f || path.startsWith(f + "/");
-  }
-  function hash31(str) {
-    let h = 0;
-    const t = String(str || "");
-    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
-    return h >>> 0;
-  }
-  function yieldToMainThread(timeoutMs = 200) {
-    return new Promise((resolve2) => {
-      if (typeof window === "undefined") {
-        resolve2();
-        return;
-      }
-      const ric = window.requestIdleCallback;
-      if (typeof ric === "function") ric(() => resolve2(), { timeout: timeoutMs });
-      else window.setTimeout(resolve2, 0);
-    });
-  }
-  var import_moment2;
-  var init_utils = __esm({
-    "src/core/utils.ts"() {
-      import_moment2 = __toESM(require_moment());
-      init_fake_obsidian();
-      init_app();
-    }
-  });
-
   // src/core/z-order.ts
   function registerAlwaysOnTop(el) {
     alwaysOnTop.add(el);
@@ -4952,6 +4809,114 @@ var BZW_memo = (() => {
     }
   });
 
+  // src/core/utils.ts
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
+  }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function generateId(prefix) {
+    prefix = prefix || "item";
+    return prefix + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+  }
+  function extractUrlAndDisplay(c) {
+    const m1 = c.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (m1) return { url: m1[2], display: m1[1] };
+    const m2 = c.match(/(https?:\/\/\S+)/i);
+    if (m2) {
+      const u = m2[1], d = c.replace(u, "").trim();
+      return { url: u, display: d || u };
+    }
+    return { url: null, display: c };
+  }
+  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
+    const target = (0, import_moment2.default)(date);
+    if (!target.isValid()) return "无效日期";
+    let hasExplicitTime = true;
+    if (typeof date === "string") {
+      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
+    }
+    const nowMoment = (0, import_moment2.default)(now);
+    const diffSeconds = nowMoment.diff(target, "seconds");
+    function shouldShowTime() {
+      const timeStr = target.format("HH:mm");
+      if (timeStr !== "00:00") return true;
+      return hasExplicitTime;
+    }
+    if (diffSeconds < 0) {
+      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
+    }
+    if (diffSeconds < 60) return "刚刚";
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
+    const todayStart = (0, import_moment2.default)(now).startOf("day");
+    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
+      const hours = Math.floor(diffMinutes / 60);
+      return `${hours}小时前`;
+    }
+    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
+    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
+    if (target.isSame(yesterdayStart, "day")) {
+      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
+    }
+    if (target.isSame(beforeYesterdayStart, "day")) {
+      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
+    }
+    const weekStart = (0, import_moment2.default)(now).startOf("week");
+    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
+      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
+    }
+    const isThisYear = target.year() === nowMoment.year();
+    if (isThisYear) {
+      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
+    }
+    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
+  }
+  function getCurrentNoteInfo() {
+    const f = getApp().workspace.getActiveFile();
+    return f ? { path: f.path, name: f.basename } : null;
+  }
+  function getCurrentCursorPosition() {
+    const ws = getApp().workspace;
+    const ed = ws.activeEditor && ws.activeEditor.editor;
+    return ed ? { line: ed.getCursor().line, ch: ed.getCursor().ch } : null;
+  }
+  async function fetchPageTitle(url) {
+    try {
+      const r = await requestUrl({
+        url,
+        method: "GET",
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
+      });
+      if (r.status === 200) {
+        const m = r.text.match(/<title[^>]*>([^<]*)<\/title>/i);
+        if (m && m[1]) return m[1].trim();
+      }
+    } catch (e) {
+    }
+    return null;
+  }
+  function bytesEqual(a, b) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+    return true;
+  }
+  var import_moment2;
+  var init_utils = __esm({
+    "src/core/utils.ts"() {
+      import_moment2 = __toESM(require_moment());
+      init_fake_obsidian();
+      init_app();
+    }
+  });
+
   // src/memo/data.ts
   function parseScenarios(raw) {
     if (!raw || !raw.trim()) return [...DEFAULT_SCENARIOS];
@@ -5117,7 +5082,7 @@ var BZW_memo = (() => {
     return (0, import_moment4.default)().format("YYYY-MM-DD HH:mm");
   }
   function getTodayStr() {
-    return localDayKey();
+    return (0, import_moment4.default)().format("YYYY-MM-DD");
   }
   function getDueStatus(due) {
     if (!due) return null;
@@ -5155,7 +5120,6 @@ var BZW_memo = (() => {
   var init_due = __esm({
     "src/memo/due.ts"() {
       import_moment4 = __toESM(require_moment());
-      init_utils();
     }
   });
 
@@ -7135,6 +7099,7 @@ var BZW_memo = (() => {
     return false;
   }
   function onMouseDownCapture(ev) {
+    if (touchSettlePending) return;
     if (popupEl && popupEl.isConnected && !popupEl.contains(ev.target) && !inSheetCompanion(ev.target)) {
       closeItemMenu();
     }
@@ -7493,11 +7458,6 @@ var BZW_memo = (() => {
   function esc(s) {
     return escapeHtml2(String(s != null ? s : ""));
   }
-  function localNow() {
-    const d = /* @__PURE__ */ new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-  }
   function iconSpan(name, extra = "") {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
   }
@@ -7509,6 +7469,9 @@ var BZW_memo = (() => {
   });
 
   // src/memo/render.ts
+  function iconSpan2(name, extra = "") {
+    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
   function sceneDot(scene) {
     return SCENE_DOTS[scene] || "#8b8f9a";
   }
@@ -7528,7 +7491,7 @@ var BZW_memo = (() => {
   function sceneLeadHtml(o, dotCls) {
     var _a2, _b2;
     const pseudo = SCENE_PSEUDO_ICONS[o.scene];
-    if (pseudo) return iconSpan(pseudo.icon, (_a2 = pseudo.cls) != null ? _a2 : "");
+    if (pseudo) return iconSpan2(pseudo.icon, (_a2 = pseudo.cls) != null ? _a2 : "");
     const emo = (_b2 = o.scene.match(LEADING_EMOJI_RE)) == null ? void 0 : _b2[1];
     if (emo) return `<span class="bz-rail-emoji">${escapeHtml2(emo)}</span>`;
     if (!o.dot) return "";
@@ -7544,18 +7507,18 @@ var BZW_memo = (() => {
     return `<button class="bz-mobstrip-chip${active2 ? " is-on" : ""}" data-memo-scene="${escapeHtml2(o.scene)}">${sceneLeadHtml(o, "bz-mobstrip-dot")}${escapeHtml2(sceneLabel(o.scene))}</button>`;
   }
   function mobAddSceneChipHtml() {
-    return `<button class="bz-mobstrip-chip bz-mobstrip-add" data-memo-addscene title="添加场景">${iconSpan(MEMO_ICONS.addScene)}${escapeHtml2("添加场景")}</button>`;
+    return `<button class="bz-mobstrip-chip bz-mobstrip-add" data-memo-addscene title="添加场景">${iconSpan2(MEMO_ICONS.addScene)}${escapeHtml2("添加场景")}</button>`;
   }
   function panelShellHtml() {
     return `
     <div class="bz-panel-frame bz-memo-panel bz-panel-mtop">
       <div class="bz-panel-head">
-        <div class="bz-panel-brand">${iconSpan(MEMO_ICONS.brand, "bz-ic--sm")}</div>
+        <div class="bz-panel-brand">${iconSpan2(MEMO_ICONS.brand, "bz-ic--sm")}</div>
         <div class="bz-panel-title">备忘录</div>
         <div class="bz-panel-head-sp"></div>
         <div class="bz-panel-head-btns">
-          <button class="bz-icon-btn bz-memo-head-settings" data-memo-head-settings title="打开备忘录设置">${iconSpan(MEMO_ICONS.settings)}</button>
-          <button class="bz-icon-btn bz-touch-target bz-touch-target--lg bz-memo-head-close" data-memo-head-close title="关闭">${iconSpan(MEMO_ICONS.close)}</button>
+          <button class="bz-icon-btn bz-memo-head-settings" data-memo-head-settings title="打开备忘录设置">${iconSpan2(MEMO_ICONS.settings)}</button>
+          <button class="bz-icon-btn bz-touch-target bz-touch-target--lg bz-memo-head-close" data-memo-head-close title="关闭">${iconSpan2(MEMO_ICONS.close)}</button>
         </div>
       </div>
       <div class="bz-memo-body">
@@ -7563,7 +7526,7 @@ var BZW_memo = (() => {
           <div class="bz-rail-scroll">
             <div class="bz-rail-label">场景</div>
             <div data-memo-nav></div>
-            <button class="bz-memo-side-add" data-memo-addscene>${iconSpan(MEMO_ICONS.addScene)} 添加场景</button>
+            <button class="bz-memo-side-add" data-memo-addscene>${iconSpan2(MEMO_ICONS.addScene)} 添加场景</button>
           </div>
         </div>
         <div class="bz-memo-main">
@@ -7571,17 +7534,17 @@ var BZW_memo = (() => {
             <div class="bz-main-title" data-memo-main-title>全部</div>
             <div class="bz-main-count" data-memo-main-count></div>
             <div class="bz-main-spacer"></div>
-            <button class="bz-btn bz-btn--primary bz-btn--md" data-memo-newbtn>${iconSpan(MEMO_ICONS.add, "bz-ic--sm")} 新建备忘录</button>
+            <button class="bz-btn bz-btn--primary bz-btn--md" data-memo-newbtn>${iconSpan2(MEMO_ICONS.add, "bz-ic--sm")} 新建备忘录</button>
           </div>
           <div class="bz-toolrow">
-            <div class="bz-search">${iconSpan(MEMO_ICONS.search)}<input class="bz-input" type="text" data-memo-search placeholder="搜索内容 / 场景…"></div>
+            <div class="bz-search">${iconSpan2(MEMO_ICONS.search)}<input class="bz-input" type="text" data-memo-search placeholder="搜索内容 / 场景…"></div>
             <div class="bz-memo-sort" data-memo-sort></div>
           </div>
           <div class="bz-mobstrip" data-memo-mob-scenes></div>
           <div class="bz-memo-content" data-memo-content></div>
           <div class="bz-memo-composer">
             <input class="bz-input" type="text" data-memo-composer-input placeholder="输入内容，Enter 保存…">
-            <button class="bz-btn bz-btn--primary" data-memo-composer-add>${iconSpan(MEMO_ICONS.add, "bz-ic--sm")} 添加</button>
+            <button class="bz-btn bz-btn--primary" data-memo-composer-add>${iconSpan2(MEMO_ICONS.add, "bz-ic--sm")} 添加</button>
           </div>
         </div>
       </div>
@@ -7590,10 +7553,10 @@ var BZW_memo = (() => {
   function metaTagsHtml(it, due, relTime4) {
     const tags = [];
     if (it.scene === "公开课" && it.courseName) {
-      tags.push(`<span class="bz-memo-tag bz-memo-tag-course">${iconSpan(MEMO_ICONS.course)} ${escapeHtml2(it.courseName.replace(/^《|》$/g, ""))}</span>`);
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-course">${iconSpan2(MEMO_ICONS.course)} ${escapeHtml2(it.courseName.replace(/^《|》$/g, ""))}</span>`);
     }
     if (it.scene === "代码" && it.scriptName) {
-      tags.push(`<span class="bz-memo-tag bz-memo-tag-script">${iconSpan(MEMO_ICONS.script)} ${escapeHtml2(it.scriptName)}</span>`);
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-script">${iconSpan2(MEMO_ICONS.script)} ${escapeHtml2(it.scriptName)}</span>`);
     }
     if (it.url) {
       let host = "链接";
@@ -7601,19 +7564,19 @@ var BZW_memo = (() => {
         host = new URL(it.url).hostname.replace(/^www\./, "");
       } catch (e) {
       }
-      tags.push(`<span class="bz-memo-tag bz-memo-tag-url" title="${escapeHtml2(it.url)}">${iconSpan(MEMO_ICONS.url)} ${escapeHtml2(host)}</span>`);
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-url" title="${escapeHtml2(it.url)}">${iconSpan2(MEMO_ICONS.url)} ${escapeHtml2(host)}</span>`);
     }
     if (it.notePath) {
       const name = it.notePath.split("/").pop().replace(/\.md$/i, "");
       const isCourseSame = it.scene === "公开课" && it.courseName && it.courseName.replace(/^《|》$/g, "") === name;
       if (!isCourseSame) {
-        tags.push(`<span class="bz-memo-tag bz-memo-tag-pos" data-memo-pos="${escapeHtml2(it.id)}">${iconSpan(MEMO_ICONS.pos)} ${escapeHtml2(name)}</span>`);
+        tags.push(`<span class="bz-memo-tag bz-memo-tag-pos" data-memo-pos="${escapeHtml2(it.id)}">${iconSpan2(MEMO_ICONS.pos)} ${escapeHtml2(name)}</span>`);
       }
     }
     const imp = it.priority === "important" ? " bz-memo-tag-important" : "";
     tags.push(`<span class="bz-memo-tag bz-memo-tag-scene${imp}">#${escapeHtml2(it.scene)}</span>`);
     if (due) {
-      tags.push(`<span class="bz-memo-tag ${dueTagClass(due.status)}">${iconSpan(dueIconName(due.status))} ${escapeHtml2(due.text)}</span>`);
+      tags.push(`<span class="bz-memo-tag ${dueTagClass(due.status)}">${iconSpan2(dueIconName(due.status))} ${escapeHtml2(due.text)}</span>`);
     }
     if (it.created && relTime4) {
       tags.push(`<span class="bz-memo-time">${escapeHtml2(relTime4)}</span>`);
@@ -7637,7 +7600,7 @@ var BZW_memo = (() => {
   }
   function doneBarHtml(open, count) {
     return `<div class="bz-memo-donebar${open ? " bz-memo-donebar-open" : ""}" data-memo-donebar>
-      ${iconSpan(MEMO_ICONS.doneFold)} 已完成 <span class="bz-memo-donebar-cnt">${count}</span></div>`;
+      ${iconSpan2(MEMO_ICONS.doneFold)} 已完成 <span class="bz-memo-donebar-cnt">${count}</span></div>`;
   }
   function doneMoreHtml(n) {
     return `<button class="bz-memo-done-more" data-memo-donemore>更早 ${n} 条</button>`;
@@ -8926,7 +8889,10 @@ var BZW_memo = (() => {
 
   // src/pomodoro/stats.ts
   function dayKey(ts) {
-    return localDayKey(ts);
+    const d = new Date(ts);
+    const m = pad2(d.getMonth() + 1);
+    const day = pad2(d.getDate());
+    return `${d.getFullYear()}-${m}-${day}`;
   }
   function todayCount(history2, now) {
     const today = dayKey(now);
@@ -11710,7 +11676,9 @@ var BZW_memo = (() => {
   }
   function toDateString(timestamp) {
     if (!Number.isFinite(timestamp) || !timestamp) return null;
-    return localDayKey(timestamp);
+    const d = new Date(timestamp);
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
   }
   function buildEpubItem(app, aggregate) {
     var _a2, _b2, _c;
@@ -11783,7 +11751,6 @@ var BZW_memo = (() => {
     "src/bookshelf/data.ts"() {
       init_fake_obsidian();
       init_settings_provider();
-      init_utils();
       init_state3();
       init_render5();
       WEAVE_PLUGIN_ID = "weave-epub-reader";
@@ -12511,7 +12478,7 @@ ${countsToText(s.missing)}
           tick: async (label) => {
             var _a3;
             (_a3 = opts.onProgress) == null ? void 0 : _a3.call(opts, { index: i, total, label });
-            await yieldToMainThread2();
+            await yieldToMainThread();
           },
           isCancelled: () => {
             var _a3;
@@ -12534,8 +12501,16 @@ ${countsToText(s.missing)}
     lastReport = report;
     return report;
   }
-  function yieldToMainThread2() {
-    return yieldToMainThread();
+  function yieldToMainThread() {
+    return new Promise((resolve2) => {
+      if (typeof window === "undefined") {
+        resolve2();
+        return;
+      }
+      const ric = window.requestIdleCallback;
+      if (typeof ric === "function") ric(() => resolve2(), { timeout: 200 });
+      else window.setTimeout(resolve2, 0);
+    });
   }
   function getLastCheckupReport() {
     return lastReport;
@@ -12643,7 +12618,6 @@ ${countsToText(s.missing)}
   var CHECK_LABELS, lastReport;
   var init_run = __esm({
     "src/checkup/run.ts"() {
-      init_utils();
       init_storage();
       init_files();
       init_checks_json();
@@ -15417,6 +15391,21 @@ ${countsToText(s.missing)}
       const it = itemById(cell.dataset.belId);
       if (it) openRowMenuAt(it, e.clientX, e.clientY);
     });
+    longPress(
+      content,
+      (ev) => {
+        var _a2, _b2;
+        const cell = (_b2 = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-bel-id]");
+        if (!cell) return;
+        const it = itemById(cell.dataset.belId);
+        if (it) openMobSheet(it);
+      },
+      void 0,
+      (ev) => {
+        var _a2, _b2;
+        return isMobileEnv() && !!((_b2 = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-bel-id]"));
+      }
+    );
     renderAll();
     startAutoRefresh();
     observeTheme();
@@ -15950,6 +15939,7 @@ ${countsToText(s.missing)}
       init_app();
       init_esc_manager();
       init_mobile();
+      init_dom();
       init_settings_provider();
       init_flow_dialog();
       init_ui();
@@ -15996,14 +15986,14 @@ ${countsToText(s.missing)}
     if (!s) return "";
     return s.length > max ? s.slice(0, max) + "…" : s;
   }
-  function localDayKey2(ts = Date.now()) {
+  function localDayKey(ts = Date.now()) {
     const d = new Date(ts);
     return `${d.getFullYear()}-${pad22(d.getMonth() + 1)}-${pad22(d.getDate())}`;
   }
   function localDatetime(ts = Date.now()) {
     const d = new Date(ts);
     const hms = `${pad22(d.getHours())}:${pad22(d.getMinutes())}:${pad22(d.getSeconds())}`;
-    return `${localDayKey2(ts)} ${hms}`;
+    return `${localDayKey(ts)} ${hms}`;
   }
   function toDatetime(dateStr) {
     try {
@@ -17438,7 +17428,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function briefDayKey(b) {
     const p = Number(b && b.pubdate) || 0;
-    if (p > 0) return localDayKey2(p * 1e3);
+    if (p > 0) return localDayKey(p * 1e3);
     const d = String(b && (b.date || b.fetchedAt) || "").slice(0, 10);
     return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : "未知日期";
   }
@@ -17624,12 +17614,11 @@ ${bodyText.substring(0, 6e3)}`;
       if (a.url && byUrl.has(String(a.url))) continue;
       bump(siteName(a), true);
     }
-    return [...rows.values()].sort((x, y) => y.total - x.total || y.unread - x.unread || cmpZh(x.site, y.site));
+    return [...rows.values()].sort((x, y) => y.total - x.total || y.unread - x.unread || x.site.localeCompare(y.site, "zh"));
   }
   var PLATFORM_DOMAIN;
   var init_store = __esm({
     "src/clipbook/store.ts"() {
-      init_utils();
       init_news_data();
       init_constants3();
       init_write_queue();
@@ -18050,14 +18039,14 @@ ${bodyText.substring(0, 6e3)}`;
     const fm = cache && cache.frontmatter;
     if (!fm) return null;
     if (!fm.url || !fm.created) return null;
-    const title = file.basename || stripMdExt(String(file.name || ""));
+    const title = file.basename || String(file.name || "").replace(/\.md$/, "");
     let created = new Date(fm.created).valueOf();
     if (isNaN(created)) created = Date.now();
     let backlinkNames = [];
     try {
       const bl = (getBacklinks || (() => null))(file);
       if (bl && bl.data && typeof bl.data.size === "number" && bl.data.size > 0) {
-        backlinkNames = Array.from(bl.data.keys()).map((p) => String(p || "").split("/").pop() || "").map((n) => stripTitleMarks(stripMdExt(n)));
+        backlinkNames = Array.from(bl.data.keys()).map((p) => String(p || "").split("/").pop() || "").map((n) => n.replace(/^《|》$/g, "").replace(/\.md$/, ""));
       }
     } catch (e) {
     }
@@ -18098,7 +18087,6 @@ ${bodyText.substring(0, 6e3)}`;
   }
   var init_scan = __esm({
     "src/clipbook/scan.ts"() {
-      init_utils();
       init_app();
     }
   });
@@ -18562,7 +18550,7 @@ ${body}`;
     const explicit = String(name != null ? name : "").trim();
     if (explicit) return explicit;
     const base = String(path != null ? path : "").replace(/\\/g, "/").split("/").pop() || "";
-    return stripMdExt(base) || String(path != null ? path : "");
+    return base.replace(/\.md$/i, "") || String(path != null ? path : "");
   }
   function isUrlLikeSourceText(text) {
     const s = String(text != null ? text : "").trim();
@@ -18620,7 +18608,6 @@ ${body}`;
   var URL_LIKE_RE, TRACK_KEYS;
   var init_source = __esm({
     "src/knowledge/source.ts"() {
-      init_utils();
       URL_LIKE_RE = /^(?:[\w-]+\.)+[A-Za-z]{2,}(?::\d+)?(?:[/?#][^\s]*)?$/;
       TRACK_KEYS = /* @__PURE__ */ new Set([
         "vd_source",
@@ -19314,11 +19301,11 @@ ${sample}`,
     return root.querySelector(sel);
   }
   function esc2(s) {
-    return escapeHtml(String(s != null ? s : ""));
+    return String(s != null ? s : "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   }
   function shortNoteName(path) {
     const base = String(path || "").replace(/\\/g, "/").split("/").pop() || "";
-    return stripMdExt(base) || String(path || "");
+    return base.replace(/\.md$/i, "") || String(path || "");
   }
   function humanizeError(reason) {
     const s = String(reason != null ? reason : "").trim();
@@ -19868,7 +19855,7 @@ ${sample}`,
             const srcFile = app.vault.getAbstractFileByPath(src.path);
             if (srcFile) {
               const text = await app.vault.read(srcFile);
-              const linkText = `[[${stripMdExt(path)}|${base}]]`;
+              const linkText = `[[${path.replace(/\.md$/i, "")}|${base}]]`;
               const updated = appendRelatedLine(text, linkText);
               if (updated !== text) await app.vault.modify(srcFile, updated);
             }
@@ -21217,7 +21204,7 @@ ${sample}`,
   function markHandledAndBump(raw, action) {
     const key = articleKeyOf(raw);
     const platform = raw.platform || "未知";
-    const today = localDayKey2();
+    const today = localDayKey();
     return enqueueNewsWrite(async () => {
       const res = await readNewsData();
       if (!res.ok || res.missing) return;
@@ -21301,7 +21288,7 @@ ${sample}`,
     await enqueueNewsWrite(async () => {
       const res = await readNewsData();
       if (!res.ok || res.missing) return;
-      const today = localDayKey2();
+      const today = localDayKey();
       const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
       let bumped = 0;
       const list = (res.data.articles || []).map((a) => {
@@ -21337,7 +21324,7 @@ ${sample}`,
           else s.totalSkipped = Math.max(0, (Number(s.totalSkipped) || 0) - 1);
           const platform = a.platform || "未知";
           s.byPlatform[platform] = Math.max(0, (Number(s.byPlatform[platform]) || 0) - 1);
-          const day = localDayKey2();
+          const day = localDayKey();
           s.byDate[day] = Math.max(0, (Number(s.byDate[day]) || 0) - 1);
         }
         const restored = { ...a };
@@ -21829,7 +21816,9 @@ ${sample}`,
     railListEl.innerHTML = html;
     mountIcons(railListEl);
     if (railFootEl) {
-      railFootEl.innerHTML = railFootHtml(((_d = (_c = M5.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0);
+      const d = /* @__PURE__ */ new Date();
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      railFootEl.innerHTML = railFootHtml(((_d = (_c = M5.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[key]) || 0);
     }
     const rows = railListEl.querySelectorAll("[data-src]");
     rows.forEach((row) => {
@@ -22371,7 +22360,7 @@ ${sample}`,
         order.push(a);
       });
     }
-    chapters.sort((x, y) => y.activeN + y.readN + y.savedN - (x.activeN + x.readN + x.savedN) || y.unread - x.unread || cmpZh(x.site, y.site));
+    chapters.sort((x, y) => y.activeN + y.readN + y.savedN - (x.activeN + x.readN + x.savedN) || y.unread - x.unread || x.site.localeCompare(y.site, "zh"));
     mobItemById = byId;
     mobItemOrder = order;
     if (!chapters.length) {
@@ -22659,6 +22648,11 @@ ${sample}`,
   });
 
   // src/favorites/shared.ts
+  function localNow() {
+    const d = /* @__PURE__ */ new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  }
   function relTime2(s) {
     if (!s) return "";
     const d = new Date(s.replace(" ", "T"));
@@ -22782,7 +22776,6 @@ ${sample}`,
     "src/favorites/shared.ts"() {
       init_str();
       init_config2();
-      init_str();
       ICON3 = {
         close: "x",
         add: "plus",
@@ -22964,6 +22957,21 @@ ${sample}`,
       const it = itemById2(card.dataset.favId);
       if (it) openRowMenuAt2(it, e.clientX, e.clientY);
     });
+    longPress(
+      content,
+      (ev) => {
+        var _a2, _b2;
+        const card = (_b2 = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-fav-id]");
+        if (!card) return;
+        const it = itemById2(card.dataset.favId);
+        if (it) openMobSheet2(it);
+      },
+      void 0,
+      (ev) => {
+        var _a2, _b2;
+        return isMobileEnv() && !!((_b2 = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-fav-id]"));
+      }
+    );
     void (async () => {
       await loadItems();
       renderAll3();
@@ -23436,6 +23444,7 @@ GitHub 仓库：${ghInfo.title}
     "src/favorites/ui.ts"() {
       init_notice();
       init_z_order();
+      init_dom();
       init_esc_manager();
       init_mobile();
       init_flow_dialog();
@@ -23577,7 +23586,6 @@ GitHub 仓库：${ghInfo.title}
   // src/reading-report/index.ts
   var init_reading_report = __esm({
     "src/reading-report/index.ts"() {
-      init_utils();
       init_notice();
       init_ui();
       init_data3();
@@ -23605,7 +23613,6 @@ GitHub 仓库：${ghInfo.title}
   var init_notes_ui = __esm({
     "src/bookshelf/notes-ui.ts"() {
       init_notice();
-      init_utils();
       init_dom();
       init_flow_dialog();
       init_ui();
@@ -23863,7 +23870,6 @@ GitHub 仓库：${ghInfo.title}
   var ReviewDataManager;
   var init_data8 = __esm({
     "src/review/data.ts"() {
-      init_utils();
       init_storage();
       init_settings_provider();
       init_fsrs();
@@ -23874,7 +23880,7 @@ GitHub 仓库：${ghInfo.title}
         /** 加载条目（向后兼容旧字段；日期兼容 ISO 字符串与数字）。
          *  走模块级 getApp（reviewApp 为单例 dataManager，app 参数注入会绑定旧 app 导致跨测试/重开写错 vault） */
         async loadItems() {
-          var _a2;
+          var _a2, _b2;
           const data = await jsonFileStore(getReviewFilePath()).read();
           const items = Array.isArray(data) ? data : [];
           const valid = [];
@@ -23883,10 +23889,10 @@ GitHub 仓库：${ghInfo.title}
             if (!file) {
               item.file = null;
               item.isMissing = true;
-              item.name = item.name || stripMdExt(item.filePath.split("/").pop() || "") || item.filePath;
+              item.name = item.name || ((_a2 = item.filePath.split("/").pop()) == null ? void 0 : _a2.replace(/\.md$/, "")) || item.filePath;
               item.isCompleted = item.completed || false;
               item.isOverdue = false;
-              item.currentStage = ((_a2 = item.stage) != null ? _a2 : (item.reviewStage || 1) - 1) + 1;
+              item.currentStage = ((_b2 = item.stage) != null ? _b2 : (item.reviewStage || 1) - 1) + 1;
               item.totalStages = TOTAL_STAGES;
               valid.push(item);
               continue;
@@ -25030,10 +25036,12 @@ ${n.content.slice(0, 2e3)}
     ReviewWatcher: () => ReviewWatcher,
     __setAutoAddMergeMsForTests: () => __setAutoAddMergeMsForTests,
     __setRenameMergeMsForTests: () => __setRenameMergeMsForTests,
-    isUnderFolder: () => isUnderFolder2
+    isUnderFolder: () => isUnderFolder
   });
-  function isUnderFolder2(folder, path) {
-    return isUnderFolder(folder, path);
+  function isUnderFolder(folder, path) {
+    const f = (folder || "").trim().replace(/\/+$/, "");
+    if (!f) return false;
+    return path === f || path.startsWith(f + "/");
   }
   function __setAutoAddMergeMsForTests(ms) {
     REVIEW_AUTO_ADD_MERGE_MS = ms;
@@ -25044,7 +25052,6 @@ ${n.content.slice(0, 2e3)}
   var REVIEW_AUTO_ADD_MERGE_MS, RENAME_MERGE_MS, ReviewWatcher;
   var init_watch = __esm({
     "src/review/watch.ts"() {
-      init_utils();
       init_notice();
       init_flow_dialog();
       init_settings_provider();
@@ -25073,7 +25080,7 @@ ${n.content.slice(0, 2e3)}
           return Array.isArray(s == null ? void 0 : s.reviewExcludedNotes) ? s.reviewExcludedNotes : [];
         }
         isWatched(path) {
-          return this.watchedFolders.some((f) => isUnderFolder2(f, path));
+          return this.watchedFolders.some((f) => isUnderFolder(f, path));
         }
         isExcluded(path) {
           return this.excludedNotes.includes(path);
@@ -25188,7 +25195,7 @@ ${n.content.slice(0, 2e3)}
         }
         /** 未加入候选：目录内全部 md − 已加入 − 已排除（递归；挂起记录占位路径天然排除） */
         collectAutoaddCandidates(folder, items) {
-          return this.app.vault.getMarkdownFiles().map((f) => f.path).filter((p) => isUnderFolder2(folder, p)).filter((p) => !items.some((i) => i.filePath === p)).filter((p) => !this.isExcluded(p));
+          return this.app.vault.getMarkdownFiles().map((f) => f.path).filter((p) => isUnderFolder(folder, p)).filter((p) => !items.some((i) => i.filePath === p)).filter((p) => !this.isExcluded(p));
         }
         /** 选择监听文件夹后的存量收编确认（ticket 099）：确认 → 批量全部加入并返回 true；取消 → 什么都不做返回 false（不写排除名单） */
         async confirmBatchAddForFolder(folder) {
@@ -25207,7 +25214,7 @@ ${n.content.slice(0, 2e3)}
           let ok = 0;
           for (const p of candidates) {
             try {
-              await this.dataManager.addItem(p, stripMdExt(p.split("/").pop()));
+              await this.dataManager.addItem(p, p.split("/").pop().replace(/\.md$/, ""));
               ok++;
             } catch (e) {
             }
@@ -25226,7 +25233,7 @@ ${n.content.slice(0, 2e3)}
           if (idx !== -1) folders.splice(idx, 1);
           s.reviewWatchedFolders = folders;
           const before = Array.isArray(s.reviewExcludedNotes) ? [...s.reviewExcludedNotes] : [];
-          const kept = before.filter((p) => !isUnderFolder2(folder, p));
+          const kept = before.filter((p) => !isUnderFolder(folder, p));
           s.reviewExcludedNotes = kept;
           await saveSettings();
           return before.length - kept.length;
@@ -25573,7 +25580,6 @@ ${n.content.slice(0, 2e3)}
   var CORRECT_JUMP_DELAY_MS2, SprintSession, RATING_NAMES2;
   var init_sprint = __esm({
     "src/review/sprint.ts"() {
-      init_utils();
       init_notice();
       init_flow_dialog();
       init_ui();
@@ -25924,7 +25930,7 @@ ${n.content.slice(0, 2e3)}
           this.bindTop();
         }
         asideStates() {
-          return this.entries.map((e) => ({ name: stripTitleMarks(e.item.name), state: e.state }));
+          return this.entries.map((e) => ({ name: e.item.name.replace(/^《|》$/g, ""), state: e.state }));
         }
         renderQuestion() {
           var _a2, _b2, _c, _d, _e;
@@ -25965,7 +25971,7 @@ ${n.content.slice(0, 2e3)}
           const rating = accuracyToRating(acc);
           const passed = rating === "easy" || rating === "good";
           const remain = this.remainingCount;
-          const name = stripTitleMarks(entry.item.name);
+          const name = entry.item.name.replace(/^《|》$/g, "");
           const nextLabel = this.mode === "single" ? "完成 · 回面板" : remain > 0 ? `下一篇 · ${this.nextPendingName()}` : "完成本轮 · 结算";
           const ratingLine = this.mode === "redo" ? `${RATING_NAMES2[rating]} · 已解除待重做` : `${RATING_NAMES2[rating]} · 下次 ${entry.passNote || "已排期"}`;
           this.view = "result";
@@ -25990,7 +25996,7 @@ ${n.content.slice(0, 2e3)}
         }
         nextPendingName() {
           const nx = this.entries.find((e) => e.state === "pending");
-          return nx ? stripTitleMarks(nx.item.name).slice(0, 12) : "";
+          return nx ? nx.item.name.replace(/^《|》$/g, "").slice(0, 12) : "";
         }
         showSummary() {
           var _a2, _b2;
@@ -26379,7 +26385,7 @@ ${n.content.slice(0, 2e3)}
       const lastTs = (_a3 = h[h.length - 1]) == null ? void 0 : _a3.timestamp;
       const cnt = h.length;
       return {
-        name: stripTitleMarks(i.name),
+        name: i.name.replace(/^《|》$/g, ""),
         sub: `${cnt} 次`,
         meta: lastTs ? formatRelativeTime(new Date(lastTs)) : ""
       };
@@ -26439,7 +26445,7 @@ ${n.content.slice(0, 2e3)}
       }
     }
     status.innerHTML = `
-    <div style="font-size:15px;font-weight:600;color:var(--text-normal);">${escapeHtml(stripTitleMarks(item.name))}</div>
+    <div style="font-size:15px;font-weight:600;color:var(--text-normal);">${escapeHtml(item.name.replace(/^《|》$/g, ""))}</div>
     <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${stageText} · 共 ${history2.length} 次复习${curR || ""}</div>
   `;
     body.appendChild(status);
@@ -26950,7 +26956,7 @@ ${n.content.slice(0, 2e3)}
   }
   function pseudoMdFile(path) {
     const base = path.split("/").pop() || "";
-    return { path, basename: stripMdExt(base), extension: "md" };
+    return { path, basename: base.replace(/\.md$/, ""), extension: "md" };
   }
   function ensureReview(app) {
     if (initialized5) return;
@@ -27131,7 +27137,6 @@ ${n.content.slice(0, 2e3)}
   var initialized5, dataManager2, uiManager2, reviewWatcher, checkInterval, firstCheckTimer, unsubscribers;
   var init_review = __esm({
     "src/review/index.ts"() {
-      init_utils();
       init_notice();
       init_flow_dialog();
       init_domain_bus();
@@ -28725,7 +28730,7 @@ ${n.content.slice(0, 2e3)}
     return text.replace(FRONTMATTER_RE, "");
   }
   function noteTitleFromPath(path) {
-    return stripMdExt(path.slice(path.lastIndexOf("/") + 1));
+    return path.slice(path.lastIndexOf("/") + 1).replace(/\.md$/i, "");
   }
   function embedChunks(content, title, minChunk = 50) {
     const body = stripFrontmatter2(content);
@@ -28769,7 +28774,6 @@ ${n.content.slice(0, 2e3)}
   var CHUNK_SIZE, SENTENCE_BOUNDARY, FRONTMATTER_RE;
   var init_chunk = __esm({
     "src/secondbrain/chunk.ts"() {
-      init_utils();
       CHUNK_SIZE = 256;
       SENTENCE_BOUNDARY = /[。！？!?\n]+/;
       FRONTMATTER_RE = /^---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/;
@@ -30043,7 +30047,6 @@ ${n.content.slice(0, 2e3)}
   var ReferencePanel;
   var init_reference_panel = __esm({
     "src/secondbrain/reference-panel.ts"() {
-      init_utils();
       init_notice();
       init_z_order();
       init_float_window();
@@ -30197,7 +30200,7 @@ ${n.content.slice(0, 2e3)}
           const panel2 = this;
           const card = document.createElement("div");
           card.className = "bz-sb-ref-card";
-          card.innerHTML = refCardHtml(stripMdExt(item.path.replace(/^.*[\\/]/, "")), Math.round(item.score * 100), "#a33d2a");
+          card.innerHTML = refCardHtml(item.path.replace(/^.*[\\/]/, "").replace(/\.md$/i, ""), Math.round(item.score * 100), "#a33d2a");
           const topRow = card.querySelector(".bz-sb-ref-card-top");
           const bodyDiv = card.querySelector(".bz-sb-ref-card-body");
           renderMarkdown(bodyDiv, item.chunk, panel2.app);
@@ -30694,7 +30697,6 @@ ${userMsg}`;
   var SNAP_MID, SNAP_HIGH, COLLAPSE_THRESHOLD, MobilePanel;
   var init_mobile_panel = __esm({
     "src/secondbrain/mobile-panel.ts"() {
-      init_utils();
       init_esc_manager();
       init_notice();
       init_ui();
@@ -30937,7 +30939,7 @@ ${userMsg}`;
             topRow.className = "bz-sb-mb-card-top";
             const pathDiv = document.createElement("div");
             pathDiv.className = "bz-sb-mb-card-path";
-            pathDiv.textContent = stripMdExt(item.path.replace(/^.*[\\/]/, ""));
+            pathDiv.textContent = item.path.replace(/^.*[\\/]/, "").replace(/\.md$/i, "");
             const scoreDiv = document.createElement("div");
             scoreDiv.className = "bz-sb-mb-card-score";
             scoreDiv.textContent = `${Math.round(item.score * 100)}%`;
@@ -31140,7 +31142,7 @@ ${text}`;
   }
   function matchesScope(scopes, path) {
     if (!scopes.length) return false;
-    return scopes.some((dir) => isUnderFolder3(dir, path));
+    return scopes.some((dir) => isUnderFolder2(dir, path));
   }
   function computeBackfillTargets(allPaths, opts) {
     const seen = /* @__PURE__ */ new Set();
@@ -31153,8 +31155,10 @@ ${text}`;
     }
     return out;
   }
-  function isUnderFolder3(folder, path) {
-    return isUnderFolder(folder, path);
+  function isUnderFolder2(folder, path) {
+    const f = (folder || "").trim().replace(/\/+$/, "");
+    if (!f) return false;
+    return path === f || path.startsWith(f + "/");
   }
   function computeHash(content) {
     let h = 2166136261;
@@ -31173,12 +31177,12 @@ ${text}`;
     return parseRelatedEntries(value).length > 0;
   }
   function toRelatedEntry(targetPath) {
-    return `[[${stripMdExt(targetPath)}]]`;
+    return `[[${targetPath.replace(/\.md$/i, "")}]]`;
   }
   function normalizeRelatedEntry(entry) {
     const m = String(entry != null ? entry : "").match(/\[\[\s*([^\][]+?)\s*(?:#[^\][]*)?(?:\|[^\][]*)?\]\]/);
     if (!m) return null;
-    const p = stripMdExt(m[1].trim());
+    const p = m[1].trim().replace(/\.md$/i, "");
     return p || null;
   }
   function mergeRelated(existing, additions, maxLinks = 0) {
@@ -31309,7 +31313,6 @@ ${text}`;
   }
   var init_data9 = __esm({
     "src/secondbrain/link-agent/data.ts"() {
-      init_utils();
       init_store_file();
       init_settings_provider();
     }
@@ -32891,7 +32894,8 @@ ${text}`;
   function colorOf(platform) {
     const k = Object.keys(PLATFORM_COLOR_MAP).find((x) => (platform || "").toLowerCase().includes(x.toLowerCase()));
     if (k) return PLATFORM_COLOR_MAP[k];
-    const h = hash31(platform || "?");
+    let h = 0;
+    for (let i = 0; i < (platform || "?").length; i++) h = h * 31 + (platform || "?").charCodeAt(i) >>> 0;
     return PALETTE[h % PALETTE.length];
   }
   function avatarHTML(platform, url, cls = "bz-pwv-avatar") {
@@ -36178,12 +36182,11 @@ ${text}`;
     return String(s.encryptRoot || "CONFIG/.ENCRYPT").replace(/\/+$/, "");
   }
   function isEncryptLockedPath(app, path) {
-    return isUnderFolder3(encryptRoot(), path);
+    return isUnderFolder2(encryptRoot(), path);
   }
   var LINK_PROBE_TIMEOUT_MS, LINK_BATCH_DELAY_MS, LINK_BATCH_NOTICE_KEY, LINK_ERROR_NOTICE_KEY, JUDGE_PROMPT_PREFIX, CANDIDATE_POOL_MIN, LINK_QUERY_MAX_CHARS, LinkAgent;
   var init_pipeline = __esm({
     "src/secondbrain/link-agent/pipeline.ts"() {
-      init_utils();
       init_notice();
       init_settings_provider();
       init_config4();
@@ -36634,10 +36637,11 @@ ${text}`;
             basenameCounts.set(b, (basenameCounts.get(b) || 0) + 1);
           }
           const isAlive = (target) => {
+            var _a3;
             const full = target.endsWith(".md") ? target : `${target}.md`;
             if (this.app.vault.getAbstractFileByPath(full)) return true;
             if (((encryptedPaths == null ? void 0 : encryptedPaths.has(full)) || (encryptedPaths == null ? void 0 : encryptedPaths.has(target))) === true) return true;
-            const base = stripMdExt(full.split("/").pop() || "");
+            const base = ((_a3 = full.split("/").pop()) == null ? void 0 : _a3.replace(/\.md$/i, "")) || "";
             return (basenameCounts.get(base) || 0) > 0;
           };
           let removedTotal = 0;
@@ -39604,7 +39608,7 @@ ${text}`;
     if (!it || !it.due) return;
     const d = new Date(it.due.replace("T", " "));
     d.setDate(d.getDate() + days);
-    const next = `${localDayKey(d)} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    const next = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
     try {
       await MemoData.updateItem(id, { due: next });
       emitDomainEvent("memo", { kind: "postponed", title: it.title, due: next });
@@ -39666,10 +39670,11 @@ ${text}`;
     void Promise.resolve().then(() => (init_pomodoro(), pomodoro_exports)).then((m) => m.startFocusForTask(app, it.title));
   }
   function buildCardActions(it) {
+    var _a2, _b2;
     const actions = [];
     if (it.linkedNote || it.url) {
       let sub;
-      if (it.linkedNote) sub = stripMdExt(it.linkedNote.split("/").pop() || "");
+      if (it.linkedNote) sub = (_a2 = it.linkedNote.split("/").pop()) == null ? void 0 : _a2.replace(/\.md$/i, "");
       else if (it.url) {
         try {
           sub = new URL(it.url).hostname;
@@ -39683,7 +39688,7 @@ ${text}`;
         icon: "book-open",
         label: "跳转关联笔记",
         title: "跳转关联笔记",
-        sub: stripMdExt(it.notePath.split("/").pop() || ""),
+        sub: (_b2 = it.notePath.split("/").pop()) == null ? void 0 : _b2.replace(/\.md$/i, ""),
         onClick: () => jumpToNote(it)
       });
     }
@@ -39976,7 +39981,7 @@ ${text}`;
       }
     });
     if (posState.notePath) {
-      const name = stripMdExt(posState.notePath.split("/").pop() || "");
+      const name = (posState.notePath.split("/").pop() || "").replace(/\.md$/i, "");
       setPosBtn(name, true);
     } else {
       setPosBtn("定位到笔记", false);
@@ -40420,7 +40425,6 @@ ${text}`;
   }
 
   // src/memo/file-sync.ts
-  init_utils();
   init_notice();
   init_settings_provider();
   init_domain_bus();
@@ -40532,7 +40536,7 @@ ${text}`;
     const isMd = (file) => file && file.extension === "md" && inFolders(file.path, getWatchedFolders());
     const pseudoFile = (path) => ({
       path,
-      basename: stripMdExt(path.split("/").pop() || ""),
+      basename: (path.split("/").pop() || "").replace(/\.md$/, ""),
       extension: "md"
     });
     const flushRenames = createBatchFlusher(async (batch) => {
@@ -40545,7 +40549,7 @@ ${text}`;
       var _a2;
       const file = pseudoFile(evt.newPath);
       if (!isMd(file)) return;
-      const oldTitle = stripMdExt(((_a2 = evt.oldPath) != null ? _a2 : "").split("/").pop());
+      const oldTitle = ((_a2 = evt.oldPath) != null ? _a2 : "").split("/").pop().replace(/\.md$/, "");
       flushRenames({
         oldPath: evt.oldPath,
         newPath: evt.newPath,

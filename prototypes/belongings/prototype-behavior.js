@@ -1,4 +1,4 @@
-/* 源指纹 b225ed48e6b79f2d · 仓内输入 49 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 db59ac78bdbcfcd7 · 仓内输入 49 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/belongings/fake-sim.ts → window.BZW_belongings（行为单源预览包，issue 245/ADR-0106） */
 var BZW_belongings = (() => {
@@ -4504,6 +4504,69 @@ var BZW_belongings = (() => {
     return typeof Platform !== "undefined" && !!Platform.isMobile;
   }
 
+  // src/core/dom.ts
+  function longPress(el, cb, dur, filter) {
+    if (!dur) dur = 500;
+    let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
+    let suppressClick = false;
+    const M2 = 10;
+    function start(e) {
+      if (filter && !filter(e)) return;
+      if (e.button !== void 0 && e.button !== 0) return;
+      fired = false;
+      moved = false;
+      if (e.touches && e.touches.length) {
+        const t = e.touches[0];
+        sx = t.clientX;
+        sy = t.clientY;
+        touching = true;
+      }
+      timer = setTimeout(function() {
+        timer = null;
+        fired = true;
+        cb(e);
+      }, dur);
+    }
+    function cancel() {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    }
+    function move(e) {
+      if (!timer || !touching || !e.touches || !e.touches.length) return;
+      const t = e.touches[0];
+      if (Math.abs(t.clientX - sx) > M2 || Math.abs(t.clientY - sy) > M2) {
+        moved = true;
+        cancel();
+      }
+    }
+    function endFromTouch() {
+      if (fired) suppressClick = true;
+      touching = false;
+      cancel();
+    }
+    function endFromMouse() {
+      touching = false;
+      cancel();
+    }
+    function onClick(e) {
+      if (suppressClick) {
+        suppressClick = false;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }
+    el.addEventListener("mousedown", start);
+    el.addEventListener("mouseup", endFromMouse);
+    el.addEventListener("mouseleave", endFromMouse);
+    el.addEventListener("touchstart", start, { passive: true });
+    el.addEventListener("touchend", endFromTouch);
+    el.addEventListener("touchmove", move, { passive: true });
+    el.addEventListener("touchcancel", endFromTouch);
+    el.addEventListener("click", onClick, true);
+  }
+
   // src/core/utils.ts
   var import_moment = __toESM(require_moment());
   function escapeHtml(str) {
@@ -4789,6 +4852,7 @@ var BZW_belongings = (() => {
     return false;
   }
   function onMouseDownCapture(ev) {
+    if (touchSettlePending) return;
     if (popupEl && popupEl.isConnected && !popupEl.contains(ev.target) && !inSheetCompanion(ev.target)) {
       closeItemMenu();
     }
@@ -7066,6 +7130,21 @@ var BZW_belongings = (() => {
       const it = itemById(cell.dataset.belId);
       if (it) openRowMenuAt(it, e.clientX, e.clientY);
     });
+    longPress(
+      content,
+      (ev) => {
+        var _a, _b;
+        const cell = (_b = (_a = ev.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, "[data-bel-id]");
+        if (!cell) return;
+        const it = itemById(cell.dataset.belId);
+        if (it) openMobSheet(it);
+      },
+      void 0,
+      (ev) => {
+        var _a, _b;
+        return isMobileEnv() && !!((_b = (_a = ev.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, "[data-bel-id]"));
+      }
+    );
     renderAll();
     startAutoRefresh();
     observeTheme();

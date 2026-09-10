@@ -1,4 +1,4 @@
-/* 源指纹 1b180ac125ad6464 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 c6f35cabc75dbf19 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -26,7 +26,6 @@ var BZR_cinema = (() => {
     GROUP_SUBS_OF: () => GROUP_SUBS_OF,
     ICON: () => ICON,
     ST_COLOR: () => ST_COLOR,
-    actionRowsHtml: () => actionRowsHtml,
     aiPageHtml: () => aiPageHtml,
     aiRecMeta: () => aiRecMeta,
     aiRecName: () => aiRecName,
@@ -282,9 +281,6 @@ var BZR_cinema = (() => {
       <div class="ai-title">让 AI 读懂你的片库</div>
       <div class="ai-sub">基于你的评分、影评与偏好标签生成荐片，<br>结果可直接加入想看清单</div>
       <button class="ai-start j-ai-start" data-cinema-ai-start>${iconSpan(ICON.ai)}开始推荐</button></div>`;
-  }
-  function actionRowsHtml(acts, itemClass) {
-    return acts.map((a, i) => `<button class="${itemClass}${a.danger ? " danger" : ""}" data-i="${i}">${iconSpan(a.icon)}${a.label}</button>`).join("");
   }
   function sheetHeadHtml(it, posterUrl) {
     return `<div class="cn-sheet-head">${posterUrl ? `<img class="cn-sheet-poster" src="${esc(posterUrl)}" onerror="this.remove()">` : ""}

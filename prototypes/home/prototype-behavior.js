@@ -1,4 +1,4 @@
-/* 源指纹 9046ef30d11632b3 · 仓内输入 98 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ee0e726469a58302 · 仓内输入 98 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/favorites/config.ts","src/favorites/data.ts","src/home/domains.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -4323,11 +4323,7 @@ var BZW_home = (() => {
   });
 
   // src/core/esc-manager.ts
-  function registerPanelEsc(id, isVisible, close) {
-    if (panelEscHandles.has(id)) return;
-    panelEscHandles.set(id, escManager.register(id, { isVisible, close }));
-  }
-  var escManager, panelEscHandles;
+  var escManager;
   var init_esc_manager = __esm({
     "src/core/esc-manager.ts"() {
       escManager = (() => {
@@ -4373,7 +4369,6 @@ var BZW_home = (() => {
           }
         };
       })();
-      panelEscHandles = /* @__PURE__ */ new Map();
     }
   });
 
@@ -5918,15 +5913,15 @@ var BZW_home = (() => {
     mask.appendChild(foot);
     document.body.appendChild(mask);
     lockBodyScroll(true);
-    let escHandle2 = null;
+    let escHandle3 = null;
     function close() {
       if (current !== mask) return;
       mask.remove();
-      escHandle2 == null ? void 0 : escHandle2.unregister();
+      escHandle3 == null ? void 0 : escHandle3.unregister();
       current = null;
       lockBodyScroll(false);
     }
-    escHandle2 = escManager.register("bz-lightbox", {
+    escHandle3 = escManager.register("bz-lightbox", {
       isVisible: () => mask.isConnected,
       close
     });
@@ -5985,19 +5980,19 @@ var BZW_home = (() => {
     popup.appendChild(body);
     mask.appendChild(popup);
     let closed = false;
-    let escHandle2 = null;
+    let escHandle3 = null;
     function close() {
       var _a;
       if (closed) return;
       closed = true;
       mask.remove();
-      escHandle2 == null ? void 0 : escHandle2.unregister();
+      escHandle3 == null ? void 0 : escHandle3.unregister();
       (_a = opts.onClose) == null ? void 0 : _a.call(opts);
     }
     mask.addEventListener("click", (e) => {
       if (e.target === mask) close();
     });
-    escHandle2 = escManager.register("bz-modal", {
+    escHandle3 = escManager.register("bz-modal", {
       isVisible: () => mask.isConnected,
       close
     });
@@ -6462,6 +6457,7 @@ var BZW_home = (() => {
     return false;
   }
   function onMouseDownCapture(ev) {
+    if (touchSettlePending) return;
     if (popupEl && popupEl.isConnected && !popupEl.contains(ev.target) && !inSheetCompanion(ev.target)) {
       closeItemMenu();
     }
@@ -6988,86 +6984,6 @@ var BZW_home = (() => {
     }
   });
 
-  // src/core/utils.ts
-  function escapeHtml2(str) {
-    return str.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
-  }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
-  }
-  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
-    const target = (0, import_moment2.default)(date);
-    if (!target.isValid()) return "无效日期";
-    let hasExplicitTime = true;
-    if (typeof date === "string") {
-      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
-    }
-    const nowMoment = (0, import_moment2.default)(now);
-    const diffSeconds = nowMoment.diff(target, "seconds");
-    function shouldShowTime() {
-      const timeStr = target.format("HH:mm");
-      if (timeStr !== "00:00") return true;
-      return hasExplicitTime;
-    }
-    if (diffSeconds < 0) {
-      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
-    }
-    if (diffSeconds < 60) return "刚刚";
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
-    const todayStart = (0, import_moment2.default)(now).startOf("day");
-    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
-      const hours = Math.floor(diffMinutes / 60);
-      return `${hours}小时前`;
-    }
-    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
-    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
-    if (target.isSame(yesterdayStart, "day")) {
-      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
-    }
-    if (target.isSame(beforeYesterdayStart, "day")) {
-      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
-    }
-    const weekStart = (0, import_moment2.default)(now).startOf("week");
-    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
-      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
-    }
-    const isThisYear = target.year() === nowMoment.year();
-    if (isThisYear) {
-      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
-    }
-    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
-  }
-  function localDayKey(ts = Date.now()) {
-    const d = ts instanceof Date ? ts : new Date(ts);
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-  }
-  function stripMdExt(name) {
-    return String(name || "").replace(/\.md$/i, "");
-  }
-  function stripTitleMarks(s) {
-    return String(s || "").replace(/^《|》$/g, "");
-  }
-  function isUnderFolder(folder, path) {
-    const f = (folder || "").trim().replace(/\/+$/, "");
-    if (!f) return false;
-    return path === f || path.startsWith(f + "/");
-  }
-  var import_moment2;
-  var init_utils = __esm({
-    "src/core/utils.ts"() {
-      import_moment2 = __toESM(require_moment());
-      init_fake_obsidian();
-      init_app();
-    }
-  });
-
   // src/pomodoro/state.ts
   function createInitialState() {
     return { phase: "idle", endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
@@ -7406,7 +7322,6 @@ var BZW_home = (() => {
   var ReviewDataManager;
   var init_data2 = __esm({
     "src/review/data.ts"() {
-      init_utils();
       init_storage();
       init_settings_provider();
       init_fsrs();
@@ -7417,7 +7332,7 @@ var BZW_home = (() => {
         /** 加载条目（向后兼容旧字段；日期兼容 ISO 字符串与数字）。
          *  走模块级 getApp（reviewApp 为单例 dataManager，app 参数注入会绑定旧 app 导致跨测试/重开写错 vault） */
         async loadItems() {
-          var _a;
+          var _a, _b;
           const data = await jsonFileStore(getReviewFilePath()).read();
           const items = Array.isArray(data) ? data : [];
           const valid = [];
@@ -7426,10 +7341,10 @@ var BZW_home = (() => {
             if (!file) {
               item.file = null;
               item.isMissing = true;
-              item.name = item.name || stripMdExt(item.filePath.split("/").pop() || "") || item.filePath;
+              item.name = item.name || ((_a = item.filePath.split("/").pop()) == null ? void 0 : _a.replace(/\.md$/, "")) || item.filePath;
               item.isCompleted = item.completed || false;
               item.isOverdue = false;
-              item.currentStage = ((_a = item.stage) != null ? _a : (item.reviewStage || 1) - 1) + 1;
+              item.currentStage = ((_b = item.stage) != null ? _b : (item.reviewStage || 1) - 1) + 1;
               item.totalStages = TOTAL_STAGES;
               valid.push(item);
               continue;
@@ -8341,6 +8256,71 @@ var BZW_home = (() => {
     }
   });
 
+  // src/core/utils.ts
+  function escapeHtml2(str) {
+    return str.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
+  }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
+    const target = (0, import_moment2.default)(date);
+    if (!target.isValid()) return "无效日期";
+    let hasExplicitTime = true;
+    if (typeof date === "string") {
+      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
+    }
+    const nowMoment = (0, import_moment2.default)(now);
+    const diffSeconds = nowMoment.diff(target, "seconds");
+    function shouldShowTime() {
+      const timeStr = target.format("HH:mm");
+      if (timeStr !== "00:00") return true;
+      return hasExplicitTime;
+    }
+    if (diffSeconds < 0) {
+      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
+    }
+    if (diffSeconds < 60) return "刚刚";
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
+    const todayStart = (0, import_moment2.default)(now).startOf("day");
+    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
+      const hours = Math.floor(diffMinutes / 60);
+      return `${hours}小时前`;
+    }
+    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
+    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
+    if (target.isSame(yesterdayStart, "day")) {
+      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
+    }
+    if (target.isSame(beforeYesterdayStart, "day")) {
+      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
+    }
+    const weekStart = (0, import_moment2.default)(now).startOf("week");
+    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
+      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
+    }
+    const isThisYear = target.year() === nowMoment.year();
+    if (isThisYear) {
+      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
+    }
+    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
+  }
+  var import_moment2;
+  var init_utils = __esm({
+    "src/core/utils.ts"() {
+      import_moment2 = __toESM(require_moment());
+      init_fake_obsidian();
+      init_app();
+    }
+  });
+
   // src/core/flow-dialog.ts
   function buildFlowDialogParts(title, message, actions) {
     let buttons;
@@ -8387,7 +8367,7 @@ var BZW_home = (() => {
       popup.innerHTML = parts.html;
       mask.appendChild(popup);
       document.body.appendChild(mask);
-      const escHandle2 = escManager.register("q3-confirm", {
+      const escHandle3 = escManager.register("q3-confirm", {
         isVisible: () => mask.isConnected,
         close: () => settle(void 0)
       });
@@ -8401,7 +8381,7 @@ var BZW_home = (() => {
         if (settled) return;
         settled = true;
         if (activeSettle === settle) activeSettle = null;
-        escHandle2.unregister();
+        escHandle3.unregister();
         mask.remove();
         restoreFocus();
         resolve(v);
@@ -9161,10 +9141,12 @@ ${n.content.slice(0, 2e3)}
     ReviewWatcher: () => ReviewWatcher,
     __setAutoAddMergeMsForTests: () => __setAutoAddMergeMsForTests,
     __setRenameMergeMsForTests: () => __setRenameMergeMsForTests,
-    isUnderFolder: () => isUnderFolder2
+    isUnderFolder: () => isUnderFolder
   });
-  function isUnderFolder2(folder, path) {
-    return isUnderFolder(folder, path);
+  function isUnderFolder(folder, path) {
+    const f = (folder || "").trim().replace(/\/+$/, "");
+    if (!f) return false;
+    return path === f || path.startsWith(f + "/");
   }
   function __setAutoAddMergeMsForTests(ms) {
     REVIEW_AUTO_ADD_MERGE_MS = ms;
@@ -9175,7 +9157,6 @@ ${n.content.slice(0, 2e3)}
   var REVIEW_AUTO_ADD_MERGE_MS, RENAME_MERGE_MS, ReviewWatcher;
   var init_watch = __esm({
     "src/review/watch.ts"() {
-      init_utils();
       init_notice();
       init_flow_dialog();
       init_settings_provider();
@@ -9204,7 +9185,7 @@ ${n.content.slice(0, 2e3)}
           return Array.isArray(s == null ? void 0 : s.reviewExcludedNotes) ? s.reviewExcludedNotes : [];
         }
         isWatched(path) {
-          return this.watchedFolders.some((f) => isUnderFolder2(f, path));
+          return this.watchedFolders.some((f) => isUnderFolder(f, path));
         }
         isExcluded(path) {
           return this.excludedNotes.includes(path);
@@ -9319,7 +9300,7 @@ ${n.content.slice(0, 2e3)}
         }
         /** 未加入候选：目录内全部 md − 已加入 − 已排除（递归；挂起记录占位路径天然排除） */
         collectAutoaddCandidates(folder, items) {
-          return this.app.vault.getMarkdownFiles().map((f) => f.path).filter((p) => isUnderFolder2(folder, p)).filter((p) => !items.some((i) => i.filePath === p)).filter((p) => !this.isExcluded(p));
+          return this.app.vault.getMarkdownFiles().map((f) => f.path).filter((p) => isUnderFolder(folder, p)).filter((p) => !items.some((i) => i.filePath === p)).filter((p) => !this.isExcluded(p));
         }
         /** 选择监听文件夹后的存量收编确认（ticket 099）：确认 → 批量全部加入并返回 true；取消 → 什么都不做返回 false（不写排除名单） */
         async confirmBatchAddForFolder(folder) {
@@ -9338,7 +9319,7 @@ ${n.content.slice(0, 2e3)}
           let ok = 0;
           for (const p of candidates) {
             try {
-              await this.dataManager.addItem(p, stripMdExt(p.split("/").pop()));
+              await this.dataManager.addItem(p, p.split("/").pop().replace(/\.md$/, ""));
               ok++;
             } catch (e) {
             }
@@ -9357,7 +9338,7 @@ ${n.content.slice(0, 2e3)}
           if (idx !== -1) folders.splice(idx, 1);
           s.reviewWatchedFolders = folders;
           const before = Array.isArray(s.reviewExcludedNotes) ? [...s.reviewExcludedNotes] : [];
-          const kept = before.filter((p) => !isUnderFolder2(folder, p));
+          const kept = before.filter((p) => !isUnderFolder(folder, p));
           s.reviewExcludedNotes = kept;
           await saveSettings();
           return before.length - kept.length;
@@ -9704,7 +9685,6 @@ ${n.content.slice(0, 2e3)}
   var CORRECT_JUMP_DELAY_MS2, SprintSession, RATING_NAMES2;
   var init_sprint = __esm({
     "src/review/sprint.ts"() {
-      init_utils();
       init_notice();
       init_flow_dialog();
       init_ui();
@@ -10055,7 +10035,7 @@ ${n.content.slice(0, 2e3)}
           this.bindTop();
         }
         asideStates() {
-          return this.entries.map((e) => ({ name: stripTitleMarks(e.item.name), state: e.state }));
+          return this.entries.map((e) => ({ name: e.item.name.replace(/^《|》$/g, ""), state: e.state }));
         }
         renderQuestion() {
           var _a, _b, _c, _d, _e;
@@ -10096,7 +10076,7 @@ ${n.content.slice(0, 2e3)}
           const rating = accuracyToRating(acc);
           const passed = rating === "easy" || rating === "good";
           const remain = this.remainingCount;
-          const name = stripTitleMarks(entry.item.name);
+          const name = entry.item.name.replace(/^《|》$/g, "");
           const nextLabel = this.mode === "single" ? "完成 · 回面板" : remain > 0 ? `下一篇 · ${this.nextPendingName()}` : "完成本轮 · 结算";
           const ratingLine = this.mode === "redo" ? `${RATING_NAMES2[rating]} · 已解除待重做` : `${RATING_NAMES2[rating]} · 下次 ${entry.passNote || "已排期"}`;
           this.view = "result";
@@ -10121,7 +10101,7 @@ ${n.content.slice(0, 2e3)}
         }
         nextPendingName() {
           const nx = this.entries.find((e) => e.state === "pending");
-          return nx ? stripTitleMarks(nx.item.name).slice(0, 12) : "";
+          return nx ? nx.item.name.replace(/^《|》$/g, "").slice(0, 12) : "";
         }
         showSummary() {
           var _a, _b;
@@ -10510,7 +10490,7 @@ ${n.content.slice(0, 2e3)}
       const lastTs = (_a2 = h[h.length - 1]) == null ? void 0 : _a2.timestamp;
       const cnt = h.length;
       return {
-        name: stripTitleMarks(i.name),
+        name: i.name.replace(/^《|》$/g, ""),
         sub: `${cnt} 次`,
         meta: lastTs ? formatRelativeTime(new Date(lastTs)) : ""
       };
@@ -10570,7 +10550,7 @@ ${n.content.slice(0, 2e3)}
       }
     }
     status.innerHTML = `
-    <div style="font-size:15px;font-weight:600;color:var(--text-normal);">${escapeHtml2(stripTitleMarks(item.name))}</div>
+    <div style="font-size:15px;font-weight:600;color:var(--text-normal);">${escapeHtml2(item.name.replace(/^《|》$/g, ""))}</div>
     <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${stageText} · 共 ${history2.length} 次复习${curR || ""}</div>
   `;
     body.appendChild(status);
@@ -11081,7 +11061,7 @@ ${n.content.slice(0, 2e3)}
   }
   function pseudoMdFile(path) {
     const base = path.split("/").pop() || "";
-    return { path, basename: stripMdExt(base), extension: "md" };
+    return { path, basename: base.replace(/\.md$/, ""), extension: "md" };
   }
   function ensureReview(app) {
     if (initialized2) return;
@@ -11262,7 +11242,6 @@ ${n.content.slice(0, 2e3)}
   var initialized2, dataManager, uiManager, reviewWatcher, checkInterval, firstCheckTimer, unsubscribers;
   var init_review = __esm({
     "src/review/index.ts"() {
-      init_utils();
       init_notice();
       init_flow_dialog();
       init_domain_bus();
@@ -13051,7 +13030,10 @@ ${n.content.slice(0, 2e3)}
 
   // src/pomodoro/stats.ts
   function dayKey(ts) {
-    return localDayKey(ts);
+    const d = new Date(ts);
+    const m = pad2(d.getMonth() + 1);
+    const day = pad2(d.getDate());
+    return `${d.getFullYear()}-${m}-${day}`;
   }
   function todayCount(history2, now) {
     const today = dayKey(now);
@@ -14089,7 +14071,6 @@ ${n.content.slice(0, 2e3)}
   // src/recap/aggregate.ts
   init_settings_provider();
   init_storage();
-  init_utils();
 
   // src/home/weekly.ts
   init_settings_provider();
@@ -14186,7 +14167,6 @@ ${n.content.slice(0, 2e3)}
   // src/bookshelf/data.ts
   init_fake_obsidian();
   init_settings_provider();
-  init_utils();
 
   // src/bookshelf/state.ts
   init_settings_provider();
@@ -14343,7 +14323,9 @@ ${n.content.slice(0, 2e3)}
   }
   function toDateString(timestamp) {
     if (!Number.isFinite(timestamp) || !timestamp) return null;
-    return localDayKey(timestamp);
+    const d = new Date(timestamp);
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
   }
   function buildEpubItem(app, aggregate) {
     var _a, _b, _c;
@@ -14504,7 +14486,6 @@ ${n.content.slice(0, 2e3)}
   }
 
   // src/diary/parser.ts
-  var HEADING_REGEX = /^#\s*((?:\S+)+)\s+(\d{2}:\d{2})/u;
   function isEncryptedEntry(entry) {
     return typeof entry.content === "string" && entry.content.includes("🔐");
   }
@@ -14514,7 +14495,7 @@ ${n.content.slice(0, 2e3)}
     let currentEntry = null;
     let contentLines = [];
     let unparsedLines = 0;
-    const headingRegex = HEADING_REGEX;
+    const headingRegex = /^#\s*((?:\S+)+)\s+(\d{2}:\d{2})/u;
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const headingMatch = line.match(headingRegex);
@@ -14726,7 +14707,9 @@ ${n.content.slice(0, 2e3)}
     return JSON.parse(await app.vault.read(f));
   }
   function localDayStr(anchor) {
-    return localDayKey(anchor);
+    const d = new Date(anchor);
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
   }
   async function collectRecap(app, now = Date.now()) {
     var _a, _b, _c;
@@ -15851,8 +15834,15 @@ ${n.content.slice(0, 2e3)}
     mountIcons(tiles);
     mountRowInteractions(overlay, H.appRef, river);
   }
+  var escRegistered = false;
+  var escHandle2 = null;
   function registerEscapeHandler() {
-    registerPanelEsc("bz-home", () => !!H.currentOverlay, closeOverlay);
+    if (escRegistered) return;
+    escRegistered = true;
+    escHandle2 = escManager.register("bz-home", {
+      isVisible: () => !!H.currentOverlay,
+      close: closeOverlay
+    });
   }
 
   // src/home/index.ts

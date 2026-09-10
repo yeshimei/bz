@@ -38,6 +38,16 @@
 </head>
 <body class="theme-light">
 <script>
+  /* 宿主保真（演示钩子，评审壳专用）：Obsidian 移动端原生顶栏/底栏占位（约 44px+44px）
+     在 webview 视口之外，使 --bz-vvh（visualViewport 口径，issue 266）短于 100vh——
+     真机上面板若走 overlay 居中链，顶部会空出 44px（用户真机反馈 2026-09-10）。
+     壳按此口径模拟（--bz-vvh = 100vh - 88px），复现顶距供评审；配合 styles.css 里
+     「移动壳顶部对齐」修复，可见面板贴顶、底边落在可视视口下沿。 */
+  if (new URLSearchParams(location.search).get('mob')) {
+    document.documentElement.style.setProperty('--bz-vvh', 'calc(100vh - 88px)');
+  }
+</script>
+<script>
   (function () {
     var B = window.BZW_cinema;
     B.bootCinemaSim();

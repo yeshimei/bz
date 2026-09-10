@@ -44,6 +44,16 @@ function menuLabels(): (string | null)[] {
     .map((b) => { const sp = b.querySelectorAll('span'); return sp.length ? sp[sp.length - 1].textContent : null; });
 }
 
+/** 触屏按压（core/dom.longPress 手势）：touchstart → 停留 ms → touchend；越过 500ms 即长按。
+ *  jsdom 不自动合成 click，故短按不会误走「点卡开抽屉」路径，断言只反映长按入口本身 */
+async function touchPress(el: HTMLElement, ms: number): Promise<void> {
+  const ts = new TouchEvent('touchstart', { bubbles: true, cancelable: true });
+  Object.defineProperty(ts, 'touches', { value: [{ clientX: 10, clientY: 10 }] });
+  el.dispatchEvent(ts);
+  await tick(ms);
+  el.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+}
+
 /** 按文案点击浮层动作项 */
 function clickAction(label: string): HTMLElement {
   const items = [...document.querySelectorAll('.bz-fav-ctx button, .bz-fav-sh-acts button')] as HTMLElement[];
@@ -1255,6 +1265,24 @@ describe('移动端抽屉', () => {
     mask.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(10);
     expect(document.querySelector('.bz-fav-sheet')).toBeNull();
+  });
+
+  it('长按卡片 → 弹抽屉（统一手势 core/dom.longPress）：桌面长按不弹、移动端短按不弹、移动端长按弹', async () => {
+    const ctx = await setup();
+    seedVault(ctx.vault, [seedItem({ id: '1', title: '长按条目', url: '', desc: 'y' })]);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    // 桌面（Platform.isMobile=false）：手势过滤不放行
+    await touchPress(cards()[0], 550);
+    expect(document.querySelector('.bz-fav-sheet')).toBeNull();
+    // 移动端短按（未到 500ms）：不弹
+    Platform.isMobile = true;
+    await touchPress(cards()[0], 100);
+    expect(document.querySelector('.bz-fav-sheet')).toBeNull();
+    // 移动端长按：弹抽屉，头部标题正确（与点卡入口同一 openMobSheet）
+    await touchPress(cards()[0], 550);
+    expect(document.querySelector('.bz-fav-sheet')).not.toBeNull();
+    expect(document.querySelector('.bz-fav-sh-title')!.textContent).toBe('长按条目');
   });
 });
 

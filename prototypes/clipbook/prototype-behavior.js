@@ -1,4 +1,4 @@
-/* 源指纹 1104daf01826e928 · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 24495f00f9c7b18e · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/brief.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -5478,9 +5478,6 @@ var BZW_clipbook = (() => {
       return "&#39;";
     });
   }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
-  }
   function generateId(prefix) {
     prefix = prefix || "item";
     return prefix + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
@@ -5543,19 +5540,6 @@ var BZW_clipbook = (() => {
     }
     return null;
   }
-  function localDayKey(ts = Date.now()) {
-    const d = ts instanceof Date ? ts : new Date(ts);
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-  }
-  function stripMdExt(name) {
-    return String(name || "").replace(/\.md$/i, "");
-  }
-  function stripTitleMarks(s) {
-    return String(s || "").replace(/^《|》$/g, "");
-  }
-  function cmpZh(a, b) {
-    return String(a || "").localeCompare(String(b || ""), "zh");
-  }
   var import_moment;
   var init_utils = __esm({
     "src/core/utils.ts"() {
@@ -5589,6 +5573,7 @@ var BZW_clipbook = (() => {
     return false;
   }
   function onMouseDownCapture(ev) {
+    if (touchSettlePending) return;
     if (popupEl && popupEl.isConnected && !popupEl.contains(ev.target) && !inSheetCompanion(ev.target)) {
       closeItemMenu();
     }
@@ -8096,14 +8081,14 @@ ${bodyText.substring(0, 6e3)}`;
     if (!s) return "";
     return s.length > max ? s.slice(0, max) + "…" : s;
   }
-  function localDayKey2(ts = Date.now()) {
+  function localDayKey(ts = Date.now()) {
     const d = new Date(ts);
-    return `${d.getFullYear()}-${pad22(d.getMonth() + 1)}-${pad22(d.getDate())}`;
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
   }
   function localDatetime(ts = Date.now()) {
     const d = new Date(ts);
-    const hms = `${pad22(d.getHours())}:${pad22(d.getMinutes())}:${pad22(d.getSeconds())}`;
-    return `${localDayKey2(ts)} ${hms}`;
+    const hms = `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+    return `${localDayKey(ts)} ${hms}`;
   }
   function toDatetime(dateStr) {
     try {
@@ -8114,7 +8099,7 @@ ${bodyText.substring(0, 6e3)}`;
       return (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").substring(0, 19);
     }
   }
-  function pad22(n) {
+  function pad2(n) {
     return String(n).padStart(2, "0");
   }
   var init_constants = __esm({
@@ -9080,7 +9065,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function briefDayKey(b) {
     const p = Number(b && b.pubdate) || 0;
-    if (p > 0) return localDayKey2(p * 1e3);
+    if (p > 0) return localDayKey(p * 1e3);
     const d = String(b && (b.date || b.fetchedAt) || "").slice(0, 10);
     return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : "未知日期";
   }
@@ -9266,12 +9251,11 @@ ${bodyText.substring(0, 6e3)}`;
       if (a.url && byUrl.has(String(a.url))) continue;
       bump(siteName(a), true);
     }
-    return [...rows.values()].sort((x, y) => y.total - x.total || y.unread - x.unread || cmpZh(x.site, y.site));
+    return [...rows.values()].sort((x, y) => y.total - x.total || y.unread - x.unread || x.site.localeCompare(y.site, "zh"));
   }
   var PLATFORM_DOMAIN;
   var init_store = __esm({
     "src/clipbook/store.ts"() {
-      init_utils();
       init_news_data();
       init_constants();
       init_write_queue();
@@ -9709,14 +9693,14 @@ ${bodyText.substring(0, 6e3)}`;
     const fm = cache && cache.frontmatter;
     if (!fm) return null;
     if (!fm.url || !fm.created) return null;
-    const title = file.basename || stripMdExt(String(file.name || ""));
+    const title = file.basename || String(file.name || "").replace(/\.md$/, "");
     let created = new Date(fm.created).valueOf();
     if (isNaN(created)) created = Date.now();
     let backlinkNames = [];
     try {
       const bl = (getBacklinks || (() => null))(file);
       if (bl && bl.data && typeof bl.data.size === "number" && bl.data.size > 0) {
-        backlinkNames = Array.from(bl.data.keys()).map((p) => String(p || "").split("/").pop() || "").map((n) => stripTitleMarks(stripMdExt(n)));
+        backlinkNames = Array.from(bl.data.keys()).map((p) => String(p || "").split("/").pop() || "").map((n) => n.replace(/^《|》$/g, "").replace(/\.md$/, ""));
       }
     } catch (e) {
     }
@@ -9757,7 +9741,6 @@ ${bodyText.substring(0, 6e3)}`;
   }
   var init_scan = __esm({
     "src/clipbook/scan.ts"() {
-      init_utils();
       init_app();
     }
   });
@@ -10221,7 +10204,7 @@ ${body}`;
     const explicit = String(name != null ? name : "").trim();
     if (explicit) return explicit;
     const base = String(path != null ? path : "").replace(/\\/g, "/").split("/").pop() || "";
-    return stripMdExt(base) || String(path != null ? path : "");
+    return base.replace(/\.md$/i, "") || String(path != null ? path : "");
   }
   function isUrlLikeSourceText(text) {
     const s = String(text != null ? text : "").trim();
@@ -10279,7 +10262,6 @@ ${body}`;
   var URL_LIKE_RE, TRACK_KEYS;
   var init_source = __esm({
     "src/knowledge/source.ts"() {
-      init_utils();
       URL_LIKE_RE = /^(?:[\w-]+\.)+[A-Za-z]{2,}(?::\d+)?(?:[/?#][^\s]*)?$/;
       TRACK_KEYS = /* @__PURE__ */ new Set([
         "vd_source",
@@ -10966,11 +10948,11 @@ ${sample}`,
     return root.querySelector(sel);
   }
   function esc2(s) {
-    return escapeHtml(String(s != null ? s : ""));
+    return String(s != null ? s : "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   }
   function shortNoteName(path) {
     const base = String(path || "").replace(/\\/g, "/").split("/").pop() || "";
-    return stripMdExt(base) || String(path || "");
+    return base.replace(/\.md$/i, "") || String(path || "");
   }
   function humanizeError(reason) {
     const s = String(reason != null ? reason : "").trim();
@@ -11455,7 +11437,7 @@ ${sample}`,
             const srcFile = app.vault.getAbstractFileByPath(src.path);
             if (srcFile) {
               const text = await app.vault.read(srcFile);
-              const linkText = `[[${stripMdExt(path)}|${base}]]`;
+              const linkText = `[[${path.replace(/\.md$/i, "")}|${base}]]`;
               const updated = appendRelatedLine(text, linkText);
               if (updated !== text) await app.vault.modify(srcFile, updated);
             }
@@ -12804,7 +12786,7 @@ ${sample}`,
   function markHandledAndBump(raw, action) {
     const key = articleKeyOf(raw);
     const platform = raw.platform || "未知";
-    const today = localDayKey2();
+    const today = localDayKey();
     return enqueueNewsWrite(async () => {
       const res = await readNewsData();
       if (!res.ok || res.missing) return;
@@ -12888,7 +12870,7 @@ ${sample}`,
     await enqueueNewsWrite(async () => {
       const res = await readNewsData();
       if (!res.ok || res.missing) return;
-      const today = localDayKey2();
+      const today = localDayKey();
       const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
       let bumped = 0;
       const list = (res.data.articles || []).map((a) => {
@@ -12924,7 +12906,7 @@ ${sample}`,
           else s.totalSkipped = Math.max(0, (Number(s.totalSkipped) || 0) - 1);
           const platform = a.platform || "未知";
           s.byPlatform[platform] = Math.max(0, (Number(s.byPlatform[platform]) || 0) - 1);
-          const day = localDayKey2();
+          const day = localDayKey();
           s.byDate[day] = Math.max(0, (Number(s.byDate[day]) || 0) - 1);
         }
         const restored = { ...a };
@@ -13416,7 +13398,9 @@ ${sample}`,
     railListEl.innerHTML = html;
     mountIcons(railListEl);
     if (railFootEl) {
-      railFootEl.innerHTML = railFootHtml(((_d = (_c = M.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0);
+      const d = /* @__PURE__ */ new Date();
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      railFootEl.innerHTML = railFootHtml(((_d = (_c = M.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[key]) || 0);
     }
     const rows = railListEl.querySelectorAll("[data-src]");
     rows.forEach((row) => {
@@ -13958,7 +13942,7 @@ ${sample}`,
         order.push(a);
       });
     }
-    chapters.sort((x, y) => y.activeN + y.readN + y.savedN - (x.activeN + x.readN + x.savedN) || y.unread - x.unread || cmpZh(x.site, y.site));
+    chapters.sort((x, y) => y.activeN + y.readN + y.savedN - (x.activeN + x.readN + x.savedN) || y.unread - x.unread || x.site.localeCompare(y.site, "zh"));
     mobItemById = byId;
     mobItemOrder = order;
     if (!chapters.length) {
