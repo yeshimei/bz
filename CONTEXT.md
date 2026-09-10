@@ -178,7 +178,7 @@ _Avoid_: 闪念（旧功能名，仅存于「闪念笔记」文档类型语义�
 
 **闪念笔记 (Flash Note)**: 卡片盒目录下的快速笔记**文档类型**（path-classify 分类 `'flash'`；smartcat 观察来源标签与 credibility 0.9 档位沿用此词汇）。注意与「第二大脑」功能相区分：前者是笔记类型，后者是管理/检索它们的功能模块。
 
-**内容首页 (Content Home)**: 域 `src/home`（ticket 177），内容式首页弹窗（命令 `bz-home-open`，lucide layout-grid）：顶部问候/搜索、域卡网格（右下徽标 = 各域真实统计，点卡执行对应 `bz-*` 命令）、未钉域迷你 chips、移动端统计条与两列卡；编辑模式可增删钉选域（存 home.json pinned，默认 diary/cinema/review）。旧入口页（launcher 域，bz-home 命令与手势）已退役删除（ADR-0093），本域为唯一入口首页。统计直读各域数据层、失败静默回落。
+**内容首页 (Content Home)**: 域 `src/home`（ticket 177），内容式首页弹窗（命令 `bz-home-open`，lucide layout-grid）：顶部问候/周历、域入口（桌面 = 入口行 / 移动 = 两列瓦片，点行执行对应 `bz-*` 命令）、时间线、预告；移动端统计条。旧入口页（launcher 域，bz-home 命令与手势）已退役删除（ADR-0093），本域为唯一入口首页。统计直读各域数据层、失败静默回落。**入口顺序与显隐（issue 267）** = `home.json` **v3 `{version,desk[],mob[],hiddenDesk[],hiddenMob[]}`——顺序与隐藏都按端各一份**，桌面删的域不会从移动端消失（v2 单一 `hidden` 两端共用是 bug，读取时两端各继承一份迁移；写盘提交整份、本端编辑不动另一端）。编辑入口 = 设置面板「首页 → 入口」组**内联**（`entry-editor.ts` 的 `mountHomeEntryEditor`）：拖动排序 + 点 × 移除，**移除的域不分区、无「已隐藏」标题**，就地排到同一列表最下面（`.bz-home-ent-row--off` 弱化 + 拖柄隐 + 点 + 加回）。同域「外观」组（issue 246 范式，占位键 homeLayout/homeSkin）置顶。域右键菜单/长按抽屉走 `core/item-actions` 的 `DOMAIN_MENU`（只放域自己的快捷动作，**本表没有条目的域不挂浮层**）。_Avoid_: 钉选、pinned（v1/v2 遗留机制，已退役）、编辑模式、编辑入口…按钮（浮层弹窗形态已退役）
 _Avoid_: 新标签页、主页、dashboard、启动台
 
 ### 番茄钟域（规划中，ticket 26）
