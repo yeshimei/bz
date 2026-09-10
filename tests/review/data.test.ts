@@ -1,3 +1,4 @@
+import { makeApp } from '../helpers/app';
 /**
  * 复习计划数据层测试（ticket 16 修正版）：ISO 日期/兼容迁移/updateItem(filePath,fn)
  */
@@ -8,9 +9,6 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { ReviewDataManager, REVIEW_FILE_PATH, getReviewFilePath } from '../../src/review/data';
 
-function makeApp(vault: MockVault) {
-  return mockAppWithVault(vault);
-}
 
 describe('ReviewDataManager', () => {
   beforeEach(() => {

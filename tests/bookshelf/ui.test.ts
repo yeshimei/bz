@@ -1,3 +1,4 @@
+import { makeApp } from '../helpers/app';
 /**
  * 书库（bookshelf）UI 层测试：书脊墙渲染（issue 218 1:1 复刻）——
  * 行内标题/统计标签筛选/分类分区/倒叠区/搜索/排序三档/借书卡（改状态进度日期书评/删除/EPUB 只读/直达）
@@ -13,9 +14,6 @@ import { ensureBookshelf, unloadBookshelf, openBookshelf, openBookshelfReport } 
 import { createOverlay, closeOverlay, applyBookshelfSkin, bsSkinClass } from '../../src/bookshelf/ui';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 
-function makeApp(vault: MockVault) {
-  return mockAppWithVault(vault);
-}
 
 /** 轮询等待报告分片渲染完成（成功反馈 toast = finishDone 标记） */
 async function waitReport(content: HTMLElement, timeout = 6000): Promise<void> {

@@ -1,3 +1,4 @@
+import { makeApp } from '../helpers/app';
 /**
  * 复习计划核心应用补测（覆盖率目标）：markReview 防御分支与 FSRS 缩放兜底、
  * regenerateQuestions 未初始化、redoReviewLoop popup 缺失路径、quizReviewLoop 空题/失败
@@ -13,9 +14,6 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { reviewApp, __setReviewAwayGraceMsForTests } from '../../src/review/app';
 import { ReviewDataManager, REVIEW_FILE_PATH } from '../../src/review/data';
 
-function makeApp(vault: MockVault) {
-  return mockAppWithVault(vault);
-}
 
 async function seedOverdue(vault: MockVault, partial: any = {}) {
   const now = new Date();

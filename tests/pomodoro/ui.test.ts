@@ -1,3 +1,4 @@
+import { makeApp } from '../helpers/app';
 /**
  * 番茄钟弹窗 UI 测试（ticket 28）：渲染/交互/单例/后台继续/恢复落盘
  * fake timers（含 Date）：tick 轮询与倒计时时间推进可控。
@@ -16,9 +17,6 @@ import { enqueueFileTask } from '../../src/core/storage';
 
 const T0 = new Date('2026-08-10T10:00:00').getTime();
 
-function makeApp(vault: MockVault) {
-  return mockAppWithVault(vault);
-}
 
 function setup(vault: MockVault = new MockVault(), settings: any = {}) {
   const app = makeApp(vault);

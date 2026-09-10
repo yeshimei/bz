@@ -1,3 +1,4 @@
+import { makeApp } from '../helpers/app';
 /**
  * 复习计划 UI 测试（2026-09-04 三区队列形态）：常驻 DOM/三区渲染/到期可点/归档/底部信息行/
  * 难度弹窗 XSS/移动全屏/搜索。旧单列 UI 测试随形态重写收编于此（含原 ui-cov/ui-enhance 有效断言）。
@@ -16,9 +17,6 @@ import { reviewApp } from '../../src/review/app';
 
 const DAY0 = 86400e3;
 
-function makeApp(vault: MockVault) {
-  return mockAppWithVault(vault);
-}
 
 function seed(vault: MockVault, extra: any[] = []) {
   const now = new Date();

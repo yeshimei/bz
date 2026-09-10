@@ -1,3 +1,4 @@
+import { todayStr } from '../helpers/date';
 /**
  * 日记观察集成（ticket 077，ADR-0030）：ensure 后模拟日记 create/modify/delete/rename →
  * 每条独立 10 分钟结算（测试注入 60ms 真实 timer，规避 fake timers 与反射调度相互作用）。
@@ -54,11 +55,6 @@ const readBehavior = (): any[] => __getSmartcatInternals().data.memory.behaviorS
 const timerKey = (path: string, date: string, time: string) => `${path}\u0001${date}\u0001${time}`;
 
 /** 今天日期（本地时区，与 index diaryTodayStr 同语义——重启基线测试用） */
-function todayStr(): string {
-  const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
 
 /** 距今 offset 天日期（本地时区，与 index diaryDateStr 同语义——基线扩窗测试用） */
 function dateOffset(offset: number): string {

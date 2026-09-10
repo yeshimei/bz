@@ -1,3 +1,4 @@
+import { makeApp } from '../helpers/app';
 /**
  * 番茄钟数据层测试（ticket 27）：pomodoro.json 读写 + storagePath 优先 + 容错
  */
@@ -9,9 +10,6 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { PomodoroDataManager, POMODORO_FILE_PATH, getPomodoroFilePath, defaultPomodoroData } from '../../src/pomodoro/data';
 import { createInitialState, recover, DEFAULT_DURATIONS, DEFAULT_OPTIONS } from '../../src/pomodoro/state';
 
-function makeApp(vault: MockVault) {
-  return mockAppWithVault(vault);
-}
 
 describe('getPomodoroFilePath', () => {
   beforeEach(() => {

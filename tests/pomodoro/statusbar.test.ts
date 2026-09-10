@@ -1,3 +1,4 @@
+import { makeApp } from '../helpers/app';
 /**
  * 番茄钟状态栏测试（ticket 29）：🍅 mm:ss / 空闲灰态 / 点击开弹窗 / 卸载无残留
  */
@@ -12,9 +13,6 @@ import { createInitialState } from '../../src/pomodoro/state';
 
 const T0 = new Date('2026-08-10T10:00:00').getTime();
 
-function makeApp(vault: MockVault) {
-  return mockAppWithVault(vault);
-}
 
 describe('番茄钟状态栏', () => {
   let container: HTMLElement;
