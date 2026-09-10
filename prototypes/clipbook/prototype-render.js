@@ -1,3 +1,5 @@
+/* 源指纹 035ea1df0905ef90 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["src/clipbook/render.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/clipbook/render.ts → window.BZR_clipbook（评审壳预览包，ADR-0104） */
 var BZR_clipbook = (() => {
   var __defProp = Object.defineProperty;

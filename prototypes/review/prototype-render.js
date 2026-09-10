@@ -1,3 +1,5 @@
+/* 源指纹 9a6b196f33ed18c9 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["src/review/fsrs.ts","src/review/queue.ts","src/review/render.ts","src/review/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/review/render.ts → window.BZR_review（评审壳预览包，ADR-0104） */
 var BZR_review = (() => {
   var __defProp = Object.defineProperty;
