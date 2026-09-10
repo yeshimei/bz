@@ -35,8 +35,9 @@
 
   /* 桌面外景（真行为 iframe：overlay append iframe body，宽度决定布局） */
   .demo-dt { flex: none; width: 920px; height: 640px; }
-  /* 移动外景：宽恒 412 CSS px（= 1440 物理 px = 整屏宽，1440/3.5=411.4 ↑），高度两档：
-   *   满屏 915（WebView 全屏视口 = 整块屏幕，贴手机上对比用，默认）
+  /* 移动外景：宽恒 412 CSS px（= 1440 物理 px = 整屏宽，1440/3.5=411.4 ↑）；高度自由可调
+   *   （滑块 650~1000 CSS px），另有两个快捷档：
+   *   满屏 915（WebView 全屏视口 = 整块屏幕，贴手机屏幕对比应完全重合，默认）
    *   内容区 827（再扣 MIUI 状态栏 24 + Obsidian 底栏 48 + 手势区 16，看实际可用区）
    *   412 仍 ≤768 → 移动布局命中。
    *
@@ -66,6 +67,7 @@
   #rulerBar input[type="number"] { width: 58px; border: 1px solid #c9c2b2; border-radius: 3px; padding: 1px 3px; font: 11px 'Microsoft YaHei'; color: #6b6455; }
   #rulerBar input[type="range"] { width: 148px; accent-color: #b3564d; vertical-align: middle; }
   #rulerBar button { border: 1px solid #c9c2b2; background: #fff; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; border-radius: 3px; padding: 1px 7px; }
+  #rulerBar button.on { background: #b3564d; border-color: #b3564d; color: #fff; }
   #rulerBar .si { color: #6b6455; }
   .vbadge .ok { color: #3d8f5d; }
   .vbadge .bad { color: #b3564d; }
@@ -77,7 +79,7 @@
   <div id="rulerBar" hidden>
     <div class="ruler" title="外缘宽度 = 412 CSS px（= 屏幕宽）"></div>
     <div class="ruler-row">量这条线的<b>外缘宽度</b>（或拿手机贴屏幕比 <b>屏幕宽</b>，别量机身边框）→ <input id="calibMm" type="number" step="0.5" min="10" placeholder="mm"><button id="calibGo">校准</button><button id="calibClear">清除</button></div>
-    <div class="ruler-row">高度 <label><input type="checkbox" id="fullH" checked>满屏 915（整块屏幕）</label><span class="si">不勾 = 内容区 827（扣状态栏/底栏）</span></div>
+    <div class="ruler-row">高度 <button id="hFull">满屏 915</button><button id="hContent">内容区 827</button><input id="hRange" type="range" min="650" max="1000" step="1" title="自由调（CSS px）"><span class="si" id="hInfo"></span><span class="si">贴手机比：宽对屏幕宽，高拖到上下边缘都重合</span></div>
     <div class="ruler-row">微调 <input id="scaleRange" type="range" min="0.3" max="1" step="0.001"><span class="si" id="scaleInfo"></span></div>
   </div>
 
@@ -150,7 +152,10 @@
   const H_KEY = 'bz-proto:home-mob-h';                   // 高度档：915 满屏 / 827 内容区
   const toggle1to1 = document.querySelector('#one2one');
   const rulerBar = document.querySelector('#rulerBar');
-  const fullH = document.querySelector('#fullH');
+  const hFull = document.querySelector('#hFull');
+  const hContent = document.querySelector('#hContent');
+  const hRange = document.querySelector('#hRange');
+  const hInfo = document.querySelector('#hInfo');
   const rangeEl = document.querySelector('#scaleRange');
   const scaleInfo = document.querySelector('#scaleInfo');
   let scaleNow = 1;
@@ -166,10 +171,14 @@
       : `×${scaleNow.toFixed(3)}（未校准，估算值）`;
   };
   const setH = (h) => {
+    h = Math.min(1400, Math.max(400, Math.round(h)));
     hNow = h;
     document.documentElement.style.setProperty('--mob-h', h + 'px');
     localStorage.setItem(H_KEY, String(h));
-    fullH.checked = h === FULL_H;
+    hRange.value = String(Math.min(1000, Math.max(650, h)));
+    hFull.classList.toggle('on', h === FULL_H);
+    hContent.classList.toggle('on', h === CONTENT_H);
+    hInfo.textContent = h === FULL_H ? '满屏' : h === CONTENT_H ? '内容区' : `${h}px`;
     refreshInfo();
   };
   const setScale = (s) => {
@@ -198,10 +207,13 @@
     setScale(GUESS_SCALE);
   });
   rangeEl.addEventListener('input', () => setScale(parseFloat(rangeEl.value)));
-  fullH.addEventListener('change', () => setH(fullH.checked ? FULL_H : CONTENT_H));
+  hFull.addEventListener('click', () => setH(FULL_H));
+  hContent.addEventListener('click', () => setH(CONTENT_H));
+  hRange.addEventListener('input', () => setH(parseFloat(hRange.value)));
   { const mode = localStorage.getItem(MODE_KEY);        // null = 首次访问
     const on = mode === null ? true : mode === '1';     // 首次默认开真机档
-    setH(parseFloat(localStorage.getItem(H_KEY)) === CONTENT_H ? CONTENT_H : FULL_H);  // 默认满屏
+    const savedH = parseFloat(localStorage.getItem(H_KEY));
+    setH(Number.isFinite(savedH) && savedH > 0 ? savedH : FULL_H);   // 默认满屏 915
     setScale(on ? (savedScale() || GUESS_SCALE) : 1); }
 
   document.querySelector('#reset').addEventListener('click', () => {
