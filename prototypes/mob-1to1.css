@@ -1,0 +1,26 @@
+/* 移动端评审外景 = 小米13U 真机尺寸（物理 1:1），**全域共用**（13 个行为单源域）。
+ *
+ * 只提供「尺寸 + 缩放」，外观（边框 / 圆角 / 阴影 / 背景）仍由各域 prototype.html
+ * 自己的 .demo-mob 规则给 —— 本文件不放任何颜色。
+ *
+ * 尺寸推导：
+ *   - 1440 × 3200 物理 px ÷ dpr 3.5 = 412 × 915 CSS px = 整块屏幕（412 仍 ≤768 → 移动布局命中）
+ *   - 本机实测「412 CSS px 基准线」= 118mm → scale = 70.2 / 118 ≈ 0.5949
+ *     → 外景在屏幕上为 70.2 × 155.9mm，等于真机屏幕（实测 70.2 × 156.0mm）
+ *   - 换显示器只需改 prototypes/mob-1to1.js 里的 RULER_MM 一个常量
+ *
+ * ⚠️ 缩放用 transform（只缩视觉），**绝不改 iframe 的 width/height** ——
+ *    那会连 iframe 内部视口一起改，动到 @media ≤768 的布局判据。
+ * 占位交给外层 .demo-mob-wrap（尺寸 = 未缩放尺寸 × scale）。
+ */
+.demo-mob-wrap {
+  flex: none;
+  display: block;
+  width: calc(412px * var(--mob-scale, 1));
+  height: calc(915px * var(--mob-scale, 1));
+}
+
+.demo-mob {
+  transform: scale(var(--mob-scale, 1));
+  transform-origin: top left;
+}

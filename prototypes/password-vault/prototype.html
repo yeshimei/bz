@@ -16,7 +16,7 @@
   │ 行为单源（issue 251/ADR-0106）：交互逻辑全部是插件同款 ui.ts 依赖链——     │
   │   经 ./prototype-behavior.js（src/password-vault/fake-sim.ts 构建，       │
   │   alias obsidian→公共假层）在下方两个 iframe 视图里跑真行为；             │
-  │   桌面 iframe 1200px 宽视口 = 桌面 1060 居中卡本体；移动 iframe 396px =  │
+  │   桌面 iframe 1200px 宽视口 = 桌面 1060 居中卡本体；移动 iframe 412×915 =  │
   │   styles.css 移动全屏单列态。数据 = localStorage fake vault（演示库：     │
   │   主密码 demo；.safe.enc + 密文镜像由真 SafeManager 加密链离线生成，      │
   │   双 iframe 共享同一数据源）。锁屏安全机制（冷却/首设确认）真码运行。     │
@@ -31,6 +31,8 @@
      iframe boot 时 window.PWV_DATA 还是 undefined，种子静默空跑（评审壳时序坑） -->
 <script src="./prototype-icons.js"></script>
 <script src="./prototype-data.js"></script>
+<link rel="stylesheet" href="../mob-1to1.css">
+<script src="../mob-1to1.js"></script>
 <style>
   /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -47,8 +49,8 @@
 
   /* 桌面外景（真行为 iframe：面板 append iframe body，本体 1060 居中卡来自 styles.css） */
   .demo-dt { flex: none; width: 1200px; height: 800px; }
-  /* 移动外景：396px iframe → 全屏单列态铺满即手机框尺寸 */
-  .demo-mob { width: 396px; height: 780px; border-radius: 26px; overflow: hidden; flex: none;
+  /* 移动外景：412×915 iframe → 全屏单列态铺满即手机框尺寸 */
+  .demo-mob { width: 412px; height: 915px; border-radius: 26px; overflow: hidden; flex: none;
     border: 1px solid #d8d1c0; box-shadow: 0 8px 30px rgba(0,0,0,.14); background: #f5f2ec; }
   .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
 
@@ -62,9 +64,9 @@
 </head>
 <body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark，壳内必须补一类才不透明 -->
   <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="密码本·桌面"></iframe></div>
-  <div id="mobHost" class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="密码本·移动"></iframe></div>
+  <div id="mobHost" class="demo-mob-wrap"><div class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="密码本·移动"></iframe></div></div>
 
-  <div class="vbadge">密码本 · 真行为单源预览（桌面=真 ui.ts 跑在 1200px，移动=396px）· 演示库主密码 demo
+  <div class="vbadge">密码本 · 真行为单源预览（桌面=真 ui.ts 跑在 1200px，移动=412×915）· 演示库主密码 demo
     <button id="mobToggle">隐藏移动端</button>
     <button id="reset">重置演示数据</button>
     <span id="stResult"></span>
