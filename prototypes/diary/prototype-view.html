@@ -23,18 +23,6 @@
 <link rel="stylesheet" href="../../src/core/ui/tokens.css">
 <link rel="stylesheet" href="../../src/core/ui/components.css">
 <link rel="stylesheet" href="../../src/diary/styles.css">
-<!-- 评审变体皮肤位：?skin=warm|quiet|darkroom —— 必须排在域样式之后（同序覆盖视觉层），
-     空值时整条移除，常态即「现状」；markup/行为不受影响（纯视觉层，ADR-0104 单源不破）。 -->
-<link rel="stylesheet" id="skinCss" href="about:blank">
-<script>
-  (function () {
-    var m = /(?:^|[?&])skin=([a-z0-9-]+)/.exec(location.search);
-    window.__BZ_SKIN__ = m ? m[1] : '';
-    var el = document.getElementById('skinCss');
-    if (m) el.setAttribute('href', './skins/' + m[1] + '.css');
-    else el.parentNode.removeChild(el);
-  })();
-</script>
 <script src="./prototype-icons.js"></script>
 <script src="./prototype-data.js"></script>
 <script src="./prototype-behavior.js"></script>
@@ -58,8 +46,6 @@
       body.classList.remove('theme-light');
       body.classList.add('theme-dark');
     }
-    // 皮肤类挂 body：皮肤的覆盖规则一律以 body.skin-<名> 兜底（特异性稳赢域样式）
-    if (window.__BZ_SKIN__) body.classList.add('skin-' + window.__BZ_SKIN__);
     var B = window.BZW_diary;
     B.bootDiarySim();
     B.openPanel();
