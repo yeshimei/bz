@@ -71,6 +71,98 @@ async function getPlayUrls({ bvid, cid, cookie, fetchJson }) {
   return j.data.dash
 }
 
+// ---- UP 主投稿列表（issue 263「每日简报」）----
+// x/space/wbi/arc/search（wbi 签名 + Cookie）→ 该 mid 的投稿。相比动态流（x/polymer/web-dynamic/v1/feed/space）：
+// 直接给 bvid/created/description，不受动态保留条数限制；length 字段是字符串（"MM:SS"/"HH:MM:SS"）需转秒。
+// 返回按接口顺序（order=pubdate 倒序）的 [{bvid,title,pubdate,duration,pic,description}]
+async function getUpVideos({ mid, cookie, fetchJson, ps = 10, pn = 1 }) {
+  const keys = await getWbiKeys(cookie, fetchJson)
+  const qs = wbiSign(
+    { mid: String(mid), ps: String(ps), pn: String(pn), order: 'pubdate', tid: '0', order_avoided: 'true' },
+    keys.imgKey, keys.subKey,
+  )
+  const j = await fetchJson(`https://api.bilibili.com/x/space/wbi/arc/search?${qs}`, cookie ? { Cookie: cookie } : {})
+  if (j.code !== 0) throw new Error(`投稿列表获取失败：${j.message || j.code}`)
+  const vlist = (j.data && j.data.list && j.data.list.vlist) || []
+  return vlist.map(v => ({
+    bvid: v.bvid || '',
+    title: v.title || '',
+    pubdate: Number(v.created) || 0,
+    duration: parseLenStr(v.length),
+    pic: v.pic || '',
+    description: v.description || '',
+    author: v.author || '',
+  })).filter(v => v.bvid)
+}
+
+// 投稿列表 length 字段是字符串（"MM:SS" / "HH:MM:SS"）→ 秒；非法返回 0
+function parseLenStr(s) {
+  const parts = String(s == null ? '' : s).split(':').map(p => Number(p))
+  if (!parts.length || parts.some(n => !isFinite(n))) return 0
+  return parts.reduce((acc, n) => acc * 60 + n, 0)
+}
+
+// 取视频第 1 P 的 cid（x/player/pagelist）。
+// 注意：接口 data 为**裸数组**（`data:[{cid,page,…}]`），历史形态 `data.pages[]` 亦兼容。
+async function getCid({ bvid, cookie, fetchJson }) {
+  const j = await fetchJson(`https://api.bilibili.com/x/player/pagelist?bvid=${encodeURIComponent(bvid)}`, cookie ? { Cookie: cookie } : {})
+  if (j.code !== 0) throw new Error(`分P信息获取失败：${j.message || j.code}`)
+  const d = j.data
+  const pages = Array.isArray(d) ? d : (d && d.pages) || []
+  return pages.length ? pages[0].cid : null
+}
+
+// ---- 字幕优先链路（issue 263）----
+// x/player/v2 → data.subtitle.subtitles[]（中文优先）→ subtitle_url 拉 JSON → body[].content 拼接全文。
+// 无字幕 / 接口异常 / 空文本 → 返回 null（调用方回退转写分支）。
+// 注意：subtitle_url 形如 `//aisubtitle.hdslb.com/…`（协议相对），必须补 `https:` 前缀才能直连。
+//
+// **可信度校验（issue 263 实测发现，必须做）**：B 站对部分稿件返回的 AI 字幕与视频**内容不符**——
+// 实测 `BV1ZSb36zE9G`（时长 39s、cid 稳定）同一个 cid 两次调用拿到的字幕分别讲「贵阳街头炒菜」（756s 轨）
+// 与「重生/小娘子」（138 行），且字幕时间轴远超视频时长。营销号/标题党稿件上尤其常见。
+// 因此字幕**不可盲信**：命中后仍须过 checkSubtitlePlausible（时长越界 / 字速不可能 → 判不可信），
+// 不可信则**回退音频转写**。getSubtitle 命中但不可信时返回 {text, lang, rejected:'原因'}，调用方据此回退。
+async function getSubtitle({ bvid, cid, cookie, fetchJson, duration }) {
+  const j = await fetchJson(`https://api.bilibili.com/x/player/v2?bvid=${encodeURIComponent(bvid)}&cid=${encodeURIComponent(cid)}`, cookie ? { Cookie: cookie } : {})
+  if (!j || j.code !== 0) return null
+  const subs = (j.data && j.data.subtitle && j.data.subtitle.subtitles) || []
+  if (!Array.isArray(subs) || !subs.length) return null
+  // 中文轨优先：B 站 lan 实际值是 `ai-zh`（AI 中文）/`zh-CN`/`zh-Hans` 等——**不是**以 zh 开头，
+  // 因此先精确匹配 ai-zh，再退化为「含 zh」，最后兜底首轨。
+  const pick = subs.find(s => /^ai-zh$/i.test((s && s.lan) || ''))
+    || subs.find(s => /zh/i.test((s && s.lan) || ''))
+    || subs[0]
+  let u = String((pick && pick.subtitle_url) || '')
+  if (!u) return null
+  if (u.indexOf('//') === 0) u = 'https:' + u
+  const body = await fetchJson(u, cookie ? { Cookie: cookie } : {})
+  const lines = Array.isArray(body && body.body) ? body.body : []
+  const segs = lines
+    .map(l => ({ text: String((l && l.content) || '').trim(), to: Number(l && l.to) || 0 }))
+    .filter(s => s.text)
+  const text = segs.map(s => s.text).join(' ')
+  if (!text) return null
+  const lang = (pick && (pick.lan_doc || pick.lan)) || ''
+  const maxTo = segs.reduce((m, s) => Math.max(m, s.to), 0)
+  const check = checkSubtitlePlausible({ text, maxTo, duration })
+  return check.ok ? { text, lang } : { text, lang, rejected: check.reason }
+}
+
+/** 字幕可信度：字幕时长不得显著超出视频时长；字速（字/秒）不得超出人类语速上限。
+ *  duration 未知（0）时跳过时长项校验，仅查字速。返回 {ok} 或 {ok:false, reason} */
+function checkSubtitlePlausible({ text, maxTo, duration }) {
+  const chars = String(text || '').length
+  const dur = Number(duration) || 0
+  if (dur > 0 && maxTo > dur * 1.25 + 5) {
+    return { ok: false, reason: `字幕时间轴 ${Math.round(maxTo)}s 超出视频时长 ${dur}s` }
+  }
+  const span = dur > 0 ? dur : maxTo
+  if (span > 0 && chars / span > 12) {
+    return { ok: false, reason: `字速 ${Math.round(chars / span)} 字/秒 不可能（疑字幕与视频不匹配）` }
+  }
+  return { ok: true }
+}
+
 function lastLine(s) {
   const lines = s.trim().split(/\r?\n/)
   return lines[lines.length - 1] || ''
@@ -843,6 +935,114 @@ async function runBatch(task, deps = {}) {
   }
 }
 
+// ---- 每日简报批处理（--brief，issue 263）：runBrief ----
+// 契约（与 bz 插件「每日简报」对齐，cli.js --brief 调用）：
+//   task = { items?, ups?, known?, backfill?, limit?, options }
+//   **发现交给本工具**（bili-dl 已有 wbi 签名与 Cookie，守护不必再实现一遍）：
+//     ups = 深度名单（uid 字符串或 {mid,name}），backfill = 每 UP 回溯条数（缺省 10，首次启用口径）；
+//     逐 UP 拉投稿列表 → 剔除 known（守护传入，来自 news.json briefs 已有 bvid）→ 汇成待处理池。
+//     items 直传（[{bvid,title,duration,pubdate}]）时不做发现（手动/测试用）。
+//   limit（缺省 3）：单次 spawn 最多处理条数，剩余由守护下轮继续（ADR-0119 §10 分轮消化）。
+//   逐条：**字幕优先**（getCid → getSubtitle）→ 命中即把字幕全文落转录临时文件（source='subtitle'）；
+//     无字幕 / **字幕可信度校验不过** → 复用 runBatch（keepVideo:false / compress:false / quality:'720'）
+//     下载转写（复用其缓存与断点续跑），取其 transcriptPath（source='transcript'），
+//     校验不过时额外回报 subtitleRejected 原因。**单条失败不阻断整批**，记入 fail 并继续下一条。
+//   onItem(i, n, bvid)：条级进度（调用方可据此打「第 i/N 条」行）；onInfo(info)：每条一次（[bz-info] 语义）。
+// 返回 { ok: [{bvid,title,source,transcriptPath,duration,pubdate,upMid,upName,subtitleRejected?}],
+//        fail: [{bvid,reason}] }（ups 发现失败时 bvid 为空串，reason 注明 UP）
+async function runBrief(task, deps = {}) {
+  resetAbort()
+  const conf = { ...(deps.conf || {}), ...((task && task.options) || {}) }
+  const cookie = deps.cookie || null
+  const fetchJson = deps.fetchJson || fetchJsonImpl
+  const onStep = deps.onStep || (() => {})
+  const onItem = deps.onItem || (() => {})
+  const onInfo = deps.onInfo || (() => {})
+  const limit = Math.max(1, Number(task && task.limit) || 3)
+  const known = new Set((Array.isArray(task && task.known) ? task.known : []).map(u => String(u)))
+  const ok = []
+  const fail = []
+  const ups = (Array.isArray(task && task.ups) ? task.ups : [])
+    .map(u => (u && typeof u === 'object'
+      ? { mid: String(u.mid || '').trim(), name: String(u.name || '') }
+      : { mid: String(u || '').trim(), name: '' }))
+    .filter(u => u.mid)
+  let pool
+  if (ups.length) {
+    const backfill = Math.max(1, Number(task && task.backfill) || 10)
+    pool = []
+    onStep('拉取投稿列表')
+    for (const up of ups) {
+      try {
+        const vids = await getUpVideos({ mid: up.mid, cookie, fetchJson, ps: backfill })
+        for (const v of vids) {
+          if (known.has(v.bvid)) continue
+          pool.push({ ...v, upMid: up.mid, upName: v.author || up.name })
+        }
+      } catch (err) {
+        fail.push({ bvid: '', reason: `UP ${up.mid} 投稿列表拉取失败：${(err && err.message) || String(err)}` })
+      }
+    }
+  } else {
+    // items 直传 = 显式指定（手动重跑/调试）：**不按 known 过滤**，否则错误条目无法手动重跑
+    pool = (Array.isArray(task && task.items) ? task.items : []).filter(it => it && it.bvid)
+  }
+  const batch = pool.slice(0, limit)
+  for (let i = 0; i < batch.length; i++) {
+    const it = batch[i]
+    const bvid = String(it.bvid)
+    onItem(i + 1, batch.length, bvid)
+    const info = {
+      title: it.title || '', uploader: it.upName || '',
+      bvid, url: `https://www.bilibili.com/video/${bvid}`,
+      duration: Number(it.duration) || 0,
+    }
+    try {
+      onStep('字幕中')
+      const cid = await getCid({ bvid, cookie, fetchJson })
+      const sub = cid ? await getSubtitle({ bvid, cid, cookie, fetchJson, duration: info.duration }) : null
+      let text = ''
+      let source = 'subtitle'
+      const subtitleRejected = (sub && sub.rejected) || ''
+      if (subtitleRejected) onStep('字幕存疑，改转写')
+      if (sub && sub.text && !subtitleRejected) {
+        text = sub.text
+      } else {
+        source = 'transcript'
+        const r = await runBatch(
+          {
+            url: `https://www.bilibili.com/video/${bvid}`, start: null, end: null,
+            options: { ...((task && task.options) || {}), keepVideo: false, compress: false, quality: '720' },
+          },
+          { ...deps, conf, onStep, onInfo: () => {} },   // 内层不重复打 [bz-info]（外层逐条统一打）
+        )
+        try { text = String(fs.readFileSync(r.transcriptPath, 'utf8') || '').trim() } catch { text = '' }
+        try { fs.unlinkSync(r.transcriptPath) } catch {}   // 转录临时件用后即删（内容随即落简报缓存）
+        if (!info.duration && r.duration) info.duration = r.duration
+        if (!info.title && r.title) info.title = r.title
+      }
+      if (!text) throw new Error('未产出转录文本')
+      // 转录全文落**缓存目录**（`resume-` 前缀 → cleanupCache 按 cacheRetentionDays 自然回收）：
+      // 插件读它产 AI 要点，并在保留期内渲染「可展开转录稿」；过期后文件消失、该区自动隐藏。
+      // （不落系统临时目录——插件可能在数小时后才读到，且需受保留期管理。）
+      const transcriptPath = path.join(getCacheDir(conf), `resume-brief-${bvid}.txt`)
+      fs.mkdirSync(path.dirname(transcriptPath), { recursive: true })
+      fs.writeFileSync(transcriptPath, text, 'utf8')
+      onInfo(info)
+      ok.push({
+        bvid, title: info.title, source, transcriptPath, duration: info.duration,
+        pubdate: Number(it.pubdate) || 0,
+        upMid: String(it.upMid || ''),
+        upName: info.uploader || '',
+        ...(subtitleRejected ? { subtitleRejected } : {}),
+      })
+    } catch (err) {
+      fail.push({ bvid, reason: (err && err.message) || String(err) })
+    }
+  }
+  return { ok, fail }
+}
+
 module.exports = {
   UA, MIXIN_KEY_ENC_TAB, getMixinKey, fetchJsonImpl, getWbiKeys, wbiSign, getViewInfo, getPlayUrls,
   lastLine, qualityLabel, sanitizeName, extractBv, fmtTime, fmtDuration, fmtSec, parseTimeInput, buildFileName,
@@ -854,4 +1054,5 @@ module.exports = {
   cacheKey, getCacheDir, cachePath, cleanupCache,
   resumeKey, resumeClipPath, resumeCompressedPath, resumeTranscriptPath,
   vaultRel, decodeBatchArg, runBatch,
+  getUpVideos, parseLenStr, getCid, getSubtitle, checkSubtitlePlausible, runBrief,
 }

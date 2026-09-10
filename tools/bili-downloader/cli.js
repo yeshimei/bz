@@ -16,6 +16,16 @@
 //       断点续跑（ADR-0067，ticket 136 机械产物）：成功步骤产物（剪辑件/压缩件/转写稿）留存缓存目录，
 //       同一任务重跑自动从出错步骤继续，不重跑已成功步骤。
 //       --batch 模式不打印横幅、不起服务，避免污染协议。
+//   bili-dl --brief '<json>'  每日简报批处理（issue 263，ADR-0119；守护进程 spawn，插件读转录后产要点）
+//       json = {"ups":["3706929260006322"],"known":["BV..."],"backfill":10,"limit":3,"options":{...}}
+//           ups = 深度名单（uid 或 {mid,name}）：本工具自行拉投稿列表发现新视频（bili-dl 已有 wbi 签名与 Cookie）
+//           known = 已知 bvid（来自 news.json briefs），命中则跳过，不重复转写
+//       json = {"items":[{"bvid","title","pubdate","duration"}]}  直传模式（手动/调试，不做发现）
+//       或 --brief 'b64:<base64>'（同 --batch 的 shell 安全约定）
+//       逐条「字幕优先、无字幕下载转写」；字幕可信度校验不过同样回退转写；单条失败不阻断整批；
+//       stdout 行协议同 --batch，末尾 [bz-result] {"ok":[{bvid,title,source,transcriptPath,duration,pubdate,upMid,upName}],
+//       "fail":[{bvid,reason}]}（source = 'subtitle' | 'transcript'；transcriptPath 为 UTF-8 转录全文临时文件，
+//       插件读取后自删）并 exit 0。
 // ================================================================
 const os = require('os')
 const path = require('path')
@@ -67,9 +77,52 @@ function runBatchMode(rawJson) {
   })
 }
 
+// ---- 每日简报批处理（--brief）：core.runBrief 的薄壳 + 协议输出（issue 263）----
+function runBriefMode(rawJson) {
+  if (rawJson === undefined) {
+    console.error('缺少 --brief 参数（需要 JSON 字符串，如 --brief \'{"items":[{"bvid":"BV…"}]}\'）')
+    process.exit(1)
+  }
+  let task
+  try {
+    task = core.decodeBatchArg(rawJson)
+  } catch (e) {
+    console.error(`--brief 参数不是合法 JSON：${e.message}`)
+    process.exit(1)
+  }
+  if (!task || typeof task !== 'object' || Array.isArray(task)) {
+    console.error('--brief 参数必须是 JSON 对象（{"items":[{"bvid":"…"}]}）')
+    process.exit(1)
+  }
+  if (!Array.isArray(task.items) && !Array.isArray(task.ups)) {
+    console.error('缺少 items 或 ups（items:[{bvid}] 直传，或 ups:[uid] 由本工具拉投稿列表发现新视频）')
+    process.exit(1)
+  }
+  if (Array.isArray(task.items) && !task.items.length && !(Array.isArray(task.ups) && task.ups.length)) {
+    console.error('items/ups 均为空（至少给一条）')
+    process.exit(1)
+  }
+  core.runBrief(task, {
+    conf: cfg.loadConfig(),
+    cookie: cfg.loadCookie(),
+    onStep: name => console.log(`[bz-step] ${name}`),
+    onItem: (i, n) => console.log(`[bz-step] 第 ${i}/${n} 条`),
+    onProgress: p => console.log(`[bz-p] ${JSON.stringify({ phase: p.phase || 'step', pct: Number.isFinite(p.pct) ? Math.round(p.pct) : null })}`),
+    onInfo: info => console.log(`[bz-info] ${JSON.stringify(info)}`),
+  }).then(r => {
+    console.log(`[bz-result] ${JSON.stringify({ ok: r.ok, fail: r.fail })}`)
+    process.exit(0)
+  }).catch(e => {
+    console.error((e && e.message) || String(e))
+    process.exit(1)
+  })
+}
+
 const batchIdx = args.indexOf('--batch')
+const briefIdx = args.indexOf('--brief')
 if (batchIdx >= 0) runBatchMode(args[batchIdx + 1])
+else if (briefIdx >= 0) runBriefMode(args[briefIdx + 1])
 else {
-  console.error('用法：bili-dl --batch \'{"url":"BV…","start":null,"end":null}\'（ticket 136 起仅无头批处理，网页版已移除）')
+  console.error('用法：bili-dl --batch \'{"url":"BV…","start":null,"end":null}\' 或 bili-dl --brief \'{"items":[{"bvid":"BV…"}]}\'（ticket 136 起仅无头批处理，网页版已移除）')
   process.exit(1)
 }
