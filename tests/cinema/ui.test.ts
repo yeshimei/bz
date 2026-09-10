@@ -598,6 +598,27 @@ tags: [电影]
     }
   });
 
+  // 回归（2026-09-10 真机反馈）：触屏长按会同时发 pointerdown + contextmenu，桌面右键菜单
+  // 不分流就会盖在抽屉上（.cn-menu z-index 60 > .cn-sheet 56）→ 用户看到「长按弹右键菜单」。
+  it('移动端：长按+contextmenu 同发时只出抽屉，不出桌面右键菜单', () => {
+    vi.useFakeTimers();
+    try {
+      const { app } = seedMobile();
+      createOverlay(app);
+      const root = document.querySelector('section.mob.bz-cinema--midnight') as HTMLElement;
+      const card = root.querySelector('.m-grid .pcard') as HTMLElement;
+      const r = card.getBoundingClientRect();
+      // 真机触屏长按的真实事件序列：pointerdown →(450ms 定时器)→ contextmenu
+      card.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+      vi.advanceTimersByTime(500);
+      card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: r.left + 20, clientY: r.top + 20 }));
+      expect(root.querySelector('.cn-sheet'), '抽屉应在').toBeTruthy();
+      expect(root.querySelector('.cn-menu'), '移动端不应出桌面右键菜单').toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('移动端头行钮序：添加最前、关闭最后，设置钮退役（影院设置并入插件设置页）', () => {
     const { app } = seedMobile();
     createOverlay(app);
