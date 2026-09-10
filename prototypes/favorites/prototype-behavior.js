@@ -1,4 +1,4 @@
-/* 源指纹 5909811cbab8cb4d · 仓内输入 49 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 0d2918c5e87fa919 · 仓内输入 49 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
@@ -5237,6 +5237,69 @@ var BZW_favorites = (() => {
     }
   };
 
+  // src/core/dom.ts
+  function longPress(el, cb, dur, filter) {
+    if (!dur) dur = 500;
+    let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
+    let suppressClick = false;
+    const M2 = 10;
+    function start(e) {
+      if (filter && !filter(e)) return;
+      if (e.button !== void 0 && e.button !== 0) return;
+      fired = false;
+      moved = false;
+      if (e.touches && e.touches.length) {
+        const t = e.touches[0];
+        sx = t.clientX;
+        sy = t.clientY;
+        touching = true;
+      }
+      timer = setTimeout(function() {
+        timer = null;
+        fired = true;
+        cb(e);
+      }, dur);
+    }
+    function cancel() {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    }
+    function move(e) {
+      if (!timer || !touching || !e.touches || !e.touches.length) return;
+      const t = e.touches[0];
+      if (Math.abs(t.clientX - sx) > M2 || Math.abs(t.clientY - sy) > M2) {
+        moved = true;
+        cancel();
+      }
+    }
+    function endFromTouch() {
+      if (fired) suppressClick = true;
+      touching = false;
+      cancel();
+    }
+    function endFromMouse() {
+      touching = false;
+      cancel();
+    }
+    function onClick(e) {
+      if (suppressClick) {
+        suppressClick = false;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }
+    el.addEventListener("mousedown", start);
+    el.addEventListener("mouseup", endFromMouse);
+    el.addEventListener("mouseleave", endFromMouse);
+    el.addEventListener("touchstart", start, { passive: true });
+    el.addEventListener("touchend", endFromTouch);
+    el.addEventListener("touchmove", move, { passive: true });
+    el.addEventListener("touchcancel", endFromTouch);
+    el.addEventListener("click", onClick, true);
+  }
+
   // src/core/esc-manager.ts
   var escManager = (() => {
     const layers = [];
@@ -5720,6 +5783,21 @@ var BZW_favorites = (() => {
       const it = itemById(card.dataset.favId);
       if (it) openRowMenuAt(it, e.clientX, e.clientY);
     });
+    longPress(
+      content,
+      (ev) => {
+        var _a, _b;
+        const card = (_b = (_a = ev.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, "[data-fav-id]");
+        if (!card) return;
+        const it = itemById(card.dataset.favId);
+        if (it) openMobSheet(it);
+      },
+      void 0,
+      (ev) => {
+        var _a, _b;
+        return isMobileEnv() && !!((_b = (_a = ev.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, "[data-fav-id]"));
+      }
+    );
     void (async () => {
       await loadItems();
       renderAll();
