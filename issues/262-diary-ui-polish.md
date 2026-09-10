@@ -1,8 +1,8 @@
 # 262 — 日记本 UI 精修批：章节栏缩略图取帧根治 + 交互细节 + 视觉收口
 
-- status: doing
+- status: done（2026-09-10 交付）
 - type: fix（取帧/缓存/粘顶 三处真 bug）+ polish（头行精简/高亮时机/弹窗重做）
-- 分支: `diary-quick`（worktree `diary-quick`，从 master bdc635cd 分叉）
+- 分支: `diary-quick`（worktree `diary-quick`，从 master bdc635cd 分叉；已合并回 master 并清理）
 - 依据: 用户在使用原型（快速原型模式）时逐条反馈；无 ADR（可逆域内改动，三要件不满足，沿 issue 254 先例）
 
 ## 背景
