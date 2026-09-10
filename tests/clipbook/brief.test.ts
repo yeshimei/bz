@@ -62,6 +62,29 @@ describe('normalizeBrief / parseBriefs（容错解析）', () => {
     expect(b.duration).toBe(0);
   });
 
+  it('运行期字段原样带出：transcriptPath / subtitleRejected 不得被归一丢弃', () => {
+    // 回归（issue 263 实测）：插件读盘 → 回写会整段重写 briefs，
+    // 早期白名单漏了这两个键，导致转录稿链接永久丢失、条目永远出不了稿。
+    const raw = {
+      bvid: 'BV1',
+      transcriptPath: 'C:/cache/resume-brief-BV1.txt',
+      subtitleRejected: '字幕时间轴 756s 超出视频时长 39s',
+    };
+    const b = normalizeBrief(raw) as any;
+    expect(b.transcriptPath).toBe('C:/cache/resume-brief-BV1.txt');
+    expect(b.subtitleRejected).toBe('字幕时间轴 756s 超出视频时长 39s');
+    // 经 parseBriefs 整段往返后仍在（这才是真实读盘路径）
+    const roundTripped = parseBriefs([b])[0] as any;
+    expect(roundTripped.transcriptPath).toBe('C:/cache/resume-brief-BV1.txt');
+    expect(roundTripped.subtitleRejected).toBe('字幕时间轴 756s 超出视频时长 39s');
+  });
+
+  it('运行期字段缺省时不出键（保持旧条目形态不变）', () => {
+    const b = normalizeBrief({ bvid: 'BV1' }) as any;
+    expect('transcriptPath' in b).toBe(false);
+    expect('subtitleRejected' in b).toBe(false);
+  });
+
   it('state 归一：read=true → read；state=saved 保留', () => {
     expect(normalizeBrief({ bvid: 'BV1', read: true })!.state).toBe('read');
     expect(normalizeBrief({ bvid: 'BV1', state: 'saved' })!.state).toBe('saved');
