@@ -1,4 +1,4 @@
-/* 源指纹 6ea2efd97f56612c · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e97c844fa63a1f62 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/secondbrain/fake-sim.ts → window.BZW_secondbrain（行为单源预览包，issue 245/ADR-0106） */
 var BZW_secondbrain = (() => {
@@ -5344,6 +5344,9 @@ var BZW_secondbrain = (() => {
     for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
     return true;
   }
+  function stripMdExt(name) {
+    return String(name || "").replace(/\.md$/i, "");
+  }
   var import_moment;
   var init_utils = __esm({
     "src/core/utils.ts"() {
@@ -7429,6 +7432,7 @@ ${userMsg}`;
   var ReferencePanel;
   var init_reference_panel = __esm({
     "src/secondbrain/reference-panel.ts"() {
+      init_utils();
       init_notice();
       init_z_order();
       init_float_window();
@@ -7582,7 +7586,7 @@ ${userMsg}`;
           const panel2 = this;
           const card = document.createElement("div");
           card.className = "bz-sb-ref-card";
-          card.innerHTML = refCardHtml(item.path.replace(/^.*[\\/]/, "").replace(/\.md$/i, ""), Math.round(item.score * 100), "#a33d2a");
+          card.innerHTML = refCardHtml(stripMdExt(item.path.replace(/^.*[\\/]/, "")), Math.round(item.score * 100), "#a33d2a");
           const topRow = card.querySelector(".bz-sb-ref-card-top");
           const bodyDiv = card.querySelector(".bz-sb-ref-card-body");
           renderMarkdown(bodyDiv, item.chunk, panel2.app);
@@ -7811,6 +7815,7 @@ ${userMsg}`;
   var SNAP_MID, SNAP_HIGH, COLLAPSE_THRESHOLD, MobilePanel;
   var init_mobile_panel = __esm({
     "src/secondbrain/mobile-panel.ts"() {
+      init_utils();
       init_esc_manager();
       init_notice();
       init_ui();
@@ -8053,7 +8058,7 @@ ${userMsg}`;
             topRow.className = "bz-sb-mb-card-top";
             const pathDiv = document.createElement("div");
             pathDiv.className = "bz-sb-mb-card-path";
-            pathDiv.textContent = item.path.replace(/^.*[\\/]/, "").replace(/\.md$/i, "");
+            pathDiv.textContent = stripMdExt(item.path.replace(/^.*[\\/]/, ""));
             const scoreDiv = document.createElement("div");
             scoreDiv.className = "bz-sb-mb-card-score";
             scoreDiv.textContent = `${Math.round(item.score * 100)}%`;

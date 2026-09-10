@@ -1,4 +1,4 @@
-/* 源指纹 c6f35cabc75dbf19 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 3bf240ed603e7464 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
