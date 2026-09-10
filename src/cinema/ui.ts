@@ -568,6 +568,7 @@ function bindMidnight(sec: HTMLElement, app: App): void {
     }
     const chip = t.closest('.chip') as HTMLElement | null;
     if (chip) {
+      M.view = 'list'; // chips 属列表视图：在 AI/分析页点 chips 必须回落列表（否则筛选生效但页面停在原视图，看着像「点了没反应」）
       if (chip.dataset.c) {
         M.typeFilter = chip.dataset.c === 'all' ? null : chip.dataset.c;
         M.statusFilter = null;

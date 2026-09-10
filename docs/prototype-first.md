@@ -13,7 +13,10 @@
 | `src/<域>/ui.ts` | 行为单源（生命周期/事件委托/数据流；禁手写 markup） |
 | `prototypes/<域>/prototype.html` + `prototype-view.html` | 评审壳：双 iframe（桌面 920 + 移动 412×915 真机尺寸）跑真行为，可带 `?selftest=1` 自检 |
 | `prototypes/<域>/fake-sim.ts` + `fake/fake-obsidian.ts` | 行为产物入口与公共假层（localStorage 假 vault / 假 Platform / setIcon 图标表 / AI 罐头） |
+| `prototypes/host-theme.css` / `host-base.css` | 宿主保真层（壳专用，插件内由真宿主提供）：前者是色彩 token，后者是 app.css 的裸 `button` 基线 |
 | `prototype-render.js` / `prototype-behavior.js` | 构建产物（入库保双击零依赖；勿手改） |
+
+`host-base.css` 的来历：评审壳不载宿主 `app.css`，域样式若只写 `display:flex` 而不写 `justify-content`，真机会被宿主基线（`display:inline-flex` + `justify-content:center` + `height:30px`）压成居中，浏览器预览却"一切正常"（2026-09-10 影院右键菜单/长按抽屉/左下角入口实例）。补这一层后，这类宿主基线坑在评审阶段就能暴露。**芯样式仍须自足**：该文件只在壳里补宿主基线，域 CSS 自己该写的 `justify-content` / `text-align` 一条都不能省（否则真机照样跑偏）。
 
 原型历史版本在 `.zcode/ui-prototypes/`（不入 git）；`prototypes/<域>/prototype.html` 始终是当前定稿。
 

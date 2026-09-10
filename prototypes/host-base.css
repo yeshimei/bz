@@ -1,0 +1,40 @@
+/* 宿主基线保真（评审壳专用）：真实 Obsidian app.css 的裸 button 基线。
+ *
+ * 来历：逐条搬运自 obsidian-1.13.4.asar（%APPDATA%/obsidian/obsidian-1.13.4.asar），
+ *       仅把宿主 token 补成实值（--input-height 30px / --input-font-weight=--font-normal 400
+ *       / --input-radius 5px / --font-ui-small 13px，均取自同一 asar）。
+ *
+ * 为什么需要：评审壳只载域 CSS，不载宿主 app.css。域样式若只写 display:flex 而不写
+ *   justify-content，真机上就被宿主基线压成 center（2026-09-10 影院右键菜单/长按抽屉/
+ *   左下角 rail-foot 实例：图标+文字整行居中、行高被压到 30px），而浏览器预览一切"正常"
+ *   —— 这个差异只能在真机发现。本文件把该差异提前暴露在评审阶段。
+ *
+ * 生效范围：仅评审壳（prototypes/<域>/prototype-view.html 引用）；插件内由真实宿主
+ *   app.css 提供，域样式无需重复。与 prototypes/host-theme.css（宿主色彩 token）同款思路。
+ */
+
+:root {
+  --input-height: 30px;
+  --input-font-weight: 400; /* 宿主 --font-normal */
+  --input-radius: 5px;
+  --font-ui-small: 13px;
+}
+
+button {
+  --text-color: var(--text-normal);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color);
+  font-size: var(--font-ui-small);
+  border-radius: var(--input-radius);
+  border: 0;
+  padding: 4px 12px;
+  height: var(--input-height);
+  font-weight: var(--input-font-weight);
+  cursor: pointer;
+  font-family: inherit;
+  outline: none;
+  user-select: none;
+  white-space: nowrap;
+}

@@ -40,7 +40,11 @@
 .bz-cinema--midnight .rail-sec{padding:10px 10px 4px;flex:1;overflow:hidden auto;scrollbar-width:none}
 .bz-cinema--midnight .rail-sec::-webkit-scrollbar{display:none}
 .bz-cinema--midnight .rail-label{font-size:10.5px;letter-spacing:.3em;color:var(--ink-3);padding:0 8px 6px}
-.bz-cinema--midnight .rail-item{display:flex;align-items:center;gap:8px;width:100%;padding:7px 8px;border:0;background:none;border-radius:8px;cursor:pointer;font-size:13px;color:var(--ink-2);font-family:inherit;text-align:left}
+/* 通栏按钮（rail-item / cn-menu-item / cn-sheet-item）必须显式 justify-content:flex-start：
+   宿主 app.css 的裸 button 基线是 display:inline-flex + justify-content:center，本类只把
+   display 改成 flex、不动 justify-content → 真机里图标+文字被整行居中（评审壳不载宿主
+   app.css，故此坑只在真机显形）。同 core 的 .bz-popover-item「钉死 button 宿主基线」处置。 */
+.bz-cinema--midnight .rail-item{display:flex;align-items:center;justify-content:flex-start;gap:8px;width:100%;padding:7px 8px;border:0;background:none;border-radius:8px;cursor:pointer;font-size:13px;color:var(--ink-2);font-family:inherit;text-align:left}
 .bz-cinema--midnight .rail-item:hover{background:var(--chip);color:var(--ink)}
 .bz-cinema--midnight .rail-item.is-on{background:var(--chip);color:var(--ink);font-weight:600}
 .bz-cinema--midnight .rail-item .dot{width:7px;height:7px;border-radius:50%;flex:none}
@@ -157,7 +161,7 @@
 .bz-cinema--midnight .cn-confirm .dm-actions{justify-content:center;margin-top:16px}
 /* 右键菜单（面板内 absolute） */
 .bz-cinema--midnight .cn-menu{position:absolute;z-index:60;min-width:158px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px #0005;padding:5px}
-.bz-cinema--midnight .cn-menu-item{display:flex;align-items:center;gap:9px;width:100%;border:0;background:none;border-radius:7px;padding:8px 10px;font-size:12.5px;color:var(--ink-2);cursor:pointer;font-family:inherit;text-align:left}
+.bz-cinema--midnight .cn-menu-item{display:flex;align-items:center;justify-content:flex-start;gap:9px;width:100%;border:0;background:none;border-radius:7px;padding:8px 10px;font-size:12.5px;color:var(--ink-2);cursor:pointer;font-family:inherit;text-align:left}
 .bz-cinema--midnight .cn-menu-item:hover{background:var(--chip);color:var(--ink)}
 .bz-cinema--midnight .cn-menu-item svg{width:13px;height:13px;flex:none}
 .bz-cinema--midnight .cn-menu-item.danger{color:#b3402a}
@@ -169,7 +173,7 @@
 .bz-cinema--midnight .cn-sheet-poster{width:38px;height:54px;border-radius:5px;object-fit:cover;border:1px solid var(--line);background:var(--chip);flex:none}
 .bz-cinema--midnight .cn-sheet-name{font-size:13.5px;font-weight:700;color:var(--ink)}
 .bz-cinema--midnight .cn-sheet-sub{font-size:11px;color:var(--ink-3);margin-top:3px}
-.bz-cinema--midnight .cn-sheet-item{display:flex;align-items:center;gap:11px;width:100%;border:0;background:none;border-radius:9px;padding:12px 10px;font-size:13px;color:var(--ink-2);cursor:pointer;font-family:inherit;text-align:left}
+.bz-cinema--midnight .cn-sheet-item{display:flex;align-items:center;justify-content:flex-start;gap:11px;width:100%;border:0;background:none;border-radius:9px;padding:12px 10px;font-size:13px;color:var(--ink-2);cursor:pointer;font-family:inherit;text-align:left}
 .bz-cinema--midnight .cn-sheet-item:hover{background:var(--chip);color:var(--ink)}
 .bz-cinema--midnight .cn-sheet-item svg{width:15px;height:15px;flex:none}
 .bz-cinema--midnight .cn-sheet-item.danger{color:#b3402a}
@@ -359,7 +363,7 @@
 .bz-cinema--booth .rail-sec{flex:1;overflow:hidden auto;scrollbar-width:none;padding:2px 10px}
 .bz-cinema--booth .rail-sec::-webkit-scrollbar{display:none}
 .bz-cinema--booth .rail-label{font-size:9.5px;letter-spacing:.32em;color:var(--ink-3);padding:8px 6px 5px;font-family:"Courier New",monospace}
-.bz-cinema--booth .rail-item{display:flex;align-items:center;gap:8px;width:100%;padding:6.5px 8px;border:0;background:none;border-radius:4px;cursor:pointer;font-size:12.5px;color:var(--ink-2);font-family:inherit;text-align:left}
+.bz-cinema--booth .rail-item{display:flex;align-items:center;justify-content:flex-start;gap:8px;width:100%;padding:6.5px 8px;border:0;background:none;border-radius:4px;cursor:pointer;font-size:12.5px;color:var(--ink-2);font-family:inherit;text-align:left}
 .bz-cinema--booth .rail-item:hover{color:var(--ink)}
 .bz-cinema--booth .rail-item.is-on{background:var(--room);color:var(--ink);font-weight:700;box-shadow:inset 2px 0 0 var(--amber)}
 .bz-cinema--booth .rail-item .tape{width:5px;height:14px;flex:none;border-radius:1px;transform:skewX(-8deg)}

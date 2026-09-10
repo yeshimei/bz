@@ -7,12 +7,15 @@
   本页 = 影院行为单源评审壳的 iframe 视图（issue 245/ADR-0106）。
   它不实现任何影院交互——只把真行为层跑起来：
     - 载入同一份 CSS（core + 域，与插件同源）
+    - 载入 ../host-base.css：真实宿主 app.css 的裸 button 基线（评审壳不载宿主 app.css，
+      不补这层就看不出「域样式漏写 justify-content 被宿主 center 压盖」这类真机差异）
     - 载入 prototype-behavior.js（真 ui.ts 依赖链，alias obsidian→fake）
     - boot + openCinema：午夜场面板 append 到本页 body（iframe 即全屏视口），
       桌面视图 920×640 = 900×620 面板居中；移动视图 396×780 = Platform.isMobile（视口判定）
   宿主差异（数据/图标/视口）由 fake/fake-obsidian / prototype-icons.js 提供；
   午夜场自绘主题变量挂 .bz-cinema--midnight 域根类，随 body.theme-light/dark 翻转。
 -->
+<link rel="stylesheet" href="../host-base.css"><!-- 宿主 app.css 的裸 button 基线（真机口径；见该文件头注释） -->
 <link rel="stylesheet" href="../../src/core/styles.css">
 <link rel="stylesheet" href="../../src/core/ui/tokens.css">
 <link rel="stylesheet" href="../../src/core/ui/components.css">
