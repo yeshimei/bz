@@ -5,3 +5,9 @@ main.js text eol=lf
 # 原型产物同理（esbuild 输出 LF）：不固定则每次 build-preview 重出都会产生
 # 「全文件行尾变化」的假差异，把真实内容变更淹没（2026-09-10 实测：git 内 100% 为 CRLF）
 prototypes/**/*.js text eol=lf
+
+# 原型侧 .ts 种子（fake-sim.ts / fake/*.ts）同样要固定 LF：它们被 build-preview 内联进产物，
+# 而**源指纹是对磁盘字节算的**。autocrlf=true 下 worktree 检出为 CRLF、主仓为 LF，
+# 两份「git 都认为干净」但指纹不同 → 换个位置重出就刷一遍指纹行（假差异），
+# 「构建位置无关」的承诺对这批文件失效（2026-09-10 实测 6 个壳受影响）
+prototypes/**/*.ts text eol=lf

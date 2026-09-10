@@ -6,7 +6,8 @@
  */
 import type { App } from 'obsidian';
 import { getSettings } from '../core/settings-provider';
-import { PasswordVaultAppController } from './ui';
+import { notice } from '../core/notice';
+import { PasswordVaultAppController, copySensitiveText } from './ui';
 
 let initialized = false;
 let controller: PasswordVaultAppController | null = null;
@@ -33,6 +34,22 @@ export async function ensurePasswordVault(app: App): Promise<void> {
 
 export function openPasswordVault(app: App): void {
   void ensurePasswordVault(app).then(() => getController().openManager());
+}
+
+/**
+ * 快速生成密码（命令 bz-password-vault-gen，2026-09-10 首页入口菜单联动）：
+ * 按设置的字符集/长度生成 → 复制到剪贴板（60 秒后自动清空，与面板内「复制」同一路径）→ 通知。
+ * 全程不打开面板；生成器与面板同源（同一个 controller 实例读同一份设置）。
+ */
+export async function copyGeneratedPassword(app: App): Promise<void> {
+  await ensurePasswordVault(app);
+  const pw = getController().uiManager.generatePassword();
+  try {
+    await copySensitiveText(pw);
+    notice('已生成并复制密码，60 秒后自动清空剪贴板');
+  } catch {
+    notice('密码已生成，但复制失败（剪贴板不可用）', 'warning');
+  }
 }
 
 /** 卸载清理（main.ts onunload 调用） */

@@ -310,6 +310,17 @@ describe('移动端底部抽屉（Platform.isMobile = true）', () => {
     vi.useRealTimers();
   });
 
+  it('sheetClass：域皮肤类落到抽屉本体（与 menuClass 对称，两端可传同一个类）', () => {
+    vi.useFakeTimers();
+    const card = makeCard();
+    attachItemActions(card, ACTIONS, { ...SHEET_OPTS, sheetClass: 'bz-home-menu' });
+    openSheet(card);
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet.classList.contains('bz-item-sheet')).toBe(true); // 基线类不丢（core 规则仍命中）
+    expect(sheet.classList.contains('bz-home-menu')).toBe(true);
+    vi.useRealTimers();
+  });
+
   it('点抽屉项：执行回调并关闭（遮罩与抽屉都移除）', () => {
     vi.useFakeTimers();
     const card = makeCard();

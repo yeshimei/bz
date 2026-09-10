@@ -1,4 +1,4 @@
-/* 源指纹 ce1e026c8ac3341f · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 275e6c7e7a61cc8f · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/password-vault/fake-sim.ts → window.BZW_password_vault（行为单源预览包，issue 245/ADR-0106） */
 var BZW_password_vault = (() => {
@@ -4316,51 +4316,6 @@ var BZW_password_vault = (() => {
     return _provider ? _provider() : {};
   }
 
-  // src/core/esc-manager.ts
-  var escManager = (() => {
-    const layers = [];
-    const onKeydown = (e) => {
-      if (e.key !== "Escape") return;
-      for (let i = layers.length - 1; i >= 0; i--) {
-        const L = layers[i];
-        try {
-          if (L.isVisible()) {
-            L.close();
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            return;
-          }
-        } catch (err) {
-          layers.splice(i, 1);
-        }
-      }
-    };
-    if (typeof document !== "undefined") {
-      document.addEventListener("keydown", onKeydown);
-    }
-    return {
-      register(id, layer) {
-        for (let i = layers.length - 1; i >= 0; i--) {
-          if (layers[i].id === id && !layers[i].isVisible()) layers.splice(i, 1);
-        }
-        const rec = Object.assign({ id }, layer);
-        layers.push(rec);
-        return {
-          unregister: () => {
-            const i = layers.indexOf(rec);
-            if (i !== -1) layers.splice(i, 1);
-          }
-        };
-      },
-      /** 插件卸载时移除全局监听 */
-      destroy() {
-        if (typeof document !== "undefined") {
-          document.removeEventListener("keydown", onKeydown);
-        }
-      }
-    };
-  })();
-
   // src/core/z-order.ts
   var zCounter = 1e5;
   var alwaysOnTop = /* @__PURE__ */ new Set();
@@ -4664,6 +4619,51 @@ var BZW_password_vault = (() => {
       }
     };
   }
+
+  // src/core/esc-manager.ts
+  var escManager = (() => {
+    const layers = [];
+    const onKeydown = (e) => {
+      if (e.key !== "Escape") return;
+      for (let i = layers.length - 1; i >= 0; i--) {
+        const L = layers[i];
+        try {
+          if (L.isVisible()) {
+            L.close();
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return;
+          }
+        } catch (err) {
+          layers.splice(i, 1);
+        }
+      }
+    };
+    if (typeof document !== "undefined") {
+      document.addEventListener("keydown", onKeydown);
+    }
+    return {
+      register(id, layer) {
+        for (let i = layers.length - 1; i >= 0; i--) {
+          if (layers[i].id === id && !layers[i].isVisible()) layers.splice(i, 1);
+        }
+        const rec = Object.assign({ id }, layer);
+        layers.push(rec);
+        return {
+          unregister: () => {
+            const i = layers.indexOf(rec);
+            if (i !== -1) layers.splice(i, 1);
+          }
+        };
+      },
+      /** 插件卸载时移除全局监听 */
+      destroy() {
+        if (typeof document !== "undefined") {
+          document.removeEventListener("keydown", onKeydown);
+        }
+      }
+    };
+  })();
 
   // src/core/dom.ts
   function longPress(el, cb, dur, filter) {
@@ -5141,7 +5141,7 @@ var BZW_password_vault = (() => {
     const mask = document.createElement("div");
     mask.className = "bz-item-sheet-mask";
     const sheet = document.createElement("div");
-    sheet.className = "bz-item-sheet";
+    sheet.className = "bz-item-sheet" + ((opts == null ? void 0 : opts.sheetClass) ? " " + opts.sheetClass : "");
     if (opts == null ? void 0 : opts.sheetHead) {
       const head = document.createElement("div");
       head.className = "bz-item-sheet-head";

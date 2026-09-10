@@ -4,4 +4,4 @@
  * ticket 63：移除读书番茄钟与专注目标（导出面同步清理）。
  * 增强包：startFocusForTask——备忘录「专注这个」联动入口（memo 域动态 import，ADR-0002 延迟解析）。
  */
-export { openPomodoro, unloadPomodoro, ensurePomodoro, startFocusForTask } from './ui';
+export { openPomodoro, unloadPomodoro, ensurePomodoro, startFocusForTask, toggleFocus, isFocusing } from './ui';
