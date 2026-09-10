@@ -1,3 +1,4 @@
+import { makeApp } from '../helpers/app';
 /**
  * 复习计划核心逻辑测试（ticket 16 修正版）：markReview 阶梯/FSRS/未到期/autoJumpOverdue
  */
@@ -9,9 +10,6 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { reviewApp, __setReviewAwayGraceMsForTests } from '../../src/review/app';
 import { ReviewDataManager, REVIEW_FILE_PATH, ReviewItem } from '../../src/review/data';
 
-function makeApp(vault: MockVault) {
-  return mockAppWithVault(vault);
-}
 
 /** 预置一条逾期复习数据 */
 async function seedOverdue(vault: MockVault, partial: Partial<ReviewItem> = {}) {

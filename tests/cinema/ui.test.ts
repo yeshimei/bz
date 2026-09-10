@@ -1,3 +1,4 @@
+import { makeApp } from '../helpers/app';
 /**
  * 影院（cinema）UI 层测试：风格化面板（issue 236 / ADR-0103）
  * DOM 与 src/cinema/prototype.html 同构：午夜场 desk（d-rail/d-head/d-tools/grid）
@@ -18,9 +19,6 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { emitDomainEvent, clearDomainEvents, onDomainEvent } from '../../src/core/domain-bus';
 
-function makeApp(vault: MockVault) {
-  return mockAppWithVault(vault);
-}
 
 function md(content: string): string {
   return content;

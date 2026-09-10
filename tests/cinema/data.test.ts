@@ -1,3 +1,4 @@
+import { makeApp } from '../helpers/app';
 // @vitest-environment node
 /**
  * 影院（cinema）数据层测试：解析/排序/筛选
@@ -9,9 +10,6 @@ import { M, resetCinemaState, type CinemaItem } from '../../src/cinema/state';
 import { rebuildItems, getDisplayItems, sortByDateDesc, sortByCreatedDesc, dateVal } from '../../src/cinema/data';
 import { getStarString, getGroupForTag, getGroupSafe } from '../../src/cinema/constants';
 
-function makeApp(vault: MockVault) {
-  return mockAppWithVault(vault);
-}
 
 function md(content: string): string {
   return content;

@@ -1,3 +1,4 @@
+import { makeApp } from '../helpers/app';
 /**
  * 番茄钟域入口测试（src/pomodoro/index.ts）：
  * 命令回调与生命周期经官方 barrel 入口触达——ensureXxx 幂等初始化、openPomodoro 复用已加载数据、
@@ -15,9 +16,6 @@ import { mountPomodoroStatusBar } from '../../src/pomodoro/statusbar';
 
 const T0 = new Date('2026-08-10T10:00:00').getTime();
 
-function makeApp(vault: MockVault) {
-  return mockAppWithVault(vault);
-}
 
 /** 运行中数据：专注阶段还剩 2 分钟 */
 function runningData() {

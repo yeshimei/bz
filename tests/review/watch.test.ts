@@ -1,3 +1,4 @@
+import { makeApp } from '../helpers/app';
 /**
  * 复习计划监听器测试（ticket 098；ticket 099 修订+追加）：isUnderFolder / 自动加入四态 /
  * 收编确认（取消=什么都不做）/ 删除确认移除/保留 / 改名自动更新 / 移除目录清空其下排除记录
@@ -10,9 +11,6 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { isUnderFolder, ReviewWatcher, __setAutoAddMergeMsForTests, __setRenameMergeMsForTests } from '../../src/review/watch';
 import { ReviewDataManager, REVIEW_FILE_PATH } from '../../src/review/data';
 
-function makeApp(vault: MockVault) {
-  return mockAppWithVault(vault);
-}
 
 /** 通知测试 helper（自绘 toast 会被挂到 #bz-notice-container） */
 function lastNoticeText(): string {

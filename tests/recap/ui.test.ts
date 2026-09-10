@@ -1,3 +1,4 @@
+import { todayStr } from '../helpers/date';
 /**
  * 今日回顾（recap 域）UI 测试（方向一 R2）：面板开合（toggle/ESC/卸载）、
  * 摘要行五格与 N/A 降级、痕迹时间轴渲染、空天 .bz-empty 引导（写日记动作）、
@@ -63,12 +64,6 @@ function recApp(vault: MockVault) {
 const TODAY0 = new Date().setHours(0, 0, 0, 0);
 const AT = (h: number, m: number) => TODAY0 + h * 3600000 + m * 60000;
 
-function todayStr(offsetDays = 0): string {
-  const d = new Date();
-  d.setDate(d.getDate() + offsetDays);
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
 
 /** 种混合数据（同 aggregate 集成用例的浓缩版：五域各有痕迹） */
 function seedDay(vault: StatVault): void {

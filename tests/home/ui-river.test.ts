@@ -1,3 +1,4 @@
+import { todayStr } from '../helpers/date';
 /**
  * 内容首页（home 域）UI 测试（issue 232 活动河改版）：
  * 面板装配（头行/三栏/移动瓦片）、全域入口行、时间线空态、预告三卡、点行直达、ESC/遮罩关闭。
@@ -12,11 +13,6 @@ import { closeOverlay } from '../../src/home/ui';
 import { resetHomeState, H } from '../../src/home/state';
 import { DOMAINS } from '../../src/home/domains';
 
-function todayStr(): string {
-  const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
 
 function yesterdayDateStr(): string {
   const d = new Date();

@@ -1,3 +1,4 @@
+import { todayStr } from '../helpers/date';
 // @vitest-environment node
 /**
  * 今日回顾（recap 域）聚合层测试（方向一 R2）：
@@ -173,12 +174,6 @@ describe('buildRecap（聚合纯函数）', () => {
 /* ---------- collectRecap 采集集成（MockVault，只读契约） ---------- */
 
 /** 本地时区今天日期串与时刻（collectRecap 缺省 now=Date.now()，用例数据全部动态锚定今天） */
-function todayStr(offsetDays = 0): string {
-  const d = new Date();
-  d.setDate(d.getDate() + offsetDays);
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
 
 const TODAY0 = new Date().setHours(0, 0, 0, 0); // 今天本地 0 点毫秒
 const AT_TODAY = (h: number, m: number) => TODAY0 + h * 3600000 + m * 60000;

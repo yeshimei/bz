@@ -1,3 +1,4 @@
+import { makeApp } from '../helpers/app';
 // @vitest-environment node
 /**
  * 书架墙（bookshelf）数据层测试：md 解析/状态派生/EPUB 聚合/排序/统计/目录回落
@@ -13,9 +14,6 @@ import {
 } from '../../src/bookshelf/data';
 import { sortItems, kwFilter, currentSideItems, catFilterItems } from '../../src/bookshelf/render';
 
-function makeApp(vault: MockVault) {
-  return mockAppWithVault(vault);
-}
 
 function seedVault(): { vault: MockVault; app: ReturnType<typeof mockAppWithVault> } {
   const vault = new MockVault();

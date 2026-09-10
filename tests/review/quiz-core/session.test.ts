@@ -3,6 +3,7 @@
  * 覆盖：startReviewSession 契约 / 单选多选判定 / 持久化后计数 / 答对 0.8s 亮绿后自动跳题（ticket 156）/
  * 键盘快捷键 / 头部对错计数删除（ticket 156）/ 退出确认闸门 / 结果卡阶段防拆 DOM。
  */
+import { makeApp } from '../../helpers/app';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../../mock-vault';
 import { resetObsidianMocks, getNoticeMessages } from '../../mock-obsidian-entry';
@@ -11,9 +12,6 @@ import { QuizMasterUI, quizUI } from '../../../src/review/quiz-core/session';
 import { QUIZ_FILE_PATH } from '../../../src/review/quiz-core/manager';
 import type { QuizQuestion } from '../../../src/review/quiz-core/manager';
 
-function makeApp(vault: MockVault) {
-  return mockAppWithVault(vault);
-}
 
 /** 预置题库（manager.removeQuestion 落盘断言需要 quiz.json 存在对应笔记键） */
 function seedQuiz(vault: MockVault, notes: Record<string, any[]>) {
