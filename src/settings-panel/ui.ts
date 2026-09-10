@@ -471,7 +471,8 @@ export class SettingsPanelUI {
   /* ---------- 移动端：全屏推入式两页（首页搜索 + 域列表 → 推入域设置页） ---------- */
 
   private buildMobile(popup: HTMLElement): void {
-    popup.classList.add('bz-sp-mobile');
+    // bz-panel-mtop：≤768px 顶部避让 Obsidian 移动端头部（max(44px, 安全区)，全站统一档）
+    popup.classList.add('bz-sp-mobile', 'bz-panel-mtop');
     popup.innerHTML = R.mobShellHtml();
     this.mobPushed = false; // 面板重建（含上次关闭时停在推入页）从首页起
 
