@@ -546,6 +546,27 @@ tags: [电影]
     expect(M.currentOverlay).toBeNull();
   });
 
+  // 回归（2026-09-10 真机反馈）：AI 荐片/观影分析页点 chips 无反应——chips 行在移动壳里常驻，
+  // 但 chip 分支唯独没复位 M.view，筛选改了而页面仍停在 AI/分析页。
+  it('移动端：AI/分析页点 chips 回落海报列表（类型与状态两条路径）', () => {
+    const { app } = seedMobile();
+    createOverlay(app);
+    const root = document.querySelector('section.mob.bz-cinema--midnight') as HTMLElement;
+    // AI 页 → 点类型 chip
+    clickEl(root.querySelector('.j-mai'));
+    expect(M.view).toBe('ai');
+    clickEl(root.querySelector('.chip[data-c="剧集"]'));
+    expect(M.view).toBe('list');
+    expect(root.querySelector('.j-mview')?.classList.contains('m-scroll')).toBe(true);
+    expect(root.querySelectorAll('.m-grid .pcard').length).toBe(1);
+    // 分析页 → 点状态 chip
+    clickEl(root.querySelector('.j-mstat'));
+    expect(M.view).toBe('stat');
+    clickEl(root.querySelector('.chip[data-s="已看"]'));
+    expect(M.view).toBe('list');
+    expect(root.querySelectorAll('.m-grid .pcard').length).toBe(1); // 状态 chip 不覆写类型筛（与 rail 同口径：仅 toggle 状态）
+  });
+
   it('移动端搜索：防抖全刷 + 标题/计数联动', async () => {
     const { app } = seedMobile();
     createOverlay(app);
