@@ -243,8 +243,8 @@ export function briefListHtml(
 }
 
 /**
- * 总结正文轻渲染（简报专用，纯层）：一句话总结恒为单行 → `<p>`。
- * 仍兼容 `## 小节` → h3、`- 要点` → ul/li（历史条目曾按要点列表产出）；
+ * 要点正文轻渲染（简报专用，纯层）：`## 小节` → h3、`- 要点` → ul/li、其余 → p。
+ * 兼容历史条目曾按「整篇一句话」产出的单行形态（落到 p 分支）；
  * 不走 md.ts 段落化（其为文章正文设计，只认 p/quote/img，会把 markdown 记号原样吐出）。
  */
 export function briefPointsHtml(body: string): string {
@@ -270,7 +270,7 @@ export function briefPointsHtml(body: string): string {
   return out;
 }
 
-/** 简报阅读面：一句话总结 + 「打开原视频」脚 + 可展开转录稿（缓存保留期内；取不到则不出该段） */
+/** 简报阅读面：要点正文 + 「打开原视频」脚 + 可展开转录稿（缓存保留期内；取不到则不出该段） */
 export function briefReaderHtml(
   a: ClipArticle,
   opts: { time: string; points: string; transcript: string; durationLabel: string }
@@ -292,7 +292,7 @@ export function briefReaderHtml(
       <div class="bz-clip-brief-err">${iconSpan(ICO.x, 'bz-ic--xs')}本期抓取失败：${esc(err)}</div>
       <div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-brief-retry>重新抓取本期</span></div>${feet}`;
   }
-  const pts = opts.points || `<p class="dim">正在生成本期总结…</p>`;
+  const pts = opts.points || `<p class="dim">正在生成本期要点…</p>`;
   const tr = opts.transcript
     ? `<details class="bz-clip-brief-tr"><summary>完整转录稿</summary><div class="bz-clip-brief-tr-body">${esc(opts.transcript)}</div></details>`
     : '';

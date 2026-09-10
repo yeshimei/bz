@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { briefKeyOf, excerpt } from '../../src/clipbook/constants';
 import { normalizeBrief, parseBriefs, applyBriefRetention } from '../../src/clipbook/news-data';
 import { clipBrief, queryBriefs, groupBriefsByDay, briefTimeTs, briefDayKey } from '../../src/clipbook/store';
-import { pendingBriefs, buildBriefPrompt, cleanSummary, runBriefSummaries } from '../../src/clipbook/brief';
+import { pendingBriefs, buildBriefPrompt, cleanPoints, runBriefSummaries } from '../../src/clipbook/brief';
 import type { ClipbookData } from '../../src/clipbook/data';
 
 const emptySidecar = (): ClipbookData => ({ articleOverrides: {}, savedArchive: [], order: [] });
@@ -194,14 +194,15 @@ describe('待出稿扫描与提示词', () => {
     expect(pendingBriefs(list).map((b) => b.bvid)).toEqual(['BV_P']);
   });
 
-  it('buildBriefPrompt：含标题/UP/时长/转录；要求只出一句话、不要时间轴', () => {
+  it('buildBriefPrompt：含标题/UP/时长/转录；要求按小节分组、每条要点一句话、不要时间轴', () => {
     const p = buildBriefPrompt(brief({ body: undefined }), '转录正文');
     expect(p).toContain('走向灭亡！Anthropic 员工警告');
     expect(p).toContain('黑鸦Heya');
     expect(p).toContain('173 秒');
     expect(p).toContain('转录正文');
-    expect(p).toContain('只输出一句话');
-    expect(p).toContain('不要时间轴');
+    expect(p).toContain('要点列表');
+    expect(p).toContain('每条要点只写一句话');
+    expect(p).toContain('不要输出时间轴');
   });
 
   it('buildBriefPrompt：超长转录截断到上限', () => {
@@ -209,16 +210,14 @@ describe('待出稿扫描与提示词', () => {
     expect(p.length).toBeLessThan(20000);
   });
 
-  it('cleanSummary：去代码围栏 + 压成单行（剥标题/列表符号）', () => {
-    // 模型偶尔仍吐围栏与列表形态——口径是 body 恒为一句自然句，故一并剥掉
-    expect(cleanSummary('```markdown\n## A\n- b\n```')).toBe('Ab');
-    expect(cleanSummary('  ## A  ')).toBe('A');
-    expect(cleanSummary('一句话总结。\n\n第二段应被并上。')).toBe('一句话总结。第二段应被并上。');
-    expect(cleanSummary('')).toBe('');
+  it('cleanPoints：去代码围栏 + 去首尾空白；保留行结构（渲染层契约）', () => {
+    expect(cleanPoints('```markdown\n## A\n- b\n```')).toBe('## A\n- b');
+    expect(cleanPoints('  ## A  ')).toBe('## A');
+    expect(cleanPoints('')).toBe('');
   });
 });
 
-describe('runBriefSummaries（AI 一句话总结生成与回写）', () => {
+describe('runBriefSummaries（AI 要点生成与回写）', () => {
   const mk = (over: any = {}) => ({ ...brief({ body: undefined }), ...over });
 
   it('无待出稿 → 零开销返回', async () => {
@@ -229,13 +228,13 @@ describe('runBriefSummaries（AI 一句话总结生成与回写）', () => {
   it('正常出稿：写 body 并清 error；幂等（不重复处理已有 body 的条目）', async () => {
     const patches: Array<[string, any]> = [];
     const r = await runBriefSummaries([mk()], {
-      ai: { chat: async () => '```\nDeepSeek 宣布 V4.1 Flash 将于 9 月 10 日发布并取代 V4 Pro。\n```' },
+      ai: { chat: async () => '```markdown\n## 发布\n- DeepSeek 宣布 9 月 10 日发布 V4.1 Flash\n- V4 Pro 请求将全部转移\n```' },
       readText: () => '转录全文',
       writePatch: async (bvid, patch) => { patches.push([bvid, patch]); },
     });
     expect(r).toEqual({ done: 1, failed: 0, skipped: 0 });
     expect(patches[0][0]).toBe('BV1rHYx6fEzy');
-    expect(patches[0][1].body).toBe('DeepSeek 宣布 V4.1 Flash 将于 9 月 10 日发布并取代 V4 Pro。');
+    expect(patches[0][1].body).toBe('## 发布\n- DeepSeek 宣布 9 月 10 日发布 V4.1 Flash\n- V4 Pro 请求将全部转移');
     expect(patches[0][1].error).toBeUndefined();
   });
 
@@ -265,13 +264,14 @@ describe('runBriefSummaries（AI 一句话总结生成与回写）', () => {
     const patches: any[] = [];
     let n = 0;
     const r = await runBriefSummaries([mk(), mk({ bvid: 'BV_OK' })], {
-      ai: { chat: async () => { n++; if (n === 1) throw new Error('429 限流'); return '一句话总结。'; } },
+      // 第一条：带选项与兜底重试**都**失败（n=1,2）→ 才写错误；第二条（n=3）成功
+      ai: { chat: async () => { n++; if (n <= 2) throw new Error('429 限流'); return '## A\n- b'; } },
       readText: () => '转录',
       writePatch: async (bvid, patch) => { patches.push({ bvid, ...patch }); },
     });
     expect(r).toEqual({ done: 1, failed: 1, skipped: 0 });
     expect(String(patches[0].error)).toContain('429 限流');
-    expect(patches[1].body).toBe('一句话总结。');
+    expect(patches[1].body).toBe('## A\n- b');
   });
 
   it('AI 产出为空 → 记失败（不写空 body）', async () => {
@@ -284,5 +284,46 @@ describe('runBriefSummaries（AI 一句话总结生成与回写）', () => {
     expect(r.failed).toBe(1);
     expect(patches[0].body).toBeUndefined();
     expect(String(patches[0].error)).toContain('产出为空');
+  });
+
+  it('首次调用带关闭思维链选项（reasoning_effort=none，避推理模型思维链吃光配额）', async () => {
+    const calls: any[] = [];
+    const r = await runBriefSummaries([mk()], {
+      ai: { chat: async (_p: string, opts?: any) => { calls.push(opts); return '## A\n- b'; } },
+      readText: () => '转录',
+      writePatch: async () => {},
+    });
+    expect(r).toEqual({ done: 1, failed: 0, skipped: 0 });
+    expect(calls.length).toBe(1);
+    expect(calls[0]).toEqual({ modelOptions: { reasoning_effort: 'none' } });
+  });
+
+  it('关闭思维链参数不被 provider 接受（抛错）→ 去掉参数重试成功', async () => {
+    const opts: any[] = [];
+    const r = await runBriefSummaries([mk()], {
+      ai: {
+        chat: async (_p: string, o?: any) => {
+          opts.push(o);
+          if (o) throw new Error('400 unsupported parameter: reasoning_effort');
+          return '## A\n- b';
+        },
+      },
+      readText: () => '转录',
+      writePatch: async () => {},
+    });
+    expect(r).toEqual({ done: 1, failed: 0, skipped: 0 });
+    expect(opts.length).toBe(2);
+    expect(opts[1]).toBeUndefined();
+  });
+
+  it('首次产出为空（思维链吃光配额）→ 重试一次成功', async () => {
+    let n = 0;
+    const r = await runBriefSummaries([mk()], {
+      ai: { chat: async () => { n++; return n === 1 ? '' : '## A\n- b'; } },
+      readText: () => '转录',
+      writePatch: async () => {},
+    });
+    expect(r).toEqual({ done: 1, failed: 0, skipped: 0 });
+    expect(n).toBe(2);
   });
 });

@@ -177,7 +177,7 @@ export function briefDayKey(b: any): string {
  * 简报条目 → ClipArticle（origin='brief'）。与 news 面同构，差异：
  * - id = `bv:<bvid>`（briefKeyOf 同源，跨段不撞）；url 恒为 B 站视频页；
  * - srcName/typeLabel = UP 名（bilibiliUpInfo 回填 → upName → uid）；
- * - summary = body 清洗截断（列表摘要），body = 一句话总结（右栏渲染）；
+ * - summary = 要点首行清洗（列表摘要），body = 要点 markdown（右栏渲染）；
  * - 失败条目（error 非空）：标题回退 bvid、summary 用错误原因，供列表可见 + 重跑入口；
  * - st = saved > read > unread（与 news 同口径，saved 由 state 承载）。
  */
