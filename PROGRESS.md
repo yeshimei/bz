@@ -355,3 +355,11 @@
 - [x] 设置：巩固参数 11 → 2（反思观察阈值 + 引用摘录字数）；「移动端默认全屏」组挪面板最下；6 个退役设置键 data.json 残留值忽略
 - [x] 测试：memory.test「睡前巩固」describe 整体重写为「行为小结」+ routedFetch 路由 mock；insight-version/emotion-recall/adr0069-core/trait-attribution/index-cov/behavior-wording/settings 同步
 - [x] 门禁：tsc 0 错 + 全量 221 文件 3553 用例绿 + 构建部署 E 盘
+
+## Issue 256 — 回忆墙升格日记本（旧 diary 编辑域退役 + 单源原型化）
+
+**状态：已交付**（2026-09-10，ADR-0115）
+
+- [x] 规格：`issues/256-diary-wall-promoted-diary.md`（spec.md「回忆墙升格日记本」节同步；ADR-0115）
+- [x] 实现：src/diary-wall→src/diary 正名升格；写链路迁入（写弹窗/时间标签选择器/store 写层/守卫/修复引擎/加密编排）；旧编辑面板退役；设置 12 键收编 3 键 + 2 跨域读；单源原型化全套（render.ts/fake-sim/fake-obsidian/双 iframe 壳/PROTOTYPE.md）+ 双清单登记；外围归一（home 磁贴合一/settings-panel/domain-icons/smoke.test/tests 并归/recap/smartcat）
+- [x] 门禁：tsc 0 错 + 全量 252 文件 4039 用例绿；merge master（todo→memo 正名/issue 261）解 7 处冲突

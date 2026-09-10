@@ -1,6 +1,6 @@
 # AGENTS.md — 包仔（bz）Obsidian 插件
 
-独立 Obsidian 插件，22 功能域（详见领域清单）。**项目语言：中文**。
+独立 Obsidian 插件，21 功能域（详见领域清单）。**项目语言：中文**。
 
 ## 命令与构建
 - `pnpm install` / `pnpm run dev` / `pnpm run build` / `pnpm test` / `pnpm exec tsc --noEmit`（依赖用 pnpm，勿用 npm）
@@ -22,8 +22,7 @@
 ## 领域清单（数据均在 CONFIG/STORAGE/）
 | 域 | 数据 |
 |---|---|
-| diary | `我的/日记/*.md`（旧域，冻结：只保写安全，不投资） |
-| diary-wall（回忆墙） | `我的/日记/*.md`（只读派生视图，ADR-0081） |
+| diary（日记本） | `我的/日记/*.md`（媒体优先界面 + 写链路，ADR-0115：回忆墙正名升格、旧编辑域退役并入） |
 | memo（备忘录） | memo.json（唯一属主，ADR-0092/0117：UI/写盘/引用同步/被动捕获全归本域） |
 | belongings | belongings.json |
 | clipbook（剪藏本，ADR-0082） | news.json（未读流）+ `归档/网页剪藏/*.md` + clipbook.json（侧写） |
