@@ -1,4 +1,4 @@
-/* 源指纹 14dee7d43c73019e · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 c16e9d5a5d97988e · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/bookshelf/fake-sim.ts","prototypes/bookshelf/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/index.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/bookshelf/fake-sim.ts → window.BZW_bookshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_bookshelf = (() => {
@@ -4287,6 +4287,36 @@ var BZW_bookshelf = (() => {
     else M.sortMode = "recent";
   }
 
+  // src/core/utils.ts
+  var import_moment = __toESM(require_moment());
+  function escapeHtml2(str) {
+    return str.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
+  }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function localDayKey(ts = Date.now()) {
+    const d = ts instanceof Date ? ts : new Date(ts);
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
+  function yieldToMainThread(timeoutMs = 200) {
+    return new Promise((resolve) => {
+      if (typeof window === "undefined") {
+        resolve();
+        return;
+      }
+      const ric = window.requestIdleCallback;
+      if (typeof ric === "function") ric(() => resolve(), { timeout: timeoutMs });
+      else window.setTimeout(resolve, 0);
+    });
+  }
+
   // src/bookshelf/constants.ts
   var STATUS_UNREAD = "未读";
   var STATUS_READING = "在读";
@@ -4760,9 +4790,7 @@ var BZW_bookshelf = (() => {
   }
   function toDateString(timestamp) {
     if (!Number.isFinite(timestamp) || !timestamp) return null;
-    const d = new Date(timestamp);
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    return localDayKey(timestamp);
   }
   function buildEpubItem(app, aggregate) {
     var _a, _b, _c;
@@ -4889,6 +4917,11 @@ var BZW_bookshelf = (() => {
       }
     };
   })();
+  var panelEscHandles = /* @__PURE__ */ new Map();
+  function registerPanelEsc(id, isVisible, close) {
+    if (panelEscHandles.has(id)) return;
+    panelEscHandles.set(id, escManager.register(id, { isVisible, close }));
+  }
 
   // src/core/z-order.ts
   var zCounter = 1e5;
@@ -5326,21 +5359,6 @@ var BZW_bookshelf = (() => {
         hideNow(n);
       }
     };
-  }
-
-  // src/core/utils.ts
-  var import_moment = __toESM(require_moment());
-  function escapeHtml2(str) {
-    return str.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
-  }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
   }
 
   // src/reading-report/stats.ts
@@ -7187,14 +7205,8 @@ var BZW_bookshelf = (() => {
   <div>读取书库时出错，请查看控制台获取详情</div>
 </div>`;
   var IDLE_CALLBACK_TIMEOUT_MS = 50;
-  function yieldToMainThread() {
-    return new Promise((resolve) => {
-      if (typeof window.requestIdleCallback === "function") {
-        window.requestIdleCallback(() => resolve(), { timeout: IDLE_CALLBACK_TIMEOUT_MS });
-      } else {
-        window.setTimeout(resolve, 0);
-      }
-    });
+  function yieldToMainThread2() {
+    return yieldToMainThread(IDLE_CALLBACK_TIMEOUT_MS);
   }
   function cancelReadingReport() {
     renderSeq++;
@@ -7252,11 +7264,11 @@ var BZW_bookshelf = (() => {
     };
     const step = async () => {
       progress.setMessage("正在读取书库…");
-      await yieldToMainThread();
+      await yieldToMainThread2();
       if (!alive()) return finishAbort();
       const bookNotes = getAllBookNotes(app);
       progress.setMessage("正在读取 EPUB 书目…");
-      await yieldToMainThread();
+      await yieldToMainThread2();
       if (!alive()) return finishAbort();
       const epubEntries = await getEpubBookNotes(app);
       if (!alive()) return finishAbort();
@@ -7268,7 +7280,7 @@ var BZW_bookshelf = (() => {
         return finishDone(true);
       }
       progress.setMessage("正在计算统计数据…");
-      await yieldToMainThread();
+      await yieldToMainThread2();
       if (!alive()) return finishAbort();
       const stats = calculateReadingStats(allNotes);
       const hmData = processHeatmapData(stats.readingSessions);
@@ -7278,7 +7290,7 @@ var BZW_bookshelf = (() => {
       container.innerHTML = "";
       for (const section of sections) {
         if (!alive()) return finishAbort();
-        await yieldToMainThread();
+        await yieldToMainThread2();
         if (!alive()) return finishAbort();
         container.insertAdjacentHTML("beforeend", section.generate());
         progress.setMessage(`正在生成${section.label}…`);
@@ -7612,15 +7624,8 @@ var BZW_bookshelf = (() => {
     }
     M.renderFn = null;
   }
-  var mainEscRegistered = false;
-  var mainEscHandle = null;
   function registerEscapeHandler() {
-    if (mainEscRegistered) return;
-    mainEscRegistered = true;
-    mainEscHandle = escManager.register("bz-bookshelf", {
-      isVisible: () => !!M.currentOverlay,
-      close: () => closeOverlay()
-    });
+    registerPanelEsc("bz-bookshelf", () => !!M.currentOverlay, () => closeOverlay());
   }
 
   // src/bookshelf/index.ts

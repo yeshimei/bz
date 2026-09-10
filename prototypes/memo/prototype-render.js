@@ -1,4 +1,4 @@
-/* 源指纹 6f0423d9a155eceb · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a9800c93a29d24bf · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/memo/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/memo/render.ts → window.BZR_memo（评审壳预览包，ADR-0104） */
 var BZR_memo = (() => {
@@ -49,6 +49,9 @@ var BZR_memo = (() => {
   function escapeHtml(s) {
     return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
   }
+  function iconSpan(name, extra = "") {
+    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
 
   // src/memo/render.ts
   var MEMO_ICONS = {
@@ -73,9 +76,6 @@ var BZR_memo = (() => {
     sceneAll: "layers",
     sceneToday: "sun"
   };
-  function iconSpan(name, extra = "") {
-    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
-  }
   var SCENE_DOTS = {
     剪藏: "#e67341",
     代码: "#4c82c8",

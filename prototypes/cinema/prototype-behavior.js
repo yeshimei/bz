@@ -1,4 +1,4 @@
-/* 源指纹 6d23cc17eb5d7626 · 仓内输入 51 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 fcd7054d2683e0e5 · 仓内输入 51 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -5431,6 +5431,11 @@ var BZW_cinema = (() => {
       }
     };
   })();
+  var panelEscHandles = /* @__PURE__ */ new Map();
+  function registerPanelEsc(id, isVisible, close) {
+    if (panelEscHandles.has(id)) return;
+    panelEscHandles.set(id, escManager.register(id, { isVisible, close }));
+  }
 
   // src/core/mobile.ts
   function isMobileEnv() {
@@ -5473,6 +5478,21 @@ var BZW_cinema = (() => {
   }
   function iconSpan(name, extra = "") {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
+
+  // src/core/utils.ts
+  var import_moment = __toESM(require_moment());
+  function escapeHtml2(str) {
+    return str.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
+  }
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   // src/cinema/douban-queue.ts
@@ -5681,9 +5701,6 @@ var BZW_cinema = (() => {
     }
     return fetchComplete(M.appRef, entry.file);
   }
-  function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
 
   // src/cinema/recommend.ts
   var GROUP_DEFAULT_TAG = {
@@ -5854,18 +5871,6 @@ tags:
 我已看过：${list || "（暂无）"}
 请推荐 3~5 部与基准影片气质相近、但我还没看过的同类佳作（可从真实世界影视中挑选），结合我的观影口味说明理由。
 严格输出 JSON（不要输出其他内容）：{"recommendations":[{"title":"片名","year":"年份","type":"类型","director":"导演","reason":"为何与基准影片同类、为何适合我"}]}`;
-  }
-
-  // src/core/utils.ts
-  var import_moment = __toESM(require_moment());
-  function escapeHtml2(str) {
-    return str.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
   }
 
   // src/cinema/analysis.ts
@@ -7082,14 +7087,8 @@ ${item.review ? `影评: ${item.review}
     M.renderFn = null;
     M.view = "list";
   }
-  var mainEscRegistered = false;
   function registerEscapeHandler() {
-    if (mainEscRegistered) return;
-    mainEscRegistered = true;
-    escManager.register("bz-cinema", {
-      isVisible: () => !!M.currentOverlay,
-      close: () => closeOverlay()
-    });
+    registerPanelEsc("bz-cinema", () => !!M.currentOverlay, () => closeOverlay());
   }
 
   // src/cinema/index.ts
