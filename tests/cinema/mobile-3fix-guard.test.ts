@@ -46,21 +46,34 @@ describe('A. 移动端面板真机全屏', () => {
   });
 });
 
-describe('C. 定尺方形图标钮钉死宿主 button padding', () => {
-  // 定尺（固定边长）+ grid 居中的方形钮：尺寸自己说了算，必须 padding:0
-  for (const sel of [
-    '.bz-cinema--midnight .m-tool{',
-    '.bz-cinema--midnight .m-head .add{',
-    '.bz-cinema--midnight .cn-modal-x{',
-    '.bz-cinema--midnight .sp-back{',
-  ]) {
-    it(`${sel} 显式 padding:0 !important 且保持定尺`, () => {
+describe('C. 右上角钮组（m-acts）图标精确居中', () => {
+  // 只覆盖右上角这组：＋（.m-head .add）与 AI/分析/关闭（.m-tool）。
+  // 其他按钮（弹窗关闭钮 cn-modal-x / 返回钮 sp-back / chips / rail）不在守卫内——
+  // 用户明确要求「只修右上角按钮，不动其他按钮样式」。
+  for (const [sel, icSel, icon] of [
+    ['.bz-cinema--midnight .m-tool{', '.bz-cinema--midnight .m-tool .bz-ic{', 15],
+    ['.bz-cinema--midnight .m-head .add{', '.bz-cinema--midnight .m-head .add .bz-ic{', 16],
+  ] as const) {
+    it(`${sel} 定尺 + 显式 padding:0 !important`, () => {
       const d = rule(sel);
-      // !important 是必需的：宿主 `.is-tablet button:not(.clickable-icon)` 特异性 (0,2,1) > 本类 (0,2,0)
+      // !important 必需：宿主 `.is-tablet button:not(.clickable-icon)` 特异性 (0,2,1) > 本类 (0,2,0)
       expect(d).toMatch(/padding:0 !important/);
       expect(d).toMatch(/width:\d+px/);
       expect(d).toMatch(/height:\d+px/);
       expect(d).toMatch(/display:grid/);
     });
+
+    // 偏移根因守卫：core 的 .bz-ic 是 width/height:1em（跟宿主 button 字号走），小于 svg 时
+    // 图标从容器左上角溢出 → 实测中心偏右下 1~1.5px。容器尺寸必须与 svg 尺寸一致。
+    it(`${icSel} 图标容器与 svg 同尺寸（${icon}px）`, () => {
+      const d = rule(icSel);
+      expect(d).toMatch(new RegExp(`width:${icon}px`));
+      expect(d).toMatch(new RegExp(`height:${icon}px`));
+    });
   }
+
+  it('其他按钮未被波及（cn-modal-x / sp-back 无 padding 钉死）', () => {
+    expect(rule('.bz-cinema--midnight .cn-modal-x{')).not.toMatch(/padding/);
+    expect(rule('.bz-cinema--midnight .sp-back{')).not.toMatch(/padding/);
+  });
 });

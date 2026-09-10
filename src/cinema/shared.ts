@@ -246,16 +246,10 @@ export function aiPageHtml(inp: AiPageInput): string {
       <button class="ai-start j-ai-start" data-cinema-ai-start>${iconSpan(ICON.ai)}开始推荐</button></div>`;
 }
 
-// ---------- 菜单/抽屉行（动作接线留行为层：这里只排 icon+label） ----------
+// ---------- 长按抽屉头部（动作行由 core/item-actions 统一渲染：见 ui.ts openSheet） ----------
 
-export interface MenuActView { icon: string; label: string; danger?: boolean }
-
-/** 右键菜单与长按抽屉共用的动作行（.cn-menu-item / .cn-sheet-item 外层类由各端拼） */
-export function actionRowsHtml(acts: MenuActView[], itemClass: string): string {
-  return acts.map((a, i) => `<button class="${itemClass}${a.danger ? ' danger' : ''}" data-i="${i}">${iconSpan(a.icon)}${a.label}</button>`).join('');
-}
-
-/** 长按抽屉头部（海报 + 名称 + meta 行；海报 URL 由调用方解析） */
+/** 抽屉头部（海报 + 名称 + meta 行；海报 URL 由调用方解析）。动作行不再自绘——
+ *  移动端抽屉与桌面菜单统一走 core/item-actions（ADR：手势与浮层单源）。 */
 export function sheetHeadHtml(it: CinemaItem, posterUrl: string | null): string {
   return `<div class="cn-sheet-head">${posterUrl ? `<img class="cn-sheet-poster" src="${esc(posterUrl)}" onerror="this.remove()">` : ''}
     <div><div class="cn-sheet-name">${esc(it.name)}</div><div class="cn-sheet-sub">${esc(it.year || '')} · ${esc(it.director || it.group)} · ${statusText(it.status)}</div></div></div>`;

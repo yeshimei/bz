@@ -26,6 +26,7 @@ import { topifyZ } from '../core/z-order';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { isMobileEnv } from '../core/mobile';
+import { longPress } from '../core/dom';
 import { tryGetSettings } from '../core/settings-provider';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { mountIcons, uiSuggest, uiIconSpan } from '../core/ui';
@@ -313,6 +314,19 @@ async function openPanelInner(): Promise<void> {
     const it = itemById(cell.dataset.belId as string);
     if (it) openRowMenuAt(it, e.clientX, e.clientY);
   });
+  // 移动端长按卡片 → 底部抽屉（统一手势 core/dom.longPress：与 core/item-actions 同源，
+  // 触屏滚动不受影响——被动监听 + 10px 移动取消）。点卡开抽屉的既有入口保留，长按为新增入口。
+  longPress(
+    content,
+    (ev: any) => {
+      const cell = (ev.target as HTMLElement)?.closest?.('[data-bel-id]') as HTMLElement | null;
+      if (!cell) return;
+      const it = itemById(cell.dataset.belId as string);
+      if (it) openMobSheet(it);
+    },
+    undefined,
+    (ev: any) => isMobileEnv() && !!(ev.target as HTMLElement)?.closest?.('[data-bel-id]')
+  );
 
   renderAll();
   startAutoRefresh();

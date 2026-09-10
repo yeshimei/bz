@@ -286,10 +286,12 @@
         t('新增同步到移动', mobCards() === DATA.length + 1);
 
         // 右键菜单（桌面）：已看卡 5 项（无标记动作项）
+        // 浮层已统一走 core/item-actions（.bz-item-menu 挂 document.body，不在面板树内）
+        const dtDoc = document.querySelector('#dtHost iframe').contentDocument;
         ctxCard(cardByName(dd, '测试影片'));
         await sleep(100);
-        t('右键菜单5项(已看)', dd.querySelectorAll('.cn-menu .cn-menu-item').length === 5
-          && ![...dd.querySelectorAll('.cn-menu .cn-menu-item')].some((b) => b.textContent.includes('标记')));
+        t('右键菜单5项(已看)', dtDoc.querySelectorAll('.bz-item-menu .bz-item-menu-item').length === 5
+          && ![...dtDoc.querySelectorAll('.bz-item-menu .bz-item-menu-item')].some((b) => b.textContent.includes('标记')));
 
         // 状态流转（桌面，种子想看片：想看 → 在看 → 已看；跑完还原 frontmatter 保自检可重复）
         const wantName = (DATA.find((x) => x.status === '想看') || {}).name;
@@ -297,25 +299,30 @@
         const wantOrig = localStorage.getItem(wantKey);
         ctxCard(cardByName(dd, wantName));
         await sleep(100);
-        t('右键菜单7项(想看)', dd.querySelectorAll('.cn-menu .cn-menu-item').length === 7);
-        clickReal([...dd.querySelectorAll('.cn-menu .cn-menu-item')].find((b) => b.textContent.includes('标记在看')));
+        t('右键菜单7项(想看)', dtDoc.querySelectorAll('.bz-item-menu .bz-item-menu-item').length === 7);
+        clickReal([...dtDoc.querySelectorAll('.bz-item-menu .bz-item-menu-item')].find((b) => b.textContent.includes('标记在看')));
         await sleep(500);
         t('流转在看徽标', badgeOf(cardByName(dd, wantName)) === '在看' && fmField(wantName, '评分') === '0');
         ctxCard(cardByName(dd, wantName));
         await sleep(100);
-        t('在看态无标记在看项', ![...dd.querySelectorAll('.cn-menu .cn-menu-item')].some((b) => b.textContent.includes('标记在看')));
-        clickReal([...dd.querySelectorAll('.cn-menu .cn-menu-item')].find((b) => b.textContent.includes('标记已看')));
+        t('在看态无标记在看项', ![...dtDoc.querySelectorAll('.bz-item-menu .bz-item-menu-item')].some((b) => b.textContent.includes('标记在看')));
+        clickReal([...dtDoc.querySelectorAll('.bz-item-menu .bz-item-menu-item')].find((b) => b.textContent.includes('标记已看')));
         await sleep(500);
         t('流转已看收徽标', badgeOf(cardByName(dd, wantName)) === null && fmField(wantName, '评分') === '5');
 
-        // 长按抽屉（移动，450ms 阈值）
+        // 长按抽屉（移动）：统一手势 core/dom.longPress（touchstart 被动监听，500ms 阈值）
+        const mobDoc = document.querySelector('#mobHost iframe').contentDocument;
         const lpCard = mob('.m-grid .pcard');
-        lpCard.dispatchEvent(new Event('pointerdown'));
-        await sleep(650);
-        t('长按抽屉开', !!mob('.cn-sheet') && !!mob('.cn-sheet-name') && mob('.cn-sheet').querySelectorAll('.cn-sheet-item').length >= 4);
-        mob('.cn-sheet-mask').click();
-        await sleep(80);
-        t('抽屉遮罩关闭', !mob('.cn-sheet'));
+        lpCard.dispatchEvent(new Event('touchstart', { bubbles: true }));
+        await sleep(700);
+        t('长按抽屉开', !!mobDoc.querySelector('.bz-item-sheet') && !!mobDoc.querySelector('.cn-sheet-name')
+          && mobDoc.querySelectorAll('.bz-item-sheet .bz-item-sheet-item').length >= 4);
+        // 长按松手会补发一次合成 click（会命中刚打开的遮罩把抽屉关掉）——core 的静置窗口吞掉它；
+        // 越过窗口（400ms）后再点遮罩应当能关
+        await sleep(500);
+        mobDoc.querySelector('.bz-item-sheet-mask').click();
+        await sleep(120);
+        t('抽屉遮罩关闭', !mobDoc.querySelector('.bz-item-sheet'));
 
         // 头行钮序（移动 m-acts）：添加最前 → AI → 分析 → 关闭最后；设置钮退役（设置走插件设置页）
         const acts = [...mob('.m-acts').querySelectorAll('button')];
