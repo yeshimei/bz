@@ -126,6 +126,11 @@ function inSheetCompanion(target: Node): boolean {
 
 /** 文档捕获层 mousedown：点浮层外任意处按下即关闭 */
 function onMouseDownCapture(ev: MouseEvent): void {
+  // 长按松手时浏览器补发的**合成 mousedown**会落在刚打开的遮罩上（触屏兼容鼠标事件：
+  // touchend → mousedown(命中指针处元素=遮罩) → mouseup(仍指向原触摸目标) → 可能无 click）。
+  // 静置窗口内不当作「外部点击」，否则抽屉开出来就被自己的遮罩关掉（真机实测：长按后
+  // 一松手抽屉即消失，用户感知「长按没反应」）。窗口外（真实轻点）照常关闭。
+  if (touchSettlePending) return;
   if (popupEl && popupEl.isConnected && !popupEl.contains(ev.target as Node) && !inSheetCompanion(ev.target as Node)) {
     closeItemMenu();
   }

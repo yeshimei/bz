@@ -23,6 +23,7 @@
  */
 import { notice, notify, notifyUndo, notifySaveError } from '../core/notice';
 import { topifyZ } from '../core/z-order';
+import { longPress } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { isMobileEnv } from '../core/mobile';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
@@ -178,6 +179,19 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
     const it = itemById(card.dataset.favId as string);
     if (it) openRowMenuAt(it, e.clientX, e.clientY);
   });
+  // 移动端长按卡片 → 底部抽屉（统一手势 core/dom.longPress：与 core/item-actions 同源，
+  // 触屏滚动不受影响——被动监听 + 10px 移动取消）。点卡开抽屉的既有入口保留，长按为新增入口。
+  longPress(
+    content,
+    (ev: any) => {
+      const card = (ev.target as HTMLElement)?.closest?.('[data-fav-id]') as HTMLElement | null;
+      if (!card) return;
+      const it = itemById(card.dataset.favId as string);
+      if (it) openMobSheet(it);
+    },
+    undefined,
+    (ev: any) => isMobileEnv() && !!(ev.target as HTMLElement)?.closest?.('[data-fav-id]')
+  );
 
   void (async () => {
     await loadItems();

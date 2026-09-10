@@ -81,6 +81,15 @@ function rightClick(cell: HTMLElement, x = 60, y = 60) {
 function clickCell(cell: HTMLElement) {
   cell.click();
 }
+/** 触屏按压（core/dom.longPress 手势）：touchstart → 停留 ms → touchend；越过 500ms 即长按。
+ *  jsdom 不自动合成 click，故短按不会误走「点卡开抽屉」路径，断言只反映长按入口本身 */
+async function touchPress(el: HTMLElement, ms: number): Promise<void> {
+  const ts = new TouchEvent('touchstart', { bubbles: true, cancelable: true });
+  Object.defineProperty(ts, 'touches', { value: [{ clientX: 10, clientY: 10 }] });
+  el.dispatchEvent(ts);
+  await tick(ms);
+  el.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+}
 /** 当前浮层动作项文案列表（桌面菜单 / 移动抽屉共用 label 断言） */
 function actionLabels(): string[] {
   return [...document.querySelectorAll('.bz-item-menu-label, .bz-item-sheet-label')].map((e) => e.textContent || '');
@@ -940,6 +949,23 @@ describe('归物本行操作（桌面菜单 / 移动抽屉 / 动作集）', () =
     } finally {
       Platform.isMobile = false;
     }
+  });
+
+  it('长按卡 → .bz-item-sheet（统一手势 core/dom.longPress）：桌面长按不弹、移动端短按不弹、移动端长按弹', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1', name: '机械键盘', purchase_price: 399 }) });
+    await open(vault);
+    // 桌面（Platform.isMobile=false）：手势过滤不放行
+    await touchPress(cells()[0], 550);
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
+    // 移动端短按（未到 500ms）：不弹
+    Platform.isMobile = true;
+    await touchPress(cells()[0], 100);
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
+    // 移动端长按：弹抽屉，头部名称正确（与点卡入口同一 openMobSheet）
+    await touchPress(cells()[0], 550);
+    await flush();
+    expect(document.querySelector('.bz-item-sheet-mask')).not.toBeNull();
+    expect(document.querySelector('.bz-item-sheet-title')!.textContent).toBe('机械键盘');
   });
 });
 
