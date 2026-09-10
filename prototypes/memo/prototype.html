@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -59,10 +59,8 @@
   <div id="mobHost" class="demo-mob-wrap"><div class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="备忘录·移动"></iframe></div></div>
 
   <div class="vbadge">备忘录 · 真行为单源预览（桌面=真 ui.ts 跑在 920px，移动=412×915）· 演示 16 条
+    <button id="layoutToggle">布局：清单（仅一套）</button>
     <button id="skinToggle">皮肤→编辑部</button>
-    <button id="capDemo">被动捕获演示</button>
-    <button id="renameDemo">笔记改名演示</button>
-    <button id="delDemo">笔记删除演示</button>
     <button id="mobToggle">隐藏移动端</button>
     <button id="reset">重置演示数据</button>
     <span id="stResult"></span>
@@ -75,10 +73,11 @@
   /* ==================== 壳基座（仅外景）：两个真行为 iframe + 数据种子 + 演示钩子 ====================
    * 行为全部在 iframe 内跑真 ui.ts（prototype-behavior.js）；本页只做：
    *  - 数据种子（MEMO.ITEMS 首启写 localStorage memo.json，数组同构，见 fake-sim seedDatabase）
-   *  - 四个演示面（被动捕获 / 打开笔记提醒 / 引用同步·改名 / 引用同步·删除）——手动触发，
-   *    经桌面 iframe 的 BZW_memo 演示钩子驱动真 reminder.ts / file-sync.ts
+   *  - 外景开关（皮肤切换 / 隐藏移动端）
    *  - 重置演示数据（清 localStorage 后重载 iframe）
-   *  - 自检（?selftest=1）：经 iframe contentWindow 访问真 DOM
+   *  - 自检（?selftest=1）：经 iframe contentWindow 访问真 DOM；被动捕获 / 打开笔记提醒 /
+   *    引用同步（改名·删除）三面由自检驱动真 reminder.ts / file-sync.ts（issue 269 撤下三枚
+   *    手动演示钮后，这里是它们唯一的触发口）
    */
   const LS = 'bz-sim:CONFIG/STORAGE/memo.json';
   const seedOnce = () => {
@@ -115,28 +114,89 @@
   });
 
   document.querySelector('#reset').addEventListener('click', () => {
+    // 重置 = 回到出厂评审基线：数据种子 + 跨 iframe 外观选择（皮肤/布局）一并清掉，
+    // 否则「重置」后仍停在上一轮切到的皮肤上，与按钮语义不符（issue 269）。
     localStorage.removeItem(LS);
+    localStorage.removeItem('bz-sim:demo-settings');
     location.reload();
   });
 
-  // ===== 演示钩子（驱动桌面 iframe 内的真行为层；数据落 localStorage，移动侧重开面板可见） =====
+  // ===== 演示钩子（驱动 iframe 内的真行为层；数据落 localStorage，移动侧重开面板可见） =====
+  // issue 269：被动捕获 / 笔记改名 / 笔记删除三枚演示钮按用户要求从徽牌撤下——
+  // 三面的真链路（reminder.ts / file-sync.ts）改由 ?selftest=1 自检驱动，覆盖率不减。
   const B = () => dtFrame().contentWindow.BZW_memo;
+
+  /* 双 iframe = 两份互不相识的行为包实例（各自内存设置副本）。壳上**外观类**按钮
+   * （皮肤/布局）必须对两侧都下发，否则「桌面变了、移动没变」——issue 269 用户实测症状。
+   * 下发用**绝对值**：先在首实例上算出 next，再拿同一个 next 调两侧的 setter，
+   * 不做「两侧各自 toggle/cycle」（那两个实例一旦状态不一致就会各转各的、越切越偏）。
+   * 注：数据类钩子（改名/删除/被动捕获）只驱动桌面实例即可——数据落 localStorage，
+   * 移动侧重开面板即读到同一份；外观是内存态，必须逐实例下发。 */
+  const instances = () => [dtFrame(), mobFrame()]
+    .map((f) => f && f.contentWindow && f.contentWindow.BZW_memo)
+    .filter((b) => b && typeof b === 'object');
+  const firstReady = (fn) => {
+    for (const b of instances()) if (typeof b[fn] === 'function') return b;
+    return null;
+  };
+  /** 按绝对目标下发两侧（setter 名 + 值）；返回首个实例的返回值供按钮回显 */
+  const applyAll = (fn, value) => {
+    let out = null;
+    for (const b of instances()) {
+      if (typeof b[fn] !== 'function') continue;
+      const r = b[fn](value);
+      if (out === null) out = r;
+    }
+    return out;
+  };
+
+  // 布局钮（issue 269 用户拍板：徽牌放布局切换）：清单 = 域设置 schema「面板布局」行单源，
+  // 壳内不写死布局名——该行加第二布局后本按钮自动可切。
+  // 现状只有一套（清单 / 场景工作台），故按钮标注「仅一套」，点按为 no-op（memoLayout 尚无消费方）。
+  const layoutBtn = document.querySelector('#layoutToggle');
+  const paintLayout = (st) => {
+    if (!st) return;
+    layoutBtn.textContent = '布局：' + (st.label || '—') + (st.count > 1 ? '' : '（仅一套）');
+    layoutBtn.title = st.count > 1
+      ? '点按切到下一个布局（共 ' + st.count + ' 套，桌面 + 移动两端同步）'
+      : '备忘录目前只有这一套布局；域设置 schema 加第二套后本按钮自动可切';
+  };
+  // 初绘等 iframe 里的行为包就绪（B() 在 iframe 载入前为 undefined）
+  const paintLayoutWhenReady = () => {
+    const b = firstReady('layoutState');
+    if (!b) { setTimeout(paintLayoutWhenReady, 200); return; }
+    paintLayout(b.layoutState());
+  };
+  paintLayoutWhenReady();
+  layoutBtn.addEventListener('click', () => {
+    const b = firstReady('layoutState');
+    if (!b) return;
+    const st = b.layoutState();
+    const all = b.listLayouts();
+    if (all.length < 2) { paintLayout(st); return; } // 仅一套：原地不动（布局尚未落地）
+    const i = Math.max(0, all.findIndex((o) => o.value === st.value));
+    paintLayout(applyAll('setLayout', all[(i + 1) % all.length].value));
+  });
+
   const skinBtn = document.querySelector('#skinToggle');
+  const paintSkin = (cur) => {
+    // 标签回显**当前**皮肤（旧写法「皮肤→编辑部」是「待切目标」，与判定用的字符串同形，
+    // 直接导致目标恒为 paper、点按永远不动——issue 269 修）
+    skinBtn.textContent = '皮肤：' + (cur === 'editorial' ? '编辑部' : '纸感手账');
+    skinBtn.title = '点按切到另一套皮肤（纸感手账 / 编辑部，桌面 + 移动两端同步）';
+  };
+  const paintSkinWhenReady = () => {
+    const b = firstReady('skinState');
+    if (!b) { setTimeout(paintSkinWhenReady, 200); return; }
+    paintSkin(b.skinState());
+  };
+  paintSkinWhenReady();
   skinBtn.addEventListener('click', () => {
-    const next = skinBtn.textContent.includes('编辑部') ? 'paper' : 'editorial';
-    B().applySkin(next);
-    skinBtn.textContent = next === 'editorial' ? '皮肤→纸感' : '皮肤→编辑部';
-  });
-  document.querySelector('#capDemo').addEventListener('click', () => B().demoCapture());
-  document.querySelector('#renameDemo').addEventListener('click', () => {
-    const ok = B().demoRenameNote('笔记/项目规划.md', '笔记/项目规划-2026.md');
-    window.alert(ok ? '已派发 vault rename：笔记/项目规划.md → 笔记/项目规划-2026.md\nfile-sync 将把 3 条关联备忘录的 notePath 就地改写（namePosition 定位保留）。'
-                    : 'fake vault 里没有该笔记');
-  });
-  document.querySelector('#delDemo').addEventListener('click', () => {
-    const ok = B().demoDeleteNote('笔记/项目规划-2026.md');
-    window.alert(ok ? '已派发 vault delete：笔记/项目规划-2026.md\nfile-sync 将清空关联备忘录的 notePath/notePosition。'
-                    : 'fake vault 里没有该笔记（先跑「笔记改名演示」）');
+    const b = firstReady('skinState');
+    if (!b) return;
+    const next = b.skinState() === 'paper' ? 'editorial' : 'paper';
+    // 按返回的**绝对值**回显（applySkin 归一后返回；别拿点击前的状态画标签）
+    paintSkin(applyAll('applySkin', next));
   });
 
   /* ==================== 自检（?selftest=1）：真行为 DOM 断言（经 iframe） ==================== */
@@ -170,6 +230,29 @@
         t('移动面板开', !!mob('.bz-memo-panel'));
         t('初始16条', db().length === BASE);
         t('皮肤默认纸感', dt('.bz-memo-panel').classList.contains('bz-memo-skin-paper'));
+        // 徽牌皮肤钮（issue 269 修复守卫，两轮）：① 旧实现标签与目标方向写反 → 点按永远不动；
+        // ② 旧实现只调桌面实例 → 移动端不跟着切（双 iframe 两份行为包实例）。两条都要守住。
+        (() => {
+          const skinOf = (doc) => doc.querySelector('.bz-memo-panel').classList.contains('bz-memo-skin-paper') ? 'paper' : 'editorial';
+          const beforeDt = skinOf(dd);
+          const beforeMob = skinOf(md);
+          document.querySelector('#skinToggle').click();
+          const dtFlipped = skinOf(dd) !== beforeDt;
+          const mobFlipped = skinOf(md) !== beforeMob;
+          const sameNow = skinOf(dd) === skinOf(md);
+          t('皮肤钮切得动（桌面）', dtFlipped);
+          t('皮肤钮切得动（移动端同步）', mobFlipped);
+          t('点一次两端皮肤一致', sameNow);
+          // 按钮标签必须回显**切换后**的皮肤（曾因 applySkin 返回 void 而回显切换前的值）
+          const lbl = document.querySelector('#skinToggle').textContent;
+          const want = skinOf(dd) === 'editorial' ? '编辑部' : '纸感手账';
+          t('皮肤钮标签回显切换后的皮肤', lbl.includes(want));
+          document.querySelector('#skinToggle').click();
+          t('皮肤钮切回原皮肤（两端）', skinOf(dd) === beforeDt && skinOf(md) === beforeMob);
+        })();
+        // 徽牌（issue 269）：三枚手动演示钮已撤；布局钮在场且回显域设置 schema 的布局名
+        t('三枚演示钮已撤', !document.querySelector('#capDemo, #renameDemo, #delDemo'));
+        t('布局钮在场', (document.querySelector('#layoutToggle') || {}).textContent?.includes('布局：') === true);
         t('nav 场景=3伪+6用户', dd.querySelectorAll('[data-memo-nav] [data-memo-scene]').length === 9);
         t('移动 chips=3伪+6用户', md.querySelectorAll('[data-memo-mob-scenes] [data-memo-scene]').length === 9);
         t('nav 图标兑现', !!dt('[data-memo-nav] [data-memo-scene] svg')); // fake setIcon + MEMO_ICONS 表生效
@@ -206,11 +289,14 @@
         await sleep(150);
         t('编辑器关（点遮罩）', !dd.querySelector('.bz-overlay-popup .bz-memo-editor'));
 
-        // 皮肤热切换（真 applyMemoSkin）
+        // 皮肤热切换（真 applyMemoSkin；两侧都下发——单开一侧会让移动端停在旧皮肤）
         B().applySkin('editorial');
+        mobFrame().contentWindow.BZW_memo.applySkin('editorial');
         await sleep(80);
         t('皮肤切编辑部', dt('.bz-memo-panel').classList.contains('bz-memo-skin-editorial'));
+        t('皮肤切编辑部（移动端）', mob('.bz-memo-panel').classList.contains('bz-memo-skin-editorial'));
         B().applySkin('paper');
+        mobFrame().contentWindow.BZW_memo.applySkin('paper');
 
         // 引用同步·改名（真 file-sync：vault rename → 域事件总线 → notePath 改写，去抖回放）
         const renamed = B().demoRenameNote('笔记/项目规划.md', '笔记/项目规划-2026.md');

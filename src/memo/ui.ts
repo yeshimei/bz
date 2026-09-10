@@ -1,15 +1,17 @@
-/**
+﻿/**
  * 备忘录（memo）域 UI：场景工作台（原型 1 定稿形态）
  * 桌面：遮罩 + 720×580 面板（壳 = 组件库 .bz-panel-overlay/.bz-panel-frame，
  *       ADR-0094 接入；ADR-0084：右缘/底缘/右下角拖动缩放，钳制 720×520 ~
  *       min(1280×880, 视口92%)，尺寸记忆 persist → settings.memoPanelWidth/Height）：
  *       左场景栏（.bz-rail 族：全部/今日/重要 = 图标前缀，用户场景 = 场景色点；
  *       「添加场景」虚线钮挂列表尾部，紧贴最后一个场景之下）+ 右侧列表
- *       （.bz-main-head 主头行 + .bz-toolrow 工具行（.bz-search 搜索 + 排序 segmented）；
- *       条目卡 meta 对齐源码 buildMeta 顺序）
+ *       （.bz-main-head 主头行 + .bz-toolrow 工具行（.bz-search 搜索 + 排序下拉
+ *       uiSelect，issue 268 起由三档平铺改单枚下拉）；条目卡 meta 对齐源码 buildMeta 顺序）
  * 头行：.bz-panel-brand 品牌块 + 右侧「打开备忘录设置 / 关闭」图标钮（issue 197，
- *       对齐剪藏本头行范式；设置钮直达设置面板备忘录域）
- * 移动：真全屏 + 顶部横滑场景条（.bz-mobstrip；头行钮组桌面/移动共用）
+ *       对齐剪藏本头行范式；设置钮直达设置面板备忘录域）。皮肤段桌面收掉整组，
+ *       移动端只放回关闭一枚（issue 268：设置/新建撤出移动头行）
+ * 移动：真全屏 + 顶部横滑场景条（.bz-mobstrip：场景 chips + 尾部「添加场景」虚线 chip）
+ *       + 底部录入（「添加」= 打开创建弹窗并把已输入文字带过去，issue 268 用户拍板）
  * 交互：
  *   - 桌面右键条目 → 跟手菜单（无顶部信息卡）；移动长按 → 底部抽屉（带 sheetHead）
  *     （两者复用 core/item-actions：attachItemActions）
@@ -33,7 +35,7 @@ import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
 import { isMobileEnv } from '../core/mobile';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { uiModal, uiIcon, uiChoice, uiBtn, uiBtnRow, uiResizable, uiEmpty, mountIcons, uiSuggest } from '../core/ui';
+import { uiModal, uiIcon, uiChoice, uiSelect, uiBtn, uiBtnRow, uiResizable, uiEmpty, mountIcons, uiSuggest } from '../core/ui';
 import { openFlowDialog } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
@@ -45,7 +47,7 @@ import { MemoData, DEFAULT_SCENARIOS } from './data';
 import { getDueStatus, formatDueText } from './due';
 import {
   MEMO_ICONS as ICON, iconSpan, sceneDot, sceneLabel, mainCountHtml,
-  navBtnHtml, mobChipHtml, panelShellHtml, metaTagsHtml,
+  navBtnHtml, mobChipHtml, mobAddSceneChipHtml, panelShellHtml, metaTagsHtml,
   cardHtml as renderCard, sectionLabelHtml, doneBarHtml, doneMoreHtml, type MetaDue,
 } from './render';
 import type { MemoItem } from './types';
@@ -306,17 +308,18 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
   applyMemoSkin(tryGetSettings().memoSkin);
   mountIcons(overlay);
 
-  // 排序三档（浮岛 segmented，issue 199：滑动白卡指示器；桌面工具行；移动不显示）
+  // 排序 = 组件库下拉（issue 268 用户拍板：三档平铺占宽把搜索框挤窄，改单枚下拉——
+  // 收起态只占一行文案宽，搜索框（.bz-search flex:1）随之变长；展开菜单走 .bz-select-menu，
+  // 皮肤段按 paper/editorial 各自风格化。值域/写回口径不变）
   const sortEl = overlay.querySelector('[data-memo-sort]') as HTMLElement;
-  const sortChoice = uiChoice<string>({
+  const sortSelect = uiSelect<string>({
     options: [
       { value: 'priority', label: '紧急优先' },
       { value: 'due', label: '仅按到期' },
       { value: 'created', label: '按创建' },
     ],
     value: M.sortMode,
-    float: true,
-    label: '排序方式',
+    className: 'bz-memo-sortsel',
     onChange: (v) => {
       M.sortMode = v;
       // 同步写入默认排序（与 memo 共用 memoSortMode 键）
@@ -325,8 +328,8 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
       renderAll();
     },
   });
-  sortEl.appendChild(sortChoice.el);
-  sortChoiceDetach = sortChoice.detach;
+  sortEl.appendChild(sortSelect.el);
+  sortSelectDetach = sortSelect.detach;
 
   // 桌面拖动缩放（ADR-0084；移动端真全屏/常规卡都由 CSS 撑满视口，不挂）。
   // 尺寸记忆（ADR-0094）：persist.load 挂载时恢复（resize 工厂钳到与拖拽同口径），
@@ -395,9 +398,9 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
       renderAll();
       return;
     }
-    // 底部录入
+    // 底部录入（桌面 = 快速落盘；移动 = 打开创建弹窗，见 submitComposer）
     const composerAdd = t.closest('[data-memo-composer-add]');
-    if (composerAdd) { addFromComposer(); return; }
+    if (composerAdd) { submitComposer(); return; }
   });
 
   // 行内勾选（完成/恢复；300ms 防抖对齐 memo 卡片）
@@ -487,10 +490,10 @@ export function closeMemoPanel(): void {
     panelResizeDetach.detach();
     panelResizeDetach = null;
   }
-  // 摘排序浮岛的 resize 监听
-  if (sortChoiceDetach) {
-    sortChoiceDetach();
-    sortChoiceDetach = null;
+  // 摘排序下拉的 document 级监听（开合/ESC）
+  if (sortSelectDetach) {
+    sortSelectDetach();
+    sortSelectDetach = null;
   }
   M.renderFn = null;
   M.pinnedNewId = null;
@@ -513,8 +516,8 @@ export function registerEscapeHandler(): void {
 
 /** 面板当前 resize detach（打开期间非空，关闭清空） */
 let panelResizeDetach: { detach: () => void } | null = null;
-/** 排序浮岛 resize 监听 detach（面板关闭时摘除，防孤儿监听） */
-let sortChoiceDetach: (() => void) | null = null;
+/** 排序下拉（uiSelect）的 document 级监听 detach（面板关闭时摘除，防孤儿监听） */
+let sortSelectDetach: (() => void) | null = null;
 
 // ---------- 渲染 ----------
 
@@ -573,9 +576,11 @@ function renderNav(): void {
 function renderMobScenes(): void {
   const wrap = M.overlay!.querySelector('[data-memo-mob-scenes]') as HTMLElement;
   if (!wrap) return;
+  // 「添加场景」固定挂在平铺场景条的**最后面**（issue 268 用户拍板：与收藏本磁贴行同款，
+  // 动作磁贴跟在全部场景之后）；左栏桌面那条虚线钮位置不变
   wrap.innerHTML = sceneOptions()
     .map((o) => mobChipHtml(o, M.activeScene === o.scene))
-    .join('');
+    .join('') + mobAddSceneChipHtml();
   mountIcons(wrap);
   wrap.querySelectorAll<HTMLElement>('[data-memo-scene]').forEach((el) => {
     attachSceneActions(el, el.dataset.memoScene as string);
@@ -882,6 +887,32 @@ function buildCardActions(it: MemoItem): ItemAction[] {
 
 // ---------- 编辑器（新建/编辑弹窗） ----------
 
+/**
+ * 底部录入提交（issue 268）：两端逻辑分叉——
+ * 桌面 = `addFromComposer()` 快速落盘（保留既有「输入即存 + toast 补全」链路）；
+ * 移动 = 打开创建弹窗（真全屏下弹窗能补场景/优先级/截止/定位，且移动端头行已撤掉新建钮，
+ * 这一枚就是移动端的新建入口）。已输入文字**带进弹窗**当初始内容（用户拍板），
+ * 输入框留到弹窗保存成功才清——中途取消不丢草稿。
+ * 「当前选中的场景」也一并带进弹窗（issue 269 用户拍板：选中某场景再点添加，
+ * 弹窗里预选这个场景）——与桌面 composer 快速落盘的 composerScene() 同口径。
+ */
+function submitComposer(): void {
+  if (!isMobileEnv()) { addFromComposer(); return; }
+  const input = M.overlay!.querySelector('[data-memo-composer-input]') as HTMLInputElement | null;
+  const txt = (input?.value || '').trim();
+  // 剪藏剪贴板预填的标题候选随草稿一起交接（内容仍是原始 URL 才认，用户改动即弃）
+  const hint = clipTitleHint && clipTitleHint.title && txt === clipTitleHint.url ? clipTitleHint : null;
+  openEditor(null, {
+    presetContent: txt,
+    presetTitle: hint ? hint.title : '',
+    presetScene: composerScene(),
+    onSaved: () => {
+      if (input) input.value = '';
+      clipTitleHint = null;
+    },
+  });
+}
+
 function addFromComposer(): void {
   const overlay = M.overlay!;
   const input = overlay.querySelector('[data-memo-composer-input]') as HTMLInputElement;
@@ -929,13 +960,26 @@ function addFromComposer(): void {
   })();
 }
 
-/** 打开编辑器（item = null 新建）；用 uiModal：无关闭按钮、点遮罩/ESC 关闭 */
-export function openEditor(item: MemoItem | null): void {
+/** 打开编辑器（item = null 新建）；用 uiModal：无关闭按钮、点遮罩/ESC 关闭
+ *
+ * opts（新建态预填，issue 268 移动端「底部添加 → 弹窗」交接用；编辑态忽略）：
+ *  - presetContent：内容框初值（底部录入已输入的文字带进弹窗）
+ *  - presetTitle：剪藏标题框初值（剪贴板预填抓到的页面标题）
+ *  - presetScene：场景平铺预选（issue 269：当前选中的场景带进弹窗；非法/缺省回落
+ *    memoDefaultScene → 第一个场景，与 fallbackScene 同口径）
+ *  - onSaved：保存成功后的回调（调用方清底部录入草稿）
+ */
+export function openEditor(
+  item: MemoItem | null,
+  opts?: { presetContent?: string; presetTitle?: string; presetScene?: string; onSaved?: () => void },
+): void {
   const isEdit = !!item;
   const scenes = MemoData.getScenarios();
   const editing = item ?? null;
-  // 默认场景：编辑态用条目自身场景；新建走 fallbackScene（设置 memoDefaultScene 或第一个）
-  const defaultScene = editing ? editing.scene : fallbackScene();
+  // 默认场景：编辑态用条目自身场景；新建优先 opts.presetScene（合法才认），否则走
+  // fallbackScene（设置 memoDefaultScene 或第一个）
+  const presetScene = opts?.presetScene && scenes.includes(opts.presetScene) ? opts.presetScene : null;
+  const defaultScene = editing ? editing.scene : (presetScene ?? fallbackScene());
   const isClip = defaultScene === '剪藏';
   const isCode = defaultScene === '代码';
   const isCourse = defaultScene === '公开课';
@@ -957,7 +1001,7 @@ export function openEditor(item: MemoItem | null): void {
   const contentInput = document.createElement('textarea');
   contentInput.className = 'bz-input';
   contentInput.placeholder = '输入备忘录内容...';
-  contentInput.value = editing ? editing.title : '';
+  contentInput.value = editing ? editing.title : (opts?.presetContent || '');
   contentField.append(contentLabel, contentInput);
   form.appendChild(contentField);
 
@@ -967,7 +1011,7 @@ export function openEditor(item: MemoItem | null): void {
   const titleInput = document.createElement('input');
   titleInput.className = 'bz-input';
   titleInput.placeholder = '标题（可选）';
-  titleInput.value = '';
+  titleInput.value = editing ? '' : (opts?.presetTitle || '');
   titleBox.appendChild(titleInput);
   form.appendChild(titleBox);
 
@@ -1229,6 +1273,7 @@ export function openEditor(item: MemoItem | null): void {
           notice(`已添加到「${scene}」`, 'success');
         }
         closeModal();
+        opts?.onSaved?.(); // 新建成功才回调（调用方清底部录入草稿；失败分支不触发）
         await refresh();
       } catch (e) {
         notifySaveError(e, isEdit ? '保存备忘录' : '新建备忘录');

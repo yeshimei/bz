@@ -1,4 +1,4 @@
-/* 源指纹 c42b9d63eb2b226a · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 6f0423d9a155eceb · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/memo/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/memo/render.ts → window.BZR_memo（评审壳预览包，ADR-0104） */
 var BZR_memo = (() => {
@@ -34,6 +34,7 @@ var BZR_memo = (() => {
     iconSpan: () => iconSpan,
     mainCountHtml: () => mainCountHtml,
     metaTagsHtml: () => metaTagsHtml,
+    mobAddSceneChipHtml: () => mobAddSceneChipHtml,
     mobChipHtml: () => mobChipHtml,
     navBtnHtml: () => navBtnHtml,
     panelShellHtml: () => panelShellHtml,
@@ -123,6 +124,9 @@ var BZR_memo = (() => {
   function mobChipHtml(o, active) {
     return `<button class="bz-mobstrip-chip${active ? " is-on" : ""}" data-memo-scene="${escapeHtml(o.scene)}">${sceneLeadHtml(o, "bz-mobstrip-dot")}${escapeHtml(sceneLabel(o.scene))}</button>`;
   }
+  function mobAddSceneChipHtml() {
+    return `<button class="bz-mobstrip-chip bz-mobstrip-add" data-memo-addscene title="添加场景">${iconSpan(MEMO_ICONS.addScene)}${escapeHtml("添加场景")}</button>`;
+  }
   function panelShellHtml() {
     return `
     <div class="bz-panel-frame bz-memo-panel bz-panel-mtop">
@@ -131,9 +135,8 @@ var BZR_memo = (() => {
         <div class="bz-panel-title">备忘录</div>
         <div class="bz-panel-head-sp"></div>
         <div class="bz-panel-head-btns">
-          <button class="bz-icon-btn" data-memo-head-settings title="打开备忘录设置">${iconSpan(MEMO_ICONS.settings)}</button>
-          <button class="bz-icon-btn bz-touch-target bz-memo-head-new" data-memo-newbtn title="新建备忘录">${iconSpan(MEMO_ICONS.add)}</button>
-          <button class="bz-icon-btn bz-touch-target bz-memo-head-close" data-memo-head-close title="关闭">${iconSpan(MEMO_ICONS.close)}</button>
+          <button class="bz-icon-btn bz-memo-head-settings" data-memo-head-settings title="打开备忘录设置">${iconSpan(MEMO_ICONS.settings)}</button>
+          <button class="bz-icon-btn bz-touch-target bz-touch-target--lg bz-memo-head-close" data-memo-head-close title="关闭">${iconSpan(MEMO_ICONS.close)}</button>
         </div>
       </div>
       <div class="bz-memo-body">
