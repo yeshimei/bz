@@ -1,3 +1,7 @@
 # 发布版 main.js 由构建生成（esbuild 输出 LF）：固定 LF 避免 autocrlf 检出成 CRLF，
 # 否则每次 pnpm run build 同步后 git status 都会出现行尾假差异
 main.js text eol=lf
+
+# 原型产物同理（esbuild 输出 LF）：不固定则每次 build-preview 重出都会产生
+# 「全文件行尾变化」的假差异，把真实内容变更淹没（2026-09-10 实测：git 内 100% 为 CRLF）
+prototypes/**/*.js text eol=lf
