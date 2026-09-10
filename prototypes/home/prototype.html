@@ -16,6 +16,7 @@
   │   alias obsidian→公共假层）在下方两个 iframe 视图里跑真行为；               │
   │   桌面 iframe 920px = 桌面三栏；移动 iframe 412×827 = 小米13U 真机可视区   │
   │   1440×3200 @dpr3.5 → 412×915；扣状态栏 24 + 底栏 48 + 手势区 16 = 827    │
+  │   徽牌「1:1 真机」= 物理尺寸对齐（412 CSS px → 屏宽 70.15mm，量一次校准） │
   │   @media/@container ≤768 移动布局。数据 = fake vault（localStorage 种子，  │
   │   相对「今天」生成、跨天自动重灌，见 fake-sim.ts）。                        │
   │ 壳内只允许：外景容器样式、评审徽牌、演示钩子与自检。                        │
@@ -38,8 +39,15 @@
    * 推导：物理 1440×3200（6.73" 522ppi）→ Android density 档 560dpi → dpr 3.5
    *   → WebView 视口 412×915 CSS px（1440/3.5=411.4 ↑，3200/3.5=914.3 ↑）
    *   → 扣 MIUI 状态栏 24 + Obsidian 底部工具栏 48 + 手势安全区 16 = 827
-   * 屏满（不扣底栏）= 875；三键导航再 -32。412 仍 ≤768 → 移动布局命中 */
+   * 屏满（不扣底栏）= 875；三键导航再 -32。412 仍 ≤768 → 移动布局命中
+   *
+   * 1:1 真机（物理尺寸对齐，非 CSS 像素）：6.73" 20:9 → 屏宽 70.15mm，
+   *   而 412 CSS px 在桌面按参考像素（1px = 1/96 英寸）渲染 ≈ 109mm —— 约 1.55 倍。
+   *   故用 transform: scale 只缩视觉；iframe 内视口恒为 412×827 CSS px，
+   *   绝不改 width/height（改了就动到 @media ≤768 的判据）。占位交给外层 wrap。 */
+  .demo-mob-wrap { flex: none; width: calc(412px * var(--mob-scale, 1)); height: calc(827px * var(--mob-scale, 1)); }
   .demo-mob { width: 412px; height: 827px; border-radius: 26px; overflow: hidden; flex: none;
+    transform: scale(var(--mob-scale, 1)); transform-origin: top left;
     border: 1px solid #b8b0a0; box-shadow: 0 8px 30px rgba(0,0,0,.16); background: #f5f2ec; }
   .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
 
@@ -47,16 +55,20 @@
   .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #8b8474; display: flex; gap: 10px; align-items: center;
     background: rgba(255,255,255,.92); border: 1px solid #c9c2b2; padding: 3px 8px; z-index: 900; }
   .vbadge button { border: none; background: none; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; }
+  .vbadge input { width: 48px; border: 1px solid #c9c2b2; border-radius: 3px; padding: 1px 3px; font: 11px 'Microsoft YaHei'; color: #6b6455; }
   .vbadge .ok { color: #3d8f5d; }
   .vbadge .bad { color: #b3564d; }
 </style>
 </head>
 <body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark，壳内必须补一类才不透明 -->
   <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="内容首页·桌面"></iframe></div>
-  <div id="mobHost" class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="内容首页·移动"></iframe></div>
+  <div id="mobHost" class="demo-mob-wrap"><div class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="内容首页·移动"></iframe></div></div>
 
   <div class="vbadge">内容首页 · 真行为单源预览（桌面=真 ui.ts 跑在 920px，移动=412×827 小米13U）
     <button id="mobToggle">隐藏移动端</button>
+    <button id="one2one">1:1 真机</button>
+    <span id="calib" hidden>框宽实测 <input id="calibMm" type="number" step="0.1" min="1" placeholder="mm"><button id="calibGo">校准</button></span>
+    <span id="scaleInfo"></span>
     <button id="reset">重置演示数据</button>
     <span id="stResult"></span>
   </div>
@@ -100,6 +112,45 @@
     m.style.display = hidden ? '' : 'none';
     document.querySelector('#mobToggle').textContent = hidden ? '隐藏移动端' : '显示移动端';
   });
+
+  /* ==================== 移动外景 1:1 真机（物理尺寸对齐小米13U） ====================
+   * 目标：框在屏幕上的「毫米数」= 真机屏宽，而不是 CSS 像素数相等。
+   *   6.73" 20:9 → 屏宽 = 6.73×25.4×9/√(20²+9²) = 70.15mm；412 CSS px = 1440 物理 px = 整屏宽。
+   * 未校准时按 CSS 参考像素（1px = 1/96 英寸）估算 ≈ 0.643×；Windows 系统缩放非 100%
+   * 时该估算会偏，故提供「量一次框宽」的迭代校准（校准值存 localStorage）。
+   */
+  const MOB_MM = 70.15;                                  // 小米13U 屏宽（mm）
+  const GUESS_SCALE = MOB_MM / (412 * 25.4 / 96);        // ≈ 0.643（标准 96dpi 推算）
+  const SCALE_KEY = 'bz-proto:home-mob-scale';    // 真机档的 scale（仅 1:1 模式下写）
+  const MODE_KEY = 'bz-proto:home-mob-1to1';      // 模式（'1' 真机 / '0' CSS）
+  const toggle1to1 = document.querySelector('#one2one');
+  const calibBox = document.querySelector('#calib');
+  const scaleInfo = document.querySelector('#scaleInfo');
+  const savedScale = () => { const v = parseFloat(localStorage.getItem(SCALE_KEY)); return Number.isFinite(v) && v > 0 && v !== 1 ? v : 0; };
+  const curScale = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mob-scale')) || 1;
+  const setScale = (s) => {
+    document.documentElement.style.setProperty('--mob-scale', String(s));
+    const on = s !== 1;
+    if (on) localStorage.setItem(SCALE_KEY, String(s));
+    localStorage.setItem(MODE_KEY, on ? '1' : '0');
+    toggle1to1.textContent = on ? '回到 CSS 1:1' : '1:1 真机';
+    calibBox.hidden = !on;
+    scaleInfo.textContent = on ? `×${s.toFixed(3)}（框宽应 ${MOB_MM}mm）` : '';
+  };
+  toggle1to1.addEventListener('click', () => {
+    setScale(curScale() === 1 ? (savedScale() || GUESS_SCALE) : 1);
+  });
+  document.querySelector('#calibGo').addEventListener('click', () => {
+    const mm = parseFloat(document.querySelector('#calibMm').value);
+    // 迭代校准：量到的是「当前 scale 渲染出的框宽」→ 修正系数 = 目标 / 实测
+    if (!mm || mm <= 0) return;
+    setScale(Math.min(4, Math.max(0.2, curScale() * (MOB_MM / mm))));
+  });
+  { const mode = localStorage.getItem(MODE_KEY);                 // null = 首次
+    const on = mode === null ? true : mode === '1';              // 首次默认真机档
+    if (!on) setScale(1);
+    else { setScale(savedScale() || GUESS_SCALE);
+           if (mode === null) scaleInfo.textContent = `×${GUESS_SCALE.toFixed(3)}（估算值，量一次框宽校准）`; } }
 
   document.querySelector('#reset').addEventListener('click', () => {
     B.resetHomeSim();
