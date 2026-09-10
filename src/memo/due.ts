@@ -1,5 +1,5 @@
 /**
- * 待办（todo）截止日期工具
+ * 备忘录（memo）截止日期工具
  * 自 memo/due.ts 迁移（备忘录.js 逐字移植语义）。
  * getDueStatus：overdue（已过期）/ today（今日到期）/ future（未来）/ null（无截止）
  * formatDueText：逾期文案（N天前已过期/今天 HH:mm 已过期/今天 HH:mm 到期/明天 HH:mm 到期/MM/DD HH:mm 到期）

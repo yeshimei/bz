@@ -11,7 +11,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { DEFAULT_SETTINGS } from '../../src/settings';
 import {
   currentWeekRange, parseLocalDay, countMoviesThisWeek, countBooksFinished,
-  sumPomodoroWeek, todoWeekStats, countDiaryThisWeek, collectWeeklyStat, EMPTY_WEEKLY,
+  sumPomodoroWeek, memoWeekStats, countDiaryThisWeek, collectWeeklyStat, EMPTY_WEEKLY,
 } from '../../src/home/weekly';
 
 const MON = new Date(2026, 7, 31).getTime(); // 本周一 0 点（2026-08-31）
@@ -132,7 +132,7 @@ describe('本周番茄（sumPomodoroWeek）', () => {
   });
 });
 
-describe('本周待办（todoWeekStats：完成/创建两项独立）', () => {
+describe('本周备忘录（memoWeekStats：完成/创建两项独立）', () => {
   it('上周创建本周完成：计完成不计创建；本周创建未完成：只计创建', () => {
     const items = [
       { created: '2026-08-29 10:00:00', completed: '2026-09-02 11:00:00' },
@@ -140,14 +140,14 @@ describe('本周待办（todoWeekStats：完成/创建两项独立）', () => {
       { created: '2026-09-02 08:00:00', completed: '2026-09-03 20:00:00' },
       { created: '2026-08-20 08:00:00', completed: '2026-08-25 20:00:00' }, // 上周创建上周完成
     ];
-    const s = todoWeekStats(items, currentWeekRange(WED));
+    const s = memoWeekStats(items, currentWeekRange(WED));
     expect(s.done).toBe(2);
     expect(s.created).toBe(2);
   });
 
   it('空数据 → 完成创建双 0（UI 侧创建 0 不显示百分号的数据基础）', () => {
-    expect(todoWeekStats([], currentWeekRange(WED))).toEqual({ done: 0, created: 0 });
-    expect(todoWeekStats([{ created: null, completed: null }], currentWeekRange(WED))).toEqual({ done: 0, created: 0 });
+    expect(memoWeekStats([], currentWeekRange(WED))).toEqual({ done: 0, created: 0 });
+    expect(memoWeekStats([{ created: null, completed: null }], currentWeekRange(WED))).toEqual({ done: 0, created: 0 });
   });
 });
 
@@ -194,7 +194,7 @@ describe('collectWeeklyStat（只读采集集成）', () => {
     expect(created).toEqual([]);
   });
 
-  it('混合数据：各指标独立聚合（影视/读完/番茄/待办/日记）', async () => {
+  it('混合数据：各指标独立聚合（影视/读完/番茄/备忘录/日记）', async () => {
     // 影视：1 部本周已看 + 1 部上周已看 + 1 部本周想看（不计）
     vault.files.set('我的/影视/《周中一场》.md', cinemaMd(8, '2026-09-02'));
     vault.files.set('我的/影视/《上周一场》.md', cinemaMd(7, '2026-08-29'));
@@ -212,7 +212,7 @@ describe('collectWeeklyStat（只读采集集成）', () => {
         { ts: LAST_SUN, duration: 1800 },
       ],
     }));
-    // 待办：本周创建 2（其中 1 条本周完成）+ 上周创建本周完成 1 → done 2 / created 2
+    // 备忘录：本周创建 2（其中 1 条本周完成）+ 上周创建本周完成 1 → done 2 / created 2
     vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
       { created: '2026-09-01 09:00:00', completed: null },
       { created: '2026-09-02 08:00:00', completed: '2026-09-03 20:00:00' },
@@ -228,8 +228,8 @@ describe('collectWeeklyStat（只读采集集成）', () => {
     expect(stat.booksFinished).toBe(1);
     expect(stat.pomodoros).toBe(2);
     expect(stat.pomodoroMinutes).toBe(35);
-    expect(stat.todoDone).toBe(2);
-    expect(stat.todoCreated).toBe(2);
+    expect(stat.memoDone).toBe(2);
+    expect(stat.memoCreated).toBe(2);
     expect(stat.diary).toBe(2);
   });
 

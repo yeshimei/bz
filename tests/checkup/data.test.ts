@@ -4,7 +4,7 @@
  * - 检查一 json 可解析：全绿样本 / 坏 json + CONFIG/.CORRUPT 留档路径列出；
  * - 检查二 字段漂移：约定外字段/缺失字段统计、段级漂移（只报告不修）；
  * - 检查三 孤儿条目：影院海报 / 书架 md 封面与 EPUB / 剪藏 savedArchive 残留 / 收藏关联笔记；
- * - 检查四 同源一致性：双视角计数（含不一致样本）/ 非对象 / 重复 id / 缺 id / 缺标题；
+ * - 检查四 同源一致性：双链计数（含不一致样本）/ 非对象 / 重复 id / 缺 id / 缺标题；
  * - 一键修复 + 撤销链：favorites 关联清空与还原、clipbook savedArchive 移除与插回。
  * 全部只读纪律断言：体检/检查不写任何文件（仅修复写定点数据文件）。
  */
@@ -101,7 +101,7 @@ describe('检查一：json 可解析', () => {
     expect(sec).not.toBeNull();
     const errs = sec!.issues.filter((i) => i.severity === 'error');
     expect(errs).toHaveLength(1);
-    expect(errs[0].title).toContain('备忘录 / 待办');
+    expect(errs[0].title).toContain('备忘录');
     expect(errs[0].detail).toContain(`${DIR}/memo.json`);
     expect(errs[0].detail).toContain(`${CORRUPT}/memo.json.20260904-120000.bak`);
     // 无留档时的坏文件也照报（留档：暂无）
@@ -192,7 +192,7 @@ describe('检查二：字段漂移', () => {
   it('driftIssuesOf：非对象条目红色问题（检查函数层面）', () => {
     const { summary, issues } = driftIssuesOf([
       {
-        plan: { file: `${DIR}/memo.json`, label: '备忘录 / 待办', kind: 'item' },
+        plan: { file: `${DIR}/memo.json`, label: '备忘录', kind: 'item' },
         parsed: { ok: true, data: [] } as const,
         item: { scanned: 0, nonObject: 1, extra: {}, missing: {} },
       },
@@ -290,27 +290,27 @@ describe('检查三：孤儿条目', () => {
 });
 
 describe('检查四：同源一致性', () => {
-  it('全绿样本：双视角条数/完成数一致', async () => {
+  it('全绿样本：双链条数/完成数一致', async () => {
     const items = [fullMemoItem(), fullMemoItem({ id: 'item-2', completed: '2026-01-02 00:00:00' })];
     const { app } = makeApp({ [`${DIR}/memo.json`]: JSON.stringify(items) });
     const sec = await checkSameSourceConsistency(app);
     expect(sec!.issues).toEqual([]);
-    expect(sec!.summary).toContain('两域口径一致');
+    expect(sec!.summary).toContain('双链口径一致');
     expect(sec!.summary).toContain('完成 1');
   });
 
-  it('双视角不一致样本：计数分叉报红', () => {
+  it('双链不一致样本：计数分叉报红', () => {
     const { issues } = consistencyIssuesOf({
       total: 3, nonObject: 0, missingId: 0, duplicateId: 0, missingTitle: 0,
-      memoView: { total: 3, done: 2 },
-      todoView: { total: 2, done: 1 },
+      storeView: { total: 3, done: 2 },
+      rawView: { total: 2, done: 1 },
     });
     const err = issues.find((i) => i.severity === 'error');
     expect(err).toBeTruthy();
-    expect(err!.title).toContain('双视角计数不一致');
+    expect(err!.title).toContain('双链计数不一致');
   });
 
-  it('非对象条目报红（两域读取都会中断）', async () => {
+  it('非对象条目报红（两条读取链都会中断）', async () => {
     const { app } = makeApp({ [`${DIR}/memo.json`]: JSON.stringify(['oops']) });
     const sec = await checkSameSourceConsistency(app);
     expect(sec!.issues.some((i) => i.severity === 'error' && i.title.includes('非对象条目'))).toBe(true);

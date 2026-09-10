@@ -42,7 +42,7 @@ const DOMAIN_LABEL: Record<RecapDomain, string> = {
   diary: '日记',
   cinema: '影视',
   bookshelf: '读书',
-  todo: '待办',
+  memo: '备忘录',
   pomodoro: '番茄',
 };
 
@@ -100,7 +100,7 @@ export async function refreshAndRender(app: App): Promise<void> {
   try {
     data = await collectRecap(H.appRef ?? app);
   } catch {
-    data = { summary: { diary: 0, movies: 0, books: 0, todoDone: 0, pomodoros: 0, pomodoroMinutes: 0 }, items: [], failed: ['diary', 'cinema', 'bookshelf', 'todo', 'pomodoro'] };
+    data = { summary: { diary: 0, movies: 0, books: 0, memoDone: 0, pomodoros: 0, pomodoroMinutes: 0 }, items: [], failed: ['diary', 'cinema', 'bookshelf', 'memo', 'pomodoro'] };
   }
   if (!H.currentOverlay) return; // 采集期间已关闭
   renderAll(data, app);
@@ -236,7 +236,7 @@ function summaryEl(s: RecapSummary, failed: RecapDomain[]): HTMLDivElement {
     statEl(val('diary', `${s.diary} 条`), '日记'),
     statEl(val('cinema', `${s.movies}`), '影视'),
     statEl(val('bookshelf', `${s.books}`), '读书'),
-    statEl(val('todo', `${s.todoDone}`), '待办完成'),
+    statEl(val('memo', `${s.memoDone}`), '备忘录完成'),
     statEl(pom, '番茄'),
   );
   return summary;

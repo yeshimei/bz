@@ -105,22 +105,22 @@ describe('批 C-5：bookshelf 面板 44px 补接 .bz-panel-mtop', () => {
   });
 });
 
-// ═══════════ todo（项 6；ADR-0094 头行/壳接组件库后复检） ═══════════
+// ═══════════ memo（项 6；ADR-0094 头行/壳接组件库后复检） ═══════════
 
-describe('批 C-6：todo 头行类名拆雷', () => {
-  it('头行接共享 .bz-panel-head（新体系），不撞 core 对 .bz-todo-head 的 !important 旧规范', () => {
-    const ui = repo('src/todo/ui.ts');
+describe('批 C-6：memo 头行类名拆雷', () => {
+  it('头行接共享 .bz-panel-head（新体系），不撞 core 对 .bz-memo-head 的 !important 旧规范', () => {
+    const ui = repo('src/memo/ui.ts');
     expect(ui).toContain('class="bz-panel-head"');
-    const css = repo('src/todo/styles.css');
-    expect(css).not.toMatch(/\.bz-todo-panel-head\s*\{/); // 域内头行规则退役（共享类接管）
-    expect(css).not.toMatch(/\.bz-todo-head\s*\{/); // 旧类名规则退役
-    // core 旧规范（.bz-todo-head 选择器组）随 memo 域退役（ADR-0092）失去服务对象，仅历史样式残留
+    const css = repo('src/memo/styles.css');
+    expect(css).not.toMatch(/\.bz-memo-panel-head\s*\{/); // 域内头行规则退役（共享类接管）
+    expect(css).not.toMatch(/\.bz-memo-head\s*\{/); // 旧类名规则退役
+    // core 旧规范（.bz-memo-head 选择器组）随 memo 域退役（ADR-0092）失去服务对象，仅历史样式残留
   });
 
   it('面板根节点挂 .bz-panel-mtop；移动头行自垫 safe-area 收拢', () => {
-    expect(repo('src/todo/ui.ts')).toMatch(/class="bz-panel-frame bz-todo-panel bz-panel-mtop"/);
-    const css = repo('src/todo/styles.css');
-    expect(css).not.toMatch(/\.bz-todo-head\s*\{[^}]*safe-area-inset-top/);
+    expect(repo('src/memo/ui.ts')).toMatch(/class="bz-panel-frame bz-memo-panel bz-panel-mtop"/);
+    const css = repo('src/memo/styles.css');
+    expect(css).not.toMatch(/\.bz-memo-head\s*\{[^}]*safe-area-inset-top/);
     expect(css).not.toMatch(/safe-area-inset-top\)\);?\s*\}/);
   });
 });

@@ -13,7 +13,7 @@ import { notify } from '../src/core/notice';
 const syncSpies = vi.hoisted(() => ({
   ensureFileSync: vi.fn(),
 }));
-vi.mock('../src/todo', async (importOriginal) => ({
+vi.mock('../src/memo', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   ensureFileSync: syncSpies.ensureFileSync,
 }));
@@ -52,7 +52,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-home-open',
   // 今日回顾（recap 域，方向一 R2：当天五域痕迹聚合面板）
   'bz-recap-today',
-  'bz-todo-open', 'bz-todo-add',
+  'bz-memo-open', 'bz-memo-add',
   'bz-belongings-add', 'bz-belongings-open',
   // 剪藏本（clipbook 融合域，ADR-0082）：聚合讯未读流+剪藏笔记一体化；旧 bz-clipping-open/bz-news-open 断开
   'bz-clipbook-open',
@@ -125,12 +125,12 @@ describe('bz 骨架冒烟', () => {
     }
   });
 
-  it('ribbon 主入口指向待办面板（捕获入口改道：点击落点=待办工作台）', async () => {
+  it('ribbon 主入口指向备忘录面板（捕获入口改道：点击落点=备忘录工作台）', async () => {
     const plugin = await createPlugin(makeMockApp());
 
     expect(plugin.ribbonIcons.length).toBeGreaterThanOrEqual(1);
-    expect(plugin.ribbonIcons[0].title).toBe('待办');
-    // 点击落点核对：打开待办面板
+    expect(plugin.ribbonIcons[0].title).toBe('备忘录');
+    // 点击落点核对：打开备忘录面板
     plugin.ribbonIcons[0].callback();
     await vi.waitFor(() => {
       expect(document.querySelector('.bz-panel-overlay')).toBeTruthy();
@@ -144,11 +144,11 @@ describe('bz 骨架冒烟', () => {
     expect(byId('bz-cinema-add').name).toBe('加影视');
     // 书架墙（bookshelf 新域）
     expect(byId('bz-bookshelf-open').name).toBe('书库');
-    // todo 新域：待办 / 加待办（enh-sweep-a 去冗余括号后缀）
-    expect(byId('bz-todo-open').name).toBe('待办');
+    // memo 新域：备忘录 / 加备忘录（enh-sweep-a 去冗余括号后缀）
+    expect(byId('bz-memo-open').name).toBe('备忘录');
     // clipbook 融合域（ADR-0082）：剪藏本 = 聚合讯+剪藏本合一入口
     expect(byId('bz-clipbook-open').name).toBe('剪藏本');
-    expect(byId('bz-todo-add').name).toBe('加待办');
+    expect(byId('bz-memo-add').name).toBe('加备忘录');
     // t2：四套叫法统一「阅读分析报告」（走查批 D；home 磁贴保留短名「阅读报告」）
     expect(byId('bz-reading-report-open').name).toBe('阅读分析报告');
     // f3：评级四命令去英文后缀、统一「复习（X）」标点
@@ -175,7 +175,7 @@ describe('bz 骨架冒烟', () => {
     const domainCommands: Array<[string, string]> = [
       ['bz-home-open', 'home'],
       ['bz-recap-today', 'recap'],
-      ['bz-todo-open', 'todo'],
+      ['bz-memo-open', 'memo'],
       ['bz-belongings-open', 'belongings'],
       ['bz-clipbook-open', 'clipping'],
       ['bz-auto-summary-redo', 'auto-summary'],
@@ -279,8 +279,8 @@ describe('bz 骨架冒烟', () => {
     expect('newsRetentionSavedDays' in s).toBe(false);
     expect('newsRetentionSkippedDays' in s).toBe(false);
     expect(s.newsRetentionUnsavedDays).toBe('30');
-    // 待办面板皮肤（issue 210 四轮）：默认风格下线，缺省 = 纸感手账
-    expect(s.todoSkin).toBe('paper');
+    // 备忘录面板皮肤（issue 210 四轮）：默认风格下线，缺省 = 纸感手账
+    expect(s.memoSkin).toBe('paper');
     // enh-sweep-a 死键清理：旧 clipping 域孤儿键（实际生效 = clipbook 键）与
     // bookshelf 未接管前遗留的 5 个书库展示开关键，全仓无消费方，接口+默认值双删
     expect('clippingMobileDefaultFullscreen' in s).toBe(false);
@@ -325,10 +325,10 @@ ${failures.join('\n')}`).toEqual([]);
     const app = makeMockApp();
     const plugin = await createPlugin(app);
     // 引用同步无条件常驻（issue 187：aiAgentEnabled 开关退役）——
-    // todo/favorites 两路文件同步 ensure 各恰好一次，均不抛错
+    // memo/favorites 两路文件同步 ensure 各恰好一次，均不抛错
     expect(plugin.settings.autoSummaryEnabled).toBe(true);
     expect(plugin.settings.secondBrainEnabled).toBe(true);
-    // favorites file-sync 整链随关联笔记退役（ADR-0101），仅剩 todo 一路
+    // favorites file-sync 整链随关联笔记退役（ADR-0101），仅剩 memo 一路
     expect(syncSpies.ensureFileSync).toHaveBeenCalledTimes(1);
     expect(syncSpies.ensureFileSync).toHaveBeenCalledWith(app);
   }, 15000);
@@ -344,13 +344,13 @@ ${failures.join('\n')}`).toEqual([]);
   it('设置持久化（saveData/loadData 往返）', async () => {
     const plugin = await createPlugin(makeMockApp());
 
-    plugin.settings.todoFilePath = '自定义/路径';
+    plugin.settings.memoFilePath = '自定义/路径';
     await plugin.saveSettings();
-    expect(diskData['bz'].todoFilePath).toBe('自定义/路径');
+    expect(diskData['bz'].memoFilePath).toBe('自定义/路径');
 
     // 重新加载时合并默认值
     const plugin2 = await createPlugin(makeMockApp());
-    expect(plugin2.settings.todoFilePath).toBe('自定义/路径');
+    expect(plugin2.settings.memoFilePath).toBe('自定义/路径');
     expect(plugin2.settings.cinemaFolderPath).toBe('我的/影视');
   });
 });

@@ -1,7 +1,7 @@
 /* ============================================================
  * bz 组件库 · 主头行（src/core/ui/mainhead.ts）
  * uiMainHead：内容区主头行——分组标题 + 计数 + spacer + 主按钮
- * （30px 中档）。收编 todo/cinema/favorites/belongings 四域逐字重复。
+ * （30px 中档）。收编 memo/cinema/favorites/belongings 四域逐字重复。
  * ============================================================ */
 import type { BzMainHeadOpts } from './types';
 import { uiBtn } from './button';

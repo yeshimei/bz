@@ -653,7 +653,7 @@ describe('番茄钟弹窗', () => {
   });
 });
 
-describe('增强包：循环圆点 / 时段分布 / 通知动作 / Space / 待办联动', () => {
+describe('增强包：循环圆点 / 时段分布 / 通知动作 / Space / 备忘录联动', () => {
   beforeEach(() => {
     resetObsidianMocks();
     setApp(null as any);

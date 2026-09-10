@@ -1,13 +1,13 @@
 /**
- * 待办（todo）域类型
+ * 备忘录（memo）域类型
  * 数据格式与 memo.json 零迁移（spec「数据格式总表」14 字段），与旧 memo 域共用同一数据文件。
  */
-export interface TodoPosition {
+export interface MemoPosition {
   line: number;
   ch: number;
 }
 
-export interface TodoItem {
+export interface MemoItem {
   id: string;
   title: string;
   scene: string;
@@ -16,7 +16,7 @@ export interface TodoItem {
   completed: string | null;
   due: string | null;
   notePath: string | null;
-  notePosition: TodoPosition | null;
+  notePosition: MemoPosition | null;
   scriptName: string | null;
   courseName: string | null;
   coursePath: string | null;

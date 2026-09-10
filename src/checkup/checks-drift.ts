@@ -2,7 +2,7 @@
  * 数据体检·检查二：字段漂移（D4 检查 b）。
  *
  * 各域数据 normalize 后都有约定字段集；这里对磁盘原文做「约定外字段 / 约定字段缺失」统计：
- * - 条目级：memo.json（备忘录/待办条目）、favorites.json（收藏条目）、pomodoro.json（history 条目）；
+ * - 条目级：memo.json（备忘录条目）、favorites.json（收藏条目）、pomodoro.json（history 条目）；
  * - 段级：clipbook / news / home / belongings / quiz / pomodoro 根段。
  * 只报告不修（铁律：体检只读；缺失字段多数是旧数据常态，域读取时会自动补默认值）。
  */
@@ -10,7 +10,7 @@ import type { App } from 'obsidian';
 import type { CheckIssue, CheckOpts, CheckResult, CheckSection } from './types';
 import { readRawJson, jsonScanTargets } from './files';
 
-/** 备忘录/待办条目约定字段（todo/data.ts normalizeItem 同款 14 字段） */
+/** 备忘录条目约定字段（memo/data.ts normalizeItem 同款 14 字段） */
 export const MEMO_ITEM_FIELDS = [
   'id', 'title', 'scene', 'priority', 'created', 'completed', 'due',
   'notePath', 'notePosition', 'scriptName', 'courseName', 'coursePath', 'linkedNote', 'url',
@@ -116,7 +116,7 @@ function driftPlans(app: App): DriftDomainPlan[] {
     const hit = [...targets.keys()].find((f) => f.endsWith('/' + name) || f === name);
     return hit || name;
   };
-  plans.push({ file: pathOf('memo.json'), label: targets.get(pathOf('memo.json')) || '备忘录 / 待办', kind: 'item' });
+  plans.push({ file: pathOf('memo.json'), label: targets.get(pathOf('memo.json')) || '备忘录', kind: 'item' });
   plans.push({ file: pathOf('favorites.json'), label: targets.get(pathOf('favorites.json')) || '收藏本', kind: 'item' });
   plans.push({ file: pathOf('pomodoro.json'), label: targets.get(pathOf('pomodoro.json')) || '番茄钟', kind: 'history' });
   for (const name of Object.keys(SEGMENT_FIELDS)) {
@@ -145,8 +145,8 @@ export function driftIssuesOf(
         hasDrift = true;
         issues.push({
           severity: 'error',
-          title: `${r.plan.label}：${s.nonObject} 条非对象条目（两域读取都会失败）`,
-          detail: `文件：${r.plan.file}\n数组里混入了 ${s.nonObject} 条非对象内容（字符串/数字等），备忘录与待办的读取链都会在这里中断，请从留档或备份修复该文件。`,
+          title: `${r.plan.label}：${s.nonObject} 条非对象条目（两条读取链都会失败）`,
+          detail: `文件：${r.plan.file}\n数组里混入了 ${s.nonObject} 条非对象内容（字符串/数字等），备忘录的读取链都会在这里中断，请从留档或备份修复该文件。`,
         });
       }
       if (Object.keys(s.extra).length) {

@@ -25,7 +25,7 @@ export interface PomodoroState {
   pausedBy?: 'autopause';
   /** 当前循环内已完成专注数（进长休后清零） */
   cycleFocusCount: number;
-  /** 当前专注归属任务标题（待办「专注这个」联动写入；专注自然完成写入历史后清除） */
+  /** 当前专注归属任务标题（备忘录「专注这个」联动写入；专注自然完成写入历史后清除） */
   task?: string;
 }
 
@@ -48,7 +48,7 @@ export interface HistoryEntry {
   ts: number;
   /** 实际专注时长（秒） */
   duration: number;
-  /** 归属任务标题（待办「专注这个」联动；普通开始无此字段，统计口径扩展预留） */
+  /** 归属任务标题（备忘录「专注这个」联动；普通开始无此字段，统计口径扩展预留） */
   task?: string;
 }
 
@@ -127,7 +127,7 @@ function completePhase(state: PomodoroState, now: number, d: Durations, o: Pomod
     longBreak = count >= d.longBreakInterval;
     if (longBreak) count = 0;
     // duration = 活跃专注时长：暂停期间时间不流逝（endTime 顺延），故恒等于名义工作时长
-    // 归属：待办「专注这个」联动时把任务标题写进历史（统计口径扩展预留）
+    // 归属：备忘录「专注这个」联动时把任务标题写进历史（统计口径扩展预留）
     historyEntry = { ts: now, duration: d.workMin * 60, ...(state.task ? { task: state.task } : {}) };
   }
   // 下一阶段

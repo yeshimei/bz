@@ -77,7 +77,7 @@ export async function requestUrl(): Promise<never> {
 /**
  * home 的真依赖闭包比 belongings 宽：river 静态依赖 review/app，review/app 内部
  * 动态 import review/ui / settings-panel / quiz-core（IIFE 产物会把动态 import 整体
- * 内联），把 settings-panel/todo/diary/diary-wall/smartcat/clipbook/secondbrain/
+ * 内联），把 settings-panel/memo/diary/diary-wall/smartcat/clipbook/secondbrain/
  * literature/encrypt/pomodoro 的 UI 模块一并拉进产物（esbuild metafile 实测 218 模块）。
  * 这些模块在首页评审里永不执行（首页只采集只读快照），其 obsidian 值导入只需
  * 「可解析 + 模块顶层求值不崩」——宽松壳类即可，不提供真实行为；运行期触达

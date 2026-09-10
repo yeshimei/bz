@@ -12,12 +12,12 @@
  *   视口 92%)——任何屏幕不越出遮罩可视区，大屏也不会拉出无边面板。
  * 尺寸记忆：可选 persist（ADR-0094）——挂载时 load() 有值即恢复
  *   （钳到与拖拽同口径的 min/max + 视口 92%）；onChange 防抖 300ms 调
- *   save() 落盘（仿 todo 域 rememberPanelSize trailing 防抖），句柄另有
+ *   save() 落盘（仿 memo 域 rememberPanelSize trailing 防抖），句柄另有
  *   flush()（立即落盘待存尾值，无待存 no-op；域内「关面板即落盘」用），
  *   detach 时未落盘的尾值也立即 flush 防丢。不传 persist 行为不变（向后兼容）。
  * 拖拽收尾吞终端 click（issue 222）：mousedown 在面板热区、mouseup 落遮罩时 click
  *   派发公共祖先遮罩 → 「点遮罩关闭」误触发；经 core/dom swallowNextClick 统一防线，
- *   todo/剪藏本/保险库等「缩放热区 × 点遮罩关闭」组合全量受益。
+ *   memo/剪藏本/保险库等「缩放热区 × 点遮罩关闭」组合全量受益。
  * 注意：移动端（触屏）请勿挂载——本工厂只处理 mouse 指针事件。
  * ============================================================ */
 import { swallowNextClick } from '../dom';
@@ -191,7 +191,7 @@ export function uiResizable(el: HTMLElement, opts: BzResizableOpts = {}): {
   return {
     flush,
     detach: () => {
-      // 未落的防抖尾值立即补存防丢（仿 todo flushPendingSize）
+      // 未落的防抖尾值立即补存防丢（仿 memo flushPendingSize）
       flush();
       el.removeEventListener('mousemove', onHover);
       el.removeEventListener('mouseleave', onMouseLeave);

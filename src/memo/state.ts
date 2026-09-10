@@ -1,17 +1,17 @@
 /**
- * 待办（todo）域状态：模块级可变对象 M + 界面状态
+ * 备忘录（memo）域状态：模块级可变对象 M + 界面状态
  * 与 memo 域并存：读写同一 memo.json；后台任务（引用同步/AI 剪藏归档/启动与
- * file-open 提醒）仍由旧 memo 域执行，todo 只负责 UI 与交互（旧 memo 删除时再交接）。
+ * file-open 提醒）仍由旧 memo 域执行，memo 只负责 UI 与交互（旧 memo 删除时再交接）。
  */
 import type { App } from 'obsidian';
-import type { TodoItem } from './types';
+import type { MemoItem } from './types';
 
-export interface TodoState {
+export interface MemoState {
   appRef: App | null;
   /** 面板是否已初始化/打开 */
   overlay: HTMLElement | null;
   /** 全部条目（loadItems 结果） */
-  items: TodoItem[];
+  items: MemoItem[];
   /** 场景筛选：'全部' | '今日'（到期优先视图） | 场景名 */
   activeScene: string;
   /** 排序：priority（紧急优先）/ due（仅按到期）/ created（按创建） */
@@ -30,7 +30,7 @@ export interface TodoState {
   renderFn: (() => void) | null;
 }
 
-export const M: TodoState = {
+export const M: MemoState = {
   appRef: null,
   overlay: null,
   items: [],
@@ -45,7 +45,7 @@ export const M: TodoState = {
 };
 
 /** 测试/重建用：整体重置模块状态 */
-export function resetTodoState(): void {
+export function resetMemoState(): void {
   M.appRef = null;
   M.overlay = null;
   M.items = [];

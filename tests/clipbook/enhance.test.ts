@@ -322,7 +322,7 @@ describe('面板拖拽缩放 + 尺寸记忆（enh 包 8）', () => {
   it('记忆值越界（超视口 92%）打开即钳制', async () => {
     await openDesktop({ clipbookPanelWidth: 5000, clipbookPanelHeight: 5000 });
     const frame = document.querySelector('.bz-clip-frame') as HTMLElement;
-    // jsdom 视口 1024×768 → 92% = 942×706（与 todo 面板同口径）
+    // jsdom 视口 1024×768 → 92% = 942×706（与 memo 面板同口径）
     expect(frame.style.width).toBe('942px');
     expect(frame.style.height).toBe('706px');
   });
