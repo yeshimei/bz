@@ -7086,6 +7086,42 @@ var BZW_home = (() => {
     }
   });
 
+  // src/core/domain-bus.ts
+  function emitDomainEvent(channel, evt) {
+    const handlers = channels.get(channel);
+    if (!handlers || handlers.size === 0) return;
+    for (const handler of [...handlers]) {
+      try {
+        handler(evt);
+      } catch (e) {
+        console.error(`bz: 域事件 handler 异常（channel=${channel}）`, e);
+      }
+    }
+  }
+  function onDomainEvent(channel, handler) {
+    let set = channels.get(channel);
+    if (!set) {
+      set = /* @__PURE__ */ new Set();
+      channels.set(channel, set);
+    }
+    set.add(handler);
+    let offed = false;
+    return () => {
+      if (offed) return;
+      offed = true;
+      const cur = channels.get(channel);
+      if (!cur) return;
+      cur.delete(handler);
+      if (cur.size === 0) channels.delete(channel);
+    };
+  }
+  var channels;
+  var init_domain_bus = __esm({
+    "src/core/domain-bus.ts"() {
+      channels = /* @__PURE__ */ new Map();
+    }
+  });
+
   // src/core/ai.ts
   function getQ3Settings() {
     return _settingsProvider ? _settingsProvider() : {};
@@ -8423,31 +8459,6 @@ ${n.content.slice(0, 2e3)}
       init_settings_provider();
       init_session();
       initialized = false;
-    }
-  });
-
-  // src/core/domain-bus.ts
-  function onDomainEvent(channel, handler) {
-    let set = channels.get(channel);
-    if (!set) {
-      set = /* @__PURE__ */ new Set();
-      channels.set(channel, set);
-    }
-    set.add(handler);
-    let offed = false;
-    return () => {
-      if (offed) return;
-      offed = true;
-      const cur = channels.get(channel);
-      if (!cur) return;
-      cur.delete(handler);
-      if (cur.size === 0) channels.delete(channel);
-    };
-  }
-  var channels;
-  var init_domain_bus = __esm({
-    "src/core/domain-bus.ts"() {
-      channels = /* @__PURE__ */ new Map();
     }
   });
 
@@ -10859,6 +10870,7 @@ ${n.content.slice(0, 2e3)}
     }).then(async (v) => {
       if (v !== "ok") return;
       await dataManager.removeItem(file.path);
+      emitDomainEvent("review", { kind: "removed", title: file.basename });
       notifyUndo(`已移出「${file.basename}」`, () => {
         void (async () => {
           try {
@@ -10991,6 +11003,7 @@ ${n.content.slice(0, 2e3)}
       init_fsrs();
       init_queue();
       init_stats();
+      init_domain_bus();
       REVIEW_AWAY_GRACE_MS = 12e4;
       reviewApp = {
         checkInterval: null,
@@ -11188,6 +11201,7 @@ ${n.content.slice(0, 2e3)}
             notice(`R=${rPct}%，下次复习：${days > 0 ? days + "天" : "1天"}后`, "success");
           }
           void this.maybeRunFit(getApp());
+          emitDomainEvent("review", { kind: "rated", title: item.name || filePath, rating });
         },
         /** 跳转逾期（bz-review-start/overdue 命令入口）：完整复习流程 = startRoundSprint */
         async autoJumpOverdue() {
@@ -11239,6 +11253,7 @@ ${n.content.slice(0, 2e3)}
         async startSingleSprint(item) {
           const app = getApp();
           this.ensure(app);
+          emitDomainEvent("review", { kind: "started" });
           const quiz = await this.quizWithAI();
           if (!quiz || !quiz.ai) {
             notify("做题家未初始化，改用普通复习", { type: "warning", dedupeKey: "review-quiz-ai" });
@@ -11251,6 +11266,7 @@ ${n.content.slice(0, 2e3)}
         async startRoundSprint() {
           const app = getApp();
           this.ensure(app);
+          emitDomainEvent("review", { kind: "started" });
           let items = await this.dataManager.loadItems();
           const pend = this.pendingRedoItems(items);
           if (pend.length && getSettings().forceQuizForReview) {
@@ -11519,6 +11535,7 @@ ${n.content.slice(0, 2e3)}
           if (items.some((i) => i.filePath === file.path)) throw new Error("该笔记已在复习计划中");
           await dm.addItem(file.path, file.basename);
           notice("已加入复习计划，首次复习：1分钟后", "success");
+          emitDomainEvent("review", { kind: "added", title: file.basename });
         },
         /** 文件树染色 + 阶段徽标（源码 L719-772 逐字；ticket 100 加「文件树标记」开关；
          *   ticket 48 收敛：不再全库 getMarkdownFiles + 逐路径 querySelector——
@@ -11727,7 +11744,6 @@ ${n.content.slice(0, 2e3)}
     clipping: "scissors",
     favorites: "star",
     diary: "notebook-pen",
-    "diary-wall": "images",
     "reading-report": "bar-chart-3",
     cinema: "clapperboard",
     bookshelf: "book-open",
@@ -11745,13 +11761,13 @@ ${n.content.slice(0, 2e3)}
   };
 
   // src/home/shared.ts
-  var ICON_KEY = { wall: "diary-wall", settings: "settings-panel", vault: "password-vault" };
+  var ICON_KEY = { settings: "settings-panel", vault: "password-vault" };
   var iconOf = (id) => {
     var _a;
     return DOMAIN_ICONS[(_a = ICON_KEY[id]) != null ? _a : id];
   };
   var DOMAINS = [
-    { id: "diary", commandId: "bz-diary-open", name: "日记本", sub: "写今天的闪念", icon: iconOf("diary") },
+    { id: "diary", commandId: "bz-diary-open", name: "日记本", sub: "写今天的闪念 · 回忆媒体墙", icon: iconOf("diary") },
     { id: "cinema", commandId: "bz-cinema-open", name: "影院", sub: "影视想看与在看", icon: iconOf("cinema") },
     { id: "review", commandId: "bz-review-open", name: "复习计划", sub: "到期卡片队列", icon: iconOf("review") },
     { id: "pomodoro", commandId: "bz-pomodoro-open", name: "番茄钟", sub: "专注计时", icon: iconOf("pomodoro") },
@@ -11763,7 +11779,6 @@ ${n.content.slice(0, 2e3)}
     { id: "bookshelf", commandId: "bz-bookshelf-open", name: "书库", sub: "藏书与读书笔记", icon: iconOf("bookshelf") },
     // 第二大脑（secondbrain 域，issue 251）：主面板统一入口（检索/对话/灵感参考都从面板进）
     { id: "secondbrain", commandId: "bz-secondbrain-panel", name: "第二大脑", sub: "笔记检索与问答", icon: iconOf("secondbrain") },
-    { id: "wall", commandId: "bz-diary-wall-open", name: "回忆墙", sub: "相片墙浏览日记", icon: iconOf("wall") },
     { id: "belongings", commandId: "bz-belongings-open", name: "归物本", sub: "物品登记", icon: iconOf("belongings") },
     { id: "attach", commandId: "bz-attach-move", name: "移动附件", sub: "附件归位", icon: iconOf("attach") },
     { id: "encrypt", commandId: "bz-encrypt-open", name: "保险库", sub: "密码·加密笔记·日记", icon: iconOf("encrypt") },
@@ -11784,7 +11799,6 @@ ${n.content.slice(0, 2e3)}
     bookshelf: "#3d7bd6",
     secondbrain: "#a33d2a",
     "reading-report": "#3fa7a0",
-    wall: "#7c8cf8",
     belongings: "#45a35c",
     attach: "#8a8f99",
     encrypt: "#8a8f99",
@@ -11873,7 +11887,7 @@ ${n.content.slice(0, 2e3)}
     } else if (s.diaryWrittenToday) {
       out.push({ h: `今日日记已写 · 连击 ×${s.diaryStreak + 1}`, b: "明天同一时间回来续上，连击就是这么长起来的。", go: "diary", goLabel: "看日记本 →" });
     } else {
-      out.push({ h: "给明天留一句话", b: "今晚写一篇日记，明晚它会变成回忆墙上的新格子。", go: "diary", goLabel: "去写日记 →" });
+      out.push({ h: "给明天留一句话", b: "今晚写一篇日记，明晚它会变成日记本媒体墙上的新格子。", go: "diary", goLabel: "去写日记 →" });
     }
     return out;
   }
@@ -11910,8 +11924,6 @@ ${n.content.slice(0, 2e3)}
         return `${c.favoritesTotal} 条`;
       case "belongings":
         return `登记 ${c.belongingsTotal} 件`;
-      case "wall":
-        return `${c.diaryTotal} 格`;
       default:
         return null;
     }
@@ -11956,6 +11968,9 @@ ${n.content.slice(0, 2e3)}
     for (let j = full; j < 5; j++) s += "☆";
     return s;
   }
+
+  // src/cinema/state.ts
+  init_settings_provider();
 
   // src/cinema/data.ts
   function parseMovieFile(file, app) {

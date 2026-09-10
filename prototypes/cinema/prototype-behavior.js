@@ -4826,7 +4826,6 @@ var BZW_cinema = (() => {
     if (isUnderDir("卡片盒", p)) return "flash";
     if (matchSettingDir(s.articleDirectory, p, "归档/网页剪藏")) return "clipping";
     if (matchSettingDir(s.cinemaFolderPath, p, "我的/影视")) return "cinema";
-    if (matchSettingDir(s.movieDirectory, p, "我的/影视")) return "movie";
     if (isUnderDir("我的/现代诗", p)) return "poem";
     if (matchSettingDir(s.letterDirectory, p, "我的/信")) return "letter";
     if (matchSettingDir(s.knowledgeDirectory, p, "文献盒")) return "knowledge";

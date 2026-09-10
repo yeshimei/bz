@@ -4817,6 +4817,17 @@ var BZW_review = (() => {
   });
 
   // src/core/domain-bus.ts
+  function emitDomainEvent(channel, evt) {
+    const handlers = channels.get(channel);
+    if (!handlers || handlers.size === 0) return;
+    for (const handler of [...handlers]) {
+      try {
+        handler(evt);
+      } catch (e) {
+        console.error(`bz: 域事件 handler 异常（channel=${channel}）`, e);
+      }
+    }
+  }
   function onDomainEvent(channel, handler) {
     let set = channels.get(channel);
     if (!set) {
@@ -10551,6 +10562,7 @@ ${n.content.slice(0, 2e3)}
       init_fsrs();
       init_queue();
       init_stats();
+      init_domain_bus();
       REVIEW_AWAY_GRACE_MS = 12e4;
       reviewApp = {
         checkInterval: null,
@@ -10748,6 +10760,7 @@ ${n.content.slice(0, 2e3)}
             notice(`R=${rPct}%，下次复习：${days > 0 ? days + "天" : "1天"}后`, "success");
           }
           void this.maybeRunFit(getApp());
+          emitDomainEvent("review", { kind: "rated", title: item.name || filePath, rating });
         },
         /** 跳转逾期（bz-review-start/overdue 命令入口）：完整复习流程 = startRoundSprint */
         async autoJumpOverdue() {
@@ -10799,6 +10812,7 @@ ${n.content.slice(0, 2e3)}
         async startSingleSprint(item) {
           const app = getApp();
           this.ensure(app);
+          emitDomainEvent("review", { kind: "started" });
           const quiz = await this.quizWithAI();
           if (!quiz || !quiz.ai) {
             notify("做题家未初始化，改用普通复习", { type: "warning", dedupeKey: "review-quiz-ai" });
@@ -10811,6 +10825,7 @@ ${n.content.slice(0, 2e3)}
         async startRoundSprint() {
           const app = getApp();
           this.ensure(app);
+          emitDomainEvent("review", { kind: "started" });
           let items = await this.dataManager.loadItems();
           const pend = this.pendingRedoItems(items);
           if (pend.length && getSettings().forceQuizForReview) {
@@ -11079,6 +11094,7 @@ ${n.content.slice(0, 2e3)}
           if (items.some((i) => i.filePath === file.path)) throw new Error("该笔记已在复习计划中");
           await dm.addItem(file.path, file.basename);
           notice("已加入复习计划，首次复习：1分钟后", "success");
+          emitDomainEvent("review", { kind: "added", title: file.basename });
         },
         /** 文件树染色 + 阶段徽标（源码 L719-772 逐字；ticket 100 加「文件树标记」开关；
          *   ticket 48 收敛：不再全库 getMarkdownFiles + 逐路径 querySelector——
@@ -11593,6 +11609,7 @@ ${n.content.slice(0, 2e3)}
     }).then(async (v) => {
       if (v !== "ok") return;
       await dataManager.removeItem(file.path);
+      emitDomainEvent("review", { kind: "removed", title: file.basename });
       notifyUndo(`已移出「${file.basename}」`, () => {
         void (async () => {
           try {
