@@ -109,7 +109,7 @@ describe('批 C-5：bookshelf 面板 44px 补接 .bz-panel-mtop', () => {
 
 describe('批 C-6：memo 头行类名拆雷', () => {
   it('头行接共享 .bz-panel-head（新体系），不撞 core 对 .bz-memo-head 的 !important 旧规范', () => {
-    const ui = repo('src/memo/ui.ts');
+    const ui = repo('src/memo/render.ts'); // 壳 markup 单源在 render.ts（issue 260 §2）
     expect(ui).toContain('class="bz-panel-head"');
     const css = repo('src/memo/styles.css');
     expect(css).not.toMatch(/\.bz-memo-panel-head\s*\{/); // 域内头行规则退役（共享类接管）
@@ -118,7 +118,7 @@ describe('批 C-6：memo 头行类名拆雷', () => {
   });
 
   it('面板根节点挂 .bz-panel-mtop；移动头行自垫 safe-area 收拢', () => {
-    expect(repo('src/memo/ui.ts')).toMatch(/class="bz-panel-frame bz-memo-panel bz-panel-mtop"/);
+    expect(repo('src/memo/render.ts')).toMatch(/class="bz-panel-frame bz-memo-panel bz-panel-mtop"/);
     const css = repo('src/memo/styles.css');
     expect(css).not.toMatch(/\.bz-memo-head\s*\{[^}]*safe-area-inset-top/);
     expect(css).not.toMatch(/safe-area-inset-top\)\);?\s*\}/);
