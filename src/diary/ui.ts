@@ -306,7 +306,7 @@ export class DiaryAppController {
   /**
    * 面板骨架（桌面/移动共用——真全屏由 CSS ≤768px 控制，两份 HTML 一字不差）。
    * 增强包 #4：头行/灯箱按钮 emoji 换 lucide（ensureElements 后 decorateIcons 按 data-act 注入 uiIcon）；
-   * 增强包 #10：年月跳转提为头部显式按钮（data-act="date-picker"，品牌行点击入口保留）；
+   * 头行精简（2026-09-10 用户要求）：关闭/设置/按年月跳转三枚按钮移除，日期入口只留品牌行；
    * 增强包 #1：灯箱加左右切换按钮（连看）。
    */
   private panelHTML(): string {
@@ -324,7 +324,7 @@ export class DiaryAppController {
   private decorateIcons(scope: HTMLElement) {
     for (const [act, name] of Object.entries(ACT_ICON)) {
       scope.querySelectorAll<HTMLElement>(`[data-act="${act}"]`).forEach((btn) => {
-        // 品牌行也有 data-act="date-picker"（点击入口），只注入按钮类，不注入品牌文本容器
+        // 只注入空壳 button（品牌行 div 等非按钮载体、已注入过的一律跳过）
         if (btn.tagName !== 'BUTTON' || btn.firstChild) return;
         btn.appendChild(uiIcon(name));
       });
@@ -333,9 +333,7 @@ export class DiaryAppController {
 
   // ---------- 交互绑定 ----------
   private bindPanel(ui: typeof this.desk) {
-    // 关闭
-    ui.head.querySelector('[data-act="close"]')?.addEventListener('click', () => this.hide());
-    // 按日期筛选：品牌行点击 + 头部显式「按年月跳转」按钮（增强 #10）共用一个动作
+    // 按日期筛选：头行仅剩品牌行入口（点「日记本」标题）——显式「按年月跳转」按钮已移除
     ui.head.querySelectorAll('[data-act="date-picker"]').forEach((el) => {
       el.addEventListener('click', () => this.openDatePicker());
     });
@@ -343,11 +341,7 @@ export class DiaryAppController {
     ui.head.querySelector('[data-act="add"]')?.addEventListener('click', () => this.openAddEntry());
     // 搜索：toggle 真搜索框
     ui.head.querySelector('[data-act="search"]')?.addEventListener('click', () => this.toggleSearch(ui));
-    // 设置直达（issue 201 头行对齐备忘录）：关面板 → 设置面板定位日记本域（动态 import 防环引用）
-    ui.head.querySelector('[data-act="settings"]')?.addEventListener('click', () => {
-      this.hide();
-      void import('../settings-panel').then((m) => m.openSettingsPanel(getApp(), 'diary'));
-    });
+    // 关闭（ESC / 点遮罩）与设置直达的按钮已随头行精简移除，见 render.ts wallPanelHTML 注释
     // 灯箱关闭按钮（双实例各自一份）
     ui.lb.querySelector('[data-act="lb-close"]')?.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -670,16 +664,13 @@ export class DiaryAppController {
   }
 
   /**
-   * 章节栏构建（仅桌面调用）：标题 + 年份分组月份行（含胶卷缩略条）。
+   * 章节栏构建（仅桌面调用）：年份分组月份行（含胶卷缩略条）。
    * 月份 = groupByMonth(list) 的 key 倒序（对齐数据层契约）。
+   * 2026-09-10：栏顶「章 节」标题块按用户要求移除——一列月份本身自明，标题是多余噪点。
    */
   private mkRailScroll(list: WallEntry[]): HTMLElement {
     const scroll = document.createElement('div');
     scroll.className = 'bz-rail-scroll';
-    const title = document.createElement('div');
-    title.className = 'bz-diary-rail-title';
-    title.textContent = '章 节';
-    scroll.appendChild(title);
     const byMonth = groupByMonth(list);
     const months = [...byMonth.keys()].sort().reverse();
     // 增强 #2：年份分组——跨年处插年份分隔标签（data-month 仍存完整 YYYY-MM，定位逻辑不动）
@@ -1049,17 +1040,39 @@ export class DiaryAppController {
       thumb.className = 'bz-diary-memory-thumb';
       const m = e.media[0];
       const src = this.mediaSrcFor(e, m.name);
-      if (m.kind === 'img' && src) {
+      const isVid = m.kind === 'video';
+      // 视频格先垫播放角标：小图未就绪/取帧失败时它就是「这是视频」的说明
+      if (isVid) {
+        thumb.classList.add('bz-diary-memory-thumb--v');
+        thumb.appendChild(uiIcon(ACTION_ICON.play));
+      }
+      if ((m.kind === 'img' || isVid) && src) {
         const img = document.createElement('img');
         img.loading = 'lazy';
         img.alt = e.date;
         // issue 217 S2：时光条缩略走小图缓存——直挂原图会在纪念日命中多时整排原图解码
-        //（与 issue 212 章节栏同病根）；命中贴 48px 小图，未命中贴原图 + 后台压图回存
+        //（与 issue 212 章节栏同病根）；命中贴 48px 小图，未命中贴原图 + 后台压图回存。
+        // 视频不能直挂原 src（img 挂不了视频）→ 一律走首帧压缩，失败只留播放角标。
         const key = railThumbKey(e.date, m.name);
+        // 角标只在「还没有图」时占位（同章节栏口径）：小图一落地就撤，不压在图上
+        const showThumb = (url: string) => {
+          img.src = url;
+          thumb.querySelectorAll('[data-icon]').forEach((ic) => ic.remove());
+        };
         void getRailThumb(key).then((small) => {
           if (!img.isConnected) return;
           if (small) {
-            img.src = small;
+            showThumb(small);
+            return;
+          }
+          if (isVid) {
+            // 同图片口径：无 IO（jsdom/旧内核）不进压缩管线，留角标占位
+            if (typeof IntersectionObserver === 'undefined') return;
+            void makeVideoThumb(src).then((t2) => {
+              if (!t2) return;
+              void putRailThumb(key, t2);
+              if (img.isConnected) showThumb(t2);
+            });
             return;
           }
           img.src = src;
@@ -1070,8 +1083,8 @@ export class DiaryAppController {
           }
         });
         thumb.appendChild(img);
-      } else {
-        thumb.appendChild(uiIcon(m.kind === 'video' ? ACTION_ICON.play : ACTION_ICON.music));
+      } else if (m.kind === 'audio') {
+        thumb.appendChild(uiIcon(ACTION_ICON.music));
       }
       const year = document.createElement('span');
       year.className = 'bz-diary-memory-year';
@@ -1288,9 +1301,12 @@ export class DiaryAppController {
 
   /**
    * 章节栏缩略图（issue 210/212）：调用方保证只传图片/视频媒体。
-   * 渲染时零加载——图片挂 data-thumb-src 占位、视频挂 data-src 占位（播放角标），
+   * 渲染时零加载——图片挂 data-thumb-src 占位、视频挂 data-src 占位，
    * 交 setupRailLazy 进视口才走「查小图缓存 → 命中贴 48px 小图 / 未命中压图回存」，
    * 20px 小格永不触发原图整张解码（issue 212 卡顿病根）。
+   *
+   * 视频格不出现播放角标（用户 2026-09-10 明确要求）：格内始终只有一个视觉主体——
+   * 小图就绪前是 --v 的 teal 渐变底（自身即「这是视频」的标记），就绪后直接贴小图。
    */
   private thumbEl(m: WallMedia, entry: WallEntry): HTMLElement {
     const t = document.createElement('span');
@@ -1306,14 +1322,11 @@ export class DiaryAppController {
         t.dataset.encNote = entry.noteId;
         t.dataset.thumbKey = railThumbKey(entry.date, m.name);
       }
-      // 无资源：仅图标占位
-      t.appendChild(uiIcon(m.kind === 'video' ? ACTION_ICON.play : ACTION_ICON.image));
+      // 无资源：图片仍挂占位图标（破图可辨）；视频不挂（区分靠 --v 渐变底）
+      if (m.kind !== 'video') t.appendChild(uiIcon(ACTION_ICON.image));
       return t;
     }
     if (m.kind === 'video') {
-      // 播放角标浮层（首帧小图挂载后仍保留）；图片格不加图标——
-      // issue 216 病根：占位图标与 img 并存，图加载出来图标也不消失（用户截图破图小标）
-      t.appendChild(uiIcon(ACTION_ICON.play));
       const v = document.createElement('video');
       v.muted = true;
       v.preload = 'none';
@@ -1432,31 +1445,36 @@ export class DiaryAppController {
     });
   }
 
-  /** 缩略格换成缓存小图（视频格保留播放角标浮层；加密格载体是 span，只换内容保角标） */
+  /**
+   * 缩略格换成小图（图片/视频/加密格三路共用）。
+   * 播放角标只在「还没有图」时当占位——小图一落地就撤掉（用户 2026-09-10 要求：
+   * 章节栏视频图上不要再压一个播放图标）。
+   * 载体两种：加密格 el 是 span（自身即格）；其余 el 是格内的 img/video 元素。
+   */
   private swapThumbToImg(el: HTMLElement, dataUrl: string): void {
     const img = document.createElement('img');
     img.src = dataUrl;
     img.decoding = 'async';
-    if (el.tagName === 'SPAN') {
-      const keepPlay = el.classList.contains('bz-diary-month-thumb--v');
-      const icon = keepPlay ? el.querySelector('[data-icon]') : null;
-      el.textContent = '';
-      if (icon) el.appendChild(icon);
-      el.appendChild(img);
-      return;
-    }
-    const cell = el.parentElement;
+    const cell = el.tagName === 'SPAN' ? el : el.parentElement;
     if (!cell) return;
-    cell.replaceChild(img, el);
+    cell.querySelectorAll('[data-icon]').forEach((ic) => ic.remove());
+    const cur = cell.querySelector('img, video');
+    if (cur) cell.replaceChild(img, cur);
+    else cell.appendChild(img);
   }
 
-  /** 章节栏视频缩略挂载（issue 210 旧行为，现为压缩失败兜底）：data-src → src + preload=metadata */
+  /**
+   * 章节栏视频缩略挂载（issue 210 旧行为，现为压缩失败兜底）：data-src → src。
+   * preload 必须是 auto：`metadata` 只到 readyState=1，浏览器不解码帧，格子永远是空的
+   * （与 issue 212 的 loadeddata 取帧全黑同一实测结论）。元素在 IO 离开视口时 pause，
+   * 真实用途是「压缩管线失败时至少还看得到首帧」。
+   */
   private hydrateRailVideo(v: HTMLVideoElement) {
     const src = v.dataset.src;
     if (!src || v.getAttribute('src')) return;
     v.setAttribute('src', src);
     delete v.dataset.src;
-    v.preload = 'metadata';
+    v.preload = 'auto';
   }
 
   // ---------- 视口懒加载控制器 ----------
@@ -1562,40 +1580,63 @@ export class DiaryAppController {
 
   /** 滚动高亮：rAF 节流，当前月份在章节栏高亮并滚到可见。
    *  与 scrollToMonth 同口径用 getBoundingClientRect 差值（content-visibility 下 offsetTop 不可靠，P2-1 审查修复）。
-   *  ADR-0094：滚动容器收敛为 .bz-rail 内的 .bz-rail-scroll（共享族结构）。 */
+   *  ADR-0094：滚动容器收敛为 .bz-rail 内的 .bz-rail-scroll（共享族结构）。
+   *  2026-09-10：绑定后立即 schedule 一次——旧实现只挂 scroll 监听，开墙不滚动就一个月份
+   *  都不亮（用户要求「打开日记本默认高亮当前月份」）。 */
   private setupRailHighlight(wall: HTMLElement, rail: HTMLElement, key: 'desk' | 'mob') {
     const scroller = (rail.querySelector('.bz-rail-scroll') as HTMLElement | null) || rail;
-    let raf: number | null = null;
-    const onScroll = () => {
-      if (raf !== null) return;
-      raf = requestAnimationFrame(() => {
-        raf = null;
-        const headEls = wall.querySelectorAll<HTMLElement>('.bz-diary-day-head');
-        if (!headEls.length) return;
-        const wallRect = wall.getBoundingClientRect();
-        // relTop 是「节头顶 − 墙体顶」的视口相对量（P1 审查修复：旧实现误与
-        // scrollTop+8 比较——坐标系混用导致滚过一半后所有节头全部命中，章节栏恒高亮最后月份）
-        const items = Array.from(headEls, (h) => ({
-          date: h.dataset.date!,
-          relTop: h.getBoundingClientRect().top - wallRect.top,
-        }));
-        let currentMonth = pickCurrentMonth(items);
-        if (!currentMonth) currentMonth = items[0].date.slice(0, 7);
-        rail.querySelectorAll('.bz-diary-month').forEach((it) => {
-          it.classList.toggle('on', it.getAttribute('data-month') === currentMonth);
-        });
-        const active = rail.querySelector<HTMLElement>(`.bz-diary-month[data-month="${currentMonth}"]`);
-        if (active) {
-          const railRect = scroller.getBoundingClientRect();
-          const actRect = active.getBoundingClientRect();
-          if (actRect.top < railRect.top || actRect.bottom > railRect.bottom) {
-            scroller.scrollTop += actRect.top - railRect.top - (scroller.clientHeight - actRect.height) / 2;
-          }
+    // rAF 兜底：无 rAF 的环境（部分 jsdom 配置/旧内核）退 setTimeout，
+    // 保证「开墙即定高亮」不因环境差异失效
+    const rafFn = (cb: FrameRequestCallback): number =>
+      typeof requestAnimationFrame === 'function' ? requestAnimationFrame(cb) : (setTimeout(() => cb(0), 16) as unknown as number);
+    const cafFn = (h: number): void => {
+      if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(h);
+      else clearTimeout(h as unknown as ReturnType<typeof setTimeout>);
+    };
+    let rafId: number | null = null;
+    const sync = () => {
+      const headEls = wall.querySelectorAll<HTMLElement>('.bz-diary-day-head');
+      if (!headEls.length) return;
+      const wallRect = wall.getBoundingClientRect();
+      // relTop 是「节头顶 − 墙体顶」的视口相对量（P1 审查修复：旧实现误与
+      // scrollTop+8 比较——坐标系混用导致滚过一半后所有节头全部命中，章节栏恒高亮最后月份）
+      const items = Array.from(headEls, (h) => ({
+        date: h.dataset.date!,
+        relTop: h.getBoundingClientRect().top - wallRect.top,
+      }));
+      let currentMonth = pickCurrentMonth(items);
+      if (!currentMonth) currentMonth = items[0].date.slice(0, 7);
+      rail.querySelectorAll('.bz-diary-month').forEach((it) => {
+        it.classList.toggle('on', it.getAttribute('data-month') === currentMonth);
+      });
+      const active = rail.querySelector<HTMLElement>(`.bz-diary-month[data-month="${currentMonth}"]`);
+      if (active) {
+        const railRect = scroller.getBoundingClientRect();
+        const actRect = active.getBoundingClientRect();
+        if (actRect.top < railRect.top || actRect.bottom > railRect.bottom) {
+          scroller.scrollTop += actRect.top - railRect.top - (scroller.clientHeight - actRect.height) / 2;
         }
+      }
+    };
+    const schedule = () => {
+      if (rafId !== null) return;
+      rafId = rafFn(() => {
+        rafId = null;
+        sync();
       });
     };
-    wall.addEventListener('scroll', onScroll, { passive: true });
-    this.rafCleanups[key] = () => wall.removeEventListener('scroll', onScroll);
+    wall.addEventListener('scroll', schedule, { passive: true });
+    this.rafCleanups[key] = () => {
+      wall.removeEventListener('scroll', schedule);
+      if (rafId !== null) {
+        cafFn(rafId);
+        rafId = null;
+      }
+    };
+    // 开墙即定高亮（用户要求：打开日记本时章节栏默认高亮当前月份）——
+    // 旧实现只在 scroll 事件里跑，不滚动就一个月份都不亮。
+    // 延一帧测量：renderWall 刚重建 DOM，等布局落地再取 rect。
+    schedule();
   }
 
   private teardownScrollers(key: 'desk' | 'mob') {
@@ -2220,7 +2261,19 @@ export class DiaryAppController {
 
   /** 标题点击 → 回忆墙自包含日期选择器（按年份/月份过滤本域数据；不再调 diary showDatePicker——那是 diary 面板的 filter） */
   private openDatePicker() {
-    this.showDateFilter(this.selDateFilter?.year ?? null);
+    this.showDateFilter(this.selDateFilter?.year ?? this.defaultFilterYear());
+  }
+
+  /**
+   * 打开时的默认浏览年份 = 当前年份（用户要求「打开日期筛选默认选中当前年份」）。
+   * 当前年若没有任何数据（跨年空窗），回落最新有数据的年份——否则月份网格不渲染，
+   * 打开只剩一句提示。
+   */
+  private defaultFilterYear(): string | null {
+    const years = Array.from(new Set(this.entries.map((e) => e.date.slice(0, 4))));
+    if (!years.length) return null;
+    const now = String(new Date().getFullYear());
+    return years.includes(now) ? now : years.sort((a, b) => b.localeCompare(a))[0];
   }
 
   /** 显示日期筛选弹窗：viewYear 只是「正在浏览的年份」临时值（P2 审查修复：
@@ -2245,35 +2298,51 @@ export class DiaryAppController {
     // 年份高亮：浏览中的年份优先，未浏览时回落已生效筛选的年份
     const activeYear = viewYear ?? cur?.year ?? null;
 
-    // 头部：标题 + 全部按钮 + 关闭
+    // 头部：标题 +（有筛选时）全部 + 关闭——规格对齐头行（左标题、右动作）
     const head = document.createElement('div');
     head.className = 'bz-diary-datefilter-head';
     const title = document.createElement('div');
     title.className = 'bz-diary-datefilter-title';
     title.textContent = '按日期筛选';
-    const resetBtn = document.createElement('button');
-    resetBtn.className = 'bz-diary-datefilter-reset';
-    resetBtn.textContent = '全部';
-    resetBtn.addEventListener('click', () => {
-      this.selDateFilter = null;
-      this.closeDateFilter();
-      this.renderAll();
-    });
+    head.appendChild(title);
+    if (cur) {
+      // 无筛选时不给「全部」——没有东西可清，纯噪点
+      const resetBtn = document.createElement('button');
+      resetBtn.className = 'bz-diary-datefilter-reset';
+      resetBtn.textContent = '全部';
+      resetBtn.addEventListener('click', () => {
+        this.selDateFilter = null;
+        this.closeDateFilter();
+        this.renderAll();
+      });
+      head.appendChild(resetBtn);
+    }
     const closeBtn = document.createElement('button');
     closeBtn.className = 'bz-diary-datefilter-close';
+    closeBtn.title = '关闭';
     closeBtn.appendChild(uiIcon('x')); // 增强 #4：lucide 线条图标
     closeBtn.addEventListener('click', () => this.closeDateFilter());
-    head.append(title, resetBtn, closeBtn);
+    head.appendChild(closeBtn);
     card.appendChild(head);
 
-    // 年份行（chips）
+    // 年份行 chips（规格对齐类型 chips：11px 药丸 + 计数 faint）
+    const yearLabel = document.createElement('div');
+    yearLabel.className = 'bz-diary-datefilter-label';
+    yearLabel.textContent = '年份';
+    card.appendChild(yearLabel);
+
     const yearRow = document.createElement('div');
     yearRow.className = 'bz-diary-datefilter-years';
+    const yearCount = new Map<string, number>();
+    this.entries.forEach((e) => {
+      const y = e.date.slice(0, 4);
+      yearCount.set(y, (yearCount.get(y) || 0) + 1);
+    });
     years.forEach((y) => {
       const b = document.createElement('button');
       b.className = 'bz-diary-datefilter-year' + (activeYear === y ? ' bz-diary-datefilter-year--on' : '');
       b.dataset.year = y;
-      b.textContent = y;
+      b.innerHTML = `<span class="bz-diary-datefilter-year-name">${y}</span><span class="bz-diary-datefilter-year-cnt">${yearCount.get(y) || 0}</span>`;
       b.addEventListener('click', () => {
         // 两段式：点年份 → 只切换到该年的月份网格（临时值，不提交筛选）；
         // 点月份才应用过滤并关闭
@@ -2285,6 +2354,10 @@ export class DiaryAppController {
 
     // 正在浏览年份的月份网格
     if (viewYear && years.includes(viewYear)) {
+      const monthLabel = document.createElement('div');
+      monthLabel.className = 'bz-diary-datefilter-label';
+      monthLabel.textContent = '月份';
+      card.appendChild(monthLabel);
       const monthRow = document.createElement('div');
       monthRow.className = 'bz-diary-datefilter-months';
       const monthCounts = new Map<string, number>();
@@ -2303,7 +2376,8 @@ export class DiaryAppController {
           'bz-diary-datefilter-month' +
           (cnt === 0 ? ' bz-diary-datefilter-month--empty' : '') +
           (isOn ? ' bz-diary-datefilter-month--on' : '');
-        cardEl.innerHTML = `<span class="bz-diary-datefilter-month-name">${i}月</span><span class="bz-diary-datefilter-month-cnt">${cnt} 条</span>`;
+        // 计数裸数字（同 chips 口径）；空月不写 0，靠虚线底自证
+        cardEl.innerHTML = `<span class="bz-diary-datefilter-month-name">${i}月</span><span class="bz-diary-datefilter-month-cnt">${cnt || ''}</span>`;
         cardEl.addEventListener('click', () => {
           if (cnt === 0) return;
           // 点月份才提交筛选（年份本身只是浏览临时值）

@@ -58,6 +58,10 @@
 - **行为单源**：`fake-sim.ts` 以真 `ui.ts`/`store.ts`/`dialogs.ts`/`entry-actions`/`data.ts`/
   `config.ts` 依赖链为入口 → 产 `prototype-behavior.js` 挂 `BZW_diary`；壳只调
   `bootDiarySim()` + `openPanel()` / `openWrite()`（bz-diary-open / bz-diary-write 同链路）。
+  > issue 262 后头行「设置」按钮退役，`bindPanel` 里唯一的 `import('../settings-panel')`
+  > 随之删除 —— settings-panel 全域 schema 闭包（连带 secondbrain/pomodoro/smartcat 的 schema）
+  > 不再进本包，`prototype-behavior.js` 由 1.73MB 降到 0.65MB。评审期不能再从日记本 ⚙️ 直达设置面板
+  >（真要看得从插件本体进）；假层的 Setting/壳类保留，只作防顶层求值崩的兜底。
 - **宿主差异**全部在 `fake/fake-obsidian.ts`：localStorage fake vault（读改写/删/adapter.list
   目录面）、`getResourcePath`+`getFirstLinkpathDest`（媒体 URL：入库子集走 `assets/` 清单，
   其余 http 环境下回退 `/__vault-media/` 现场取流）、
