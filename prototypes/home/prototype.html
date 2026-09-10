@@ -55,20 +55,35 @@
   .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #8b8474; display: flex; gap: 10px; align-items: center;
     background: rgba(255,255,255,.92); border: 1px solid #c9c2b2; padding: 3px 8px; z-index: 900; }
   .vbadge button { border: none; background: none; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; }
-  .vbadge input { width: 48px; border: 1px solid #c9c2b2; border-radius: 3px; padding: 1px 3px; font: 11px 'Microsoft YaHei'; color: #6b6455; }
+  /* 1:1 真机量具条：基准线**不参与缩放**，是唯一的绝对锚点（尺子量它 → 换算 CSS px 的物理大小）。
+     旧版让用户量「会缩放的框宽」，等于自己量自己，没重新量就再点会累乘 —— 已废弃。 */
+  #rulerBar { flex: none; width: min(92vw, 660px); display: flex; flex-direction: column; align-items: center; gap: 7px;
+    background: rgba(255,255,255,.94); border: 1px solid #c9c2b2; padding: 10px 14px; font-size: 11px; color: #8b8474; }
+  #rulerBar .ruler { width: 412px; max-width: 100%; height: 14px;
+    border-left: 2px solid #b3564d; border-right: 2px solid #b3564d; border-bottom: 2px solid #b3564d; }
+  #rulerBar .ruler-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  #rulerBar input[type="number"] { width: 58px; border: 1px solid #c9c2b2; border-radius: 3px; padding: 1px 3px; font: 11px 'Microsoft YaHei'; color: #6b6455; }
+  #rulerBar input[type="range"] { width: 148px; accent-color: #b3564d; vertical-align: middle; }
+  #rulerBar button { border: 1px solid #c9c2b2; background: #fff; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; border-radius: 3px; padding: 1px 7px; }
+  #rulerBar .si { color: #6b6455; }
   .vbadge .ok { color: #3d8f5d; }
   .vbadge .bad { color: #b3564d; }
 </style>
 </head>
 <body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark，壳内必须补一类才不透明 -->
   <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="内容首页·桌面"></iframe></div>
+
+  <div id="rulerBar" hidden>
+    <div class="ruler" title="外缘宽度 = 412 CSS px"></div>
+    <div class="ruler-row">量上面这条线的<b>外缘宽度</b>，填实际毫米数 → <input id="calibMm" type="number" step="0.5" min="10" placeholder="mm"><button id="calibGo">校准</button><button id="calibClear">清除</button></div>
+    <div class="ruler-row">或拿手机贴屏幕比对，拖到一样宽：<input id="scaleRange" type="range" min="0.3" max="1" step="0.001"><span class="si" id="scaleInfo"></span></div>
+  </div>
+
   <div id="mobHost" class="demo-mob-wrap"><div class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="内容首页·移动"></iframe></div></div>
 
   <div class="vbadge">内容首页 · 真行为单源预览（桌面=真 ui.ts 跑在 920px，移动=412×827 小米13U）
     <button id="mobToggle">隐藏移动端</button>
     <button id="one2one">1:1 真机</button>
-    <span id="calib" hidden>框宽实测 <input id="calibMm" type="number" step="0.1" min="1" placeholder="mm"><button id="calibGo">校准</button></span>
-    <span id="scaleInfo"></span>
     <button id="reset">重置演示数据</button>
     <span id="stResult"></span>
   </div>
@@ -117,40 +132,56 @@
    * 目标：框在屏幕上的「毫米数」= 真机屏宽，而不是 CSS 像素数相等。
    *   6.73" 20:9 → 屏宽 = 6.73×25.4×9/√(20²+9²) = 70.15mm；412 CSS px = 1440 物理 px = 整屏宽。
    * 未校准时按 CSS 参考像素（1px = 1/96 英寸）估算 ≈ 0.643×；Windows 系统缩放非 100%
-   * 时该估算会偏，故提供「量一次框宽」的迭代校准（校准值存 localStorage）。
+   * 时该估算会偏。校准是**绝对公式**，锚点 = 量具条那条不缩放的基准线（412 CSS px）：
+   *   量得 L mm → 1 CSS px = L/412 mm → scale = 70.15 / L。
+   *   结果只由 L 决定、与当前倍数无关，故反复点校准数值恒定。
+   *   （旧版让用户量「当前渲染出的框宽」再修正，属自己量自己 → 连点会累乘，已废弃。）
    */
   const MOB_MM = 70.15;                                  // 小米13U 屏宽（mm）
-  const GUESS_SCALE = MOB_MM / (412 * 25.4 / 96);        // ≈ 0.643（标准 96dpi 推算）
-  const SCALE_KEY = 'bz-proto:home-mob-scale';    // 真机档的 scale（仅 1:1 模式下写）
-  const MODE_KEY = 'bz-proto:home-mob-1to1';      // 模式（'1' 真机 / '0' CSS）
+  const RULER_CSS = 412;                                 // 基准线 CSS 宽（= iframe 视口宽）
+  const GUESS_SCALE = MOB_MM / (RULER_CSS * 25.4 / 96);  // ≈ 0.643（标准 96dpi 推算）
+  const SCALE_KEY = 'bz-proto:home-mob-scale';           // 真机档倍数（仅 1:1 模式下写）
+  const MODE_KEY = 'bz-proto:home-mob-1to1';             // 模式：'1' 真机 / '0' CSS
+  const MM_KEY = 'bz-proto:home-mob-calmm';              // 基准线实测毫米数（校准锚点）
   const toggle1to1 = document.querySelector('#one2one');
-  const calibBox = document.querySelector('#calib');
+  const rulerBar = document.querySelector('#rulerBar');
+  const rangeEl = document.querySelector('#scaleRange');
   const scaleInfo = document.querySelector('#scaleInfo');
+  let scaleNow = 1;
   const savedScale = () => { const v = parseFloat(localStorage.getItem(SCALE_KEY)); return Number.isFinite(v) && v > 0 && v !== 1 ? v : 0; };
-  const curScale = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mob-scale')) || 1;
+  const calMm = () => { const v = parseFloat(localStorage.getItem(MM_KEY)); return Number.isFinite(v) && v > 0 ? v : 0; };
   const setScale = (s) => {
+    s = Math.min(4, Math.max(0.2, s));
+    scaleNow = s;
     document.documentElement.style.setProperty('--mob-scale', String(s));
     const on = s !== 1;
     if (on) localStorage.setItem(SCALE_KEY, String(s));
     localStorage.setItem(MODE_KEY, on ? '1' : '0');
     toggle1to1.textContent = on ? '回到 CSS 1:1' : '1:1 真机';
-    calibBox.hidden = !on;
-    scaleInfo.textContent = on ? `×${s.toFixed(3)}（框宽应 ${MOB_MM}mm）` : '';
+    rulerBar.hidden = !on;
+    rangeEl.value = String(Math.min(1, Math.max(0.3, s)));
+    if (!on) { scaleInfo.textContent = ''; return; }
+    // 框在屏幕上的实测宽度 = scale × 基准线实测值（412·s × L/412 = s·L）
+    const L = calMm();
+    scaleInfo.textContent = L ? `×${s.toFixed(3)}　框宽约 ${(s * L).toFixed(1)}mm` : `×${s.toFixed(3)}（未校准，估算值）`;
   };
   toggle1to1.addEventListener('click', () => {
-    setScale(curScale() === 1 ? (savedScale() || GUESS_SCALE) : 1);
+    setScale(scaleNow === 1 ? (savedScale() || GUESS_SCALE) : 1);
   });
   document.querySelector('#calibGo').addEventListener('click', () => {
-    const mm = parseFloat(document.querySelector('#calibMm').value);
-    // 迭代校准：量到的是「当前 scale 渲染出的框宽」→ 修正系数 = 目标 / 实测
-    if (!mm || mm <= 0) return;
-    setScale(Math.min(4, Math.max(0.2, curScale() * (MOB_MM / mm))));
+    const L = parseFloat(document.querySelector('#calibMm').value);
+    if (!L || L <= 0) return;
+    localStorage.setItem(MM_KEY, String(L));   // 绝对锚点：1 CSS px = L/412 mm
+    setScale(MOB_MM / L);                      // 与当前倍数无关 → 反复点结果恒定
   });
-  { const mode = localStorage.getItem(MODE_KEY);                 // null = 首次
-    const on = mode === null ? true : mode === '1';              // 首次默认真机档
-    if (!on) setScale(1);
-    else { setScale(savedScale() || GUESS_SCALE);
-           if (mode === null) scaleInfo.textContent = `×${GUESS_SCALE.toFixed(3)}（估算值，量一次框宽校准）`; } }
+  document.querySelector('#calibClear').addEventListener('click', () => {
+    localStorage.removeItem(MM_KEY); localStorage.removeItem(SCALE_KEY);
+    setScale(GUESS_SCALE);
+  });
+  rangeEl.addEventListener('input', () => setScale(parseFloat(rangeEl.value)));
+  { const mode = localStorage.getItem(MODE_KEY);        // null = 首次访问
+    const on = mode === null ? true : mode === '1';     // 首次默认开真机档
+    setScale(on ? (savedScale() || GUESS_SCALE) : 1); }
 
   document.querySelector('#reset').addEventListener('click', () => {
     B.resetHomeSim();
