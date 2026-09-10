@@ -21,32 +21,39 @@
   └────────────────────────────────────────────────────────────────────────┘
 -->
 <style>
-  /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
+  /* ===== 以下全部是演示壳，禁止放组件样式（颜色一律取宿主 token） ===== */
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 32px 24px;
-    background: #e3e0d8; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+    background: var(--background-secondary); color: var(--text-normal); font-family: var(--font-interface); }
   * { scrollbar-width: none; } *::-webkit-scrollbar { display: none; }
 
   /* 桌面外景（真行为 iframe：面板 append iframe body，本体 980px 宽 82vh 卡来自 styles.css） */
   .demo-dt { flex: none; width: 1020px; height: 760px; }
   /* 移动外景：396px iframe → 真全屏态（≤768 fake Platform.isMobile） */
   .demo-mob { width: 396px; height: 780px; border-radius: 26px; overflow: hidden; flex: none;
-    border: 1px solid #d8d1c0; box-shadow: 0 8px 30px rgba(0,0,0,.14); background: #f5f2ec; }
+    border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-l); background: var(--background-primary); }
   .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
 
   /* 评审徽牌（演示壳自用） */
-  .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #9a917d; display: flex; gap: 10px; align-items: center;
-    background: rgba(255,255,255,.9); border: 1px solid #d8d1c0; padding: 3px 8px; z-index: 900; }
-  .vbadge button { border: none; background: none; color: #b3564d; font: 11px 'Microsoft YaHei'; cursor: pointer; }
-  .vbadge .ok { color: #3d8f5d; }
-  .vbadge .bad { color: #b3564d; }
+  .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: var(--font-ui-smaller); color: var(--text-muted); display: flex; gap: 10px; align-items: center;
+    background: var(--background-primary); border: 1px solid var(--background-modifier-border); padding: 4px 9px; border-radius: var(--radius-m); z-index: 900; }
+  .vbadge button { border: none; background: none; color: var(--text-accent); font: inherit; cursor: pointer; }
+  .vbadge .ok { color: var(--color-green); }
+  .vbadge .bad { color: var(--text-error); }
+  /* 明暗切换：分段控件（壳自用，非组件样式） */
+  .themegrp { display: flex; border: 1px solid var(--background-modifier-border); border-radius: var(--radius-s); overflow: hidden; }
+  .themegrp button { padding: 2px 7px; color: var(--text-muted); }
+  .themegrp button.on { background: var(--interactive-accent); color: var(--text-on-accent); }
 </style>
 </head>
-<body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark，壳内必须补一类才不透明 -->
+<body class="theme-light"> <!-- 宿主类由 host-theme.css 定义（theme-light / theme-dark），下方脚本按切换钮改写 -->
   <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="日记本·桌面"></iframe></div>
   <div id="mobHost" class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="日记本·移动"></iframe></div>
 
   <div class="vbadge">日记本 · 真行为单源预览（桌面=真 ui.ts 跑在 980px，移动=396px 真全屏）· 真实 vault 快照
+    <span class="themegrp" id="themeGrp">
+      <button data-mode="light">明</button><button data-mode="dark">暗</button><button data-mode="auto">跟随系统</button>
+    </span>
     <button id="mobToggle">隐藏移动端</button>
     <button id="reset">重置演示数据</button>
     <span id="stResult"></span>
@@ -100,7 +107,7 @@
     const kill = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k && k.startsWith(LS)) kill.push(k);
+      if (k && k.startsWith(LS) && k !== LS + '__theme') kill.push(k); // 主题偏好不属于演示数据，保留
     }
     kill.forEach((k) => localStorage.removeItem(k));
     location.reload();
@@ -145,6 +152,15 @@
         t('移动域CSS生效(--dw-bg)', cssVar(md).length > 0);
         t('桌面品牌=日记本', dt('.bz-diary-bookname')?.textContent === '日记本');
         t('桌面面板可见', getComputedStyle(dt('.bz-diary')).display === 'flex');
+        // 宿主主题保真（issue 256 附带）：宿主 token 必须来自 host-theme.css 的真值，
+        // 而非壳内旧写死近似值；域变量 --dw-* 应解析到宿主 token。
+        const hostBg = getComputedStyle(dd.body).getPropertyValue('--background-primary').trim();
+        const h = getComputedStyle(dd.body).getPropertyValue('--accent-h').trim();
+        t('宿主背景 token 在场', hostBg.length > 0);
+        t('宿主强调色 h 值在场', h.length > 0);
+        const dwBg = cssVar(dd);
+        t('域底色已绑宿主背景', dwBg === hostBg || dwBg.startsWith('var(')); // 浏览器保留 var() 原文时视为已绑定
+        t('壳外景底色已主题化(preview 页 body)', getComputedStyle(document.body).getPropertyValue('--background-secondary').trim().length > 0);
 
         // 数据链：真实快照经真 parser 现场解析 → chips/节头在场
         const chips = () => dd.querySelectorAll('.bz-diary-chip').length;

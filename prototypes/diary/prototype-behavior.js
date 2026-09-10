@@ -40,9 +40,9 @@ var BZW_diary = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -4058,6 +4058,11 @@ var BZW_diary = (() => {
     const src = typeof window !== "undefined" && window.DIARY || window.parent && window.parent.DIARY || null;
     return (src == null ? void 0 : src.ASSETS) || [];
   }
+  function vaultMediaUrl(base) {
+    if (typeof location === "undefined" || !/^https?:$/.test(location.protocol)) return "";
+    if (!MEDIA_EXT_RE.test(base)) return "";
+    return "/__vault-media/" + encodeURIComponent(base);
+  }
   function parseFrontmatter(content) {
     if (!content.startsWith("---")) return null;
     const end = content.indexOf("\n---", 3);
@@ -4095,7 +4100,7 @@ var BZW_diary = (() => {
     }
     return fm;
   }
-  var import_moment, Platform, MarkdownRenderer, MarkdownView, Component, TFile, Setting, KEY_PREFIX, FakeVault, FakeMetadataCache, FakeApp;
+  var import_moment, Platform, MarkdownRenderer, MarkdownView, Component, TFile, Setting, KEY_PREFIX, MEDIA_EXT_RE, FakeVault, FakeMetadataCache, FakeApp;
   var init_fake_obsidian = __esm({
     "prototypes/diary/fake/fake-obsidian.ts"() {
       import_moment = __toESM(require_moment());
@@ -4293,6 +4298,7 @@ var BZW_diary = (() => {
         }
       };
       KEY_PREFIX = "bz-sim:";
+      MEDIA_EXT_RE = /\.(png|jpe?g|gif|webp|avif|bmp|svg|mp4|m4v|webm|mov|ogv|mp3|m4a|aac|wav|flac|ogg|oga)$/i;
       FakeVault = class _FakeVault {
         constructor() {
           this.listeners = /* @__PURE__ */ new Map();
@@ -4384,10 +4390,13 @@ var BZW_diary = (() => {
         async createFolder(_path) {
           return void 0;
         }
-        /** 媒体资源 URL：清单命中 → assets/ 相对路径；未命中 → ''（墙渐变占位语义） */
+        /** 媒体资源 URL：入库子集命中 → assets/ 相对路径；否则按需走预览服务的真实 vault 取流；
+         *  file://（双击直开、无服务端）下两者都不可用 → ''（墙渐变占位语义）。 */
         getResourcePath(file) {
           const base = file.path.split("/").pop() || "";
-          return assetManifest().includes(base) ? "./assets/" + encodeURIComponent(base) : "";
+          if (!base) return "";
+          if (assetManifest().includes(base)) return "./assets/" + encodeURIComponent(base);
+          return vaultMediaUrl(base);
         }
         /** 事件订阅（core/app vault.on/offref 同形） */
         on(evt, cb) {
@@ -4417,10 +4426,13 @@ var BZW_diary = (() => {
           const fm = this.cache.get(file.path);
           return fm ? { frontmatter: fm } : null;
         }
-        /** 媒体链接解析（data.ts mediaSrc 优先路）：引用 basename 在 assets 清单 → TFile 形状 */
+        /** 媒体链接解析（data.ts mediaSrc 优先路）：入库清单命中、或经预览服务可取真实 vault 媒体
+         *  （http 环境 + 媒体扩展名）→ 返回 TFile 形状；否则 null → mediaSrc 回退 '' 走渐变占位。 */
         getFirstLinkpathDest(ref, _sourcePath) {
           const base = (ref || "").split("/").pop() || "";
-          return assetManifest().includes(base) ? { path: base } : null;
+          if (!base) return null;
+          if (assetManifest().includes(base)) return { path: base };
+          return vaultMediaUrl(base) ? { path: base } : null;
         }
         readThrough(path) {
           try {
@@ -4801,11 +4813,19 @@ var BZW_diary = (() => {
   });
 
   // src/diary/config.ts
+  function safeResolve(resolver, fallback) {
+    try {
+      const v = resolver();
+      return v && v.trim() ? v : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
   function applyDirectories(settings) {
     DIARY_DIRECTORY = settings.diaryDirectory || "我的/日记";
     LETTER_DIRECTORY = settings.letterDirectory || "我的/信";
-    MOVIE_DIRECTORY = resolveCinemaFolderPath();
-    BOOK_DIRECTORY = resolveFolderPath();
+    MOVIE_DIRECTORY = safeResolve(resolveCinemaFolderPath, "我的/影视");
+    BOOK_DIRECTORY = safeResolve(resolveFolderPath, "书库");
   }
   function getPrimaryTagsInDisplayOrder() {
     const tags = Object.keys(PRIMARY_TAGS_CONFIG);
@@ -13721,8 +13741,7 @@ var BZW_diary = (() => {
         // 域入口命令与面板导航共用
         home: "layout-grid",
         recap: "calendar-heart",
-        memo: "sticky-note",
-        todo: "check-square",
+        memo: "check-square",
         belongings: "package",
         clipping: "scissors",
         favorites: "star",
@@ -13971,7 +13990,7 @@ var BZW_diary = (() => {
   function miniHtml(kind, prev) {
     const st = (extra) => ` style="${extra}"`;
     const bg = st(`background:${prev.bg}`);
-    if (kind === "todo") {
+    if (kind === "memo") {
       const headCls = "m-head" + (prev.head === "stripe" ? " m-stripe" : "");
       const headBg = prev.head === "stripe" ? prev.bg : prev.ink;
       const headBorder = prev.head === "stripe" ? `border-bottom:2px solid ${prev.ink};` : "";
@@ -15557,7 +15576,7 @@ var BZW_diary = (() => {
   function jsonScanTargets(app) {
     const s = tryGetSettings();
     return [
-      { file: storageFile("memo.json", storageDir()), label: "备忘录 / 待办" },
+      { file: storageFile("memo.json", storageDir()), label: "备忘录" },
       { file: getStoragePath(s.storagePath), label: "收藏本" },
       { file: storageFile("belongings.json"), label: "归物本" },
       { file: storageFile("clipbook.json"), label: "剪藏本侧写" },
@@ -15706,7 +15725,7 @@ var BZW_diary = (() => {
       const hit = [...targets.keys()].find((f) => f.endsWith("/" + name) || f === name);
       return hit || name;
     };
-    plans.push({ file: pathOf("memo.json"), label: targets.get(pathOf("memo.json")) || "备忘录 / 待办", kind: "item" });
+    plans.push({ file: pathOf("memo.json"), label: targets.get(pathOf("memo.json")) || "备忘录", kind: "item" });
     plans.push({ file: pathOf("favorites.json"), label: targets.get(pathOf("favorites.json")) || "收藏本", kind: "item" });
     plans.push({ file: pathOf("pomodoro.json"), label: targets.get(pathOf("pomodoro.json")) || "番茄钟", kind: "history" });
     for (const name of Object.keys(SEGMENT_FIELDS)) {
@@ -15732,9 +15751,9 @@ var BZW_diary = (() => {
           hasDrift = true;
           issues.push({
             severity: "error",
-            title: `${r.plan.label}：${s.nonObject} 条非对象条目（两域读取都会失败）`,
+            title: `${r.plan.label}：${s.nonObject} 条非对象条目（两条读取链都会失败）`,
             detail: `文件：${r.plan.file}
-数组里混入了 ${s.nonObject} 条非对象内容（字符串/数字等），备忘录与待办的读取链都会在这里中断，请从留档或备份修复该文件。`
+数组里混入了 ${s.nonObject} 条非对象内容（字符串/数字等），备忘录的读取链都会在这里中断，请从留档或备份修复该文件。`
           });
         }
         if (Object.keys(s.extra).length) {
@@ -16116,7 +16135,7 @@ ${countsToText(s.missing)}
     }
   });
 
-  // src/todo/data.ts
+  // src/memo/data.ts
   function parseScenarios(raw) {
     if (!raw || !raw.trim()) return [...DEFAULT_SCENARIOS];
     const list = raw.split(/[,，]/).map((s) => s.trim()).filter((s) => s.length > 0);
@@ -16146,23 +16165,23 @@ ${countsToText(s.missing)}
       url: item.url || null
     };
   }
-  var import_moment3, DEFAULT_SCENARIOS, TodoData;
+  var import_moment3, DEFAULT_SCENARIOS, MemoData;
   var init_data4 = __esm({
-    "src/todo/data.ts"() {
+    "src/memo/data.ts"() {
       import_moment3 = __toESM(require_moment());
       init_json_store();
       init_app();
       init_utils();
       init_storage();
       DEFAULT_SCENARIOS = ["剪藏", "工作", "学习", "生活", "代码", "公开课"];
-      TodoData = {
-        todoFilePath: "",
+      MemoData = {
+        memoFilePath: "",
         scenarios: [],
         _store: null,
         cinemaFolderPath: "我的/影视",
         init(settings) {
-          this.todoFilePath = storageFile("memo.json", settings.storagePath || "CONFIG/STORAGE");
-          this._store = jsonStore(this.todoFilePath);
+          this.memoFilePath = storageFile("memo.json", settings.storagePath || "CONFIG/STORAGE");
+          this._store = jsonStore(this.memoFilePath);
           this.scenarios = parseScenarios(settings.memoScenarios);
           this.cinemaFolderPath = settings.cinemaFolderPath || "我的/影视";
         },
@@ -16176,7 +16195,7 @@ ${countsToText(s.missing)}
          *  id 前缀用 generateId() 默认 'item'——与旧 memo 域同写 memo.json，保证两域对同文件
          *  的 id 形态完全一致（T5）。读改写整体入 per-path 串行队列（写竞态收敛，对照 memo/data.ts） */
         async loadItems() {
-          return enqueueFileTask(this.todoFilePath, async () => {
+          return enqueueFileTask(this.memoFilePath, async () => {
             const raw = await this.read();
             let needWrite = false;
             const items = raw.map((item) => {
@@ -16191,14 +16210,14 @@ ${countsToText(s.missing)}
           });
         },
         async addItem(item) {
-          return enqueueFileTask(this.todoFilePath, async () => {
+          return enqueueFileTask(this.memoFilePath, async () => {
             const data = await this.read();
             data.unshift(item);
             await this.write(data);
           });
         },
         async updateItem(id, newData) {
-          return enqueueFileTask(this.todoFilePath, async () => {
+          return enqueueFileTask(this.memoFilePath, async () => {
             const data = await this.read();
             const idx = data.findIndex((d) => d.id === id);
             if (idx === -1) throw new Error("条目不存在");
@@ -16222,7 +16241,7 @@ ${countsToText(s.missing)}
         },
         /** 删除条目；返回被删条目的原索引（未找到返回 -1），供撤销时插回原位 */
         async deleteItem(id) {
-          return enqueueFileTask(this.todoFilePath, async () => {
+          return enqueueFileTask(this.memoFilePath, async () => {
             const data = await this.read();
             const idx = data.findIndex((d) => d.id === id);
             if (idx !== -1) {
@@ -16234,7 +16253,7 @@ ${countsToText(s.missing)}
         },
         /** 撤销删除：把删除前的条目快照插回原索引（越界/未传则头部插入，对齐 addItem 语义） */
         async restoreItem(item, idx) {
-          return enqueueFileTask(this.todoFilePath, async () => {
+          return enqueueFileTask(this.memoFilePath, async () => {
             const data = await this.read();
             const at = idx !== void 0 && idx >= 0 && idx <= data.length ? idx : 0;
             data.splice(at, 0, item);
@@ -16244,7 +16263,7 @@ ${countsToText(s.missing)}
         /** 批量迁移条目场景（场景重命名/删除用）：scene === from → to，返回迁移条数。
          *  同源兼容：只改条目 scene 字段，写法与 memo 域读写同文件同形，memo 侧下次 loadItems 即读到 */
         async updateSceneBulk(from, to) {
-          return enqueueFileTask(this.todoFilePath, async () => {
+          return enqueueFileTask(this.memoFilePath, async () => {
             const data = await this.read();
             let n = 0;
             data.forEach((d) => {
@@ -16306,8 +16325,8 @@ ${countsToText(s.missing)}
       missingId: 0,
       duplicateId: 0,
       missingTitle: 0,
-      memoView: { total: 0, done: 0 },
-      todoView: { total: 0, done: 0 }
+      storeView: { total: 0, done: 0 },
+      rawView: { total: 0, done: 0 }
     };
     if (!Array.isArray(raw)) return stats;
     const seenIds = /* @__PURE__ */ new Set();
@@ -16322,11 +16341,11 @@ ${countsToText(s.missing)}
       else seenIds.add(id);
       if (!it.title || !String(it.title).trim()) stats.missingTitle += 1;
       const m = memoNormalize(it);
-      if (m.completed !== null) stats.memoView.done += 1;
+      if (m.completed !== null) stats.storeView.done += 1;
       const t = normalizeItem(it);
-      if (t.completed) stats.todoView.done += 1;
-      stats.memoView.total += 1;
-      stats.todoView.total += 1;
+      if (t.completed) stats.rawView.done += 1;
+      stats.storeView.total += 1;
+      stats.rawView.total += 1;
     }
     return stats;
   }
@@ -16338,49 +16357,49 @@ ${countsToText(s.missing)}
         issues: [
           {
             severity: "error",
-            title: "memo.json 不是条目数组形态（备忘录与待办都无法读取）",
-            detail: "两域的读取链都期望「条目数组」；当前文件是其他形态，请从 CONFIG/.CORRUPT/ 留档或备份恢复。"
+            title: "memo.json 不是条目数组形态（两条读取链都无法读取）",
+            detail: "两条读取链都期望「条目数组」；当前文件是其他形态，请从 CONFIG/.CORRUPT/ 留档或备份恢复。"
           }
         ]
       };
     }
-    if (stats.memoView.total !== stats.todoView.total || stats.memoView.done !== stats.todoView.done) {
+    if (stats.storeView.total !== stats.rawView.total || stats.storeView.done !== stats.rawView.done) {
       issues.push({
         severity: "error",
-        title: `双视角计数不一致：备忘录 ${stats.memoView.total} 条/完成 ${stats.memoView.done}，待办 ${stats.todoView.total} 条/完成 ${stats.todoView.done}`,
-        detail: "同一份 memo.json，两个域的统计口径出现分叉，说明字段归一链路有 bug，请反馈修复。"
+        title: `双链计数不一致：单例读 ${stats.storeView.total} 条/完成 ${stats.storeView.done}，直读 ${stats.rawView.total} 条/完成 ${stats.rawView.done}`,
+        detail: "同一份 memo.json，两条读取链的统计口径出现分叉，说明字段归一链路有 bug，请反馈修复。"
       });
     }
     if (stats.nonObject > 0) {
       issues.push({
         severity: "error",
-        title: `${stats.nonObject} 条非对象条目（备忘录与待办的读取都会在这里中断）`,
-        detail: "数组里混入了非对象内容（字符串/数字等），两域加载都会失败，请从留档或备份修复。"
+        title: `${stats.nonObject} 条非对象条目（两条读取链都会在这里中断）`,
+        detail: "数组里混入了非对象内容（字符串/数字等），两条链加载都会失败，请从留档或备份修复。"
       });
     }
     if (stats.duplicateId > 0) {
       issues.push({
         severity: "warn",
         title: `${stats.duplicateId} 条重复 id（完成/删除会同 id 联动误伤）`,
-        detail: "同 id 条目在两域中都会被当成同一条处理：勾选完成一条，另一条也显示完成。"
+        detail: "同 id 条目在两条读取链中都会被当成同一条处理：勾选完成一条，另一条也显示完成。"
       });
     }
     if (stats.missingTitle > 0) {
       issues.push({
         severity: "warn",
         title: `${stats.missingTitle} 条缺少标题（列表显示为空行）`,
-        detail: "标题是两域共用的展示字段；缺失多为外部写入导致。"
+        detail: "标题是两条读取链共用的展示字段；缺失多为外部写入导致。"
       });
     }
     if (stats.missingId > 0) {
       issues.push({
         severity: "info",
         title: `${stats.missingId} 条缺少 id（下次读取时自动补）`,
-        detail: "两域加载时会自动生成 id 写回，无需处理。"
+        detail: "加载链会自动生成 id 写回，无需处理。"
       });
     }
     const bad = stats.nonObject + stats.duplicateId + stats.missingTitle;
-    const summary = issues.some((i) => i.severity === "error") ? "发现结构异常" : bad > 0 ? `条数 ${stats.total} · 完成 ${stats.memoView.done}，两域口径一致，另有 ${bad} 处小问题` : `条数 ${stats.total} · 完成 ${stats.memoView.done}，两域口径一致`;
+    const summary = issues.some((i) => i.severity === "error") ? "发现结构异常" : bad > 0 ? `条数 ${stats.total} · 完成 ${stats.storeView.done}，双链口径一致，另有 ${bad} 处小问题` : `条数 ${stats.total} · 完成 ${stats.storeView.done}，双链口径一致`;
     return { summary, issues };
   }
   async function checkSameSourceConsistency(app, opts = {}) {
@@ -16389,15 +16408,15 @@ ${countsToText(s.missing)}
     const file = ((_b2 = jsonScanTargets(app).find((t) => t.file.endsWith("/memo.json"))) == null ? void 0 : _b2.file) || "CONFIG/STORAGE/memo.json";
     const parsed = await readRawJson(app, file);
     if (parsed === null) {
-      return { id: "consistency", name: "同源一致性（备忘录 / 待办）", summary: "memo.json 不存在（两域都还没写过数据），跳过", issues: [], scanned: 0 };
+      return { id: "consistency", name: "同源一致性（备忘录）", summary: "memo.json 不存在（还没写过数据），跳过", issues: [], scanned: 0 };
     }
     if (!parsed.ok) {
-      return { id: "consistency", name: "同源一致性（备忘录 / 待办）", summary: "memo.json 无法解析（见「数据文件可解析」项），跳过", issues: [], scanned: 0 };
+      return { id: "consistency", name: "同源一致性（备忘录）", summary: "memo.json 无法解析（见「数据文件可解析」项），跳过", issues: [], scanned: 0 };
     }
-    await ((_c = opts.tick) == null ? void 0 : _c.call(opts, "备忘录 / 待办"));
+    await ((_c = opts.tick) == null ? void 0 : _c.call(opts, "备忘录"));
     const stats = analyzeMemoConsistency(parsed.data);
     const { summary, issues } = consistencyIssuesOf(stats);
-    return { id: "consistency", name: "同源一致性（备忘录 / 待办）", summary, issues, scanned: stats.total };
+    return { id: "consistency", name: "同源一致性（备忘录）", summary, issues, scanned: stats.total };
   }
   var init_checks_consistency = __esm({
     "src/checkup/checks-consistency.ts"() {
@@ -17352,61 +17371,20 @@ ${countsToText(s.missing)}
     }
   });
 
-  // src/todo/due.ts
+  // src/memo/due.ts
   var import_moment4;
   var init_due = __esm({
-    "src/todo/due.ts"() {
+    "src/memo/due.ts"() {
       import_moment4 = __toESM(require_moment());
     }
   });
 
-  // src/todo/state.ts
-  var M3;
-  var init_state3 = __esm({
-    "src/todo/state.ts"() {
-      M3 = {
-        appRef: null,
-        overlay: null,
-        items: [],
-        activeScene: "全部",
-        sortMode: "priority",
-        search: "",
-        showDone: false,
-        showEarlierDone: false,
-        pinnedNewId: null,
-        completeTimers: /* @__PURE__ */ new Map(),
-        renderFn: null
-      };
-    }
-  });
-
-  // src/todo/ui.ts
-  function applyTodoSkin(skin) {
-    if (!M3.overlay) return;
-    const panel2 = M3.overlay.querySelector(".bz-todo-panel");
-    if (!panel2) return;
-    panel2.classList.remove("bz-todo-skin-paper", "bz-todo-skin-editorial");
-    const v = skin === "editorial" ? "editorial" : "paper";
-    panel2.classList.add(`bz-todo-skin-${v}`);
-  }
-  var import_moment5, ICON2, SCENE_PSEUDO_ICONS;
-  var init_ui4 = __esm({
-    "src/todo/ui.ts"() {
-      import_moment5 = __toESM(require_moment());
-      init_notice();
-      init_esc_manager();
-      init_dom();
-      init_mobile();
-      init_settings_provider();
-      init_ui();
-      init_flow_dialog();
-      init_domain_bus();
-      init_item_actions();
-      init_utils();
-      init_data4();
-      init_due();
-      init_state3();
-      ICON2 = {
+  // src/memo/render.ts
+  var MEMO_ICONS, SCENE_PSEUDO_ICONS;
+  var init_render5 = __esm({
+    "src/memo/render.ts"() {
+      init_str();
+      MEMO_ICONS = {
         brand: "list-checks",
         close: "x",
         search: "search",
@@ -17429,41 +17407,91 @@ ${countsToText(s.missing)}
         sceneToday: "sun"
       };
       SCENE_PSEUDO_ICONS = {
-        全部: { icon: ICON2.sceneAll },
-        今日: { icon: ICON2.sceneToday },
-        重要: { icon: ICON2.star, cls: "bz-ic--warning" }
+        全部: { icon: MEMO_ICONS.sceneAll },
+        今日: { icon: MEMO_ICONS.sceneToday },
+        重要: { icon: MEMO_ICONS.star, cls: "bz-ic--warning" }
       };
     }
   });
 
-  // src/todo/settings.ts
+  // src/memo/state.ts
+  var M3;
+  var init_state3 = __esm({
+    "src/memo/state.ts"() {
+      M3 = {
+        appRef: null,
+        overlay: null,
+        items: [],
+        activeScene: "全部",
+        sortMode: "priority",
+        search: "",
+        showDone: false,
+        showEarlierDone: false,
+        pinnedNewId: null,
+        completeTimers: /* @__PURE__ */ new Map(),
+        renderFn: null
+      };
+    }
+  });
+
+  // src/memo/ui.ts
+  function applyMemoSkin(skin) {
+    if (!M3.overlay) return;
+    const panel2 = M3.overlay.querySelector(".bz-memo-panel");
+    if (!panel2) return;
+    panel2.classList.remove("bz-memo-skin-paper", "bz-memo-skin-editorial");
+    const v = skin === "editorial" ? "editorial" : "paper";
+    panel2.classList.add(`bz-memo-skin-${v}`);
+  }
+  var import_moment5;
+  var init_ui4 = __esm({
+    "src/memo/ui.ts"() {
+      import_moment5 = __toESM(require_moment());
+      init_notice();
+      init_esc_manager();
+      init_dom();
+      init_mobile();
+      init_settings_provider();
+      init_ui();
+      init_flow_dialog();
+      init_domain_bus();
+      init_item_actions();
+      init_utils();
+      init_data4();
+      init_due();
+      init_render5();
+      init_state3();
+    }
+  });
+
+  // src/memo/settings.ts
   var settings_exports2 = {};
   __export(settings_exports2, {
-    todoSettingsSchema: () => todoSettingsSchema
+    memoSettingsSchema: () => memoSettingsSchema
   });
-  function todoReloadScenes() {
-    TodoData.init(getSettings());
+  function memoReloadScenes() {
+    MemoData.init(getSettings());
   }
-  function todoSettingsSchema() {
+  function memoSettingsSchema() {
     return {
       groups: [
         {
-          // 外观组（标准化：与其他域同范式置顶——布局行占位单卡，主题=todoSkin 两肤；
+          // 外观组（标准化：与其他域同范式置顶——布局行占位单卡，主题=memoSkin 两肤；
           // 布局维度待皮肤设计时接入）
           icon: "palette",
           name: "外观",
           rows: [
-            { type: "choiceCards", name: "面板布局", binding: { key: "todoLayout" }, options: [{ value: "default", label: "清单", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板布局", binding: { key: "memoLayout" }, options: [{ value: "default", label: "清单", prevClass: "bz-sp-prev-panel" }] },
             {
               type: "choiceCards",
               name: "面板主题",
-              binding: { key: "todoSkin" },
-              layoutKey: "todoLayout",
+              binding: { key: "memoSkin" },
+              layoutKey: "memoLayout",
               options: [
                 { value: "paper", label: "纸感手账", layout: "default", prevClass: "bz-skinprev-paper" },
                 { value: "editorial", label: "编辑部", layout: "default", prevClass: "bz-skinprev-editorial" }
               ],
-              onChange: (v) => applyTodoSkin(v)
+              onChange: (v) => applyMemoSkin(v)
             }
           ]
         },
@@ -17507,7 +17535,7 @@ ${countsToText(s.missing)}
             {
               type: "select",
               name: "新条目默认优先级",
-              desc: "新建待办时默认选中的优先级",
+              desc: "新建备忘录时默认选中的优先级",
               binding: { key: "memoDefaultPriority" },
               options: [
                 { value: "minor", label: "次要" },
@@ -17517,11 +17545,11 @@ ${countsToText(s.missing)}
             {
               type: "select",
               name: "新条目默认场景",
-              desc: "新建待办时默认选用的场景",
+              desc: "新建备忘录时默认选用的场景",
               binding: { key: "memoDefaultScene" },
               options: [
                 { value: "", label: "第一个场景" },
-                ...TodoData.getScenarios().map((sc) => ({ value: sc, label: sc }))
+                ...MemoData.getScenarios().map((sc) => ({ value: sc, label: sc }))
               ]
             }
           ]
@@ -17536,7 +17564,7 @@ ${countsToText(s.missing)}
               desc: "场景名用逗号分隔，留空使用默认场景（与备忘录共用）",
               placeholder: "剪藏,工作,学习,生活,代码,公开课",
               binding: { key: "memoScenarios" },
-              onCommit: todoReloadScenes
+              onCommit: memoReloadScenes
             }
           ]
         },
@@ -17547,13 +17575,13 @@ ${countsToText(s.missing)}
             {
               type: "toggle",
               name: "启动时自动弹出",
-              desc: "启动时若有重要或到期未完成的待办，自动打开待办面板提醒",
+              desc: "启动时若有重要或到期未完成的备忘录，自动打开备忘录面板提醒",
               binding: { key: "autoPopupOnStart" }
             },
             {
               type: "toggle",
               name: "打开笔记自动提醒",
-              desc: "打开笔记时若笔记有重要或到期的未完成待办，自动打开待办面板并定位到关联待办",
+              desc: "打开笔记时若笔记有重要或到期的未完成备忘录，自动打开备忘录面板并定位到关联备忘录",
               binding: {
                 get: () => getSettings().openNoteReminder !== false,
                 set: (v) => {
@@ -17568,7 +17596,7 @@ ${countsToText(s.missing)}
     };
   }
   var init_settings2 = __esm({
-    "src/todo/settings.ts"() {
+    "src/memo/settings.ts"() {
       init_settings_provider();
       init_data4();
       init_ui4();
@@ -18286,7 +18314,7 @@ ${countsToText(s.missing)}
     return `<div class="bz-bel-detail">
     <div class="bz-bel-detail-head">
       <div class="bz-bel-detail-title">${esc(it.name)}</div>
-      <button class="bz-icon-btn" data-bd-close title="关闭">${iconSpan(ICON3.close)}</button>
+      <button class="bz-icon-btn" data-bd-close title="关闭">${iconSpan(ICON2.close)}</button>
     </div>
     <div class="bz-bel-detail-idrow">
       <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
@@ -18307,7 +18335,7 @@ ${countsToText(s.missing)}
     <div class="bz-btn-row bz-bel-detail-btns">
       <div class="bz-bel-form-spacer"></div>
       <button type="button" class="bz-btn bz-btn--ghost" data-bd-edit>${iconSpan("pencil", "bz-ic--sm")} 编辑</button>
-      <button type="button" class="bz-btn bz-btn--primary bz-bel-delbtn" data-bd-del>${iconSpan(ICON3.del, "bz-ic--sm")} 删除</button>
+      <button type="button" class="bz-btn bz-btn--primary bz-bel-delbtn" data-bd-del>${iconSpan(ICON2.del, "bz-ic--sm")} 删除</button>
     </div>
   </div>`;
   }
@@ -18386,14 +18414,14 @@ ${countsToText(s.missing)}
     specs.push({ icon: "trash-2", label: "删除", act: "del", danger: true });
     return specs;
   }
-  var ICON3, STATUS, STATUS_ORDER, STATUS_LABELS, SORT_OPTS;
+  var ICON2, STATUS, STATUS_ORDER, STATUS_LABELS, SORT_OPTS;
   var init_shared3 = __esm({
     "src/belongings/shared.ts"() {
       init_str();
       init_emoji_icon_map();
       init_emoji_icon_map();
       init_str();
-      ICON3 = {
+      ICON2 = {
         add: "plus",
         search: "search",
         close: "x",
@@ -18438,26 +18466,26 @@ ${countsToText(s.missing)}
           <div class="bz-bel-mobhead-t">归物本</div>
           <div class="bz-bel-mobhead-sub" data-bel-mobstats></div>
         </div>
-        <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON3.close)}</button>
+        <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON2.close)}</button>
       </div>
     </div>
     <div class="bz-bel-chips" data-bel-chips></div>
     <div class="bz-toolrow bz-bel-toolrow">
-      <div class="bz-search">${iconSpan(ICON3.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类…"></div>
+      <div class="bz-search">${iconSpan(ICON2.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类…"></div>
       <div class="bz-bel-yearsel">
-        <div class="bz-bel-select" data-bel-year role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">全部年份</span>${iconSpan(ICON3.chevD, "bz-bel-select-chev")}</div>
+        <div class="bz-bel-select" data-bel-year role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">全部年份</span>${iconSpan(ICON2.chevD, "bz-bel-select-chev")}</div>
         <div class="bz-bel-dropmenu" data-bel-yearmenu role="listbox"></div>
       </div>
       <div class="bz-bel-yearsel bz-bel-mobsortsel-wrap">
-        <div class="bz-bel-select" data-bel-mobsortsel role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">最近购入</span>${iconSpan(ICON3.chevD, "bz-bel-select-chev")}</div>
+        <div class="bz-bel-select" data-bel-mobsortsel role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">最近购入</span>${iconSpan(ICON2.chevD, "bz-bel-select-chev")}</div>
         <div class="bz-bel-dropmenu" data-bel-mobsortmenu role="listbox"></div>
       </div>
       <div class="bz-bel-sort" data-bel-sort></div>
-      <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${iconSpan(ICON3.add, "bz-ic--sm")} 记一笔</button>
+      <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${iconSpan(ICON2.add, "bz-ic--sm")} 记一笔</button>
     </div>
     <div class="bz-mobstrip" data-bel-mobstatus></div>
     <div class="bz-bel-content" data-bel-content></div>
-    <button class="bz-btn bz-btn--md bz-bel-mobadd" data-bel-add>${iconSpan(ICON3.add, "bz-ic--sm")} 记一笔</button>
+    <button class="bz-btn bz-btn--md bz-bel-mobadd" data-bel-add>${iconSpan(ICON2.add, "bz-ic--sm")} 记一笔</button>
   </div>
 </div>`;
   }
@@ -18504,7 +18532,7 @@ ${countsToText(s.missing)}
     return `投入 ${moneyShort(totalAssets(items))} · 日均 ${avgDailyCost(items).toFixed(2)}`;
   }
   function emptyHtml(noMatch) {
-    return `<div class="bz-empty">${iconSpan(ICON3.empty, "bz-empty-ic")}<div class="bz-empty-title">${noMatch ? "没有符合条件的物品" : "这里还没有物品"}</div><div class="bz-empty-desc">${noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"}</div></div>`;
+    return `<div class="bz-empty">${iconSpan(ICON2.empty, "bz-empty-ic")}<div class="bz-empty-title">${noMatch ? "没有符合条件的物品" : "这里还没有物品"}</div><div class="bz-empty-desc">${noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"}</div></div>`;
   }
   function cellHtml(it, idx) {
     var _a2;
@@ -18575,7 +18603,7 @@ ${countsToText(s.missing)}
     }
     hooks.mountIcons(content);
   }
-  var init_render5 = __esm({
+  var init_render6 = __esm({
     "src/belongings/layouts/poster/render.ts"() {
       init_str();
       init_shared3();
@@ -18583,10 +18611,10 @@ ${countsToText(s.missing)}
   });
 
   // src/belongings/render.ts
-  var init_render6 = __esm({
+  var init_render7 = __esm({
     "src/belongings/render.ts"() {
       init_shared3();
-      init_render5();
+      init_render6();
     }
   });
 
@@ -18787,7 +18815,7 @@ ${countsToText(s.missing)}
     return {
       groups: [
         {
-          // 外观组与待办同构（上布局行下主题行）；占位单卡（用户拍板 C）：当前仅 P20 大字报 × 暖白，
+          // 外观组与备忘录同构（上布局行下主题行）；占位单卡（用户拍板 C）：当前仅 P20 大字报 × 暖白，
           // 布局/主题扩展待将来开模——键与联动契约已按可扩展形态立好
           icon: "palette",
           name: "外观",
@@ -19523,7 +19551,7 @@ ${countsToText(s.missing)}
       init_domain_bus();
       init_belongings_source();
       init_data5();
-      init_render6();
+      init_render7();
       init_ai2();
       THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
       SEARCH_DEBOUNCE_MS = 180;
@@ -21094,7 +21122,7 @@ ${bodyText.substring(0, 6e3)}`;
   `;
   }
   var ICO;
-  var init_render7 = __esm({
+  var init_render8 = __esm({
     "src/clipbook/render.ts"() {
       init_str();
       ICO = {
@@ -22654,19 +22682,28 @@ ${sample}`,
           popup.className = "bz-kb-window kb";
           if (isMobileEnv()) popup.classList.add("bz-panel-mtop");
           popup.style.display = "none";
-          popup.innerHTML = `
-      <div class="bz-kb-head">
-        <div class="bz-kb-parts">
+          const partBtns = `
           <button class="bz-kb-part is-on" data-kb-act="part" data-part="z1">部壹 · 文献</button>
           <button class="bz-kb-part" data-kb-act="part" data-part="z2">部贰 · 卡片</button>
-          <button class="bz-kb-part" data-kb-act="part" data-part="z3">部叁 · 主题</button>
+          <button class="bz-kb-part" data-kb-act="part" data-part="z3">部叁 · 主题</button>`;
+          popup.innerHTML = isMobileEnv() ? `
+      <div class="bz-kb-head">
+        <div class="bz-kb-brand">
+          <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
+          <div class="bz-kb-title">知 识 盒</div>
+        </div>
+        <button class="bz-kb-mclose" data-kb-act="kb-close" title="关闭知识盒">✕</button>
+      </div>
+      <div class="bz-kb-parts">${partBtns}
+      </div>
+      <div class="bz-kb-sc" id="kb-sc"></div>` : `
+      <div class="bz-kb-head">
+        <div class="bz-kb-parts">${partBtns}
         </div>
         <div class="bz-kb-brand">
           <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
           <div class="bz-kb-title">知 识 盒</div>
-          <div class="bz-kb-phon">[ zhī shí hé ] · 检索归第二大脑 · 知识盒只整理关联</div>
         </div>
-        ${isMobileEnv() ? '<button class="bz-kb-mclose" data-kb-act="kb-close" title="关闭知识盒">✕</button>' : ""}
       </div>
       <div class="bz-kb-sc" id="kb-sc"></div>`;
           document.body.appendChild(mask);
@@ -22692,13 +22729,15 @@ ${sample}`,
           else if (act === "lit-peek") {
             const p = t.getAttribute("data-path") || "";
             const n = this.allNotes.find((x) => x.path === p);
-            if (n) void this.openLitPreview(n);
+            if (n) void this.openPreview(n);
+          } else if (act === "card-peek") {
+            const p = t.getAttribute("data-path") || "";
+            const c = this.allCards.find((x) => x.path === p);
+            if (c) void this.openPreview(c, "card");
           } else if (act === "topic-open") {
             const p = t.getAttribute("data-path") || "";
-            const n = this.allTopics.find((x) => x.path === p);
-            if (n) void this.openTopicNote(n);
-          } else if (act === "topics-back") {
-            this.renderTopics();
+            const tp = this.allTopics.find((x) => x.path === p);
+            if (tp) void this.openPreview({ file: tp.file, path: tp.path, title: tp.title, domain: tp.where }, "topic");
           } else if (act === "kb-close") this.hideMain();
         }
         syncPartButtons() {
@@ -22802,17 +22841,15 @@ ${sample}`,
           }).join("");
           this.contentEl.innerHTML = `
       <div class="bz-kb-pd">
-        <div class="bz-kb-sec">录 入 · 素 材 层 进 货 口（两 种 来 源，全 交 给 AI）</div>
         <div class="bz-kb-entryrow">
-          <button class="bz-kb-entrybtn" data-kb-act="term-entry"><b>文字录入 · 术语</b><span>想到一个概念，AI 当场生成术语卡预览，确认后写入文献盒</span></button>
-          <button class="bz-kb-entrybtn" data-kb-act="video-entry"><b>视频录入 · 任务</b><span>B 站链接丢进来：下载、转写、AI 生成文献笔记，全自动</span></button>
+          <button class="bz-kb-entrybtn" data-kb-act="term-entry"><b>文字录入 · 术语</b><span>想到一个概念，当场落成一张术语卡</span></button>
+          <button class="bz-kb-entrybtn" data-kb-act="video-entry"><b>视频录入 · 任务</b><span>丢进来一个 B 站链接，文献笔记自动长出来</span></button>
         </div>
-        <div class="bz-kb-sec" style="margin-top:20px">文 献 · 等 被 主 题 笔 记 引 用 、 被 提 炼</div>
         ${rows || '<div class="bz-kb-empty">「文献目录」还没有文献笔记——从上面的两种录入开始。</div>'}
       </div>`;
         }
-        /** 部壹文献预览弹层：正文真 Markdown 渲染（视频 ![[mp4]] 内嵌可播）+ related 关联 + 可点来源（只读；关闭走 ✕/ESC） */
-        async openLitPreview(n) {
+        /** 三部共用预览弹层（文献/卡片/主题同一样式）：正文真 Markdown 渲染（视频 ![[mp4]] 内嵌可播）+ 关联 + 可点来源（只读；关闭走 ✕/ESC） */
+        async openPreview(n, kind = "lit") {
           var _a2;
           const app = getApp();
           let raw = "";
@@ -22825,13 +22862,14 @@ ${sample}`,
           const parasHtml = body.split(/\r?\n\r?\n+/).map((b) => b.trim()).filter(Boolean).map((b) => `<p>${esc2(b)}</p>`).join("") || "<p>（无正文）</p>";
           const rels = await this.noteRels(n);
           const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc2(n.url)}" href="#">${esc2(n.url)}</a></div>` : n.source && !n.source.startsWith("[[") ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc2(n.source)}" href="#">${esc2(n.sourceTitle || n.source)}</a></div>` : "";
-          this.openSheet(this.sheetWrap(`文献预览 · ${n.type === "video" ? "影像" : "词条"}`, `
+          const head = kind === "card" ? { title: "卡片预览 · 卡片盒", badge: "卡 片", hot: false } : kind === "topic" ? { title: "主题预览 · 主题笔记", badge: "主 题", hot: false } : { title: `文献预览 · ${n.type === "video" ? "影像" : "词条"}`, badge: n.type === "video" ? "影 像" : "词 条", hot: n.type === "video" };
+          this.openSheet(this.sheetWrap(head.title, `
       <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc2(n.title)}</span>
-        <span class="bz-kb-pos ${n.type === "video" ? "hot" : ""}">${n.type === "video" ? "影 像" : "词 条"}</span>
+        <span class="bz-kb-pos ${head.hot ? "hot" : ""}">${head.badge}</span>
         <span class="bz-kb-dom">${esc2(n.domain || "未分类")}</span></div>
       <div class="bz-kb-tail"><span class="bz-kb-meta">${esc2(n.date || "")}</span></div>
       <div class="bz-kb-paras" id="bz-kb-preview-body">${parasHtml}</div>
-      ${rels.length ? `<div class="bz-kb-sec">关 联（related，Obsidian 双链）</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc2(r)}</span>`).join("")}</div>` : ""}
+      ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc2(r)}</span>`).join("")}</div>` : ""}
       ${srcHtml}`));
           this._previewNote = n;
           const bodyEl2 = this.popup ? q(this.popup, "#bz-kb-preview-body") : null;
@@ -22971,13 +23009,12 @@ ${sample}`,
           if (!this.contentEl) return;
           this.cardsShown = Math.max(this.cardsShown, 80);
           const shown = this.allCards.slice(0, this.cardsShown);
-          const rows = shown.map((c) => `<div class="bz-kb-lexrow" style="cursor:default">
+          const rows = shown.map((c) => `<div class="bz-kb-lexrow" data-kb-act="card-peek" data-path="${esc2(c.path)}">
       <div class="bz-kb-hw"><span class="bz-kb-w">${esc2(c.title)}</span>${this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ""}<span class="bz-kb-dom">${esc2(c.domain)}</span></div>
       <div class="bz-kb-tail"><span>${c.review ? "复习中 · 到期由闹钟安排" : "未入复习"}</span><span style="margin-left:auto">连 1 张旧卡</span></div>
     </div>`).join("");
           const rest = this.allCards.length - shown.length;
           this.contentEl.innerHTML = `<div class="bz-kb-pd">
-      <div class="bz-kb-sec">卡 片 · 提 炼 层（只 许 你 写 · ${this.allCards.length} 张）</div>
       ${rows || '<div class="bz-kb-empty">卡片目录还没有卡片——在部壹文献预览里「提炼成卡」。</div>'}
       ${rest > 0 ? `<div class="bz-kb-empty" data-kb-act="cards-more">↓ 还有 ${rest} 张，滚动或点此加载</div>` : ""}
     </div>`;
@@ -23017,51 +23054,18 @@ ${sample}`,
             const rel = formatRelativeTime(String(t.created || ""));
             return `<div class="bz-kb-lexrow" data-kb-act="topic-open" data-path="${esc2(t.path)}">
       <div class="bz-kb-hw"><span class="bz-kb-w">${esc2(t.title)}</span><span class="bz-kb-dom">${esc2(t.where)}</span></div>
-      <div class="bz-kb-tail"><span class="bz-kb-meta">${rel === "无效日期" ? "" : esc2(rel)}</span><span style="margin-left:auto">一篇普通笔记 →</span></div>
+      <div class="bz-kb-tail"><span class="bz-kb-meta">${rel === "无效日期" ? "" : esc2(rel)}</span></div>
     </div>`;
           }).join("");
           this.contentEl.innerHTML = `<div class="bz-kb-pd">
-      <div class="bz-kb-sec">主 题 笔 记 · 展 示（真 实 存 量）</div>
       ${rows || '<div class="bz-kb-empty">主题目录还没有笔记。</div>'}
-      <div class="bz-kb-note" style="font-size:11px;margin-top:14px">主题笔记就是普通笔记，你自己写自己组织；写作与检索发生在 Obsidian + 第二大脑（灵感参考 / AI 对话）。主题与其他盒的关联机制方向探索中——当前版本仅做展示。</div>
     </div>`;
-        }
-        /** 主题笔记只读渲染（MarkdownRenderer；mock/失败回退纯文本） */
-        async openTopicNote(t) {
-          var _a2;
-          const app = getApp();
-          let md = "";
-          try {
-            md = await app.vault.read(t.file);
-          } catch (e) {
-            md = "";
-          }
-          if (!this.contentEl) return;
-          this.contentEl.innerHTML = `<div class="bz-kb-pd">
-      <button class="bz-kb-back" data-kb-act="topics-back">← 部叁 · 主题笔记</button>
-      <div class="bz-kb-ntitle">${esc2(t.title)}</div>
-      <div class="bz-kb-nmeta"><span class="bz-kb-dom">${esc2(t.where)}</span><span class="bz-kb-meta">${esc2(formatRelativeTime(String(t.created || "")) === "无效日期" ? "" : formatRelativeTime(String(t.created || "")))}</span></div>
-      <div class="bz-kb-noteview" id="kb-noteview"></div>
-    </div>`;
-          const el = q(this.contentEl, "#kb-noteview");
-          if (!el) return;
-          try {
-            const MR = MarkdownRenderer;
-            if (MR && typeof MR.render === "function") {
-              await MR.render(md, this.app, el, t.path);
-              if (!((_a2 = el.textContent) == null ? void 0 : _a2.trim()) || el.textContent.includes("[object Object]")) el.textContent = md;
-            } else {
-              el.textContent = md;
-            }
-          } catch (e) {
-            el.textContent = md;
-          }
         }
         async ensureCards() {
           const dir = cardboxDirOf(tryGetSettings());
           if (!this.loadedCardDir || this.loadedCardDir !== dir || this.allCards.length === 0) await this.loadCards(dir);
         }
-        /** 读文献笔记 frontmatter related 展示名列表（预览「关联」区；行扫描实现） */
+        /** 读笔记 frontmatter related 展示名列表（预览「关联」区；行扫描实现） */
         async noteRels(n) {
           var _a2;
           try {
@@ -25546,7 +25550,7 @@ ${sample}`,
       init_news_source_settings();
       init_md();
       init_store();
-      init_render7();
+      init_render8();
       init_state4();
       init_loader();
       init_flow();
@@ -25659,7 +25663,7 @@ ${sample}`,
     const rest = base.filter((i) => !i.pinned);
     return [...pinned, ...rest];
   }
-  function cardHtml(it, idx) {
+  function cardHtml2(it, idx) {
     const pinnedCls = it.pinned ? " bz-fav-pinc" : "";
     const archCls = it.archived ? " bz-fav-arch" : "";
     const hue = hueOf((it.tags || [])[0] || "");
@@ -25682,15 +25686,15 @@ ${sample}`,
   }
   function actionSpecs2(it) {
     const acts = [];
-    if ((it.url || "").trim()) acts.push({ icon: ICON4.open, label: "打开", act: "open" });
+    if ((it.url || "").trim()) acts.push({ icon: ICON3.open, label: "打开", act: "open" });
     acts.push({
-      icon: it.pinned ? ICON4.pinOff : ICON4.pin,
+      icon: it.pinned ? ICON3.pinOff : ICON3.pin,
       label: it.pinned ? "取消置顶" : "置顶",
       act: "pin"
     });
-    acts.push({ icon: ICON4.edit, label: "编辑", act: "edit" });
-    acts.push(it.archived ? { icon: ICON4.unarchive, label: "取消归档", act: "unarchive" } : { icon: ICON4.archive, label: "归档", act: "archive" });
-    acts.push({ icon: ICON4.del, label: "删除", act: "del", danger: true });
+    acts.push({ icon: ICON3.edit, label: "编辑", act: "edit" });
+    acts.push(it.archived ? { icon: ICON3.unarchive, label: "取消归档", act: "unarchive" } : { icon: ICON3.archive, label: "归档", act: "archive" });
+    acts.push({ icon: ICON3.del, label: "删除", act: "del", danger: true });
     return acts;
   }
   function ctxMenuHtml(acts) {
@@ -25723,18 +25727,18 @@ ${sample}`,
     <div class="bz-fav-fld bz-fav-inline"><span class="bz-fav-sw${it && it.pinned ? " bz-fav-on" : ""}" id="fz-pin"></span><span class="bz-fav-fld-desc">置顶后恒排最前</span></div>
     <div class="bz-fav-err" id="fz-err"></div>
     <div class="bz-fav-btns">
-      <button type="button" id="fz-ai" class="bz-fav-ai-btn">${iconSpan(ICON4.ai, "bz-ic--xs")} <span>AI 整理</span></button>
+      <button type="button" id="fz-ai" class="bz-fav-ai-btn">${iconSpan(ICON3.ai, "bz-ic--xs")} <span>AI 整理</span></button>
       <button type="button" data-fz-cancel>取消</button>
       <button type="button" id="fz-save" class="bz-fav-pri">${editing ? "更新" : "保存"}</button>
     </div>
   </div>`;
   }
-  var ICON4;
+  var ICON3;
   var init_shared4 = __esm({
     "src/favorites/shared.ts"() {
       init_str();
       init_config2();
-      ICON4 = {
+      ICON3 = {
         close: "x",
         add: "plus",
         open: "external-link",
@@ -25753,14 +25757,14 @@ ${sample}`,
   function panelHtml4(mobile2) {
     const mob = mobile2 ? " bz-fav-mob bz-panel-mtop" : "";
     return `<div class="bz-fav-panel bz-fav-scope${mob}">
-  <div class="bz-fav-head"><h1>收藏本</h1><button class="bz-fav-mob-close bz-touch-target bz-touch-target--xl" data-fav-close title="关闭">${iconSpan(ICON4.close, "bz-ic--xs")}</button></div>
+  <div class="bz-fav-head"><h1>收藏本</h1><button class="bz-fav-mob-close bz-touch-target bz-touch-target--xl" data-fav-close title="关闭">${iconSpan(ICON3.close, "bz-ic--xs")}</button></div>
   <div class="bz-fav-tags" data-fav-tags></div>
   <div class="bz-fav-board" data-fav-content></div>
 </div>`;
   }
   function chipsHtml2(items, view, mobile2) {
     const mk = (label, ic2, cnt, active2, grey = false) => `<button class="bz-fav-chip${active2 ? " bz-fav-on" : ""}${grey ? " bz-fav-chip--grey" : ""}" data-fav-tag="${esc(label)}">${ic2 ? iconSpan(ic2, "bz-ic--xs") : ""}<span>${esc(label)} ${cnt}</span></button>`;
-    const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${iconSpan(ICON4.add, "bz-ic--xs")}<span>新收藏</span></button>`;
+    const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${iconSpan(ICON3.add, "bz-ic--xs")}<span>新收藏</span></button>`;
     const chips = mk("全部", "", visibleItems(items).length, !view.archived && view.tag === null) + mk("已归档", "archive", archivedItems(items).length, view.archived, true) + TAGS.map((t) => {
       const n = tagCount(items, t.label);
       return n ? mk(t.label, t.ic, n, !view.archived && view.tag === t.label) : "";
@@ -25770,7 +25774,7 @@ ${sample}`,
   function boardHtml(items, view) {
     const list = filteredItems(items, view);
     if (!list.length) return emptyHtml2();
-    return list.map((it) => cardHtml(it, items.indexOf(it))).join("");
+    return list.map((it) => cardHtml2(it, items.indexOf(it))).join("");
   }
   function renderTagsInto(mount, items, view, hooks) {
     mount.innerHTML = chipsHtml2(items, view, hooks.mobile);
@@ -25786,7 +25790,7 @@ ${sample}`,
     const board = panel2.querySelector("[data-fav-content]");
     if (board) renderBoardInto(board, items, view, hooks);
   }
-  var init_render8 = __esm({
+  var init_render9 = __esm({
     "src/favorites/layouts/board/render.ts"() {
       init_str();
       init_config2();
@@ -25795,10 +25799,10 @@ ${sample}`,
   });
 
   // src/favorites/render.ts
-  var init_render9 = __esm({
+  var init_render10 = __esm({
     "src/favorites/render.ts"() {
       init_shared4();
-      init_render8();
+      init_render9();
     }
   });
 
@@ -26395,7 +26399,7 @@ GitHub 仓库：${ghInfo.title}
       init_domain_bus();
       init_favorites_source();
       init_config2();
-      init_render9();
+      init_render10();
       M6 = {
         overlay: null,
         items: [],
@@ -26451,7 +26455,7 @@ GitHub 仓库：${ghInfo.title}
           icon: "folder-open",
           name: "目录",
           rows: [
-            { type: "path", mode: "single", name: "影视文件夹", desc: "影院读取的影视文件夹（目录唯一真理，ADR-0115：日记本域亦读本键）", binding: { key: "cinemaFolderPath" } }
+            { type: "path", mode: "single", name: "影视文件夹", desc: "影院读取的影视文件夹，日记本也从这里读影视", binding: { key: "cinemaFolderPath" } }
             // 旧「每批加载数量」（cinemaPageSize）已删除：全仓无消费点（列表一次全量渲染），属死配置
           ]
         },
@@ -28283,7 +28287,7 @@ ${n.content.slice(0, 2e3)}
   function colHead(count, name) {
     return `<div class="bz-q-col-head"><span class="cnt">${count}</span><span class="name">${name}</span></div>`;
   }
-  function cardHtml2(item, ctx = {}) {
+  function cardHtml3(item, ctx = {}) {
     var _a2, _b2, _c;
     const now = (_a2 = ctx.now) != null ? _a2 : Date.now();
     const w = (_b2 = ctx.w) != null ? _b2 : DEFAULT_W;
@@ -28313,7 +28317,7 @@ ${n.content.slice(0, 2e3)}
   }
   function cardsOf(items, ctx) {
     if (!items.length) return `<div class="bz-q-hint">没有条目</div>`;
-    return items.map((it) => cardHtml2(it, ctx)).join("");
+    return items.map((it) => cardHtml3(it, ctx)).join("");
   }
   function queueViewHtml(items, ctx = {}) {
     var _a2, _b2, _c;
@@ -28503,7 +28507,7 @@ ${n.content.slice(0, 2e3)}
     </span>`;
   }
   var ESC;
-  var init_render10 = __esm({
+  var init_render11 = __esm({
     "src/review/render.ts"() {
       init_fsrs();
       init_queue();
@@ -28526,7 +28530,7 @@ ${n.content.slice(0, 2e3)}
       init_flow_dialog();
       init_ui();
       init_esc_manager();
-      init_render10();
+      init_render11();
       CORRECT_JUMP_DELAY_MS2 = 800;
       SprintSession = class {
         constructor(opts) {
@@ -29507,7 +29511,7 @@ ${n.content.slice(0, 2e3)}
       init_ui();
       init_item_actions();
       init_fsrs();
-      init_render10();
+      init_render11();
       init_queue();
       init_sprint();
       init_settings_schema2();
@@ -29986,6 +29990,7 @@ ${n.content.slice(0, 2e3)}
     }).then(async (v) => {
       if (v !== "ok") return;
       await dataManager.removeItem(file.path);
+      emitDomainEvent("review", { kind: "removed", title: file.basename });
       notifyUndo(`已移出「${file.basename}」`, () => {
         void (async () => {
           try {
@@ -30118,6 +30123,7 @@ ${n.content.slice(0, 2e3)}
       init_fsrs();
       init_queue();
       init_stats2();
+      init_domain_bus();
       REVIEW_AWAY_GRACE_MS = 12e4;
       reviewApp = {
         checkInterval: null,
@@ -30315,6 +30321,7 @@ ${n.content.slice(0, 2e3)}
             notice(`R=${rPct}%，下次复习：${days > 0 ? days + "天" : "1天"}后`, "success");
           }
           void this.maybeRunFit(getApp());
+          emitDomainEvent("review", { kind: "rated", title: item.name || filePath, rating });
         },
         /** 跳转逾期（bz-review-start/overdue 命令入口）：完整复习流程 = startRoundSprint */
         async autoJumpOverdue() {
@@ -30366,6 +30373,7 @@ ${n.content.slice(0, 2e3)}
         async startSingleSprint(item) {
           const app = getApp();
           this.ensure(app);
+          emitDomainEvent("review", { kind: "started" });
           const quiz = await this.quizWithAI();
           if (!quiz || !quiz.ai) {
             notify("做题家未初始化，改用普通复习", { type: "warning", dedupeKey: "review-quiz-ai" });
@@ -30378,6 +30386,7 @@ ${n.content.slice(0, 2e3)}
         async startRoundSprint() {
           const app = getApp();
           this.ensure(app);
+          emitDomainEvent("review", { kind: "started" });
           let items = await this.dataManager.loadItems();
           const pend = this.pendingRedoItems(items);
           if (pend.length && getSettings().forceQuizForReview) {
@@ -30646,6 +30655,7 @@ ${n.content.slice(0, 2e3)}
           if (items.some((i) => i.filePath === file.path)) throw new Error("该笔记已在复习计划中");
           await dm.addItem(file.path, file.basename);
           notice("已加入复习计划，首次复习：1分钟后", "success");
+          emitDomainEvent("review", { kind: "added", title: file.basename });
         },
         /** 文件树染色 + 阶段徽标（源码 L719-772 逐字；ticket 100 加「文件树标记」开关；
          *   ticket 48 收敛：不再全库 getMarkdownFiles + 逐路径 querySelector——
@@ -31484,7 +31494,7 @@ ${n.content.slice(0, 2e3)}
   function escapeHtml3(s) {
     return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   }
-  function panelShellHtml() {
+  function panelShellHtml2() {
     return `
   <div class="bz-sb-head">
     <div class="bz-sb-glyph">${ic("brain", 19)}</div>
@@ -31622,7 +31632,7 @@ ${n.content.slice(0, 2e3)}
     return `<div class="bz-sb-ref-empty">${escapeHtml3(text)}</div>`;
   }
   var SB_PALETTE, SB_FALLBACK, ic, CHAT_CHIPS;
-  var init_render11 = __esm({
+  var init_render12 = __esm({
     "src/secondbrain/render.ts"() {
       SB_PALETTE = ["#0f766e", "#6366f1", "#d97706", "#db2777", "#0e7490", "#7c3aed", "#b45309", "#be185d"];
       SB_FALLBACK = "#a39b8c";
@@ -32989,7 +32999,7 @@ ${n.content.slice(0, 2e3)}
       init_config3();
       init_context();
       init_ui_tools();
-      init_render11();
+      init_render12();
       init_ui();
       ReferencePanel = class {
         constructor(app, store2, existingWin) {
@@ -33376,7 +33386,7 @@ ${n.content.slice(0, 2e3)}
       init_ui_tools();
       init_ai3();
       init_store_file();
-      init_render11();
+      init_render12();
       ChatPanel = class {
         constructor(store2, app) {
           this.history = [];
@@ -33641,7 +33651,7 @@ ${userMsg}`;
       init_context();
       init_ui_tools();
       init_ai3();
-      init_render11();
+      init_render12();
       init_store_file();
       SNAP_MID = 45;
       SNAP_HIGH = 75;
@@ -35486,8 +35496,8 @@ ${text}`;
       init_whitelist();
       init_local_ip();
       init_store_file();
-      init_render11();
-      init_render11();
+      init_render12();
+      init_render12();
       SecondBrainPanel = class {
         constructor(app, store2, opts) {
           this.mask = null;
@@ -35697,7 +35707,7 @@ ${text}`;
           mask.onclick = () => this.close();
           const popup = document.createElement("div");
           popup.className = "bz-sb-panel";
-          popup.innerHTML = panelShellHtml();
+          popup.innerHTML = panelShellHtml2();
           (_a2 = popup.querySelector("#bz-sb-open-chat")) == null ? void 0 : _a2.addEventListener("click", () => {
             this.close();
             this.opts.onOpenChat();
@@ -37752,7 +37762,7 @@ ${text}`;
         ai: async () => (await Promise.resolve().then(() => (init_settings_main_schema(), settings_main_schema_exports))).aiSettingsSchema(),
         appearance: async () => (await Promise.resolve().then(() => (init_schema(), schema_exports))).appearanceSettingsSchema(),
         diary: async () => (await Promise.resolve().then(() => (init_settings(), settings_exports))).diarySettingsSchema(),
-        todo: async () => (await Promise.resolve().then(() => (init_settings2(), settings_exports2))).todoSettingsSchema(),
+        memo: async () => (await Promise.resolve().then(() => (init_settings2(), settings_exports2))).memoSettingsSchema(),
         belongings: async () => (await Promise.resolve().then(() => (init_ui5(), ui_exports3))).belongingSettingsSchema(),
         // 数据源组为声明行（外部 news.json 状态），先读盘预载再建 schema
         clipping: async () => {
@@ -37798,8 +37808,9 @@ ${text}`;
         { id: "global", name: "通用", icon: DOMAIN_ICONS.global, desc: "存储路径等跨域基础偏好", schemaLoader: schemaLoaders.general },
         { id: "appearance", name: "设置", icon: DOMAIN_ICONS.appearance, desc: "设置面板的布局与主题", schemaLoader: schemaLoaders.appearance },
         { id: "ai", name: "AI", icon: DOMAIN_ICONS.ai, desc: "AI 服务商与模型配置", schemaLoader: schemaLoaders.ai },
+        // diary = ADR-0115 回忆墙升格正名（唯一日记 UI），diary-wall 域退役
         { id: "diary", name: "日记本", icon: DOMAIN_ICONS.diary, desc: "日记目录、写日记与解析检测", schemaLoader: schemaLoaders.diary },
-        { id: "todo", name: "待办", icon: DOMAIN_ICONS.todo, desc: "待办工作台与提醒（捕获入口落点）", schemaLoader: schemaLoaders.todo },
+        { id: "memo", name: "备忘录", icon: DOMAIN_ICONS.memo, desc: "备忘录工作台与提醒（捕获入口落点）", schemaLoader: schemaLoaders.memo },
         { id: "belongings", name: "归物本", icon: DOMAIN_ICONS.belongings, desc: "物品登记与查找", schemaLoader: schemaLoaders.belongings },
         { id: "clipping", name: "剪藏本", icon: DOMAIN_ICONS.clipping, desc: "未读流与剪藏笔记", schemaLoader: schemaLoaders.clipping },
         { id: "favorites", name: "收藏本", icon: DOMAIN_ICONS.favorites, desc: "收藏条目", schemaLoader: schemaLoaders.favorites },
@@ -37819,7 +37830,7 @@ ${text}`;
       ];
       NAV_SECS = [
         { title: "基础", ids: ["global", "appearance", "ai"] },
-        { title: "记录", ids: ["diary", "todo", "belongings", "clipping", "favorites"] },
+        { title: "记录", ids: ["diary", "memo", "belongings", "clipping", "favorites"] },
         { title: "媒体与知识", ids: ["cinema", "bookshelf", "review", "secondbrain", "knowledge"] },
         { title: "工具", ids: ["pomodoro", "encrypt", "password-vault", "smartcat"] }
       ];
@@ -37849,7 +37860,7 @@ ${text}`;
           this.mobPushed = false;
         }
         /**
-         * 打开面板；domainId 可选（增强包：待办场景菜单「在设置中编辑」直达）——
+         * 打开面板；domainId 可选（增强包：备忘录场景菜单「在设置中编辑」直达）——
          * 桌面定位左栏选中域；移动端打开后直接进域设置弹窗。未知 id 忽略（回退通用）。
          */
         open(domainId) {
@@ -38950,13 +38961,7 @@ ${String(review).trim()}`;
     else diaryDataMap.set(dateStr, entries);
     return { entries, exists: true };
   }
-  async function writeDateToFile(dateStr, entries) {
-    const filePath = `${DIARY_DIRECTORY}/${dateStr}.md`;
-    if (entries.length === 0) {
-      const file2 = getApp().vault.getAbstractFileByPath(filePath);
-      if (file2) await getApp().vault.delete(file2);
-      return;
-    }
+  function serializeDateFile(entries) {
     entries.sort((a, b) => a.timeValue - b.timeValue);
     let headingCursor = 0;
     const fileLines = entries.map((entry) => {
@@ -38968,22 +38973,26 @@ ${String(review).trim()}`;
       headingCursor += lines.length;
       return lines;
     }).flat().slice(0, -1);
-    const finalContent = fileLines.join("\n");
-    const file = getApp().vault.getAbstractFileByPath(filePath);
-    try {
-      if (file) await getApp().vault.modify(file, finalContent);
-      else await getApp().vault.create(filePath, finalContent);
-    } catch (error) {
-      console.error(`重新生成文件 ${dateStr}.md 失败:`, error);
-      throw error;
-    }
+    return fileLines.join("\n");
   }
   async function withDateFile(dateStr, task) {
     const filePath = `${DIARY_DIRECTORY}/${dateStr}.md`;
     return enqueueFileTask(filePath, async () => {
       const { entries } = await syncDateFromDisk(dateStr);
       const result = await task(entries);
-      await writeDateToFile(dateStr, entries);
+      const file = getApp().vault.getAbstractFileByPath(filePath);
+      if (entries.length === 0) {
+        if (file) await getApp().vault.delete(file);
+        return result;
+      }
+      const finalContent = serializeDateFile(entries);
+      try {
+        if (file) await getApp().vault.modify(file, finalContent);
+        else await getApp().vault.create(filePath, finalContent);
+      } catch (error) {
+        console.error(`重新生成文件 ${dateStr}.md 失败:`, error);
+        throw error;
+      }
       return result;
     });
   }

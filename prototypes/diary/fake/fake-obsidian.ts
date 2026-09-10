@@ -339,6 +339,20 @@ function assetManifest(): string[] {
   return src?.ASSETS || [];
 }
 
+/** 真实 vault 媒体名判定：按扩展名识别（与 data.ts 的媒体扩展名同口径的超集） */
+const MEDIA_EXT_RE = /\.(png|jpe?g|gif|webp|avif|bmp|svg|mp4|m4v|webm|mov|ogv|mp3|m4a|aac|wav|flac|ogg|oga)$/i;
+
+/**
+ * 按需取流的服务端路由（preview-live.mjs 的 /__vault-media/<文件名>）：
+ * 快照引用的媒体全量 1.8G，入库只留子集；其余由预览服务现场从真实 vault 取，
+ * 保真且仓库不膨胀。非 http 环境（双击直开 file://）无服务端 → '' 走渐变占位。
+ */
+function vaultMediaUrl(base: string): string {
+  if (typeof location === 'undefined' || !/^https?:$/.test(location.protocol)) return '';
+  if (!MEDIA_EXT_RE.test(base)) return '';
+  return '/__vault-media/' + encodeURIComponent(base);
+}
+
 declare global {
   interface Window {
     DIARY?: { FILES?: Array<{ path: string; content: string; ctime: number }>; ASSETS?: string[] };
@@ -422,10 +436,13 @@ export class FakeVault {
     return undefined as never;
   }
 
-  /** 媒体资源 URL：清单命中 → assets/ 相对路径；未命中 → ''（墙渐变占位语义） */
+  /** 媒体资源 URL：入库子集命中 → assets/ 相对路径；否则按需走预览服务的真实 vault 取流；
+   *  file://（双击直开、无服务端）下两者都不可用 → ''（墙渐变占位语义）。 */
   getResourcePath(file: { path: string }): string {
     const base = file.path.split('/').pop() || '';
-    return assetManifest().includes(base) ? './assets/' + encodeURIComponent(base) : '';
+    if (!base) return '';
+    if (assetManifest().includes(base)) return './assets/' + encodeURIComponent(base);
+    return vaultMediaUrl(base);
   }
 
   /** adapter 直读目录面（data.ts collectMdPaths 递归枚举 md 的数据源）。
@@ -487,10 +504,13 @@ export class FakeMetadataCache {
     return fm ? { frontmatter: fm } : null;
   }
 
-  /** 媒体链接解析（data.ts mediaSrc 优先路）：引用 basename 在 assets 清单 → TFile 形状 */
+  /** 媒体链接解析（data.ts mediaSrc 优先路）：入库清单命中、或经预览服务可取真实 vault 媒体
+   *  （http 环境 + 媒体扩展名）→ 返回 TFile 形状；否则 null → mediaSrc 回退 '' 走渐变占位。 */
   getFirstLinkpathDest(ref: string, _sourcePath: string): { path: string } | null {
     const base = (ref || '').split('/').pop() || '';
-    return assetManifest().includes(base) ? { path: base } : null;
+    if (!base) return null;
+    if (assetManifest().includes(base)) return { path: base };
+    return vaultMediaUrl(base) ? { path: base } : null;
   }
 
   private readThrough(path: string): string {
