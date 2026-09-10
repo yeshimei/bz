@@ -8,6 +8,8 @@
  * 特殊文件解析所需的 getFileFrontmatter 以 app 参数注入（不 import ../diary/app，自包含）。
  * moment 来自 'obsidian'（测试 alias 已替换为 moment）。
  */
+/** 标题行正则（`# <emoji+> HH:mm`；smartcat/diary-source 同源引用，防双侧漂移） */
+export const HEADING_REGEX = /^#\s*((?:\S+)+)\s+(\d{2}:\d{2})/u;
 import { moment } from 'obsidian';
 import { emojiToTagMap, getTagEmoji } from './config';
 import type { DiaryEntry } from './types';
@@ -29,7 +31,7 @@ export function parseFile(content: string, dateStr: string, onUnparsed?: (unpars
   let contentLines: string[] = [];
   let unparsedLines = 0;
 
-  const headingRegex = /^#\s*((?:\S+)+)\s+(\d{2}:\d{2})/u;
+  const headingRegex = HEADING_REGEX;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];

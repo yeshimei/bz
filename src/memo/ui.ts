@@ -31,7 +31,7 @@
 import type { App, EventRef } from 'obsidian';
 import moment from 'moment';
 import { notice, notify, notifyUndo, notifySaveError } from '../core/notice';
-import { escManager } from '../core/esc-manager';
+import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
 import { isMobileEnv } from '../core/mobile';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
@@ -502,14 +502,8 @@ export function closeMemoPanel(): void {
   M.completeTimers.clear();
 }
 
-let mainEscRegistered = false;
 export function registerEscapeHandler(): void {
-  if (mainEscRegistered) return;
-  mainEscRegistered = true;
-  escManager.register('bz-memo', {
-    isVisible: () => !!M.overlay,
-    close: () => closeMemoPanel(),
-  });
+  registerPanelEsc('bz-memo', () => !!M.overlay, () => closeMemoPanel());
 }
 
 // ---------- 面板尺寸记忆（ADR-0084/0094：uiResizable persist 托管，见 openMemoPanel） ----------

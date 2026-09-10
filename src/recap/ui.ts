@@ -13,7 +13,7 @@
  *     AI 未配置/失败 → 降级数字模板，弹通知给「写入日记/复制」动作；同日已写过按钮变「重新生成」。
  */
 import type { App } from 'obsidian';
-import { escManager } from '../core/esc-manager';
+import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { uiBtn, uiBtnRow, uiEmpty, uiStat, mountIcons } from '../core/ui';
 import { notify, notifyActionError, notifySaveError } from '../core/notice';
 import { topifyZ } from '../core/dom';
@@ -317,22 +317,11 @@ export function closeOverlay(): void {
   H.currentOverlay = null;
 }
 
-let escRegistered = false;
-let escHandle: { unregister: () => void } | null = null;
-
 export function registerEscapeHandler(): void {
-  if (escRegistered) return;
-  escRegistered = true;
-  escHandle = escManager.register('bz-recap', {
-    isVisible: () => !!H.currentOverlay,
-    close: closeOverlay,
-  });
+  registerPanelEsc('bz-recap', () => !!H.currentOverlay, closeOverlay);
 }
 
 /** 注销 ESC 层（卸载时调用；escManager 层不随插件卸载自动清理） */
 export function unregisterEscapeHandler(): void {
-  if (!escRegistered) return;
-  escRegistered = false;
-  escHandle?.unregister();
-  escHandle = null;
+  unregisterPanelEsc('bz-recap');
 }

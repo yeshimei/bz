@@ -4,7 +4,7 @@
  * 纯度：禁 obsidian/moment/core 服务（tests/core/render-purity 守卫 import 图）——
  * 时间类（due 状态/文案、相对时间）由调用方计算后以参数注入，本层只拼字符串。
  */
-import { escapeHtml as esc } from '../core/ui/str';
+import { escapeHtml as esc, iconSpan } from '../core/ui/str';
 import type { MemoItem } from './types';
 
 /** 域图标表（lucide 名；渲染后组件库 mountIcons 统一 setIcon） */
@@ -31,10 +31,8 @@ export const MEMO_ICONS = {
 	sceneToday: 'sun',
 };
 
-/** lucide 占位 HTML（innerHTML 拼接用；渲染后组件库 mountIcons 统一 setIcon） */
-export function iconSpan(name: string, extra = ''): string {
-	return `<i data-lucide="${name}" class="bz-ic${extra ? ' ' + extra : ''}"></i>`;
-}
+// lucide 占位 HTML 收口 core/ui/str（渲染后组件库 mountIcons 统一 setIcon） 
+export { iconSpan };
 
 /** 场景色点（数据语义色，域内直给；与旧 memo 相近语义） */
 export const SCENE_DOTS: Record<string, string> = {

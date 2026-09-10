@@ -11,6 +11,7 @@
  */
 import type { App, TFile } from 'obsidian';
 import { notice } from '../core/notice';
+import { sleep } from '../core/utils';
 import { M } from './state';
 import { rebuildItems } from './data';
 
@@ -287,9 +288,7 @@ async function runOne(entry: QueueEntry): Promise<boolean> {
   return fetchComplete(M.appRef, entry.file);
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+
 
 /** 插件卸载：清队列与状态、杀活动子进程（会话语义重置） */
 export function shutdownDoubanQueue(): void {

@@ -403,10 +403,7 @@ export function refStateHtml(text: string): string {
   return `<div class="bz-sb-ref-empty">${escapeHtml(text)}</div>`;
 }
 
-// ==================== SecondBrainMeta 结构（收编声明，供纯函数引用） ====================
+// ==================== SecondBrainMeta 结构（type-only 引 vector-store 单源；type import 不进渲染包） ====================
 
-export interface SecondBrainMeta {
-  version: number;
-  notes: Record<string, { mtime: number; chunks: { text: string }[] }>;
-  _dim: number;
-}
+import type { SecondBrainMeta } from './vector-store';
+export type { SecondBrainMeta };
