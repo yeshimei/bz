@@ -11,6 +11,7 @@ import { closeItemMenu } from './core/item-actions';
 import { setApp, getApp } from './core/app';
 import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
 import { setSettingsProvider, setSettingsSaver } from './core/settings-provider';
+import { bindMobileViewport, unbindMobileViewport } from './core/viewport';
 import { DOMAIN_ICONS } from './core/domain-icons';
 import { clearDomainEvents } from './core/domain-bus';
 import { attachObsidianAdapter, detachObsidianAdapter } from './core/obsidian-adapter';
@@ -184,6 +185,11 @@ export default class BzPlugin extends Plugin {
     // 域事件总线地基：全插件唯一 vault 订阅点挂载（registerEvent 保证插件卸载时 Obsidian 自动清理引用）
     attachObsidianAdapter(this.app, (ref) => this.registerEvent(ref as any));
 
+    // 移动端可视视口高度（issue 266）：把 visualViewport.height 写进 --bz-vvh，
+    // 让移动端真全屏面板（.bz-panel-mtop）随软键盘收缩，底部输入条不再被键盘压住。
+    // 桌面端无害（媒体查询不命中）；卸载时 onunload 解绑。
+    bindMobileViewport();
+
     // 命令裸注册（ADR-0004：app.commands.addCommand 原样 id 注册——plugin.addCommand 会被 Obsidian 自动加插件前缀，主页.js 等外部裸 id 调用会失效）
     for (const c of COMMANDS) {
       (this.app as any).commands.addCommand({ id: c.id, name: c.name, icon: c.icon, callback: c.callback });
@@ -225,6 +231,8 @@ export default class BzPlugin extends Plugin {
   }
 
   async onunload() {
+    // 移动端视口监听解绑 + --bz-vvh 清理（issue 266；连带卸掉 document 级监听）
+    unbindMobileViewport();
     // 统一右键菜单/长按抽屉浮层先收口（fix(main)：卸载接线补全）
     closeItemMenu();
     // toast 卸载清理（UX 整改 l2-toast）：清空通知容器 DOM + 存活/去重状态

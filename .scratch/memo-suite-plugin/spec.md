@@ -55,6 +55,8 @@ Feature: memo-suite-plugin
 22. 作为用户，我希望长按 #标签 直接编辑待办全部信息（内容/场景/优先级等），公开课场景标签不重复显示，以便与原脚本一致。
 23. 作为用户，我希望小橘能感知备忘录的 UI 操作（添加/编辑/完成/恢复/延后/优先级/删除）与每日到期待办，以便陪伴记忆细致准确。（2026-08-23 用户拍板，ticket 075：**方法监听**——memo UI 确认回调调 `notifyMemoAction`，文案构造集中 `src/smartcat/memo-source.ts` 纯函数；添加=详细键值式（场景/脚本/课程/优先级/截止/笔记，有才加），编辑=方案 α 一次保存一条变更摘要，其余动作仅标题；**每日到期扫描**——每天一次、合并一条「你有 N 个待办今天到期：…」，日期持久化 `editingData.dueScan` 跨重启去重；AIAgent 同步等非 UI 写入不收；domain-source memo extract 移除）
 
+24. 作为用户，我希望移动端真全屏打开备忘录面板时，头行右上角有可用的 ✕ 关闭钮与 ＋ 新建钮（＋ 打开与桌面同一套完整新建表单弹窗），并且点底部录入条唤出软键盘时面板随可视视口收缩、录入条浮在键盘上方始终可见；同时这三处**只改 UI、不改任何功能逻辑**。（2026-09-10 用户拍板，issue 266，ADR-0120：✕/＋ 按钮 DOM 与行为接线本就存在——关闭钮被皮肤层 `.bz-memo-skin-* .bz-panel-head-btns{display:none}` 藏掉（默认皮肤即 paper，故为默认路径）、新建钮随 `.bz-main-head` 被移动端整行隐藏，故只补样式放回与头行新钮（复用同一 `data-memo-newbtn` 钩子 → `openEditor(null)`，零新增行为）；键盘遮挡两处并修——① 面板高度从 `100vh` 改挂 `var(--bz-vvh, 100vh)`（core 新增 `src/core/viewport.ts` 从 `visualViewport.height` 写变量，core 只给基线 `:root{--bz-vvh:100vh}` + `@supports` 升级 `100dvh`，**不代域改高度**），② 面板 `align-self: flex-start` 破父遮罩 `align-items:center`（否则缩短后底边仍落在键盘下））
+
 ### 归物本（Belongings）
 
 13. 作为用户，我希望物品登记面板（列表、搜索、新增/编辑/删除、图片展示）与原脚本一致，以便继续登记我的物品。

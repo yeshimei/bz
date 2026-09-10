@@ -3,6 +3,55 @@
 > 进度同步总表（AGENTS.md）。每票一节，状态：计划中 → 进行中 → 门禁 → 已交付。
 
 
+## Issue 266 — 备忘录移动端真全屏三处 UI 缺陷（ADR-0120）
+
+**状态：已交付**
+
+- [x] 需求（用户拍板，2026-09-10）：移动端真全屏下三条 UI 问题，**均不改功能逻辑**——
+      ① 没有关闭按钮；② 没有「添加备忘的弹窗按钮」；③ 输入框不跟随软键盘、被键盘盖住
+- [x] 根因 A（无关闭钮）：头行 markup 与行为接线一直都在，被两层叠加藏掉——
+      皮肤层 `.bz-memo-skin-{paper,editorial} .bz-panel-head-btns{display:none}` 藏整组
+      （**默认皮肤即 paper**，`src/settings.ts:488`，故是开箱即中的默认路径）
+      + 移动端无恢复规则；真全屏下点遮罩关闭不可能触发（面板盖住遮罩）、手机无 ESC 键，
+      故钮组藏掉后无任何可用关闭入口
+- [x] 根因 B（无新建入口）：新建钮在 `.bz-main-head` 内，被移动端 `display:none` 整行隐藏，
+      新建只剩底部录入条（一句话快速添加，不是完整表单弹窗）
+- [x] 根因 C（键盘遮挡）：真全屏面板写死 `height: 100vh`，而 `100vh` 是布局视口高度、
+      **不随软键盘收缩**；项目此前无任何 core 级视口层（`dvh`/`--bz-vh` 全仓零命中）。
+      另有隐蔽一环：面板父层 `.bz-panel-overlay` 是 `align-items: center` 且 `fixed; inset:0`
+      不随键盘收缩——只缩短子面板高度会上下居中内缩，底边仍落在键盘下，必须同时改顶部对齐
+- [x] 修复 A（`src/memo/render.ts` + `styles.css`）：关闭钮加独立类 `bz-memo-head-close`
+      （不吃核心层 `.bz-icon-btn--close` 等四类历史隐藏规则）
+- [x] 修复 B（同上）：头行钮组内新增移动端专属 `.bz-memo-head-new`，
+      **复用同一 `data-memo-newbtn` 钩子** → 命中 `ui.ts` 既有委托 `openEditor(null)`，零新增行为；
+      桌面隐藏走 `@media (min-width: 769px)` 与全局移动档互补，免掉「后写者赢」的顺序陷阱
+- [x] 修复 C 之一（core 只给资源，不代域改几何）：新增 `src/core/viewport.ts`，
+      `main.ts` onload/unload 成对 bind/unbind，把 `visualViewport.height` 写进 `--bz-vvh`
+      （resize + scroll，iOS 键盘只发 scroll；window resize/orientationchange 兜底）；
+      `components.css` 在 `.bz-panel-mtop` 段后补基线 `:root{--bz-vvh:100vh}` +
+      `@supports (height:100dvh)` 升级，**核心层不改任何面板高度**
+- [x] 修复 C 之二（memo 域消费）：移动端块 `.bz-memo-panel { height/max-height: var(--bz-vvh, 100vh);
+      align-self: flex-start; }`——高度随可视视口收缩 + 顶部对齐破父层居中
+- [x] 否决「core 一处覆盖全域 13 面板」（曾设计后撤回）：`.bz-panel-mtop` 字面语义只是
+      「移动端顶部避让档」，并非「100vh 定高的面板根」——knowledge `.bz-kb-window.bz-panel-mtop`
+      是 `top/bottom` 锚定 + `height: auto`、clipbook `.bz-clip-mob-detail.bz-panel-mtop`
+      是父级 `inset:0` 的嵌套层，强行 `!important` 会打断这两处；且面板几何归域（ADR-0002 分层）
+- [x] 移动端收口段：`src/memo/styles.css` **文件末尾**新增「移动端收口段（issue 266）」
+      （头行钮组 `display:flex` 放回 + 关闭/新建钮抬到 32px 可视档，命中区走
+      markup 的 `.bz-touch-target` → 44px，与归物本移动端关闭钮同款先例）。
+      皮肤段在同文件 :349/:459 更靠前，
+      同特异性后写赢 → **无需改 CSS 聚合顺序**（`scripts/build-css.mjs` 未改动）
+- [x] 边界核实（未误伤）：核心层未改任何面板几何 → 另外 12 个真全屏域与全部非全屏浮窗
+      （小橘 `#chat-panel` 60vh、第二大脑侧浮窗、密码本底部 sheet）**零影响**
+- [x] 测试：新增 `tests/memo/mobile-ui-3fix.test.ts` 12 用例（样式源/markup 源/接线源静态断言，
+      对齐 ticket 265 手法），覆盖三条修复 + `align-self` 居中陷阱 + 桌面零影响
+      + 「核心层不得强改 `.bz-panel-mtop` 高度」反回归锁
+- [x] 文档：`issues/266-memo-mobile-fullscreen-3fix.md` + `docs/adr/0120-mobile-viewport-keyboard-height.md`
+      + CONTEXT.md 新增词条「移动端真全屏面板标记类 `.bz-panel-mtop`」「移动端可视视口高度 `--bz-vvh`」
+      （并修正 `.bz-win-mfs` 已退役的旧表述）
+- [x] 门禁：`tsc --noEmit` 0 错 + 全量 **255 文件 / 4116 用例全绿** + CSS 聚合构建验证
+
+
 ## Ticket 177 — 剪藏本×聚合讯融合（clipbook 域，ADR-0082）
 
 **状态：已交付**
