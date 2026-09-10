@@ -14,7 +14,8 @@
   │ 行为单源（issue 245/ADR-0106）：交互逻辑全部是插件同款 ui.ts 依赖链——       │
   │   经 ./prototype-behavior.js（src/home/fake-sim.ts 构建，                 │
   │   alias obsidian→公共假层）在下方两个 iframe 视图里跑真行为；               │
-  │   桌面 iframe 920px = 桌面三栏；移动 iframe 396px = styles.css            │
+  │   桌面 iframe 920px = 桌面三栏；移动 iframe 412×827 = 小米13U 真机可视区   │
+  │   1440×3200 @dpr3.5 → 412×915；扣状态栏 24 + 底栏 48 + 手势区 16 = 827    │
   │   @media/@container ≤768 移动布局。数据 = fake vault（localStorage 种子，  │
   │   相对「今天」生成、跨天自动重灌，见 fake-sim.ts）。                        │
   │ 壳内只允许：外景容器样式、评审徽牌、演示钩子与自检。                        │
@@ -33,8 +34,12 @@
 
   /* 桌面外景（真行为 iframe：overlay append iframe body，宽度决定布局） */
   .demo-dt { flex: none; width: 920px; height: 640px; }
-  /* 移动外景：396px iframe → 面板 100vw → @media/@container ≤768 移动布局 */
-  .demo-mob { width: 396px; height: 780px; border-radius: 26px; overflow: hidden; flex: none;
+  /* 移动外景：412×827 iframe = 小米13U 真机可视区。
+   * 推导：物理 1440×3200（6.73" 522ppi）→ Android density 档 560dpi → dpr 3.5
+   *   → WebView 视口 412×915 CSS px（1440/3.5=411.4 ↑，3200/3.5=914.3 ↑）
+   *   → 扣 MIUI 状态栏 24 + Obsidian 底部工具栏 48 + 手势安全区 16 = 827
+   * 屏满（不扣底栏）= 875；三键导航再 -32。412 仍 ≤768 → 移动布局命中 */
+  .demo-mob { width: 412px; height: 827px; border-radius: 26px; overflow: hidden; flex: none;
     border: 1px solid #b8b0a0; box-shadow: 0 8px 30px rgba(0,0,0,.16); background: #f5f2ec; }
   .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
 
@@ -50,7 +55,7 @@
   <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="内容首页·桌面"></iframe></div>
   <div id="mobHost" class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="内容首页·移动"></iframe></div>
 
-  <div class="vbadge">内容首页 · 真行为单源预览（桌面=真 ui.ts 跑在 920px，移动=396px）
+  <div class="vbadge">内容首页 · 真行为单源预览（桌面=真 ui.ts 跑在 920px，移动=412×827 小米13U）
     <button id="mobToggle">隐藏移动端</button>
     <button id="reset">重置演示数据</button>
     <span id="stResult"></span>
@@ -181,7 +186,7 @@
         dtFrame().contentWindow.BZW_home.openHome();
         await waitFrame(dtDoc, '.bz-home-entries .bz-home-erow');
 
-        // 移动端（396px iframe）：@media 全屏命中 + 瓦片置前 + 头行关闭钮 + 周历切天
+        // 移动端（412×827 iframe ≈ 小米13U 真机）：@media 全屏命中 + 瓦片置前 + 头行关闭钮 + 周历切天
         t('移动端@media全屏命中', Math.abs(mob('.bz-home-panel').getBoundingClientRect().width - md.documentElement.clientWidth) < 1);
         t('移动瓦片13枚', md.querySelectorAll('.bz-home-m-tile').length === 13);
         t('移动入口行隐藏（瓦片替代，CSS display:none）', getComputedStyle(mob('.bz-home-entries')).display === 'none');
