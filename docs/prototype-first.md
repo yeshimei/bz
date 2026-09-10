@@ -2,7 +2,7 @@
 
 域 UI 的唯一真理源是**与插件共用的实现源码**（`src/<域>/` 的 `styles.css` / `render.ts` / `ui.ts`）。原型评审壳（`prototypes/<域>/prototype.html`）与插件是同一份代码的两个运行端：改源码一处两侧生效；两侧不一致 = 缺陷，改源码（或假层），禁止任一侧私改、禁止手改构建产物、禁止目测调参。
 
-行为单源域以 `scripts/build-preview.mjs` 的 `BEHAVIOR_DOMAINS` 为准：belongings / bookshelf / cinema / clipbook / favorites / home / knowledge / password-vault / review / secondbrain / settings-panel。
+行为单源域以 `scripts/build-preview.mjs` 的 `BEHAVIOR_DOMAINS` 为准：belongings / bookshelf / cinema / clipbook / favorites / home / knowledge / memo / password-vault / review / secondbrain / settings-panel。
 
 ## 文件约定
 
