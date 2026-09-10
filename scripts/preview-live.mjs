@@ -4,6 +4,11 @@
  * prototypes/<域>/（评审工件：壳 html/fake-sim.ts/fake 层），render.ts/shared.ts 变化自动
  * 重出预览包+行为包，ui.ts/fake 链变化重出行为包，然后经 SSE 推浏览器 location.reload()。
  * 打开 http://localhost:5177/prototypes/<域>/prototype.html 即得免刷新预览。
+ *
+ * 另供 /__vault-media/<文件名>：按 basename 从【真实 vault】按需取流（支持 Range，
+ * 视频可拖拽）。评审快照引用的媒体全量 1.8G（图 577M / 视频 1.07G / 音频 151M），
+ * 不可能入库——入库只留小分子集，剩下的走本路由现场取，保真且仓库不膨胀。
+ * vault 根从 esbuild.config.mjs 的 VAULT_PLUGIN_DIR 反推，可用 --vault <根> 覆盖。
  */
 import http from 'node:http';
 import fs from 'node:fs';
@@ -13,7 +18,88 @@ import { buildPreview, buildBehavior, PREVIEW_DOMAINS, BEHAVIOR_DOMAINS } from '
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.argv[2]) || 5177;
-const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml' };
+const MIME = {
+  '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json', '.map': 'application/json',
+  '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif', '.webp': 'image/webp', '.avif': 'image/avif', '.bmp': 'image/bmp', '.ico': 'image/x-icon',
+  '.mp4': 'video/mp4', '.m4v': 'video/mp4', '.webm': 'video/webm', '.mov': 'video/quicktime', '.ogv': 'video/ogg',
+  '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4', '.aac': 'audio/aac', '.wav': 'audio/wav',
+  '.flac': 'audio/flac', '.ogg': 'audio/ogg', '.oga': 'audio/ogg',
+  '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf', '.otf': 'font/otf',
+  '.pdf': 'application/pdf', '.txt': 'text/plain; charset=utf-8', '.md': 'text/markdown; charset=utf-8',
+};
+
+// ---------- 真实 vault 媒体索引（惰性建，只收媒体扩展名） ----------
+const MEDIA_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.avif', '.bmp', '.svg', '.mp4', '.m4v', '.webm', '.mov', '.ogv', '.mp3', '.m4a', '.aac', '.wav', '.flac', '.ogg', '.oga']);
+let vaultRoot = '';
+{
+  const i = process.argv.indexOf('--vault');
+  if (i >= 0 && process.argv[i + 1]) vaultRoot = path.resolve(process.argv[i + 1]);
+  else {
+    try {
+      const cfg = fs.readFileSync(path.join(ROOT, 'esbuild.config.mjs'), 'utf8');
+      const m = cfg.match(/VAULT_PLUGIN_DIR\s*=\s*"([^"]+)"/);
+      if (m) vaultRoot = path.resolve(m[1], '..', '..', '..'); // <vault>/.obsidian/plugins/bz → <vault>
+    } catch { /* 构建配置读不到：本路由退化为 404，其余功能不受影响 */ }
+  }
+}
+let vaultIndexCache = null;
+function vaultIndex() {
+  if (vaultIndexCache) return vaultIndexCache;
+  const map = new Map();
+  if (!vaultRoot || !fs.existsSync(vaultRoot)) return (vaultIndexCache = map);
+  const stack = [vaultRoot];
+  while (stack.length) {
+    const cur = stack.pop();
+    let ents;
+    try { ents = fs.readdirSync(cur, { withFileTypes: true }); } catch { continue; }
+    for (const e of ents) {
+      if (e.name === '.obsidian' || e.name === '.trash' || e.name.startsWith('.git')) continue;
+      const p = path.join(cur, e.name);
+      if (e.isDirectory()) stack.push(p);
+      else if (MEDIA_EXT.has(path.extname(e.name).toLowerCase()) && !map.has(e.name.toLowerCase())) map.set(e.name.toLowerCase(), p);
+    }
+  }
+  console.log(`[preview-live] vault 媒体索引：${map.size} 个（${vaultRoot || '未定位 vault'}）`);
+  return (vaultIndexCache = map);
+}
+
+/** vault 媒体流（Range 支持：视频拖拽/逐段加载必需） */
+function serveVaultMedia(req, res, rawName) {
+  const name = decodeURIComponent(rawName);
+  const file = vaultIndex().get(name.toLowerCase());
+  if (!file || !fs.existsSync(file)) {
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('vault media not found: ' + name);
+    return;
+  }
+  const size = fs.statSync(file).size;
+  const type = MIME[path.extname(file).toLowerCase()] || 'application/octet-stream';
+  const range = req.headers.range;
+  if (range) {
+    const m = /^bytes=(\d*)-(\d*)$/.exec(range.trim());
+    if (m) {
+      let start = m[1] ? Number(m[1]) : 0;
+      let end = m[2] ? Number(m[2]) : size - 1;
+      if (Number.isNaN(start) || Number.isNaN(end) || start > end || start >= size) {
+        res.writeHead(416, { 'Content-Range': `bytes */${size}` });
+        res.end();
+        return;
+      }
+      end = Math.min(end, size - 1);
+      res.writeHead(206, {
+        'Content-Type': type, 'Accept-Ranges': 'bytes',
+        'Content-Range': `bytes ${start}-${end}/${size}`, 'Content-Length': end - start + 1,
+        'Cache-Control': 'no-store',
+      });
+      fs.createReadStream(file, { start, end }).pipe(res);
+      return;
+    }
+  }
+  res.writeHead(200, { 'Content-Type': type, 'Accept-Ranges': 'bytes', 'Content-Length': size, 'Cache-Control': 'no-store' });
+  fs.createReadStream(file).pipe(res);
+}
 
 // 监听两棵源树（相对仓库根的 rel 前缀区分）：src/ = 插件源码；prototypes/ = 评审工件
 const srcRoot = path.join(ROOT, 'src');
@@ -115,6 +201,11 @@ a.card.off{opacity:.45}
 </style></head><body><div class="wrap"><h1>原型预览 · 行为单源域导航</h1>
 <div class="sub">SSE 热刷新已注入各评审壳：改 ${'src/<域>/** 或 prototypes/<域>/**'} 的 .ts/.css/.html 自动重出产物并刷新。快捷键返回本页：浏览器后退。</div>
 <div class="grid">\n${items}\n</div></div></body></html>`);
+    return;
+  }
+  // 真实 vault 媒体按需取流（评审壳的 mediaSrc 未命中入库子集时回退到这里）
+  if (url.pathname.startsWith('/__vault-media/')) {
+    serveVaultMedia(req, res, url.pathname.slice('/__vault-media/'.length));
     return;
   }
   let file = path.normalize(path.join(ROOT, decodeURIComponent(url.pathname)));

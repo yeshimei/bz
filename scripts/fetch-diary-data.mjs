@@ -2,8 +2,11 @@
 //
 // 从真实 vault 抓「我的/日记」+「我的/影视」+「我的/信」+「书库」的 md 原文快照，
 // 写 prototypes/diary/prototype-data.js（window.DIARY.FILES：{path, content, ctime} 原文逐字），
-// 并把正文 `![[媒体]]` 引用解析到的真实媒体复制到 prototypes/diary/assets/<文件名>
-//（清单落 window.DIARY.ASSETS；超限/缺失的媒体不进清单 → 壳内走渐变占位，评审语义仍成立）。
+// 并把正文 `![[媒体]]` 引用到的真实媒体【择要】复制到 prototypes/diary/assets/<文件名>
+//（清单落 window.DIARY.ASSETS）。预算外/超单限的媒体不入库但仍可见——预览服务
+// preview-live.mjs 的 /__vault-media/ 会现场从真实 vault 取流（引用全量 1.8G，
+// 图 577M / 视频 1.07G / 音频 151M，不可能入库）；只有「双击直开无服务端」时才退
+// 渐变占位（评审语义仍成立）。
 //
 // 快照是「原始 md 原文」而非解析产物：评审壳把 FILES 写进 fake vault（localStorage），
 // 由真数据链（src/diary/parser.ts + data.ts + config.ts）现场解析——标签/媒体/排序全单源，
@@ -122,13 +125,19 @@ for (const dir of DIRS) {
   }
 }
 
-// ---------- 复制媒体（总预算内截止；超出预算的引用不进清单 → 壳内渐变占位） ----------
+// ---------- 复制媒体（总预算内截止） ----------
+// 顺序 = DIRS 优先序（我的/日记 → 影视 → 信 → 书库），即 assets Map 的插入序。
+// 【坑】曾按 basename 字典序排（早先为「产物稳定」），结果书库书页扫描图 00001.jpeg…
+// 按字序全部排在日记照片（P1058888.jpg…）之前，16M 预算被书页吃光，日记媒体命中率
+// 掉到 25%——评审时满墙渐变占位。字典序稳定换个实现方式即可，优先级不能丢。
+// 另：预算外/超单限的引用并非「看不到」——预览服务 /__vault-media/ 会现场从真实
+// vault 取流，本子集只服务「双击直开、无服务端」的离线评审。
 const assetDir = path.join(ROOT, 'prototypes', 'diary', 'assets');
 fs.rmSync(assetDir, { recursive: true, force: true });
 fs.mkdirSync(assetDir, { recursive: true });
 let budget = ASSET_BUDGET_BYTES;
 let overBudget = 0;
-for (const [base, src] of [...assets].sort((a, b) => a[0].localeCompare(b[0]))) {
+for (const [base, src] of assets) {
   const size = fs.statSync(src).size;
   if (size > budget) {
     assets.delete(base);

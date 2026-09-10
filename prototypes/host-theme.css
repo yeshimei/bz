@@ -1,0 +1,151 @@
+/* 自动生成：node scripts/fetch-host-theme.mjs —— 手改无效，重跑覆盖。
+ * 宿主保真：把评审壳的宿主环境还原为真实 Obsidian。
+ *   来源 vault   : E:\Obsidian\叫我包仔
+ *   强调色       : #e67341 → --accent-h/s/l = 18 / 77% / 58%
+ *   基础字号     : 20px（--font-ui-small 等按 Obsidian 公式联动）
+ *   明暗         : appearance.theme = system（壳内仍有明暗切换钮）
+ *   已启用片段   : custom-admonitions.1f704f / mermaid gitGraph / 1
+ *
+ * 结构（与 Obsidian app.css 同口径）：
+ *   body                → 字体/圆角 + --accent-h/s/l（强调色与明暗无关）
+ *   body.theme-light    → 亮色 base 色阶 + 派生 token
+ *   body.theme-dark     → 暗色 base 色阶 + 派生 token
+ * 只列域样式真正消费的 token（host-fidelity 子集），不是 app.css 全量搬运。
+ */
+
+body {
+  --font-text-size: 20px;
+  --font-ui-smaller: calc(var(--font-text-size) - 4px);
+  --font-ui-small: calc(var(--font-text-size) - 3px);
+  --font-ui-medium: calc(var(--font-text-size) - 1px);
+  --font-ui-large: calc(var(--font-text-size) + 2px);
+  --font-default: ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+  --font-interface: var(--font-default);
+  --font-text: var(--font-default);
+  --font-monospace-default: ui-monospace, SFMono-Regular, "Cascadia Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  --font-monospace: var(--font-monospace-default);
+  --radius-s: 4px;
+  --radius-m: 8px;
+  --radius-l: 12px;
+  --accent-h: 18;
+  --accent-s: 77%;
+  --accent-l: 58%;
+  font-family: var(--font-interface);
+  font-size: var(--font-text-size);
+  color: var(--text-normal);
+  background-color: var(--background-primary);
+}
+
+body.theme-light {
+  --background-primary: var(--color-base-00);
+  --background-primary-alt: var(--color-base-10);
+  --background-secondary: var(--color-base-20);
+  --background-modifier-border: var(--color-base-30);
+  --background-modifier-border-hover: var(--color-base-35);
+  --background-modifier-border-focus: var(--color-base-40);
+  --background-modifier-hover: color-mix(in oklch, var(--mono-100) 6.7%, transparent);
+  --background-modifier-active-hover: color-mix(in oklch, var(--interactive-accent) 10%, transparent);
+  --text-normal: var(--color-base-100);
+  --text-muted: var(--color-base-70);
+  --text-faint: var(--color-base-50);
+  --text-error: var(--color-red);
+  --text-success: var(--color-green);
+  --text-warning: var(--color-orange);
+  --text-accent-hover: var(--color-accent-2);
+  --text-on-accent: white;
+  --text-on-accent-inverted: black;
+  --color-accent: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+  --color-base-00: #ffffff;
+  --color-base-05: #fcfcfc;
+  --color-base-10: #fafafa;
+  --color-base-20: #f6f6f6;
+  --color-base-25: #efefef;
+  --color-base-30: #e4e4e4;
+  --color-base-35: #dadada;
+  --color-base-40: #bdbdbd;
+  --color-base-50: #ababab;
+  --color-base-60: #707070;
+  --color-base-70: #5c5c5c;
+  --color-base-100: #222222;
+  --mono-0: white;
+  --mono-100: black;
+  --background-secondary-alt: var(--color-base-05);
+  --background-modifier-cover: rgba(220, 220, 220, 0.4);
+  --background-modifier-form-field: var(--color-base-00);
+  --background-modifier-box-shadow: rgba(0, 0, 0, 0.1);
+  --text-accent: var(--color-accent);
+  --text-selection: color-mix(in oklch, var(--interactive-accent) 20%, transparent);
+  --interactive-normal: var(--color-base-00);
+  --interactive-hover: var(--color-base-10);
+  --interactive-accent: var(--color-accent-1);
+  --interactive-accent-hover: var(--color-accent-2);
+  --color-accent-1: hsl(calc(var(--accent-h) - 1), calc(var(--accent-s) * 1.01), calc(var(--accent-l) * 1.075));
+  --color-accent-2: hsl(calc(var(--accent-h) - 3), calc(var(--accent-s) * 1.02), calc(var(--accent-l) * 1.15));
+  --color-red: #e93147;
+  --color-orange: #ec7500;
+  --color-yellow: #e0ac00;
+  --color-green: #08b94e;
+  --color-cyan: #00bfbc;
+  --color-blue: #086ddd;
+  --color-purple: #7852ee;
+  --color-pink: #d53984;
+  --shadow-s: 0px 1px 2px rgba(0, 0, 0, 0.028), 0px 3.4px 6.7px rgba(0, 0, 0, 0.042), 0px 15px 30px rgba(0, 0, 0, 0.07);
+  --shadow-l: 0px 1.8px 7.3px rgba(0, 0, 0, 0.071), 0px 6.3px 24.7px rgba(0, 0, 0, 0.112), 0px 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+body.theme-dark {
+  --background-primary: var(--color-base-00);
+  --background-primary-alt: var(--color-base-10);
+  --background-secondary: var(--color-base-20);
+  --background-modifier-border: var(--color-base-30);
+  --background-modifier-border-hover: var(--color-base-35);
+  --background-modifier-border-focus: var(--color-base-40);
+  --background-modifier-hover: color-mix(in oklch, var(--mono-100) 6.7%, transparent);
+  --background-modifier-active-hover: color-mix(in oklch, var(--interactive-accent) 10%, transparent);
+  --text-normal: var(--color-base-100);
+  --text-muted: var(--color-base-70);
+  --text-faint: var(--color-base-50);
+  --text-error: var(--color-red);
+  --text-success: var(--color-green);
+  --text-warning: var(--color-orange);
+  --text-accent-hover: var(--color-accent-2);
+  --text-on-accent: white;
+  --text-on-accent-inverted: black;
+  --color-accent: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+  --color-base-00: #1C1C1C;
+  --color-base-05: #212121;
+  --color-base-10: #232323;
+  --color-base-20: #282828;
+  --color-base-25: #2e2e2e;
+  --color-base-30: #333333;
+  --color-base-35: #3f3f3f;
+  --color-base-40: #555555;
+  --color-base-50: #666666;
+  --color-base-60: #999999;
+  --color-base-70: #b3b3b3;
+  --color-base-100: #dadada;
+  --mono-0: black;
+  --mono-100: white;
+  --background-secondary-alt: var(--color-base-30);
+  --background-modifier-cover: rgba(10, 10, 10, 0.4);
+  --background-modifier-form-field: var(--color-base-25);
+  --background-modifier-box-shadow: rgba(0, 0, 0, 0.3);
+  --text-accent: var(--color-accent-1);
+  --text-selection: color-mix(in oklch, var(--interactive-accent) 33%, transparent);
+  --interactive-normal: var(--color-base-30);
+  --interactive-hover: var(--color-base-35);
+  --interactive-accent: var(--color-accent);
+  --interactive-accent-hover: var(--color-accent-1);
+  --color-accent-1: hsl(calc(var(--accent-h) - 3), calc(var(--accent-s) * 1.02), calc(var(--accent-l) * 1.15));
+  --color-accent-2: hsl(calc(var(--accent-h) - 5), calc(var(--accent-s) * 1.05), calc(var(--accent-l) * 1.29));
+  --color-red: #fb464c;
+  --color-orange: #e9973f;
+  --color-yellow: #e0de71;
+  --color-green: #44cf6e;
+  --color-cyan: #53dfdd;
+  --color-blue: #027aff;
+  --color-purple: #a882ff;
+  --color-pink: #fa99cd;
+  --shadow-s: 0px 1px 2px rgba(0, 0, 0, 0.121), 0px 3.4px 6.7px rgba(0, 0, 0, 0.179), 0px 15px 30px rgba(0, 0, 0, 0.3);
+  --shadow-l: 0px 1.8px 7.3px rgba(0, 0, 0, 0.071), 0px 6.3px 24.7px rgba(0, 0, 0, 0.112), 0px 30px 90px rgba(0, 0, 0, 0.2);
+}
