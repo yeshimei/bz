@@ -3,16 +3,18 @@
  * 视觉基准 = 拍板原型 .zcode/ui-prototypes/belongings-redesign20/p20-full.html（issue 230 方向纠正：
  * 原型 → 域，禁止拿域现状反向生成原型）。p20 的 CSS 值逐字回灌（面板 920×640 相对原型整页海报
  * 等比缩档：h1 56→40 / hero KPI 56→42 / cell em 44→40 / name 20→19 / price 25→23）。
- * 架构：.bz-bel--poster / .bz-bel-form / .bz-bel-detail 作用域 token 覆盖（米白纸面 #f5f2ec +
- * 墨黑 #171512 + 赤橙 #e8481f，双主题恒定纸面）+ .bz-bel-* 装饰类；通用件继续消费组件库
+ * 架构：.bz-bel--poster / .bz-bel-form / .bz-bel-detail 作用域 token 覆盖（亮色 = 米白纸面
+ * #f5f2ec + 墨黑 #171512 + 赤橙 #e8481f；.theme-dark = 夜版海报深炭变体，issue 270 推翻
+ * 「双主题恒定纸面」旧口径）+ .bz-bel-* 装饰类；通用件继续消费组件库
  * （chips/segmented/搜索/按钮/字段），在其上做海报皮作用域覆盖（方角/墨框/下划线）。
  * 移动端 = p20 手机壳设计：m-kpis 四格 / 工具行(搜索+年份) → 横滑 chips → 排序 seg → 单列网格
  * → 底部记一笔 → 居中脚注；判定走容器查询（评审壳手机框与真机全屏同源，见文末）。
  * 口径：标签/徽章字号 ≥11px；不持静态 z-index；触控 44px 档走 .bz-touch-target / min-height。
  */
 
-/* ---- 皮肤 token（面板 + 表单 + 详情 + 右键菜单四壳同源；纸面双主题恒定） ----
-   菜单/表单/详情挂 body，须自带 token（.bz-bel-menu 经 openItemMenu menuClass 挂上） */
+/* ---- 皮肤 token（面板 + 表单 + 详情 + 右键菜单四壳同源；亮色纸面，暗色见下方夜版组） ----
+   菜单/表单/详情挂 body，须自带 token（.bz-bel-menu 经 openItemMenu menuClass 挂上；
+   三者都是 body 后代，.theme-dark 祖先选择器可达） */
 .bz-bel--poster,
 .bz-bel-form,
 .bz-bel-detail,
@@ -36,6 +38,46 @@
   --bz-brand: #e8481f;
   --bz-brand-hover: #c93a10; /* 海报橙加深档：悬停/按压不漏组件库全局暗橙 */
   --bz-brand-soft: rgba(232, 72, 31, 0.14); /* 品牌浅底（accent 图标钮/badge）同源 */
+  --bz-bel-shadow: rgba(23, 21, 18, 0.22); /* 硬偏移阴影（面板/下拉档） */
+  --bz-bel-shadow-strong: rgba(23, 21, 18, 0.85); /* 硬偏移阴影（详情/表单/菜单档） */
+  --bz-bel-shadow-pop: rgba(23, 21, 18, 0.15); /* 硬偏移阴影（联想浮层档） */
+  --bz-bel-ink-muted: #b9b2a2; /* 反色（墨底）卡上的弱化字：hover idx/mut */
+  --bz-bel-tag-sold: #8a5a26; /* 状态徽章转卖档 */
+  --bz-bel-tag-discard: #8a8375; /* 状态徽章丢弃档 */
+}
+
+/* ---- 夜版海报（issue 270：.theme-dark 暗色变体，黑板报方向）----
+   深炭底 + 米白粉笔墨 + 赤橙微提亮；反色体系（墨底纸字 ⇄ 纸底墨字）随 token 自动翻转，
+   阴影转纯黑加深，离场灰化/浮层/hover 全走 token，零结构规则 */
+.theme-dark .bz-bel--poster,
+.theme-dark .bz-bel-form,
+.theme-dark .bz-bel-detail,
+.theme-dark .bz-bel-menu {
+  --bz-bel-paper: #1a1815;
+  --bz-bel-ink: #ece7da;
+  --bz-bel-accent: #f0603a;
+  --bz-bel-line: #3a352c;
+  --bz-bel-dim: #25221d;
+  --bz-surface-1: #1a1815;
+  --bz-surface-2: #211e19;
+  --bz-surface-3: #1a1815;
+  --bz-surface-4: #211e19;
+  --bz-surface-hover: #25221d;
+  --bz-text-1: #ece7da;
+  --bz-text-2: #b5ad9b;
+  --bz-text-3: #7d7666;
+  --bz-border: #3a352c;
+  --bz-border-strong: #ece7da;
+  --bz-border-hover: #5a5344;
+  --bz-brand: #f0603a;
+  --bz-brand-hover: #d14a26; /* 加深档语义与亮侧对齐：暗底上仍比常态深一档可辨 */
+  --bz-brand-soft: rgba(240, 96, 58, 0.18);
+  --bz-bel-shadow: rgba(0, 0, 0, 0.55);
+  --bz-bel-shadow-strong: rgba(0, 0, 0, 0.9);
+  --bz-bel-shadow-pop: rgba(0, 0, 0, 0.5);
+  --bz-bel-ink-muted: #6b6455; /* 反色底此时是米白，弱化字转深灰 */
+  --bz-bel-tag-sold: #c08b4f;
+  --bz-bel-tag-discard: #9a9282;
 }
 
 /* ---- 主面板（骨架走 .bz-panel-frame，遮罩走 .bz-panel-overlay；瑞士方角） ---- */
@@ -44,7 +86,7 @@
   background: var(--bz-bel-paper);
   border: 2px solid var(--bz-bel-ink);
   border-radius: 0;
-  box-shadow: 8px 8px 0 rgba(23, 21, 18, 0.22);
+  box-shadow: 8px 8px 0 var(--bz-bel-shadow);
 }
 /* 无壳头行（issue 219b/c 范式）：桌面无头（hero 即头，点遮罩/Esc 关闭）；印章头 .bz-bel-mobhead 移动专属 */
 .bz-bel-mobhead,
@@ -127,7 +169,7 @@
   min-width: 100%; max-height: 264px; overflow-y: auto;
   background: var(--bz-bel-paper);
   border: 2px solid var(--bz-bel-ink); border-radius: 0;
-  box-shadow: 6px 6px 0 rgba(23, 21, 18, 0.22);
+  box-shadow: 6px 6px 0 var(--bz-bel-shadow);
   z-index: 3; /* 面板内浮层：后置定位卡片会盖住同层菜单，小值抬一层（窗口层仍归 topifyZ） */
 }
 .bz-bel-yearsel.is-open .bz-bel-dropmenu { display: block; }
@@ -188,8 +230,8 @@
   cursor: default; user-select: none; -webkit-user-select: none;
 }
 .bz-bel-cell:hover { background: var(--bz-bel-ink); color: var(--bz-bel-paper); }
-.bz-bel-cell:hover .bz-bel-cell-idx { color: #b9b2a2; }
-.bz-bel-cell:hover .bz-bel-mut { color: #b9b2a2; }
+.bz-bel-cell:hover .bz-bel-cell-idx { color: var(--bz-bel-ink-muted); }
+.bz-bel-cell:hover .bz-bel-mut { color: var(--bz-bel-ink-muted); }
 .bz-bel-cell-idx { font-size: var(--bz-font-caption); letter-spacing: 2px; color: var(--bz-text-3); }
 .bz-bel-tag {
   position: absolute; top: 13px; right: 13px;
@@ -201,8 +243,8 @@
 /* 状态徽章（数据语义色，P20 海报化：使用中=实底墨 / 闲置=赤橙 / 转卖=棕橙 / 丢弃=虚线灰） */
 .bz-bel-tag--using { background: var(--bz-bel-ink); border-color: var(--bz-bel-ink); color: var(--bz-bel-paper); }
 .bz-bel-tag--idle { border-color: var(--bz-bel-accent); color: var(--bz-bel-accent); }
-.bz-bel-tag--sold { border-color: #8a5a26; color: #8a5a26; }
-.bz-bel-tag--discard { border-style: dashed; border-color: #8a8375; color: #8a8375; }
+.bz-bel-tag--sold { border-color: var(--bz-bel-tag-sold); color: var(--bz-bel-tag-sold); }
+.bz-bel-tag--discard { border-style: dashed; border-color: var(--bz-bel-tag-discard); color: var(--bz-bel-tag-discard); }
 .bz-bel-cell:hover .bz-bel-tag--using { background: var(--bz-bel-paper); border-color: var(--bz-bel-paper); color: var(--bz-bel-ink); }
 .bz-bel-cell-em { font-size: 40px; line-height: 1; margin: auto 0; padding: 10px 0 var(--bz-space-sm); }
 .bz-bel-name {
@@ -232,7 +274,7 @@
   width: 520px; max-width: calc(100vw - 32px); max-height: 86vh; overflow-y: auto;
   background: var(--bz-bel-paper); color: var(--bz-bel-ink);
   border: 2px solid var(--bz-bel-ink); border-radius: 0;
-  box-shadow: 10px 10px 0 rgba(23, 21, 18, 0.85);
+  box-shadow: 10px 10px 0 var(--bz-bel-shadow-strong);
   padding: 22px var(--bz-space-xl);
 }
 .bz-bel-detail-head {
@@ -270,7 +312,7 @@
   border-radius: 0; padding: 0; min-width: 160px;
   background: var(--bz-bel-paper);
   border: 2px solid var(--bz-bel-ink);
-  box-shadow: 6px 6px 0 rgba(23, 21, 18, 0.85);
+  box-shadow: 6px 6px 0 var(--bz-bel-shadow-strong);
   overflow: hidden;
 }
 .bz-item-menu.bz-bel-menu button.bz-item-menu-item { border-radius: 0 !important; padding: 10px var(--bz-space-lg); font-size: var(--bz-font-label); letter-spacing: 1px; }
@@ -287,7 +329,7 @@
 .bz-bel-form {
   background: var(--bz-bel-paper); color: var(--bz-bel-ink);
   border-radius: 0;
-  border: 2px solid var(--bz-bel-ink); box-shadow: 10px 10px 0 rgba(23, 21, 18, 0.85);
+  border: 2px solid var(--bz-bel-ink); box-shadow: 10px 10px 0 var(--bz-bel-shadow-strong);
   width: 480px; max-width: calc(100vw - 32px); max-height: 86vh; overflow-y: auto;
   padding: var(--bz-space-lg); display: flex; flex-direction: column;
 }
@@ -297,7 +339,7 @@
 .bz-bel-form .bz-popover {
   background: var(--bz-bel-paper);
   border: 1.5px solid var(--bz-bel-ink); border-radius: 0;
-  box-shadow: 4px 4px 0 rgba(23, 21, 18, 0.15);
+  box-shadow: 4px 4px 0 var(--bz-bel-shadow-pop);
 }
 .bz-bel-form .bz-popover-item:hover { background: var(--bz-bel-dim); }
 .bz-bel-form .bz-popover-item.is-on { background: var(--bz-bel-dim); color: var(--bz-bel-accent); }
