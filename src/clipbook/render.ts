@@ -50,6 +50,7 @@ export const ICO = {
   folder: 'folder-open',
   rotate: 'rotate-ccw',
   radio: 'radio',
+  brief: 'newspaper',
 };
 
 // ==================== 面板骨架 ====================
@@ -141,8 +142,8 @@ export function stateLabel(st: string): string {
 
 // ==================== 左 rail（V1 点线索引） ====================
 
-/** data-src JSON 序列化选择器（UP 行携带 platform=B站 + up=uid；site 行携带站点名） */
-export type SrcSelJson = { kind: 'all' } | { kind: 'inbox'; platform: string; up: string | null } | { kind: 'clip' } | { kind: 'site'; site: string };
+/** data-src JSON 序列化选择器（UP 行携带 platform=B站 + up=uid；site 行携带站点名；brief = 每日简报固定源） */
+export type SrcSelJson = { kind: 'all' } | { kind: 'inbox'; platform: string; up: string | null } | { kind: 'clip' } | { kind: 'site'; site: string } | { kind: 'brief' };
 
 /** rail 源行（原 ui.ts railItemHtml 平移）：徽标/图标槽位保留 DOM（编辑部皮肤 CSS 隐藏，结构给测试） */
 export function railItemHtml(sel: SrcSelJson, label: string, unread: number, total: number, icon: string | null, color: string | null, active: boolean, sub?: string): string {
@@ -204,6 +205,99 @@ export function deskFoldRowHtml(kind: 'read' | 'saved', n: number, open: boolean
 /** 桌面折叠段体（未展开 = hidden；纯结构，视觉由 styles.css） */
 export function foldBodyHtml(html: string, open: boolean): string {
   return html ? `<div class="bz-clip-desk-fold-body"${open ? '' : ' hidden'}>${html}</div>` : '';
+}
+
+// ==================== 每日简报（ADR-0119）：按天分节的目录 + 阅读区 ====================
+
+/** 日节头（ADR-0119 §5：日期 + 当日条数；编辑部风细线拖尾） */
+export function briefDayHeadHtml(day: string, n: number): string {
+  return `
+    <div class="bz-clip-day" data-clip-day="${esc(day)}">
+      <span class="bz-clip-day-name">${esc(day)}</span>
+      <span class="bz-clip-day-n">${n} 条</span>
+      <span class="bz-clip-day-rule"></span>
+    </div>`;
+}
+
+/**
+ * 简报目录（按天分节，节内条目复用中栏条目 markup —— data-id 复用点击/右键/长按链路）。
+ * 与 news 面不同：**不做已读/已收折叠段**（ADR-0119 §5「参与状态机」= 状态点与计数照常，
+ * 但简报以「按天翻阅」为主，隐藏已读会把当天内容掏空）；状态由 `bz-clip-item--<st>` 视觉表达。
+ * 失败条目（error）行首加 ✗ 标记，点开进错误阅读面（带重跑入口）。
+ */
+export function briefListHtml(
+  groups: Array<{ day: string; items: ClipArticle[] }>,
+  curId: string | null,
+  timeOf: (a: ClipArticle) => string
+): string {
+  return groups.map((g) => `
+    ${briefDayHeadHtml(g.day, g.items.length)}
+    ${g.items.map((a) => `
+    <div class="bz-clip-item bz-clip-item--${a.st}${a.raw && a.raw.error ? ' bz-clip-item--err' : ''}${curId && curId === a.id ? ' on' : ''}" data-id="${esc(a.id)}">
+      <span class="bz-clip-item-tag">${a.raw && a.raw.error ? '✗' : esc(a.raw && a.raw.src === 'subtitle' ? '字幕' : '转写')}</span>
+      <div class="bz-clip-item-main">
+        <div class="bz-clip-item-t"><span>${esc(a.title)}</span></div>
+        <div class="bz-clip-item-meta">${esc(siteShort(a.srcName))} · ${esc(timeOf(a))}</div>
+      </div>
+    </div>`).join('')}`).join('');
+}
+
+/**
+ * 要点正文轻渲染（简报专用，纯层）：`## 小节` → h3、`- 要点` → ul/li、其余 → p。
+ * 不走 md.ts 段落化（其为文章正文设计，只认 p/quote/img，会把 markdown 记号原样吐出）。
+ */
+export function briefPointsHtml(body: string): string {
+  const lines = String(body || '').split(/\r?\n/);
+  let out = '';
+  let inList = false;
+  const closeList = () => { if (inList) { out += '</ul>'; inList = false; } };
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) { closeList(); continue; }
+    const h = line.match(/^#{1,6}\s+(.*)$/);
+    if (h) { closeList(); out += `<h3 class="bz-clip-brief-h">${inlineHtml(h[1])}</h3>`; continue; }
+    const li = line.match(/^[-*]\s+(.*)$/);
+    if (li) {
+      if (!inList) { out += '<ul class="bz-clip-brief-ul">'; inList = true; }
+      out += `<li>${inlineHtml(li[1])}</li>`;
+      continue;
+    }
+    closeList();
+    out += `<p>${inlineHtml(line)}</p>`;
+  }
+  closeList();
+  return out;
+}
+
+/** 简报阅读面：要点正文 + 「打开原视频」脚 + 可展开转录稿（缓存保留期内；取不到则不出该段） */
+export function briefReaderHtml(
+  a: ClipArticle,
+  opts: { time: string; points: string; transcript: string; durationLabel: string }
+): string {
+  const err = a.raw && a.raw.error ? String(a.raw.error) : '';
+  const head = `
+    <div class="bz-clip-art-title">${esc(a.title)}</div>
+    <div class="bz-clip-art-meta">
+      <span>${esc(opts.time)}</span>
+      <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${esc(siteShort(a.srcName))}</span></span>
+      ${opts.durationLabel ? `<span class="bz-clip-art-dur">${esc(opts.durationLabel)}</span>` : ''}
+    </div>`;
+  const feet = `
+    <div class="bz-clip-art-foot">
+      <span role="button" tabindex="0" data-clip-open-url>打开原视频 ${iconSpan(ICO.external, 'bz-ic--xs')}</span>
+    </div>`;
+  if (err) {
+    return `${head}
+      <div class="bz-clip-brief-err">${iconSpan(ICO.x, 'bz-ic--xs')}本期抓取失败：${esc(err)}</div>
+      <div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-brief-retry>重新抓取本期</span></div>${feet}`;
+  }
+  const pts = opts.points || `<p class="dim">正在生成本期要点…</p>`;
+  const tr = opts.transcript
+    ? `<details class="bz-clip-brief-tr"><summary>完整转录稿</summary><div class="bz-clip-brief-tr-body">${esc(opts.transcript)}</div></details>`
+    : '';
+  return `${head}
+    <div class="bz-clip-brief-points" data-clip-md>${pts}</div>
+    ${tr}${feet}`;
 }
 
 // ==================== 右栏阅读面 ====================

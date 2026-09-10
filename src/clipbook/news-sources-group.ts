@@ -21,7 +21,7 @@ import { renderSettingsInto } from '../core/settings-schema';
 import type { SettingsRow, SettingsRowContext, SettingsSchema } from '../core/settings-schema';
 import {
   readDataSourceState, writeSources, addBilibiliUp, removeBilibiliUp,
-  writeBilibiliMaxItems, writeBilibiliCookie, type DataSourceState,
+  writeBilibiliMaxItems, writeBilibiliCookie, addBriefUp, removeBriefUp, type DataSourceState,
 } from './news-source-settings';
 import { resolveUidFromInput, type BilibiliUpInfo } from './news-data';
 
@@ -64,6 +64,11 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
     box.bilibiliUps.length > 0
       ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主，添加与移除在管理弹窗`
       : '暂未跟踪 UP 主，添加与移除在管理弹窗';
+  /** 每日简报名单行描述（ADR-0119：名单 + 已产条目计数） */
+  const briefListDesc = () =>
+    box.briefUps.length > 0
+      ? `已开启 ${box.briefUps.length} 位 UP 主，已产出 ${box.totalBriefs} 条要点`
+      : '尚未开启深度总结，添加 UP 主后每日生成要点';
 
   return [
     { type: 'toggle', name: '知乎日报', desc: '抓取知乎日报每日文章', binding: sourceBinding('zhihu'),
@@ -78,13 +83,31 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
         ups: [...box.bilibiliUps],
         upInfo: { ...box.bilibiliUpInfo },
         cookie: box.bilibiliCookie,
+        briefUps: [...box.briefUps],
         onChanged: async () => {
           // 增删/配置后重读盘回填状态盒 + 行描述（以磁盘为基底，与写队列串行）
           const fresh = await readDataSourceState();
           box.bilibiliUps = [...fresh.bilibiliUps];
           box.bilibiliUpInfo = { ...fresh.bilibiliUpInfo };
           box.bilibiliCookie = fresh.bilibiliCookie;
+          box.briefUps = [...fresh.briefUps];
           setRowDesc(ctx, upListDesc());
+          ctx.refreshVisibility();
+        },
+      }) },
+    { type: 'button', name: '每日简报名单', desc: briefListDesc(), buttonText: '管理', cta: true,
+      onClick: (ctx) => openUpManagerModal({
+        ups: [...box.bilibiliUps],
+        upInfo: { ...box.bilibiliUpInfo },
+        cookie: box.bilibiliCookie,
+        briefUps: [...box.briefUps],
+        onChanged: async () => {
+          const fresh = await readDataSourceState();
+          box.bilibiliUps = [...fresh.bilibiliUps];
+          box.bilibiliUpInfo = { ...fresh.bilibiliUpInfo };
+          box.bilibiliCookie = fresh.bilibiliCookie;
+          box.briefUps = [...fresh.briefUps];
+          setRowDesc(ctx, briefListDesc());
           ctx.refreshVisibility();
         },
       }) },
@@ -117,6 +140,8 @@ export interface UpManagerSchemaOptions {
   ups: string[];
   upInfo: Record<string, BilibiliUpInfo>;
   cookie: string;
+  /** 每日简报名单（ADR-0119：briefUps 段，与 UP 主名单互斥）；lint 最小参数调用可省 */
+  briefUps?: string[];
   onChanged: () => void;
 }
 
@@ -126,6 +151,8 @@ interface UpManagerBox {
   cookieInput: string;
   ups: string[];
   upInfo: Record<string, BilibiliUpInfo>;
+  briefInput: string;
+  briefUps: string[];
 }
 
 /**
@@ -139,6 +166,8 @@ export function upManagerSettingsSchema(opts: UpManagerSchemaOptions): SettingsS
     cookieInput: String(opts.cookie || ''),
     ups: [...opts.ups],
     upInfo: { ...opts.upInfo },
+    briefInput: '',
+    briefUps: [...(opts.briefUps || [])],
   };
   return {
     groups: [
@@ -203,8 +232,76 @@ export function upManagerSettingsSchema(opts: UpManagerSchemaOptions): SettingsS
           },
         ],
       },
+      {
+        // 每日简报（ADR-0119）：独立名单——走「字幕优先 → 转写 → AI 要点」链路，与上方 UP 主名单**互斥**
+        icon: 'newspaper',
+        name: '每日简报',
+        rows: [
+          {
+            type: 'text',
+            name: '添加 UP 主',
+            desc: '粘贴主页链接或视频链接，自动解析后入库',
+            placeholder: '粘贴链接或 UID',
+            binding: {
+              get: () => box.briefInput,
+              set: (v) => { box.briefInput = v; },
+              save: () => {},
+            },
+            actions: [{
+              text: '添加',
+              cta: true,
+              onClick: (value) => addBriefUid(value, box, opts),
+            }],
+          },
+          {
+            type: 'list',
+            name: '深度总结名单',
+            desc: '每日抓取其新投稿并生成要点',
+            items: () => box.briefUps.map((uid) => ({
+              key: uid,
+              label: upDisplayName(uid, box.upInfo[uid]),
+              sub: `UID ${uid}`,
+              imageUrl: box.upInfo[uid]?.avatar,
+            })),
+            emptyText: '暂无深度总结 UP 主，在上方粘贴主页链接添加',
+            onChange: (keys) => {
+              void (async () => {
+                const removed = box.briefUps.filter((u) => !keys.includes(u));
+                for (const uid of removed) {
+                  await removeBriefUp(uid);
+                  box.briefUps = box.briefUps.filter((u) => u !== uid);
+                  notice(`已从每日简报移除 ${uid}`, 'success');
+                }
+                if (removed.length > 0) opts.onChanged();
+              })();
+            },
+          },
+        ],
+      },
     ],
   };
+}
+
+/** 添加每日简报名单动作（解析 UID → 入库；互斥：入简报名单即从 UP 主名单移除） */
+async function addBriefUid(raw: string | undefined, box: UpManagerBox, opts: UpManagerSchemaOptions): Promise<void> {
+  const input = String(raw || '').trim();
+  if (!input) return;
+  const uid = await resolveUidFromInput(input);
+  if (!uid) {
+    notice('无法识别 UID，请粘贴 space.bilibili.com 内的主页链接', 'error');
+    return;
+  }
+  const added = await addBriefUp(uid);
+  if (!added) {
+    notice('该 UP 主已在每日简报名单中', 'info');
+    return;
+  }
+  box.briefInput = '';
+  box.briefUps = [...box.briefUps, uid];
+  // 互斥：可能已从 UP 主名单移除，字盒同步（避免弹窗内两列表同时显示同一 UP）
+  box.ups = box.ups.filter((u) => u !== uid);
+  opts.onChanged();
+  notice(`已添加每日简报 UP 主 ${uid}`, 'success');
 }
 
 /** UP 主显示名：后台回填名字则用之，否则回退 uid（ticket 126） */
@@ -246,7 +343,7 @@ async function saveCookie(value: string, box: UpManagerBox, opts: UpManagerSchem
 }
 
 /** 打开 UP 主名单管理弹窗：自建 overlay + 声明式内容（ticket 131；z 序与叠加行为零变化） */
-function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, BilibiliUpInfo>; cookie: string; onChanged: () => void }): void {
+function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, BilibiliUpInfo>; cookie: string; briefUps: string[]; onChanged: () => void }): void {
   let handle: { unregister(): void } | null = null;
   function close(): void {
     mask.remove();

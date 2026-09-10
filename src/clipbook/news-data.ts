@@ -7,7 +7,7 @@
 import { TFile } from 'obsidian';
 import { getApp } from '../core/app';
 import { jsonFileStore, storageFile } from '../core/storage';
-import { articleKeyOf } from './constants';
+import { articleKeyOf, briefKeyOf } from './constants';
 
 export const NEWS_JSON_PATH = 'CONFIG/STORAGE/news.json';
 export const STATS_JSON_PATH = 'CONFIG/STORAGE/news-stats.json';
@@ -34,7 +34,9 @@ export interface BilibiliUpInfo {
 
 /** 四段对象结构（ADR-0060）；articles 为原纯数组内容，stats 由 news-stats.json 并入。
  *  bilibiliUpInfo 为第五段（可选，ticket 126 新增）：uid → {name?, avatar?}，后台回填、插件只读展示；
- *  bilibiliMaxItems/bilibiliCookie 为第六段（可选，ticket 127 新增）：每 UP 最近 N 条 + 用户配置的 B 站 Cookie */
+ *  bilibiliMaxItems/bilibiliCookie 为第六段（可选，ticket 127 新增）：每 UP 最近 N 条 + 用户配置的 B 站 Cookie
+ *  briefUps/briefs 为第七、八段（ADR-0119 新增，每日简报）：名单 uid 数组 + 简报条目数组，
+ *  **插件侧写、数据源守护只读**（守护用 briefUps 判断调度、读 briefs 去重）。*/
 export interface NewsData {
   articles: any[];
   stats: { totalRead: number; totalSaved: number; totalSkipped: number; byPlatform: Record<string, number>; byDate: Record<string, number> };
@@ -43,6 +45,10 @@ export interface NewsData {
   bilibiliMaxItems: number;
   bilibiliCookie: string;
   sources: NewsSources;
+  /** 每日简报名单（ADR-0119）：走「字幕优先 → 转写 → AI 要点」链路的 UP uid */
+  briefUps: string[];
+  /** 简报条目（ADR-0119）：一条视频一条，body = AI 要点 markdown */
+  briefs: any[];
 }
 
 /** 读取失败 / 文件缺失的区分（首用引导 vs 错误态沿用 reader 语义） */
@@ -53,7 +59,44 @@ export interface ReadNewsResult {
 }
 
 function emptyData(): NewsData {
-  return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES } };
+  return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, briefUps: [], briefs: [] };
+}
+
+/** 简报条目容错解析（纯函数，ADR-0119）：非对象条目丢弃；bvid 缺失丢弃（无稳定标识）；
+ *  字段归一（字符串化 + 去空白）；read/state 缺失 → 未读；body/src/error 缺失 → 省略键。 */
+export function normalizeBrief(raw: unknown): any | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const r = raw as Record<string, any>;
+  const bvid = String(r.bvid ?? '').trim();
+  if (!bvid) return null;
+  const b: any = {
+    bvid,
+    title: String(r.title ?? ''),
+    url: String(r.url ?? '') || `https://www.bilibili.com/video/${bvid}`,
+    upMid: String(r.upMid ?? ''),
+    upName: String(r.upName ?? ''),
+    duration: Number(r.duration) || 0,
+    pubdate: Number(r.pubdate) || 0,
+    date: String(r.date ?? ''),
+    fetchedAt: String(r.fetchedAt ?? ''),
+    read: r.read === true,
+    state: r.state === 'saved' ? 'saved' : (r.read === true ? 'read' : 'unread'),
+  };
+  if (r.body) b.body = String(r.body);
+  if (r.src) b.src = String(r.src);
+  if (r.error) b.error = String(r.error);
+  return b;
+}
+
+/** 简报条目列表容错解析（纯函数）：非数组 → []；逐条 normalizeBrief 丢弃非法项 */
+export function parseBriefs(raw: unknown): any[] {
+  if (!Array.isArray(raw)) return [];
+  const out: any[] = [];
+  for (const it of raw) {
+    const b = normalizeBrief(it);
+    if (b) out.push(b);
+  }
+  return out;
 }
 
 /** 纯函数：bilibiliUpInfo 段容错解析（uid → {name?, avatar?}；非对象/数组/空 → {}；头像统一转 https） */
@@ -137,6 +180,8 @@ export function parseNewsFileContent(raw: string): NewsData | null {
       sources: obj.sources && typeof obj.sources === 'object'
         ? { ...DEFAULT_SOURCES, ...(obj.sources as Record<string, boolean>) }
         : { ...DEFAULT_SOURCES },
+      briefUps: Array.isArray(obj.briefUps) ? obj.briefUps.map((u: any) => String(u ?? '').trim()).filter(Boolean) : [],
+      briefs: parseBriefs(obj.briefs),
     };
   }
   return null;
@@ -176,6 +221,8 @@ export interface NewsWriteIntent {
   set: Partial<NewsData>;
   /** articles 删除意图（articleKeyOf 列表）：并集合并时从磁盘侧一并剔除，防删除条目被磁盘旧值复活 */
   removeArticleKeys?: string[];
+  /** briefs 删除意图（briefKeyOf 列表，issue 263）：同上，防删除条目被磁盘旧值复活 */
+  removeBriefKeys?: string[];
 }
 
 /**
@@ -184,6 +231,8 @@ export interface NewsWriteIntent {
  * 更新的配置段覆盖丢失。规则：
  * - articles：磁盘 ∪ 声明列表按 articleKeyOf 并集（磁盘顺序保留，声明条目同 key 胜出，
  *   removeArticleKeys 从两侧剔除）；
+ * - briefs（issue 263）：同法按 briefKeyOf 并集——守护追加新条目、插件回填 body/state
+ *   都在同一段上写，盲覆盖会让任一侧的新写丢失；
  * - 其余段：声明改动（intent.set 含该段）→ 用声明值；未声明 → 取磁盘现值。
  * 须在 write-queue 串行队列内调用（见 write-queue.ts）。
  */
@@ -213,7 +262,29 @@ export async function writeNewsDataMerged(intent: NewsWriteIntent): Promise<void
     }
     next.articles = merged;
   }
-  for (const seg of ['stats', 'bilibiliUps', 'bilibiliUpInfo', 'bilibiliMaxItems', 'bilibiliCookie', 'sources'] as const) {
+  if (intent.set.briefs || intent.removeBriefKeys?.length) {
+    const patchList = intent.set.briefs || [];
+    const removeKeys = new Set(intent.removeBriefKeys || []);
+    const patchByKey = new Map<string, any>();
+    for (const b of patchList) patchByKey.set(briefKeyOf(b), b);
+    const merged: any[] = [];
+    const seen = new Set<string>();
+    for (const b of base.briefs || []) {
+      const k = briefKeyOf(b);
+      if (removeKeys.has(k)) continue;
+      seen.add(k);
+      merged.push(patchByKey.has(k) ? patchByKey.get(k) : b);
+    }
+    for (const b of patchList) {
+      const k = briefKeyOf(b);
+      if (!seen.has(k)) {
+        merged.push(b);
+        seen.add(k);
+      }
+    }
+    next.briefs = merged;
+  }
+  for (const seg of ['stats', 'bilibiliUps', 'bilibiliUpInfo', 'bilibiliMaxItems', 'bilibiliCookie', 'sources', 'briefUps'] as const) {
     if (intent.set[seg] !== undefined) {
       (next as any)[seg] = intent.set[seg];
     }
@@ -314,4 +385,25 @@ export function applyRetention(articles: any[], savedDays: number, skippedDays: 
 export function normalizeRetentionDays(v: string): number | null {
   const n = Number(String(v || '').trim());
   return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/**
+ * 简报条目保留清理（纯函数，ADR-0119 §13；插件侧装载时一次）：
+ * - read 非 true（未读）→ 永不处理（含待出稿与错误条目——没读过的简报不删）
+ * - read === true（已读/已保存骨架）→ 按 fetchedAt ?? date 超 days 天删除
+ * - 起算时间解析失败（NaN）→ 保守保留
+ * 与 articles 段同口径（applyRetention），只是不再区分 saved/skipped 两档。
+ */
+export function applyBriefRetention(briefs: any[], days: number, now: number = Date.now()): any[] {
+  const DAY = 24 * 60 * 60 * 1000;
+  const kept: any[] = [];
+  for (const b of briefs) {
+    if (!b || b.read !== true) { kept.push(b); continue; }
+    if (!Number.isFinite(days) || days <= 0) { kept.push(b); continue; }
+    const t = new Date(b.fetchedAt || b.date || '').getTime();
+    if (!Number.isFinite(t)) { kept.push(b); continue; }
+    if (now - t > days * DAY) continue; // 超龄删
+    kept.push(b);
+  }
+  return kept;
 }

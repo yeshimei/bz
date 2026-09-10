@@ -51,9 +51,11 @@ describe('数据源组 schema 形态（声明式重写）', () => {
     seedDisk();
     const state = await readDataSourceState();
     const rows = dataSourceGroupRows(state);
-    expect(rows.length).toBeGreaterThanOrEqual(5);
+    expect(rows.length).toBeGreaterThanOrEqual(6);
     expect(rows.some((r) => r.type === 'custom')).toBe(false);
-    expect(rows.map((r) => r.type)).toEqual(['toggle', 'toggle', 'toggle', 'button', 'number', 'number']);
+    // ADR-0119：B站组后新增「每日简报名单」按钮行（briefUps 管理入口），其余行序不变
+    expect(rows.map((r) => r.type)).toEqual(['toggle', 'toggle', 'toggle', 'button', 'button', 'number', 'number']);
+    expect(rowByName(rows, '每日简报名单').buttonText).toBe('管理');
   });
 
   it('news.json 缺失：安装引导（info + 复制安装命令按钮）', async () => {

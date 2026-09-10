@@ -7,7 +7,7 @@
  * - clipbook.json 侧写读取；
  * - 剪藏目录扫描（目录不存在 → null 区分空态）。
  */
-import { readNewsData, writeNewsDataMerged, migrateLegacyStats, applyRetention, normalizeRetentionDays, statsHasData, type NewsWriteIntent } from './news-data';
+import { readNewsData, writeNewsDataMerged, migrateLegacyStats, applyRetention, applyBriefRetention, normalizeRetentionDays, statsHasData, type NewsWriteIntent } from './news-data';
 import { readClipbookData } from './data';
 import { scanClipDirectory, type ClipNote } from './scan';
 import { clipUrlSet } from './store';
@@ -38,6 +38,7 @@ export async function readNewsAndSidecar(): Promise<PanelData> {
 
   if (res.missing) {
     M.articles = [];
+    M.briefs = [];
     M.clipNotes = null;
     M.clipUrls = new Set();
     M.sidecar = { articleOverrides: {}, savedArchive: [], order: [] };
@@ -46,6 +47,7 @@ export async function readNewsAndSidecar(): Promise<PanelData> {
   }
   if (!res.ok) {
     M.articles = [];
+    M.briefs = [];
     M.clipNotes = null;
     M.clipUrls = new Set();
     M.sidecar = { articleOverrides: {}, savedArchive: [], order: [] };
@@ -61,6 +63,10 @@ export async function readNewsAndSidecar(): Promise<PanelData> {
   const cleaned = applyRetention(data.articles, days, days);
   const retentionChanged = cleaned.length !== data.articles.length;
   if (retentionChanged) data = { ...data, articles: cleaned };
+  // 简报条目保留清理（ADR-0119 §13：同口径——未读永不清理；已读/已保存骨架超 days 天删）
+  const cleanedBriefs = applyBriefRetention(data.briefs || [], days);
+  const briefRetentionChanged = cleanedBriefs.length !== (data.briefs || []).length;
+  if (briefRetentionChanged) data = { ...data, briefs: cleanedBriefs };
   // 旧 stats 迁移（stats 段无真实数据时并入旧 news-stats.json 一次）
   let statsChanged = false;
   if (!statsHasData(data.stats)) {
@@ -72,10 +78,11 @@ export async function readNewsAndSidecar(): Promise<PanelData> {
   }
   // F：清理/迁移写回走共享串行队列 + 段级合并（只声明实际改动的段，daemon 在
   // 读-写窗口内追加的文章不被旧快照覆盖）
-  if (retentionChanged || statsChanged) {
+  if (retentionChanged || statsChanged || briefRetentionChanged) {
     const set: NewsWriteIntent['set'] = {};
     if (retentionChanged) set.articles = data.articles;
     if (statsChanged) set.stats = data.stats;
+    if (briefRetentionChanged) set.briefs = data.briefs;
     await enqueueNewsWrite(() => writeNewsDataMerged({ set }));
   }
 
@@ -88,6 +95,7 @@ export async function readNewsAndSidecar(): Promise<PanelData> {
   const clipUrls = clipUrlSet(clipNotes || []);
 
   M.articles = data.articles;
+  M.briefs = data.briefs || [];
   M.stats = data.stats;
   M.sidecar = sidecar;
   M.clipNotes = clipNotes;
