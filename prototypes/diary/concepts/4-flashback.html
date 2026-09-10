@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>概念稿 4 · 镜头（单张播放器）</title>
+<!--
+  ============================================================================
+  概念稿 4 ·「镜头」—— 一次只看一条
+  ----------------------------------------------------------------------------
+  范式主张：日记的第三种用法既不是「读」也不是「看形状」，是**偶遇**——
+  让过去自己找上门来。这时候列表是敌人：它逼你选择，而偶遇的价值恰恰在于不选择。
+
+  与现有实现的根本差别：
+  - 现有：一屏几十张卡片，眼睛在挑，脑子在筛（浏览模式）
+  - 本稿：**一屏只有一条**（播放模式）
+    · 大图/大字号 + 题注 + 时间，全屏沉浸（刻意暗色，像看片）
+    · 四种入口：那年今天 / 随机漫游 / 只看媒体 / 顺序
+    · 底部胶片条可跳看，键盘 ←→ 空格 翻页
+  - 没有筛选、没有分组、没有密度；消费而非检索
+
+  数据：../prototype-data.js → concept-data.js（真解析链）
+  ============================================================================
+-->
+<link rel="stylesheet" href="../../host-theme.css">
+<link rel="stylesheet" href="./base.css">
+<style>
+  /* 刻意暗色：播放模式独立于宿主明暗（像相机/影院的沉浸态） */
+  body {
+    --c-bg: #0d0d10; --c-surface: #17171c; --c-ink: #ececf1; --c-muted: #9b9ba6;
+    --c-faint: #64646f; --c-line: #26262e; --c-hover: #202028;
+    background: #0d0d10; color: var(--c-ink);
+    display: flex; flex-direction: column;
+  }
+
+  /* ---------- 顶部模式条 ---------- */
+  .modes {
+    flex: none; display: flex; align-items: center; gap: 8px;
+    padding: 16px 26px; justify-content: center;
+  }
+  .modes button {
+    font-size: 12px; letter-spacing: .1em; padding: 6px 15px; border-radius: 99px;
+    color: #7e7e8a; border: 1px solid #26262e; transition: all .15s;
+  }
+  .modes button:hover { color: #ececf1; border-color: #3a3a46; }
+  .modes button.on { background: var(--c-accent); border-color: transparent; color: #0d0d10; font-weight: 600; }
+  .modes .spacer { flex: 1; }
+  .modes .pos { font-family: var(--c-mono); font-size: 11px; color: var(--c-faint); letter-spacing: .12em; }
+
+  /* ---------- 舞台 ---------- */
+  .stage {
+    flex: 1; min-height: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 10px 40px 6px;
+    position: relative; cursor: pointer;
+  }
+  .frame { max-width: 100%; max-height: 100%; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+  .frame.fade { animation: fadein .42s ease; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
+
+  .vis { max-width: 92vw; display: flex; align-items: center; justify-content: center; }
+  .vis img, .vis video { max-height: 58vh; max-width: 100%; border-radius: 8px; object-fit: contain; box-shadow: 0 24px 70px -20px rgba(0,0,0,.9); }
+  .vis video { background: #000; }
+  .mstack { display: flex; gap: 8px; align-items: center; justify-content: center; max-width: 92vw; }
+  .mstack .s { height: 58vh; border-radius: 8px; overflow: hidden; background: #17171c; cursor: pointer; }
+  .mstack .s img { height: 100%; width: auto; max-width: 46vw; object-fit: cover; }
+  .mstack .s.side img { filter: brightness(.55) saturate(.7); }
+
+  /* 纯文字条目：大字排版 */
+  .quote {
+    max-width: 680px; text-align: center; font-family: var(--c-serif);
+    font-size: 25px; line-height: 1.82; letter-spacing: .02em; color: #f2f2f6;
+    display: -webkit-box; -webkit-line-clamp: 12; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .quote.small { font-size: 19px; }
+  .quote strong { font-weight: 600; }
+
+  .cap { text-align: center; max-width: 82vw; }
+  .cap .when { font-family: var(--c-mono); font-size: 12px; letter-spacing: .22em; color: var(--c-faint); }
+  .cap .when b { color: var(--c-accent); font-weight: 600; }
+  .cap .tags { margin-top: 9px; font-size: 12px; color: #8b8b96; letter-spacing: .08em; }
+  .cap .tags i { display: inline-block; width: 5px; height: 5px; border-radius: 50%; margin: 0 7px 2px 0; vertical-align: middle; }
+
+  /* 左右热区 */
+  .hitz { position: absolute; top: 0; bottom: 0; width: 15%; display: flex; align-items: center; justify-content: center; color: #3a3a46; font-size: 26px; opacity: 0; transition: opacity .18s; }
+  .stage:hover .hitz { opacity: 1; }
+  .hitz.l { left: 0; } .hitz.r { right: 0; }
+
+  /* ---------- 胶片条 ---------- */
+  .strip {
+    flex: none; display: flex; gap: 5px; overflow-x: auto; padding: 12px 26px 18px;
+    border-top: 1px solid var(--c-line); background: #0a0a0d;
+  }
+  .strip .f {
+    flex: none; width: 52px; height: 52px; border-radius: 6px; overflow: hidden;
+    background: #17171c; cursor: pointer; position: relative;
+    opacity: .42; transition: opacity .15s, transform .15s, box-shadow .15s;
+  }
+  .strip .f img { width: 100%; height: 100%; object-fit: cover; }
+  .strip .f .txt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; color: #6e6e7a; background: #14141a; }
+  .strip .f:hover { opacity: .8; }
+  .strip .f.on { opacity: 1; transform: translateY(-3px); box-shadow: 0 0 0 2px var(--c-accent); }
+  .strip .f .mk { position: absolute; left: 3px; bottom: 3px; width: 4px; height: 4px; border-radius: 50%; }
+
+  .hint { font-size: 11.5px; color: #75757f; letter-spacing: .1em; text-align: center; padding-bottom: 9px; }
+</style>
+</head>
+<body>
+<div class="c-boot" id="boot"><i></i>正在上片…</div>
+
+<div class="modes" id="modes">
+  <button data-m="today" class="on">那年今天</button>
+  <button data-m="random">随机漫游</button>
+  <button data-m="media">只看媒体</button>
+  <button data-m="seq">按时间顺序</button>
+  <span class="spacer"></span>
+  <span class="pos" id="pos"></span>
+</div>
+
+<div class="stage" id="stage">
+  <div class="hitz l" id="prev">‹</div>
+  <div class="hitz r" id="next">›</div>
+  <div class="frame" id="frame"></div>
+</div>
+
+<div class="strip c-noscroll" id="strip"></div>
+<div class="hint">← → 空格 翻页 · 点画面下一张 · 点胶片跳看</div>
+
+<script src="../prototype-data.js"></script>
+<script src="./concept-data.js"></script>
+<script src="./concept-ui.js"></script>
+<script>
+(function () {
+  var C = CUI, M = null, QUEUE = [], I = 0, MODE = 'today';
+
+  C.ready(function (model) {
+    M = model;
+    if (!queue('today').length) { MODE = 'random'; document.querySelector('[data-m="today"]').classList.remove('on'); document.querySelector('[data-m="random"]').classList.add('on'); }
+    build();
+    go(0);
+    document.getElementById('modes').addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      Array.prototype.forEach.call(this.querySelectorAll('button'), function (x) { x.classList.remove('on'); });
+      b.classList.add('on');
+      MODE = b.dataset.m;
+      build(); go(0);
+    });
+  });
+
+  /** 今天（快照里的「今天」= 数据最新一天，保证「那年今天」有内容） */
+  function todayStr() { return M.span.to; }
+
+  function queue(mode) {
+    if (mode === 'today') return M.onThisDay(todayStr());
+    if (mode === 'media') return M.entries.filter(function (e) { return C.mediaStat(e).total > 0; });
+    if (mode === 'seq') return M.entries.slice();
+    var a = M.entries.slice();
+    // 稳定伪随机：按 id 散列，避免每次刷新都变
+    a.sort(function (x, y) { return hash(x.id || x.filename + x.time) - hash(y.id || y.filename + y.time); });
+    return a;
+  }
+  function hash(s) { var h = 0; s = String(s); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; }
+
+  function build() {
+    QUEUE = queue(MODE);
+    var st = document.getElementById('strip');
+    st.innerHTML = '';
+    QUEUE.slice(0, 200).forEach(function (e, i) {
+      var f = C.h('div.f');
+      var img = C.firstImage(e);
+      if (img) {
+        f.appendChild(C.img(C.fixMedia(BZ_CONCEPT.url(img.name, e.filename)), img.name));
+      } else {
+        f.appendChild(C.h('div.txt', { text: e.emoji || '✎' }));
+      }
+      var mk = C.h('div.mk');
+      mk.style.background = C.tagColor(e.tags[0] || '日记');
+      f.appendChild(mk);
+      f.onclick = function (ev) { ev.stopPropagation(); go(i); };
+      st.appendChild(f);
+    });
+  }
+
+  function go(i) {
+    if (!QUEUE.length) return;
+    I = (i + QUEUE.length) % QUEUE.length;
+    var e = QUEUE[I];
+    var frame = document.getElementById('frame');
+    frame.innerHTML = '';
+    frame.classList.remove('fade');
+    void frame.offsetWidth;
+    frame.classList.add('fade');
+
+    // 视觉主体：优先媒体，其次大字正文
+    var pics = (e.media || []).filter(function (m) { return m.kind === 'img' || m.kind === 'video'; });
+    if (pics.length) {
+      if (pics[0].kind === 'video') {
+        var v = document.createElement('video');
+        v.src = C.fixMedia(BZ_CONCEPT.url(pics[0].name, e.filename));
+        v.controls = true; v.autoplay = true; v.muted = true; v.playsInline = true;
+        var vis = C.h('div.vis'); vis.appendChild(v);
+        frame.appendChild(vis);
+      } else if (pics.length === 1) {
+        var vis1 = C.h('div.vis');
+        vis1.appendChild(C.img(C.fixMedia(BZ_CONCEPT.url(pics[0].name, e.filename)), pics[0].name));
+        frame.appendChild(vis1);
+      } else {
+        var st = C.h('div.mstack');
+        pics.slice(0, 3).forEach(function (md, k) {
+          var s = C.h('div.s' + (k !== 0 ? ' side' : ''));
+          s.appendChild(C.img(C.fixMedia(BZ_CONCEPT.url(md.name, e.filename)), md.name));
+          st.appendChild(s);
+        });
+        frame.appendChild(st);
+      }
+      // 媒体条目的正文作小字题注
+      if (e.text) {
+        var tp = C.h('div.cap');
+        tp.innerHTML = '<div style="font-size:13.5px;line-height:1.7;color:#a9a9b4;max-width:66vw">' +
+          C.esc(C.excerpt(e, 150)) + '</div>';
+        frame.appendChild(tp);
+      }
+    } else {
+      var t = e.text || '（空）';
+      var q = C.h('div.quote' + (t.length > 120 ? '.small' : ''));
+      q.innerHTML = C.esc(t).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+      frame.appendChild(q);
+    }
+
+    // 题注
+    var cap = C.h('div.cap');
+    cap.innerHTML =
+      '<div class="when"><b>' + e.date + '</b>　' + C.weekday(e.date) + '　' + e.time + '　·　' + C.relDay(e.date) + '</div>' +
+      '<div class="tags">' + e.tags.map(function (tg) {
+        return '<i style="background:' + C.tagColor(tg) + '"></i>' + C.esc(tg);
+      }).join('　') + '</div>';
+    frame.appendChild(cap);
+
+    document.getElementById('pos').textContent = (I + 1) + ' / ' + QUEUE.length;
+    Array.prototype.forEach.call(document.querySelectorAll('.strip .f'), function (f, k) {
+      var on = k === I;
+      f.classList.toggle('on', on);
+      if (on) f.scrollIntoView({ inline: 'center', block: 'nearest' });
+    });
+  }
+
+  document.getElementById('stage').onclick = function () { go(I + 1); };
+  document.getElementById('prev').onclick = function (ev) { ev.stopPropagation(); go(I - 1); };
+  document.getElementById('next').onclick = function (ev) { ev.stopPropagation(); go(I + 1); };
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'ArrowRight' || ev.key === ' ') { ev.preventDefault(); go(I + 1); }
+    if (ev.key === 'ArrowLeft') go(I - 1);
+  });
+})();
+</script>
+</body>
+</html>

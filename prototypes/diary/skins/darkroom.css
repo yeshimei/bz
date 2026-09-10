@@ -1,0 +1,427 @@
+/* ============================================================================
+   日记本原型变体 C ·「暗房」—— 沉浸暗色影像风
+   ----------------------------------------------------------------------------
+   单源纪律：仅视觉层覆盖，markup / 行为零改动（同 warm.css 口径）。
+
+   设计意图：
+   - 「暗房」是刻意独立于宿主明暗的一套沉浸配色（像相机 App / 影院），媒体是唯一
+     亮源：界面退到近黑，照片与视频被推到最前。
+   - 章节栏改「胶片齿孔时间线」：一条竖脊 + 齿孔点，月份贴着脊排；缩略图变像框。
+   - 媒体卡：大圆角 + 底部渐变遮罩题注常显（不再 hover 才出现），播放角标常驻半透明，
+     墙上第一眼就能读到「时间 + 标签」，而不是一片匿名色块。
+   - 文字条目变「便签卡」：深面 + 左侧强调色竖线，与影像卡形成两种材质对比。
+   ========================================================================== */
+
+body.skin-darkroom {
+  /* 覆盖底 token，保证即使在 theme-light 下也整体转暗 */
+  --background-primary: #15151b;
+  --background-secondary: #101015;
+  --text-normal: #ececf1;
+  --text-muted: #9c9caa;
+  --text-faint: #6c6c7a;
+  --background-modifier-border: #2b2b35;
+  --background-modifier-hover: #23232d;
+  --background-modifier-active-hover: #2c2c37;
+  --background-modifier-cover: rgba(0, 0, 0, 0.72);
+  --text-on-accent: #14141a;
+
+  /* 核心组件库 token 同套转暗：宿主 theme-light 下 --bz-* 仍是亮色，
+     不覆盖会让搜索框/抽屉/侧栏在暗房里白头（body.skin-* 特异性 (0,1,1) 稳赢 .theme-light） */
+  --bz-surface-0: #101015;
+  --bz-surface-1: #17171d;
+  --bz-surface-2: #1e1e26;
+  --bz-surface-3: #26262f;
+  --bz-surface-4: #2b2b35;
+  --bz-surface-hover: #2c2c36;
+  --bz-surface-active: #33333e;
+  --bz-overlay: rgba(0, 0, 0, 0.6);
+  --bz-text-1: #ececf1;
+  --bz-text-2: #9c9caa;
+  --bz-text-3: #6c6c7a;
+  --bz-text-invert: #14141a;
+  --bz-brand: #e67341;
+  --bz-brand-hover: #ef8352;
+  --bz-brand-soft: rgba(230, 115, 65, 0.16);
+  --bz-border: rgba(255, 255, 255, 0.09);
+  --bz-border-strong: rgba(255, 255, 255, 0.18);
+  --bz-border-hover: rgba(255, 255, 255, 0.28);
+  --bz-code-bg: rgba(255, 255, 255, 0.07);
+}
+
+body.skin-darkroom .bz-diary {
+  background: rgba(0, 0, 0, 0.72);
+  --dw-bg: #15151b;
+  --dw-surface: #1e1e26;
+  --dw-hover: #262630;
+  --dw-active-hover: #2e2e3a;
+  --dw-line: #2c2c37;
+  --dw-cover: rgba(0, 0, 0, 0.72);
+  --dw-ink: #ececf1;
+  --dw-muted: #9c9caa;
+  --dw-faint: #6c6c7a;
+  --dw-on-accent: #14141a;
+  --dw-shadow-md: 0 6px 18px -6px rgba(0, 0, 0, 0.7), 0 30px 70px -20px rgba(0, 0, 0, 0.85);
+  --dw-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+body.skin-darkroom .bz-diary-desk {
+  border-radius: 16px;
+  border: 1px solid #2b2b35;
+  box-shadow: var(--dw-shadow-md);
+}
+body.skin-darkroom .bz-diary-mob {
+  border-radius: 0;
+}
+
+/* ---------- 抬头 ---------- */
+body.skin-darkroom .bz-diary-head {
+  padding: 18px 24px 10px;
+  align-items: baseline;
+}
+body.skin-darkroom .bz-diary-bookname {
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #f3f3f7;
+}
+body.skin-darkroom .bz-diary-range {
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  color: var(--dw-faint);
+}
+body.skin-darkroom .bz-diary .bz-diary-icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--dw-faint);
+}
+body.skin-darkroom .bz-diary .bz-diary-icon-btn:hover {
+  background: var(--dw-hover);
+  color: #fff;
+}
+body.skin-darkroom .bz-diary .bz-diary-icon-btn--on {
+  background: color-mix(in srgb, var(--dw-accent) 26%, transparent);
+  color: color-mix(in srgb, var(--dw-accent) 60%, #fff);
+}
+
+/* ---------- chips：描边幽灵，单行 ---------- */
+body.skin-darkroom .bz-diary-chiprow {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 6px;
+  padding: 2px 24px 12px;
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent);
+}
+body.skin-darkroom .bz-diary-chiprow::-webkit-scrollbar {
+  display: none;
+}
+body.skin-darkroom .bz-diary .bz-diary-chip {
+  flex: 0 0 auto;
+  background: transparent;
+  border: 1px solid var(--dw-line);
+  box-shadow: none;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  padding: 4px 11px;
+  color: var(--dw-muted);
+}
+body.skin-darkroom .bz-diary .bz-diary-chip:hover {
+  background: var(--dw-hover);
+  color: #fff;
+  border-color: #3d3d4c;
+}
+body.skin-darkroom .bz-diary .bz-diary-chip--on {
+  background: color-mix(in srgb, var(--dw-accent) 24%, transparent);
+  border-color: color-mix(in srgb, var(--dw-accent) 62%, transparent);
+  color: color-mix(in srgb, var(--dw-accent) 45%, #fff);
+  box-shadow: 0 0 14px -4px color-mix(in srgb, var(--dw-accent) 70%, transparent);
+}
+body.skin-darkroom .bz-diary-chip-cnt {
+  color: inherit;
+  opacity: 0.55;
+}
+body.skin-darkroom .bz-diary .bz-diary-chip--locked {
+  border-style: dashed;
+  opacity: 0.6;
+}
+body.skin-darkroom .bz-diary-subrow {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 10px;
+  padding: 0 24px 10px;
+}
+body.skin-darkroom .bz-diary .bz-diary-subchip {
+  flex: 0 0 auto;
+  background: var(--dw-surface);
+  color: var(--dw-muted);
+}
+body.skin-darkroom .bz-diary .bz-diary-subchip--on {
+  background: color-mix(in srgb, var(--dw-accent) 26%, transparent);
+  color: color-mix(in srgb, var(--dw-accent) 45%, #fff);
+}
+body.skin-darkroom .bz-diary-searchrow {
+  padding: 0 24px 12px;
+}
+
+/* ---------- 章节栏：胶片齿孔时间线 ---------- */
+body.skin-darkroom .bz-diary-rail {
+  --bz-rail-w: 164px;
+  /* 侧栏与吸顶标题必须同底：域样式给标题涂的是 --dw-bg（面板底），
+     与 .bz-rail 的 --bz-surface-1 不等时会露出一块「选中感」方块 */
+  background: transparent;
+  border-right: 1px solid var(--dw-line);
+}
+body.skin-darkroom .bz-diary-rail-title {
+  background: var(--dw-bg);
+}
+body.skin-darkroom .bz-diary-rail .bz-rail-scroll {
+  padding: 12px 12px 20px 16px;
+}
+body.skin-darkroom .bz-diary-rail-title {
+  font-size: 10px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--dw-faint);
+  padding: 4px 12px 10px 20px;
+}
+body.skin-darkroom .bz-diary-rail-year {
+  font-size: 12px;
+  letter-spacing: 0.26em;
+  color: var(--dw-faint);
+  padding: 16px 12px 4px 20px;
+  position: relative;
+}
+/* 竖脊 */
+body.skin-darkroom .bz-diary-rail .bz-rail-scroll {
+  position: relative;
+}
+body.skin-darkroom .bz-diary-rail .bz-rail-scroll::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  bottom: 20px;
+  width: 1px;
+  background: linear-gradient(var(--dw-line), transparent);
+}
+body.skin-darkroom .bz-diary-rail .bz-rail-item {
+  border-radius: 8px;
+  position: relative;
+}
+/* 齿孔点 */
+body.skin-darkroom .bz-diary-rail .bz-rail-item::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 14px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #3a3a48;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+body.skin-darkroom .bz-diary-rail .bz-rail-item.on::before {
+  background: var(--dw-accent);
+  box-shadow: 0 0 10px -1px color-mix(in srgb, var(--dw-accent) 80%, transparent);
+}
+body.skin-darkroom .bz-diary-rail .bz-diary-month {
+  padding: 10px 10px 10px 14px;
+}
+body.skin-darkroom .bz-diary-month-strip {
+  gap: 3px;
+  margin-top: 7px;
+}
+/* 缩略：像框 */
+body.skin-darkroom .bz-diary-month-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: #26262f;
+  box-shadow: inset 0 0 0 1px #33333f;
+}
+body.skin-darkroom .bz-diary-month-thumb--v {
+  background: linear-gradient(
+    140deg,
+    color-mix(in srgb, var(--dw-accent) 70%, #000) 0%,
+    var(--dw-accent) 100%
+  );
+  color: #14141a;
+}
+
+/* ---------- 那年今天 ---------- */
+body.skin-darkroom .bz-diary-memories-head {
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dw-muted);
+  font-weight: 500;
+}
+body.skin-darkroom .bz-diary .bz-diary-memory {
+  border-radius: 10px;
+  box-shadow: 0 4px 14px -4px rgba(0, 0, 0, 0.8);
+}
+
+/* ---------- 日期节头：等宽日期 + 强调色圆点 ---------- */
+body.skin-darkroom .bz-diary-wall {
+  padding: 8px 24px 40px;
+}
+body.skin-darkroom .bz-diary-day-head {
+  padding: 24px 0 12px;
+  gap: 10px;
+  align-items: center;
+}
+body.skin-darkroom .bz-diary-day-date {
+  font-family: var(--dw-mono);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: #f3f3f7;
+}
+body.skin-darkroom .bz-diary-day-date::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dw-accent);
+  margin-right: 9px;
+  vertical-align: middle;
+  box-shadow: 0 0 10px -1px color-mix(in srgb, var(--dw-accent) 85%, transparent);
+}
+body.skin-darkroom .bz-diary-day-week {
+  font-size: 11.5px;
+  letter-spacing: 0.12em;
+  color: var(--dw-faint);
+}
+body.skin-darkroom .bz-diary-day-stat {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--dw-faint);
+}
+body.skin-darkroom .bz-diary-day-head::after {
+  height: 1px;
+  background: linear-gradient(90deg, var(--dw-line), transparent 70%);
+}
+
+/* ---------- 媒体卡：影像优先 + 常显遮罩题注 ---------- */
+body.skin-darkroom .bz-diary-masonry {
+  column-gap: 12px;
+  padding-top: 8px;
+}
+body.skin-darkroom .bz-diary-item {
+  border-radius: 14px;
+  margin-bottom: 12px;
+}
+body.skin-darkroom .bz-diary-media {
+  border-radius: 14px;
+  background: #0e0e13;
+  box-shadow: 0 4px 16px -6px rgba(0, 0, 0, 0.9);
+}
+body.skin-darkroom .bz-diary-media-wrap > .bz-diary-text-row {
+  padding: 10px 2px 0;
+}
+body.skin-darkroom .bz-diary-media-wrap > .bz-diary-text-tx {
+  padding: 4px 2px 8px;
+  color: var(--dw-muted);
+}
+body.skin-darkroom .bz-diary-media-wrap > .bz-diary-media + .bz-diary-media {
+  margin-top: 8px;
+}
+/* 题注常显（深色渐变 + 底部小字） */
+body.skin-darkroom .bz-diary-cap {
+  opacity: 1;
+  padding: 26px 11px 9px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.78));
+  font-size: 11px;
+  letter-spacing: 0.03em;
+}
+body.skin-darkroom .bz-diary-media:hover .bz-diary-cap {
+  opacity: 1;
+}
+/* 播放角标常驻半透明 */
+body.skin-darkroom .bz-diary-play {
+  opacity: 0.85;
+  width: 46px;
+  height: 46px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+}
+body.skin-darkroom .bz-diary-media:hover .bz-diary-play {
+  opacity: 1;
+  background: color-mix(in srgb, var(--dw-accent) 72%, transparent);
+  color: #14141a;
+}
+body.skin-darkroom .bz-diary-dur {
+  background: rgba(0, 0, 0, 0.72);
+  font-size: 10.5px;
+}
+body.skin-darkroom .bz-diary-ph {
+  opacity: 0.5;
+}
+
+/* ---------- 文字条目：便签卡（左强调竖线） ---------- */
+body.skin-darkroom .bz-diary-text {
+  background: var(--dw-surface);
+  border-radius: 12px;
+  padding: 13px 15px 13px 17px;
+  position: relative;
+  box-shadow: inset 0 0 0 1px #26262f;
+}
+body.skin-darkroom .bz-diary-text::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: color-mix(in srgb, var(--dw-accent) 72%, transparent);
+}
+body.skin-darkroom .bz-diary-text:hover {
+  background: var(--dw-hover);
+}
+body.skin-darkroom .bz-diary-text-t {
+  color: var(--dw-faint);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+body.skin-darkroom .bz-diary-text-tx {
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: #dcdce4;
+}
+body.skin-darkroom .bz-diary-wide {
+  background: var(--dw-surface);
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px #26262f;
+}
+body.skin-darkroom .bz-diary-wide > .bz-diary-text-row {
+  padding: 15px 17px 0;
+}
+body.skin-darkroom .bz-diary-wide-md {
+  padding: 8px 17px 14px;
+}
+
+/* ---------- 灯箱 / 抽屉 / 空态 ---------- */
+body.skin-darkroom .bz-diary-lb {
+  background: rgba(0, 0, 0, 0.95);
+}
+body.skin-darkroom .bz-diary-lbcap {
+  color: rgba(255, 255, 255, 0.82);
+  letter-spacing: 0.06em;
+}
+body.skin-darkroom .bz-diary .bz-diary-sheet {
+  background: #1b1b22;
+  border-radius: 18px 18px 0 0;
+}
+body.skin-darkroom .bz-diary-empty-title {
+  color: var(--dw-muted);
+  letter-spacing: 0.08em;
+}
+body.skin-darkroom .bz-diary .bz-diary-empty-btn {
+  border-radius: 999px;
+  padding: 10px 26px;
+  color: #14141a;
+  box-shadow: 0 0 20px -6px color-mix(in srgb, var(--dw-accent) 80%, transparent);
+}

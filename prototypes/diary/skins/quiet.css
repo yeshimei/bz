@@ -1,0 +1,343 @@
+/* ============================================================================
+   日记本原型变体 B ·「留白」—— 静谧现代风
+   ----------------------------------------------------------------------------
+   单源纪律：仅视觉层覆盖，markup / 行为零改动（同 warm.css 口径）。
+
+   设计意图：
+   - 「不画盒子」：去掉卡片填充与边框，区块之间只用留白 + 发丝线分开。层次靠
+     字号与字重表达，而不是靠灰底色块——这是当前设计最大的病（一灰到底）。
+   - chips 彻底去胶囊化：退成一排轻文字筛选，选中=强调色文字 + 下划线。首屏顶部
+     由「4 行灰墙」变成一条几乎隐形的筛选线。
+   - 日期节头给到 30px 极轻字号（数字大、笔画细），周几与统计退到极小号字距拉开，
+     形成「大留白 + 强对比」的杂志内页感。
+   - 媒体 18px 圆角 + 长柔投影，像一张张摊在桌面上的照片；不再一律裁 4:3。
+   ========================================================================== */
+
+body.skin-quiet {
+  --q-serif: 'Optima', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  --q-hair: color-mix(in srgb, var(--text-normal) 9%, transparent);
+  --q-hair-2: color-mix(in srgb, var(--text-normal) 14%, transparent);
+}
+
+/* ---------- 面板：近白、无边框、极轻投影 ---------- */
+body.skin-quiet .bz-diary {
+  background: color-mix(in srgb, var(--background-secondary) 55%, #b9bcc4 8%);
+  --dw-bg: color-mix(in srgb, var(--background-primary) 99%, var(--interactive-accent) 1%);
+  --dw-surface: transparent;
+  --dw-hover: color-mix(in srgb, var(--text-normal) 4%, transparent);
+  --dw-active-hover: color-mix(in srgb, var(--interactive-accent) 9%, transparent);
+  --dw-line: var(--q-hair);
+  --dw-ink: color-mix(in srgb, var(--text-normal) 97%, #000 3%);
+  --dw-muted: color-mix(in srgb, var(--text-muted) 82%, transparent);
+  --dw-shadow-sm: 0 1px 3px rgba(20, 24, 32, 0.05);
+  --dw-shadow-md: 0 4px 10px -3px rgba(20, 24, 32, 0.1), 0 24px 60px -22px rgba(20, 24, 32, 0.22);
+  --dw-shadow-lg: 0 6px 18px -4px rgba(20, 24, 32, 0.12), 0 36px 80px -26px rgba(20, 24, 32, 0.24);
+}
+body.skin-quiet .bz-diary-desk {
+  border-radius: 18px;
+  box-shadow: var(--dw-shadow-md);
+}
+
+/* ---------- 抬头：轻字重品牌 + 字距 ---------- */
+body.skin-quiet .bz-diary-head {
+  padding: 24px 32px 14px;
+  align-items: baseline;
+}
+body.skin-quiet .bz-diary-bookname {
+  font-family: var(--q-serif);
+  font-size: 21px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+}
+body.skin-quiet .bz-diary-range {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--dw-faint);
+}
+body.skin-quiet .bz-diary .bz-diary-icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  font-size: 15px;
+  color: var(--dw-faint);
+}
+body.skin-quiet .bz-diary .bz-diary-icon-btn:hover {
+  background: var(--dw-hover);
+  color: var(--dw-ink);
+}
+
+/* ---------- chips：轻文字筛选，选中下划线（去胶囊） ---------- */
+body.skin-quiet .bz-diary-chiprow {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 18px;
+  padding: 2px 32px 16px;
+  border-bottom: 1px solid var(--q-hair);
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 30px), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 30px), transparent);
+}
+body.skin-quiet .bz-diary-chiprow::-webkit-scrollbar {
+  display: none;
+}
+body.skin-quiet .bz-diary .bz-diary-chip {
+  flex: 0 0 auto;
+  background: transparent !important;
+  border: none;
+  box-shadow: none;
+  padding: 2px 0 6px;
+  border-radius: 0;
+  font-size: 12.5px;
+  letter-spacing: 0.03em;
+  color: var(--dw-faint);
+  position: relative;
+}
+body.skin-quiet .bz-diary .bz-diary-chip:hover {
+  color: var(--dw-ink);
+}
+body.skin-quiet .bz-diary .bz-diary-chip--on {
+  color: var(--dw-accent);
+  font-weight: 500;
+}
+body.skin-quiet .bz-diary .bz-diary-chip--on::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--dw-accent);
+}
+body.skin-quiet .bz-diary-chip-cnt {
+  font-size: 10px;
+  color: inherit;
+  opacity: 0.5;
+}
+body.skin-quiet .bz-diary .bz-diary-chip--locked {
+  opacity: 0.55;
+  font-style: italic;
+}
+
+body.skin-quiet .bz-diary-subrow {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 14px;
+  padding: 10px 32px 8px;
+}
+body.skin-quiet .bz-diary .bz-diary-subchip {
+  flex: 0 0 auto;
+  background: transparent;
+  border: none;
+  padding: 2px 0;
+  border-radius: 0;
+  font-size: 12px;
+  color: var(--dw-faint);
+}
+body.skin-quiet .bz-diary .bz-diary-subchip--on {
+  background: transparent;
+  color: var(--dw-accent);
+  box-shadow: inset 0 -2px 0 var(--dw-accent);
+}
+body.skin-quiet .bz-diary-searchrow {
+  padding: 0 32px 12px;
+}
+
+/* ---------- 章节栏：极简 —— 大号轻月份 + 计数 ---------- */
+body.skin-quiet .bz-diary-rail {
+  --bz-rail-w: 172px;
+  /* 侧栏与面板同底（去掉核心的灰侧栏），只留一条发丝分隔；吸顶标题同底防露块 */
+  background: transparent;
+  border-right: 1px solid var(--q-hair);
+}
+body.skin-quiet .bz-diary-rail-title {
+  background: var(--dw-bg);
+}
+body.skin-quiet .bz-diary-rail .bz-rail-scroll {
+  padding: 6px 16px 20px;
+}
+body.skin-quiet .bz-diary-rail-title {
+  font-size: 10px;
+  letter-spacing: 0.34em;
+  color: var(--dw-faint);
+  padding: 8px 12px 10px;
+  font-weight: 500;
+}
+body.skin-quiet .bz-diary-rail-year {
+  font-size: 13px;
+  font-weight: 300;
+  letter-spacing: 0.22em;
+  color: var(--dw-faint);
+  padding: 18px 12px 2px;
+}
+body.skin-quiet .bz-diary-rail .bz-rail-item {
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+body.skin-quiet .bz-diary-rail .bz-diary-month {
+  padding: 10px 12px;
+}
+/* 月份缩略：退成一排极小的点/像，不再抢注意力 */
+body.skin-quiet .bz-diary-month-strip {
+  gap: 5px;
+  margin-top: 8px;
+}
+body.skin-quiet .bz-diary-month-thumb {
+  width: 16px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--q-hair-2);
+  box-shadow: none;
+}
+body.skin-quiet .bz-diary-month-thumb svg {
+  display: none;
+}
+body.skin-quiet .bz-diary-month-thumb--v {
+  background: var(--dw-accent);
+  opacity: 0.75;
+}
+
+/* ---------- 那年今天 ---------- */
+body.skin-quiet .bz-diary-memories-head {
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  font-weight: 400;
+  color: var(--dw-faint);
+  text-transform: uppercase;
+}
+body.skin-quiet .bz-diary .bz-diary-memory {
+  border-radius: 12px;
+  box-shadow: 0 2px 10px -3px rgba(20, 24, 32, 0.18);
+}
+
+/* ---------- 日期节头：大号轻字重 + 大量留白 ---------- */
+body.skin-quiet .bz-diary-wall {
+  padding: 8px 32px 56px;
+}
+body.skin-quiet .bz-diary-day-head {
+  padding: 40px 0 18px;
+  gap: 14px;
+  align-items: baseline;
+}
+body.skin-quiet .bz-diary-day-date {
+  font-family: var(--q-serif);
+  font-size: 30px;
+  font-weight: 200;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  color: var(--dw-ink);
+}
+body.skin-quiet .bz-diary-day-week {
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  color: var(--dw-faint);
+}
+body.skin-quiet .bz-diary-day-stat {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--dw-faint);
+  opacity: 0.8;
+}
+body.skin-quiet .bz-diary-day-head::after {
+  height: 1px;
+  background: var(--q-hair);
+}
+body.skin-quiet .bz-diary-day-head:first-child {
+  padding-top: 14px;
+}
+
+/* ---------- 瀑布与卡片：去盒子，媒体当主角 ---------- */
+body.skin-quiet .bz-diary-masonry {
+  column-gap: 18px;
+  padding-top: 6px;
+}
+body.skin-quiet .bz-diary-item {
+  border-radius: 16px;
+  margin-bottom: 26px;
+}
+body.skin-quiet .bz-diary-media {
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--text-normal) 5%, transparent);
+  box-shadow: 0 3px 10px -3px rgba(20, 24, 32, 0.16), 0 16px 40px -20px rgba(20, 24, 32, 0.28);
+}
+body.skin-quiet .bz-diary-media img,
+body.skin-quiet .bz-diary-media video {
+  border-radius: 16px;
+}
+body.skin-quiet .bz-diary-media-wrap > .bz-diary-text-row {
+  padding: 12px 2px 0;
+}
+body.skin-quiet .bz-diary-media-wrap > .bz-diary-text-tx {
+  padding: 4px 2px 8px;
+}
+body.skin-quiet .bz-diary-media-wrap > .bz-diary-media + .bz-diary-media {
+  margin-top: 10px;
+}
+/* 文字卡：不画盒子，只留文字与一条极淡的左标线 */
+body.skin-quiet .bz-diary-text {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 2px 0 2px 16px;
+  position: relative;
+}
+body.skin-quiet .bz-diary-text::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--q-hair-2);
+  transition: background 0.2s;
+}
+body.skin-quiet .bz-diary-text:hover {
+  background: transparent;
+}
+body.skin-quiet .bz-diary-text:hover::before {
+  background: var(--dw-accent);
+}
+body.skin-quiet .bz-diary-text-t {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--dw-faint);
+}
+body.skin-quiet .bz-diary-text-tx {
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--dw-ink);
+}
+/* 长文跨栏卡：改为上下发丝线夹住的「内页」 */
+body.skin-quiet .bz-diary-wide {
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--q-hair);
+  border-bottom: 1px solid var(--q-hair);
+  border-radius: 0;
+  box-shadow: none;
+}
+body.skin-quiet .bz-diary-wide > .bz-diary-text-row {
+  padding: 20px 0 0;
+}
+body.skin-quiet .bz-diary-wide-md {
+  padding: 10px 0 20px;
+  columns: 3;
+  column-gap: 36px;
+}
+
+/* ---------- 空态 / 灯箱 ---------- */
+body.skin-quiet .bz-diary .bz-diary-empty-btn {
+  border-radius: 999px;
+  padding: 10px 28px;
+  letter-spacing: 0.1em;
+  font-weight: 400;
+}
+body.skin-quiet .bz-diary-lbcap {
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  font-weight: 300;
+}
+body.skin-quiet .bz-diary .bz-diary-sheet {
+  border-radius: 20px 20px 0 0;
+}
