@@ -102,7 +102,13 @@ export function mobChipHtml(o: { scene: string; dot: string }, active: boolean):
 	return `<button class="bz-mobstrip-chip${active ? ' is-on' : ''}" data-memo-scene="${esc(o.scene)}">${sceneLeadHtml(o, 'bz-mobstrip-dot')}${esc(sceneLabel(o.scene))}</button>`;
 }
 
-/** 面板壳首帧模板（.bz-panel-frame.bz-memo-panel；各槽位的渲染与行为接线在 ui.ts） */
+/** 面板壳首帧模板（.bz-panel-frame.bz-memo-panel；各槽位的渲染与行为接线在 ui.ts）
+ *
+ * 移动端头行（issue 266）：移动端真全屏只有这一条头行可用（.bz-main-head 在
+ * ≤768px 按原型隐藏、新建入口原本只剩底部录入条），故头行补一枚移动端专属的
+ * 新建按钮 `.bz-memo-head-new`——桌面隐藏（桌面走 .bz-main-head 里那枚
+ * 「新建备忘录」大按钮）。两枚共用同一个 `data-memo-newbtn` 钩子，
+ * 复用 ui.ts 里既有的事件委托（`openEditor(null)`），零新增行为。 */
 export function panelShellHtml(): string {
 	return `
     <div class="bz-panel-frame bz-memo-panel bz-panel-mtop">
@@ -112,7 +118,8 @@ export function panelShellHtml(): string {
         <div class="bz-panel-head-sp"></div>
         <div class="bz-panel-head-btns">
           <button class="bz-icon-btn" data-memo-head-settings title="打开备忘录设置">${iconSpan(MEMO_ICONS.settings)}</button>
-          <button class="bz-icon-btn" data-memo-head-close title="关闭">${iconSpan(MEMO_ICONS.close)}</button>
+          <button class="bz-icon-btn bz-touch-target bz-memo-head-new" data-memo-newbtn title="新建备忘录">${iconSpan(MEMO_ICONS.add)}</button>
+          <button class="bz-icon-btn bz-touch-target bz-memo-head-close" data-memo-head-close title="关闭">${iconSpan(MEMO_ICONS.close)}</button>
         </div>
       </div>
       <div class="bz-memo-body">

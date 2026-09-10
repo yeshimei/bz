@@ -320,8 +320,15 @@ _Avoid_: 记忆文件、memories 目录、四层（已废弃）；迁移（已�
 
 ### 移动端窗口（ticket 68，跨域）
 
-**移动端默认全屏 (Mobile Default Fullscreen)**: bz 的跨域设置（ticket 68，ADR-0019）——12 个有主窗口的域各一项布尔开关（键 `<域前缀>MobileDefaultFullscreen`，落 data.json），**仅移动端（`Platform.isMobile`）显示与生效**，桌面端不显示不受影响。语义：≤768px 时 **开=真全屏**（主窗口覆盖整个视口 100vw×100vh、去圆角、头部避让安全区、底部 env(safe-area-inset-bottom)，统一类 `.bz-win-mfs`），**关=常规卡**（95%/90vh 圆角卡）；只决定每次打开的**初始形态**，窗口内无手动切换按钮。多窗口域（书库主面板+读书笔记+阅读报告一并对控制，ADR-0091）筛选/批注等小弹窗不纳入；阅读报告跟随书库键（2026-08 用户拍板，不设独立开关）。默认值=行为保持（原移动端即全屏的域默认开——日记/归物本/剪藏本/收藏本/复习/保险库等；原居中卡的域默认关——备忘录/番茄钟/文献盒）。
+**移动端默认全屏 (Mobile Default Fullscreen)**: bz 的跨域设置（ticket 68，ADR-0019）——12 个有主窗口的域各一项布尔开关（键 `<域前缀>MobileDefaultFullscreen`，落 data.json），**仅移动端（`Platform.isMobile`）显示与生效**，桌面端不显示不受影响。语义：≤768px 时 **开=真全屏**（主窗口覆盖整个视口、去圆角、头部避让安全区、底部 env(safe-area-inset-bottom)），**关=常规卡**（95%/90vh 圆角卡）；只决定每次打开的**初始形态**，窗口内无手动切换按钮。多窗口域（书库主面板+读书笔记+阅读报告一并对控制，ADR-0091）筛选/批注等小弹窗不纳入；阅读报告跟随书库键（2026-08 用户拍板，不设独立开关）。默认值=行为保持（原移动端即全屏的域默认开——日记/归物本/剪藏本/收藏本/复习/保险库等；原居中卡的域默认关——备忘录/番茄钟/文献盒）。**注**：原本承载「真全屏/常规卡」成对规则的环境类 `.bz-win-mfs`（及其「非真全屏隐藏关闭按钮」后代选择器）**已全域退役**，现由统一顶距类 `.bz-panel-mtop` 承担「移动端真全屏面板」标记职责（见下条）。
 _Avoid_: 窗口最大化、自动全屏（注意区别于闪念 FloatWindow 双击标题栏最大化——那是未接线的桌面窄窗机制，与本设置无关）
+
+**移动端真全屏面板标记类 `.bz-panel-mtop` (Mobile Fullscreen Panel Marker)**: 全站统一档（`src/core/ui/components.css`）——≤768px 时：①`padding-top: max(44px, env(safe-area-inset-top)) !important` 避让 Obsidian 移动端头部，并归零首子元素顶距（域内头行不得再重复写避让，防双份顶距）；②卡片形态 `border-radius: 0; border: none` 仍由各域自写；③**面板高度不由本类决定**——面板几何归各域（ADR-0120 决策 4：本类字面语义只是「移动端顶部避让档」，除 13 个真全屏面板根外还有 knowledge `.bz-kb-window` 的 `top/bottom` 锚定式与 clipbook `.bz-clip-mob-detail` 的 `inset:0` 嵌套层两处例外，核心层若提权强改高度会打断它们）。**挂载语义即「该面板在移动端是真全屏」**：13 个真全屏面板根全部挂它（memo/diary/clipbook/home/favorites/belongings/bookshelf/encrypt/review/recap/settings-panel/knowledge/pomodoro）；刻意的非全屏形态一律**不挂**（小橘 `#chat-panel` 60vh 聊天窗、第二大脑侧浮窗/近全屏留边弹窗、密码本底部 sheet）。
+_Avoid_: .bz-win-mfs（已退役的旧环境类）、移动端全屏开关（指上条跨域设置，是本类的上游决策）
+
+**移动端可视视口高度 `--bz-vvh` (Mobile Visual Viewport Height Token)**: 核心层提供的**共享资源**（ADR-0120/issue 266），用于修复软键盘遮挡底部输入条。`src/core/viewport.ts` 把 `window.visualViewport.height` 写进 `document.documentElement` 的 `--bz-vvh`（px；监听 `visualViewport` 的 `resize` + `scroll`——iOS 键盘弹出只发 scroll 不发 resize——外加 window `resize`/`orientationchange` 兜底；幂等挂载，`onunload` 解绑）。核心层另给基线：≤768px 时 `:root{--bz-vvh:100vh}`，`@supports (height:100dvh)` 升级为 `100dvh`（保证变量恒有值，避开 `var()` 回退值不受支持时整条声明失效落到 `auto` 的陷阱）。**消费方式（域内一行）**：`height: var(--bz-vvh, 100vh); max-height: var(--bz-vvh, 100vh);`，且若面板由 `.bz-panel-overlay`（`align-items: center`）承载，**必须同时加 `align-self: flex-start`**——遮罩 `fixed; inset:0` 不随键盘收缩，只缩短高度而不改对齐会让底边仍落在键盘之下。老内核退回 `100vh` 与改造前一致（零劣化）。范例见 `src/memo/styles.css` 移动端块；其余 12 域为可选接入（ADR-0120「后续」）。
+_Avoid_: `--bz-vh`（不存在的旧写法）、`dvh` 直接写死（旧内核无兜底、拿不到 JS 精修）
+
 
 ### 加密日记条目（日记加密，ticket 67）
 
