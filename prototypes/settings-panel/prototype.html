@@ -27,6 +27,7 @@
 <link rel="stylesheet" href="../../src/core/ui/tokens.css">
 <link rel="stylesheet" href="../../src/core/ui/components.css">
 <link rel="stylesheet" href="../../src/settings-panel/styles.css">
+<link rel="stylesheet" href="../../src/home/styles.css">
 <link rel="stylesheet" href="../mob-1to1.css">
 <script src="../mob-1to1.js"></script>
 <style>
@@ -135,10 +136,10 @@
     (async () => {
       const res = document.querySelector('#stResult');
       try {
-        // 基线检查：自检会改设置（diarySkin/diaryDirectory/cinemaSortMode/belongingsMobileDefaultFullscreen）。
+        // 基线检查：自检会改设置（diarySkin/diaryDirectory/cinemaSortMode/belongingsDefaultStatus）。
         // 残留上次运行（键在）则清 bz-sim:* 重载一次。headless 全新 profile 天然干净；
         // 浏览器手动重复跑 selftest 也能自清理（壳可重复）。
-        const dirtyKeys = ['diarySkin', 'diaryDirectory', 'cinemaSortMode', 'belongingsMobileDefaultFullscreen'];
+        const dirtyKeys = ['diarySkin', 'diaryDirectory', 'cinemaSortMode', 'belongingsDefaultStatus'];
         let base = {};
         try { base = JSON.parse(localStorage.getItem(SIM_SETTINGS_KEY) || '{}'); } catch { base = {}; }
         if (dirtyKeys.some((k) => k in base)) {
@@ -174,20 +175,49 @@
         t('移动CSS规则非空', rulesOf(md) > 50);
         t('移动面板底色非透明', getComputedStyle(mob('.bz-sp-mobile')).backgroundColor !== 'rgba(0, 0, 0, 0)');
 
+        /* ---------- 移动：壳结构（关闭钮只留首页页；分组与桌面导航同源） ---------- */
+        // 2026-09-10 拍板：域页右上角关闭钮删除（域页已有返回钮弹回首页，再叠一枚误触率高），
+        // 关面板走首页页那枚 —— 全 DOM 只剩一枚关闭钮。
+        t('移动域页无关闭钮', mobAll('.bz-sp-mob-page--domain .bz-sp-mob-close').length === 0);
+        t('移动首页页保留关闭钮（全 DOM 唯一一枚）', mobAll('.bz-sp-mob-page--home .bz-sp-mob-close').length === 1 &&
+          mobAll('.bz-sp-mob-close').length === 1);
+        t('移动返回钮在场（域页弹回首页用）', !!mob('.bz-sp-mob-back-btn'));
+        // 侧栏重新分细组（2026-09-10 拍板七组）：移动列表与桌面导航同源同序
+        const MOB_SECS = '基础>智能>记录>收集>媒体与阅读>工具>安全';
+        const mobSecOrder = await waitFor(() => {
+          const s = mobAll('.bz-sp-mob-sec').map((e) => e.textContent).join('>');
+          return s === MOB_SECS ? s : null;
+        });
+        t('移动分组与桌面导航同源七组', mobSecOrder === MOB_SECS);
+
         /* ---------- 桌面：壳结构 + 徽标（schema 预载回填）+ 默认域 ---------- */
         t('桌面面板开', !!dt('#bz-settings-panel-popup.bz-sp-desk'));
         t('桌面导航域≥16', dtAll('.bz-sp-nav-item').length >= 16);
         t('导航图标兑现（fake setIcon SVG）', !!dt('.bz-sp-nav-item .bz-sp-nav-ic svg'));
         t('头行搜索框在场', !!dt('.bz-sp-search .bz-input'));
+        // 侧栏重新分细组（2026-09-10 拍板七组，替代原「基础/记录/媒体与知识/工具」四组）：
+        // 组内域序 = DOMAINS 声明序，组序 = NAV_SECS 声明序 —— 单测 tests/settings-panel.test.ts 同口径。
+        const NAV_GROUPS = '基础>智能>记录>收集>媒体与阅读>工具>安全';
+        const navSecOrder = dtAll('.bz-sp-nav-sec-t').map((e) => e.textContent).join('>');
+        t('侧栏七组分组顺序', navSecOrder === NAV_GROUPS);
+        t('基础组含首页（通用/设置/首页）', (() => {
+          const items = dtAll('.bz-sp-nav-sec')[0]?.querySelectorAll('.bz-sp-nav-item') ?? [];
+          return [...items].map((b) => b.dataset.spDomain).join(',') === 'global,appearance,home';
+        })());
+        t('无「其他」尾组（18 可见域全在表内）', !dtAll('.bz-sp-nav-sec-t').some((e) => e.textContent === '其他'));
         await waitFor(() => badgeOf('global') !== '·' && badgeOf('global') !== '');
         t('通用徽标=1', badgeOf('global') === '1');
         t('设置徽标=2（外观独立域）', badgeOf('appearance') === '2');
-        // AI=9：4 常显（服务商/模型名称/上下文/最大输出）+ deepseek 密钥行（seed aiProvider=deepseek，
-        // visibleWhen 门控放行）+ 采样参数组 4
-        t('AI徽标=9（含 seed deepseek 密钥行门控放行）', badgeOf('ai') === '9');
+        // AI=5：4 常显（服务商/模型名称/上下文窗口/最大输出 token）+ deepseek 密钥行
+        // （seed aiProvider=deepseek，visibleWhen 门控放行）。**不是 9**：采样参数组 4 行已于
+        // 2026-09-08 拍板退役（schema 注释），旧断言按 9 是那批行还在时的口径。
+        t('AI徽标=5（含 seed deepseek 密钥行门控放行）', badgeOf('ai') === '5');
         t('归物本徽标=3（移动端组桌面门控不计）', badgeOf('belongings') === '3');
         t('默认域=通用（数据存储路径组）', await waitFor(() => dt('.bz-sp-pane .bz-sp-group-name')?.textContent === '数据存储路径') !== null);
-        t('通用路径行选择按钮（自绘 bz-sp-btn）', !!dt('.bz-sp-pane .bz-sp-path-btn.bz-sp-btn'));
+        // 路径行控件二态（renderer.ts path 分支）：有值 → chip 回显（点文本重开），空值 → 「选择…」按钮。
+        // 种子给了 storagePath，所以这里兑现的是 chip 态；两态都是自绘（无原生 Setting 嵌套）。
+        t('通用路径行自绘 chip 回显（有值态）', !!dt('.bz-sp-pane .bz-sp-chips .bz-sp-chip') &&
+          !dt('.bz-sp-pane .bz-sp-path-btn'));
 
         /* ---------- 桌面：搜索过滤域导航 ---------- */
         const searchIn = dt('.bz-sp-search .bz-input');
@@ -212,8 +242,10 @@
         dt('.bz-sp-nav-item[data-sp-domain="diary"]').click();
         await waitPaneGroups(3);
         const diaryPicks = () => dtAll('.bz-sp-pane .bz-sp-cardpick');
-        await waitFor(() => diaryPicks().length === 2);
-        t('日记主题卡被布局联动过滤为空（diarySkin 未设）', diaryPicks()[1].querySelectorAll('.bz-sp-cardpick-card').length === 0);
+        await waitFor(() => diaryPicks().length === 2 && diaryPicks()[1].querySelectorAll('.bz-sp-cardpick-card').length === 1);
+        // 种子给了 diarySkin='default' → 布局门放行主题单卡「画廊白」（ADR-0115 正名：值 ivory→gallery）
+        t('日记主题卡联动单卡（画廊白放行）', diaryPicks()[1].querySelector('.bz-sp-cardpick-card')?.textContent.includes('画廊白') === true);
+        t('主题卡按种子值选中（diarySkinTheme=gallery）', diaryPicks()[1].querySelector('.bz-sp-cardpick-card').classList.contains('is-on'));
         diaryPicks()[0].querySelector('.bz-sp-cardpick-card').click();
         t('布局卡键直绑落内存设置（diarySkin=default）', sim().diarySkin === 'default');
         // choiceCards 不热重渲（真行为口径）：切走再切回，联动过滤放行主题单卡
@@ -221,16 +253,116 @@
         dt('.bz-sp-nav-item[data-sp-domain="diary"]').click();
         await waitPaneGroups(3);
         await waitFor(() => diaryPicks().length === 2 && diaryPicks()[1].querySelectorAll('.bz-sp-cardpick-card').length === 1);
-        t('布局落盘后主题行单卡（象牙白放行）', diaryPicks()[1].querySelector('.bz-sp-cardpick-card')?.textContent.includes('象牙白') === true);
+        t('切走切回后主题行仍单卡（画廊白）', diaryPicks()[1].querySelector('.bz-sp-cardpick-card')?.textContent.includes('画廊白') === true);
+
+        /* ---------- 首页「外观 → 首页入口」内联编辑器（2026-09-10：弹窗 → 面板内联） ---------- */
+        // 导航项与面板内容都是异步渲染的（preload 徽标后才定稿）：一律 waitFor + 判空点击，
+        // 不做「元素一定已在」的假设（曾因时序踩到 null.click）。
+        const clickIf = (sel) => { const el = dt(sel); if (el) el.click(); return !!el; };
+
+        const homeNav = await waitFor(() => dt('.bz-sp-nav-item[data-sp-domain="home"]'));
+        t('设置导航出现「首页」域', !!homeNav && homeNav.textContent.indexOf('首页') >= 0);
+        if (homeNav) homeNav.click();
+        // 内联列表在 loadHomeOrder 完成后才填 —— 必须等行就绪再断言
+        const entRows = await waitFor(() => dtAll('[data-ent-list] [data-ent-row]').length === 14);
+        t('首页域内联出入口列表（14 域默认顺序）', !!entRows);
+        // 组序（2026-09-10 拍板）：外观（与其他域同范式，issue 246）在上、入口在下
+        t('首页域组序=外观 → 入口', dtAll('.bz-sp-pane .bz-sp-group-name').map((e) => e.textContent).join('>') === '外观>入口');
+        const homePicks = () => dtAll('.bz-sp-pane .bz-sp-cardpick');
+        await waitFor(() => homePicks().length === 2 && homePicks().every((p) => p.querySelectorAll('.bz-sp-cardpick-card').length === 1));
+        t('外观组两卡组（布局+主题 各一档）', homePicks().length === 2);
+        t('布局卡=活动河（预览 bz-sp-prev-panel）', homePicks()[0].querySelector('.bz-sp-cardpick-name')?.textContent === '活动河' &&
+          !!homePicks()[0].querySelector('.bz-sp-mini.bz-sp-prev-panel'));
+        t('主题卡=米白（预览 bz-sp-prev-cream 生效）', homePicks()[1].querySelector('.bz-sp-cardpick-name')?.textContent === '米白' &&
+          !!homePicks()[1].querySelector('.bz-sp-mini.bz-sp-prev-cream'));
+        t('两卡按种子值选中（homeLayout/homeSkin）', homePicks()[0].querySelector('.bz-sp-cardpick-card').classList.contains('is-on') &&
+          homePicks()[1].querySelector('.bz-sp-cardpick-card').classList.contains('is-on'));
+        t('不再有「编辑入口…」按钮（不开弹窗）', !dtAll('.bz-sp-pane button').some((b) => b.textContent.indexOf('编辑入口') >= 0));
+        t('不再有浮层遮罩（弹窗形态已退役）', !dt('.bz-home-ee-mask'));
+        t('不再有「已移除的域仍可从命令面板打开」提示行', dt('.bz-sp-pane').textContent.indexOf('命令面板') < 0);
+        t('内联列表有拖拽手柄（已物化 svg）', !!dt('[data-ent-list] .bz-home-ent-grip svg'));
+        t('桌面端只归桌面那套（data-ent-scope=desk）', (dt('.bz-home-ent') || {}).getAttribute && dt('.bz-home-ent').getAttribute('data-ent-scope') === 'desk');
+        t('无桌面/移动切换段（各端只改自己）', dtAll('.bz-home-ent-seg').length === 0);
+
+        // 移除 = 隐藏（只作用本端）；改动即时落盘。
+        // 2026-09-10 拍板：移除的域**不分区、无「已隐藏」标题**，就地排到同一列表最下面（弱化 + 无拖柄 + 点 + 加回）
+        const entListIds = () => dtAll('[data-ent-list] [data-ent-row]').map((r) => r.dataset.entRow);
+        const rowsBeforeRemove = entListIds();
+        t('点 × 移除设置域', clickIf('[data-ent-list] [data-ent-row="settings"] [data-ent-remove]'));
+        await sleep(160);
+        t('移除后行仍在同一列表（不分区）', !!dt('[data-ent-list] [data-ent-row="settings"]'));
+        t('移除后行带 --off 弱化类且无移除钮', dt('[data-ent-list] [data-ent-row="settings"]')?.classList.contains('bz-home-ent-row--off') === true &&
+          !dt('[data-ent-list] [data-ent-row="settings"] [data-ent-remove]'));
+        t('移除后排到列表最下面（末位是它）', entListIds()[entListIds().length - 1] === 'settings' &&
+          entListIds().length === rowsBeforeRemove.length);
+        t('移除后恢复钮在场（点 + 加回）', !!dt('[data-ent-restore="settings"]'));
+        t('无「已隐藏」分区元素（.bz-home-ent-sec 已退役）', dtAll('.bz-home-ent-sec').length === 0);
+        t('移除行的拖柄已隐（不参与排序）', (() => {
+          const grip = dt('[data-ent-list] [data-ent-row="settings"] .bz-home-ent-grip');
+          return !!grip && getComputedStyle(grip).visibility === 'hidden';
+        })());
+        t('列表提示语兑现（移除排最下面 · 点 + 加回）', dt('.bz-home-ent-hint')?.textContent.includes('移除的排到最下面') === true);
+        t('改动即时落盘 home.json', Object.keys(localStorage).some((k) => k.indexOf('home.json') >= 0));
+        t('点 + 恢复设置域', clickIf('[data-ent-restore="settings"]'));
+        await sleep(160);
+        t('恢复后回到可见列（--off 已摘）', dt('[data-ent-list] [data-ent-row="settings"]')?.classList.contains('bz-home-ent-row--off') === false);
+        t('恢复后无残留恢复钮/分区', !dt('[data-ent-restore="settings"]') && dtAll('.bz-home-ent-sec').length === 0);
+
+        // 拖拽排序（桌面端）
+        const entRow0 = dt('[data-ent-list] [data-ent-row]');
+        const entOrderBefore = dtAll('[data-ent-list] [data-ent-row]').map((r) => r.dataset.entRow).join(',');
+        if (entRow0) {
+          const entY0 = entRow0.getBoundingClientRect().top + 6;
+          const ENT_W = dtFrame().contentWindow;
+          const ENT_PE = ENT_W.PointerEvent || PointerEvent;
+          entRow0.dispatchEvent(new ENT_PE('pointerdown', { bubbles: true, button: 0, clientX: 100, clientY: entY0 }));
+          await sleep(40);
+          ENT_W.dispatchEvent(new ENT_PE('pointermove', { bubbles: true, clientX: 100, clientY: entY0 + 130 }));
+          await sleep(40);
+          t('拖拽中行带 drag 标记', !!dt('.bz-home-ent-drag'));
+          ENT_W.dispatchEvent(new ENT_PE('pointerup', { bubbles: true, clientX: 100, clientY: entY0 + 130 }));
+          // 拖拽后有 300ms 点击抑制窗口（防落点误触），必须等过它再做后续点击
+          await sleep(520);
+        }
+        const entOrderAfter = dtAll('[data-ent-list] [data-ent-row]').map((r) => r.dataset.entRow).join(',');
+        t('拖拽后列表顺序变化', entOrderAfter !== entOrderBefore);
+
+        // 落盘形状 = v3 四份数组（顺序与隐藏都按端各一份 → 本端编辑影响不到另一端）
+        t('home.json 落盘为 v3（desk/mob/hiddenDesk/hiddenMob 各一份）', (() => {
+          const key = Object.keys(localStorage).find((k) => k.indexOf('home.json') >= 0);
+          if (!key) return false;
+          try {
+            const v = JSON.parse(localStorage.getItem(key));
+            const j = JSON.parse(v && v.c ? v.c : v);
+            return j.version === 3 && Array.isArray(j.desk) && Array.isArray(j.mob) && Array.isArray(j.hiddenDesk) && Array.isArray(j.hiddenMob);
+          } catch { return false; }
+        })());
 
         // dir-picker：日记目录 → 打开（先快速首渲染后 adapter 补齐）
+        // 前置：本节跟着首页域那节跑，面板停在首页页 —— 先切回日记本域（行的归属域），
+        // 否则 diaryRow() 永远找不到行（曾以 undefined.querySelector 崩掉整轮自检）。
+        const diaryNav = await waitFor(() => dt('.bz-sp-nav-item[data-sp-domain="diary"]'));
+        if (diaryNav) diaryNav.click();
+        await waitPaneGroups(3);
         const diaryRow = () => dtAll('.bz-sp-pane .bz-sp-set-row').find((r) => r.querySelector('.bz-sp-set-name')?.textContent === '日记目录');
         await waitFor(() => diaryRow());
-        diaryRow().querySelector('.bz-sp-path-btn').click();
+        // 打开选择器：有值走 chip（点文本重开）、无值走「选择…」按钮 —— 两种形态都要能开
+        // （种子给 diaryDirectory='我的/日记'，所以常态是 chip；空态按钮分支保留给清空后的场景）
+        const openDiaryPicker = () => {
+          const row = diaryRow();
+          const hit = row.querySelector('.bz-sp-path-btn') || row.querySelector('.bz-sp-chip');
+          if (hit) hit.click();
+          return !!hit;
+        };
+        t('dir-picker 入口在场（有值 chip / 空态按钮二选一）', openDiaryPicker());
         const pickerRows = () => dtAll('.bz-sp-picker-mask .bz-sp-picker-row');
         await waitFor(() => dt('.bz-sp-picker-mask'));
         t('dir-picker 打开（挂 body 弹层）', !!dt('.bz-sp-picker-mask .bz-sp-picker'));
-        t('dir-picker 空选面包屑（未设置）', dt('.bz-sp-picker-crumb')?.textContent.includes('未设置') === true);
+        // 面包屑回显当前绑定值（种子已设 我的/日记；清空后才会是「未设置」）
+        t('dir-picker 面包屑回显当前值', (() => {
+          const c = dt('.bz-sp-picker-crumb');
+          return !!c && c.textContent.includes('我的') && c.textContent.includes('日记');
+        })());
         await waitFor(() => pickerRows().length >= 10 && pickerRows().some((r) => r.textContent.includes('信件')));
         t('dir-picker 降级聚合目录（库根+文件父目录+adapter 补齐）',
           pickerRows().length >= 10 && pickerRows().some((r) => r.textContent.includes('（库根目录）')) &&
@@ -258,23 +390,32 @@
         t('下拉键直绑落内存设置（cinemaSortMode=rating）', sim().cinemaSortMode === 'rating');
         t('下拉触发器值跟随', sortRow().querySelector('.bz-select-val')?.textContent === '按评分');
 
-        /* ---------- 移动：M1 命令面板 + 域设置弹窗 + 移动端组沉底 ---------- */
+        /* ---------- 移动：域页推入（M1 两页式）+ 键直绑落移动 realm + 返回钮弹回 ---------- */
         t('移动面板开', !!mob('#bz-settings-panel-popup.bz-sp-mobile'));
-        t('移动头行关闭钮图标兑现', !!mob('.bz-sp-mob-close svg'));
-        t('移动分组列表（基础/记录/媒体与知识/工具）', mobAll('.bz-sp-mob-sec').filter((s) => ['基础', '记录', '媒体与知识', '工具'].includes(s.textContent)).length === 4);
+        t('移动头行关闭钮图标兑现（首页页限定）', !!mob('.bz-sp-mob-page--home .bz-sp-mob-close svg'));
         const mobBelItem = () => mobAll('.bz-sp-mob-item').find((b) => b.querySelector('.bz-sp-mob-name')?.textContent === '归物本');
         mobBelItem().click();
-        await waitFor(() => md.querySelector('.bz-sp-mob-modal'));
-        const mobGroups = () => [...md.querySelectorAll('.bz-sp-mob-modal .bz-sp-group')];
-        await waitFor(() => mobGroups().length >= 3);
-        t('移动弹窗渲染归物本全部组（含移动端组）', mobGroups().length === 3);
-        t('移动端组沉底（弹窗末组）', mobGroups()[mobGroups().length - 1].querySelector('.bz-sp-group-name')?.textContent === '移动端');
-        const mfsSw = mobGroups()[mobGroups().length - 1].querySelector('.bz-sw');
-        mfsSw.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-        t('移动端开关键直绑落内存（移动 realm 设置单例）', simMob().belongingsMobileDefaultFullscreen === true);
-        const mobMask = md.querySelector('.bz-sp-mob-modal').previousElementSibling;
-        mobMask.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-        t('移动弹窗遮罩点击关闭', !md.querySelector('.bz-sp-mob-modal'));
+        // M1 两页式：域设置**推入成页**（不是弹窗）——bz-sp-mob-pushed 是页切换的唯一标记
+        await waitFor(() => md.querySelector('.bz-sp-mob-page--domain .bz-sp-group'));
+        t('域页推入（popup 带 bz-sp-mob-pushed）', !!md.querySelector('#bz-settings-panel-popup.bz-sp-mob-pushed'));
+        t('域页标题跟随域名', (md.querySelector('.bz-sp-mob-title') || {}).textContent === '归物本');
+        const mobGroups = () => [...md.querySelectorAll('.bz-sp-mob-page--domain .bz-sp-group')];
+        await waitFor(() => mobGroups().length >= 2);
+        t('域页渲染归物本全部组', mobGroups().length === 2);
+        t('域页组序=外观 → 显示', mobGroups().map((g) => g.querySelector('.bz-sp-group-name')?.textContent).join('>') === '外观>显示');
+        t('域页无关闭钮（关面板走首页那枚）', md.querySelectorAll('.bz-sp-mob-page--domain .bz-sp-mob-close').length === 0);
+        // 键直绑落**移动 realm** 的设置单例（移动 iframe 是独立 JS realm，靠 localStorage 持久层与桌面同源共享）
+        const mobSelRow = () => [...md.querySelectorAll('.bz-sp-mob-page--domain .bz-sp-set-row')]
+          .find((r) => r.querySelector('.bz-sp-set-name')?.textContent === '默认状态筛选');
+        await waitFor(() => mobSelRow());
+        mobSelRow().querySelector('.bz-select').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        const mobOpt = await waitFor(() => [...md.querySelectorAll('.bz-select-menu .bz-select-item')].find((o) => o.textContent.includes('使用中')));
+        mobOpt.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        t('移动域页下拉键直绑落移动 realm 设置单例', simMob().belongingsDefaultStatus === 'using');
+        // 域页头行不再挂关闭钮，取返回钮弹回首页（2026-09-10 拍板交互）
+        md.querySelector('.bz-sp-mob-back-btn').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        await sleep(300);
+        t('返回钮弹回首页页（pushed 已摘）', !md.querySelector('#bz-settings-panel-popup.bz-sp-mob-pushed'));
 
         // 移动搜索：域段 + 设置项段（schemaRowCache 预载）
         const mobSearch = mob('.bz-sp-mob-search .bz-input');
@@ -284,13 +425,15 @@
         t('移动搜索「设置项」段在场', mobAll('.bz-sp-mob-sec').some((s) => s.textContent.startsWith('设置项')));
         t('移动设置项命中行 kind 徽标', mobAll('.bz-sp-mob-kind').length > 0);
 
+
         document.title = window.__st.fail.length
           ? 'SELFTEST FAIL ' + window.__st.fail.join(',')
           : `SELFTEST OK ${window.__st.pass}/${window.__st.pass + window.__st.fail.length}`;
         res.textContent = window.__st.fail.length ? '自检失败' : `自检通过 ${window.__st.pass}`;
         res.className = window.__st.fail.length ? 'bad' : 'ok';
       } catch (err) {
-        document.title = 'SELFTEST ERR ' + (err && err.message || err);
+        document.title = 'SELFTEST ERR ' + String(err && err.message || err).slice(0, 120)
+          + ' | 已过 ' + window.__st.pass + ' 项，失败：' + (window.__st.fail.join('，') || '（无）');
         res.textContent = '自检异常';
         res.className = 'bad';
       }

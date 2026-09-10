@@ -155,6 +155,13 @@ async function collectBelongingsCounts(app: App, c: RiverCounts): Promise<void> 
   c.belongingsTotal = Object.keys((db as { items?: Record<string, unknown> }).items ?? {}).length;
 }
 
+/** 备忘录：未完成条数（memo.json 同源直读，不依赖 DataManager 单例；文件缺失不建） */
+async function collectMemoCounts(app: App, c: RiverCounts): Promise<void> {
+  const raw = await readJsonIfExists(app, storageFile('memo.json'));
+  const all = Array.isArray(raw) ? raw : [];
+  c.memoOpen = (all as Array<Record<string, unknown>>).filter((m) => !m?.completed).length;
+}
+
 /** 日记总数（目录前缀递归 md 数，含子目录）+ 写作连击（今天未写不算断） */
 function collectDiary(app: App, now: number, c: RiverCounts): RiverStreak {
   const dir = settingDir(['diaryDirectory'], '我的/日记');
@@ -194,6 +201,7 @@ export async function collectRiver(app: App, now: number = Date.now()): Promise<
     safe(() => collectClippingCounts(app, counts)),
     safe(() => collectFavoritesCounts(app, counts)),
     safe(() => collectBelongingsCounts(app, counts)),
+    safe(() => collectMemoCounts(app, counts)),
   ]);
   let streak: RiverStreak = { diaryStreak: 0, diaryWrittenToday: false };
   try {

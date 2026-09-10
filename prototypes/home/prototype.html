@@ -88,11 +88,12 @@
   const waitFrame = (getDoc, sel) => new Promise((res, rej) => {
     const started = Date.now();
     const tries = () => {
+      // 超时守卫放 try 之外：getDoc() 抛错被 catch 吞掉时会绕过内部守卫 → 无限重试（曾因此卡死自检）
+      if (Date.now() - started > 30000) return rej(new Error('iframe 面板超时'));
       try {
         const doc = getDoc();
         // 等 [data-home-entries]：活动河采集完成后才有（骨架期无入口行）
         if (doc && doc.querySelector(sel)) return res(doc);
-        if (Date.now() - started > 30000) return rej(new Error('iframe 面板超时'));
         setTimeout(tries, 150);
       } catch (e) { setTimeout(tries, 150); }
     };
@@ -123,8 +124,9 @@
 
   /* ==================== 自检（?selftest=1）：真行为 DOM 断言（经 iframe） ==================== */
   if (location.search.includes('selftest')) {
-    window.__st = { pass: 0, fail: [] };
-    const t = (name, cond) => cond ? window.__st.pass++ : window.__st.fail.push(name);
+    window.__st = { pass: 0, fail: [], last: '' };
+    // last = 最近一条断言名：自检卡死时靠它定位「跑到了哪一条」（ERR/超时排查用）
+    const t = (name, cond) => { window.__st.last = name; cond ? window.__st.pass++ : window.__st.fail.push(name); };
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     (async () => {
       const res = document.querySelector('#stResult');
@@ -134,7 +136,7 @@
         let mark = null;
         try { mark = JSON.parse(localStorage.getItem('bz-sim:__home_seed') || 'null'); } catch { mark = null; }
         const today = (() => { const d = new Date(); const p = (n) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; })();
-        if (!mark || mark.seededOn !== today || mark.rev !== 3) {
+        if (!mark || mark.seededOn !== today || mark.rev !== 6) {
           if (!location.search.includes('reset=1')) {
             B.resetHomeSim();
             location.search = '?selftest=1&reset=1';
@@ -156,9 +158,12 @@
 
         t('桌面面板开', !!dt('.bz-home-panel'));
         t('移动面板开', !!mob('.bz-home-panel'));
-        t('入口行13域', dtRows().length === 13);
-        t('复习行计数=9张逾期1', dtRows()[2].querySelector('.bz-home-ect').textContent === '9 张 · 逾期 1');
-        t('日记行计数=518篇', dtRows()[0].querySelector('.bz-home-ect').textContent === '518 篇');
+        t('入口行13域（home.json 的 hiddenDesk 藏了密码本）', dtRows().length === 13);
+        t('首页按 home.json 顺序（首行=书库）', dtRows()[0].dataset.homeGo === 'bookshelf');
+        t('桌面隐藏域不在入口列', ![...dtRows()].some((r) => r.dataset.homeGo === 'vault'));
+        t('备忘录行计数=2条待办', [...dtRows()].find((r) => r.dataset.homeGo === 'memo').querySelector('.bz-home-ect').textContent === '2 条待办');
+        t('复习行计数=9张逾期1', [...dtRows()].find((r) => r.dataset.homeGo === 'review').querySelector('.bz-home-ect').textContent === '9 张 · 逾期 1');
+        t('日记行计数=518篇', [...dtRows()].find((r) => r.dataset.homeGo === 'diary').querySelector('.bz-home-ect').textContent === '518 篇');
         t('书库行计数=在读9读完4', [...dtRows()].find((r) => r.dataset.homeGo === 'bookshelf').querySelector('.bz-home-ect').textContent === '在读 9 · 读完 4');
         t('剪藏行计数=未读12', [...dtRows()].find((r) => r.dataset.homeGo === 'clipping').querySelector('.bz-home-ect').textContent === '未读 12 篇');
         t('归物行计数=登记12件', [...dtRows()].find((r) => r.dataset.homeGo === 'belongings').querySelector('.bz-home-ect').textContent === '登记 12 件');
@@ -172,7 +177,7 @@
         t('周历7格+hit4格', dd.querySelectorAll('.bz-home-wk').length === 7 && dd.querySelectorAll('.bz-home-wk--hit').length === 4);
         t('今天显示今+选中格=今天', [...dd.querySelectorAll('.bz-home-wk-n')].some((n) => n.textContent === '今') && dt('.bz-home-wk--sel .bz-home-wk-n').textContent === '今');
         t('关闭钮图标已物化（真 setIcon）', !!dt('[data-home-close] svg'));
-        t('移动瓦片在 DOM（桌面隐藏）', dd.querySelectorAll('.bz-home-m-tile').length === 13);
+        t('移动瓦片在 DOM（14 枚：移动端没藏密码本）', dd.querySelectorAll('.bz-home-m-tile').length === 14);
         t('移动瓦片桌面隐藏', getComputedStyle(dt('.bz-home-tiles')).display === 'none');
 
         // 周历切天（桌面）：切昨天 → 时间线 4 条 + 标题带日期 + 无点评；切回今天恢复
@@ -194,7 +199,7 @@
         t('重开面板（活动河重采）', !!dt('.bz-home-panel') && dtRows().length === 13);
 
         // 入口点击降级（桌面）：FakeApp 无 commands → openDomain 捕获走真 notice，不崩、面板关
-        dtRows()[3].click();
+        [...dtRows()].find((r) => r.dataset.homeGo === 'review').click();
         await sleep(80);
         t('入口点击：面板关闭（域命令直达语义）', !dt('.bz-home-panel'));
         t('入口点击：降级通知弹出不崩', !!dt('.bz-notice') && dt('.bz-notice').textContent.indexOf('暂时不可用') >= 0);
@@ -203,7 +208,9 @@
 
         // 移动端（412 宽 iframe ≈ 小米13U，高度 915 满屏/827 内容区可切）：@media 全屏命中 + 瓦片置前 + 头行关闭钮 + 周历切天
         t('移动端@media全屏命中', Math.abs(mob('.bz-home-panel').getBoundingClientRect().width - md.documentElement.clientWidth) < 1);
-        t('移动瓦片13枚', md.querySelectorAll('.bz-home-m-tile').length === 13);
+        t('移动瓦片14枚（hiddenMob 为空 → 密码本在列）', md.querySelectorAll('.bz-home-m-tile').length === 14);
+        t('两端隐藏互不影响：桌面藏的域在移动端仍在列', !!md.querySelector('.bz-home-m-tile[data-home-go="vault"]'));
+        t('移动顺序未自定义（首枚=日记本，两端各排各的）', md.querySelector('.bz-home-m-tile').dataset.homeGo === 'diary');
         t('移动入口行隐藏（瓦片替代，CSS display:none）', getComputedStyle(mob('.bz-home-entries')).display === 'none');
         t('关闭钮在头行（移动范式）', !!mob('.bz-home-head [data-home-close]'));
         const mobYester = [...md.querySelectorAll('.bz-home-wk')].map((b) => b.dataset.homeWeekday)[1];
@@ -213,6 +220,100 @@
         [...md.querySelectorAll('.bz-home-wk')][0].click();
         await sleep(60);
         t('移动切回今天9条', md.querySelectorAll('.bz-home-timeline .bz-home-ev').length === 9);
+
+        // ===== 移动端长按抽屉（2026-09-10）：盒头 = 域彩色图标 + 域名 + 入口行那行灰字；番茄钟文案动态 =====
+        const MW = mobFrame().contentWindow;
+        /** 长按瓦片（core/dom longPress = mousedown 计时 500ms；移动 iframe 内 Platform.isMobile=true） */
+        const longPressTile = async (id) => {
+          const tile = md.querySelector('.bz-home-m-tile[data-home-go="' + id + '"]');
+          tile.dispatchEvent(new MW.MouseEvent('mousedown', { bubbles: true, button: 0 }));
+          await sleep(600);
+        };
+        const sheetLabels = () => [...md.querySelectorAll('.bz-item-sheet-label')].map((b) => b.textContent.trim());
+
+        await longPressTile('diary');
+        t('移动端长按入口 → 弹底部抽屉', !!md.querySelector('.bz-item-sheet'));
+        t('抽屉盒头有域图标（svg 已物化）', !!md.querySelector('.bz-home-sheet-ic svg'));
+        t('盒头图标取域色（日记 #e67341）', (md.querySelector('.bz-home-sheet-ic').getAttribute('style') || '').indexOf('#e67341') >= 0);
+        t('盒头显示域名', md.querySelector('.bz-home-sheet-nm').textContent === '日记本');
+        t('盒头版式：图标与标题同一行（上排）', (() => {
+          const top = md.querySelector('.bz-home-sheet-top');
+          return !!top && !!top.querySelector('.bz-home-sheet-ic svg') && !!top.querySelector('.bz-home-sheet-nm');
+        })());
+        t('盒头版式：灰字在下排（不在图标行内）', (() => {
+          const top = md.querySelector('.bz-home-sheet-top'); const sub = md.querySelector('.bz-home-sheet-sub');
+          return !!top && !!sub && !top.contains(sub) && sub.parentElement.classList.contains('bz-home-sheet-head');
+        })());
+        // 字号拍板（用户 2026-09-10 二次）：功能项 > 盒头标题 > 盒头小字 —— 按计算样式实测，不靠肉眼
+        t('抽屉字号：功能项 > 标题 > 小字（实测计算样式）', (() => {
+          const it = md.querySelector('.bz-item-sheet-item'); const nm = md.querySelector('.bz-home-sheet-nm'); const sub = md.querySelector('.bz-home-sheet-sub');
+          if (!it || !nm || !sub) return false;
+          const f = (el) => parseFloat(getComputedStyle(el).fontSize);
+          return f(it) > f(nm) && f(nm) > f(sub);
+        })());
+        t('盒头灰字=入口行那行小字（同口径）', md.querySelector('.bz-home-sheet-sub').textContent === md.querySelector('.bz-home-m-tile[data-home-go="diary"] .bz-home-ect').textContent);
+        t('抽屉功能项=写日记', sheetLabels().join('|') === '写日记');
+
+        await longPressTile('pomodoro');
+        t('番茄钟抽屉项=停止专注（种子 = 暂停中的专注）', sheetLabels().join('|') === '停止专注');
+
+        // 跑真 toggleFocus（同一条命令链路）→ 停掉专注 → 重开面板重采相位 → 文案应翻成「开始专注」
+        await MW.BZW_home.toggleFocusSim();
+        md.querySelector('.bz-home-head [data-home-close]').click();
+        await sleep(100);
+        t('移动端关闭钮关掉面板（抽屉同关）', !md.querySelector('.bz-home-panel') && !md.querySelector('.bz-item-sheet'));
+        MW.BZW_home.openHome();
+        await waitFrame(mobDoc, '.bz-home-m-tile');
+        await longPressTile('pomodoro');
+        t('停止专注后文案翻成「开始专注」（动态识别）', sheetLabels().join('|') === '开始专注');
+
+        md.querySelector('.bz-item-sheet-mask').click();
+        await sleep(80);
+        t('点遮罩关掉抽屉', !md.querySelector('.bz-item-sheet'));
+
+        // ===== 入口菜单（2026-09-10：只放域快捷动作；无动作的域不挂） =====
+        const rowOf = (id) => [...dtRows()].find((r) => r.dataset.homeGo === id);
+        const openMenu = (row, y = 120) => row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 120, clientY: y }));
+        const menuLabelsNow = () => [...dd.querySelectorAll('.bz-item-menu-item')].map((b) => b.textContent.trim());
+
+        // 域清单变更：移出「移动附件」、入列「备忘录」
+        t('移动附件已移出入口', !rowOf('attach'));
+        t('备忘录入列', !!rowOf('memo'));
+
+        // 挂载口径：只有带快捷动作的域才挂浮层（core/item-actions 会给元素打 bz-item-card 标记）
+        t('有快捷动作的域已挂浮层（日记）', !!rowOf('diary') && rowOf('diary').classList.contains('bz-item-card'));
+        t('无快捷动作的域不挂浮层（设置）', !!rowOf('settings') && !rowOf('settings').classList.contains('bz-item-card'));
+        t('无快捷动作的域不挂浮层（剪藏本）', !!rowOf('clipping') && !rowOf('clipping').classList.contains('bz-item-card'));
+        t('无快捷动作的域不挂浮层（保险库）', !!rowOf('encrypt') && !rowOf('encrypt').classList.contains('bz-item-card'));
+        t('移动瓦片同口径（日记挂、设置不挂）', !!mob('.bz-home-m-tile[data-home-go="diary"]') && mob('.bz-home-m-tile[data-home-go="diary"]').classList.contains('bz-item-card') && !mob('.bz-home-m-tile[data-home-go="settings"]').classList.contains('bz-item-card'));
+
+        // 菜单内容：只有域快捷动作（无「打开 X」、无「整理顺序」）
+        openMenu(rowOf('diary'));
+        await sleep(80);
+        const diaryLabels = menuLabelsNow();
+        t('日记菜单仅 1 项', diaryLabels.length === 1);
+        t('日记菜单=写日记', diaryLabels[0] === '写日记');
+        t('菜单无「打开」项', !diaryLabels.some((s) => s.indexOf('打开') >= 0));
+        t('菜单无「整理顺序」项', !diaryLabels.some((s) => s.indexOf('整理顺序') >= 0));
+        t('菜单项图标已物化（svg）', !!dd.querySelector('.bz-item-menu-item .bz-item-menu-icon svg'));
+
+        openMenu(rowOf('cinema'), 160);
+        await sleep(80);
+        const cinemaLabels = menuLabelsNow();
+        t('影院菜单=加影视+分析报告', cinemaLabels.length === 2 && cinemaLabels[0] === '加影视' && cinemaLabels[1] === '影视分析报告');
+        openMenu(rowOf('pomodoro'), 200);
+        await sleep(80);
+        // 番茄钟 = 唯一动态文案项：种子是「暂停中的专注」→ 桌面菜单显示「停止专注」（移动抽屉另有断言）
+        t('番茄菜单=停止专注（动态文案，种子为专注中）', menuLabelsNow().join('|') === '停止专注');
+        openMenu(rowOf('knowledge'), 200);
+        await sleep(80);
+        const kbLabels = menuLabelsNow();
+        t('知识盒菜单=术语+视频生成文献笔记', kbLabels.length === 2 && kbLabels[1] === '视频生成文献笔记');
+        // 密码本已被 home.json 隐藏 → 不在入口列（故此处不做它的菜单断言，隐藏链路由上面两条覆盖）
+        t('隐藏域没有浮层标记', ![...dtRows()].some((r) => r.dataset.homeGo === 'vault' && r.classList.contains('bz-item-card')));
+        // 无快捷动作的域：压根没挂浮层（右键不弹菜单；不依赖「上一个菜单已关」这种时序）
+        t('设置域未挂浮层（右键不弹菜单）', !rowOf('settings').classList.contains('bz-item-card'));
+
 
         document.title = window.__st.fail.length
           ? 'SELFTEST FAIL ' + window.__st.fail.join(',')

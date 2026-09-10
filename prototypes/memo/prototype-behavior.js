@@ -1,5 +1,5 @@
-/* 源指纹 f22554495221b00a · 仓内输入 202 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/brief.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 be29eeb2bee13f65 · 仓内输入 206 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/brief.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -7291,7 +7291,7 @@ var BZW_memo = (() => {
     const mask = document.createElement("div");
     mask.className = "bz-item-sheet-mask";
     const sheet = document.createElement("div");
-    sheet.className = "bz-item-sheet";
+    sheet.className = "bz-item-sheet" + ((opts == null ? void 0 : opts.sheetClass) ? " " + opts.sheetClass : "");
     if (opts == null ? void 0 : opts.sheetHead) {
       const head = document.createElement("div");
       head.className = "bz-item-sheet-head";
@@ -7505,9 +7505,6 @@ var BZW_memo = (() => {
   function mobChipHtml(o, active2) {
     return `<button class="bz-mobstrip-chip${active2 ? " is-on" : ""}" data-memo-scene="${escapeHtml2(o.scene)}">${sceneLeadHtml(o, "bz-mobstrip-dot")}${escapeHtml2(sceneLabel(o.scene))}</button>`;
   }
-  function mobAddSceneChipHtml() {
-    return `<button class="bz-mobstrip-chip bz-mobstrip-add" data-memo-addscene title="添加场景">${iconSpan2(MEMO_ICONS.addScene)}${escapeHtml2("添加场景")}</button>`;
-  }
   function panelShellHtml() {
     return `
     <div class="bz-panel-frame bz-memo-panel bz-panel-mtop">
@@ -7516,8 +7513,9 @@ var BZW_memo = (() => {
         <div class="bz-panel-title">备忘录</div>
         <div class="bz-panel-head-sp"></div>
         <div class="bz-panel-head-btns">
-          <button class="bz-icon-btn bz-memo-head-settings" data-memo-head-settings title="打开备忘录设置">${iconSpan2(MEMO_ICONS.settings)}</button>
-          <button class="bz-icon-btn bz-touch-target bz-touch-target--lg bz-memo-head-close" data-memo-head-close title="关闭">${iconSpan2(MEMO_ICONS.close)}</button>
+          <button class="bz-icon-btn" data-memo-head-settings title="打开备忘录设置">${iconSpan2(MEMO_ICONS.settings)}</button>
+          <button class="bz-icon-btn bz-touch-target bz-memo-head-new" data-memo-newbtn title="新建备忘录">${iconSpan2(MEMO_ICONS.add)}</button>
+          <button class="bz-icon-btn bz-touch-target bz-memo-head-close" data-memo-head-close title="关闭">${iconSpan2(MEMO_ICONS.close)}</button>
         </div>
       </div>
       <div class="bz-memo-body">
@@ -8968,9 +8966,11 @@ var BZW_memo = (() => {
   __export(ui_exports2, {
     closePomodoro: () => closePomodoro,
     ensurePomodoro: () => ensurePomodoro,
+    isFocusing: () => isFocusing,
     openPomodoro: () => openPomodoro,
     pomodoroSettingsSchema: () => pomodoroSettingsSchema,
     startFocusForTask: () => startFocusForTask,
+    toggleFocus: () => toggleFocus,
     unloadPomodoro: () => unloadPomodoro
   });
   function durations() {
@@ -9544,6 +9544,25 @@ var BZW_memo = (() => {
     state = { ...state, task: taskTitle };
     applyAction("start");
   }
+  function isFocusing() {
+    return state.phase === "focus" && (state.endTime !== null || state.paused);
+  }
+  async function toggleFocus(app) {
+    await ensurePomodoro(app);
+    if (isFocusing()) {
+      const before = state;
+      applyAction("reset");
+      if (state === before) notice("强制专注模式中，请先在番茄钟面板操作", "warning");
+      else notice("专注已停止");
+      return;
+    }
+    if (state.phase === "short-break" || state.phase === "long-break") {
+      state = transition(state, "skip", Date.now(), durations(), options()).state;
+      void save();
+      render();
+    }
+    applyAction("start");
+  }
   function unloadPomodoro() {
     if (timerId !== null) {
       window.clearInterval(timerId);
@@ -9599,8 +9618,10 @@ var BZW_memo = (() => {
   var pomodoro_exports = {};
   __export(pomodoro_exports, {
     ensurePomodoro: () => ensurePomodoro,
+    isFocusing: () => isFocusing,
     openPomodoro: () => openPomodoro,
     startFocusForTask: () => startFocusForTask,
+    toggleFocus: () => toggleFocus,
     unloadPomodoro: () => unloadPomodoro
   });
   var init_pomodoro = __esm({
@@ -12498,8 +12519,8 @@ ${countsToText(s.missing)}
     const restored = /* @__PURE__ */ new Map();
     const fixed = await enqueueFileTask(file, async () => {
       var _a2;
-      const store2 = jsonFileStore(file, { defaultValue: [] });
-      const data = await store2.read();
+      const store3 = jsonFileStore(file, { defaultValue: [] });
+      const data = await store3.read();
       const want = new Set(ids);
       let n = 0;
       for (const it of data) {
@@ -12510,7 +12531,7 @@ ${countsToText(s.missing)}
         it.linkedNote = null;
         n += 1;
       }
-      if (n > 0) await store2.write(data);
+      if (n > 0) await store3.write(data);
       return n;
     });
     return {
@@ -12520,13 +12541,13 @@ ${countsToText(s.missing)}
         if (!restored.size) return;
         await enqueueFileTask(file, async () => {
           var _a2;
-          const store2 = jsonFileStore(file, { defaultValue: [] });
-          const data = await store2.read();
+          const store3 = jsonFileStore(file, { defaultValue: [] });
+          const data = await store3.read();
           for (const it of data) {
             if (!it || typeof it !== "object" || !restored.has(String(it.id))) continue;
             it.linkedNote = (_a2 = restored.get(String(it.id))) != null ? _a2 : null;
           }
-          await store2.write(data);
+          await store3.write(data);
         });
       }
     };
@@ -12534,10 +12555,10 @@ ${countsToText(s.missing)}
   async function fixClipbook(app, file, urls) {
     const removed = [];
     const fixed = await enqueueFileTask(file, async () => {
-      const store2 = jsonFileStore(file, {
+      const store3 = jsonFileStore(file, {
         defaultValue: () => ({ articleOverrides: {}, savedArchive: [], order: [] })
       });
-      const data = await store2.read();
+      const data = await store3.read();
       const list = Array.isArray(data && data.savedArchive) ? data.savedArchive : [];
       const want = new Set(urls);
       const kept = [];
@@ -12553,7 +12574,7 @@ ${countsToText(s.missing)}
       });
       if (n > 0) {
         data.savedArchive = kept;
-        await store2.write(data);
+        await store3.write(data);
       }
       return n;
     });
@@ -12563,17 +12584,17 @@ ${countsToText(s.missing)}
       undo: async () => {
         if (!removed.length) return;
         await enqueueFileTask(file, async () => {
-          const store2 = jsonFileStore(file, {
+          const store3 = jsonFileStore(file, {
             defaultValue: () => ({ articleOverrides: {}, savedArchive: [], order: [] })
           });
-          const data = await store2.read();
+          const data = await store3.read();
           const list = Array.isArray(data && data.savedArchive) ? data.savedArchive : [];
           for (const r of removed) {
             const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
             list.splice(at, 0, { url: r.url, title: r.title, savedAt: r.savedAt });
           }
           data.savedArchive = list;
-          await store2.write(data);
+          await store3.write(data);
         });
       }
     };
@@ -12978,6 +12999,347 @@ ${countsToText(s.missing)}
   }
   var init_schema = __esm({
     "src/settings-panel/schema.ts"() {
+    }
+  });
+
+  // src/home/shared.ts
+  function applyOrder(order, domains = DOMAINS) {
+    if (!order || !order.length) return domains;
+    const rank = /* @__PURE__ */ new Map();
+    order.forEach((id, i) => {
+      if (!rank.has(id)) rank.set(id, i);
+    });
+    const MISS = Number.MAX_SAFE_INTEGER;
+    return [...domains].sort((a, b) => {
+      var _a2, _b2;
+      return ((_a2 = rank.get(a.id)) != null ? _a2 : MISS) - ((_b2 = rank.get(b.id)) != null ? _b2 : MISS);
+    });
+  }
+  function reorderTo(order, id, toIndex, hidden = [], domains = DOMAINS) {
+    const all = applyOrder(order, domains).map((d) => d.id);
+    const off = new Set(hidden);
+    const visible = all.filter((x) => !off.has(x));
+    const from = visible.indexOf(id);
+    if (from < 0 || toIndex < 0 || toIndex >= visible.length) return all;
+    visible.splice(from, 1);
+    visible.splice(toIndex, 0, id);
+    return [...visible, ...all.filter((x) => off.has(x))];
+  }
+  function hiddenOf(order, scope) {
+    return scope === "mob" ? order.hiddenMob : order.hiddenDesk;
+  }
+  function visibleDomains(order, hidden, domains = DOMAINS) {
+    const hide2 = new Set(hidden != null ? hidden : []);
+    return applyOrder(order, domains.filter((d) => !hide2.has(d.id)));
+  }
+  function domainColor(id) {
+    var _a2;
+    return (_a2 = DOMAIN_DOT[id]) != null ? _a2 : "#8a8f99";
+  }
+  var ICON_KEY, iconOf, DOMAINS, DOMAIN_MAP2, DOMAIN_DOT, ALL_DOMAIN_IDS;
+  var init_shared3 = __esm({
+    "src/home/shared.ts"() {
+      init_str();
+      init_domain_icons();
+      ICON_KEY = { settings: "settings-panel", vault: "password-vault" };
+      iconOf = (id) => {
+        var _a2;
+        return DOMAIN_ICONS[(_a2 = ICON_KEY[id]) != null ? _a2 : id];
+      };
+      DOMAINS = [
+        { id: "diary", commandId: "bz-diary-open", name: "日记本", sub: "写今天的闪念 · 回忆媒体墙", icon: iconOf("diary") },
+        // 备忘录（memo 域，ADR-0092/0117）：2026-09-10 用户拍板补入首页入口（此前只在命令面板可达）
+        { id: "memo", commandId: "bz-memo-open", name: "备忘录", sub: "随手记与待办", icon: iconOf("memo") },
+        { id: "cinema", commandId: "bz-cinema-open", name: "影院", sub: "影视想看与在看", icon: iconOf("cinema") },
+        { id: "review", commandId: "bz-review-open", name: "复习计划", sub: "到期卡片队列", icon: iconOf("review") },
+        { id: "pomodoro", commandId: "bz-pomodoro-open", name: "番茄钟", sub: "专注计时", icon: iconOf("pomodoro") },
+        { id: "favorites", commandId: "bz-favorites-open", name: "收藏本", sub: "收藏条目", icon: iconOf("favorites") },
+        { id: "clipping", commandId: "bz-clipbook-open", name: "剪藏本", sub: "未读流与剪藏", icon: iconOf("clipping") },
+        // 文献盒（literature 域，ADR-0072）：文献笔记列表 + 视频/术语录入（补内容域曝光位）
+        { id: "knowledge", commandId: "bz-knowledge-open", name: "知识盒", sub: "文献录入 · 卡片 · 主题", icon: iconOf("knowledge") },
+        // 旧书库（library）域退役：本卡由书架墙（bookshelf）承接（id 变更后旧 home.json 里钉选的 library 自动失效，可在编辑模式重钉）
+        { id: "bookshelf", commandId: "bz-bookshelf-open", name: "书库", sub: "藏书与读书笔记", icon: iconOf("bookshelf") },
+        // 第二大脑（secondbrain 域，issue 251）：主面板统一入口（检索/对话/灵感参考都从面板进）
+        { id: "secondbrain", commandId: "bz-secondbrain-panel", name: "第二大脑", sub: "笔记检索与问答", icon: iconOf("secondbrain") },
+        { id: "belongings", commandId: "bz-belongings-open", name: "归物本", sub: "物品登记", icon: iconOf("belongings") },
+        // 移动附件（attach 域）：2026-09-10 用户拍板自首页入口移除（命令仍可在命令面板调用）
+        { id: "encrypt", commandId: "bz-encrypt-open", name: "保险库", sub: "密码·加密笔记·日记", icon: iconOf("encrypt") },
+        // 密码本（password-vault 域，ADR-0109 拆回独立域；id 沿用合并前磁贴 id，旧钉选自动复活）
+        { id: "vault", commandId: "bz-password-vault-open", name: "密码本", sub: "密码与密钥", icon: iconOf("vault") },
+        { id: "settings", commandId: "bz-settings-panel-open", name: "设置", sub: "全域设置", icon: iconOf("settings") }
+      ];
+      DOMAIN_MAP2 = new Map(DOMAINS.map((d) => [d.id, d]));
+      DOMAIN_DOT = {
+        diary: "#e67341",
+        memo: "#e8590c",
+        recap: "#d64d8f",
+        cinema: "#e6951d",
+        review: "#7c5cd6",
+        pomodoro: "#e5534b",
+        favorites: "#f0b429",
+        clipping: "#2f9e5f",
+        knowledge: "#c2559d",
+        bookshelf: "#3d7bd6",
+        secondbrain: "#a33d2a",
+        "reading-report": "#3fa7a0",
+        belongings: "#45a35c",
+        attach: "#8a8f99",
+        encrypt: "#8a8f99",
+        vault: "#c9a227",
+        smartcat: "#e67341",
+        settings: "#8a8f99"
+      };
+      ALL_DOMAIN_IDS = DOMAINS.map((d) => d.id);
+    }
+  });
+
+  // src/home/order.ts
+  function emptyHomeOrder() {
+    return { version: HOME_ORDER_VERSION, desk: [], mob: [], hiddenDesk: [], hiddenMob: [] };
+  }
+  function strList(v) {
+    return Array.isArray(v) ? v.filter((x) => typeof x === "string" && !!x) : [];
+  }
+  function normalizeHomeOrder(raw) {
+    const o = raw != null ? raw : {};
+    const legacy = strList(o.hidden);
+    return {
+      version: HOME_ORDER_VERSION,
+      desk: strList(o.desk),
+      mob: strList(o.mob),
+      hiddenDesk: o.hiddenDesk === void 0 ? legacy : strList(o.hiddenDesk),
+      hiddenMob: o.hiddenMob === void 0 ? legacy : strList(o.hiddenMob)
+    };
+  }
+  async function loadHomeOrder(app) {
+    try {
+      return normalizeHomeOrder(await store(app).read());
+    } catch (e) {
+      return emptyHomeOrder();
+    }
+  }
+  async function saveHomeConfig(order, app) {
+    return enqueueFileTask(storageFile("home.json"), async () => {
+      await store(app).write({
+        version: HOME_ORDER_VERSION,
+        desk: [...order.desk],
+        mob: [...order.mob],
+        hiddenDesk: [...order.hiddenDesk],
+        hiddenMob: [...order.hiddenMob]
+      });
+    });
+  }
+  var HOME_ORDER_VERSION, store;
+  var init_order = __esm({
+    "src/home/order.ts"() {
+      init_storage();
+      HOME_ORDER_VERSION = 3;
+      store = (app) => jsonFileStore(storageFile("home.json"), { defaultValue: () => emptyHomeOrder(), app });
+    }
+  });
+
+  // src/home/entry-editor.ts
+  function mountHomeEntryEditor(body, app) {
+    const scope = isMobileEnv() ? "mob" : "desk";
+    let order = null;
+    let suppressClickUntil = 0;
+    const root = document.createElement("div");
+    root.className = "bz-home-ent";
+    root.setAttribute("data-ent-scope", scope);
+    body.appendChild(root);
+    function setHidden(ids) {
+      if (!order) return;
+      order = scope === "mob" ? { ...order, hiddenMob: ids } : { ...order, hiddenDesk: ids };
+    }
+    function setScopeOrder(ids) {
+      if (!order) return;
+      order = scope === "mob" ? { ...order, mob: ids } : { ...order, desk: ids };
+    }
+    function persist() {
+      if (!order) return;
+      void saveHomeConfig(order, app).catch(() => void 0);
+    }
+    let drag = null;
+    function endDrag() {
+      const c = drag;
+      drag = null;
+      if (!c) return;
+      if (c.armTimer) clearTimeout(c.armTimer);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      c.el.classList.remove("bz-home-ent-drag");
+      c.el.style.transform = "";
+    }
+    function onMove(e) {
+      const c = drag;
+      if (!c) return;
+      const dy = e.clientY - c.startY;
+      if (!c.active) {
+        if (!c.armed) {
+          if (Math.abs(dy) > 8) endDrag();
+          return;
+        }
+        if (Math.abs(dy) < DRAG_PX) return;
+        c.active = true;
+        c.el.classList.add("bz-home-ent-drag");
+      }
+      e.preventDefault();
+      const to = Math.max(0, Math.min(c.from + Math.round(dy / c.step), c.total - 1));
+      c.to = to;
+      c.el.style.transform = `translateY(${(to - c.from) * c.step}px)`;
+    }
+    function onUp() {
+      const c = drag;
+      if (!c) return;
+      const { active: active2, to, from } = c;
+      const id = c.el.dataset.entRow || "";
+      endDrag();
+      if (!active2) return;
+      suppressClickUntil = Date.now() + 300;
+      if (!order || to === from || !id) {
+        render2();
+        return;
+      }
+      setScopeOrder(reorderTo(order[scope], id, to, hiddenOf(order, scope)));
+      persist();
+      render2();
+    }
+    function attachDrag(el, listEl2, total) {
+      el.addEventListener("pointerdown", (e) => {
+        var _a2, _b2;
+        if (e.button) return;
+        if (e.target.closest("[data-ent-remove]")) return;
+        const rows = Array.from(listEl2.querySelectorAll(ROW_SEL));
+        const from = rows.indexOf(el);
+        if (from < 0 || total < 2) return;
+        let step = ((_b2 = (_a2 = rows[0]) == null ? void 0 : _a2.offsetHeight) != null ? _b2 : 40) + 6;
+        if (rows.length >= 2) {
+          const d = rows[1].offsetTop - rows[0].offsetTop;
+          if (d > 0) step = d;
+        }
+        const c = {
+          el,
+          listEl: listEl2,
+          startY: e.clientY,
+          step,
+          from,
+          to: from,
+          total,
+          active: false,
+          armed: !isMobileEnv(),
+          armTimer: null
+        };
+        drag = c;
+        if (isMobileEnv()) {
+          c.armTimer = setTimeout(() => {
+            if (drag === c) c.armed = true;
+            c.armTimer = null;
+          }, TOUCH_ARM_MS);
+        }
+        window.addEventListener("pointermove", onMove);
+        window.addEventListener("pointerup", onUp);
+        window.addEventListener("pointercancel", onUp);
+      });
+    }
+    function rowHtml2(d, isHidden) {
+      const btn = isHidden ? '<button type="button" class="bz-home-ent-btn bz-home-ent-btn--add" data-ent-restore="' + d.id + '" title="重新加回" aria-label="加回' + d.name + '">' + iconSpan("plus") + "</button>" : '<button type="button" class="bz-home-ent-btn" data-ent-remove="' + d.id + '" title="移除（隐藏）" aria-label="移除' + d.name + '">' + iconSpan("x") + "</button>";
+      return '<div class="bz-home-ent-row' + (isHidden ? " bz-home-ent-row--off" : "") + '" data-ent-row="' + d.id + '"><span class="bz-home-ent-grip" aria-hidden="true">' + iconSpan("grip-vertical") + '</span><span class="bz-home-ent-ic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span><span class="bz-home-ent-nm">' + esc(d.name) + "</span>" + btn + "</div>";
+    }
+    function render2() {
+      if (!order) return;
+      const ids = hiddenOf(order, scope);
+      const visible = visibleDomains(order[scope], ids);
+      const hidden = DOMAINS.filter((d) => ids.includes(d.id));
+      root.innerHTML = '<div class="bz-home-ent-hint">拖动排序 · 点 × 移除（移除的排到最下面，点 + 加回）</div><div class="bz-home-ent-list" data-ent-list>' + visible.map((d) => rowHtml2(d, false)).join("") + hidden.map((d) => rowHtml2(d, true)).join("") + "</div>";
+      mountIcons(root);
+      const listEl2 = root.querySelector("[data-ent-list]");
+      if (!listEl2) return;
+      const rows = Array.from(listEl2.querySelectorAll(ROW_SEL));
+      for (const el of rows.slice(0, visible.length)) attachDrag(el, listEl2, visible.length);
+    }
+    root.addEventListener("click", (e) => {
+      if (Date.now() < suppressClickUntil) {
+        e.stopPropagation();
+        e.preventDefault();
+        return;
+      }
+      if (!order) return;
+      const t = e.target;
+      const rm = t.closest("[data-ent-remove]");
+      if (rm) {
+        const id = rm.dataset.entRemove || "";
+        const ids = hiddenOf(order, scope);
+        if (id && !ids.includes(id)) {
+          setHidden([...ids, id]);
+          persist();
+          render2();
+        }
+        return;
+      }
+      const rs = t.closest("[data-ent-restore]");
+      if (rs) {
+        const id = rs.dataset.entRestore || "";
+        setHidden(hiddenOf(order, scope).filter((x) => x !== id));
+        persist();
+        render2();
+      }
+    });
+    render2();
+    void loadHomeOrder(app).then((o) => {
+      order = o;
+      render2();
+    });
+  }
+  var ROW_SEL, DRAG_PX, TOUCH_ARM_MS;
+  var init_entry_editor = __esm({
+    "src/home/entry-editor.ts"() {
+      init_mobile();
+      init_ui();
+      init_str();
+      init_shared3();
+      init_order();
+      ROW_SEL = "[data-ent-row]";
+      DRAG_PX = 10;
+      TOUCH_ARM_MS = 200;
+    }
+  });
+
+  // src/home/settings.ts
+  var settings_exports = {};
+  __export(settings_exports, {
+    homeSettingsSchema: () => homeSettingsSchema
+  });
+  function homeSettingsSchema() {
+    return {
+      groups: [
+        {
+          // 外观组（issue 246 范式，与各域同款置顶）：布局/主题各一档占位单卡
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "homeLayout" }, options: [{ value: "default", label: "活动河", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板主题", binding: { key: "homeSkin" }, layoutKey: "homeLayout", options: [{ value: "cream", label: "米白", layout: "default", prevClass: "bz-sp-prev-cream" }] }
+          ]
+        },
+        {
+          // 入口组（排外观之下）：拖动排序 + 移除/加回，内联编辑器
+          icon: "layout-grid",
+          name: "入口",
+          rows: [
+            {
+              type: "custom",
+              render: (body) => mountHomeEntryEditor(body, getApp())
+            }
+          ]
+        }
+      ]
+    };
+  }
+  var init_settings = __esm({
+    "src/home/settings.ts"() {
+      init_app();
+      init_entry_editor();
     }
   });
 
@@ -13430,8 +13792,8 @@ ${countsToText(s.missing)}
   });
 
   // src/diary/settings.ts
-  var settings_exports = {};
-  __export(settings_exports, {
+  var settings_exports2 = {};
+  __export(settings_exports2, {
     diarySettingsSchema: () => diarySettingsSchema
   });
   function diarySettingsSchema() {
@@ -13471,7 +13833,7 @@ ${countsToText(s.missing)}
       ]
     };
   }
-  var init_settings = __esm({
+  var init_settings2 = __esm({
     "src/diary/settings.ts"() {
       init_settings_provider();
       init_config3();
@@ -13480,8 +13842,8 @@ ${countsToText(s.missing)}
   });
 
   // src/memo/settings.ts
-  var settings_exports2 = {};
-  __export(settings_exports2, {
+  var settings_exports3 = {};
+  __export(settings_exports3, {
     memoSettingsSchema: () => memoSettingsSchema
   });
   function memoReloadScenes() {
@@ -13610,7 +13972,7 @@ ${countsToText(s.missing)}
       ]
     };
   }
-  var init_settings2 = __esm({
+  var init_settings3 = __esm({
     "src/memo/settings.ts"() {
       init_settings_provider();
       init_data();
@@ -14430,7 +14792,7 @@ ${countsToText(s.missing)}
     return specs;
   }
   var ICON2, STATUS, STATUS_ORDER, STATUS_LABELS, SORT_OPTS;
-  var init_shared3 = __esm({
+  var init_shared4 = __esm({
     "src/belongings/shared.ts"() {
       init_str();
       init_emoji_icon_map();
@@ -14621,14 +14983,14 @@ ${countsToText(s.missing)}
   var init_render6 = __esm({
     "src/belongings/layouts/poster/render.ts"() {
       init_str();
-      init_shared3();
+      init_shared4();
     }
   });
 
   // src/belongings/render.ts
   var init_render7 = __esm({
     "src/belongings/render.ts"() {
-      init_shared3();
+      init_shared4();
       init_render6();
     }
   });
@@ -22391,7 +22753,7 @@ ${sample}`,
   </div>`;
   }
   var ICON3;
-  var init_shared4 = __esm({
+  var init_shared5 = __esm({
     "src/favorites/shared.ts"() {
       init_str();
       init_config2();
@@ -22451,14 +22813,14 @@ ${sample}`,
     "src/favorites/layouts/board/render.ts"() {
       init_str();
       init_config2();
-      init_shared4();
+      init_shared5();
     }
   });
 
   // src/favorites/render.ts
   var init_render10 = __esm({
     "src/favorites/render.ts"() {
-      init_shared4();
+      init_shared5();
       init_render9();
     }
   });
@@ -23076,8 +23438,8 @@ GitHub 仓库：${ghInfo.title}
   });
 
   // src/cinema/settings.ts
-  var settings_exports3 = {};
-  __export(settings_exports3, {
+  var settings_exports4 = {};
+  __export(settings_exports4, {
     cinemaSettingsSchema: () => cinemaSettingsSchema
   });
   function cinemaSettingsSchema() {
@@ -23157,7 +23519,7 @@ GitHub 仓库：${ghInfo.title}
       ]
     };
   }
-  var init_settings3 = __esm({
+  var init_settings4 = __esm({
     "src/cinema/settings.ts"() {
       init_settings_common();
     }
@@ -23258,8 +23620,8 @@ GitHub 仓库：${ghInfo.title}
   });
 
   // src/bookshelf/settings.ts
-  var settings_exports4 = {};
-  __export(settings_exports4, {
+  var settings_exports5 = {};
+  __export(settings_exports5, {
     bookshelfSettingsSchema: () => bookshelfSettingsSchema
   });
   function bookshelfSettingsSchema() {
@@ -23334,7 +23696,7 @@ GitHub 仓库：${ghInfo.title}
       ]
     };
   }
-  var init_settings4 = __esm({
+  var init_settings5 = __esm({
     "src/bookshelf/settings.ts"() {
       init_data3();
       init_ui8();
@@ -27639,22 +28001,22 @@ ${n.content.slice(0, 2e3)}
       return false;
     }
     let anyLegacy = false;
-    const store2 = emptyStore();
+    const store3 = emptyStore();
     for (const name of LEGACY_FILES) {
       const legacyPath = storeDir() + "/" + name;
       const raw = await readJsonIfExists(app, legacyPath).catch(() => null);
       if (raw === null) continue;
       anyLegacy = true;
-      if (name === "secondbrain_meta.json" && raw && typeof raw === "object") store2.meta = raw;
-      else if (name === "secondbrain_panel.json" && raw && typeof raw === "object") store2.panel = raw;
+      if (name === "secondbrain_meta.json" && raw && typeof raw === "object") store3.meta = raw;
+      else if (name === "secondbrain_panel.json" && raw && typeof raw === "object") store3.panel = raw;
       else if (name === "secondbrain_link_queue.json") {
-        if (Array.isArray(raw)) store2.link.queue = raw;
+        if (Array.isArray(raw)) store3.link.queue = raw;
       } else if (name === "secondbrain_link_state.json") {
-        if (raw && typeof raw === "object" && !Array.isArray(raw)) store2.link.state = raw;
+        if (raw && typeof raw === "object" && !Array.isArray(raw)) store3.link.state = raw;
       }
     }
     if (!anyLegacy) return false;
-    await adapter.write(storePath, JSON.stringify(store2));
+    await adapter.write(storePath, JSON.stringify(store3));
     for (const name of LEGACY_FILES) {
       const legacyPath = storeDir() + "/" + name;
       try {
@@ -27881,23 +28243,23 @@ ${n.content.slice(0, 2e3)}
       }
     }
   }
-  async function reconcileConflicts(a, store2) {
+  async function reconcileConflicts(a, store3) {
     var _a2;
     const adapter = (_a2 = a == null ? void 0 : a.vault) == null ? void 0 : _a2.adapter;
-    if (!adapter || typeof adapter.list !== "function") return store2;
+    if (!adapter || typeof adapter.list !== "function") return store3;
     let listed = [];
     try {
       const r = await adapter.list(storeDir());
       listed = Array.isArray(r == null ? void 0 : r.files) ? r.files : [];
     } catch (e) {
-      return store2;
+      return store3;
     }
     const conflictJson = listed.filter((f) => isConflictJsonName(f.split("/").pop() || f));
     const conflictVec = listed.filter((f) => isConflictVecName(f.split("/").pop() || f));
-    if (!conflictJson.length && !conflictVec.length) return store2;
-    const primaryMeta = store2.meta;
+    if (!conflictJson.length && !conflictVec.length) return store3;
+    const primaryMeta = store3.meta;
     const conflictMetas = [];
-    let merged = store2;
+    let merged = store3;
     let jsonMerged = false;
     for (const name of conflictJson) {
       try {
@@ -27980,8 +28342,8 @@ ${n.content.slice(0, 2e3)}
   }
   async function readStoreRaw(app) {
     const a = resolveApp(app);
-    const store2 = await readStoreRawInner(a);
-    return reconcileConflicts(a, store2);
+    const store3 = await readStoreRawInner(a);
+    return reconcileConflicts(a, store3);
   }
   async function saveStoreRaw(data, app) {
     var _a2;
@@ -28000,9 +28362,9 @@ ${n.content.slice(0, 2e3)}
   }
   async function mutateStore(fn, app) {
     await enqueue2(async () => {
-      const store2 = await readStoreRaw(app);
-      fn(store2);
-      await saveStoreRaw(store2, app);
+      const store3 = await readStoreRaw(app);
+      fn(store3);
+      await saveStoreRaw(store3, app);
     });
   }
   async function loadChatHistory(app) {
@@ -29659,7 +30021,7 @@ ${n.content.slice(0, 2e3)}
       init_render12();
       init_ui();
       ReferencePanel = class {
-        constructor(app, store2, existingWin) {
+        constructor(app, store3, existingWin) {
           this.lastQuery = "";
           this.floatingCards = /* @__PURE__ */ new Set();
           /** 密度态：false=标题+省略内容（默认），true=仅标题（会话内有效，不持久化） */
@@ -29679,7 +30041,7 @@ ${n.content.slice(0, 2e3)}
           /** 浮卡的拖拽/缩放 document 级监听卸载器：close 时对仍在漂浮的卡片兜底解绑 */
           this.floatDetachers = /* @__PURE__ */ new Map();
           this.app = app;
-          this.store = store2;
+          this.store = store3;
           this.denseBtn = document.createElement("button");
           this.denseBtn.className = "bz-sb-float-btn";
           this.denseBtn.innerHTML = '<i data-lucide="file-text"></i>';
@@ -30045,7 +30407,7 @@ ${n.content.slice(0, 2e3)}
       init_store_file();
       init_render12();
       ChatPanel = class {
-        constructor(store2, app) {
+        constructor(store3, app) {
           this.history = [];
           this.escHandle = null;
           /** 进行中的对话请求（ticket 141）：非空时发送钮呈「停止」态，点击中止 */
@@ -30054,7 +30416,7 @@ ${n.content.slice(0, 2e3)}
           this.seq = 0;
           var _a2, _b2;
           this.app = app;
-          this.store = store2;
+          this.store = store3;
           const CONFIG2 = buildConfig();
           const { mask, popup } = createOverlay({
             maskId: "bz-sb-chat-mask",
@@ -30314,7 +30676,7 @@ ${userMsg}`;
       SNAP_HIGH = 75;
       COLLAPSE_THRESHOLD = 18;
       MobilePanel = class {
-        constructor(app, store2) {
+        constructor(app, store3) {
           this.mode = "ref";
           this.collapsed = false;
           this.chatHistory = [];
@@ -30330,7 +30692,7 @@ ${userMsg}`;
           this.lastQuery = "";
           var _a2;
           this.app = app;
-          this.store = store2;
+          this.store = store3;
           const CONFIG2 = buildConfig();
           this.sheet = document.createElement("div");
           this.sheet.className = "bz-sb-mb-sheet";
@@ -30373,7 +30735,7 @@ ${userMsg}`;
           this.pillRef.addEventListener("click", () => this.switchTab("ref"));
           this.pillChat.addEventListener("click", () => this.switchTab("chat"));
           this.mini.addEventListener("click", () => this.expand());
-          void store2.initMobile().catch((e) => console.warn("[secondbrain] initMobile 失败", e));
+          void store3.initMobile().catch((e) => console.warn("[secondbrain] initMobile 失败", e));
           this.escHandle = escManager.register("bz-sb-mb-sheet", {
             isVisible: () => !this.collapsed && !!this.sheet.isConnected,
             close: () => this.collapse()
@@ -30817,8 +31179,8 @@ ${text}`;
     return { keep, removed };
   }
   async function loadQueue() {
-    const store2 = await loadStore();
-    const data = store2.link.queue;
+    const store3 = await loadStore();
+    const data = store3.link.queue;
     if (!Array.isArray(data)) return [];
     return data.filter((it) => it && typeof it.path === "string" && it.path.endsWith(".md")).map((it) => ({
       path: it.path,
@@ -30862,8 +31224,8 @@ ${text}`;
     return removed;
   }
   async function loadLinkState() {
-    const store2 = await loadStore();
-    const data = store2.link.state;
+    const store3 = await loadStore();
+    const data = store3.link.state;
     if (!data || typeof data !== "object" || Array.isArray(data)) return {};
     const out = {};
     for (const [path, entry] of Object.entries(data)) {
@@ -36484,7 +36846,7 @@ ${text}`;
     initialized7 = true;
     appRef2 = app;
     const s = new VectorStore(app);
-    store = s;
+    store2 = s;
     s.initialLoad = (async () => {
       try {
         await s.load();
@@ -36501,10 +36863,10 @@ ${text}`;
       }
     })();
     unsubVault = onDomainEvent("vault:md-modified", () => {
-      if (!(store == null ? void 0 : store.isIndexReady())) return;
+      if (!(store2 == null ? void 0 : store2.isIndexReady())) return;
       if (refreshTimer) clearTimeout(refreshTimer);
       refreshTimer = setTimeout(() => {
-        store == null ? void 0 : store.refresh().catch((e) => console.warn("[secondbrain] 后台刷新失败", e));
+        store2 == null ? void 0 : store2.refresh().catch((e) => console.warn("[secondbrain] 后台刷新失败", e));
       }, 5e3);
     });
     try {
@@ -36547,20 +36909,20 @@ ${text}`;
     linkWatcher == null ? void 0 : linkWatcher.destroy();
     linkWatcher = null;
     linkAgent = null;
-    store = null;
+    store2 = null;
     appRef2 = null;
     initialized7 = false;
     resetDeepseekAI();
   }
   function ensureReference() {
-    if (!appRef2 || !store) return;
+    if (!appRef2 || !store2) return;
     if (reference && !reference.alive) reference = null;
     if (reference) return;
     if (IS_MOBILE) {
-      mobile != null ? mobile : mobile = new MobilePanel(appRef2, store);
+      mobile != null ? mobile : mobile = new MobilePanel(appRef2, store2);
       return;
     }
-    reference = new ReferencePanel(appRef2, store);
+    reference = new ReferencePanel(appRef2, store2);
   }
   function openReferenceInternal() {
     ensureReference();
@@ -36571,8 +36933,8 @@ ${text}`;
     }
   }
   function ensureChat() {
-    if (!appRef2 || !store || chat) return;
-    chat = new ChatPanel(store, appRef2);
+    if (!appRef2 || !store2 || chat) return;
+    chat = new ChatPanel(store2, appRef2);
   }
   function openChatInternal() {
     if (IS_MOBILE) {
@@ -36586,8 +36948,8 @@ ${text}`;
   }
   function openSecondBrainPanel(app) {
     ensureSecondBrain(app);
-    if (!store) return;
-    panel != null ? panel : panel = new SecondBrainPanel(app, store, {
+    if (!store2) return;
+    panel != null ? panel : panel = new SecondBrainPanel(app, store2, {
       onOpenReference: () => openReferenceInternal(),
       onOpenChat: () => openChatInternal()
     });
@@ -36595,8 +36957,8 @@ ${text}`;
   }
   function rebuildSecondBrainIndex(app) {
     ensureSecondBrain(app);
-    if (!store) return;
-    panel != null ? panel : panel = new SecondBrainPanel(app, store, {
+    if (!store2) return;
+    panel != null ? panel : panel = new SecondBrainPanel(app, store2, {
       onOpenReference: () => openReferenceInternal(),
       onOpenChat: () => openChatInternal()
     });
@@ -36605,7 +36967,7 @@ ${text}`;
   }
   function openSecondBrainReference(app) {
     ensureSecondBrain(app);
-    if (!(store == null ? void 0 : store.isIndexReady())) {
+    if (!(store2 == null ? void 0 : store2.isIndexReady())) {
       openSecondBrainPanel(app);
       return;
     }
@@ -36613,7 +36975,7 @@ ${text}`;
   }
   function openSecondBrainChat(app) {
     ensureSecondBrain(app);
-    if (!(store == null ? void 0 : store.isIndexReady())) {
+    if (!(store2 == null ? void 0 : store2.isIndexReady())) {
       openSecondBrainPanel(app);
       return;
     }
@@ -36675,7 +37037,7 @@ ${text}`;
       notice(`关联处理失败：${e instanceof Error ? e.message : String(e)}`, "error");
     }
   }
-  var appRef2, store, initialized7, panel, reference, chat, mobile, linkAgent, linkWatcher, unsubVault, refreshTimer;
+  var appRef2, store2, initialized7, panel, reference, chat, mobile, linkAgent, linkWatcher, unsubVault, refreshTimer;
   var init_secondbrain = __esm({
     "src/secondbrain/index.ts"() {
       init_domain_bus();
@@ -36691,7 +37053,7 @@ ${text}`;
       init_pipeline();
       init_watch2();
       appRef2 = null;
-      store = null;
+      store2 = null;
       initialized7 = false;
       panel = null;
       reference = null;
@@ -36988,7 +37350,7 @@ ${text}`;
       init_render12();
       init_render12();
       SecondBrainPanel = class {
-        constructor(app, store2, opts) {
+        constructor(app, store3, opts) {
           this.mask = null;
           this.popup = null;
           /** ESC 层级句柄（ticket 141 迁移：原私挂 document keydown 废弃） */
@@ -37001,7 +37363,7 @@ ${text}`;
           /** 设置页「重新索引」意图标记（ticket 108：确认后打开面板即自动全量重建） */
           this.rebuildRequested = false;
           this.app = app;
-          this.store = store2;
+          this.store = store3;
           this.opts = opts;
         }
         /** 设置页「重新索引」调用（index.ts 入口转发）：标记意图后打开面板自动跑 */
@@ -37409,17 +37771,17 @@ ${text}`;
         async loadSummaryAndLinks() {
           var _a2, _b2, _c;
           try {
-            const store2 = await loadStore(this.app);
+            const store3 = await loadStore(this.app);
             const popup = this.popup;
             if (!popup || !popup.isConnected) return;
-            const summary = ((_a2 = store2.panel) == null ? void 0 : _a2.summary) || "";
+            const summary = ((_a2 = store3.panel) == null ? void 0 : _a2.summary) || "";
             const aiCard = popup.querySelector("#bz-sb-ai-card");
             const aiTxt = popup.querySelector("#bz-sb-ai-txt");
             if (aiCard) aiCard.style.display = summary ? "" : "none";
             if (aiTxt && summary) {
-              aiTxt.innerHTML = panelSummaryHtml(summary, ((_b2 = store2.panel) == null ? void 0 : _b2.generatedAt) ? formatRelativeTime(store2.panel.generatedAt) : "");
+              aiTxt.innerHTML = panelSummaryHtml(summary, ((_b2 = store3.panel) == null ? void 0 : _b2.generatedAt) ? formatRelativeTime(store3.panel.generatedAt) : "");
             }
-            const linkedTotal = Object.keys(((_c = store2.link) == null ? void 0 : _c.state) || {}).length;
+            const linkedTotal = Object.keys(((_c = store3.link) == null ? void 0 : _c.state) || {}).length;
             const log = popup.querySelector("#bz-sb-log");
             if (log && linkedTotal) {
               log.insertAdjacentHTML(
@@ -37435,8 +37797,8 @@ ${text}`;
   });
 
   // src/password-vault/settings.ts
-  var settings_exports5 = {};
-  __export(settings_exports5, {
+  var settings_exports6 = {};
+  __export(settings_exports6, {
     passwordVaultSettingsSchema: () => passwordVaultSettingsSchema
   });
   function passwordVaultSettingsSchema() {
@@ -37453,7 +37815,7 @@ ${text}`;
       ]
     };
   }
-  var init_settings5 = __esm({
+  var init_settings6 = __esm({
     "src/password-vault/settings.ts"() {
       init_settings_common();
     }
@@ -38230,7 +38592,7 @@ ${text}`;
     }
     return n;
   }
-  var schemaLoaders, DOMAINS, NAV_SECS, schemaRowCache, loadedCounts, listableDomains, navBadges, SettingsPanelUI;
+  var schemaLoaders, DOMAINS2, NAV_SECS, schemaRowCache, loadedCounts, listableDomains, navBadges, SettingsPanelUI;
   var init_ui12 = __esm({
     "src/settings-panel/ui.ts"() {
       init_dom();
@@ -38263,8 +38625,10 @@ ${text}`;
         },
         ai: async () => (await Promise.resolve().then(() => (init_settings_main_schema(), settings_main_schema_exports))).aiSettingsSchema(),
         appearance: async () => (await Promise.resolve().then(() => (init_schema(), schema_exports))).appearanceSettingsSchema(),
-        diary: async () => (await Promise.resolve().then(() => (init_settings(), settings_exports))).diarySettingsSchema(),
-        memo: async () => (await Promise.resolve().then(() => (init_settings2(), settings_exports2))).memoSettingsSchema(),
+        // 内容首页（home 域，2026-09-10）：入口顺序与显隐 = 一个按钮开编辑弹窗
+        home: async () => (await Promise.resolve().then(() => (init_settings(), settings_exports))).homeSettingsSchema(),
+        diary: async () => (await Promise.resolve().then(() => (init_settings2(), settings_exports2))).diarySettingsSchema(),
+        memo: async () => (await Promise.resolve().then(() => (init_settings3(), settings_exports3))).memoSettingsSchema(),
         belongings: async () => (await Promise.resolve().then(() => (init_ui4(), ui_exports3))).belongingSettingsSchema(),
         // 数据源组为声明行（外部 news.json 状态），先读盘预载再建 schema
         clipping: async () => {
@@ -38273,8 +38637,8 @@ ${text}`;
           return (await Promise.resolve().then(() => (init_ui6(), ui_exports5))).clipbookSettingsSchema(state2);
         },
         favorites: async () => (await Promise.resolve().then(() => (init_ui7(), ui_exports6))).favoritesSettingsSchema(),
-        cinema: async () => (await Promise.resolve().then(() => (init_settings3(), settings_exports3))).cinemaSettingsSchema(),
-        bookshelf: async () => (await Promise.resolve().then(() => (init_settings4(), settings_exports4))).bookshelfSettingsSchema(),
+        cinema: async () => (await Promise.resolve().then(() => (init_settings4(), settings_exports4))).cinemaSettingsSchema(),
+        bookshelf: async () => (await Promise.resolve().then(() => (init_settings5(), settings_exports5))).bookshelfSettingsSchema(),
         review: async () => {
           const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app2(), app_exports));
           const { reviewSettingsSchema: reviewSettingsSchema2 } = await Promise.resolve().then(() => (init_ui9(), ui_exports7));
@@ -38285,7 +38649,7 @@ ${text}`;
         secondbrain: async () => (await Promise.resolve().then(() => (init_panel(), panel_exports))).secondBrainSettingsSchema(),
         pomodoro: async () => (await Promise.resolve().then(() => (init_ui2(), ui_exports2))).pomodoroSettingsSchema(),
         encrypt: async () => (await Promise.resolve().then(() => (init_ui10(), ui_exports8))).encryptSettingsSchema(),
-        "password-vault": async () => (await Promise.resolve().then(() => (init_settings5(), settings_exports5))).passwordVaultSettingsSchema(),
+        "password-vault": async () => (await Promise.resolve().then(() => (init_settings6(), settings_exports6))).passwordVaultSettingsSchema(),
         knowledge: async () => (await Promise.resolve().then(() => (init_ui5(), ui_exports4))).knowledgeSettingsSchema(),
         smartcat: async () => {
           const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data11(), data_exports));
@@ -38306,7 +38670,7 @@ ${text}`;
           });
         }
       };
-      DOMAINS = [
+      DOMAINS2 = [
         { id: "global", name: "通用", icon: DOMAIN_ICONS.global, desc: "存储路径等跨域基础偏好", schemaLoader: schemaLoaders.general },
         { id: "appearance", name: "设置", icon: DOMAIN_ICONS.appearance, desc: "设置面板的布局与主题", schemaLoader: schemaLoaders.appearance },
         { id: "ai", name: "AI", icon: DOMAIN_ICONS.ai, desc: "AI 服务商与模型配置", schemaLoader: schemaLoaders.ai },
@@ -38322,7 +38686,7 @@ ${text}`;
         { id: "review", name: "复习计划", icon: DOMAIN_ICONS.review, desc: "间隔重复与做题", schemaLoader: schemaLoaders.review },
         { id: "secondbrain", name: "第二大脑", icon: DOMAIN_ICONS.secondbrain, desc: "嵌入检索与对话", schemaLoader: schemaLoaders.secondbrain },
         { id: "auto-summary", name: "自动摘要", icon: DOMAIN_ICONS["auto-summary"], desc: "剪藏自动摘要", noSettings: true },
-        { id: "home", name: "内容首页", icon: DOMAIN_ICONS.home, desc: "统计域卡首页", noSettings: true },
+        { id: "home", name: "首页", icon: DOMAIN_ICONS.home, desc: "首页外观：入口顺序与显隐", schemaLoader: schemaLoaders.home },
         { id: "pomodoro", name: "番茄钟", icon: DOMAIN_ICONS.pomodoro, desc: "专注计时与休息", schemaLoader: schemaLoaders.pomodoro },
         { id: "attach", name: "附件搬移", icon: DOMAIN_ICONS.attach, desc: "附件整理", noSettings: true },
         { id: "encrypt", name: "保险库", icon: DOMAIN_ICONS.encrypt, desc: "密码、加密笔记与加密日记", schemaLoader: schemaLoaders.encrypt },
@@ -38331,14 +38695,17 @@ ${text}`;
         { id: "knowledge", name: "知识盒", icon: DOMAIN_ICONS.knowledge, desc: "文献录入 · 卡片 · 主题", schemaLoader: schemaLoaders.knowledge }
       ];
       NAV_SECS = [
-        { title: "基础", ids: ["global", "appearance", "ai"] },
-        { title: "记录", ids: ["diary", "memo", "belongings", "clipping", "favorites"] },
-        { title: "媒体与知识", ids: ["cinema", "bookshelf", "review", "secondbrain", "knowledge"] },
-        { title: "工具", ids: ["pomodoro", "encrypt", "password-vault", "smartcat"] }
+        { title: "基础", ids: ["global", "appearance", "home"] },
+        { title: "智能", ids: ["ai", "secondbrain"] },
+        { title: "记录", ids: ["diary", "memo", "belongings"] },
+        { title: "收集", ids: ["clipping", "favorites"] },
+        { title: "媒体与阅读", ids: ["cinema", "bookshelf", "review", "knowledge"] },
+        { title: "工具", ids: ["pomodoro", "smartcat"] },
+        { title: "安全", ids: ["encrypt", "password-vault"] }
       ];
       schemaRowCache = /* @__PURE__ */ new Map();
       loadedCounts = /* @__PURE__ */ new Map();
-      listableDomains = () => DOMAINS.filter((d) => {
+      listableDomains = () => DOMAINS2.filter((d) => {
         var _a2;
         return !d.noSettings && d.schemaLoader && (!loadedCounts.has(d.id) || ((_a2 = loadedCounts.get(d.id)) != null ? _a2 : 0) > 0);
       });
@@ -38366,7 +38733,7 @@ ${text}`;
          * 桌面定位左栏选中域；移动端打开后直接进域设置弹窗。未知 id 忽略（回退通用）。
          */
         open(domainId) {
-          const deep = domainId ? DOMAINS.find((x) => x.id === domainId) : void 0;
+          const deep = domainId ? DOMAINS2.find((x) => x.id === domainId) : void 0;
           if (deep) this.activeDomainId = deep.id;
           if (this.mask && this.popup) {
             topifyZ(this.mask, this.popup);
@@ -38444,7 +38811,7 @@ ${text}`;
               b.addEventListener("click", () => {
                 this.activeDomainId = id;
                 renderNav2(searchIn.value);
-                void this.renderDomain(pane, DOMAINS.find((x) => x.id === id));
+                void this.renderDomain(pane, DOMAINS2.find((x) => x.id === id));
               });
             });
           };
@@ -38457,7 +38824,7 @@ ${text}`;
           });
           renderNav2("");
           this.rerenderList = () => renderNav2(searchIn.value);
-          void this.renderDomain(pane, (_a2 = DOMAINS.find((x) => x.id === this.activeDomainId)) != null ? _a2 : DOMAINS[0]);
+          void this.renderDomain(pane, (_a2 = DOMAINS2.find((x) => x.id === this.activeDomainId)) != null ? _a2 : DOMAINS2[0]);
         }
         /**
          * 预加载全部有 schema 的域，回填左侧导航徽标（设置项总数）。
@@ -38466,7 +38833,7 @@ ${text}`;
          * 组级/行级 visibleWhen 门控（如移动端组）按当前端环境过滤。
          */
         async preloadAllBadges() {
-          const tasks = DOMAINS.filter((d) => d.schemaLoader).map(async (d) => {
+          const tasks = DOMAINS2.filter((d) => d.schemaLoader).map(async (d) => {
             var _a2;
             try {
               const schema = await d.schemaLoader();
@@ -38486,7 +38853,7 @@ ${text}`;
         refreshNavBadges() {
           if (!this.navEl) return;
           this.navEl.querySelectorAll(".bz-sp-nav-item").forEach((b) => {
-            const d = DOMAINS.find((x) => x.id === b.dataset.spDomain);
+            const d = DOMAINS2.find((x) => x.id === b.dataset.spDomain);
             if (!d) return;
             const ct = b.querySelector(".bz-sp-nav-count");
             if (ct) ct.textContent = badgeOf(d);
@@ -38563,8 +38930,6 @@ ${text}`;
           this.mobPushed = false;
           const homeTools = popup.querySelector('[data-sp-mob-tools="home"]');
           homeTools.appendChild(uiIconBtn({ icon: "x", lg: true, title: "关闭", className: "bz-sp-mob-close", onClick: () => this.hide() }));
-          const domainTools = popup.querySelector('[data-sp-mob-tools="domain"]');
-          domainTools.appendChild(uiIconBtn({ icon: "x", lg: true, title: "关闭", className: "bz-sp-mob-close", onClick: () => this.hide() }));
           const back = popup.querySelector("[data-sp-mob-back]");
           back.appendChild(uiIconBtn({ icon: "arrow-left", lg: true, title: "返回", className: "bz-sp-mob-back-btn", onClick: () => this.popDomain() }));
           mountIcons(popup);
@@ -38587,7 +38952,7 @@ ${text}`;
               const doms = listableDomains().filter((d) => d.name.includes(query) || d.desc.includes(query));
               const rows = [];
               schemaRowCache.forEach((rowsOf, did) => {
-                const d = DOMAINS.find((x) => x.id === did);
+                const d = DOMAINS2.find((x) => x.id === did);
                 if (!d) return;
                 rowsOf.forEach((r) => {
                   if (r.name.includes(query) || r.desc && r.desc.includes(query)) rows.push({ domain: d, name: r.name, desc: r.desc || d.name });
@@ -38610,7 +38975,7 @@ ${text}`;
               list.innerHTML = html;
             }
             list.querySelectorAll(".bz-sp-mob-item").forEach((b) => {
-              const d = DOMAINS.find((x) => x.id === b.dataset.spDomain);
+              const d = DOMAINS2.find((x) => x.id === b.dataset.spDomain);
               if (d) b.addEventListener("click", () => void this.pushDomain(d));
             });
             mountIcons(list);
@@ -38831,14 +39196,15 @@ ${text}`;
     applyMemoSkin(tryGetSettings().memoSkin);
     mountIcons(overlay2);
     const sortEl = overlay2.querySelector("[data-memo-sort]");
-    const sortSelect = uiSelect({
+    const sortChoice = uiChoice({
       options: [
         { value: "priority", label: "紧急优先" },
         { value: "due", label: "仅按到期" },
         { value: "created", label: "按创建" }
       ],
       value: M.sortMode,
-      className: "bz-memo-sortsel",
+      float: true,
+      label: "排序方式",
       onChange: (v) => {
         M.sortMode = v;
         getSettings().memoSortMode = v;
@@ -38846,8 +39212,8 @@ ${text}`;
         renderAll4();
       }
     });
-    sortEl.appendChild(sortSelect.el);
-    sortSelectDetach = sortSelect.detach;
+    sortEl.appendChild(sortChoice.el);
+    sortChoiceDetach = sortChoice.detach;
     if (!isMobileEnv()) {
       panelResizeDetach2 = uiResizable(panelEl, {
         minW: PANEL.MIN_W,
@@ -38919,7 +39285,7 @@ ${text}`;
       }
       const composerAdd = t.closest("[data-memo-composer-add]");
       if (composerAdd) {
-        submitComposer();
+        addFromComposer();
         return;
       }
     });
@@ -38995,9 +39361,9 @@ ${text}`;
       panelResizeDetach2.detach();
       panelResizeDetach2 = null;
     }
-    if (sortSelectDetach) {
-      sortSelectDetach();
-      sortSelectDetach = null;
+    if (sortChoiceDetach) {
+      sortChoiceDetach();
+      sortChoiceDetach = null;
     }
     M.renderFn = null;
     M.pinnedNewId = null;
@@ -39046,7 +39412,7 @@ ${text}`;
   function renderMobScenes() {
     const wrap = M.overlay.querySelector("[data-memo-mob-scenes]");
     if (!wrap) return;
-    wrap.innerHTML = sceneOptions().map((o) => mobChipHtml(o, M.activeScene === o.scene)).join("") + mobAddSceneChipHtml();
+    wrap.innerHTML = sceneOptions().map((o) => mobChipHtml(o, M.activeScene === o.scene)).join("");
     mountIcons(wrap);
     wrap.querySelectorAll("[data-memo-scene]").forEach((el) => {
       attachSceneActions(el, el.dataset.memoScene);
@@ -39344,24 +39710,6 @@ ${text}`;
     actions.push({ icon: "trash-2", label: "删除", title: "删除", kind: "danger", onClick: () => void deleteItemConfirm(it) });
     return actions;
   }
-  function submitComposer() {
-    if (!isMobileEnv()) {
-      addFromComposer();
-      return;
-    }
-    const input = M.overlay.querySelector("[data-memo-composer-input]");
-    const txt = ((input == null ? void 0 : input.value) || "").trim();
-    const hint = clipTitleHint && clipTitleHint.title && txt === clipTitleHint.url ? clipTitleHint : null;
-    openEditor(null, {
-      presetContent: txt,
-      presetTitle: hint ? hint.title : "",
-      presetScene: composerScene(),
-      onSaved: () => {
-        if (input) input.value = "";
-        clipTitleHint = null;
-      }
-    });
-  }
   function addFromComposer() {
     const overlay2 = M.overlay;
     const input = overlay2.querySelector("[data-memo-composer-input]");
@@ -39408,12 +39756,11 @@ ${text}`;
       await refresh();
     })();
   }
-  function openEditor(item, opts) {
+  function openEditor(item) {
     const isEdit = !!item;
     const scenes = MemoData.getScenarios();
     const editing = item != null ? item : null;
-    const presetScene = (opts == null ? void 0 : opts.presetScene) && scenes.includes(opts.presetScene) ? opts.presetScene : null;
-    const defaultScene = editing ? editing.scene : presetScene != null ? presetScene : fallbackScene();
+    const defaultScene = editing ? editing.scene : fallbackScene();
     const isClip = defaultScene === "剪藏";
     const isCode = defaultScene === "代码";
     const isCourse = defaultScene === "公开课";
@@ -39431,7 +39778,7 @@ ${text}`;
     const contentInput = document.createElement("textarea");
     contentInput.className = "bz-input";
     contentInput.placeholder = "输入备忘录内容...";
-    contentInput.value = editing ? editing.title : (opts == null ? void 0 : opts.presetContent) || "";
+    contentInput.value = editing ? editing.title : "";
     contentField.append(contentLabel, contentInput);
     form.appendChild(contentField);
     const titleBox = document.createElement("div");
@@ -39439,7 +39786,7 @@ ${text}`;
     const titleInput = document.createElement("input");
     titleInput.className = "bz-input";
     titleInput.placeholder = "标题（可选）";
-    titleInput.value = editing ? "" : (opts == null ? void 0 : opts.presetTitle) || "";
+    titleInput.value = "";
     titleBox.appendChild(titleInput);
     form.appendChild(titleBox);
     const scriptBox = document.createElement("div");
@@ -39641,7 +39988,6 @@ ${text}`;
       const finalTitle = scene === "剪藏" && titleVal ? titleVal : content;
       const { url } = extractUrlAndDisplay(content);
       void (async () => {
-        var _a2;
         try {
           if (isEdit && editing) {
             await MemoData.updateItem(editing.id, {
@@ -39682,7 +40028,6 @@ ${text}`;
             notice(`已添加到「${scene}」`, "success");
           }
           closeModal();
-          (_a2 = opts == null ? void 0 : opts.onSaved) == null ? void 0 : _a2.call(opts);
           await refresh();
         } catch (e) {
           notifySaveError(e, isEdit ? "保存备忘录" : "新建备忘录");
@@ -39879,7 +40224,7 @@ ${text}`;
       console.error(e);
     }
   }
-  var import_moment6, PANEL, SEARCH_DEBOUNCE_MS3, DONE_WINDOW_DAYS, searchDebounceTimer2, clipTitleHint, panelResizeDetach2, sortSelectDetach;
+  var import_moment6, PANEL, SEARCH_DEBOUNCE_MS3, DONE_WINDOW_DAYS, searchDebounceTimer2, clipTitleHint, panelResizeDetach2, sortChoiceDetach;
   var init_ui13 = __esm({
     "src/memo/ui.ts"() {
       import_moment6 = __toESM(require_moment());
@@ -39903,7 +40248,7 @@ ${text}`;
       searchDebounceTimer2 = null;
       clipTitleHint = null;
       panelResizeDetach2 = null;
-      sortSelectDetach = null;
+      sortChoiceDetach = null;
     }
   });
 
@@ -39913,18 +40258,11 @@ ${text}`;
     applySkin: () => applySkin,
     bootMemoSim: () => bootMemoSim,
     closePanel: () => closeMemoPanel,
-    cycleLayout: () => cycleLayout,
     demoCapture: () => demoCapture,
     demoDeleteNote: () => demoDeleteNote,
     demoFileOpen: () => demoFileOpen,
     demoRenameNote: () => demoRenameNote,
-    layoutState: () => layoutState,
-    listLayouts: () => listLayouts,
-    listSkins: () => listSkins,
-    openPanel: () => openPanel3,
-    setLayout: () => setLayout,
-    skinState: () => skinState,
-    toggleSkin: () => toggleSkin
+    openPanel: () => openPanel3
   });
   init_fake_obsidian();
   init_app();
@@ -40053,11 +40391,6 @@ ${text}`;
     for (const item of items) {
       if (item.linkedNote === path) {
         item.linkedNote = null;
-        changed = true;
-      }
-      if (item.notePath === path) {
-        item.notePath = null;
-        item.notePosition = null;
         changed = true;
       }
     }
@@ -40227,30 +40560,7 @@ ${text}`;
 
   // prototypes/memo/fake-sim.ts
   init_ui13();
-  init_settings2();
   var VAULT_KEY = "bz-sim:CONFIG/STORAGE/memo.json";
-  var DEMO_KEY = "bz-sim:demo-settings";
-  var SHARED_KEYS = ["memoSkin", "memoLayout"];
-  function loadSharedSettings() {
-    try {
-      const raw = localStorage.getItem(DEMO_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== "object") return;
-      for (const k of SHARED_KEYS) {
-        if (parsed[k] !== void 0) demoSettings[k] = parsed[k];
-      }
-    } catch (e) {
-    }
-  }
-  function saveSharedSettings() {
-    try {
-      const out = {};
-      for (const k of SHARED_KEYS) out[k] = demoSettings[k];
-      localStorage.setItem(DEMO_KEY, JSON.stringify(out));
-    } catch (e) {
-    }
-  }
   var _app3 = null;
   var demoSettings = {
     storagePath: "CONFIG/STORAGE",
@@ -40292,7 +40602,6 @@ ${text}`;
     if (g.__bzMemoSimBooted) return;
     g.__bzMemoSimBooted = true;
     seedDatabase();
-    loadSharedSettings();
     injectRuntime();
   }
   function openPanel3() {
@@ -40301,63 +40610,8 @@ ${text}`;
   }
   function applySkin(skin) {
     bootMemoSim();
-    demoSettings.memoSkin = skin === "editorial" ? "editorial" : "paper";
-    saveSharedSettings();
-    applyMemoSkin(demoSettings.memoSkin);
-    return demoSettings.memoSkin;
-  }
-  function skinState() {
-    return demoSettings.memoSkin === "editorial" ? "editorial" : "paper";
-  }
-  function toggleSkin() {
-    const next = skinState() === "paper" ? "editorial" : "paper";
-    applySkin(next);
-    return next;
-  }
-  function listSkins() {
-    return [
-      { value: "paper", label: "纸感手账" },
-      { value: "editorial", label: "编辑部" }
-    ];
-  }
-  function listLayouts() {
-    var _a2;
-    const row = memoSettingsSchema().groups.flatMap((g) => g.rows).find((r) => {
-      var _a3;
-      return ((_a3 = r.binding) == null ? void 0 : _a3.key) === "memoLayout";
-    });
-    const opts = (_a2 = row == null ? void 0 : row.options) != null ? _a2 : [];
-    return opts.map((o) => ({ value: o.value, label: o.label }));
-  }
-  function currentLayoutValue() {
-    var _a2, _b2, _c;
-    const all = listLayouts();
-    const cur = String((_a2 = demoSettings.memoLayout) != null ? _a2 : "");
-    return all.some((o) => o.value === cur) ? cur : (_c = (_b2 = all[0]) == null ? void 0 : _b2.value) != null ? _c : "";
-  }
-  function layoutState() {
-    var _a2, _b2;
-    bootMemoSim();
-    const all = listLayouts();
-    const value = currentLayoutValue();
-    return { value, label: (_b2 = (_a2 = all.find((o) => o.value === value)) == null ? void 0 : _a2.label) != null ? _b2 : value, count: all.length };
-  }
-  function cycleLayout() {
-    const all = listLayouts();
-    if (all.length === 0) return { value: "", label: "", count: 0 };
-    const i = Math.max(0, all.findIndex((o) => o.value === currentLayoutValue()));
-    const next = all[(i + 1) % all.length];
-    return setLayout(next.value);
-  }
-  function setLayout(value) {
-    var _a2;
-    bootMemoSim();
-    const all = listLayouts();
-    const hit = (_a2 = all.find((o) => o.value === value)) != null ? _a2 : all[0];
-    if (!hit) return { value: "", label: "", count: 0 };
-    demoSettings.memoLayout = hit.value;
-    saveSharedSettings();
-    return { value: hit.value, label: hit.label, count: all.length };
+    demoSettings.memoSkin = skin;
+    applyMemoSkin(skin);
   }
   function demoCapture() {
     bootMemoSim();
