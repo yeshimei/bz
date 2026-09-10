@@ -40,7 +40,6 @@ var BZR_home = (() => {
     iconSpan: () => iconSpan,
     loadingEntriesHtml: () => loadingEntriesHtml,
     loadingFlowHtml: () => loadingFlowHtml,
-    memoIdOf: () => memoIdOf,
     nextHtml: () => nextHtml,
     panelFrameHtml: () => panelFrameHtml,
     riverCountText: () => riverCountText,
@@ -69,8 +68,7 @@ var BZR_home = (() => {
     // 域入口命令与面板导航共用
     home: "layout-grid",
     recap: "calendar-heart",
-    memo: "sticky-note",
-    todo: "check-square",
+    memo: "check-square",
     belongings: "package",
     clipping: "scissors",
     favorites: "star",
@@ -158,8 +156,8 @@ var BZR_home = (() => {
     diary: 0,
     movies: 0,
     books: 0,
-    todoDone: 0,
-    todoCreated: 0,
+    memoDone: 0,
+    memoCreated: 0,
     pomodoros: 0,
     pomodoroMinutes: 0
   };
@@ -231,7 +229,7 @@ var BZR_home = (() => {
     return {
       diary: day.summary.diary > 0 ? "ok" : data.streak.diaryStreak > 0 ? "warn" : "off",
       review: data.counts.reviewOverdue > 0 ? "hot" : "off",
-      memo: day.summary.todoDone + day.summary.todoCreated > 0 ? "ok" : "off",
+      memo: day.summary.memoDone + day.summary.memoCreated > 0 ? "ok" : "off",
       pomodoro: day.summary.pomodoros > 0 ? "ok" : "off",
       cinema: hasEvent("cinema") ? "ok" : "off",
       bookshelf: hasEvent("bookshelf") ? "ok" : "off"
@@ -263,9 +261,6 @@ var BZR_home = (() => {
       default:
         return null;
     }
-  }
-  function memoIdOf(domain) {
-    return domain === "todo" ? "memo" : domain;
   }
 
   // src/home/layouts/river/render.ts
@@ -317,7 +312,7 @@ var BZR_home = (() => {
       var _a2, _b, _c, _d, _e;
       const note = notes.find((n) => n.index === i);
       const lastDiary = i === day.events.length - 1 && note && note.text.indexOf("日记") >= 0 ? " bz-home-ev--warn" : "";
-      const memoId = memoIdOf(e.domain);
+      const memoId = e.domain;
       const dmColor = (_a2 = DOMAIN_DOT[memoId]) != null ? _a2 : "#8a8f99";
       const dmName = (_c = (_b = DOMAIN_MAP.get(memoId)) == null ? void 0 : _b.name) != null ? _c : e.domain;
       const dmIcon = (_e = (_d = DOMAIN_MAP.get(memoId)) == null ? void 0 : _d.icon) != null ? _e : "";
