@@ -1,4 +1,4 @@
-/* 源指纹 bfc492414b4fba90 · 仓内输入 206 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 683bb94238d377ea · 仓内输入 206 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/brief.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -26292,33 +26292,33 @@ ${n.content.slice(0, 2e3)}
   });
   function statCardHTML(label, value, idx) {
     const bg = PASTEL_CARDS[idx % PASTEL_CARDS.length];
-    return `<div style="flex:1;min-width:80px;padding:12px 6px;background:${bg};border-radius:10px;text-align:center;border:1px solid rgba(0,0,0,0.06);">
-    <div style="font-size:1.3rem;font-weight:700;color:#3D4456;line-height:1.2;">${value}</div>
-    <div style="font-size:.68rem;color:rgba(61,68,86,0.65);margin-top:3px;">${label}</div>
+    return `<div class="bz-stats-card" style="background:${bg};">
+    <div class="bz-stats-card-val">${value}</div>
+    <div class="bz-stats-card-lbl">${label}</div>
   </div>`;
   }
   function sectionHTML(title, body, accent = "#D6E4FF") {
-    return `<div style="margin:12px 16px;padding:14px 14px 12px;background:var(--background-secondary);border-radius:12px;border:1px solid var(--background-modifier-border);">
-    <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:.92rem;margin-bottom:12px;">
-      <span style="width:4px;height:14px;border-radius:2px;background:${accent};flex-shrink:0;"></span>
+    return `<div class="bz-stats-section">
+    <div class="bz-stats-section-head">
+      <span class="bz-stats-section-accent" style="background:${accent};"></span>
       <span>${title}</span>
     </div>
     ${body}
   </div>`;
   }
   function emptyHTML() {
-    return '<p style="text-align:center;color:var(--text-muted);font-size:.8rem;padding:12px 0;">暂无数据</p>';
+    return '<p class="bz-stats-empty">暂无数据</p>';
   }
   function softBarHTML(entries, color) {
     if (!entries.length) return emptyHTML();
     const max = Math.max(...entries.map((e) => e.value), 1);
     return entries.map((e) => `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
-      <span style="width:56px;flex-shrink:0;font-size:.76rem;color:var(--text-muted);text-align:right;white-space:nowrap;">${e.label}</span>
-      <div style="flex:1;height:10px;background:var(--background-modifier-border);border-radius:5px;overflow:hidden;">
-        <div style="height:100%;width:${Math.max(e.value / max * 100, 2)}%;background:${color};border-radius:5px;"></div>
+    <div class="bz-stats-bar-row">
+      <span class="bz-stats-bar-lbl">${e.label}</span>
+      <div class="bz-stats-bar-track">
+        <div class="bz-stats-bar-fill" style="width:${Math.max(e.value / max * 100, 2)}%;background:${color};"></div>
       </div>
-      <span style="width:30px;flex-shrink:0;font-size:.76rem;color:var(--text-normal);text-align:right;">${e.value}</span>
+      <span class="bz-stats-bar-val">${e.value}</span>
     </div>`).join("");
   }
   function barChartHTML(entries, color) {
@@ -26326,33 +26326,33 @@ ${n.content.slice(0, 2e3)}
     const max = Math.max(...entries.map((e) => e.value), 1);
     const minH = 26, maxH = 92;
     return `
-    <div style="overflow-x:auto;margin:8px 0 4px;">
-      <div style="display:flex;align-items:flex-end;gap:6px;min-width:${Math.max(entries.length * 34, 200)}px;padding:0 4px;">
+    <div class="bz-stats-chart-scroll">
+      <div class="bz-stats-chart" style="min-width:${Math.max(entries.length * 34, 200)}px;">
       ${entries.map((e) => {
       const h = max > 0 ? minH + e.value / max * (maxH - minH) : minH;
       return `
-        <div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;">
-          <div style="width:100%;min-width:22px;height:${h}px;background:${color};border-radius:6px 6px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:3px;color:#3D4456;font-weight:700;font-size:.7rem;">${e.value || ""}</div>
-          <div style="margin-top:5px;font-size:.66rem;color:var(--text-muted);text-align:center;white-space:nowrap;">${e.label}</div>
+        <div class="bz-stats-chart-col">
+          <div class="bz-stats-chart-bar" style="height:${h}px;background:${color};">${e.value || ""}</div>
+          <div class="bz-stats-chart-lbl">${e.label}</div>
         </div>`;
     }).join("")}
       </div>
     </div>`;
   }
   function statInlineHTML(items) {
-    return `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">${items.map((s) => `
-    <span style="font-size:.74rem;color:var(--text-muted);background:var(--background-primary);border:1px solid var(--background-modifier-border);border-radius:8px;padding:3px 10px;">${s}</span>`).join("")}</div>`;
+    return `<div class="bz-stats-inline">${items.map((s) => `
+    <span class="bz-stats-inline-chip">${s}</span>`).join("")}</div>`;
   }
   function rankListHTML(items) {
     if (!items.length) return emptyHTML();
     const badges = ["#FFF3C4", "#D8F3DC", "#D6E4FF"];
     return items.map((it, i) => {
-      const rank = i < 3 ? `<span style="width:20px;height:20px;flex-shrink:0;border-radius:50%;background:${badges[i]};color:#3D4456;font-size:.68rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(0,0,0,0.06);">${i + 1}</span>` : `<span style="width:20px;flex-shrink:0;font-size:.72rem;color:var(--text-muted);text-align:center;">${i + 1}</span>`;
-      return `<div class="bz-review-stats-tl-row" data-idx="${i}" style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--background-modifier-border);cursor:pointer;">
+      const rank = i < 3 ? `<span class="bz-stats-rank-badge" style="background:${badges[i]};">${i + 1}</span>` : `<span class="bz-stats-rank-plain">${i + 1}</span>`;
+      return `<div class="bz-review-stats-tl-row" data-idx="${i}">
       ${rank}
-      <span style="flex:1;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(it.name)}</span>
-      ${it.sub ? `<span style="font-size:.7rem;color:var(--text-muted);flex-shrink:0;">${it.sub}</span>` : ""}
-      <span style="font-size:.72rem;color:var(--text-muted);flex-shrink:0;">${it.meta}</span>
+      <span class="bz-stats-rank-name">${escapeHtml(it.name)}</span>
+      ${it.sub ? `<span class="bz-stats-rank-sub">${it.sub}</span>` : ""}
+      <span class="bz-stats-rank-meta">${it.meta}</span>
     </div>`;
     }).join("");
   }
@@ -26421,7 +26421,7 @@ ${n.content.slice(0, 2e3)}
   function buildStatsHTML(app, dm, items, stats) {
     var _a2, _b2;
     const cards = `
-    <div style="display:flex;flex-wrap:wrap;gap:8px;padding:16px 16px 0;">
+    <div class="bz-stats-cards">
       ${statCardHTML("总复习（天）", stats.totalReviews, 0)}
       ${statCardHTML("连续天数", stats.streak, 1)}
       ${statCardHTML("今日复习", stats.todayReviews, 2)}
@@ -26475,7 +26475,7 @@ ${n.content.slice(0, 2e3)}
     });
     const timelineHTML = sectionHTML(
       "复习时间线",
-      rankListHTML(tlItems) + '<div style="font-size:.68rem;color:var(--text-faint);text-align:center;padding-top:8px;">点击笔记查看复习历史</div>',
+      rankListHTML(tlItems) + '<div class="bz-stats-hint">点击笔记查看复习历史</div>',
       "#FADDE1"
     );
     const daily7 = stats.daily7.map((d) => ({ label: d.date.slice(5).replace("-", "/"), value: d.count }));
@@ -26512,12 +26512,10 @@ ${n.content.slice(0, 2e3)}
     closeBtn.className = "bz-win-close bz-review-history-close bz-touch-target--xl";
     closeBtn.title = "关闭";
     closeBtn.appendChild(uiIcon("x"));
-    closeBtn.style.cssText = "position:absolute;top:10px;right:10px;z-index:2;background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px;box-shadow:none !important;";
     closeBtn.addEventListener("click", closeTimeline);
     histPopup.appendChild(closeBtn);
     const status = document.createElement("div");
     status.className = "bz-review-history-status";
-    status.style.cssText = "padding:16px 18px 10px;";
     const stageText = item.phase === "fsrs" ? `FSRS Lv.${(item.stage || 0) - 9 + 1}` : `${(item.stage || 0) + 1}/10`;
     let curR = null;
     if (item.phase === "fsrs" && item.stability && item.lastReviewed) {
@@ -26528,13 +26526,13 @@ ${n.content.slice(0, 2e3)}
       }
     }
     status.innerHTML = `
-    <div style="font-size:15px;font-weight:600;color:var(--text-normal);">${escapeHtml(stripTitleMarks(item.name))}</div>
-    <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${stageText} · 共 ${history2.length} 次复习${curR || ""}</div>
+    <div class="bz-review-history-name">${escapeHtml(stripTitleMarks(item.name))}</div>
+    <div class="bz-review-history-sub">${stageText} · 共 ${history2.length} 次复习${curR || ""}</div>
   `;
     body.appendChild(status);
     if (!history2.length) {
       const empty = document.createElement("div");
-      empty.style.cssText = "padding:30px;text-align:center;color:var(--text-faint);font-size:13px;";
+      empty.className = "bz-review-history-empty";
       empty.textContent = "暂无复习记录";
       body.appendChild(empty);
       histEsc = escManager.register("review-history", { isVisible: () => !!histMask && histMask.style.display === "block", close: closeTimeline });
@@ -26542,7 +26540,6 @@ ${n.content.slice(0, 2e3)}
     }
     const tl = document.createElement("div");
     tl.className = "bz-review-history-tl";
-    tl.style.cssText = "flex:1;overflow-y:auto;padding:4px 18px 20px;";
     const itemsHTML = history2.map((h, i) => {
       const isLast = i === history2.length - 1;
       const ratingName = RATING_NAMES[h.rating] || h.rating;
@@ -26550,15 +26547,15 @@ ${n.content.slice(0, 2e3)}
       const rText = h.R !== void 0 ? `R=${h.R <= 1 ? Math.round(h.R * 100) : Math.round(h.R)}%` : "";
       const sText = h.stability !== void 0 ? `S=${h.stability}` : "";
       const meta = [rText, sText].filter(Boolean).join(" · ");
-      const line = isLast ? "" : '<div style="position:absolute;left:5px;top:14px;bottom:-4px;width:2px;background:var(--background-modifier-border);"></div>';
+      const line = isLast ? "" : '<div class="bz-review-history-line"></div>';
       return `
-      <div style="position:relative;padding-left:20px;padding-bottom:${isLast ? "4px" : "14px"};">
+      <div class="bz-review-history-item${isLast ? " is-last" : ""}">
         ${line}
-        <div style="position:absolute;left:0;top:4px;width:12px;height:12px;border-radius:50%;background:${color};flex-shrink:0;"></div>
-        <div style="display:flex;align-items:baseline;gap:10px;font-size:13px;">
-          <span style="color:var(--text-muted);font-size:12px;min-width:86px;flex-shrink:0;">${formatRelativeTime(new Date(h.timestamp))}</span>
-          <span style="font-weight:500;color:${color};min-width:32px;">${ratingName}</span>
-          <span style="color:var(--text-faint);font-size:12px;">阶段${h.stage}${meta ? " · " + meta : ""}</span>
+        <div class="bz-review-history-dot" style="background:${color};"></div>
+        <div class="bz-review-history-row">
+          <span class="bz-review-history-time">${formatRelativeTime(new Date(h.timestamp))}</span>
+          <span class="bz-review-history-rating" style="color:${color};">${ratingName}</span>
+          <span class="bz-review-history-stage">阶段${h.stage}${meta ? " · " + meta : ""}</span>
         </div>
       </div>`;
     }).join("");
