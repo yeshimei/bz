@@ -1,4 +1,4 @@
-/* 源指纹 d8ec6a106e5ff9d0 · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 04d12b6125e5ac02 · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/bookshelf/fake-sim.ts","prototypes/bookshelf/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/index.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/bookshelf/fake-sim.ts → window.BZW_bookshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_bookshelf = (() => {
@@ -6512,27 +6512,10 @@ var BZW_bookshelf = (() => {
 
   // src/core/chart-palette.ts
   var CHART_PASTEL_SERIES = ["#D6E4FF", "#D8F3DC", "#CDF0EA", "#FADDE1", "#FFE5CC", "#E6DFF5"];
-  var CHART_INK = "#3D4456";
   var CHART_FALLBACK = "#95a5a6";
   var CHART_HIGHLIGHT = "#FFE5CC";
-  var CHART_GRADIENT_VIOLET = "linear-gradient(135deg, #667eea, #764ba2)";
-  var CHART_GRADIENT_PINK = "linear-gradient(135deg, #f093fb, #f5576c)";
-  var CHART_GRADIENT_AQUA = "linear-gradient(135deg, #4facfe, #00f2fe)";
-  var CHART_GRADIENT_MINT = "linear-gradient(135deg, #43e97b, #38f9d7)";
-  var CHART_GRADIENT_CORAL = "linear-gradient(135deg, #ff6b6b, #ff8e8e)";
-  var CHART_METRIC_VIOLET = "#667eea";
-  var CHART_METRIC_AQUA = "#4facfe";
-  var CHART_METRIC_MINT = "#43e97b";
-  var CHART_METRIC_CORAL = "#ff6b6b";
-  var CHART_METRIC_RED = "#e74c3c";
-  var CHART_METRIC_BLUE = "#3498db";
-  var CHART_METRIC_PURPLE = "#9b59b6";
-  var CHART_METRIC_GREEN = "#27ae60";
-  var CHART_METRIC_ORANGE = "#e67e22";
-  var CHART_METRIC_SKY = "#64d6f3";
   var CHART_AUTHOR_RANK_COLORS = ["#ffd700", "#c0c0c0", "#cd7f32", "#3498db", "#9b59b6"];
   var CHART_RANK_FALLBACK_DEEP = "#7f8c8d";
-  var CHART_SPEED_BAR_GRADIENT = "linear-gradient(90deg, #4CAF50, #45a049)";
   var CHART_FOCUS_SERIES = ["#ff6b6b", "#ff9ff3", "#feca57", "#48dbfb", "#1dd1a1"];
 
   // src/reading-report/report.ts
@@ -6559,7 +6542,7 @@ var BZW_bookshelf = (() => {
   ${cols.map((col) => {
       const height = max > 0 && col.count > 0 ? 12 + Math.round(col.count / max * 44) : 3;
       const bg = col.accent ? CHART_HIGHLIGHT : CHART_PASTEL_SERIES[0];
-      const num = col.count > 0 ? `<span style="color:${CHART_INK}">${col.count}</span>` : "";
+      const num = col.count > 0 ? `<span class="bz-rr-mbar-num">${col.count}</span>` : "";
       return `
     <div class="bz-rr-mcol">
     <div class="bz-rr-mbar${col.accent ? " bz-rr-mbar--accent" : ""}" style="height:${height}px;background:${bg}">${num}</div>
@@ -6586,53 +6569,53 @@ var BZW_bookshelf = (() => {
     const totalFormattedTime = formatReadingTime2(stats.totalReadingTime);
     const avgReadingTime = formatReadingTime2(stats.totalReadingTime / Math.max(stats.readBooks, 1));
     return `
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;">
+  <div class="bz-rr-grid">
 
-  <div style="background: ${CHART_GRADIENT_VIOLET}; padding: 20px; border-radius: 10px; color: white; text-align: center;">
-  <div style="font-size: 2em; font-weight: bold;">${stats.totalBooks}</div>
+  <div class="bz-rr-hero bz-rr-hero--violet">
+  <div class="bz-rr-hero-num">${stats.totalBooks}</div>
   <div>书库</div>
   </div>
-   
-  <div style="background: ${CHART_GRADIENT_PINK}; padding: 20px; border-radius: 10px; color: white; text-align: center;">
-  <div style="font-size: 2em; font-weight: bold;">${stats.readBooks}</div>
+
+  <div class="bz-rr-hero bz-rr-hero--pink">
+  <div class="bz-rr-hero-num">${stats.readBooks}</div>
   <div>已读</div>
   </div>
 
-  <div style="background: ${CHART_GRADIENT_AQUA}; padding: 20px; border-radius: 10px; color: white; text-align: center;">
-  <div style="font-size: 2em; font-weight: bold;">${stats.readingBooks}</div>
+  <div class="bz-rr-hero bz-rr-hero--aqua">
+  <div class="bz-rr-hero-num">${stats.readingBooks}</div>
   <div>在读</div>
   </div>
 
-  <div style="background: ${CHART_GRADIENT_MINT}; padding: 20px; border-radius: 10px; color: white; text-align: center;">
-  <div style="font-size: 2em; font-weight: bold;">${stats.unreadBooks}</div>
+  <div class="bz-rr-hero bz-rr-hero--mint">
+  <div class="bz-rr-hero-num">${stats.unreadBooks}</div>
   <div>未读</div>
   </div>
   </div>
-  
-  <div style="background: var(--background-secondary); padding: 20px; border-radius: 10px; margin: 20px 0;">
-  <div style="font-size: 2.5em; font-weight: bold; color: var(--text-normal); text-align: center; margin: 20px 0;">
+
+  <div class="bz-rr-panel">
+  <div class="bz-rr-total">
   ${totalFormattedTime.replace("h", "小时").replace("m", "分钟")}
   </div>
 
-  <div style="display: flex; justify-content: space-around; text-align: center; margin-top: 30px;">
+  <div class="bz-rr-metric-row">
   <div>
-  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_RED};">${stats.totalHighlights}</div>
+  <div class="bz-rr-metric-num bz-rr-c-red">${stats.totalHighlights}</div>
   <div>划线</div>
   </div>
   <div>
-  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_BLUE};">${stats.totalThinks}</div>
+  <div class="bz-rr-metric-num bz-rr-c-blue">${stats.totalThinks}</div>
   <div>想法</div>
   </div>
   <div>
-  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_PURPLE};">${stats.totalDialogue}</div>
+  <div class="bz-rr-metric-num bz-rr-c-purple">${stats.totalDialogue}</div>
   <div>讨论</div>
   </div>
   <div>
-  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_PURPLE};">${stats.totalOutlinks}</div>
+  <div class="bz-rr-metric-num bz-rr-c-purple">${stats.totalOutlinks}</div>
   <div>出链</div>
   </div>
   <div>
-  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_GREEN};">${avgReadingTime}</div>
+  <div class="bz-rr-metric-num bz-rr-c-green">${avgReadingTime}</div>
   <div>平均每本</div>
   </div>
   </div>
@@ -6642,13 +6625,13 @@ var BZW_bookshelf = (() => {
   function generateYearlyStats(stats) {
     const yearlyData = Object.entries(stats.yearlyStats).sort((a, b) => b[0].localeCompare(a[0]));
     if (yearlyData.length === 0) {
-      return `<div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
-    <p style="text-align: center; color: var(--text-muted); padding: 40px 0;">暂无年度阅读数据</p>
+      return `<div class="bz-rr-card">
+    <p class="bz-rr-empty bz-rr-empty--pad">暂无年度阅读数据</p>
     </div>`;
     }
     return `
-  <div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+  <div class="bz-rr-card">
+  <div class="bz-rr-year-grid">
   ${yearlyData.map(([year, data]) => {
       const monthCols = generateMonthBarColumns(
         getYearMonthBars(stats.monthlyStats, year).map((b) => ({ label: b.label, count: b.booksRead }))
@@ -6656,10 +6639,10 @@ var BZW_bookshelf = (() => {
       return `
     <div class="bz-rr-year-cell">
     <div class="bz-rr-year-card" data-rr-year="${year}" title="点击展开 ${year} 年逐月阅读" role="button">
-    <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 5px;">${year}年<i data-lucide="chevron-down" class="bz-ic bz-ic--sm bz-rr-year-chev"></i></div>
-    <div style="font-size: 2em; font-weight: bold;">${data.booksRead}</div>
+    <div class="bz-rr-year-title">${year}年<i data-lucide="chevron-down" class="bz-ic bz-ic--sm bz-rr-year-chev"></i></div>
+    <div class="bz-rr-hero-num">${data.booksRead}</div>
     <div>阅读数量</div>
-    <div style="font-size: 0.8em; opacity: 0.8; margin-top: 3px;">
+    <div class="bz-rr-year-time">
     ${formatReadingTime2(data.totalReadingTime)}
     </div>
     </div>
@@ -6674,28 +6657,27 @@ var BZW_bookshelf = (() => {
   function generateAuthorStats(stats) {
     const topAuthors = Object.entries(stats.authorStats).sort((a, b) => b[1].count - a[1].count).slice(0, 5);
     if (topAuthors.length === 0) {
-      return `<div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
-    <p style="text-align: center; color: var(--text-muted);">暂无作者统计数据</p>
+      return `<div class="bz-rr-card">
+    <p class="bz-rr-empty">暂无作者统计数据</p>
     </div>`;
     }
     return `
-  <div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
+  <div class="bz-rr-card">
 
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-top: 15px;">
+  <div class="bz-rr-author-grid">
   ${topAuthors.map(([author, data], index) => {
       const completionRate = data.totalBooks > 0 ? (data.completedBooks / data.totalBooks * 100).toFixed(1) : 0;
       const rankColors = CHART_AUTHOR_RANK_COLORS;
       return `
     <div class="bz-rr-author-card" data-rr-author="${escapeHtml2(author)}" title="在书架中搜索该作者" role="button"
-    style="background: linear-gradient(135deg, ${rankColors[index] || CHART_FALLBACK}, ${rankColors[index] ? rankColors[index] + "cc" : CHART_RANK_FALLBACK_DEEP});
-    padding: 15px; border-radius: 8px; color: white; position: relative;">
-    <div style="font-size: 2em; position: absolute; top: 10px; right: 15px; opacity: 0.3;">${index + 1}</div>
-    <div style="font-weight: bold; font-size: 1.1em;">${escapeHtml2(author)}</div>
-    <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+    style="background: linear-gradient(135deg, ${rankColors[index] || CHART_FALLBACK}, ${rankColors[index] ? rankColors[index] + "cc" : CHART_RANK_FALLBACK_DEEP});">
+    <div class="bz-rr-author-rank">${index + 1}</div>
+    <div class="bz-rr-author-name">${escapeHtml2(author)}</div>
+    <div class="bz-rr-author-row">
     <span>作品数: ${data.totalBooks}</span>
     <span>完成: ${completionRate}%</span>
     </div>
-    <div style="margin-top: 5px; font-size: 0.9em;">
+    <div class="bz-rr-author-time">
     阅读时长: ${formatReadingTime2(data.totalReadingTime)}
     </div>
     </div>
@@ -6711,51 +6693,51 @@ var BZW_bookshelf = (() => {
     }
     const speedAnalysis = analyzeReadingSpeed(stats);
     return `
-  <div style="background: var(--background-primary); padding: 16px; border-radius: 8px; border: 1px solid var(--background-modifier-border); margin: 16px 0; ">
+  <div class="bz-rr-card bz-rr-card--sm">
 
-  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
+  <div class="bz-rr-speed-grid">
 
-  <div style="background: ${CHART_GRADIENT_VIOLET}; padding: 16px; border-radius: 8px; color: white; text-align: center;">
-  <div style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">总阅读量</div>
-  <div style="font-size: 20px; font-weight: 600;">${(stats.readingSpeed.totalPages / 1e3).toFixed(1)}k</div>
-  <div style="font-size: 12px; opacity: 0.8;">页数</div>
+  <div class="bz-rr-hero bz-rr-hero--sm bz-rr-hero--violet">
+  <div class="bz-rr-hero-label--sm">总阅读量</div>
+  <div class="bz-rr-hero-num--sm">${(stats.readingSpeed.totalPages / 1e3).toFixed(1)}k</div>
+  <div class="bz-rr-hero-sub">页数</div>
   </div>
 
 
-  <div style="background: ${CHART_GRADIENT_AQUA}; padding: 16px; border-radius: 8px; color: white; text-align: center;">
-  <div style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">阅读速度</div>
-  <div style="font-size: 20px; font-weight: 600;">${stats.readingSpeed.averagePagesPerHour.toFixed(0)}</div>
-  <div style="font-size: 12px; opacity: 0.8;">页/小时</div>
+  <div class="bz-rr-hero bz-rr-hero--sm bz-rr-hero--aqua">
+  <div class="bz-rr-hero-label--sm">阅读速度</div>
+  <div class="bz-rr-hero-num--sm">${stats.readingSpeed.averagePagesPerHour.toFixed(0)}</div>
+  <div class="bz-rr-hero-sub">页/小时</div>
   </div>
 
 
-  <div style="background: ${CHART_GRADIENT_MINT}; padding: 16px; border-radius: 8px; color: white; text-align: center;">
-  <div style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">总字数</div>
-  <div style="font-size: 20px; font-weight: 600;">${(stats.readingSpeed.totalWords / 1e4).toFixed(1)}w</div>
-  <div style="font-size: 12px; opacity: 0.8;">万字</div>
+  <div class="bz-rr-hero bz-rr-hero--sm bz-rr-hero--mint">
+  <div class="bz-rr-hero-label--sm">总字数</div>
+  <div class="bz-rr-hero-num--sm">${(stats.readingSpeed.totalWords / 1e4).toFixed(1)}w</div>
+  <div class="bz-rr-hero-sub">万字</div>
   </div>
 
 
-  <div style="background: ${CHART_GRADIENT_CORAL}; padding: 16px; border-radius: 8px; color: white; text-align: center;">
-  <div style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">字速</div>
-  <div style="font-size: 20px; font-weight: 600;">${(stats.readingSpeed.averageWordsPerHour / 1e3).toFixed(1)}k</div>
-  <div style="font-size: 12px; opacity: 0.8;">字/小时</div>
+  <div class="bz-rr-hero bz-rr-hero--sm bz-rr-hero--coral">
+  <div class="bz-rr-hero-label--sm">字速</div>
+  <div class="bz-rr-hero-num--sm">${(stats.readingSpeed.averageWordsPerHour / 1e3).toFixed(1)}k</div>
+  <div class="bz-rr-hero-sub">字/小时</div>
   </div>
   </div>
 
 
-  <div style="background: var(--background-secondary); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-  <div style="font-size: 15px; font-weight: 500; color: var(--text-normal);">速度等级</div>
-  <div style="font-size: 14px; color: var(--text-muted);">${speedAnalysis.speedLevel}</div>
+  <div class="bz-rr-panel bz-rr-panel--sm">
+  <div class="bz-rr-speed-head">
+  <div class="bz-rr-speed-label">速度等级</div>
+  <div class="bz-rr-speed-level">${speedAnalysis.speedLevel}</div>
   </div>
 
 
-  <div style="width: 100%; height: 8px; background: var(--background-modifier-border); border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
-  <div style="width: ${speedAnalysis.speedPercentage}%; height: 100%; background: ${CHART_SPEED_BAR_GRADIENT}; border-radius: 4px;"></div>
+  <div class="bz-rr-speed-track">
+  <div class="bz-rr-speed-fill" style="width: ${speedAnalysis.speedPercentage}%"></div>
   </div>
 
-  <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted);">
+  <div class="bz-rr-speed-scale">
   <span>较慢</span>
   <span>适中</span>
   <span>快速</span>
@@ -6763,27 +6745,27 @@ var BZW_bookshelf = (() => {
   </div>
 
 
-  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px;">
+  <div class="bz-rr-cell-grid">
 
-  <div style="background: var(--background-primary); padding: 12px; border-radius: 6px; border: 1px solid var(--background-modifier-border); text-align: center;">
-  <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">效率评分</div>
-  <div style="font-size: 18px; font-weight: 600; color: ${CHART_METRIC_CORAL};">${speedAnalysis.efficiencyScore}/10</div>
+  <div class="bz-rr-cell">
+  <div class="bz-rr-cell-label">效率评分</div>
+  <div class="bz-rr-cell-num bz-rr-c-coral">${speedAnalysis.efficiencyScore}/10</div>
   </div>
 
 
-  <div style="background: var(--background-primary); padding: 12px; border-radius: 6px; border: 1px solid var(--background-modifier-border); text-align: center;">
-  <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">阅读类型</div>
-  <div style="font-size: 14px; font-weight: 500; color: ${CHART_METRIC_VIOLET};">${speedAnalysis.readingType}</div>
+  <div class="bz-rr-cell">
+  <div class="bz-rr-cell-label">阅读类型</div>
+  <div class="bz-rr-cell-num--sm bz-rr-c-violet">${speedAnalysis.readingType}</div>
   </div>
 
-  <div style="background: var(--background-primary); padding: 12px; border-radius: 6px; border: 1px solid var(--background-modifier-border); text-align: center;">
-  <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">最佳速度</div>
-  <div style="font-size: 18px; font-weight: 600; color: ${CHART_METRIC_SKY};">${speedAnalysis.bestSpeed}页/小时</div>
+  <div class="bz-rr-cell">
+  <div class="bz-rr-cell-label">最佳速度</div>
+  <div class="bz-rr-cell-num bz-rr-c-sky">${speedAnalysis.bestSpeed}页/小时</div>
   </div>
 
-  <div style="background: var(--background-primary); padding: 12px; border-radius: 6px; border: 1px solid var(--background-modifier-border); text-align: center;">
-  <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">平均时长</div>
-  <div style="font-size: 18px; font-weight: 600; color: ${CHART_METRIC_CORAL};">${speedAnalysis.avgSessionTime}</div>
+  <div class="bz-rr-cell">
+  <div class="bz-rr-cell-label">平均时长</div>
+  <div class="bz-rr-cell-num bz-rr-c-coral">${speedAnalysis.avgSessionTime}</div>
   </div>
   </div>
   </div>
@@ -6797,8 +6779,8 @@ var BZW_bookshelf = (() => {
   };
   function generateReadingHabitsDeepAnalysis2(readingSessions) {
     if (!readingSessions || readingSessions.length < 5) {
-      return `<div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
-    <p style="text-align: center; color: var(--text-muted);">需要更多会话数据进行分析</p>
+      return `<div class="bz-rr-card">
+    <p class="bz-rr-empty">需要更多会话数据进行分析</p>
     </div>`;
     }
     const analysis = analyzeReadingHabits(readingSessions);
@@ -6808,9 +6790,9 @@ var BZW_bookshelf = (() => {
       display: `${percentage}%`
     }));
     return `
-  <div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
+  <div class="bz-rr-card">
   <div class="bz-rr-bar-head"><span>会话时段分布</span><span>共 ${readingSessions.length} 次会话</span></div>
-  <div style="margin: 12px 0;">
+  <div class="bz-rr-bar-wrap">
   ${generateBarRows(slotRows)}
   </div>
   </div>
@@ -6819,31 +6801,31 @@ var BZW_bookshelf = (() => {
   function generateReadingTrendsAnalysis(stats, bookNotes) {
     const trends = analyzeReadingTrends(stats, bookNotes);
     return `
-  <div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
+  <div class="bz-rr-card">
 
   <!-- 核心指标概览 -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 20px 0;">
-  <div style="text-align: center; padding: 15px; background: var(--background-secondary); border-radius: 8px;">
-  <div style="font-size: 1.8em; font-weight: bold; color: ${CHART_METRIC_VIOLET};">${trends.currentMonth.books}</div>
-  <div style="font-size: 0.9em; color: var(--text-muted);">本月阅读</div>
+  <div class="bz-rr-trend-grid">
+  <div class="bz-rr-metric">
+  <div class="bz-rr-metric-num--lg bz-rr-c-violet">${trends.currentMonth.books}</div>
+  <div class="bz-rr-metric-label">本月阅读</div>
   </div>
-  <div style="text-align: center; padding: 15px; background: var(--background-secondary); border-radius: 8px;">
-  <div style="font-size: 1.8em; font-weight: bold; color: ${CHART_METRIC_AQUA};">${trends.quarterlyAvg}</div>
-  <div style="font-size: 0.9em; color: var(--text-muted);">季度平均</div>
+  <div class="bz-rr-metric">
+  <div class="bz-rr-metric-num--lg bz-rr-c-aqua">${trends.quarterlyAvg}</div>
+  <div class="bz-rr-metric-label">季度平均</div>
   </div>
-  <div style="text-align: center; padding: 15px; background: var(--background-secondary); border-radius: 8px;">
-  <div style="font-size: 1.8em; font-weight: bold; color: ${CHART_METRIC_MINT};">${trends.completionRate}</div>
-  <div style="font-size: 0.9em; color: var(--text-muted);">完成率</div>
+  <div class="bz-rr-metric">
+  <div class="bz-rr-metric-num--lg bz-rr-c-mint">${trends.completionRate}</div>
+  <div class="bz-rr-metric-label">完成率</div>
   </div>
-  <div style="text-align: center; padding: 15px; background: var(--background-secondary); border-radius: 8px;">
-  <div style="font-size: 1.8em; font-weight: bold; color: ${CHART_METRIC_CORAL};">${trends.trendDirection}</div>
-  <div style="font-size: 0.9em; color: var(--text-muted);">趋势方向</div>
+  <div class="bz-rr-metric">
+  <div class="bz-rr-metric-num--lg bz-rr-c-coral">${trends.trendDirection}</div>
+  <div class="bz-rr-metric-label">趋势方向</div>
   </div>
   </div>
 
   <!-- 移动端优化的月度趋势 -->
-  <div style="margin: 25px 0;">
-  <div style="font-weight: bold; color: var(--text-normal); margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">
+  <div class="bz-rr-section">
+  <div class="bz-rr-sec-head">
 
   </div>
   ${generateMobileFriendlyTrendChart(trends.recentMonths)}
@@ -6853,7 +6835,7 @@ var BZW_bookshelf = (() => {
   }
   function generateMobileFriendlyTrendChart(recentMonths) {
     if (recentMonths.length === 0) {
-      return '<p style="text-align: center; color: var(--text-muted); padding: 20px 0;">暂无月度数据</p>';
+      return '<p class="bz-rr-empty bz-rr-empty--pad-sm">暂无月度数据</p>';
     }
     return generateMonthBarColumns(
       recentMonths.map((data, index) => ({
@@ -6872,8 +6854,8 @@ var BZW_bookshelf = (() => {
   }
   function generateReadingHeatmap(readingSessions, cursorMonth) {
     if (!readingSessions || readingSessions.length === 0) {
-      return `<div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
-    <p style="text-align: center; color: var(--text-muted);">暂无阅读会话数据，无法生成热力图</p>
+      return `<div class="bz-rr-card">
+    <p class="bz-rr-empty">暂无阅读会话数据，无法生成热力图</p>
     </div>`;
     }
     const heatmapData = processHeatmapData(readingSessions);
@@ -6882,23 +6864,23 @@ var BZW_bookshelf = (() => {
     const idx = monthKeys.indexOf(cursor);
     const navBtn = (dir, disabled) => `<button class="bz-rr-hm-nav" data-rr-hm-${dir}${disabled ? " disabled" : ""} title="${dir === "prev" ? "上一月" : "下一月"}" aria-label="${dir === "prev" ? "上一月" : "下一月"}"><i data-lucide="chevron-${dir === "prev" ? "left" : "right"}" class="bz-ic bz-ic--sm"></i></button>`;
     return `
-  <div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
+  <div class="bz-rr-card">
 
   <!-- 热力图统计概览 -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 20px 0;">
-  <div style="text-align: center; padding: 12px; background: var(--background-secondary); border-radius: 8px;">
-  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_VIOLET};">${heatmapData.totalDays}</div>
-  <div style="font-size: 0.8em; color: var(--text-muted);">有阅读天数</div>
+  <div class="bz-rr-hm-metrics">
+  <div class="bz-rr-metric bz-rr-metric--tight">
+  <div class="bz-rr-metric-num bz-rr-c-violet">${heatmapData.totalDays}</div>
+  <div class="bz-rr-metric-label--sm">有阅读天数</div>
   </div>
 
-  <div style="text-align: center; padding: 12px; background: var(--background-secondary); border-radius: 8px;">
-  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_CORAL};">${heatmapData.longestStreak}</div>
-  <div style="font-size: 0.8em; color: var(--text-muted);">最长连续天数</div>
+  <div class="bz-rr-metric bz-rr-metric--tight">
+  <div class="bz-rr-metric-num bz-rr-c-coral">${heatmapData.longestStreak}</div>
+  <div class="bz-rr-metric-label--sm">最长连续天数</div>
   </div>
   </div>
 
   <!-- 热力图主体（段头翻月：processHeatmapData 已算全部月度数据，‹ › 逐月切换） -->
-  <div style="margin: 25px 0;">
+  <div class="bz-rr-section">
   <div class="bz-rr-hm-head">
   ${navBtn("prev", idx <= 0)}
   <div class="bz-rr-hm-title" data-rr-hm-title>${heatmapMonthTitle(cursor)}</div>
@@ -6916,7 +6898,7 @@ var BZW_bookshelf = (() => {
   function generateHeatmapGrid(heatmapData, cursorMonth) {
     const months = getHeatmapMonthKeys(heatmapData);
     if (months.length === 0) {
-      return '<p style="text-align: center; color: var(--text-muted); padding: 40px 0;">暂无数据</p>';
+      return '<p class="bz-rr-empty bz-rr-empty--pad">暂无数据</p>';
     }
     const cursor = cursorMonth && months.includes(cursorMonth) ? cursorMonth : months[months.length - 1];
     return generateMonthHeatmap(heatmapData.monthlyData[cursor], cursor);
@@ -6952,25 +6934,25 @@ var BZW_bookshelf = (() => {
       }
     }
     return `
-  <div style="margin-bottom: 25px;">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-  <div style="font-weight: bold; color: var(--text-normal); font-size: 1.1em;">
+  <div class="bz-rr-hm-month">
+  <div class="bz-rr-hm-subhead">
+  <div class="bz-rr-hm-subtitle">
   ${year}年${monthName}
   </div>
 
   </div>
 
   <!-- 星期标签 -->
-  <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 8px; ">
+  <div class="bz-rr-hm-week">
   ${["一", "二", "三", "四", "五", "六", "日"].map(
       (day) => `
-    <div style="text-align: center; font-size: 0.75em; color: var(--text-faint); padding: 2px;">${day}</div>
+    <div class="bz-rr-hm-weekday">${day}</div>
     `
     ).join("")}
   </div>
 
   <!-- 热力图网格 -->
-  <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-right:-20px ">
+  <div class="bz-rr-hm-grid">
   ${weekRows.flatMap((week) => week.map((cell) => generateHeatmapCell(cell))).join("")}
   </div>
   </div>
@@ -6981,11 +6963,11 @@ var BZW_bookshelf = (() => {
       return '<div class="bz-rr-hm-cell"></div>';
     }
     if (cell.type === "future") {
-      return `<div class="bz-rr-hm-cell" style="background: var(--background-secondary);"
+      return `<div class="bz-rr-hm-cell bz-rr-hm-cell--off"
     title="${cell.date} - 未来日期"></div>`;
     }
     if (cell.type === "nodata") {
-      return `<div class="bz-rr-hm-cell" style="background: var(--background-secondary);"
+      return `<div class="bz-rr-hm-cell bz-rr-hm-cell--off"
     title="${cell.date} - 无阅读记录"></div>`;
     }
     const durationHours = cell.data.duration / 3600;
@@ -7002,79 +6984,70 @@ var BZW_bookshelf = (() => {
   function generateReadingFocusAnalysis(stats, bookNotes) {
     const focusData = analyzeReadingFocus(stats.readingSessions, bookNotes);
     return `
- <div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
-    
+ <div class="bz-rr-card">
+
     <!-- 核心指标卡片 -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 20px 0;">
-      
-        <div style="text-align: center; padding: 15px; background: ${CHART_GRADIENT_AQUA}; color: white; border-radius: 8px;">
-            <div style="font-size: 1.8em; font-weight: bold;">${focusData.deepSessions}</div>
-            <div style="font-size: 0.8em; opacity: 0.9;">深度会话</div>
+    <div class="bz-rr-focus-grid">
+
+        <div class="bz-rr-hero bz-rr-hero--pad bz-rr-hero--aqua">
+            <div class="bz-rr-hero-num--lg">${focusData.deepSessions}</div>
+            <div class="bz-rr-hero-label">深度会话</div>
         </div>
-        
-        <div style="text-align: center; padding: 15px; background: ${CHART_GRADIENT_MINT}; color: white; border-radius: 8px;">
-            <div style="font-size: 1.8em; font-weight: bold;">${focusData.trendDescription}</div>
-            <div style="font-size: 0.8em; opacity: 0.9;">专注趋势</div>
+
+        <div class="bz-rr-hero bz-rr-hero--pad bz-rr-hero--mint">
+            <div class="bz-rr-hero-num--lg">${focusData.trendDescription}</div>
+            <div class="bz-rr-hero-label">专注趋势</div>
         </div>
-        
-        <div style="text-align: center; padding: 15px; background: ${CHART_GRADIENT_CORAL}; color: white; border-radius: 8px;">
-            <div style="font-size: 1.8em; font-weight: bold;">${focusData.bestTimeSlot}</div>
-            <div style="font-size: 0.8em; opacity: 0.9;">最佳时段</div>
-            
-            
+
+        <div class="bz-rr-hero bz-rr-hero--pad bz-rr-hero--coral">
+            <div class="bz-rr-hero-num--lg">${focusData.bestTimeSlot}</div>
+            <div class="bz-rr-hero-label">最佳时段</div>
         </div>
-        
-          <div style="text-align: center; padding: 15px; background: ${CHART_GRADIENT_VIOLET}; color: white; border-radius: 8px;">
-            <div style="font-size: 1.8em; font-weight: bold;">${focusData.focusScore}/100</div>
-            <div style="font-size: 0.8em; opacity: 0.9;">专注度评分</div>
+
+          <div class="bz-rr-hero bz-rr-hero--pad bz-rr-hero--violet">
+            <div class="bz-rr-hero-num--lg">${focusData.focusScore}/100</div>
+            <div class="bz-rr-hero-label">专注度评分</div>
         </div>
-        
-        
-        <div style="padding: 15px; background: var(--background-secondary); border-radius: 8px; text-align: center;">
-                <div style="font-size: 2em; font-weight: bold; color: ${CHART_METRIC_GREEN};">${focusData.consistencyScore}/10</div>
-                <div style="font-size: 0.85em; color: var(--text-normal);">连续性评分</div>
+
+        <div class="bz-rr-metric">
+                <div class="bz-rr-metric-num--xl bz-rr-c-green">${focusData.consistencyScore}/10</div>
+                <div class="bz-rr-metric-label--normal">连续性评分</div>
             </div>
-            
-            <div style="padding: 15px; background: var(--background-secondary); border-radius: 8px; text-align: center;">
-                <div style="font-size: 2em; font-weight: bold; color: ${CHART_METRIC_ORANGE};">${focusData.efficiencyScore}/10</div>
-                <div style="font-size: 0.85em; color: var(--text-normal);">效率评分</div>
+
+            <div class="bz-rr-metric">
+                <div class="bz-rr-metric-num--xl bz-rr-c-orange">${focusData.efficiencyScore}/10</div>
+                <div class="bz-rr-metric-label--normal">效率评分</div>
             </div>
     </div>
-    
+
     <!-- 专注度分布图表 -->
-    <div style="margin: 25px 0;">
-        
-        
-        <div style="display: flex; flex-direction: column; gap: 12px;">
+    <div class="bz-rr-section">
+
+        <div class="bz-rr-focus-list">
             ${focusData.sessionDistribution.map((item, index) => {
       const colors = CHART_FOCUS_SERIES;
       const labels = ["碎片化 (<10分钟)", "轻度专注 (10-30分钟)", "中等专注 (30-60分钟)", "深度专注 (1-2小时)", "高度专注 (>2小时)"];
       return `
-                <div style="display: flex; align-items: center; background: var(--background-secondary); padding: 10px; border-radius: 8px;">
-                    <div style="width: 60px; font-size: 0.85em; color: var(--text-normal); font-weight: bold;">${labels[index]}</div>
-                    <div style="flex: 1; margin: 0 15px;">
-                        <div style="width: 100%; height: 8px; background: var(--background-modifier-border); border-radius: 4px; overflow: hidden;">
-                            <div style="width: ${item.percentage}%; height: 100%; background: ${colors[index]}; border-radius: 4px;"></div>
+                <div class="bz-rr-focus-row">
+                    <div class="bz-rr-focus-label">${labels[index]}</div>
+                    <div class="bz-rr-focus-mid">
+                        <div class="bz-rr-focus-track">
+                            <div class="bz-rr-focus-fill" style="width: ${item.percentage}%; background: ${colors[index]};"></div>
                         </div>
                     </div>
-                    <div style="width: 50px; text-align: right; font-size: 0.9em; color: var(--text-muted);">${item.count}次 (${item.percentage}%)</div>
+                    <div class="bz-rr-focus-val">${item.count}次 (${item.percentage}%)</div>
                 </div>
                 `;
     }).join("")}
         </div>
     </div>
-    
-    
+
     </div>
-    
+
     <!-- 专注度对比 -->
-    <div style="margin: 20px 0;">
-   
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
-            
-            
-            
+    <div class="bz-rr-block">
+
+        <div class="bz-rr-block-grid">
         </div>
     </div>
 </div> `;
@@ -7082,41 +7055,41 @@ var BZW_bookshelf = (() => {
   function generateReadingCategoryAnalysis(bookNotes) {
     const categoryAnalysis = analyzeReadingCategories(bookNotes);
     if (categoryAnalysis.totalBooks === 0) {
-      return `<div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
-    <p style="text-align: center; color: var(--text-muted);">暂无书籍分类数据</p>
+      return `<div class="bz-rr-card">
+    <p class="bz-rr-empty">暂无书籍分类数据</p>
     </div>`;
     }
     return `
-  <div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
+  <div class="bz-rr-card">
 
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 20px 0;">
-  <div style="text-align: center; padding: 15px; background: ${CHART_GRADIENT_VIOLET}; color: white; border-radius: 8px; min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
-  <div style="font-size: 1.8em; font-weight: bold; line-height: 1.2;">${categoryAnalysis.totalCategories}</div>
-  <div style="font-size: 0.8em; opacity: 0.9; margin-top: 5px;">阅读分类</div>
+  <div class="bz-rr-cat-grid">
+  <div class="bz-rr-hero bz-rr-hero--pad bz-rr-hero--col bz-rr-hero--violet">
+  <div class="bz-rr-hero-num--cat">${categoryAnalysis.totalCategories}</div>
+  <div class="bz-rr-hero-label--mt">阅读分类</div>
   </div>
 
-  <div style="text-align: center; padding: 15px; background: ${CHART_GRADIENT_MINT}; color: white; border-radius: 8px; min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
-  <div style="font-size: 1.5em; font-weight: bold; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml2(categoryAnalysis.topCategory.name)}</div>
-  <div style="font-size: 0.8em; opacity: 0.9; margin-top: 5px;">最常阅读</div>
+  <div class="bz-rr-hero bz-rr-hero--pad bz-rr-hero--col bz-rr-hero--mint">
+  <div class="bz-rr-hero-num--clamp">${escapeHtml2(categoryAnalysis.topCategory.name)}</div>
+  <div class="bz-rr-hero-label--mt">最常阅读</div>
   </div>
 
-  <div style="text-align: center; padding: 15px; background: ${CHART_GRADIENT_AQUA}; color: white; border-radius: 8px; min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
-  <div style="font-size: 1.8em; font-weight: bold; line-height: 1.2;">${categoryAnalysis.diversityScore}%</div>
-  <div style="font-size: 0.8em; opacity: 0.9; margin-top: 5px;">多样性</div>
+  <div class="bz-rr-hero bz-rr-hero--pad bz-rr-hero--col bz-rr-hero--aqua">
+  <div class="bz-rr-hero-num--cat">${categoryAnalysis.diversityScore}%</div>
+  <div class="bz-rr-hero-label--mt">多样性</div>
   </div>
 
-  <div style="text-align: center; padding: 15px; background: ${CHART_GRADIENT_CORAL}; color: white; border-radius: 8px; min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
-  <div style="font-size: 1.8em; font-weight: bold; line-height: 1.2;">${categoryAnalysis.balanceScore}%</div>
-  <div style="font-size: 0.8em; opacity: 0.9; margin-top: 5px;">平衡度</div>
+  <div class="bz-rr-hero bz-rr-hero--pad bz-rr-hero--col bz-rr-hero--coral">
+  <div class="bz-rr-hero-num--cat">${categoryAnalysis.balanceScore}%</div>
+  <div class="bz-rr-hero-label--mt">平衡度</div>
   </div>
   </div>
 
-  <div style="margin: 25px 0;">
+  <div class="bz-rr-section">
   <div class="bz-rr-bar-head">
   <span>分类分布 · 共 ${categoryAnalysis.totalBooks} 本 / ${categoryAnalysis.totalCategories} 类</span>
   <span>点分类行回书架查看</span>
   </div>
-  <div style="margin: 12px 0;">
+  <div class="bz-rr-bar-wrap">
   ${generateBarRows(
       categoryAnalysis.categoryDistribution.map((category, index) => ({
         label: category.name,
@@ -7141,15 +7114,15 @@ var BZW_bookshelf = (() => {
   function generateReadingNotesInteractionAnalysis(bookNotes) {
     const interactionAnalysis = analyzeNotesInteractions(bookNotes);
     if (interactionAnalysis.totalBooks === 0) {
-      return `<div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
-    <p style="text-align: center; color: var(--text-muted);">暂无笔记互动数据</p>
+      return `<div class="bz-rr-card">
+    <p class="bz-rr-empty">暂无笔记互动数据</p>
     </div>`;
     }
     return `
-  <div style="background: var(--background-primary); padding: 20px; border-radius: 10px; border: 1px solid var(--background-modifier-border); margin: 20px 0;">
+  <div class="bz-rr-card">
 
   <div class="bz-rr-bar-head"><span>互动分布</span><span>总互动 ${interactionAnalysis.totalInteractions}</span></div>
-  <div style="margin: 12px 0;">
+  <div class="bz-rr-bar-wrap">
   ${generateBarRows(
       interactionAnalysis.interactionDistribution.map((item) => ({
         label: INTERACTION_TYPE_LABELS[item.type] || item.type,
@@ -7159,35 +7132,35 @@ var BZW_bookshelf = (() => {
     )}
   </div>
 
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;">
-  <div style="padding: 15px; background: var(--background-secondary); border-radius: 8px; text-align: center;">
-  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_VIOLET};">${interactionAnalysis.avgHighlightsPerBook}</div>
-  <div style="font-size: 0.9em; color: var(--text-muted);">平均每本划线</div>
+  <div class="bz-rr-int-grid">
+  <div class="bz-rr-metric">
+  <div class="bz-rr-metric-num bz-rr-c-violet">${interactionAnalysis.avgHighlightsPerBook}</div>
+  <div class="bz-rr-metric-label">平均每本划线</div>
   </div>
 
-  <div style="padding: 15px; background: var(--background-secondary); border-radius: 8px; text-align: center;">
-  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_AQUA};">${interactionAnalysis.thinkRatio}%</div>
-  <div style="font-size: 0.9em; color: var(--text-muted);">想法比例</div>
+  <div class="bz-rr-metric">
+  <div class="bz-rr-metric-num bz-rr-c-aqua">${interactionAnalysis.thinkRatio}%</div>
+  <div class="bz-rr-metric-label">想法比例</div>
   </div>
 
-  <div style="padding: 15px; background: var(--background-secondary); border-radius: 8px; text-align: center;">
-  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_MINT};">${interactionAnalysis.interactionScore}/100</div>
-  <div style="font-size: 0.9em; color: var(--text-muted);">互动评分</div>
+  <div class="bz-rr-metric">
+  <div class="bz-rr-metric-num bz-rr-c-mint">${interactionAnalysis.interactionScore}/100</div>
+  <div class="bz-rr-metric-label">互动评分</div>
   </div>
 
-   <div style="padding: 15px; background: var(--background-secondary); border-radius: 8px; text-align: center;">
-  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_BLUE};">${interactionAnalysis.interactionPattern}</div>
-  <div style="font-size: 0.9em; color: var(--text-muted);">${interactionAnalysis.patternDescription}</div>
+   <div class="bz-rr-metric">
+  <div class="bz-rr-metric-num bz-rr-c-blue">${interactionAnalysis.interactionPattern}</div>
+  <div class="bz-rr-metric-label">${interactionAnalysis.patternDescription}</div>
   </div>
 
-   <div style="padding: 15px; background: var(--background-secondary); border-radius: 8px; text-align: center;">
-  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_PURPLE};">${interactionAnalysis.thinkingDepth}</div>
-  <div style="font-size: 0.9em; color: var(--text-muted);">${interactionAnalysis.thinkingDescription}</div>
+   <div class="bz-rr-metric">
+  <div class="bz-rr-metric-num bz-rr-c-purple">${interactionAnalysis.thinkingDepth}</div>
+  <div class="bz-rr-metric-label">${interactionAnalysis.thinkingDescription}</div>
   </div>
 
-   <div style="padding: 15px; background: var(--background-secondary); border-radius: 8px; text-align: center;">
-  <div style="font-size: 1.5em; font-weight: bold; color: ${CHART_METRIC_CORAL};">${interactionAnalysis.connectionLevel}</div>
-  <div style="font-size: 0.9em; color: var(--text-muted);">${interactionAnalysis.connectionDescription}</div>
+   <div class="bz-rr-metric">
+  <div class="bz-rr-metric-num bz-rr-c-coral">${interactionAnalysis.connectionLevel}</div>
+  <div class="bz-rr-metric-label">${interactionAnalysis.connectionDescription}</div>
   </div>
   </div>
   </div>
