@@ -1,6 +1,6 @@
 # 260 — 待办正名「备忘录」+ 旧 memo 遗产清算 + 单源接入
 
-- status: doing
+- status: done
 - type: §1 refactor（正名+清算，行为保持） / §2 feature（单源接入）
 - 分支: §1 `memo-rename-260`（worktree `memo-rename-260`）；§2 `memo-single-source-260`（worktree）
 - 依据: ADR-0117（兑现 ADR-0092 第 19 行「名号继承另行立项」伏笔）
