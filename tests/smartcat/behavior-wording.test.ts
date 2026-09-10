@@ -48,7 +48,7 @@ describe('buildBehaviorWording：news（聚合讯）', () => {
 
 describe('buildBehaviorWording：movie（影视）', () => {
   it('movie:want / watching / watched', () => {
-    expect(buildBehaviorWording(makeItem('movie', 'want', { entityType: 'movie', action: 'want', name: '流浪地球' }))).toBe('你把《流浪地球》加入想看');
+    expect(buildBehaviorWording(makeItem('movie', 'want', { entityType: 'movie', action: 'want', name: '流浪地球' }))).toBe('你把《流浪地球》加入了想看');
     expect(buildBehaviorWording(makeItem('movie', 'watching', { entityType: 'movie', action: 'watching', name: '流浪地球' }))).toBe('你开始看《流浪地球》');
     expect(buildBehaviorWording(makeItem('movie', 'watched', { entityType: 'movie', action: 'watched', name: '流浪地球' }))).toBe('你看完了《流浪地球》');
   });
@@ -173,25 +173,52 @@ describe('buildBehaviorWording：reflection / weekly-report / dossier / secondbr
   });
 });
 
-describe('buildBehaviorWording：literature（文献盒，ADR-0066/0072）', () => {
-  it('literature:converted → 你把《标题》转成了文献', () => {
-    const item = makeItem('literature', 'converted', { entityType: 'literature', action: 'converted', name: '从零开始学B站', extras: { notePath: '文献盒/从零开始学B站.md' } });
+describe('buildBehaviorWording：knowledge（知识盒，ADR-0066/0072/0112）', () => {
+  it('knowledge:converted → 你把《标题》转成了文献', () => {
+    const item = makeItem('knowledge', 'converted', { entityType: 'knowledge', action: 'converted', name: '从零开始学B站', extras: { notePath: '知识盒/从零开始学B站.md' } });
     expect(buildBehaviorWording(item)).toBe('你把《从零开始学B站》转成了文献');
   });
 
-  it('literature:term-generated → 你为「术语」生成了一篇术语文献', () => {
-    const item = makeItem('literature', 'term-generated', { entityType: 'literature', action: 'term-generated', name: '习得性无助' });
+  it('knowledge:term-generated → 你为「术语」生成了一篇术语文献', () => {
+    const item = makeItem('knowledge', 'term-generated', { entityType: 'knowledge', action: 'term-generated', name: '习得性无助' });
     expect(buildBehaviorWording(item)).toBe('你为「习得性无助」生成了一篇术语文献');
   });
 
-  it('遗留 bili-downloader:converted / bili 存量条目同样命中（别名兼容，ADR-0072）', () => {
-    const item = makeItem('bili-downloader', 'converted', { entityType: 'bili', action: 'converted', name: '旧视频笔记' });
-    expect(buildBehaviorWording(item)).toBe('你把《旧视频笔记》转成了文献');
+  it('遗留 literature / bili-downloader 存量条目同样命中（别名兼容，ADR-0072/0112）', () => {
+    expect(buildBehaviorWording(makeItem('literature', 'converted', { entityType: 'literature', action: 'converted', name: '旧视频笔记' }))).toBe('你把《旧视频笔记》转成了文献');
+    expect(buildBehaviorWording(makeItem('bili-downloader', 'converted', { entityType: 'bili', action: 'converted', name: '更旧视频笔记' }))).toBe('你把《更旧视频笔记》转成了文献');
   });
 
-  it('literature 未知动作 → 实体默认', () => {
-    const item = makeItem('literature', 'weird', { entityType: 'literature', action: 'weird', name: 'X' });
-    expect(buildBehaviorWording(item)).toBe('文献动态：X');
+  it('knowledge 未知动作 → 实体默认', () => {
+    const item = makeItem('knowledge', 'weird', { entityType: 'knowledge', action: 'weird', name: 'X' });
+    expect(buildBehaviorWording(item)).toBe('知识盒动态：X');
+  });
+});
+
+describe('buildBehaviorWording：review / quiz / attach（issue 261 接线）', () => {
+  it('review 动作集（started/added/removed/rated）', () => {
+    expect(buildBehaviorWording(makeItem('review', 'started', { entityType: 'review', action: 'started' }))).toBe('你开始了复习');
+    expect(buildBehaviorWording(makeItem('review', 'added', { entityType: 'review', action: 'added', name: '三体' }))).toBe('你把《三体》加入了复习计划');
+    expect(buildBehaviorWording(makeItem('review', 'removed', { entityType: 'review', action: 'removed', name: '三体' }))).toBe('你把《三体》移出了复习计划');
+    expect(buildBehaviorWording(makeItem('review', 'rated', { entityType: 'review', action: 'rated', name: '三体', extras: { rating: 'good' } }))).toBe('你复习了《三体》，自评「一般」');
+    expect(buildBehaviorWording(makeItem('review', 'rated', { entityType: 'review', action: 'rated', name: '三体' }))).toBe('你复习了《三体》');
+  });
+
+  it('quiz 动作集（added/answered）', () => {
+    expect(buildBehaviorWording(makeItem('quiz', 'added', { entityType: 'quiz', action: 'added', name: '勾股定理' }))).toBe('你把「勾股定理」加入了题库');
+    expect(buildBehaviorWording(makeItem('quiz', 'answered', { entityType: 'quiz', action: 'answered', name: '勾股定理', extras: { correct: true } }))).toBe('你回答了题目「勾股定理」，答对了');
+    expect(buildBehaviorWording(makeItem('quiz', 'answered', { entityType: 'quiz', action: 'answered', name: '勾股定理', extras: { correct: false } }))).toBe('你回答了题目「勾股定理」，答错了');
+  });
+
+  it('attach:moved 带成功数 / 不带', () => {
+    expect(buildBehaviorWording(makeItem('attach', 'moved', { entityType: 'attach', action: 'moved', count: 3 }))).toBe('你搬移了当前笔记引用的 3 个附件');
+    expect(buildBehaviorWording(makeItem('attach', 'moved', { entityType: 'attach', action: 'moved' }))).toBe('你搬移了当前笔记引用的附件');
+  });
+});
+
+describe('buildBehaviorWording：favorites unarchived（issue 261 补全）', () => {
+  it('favorite:unarchived → 移出归档', () => {
+    expect(buildBehaviorWording(makeItem('favorites', 'unarchived', { entityType: 'favorite', action: 'unarchived', name: 'GitHub' }))).toBe('你把《GitHub》移出了归档');
   });
 });
 

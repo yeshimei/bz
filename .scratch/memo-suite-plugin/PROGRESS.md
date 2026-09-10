@@ -919,3 +919,15 @@ etrieve 增 lexicalQuery（词法降级免「情绪/时段」噪音）。④ **�
 - ✅ 重复收口：encrypt 确认框 5→1 `askConfirm`、diary-wall `isEncHidden` 5 处、review `quizWithAI` 3 处、smartcat `consumeLibraryDiff` 5 段、core 设置行样板 ×7 `newRowSetting`
 - ✅ 长函数拆解：encrypt renderDesktop(~125行)→4、diary-wall renderWall(165行)/openSheet(105行)；缝线不明显的（openEditor 330行、renderRow 330行 switch、doRefresh 210行）按停止条件原地保留
 - 📄 issues/259 完整报告（含 5 项留拍板）；测试偶发假失败 1 例复跑全绿（vitest 配置已载明的 CPU 争抢型，非改动致败）
+
+## 2026-09-10 小橘行为流接线补齐 + 文案人性化（issue 261 / ADR-0118）
+**状态：worktree 全量 4216 测试（264 文件）+ tsc 0 错误；合并 master（cb1435cc）复核仍全绿；worktree/smartcat-behavior-261**
+
+- ✅ **接线补齐（ADR-0069 遗留死代码激活）**：`coverage-source.ts` 自 b856c3c4 起为 review/quiz/attach 三域预建纯函数却生产零引用；本票首次接上 —— review 域 `app.ts`（markReview→rated、addCurrentToReview→added、startSingleSprint/startRoundSprint→started）+ `index.ts`（reviewRemoveCurrent→removed）；attach 域 `ui.ts`（runMove 成功→moved，带实际成功数）；smartcat `index.ts` 新增 `notifyReviewAction`/`notifyAttachMoved` 订阅
+- ✅ **emit 落点选择**：review 的 emit 放 `app.ts` 方法内而非命令层，因 markReview 被 sprint/reviewLoop 内部调用，命令层会漏采；复查确认 reviewLoop 仅由两个 start* 入口调用，started 覆盖无漏
+- ✅ **命名漂移纠正**：e7cdeb94（issue 255 literature→knowledge）只改 routing 键，`index.ts` 仍 `addObservation('literature')`、`knowledge-source.ts` 仍产 `entityType:'literature'` → 实际落 `system:fallback`；本票全链对齐 knowledge，wording 注册改 knowledge 主键并保留 `literature`/`bili`/`bili-downloader` 旧别名兼容存量
+- ✅ **模板与路由补缺**：favorites `unarchived` 文案模板（favorites-source 早已产此 action 但无模板）+ routing 补 `favorites:archived`/`favorites:unarchived` 两键；dashboard `BEHAVIOR_SOURCE_LABELS` 补 `literature`（旧存量）/review/quiz/attach
+- ✅ **文案人性化**：movie want「加入想看」→「加入了想看」；review rated 重写「你给《X》完成了复习评分（忘了）」→「你复习了《X》，自评「忘了」」（四档 again/hard/good/easy）；knowledge 默认「文献动态」→「知识盒动态」
+- ✅ **有意不接**：secondbrain 模板保留不接线（存量兼容）；diary entry-added/deleted/file-vacated 有意不接（file-created/modified/deleted 已覆盖，防双记录）；quiz 构造层保留待其动作点接线（已并入 review，评分由 review:rated 表征）
+- ✅ **测试**：新增 `tests/smartcat/coverage-action.test.ts` 6 例（review started/added/removed/rated、空标题与 noteSource 关静默、attach moved 带/不带 count）；同步修 3 处存量断言（movie want / literature→knowledge / review rated 四档）
+- 📄 文档：issues/261 立项；docs/adr/0118；CONTEXT 行为流词条；spec 增补纪要

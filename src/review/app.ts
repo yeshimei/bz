@@ -15,6 +15,7 @@ import { fitFromItems, mergeFittedW } from './fit';
 import { DEFAULT_W } from './fsrs';
 import { DEFAULT_R_THRESHOLD, isEarlyDue, roundQueue } from './queue';
 import { computeStats } from './stats';
+import { emitDomainEvent } from '../core/domain-bus';
 
 /** item 5：普通复习离篇宽限期（ms）——持续离篇超过此时长才算中断；测试可注入 */
 export let REVIEW_AWAY_GRACE_MS = 120000;
@@ -245,6 +246,8 @@ export const reviewApp = {
     // ADR-0077：评级也累计拟合计数（含阶梯阶段；样本过滤在 fit.ts 内做）。
     // fire-and-forget：计数在入口同步累加，拟合自防重入；不 await 避免大历史时卡评级路径
     void this.maybeRunFit(getApp());
+    // 行为流（issue 261）：评分入小橘行为流（review:rated，域事件总线；未装小橘时订阅端静默）
+    emitDomainEvent('review', { kind: 'rated', title: item.name || filePath, rating });
   },
 
   /** 跳转逾期（bz-review-start/overdue 命令入口）：完整复习流程 = startRoundSprint */
@@ -303,6 +306,8 @@ export const reviewApp = {
   async startSingleSprint(item: ReviewItem): Promise<void> {
     const app = getApp();
     this.ensure(app);
+    // 行为流（issue 261）：开始复习入小橘行为流（review:started）
+    emitDomainEvent('review', { kind: 'started' });
     const quiz: any = await this.quizWithAI();
     if (!quiz || !quiz.ai) {
       // 做题家不可用（无 AI）：降级为普通复习（打开笔记等自评）
@@ -318,6 +323,8 @@ export const reviewApp = {
   async startRoundSprint(): Promise<void> {
     const app = getApp();
     this.ensure(app);
+    // 行为流（issue 261）：开始本轮复习入小橘行为流（review:started）
+    emitDomainEvent('review', { kind: 'started' });
     let items = await this.dataManager!.loadItems();
     const pend = this.pendingRedoItems(items);
     if (pend.length && getSettings().forceQuizForReview) {
@@ -620,6 +627,8 @@ export const reviewApp = {
     if (items.some((i) => i.filePath === file.path)) throw new Error('该笔记已在复习计划中');
     await dm.addItem(file.path, file.basename);
     notice('已加入复习计划，首次复习：1分钟后', 'success');
+    // 行为流（issue 261）：加入复习计划入小橘行为流（review:added）
+    emitDomainEvent('review', { kind: 'added', title: file.basename });
   },
 
   /** 文件树染色 + 阶段徽标（源码 L719-772 逐字；ticket 100 加「文件树标记」开关；

@@ -30,7 +30,7 @@ export function buildKnowledgeStructured(evt: KnowledgeActionEvent): StructuredM
   if (!evt || typeof evt !== 'object') return null;
   if (evt.kind === 'converted') {
     return {
-      entityType: 'literature',
+      entityType: 'knowledge',
       action: 'converted',
       name: titleOf(evt.notePath) || bvOf(evt.url) || '一部视频',
       id: evt.id,
@@ -39,7 +39,7 @@ export function buildKnowledgeStructured(evt: KnowledgeActionEvent): StructuredM
   }
   if (evt.kind === 'term-generated') {
     return {
-      entityType: 'literature',
+      entityType: 'knowledge',
       action: 'term-generated',
       name: String(evt.term || '').trim() || '术语',
       id: evt.id,

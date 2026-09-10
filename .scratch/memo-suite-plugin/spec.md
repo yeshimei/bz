@@ -1074,3 +1074,7 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 ### 待办正名「备忘录」+ 旧 memo 遗产清算 + 单源接入（issue 260 / ADR-0117，2026-09-10）
 
 > 用户经 grill-with-docs 拷问（中途两次方向修正后拍板）：待办域正名备忘录（memo），旧备忘录遗产全部废弃、功能与文案以现待办域实现为准统一，随后按 belongings 范式接入单源。§1 全链路改名：目录/`TodoItem→MemoItem` 等标识符/命令 `bz-todo-*→bz-memo-*`（无别名换代）/CSS 类/内部键（RecapDomain、memoDone/memoCreated、DOMAIN_ICONS）；清算 = home `memoIdOf` 删除、checkup「备忘录 / 待办」归一、`todoSkin→memoSkin` 值迁移；6 个 `memo*` 设置键与 `'memo'` 通道、smartcat/manifest 备忘录文案正名后名实归位零改动；memo.json 红线零迁移。§2 单源：render.ts 纯层（编辑弹窗保持命令式）+ prototypes/memo/ 双 iframe 壳（主流程/引用同步/被动捕获/皮肤四行为面）+ 双清单登记 + purity 纳管。
+
+### 小橘行为流接线补齐 + 文案人性化（issue 261 / ADR-0118，2026-09-10）
+
+> 用户：「小橘的行为流补全，因为之前的代码都大改过，补全一下，文案重写，人性化的」。盘点确认 ADR-0069 为 review/quiz/attach 预先落好的 routing 规则与 behavior-wording 模板（`coverage-source.ts`）**从未接线**（仅测试引用，生产零引用）；issue 255（literature 更名 knowledge）只改 routing 键，`index.ts`/`knowledge-source.ts` 仍用 `literature`，路由落 `system:fallback`。补齐：review（started/added/removed/rated，emit 落 app.ts 方法内覆盖 sprint/reviewLoop 内部调用）与 attach（moved，runMove 成功后）经域事件接入行为流；literature→knowledge 全链对齐（source/entityType 改 `knowledge`，保留 `literature`/`bili`/`bili-downloader` 别名兼容存量；dashboard 来源标签补 `literature`/`review`/`quiz`/`attach`）；favorites 补 `archived`/`unarchived` 路由与文案。文案人性化：修「加入想看」→「加入了想看」、review rated →「你复习了《X》，自评「一般」」、knowledge 实体默认改「知识盒动态」。secondbrain 模板保留不接线（存量兼容）；diary `entry-added`/`entry-deleted`/`file-vacated` 有意不接（文件事件已覆盖防双记录）。门禁：tsc 0 错 + 全量 4207 用例绿。
