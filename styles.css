@@ -3858,8 +3858,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
  * --background-primary/secondary、--text-normal/muted/faint、--interactive-accent、
  * --background-modifier-border/hover/active-hover、--color-green/orange/cyan。 */
 
-/* ---------- 设计变量（token 化，跟随 Obsidian 主题亮暗） ---------- */
-.bz-diary {
+/* ---------- 设计变量（token 化，跟随 Obsidian 主题亮暗） ----------
+   挂 body 的日记弹层（日期筛选 .bz-diary-datefilter）不在 .bz-diary 根内，必须同列声明——
+   否则 --dw-* 在它身上全部解析失败（背景 transparent、边框/文字色全丢）。
+   用户报障：「点击『日记本』打开的日期窗口没有背景色」即此因（此前只补过按钮背景，
+   卡片的 var(--dw-bg) 仍是空值）。 */
+.bz-diary,
+.bz-diary-datefilter {
   --dw-bg: var(--background-primary);
   --dw-surface: var(--background-secondary);
   --dw-hover: var(--background-modifier-hover);
@@ -3879,8 +3884,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   --dw-shadow-sm: 0 1px 2px -2px rgba(0, 0, 0, 0.16), 0 3px 6px 0 rgba(0, 0, 0, 0.12);
   --dw-shadow-md: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
   --dw-shadow-lg: 0 6px 16px -8px rgba(0, 0, 0, 0.08), 0 9px 28px 0 rgba(0, 0, 0, 0.05), 0 12px 48px 16px rgba(0, 0, 0, 0.03);
+}
 
-  /* 根容器：固定全屏遮罩层（JS 控制 display），居中卡由子元素承担 */
+/* 面板根容器：固定全屏遮罩层（JS 控制 display），居中卡由子元素承担 */
+.bz-diary {
   background: var(--dw-cover);
   color: var(--dw-ink);
   display: flex;
@@ -4169,21 +4176,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   /* 胶卷缩略图条换行到名称/计数第二行（.bz-rail-item 是 flex row） */
   flex-wrap: wrap;
 }
-.bz-diary-rail-title {
-  font-size: 11px;
-  color: var(--dw-faint);
-  letter-spacing: 0.08em;
-  padding: 4px 10px 8px;
-  font-weight: 600;
-  position: sticky;
-  /* issue 217 S3：top:-12px 配 12px 顶垫会让标题滚出后卡在可视区上缘外（吞半截） */
-  top: 0;
-  background: var(--dw-bg);
-  z-index: 2;
-}
+/* 栏顶「章 节」标题块已移除（2026-09-10 用户要求）：一列月份本身自明，
+   其 .bz-diary-rail-title 规则（含 sticky 遮罩）随元素一并删除 */
 /* 增强 #2：年份分组分隔标签（跨年处插入；月份项 data-month 不变，定位逻辑不动）。
-   issue 217 S3：旧 `:first-of-type` 永远命中 title div（首个 div 子元素），是死规则——
-   改用相邻选择器命中「标题后第一个年份标签」 */
+   首个年份标签（现为栏内首个子元素）顶垫收窄——上方已有 .bz-rail-scroll 的 12px 内垫 */
 .bz-diary-rail-year {
   font-size: 11px;
   font-weight: 600;
@@ -4191,7 +4187,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   padding: 12px 10px 2px;
   letter-spacing: 0.06em;
 }
-.bz-diary-rail-title + .bz-diary-rail-year {
+.bz-diary-rail-year:first-child {
   padding-top: 4px;
 }
 .bz-diary-month-strip {
@@ -4239,20 +4235,20 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   height: 100%;
   object-fit: cover;
 }
+/* 视频格小图铺满格子（角标已按用户要求撤销，格内只有图一个主体） */
 .bz-diary-month-thumb--v img {
   z-index: 0;
-}
-.bz-diary-month-thumb--v svg {
-  position: relative;
-  z-index: 1;
-  filter: drop-shadow(0 0 2px rgb(0 0 0 / 0.5));
 }
 
 /* ---- 瀑布区（独立滚动容器） ---- */
 .bz-diary-wall {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 24px 32px;
+  /* 顶垫必须是 0：日节头是 sticky top:0，而 sticky 的包含块是滚动容器的【内容框】——
+     容器带 padding-top 时节头只能停在「容器顶 + padding」处，那几像素就会露出滚过去
+     的正文（用户报障：日期头吸附时和上面头部之间有一道空隙）。首屏顶距由节头自身
+     padding(14px) 与时光条 padding 承担，不靠容器顶垫。 */
+  padding: 0 24px 32px;
   position: relative;
   scroll-behavior: smooth;
 }
@@ -4311,6 +4307,22 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   height: 100%;
   object-fit: cover;
   display: block;
+}
+/* 视频缩略：首帧小图铺满 + 播放角标浮其上（与章节栏同口径，issue 212/217 修正） */
+.bz-diary-memory-thumb--v {
+  position: relative;
+}
+.bz-diary-memory-thumb--v img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+.bz-diary-memory-thumb--v svg {
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 0 2px rgb(0 0 0 / 0.5));
 }
 .bz-diary-memory-year {
   position: absolute;
@@ -4939,7 +4951,25 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
    已收编 core 样式库 .bz-touch-target--xl（components.css，模板挂类，inset -12px 补足 44px；
    shadcn extend-touch-target 同款：视觉不变；绝对定位外扩不触发横滑容器额外滚动宽度） */
 
-/* ============ 日期筛选弹窗（自包含，标题「日记本」点击打开） ============ */
+/* ============ 日期筛选弹窗（自包含，标题「日记本」点击打开） ============
+   2026-09-10 视觉重做：旧版是「居中大卡 + 4 列实心方块」，与域内语言脱节
+   （面板自己用 11px 药丸 chips、--dw-faint 字距小标签、发丝分隔线，没有大色块）。
+   现规格全部对齐面板：head 同日节头（左标题 + 右动作 + ::after 发丝线）、
+   年份 chip 同 .bz-diary-chip（11px 药丸 + faint 计数 + 选中实心 accent）、
+   月份改 3 列轻量格（表面底 + 右侧裸计数），空月沿用 chip--locked 的虚线语义。 */
+
+/* 该弹窗挂 body，吃不到 .bz-diary 的域 reset（box-sizing / 清 margin）——就地补一份 */
+.bz-diary-datefilter,
+.bz-diary-datefilter *,
+.bz-diary-datefilter *::before,
+.bz-diary-datefilter *::after {
+  box-sizing: border-box;
+}
+.bz-diary-datefilter * {
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+}
 .bz-diary-datefilter {
   position: fixed;
   inset: 0;
@@ -4949,10 +4979,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   align-items: center;
   justify-content: center;
   padding: 24px;
-  box-sizing: border-box;
 }
 .bz-diary-datefilter-card {
-  width: 460px;
+  width: 372px;
   max-width: 92vw;
   max-height: 82vh;
   overflow-y: auto;
@@ -4960,60 +4989,99 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border-radius: 14px;
   box-shadow: var(--dw-shadow-md);
   animation: bz-diary-slide-up 0.2s ease-out;
+  padding-bottom: 16px;
 }
+/* 头行：规格同 .bz-diary-head / .bz-diary-day-head（左标题、右动作，发丝分隔线走 ::after） */
 .bz-diary-datefilter-head {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--dw-line);
+  gap: 6px;
+  padding: 16px 20px 10px;
+}
+.bz-diary-datefilter-head::after {
+  content: '';
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 0;
+  height: 1px;
+  background: var(--dw-line);
 }
 .bz-diary-datefilter-title {
+  flex: 1;
   font-size: 15px;
   font-weight: 600;
   color: var(--dw-ink);
-  flex: 1;
 }
-/* 日期弹窗挂 body（不在 .bz-diary 根内），其按钮同样被 core reset.css
-   `[class*="bz-"] button` 清背景——前缀 .bz-diary-datefilter 提升特异性恢复
-   （用户反馈：日期选择器样式丢失、背景纯透明） */
+/* 小节标签：与章节栏年份标签同规格（11px / faint / 字距 0.08em） */
+.bz-diary-datefilter-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--dw-faint);
+  padding: 14px 20px 8px;
+}
+/* 按钮一律带 .bz-diary-datefilter 前缀：core reset.css `[class*="bz-"] button`
+   会清背景/字号/边框，前缀化（(0,2,0)）才能恢复（用户反馈过样式丢失） */
 .bz-diary-datefilter .bz-diary-datefilter-reset {
-  padding: 4px 12px;
+  padding: 4px 10px;
   border-radius: 999px;
-  background: var(--dw-surface);
+  border: none;
+  background: none;
   box-shadow: none;
   color: var(--dw-muted);
-  font-size: 12px;
+  font-size: 11px;
   cursor: pointer;
+  transition: background 0.15s, color 0.15s;
 }
 .bz-diary-datefilter .bz-diary-datefilter-reset:hover {
-  background: var(--dw-hover);
+  background: var(--dw-surface);
+  color: var(--dw-accent);
 }
+/* 关闭钮：规格同 .bz-diary-icon-btn（22×26 / muted / hover 表面底） */
 .bz-diary-datefilter .bz-diary-datefilter-close {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  box-shadow: none;
   color: var(--dw-muted);
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1;
   cursor: pointer;
+  transition: background 0.15s;
 }
 .bz-diary-datefilter .bz-diary-datefilter-close:hover {
-  background: var(--dw-hover);
+  background: var(--dw-surface);
 }
+/* 年份 chips：与 .bz-diary-chip 同规格（11px 药丸 / surface 底 / 计数 faint） */
 .bz-diary-datefilter-years {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 14px 20px 4px;
+  gap: 6px;
+  padding: 0 20px;
 }
 .bz-diary-datefilter .bz-diary-datefilter-year {
-  padding: 5px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border: none;
   border-radius: 999px;
   background: var(--dw-surface);
   box-shadow: none;
   color: var(--dw-ink);
-  font-size: 13px;
+  font-size: 11px;
+  line-height: 1.25;
   cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
 }
 .bz-diary-datefilter .bz-diary-datefilter-year:hover {
   background: var(--dw-hover);
@@ -5022,22 +5090,36 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: var(--dw-accent);
   color: var(--dw-on-accent);
 }
+.bz-diary-datefilter-year-name {
+  font-weight: 500;
+}
+.bz-diary-datefilter-year-cnt {
+  font-size: 11px;
+  color: var(--dw-faint);
+}
+.bz-diary-datefilter .bz-diary-datefilter-year--on .bz-diary-datefilter-year-cnt {
+  color: rgba(255, 255, 255, 0.75);
+}
+/* 月份格：轻量表面 + 右侧裸计数；空月虚线底（同 chip--locked 语义），不做不可点的大灰块 */
 .bz-diary-datefilter-months {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  padding: 12px 20px 20px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 0 20px;
 }
 .bz-diary-datefilter .bz-diary-datefilter-month {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 12px 8px;
-  border-radius: 10px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 8px 10px;
+  /* 常态也留 1px 透明边框：空月的虚线边框不撑高行，整格高度恒定 */
+  border: 1px solid transparent;
+  border-radius: 8px;
   background: var(--dw-surface);
   box-shadow: none;
   cursor: pointer;
+  transition: background 0.15s;
 }
 .bz-diary-datefilter .bz-diary-datefilter-month:hover {
   background: var(--dw-hover);
@@ -5045,15 +5127,21 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-diary-datefilter .bz-diary-datefilter-month--on {
   background: var(--dw-accent);
 }
-.bz-diary-datefilter .bz-diary-datefilter-month--on .bz-diary-datefilter-month-name {
+.bz-diary-datefilter .bz-diary-datefilter-month--on .bz-diary-datefilter-month-name,
+.bz-diary-datefilter .bz-diary-datefilter-month--on .bz-diary-datefilter-month-cnt {
   color: var(--dw-on-accent);
 }
-.bz-diary-datefilter-month--empty {
-  opacity: 0.45;
+.bz-diary-datefilter .bz-diary-datefilter-month--empty {
+  background: none;
+  border: 1px dashed var(--dw-line);
+  opacity: 0.6;
   cursor: not-allowed;
 }
+.bz-diary-datefilter .bz-diary-datefilter-month--empty:hover {
+  background: none;
+}
 .bz-diary-datefilter-month-name {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--dw-ink);
 }
@@ -5062,7 +5150,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   color: var(--dw-faint);
 }
 .bz-diary-datefilter-hint {
-  padding: 20px;
+  padding: 4px 20px 20px;
   text-align: center;
   font-size: 12px;
   color: var(--dw-faint);
@@ -5318,8 +5406,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
  * --background-primary/secondary、--text-normal/muted/faint、--interactive-accent、
  * --background-modifier-border/hover/active-hover、--color-green/orange/cyan。 */
 
-/* ---------- 设计变量（token 化，跟随 Obsidian 主题亮暗） ---------- */
-.bz-diary {
+/* ---------- 设计变量（token 化，跟随 Obsidian 主题亮暗） ----------
+   挂 body 的日记弹层（日期筛选 .bz-diary-datefilter）不在 .bz-diary 根内，必须同列声明——
+   否则 --dw-* 在它身上全部解析失败（背景 transparent、边框/文字色全丢）。
+   用户报障：「点击『日记本』打开的日期窗口没有背景色」即此因（此前只补过按钮背景，
+   卡片的 var(--dw-bg) 仍是空值）。 */
+.bz-diary,
+.bz-diary-datefilter {
   --dw-bg: var(--background-primary);
   --dw-surface: var(--background-secondary);
   --dw-hover: var(--background-modifier-hover);
@@ -5339,8 +5432,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   --dw-shadow-sm: 0 1px 2px -2px rgba(0, 0, 0, 0.16), 0 3px 6px 0 rgba(0, 0, 0, 0.12);
   --dw-shadow-md: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
   --dw-shadow-lg: 0 6px 16px -8px rgba(0, 0, 0, 0.08), 0 9px 28px 0 rgba(0, 0, 0, 0.05), 0 12px 48px 16px rgba(0, 0, 0, 0.03);
+}
 
-  /* 根容器：固定全屏遮罩层（JS 控制 display），居中卡由子元素承担 */
+/* 面板根容器：固定全屏遮罩层（JS 控制 display），居中卡由子元素承担 */
+.bz-diary {
   background: var(--dw-cover);
   color: var(--dw-ink);
   display: flex;
@@ -5629,21 +5724,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   /* 胶卷缩略图条换行到名称/计数第二行（.bz-rail-item 是 flex row） */
   flex-wrap: wrap;
 }
-.bz-diary-rail-title {
-  font-size: 11px;
-  color: var(--dw-faint);
-  letter-spacing: 0.08em;
-  padding: 4px 10px 8px;
-  font-weight: 600;
-  position: sticky;
-  /* issue 217 S3：top:-12px 配 12px 顶垫会让标题滚出后卡在可视区上缘外（吞半截） */
-  top: 0;
-  background: var(--dw-bg);
-  z-index: 2;
-}
+/* 栏顶「章 节」标题块已移除（2026-09-10 用户要求）：一列月份本身自明，
+   其 .bz-diary-rail-title 规则（含 sticky 遮罩）随元素一并删除 */
 /* 增强 #2：年份分组分隔标签（跨年处插入；月份项 data-month 不变，定位逻辑不动）。
-   issue 217 S3：旧 `:first-of-type` 永远命中 title div（首个 div 子元素），是死规则——
-   改用相邻选择器命中「标题后第一个年份标签」 */
+   首个年份标签（现为栏内首个子元素）顶垫收窄——上方已有 .bz-rail-scroll 的 12px 内垫 */
 .bz-diary-rail-year {
   font-size: 11px;
   font-weight: 600;
@@ -5651,7 +5735,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   padding: 12px 10px 2px;
   letter-spacing: 0.06em;
 }
-.bz-diary-rail-title + .bz-diary-rail-year {
+.bz-diary-rail-year:first-child {
   padding-top: 4px;
 }
 .bz-diary-month-strip {
@@ -5699,20 +5783,20 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   height: 100%;
   object-fit: cover;
 }
+/* 视频格小图铺满格子（角标已按用户要求撤销，格内只有图一个主体） */
 .bz-diary-month-thumb--v img {
   z-index: 0;
-}
-.bz-diary-month-thumb--v svg {
-  position: relative;
-  z-index: 1;
-  filter: drop-shadow(0 0 2px rgb(0 0 0 / 0.5));
 }
 
 /* ---- 瀑布区（独立滚动容器） ---- */
 .bz-diary-wall {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 24px 32px;
+  /* 顶垫必须是 0：日节头是 sticky top:0，而 sticky 的包含块是滚动容器的【内容框】——
+     容器带 padding-top 时节头只能停在「容器顶 + padding」处，那几像素就会露出滚过去
+     的正文（用户报障：日期头吸附时和上面头部之间有一道空隙）。首屏顶距由节头自身
+     padding(14px) 与时光条 padding 承担，不靠容器顶垫。 */
+  padding: 0 24px 32px;
   position: relative;
   scroll-behavior: smooth;
 }
@@ -5771,6 +5855,22 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   height: 100%;
   object-fit: cover;
   display: block;
+}
+/* 视频缩略：首帧小图铺满 + 播放角标浮其上（与章节栏同口径，issue 212/217 修正） */
+.bz-diary-memory-thumb--v {
+  position: relative;
+}
+.bz-diary-memory-thumb--v img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+.bz-diary-memory-thumb--v svg {
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 0 2px rgb(0 0 0 / 0.5));
 }
 .bz-diary-memory-year {
   position: absolute;
@@ -6399,7 +6499,25 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
    已收编 core 样式库 .bz-touch-target--xl（components.css，模板挂类，inset -12px 补足 44px；
    shadcn extend-touch-target 同款：视觉不变；绝对定位外扩不触发横滑容器额外滚动宽度） */
 
-/* ============ 日期筛选弹窗（自包含，标题「日记本」点击打开） ============ */
+/* ============ 日期筛选弹窗（自包含，标题「日记本」点击打开） ============
+   2026-09-10 视觉重做：旧版是「居中大卡 + 4 列实心方块」，与域内语言脱节
+   （面板自己用 11px 药丸 chips、--dw-faint 字距小标签、发丝分隔线，没有大色块）。
+   现规格全部对齐面板：head 同日节头（左标题 + 右动作 + ::after 发丝线）、
+   年份 chip 同 .bz-diary-chip（11px 药丸 + faint 计数 + 选中实心 accent）、
+   月份改 3 列轻量格（表面底 + 右侧裸计数），空月沿用 chip--locked 的虚线语义。 */
+
+/* 该弹窗挂 body，吃不到 .bz-diary 的域 reset（box-sizing / 清 margin）——就地补一份 */
+.bz-diary-datefilter,
+.bz-diary-datefilter *,
+.bz-diary-datefilter *::before,
+.bz-diary-datefilter *::after {
+  box-sizing: border-box;
+}
+.bz-diary-datefilter * {
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+}
 .bz-diary-datefilter {
   position: fixed;
   inset: 0;
@@ -6409,10 +6527,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   align-items: center;
   justify-content: center;
   padding: 24px;
-  box-sizing: border-box;
 }
 .bz-diary-datefilter-card {
-  width: 460px;
+  width: 372px;
   max-width: 92vw;
   max-height: 82vh;
   overflow-y: auto;
@@ -6420,60 +6537,99 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border-radius: 14px;
   box-shadow: var(--dw-shadow-md);
   animation: bz-diary-slide-up 0.2s ease-out;
+  padding-bottom: 16px;
 }
+/* 头行：规格同 .bz-diary-head / .bz-diary-day-head（左标题、右动作，发丝分隔线走 ::after） */
 .bz-diary-datefilter-head {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--dw-line);
+  gap: 6px;
+  padding: 16px 20px 10px;
+}
+.bz-diary-datefilter-head::after {
+  content: '';
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 0;
+  height: 1px;
+  background: var(--dw-line);
 }
 .bz-diary-datefilter-title {
+  flex: 1;
   font-size: 15px;
   font-weight: 600;
   color: var(--dw-ink);
-  flex: 1;
 }
-/* 日期弹窗挂 body（不在 .bz-diary 根内），其按钮同样被 core reset.css
-   `[class*="bz-"] button` 清背景——前缀 .bz-diary-datefilter 提升特异性恢复
-   （用户反馈：日期选择器样式丢失、背景纯透明） */
+/* 小节标签：与章节栏年份标签同规格（11px / faint / 字距 0.08em） */
+.bz-diary-datefilter-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--dw-faint);
+  padding: 14px 20px 8px;
+}
+/* 按钮一律带 .bz-diary-datefilter 前缀：core reset.css `[class*="bz-"] button`
+   会清背景/字号/边框，前缀化（(0,2,0)）才能恢复（用户反馈过样式丢失） */
 .bz-diary-datefilter .bz-diary-datefilter-reset {
-  padding: 4px 12px;
+  padding: 4px 10px;
   border-radius: 999px;
-  background: var(--dw-surface);
+  border: none;
+  background: none;
   box-shadow: none;
   color: var(--dw-muted);
-  font-size: 12px;
+  font-size: 11px;
   cursor: pointer;
+  transition: background 0.15s, color 0.15s;
 }
 .bz-diary-datefilter .bz-diary-datefilter-reset:hover {
-  background: var(--dw-hover);
+  background: var(--dw-surface);
+  color: var(--dw-accent);
 }
+/* 关闭钮：规格同 .bz-diary-icon-btn（22×26 / muted / hover 表面底） */
 .bz-diary-datefilter .bz-diary-datefilter-close {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  box-shadow: none;
   color: var(--dw-muted);
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1;
   cursor: pointer;
+  transition: background 0.15s;
 }
 .bz-diary-datefilter .bz-diary-datefilter-close:hover {
-  background: var(--dw-hover);
+  background: var(--dw-surface);
 }
+/* 年份 chips：与 .bz-diary-chip 同规格（11px 药丸 / surface 底 / 计数 faint） */
 .bz-diary-datefilter-years {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 14px 20px 4px;
+  gap: 6px;
+  padding: 0 20px;
 }
 .bz-diary-datefilter .bz-diary-datefilter-year {
-  padding: 5px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border: none;
   border-radius: 999px;
   background: var(--dw-surface);
   box-shadow: none;
   color: var(--dw-ink);
-  font-size: 13px;
+  font-size: 11px;
+  line-height: 1.25;
   cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
 }
 .bz-diary-datefilter .bz-diary-datefilter-year:hover {
   background: var(--dw-hover);
@@ -6482,22 +6638,36 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: var(--dw-accent);
   color: var(--dw-on-accent);
 }
+.bz-diary-datefilter-year-name {
+  font-weight: 500;
+}
+.bz-diary-datefilter-year-cnt {
+  font-size: 11px;
+  color: var(--dw-faint);
+}
+.bz-diary-datefilter .bz-diary-datefilter-year--on .bz-diary-datefilter-year-cnt {
+  color: rgba(255, 255, 255, 0.75);
+}
+/* 月份格：轻量表面 + 右侧裸计数；空月虚线底（同 chip--locked 语义），不做不可点的大灰块 */
 .bz-diary-datefilter-months {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  padding: 12px 20px 20px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 0 20px;
 }
 .bz-diary-datefilter .bz-diary-datefilter-month {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 12px 8px;
-  border-radius: 10px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 8px 10px;
+  /* 常态也留 1px 透明边框：空月的虚线边框不撑高行，整格高度恒定 */
+  border: 1px solid transparent;
+  border-radius: 8px;
   background: var(--dw-surface);
   box-shadow: none;
   cursor: pointer;
+  transition: background 0.15s;
 }
 .bz-diary-datefilter .bz-diary-datefilter-month:hover {
   background: var(--dw-hover);
@@ -6505,15 +6675,21 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-diary-datefilter .bz-diary-datefilter-month--on {
   background: var(--dw-accent);
 }
-.bz-diary-datefilter .bz-diary-datefilter-month--on .bz-diary-datefilter-month-name {
+.bz-diary-datefilter .bz-diary-datefilter-month--on .bz-diary-datefilter-month-name,
+.bz-diary-datefilter .bz-diary-datefilter-month--on .bz-diary-datefilter-month-cnt {
   color: var(--dw-on-accent);
 }
-.bz-diary-datefilter-month--empty {
-  opacity: 0.45;
+.bz-diary-datefilter .bz-diary-datefilter-month--empty {
+  background: none;
+  border: 1px dashed var(--dw-line);
+  opacity: 0.6;
   cursor: not-allowed;
 }
+.bz-diary-datefilter .bz-diary-datefilter-month--empty:hover {
+  background: none;
+}
 .bz-diary-datefilter-month-name {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--dw-ink);
 }
@@ -6522,7 +6698,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   color: var(--dw-faint);
 }
 .bz-diary-datefilter-hint {
-  padding: 20px;
+  padding: 4px 20px 20px;
   text-align: center;
   font-size: 12px;
   color: var(--dw-faint);
