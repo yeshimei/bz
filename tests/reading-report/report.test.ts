@@ -134,7 +134,7 @@ describe('report 生成函数', () => {
     expect(html).toContain('2月');
     expect(html).toContain('bz-rr-mbar--accent');
     // 零月柱体无数值文本（与书架近 12 月柱同语义）
-    expect(html).not.toContain('<span style="color:#3D4456">0</span>');
+    expect(html).not.toContain('<span class="bz-rr-mbar-num">0</span>');
   });
 
   it('generateReadingHabitsDeepAnalysis2：会话不足 5 条空态 + 数据态（时段条形行）', () => {
@@ -253,7 +253,7 @@ describe('report 生成函数', () => {
     const cell = generateHeatmapCell({ type: 'nodata', date: '2000-01-15' });
     expect(cell).not.toContain('未来日期');
     expect(cell).toContain('无阅读记录');
-    expect(cell).toContain('var(--background-secondary)'); // 与 future 同为主题中性底（p1）
+    expect(cell).toContain('bz-rr-hm-cell--off'); // 与 future 同为主题中性底（p1；issue 270 迁域样式类）
   });
 
   it('generateReadingFocusAnalysis：专注度指标卡', () => {
@@ -335,19 +335,24 @@ describe('report 生成函数', () => {
     expect(html).toContain('data-lucide="chevron-left"');
   });
 
-  it('p1 主题适配：整页用主题变量，无硬编码浅色板', () => {
+  it('p1 主题适配：容器走主题变量类，无硬编码浅色板', () => {
     const html = generateFullStatsReport(stats, books) + generateReadingCategoryAnalysis(books) + generateReadingHeatmap(sessions) + generateHeatmapCell({ type: 'data', date: '2025-06-01', data: { duration: 600, sessions: 1 } });
-    expect(html).toContain('var(--background-primary)');
-    expect(html).toContain('var(--background-secondary)');
-    expect(html).toContain('var(--text-normal)');
-    expect(html).toContain('var(--text-muted)');
+    // issue 270 迁移后主题变量宿主是域样式类（.bz-rr-card/.bz-rr-panel/.bz-rr-metric-label 等）
+    const css = readFileSync(resolve(process.cwd(), 'src/reading-report/styles.css'), 'utf8');
+    expect(css).toContain('var(--background-primary)');
+    expect(css).toContain('var(--background-secondary)');
+    expect(css).toContain('var(--text-normal)');
+    expect(css).toContain('var(--text-muted)');
+    // markup 挂类而非内联
+    expect(html).toContain('bz-rr-card');
     expect(html).not.toContain('background: white');
     expect(html).not.toContain('#2c3e50');
     expect(html).not.toContain('color: #666');
     expect(html).not.toContain('#f8f9fa');
-    // 热力图等级 0（无阅读）用主题中性色（p1）
+    // 热力图等级 0（无阅读）的数据格走运行时取色路径，getHeatmapColor(0) 仍为主题中性色（p1）
     expect(generateHeatmapCell({ type: 'data', date: '2025-06-01', data: { duration: 600, sessions: 1 } })).toContain('var(--background-secondary)');
-    expect(generateHeatmapCell({ type: 'nodata', date: '2000-01-15' })).toContain('var(--background-secondary)');
+    // nodata 静态空白格迁域样式类（issue 270）
+    expect(generateHeatmapCell({ type: 'nodata', date: '2000-01-15' })).toContain('bz-rr-hm-cell--off');
   });
 });
 
@@ -362,24 +367,35 @@ describe('图表色收编 core/chart-palette（终局 review 批 B-2）', () => 
     expect(hexes, `残留内联 hex: ${hexes.join(', ')}`).toEqual([]);
   });
 
-  it('生成 HTML 引用色板常量（值与收编前逐一一致）', () => {
-    // 渐变横幅（概览卡/速度分析/专注度/分类分析）
-    expect(generateStatsReport(stats)).toContain(CHART_GRADIENT_VIOLET);
-    expect(generateStatsReport(stats)).toContain(CHART_GRADIENT_PINK);
-    expect(generateReadingSpeedAnalysis(stats)).toContain(CHART_GRADIENT_AQUA);
-    expect(generateReadingSpeedAnalysis(stats)).toContain(CHART_GRADIENT_MINT);
-    expect(generateReadingSpeedAnalysis(stats)).toContain(CHART_GRADIENT_CORAL);
-    expect(generateReadingFocusAnalysis(stats, books)).toContain(CHART_GRADIENT_AQUA);
-    expect(generateReadingCategoryAnalysis(books)).toContain(CHART_GRADIENT_VIOLET);
-    // 指标数字强调色
-    expect(generateStatsReport(stats)).toContain(`color: ${CHART_METRIC_RED}`);
-    expect(generateStatsReport(stats)).toContain(`color: ${CHART_METRIC_PURPLE}`);
-    expect(generateReadingTrendsAnalysis(stats, books)).toContain(`color: ${CHART_METRIC_VIOLET}`);
-    expect(generateReadingSpeedAnalysis(stats)).toContain(`color: ${CHART_METRIC_SKY}`);
-    expect(generateReadingFocusAnalysis(stats, books)).toContain(`color: ${CHART_METRIC_ORANGE}`);
-    // 速度条 / 排名卡 / 专注分布系列
-    expect(generateReadingSpeedAnalysis(stats)).toContain(`background: ${CHART_SPEED_BAR_GRADIENT}`);
+  it('生成 HTML 引用色板档位（issue 270：静态档迁 CSS，markup 挂类 + CSS 值与常量逐字一致）', () => {
+    // 渐变横幅（概览卡/速度分析/专注度/分类分析）：markup 挂 .bz-rr-hero--* 类
+    expect(generateStatsReport(stats)).toContain('bz-rr-hero--violet');
+    expect(generateStatsReport(stats)).toContain('bz-rr-hero--pink');
+    expect(generateReadingSpeedAnalysis(stats)).toContain('bz-rr-hero--aqua');
+    expect(generateReadingSpeedAnalysis(stats)).toContain('bz-rr-hero--mint');
+    expect(generateReadingSpeedAnalysis(stats)).toContain('bz-rr-hero--coral');
+    expect(generateReadingFocusAnalysis(stats, books)).toContain('bz-rr-hero--aqua');
+    expect(generateReadingCategoryAnalysis(books)).toContain('bz-rr-hero--violet');
+    // 指标数字强调色：markup 挂 .bz-rr-c-* 类
+    expect(generateStatsReport(stats)).toContain('bz-rr-c-red');
+    expect(generateStatsReport(stats)).toContain('bz-rr-c-purple');
+    expect(generateReadingTrendsAnalysis(stats, books)).toContain('bz-rr-c-violet');
+    expect(generateReadingSpeedAnalysis(stats)).toContain('bz-rr-c-sky');
+    expect(generateReadingFocusAnalysis(stats, books)).toContain('bz-rr-c-orange');
+    // 速度条 / 排名卡 / 专注分布系列：速度条渐变迁 CSS 类，排名卡与分布条仍运行时内联
+    expect(generateReadingSpeedAnalysis(stats)).toContain('bz-rr-speed-fill');
     expect(generateAuthorStats(stats)).toContain(`linear-gradient(135deg, ${CHART_AUTHOR_RANK_COLORS[0]}`);
     expect(generateReadingFocusAnalysis(stats, books)).toContain(`background: ${CHART_FOCUS_SERIES[0]}`);
+    // CSS 侧值与 palette 常量逐字一致（防单侧漂移）
+    const css = readFileSync(resolve(process.cwd(), 'src/reading-report/styles.css'), 'utf8');
+    expect(css).toContain(CHART_GRADIENT_VIOLET);
+    expect(css).toContain(CHART_GRADIENT_PINK);
+    expect(css).toContain(CHART_GRADIENT_AQUA);
+    expect(css).toContain(CHART_GRADIENT_MINT);
+    expect(css).toContain(CHART_GRADIENT_CORAL);
+    expect(css).toContain(CHART_SPEED_BAR_GRADIENT);
+    for (const metric of [CHART_METRIC_RED, CHART_METRIC_PURPLE, CHART_METRIC_VIOLET, CHART_METRIC_SKY, CHART_METRIC_ORANGE]) {
+      expect(css).toContain(metric);
+    }
   });
 });
