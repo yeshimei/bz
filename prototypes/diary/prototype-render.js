@@ -46,9 +46,6 @@ var BZR_diary = (() => {
   var ACT_ICON = {
     add: "pen-line",
     search: "search",
-    "date-picker": "calendar",
-    settings: "settings",
-    close: "x",
     "lb-close": "x",
     "lb-prev": "chevron-left",
     "lb-next": "chevron-right"
@@ -90,10 +87,6 @@ var BZR_diary = (() => {
         <div class="bz-diary-btns">
           <button class="bz-diary-icon-btn bz-touch-target--xl" data-act="add" title="写日记"></button>
           <button class="bz-diary-icon-btn bz-touch-target--xl" data-act="search" title="搜索"></button>
-          <button class="bz-diary-icon-btn bz-touch-target--xl" data-act="date-picker" title="按年月跳转"></button>
-          <button class="bz-diary-icon-btn bz-touch-target--xl" data-act="settings" title="打开日记本设置"></button>
-          <!-- issue 201 对齐待办：关闭钮不挂 bz-win-close（core 规则非真全屏隐藏之），桌面/移动常显同待办 -->
-          <button class="bz-diary-icon-btn bz-touch-target--xl" data-act="close" title="关闭"></button>
         </div>
       </div>
       <div class="bz-diary-chiprow"></div>

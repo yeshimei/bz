@@ -1082,3 +1082,13 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 ### 回忆墙升格日记本：旧编辑域退役 + 写链路迁入 + 单源原型化（issue 256 / ADR-0115，2026-09-10）
 
 > 用户拍板三件事一批做：删旧 `src/diary` 编辑域、`src/diary-wall`→`src/diary` 正名「日记本」、设置 12 键收编 3 键（diaryDirectory/letterDirectory/useFileDateTime）+ 2 跨域读（影视→影院、书库→书架墙）+ 回忆墙单源原型化。命令接手 `bz-diary-open`（notebook-pen）/`bz-diary-write`（域内注册），`bz-diary-wall-open` 退役；CSS 前缀与皮肤键 `diaryWall*`→`diary*`（占位键值零迁移）。写链路整体迁入（写弹窗/时间标签选择器/store 写层/守卫/修复引擎/加密编排），旧编辑面板（条目列表/筛选）退役，墙既有交互原样保留。单源原型化 bookshelf 范式全套（render.ts/fake-sim/fake-obsidian/双 iframe 壳/真实数据种子/PROTOTYPE.md），PREVIEW/BEHAVIOR 双清单登记。外围归一：home 双磁贴并一、settings-panel 条目与行为包、domain-icons、smoke.test、tests/diary-wall→tests/diary 并归、recap/smartcat import 改指新域。src 顺手修：diary/config.ts 跨域解析 safeResolve 兜底、store.ts 落盘 IO 收敛 enqueueFileTask 词法区（D3 直写守门）、cinema/settings.ts 文案过 lint。门禁：tsc 0 错 + 全量 4039 用例（252 文件）绿；合并 master（todo→memo 正名 + issue 261）解 7 处冲突。
+
+### 日记本 UI 精修批：取帧根治 + 交互细节 + 视觉收口（issue 262，2026-09-10）
+
+> 日记本（ADR-0115）落域后进入快速原型评审，用户逐条反馈，共 9 项收敛。三条真 bug 均**先实测定位再改**（CDP 探针读像素/计算样式/元素命中，不靠目视）：
+> ① **章节栏视频缩略图全黑**——旧实现取首帧等 `loadeddata`（readyState=2，帧未合成到可绘表面），drawImage 得到 48×48 纯黑且写进 IndexedDB 永久命中；对照实验证明决定变量只有「等哪个事件」（游离/挂载、元素尺寸均无关），改等 `canplay`。连带修：空帧判据 `isFlatFrameData`（**逐通道**极差 ≤12，初版用 R+G+B 和值会误杀等亮度和真帧）、seekPlan 换落点重试（开场黑场）、缓存换库 `bz-diary-thumbs`→`-v2` 并删旧库、取帧路径改直挂 URL 流式 + 跨源污染才走 blob 且限 48MB（旧实现无条件整片 fetch，实测单条 16.9MB / vault 总量 1.07GB）、兜底 `preload` 也改 auto。实测 7/7 真帧。
+> ② **日期筛选弹窗无背景色**——设计变量 `--dw-*` 只声明在 `.bz-diary`，弹窗挂 body 在根外 → `var(--dw-bg)` 计算值失效；token 块选择器改 `.bz-diary, .bz-diary-datefilter`。**通用约定：日记域凡挂 body 的弹层都必须把类名加进 token 选择器组。**
+> ③ **日节头粘顶与上方有空隙**——`position: sticky; top:0` 的包含块是滚动容器**内容框**，容器 `padding-top` 那一条永远盖不住（实测那 4px 里露出的是滚过去的正文）；`.bz-diary-wall` 顶垫清零。
+> 精修项：头行按钮删「关闭/设置/按年月跳转」三枚（日期入口留品牌行；移动端无 ✕ 的隐患已明示用户待拍板）、章节栏视频格彻底不出现播放角标（渲染期 + 收口 + 兜底三条路径全清）、章节栏开墙即高亮当前月（旧实现只在 scroll 里跑）、日期弹窗默认选中当前年 + 整块视觉重做（对齐域内 chips/节头语言，补域 reset 缺项）、章节栏「章 节」标题块移除。
+> 另探索四版皮肤（铅印/毛玻璃/终端/印样），用户评判「都不好看」，**全数撤回**、不留任何皮肤代码；复盘：四版都只改皮肤而首屏最重的标签墙/头部未动，且衬线/等宽配中文在 Windows 字体链回退。
+> 门禁：tsc 0 错 + diary/core/smoke 52 文件 782 用例绿（新增 7 项回归）；无 ADR、无 CONTEXT 词条改动（可逆域内改动，沿 issue 254 先例）。

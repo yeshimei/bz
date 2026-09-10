@@ -160,6 +160,26 @@ describe('回忆墙 UI', () => {
     expect(heads.length).toBe(3);
   });
 
+  it('开墙即高亮当前月份：不滚动章节栏也有且仅有一个 on（旧实现只在 scroll 里跑 → 0 个）', async () => {
+    await openAndWait();
+    // 开墙渲染后立刻定高亮（rAF/setTimeout 延一帧，故 waitFor）
+    await waitFor(() => document.querySelectorAll('.bz-diary-desk .bz-diary-month.on').length > 0);
+    // jsdom 下所有 rect 均为 0，无法断言「哪一个月」——只钉住「恰有一个高亮」这条契约
+    // （高亮谁由真实几何决定，CDP 探针实测：最新月 2026-08）
+    expect(document.querySelectorAll('.bz-diary-desk .bz-diary-month.on').length).toBe(1);
+  });
+
+  it('日节头粘顶不留缝：.bz-diary-wall 顶垫必须为 0（sticky 包含块 = 滚动容器内容框）', () => {
+    // 病根：容器 padding-top>0 时 sticky 节头只能停在「容器顶 + padding」处，
+    // 那几像素里露的是滚过去的正文（用户报障截图）。
+    const css = readFileSync(resolve(process.cwd(), 'src/diary/styles.css'), 'utf8');
+    const block = /\.bz-diary-wall\s*\{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(block).toBeTruthy();
+    const pad = /padding:\s*([^;]+);/.exec(block)?.[1]?.trim() ?? '';
+    expect(pad, `.bz-diary-wall padding = "${pad}"`).toBeTruthy();
+    expect(pad.split(/\s+/)[0], '容器顶垫').toBe('0');
+  });
+
   it('章节栏点击月份 → 平滑滚动定位到该月首个节头', async () => {
     const c = await openAndWait();
     const monthItem = document.querySelector<HTMLElement>('.bz-diary-month[data-month="2026-08"]');
@@ -310,21 +330,39 @@ describe('回忆墙 UI', () => {
   });
 
   // ===== v2 新功能 =====
-  it('头部按钮序：编辑、搜索、按年月跳转（增强 #10）、设置（issue 201）、关闭；图标 lucide 化（增强 #4）', async () => {
+  it('头行按钮组只剩「写日记 / 搜索」——关闭、设置、按年月跳转已按用户要求移除（图标 lucide 化）', async () => {
     await openAndWait();
     const btns = Array.from(document.querySelectorAll('.bz-diary-desk .bz-diary-btns [data-act]')).map(
       (b) => (b as HTMLElement).dataset.act
     );
-    // 编辑 → 搜索 → 年月跳转 → 设置 → 关闭（issue 201 头行对齐待办：+⚙设置直达）
-    expect(btns).toEqual(['add', 'search', 'date-picker', 'settings', 'close']);
-    // 头行图标：pen-line / search / calendar / settings / x（uiIcon 经 setIcon 渲染，mock 记录到 dataset.icon）
+    expect(btns).toEqual(['add', 'search']);
+    // 头行图标：pen-line / search（uiIcon 经 setIcon 渲染，mock 记录到 dataset.icon）
     const icons = Array.from(
       document.querySelectorAll<HTMLElement>('.bz-diary-desk .bz-diary-btns [data-act] .bz-ic')
     ).map((i) => i.dataset.icon);
-    expect(icons).toEqual(['pen-line', 'search', 'calendar', 'settings', 'x']);
-    // 关闭钮对齐备忘录：不挂 bz-win-close（core 规则非真全屏隐藏之）→ 桌面常显
-    const closeBtn = document.querySelector('.bz-diary-desk [data-act="close"]') as HTMLElement;
-    expect(closeBtn.classList.contains('bz-win-close')).toBe(false);
+    expect(icons).toEqual(['pen-line', 'search']);
+    // 三枚退役按钮在头行不再存在（关闭仍可经 ESC / 点遮罩）
+    for (const act of ['close', 'settings', 'date-picker']) {
+      expect(document.querySelector(`.bz-diary-desk .bz-diary-btns [data-act="${act}"]`), act).toBeNull();
+    }
+    // 日期筛选入口仍由品牌行承担
+    const brand = document.querySelector('.bz-diary-desk .bz-diary-brand') as HTMLElement;
+    expect(brand.dataset.act).toBe('date-picker');
+  });
+
+  it('章节栏视频格：从头到尾不出现播放角标；小图落地后格内只有图', async () => {
+    vault.files.set('我的/日记/2026-06-12.md', '# 🎬 09:00\n![[VID_20260612_090000.mp4]]\n');
+    const c = await openAndWait();
+    const rail = document.querySelector('.bz-diary-desk .bz-diary-rail') as HTMLElement;
+    const cell = rail.querySelector('.bz-diary-month-thumb--v') as HTMLElement;
+    expect(cell).toBeTruthy();
+    // 渲染期就没有角标（用户 2026-09-10 要求：图上不要压播放图标）
+    expect(cell.querySelector('[data-icon]')).toBeNull();
+    // 模拟小图落地（swapThumbToImg 是 IO 路径的收口，直接驱动它）
+    (c as any).swapThumbToImg(cell.querySelector('video'), 'data:image/webp;base64,AAAA');
+    expect(cell.querySelector('img')!.getAttribute('src')).toBe('data:image/webp;base64,AAAA');
+    expect(cell.querySelector('[data-icon]')).toBeNull();
+    expect(cell.querySelector('video')).toBeNull();
   });
 
   it('加密 chip 常驻显示（即使无加密条目），锁定态点击 → 弹解锁面板，解锁后选中「加密」', async () => {
@@ -494,6 +532,25 @@ describe('回忆墙 UI', () => {
     expect(popup.textContent).toContain('按日期筛选');
     // 年份行（2026 / 2025 来自 mock 数据日期）
     expect(popup.querySelectorAll('.bz-diary-datefilter-year').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('日期筛选：打开即默认选中当前年份（该年无数据时回落最新年份），并直接渲染月份网格', async () => {
+    await openAndWait();
+    (document.querySelector('.bz-diary-desk .bz-diary-brand') as HTMLElement).click();
+    const popup = document.querySelector('.bz-diary-datefilter') as HTMLElement;
+    const yearsPresent = Array.from(popup.querySelectorAll<HTMLElement>('.bz-diary-datefilter-year')).map(
+      (b) => b.dataset.year!
+    );
+    expect(yearsPresent.length).toBeGreaterThanOrEqual(1); // 已按倒序，[0] 为最新年
+    const nowYear = String(new Date().getFullYear());
+    const expected = yearsPresent.includes(nowYear) ? nowYear : yearsPresent[0];
+    const on = popup.querySelector<HTMLElement>('.bz-diary-datefilter-year--on');
+    expect(on).toBeTruthy();
+    expect(on!.dataset.year).toBe(expected);
+    // 默认选中年 → 月份网格直接可见（不必再点一次年份）
+    expect(popup.querySelectorAll('.bz-diary-datefilter-month').length).toBe(12);
+    // 年份只是浏览临时值，未提交筛选
+    expect(DiaryAppController.instance!.selDateFilter).toBeNull();
   });
 
   it('日期选择器：点年份 → 月份网格；点月份 → 过滤该月条目', async () => {
@@ -860,13 +917,25 @@ describe('回忆墙 UI', () => {
     expect(((c as any).filtered() as any[]).some((e) => e.encrypted)).toBe(true);
   });
 
-  it('issue 217 样式落位：md 排版/音频矮条/年份相邻选择器在位，.bz-diary-tx 死规则删除', () => {
+  it('issue 217 样式落位：md 排版/音频矮条/首年标签收窄在位，.bz-diary-tx 死规则删除', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/diary/styles.css'), 'utf8');
     expect(css).toContain('.bz-diary-md p'); // S1：markdown 排版
     expect(css).toContain('.bz-diary-media--audio'); // S4：音频矮条
-    expect(css).toContain('.bz-diary-rail-title + .bz-diary-rail-year'); // S3：死规则修复
+    // S3：原为「标题后第一个年份标签」，标题块 2026-09-10 移除后改钉首个子元素
+    expect(css).toContain('.bz-diary-rail-year:first-child');
     expect(css).not.toContain('.bz-diary-tx {'); // S5：死规则删除
     expect(css).not.toContain('#2a9d8f'); // 小项：teal 写死色改 token
+  });
+
+  it('章节栏无「章 节」标题块（用户要求移除），首个年份标签直接打头', async () => {
+    await openAndWait();
+    const rail = document.querySelector('.bz-diary-desk .bz-diary-rail') as HTMLElement;
+    expect(rail.querySelector('.bz-diary-rail-title')).toBeNull();
+    expect(rail.textContent).not.toContain('章');
+    // 栏内首个子元素 = 年份标签（不再是标题），月份项紧随其后
+    const scroll = rail.querySelector('.bz-rail-scroll') as HTMLElement;
+    expect(scroll.firstElementChild!.className).toContain('bz-diary-rail-year');
+    expect(rail.querySelectorAll('.bz-diary-month').length).toBeGreaterThanOrEqual(1);
   });
 
   it('issue 218：长文跨栏卡——≥800 字整卡跨全宽、卡内分栏、媒体横排网格；短文维持三栏小卡', async () => {
@@ -896,7 +965,7 @@ describe('回忆墙 UI', () => {
     expect(css).toContain('column-span: all');
   });
 
-  it('issue 210：章节栏视频缩略懒加载——无 IO 直挂 src + preload=metadata，格内留播放角标', async () => {
+  it('issue 210：章节栏视频缩略懒加载——无 IO 直挂 src + preload=auto，且格内无播放角标', async () => {
     // 本例私有夹具：beforeEach 每例重建 vault，加一条纯视频日记不影响他例
     vault.files.set('我的/日记/2026-06-10.md', '# 🎬 10:00\n![[VID_20260610_100000.mp4]]\n');
     await openAndWait();
@@ -908,9 +977,13 @@ describe('回忆墙 UI', () => {
       expect(v).toBeTruthy();
       // jsdom 无 IntersectionObserver → setupRailLazy 直接挂载
       expect(v.getAttribute('src')).toContain('https://example.com/vault/');
-      expect(v.preload).toBe('metadata');
-      // 播放角标保留（首帧就绪前占位；mock setIcon 产出带 data-icon 的 span）
-      expect(t.querySelector('[data-icon]')).toBeTruthy();
+      // preload 必须 auto：metadata 只到 readyState=1，浏览器不解码帧，格子永远空
+      //（issue 212 取帧全黑同一实测结论，2026-09-10 修正）
+      expect(v.preload).toBe('auto');
+      // 视频格不挂播放角标（用户 2026-09-10 要求：图上不要压播放图标）——
+      // 视频身份靠 --v 渐变底承载，格内只有图/视频一个主体
+      expect(t.querySelector('[data-icon]')).toBeNull();
+      expect(t.classList.contains('bz-diary-month-thumb--v')).toBe(true);
     });
   });
 
@@ -1018,6 +1091,26 @@ describe('回忆墙 UI', () => {
     // 无命中（默认数据无今天日期）不渲染
     const c2 = DiaryAppController.instance!;
     void c2;
+  });
+
+  it('增强 #5 补：时光条视频条目——垫播放角标 + --v 类 + 小图挂载位（issue 212 修正）', async () => {
+    const now = new Date();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    vault.files.set(
+      `我的/日记/${now.getFullYear() - 1}-${mm}-${dd}.md`,
+      '# 🎬 08:00\n去年今天拍的视频。\n![[VID_20250910_080000.mp4]]\n'
+    );
+    await openAndWait();
+    const cell = document.querySelector('.bz-diary-desk .bz-diary-memory') as HTMLElement;
+    expect(cell).toBeTruthy();
+    const thumb = cell.querySelector('.bz-diary-memory-thumb') as HTMLElement;
+    // 视频格走 --v 变体（首帧小图铺满 + 角标浮其上）
+    expect(thumb.classList.contains('bz-diary-memory-thumb--v')).toBe(true);
+    // 播放角标垫底：小图未就绪 / 取帧失败时它就是「这是视频」的说明
+    expect(thumb.querySelector('[data-icon]')).toBeTruthy();
+    // 小图挂载位在位（jsdom 无 IO 不进压缩管线，但 DOM 钩子必须在）
+    expect(thumb.querySelector('img')).toBeTruthy();
   });
 
   it('增强 #5 反向：无去年今日条目时不渲染时光条', async () => {
@@ -1184,16 +1277,20 @@ describe('回忆墙 UI', () => {
     expect(mocks.loadEncryptedEntries).not.toHaveBeenCalled();
   });
 
-  it('增强 #10：年月跳转显式按钮——点击打开日期筛选弹窗（与品牌行入口同动作）', async () => {
+  it('日期筛选入口：点头行「日记本」标题开弹窗；弹窗挂 body 仍带背景色（设计变量同域声明）', async () => {
     await openAndWait();
     const desk = document.querySelector('.bz-diary-desk')!;
-    const btn = desk.querySelector<HTMLButtonElement>('.bz-diary-btns [data-act="date-picker"]');
-    expect(btn).toBeTruthy();
-    expect((btn!.querySelector('.bz-ic') as HTMLElement).dataset.icon).toBe('calendar');
-    btn!.click();
+    const brand = desk.querySelector<HTMLElement>('.bz-diary-brand[data-act="date-picker"]');
+    expect(brand).toBeTruthy();
+    brand!.click();
     const popup = document.querySelector('.bz-diary-datefilter') as HTMLElement;
     expect(popup).toBeTruthy();
     expect(popup.style.display).toBe('flex');
+    // 病根回归：弹窗挂 document.body（在 .bz-diary 根外）→ --dw-* 若只声明在 .bz-diary
+    // 上，卡片 var(--dw-bg) 解析为空 = 无背景色（用户报障）。断言两者同在选择器组内。
+    const css = readFileSync(resolve(process.cwd(), 'src/diary/styles.css'), 'utf8');
+    expect(css).toMatch(/\.bz-diary,\s*\.bz-diary-datefilter\s*\{[^}]*--dw-bg:/);
+    expect(css).toMatch(/\.bz-diary-datefilter-card\s*\{[^}]*background:\s*var\(--dw-bg\)/);
   });
 
   it('增强 #11：跳原文回墙恢复——筛选保持、恢复态一次性消费', async () => {
