@@ -8191,6 +8191,68 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 #__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_ok__:hover { background: #c2410c; }
 
+
+/* ==================== 每日简报（ADR-0119 / issue 263） ====================
+   面板内一律消费 --clip-* 编辑部纸墨变量（本域皮肤为固定纸面，不随 IDE 主题切换）。 */
+
+/* 中栏：日节头（日期 + 当日条数 + 细线拖尾） */
+.bz-clip-day {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: var(--bz-space-md) var(--bz-space-md) 6px;
+}
+.bz-clip-day-name {
+  font-family: var(--clip-serif); font-size: 12px; letter-spacing: 2px;
+  color: var(--clip-ink-2); font-weight: 700;
+}
+.bz-clip-day-n { font-size: 11px; color: var(--clip-accent); }
+.bz-clip-day-rule { flex: 1; height: 1px; background: var(--clip-rule, rgba(28,26,23,.16)); align-self: center; }
+
+/* 中栏：条目来源小标（字幕 / 转写；失败为 ✗） */
+.bz-clip-item-tag {
+  flex: 0 0 auto; align-self: flex-start; margin-top: 2px;
+  font-family: var(--clip-serif); font-size: 11px; letter-spacing: 1px;
+  color: var(--clip-ink-3, #8a8275); border: 1px solid currentColor;
+  padding: 0 4px; line-height: 16px;
+}
+.bz-clip-item--err .bz-clip-item-tag { color: #c2410c; }
+.bz-clip-item--err .bz-clip-item-t { color: #c2410c; }
+
+/* 右栏：要点正文（h3 小节 + ul 要点；不走文章首字下沉） */
+.bz-clip-brief-points { font-size: var(--bz-font-body); line-height: 1.95; color: var(--clip-body); }
+.bz-clip-brief-h {
+  font-family: var(--clip-serif); font-size: 15px; font-weight: 700; letter-spacing: 1px;
+  color: var(--clip-ink, #1c1a17); margin: var(--bz-space-lg) 0 6px;
+  padding-left: 10px; border-left: 3px solid var(--clip-accent);
+}
+.bz-clip-brief-points > .bz-clip-brief-h:first-child { margin-top: 0; }
+.bz-clip-brief-ul { margin: 0 0 var(--bz-space-md); padding-left: 20px; }
+.bz-clip-brief-ul li { margin: 0 0 4px; }
+.bz-clip-brief-points p { margin: 0 0 var(--bz-space-md); }
+
+/* 右栏：失败态 + 重跑入口 */
+.bz-clip-brief-err {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--clip-cream); border-left: 3px solid #c2410c;
+  padding: var(--bz-space-md); font-size: var(--bz-font-meta); color: #8a3a12;
+}
+
+/* 右栏：可展开完整转录稿（缓存保留期内；过期后该段自动消失） */
+.bz-clip-brief-tr {
+  margin: var(--bz-space-lg) 0; border-top: 1px solid var(--clip-rule, rgba(28,26,23,.16));
+  padding-top: var(--bz-space-md);
+}
+.bz-clip-brief-tr > summary {
+  cursor: pointer; list-style: none;
+  font-family: var(--clip-serif); font-size: 12px; letter-spacing: 2px; color: var(--clip-ink-2);
+}
+.bz-clip-brief-tr > summary::-webkit-details-marker { display: none; }
+.bz-clip-brief-tr > summary::before { content: '＋ '; color: var(--clip-accent); }
+.bz-clip-brief-tr[open] > summary::before { content: '－ '; }
+.bz-clip-brief-tr-body {
+  margin-top: var(--bz-space-md); max-height: 340px; overflow: auto;
+  font-size: var(--bz-font-meta); line-height: 1.9; color: var(--clip-ink-2);
+  white-space: pre-wrap; word-break: break-word;
+}
 /* ==================== 收藏本域样式（src/favorites/styles.css，issue 227「C5 终版」1:1 换血） ====================
  * 原型 .zcode/ui-prototypes/favorites-cork-5/c5-linen-full.html 逐字照搬（ADR-0101，用户拍板豁免铁律 6：
  * 面板 UI 不使用样式库/组件库，全部域内自带）。类名映射：.tags→.bz-fav-tags、.card→.bz-fav-card、
