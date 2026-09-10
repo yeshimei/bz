@@ -594,6 +594,11 @@ function bindMidnight(sec: HTMLElement, app: App): void {
     }
   });
   sec.addEventListener('contextmenu', (e) => {
+    // 桌面壳专属：右键菜单是鼠标惯用件。移动壳必须分流——触屏长按会**同时**发
+    // pointerdown 与 contextmenu，不分流时 450ms 的抽屉刚开出来就被右键菜单盖住
+    // （.cn-menu z-index 60 > .cn-sheet 56），用户看到的是「长按弹右键菜单」。
+    // 移动端长按手势由 attachLongPress 承担，卡片的 contextmenu 在那里已 preventDefault 掉原生菜单。
+    if (sec.classList.contains('mob')) return;
     const cardEl = (e.target as HTMLElement).closest('.pcard') as HTMLElement | null;
     if (!cardEl) return;
     e.preventDefault();

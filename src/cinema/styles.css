@@ -79,16 +79,28 @@
 .bz-cinema--midnight .pmeta{font-size:11px;color:var(--ink-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bz-cinema--midnight .pstars{font-size:10.5px;color:var(--star);margin-top:3px;letter-spacing:1px}
 .bz-cinema--midnight .pstars .num{color:var(--ink-2);margin-left:4px;letter-spacing:0}
-/* 午夜场 · 移动端（探索稿 .mob 396×780） */
-.bz-cinema--midnight.mob{width:396px;height:780px;border-radius:26px;border:10px solid #1a1814;background:var(--panel);overflow:hidden;display:flex;flex-direction:column;position:relative;box-shadow:0 14px 40px #0004}
+/* 午夜场 · 移动端：真机全屏。
+   探索稿那套 396×780 + 10px 黑边框 + 26px 圆角是「评审稿里的手机模型框」，落域时被
+   照搬进插件 → 真机上等于在手机屏幕里再画一台手机（上下留 66px、左右留 7px）。
+   全插件移动端（belongings/bookshelf/diary/favorites/home/memo/recap/secondbrain）
+   都走 100vw×100vh，影院曾是唯一异类。高度取 --bz-vvh（issue 266 的可视视口变量）：
+   随软键盘收缩，搜索时结果区不会被键盘盖住。桌面基类带的 1px 边框 / 14px 圆角在本层清掉。 */
+.bz-cinema--midnight.mob{width:100vw;height:var(--bz-vvh,100vh);background:var(--panel);border:0;border-radius:0;overflow:hidden;display:flex;flex-direction:column;position:relative}
 .bz-cinema--midnight .m-head{flex:none;display:flex;align-items:center;gap:8px;padding:16px 16px 12px}
 .bz-cinema--midnight .m-head h2{font-family:"Noto Serif SC",SimSun,serif;font-size:17px;letter-spacing:.1em;color:var(--ink);margin:0}
 .bz-cinema--midnight .m-head .cnt{font-size:11.5px;color:var(--ink-3)}
 .bz-cinema--midnight .m-acts{margin-left:auto;display:flex;gap:8px;align-items:center}
-.bz-cinema--midnight .m-tool{flex:none;width:30px;height:30px;border:1px solid var(--line);background:none;border-radius:10px;color:var(--ink-3);display:grid;place-items:center;cursor:pointer}
+/* 定尺方形图标钮（m-tool / m-head .add / cn-modal-x / sp-back）一律显式 padding:0：
+   它们是固定边长 + display:grid/place-items:center 的方形钮，尺寸自己说了算，
+   而宿主 app.css 的裸 button 基线带 padding（手机 4px 12px、**平板 .is-tablet
+   button:not(.clickable-icon) 给 4px 20px**）。不钉死时 border-box 盒子会被 padding
+   撑破——实测 30px 的 m-tool 在平板口径下变 34~42px，右侧钮组行就散了。
+   必须带 !important：宿主那条选择器特异性 (0,2,1) 高于本类 (0,2,0)，普通 padding:0
+   压不住（实测确认）；与 core `.bz-item-menu button.bz-item-menu-item` 抗宿主基线同款处置。 */
+.bz-cinema--midnight .m-tool{flex:none;width:30px;height:30px;padding:0 !important;border:1px solid var(--line);background:none;border-radius:10px;color:var(--ink-3);display:grid;place-items:center;cursor:pointer}
 .bz-cinema--midnight .m-tool:hover{color:var(--ink);background:var(--chip)}
 .bz-cinema--midnight .m-tool svg{width:15px;height:15px}
-.bz-cinema--midnight .m-head .add{flex:none;width:30px;height:30px;border-radius:10px;background:var(--gold);color:#fff;border:0;display:grid;place-items:center;cursor:pointer}
+.bz-cinema--midnight .m-head .add{flex:none;width:30px;height:30px;padding:0 !important;border-radius:10px;background:var(--gold);color:#fff;border:0;display:grid;place-items:center;cursor:pointer}
 .bz-cinema--midnight .m-head .add svg{width:16px;height:16px}
 .bz-cinema--midnight .m-chips{flex:none;display:flex;gap:7px;overflow-x:auto;padding:4px 16px 10px;scrollbar-width:none}
 .bz-cinema--midnight .m-chips::-webkit-scrollbar{display:none}
@@ -108,7 +120,7 @@
 .bz-cinema--midnight .cn-modal{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 48px #0005,0 2px 10px #0003;padding:18px 20px;max-width:min(430px,100%);max-height:100%;overflow-y:auto;scrollbar-width:none;position:relative}
 .bz-cinema--midnight .cn-modal::-webkit-scrollbar{display:none}
 .bz-cinema--midnight .cn-modal-title{font-family:"Noto Serif SC",SimSun,serif;font-size:17px;font-weight:700;letter-spacing:.08em;color:var(--ink);margin-bottom:12px;padding-right:24px}
-.bz-cinema--midnight .cn-modal-x{position:absolute;top:12px;right:12px;width:26px;height:26px;border:0;background:none;border-radius:7px;color:var(--ink-3);cursor:pointer;display:grid;place-items:center}
+.bz-cinema--midnight .cn-modal-x{position:absolute;top:12px;right:12px;width:26px;height:26px;padding:0 !important;border:0;background:none;border-radius:7px;color:var(--ink-3);cursor:pointer;display:grid;place-items:center}
 .bz-cinema--midnight .cn-modal-x:hover{background:var(--chip);color:var(--ink)}
 .bz-cinema--midnight .cn-modal-x svg{width:13px;height:13px}
 /* 详情弹窗 */
@@ -179,7 +191,7 @@
 .bz-cinema--midnight .cn-sheet-item.danger{color:#b3402a}
 /* 子页面（AI 荐片 / 观影分析）公共头 */
 .bz-cinema--midnight .sp-head{flex:none;display:flex;align-items:center;gap:9px;padding:14px 20px 0}
-.bz-cinema--midnight .sp-back{width:28px;height:28px;border:1px solid var(--line);background:none;border-radius:8px;color:var(--ink-2);cursor:pointer;display:grid;place-items:center;flex:none}
+.bz-cinema--midnight .sp-back{width:28px;height:28px;padding:0 !important;border:1px solid var(--line);background:none;border-radius:8px;color:var(--ink-2);cursor:pointer;display:grid;place-items:center;flex:none}
 .bz-cinema--midnight .sp-back:hover{color:var(--ink);border-color:var(--gold)}
 .bz-cinema--midnight .sp-back svg{width:13px;height:13px}
 .bz-cinema--midnight .sp-title{font-family:"Noto Serif SC",SimSun,serif;font-size:18px;font-weight:700;letter-spacing:.1em;color:var(--ink)}
