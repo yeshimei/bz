@@ -63,7 +63,7 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   appearance: async () => (await import('./schema')).appearanceSettingsSchema(),
   diary: async () => (await import('../diary/ui/panel')).diarySettingsSchema(),
   'diary-wall': async () => (await import('../diary-wall/settings')).diaryWallSettingsSchema(),
-  todo: async () => (await import('../todo/settings')).todoSettingsSchema(),
+  memo: async () => (await import('../memo/settings')).memoSettingsSchema(),
   belongings: async () => (await import('../belongings/ui')).belongingSettingsSchema(),
   // 数据源组为声明行（外部 news.json 状态），先读盘预载再建 schema
   clipping: async () => {
@@ -115,7 +115,7 @@ export const DOMAINS: DomainDef[] = [
   { id: 'ai', name: 'AI', icon: DOMAIN_ICONS.ai, desc: 'AI 服务商与模型配置', schemaLoader: schemaLoaders.ai },
   { id: 'diary', name: '日记本', icon: DOMAIN_ICONS.diary, desc: '日记目录、显示与默认视图', schemaLoader: schemaLoaders.diary },
   { id: 'diary-wall', name: '回忆墙', icon: DOMAIN_ICONS['diary-wall'], desc: '回忆墙媒体视图（只读）', schemaLoader: schemaLoaders['diary-wall'] },
-  { id: 'todo', name: '待办', icon: DOMAIN_ICONS.todo, desc: '待办工作台与提醒（捕获入口落点）', schemaLoader: schemaLoaders.todo },
+  { id: 'memo', name: '备忘录', icon: DOMAIN_ICONS.memo, desc: '备忘录工作台与提醒（捕获入口落点）', schemaLoader: schemaLoaders.memo },
   { id: 'belongings', name: '归物本', icon: DOMAIN_ICONS.belongings, desc: '物品登记与查找', schemaLoader: schemaLoaders.belongings },
   { id: 'clipping', name: '剪藏本', icon: DOMAIN_ICONS.clipping, desc: '未读流与剪藏笔记', schemaLoader: schemaLoaders.clipping },
   { id: 'favorites', name: '收藏本', icon: DOMAIN_ICONS.favorites, desc: '收藏条目', schemaLoader: schemaLoaders.favorites },
@@ -139,7 +139,7 @@ export const DOMAINS: DomainDef[] = [
  *  id 口径 = DOMAINS 的 id（剪藏本在 DOMAINS 里叫 clipping）。导出供回归测试断言。 */
 export const NAV_SECS: Array<{ title: string; ids: string[] }> = [
   { title: '基础', ids: ['global', 'appearance', 'ai'] },
-  { title: '记录', ids: ['diary', 'diary-wall', 'todo', 'belongings', 'clipping', 'favorites'] },
+  { title: '记录', ids: ['diary', 'diary-wall', 'memo', 'belongings', 'clipping', 'favorites'] },
   { title: '媒体与知识', ids: ['cinema', 'bookshelf', 'review', 'secondbrain', 'knowledge'] },
   { title: '工具', ids: ['pomodoro', 'encrypt', 'password-vault', 'smartcat'] },
 ];
@@ -239,7 +239,7 @@ export class SettingsPanelUI {
   private mobPushed = false;
 
   /**
-   * 打开面板；domainId 可选（增强包：待办场景菜单「在设置中编辑」直达）——
+   * 打开面板；domainId 可选（增强包：备忘录场景菜单「在设置中编辑」直达）——
    * 桌面定位左栏选中域；移动端打开后直接进域设置弹窗。未知 id 忽略（回退通用）。
    */
   open(domainId?: string): void {

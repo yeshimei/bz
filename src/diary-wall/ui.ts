@@ -365,7 +365,7 @@ export class DiaryWallAppController {
           <button class="bz-diary-wall-icon-btn bz-touch-target--xl" data-act="search" title="搜索"></button>
           <button class="bz-diary-wall-icon-btn bz-touch-target--xl" data-act="date-picker" title="按年月跳转"></button>
           <button class="bz-diary-wall-icon-btn bz-touch-target--xl" data-act="settings" title="打开回忆墙设置"></button>
-          <!-- issue 201 对齐待办：关闭钮不挂 bz-win-close（core 规则非真全屏隐藏之），桌面/移动常显同待办 -->
+          <!-- issue 201 对齐备忘录：关闭钮不挂 bz-win-close（core 规则非真全屏隐藏之），桌面/移动常显同备忘录 -->
           <button class="bz-diary-wall-icon-btn bz-touch-target--xl" data-act="close" title="关闭"></button>
         </div>
       </div>
@@ -430,7 +430,7 @@ export class DiaryWallAppController {
     ui.head.querySelector('[data-act="add"]')?.addEventListener('click', () => this.openAddEntry());
     // 搜索：toggle 真搜索框
     ui.head.querySelector('[data-act="search"]')?.addEventListener('click', () => this.toggleSearch(ui));
-    // 设置直达（issue 201 头行对齐待办）：关面板 → 设置面板定位回忆墙域（动态 import 防环引用）
+    // 设置直达（issue 201 头行对齐备忘录）：关面板 → 设置面板定位回忆墙域（动态 import 防环引用）
     ui.head.querySelector('[data-act="settings"]')?.addEventListener('click', () => {
       this.hide();
       void import('../settings-panel').then((m) => m.openSettingsPanel(getApp(), 'diary-wall'));

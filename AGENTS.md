@@ -24,7 +24,7 @@
 |---|---|
 | diary | `我的/日记/*.md`（旧域，冻结：只保写安全，不投资） |
 | diary-wall（回忆墙） | `我的/日记/*.md`（只读派生视图，ADR-0081） |
-| todo（待办） | memo.json（唯一属主，ADR-0092：UI/写盘/引用同步/被动捕获全归本域） |
+| memo（备忘录） | memo.json（唯一属主，ADR-0092/0117：UI/写盘/引用同步/被动捕获全归本域） |
 | belongings | belongings.json |
 | clipbook（剪藏本，ADR-0082） | news.json（未读流）+ `归档/网页剪藏/*.md` + clipbook.json（侧写） |
 | favorites | favorites.json |

@@ -139,7 +139,7 @@ export interface BzRailItem {
   name: string;
   icon?: BzIconName;       // 前缀 lucide 图标（.bz-ic）
   boxedIcon?: BzIconName;  // 前缀图标底座（.bz-rail-ic 20px 小方块）
-  emoji?: string;          // 前缀 emoji 行头（.bz-rail-emoji 14px 槽；issue 201，同 todo 场景行头）
+  emoji?: string;          // 前缀 emoji 行头（.bz-rail-emoji 14px 槽；issue 201，同 memo 场景行头）
   badge?: { t: string; label: string; tint?: string }; // 字母/字徽标（t=文本，label=aria 名，tint=底色注入 --bz-rail-tint）
   dot?: string;            // 状态色点（色值 → --bz-rail-tint）
   count?: string | number; // 计数

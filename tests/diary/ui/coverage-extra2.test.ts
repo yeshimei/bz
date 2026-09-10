@@ -82,7 +82,7 @@ describe('openAddDialog useFileDateTime 分支', () => {
 
 describe('saveNewEntry 分支', () => {
   beforeEach(() => {
-    // fake timers 钉死系统时钟：0:00–0:10 档「10 分钟前」落在昨天，日记文件落昨日档（对齐 todo due.test.ts 先例）
+    // fake timers 钉死系统时钟：0:00–0:10 档「10 分钟前」落在昨天，日记文件落昨日档（对齐 memo due.test.ts 先例）
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 7, 10, 12, 0)); // 2026-08-10（周一）正午
   });
