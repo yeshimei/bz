@@ -8,10 +8,10 @@
  *     对策：createAI 默认 8192 tokens 头寸 + 空内容即降级）→ 纯数字模板总结，不写盘，
  *     由调用方（ui 层）弹通知给「写入日记/复制」动作。
  *  2. writeRecapEntry——把总结作为一条带「今日回顾」标记的日记条目写进当天日记。
- *     全程走 diary 既有写入 API（refreshFile/addEntry/deleteEntry，函数级动态 import，
- *     不改 src/diary 任何文件——旧域冻结区）；替换语义 = 先插新条目再删旧条目
+ *     全程走 diary 写层 API（listDateEntries/addEntry/removeDiaryEntries，函数级动态 import，
+ *     不改 src/diary 任何文件——ADR-0115 正名后写层即回忆墙域的守卫写盘）；替换语义 = 先插新条目再删旧条目
  *     （失败顺序的安全性：插入失败旧内容原样保留；删除失败最多暂时叠条，下次生成自愈，
- *      任意一步失败文件都是 diary writeFile 全量重写的合法形态，不会写坏用户日记）。
+ *      任意一步失败文件都是 diary 写层全量重写的合法形态，不会写坏用户日记）。
  *
  * 条目标识（重要）：日记标签靠 emoji 往返（parser emojiToTagMap），「今日回顾」不在标签配置里，
  * 写盘后 emoji 回落 📖、重解析变回「日记」标签——故用正文首行标记「【今日回顾】」做稳定标识，
@@ -213,30 +213,26 @@ export async function writeRecapEntry(app: App, content: string, now: number = D
     }
   }
 
-  // 函数级动态 import（依赖方向 ADR-0002：recap ← diary 延迟解析；不改 diary 任何文件）
+  // 函数级动态 import（依赖方向 ADR-0002：recap ← diary 延迟解析；不改 diary 任何文件）。
+  // 新写层每次操作前自行从磁盘同步该日期（日记本从未打开过也能安全全量重写），无需预刷新。
   const store = await import('../diary/store');
-  const diaryState = await import('../diary/state');
 
-  // 当天文件同步进内存 map（日记本从未打开过也能安全全量重写；不刷新会把磁盘旧内容覆盖丢）
-  if (file) await store.refreshFile(filePath);
-
-  const entries = diaryState.diaryDataMap?.get(dateStr) ?? [];
-  const olds = entries.filter(isRecapEntry);
   const timeStr = fmtHM(now);
+  // 探旧（守卫拒读 → 视为无旧条目；后续 addEntry 会在同一守卫上先失败）
+  const hadOld = (await store.listDateEntries(dateStr).catch(() => [] as DiaryEntry[])).some(isRecapEntry);
 
-  // 先插新（diary addEntry：map 插入 + writeFile 全量重写 + 列表轻刷新）
+  // 先插新（diary addEntry：磁盘同步 + map 插入 + 全量重写，写前守卫拒未解析行）
   await store.addEntry(dateStr, timeStr, ['日记'], content);
 
-  // 再删旧（失败不致命：文件合法，最多暂时叠条；下次生成会再清）
-  for (const old of olds) {
-    if (!old.id) continue;
-    try {
-      await store.deleteEntry(old.id);
-    } catch (e) {
-      console.warn('[recap] 清理旧「今日回顾」条目失败（下次生成会重试清理）:', e);
-    }
+  // 再删旧（失败不致命：文件合法，最多暂时叠条；下次生成会再清）。
+  // 旧条目按「今日回顾」标记定位，排除刚插入的新条目（同刻同文）；删除在写层队列内
+  // 重新磁盘同步后按行号定位，插入导致的行号位移不影响。
+  try {
+    await store.removeDiaryEntries(dateStr, (e) => isRecapEntry(e) && !(e.time === timeStr && e.content === content.trim()));
+  } catch (e) {
+    console.warn('[recap] 清理旧「今日回顾」条目失败（下次生成会重试清理）:', e);
   }
-  return olds.length ? 'replaced' : 'written';
+  return hadOld ? 'replaced' : 'written';
 }
 
 /** 今天是否已写过「今日回顾」条目（头行按钮「生成今日总结/重新生成」的判定依据；只读） */

@@ -6,10 +6,9 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp as setCoreApp } from '../../src/core/app';
-import { setApp as setDiaryApp } from '../../src/diary/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { applyDirectories, resetTagsConfig } from '../../src/diary/config';
-import { state, setDiaryDataMap } from '../../src/diary/state';
+import { setDiaryDataMap } from '../../src/diary/store';
 import {
   ENCRYPT_TAG,
   isUnlocked,
@@ -40,21 +39,12 @@ beforeEach(async () => {
     encryptPreviewEnabled: false,
     encryptSecurityMode: false,
   }) as any);
-  state.data.selectedTags.clear();
-  state.data.currentDateFilter = null;
-  state.data.currentSearchKeyword = '';
-  state.data.originalDiaryEntries = [];
-  state.data.currentFilteredEntries = [];
-  state.data.isLoadingData = false;
-  state.events.isInternalUpdate = false;
-  state.events.fileListenerAttached = false;
-  if (state.data.searchDebounceTimer) clearTimeout(state.data.searchDebounceTimer);
+  // 旧 diary/state（筛选/加载态）已随写链路迁入 store：此处只需重置数据图
   setDiaryDataMap(null);
   vault = new MockVault();
   vault.files.set('我的/日记/2024-01-01.md', '# 📖 08:00\n第一条日记\n');
   const app = mockAppWithVault(vault);
   setCoreApp(app as any);
-  setDiaryApp(app as any);
 });
 
 afterEach(() => {
@@ -122,7 +112,7 @@ describe('encryptEntry 附件收集', () => {
     vault.binaryFiles.set('a.png', new Uint8Array([1, 2, 3]));
     // v.mp4 存在但读取失败；ghost.png 不存在
     vault.binaryFiles.set('v.mp4', new Uint8Array([4]));
-    const app = (await import('../../src/diary/app')).getApp() as any;
+    const app = (await import('../../src/core/app')).getApp() as any;
     // 仅 v.mp4 读取失败；其余附件（a.png）正常读取。
     // 注意：app.vault 即 vault 本体，必须先捕获原函数再 spyOn，避免递归自调
     const realReadBinary = vault.readBinary.bind(vault);

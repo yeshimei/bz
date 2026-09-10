@@ -11,7 +11,6 @@
  * - 与内容首页磁贴/ribbon 对齐：diary=notebook-pen（ribbon「日记本」同款）、
  *   cinema=clapperboard（磁贴同款，命令旧 film 漂移由此收敛）、review=repeat-2（磁贴同款）；
  * - recap=calendar-heart（今日回顾，方向一 R2 新域；lucide 日历语义，未与其他命令重复）；
- * - diary-wall=images（回忆墙媒体语义，命令/磁贴同款，批 B 入表）；
  * - settings-panel=settings-2（设置面板命令/磁贴同款，批 B 入表）；
  * - 历史重复图标错开：diary 不再与 bookshelf 同用 book-open（bookshelf 独占）；
  *   复习报告命令 bz-review-report 弃 bar-chart-3（阅读分析报告独占）改 calendar-check；
@@ -31,7 +30,6 @@ export const DOMAIN_ICONS: Readonly<Record<string, string>> = {
   clipping: 'scissors',
   favorites: 'star',
   diary: 'notebook-pen',
-  'diary-wall': 'images',
   'reading-report': 'bar-chart-3',
   cinema: 'clapperboard',
   bookshelf: 'book-open',

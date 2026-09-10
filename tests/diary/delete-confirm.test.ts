@@ -1,85 +1,99 @@
 /**
- * 删除确认失败提示回归（P3 审查修复）：showConfirm 的 .then 补 .catch，
- * deleteEntry 抛错时弹人话错误通知，不再是 unhandled rejection 无提示。
+ * 删除确认回归（P3 审查修复延续，ADR-0115 locator 化）：entry-actions showConfirm。
+ * - 删除失败：弹「删除日记失败」错误通知（不再是静默 unhandled rejection）；
+ * - 取消：不触发删除；
+ * - 加密条目：走保险箱密文销毁分支并发 diary:encrypted-purged；
+ * - 普通条目：写层守卫拒删时静默（人话通知已由写层发出）。
  */
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { setApp } from '../../src/diary/app';
-import { applyDirectories, resetTagsConfig } from '../../src/diary/config';
-import { setDiaryDataMap, state } from '../../src/diary/state';
+import { setApp } from '../../src/core/app';
+import { applyDirectories } from '../../src/diary/config';
+import { showConfirm } from '../../src/diary/ui/entry-actions';
+import { removeDiaryEntries } from '../../src/diary/store';
 import { clearNotices, getNoticeMessages } from '../mock-obsidian-entry';
+import { MockVault, mockAppWithVault } from '../mock-vault';
 
 const mocks = vi.hoisted(() => ({
-  dialog: vi.fn(async () => 'ok'),
-  deleteEntry: vi.fn(async () => {}),
-}));
-// 确认弹窗直接返回「确定」；删除动作可编程拒绝
-vi.mock('../../src/core/flow-dialog', () => ({
-  openFlowDialog: mocks.dialog,
-}));
-vi.mock('../../src/diary/store', () => ({
-  deleteEntry: mocks.deleteEntry,
-  refreshFile: vi.fn(async () => {}),
-  reloadWithEncrypted: vi.fn(async () => {}),
-  loadAll: vi.fn(async () => {}),
-}));
-vi.mock('../../src/diary/ui/dialogs', () => ({
-  showTagPicker: vi.fn(),
-}));
-vi.mock('../../src/encrypt', () => ({
-  ensureSafeUnlocked: vi.fn(async () => true),
-  getSafeManager: () => ({ manifest: { notes: [] } }),
-}));
-vi.mock('../../src/encrypt/ui', () => ({
-  collectNoteAttachmentPaths: () => [],
+  deleteEncryptedEntry: vi.fn(async () => {}),
+  emitDomainEvent: vi.fn(),
 }));
 vi.mock('../../src/diary/encrypt', () => ({
-  ENCRYPT_TAG: '加密',
-  deleteEncryptedEntry: vi.fn(async () => {}),
-  encryptEntry: vi.fn(async () => null),
-  isUnlocked: () => false,
-  reclassifyEntry: vi.fn(async () => true),
+  deleteEncryptedEntry: mocks.deleteEncryptedEntry,
 }));
+vi.mock('../../src/core/domain-bus', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/core/domain-bus')>();
+  return { ...actual, emitDomainEvent: mocks.emitDomainEvent };
+});
+
+const LOC = { filename: '2024-01-01', date: '2024-01-01', time: '08:00', lineNumber: 1, tags: ['日记'] };
+
+let vault: MockVault;
+
+/** 点确认弹窗的「删除日记」钮（core flow-dialog 标准双动作） */
+async function confirmOk(): Promise<void> {
+  await vi.waitFor(() => {
+    const b = document.querySelector('#__shared_confirm_ok__') as HTMLButtonElement | null;
+    if (!b) throw new Error('确认框未开');
+    b.click();
+    return true;
+  });
+  await new Promise((r) => setTimeout(r, 30));
+}
 
 beforeEach(() => {
   document.body.innerHTML = '';
   clearNotices();
-  resetTagsConfig();
   applyDirectories({});
-  setDiaryDataMap(new Map());
-  state.data.originalDiaryEntries = [];
-  state.data.currentFilteredEntries = [];
-  for (const fn of Object.values(mocks)) fn.mockClear();
-  mocks.dialog.mockResolvedValue('ok');
-  setApp({ vault: {}, metadataCache: { getFileCache: () => null }, workspace: {} } as any);
+  mocks.deleteEncryptedEntry.mockClear();
+  mocks.emitDomainEvent.mockClear();
+  vault = new MockVault();
+  setApp(mockAppWithVault(vault));
 });
 
-describe('删除确认失败提示（P3 审查修复）', () => {
-  it('deleteEntry 抛错：弹「删除日记失败」错误通知（不再静默 unhandled rejection）', async () => {
-    const { showConfirm } = await import('../../src/diary/ui/entries');
-    state.data.originalDiaryEntries = [
-      { date: '2024-01-01', time: '08:00', timeValue: 800, tags: ['日记'], emoji: '📖', content: 'x', filename: '2024-01-01', lineNumber: 1, id: 'e1' },
-    ];
-    mocks.deleteEntry.mockRejectedValueOnce(new Error('磁盘写入失败'));
-    showConfirm('e1');
-    await vi.waitFor(() => {
-      if (!getNoticeMessages().some((m) => m.includes('删除日记失败'))) throw new Error('notice not shown yet');
-    });
-    const msgs = getNoticeMessages().join('\n');
-    expect(msgs).toContain('删除日记失败');
-    expect(msgs).toContain('磁盘写入失败');
-    // 通知正文不带 emoji（类型图标由通知系统自绘）
-    expect(msgs).not.toMatch(/[\u{1F300}-\u{1FAFF}]/u);
+describe('showConfirm 删除确认（locator 定位）', () => {
+  it('删除失败（写层抛错）：弹「删除日记失败」错误通知', async () => {
+    vault.files.set('我的/日记/2024-01-01.md', '# 📖 08:00\nA\n');
+    // 写层故障注入：vault.delete 抛错（删到空触发整文件删除分支）
+    (vault as any).delete = async () => {
+      throw new Error('disk error');
+    };
+    showConfirm(LOC);
+    await confirmOk();
+    expect(getNoticeMessages().join('\n')).toContain('删除日记失败');
+    expect(getNoticeMessages().join('\n')).toContain('disk error');
   });
 
-  it('取消：不触发删除', async () => {
-    const { showConfirm } = await import('../../src/diary/ui/entries');
-    state.data.originalDiaryEntries = [
-      { date: '2024-01-01', time: '08:00', timeValue: 800, tags: ['日记'], emoji: '📖', content: 'x', filename: '2024-01-01', lineNumber: 1, id: 'e2' },
-    ];
-    mocks.dialog.mockResolvedValueOnce('cancel');
-    showConfirm('e2');
-    await new Promise((r) => setTimeout(r, 20));
-    expect(mocks.deleteEntry).not.toHaveBeenCalled();
-    expect(getNoticeMessages().join('\n')).not.toContain('已删除');
+  it('取消：不触发删除，文件原样', async () => {
+    vault.files.set('我的/日记/2024-01-01.md', '# 📖 08:00\nA\n');
+    showConfirm(LOC);
+    await vi.waitFor(() => {
+      const b = document.querySelector('#__shared_confirm_cancel__') as HTMLButtonElement | null;
+      if (!b) throw new Error('确认框未开');
+      b.click();
+      return true;
+    });
+    await new Promise((r) => setTimeout(r, 30));
+    expect(vault.files.has('我的/日记/2024-01-01.md')).toBe(true);
+    expect(mocks.emitDomainEvent).not.toHaveBeenCalled();
+  });
+
+  it('加密条目：确认后销毁密文并发 diary:encrypted-purged', async () => {
+    showConfirm({ ...LOC, encrypted: true, noteId: 'enc-1' });
+    await confirmOk();
+    expect(mocks.deleteEncryptedEntry).toHaveBeenCalledWith('enc-1');
+    expect(mocks.emitDomainEvent).toHaveBeenCalledWith('diary:encrypted-purged', { noteId: 'enc-1' });
+  });
+
+  it('普通条目：守卫拒删（UnparsedLineError）静默——通知已由写层发出', async () => {
+    const { UnparsedLineError } = await import('../../src/diary/store');
+    const spy = vi
+      .spyOn(await import('../../src/diary/store'), 'removeDiaryEntries')
+      .mockRejectedValueOnce(new UnparsedLineError('2024-01-01', 2));
+    showConfirm(LOC);
+    await confirmOk();
+    spy.mockRestore();
+    expect(getNoticeMessages().join('\n')).not.toContain('删除日记失败');
+    expect(mocks.emitDomainEvent).not.toHaveBeenCalled();
+    void removeDiaryEntries;
   });
 });

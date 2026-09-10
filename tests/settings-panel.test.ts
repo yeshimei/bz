@@ -81,7 +81,8 @@ describe('设置面板（settings-panel）', () => {
     // 无设置项的域不在左侧列表显示（用户拍板）；issue 186 AI 自全局拆出独立成域（通用 + AI 两项）
     // 旧书库（library）域退役：设置组删除后可见域 16 → 15；issue 201 补回忆墙 → 加载前列表 16
     // （issue 246 回忆墙/收藏本桌面得外观组后回归桌面列表 → 加载前即 17）
-    expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBeGreaterThanOrEqual(16);
+    // ADR-0115：回忆墙升格并入日记本（可见域 18 → 17）
+    expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBeGreaterThanOrEqual(15);
     // 无底部快捷键提示 / 无右侧导航条；顶栏面包屑 = 「设置」（拍板 P1 系统面板布局）
     expect(popup.querySelector('.bz-sp-foot')).toBeNull();
     const crumb = popup.querySelector('.bz-sp-crumb');
@@ -98,26 +99,24 @@ describe('设置面板（settings-panel）', () => {
     expect(badges[0]).toBe('1'); // 通用：数据存储路径 1 项（外观已独立「设置」域）
     expect(badges[1]).toBe('2'); // 设置：布局 + 主题两张卡片行（拍板 P1：外观独立域）
     expect(badges[2]).toBe('4'); // AI：服务商+模型名称+上下文+最大输出（采样参数组已退役；aiProvider 未设 → 密钥行门控隐藏）
-    expect(badges[3]).toBe('14'); // 日记本（index 3）：issue 246 补外观组两卡
-    expect(badges[4]).toBe('2'); // 回忆墙（index 4）：issue 246 补外观组两卡 → 桌面回归列表
-    expect(badges[5]).toBe('10'); // 待办（index 5）：外观组标准化（布局占位卡+主题两卡替换原皮肤单卡）后 10 项
-    expect(badges[6]).toBe('3'); // 归物本（index 6）：外观组布局/主题两卡 + 默认状态筛选，桌面 3 项
-    expect(badges[8]).toBe('2'); // 收藏本（index 8）：issue 246 补外观组两卡 → 桌面回归列表
+    expect(badges[3]).toBe('5'); // 日记本（index 3）：ADR-0115 升格后 = 外观 2 + 目录 2 + 显示 1（维护组为按钮行，不计设置项）
+    expect(badges[4]).toBe('10'); // 待办（index 4）：外观组标准化（布局占位卡+主题两卡替换原皮肤单卡）后 10 项
+    expect(badges[5]).toBe('3'); // 归物本（index 5）：外观组布局/主题两卡 + 默认状态筛选，桌面 3 项
+    expect(badges[7]).toBe('2'); // 收藏本（index 7）：issue 246 补外观组两卡 → 桌面回归列表
     // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）
     const navIcons = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-ic')];
-    expect(navIcons.length).toBe(18); // issue 246 回忆墙/收藏本桌面得外观组回归 → 17；issue 250 补密码本 → 18
+    expect(navIcons.length).toBe(17); // issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17
     expect(navIcons[0].getAttribute('data-icon')).toBe('settings'); // 通用
     expect(navIcons[1].getAttribute('data-icon')).toBe('palette'); // 设置（拍板 P1：外观独立域）
     expect(navIcons[2].getAttribute('data-icon')).toBe('sparkles'); // AI
     expect(navIcons[3].getAttribute('data-icon')).toBe('notebook-pen'); // 日记本（enh-sweep-a：与 ribbon/磁贴同款，错开书架墙 book-open）
-    expect(navIcons[4].getAttribute('data-icon')).toBe('images'); // 回忆墙
-    expect(navIcons[5].getAttribute('data-icon')).toBe('check-square'); // 待办
-    expect(navIcons[9].getAttribute('data-icon')).toBe('clapperboard'); // 影院（记录组 6 域后 index 9）
+    expect(navIcons[4].getAttribute('data-icon')).toBe('check-square'); // 待办
+    expect(navIcons[8].getAttribute('data-icon')).toBe('clapperboard'); // 影院（记录组 5 域后 index 8）
     // 拍板分组顺序（NAV_SECS）：…工具组 = 番茄钟/保险库/密码本/小橘陪伴猫
-    expect(navIcons[14].getAttribute('data-icon')).toBe('timer'); // 番茄钟
-    expect(navIcons[15].getAttribute('data-icon')).toBe('lock'); // 保险库
-    expect(navIcons[16].getAttribute('data-icon')).toBe('key'); // 密码本（issue 250 拆回独立域）
-    expect(navIcons[17].getAttribute('data-icon')).toBe('cat'); // 小橘陪伴猫（issue 194 转可见）
+    expect(navIcons[13].getAttribute('data-icon')).toBe('timer'); // 番茄钟
+    expect(navIcons[14].getAttribute('data-icon')).toBe('lock'); // 保险库
+    expect(navIcons[15].getAttribute('data-icon')).toBe('key'); // 密码本（issue 250 拆回独立域）
+    expect(navIcons[16].getAttribute('data-icon')).toBe('cat'); // 小橘陪伴猫（issue 194 转可见）
     // 无 emoji 图标残留（头行/列表/徽标全文本或 lucide）
     expect(popup.textContent).not.toMatch(EMOJI_RE);
     ui.cleanup();
@@ -417,8 +416,8 @@ describe('设置面板（settings-panel）', () => {
   it('占位域外观组遍历锚点（issue 246）：9 域 schema 组[0] 均为外观组（布局 default + 域化主题，layoutKey 契约）', async () => {
     // schema 层直接断言（渲染链已被上方待办/归物本/设置域锚点覆盖）；[域id, 布局键, 主题键, 加载器]
     const cases: Array<[string, string, string, () => Promise<SettingsSchema>]> = [
-      ['日记本', 'diarySkin', 'diarySkinTheme', async () => (await import('../src/diary/ui/panel')).diarySettingsSchema()],
-      ['回忆墙', 'diaryWallSkin', 'diaryWallSkinTheme', async () => (await import('../src/diary-wall/settings')).diaryWallSettingsSchema()],
+      // ADR-0115：回忆墙升格并入日记本，双条目归一（diaryWallSkin* 键已退役）
+      ['日记本', 'diarySkin', 'diarySkinTheme', async () => (await import('../src/diary/settings')).diarySettingsSchema()],
       ['剪藏本', 'clipbookSkin', 'clipbookSkinTheme', async () => (await import('../src/clipbook/ui')).clipbookSettingsSchema((await import('../src/clipbook/news-source-settings')).emptyDataSourceState(true))],
       ['收藏本', 'favoritesSkin', 'favoritesSkinTheme', async () => (await import('../src/favorites/ui')).favoritesSettingsSchema()],
       ['复习计划', 'reviewSkin', 'reviewSkinTheme', async () => (await import('../src/review/settings-schema')).reviewSettingsSchema({ app: getApp(), dataManager: {} as never })],
@@ -637,18 +636,18 @@ describe('设置面板（settings-panel）', () => {
     for (;;) {
       names = [...popup.querySelectorAll('.bz-sp-nav-name')].map((b) => b.textContent);
       const badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
-      if (Date.now() > deadline0 || (names.length === 18 && !badges.includes('·'))) break;
+      if (Date.now() > deadline0 || (names.length === 17 && !badges.includes('·'))) break;
       await new Promise((r) => setTimeout(r, 30));
     }
     // 只看域名（nav-name），避免描述包含（如剪藏本「网页剪藏与聚合讯」）误判
-    expect(names).toHaveLength(18); // issue 246 回忆墙/收藏本桌面回归 → 17；issue 250 补密码本 → 18
+    expect(names).toHaveLength(17); // issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17
     expect(names.slice(0, 3)).toEqual(['通用', '设置', 'AI']); // 基础组：通用 → 设置 → AI
     // 无设置域（聚合讯/阅读报告/自动摘要/附件搬移）一律不出现；小橘陪伴猫有 schema（issue 194 转可见）
     for (const n of ['聚合讯', '阅读报告', '做题家', '自动摘要', '附件搬移']) {
       expect(names).not.toContain(n);
     }
     expect(names).toContain('小橘陪伴猫');
-    expect(names).toContain('回忆墙'); // issue 246 外观组落域 → 桌面回归列表
+    expect(names).toContain('日记本'); // ADR-0115：回忆墙升格日记本，单条目在列
     expect(names).toContain('收藏本'); // issue 246 外观组落域 → 桌面回归列表
     // 旧书库（library）域退役：名称由 bookshelf（书库，issue 207 正名）承接，列表恰好一个「书库」
     expect(names.filter((n) => n === '书库')).toHaveLength(1);
@@ -675,15 +674,15 @@ describe('设置面板（settings-panel）', () => {
     let names: (string | null)[];
     for (;;) {
       names = [...popup.querySelectorAll('.bz-sp-mob-name')].map((b) => b.textContent);
-      if (Date.now() > deadline0 || names.length === 18) break;
+      if (Date.now() > deadline0 || names.length === 17) break;
       await new Promise((r) => setTimeout(r, 30));
     }
     // 只看域名（mob-name），避免描述包含误判
-    expect(names).toHaveLength(18); // issue 201 补回忆墙域 → 16；拍板 P1 补「设置」域 → 17；issue 250 补密码本 → 18
+    expect(names).toHaveLength(17); // 拍板 P1 补「设置」域 → 17；issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17
     expect(names.slice(0, 3)).toEqual(['通用', '设置', 'AI']);
     expect(names).not.toContain('聚合讯');
     expect(names).toContain('小橘陪伴猫'); // 有 schema，issue 194 转可见
-    expect(names).toContain('回忆墙'); // issue 201 补域（移动端有「移动端默认全屏」1 项）
+    expect(names).toContain('日记本'); // ADR-0115：回忆墙升格日记本，单条目在列
     expect(names.filter((n) => n === '书库')).toHaveLength(1); // 旧书库域退役：名称由 bookshelf 承接（issue 207）
     // 搜索也搜不到该无设置域
     const search = popup.querySelector('.bz-sp-mob-search .bz-input') as HTMLInputElement;
@@ -732,8 +731,8 @@ describe('设置面板（settings-panel）', () => {
     expect(closeBtn.querySelector('.bz-ic[data-icon="x"]')).toBeTruthy();
     expect(popup.textContent).not.toMatch(EMOJI_RE);
     // 无设置项的域不在列表显示（用户拍板）；issue 194 小橘陪伴猫转可见 → 15
-    // issue 201 补回忆墙域 → 16；拍板 P1 补「设置」域 → 加载前列表 17；issue 250 补密码本 → 18
-    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(18);
+    // 拍板 P1 补「设置」域 → 加载前列表 17；issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17
+    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(17);
     // 移动列表图标为 lucide（tile 内 svg 容器）
     const firstIc = popup.querySelector('.bz-sp-mob-item .bz-sp-mob-ic .bz-ic');
     expect(firstIc).toBeTruthy();

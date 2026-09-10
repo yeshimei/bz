@@ -150,7 +150,8 @@ describe('buildDots / riverCountText（入口行彩点与计数文案）', () =>
     expect(riverCountText('clipping', d)).toBe('未读 55 篇');
     expect(riverCountText('favorites', d)).toBe('48 条');
     expect(riverCountText('belongings', d)).toBe('登记 65 件');
-    expect(riverCountText('wall', d)).toBe('522 格');
+    // ADR-0115：回忆墙磁贴随升格并入日记本，'wall' id 退役 → 回落 null（与未接数域同口径）
+    expect(riverCountText('wall', d)).toBeNull();
     expect(riverCountText('settings', d)).toBeNull();
     expect(riverCountText('pomodoro', d)).toBeNull();
   });

@@ -1,9 +1,14 @@
 /**
- * 解析层：从文件内容/文件对象解析日记条目（纯函数，不直接触碰 DOM）。
- * 原脚本 1364-1721 行 + parseNaturalTime（3550-3581）。
+ * 日记本（diary）域解析层——原回忆墙升格正名（ADR-0115）
+ *
+ * 从 src/diary/parser.ts 拷贝（用户决策「回忆墙自包含，日后删除日记本域」）：
+ * - parseFile（日记，纯函数：`# emoji序列 HH:mm` 标题切分，不依赖 app 注入）；
+ * - parseMovieFile / parseLetterFile（影视/信，读 frontmatter + 文件创建时间）；
+ * - 新增 parseBookFile（书库，读 completionDate/readingDate/title/bookReview/cover）。
+ * 特殊文件解析所需的 getFileFrontmatter 以 app 参数注入（不 import ../diary/app，自包含）。
+ * moment 来自 'obsidian'（测试 alias 已替换为 moment）。
  */
 import { moment } from 'obsidian';
-import { getApp } from './app';
 import { emojiToTagMap, getTagEmoji } from './config';
 import type { DiaryEntry } from './types';
 
@@ -113,9 +118,9 @@ export function parseFile(content: string, dateStr: string, onUnparsed?: (unpars
   return entries;
 }
 
-/** 获取文件 frontmatter（无则返回 null） */
-function getFileFrontmatter(file: any): Record<string, any> | null {
-  const cache = getApp().metadataCache.getFileCache(file);
+/** 获取文件 frontmatter（无则返回 null）；app 由调用方注入（不依赖 diary/app 单例） */
+function getFileFrontmatter(file: any, app: any): Record<string, any> | null {
+  const cache = app.metadataCache.getFileCache(file);
   return cache && cache.frontmatter ? cache.frontmatter : null;
 }
 
@@ -134,10 +139,13 @@ function makeEntryId(prefix: string, file: any, dateStr: string): string {
 
 /**
  * 解析影视文件，生成一个日记条目（每个文件对应一个条目）
+ * - 必须有影评且非空、观影日期合法，否则返回 null（跳过）；
+ * - 标签按 frontmatter tags 归类（电影/纪录片/电视剧/动漫），content = 影评 + `![[海报]]` + #文件名；
+ * - filename 为完整 vault 路径（UI 跳转依据）。
  */
-export async function parseMovieFile(file: any): Promise<DiaryEntry | null> {
+export async function parseMovieFile(file: any, app: any): Promise<DiaryEntry | null> {
   try {
-    const fm = getFileFrontmatter(file);
+    const fm = getFileFrontmatter(file, app);
     if (!fm) return null;
 
     // 必须有影评且非空
@@ -193,10 +201,13 @@ export async function parseMovieFile(file: any): Promise<DiaryEntry | null> {
 
 /**
  * 解析信文件，生成一个日记条目（每个文件对应一个条目）
+ * - readonly=true 或缺少有效 date 返回 null（跳过）；
+ * - content = `**标题**` + 正文（正文去掉 frontmatter）；
+ * - filename 为完整 vault 路径（UI 跳转依据）。
  */
-export async function parseLetterFile(file: any): Promise<DiaryEntry | null> {
+export async function parseLetterFile(file: any, app: any): Promise<DiaryEntry | null> {
   try {
-    const fm = getFileFrontmatter(file);
+    const fm = getFileFrontmatter(file, app);
     if (!fm) return null;
 
     // 如果 readonly 为 true，忽略
@@ -214,7 +225,7 @@ export async function parseLetterFile(file: any): Promise<DiaryEntry | null> {
     const dateFormatted = parsed.format('YYYY-MM-DD');
 
     // 读取文件内容，提取正文（去掉 frontmatter）
-    const fullContent = await getApp().vault.read(file);
+    const fullContent = await app.vault.read(file);
     const frontmatterRegex = /^---\n([\s\S]*?)\n---\n/;
     const match = fullContent.match(frontmatterRegex);
     let body = fullContent;
@@ -247,7 +258,66 @@ export async function parseLetterFile(file: any): Promise<DiaryEntry | null> {
   }
 }
 
-// ===== 自然语言时间解析（原 3550-3581） =====
+/**
+ * 解析书文件（书库/*.md），生成一个日记条目（每个文件对应一个条目）
+ * - 日期：completionDate 优先，无则 readingDate，都无（或非法）返回 null（跳过）；
+ * - 必须有书评且非空（bookReview），否则返回 null 跳过（用户要求「书只获取有书评的」，与影视影评同语义）；
+ * - title：frontmatter title，缺省回退文件名（不含扩展名）；
+ * - content = `**《title》**` + 空行 + bookReview；
+ * - cover 拼进 content（`![[cover]]`），由数据层 extractMedia 提取为媒体；
+ * - tag=['书']，emoji=getTagEmoji('书')；filename 为完整 vault 路径；id=makeEntryId('book',...)；
+ * - 时间取文件创建时间（与影视/信同口径，用于同日混排）。
+ */
+export async function parseBookFile(file: any, app: any): Promise<DiaryEntry | null> {
+  try {
+    const fm = getFileFrontmatter(file, app);
+    if (!fm) return null;
+
+    // 必须有书评且非空（与影视影评同口径：无书评不进入回忆墙）
+    const review = fm.bookReview;
+    if (!review || String(review).trim() === '') return null;
+
+    // 日期：completionDate 优先，无则 readingDate；都无跳过
+    let dateStr = fm.completionDate ?? fm.readingDate;
+    if (!dateStr || !moment(dateStr, 'YYYY-MM-DD', true).isValid()) return null;
+    dateStr = moment(dateStr).format('YYYY-MM-DD');
+
+    // 标题：frontmatter title 优先，缺省回退文件名
+    const title = (fm.title && String(fm.title).trim() !== '' ? String(fm.title).trim() : null) || file.basename;
+
+    // 正文：`**《title》**` + bookReview
+    let content = `**《${title}》**`;
+    if (review && String(review).trim() !== '') {
+      content += `\n\n${String(review).trim()}`;
+    }
+
+    // 封面：拼 `![[cover]]` 进 content（extractMedia 才能提取）；cover 可能带路径（如 CONFIG/BOOK/xx/cover.jpeg）
+    const cover = fm.cover;
+    if (cover && String(cover).trim() !== '') {
+      content += `\n\n![[${String(cover).trim()}]]`;
+    }
+
+    // 文件创建时间作为时分秒
+    const { timeStr, timeValue } = await getFileTimeParts(file);
+
+    return {
+      date: dateStr,
+      time: timeStr,
+      timeValue: timeValue,
+      tags: ['书'],
+      emoji: getTagEmoji('书'),
+      content: content,
+      filename: file.path,
+      lineNumber: 0,
+      id: makeEntryId('book', file, dateStr),
+    };
+  } catch (err) {
+    console.error(`解析书文件失败 ${file.path}:`, err);
+    return null;
+  }
+}
+
+// ===== 自然语言时间解析（issue 256 随写链路自旧 diary/parser 迁入） =====
 
 /** 解析自然语言日期时间；失败返回 null */
 export function parseNaturalTime(input: string): any {

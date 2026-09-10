@@ -1,46 +1,45 @@
 /**
- * 弹窗族：添加日记、标签选择器、日期筛选（原脚本 949-1130 + 2243-2430 + 3238-3478）。
+ * 写链路弹窗族（issue 256 随写链路迁入新 diary 域）：
+ * - 写日记弹窗（openAddDialog/saveNewEntry + 滚轮日期时间控件）；
+ * - 标签选择器（showTagPicker：改标签/加密条目改分类降级分流 + 删除入口）。
+ * 旧编辑面板专属的日期筛选弹窗、卡片插拔/筛选刷新随域退役；
+ * 数据落盘全走 ./store 写层（守卫 + 串行队列），条目定位 = filename + lineNumber；
+ * 动作结果经域事件（diary:entry-added / tags-changed / entry-deleted / entry-decrypted）
+ * 通知宿主（墙）与其他消费者，本模块不刷新任何列表 UI。
  */
 import { MarkdownView as MarkdownViewFromObsidian, moment } from 'obsidian';
-import { pad2 } from '../../core/utils';
 import { topifyZ } from '../../core/z-order';
 import { notice } from '../../core/notice';
 import { openFlowDialog } from '../../core/flow-dialog';
-import { emitDomainEvent } from '../../core/domain-bus';
-import { getApp } from '../app';
+import { getApp } from '../../core/app';
+import { tryGetSettings } from '../../core/settings-provider';
 import {
   DIARY_DIRECTORY,
   getSortedTagsForAddDialog,
-  getSubTagsOfPrimary,
   getTagEmoji,
   getParentPrimaryTag,
   isSubTag,
 } from '../config';
 import { parseFlexibleDateTime } from '../parser';
-import { addEntry, writeFile, reloadWithEncrypted } from '../store';
+import { addEntry, updateDiaryTags, isUnparsedRefusal } from '../store';
 import { ENCRYPT_TAG, reclassifyEntry } from '../encrypt';
-import { diaryDataMap, state } from '../state';
-import { getJumpToEditAfterSaveSetting, getTagShowEmojiSetting, getUseFileDateTimeSetting } from './ui-settings';
-import { rebuildTags, updateTitleSuffix } from './filter-shared';
-import { applyFilter as applyFilterFromDialogs, insertCard, jumpToEntry, removeCard, showConfirm as showConfirmFromDialogs } from './entries';
-import { createDateTimeControl, resetDateTimeControl } from './datetime-picker';
+import { emitDomainEvent } from '../../core/domain-bus';
+import { createDateTimeControl, resetDateTimeControl, setDateTimeYearRangeProvider } from './datetime-picker';
+import { showConfirm } from './entry-actions';
+import { buildLocatorPredicateFor } from './locator';
 
-// ===== 类型选择按钮（类型选择器与写日记弹窗共用） =====
+// ===== 类型选择按钮（写日记弹窗与标签选择器共用） =====
 
-/**
- * 生成类型选择按钮（emoji + 标签，二级标签附父标签 emoji 角标）。
- * showEmoji=false 时纯文字（类型选择器跟随 diaryTagShowEmoji 设置；
- * 写日记弹窗保持始终显示 emoji 的既有行为，传 true）。
- */
-function createTagOptionButton(tag: string, showEmoji: boolean): HTMLButtonElement {
+/** 生成类型选择按钮（emoji + 标签，二级标签附父标签 emoji 角标；写日记弹窗/选择器恒显示 emoji） */
+function createTagOptionButton(tag: string): HTMLButtonElement {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'diary-tag-selector-btn';
   btn.dataset.tag = tag;
-  let buttonText = showEmoji ? `${getTagEmoji(tag)} ${tag}` : `${tag}`;
+  let buttonText = `${getTagEmoji(tag)} ${tag}`;
   if (isSubTag(tag)) {
     const parentTag = getParentPrimaryTag(tag);
-    if (parentTag && showEmoji) {
+    if (parentTag) {
       buttonText += ` <span style="font-size: 12px;margin-left:4px;position: absolute;top: 0;right: 0;translate: 5px -5px;">${getTagEmoji(parentTag)}</span>`;
     }
   }
@@ -49,189 +48,28 @@ function createTagOptionButton(tag: string, showEmoji: boolean): HTMLButtonEleme
   return btn;
 }
 
-// ===== 日期筛选弹窗（原 949-1129） =====
+// ===== 标签选择器（原 2243-2430；定位 id → filename+lineNumber） =====
 
-export function createDatePicker() {
-  const existingMask = document.getElementById('diary-date-filter-mask');
-  const existingPopup = document.getElementById('diary-date-filter-popup');
-  if (existingMask) existingMask.remove();
-  if (existingPopup) existingPopup.remove();
-
-  const mask = document.createElement('div');
-  mask.id = 'diary-date-filter-mask';
-  mask.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);display:none;';
-  mask.onclick = (e) => {
-    if (e.target === mask) mask.style.display = 'none';
-  };
-
-  const popup = document.createElement('div');
-  popup.id = 'diary-date-filter-popup';
-  popup.style.cssText =
-    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--background-primary);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.3);width:90%;max-width:480px;display:flex;flex-direction:column;overflow:hidden;';
-
-  const header = document.createElement('div');
-  header.style.cssText = 'padding:16px 20px;border-bottom:1px solid var(--background-modifier-border);display:flex;justify-content:space-between;align-items:center;';
-
-  const headerTitle = document.createElement('h4');
-  headerTitle.textContent = '按日期筛选';
-  headerTitle.style.cssText = 'margin:0;font-size:16px;font-weight:600;color:var(--text-normal);';
-
-  const resetBtn = document.createElement('button');
-  resetBtn.textContent = '全部';
-  resetBtn.style.cssText = 'background:var(--background-secondary);border:none;border-radius:20px;padding:4px 12px;font-size:13px;cursor:pointer;color:var(--text-normal);';
-  resetBtn.onclick = () => {
-    state.data.currentDateFilter = null;
-    applyFilterFromDialogs();
-    mask.style.display = 'none';
-  };
-
-  header.appendChild(headerTitle);
-  header.appendChild(resetBtn);
-
-  const content = document.createElement('div');
-  content.id = 'date-filter-content';
-  content.style.cssText = 'flex:1;overflow-y:auto;padding:20px;';
-
-  popup.appendChild(header);
-  popup.appendChild(content);
-  mask.appendChild(popup);
-  document.body.appendChild(mask);
+/** 标签选择器的定位面：宿主（墙）条目透传字段 */
+export interface DiaryEntryLocator {
+  /** 来源文件名（日记 = 日期字符串） */
+  filename: string;
+  /** 日期 YYYY-MM-DD */
+  date: string;
+  /** 时间 HH:mm */
+  time: string;
+  /** 在文件中的标题行号（写层稳定定位依据） */
+  lineNumber: number;
+  /** 当前标签数组 */
+  tags: string[];
+  /** 是否加密条目（改分类 = 解密降级） */
+  encrypted?: boolean;
+  /** 加密条目的保险箱 SafeNote id */
+  noteId?: string;
 }
 
-/** 获取所有存在的年份 */
-function getYears(): string[] {
-  const years = new Set<string>();
-  state.data.originalDiaryEntries.forEach((entry) => {
-    const year = entry.date.split('-')[0];
-    years.add(year);
-  });
-  return Array.from(years).sort((a, b) => b.localeCompare(a));
-}
-
-/** 显示日期选择器 */
-export function showDatePicker() {
-  const mask = document.getElementById('diary-date-filter-mask');
-  const content = document.getElementById('date-filter-content');
-  if (!mask || !content) return;
-
-  const years = getYears();
-  let selectedYear: string | null = years.length ? years[0] : null;
-  // 当前筛选所在年份优先（DateFilter.year 恒存在）
-  if (state.data.currentDateFilter?.year) {
-    selectedYear = state.data.currentDateFilter.year;
-  }
-
-  renderDatePicker(content, years, selectedYear);
-  topifyZ(mask); // ADR-0067：显示即发号，谁后显示谁在上（content 为 mask 子节点随动）
-  mask.style.display = 'block';
-}
-
-/** 渲染日期选择器内容 */
-function renderDatePicker(container: HTMLElement, years: string[], currentYear: string | null) {
-  container.innerHTML = '';
-  if (!years.length) {
-    const emptyMsg = document.createElement('div');
-    emptyMsg.textContent = '暂无日记数据';
-    emptyMsg.style.cssText = 'text-align:center;padding:40px;color:var(--text-muted);';
-    container.appendChild(emptyMsg);
-    return;
-  }
-
-  const navBar = document.createElement('div');
-  navBar.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;background:var(--background-secondary);border-radius:40px;padding:4px;';
-
-  const prevBtn = document.createElement('button');
-  prevBtn.textContent = '‹';
-  prevBtn.style.cssText = 'width:36px;height:36px;border-radius:50%;border:none;background:var(--background-primary);cursor:pointer;font-size:20px;color:var(--text-normal);display:flex;align-items:center;justify-content:center;';
-  prevBtn.onclick = () => {
-    const idx = years.indexOf(currentYear!);
-    if (idx < years.length - 1) {
-      renderDatePicker(container, years, years[idx + 1]);
-    }
-  };
-
-  const yearDisplay = document.createElement('div');
-  yearDisplay.textContent = currentYear!;
-  yearDisplay.style.cssText = 'font-weight:600;font-size:18px;color:var(--text-normal);padding:0 12px;cursor:pointer;';
-  yearDisplay.onclick = () => {
-    state.data.currentDateFilter = { year: currentYear! };
-    applyFilterFromDialogs();
-    document.getElementById('diary-date-filter-mask')!.style.display = 'none';
-  };
-
-  const nextBtn = document.createElement('button');
-  nextBtn.textContent = '›';
-  nextBtn.style.cssText = 'width:36px;height:36px;border-radius:50%;border:none;background:var(--background-primary);cursor:pointer;font-size:20px;color:var(--text-normal);display:flex;align-items:center;justify-content:center;';
-  nextBtn.onclick = () => {
-    const idx = years.indexOf(currentYear!);
-    if (idx > 0) {
-      renderDatePicker(container, years, years[idx - 1]);
-    }
-  };
-
-  navBar.appendChild(prevBtn);
-  navBar.appendChild(yearDisplay);
-  navBar.appendChild(nextBtn);
-  container.appendChild(navBar);
-
-  const monthStats = new Map<string, number>();
-  state.data.originalDiaryEntries.forEach((entry) => {
-    const [year, month] = entry.date.split('-');
-    if (year === currentYear) {
-      monthStats.set(month, (monthStats.get(month) || 0) + 1);
-    }
-  });
-
-  const monthGrid = document.createElement('div');
-  monthGrid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:12px;';
-
-  for (let i = 1; i <= 12; i++) {
-    const monthStr = pad2(i);
-    const count = monthStats.get(monthStr) || 0;
-    const monthCard = document.createElement('div');
-    monthCard.className = 'diary-date-filter-month-card';
-    monthCard.style.cssText = 'background:var(--background-secondary);border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;transition:all 0.2s;border:1px solid transparent;';
-    if (count === 0) {
-      monthCard.style.opacity = '0.5';
-      monthCard.style.cursor = 'not-allowed';
-    } else {
-      monthCard.onclick = () => {
-        state.data.currentDateFilter = { year: currentYear!, month: monthStr };
-        applyFilterFromDialogs();
-        document.getElementById('diary-date-filter-mask')!.style.display = 'none';
-      };
-      monthCard.onmouseenter = () => {
-        if (count > 0) monthCard.style.background = 'var(--background-modifier-hover)';
-      };
-      monthCard.onmouseleave = () => {
-        monthCard.style.background = 'var(--background-secondary)';
-      };
-    }
-
-    const monthName = document.createElement('div');
-    monthName.textContent = `${i}月`;
-    monthName.style.cssText = 'font-size:15px;font-weight:500;color:var(--text-normal);margin-bottom:4px;';
-
-    const countSpan = document.createElement('div');
-    countSpan.textContent = `${count}篇`;
-    countSpan.style.cssText = 'font-size:12px;color:var(--text-muted);';
-
-    monthCard.appendChild(monthName);
-    monthCard.appendChild(countSpan);
-    monthGrid.appendChild(monthCard);
-  }
-
-  container.appendChild(monthGrid);
-
-  if (monthStats.size === 0) {
-    const noDataMsg = document.createElement('div');
-    noDataMsg.textContent = '该年份无日记记录';
-    noDataMsg.style.cssText = 'text-align:center;padding:20px;color:var(--text-muted);margin-top:16px;';
-    container.appendChild(noDataMsg);
-  }
-}
-
-// ===== 标签选择器（原 2243-2430） =====
+/** 当前标签选择器绑定的条目（showTagPicker 设置，保存/删除时消费） */
+let activeTagPickerLoc: DiaryEntryLocator | null = null;
 
 export function createTagPicker() {
   const existingPopup = document.getElementById('diary-tag-selector-popup');
@@ -266,32 +104,30 @@ export function createTagPicker() {
   deleteBtn.textContent = '删除';
   deleteBtn.style.cssText = 'background:var(--background-modifier-error);color:var(--background-primary);margin-right:auto;';
   deleteBtn.onclick = () => {
-    const entryId = popup.dataset.entryId;
-    if (entryId) showConfirmFromDialogs(entryId);
+    const loc = activeTagPickerLoc;
+    hideTagPicker();
+    if (loc) showConfirm(loc);
   };
 
   const saveBtn = document.createElement('button');
   saveBtn.className = 'diary-action-btn diary-save-btn';
   saveBtn.textContent = '保存';
   saveBtn.onclick = () => {
+    const loc = activeTagPickerLoc;
+    if (!loc) {
+      hideTagPicker();
+      return;
+    }
     const selTagNames: string[] = [];
     buttonsContainer.querySelectorAll('.diary-tag-selector-btn.diary-active').forEach((btn) => {
       selTagNames.push((btn as HTMLElement).dataset.tag!);
     });
-    const entryId = popup.dataset.entryId;
-    if (!entryId) {
-      mask.style.display = 'none';
-      popup.style.display = 'none';
-      return;
-    }
     if (selTagNames.length === 0) {
       notice('请至少选择一个标签');
       return;
     }
-    const entry = state.data.originalDiaryEntries.find((e) => e.id === entryId);
-    const isEncryptedEntry = !!entry?.encrypted;
     hideTagPicker();
-    void handleTagPickerSave(entryId, selTagNames, isEncryptedEntry);
+    void handleTagPickerSave(loc, selTagNames, !!loc.encrypted);
   };
 
   actionsContainer.appendChild(deleteBtn);
@@ -313,17 +149,12 @@ function hideTagPicker() {
 
 /**
  * 标签选择器「保存」分流（ADR-0017）：
- * - 加密条目的保存 = 改分类降级（reclassifyEntry），成功后 merge 回 md 并从保险箱取出。
- * - 非加密条目走原 updateTags 写回（加密入口在抽屉「加密」动作，标签选择器不提供加密分类）。
+ * - 加密条目的保存 = 改分类降级（reclassifyEntry），成功后 merge 回 md 并从保险箱取出，
+ *   发 diary:entry-decrypted 通知宿主刷新；
+ * - 非加密条目走写层 updateDiaryTags（加密入口在抽屉「加密」动作，标签选择器不提供加密分类），
+ *   写盘成功由写层发 diary:tags-changed。
  */
-async function handleTagPickerSave(
-  entryId: string,
-  selTagNames: string[],
-  isEncryptedEntry: boolean
-) {
-  const entry = state.data.originalDiaryEntries.find((e) => e.id === entryId);
-  if (!entry) return;
-
+async function handleTagPickerSave(loc: DiaryEntryLocator, selTagNames: string[], isEncryptedEntry: boolean) {
   if (isEncryptedEntry) {
     // 加密条目：改分类 = 解密降级 + 应用新标签（Q20-a）
     const proceed =
@@ -336,29 +167,37 @@ async function handleTagPickerSave(
         ],
       })) === 'ok';
     if (!proceed) return;
-    if (!entry.noteId) return;
-    const success = await reclassifyEntry(entry.noteId, selTagNames);
+    if (!loc.noteId) return;
+    const newTags = selTagNames.filter((t) => t !== ENCRYPT_TAG);
+    const success = await reclassifyEntry(loc.noteId, selTagNames);
     if (!success) {
       notice('解密改分类失败', 'error');
-    } else {
-      // UX-8：加密条目改分类成功提示，语义同「已解密还原」
-      notice('已解密还原', 'success');
+      return;
     }
-    await reloadWithEncrypted();
+    // UX-8：加密条目改分类成功提示，语义同「已解密还原」
+    notice('已解密还原', 'success');
+    emitDomainEvent('diary:entry-decrypted', { noteId: loc.noteId, date: loc.date, newTags });
     return;
   }
 
-  // 普通改分类
-  await updateTags(entryId, selTagNames);
+  // 普通改分类（行号优先、同刻唯一兜底；定位失败告警中止，不盲写旧数据）
+  const dateStr = loc.date;
+  const predicate = await buildLocatorPredicateFor(dateStr, loc);
+  try {
+    const updated = await updateDiaryTags(dateStr, predicate, selTagNames);
+    if (!updated) {
+      notice('未能在日记数据中定位该条目，标签没有修改', 'error');
+    }
+  } catch (e) {
+    if (!isUnparsedRefusal(e)) throw e;
+  }
 }
 
-export function showTagPicker(entryId: string) {
-  const entry = state.data.originalDiaryEntries.find((e) => e.id === entryId);
-  if (!entry) return;
+export function showTagPicker(loc: DiaryEntryLocator) {
   const mask = document.getElementById('diary-tag-selector-mask');
   const popup = document.getElementById('diary-tag-selector-popup');
   if (!mask || !popup) return;
-  popup.dataset.entryId = entryId;
+  activeTagPickerLoc = loc;
 
   const buttonsContainer = popup.querySelector('.diary-tag-selector-buttons');
   if (!buttonsContainer) return;
@@ -368,15 +207,15 @@ export function showTagPicker(entryId: string) {
 
   // 加密分类不在类型选择器提供（加密唯一入口 = 抽屉「加密」动作，ADR-0017）；
   // 加密条目的改分类（降级）同样不含「加密」选项
-  const isEncryptedEntry = !!entry.encrypted;
+  const isEncrypted = !!loc.encrypted;
   const sortedTags = getSortedTagsForAddDialog();
 
   // 当前条目的标签集合（加密条目：除「加密」外的原始分类为已选项）
-  const currentTagsSet = new Set(isEncryptedEntry ? entry.tags.filter((t) => t !== ENCRYPT_TAG) : entry.tags);
+  const currentTagsSet = new Set(isEncrypted ? loc.tags.filter((t) => t !== ENCRYPT_TAG) : loc.tags);
 
   // 生成按钮
   for (const tag of sortedTags) {
-    const button = createTagOptionButton(tag, getTagShowEmojiSetting());
+    const button = createTagOptionButton(tag);
 
     if (currentTagsSet.has(tag)) {
       button.classList.add('diary-active');
@@ -404,81 +243,6 @@ export function showTagPicker(entryId: string) {
   topifyZ(mask, popup); // ADR-0067：显示即发号
   mask.style.display = 'block';
   popup.style.display = 'block';
-}
-
-/** 更新条目标签（原 2372-2430） */
-export async function updateTags(entryId: string, newTags: string[]) {
-  const entry = state.data.originalDiaryEntries.find((e) => e.id === entryId);
-  if (!entry) return;
-
-  const oldTags = [...entry.tags];
-  if (oldTags.length === newTags.length && oldTags.every((t) => newTags.includes(t))) {
-    return;
-  }
-
-  const dateStr = entry.date;
-  const entries = diaryDataMap?.get(dateStr) ?? null;
-  // 稳定定位（P1-12）：行号优先，同 time 多条不再改错位置；旧行号失配时回退「该时间仅一条」
-  const sameTime = entries?.filter((e) => e.time === entry.time) ?? [];
-  const targetEntry =
-    entries?.find((e) => e.time === entry.time && e.lineNumber === entry.lineNumber) ??
-    (sameTime.length === 1 ? sameTime[0] : undefined);
-  // P2 审查修复：定位失败（map 中无对应块，如数据未加载/被加密链路换血）时告警并中止，
-  // 不再盲写旧数据——旧行为 UI 显示新标签、磁盘还是旧标签
-  if (!targetEntry) {
-    notice('未能在日记数据中定位该条目，标签没有修改', 'error');
-    return;
-  }
-
-  entry.tags = newTags;
-  // 使用 getTagEmoji 生成 emoji 序列
-  entry.emoji = newTags.map((tag) => getTagEmoji(tag)).join('');
-  targetEntry.tags = newTags;
-  targetEntry.emoji = entry.emoji;
-
-  await writeFile(dateStr);
-
-  // 动作埋点：标签变更写盘成功（oldTags 已在函数开头捕获）
-  emitDomainEvent('diary:tags-changed', { entryId, date: entry.date, time: entry.time, from: oldTags, to: newTags });
-
-  // 更新卡片上的 emoji 显示
-  const emojiElement = document.querySelector(`#diary-entry-${CSS.escape(entryId)} .diary-emoji`);
-  if (emojiElement) {
-    let displayEmojiSeq = '';
-    if (state.ui.singleSelectedTagForDisplay && entry.tags.includes(state.ui.singleSelectedTagForDisplay)) {
-      displayEmojiSeq = getTagEmoji(state.ui.singleSelectedTagForDisplay);
-    } else {
-      displayEmojiSeq = entry.tags.map((tag) => getTagEmoji(tag)).join('');
-    }
-    emojiElement.textContent = displayEmojiSeq;
-  }
-
-  // 如果当前有筛选，且条目不再匹配筛选条件，则移除卡片
-  if (state.data.selectedTags.size > 0) {
-    const stillMatches = entry.tags.some((tag) => state.data.selectedTags.has(tag));
-    if (!stillMatches) {
-      removeCard(entryId);
-      const idx = state.data.currentFilteredEntries.findIndex((e) => e.id === entryId);
-      if (idx !== -1) state.data.currentFilteredEntries.splice(idx, 1);
-    } else {
-      // 如果本来不在 filtered 中但现在匹配了，需要插入
-      const idx = state.data.currentFilteredEntries.findIndex((e) => e.id === entryId);
-      if (idx === -1) {
-        state.data.currentFilteredEntries.push(entry);
-        state.data.currentFilteredEntries.sort((a, b) => {
-          const dateCmp = b.date.localeCompare(a.date);
-          return dateCmp !== 0 ? dateCmp : b.timeValue - a.timeValue;
-        });
-        insertCard(entry);
-        // P2 审查修复：插卡后前移显示计数——新卡片已渲染进 DOM，滚动加载下一批
-        // 从其后开始，否则滚到底时尾部条目重复渲染
-        state.data.currentDisplayCount += 1;
-      }
-    }
-  }
-
-  rebuildTags();
-  updateTitleSuffix();
 }
 
 // ===== 添加日记弹窗（原 3238-3478） =====
@@ -518,14 +282,13 @@ export function createAddDialog() {
   // 类型按钮（排序规则与 openAddDialog 一致：主标签平铺、有二级标签的主标签展开为二级；加密分类不在此提供）
   const allTags = getSortedTagsForAddDialog();
   for (const tag of allTags) {
-    const btn = createTagOptionButton(tag, true);
+    const btn = createTagOptionButton(tag);
     btn.onclick = (e) => {
       e.preventDefault();
       btn.classList.toggle('diary-active');
     };
     typeContainer.appendChild(btn);
   }
-
 
   const buttonsContainer = document.createElement('div');
   buttonsContainer.style.cssText = 'display:flex;gap:12px;justify-content:flex-end;';
@@ -546,11 +309,20 @@ export function createAddDialog() {
   document.body.appendChild(mask);
 }
 
-/** 打开添加日记弹窗（原 3348-3426） */
-export function openAddDialog() {
+/** 打开添加日记弹窗（原 3348-3426）。
+ * opts.yearRange：宿主（墙）注入的滚轮年份动态范围（UX-34，取自当前数据最早/最新年份）；
+ * 未注入回落 1900～当前年+1。 */
+export function openAddDialog(opts?: { yearRange?: { min: number; max: number } }) {
   const mask = document.getElementById('add-diary-mask');
   const popup = document.getElementById('add-diary-popup');
   if (!mask || !popup) return;
+
+  if (opts?.yearRange) {
+    const range = opts.yearRange;
+    setDateTimeYearRangeProvider(() => range);
+  } else {
+    setDateTimeYearRangeProvider(null);
+  }
 
   // 1. 刷新类型按钮（按排序规则）
   const typeContainer = document.getElementById('add-diary-type-container');
@@ -558,7 +330,7 @@ export function openAddDialog() {
     typeContainer.innerHTML = '';
     const sortedTags = getSortedTagsForAddDialog();
     for (const tag of sortedTags) {
-      const btn = createTagOptionButton(tag, true);
+      const btn = createTagOptionButton(tag);
       btn.onclick = (e) => {
         e.preventDefault();
         btn.classList.toggle('diary-active');
@@ -574,7 +346,6 @@ export function openAddDialog() {
   let defaultTimeStr = moment().format('HH:mm');
 
   if (getUseFileDateTimeSetting()) {
-    // 改为判断 toggle
     const activeView = getApp().workspace.getActiveViewOfType(MarkdownViewFromObsidian) as any;
     if (activeView && activeView.file) {
       const file = activeView.file;
@@ -604,34 +375,13 @@ export function openAddDialog() {
   setTimeout(() => datetimeInput && datetimeInput.focus(), 100);
 }
 
-/** 保存新日记条目（原 3428-3478） */
-
-// P1-14：插入当前视图的条件与 applyFilter 同源求值——
-// 标签筛选（含主标签→二级标签展开）+ 日期筛选 + 搜索关键词
-function matchesCurrentTagFilter(tags: string[]): boolean {
-  if (state.data.selectedTags.size === 0) return true;
-  for (const tag of state.data.selectedTags) {
-    const subTags = getSubTagsOfPrimary(tag);
-    if (subTags && subTags.length > 0) {
-      if (tags.includes(tag) || tags.some((t) => subTags.some((sub) => sub.tag === t))) return true;
-    } else if (tags.includes(tag)) {
-      return true;
-    }
-  }
-  return false;
+/** useFileDateTime 设置读取（原 ui-settings.getUseFileDateTimeSetting；唯一存活的显示键，经设置访问器直读） */
+function getUseFileDateTimeSetting(): boolean {
+  const s = tryGetSettings() as Record<string, unknown>;
+  return s?.useFileDateTime === true;
 }
 
-function matchesCurrentSearch(entry: { content: string; tags: string[]; time: string; date: string }): boolean {
-  if (!state.data.currentSearchKeyword) return true;
-  const lowerKeyword = state.data.currentSearchKeyword.toLowerCase();
-  return (
-    entry.content.toLowerCase().includes(lowerKeyword) ||
-    entry.tags.some((tag) => tag.toLowerCase().includes(lowerKeyword)) ||
-    entry.time.toLowerCase().includes(lowerKeyword) ||
-    entry.date.includes(state.data.currentSearchKeyword)
-  );
-}
-
+/** 保存新日记条目（原 3428-3478；面板插拔随域退役，保存成功由写层发 diary:entry-added） */
 export async function saveNewEntry() {
   const datetimeInput = document.getElementById('add-diary-datetime') as HTMLInputElement | null;
   const mask = document.getElementById('add-diary-mask');
@@ -659,41 +409,14 @@ export async function saveNewEntry() {
   const timeStr = targetMoment.format('HH:mm');
 
   try {
-    const newEntry = await addEntry(dateStr, timeStr, selTagNames, '');
-    // 动作埋点：新增保存成功（本期无消费者，emit 即可）
-    emitDomainEvent('diary:entry-added', { date: dateStr, time: timeStr, tags: selTagNames, content: '' });
+    await addEntry(dateStr, timeStr, selTagNames, '');
     // UX-7：保存成功确认（正文不带 emoji，类型图标即视觉前缀）
     notice('已保存日记', 'success');
     mask.style.display = 'none';
     popup.style.display = 'none';
-
-    // 保存后立即进入编辑（设置项 diaryJumpToEditAfterSave，关=仅关闭弹窗）
-    if (getJumpToEditAfterSaveSetting() && newEntry) {
-      jumpToEntry(newEntry, 'edit');
-    }
-
-    if (
-      newEntry &&
-      matchesCurrentTagFilter(newEntry.tags) &&
-      matchesCurrentSearch(newEntry) &&
-      (!state.data.currentDateFilter ||
-        (state.data.currentDateFilter.month
-          ? newEntry.date.startsWith(`${state.data.currentDateFilter.year}-${state.data.currentDateFilter.month}`)
-          : newEntry.date.startsWith(state.data.currentDateFilter.year)))
-    ) {
-      state.data.currentFilteredEntries.push(newEntry);
-      state.data.currentFilteredEntries.sort((a, b) => {
-        const dateCmp = b.date.localeCompare(a.date);
-        return dateCmp !== 0 ? dateCmp : b.timeValue - a.timeValue;
-      });
-      insertCard(newEntry);
-      // P2 审查修复：插卡后前移显示计数——新卡片已渲染进 DOM，滚动加载下一批
-      // 从其后开始，否则滚到底时尾部条目重复渲染
-      state.data.currentDisplayCount += 1;
-    }
   } catch (error: any) {
+    if (isUnparsedRefusal(error)) return; // 守卫拒写：人话通知已由写层发出
     console.error('保存日记失败:', error);
     notice('保存日记失败：' + error.message, 'error');
   }
 }
-

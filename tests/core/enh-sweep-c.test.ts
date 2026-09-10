@@ -19,7 +19,7 @@ const src = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8');
 const componentsCss = () => readFileSync(resolve(process.cwd(), 'src/core/ui/components.css'), 'utf8');
 
 /** 本包可改域（其余域在跑代理地盘，不纳入断言） */
-const EDITABLE = ['diary-wall', 'home', 'cinema', 'clipbook', 'encrypt', 'favorites', 'belongings', 'pomodoro', 'review', 'attach'];
+const EDITABLE = ['diary', 'home', 'cinema', 'clipbook', 'encrypt', 'favorites', 'belongings', 'pomodoro', 'review', 'attach'];
 
 describe('enh-sweep-c：.bz-panel-mtop 移动全屏顶距', () => {
   it('样式库：≤768px 断点内 44px 顶距（max 安全区）+ 首子元素顶距归零', () => {
@@ -40,7 +40,7 @@ describe('enh-sweep-c：.bz-panel-mtop 移动全屏顶距', () => {
     expect(clip).toContain('bz-clip-mob-detail bz-panel-mtop'); // 移动详情屏2 overlay 自带避让
     expect(src('src/encrypt/ui.ts')).toContain("classList.add('bz-panel-mtop')");
     expect(src('src/review/ui.ts')).toContain("classList.add('bz-panel-mtop')");
-    expect(src('src/diary-wall/ui.ts')).toContain("'bz-diary-wall-mob bz-panel-mtop'");
+    expect(src('src/diary/ui.ts')).toContain("'bz-diary-mob bz-panel-mtop'"); // ADR-0115：回忆墙升格日记本，挂载点类名同步
     // 番茄钟原「随 mfs 开关同挂摘」接线已随「移动端默认全屏」特性全链退役
   });
 
@@ -50,8 +50,8 @@ describe('enh-sweep-c：.bz-panel-mtop 移动全屏顶距', () => {
     expect(css('cinema')).not.toMatch(/bz-cinema-head \{ padding-top: max\(12px/);
     expect(css('clipbook')).not.toMatch(/bz-clip-mob-top \{[^}]*safe-area-inset-top/);
     expect(css('clipbook')).not.toMatch(/bz-clip-mob-detail-top \{[^}]*safe-area-inset-top/);
-    expect(css('diary-wall')).not.toMatch(/bz-diary-wall-mob \{[^}]*padding-top: max\(12px/);
-    expect(css('diary-wall')).not.toMatch(/bz-diary-wall-mob \.bz-diary-wall-head \{[^}]*padding-top/);
+    expect(css('diary')).not.toMatch(/bz-diary-mob \{[^}]*padding-top: max\(12px/);
+    expect(css('diary')).not.toMatch(/bz-diary-mob \.bz-diary-head \{[^}]*padding-top/);
     expect(css('home')).not.toMatch(/bz-home-hero \{[^}]*env\(safe-area-inset-top/);
   });
 });
@@ -69,7 +69,7 @@ describe('enh-sweep-c：触控热区扫尾', () => {
       expect(css(d), d).toMatch(/@media \(pointer: coarse\)/);
     }
     // 收编域不再复制 ::after 外扩（防双份外扩）
-    for (const d of ['favorites', 'belongings', 'encrypt', 'diary-wall']) {
+    for (const d of ['favorites', 'belongings', 'encrypt', 'diary']) {
       expect(css(d), d).not.toMatch(/inset: -(6|8|12)px/);
     }
   });
@@ -127,8 +127,8 @@ describe('enh-sweep-c：杂项打磨', () => {
     expect(s).not.toContain('bz-sprint-block');
   });
 
-  it('死选择器清理：diary-wall text--locked / encrypt 旧清单卡视图', () => {
-    expect(css('diary-wall')).not.toContain('text--locked');
+  it('死选择器清理：diary text--locked / encrypt 旧清单卡视图', () => {
+    expect(css('diary')).not.toContain('text--locked');
     expect(css('encrypt')).not.toMatch(/\.bz-encrypt-card\b/);
     expect(css('encrypt')).not.toMatch(/\.bz-encrypt-head\b/);
     expect(css('encrypt')).not.toMatch(/\.bz-encrypt-empty\b/);

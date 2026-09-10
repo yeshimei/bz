@@ -8,7 +8,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, clearNotices, hasNotice } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
-import { setApp as setDiaryApp } from '../../src/diary/app';
+import { setApp as setDiaryApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { DEFAULT_SETTINGS } from '../../src/settings';
 import { resetRecapState } from '../../src/recap/state';
@@ -27,7 +27,7 @@ import { createAI, getAIProvider } from '../../src/core/ai';
 import { recapDiaryFilePath, RECAP_MARKER } from '../../src/recap/summarize';
 import { H } from '../../src/recap/state';
 import { parseFile } from '../../src/diary/parser';
-import { setDiaryDataMap, state as diaryState } from '../../src/diary/state';
+import { setDiaryDataMap } from '../../src/diary/store';
 
 const mockedCreateAI = vi.mocked(createAI);
 const mockedGetProvider = vi.mocked(getAIProvider);
@@ -102,8 +102,6 @@ describe('今日回顾面板（recap 域）', () => {
     // diary 写入 API 的 app 注入 + 内存状态复位（writeRecapEntry 走真实 diary store）
     setDiaryApp(mockAppWithVault(vault) as any);
     setDiaryDataMap(null);
-    diaryState.data.originalDiaryEntries = [];
-    diaryState.data.currentFilteredEntries = [];
     document.body.innerHTML = '';
     clearNotices();
   });
@@ -230,8 +228,6 @@ describe('R3 生成今日总结（写进日记）', () => {
     vi.clearAllMocks();
     setDiaryApp(mockAppWithVault(vault) as any);
     setDiaryDataMap(null);
-    diaryState.data.originalDiaryEntries = [];
-    diaryState.data.currentFilteredEntries = [];
     document.body.innerHTML = '';
     clearNotices();
   });

@@ -82,29 +82,29 @@ describe('classifyFilePath（settings 注入自定义目录）', () => {
     expect(classifyFilePath('我的/日记/a.md')).toBe('diary');
   });
 
-  it('movie 语义仅靠 movieDirectory（日记本键）命中；ADR-0087 movieFolderPath 退役', () => {
-    // movieFolderPath 键已退役：设置里不再识别（缺省影视目录归 cinema）
+  it('movie 分类随 diary 旧域退役（ADR-0115）：movieDirectory 键不再识别，影视目录唯一归 cinema', () => {
+    // 旧 movieFolderPath / movieDirectory 键均已退役：设置里不再识别（缺省影视目录归 cinema）
     setSettingsProvider(() => ({ movieFolderPath: 'F1' } as any));
     expect(classifyFilePath('F1/a.md')).toBeNull();
-    // movieDirectory（日记本用）仍归 movie 语义
     setSettingsProvider(() => ({ movieDirectory: 'F2' } as any));
-    expect(classifyFilePath('F2/b.md')).toBe('movie');
+    expect(classifyFilePath('F2/b.md')).toBeNull();
     // 两键都缺 → 影视目录归 cinema（cinemaFolderPath 缺省回落 '我的/影视'）
     setSettingsProvider(() => ({}) as any);
     expect(classifyFilePath('我的/影视/c.md')).toBe('cinema');
   });
 
   it('cinema 分支：显式配置生效且优先；缺省回落影视目录归 cinema（ADR-0087）', () => {
-    // 缺省：我的/影视 归 cinema（cinema 接管影视；movieDirectory 未配时不再回落 movie）
+    // 缺省：我的/影视 归 cinema（cinema 接管影视；ADR-0115 起 diary 影视目录同读本键）
     setSettingsProvider(() => ({} as any));
     expect(classifyFilePath('我的/影视/c.md')).toBe('cinema');
     // 显式配置 cinemaFolderPath → 该目录归 cinema
     setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' } as any));
     expect(classifyFilePath('我的/影视/c.md')).toBe('cinema');
-    // 配置到别处 → 我的/影视 因缺省回落仍归 cinema；自定义目录归 movie（movieDirectory 场景）
-    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影院', movieDirectory: '我的/影视' } as any));
+    // 配置到别处 → 影视目录唯一真理随配置走：我的/影院 归 cinema，默认目录 我的/影视 不再强认
+    // （ADR-0115：旧 movie 分支退役，其目录判定并入 cinemaFolderPath，避免「配置搬走后旧目录仍报 cinema」）
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影院' } as any));
     expect(classifyFilePath('我的/影院/c.md')).toBe('cinema');
-    expect(classifyFilePath('我的/影视/c.md')).toBe('movie');
+    expect(classifyFilePath('我的/影视/c.md')).toBeNull();
     // 空白值 → 回落默认影视目录 → cinema
     setSettingsProvider(() => ({ cinemaFolderPath: '   ' } as any));
     expect(classifyFilePath('我的/影视/c.md')).toBe('cinema');

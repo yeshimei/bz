@@ -1,19 +1,22 @@
 // @vitest-environment node
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { setApp } from '../../src/diary/app';
+import { setApp } from '../../src/core/app';
 import { buildTagMaps } from '../../src/diary/config';
 import { parseFile, parseMovieFile, parseLetterFile, parseNaturalTime, isEncryptedEntry } from '../../src/diary/parser';
 
-/** 构造测试用 mock app */
+/** 构造测试用 mock app（同时挂到 core/app 供域内 getApp 路径使用，并返回实例供解析函数显式传入） */
+let app: any;
 function mockApp(files: Record<string, string>, frontmatters: Record<string, any>) {
-  setApp({
+  app = {
     metadataCache: {
       getFileCache: (f: any) => ({ frontmatter: frontmatters[f.path] }),
     },
     vault: {
       read: async (f: any) => files[f.path] ?? '',
     },
-  } as any);
+  };
+  setApp(app as any);
+  return app;
 }
 
 function makeFile(path: string, ctime: number, basename?: string) {
@@ -131,7 +134,7 @@ describe('parseMovieFile', () => {
   it('正常解析影视条目', async () => {
     const fm = { 影评: '很好看', 观影日期: '2024-02-03', 海报: 'poster.png', tags: ['电影'] };
     mockApp({}, { '我的/影视/xxx.md': fm });
-    const entry = await parseMovieFile(makeFile('我的/影视/xxx.md', Date.UTC(2024, 0, 3, 21, 30)));
+    const entry = await parseMovieFile(makeFile('我的/影视/xxx.md', Date.UTC(2024, 0, 3, 21, 30)), app);
     expect(entry).toMatchObject({
       date: '2024-02-03',
       tags: ['电影'],
@@ -144,23 +147,23 @@ describe('parseMovieFile', () => {
 
   it('无影评返回 null', async () => {
     mockApp({}, { 'a.md': { 观影日期: '2024-02-03' } });
-    expect(await parseMovieFile(makeFile('a.md', 0))).toBeNull();
+    expect(await parseMovieFile(makeFile('a.md', 0), app)).toBeNull();
   });
 
   it('无效观影日期返回 null', async () => {
     mockApp({}, { 'a.md': { 影评: 'x', 观影日期: 'not-a-date' } });
-    expect(await parseMovieFile(makeFile('a.md', 0))).toBeNull();
+    expect(await parseMovieFile(makeFile('a.md', 0), app)).toBeNull();
   });
 
   it('tags 字符串形式解析主标签', async () => {
     mockApp({}, { 'a.md': { 影评: 'x', 观影日期: '2024-02-03', tags: '纪录片' } });
-    const entry = await parseMovieFile(makeFile('a.md', 0));
+    const entry = await parseMovieFile(makeFile('a.md', 0), app);
     expect(entry!.tags).toEqual(['纪录片']);
   });
 
   it('以 剧/漫 结尾的 rawTag 归类', async () => {
     mockApp({}, { 'a.md': { 影评: 'x', 观影日期: '2024-02-03', tags: ['日剧'] } });
-    const entry = await parseMovieFile(makeFile('a.md', 0));
+    const entry = await parseMovieFile(makeFile('a.md', 0), app);
     expect(entry!.tags).toEqual(['电视剧']);
   });
 });
@@ -169,7 +172,7 @@ describe('parseLetterFile', () => {
   it('正常解析信件', async () => {
     const fm = { date: '2024-03-04 20:00' };
     mockApp({ '我的/信/给未来的我.md': '---\ndate: 2024-03-04 20:00\n---\n你好，未来的我\n' }, { '我的/信/给未来的我.md': fm });
-    const entry = await parseLetterFile(makeFile('我的/信/给未来的我.md', Date.UTC(2024, 2, 4, 20, 0)));
+    const entry = await parseLetterFile(makeFile('我的/信/给未来的我.md', Date.UTC(2024, 2, 4, 20, 0)), app);
     expect(entry).toMatchObject({
       date: '2024-03-04',
       tags: ['信'],
@@ -181,12 +184,12 @@ describe('parseLetterFile', () => {
 
   it('readonly 信件忽略', async () => {
     mockApp({}, { 'a.md': { date: '2024-03-04', readonly: true } });
-    expect(await parseLetterFile(makeFile('a.md', 0))).toBeNull();
+    expect(await parseLetterFile(makeFile('a.md', 0), app)).toBeNull();
   });
 
   it('无 date 返回 null', async () => {
     mockApp({}, { 'a.md': { readonly: false } });
-    expect(await parseLetterFile(makeFile('a.md', 0))).toBeNull();
+    expect(await parseLetterFile(makeFile('a.md', 0), app)).toBeNull();
   });
 });
 

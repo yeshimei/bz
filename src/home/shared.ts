@@ -21,8 +21,8 @@ export { DOMAIN_ICONS };
 
 /* ---------- 域清单（原 domains.ts 收编；domains.ts re-export 兼容旧引用） ---------- */
 
-/** 磁贴 id → 事实源键（wall/settings/vault 与域 id 异名，其余同键） */
-const ICON_KEY: Record<string, string> = { wall: 'diary-wall', settings: 'settings-panel', vault: 'password-vault' };
+/** 磁贴 id → 事实源键（settings/vault 与域 id 异名，其余同键；wall 随日记本正名并一，ADR-0115） */
+const ICON_KEY: Record<string, string> = { settings: 'settings-panel', vault: 'password-vault' };
 /** 图标一律取 core/domain-icons 单一事实源（终局 review 批 B：17 条字面量迁移，值不变） */
 const iconOf = (id: string): string => DOMAIN_ICONS[ICON_KEY[id] ?? id];
 
@@ -39,7 +39,7 @@ export interface HomeDomain {
 }
 
 export const DOMAINS: HomeDomain[] = [
-  { id: 'diary', commandId: 'bz-diary-open', name: '日记本', sub: '写今天的闪念', icon: iconOf('diary') },
+  { id: 'diary', commandId: 'bz-diary-open', name: '日记本', sub: '写今天的闪念 · 回忆媒体墙', icon: iconOf('diary') },
   { id: 'cinema', commandId: 'bz-cinema-open', name: '影院', sub: '影视想看与在看', icon: iconOf('cinema') },
   { id: 'review', commandId: 'bz-review-open', name: '复习计划', sub: '到期卡片队列', icon: iconOf('review') },
   { id: 'pomodoro', commandId: 'bz-pomodoro-open', name: '番茄钟', sub: '专注计时', icon: iconOf('pomodoro') },
@@ -51,7 +51,6 @@ export const DOMAINS: HomeDomain[] = [
   { id: 'bookshelf', commandId: 'bz-bookshelf-open', name: '书库', sub: '藏书与读书笔记', icon: iconOf('bookshelf') },
   // 第二大脑（secondbrain 域，issue 251）：主面板统一入口（检索/对话/灵感参考都从面板进）
   { id: 'secondbrain', commandId: 'bz-secondbrain-panel', name: '第二大脑', sub: '笔记检索与问答', icon: iconOf('secondbrain') },
-  { id: 'wall', commandId: 'bz-diary-wall-open', name: '回忆墙', sub: '相片墙浏览日记', icon: iconOf('wall') },
   { id: 'belongings', commandId: 'bz-belongings-open', name: '归物本', sub: '物品登记', icon: iconOf('belongings') },
   { id: 'attach', commandId: 'bz-attach-move', name: '移动附件', sub: '附件归位', icon: iconOf('attach') },
   { id: 'encrypt', commandId: 'bz-encrypt-open', name: '保险库', sub: '密码·加密笔记·日记', icon: iconOf('encrypt') },
@@ -75,7 +74,6 @@ export const DOMAIN_DOT: Record<string, string> = {
   bookshelf: '#3d7bd6',
   secondbrain: '#a33d2a',
   'reading-report': '#3fa7a0',
-  wall: '#7c8cf8',
   belongings: '#45a35c',
   attach: '#8a8f99',
   encrypt: '#8a8f99',
@@ -259,7 +257,7 @@ export function buildPreviews(data: RiverData): RiverPreview[] {
   } else if (s.diaryWrittenToday) {
     out.push({ h: `今日日记已写 · 连击 ×${s.diaryStreak + 1}`, b: '明天同一时间回来续上，连击就是这么长起来的。', go: 'diary', goLabel: '看日记本 →' });
   } else {
-    out.push({ h: '给明天留一句话', b: '今晚写一篇日记，明晚它会变成回忆墙上的新格子。', go: 'diary', goLabel: '去写日记 →' });
+    out.push({ h: '给明天留一句话', b: '今晚写一篇日记，明晚它会变成日记本媒体墙上的新格子。', go: 'diary', goLabel: '去写日记 →' });
   }
   return out;
 }
@@ -304,8 +302,6 @@ export function riverCountText(id: string, data: RiverData): string | null {
       return `${c.favoritesTotal} 条`;
     case 'belongings':
       return `登记 ${c.belongingsTotal} 件`;
-    case 'wall':
-      return `${c.diaryTotal} 格`;
     default:
       return null; // recap/literature/reading-report/attach/encrypt/vault/smartcat/settings/pomodoro 走域副题
   }

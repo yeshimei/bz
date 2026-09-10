@@ -1,12 +1,20 @@
 /**
- * 滚轮日期时间选择器（原脚本 2629-3234）。
+ * 滚轮日期时间选择器（原脚本 2629-3234；issue 256 随写链路迁入新 diary 域）。
+ * 年份动态范围（UX-34）改由调用方注入：写日记宿主（墙）打开弹窗时经
+ * setDateTimeYearRangeProvider 提供当前数据的年份范围，未注入回落 1900～当前年+1。
  */
 import { moment } from 'obsidian';
 import { notice } from '../../core/notice';
 import { escManager } from '../../core/esc-manager';
 import { allocZ } from '../../core/z-order';
 import { parseFlexibleDateTime } from '../parser';
-import { state } from '../state';
+
+/** 年份动态范围提供方（写日记宿主注册；null = 未注入回落默认范围） */
+let yearRangeProvider: (() => { min: number; max: number }) | null = null;
+
+export function setDateTimeYearRangeProvider(p: (() => { min: number; max: number }) | null) {
+  yearRangeProvider = p;
+}
 
 // ===== 滚轮列（原 2629-2782） =====
 
@@ -282,18 +290,20 @@ function updateAllColumns(picker: WheelPicker, shouldScroll = false) {
 // ===== 显示统一日期时间选择器（原 2865-3033） =====
 
 /**
- * 滚轮年份动态范围（UX-34）：
- * min = 数据最早年份（无数据时回落下限 1900，下限放宽至 1900）；
- * max = 当前年份 + 1。
+ * 滚轮年份动态范围（UX-34）：宿主注入的提供方优先；
+ * 未注入回落 min 1900（下限放宽）、max 当前年份 + 1。
  */
 function getYearRange(): { min: number; max: number } {
-  let earliest: number | null = null;
-  for (const entry of state.data.originalDiaryEntries) {
-    const y = parseInt(String(entry.date).split('-')[0], 10);
-    if (!Number.isNaN(y) && (earliest === null || y < earliest)) earliest = y;
+  if (yearRangeProvider) {
+    try {
+      const r = yearRangeProvider();
+      if (r && Number.isFinite(r.min) && Number.isFinite(r.max) && r.min <= r.max) return r;
+    } catch (e) {
+      /* 提供方异常回落默认范围 */
+    }
   }
   return {
-    min: Math.max(1900, earliest ?? 1900),
+    min: 1900,
     max: new Date().getFullYear() + 1,
   };
 }

@@ -54,18 +54,18 @@ afterEach(() => {
 
 describe('renderSettingsInto：绑定与落盘', () => {
   it('toggle 键直绑：初始值回填，变更即时写内存 + 落盘', () => {
-    state.showTagCount = true;
+    state.useFileDateTime = true;
     const container = document.createElement('div');
     renderSettingsInto(container, {
       groups: [
-        { icon: 'eye', name: '显示', rows: [{ type: 'toggle', name: '显示标签计数', binding: { key: 'showTagCount' } }] },
+        { icon: 'eye', name: '显示', rows: [{ type: 'toggle', name: '默认日期取自文件', binding: { key: 'useFileDateTime' } }] },
       ],
     });
-    const row = findRow(container, '显示标签计数');
+    const row = findRow(container, '默认日期取自文件');
     const toggle = controlOf(row);
     expect(toggle.value).toBe(true);
     toggle.trigger(false);
-    expect(state.showTagCount).toBe(false);
+    expect(state.useFileDateTime).toBe(false);
     expect(saver).toHaveBeenCalledTimes(1);
   });
 
@@ -230,7 +230,7 @@ describe('text 行：防抖 + 失焦/回车 + onCommit 一次性提示（warnedI
 
 describe('visibleWhen 联动 + 徽标 + actionRow 豁免 + custom 插槽', () => {
   function renderLinked(): HTMLElement {
-    state.showTagCount = true;
+    state.useFileDateTime = true;
     const container = document.createElement('div');
     renderSettingsInto(container, {
       groups: [
@@ -238,12 +238,12 @@ describe('visibleWhen 联动 + 徽标 + actionRow 豁免 + custom 插槽', () =>
           icon: 'eye',
           name: '联动组',
           rows: [
-            { type: 'toggle', name: '总开关', binding: { key: 'showTagCount' } },
+            { type: 'toggle', name: '总开关', binding: { key: 'useFileDateTime' } },
             {
               type: 'text',
               name: '条件行',
               binding: { key: 'bookshelfFolderPath' },
-              visibleWhen: (s) => s.showTagCount === true,
+              visibleWhen: (s) => s.useFileDateTime === true,
             },
             {
               type: 'button',
@@ -287,17 +287,17 @@ describe('visibleWhen 联动 + 徽标 + actionRow 豁免 + custom 插槽', () =>
   });
 
   it('custom 插槽：render(body, ctx) 渲染进包装容器，visibleWhen 作用于包装容器', () => {
-    state.showTagCount = true;
+    state.useFileDateTime = true;
     const container = document.createElement('div');
     renderSettingsInto(container, {
       groups: [
         {
           name: 'G',
           rows: [
-            { type: 'toggle', name: '总开关', binding: { key: 'showTagCount' } },
+            { type: 'toggle', name: '总开关', binding: { key: 'useFileDateTime' } },
             {
               type: 'custom',
-              visibleWhen: (s) => s.showTagCount === true,
+              visibleWhen: (s) => s.useFileDateTime === true,
               render: (body, ctx) => {
                 const flag = document.createElement('span');
                 flag.className = 'bz-schema-custom-flag';
@@ -362,7 +362,7 @@ describe('textarea 行与区块标题平铺形态', () => {
     const container = document.createElement('div');
     renderSettingsInto(container, {
       groups: [
-        { name: '🤖 AI', rows: [{ type: 'toggle', name: '开关行', binding: { key: 'showTagCount' } }] },
+        { name: '🤖 AI', rows: [{ type: 'toggle', name: '开关行', binding: { key: 'useFileDateTime' } }] },
         { name: '📂 数据', rows: [{ type: 'info', name: '说明行' }] },
       ],
     });
