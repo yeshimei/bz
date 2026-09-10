@@ -1,4 +1,4 @@
-/* 源指纹 f156a3e6f0786228 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 843764ea50c229eb · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/password-vault/fake-sim.ts → window.BZW_password_vault（行为单源预览包，issue 245/ADR-0106） */
 var BZW_password_vault = (() => {
@@ -4665,6 +4665,180 @@ var BZW_password_vault = (() => {
     };
   })();
 
+  // src/core/utils.ts
+  var import_moment = __toESM(require_moment());
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
+  }
+  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
+    const target = (0, import_moment.default)(date);
+    if (!target.isValid()) return "无效日期";
+    let hasExplicitTime = true;
+    if (typeof date === "string") {
+      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
+    }
+    const nowMoment = (0, import_moment.default)(now);
+    const diffSeconds = nowMoment.diff(target, "seconds");
+    function shouldShowTime() {
+      const timeStr = target.format("HH:mm");
+      if (timeStr !== "00:00") return true;
+      return hasExplicitTime;
+    }
+    if (diffSeconds < 0) {
+      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
+    }
+    if (diffSeconds < 60) return "刚刚";
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
+    const todayStart = (0, import_moment.default)(now).startOf("day");
+    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
+      const hours = Math.floor(diffMinutes / 60);
+      return `${hours}小时前`;
+    }
+    const yesterdayStart = (0, import_moment.default)(now).subtract(1, "days").startOf("day");
+    const beforeYesterdayStart = (0, import_moment.default)(now).subtract(2, "days").startOf("day");
+    if (target.isSame(yesterdayStart, "day")) {
+      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
+    }
+    if (target.isSame(beforeYesterdayStart, "day")) {
+      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
+    }
+    const weekStart = (0, import_moment.default)(now).startOf("week");
+    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
+      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
+    }
+    const isThisYear = target.year() === nowMoment.year();
+    if (isThisYear) {
+      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
+    }
+    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
+  }
+  function secureRandomPassword(length, charset) {
+    const n = charset.length;
+    if (!(length > 0) || n === 0) return "";
+    const LIMIT2 = Math.floor(4294967296 / n) * n;
+    let pwd = "";
+    while (pwd.length < length) {
+      const buf = new Uint32Array(length - pwd.length);
+      crypto.getRandomValues(buf);
+      for (let i = 0; i < buf.length && pwd.length < length; i++) {
+        if (buf[i] >= LIMIT2) continue;
+        pwd += charset.charAt(buf[i] % n);
+      }
+    }
+    return pwd;
+  }
+  var CLIPBOARD_CLEAR_DELAY_MS = 6e4;
+  var clipboardClearTimer = null;
+  function cancelClipboardClear() {
+    if (clipboardClearTimer !== null) {
+      clearTimeout(clipboardClearTimer);
+      clipboardClearTimer = null;
+    }
+  }
+  function armClipboardClear() {
+    if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
+    clipboardClearTimer = setTimeout(() => {
+      clipboardClearTimer = null;
+      try {
+        void navigator.clipboard.writeText("").catch(() => {
+        });
+      } catch (e) {
+      }
+    }, CLIPBOARD_CLEAR_DELAY_MS);
+  }
+  function copySensitiveText(text) {
+    try {
+      return navigator.clipboard.writeText(text).then(() => armClipboardClear());
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+
+  // src/core/flow-dialog.ts
+  var FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
+  var FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
+  function buildFlowDialogParts(title, message, actions) {
+    let buttons;
+    if (actions.length === 2) {
+      buttons = [
+        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
+        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
+      ];
+    } else {
+      buttons = actions.map((a, i) => {
+        const cls = ["bz-flow-dialog-action"];
+        if (a.danger) cls.push("bz-flow-dialog-danger");
+        if (a.cta) cls.push("bz-flow-dialog-cta");
+        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
+      });
+    }
+    const ctaIdx = actions.findIndex((a) => a.cta);
+    const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
+    const html = "<h4>" + escapeHtml(title || "确认") + "</h4><p>" + escapeHtml(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
+      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
+    }).join("") + "</div>";
+    return { html, buttons, focusId: buttons[focusIdx].id };
+  }
+  var activeSettle = null;
+  function openFlowDialog(opts) {
+    if (!opts.actions || opts.actions.length === 0) {
+      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
+    }
+    return new Promise((resolve) => {
+      const prevActive = document.activeElement;
+      if (activeSettle) activeSettle(void 0);
+      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
+      const mask = document.createElement("div");
+      mask.id = "__shared_confirm_mask__";
+      mask.style.zIndex = String(allocZ());
+      mask.onclick = (e) => {
+        if (e.target === mask) settle(void 0);
+      };
+      const popup = document.createElement("div");
+      popup.id = "__shared_confirm_popup__";
+      if (opts.className) popup.classList.add(opts.className);
+      popup.setAttribute("role", "dialog");
+      popup.setAttribute("aria-modal", "true");
+      popup.innerHTML = parts.html;
+      mask.appendChild(popup);
+      document.body.appendChild(mask);
+      const escHandle = escManager.register("q3-confirm", {
+        isVisible: () => mask.isConnected,
+        close: () => settle(void 0)
+      });
+      let settled = false;
+      function restoreFocus() {
+        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
+          prevActive.focus();
+        }
+      }
+      function settle(v) {
+        if (settled) return;
+        settled = true;
+        if (activeSettle === settle) activeSettle = null;
+        escHandle.unregister();
+        mask.remove();
+        restoreFocus();
+        resolve(v);
+      }
+      activeSettle = settle;
+      for (const b of parts.buttons) {
+        const btn = document.getElementById(b.id);
+        if (btn) btn.onclick = () => settle(b.value);
+      }
+      const focusBtn = document.getElementById(parts.focusId);
+      if (focusBtn) focusBtn.focus();
+    });
+  }
+
   // src/core/dom.ts
   function longPress(el, cb, dur, filter) {
     if (!dur) dur = 500;
@@ -4788,145 +4962,6 @@ var BZW_password_vault = (() => {
     popup.style.maxWidth = (opts.maxWidth || 400) + "px";
     topifyZ(mask, popup);
     return { mask, popup, topify: () => topifyZ(mask, popup) };
-  }
-
-  // src/core/utils.ts
-  var import_moment = __toESM(require_moment());
-  function escapeHtml(str) {
-    return str.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
-  }
-  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
-    const target = (0, import_moment.default)(date);
-    if (!target.isValid()) return "无效日期";
-    let hasExplicitTime = true;
-    if (typeof date === "string") {
-      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
-    }
-    const nowMoment = (0, import_moment.default)(now);
-    const diffSeconds = nowMoment.diff(target, "seconds");
-    function shouldShowTime() {
-      const timeStr = target.format("HH:mm");
-      if (timeStr !== "00:00") return true;
-      return hasExplicitTime;
-    }
-    if (diffSeconds < 0) {
-      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
-    }
-    if (diffSeconds < 60) return "刚刚";
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
-    const todayStart = (0, import_moment.default)(now).startOf("day");
-    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
-      const hours = Math.floor(diffMinutes / 60);
-      return `${hours}小时前`;
-    }
-    const yesterdayStart = (0, import_moment.default)(now).subtract(1, "days").startOf("day");
-    const beforeYesterdayStart = (0, import_moment.default)(now).subtract(2, "days").startOf("day");
-    if (target.isSame(yesterdayStart, "day")) {
-      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
-    }
-    if (target.isSame(beforeYesterdayStart, "day")) {
-      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
-    }
-    const weekStart = (0, import_moment.default)(now).startOf("week");
-    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
-      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
-    }
-    const isThisYear = target.year() === nowMoment.year();
-    if (isThisYear) {
-      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
-    }
-    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
-  }
-  function hash31(str) {
-    let h = 0;
-    const t = String(str || "");
-    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
-    return h >>> 0;
-  }
-
-  // src/core/flow-dialog.ts
-  var FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
-  var FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
-  function buildFlowDialogParts(title, message, actions) {
-    let buttons;
-    if (actions.length === 2) {
-      buttons = [
-        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
-        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
-      ];
-    } else {
-      buttons = actions.map((a, i) => {
-        const cls = ["bz-flow-dialog-action"];
-        if (a.danger) cls.push("bz-flow-dialog-danger");
-        if (a.cta) cls.push("bz-flow-dialog-cta");
-        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
-      });
-    }
-    const ctaIdx = actions.findIndex((a) => a.cta);
-    const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const html = "<h4>" + escapeHtml(title || "确认") + "</h4><p>" + escapeHtml(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
-      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
-      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
-    }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id };
-  }
-  var activeSettle = null;
-  function openFlowDialog(opts) {
-    if (!opts.actions || opts.actions.length === 0) {
-      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
-    }
-    return new Promise((resolve) => {
-      const prevActive = document.activeElement;
-      if (activeSettle) activeSettle(void 0);
-      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
-      const mask = document.createElement("div");
-      mask.id = "__shared_confirm_mask__";
-      mask.style.zIndex = String(allocZ());
-      mask.onclick = (e) => {
-        if (e.target === mask) settle(void 0);
-      };
-      const popup = document.createElement("div");
-      popup.id = "__shared_confirm_popup__";
-      if (opts.className) popup.classList.add(opts.className);
-      popup.setAttribute("role", "dialog");
-      popup.setAttribute("aria-modal", "true");
-      popup.innerHTML = parts.html;
-      mask.appendChild(popup);
-      document.body.appendChild(mask);
-      const escHandle = escManager.register("q3-confirm", {
-        isVisible: () => mask.isConnected,
-        close: () => settle(void 0)
-      });
-      let settled = false;
-      function restoreFocus() {
-        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
-          prevActive.focus();
-        }
-      }
-      function settle(v) {
-        if (settled) return;
-        settled = true;
-        if (activeSettle === settle) activeSettle = null;
-        escHandle.unregister();
-        mask.remove();
-        restoreFocus();
-        resolve(v);
-      }
-      activeSettle = settle;
-      for (const b of parts.buttons) {
-        const btn = document.getElementById(b.id);
-        if (btn) btn.onclick = () => settle(b.value);
-      }
-      const focusBtn = document.getElementById(parts.focusId);
-      if (focusBtn) focusBtn.focus();
-    });
   }
 
   // src/core/mobile.ts
@@ -5279,37 +5314,6 @@ var BZW_password_vault = (() => {
       void 0,
       opts == null ? void 0 : opts.longPressFilter
     );
-  }
-
-  // src/core/domain-bus.ts
-  var channels = /* @__PURE__ */ new Map();
-  function emitDomainEvent(channel, evt) {
-    const handlers = channels.get(channel);
-    if (!handlers || handlers.size === 0) return;
-    for (const handler of [...handlers]) {
-      try {
-        handler(evt);
-      } catch (e) {
-        console.error(`bz: 域事件 handler 异常（channel=${channel}）`, e);
-      }
-    }
-  }
-  function onDomainEvent(channel, handler) {
-    let set = channels.get(channel);
-    if (!set) {
-      set = /* @__PURE__ */ new Set();
-      channels.set(channel, set);
-    }
-    set.add(handler);
-    let offed = false;
-    return () => {
-      if (offed) return;
-      offed = true;
-      const cur = channels.get(channel);
-      if (!cur) return;
-      cur.delete(handler);
-      if (cur.size === 0) channels.delete(channel);
-    };
   }
 
   // src/core/ui/icon.ts
@@ -6365,6 +6369,37 @@ var BZW_password_vault = (() => {
       if (reloadWarned) return;
       reloadWarned = true;
       notice(RELOAD_SETTINGS_NOTICE, "info");
+    };
+  }
+
+  // src/core/domain-bus.ts
+  var channels = /* @__PURE__ */ new Map();
+  function emitDomainEvent(channel, evt) {
+    const handlers = channels.get(channel);
+    if (!handlers || handlers.size === 0) return;
+    for (const handler of [...handlers]) {
+      try {
+        handler(evt);
+      } catch (e) {
+        console.error(`bz: 域事件 handler 异常（channel=${channel}）`, e);
+      }
+    }
+  }
+  function onDomainEvent(channel, handler) {
+    let set = channels.get(channel);
+    if (!set) {
+      set = /* @__PURE__ */ new Set();
+      channels.set(channel, set);
+    }
+    set.add(handler);
+    let offed = false;
+    return () => {
+      if (offed) return;
+      offed = true;
+      const cur = channels.get(channel);
+      if (!cur) return;
+      cur.delete(handler);
+      if (cur.size === 0) channels.delete(channel);
     };
   }
 
@@ -7925,13 +7960,16 @@ var BZW_password_vault = (() => {
     }
   };
 
-  // src/encrypt/vault-pw-view.ts
-  function relTime(iso) {
-    if (!iso) return "";
-    return formatRelativeTime(iso);
+  // src/core/ui/str.ts
+  var ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  function escapeHtml2(s) {
+    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
   }
-  function dots(p) {
-    return "•".repeat(Math.min((p || "").length, 18));
+  function esc(s) {
+    return escapeHtml2(String(s != null ? s : ""));
+  }
+  function escAttr(s) {
+    return String(s != null ? s : "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
   var PLATFORM_COLOR_MAP = {
     github: "#5a5f73",
@@ -7946,15 +7984,23 @@ var BZW_password_vault = (() => {
   function colorOf(platform) {
     const k = Object.keys(PLATFORM_COLOR_MAP).find((x) => (platform || "").toLowerCase().includes(x.toLowerCase()));
     if (k) return PLATFORM_COLOR_MAP[k];
-    const h = hash31(platform || "?");
+    let h = 0;
+    const t = platform || "?";
+    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
     return PALETTE[h % PALETTE.length];
+  }
+
+  // src/encrypt/vault-pw-view.ts
+  function relTime(iso) {
+    if (!iso) return "";
+    return formatRelativeTime(iso);
+  }
+  function dots(p) {
+    return "•".repeat(Math.min((p || "").length, 18));
   }
   function avatarHTML(platform, url, cls = "bz-pwv-avatar") {
     const ch = (platform || "?").slice(0, 1);
     return `<div class="${cls}" style="background:${colorOf(platform)}" data-pwv-avatar="1" data-url="${escAttr(url || "")}"><span>${escAttr(ch)}</span></div>`;
-  }
-  function escAttr(s) {
-    return String(s != null ? s : "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
   function hydratePwAvatars(scope) {
     scope.querySelectorAll("[data-pwv-avatar]").forEach((box) => {
@@ -8724,47 +8770,6 @@ var BZW_password_vault = (() => {
   // src/encrypt/ui.ts
   function statusbarHtml(unlocked) {
     return `${vIc(unlocked ? "lock-open" : "lock", 12)} 保险库`;
-  }
-  function secureRandomPassword(length, charset) {
-    const n = charset.length;
-    if (!(length > 0) || n === 0) return "";
-    const LIMIT2 = Math.floor(4294967296 / n) * n;
-    let pwd = "";
-    while (pwd.length < length) {
-      const buf = new Uint32Array(length - pwd.length);
-      crypto.getRandomValues(buf);
-      for (let i = 0; i < buf.length && pwd.length < length; i++) {
-        if (buf[i] >= LIMIT2) continue;
-        pwd += charset.charAt(buf[i] % n);
-      }
-    }
-    return pwd;
-  }
-  var CLIPBOARD_CLEAR_DELAY_MS = 6e4;
-  var clipboardClearTimer = null;
-  function cancelClipboardClear() {
-    if (clipboardClearTimer !== null) {
-      clearTimeout(clipboardClearTimer);
-      clipboardClearTimer = null;
-    }
-  }
-  function armClipboardClear() {
-    if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
-    clipboardClearTimer = setTimeout(() => {
-      clipboardClearTimer = null;
-      try {
-        void navigator.clipboard.writeText("").catch(() => {
-        });
-      } catch (e) {
-      }
-    }, CLIPBOARD_CLEAR_DELAY_MS);
-  }
-  function copySensitiveText(text) {
-    try {
-      return navigator.clipboard.writeText(text).then(() => armClipboardClear());
-    } catch (e) {
-      return Promise.reject(e);
-    }
   }
   function passwordStrength(pw) {
     if (!pw) return "weak";
@@ -11059,236 +11064,6 @@ var BZW_password_vault = (() => {
     return getController().dataManager;
   }
 
-  // src/password-vault/data.ts
-  var PASSWORD_VAULT_CHANNEL2 = "password-vault:changed";
-  var ENCRYPT_CHANGED_CHANNEL3 = "encrypt:changed";
-  var VAULT_KIND2 = "password-vault";
-  var VAULT_PATH2 = "CONFIG/.ENCRYPT/passwords";
-  var VAULT_TITLE2 = "密码本";
-  var PasswordVaultDataManager2 = class {
-    constructor(safe) {
-      this.pwData = [];
-      /** load 缓存（ticket 43 同款）：清单条目 + 原始密文字节；密文未变不重解密 */
-      this.loadCache = null;
-      /** 域事件退订 */
-      this.offChanged = null;
-      this.offEncryptChanged = null;
-      /** 自身写盘中标志：save() 期间跳过外部事件重载（自己写的 encrypt:changed 广播不触发自重载） */
-      this.saving = false;
-      /** 外部变更回调（UI 订阅；外部改动 → 重载后回调） */
-      this.onExternalChange = null;
-      this.safe = safe || getSafeManager();
-      this.offChanged = onDomainEvent(PASSWORD_VAULT_CHANNEL2, (evt) => {
-        if ((evt == null ? void 0 : evt.source) === "password-vault") return;
-        void this.reloadFromExternal();
-      });
-      this.offEncryptChanged = onDomainEvent(ENCRYPT_CHANGED_CHANNEL3, (evt) => {
-        const note = this.vaultNote;
-        if (!note || (evt == null ? void 0 : evt.noteId) && evt.noteId !== note.id) return;
-        void this.reloadFromExternal();
-      });
-    }
-    /** 解锁态 = 保险箱解锁态（同一把主密码） */
-    get unlocked() {
-      return this.safe.unlocked;
-    }
-    /** 底层 SafeManager（锁屏/首设判定用；与数据层同一实例） */
-    get safeManager() {
-      return this.safe;
-    }
-    get vaultNote() {
-      return this.safe.manifest.notes.find((n) => n.kind === VAULT_KIND2) || null;
-    }
-    /** 外部变更处理：尝试重载（未解锁/失败静默，由 UI 自行决定展示） */
-    async reloadFromExternal() {
-      var _a;
-      if (this.saving) return;
-      if (!this.safe.unlocked) return;
-      try {
-        await this.load();
-        (_a = this.onExternalChange) == null ? void 0 : _a.call(this);
-      } catch (e) {
-      }
-    }
-    async load() {
-      if (!this.safe.unlocked) {
-        throw new Error("未解锁，无法加载数据");
-      }
-      const note = this.vaultNote;
-      if (!note) {
-        this.pwData = [];
-        this.loadCache = null;
-        return;
-      }
-      const cipher = await this.safe.readNotePayloadRaw(note);
-      if (this.loadCache && this.loadCache.noteId === note.id && this.loadCache.cipher === cipher) {
-        return;
-      }
-      const plain = await this.safe.decryptNoteBody(note);
-      if (plain === null) throw new Error("保险库数据解密失败");
-      let parsed;
-      try {
-        parsed = JSON.parse(plain);
-      } catch (e) {
-        throw new Error("保险库数据损坏");
-      }
-      this.pwData = Array.isArray(parsed) ? parsed.filter((x) => !!x && typeof x === "object" && !Array.isArray(x)) : [];
-      this.pwData = this.pwData.map((item) => {
-        if (!item.id) item.id = `pw-${Date.now()}-${Math.random()}`;
-        if (!item.platform) item.platform = "";
-        if (!item.url) item.url = "";
-        if (!item.account) item.account = "";
-        if (!item.password) item.password = "";
-        if (!item.note) item.note = "";
-        if (!item.createdAt) item.createdAt = (/* @__PURE__ */ new Date()).toISOString();
-        if (item.fav === void 0) item.fav = false;
-        return item;
-      });
-      this.loadCache = { noteId: note.id, cipher };
-    }
-    async save() {
-      if (!this.safe.unlocked) {
-        throw new Error("未解锁，无法保存数据");
-      }
-      this.saving = true;
-      try {
-        const json = JSON.stringify(this.pwData, null, 2);
-        const note = this.vaultNote;
-        if (note) {
-          await this.safe.updateNotePayload(note.id, json);
-        } else {
-          await this.safe.lockNote({
-            path: VAULT_PATH2,
-            title: VAULT_TITLE2,
-            kind: VAULT_KIND2,
-            content: json,
-            attachments: []
-          });
-        }
-      } finally {
-        this.saving = false;
-      }
-      emitDomainEvent(PASSWORD_VAULT_CHANNEL2, { source: "password-vault" });
-    }
-    lock() {
-      this.safe.lock();
-      this.pwData = [];
-      this.loadCache = null;
-    }
-    // ---------- 平台聚合 ----------
-    platforms() {
-      const map = /* @__PURE__ */ new Map();
-      for (const d of this.pwData) {
-        const key = d.platform || "(无平台)";
-        if (!map.has(key)) map.set(key, []);
-        map.get(key).push(d);
-      }
-      const list = [];
-      for (const [platform, accounts] of map) {
-        accounts.sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || "") * -1);
-        list.push({ platform, accounts });
-      }
-      list.sort((a, b) => {
-        var _a, _b;
-        return (((_a = a.accounts[0]) == null ? void 0 : _a.createdAt) || "").localeCompare(((_b = b.accounts[0]) == null ? void 0 : _b.createdAt) || "") * -1;
-      });
-      return list;
-    }
-    accountsOf(platform) {
-      const key = platform || "(无平台)";
-      return this.pwData.filter((d) => (d.platform || "(无平台)") === key).sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || "") * -1);
-    }
-    hasFav(platform) {
-      return this.accountsOf(platform).some((d) => d.fav);
-    }
-    favCount(platform) {
-      return this.accountsOf(platform).filter((d) => d.fav).length;
-    }
-    // ---------- 条目操作 ----------
-    async addItem(item) {
-      if (!this.unlocked) throw new Error("未解锁");
-      item.id = `pw-${Date.now()}-${Math.random()}`;
-      item.createdAt = (/* @__PURE__ */ new Date()).toISOString();
-      if (item.fav === void 0) item.fav = false;
-      this.pwData.unshift(item);
-      await this.save();
-    }
-    async updateItem(id, newData) {
-      if (!this.unlocked) throw new Error("未解锁");
-      const index = this.pwData.findIndex((d) => d.id === id);
-      if (index === -1) throw new Error("条目不存在");
-      this.pwData[index] = { ...this.pwData[index], ...newData };
-      await this.save();
-    }
-    async deleteItem(id) {
-      if (!this.unlocked) throw new Error("未解锁");
-      const index = this.pwData.findIndex((d) => d.id === id);
-      if (index === -1) throw new Error("条目不存在");
-      this.pwData.splice(index, 1);
-      await this.save();
-    }
-    /** 删除整个平台（返回删除的账号数） */
-    async removePlatform(platform) {
-      if (!this.unlocked) throw new Error("未解锁");
-      const key = platform || "(无平台)";
-      const n = this.accountsOf(key).length;
-      this.pwData = this.pwData.filter((d) => (d.platform || "(无平台)") !== key);
-      await this.save();
-      return n;
-    }
-    /** 编辑平台信息：改名/改链接应用到该平台全部账号 */
-    async updatePlatform(platform, patch) {
-      if (!this.unlocked) throw new Error("未解锁");
-      const key = platform || "(无平台)";
-      const target = (patch.platform || "").trim() || key;
-      for (const d of this.pwData) {
-        if ((d.platform || "(无平台)") === key) {
-          d.platform = target;
-          if (patch.url !== void 0) d.url = patch.url.trim();
-        }
-      }
-      await this.save();
-    }
-    async toggleFav(id) {
-      if (!this.unlocked) throw new Error("未解锁");
-      const d = this.pwData.find((x) => x.id === id);
-      if (!d) throw new Error("条目不存在");
-      d.fav = !d.fav;
-      await this.save();
-    }
-    async clearAll() {
-      if (!this.unlocked) throw new Error("未解锁");
-      this.pwData = [];
-      await this.save();
-    }
-    /** 搜索：平台/账号/备注（与旧密码本同口径） */
-    search(keyword) {
-      if (!this.unlocked) throw new Error("未解锁");
-      if (!keyword) return this.pwData;
-      const lower = keyword.toLowerCase();
-      return this.pwData.filter(
-        (item) => (item.platform || "").toLowerCase().includes(lower) || (item.account || "").toLowerCase().includes(lower) || (item.note || "").toLowerCase().includes(lower)
-      );
-    }
-    /** 卸载清理：退订域事件 */
-    destroy() {
-      var _a, _b;
-      (_a = this.offChanged) == null ? void 0 : _a.call(this);
-      this.offChanged = null;
-      (_b = this.offEncryptChanged) == null ? void 0 : _b.call(this);
-      this.offEncryptChanged = null;
-    }
-  };
-
-  // src/core/ui/str.ts
-  var ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-  function escapeHtml2(s) {
-    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
-  }
-  function esc(s) {
-    return escapeHtml2(String(s != null ? s : ""));
-  }
-
   // src/password-vault/render.ts
   function relTime2(iso) {
     if (!iso) return "";
@@ -11304,23 +11079,6 @@ var BZW_password_vault = (() => {
   }
   function dots2(p) {
     return "•".repeat(Math.min((p || "").length, 18));
-  }
-  var PLATFORM_COLOR_MAP2 = {
-    github: "#5a5f73",
-    微信: "#3eb575",
-    支付宝: "#4f7cf7",
-    notion: "#111111",
-    哔哩哔哩: "#fb7299",
-    招商银行: "#d43d3d",
-    豆瓣: "#3fa34d"
-  };
-  var PALETTE2 = ["#7c6bd6", "#3e8e5a", "#c98a1e", "#4f7cf7", "#d43d3d", "#2a9d8f", "#b4551d", "#5a5f73"];
-  function colorOf2(platform) {
-    const k = Object.keys(PLATFORM_COLOR_MAP2).find((x) => (platform || "").toLowerCase().includes(x.toLowerCase()));
-    if (k) return PLATFORM_COLOR_MAP2[k];
-    let h = 0;
-    for (let i = 0; i < (platform || "?").length; i++) h = h * 31 + (platform || "?").charCodeAt(i) >>> 0;
-    return PALETTE2[h % PALETTE2.length];
   }
   var ICONS2 = {
     seal: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1.6" fill="#fff" stroke="none"/></svg>',
@@ -11342,13 +11100,10 @@ var BZW_password_vault = (() => {
     lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
     x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'
   };
-  var AV_BG = (platform) => `background:${colorOf2(platform)}`;
-  function escAttr2(s) {
-    return String(s != null ? s : "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
+  var AV_BG = (platform) => `background:${colorOf(platform)}`;
   function avatarHTML2(platform, url, cls = "bz-password-vault-av") {
     const ch = (platform || "?").slice(0, 1);
-    return `<div class="${cls} bz-pwv-avatar" style="${AV_BG(platform)}" data-avatar="1" data-url="${escAttr2(url || "")}"><span>${ch}</span></div>`;
+    return `<div class="${cls} bz-pwv-avatar" style="${AV_BG(platform)}" data-avatar="1" data-url="${escAttr(url || "")}"><span>${ch}</span></div>`;
   }
   function lockHTML(which) {
     return `
@@ -11535,41 +11290,6 @@ var BZW_password_vault = (() => {
 
   // src/password-vault/ui.ts
   var DEFAULT_CHARSET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+";
-  function secureRandomPassword2(length, charset) {
-    const n = charset.length;
-    if (!(length > 0) || n === 0) return "";
-    const LIMIT2 = Math.floor(4294967296 / n) * n;
-    let pwd = "";
-    while (pwd.length < length) {
-      const buf = new Uint32Array(length - pwd.length);
-      crypto.getRandomValues(buf);
-      for (let i = 0; i < buf.length && pwd.length < length; i++) {
-        if (buf[i] >= LIMIT2) continue;
-        pwd += charset.charAt(buf[i] % n);
-      }
-    }
-    return pwd;
-  }
-  var CLIPBOARD_CLEAR_DELAY_MS2 = 6e4;
-  var clipboardClearTimer2 = null;
-  function armClipboardClear2() {
-    if (clipboardClearTimer2 !== null) clearTimeout(clipboardClearTimer2);
-    clipboardClearTimer2 = setTimeout(() => {
-      clipboardClearTimer2 = null;
-      try {
-        void navigator.clipboard.writeText("").catch(() => {
-        });
-      } catch (e) {
-      }
-    }, CLIPBOARD_CLEAR_DELAY_MS2);
-  }
-  function copySensitiveText2(text) {
-    try {
-      return navigator.clipboard.writeText(text).then(() => armClipboardClear2());
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  }
   function hydrateAvatars(scope) {
     scope.querySelectorAll("[data-avatar]").forEach((box) => {
       if (box.querySelector("img")) return;
@@ -12372,7 +12092,7 @@ var BZW_password_vault = (() => {
     // ---------- 复制 ----------
     async copy(text) {
       try {
-        await copySensitiveText2(text);
+        await copySensitiveText(text);
         return true;
       } catch (e) {
         try {
@@ -12383,7 +12103,7 @@ var BZW_password_vault = (() => {
           ta.select();
           const ok = document.execCommand("copy");
           ta.remove();
-          if (ok) armClipboardClear2();
+          if (ok) armClipboardClear();
           return ok;
         } catch (e2) {
           return false;
@@ -12407,7 +12127,7 @@ var BZW_password_vault = (() => {
     generatePassword() {
       const length = parseInt(this.config.length) || 16;
       const charset = this.config.charset || DEFAULT_CHARSET;
-      return secureRandomPassword2(length, charset);
+      return secureRandomPassword(length, charset);
     }
     // ---------- 显示/隐藏 ----------
     show() {
@@ -12643,10 +12363,7 @@ var BZW_password_vault = (() => {
     // ---------- 卸载 ----------
     cleanup() {
       var _a;
-      if (clipboardClearTimer2 !== null) {
-        clearTimeout(clipboardClearTimer2);
-        clipboardClearTimer2 = null;
-      }
+      cancelClipboardClear();
       if (this.searchTimer !== null) {
         clearTimeout(this.searchTimer);
         this.searchTimer = null;
@@ -12668,7 +12385,7 @@ var BZW_password_vault = (() => {
   var _PasswordVaultAppController = class _PasswordVaultAppController {
     constructor(config) {
       this._initialized = false;
-      this.dataManager = new PasswordVaultDataManager2();
+      this.dataManager = new PasswordVaultDataManager(getSafeManager());
       this.uiManager = new PasswordVaultUIManager(this.dataManager, config);
     }
     static getInstance(config) {

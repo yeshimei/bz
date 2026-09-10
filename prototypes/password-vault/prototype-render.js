@@ -1,4 +1,4 @@
-/* 源指纹 0cb32bda5cf6b380 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 5233452deb6acf14 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/password-vault/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/password-vault/render.ts → window.BZR_password_vault（评审壳预览包，ADR-0104） */
 var BZR_password_vault = (() => {
@@ -56,6 +56,27 @@ var BZR_password_vault = (() => {
   function esc(s) {
     return escapeHtml(String(s != null ? s : ""));
   }
+  function escAttr(s) {
+    return String(s != null ? s : "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  var PLATFORM_COLOR_MAP = {
+    github: "#5a5f73",
+    微信: "#3eb575",
+    支付宝: "#4f7cf7",
+    notion: "#111111",
+    哔哩哔哩: "#fb7299",
+    招商银行: "#d43d3d",
+    豆瓣: "#3fa34d"
+  };
+  var PALETTE = ["#7c6bd6", "#3e8e5a", "#c98a1e", "#4f7cf7", "#d43d3d", "#2a9d8f", "#b4551d", "#5a5f73"];
+  function colorOf(platform) {
+    const k = Object.keys(PLATFORM_COLOR_MAP).find((x) => (platform || "").toLowerCase().includes(x.toLowerCase()));
+    if (k) return PLATFORM_COLOR_MAP[k];
+    let h = 0;
+    const t = platform || "?";
+    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
+    return PALETTE[h % PALETTE.length];
+  }
 
   // src/password-vault/render.ts
   function relTime(iso) {
@@ -72,23 +93,6 @@ var BZR_password_vault = (() => {
   }
   function dots(p) {
     return "•".repeat(Math.min((p || "").length, 18));
-  }
-  var PLATFORM_COLOR_MAP = {
-    github: "#5a5f73",
-    微信: "#3eb575",
-    支付宝: "#4f7cf7",
-    notion: "#111111",
-    哔哩哔哩: "#fb7299",
-    招商银行: "#d43d3d",
-    豆瓣: "#3fa34d"
-  };
-  var PALETTE = ["#7c6bd6", "#3e8e5a", "#c98a1e", "#4f7cf7", "#d43d3d", "#2a9d8f", "#b4551d", "#5a5f73"];
-  function colorOf(platform) {
-    const k = Object.keys(PLATFORM_COLOR_MAP).find((x) => (platform || "").toLowerCase().includes(x.toLowerCase()));
-    if (k) return PLATFORM_COLOR_MAP[k];
-    let h = 0;
-    for (let i = 0; i < (platform || "?").length; i++) h = h * 31 + (platform || "?").charCodeAt(i) >>> 0;
-    return PALETTE[h % PALETTE.length];
   }
   var ICONS = {
     seal: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1.6" fill="#fff" stroke="none"/></svg>',
@@ -111,9 +115,6 @@ var BZR_password_vault = (() => {
     x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'
   };
   var AV_BG = (platform) => `background:${colorOf(platform)}`;
-  function escAttr(s) {
-    return String(s != null ? s : "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
   function avatarHTML(platform, url, cls = "bz-password-vault-av") {
     const ch = (platform || "?").slice(0, 1);
     return `<div class="${cls} bz-pwv-avatar" style="${AV_BG(platform)}" data-avatar="1" data-url="${escAttr(url || "")}"><span>${ch}</span></div>`;
