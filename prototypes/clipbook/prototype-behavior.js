@@ -110,7 +110,7 @@ var BZW_clipbook = (() => {
     stats[path] = { ctime, mtime: ctime };
     localStorage.setItem(STAT_KEY, JSON.stringify(stats));
   }
-  var Platform, TFile, Setting, MarkdownView, MarkdownRenderer, LS_PREFIX, STAT_KEY, FakeVault, FakeApp;
+  var Platform, TFile, Setting, Component, MarkdownView, MarkdownRenderer, LS_PREFIX, STAT_KEY, FakeVault, FakeApp;
   var init_fake_obsidian = __esm({
     "prototypes/clipbook/fake/fake-obsidian.ts"() {
       Platform = {
@@ -129,6 +129,8 @@ var BZW_clipbook = (() => {
         constructor(_container) {
           this.settingEl = document.createElement("div");
         }
+      };
+      Component = class {
       };
       MarkdownView = class {
         constructor() {
@@ -902,6 +904,130 @@ var BZW_clipbook = (() => {
   });
 
   // src/core/ui/suggest.ts
+  function uiSuggest(opts) {
+    var _a;
+    const anchor = opts.anchor;
+    const max = (_a = opts.max) != null ? _a : 30;
+    let layer = null;
+    let skipNextOpen = false;
+    const close = () => {
+      if (!layer) return;
+      layer.remove();
+      layer = null;
+      document.removeEventListener("mousedown", onDocDown, true);
+    };
+    const onDocDown = (e) => {
+      const t = e.target;
+      if (!anchor.isConnected) {
+        close();
+        return;
+      }
+      if ((layer == null ? void 0 : layer.contains(t)) || anchor.contains(t)) return;
+      close();
+    };
+    const pick = (raw) => {
+      var _a2;
+      anchor.value = raw;
+      close();
+      (_a2 = opts.onPick) == null ? void 0 : _a2.call(opts, raw);
+      if (document.activeElement !== anchor) {
+        skipNextOpen = true;
+        anchor.focus();
+      }
+    };
+    const draw = () => {
+      if (!layer) return;
+      const cur = anchor.value.trim();
+      const q2 = cur.toLowerCase();
+      const matched = opts.source().filter((s) => (!opts.excludeCurrent || s !== cur) && (!q2 || s.toLowerCase().includes(q2))).slice(0, max);
+      if (!matched.length) {
+        close();
+        return;
+      }
+      layer.replaceChildren();
+      matched.forEach((raw) => {
+        var _a2;
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "bz-popover-item";
+        b.dataset.value = raw;
+        b.setAttribute("role", "option");
+        const on = raw === cur;
+        if (on) b.classList.add("is-on");
+        const icon = (_a2 = opts.iconOf) == null ? void 0 : _a2.call(opts, raw);
+        if (icon) {
+          const ic = document.createElement("span");
+          ic.className = "bz-suggest-ic";
+          if (typeof icon === "string") ic.textContent = icon;
+          else ic.appendChild(icon);
+          b.appendChild(ic);
+        }
+        const label = document.createElement("span");
+        label.textContent = opts.labelOf ? opts.labelOf(raw) : raw;
+        b.appendChild(label);
+        b.addEventListener("click", () => pick(raw));
+        layer.appendChild(b);
+      });
+    };
+    const open = () => {
+      if (skipNextOpen) {
+        skipNextOpen = false;
+        return;
+      }
+      if (layer) {
+        draw();
+        return;
+      }
+      const m = document.createElement("div");
+      m.className = "bz-popover";
+      m.setAttribute("role", "listbox");
+      (anchor.parentElement || anchor).appendChild(m);
+      layer = m;
+      document.addEventListener("mousedown", onDocDown, true);
+      draw();
+    };
+    const activeIdx = () => {
+      var _a2;
+      return [...(_a2 = layer == null ? void 0 : layer.querySelectorAll(".bz-popover-item")) != null ? _a2 : []].findIndex((o) => o.classList.contains("is-on"));
+    };
+    const moveActive = (to) => {
+      var _a2, _b;
+      const items = [...(_a2 = layer == null ? void 0 : layer.querySelectorAll(".bz-popover-item")) != null ? _a2 : []];
+      if (!items.length) return;
+      const next = items[Math.max(0, Math.min(items.length - 1, to))];
+      items.forEach((o) => o.classList.toggle("is-on", o === next));
+      (_b = next.scrollIntoView) == null ? void 0 : _b.call(next, { block: "nearest" });
+    };
+    anchor.addEventListener("focus", open);
+    anchor.addEventListener("input", () => {
+      skipNextOpen = false;
+      open();
+    });
+    anchor.addEventListener("keydown", (e) => {
+      if (!layer) return;
+      if (e.key === "ArrowDown") {
+        moveActive(activeIdx() + 1);
+        e.preventDefault();
+      } else if (e.key === "ArrowUp") {
+        moveActive(activeIdx() < 0 ? layer.querySelectorAll(".bz-popover-item").length - 1 : activeIdx() - 1);
+        e.preventDefault();
+      } else if (e.key === "Enter") {
+        const on = layer.querySelector(".bz-popover-item.is-on");
+        if (on) pick(on.dataset.value);
+        e.preventDefault();
+      } else if (e.key === "Escape") {
+        close();
+        e.stopPropagation();
+      }
+    });
+    return {
+      close,
+      /** 清理：关浮层并摘 document 监听（宿主收尾用；anchor 随表单移除时下次外点自清） */
+      detach: () => {
+        close();
+      }
+    };
+  }
   var init_suggest = __esm({
     "src/core/ui/suggest.ts"() {
     }
@@ -5397,6 +5523,21 @@ var BZW_clipbook = (() => {
     }
     return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
   }
+  async function fetchPageTitle(url) {
+    try {
+      const r = await requestUrl({
+        url,
+        method: "GET",
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
+      });
+      if (r.status === 200) {
+        const m = r.text.match(/<title[^>]*>([^<]*)<\/title>/i);
+        if (m && m[1]) return m[1].trim();
+      }
+    } catch (e) {
+    }
+    return null;
+  }
   var import_moment;
   var init_utils = __esm({
     "src/core/utils.ts"() {
@@ -6278,12 +6419,16 @@ var BZW_clipbook = (() => {
       refreshSettingsGroupCounts(container);
       markSettingSplitRows(container);
     };
-    const renderTextualRow = (body, row) => {
-      var _a2;
-      const ctx = { rowEl: body, refreshVisibility: reevaluate };
+    const newRowSetting = (body, row) => {
       const setting = new Setting(body).setName(row.name);
       if (row.desc) setting.setDesc(row.desc);
       if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+      return setting;
+    };
+    const renderTextualRow = (body, row) => {
+      var _a2;
+      const ctx = { rowEl: body, refreshVisibility: reevaluate };
+      const setting = newRowSetting(body, row);
       const isNumber = row.type === "number";
       const acc = isNumber ? bindValue(row.binding) : bindValue(row.binding);
       const changeCb = row.onChange;
@@ -6447,9 +6592,7 @@ var BZW_clipbook = (() => {
         }
         case "toggle": {
           const acc = bindValue(row.binding);
-          const setting = new Setting(body).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          const setting = newRowSetting(body, row);
           setting.addToggle(
             (t) => t.setValue(acc.read() === true).onChange(async (v) => {
               var _a3;
@@ -6463,9 +6606,7 @@ var BZW_clipbook = (() => {
         }
         case "select": {
           const acc = bindValue(row.binding);
-          const setting = new Setting(body).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          const setting = newRowSetting(body, row);
           setting.addDropdown((dd) => {
             var _a3;
             for (const opt of row.options) dd.addOption(opt.value, opt.label);
@@ -6482,9 +6623,7 @@ var BZW_clipbook = (() => {
         }
         case "choiceCards": {
           const acc = bindValue(row.binding);
-          const setting = new Setting(body).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          const setting = newRowSetting(body, row);
           const pick = uiCardChoice({
             value: String((_a2 = acc.read()) != null ? _a2 : "") || row.options[0].value,
             options: row.options,
@@ -6502,9 +6641,7 @@ var BZW_clipbook = (() => {
         }
         case "slider": {
           const acc = bindValue(row.binding);
-          const setting = new Setting(body).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          const setting = newRowSetting(body, row);
           setting.addSlider((sl) => {
             var _a3;
             sl.setLimits(row.min, row.max, (_a3 = row.step) != null ? _a3 : 1);
@@ -6527,9 +6664,7 @@ var BZW_clipbook = (() => {
           return;
         }
         case "button": {
-          const setting = new Setting(body).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          const setting = newRowSetting(body, row);
           setting.addButton((b) => {
             if (row.cta) b.setCta();
             b.setButtonText(row.buttonText).onClick(() => row.onClick(ctx));
@@ -6538,9 +6673,7 @@ var BZW_clipbook = (() => {
           return;
         }
         case "info": {
-          const setting = new Setting(body).setName(row.name);
-          if (row.desc) setting.setDesc(row.desc);
-          if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
+          const setting = newRowSetting(body, row);
           for (const a of (_c = row.actions) != null ? _c : []) {
             setting.addButton((b) => {
               if (a.cta) b.setCta();
@@ -7488,7 +7621,6 @@ ${bodyText.substring(0, 6e3)}`;
         if (tagsEnabled !== false && (!fm || !Array.isArray(fm.tags) || fm.tags.length === 0)) missing.push("tags");
         if (missing.length === 0) return;
       }
-      console.log(`[自动摘要] 补全缺失字段(${missing.join("/")}): ${file.basename}`);
       const startName = fm && fm.title ? fm.title : file.basename;
       const key = dedupeKeyFor(file);
       if (!opts.quiet) {
@@ -7553,7 +7685,6 @@ ${bodyText.substring(0, 6e3)}`;
       } else if (h) {
         h.hide();
       }
-      console.log(`[自动摘要] ✅ 完成: ${targetFile.basename}`);
     } catch (e) {
       if (h) h.hide();
       console.error(`[自动摘要] 处理失败: ${file.basename}`, e);
@@ -7665,7 +7796,6 @@ ${bodyText.substring(0, 6e3)}`;
       if (workspaceRef && typeof workspaceRef.on === "function") {
         openListenerRef = workspaceRef.on("file-open", (file) => queueProcess(app, ai, file));
       }
-      console.log(`[自动摘要] 👁️ 监听 ${getWatchDir()}` + (timing === "lazy" ? "（懒触发：仅打开时）" : ""));
     }, 2e3);
   }
   function ensureAutoSummary(app) {
@@ -9084,10 +9214,7 @@ ${bodyText.substring(0, 6e3)}`;
     M.cur = null;
     M.list = [];
     M.upInfo = {};
-    M.ctxOpen = false;
     M.mobDetailOpen = false;
-    M.mobSearchOpen = false;
-    M.searchKeyword = "";
   }
   var M;
   var init_state = __esm({
@@ -9106,11 +9233,8 @@ ${bodyText.substring(0, 6e3)}`;
         cur: null,
         list: [],
         upInfo: {},
-        ctxOpen: false,
         mobDetailOpen: false,
-        mobSearchOpen: false,
-        isMobile: false,
-        searchKeyword: ""
+        isMobile: false
       };
     }
   });
@@ -9571,6 +9695,90 @@ ${body}`;
     }
   });
 
+  // src/knowledge/source.ts
+  function noteSourceName(path, name) {
+    const explicit = String(name != null ? name : "").trim();
+    if (explicit) return explicit;
+    const base = String(path != null ? path : "").replace(/\\/g, "/").split("/").pop() || "";
+    return base.replace(/\.md$/i, "") || String(path != null ? path : "");
+  }
+  function isUrlLikeSourceText(text) {
+    const s = String(text != null ? text : "").trim();
+    if (!s || /\s/.test(s)) return false;
+    if (/^https?:\/\/\S+$/i.test(s)) return true;
+    return URL_LIKE_RE.test(s);
+  }
+  function cleanUrlText(text) {
+    return String(text != null ? text : "").trim().replace(/[，。！？；、,;.!?…'"’”\])}>】」』]+$/, "");
+  }
+  function normalizeSourceUrl(input) {
+    const s = cleanUrlText(input);
+    const m = s.match(/^(https?:\/\/)([^/?#]+)([^?#]*)(\?[^#]*)?(#.*)?$/i);
+    if (!m) return s;
+    const [, scheme, host, path, query, hash] = m;
+    const bare = host.toLowerCase().replace(/^www\./, "");
+    if (bare === "b23.tv") return scheme + host + path;
+    if (bare.endsWith("bilibili.com") && /^\/video\//.test(path)) {
+      const keep = (query != null ? query : "").slice(1).split("&").filter((kv) => /^(p|t)=/.test(kv));
+      return scheme + host + path + (keep.length ? "?" + keep.join("&") : "");
+    }
+    if (!query) return s;
+    const kept = query.slice(1).split("&").filter(Boolean).filter((kv) => {
+      const k = kv.split("=")[0].toLowerCase();
+      return !k.startsWith("utm_") && !k.startsWith("spm_") && !TRACK_KEYS.has(k);
+    });
+    return scheme + host + path + (kept.length ? "?" + kept.join("&") : "") + (hash != null ? hash : "");
+  }
+  function decodeHtmlEntities(s) {
+    return s.replace(/&quot;/gi, '"').replace(/&#0?39;/g, "'").replace(/&apos;/gi, "'").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&");
+  }
+  function cleanSourceTitle(raw) {
+    let t = decodeHtmlEntities(String(raw != null ? raw : "")).replace(/\s+/g, " ").trim();
+    t = t.replace(/\s*[_\-–—|｜]\s*哔哩哔哩(?:_bilibili)?\s*$/i, "");
+    t = t.replace(/\s*[_\-–—|｜]\s*bilibili\s*$/i, "");
+    t = t.replace(/\s*[-–—|｜]\s*知乎(?:日报|专栏)?\s*$/, "");
+    return t.trim();
+  }
+  function serializeTermSource(src) {
+    var _a;
+    if (!src) return null;
+    if (src.kind === "external") {
+      const url = normalizeSourceUrl(src.url);
+      if (!url) return null;
+      const out = { source: url };
+      const title = src.title ? cleanSourceTitle(src.title) : "";
+      if (title) out.sourceTitle = title;
+      return out;
+    }
+    const path = String((_a = src.path) != null ? _a : "").trim();
+    if (!path) return null;
+    const name = noteSourceName(path, src.name);
+    return { source: `[[${path}|${name}]]` };
+  }
+  var URL_LIKE_RE, TRACK_KEYS;
+  var init_source = __esm({
+    "src/knowledge/source.ts"() {
+      URL_LIKE_RE = /^(?:[\w-]+\.)+[A-Za-z]{2,}(?::\d+)?(?:[/?#][^\s]*)?$/;
+      TRACK_KEYS = /* @__PURE__ */ new Set([
+        "vd_source",
+        "vd_src",
+        "seid",
+        "unique_k",
+        "from",
+        "share_source",
+        "share_medium",
+        "share_token",
+        "share_plat",
+        "share_to",
+        "share_from",
+        "share_times",
+        "gcid",
+        "refer",
+        "scene"
+      ]);
+    }
+  });
+
   // src/knowledge/note-gen.ts
   function parseDomainList(raw) {
     return [...new Set(String(raw != null ? raw : "").split(/[,，、]/).map((s) => s.trim()).filter(Boolean))];
@@ -9767,10 +9975,15 @@ ${t}`,
       "type: term",
       `domain: ${quoteYaml(domain)}`,
       `term: ${quoteYaml(term)}`,
-      `date: ${quoteYaml(nowStamp())}`,
-      "---"
-    ].join("\n");
-    const body = [fm, summary].filter(Boolean).join("\n\n");
+      `date: ${quoteYaml(nowStamp())}`
+    ];
+    const src = serializeTermSource(opts.source);
+    if (src) {
+      fm.push(`source: ${quoteYaml(src.source)}`);
+      if (src.sourceTitle) fm.push(`sourceTitle: ${quoteYaml(src.sourceTitle)}`);
+    }
+    fm.push("---");
+    const body = [fm.join("\n"), summary].filter(Boolean).join("\n\n");
     return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(term), body);
   }
   function parseFrontmatter2(content) {
@@ -9871,6 +10084,7 @@ ${sample}`,
       init_ai();
       init_app();
       init_settings_provider();
+      init_source();
       BACKFILL_AI_TIMEOUT_MS = 25e3;
     }
   });
@@ -10279,6 +10493,11 @@ ${sample}`,
     if (m) return m[0];
     return url.length > 28 ? url.slice(0, 28) + "…" : url;
   }
+  function dateStamp() {
+    const d = /* @__PURE__ */ new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  }
   function litDirOf(s) {
     const raw = s && s.knowledgeDirectory ? String(s.knowledgeDirectory) : "文献盒";
     return raw.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
@@ -10336,12 +10555,14 @@ ${sample}`,
       init_flow_dialog();
       init_notice();
       init_utils();
+      init_suggest();
       init_z_order();
       init_domain_bus();
       init_app();
       init_data2();
       init_processor2();
       init_note_gen();
+      init_source();
       STATUS_META = {
         pending: { label: "待处理", cls: "bz-kb-pending" },
         processing: { label: "处理中", cls: "bz-kb-processing" },
@@ -10365,7 +10586,6 @@ ${sample}`,
           this.popup = null;
           this.contentEl = null;
           this.part = "z1";
-          this.noteView = null;
           this.allNotes = [];
           this.allCards = [];
           this.allTopics = [];
@@ -10393,6 +10613,10 @@ ${sample}`,
           this.termGenerating = false;
           this.termSummarizing = false;
           this.termHasDraft = false;
+          this.termSource = null;
+          // 术语来源（ADR-0116；null = 未填）
+          this.termSrcSuggest = null;
+          this.termSrcTimer = null;
           this.editingId = null;
           this.onKeydown = () => {
           };
@@ -10433,18 +10657,29 @@ ${sample}`,
           const popup = document.createElement("div");
           popup.id = "knowledge-popup";
           popup.className = "bz-kb-window kb";
+          if (isMobileEnv()) popup.classList.add("bz-panel-mtop");
           popup.style.display = "none";
-          popup.innerHTML = `
-      <div class="bz-kb-head">
-        <div class="bz-kb-parts">
+          const partBtns = `
           <button class="bz-kb-part is-on" data-kb-act="part" data-part="z1">部壹 · 文献</button>
           <button class="bz-kb-part" data-kb-act="part" data-part="z2">部贰 · 卡片</button>
-          <button class="bz-kb-part" data-kb-act="part" data-part="z3">部叁 · 主题</button>
+          <button class="bz-kb-part" data-kb-act="part" data-part="z3">部叁 · 主题</button>`;
+          popup.innerHTML = isMobileEnv() ? `
+      <div class="bz-kb-head">
+        <div class="bz-kb-brand">
+          <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
+          <div class="bz-kb-title">知 识 盒</div>
+        </div>
+        <button class="bz-kb-mclose" data-kb-act="kb-close" title="关闭知识盒">✕</button>
+      </div>
+      <div class="bz-kb-parts">${partBtns}
+      </div>
+      <div class="bz-kb-sc" id="kb-sc"></div>` : `
+      <div class="bz-kb-head">
+        <div class="bz-kb-parts">${partBtns}
         </div>
         <div class="bz-kb-brand">
           <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
           <div class="bz-kb-title">知 识 盒</div>
-          <div class="bz-kb-phon">[ zhī shí hé ] · 检索归第二大脑 · 知识盒只整理关联</div>
         </div>
       </div>
       <div class="bz-kb-sc" id="kb-sc"></div>`;
@@ -10464,7 +10699,6 @@ ${sample}`,
           const act = t.getAttribute("data-kb-act");
           if (act === "part") {
             this.part = t.getAttribute("data-part") || "z1";
-            this.noteView = null;
             void this.refreshCurrent();
             this.syncPartButtons();
           } else if (act === "term-entry") this.showTermEntry();
@@ -10472,15 +10706,16 @@ ${sample}`,
           else if (act === "lit-peek") {
             const p = t.getAttribute("data-path") || "";
             const n = this.allNotes.find((x) => x.path === p);
-            if (n) void this.openLitPreview(n);
+            if (n) void this.openPreview(n);
+          } else if (act === "card-peek") {
+            const p = t.getAttribute("data-path") || "";
+            const c = this.allCards.find((x) => x.path === p);
+            if (c) void this.openPreview(c, "card");
           } else if (act === "topic-open") {
             const p = t.getAttribute("data-path") || "";
-            const n = this.allTopics.find((x) => x.path === p);
-            if (n) void this.openTopicNote(n);
-          } else if (act === "topics-back") {
-            this.noteView = null;
-            this.renderTopics();
-          }
+            const tp = this.allTopics.find((x) => x.path === p);
+            if (tp) void this.openPreview({ file: tp.file, path: tp.path, title: tp.title, domain: tp.where }, "topic");
+          } else if (act === "kb-close") this.hideMain();
         }
         syncPartButtons() {
           if (!this.popup) return;
@@ -10561,6 +10796,8 @@ ${sample}`,
               domain: fm && fm.domain ? String(fm.domain) : "",
               summary: fm && fm.summary ? String(fm.summary) : "",
               url: fm && fm.url ? String(fm.url) : "",
+              source: fm && fm.source ? String(fm.source) : "",
+              sourceTitle: fm && fm.sourceTitle ? String(fm.sourceTitle) : "",
               date,
               created
             };
@@ -10571,7 +10808,6 @@ ${sample}`,
         }
         renderLiterature() {
           if (!this.contentEl) return;
-          this.noteView = null;
           const rows = this.allNotes.map((n, i) => {
             const no = String(i + 1).padStart(2, "0");
             const kind = n.type === "video" ? "影 像" : "词 条";
@@ -10582,17 +10818,16 @@ ${sample}`,
           }).join("");
           this.contentEl.innerHTML = `
       <div class="bz-kb-pd">
-        <div class="bz-kb-sec">录 入 · 素 材 层 进 货 口（两 种 来 源，全 交 给 AI）</div>
         <div class="bz-kb-entryrow">
-          <button class="bz-kb-entrybtn" data-kb-act="term-entry"><b>文字录入 · 术语</b><span>想到一个概念，AI 当场生成术语卡预览，确认后写入文献盒</span></button>
-          <button class="bz-kb-entrybtn" data-kb-act="video-entry"><b>视频录入 · 任务</b><span>B 站链接丢进来：下载、转写、AI 生成文献笔记，全自动</span></button>
+          <button class="bz-kb-entrybtn" data-kb-act="term-entry"><b>文字录入 · 术语</b><span>想到一个概念，当场落成一张术语卡</span></button>
+          <button class="bz-kb-entrybtn" data-kb-act="video-entry"><b>视频录入 · 任务</b><span>丢进来一个 B 站链接，文献笔记自动长出来</span></button>
         </div>
-        <div class="bz-kb-sec" style="margin-top:20px">文 献 · 等 被 主 题 笔 记 引 用 、 被 提 炼</div>
         ${rows || '<div class="bz-kb-empty">「文献目录」还没有文献笔记——从上面的两种录入开始。</div>'}
       </div>`;
         }
-        /** 部壹文献预览弹层：全文段落 + related + 提炼成卡 */
-        async openLitPreview(n) {
+        /** 三部共用预览弹层（文献/卡片/主题同一样式）：正文真 Markdown 渲染（视频 ![[mp4]] 内嵌可播）+ 关联 + 可点来源（只读；关闭走 ✕/ESC） */
+        async openPreview(n, kind = "lit") {
+          var _a;
           const app = getApp();
           let raw = "";
           try {
@@ -10601,39 +10836,42 @@ ${sample}`,
             raw = "";
           }
           const body = stripFrontmatter(raw);
-          const blocks = body.split(/\r?\n\r?\n+/).map((b) => b.trim()).filter(Boolean);
-          const paras = [];
-          let videoEmbed = "";
-          for (const b of blocks) {
-            const vm = b.match(/^!\[\[(.+?\.(?:mp4|webm|mkv))\]\]$/);
-            if (vm) {
-              videoEmbed = vm[1];
-              continue;
-            }
-            paras.push(b);
-          }
+          const parasHtml = body.split(/\r?\n\r?\n+/).map((b) => b.trim()).filter(Boolean).map((b) => `<p>${esc2(b)}</p>`).join("") || "<p>（无正文）</p>";
           const rels = await this.noteRels(n);
-          const parasHtml = paras.map((p) => `<p>${esc2(p)}</p>`).join("") || "<p>（无正文）</p>";
-          const clipHtml = videoEmbed ? `<div class="bz-kb-cliprow">视频片段 · ${esc2(shortNoteName(videoEmbed))}</div>` : "";
-          const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink">${esc2(n.url)}</div>` : "";
-          this.openSheet(this.sheetWrap(`文献预览 · ${n.type === "video" ? "影像" : "词条"}`, `
+          const srcHtml = n.url ? `<div class="bz-kb-sec">原 文</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc2(n.url)}" href="#">${esc2(n.url)}</a></div>` : n.source && !n.source.startsWith("[[") ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc2(n.source)}" href="#">${esc2(n.sourceTitle || n.source)}</a></div>` : "";
+          const head = kind === "card" ? { title: "卡片预览 · 卡片盒", badge: "卡 片", hot: false } : kind === "topic" ? { title: "主题预览 · 主题笔记", badge: "主 题", hot: false } : { title: `文献预览 · ${n.type === "video" ? "影像" : "词条"}`, badge: n.type === "video" ? "影 像" : "词 条", hot: n.type === "video" };
+          this.openSheet(this.sheetWrap(head.title, `
       <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc2(n.title)}</span>
-        <span class="bz-kb-pos ${n.type === "video" ? "hot" : ""}">${n.type === "video" ? "影 像" : "词 条"}</span>
+        <span class="bz-kb-pos ${head.hot ? "hot" : ""}">${head.badge}</span>
         <span class="bz-kb-dom">${esc2(n.domain || "未分类")}</span></div>
       <div class="bz-kb-tail"><span class="bz-kb-meta">${esc2(n.date || "")}</span></div>
-      <div class="bz-kb-paras">${parasHtml}</div>
-      ${clipHtml}
-      ${rels.length ? `<div class="bz-kb-sec">来 源 小 纸 条（related，落卡时自动带）</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc2(r)}</span>`).join("")}</div>` : ""}
-      ${srcHtml}
-      <div style="margin-top:18px;display:flex;gap:10px">
-        <button class="bz-kb-bigbtn" data-kb-act="card-new">提炼成卡</button>
-        <button class="bz-kb-ghost" data-kb-close>先放回去</button>
-      </div>`));
+      <div class="bz-kb-paras" id="bz-kb-preview-body">${parasHtml}</div>
+      ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc2(r)}</span>`).join("")}</div>` : ""}
+      ${srcHtml}`));
           this._previewNote = n;
+          const bodyEl = this.popup ? q(this.popup, "#bz-kb-preview-body") : null;
+          if (bodyEl && body) {
+            try {
+              const comp = new Component();
+              await MarkdownRenderer.render(this.app, body, bodyEl, n.path, comp);
+              comp.unload();
+            } catch (e) {
+            }
+            if (!bodyEl.querySelector("*") || !((_a = bodyEl.textContent) == null ? void 0 : _a.trim())) {
+              bodyEl.innerHTML = parasHtml;
+            }
+          }
+          const srcLinks = this.popup ? this.popup.querySelectorAll("[data-lit-src-url]") : [];
+          srcLinks.forEach((a) => {
+            a.addEventListener("click", (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              this._openExternal(a.getAttribute("data-lit-src-url") || "");
+            });
+          });
         }
-        /** 提炼成卡编辑弹层（原型唯一真理：词头可改 / 源链+领域自动带 / 连一张旧卡 / 为什么相关） */
+        /** 提炼成卡编辑弹层（原型唯一真理：词头可改 / 源文献+领域自动带，落 related 双链互链 / 连一张旧卡 / 为什么相关） */
         async openCardEditor(n) {
-          var _a, _b, _c;
           await this.ensureCards();
           const dom = n.domain || "未分类";
           const sameDom = this.allCards.filter((c) => c.domain === dom).map((c) => c.title);
@@ -10649,7 +10887,7 @@ ${sample}`,
           this.openSheet(this.sheetWrap("提炼成卡 → 卡片盒", `
       <div class="bz-kb-f"><div class="bz-kb-flb">词 头（可 改）</div>
         <input type="text" data-kb-role="cardtitle" value="${esc2(n.title)}"></div>
-      <div class="bz-kb-f"><div class="bz-kb-flb">来 源 小 纸 条（自 动 带，不 用 手 填）</div>
+      <div class="bz-kb-f"><div class="bz-kb-flb">来 源 与 领 域（自 动 带，落 related 双链）</div>
         <div class="bz-kb-srcline"><span class="bz-kb-srchip"><b>源</b>${esc2(n.path)}</span>
         <span class="bz-kb-srchip"><b>领域</b>〔${esc2(dom)}〕自动继承</span></div></div>
       <div class="bz-kb-f"><div class="bz-kb-flb">连 一 张 旧 卡（铁律：不 解 释 的 链 接 不 产 生 知 识）</div>
@@ -10662,26 +10900,6 @@ ${sample}`,
       </div>
       <div class="bz-kb-note" style="font-size:11px;margin-top:14px">落卡后它躺在卡片盒，随时被任何笔记引用——不强迫挂进哪篇，也不强迫复习。</div>`));
           this.editor = { source: n, pick: null, why: whySug, title: n.title };
-          const titleInput = (_a = this.popup) == null ? void 0 : _a.querySelector("[data-kb-role=cardtitle]");
-          if (titleInput) titleInput.addEventListener("input", () => {
-            if (this.editor) this.editor.title = titleInput.value;
-            this.syncSaveBtn();
-          });
-          const whyInput = (_b = this.popup) == null ? void 0 : _b.querySelector("[data-kb-role=why]");
-          if (whyInput) whyInput.addEventListener("input", () => {
-            if (this.editor) this.editor.why = whyInput.value;
-            this.syncSaveBtn();
-          });
-          (_c = this.popup) == null ? void 0 : _c.querySelectorAll("[data-kb-old]").forEach((b) => {
-            b.addEventListener("click", () => {
-              var _a2;
-              if (!this.editor) return;
-              this.editor.pick = b.getAttribute("data-kb-old");
-              (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll("[data-kb-old]").forEach((x) => x.classList.toggle("is-on", x === b));
-              this.syncSaveBtn();
-            });
-          });
-          this.syncSaveBtn();
         }
         syncSaveBtn() {
           var _a;
@@ -10698,7 +10916,7 @@ ${sample}`,
           const src = this.editor.source;
           const why = this.editor.why.trim();
           let base = this.editor.title.trim() || src.title;
-          const stamp = this.cardDateStamp();
+          const stamp = dateStamp();
           try {
             let idx = 2;
             while (app.vault.getAbstractFileByPath(`${dir}/${base}.md`)) {
@@ -10731,11 +10949,6 @@ ${sample}`,
           } catch (e) {
             notice("落卡失败：" + ((_a = e == null ? void 0 : e.message) != null ? _a : String(e)), "error");
           }
-        }
-        cardDateStamp() {
-          const d = /* @__PURE__ */ new Date();
-          const p = (n) => String(n).padStart(2, "0");
-          return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
         }
         /** 部贰卡片扫描（存量零迁移：领域读序 domain → category → 未分类） */
         async loadCards(dir) {
@@ -10771,16 +10984,14 @@ ${sample}`,
         }
         renderCards() {
           if (!this.contentEl) return;
-          this.noteView = null;
           this.cardsShown = Math.max(this.cardsShown, 80);
           const shown = this.allCards.slice(0, this.cardsShown);
-          const rows = shown.map((c) => `<div class="bz-kb-lexrow" style="cursor:default">
+          const rows = shown.map((c) => `<div class="bz-kb-lexrow" data-kb-act="card-peek" data-path="${esc2(c.path)}">
       <div class="bz-kb-hw"><span class="bz-kb-w">${esc2(c.title)}</span>${this.sessionNewPaths.has(c.path) ? '<span class="bz-kb-pos ok">新 落</span>' : ""}<span class="bz-kb-dom">${esc2(c.domain)}</span></div>
       <div class="bz-kb-tail"><span>${c.review ? "复习中 · 到期由闹钟安排" : "未入复习"}</span><span style="margin-left:auto">连 1 张旧卡</span></div>
     </div>`).join("");
           const rest = this.allCards.length - shown.length;
           this.contentEl.innerHTML = `<div class="bz-kb-pd">
-      <div class="bz-kb-sec">卡 片 · 提 炼 层（只 许 你 写 · ${this.allCards.length} 张）</div>
       ${rows || '<div class="bz-kb-empty">卡片目录还没有卡片——在部壹文献预览里「提炼成卡」。</div>'}
       ${rest > 0 ? `<div class="bz-kb-empty" data-kb-act="cards-more">↓ 还有 ${rest} 张，滚动或点此加载</div>` : ""}
     </div>`;
@@ -10816,57 +11027,22 @@ ${sample}`,
         }
         renderTopics() {
           if (!this.contentEl) return;
-          this.noteView = null;
           const rows = this.allTopics.map((t) => {
             const rel = formatRelativeTime(String(t.created || ""));
             return `<div class="bz-kb-lexrow" data-kb-act="topic-open" data-path="${esc2(t.path)}">
       <div class="bz-kb-hw"><span class="bz-kb-w">${esc2(t.title)}</span><span class="bz-kb-dom">${esc2(t.where)}</span></div>
-      <div class="bz-kb-tail"><span class="bz-kb-meta">${rel === "无效日期" ? "" : esc2(rel)}</span><span style="margin-left:auto">一篇普通笔记 →</span></div>
+      <div class="bz-kb-tail"><span class="bz-kb-meta">${rel === "无效日期" ? "" : esc2(rel)}</span></div>
     </div>`;
           }).join("");
           this.contentEl.innerHTML = `<div class="bz-kb-pd">
-      <div class="bz-kb-sec">主 题 笔 记 · 展 示（真 实 存 量）</div>
       ${rows || '<div class="bz-kb-empty">主题目录还没有笔记。</div>'}
-      <div class="bz-kb-note" style="font-size:11px;margin-top:14px">主题笔记就是普通笔记，你自己写自己组织；写作与检索发生在 Obsidian + 第二大脑（灵感参考 / AI 对话）。主题与其他盒的关联机制方向探索中——当前版本仅做展示。</div>
     </div>`;
-        }
-        /** 主题笔记只读渲染（MarkdownRenderer；mock/失败回退纯文本） */
-        async openTopicNote(t) {
-          var _a;
-          const app = getApp();
-          let md = "";
-          try {
-            md = await app.vault.read(t.file);
-          } catch (e) {
-            md = "";
-          }
-          this.noteView = { path: t.path, title: t.title };
-          if (!this.contentEl) return;
-          this.contentEl.innerHTML = `<div class="bz-kb-pd">
-      <button class="bz-kb-back" data-kb-act="topics-back">← 部叁 · 主题笔记</button>
-      <div class="bz-kb-ntitle">${esc2(t.title)}</div>
-      <div class="bz-kb-nmeta"><span class="bz-kb-dom">${esc2(t.where)}</span><span class="bz-kb-meta">${esc2(formatRelativeTime(String(t.created || "")) === "无效日期" ? "" : formatRelativeTime(String(t.created || "")))}</span></div>
-      <div class="bz-kb-noteview" id="kb-noteview"></div>
-    </div>`;
-          const el = q(this.contentEl, "#kb-noteview");
-          if (!el) return;
-          try {
-            const MR = MarkdownRenderer;
-            if (MR && typeof MR.render === "function") {
-              await MR.render(md, this.app, el, t.path);
-              if (!((_a = el.textContent) == null ? void 0 : _a.trim()) || el.textContent.includes("[object Object]")) el.textContent = md;
-            } else {
-              el.textContent = md;
-            }
-          } catch (e) {
-            el.textContent = md;
-          }
         }
         async ensureCards() {
           const dir = cardboxDirOf(tryGetSettings());
           if (!this.loadedCardDir || this.loadedCardDir !== dir || this.allCards.length === 0) await this.loadCards(dir);
         }
-        /** 读文献笔记 frontmatter related 展示名列表（预览「来源小纸条」；行扫描实现） */
+        /** 读笔记 frontmatter related 展示名列表（预览「关联」区；行扫描实现） */
         async noteRels(n) {
           var _a;
           try {
@@ -10946,7 +11122,6 @@ ${sample}`,
           var _a;
           (_a = this.popup) == null ? void 0 : _a.querySelectorAll(".bz-kb-ovl").forEach((x) => x.remove());
           this.editor = null;
-          this._previewNote = null;
         }
         sheetWrap(title, body) {
           return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc2(title)}</span><button class="bz-kb-sheet-close" data-kb-close title="关闭">✕</button></div><div class="bz-kb-sheet-body">${body}</div>`;
@@ -10984,9 +11159,9 @@ ${sample}`,
           this.allTopics = this.allTopics.filter((t) => t.path !== path);
         }
         invalidateCached(_path) {
-          this.loadedLitDir = this.loadedLitDir ? "" : this.loadedLitDir;
-          this.loadedCardDir = this.loadedCardDir ? "" : this.loadedCardDir;
-          this.loadedTopicDir = this.loadedTopicDir ? "" : this.loadedTopicDir;
+          this.loadedLitDir = "";
+          this.loadedCardDir = "";
+          this.loadedTopicDir = "";
         }
         attachFileListener() {
           if (this.fileListenerAttached) return;
@@ -11324,7 +11499,7 @@ ${sample}`,
           addMask.onclick = () => this.hideAddDialog();
           const popup = document.createElement("div");
           popup.id = "knowledge-add-popup";
-          popup.className = "bz-lit-dialog";
+          popup.className = "bz-lit-dialog kb";
           popup.style.display = "none";
           popup.innerHTML = `
       <div id="lit-add-mode" class="bz-lit-mode-tag" style="display:none;">编辑任务</div>
@@ -11605,11 +11780,6 @@ ${sample}`,
           return card;
         }
         // ==================== 术语生成面板（文字录入；142 简洁版 + 155 总结） ====================
-        termDateStamp() {
-          const d = /* @__PURE__ */ new Date();
-          const p = (n) => String(n).padStart(2, "0");
-          return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-        }
         createTermUI() {
           var _a;
           const mask = document.createElement("div");
@@ -11619,14 +11789,27 @@ ${sample}`,
           mask.onclick = () => this.hideTermEntry();
           const popup = document.createElement("div");
           popup.id = "knowledge-term-popup";
-          popup.className = "bz-lit-dialog bz-lit-term-dialog";
+          popup.className = "bz-lit-dialog bz-lit-term-dialog kb";
           popup.style.display = "none";
           const body = document.createElement("div");
           body.className = "bz-lit-term-body";
           body.innerHTML = `
-      <div class="bz-lit-term-inputrow">
+      <div class="bz-lit-sheet-head">
+        <span class="bz-lit-sheet-title">文字录入 · 术语</span>
+        <button type="button" class="bz-lit-sheet-close" data-term-close title="关闭">✕</button>
+      </div>
+      <div class="bz-lit-term-row">
+        <span class="bz-lit-term-meta-k">术语</span>
         <input id="lit-term-input" type="text" autocomplete="off">
+      </div>
+      <div class="bz-lit-term-row">
+        <span class="bz-lit-term-meta-k">来源</span>
+        <input id="lit-term-src" type="text" autocomplete="off">
+        <span id="lit-term-src-chip" class="bz-lit-srcchip" style="display:none;"></span>
+      </div>
+      <div class="bz-lit-term-actions">
         <button id="lit-term-generate" class="bz-lit-accent-btn">生成</button>
+        <button id="lit-term-cancel" class="bz-lit-ghost-btn">取消</button>
       </div>
       <div id="lit-term-preview" style="display:none;">
         <div class="bz-lit-term-card">
@@ -11634,6 +11817,7 @@ ${sample}`,
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">术语</span><span id="lit-term-meta-term" class="bz-lit-term-meta-v"></span></div>
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">领域</span><span id="lit-term-meta-domain" class="bz-lit-term-meta-v"></span></div>
             <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">日期</span><span id="lit-term-meta-date" class="bz-lit-term-meta-v"></span></div>
+            <div class="bz-lit-term-meta-row" id="lit-term-meta-srcrow" style="display:none;"><span class="bz-lit-term-meta-k">来源</span><span id="lit-term-meta-src" class="bz-lit-term-meta-v bz-lit-srcopen" data-term-src-open="1"></span></div>
           </div>
         </div>
         <div class="bz-lit-term-card">
@@ -11650,6 +11834,7 @@ ${sample}`,
           this.termMask = mask;
           this.termPopup = popup;
           q(popup, "#lit-term-generate").onclick = () => void this.onTermGenerate();
+          q(popup, "#lit-term-cancel").onclick = () => this.hideTermEntry();
           q(popup, "#lit-term-regenerate").onclick = () => void this.onTermSummarize();
           q(popup, "#lit-term-save").onclick = () => void this.onTermConfirm();
           (_a = q(popup, "#lit-term-input")) == null ? void 0 : _a.addEventListener("keydown", (e) => {
@@ -11658,13 +11843,59 @@ ${sample}`,
               void this.onTermGenerate();
             }
           });
+          const srcInput = q(popup, "#lit-term-src");
+          if (srcInput) {
+            srcInput.addEventListener("input", () => {
+              if (this.termSrcTimer) clearTimeout(this.termSrcTimer);
+              this.termSrcTimer = setTimeout(() => this.termSrcTryCommit(srcInput), 450);
+            });
+            srcInput.addEventListener("keydown", (e) => {
+              if (e.key !== "Enter") return;
+              const raw = (srcInput.value || "").trim();
+              if (raw && isUrlLikeSourceText(raw)) {
+                e.preventDefault();
+                this.termSrcSet({ kind: "external", url: normalizeSourceUrl(raw) }, srcInput);
+              }
+            });
+            this.termSrcSuggest = uiSuggest({
+              anchor: srcInput,
+              max: 12,
+              iconOf: () => "📄",
+              labelOf: (p) => noteSourceName(p),
+              source: () => {
+                if (!srcInput.value.trim()) return [];
+                return (getApp().vault.getFiles() || []).filter((f) => f.extension === "md").map((f) => f.path);
+              },
+              onPick: (p) => this.termSrcSet({ kind: "note", path: p }, srcInput)
+            });
+          }
+          popup.addEventListener("click", (e) => {
+            const t = e.target.closest("[data-term-close],[data-term-src-clear],[data-term-src-open]");
+            if (!t) return;
+            e.stopPropagation();
+            if (t.hasAttribute("data-term-close")) {
+              this.hideTermEntry();
+            } else if (t.hasAttribute("data-term-src-clear")) {
+              const input = q(popup, "#lit-term-src");
+              this.termSrcClear(input);
+            } else if (this.termSource) {
+              if (this.termSource.kind === "note") this.openNote(this.termSource.path);
+              else this._openExternal(this.termSource.url);
+            }
+          });
         }
-        showTermEntry(term) {
+        /**
+         * 打开术语录入弹层；term 预填（命令带选中词时自动生成）；src 预填来源（ADR-0116——
+         * 仅命令入口带当前笔记，主窗按钮入口不预填）。
+         */
+        showTermEntry(term, src) {
           if (!this.termPopup || !this.termMask) return;
           this.termPreview = null;
           this.termHasDraft = false;
           const input = q(this.termPopup, "#lit-term-input");
           if (input) input.value = (term != null ? term : "").trim();
+          this.termSrcReset(q(this.termPopup, "#lit-term-src"));
+          if (src) this.termSrcSet(src, q(this.termPopup, "#lit-term-src"));
           this.setTermPreviewVisible(false);
           this.setTermGenLoading(false);
           topifyZ(this.termMask, this.termPopup);
@@ -11672,6 +11903,86 @@ ${sample}`,
           this.termPopup.style.display = "flex";
           if (input && !input.value) setTimeout(() => input.focus(), 100);
           if (input && input.value) void this.onTermGenerate();
+        }
+        /** 来源状态清空（chip 收起、输入框复位、计时器/联想层归零）——每次打开弹层即全新 */
+        termSrcReset(input) {
+          if (this.termSrcTimer) {
+            clearTimeout(this.termSrcTimer);
+            this.termSrcTimer = null;
+          }
+          this.termSource = null;
+          if (input) {
+            input.value = "";
+            input.style.display = "";
+          }
+          this.renderTermSrcChip(input);
+          this.termSrcRefreshMeta();
+        }
+        termSrcClear(input) {
+          this.termSrcReset(input);
+          if (input) setTimeout(() => input.focus(), 0);
+        }
+        /** 输入惰性提交：整串 URL 字样 → 外部 chip；其余文本等联想点选（不自动认领） */
+        termSrcTryCommit(input) {
+          this.termSrcTimer = null;
+          const raw = (input.value || "").trim();
+          if (!raw || !isUrlLikeSourceText(raw)) return;
+          this.termSrcSet({ kind: "external", url: normalizeSourceUrl(raw) }, input);
+        }
+        /** 落来源：记录 + chip 渲染 + meta 行同步；外部来源异步抓标题（失败静默降级为纯链接） */
+        termSrcSet(src, input) {
+          this.termSource = src;
+          this.renderTermSrcChip(input);
+          this.termSrcRefreshMeta();
+          if (src.kind === "external") void this.termSrcFetchTitle(src);
+        }
+        async termSrcFetchTitle(src) {
+          try {
+            const t = await fetchPageTitle(src.url);
+            if (!t || this.termSource !== src) return;
+            src.title = cleanSourceTitle(t);
+            const inp = this.termPopup ? q(this.termPopup, "#lit-term-src") : null;
+            this.renderTermSrcChip(inp);
+            this.termSrcRefreshMeta();
+          } catch (e) {
+          }
+        }
+        /** chip 渲染：有来源 → 徽标（内/外）+ 名称 + ✕；无 → 输入框可见 */
+        renderTermSrcChip(input) {
+          const popup = this.termPopup;
+          if (!popup) return;
+          const chip = q(popup, "#lit-term-src-chip");
+          if (!chip) return;
+          const src = this.termSource;
+          if (!src) {
+            chip.style.display = "none";
+            chip.textContent = "";
+            if (input) input.style.display = "";
+            return;
+          }
+          const isNote = src.kind === "note";
+          const label = isNote ? noteSourceName(src.path) : src.title || shortUrlText(src.url);
+          chip.title = isNote ? src.path : src.url;
+          chip.style.display = "inline-flex";
+          chip.innerHTML = `<b>${isNote ? "内 部" : "外 部"}</b><span>${esc2(label)}</span><button type="button" data-term-src-clear title="清除来源" aria-label="清除来源">✕</button>`;
+          if (input) input.style.display = "none";
+        }
+        /** 预览属性卡第 4 行「来源」：有来源显行（可点开），无来源隐行 */
+        termSrcRefreshMeta() {
+          const popup = this.termPopup;
+          if (!popup) return;
+          const row = q(popup, "#lit-term-meta-srcrow");
+          const val = q(popup, "#lit-term-meta-src");
+          if (!row || !val) return;
+          const src = this.termSource;
+          if (!src) {
+            row.style.display = "none";
+            val.textContent = "";
+            return;
+          }
+          row.style.display = "";
+          val.textContent = src.kind === "note" ? noteSourceName(src.path) : src.title || src.url;
+          val.title = src.kind === "note" ? src.path : src.url;
         }
         setTermPreviewVisible(v) {
           if (!this.termPopup) return;
@@ -11751,7 +12062,7 @@ ${sample}`,
           }
         }
         presentTermPreview(draft) {
-          var _a, _b;
+          var _a, _b, _c;
           this.termPreview = { domain: draft.domain, body: draft.summary };
           this.termHasDraft = true;
           if (!this.termPopup) return;
@@ -11761,10 +12072,12 @@ ${sample}`,
           const domainEl = q(this.termPopup, "#lit-term-meta-domain");
           if (domainEl) domainEl.textContent = draft.domain || "—";
           const dateEl = q(this.termPopup, "#lit-term-meta-date");
-          if (dateEl) dateEl.textContent = this.termDateStamp();
+          if (dateEl) dateEl.textContent = dateStamp();
           const contentEl = q(this.termPopup, "#lit-term-content");
           if (contentEl) contentEl.textContent = draft.summary;
           this.setTermPreviewVisible(true);
+          const prev = q(this.termPopup, "#lit-term-preview");
+          (_c = prev == null ? void 0 : prev.scrollIntoView) == null ? void 0 : _c.call(prev, { behavior: "smooth", block: "nearest" });
         }
         async onTermConfirm() {
           var _a, _b;
@@ -11781,7 +12094,13 @@ ${sample}`,
           this.termGenerating = true;
           this.setTermGenLoading(true);
           try {
-            const path = await generateTermNote({ term, summary: this.termPreview.body, domain: this.termPreview.domain });
+            const path = await generateTermNote({
+              term,
+              summary: this.termPreview.body,
+              domain: this.termPreview.domain,
+              source: this.termSource
+              // 术语来源随确认时刻的值落库（ADR-0116）
+            });
             this.openNote(path);
             emitDomainEvent("knowledge:tasks", { kind: "term-generated", term, title: term });
             this.termPreview = null;
@@ -11796,6 +12115,8 @@ ${sample}`,
         }
         hideTermEntry() {
           this.termPreview = null;
+          const srcInput = this.termPopup ? q(this.termPopup, "#lit-term-src") : null;
+          this.termSrcReset(srcInput);
           if (this.termMask) this.termMask.style.display = "none";
           if (this.termPopup) this.termPopup.style.display = "none";
         }
@@ -11831,8 +12152,18 @@ ${sample}`,
           }
         }
         destroy() {
+          var _a;
           this.clearRunTimer();
           this.runState.clear();
+          if (this.termSrcTimer) {
+            clearTimeout(this.termSrcTimer);
+            this.termSrcTimer = null;
+          }
+          try {
+            (_a = this.termSrcSuggest) == null ? void 0 : _a.detach();
+          } catch (e) {
+          }
+          this.termSrcSuggest = null;
           if (this.refreshTimer) {
             clearTimeout(this.refreshTimer);
             this.refreshTimer = null;
@@ -11901,11 +12232,14 @@ ${sample}`,
     var _a, _b;
     ensureKnowledge(app);
     let t = term == null ? void 0 : term.trim();
+    let src;
     if (!t) {
       const view = app.workspace.getActiveViewOfType(MarkdownView);
       t = ((_b = (_a = view == null ? void 0 : view.editor) == null ? void 0 : _a.getSelection()) == null ? void 0 : _b.trim()) || void 0;
+      const file = view == null ? void 0 : view.file;
+      if (file && file.extension === "md") src = { kind: "note", path: file.path };
     }
-    uiManager == null ? void 0 : uiManager.showTermEntry(t);
+    uiManager == null ? void 0 : uiManager.showTermEntry(t, src);
   }
   function unloadKnowledge() {
     uiManager == null ? void 0 : uiManager.destroy();
@@ -12203,7 +12537,6 @@ ${sample}`,
       } catch (e) {
       }
       escHandle = null;
-      escRegistered = false;
     }
     if (searchDebounceTimer !== null) {
       clearTimeout(searchDebounceTimer);
@@ -12360,7 +12693,6 @@ ${sample}`,
       isVisible: () => !!overlayEl && overlayEl.style.display !== "none",
       close: () => closePanel()
     });
-    escRegistered = true;
     const frameEl = overlayEl.querySelector(".bz-clip-frame");
     if (!isMobileEnv()) {
       panelResizeDetach = uiResizable(frameEl, {
@@ -12428,15 +12760,12 @@ ${sample}`,
     const d = /* @__PURE__ */ new Date();
     el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M.articles.length} 期`;
   }
-  function srcList() {
+  function currentSrc() {
     const s = M.sel;
     if (s.kind === "clip") return { kind: "clip" };
     if (s.kind === "site") return { kind: "site", site: s.site };
     if (s.kind === "inbox") return { kind: "inbox", platform: s.platform, up: s.up || void 0 };
     return { kind: "all" };
-  }
-  function currentSrc() {
-    return srcList();
   }
   function currentList() {
     return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], currentSrc(), M.upInfo);
@@ -13179,7 +13508,7 @@ ${sample}`,
       }
     });
   }
-  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle, escRegistered, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched;
+  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched;
   var init_ui3 = __esm({
     "src/clipbook/ui.ts"() {
       init_app();
@@ -13216,7 +13545,6 @@ ${sample}`,
       deskSearchEl = null;
       escKey = "";
       escHandle = null;
-      escRegistered = false;
       loading = false;
       dirty = false;
       loaded = false;
