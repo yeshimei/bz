@@ -124,18 +124,18 @@ describe('buildRecap（聚合纯函数）', () => {
     ]);
   });
 
-  it('待办：完成计数并入摘要，新增不计完成', () => {
+  it('备忘录：完成计数并入摘要，新增不计完成', () => {
     const sources: RecapSources = {
       ...EMPTY_SOURCES,
-      todos: [
+      memos: [
         { title: '买菜', done: true, ts: AT(9, 2) },
         { title: '写周报', done: false, ts: AT(8, 0) },
       ],
     };
     const { summary, items } = buildRecap(sources, range);
-    expect(summary.todoDone).toBe(1);
-    expect(items[0]).toMatchObject({ domain: 'todo', timeLabel: '08:00', text: '新增待办『写周报』' });
-    expect(items[1]).toMatchObject({ domain: 'todo', timeLabel: '09:02', text: '完成『买菜』' });
+    expect(summary.memoDone).toBe(1);
+    expect(items[0]).toMatchObject({ domain: 'memo', timeLabel: '08:00', text: '新增备忘录『写周报』' });
+    expect(items[1]).toMatchObject({ domain: 'memo', timeLabel: '09:02', text: '完成『买菜』' });
   });
 
   it('番茄：区间标签 [ts-duration, ts] + 归属任务名 + 分钟折算；零时长回落单时刻', () => {
@@ -158,11 +158,11 @@ describe('buildRecap（聚合纯函数）', () => {
       diaryTimes: ['20:10'],
       movies: [{ name: '夜片', watched: true, rating: 8, ts: AT(23, 0) }],
       books: [{ title: '小说', finished: false, progress: 45, ts: AT(19, 30) }],
-      todos: [{ title: '晨跑', done: true, ts: AT(7, 0) }],
+      memos: [{ title: '晨跑', done: true, ts: AT(7, 0) }],
       pomodoros: [{ task: null, duration: 1500, ts: AT(21, 25) }],
     };
     const { summary, items } = buildRecap(sources, range);
-    expect(summary).toEqual({ diary: 1, movies: 1, books: 1, todoDone: 1, pomodoros: 1, pomodoroMinutes: 25 });
+    expect(summary).toEqual({ diary: 1, movies: 1, books: 1, memoDone: 1, pomodoros: 1, pomodoroMinutes: 25 });
     expect(items.map((i) => i.timeLabel)).toEqual(['07:00', '19:30', '20:10', '21:00–21:25', '23:00']);
     // 无时刻可考的痕迹落当天 0 点（排序沉底为最早）
     const sunk = buildRecap({ ...EMPTY_SOURCES, books: [{ title: 'X', finished: true, progress: null, ts: DAY0 - 5000 }] }, range);
@@ -224,7 +224,7 @@ describe('collectRecap（只读采集集成）', () => {
     vault.files.set('书库/昨天读完.md', '---\ntags:\n- book\nreadingDate: 2026-08-01\ncompletionDate: ' + y + '\n---\n');
     vault.stats.set('书库/读完的书.md', { ctime: AT_TODAY(9, 0), mtime: AT_TODAY(21, 0) });
     vault.stats.set('书库/在读的书.md', { ctime: AT_TODAY(9, 0), mtime: AT_TODAY(19, 30) });
-    // 待办：今天完成 1（昨天创建）+ 今天新增 1（未完成）
+    // 备忘录：今天完成 1（昨天创建）+ 今天新增 1（未完成）
     vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
       { title: '晨跑', created: `${y} 08:00:00`, completed: `${t} 09:02:00` },
       { title: '写周报', created: `${t} 08:00:00`, completed: null },
@@ -241,11 +241,11 @@ describe('collectRecap（只读采集集成）', () => {
 
     const data = await collectRecap(mockAppWithVault(vault) as any);
     expect(data.failed).toEqual([]);
-    expect(data.summary).toEqual({ diary: 2, movies: 1, books: 2, todoDone: 1, pomodoros: 1, pomodoroMinutes: 25 });
+    expect(data.summary).toEqual({ diary: 2, movies: 1, books: 2, memoDone: 1, pomodoros: 1, pomodoroMinutes: 25 });
     const texts = data.items.map((i) => `${i.timeLabel} ${i.domain} ${i.text}`);
     expect(texts).toEqual([
-      '08:00 todo 新增待办『写周报』',
-      '09:02 todo 完成『晨跑』',
+      '08:00 memo 新增备忘录『写周报』',
+      '09:02 memo 完成『晨跑』',
       '11:00 cinema 《新片单》加入片单',
       '19:30 bookshelf 《在读的书》读到 45%',
       '21:00 bookshelf 读完《读完的书》',
@@ -260,7 +260,7 @@ describe('collectRecap（只读采集集成）', () => {
     vault.files.set('CONFIG/STORAGE/pomodoro.json', 'not-json-at-all');
     vault.files.set(`我的/日记/${todayStr()}.md`, '# 📖 09:00\n\n还活着');
     const data = await collectRecap(mockAppWithVault(vault) as any);
-    expect(data.failed.sort()).toEqual(['pomodoro', 'todo']);
+    expect(data.failed.sort()).toEqual(['memo', 'pomodoro']);
     expect(data.summary.diary).toBe(1);
     expect(data.items).toHaveLength(1);
   });

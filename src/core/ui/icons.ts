@@ -3,7 +3,7 @@
  * uiIconSpan：图标 span 工厂（同 uiIcon，别名收编域内 iconSpan 语义）；
  * mountIcons：把手写 HTML 模板（innerHTML 拼接）里的 <i data-lucide>
  *   占位批量替换为 setIcon 渲染的真图标（保留原 class 修饰）。
- * 收编 todo/belongings/bookshelf 等域各自的本地 mountIcons 副本。
+ * 收编 memo/belongings/bookshelf 等域各自的本地 mountIcons 副本。
  * ============================================================ */
 import { setIcon } from 'obsidian';
 

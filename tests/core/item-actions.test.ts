@@ -15,9 +15,9 @@ const ACTIONS: ItemAction[] = [
 
 function makeCard(): HTMLElement {
   const card = document.createElement('div');
-  card.className = 'todo-card';
+  card.className = 'memo-card';
   const link = document.createElement('a');
-  link.className = 'bz-todo-link';
+  link.className = 'bz-memo-link';
   link.textContent = '标题';
   link.onclick = () => (window as any).__linkClicked = true;
   card.appendChild(link);
@@ -63,10 +63,10 @@ describe('attachItemActions：列表保持干净（无图标排）', () => {
   it('longPressFilter 排除区域右键不弹浮层且不拦原生菜单（让位系统选字/复制），其他区域正常弹+拦截', () => {
     const card = makeCard();
     attachItemActions(card, ACTIONS, {
-      longPressFilter: (e) => !(e.target as HTMLElement).closest('.bz-todo-link'),
+      longPressFilter: (e) => !(e.target as HTMLElement).closest('.bz-memo-link'),
     });
     // 右键排除区（链接）→ 不弹菜单，也不 preventDefault（放行原生右键菜单）
-    const link = card.querySelector('.bz-todo-link') as HTMLElement;
+    const link = card.querySelector('.bz-memo-link') as HTMLElement;
     const evFiltered = new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 });
     Object.defineProperty(evFiltered, 'target', { value: link, configurable: true });
     link.dispatchEvent(evFiltered);
@@ -157,7 +157,7 @@ describe('右键跟手菜单（桌面主路径）', () => {
     rightClickOn(card);
     expect(document.querySelector('.bz-item-menu')).not.toBeNull();
     // 左键点卡片内链接（相对菜单为外部）→ 菜单关闭 + 链接自身点击生效
-    const link = card.querySelector('.bz-todo-link') as HTMLElement;
+    const link = card.querySelector('.bz-memo-link') as HTMLElement;
     link.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(document.querySelector('.bz-item-menu')).toBeNull();
     expect((window as any).__linkClicked).toBe(true);

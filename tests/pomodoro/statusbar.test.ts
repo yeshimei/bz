@@ -135,7 +135,7 @@ describe('番茄钟状态栏', () => {
   });
 });
 
-describe('状态栏任务归属（增强包：待办「专注这个」联动）', () => {
+describe('状态栏任务归属（增强包：备忘录「专注这个」联动）', () => {
   let container: HTMLElement;
 
   beforeEach(() => {

@@ -44,7 +44,7 @@ import { aiSuggestCategory } from './ai';
 
 const THEME_CLASSES = new Set(['theme-dark', 'theme-light']);
 
-/** 搜索防抖（对齐剪藏本/保险库/待办） */
+/** 搜索防抖（对齐剪藏本/保险库/备忘录） */
 const SEARCH_DEBOUNCE_MS = 180;
 
 // ==================== 模块状态 ====================
@@ -94,7 +94,7 @@ export function belongingSettingsSchema(): SettingsSchema {
   return {
     groups: [
       {
-        // 外观组与待办同构（上布局行下主题行）；占位单卡（用户拍板 C）：当前仅 P20 大字报 × 暖白，
+        // 外观组与备忘录同构（上布局行下主题行）；占位单卡（用户拍板 C）：当前仅 P20 大字报 × 暖白，
         // 布局/主题扩展待将来开模——键与联动契约已按可扩展形态立好
         icon: 'palette',
         name: '外观',

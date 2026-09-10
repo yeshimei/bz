@@ -50,8 +50,8 @@ const DAY_MS = 86400000;
 
 function toRiverDay(dateStr: string, summary: RecapSummary, items: RecapItem[]): RiverDay {
   const events = [...items].sort((a, b) => a.ts - b.ts);
-  // todoCreated：recap 摘要没有，由「新增待办」痕迹数派生（buildRecap 文案契约）
-  const full: RiverSummary = { ...summary, todoCreated: events.filter((e) => e.text.startsWith('新增待办')).length };
+  // memoCreated：recap 摘要没有，由「新增备忘录」痕迹数派生（buildRecap 文案契约）
+  const full: RiverSummary = { ...summary, memoCreated: events.filter((e) => e.text.startsWith('新增备忘录')).length };
   return { dateStr, events, summary: full, firstTs: events.length ? events[0].ts : null };
 }
 

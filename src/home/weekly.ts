@@ -11,7 +11,7 @@
  *             回退笔记创建时间（file.stat.ctime）落本周
  *  - books    书架墙读完：completionDate 落本周（md 书目，口径同快照在读徽标）
  *  - pomodoro pomodoro.json history：完成时刻落本周条数 + duration 秒折分钟
- *  - todo     memo.json（todo 同源）：completed 落本周=完成数，created 落本周=创建数
+ *  - memo     memo.json（memo 同源）：completed 落本周=完成数，created 落本周=创建数
  *             （完成率 P%=完成/创建，创建 0 则 UI 侧只显示完成数）
  *  - diary    日记目录文件名（YYYY-MM-DD.md，同快照「今日已写」口径）落本周条数
  */
@@ -39,10 +39,10 @@ export interface WeeklyStat {
   pomodoros: number;
   /** 本周专注分钟数（duration 秒求和四舍五入折分） */
   pomodoroMinutes: number;
-  /** 本周完成待办（completed 落本周） */
-  todoDone: number;
-  /** 本周创建待办（created 落本周） */
-  todoCreated: number;
+  /** 本周完成备忘录（completed 落本周） */
+  memoDone: number;
+  /** 本周创建备忘录（created 落本周） */
+  memoCreated: number;
   /** 本周日记条数 */
   diary: number;
 }
@@ -52,8 +52,8 @@ export const EMPTY_WEEKLY: WeeklyStat = {
   booksFinished: 0,
   pomodoros: 0,
   pomodoroMinutes: 0,
-  todoDone: 0,
-  todoCreated: 0,
+  memoDone: 0,
+  memoCreated: 0,
   diary: 0,
 };
 
@@ -120,8 +120,8 @@ export function sumPomodoroWeek(
   return { count, minutes: Math.round(seconds / 60) };
 }
 
-/** 本周待办聚合（纯函数）：completed 落本周=完成数，created 落本周=创建数（两项独立计） */
-export function todoWeekStats(
+/** 本周备忘录聚合（纯函数）：completed 落本周=完成数，created 落本周=创建数（两项独立计） */
+export function memoWeekStats(
   items: Array<Record<string, unknown>>,
   range: WeekRange
 ): { done: number; created: number } {
@@ -230,13 +230,13 @@ export async function collectWeeklyStat(app: App, now: number = Date.now()): Pro
     /* 读失败：回落 0 */
   }
 
-  // 待办：memo.json 直读（todo 同源；不依赖 DataManager 单例初始化，文件缺失不建）
+  // 备忘录：memo.json 直读（memo 同源；不依赖 DataManager 单例初始化，文件缺失不建）
   try {
     const raw = await readJsonIfExists(app, storageFile('memo.json'));
     const all = Array.isArray(raw) ? (raw as Array<Record<string, unknown>>) : [];
-    const s = todoWeekStats(all, range);
-    out.todoDone = s.done;
-    out.todoCreated = s.created;
+    const s = memoWeekStats(all, range);
+    out.memoDone = s.done;
+    out.memoCreated = s.created;
   } catch {
     /* 读失败：回落 0 */
   }

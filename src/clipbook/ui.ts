@@ -76,7 +76,7 @@ let dirty = false; // 数据变化待刷标志（目录事件回调期）
 let loaded = false; // C5：本次会话是否已成功装载过（false = 首开必须装载）
 
 // ================= 增强包常量与状态 =================
-const SEARCH_DEBOUNCE_MS = 180; // 对齐保险库/待办
+const SEARCH_DEBOUNCE_MS = 180; // 对齐保险库/备忘录
 const PANEL_MIN_W = 760; // 桌面缩放钳制（三栏骨架最小可读宽度）
 const PANEL_MIN_H = 520;
 const PANEL_MAX_W = 1600;
@@ -255,7 +255,7 @@ function buildDom(app: any): void {
     if (!row) return;
     toggleSource(JSON.parse(row.dataset.src || 'null'));
   });
-  // 桌面搜索（enh 包 1）：180ms 防抖对齐保险库/待办
+  // 桌面搜索（enh 包 1）：180ms 防抖对齐保险库/备忘录
   deskSearchEl!.addEventListener('input', () => {
     if (searchDebounceTimer !== null) clearTimeout(searchDebounceTimer);
     searchDebounceTimer = setTimeout(() => {
@@ -725,7 +725,7 @@ function bindItemMenus(): void {
     const art = all.find((x) => x.id === card.dataset.id) || M.cur;
     if (!art || art.id !== card.dataset.id) return;
     const actions = buildItemActions(art);
-    // menuClass：菜单挂 body（域内后代选择器不可达），编辑部皮肤靠根挂类生效（同 todo 皮肤先例）
+    // menuClass：菜单挂 body（域内后代选择器不可达），编辑部皮肤靠根挂类生效（同 memo 皮肤先例）
     attachItemActions(card, actions, { sheetHead: buildSheetHead(art), menuClass: 'bz-clip-menu-editorial' });
     // 单击选中 → 阅读
     card.addEventListener('click', (e) => {

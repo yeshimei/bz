@@ -84,7 +84,7 @@ describe('buildBehaviorWording：memo（备忘录，实际 entityType=task + 别
     expect(buildBehaviorWording(mk('postponed'))).toBe('你把备忘录「写周报」推迟了');
     expect(buildBehaviorWording(mk('priority'))).toBe('你调整了备忘录「写周报」的优先级');
     expect(buildBehaviorWording(mk('deleted'))).toBe('你删除了备忘录「写周报」');
-    expect(buildBehaviorWording(mk('due', { text: '你有 2 个待办今天到期：写周报（18:00）' }))).toBe('你有 2 个待办今天到期：写周报（18:00）');
+    expect(buildBehaviorWording(mk('due', { text: '你有 2 个备忘录今天到期：写周报（18:00）' }))).toBe('你有 2 个备忘录今天到期：写周报（18:00）');
     expect(buildBehaviorWording(mk('due'))).toBe('备忘录「写周报」今天到期');
   });
 });

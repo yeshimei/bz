@@ -1,5 +1,5 @@
 /**
- * 待办域文件同步（memo.json 引用同步；ADR-0092 自旧 memo 域迁入，语义逐行等价）
+ * 备忘录域文件同步（memo.json 引用同步；ADR-0092 自旧 memo 域迁入，语义逐行等价）
  *   rename → 同步引用路径/标题/notePath（memo.json）
  *   delete → 清空 linkedNote 关联
  * sync 纯函数与队列/去抖为域内私有副本（勿跨域 import）；
@@ -94,8 +94,8 @@ function enqueue(task: () => Promise<any> | void) {
       return task();
     })
     .catch((e) => {
-      console.error('[todo-file-sync]', e);
-      notify('待办同步失败，数据可能不一致', { type: 'error', dedupeKey: 'todo-file-sync' });
+      console.error('[memo-file-sync]', e);
+      notify('备忘录同步失败，数据可能不一致', { type: 'error', dedupeKey: 'memo-file-sync' });
     });
 }
 
@@ -141,7 +141,7 @@ function createBatchFlusher<T>(run: (batch: T[]) => Promise<void>): ((ev: T) => 
 
 function createFileSyncAgent(app: App): void {
   /** 对 memo.json 执行同步函数，有变化才写回。
-   *  读改写整体入 per-path 串行队列：与 memo UI / todo UI 的 CRUD 同队列互斥，
+   *  读改写整体入 per-path 串行队列：与 memo UI / memo UI 的 CRUD 同队列互斥，
    *  后台同步不得用陈旧基线覆盖面板刚写入的数据（写竞态收敛）。 */
   async function syncSource(fn: (items: any[], ...args: any[]) => boolean, ...args: any[]) {
     const path = getMemoPath();
@@ -187,7 +187,7 @@ function createFileSyncAgent(app: App): void {
   }));
 }
 
-/** 幂等初始化（todo 域总入口，main.ts onLayoutReady 调用） */
+/** 幂等初始化（memo 域总入口，main.ts onLayoutReady 调用） */
 export function ensureFileSync(app: App): void {
   if (initialized) return;
   initialized = true;
