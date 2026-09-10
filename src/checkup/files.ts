@@ -27,7 +27,7 @@ export interface JsonScanTarget {
 export function jsonScanTargets(app: App): JsonScanTarget[] {
   const s = tryGetSettings() as any;
   return [
-    { file: storageFile('memo.json', storageDir()), label: '备忘录 / 待办' },
+    { file: storageFile('memo.json', storageDir()), label: '备忘录' },
     { file: getStoragePath(s.storagePath), label: '收藏本' },
     { file: storageFile('belongings.json'), label: '归物本' },
     { file: storageFile('clipbook.json'), label: '剪藏本侧写' },

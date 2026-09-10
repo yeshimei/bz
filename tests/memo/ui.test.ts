@@ -1,5 +1,5 @@
 /**
- * 待办（todo）UI 层测试：面板结构/场景栏/编辑器场景联动/添加场景弹窗/右键菜单/勾选完成
+ * 备忘录（memo）UI 层测试：面板结构/场景栏/编辑器场景联动/添加场景弹窗/右键菜单/勾选完成
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import moment from 'moment';
@@ -7,17 +7,17 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { resetObsidianMocks, Platform as MockPlatform } from '../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { M, resetTodoState } from '../../src/todo/state';
-import { openTodoPanel, closeTodoPanel, addTodo, openEditor, applyTodoSkin } from '../../src/todo/ui';
+import { M, resetMemoState } from '../../src/memo/state';
+import { openMemoPanel, closeMemoPanel, addMemo, openEditor, applyMemoSkin } from '../../src/memo/ui';
 import { openPomodoro, unloadPomodoro } from '../../src/pomodoro';
-import { TodoData } from '../../src/todo/data';
+import { MemoData } from '../../src/memo/data';
 
 // 设置面板 mock：头行设置钮/场景菜单「在设置中编辑」直达断言用（ui.ts 动态 import 同一模块）
 vi.mock('../../src/settings-panel', () => ({ openSettingsPanel: vi.fn() }));
 
 const SETTINGS = {
   storagePath: 'CONFIG/STORAGE',
-  todoFilePath: 'CONFIG/STORAGE',
+  memoFilePath: 'CONFIG/STORAGE',
   memoScenarios: '',
   memoSortMode: 'priority',
   memoDefaultPriority: 'minor',
@@ -47,7 +47,7 @@ function seedVault(): { vault: MockVault; app: ReturnType<typeof mockAppWithVaul
   setApp(app);
   setSettingsProvider(() => settings as any);
   setSettingsSaver(saveSpy);
-  TodoData.init(settings as any);
+  MemoData.init(settings as any);
   return { vault, app, settings, saveSpy };
 }
 
@@ -58,66 +58,66 @@ function pushItem(vault: MockVault, item: Record<string, unknown>): void {
   vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify(raw, null, 2));
 }
 
-describe('todo 面板', () => {
+describe('memo 面板', () => {
   beforeEach(() => {
     resetObsidianMocks();
-    resetTodoState();
+    resetMemoState();
     document.body.innerHTML = '';
     MockPlatform.isMobile = false;
   });
   afterEach(() => {
-    closeTodoPanel();
+    closeMemoPanel();
     MockPlatform.isMobile = false;
     document.body.innerHTML = '';
   });
 
-  it('openTodoPanel：渲染头行 + 左场景栏（全部/今日/场景）+ 列表卡片', async () => {
+  it('openMemoPanel：渲染头行 + 左场景栏（全部/今日/场景）+ 列表卡片', async () => {
     const { app } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-nav] .bz-rail-item')).toBeTruthy();
+      expect(document.querySelector('[data-memo-nav] .bz-rail-item')).toBeTruthy();
     });
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
-    expect(overlay.querySelector('.bz-panel-title')?.textContent).toBe('待办');
+    expect(overlay.querySelector('.bz-panel-title')?.textContent).toBe('备忘录');
     // 桌面左栏场景：全部/今日/重要 + 6 默认场景；移动横滑条同 9
-    const navItems = overlay.querySelectorAll('[data-todo-nav] [data-todo-scene]');
+    const navItems = overlay.querySelectorAll('[data-memo-nav] [data-memo-scene]');
     expect(navItems.length).toBe(9);
-    expect(overlay.querySelectorAll('[data-todo-mob-scenes] [data-todo-scene]').length).toBe(9);
+    expect(overlay.querySelectorAll('[data-memo-mob-scenes] [data-memo-scene]').length).toBe(9);
     // 列表卡片（3 未完成；已完成折叠不展开）
     await vi.waitFor(() => {
-      expect(overlay.querySelectorAll('.bz-todo-card').length).toBe(3);
+      expect(overlay.querySelectorAll('.bz-memo-card').length).toBe(3);
     });
   });
 
   it('已完成折叠区：默认折叠，点击展开显示已完成条目', async () => {
     const { app } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-donebar')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-donebar')).toBeTruthy();
     });
-    const bar = document.querySelector('.bz-todo-donebar') as HTMLElement;
-    expect(document.querySelectorAll('.bz-todo-card.bz-todo-done').length).toBe(0);
+    const bar = document.querySelector('.bz-memo-donebar') as HTMLElement;
+    expect(document.querySelectorAll('.bz-memo-card.bz-memo-done').length).toBe(0);
     bar.click();
     await vi.waitFor(() => {
-      expect(document.querySelectorAll('.bz-todo-card.bz-todo-done').length).toBe(1);
+      expect(document.querySelectorAll('.bz-memo-card.bz-memo-done').length).toBe(1);
     });
-    const doneCard = document.querySelector('.bz-todo-card.bz-todo-done') as HTMLElement;
+    const doneCard = document.querySelector('.bz-memo-card.bz-memo-done') as HTMLElement;
     expect(doneCard.textContent).toContain('重看注意力机制');
     // 公开课 meta（已完成也显示）
-    expect(doneCard.querySelector('.bz-todo-tag-course')?.textContent).toContain('动手学深度学习');
+    expect(doneCard.querySelector('.bz-memo-tag-course')?.textContent).toContain('动手学深度学习');
   });
 
   it('场景筛选：点击「学习」只显示学习条目；再点取消', async () => {
     const { app } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-scene="学习"]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-scene="学习"]')).toBeTruthy();
     });
-    const getCards = () => document.querySelectorAll('.bz-todo-card').length;
-    const navBtn = () => document.querySelector('[data-todo-scene="学习"]') as HTMLElement;
+    const getCards = () => document.querySelectorAll('.bz-memo-card').length;
+    const navBtn = () => document.querySelector('[data-memo-scene="学习"]') as HTMLElement;
     navBtn().click();
     await vi.waitFor(() => {
-      const cards = document.querySelectorAll('.bz-todo-card');
+      const cards = document.querySelectorAll('.bz-memo-card');
       expect(cards.length).toBe(1);
       expect(cards[0].textContent).toContain('完成阅读报告');
     });
@@ -128,43 +128,43 @@ describe('todo 面板', () => {
     });
   });
 
-  it('主头行：当前场景标题 + 计数 + 新建待办按钮打开编辑器', async () => {
+  it('主头行：当前场景标题 + 计数 + 新建备忘录按钮打开编辑器', async () => {
     const { app } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-main-count]')?.textContent).toContain('项');
+      expect(document.querySelector('[data-memo-main-count]')?.textContent).toContain('项');
     });
-    const title = document.querySelector('[data-todo-main-title]') as HTMLElement;
-    const count = document.querySelector('[data-todo-main-count]') as HTMLElement;
+    const title = document.querySelector('[data-memo-main-title]') as HTMLElement;
+    const count = document.querySelector('[data-memo-main-count]') as HTMLElement;
     // 默认「全部」：3 未完成 + 1 已完成 = 4 项 · 3 未完成
     expect(title.textContent).toBe('全部');
     expect(count.textContent).toContain('4 项');
     expect(count.textContent).toContain('3 未完成');
     // 切场景后标题与计数变化
-    const learnBtn = document.querySelector('[data-todo-scene="学习"]') as HTMLElement;
+    const learnBtn = document.querySelector('[data-memo-scene="学习"]') as HTMLElement;
     learnBtn.click();
     await vi.waitFor(() => {
-      expect((document.querySelector('[data-todo-main-title]') as HTMLElement).textContent).toBe('学习');
+      expect((document.querySelector('[data-memo-main-title]') as HTMLElement).textContent).toBe('学习');
     });
-    expect((document.querySelector('[data-todo-main-count]') as HTMLElement).textContent).toContain('1 项');
+    expect((document.querySelector('[data-memo-main-count]') as HTMLElement).textContent).toContain('1 项');
     // 新建按钮 → 编辑器打开
-    (document.querySelector('[data-todo-newbtn]') as HTMLElement).click();
+    (document.querySelector('[data-memo-newbtn]') as HTMLElement).click();
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-editor')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
     });
   });
 
   it('底部录入：输入 + 点击添加 → 条目落 memo.json 并出现在列表', async () => {
     const { app, vault } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-composer-input]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-composer-input]')).toBeTruthy();
     });
-    const input = document.querySelector('[data-todo-composer-input]') as HTMLInputElement;
+    const input = document.querySelector('[data-memo-composer-input]') as HTMLInputElement;
     input.value = '新录入一条';
-    (document.querySelector('[data-todo-composer-add]') as HTMLElement).click();
+    (document.querySelector('[data-memo-composer-add]') as HTMLElement).click();
     await vi.waitFor(() => {
-      expect(document.querySelectorAll('.bz-todo-card').length).toBe(4);
+      expect(document.querySelectorAll('.bz-memo-card').length).toBe(4);
     });
     // 落盘验证
     const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
@@ -174,41 +174,41 @@ describe('todo 面板', () => {
 
   it('行内勾选完成：卡片移入已完成折叠区', async () => {
     const { app } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-check')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-check')).toBeTruthy();
     });
-    const firstCheck = document.querySelector('.bz-todo-check') as HTMLElement;
+    const firstCheck = document.querySelector('.bz-memo-check') as HTMLElement;
     firstCheck.click();
     // 300ms 防抖
     await new Promise((r) => setTimeout(r, 450));
     await vi.waitFor(() => {
-      expect(document.querySelectorAll('.bz-todo-card').length).toBe(2);
+      expect(document.querySelectorAll('.bz-memo-card').length).toBe(2);
     });
   });
 
   it('桌面尺寸记忆（ADR-0084）：有记忆值时打开即套用记忆宽高', async () => {
     const { app, settings } = seedVault();
-    settings.todoPanelWidth = 900;
-    settings.todoPanelHeight = 650;
-    openTodoPanel(app);
+    settings.memoPanelWidth = 900;
+    settings.memoPanelHeight = 650;
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-panel')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-panel')).toBeTruthy();
     });
-    const panel = document.querySelector('.bz-todo-panel') as HTMLElement;
+    const panel = document.querySelector('.bz-memo-panel') as HTMLElement;
     expect(panel.style.width).toBe('900px');
     expect(panel.style.height).toBe('650px');
   });
 
   it('桌面尺寸记忆（ADR-0084）：记忆值超视口 92% 时打开即钳到上限', async () => {
     const { app, settings } = seedVault();
-    settings.todoPanelWidth = 5000;
-    settings.todoPanelHeight = 5000;
-    openTodoPanel(app);
+    settings.memoPanelWidth = 5000;
+    settings.memoPanelHeight = 5000;
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-panel')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-panel')).toBeTruthy();
     });
-    const panel = document.querySelector('.bz-todo-panel') as HTMLElement;
+    const panel = document.querySelector('.bz-memo-panel') as HTMLElement;
     // jsdom 视口 1024×768 → 92% = 942×706
     expect(panel.style.width).toBe('942px');
     expect(panel.style.height).toBe('706px');
@@ -216,11 +216,11 @@ describe('todo 面板', () => {
 
   it('桌面尺寸记忆（ADR-0084）：拖动右缘 → 写回 settings 并保存', async () => {
     const { app, settings, saveSpy } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-panel')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-panel')).toBeTruthy();
     });
-    const panel = document.querySelector('.bz-todo-panel') as HTMLElement;
+    const panel = document.querySelector('.bz-memo-panel') as HTMLElement;
     // jsdom 无布局：mock rect 给面板真实尺寸（右缘在 x=720）
     const rect = { width: 720, height: 580, left: 0, top: 0 };
     panel.getBoundingClientRect = () => rect as DOMRect;
@@ -229,9 +229,9 @@ describe('todo 面板', () => {
     document.dispatchEvent(new MouseEvent('mousemove', { clientX: 900, clientY: 300, bubbles: true }));
     document.dispatchEvent(new MouseEvent('mouseup', { clientX: 900, clientY: 300, bubbles: true }));
     await vi.waitFor(() => {
-      expect(settings.todoPanelWidth).toBe(901);
+      expect(settings.memoPanelWidth).toBe(901);
     });
-    expect(settings.todoPanelHeight).toBe(580);
+    expect(settings.memoPanelHeight).toBe(580);
     // resize 落盘走 uiResizable persist 300ms trailing 防抖——等待防抖窗口后 save 被调用
     await vi.waitFor(() => {
       expect(saveSpy).toHaveBeenCalled();
@@ -240,15 +240,15 @@ describe('todo 面板', () => {
 
   it('移动端：不写内联宽高（满屏规则由 CSS 媒体查询接管，内联样式不再压成小卡）', async () => {
     const { app, settings } = seedVault();
-    settings.todoPanelWidth = 900;
-    settings.todoPanelHeight = 650;
+    settings.memoPanelWidth = 900;
+    settings.memoPanelHeight = 650;
     MockPlatform.isMobile = true;
     try {
-      openTodoPanel(app);
+      openMemoPanel(app);
       await vi.waitFor(() => {
-        expect(document.querySelector('.bz-todo-panel')).toBeTruthy();
+        expect(document.querySelector('.bz-memo-panel')).toBeTruthy();
       });
-      const panel = document.querySelector('.bz-todo-panel') as HTMLElement;
+      const panel = document.querySelector('.bz-memo-panel') as HTMLElement;
       expect(panel.style.width).toBe('');
       expect(panel.style.height).toBe('');
     } finally {
@@ -267,14 +267,14 @@ describe('todo 面板', () => {
       raw.forEach((r: any) => { r.due = null; });
       vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify(raw, null, 2));
     }
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-card')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-card')).toBeTruthy();
     });
     expect(M.sortMode).toBe('created');
     expect(M.showDone).toBe(true);
     // 按创建排序生效（created 降序：最新的「给影评加封面」在前）+ 已完成折叠区展开（4 卡全显）
-    const cards = document.querySelectorAll('.bz-todo-card');
+    const cards = document.querySelectorAll('.bz-memo-card');
     expect(cards.length).toBe(4);
     expect(cards[0].textContent).toContain('给影评加封面');
   });
@@ -283,39 +283,39 @@ describe('todo 面板', () => {
     const { app, settings } = seedVault();
     settings.memoSortMode = 'bogus';
     delete (settings as any).memoShowArchivedByDefault;
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-card')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-card')).toBeTruthy();
     });
     expect(M.sortMode).toBe('priority');
     expect(M.showDone).toBe(false);
     // 已完成折叠区默认收起：3 张未完成卡
-    expect(document.querySelectorAll('.bz-todo-card').length).toBe(3);
+    expect(document.querySelectorAll('.bz-memo-card').length).toBe(3);
   });
 
   it('搜索防抖 180ms：防抖窗口内不重渲，窗口后过滤生效（修复前每键全量重渲且注释称 250ms）', async () => {
     const { app } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelectorAll('.bz-todo-card').length).toBe(3);
+      expect(document.querySelectorAll('.bz-memo-card').length).toBe(3);
     });
-    const inp = document.querySelector('[data-todo-search]') as HTMLInputElement;
+    const inp = document.querySelector('[data-memo-search]') as HTMLInputElement;
     inp.value = 'ffmpeg';
     inp.dispatchEvent(new Event('input'));
     // 防抖窗口内：列表未过滤（仍 3 张未完成卡）
-    expect(document.querySelectorAll('.bz-todo-card').length).toBe(3);
+    expect(document.querySelectorAll('.bz-memo-card').length).toBe(3);
     await new Promise((r) => setTimeout(r, 250));
-    expect(document.querySelectorAll('.bz-todo-card').length).toBe(1);
-    expect(document.querySelectorAll('.bz-todo-card')[0].textContent).toContain('ffmpeg 转写参数整理');
+    expect(document.querySelectorAll('.bz-memo-card').length).toBe(1);
+    expect(document.querySelectorAll('.bz-memo-card')[0].textContent).toContain('ffmpeg 转写参数整理');
   });
 
   it('排序三档 = 浮岛 segmented（issue 199）：float 轨道 + 滑动指示器节点，切换写回设置', async () => {
     const { app, settings, saveSpy } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-sort] .bz-choice--float')).toBeTruthy();
+      expect(document.querySelector('[data-memo-sort] .bz-choice--float')).toBeTruthy();
     });
-    const track = document.querySelector('[data-todo-sort] .bz-choice--float') as HTMLElement;
+    const track = document.querySelector('[data-memo-sort] .bz-choice--float') as HTMLElement;
     // 三档 + 白卡指示器节点 + 默认「紧急优先」选中
     expect(track.querySelectorAll('.bz-choice-btn').length).toBe(3);
     expect(track.querySelector('.bz-choice-seg')).toBeTruthy();
@@ -332,46 +332,46 @@ describe('todo 面板', () => {
   });
 });
 
-describe('todo 编辑器', () => {
+describe('memo 编辑器', () => {
   beforeEach(() => {
     resetObsidianMocks();
-    resetTodoState();
+    resetMemoState();
     document.body.innerHTML = '';
     MockPlatform.isMobile = false;
   });
   afterEach(() => {
-    closeTodoPanel();
+    closeMemoPanel();
     document.body.innerHTML = '';
   });
 
-  it('addTodo：打开创建弹窗（无关闭按钮、有场景/优先级平铺）', async () => {
+  it('addMemo：打开创建弹窗（无关闭按钮、有场景/优先级平铺）', async () => {
     const { app } = seedVault();
-    addTodo(app);
+    addMemo(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-editor')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
     });
-    const editor = document.querySelector('.bz-todo-editor') as HTMLElement;
+    const editor = document.querySelector('.bz-memo-editor') as HTMLElement;
     // 场景平铺 = uiChoice（.bz-choice），选中 = 品牌（非黑）
     expect(editor.querySelectorAll('.bz-choice-btn').length).toBeGreaterThanOrEqual(8); // 6 场景 + 2 优先级
     // 平铺前无彩色圆点（.bz-choice-dot 不存在）
     expect(editor.querySelector('.bz-choice-dot')).toBeNull();
     // 第二输入框在场景平铺上方（第一个 extra 的 DOM 位置先于第一个 .bz-choice）
-    const extraEl = editor.querySelector('.bz-todo-extra') as HTMLElement;
+    const extraEl = editor.querySelector('.bz-memo-extra') as HTMLElement;
     const choiceEl = editor.querySelector('.bz-choice') as HTMLElement;
     expect(extraEl.compareDocumentPosition(choiceEl) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     // 默认场景 = 第一个（剪藏）→ 标题框显示
-    expect(editor.querySelector('.bz-todo-extra-on input')?.getAttribute('placeholder')).toBe('标题（可选）');
+    expect(editor.querySelector('.bz-memo-extra-on input')?.getAttribute('placeholder')).toBe('标题（可选）');
     // 无关闭按钮
     expect(editor.querySelector('.bz-icon-btn--close')).toBeNull();
   });
 
   it('编辑器浮岛选择 + 定位钮 F 款（issue 200 入库）：场景/优先级 float 轨道含指示器，定位钮带圆底图标', async () => {
     const { app } = seedVault();
-    addTodo(app);
+    addMemo(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-editor')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
     });
-    const editor = document.querySelector('.bz-todo-editor') as HTMLElement;
+    const editor = document.querySelector('.bz-memo-editor') as HTMLElement;
     // 场景 + 优先级两组浮岛 segmented（各含 1 枚白卡指示器节点）
     expect(editor.querySelectorAll('.bz-choice--float').length).toBe(2);
     expect(editor.querySelectorAll('.bz-choice--float > .bz-choice-seg').length).toBe(2);
@@ -384,32 +384,32 @@ describe('todo 编辑器', () => {
 
   it('场景切换联动：代码→脚本框；公开课→课程框', async () => {
     const { app } = seedVault();
-    addTodo(app);
+    addMemo(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-editor')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
     });
-    const editor = document.querySelector('.bz-todo-editor') as HTMLElement;
+    const editor = document.querySelector('.bz-memo-editor') as HTMLElement;
     const btns = editor.querySelectorAll('.bz-choice-btn');
     // 找到「代码」按钮点击
     const codeBtn = [...btns].find((b) => b.textContent === '代码') as HTMLElement;
     codeBtn.click();
-    const extras = editor.querySelectorAll('.bz-todo-extra');
+    const extras = editor.querySelectorAll('.bz-memo-extra');
     // 第二个 extra = 脚本框
     const scriptBox = extras[1] as HTMLElement;
-    expect(scriptBox.classList.contains('bz-todo-extra-on')).toBe(true);
+    expect(scriptBox.classList.contains('bz-memo-extra-on')).toBe(true);
     expect(scriptBox.querySelector('input')?.getAttribute('placeholder')).toBe('脚本名');
   });
 
   it('脚本联想框初始收起，聚焦才展开、失焦收起（issue 200 拍板：不再打开即铺满建议）', async () => {
     const { app } = seedVault(); // seed 条目 b 带 scriptName 'transcribe.py' → 建议数据源
-    addTodo(app);
+    addMemo(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-editor')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
     });
-    const editor = document.querySelector('.bz-todo-editor') as HTMLElement;
+    const editor = document.querySelector('.bz-memo-editor') as HTMLElement;
     const codeBtn = [...editor.querySelectorAll('.bz-choice-btn')].find((b) => b.textContent === '代码') as HTMLElement;
     codeBtn.click();
-    const scriptInput = editor.querySelectorAll('.bz-todo-extra')[1].querySelector('input') as HTMLInputElement;
+    const scriptInput = editor.querySelectorAll('.bz-memo-extra')[1].querySelector('input') as HTMLInputElement;
     // 初始无浮层（issue 200 焦点门控保留：不绑定即渲染）
     expect(editor.querySelector('.bz-popover')).toBeNull();
     // 聚焦展开：已有脚本名进入候选（issue 201 改 .bz-popover 下拉，同收藏本「关联笔记」）
@@ -424,20 +424,20 @@ describe('todo 编辑器', () => {
 
   it('脚本联想下拉：Escape 只收浮层不关弹窗；点候选回填输入框（issue 201）', async () => {
     const { app } = seedVault();
-    addTodo(app);
+    addMemo(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-editor')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
     });
-    const editor = document.querySelector('.bz-todo-editor') as HTMLElement;
+    const editor = document.querySelector('.bz-memo-editor') as HTMLElement;
     const codeBtn = [...editor.querySelectorAll('.bz-choice-btn')].find((b) => b.textContent === '代码') as HTMLElement;
     codeBtn.click();
-    const scriptInput = editor.querySelectorAll('.bz-todo-extra')[1].querySelector('input') as HTMLInputElement;
+    const scriptInput = editor.querySelectorAll('.bz-memo-extra')[1].querySelector('input') as HTMLInputElement;
     scriptInput.dispatchEvent(new Event('focus'));
     expect(editor.querySelector('.bz-popover')).not.toBeNull();
     // Escape 只收下拉（stopPropagation，弹窗还在）
     scriptInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(editor.querySelector('.bz-popover')).toBeNull();
-    expect(document.querySelector('.bz-todo-editor')).not.toBeNull();
+    expect(document.querySelector('.bz-memo-editor')).not.toBeNull();
     // 再聚焦 → 点候选回填
     scriptInput.dispatchEvent(new Event('focus'));
     const item = editor.querySelector('.bz-popover-item') as HTMLElement;
@@ -449,22 +449,22 @@ describe('todo 编辑器', () => {
 
   it('保存新建：写入 memo.json（含 scriptName 建议数据）', async () => {
     const { app, vault } = seedVault();
-    addTodo(app);
+    addMemo(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-editor')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
     });
-    const editor = document.querySelector('.bz-todo-editor') as HTMLElement;
+    const editor = document.querySelector('.bz-memo-editor') as HTMLElement;
     const contentInput = editor.querySelector('textarea') as HTMLTextAreaElement;
     contentInput.value = '测试脚本任务';
     // 切代码
     const codeBtn = [...editor.querySelectorAll('.bz-choice-btn')].find((b) => b.textContent === '代码') as HTMLElement;
     codeBtn.click();
-    const scriptInput = editor.querySelectorAll('.bz-todo-extra')[1].querySelector('input') as HTMLInputElement;
+    const scriptInput = editor.querySelectorAll('.bz-memo-extra')[1].querySelector('input') as HTMLInputElement;
     scriptInput.value = 'test.py';
     const saveBtn = [...editor.querySelectorAll('.bz-btn')].find((b) => b.textContent?.includes('添加')) as HTMLElement;
     saveBtn.click();
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-editor')).toBeNull();
+      expect(document.querySelector('.bz-memo-editor')).toBeNull();
     });
     const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
     expect(raw[0].title).toBe('测试脚本任务');
@@ -476,17 +476,17 @@ describe('todo 编辑器', () => {
     const { app, vault } = seedVault();
     // 公开课笔记（影视目录 + 公开课标签）→ getCourseNotes 数据源
     vault.files.set('我的/影视/动手学深度学习.md', '---\ntags: [公开课]\n---\n\n课程笔记');
-    addTodo(app);
+    addMemo(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-editor')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
     });
-    const editor = document.querySelector('.bz-todo-editor') as HTMLElement;
+    const editor = document.querySelector('.bz-memo-editor') as HTMLElement;
     const contentInput = editor.querySelector('textarea') as HTMLTextAreaElement;
     contentInput.value = '看完第三课';
     // 切公开课
     const courseBtn0 = [...editor.querySelectorAll('.bz-choice-btn')].find((b) => b.textContent === '公开课') as HTMLElement;
     courseBtn0.click();
-    const courseInput = editor.querySelectorAll('.bz-todo-extra')[2].querySelector('input') as HTMLInputElement;
+    const courseInput = editor.querySelectorAll('.bz-memo-extra')[2].querySelector('input') as HTMLInputElement;
     // 等异步课程建议装载后输入过滤
     courseInput.value = '动手学';
     courseInput.dispatchEvent(new Event('input'));
@@ -499,7 +499,7 @@ describe('todo 编辑器', () => {
     const saveBtn = [...editor.querySelectorAll('.bz-btn')].find((b) => b.textContent?.includes('添加')) as HTMLElement;
     saveBtn.click();
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-editor')).toBeNull();
+      expect(document.querySelector('.bz-memo-editor')).toBeNull();
     });
     const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
     expect(raw[0].scene).toBe('公开课');
@@ -510,15 +510,15 @@ describe('todo 编辑器', () => {
   it('公开课编辑：点建议回填 coursePath 落盘；清空课程名后 coursePath 一并清空', async () => {
     const { app, vault } = seedVault();
     vault.files.set('我的/影视/动手学深度学习.md', '---\ntags: [公开课]\n---\n\n课程笔记');
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
       expect(M.items.length).toBeGreaterThan(0);
     });
     // 编辑既有公开课条目 d（courseName《动手学深度学习》，无 coursePath）
     openEditor(M.items.find((i) => i.id === 'd')!);
-    let editor = document.querySelector('.bz-todo-editor') as HTMLElement;
+    let editor = document.querySelector('.bz-memo-editor') as HTMLElement;
     expect(editor).toBeTruthy();
-    const courseInput = editor.querySelectorAll('.bz-todo-extra')[2].querySelector('input') as HTMLInputElement;
+    const courseInput = editor.querySelectorAll('.bz-memo-extra')[2].querySelector('input') as HTMLInputElement;
     // 触发建议（异步课程建议装载后可见）→ 点笔记名建议（覆盖原书名号名）
     courseInput.value = '动手学';
     courseInput.dispatchEvent(new Event('input'));
@@ -531,20 +531,20 @@ describe('todo 编辑器', () => {
     const saveBtn = [...editor.querySelectorAll('.bz-btn')].find((b) => b.textContent?.includes('保存')) as HTMLElement;
     saveBtn.click();
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-editor')).toBeNull();
+      expect(document.querySelector('.bz-memo-editor')).toBeNull();
     });
     let raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
     expect(raw.find((r: any) => r.id === 'd').coursePath).toBe('我的/影视/动手学深度学习.md');
     // 再编辑：清掉课程名 → coursePath 一并清空（不残留旧 path）
-    M.items = await TodoData.loadItems();
+    M.items = await MemoData.loadItems();
     openEditor(M.items.find((i) => i.id === 'd')!);
-    editor = document.querySelector('.bz-todo-editor') as HTMLElement;
-    const courseInput2 = editor.querySelectorAll('.bz-todo-extra')[2].querySelector('input') as HTMLInputElement;
+    editor = document.querySelector('.bz-memo-editor') as HTMLElement;
+    const courseInput2 = editor.querySelectorAll('.bz-memo-extra')[2].querySelector('input') as HTMLInputElement;
     courseInput2.value = '';
     const saveBtn2 = [...editor.querySelectorAll('.bz-btn')].find((b) => b.textContent?.includes('保存')) as HTMLElement;
     saveBtn2.click();
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-editor')).toBeNull();
+      expect(document.querySelector('.bz-memo-editor')).toBeNull();
     });
     raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
     const dAfter = raw.find((r: any) => r.id === 'd');
@@ -553,31 +553,31 @@ describe('todo 编辑器', () => {
   });
 });
 
-describe('todo 添加场景', () => {
+describe('memo 添加场景', () => {
   beforeEach(() => {
     resetObsidianMocks();
-    resetTodoState();
+    resetMemoState();
     document.body.innerHTML = '';
     MockPlatform.isMobile = false;
   });
   afterEach(() => {
-    closeTodoPanel();
+    closeMemoPanel();
     document.body.innerHTML = '';
   });
 
   it('添加场景弹窗：输入新场景写入 memoScenarios 并即时生效', async () => {
     const { app, settings, saveSpy } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-addscene]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-addscene]')).toBeTruthy();
     });
-    (document.querySelector('[data-todo-addscene]') as HTMLElement).click();
+    (document.querySelector('[data-memo-addscene]') as HTMLElement).click();
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-addscene')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-addscene')).toBeTruthy();
     });
-    const wrap = document.querySelector('.bz-todo-addscene') as HTMLElement;
+    const wrap = document.querySelector('.bz-memo-addscene') as HTMLElement;
     // 结构（issue 199）：标题 + 满宽输入 + caption 提示行 + 右对齐按钮行
-    expect(wrap.querySelector('.bz-todo-addscene-hint')?.textContent).toContain('备忘录设置');
+    expect(wrap.querySelector('.bz-memo-addscene-hint')?.textContent).toContain('备忘录设置');
     expect(wrap.querySelector('.bz-btn-row')).toBeTruthy();
     const input = wrap.querySelector('.bz-input') as HTMLInputElement;
     input.value = '健身';
@@ -586,9 +586,9 @@ describe('todo 添加场景', () => {
       expect(saveSpy).toHaveBeenCalled();
     });
     expect(settings.memoScenarios).toContain('健身');
-    // 场景栏新增（saveSettings then → TodoData.init → refresh 渲染）
+    // 场景栏新增（saveSettings then → MemoData.init → refresh 渲染）
     await vi.waitFor(() => {
-      const navItems = document.querySelectorAll('[data-todo-scene]');
+      const navItems = document.querySelectorAll('[data-memo-scene]');
       const scenes = [...navItems].map((n) => n.textContent);
       expect(scenes.some((s) => s?.includes('健身'))).toBe(true);
     });
@@ -596,15 +596,15 @@ describe('todo 添加场景', () => {
 
   it('重复场景拦截：提示且不写入', async () => {
     const { app, settings, saveSpy } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-addscene]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-addscene]')).toBeTruthy();
     });
-    (document.querySelector('[data-todo-addscene]') as HTMLElement).click();
+    (document.querySelector('[data-memo-addscene]') as HTMLElement).click();
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-addscene')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-addscene')).toBeTruthy();
     });
-    const wrap = document.querySelector('.bz-todo-addscene') as HTMLElement;
+    const wrap = document.querySelector('.bz-memo-addscene') as HTMLElement;
     const input = wrap.querySelector('.bz-input') as HTMLInputElement;
     input.value = '学习'; // 已在默认场景
     (wrap.querySelector('.bz-btn--primary') as HTMLElement).click();
@@ -614,15 +614,15 @@ describe('todo 添加场景', () => {
   });
 });
 
-describe('todo 增强包（场景工作台已拍板项）', () => {
+describe('memo 增强包（场景工作台已拍板项）', () => {
   beforeEach(() => {
     resetObsidianMocks();
-    resetTodoState();
+    resetMemoState();
     document.body.innerHTML = '';
     MockPlatform.isMobile = false;
   });
   afterEach(() => {
-    closeTodoPanel();
+    closeMemoPanel();
     MockPlatform.isMobile = false;
     document.body.innerHTML = '';
   });
@@ -639,11 +639,11 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
 
   it('「重要」伪场景：跨场景聚合 star 条目（star 图标即前导元素，无色点——issue 197）', async () => {
     const { app } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-scene="重要"]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-scene="重要"]')).toBeTruthy();
     });
-    const impBtn = document.querySelector('[data-todo-scene="重要"]') as HTMLElement;
+    const impBtn = document.querySelector('[data-memo-scene="重要"]') as HTMLElement;
     // star 图标（mountIcons → setIcon mock 记 data-icon）即前导元素，原警示色点已删
     expect(impBtn.querySelector('[data-icon="star"]')).toBeTruthy();
     expect(impBtn.querySelector('.bz-rail-dot')).toBeNull();
@@ -651,22 +651,22 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
     expect(impBtn.querySelector('.bz-rail-count')?.textContent).toBe('1');
     impBtn.click();
     await vi.waitFor(() => {
-      const cards = document.querySelectorAll('.bz-todo-card');
+      const cards = document.querySelectorAll('.bz-memo-card');
       expect(cards.length).toBe(1);
       expect(cards[0].textContent).toContain('完成阅读报告');
     });
     // 主头行计数与伪场景同口径
-    expect((document.querySelector('[data-todo-main-count]') as HTMLElement).textContent).toContain('1 项');
+    expect((document.querySelector('[data-memo-main-count]') as HTMLElement).textContent).toContain('1 项');
   });
 
   it('场景栏前导元素（issue 197）：全部/今日/重要 = 图标，用户场景 = 场景色点；计数素数无药丸底', async () => {
     const { app } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-scene="学习"]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-scene="学习"]')).toBeTruthy();
     });
     // 伪场景图标：全部=layers / 今日=sun / 重要=star（警示色修饰类保留）
-    const lead = (scene: string) => document.querySelector(`[data-todo-scene="${scene}"]`) as HTMLElement;
+    const lead = (scene: string) => document.querySelector(`[data-memo-scene="${scene}"]`) as HTMLElement;
     expect(lead('全部').querySelector('[data-icon="layers"]')).toBeTruthy();
     expect(lead('今日').querySelector('[data-icon="sun"]')).toBeTruthy();
     expect(lead('重要').querySelector('[data-icon="star"]')!.classList.contains('bz-ic--warning')).toBe(true);
@@ -678,7 +678,7 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
     // 计数走素数档（无 --pill 药丸底，收藏式保留给 favorites）
     expect(lead('学习').querySelector('.bz-rail-count')!.classList.contains('bz-rail-count--pill')).toBe(false);
     // 移动横滑条同口径：伪场景图标 + 用户场景色点
-    const mob = (scene: string) => document.querySelector(`[data-todo-mob-scenes] [data-todo-scene="${scene}"]`) as HTMLElement;
+    const mob = (scene: string) => document.querySelector(`[data-memo-mob-scenes] [data-memo-scene="${scene}"]`) as HTMLElement;
     expect(mob('全部').querySelector('[data-icon="layers"]')).toBeTruthy();
     expect(mob('学习').querySelector('.bz-mobstrip-dot')).toBeTruthy();
   });
@@ -686,11 +686,11 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
   it('场景行头三槽（issue 200 拍板）：图标/emoji/彩圆统一槽宽；emoji 场景名剥首 emoji 显示', async () => {
     const { app, settings } = seedVault();
     settings.memoScenarios = '剪藏,工作,学习,生活,代码,公开课,🏠 家庭';
-    openTodoPanel(app);
+    openMemoPanel(app);
     // jsdom 选择器引擎对「emoji+空格」属性选择器失灵（浏览器正常），遍历 dataset 匹配
     const findRow = () =>
-      [...document.querySelectorAll('[data-todo-nav] [data-todo-scene]')]
-        .find((el) => el.getAttribute('data-todo-scene') === '🏠 家庭') as HTMLElement | undefined;
+      [...document.querySelectorAll('[data-memo-nav] [data-memo-scene]')]
+        .find((el) => el.getAttribute('data-memo-scene') === '🏠 家庭') as HTMLElement | undefined;
     await vi.waitFor(() => {
       expect(findRow()).toBeTruthy();
     });
@@ -700,68 +700,68 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
     expect(row.querySelector('.bz-rail-name')?.textContent).toBe('家庭');
     expect(row.querySelector('.bz-rail-dot')).toBeNull();
     // 无 emoji 的场景仍色点；点选后主头行标题同口径剥 emoji
-    expect((document.querySelector('[data-todo-scene="代码"] .bz-rail-dot') as HTMLElement)).toBeTruthy();
+    expect((document.querySelector('[data-memo-scene="代码"] .bz-rail-dot') as HTMLElement)).toBeTruthy();
     row.click();
     await vi.waitFor(() => {
-      expect((document.querySelector('[data-todo-main-title]') as HTMLElement).textContent).toBe('家庭');
+      expect((document.querySelector('[data-memo-main-title]') as HTMLElement).textContent).toBe('家庭');
     });
   });
 
-  it('头行钮组（issue 197）：品牌块 + 右侧设置/关闭；设置直达设置面板待办域，关闭即收面板', async () => {
+  it('头行钮组（issue 197）：品牌块 + 右侧设置/关闭；设置直达设置面板备忘录域，关闭即收面板', async () => {
     const { app } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-head-close]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-head-close]')).toBeTruthy();
     });
     // 品牌块图标 + 标题
     expect(document.querySelector('.bz-panel-brand [data-icon="list-checks"]')).toBeTruthy();
-    expect((document.querySelector('.bz-panel-title') as HTMLElement).textContent).toBe('待办');
+    expect((document.querySelector('.bz-panel-title') as HTMLElement).textContent).toBe('备忘录');
     // 设置钮 = 齿轮 settings（issue 200：settings-2 滑杆式改齿轮）
-    expect(document.querySelector('[data-todo-head-settings] [data-icon="settings"]')).toBeTruthy();
+    expect(document.querySelector('[data-memo-head-settings] [data-icon="settings"]')).toBeTruthy();
     // 关闭钮 → 面板收起
-    (document.querySelector('[data-todo-head-close]') as HTMLElement).click();
+    (document.querySelector('[data-memo-head-close]') as HTMLElement).click();
     expect(document.querySelector('.bz-panel-overlay')).toBeNull();
-    // 设置钮 → 关面板 + openSettingsPanel(app, 'todo') 直达待办设置项
-    openTodoPanel(app);
+    // 设置钮 → 关面板 + openSettingsPanel(app, 'memo') 直达备忘录设置项
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-head-settings]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-head-settings]')).toBeTruthy();
     });
-    (document.querySelector('[data-todo-head-settings]') as HTMLElement).click();
+    (document.querySelector('[data-memo-head-settings]') as HTMLElement).click();
     const { openSettingsPanel } = await import('../../src/settings-panel');
-    expect(openSettingsPanel).toHaveBeenCalledWith(app, 'todo');
+    expect(openSettingsPanel).toHaveBeenCalledWith(app, 'memo');
     expect(document.querySelector('.bz-panel-overlay')).toBeNull();
   });
 
   it('「添加场景」挂场景列表尾部（issue 197）：紧随 nav 之后随列表滚动，不再占底栏', async () => {
     const { app } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-addscene]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-addscene]')).toBeTruthy();
     });
-    const add = document.querySelector('[data-todo-addscene]') as HTMLElement;
+    const add = document.querySelector('[data-memo-addscene]') as HTMLElement;
     // 位置：.bz-rail-scroll 内、前一个兄弟 = 场景 nav（即紧贴最后一个场景之下）
     expect(add.closest('.bz-rail-scroll')).toBeTruthy();
-    expect(add.previousElementSibling?.hasAttribute('data-todo-nav')).toBe(true);
+    expect(add.previousElementSibling?.hasAttribute('data-memo-nav')).toBe(true);
     // 旧 .bz-rail-foot 底栏不再渲染
-    expect(document.querySelector('.bz-todo-panel .bz-rail-foot')).toBeNull();
+    expect(document.querySelector('.bz-memo-panel .bz-rail-foot')).toBeNull();
   });
 
   it('「今日」口径改只看今天：已完成区仅今天完成的，历史完成不显示', async () => {
     const { vault, app } = seedVault();
     pushItem(vault, { id: 'e', title: '今天补完的逾期项', scene: '生活', priority: 'minor', created: at(-1, '10:00'), completed: at(0, '09:00') });
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-scene="今日"]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-scene="今日"]')).toBeTruthy();
     });
-    (document.querySelector('[data-todo-scene="今日"]') as HTMLElement).click();
+    (document.querySelector('[data-memo-scene="今日"]') as HTMLElement).click();
     await vi.waitFor(() => {
       // 未完成：a/c 今天到期；昨天完成的 d 不再放行
-      expect(document.querySelectorAll('.bz-todo-card').length).toBe(2);
+      expect(document.querySelectorAll('.bz-memo-card').length).toBe(2);
     });
-    const bar = document.querySelector('.bz-todo-donebar') as HTMLElement;
+    const bar = document.querySelector('.bz-memo-donebar') as HTMLElement;
     bar.click();
     await vi.waitFor(() => {
-      const doneCards = document.querySelectorAll('.bz-todo-card.bz-todo-done');
+      const doneCards = document.querySelectorAll('.bz-memo-card.bz-memo-done');
       expect(doneCards.length).toBe(1); // 只有今天完成的 e
       expect(doneCards[0].textContent).toContain('今天补完的逾期项');
     });
@@ -771,17 +771,17 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
   it('「今日」与计数口径对齐：nav 徽标 = 主头行总项数（未完成到期 + 今天完成）', async () => {
     const { vault, app } = seedVault();
     pushItem(vault, { id: 'e', title: '今天补完的逾期项', scene: '生活', priority: 'minor', created: at(-1, '10:00'), completed: at(0, '09:00') });
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-scene="今日"]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-scene="今日"]')).toBeTruthy();
     });
-    (document.querySelector('[data-todo-scene="今日"]') as HTMLElement).click();
+    (document.querySelector('[data-memo-scene="今日"]') as HTMLElement).click();
     await vi.waitFor(() => {
-      expect(document.querySelectorAll('.bz-todo-card').length).toBe(2);
+      expect(document.querySelectorAll('.bz-memo-card').length).toBe(2);
     });
-    const navBtn = document.querySelector('[data-todo-scene="今日"]') as HTMLElement;
+    const navBtn = document.querySelector('[data-memo-scene="今日"]') as HTMLElement;
     expect(navBtn.querySelector('.bz-rail-count')?.textContent).toBe('3'); // a + c + e
-    const count = (document.querySelector('[data-todo-main-count]') as HTMLElement).textContent!;
+    const count = (document.querySelector('[data-memo-main-count]') as HTMLElement).textContent!;
     expect(count).toContain('3 项');
     expect(count).toContain('2 未完成');
   });
@@ -789,50 +789,50 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
   it('已完成折叠时间界：展开默认只列近 30 天，尾部「更早 N 条」放全', async () => {
     const { vault, app } = seedVault();
     pushItem(vault, { id: 'f', title: '四十天前的旧账', scene: '工作', priority: 'minor', created: at(-41, '10:00'), completed: at(-40, '10:00') });
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-donebar')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-donebar')).toBeTruthy();
     });
-    (document.querySelector('.bz-todo-donebar') as HTMLElement).click();
+    (document.querySelector('.bz-memo-donebar') as HTMLElement).click();
     await vi.waitFor(() => {
       // 展开：只列近 30 天（d 昨天 + e 今天注入前为 1 条 d），40 天前的 f 不列
-      const doneCards = document.querySelectorAll('.bz-todo-card.bz-todo-done');
+      const doneCards = document.querySelectorAll('.bz-memo-card.bz-memo-done');
       expect(doneCards.length).toBe(1);
       expect(doneCards[0].textContent).toContain('重看注意力机制');
       expect(document.body.textContent).not.toContain('四十天前的旧账');
     });
-    const more = document.querySelector('[data-todo-donemore]') as HTMLElement;
+    const more = document.querySelector('[data-memo-donemore]') as HTMLElement;
     expect(more.textContent).toContain('更早 1 条');
     more.click();
     await vi.waitFor(() => {
-      const doneCards = document.querySelectorAll('.bz-todo-card.bz-todo-done');
+      const doneCards = document.querySelectorAll('.bz-memo-card.bz-memo-done');
       expect(doneCards.length).toBe(2);
       expect(doneCards[1].textContent).toContain('四十天前的旧账');
     });
-    expect(document.querySelector('[data-todo-donemore]')).toBeNull();
+    expect(document.querySelector('[data-memo-donemore]')).toBeNull();
   });
 
   it('删除接撤销：三段式确认框 + notifyUndo 撤销后条目插回原位', async () => {
     const { vault, app } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-card[data-todo-id="b"]')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-card[data-memo-id="b"]')).toBeTruthy();
     });
     // 右键条目 b → 菜单 → 删除
-    const card = document.querySelector('.bz-todo-card[data-todo-id="b"]') as HTMLElement;
+    const card = document.querySelector('.bz-memo-card[data-memo-id="b"]') as HTMLElement;
     card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 20, clientY: 20 }));
     await vi.waitFor(() => {
       expect(document.querySelector('.bz-item-menu')).toBeTruthy();
     });
     clickMenuItem('删除');
-    // 三段式确认框：标题「删除待办」+ 问句（「」引号）+ 后果说明
+    // 三段式确认框：标题「删除备忘录」+ 问句（「」引号）+ 后果说明
     await vi.waitFor(() => {
       expect(document.getElementById('__shared_confirm_popup__')).toBeTruthy();
     });
     const popup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
-    expect(popup.querySelector('h4')?.textContent).toBe('删除待办');
+    expect(popup.querySelector('h4')?.textContent).toBe('删除备忘录');
     const msg = popup.querySelector('p')?.textContent || '';
-    expect(msg).toContain('确定删除待办「ffmpeg 转写参数整理」吗');
+    expect(msg).toContain('确定删除备忘录「ffmpeg 转写参数整理」吗');
     expect(msg).toContain('撤销');
     (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     await vi.waitFor(() => {
@@ -854,20 +854,20 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
 
   it('composer 补全半径：保存 toast 挂「补全」action 直开该条编辑器', async () => {
     const { app } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-composer-input]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-composer-input]')).toBeTruthy();
     });
-    const input = document.querySelector('[data-todo-composer-input]') as HTMLInputElement;
+    const input = document.querySelector('[data-memo-composer-input]') as HTMLInputElement;
     input.value = '带补全半径的录入';
-    (document.querySelector('[data-todo-composer-add]') as HTMLElement).click();
+    (document.querySelector('[data-memo-composer-add]') as HTMLElement).click();
     await vi.waitFor(() => {
       const act = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '补全');
       expect(act).toBeTruthy();
     });
     ([...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '补全') as HTMLElement).click();
     await vi.waitFor(() => {
-      const editor = document.querySelector('.bz-todo-editor') as HTMLElement;
+      const editor = document.querySelector('.bz-memo-editor') as HTMLElement;
       expect(editor).toBeTruthy();
       expect((editor.querySelector('textarea') as HTMLTextAreaElement).value).toBe('带补全半径的录入');
     });
@@ -876,19 +876,19 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
   it('录入当场可见：「今日」视图 composer 保存后新条目置顶出现（场景兜底 memoDefaultScene）', async () => {
     const { vault, app, settings } = seedVault();
     settings.memoDefaultScene = '代码'; // composer 场景缺省兜底 = 设置值
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-scene="今日"]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-scene="今日"]')).toBeTruthy();
     });
-    (document.querySelector('[data-todo-scene="今日"]') as HTMLElement).click();
+    (document.querySelector('[data-memo-scene="今日"]') as HTMLElement).click();
     await vi.waitFor(() => {
-      expect(document.querySelectorAll('.bz-todo-card').length).toBe(2);
+      expect(document.querySelectorAll('.bz-memo-card').length).toBe(2);
     });
-    const input = document.querySelector('[data-todo-composer-input]') as HTMLInputElement;
+    const input = document.querySelector('[data-memo-composer-input]') as HTMLInputElement;
     input.value = '临时记一笔';
-    (document.querySelector('[data-todo-composer-add]') as HTMLElement).click();
+    (document.querySelector('[data-memo-composer-add]') as HTMLElement).click();
     await vi.waitFor(() => {
-      const cards = [...document.querySelectorAll('.bz-todo-card')];
+      const cards = [...document.querySelectorAll('.bz-memo-card')];
       expect(cards.some((c) => c.textContent?.includes('临时记一笔'))).toBe(true); // 无到期也当场可见
     });
     // 场景兜底用 memoDefaultScene（非第一个场景）
@@ -896,25 +896,25 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
     expect(raw.find((r: any) => r.title === '临时记一笔').scene).toBe('代码');
   });
 
-  it('空态升级：.bz-empty 三件套（图标 + 一句话 + 「新建待办」动作按钮）', async () => {
+  it('空态升级：.bz-empty 三件套（图标 + 一句话 + 「新建备忘录」动作按钮）', async () => {
     const { app } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelectorAll('.bz-todo-card').length).toBe(3);
+      expect(document.querySelectorAll('.bz-memo-card').length).toBe(3);
     });
-    const inp = document.querySelector('[data-todo-search]') as HTMLInputElement;
+    const inp = document.querySelector('[data-memo-search]') as HTMLInputElement;
     inp.value = '绝对不存在的关键词';
     inp.dispatchEvent(new Event('input'));
     await new Promise((r) => setTimeout(r, 250));
     const empty = document.querySelector('.bz-empty') as HTMLElement;
     expect(empty).toBeTruthy();
     expect(empty.querySelector('.bz-empty-ic')).toBeTruthy();
-    expect(empty.querySelector('.bz-empty-title')?.textContent).toBe('没有匹配的待办');
+    expect(empty.querySelector('.bz-empty-title')?.textContent).toBe('没有匹配的备忘录');
     const cta = empty.querySelector('.bz-btn') as HTMLElement;
-    expect(cta.textContent).toContain('新建待办');
+    expect(cta.textContent).toContain('新建备忘录');
     cta.click();
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-editor')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
     });
   });
 
@@ -923,11 +923,11 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
     // 自定义场景（默认场景禁重命名/删除，issue 200；本条验证自定义场景全动作可用）
     settings.memoScenarios = '剪藏,工作,学习,生活,代码,公开课,副业';
     pushItem(vault, { id: 'g', title: '副业条目', scene: '副业', priority: 'minor', created: at(-1, '10:00'), completed: null });
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-nav] [data-todo-scene="副业"]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-nav] [data-memo-scene="副业"]')).toBeTruthy();
     });
-    const navBtn = document.querySelector('[data-todo-nav] [data-todo-scene="副业"]') as HTMLElement;
+    const navBtn = document.querySelector('[data-memo-nav] [data-memo-scene="副业"]') as HTMLElement;
     navBtn.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
     await vi.waitFor(() => {
       expect(document.querySelector('.bz-item-menu')).toBeTruthy();
@@ -939,9 +939,9 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
     // 重命名 副业 → 兼职：条目 scene 批量迁移 + memoScenarios 设置串更新（与旧 memo 共用）
     clickMenuItem('重命名');
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-addscene')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-addscene')).toBeTruthy();
     });
-    const wrap = document.querySelector('.bz-todo-addscene') as HTMLElement;
+    const wrap = document.querySelector('.bz-memo-addscene') as HTMLElement;
     const input = wrap.querySelector('.bz-input') as HTMLInputElement;
     expect(input.value).toBe('副业');
     input.value = '兼职';
@@ -953,17 +953,17 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
     expect(settings.memoScenarios).toBe('剪藏,工作,学习,生活,代码,公开课,兼职');
     // 左栏即时出现新场景名
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-scene="兼职"]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-scene="兼职"]')).toBeTruthy();
     });
   });
 
   it('默认场景禁重命名/删除（issue 200 拍板）：右键菜单仅剩设置直达', async () => {
     const { app } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-nav] [data-todo-scene="工作"]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-nav] [data-memo-scene="工作"]')).toBeTruthy();
     });
-    const navBtn = document.querySelector('[data-todo-nav] [data-todo-scene="工作"]') as HTMLElement;
+    const navBtn = document.querySelector('[data-memo-nav] [data-memo-scene="工作"]') as HTMLElement;
     navBtn.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
     await vi.waitFor(() => {
       expect(document.querySelector('.bz-item-menu')).toBeTruthy();
@@ -979,11 +979,11 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
     // 自定义场景（默认场景禁删除，issue 200）
     settings.memoScenarios = '剪藏,工作,学习,生活,代码,公开课,副业';
     pushItem(vault, { id: 'g', title: '副业条目', scene: '副业', priority: 'minor', created: at(-1, '10:00'), completed: null });
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('[data-todo-nav] [data-todo-scene="副业"]')).toBeTruthy();
+      expect(document.querySelector('[data-memo-nav] [data-memo-scene="副业"]')).toBeTruthy();
     });
-    const navBtn = document.querySelector('[data-todo-nav] [data-todo-scene="副业"]') as HTMLElement;
+    const navBtn = document.querySelector('[data-memo-nav] [data-memo-scene="副业"]') as HTMLElement;
     navBtn.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
     await vi.waitFor(() => {
       expect(document.querySelector('.bz-item-menu')).toBeTruthy();
@@ -995,7 +995,7 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
     const popup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
     const msg = popup.querySelector('p')?.textContent || '';
     expect(msg).toContain('确定删除场景「副业」吗');
-    expect(msg).toContain('1 条待办将迁入默认场景「剪藏」'); // memoDefaultScene 未设 → 兜底其余第一个
+    expect(msg).toContain('1 条备忘录将迁入默认场景「剪藏」'); // memoDefaultScene 未设 → 兜底其余第一个
     (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     await vi.waitFor(() => {
       const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
@@ -1006,15 +1006,15 @@ describe('todo 增强包（场景工作台已拍板项）', () => {
 
 });
 
-describe('待办×番茄联动（专注这个）', () => {
+describe('备忘录×番茄联动（专注这个）', () => {
   beforeEach(() => {
     resetObsidianMocks();
-    resetTodoState();
+    resetMemoState();
     document.body.innerHTML = '';
     MockPlatform.isMobile = false;
   });
   afterEach(() => {
-    closeTodoPanel();
+    closeMemoPanel();
     unloadPomodoro(); // 联动会拉起番茄钟域（动态 import），逐测清理
     MockPlatform.isMobile = false;
     document.body.innerHTML = '';
@@ -1024,13 +1024,13 @@ describe('待办×番茄联动（专注这个）', () => {
     return [...document.querySelectorAll('.bz-item-menu-item')] as HTMLElement[];
   }
 
-  it('未完成条目右键菜单含「专注这个」；点击直接开始归属该待办的专注', async () => {
+  it('未完成条目右键菜单含「专注这个」；点击直接开始归属该备忘录的专注', async () => {
     const { app, vault } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-card[data-todo-id="b"]')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-card[data-memo-id="b"]')).toBeTruthy();
     });
-    const card = document.querySelector('.bz-todo-card[data-todo-id="b"]') as HTMLElement;
+    const card = document.querySelector('.bz-memo-card[data-memo-id="b"]') as HTMLElement;
     card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 20, clientY: 20 }));
     await vi.waitFor(() => {
       expect(document.querySelector('.bz-item-menu')).toBeTruthy();
@@ -1054,15 +1054,15 @@ describe('待办×番茄联动（专注这个）', () => {
 
   it('已完成条目右键菜单不含「专注这个」', async () => {
     const { app } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-donebar')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-donebar')).toBeTruthy();
     });
-    (document.querySelector('.bz-todo-donebar') as HTMLElement).click(); // 展开已完成折叠区
+    (document.querySelector('.bz-memo-donebar') as HTMLElement).click(); // 展开已完成折叠区
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-card.bz-todo-done')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-card.bz-memo-done')).toBeTruthy();
     });
-    const card = document.querySelector('.bz-todo-card.bz-todo-done') as HTMLElement;
+    const card = document.querySelector('.bz-memo-card.bz-memo-done') as HTMLElement;
     card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 20, clientY: 20 }));
     await vi.waitFor(() => {
       expect(document.querySelector('.bz-item-menu')).toBeTruthy();
@@ -1072,33 +1072,33 @@ describe('待办×番茄联动（专注这个）', () => {
   });
 });
 
-describe('待办面板皮肤（issue 210）', () => {
+describe('备忘录面板皮肤（issue 210）', () => {
   beforeEach(() => {
     resetObsidianMocks();
-    resetTodoState();
+    resetMemoState();
     document.body.innerHTML = '';
     MockPlatform.isMobile = false;
   });
   afterEach(() => {
-    closeTodoPanel();
+    closeMemoPanel();
     MockPlatform.isMobile = false;
     document.body.innerHTML = '';
   });
 
   it('设置 schema：外观组置顶（布局占位单卡 + 面板主题两肤，layoutKey 联动同范式）', async () => {
     const { app } = seedVault();
-    const { todoSettingsSchema } = await import('../../src/todo/settings');
-    const schema = todoSettingsSchema();
+    const { memoSettingsSchema } = await import('../../src/memo/settings');
+    const schema = memoSettingsSchema();
     expect(schema.groups[0].name).toBe('外观');
     const [layout, theme] = schema.groups[0].rows as any[];
     expect(layout.type).toBe('choiceCards');
-    expect(layout.binding).toMatchObject({ key: 'todoLayout' });
+    expect(layout.binding).toMatchObject({ key: 'memoLayout' });
     expect(layout.options).toHaveLength(1);
     expect(layout.options[0].value).toBe('default');
     expect(theme.type).toBe('choiceCards');
     expect(theme.name).toBe('面板主题');
-    expect(theme.binding).toMatchObject({ key: 'todoSkin' });
-    expect(theme.layoutKey).toBe('todoLayout');
+    expect(theme.binding).toMatchObject({ key: 'memoSkin' });
+    expect(theme.layoutKey).toBe('memoLayout');
     expect(theme.options.map((o: any) => o.value)).toEqual(['paper', 'editorial']);
     expect(theme.options.every((o: any) => o.layout === 'default')).toBe(true);
     // 显示组不再含皮肤行
@@ -1107,90 +1107,90 @@ describe('待办面板皮肤（issue 210）', () => {
     void app;
   });
 
-  it('打开面板按 todoSkin 挂皮肤类；未知/缺省值回落纸感（默认风格已下线）', async () => {
+  it('打开面板按 memoSkin 挂皮肤类；未知/缺省值回落纸感（默认风格已下线）', async () => {
     const { app, settings } = seedVault();
-    settings.todoSkin = 'paper';
-    openTodoPanel(app);
-    expect(document.querySelector('.bz-todo-panel')!.classList.contains('bz-todo-skin-paper')).toBe(true);
-    closeTodoPanel();
+    settings.memoSkin = 'paper';
+    openMemoPanel(app);
+    expect(document.querySelector('.bz-memo-panel')!.classList.contains('bz-memo-skin-paper')).toBe(true);
+    closeMemoPanel();
 
-    resetTodoState();
-    settings.todoSkin = 'editorial';
-    openTodoPanel(app);
-    expect(document.querySelector('.bz-todo-panel')!.classList.contains('bz-todo-skin-editorial')).toBe(true);
-    closeTodoPanel();
+    resetMemoState();
+    settings.memoSkin = 'editorial';
+    openMemoPanel(app);
+    expect(document.querySelector('.bz-memo-panel')!.classList.contains('bz-memo-skin-editorial')).toBe(true);
+    closeMemoPanel();
 
-    resetTodoState();
-    settings.todoSkin = 'default';
-    openTodoPanel(app);
-    const panel = document.querySelector('.bz-todo-panel') as HTMLElement;
-    expect(panel.classList.contains('bz-todo-skin-paper')).toBe(true);
-    expect(panel.classList.contains('bz-todo-skin-editorial')).toBe(false);
+    resetMemoState();
+    settings.memoSkin = 'default';
+    openMemoPanel(app);
+    const panel = document.querySelector('.bz-memo-panel') as HTMLElement;
+    expect(panel.classList.contains('bz-memo-skin-paper')).toBe(true);
+    expect(panel.classList.contains('bz-memo-skin-editorial')).toBe(false);
   });
 
-  it('主头行计数数字包 .bz-todo-cnt-num（皮肤染色钩子）', async () => {
+  it('主头行计数数字包 .bz-memo-cnt-num（皮肤染色钩子）', async () => {
     const { app } = seedVault();
-    openTodoPanel(app);
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelectorAll('[data-todo-main-count] .bz-todo-cnt-num').length).toBe(2);
+      expect(document.querySelectorAll('[data-memo-main-count] .bz-memo-cnt-num').length).toBe(2);
     });
-    const nums = document.querySelectorAll('[data-todo-main-count] .bz-todo-cnt-num');
+    const nums = document.querySelectorAll('[data-memo-main-count] .bz-memo-cnt-num');
     expect(nums[0].textContent).toBe('4');
     expect(nums[1].textContent).toBe('3');
   });
 
-  it('弹窗换肤：todoSkin=paper 时编辑器弹窗 popup 挂皮肤类；default 不挂', async () => {
+  it('弹窗换肤：memoSkin=paper 时编辑器弹窗 popup 挂皮肤类；default 不挂', async () => {
     const { app, settings } = seedVault();
-    settings.todoSkin = 'paper';
-    openTodoPanel(app);
+    settings.memoSkin = 'paper';
+    openMemoPanel(app);
     openEditor(M.items.find((i) => i.id === 'a')!);
     const popup = document.querySelector('.bz-overlay-popup') as HTMLElement;
     expect(popup).toBeTruthy();
-    expect(popup.classList.contains('bz-todo-skin-paper')).toBe(true);
+    expect(popup.classList.contains('bz-memo-skin-paper')).toBe(true);
     document.querySelector('.bz-overlay-mask')!.remove();
-    closeTodoPanel();
+    closeMemoPanel();
 
-    resetTodoState();
+    resetMemoState();
     document.body.innerHTML = '';
-    settings.todoSkin = 'default';
-    openTodoPanel(app);
+    settings.memoSkin = 'default';
+    openMemoPanel(app);
     openEditor(M.items.find((i) => i.id === 'a')!);
     const popup2 = document.querySelector('.bz-overlay-popup') as HTMLElement;
-    expect(popup2.classList.contains('bz-todo-skin-paper')).toBe(false);
-    expect(popup2.classList.contains('bz-todo-skin-editorial')).toBe(false);
+    expect(popup2.classList.contains('bz-memo-skin-paper')).toBe(false);
+    expect(popup2.classList.contains('bz-memo-skin-editorial')).toBe(false);
   });
 
-  it('applyTodoSkin 热切换已开面板；未知值回落纸感（默认风格已下线）', async () => {
+  it('applyMemoSkin 热切换已开面板；未知值回落纸感（默认风格已下线）', async () => {
     const { app } = seedVault();
-    openTodoPanel(app);
-    const panel = document.querySelector('.bz-todo-panel') as HTMLElement;
-    applyTodoSkin('paper');
-    expect(panel.classList.contains('bz-todo-skin-paper')).toBe(true);
-    applyTodoSkin('editorial');
-    expect(panel.classList.contains('bz-todo-skin-paper')).toBe(false);
-    expect(panel.classList.contains('bz-todo-skin-editorial')).toBe(true);
-    applyTodoSkin('default');
-    expect(panel.classList.contains('bz-todo-skin-editorial')).toBe(false);
-    expect(panel.classList.contains('bz-todo-skin-paper')).toBe(true);
+    openMemoPanel(app);
+    const panel = document.querySelector('.bz-memo-panel') as HTMLElement;
+    applyMemoSkin('paper');
+    expect(panel.classList.contains('bz-memo-skin-paper')).toBe(true);
+    applyMemoSkin('editorial');
+    expect(panel.classList.contains('bz-memo-skin-paper')).toBe(false);
+    expect(panel.classList.contains('bz-memo-skin-editorial')).toBe(true);
+    applyMemoSkin('default');
+    expect(panel.classList.contains('bz-memo-skin-editorial')).toBe(false);
+    expect(panel.classList.contains('bz-memo-skin-paper')).toBe(true);
     // 面板未开时调用不抛错（仅落盘路径）
-    closeTodoPanel();
-    expect(() => applyTodoSkin('paper')).not.toThrow();
+    closeMemoPanel();
+    expect(() => applyMemoSkin('paper')).not.toThrow();
   });
 
-  it('右键菜单随皮肤换肤：todoSkin=paper 时菜单根挂皮肤类（issue 210 四轮）', async () => {
+  it('右键菜单随皮肤换肤：memoSkin=paper 时菜单根挂皮肤类（issue 210 四轮）', async () => {
     const { app, settings } = seedVault();
-    settings.todoSkin = 'editorial';
-    openTodoPanel(app);
+    settings.memoSkin = 'editorial';
+    openMemoPanel(app);
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-todo-card')).toBeTruthy();
+      expect(document.querySelector('.bz-memo-card')).toBeTruthy();
     });
-    const card = document.querySelector('.bz-todo-card') as HTMLElement;
+    const card = document.querySelector('.bz-memo-card') as HTMLElement;
     card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 20, clientY: 20 }));
     await vi.waitFor(() => {
       expect(document.querySelector('.bz-item-menu')).toBeTruthy();
     });
     const menu = document.querySelector('.bz-item-menu') as HTMLElement;
-    expect(menu.classList.contains('bz-todo-skin-editorial')).toBe(true);
-    expect(menu.classList.contains('bz-todo-skin-paper')).toBe(false);
+    expect(menu.classList.contains('bz-memo-skin-editorial')).toBe(true);
+    expect(menu.classList.contains('bz-memo-skin-paper')).toBe(false);
   });
 });

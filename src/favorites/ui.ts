@@ -420,7 +420,7 @@ function appOf(): any {
 function openExternal(url: string): void {
   const app = appOf();
   try {
-    // 不带 ?.：openUrl 缺失时抛 TypeError 落 catch 走 electron 兜底（与 todo/literature 写法对齐）
+    // 不带 ?.：openUrl 缺失时抛 TypeError 落 catch 走 electron 兜底（与 memo/literature 写法对齐）
     (app as any).openUrl(url);
   } catch (e) {
     const electron = (window as any).require && (window as any).require('electron');

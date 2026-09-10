@@ -13,8 +13,8 @@
  *              无观影日期而笔记创建在今天 → 「加入片单」
  *  - bookshelf 书架墙 md + EPUB：completionDate=今天 → 「读完」；在读且笔记改动在今天
  *              → 「读到 N%」（进度无历史记录，mtime 是唯一可测信号，口径从宽）
- *  - todo      memo.json（todo 同源直读，不依赖 DataManager 单例、不触发补写）：
- *              completed/created 落今天 → 「完成 / 新增待办」
+ *  - memo      memo.json（memo 同源直读，不依赖 DataManager 单例、不触发补写）：
+ *              completed/created 落今天 → 「完成 / 新增备忘录」
  *  - pomodoro  pomodoro.json history：完成时刻落今天 → 专注区间（ts=完成时刻，
  *              实际区间 [ts-duration, ts]，归属任务名带上）
  */
@@ -28,7 +28,7 @@ import { STATUS_WATCHED, getStarString } from '../cinema/constants';
 import { scanMarkdownBooks, loadEpubItems } from '../bookshelf/data';
 
 /** 痕迹归属域（与 DOMAIN_ICONS 键一致） */
-export type RecapDomain = 'diary' | 'cinema' | 'bookshelf' | 'todo' | 'pomodoro';
+export type RecapDomain = 'diary' | 'cinema' | 'bookshelf' | 'memo' | 'pomodoro';
 
 /** 时间轴一条痕迹：时刻 + 域 + 一句话（域图标/域名前缀由渲染层拼装） */
 export interface RecapItem {
@@ -49,8 +49,8 @@ export interface RecapSummary {
   movies: number;
   /** 今日书（读完/有进度，同一本只计一次） */
   books: number;
-  /** 今日完成待办 */
-  todoDone: number;
+  /** 今日完成备忘录 */
+  memoDone: number;
   /** 今日番茄个数 */
   pomodoros: number;
   /** 今日专注分钟数（duration 秒求和四舍五入折分） */
@@ -61,7 +61,7 @@ export const EMPTY_SUMMARY: RecapSummary = {
   diary: 0,
   movies: 0,
   books: 0,
-  todoDone: 0,
+  memoDone: 0,
   pomodoros: 0,
   pomodoroMinutes: 0,
 };
@@ -88,8 +88,8 @@ export interface RecapSources {
   movies: Array<{ name: string; watched: boolean; rating: number | null; ts: number }>;
   /** 读书痕迹：finished=读完；否则带进度 */
   books: Array<{ title: string; finished: boolean; progress: number | null; ts: number }>;
-  /** 待办痕迹：done=完成；否则=新增 */
-  todos: Array<{ title: string; done: boolean; ts: number }>;
+  /** 备忘录痕迹：done=完成；否则=新增 */
+  memos: Array<{ title: string; done: boolean; ts: number }>;
   /** 番茄痕迹：ts=完成时刻，duration 秒 */
   pomodoros: Array<{ task: string | null; duration: number; ts: number }>;
 }
@@ -98,7 +98,7 @@ export const EMPTY_SOURCES: RecapSources = {
   diaryTimes: [],
   movies: [],
   books: [],
-  todos: [],
+  memos: [],
   pomodoros: [],
 };
 
@@ -113,7 +113,7 @@ export function todayRange(anchor: number): DayRange {
 
 /** 'YYYY-MM-DD[ HH:mm[:ss]]' 日期串 → 本地毫秒（无时间部分取 0 点；非法返回 null）。
  *  刻意不走 new Date(str)：'YYYY-MM-DD' 会被按 UTC 解析，时区西移处周边界漂移一天
- *  （同 home/weekly.ts parseLocalDay 的坑；此处扩展出时间部分供待办完成时刻排序） */
+ *  （同 home/weekly.ts parseLocalDay 的坑；此处扩展出时间部分供备忘录完成时刻排序） */
 export function parseLocalDateTime(s: unknown): number | null {
   const m = /^\s*(\d{4})-(\d{1,2})-(\d{1,2})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2}))?)?/.exec(String(s ?? ''));
   if (!m) return null;
@@ -206,14 +206,14 @@ export function buildRecap(
     }
   }
 
-  // 待办：完成 / 新增
-  for (const t of sources.todos) {
+  // 备忘录：完成 / 新增
+  for (const t of sources.memos) {
     const ts = clampToDay(t.ts, range);
     if (t.done) {
-      summary.todoDone++;
-      items.push({ domain: 'todo', ts, timeLabel: fmtHM(ts), text: `完成『${t.title}』` });
+      summary.memoDone++;
+      items.push({ domain: 'memo', ts, timeLabel: fmtHM(ts), text: `完成『${t.title}』` });
     } else {
-      items.push({ domain: 'todo', ts, timeLabel: fmtHM(ts), text: `新增待办『${t.title}』` });
+      items.push({ domain: 'memo', ts, timeLabel: fmtHM(ts), text: `新增备忘录『${t.title}』` });
     }
   }
 
@@ -287,7 +287,7 @@ export async function collectRecap(app: App, now: number = Date.now()): Promise<
     diaryTimes: [],
     movies: [],
     books: [],
-    todos: [],
+    memos: [],
     pomodoros: [],
   };
 
@@ -350,7 +350,7 @@ export async function collectRecap(app: App, now: number = Date.now()): Promise<
     failed.push('bookshelf');
   }
 
-  // 待办：memo.json 直读（todo 同源；不依赖 DataManager 单例初始化，文件缺失不建）
+  // 备忘录：memo.json 直读（memo 同源；不依赖 DataManager 单例初始化，文件缺失不建）
   try {
     const raw = await readJsonIfExists(app, storageFile('memo.json'));
     const all = Array.isArray(raw) ? (raw as Array<Record<string, unknown>>) : [];
@@ -358,12 +358,12 @@ export async function collectRecap(app: App, now: number = Date.now()): Promise<
       const title = typeof it?.title === 'string' ? it.title : '';
       if (!title) continue;
       const done = parseLocalDateTime(it.completed);
-      if (done !== null && inRange(done, range)) sources.todos.push({ title, done: true, ts: done });
+      if (done !== null && inRange(done, range)) sources.memos.push({ title, done: true, ts: done });
       const created = parseLocalDateTime(it.created);
-      if (created !== null && inRange(created, range)) sources.todos.push({ title, done: false, ts: created });
+      if (created !== null && inRange(created, range)) sources.memos.push({ title, done: false, ts: created });
     }
   } catch {
-    failed.push('todo');
+    failed.push('memo');
   }
 
   // 番茄：pomodoro.json history（文件缺失不建文件；直读不走 DataManager 防坏文件触发留档重建）

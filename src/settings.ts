@@ -62,17 +62,17 @@ export default interface BzSettings {
   /** 上次选择的目标文件夹（文件夹选择器默认值） */
   attachLastFolder: string;
 
-  // ===== 📝 待办（memo.json 共享键）=====
+  // ===== 📝 备忘录（memo.json 共享键）=====
   /** 🚀 启动时自动弹出：启动时若存在未完成的重要或到期备忘录，自动弹出面板提醒 */
   autoPopupOnStart: boolean;
   /** 🔔 打开笔记自动提醒：打开笔记时若该笔记有重要/到期未完成备忘录，自动弹出面板 */
   openNoteReminder: boolean;
-  /** 🪟 待办面板桌面尺寸记忆（ADR-0084：拖动缩放后记住宽高；0 = 未拖过走默认 720×580） */
-  todoPanelWidth: number;
-  todoPanelHeight: number;
-  /** 🎨 待办面板皮肤（issue 210）：paper（纸感手账）/ editorial（编辑部）；未知值按纸感渲染（issue 210 四轮：默认风格下线） */
-  todoSkin: string;
-  todoLayout: string;
+  /** 🪟 备忘录面板桌面尺寸记忆（ADR-0084：拖动缩放后记住宽高；0 = 未拖过走默认 720×580） */
+  memoPanelWidth: number;
+  memoPanelHeight: number;
+  /** 🎨 备忘录面板皮肤（issue 210）：paper（纸感手账）/ editorial（编辑部）；未知值按纸感渲染（issue 210 四轮：默认风格下线） */
+  memoSkin: string;
+  memoLayout: string;
   /** 🏷️ 场景列表（逗号分隔，空则内置默认：剪藏,工作,学习,生活,代码,公开课） */
   memoScenarios: string;
   /** 🔀 默认排序方式：priority（紧急优先）/ due（仅到期）/ created（创建时间） */
@@ -339,7 +339,7 @@ export default interface BzSettings {
   // 只决定每次打开的初始形态；默认值=行为保持（原移动端即全屏→开，原居中卡→关）。
   // 阅读报告跟随书架墙键（2026-08 用户拍板，不设独立开关）。
   /** 日记本：移动端默认全屏（默认开——原 ≤480px 即全屏，480-768 原抽屉形态） */
-  /** 待办（todo 新域）：移动端默认全屏（默认关——与旧备忘录一致） */
+  /** 备忘录（memo 新域）：移动端默认全屏（默认关——与旧备忘录一致） */
   /** 归物本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   /** 收藏本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   /** 收藏本：列表排序键（created=创建时间最新优先 / title=标题；toolbar 排序循环钮读写。
@@ -440,6 +440,24 @@ export default interface BzSettings {
   /** 回忆墙：移动端默认全屏（默认开——回忆墙为媒体优先瀑布流，移动端真全屏设计） */
 }
 
+/** issue 260 正名一次性迁移：旧 todo* 面板设置键 → memo*（读旧写新删旧；键缺失不写） */
+const MEMO_KEY_MIGRATIONS: Array<[string, string]> = [
+  ['todoPanelWidth', 'memoPanelWidth'],
+  ['todoPanelHeight', 'memoPanelHeight'],
+  ['todoSkin', 'memoSkin'],
+  ['todoLayout', 'memoLayout'],
+];
+
+/** onload 对 loadData 原始对象就地迁移，随后才与 DEFAULT_SETTINGS 合并 */
+export function migrateMemoSettingKeys(raw: unknown): void {
+  if (!raw || typeof raw !== 'object') return;
+  const rec = raw as Record<string, unknown>;
+  for (const [from, to] of MEMO_KEY_MIGRATIONS) {
+    if (rec[from] !== undefined && rec[to] === undefined) rec[to] = rec[from];
+    delete rec[from];
+  }
+}
+
 export const DEFAULT_SETTINGS: BzSettings = {
   // AI 全局
   aiProvider: 'opencode-go',
@@ -480,11 +498,11 @@ export const DEFAULT_SETTINGS: BzSettings = {
   memoDefaultPriority: 'minor',
   memoDefaultScene: '',
   memoDueFormat: 'relative',
-  // 待办面板桌面尺寸记忆（ADR-0084；0=未拖过，打开走默认 720×580）
-  todoPanelWidth: 0,
-  todoPanelHeight: 0,
-  todoSkin: 'paper',
-  todoLayout: 'default',
+  // 备忘录面板桌面尺寸记忆（ADR-0084；0=未拖过，打开走默认 720×580）
+  memoPanelWidth: 0,
+  memoPanelHeight: 0,
+  memoSkin: 'paper',
+  memoLayout: 'default',
 
   // 日记本
   diaryDirectory: '我的/日记',

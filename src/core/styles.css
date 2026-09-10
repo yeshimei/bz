@@ -46,7 +46,7 @@
 /* 头行：16px 24px 10px（上/左右/下——头部到底部列表的间距统一 10px），行内两端对齐、间距 8 */
 .bz-win-head,
 .diary-popup-header,
-.bz-todo-head,
+.bz-memo-head,
 .fav-header,
 .bz-lib-header,
 .bz-lib-modal-header,
@@ -61,7 +61,7 @@
 /* 头行按钮容器：统一 8px 间距、垂直居中 */
 .bz-win-head > div,
 .diary-popup-header > div,
-.bz-todo-head-btns,
+.bz-memo-head-btns,
 .fav-header > div,
 .bz-lib-header-btns,
 .bz-encrypt-head-btns {
@@ -72,7 +72,7 @@
 /* 头行按钮：统一 22×26/14px、透明、无阴影无边框、圆角 4、text-muted；hover 统一背景 */
 .bz-win-head button,
 .diary-popup-header button,
-.bz-todo-head-btns button,
+.bz-memo-head-btns button,
 .fav-header button,
 .bz-lib-header-btns button,
 .bz-lib-modal-header button,
@@ -95,7 +95,7 @@
 }
 .bz-win-head button:hover,
 .diary-popup-header button:hover,
-.bz-todo-head-btns button:hover,
+.bz-memo-head-btns button:hover,
 .fav-header button:hover,
 .bz-lib-header-btns button:hover,
 .bz-lib-modal-header button:hover,

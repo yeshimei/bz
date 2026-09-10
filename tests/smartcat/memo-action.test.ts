@@ -137,7 +137,7 @@ describe('maybeMemoDueScan（每日到期扫描）', () => {
     expect(last.source).toBe('memo');
     expect(last.type).toBe('due');
     expect(last.metadata.entityType).toBe('task');
-    expect(last.metadata.extras.text).toBe('你有 2 个待办今天到期：写周报（18:00）、买菜（20:30）');
+    expect(last.metadata.extras.text).toBe('你有 2 个备忘录今天到期：写周报（18:00）、买菜（20:30）');
     expect(data.editingData.dueScan).toEqual({ date: '2026-08-25' });
   });
 
@@ -208,7 +208,7 @@ describe('maybeMemoDueScan（每日到期扫描）', () => {
     await maybeMemoDueScan(DAY2);
     await settle();
     const beh: any[] = data.memory.behaviorStream;
-    expect(beh[beh.length - 1].metadata.extras.text).toBe('你有 1 个待办今天到期：写周报（18:00）');
+    expect(beh[beh.length - 1].metadata.extras.text).toBe('你有 1 个备忘录今天到期：写周报（18:00）');
     expect(data.editingData.dueScan).toEqual({ date: '2026-08-26' });
   });
 
@@ -226,6 +226,6 @@ describe('maybeMemoDueScan（每日到期扫描）', () => {
     expect(data.editingData.dueScan).toEqual({ date: '2026-08-25' });
     const memoDueOnes = data.memory.behaviorStream.filter((b: any) => b.source === 'memo' && b.type === 'due');
     expect(memoDueOnes.length).toBe(1);
-    expect(memoDueOnes[0].metadata.extras.text).toBe('你有 1 个待办今天到期：写周报（18:00）');
+    expect(memoDueOnes[0].metadata.extras.text).toBe('你有 1 个备忘录今天到期：写周报（18:00）');
   });
 });
