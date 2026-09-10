@@ -263,3 +263,80 @@
   .bz-q-fitem { padding: var(--bz-space-xs) 0; }
   .bz-review-bar-btn { padding: 10px var(--bz-space-md); }
 }
+
+/* ==================== quiz-core 会话弹窗样式恢复（issue 270） ====================
+   quiz 并入 review（9c603ed7）时 src/quiz/styles.css 96 行被删未迁入，本节恢复。
+   token 对档（core/ui/tokens.css）：--background-primary/secondary → --bz-surface-2/1、
+   --text-normal → --bz-text-1、--background-modifier-border/hover → --bz-border/--bz-surface-hover、
+   --interactive-accent/--text-on-accent → --bz-brand/--bz-on-brand；
+   对错硬编码绿/红 → --bz-success/--bz-danger（15% 透底改 color-mix 等价）；
+   毛玻璃按 ui-design-manual「明确不采用」去除，遮罩用 --bz-overlay；
+   弹窗壳规格对齐组件库 modal（--bz-radius-md / --bz-shadow-lg / 82vh 限高）。
+   该入口现休眠（产品走 SprintSession），样式补齐不退役、不改 DOM。
+   原文件尾 @keyframes spin 无消费者（旧 loading 界面随普通模式删除），不迁。 */
+#quiz-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bz-overlay); display: flex; align-items: center; justify-content: center; }
+#quiz-popup { background: var(--bz-surface-2); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); padding: 24px; max-width: 600px; width: 90%; max-height: 82vh; overflow-y: auto; display: flex; flex-direction: column; position: relative; transition: none; }
+.bz-quiz-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.bz-quiz-title { font-size: 15px; font-weight: 600; }
+.bz-quiz-question { font-size: 17px; font-weight: 500; margin-bottom: 20px; color: var(--bz-text-1); }
+.bz-quiz-options { display: flex; flex-direction: column; gap: 6px; }
+.bz-quiz-option-text { flex: 1; }
+.quiz-option-btn {
+  padding:10px 14px;
+  border:1px solid var(--bz-border);
+  border-radius:6px;
+  background:var(--bz-surface-1);
+  text-align:left;
+  cursor:pointer;
+  font-size:15px;
+  transition:background 0.2s;
+  margin:4px 0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  box-shadow: none !important;
+  /* 长文本修复：按钮可收缩不撑破弹窗；button 默认 white-space:pre 需改回 normal 才能换行 */
+  min-width:0;
+  width:100%;
+  box-sizing:border-box;
+  white-space:normal;
+}
+/* 选项文本：flex 子项允许收缩并在按钮内换行（长 URL/英文串不截断） */
+.quiz-option-btn span {
+  min-width:0;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+}
+.quiz-option-btn:hover:not(.disabled) { background:var(--bz-surface-hover); }
+.quiz-option-btn.correct { border-color:var(--bz-success) !important; background:color-mix(in srgb, var(--bz-success) 15%, transparent); }
+.quiz-option-btn.wrong { border-color:var(--bz-danger) !important; background:color-mix(in srgb, var(--bz-danger) 15%, transparent); }
+.quiz-option-btn.selected { border-color:var(--bz-brand); background:var(--bz-surface-hover); }
+.quiz-option-btn .check-mark { opacity:0; transition:opacity 0.2s; flex-shrink:0; }
+.quiz-option-btn.selected .check-mark { opacity:1; }
+.quiz-submit-btn {
+  margin-top:16px;
+  padding:8px 20px;
+  border:none;
+  border-radius:6px;
+  background:var(--bz-brand);
+  color:var(--bz-on-brand);
+  font-size:15px;
+  cursor:pointer;
+  align-self:center;
+  box-shadow: none !important;
+}
+.quiz-submit-btn:hover { opacity:0.9; }
+.quiz-submit-btn:disabled { opacity:0.5; cursor:not-allowed; }
+.quiz-next-btn {
+  margin-top:16px;
+  padding:8px 20px;
+  border:1px solid var(--bz-border);
+  border-radius:6px;
+  background:var(--bz-surface-1);
+  color:var(--bz-text-1);
+  font-size:15px;
+  cursor:pointer;
+  align-self:center;
+  box-shadow: none !important;
+}
+.quiz-next-btn:hover { background:var(--bz-surface-hover); }
