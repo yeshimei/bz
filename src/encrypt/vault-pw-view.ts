@@ -9,7 +9,7 @@
 import { escManager } from '../core/esc-manager';
 import { createSiteIcon } from '../core/dom';
 import { attachItemActions, openItemSheet, type ItemAction, type ItemActionsOptions } from '../core/item-actions';
-import { escapeHtml, formatRelativeTime } from '../core/utils';
+import { escapeHtml, formatRelativeTime, hash31 } from '../core/utils';
 import { uiEmpty } from '../core/ui';
 import { PasswordVaultDataManager, type PasswordVaultEntry, type PlatformGroup } from './vault-data';
 
@@ -41,8 +41,7 @@ const PALETTE = ['#7c6bd6', '#3e8e5a', '#c98a1e', '#4f7cf7', '#d43d3d', '#2a9d8f
 export function colorOf(platform: string): string {
   const k = Object.keys(PLATFORM_COLOR_MAP).find((x) => (platform || '').toLowerCase().includes(x.toLowerCase()));
   if (k) return PLATFORM_COLOR_MAP[k];
-  let h = 0;
-  for (let i = 0; i < (platform || '?').length; i++) h = (h * 31 + (platform || '?').charCodeAt(i)) >>> 0;
+  const h = hash31(platform || '?');
   return PALETTE[h % PALETTE.length];
 }
 

@@ -9,6 +9,7 @@
  */
 import type { App } from 'obsidian';
 import { notice } from '../core/notice';
+import { stripMdExt } from '../core/utils';
 import { getSettings } from '../core/settings-provider';
 import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath, smartcatStorageDir, touchPresence, applyInsightPatch } from './data';
 import { eventSystem, setSmartcatApp, setupVisibilityCheck, __resetVisibilityForTests } from './state';
@@ -1392,8 +1393,7 @@ function getMemoDataPath(): string {
 
 /** 今日日期（YYYY-MM-DD，本地时区；对齐 memo due.ts getTodayStr 语义；now 可注入供测试跨天） */
 function memoTodayStr(now: Date = new Date()): string {
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}`;
+  return localDayKey(now);
 }
 
 /** 到期扫描状态（editingData.dueScan = { date: 'YYYY-MM-DD' }；同 proactiveCare 先例，旧数据缺省容忍） */
@@ -1467,7 +1467,7 @@ function notifyNewsSaved(evt: NewsReadEvent, clipPath: string): void {
   const timer = setTimeout(() => {
     void degradePendingNewsSave(clipPath);
   }, newsSaveTimeoutMs);
-  const baseName = clipPath.split('/').pop()?.replace(/\.md$/i, '') || evt.title;
+  const baseName = stripMdExt(clipPath.split('/').pop() || '') || evt.title;
   newsPendingSaves.set(clipPath, { title: evt.title, platform: evt.platform, durationMin: evt.durationMin, baseName, url: '', timer });
   // ticket 084b：异步登记 frontmatter url（rename 后反查主锚点；saveToClip 已创建文件读必成功，
   // 读失败留空走 baseName 兜底；unload 清表后该 then 自然空转）
@@ -1521,7 +1521,7 @@ async function completePendingNewsSave(file: any): Promise<void> {
 function reverseLookupPendingNewsSave(file: any, fm: { summary: string; tags: string[]; url: string }): { reg: NewsPendingSave; clipPath: string } | null {
   const path = file?.path;
   if (!path || newsPendingSaves.size === 0) return null;
-  const base = path.split('/').pop()?.replace(/\.md$/i, '') || '';
+  const base = stripMdExt(path.split('/').pop() || '');
   let baseHit: { reg: NewsPendingSave; clipPath: string } | null = null;
   for (const [clipPath, reg] of newsPendingSaves) {
     if (clipPath === path) continue; // 键已在上层命中
@@ -1574,7 +1574,7 @@ async function locateRenamedClip(reg: NewsPendingSave, clipPath: string): Promis
   // 2) 文件名 baseName 完全匹配（未改名兜底；原路径已试过，此处只收其他同 basename 文件）
   for (const c of candidates) {
     const p = String(c?.path || '');
-    const base = p.split('/').pop()?.replace(/\.md$/i, '') || '';
+    const base = stripMdExt(p.split('/').pop() || '');
     if (base === reg.baseName) return p;
   }
   return null;
@@ -1675,8 +1675,7 @@ function diaryFileDate(filePath: string): string | null {
 function diaryDateStr(offset: number, now: Date = new Date()): string {
   const d = new Date(now);
   d.setDate(d.getDate() - offset);
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  return localDayKey(d);
 }
 
 /** 重启基线（ticket 077 + 084d B3）：ensure 时对日记目录「当日 + 前 1 天 + 前 2 天」文件建快照

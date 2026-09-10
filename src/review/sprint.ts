@@ -17,6 +17,7 @@
  * 本模块只做「会话编排」，markup 单源 render.ts（issue 253：视图构建迁出）；
  * 题目获取/评级写盘/笔记打开由调用方（app 编排）注入——保持与 data/fsrs/题库解耦，可独立测试。
  */
+import { stripMdExt, stripTitleMarks } from '../core/utils';
 import type { App } from 'obsidian';
 import { notice } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
@@ -479,7 +480,7 @@ export class SprintSession {
   }
 
   private asideStates(): Array<{ name: string; state: string }> {
-    return this.entries.map((e) => ({ name: e.item.name.replace(/^《|》$/g, ''), state: e.state }));
+    return this.entries.map((e) => ({ name: stripTitleMarks(e.item.name), state: e.state }));
   }
 
   private renderQuestion(): void {
@@ -520,7 +521,7 @@ export class SprintSession {
     const rating = accuracyToRating(acc);
     const passed = rating === 'easy' || rating === 'good';
     const remain = this.remainingCount;
-    const name = entry.item.name.replace(/^《|》$/g, '');
+    const name = stripTitleMarks(entry.item.name);
     const nextLabel =
       this.mode === 'single'
         ? '完成 · 回面板'
@@ -557,7 +558,7 @@ export class SprintSession {
 
   private nextPendingName(): string {
     const nx = this.entries.find((e) => e.state === 'pending');
-    return nx ? nx.item.name.replace(/^《|》$/g, '').slice(0, 12) : '';
+    return nx ? stripTitleMarks(nx.item.name).slice(0, 12) : '';
   }
 
   private showSummary(): void {

@@ -1,3 +1,4 @@
+import { stripMdExt } from '../core/utils';
 /**
  * 第二大脑 smartChunk（ticket 103；逐字对齐 QA 闪念.js L277-310）
  * 算法：空行分段聚合（块间保留 '\n' 结构）→ 超长段再按句界切分；短于 minChunk 的尾块丢弃。
@@ -20,7 +21,7 @@ export function stripFrontmatter(text: string): string {
 
 /** 路径 → 笔记标题（basename 去 .md）：标题信号并入首块用 */
 export function noteTitleFromPath(path: string): string {
-  return path.slice(path.lastIndexOf('/') + 1).replace(/\.md$/i, '');
+  return stripMdExt(path.slice(path.lastIndexOf('/') + 1));
 }
 
 /**

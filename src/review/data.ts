@@ -6,6 +6,7 @@
  * 并发写同文件时按序落盘，后写者不再用陈旧基线覆盖先写者；坏文件由 jsonFileStore
  * 留档降级（原语 3）。read/saveItems 保持无锁原语（队列内调用，勿再入队——不可重入）。
  */
+import { stripMdExt } from '../core/utils';
 import type { App, TFile } from 'obsidian';
 import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
 import { tryGetSettings } from '../core/settings-provider';
@@ -71,7 +72,7 @@ export class ReviewDataManager {
         // 挂起记录（ticket 098）：文件不存在 → 保留条目（挂起，列表删除线展示、不计逾期、不进复习队列）
         item.file = null as any;
         item.isMissing = true;
-        item.name = item.name || item.filePath.split('/').pop()?.replace(/\.md$/, '') || item.filePath;
+        item.name = item.name || stripMdExt(item.filePath.split('/').pop() || '') || item.filePath;
         item.isCompleted = item.completed || false;
         item.isOverdue = false;
         item.currentStage = (item.stage ?? (item.reviewStage || 1) - 1) + 1;

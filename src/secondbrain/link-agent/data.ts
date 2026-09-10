@@ -14,6 +14,7 @@
  * 本文件保持纯数据层（无 DOM / 无 notice 依赖），供 node 环境测试直接加载；
  * queue/state 经 store-file 串行写链读写（与 meta/panel 段互斥）。
  */
+import { isUnderFolder as isUnderFolderCore, stripMdExt } from '../../core/utils';
 import { loadStore, mutateStore } from '../store-file';
 import { tryGetSettings } from '../../core/settings-provider';
 
@@ -83,11 +84,9 @@ export interface LinkQueueItem {
   queuedAt?: string;
 }
 
-/** 目录边界判定：path 恰为 folder 或位于其下（递归语义；与 review/watch.isUnderFolder 同构，域内私有副本不跨域 import） */
+/** 目录边界判定：path 恰为 folder 或位于其下（递归语义；core isUnderFolder 转发壳） */
 export function isUnderFolder(folder: string, path: string): boolean {
-  const f = (folder || '').trim().replace(/\/+$/, '');
-  if (!f) return false;
-  return path === f || path.startsWith(f + '/');
+  return isUnderFolderCore(folder, path);
 }
 
 /** 内容哈希（FNV-1a 32 位 hex + 长度后缀）：同 path 重入队判定内容是否变化用 */
@@ -120,7 +119,7 @@ export function hasRelatedEntries(value: unknown): boolean {
 
 /** 目标 vault 路径（含 .md）→ related 条目字符串 `[[路径去.md]]` */
 export function toRelatedEntry(targetPath: string): string {
-  return `[[${targetPath.replace(/\.md$/i, '')}]]`;
+  return `[[${stripMdExt(targetPath)}]]`;
 }
 
 /**
@@ -130,7 +129,7 @@ export function toRelatedEntry(targetPath: string): string {
 export function normalizeRelatedEntry(entry: string): string | null {
   const m = String(entry ?? '').match(/\[\[\s*([^\][]+?)\s*(?:#[^\][]*)?(?:\|[^\][]*)?\]\]/);
   if (!m) return null;
-  const p = m[1].trim().replace(/\.md$/i, '');
+  const p = stripMdExt(m[1].trim());
   return p || null;
 }
 

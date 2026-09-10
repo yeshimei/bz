@@ -1,3 +1,4 @@
+import { stripMdExt } from '../core/utils';
 /**
  * 卡片盒/现代诗/信 观察文案与判定层（ticket 083，ADR-0035；v1 基础 + v2 差异观察 + v3 真实日期 + v4 readonly 准入）：
  * 用户拍板——flash（卡片盒）/poem（现代诗）/letter（信）从「observationText 快照 + 10 分钟去弹跳」改为
@@ -50,7 +51,7 @@ export type NoteSettleResult =
 /** 文件名（basename 去 `.md` 后缀，保留原名含日期前缀/标点；`我的/现代诗/2016/161230 忧郁啊.md` → `161230 忧郁啊`） */
 export function noteFileName(path: string): string {
   const base = (path || '').replace(/\\/g, '/').split('/').pop() || '';
-  return base.replace(/\.md$/i, '');
+  return stripMdExt(base);
 }
 
 /** 正文 = 去 frontmatter 块后全量 trim（`---\n...\n---` 前置块剥离；对齐 observationText 既有诗/信分支先例） */

@@ -40,7 +40,7 @@ import { openFlowDialog } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import {
-  formatRelativeTime, getCurrentNoteInfo, getCurrentCursorPosition,
+  formatRelativeTime, getCurrentNoteInfo, getCurrentCursorPosition, localDayKey, stripMdExt,
   generateId, extractUrlAndDisplay, escapeHtml, fetchPageTitle,
 } from '../core/utils';
 import { MemoData, DEFAULT_SCENARIOS } from './data';
@@ -765,7 +765,7 @@ async function postponeItem(id: string, days: number): Promise<void> {
   if (!it || !it.due) return;
   const d = new Date(it.due.replace('T', ' '));
   d.setDate(d.getDate() + days);
-  const next = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  const next = `${localDayKey(d)} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   try {
     await MemoData.updateItem(id, { due: next });
     emitDomainEvent('memo', { kind: 'postponed', title: it.title, due: next });
@@ -836,7 +836,7 @@ function buildCardActions(it: MemoItem): ItemAction[] {
   const actions: ItemAction[] = [];
   if (it.linkedNote || it.url) {
     let sub: string | undefined;
-    if (it.linkedNote) sub = it.linkedNote.split('/').pop()?.replace(/\.md$/i, '');
+    if (it.linkedNote) sub = stripMdExt(it.linkedNote.split('/').pop() || '');
     else if (it.url) {
       try { sub = new URL(it.url).hostname; } catch (e) { /* 忽略 */ }
     }
@@ -845,7 +845,7 @@ function buildCardActions(it: MemoItem): ItemAction[] {
   if (it.notePath) {
     actions.push({
       icon: 'book-open', label: '跳转关联笔记', title: '跳转关联笔记',
-      sub: it.notePath.split('/').pop()?.replace(/\.md$/i, ''),
+      sub: stripMdExt(it.notePath.split('/').pop() || ''),
       onClick: () => jumpToNote(it),
     });
   }
@@ -1169,7 +1169,7 @@ export function openEditor(
     }
   });
   if (posState.notePath) {
-    const name = (posState.notePath.split('/').pop() || '').replace(/\.md$/i, '');
+    const name = stripMdExt(posState.notePath.split('/').pop() || '');
     setPosBtn(name, true);
   } else {
     setPosBtn('定位到笔记', false);

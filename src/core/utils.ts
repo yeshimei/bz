@@ -186,3 +186,73 @@ export function bytesEqual(a: ArrayLike<number>, b: ArrayLike<number>): boolean 
   for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
   return true;
 }
+
+// ==================== 通用化收编（全域扫描 2026-09：各域重复实现上收） ====================
+
+/** localDayKey(ts)：本地时区日期键 YYYY-MM-DD（日记文件名/统计落盘键共用口径；蓝本 clipbook/constants localDayKey） */
+export function localDayKey(ts: number | Date = Date.now()): string {
+  const d = ts instanceof Date ? ts : new Date(ts);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+/** stripMdExt(name)：剥离结尾 .md 扩展名（大小写不敏感；各域 30+ 处内联正则收口） */
+export function stripMdExt(name: string): string {
+  return String(name || '').replace(/\.md$/i, '');
+}
+
+/** stripTitleMarks(s)：剥离首尾书名号《》（各域条目名清洗收口） */
+export function stripTitleMarks(s: string): string {
+  return String(s || '').replace(/^《|》$/g, '');
+}
+
+/** cmpZh(a, b)：中文拼音序比较器（localeCompare 'zh'；条目排序收口） */
+export function cmpZh(a: string, b: string): number {
+  return String(a || '').localeCompare(String(b || ''), 'zh');
+}
+
+/** isUnderFolder(folder, path)：目录边界判定——path 恰为 folder 或位于其下（递归语义；蓝本 review/watch.ts） */
+export function isUnderFolder(folder: string, path: string): boolean {
+  const f = (folder || '').trim().replace(/\/+$/, '');
+  if (!f) return false;
+  return path === f || path.startsWith(f + '/');
+}
+
+/** hash31(str)：h*31 稳定字符串散列（>>>0；站标派色/派样式共用口径，charCodeAt 逐单元版） */
+export function hash31(str: string): number {
+  let h = 0;
+  const t = String(str || '');
+  for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0;
+  return h >>> 0;
+}
+
+/** debounce(fn, ms)：尾触防抖，返回带 cancel() 的防抖函数（新收敛能力；既有手写定时器形态各异，暂不批量替换） */
+export function debounce<T extends (...args: any[]) => void>(fn: T, ms: number): T & { cancel(): void } {
+  let t: ReturnType<typeof setTimeout> | undefined;
+  const wrapped = (...args: Parameters<T>) => {
+    if (t !== undefined) clearTimeout(t);
+    t = setTimeout(() => {
+      t = undefined;
+      fn(...args);
+    }, ms);
+  };
+  (wrapped as T & { cancel(): void }).cancel = () => {
+    if (t !== undefined) {
+      clearTimeout(t);
+      t = undefined;
+    }
+  };
+  return wrapped as T & { cancel(): void };
+}
+
+/** yieldToMainThread(timeoutMs)：让出主线程（requestIdleCallback 优先 + 超时兜底，退化 setTimeout(0)；蓝本 checkup/run.ts） */
+export function yieldToMainThread(timeoutMs = 200): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined') {
+      resolve();
+      return;
+    }
+    const ric = (window as any).requestIdleCallback;
+    if (typeof ric === 'function') ric(() => resolve(), { timeout: timeoutMs });
+    else window.setTimeout(resolve, 0);
+  });
+}

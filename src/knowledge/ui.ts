@@ -14,7 +14,7 @@ import { tryGetSettings } from '../core/settings-provider';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { openFlowDialog } from '../core/flow-dialog';
 import { notice } from '../core/notice';
-import { fetchPageTitle, formatRelativeTime } from '../core/utils';
+import { fetchPageTitle, formatRelativeTime, stripMdExt } from '../core/utils';
 import { uiSuggest } from '../core/ui/suggest';
 import { topifyZ } from '../core/z-order';
 import { emitDomainEvent, onDomainEvent } from '../core/domain-bus';
@@ -46,7 +46,7 @@ function esc(s: unknown): string {
 /** 历史笔记行展示名：去目录（含反斜杠兼容）去 .md 后缀；空路径回退原串 */
 function shortNoteName(path: string): string {
   const base = String(path || '').replace(/\\/g, '/').split('/').pop() || '';
-  return base.replace(/\.md$/i, '') || String(path || '');
+  return stripMdExt(base) || String(path || '');
 }
 
 /** 失败原因白话化：外部工具 stderr / AI 报错多为英文原文，行内映射为中文白话；未命中返回截断原文 */
@@ -635,7 +635,7 @@ export class UIManager {
       const srcFile = app.vault.getAbstractFileByPath(src.path);
       if (srcFile) {
         const text = await app.vault.read(srcFile as any);
-        const linkText = `[[${path.replace(/\.md$/i, '')}|${base}]]`;
+        const linkText = `[[${stripMdExt(path)}|${base}]]`;
         const updated = appendRelatedLine(text, linkText);
         if (updated !== text) await app.vault.modify(srcFile as any, updated);
       }

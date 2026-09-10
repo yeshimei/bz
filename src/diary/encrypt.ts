@@ -7,6 +7,7 @@
  * - 降级/改分类：restoreDiaryEntry 还原附件 + 块 merge 回原 md + 取出即删。
  * 依赖方向（ADR-0002）：store(数据层) ← 本层 ← ui；不挂 window；import 保险箱域（显式跨域 import）。
  */
+import { stripMdExt } from '../core/utils';
 import { getApp } from '../core/app';
 import { getSafeManager } from '../encrypt';
 import { collectNoteAttachmentPaths, kindOf } from '../encrypt/ui';
@@ -118,7 +119,7 @@ export async function loadEncryptedEntries(): Promise<DiaryEntry[]> {
       const plain = await safe.getDiaryEntryPlain(note.id);
       if (plain === null || plain === undefined) continue;
       // 临时文件名占位：parseFile 需要 dateStr，用它还原 date
-      const date = note.path.split('/').pop()?.replace(/\.md$/, '') || '';
+      const date = stripMdExt(note.path.split('/').pop() || '');
       const entry = parseDiaryBlock(plain, date, note.id);
       if (entry) out.push(entry);
     } catch (e) {

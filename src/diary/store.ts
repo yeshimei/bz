@@ -12,6 +12,7 @@
  * 动作完成后发域事件（diary:entry-added / entry-deleted / tags-changed / file-vacated），
  * 墙与其他消费者自行刷新；本模块不碰 DOM、不挂监听。
  */
+import { stripMdExt } from '../core/utils';
 import { notify } from '../core/notice';
 import { emitDomainEvent } from '../core/domain-bus';
 import { enqueueFileTask } from '../core/storage';
@@ -254,7 +255,7 @@ export async function updateDiaryTags(
  * 先查 diaryDataMap 快照，未命中做一次该日期磁盘同步后重查（替代旧「全量 loadAll 兜底」）。
  */
 export async function findDiaryEntry(filename: string, lineNumber: number): Promise<DiaryEntry | null> {
-  const dateStr = filename.includes('/') ? filename.split('/').pop()!.replace(/\.md$/, '') : filename;
+  const dateStr = filename.includes('/') ? stripMdExt(filename.split('/').pop()!) : filename;
   const lookup = (map: Map<string, DiaryEntry[]> | null): DiaryEntry | null => {
     const entries = map?.get(dateStr);
     if (!entries) return null;

@@ -7,6 +7,7 @@
  * - fixOrphanIssues：可修复项（收藏关联 / 剪藏残留）定点清理，读改写入 per-path
  *   串行队列（D1 契约）；返回 undo 闭包供 notifyUndo 撤销链使用。
  */
+import { yieldToMainThread as yieldToMainThreadCore } from '../core/utils';
 import type { App } from 'obsidian';
 import type { CheckIssue, CheckResult, CheckSection, CheckupReport } from './types';
 import { enqueueFileTask, jsonFileStore } from '../core/storage';
@@ -66,17 +67,9 @@ export async function runCheckup(app: App, opts: RunCheckupOpts = {}): Promise<C
   return report;
 }
 
-/** 让出主线程（requestIdleCallback 优先 + 超时兜底，退化 setTimeout） */
+/** 让出主线程（core yieldToMainThread 转发壳：requestIdleCallback 优先 + 超时兜底） */
 function yieldToMainThread(): Promise<void> {
-  return new Promise((resolve) => {
-    if (typeof window === 'undefined') {
-      resolve();
-      return;
-    }
-    const ric = (window as any).requestIdleCallback;
-    if (typeof ric === 'function') ric(() => resolve(), { timeout: 200 });
-    else window.setTimeout(resolve, 0);
-  });
+  return yieldToMainThreadCore();
 }
 
 // ---------- 结果缓存（仿保险库体检：lastCheckup 内存级缓存） ----------

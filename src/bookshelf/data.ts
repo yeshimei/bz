@@ -8,6 +8,7 @@
 import { TFile } from 'obsidian';
 import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
+import { localDayKey } from '../core/utils';
 import type { BookshelfItem } from './state';
 import { M } from './state';
 import { getDisplayItems as pipeDisplay } from './render';
@@ -182,10 +183,8 @@ export function formatReadingTime(totalReadTimeMs: number | undefined): string |
 
 function toDateString(timestamp: number | undefined): string | null {
   if (!Number.isFinite(timestamp) || !timestamp) return null;
-  // 本地时区 YYYY-MM-DD（原 UTC 切片会在时区边界偏移一天，audit H；口径同 reading-report/stats.ts）
-  const d = new Date(timestamp);
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  // 本地时区 YYYY-MM-DD（原 UTC 切片会在时区边界偏移一天，audit H；core localDayKey 转发壳）
+  return localDayKey(timestamp as number);
 }
 
 /** 单本 EPUB 聚合 → 书架条目（缺 title/vaultPath 跳过） */

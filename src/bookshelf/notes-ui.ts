@@ -10,6 +10,7 @@
  */
 import type { App, TFile } from 'obsidian';
 import { notice } from '../core/notice';
+import { localDayKey } from '../core/utils';
 import { longPress } from '../core/dom';
 import { openFlowDialog } from '../core/flow-dialog';
 import { uiModal, uiEmpty } from '../core/ui';
@@ -319,8 +320,7 @@ function renderEpubHighlightBlock(
   const dateEl = document.createElement('div');
   dateEl.className = 'bz-bs-hl-date bz-bs-hl-date--pointer';
   if (note.createdTime) {
-    const d = new Date(note.createdTime);
-    dateEl.textContent = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    dateEl.textContent = localDayKey(note.createdTime);
   } else {
     dateEl.textContent = '无日期';
   }
