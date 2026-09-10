@@ -64,3 +64,20 @@ export const escManager = (() => {
     },
   };
 })();
+
+/** ==================== 面板 ESC 幂等注册样板收口 ====================
+ * 各域面板的「registered 旗标 + handle 保存 + register/unregister」样板统一走这里：
+ *  - registerPanelEsc：同 id 已注册时静默跳过（幂等），层常驻由 isVisible 判活；
+ *  - unregisterPanelEsc：注销并清缓存（未注册时静默）。
+ * 层 id 约定沿用域内 'bz-<域>'。 */
+const panelEscHandles = new Map<string, EscHandle>();
+
+export function registerPanelEsc(id: string, isVisible: () => boolean, close: () => void): void {
+  if (panelEscHandles.has(id)) return;
+  panelEscHandles.set(id, escManager.register(id, { isVisible, close }));
+}
+
+export function unregisterPanelEsc(id: string): void {
+  panelEscHandles.get(id)?.unregister();
+  panelEscHandles.delete(id);
+}

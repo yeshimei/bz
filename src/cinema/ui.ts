@@ -14,7 +14,7 @@ import type { App } from 'obsidian';
 import { TFile } from 'obsidian';
 import { notice, notifySaveError } from '../core/notice';
 import { emitDomainEvent } from '../core/domain-bus';
-import { escManager } from '../core/esc-manager';
+import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { isMobileEnv } from '../core/mobile';
 import { topifyZ } from '../core/dom';
 import { tryGetSettings } from '../core/settings-provider';
@@ -670,12 +670,6 @@ export function closeOverlay(): void {
 
 // ---------- ESC（主面板；弹窗层各自注册更高优先级） ----------
 
-let mainEscRegistered = false;
 export function registerEscapeHandler(): void {
-  if (mainEscRegistered) return;
-  mainEscRegistered = true;
-  escManager.register('bz-cinema', {
-    isVisible: () => !!M.currentOverlay,
-    close: () => closeOverlay(),
-  });
+  registerPanelEsc('bz-cinema', () => !!M.currentOverlay, () => closeOverlay());
 }

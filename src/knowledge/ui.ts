@@ -14,7 +14,7 @@ import { tryGetSettings } from '../core/settings-provider';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { openFlowDialog } from '../core/flow-dialog';
 import { notice } from '../core/notice';
-import { fetchPageTitle, formatRelativeTime, stripMdExt } from '../core/utils';
+import { escapeHtml, fetchPageTitle, formatRelativeTime, stripMdExt } from '../core/utils';
 import { uiSuggest } from '../core/ui/suggest';
 import { topifyZ } from '../core/z-order';
 import { emitDomainEvent, onDomainEvent } from '../core/domain-bus';
@@ -38,9 +38,9 @@ function q<T extends HTMLElement>(root: HTMLElement, sel: string): T | null {
   return root.querySelector(sel) as T | null;
 }
 
-/** HTML 转义（进度文案来自外部进程 stdout，统一转义防注入） */
+/** HTML 转义（进度文案来自外部进程 stdout，统一转义防注入；core escapeHtml 转发壳） */
 function esc(s: unknown): string {
-  return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+  return escapeHtml(String(s ?? ''));
 }
 
 /** 历史笔记行展示名：去目录（含反斜杠兼容）去 .md 后缀；空路径回退原串 */

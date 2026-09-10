@@ -54,12 +54,8 @@ export interface FavView {
 
 // ==================== 小工具 / 口径 ====================
 
-/** 本地时间 YYYY-MM-DD HH:mm:ss（created/archivedAt 写入格式） */
-export function localNow(): string {
-  const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-}
+// 本地时间 YYYY-MM-DD HH:mm:ss（created/archivedAt 写入格式）收口 core/ui/str
+export { localNow } from '../core/ui/str';
 
 /** 相对时间（原型 1:1：刚刚/N 分钟前/N 小时前/N 天前，超 7 天回落 M-D 短日期） */
 export function relTime(s: string | undefined): string {

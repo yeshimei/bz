@@ -19,7 +19,7 @@
  * （渲染纯层，与原型壳消费同一份）；本文件只剩行为层——生命周期/事件绑定/ESC/命令直达。
  */
 import type { IconName } from 'obsidian';
-import { escManager } from '../core/esc-manager';
+import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { notice } from '../core/notice';
 import { mountIcons } from '../core/ui';
 import { topifyZ } from '../core/dom';
@@ -240,21 +240,11 @@ function renderAll(): void {
 
 /* ---------- ESC / 通知 ---------- */
 
-let escRegistered = false;
-let escHandle: { unregister: () => void } | null = null;
 export function registerEscapeHandler(): void {
-  if (escRegistered) return;
-  escRegistered = true;
-  escHandle = escManager.register('bz-home', {
-    isVisible: () => !!H.currentOverlay,
-    close: closeOverlay,
-  });
+  registerPanelEsc('bz-home', () => !!H.currentOverlay, closeOverlay);
 }
 
 /** 注销 ESC 层（关闭面板/卸载时调用；escManager 层不随插件卸载自动清理） */
 export function unregisterEscapeHandler(): void {
-  if (!escRegistered) return;
-  escRegistered = false;
-  escHandle?.unregister();
-  escHandle = null;
+  unregisterPanelEsc('bz-home');
 }

@@ -14,7 +14,7 @@
  */
 import type { App } from 'obsidian';
 import { TFile } from 'obsidian';
-import { escManager } from '../core/esc-manager';
+import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { allocZ } from '../core/z-order';
 import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
@@ -330,21 +330,11 @@ export function closeOverlay(): void {
 
 // ---------- ESC（主面板） ----------
 
-let mainEscRegistered = false;
-let mainEscHandle: { unregister: () => void } | null = null;
 export function registerEscapeHandler(): void {
-  if (mainEscRegistered) return;
-  mainEscRegistered = true;
-  mainEscHandle = escManager.register('bz-bookshelf', {
-    isVisible: () => !!M.currentOverlay,
-    close: () => closeOverlay(),
-  });
+  registerPanelEsc('bz-bookshelf', () => !!M.currentOverlay, () => closeOverlay());
 }
 
 /** 注销 ESC 层（卸载时调用；escManager 层不随插件卸载自动清理） */
 export function unregisterEscapeHandler(): void {
-  if (!mainEscRegistered) return;
-  mainEscRegistered = false;
-  mainEscHandle?.unregister();
-  mainEscHandle = null;
+  unregisterPanelEsc('bz-bookshelf');
 }

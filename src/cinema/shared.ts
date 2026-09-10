@@ -101,8 +101,10 @@ export function pcardHtml(it: CinemaItem, posterUrl: string | null, fetching = f
 
 // ---------- 视图状态快照（纯层禁读 M：筛选/排序/视图显式入参） ----------
 
+export type CinemaViewKind = 'list' | 'ai' | 'stat';
+
 export interface CinemaView {
-  view: 'list' | 'ai' | 'stat';
+  view: CinemaViewKind;
   typeFilter: string | null;
   statusFilter: string | null;
   sortMode: string;

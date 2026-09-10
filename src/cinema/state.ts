@@ -2,6 +2,7 @@
  * 影院（cinema）域状态：模块级可变对象 M
  * 自 ADR-0087 起接管原 movie 域（旧 src/movie 已退役），数据仍是 `我的/影视/*.md`。
  */
+import type { CinemaViewKind } from './shared';
 import type { App, TFile } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 
@@ -55,7 +56,7 @@ export interface CinemaState {
   /** 排序模式 */
   sortMode: CinemaSortMode;
   /** 当前视图：list / ai / stat */
-  view: 'list' | 'ai' | 'stat';
+  view: CinemaViewKind;
   searchKeyword: string;
   searchDebounceTimer: ReturnType<typeof setTimeout> | null;
   appRef: App | null;

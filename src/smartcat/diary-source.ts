@@ -29,8 +29,8 @@ export const DIARY_SETTLE_MS = 10 * 60 * 1000;
 /** 更新观察累计字数阈值（累计 >50 字才生成更新观察；=50 不生成） */
 export const DIARY_UPDATE_THRESHOLD = 50;
 
-/** 标题行正则（与 diary/parser.parseFile 的 headingRegex 完全一致：`# <emoji+> HH:mm`） */
-const HEADING_RE = /^#\s*((?:\S+)+)\s+(\d{2}:\d{2})/u;
+// 标题行正则收口 diary/parser（HEADING_REGEX 同源，防双侧漂移） 
+import { HEADING_REGEX as HEADING_RE } from '../diary/parser';
 
 /** 字符数（中文按字符计：按码点切分，代理对 emoji 记 1 字；对齐 ticket「中文按字符数」语义） */
 export function diaryCharCount(s: string): number {
