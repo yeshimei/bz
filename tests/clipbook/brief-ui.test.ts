@@ -43,22 +43,23 @@ describe('briefDayHeadHtml（日节头）', () => {
 });
 
 describe('briefListHtml（按天分节的目录）', () => {
-  it('日节头 + 条目（data-id 复用点击/右键链路）+ 来源小标', () => {
+  it('日节头 + 条目（data-id 复用点击/右键链路）', () => {
     const html = briefListHtml([{ day: '2026-09-10', items: [art()] }], 'bv:BV1rHYx6fEzy', () => '2 小时前');
     expect(html).toContain('data-clip-day="2026-09-10"');
     expect(html).toContain('data-id="bv:BV1rHYx6fEzy"');
-    expect(html).toContain('转写');
     expect(html).toContain('黑鸦Heya');
     expect(html).toContain('2 小时前');
     // 选中态
     expect(html).toContain('bz-clip-item--unread on');
   });
 
-  it('字幕来源标「字幕」，失败条目标 ✗ 且带错误类', () => {
+  it('来源小标已退役（不再出行首「字幕/转写/✗」；失败仅由错误类表达）', () => {
     const ok = briefListHtml([{ day: 'd', items: [art({ src: 'subtitle' })] }], null, () => '');
-    expect(ok).toContain('字幕');
+    expect(ok).not.toContain('bz-clip-item-tag');
+    expect(ok).not.toContain('字幕');
+    expect(ok).not.toContain('转写');
     const bad = briefListHtml([{ day: 'd', items: [art({ title: '', body: undefined, error: '转文字失败' })] }], null, () => '');
-    expect(bad).toContain('✗');
+    expect(bad).not.toContain('bz-clip-item-tag');
     expect(bad).toContain('bz-clip-item--err');
   });
 
@@ -95,30 +96,23 @@ describe('briefPointsHtml（要点轻渲染）', () => {
 describe('briefReaderHtml（阅读面）', () => {
   const base = { time: '2026-09-09 10:00', durationLabel: '2:53' };
 
-  it('正常：要点 + 打开原视频 + 可展开转录稿', () => {
-    const h = briefReaderHtml(art(), { ...base, points: '<h3>x</h3>', transcript: '转录全文内容' });
+  it('正常：要点 + 打开原视频（转录稿段已退役）', () => {
+    const h = briefReaderHtml(art(), { ...base, points: '<h3>x</h3>' });
     expect(h).toContain('bz-clip-brief-points');
     expect(h).toContain('data-clip-open-url');
     expect(h).toContain('打开原视频');
     expect(h).toContain('2:53');
-    expect(h).toContain('<details class="bz-clip-brief-tr">');
-    expect(h).toContain('完整转录稿');
-    expect(h).toContain('转录全文内容');
-  });
-
-  it('转录稿取不到（缓存过期）→ 不出该段', () => {
-    const h = briefReaderHtml(art(), { ...base, points: '<p>x</p>', transcript: '' });
     expect(h).not.toContain('bz-clip-brief-tr');
-    expect(h).toContain('data-clip-open-url');
+    expect(h).not.toContain('完整转录稿');
   });
 
   it('要点未生成 → 出占位提示', () => {
-    const h = briefReaderHtml(art(), { ...base, points: '', transcript: '' });
+    const h = briefReaderHtml(art(), { ...base, points: '' });
     expect(h).toContain('正在生成本期要点');
   });
 
   it('失败条目：错误态 + 重跑入口（不出要点区）', () => {
-    const h = briefReaderHtml(art({ title: '', body: undefined, error: '转文字失败：未配置 pythonPath' }), { ...base, points: '', transcript: '' });
+    const h = briefReaderHtml(art({ title: '', body: undefined, error: '转文字失败：未配置 pythonPath' }), { ...base, points: '' });
     expect(h).toContain('bz-clip-brief-err');
     expect(h).toContain('本期抓取失败');
     expect(h).toContain('未配置 pythonPath');

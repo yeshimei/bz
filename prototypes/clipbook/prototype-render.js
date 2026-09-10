@@ -208,7 +208,6 @@ var BZR_clipbook = (() => {
     ${briefDayHeadHtml(g.day, g.items.length)}
     ${g.items.map((a) => `
     <div class="bz-clip-item bz-clip-item--${a.st}${a.raw && a.raw.error ? " bz-clip-item--err" : ""}${curId && curId === a.id ? " on" : ""}" data-id="${esc(a.id)}">
-      <span class="bz-clip-item-tag">${a.raw && a.raw.error ? "✗" : esc(a.raw && a.raw.src === "subtitle" ? "字幕" : "转写")}</span>
       <div class="bz-clip-item-main">
         <div class="bz-clip-item-t"><span>${esc(a.title)}</span></div>
         <div class="bz-clip-item-meta">${esc(siteShort(a.srcName))} · ${esc(timeOf(a))}</div>
@@ -271,10 +270,9 @@ var BZR_clipbook = (() => {
       <div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-brief-retry>重新抓取本期</span></div>${feet}`;
     }
     const pts = opts.points || `<p class="dim">正在生成本期要点…</p>`;
-    const tr = opts.transcript ? `<details class="bz-clip-brief-tr"><summary>完整转录稿</summary><div class="bz-clip-brief-tr-body">${esc(opts.transcript)}</div></details>` : "";
     return `${head}
     <div class="bz-clip-brief-points" data-clip-md>${pts}</div>
-    ${tr}${feet}`;
+    ${feet}`;
   }
   function inlineHtml(text) {
     let out = "";

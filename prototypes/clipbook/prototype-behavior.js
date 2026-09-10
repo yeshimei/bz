@@ -8068,6 +8068,11 @@ ${bodyText.substring(0, 6e3)}`;
     if (a && a.url) return "url:" + String(a.url);
     return "td:" + String(a && a.title || "") + "|" + String(a && a.date || "");
   }
+  function briefKeyOf(b) {
+    if (b && b.bvid) return "bv:" + String(b.bvid);
+    if (b && b.url) return "url:" + String(b.url);
+    return "td:" + String(b && b.title || "") + "|" + String(b && b.fetchedAt || "");
+  }
   function excerpt(body, max = 90) {
     const s = String(body || "").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/[#>*`_~-]/g, "").replace(/\s+/g, " ").trim();
     if (!s) return "";
@@ -8104,7 +8109,42 @@ ${bodyText.substring(0, 6e3)}`;
     return storageFile("news.json");
   }
   function emptyData() {
-    return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", sources: { ...DEFAULT_SOURCES } };
+    return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", sources: { ...DEFAULT_SOURCES }, briefUps: [], briefs: [] };
+  }
+  function normalizeBrief(raw) {
+    var _a, _b, _c, _d, _e, _f, _g;
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+    const r = raw;
+    const bvid = String((_a = r.bvid) != null ? _a : "").trim();
+    if (!bvid) return null;
+    const b = {
+      bvid,
+      title: String((_b = r.title) != null ? _b : ""),
+      url: String((_c = r.url) != null ? _c : "") || `https://www.bilibili.com/video/${bvid}`,
+      upMid: String((_d = r.upMid) != null ? _d : ""),
+      upName: String((_e = r.upName) != null ? _e : ""),
+      duration: Number(r.duration) || 0,
+      pubdate: Number(r.pubdate) || 0,
+      date: String((_f = r.date) != null ? _f : ""),
+      fetchedAt: String((_g = r.fetchedAt) != null ? _g : ""),
+      read: r.read === true,
+      state: r.state === "saved" ? "saved" : r.read === true ? "read" : "unread"
+    };
+    if (r.body) b.body = String(r.body);
+    if (r.src) b.src = String(r.src);
+    if (r.error) b.error = String(r.error);
+    if (r.transcriptPath) b.transcriptPath = String(r.transcriptPath);
+    if (r.subtitleRejected) b.subtitleRejected = String(r.subtitleRejected);
+    return b;
+  }
+  function parseBriefs(raw) {
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    for (const it of raw) {
+      const b = normalizeBrief(it);
+      if (b) out.push(b);
+    }
+    return out;
   }
   function parseBilibiliUpInfo(raw) {
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
@@ -8166,7 +8206,9 @@ ${bodyText.substring(0, 6e3)}`;
         bilibiliUpInfo: parseBilibiliUpInfo(obj.bilibiliUpInfo),
         bilibiliMaxItems: parseBilibiliMaxItems(obj.bilibiliMaxItems),
         bilibiliCookie: parseBilibiliCookie(obj.bilibiliCookie),
-        sources: obj.sources && typeof obj.sources === "object" ? { ...DEFAULT_SOURCES, ...obj.sources } : { ...DEFAULT_SOURCES }
+        sources: obj.sources && typeof obj.sources === "object" ? { ...DEFAULT_SOURCES, ...obj.sources } : { ...DEFAULT_SOURCES },
+        briefUps: Array.isArray(obj.briefUps) ? obj.briefUps.map((u) => String(u != null ? u : "").trim()).filter(Boolean) : [],
+        briefs: parseBriefs(obj.briefs)
       };
     }
     return null;
@@ -8193,7 +8235,7 @@ ${bodyText.substring(0, 6e3)}`;
     }
   }
   async function writeNewsDataMerged(intent) {
-    var _a;
+    var _a, _b;
     const res = await readNewsData();
     const base = res.ok ? res.data : emptyData();
     const next = { ...base };
@@ -8219,7 +8261,29 @@ ${bodyText.substring(0, 6e3)}`;
       }
       next.articles = merged;
     }
-    for (const seg of ["stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources"]) {
+    if (intent.set.briefs || ((_b = intent.removeBriefKeys) == null ? void 0 : _b.length)) {
+      const patchList = intent.set.briefs || [];
+      const removeKeys = new Set(intent.removeBriefKeys || []);
+      const patchByKey = /* @__PURE__ */ new Map();
+      for (const b of patchList) patchByKey.set(briefKeyOf(b), b);
+      const merged = [];
+      const seen = /* @__PURE__ */ new Set();
+      for (const b of base.briefs || []) {
+        const k = briefKeyOf(b);
+        if (removeKeys.has(k)) continue;
+        seen.add(k);
+        merged.push(patchByKey.has(k) ? patchByKey.get(k) : b);
+      }
+      for (const b of patchList) {
+        const k = briefKeyOf(b);
+        if (!seen.has(k)) {
+          merged.push(b);
+          seen.add(k);
+        }
+      }
+      next.briefs = merged;
+    }
+    for (const seg of ["stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources", "briefUps"]) {
       if (intent.set[seg] !== void 0) {
         next[seg] = intent.set[seg];
       }
@@ -8304,6 +8368,28 @@ ${bodyText.substring(0, 6e3)}`;
     const n = Number(String(v || "").trim());
     return Number.isFinite(n) && n > 0 ? n : null;
   }
+  function applyBriefRetention(briefs, days, now = Date.now()) {
+    const DAY = 24 * 60 * 60 * 1e3;
+    const kept = [];
+    for (const b of briefs) {
+      if (!b || b.read !== true) {
+        kept.push(b);
+        continue;
+      }
+      if (!Number.isFinite(days) || days <= 0) {
+        kept.push(b);
+        continue;
+      }
+      const t = new Date(b.fetchedAt || b.date || "").getTime();
+      if (!Number.isFinite(t)) {
+        kept.push(b);
+        continue;
+      }
+      if (now - t > days * DAY) continue;
+      kept.push(b);
+    }
+    return kept;
+  }
   var STATS_JSON_PATH, DEFAULT_SOURCES, DEFAULT_STATS;
   var init_news_data = __esm({
     "src/clipbook/news-data.ts"() {
@@ -8329,7 +8415,7 @@ ${bodyText.substring(0, 6e3)}`;
 
   // src/clipbook/news-source-settings.ts
   function emptyDataSourceState(exists = false) {
-    return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", lastFetchAt: null, totalArticles: 0 };
+    return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", lastFetchAt: null, totalArticles: 0, briefUps: [], totalBriefs: 0 };
   }
   async function readDataSourceState() {
     const res = await readNewsData();
@@ -8351,7 +8437,9 @@ ${bodyText.substring(0, 6e3)}`;
       bilibiliMaxItems: res.data.bilibiliMaxItems,
       bilibiliCookie: res.data.bilibiliCookie,
       lastFetchAt,
-      totalArticles: res.data.articles.length
+      totalArticles: res.data.articles.length,
+      briefUps: [...res.data.briefUps || []],
+      totalBriefs: (res.data.briefs || []).length
     };
   }
   async function writeSources(sources) {
@@ -8387,6 +8475,28 @@ ${bodyText.substring(0, 6e3)}`;
       const res = await readNewsData();
       if (!res.ok) return;
       await writeNewsDataMerged({ set: { bilibiliCookie: c } });
+    });
+  }
+  async function addBriefUp(uid) {
+    const id = String(uid || "").trim();
+    if (!id) return false;
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return false;
+      if ((res.data.briefUps || []).includes(id)) return false;
+      const set = { briefUps: [...res.data.briefUps || [], id] };
+      if (res.data.bilibiliUps.includes(id)) set.bilibiliUps = res.data.bilibiliUps.filter((u) => u !== id);
+      await writeNewsDataMerged({ set });
+      return true;
+    });
+  }
+  async function removeBriefUp(uid) {
+    const id = String(uid || "").trim();
+    if (!id) return;
+    await enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok || res.missing) return;
+      await writeNewsDataMerged({ set: { briefUps: (res.data.briefUps || []).filter((u) => u !== id) } });
     });
   }
   async function removeBilibiliUp(uid) {
@@ -8436,6 +8546,7 @@ ${bodyText.substring(0, 6e3)}`;
       save: () => writeSources({ ...box.sources })
     });
     const upListDesc = () => box.bilibiliUps.length > 0 ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主，添加与移除在管理弹窗` : "暂未跟踪 UP 主，添加与移除在管理弹窗";
+    const briefListDesc = () => box.briefUps.length > 0 ? `已开启 ${box.briefUps.length} 位 UP 主，已产出 ${box.totalBriefs} 条要点` : "尚未开启深度总结，添加 UP 主后每日生成要点";
     return [
       {
         type: "toggle",
@@ -8469,12 +8580,36 @@ ${bodyText.substring(0, 6e3)}`;
           ups: [...box.bilibiliUps],
           upInfo: { ...box.bilibiliUpInfo },
           cookie: box.bilibiliCookie,
+          briefUps: [...box.briefUps],
           onChanged: async () => {
             const fresh = await readDataSourceState();
             box.bilibiliUps = [...fresh.bilibiliUps];
             box.bilibiliUpInfo = { ...fresh.bilibiliUpInfo };
             box.bilibiliCookie = fresh.bilibiliCookie;
+            box.briefUps = [...fresh.briefUps];
             setRowDesc(ctx, upListDesc());
+            ctx.refreshVisibility();
+          }
+        })
+      },
+      {
+        type: "button",
+        name: "每日简报名单",
+        desc: briefListDesc(),
+        buttonText: "管理",
+        cta: true,
+        onClick: (ctx) => openUpManagerModal({
+          ups: [...box.bilibiliUps],
+          upInfo: { ...box.bilibiliUpInfo },
+          cookie: box.bilibiliCookie,
+          briefUps: [...box.briefUps],
+          onChanged: async () => {
+            const fresh = await readDataSourceState();
+            box.bilibiliUps = [...fresh.bilibiliUps];
+            box.bilibiliUpInfo = { ...fresh.bilibiliUpInfo };
+            box.bilibiliCookie = fresh.bilibiliCookie;
+            box.briefUps = [...fresh.briefUps];
+            setRowDesc(ctx, briefListDesc());
             ctx.refreshVisibility();
           }
         })
@@ -8514,7 +8649,9 @@ ${bodyText.substring(0, 6e3)}`;
       inputValue: "",
       cookieInput: String(opts.cookie || ""),
       ups: [...opts.ups],
-      upInfo: { ...opts.upInfo }
+      upInfo: { ...opts.upInfo },
+      briefInput: "",
+      briefUps: [...opts.briefUps || []]
     };
     return {
       groups: [
@@ -8587,9 +8724,80 @@ ${bodyText.substring(0, 6e3)}`;
               }
             }
           ]
+        },
+        {
+          // 每日简报（ADR-0119）：独立名单——走「字幕优先 → 转写 → AI 要点」链路，与上方 UP 主名单**互斥**
+          icon: "newspaper",
+          name: "每日简报",
+          rows: [
+            {
+              type: "text",
+              name: "添加 UP 主",
+              desc: "粘贴主页链接或视频链接，自动解析后入库",
+              placeholder: "粘贴链接或 UID",
+              binding: {
+                get: () => box.briefInput,
+                set: (v) => {
+                  box.briefInput = v;
+                },
+                save: () => {
+                }
+              },
+              actions: [{
+                text: "添加",
+                cta: true,
+                onClick: (value) => addBriefUid(value, box, opts)
+              }]
+            },
+            {
+              type: "list",
+              name: "深度总结名单",
+              desc: "每日抓取其新投稿并生成要点",
+              items: () => box.briefUps.map((uid) => {
+                var _a;
+                return {
+                  key: uid,
+                  label: upDisplayName(uid, box.upInfo[uid]),
+                  sub: `UID ${uid}`,
+                  imageUrl: (_a = box.upInfo[uid]) == null ? void 0 : _a.avatar
+                };
+              }),
+              emptyText: "暂无深度总结 UP 主，在上方粘贴主页链接添加",
+              onChange: (keys) => {
+                void (async () => {
+                  const removed = box.briefUps.filter((u) => !keys.includes(u));
+                  for (const uid of removed) {
+                    await removeBriefUp(uid);
+                    box.briefUps = box.briefUps.filter((u) => u !== uid);
+                    notice(`已从每日简报移除 ${uid}`, "success");
+                  }
+                  if (removed.length > 0) opts.onChanged();
+                })();
+              }
+            }
+          ]
         }
       ]
     };
+  }
+  async function addBriefUid(raw, box, opts) {
+    const input = String(raw || "").trim();
+    if (!input) return;
+    const uid = await resolveUidFromInput(input);
+    if (!uid) {
+      notice("无法识别 UID，请粘贴 space.bilibili.com 内的主页链接", "error");
+      return;
+    }
+    const added = await addBriefUp(uid);
+    if (!added) {
+      notice("该 UP 主已在每日简报名单中", "info");
+      return;
+    }
+    box.briefInput = "";
+    box.briefUps = [...box.briefUps, uid];
+    box.ups = box.ups.filter((u) => u !== uid);
+    opts.onChanged();
+    notice(`已添加每日简报 UP 主 ${uid}`, "success");
   }
   function upDisplayName(uid, info) {
     return info && info.name ? info.name : `UP ${uid}`;
@@ -8846,9 +9054,110 @@ ${bodyText.substring(0, 6e3)}`;
     for (const n of notes) if (n && n.url) s.add(String(n.url));
     return s;
   }
-  function queryBySource(articles, sidecar, clipByUrl, clipNotes, source, upInfoMap = {}) {
+  function briefTimeTs(b) {
+    const p = Number(b && b.pubdate) || 0;
+    if (p > 0) return p * 1e3;
+    const t = new Date(b && (b.date || b.fetchedAt) || "").valueOf();
+    return isNaN(t) ? Date.now() : t;
+  }
+  function briefDayKey(b) {
+    const p = Number(b && b.pubdate) || 0;
+    if (p > 0) return localDayKey(p * 1e3);
+    const d = String(b && (b.date || b.fetchedAt) || "").slice(0, 10);
+    return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : "未知日期";
+  }
+  function clipBrief(b, opts = {}) {
+    const savedKeys = opts.savedKeys || /* @__PURE__ */ new Set();
+    const upInfo = opts.upInfo || {};
+    const bvid = String(b && b.bvid || "");
+    const url = String(b && b.url || "") || (bvid ? `https://www.bilibili.com/video/${bvid}` : "");
+    const upMid = String(b && b.upMid || "");
+    const up = String(b && b.upName || "") || upInfo[upMid] && upInfo[upMid].name || upMid || "";
+    const failed = !!(b && b.error);
+    const title = failed ? bvid || "拉取失败" : String(b && b.title || "(无标题)");
+    const body = cleanBody(b && b.body);
+    const archived = !!url && savedKeys.has(url);
+    const saved = b && b.state === "saved" || archived;
+    const st = saved ? "saved" : b && b.read === true ? "read" : "unread";
+    const ts = briefTimeTs(b);
+    return {
+      id: "bv:" + bvid,
+      origin: "brief",
+      title,
+      url,
+      site: "B站",
+      domain: "bilibili.com",
+      author: up,
+      srcName: up || "每日简报",
+      typeLabel: "每日简报",
+      timeText: String(b && (b.fetchedAt || b.date) || ""),
+      timeTs: ts,
+      summary: failed ? String(b.error) : excerpt(body, 110),
+      body,
+      tags: [],
+      notePath: null,
+      st,
+      clipped: !!url && !!saved,
+      raw: b,
+      backlinks: []
+    };
+  }
+  function queryBriefs(briefs, sidecar, upInfoMap = {}) {
+    const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
+    return (briefs || []).map((b) => clipBrief(b, { savedKeys, upInfo: upInfoMap })).sort((a, b) => b.timeTs - a.timeTs);
+  }
+  function groupBriefsByDay(list) {
+    const groups = [];
+    const idx = /* @__PURE__ */ new Map();
+    for (const a of list) {
+      const day = briefDayKey(a.raw);
+      let i = idx.get(day);
+      if (i === void 0) {
+        i = groups.length;
+        idx.set(day, i);
+        groups.push({ day, items: [] });
+      }
+      groups[i].items.push(a);
+    }
+    return groups;
+  }
+  async function writeBriefState(raw, action) {
+    const bvid = String(raw && raw.bvid || "");
+    if (!bvid) return;
+    await writeBriefPatch(bvid, {
+      read: true,
+      state: raw && raw.state === "saved" || action === "save" ? "saved" : "read"
+    });
+  }
+  async function deleteBrief(bvid) {
+    const key = String(bvid || "");
+    if (!key) return;
+    await enqueueNewsWrite(async () => {
+      await writeNewsDataMerged({ set: {}, removeBriefKeys: ["bv:" + key] });
+    });
+  }
+  async function writeBriefPatch(bvid, patch) {
+    const key = String(bvid || "");
+    if (!key) return;
+    await enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok || res.missing) return;
+      let hit = false;
+      const list = (res.data.briefs || []).map((b) => {
+        if (String(b && b.bvid || "") !== key) return b;
+        hit = true;
+        return { ...b, ...patch };
+      });
+      if (!hit) return;
+      await writeNewsDataMerged({ set: { briefs: list } });
+    });
+  }
+  function queryBySource(articles, sidecar, clipByUrl, clipNotes, source, upInfoMap = {}, briefs = []) {
     if (source.kind === "clip") {
       return (clipNotes || []).map((n) => clipFromNote(n));
+    }
+    if (source.kind === "brief") {
+      return queryBriefs(briefs, sidecar, upInfoMap);
     }
     const pool = (articles || []).filter((a) => !a.read);
     const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
@@ -8873,9 +9182,12 @@ ${bodyText.substring(0, 6e3)}`;
     }
     return out.filter((a) => a.st !== "saved").sort((a, b) => b.timeTs - a.timeTs);
   }
-  function queryBySourceFull(articles, sidecar, clipByUrl, clipNotes, source, upInfoMap = {}) {
+  function queryBySourceFull(articles, sidecar, clipByUrl, clipNotes, source, upInfoMap = {}, briefs = []) {
     if (source.kind === "clip") {
       return (clipNotes || []).map((n) => clipFromNote(n));
+    }
+    if (source.kind === "brief") {
+      return queryBriefs(briefs, sidecar, upInfoMap);
     }
     const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
     const isClippedNews = (a) => !!a && !!a.url && (savedKeys.has(String(a.url)) || clipByUrl.has(String(a.url)));
@@ -9067,6 +9379,85 @@ ${bodyText.substring(0, 6e3)}`;
   function foldBodyHtml(html, open) {
     return html ? `<div class="bz-clip-desk-fold-body"${open ? "" : " hidden"}>${html}</div>` : "";
   }
+  function briefDayHeadHtml(day, n) {
+    return `
+    <div class="bz-clip-day" data-clip-day="${esc(day)}">
+      <span class="bz-clip-day-name">${esc(day)}</span>
+      <span class="bz-clip-day-n">${n} 条</span>
+      <span class="bz-clip-day-rule"></span>
+    </div>`;
+  }
+  function briefListHtml(groups, curId, timeOf) {
+    return groups.map((g) => `
+    ${briefDayHeadHtml(g.day, g.items.length)}
+    ${g.items.map((a) => `
+    <div class="bz-clip-item bz-clip-item--${a.st}${a.raw && a.raw.error ? " bz-clip-item--err" : ""}${curId && curId === a.id ? " on" : ""}" data-id="${esc(a.id)}">
+      <div class="bz-clip-item-main">
+        <div class="bz-clip-item-t"><span>${esc(a.title)}</span></div>
+        <div class="bz-clip-item-meta">${esc(siteShort(a.srcName))} · ${esc(timeOf(a))}</div>
+      </div>
+    </div>`).join("")}`).join("");
+  }
+  function briefPointsHtml(body) {
+    const lines = String(body || "").split(/\r?\n/);
+    let out = "";
+    let inList = false;
+    const closeList = () => {
+      if (inList) {
+        out += "</ul>";
+        inList = false;
+      }
+    };
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (!line) {
+        closeList();
+        continue;
+      }
+      const h = line.match(/^#{1,6}\s+(.*)$/);
+      if (h) {
+        closeList();
+        out += `<h3 class="bz-clip-brief-h">${inlineHtml(h[1])}</h3>`;
+        continue;
+      }
+      const li = line.match(/^[-*]\s+(.*)$/);
+      if (li) {
+        if (!inList) {
+          out += '<ul class="bz-clip-brief-ul">';
+          inList = true;
+        }
+        out += `<li>${inlineHtml(li[1])}</li>`;
+        continue;
+      }
+      closeList();
+      out += `<p>${inlineHtml(line)}</p>`;
+    }
+    closeList();
+    return out;
+  }
+  function briefReaderHtml(a, opts) {
+    const err = a.raw && a.raw.error ? String(a.raw.error) : "";
+    const head = `
+    <div class="bz-clip-art-title">${esc(a.title)}</div>
+    <div class="bz-clip-art-meta">
+      <span>${esc(opts.time)}</span>
+      <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${esc(siteShort(a.srcName))}</span></span>
+      ${opts.durationLabel ? `<span class="bz-clip-art-dur">${esc(opts.durationLabel)}</span>` : ""}
+    </div>`;
+    const feet = `
+    <div class="bz-clip-art-foot">
+      <span role="button" tabindex="0" data-clip-open-url>打开原视频 ${iconSpan(ICO.external, "bz-ic--xs")}</span>
+    </div>`;
+    if (err) {
+      return `${head}
+      <div class="bz-clip-brief-err">${iconSpan(ICO.x, "bz-ic--xs")}本期抓取失败：${esc(err)}</div>
+      <div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-brief-retry>重新抓取本期</span></div>${feet}`;
+    }
+    const pts = opts.points || `<p class="dim">正在生成本期要点…</p>`;
+    return `${head}
+    <div class="bz-clip-brief-points" data-clip-md>${pts}</div>
+    ${feet}`;
+  }
   function inlineHtml(text) {
     let out = "";
     let last = 0;
@@ -9192,7 +9583,8 @@ ${bodyText.substring(0, 6e3)}`;
         globe: "globe",
         folder: "folder-open",
         rotate: "rotate-ccw",
-        radio: "radio"
+        radio: "radio",
+        brief: "newspaper"
       };
     }
   });
@@ -9206,6 +9598,7 @@ ${bodyText.substring(0, 6e3)}`;
     M.overlay = null;
     M.open = false;
     M.articles = [];
+    M.briefs = [];
     M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
     M.sidecar = { articleOverrides: {}, savedArchive: [], order: [] };
     M.clipNotes = null;
@@ -9225,6 +9618,7 @@ ${bodyText.substring(0, 6e3)}`;
         dir: "归档/网页剪藏",
         open: false,
         articles: [],
+        briefs: [],
         stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },
         sidecar: { articleOverrides: {}, savedArchive: [], order: [] },
         clipNotes: null,
@@ -9358,6 +9752,7 @@ ${bodyText.substring(0, 6e3)}`;
     const res = await readNewsData();
     if (res.missing) {
       M.articles = [];
+      M.briefs = [];
       M.clipNotes = null;
       M.clipUrls = /* @__PURE__ */ new Set();
       M.sidecar = { articleOverrides: {}, savedArchive: [], order: [] };
@@ -9366,6 +9761,7 @@ ${bodyText.substring(0, 6e3)}`;
     }
     if (!res.ok) {
       M.articles = [];
+      M.briefs = [];
       M.clipNotes = null;
       M.clipUrls = /* @__PURE__ */ new Set();
       M.sidecar = { articleOverrides: {}, savedArchive: [], order: [] };
@@ -9378,6 +9774,9 @@ ${bodyText.substring(0, 6e3)}`;
     const cleaned = applyRetention(data.articles, days, days);
     const retentionChanged = cleaned.length !== data.articles.length;
     if (retentionChanged) data = { ...data, articles: cleaned };
+    const cleanedBriefs = applyBriefRetention(data.briefs || [], days);
+    const briefRetentionChanged = cleanedBriefs.length !== (data.briefs || []).length;
+    if (briefRetentionChanged) data = { ...data, briefs: cleanedBriefs };
     let statsChanged = false;
     if (!statsHasData(data.stats)) {
       const migrated = await migrateLegacyStats(data);
@@ -9386,10 +9785,11 @@ ${bodyText.substring(0, 6e3)}`;
         statsChanged = true;
       }
     }
-    if (retentionChanged || statsChanged) {
+    if (retentionChanged || statsChanged || briefRetentionChanged) {
       const set = {};
       if (retentionChanged) set.articles = data.articles;
       if (statsChanged) set.stats = data.stats;
+      if (briefRetentionChanged) set.briefs = data.briefs;
       await enqueueNewsWrite(() => writeNewsDataMerged({ set }));
     }
     const sidecar = await readClipbookData();
@@ -9398,6 +9798,7 @@ ${bodyText.substring(0, 6e3)}`;
     });
     const clipUrls = clipUrlSet(clipNotes || []);
     M.articles = data.articles;
+    M.briefs = data.briefs || [];
     M.stats = data.stats;
     M.sidecar = sidecar;
     M.clipNotes = clipNotes;
@@ -9418,14 +9819,114 @@ ${bodyText.substring(0, 6e3)}`;
     }
   });
 
+  // src/clipbook/brief.ts
+  function pendingBriefs(briefs) {
+    return (briefs || []).filter((b) => !!b && !!b.bvid && !b.body && !b.error && !!b.transcriptPath);
+  }
+  function cleanPoints(text) {
+    let s = String(text || "").trim();
+    s = s.replace(/^```[a-zA-Z]*\s*\n?/, "").replace(/\n?```\s*$/, "");
+    return s.trim();
+  }
+  function buildBriefPrompt(b, transcript) {
+    const title = String(b && b.title || "（无标题）");
+    const up = String(b && b.upName || "");
+    const dur = Number(b && b.duration || 0);
+    const body = String(transcript || "").slice(0, TRANSCRIPT_MAX);
+    return [
+      "你是简报编辑。下面是一期短视频的完整字幕/转录文字，请提炼成**要点列表**供快速扫读。",
+      "",
+      "要求：",
+      "- 用 markdown：`## 小节标题` 分组，每组下面用 `- ` 列要点",
+      "- 2–4 个小组，每组 2–4 条",
+      "- **每条要点只写一句话，控制在 30 字以内**：短句、直给结论，不要把多件事塞进同一条",
+      "- 保留关键事实、数字、人名、公司名与产品名",
+      "- 只依据原文，不要补充外部信息，不要臆测，不要写「本视频介绍了」这类空话",
+      "- **不要输出时间轴或时间戳**，不要整句复述原文",
+      "- 直接输出要点正文，不要任何前后解释或总结语",
+      "",
+      `视频标题：${title}`,
+      up ? `UP 主：${up}` : "",
+      dur > 0 ? `时长：${dur} 秒` : "",
+      "",
+      "转录全文：",
+      body
+    ].filter((s) => s !== "").join("\n");
+  }
+  function defaultReadText(absPath) {
+    try {
+      const w = window;
+      if (!w || !w.require) return null;
+      const fs = w.require("fs");
+      if (!fs || typeof fs.readFileSync !== "function") return null;
+      return String(fs.readFileSync(absPath, "utf8") || "");
+    } catch (e) {
+      return null;
+    }
+  }
+  async function runBriefSummaries(briefs, deps = {}) {
+    const pending = pendingBriefs(briefs);
+    if (!pending.length) return { done: 0, failed: 0, skipped: 0 };
+    const readText = deps.readText || defaultReadText;
+    const writePatch = deps.writePatch || writeBriefPatch;
+    const ai = deps.ai !== void 0 ? deps.ai : createAI();
+    let done = 0;
+    let failed = 0;
+    let skipped = 0;
+    for (let i = 0; i < pending.length; i++) {
+      const b = pending[i];
+      const bvid = String(b.bvid);
+      if (deps.onItem) deps.onItem(bvid, i + 1, pending.length);
+      const transcript = readText(String(b.transcriptPath || ""));
+      if (!transcript || !transcript.trim()) {
+        skipped++;
+        continue;
+      }
+      if (!ai || typeof ai.chat !== "function") {
+        failed++;
+        await writePatch(bvid, { error: "AI 未配置：请在插件设置中配置 AI 提供方后重跑本条" });
+        continue;
+      }
+      const prompt = buildBriefPrompt(b, transcript);
+      try {
+        let out = "";
+        try {
+          out = cleanPoints(await ai.chat(prompt, NO_THINK_OPTION));
+        } catch (e) {
+        }
+        if (!out) out = cleanPoints(await ai.chat(prompt));
+        if (!out) throw new Error("AI 产出为空");
+        await writePatch(bvid, { body: out, error: void 0 });
+        done++;
+      } catch (e) {
+        failed++;
+        await writePatch(bvid, { error: `要点生成失败：${e && e.message || String(e)}` });
+      }
+    }
+    return { done, failed, skipped };
+  }
+  var TRANSCRIPT_MAX, NO_THINK_OPTION;
+  var init_brief = __esm({
+    "src/clipbook/brief.ts"() {
+      init_ai();
+      init_store();
+      TRANSCRIPT_MAX = 12e3;
+      NO_THINK_OPTION = { modelOptions: { reasoning_effort: "none" } };
+    }
+  });
+
   // src/clipbook/save.ts
   function clipDirOf() {
     const s = tryGetSettings();
     return s && s.articleDirectory || "归档/网页剪藏";
   }
-  async function writeClipNote(raw) {
+  function dailyBriefDirOf() {
+    const s = tryGetSettings();
+    return s && s.dailyBriefDir || "归档/每日简报";
+  }
+  async function writeClipNote(raw, dirOverride) {
     const app = getApp();
-    const dir = clipDirOf();
+    const dir = dirOverride || clipDirOf();
     const cleanTitle = String(raw.title || "").replace(/[\\/:*?"<>|]/g, "").trim();
     if (!cleanTitle) {
       notice("标题为空", "error");
@@ -12492,6 +12993,10 @@ ${sample}`,
       loaded = true;
       beginSession();
       renderAll();
+      void runBriefSummaries(M.briefs).then((r) => {
+        if (r.done > 0 && M.open) void readNewsAndSidecar().then(() => renderAll());
+      }).catch(() => {
+      });
     }).catch((e) => {
       console.error("[剪藏本] 装载失败", e);
       notice("剪藏本数据读取失败", "error");
@@ -12626,6 +13131,17 @@ ${sample}`,
         return;
       }
       if (t.closest("[data-clip-open-note]") && M.cur) openNote(M.cur);
+      if (t.closest("[data-clip-open-url]") && M.cur && M.cur.url) {
+        try {
+          window.open(M.cur.url, "_blank");
+        } catch (e2) {
+        }
+        return;
+      }
+      if (t.closest("[data-clip-brief-retry]") && M.cur) {
+        void retryBrief(M.cur);
+        return;
+      }
     });
     readPaneEl.addEventListener("keydown", (e) => {
       if (e.key === "ArrowLeft" || e.key === "k") {
@@ -12764,11 +13280,15 @@ ${sample}`,
     const s = M.sel;
     if (s.kind === "clip") return { kind: "clip" };
     if (s.kind === "site") return { kind: "site", site: s.site };
+    if (s.kind === "brief") return { kind: "brief" };
     if (s.kind === "inbox") return { kind: "inbox", platform: s.platform, up: s.up || void 0 };
     return { kind: "all" };
   }
+  function currentBriefs() {
+    return queryBriefs(M.briefs || [], M.sidecar, M.upInfo);
+  }
   function currentList() {
-    return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], currentSrc(), M.upInfo);
+    return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], currentSrc(), M.upInfo, M.briefs);
   }
   function epochReset() {
     dirEpoch++;
@@ -12777,6 +13297,7 @@ ${sample}`,
   function srcKey(src) {
     if (src.kind === "all") return "all";
     if (src.kind === "clip") return "clip";
+    if (src.kind === "brief") return "brief";
     if (src.kind === "site") return "site:" + src.site;
     return `inbox:${src.platform}:${src.up || ""}`;
   }
@@ -12784,7 +13305,7 @@ ${sample}`,
     const key = srcKey(src);
     const cur = dirSnap.get(key);
     if (cur && snapEpochs.get(key) === dirEpoch) return cur;
-    const b = bucketByState(queryBySourceFull(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo));
+    const b = bucketByState(queryBySourceFull(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo, M.briefs));
     const snap = { unread: b.unread.map((a) => a.id), read: b.read.map((a) => a.id), saved: b.saved.map((a) => a.id) };
     dirSnap.set(key, snap);
     snapEpochs.set(key, dirEpoch);
@@ -12792,7 +13313,7 @@ ${sample}`,
   }
   function resolveSnap(snap, src) {
     const live2 = /* @__PURE__ */ new Map();
-    for (const a of queryBySourceFull(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo)) live2.set(a.id, a);
+    for (const a of queryBySourceFull(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo, M.briefs)) live2.set(a.id, a);
     const pick = (ids) => ids.map((id) => live2.get(id)).filter((a) => !!a);
     return { unread: pick(snap.unread), read: pick(snap.read), saved: pick(snap.saved) };
   }
@@ -12832,9 +13353,21 @@ ${sample}`,
     if (!railListEl) return;
     const arts = M.articles;
     const clipNotes = M.clipNotes || [];
-    const countOf = (source) => queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, source, M.upInfo).filter(matchesSearch).length;
+    const countOf = (source) => queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, source, M.upInfo, M.briefs).filter(matchesSearch).length;
     const allHit = countOf({ kind: "all" });
     let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M.sel.kind === "all", "");
+    const briefAll = currentBriefs();
+    const briefHit = countOf({ kind: "brief" });
+    html += railItemHtml(
+      { kind: "brief" },
+      "每日简报",
+      searchKw ? briefHit : briefAll.filter((a) => a.st === "unread").length,
+      briefAll.length,
+      ICO.brief,
+      "",
+      M.sel.kind === "brief",
+      ""
+    );
     for (const row of aggregateSites(arts, clipNotes, new Set((M.sidecar.savedArchive || []).map((x) => x.url)), M.clipUrls)) {
       const full = queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, { kind: "site", site: row.site }, M.upInfo);
       const unreadN = full.filter((a) => a.st !== "saved").length;
@@ -12875,12 +13408,13 @@ ${sample}`,
         return;
       }
       if (!sel) return;
-      const source = sel.kind === "clip" ? { kind: "clip" } : sel.kind === "inbox" ? { kind: "inbox", platform: String(sel.platform || ""), up: sel.up ? String(sel.up) : void 0 } : { kind: "all" };
+      const source = sel.kind === "clip" ? { kind: "clip" } : sel.kind === "brief" ? { kind: "brief" } : sel.kind === "inbox" ? { kind: "inbox", platform: String(sel.platform || ""), up: sel.up ? String(sel.up) : void 0 } : { kind: "all" };
       const actions = buildRailActions(String(row.title || ""), source);
       if (actions.length) attachItemActions(row, actions, { sheetTitle: String(row.title || ""), menuClass: "bz-clip-menu-editorial" });
     });
   }
   function buildRailActions(label, source) {
+    if (source.kind === "brief") return [];
     const unreadList = queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], source, M.upInfo).filter((a) => a.origin === "news");
     if (!unreadList.length) return [];
     const n = unreadList.length;
@@ -12909,6 +13443,21 @@ ${sample}`,
   function renderList() {
     if (!listEl) return;
     const src = currentSrc();
+    if (src.kind === "brief") {
+      const filtered = currentBriefs().filter((a) => !searchKw || matchesSearch(a));
+      if (!filtered.length) {
+        listEl.innerHTML = "";
+        listEl.appendChild(uiEmpty({ icon: "inbox", title: searchKw ? "没有匹配的简报" : "每日简报为空" }));
+        M.cur = null;
+        if (readerEl) renderReader();
+        return;
+      }
+      if (!filtered.some((a) => a.id === (M.cur && M.cur.id))) M.cur = filtered[0];
+      listEl.innerHTML = briefListHtml(groupBriefsByDay(filtered), M.cur ? M.cur.id : null, (a) => relTime(a.timeTs));
+      M.list = filtered;
+      bindItemMenus();
+      return;
+    }
     if (src.kind === "clip") {
       const list = queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo).filter((a) => !searchKw || matchesSearch(a));
       if (!list.length) {
@@ -13062,6 +13611,43 @@ ${sample}`,
       img.addEventListener("error", () => img.remove(), { once: true });
     });
   }
+  function readBriefTranscript(a) {
+    const p = String(a.raw && a.raw.transcriptPath || "");
+    if (!p) return "";
+    const cached = briefTrCache.get(p);
+    if (cached !== void 0) return cached;
+    let text = "";
+    try {
+      const w = window;
+      const fs = w && w.require ? w.require("fs") : null;
+      if (fs && typeof fs.readFileSync === "function" && fs.existsSync(p)) text = String(fs.readFileSync(p, "utf8") || "");
+    } catch (e) {
+      text = "";
+    }
+    briefTrCache.set(p, text);
+    return text;
+  }
+  function fmtBriefDur(a) {
+    const s = Number(a.raw && a.raw.duration || 0);
+    if (!(s > 0)) return "";
+    return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+  }
+  async function retryBrief(a) {
+    const raw = a.raw;
+    if (!raw || !raw.bvid) return;
+    if (readBriefTranscript(a)) {
+      notice("正在重新生成本期要点…", "info");
+      const r = await runBriefSummaries([{ ...raw, error: void 0 }]);
+      await refreshAfterAction();
+      if (r.done > 0) notice("本期要点已重新生成", "success");
+      else notice("本期要点重跑未成功", "error");
+      return;
+    }
+    await deleteBrief(String(raw.bvid));
+    briefTrCache.delete(String(raw.transcriptPath || ""));
+    await refreshAfterAction();
+    notice("已排入下一轮重新抓取", "info");
+  }
   function renderReader() {
     if (!readerEl) return;
     const a = M.cur;
@@ -13072,6 +13658,15 @@ ${sample}`,
       return;
     }
     setReadingSession(a.id);
+    if (a.origin === "brief") {
+      readerEl.innerHTML = briefReaderHtml(a, {
+        time: a.timeText || relTime(a.timeTs),
+        points: a.body ? briefPointsHtml(a.body) : "",
+        durationLabel: fmtBriefDur(a)
+      });
+      mountIcons(readerEl);
+      return;
+    }
     let paras = "";
     if (a.origin === "clip") {
       const cached = a.notePath ? clipBodyCache.get(a.notePath) : void 0;
@@ -13146,9 +13741,36 @@ ${sample}`,
     if (changed) resetReadScroll();
   }
   async function doSave(a) {
-    if (!a || a.origin !== "news") return;
+    if (!a) return;
+    if (a.origin === "brief") {
+      await doSaveBrief(a);
+      return;
+    }
+    if (a.origin !== "news") return;
     const ok = await flowSave(a);
     if (!ok) return;
+    await refreshAfterAction();
+  }
+  async function doSaveBrief(a) {
+    const raw = a.raw || {};
+    if (raw.error) {
+      notice("本期抓取失败，没有可保存的内容", "warning");
+      return;
+    }
+    const ok = await writeClipNote({
+      url: a.url,
+      author: a.author,
+      platform: "B站",
+      summary: a.summary,
+      tags: [],
+      date: String(raw.date || ""),
+      title: a.title,
+      body: a.body
+    }, dailyBriefDirOf());
+    if (!ok) return;
+    raw.read = true;
+    raw.state = "saved";
+    await writeBriefState(raw, "save");
     await refreshAfterAction();
   }
   async function doMarkRead(a) {
@@ -13384,7 +14006,21 @@ ${sample}`,
     markReadOnOpen(a);
   }
   function markReadOnOpen(a) {
-    if (!a || a.origin !== "news" || a.st !== "unread") return;
+    if (!a || a.st !== "unread") return;
+    if (a.origin === "brief") {
+      const braw = a.raw;
+      if (!braw || braw.read === true || braw.error) return;
+      braw.read = true;
+      void writeBriefState(braw, "read").then(() => {
+        if (M.open && !M.mobDetailOpen) {
+          renderList();
+          renderRail();
+        }
+      }).catch(() => {
+      });
+      return;
+    }
+    if (a.origin !== "news") return;
     const raw = a.raw || M.articles.find((n) => articleKeyOf(n) === a.id);
     if (!raw || raw.read === true) return;
     raw.read = true;
@@ -13436,6 +14072,7 @@ ${sample}`,
               { value: "large", label: "大" }
             ], onChange: () => applyReaderFontSize() },
             { type: "path", mode: "single", name: "剪藏目录", desc: "存放网页剪藏文章的文件夹", binding: { key: "articleDirectory" } },
+            { type: "path", mode: "single", name: "每日简报目录", desc: "每日简报保存的文件夹，与剪藏目录分开", binding: { key: "dailyBriefDir" } },
             { type: "number", name: "面板宽度记忆", desc: "桌面拖拽面板边缘缩放后自动记忆，0 为未拖过", binding: { key: "clipbookPanelWidth" }, min: 0, step: 10 },
             { type: "number", name: "面板高度记忆", desc: "桌面拖拽面板边缘缩放后自动记忆，0 为未拖过", binding: { key: "clipbookPanelHeight" }, min: 0, step: 10 },
             { type: "number", name: "目录栏宽度记忆", desc: "拖动目录与阅读分隔线后自动记忆，0 为未拖过", binding: { key: "clipbookMidWidth" }, min: 0, step: 10 }
@@ -13508,7 +14145,7 @@ ${sample}`,
       }
     });
   }
-  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched;
+  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, briefTrCache;
   var init_ui3 = __esm({
     "src/clipbook/ui.ts"() {
       init_app();
@@ -13530,6 +14167,8 @@ ${sample}`,
       init_render();
       init_state();
       init_loader();
+      init_brief();
+      init_save();
       init_flow();
       overlayEl = null;
       railListEl = null;
@@ -13569,6 +14208,7 @@ ${sample}`,
       snapEpochs = /* @__PURE__ */ new Map();
       deskFoldOpen = /* @__PURE__ */ new Set();
       deskFoldTouched = /* @__PURE__ */ new Set();
+      briefTrCache = /* @__PURE__ */ new Map();
     }
   });
 
@@ -13610,7 +14250,6 @@ ${sample}`,
     if (isUnderDir("卡片盒", p)) return "flash";
     if (matchSettingDir(s.articleDirectory, p, "归档/网页剪藏")) return "clipping";
     if (matchSettingDir(s.cinemaFolderPath, p, "我的/影视")) return "cinema";
-    if (matchSettingDir(s.movieDirectory, p, "我的/影视")) return "movie";
     if (isUnderDir("我的/现代诗", p)) return "poem";
     if (matchSettingDir(s.letterDirectory, p, "我的/信")) return "letter";
     if (matchSettingDir(s.knowledgeDirectory, p, "文献盒")) return "knowledge";
@@ -13726,7 +14365,7 @@ ${sample}`,
   // prototypes/clipbook/fake-sim.ts
   init_ui3();
   var CLIP_DIR = "归档/网页剪藏";
-  var SEED_MARK = "bz-sim:__clipbook-seed-v1";
+  var SEED_MARK = "bz-sim:__clipbook-seed-v2";
   var SETTINGS_KEY = "bz-sim:__settings";
   var NEWS_PATH = "CONFIG/STORAGE/news.json";
   var SIDECAR_PATH = "CONFIG/STORAGE/clipbook.json";
@@ -13752,7 +14391,10 @@ ${sample}`,
       bilibiliUpInfo: src.NEWS.upInfo || {},
       bilibiliMaxItems: 10,
       bilibiliCookie: "",
-      sources: { zhihu: true, guokr: true, bilibili: true }
+      sources: { zhihu: true, guokr: true, bilibili: true },
+      // 每日简报（ADR-0119）：真实库快照的 briefs 段；缺失退化为空数组（面板简报源显示空态）
+      briefs: src.NEWS.briefs || [],
+      briefUps: src.NEWS.briefUps || []
     }));
     seedVaultFile(SIDECAR_PATH, JSON.stringify(src.SIDECAR));
     const base = 17e11;
