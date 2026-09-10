@@ -35,6 +35,9 @@
    选项预留，此处放开——收起态按内容宽（文案 + 箭头 + 内边距）自适应即可。 */
 .bz-memo-sort { flex-shrink: 0; }
 .bz-memo-sort .bz-select { min-width: 0; width: auto; }
+/* 排序下拉实例类（uiSelect className，挂 .bz-select 根上）：不参与工具行压缩，
+   宽度自适应由上一行管；皮肤观感（墨边贴纸/方角描边）见皮肤段排序下拉组 */
+.bz-memo-sortsel { flex-shrink: 0; }
 
 /* 移动场景条尾部「添加场景」虚线 chip（issue 268，markup 见 render.mobAddSceneChipHtml）：
    动作磁贴跟在全部场景之后，与左栏 .bz-memo-side-add 同语义、收藏本 .bz-fav-chip-add
@@ -144,6 +147,13 @@
 .bz-memo-form { display: flex; flex-direction: column; gap: var(--bz-space-md); margin-top: var(--bz-space-md); }
 .bz-memo-form .bz-field { margin-bottom: 0; }
 .bz-memo-form textarea.bz-input { min-height: 64px; }
+/* 弹窗内容包裹（uiModal .bz-dialog-body 的直接子节点，内含 .bz-memo-form）：
+   纵向排布 + 防溢出；顶部间距由 form 的 margin-top 自管。全 token 取值，
+   两肤 × 亮暗四组合随皮肤作用域 token 自动协调 */
+.bz-memo-editor { display: flex; flex-direction: column; min-width: 0; }
+/* 底部按钮行包裹：右对齐（内部 .bz-btn-row 同向双保险）；margin-top 沿用
+   addscene 按钮行惯例（表单 gap 之上再垫 xs 档，动作行与字段分离） */
+.bz-memo-form-actions { display: flex; justify-content: flex-end; margin-top: var(--bz-space-xs); }
 /* 第二个输入框（剪藏标题/代码脚本/公开课课程）容器：输入框满宽
    （.bz-input 默认 240px 定宽，不在 .bz-field 里的框须显式撑满，issue 199）；
    position:relative 供联想 .bz-popover 浮层锚定（issue 201） */
@@ -155,6 +165,11 @@
 .bz-memo-pos-row { display: flex; align-items: center; gap: var(--bz-space-sm); min-height: 32px; }
 .bz-memo-pos-row .bz-memo-pos-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
 .bz-memo-pos-row .bz-memo-pos-hint .bz-ic { width: 12px; height: 12px; vertical-align: -2px; }
+/* 截止时间行（datetime 输入 + 清除钮）：flex 防组件库 `.bz-field .bz-input
+   { width: 100% }` 把清除钮挤换行——输入框吃余量（flex-basis 覆盖 width），
+   清除钮定宽贴右；间距/对齐消费 spacing token，随肤随档 */
+.bz-memo-due-row { display: flex; align-items: center; gap: var(--bz-space-sm); }
+.bz-memo-due-row .bz-input { flex: 1; min-width: 0; }
 
 /* ---- 添加场景弹窗（issue 199：此前容器/提示零规则裸排） ---- */
 .bz-memo-addscene { display: flex; flex-direction: column; gap: var(--bz-space-md); margin-top: var(--bz-space-md); }
@@ -504,6 +519,79 @@
   letter-spacing: 0.06em;
 }
 
+/* ─── 纸感手账 · 夜（issue 270：推翻「固定明度」旧拍板补暗色；照 cinema 先例
+   纯 CSS——.theme-dark 挂 body，面板 / uiModal 弹窗 / 右键菜单根均挂 document.body
+   树内，后代选择器可达）───
+   暗色 = 深纸底 + 浅墨边 + 黑硬阴影：token 整组覆盖后，各结构位消费 var 的声明
+   （墨边/输入墨框/激活描边等）自动随档；仅亮色段硬编码位需就地覆盖。小钮与贴纸的
+   var(--bz-skin-ink) 硬偏移阴影随墨转浅，暗底上读作「粉笔描边」，与浅墨边同一
+   语言；大壳层阴影显式转黑保深度。亮色侧零改动。 */
+.theme-dark .bz-memo-skin-paper {
+  --bz-skin-ink: #ece2ca;
+  --bz-surface-1: #211d13;
+  --bz-surface-2: #2b2617;
+  --bz-surface-3: #342e1d;
+  --bz-surface-hover: #38311f;
+  --bz-text-1: #ede4cd;
+  --bz-text-2: #b5a98a;
+  --bz-text-3: #7e7559;
+  --bz-border: rgba(236, 226, 202, 0.16);
+  --bz-border-strong: rgba(236, 226, 202, 0.72);
+  --bz-brand: #f27b28;
+  --bz-brand-hover: #fb8f42;
+  --bz-brand-soft: rgba(242, 123, 40, 0.2);
+}
+/* 三壳（面板/uiModal 弹窗/右键菜单）：米纸点阵转暗点阵，墨影转黑影；
+   墨边消费 ink 自动转浅 */
+.theme-dark .bz-memo-panel.bz-memo-skin-paper {
+  background:
+    radial-gradient(rgba(236, 226, 202, 0.1) 1px, transparent 1px) 0 0 / 22px 22px,
+    #1b1710;
+  box-shadow: 9px 10px 0 rgba(0, 0, 0, 0.6);
+}
+.theme-dark .bz-overlay-popup.bz-memo-skin-paper {
+  background: #1b1710;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.6);
+}
+.theme-dark .bz-item-menu.bz-memo-skin-paper {
+  background: #1b1710;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.6);
+}
+/* 头行斜纹：墨纹转浅墨纹 */
+.theme-dark .bz-memo-skin-paper .bz-panel-head {
+  background: repeating-linear-gradient(-45deg, rgba(236, 226, 202, 0.05) 0 14px, transparent 14px 28px);
+}
+/* 墨底纸字反转位（场景贴纸标签 / 表单格子选中项 / 排序选中项）：ink 转浅后
+   纸白字不可读，字转深纸色（底色消费 ink 自动转浅） */
+.theme-dark .bz-memo-skin-paper .bz-rail-label { color: #1b1710; }
+.theme-dark .bz-memo-skin-paper .bz-choice .bz-choice-btn { border-left-color: rgba(236, 226, 202, 0.16); }
+.theme-dark .bz-memo-skin-paper .bz-choice .bz-choice-btn.is-on { color: #1b1710 !important; }
+.theme-dark .bz-memo-skin-paper .bz-choice .bz-choice-btn.is-on:hover { color: #1b1710 !important; }
+.theme-dark .bz-memo-skin-paper .bz-memo-sort .bz-select-item.is-on { color: #1b1710; }
+.theme-dark .bz-memo-skin-paper .bz-memo-sort .bz-select-item.is-on:hover { color: #1b1710; }
+/* 硬编码纸白底位：排序菜单转深纸档；触发器/菜单/课程贴纸的墨影转黑影 */
+.theme-dark .bz-memo-skin-paper .bz-memo-sort .bz-select-menu {
+  background: #1b1710;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6);
+}
+.theme-dark .bz-memo-skin-paper .bz-memo-sort .bz-select { box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55); }
+/* open 态恢复品牌橙阴影：上条 (0,4,0) 与亮色 .open 档同特异性且更靠后，须显式压回 */
+.theme-dark .bz-memo-skin-paper .bz-memo-sort .bz-select.open { box-shadow: 2px 2px 0 var(--bz-brand); }
+.theme-dark .bz-memo-skin-paper .bz-memo-tag.bz-memo-tag-course {
+  background: #3a2f18;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55);
+}
+/* 输入 inset 影转黑；卡间虚线与三处虚线框转浅墨（base 覆盖会以同特异性压住
+   亮色段的 :hover 恢复档，故 hover 位显式补回——声明与亮色一致，var 随档） */
+.theme-dark .bz-memo-skin-paper .bz-input { box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.35); }
+.theme-dark .bz-memo-skin-paper .bz-memo-card + .bz-memo-card { border-top-color: rgba(236, 226, 202, 0.14); }
+.theme-dark .bz-memo-skin-paper .bz-memo-side-add,
+.theme-dark .bz-memo-skin-paper .bz-memo-donebar,
+.theme-dark .bz-memo-skin-paper .bz-mobstrip-chip.bz-mobstrip-add { border-color: rgba(236, 226, 202, 0.4); }
+.theme-dark .bz-memo-skin-paper .bz-memo-side-add:hover,
+.theme-dark .bz-memo-skin-paper .bz-memo-donebar:hover,
+.theme-dark .bz-memo-skin-paper .bz-mobstrip-chip.bz-mobstrip-add:hover { border-color: var(--bz-skin-ink); }
+
 /* ─── 编辑部 ─── */
 /* token 层 */
 .bz-memo-skin-editorial {
@@ -716,6 +804,66 @@
 .bz-memo-skin-editorial .bz-item-menu-item:hover {
   background: var(--bz-skin-ink);
   color: #ffffff;
+}
+
+/* ─── 编辑部 · 夜（issue 270，先例与可达性论证同纸感段）───
+   编辑部 = 黑白红，暗色即「报纸暗房」反转：碳黑底 + 浅墨线 + 红仍为唯一强调色。
+   ink 转浅后，亮色段一切「ink 底 + 纸白字」的反转位（hover/选中）需就地补深字。 */
+.theme-dark .bz-memo-skin-editorial {
+  --bz-skin-ink: #e8e6e1;
+  --bz-surface-1: #161618;
+  --bz-surface-2: #1e1e21;
+  --bz-surface-3: #26262a;
+  --bz-surface-hover: #26262a;
+  --bz-text-1: #ececea;
+  --bz-text-2: #a5a29b;
+  --bz-text-3: #6d6a64;
+  --bz-border: #343337;
+  --bz-border-strong: #cfccc5;
+  --bz-brand: #ee4438;
+  --bz-brand-hover: #f55b50;
+  --bz-brand-soft: rgba(238, 68, 56, 0.16);
+}
+/* 三壳：白底转碳黑，投影转黑（墨边消费 ink 自动转浅） */
+.theme-dark .bz-memo-panel.bz-memo-skin-editorial {
+  background: #161618;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+.theme-dark .bz-overlay-popup.bz-memo-skin-editorial {
+  background: #161618;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+}
+.theme-dark .bz-item-menu.bz-memo-skin-editorial {
+  background: #161618;
+  box-shadow: 6px 8px 0 rgba(0, 0, 0, 0.5);
+}
+/* ink 浅底反转位：纸白字转碳黑字（底色消费 ink 自动转浅） */
+.theme-dark .bz-memo-skin-editorial .bz-memo-side-add:hover,
+.theme-dark .bz-memo-skin-editorial .bz-memo-donebar:hover,
+.theme-dark .bz-memo-skin-editorial .bz-item-menu-item:hover,
+.theme-dark .bz-memo-skin-editorial .bz-memo-sort .bz-select-item:hover,
+.theme-dark .bz-memo-skin-editorial .bz-memo-sort .bz-select-item.is-on:hover,
+.theme-dark .bz-memo-skin-editorial .bz-mobstrip-chip.is-on,
+.theme-dark .bz-memo-skin-editorial .bz-mobstrip-chip.bz-mobstrip-add:hover { color: #161618; }
+/* 硬编码白底位转暗档：排序菜单/格子容器转主底，chip/复选框/格子项转次底 */
+.theme-dark .bz-memo-skin-editorial .bz-memo-sort .bz-select-menu {
+  background: #161618;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5);
+}
+.theme-dark .bz-memo-skin-editorial .bz-mobstrip-chip { background: #1e1e21; }
+.theme-dark .bz-memo-skin-editorial .bz-mobstrip-chip:hover { background: var(--bz-surface-hover); }
+.theme-dark .bz-memo-skin-editorial .bz-memo-check { background: #1e1e21; }
+.theme-dark .bz-memo-skin-editorial .bz-memo-check:hover { background: var(--bz-brand); }
+.theme-dark .bz-overlay-popup.bz-memo-skin-editorial .bz-choice--float { background: #1e1e21; }
+.theme-dark .bz-overlay-popup.bz-memo-skin-editorial .bz-choice .bz-choice-btn { background: #1e1e21 !important; }
+.theme-dark .bz-overlay-popup.bz-memo-skin-editorial .bz-choice .bz-choice-btn.is-on { color: #161618 !important; }
+/* 移动端关闭钮（文件尾媒体查询档）：编辑部白底 !important 硬编码在暗色下转次底、
+   hover 浅墨底纸白字转碳黑字（墨边消费 ink 自动转浅）。桌面该钮被皮肤段整组
+   藏起，命中无视觉影响。 */
+.theme-dark .bz-memo-panel.bz-memo-skin-editorial .bz-memo-head-close { background: #1e1e21 !important; }
+.theme-dark .bz-memo-panel.bz-memo-skin-editorial .bz-memo-head-close:hover {
+  background: var(--bz-skin-ink) !important;
+  color: #161618 !important;
 }
 
 /* ---- 皮肤选择卡预览（设置面板 .bz-cardpick-prev 变体；复刻各皮肤面板迷你形态） ---- */
