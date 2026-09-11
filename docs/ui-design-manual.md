@@ -209,7 +209,7 @@
      | container-highest | neutral22 | 最高层（菜单/浮层） |
      | on-surface | neutral90 | 暗色主文字用 high-tone |
   - 我们已有 `--background-secondary`/`--background-modifier-hover` 做色差，**新 UI 在暗色下默认走方案 2（表面色差）+ 极轻阴影**；亮色下照常走三档阴影。
-- **毛玻璃明确不采用**（[Apple HIG Materials](https://developer.apple.com/design/human-interface-guidelines/materials/) 推导）：网页拿不到原生 vibrancy；`backdrop-filter` 在 Obsidian 各种主题背景上对比度不可控、暗色插件窗口内会串色降可读性，违反「清晰」原则。层级一律用表面色差 + 阴影表达。
+- **毛玻璃仅限遮罩层，单源 token（ADR-0123，2026-09-11 推翻旧全禁口径）**：层级仍一律用表面色差 + 阴影表达（卡片/浮层不加 backdrop-filter）；唯一例外 = **遮罩层**（挡界面的半透明层）——`backdrop-filter: blur(var(--bz-overlay-blur))`（8px 单源，域内禁自写像素值），底色走 `var(--bz-overlay)` 明暗自适应，品牌底色域豁免只加 blur；灯箱/播放器黑底（`--bz-scrim`）不适用。清单由 `tests/core/overlay-glass.test.ts` 守卫（issue 282）。
 - hover 阴影只允许**轻微加深**，不放大、不位移太多。
 - 弹窗阴影与既有 `.bz-overlay-popup` 对齐，新弹窗直接复用类，不另造。
 
@@ -402,7 +402,7 @@
 | Token 体系 | [shadcn/ui globals.css](https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/v4/app/globals.css)、[GitHub Primer](https://primer.style/product/primitives/)、[Material token](https://github.com/material-components/material-web/blob/main/tokens/_md-sys-color.scss) | 成对语义命名、base/functional/component 三层、base-8 间距、暗色不依赖阴影 → §2/4.1/5.2 |
 | 暗色阴影/表面 | [Primer shadow.json5](https://github.com/primer/primitives/blob/main/src/tokens/functional/shadow/shadow.json5)、[Material tonal surface](https://github.com/material-components/material-components-android/blob/master/docs/theming/Color.md) | 暗色白字光晕或表面色阶、暗色层级越高越亮 → §5.2 |
 | 交互态 | [Material 3 State Layer](https://m3.material.io/styles/state/overview)、[Ant controlHeight](https://github.com/ant-design/ant-design/blob/master/components/theme/themes/shared/genControlHeight.ts) | hover 8%/focus 10%、禁用 38%/12%、控件高 32/44px → §6.4 |
-| 毛玻璃禁用 | [Apple HIG Materials](https://developer.apple.com/design/human-interface-guidelines/materials/) | 网页无原生 vibrancy、backdrop-filter 不可控 → §5.2 |
+| 毛玻璃仅限遮罩 | [Apple HIG Materials](https://developer.apple.com/design/human-interface-guidelines/materials/) | 卡片/浮层不用 backdrop-filter；遮罩层走 `--bz-overlay-blur` 单源（ADR-0123）→ §5.2 |
 | 空态 | [Refactoring UI](https://refactoringui.com/) | 空态要有引导与动作 → §8.3 |
 
 ---

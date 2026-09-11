@@ -1122,3 +1122,14 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 > ③ **隐藏滚动条（277）**：手册 352 早拍「全站隐藏」，实现却 12 域各写一份（30+ 条），知识盒因自带私有面板壳（.bz-kb-window，不吃 `.bz-panel-frame *` 通杀）全漏网，另有三处 `scrollbar-width: thin`（knowledge:153/306/522）与 encrypt 自绘 6px thumb 可见。落地 = **core 一条界面级通杀**（`[class^="bz-"]`/`[id^="bz-"]` + 面板壳整树 + 非 bz 前缀遗留弹层；**刻意不用 `*` 通配**，Obsidian 本体不碰）+ 清退违规与冗余声明；滚动功能保留（不动 overflow）。作用域拍板 = bz 自有界面全量。
 > ④ **视频录入自动回填（278）**：录入弹窗 7 输入框现全手填、无监听、无 placeholder（沿「去 placeholder」既有拍板，本次不加回）。件全现成且同域：`normalizeSourceUrl`（source.ts:52，B站留 p/t、剥 spm_id_from/vd_source）只术语链路在用，`fetchPageTitle`/`cleanSourceTitle` 兜底链现成。新增域内 `video-meta.ts`：输入 450ms 防抖 → 先净化写回输入框 → B 站 view API（title/owner.name）→ 失败回退页面标题 → 再失败静默（零 toast）；**回填只补空字段**、用序列号+输入值双校验丢弃过期响应；保存前与数据层（data.ts:65 normalizeUrl）同源净化兜底；`[bz-info]` 下载期合并对齐同口径（标题也只补空，不再无条件覆盖手填）。`b23.tv` 短链响应无重定向目标可读 → 只抓标题、UP主 留空由下载期补齐（已知限制写下）。不迁移存量数据。
 > 交付形态：用户拍板**只出文档**（代码待后续会话按 issues 执行，走 worktree：worktree 开发 → merge master → 门禁全绿 → 合并 → 主仓 build 部署）。
+
+### 备忘录代码批七项：抽屉收编后续 + 毛玻璃 + 点亮 + 通知收紧（issue 280–286 / ADR-0123，2026-09-11）
+
+> memo-code-fix 全流程：memo.json 筛 scene='代码' 未完成 7 条 → 4 路并行调研 → 6 worktree 无冲突并行开发（12+2 commits）→ 3 路 review 全通过（P2×1 + P3 触控热区当场回补）→ 串行合并（每轮 tsc+全量门禁）→ build 部署。
+> ① **diary 抽屉关闭钮退役（280）**：issue 271 全域「遮罩点关」拍板的唯一残留异类删除；core 四关闭途径（遮罩/下滑/ESC/动作项）保留；ACTION_ICON.close 键保留（真机事故产物）。
+> ② **主面板 ✕ 复位优先（281）**：备忘「主界面」经调研落 diary（搜索栏）+ secondbrain（expandedDirs）——home 无可复位列表、settings-panel 推入态 ✕ 不可点，均排除；语义先例 = clipbook「关闭」钮（复位优先、无复位项才退出）。
+> ③ **遮罩毛玻璃（282 / ADR-0123）**：推翻手册 §5.2 禁令。`--bz-overlay-blur: 8px` 单源 token；非品牌域统一 var(--bz-overlay)+blur；品牌底色域（favorites/secondbrain/settings-panel/password-vault 暖色系）只加 blur；灯箱 --bz-scrim 不适用；overlay-glass.test 清单守卫。存量 TS 内联遮罩两处为后续债务。
+> ④ **首页彩点五条件点亮（283）**：等级语义 ok=今日动静 / warn=进行中·待处理 / hot=逾期·紧急。clipping 未读→warn、pomodoro 专注中→warn（取高）、review 逾期→hot（既有）、cinema 在看→warn（取高）、memo 重要未完成→hot（取高）。纯层契约：pomodoroFocusing/memoUrgentOpen 作数据入参（memoOpen 口径不动）。
+> ⑤ **memo 抽屉头勾选圈（284）**：checkHtml 抽导出与列表单源；点圈接 toggleCheck（300ms 防抖共享）；sheetClass 皮肤随行；44px 触控热区 + 19px 尺寸对齐列表（review 回补）。
+> ⑥ **通知收紧（285）**：全局口径 = 操作结果在触发 UI 上立即可见不弹成功通知。18 处删除（diary×3 + memo×4 + 主体×11），边缘两可类（批量计数/密码确认/后果说明）不动；口径回写 CONTEXT「通知」词条。diary dialogs:178 遗留一处待后续统一。
+> ⑦ **影院标记已看改编辑窗（286）**：openForm 加 presetSt='已看'，评分滑杆预填、影评展开，取消不落盘；saveEdit 补发 status/rated 事件与 markStatus 同口径（副作用：普通编辑也进行为流，有意扩展）；「标记在看」保持快速语义。
