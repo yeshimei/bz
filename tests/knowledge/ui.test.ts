@@ -198,6 +198,22 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     await vi.waitFor(() => expect(app.openUrl).toHaveBeenCalledWith('https://www.bilibili.com/video/BV1demo/'));
   });
 
+  it('纯嵌入正文（只有 ![[…mp4]]）渲染成功 → 不误触发纯文本兜底（review 275：成败判据=是否产出元素）', async () => {
+    vault.files.set('文献盒/纯嵌入C.md', noteMd({
+      title: '纯嵌入C', type: 'video', domain: '物理', date: '2026-09-04 10:00:00',
+      body: '![[CONFIG/APPENDIX/带片C.mp4]]',
+    }));
+    ui.showMain();
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-kb-lexrow').length).toBe(1));
+    (document.querySelector('.bz-kb-lexrow[data-kb-act=lit-peek]') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('bz-kb-preview-body')).toBeTruthy());
+    const bodyEl = document.getElementById('bz-kb-preview-body')!;
+    // 渲染产出元素（mock 为包裹 div）→ 兜底不落地：嵌入字面恰好一份、无「（无正文）」兜底段
+    expect(bodyEl.querySelector('*')).toBeTruthy();
+    expect(bodyEl.textContent!.split('![[CONFIG/APPENDIX/带片C.mp4]]').length - 1).toBe(1);
+    expect(bodyEl.textContent).not.toContain('（无正文）');
+  });
+
   it('渲染抛错 → 纯文本兜底且不叠加：兜底只写一份；再开（渲染恢复）仍恰好一份（issue 275）', async () => {
     vault.files.set('文献盒/抛错C.md', noteMd({
       title: '抛错C', type: 'video', domain: '物理', date: '2026-09-03 10:00:00',

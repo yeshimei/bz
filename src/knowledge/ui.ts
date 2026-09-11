@@ -570,7 +570,9 @@ export class UIManager {
           await MarkdownRenderer.render(this.app, body, bodyEl, n.path, comp);
           comp.unload();
         } catch { /* 渲染失败回退纯文本 */ }
-        if (!bodyEl.querySelector('*') || !bodyEl.textContent?.trim()) {
+        if (!bodyEl.querySelector('*')) {
+          // 成败判据 =「是否产出元素」：嵌入型正文（如纯 ![[…mp4]]）渲染成功产出 video 但无文本，
+          // 不得因 textContent 为空误触发兜底（否则字面嵌入叠加在视频后 = 双份复现，review 275 修复）
           bodyEl.innerHTML = parasHtml;
         }
       } else {
