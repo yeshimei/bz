@@ -569,7 +569,8 @@ export function buildPreviews(data: RiverData): RiverPreview[] {
   if (!s.diaryWrittenToday && s.diaryStreak > 0) {
     out.push({ h: `日记连击 ×${s.diaryStreak} 待续`, b: '写三行也算数。今晚补上，明天它自己接着长。', go: 'diary', goLabel: '去写日记 →' });
   } else if (s.diaryWrittenToday) {
-    out.push({ h: `今日日记已写 · 连击 ×${s.diaryStreak + 1}`, b: '明天同一时间回来续上，连击就是这么长起来的。', go: 'diary', goLabel: '看日记本 →' });
+    // 连击口径（H11）：diaryStreak 已含今天（writtenToday 时从今天起算），不再 +1（恒多算一天的回归）
+    out.push({ h: `今日日记已写 · 连击 ×${s.diaryStreak}`, b: '明天同一时间回来续上，连击就是这么长起来的。', go: 'diary', goLabel: '看日记本 →' });
   } else {
     out.push({ h: '给明天留一句话', b: '今晚写一篇日记，明晚它会变成日记本媒体墙上的新格子。', go: 'diary', goLabel: '去写日记 →' });
   }
