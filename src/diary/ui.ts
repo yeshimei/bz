@@ -325,8 +325,16 @@ export class DiaryAppController {
     ui.head.querySelector('[data-act="add"]')?.addEventListener('click', () => this.openAddEntry());
     // 搜索：toggle 真搜索框
     ui.head.querySelector('[data-act="search"]')?.addEventListener('click', () => this.toggleSearch(ui));
-    // 关闭面板（2026-09-11 移动端评审补回：全屏页无遮罩可点；桌面由 CSS 隐藏该钮）
-    ui.head.querySelector('[data-act="close"]')?.addEventListener('click', () => this.hide());
+    // 「关闭」复位优先（clipbook 同款语义）：搜索栏开着先收搜索不关面板，已收起再点 ✕ 才退出
+    // （2026-09-11 移动端评审补回关闭钮：全屏页无遮罩可点；桌面由 CSS 隐藏该钮）
+    ui.head.querySelector('[data-act="close"]')?.addEventListener('click', () => {
+      const row = ui.searchRow;
+      if (row && row.style.display !== 'none') {
+        this.toggleSearch(ui);
+      } else {
+        this.hide();
+      }
+    });
     // 关闭（ESC / 点遮罩）与设置直达的按钮已随头行精简移除，见 render.ts wallPanelHTML 注释
     // 灯箱关闭按钮（双实例各自一份）
     ui.lb.querySelector('[data-act="lb-close"]')?.addEventListener('click', (e) => {
