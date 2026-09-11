@@ -300,7 +300,14 @@ export class SafeManager {
         if (!forceReset) return false;
         return this.firstTimeSetup(password);
       }
-      if (!parsed || !Array.isArray(parsed.notes)) parsed.notes = [];
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        // E12：密文解出 null/标量/数组（合法 JSON 但结构损坏）——密码正确、数据损坏，
+        // 此前对 null 赋值抛 TypeError 被 catch 误判成「密码错误」，输对密码也进不了重设流程
+        this.manifestIssue = 'corrupt';
+        if (!forceReset) return false;
+        return this.firstTimeSetup(password);
+      }
+      if (!Array.isArray(parsed.notes)) parsed.notes = [];
       parsed.version = parsed.version || 1;
       this.manifest = parsed;
       this.password = password;
@@ -335,6 +342,9 @@ export class SafeManager {
       this.unlocked = false;
       this.password = null;
       this.manifest = { version: 1, notes: [] };
+      // E4：写失败回滚必须同步回发解锁态——此前只改内存，状态栏与密码本等订阅方卡在「已解锁」
+      this.onUnlockChange?.(false);
+      emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: false });
       return false;
     }
   }
@@ -868,50 +878,54 @@ export class SafeManager {
    * @returns { files: 删除的孤儿密文文件数, notes: 清除的失效条目数 }
    */
   async resolveHealth(keys: string[]): Promise<{ files: number; notes: number }> {
-    if (!this.unlocked) throw new Error('未解锁，无法清理');
-    const want = new Set(keys);
-    let notes = 0;
-    let files = 0;
+    // E13：整体入 opQueue——清单条目清除与 saveManifest 同 lockNote/restoreNote 串行互斥，
+    // 防后落盘的旧清单快照抹掉并发 lockNote 新增的条目
+    return this.enqueueOp(async () => {
+      if (!this.unlocked) throw new Error('未解锁，无法清理');
+      const want = new Set(keys);
+      let notes = 0;
+      let files = 0;
 
-    // 1) 失效条目整条清除
-    const kept: SafeNote[] = [];
-    for (const n of this.manifest.notes) {
-      let bodyExists = false;
-      if (n.contentRef) {
+      // 1) 失效条目整条清除
+      const kept: SafeNote[] = [];
+      for (const n of this.manifest.notes) {
+        let bodyExists = false;
+        if (n.contentRef) {
+          try {
+            bodyExists = await this.adapter.exists(this.resolveRef(n.contentRef));
+          } catch (e) {
+            bodyExists = false;
+          }
+        }
+        if (want.has('entry:' + n.id) && !bodyExists) {
+          // 正文镜像已缺失（dead-entry 判定），deleteNoteMirrors 对缺失正文为无害空操作
+          await this.deleteNoteMirrors(n);
+          notes += 1;
+        } else {
+          kept.push(n);
+        }
+      }
+      if (notes > 0) this.manifest.notes = kept;
+
+      // 2) 孤儿密文文件删除（形态校验同扫描：点前缀 + .enc，避开清单与目录结构）
+      for (const key of keys) {
+        if (!key.startsWith('file:')) continue;
+        const name = key.slice('file:'.length);
+        if (!name.startsWith('.') || !name.endsWith('.enc')) continue;
         try {
-          bodyExists = await this.adapter.exists(this.resolveRef(n.contentRef));
+          if (await this.adapter.exists(this.resolveRef(name))) {
+            await this.adapter.remove(this.resolveRef(name));
+            files += 1;
+          }
         } catch (e) {
-          bodyExists = false;
+          /* 单文件失败继续 */
         }
       }
-      if (want.has('entry:' + n.id) && !bodyExists) {
-        // 正文镜像已缺失（dead-entry 判定），deleteNoteMirrors 对缺失正文为无害空操作
-        await this.deleteNoteMirrors(n);
-        notes += 1;
-      } else {
-        kept.push(n);
-      }
-    }
-    if (notes > 0) this.manifest.notes = kept;
 
-    // 2) 孤儿密文文件删除（形态校验同扫描：点前缀 + .enc，避开清单与目录结构）
-    for (const key of keys) {
-      if (!key.startsWith('file:')) continue;
-      const name = key.slice('file:'.length);
-      if (!name.startsWith('.') || !name.endsWith('.enc')) continue;
-      try {
-        if (await this.adapter.exists(this.resolveRef(name))) {
-          await this.adapter.remove(this.resolveRef(name));
-          files += 1;
-        }
-      } catch (e) {
-        /* 单文件失败继续 */
-      }
-    }
-
-    if (notes > 0) await this.saveManifest(); // 清单落盘失败向上抛（下次重试，条目判定幂等）
-    await this.clearStaging();
-    return { files, notes };
+      if (notes > 0) await this.saveManifest(); // 清单落盘失败向上抛（下次重试，条目判定幂等）
+      await this.clearStaging();
+      return { files, notes };
+    });
   }
 
   /**
@@ -929,13 +943,16 @@ export class SafeManager {
   /**
    * 加锁一篇笔记（操作级互斥入口，P1-6）：实例级 promise 链串行——
    * 并发 lockNote/restoreNote 按发起顺序排队执行，杜绝挂起标记/清单/暂存区的并发互吞。
+   * @param onSkippedStale E14：加密期间原文件被编辑过（删前重读与加密正文不一致）而
+   *   保留未删的路径列表——密文为加密时的旧内容，调用方应提示用户可重做。
    */
   lockNote(
     input: LockNoteInput,
     onProgress?: (p: EncryptProgress) => void,
-    onDeleteFailed?: (paths: string[]) => void
+    onDeleteFailed?: (paths: string[]) => void,
+    onSkippedStale?: (paths: string[]) => void
   ): Promise<SafeNote> {
-    return this.enqueueOp(() => this.lockNoteSerial(input, onProgress, onDeleteFailed));
+    return this.enqueueOp(() => this.lockNoteSerial(input, onProgress, onDeleteFailed, onSkippedStale));
   }
 
   /**
@@ -953,7 +970,8 @@ export class SafeManager {
   private async lockNoteSerial(
     input: LockNoteInput,
     onProgress?: (p: EncryptProgress) => void,
-    onDeleteFailed?: (paths: string[]) => void
+    onDeleteFailed?: (paths: string[]) => void,
+    onSkippedStale?: (paths: string[]) => void
   ): Promise<SafeNote> {
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法加密笔记');
     await this.ensureSafeRootDir();
@@ -967,6 +985,7 @@ export class SafeManager {
     const stagedRefs: string[] = [];
     let note: SafeNote | null = null;
     let manifestSaved = false; // S2 是否落盘成功（P1-5：未落盘的失败在内存回退幽灵条目）
+    const skippedStale: string[] = []; // E14：加密期间被编辑、删除前重读不一致而保留的原文件
     try {
       // 附件加密并行（BLOB_CONCURRENCY=3）：每个 blob 独立 salt → 逐附件 PBKDF2(100k)，
       // 串行会让多附件明显变慢；进度按完成数上报（顺序不定，语义不变）。
@@ -1051,13 +1070,31 @@ export class SafeManager {
       // 普通加密笔记删除整篇原文件；diary-entry/password-vault 无整文件可删
       //（日记条目块移除由日记域自行处理 ADR-0017 Q6-b；密码本无原文件，path 为虚拟占位）
       if (input.kind !== 'diary-entry' && input.kind !== 'password-vault') {
+        // E14：删前重读比对——加密耗时窗口（确认框/附件加密/PBKDF2）内用户继续编辑，
+        // 增量只存在于原文件，直接删 = 保险库存旧快照 + 新增量永久丢失。
+        // 与加密正文不一致（归一化行尾）→ 保留原文件不删，经 onSkippedStale 上报提示重做。
+        let stale = false;
         try {
-          await this.deleteVaultFile(input.path);
+          const f = getApp().vault.getAbstractFileByPath(input.path);
+          if (f && (f as any).isFolder !== true) {
+            const current = await getApp().vault.read(f as any);
+            stale = current.replace(/\r\n/g, '\n') !== input.content.replace(/\r\n/g, '\n');
+          }
         } catch (e) {
-          deleteFailed.push(input.path);
+          /* 读不到按原样尝试删除（删除失败本就仅上报不回滚） */
+        }
+        if (stale) {
+          skippedStale.push(input.path);
+        } else {
+          try {
+            await this.deleteVaultFile(input.path);
+          } catch (e) {
+            deleteFailed.push(input.path);
+          }
         }
       }
       onDeleteFailed?.(deleteFailed);
+      onSkippedStale?.(skippedStale);
       return note;
     } catch (e) {
       // 整笔放弃：清理本次已写入的暂存镜像（原文件未动）；挂起标记/清单残留由解锁自愈回收
@@ -1287,86 +1324,92 @@ export class SafeManager {
     if (timeValue === null || Number.isNaN(timeValue)) return false;
 
     await this.ensureVaultParentFolder(datePath);
-    const existing = app.vault.getAbstractFileByPath(datePath);
-    let existingText = '';
-    if (existing && (existing as any).isFolder !== true) {
-      existingText = await app.vault.read(existing as any);
-    }
-    const existingLines = existingText ? existingText.replace(/\r\n/g, '\n').split('\n') : [];
-
-    // 组装块行：标题行原样保留（`# emoji HH:mm`，不再拼接时间），标题与正文间补空行
-    // （与 writeFile 生成格式一致：# emoji HH:mm → 空行 → 正文）
-    const blockRows: string[] = [lines[0].trim()];
-    const blockLines: string[] = [];
-    for (let i = 1; i < lines.length; i++) blockLines.push(lines[i]);
-    while (blockLines.length && blockLines[blockLines.length - 1].trim() === '') blockLines.pop();
-    while (blockLines.length && blockLines[0].trim() === '') blockLines.shift();
-    if (blockLines.length) {
-      blockRows.push('');
-      blockRows.push(...blockLines);
-    }
-
-    // 幂等：目标文件已含「标题行 + 正文」一致的块（上次「块已 merge 但清单没保存」的中断残留/重试）
-    // → 视为已完成，跳过防重复插入。
-    // 判重不能只比标题行（P0 回归）：同分钟同标签的两条日记标题行完全相同，仅凭标题跳过
-    // 会把另一条的内容误判为「已还原」——还原块被静默吞掉且照常删镜像删清单，内容永久丢失。
-    // 因此对每个命中标题行，取到下一个标题行为止，与还原块的非空行序列逐行比对：
-    // 正文一致才算已 merge；不一致（同刻另一条）照常按时间序插入。
-    const headingRe = /^#\s+\S+\s+(\d{2}:\d{2})$/;
-    const sigLines = (ls: string[]) => ls.map((l) => l.trim()).filter((l) => l !== '');
-    const blockSig = sigLines(blockRows);
-    let alreadyMerged = false;
-    for (let i = 0; i < existingLines.length; i++) {
-      if (existingLines[i].trim() !== lines[0].trim()) continue;
-      const seg: string[] = [];
-      for (let k = i + 1; k < existingLines.length && !headingRe.test(existingLines[k]); k++) seg.push(existingLines[k]);
-      if (sigLines(seg).join('\n') === blockSig.slice(1).join('\n')) {
-        alreadyMerged = true;
-        break;
+    // D4：读改写整体入 core per-path 串行队列（键 = 日期 md 路径，与 diary 写层 withDateFile
+    // 同队列互斥）——此前绕过 diary 写层直读直写，与写层「旧快照全量重写」交错时
+    // 还原块会被下一次全量写抹掉且清单已删（条目盘上与保险箱同时消失）。
+    // 队列不可重入：本任务体内不再对同路径入队。
+    await enqueueFileTask(datePath, async () => {
+      const existing = app.vault.getAbstractFileByPath(datePath);
+      let existingText = '';
+      if (existing && (existing as any).isFolder !== true) {
+        existingText = await app.vault.read(existing as any);
       }
-    }
-    if (alreadyMerged) return true;
+      const existingLines = existingText ? existingText.replace(/\r\n/g, '\n').split('\n') : [];
 
-    // 按时间序 merge：找到第一个 timeValue >= 本条的标题行，在其前插入；否则追加到末尾
-    let insertIdx = existingLines.length;
-    for (let i = 0; i < existingLines.length; i++) {
-      const m = existingLines[i].match(headingRe);
-      if (m) {
-        const tv = parseInt(m[1].slice(0, 2), 10) * 100 + parseInt(m[1].slice(3, 5), 10);
-        if (tv >= timeValue) {
-          insertIdx = i;
+      // 组装块行：标题行原样保留（`# emoji HH:mm`，不再拼接时间），标题与正文间补空行
+      // （与 writeFile 生成格式一致：# emoji HH:mm → 空行 → 正文）
+      const blockRows: string[] = [lines[0].trim()];
+      const blockLines: string[] = [];
+      for (let i = 1; i < lines.length; i++) blockLines.push(lines[i]);
+      while (blockLines.length && blockLines[blockLines.length - 1].trim() === '') blockLines.pop();
+      while (blockLines.length && blockLines[0].trim() === '') blockLines.shift();
+      if (blockLines.length) {
+        blockRows.push('');
+        blockRows.push(...blockLines);
+      }
+
+      // 幂等：目标文件已含「标题行 + 正文」一致的块（上次「块已 merge 但清单没保存」的中断残留/重试）
+      // → 视为已完成，跳过防重复插入。
+      // 判重不能只比标题行（P0 回归）：同分钟同标签的两条日记标题行完全相同，仅凭标题跳过
+      // 会把另一条的内容误判为「已还原」——还原块被静默吞掉且照常删镜像删清单，内容永久丢失。
+      // 因此对每个命中标题行，取到下一个标题行为止，与还原块的非空行序列逐行比对：
+      // 正文一致才算已 merge；不一致（同刻另一条）照常按时间序插入。
+      const headingRe = /^#\s+\S+\s+(\d{2}:\d{2})$/;
+      const sigLines = (ls: string[]) => ls.map((l) => l.trim()).filter((l) => l !== '');
+      const blockSig = sigLines(blockRows);
+      let alreadyMerged = false;
+      for (let i = 0; i < existingLines.length; i++) {
+        if (existingLines[i].trim() !== lines[0].trim()) continue;
+        const seg: string[] = [];
+        for (let k = i + 1; k < existingLines.length && !headingRe.test(existingLines[k]); k++) seg.push(existingLines[k]);
+        if (sigLines(seg).join('\n') === blockSig.slice(1).join('\n')) {
+          alreadyMerged = true;
           break;
         }
       }
-    }
+      if (alreadyMerged) return;
 
-    // 组装新文件内容：前段 + （与前条目分隔空行）+ 本条块 + （与后条目分隔空行）+ 后段
-    const out: string[] = [];
-    for (let i = 0; i < insertIdx; i++) out.push(existingLines[i]);
-    if (insertIdx > 0 && existingLines[insertIdx - 1].trim() !== '') out.push('');
-    out.push(...blockRows);
-    if (insertIdx < existingLines.length && existingLines[insertIdx].trim() !== '') out.push('');
-    for (let i = insertIdx; i < existingLines.length; i++) out.push(existingLines[i]);
-
-    // 规整：连续空行折叠为一条、首尾不残留空行
-    const clean: string[] = [];
-    for (const ln of out) {
-      if (ln.trim() === '') {
-        if (clean.length && clean[clean.length - 1] !== '') clean.push('');
-      } else {
-        clean.push(ln);
+      // 按时间序 merge：找到第一个 timeValue >= 本条的标题行，在其前插入；否则追加到末尾
+      let insertIdx = existingLines.length;
+      for (let i = 0; i < existingLines.length; i++) {
+        const m = existingLines[i].match(headingRe);
+        if (m) {
+          const tv = parseInt(m[1].slice(0, 2), 10) * 100 + parseInt(m[1].slice(3, 5), 10);
+          if (tv >= timeValue) {
+            insertIdx = i;
+            break;
+          }
+        }
       }
-    }
-    while (clean.length && clean[0] === '') clean.shift();
-    while (clean.length && clean[clean.length - 1] === '') clean.pop();
-    const finalText = clean.join('\n');
 
-    if (existing && (existing as any).isFolder !== true) {
-      await app.vault.modify(existing as any, finalText);
-    } else {
-      const file = await app.vault.create(datePath, finalText);
-      (app.metadataCache as any)?.trigger?.('changed', file);
-    }
+      // 组装新文件内容：前段 + （与前条目分隔空行）+ 本条块 + （与后条目分隔空行）+ 后段
+      const out: string[] = [];
+      for (let i = 0; i < insertIdx; i++) out.push(existingLines[i]);
+      if (insertIdx > 0 && existingLines[insertIdx - 1].trim() !== '') out.push('');
+      out.push(...blockRows);
+      if (insertIdx < existingLines.length && existingLines[insertIdx].trim() !== '') out.push('');
+      for (let i = insertIdx; i < existingLines.length; i++) out.push(existingLines[i]);
+
+      // 规整：连续空行折叠为一条、首尾不残留空行
+      const clean: string[] = [];
+      for (const ln of out) {
+        if (ln.trim() === '') {
+          if (clean.length && clean[clean.length - 1] !== '') clean.push('');
+        } else {
+          clean.push(ln);
+        }
+      }
+      while (clean.length && clean[0] === '') clean.shift();
+      while (clean.length && clean[clean.length - 1] === '') clean.pop();
+      const finalText = clean.join('\n');
+
+      if (existing && (existing as any).isFolder !== true) {
+        await app.vault.modify(existing as any, finalText);
+      } else {
+        const file = await app.vault.create(datePath, finalText);
+        (app.metadataCache as any)?.trigger?.('changed', file);
+      }
+    });
     return true;
   }
 
@@ -1425,35 +1468,44 @@ export class SafeManager {
     return true;
   }
 
-  /** 删除一条加密笔记（连同镜像文件、清单记录）。谨慎：真删除不可恢复。 */
-  async removeNote(noteId: string): Promise<void> {
-    if (!this.unlocked) throw new Error('未解锁');
-    const idx = this.manifest.notes.findIndex((n) => n.id === noteId);
-    if (idx === -1) return;
-    const note = this.manifest.notes[idx];
-    await this.deleteNoteMirrors(note);
-    this.manifest.notes.splice(idx, 1);
-    await this.saveManifest();
+  /**
+   * 删除一条加密笔记（连同镜像文件、清单记录）。谨慎：真删除不可恢复。
+   * E13：整体入 opQueue——与 lockNote/restoreNote 同链串行，防内存清单快照互踩
+   * （此前可与其并发，后落盘的旧清单快照会抹掉并发 lockNote 新增的条目）。
+   */
+  removeNote(noteId: string): Promise<void> {
+    return this.enqueueOp(async () => {
+      if (!this.unlocked) throw new Error('未解锁');
+      const idx = this.manifest.notes.findIndex((n) => n.id === noteId);
+      if (idx === -1) return;
+      const note = this.manifest.notes[idx];
+      await this.deleteNoteMirrors(note);
+      this.manifest.notes.splice(idx, 1);
+      await this.saveManifest();
+    });
   }
 
   /**
    * 更新条目正文镜像（覆盖同一 contentRef，不产生孤儿镜像；清单同步持久化）。
    * 供密码本整表（password-vault）等高频改写载荷用：重用既有镜像名，避免每次新镜像堆积。
    * 覆盖走 replaceMirrorAtomic（P0-1）：暂存+rename 原子换入，任何写失败正式位保持旧完整密文。
+   * E13：整体入 opQueue（理由同 removeNote——清单读改写与 lockNote/restoreNote 串行互斥）。
    */
-  async updateNotePayload(noteId: string, plainContent: string): Promise<void> {
-    if (!this.unlocked || !this.password) throw new Error('未解锁，无法保存');
-    const note = this.manifest.notes.find((n) => n.id === noteId);
-    if (!note) throw new Error('未找到清单条目');
-    const encrypted = await CryptoService.encrypt(plainContent, this.password);
-    if (note.contentRef) {
-      await this.replaceMirrorAtomic(note.contentRef, encrypted); // 原子覆盖同一密文镜像
-    } else {
-      const ref = flatName();
-      await this.replaceMirrorAtomic(ref, encrypted);
-      note.contentRef = ref;
-    }
-    await this.saveManifest();
+  updateNotePayload(noteId: string, plainContent: string): Promise<void> {
+    return this.enqueueOp(async () => {
+      if (!this.unlocked || !this.password) throw new Error('未解锁，无法保存');
+      const note = this.manifest.notes.find((n) => n.id === noteId);
+      if (!note) throw new Error('未找到清单条目');
+      const encrypted = await CryptoService.encrypt(plainContent, this.password);
+      if (note.contentRef) {
+        await this.replaceMirrorAtomic(note.contentRef, encrypted); // 原子覆盖同一密文镜像
+      } else {
+        const ref = flatName();
+        await this.replaceMirrorAtomic(ref, encrypted);
+        note.contentRef = ref;
+      }
+      await this.saveManifest();
+    });
   }
 
   /** 解附件预览层 → dataUrl 明文（预览窗用；无预览层返回 null） */

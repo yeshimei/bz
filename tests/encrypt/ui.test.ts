@@ -66,12 +66,12 @@ describe('UIManager 解锁弹窗', () => {
     expect(dialog.querySelector('.bz-encrypt-dialog-ack')).toBeTruthy(); // 硬警告确认勾选（仅首设显示）
     const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
     // 两次不一致
-    (inputs[0] as HTMLInputElement).value = 'pw1';
-    (inputs[1] as HTMLInputElement).value = 'pw2';
+    (inputs[0] as HTMLInputElement).value = 'pw123';
+    (inputs[1] as HTMLInputElement).value = 'pw456';
     confirmBtn.click();
     expect(hasNotice('两次密码不一致')).toBe(true);
-    // 一致但未勾选风险确认 → 拒绝设置
-    (inputs[1] as HTMLInputElement).value = 'pw1';
+    // 一致但未勾选风险确认 → 拒绝设置（pw123 满足 E18 最短 4 位，短路在勾选检查）
+    (inputs[1] as HTMLInputElement).value = 'pw123';
     confirmBtn.click();
     expect(hasNotice('请先勾选风险确认')).toBe(true);
     expect(dm.unlocked).toBe(false);
@@ -463,9 +463,9 @@ describe('EncryptAppController', () => {
     const dialog = findDialog()!;
     const inputs = dialog.querySelectorAll('input[type="password"]');
     const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
-    (inputs[0] as HTMLInputElement).value = 'pw';
+    (inputs[0] as HTMLInputElement).value = 'pwxy';
     confirmBtn.click();
-    (inputs[1] as HTMLInputElement).value = 'pw';
+    (inputs[1] as HTMLInputElement).value = 'pwxy';
     (dialog.querySelector('.bz-encrypt-dialog-ack input') as HTMLInputElement).click();
     confirmBtn.click();
     await p;
@@ -1214,9 +1214,9 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
       const dialog = findDialog()!;
       const inputs = dialog.querySelectorAll('input[type="password"]');
       const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
-      (inputs[0] as HTMLInputElement).value = 'pw';
+      (inputs[0] as HTMLInputElement).value = 'pwxy';
       confirmBtn.click();
-      (inputs[1] as HTMLInputElement).value = 'pw';
+      (inputs[1] as HTMLInputElement).value = 'pwxy';
       (dialog.querySelector('.bz-encrypt-dialog-ack input') as HTMLInputElement).click();
       confirmBtn.click();
       expect(await p).toBe(false);
