@@ -103,7 +103,7 @@ export function getSafeManager(): import('./data').SafeManager {
 export async function lockSafe(app: App): Promise<boolean> {
   await ensureEncrypt(app);
   if (!getSafeManager().unlocked) return false;
-  getController().uiManager.lockNow();
+  getController().uiManager.lockNow(true); // E11：安静上锁——通知由命令侧发一次，hide 不再补发
   return true;
 }
 
