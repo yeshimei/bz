@@ -335,6 +335,75 @@ export interface RiverData {
   pomodoroFocusing: boolean;
 }
 
+/* ---------- 时间线四类（内容过滤 / 范围 / 字号 口径；issue 287，2026-09-11 用户点名） ---------- */
+
+/** 时间线一条痕迹的类别（设置面板「时间线内容过滤」的勾选单位）。
+ *  分法只认「这条痕迹说了什么」，不认域——同一条日记痕迹永远是 produce，
+ *  不会因为改了域清单而换类。 */
+export type TimelineKind =
+  /** 产出：写出了/收进了/记下了东西（日记条目、剪藏保存、读完一本、看完一部、写完备忘、专注完） */
+  | 'produce'
+  /** 状态推进：改的是已有东西的状态（加入片单、读到 N%、新增待办、标记在看） */
+  | 'progress'
+  /** 小橘点评 ✦（不是痕迹，是挂在痕迹下面的那句话） */
+  | 'note'
+  /** 已跳过：剪藏流里被划掉的条目（news:skipped，真实数据里占行为流 51%） */
+  | 'skipped';
+
+/** 四类的中文名（设置面板勾选项文案单源；首页不需要，故只在这边声明） */
+export const TIMELINE_KIND_LABEL: Record<TimelineKind, string> = {
+  produce: '产出',
+  progress: '状态推进',
+  note: '点评 ✦',
+  skipped: '已跳过',
+};
+
+/** 时间线过滤设置（四个键的读值快照；缺省全开产出/状态推进/点评、关已跳过） */
+export interface TimelineFilter {
+  produce: boolean;
+  progress: boolean;
+  notes: boolean;
+  skipped: boolean;
+}
+
+export const DEFAULT_TIMELINE_FILTER: TimelineFilter = {
+  produce: true, progress: true, notes: true, skipped: false,
+};
+
+/** 时间线时间范围（「最近 N 天」的分子；week = 周历窗口全长 7 天） */
+export type TimelineRange = 'today' | '3d' | 'week';
+
+/** 范围 → 天数（today=1 只渲染今天那一格；3d=3；week=7 与周历同窗口） */
+export function timelineRangeDays(range: string | null | undefined): number {
+  if (range === '3d') return 3;
+  if (range === 'week') return 7;
+  return 1;
+}
+
+/**
+ * 一条 recap 痕迹 → 类别（纯函数，node 可测）。
+ * 判据取**文案前缀**而非域：同一域两种动作分属两类是常态
+ * （影院「标记已看」= 产出，「加入片单」= 状态推进），只有文案才带这个信息。
+ * 域名 → 文案前缀的对应关系见 recap/aggregate.ts 的 buildRecap 各分支。
+ */
+export function timelineKind(text: string): TimelineKind {
+  // 状态推进：只有「还没发生成事实」的动作落这里
+  if (
+    text.startsWith('新增备忘录')       // 记下来了，但还没做完
+    || text.includes('加入片单')        // 想看，不是看过
+    || text.includes('读到 ')           // 进度，不是读完
+  ) return 'progress';
+  return 'produce';
+}
+
+/** 按设置过滤时间线痕迹（纯函数，node 可测）。hiddenKinds 内含的类别整条剔除。 */
+export function filterEvents<T extends { text: string }>(events: T[], filter: TimelineFilter): T[] {
+  return events.filter((e) => {
+    const kind = timelineKind(e.text);
+    return kind === 'progress' ? filter.progress : filter.produce;
+  });
+}
+
 /* ---------- 日期/文案小工具 ---------- */
 
 function p2(n: number): string {
