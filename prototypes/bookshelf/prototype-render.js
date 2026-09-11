@@ -1,4 +1,4 @@
-/* 源指纹 e57020c82c171248 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 5f846ee00d4f25d7 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/bookshelf/constants.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/bookshelf/render.ts → window.BZR_bookshelf（评审壳预览包，ADR-0104） */
 var BZR_bookshelf = (() => {
@@ -151,7 +151,7 @@ var BZR_bookshelf = (() => {
         <div class="bz-bs-d-body">
         ${review}
         <table class="bz-bs-d-ledger">
-          <tr><td>状 态</td><td><span class="bz-bs-d-stdot" style="background:${statusColor(it.status)}"></span>${esc(it.status)}${go}</td></tr>
+          <tr><td>状 态</td><td><span class="bz-bs-d-nowrap"><span class="bz-bs-d-stdot" style="background:${statusColor(it.status)}"></span>${esc(it.status)}${go}</span></td></tr>
           <tr><td>累计时长</td><td>${esc(hoursText)}</td></tr>
           <tr><td>起读 · 读完</td><td>${esc(it.readingDate || "—")} · ${esc(it.completionDate || "—")}</td></tr>
           <tr><td>划线 / 想法</td><td>${it.highlights} 条 / ${it.thinks} 条</td></tr>
