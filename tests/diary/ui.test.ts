@@ -363,6 +363,24 @@ describe('回忆墙 UI', () => {
     expect(brand.dataset.act).toBe('date-picker');
   });
 
+  it('头行关闭「复位优先」（clipbook 同款语义）：搜索栏开着先收搜索不关面板，已收再点才退出', async () => {
+    await openAndWait();
+    const root = document.querySelector('.bz-diary') as HTMLElement;
+    const desk = document.querySelector('.bz-diary-desk')!;
+    const row = desk.querySelector<HTMLElement>('.bz-diary-searchrow')!;
+    expect(row.style.display).toBe('none');
+    // 开搜索栏（真实路径：点头行搜索钮）
+    desk.querySelector<HTMLElement>('[data-act="search"]')!.click();
+    expect(row.style.display).toBe('block');
+    // ✕ 第一击：只收搜索栏，面板不关
+    desk.querySelector<HTMLElement>('[data-act="close"]')!.click();
+    expect(row.style.display).toBe('none');
+    expect(root.style.display).toBe('flex');
+    // ✕ 第二击：搜索栏已收（无待复位态）→ 才退出面板
+    desk.querySelector<HTMLElement>('[data-act="close"]')!.click();
+    expect(root.style.display).toBe('none');
+  });
+
   it('章节栏视频格：从头到尾不出现播放角标；小图落地后格内只有图', async () => {
     vault.files.set('我的/日记/2026-06-12.md', '# 🎬 09:00\n![[VID_20260612_090000.mp4]]\n');
     const c = await openAndWait();
@@ -669,9 +687,9 @@ describe('回忆墙 UI', () => {
     await touchPress(mobItem, 550);
     const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
     expect(sheet).toBeTruthy();
-    // 富媒体头在场：emoji + 时间行 + 正文预览 + 右上关闭钮
+    // 富媒体头在场：emoji + 时间行 + 正文预览（关闭钮已全域退役——issue 271，点遮罩/下滑/ESC 关闭）
     expect(sheet.querySelector('.bz-diary-sheet-head')).toBeTruthy();
-    expect(sheet.querySelector('.bz-diary-sheet-close')).toBeTruthy();
+    expect(sheet.querySelector('.bz-diary-sheet-close')).toBeNull();
     // 动作行 = core 统一动作项（左对齐、!important 抗 Obsidian button 压盖）
     expect(sheet.querySelector('.bz-item-sheet-item')).toBeTruthy();
   });

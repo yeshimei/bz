@@ -290,7 +290,15 @@ export class SecondBrainPanel {
     popup.innerHTML = panelShellHtml();
 
     // 头行：AI 对话 / 灵感参考 / 关闭（图标钮；⚙️ 已摘——设置走设置面板；引导期 func 钮整体收起，ticket 107）
-    popup.querySelector('#bz-sb-panel-close')?.addEventListener('click', () => this.close());
+    // 「关闭」复位优先（clipbook 同款语义）：来源分布树有展开目录先全部收起并重绘，无展开才关面板
+    popup.querySelector('#bz-sb-panel-close')?.addEventListener('click', () => {
+      if (this.expandedDirs.size) {
+        this.expandedDirs.clear();
+        this.renderDist();
+      } else {
+        this.close();
+      }
+    });
     popup.querySelector('#bz-sb-open-chat')?.addEventListener('click', () => {
       this.close();
       this.opts.onOpenChat();

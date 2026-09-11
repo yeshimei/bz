@@ -410,8 +410,7 @@ export async function saveNewEntry() {
 
   try {
     await addEntry(dateStr, timeStr, selTagNames, '');
-    // UX-7：保存成功确认（正文不带 emoji，类型图标即视觉前缀）
-    notice('已保存日记', 'success');
+    // 收紧通知（memo item-1789105697068）：保存成功结果立即可见（弹窗关、墙已刷新），不再弹成功提示
     mask.style.display = 'none';
     popup.style.display = 'none';
   } catch (error: any) {

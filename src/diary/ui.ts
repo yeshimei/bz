@@ -325,8 +325,16 @@ export class DiaryAppController {
     ui.head.querySelector('[data-act="add"]')?.addEventListener('click', () => this.openAddEntry());
     // 搜索：toggle 真搜索框
     ui.head.querySelector('[data-act="search"]')?.addEventListener('click', () => this.toggleSearch(ui));
-    // 关闭面板（2026-09-11 移动端评审补回：全屏页无遮罩可点；桌面由 CSS 隐藏该钮）
-    ui.head.querySelector('[data-act="close"]')?.addEventListener('click', () => this.hide());
+    // 「关闭」复位优先（clipbook 同款语义）：搜索栏开着先收搜索不关面板，已收起再点 ✕ 才退出
+    // （2026-09-11 移动端评审补回关闭钮：全屏页无遮罩可点；桌面由 CSS 隐藏该钮）
+    ui.head.querySelector('[data-act="close"]')?.addEventListener('click', () => {
+      const row = ui.searchRow;
+      if (row && row.style.display !== 'none') {
+        this.toggleSearch(ui);
+      } else {
+        this.hide();
+      }
+    });
     // 关闭（ESC / 点遮罩）与设置直达的按钮已随头行精简移除，见 render.ts wallPanelHTML 注释
     // 灯箱关闭按钮（双实例各自一份）
     ui.lb.querySelector('[data-act="lb-close"]')?.addEventListener('click', (e) => {
@@ -1888,7 +1896,7 @@ export class DiaryAppController {
           notice('加密失败：原文块摘除未生效', 'error');
           return;
         }
-        notice('已加密移入保险箱', 'success');
+        // 收紧通知：加密移入成功结果立即可见（条目从墙消失），不再弹成功提示
         void this.loadAndRender();
       }
     } catch (err) {
@@ -1908,7 +1916,7 @@ export class DiaryAppController {
       const newTags = e.tags.filter((t) => t !== '加密');
       const ok = await reclassifyEntry(noteId, newTags);
       if (ok) {
-        notice('已解密还原', 'success');
+        // 收紧通知：解密还原成功结果立即可见（条目回墙），不再弹成功提示
         void this.loadAndRender();
       } else {
         notice('解密失败：主密码可能不正确，密文未受影响', 'error');
@@ -1975,7 +1983,7 @@ export class DiaryAppController {
     return acts;
   }
 
-  /** 抽屉富媒体头（core sheetHead）：emoji + 时间行 + 正文预览 + 媒体缩略（点击进灯箱）+ 右上关闭钮 */
+  /** 抽屉富媒体头（core sheetHead）：emoji + 时间行 + 正文预览 + 媒体缩略（点击进灯箱） */
   private mkSheetHead(e: WallEntry): HTMLElement {
     const head = document.createElement('div');
     head.className = 'bz-diary-sheet-head';
@@ -2018,19 +2026,8 @@ export class DiaryAppController {
     info.appendChild(timeEl);
     info.appendChild(contentEl);
     info.appendChild(media);
-    // 右上角关闭钮（2026-09-11 移动端评审新增；随富媒体头走 sheetHead 路径）
-    const close = document.createElement('button');
-    close.type = 'button';
-    close.className = 'bz-diary-sheet-close';
-    close.title = '关闭';
-    close.appendChild(uiIcon(ACTION_ICON.close));
-    close.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      this.closeSheet();
-    });
     head.appendChild(emoji);
     head.appendChild(info);
-    head.appendChild(close);
     return head;
   }
 
