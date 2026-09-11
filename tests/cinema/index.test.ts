@@ -53,6 +53,22 @@ describe('cinema ensureCinema 目录回落（ADR-0087）', () => {
     ensureCinema(makeApp(vault));
     expect(M.folderPath).toBe('我的/影视');
   });
+
+  it('G6 回归：会话内改「影视文件夹」→ 下次 ensureCinema 即同步（不再缓存首次值）', () => {
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影院' } as any));
+    const vault = new MockVault();
+    const app = makeApp(vault);
+    ensureCinema(app);
+    expect(M.folderPath).toBe('我的/影院');
+    // 已初始化状态下改设置（幂等闸门不再拦目录同步）
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/新影院' } as any));
+    ensureCinema(app);
+    expect(M.folderPath).toBe('我的/新影院');
+    // 清空配置 → 回落默认（resolveCinemaFolderPath 唯一单源）
+    setSettingsProvider(() => ({} as any));
+    ensureCinema(app);
+    expect(M.folderPath).toBe('我的/影视');
+  });
 });
 
 describe('cinema 默认视图接线（issue 194）', () => {

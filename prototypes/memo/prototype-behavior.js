@@ -1,4 +1,4 @@
-/* 源指纹 ce86991d66695f0e · 仓内输入 208 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 3ecb58d30c4ef3c7 · 仓内输入 208 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -24159,31 +24159,47 @@ GitHub 仓库：${ghInfo.title}
         async saveQuiz(app, quiz) {
           await jsonFileStore(getQuizFilePath(), { app }).write(quiz);
         }
+        /**
+         * G3：quiz.json 读改写事务（写路径唯一入口，纯读勿入——队列只为串行化「读→改→写」）。
+         * fn 基于队列内读出的磁盘现值改动；fn 返回 false = 无改动跳过写盘。
+         * 队列不可重入：fn 内勿再调 mutateQuiz/enqueueFileTask 同路径（死锁）。
+         * （session.ts 批量出题写回/清理非活跃键共用——AI 长耗时窗口内基于磁盘现值合并，不覆盖并发删题）
+         */
+        mutateQuiz(app, fn) {
+          return enqueueFileTask(getQuizFilePath(), async () => {
+            const quiz = await this.loadQuiz(app);
+            const result = await fn(quiz);
+            if (result !== false) await this.saveQuiz(app, quiz);
+            return result;
+          });
+        }
         /** 源码 L40-43 */
         async getQuestionsForNote(app, notePath) {
           const quiz = await this.loadQuiz(app);
           return quiz.notes[notePath] || null;
         }
-        /** 源码 L45-49 */
+        /** 源码 L45-49（G3：RMW 入队，fn 内改现值） */
         async saveQuestionsForNote(app, notePath, questions) {
-          const quiz = await this.loadQuiz(app);
-          quiz.notes[notePath] = questions.map((q2) => ({ ...q2 }));
-          await this.saveQuiz(app, quiz);
+          await this.mutateQuiz(app, (quiz) => {
+            quiz.notes[notePath] = questions.map((q2) => ({ ...q2 }));
+          });
         }
         /** 源码 L51-57 splice 语义 + P0-2 稳定定位改造：
          *  会话期 _index 是开考时的快照，题库并发变化（同笔记多题先后答对、复习重出题等）
          *  后按快照下标会删错行/漏删；改为按题目生成标识（question+options+correctIndices，
          *  correctIndices 顺序不敏感）在存储数组内定位。
          *  同内容多题：每次删除首个匹配＝按未答优先逐个消费。
-         *  目标题已不在库中（并发刷新等）→ 终态已达成，静默成功；空键仍保留（源码语义）。 */
+         *  目标题已不在库中（并发刷新等）→ 终态已达成，静默成功不写盘（fn 返回 false）；
+         *  空键仍保留（源码语义）。G3：RMW 入队，与批量出题写回互斥串行。 */
         async removeQuestion(app, notePath, target) {
-          const quiz = await this.loadQuiz(app);
-          const list = quiz.notes[notePath];
-          if (!list) return;
-          const idx = list.findIndex((q2) => sameQuestion(q2, target));
-          if (idx === -1) return;
-          list.splice(idx, 1);
-          await this.saveQuiz(app, quiz);
+          await this.mutateQuiz(app, (quiz) => {
+            const list = quiz.notes[notePath];
+            if (!list) return false;
+            const idx = list.findIndex((q2) => sameQuestion(q2, target));
+            if (idx === -1) return false;
+            list.splice(idx, 1);
+            return void 0;
+          });
         }
         /** 源码 L59-72：遍历补 notePath/_index */
         async getUncompletedQuestions(app) {
@@ -24311,25 +24327,30 @@ ${n.content.slice(0, 2e3)}
           }
           return `根据以下多篇笔记内容，为每篇笔记生成选择题。请仅返回一个合法的 JSON 对象：
 {
-  "noteId1": [ { "question": "...", "options": ["A","B","C","D"], "correctIndices": [0], "explain": "..." }, ... ],
-  "noteId2": [ ... ]
+  "<笔记ID>": [ { "question": "...", "options": ["A","B","C","D"], "correctIndices": [0], "explain": "..." }, ... ],
+  ...
 }
 规则：
 - 类型：${typeHint}，${countHint}
 - ${difficultyHint}
 - 每题必须带 explain 字段：一句话解析正确答案并附原文依据
-- 键名为笔记ID（即 "笔记ID:xxx" 中的 xxx），值为该笔记的题目数组
+- JSON 的键必须是下方「===== 笔记ID:xxx =====」中的 xxx 本身（完整笔记路径，逐字复制，不要自造编号如 noteId1），每篇笔记一个键，值为该笔记的题目数组
 - 每题4个选项，correctIndices 为正确选项索引数组
 笔记内容：${notesBlock}`;
         }
-        /** 批量生成（源码 L193-212 逐字） */
-        async generateBatch(notes, aiService, enableMultipleChoice, questionsPerNote, difficulty) {
-          const prompt = this.buildBatchPrompt(notes, enableMultipleChoice, questionsPerNote, difficulty);
-          const result = await aiService.json(prompt);
-          const parsed = this.extractJSON(result);
+        /**
+         * G5：返回键归一——AI 可能不按规则返回（照旧示例返回 noteId1、加「笔记ID:」前缀、
+         * 带首尾空白等），归一到真实笔记路径；无法映射到已知笔记的键丢弃（不写垃圾键、
+         * 不虚报「已为 N 篇生成」）。
+         */
+        normalizeBatchKeys(parsed, knownIds) {
+          const exact = new Set(knownIds);
           const out = {};
-          for (const [noteId, qs] of Object.entries(parsed)) {
+          for (const [rawKey, qs] of Object.entries(parsed)) {
             if (!Array.isArray(qs)) continue;
+            let key = rawKey.trim();
+            if (key.startsWith("笔记ID:")) key = key.slice("笔记ID:".length).trim();
+            if (!exact.has(key)) continue;
             const valid = [];
             for (const q2 of qs) {
               if (!q2.question || !Array.isArray(q2.options) || q2.options.length !== 4 || !Array.isArray(q2.correctIndices)) {
@@ -24339,9 +24360,16 @@ ${n.content.slice(0, 2e3)}
               if (!indices.length) continue;
               valid.push({ ...q2, correctIndices: indices });
             }
-            if (valid.length) out[noteId] = valid;
+            if (valid.length) out[key] = valid;
           }
           return out;
+        }
+        /** 批量生成（源码 L193-212 逐字；G5：返回键归一到真实笔记路径） */
+        async generateBatch(notes, aiService, enableMultipleChoice, questionsPerNote, difficulty) {
+          const prompt = this.buildBatchPrompt(notes, enableMultipleChoice, questionsPerNote, difficulty);
+          const result = await aiService.json(prompt);
+          const parsed = this.extractJSON(result);
+          return this.normalizeBatchKeys(parsed, notes.map((n) => n.id));
         }
       };
     }
@@ -24413,17 +24441,19 @@ ${n.content.slice(0, 2e3)}
           try {
             const activeItems = await loadActiveItems(app);
             if (!activeItems.length) {
-              await this.manager.saveQuiz(getApp(), { notes: {} });
+              await this.manager.mutateQuiz(app, (quiz) => {
+                for (const notePath of Object.keys(quiz.notes)) delete quiz.notes[notePath];
+              });
               return;
             }
-            const quiz = await this.manager.loadQuiz(app);
             const activePaths = new Set(activeItems.map((i) => i.filePath));
-            for (const notePath of Object.keys(quiz.notes)) {
-              if (!activePaths.has(notePath)) {
-                delete quiz.notes[notePath];
+            await this.manager.mutateQuiz(app, (quiz) => {
+              for (const notePath of Object.keys(quiz.notes)) {
+                if (!activePaths.has(notePath)) {
+                  delete quiz.notes[notePath];
+                }
               }
-            }
-            await this.manager.saveQuiz(app, quiz);
+            });
             const notePaths = activeItems.map((i) => i.filePath);
             await this.ensureQuestions(notePaths);
           } catch (e) {
@@ -24455,13 +24485,14 @@ ${n.content.slice(0, 2e3)}
               const h = notify(`正在为 ${missing.length} 篇笔记批量生成题目…`, { type: "progress", dedupeKey: "quiz-generate" });
               const batchResult = await this.generator.generateBatch(missing, _QuizMasterUI.ai, enableMultipleChoice, questionsPerNote, difficulty);
               let batchOk = 0;
-              for (const [path, qs] of Object.entries(batchResult)) {
-                if (qs.length) {
-                  quiz.notes[path] = qs;
-                  batchOk++;
+              await this.manager.mutateQuiz(app, (quiz2) => {
+                for (const [path, qs] of Object.entries(batchResult)) {
+                  if (qs.length) {
+                    quiz2.notes[path] = qs;
+                    batchOk++;
+                  }
                 }
-              }
-              await this.manager.saveQuiz(app, quiz);
+              });
               h.setType("success");
               h.setMessage(`已为 ${batchOk} 篇笔记生成题目`);
               return;
@@ -24478,9 +24509,8 @@ ${n.content.slice(0, 2e3)}
               if (!_QuizMasterUI.ai) throw new Error("AI 未初始化");
               const qs = await this.generator.generate(note.content, _QuizMasterUI.ai, enableMultipleChoice, questionsPerNote, difficulty);
               if (qs.length) {
-                quiz.notes[note.id] = qs;
+                await this.manager.saveQuestionsForNote(app, note.id, qs);
                 okCount++;
-                await this.manager.saveQuiz(app, quiz);
               } else {
                 failCount++;
               }
@@ -25132,12 +25162,12 @@ ${n.content.slice(0, 2e3)}
     }
     return `<span class="bz-q-tag is-stage">阶段 ${(_a2 = item.currentStage) != null ? _a2 : item.stage + 1}/${TOTAL_STAGES}</span>`;
   }
-  function sortColumn(items, now = Date.now()) {
+  function sortColumn(items, now = Date.now(), w = DEFAULT_W) {
     return items.slice().sort((a, b) => {
       var _a2, _b2;
       if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
-      const ra = a.phase === "fsrs" && a.stability ? (_a2 = currentRPct(a, DEFAULT_W, now)) != null ? _a2 : 999 : 999;
-      const rb = b.phase === "fsrs" && b.stability ? (_b2 = currentRPct(b, DEFAULT_W, now)) != null ? _b2 : 999 : 999;
+      const ra = a.phase === "fsrs" && a.stability ? (_a2 = currentRPct(a, w, now)) != null ? _a2 : 999 : 999;
+      const rb = b.phase === "fsrs" && b.stability ? (_b2 = currentRPct(b, w, now)) != null ? _b2 : 999 : 999;
       if (ra !== rb) return ra - rb;
       return new Date(a.nextReviewDate || 0).getTime() - new Date(b.nextReviewDate || 0).getTime();
     });
@@ -25221,10 +25251,10 @@ ${n.content.slice(0, 2e3)}
         <span class="bz-q-strip-txt">今日 ${col.today.length} 篇到期 · 逾期 ${col.overdue.length} 篇顺延</span>
         <button class="bz-btn bz-btn--primary" data-act="begin">开始本轮</button>
       </div>`;
-    const body = ctx.showArchived ? `<div class="bz-q-cols"><div class="bz-q-col done">${colHead(col.done.length, "已完成")}${cardsOf(sortColumn(col.done, now), full)}</div></div>` : `<div class="bz-q-cols">
-          <div class="bz-q-col danger">${colHead(col.overdue.length, "已逾期")}${cardsOf(sortColumn(col.overdue, now), full)}</div>
-          <div class="bz-q-col warn">${colHead(col.today.length, "今天到期")}${cardsOf(sortColumn(col.today, now), full)}</div>
-          <div class="bz-q-col future">${colHead(col.future.length, "未来")}${cardsOf(sortColumn(col.future, now), full)}</div>
+    const body = ctx.showArchived ? `<div class="bz-q-cols"><div class="bz-q-col done">${colHead(col.done.length, "已完成")}${cardsOf(sortColumn(col.done, now, w), full)}</div></div>` : `<div class="bz-q-cols">
+          <div class="bz-q-col danger">${colHead(col.overdue.length, "已逾期")}${cardsOf(sortColumn(col.overdue, now, w), full)}</div>
+          <div class="bz-q-col warn">${colHead(col.today.length, "今天到期")}${cardsOf(sortColumn(col.today, now, w), full)}</div>
+          <div class="bz-q-col future">${colHead(col.future.length, "未来")}${cardsOf(sortColumn(col.future, now, w), full)}</div>
         </div>`;
     const stats = computeStats(items);
     const archItem = ctx.showArchived ? `<span class="bz-q-fitem bz-touch-target--lg is-back" data-act="arch" title="点此返回队列">
@@ -25502,6 +25532,7 @@ ${n.content.slice(0, 2e3)}
           if (this.finished) return;
           const t = e.target;
           if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+          if (t && typeof t.closest === "function" && t.closest(".bz-sprint-opt")) return;
           if (e.ctrlKey || e.metaKey || e.altKey) return;
           if (e.key !== "Enter") {
             if (this.view !== "question" || !this.q || this.q.answered) return;
@@ -25601,7 +25632,7 @@ ${n.content.slice(0, 2e3)}
             const nextReviewAt = await this.opts.onPassed(entry.item, rating, { acc: entry.acc, wrong: entry.wrong });
             if (this.finished) return;
             entry.state = "passed";
-            entry.passNote = this.nextIntervalNote(nextReviewAt || entry.item.nextReviewDate);
+            entry.passNote = this.nextIntervalNote(nextReviewAt || void 0);
           } else {
             await this.opts.onFailed(entry.item, rating, { acc: entry.acc, wrong: entry.wrong });
             if (this.finished) return;
@@ -27106,7 +27137,7 @@ ${n.content.slice(0, 2e3)}
           const nextReview = item.nextReviewDate ? new Date(item.nextReviewDate) : /* @__PURE__ */ new Date(0);
           if (now < nextReview) {
             const rThreshold = Number(getSettings().reviewRThreshold) || DEFAULT_R_THRESHOLD;
-            if (!isEarlyDue(item, rThreshold, this.currentW())) {
+            if (!isEarlyDue(item, rThreshold, this.currentW()) && !isDueToday(item)) {
               const diff = nextReview.getTime() - now.getTime();
               const mins = Math.ceil(diff / 6e4);
               notice(`还未到复习时间（${mins}分钟后）`);
@@ -27341,7 +27372,8 @@ ${n.content.slice(0, 2e3)}
               await this.applyReviewStyles(app);
               const fresh = await this.dataManager.loadItems();
               const updated = fresh.find((i) => i.filePath === item.filePath);
-              return (updated == null ? void 0 : updated.nextReviewDate) || void 0;
+              if (!updated || updated.lastReviewed !== item.lastReviewed) return void 0;
+              return updated.nextReviewDate || void 0;
             },
             onFailed: async (item, rating, entry) => {
               if (mode !== "redo") {

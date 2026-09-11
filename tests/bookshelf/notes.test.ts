@@ -183,6 +183,37 @@ describe('updateComment / deleteHighlight', () => {
     expect(out).toContain('他域并发写入'); // 并发落盘未被旧快照回滚
   });
 
+  it('G12 回归：预检命中后重放未命中（并发改动高亮原文）→ 失败路径，不假成功', async () => {
+    const app = makeApp(vault);
+    let done = false;
+    // 模拟并发改动：process 回调执行前盘上原文已被改（重放必未命中）
+    const realProcess = app.vault.process.bind(app.vault);
+    app.vault.process = async (file: any, fn: (c: string) => string) => {
+      vault.files.set('书库/活着.md', vault.files.get('书库/活着.md')!.replace('原文一', '原文已被并发修改'));
+      return realProcess(file, fn);
+    };
+    const ok = await updateComment(app, '书库/活着.md', 'h1', '原文一', '新批注', () => { done = true; });
+    // 旧实现：预检命中 → 重放未命中全文原样写回仍 return true + onDone（假成功、编辑丢失）
+    expect(ok).toBe(false);
+    expect(done).toBe(false); // 不关弹窗
+    expect(hasNotice('未找到对应高亮（原文不匹配），编辑失败')).toBe(true);
+  });
+
+  it('G12 回归：deleteHighlight 重放未命中 → 失败路径（不假成功删除）', async () => {
+    const app = makeApp(vault);
+    const done = vi.fn();
+    const realProcess = app.vault.process.bind(app.vault);
+    app.vault.process = async (file: any, fn: (c: string) => string) => {
+      vault.files.set('书库/活着.md', vault.files.get('书库/活着.md')!.replace('原文一', '原文已被并发修改'));
+      return realProcess(file, fn);
+    };
+    const ok = await deleteHighlight(app, '书库/活着.md', 'h1', '原文一', done);
+    expect(ok).toBe(false);
+    expect(done).toHaveBeenCalled(); // 失败也重开壳（B2）
+    expect(hasNotice('未找到对应高亮（原文不匹配），删除失败')).toBe(true);
+    expect(vault.files.get('书库/活着.md')).toContain('原文已被并发修改'); // 划线未被破坏
+  });
+
   it('audit H：文件缺失 → notice + resolve(false)（不再静默 return 悬挂弹窗）', async () => {
     const ok = await updateComment(makeApp(vault), '书库/不存在.md', 'h1', '原文一', 'x');
     expect(ok).toBe(false);

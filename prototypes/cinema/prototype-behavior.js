@@ -1,4 +1,4 @@
-/* 源指纹 fa82a564b3045bee · 仓内输入 52 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e31ca615f5614a76 · 仓内输入 52 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -4898,6 +4898,14 @@ var BZW_cinema = (() => {
 
   // src/cinema/state.ts
   var DEFAULT_FOLDER = "我的/影视";
+  function resolveCinemaFolderPath() {
+    try {
+      const s = tryGetSettings();
+      return typeof s.cinemaFolderPath === "string" && s.cinemaFolderPath.trim() ? s.cinemaFolderPath : DEFAULT_FOLDER;
+    } catch (e) {
+      return DEFAULT_FOLDER;
+    }
+  }
   var M = {
     currentOverlay: null,
     items: [],
@@ -5898,6 +5906,7 @@ var BZW_cinema = (() => {
   var queue = [];
   var pending = /* @__PURE__ */ new Map();
   var attempted = /* @__PURE__ */ new Set();
+  var cancelled = /* @__PURE__ */ new Set();
   var failedNames = [];
   var pumping = false;
   var cliPath = null;
@@ -6047,6 +6056,13 @@ var BZW_cinema = (() => {
     void pump();
     return true;
   }
+  function dequeueDoubanFetch(path) {
+    if (!path) return;
+    const at = queue.findIndex((e) => e.file.path === path);
+    if (at >= 0) queue.splice(at, 1);
+    pending.delete(path);
+    cancelled.add(path);
+  }
   function sweepDoubanFetch(_app2) {
     var _a, _b;
     let added = 0;
@@ -6088,6 +6104,10 @@ var BZW_cinema = (() => {
         first = false;
         const ok = await waitCompleteOrExit(entry, runOne(entry));
         pending.delete(entry.file.path);
+        if (cancelled.delete(entry.file.path)) {
+          refreshAfterFetch();
+          continue;
+        }
         if (!ok) failedNames.push(entry.name);
         refreshAfterFetch();
       }
@@ -6623,7 +6643,7 @@ tags:
   ${secHTML("我的高分 TOP10", "bar-chart-3", data.topRated.length ? data.topRated.map((it, i) => topRow(String(i + 1), esc2(it.name), Number(it.rating).toFixed(1))).join("") : emptyHTML())}
   ${secHTML("系列追踪", "bar-chart-3", data.seriesList.length ? data.seriesList.map(([k, v], i) => topRow(String(i + 1), `《${esc2(k)}》`, `${v} 部`)).join("") : emptyHTML())}
   ${secHTML("追剧深度", "bar-chart-3", data.seasons.length ? kvInline([`平均 <b>${data.avgSeason}</b> 季`]) + data.seasons.map((s, i) => topRow(String(i + 1), `《${esc2(s.name)}》`, `${s.seasons} 季`)).join("") : emptyHTML())}
-  ${secHTML(`想看清单（${(_a = data.wantTotal) != null ? _a : data.wantList.length}）`, "bar-chart-3", (data.wantList.length ? data.wantList.map((it, i) => topRow(String(i + 1), esc2(it.name) + (it.douban ? " · 豆瓣 " + esc2(it.douban) : ""), "")).join("") : emptyHTML()) + (Object.keys(data.wantTags).length ? '<div class="tag-cloud" style="margin-top:10px">' + Object.entries(data.wantTags).sort((a, b) => b[1] - a[1]).map(([t, c]) => `<span class="tag-pill">${esc2(t)} <b>${c}</b></span>`).join("") + "</div>" : ""))}`;
+  ${secHTML(`想看清单（${(_a = data.wantTotal) != null ? _a : data.wantList.length}）`, "bar-chart-3", (data.wantList.length ? data.wantList.map((it, i) => topRow(String(i + 1), esc2(it.name) + (it.doubanRating ? " · 豆瓣 " + esc2(it.doubanRating) : ""), "")).join("") : emptyHTML()) + (Object.keys(data.wantTags).length ? '<div class="tag-cloud" style="margin-top:10px">' + Object.entries(data.wantTags).sort((a, b) => b[1] - a[1]).map(([t, c]) => `<span class="tag-pill">${esc2(t)} <b>${c}</b></span>`).join("") + "</div>" : ""))}`;
   }
 
   // src/cinema/shared.ts
@@ -6957,6 +6977,7 @@ tags:
   async function markStatus(item, target, sec, app) {
     const fromSt = item.status === STATUS_WANT ? "want" : item.status === STATUS_WATCHING ? "watching" : "watched";
     const prevRating = item.rating && item.rating > 0 ? item.rating : null;
+    const prev = { status: item.status, rating: item.rating, watchDate: item.watchDate };
     item.status = target === "已看" ? STATUS_WATCHED : STATUS_WATCHING;
     if (target === "在看") {
       item.rating = 0;
@@ -6974,6 +6995,7 @@ tags:
       }
       renderAll(app);
     } catch (e) {
+      Object.assign(item, prev);
       notifySaveError(e);
       console.error(e);
       renderAll(app);
@@ -7284,6 +7306,7 @@ ${item.review ? `影评: ${item.review}
           notice("删除失败：文件可能被占用，请重试", "error");
           return;
         }
+        dequeueDoubanFetch(item.file.path);
       }
       const idx = M.items.indexOf(item);
       if (idx > -1) M.items.splice(idx, 1);
@@ -7535,11 +7558,10 @@ ${item.review ? `影评: ${item.review}
     M.statusFilter = st === "想看" || st === "在看" || st === "已看" ? st : null;
   }
   function ensureCinema(app) {
+    M.folderPath = resolveCinemaFolderPath();
     if (initialized) return;
     initialized = true;
     M.appRef = app;
-    const s = tryGetSettings();
-    M.folderPath = typeof s.cinemaFolderPath === "string" && s.cinemaFolderPath.trim() ? s.cinemaFolderPath : DEFAULT_FOLDER;
     registerEscapeHandler();
     registerAutoRefresh(app);
   }
