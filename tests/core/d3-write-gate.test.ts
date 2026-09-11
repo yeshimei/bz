@@ -63,10 +63,6 @@ const WHITELIST: Array<{ file: RegExp; reason: string; /** 防回归哨兵：预
     reason: 'ADR-0112 数据文件更名一次性迁移：literature.json 原样复制为 knowledge.json（只复制不改写，旧文件保留）',
   },
   {
-    file: /^src\/diary\/ui\/repair-modal\.ts$/,
-    reason: '日记修复工具的 md 结构修复写（旧域冻结区 UI 不投资；修复流自带守卫与用户确认）',
-  },
-  {
     file: /^src\/clipbook\/save\.ts$/,
     reason: '剪藏 md 用户文档写（归档/网页剪藏/*.md）；news.json/clipbook.json 数据写已 D2 收编',
   },

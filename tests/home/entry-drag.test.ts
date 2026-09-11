@@ -5,9 +5,12 @@
  * 两条都不是视觉细节，是拖拽实现本身缺件，故各钉一条断言：
  *  - **让位**：被拖行从 index 0 拖到 2，途中的 1/2 两行必须带 .bz-home-ent-shift 且反向位移一格
  *    （此前只写被拖行自己的 transform，邻居纹丝不动 → 用户看到的「没有动态效果」）；
- *  - **触屏长按**：pointerdown 必须立刻把该行 touch-action 置 none（否则浏览器按 pan-y 接管，
- *    pointermove 变 pointercancel，拖拽静默失效 → 用户看到的「长按没效果」）；
- *    且按住窗口（250ms）内的位移不激活拖拽，过窗口后一次移动即起拖。
+ *  - **触屏长按**：按住窗口（250ms）内不激活拖拽，过窗口后一次移动即起拖；
+ *    滚动归属由非 passive touchmove 仲裁（补扫 E）：pointerdown **不再**抢 touch-action
+ *    （手势进行中改它不生效，「短滑交还滚动」不可达 → 死手势），未 armed 放行原生滚动、
+ *    armed 后 preventDefault 拦滚动独占手势。
+ *  - **blur 兜底**（补扫 D）：拖拽中切窗口 → 兜底收尾；监听挂 AbortController 信号，
+ *    设置面板重渲染重建编辑器时 abort 旧的，window 上不叠加。
  *
  * 这里只测「DOM 层是否按契约动手」——jQuery 级的像素观感留给评审壳。
  */
@@ -123,35 +126,61 @@ describe('首页入口拖拽（2026-09-11 用户报 bug 重写）', () => {
     window.dispatchEvent(pe('pointerup', 400 - step * 2));
   });
 
-  it('触屏：pointerdown 立刻改 touch-action=none（否则手势被浏览器抢走 → 长按无效果）', async () => {
+  it('触屏：pointerdown 不再抢 touch-action（E：手势进行中改它不生效，短滑「交还」不可达）', async () => {
     const host = makeHost();
     const rows = await mountMobile(host);
     stubLayout(rows);
 
     rows[0].dispatchEvent(pe('pointerdown', 100));
-    expect(rows[0].style.touchAction).toBe('none'); // 手势所有权先拿住
+    expect(rows[0].style.touchAction).toBe(''); // 不动 touch-action：滚动归属交给 touchmove 仲裁
     expect(document.querySelector('.bz-home-ent-drag')).toBeNull(); // 还没到长按窗口
 
     // 按住窗口内小幅抖动：不算滚动，不取消长按
     window.dispatchEvent(pe('pointermove', 104));
-    expect(rows[0].style.touchAction).toBe('none');
+    expect(rows[0].style.touchAction).toBe('');
     window.dispatchEvent(pe('pointerup', 104));
-    await new Promise((r) => setTimeout(r, 20));
-    expect(rows[0].style.touchAction).toBe(''); // 收尾交还
   });
 
-  it('触屏：按住窗口内大幅滑动 → 交还手势滚列表（不进拖拽）', async () => {
+  it('触屏：按住窗口内短滑 → touchmove 不拦（原生滚动照常），不进拖拽', async () => {
     const host = makeHost();
     const rows = await mountMobile(host);
     stubLayout(rows);
 
     rows[0].dispatchEvent(pe('pointerdown', 100));
-    window.dispatchEvent(pe('pointermove', 140)); // 40px > 8px slop：用户要滚
-    expect(rows[0].style.touchAction).toBe(''); // 已交还
-    window.dispatchEvent(pe('pointermove', 220));
+    // 短滑期间仲裁未 armed：不 preventDefault，浏览器原生滚动照常
+    //（旧实现此处 touch-action 已被锁 none，滚动进不来=既不拖也不滚的死手势）
+    const scrollEvt = new Event('touchmove', { cancelable: true });
+    window.dispatchEvent(scrollEvt);
+    expect(scrollEvt.defaultPrevented).toBe(false);
+
+    window.dispatchEvent(pe('pointermove', 140)); // 40px > 8px slop：用户要滚 → 收掉候选拖拽
     expect(document.querySelector('.bz-home-ent-drag')).toBeNull();
     expect(rows[1].classList.contains('bz-home-ent-shift')).toBe(false);
+    // 收尾后仲裁监听已摘：继续不拦滚动
+    const lateEvt = new Event('touchmove', { cancelable: true });
+    window.dispatchEvent(lateEvt);
+    expect(lateEvt.defaultPrevented).toBe(false);
     window.dispatchEvent(pe('pointerup', 220));
+  });
+
+  it('触屏：armed 后 touchmove 被 preventDefault 拦滚动（拖拽独占手势），松手收尾后放行', async () => {
+    const host = makeHost();
+    const rows = await mountMobile(host);
+    stubLayout(rows);
+
+    rows[0].dispatchEvent(pe('pointerdown', 100));
+    await new Promise((r) => setTimeout(r, 300)); // 过 TOUCH_ARM_MS → armed
+    // armed 后 touchmove 一律拦下：浏览器不起滚动、不发 pointercancel，pointermove 流保持
+    const blocked = new Event('touchmove', { cancelable: true });
+    window.dispatchEvent(blocked);
+    expect(blocked.defaultPrevented).toBe(true);
+
+    window.dispatchEvent(pe('pointerup', 100));
+    await new Promise((r) => setTimeout(r, 20));
+    // 松手收尾：仲裁监听摘除，滚动放行
+    const after = new Event('touchmove', { cancelable: true });
+    window.dispatchEvent(after);
+    expect(after.defaultPrevented).toBe(false);
   });
 
   it('触屏：按住满窗口后第一次移动即起拖，并带动邻居让位', async () => {
@@ -172,5 +201,37 @@ describe('首页入口拖拽（2026-09-11 用户报 bug 重写）', () => {
     await new Promise((r) => setTimeout(r, 20));
     const after = Array.from(host.querySelectorAll<HTMLElement>('[data-ent-row]'));
     expect(after[0].dataset.entRow).toBe(rows[1].dataset.entRow);
+  });
+
+  it('补扫 D 回归：blur 兜底监听挂 AbortController——重建 mount 时 abort 旧的，兜底仍工作', async () => {
+    const host1 = makeHost();
+    const spy = vi.spyOn(window, 'addEventListener');
+    mountHomeEntryEditor(host1, mockAppWithVault(new MockVault()) as any);
+    await new Promise((r) => setTimeout(r, 20));
+    const firstCalls = spy.mock.calls.filter(([type]) => type === 'blur');
+    expect(firstCalls.length).toBe(1);
+    const firstSignal = (firstCalls[0][2] as AddEventListenerOptions | undefined)?.signal;
+    expect(firstSignal).toBeInstanceOf(AbortSignal);
+
+    // 设置面板重渲染 → 重新 mount：旧 mount 的 blur 监听随 abort 摘除（不再叠加）
+    const host2 = makeHost();
+    mountHomeEntryEditor(host2, mockAppWithVault(new MockVault()) as any);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(firstSignal!.aborted).toBe(true);
+    const allCalls = spy.mock.calls.filter(([type]) => type === 'blur');
+    expect(allCalls.length).toBe(2); // 每次 mount 恰好一份，不累积
+    const secondSignal = (allCalls[1][2] as AddEventListenerOptions | undefined)?.signal;
+    expect(secondSignal?.aborted).toBe(false);
+    spy.mockRestore();
+
+    // 最新 mount 的 blur 兜底仍工作：拖拽中切窗口 → 收尾（浮起类/位移清除）
+    const rows = Array.from(host2.querySelectorAll<HTMLElement>('[data-ent-row]'));
+    stubLayout(rows);
+    rows[0].dispatchEvent(pe('pointerdown', 100));
+    window.dispatchEvent(pe('pointermove', 160)); // 起拖
+    expect(rows[0].classList.contains('bz-home-ent-drag')).toBe(true);
+    window.dispatchEvent(new Event('blur'));
+    expect(rows[0].classList.contains('bz-home-ent-drag')).toBe(false);
+    expect(rows[0].style.transform).toBe('');
   });
 });
