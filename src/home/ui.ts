@@ -22,7 +22,7 @@
 import type { IconName } from 'obsidian';
 import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { notice } from '../core/notice';
-import { mountIcons } from '../core/ui';
+import { mountIcons, uiEmpty, uiBtn } from '../core/ui';
 import { topifyZ } from '../core/dom';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { tryGetSettings } from '../core/settings-provider';
@@ -134,6 +134,9 @@ async function refreshRiverAndRender(): Promise<void> {
   const focusing = isFocusingPhase(phase);
   if (river) river.pomodoroFocusing = focusing;
   H.river = river;
+  // 采集失败标记（H12）：聚合层异常被 catch(() => null) 吞成 null 时置位——渲染出「失败 + 重试」
+  // 空态而非永挂加载骨架；成功采集即清位
+  H.riverFailed = river === null;
   if (order) H.order = order;
   H.pomodoroPhase = phase;
   // 「默认打开日」只在数据刚到、用户还没点过周历时定一次（H.riverView 为 null = 没点过）
@@ -149,6 +152,7 @@ export function closeOverlay(): void {
   H.currentOverlay.remove();
   H.currentOverlay = null;
   H.river = null;
+  H.riverFailed = false; // 失败态随面板关闭失效（重开先出加载骨架，不由上次失败残留）
   // 查看日随本次打开失效：重开要重新按「默认打开日」定位（否则会以关面板前的选中日渲染）
   H.riverView = null;
 }
@@ -307,11 +311,31 @@ function renderAll(): void {
   if (date) date.textContent = headDateText();
 
   if (!H.river) {
-    // 数据未到/采集失败：结构占位（骨架），不闪空内容
+    // 数据未到：结构占位（骨架），不闪空内容；采集失败（H12）→ 失败空态 + 重试，不再永挂骨架
     const entries = overlay.querySelector('[data-home-entries]') as HTMLElement;
     const flow = overlay.querySelector('[data-home-flow]') as HTMLElement;
     const next = overlay.querySelector('[data-home-next]') as HTMLElement;
-    entries.innerHTML = loadingEntriesHtml();
+    if (H.riverFailed) {
+      const empty = uiEmpty({
+        icon: 'alert-circle',
+        title: '首页数据采集失败',
+        desc: '活动河数据没能读出来（各域数据文件或面板数据暂不可用）',
+      });
+      const retry = uiBtn({ label: '重试', onClick: () => {
+        H.riverFailed = false;
+        renderAll();
+        void refreshRiverAndRender();
+      } });
+      const row = document.createElement('div');
+      row.className = 'bz-btn-row bz-btn-row--center';
+      row.appendChild(retry);
+      empty.appendChild(row);
+      entries.innerHTML = '';
+      entries.appendChild(empty);
+      mountIcons(entries);
+    } else {
+      entries.innerHTML = loadingEntriesHtml();
+    }
     flow.innerHTML = loadingFlowHtml();
     next.innerHTML = '';
     (overlay.querySelector('[data-home-tiles]') as HTMLElement).innerHTML = '';
