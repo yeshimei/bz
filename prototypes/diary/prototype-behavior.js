@@ -1,4 +1,4 @@
-/* 源指纹 cc27a3dc7a35bb74 · 仓内输入 74 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 3a9c4f13b36bb227 · 仓内输入 74 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -9225,7 +9225,7 @@ var BZW_diary = (() => {
     const recentRows = recent2.length ? recent2.map((r) => {
       const color = r.kind === "note" ? ASSET_COLOR.note : ASSET_COLOR.diary;
       const iconName = r.kind === "note" ? "file-lock" : "book-lock";
-      return `<div class="bz-vault-minirow" data-recent="note">
+      return `<div class="bz-vault-minirow" data-recent="note"${r.id ? ` data-recent-id="${escapeHtml(r.id)}"` : ""}>
             <span class="av" style="background:${color}">${vIc(iconName, 14)}</span>
             <div class="mid"><div class="a">${escapeHtml(r.title)}</div><div class="b">${escapeHtml(r.sub)}</div></div>
             <span class="tm">${escapeHtml(r.time)}</span></div>`;
@@ -9448,12 +9448,8 @@ var BZW_diary = (() => {
     hint.textContent = opts.hint || "";
     hint.style.display = opts.hint ? "" : "none";
     box.appendChild(hint);
-    if (opts.inline) {
-      el.appendChild(box);
-    } else {
-      el.appendChild(box);
-      el.style.display = "flex";
-    }
+    if (!opts.inline) el.style.display = "flex";
+    el.appendChild(box);
     const focus = () => {
       try {
         input.focus({ preventScroll: true });
@@ -10376,7 +10372,12 @@ var BZW_diary = (() => {
             });
             topifyZ(ls.el);
             document.body.appendChild(ls.el);
+            const esc2 = escManager.register("bz-vault-unlock", {
+              isVisible: () => ls.el.isConnected,
+              close: () => done(false)
+            });
             const done = (ok) => {
+              esc2.unregister();
               ls.close();
               resolve(ok);
             };
@@ -10590,17 +10591,25 @@ var BZW_diary = (() => {
           const attachments = pureNotes.reduce((s, n) => s + n.attachments.length, 0);
           const attBytes = pureNotes.reduce((s, n) => s + n.attachments.reduce((b, a) => b + (a.blobSize || 0), 0), 0);
           const recent2 = [];
-          const pushRecent = (kind, title, sub, time, ts) => recent2.push({ kind, title, sub, time, ts });
+          const pushRecent = (kind, id, title, sub, time, ts) => recent2.push({ kind, id, title, sub, time, ts });
           for (const n of vaultNotes.slice(0, 6)) {
             const kind = n.kind === "diary-entry" ? "diary" : "note";
-            pushRecent(kind, n.title, `${n.attachments.length} 个附件`, formatRelativeTime(n.createdAt), Date.parse(n.createdAt || "") || 0);
+            pushRecent(
+              kind,
+              kind === "note" ? n.id : void 0,
+              // diary 落笔记列表后无法定位（无独立资产），不带 id
+              n.title,
+              `${n.attachments.length} 个附件 · ${n.path}`,
+              formatRelativeTime(n.createdAt),
+              Date.parse(n.createdAt || "") || 0
+            );
           }
           recent2.sort((a, b) => b.ts - a.ts);
           return {
             counts: c,
             attachments,
             attBytes,
-            recent: recent2.slice(0, 6).map(({ kind, title, sub, time }) => ({ kind, title, sub, time })),
+            recent: recent2.slice(0, 6).map(({ kind, id, title, sub, time }) => ({ kind, id, title, sub, time })),
             health: this.lastHealth
             // E5：随最近一次体检结果更新（未体检 null → 显示「未体检」）
           };
@@ -10652,7 +10661,11 @@ var BZW_diary = (() => {
           );
           (_b = area.querySelector('[data-hero="recent-all"]')) == null ? void 0 : _b.addEventListener("click", () => this.setAssetFromNav("note"));
           area.querySelectorAll(".bz-vault-minirow[data-recent]").forEach(
-            (el) => el.addEventListener("click", () => this.setAssetFromNav(el.getAttribute("data-recent")))
+            (el) => el.addEventListener("click", () => {
+              const rid = el.getAttribute("data-recent-id");
+              if (rid) this._selNoteId = rid;
+              this.setAssetFromNav(el.getAttribute("data-recent"));
+            })
           );
           detail.appendChild(area);
         }
@@ -11148,7 +11161,7 @@ var BZW_diary = (() => {
         /**
          * 解锁成功落点：直落加密笔记资产并聚焦搜索框——
          * 面板已只管加密笔记（密码本入口移除），打开即进入笔记列表多点一行都不用。
-         * 'pw' 传入值由 setAssetFromNav 兜底收敛为 'note'，保留调用形状以稳住测试面。
+         * 方法名保留快速取密时代的旧称，稳住调用面与测试面。
          */
         enterPwQuickAccess() {
           if (!this._initialized) return;
@@ -15733,7 +15746,7 @@ ${entry.content.trim()}`;
       try {
         if (this.isSpecialWallEntry(e)) return;
         const { ensureSafeUnlocked: ensureSafeUnlocked2 } = await Promise.resolve().then(() => (init_encrypt(), encrypt_exports));
-        const unlocked = await ensureSafeUnlocked2();
+        const unlocked = await ensureSafeUnlocked2("diary");
         if (!unlocked) return;
         const filename = e.filename || e.date;
         const entry = await findDiaryEntry(filename, e.lineNumber || 0);

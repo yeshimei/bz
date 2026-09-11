@@ -1062,8 +1062,13 @@ export class UIManager {
       });
       topifyZ(ls.el); // ADR-0067：一次性弹窗，创建即显示即发号
       document.body.appendChild(ls.el);
+      // 挂 body 弹层自声明 ESC 层（兜底链）：解锁屏开着时 ESC 只关解锁屏，不穿透主面板
+      const esc = escManager.register('bz-vault-unlock', {
+        isVisible: () => ls.el.isConnected,
+        close: () => done(false),
+      });
 
-      const done = (ok: boolean) => { ls.close(); resolve(ok); };
+      const done = (ok: boolean) => { esc.unregister(); ls.close(); resolve(ok); };
       const setErr = (m: string) => {
         ls.setError(m);
         setTimeout(() => { if (ls.input.value) ls.setError(''); }, 2600);
@@ -1285,12 +1290,19 @@ export class UIManager {
     const attachments = pureNotes.reduce((s, n) => s + n.attachments.length, 0);
     const attBytes = pureNotes.reduce((s, n) => s + n.attachments.reduce((b, a) => b + (a.blobSize || 0), 0), 0);
     // 密码本已移出保险库面板，概览流水只收笔记/日记（diary 条目点击统一落笔记资产）
-    const recent: Array<{ kind: 'note' | 'diary'; title: string; sub: string; time: string; ts: number }> = [];
-    const pushRecent = (kind: 'note' | 'diary', title: string, sub: string, time: string, ts: number) =>
-      recent.push({ kind, title, sub, time, ts });
+    const recent: Array<{ kind: 'note' | 'diary'; id?: string; title: string; sub: string; time: string; ts: number }> = [];
+    const pushRecent = (kind: 'note' | 'diary', id: string | undefined, title: string, sub: string, time: string, ts: number) =>
+      recent.push({ kind, id, title, sub, time, ts });
     for (const n of vaultNotes.slice(0, 6)) {
       const kind = n.kind === 'diary-entry' ? 'diary' : 'note';
-      pushRecent(kind, n.title, `${n.attachments.length} 个附件`, formatRelativeTime(n.createdAt), Date.parse(n.createdAt || '') || 0);
+      pushRecent(
+        kind,
+        kind === 'note' ? n.id : undefined, // diary 落笔记列表后无法定位（无独立资产），不带 id
+        n.title,
+        `${n.attachments.length} 个附件 · ${n.path}`,
+        formatRelativeTime(n.createdAt),
+        Date.parse(n.createdAt || '') || 0,
+      );
     }
     // G：按真实时间戳降序（旧实现按相对时间字符串 localeCompare——「今天」「3 天前」字典序无时序意义）
     recent.sort((a, b) => b.ts - a.ts);
@@ -1298,7 +1310,7 @@ export class UIManager {
       counts: c,
       attachments,
       attBytes,
-      recent: recent.slice(0, 6).map(({ kind, title, sub, time }) => ({ kind, title, sub, time })),
+      recent: recent.slice(0, 6).map(({ kind, id, title, sub, time }) => ({ kind, id, title, sub, time })),
       health: this.lastHealth, // E5：随最近一次体检结果更新（未体检 null → 显示「未体检」）
     };
   }
@@ -1350,7 +1362,12 @@ export class UIManager {
     );
     area.querySelector('[data-hero="recent-all"]')?.addEventListener('click', () => this.setAssetFromNav('note'));
     area.querySelectorAll('.bz-vault-minirow[data-recent]').forEach((el) =>
-      el.addEventListener('click', () => this.setAssetFromNav((el.getAttribute('data-recent') as 'note' | 'diary')))
+      el.addEventListener('click', () => {
+        // 原型口径：点流水 → 落列表并定位该条目（diary 段无 id，仅落列表）
+        const rid = el.getAttribute('data-recent-id');
+        if (rid) this._selNoteId = rid;
+        this.setAssetFromNav(el.getAttribute('data-recent') as 'note' | 'diary');
+      })
     );
     detail.appendChild(area);
   }
@@ -1894,7 +1911,7 @@ export class UIManager {
   /**
    * 解锁成功落点：直落加密笔记资产并聚焦搜索框——
    * 面板已只管加密笔记（密码本入口移除），打开即进入笔记列表多点一行都不用。
-   * 'pw' 传入值由 setAssetFromNav 兜底收敛为 'note'，保留调用形状以稳住测试面。
+   * 方法名保留快速取密时代的旧称，稳住调用面与测试面。
    */
   enterPwQuickAccess(): void {
     if (!this._initialized) return;

@@ -32,8 +32,8 @@ export interface OverviewStats {
   attachments: number;
   /** 附件密文字节聚合（blobSize 之和，纯笔记口径） */
   attBytes: number;
-  /** 最近 N 条（笔记 + 日记；密码本已移出保险库面板） */
-  recent: Array<{ kind: 'note' | 'diary'; title: string; sub: string; time: string }>;
+  /** 最近 N 条（笔记 + 日记；密码本已移出保险库面板）。id 供点击流水直接定位条目（diary 无独立资产不传） */
+  recent: Array<{ kind: 'note' | 'diary'; id?: string; title: string; sub: string; time: string }>;
   health: { issues: number; lastChecked?: string } | null;
 }
 
@@ -55,8 +55,9 @@ export function overviewHTML(stats: OverviewStats): string {
         .map((r) => {
           const color = r.kind === 'note' ? ASSET_COLOR.note : ASSET_COLOR.diary;
           const iconName = r.kind === 'note' ? 'file-lock' : 'book-lock';
-          // 日记条目已无独立资产入口，点击统一落加密笔记列表（data-recent 不再写 'diary'）
-          return `<div class="bz-vault-minirow" data-recent="note">
+          // 日记条目已无独立资产入口，点击统一落加密笔记列表（data-recent 不再写 'diary'）；
+          // 笔记条目带 id，点击后直定位该条目（原型：点流水 → 列表选中该篇）
+          return `<div class="bz-vault-minirow" data-recent="note"${r.id ? ` data-recent-id="${escapeHtml(r.id)}"` : ''}>
             <span class="av" style="background:${color}">${vIc(iconName, 14)}</span>
             <div class="mid"><div class="a">${escapeHtml(r.title)}</div><div class="b">${escapeHtml(r.sub)}</div></div>
             <span class="tm">${escapeHtml(r.time)}</span></div>`;

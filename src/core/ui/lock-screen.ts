@@ -189,12 +189,8 @@ export function uiLockScreen(opts: LockScreenOpts): LockScreenHandle {
   hint.style.display = opts.hint ? '' : 'none';
   box.appendChild(hint);
 
-  if (opts.inline) {
-    el.appendChild(box);
-  } else {
-    el.appendChild(box);
-    el.style.display = 'flex';
-  }
+  if (!opts.inline) el.style.display = 'flex';
+  el.appendChild(box);
 
   const focus = () => {
     try {

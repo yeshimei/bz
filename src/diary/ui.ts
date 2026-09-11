@@ -1881,7 +1881,7 @@ export class DiaryAppController {
       // P1 审查修复：影视/信/书特殊条目不提供加密（入库语义错位）——菜单已屏蔽，此处兜底
       if (this.isSpecialWallEntry(e)) return;
       const { ensureSafeUnlocked } = await import('../encrypt') as typeof import('../encrypt');
-      const unlocked = await ensureSafeUnlocked();
+      const unlocked = await ensureSafeUnlocked('diary'); // 加密的是日记条目，解锁屏走 diary 域口径（与 519 行入口同文案）
       if (!unlocked) return;
       const filename = e.filename || e.date;
       const entry = await findDiaryEntry(filename, e.lineNumber || 0);
