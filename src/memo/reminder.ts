@@ -27,6 +27,10 @@ export function hasPendingUrgent(items: MemoItem[], path?: string | null): boole
 }
 
 let fileOpenRef: EventRef | null = null;
+/** E7：注册时自持 app 引用——此前卸载经 M.appRef 可选链，uiUnload 先置空 M.appRef 时
+ *  offref 短路永不执行：禁用插件后 file-open 监听仍在（开笔记照弹面板写 memo.json），
+ *  再启用还会叠加翻倍。存本模块变量后卸载顺序无关。 */
+let fileOpenApp: App | null = null;
 let startPopupTimer: ReturnType<typeof setTimeout> | null = null;
 /** 已提醒笔记（同 memo remindedFiles 口径：同一笔记只提醒一次，防反复弹出） */
 const remindedFiles = new Set<string>();
@@ -58,6 +62,7 @@ async function autoPopupOnStart(app: App): Promise<void> {
 export function ensureMemoReminders(app: App): void {
   if (fileOpenRef) return;
   const s = tryGetSettings();
+  fileOpenApp = app; // E7：自持引用，卸载不再依赖 M.appRef 存活
   // 启动自动弹出（开关注册时判定；关=不弹也不设定时）
   if (s?.autoPopupOnStart !== false) void autoPopupOnStart(app);
   // 打开笔记提醒（开关事件触发时判定——设置变更即时生效，无需重注册）
@@ -81,10 +86,11 @@ export function ensureMemoReminders(app: App): void {
 export function unloadMemoReminders(): void {
   if (fileOpenRef) {
     try {
-      M.appRef?.workspace.offref?.(fileOpenRef as any);
+      fileOpenApp?.workspace.offref?.(fileOpenRef as any); // E7：用自持 app，不依赖 M.appRef
     } catch (e) { /* 环境无 offref 时忽略 */ }
     fileOpenRef = null;
   }
+  fileOpenApp = null;
   if (startPopupTimer !== null) {
     clearTimeout(startPopupTimer);
     startPopupTimer = null;

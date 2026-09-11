@@ -24,16 +24,20 @@ interface SyncItem {
   [key: string]: any;
 }
 
-/** 笔记重命名：同步引用路径 / 标题 / notePath */
+/** 笔记重命名：同步引用路径 / 标题 / notePath。
+ *  E21：标题联动只对「本条引用了该笔记」（notePath/linkedNote 命中）的条目生效——
+ *  此前按「标题 === 旧文件名」盲改，内容恰好与文件同名的无关条目标题被悄悄改掉。 */
 function syncRename(
   items: SyncItem[],
   { oldPath, newPath, oldTitle, newTitle }: { oldPath: string; newPath: string; oldTitle: string; newTitle: string }
 ): boolean {
   let changed = false;
   for (const item of items) {
-    if (item.linkedNote === oldPath) { item.linkedNote = newPath; changed = true; }
-    if (item.title === oldTitle) { item.title = newTitle; changed = true; }
-    if (item.notePath === oldPath) { item.notePath = newPath; changed = true; }
+    const linkedHit = item.linkedNote === oldPath;
+    const noteHit = item.notePath === oldPath;
+    if (linkedHit) { item.linkedNote = newPath; changed = true; }
+    if (noteHit) { item.notePath = newPath; changed = true; }
+    if ((linkedHit || noteHit) && item.title === oldTitle) { item.title = newTitle; changed = true; }
   }
   return changed;
 }
@@ -168,6 +172,19 @@ function createFileSyncAgent(app: App): void {
 
   const isMd = (file: any) => file && file.extension === 'md' && inFolders(file.path, getWatchedFolders());
 
+  /** E22：范围外笔记只要被 memo.json 实际引用（notePath/linkedNote 命中）也放行同步——
+   *  notePath 可指向任意笔记（编辑器「定位到笔记」），监听范围只覆盖两个目录时，
+   *  范围外笔记 rename/delete 引用不同步（卡片「位置」tag 跳不存在的文件）。 */
+  const referencedByMemo = async (path: string): Promise<boolean> => {
+    if (!path) return false;
+    try {
+      const items = await loadJSON(app, getMemoPath());
+      return (items as SyncItem[]).some((it) => it?.linkedNote === path || it?.notePath === path);
+    } catch (e) {
+      return false;
+    }
+  };
+
   // rename 同类事件按 DEBOUNCE_DELAY 合并去抖回放保序；delete 保持即时。
 
   /** 总线载荷 → 现有闭包期望的伪 TFile 形状（{path, basename, extension:'md'}，rename 另附 oldPath） */
@@ -185,20 +202,26 @@ function createFileSyncAgent(app: App): void {
   _flushers.push(flushRenames);
   _refs.push(onDomainEvent<{ oldPath: string; newPath: string }>('vault:md-renamed', (evt) => {
     const file = pseudoFile(evt.newPath);
-    if (!isMd(file)) return;
-    const oldTitle = stripMdExt((evt.oldPath ?? '').split('/').pop()!);
-    flushRenames({
-      oldPath: evt.oldPath,
-      newPath: evt.newPath,
-      oldTitle,
-      newTitle: file.basename,
-    });
+    // E22：范围外放行看新旧两条路径（改名移出/移入监听范围都算被引用）
+    void (async () => {
+      if (!(isMd(file) || (await referencedByMemo(evt.oldPath)) || (await referencedByMemo(evt.newPath)))) return;
+      const oldTitle = stripMdExt((evt.oldPath ?? '').split('/').pop()!);
+      flushRenames({
+        oldPath: evt.oldPath,
+        newPath: evt.newPath,
+        oldTitle,
+        newTitle: file.basename,
+      });
+    })();
   }));
 
   _refs.push(onDomainEvent<{ path: string }>('vault:md-deleted', (evt) => {
     const file = pseudoFile(evt.path);
-    if (!isMd(file)) return;
-    enqueue(() => syncSource(syncDelete, evt.path));
+    void (async () => {
+      // E22：范围外但被 memo.json 引用的笔记删除同样要清关联
+      if (!(isMd(file) || (await referencedByMemo(evt.path)))) return;
+      enqueue(() => syncSource(syncDelete, evt.path));
+    })();
   }));
 }
 

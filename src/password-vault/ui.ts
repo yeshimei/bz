@@ -11,6 +11,8 @@
 import { escManager } from '../core/esc-manager';
 import { secureRandomPassword, armClipboardClear, copySensitiveText, cancelClipboardClear } from '../core/utils';
 import { getSafeManager } from '../encrypt';
+import { ENCRYPT_UNLOCK_CHANGED_CHANNEL } from '../encrypt/data';
+import { onDomainEvent } from '../core/domain-bus';
 import { topifyZ, createSiteIcon } from '../core/dom';
 import { openFlowDialog } from '../core/flow-dialog';
 import { notice } from '../core/notice';
@@ -108,6 +110,8 @@ export class PasswordVaultUIManager {
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
   private escUnregister: { unregister: () => void } | null = null;
+  /** 共锁订阅（E2）：encrypt:unlock-changed 退订句柄（show 挂 / hide+cleanup 摘） */
+  private unlockOff: (() => void) | null = null;
   private _initialized = false;
   // DOM 引用（桌面）
   private desk!: {
@@ -260,6 +264,8 @@ export class PasswordVaultUIManager {
   }
 
   private mobPagePlatform: string | null = null;
+  /** 当前移动详情页若是「账号详情页」，记录其条目（E6：重建页内容时区分平台页/账号页） */
+  private mobPageAccount: PasswordVaultEntry | null = null;
 
   /** 绑定添加/编辑弹窗的保存/取消/生成按钮（双实例各一份） */
   private bindDialogs() {
@@ -275,6 +281,15 @@ export class PasswordVaultUIManager {
       dlg.querySelector('[data-act="gen"]')?.addEventListener('click', () => {
         (dlg.querySelector('[data-f="password"]') as HTMLInputElement).value = this.generatePassword();
         this.toast('已生成新密码');
+      });
+      // eye 切换（E5）：默认掩码，点击明文/掩码互换（对齐 encrypt 侧同弹窗）
+      dlg.querySelector('[data-act="pw-eye"]')?.addEventListener('click', () => {
+        const input = dlg.querySelector('[data-f="password"]') as HTMLInputElement;
+        const eye = dlg.querySelector('[data-act="pw-eye"]') as HTMLElement;
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        eye.title = show ? '隐藏密码' : '显示密码';
+        eye.innerHTML = show ? ICONS.eyeoff : ICONS.eye;
       });
       // 取消
       dlg.querySelector('[data-act="cancel"]')?.addEventListener('click', () => {
@@ -555,19 +570,57 @@ export class PasswordVaultUIManager {
     } else if (act === 'eye') {
       this.shownIds[d.id] = !this.shownIds[d.id];
       this.renderAll();
+      this.refreshMobPage(); // E6：移动详情页重建，明文/掩码立即生效
     } else if (act === 'edit') {
       this.openEntryDialog(d);
     } else if (act === 'fav') {
-      await this.dataManager.toggleFav(d.id);
+      try {
+        await this.dataManager.toggleFav(d.id); // E16：失败 toast + 回滚重绘（dataManager 内存快照回退）
+      } catch (e: any) {
+        t('操作失败：' + (e?.message || e), true);
+      }
       this.renderAll();
+      this.refreshMobPage(); // E6：收藏星标立即生效
     } else if (act === 'del') {
       this.askConfirm('删除密码条目', `确定删除账号 "${d.account}" 吗？此操作不可撤销。`, true, async () => {
-        await this.dataManager.deleteItem(d.id);
+        try {
+          await this.dataManager.deleteItem(d.id); // E16：失败 toast（回滚由数据层负责）
+        } catch (e: any) {
+          t('删除失败：' + (e?.message || e), true);
+          this.renderAll();
+          return;
+        }
         if (this.selAccount === d.id) this.selAccount = null;
         this.renderAll();
+        this.refreshMobPage(); // E6：已删条目从移动详情页消失
         t('已删除');
       });
     }
+  }
+
+  /**
+   * 重建当前移动端详情页（E6）：renderAll 只重绘列表，已打开的 pageBody 不重建——
+   * eye/fav 等内存态变化后页面内容要等下次进入才更新（点眼睛/收藏无可见反应）。
+   * 页未打开为幂等空操作；条目/平台已被删光则收起页面。
+   */
+  private refreshMobPage(): void {
+    if (!this.mobPagePlatform || !this.mob.page.classList.contains('open')) return;
+    const plat = this.mobPagePlatform;
+    if (this.mobPageAccount && this.mobPageAccount.id) {
+      const d = this.dataManager.pwData.find((x) => x.id === this.mobPageAccount!.id);
+      if (d) {
+        this.openAccountPage(d);
+        return;
+      }
+    }
+    const group = this.dataManager.platforms().find((p) => p.platform === plat);
+    if (group) {
+      this.openPage(group);
+      return;
+    }
+    this.mob.page.classList.remove('open');
+    this.mobPagePlatform = null;
+    this.mobPageAccount = null;
   }
 
   // ---------- 移动端渲染 ----------
@@ -685,6 +738,7 @@ export class PasswordVaultUIManager {
     });
     this.mob.pageTitle.textContent = p.platform;
     this.mobPagePlatform = p.platform;
+    this.mobPageAccount = null; // E6：平台页
     this.mob.page.classList.add('open');
   }
 
@@ -713,6 +767,7 @@ export class PasswordVaultUIManager {
     });
     this.mob.pageTitle.textContent = d.platform;
     this.mobPagePlatform = d.platform;
+    this.mobPageAccount = d; // E6：账号页
     this.mob.page.classList.add('open');
   }
 
@@ -768,8 +823,13 @@ export class PasswordVaultUIManager {
         label: d.fav ? '取消收藏' : '收藏',
         onClick: () => {
           void (async () => {
-            await this.dataManager.toggleFav(d.id);
+            try {
+              await this.dataManager.toggleFav(d.id); // E16：失败 toast，不再裸 await 吞成 unhandled rejection
+            } catch (e: any) {
+              t('操作失败：' + (e?.message || e), true);
+            }
             this.renderAll();
+            this.refreshMobPage();
           })();
         },
       },
@@ -789,8 +849,15 @@ export class PasswordVaultUIManager {
         onClick: () =>
           this.askConfirm('删除密码条目', `确定删除账号 "${d.account}" 吗？此操作不可撤销。`, true, () => {
             void (async () => {
-              await this.dataManager.deleteItem(d.id);
+              try {
+                await this.dataManager.deleteItem(d.id); // E16：失败 toast
+              } catch (e: any) {
+                t('删除失败：' + (e?.message || e), true);
+                this.renderAll();
+                return;
+              }
               this.renderAll();
+              this.refreshMobPage();
               t('已删除');
             })();
           }),
@@ -838,9 +905,17 @@ export class PasswordVaultUIManager {
       onClick: () =>
         this.askConfirm('删除整个平台', `将删除「${platform}」的 ${count} 个账号，此操作不可撤销。确定继续？`, true, () => {
           void (async () => {
-            const n = await this.dataManager.removePlatform(platform);
+            let n = 0;
+            try {
+              n = await this.dataManager.removePlatform(platform); // E16：失败 toast
+            } catch (e: any) {
+              t('删除失败：' + (e?.message || e), true);
+              this.renderAll();
+              return;
+            }
             this.selPlatform = null;
             this.renderAll();
+            this.refreshMobPage(); // E6：整平台删除后收起其移动详情页
             t(`已删除平台与 ${n} 个账号`);
           })();
         }),
@@ -902,8 +977,15 @@ export class PasswordVaultUIManager {
   }
 
   // ---------- 确认框（原型自绘，双实例同步） ----------
+  /** 当前确认回调（E1）：监听器只在首绑时挂一次，回调每次 askConfirm 覆写——
+   *  此前每次调用都给 .ok 叠加监听器：第一次取消后第二次确认会先命中旧监听器，
+   *  执行的是上一次的动作（删错条目）；首次已确认过则旧监听器抢先消费 pending。 */
+  private confirmYes: (() => void) | null = null;
+
   askConfirm(title: string, message: string, danger: boolean, onYes: () => void) {
-    this.root!.querySelectorAll('.bz-password-vault-pop2:not(.bz-password-vault-platedit)').forEach((pop) => {
+    this.confirmYes = onYes;
+    this.root!.querySelectorAll('.bz-password-vault-pop2:not(.bz-password-vault-platedit)').forEach((node) => {
+      const pop = node as HTMLElement;
       const card = pop.querySelector('.card')!;
       card.querySelector('h3')!.textContent = title;
       card.querySelector('.msg')!.textContent = message;
@@ -912,30 +994,26 @@ export class PasswordVaultUIManager {
       ok.classList.toggle('danger', !!danger);
       pop.classList.add('open');
       (pop as HTMLElement).dataset.confirmCb = 'pending';
-      // 点击遮罩（非弹窗本体）关闭
+      // 遮罩与确定按钮均一次性绑定（E1：确定按钮此前每次调用叠加监听器）
       if (!(pop as HTMLElement).dataset.maskBound) {
         (pop as HTMLElement).dataset.maskBound = '1';
+        // 点击遮罩（非弹窗本体）关闭
         pop.addEventListener('click', (e) => {
           if (e.target === pop) {
             pop.classList.remove('open');
             (pop as HTMLElement).dataset.confirmCb = '';
           }
         });
+        ok.addEventListener('click', () => {
+          pop.classList.remove('open');
+          if (pop.dataset.confirmCb === 'pending') {
+            pop.dataset.confirmCb = '';
+            this.confirmYes?.();
+          }
+        });
       }
     });
-    // 绑定确认按钮（一次性）
-    this.root!.querySelectorAll('.bz-password-vault-pop2:not(.bz-password-vault-platedit) .ok').forEach((ok) => {
-      ok.addEventListener('click', () => {
-        const pop = ok.closest('.bz-password-vault-pop2') as HTMLElement;
-        pop.classList.remove('open');
-        if (pop.dataset.confirmCb === 'pending') {
-          pop.dataset.confirmCb = '';
-          onYes();
-        }
-      });
-    });
   }
-
   // ---------- toast（原型自绘） ----------
   toast(msg: string, isErr = false) {
     this.root!.querySelectorAll('.bz-password-vault-toast').forEach((el) => {
@@ -999,16 +1077,55 @@ export class PasswordVaultUIManager {
     if (!this._initialized) this.ensureElements();
     this.root!.style.display = 'flex';
     topifyZ(this.root!); // ADR-0067
+    this.subscribeUnlockEvents(); // E2：面板打开期间感知别域上锁/解锁（保险库「立即上锁」/安全模式/日记域）
     void this.loadAndRender();
   }
 
   hide() {
     if (!this.root) return;
+    this.unsubscribeUnlockEvents(); // E2：先摘订阅再走安全模式自锁，避免自己锁自己再触发一轮重绘
     this.root.style.display = 'none';
     if (this.config.securityMode) {
       this.dataManager.lock();
-      this.toast('安全模式：已自动上锁');
+      notice('安全模式：已自动上锁'); // E15：toast 挂在已隐藏面板内部永远看不见，改走全局通知
     }
+  }
+
+  /**
+   * 共锁感知（E2）：保险库与密码本同一把主密码，别域上锁/解锁后面板必须实时跟随——
+   * - 上锁：清数据 + 锁屏接管（此前明文照常可看可复制、写操作静默无效）；
+   * - 解锁：重载数据并重绘（锁后同会话再解锁的路径）。
+   * 事件到达时 SafeManager 已翻转解锁态，本域仅对「订阅期间见过解锁」的首次 false
+   * 补一次 lock()（清密码本明文缓存）；lock() 内部的重复广播由此旗标自然收敛。
+   */
+  private lastUnlockSeen = false;
+
+  private subscribeUnlockEvents(): void {
+    if (this.unlockOff) return;
+    this.lastUnlockSeen = this.dataManager.unlocked;
+    this.unlockOff = onDomainEvent<{ unlocked: boolean }>(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
+      void this.onSharedLockChanged(!!evt?.unlocked);
+    });
+  }
+
+  private unsubscribeUnlockEvents(): void {
+    if (this.unlockOff) {
+      this.unlockOff();
+      this.unlockOff = null;
+    }
+  }
+
+  private async onSharedLockChanged(unlocked: boolean): Promise<void> {
+    if (unlocked) {
+      this.lastUnlockSeen = true;
+      await this.loadAndRender();
+      return;
+    }
+    if (this.lastUnlockSeen) {
+      this.lastUnlockSeen = false; // 先落旗标再 lock：lock() 的重复广播由此短路
+      this.dataManager.lock(); // 清本域明文缓存（pwData/loadCache）
+    }
+    this.renderAll();
   }
 
   private async loadAndRender() {
@@ -1239,6 +1356,7 @@ export class PasswordVaultUIManager {
         const openConfirm = this.root!.querySelector('.bz-password-vault-pop2.open');
         if (openConfirm) {
           openConfirm.classList.remove('open');
+          (openConfirm as HTMLElement).dataset.confirmCb = ''; // E1：ESC 关闭同步作废挂起回调
           return;
         }
         this.hide();
@@ -1249,6 +1367,7 @@ export class PasswordVaultUIManager {
   // ---------- 卸载 ----------
   cleanup() {
     cancelClipboardClear();
+    this.unsubscribeUnlockEvents(); // E2：退订共锁事件
     if (this.searchTimer !== null) {
       clearTimeout(this.searchTimer);
       this.searchTimer = null;

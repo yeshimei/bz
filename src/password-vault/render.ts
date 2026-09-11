@@ -79,7 +79,7 @@ const AV_BG = (platform: string) => `background:${colorOf(platform)}`;
  * 渲染后需调 ui.ts hydrateAvatars 注入 <img>（createSiteIcon 需 JS 创建，行为层职责）。
  */
 export function avatarHTML(platform: string, url: string | null | undefined, cls = 'bz-password-vault-av'): string {
-  const ch = (platform || '?').slice(0, 1);
+  const ch = esc((platform || '?').slice(0, 1)); // E17：首字符与其他处同口径转义（平台名以 < 开头时不再吞 markup）
   return `<div class="${cls} bz-pwv-avatar" style="${AV_BG(platform)}" data-avatar="1" data-url="${escAttr(url || '')}"><span>${ch}</span></div>`;
 }
 
@@ -109,7 +109,7 @@ export function modalHTML(which: 'desk' | 'mob'): string {
           <label>链接（可选）</label><input data-f="url" placeholder="https://…">
           <label>账号 *</label><input data-f="account" placeholder="登录账号 / 邮箱 / 手机号">
           <label>密码 *</label>
-          <div class="pwdrow"><input data-f="password" placeholder="密码"><button class="gen" data-act="gen">生成</button></div>
+          <div class="pwdrow"><input data-f="password" type="password" placeholder="密码" autocomplete="new-password"><button class="mini" data-act="pw-eye" type="button" title="显示密码">${ICONS.eye}</button><button class="gen" data-act="gen">生成</button></div>
           <label>备注（可选）</label><input data-f="note" placeholder="备用信息…">
           <div class="err" data-f-err></div>
           <div class="btns"><button class="cancel" data-act="cancel">取消</button><button class="save" data-act="save">保存</button></div>

@@ -8,7 +8,8 @@ import moment from 'moment';
 import { jsonStore } from '../core/json-store';
 import { getApp } from '../core/app';
 import { generateId, extractUrlAndDisplay } from '../core/utils';
-import { enqueueFileTask, storageFile } from '../core/storage';
+import { backupOriginal, enqueueFileTask, storageFile } from '../core/storage';
+import { notify } from '../core/notice';
 import type { MemoItem } from './types';
 
 export interface MemoSettingsLike {
@@ -88,6 +89,23 @@ export const MemoData = {
   async loadItems(): Promise<MemoItem[]> {
     return enqueueFileTask(this.memoFilePath, async () => {
       const raw = await this.read();
+      // E23：合法 JSON 但非数组（对象/标量/null 等损坏形态）——此前 raw.map 抛 TypeError
+      // 被上层吞掉，面板静默空白。按 D1 契约原样留档后重建空清单，不再无声丢形态。
+      if (!Array.isArray(raw)) {
+        const backup = await backupOriginal(getApp(), this.memoFilePath);
+        await this.write([]);
+        try {
+          notify(
+            backup
+              ? `备忘录数据文件损坏（内容不是列表），原内容已留档到 ${backup}，已重建空清单继续使用`
+            : '备忘录数据文件损坏（内容不是列表），已重建空清单继续使用',
+            { type: 'warning', dedupeKey: 'memo-loaditems-corrupt' }
+          );
+        } catch (e) {
+          /* 无 DOM 环境（纯数据层 node 测试等）静默 */
+        }
+        return [];
+      }
       let needWrite = false;
       const items = raw.map((item: any) => {
         if (!item.id) {
