@@ -17,6 +17,7 @@ import { openFlowDialog } from '../core/flow-dialog';
 import { createOverlay, topifyZ } from '../core/dom';
 import {
   attachItemActions,
+  openItemMenu,
   openItemSheet,
   registerSheetCompanion,
   unregisterSheetCompanion,
@@ -32,7 +33,7 @@ import type { SettingsSchema } from '../core/settings-schema';
 import { SafeManager, base64ToBytes, bytesToBase64, type SafeNote, type SafeAttachment, type HealthReport, type HealthItem, type LockAttachmentInput } from './data';
 import { compressImage, videoFrame } from './preview';
 import { PasswordVaultDataManager, type PasswordVaultEntry, type PlatformGroup } from './vault-data';
-import { VaultPwView, relTime as pwRelTime, DEFAULT_PW_STATE, DEFAULT_PW_CHARSET, type PwViewState, type PwViewHost } from './vault-pw-view';
+import { VaultPwView, DEFAULT_PW_STATE, DEFAULT_PW_CHARSET, type PwViewState, type PwViewHost } from './vault-pw-view';
 import { openPasswordQuickPicker } from './pw-picker';
 import { overviewHTML, noteRowHTML, noteDetailHTML, type VaultAsset, type OverviewStats, vIc } from './vault-assets-view';
 import { uiLockScreen } from '../core/ui/lock-screen';
@@ -131,7 +132,7 @@ export function pwStrengthLabel(s: PwStrength): string {
 }
 
 /** 上次停留资产（会话级记忆）：下次打开面板/快速取密直落该资产，不回概览 */
-let lastVisitedAsset: VaultAsset = 'pw';
+let lastVisitedAsset: VaultAsset = 'note';
 
 /**
  * 收集笔记引用的图片/视频附件路径（纯函数，只读，便于单测）。
@@ -514,9 +515,7 @@ export class UIManager {
           </div>
           <div class="bz-vault-item on" data-asset="overview">${vIc('layout-grid', 16)}概览<span class="cnt" data-cnt="overview"></span></div>
           <div class="bz-vault-sec">资产档案</div>
-          <div class="bz-vault-item" data-asset="pw">${vIc('key', 16)}密码<span class="cnt" data-cnt="pw"></span></div>
           <div class="bz-vault-item k-note" data-asset="note">${vIc('file-lock', 16)}加密笔记<span class="cnt" data-cnt="note"></span></div>
-          <div class="bz-vault-item k-diary" data-asset="diary">${vIc('book-lock', 16)}加密日记<span class="cnt" data-cnt="diary"></span></div>
           <div class="grow"></div>
           <div class="bz-vault-health" data-act="health-card" title="打开保险库体检">
             <div class="ht"><span class="okdot"></span><span data-health-t>保险库健康</span></div>
@@ -528,11 +527,9 @@ export class UIManager {
           <div class="bz-vault-bar">
             <h1 data-vault-title>保险库</h1>
             <div class="sub" data-vault-sub></div>
-            <div class="bz-vault-search">${vIc('search', 14)}<input placeholder="搜索全部资产…" data-vault-search></div>
-            <button class="bz-vault-ic" data-act="gen" title="生成密码">${vIc('refresh-cw', 15)}</button>
-            <button class="bz-vault-ic" data-act="lock-note" title="加密当前笔记">${vIc('file-lock', 15)}</button>
+            <div class="bz-vault-search">${vIc('search', 14)}<input placeholder="搜索加密笔记…" data-vault-search></div>
+            <button class="bz-vault-ic" data-act="lock-note" title="存入笔记">${vIc('file-lock', 15)}</button>
             <button class="bz-vault-ic" data-act="health" title="保险库体检">${vIc('stethoscope', 15)}</button>
-            <button class="bz-vault-ic" data-act="settings" title="保险库设置">${vIc('settings', 15)}</button>
             <button class="bz-vault-ic close" data-act="close" title="关闭">${vIc('x', 15)}</button>
           </div>
           <div class="bz-vault-pane">
@@ -551,9 +548,7 @@ export class UIManager {
         <div class="bz-vault-msearch">${vIc('search', 13)}<input placeholder="搜索全部资产…" data-mob-search></div>
         <div class="bz-vault-mseg" data-mob-seg>
           <span class="sg on" data-masset="overview">概览</span>
-          <span class="sg" data-masset="pw">密码</span>
           <span class="sg" data-masset="note">笔记</span>
-          <span class="sg" data-masset="diary">日记</span>
         </div>
         <div class="bz-vault-mbody" data-mob-body></div>
       </div>`;
@@ -593,6 +588,7 @@ export class UIManager {
   /** 统一骨架交互：资产导航 / 顶栏动作 / 搜索防抖 / 移动端 seg */
   private bindVaultShell(): void {
     const setAsset = (a: VaultAsset) => {
+      if (a === 'pw' || a === 'diary') a = 'note'; // 资产兜底：入口收敛后残留值落加密笔记
       this.asset = a;
       lastVisitedAsset = a; // 记住停留资产：下次打开直落
       this.pwState.searchKw = '';
@@ -610,19 +606,26 @@ export class UIManager {
     this.popup!.querySelector('[data-act="lock"]')?.addEventListener('click', () => this.lockNow());
     this.popup!.querySelector('[data-act="close"]')?.addEventListener('click', () => this.hide());
     this.popup!.querySelector('[data-act="mob-close"]')?.addEventListener('click', () => this.hide());
-    this.popup!.querySelector('[data-act="settings"]')?.addEventListener('click', () => this.openSettings());
+    // 设置入口：顶栏按钮已按原型去掉，改为面板空白处右键菜单。
+    // 行/卡（自带条目抽屉）、菜单本体、表单控件不冒泡开面板菜单——否则两级菜单互顶
+    this.popup!.addEventListener('contextmenu', (e) => {
+      const t = e.target;
+      if (!(t instanceof HTMLElement)) return;
+      if (t.closest('.bz-vault-row, .bz-pwv-plrow, .bz-pwv-acctcard, .bz-pwv-mobcard, .bz-item-menu, input, textarea, button')) return;
+      e.preventDefault();
+      this.openPanelMenu(e.clientX, e.clientY);
+    });
     this.popup!.querySelector('[data-act="health"]')?.addEventListener('click', () => void this.openHealthDialog());
     // 左栏健康卡：读真实体检状态 + 点击直达体检
     this.popup!.querySelector('[data-act="health-card"]')?.addEventListener('click', () => void this.openHealthDialog());
     this.popup!.querySelector('[data-act="lock-note"]')?.addEventListener('click', () => this.onLockCurrentNote?.());
-    this.popup!.querySelector('[data-act="gen"]')?.addEventListener('click', () => this.genAndToast());
-    // 搜索防抖（资产内过滤）；概览页输入 → 自动切到密码结果（资产切换保留关键词）
+    // 搜索防抖（资产内过滤）：概览页输入 → 自动切到加密笔记结果（保留关键词）
     const bindSearch = (input: HTMLInputElement, isMob: boolean) => {
       input.addEventListener('input', () => {
         const v = input.value.trim();
         if (this.asset === 'overview' && v) {
-          this.asset = 'pw';
-          lastVisitedAsset = 'pw';
+          this.asset = 'note';
+          lastVisitedAsset = 'note';
         }
         this.pwState.searchKw = v;
         this.desk.search.value = isMob ? v : this.desk.search.value;
@@ -1026,6 +1029,15 @@ export class UIManager {
     notice(msg, tone || undefined);
   }
 
+  /** 面板空白处右键菜单：设置入口（顶栏按原型去掉了设置按钮，收在这里） */
+  private openPanelMenu(x: number, y: number): void {
+    const actions: ItemAction[] = [
+      { icon: 'settings', label: '保险库设置', onClick: () => this.openSettings() },
+      { icon: 'stethoscope', label: '保险库体检', onClick: () => void this.openHealthDialog() },
+    ];
+    openItemMenu(x, y, actions, true, 'bz-vault-menu');
+  }
+
   /** 解锁屏：三域共用骨架（core/ui/lock-screen），文案与统计按域注入 */
   async showPasswordDialog(kind: LockScreenKind = 'vault'): Promise<boolean> {
     const exists = await this.dataManager.exists();
@@ -1234,10 +1246,9 @@ export class UIManager {
       const el = this.popup!.querySelector(`[data-cnt="${a}"]`);
       if (el) el.textContent = String(v);
     };
-    setCnt('overview', c.pw + c.note + c.diary);
-    setCnt('pw', c.pw);
+    // 概览计数/健康卡口径：密码本已移出保险库面板，只算库内加密资产（笔记+日记）
+    setCnt('overview', c.note + c.diary);
     setCnt('note', c.note);
-    setCnt('diary', c.diary);
     this.desk.nav.querySelectorAll('.bz-vault-item').forEach((el) => {
       el.classList.toggle('on', el.getAttribute('data-asset') === this.asset);
     });
@@ -1248,7 +1259,7 @@ export class UIManager {
     const ht = this.popup!.querySelector('[data-health-t]');
     const hd = this.popup!.querySelector('[data-health-d]');
     const dot = this.popup!.querySelector<HTMLElement>('.bz-vault-health .okdot');
-    if (ht) ht.textContent = c.pw + c.note + c.diary ? '保险库健康' : '保险库为空';
+    if (ht) ht.textContent = c.note + c.diary ? '保险库健康' : '保险库为空';
     if (hd) {
       if (!this.lastHealth) hd.textContent = '未体检 · 点此体检';
       else if (this.lastHealth.issues === 0) hd.textContent = `体检通过 · ${this.lastHealth.lastChecked}`;
@@ -1266,23 +1277,18 @@ export class UIManager {
     }
   }
 
-  /** 概览统计（供 overviewHTML） */
+  /** 概览统计（供 overviewHTML；口径与 captureLockStats 的 vault 档一致：附件/字节只算纯笔记） */
   private overviewStats(): OverviewStats {
     const c = this.counts();
-    const allNotes = [...this.dataManager.manifest.notes].filter((n) => n.kind !== 'password-vault');
-    const attachments = allNotes.reduce((s, n) => s + n.attachments.length, 0);
-    const pwPlats = this.pwDataManager.platforms();
-    const recent: Array<{ kind: 'pw' | 'note' | 'diary'; title: string; sub: string; time: string; ts: number }> = [];
-    const pushRecent = (kind: 'pw' | 'note' | 'diary', title: string, sub: string, time: string, ts: number) =>
+    const vaultNotes = [...this.dataManager.manifest.notes].filter((n) => n.kind !== 'password-vault');
+    const pureNotes = vaultNotes.filter((n) => n.kind !== 'diary-entry');
+    const attachments = pureNotes.reduce((s, n) => s + n.attachments.length, 0);
+    const attBytes = pureNotes.reduce((s, n) => s + n.attachments.reduce((b, a) => b + (a.blobSize || 0), 0), 0);
+    // 密码本已移出保险库面板，概览流水只收笔记/日记（diary 条目点击统一落笔记资产）
+    const recent: Array<{ kind: 'note' | 'diary'; title: string; sub: string; time: string; ts: number }> = [];
+    const pushRecent = (kind: 'note' | 'diary', title: string, sub: string, time: string, ts: number) =>
       recent.push({ kind, title, sub, time, ts });
-    // 密码：平台最近更新
-    for (const p of pwPlats.slice(0, 3)) {
-      const r = p.accounts[0];
-      const created = (r && r.createdAt) || '';
-      pushRecent('pw', p.platform, r ? r.account || '(无账号)' : '', pwRelTime(created), Date.parse(created) || 0);
-    }
-    // 笔记/日记
-    for (const n of allNotes.slice(0, 3)) {
+    for (const n of vaultNotes.slice(0, 6)) {
       const kind = n.kind === 'diary-entry' ? 'diary' : 'note';
       pushRecent(kind, n.title, `${n.attachments.length} 个附件`, formatRelativeTime(n.createdAt), Date.parse(n.createdAt || '') || 0);
     }
@@ -1290,9 +1296,8 @@ export class UIManager {
     recent.sort((a, b) => b.ts - a.ts);
     return {
       counts: c,
-      pwPlatforms: pwPlats.length,
-      pwFavPlatforms: pwPlats.filter((p) => this.pwDataManager.hasFav(p.platform)).length,
       attachments,
+      attBytes,
       recent: recent.slice(0, 6).map(({ kind, title, sub, time }) => ({ kind, title, sub, time })),
       health: this.lastHealth, // E5：随最近一次体检结果更新（未体检 null → 显示「未体检」）
     };
@@ -1327,24 +1332,25 @@ export class UIManager {
   /** 桌面概览：hero 计数 + 统计卡 + 最近 + 体检摘要（点击跳资产/动作） */
   private renderDeskOverview() {
     const c = this.counts();
-    this.setVaultHead('保险库', `${c.pw} 密码 · ${c.note} 笔记 · ${c.diary} 日记`);
+    const stats = this.overviewStats();
+    const kb = stats.attBytes > 0 ? (stats.attBytes / 1024).toFixed(1) + ' KB' : '—';
+    this.setVaultHead('保险库', `${c.note} 篇笔记 · ${stats.attachments} 附件 · ${kb} 密文`);
     const detail = this.desk.detail;
     const area = document.createElement('div');
     area.className = 'bz-vault-area';
-    area.innerHTML = overviewHTML(this.overviewStats());
-    // 概览卡/hero 点击 → 资产跳转
+    area.innerHTML = overviewHTML(stats);
+    // 概览卡/hero 点击 → 资产跳转（卡片统一落加密笔记；pw/diary 由 setAssetFromNav 兜底收敛）
     area.querySelectorAll('.card[data-nav]').forEach((el) =>
       el.addEventListener('click', () => this.setAssetFromNav((el.getAttribute('data-nav') as VaultAsset)))
     );
     area.querySelector('[data-hero="lock-note"]')?.addEventListener('click', () => this.onLockCurrentNote?.());
-    area.querySelector('[data-hero="add-pw"]')?.addEventListener('click', () => this.openPwEntryDialog());
     // hero「体检」按钮 + 概览体检卡（整卡可点）都直达体检
     area.querySelectorAll('[data-hero="health"]').forEach((el) =>
       el.addEventListener('click', () => void this.openHealthDialog())
     );
-    area.querySelector('[data-hero="recent-all"]')?.addEventListener('click', () => this.setAssetFromNav('pw'));
+    area.querySelector('[data-hero="recent-all"]')?.addEventListener('click', () => this.setAssetFromNav('note'));
     area.querySelectorAll('.bz-vault-minirow[data-recent]').forEach((el) =>
-      el.addEventListener('click', () => this.setAssetFromNav((el.getAttribute('data-recent') as 'pw' | 'note' | 'diary')))
+      el.addEventListener('click', () => this.setAssetFromNav((el.getAttribute('data-recent') as 'note' | 'diary')))
     );
     detail.appendChild(area);
   }
@@ -1872,6 +1878,8 @@ export class UIManager {
   }
 
   private setAssetFromNav(a: VaultAsset): void {
+    // 资产兜底：面板已只管加密笔记（pw/diary 入口按原型移除），旧停留值/概览流水残留统一落 note
+    if (a === 'pw' || a === 'diary') a = 'note';
     this.asset = a;
     lastVisitedAsset = a; // 记住停留资产：下次打开直落
     this.desk.nav.querySelectorAll('.bz-vault-item').forEach((el) =>
@@ -1884,12 +1892,13 @@ export class UIManager {
   }
 
   /**
-   * 快速取密落点（解锁成功后调用）：直接切到密码资产并聚焦搜索框——
-   * 打开面板就是为了取密/管密，不再停留在概览多点一步。
+   * 解锁成功落点：直落加密笔记资产并聚焦搜索框——
+   * 面板已只管加密笔记（密码本入口移除），打开即进入笔记列表多点一行都不用。
+   * 'pw' 传入值由 setAssetFromNav 兜底收敛为 'note'，保留调用形状以稳住测试面。
    */
   enterPwQuickAccess(): void {
     if (!this._initialized) return;
-    this.setAssetFromNav('pw');
+    this.setAssetFromNav('note');
     this.desk.search.value = '';
     try {
       this.desk.search.focus({ preventScroll: true } as any);
@@ -2062,22 +2071,69 @@ export class UIManager {
   }
 
   // ---------- 加密笔记/日记销毁/还原 ----------
+  /**
+   * 销毁加密笔记：重输主密码二次确认（高危操作防误触）。
+   * 确认窗复用共享解锁屏（全屏遮罩模式），提交走 verifyPassword 只读校验——
+   * 通过才执行 removeNote；这是防误触确认而非解锁，不进解锁冷却节流。
+   */
   confirmDeleteNote(note: SafeNote) {
-    this.askConfirm(
-      '删除加密笔记',
-      `将永久删除「${note.title}」的正文与全部附件密文，不可恢复。确定删除？`,
-      '永久删除',
-      () => {
-        void this.dataManager
-          .removeNote(note.id)
-          .then(() => {
-            if (this._selNoteId === note.id) this._selNoteId = null;
-            this.renderList();
-            this.toast(`已删除加密笔记「${note.title}」`);
-          })
-          .catch((e: any) => this.toast('删除失败：' + e.message, true));
+    const ls = uiLockScreen({
+      kind: 'vault',
+      icon: 'lock',
+      title: '销毁确认',
+      sub: `将永久销毁「${note.title}」的正文与全部附件密文，销毁后不可恢复`,
+      stats: [],
+      placeholder: '重输主密码确认',
+      action: '确认销毁',
+      secText: '销毁后密文不可恢复',
+      secTone: 'bad',
+    });
+    topifyZ(ls.el); // ADR-0067：一次性弹窗，创建即显示即发号
+    document.body.appendChild(ls.el);
+    const esc = escManager.register('bz-vault-destroy-confirm', {
+      isVisible: () => !!ls.el.isConnected,
+      close: () => done(false),
+    });
+    const setErr = (m: string) => {
+      ls.setError(m);
+      setTimeout(() => { if (ls.input.value) ls.setError(''); }, 2600);
+    };
+    const done = (ok: boolean) => {
+      esc.unregister();
+      ls.close();
+      if (!ok) return;
+      void this.dataManager
+        .removeNote(note.id)
+        .then(() => {
+          if (this._selNoteId === note.id) this._selNoteId = null;
+          this.renderList();
+          this.toast(`已销毁加密笔记「${note.title}」`);
+        })
+        .catch((e: any) => this.toast('销毁失败：' + e.message, true));
+    };
+    const submit = async () => {
+      const pw = ls.input.value;
+      if (!pw) { this.rejectInput('请输入主密码确认', setErr); return; }
+      ls.setBusy(true);
+      try {
+        if (await this.dataManager.verifyPassword(pw)) done(true);
+        else {
+          ls.setBusy(false);
+          this.rejectInput('主密码错误，未销毁', setErr, 'error');
+          ls.input.value = '';
+          ls.focus();
+        }
+      } catch (e: any) {
+        ls.setBusy(false);
+        this.rejectInput('校验失败：' + (e?.message || '请重试'), setErr, 'error');
       }
-    );
+    };
+    ls.actionBtn.addEventListener('click', () => void submit());
+    ls.input.addEventListener('keydown', (e) => { if (e.key === 'Enter') void submit(); });
+    // 点遮罩（非内容区）关闭 = 取消（同解锁屏语义）
+    ls.el.addEventListener('click', (e) => { if (e.target === ls.el) done(false); });
+    ls.focus();
+    setTimeout(() => ls.focus(), 150);
   }
 
   /** 日记还原回日记（复用 diary reclassifyEntry 语义：还原块 merge 回原日期 md） */
