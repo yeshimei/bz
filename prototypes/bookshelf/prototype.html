@@ -250,6 +250,9 @@
         t('借书卡标题一致', dt('.bz-bs-d-title').textContent === firstIt.title);
         t('进度百分数', dt('.bz-bs-d-prognum').textContent === Math.round(firstIt.progress) + '%');
         t('在读详情带「继续」跳书钮', firstIt.status !== '在读' || !!dt('[data-bs-d-continue]'));
+        t('借书卡固定高(不随书评拉长)', getComputedStyle(dt('.bz-bs-d-popup')).height !== 'auto');
+        const goBtn = dt('[data-bs-d-continue]');
+        t('「继续」与在读同排(nowrap)', firstIt.status !== '在读' || (!!goBtn && getComputedStyle(goBtn.closest('.bz-bs-d-nowrap')).whiteSpace === 'nowrap'));
         const db = dt('.bz-bs-d-body');
         t('标题作者固定+书评台账内部滚动(滚动条隐藏)', !!db && getComputedStyle(db).overflowY === 'auto' && getComputedStyle(db).scrollbarWidth === 'none' && getComputedStyle(dt('.bz-bs-d-popup')).overflow === 'hidden');
         t('借书卡无✕钮（点遮罩/Esc 关）', !dt('.bz-bs-d-x'));
