@@ -754,7 +754,6 @@ async function completeItem(it: MemoItem): Promise<void> {
   try {
     await MemoData.completeItem(it.id);
     emitDomainEvent('memo', { kind: 'completed', title: it.title });
-    notice('已标记完成', 'success');
   } catch (e) {
     notifySaveError(e, '标记完成');
     console.error(e);
@@ -766,7 +765,6 @@ async function restoreItem(it: MemoItem): Promise<void> {
   try {
     await MemoData.updateItem(it.id, { completed: null });
     emitDomainEvent('memo', { kind: 'restored', title: it.title });
-    notice('已恢复未完成', 'success');
   } catch (e) {
     notifySaveError(e, '恢复未完成');
     console.error(e);
@@ -1263,7 +1261,6 @@ export function openEditor(
             url: url ?? editing.url,
           });
           emitDomainEvent('memo', { kind: 'edited', old: { title: editing.title }, next: { title: finalTitle, scene, priority, due } });
-          notice('已保存', 'success');
         } else {
           const it: MemoItem = {
             id: generateId(), // T5：与旧 memo 同前缀 'item'（同源 memo.json）
@@ -1284,7 +1281,6 @@ export function openEditor(
           await MemoData.addItem(it);
           emitDomainEvent('memo', { kind: 'added', title: finalTitle, scene, priority, due });
           M.pinnedNewId = it.id; // 录入当场可见：伪场景过滤放行这条新目
-          notice(`已添加到「${scene}」`, 'success');
         }
         closeModal();
         opts?.onSaved?.(); // 新建成功才回调（调用方清底部录入草稿；失败分支不触发）
