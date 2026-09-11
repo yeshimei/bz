@@ -25,6 +25,7 @@ import type { KnowledgeTask } from './types';
 import { BatchRunner, type BatchEvents } from './processor';
 import { backfillNotes, generateTermDraft, generateTermNote, summarizeTermSummary } from './note-gen';
 import { cleanSourceTitle, isUrlLikeSourceText, normalizeSourceUrl, noteSourceName, type TermSource } from './source';
+import { fetchVideoMeta } from './video-meta';
 
 interface StatusMeta { label: string; cls: string; }
 const STATUS_META: Record<KnowledgeTask['status'], StatusMeta> = {
@@ -302,6 +303,9 @@ export class UIManager {
   // ---- 添加任务弹窗 / 历史弹窗 ----
   addMask: HTMLElement | null = null;
   addPopup: HTMLElement | null = null;
+  /** 录入 URL 防抖定时器与解析序列号（issue 278：450ms 防抖回填 + 过期响应丢弃） */
+  private addUrlTimer: ReturnType<typeof setTimeout> | null = null;
+  private addUrlSeq = 0;
   historyMask: HTMLElement | null = null;
   historyPopup: HTMLElement | null = null;
   historyList: HTMLElement | null = null;
@@ -1246,10 +1250,25 @@ export class UIManager {
         if (e.key === 'Enter') { e.preventDefault(); void this._handleAddSave(); }
       });
     }
+    // 录入 URL 防抖解析（issue 278 / ADR-0122 拍板要点 5，档位沿术语来源输入框 450ms）：
+    // 粘贴/手输停顿即净化写回 + 抓元信息回填空字段；无 placeholder、无解析按钮（既有拍板不回加）
+    const addUrlInput = q<HTMLInputElement>(popup, '#lit-add-url');
+    if (addUrlInput) {
+      addUrlInput.addEventListener('input', () => {
+        if (this.addUrlTimer) clearTimeout(this.addUrlTimer);
+        this.addUrlSeq++; // 新输入使在途解析过期（回填前序列号校验丢弃）
+        this.addUrlTimer = setTimeout(() => {
+          this.addUrlTimer = null;
+          void this.addUrlResolve(addUrlInput);
+        }, 450);
+      });
+    }
   }
 
   showAddDialog(editItem?: Partial<KnowledgeTask>): void {
     if (!this.addPopup || !this.addMask) return;
+    // 重开即全新：清防抖定时器 + 序列号失效在途解析（编辑态预填不触发 input，改 URL 才走回填）
+    this.addUrlReset();
     this.editingId = editItem?.id ?? null;
     const modeTag = q<HTMLElement>(this.addPopup, '#lit-add-mode');
     if (modeTag) modeTag.style.display = this.editingId ? 'inline-block' : 'none';
@@ -1291,11 +1310,38 @@ export class UIManager {
     if (this.addMask) this.addMask.style.display = 'none';
     if (this.addPopup) this.addPopup.style.display = 'none';
     this.editingId = null;
+    this.addUrlReset(); // 关弹窗清定时器/在途序列：杜绝迟到回填到已卸载 DOM（issue 278）
+  }
+
+  /** 录入 URL 解析清理：防抖定时器归零 + 序列号失效在途响应（开/关弹窗共用） */
+  private addUrlReset(): void {
+    if (this.addUrlTimer) { clearTimeout(this.addUrlTimer); this.addUrlTimer = null; }
+    this.addUrlSeq++;
+  }
+
+  /**
+   * 录入 URL 防抖触发（issue 278）：先净化写回（值有变才写，用户可见），再抓元信息。
+   * 回填只补空字段（trim 后为空才算空）；序列号 + 输入值双校验丢弃过期响应；全程静默。
+   */
+  private async addUrlResolve(input: HTMLInputElement): Promise<void> {
+    const popup = this.addPopup;
+    if (!popup) return;
+    const seq = this.addUrlSeq;
+    const cleaned = normalizeSourceUrl(input.value);
+    if (cleaned && cleaned !== input.value) input.value = cleaned;
+    const meta = await fetchVideoMeta(cleaned);
+    // 序列号（期间改过输入/开关弹窗）或输入值（用户又动过）变了 → 迟到响应，丢弃
+    if (seq !== this.addUrlSeq || this.addPopup !== popup || input.value !== cleaned) return;
+    const titleEl = q<HTMLInputElement>(popup, '#lit-add-vtitle');
+    const upEl = q<HTMLInputElement>(popup, '#lit-add-uploader');
+    if (meta?.title && titleEl && !titleEl.value.trim()) titleEl.value = meta.title;
+    if (meta?.uploader && upEl && !upEl.value.trim()) upEl.value = meta.uploader;
   }
 
   private async _handleAddSave(): Promise<void> {
     if (!this.addPopup) return;
-    const url = (q<HTMLInputElement>(this.addPopup, '#lit-add-url')?.value ?? '').trim();
+    // 保存前净化兜底（issue 278）：防粘贴后立即回车、防抖未及触发；裸 BV 号/非 http 文本原样
+    const url = normalizeSourceUrl((q<HTMLInputElement>(this.addPopup, '#lit-add-url')?.value ?? '').trim());
     const clipMode = q<HTMLElement>(this.addPopup, '#lit-add-range')?.querySelector('button[data-range].active')?.getAttribute('data-range') === 'clip';
     const startRaw = (q<HTMLInputElement>(this.addPopup, '#lit-add-start')?.value ?? '').trim();
     const endRaw = (q<HTMLInputElement>(this.addPopup, '#lit-add-end')?.value ?? '').trim();
@@ -1807,6 +1853,7 @@ export class UIManager {
     this.clearRunTimer();
     this.runState.clear();
     if (this.termSrcTimer) { clearTimeout(this.termSrcTimer); this.termSrcTimer = null; }
+    this.addUrlReset(); // 录入 URL 防抖定时器/在途序列随销毁归零（issue 278）
     try { this.termSrcSuggest?.detach(); } catch { /* 忽略 */ }
     this.termSrcSuggest = null;
     if (this.refreshTimer) { clearTimeout(this.refreshTimer); this.refreshTimer = null; }

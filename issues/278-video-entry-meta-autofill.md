@@ -65,9 +65,9 @@
 
 ## 验收
 
-- [ ] 粘贴 B 站分享链接（带 `spm_id_from`/`vd_source`）→ 输入框自动变干净、标题与 UP主 回填，全程无 toast
-- [ ] 手填标题后再改 URL：手填值不被覆盖；清空标题后改 URL：被回填
-- [ ] 非 B 站链接只净化不联网抓取；抓取失败完全静默；弹窗关闭后无迟到回填
-- [ ] 落库 `knowledge.json` 与新生成文献笔记 frontmatter `url` 均为净化值
-- [ ] 批处理跑完，「只补空」不覆盖手填标题、UP主 仍能补齐
-- [ ] 全量门禁：`pnpm test` + `pnpm exec tsc --noEmit` + 自审 + diff 审查 + 主仓 `pnpm run build` 部署
+- [x] 粘贴 B 站分享链接（带 `spm_id_from`/`vd_source`）→ 输入框自动变干净、标题与 UP主 回填，全程无 toast（评审壳 selftest：`prototypes/knowledge/prototype.html?selftest=1` PASS 9/FAIL 0，含 URL 净化写回 / view API 罐头回填 / 零通知四断言；`tests/knowledge/ui.test.ts` 防抖用例同证）
+- [x] 手填标题后再改 URL：手填值不被覆盖；清空标题后改 URL：被回填（`tests/knowledge/ui.test.ts` 防抖回填用例「只补空」断言 + 编辑态同款）
+- [x] 非 B 站链接只净化不联网抓取（按 §2 契约口径：不调 B 站 view API，标题兜底走一次 `fetchPageTitle`）；抓取失败完全静默（实现全程零 notice，`tests/knowledge/video-meta.test.ts` 双失败/风控/超时用例）；弹窗关闭后无迟到回填（`tests/knowledge/ui.test.ts` 过期/关弹窗丢弃断言）
+- [x] 落库 `knowledge.json` 与新生成文献笔记 frontmatter `url` 均为净化值（`normalizeUrl` 单源收口：addTask 落库即净化（`tests/knowledge/ui.test.ts` 粘贴立即保存用例），note-gen frontmatter `url` 引用任务同值，链路无第二入口；真机整链生成待真机复核）
+- [x] 批处理跑完，「只补空」不覆盖手填标题、UP主 仍能补齐（`tests/knowledge/processor.test.ts` issue 278 用例）
+- [ ] 全量门禁：`pnpm test` + `pnpm exec tsc --noEmit` + 自审 + diff 审查 + 主仓 `pnpm run build` 部署（worktree 内已全绿：全量测试除 master 既有红外零新增、tsc 零错误；主仓构建部署按工作流归主仓库侧）
