@@ -66,8 +66,8 @@ describe('批 B-3：触控热区收编 core .bz-touch-target', () => {
     // 默认档（原 inset -6px）：32px 档头行图标钮（belongings ADR-0094 起同 favorites 挂 --lg 修饰符）
     expect(repo('src/belongings/layouts/poster/render.ts')).toMatch(/bz-icon-btn--lg bz-touch-target/); // issue 237 markup 单源 render.ts
     expect(repo('src/favorites/layouts/board/render.ts')).toMatch(/bz-fav-mob-close bz-touch-target/); // issue 242 markup 单源 render.ts（ADR-0101 关闭钮挂 44px 档）
-    // --sm（原 -4px）：番茄钟控制钮、复习评级条
-    expect(repo('src/pomodoro/ui.ts')).toMatch(/pomodoro-btn pomodoro-btn-primary bz-touch-target--sm/);
+    // --sm（原 -4px）：番茄钟控制钮（骨架 markup 单源已迁 render.ts，ADR-0104）、复习评级条
+    expect(repo('src/pomodoro/render.ts')).toMatch(/pomodoro-btn pomodoro-btn-primary bz-touch-target--sm/);
     expect(repo('src/review/render.ts')).toContain('bz-review-bar-btn bz-touch-target--sm'); // issue 253 markup 单源 render.ts
     // --lg（原 -8px）：加密空态钮/复制账号钮、复习信息行（home 活动河改版后无盒装钮/迷你 chips）
     expect(repo('src/encrypt/vault-pw-view.ts')).toContain('bz-pwv-empty-add bz-touch-target--lg');

@@ -1,10 +1,10 @@
 // @vitest-environment node
 /**
  * 番茄钟历史聚合测试（ticket 30）：今日计数 + 近 7 天滚动窗口
- * 增强包：今日总分钟（todayMinutes）+ 今日 12 槽时段分布（todayHourBuckets）+ 日维度分钟数
+ * 口径：今日总分钟（todayMinutes）+ 近 7 天日维度计数/分钟数（last7Days）
  */
 import { describe, it, expect } from 'vitest';
-import { todayCount, todayMinutes, todayHourBuckets, last7Days } from '../../src/pomodoro/stats';
+import { todayCount, todayMinutes, last7Days } from '../../src/pomodoro/stats';
 import type { HistoryEntry } from '../../src/pomodoro/state';
 
 // 本地时区日期（2026-08-10 周一 10:00 本地）
@@ -94,30 +94,5 @@ describe('todayMinutes（增强包：今日总时长）', () => {
   it('非整分钟时长四舍五入（防御浮点）', () => {
     const h = [{ ts: new Date(2026, 7, 10, 9, 0, 0).getTime(), duration: 90 }]; // 1.5 分钟
     expect(todayMinutes(h, NOW)).toBe(2);
-  });
-});
-
-describe('todayHourBuckets（增强包：今日 12 槽时段分布）', () => {
-  it('恒 12 槽（2 小时一格），空历史全 0', () => {
-    const buckets = todayHourBuckets([], NOW);
-    expect(buckets).toHaveLength(12);
-    expect(buckets.map((b) => b.hour)).toEqual([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]);
-    expect(buckets.every((b) => b.count === 0)).toBe(true);
-  });
-
-  it('按完成时刻落槽：9 点 → [8,10) 槽、14 点 → [14,16) 槽；非今日不计', () => {
-    const h = [
-      { ts: new Date(2026, 7, 10, 9, 15, 0).getTime(), duration: 1500 }, // 今天 9 点
-      { ts: new Date(2026, 7, 10, 9, 59, 0).getTime(), duration: 1500 }, // 今天 9 点
-      { ts: new Date(2026, 7, 10, 14, 0, 0).getTime(), duration: 1500 }, // 今天 14 点（槽下界）
-      { ts: new Date(2026, 7, 10, 15, 59, 0).getTime(), duration: 1500 }, // 今天 15:59（槽内）
-      { ts: new Date(2026, 7, 10, 23, 30, 0).getTime(), duration: 1500 }, // 今天 23 点 → [22,24) 末槽
-      { ts: new Date(2026, 7, 9, 9, 15, 0).getTime(), duration: 1500 }, // 昨天 9 点不计
-    ];
-    const buckets = todayHourBuckets(h, NOW);
-    expect(buckets[4]).toEqual({ hour: 8, count: 2 });
-    expect(buckets[7]).toEqual({ hour: 14, count: 2 });
-    expect(buckets[11]).toEqual({ hour: 22, count: 1 });
-    expect(buckets[0].count).toBe(0);
   });
 });

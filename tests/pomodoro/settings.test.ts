@@ -249,6 +249,74 @@ describe('面板主题（皮肤单源）', () => {
       expect(css).toContain(`.theme-dark #pomodoro-popup.pomodoro-skin-${t.value}`);
     }
   });
+
+  it('配色单源：色值只在 pomodoro/styles.css 的 :root --pz-<id>-* 表，settings-panel 预览卡引用变量（评审双源清零）', () => {
+    const pzCss = readFileSync(resolve(process.cwd(), 'src/pomodoro/styles.css'), 'utf8');
+    const spCss = readFileSync(resolve(process.cwd(), 'src/settings-panel/styles.css'), 'utf8');
+    for (const t of POMODORO_SKIN_THEMES) {
+      // 预览卡三槽：亮面/暗面/强调都出自 :root 表
+      expect(pzCss).toContain(`--pz-${t.value}-l:#`);
+      expect(pzCss).toContain(`--pz-${t.value}-d:#`);
+      expect(pzCss).toContain(`--pz-${t.value}-a:#`);
+      expect(spCss).toContain(`bz-sp-prev-pomo-${t.value}`);
+      expect(spCss).toContain(`var(--pz-${t.value}-a)`);
+    }
+    // 预览卡段内不得再手抄六位 hex（#fff 圆点高光除外）——色值唯一出处 = :root 表
+    const prevBlock = spCss.slice(spCss.indexOf('bz-sp-prev-pomo-tomato'), spCss.indexOf('/* 保险库·钢灰 */'));
+    expect(prevBlock).not.toMatch(/#[0-9a-fA-F]{6}/);
+    // 旧预览键已退役（schema 只发 bz-sp-prev-pomo-*）
+    expect(spCss).not.toContain('bz-sp-prev-tomato');
+    // 弹窗消费块不再持有皮肤 hex：皮肤类行只允许变量声明（--pz-*）与 grid 格纹例外
+    const skinLines = pzCss.split('\n').filter((l) => l.includes('.pomodoro-skin-'));
+    for (const l of skinLines) {
+      const decl = l.replace(/--[a-z-]+:(var\(--pz-[a-z-]+\)|rgba\([^)]*\)|#fff\b)/gi, '');
+      expect(decl).not.toMatch(/#[0-9a-fA-F]{6}/);
+    }
+  });
+});
+
+describe('外观组链路（评审 c1：设置面板改主题 → 弹窗即时换皮）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+    document.body.innerHTML = '';
+    unloadPomodoro();
+  });
+  afterEach(() => {
+    unloadPomodoro();
+  });
+
+  it('主题行 onChange：点卡片 → 写设置 + render → 弹窗皮肤类即时重挂（弹窗开着不用重开）', async () => {
+    const settings = { ...DEFAULT_SETTINGS, pomodoroSkinTheme: 'tomato' } as any;
+    const { app } = setup(settings);
+    await openPomodoro(app);
+    expect(el('pomodoro-popup').classList.contains('pomodoro-skin-tomato')).toBe(true);
+    openPomodoroSettingsDirect();
+    const row = itemByName('面板主题');
+    expect(row).toBeTruthy();
+    const card = row.querySelector('.bz-cardpick-card[data-value="ink"]') as HTMLButtonElement | null;
+    expect(card).toBeTruthy();
+    card!.click();
+    // onChange 链是异步（write → persist → row.onChange → render），让微任务落地
+    await new Promise((r) => setTimeout(r, 0));
+    expect(settings.pomodoroSkinTheme).toBe('ink');
+    expect(el('pomodoro-popup').classList.contains('pomodoro-skin-ink')).toBe(true);
+    expect(el('pomodoro-popup').classList.contains('pomodoro-skin-tomato')).toBe(false);
+  });
+
+  it('布局行 onChange 已挂（配套回落）；当前主题适配布局时不回落（防误重置用户主题）', () => {
+    const settings = { ...DEFAULT_SETTINGS, pomodoroSkin: 'default', pomodoroSkinTheme: 'sakura' } as any;
+    setup(settings);
+    const rows = pomodoroSettingsSchema().groups[0].rows as any[];
+    const layoutRow = rows.find((r) => r.name === '面板布局');
+    const themeRow = rows.find((r) => r.name === '面板主题');
+    expect(typeof layoutRow.onChange).toBe('function');
+    expect(typeof themeRow.onChange).toBe('function');
+    // 全部主题 layout='default' 与当前布局适配 → 回落分支不可达，主题原样保留
+    layoutRow.onChange('default', {} as any);
+    expect(settings.pomodoroSkinTheme).toBe('sakura');
+  });
 });
 
 describe('设置生效', () => {

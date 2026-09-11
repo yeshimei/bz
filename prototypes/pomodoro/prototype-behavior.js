@@ -1,5 +1,5 @@
-/* 源指纹 b815ea44e83a0059 · 仓内输入 19 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
+/* 源指纹 76723ac8ee7970cb · 仓内输入 20 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
   var __create = Object.create;
@@ -5007,6 +5007,53 @@ var BZW_pomodoro = (() => {
     }
   });
 
+  // src/pomodoro/render.ts
+  function normalizeSkinTheme(v) {
+    const cur = String(v != null ? v : "");
+    return POMODORO_SKIN_THEMES.some((t) => t.value === cur) ? cur : DEFAULT_POMODORO_SKIN_THEME;
+  }
+  function skinClassOf(v) {
+    return `pomodoro-skin-${normalizeSkinTheme(v)}`;
+  }
+  function panelShellHtml() {
+    return `
+      <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
+        <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
+        <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
+      </svg>
+      <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
+      <div id="pomodoro-phase"></div>
+      <div id="pomodoro-task" class="pomodoro-task"></div>
+      <div id="pomodoro-time"></div>
+      <div class="pomodoro-controls">
+        <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
+        <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>
+        <button id="pomodoro-btn-skip" class="pomodoro-btn bz-touch-target--sm">跳过</button>
+      </div>
+      <div class="pomodoro-stats">
+        <div id="pomodoro-today"></div>
+        <div id="pomodoro-week" class="pomodoro-week"></div>
+      </div>`;
+  }
+  var POMODORO_SKIN_THEMES, DEFAULT_POMODORO_SKIN_THEME;
+  var init_render = __esm({
+    "src/pomodoro/render.ts"() {
+      POMODORO_SKIN_THEMES = [
+        { value: "tomato", label: "番茄" },
+        { value: "ink", label: "墨白" },
+        { value: "grid", label: "方格纸" },
+        { value: "moss", label: "苔原" },
+        { value: "mist", label: "海雾" },
+        { value: "sand", label: "暖沙" },
+        { value: "citrus", label: "蜜柑" },
+        { value: "sakura", label: "樱粉" },
+        { value: "latte", label: "咖啡" },
+        { value: "night", label: "夜航" }
+      ];
+      DEFAULT_POMODORO_SKIN_THEME = "tomato";
+    }
+  });
+
   // src/pomodoro/sound.ts
   function playSound(kind, volume = 100) {
     const w = typeof window !== "undefined" ? window : globalThis;
@@ -5187,12 +5234,11 @@ var BZW_pomodoro = (() => {
 
   // src/pomodoro/ui.ts
   function applySkinClass() {
-    var _a;
     const popup = document.getElementById("pomodoro-popup");
     if (!popup) return;
-    const cur = String((_a = tryGetSettings().pomodoroSkinTheme) != null ? _a : "");
-    const skin = POMODORO_SKIN_THEMES.some((t) => t.value === cur) ? cur : "tomato";
-    for (const t of POMODORO_SKIN_THEMES) popup.classList.toggle(`pomodoro-skin-${t.value}`, t.value === skin);
+    const want = skinClassOf(tryGetSettings().pomodoroSkinTheme);
+    for (const t of POMODORO_SKIN_THEMES) popup.classList.remove(`pomodoro-skin-${t.value}`);
+    popup.classList.add(want);
   }
   function durations() {
     const s = tryGetSettings();
@@ -5506,26 +5552,7 @@ var BZW_pomodoro = (() => {
     var _a;
     const mask = document.createElement("div");
     mask.id = "pomodoro-mask";
-    mask.innerHTML = `
-    <div id="pomodoro-popup" tabindex="-1">
-      <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
-        <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
-        <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
-      </svg>
-      <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
-      <div id="pomodoro-phase"></div>
-      <div id="pomodoro-task" class="pomodoro-task"></div>
-      <div id="pomodoro-time"></div>
-      <div class="pomodoro-controls">
-        <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
-        <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>
-        <button id="pomodoro-btn-skip" class="pomodoro-btn bz-touch-target--sm">跳过</button>
-      </div>
-      <div class="pomodoro-stats">
-        <div id="pomodoro-today"></div>
-        <div id="pomodoro-week" class="pomodoro-week"></div>
-      </div>
-    </div>`;
+    mask.innerHTML = `<div id="pomodoro-popup" tabindex="-1">${panelShellHtml()}</div>`;
     mask.style.zIndex = String(allocZ());
     document.body.appendChild(mask);
     maskEl = mask;
@@ -5597,7 +5624,7 @@ var BZW_pomodoro = (() => {
     if (state.paused) return "paused";
     return state.endTime !== null ? "focusing" : "idle";
   }
-  var dataManager, state, history, loaded, maskEl, escHandle, timerId, appRef, autoPauseMain, visibilityHandler, POMODORO_SKIN_THEMES, lastStatsKey, initInflight, openInflight;
+  var dataManager, state, history, loaded, maskEl, escHandle, timerId, appRef, autoPauseMain, visibilityHandler, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
   var init_ui = __esm({
     "src/pomodoro/ui.ts"() {
       init_fake_obsidian();
@@ -5607,6 +5634,8 @@ var BZW_pomodoro = (() => {
       init_notice();
       init_settings_common();
       init_data();
+      init_render();
+      init_render();
       init_sound();
       init_statusbar();
       init_stats();
@@ -5625,19 +5654,8 @@ var BZW_pomodoro = (() => {
       appRef = null;
       autoPauseMain = false;
       visibilityHandler = null;
-      POMODORO_SKIN_THEMES = [
-        { value: "tomato", label: "番茄" },
-        { value: "ink", label: "墨白" },
-        { value: "grid", label: "方格纸" },
-        { value: "moss", label: "苔原" },
-        { value: "mist", label: "海雾" },
-        { value: "sand", label: "暖沙" },
-        { value: "citrus", label: "蜜柑" },
-        { value: "sakura", label: "樱粉" },
-        { value: "latte", label: "咖啡" },
-        { value: "night", label: "夜航" }
-      ];
       lastStatsKey = "";
+      SKIN_THEME_OPTIONS = POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: "default", prevClass: `bz-sp-prev-pomo-${t.value}` }));
       initInflight = null;
       openInflight = null;
     }
