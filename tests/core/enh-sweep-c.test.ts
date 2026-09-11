@@ -6,7 +6,7 @@
  *  3) 触控热区扫尾（pointer:coarse ::after 外扩 / padding 抬档）；
  *  4) 小字号扫尾（可改域 styles.css 无 9px/10px；.bz-clip-favchip.sm 8px 装饰性例外）；
  *  5) favorites/belongings 静态 z 档退役（topifyZ 动态发号，ADR-0067）；
- *  6) 杂项：review 遮罩去毛玻璃 / 滚动条隐藏 / 死选择器删除 / favorites 计数类名对齐；
+ *  6) 杂项：review 遮罩去毛玻璃 / 滚动条隐藏收敛 core 界面级单源（issue 277）/ 死选择器删除 / favorites 计数类名对齐；
  *  7) lucide 收尾：encrypt 状态栏·抽屉头、review 对错标记·排除钮去 emoji/文本符号。
  * 样式断言读源 styles.css 文本（jsdom 不解析 css 文件）；行为断言见 favorites/belongings/encrypt 域测试。
  */
@@ -117,7 +117,7 @@ describe('enh-sweep-c：静态 z-index 退役（favorites/belongings）', () => 
 });
 
 describe('enh-sweep-c：杂项打磨', () => {
-  it('review：遮罩 token 毛玻璃（--bz-overlay-blur 三处单源）+ 队列/冲刺滚动条隐藏 + 死规则清理', () => {
+  it('review：遮罩 token 毛玻璃（--bz-overlay-blur 三处单源）+ 滚动条隐藏收敛 core 界面级单源 + 死规则清理', () => {
     const s = css('review');
     for (const sel of ['#review-stats-mask', '#review-history-mask', '#quiz-mask']) {
       expect(s, `缺 ${sel} 毛玻璃`).toMatch(
@@ -125,8 +125,9 @@ describe('enh-sweep-c：杂项打磨', () => {
       );
     }
     expect(s.match(/backdrop-filter/g)?.length).toBe(3); // 仅上述三处遮罩
-    expect(s).toMatch(/#review-entries-container, #review-entries-container \* \{ scrollbar-width: none/);
-    expect(s).not.toMatch(/#review-entries-container::-webkit-scrollbar \{ width/); // overflow:hidden 容器上的死规则
+    // 滚动条隐藏收敛 core 界面级单源（ADR-0122 / issue 277）：core 规则在册 + review 域内不再重复定义
+    expect(componentsCss()).toMatch(/#review-entries-container[^{]*\{[^}]*scrollbar-width: none/);
+    expect(s).not.toMatch(/scrollbar-width|::-webkit-scrollbar/);
     expect(s).not.toContain('#review-watch-folders'); // 监听文件夹 chip 渲染已退役
     expect(s).not.toContain('bz-review-watch-chip');
     expect(s).not.toContain('bz-sprint-block');
