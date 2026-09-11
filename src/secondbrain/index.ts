@@ -18,7 +18,7 @@ import { tryGetSettings } from '../core/settings-provider';
 import { IS_MOBILE } from './config';
 import { VectorStore } from './vector-store';
 import { resetDeepseekAI } from './ai';
-import { SecondBrainPanel } from './panel';
+import { SecondBrainPanel, confirmFullRebuild } from './panel';
 import { ReferencePanel } from './reference-panel';
 import { ChatPanel } from './chat-panel';
 import { MobilePanel } from './mobile-panel';
@@ -180,8 +180,11 @@ export function openSecondBrainPanel(app: App): void {
   void panel.open();
 }
 
-/** 设置页「重新索引」（ticket 108）：打开主面板并标记全量重建意图，面板自动进入重建进度视图 */
-export function rebuildSecondBrainIndex(app: App): void {
+/**
+ * 「重新索引」确认通过后的实际动作：打开主面板并标记全量重建意图，面板自动进入重建进度视图。
+ * 从设置页跳转用（那边确认已做过，不能再弹一次）；首页入口菜单走带确认的 rebuildSecondBrainIndex。
+ */
+export function requestRebuildAndOpen(app: App): void {
   ensureSecondBrain(app);
   if (!store) return;
   panel ??= new SecondBrainPanel(app, store, {
@@ -190,6 +193,17 @@ export function rebuildSecondBrainIndex(app: App): void {
   });
   panel.requestRebuild();
   void panel.open();
+}
+
+/**
+ * 命令 bz-secondbrain-rebuild-index（首页入口菜单「重建索引」）：
+ * **先弹确认框**（confirmFullRebuild 单源，同面板「全量重建」/设置页「重新索引」那份 ——
+ * 2026-09-11 用户要求：清空重嵌是破坏性动作，右键直达也必须过确认），
+ * 确认后打开主面板进重建进度视图。返回 Promise（首页 keepHome 据此在确认/取消后刷新）。
+ */
+export async function rebuildSecondBrainIndex(app: App): Promise<void> {
+  if (!(await confirmFullRebuild())) return;
+  requestRebuildAndOpen(app);
 }
 
 /** 命令 bz-secondbrain-open：参考侧边栏（移动端为底部抽屉参考 tab）；空库统一转开主面板引导 */

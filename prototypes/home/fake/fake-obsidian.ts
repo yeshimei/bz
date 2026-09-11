@@ -436,7 +436,19 @@ const FAKE_COMMANDS: Record<string, () => Promise<void>> = {
   'bz-encrypt-lock-vault': async () => notice('保险库已锁定', 'success'),
   'bz-password-vault-lock': async () => notice('密码本已锁定', 'success'),
   // —— 即时类 ——
-  'bz-secondbrain-rebuild-index': async () => notice('索引重建完成', 'success'),
+  // 重建索引：真实现（secondbrain/panel.ts::confirmFullRebuild）也是这个 flow 确认框 ——
+  // 破坏性动作（清空重嵌）右键直达也必须过确认。文案与真实现同源，改两边一起改。
+  'bz-secondbrain-rebuild-index': async () => {
+    const v = await openFlowDialog({
+      title: '重新索引',
+      message: '将清空现有向量索引，按当前白名单全部重嵌入（约等于首次初始化全量跑一遍）。期间参考侧边栏与对话的向量检索会降级为文本匹配。确定继续吗？',
+      actions: [
+        { label: '取消', value: 'cancel' },
+        { label: '开始重建', value: 'ok', cta: true },
+      ],
+    });
+    if (v === 'ok') notice('索引重建完成', 'success');
+  },
   // —— 开别域面板类（壳里没有别域面板，只给一条说明性通知）——
   'bz-memo-note-binding': async () => notice('已打开备忘录（关联当前笔记）'),
   'bz-cinema-random-pick': async () => notice('已打开影院并抽中一部'),

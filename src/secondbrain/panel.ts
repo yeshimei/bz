@@ -56,6 +56,23 @@ export interface PanelOptions {
   onOpenChat: () => void;
 }
 
+/**
+ * 「重新索引」确认框（flow 弹窗**单源**，2026-09-11）：三处共用同一段文案与动作 ——
+ * ① 本面板底部「全量重建」钮 ② 设置页「重新索引」行 ③ 首页入口菜单
+ * （bz-secondbrain-rebuild-index，用户要求右键也要先确认）。
+ * 改文案/按钮只改这里，别再各处内联一份。
+ */
+export function confirmFullRebuild(): Promise<boolean> {
+  return openFlowDialog({
+    title: '重新索引',
+    message: '将清空现有向量索引，按当前白名单全部重嵌入（约等于首次初始化全量跑一遍）。期间参考侧边栏与对话的向量检索会降级为文本匹配。确定继续吗？',
+    actions: [
+      { label: '取消', value: 'cancel' },
+      { label: '开始重建', value: 'ok', cta: true },
+    ],
+  }).then((v) => v === 'ok');
+}
+
 export class SecondBrainPanel {
   app: App;
   store: VectorStore;
@@ -314,15 +331,8 @@ export class SecondBrainPanel {
       void this.runIncremental();
     });
     popup.querySelector('#bz-sb-rebuild')?.addEventListener('click', () => {
-      void openFlowDialog({
-        title: '重新索引',
-        message: '将清空现有向量索引，按当前白名单全部重嵌入（约等于首次初始化全量跑一遍）。期间参考侧边栏与对话的向量检索会降级为文本匹配。确定继续吗？',
-        actions: [
-          { label: '取消', value: 'cancel' },
-          { label: '开始重建', value: 'ok', cta: true },
-        ],
-      }).then((v) => {
-        if (v === 'ok') void this.runRebuild();
+      void confirmFullRebuild().then((ok) => {
+        if (ok) void this.runRebuild();
       });
     });
 
@@ -809,18 +819,12 @@ export function secondBrainSettingsSchema(): SettingsSchema {
             desc: '清空现有向量索引并按当前白名单重嵌入，期间检索降级为文本匹配',
             buttonText: '开始',
             onClick: () => {
-              void openFlowDialog({
-                title: '重新索引',
-                message: '将清空现有向量索引，按当前白名单全部重嵌入（约等于首次初始化全量跑一遍）。期间参考侧边栏与对话的向量检索会降级为文本匹配。确定继续吗？',
-                actions: [
-                  { label: '取消', value: 'cancel' },
-                  { label: '开始重建', value: 'ok', cta: true },
-                ],
-              }).then((v) => {
-                if (v === 'ok') {
-                  // 关设置弹窗 → 打开主面板 → 进入重建进度视图（ticket 108）
+              // 确认框走 confirmFullRebuild 单源；确认后关设置弹窗 → 打开主面板进重建视图
+              // （requestRebuildAndOpen 不再二次确认 —— 确认在这里已经做过）
+              void confirmFullRebuild().then((ok) => {
+                if (ok) {
                   closeSettingsModal();
-                  void import('./index').then((m) => m.rebuildSecondBrainIndex(getApp()));
+                  void import('./index').then((m) => m.requestRebuildAndOpen(getApp()));
                 }
               });
             },
