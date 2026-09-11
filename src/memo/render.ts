@@ -199,6 +199,12 @@ export function metaTagsHtml(it: MemoItem, due: MetaDue, relTime: string): strin
 	return tags.join('');
 }
 
+/** 勾选圈（列表卡与移动抽屉头共用，ADR-0104 markup 单源；完成态带 bz-memo-checked，
+ *  title 随态换文案，data-memo-check 锚点两处同款——点击行为各自接线在 ui.ts） */
+export function checkHtml(it: MemoItem): string {
+	return `<span class="bz-memo-check${it.completed ? ' bz-memo-checked' : ''}" data-memo-check title="${it.completed ? '恢复未完成' : '标记完成'}"></span>`;
+}
+
 /** 条目卡（勾选/标题/meta；标题带 linkedNote/url 时为可点链接，点击行为接线在 ui.ts） */
 export function cardHtml(it: MemoItem, due: MetaDue, relTime: string): string {
 	const titleCls = it.completed ? ' bz-memo-done' : '';
@@ -207,7 +213,7 @@ export function cardHtml(it: MemoItem, due: MetaDue, relTime: string): string {
 		? `<a href="javascript:void(0)" data-memo-openitem="${esc(it.id)}">${esc(it.title)}</a>`
 		: esc(it.title);
 	return `<div class="bz-memo-card${titleCls}" data-memo-id="${esc(it.id)}">
-      <span class="bz-memo-check${it.completed ? ' bz-memo-checked' : ''}" data-memo-check title="${it.completed ? '恢复未完成' : '标记完成'}"></span>
+      ${checkHtml(it)}
       <div class="bz-memo-body-text">
         <div class="bz-memo-card-title">${titleHtml}</div>
         <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime)}</div>

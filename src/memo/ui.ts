@@ -38,7 +38,7 @@ import { getSettings, saveSettings, tryGetSettings } from '../core/settings-prov
 import { uiModal, uiIcon, uiChoice, uiSelect, uiBtn, uiBtnRow, uiResizable, uiEmpty, mountIcons, uiSuggest } from '../core/ui';
 import { openFlowDialog } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
-import { attachItemActions, type ItemAction } from '../core/item-actions';
+import { attachItemActions, closeItemMenu, type ItemAction } from '../core/item-actions';
 import {
   formatRelativeTime, getCurrentNoteInfo, getCurrentCursorPosition, localDayKey, stripMdExt,
   generateId, extractUrlAndDisplay, escapeHtml, fetchPageTitle,
@@ -48,7 +48,7 @@ import { getDueStatus, formatDueText } from './due';
 import {
   MEMO_ICONS as ICON, iconSpan, sceneDot, sceneLabel, mainCountHtml,
   navBtnHtml, mobChipHtml, mobAddSceneChipHtml, panelShellHtml, metaTagsHtml,
-  cardHtml as renderCard, sectionLabelHtml, doneBarHtml, doneMoreHtml, type MetaDue,
+  cardHtml as renderCard, checkHtml, sectionLabelHtml, doneBarHtml, doneMoreHtml, type MetaDue,
 } from './render';
 import type { MemoItem } from './types';
 import { M } from './state';
@@ -403,7 +403,7 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
     if (composerAdd) { submitComposer(); return; }
   });
 
-  // 行内勾选（完成/恢复；300ms 防抖对齐 memo 卡片）
+  // 行内勾选（完成/恢复；300ms 防抖对齐 memo 卡片）——切换逻辑抽 toggleCheck，与移动抽屉头共用
   const content = overlay.querySelector('[data-memo-content]') as HTMLElement;
   content.addEventListener('click', (e) => {
     const check = (e.target as HTMLElement).closest('[data-memo-check]') as HTMLElement | null;
@@ -413,22 +413,7 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
     const it = M.items.find((i) => i.id === card.dataset.memoId);
     if (!it) return;
     e.stopPropagation();
-    // 已恢复路径（已完成条目勾选 = 恢复）
-    if (it.completed) {
-      void restoreItem(it);
-      return;
-    }
-    // 完成防抖：300ms 内反悔取消
-    if (M.completeTimers.has(it.id)) {
-      clearTimeout(M.completeTimers.get(it.id));
-      M.completeTimers.delete(it.id);
-      return;
-    }
-    const timer = setTimeout(() => {
-      M.completeTimers.delete(it.id);
-      void completeItem(it);
-    }, 300);
-    M.completeTimers.set(it.id, timer);
+    toggleCheck(it);
   });
 
   // 底部录入 Enter
@@ -670,24 +655,38 @@ function renderContent(): void {
     if (!it) return;
     attachItemActions(card as HTMLElement, buildCardActions(it), {
       menuClass: skinClass() || undefined,
+      sheetClass: skinClass() || undefined, // 抽屉挂 body，需自带皮肤类，头部勾选圈皮肤样式才随行
       sheetHead: buildSheetHead(it),
     });
   });
 }
 
-/** 移动抽屉顶部信息说明（与列表卡一致的标题 + meta；桌面右键菜单不带头部，组件库自动区分） */
+/** 移动抽屉顶部信息说明（与列表卡同源 markup——勾选圈走 checkHtml 单源（ADR-0104），
+ *  完成态 = 圈 bz-memo-checked + 头 bz-memo-done 暗淡 + 标题 .done 划线；点圈恢复/标记完成
+ *  走列表同款 toggleCheck（先关抽屉再执行，与功能项「先关再执行」同款收束）。
+ *  桌面右键菜单不带头部，组件库自动区分） */
 function buildSheetHead(it: MemoItem): HTMLElement {
   const head = document.createElement('div');
-  head.className = 'bz-item-sheet-entry';
+  head.className = 'bz-item-sheet-entry bz-memo-sheet-entry';
+  if (it.completed) head.classList.add('bz-memo-done');
+  head.insertAdjacentHTML('afterbegin', checkHtml(it));
+  const text = document.createElement('div');
+  text.className = 'bz-memo-body-text';
   const title = document.createElement('div');
   title.textContent = it.title;
   if (it.completed) title.classList.add('done');
-  head.appendChild(title);
+  text.appendChild(title);
   const meta = document.createElement('div');
   meta.className = 'bz-memo-meta';
   meta.innerHTML = metaTags(it);
   mountIcons(meta);
-  head.appendChild(meta);
+  text.appendChild(meta);
+  head.appendChild(text);
+  head.querySelector('[data-memo-check]')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeItemMenu();
+    toggleCheck(it);
+  });
   return head;
 }
 
@@ -728,6 +727,27 @@ function jumpToNote(it: MemoItem): void {
     editor.setCursor(line, ch || 0);
     editor.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
   }
+}
+
+/** 行内勾选切换（列表卡与移动抽屉头共用）：已完成 = 恢复；未完成 = 300ms 防抖后标记完成
+ *  （防抖窗口内再点 = 反悔取消） */
+function toggleCheck(it: MemoItem): void {
+  // 已恢复路径（已完成条目勾选 = 恢复）
+  if (it.completed) {
+    void restoreItem(it);
+    return;
+  }
+  // 完成防抖：300ms 内反悔取消
+  if (M.completeTimers.has(it.id)) {
+    clearTimeout(M.completeTimers.get(it.id));
+    M.completeTimers.delete(it.id);
+    return;
+  }
+  const timer = setTimeout(() => {
+    M.completeTimers.delete(it.id);
+    void completeItem(it);
+  }, 300);
+  M.completeTimers.set(it.id, timer);
 }
 
 async function completeItem(it: MemoItem): Promise<void> {
