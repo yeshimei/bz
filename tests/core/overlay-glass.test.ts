@@ -75,7 +75,8 @@ describe('core 旧硬编码遮罩两处（core/styles.css）', () => {
 describe('域遮罩 blur 全量在位', () => {
   it('非品牌域遮罩含 token blur（encrypt×3 / knowledge / review×3 / pomodoro / diary×2 / password-vault×3）', () => {
     const cases: Array<[file: string, selector: string]> = [
-      ['src/encrypt/styles.css', '.bz-encrypt-dialog-mask'],
+      // 保险库解锁屏已收编为 core 共享组件（三域同源），遮罩随之落到 core 组件库
+      ['src/core/ui/components.css', '.bz-lockscreen--mask'],
       ['src/encrypt/styles.css', '.bz-encrypt-health-mask'],
       ['src/encrypt/styles.css', '.bz-vault-dlg-mask'],
       ['src/knowledge/styles.css', '.bz-kb-mask'],

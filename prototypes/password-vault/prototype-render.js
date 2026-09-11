@@ -1,4 +1,4 @@
-/* 源指纹 c54a85e2760a3c33 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 25704c836fd4e119 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/password-vault/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/password-vault/render.ts → window.BZR_password_vault（评审壳预览包，ADR-0104） */
 var BZR_password_vault = (() => {
@@ -121,14 +121,7 @@ var BZR_password_vault = (() => {
   }
   function lockHTML(which) {
     return `
-      <div class="bz-password-vault-lock" data-lock="${which}">
-        <div class="seal">${ICONS.seal}</div>
-        <h2 data-lock-title>设置主密码</h2>
-        <input type="password" data-lock-p1 placeholder="主密码" autocomplete="off">
-        <input type="password" data-lock-p2 placeholder="再次输入确认" autocomplete="off" style="display:none">
-        <div class="err" data-lock-err></div>
-        <button class="go" data-lock-go>解锁保险库</button>
-      </div>`;
+      <div class="bz-password-vault-lock" data-lock="${which}"></div>`;
   }
   function modalHTML(which) {
     return `

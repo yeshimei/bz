@@ -1679,3 +1679,26 @@
 .bz-button:hover {
   background: var(--interactive-accent-hover);
 }
+
+/* ============ 解锁屏（三域共用骨架 · 加密日记口径） ============
+ * 弹层挂 body，够不着 .bz-diary 根 —— 与日期筛选同款教训：自己重声明 --dw-* 再消费。
+ * 风格 = 日记域口径：扁平强调色 + 收敛圆角（比保险库克制）。
+ */
+.bz-lockscreen--diary {
+  --dw-bg: var(--background-primary);
+  --dw-surface: var(--background-secondary);
+  --dw-line: var(--background-modifier-border);
+  --dw-ink: var(--text-normal);
+  --dw-muted: var(--text-muted);
+  --dw-faint: var(--text-faint);
+  --dw-accent: var(--interactive-accent);
+  --ls-accent: var(--dw-accent);
+  --ls-accent-soft: var(--dw-accent);
+  --ls-seal-radius: 16px;
+  --ls-bg: var(--dw-surface);
+  --ls-surface: var(--dw-bg);
+  --ls-line: var(--dw-line);
+  --ls-ink: var(--dw-ink);
+  --ls-muted: var(--dw-muted);
+  --ls-faint: var(--dw-faint);
+}

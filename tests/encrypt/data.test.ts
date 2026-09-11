@@ -97,6 +97,44 @@ describe('SafeManager 状态机', () => {
   });
 });
 
+describe('SafeManager verifyPassword（销毁二次确认，只读校验）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vault = new MockVault();
+  });
+
+  it('正确密码 true、错误密码 false；不改解锁态/清单/磁盘（只读）', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('master123');
+    await lockSample(sm);
+    const notesBefore = sm.manifest.notes.length;
+    const filesBefore = vault.files.size;
+    expect(await sm.verifyPassword('master123')).toBe(true);
+    expect(await sm.verifyPassword('wrong')).toBe(false);
+    // 只读契约：解锁态、清单、磁盘文件均未被触碰（区别于 unlock 的写路径）
+    expect(sm.unlocked).toBe(true);
+    expect(sm.manifest.notes.length).toBe(notesBefore);
+    expect(vault.files.size).toBe(filesBefore);
+  });
+
+  it('锁定态下仍可校验（凭磁盘密文）；无清单时一律 false 不抛错', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('master123');
+    sm.lock();
+    // 锁定态：manifest 已清空，但 verifyPassword 读磁盘密文校验
+    expect(await sm.verifyPassword('master123')).toBe(true);
+    expect(await sm.verifyPassword('nope')).toBe(false);
+    expect(sm.unlocked).toBe(false);
+    // 全新根目录（无 .safe.enc）：false 而非异常
+    makeApp(new MockVault());
+    const sm2 = new SafeManager('CONFIG/.ENCRYPT/EMPTY');
+    expect(await sm2.verifyPassword('anything')).toBe(false);
+  });
+});
+
 describe('SafeManager 加锁', () => {
   let vault: MockVault;
 

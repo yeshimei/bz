@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V3 · 库房台账 — 保险库</title>
+<style>
+  :root{
+    --bg:#161616; --panel:#1e1e1e; --panel2:#262626; --border:#333; --border2:#3f3f3f;
+    --tx:#dadada; --tx2:#999; --tx3:#777; --ac:#8a7cf5; --danger:#e35d5d; --ok:#5db97a;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--tx);font:14px/1.65 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;min-height:100vh;display:flex;flex-direction:column}
+  button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+  svg{vertical-align:-2px}
+
+  .topbar{background:var(--panel);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .topbar .brand{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px}
+  .topbar .brand svg{color:var(--ac)}
+  .stat{font-size:12px;color:var(--tx3);display:flex;align-items:center;gap:6px}
+  .stat b{color:var(--tx2);font-weight:500}
+  .stat .dot{width:7px;height:7px;border-radius:50%;background:var(--danger)}
+  .stat .dot.on{background:var(--ok)}
+  .topbar .sp{flex:1}
+  .btn{border:1px solid var(--border2);border-radius:8px;padding:6px 14px;font-size:13px;color:var(--tx2)}
+  .btn:hover{background:var(--panel2);color:var(--tx)}
+  .btn.pri{color:var(--ac);border-color:rgba(138,124,245,.45)}
+  .btn.dgr{color:var(--danger);border-color:rgba(227,93,93,.4)}
+
+  /* 锁定态：正文区只露统计 */
+  #lockZone{flex:1;display:none;align-items:center;justify-content:center}
+  .lock-panel{width:360px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:30px 32px}
+  .lock-panel h2{font-size:15px;font-weight:600;margin-bottom:4px}
+  .lock-panel .sub{color:var(--tx3);font-size:12px;margin-bottom:18px}
+  .lock-stats{display:flex;gap:12px;margin-bottom:20px}
+  .lock-stats div{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+  .lock-stats b{display:block;font-size:17px;font-weight:600}
+  .lock-stats span{font-size:11px;color:var(--tx3)}
+  .pw-wrap{display:flex;border:1px solid var(--border2);border-radius:8px;overflow:hidden;background:var(--bg)}
+  .pw-wrap input{flex:1;background:none;border:none;outline:none;color:var(--tx);padding:9px 12px}
+  .pw-wrap button{padding:9px 16px;color:var(--ac);border-left:1px solid var(--border)}
+  .lock-err{color:var(--danger);font-size:12px;height:18px;margin-top:8px}
+
+  /* 台账双栏 */
+  #ledger{flex:1;display:none;min-height:0}
+  .flow{width:330px;border-right:1px solid var(--border);overflow:auto;background:var(--panel);padding:16px 0 16px 20px}
+  .flow h3{font-size:12px;color:var(--tx3);font-weight:500;letter-spacing:.12em;margin-bottom:10px}
+  .fitem{display:flex;gap:10px;padding:9px 14px 9px 0;border-left:1px solid var(--border);margin-left:0;padding-left:16px;position:relative;font-size:12px}
+  .fitem::before{content:"";position:absolute;left:-4px;top:15px;width:7px;height:7px;border-radius:50%;background:var(--tx3)}
+  .fitem.in::before{background:var(--ok)}
+  .fitem.out::before{background:var(--ac)}
+  .fitem.warn::before{background:var(--danger)}
+  .fitem .t{color:var(--tx3);flex:none;width:38px}
+  .fitem .d b{color:var(--tx2);font-weight:500}
+  .fitem .d{color:var(--tx3)}
+
+  .stock{flex:1;display:flex;flex-direction:column;min-width:0}
+  .stock-hd{padding:14px 24px 10px;font-size:12px;color:var(--tx3);letter-spacing:.12em;display:flex;justify-content:space-between}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{text-align:left;font-weight:500;color:var(--tx3);font-size:11px;letter-spacing:.08em;padding:7px 14px;border-bottom:1px solid var(--border)}
+  tbody tr{cursor:pointer}
+  tbody tr:hover{background:var(--panel)}
+  tbody tr.sel{background:var(--panel2)}
+  tbody td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--tx2)}
+  tbody td.no{color:var(--tx3);font-size:12px;width:64px}
+  tbody td.ttl{color:var(--tx);max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  tbody td.att{color:var(--tx3);font-size:12px}
+
+  .detail{border-top:1px solid var(--border);background:var(--panel);padding:14px 24px;display:none;gap:26px;align-items:center}
+  .detail.open{display:flex}
+  .detail .col .k{font-size:11px;color:var(--tx3);margin-bottom:2px}
+  .detail .col .v{font-size:13px}
+  .detail .sp{flex:1}
+  .detail .act{display:flex;gap:8px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5l-8-3z"/></svg>保险库 · 台账</div>
+  <span class="stat"><span class="dot" id="stDot"></span><span id="stText">锁定</span></span>
+  <span class="stat">库存 <b id="stCount">12 条</b></span>
+  <span class="stat">密文总量 <b>486 KB</b></span>
+  <span class="stat">上次体检 <b>09-09 通过</b></span>
+  <span class="sp"></span>
+  <button class="btn pri" id="depBtn" style="display:none">登记存入</button>
+  <button class="btn" id="lockBtn" style="display:none">上锁</button>
+</div>
+
+<div id="lockZone">
+  <div class="lock-panel">
+    <h2>登记前先开库</h2>
+    <div class="sub">解锁后才能查阅库存明细与操作流水详情</div>
+    <div class="lock-stats">
+      <div><b>12</b><span>库存条目</span></div>
+      <div><b>9</b><span>随库附件</span></div>
+      <div><b>486 KB</b><span>密文总量</span></div>
+    </div>
+    <div class="pw-wrap">
+      <input id="pw" type="password" placeholder="主密码">
+      <button id="unlockBtn">开库</button>
+    </div>
+    <div class="lock-err" id="err"></div>
+  </div>
+</div>
+
+<div id="ledger">
+  <div class="flow">
+    <h3>操 作 流 水</h3>
+    <div id="flowList"></div>
+  </div>
+  <div class="stock">
+    <div class="stock-hd"><span>库 存 明 细</span><span>点击条目查看密文信息</span></div>
+    <div style="overflow:auto;flex:1">
+      <table>
+        <thead><tr><th>库位</th><th>标题</th><th>原笔记</th><th>存入日</th><th>附件</th><th>密文</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="detail" id="detail">
+      <div class="col"><div class="k">库位</div><div class="v" id="dNo"></div></div>
+      <div class="col"><div class="k">密文镜像</div><div class="v" id="dRef"></div></div>
+      <div class="col"><div class="k">密文大小</div><div class="v" id="dSize"></div></div>
+      <div class="col"><div class="k">校验指纹</div><div class="v" id="dFp"></div></div>
+      <span class="sp"></span>
+      <div class="act">
+        <button class="btn pri" id="outBtn">取出还原</button>
+        <button class="btn dgr" id="delBtn">销毁</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STOCK = [
+  {no:"B-01",title:"个人证件与材料扫描",path:"私密/证件材料.md",date:"08-14",atts:2,size:"12.4 KB",ref:"a7f3c2.enc",fp:"9e·41b2"},
+  {no:"B-02",title:"银行账户与密码备忘",path:"私密/账户备忘.md",date:"08-20",atts:0,size:"3.1 KB",ref:"k2m8x1.enc",fp:"3a·77c0"},
+  {no:"B-03",title:"2026 上半年收入台账",path:"私密/收入台账.md",date:"07-02",atts:1,size:"9.8 KB",ref:"p4q1z9.enc",fp:"c5·02ef"},
+  {no:"B-04",title:"写给家里的一封信",path:"私密/信件.md",date:"06-11",atts:0,size:"4.2 KB",ref:"r7w3n2.enc",fp:"18·d9aa"},
+  {no:"B-05",title:"医疗记录汇总",path:"私密/医疗记录.md",date:"09-01",atts:3,size:"15.6 KB",ref:"t5y8u3.enc",fp:"6b·43c7"},
+  {no:"B-06",title:"合同草稿 · 房屋租赁",path:"工作/合同草稿.md",date:"08-28",atts:1,size:"21.0 KB",ref:"v2b6m4.enc",fp:"e0·5811"},
+  {no:"B-07",title:"投资账户持仓明细",path:"私密/持仓明细.md",date:"09-05",atts:0,size:"2.7 KB",ref:"w9c3p7.enc",fp:"44·9b3e"},
+  {no:"B-08",title:"旧手机备份清单",path:"私密/备份清单.md",date:"05-19",atts:0,size:"1.3 KB",ref:"x4d8q2.enc",fp:"a9·1f60"},
+  {no:"B-09",title:"保险单据归档",path:"私密/保险单据.md",date:"04-22",atts:1,size:"8.9 KB",ref:"y7e1r5.enc",fp:"7d·c2a4"},
+  {no:"B-10",title:"旅行证件与行程底稿",path:"私密/行程底稿.md",date:"03-08",atts:0,size:"3.6 KB",ref:"z3f6s8.enc",fp:"f2·309d"},
+  {no:"B-11",title:"家庭网络与设备口令",path:"私密/设备口令.md",date:"09-08",atts:0,size:"1.8 KB",ref:"a9g4t1.enc",fp:"5c·86e7"},
+  {no:"B-12",title:"谈话记录 · 0903",path:"私密/谈话记录.md",date:"09-03",atts:0,size:"7.2 KB",ref:"b2h7u6.enc",fp:"91·e4b8"},
+];
+let stock = STOCK.map(n=>({...n}));
+let flow = [
+  {t:"09-11",d:"<b>存入</b>「家庭网络与设备口令」",c:"in"},
+  {t:"09-09",d:"库体检通过 · 12 条 · 无异常",c:"in"},
+  {t:"09-08",d:"<b>开库</b> · 会话 23 分钟",c:""},
+  {t:"09-05",d:"<b>存入</b>「投资账户持仓明细」",c:"in"},
+  {t:"09-03",d:"<b>存入</b>「谈话记录 · 0903」",c:"in"},
+  {t:"09-01",d:"<b>取出</b>「就诊记录 0830」后重新封存",c:"out"},
+  {t:"08-28",d:"<b>存入</b>「合同草稿 · 房屋租赁」",c:"in"},
+  {t:"08-25",d:"<b>销毁</b>「临时草稿 0812」",c:"warn"},
+  {t:"08-20",d:"<b>存入</b>「银行账户与密码备忘」",c:"in"},
+  {t:"08-14",d:"<b>存入</b>「个人证件与材料扫描」",c:"in"},
+  {t:"08-10",d:"主密码变更完成",c:"warn"},
+];
+let sel = null, unlocked = false;
+const $ = id=>document.getElementById(id);
+const esc = s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+
+function renderTop(){
+  $("stDot").className = "dot" + (unlocked?" on":"");
+  $("stText").textContent = unlocked ? "已解锁 · 会话中" : "锁定";
+  $("depBtn").style.display = unlocked ? "" : "none";
+  $("lockBtn").style.display = unlocked ? "" : "none";
+}
+function renderFlow(){
+  $("flowList").innerHTML = flow.map(f=>`<div class="fitem ${f.c}"><span class="t">${f.t}</span><span class="d">${f.d}</span></div>`).join("");
+}
+function renderTable(){
+  $("tbody").innerHTML = stock.map(n=>`
+    <tr class="${sel===n.no?"sel":""}" data-no="${n.no}">
+      <td class="no">${n.no}</td>
+      <td class="ttl">${esc(n.title)}</td>
+      <td>${esc(n.path)}</td>
+      <td>${n.date}</td>
+      <td class="att">${n.atts||"—"}</td>
+      <td>${n.size}</td>
+    </tr>`).join("");
+  $("tbody").querySelectorAll("tr").forEach(tr=>tr.onclick=()=>{
+    sel = tr.dataset.no; renderTable(); renderDetail();
+  });
+}
+function renderDetail(){
+  const n = stock.find(x=>x.no===sel);
+  if(!n){ $("detail").classList.remove("open"); return; }
+  $("dNo").textContent = n.no;
+  $("dRef").textContent = n.ref;
+  $("dSize").textContent = n.size;
+  $("dFp").textContent = "SHA-256 " + n.fp + "…";
+  $("detail").classList.add("open");
+}
+$("unlockBtn").onclick = ()=>{
+  if($("pw").value.length<4){ $("err").textContent="密码不符，重试。"; return; }
+  $("pw").value=""; $("err").textContent="";
+  unlocked=true; sel=null;
+  $("lockZone").style.display="none"; $("ledger").style.display="flex";
+  flow.unshift({t:"09-11",d:"<b>开库</b> · 会话开始",c:""});
+  renderTop(); renderFlow(); renderTable(); renderDetail();
+};
+$("pw").addEventListener("keydown",e=>{ if(e.key==="Enter") $("unlockBtn").click(); });
+$("lockBtn").onclick = ()=>{
+  unlocked=false; sel=null;
+  $("ledger").style.display="none"; $("lockZone").style.display="flex";
+  flow.unshift({t:"09-11",d:"<b>上锁</b> · 密钥失效",c:"warn"});
+  renderTop(); renderFlow(); renderDetail();
+};
+$("outBtn").onclick = ()=>{
+  const n=stock.find(x=>x.no===sel); if(!n) return;
+  stock = stock.filter(x=>x.no!==n.no); sel=null;
+  flow.unshift({t:"09-11",d:`<b>取出</b>「${n.title}」还原到文库`,c:"out"});
+  $("stCount").textContent = stock.length + " 条";
+  renderFlow(); renderTable(); renderDetail();
+};
+$("delBtn").onclick = ()=>{
+  const n=stock.find(x=>x.no===sel); if(!n) return;
+  const b=$("delBtn");
+  if(b.dataset.arm!=="1"){ b.dataset.arm="1"; b.textContent="确认销毁？"; setTimeout(()=>{b.dataset.arm="";b.textContent="销毁"},2600); return; }
+  b.dataset.arm=""; b.textContent="销毁";
+  stock = stock.filter(x=>x.no!==n.no); sel=null;
+  flow.unshift({t:"09-11",d:`<b>销毁</b>「${n.title}」密文`,c:"warn"});
+  $("stCount").textContent = stock.length + " 条";
+  renderFlow(); renderTable(); renderDetail();
+};
+$("depBtn").onclick = ()=>{
+  stock.push({no:"B-"+String(13+stock.length-STOCK.length).padStart(2,"0"),title:"周报 09-06",path:"工作/周报.md",date:"09-11",atts:0,size:"2.2 KB",ref:"c5j9v3.enc",fp:"26·7a10"});
+  flow.unshift({t:"09-11",d:"<b>存入</b>「周报 09-06」",c:"in"});
+  $("stCount").textContent = stock.length + " 条";
+  renderFlow(); renderTable();
+};
+renderTop(); renderFlow(); renderTable();
+$("lockZone").style.display="flex";
+</script>
+</body>
+</html>

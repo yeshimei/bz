@@ -543,7 +543,8 @@ export class DiaryAppController {
   private async unlockAndSelectEncrypt() {
     try {
       const { ensureSafeUnlocked } = await import('../encrypt');
-      const ok = await ensureSafeUnlocked();
+      // 同一套解锁屏骨架，按日记域口径注入文案/统计与配色（--dw-* token）
+      const ok = await ensureSafeUnlocked('diary');
       if (!ok) return; // 用户取消/密码错误：保持锁定态
       this.lockedVisible = true;
       this.selTag = '加密';
@@ -1890,7 +1891,7 @@ export class DiaryAppController {
       // P1 审查修复：影视/信/书特殊条目不提供加密（入库语义错位）——菜单已屏蔽，此处兜底
       if (this.isSpecialWallEntry(e)) return;
       const { ensureSafeUnlocked } = await import('../encrypt') as typeof import('../encrypt');
-      const unlocked = await ensureSafeUnlocked();
+      const unlocked = await ensureSafeUnlocked('diary'); // 加密的是日记条目，解锁屏走 diary 域口径（与 519 行入口同文案）
       if (!unlocked) return;
       const entry = await findDiaryEntry(e.filePath || e.filename || e.date, e.lineNumber || 0);
       if (!entry) {
