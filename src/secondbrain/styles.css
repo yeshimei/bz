@@ -635,12 +635,20 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* 窄面板兜底 → 整体滚动（ADR-0114，双固定）：panel-content 是唯一滚动容器，
-   头行在其外天然吸顶；操作行 sticky 吸底；中间卡片全部自然高展开 */
+/* 移动端全屏（issue 272，用户拍板替代 ADR-0114 窄卡兜底；顶距 44px 由根上 .bz-panel-mtop 出）：
+   panel-content 是唯一滚动容器，头行在其外天然吸顶；操作行 sticky 吸底；中间卡片全部自然高展开 */
 @media (max-width: 768px) {
   .bz-sb-panel {
-    width: calc(100vw - 24px);
-    height: calc(100vh - 24px);
+    top: 0;
+    left: 0;
+    transform: none;
+    width: 100vw;
+    max-width: none;
+    height: var(--bz-vvh, 100vh);
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
   .bz-sb-panel-content {
     overflow-y: auto;

@@ -286,10 +286,11 @@ export class SecondBrainPanel {
     mask.onclick = () => this.close();
 
     const popup = document.createElement('div');
-    popup.className = 'bz-sb-panel';
+    popup.className = 'bz-sb-panel bz-panel-mtop'; // 移动端全屏 + 44px 顶部避让（issue 272；桌面不生效）
     popup.innerHTML = panelShellHtml();
 
-    // 头行：AI 对话 / 灵感参考（图标钮；⚙️ 已摘——设置走设置面板；引导期 func 钮整体收起，ticket 107）
+    // 头行：AI 对话 / 灵感参考 / 关闭（图标钮；⚙️ 已摘——设置走设置面板；引导期 func 钮整体收起，ticket 107）
+    popup.querySelector('#bz-sb-panel-close')?.addEventListener('click', () => this.close());
     popup.querySelector('#bz-sb-open-chat')?.addEventListener('click', () => {
       this.close();
       this.opts.onOpenChat();
