@@ -7322,6 +7322,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
    选项预留，此处放开——收起态按内容宽（文案 + 箭头 + 内边距）自适应即可。 */
 .bz-memo-sort { flex-shrink: 0; }
 .bz-memo-sort .bz-select { min-width: 0; width: auto; }
+/* 排序下拉实例类（uiSelect className，挂 .bz-select 根上）：不参与工具行压缩，
+   宽度自适应由上一行管；皮肤观感（墨边贴纸/方角描边）见皮肤段排序下拉组 */
+.bz-memo-sortsel { flex-shrink: 0; }
 
 /* 移动场景条尾部「添加场景」虚线 chip（issue 268，markup 见 render.mobAddSceneChipHtml）：
    动作磁贴跟在全部场景之后，与左栏 .bz-memo-side-add 同语义、收藏本 .bz-fav-chip-add
@@ -7431,6 +7434,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-memo-form { display: flex; flex-direction: column; gap: var(--bz-space-md); margin-top: var(--bz-space-md); }
 .bz-memo-form .bz-field { margin-bottom: 0; }
 .bz-memo-form textarea.bz-input { min-height: 64px; }
+/* 弹窗内容包裹（uiModal .bz-dialog-body 的直接子节点，内含 .bz-memo-form）：
+   纵向排布 + 防溢出；顶部间距由 form 的 margin-top 自管。全 token 取值，
+   两肤 × 亮暗四组合随皮肤作用域 token 自动协调 */
+.bz-memo-editor { display: flex; flex-direction: column; min-width: 0; }
+/* 底部按钮行包裹：右对齐（内部 .bz-btn-row 同向双保险）；margin-top 沿用
+   addscene 按钮行惯例（表单 gap 之上再垫 xs 档，动作行与字段分离） */
+.bz-memo-form-actions { display: flex; justify-content: flex-end; margin-top: var(--bz-space-xs); }
 /* 第二个输入框（剪藏标题/代码脚本/公开课课程）容器：输入框满宽
    （.bz-input 默认 240px 定宽，不在 .bz-field 里的框须显式撑满，issue 199）；
    position:relative 供联想 .bz-popover 浮层锚定（issue 201） */
@@ -7442,6 +7452,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-memo-pos-row { display: flex; align-items: center; gap: var(--bz-space-sm); min-height: 32px; }
 .bz-memo-pos-row .bz-memo-pos-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
 .bz-memo-pos-row .bz-memo-pos-hint .bz-ic { width: 12px; height: 12px; vertical-align: -2px; }
+/* 截止时间行（datetime 输入 + 清除钮）：flex 防组件库 `.bz-field .bz-input
+   { width: 100% }` 把清除钮挤换行——输入框吃余量（flex-basis 覆盖 width），
+   清除钮定宽贴右；间距/对齐消费 spacing token，随肤随档 */
+.bz-memo-due-row { display: flex; align-items: center; gap: var(--bz-space-sm); }
+.bz-memo-due-row .bz-input { flex: 1; min-width: 0; }
 
 /* ---- 添加场景弹窗（issue 199：此前容器/提示零规则裸排） ---- */
 .bz-memo-addscene { display: flex; flex-direction: column; gap: var(--bz-space-md); margin-top: var(--bz-space-md); }
@@ -7791,6 +7806,79 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   letter-spacing: 0.06em;
 }
 
+/* ─── 纸感手账 · 夜（issue 270：推翻「固定明度」旧拍板补暗色；照 cinema 先例
+   纯 CSS——.theme-dark 挂 body，面板 / uiModal 弹窗 / 右键菜单根均挂 document.body
+   树内，后代选择器可达）───
+   暗色 = 深纸底 + 浅墨边 + 黑硬阴影：token 整组覆盖后，各结构位消费 var 的声明
+   （墨边/输入墨框/激活描边等）自动随档；仅亮色段硬编码位需就地覆盖。小钮与贴纸的
+   var(--bz-skin-ink) 硬偏移阴影随墨转浅，暗底上读作「粉笔描边」，与浅墨边同一
+   语言；大壳层阴影显式转黑保深度。亮色侧零改动。 */
+.theme-dark .bz-memo-skin-paper {
+  --bz-skin-ink: #ece2ca;
+  --bz-surface-1: #211d13;
+  --bz-surface-2: #2b2617;
+  --bz-surface-3: #342e1d;
+  --bz-surface-hover: #38311f;
+  --bz-text-1: #ede4cd;
+  --bz-text-2: #b5a98a;
+  --bz-text-3: #7e7559;
+  --bz-border: rgba(236, 226, 202, 0.16);
+  --bz-border-strong: rgba(236, 226, 202, 0.72);
+  --bz-brand: #f27b28;
+  --bz-brand-hover: #fb8f42;
+  --bz-brand-soft: rgba(242, 123, 40, 0.2);
+}
+/* 三壳（面板/uiModal 弹窗/右键菜单）：米纸点阵转暗点阵，墨影转黑影；
+   墨边消费 ink 自动转浅 */
+.theme-dark .bz-memo-panel.bz-memo-skin-paper {
+  background:
+    radial-gradient(rgba(236, 226, 202, 0.1) 1px, transparent 1px) 0 0 / 22px 22px,
+    #1b1710;
+  box-shadow: 9px 10px 0 rgba(0, 0, 0, 0.6);
+}
+.theme-dark .bz-overlay-popup.bz-memo-skin-paper {
+  background: #1b1710;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.6);
+}
+.theme-dark .bz-item-menu.bz-memo-skin-paper {
+  background: #1b1710;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.6);
+}
+/* 头行斜纹：墨纹转浅墨纹 */
+.theme-dark .bz-memo-skin-paper .bz-panel-head {
+  background: repeating-linear-gradient(-45deg, rgba(236, 226, 202, 0.05) 0 14px, transparent 14px 28px);
+}
+/* 墨底纸字反转位（场景贴纸标签 / 表单格子选中项 / 排序选中项）：ink 转浅后
+   纸白字不可读，字转深纸色（底色消费 ink 自动转浅） */
+.theme-dark .bz-memo-skin-paper .bz-rail-label { color: #1b1710; }
+.theme-dark .bz-memo-skin-paper .bz-choice .bz-choice-btn { border-left-color: rgba(236, 226, 202, 0.16); }
+.theme-dark .bz-memo-skin-paper .bz-choice .bz-choice-btn.is-on { color: #1b1710 !important; }
+.theme-dark .bz-memo-skin-paper .bz-choice .bz-choice-btn.is-on:hover { color: #1b1710 !important; }
+.theme-dark .bz-memo-skin-paper .bz-memo-sort .bz-select-item.is-on { color: #1b1710; }
+.theme-dark .bz-memo-skin-paper .bz-memo-sort .bz-select-item.is-on:hover { color: #1b1710; }
+/* 硬编码纸白底位：排序菜单转深纸档；触发器/菜单/课程贴纸的墨影转黑影 */
+.theme-dark .bz-memo-skin-paper .bz-memo-sort .bz-select-menu {
+  background: #1b1710;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6);
+}
+.theme-dark .bz-memo-skin-paper .bz-memo-sort .bz-select { box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55); }
+/* open 态恢复品牌橙阴影：上条 (0,4,0) 与亮色 .open 档同特异性且更靠后，须显式压回 */
+.theme-dark .bz-memo-skin-paper .bz-memo-sort .bz-select.open { box-shadow: 2px 2px 0 var(--bz-brand); }
+.theme-dark .bz-memo-skin-paper .bz-memo-tag.bz-memo-tag-course {
+  background: #3a2f18;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55);
+}
+/* 输入 inset 影转黑；卡间虚线与三处虚线框转浅墨（base 覆盖会以同特异性压住
+   亮色段的 :hover 恢复档，故 hover 位显式补回——声明与亮色一致，var 随档） */
+.theme-dark .bz-memo-skin-paper .bz-input { box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.35); }
+.theme-dark .bz-memo-skin-paper .bz-memo-card + .bz-memo-card { border-top-color: rgba(236, 226, 202, 0.14); }
+.theme-dark .bz-memo-skin-paper .bz-memo-side-add,
+.theme-dark .bz-memo-skin-paper .bz-memo-donebar,
+.theme-dark .bz-memo-skin-paper .bz-mobstrip-chip.bz-mobstrip-add { border-color: rgba(236, 226, 202, 0.4); }
+.theme-dark .bz-memo-skin-paper .bz-memo-side-add:hover,
+.theme-dark .bz-memo-skin-paper .bz-memo-donebar:hover,
+.theme-dark .bz-memo-skin-paper .bz-mobstrip-chip.bz-mobstrip-add:hover { border-color: var(--bz-skin-ink); }
+
 /* ─── 编辑部 ─── */
 /* token 层 */
 .bz-memo-skin-editorial {
@@ -8003,6 +8091,66 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-memo-skin-editorial .bz-item-menu-item:hover {
   background: var(--bz-skin-ink);
   color: #ffffff;
+}
+
+/* ─── 编辑部 · 夜（issue 270，先例与可达性论证同纸感段）───
+   编辑部 = 黑白红，暗色即「报纸暗房」反转：碳黑底 + 浅墨线 + 红仍为唯一强调色。
+   ink 转浅后，亮色段一切「ink 底 + 纸白字」的反转位（hover/选中）需就地补深字。 */
+.theme-dark .bz-memo-skin-editorial {
+  --bz-skin-ink: #e8e6e1;
+  --bz-surface-1: #161618;
+  --bz-surface-2: #1e1e21;
+  --bz-surface-3: #26262a;
+  --bz-surface-hover: #26262a;
+  --bz-text-1: #ececea;
+  --bz-text-2: #a5a29b;
+  --bz-text-3: #6d6a64;
+  --bz-border: #343337;
+  --bz-border-strong: #cfccc5;
+  --bz-brand: #ee4438;
+  --bz-brand-hover: #f55b50;
+  --bz-brand-soft: rgba(238, 68, 56, 0.16);
+}
+/* 三壳：白底转碳黑，投影转黑（墨边消费 ink 自动转浅） */
+.theme-dark .bz-memo-panel.bz-memo-skin-editorial {
+  background: #161618;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+.theme-dark .bz-overlay-popup.bz-memo-skin-editorial {
+  background: #161618;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+}
+.theme-dark .bz-item-menu.bz-memo-skin-editorial {
+  background: #161618;
+  box-shadow: 6px 8px 0 rgba(0, 0, 0, 0.5);
+}
+/* ink 浅底反转位：纸白字转碳黑字（底色消费 ink 自动转浅） */
+.theme-dark .bz-memo-skin-editorial .bz-memo-side-add:hover,
+.theme-dark .bz-memo-skin-editorial .bz-memo-donebar:hover,
+.theme-dark .bz-memo-skin-editorial .bz-item-menu-item:hover,
+.theme-dark .bz-memo-skin-editorial .bz-memo-sort .bz-select-item:hover,
+.theme-dark .bz-memo-skin-editorial .bz-memo-sort .bz-select-item.is-on:hover,
+.theme-dark .bz-memo-skin-editorial .bz-mobstrip-chip.is-on,
+.theme-dark .bz-memo-skin-editorial .bz-mobstrip-chip.bz-mobstrip-add:hover { color: #161618; }
+/* 硬编码白底位转暗档：排序菜单/格子容器转主底，chip/复选框/格子项转次底 */
+.theme-dark .bz-memo-skin-editorial .bz-memo-sort .bz-select-menu {
+  background: #161618;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5);
+}
+.theme-dark .bz-memo-skin-editorial .bz-mobstrip-chip { background: #1e1e21; }
+.theme-dark .bz-memo-skin-editorial .bz-mobstrip-chip:hover { background: var(--bz-surface-hover); }
+.theme-dark .bz-memo-skin-editorial .bz-memo-check { background: #1e1e21; }
+.theme-dark .bz-memo-skin-editorial .bz-memo-check:hover { background: var(--bz-brand); }
+.theme-dark .bz-overlay-popup.bz-memo-skin-editorial .bz-choice--float { background: #1e1e21; }
+.theme-dark .bz-overlay-popup.bz-memo-skin-editorial .bz-choice .bz-choice-btn { background: #1e1e21 !important; }
+.theme-dark .bz-overlay-popup.bz-memo-skin-editorial .bz-choice .bz-choice-btn.is-on { color: #161618 !important; }
+/* 移动端关闭钮（文件尾媒体查询档）：编辑部白底 !important 硬编码在暗色下转次底、
+   hover 浅墨底纸白字转碳黑字（墨边消费 ink 自动转浅）。桌面该钮被皮肤段整组
+   藏起，命中无视觉影响。 */
+.theme-dark .bz-memo-panel.bz-memo-skin-editorial .bz-memo-head-close { background: #1e1e21 !important; }
+.theme-dark .bz-memo-panel.bz-memo-skin-editorial .bz-memo-head-close:hover {
+  background: var(--bz-skin-ink) !important;
+  color: #161618 !important;
 }
 
 /* ---- 皮肤选择卡预览（设置面板 .bz-cardpick-prev 变体；复刻各皮肤面板迷你形态） ---- */
@@ -9136,7 +9284,64 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 #review-history-body { flex: 1; overflow-y: auto; position: relative; }
 .bz-review-history-close { position: absolute; top: 10px; right: 10px; z-index: 2; background: none; border: none; cursor: pointer; color: var(--bz-text-2); padding: var(--bz-space-xs); box-shadow: none !important; }
 .bz-review-history-close:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
-.bz-review-stats-tl-row { text-align: left; padding: var(--bz-space-sm) 10px; border-radius: var(--bz-radius-sm); border: none; background: var(--bz-surface-1); color: var(--bz-text-1); font-size: var(--bz-font-label); cursor: pointer; }
+/* 排名/时间线行（issue 270：stats-ui 内联收编并入本类，值逐字搬运——
+   display/gap/padding/border-bottom 原为行内联，此处合并后内联删除） */
+.bz-review-stats-tl-row { text-align: left; display: flex; align-items: center; gap: 8px; padding: 7px 4px; border-radius: var(--bz-radius-sm); border: none; border-bottom: 1px solid var(--bz-border); background: var(--bz-surface-1); color: var(--bz-text-1); font-size: var(--bz-font-label); cursor: pointer; }
+
+/* ==================== 统计弹窗内容件（issue 270：stats-ui.ts 内联样式收编） ====================
+   浅色统计卡 PASTEL_CARDS / 色条 accent / 评级色 RATING_COLORS 为数据驱动动态色，
+   保留行内 background/color；其余静态值逐字迁入下列类（Obsidian 变量按 --bz-* 档对档：
+   primary/secondary → surface-2/1、text-normal/muted/faint → text-1/2/3、
+   background-modifier-border → border）。 */
+/* 浅色统计卡（对齐影视 PASTEL_CARDS，卡色按 idx 动态内联） */
+.bz-stats-cards { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 16px 0; }
+.bz-stats-card { flex: 1; min-width: 80px; padding: 12px 6px; border-radius: 10px; text-align: center; border: 1px solid rgba(0,0,0,0.06); }
+.bz-stats-card-val { font-size: 1.3rem; font-weight: 700; color: #3D4456; line-height: 1.2; }
+.bz-stats-card-lbl { font-size: .68rem; color: rgba(61,68,86,0.65); margin-top: 3px; }
+/* 色条板块容器（对齐影视 sectionHTML，色条 background 动态内联） */
+.bz-stats-section { margin: 12px 16px; padding: 14px 14px 12px; background: var(--bz-surface-1); border-radius: 12px; border: 1px solid var(--bz-border); }
+.bz-stats-section-head { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: .92rem; margin-bottom: 12px; }
+.bz-stats-section-accent { width: 4px; height: 14px; border-radius: 2px; flex-shrink: 0; }
+/* 空态 */
+.bz-stats-empty { text-align: center; color: var(--bz-text-2); font-size: .8rem; padding: 12px 0; }
+/* 软进度条（fill 的 width/background 动态内联） */
+.bz-stats-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+.bz-stats-bar-lbl { width: 56px; flex-shrink: 0; font-size: .76rem; color: var(--bz-text-2); text-align: right; white-space: nowrap; }
+.bz-stats-bar-track { flex: 1; height: 10px; background: var(--bz-border); border-radius: 5px; overflow: hidden; }
+.bz-stats-bar-fill { height: 100%; border-radius: 5px; }
+.bz-stats-bar-val { width: 30px; flex-shrink: 0; font-size: .76rem; color: var(--bz-text-1); text-align: right; }
+/* 竖柱状图（容器 min-width、柱体 height/background 动态内联） */
+.bz-stats-chart-scroll { overflow-x: auto; margin: 8px 0 4px; }
+.bz-stats-chart { display: flex; align-items: flex-end; gap: 6px; padding: 0 4px; }
+.bz-stats-chart-col { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0; }
+.bz-stats-chart-bar { width: 100%; min-width: 22px; border-radius: 6px 6px 0 0; display: flex; align-items: flex-start; justify-content: center; padding-top: 3px; color: #3D4456; font-weight: 700; font-size: .7rem; }
+.bz-stats-chart-lbl { margin-top: 5px; font-size: .66rem; color: var(--bz-text-2); text-align: center; white-space: nowrap; }
+/* chips 行内小统计 */
+.bz-stats-inline { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.bz-stats-inline-chip { font-size: .74rem; color: var(--bz-text-2); background: var(--bz-surface-2); border: 1px solid var(--bz-border); border-radius: 8px; padding: 3px 10px; }
+/* 排名列表（前三徽章 background 动态内联） */
+.bz-stats-rank-badge { width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%; color: #3D4456; font-size: .68rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(0,0,0,0.06); }
+.bz-stats-rank-plain { width: 20px; flex-shrink: 0; font-size: .72rem; color: var(--bz-text-2); text-align: center; }
+.bz-stats-rank-name { flex: 1; font-size: .83rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bz-stats-rank-sub { font-size: .7rem; color: var(--bz-text-2); flex-shrink: 0; }
+.bz-stats-rank-meta { font-size: .72rem; color: var(--bz-text-2); flex-shrink: 0; }
+.bz-stats-hint { font-size: .68rem; color: var(--bz-text-3); text-align: center; padding-top: 8px; }
+
+/* ==================== 复习历史时间线（issue 270：时间轴竖线式内联收编） ====================
+   圆点/评级字色为 RATING_COLORS 数据驱动动态色，保留行内 background/color。 */
+.bz-review-history-status { padding: 16px 18px 10px; }
+.bz-review-history-name { font-size: 15px; font-weight: 600; color: var(--bz-text-1); }
+.bz-review-history-sub { font-size: 12px; color: var(--bz-text-2); margin-top: 2px; }
+.bz-review-history-empty { padding: 30px; text-align: center; color: var(--bz-text-3); font-size: 13px; }
+.bz-review-history-tl { flex: 1; overflow-y: auto; padding: 4px 18px 20px; }
+.bz-review-history-item { position: relative; padding-left: 20px; padding-bottom: 14px; }
+.bz-review-history-item.is-last { padding-bottom: 4px; }
+.bz-review-history-line { position: absolute; left: 5px; top: 14px; bottom: -4px; width: 2px; background: var(--bz-border); }
+.bz-review-history-dot { position: absolute; left: 0; top: 4px; width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.bz-review-history-row { display: flex; align-items: baseline; gap: 10px; font-size: 13px; }
+.bz-review-history-time { color: var(--bz-text-2); font-size: 12px; min-width: 86px; flex-shrink: 0; }
+.bz-review-history-rating { font-weight: 500; min-width: 32px; }
+.bz-review-history-stage { color: var(--bz-text-3); font-size: 12px; }
 
 /* item 14：统计/历史关闭钮与文件树徽标的 lucide 图标尺寸 */
 #review-stats-close .bz-ic, .bz-review-history-close .bz-ic { display: inline-flex; width: 14px; height: 14px; }
@@ -9151,6 +9356,83 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-q-fitem { padding: var(--bz-space-xs) 0; }
   .bz-review-bar-btn { padding: 10px var(--bz-space-md); }
 }
+
+/* ==================== quiz-core 会话弹窗样式恢复（issue 270） ====================
+   quiz 并入 review（9c603ed7）时 src/quiz/styles.css 96 行被删未迁入，本节恢复。
+   token 对档（core/ui/tokens.css）：--background-primary/secondary → --bz-surface-2/1、
+   --text-normal → --bz-text-1、--background-modifier-border/hover → --bz-border/--bz-surface-hover、
+   --interactive-accent/--text-on-accent → --bz-brand/--bz-on-brand；
+   对错硬编码绿/红 → --bz-success/--bz-danger（15% 透底改 color-mix 等价）；
+   毛玻璃按 ui-design-manual「明确不采用」去除，遮罩用 --bz-overlay；
+   弹窗壳规格对齐组件库 modal（--bz-radius-md / --bz-shadow-lg / 82vh 限高）。
+   该入口现休眠（产品走 SprintSession），样式补齐不退役、不改 DOM。
+   原文件尾 @keyframes spin 无消费者（旧 loading 界面随普通模式删除），不迁。 */
+#quiz-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bz-overlay); display: flex; align-items: center; justify-content: center; }
+#quiz-popup { background: var(--bz-surface-2); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); padding: 24px; max-width: 600px; width: 90%; max-height: 82vh; overflow-y: auto; display: flex; flex-direction: column; position: relative; transition: none; }
+.bz-quiz-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.bz-quiz-title { font-size: 15px; font-weight: 600; }
+.bz-quiz-question { font-size: 17px; font-weight: 500; margin-bottom: 20px; color: var(--bz-text-1); }
+.bz-quiz-options { display: flex; flex-direction: column; gap: 6px; }
+.bz-quiz-option-text { flex: 1; }
+.quiz-option-btn {
+  padding:10px 14px;
+  border:1px solid var(--bz-border);
+  border-radius:6px;
+  background:var(--bz-surface-1);
+  text-align:left;
+  cursor:pointer;
+  font-size:15px;
+  transition:background 0.2s;
+  margin:4px 0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  box-shadow: none !important;
+  /* 长文本修复：按钮可收缩不撑破弹窗；button 默认 white-space:pre 需改回 normal 才能换行 */
+  min-width:0;
+  width:100%;
+  box-sizing:border-box;
+  white-space:normal;
+}
+/* 选项文本：flex 子项允许收缩并在按钮内换行（长 URL/英文串不截断） */
+.quiz-option-btn span {
+  min-width:0;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+}
+.quiz-option-btn:hover:not(.disabled) { background:var(--bz-surface-hover); }
+.quiz-option-btn.correct { border-color:var(--bz-success) !important; background:color-mix(in srgb, var(--bz-success) 15%, transparent); }
+.quiz-option-btn.wrong { border-color:var(--bz-danger) !important; background:color-mix(in srgb, var(--bz-danger) 15%, transparent); }
+.quiz-option-btn.selected { border-color:var(--bz-brand); background:var(--bz-surface-hover); }
+.quiz-option-btn .check-mark { opacity:0; transition:opacity 0.2s; flex-shrink:0; }
+.quiz-option-btn.selected .check-mark { opacity:1; }
+.quiz-submit-btn {
+  margin-top:16px;
+  padding:8px 20px;
+  border:none;
+  border-radius:6px;
+  background:var(--bz-brand);
+  color:var(--bz-on-brand);
+  font-size:15px;
+  cursor:pointer;
+  align-self:center;
+  box-shadow: none !important;
+}
+.quiz-submit-btn:hover { opacity:0.9; }
+.quiz-submit-btn:disabled { opacity:0.5; cursor:not-allowed; }
+.quiz-next-btn {
+  margin-top:16px;
+  padding:8px 20px;
+  border:1px solid var(--bz-border);
+  border-radius:6px;
+  background:var(--bz-surface-1);
+  color:var(--bz-text-1);
+  font-size:15px;
+  cursor:pointer;
+  align-self:center;
+  box-shadow: none !important;
+}
+.quiz-next-btn:hover { background:var(--bz-surface-hover); }
 /* ==================== 番茄钟域样式（src/pomodoro/styles.css） ==================== */
 /* ==================== 番茄钟状态栏（pomodoro，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
     .pomodoro-statusbar { display: inline-flex; align-items: center; gap: var(--bz-space-xs); cursor: pointer; padding: 2px var(--bz-space-xs); border-radius: var(--radius-s, var(--bz-radius-xs)); transition: background-color var(--bz-dur-fast) ease, opacity var(--bz-dur-fast) ease; }
@@ -12650,16 +12932,18 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
  * 视觉基准 = 拍板原型 .zcode/ui-prototypes/belongings-redesign20/p20-full.html（issue 230 方向纠正：
  * 原型 → 域，禁止拿域现状反向生成原型）。p20 的 CSS 值逐字回灌（面板 920×640 相对原型整页海报
  * 等比缩档：h1 56→40 / hero KPI 56→42 / cell em 44→40 / name 20→19 / price 25→23）。
- * 架构：.bz-bel--poster / .bz-bel-form / .bz-bel-detail 作用域 token 覆盖（米白纸面 #f5f2ec +
- * 墨黑 #171512 + 赤橙 #e8481f，双主题恒定纸面）+ .bz-bel-* 装饰类；通用件继续消费组件库
+ * 架构：.bz-bel--poster / .bz-bel-form / .bz-bel-detail 作用域 token 覆盖（亮色 = 米白纸面
+ * #f5f2ec + 墨黑 #171512 + 赤橙 #e8481f；.theme-dark = 夜版海报深炭变体，issue 270 推翻
+ * 「双主题恒定纸面」旧口径）+ .bz-bel-* 装饰类；通用件继续消费组件库
  * （chips/segmented/搜索/按钮/字段），在其上做海报皮作用域覆盖（方角/墨框/下划线）。
  * 移动端 = p20 手机壳设计：m-kpis 四格 / 工具行(搜索+年份) → 横滑 chips → 排序 seg → 单列网格
  * → 底部记一笔 → 居中脚注；判定走容器查询（评审壳手机框与真机全屏同源，见文末）。
  * 口径：标签/徽章字号 ≥11px；不持静态 z-index；触控 44px 档走 .bz-touch-target / min-height。
  */
 
-/* ---- 皮肤 token（面板 + 表单 + 详情 + 右键菜单四壳同源；纸面双主题恒定） ----
-   菜单/表单/详情挂 body，须自带 token（.bz-bel-menu 经 openItemMenu menuClass 挂上） */
+/* ---- 皮肤 token（面板 + 表单 + 详情 + 右键菜单四壳同源；亮色纸面，暗色见下方夜版组） ----
+   菜单/表单/详情挂 body，须自带 token（.bz-bel-menu 经 openItemMenu menuClass 挂上；
+   三者都是 body 后代，.theme-dark 祖先选择器可达） */
 .bz-bel--poster,
 .bz-bel-form,
 .bz-bel-detail,
@@ -12683,6 +12967,46 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   --bz-brand: #e8481f;
   --bz-brand-hover: #c93a10; /* 海报橙加深档：悬停/按压不漏组件库全局暗橙 */
   --bz-brand-soft: rgba(232, 72, 31, 0.14); /* 品牌浅底（accent 图标钮/badge）同源 */
+  --bz-bel-shadow: rgba(23, 21, 18, 0.22); /* 硬偏移阴影（面板/下拉档） */
+  --bz-bel-shadow-strong: rgba(23, 21, 18, 0.85); /* 硬偏移阴影（详情/表单/菜单档） */
+  --bz-bel-shadow-pop: rgba(23, 21, 18, 0.15); /* 硬偏移阴影（联想浮层档） */
+  --bz-bel-ink-muted: #b9b2a2; /* 反色（墨底）卡上的弱化字：hover idx/mut */
+  --bz-bel-tag-sold: #8a5a26; /* 状态徽章转卖档 */
+  --bz-bel-tag-discard: #8a8375; /* 状态徽章丢弃档 */
+}
+
+/* ---- 夜版海报（issue 270：.theme-dark 暗色变体，黑板报方向）----
+   深炭底 + 米白粉笔墨 + 赤橙微提亮；反色体系（墨底纸字 ⇄ 纸底墨字）随 token 自动翻转，
+   阴影转纯黑加深，离场灰化/浮层/hover 全走 token，零结构规则 */
+.theme-dark .bz-bel--poster,
+.theme-dark .bz-bel-form,
+.theme-dark .bz-bel-detail,
+.theme-dark .bz-bel-menu {
+  --bz-bel-paper: #1a1815;
+  --bz-bel-ink: #ece7da;
+  --bz-bel-accent: #f0603a;
+  --bz-bel-line: #3a352c;
+  --bz-bel-dim: #25221d;
+  --bz-surface-1: #1a1815;
+  --bz-surface-2: #211e19;
+  --bz-surface-3: #1a1815;
+  --bz-surface-4: #211e19;
+  --bz-surface-hover: #25221d;
+  --bz-text-1: #ece7da;
+  --bz-text-2: #b5ad9b;
+  --bz-text-3: #7d7666;
+  --bz-border: #3a352c;
+  --bz-border-strong: #ece7da;
+  --bz-border-hover: #5a5344;
+  --bz-brand: #f0603a;
+  --bz-brand-hover: #d14a26; /* 加深档语义与亮侧对齐：暗底上仍比常态深一档可辨 */
+  --bz-brand-soft: rgba(240, 96, 58, 0.18);
+  --bz-bel-shadow: rgba(0, 0, 0, 0.55);
+  --bz-bel-shadow-strong: rgba(0, 0, 0, 0.9);
+  --bz-bel-shadow-pop: rgba(0, 0, 0, 0.5);
+  --bz-bel-ink-muted: #6b6455; /* 反色底此时是米白，弱化字转深灰 */
+  --bz-bel-tag-sold: #c08b4f;
+  --bz-bel-tag-discard: #9a9282;
 }
 
 /* ---- 主面板（骨架走 .bz-panel-frame，遮罩走 .bz-panel-overlay；瑞士方角） ---- */
@@ -12691,7 +13015,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: var(--bz-bel-paper);
   border: 2px solid var(--bz-bel-ink);
   border-radius: 0;
-  box-shadow: 8px 8px 0 rgba(23, 21, 18, 0.22);
+  box-shadow: 8px 8px 0 var(--bz-bel-shadow);
 }
 /* 无壳头行（issue 219b/c 范式）：桌面无头（hero 即头，点遮罩/Esc 关闭）；印章头 .bz-bel-mobhead 移动专属 */
 .bz-bel-mobhead,
@@ -12774,7 +13098,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   min-width: 100%; max-height: 264px; overflow-y: auto;
   background: var(--bz-bel-paper);
   border: 2px solid var(--bz-bel-ink); border-radius: 0;
-  box-shadow: 6px 6px 0 rgba(23, 21, 18, 0.22);
+  box-shadow: 6px 6px 0 var(--bz-bel-shadow);
   z-index: 3; /* 面板内浮层：后置定位卡片会盖住同层菜单，小值抬一层（窗口层仍归 topifyZ） */
 }
 .bz-bel-yearsel.is-open .bz-bel-dropmenu { display: block; }
@@ -12835,8 +13159,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   cursor: default; user-select: none; -webkit-user-select: none;
 }
 .bz-bel-cell:hover { background: var(--bz-bel-ink); color: var(--bz-bel-paper); }
-.bz-bel-cell:hover .bz-bel-cell-idx { color: #b9b2a2; }
-.bz-bel-cell:hover .bz-bel-mut { color: #b9b2a2; }
+.bz-bel-cell:hover .bz-bel-cell-idx { color: var(--bz-bel-ink-muted); }
+.bz-bel-cell:hover .bz-bel-mut { color: var(--bz-bel-ink-muted); }
 .bz-bel-cell-idx { font-size: var(--bz-font-caption); letter-spacing: 2px; color: var(--bz-text-3); }
 .bz-bel-tag {
   position: absolute; top: 13px; right: 13px;
@@ -12848,8 +13172,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 状态徽章（数据语义色，P20 海报化：使用中=实底墨 / 闲置=赤橙 / 转卖=棕橙 / 丢弃=虚线灰） */
 .bz-bel-tag--using { background: var(--bz-bel-ink); border-color: var(--bz-bel-ink); color: var(--bz-bel-paper); }
 .bz-bel-tag--idle { border-color: var(--bz-bel-accent); color: var(--bz-bel-accent); }
-.bz-bel-tag--sold { border-color: #8a5a26; color: #8a5a26; }
-.bz-bel-tag--discard { border-style: dashed; border-color: #8a8375; color: #8a8375; }
+.bz-bel-tag--sold { border-color: var(--bz-bel-tag-sold); color: var(--bz-bel-tag-sold); }
+.bz-bel-tag--discard { border-style: dashed; border-color: var(--bz-bel-tag-discard); color: var(--bz-bel-tag-discard); }
 .bz-bel-cell:hover .bz-bel-tag--using { background: var(--bz-bel-paper); border-color: var(--bz-bel-paper); color: var(--bz-bel-ink); }
 .bz-bel-cell-em { font-size: 40px; line-height: 1; margin: auto 0; padding: 10px 0 var(--bz-space-sm); }
 .bz-bel-name {
@@ -12879,7 +13203,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   width: 520px; max-width: calc(100vw - 32px); max-height: 86vh; overflow-y: auto;
   background: var(--bz-bel-paper); color: var(--bz-bel-ink);
   border: 2px solid var(--bz-bel-ink); border-radius: 0;
-  box-shadow: 10px 10px 0 rgba(23, 21, 18, 0.85);
+  box-shadow: 10px 10px 0 var(--bz-bel-shadow-strong);
   padding: 22px var(--bz-space-xl);
 }
 .bz-bel-detail-head {
@@ -12917,7 +13241,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border-radius: 0; padding: 0; min-width: 160px;
   background: var(--bz-bel-paper);
   border: 2px solid var(--bz-bel-ink);
-  box-shadow: 6px 6px 0 rgba(23, 21, 18, 0.85);
+  box-shadow: 6px 6px 0 var(--bz-bel-shadow-strong);
   overflow: hidden;
 }
 .bz-item-menu.bz-bel-menu button.bz-item-menu-item { border-radius: 0 !important; padding: 10px var(--bz-space-lg); font-size: var(--bz-font-label); letter-spacing: 1px; }
@@ -12934,7 +13258,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-bel-form {
   background: var(--bz-bel-paper); color: var(--bz-bel-ink);
   border-radius: 0;
-  border: 2px solid var(--bz-bel-ink); box-shadow: 10px 10px 0 rgba(23, 21, 18, 0.85);
+  border: 2px solid var(--bz-bel-ink); box-shadow: 10px 10px 0 var(--bz-bel-shadow-strong);
   width: 480px; max-width: calc(100vw - 32px); max-height: 86vh; overflow-y: auto;
   padding: var(--bz-space-lg); display: flex; flex-direction: column;
 }
@@ -12944,7 +13268,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-bel-form .bz-popover {
   background: var(--bz-bel-paper);
   border: 1.5px solid var(--bz-bel-ink); border-radius: 0;
-  box-shadow: 4px 4px 0 rgba(23, 21, 18, 0.15);
+  box-shadow: 4px 4px 0 var(--bz-bel-shadow-pop);
 }
 .bz-bel-form .bz-popover-item:hover { background: var(--bz-bel-dim); }
 .bz-bel-form .bz-popover-item.is-on { background: var(--bz-bel-dim); color: var(--bz-bel-accent); }
@@ -14347,10 +14671,612 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-rr-author-card {
   cursor: pointer;
   transition: transform var(--bz-dur-fast) ease;
+  /* 内联收编（issue 270）：原行内 padding/radius/白字/排名锚点（背景渐变按名次运行时取色仍内联） */
+  padding: 15px;
+  border-radius: 8px;
+  color: white;
+  position: relative;
 }
 
 .bz-rr-author-card:hover {
   transform: translateY(-2px);
+}
+
+/* ============================================================
+ * 报告静态样式收编（issue 270）：report.ts 187 处内联 style 逐字迁入——
+ * 值不改只换挂载方式（仓库「逐字搬运」惯例）；数据驱动值（条宽/柱高/
+ * 等级色阶/排名渐变底）仍留内联。报告嵌于书架墙面板，本块随主题变量走。
+ * ============================================================ */
+
+/* ---------- 容器卡 / 次级面板 ---------- */
+
+/* 段落容器卡（background-primary + 墨边框；报告各分析段通用外壳） */
+.bz-rr-card {
+  background: var(--background-primary);
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid var(--background-modifier-border);
+  margin: 20px 0;
+}
+
+/* 紧凑档（阅读速度分析容器：原 padding 16 / radius 8 / margin 16） */
+.bz-rr-card--sm {
+  padding: 16px;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+/* 次级面板（background-secondary 无边框：概览时长块 / 速度等级块） */
+.bz-rr-panel {
+  background: var(--background-secondary);
+  padding: 20px;
+  border-radius: 10px;
+  margin: 20px 0;
+}
+
+.bz-rr-panel--sm {
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+/* ---------- 分块间距 / 空态 ---------- */
+
+.bz-rr-section {
+  margin: 25px 0;
+}
+
+.bz-rr-block {
+  margin: 20px 0;
+}
+
+.bz-rr-empty {
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.bz-rr-empty--pad {
+  padding: 40px 0;
+}
+
+.bz-rr-empty--pad-sm {
+  padding: 20px 0;
+}
+
+/* ---------- 网格（逐字收编：各段 minmax/gap/margin 原值一档一类） ---------- */
+
+.bz-rr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.bz-rr-year-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.bz-rr-author-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.bz-rr-trend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.bz-rr-hm-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.bz-rr-focus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.bz-rr-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.bz-rr-int-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.bz-rr-speed-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.bz-rr-cell-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* 专注度对比空占位块（原样保留结构） */
+.bz-rr-block-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+/* ---------- 渐变统计卡（hero：饱和渐变底 + 白字，两主题可读不加 dark 档） ---------- */
+
+.bz-rr-hero {
+  padding: 20px;
+  border-radius: 10px;
+  color: white;
+  text-align: center;
+}
+
+/* 紧凑档（速度分析：padding 16 / radius 8） */
+.bz-rr-hero--sm {
+  padding: 16px;
+  border-radius: 8px;
+}
+
+/* 中档（专注/分类：padding 15 / radius 8） */
+.bz-rr-hero--pad {
+  padding: 15px;
+  border-radius: 8px;
+}
+
+/* 纵排档（分类卡：min-height 80 + 纵向居中） */
+.bz-rr-hero--col {
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* 渐变底五档（值与 core/chart-palette.ts CHART_GRADIENT_* 逐字一致，勿单侧改动） */
+.bz-rr-hero--violet {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.bz-rr-hero--pink {
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+}
+
+.bz-rr-hero--aqua {
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+}
+
+.bz-rr-hero--mint {
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+}
+
+.bz-rr-hero--coral {
+  background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+}
+
+/* 卡内数字/标签（概览 2em / 专注 1.8em / 分类带截断 / 速度 px 档） */
+.bz-rr-hero-num {
+  font-size: 2em;
+  font-weight: bold;
+}
+
+.bz-rr-hero-num--lg {
+  font-size: 1.8em;
+  font-weight: bold;
+}
+
+.bz-rr-hero-num--cat {
+  font-size: 1.8em;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.bz-rr-hero-num--clamp {
+  font-size: 1.5em;
+  font-weight: bold;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bz-rr-hero-num--sm {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.bz-rr-hero-label {
+  font-size: 0.8em;
+  opacity: 0.9;
+}
+
+.bz-rr-hero-label--mt {
+  font-size: 0.8em;
+  opacity: 0.9;
+  margin-top: 5px;
+}
+
+.bz-rr-hero-label--sm {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 4px;
+}
+
+.bz-rr-hero-sub {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* ---------- 指标卡（次级底数字 + 标签；数字色走 .bz-rr-c-* 档） ---------- */
+
+.bz-rr-metric {
+  text-align: center;
+  padding: 15px;
+  background: var(--background-secondary);
+  border-radius: 8px;
+}
+
+/* 紧凑档（热力图统计卡：padding 12） */
+.bz-rr-metric--tight {
+  padding: 12px;
+}
+
+.bz-rr-metric-num {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.bz-rr-metric-num--lg {
+  font-size: 1.8em;
+  font-weight: bold;
+}
+
+.bz-rr-metric-num--xl {
+  font-size: 2em;
+  font-weight: bold;
+}
+
+.bz-rr-metric-label {
+  font-size: 0.9em;
+  color: var(--text-muted);
+}
+
+.bz-rr-metric-label--sm {
+  font-size: 0.8em;
+  color: var(--text-muted);
+}
+
+.bz-rr-metric-label--normal {
+  font-size: 0.85em;
+  color: var(--text-normal);
+}
+
+/* ---------- 指标数字强调色（亮档 = core/chart-palette.ts CHART_METRIC_* 逐字值；
+ * 暗底中调色偏暗，.theme-dark 统一 color-mix 提亮（渐变 hero 卡不受影响）） ---------- */
+
+.bz-rr-c-violet {
+  color: #667eea;
+}
+.bz-rr-c-aqua {
+  color: #4facfe;
+}
+.bz-rr-c-mint {
+  color: #43e97b;
+}
+.bz-rr-c-coral {
+  color: #ff6b6b;
+}
+.bz-rr-c-red {
+  color: #e74c3c;
+}
+.bz-rr-c-blue {
+  color: #3498db;
+}
+.bz-rr-c-purple {
+  color: #9b59b6;
+}
+.bz-rr-c-green {
+  color: #27ae60;
+}
+.bz-rr-c-orange {
+  color: #e67e22;
+}
+.bz-rr-c-sky {
+  color: #64d6f3;
+}
+
+.theme-dark .bz-rr-c-violet {
+  color: color-mix(in srgb, #667eea 60%, #ffffff);
+}
+.theme-dark .bz-rr-c-aqua {
+  color: color-mix(in srgb, #4facfe 60%, #ffffff);
+}
+.theme-dark .bz-rr-c-mint {
+  color: color-mix(in srgb, #43e97b 60%, #ffffff);
+}
+.theme-dark .bz-rr-c-coral {
+  color: color-mix(in srgb, #ff6b6b 60%, #ffffff);
+}
+.theme-dark .bz-rr-c-red {
+  color: color-mix(in srgb, #e74c3c 60%, #ffffff);
+}
+.theme-dark .bz-rr-c-blue {
+  color: color-mix(in srgb, #3498db 60%, #ffffff);
+}
+.theme-dark .bz-rr-c-purple {
+  color: color-mix(in srgb, #9b59b6 60%, #ffffff);
+}
+.theme-dark .bz-rr-c-green {
+  color: color-mix(in srgb, #27ae60 60%, #ffffff);
+}
+.theme-dark .bz-rr-c-orange {
+  color: color-mix(in srgb, #e67e22 60%, #ffffff);
+}
+.theme-dark .bz-rr-c-sky {
+  color: color-mix(in srgb, #64d6f3 75%, #ffffff);
+}
+
+/* 奖杯同属中调色（琥珀棕），暗底提亮一档 */
+.theme-dark .bz-rr-trophy {
+  color: color-mix(in srgb, #b45309 60%, #ffffff);
+}
+
+/* ---------- 统计概览（总时长 + 划线/想法/讨论/出链/均行） ---------- */
+
+.bz-rr-total {
+  font-size: 2.5em;
+  font-weight: bold;
+  color: var(--text-normal);
+  text-align: center;
+  margin: 20px 0;
+}
+
+.bz-rr-metric-row {
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+  margin-top: 30px;
+}
+
+/* ---------- 年度统计（年卡内文字档） ---------- */
+
+.bz-rr-year-title {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.bz-rr-year-time {
+  font-size: 0.8em;
+  opacity: 0.8;
+  margin-top: 3px;
+}
+
+/* ---------- 作者统计（卡内布局；渐变底按名次运行时取色仍内联） ---------- */
+
+.bz-rr-author-rank {
+  font-size: 2em;
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  opacity: 0.3;
+}
+
+.bz-rr-author-name {
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.bz-rr-author-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.bz-rr-author-time {
+  margin-top: 5px;
+  font-size: 0.9em;
+}
+
+/* ---------- 阅读速度分析 ---------- */
+
+.bz-rr-speed-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.bz-rr-speed-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-normal);
+}
+
+.bz-rr-speed-level {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.bz-rr-speed-track {
+  width: 100%;
+  height: 8px;
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+/* 填充档：渐变常量（CHART_SPEED_BAR_GRADIENT 值逐字一致），宽度数据驱动留内联 */
+.bz-rr-speed-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #4CAF50, #45a049);
+}
+
+.bz-rr-speed-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* 效率/类型/最佳速度/时长小卡（primary 底 + 边框） */
+.bz-rr-cell {
+  background: var(--background-primary);
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  text-align: center;
+}
+
+.bz-rr-cell-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.bz-rr-cell-num {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.bz-rr-cell-num--sm {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ---------- 专注度分布（行式条形） ---------- */
+
+.bz-rr-focus-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bz-rr-focus-row {
+  display: flex;
+  align-items: center;
+  background: var(--background-secondary);
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.bz-rr-focus-label {
+  width: 60px;
+  font-size: 0.85em;
+  color: var(--text-normal);
+  font-weight: bold;
+}
+
+.bz-rr-focus-mid {
+  flex: 1;
+  margin: 0 15px;
+}
+
+.bz-rr-focus-track {
+  width: 100%;
+  height: 8px;
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* 填充静态档；宽/底色按运行时档位循环取色留内联 */
+.bz-rr-focus-fill {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.bz-rr-focus-val {
+  width: 50px;
+  text-align: right;
+  font-size: 0.9em;
+  color: var(--text-muted);
+}
+
+/* ---------- 热力图月网格（段头/星期/格子布局） ---------- */
+
+.bz-rr-hm-month {
+  margin-bottom: 25px;
+}
+
+.bz-rr-hm-subhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.bz-rr-hm-subtitle {
+  font-weight: bold;
+  color: var(--text-normal);
+  font-size: 1.1em;
+}
+
+.bz-rr-hm-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  margin-bottom: 8px;
+}
+
+.bz-rr-hm-weekday {
+  text-align: center;
+  font-size: 0.75em;
+  color: var(--text-faint);
+  padding: 2px;
+}
+
+.bz-rr-hm-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  margin-right: -20px;
+}
+
+/* 空白格（future/nodata 主题中性底；数据格色阶运行时取色仍内联） */
+.bz-rr-hm-cell--off {
+  background: var(--background-secondary);
+}
+
+/* ---------- 月柱数字墨色（CHART_INK 值逐字一致：粉彩柱底两主题一致） ---------- */
+
+.bz-rr-mbar-num {
+  color: #3D4456;
+}
+
+/* ---------- 杂项（条形行包裹 / 段头占位） ---------- */
+
+.bz-rr-bar-wrap {
+  margin: 12px 0;
+}
+
+.bz-rr-sec-head {
+  font-weight: bold;
+  color: var(--text-normal);
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 /* ============================================================
  * 知识盒（knowledge 域）样式 · ADR-0112
@@ -14478,6 +15404,25 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   color: var(--ink);
   margin-top: 3px;
   text-indent: 0.5em;
+}
+
+/* 面板头品牌区（桌面：头部网格中列题字锁定；移动：块级头部通栏居中）——ink 随主题 + accent 点墨短线 */
+.bz-kb-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-self: center;
+  min-width: 0;
+  color: var(--ink);
+}
+.bz-kb-brand::after {
+  content: "";
+  width: 26px;
+  height: 2px;
+  margin-top: 7px;
+  border-radius: 1px;
+  background: var(--accent);
+  opacity: 0.6;
 }
 
 /* ===== 内容滚动区 ===== */
@@ -15068,6 +16013,33 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-lit-accent-btn:disabled { background: var(--chip); color: var(--ink3); cursor: default; }
 
+/* 术语弹窗取消钮 ghost 档（与 .bz-lit-accent-btn 成对）：透底细边，hover 转芯片底；
+   成对选择器抬特异性，压过 .bz-lit-term-actions button:not(.bz-lit-accent-btn) 的 hover 描边档 */
+.bz-lit-ghost-btn,
+.bz-lit-term-actions button.bz-lit-ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--ink2);
+  border-radius: 9px;
+  padding: var(--bz-space-sm) var(--bz-space-lg);
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  font-family: inherit;
+  height: auto !important;
+  transition: border-color var(--bz-dur-fast), background var(--bz-dur-fast), color var(--bz-dur-fast);
+}
+.bz-lit-ghost-btn:hover,
+.bz-lit-term-actions button.bz-lit-ghost-btn:hover {
+  border-color: var(--accent);
+  background: var(--chip);
+  color: var(--ink);
+}
+.bz-lit-ghost-btn:disabled { border-color: var(--line); background: none; color: var(--ink3); cursor: default; }
+
 .bz-lit-term-body { display: flex; flex-direction: column; min-width: 0; }
 .bz-lit-term-dialog { width: min(480px, 92vw); }
 
@@ -15197,6 +16169,21 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   justify-content: center;
 }
 .bz-lit-head-btns button:hover { background: var(--chip) !important; }
+/* 批量处理钮（▶️/⏹ 单钮态机，桌面端专属）：头行图标组内的强调档——accent 软底衬符文，
+   禁用沉芯片底；成对选择器 + !important 压过同组 button 的透底档 */
+.bz-lit-head-btns button.bz-lit-run-btn {
+  background: color-mix(in srgb, var(--accent) 16%, transparent) !important;
+  color: var(--accent) !important;
+  transition: background var(--bz-dur-fast);
+}
+.bz-lit-head-btns button.bz-lit-run-btn:hover {
+  background: color-mix(in srgb, var(--accent) 30%, transparent) !important;
+}
+.bz-lit-head-btns button.bz-lit-run-btn:disabled {
+  background: var(--chip) !important;
+  color: var(--ink3) !important;
+  cursor: default;
+}
 .bz-lit-toolbar {
   flex: none;
   display: flex;
@@ -15234,8 +16221,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* ============================================================
    第二大脑 · 定稿原型主题（issue 251 / ADR-0110）
-   三界面：主面板 / AI 对话 / 灵感参考 —— 米白 #fbfaf7 × 红棕 #a33d2a，
-   面板固定浅色自成一体，不随 .theme-dark 反色（favorites C5 同款先例）。
+   三界面：主面板 / AI 对话 / 灵感参考 —— 米白 #fbfaf7 × 红棕 #a33d2a。
+   暗色（issue 270，原「固定浅色不随 .theme-dark 反色」拍板作废）：
+   七根（三界面 + 移动抽屉/胶囊 + 浮动参考卡/hover 预览两个 body 逸出点）
+   同组 --sb-* 暗色覆盖，亮侧零改动（先例：cinema .cn-skin）。
    markup 单源 render.ts；本文件为唯一样式源（bz-sb-* 前缀）。
    移动端抽屉段（bz-sb-mb-*）同皮（issue 251 追加）：吸同一套 token。
    ============================================================ */
@@ -15252,17 +16241,22 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   display: none !important;
 }
 
-/* ==================== 主题 token（根容器同套：三界面 + 移动抽屉/胶囊） ==================== */
-
+/* ==================== 主题 token（根容器同套：三界面 + 移动抽屉/胶囊 + 双逸出点） ====================
+   双逸出点（reference-panel.ts 直挂 document.body，面板树外取不到继承）：
+   .bz-sb-ref-card--float 拖出的浮动参考卡、.bz-sb-ref-preview hover 预览——
+   类名自携 token 源（同 cinema .cn-skin 手法），在列时类摘除由浮窗根供给 */
 .bz-sb-panel,
 .bz-sb-chat-modal,
 .bz-sb-float-win,
 .bz-sb-mb-sheet,
-.bz-sb-mb-mini {
+.bz-sb-mb-mini,
+.bz-sb-ref-preview,
+.bz-sb-ref-card--float {
   --sb-bg: #fbfaf7;
   --sb-card: #ffffff;
   --sb-ink: #211d16;
   --sb-ink2: #544e42;
+  --sb-ink3: #6b6455; /* 次强功能字（功能钮/节题/chips） */
   --sb-mut: #a39b8c;
   --sb-faint: #c4bcae;
   --sb-line: #eae4d8;
@@ -15271,12 +16265,42 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   --sb-acc-soft: #fdf6f3;
   --sb-acc-line: #eeddd5;
   --sb-dark: #211d16;
+  --sb-track: #f3efe6; /* 轨道/行内 code 底（分数条/进度槽/pre） */
+  --sb-warn: #b45309;
+  --sb-on-acc: #fbfaf7; /* acc/深墨底上的字 */
 }
 
 .bz-sb-panel button,
 .bz-sb-chat-modal button,
 .bz-sb-mb-sheet button {
   font-family: inherit;
+}
+
+/* 暗色 token 组（issue 270）：七根同前缀整组覆盖，深炭棕底 × 红棕提亮档。
+   深墨锚 --sb-dark 转深红棕（user 气泡/主钮在暗底上仍成块），acc 提亮保对比 */
+.theme-dark .bz-sb-panel,
+.theme-dark .bz-sb-chat-modal,
+.theme-dark .bz-sb-float-win,
+.theme-dark .bz-sb-mb-sheet,
+.theme-dark .bz-sb-mb-mini,
+.theme-dark .bz-sb-ref-preview,
+.theme-dark .bz-sb-ref-card--float {
+  --sb-bg: #17150f;
+  --sb-card: #211d16;
+  --sb-ink: #ece7db;
+  --sb-ink2: #c9c1b1;
+  --sb-ink3: #a89f8d;
+  --sb-mut: #877f6e;
+  --sb-faint: #6b6353;
+  --sb-line: #322c21;
+  --sb-line2: #3e3627;
+  --sb-acc: #c4523d;
+  --sb-acc-soft: #2b1f19;
+  --sb-acc-line: #4a2d23;
+  --sb-dark: #3f231b;
+  --sb-track: #171410;
+  --sb-warn: #e08a2e;
+  --sb-on-acc: #fbfaf7;
 }
 
 /* ==================== 主面板弹窗（统一入口） ==================== */
@@ -15397,7 +16421,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border-radius: var(--bz-radius-sm);
   border: 1px solid var(--sb-line2);
   background: var(--sb-card);
-  color: #6b6455;
+  color: var(--sb-ink3);
   font-size: 12.5px;
   display: inline-flex;
   align-items: center;
@@ -15415,7 +16439,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-sb-fbtn--primary {
   background: var(--sb-dark);
   border-color: var(--sb-dark);
-  color: #fbfaf7;
+  color: var(--sb-on-acc);
 }
 .bz-sb-fbtn--primary:hover {
   background: var(--sb-acc);
@@ -15483,7 +16507,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   color: var(--sb-acc);
 }
 .bz-sb-card-value--warn {
-  color: #b45309;
+  color: var(--sb-warn);
 }
 .bz-sb-card-label {
   font-size: 11.5px;
@@ -15530,7 +16554,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   flex: none;
   font-size: var(--bz-font-meta);
   font-weight: 600;
-  color: #6b6455;
+  color: var(--sb-ink3);
   letter-spacing: 0.04em;
   display: flex;
   align-items: center;
@@ -15570,7 +16594,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   min-height: 2px;
 }
 .bz-sb-trend-col--last .bz-sb-trend-bar {
-  background: linear-gradient(180deg, #544e42, #211d16);
+  /* 墨色柱 = ink2→dark 渐变收编（亮侧原 #544e42→#211d16 值等价），暗色随 token 翻转 */
+  background: linear-gradient(180deg, var(--sb-ink2), var(--sb-dark));
 }
 .bz-sb-trend-col span {
   font-size: 9.5px;
@@ -15620,7 +16645,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sb-dist-bar {
   height: 7px;
-  background: #f3efe6;
+  background: var(--sb-track);
   border-radius: 99px;
   overflow: hidden;
 }
@@ -15742,7 +16767,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   text-overflow: ellipsis;
 }
 .bz-sb-log-item--warn {
-  color: #b45309;
+  color: var(--sb-warn);
 }
 .bz-sb-log-sep {
   margin: 0 6px;
@@ -15789,7 +16814,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border-radius: 10px;
   border: none;
   background: var(--sb-dark);
-  color: #fbfaf7;
+  color: var(--sb-on-acc);
   font-size: var(--bz-font-label);
   cursor: pointer;
   user-select: none;
@@ -15813,7 +16838,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-sb-init-bar {
   width: 100%;
   height: 8px;
-  background: #f3efe6;
+  background: var(--sb-track);
   border-radius: 99px;
   overflow: hidden;
 }
@@ -15972,7 +16997,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sb-chat-msg.user .bz-sb-chat-bubble {
   background: var(--sb-dark);
-  color: #fbfaf7;
+  color: var(--sb-on-acc);
   font-size: var(--bz-font-label);
   line-height: 1.65;
   white-space: pre-wrap;
@@ -16000,13 +17025,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   padding-left: 20px;
 }
 .bz-sb-chat-bubble code {
-  background: #f3efe6;
+  background: var(--sb-track);
   border-radius: var(--bz-radius-xs);
   padding: 0 5px;
   font-size: var(--bz-font-meta);
 }
 .bz-sb-chat-bubble pre {
-  background: #f3efe6;
+  background: var(--sb-track);
   border-radius: var(--bz-radius-sm);
   padding: 9px var(--bz-space-md);
   overflow: auto;
@@ -16147,7 +17172,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border-radius: 50%;
   border: none;
   background: var(--sb-dark);
-  color: #fbfaf7;
+  color: var(--sb-on-acc);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -16169,7 +17194,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sb-chat-chip {
   font-size: 11.5px;
-  color: #6b6455;
+  color: var(--sb-ink3);
   border: 1px solid var(--sb-line2);
   background: var(--sb-card);
   border-radius: 99px;
@@ -16388,7 +17413,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 分数条（定稿原型新元素） */
 .bz-sb-ref-card-bar {
   height: 3px;
-  background: #f3efe6;
+  background: var(--sb-track);
   border-radius: 99px;
   margin: 7px 0 2px;
   overflow: hidden;
@@ -16466,7 +17491,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sb-ref-preview-body pre,
 .bz-sb-ref-preview-body code {
-  background: #f3efe6;
+  background: var(--sb-track);
   border-radius: var(--bz-radius-xs);
   font-size: var(--bz-font-caption);
 }
@@ -16530,7 +17555,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-sb-mb-pill.active {
   background: var(--sb-acc);
   border-color: var(--sb-acc);
-  color: #fbfaf7;
+  color: var(--sb-on-acc);
 }
 .bz-sb-mb-drag-strip {
   flex: 1;
@@ -16689,7 +17714,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sb-mb-chat-msg.user .bz-sb-mb-chat-bubble {
   background: var(--sb-dark);
-  color: #fbfaf7;
+  color: var(--sb-on-acc);
 }
 .bz-sb-mb-chat-msg.assistant .bz-sb-mb-chat-bubble {
   background: var(--sb-card);
@@ -16761,7 +17786,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border: none;
   border-radius: 50%;
   background: var(--sb-acc);
-  color: #fbfaf7;
+  color: var(--sb-on-acc);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -16786,7 +17811,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-sb-mb-chat-chip {
   font-size: var(--bz-font-caption);
-  color: #6b6455;
+  color: var(--sb-ink3);
   border: 1px solid var(--sb-line2);
   background: var(--sb-card);
   border-radius: 99px;
@@ -16812,6 +17837,72 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   height: 100%;
   border-radius: 99px;
   background: var(--sb-acc);
+}
+
+/* ==================== 暗色装饰档（issue 270，全部 .theme-dark 前缀，亮侧零改动） ====================
+   token 组覆盖不到的一次性位：装饰渐变 / 一次性文字档 / 阴影 / 脉冲光圈 */
+
+/* 趋势柱与初始化进度：红棕渐变提亮档 */
+.theme-dark .bz-sb-panel .bz-sb-trend-bar {
+  background: linear-gradient(180deg, #b26b58, #c4523d);
+}
+.theme-dark .bz-sb-panel .bz-sb-init-fill {
+  background: linear-gradient(90deg, #b26b58, #c4523d);
+}
+/* AI 摘要卡暖纸渐变 → 暖褐渐变；一次性正文文字档提亮 */
+.theme-dark .bz-sb-panel .bz-sb-ai {
+  background: linear-gradient(135deg, #251d14, #271b15);
+}
+.theme-dark .bz-sb-panel .bz-sb-ai-txt {
+  color: #c9c1b1;
+}
+.theme-dark .bz-sb-chat-modal .bz-sb-chat-msg.assistant .bz-sb-chat-bubble {
+  color: #d8d1c2;
+}
+.theme-dark .bz-sb-ref-card-body {
+  color: #a89f8d; /* 列表内（浮窗树）与拖出浮动卡（自携 token 源）两处通用 */
+}
+
+/* 阴影加深：黑影在暗底不可见，统一抬深 */
+.theme-dark .bz-sb-panel,
+.theme-dark .bz-sb-chat-modal {
+  box-shadow: 0 24px 60px #00000080;
+}
+.theme-dark .bz-sb-float-win {
+  box-shadow: -4px 0 18px rgba(0, 0, 0, 0.5);
+}
+/* 最大化去阴影语义暗色保持（排在加深规则之后，同权后到覆盖） */
+.theme-dark .bz-sb-float-win.bz-sb-float-max {
+  box-shadow: none;
+}
+.theme-dark .bz-sb-ref-card--held {
+  box-shadow: 0 4px 14px #c4523d55;
+}
+.theme-dark .bz-sb-ref-card--float {
+  box-shadow: 0 16px 40px #00000080;
+}
+.theme-dark .bz-sb-ref-preview {
+  box-shadow: 0 18px 44px #00000080;
+}
+.theme-dark .bz-sb-mb-sheet {
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.55);
+}
+.theme-dark .bz-sb-mb-mini {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+}
+
+/* 健康脉冲光圈：acc 提亮档（@keyframes 不吃选择器作用域，走 animation-name 切换） */
+@keyframes bz-sb-pulse-dark {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 #c4523d55;
+  }
+  55% {
+    box-shadow: 0 0 0 5px #c4523d00;
+  }
+}
+.theme-dark .bz-sb-panel .bz-sb-pill-dot {
+  animation-name: bz-sb-pulse-dark;
 }
 /**
  * smartcat 域样式（小橘陪伴猫）
