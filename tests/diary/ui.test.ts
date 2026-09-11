@@ -669,9 +669,9 @@ describe('回忆墙 UI', () => {
     await touchPress(mobItem, 550);
     const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
     expect(sheet).toBeTruthy();
-    // 富媒体头在场：emoji + 时间行 + 正文预览 + 右上关闭钮
+    // 富媒体头在场：emoji + 时间行 + 正文预览（关闭钮已全域退役——issue 271，点遮罩/下滑/ESC 关闭）
     expect(sheet.querySelector('.bz-diary-sheet-head')).toBeTruthy();
-    expect(sheet.querySelector('.bz-diary-sheet-close')).toBeTruthy();
+    expect(sheet.querySelector('.bz-diary-sheet-close')).toBeNull();
     // 动作行 = core 统一动作项（左对齐、!important 抗 Obsidian button 压盖）
     expect(sheet.querySelector('.bz-item-sheet-item')).toBeTruthy();
   });

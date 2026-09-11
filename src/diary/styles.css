@@ -1004,36 +1004,6 @@
   height: 100%;
   object-fit: cover;
 }
-/* 右上角关闭钮（2026-09-11 移动端评审新增，随富媒体头走 sheetHead 路径）。
-   !important 组抗 Obsidian 默认 button 样式（灰底/边框/居中）压盖——core 动作行同款防御姿势 */
-.bz-diary-sheet-close {
-  position: absolute;
-  top: 0;
-  right: 0;
-  flex-shrink: 0;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 30px;
-  padding: 0 !important;
-  border: none !important;
-  border-radius: var(--bz-radius-xs) !important;
-  background: none !important;
-  box-shadow: none !important;
-  color: var(--text-muted) !important;
-  font-size: var(--bz-font-body) !important;
-  line-height: 1;
-  cursor: pointer;
-  transition: background var(--bz-dur-fast);
-}
-.bz-diary-sheet-close:hover {
-  background: var(--background-secondary) !important;
-}
-.bz-diary-sheet-close .bz-ic {
-  width: var(--bz-font-body);
-  height: var(--bz-font-body);
-}
 
 /* ============ 空态 ============ */
 .bz-diary-empty {
