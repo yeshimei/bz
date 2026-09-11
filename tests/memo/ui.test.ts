@@ -1385,4 +1385,67 @@ describe('memo 移动端（issue 268）', () => {
     expect(document.querySelector('.bz-memo-editor')).toBeNull();
     expect(input.value).toBe('');
   });
+
+  /** 长按卡片打开抽屉（core longPress 500ms + 静置窗口 400ms 全部越过，防合成 click 吞掉后续点击） */
+  async function openSheetByLongPress(card: HTMLElement): Promise<HTMLElement> {
+    card.dispatchEvent(new Event('touchstart', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 1000));
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet, '长按应弹出移动抽屉').toBeTruthy();
+    return sheet;
+  }
+
+  it('移动抽屉头完成态：勾选圈 checked（与列表同源 markup）+ 标题划线；点圈恢复并关抽屉', async () => {
+    const { app, vault } = seedVault();
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-donebar')).toBeTruthy();
+    });
+    // 展开已完成折叠区，露出已完成卡 d
+    (document.querySelector('.bz-memo-donebar') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('.bz-memo-card.bz-memo-done').length).toBe(1);
+    });
+    const doneCard = [...document.querySelectorAll('.bz-memo-card')].find(
+      (c) => c.textContent!.includes('重看注意力机制')
+    ) as HTMLElement;
+    const sheet = await openSheetByLongPress(doneCard);
+    // 头部 = 勾选圈（完成态 checked）+ 标题（.done 划线）+ meta，勾选圈 markup 与列表单源
+    const headCheck = sheet.querySelector('.bz-item-sheet-head .bz-memo-check') as HTMLElement;
+    expect(headCheck).toBeTruthy();
+    expect(headCheck.classList.contains('bz-memo-checked')).toBe(true);
+    expect(headCheck.title).toBe('恢复未完成');
+    expect(sheet.querySelector('.bz-item-sheet-head .done')?.textContent).toBe('重看注意力机制');
+    // 点圈 = 恢复未完成：先关抽屉，再落盘（completed 置 null）
+    headCheck.click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-item-sheet')).toBeNull();
+      const d = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!).find((x: any) => x.id === 'd');
+      expect(d.completed).toBeNull();
+    });
+  });
+
+  it('移动抽屉头未完成态：点圈走列表同款防抖完成（300ms 后落盘）', async () => {
+    const { app, vault } = seedVault();
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('.bz-memo-card').length).toBe(3);
+    });
+    const firstCard = [...document.querySelectorAll('.bz-memo-card')].find(
+      (c) => c.textContent!.includes('完成阅读报告')
+    ) as HTMLElement;
+    const sheet = await openSheetByLongPress(firstCard);
+    const headCheck = sheet.querySelector('.bz-item-sheet-head .bz-memo-check') as HTMLElement;
+    expect(headCheck).toBeTruthy();
+    expect(headCheck.classList.contains('bz-memo-checked')).toBe(false);
+    expect(headCheck.title).toBe('标记完成');
+    // 300ms 防抖：立即落盘不发生，窗口后落盘
+    headCheck.click();
+    await new Promise((r) => setTimeout(r, 100));
+    expect(JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!).find((x: any) => x.id === 'a').completed).toBeNull();
+    await vi.waitFor(() => {
+      const a = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!).find((x: any) => x.id === 'a');
+      expect(a.completed).toBeTruthy();
+    });
+  });
 });

@@ -110,6 +110,15 @@
 .bz-memo-card.bz-memo-done .bz-memo-card-title { text-decoration: line-through; color: var(--bz-text-2); }
 .bz-memo-card-title a { color: var(--bz-brand); text-decoration: underline; cursor: pointer; word-break: break-word; }
 
+/* ---- 移动抽屉头（buildSheetHead，ADR-0104 markup 单源）----
+   勾选圈复用上方 .bz-memo-check 单源规则（抽屉经 sheetClass 挂皮肤类，纸感/编辑部皮肤自动随行，
+   无需皮肤段额外覆盖）；此处只补头部横排布局与完成态——对齐列表 .bz-memo-card.bz-memo-done
+   口径（整体暗淡 0.62 + 标题划线变次级色） */
+.bz-memo-sheet-entry { flex-direction: row; align-items: flex-start; gap: 10px; }
+.bz-memo-sheet-entry .bz-memo-check { margin-top: 2px; }
+.bz-memo-sheet-entry.bz-memo-done { opacity: 0.62; }
+.bz-memo-sheet-entry .done { text-decoration: line-through; color: var(--bz-text-2); }
+
 /* meta 标签行（顺序对齐源码 buildMeta：课程→脚本→链接→位置→场景→截止→时间）。
    行内所有文字统一 18px 行高盒——标签 18px + 时间 18px，flex 居中后基线一致
    （issue 199：此前时间默认 ~13px 行高盒，与标签文字基线错位 ~2.5px） */
@@ -211,6 +220,10 @@
   .bz-memo-card .bz-memo-check { width: 19px; height: 19px; }
   /* 触控热区 ≥44px（设计手册 §8.2）：视觉尺寸不变，::after 外扩热区（19px + 13px×2 = 45px） */
   .bz-memo-card .bz-memo-check::after { content: ''; position: absolute; inset: -13px; }
+  /* 移动抽屉头同款口径（review P3）：抽屉是移动端高频场景，圈同 19px + 45px 热区，
+     对齐列表移动段——规则同款、层叠路径同款（checked 对勾 ::after 两侧行为一致） */
+  .bz-memo-sheet-entry .bz-memo-check { width: 19px; height: 19px; }
+  .bz-memo-sheet-entry .bz-memo-check::after { content: ''; position: absolute; inset: -13px; }
   .bz-memo-card .bz-memo-card-title { font-size: var(--bz-font-emphasis); }
   .bz-memo-composer .bz-input { height: 40px; }
 }
