@@ -341,21 +341,23 @@ describe('回忆墙 UI', () => {
   });
 
   // ===== v2 新功能 =====
-  it('头行按钮组只剩「写日记 / 搜索」——关闭、设置、按年月跳转已按用户要求移除（图标 lucide 化）', async () => {
+  it('头行按钮组 =「写日记 / 搜索 / 关闭」——关闭钮 2026-09-11 移动端评审补回（仅移动端显示，桌面 CSS 隐藏）（图标 lucide 化）', async () => {
     await openAndWait();
     const btns = Array.from(document.querySelectorAll('.bz-diary-desk .bz-diary-btns [data-act]')).map(
       (b) => (b as HTMLElement).dataset.act
     );
-    expect(btns).toEqual(['add', 'search']);
-    // 头行图标：pen-line / search（uiIcon 经 setIcon 渲染，mock 记录到 dataset.icon）
+    expect(btns).toEqual(['add', 'search', 'close']);
+    // 头行图标：pen-line / search / x（uiIcon 经 setIcon 渲染，mock 记录到 dataset.icon）
     const icons = Array.from(
       document.querySelectorAll<HTMLElement>('.bz-diary-desk .bz-diary-btns [data-act] .bz-ic')
     ).map((i) => i.dataset.icon);
-    expect(icons).toEqual(['pen-line', 'search']);
-    // 三枚退役按钮在头行不再存在（关闭仍可经 ESC / 点遮罩）
-    for (const act of ['close', 'settings', 'date-picker']) {
+    expect(icons).toEqual(['pen-line', 'search', 'x']);
+    // 退役按钮（设置/按年月跳转）在头行不再存在；关闭钮在桌面实例隐藏（.bz-diary-head-close）
+    for (const act of ['settings', 'date-picker']) {
       expect(document.querySelector(`.bz-diary-desk .bz-diary-btns [data-act="${act}"]`), act).toBeNull();
     }
+    const closeBtn = document.querySelector('.bz-diary-desk .bz-diary-btns [data-act="close"]') as HTMLElement;
+    expect(closeBtn.classList.contains('bz-diary-head-close')).toBe(true);
     // 日期筛选入口仍由品牌行承担
     const brand = document.querySelector('.bz-diary-desk .bz-diary-brand') as HTMLElement;
     expect(brand.dataset.act).toBe('date-picker');
@@ -639,14 +641,14 @@ describe('回忆墙 UI', () => {
     expect(item.querySelector('.bz-diary-ops')).toBeNull();
   });
 
-  it('移动端单击条目 → 打开底部抽屉', async () => {
+  it('移动端单击条目 → 不开底部抽屉（2026-09-11 评审取消单击入口，唯一入口 = 长按）', async () => {
     await openAndWait();
     // 移动实例（.bz-diary-mob）的条目：jsdom 无媒体差异，移动实例与桌面共用 renderWall(mobile=true)
     const mob = document.querySelector('.bz-diary-mob')!;
     const item = mob.querySelector('.bz-diary-item') as HTMLElement;
     expect(item).toBeTruthy();
     item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(mob.querySelector('.bz-sheet--show')).toBeTruthy();
+    expect(mob.querySelector('.bz-sheet--show')).toBeNull();
   });
 
   it('长按条目 → 底部抽屉（统一手势 core/dom.longPress）：桌面长按不开、移动端短按不开、移动端长按开；抽屉仍是 .bz-diary-sheet 详情壳', async () => {
@@ -752,19 +754,14 @@ describe('回忆墙 UI', () => {
     spy.mockRestore();
   });
 
-  it('DW4：移动端媒体单击开条目抽屉（不直进灯箱）；DW7：重渲染宽高比稳定', async () => {
+  it('DW4 反转：移动端媒体单击回归灯箱预览（抽屉只留长按入口）；DW7：重渲染宽高比稳定', async () => {
     await openAndWait();
     const mob = document.querySelector('.bz-diary-mob')!;
     const media = mob.querySelector('.bz-diary-media') as HTMLElement;
     expect(media).toBeTruthy();
     media.click();
-    // 抽屉打开（媒体条目的条目级动作可达），灯箱未开
-    expect(mob.querySelector('.bz-sheet--show')).toBeTruthy();
-    expect(mob.querySelector('.bz-diary-lb--show')).toBeNull();
-    // 抽屉内媒体缩略图仍可进灯箱（openLightbox 按可见实例亮——jsdom 桌面宽度 → desk 实例）
-    const thumb = mob.querySelector('.bz-diary-sheet-thumb') as HTMLElement;
-    expect(thumb).toBeTruthy();
-    thumb.click();
+    // 单击不再开抽屉，直接进灯箱预览（条目级动作经长按抽屉可达）
+    expect(mob.querySelector('.bz-sheet--show')).toBeNull();
     expect(document.querySelector('.bz-diary-lb--show')).toBeTruthy();
     // DW7：重渲染后同条目媒体宽高比不变（稳定散列，非全局递增 seed）
     const c = DiaryAppController.instance!;

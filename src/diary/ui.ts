@@ -27,7 +27,7 @@
  * 动作结果经域事件（diary:entry-added/tags-changed/entry-deleted/entry-decrypted/encrypted-purged/file-vacated）
  * 防抖重载本墙。旧编辑面板的「在日记本中查看」动作随域退役（墙即日记本，无处可看）。
  * 条目动作（issue 198 批次 A 收敛）：桌面右键 = core item-actions 跟手菜单（.bz-item-menu）；
- * 移动端单击 = 共享 .bz-sheet 底部抽屉（动作集与菜单不合并，维持域内现状）。
+ * 移动端长按 = 共享 .bz-sheet 底部抽屉（单击入口已按 2026-09-11 评审取消，动作集与菜单不合并）。
  */
 import { Component, MarkdownRenderer, type App, type EventRef, type IconName } from 'obsidian';
 import { escManager } from '../core/esc-manager';
@@ -342,6 +342,8 @@ export class DiaryAppController {
     ui.head.querySelector('[data-act="add"]')?.addEventListener('click', () => this.openAddEntry());
     // 搜索：toggle 真搜索框
     ui.head.querySelector('[data-act="search"]')?.addEventListener('click', () => this.toggleSearch(ui));
+    // 关闭面板（2026-09-11 移动端评审补回：全屏页无遮罩可点；桌面由 CSS 隐藏该钮）
+    ui.head.querySelector('[data-act="close"]')?.addEventListener('click', () => this.hide());
     // 关闭（ESC / 点遮罩）与设置直达的按钮已随头行精简移除，见 render.ts wallPanelHTML 注释
     // 灯箱关闭按钮（双实例各自一份）
     ui.lb.querySelector('[data-act="lb-close"]')?.addEventListener('click', (e) => {
@@ -859,9 +861,9 @@ export class DiaryAppController {
     }
   }
 
-  /** 条目级交互：移动端单击 → 抽屉；双击 → 跳转原文；右键 → 跟手上下文菜单（桌面）；加密隐藏时不弹 */
+  /** 条目级交互：双击 → 跳转原文；右键 → 跟手上下文菜单（桌面）；加密隐藏时不弹。
+   *  单击开抽屉已取消（2026-09-11 用户评审）：移动端抽屉唯一入口 = 长按（bindWallContext）。 */
   private bindItem(item: HTMLElement, e: WallEntry, mobile: boolean) {
-    // 单击：仅移动端开抽屉（桌面端动作入口 = 右键菜单 / 双击跳转，避免误触底部抽屉）
     // 双击跳转（300ms 内两次点击）
     let lastClick = 0;
     item.addEventListener('click', (ev) => {
@@ -873,7 +875,6 @@ export class DiaryAppController {
         return;
       }
       lastClick = now;
-      if (mobile) this.openSheet(e);
     });
     // 右键 → 跟手上下文菜单（桌面；capture 捕获阶段拦截，防止 Obsidian 全局右键菜单抢先处理）。
     // 委托挂在 wall 容器（bindWallContext），此处不再逐条绑——媒体/正文/文字条统一由容器委托覆盖
@@ -907,8 +908,8 @@ export class DiaryAppController {
       true
     );
     // 移动端长按条目 → 详情抽屉（统一手势 core/dom.longPress：与 core/item-actions 同源，
-    // 触屏滚动不受影响——被动监听 + 10px 移动取消）。移动端单击开抽屉的既有入口保留，
-    // 长按为新增入口；抽屉仍是 .bz-diary-sheet 详情壳（只统一手势，不换 core 动作抽屉，保观感）。
+    // 触屏滚动不受影响——被动监听 + 10px 移动取消）。抽屉唯一入口（单击入口已按
+    // 2026-09-11 评审取消）；抽屉仍是 .bz-diary-sheet 详情壳（不换 core 动作抽屉，保观感）。
     longPress(
       wall,
       (ev: any) => {
@@ -1204,7 +1205,10 @@ export class DiaryAppController {
         if (entry.noteId) v.dataset.encNote = entry.noteId;
       } else {
         const src = this.mediaSrcFor(entry, k.name);
-        if (src) v.dataset.src = src;
+        if (src) {
+          v.dataset.src = src;
+          if (mobile) this.mountWallPoster(v, src, entry, k.name);
+        }
       }
       v.onerror = () => {
         ph.style.opacity = '1';
@@ -1228,10 +1232,9 @@ export class DiaryAppController {
     }
     wrap.addEventListener('click', (e) => {
       e.stopPropagation();
-      // DW4：移动端媒体单击改开条目抽屉（原直进灯箱 → 纯媒体条目的改标签/加密/删除等条目级动作不可达；
-      // 抽屉内媒体缩略图仍可进灯箱）。桌面保持单击进灯箱。
-      if (mobile) this.openSheet(entry);
-      else this.openLightbox(k, entry);
+      // DW4 反转（2026-09-11 用户评审：移动端单击开抽屉取消）：媒体单击回归灯箱预览；
+      // 条目级动作（改标签/加密/删除）经长按抽屉可达，DW4 的可达性诉求由长按入口承接
+      this.openLightbox(k, entry);
     });
     // issue 217 F4：媒体区 click stopPropagation 使卡片级双击计数器收不到事件——
     // 桌面双击媒体补一条直达路径：首击开灯箱、双击关灯箱跳原文（与文字卡双击语义一致）
@@ -1502,6 +1505,29 @@ export class DiaryAppController {
       const s = Math.round(v.duration % 60);
       dur.textContent = `${m}:${String(s).padStart(2, '0')}`;
     }, { once: true });
+  }
+
+  /**
+   * 移动端墙内视频首帧海报（2026-09-11 评审：移动浏览器不给未播放的 <video> 绘制首帧，
+   * iOS 全黑——墙上视频卡没有预览图）。复用章节栏首帧小图管线（IndexedDB 缓存），
+   * 480px 档（墙卡 2 列 ~180css px@3x 需 ~540 设备 px），结果挂 video.poster——
+   * poster 移动端免视频解码直出。失败静默回落现状（渐变占位；桌面不走此路径，
+   * preload=metadata 本就绘真首帧，不因 480px 海报降清）。
+   */
+  private mountWallPoster(v: HTMLVideoElement, src: string, entry: WallEntry, name: string): void {
+    const key = `wall480|${railThumbKey(entry.date, name)}`;
+    void getRailThumb(key).then((cached) => {
+      if (!v.isConnected) return;
+      if (cached) {
+        v.poster = cached;
+        return;
+      }
+      void makeVideoThumb(src, 480).then((thumb) => {
+        if (!v.isConnected || !thumb) return;
+        v.poster = thumb;
+        void putRailThumb(key, thumb);
+      });
+    });
   }
 
   /** 懒加载挂载：普通媒体挂 src；加密媒体触发按需解密（增强 #8；fallback 与 IO 命中共用） */
@@ -2050,6 +2076,11 @@ export class DiaryAppController {
 
   private bindSheet() {
     [this.desk, this.mob].forEach((ui) => {
+      // 右上角关闭钮（2026-09-11 移动端评审新增）
+      ui.sheet.querySelector('[data-act="sheet-close"]')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.closeSheet();
+      });
       // 点遮罩 / 抽屉自身空白区关闭
       ui.sheet.addEventListener('click', (e) => {
         if (e.target === ui.sheet) this.closeSheet();
