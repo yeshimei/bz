@@ -1,5 +1,5 @@
-/* 源指纹 a8cfe86a9aa5a4c4 · 仓内输入 206 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/brief.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 cb58b1799c750263 · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -12157,7 +12157,7 @@ ${countsToText(s.missing)}
       SEGMENT_FIELDS = {
         "pomodoro.json": ["version", "state", "history"],
         "clipbook.json": ["articleOverrides", "savedArchive", "order"],
-        "news.json": ["articles", "stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources", "briefUps", "briefs"],
+        "news.json": ["articles", "stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources", "rssFeeds"],
         "home.json": ["version", "pinned"],
         "belongings.json": ["version", "last_updated", "items", "categories", "categoryIcons"],
         "quiz.json": ["notes"]
@@ -16046,11 +16046,6 @@ ${countsToText(s.missing)}
     if (a && a.url) return "url:" + String(a.url);
     return "td:" + String(a && a.title || "") + "|" + String(a && a.date || "");
   }
-  function briefKeyOf(b) {
-    if (b && b.bvid) return "bv:" + String(b.bvid);
-    if (b && b.url) return "url:" + String(b.url);
-    return "td:" + String(b && b.title || "") + "|" + String(b && b.fetchedAt || "");
-  }
   function excerpt(body, max = 90) {
     const s = String(body || "").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/[#>*`_~-]/g, "").replace(/\s+/g, " ").trim();
     if (!s) return "";
@@ -16087,42 +16082,33 @@ ${countsToText(s.missing)}
     return storageFile("news.json");
   }
   function emptyData() {
-    return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", sources: { ...DEFAULT_SOURCES }, briefUps: [], briefs: [] };
+    return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", sources: { ...DEFAULT_SOURCES }, rssFeeds: [] };
   }
-  function normalizeBrief(raw) {
-    var _a2, _b2, _c, _d, _e, _f, _g;
-    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
-    const r = raw;
-    const bvid = String((_a2 = r.bvid) != null ? _a2 : "").trim();
-    if (!bvid) return null;
-    const b = {
-      bvid,
-      title: String((_b2 = r.title) != null ? _b2 : ""),
-      url: String((_c = r.url) != null ? _c : "") || `https://www.bilibili.com/video/${bvid}`,
-      upMid: String((_d = r.upMid) != null ? _d : ""),
-      upName: String((_e = r.upName) != null ? _e : ""),
-      duration: Number(r.duration) || 0,
-      pubdate: Number(r.pubdate) || 0,
-      date: String((_f = r.date) != null ? _f : ""),
-      fetchedAt: String((_g = r.fetchedAt) != null ? _g : ""),
-      read: r.read === true,
-      state: r.state === "saved" ? "saved" : r.read === true ? "read" : "unread"
-    };
-    if (r.body) b.body = String(r.body);
-    if (r.src) b.src = String(r.src);
-    if (r.error) b.error = String(r.error);
-    if (r.transcriptPath) b.transcriptPath = String(r.transcriptPath);
-    if (r.subtitleRejected) b.subtitleRejected = String(r.subtitleRejected);
-    return b;
-  }
-  function parseBriefs(raw) {
+  function parseRssFeeds(raw) {
+    var _a2, _b2;
     if (!Array.isArray(raw)) return [];
     const out = [];
     for (const it of raw) {
-      const b = normalizeBrief(it);
-      if (b) out.push(b);
+      if (!it || typeof it !== "object") continue;
+      const url = String((_a2 = it.url) != null ? _a2 : "").trim();
+      if (!url) continue;
+      const title = String((_b2 = it.title) != null ? _b2 : "").trim();
+      out.push(title ? { url, title } : { url });
     }
     return out;
+  }
+  function looksLikeFeedXml(xml) {
+    return /<(rss|feed|RDF)[\s>]/i.test(String(xml || ""));
+  }
+  function extractFeedTitleFromXml(xml) {
+    const m = String(xml || "").match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    if (!m) return null;
+    const t = m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
+    return t || null;
+  }
+  function normalizeRssFeedUrl(text) {
+    const t = String(text || "").trim();
+    return /^https?:\/\/\S+$/i.test(t) ? t : null;
   }
   function parseBilibiliUpInfo(raw) {
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
@@ -16185,8 +16171,7 @@ ${countsToText(s.missing)}
         bilibiliMaxItems: parseBilibiliMaxItems(obj.bilibiliMaxItems),
         bilibiliCookie: parseBilibiliCookie(obj.bilibiliCookie),
         sources: obj.sources && typeof obj.sources === "object" ? { ...DEFAULT_SOURCES, ...obj.sources } : { ...DEFAULT_SOURCES },
-        briefUps: Array.isArray(obj.briefUps) ? obj.briefUps.map((u) => String(u != null ? u : "").trim()).filter(Boolean) : [],
-        briefs: parseBriefs(obj.briefs)
+        rssFeeds: parseRssFeeds(obj.rssFeeds)
       };
     }
     return null;
@@ -16213,7 +16198,7 @@ ${countsToText(s.missing)}
     }
   }
   async function writeNewsDataMerged(intent) {
-    var _a2, _b2;
+    var _a2;
     const res = await readNewsData();
     const base = res.ok ? res.data : emptyData();
     const next = { ...base };
@@ -16239,29 +16224,7 @@ ${countsToText(s.missing)}
       }
       next.articles = merged;
     }
-    if (intent.set.briefs || ((_b2 = intent.removeBriefKeys) == null ? void 0 : _b2.length)) {
-      const patchList = intent.set.briefs || [];
-      const removeKeys = new Set(intent.removeBriefKeys || []);
-      const patchByKey = /* @__PURE__ */ new Map();
-      for (const b of patchList) patchByKey.set(briefKeyOf(b), b);
-      const merged = [];
-      const seen = /* @__PURE__ */ new Set();
-      for (const b of base.briefs || []) {
-        const k = briefKeyOf(b);
-        if (removeKeys.has(k)) continue;
-        seen.add(k);
-        merged.push(patchByKey.has(k) ? patchByKey.get(k) : b);
-      }
-      for (const b of patchList) {
-        const k = briefKeyOf(b);
-        if (!seen.has(k)) {
-          merged.push(b);
-          seen.add(k);
-        }
-      }
-      next.briefs = merged;
-    }
-    for (const seg of ["stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources", "briefUps"]) {
+    for (const seg of ["stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources", "rssFeeds"]) {
       if (intent.set[seg] !== void 0) {
         next[seg] = intent.set[seg];
       }
@@ -16346,28 +16309,6 @@ ${countsToText(s.missing)}
     const n = Number(String(v || "").trim());
     return Number.isFinite(n) && n > 0 ? n : null;
   }
-  function applyBriefRetention(briefs, days, now = Date.now()) {
-    const DAY = 24 * 60 * 60 * 1e3;
-    const kept = [];
-    for (const b of briefs) {
-      if (!b || b.read !== true) {
-        kept.push(b);
-        continue;
-      }
-      if (!Number.isFinite(days) || days <= 0) {
-        kept.push(b);
-        continue;
-      }
-      const t = new Date(b.fetchedAt || b.date || "").getTime();
-      if (!Number.isFinite(t)) {
-        kept.push(b);
-        continue;
-      }
-      if (now - t > days * DAY) continue;
-      kept.push(b);
-    }
-    return kept;
-  }
   var STATS_JSON_PATH, DEFAULT_SOURCES, DEFAULT_STATS;
   var init_news_data = __esm({
     "src/clipbook/news-data.ts"() {
@@ -16375,7 +16316,7 @@ ${countsToText(s.missing)}
       init_storage();
       init_constants3();
       STATS_JSON_PATH = "CONFIG/STORAGE/news-stats.json";
-      DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true };
+      DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true, rss: true };
       DEFAULT_STATS = () => ({ totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} });
     }
   });
@@ -16395,17 +16336,17 @@ ${countsToText(s.missing)}
   var news_source_settings_exports = {};
   __export(news_source_settings_exports, {
     addBilibiliUp: () => addBilibiliUp,
-    addBriefUp: () => addBriefUp,
+    addRssFeed: () => addRssFeed,
     emptyDataSourceState: () => emptyDataSourceState,
     readDataSourceState: () => readDataSourceState,
     removeBilibiliUp: () => removeBilibiliUp,
-    removeBriefUp: () => removeBriefUp,
+    removeRssFeed: () => removeRssFeed,
     writeBilibiliCookie: () => writeBilibiliCookie,
     writeBilibiliMaxItems: () => writeBilibiliMaxItems,
     writeSources: () => writeSources
   });
   function emptyDataSourceState(exists = false) {
-    return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", lastFetchAt: null, totalArticles: 0, briefUps: [], totalBriefs: 0 };
+    return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", lastFetchAt: null, totalArticles: 0, rssFeeds: [] };
   }
   async function readDataSourceState() {
     const res = await readNewsData();
@@ -16428,8 +16369,7 @@ ${countsToText(s.missing)}
       bilibiliCookie: res.data.bilibiliCookie,
       lastFetchAt,
       totalArticles: res.data.articles.length,
-      briefUps: [...res.data.briefUps || []],
-      totalBriefs: (res.data.briefs || []).length
+      rssFeeds: [...res.data.rssFeeds]
     };
   }
   async function writeSources(sources) {
@@ -16467,26 +16407,26 @@ ${countsToText(s.missing)}
       await writeNewsDataMerged({ set: { bilibiliCookie: c } });
     });
   }
-  async function addBriefUp(uid) {
-    const id = String(uid || "").trim();
-    if (!id) return false;
+  async function addRssFeed(url, title) {
+    const u = normalizeRssFeedUrl(url);
+    if (!u) return false;
+    const t = String(title || "").trim();
     return enqueueNewsWrite(async () => {
       const res = await readNewsData();
       if (!res.ok) return false;
-      if ((res.data.briefUps || []).includes(id)) return false;
-      const set = { briefUps: [...res.data.briefUps || [], id] };
-      if (res.data.bilibiliUps.includes(id)) set.bilibiliUps = res.data.bilibiliUps.filter((u) => u !== id);
-      await writeNewsDataMerged({ set });
+      if (res.data.rssFeeds.some((f) => f.url === u)) return false;
+      const feed = t ? { url: u, title: t } : { url: u };
+      await writeNewsDataMerged({ set: { rssFeeds: [...res.data.rssFeeds, feed] } });
       return true;
     });
   }
-  async function removeBriefUp(uid) {
-    const id = String(uid || "").trim();
-    if (!id) return;
+  async function removeRssFeed(url) {
+    const u = String(url || "").trim();
+    if (!u) return;
     await enqueueNewsWrite(async () => {
       const res = await readNewsData();
       if (!res.ok || res.missing) return;
-      await writeNewsDataMerged({ set: { briefUps: (res.data.briefUps || []).filter((u) => u !== id) } });
+      await writeNewsDataMerged({ set: { rssFeeds: res.data.rssFeeds.filter((f) => f.url !== u) } });
     });
   }
   async function removeBilibiliUp(uid) {
@@ -16974,6 +16914,7 @@ ${bodyText.substring(0, 6e3)}`;
       ];
     }
     const bilibiliOn = () => box.sources.bilibili === true;
+    const rssOn = () => box.sources.rss === true;
     const sourceBinding = (key) => ({
       get: () => box.sources[key] === true,
       set: (v) => {
@@ -16982,7 +16923,7 @@ ${bodyText.substring(0, 6e3)}`;
       save: () => writeSources({ ...box.sources })
     });
     const upListDesc = () => box.bilibiliUps.length > 0 ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主，添加与移除在管理弹窗` : "暂未跟踪 UP 主，添加与移除在管理弹窗";
-    const briefListDesc = () => box.briefUps.length > 0 ? `已开启 ${box.briefUps.length} 位 UP 主，已产出 ${box.totalBriefs} 条要点` : "尚未开启深度总结，添加 UP 主后每日生成要点";
+    const rssListDesc = () => box.rssFeeds.length > 0 ? `已订阅 ${box.rssFeeds.length} 个 RSS 源，添加与移除在管理弹窗` : "暂未订阅 RSS 源，添加与移除在管理弹窗";
     return [
       {
         type: "toggle",
@@ -17016,36 +16957,36 @@ ${bodyText.substring(0, 6e3)}`;
           ups: [...box.bilibiliUps],
           upInfo: { ...box.bilibiliUpInfo },
           cookie: box.bilibiliCookie,
-          briefUps: [...box.briefUps],
           onChanged: async () => {
             const fresh = await readDataSourceState();
             box.bilibiliUps = [...fresh.bilibiliUps];
             box.bilibiliUpInfo = { ...fresh.bilibiliUpInfo };
             box.bilibiliCookie = fresh.bilibiliCookie;
-            box.briefUps = [...fresh.briefUps];
             setRowDesc(ctx, upListDesc());
             ctx.refreshVisibility();
           }
         })
       },
       {
+        type: "toggle",
+        name: "RSS 订阅",
+        desc: "抓取订阅列表内 RSS 源的文章",
+        binding: sourceBinding("rss"),
+        onChange: (v) => notice(`已${v ? "开启" : "关闭"}RSS 订阅`, "success")
+      },
+      {
         type: "button",
-        name: "每日简报名单",
-        desc: briefListDesc(),
+        name: "RSS 订阅源",
+        desc: rssListDesc(),
         buttonText: "管理",
         cta: true,
-        onClick: (ctx) => openUpManagerModal({
-          ups: [...box.bilibiliUps],
-          upInfo: { ...box.bilibiliUpInfo },
-          cookie: box.bilibiliCookie,
-          briefUps: [...box.briefUps],
+        visibleWhen: rssOn,
+        onClick: (ctx) => openRssManagerModal({
+          feeds: box.rssFeeds.map((f) => ({ ...f })),
           onChanged: async () => {
             const fresh = await readDataSourceState();
-            box.bilibiliUps = [...fresh.bilibiliUps];
-            box.bilibiliUpInfo = { ...fresh.bilibiliUpInfo };
-            box.bilibiliCookie = fresh.bilibiliCookie;
-            box.briefUps = [...fresh.briefUps];
-            setRowDesc(ctx, briefListDesc());
+            box.rssFeeds = fresh.rssFeeds.map((f) => ({ ...f }));
+            setRowDesc(ctx, rssListDesc());
             ctx.refreshVisibility();
           }
         })
@@ -17085,9 +17026,7 @@ ${bodyText.substring(0, 6e3)}`;
       inputValue: "",
       cookieInput: String(opts.cookie || ""),
       ups: [...opts.ups],
-      upInfo: { ...opts.upInfo },
-      briefInput: "",
-      briefUps: [...opts.briefUps || []]
+      upInfo: { ...opts.upInfo }
     };
     return {
       groups: [
@@ -17160,80 +17099,9 @@ ${bodyText.substring(0, 6e3)}`;
               }
             }
           ]
-        },
-        {
-          // 每日简报（ADR-0119）：独立名单——走「字幕优先 → 转写 → AI 要点」链路，与上方 UP 主名单**互斥**
-          icon: "newspaper",
-          name: "每日简报",
-          rows: [
-            {
-              type: "text",
-              name: "添加 UP 主",
-              desc: "粘贴主页链接或视频链接，自动解析后入库",
-              placeholder: "粘贴链接或 UID",
-              binding: {
-                get: () => box.briefInput,
-                set: (v) => {
-                  box.briefInput = v;
-                },
-                save: () => {
-                }
-              },
-              actions: [{
-                text: "添加",
-                cta: true,
-                onClick: (value) => addBriefUid(value, box, opts)
-              }]
-            },
-            {
-              type: "list",
-              name: "深度总结名单",
-              desc: "每日抓取其新投稿并生成要点",
-              items: () => box.briefUps.map((uid) => {
-                var _a2;
-                return {
-                  key: uid,
-                  label: upDisplayName(uid, box.upInfo[uid]),
-                  sub: `UID ${uid}`,
-                  imageUrl: (_a2 = box.upInfo[uid]) == null ? void 0 : _a2.avatar
-                };
-              }),
-              emptyText: "暂无深度总结 UP 主，在上方粘贴主页链接添加",
-              onChange: (keys) => {
-                void (async () => {
-                  const removed = box.briefUps.filter((u) => !keys.includes(u));
-                  for (const uid of removed) {
-                    await removeBriefUp(uid);
-                    box.briefUps = box.briefUps.filter((u) => u !== uid);
-                    notice(`已从每日简报移除 ${uid}`, "success");
-                  }
-                  if (removed.length > 0) opts.onChanged();
-                })();
-              }
-            }
-          ]
         }
       ]
     };
-  }
-  async function addBriefUid(raw, box, opts) {
-    const input = String(raw || "").trim();
-    if (!input) return;
-    const uid = await resolveUidFromInput(input);
-    if (!uid) {
-      notice("无法识别 UID，请粘贴 space.bilibili.com 内的主页链接", "error");
-      return;
-    }
-    const added = await addBriefUp(uid);
-    if (!added) {
-      notice("该 UP 主已在每日简报名单中", "info");
-      return;
-    }
-    box.briefInput = "";
-    box.briefUps = [...box.briefUps, uid];
-    box.ups = box.ups.filter((u) => u !== uid);
-    opts.onChanged();
-    notice(`已添加每日简报 UP 主 ${uid}`, "success");
   }
   function upDisplayName(uid, info) {
     return info && info.name ? info.name : `UP ${uid}`;
@@ -17300,8 +17168,140 @@ ${bodyText.substring(0, 6e3)}`;
     });
     handle = handleReg;
   }
+  async function fetchRssFeedTitle(url) {
+    try {
+      const timer = new Promise((resolve2) => setTimeout(() => resolve2(null), 1e4));
+      const req = requestUrl({ url, method: "GET" }).then((resp) => {
+        if (resp.status < 200 || resp.status >= 300) return null;
+        if (!looksLikeFeedXml(resp.text)) return null;
+        return extractFeedTitleFromXml(resp.text);
+      });
+      return await Promise.race([req, timer]);
+    } catch (e) {
+      return null;
+    }
+  }
+  function rssManagerSettingsSchema(opts) {
+    const box = {
+      inputValue: "",
+      feeds: opts.feeds.map((f) => ({ ...f }))
+    };
+    return {
+      groups: [
+        {
+          icon: "rss",
+          name: "RSS 订阅源",
+          rows: [
+            { type: "info", name: "守护需更新", desc: "RSS 抓取由 obsidian-news 守护执行，请更新到最新版并重启守护后生效" },
+            {
+              type: "text",
+              name: "添加 RSS 源",
+              desc: "粘贴 RSS 订阅地址，保存前先试拉校验并读取源名称",
+              placeholder: "https://example.com/rss.xml",
+              binding: {
+                get: () => box.inputValue,
+                set: (v) => {
+                  box.inputValue = v;
+                },
+                save: () => {
+                }
+              },
+              actions: [{
+                text: "添加",
+                cta: true,
+                onClick: (value) => addRssFeedUrl(value, box, opts)
+              }]
+            },
+            {
+              type: "list",
+              name: "订阅列表",
+              desc: "已订阅的 RSS 源，移除后不再抓取",
+              items: () => box.feeds.map((f) => ({
+                key: f.url,
+                label: f.title || f.url,
+                sub: f.title ? f.url : ""
+              })),
+              emptyText: "暂无订阅源，在上方粘贴 RSS 地址添加",
+              onChange: (keys) => (async () => {
+                const removed = box.feeds.filter((f) => !keys.includes(f.url));
+                for (const f of removed) {
+                  await removeRssFeed(f.url);
+                  box.feeds = box.feeds.filter((x) => x.url !== f.url);
+                  notice(`已移除 RSS 源 ${f.title || f.url}`, "success");
+                }
+                if (removed.length > 0) opts.onChanged();
+              })()
+            }
+          ]
+        }
+      ]
+    };
+  }
+  async function addRssFeedUrl(raw, box, opts) {
+    const input = String(raw || "").trim();
+    if (!input) return;
+    const url = normalizeRssFeedUrl(input);
+    if (!url) {
+      notice("无效的 RSS 地址，请粘贴 http/https 开头的订阅链接", "error");
+      return;
+    }
+    if (box.feeds.some((f) => f.url === url)) {
+      notice("该 RSS 源已在订阅列表中", "info");
+      return;
+    }
+    notice("正在校验 RSS 地址…", "info");
+    const title = await fetchRssFeedTitle(url);
+    if (title === null) {
+      notice("试拉失败：地址不可达或不是有效的 RSS 源，未添加", "error");
+      return;
+    }
+    const added = await addRssFeed(url, title);
+    if (!added) {
+      notice("该 RSS 源已在订阅列表中", "info");
+      return;
+    }
+    box.inputValue = "";
+    box.feeds = [...box.feeds, { url, title }];
+    opts.onChanged();
+    notice(`已订阅 ${title || url}`, "success");
+  }
+  function openRssManagerModal(opts) {
+    let handle = null;
+    function close() {
+      mask.remove();
+      popup.remove();
+      if (handle) handle.unregister();
+    }
+    const { mask, popup } = createOverlay({
+      maskId: "bz-rss-manager-mask",
+      popupId: "bz-rss-manager-popup",
+      maxWidth: 560,
+      onMaskClick: close
+    });
+    const header = document.createElement("div");
+    header.className = "bz-settings-header";
+    const title = document.createElement("h3");
+    title.className = "bz-settings-title";
+    title.textContent = "RSS 订阅管理";
+    header.appendChild(title);
+    const content = document.createElement("div");
+    content.className = "bz-settings-content";
+    renderSettingsInto(content, rssManagerSettingsSchema(opts));
+    popup.appendChild(header);
+    popup.appendChild(content);
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+    mask.style.display = "block";
+    popup.style.display = "flex";
+    const handleReg = escManager.register("bz-rss-manager", {
+      isVisible: () => true,
+      close
+    });
+    handle = handleReg;
+  }
   var init_news_sources_group = __esm({
     "src/clipbook/news-sources-group.ts"() {
+      init_fake_obsidian();
       init_notice();
       init_settings_common();
       init_dom();
@@ -17313,74 +17313,11 @@ ${bodyText.substring(0, 6e3)}`;
   });
 
   // src/clipbook/md.ts
-  function splitImageTokens(line) {
-    const out = [];
-    let last = 0;
-    let m;
-    IMG_TOKEN_RE.lastIndex = 0;
-    while ((m = IMG_TOKEN_RE.exec(line)) !== null) {
-      if (m.index > last) out.push({ kind: "text", text: line.slice(last, m.index) });
-      const tok = m[0];
-      const md = tok.match(/^!\[([^\]]*)\]\(([^)\s]+)[^)]*\)$/);
-      if (md) {
-        out.push({ kind: "img", src: md[2] });
-      } else {
-        const wiki = tok.match(/^!\[\[([^\]]+)\]\]$/);
-        if (wiki) out.push({ kind: "img", src: "![[" + wiki[1].split("|")[0].trim() + "]]" });
-      }
-      last = m.index + tok.length;
-    }
-    if (last < line.length) out.push({ kind: "text", text: line.slice(last) });
-    return out;
-  }
-  function cleanLine(s) {
-    const links = [];
-    let t = s.replace(/\[[^\]]*\]\([^)\s]+[^)]*\)/g, (m) => {
-      links.push(m);
-      return `\0${links.length - 1}\0`;
-    });
-    t = t.replace(/^#{1,6}\s*/, "");
-    t = t.replace(/[*_`~]/g, "");
-    t = t.replace(/^[-•]\s+/, "");
-    t = t.replace(/\u0000(\d+)\u0000/g, (_, i) => links[Number(i)]);
-    return t.trim();
-  }
-  function toParagraphs(body) {
-    const src = String(body || "").replace(/\r\n?/g, "\n").split(/\n{2,}/);
-    const out = [];
-    for (const chunk of src) {
-      const lines = chunk.split("\n").map((l) => l.trim()).filter(Boolean);
-      if (lines.length === 0) continue;
-      const isQuote = lines[0].startsWith(">");
-      const textBuf = [];
-      const flushText = () => {
-        const text = textBuf.join(" ").trim();
-        textBuf.length = 0;
-        if (text) out.push({ type: isQuote ? "quote" : "p", text });
-      };
-      for (const line of lines) {
-        const content = isQuote && line.startsWith(">") ? line.replace(/^>\s?/, "") : line;
-        for (const piece of splitImageTokens(content)) {
-          if (piece.kind === "img") {
-            flushText();
-            out.push({ type: "img", text: piece.src });
-          } else {
-            const cleaned = cleanLine(piece.text);
-            if (cleaned) textBuf.push(cleaned);
-          }
-        }
-      }
-      flushText();
-    }
-    return out;
-  }
   function stripClipChrome(raw) {
     return String(raw || "").replace(/^\s*---[\s\S]*?---/, "").replace(/```dataviewjs[\s\S]*?```/g, "").trim();
   }
-  var IMG_TOKEN_RE;
   var init_md = __esm({
     "src/clipbook/md.ts"() {
-      IMG_TOKEN_RE = /(!\[[^\]]*\]\([^)]*\)|!\[\[[^\]]+\]\])/g;
     }
   });
 
@@ -17490,110 +17427,9 @@ ${bodyText.substring(0, 6e3)}`;
     for (const n of notes) if (n && n.url) s.add(String(n.url));
     return s;
   }
-  function briefTimeTs(b) {
-    const p = Number(b && b.pubdate) || 0;
-    if (p > 0) return p * 1e3;
-    const t = new Date(b && (b.date || b.fetchedAt) || "").valueOf();
-    return isNaN(t) ? Date.now() : t;
-  }
-  function briefDayKey(b) {
-    const p = Number(b && b.pubdate) || 0;
-    if (p > 0) return localDayKey2(p * 1e3);
-    const d = String(b && (b.date || b.fetchedAt) || "").slice(0, 10);
-    return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : "未知日期";
-  }
-  function clipBrief(b, opts = {}) {
-    const savedKeys = opts.savedKeys || /* @__PURE__ */ new Set();
-    const upInfo = opts.upInfo || {};
-    const bvid = String(b && b.bvid || "");
-    const url = String(b && b.url || "") || (bvid ? `https://www.bilibili.com/video/${bvid}` : "");
-    const upMid = String(b && b.upMid || "");
-    const up = String(b && b.upName || "") || upInfo[upMid] && upInfo[upMid].name || upMid || "";
-    const failed = !!(b && b.error);
-    const title = failed ? bvid || "拉取失败" : String(b && b.title || "(无标题)");
-    const body = cleanBody(b && b.body);
-    const archived = !!url && savedKeys.has(url);
-    const saved = b && b.state === "saved" || archived;
-    const st = saved ? "saved" : b && b.read === true ? "read" : "unread";
-    const ts = briefTimeTs(b);
-    return {
-      id: "bv:" + bvid,
-      origin: "brief",
-      title,
-      url,
-      site: "B站",
-      domain: "bilibili.com",
-      author: up,
-      srcName: up || "每日简报",
-      typeLabel: "每日简报",
-      timeText: String(b && (b.fetchedAt || b.date) || ""),
-      timeTs: ts,
-      summary: failed ? String(b.error) : excerpt(body, 110),
-      body,
-      tags: [],
-      notePath: null,
-      st,
-      clipped: !!url && !!saved,
-      raw: b,
-      backlinks: []
-    };
-  }
-  function queryBriefs(briefs, sidecar, upInfoMap = {}) {
-    const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
-    return (briefs || []).map((b) => clipBrief(b, { savedKeys, upInfo: upInfoMap })).sort((a, b) => b.timeTs - a.timeTs);
-  }
-  function groupBriefsByDay(list) {
-    const groups = [];
-    const idx = /* @__PURE__ */ new Map();
-    for (const a of list) {
-      const day = briefDayKey(a.raw);
-      let i = idx.get(day);
-      if (i === void 0) {
-        i = groups.length;
-        idx.set(day, i);
-        groups.push({ day, items: [] });
-      }
-      groups[i].items.push(a);
-    }
-    return groups;
-  }
-  async function writeBriefState(raw, action) {
-    const bvid = String(raw && raw.bvid || "");
-    if (!bvid) return;
-    await writeBriefPatch(bvid, {
-      read: true,
-      state: raw && raw.state === "saved" || action === "save" ? "saved" : "read"
-    });
-  }
-  async function deleteBrief(bvid) {
-    const key = String(bvid || "");
-    if (!key) return;
-    await enqueueNewsWrite(async () => {
-      await writeNewsDataMerged({ set: {}, removeBriefKeys: ["bv:" + key] });
-    });
-  }
-  async function writeBriefPatch(bvid, patch) {
-    const key = String(bvid || "");
-    if (!key) return;
-    await enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok || res.missing) return;
-      let hit = false;
-      const list = (res.data.briefs || []).map((b) => {
-        if (String(b && b.bvid || "") !== key) return b;
-        hit = true;
-        return { ...b, ...patch };
-      });
-      if (!hit) return;
-      await writeNewsDataMerged({ set: { briefs: list } });
-    });
-  }
-  function queryBySource(articles, sidecar, clipByUrl, clipNotes, source, upInfoMap = {}, briefs = []) {
+  function queryBySource(articles, sidecar, clipByUrl, clipNotes, source, upInfoMap = {}) {
     if (source.kind === "clip") {
       return (clipNotes || []).map((n) => clipFromNote(n));
-    }
-    if (source.kind === "brief") {
-      return queryBriefs(briefs, sidecar, upInfoMap);
     }
     const pool = (articles || []).filter((a) => !a.read);
     const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
@@ -17618,12 +17454,9 @@ ${bodyText.substring(0, 6e3)}`;
     }
     return out.filter((a) => a.st !== "saved").sort((a, b) => b.timeTs - a.timeTs);
   }
-  function queryBySourceFull(articles, sidecar, clipByUrl, clipNotes, source, upInfoMap = {}, briefs = []) {
+  function queryBySourceFull(articles, sidecar, clipByUrl, clipNotes, source, upInfoMap = {}) {
     if (source.kind === "clip") {
       return (clipNotes || []).map((n) => clipFromNote(n));
-    }
-    if (source.kind === "brief") {
-      return queryBriefs(briefs, sidecar, upInfoMap);
     }
     const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
     const isClippedNews = (a) => !!a && !!a.url && (savedKeys.has(String(a.url)) || clipByUrl.has(String(a.url)));
@@ -17799,112 +17632,8 @@ ${bodyText.substring(0, 6e3)}`;
   function foldBodyHtml(html, open) {
     return html ? `<div class="bz-clip-desk-fold-body"${open ? "" : " hidden"}>${html}</div>` : "";
   }
-  function briefDayHeadHtml(day, n) {
-    return `
-    <div class="bz-clip-day" data-clip-day="${esc(day)}">
-      <span class="bz-clip-day-name">${esc(day)}</span>
-      <span class="bz-clip-day-n">${n} 条</span>
-      <span class="bz-clip-day-rule"></span>
-    </div>`;
-  }
-  function briefListHtml(groups, curId, timeOf) {
-    return groups.map((g) => `
-    ${briefDayHeadHtml(g.day, g.items.length)}
-    ${g.items.map((a) => `
-    <div class="bz-clip-item bz-clip-item--${a.st}${a.raw && a.raw.error ? " bz-clip-item--err" : ""}${curId && curId === a.id ? " on" : ""}" data-id="${esc(a.id)}">
-      <div class="bz-clip-item-main">
-        <div class="bz-clip-item-t"><span>${esc(a.title)}</span></div>
-        <div class="bz-clip-item-meta">${esc(siteShort(a.srcName))} · ${esc(timeOf(a))}</div>
-      </div>
-    </div>`).join("")}`).join("");
-  }
-  function briefPointsHtml(body) {
-    const lines = String(body || "").split(/\r?\n/);
-    let out = "";
-    let inList = false;
-    const closeList = () => {
-      if (inList) {
-        out += "</ul>";
-        inList = false;
-      }
-    };
-    for (const raw of lines) {
-      const line = raw.trim();
-      if (!line) {
-        closeList();
-        continue;
-      }
-      const h = line.match(/^#{1,6}\s+(.*)$/);
-      if (h) {
-        closeList();
-        out += `<h3 class="bz-clip-brief-h">${inlineHtml(h[1])}</h3>`;
-        continue;
-      }
-      const li = line.match(/^[-*]\s+(.*)$/);
-      if (li) {
-        if (!inList) {
-          out += '<ul class="bz-clip-brief-ul">';
-          inList = true;
-        }
-        out += `<li>${inlineHtml(li[1])}</li>`;
-        continue;
-      }
-      closeList();
-      out += `<p>${inlineHtml(line)}</p>`;
-    }
-    closeList();
-    return out;
-  }
-  function briefReaderHtml(a, opts) {
-    const err = a.raw && a.raw.error ? String(a.raw.error) : "";
-    const head = `
-    <div class="bz-clip-art-title">${esc(a.title)}</div>
-    <div class="bz-clip-art-meta">
-      <span>${esc(opts.time)}</span>
-      <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${esc(siteShort(a.srcName))}</span></span>
-      ${opts.durationLabel ? `<span class="bz-clip-art-dur">${esc(opts.durationLabel)}</span>` : ""}
-    </div>`;
-    const feet = `
-    <div class="bz-clip-art-foot">
-      <span role="button" tabindex="0" data-clip-open-url>打开原视频 ${iconSpan(ICO.external, "bz-ic--xs")}</span>
-    </div>`;
-    if (err) {
-      return `${head}
-      <div class="bz-clip-brief-err">${iconSpan(ICO.x, "bz-ic--xs")}本期抓取失败：${esc(err)}</div>
-      <div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-brief-retry>重新抓取本期</span></div>${feet}`;
-    }
-    const pts = opts.points || `<p class="dim">正在生成本期要点…</p>`;
-    return `${head}
-    <div class="bz-clip-brief-points" data-clip-md>${pts}</div>
-    ${feet}`;
-  }
-  function inlineHtml(text) {
-    let out = "";
-    let last = 0;
-    const re = /\[([^\]]+)\]\(([^)\s]+)\)/g;
-    let m;
-    while ((m = re.exec(text)) !== null) {
-      out += esc(text.slice(last, m.index));
-      out += `<a class="bz-clip-md-link" href="${esc(m[2])}" data-clip-ext target="_blank" rel="noopener noreferrer">${esc(m[1])}</a>`;
-      last = m.index + m[0].length;
-    }
-    out += esc(text.slice(last));
-    return out;
-  }
-  function paragraphsHtml(paras, resolveImg) {
-    return paras.map((p) => {
-      if (p.type === "img") {
-        const src = resolveImg(p.text);
-        return src ? `<img class="bz-clip-art-img" src="${esc(src)}" alt="文章配图" loading="lazy">` : "";
-      }
-      return p.type === "quote" ? `<blockquote>${inlineHtml(p.text)}</blockquote>` : `<p>${inlineHtml(p.text)}</p>`;
-    }).join("");
-  }
   function summaryHtml(summary) {
     return `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan("sparkles", "bz-ic--xs")}摘要</span>${esc(summary)}</div>`;
-  }
-  function clipLoadingHtml() {
-    return `<p class="dim">正在读取剪藏正文…</p>`;
   }
   function readerHtml(a, opts) {
     const openNoteFoot = a.origin === "clip" && a.notePath ? `<div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-open-note>打开笔记 ${iconSpan(ICO.external, "bz-ic--xs")}</span></div>` : "";
@@ -17915,7 +17644,7 @@ ${bodyText.substring(0, 6e3)}`;
       <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${esc(siteShort(a.srcName))}</span></span>
     </div>
     ${a.summary ? summaryHtml(a.summary) : ""}
-    <div class="bz-clip-art-md" data-clip-md>${opts.paras || `<p class="dim">${esc(a.origin === "clip" ? "（笔记暂无正文）" : "正文已清空（已处理条目）")}</p>`}</div>
+    <div class="bz-clip-art-md markdown-rendered" data-clip-md>${opts.note ? `<p class="dim">${esc(opts.note)}</p>` : ""}</div>
     ${openNoteFoot}
   `;
   }
@@ -17977,7 +17706,7 @@ ${bodyText.substring(0, 6e3)}`;
     <div class="bz-clip-mob-d-kicker"><span>${esc(siteShort(a.srcName))} · ${esc(opts.time)}</span><span>${esc(opts.seq)}</span></div>
     <div class="bz-clip-mob-d-title">${esc(a.title)}</div>
     <hr class="bz-clip-mob-d-rule">
-    <div class="bz-clip-mob-d-md">${opts.paras || `<p>${esc(a.origin === "clip" ? "（剪藏笔记正文请在 Obsidian 中打开）" : "正文已清空")}</p>`}</div>
+    <div class="bz-clip-mob-d-md markdown-rendered" data-clip-mob-md>${opts.note ? `<p>${esc(opts.note)}</p>` : ""}</div>
     <div class="bz-clip-mob-d-foot"><span class="bz-clip-mob-d-next" data-clip-mob-next>↓ 读下一则</span><span class="bz-clip-mob-d-fch">${esc(siteShort(a.srcName))}</span></div>
   `;
   }
@@ -18003,8 +17732,7 @@ ${bodyText.substring(0, 6e3)}`;
         globe: "globe",
         folder: "folder-open",
         rotate: "rotate-ccw",
-        radio: "radio",
-        brief: "newspaper"
+        radio: "radio"
       };
     }
   });
@@ -18018,7 +17746,6 @@ ${bodyText.substring(0, 6e3)}`;
     M5.overlay = null;
     M5.open = false;
     M5.articles = [];
-    M5.briefs = [];
     M5.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
     M5.sidecar = { articleOverrides: {}, savedArchive: [], order: [] };
     M5.clipNotes = null;
@@ -18038,7 +17765,6 @@ ${bodyText.substring(0, 6e3)}`;
         dir: "归档/网页剪藏",
         open: false,
         articles: [],
-        briefs: [],
         stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },
         sidecar: { articleOverrides: {}, savedArchive: [], order: [] },
         clipNotes: null,
@@ -18173,7 +17899,6 @@ ${bodyText.substring(0, 6e3)}`;
     const res = await readNewsData();
     if (res.missing) {
       M5.articles = [];
-      M5.briefs = [];
       M5.clipNotes = null;
       M5.clipUrls = /* @__PURE__ */ new Set();
       M5.sidecar = { articleOverrides: {}, savedArchive: [], order: [] };
@@ -18182,7 +17907,6 @@ ${bodyText.substring(0, 6e3)}`;
     }
     if (!res.ok) {
       M5.articles = [];
-      M5.briefs = [];
       M5.clipNotes = null;
       M5.clipUrls = /* @__PURE__ */ new Set();
       M5.sidecar = { articleOverrides: {}, savedArchive: [], order: [] };
@@ -18195,9 +17919,6 @@ ${bodyText.substring(0, 6e3)}`;
     const cleaned = applyRetention(data.articles, days, days);
     const retentionChanged = cleaned.length !== data.articles.length;
     if (retentionChanged) data = { ...data, articles: cleaned };
-    const cleanedBriefs = applyBriefRetention(data.briefs || [], days);
-    const briefRetentionChanged = cleanedBriefs.length !== (data.briefs || []).length;
-    if (briefRetentionChanged) data = { ...data, briefs: cleanedBriefs };
     let statsChanged = false;
     if (!statsHasData(data.stats)) {
       const migrated = await migrateLegacyStats(data);
@@ -18206,11 +17927,10 @@ ${bodyText.substring(0, 6e3)}`;
         statsChanged = true;
       }
     }
-    if (retentionChanged || statsChanged || briefRetentionChanged) {
+    if (retentionChanged || statsChanged) {
       const set = {};
       if (retentionChanged) set.articles = data.articles;
       if (statsChanged) set.stats = data.stats;
-      if (briefRetentionChanged) set.briefs = data.briefs;
       await enqueueNewsWrite(() => writeNewsDataMerged({ set }));
     }
     const sidecar = await readClipbookData();
@@ -18219,7 +17939,6 @@ ${bodyText.substring(0, 6e3)}`;
     });
     const clipUrls = clipUrlSet2(clipNotes || []);
     M5.articles = data.articles;
-    M5.briefs = data.briefs || [];
     M5.stats = data.stats;
     M5.sidecar = sidecar;
     M5.clipNotes = clipNotes;
@@ -18240,110 +17959,10 @@ ${bodyText.substring(0, 6e3)}`;
     }
   });
 
-  // src/clipbook/brief.ts
-  function pendingBriefs(briefs) {
-    return (briefs || []).filter((b) => !!b && !!b.bvid && !b.body && !b.error && !!b.transcriptPath);
-  }
-  function cleanPoints(text) {
-    let s = String(text || "").trim();
-    s = s.replace(/^```[a-zA-Z]*\s*\n?/, "").replace(/\n?```\s*$/, "");
-    return s.trim();
-  }
-  function buildBriefPrompt(b, transcript) {
-    const title = String(b && b.title || "（无标题）");
-    const up = String(b && b.upName || "");
-    const dur = Number(b && b.duration || 0);
-    const body = String(transcript || "").slice(0, TRANSCRIPT_MAX);
-    return [
-      "你是简报编辑。下面是一期短视频的完整字幕/转录文字，请提炼成**要点列表**供快速扫读。",
-      "",
-      "要求：",
-      "- 用 markdown：`## 小节标题` 分组，每组下面用 `- ` 列要点",
-      "- 2–4 个小组，每组 2–4 条",
-      "- **每条要点只写一句话，控制在 30 字以内**：短句、直给结论，不要把多件事塞进同一条",
-      "- 保留关键事实、数字、人名、公司名与产品名",
-      "- 只依据原文，不要补充外部信息，不要臆测，不要写「本视频介绍了」这类空话",
-      "- **不要输出时间轴或时间戳**，不要整句复述原文",
-      "- 直接输出要点正文，不要任何前后解释或总结语",
-      "",
-      `视频标题：${title}`,
-      up ? `UP 主：${up}` : "",
-      dur > 0 ? `时长：${dur} 秒` : "",
-      "",
-      "转录全文：",
-      body
-    ].filter((s) => s !== "").join("\n");
-  }
-  function defaultReadText(absPath) {
-    try {
-      const w = window;
-      if (!w || !w.require) return null;
-      const fs = w.require("fs");
-      if (!fs || typeof fs.readFileSync !== "function") return null;
-      return String(fs.readFileSync(absPath, "utf8") || "");
-    } catch (e) {
-      return null;
-    }
-  }
-  async function runBriefSummaries(briefs, deps = {}) {
-    const pending = pendingBriefs(briefs);
-    if (!pending.length) return { done: 0, failed: 0, skipped: 0 };
-    const readText = deps.readText || defaultReadText;
-    const writePatch = deps.writePatch || writeBriefPatch;
-    const ai = deps.ai !== void 0 ? deps.ai : createAI();
-    let done = 0;
-    let failed = 0;
-    let skipped = 0;
-    for (let i = 0; i < pending.length; i++) {
-      const b = pending[i];
-      const bvid = String(b.bvid);
-      if (deps.onItem) deps.onItem(bvid, i + 1, pending.length);
-      const transcript = readText(String(b.transcriptPath || ""));
-      if (!transcript || !transcript.trim()) {
-        skipped++;
-        continue;
-      }
-      if (!ai || typeof ai.chat !== "function") {
-        failed++;
-        await writePatch(bvid, { error: "AI 未配置：请在插件设置中配置 AI 提供方后重跑本条" });
-        continue;
-      }
-      const prompt = buildBriefPrompt(b, transcript);
-      try {
-        let out = "";
-        try {
-          out = cleanPoints(await ai.chat(prompt, NO_THINK_OPTION));
-        } catch (e) {
-        }
-        if (!out) out = cleanPoints(await ai.chat(prompt));
-        if (!out) throw new Error("AI 产出为空");
-        await writePatch(bvid, { body: out, error: void 0 });
-        done++;
-      } catch (e) {
-        failed++;
-        await writePatch(bvid, { error: `要点生成失败：${e && e.message || String(e)}` });
-      }
-    }
-    return { done, failed, skipped };
-  }
-  var TRANSCRIPT_MAX, NO_THINK_OPTION;
-  var init_brief = __esm({
-    "src/clipbook/brief.ts"() {
-      init_ai();
-      init_store();
-      TRANSCRIPT_MAX = 12e3;
-      NO_THINK_OPTION = { modelOptions: { reasoning_effort: "none" } };
-    }
-  });
-
   // src/clipbook/save.ts
   function clipDirOf2() {
     const s = tryGetSettings();
     return s && s.articleDirectory || "归档/网页剪藏";
-  }
-  function dailyBriefDirOf() {
-    const s = tryGetSettings();
-    return s && s.dailyBriefDir || "归档/每日简报";
   }
   async function writeClipNote(raw, dirOverride) {
     const app = getApp();
@@ -21275,9 +20894,7 @@ ${sample}`,
       if (!res.ok || res.missing) return;
       const list = (res.data.articles || []).map((a) => {
         if (articleKeyOf(a) !== key) return a;
-        const next = { ...a, read: true, state: action };
-        delete next.body;
-        return next;
+        return { ...a, read: true, state: action };
       });
       const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
       s.totalRead = (Number(s.totalRead) || 0) + 1;
@@ -21360,7 +20977,6 @@ ${sample}`,
         if (a.read === true || !keys.has(articleKeyOf(a))) return a;
         bumped++;
         const next = { ...a, read: true, state: "skipped" };
-        delete next.body;
         const platform = a.platform || "未知";
         s.byPlatform[platform] = (Number(s.byPlatform[platform]) || 0) + 1;
         s.byDate[today] = (Number(s.byDate[today]) || 0) + 1;
@@ -21479,10 +21095,6 @@ ${sample}`,
       loaded2 = true;
       beginSession();
       renderAll2();
-      void runBriefSummaries(M5.briefs).then((r) => {
-        if (r.done > 0 && M5.open) void readNewsAndSidecar().then(() => renderAll2());
-      }).catch(() => {
-      });
     }).catch((e) => {
       console.error("[剪藏本] 装载失败", e);
       notice("剪藏本数据读取失败", "error");
@@ -21617,17 +21229,6 @@ ${sample}`,
         return;
       }
       if (t.closest("[data-clip-open-note]") && M5.cur) openNote(M5.cur);
-      if (t.closest("[data-clip-open-url]") && M5.cur && M5.cur.url) {
-        try {
-          window.open(M5.cur.url, "_blank");
-        } catch (e2) {
-        }
-        return;
-      }
-      if (t.closest("[data-clip-brief-retry]") && M5.cur) {
-        void retryBrief(M5.cur);
-        return;
-      }
     });
     readPaneEl.addEventListener("keydown", (e) => {
       if (e.key === "ArrowLeft" || e.key === "k") {
@@ -21766,15 +21367,11 @@ ${sample}`,
     const s = M5.sel;
     if (s.kind === "clip") return { kind: "clip" };
     if (s.kind === "site") return { kind: "site", site: s.site };
-    if (s.kind === "brief") return { kind: "brief" };
     if (s.kind === "inbox") return { kind: "inbox", platform: s.platform, up: s.up || void 0 };
     return { kind: "all" };
   }
-  function currentBriefs() {
-    return queryBriefs(M5.briefs || [], M5.sidecar, M5.upInfo);
-  }
   function currentList() {
-    return queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], currentSrc(), M5.upInfo, M5.briefs);
+    return queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], currentSrc(), M5.upInfo);
   }
   function epochReset() {
     dirEpoch++;
@@ -21783,7 +21380,6 @@ ${sample}`,
   function srcKey(src) {
     if (src.kind === "all") return "all";
     if (src.kind === "clip") return "clip";
-    if (src.kind === "brief") return "brief";
     if (src.kind === "site") return "site:" + src.site;
     return `inbox:${src.platform}:${src.up || ""}`;
   }
@@ -21791,7 +21387,7 @@ ${sample}`,
     const key = srcKey(src);
     const cur = dirSnap.get(key);
     if (cur && snapEpochs.get(key) === dirEpoch) return cur;
-    const b = bucketByState(queryBySourceFull(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], src, M5.upInfo, M5.briefs));
+    const b = bucketByState(queryBySourceFull(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], src, M5.upInfo));
     const snap = { unread: b.unread.map((a) => a.id), read: b.read.map((a) => a.id), saved: b.saved.map((a) => a.id) };
     dirSnap.set(key, snap);
     snapEpochs.set(key, dirEpoch);
@@ -21799,7 +21395,7 @@ ${sample}`,
   }
   function resolveSnap(snap, src) {
     const live2 = /* @__PURE__ */ new Map();
-    for (const a of queryBySourceFull(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], src, M5.upInfo, M5.briefs)) live2.set(a.id, a);
+    for (const a of queryBySourceFull(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], src, M5.upInfo)) live2.set(a.id, a);
     const pick = (ids) => ids.map((id) => live2.get(id)).filter((a) => !!a);
     return { unread: pick(snap.unread), read: pick(snap.read), saved: pick(snap.saved) };
   }
@@ -21839,21 +21435,9 @@ ${sample}`,
     if (!railListEl) return;
     const arts = M5.articles;
     const clipNotes = M5.clipNotes || [];
-    const countOf = (source) => queryBySource(arts, M5.sidecar, M5.clipUrls, clipNotes, source, M5.upInfo, M5.briefs).filter(matchesSearch).length;
+    const countOf = (source) => queryBySource(arts, M5.sidecar, M5.clipUrls, clipNotes, source, M5.upInfo).filter(matchesSearch).length;
     const allHit = countOf({ kind: "all" });
     let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M5.sel.kind === "all", "");
-    const briefAll = currentBriefs();
-    const briefHit = countOf({ kind: "brief" });
-    html += railItemHtml(
-      { kind: "brief" },
-      "每日简报",
-      searchKw ? briefHit : briefAll.filter((a) => a.st === "unread").length,
-      briefAll.length,
-      ICO.brief,
-      "",
-      M5.sel.kind === "brief",
-      ""
-    );
     for (const row of aggregateSites(arts, clipNotes, new Set((M5.sidecar.savedArchive || []).map((x) => x.url)), M5.clipUrls)) {
       const full = queryBySource(arts, M5.sidecar, M5.clipUrls, clipNotes, { kind: "site", site: row.site }, M5.upInfo);
       const unreadN = full.filter((a) => a.st !== "saved").length;
@@ -21892,13 +21476,12 @@ ${sample}`,
         return;
       }
       if (!sel) return;
-      const source = sel.kind === "clip" ? { kind: "clip" } : sel.kind === "brief" ? { kind: "brief" } : sel.kind === "inbox" ? { kind: "inbox", platform: String(sel.platform || ""), up: sel.up ? String(sel.up) : void 0 } : { kind: "all" };
+      const source = sel.kind === "clip" ? { kind: "clip" } : sel.kind === "inbox" ? { kind: "inbox", platform: String(sel.platform || ""), up: sel.up ? String(sel.up) : void 0 } : { kind: "all" };
       const actions = buildRailActions(String(row.title || ""), source);
       if (actions.length) attachItemActions(row, actions, { sheetTitle: String(row.title || ""), menuClass: "bz-clip-menu-editorial" });
     });
   }
   function buildRailActions(label, source) {
-    if (source.kind === "brief") return [];
     const unreadList = queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], source, M5.upInfo).filter((a) => a.origin === "news");
     if (!unreadList.length) return [];
     const n = unreadList.length;
@@ -21927,21 +21510,6 @@ ${sample}`,
   function renderList() {
     if (!listEl) return;
     const src = currentSrc();
-    if (src.kind === "brief") {
-      const filtered2 = currentBriefs().filter((a) => !searchKw || matchesSearch(a));
-      if (!filtered2.length) {
-        listEl.innerHTML = "";
-        listEl.appendChild(uiEmpty({ icon: "inbox", title: searchKw ? "没有匹配的简报" : "每日简报为空" }));
-        M5.cur = null;
-        if (readerEl) renderReader();
-        return;
-      }
-      if (!filtered2.some((a) => a.id === (M5.cur && M5.cur.id))) M5.cur = filtered2[0];
-      listEl.innerHTML = briefListHtml(groupBriefsByDay(filtered2), M5.cur ? M5.cur.id : null, (a) => relTime(a.timeTs));
-      M5.list = filtered2;
-      bindItemMenus();
-      return;
-    }
     if (src.kind === "clip") {
       const list = queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], src, M5.upInfo).filter((a) => !searchKw || matchesSearch(a));
       if (!list.length) {
@@ -22072,65 +21640,21 @@ ${sample}`,
     out.push({ icon: "trash-2", label: "删除", kind: "danger", title: "从收件流删除", onClick: () => deleteNewsItem(a) });
     return out;
   }
-  function resolveImgSrc(src) {
-    const s = String(src || "").trim();
-    if (/^(https?:|app:|capacitor:|data:image\/)/i.test(s)) return s;
-    const wiki = s.match(/^!\[\[([^\]]+)\]\]$/);
-    if (wiki) {
-      const p = wiki[1].split("|")[0].trim();
-      try {
-        const af = getApp().vault.getAbstractFileByPath(p);
-        if (af) return getApp().vault.getResourcePath(af);
-      } catch (e) {
-      }
-      return null;
+  async function hydrateArticleMarkdown(el, md, sourcePath, alive) {
+    var _a2;
+    try {
+      const comp = new Component();
+      await MarkdownRenderer.render(getApp(), md, el, sourcePath, comp);
+      comp.unload();
+    } catch (e) {
     }
-    return null;
-  }
-  function paragraphsHtml2(body) {
-    return paragraphsHtml(toParagraphs(body), resolveImgSrc);
+    if (!alive()) return;
+    if (!el.querySelector("*") || !((_a2 = el.textContent) == null ? void 0 : _a2.trim())) el.textContent = md;
   }
   function bindImgFallback(container) {
-    container.querySelectorAll("img.bz-clip-art-img").forEach((img) => {
+    container.querySelectorAll("img").forEach((img) => {
       img.addEventListener("error", () => img.remove(), { once: true });
     });
-  }
-  function readBriefTranscript(a) {
-    const p = String(a.raw && a.raw.transcriptPath || "");
-    if (!p) return "";
-    const cached = briefTrCache.get(p);
-    if (cached !== void 0) return cached;
-    let text = "";
-    try {
-      const w = window;
-      const fs = w && w.require ? w.require("fs") : null;
-      if (fs && typeof fs.readFileSync === "function" && fs.existsSync(p)) text = String(fs.readFileSync(p, "utf8") || "");
-    } catch (e) {
-      text = "";
-    }
-    briefTrCache.set(p, text);
-    return text;
-  }
-  function fmtBriefDur(a) {
-    const s = Number(a.raw && a.raw.duration || 0);
-    if (!(s > 0)) return "";
-    return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
-  }
-  async function retryBrief(a) {
-    const raw = a.raw;
-    if (!raw || !raw.bvid) return;
-    if (readBriefTranscript(a)) {
-      notice("正在重新生成本期要点…", "info");
-      const r = await runBriefSummaries([{ ...raw, error: void 0 }]);
-      await refreshAfterAction();
-      if (r.done > 0) notice("本期要点已重新生成", "success");
-      else notice("本期要点重跑未成功", "error");
-      return;
-    }
-    await deleteBrief(String(raw.bvid));
-    briefTrCache.delete(String(raw.transcriptPath || ""));
-    await refreshAfterAction();
-    notice("已排入下一轮重新抓取", "info");
   }
   function renderReader() {
     if (!readerEl) return;
@@ -22142,25 +21666,27 @@ ${sample}`,
       return;
     }
     setReadingSession(a.id);
-    if (a.origin === "brief") {
-      readerEl.innerHTML = briefReaderHtml(a, {
-        time: a.timeText || relTime(a.timeTs),
-        points: a.body ? briefPointsHtml(a.body) : "",
-        durationLabel: fmtBriefDur(a)
-      });
-      mountIcons(readerEl);
-      return;
-    }
-    let paras = "";
+    let body = "";
+    let note = "";
     if (a.origin === "clip") {
       const cached = a.notePath ? clipBodyCache.get(a.notePath) : void 0;
-      paras = cached !== void 0 ? paragraphsHtml2(cached) : clipLoadingHtml();
+      if (cached !== void 0) {
+        body = cached;
+        if (!body) note = "（笔记暂无正文）";
+      } else {
+        note = "正在读取剪藏正文…";
+      }
     } else {
-      paras = a.body ? paragraphsHtml2(a.body) : "";
+      body = a.body;
+      if (!body) note = "正文已清空（已处理条目）";
     }
-    readerEl.innerHTML = readerHtml(a, { time: a.timeText || relTime(a.timeTs), paras });
+    readerEl.innerHTML = readerHtml(a, { time: a.timeText || relTime(a.timeTs), note });
     mountIcons(readerEl);
     bindImgFallback(readerEl);
+    const mdEl = readerEl.querySelector("[data-clip-md]");
+    if (mdEl && body) {
+      void hydrateArticleMarkdown(mdEl, body, a.notePath || "", () => !!M5.cur && M5.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
+    }
     if (a.origin === "clip") void loadClipBody(a);
   }
   async function loadClipBody(a) {
@@ -22181,10 +21707,12 @@ ${sample}`,
     clipBodyCache.set(path, body);
     if (M5.cur && M5.cur.id === a.id && readerEl) {
       const md = readerEl.querySelector("[data-clip-md]");
-      if (md) {
-        md.innerHTML = body ? paragraphsHtml2(body) : `<p class="dim">（笔记暂无正文）</p>`;
-        bindImgFallback(md);
+      if (!md) return;
+      if (!body) {
+        md.innerHTML = `<p class="dim">（笔记暂无正文）</p>`;
+        return;
       }
+      void hydrateArticleMarkdown(md, body, path, () => !!M5.cur && M5.cur.id === a.id && !!readerEl && readerEl.contains(md));
     }
   }
   function invalidateClipBodyCache(path) {
@@ -22226,35 +21754,9 @@ ${sample}`,
   }
   async function doSave(a) {
     if (!a) return;
-    if (a.origin === "brief") {
-      await doSaveBrief(a);
-      return;
-    }
     if (a.origin !== "news") return;
     const ok = await flowSave(a);
     if (!ok) return;
-    await refreshAfterAction();
-  }
-  async function doSaveBrief(a) {
-    const raw = a.raw || {};
-    if (raw.error) {
-      notice("本期抓取失败，没有可保存的内容", "warning");
-      return;
-    }
-    const ok = await writeClipNote({
-      url: a.url,
-      author: a.author,
-      platform: "B站",
-      summary: a.summary,
-      tags: [],
-      date: String(raw.date || ""),
-      title: a.title,
-      body: a.body
-    }, dailyBriefDirOf());
-    if (!ok) return;
-    raw.read = true;
-    raw.state = "saved";
-    await writeBriefState(raw, "save");
     await refreshAfterAction();
   }
   async function doMarkRead(a) {
@@ -22491,19 +21993,6 @@ ${sample}`,
   }
   function markReadOnOpen(a) {
     if (!a || a.st !== "unread") return;
-    if (a.origin === "brief") {
-      const braw = a.raw;
-      if (!braw || braw.read === true || braw.error) return;
-      braw.read = true;
-      void writeBriefState(braw, "read").then(() => {
-        if (M5.open && !M5.mobDetailOpen) {
-          renderList();
-          renderRail();
-        }
-      }).catch(() => {
-      });
-      return;
-    }
     if (a.origin !== "news") return;
     const raw = a.raw || M5.articles.find((n) => articleKeyOf(n) === a.id);
     if (!raw || raw.read === true) return;
@@ -22526,13 +22015,18 @@ ${sample}`,
       mobSaveBtnEl.classList.toggle("saved", saved);
       mobSaveBtnEl.textContent = saved ? "已存" : "存为剪藏";
     }
-    const paras = a.body ? paragraphsHtml2(a.body) : "";
+    const mdBody = a.origin === "news" ? a.body : "";
+    const note = mdBody ? "" : a.origin === "clip" ? "剪藏笔记正文请在 Obsidian 中打开" : "正文已清空";
     const idx = mobItemOrder.indexOf(a);
     const seq = idx >= 0 ? `第 ${idx + 1} 则 / ${mobItemOrder.length}` : "";
     const detailBody = mobDetailEl.querySelector("[data-clip-mob-detail-body]");
-    detailBody.innerHTML = mobDetailHtml(a, { time: a.timeText || relTime(a.timeTs), paras, seq });
+    detailBody.innerHTML = mobDetailHtml(a, { time: a.timeText || relTime(a.timeTs), note, seq });
     mountIcons(detailBody);
     bindImgFallback(detailBody);
+    const mdEl = detailBody.querySelector("[data-clip-mob-md]");
+    if (mdEl && mdBody) {
+      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M5.mobDetailOpen && !!M5.cur && M5.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
+    }
   }
   function clipbookSettingsSchema(dataSource) {
     return {
@@ -22556,7 +22050,6 @@ ${sample}`,
               { value: "large", label: "大" }
             ], onChange: () => applyReaderFontSize() },
             { type: "path", mode: "single", name: "剪藏目录", desc: "存放网页剪藏文章的文件夹", binding: { key: "articleDirectory" } },
-            { type: "path", mode: "single", name: "每日简报目录", desc: "每日简报保存的文件夹，与剪藏目录分开", binding: { key: "dailyBriefDir" } },
             { type: "number", name: "面板宽度记忆", desc: "桌面拖拽面板边缘缩放后自动记忆，0 为未拖过", binding: { key: "clipbookPanelWidth" }, min: 0, step: 10 },
             { type: "number", name: "面板高度记忆", desc: "桌面拖拽面板边缘缩放后自动记忆，0 为未拖过", binding: { key: "clipbookPanelHeight" }, min: 0, step: 10 },
             { type: "number", name: "目录栏宽度记忆", desc: "拖动目录与阅读分隔线后自动记忆，0 为未拖过", binding: { key: "clipbookMidWidth" }, min: 0, step: 10 }
@@ -22629,9 +22122,10 @@ ${sample}`,
       }
     });
   }
-  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle3, loading, dirty, loaded2, SEARCH_DEBOUNCE_MS2, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, briefTrCache;
+  var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle3, loading, dirty, loaded2, SEARCH_DEBOUNCE_MS2, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched;
   var init_ui6 = __esm({
     "src/clipbook/ui.ts"() {
+      init_fake_obsidian();
       init_app();
       init_notice();
       init_ui();
@@ -22651,8 +22145,6 @@ ${sample}`,
       init_render8();
       init_state5();
       init_loader();
-      init_brief();
-      init_save();
       init_flow();
       overlayEl = null;
       railListEl = null;
@@ -22692,7 +22184,6 @@ ${sample}`,
       snapEpochs = /* @__PURE__ */ new Map();
       deskFoldOpen = /* @__PURE__ */ new Set();
       deskFoldTouched = /* @__PURE__ */ new Set();
-      briefTrCache = /* @__PURE__ */ new Map();
     }
   });
 
