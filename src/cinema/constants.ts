@@ -6,7 +6,7 @@ export const STATUS_WANT = 0;
 export const STATUS_WATCHING = 1;
 export const STATUS_WATCHED = 2;
 
-/** 默认评分（标记已看直改默认分；10 分制中点 5） */
+/** 默认评分（编辑窗预填默认分；10 分制中点 5） */
 export const DEFAULT_RATING = 5;
 
 /** 类型分组：组 → 细分 tag 清单 */
