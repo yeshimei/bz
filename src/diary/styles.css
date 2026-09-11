@@ -1284,7 +1284,8 @@
   position: fixed;
   inset: 0;
   z-index: 95;
-  background: var(--dw-cover);
+  background: var(--bz-overlay);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   display: none;
   align-items: center;
   justify-content: center;
