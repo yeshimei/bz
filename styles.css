@@ -14391,9 +14391,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 
 /* ==================== 借书卡详情（纸卡 + 台账 + 印章；编辑控件融卡内） ==================== */
-.bz-bs-d-popup.bz-overlay-popup { max-width: min(660px, calc(100vw - 32px)); background: var(--bsw-paper); border: 1px solid var(--bsw-line); scrollbar-width: none; overflow: hidden; }
+.bz-bs-d-popup.bz-overlay-popup { max-width: min(660px, calc(100vw - 32px)); height: min(82vh, 700px); background: var(--bsw-paper); border: 1px solid var(--bsw-line); scrollbar-width: none; overflow: hidden; }
 .bz-bs-d-popup.bz-overlay-popup::-webkit-scrollbar { display: none; }
-.bz-bs-detail { position: relative; display: flex; min-height: 0; color: var(--bsw-ink); font-family: var(--bsw-sans); }
+/* 固定高：卡不随书评拉长，内容多寡只影响内部滚动区的可滚量 */
+.bz-bs-d-popup .bz-dialog-body { flex: 1; min-height: 0; }
+.bz-bs-detail { position: relative; display: flex; flex: 1; min-height: 0; color: var(--bsw-ink); font-family: var(--bsw-sans); }
 .bz-bs-d-pull {
   position: absolute; top: 0; right: 0; z-index: 2;
   background: var(--bsw-accent); color: var(--bsw-paper);
@@ -14433,6 +14435,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-bs-d-ledger td:first-child { color: var(--bsw-muted); white-space: nowrap; width: 96px; letter-spacing: 1px; }
 .bz-bs-d-ledger td:last-child { font-weight: 600; }
 .bz-bs-d-stdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+/* 状态行整体不折行：「继续」永远跟在「在读」同排（窄屏值列窄也不拆） */
+.bz-bs-d-nowrap { white-space: nowrap; }
 /* 「继续」：在读条目行内跳书钮（强调色 + 下划线，融台账行内） */
 .bz-bs-d-go {
   background: none; border: none; padding: 0 0 0 8px;
