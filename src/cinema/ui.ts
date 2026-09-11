@@ -70,7 +70,8 @@ function openDouban(item: CinemaItem): void {
   }
 }
 
-/** 快速标记状态（菜单/抽屉「标记在看/已看」）：评分映射 + 状态流转即刷新观影日期 + 域事件补发 */
+/** 快速标记状态（菜单/抽屉「标记在看」）：状态流转 + 刷新观影日期 + 域事件补发。
+ *  「标记已看」已改走编辑窗（评分影评由用户在表单输入，saveEdit 落盘时补发同款域事件） */
 async function markStatus(item: CinemaItem, target: '在看' | '已看', sec: HTMLElement, app: App): Promise<void> {
   const fromSt = item.status === STATUS_WANT ? 'want' : item.status === STATUS_WATCHING ? 'watching' : 'watched';
   const prevRating = item.rating && item.rating > 0 ? item.rating : null;
@@ -97,7 +98,7 @@ async function markStatus(item: CinemaItem, target: '在看' | '已看', sec: HT
   }
 }
 
-/** 菜单/抽屉动作列表（顺序即显示顺序；业务语义与旧版一致） */
+/** 菜单/抽屉动作列表（顺序即显示顺序） */
 interface MenuAct { icon: string; label: string; danger?: boolean; run: () => void }
 function itemActions(it: CinemaItem, sec: HTMLElement, app: App): MenuAct[] {
   const out: MenuAct[] = [{ icon: ICON.eye, label: '打开详情', run: () => openDetail(sec, it, app) }];
@@ -105,7 +106,8 @@ function itemActions(it: CinemaItem, sec: HTMLElement, app: App): MenuAct[] {
     out.push({ icon: ICON.play, label: '标记在看', run: () => void markStatus(it, '在看', sec, app) });
   }
   if (it.status !== STATUS_WATCHED) {
-    out.push({ icon: 'check', label: '标记已看', run: () => void markStatus(it, '已看', sec, app) });
+    // 标记已看不直改状态/评分：改走编辑窗预选「已看」，评分影评由用户确认后保存（memo item-1789105594322）
+    out.push({ icon: 'check', label: '标记已看', run: () => openForm(sec, it, app, '已看') });
   }
   out.push(
     { icon: ICON.ai, label: '找同类', run: () => void runSimilarRecommend(it, app) },
@@ -290,10 +292,12 @@ function openDetail(sec: HTMLElement, it: CinemaItem, app: App): void {
 
 // ---------- 弹窗：添加 / 编辑表单 ----------
 
-function openForm(sec: HTMLElement, item: CinemaItem | null, app: App): void {
+/** 添加/编辑表单弹窗。presetSt：预选状态（中文口径，如「已看」）——「标记已看」入口传入，
+ *  状态 chip 预选、评分滑杆（预填当前评分，无则默认分）与影评框自动展开；弹窗本身不落盘，保存才生效 */
+function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?: string): void {
   const editing = !!item;
   const initTag = item ? item.typeTag : '电影';
-  const initSt = item ? statusText(item.status) : '想看';
+  const initSt = presetSt ?? (item ? statusText(item.status) : '想看');
   const ratingVal = item && item.rating && item.rating > 0 ? item.rating : DEFAULT_RATING;
   const { el, close } = ovl(sec, formModalHtml({
     editing, name: item ? item.name : '', typeTag: initTag, stText: initSt,
@@ -359,7 +363,7 @@ async function saveNew(sec: HTMLElement, p: FormPayload, app: App, close: () => 
   }
 }
 
-/** 编辑落盘：改名前置校验（非法字符/重名拦截）→ persistItem（rename + frontmatter tags） */
+/** 编辑落盘：改名前置校验（非法字符/重名拦截）→ persistItem（rename + frontmatter tags）→ 域事件补发 */
 async function saveEdit(sec: HTMLElement, item: CinemaItem, p: FormPayload, app: App, close: () => void): Promise<void> {
   const group = getGroupForTag(p.tag) ?? '其他';
   const st = p.st === '想看' ? STATUS_WANT : p.st === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
@@ -378,6 +382,17 @@ async function saveEdit(sec: HTMLElement, item: CinemaItem, p: FormPayload, app:
   item.status = st; item.rating = p.rating; item.watchDate = p.date; item.review = p.review;
   try {
     await persistItem(item, app, { prevName: prev.name, prevTag: prev.typeTag });
+    // 域事件补发（与快速标记 markStatus 同口径）：状态流转 + 评分变化 → 小橘行为流；
+    // 「标记已看」改走本函数后由这里承接原 markStatus 的事件语义
+    const fromSt = prev.status === STATUS_WANT ? 'want' : prev.status === STATUS_WATCHING ? 'watching' : 'watched';
+    if (st !== prev.status) {
+      const toSt = st === STATUS_WANT ? 'want' : st === STATUS_WATCHING ? 'watching' : 'watched';
+      emitDomainEvent('movie', { kind: 'status', name: item.name, from: fromSt, to: toSt });
+    }
+    const prevRating = prev.rating && prev.rating > 0 ? prev.rating : null;
+    if (item.rating !== null && item.rating > 0 && item.rating !== prevRating) {
+      emitDomainEvent('movie', { kind: 'rated', name: item.name, fromRating: prevRating, toRating: item.rating });
+    }
     close();
     panelToast(sec, `已保存「${p.name}」`);
     renderAll(app);
