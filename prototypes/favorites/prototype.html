@@ -213,8 +213,8 @@
         };
         dd.querySelector(`[data-fav-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
         await sleep(100);
-        t('右键菜单开', !!dd.querySelector('.bz-fav-ctx'));
-        const pinBtn = [...dd.querySelectorAll('.bz-fav-ctx button')].find((b) => b.textContent.includes('置顶') && !b.textContent.includes('取消'));
+        t('右键菜单开', !!dd.querySelector('.bz-item-menu'));
+        const pinBtn = [...dd.querySelectorAll('.bz-item-menu button')].find((b) => b.textContent.includes('置顶') && !b.textContent.includes('取消'));
         clickReal(pinBtn);
         await sleep(250);
         t('置顶生效', db().find((i) => i.id === nu.id).pinned === true);
@@ -222,7 +222,7 @@
         t('置顶恒最前', firstCardTitle(dd) === '测试收藏');
         dd.querySelector(`[data-fav-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
         await sleep(100);
-        const unpinBtn = [...dd.querySelectorAll('.bz-fav-ctx button')].find((b) => b.textContent.includes('取消置顶'));
+        const unpinBtn = [...dd.querySelectorAll('.bz-item-menu button')].find((b) => b.textContent.includes('取消置顶'));
         clickReal(unpinBtn);
         await sleep(250);
         t('取消置顶', db().find((i) => i.id === nu.id).pinned === false);
@@ -230,7 +230,7 @@
         // 删除 + 撤销（真 flow-dialog 标准双动作 + 真 notice 撤销钮）
         dd.querySelector(`[data-fav-id="${nu.id}"]`).dispatchEvent(new MouseEvent('contextmenu', { clientX: 300, clientY: 300, bubbles: true, cancelable: true }));
         await sleep(100);
-        const delItem = [...dd.querySelectorAll('.bz-fav-ctx button')].find((b) => b.textContent.includes('删除'));
+        const delItem = [...dd.querySelectorAll('.bz-item-menu button')].find((b) => b.textContent.includes('删除'));
         t('删除菜单项在', !!delItem);
         clickReal(delItem);
         await sleep(150);
@@ -246,15 +246,17 @@
         await sleep(250);
         t('撤销恢复', !!db().some((i) => i.id === nu.id));
 
-        // 移动抽屉（真 openMobSheet；点遮罩本体关闭——与 core item-actions 抽屉的 touch 下拉关闭不同）
+        // 移动抽屉（2026-09-11 收编 core openItemSheet：点遮罩/下拉关闭/防穿透全归共享层；
+        // 点遮罩前须越过触屏残余 click 静置窗口 400ms）
         mob('[data-fav-content] [data-fav-id]').click();
         await sleep(100);
-        t('移动抽屉开', !!md.querySelector('.bz-fav-sheet-mask.bz-fav-show'));
-        t('抽屉磁点+标题', !!md.querySelector('.bz-fav-sheet .bz-fav-sh-dot') && !!md.querySelector('.bz-fav-sheet .bz-fav-sh-title'));
-        t('抽屉动作列在场', md.querySelectorAll('.bz-fav-sheet .bz-fav-sh-acts button').length >= 4);
-        md.querySelector('.bz-fav-sheet-mask').click();
+        t('移动抽屉开', !!md.querySelector('.bz-item-sheet'));
+        t('抽屉磁点+标题', !!md.querySelector('.bz-item-sheet .bz-fav-sh-dot') && !!md.querySelector('.bz-item-sheet .bz-fav-sh-title'));
+        t('抽屉动作列在场', md.querySelectorAll('.bz-item-sheet .bz-item-sheet-item').length >= 4);
+        await sleep(400);
+        md.querySelector('.bz-item-sheet-mask').click();
         await sleep(80);
-        t('移动抽屉关', !md.querySelector('.bz-fav-sheet-mask'));
+        t('移动抽屉关', !md.querySelector('.bz-item-sheet'));
 
         document.title = window.__st.fail.length
           ? 'SELFTEST FAIL ' + window.__st.fail.join(',')

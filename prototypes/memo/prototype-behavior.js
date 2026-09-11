@@ -1,4 +1,4 @@
-/* 源指纹 d36d7991150da339 · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 d379d880ea157efc · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -10361,7 +10361,7 @@ var BZW_memo = (() => {
             group.style.overflow = "visible";
             group.style.zIndex = "10";
           }
-          const closeMenu2 = () => {
+          const closeMenu = () => {
             var _a4;
             (_a4 = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a4.remove();
             if (group) {
@@ -10371,7 +10371,7 @@ var BZW_memo = (() => {
             document.removeEventListener("click", h);
           };
           const h = (ev) => {
-            if (!sel.contains(ev.target)) closeMenu2();
+            if (!sel.contains(ev.target)) closeMenu();
           };
           setTimeout(() => document.addEventListener("click", h));
           const menu = document.createElement("div");
@@ -10383,7 +10383,7 @@ var BZW_memo = (() => {
             it.addEventListener("click", (ev) => {
               var _a4;
               ev.stopPropagation();
-              closeMenu2();
+              closeMenu();
               vspan.textContent = labelOf(o.value);
               acc.write(o.value);
               void acc.persist();
@@ -22287,20 +22287,6 @@ ${sample}`,
     acts.push({ icon: ICON3.del, label: "删除", act: "del", danger: true });
     return acts;
   }
-  function ctxMenuHtml(acts) {
-    return acts.map((a, k) => {
-      const last = k === acts.length - 1;
-      const btn = `<button data-k="${k}"${a.danger ? ' class="bz-fav-danger"' : ""}>${iconSpan(a.icon, "bz-ic--sm")}<span>${esc(a.label)}</span></button>`;
-      return last ? `<div class="bz-fav-ctx-sep"></div>${btn}` : btn;
-    }).join("");
-  }
-  function sheetHtml(it, acts) {
-    const hue = hueOf((it.tags || [])[0] || "");
-    return `<div class="bz-fav-sh-head"><span class="bz-fav-sh-dot" style="--c:hsl(${hue} 52% 58%)"></span>
-    <div><div class="bz-fav-sh-title">${esc(it.title || "无标题")}</div>
-    <div class="bz-fav-sh-meta">${esc(relTime2(it.created))}${it.pinned ? " · 已置顶" : ""}${it.archived ? " · 已归档" : ""}</div></div></div>
-  <div class="bz-fav-sh-acts">${acts.map((a, k) => `<button data-k="${k}"${a.danger ? ' class="bz-fav-danger"' : ""}>${iconSpan(a.icon)}<span>${esc(a.label)}</span></button>`).join("")}</div>`;
-  }
   function pickChipsHtml(sel) {
     return TAGS.map(
       (t) => `<button type="button" class="${sel.has(t.label) ? "bz-fav-on" : ""}" data-tag="${esc(t.label)}">${iconSpan(t.ic, "bz-ic--xs")}<span>${esc(t.label)}</span></button>`
@@ -22434,13 +22420,9 @@ ${sample}`,
     if (mainEscRegistered2) return;
     mainEscRegistered2 = true;
     escManager.register("bz-fav", {
-      isVisible: () => !!M6.overlay || !!document.querySelector(".bz-fav-form") || !!document.querySelector(".bz-fav-sheet-mask"),
+      isVisible: () => !!M6.overlay || !!document.querySelector(".bz-fav-form"),
       close: () => {
-        if (closeMenu()) return;
-        if (document.querySelector(".bz-fav-sheet-mask")) {
-          closeSheet();
-          return;
-        }
+        closeItemMenu();
         const form = document.querySelector(".bz-fav-form");
         if (form) requestCloseForm(form);
         else closePanel3();
@@ -22618,63 +22600,36 @@ ${sample}`,
       });
     }
   }
-  function closeMenu() {
-    if (!menuEl) return false;
-    menuEl.remove();
-    menuEl = null;
-    if (menuOutsideHandler) {
-      document.removeEventListener("click", menuOutsideHandler, true);
-      menuOutsideHandler = null;
-    }
-    return true;
+  function toItemActions(it) {
+    return actionSpecs2(it).map((a) => ({
+      icon: a.icon,
+      label: a.label,
+      kind: a.danger ? "danger" : void 0,
+      onClick: () => runAction(it, a)
+    }));
   }
   function openRowMenuAt2(it, x, y) {
-    closeMenu();
-    const acts = actionSpecs2(it);
-    menuEl = document.createElement("div");
-    menuEl.className = "bz-fav-ctx bz-fav-scope";
-    menuEl.innerHTML = ctxMenuHtml(acts);
-    menuEl.addEventListener("click", (e) => {
-      const b = e.target.closest("button");
-      if (!b) return;
-      closeMenu();
-      runAction(it, acts[+b.dataset.k]);
-    });
-    document.body.appendChild(menuEl);
-    mountIcons(menuEl);
-    topifyZ(menuEl);
-    const r = menuEl.getBoundingClientRect();
-    menuEl.style.left = Math.min(x, window.innerWidth - r.width - 8) + "px";
-    menuEl.style.top = Math.min(y, window.innerHeight - r.height - 8) + "px";
-    menuOutsideHandler = (e) => {
-      if (menuEl && e.target instanceof Node && menuEl.contains(e.target)) return;
-      closeMenu();
-    };
-    document.addEventListener("click", menuOutsideHandler, true);
+    openItemMenu(x, y, toItemActions(it), true);
   }
   function openMobSheet2(it) {
-    closeSheet();
-    const acts = actionSpecs2(it);
-    const mask = document.createElement("div");
-    mask.className = "bz-fav-sheet-mask bz-fav-scope bz-fav-show";
-    mask.innerHTML = `<div class="bz-fav-sheet">${sheetHtml(it, acts)}</div>`;
-    mask.addEventListener("click", (e) => {
-      if (e.target === mask) {
-        closeSheet();
-        return;
-      }
-      const b = e.target.closest("button");
-      if (!b) return;
-      closeSheet();
-      runAction(it, acts[+b.dataset.k]);
-    });
-    document.body.appendChild(mask);
-    mountIcons(mask);
-    topifyZ(mask);
+    openItemSheet(toItemActions(it), { sheetHead: favSheetHead(it) });
   }
-  function closeSheet() {
-    var _a2;
-    (_a2 = document.querySelector(".bz-fav-sheet-mask")) == null ? void 0 : _a2.remove();
+  function favSheetHead(it) {
+    const head = document.createElement("div");
+    head.className = "bz-fav-sh-head";
+    const dot = document.createElement("span");
+    dot.className = "bz-fav-sh-dot";
+    dot.style.setProperty("--c", `hsl(${hueOf((it.tags || [])[0] || "")} 52% 58%)`);
+    const box = document.createElement("div");
+    const title = document.createElement("div");
+    title.className = "bz-fav-sh-title";
+    title.textContent = it.title || "无标题";
+    const meta = document.createElement("div");
+    meta.className = "bz-fav-sh-meta";
+    meta.textContent = `${relTime2(it.created)}${it.pinned ? " · 已置顶" : ""}${it.archived ? " · 已归档" : ""}`;
+    box.append(title, meta);
+    head.append(dot, box);
+    return head;
   }
   async function archiveItem(it) {
     try {
@@ -22767,7 +22722,7 @@ ${sample}`,
     var _a2;
     _baseline = null;
     _saving = false;
-    closeMenu();
+    closeItemMenu();
     ((_a2 = popup.closest(".bz-fav-form-mask")) != null ? _a2 : popup).remove();
   }
   function inputVal(popup, id) {
@@ -22992,7 +22947,7 @@ GitHub 仓库：${ghInfo.title}
       _saving = false;
     }
   }
-  var M6, mainEscRegistered2, _dm, _ai, _app2, menuEl, menuOutsideHandler, _saving, _baseline;
+  var M6, mainEscRegistered2, _dm, _ai, _app2, _saving, _baseline;
   var init_ui7 = __esm({
     "src/favorites/ui.ts"() {
       init_notice();
@@ -23001,6 +22956,7 @@ GitHub 仓库：${ghInfo.title}
       init_esc_manager();
       init_mobile();
       init_flow_dialog();
+      init_item_actions();
       init_app();
       init_ui();
       init_domain_bus();
@@ -23018,8 +22974,6 @@ GitHub 仓库：${ghInfo.title}
       _dm = null;
       _ai = null;
       _app2 = null;
-      menuEl = null;
-      menuOutsideHandler = null;
       _saving = false;
       _baseline = null;
     }

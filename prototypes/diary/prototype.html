@@ -174,7 +174,7 @@
         t('移动端节头渲染', md.querySelectorAll('.bz-diary-day-head').length > 0);
         t('媒体占位或图片在场', dd.querySelectorAll('.bz-diary-item img, .bz-diary-ph').length >= 0); // 墙体节点树成立
         t('灯箱壳在场', !!dt('.bz-diary-lb'));
-        t('抽屉壳在场', !!dt('.bz-diary-sheet'));
+        t('面板常驻 DOM 不含抽屉壳（2026-09-11 换核：抽屉 = core openItemSheet 按需挂 body）', !dt('.bz-diary-sheet'));
 
         // 写链路端到端（真 openAddDialog → store.addEntry → fake vault 落盘）
         dt('[data-act="add"]').click();
