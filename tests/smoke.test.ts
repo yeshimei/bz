@@ -253,7 +253,12 @@ describe('bz 骨架冒烟', () => {
     const { ensureDiary, unloadDiary } = await import('../src/diary');
     await expect(ensureDiary(app as any)).resolves.toBeUndefined();
     await expect(ensureDiary(app as any)).resolves.toBeUndefined();
+    // D15 回归：标签选择器/写日记弹窗两个 body 级 mask 随 ensure 常驻 body，卸载时必须按 id 摘除
+    expect(document.getElementById('diary-tag-selector-mask')).not.toBeNull();
+    expect(document.getElementById('add-diary-mask')).not.toBeNull();
     unloadDiary();
+    expect(document.getElementById('diary-tag-selector-mask')).toBeNull();
+    expect(document.getElementById('add-diary-mask')).toBeNull();
   });
 
   it('onunload 清理 toast 容器（UX 整改 l2-toast）', async () => {

@@ -47,9 +47,13 @@ export function openDiaryWrite(app: App): void {
   });
 }
 
-/** 卸载清理（main.ts onunload 调用；未初始化调用为幂等空清理） */
+/** 卸载清理（main.ts onunload 调用；未初始化调用为幂等空清理）。
+ *  D15：标签选择器/写日记弹窗两个 body 级 mask 随懒加载常驻 body——不摘会成为
+ *  不可见不可点的纯残留，卸载时按 id 移除。 */
 export function unloadDiary(): void {
   if (controller) controller.cleanup();
   controller = null;
   initialized = false;
+  document.getElementById('diary-tag-selector-mask')?.remove();
+  document.getElementById('add-diary-mask')?.remove();
 }

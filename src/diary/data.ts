@@ -13,7 +13,7 @@
  */
 import type { App, TFile } from 'obsidian';
 import { parseFile, parseMovieFile, parseLetterFile, parseBookFile } from './parser';
-import { DIARY_DIRECTORY, MOVIE_DIRECTORY, LETTER_DIRECTORY, BOOK_DIRECTORY } from './config';
+import { DIARY_DIRECTORY, LETTER_DIRECTORY, movieDirectory, bookDirectory } from './config';
 import type { DiaryEntry } from './types';
 
 // WallEntry 家族类型已上移 ./types（render 纯层经 types 引用，不触本文件 obsidian 依赖）
@@ -178,8 +178,9 @@ function toWallEntry(e: DiaryEntry, kind: WallEntry['kind'], dir: string): WallE
     emoji: e.emoji,
     content: e.content,
     // 透传解析层条目的定位/标识信息：供 UI 跳转/动作区分
-    // （日记 filename=dateStr；影视/信/书 filename=完整 vault 路径）
+    // （日记 filename=dateStr + filePath=完整路径；影视/信/书 filename=完整 vault 路径）
     filename: e.filename,
+    filePath: e.filePath,
     lineNumber: e.lineNumber,
     id: e.id,
     // 加密日记条目的保险箱 SafeNote id（encrypted=true 时存在；UI 解密时用，非加密条目为 undefined）
@@ -193,7 +194,8 @@ function toWallEntry(e: DiaryEntry, kind: WallEntry['kind'], dir: string): WallE
   };
 }
 
-/** 加载日记：diaryDir 下所有 `YYYY-MM-DD.md`，每文件多条目（kind='diary'） */
+/** 加载日记：diaryDir 下所有 `YYYY-MM-DD.md`（含子目录，递归收集），每文件多条目（kind='diary'）。
+ *  条目带 filePath=完整 vault 路径（D2：子目录日期文件的写层动作按路径定位，不再平面误写顶层同名文件）。 */
 async function loadDiaryEntries(app: App, diaryDir: string): Promise<WallEntry[]> {
   const vault = app.vault;
   const mdFiles = await mdFilesUnder(app, diaryDir);
@@ -206,7 +208,10 @@ async function loadDiaryEntries(app: App, diaryDir: string): Promise<WallEntry[]
         if (!m || !isValidDateStr(m[1])) return [];
         const dateStr = m[1];
         const content = await vault.read(file);
-        return parseFile(content, dateStr).map((e) => toWallEntry(e, 'diary', diaryDir));
+        return parseFile(content, dateStr).map((e) => {
+          e.filePath = file.path;
+          return toWallEntry(e, 'diary', diaryDir);
+        });
       })
     );
     for (const r of batchResults) entries.push(...r);
@@ -243,10 +248,10 @@ async function loadSpecialEntries(
  */
 export async function loadWallEntries(app: App): Promise<WallEntry[]> {
   const entries = await loadDiaryEntries(app, DIARY_DIRECTORY);
-  // 聚合影视/信/书
-  entries.push(...(await loadSpecialEntries(app, MOVIE_DIRECTORY, 'movie', parseMovieFile)));
+  // 聚合影视/信/书（影视/书库目录实时解析，D6）
+  entries.push(...(await loadSpecialEntries(app, movieDirectory(), 'movie', parseMovieFile)));
   entries.push(...(await loadSpecialEntries(app, LETTER_DIRECTORY, 'letter', parseLetterFile)));
-  entries.push(...(await loadSpecialEntries(app, BOOK_DIRECTORY, 'book', parseBookFile)));
+  entries.push(...(await loadSpecialEntries(app, bookDirectory(), 'book', parseBookFile)));
 
   // 排序：日期降序、时间降序（HH:mm 字典序与数值序一致）
   entries.sort((a, b) => {

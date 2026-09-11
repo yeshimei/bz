@@ -39,14 +39,14 @@ import { escapeHtml, hash31, localDayKey, stripMdExt } from '../core/utils';
 import { onDomainEvent } from '../core/domain-bus';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
-import { DIARY_DIRECTORY, MOVIE_DIRECTORY, LETTER_DIRECTORY, BOOK_DIRECTORY, getSubTagsOfPrimary, getPrimaryTagsInDisplayOrder, getTagEmoji } from './config';
+import { DIARY_DIRECTORY, LETTER_DIRECTORY, movieDirectory, bookDirectory, getSubTagsOfPrimary, getPrimaryTagsInDisplayOrder, getTagEmoji } from './config';
 import { loadWallEntries, mediaSrc, groupByMonth, pickOnThisDay, extractMedia, extractSegments, stripMediaLinks, type WallEntry, type WallMedia } from './data';
-import { railThumbKey, getRailThumb, putRailThumb, makeImageThumb, makeVideoThumb } from './thumb-cache';
+import { railThumbKey, railThumbKeepKeys, pruneRailThumbs, getRailThumb, putRailThumb, makeImageThumb, makeVideoThumb } from './thumb-cache';
 // markup 单源（ADR-0104）：壳模板/图标表/MIME/统计/题注在 render.ts，原型壳与插件同源消费
 import { wallPanelHTML, ACT_ICON, KIND_ICON, mimeOfMediaName, dayStats, statHtml, lbCaption, lbSubText, mediaCapHtml, WEEK } from './render';
 import { openAddDialog, showTagPicker } from './ui/dialogs';
 import { jumpToDiaryEntry, copyDiaryLink, showConfirm } from './ui/entry-actions';
-import { findDiaryEntry, removeDiaryEntries, isUnparsedRefusal } from './store';
+import { findDiaryEntry, removeDiaryEntries, isUnparsedRefusal, isDiaryReadFailure } from './store';
 import { isUnlocked, loadEncryptedEntries, encryptEntry, reclassifyEntry, deleteEncryptedEntry } from './encrypt';
 
 /** 右键菜单/抽屉动作 → lucide 图标名（增强包 #4/#7；ItemAction.icon 走 Obsidian IconName；
@@ -953,8 +953,9 @@ export class DiaryAppController {
         this.hide();
         return;
       }
-      // 普通日记条目：日期文件 # emoji 时间 标题锚点（openLinkText 原生定位，不依赖旧面板）
-      await jumpToDiaryEntry({ filename: e.filename || e.date, emoji: e.emoji, time: e.time });
+      // 普通日记条目：日期文件 # emoji 时间 标题锚点（openLinkText 原生定位，不依赖旧面板）；
+      // 子目录日期条目带 filePath 按实际路径跳转（D2）
+      await jumpToDiaryEntry({ filename: e.filename || e.date, filePath: e.filePath, emoji: e.emoji, time: e.time });
       this.hide(); // 跳转后关日记本（对齐旧面板行为）
     } catch (err) {
       notice('跳转失败', 'error');
@@ -1138,9 +1139,9 @@ export class DiaryAppController {
   }
 
   // ---------- 媒体构建（视口懒加载） ----------
-  /** 媒体 URL：带 sourcePath 解析（日记条目 → 我的/日记/日期.md；影视/信/书 → filename 完整路径），修复纯文件名全局解析失败 */
+  /** 媒体 URL：带 sourcePath 解析（日记条目 → filePath（子目录日期文件，D2）或顶层日期.md；影视/信/书 → filename 完整路径），修复纯文件名全局解析失败 */
   private mediaSrcFor(entry: WallEntry, name: string): string {
-    const src = entry.kind === 'diary' ? `${DIARY_DIRECTORY}/${entry.date}.md` : entry.filename || '';
+    const src = entry.filePath || (entry.kind === 'diary' ? `${DIARY_DIRECTORY}/${entry.date}.md` : entry.filename || '');
     return mediaSrc(this.app(), name, src);
   }
 
@@ -1780,11 +1781,14 @@ export class DiaryAppController {
   private fillLbMedia(box: HTMLElement, k: WallMedia, entry: WallEntry) {
     box.innerHTML = '';
     if (entry.encrypted) {
+      // D13：捕获发起时的连看下标——快速连按/滑动时旧请求晚到，只比对 isConnected 会把
+      // 上一个媒体回填进当前灯箱（图文错位）。下标已推进则丢弃本次回填。
+      const idx = this._lbIdx;
       const pend = document.createElement('div');
       pend.className = 'bz-diary-lb-pending';
       box.appendChild(pend);
       void this.encMediaUrl(entry.noteId || '', k).then((url) => {
-        if (!box.isConnected) return;
+        if (!box.isConnected || this._lbIdx !== idx) return;
         box.innerHTML = '';
         if (!url) {
           box.appendChild(this.mkLbErr(k));
@@ -1841,8 +1845,8 @@ export class DiaryAppController {
         notice('已复制双链引用', 'success');
         return;
       }
-      // 普通日记条目：emoji+时间 即标题锚点，直接构建双链（写层同源解析，无需反查）
-      await copyDiaryLink({ filename: e.filename || e.date, emoji: e.emoji, time: e.time });
+      // 普通日记条目：emoji+时间 即标题锚点，直接构建双链（写层同源解析，无需反查；子目录带 filePath，D2）
+      await copyDiaryLink({ filename: e.filename || e.date, filePath: e.filePath, emoji: e.emoji, time: e.time });
     } catch (err) {
       notice('复制双链失败', 'error');
     }
@@ -1857,11 +1861,12 @@ export class DiaryAppController {
     }
   }
 
-  /** 改标签：接本域 showTagPicker（filename+lineNumber 定位，写层守卫落盘；结果经域事件回刷本墙） */
+  /** 改标签：接本域 showTagPicker（filePath+lineNumber 定位，写层守卫落盘；结果经域事件回刷本墙） */
   private async editTags(e: WallEntry) {
     try {
       showTagPicker({
         filename: e.filename || e.date,
+        filePath: e.filePath,
         date: e.date,
         time: e.time,
         lineNumber: e.lineNumber || 0,
@@ -1874,25 +1879,41 @@ export class DiaryAppController {
     }
   }
 
-  /** 加密：本域 encryptEntry（需保险箱解锁）+ 写层摘除原块；结果经域事件回刷本墙 */
+  /**
+   * 加密：本域 encryptEntry（需保险箱解锁）+ 写层摘除原块；结果经域事件回刷本墙。
+   * D5：摘除失败（返回 0 或抛错）必须回滚保险箱密文——密文已入库原文未删时，
+   * 解锁后同条出现两次且重试越积越多。
+   */
   private async encryptEntryAction(e: WallEntry) {
+    let enc: Awaited<ReturnType<typeof encryptEntry>> = null;
     try {
       // P1 审查修复：影视/信/书特殊条目不提供加密（入库语义错位）——菜单已屏蔽，此处兜底
       if (this.isSpecialWallEntry(e)) return;
       const { ensureSafeUnlocked } = await import('../encrypt') as typeof import('../encrypt');
       const unlocked = await ensureSafeUnlocked();
       if (!unlocked) return;
-      const filename = e.filename || e.date;
-      const entry = await findDiaryEntry(filename, e.lineNumber || 0);
+      const entry = await findDiaryEntry(e.filePath || e.filename || e.date, e.lineNumber || 0);
       if (!entry) {
         notice('找不到原文条目，无法加密', 'error');
         return;
       }
-      const enc = await encryptEntry(entry);
+      enc = await encryptEntry(entry);
       if (enc) {
-        const removed = await removeDiaryEntries(entry.date, (x) => x.time === entry.time && x.lineNumber === entry.lineNumber);
+        let removed = 0;
+        try {
+          removed = await removeDiaryEntries(
+            entry.date,
+            (x) => x.filePath === entry.filePath && x.time === entry.time && x.lineNumber === entry.lineNumber,
+            { filePath: entry.filePath }
+          );
+        } catch (e) {
+          // 摘除抛错（守卫拒写/读盘失败）：回滚密文后原样上抛（人话通知已由写层发出）
+          await this.rollbackEncryptedNote(enc);
+          throw e;
+        }
         if (removed === 0) {
-          // 原块摘除失败：密文已入库但原文未删，解锁后会同一条出现两次——明确告知
+          // 原块摘除失败：回滚密文（D5），不留「保险箱 + 原文」双份
+          await this.rollbackEncryptedNote(enc);
           notice('加密失败：原文块摘除未生效', 'error');
           return;
         }
@@ -1900,8 +1921,18 @@ export class DiaryAppController {
         void this.loadAndRender();
       }
     } catch (err) {
-      if (err && isUnparsedRefusal(err)) return; // 守卫拒处理：人话通知已由写层发出
+      if (err && (isUnparsedRefusal(err) || isDiaryReadFailure(err))) return; // 守卫拒处理/读失败：人话通知已由写层发出
       notice('加密失败', 'error');
+    }
+  }
+
+  /** 加密失败兜底：尽力销毁刚入库的密文（失败仅留日志，不强抛——原失败原因更要紧） */
+  private async rollbackEncryptedNote(enc: NonNullable<Awaited<ReturnType<typeof encryptEntry>>>) {
+    if (!enc.noteId) return;
+    try {
+      await deleteEncryptedEntry(enc.noteId);
+    } catch (e) {
+      console.warn('[bz-diary] 加密回滚失败（保险箱可能残留密文，请手动删除）:', e);
     }
   }
 
@@ -1937,6 +1968,7 @@ export class DiaryAppController {
       }
       showConfirm({
         filename: e.filename || e.date,
+        filePath: e.filePath,
         date: e.date,
         time: e.time,
         lineNumber: e.lineNumber || 0,
@@ -2187,14 +2219,14 @@ export class DiaryAppController {
   }
 
   /** DW3：vault modify 自动刷新（clipbook 同款模式）——墙开着时日记/影视/信/书被编辑 → 防抖重读重渲染；
-   *  只关心四个数据源目录（config 常量）；隐藏期不订阅不刷新。 */
+   *  只关心四个数据源目录（影视/书库实时解析，D6：改影院/书架目录后新目录即刻生效）；隐藏期不订阅不刷新。 */
   private subscribeVaultModify(): void {
     if (this._modifyRef) return;
-    const dirs = [DIARY_DIRECTORY, MOVIE_DIRECTORY, LETTER_DIRECTORY, BOOK_DIRECTORY];
+    const dirs = () => [DIARY_DIRECTORY, movieDirectory(), LETTER_DIRECTORY, bookDirectory()];
     this._modifyRef = this.app().vault.on('modify', (file: { path?: string }) => {
       const p = (file as { path?: string } | null)?.path;
       if (!p || this.root?.style.display !== 'flex') return;
-      if (!dirs.some((d) => p.startsWith(d + '/') || p === d + '.md')) return;
+      if (!dirs().some((d) => p.startsWith(d + '/') || p === d + '.md')) return;
       if (this._modifyTimer !== null) clearTimeout(this._modifyTimer);
       this._modifyTimer = setTimeout(() => {
         this._modifyTimer = null;
@@ -2230,6 +2262,8 @@ export class DiaryAppController {
     // 保险箱已解锁：一并并入加密日记（幂等；上锁态不可见）
     await this.mergeEncryptedEntries();
     this.renderAll();
+    // D14：按当前数据的小图键集惰性清扫 IndexedDB 残留（删改媒体后旧小图不再永久占位）
+    void pruneRailThumbs(railThumbKeepKeys(this.entries));
   }
 
   // ---------- 头部动作（写日记 / 搜索 / 日期选择器） ----------

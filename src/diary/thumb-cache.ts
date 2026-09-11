@@ -74,6 +74,49 @@ export function railThumbKey(entryDate: string, mediaName: string): string {
   return `${entryDate}|${mediaName}`;
 }
 
+/** 当前数据仍在使用的缓存键全集（48px 章节栏档 + wall480 视频海报档；D14 清扫基线） */
+export function railThumbKeepKeys(entries: Array<{ date: string; media: Array<{ name: string }> }>): Set<string> {
+  const keys = new Set<string>();
+  for (const e of entries || []) {
+    for (const m of e.media || []) {
+      const key = railThumbKey(e.date, m.name);
+      keys.add(key);
+      keys.add(`wall480|${key}`);
+    }
+  }
+  return keys;
+}
+
+/**
+ * 惰性清扫（D14）：删改媒体后，旧小图在 IndexedDB 里只增不清、永久残留。
+ * 以「当前墙数据仍在用的键集」为基线，全库扫描删除基线之外的键——在每次
+ * loadAndRender 后调用（fire-and-forget），删掉即浪费，多删也会随下次命中重建。
+ * 无 IDB / 枚举失败静默降级（与模块整体降级口径一致）。
+ */
+export async function pruneRailThumbs(keepKeys: Set<string>): Promise<void> {
+  try {
+    const db = await openDb();
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      const store = tx.objectStore(STORE);
+      const req = store.getAllKeys();
+      req.onsuccess = () => {
+        try {
+          for (const key of req.result || []) {
+            if (typeof key === 'string' && !keepKeys.has(key)) store.delete(key);
+          }
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      };
+      req.onerror = () => reject(req.error);
+    });
+  } catch {
+    /* 无 IDB/枚举失败：静默降级（残留不伤正确性，下次开墙再试） */
+  }
+}
+
 export async function getRailThumb(key: string): Promise<string | null> {
   try {
     const db = await openDb();

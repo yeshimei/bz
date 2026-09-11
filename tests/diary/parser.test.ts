@@ -57,6 +57,14 @@ describe('parseFile', () => {
     expect(entries[0].tags).toEqual(['日记']);
   });
 
+  it('D11 回归：emoji 保留标题行原始序列（配置外 emoji 不被重生成映射值抹掉，锚点对得准文件）', () => {
+    const entries = parseFile('# 🐲📖 09:00\n龙抬头\n', '2024-01-01');
+    expect(entries[0].tags).toEqual(['日记']); // 🐲 不在映射表：标签只解析出「日记」
+    expect(entries[0].emoji).toBe('🐲📖'); // emoji 字段保留原始序列：跳转/双链锚点与文件标题一致
+    const entries2 = parseFile('# 😵 09:00\nx\n', '2024-01-01');
+    expect(entries2[0].emoji).toBe('😵'); // 兜底「日记」标签同样不抹原始 emoji
+  });
+
   it('时间越界行跳过', () => {
     const entries = parseFile('# 📖 25:99\nx\n# 📖 08:00\n正常\n', '2024-01-01');
     expect(entries).toHaveLength(1);
@@ -165,6 +173,23 @@ describe('parseMovieFile', () => {
     mockApp({}, { 'a.md': { 影评: 'x', 观影日期: '2024-02-03', tags: ['日剧'] } });
     const entry = await parseMovieFile(makeFile('a.md', 0), app);
     expect(entry!.tags).toEqual(['电视剧']);
+  });
+
+  it('D12 回归：无海报（frontmatter 缺字段/空白）不拼 ![[...]]，不出幽灵媒体格', async () => {
+    mockApp(
+      {},
+      {
+        '我的/影视/无海报.md': { 影评: '没海报', 观影日期: '2024-02-03', tags: ['电影'] },
+        '我的/影视/空海报.md': { 影评: '海报是空白', 观影日期: '2024-02-03', tags: ['电影'], 海报: '  ' },
+      }
+    );
+    const noPoster = await parseMovieFile(makeFile('我的/影视/无海报.md', 0), app);
+    expect(noPoster!.content).not.toContain('![[');
+    expect(noPoster!.content).toContain('没海报');
+    expect(noPoster!.content).toContain('#无海报');
+    const blankPoster = await parseMovieFile(makeFile('我的/影视/空海报.md', 0), app);
+    expect(blankPoster!.content).not.toContain('![[');
+    expect(JSON.stringify(blankPoster)).not.toContain('undefined');
   });
 });
 

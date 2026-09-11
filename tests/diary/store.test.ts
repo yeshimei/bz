@@ -10,6 +10,8 @@ import {
   findDiaryEntry,
   diaryDataMap,
   setDiaryDataMap,
+  isDiaryReadFailure,
+  DiaryFileReadError,
 } from '../../src/diary/store';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 
@@ -30,6 +32,7 @@ beforeEach(() => {
 });
 
 const DAY = '我的/日记/2024-01-01.md';
+const NESTED_DAY = '我的/日记/旧/2024-01-01.md';
 
 describe('addEntry（写层：磁盘同步 → 插入 → 全量重写）', () => {
   it('插入并写盘：# emoji 时间 标题 + 正文，按时间序落位', async () => {
@@ -52,7 +55,7 @@ describe('addEntry（写层：磁盘同步 → 插入 → 全量重写）', () =
     expect(disk).toContain('# 🚴 07:00');
     expect(disk).toContain('# 📖 08:00');
     expect(disk).toContain('# 🚴 12:00');
-    expect(diaryDataMap!.get('2024-01-01')!.length).toBe(3);
+    expect(diaryDataMap!.get(DAY)!.length).toBe(3);
   });
 
   it('P1-12 回归：同分钟追加后行号与磁盘标题行对位', async () => {
@@ -61,7 +64,7 @@ describe('addEntry（写层：磁盘同步 → 插入 → 全量重写）', () =
     const lines = vault.files.get(DAY)!.split('\n');
     // 磁盘顺序 09:00(A)、09:00(B)；第二个条目标题在第 5 行（每条目尾带空行）
     expect(lines[4]).toBe('# 📖 09:00');
-    expect(diaryDataMap!.get('2024-01-01')![1].lineNumber).toBe(5);
+    expect(diaryDataMap!.get(DAY)![1].lineNumber).toBe(5);
   });
 
   it('发 diary:entry-added 事件（载荷 date/time/tags/content）', async () => {
@@ -88,7 +91,7 @@ describe('removeDiaryEntries（守卫删除 + 整文件清空）', () => {
   it('P1-12 回归：同分钟多条删第二条，磁盘消失的必须是目标那条', async () => {
     makeVault({ [DAY]: '# 📖 09:00\nA\n\n# 📖 09:00\nB\n' });
     await listDateEntries('2024-01-01');
-    const second = diaryDataMap!.get('2024-01-01')!.find((e) => e.content === 'B')!;
+    const second = diaryDataMap!.get(DAY)!.find((e) => e.content === 'B')!;
     await removeDiaryEntries('2024-01-01', (e) => e.time === second.time && e.lineNumber === second.lineNumber);
     const disk = vault.files.get(DAY)!;
     expect(disk).toContain('A');
@@ -166,7 +169,7 @@ describe('findDiaryEntry / listDateEntries', () => {
     const snapshot = await listDateEntries('2024-01-01');
     expect(snapshot).toHaveLength(1);
     snapshot[0].content = '改过的副本';
-    expect(diaryDataMap!.get('2024-01-01')![0].content).toBe('A');
+    expect(diaryDataMap!.get(DAY)![0].content).toBe('A');
   });
 });
 
@@ -213,5 +216,88 @@ describe('D3 串行队列语义收口', () => {
     ]);
     expect(vault.files.get(DAY)).toContain('B');
     expect(vault.files.get('我的/日记/2024-01-02.md')).toContain('Y');
+  });
+});
+
+describe('D1 回归：读盘失败中止队列任务（不删文件不覆盖整天日记）', () => {
+  it('读失败的日期上删除条目：抛错中止，文件原样保留（旧实现会跑完删除路径把整天文件删掉）', async () => {
+    makeVault({ [DAY]: '# 📖 08:00\nA\n' });
+    const realRead = vault.read.bind(vault);
+    vi.spyOn(vault, 'read').mockRejectedValue(new Error('EBUSY: 资源被占用'));
+    await expect(removeDiaryEntries('2024-01-01', () => true)).rejects.toBeInstanceOf(DiaryFileReadError);
+    expect(vault.files.has(DAY)).toBe(true); // 整文件没有被删
+    expect(vault.files.get(DAY)).toBe('# 📖 08:00\nA\n'); // 内容一字未动
+    await expect(realRead(vault.file(DAY))).resolves.toBe('# 📖 08:00\nA\n');
+  });
+
+  it('读失败的日期上写新条目：抛错中止，不用「只有新条目」的全文覆盖旧日记', async () => {
+    makeVault({ [DAY]: '# 📖 08:00\nA\n' });
+    vi.spyOn(vault, 'read').mockRejectedValue(new Error('EBUSY'));
+    await expect(addEntry('2024-01-01', '09:00', ['日记'], 'B')).rejects.toSatisfy(isDiaryReadFailure);
+    expect(vault.files.get(DAY)).toBe('# 📖 08:00\nA\n'); // 旧条目没有被覆盖掉
+    expect(isDiaryReadFailure(new Error('其他错误'))).toBe(false); // 判定器不放行普通错误
+  });
+});
+
+describe('D2 回归：子目录日期文件按路径读写（不再平面误写顶层同名文件）', () => {
+  it('listDateEntries 带 filePath 读子目录文件；条目回填 filePath 且与顶层同名日期互不串扰', async () => {
+    makeVault({
+      [DAY]: '# 📖 08:00\n顶层\n',
+      [NESTED_DAY]: '# 📖 08:00\n子目录\n',
+    });
+    const nested = await listDateEntries('2024-01-01', { filePath: NESTED_DAY });
+    expect(nested).toHaveLength(1);
+    expect(nested[0].filePath).toBe(NESTED_DAY);
+    expect(nested[0].content).toBe('子目录');
+    expect(diaryDataMap!.get(NESTED_DAY)![0].content).toBe('子目录'); // map 按路径分键
+    const flat = await listDateEntries('2024-01-01');
+    expect(flat[0].content).toBe('顶层');
+    expect(diaryDataMap!.get(DAY)![0].content).toBe('顶层'); // 两份快照互不覆盖
+  });
+
+  it('删子目录文件条目：动的是子目录文件，顶层同名日期文件原样保留（旧实现删到顶层）', async () => {
+    makeVault({
+      [DAY]: '# 📖 08:00\n顶层\n',
+      [NESTED_DAY]: '# 📖 08:00\n子目录\n',
+    });
+    const hit = await findDiaryEntry(NESTED_DAY, 1);
+    expect(hit).not.toBeNull();
+    expect(hit!.content).toBe('子目录');
+    const removed = await removeDiaryEntries('2024-01-01', (e) => e.filePath === NESTED_DAY, { filePath: NESTED_DAY });
+    expect(removed).toBe(1);
+    expect(vault.files.has(NESTED_DAY)).toBe(false); // 子目录文件清空删除
+    expect(vault.files.get(DAY)).toBe('# 📖 08:00\n顶层\n'); // 顶层一字未动
+  });
+
+  it('改子目录条目标签：写回子目录文件，顶层同名文件不动', async () => {
+    makeVault({
+      [DAY]: '# 📖 08:00\n顶层\n',
+      [NESTED_DAY]: '# 📖 08:00\n子目录\n',
+    });
+    const updated = await updateDiaryTags('2024-01-01', (e) => e.filePath === NESTED_DAY, ['骑行'], {
+      filePath: NESTED_DAY,
+    });
+    expect(updated?.tags).toEqual(['骑行']);
+    expect(vault.files.get(NESTED_DAY)).toContain('# 🚴 08:00');
+    expect(vault.files.get(DAY)).toBe('# 📖 08:00\n顶层\n');
+  });
+
+  it('子目录文件加条目：新条目落子目录文件，顶层文件不新增', async () => {
+    makeVault({ [NESTED_DAY]: '# 📖 08:00\n子目录\n' });
+    await addEntry('2024-01-01', '09:00', ['日记'], '新条目', { filePath: NESTED_DAY });
+    expect(vault.files.get(NESTED_DAY)).toContain('# 📖 09:00');
+    expect(vault.files.get(NESTED_DAY)).toContain('新条目');
+    expect(vault.files.has(DAY)).toBe(false); // 顶层不平面误建
+  });
+
+  it('findDiaryEntry 传日期串仍定位顶层文件；传路径定位子目录文件', async () => {
+    makeVault({
+      [DAY]: '# 📖 08:00\n顶层\n',
+      [NESTED_DAY]: '# 📖 08:00\n子目录\n',
+    });
+    const flat = await findDiaryEntry('2024-01-01', 1);
+    expect(flat!.content).toBe('顶层');
+    const nested = await findDiaryEntry(NESTED_DAY, 1);
+    expect(nested!.content).toBe('子目录');
   });
 });

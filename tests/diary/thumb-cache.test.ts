@@ -4,7 +4,7 @@
  * 保证真实环境异常路径（隐私模式/旧内核）不抛错、只回退直挂原图。
  */
 import { describe, expect, it } from 'vitest';
-import { railThumbKey, getRailThumb, putRailThumb, makeImageThumb, makeVideoThumb, isFlatFrameData, THUMB_SIZE } from '../../src/diary/thumb-cache';
+import { railThumbKey, railThumbKeepKeys, pruneRailThumbs, getRailThumb, putRailThumb, makeImageThumb, makeVideoThumb, isFlatFrameData, THUMB_SIZE } from '../../src/diary/thumb-cache';
 
 describe('小图缓存模块（无 IDB/无 DOM 降级）', () => {
   it('railThumbKey：日期+媒体名消歧', () => {
@@ -17,6 +17,19 @@ describe('小图缓存模块（无 IDB/无 DOM 降级）', () => {
 
   it('putRailThumb 无 indexedDB 静默成功', async () => {
     await expect(putRailThumb('k', 'data:image/webp;base64,x')).resolves.toBeUndefined();
+  });
+
+  it('D14 回归：railThumbKeepKeys 覆盖 48px 章节栏档与 wall480 海报档两套键', () => {
+    const keys = railThumbKeepKeys([{ date: '2026-06-11', media: [{ name: 'a.jpg' }, { name: 'v.mp4' }] }]);
+    expect(keys.has('2026-06-11|a.jpg')).toBe(true);
+    expect(keys.has('2026-06-11|v.mp4')).toBe(true);
+    expect(keys.has('wall480|2026-06-11|v.mp4')).toBe(true);
+    expect(keys.has('wall480|2026-06-11|a.jpg')).toBe(true);
+    expect(railThumbKeepKeys([]).size).toBe(0); // 空数据：全库都可清（惰性清扫基线为空）
+  });
+
+  it('D14 回归：pruneRailThumbs 无 indexedDB 静默成功（清扫是尽力而为，不阻断渲染链）', async () => {
+    await expect(pruneRailThumbs(new Set(['k1', 'k2']))).resolves.toBeUndefined();
   });
 
   it('makeImageThumb 非法 URL 返回 null（回退直挂原图路径）', async () => {

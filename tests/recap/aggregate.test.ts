@@ -259,4 +259,16 @@ describe('collectRecap（只读采集集成）', () => {
     expect(data.summary.diary).toBe(1);
     expect(data.items).toHaveLength(1);
   });
+
+  it('R1 回归：加密过滤口径对齐墙——标题带 🔐（标签「加密」）、正文无 🔐 的条目同样不计数', async () => {
+    // 旧口径只查正文 🔐：标题带 🔐 的条目被回顾计数、却在墙上按「加密」标签隐藏 → 摘要对不上
+    vault.files.set(`我的/日记/${todayStr()}.md`, [
+      '# 📖🔐 12:00', '', '正文没有🔐标记', '',
+      '# 📖 20:00', '', '普通条目', '',
+    ].join('\n'));
+    const data = await collectRecap(mockAppWithVault(vault) as any);
+    expect(data.summary.diary).toBe(1); // 只有 20:00 普通条目计数
+    expect(data.items).toHaveLength(1);
+    expect(data.items[0].text).toContain('新增 1 条');
+  });
 });
