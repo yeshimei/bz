@@ -94,6 +94,14 @@ describe('域遮罩 blur 全量在位', () => {
     }
   });
 
+  it('diary 日期筛选遮罩收编（.bz-diary-datefilter 走遮罩块断言——文件头部有同名 token 挂载块，通用 rule 会误取）', () => {
+    const m = repo('src/diary/styles.css').match(
+      /\.bz-diary-datefilter\s*\{[^}]*position: fixed;[^}]*backdrop-filter: blur\(var\(--bz-overlay-blur\)\)/
+    );
+    expect(m, '.bz-diary-datefilter 遮罩块缺 token 毛玻璃').not.toBeNull();
+    expect(m![0]).toContain('background: var(--bz-overlay)');
+  });
+
   it('品牌底色遮罩保留域底色只加 blur（favorites / secondbrain / settings-panel）', () => {
     const fav = rule(repo('src/favorites/styles.css'), '.bz-fav-form-mask');
     expect(fav).toContain(BLUR);
