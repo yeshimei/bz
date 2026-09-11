@@ -1,4 +1,4 @@
-/* 源指纹 929925237fef7df1 · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 d36d7991150da339 · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -16097,6 +16097,9 @@ ${countsToText(s.missing)}
     }
     return out;
   }
+  function looksLikeFeedXml(xml) {
+    return /<(rss|feed|RDF)[\s>]/i.test(String(xml || ""));
+  }
   function extractFeedTitleFromXml(xml) {
     const m = String(xml || "").match(/<title[^>]*>([\s\S]*?)<\/title>/i);
     if (!m) return null;
@@ -17168,7 +17171,11 @@ ${bodyText.substring(0, 6e3)}`;
   async function fetchRssFeedTitle(url) {
     try {
       const timer = new Promise((resolve2) => setTimeout(() => resolve2(null), 1e4));
-      const req = requestUrl({ url, method: "GET" }).then((resp) => resp.status >= 200 && resp.status < 300 ? extractFeedTitleFromXml(resp.text) : null);
+      const req = requestUrl({ url, method: "GET" }).then((resp) => {
+        if (resp.status < 200 || resp.status >= 300) return null;
+        if (!looksLikeFeedXml(resp.text)) return null;
+        return extractFeedTitleFromXml(resp.text);
+      });
       return await Promise.race([req, timer]);
     } catch (e) {
       return null;
@@ -17254,7 +17261,7 @@ ${bodyText.substring(0, 6e3)}`;
       return;
     }
     box.inputValue = "";
-    box.feeds = [...box.feeds, title ? { url, title } : { url }];
+    box.feeds = [...box.feeds, { url, title }];
     opts.onChanged();
     notice(`已订阅 ${title || url}`, "success");
   }
@@ -17306,74 +17313,11 @@ ${bodyText.substring(0, 6e3)}`;
   });
 
   // src/clipbook/md.ts
-  function splitImageTokens(line) {
-    const out = [];
-    let last = 0;
-    let m;
-    IMG_TOKEN_RE.lastIndex = 0;
-    while ((m = IMG_TOKEN_RE.exec(line)) !== null) {
-      if (m.index > last) out.push({ kind: "text", text: line.slice(last, m.index) });
-      const tok = m[0];
-      const md = tok.match(/^!\[([^\]]*)\]\(([^)\s]+)[^)]*\)$/);
-      if (md) {
-        out.push({ kind: "img", src: md[2] });
-      } else {
-        const wiki = tok.match(/^!\[\[([^\]]+)\]\]$/);
-        if (wiki) out.push({ kind: "img", src: "![[" + wiki[1].split("|")[0].trim() + "]]" });
-      }
-      last = m.index + tok.length;
-    }
-    if (last < line.length) out.push({ kind: "text", text: line.slice(last) });
-    return out;
-  }
-  function cleanLine(s) {
-    const links = [];
-    let t = s.replace(/\[[^\]]*\]\([^)\s]+[^)]*\)/g, (m) => {
-      links.push(m);
-      return `\0${links.length - 1}\0`;
-    });
-    t = t.replace(/^#{1,6}\s*/, "");
-    t = t.replace(/[*_`~]/g, "");
-    t = t.replace(/^[-•]\s+/, "");
-    t = t.replace(/\u0000(\d+)\u0000/g, (_, i) => links[Number(i)]);
-    return t.trim();
-  }
-  function toParagraphs(body) {
-    const src = String(body || "").replace(/\r\n?/g, "\n").split(/\n{2,}/);
-    const out = [];
-    for (const chunk of src) {
-      const lines = chunk.split("\n").map((l) => l.trim()).filter(Boolean);
-      if (lines.length === 0) continue;
-      const isQuote = lines[0].startsWith(">");
-      const textBuf = [];
-      const flushText = () => {
-        const text = textBuf.join(" ").trim();
-        textBuf.length = 0;
-        if (text) out.push({ type: isQuote ? "quote" : "p", text });
-      };
-      for (const line of lines) {
-        const content = isQuote && line.startsWith(">") ? line.replace(/^>\s?/, "") : line;
-        for (const piece of splitImageTokens(content)) {
-          if (piece.kind === "img") {
-            flushText();
-            out.push({ type: "img", text: piece.src });
-          } else {
-            const cleaned = cleanLine(piece.text);
-            if (cleaned) textBuf.push(cleaned);
-          }
-        }
-      }
-      flushText();
-    }
-    return out;
-  }
   function stripClipChrome(raw) {
     return String(raw || "").replace(/^\s*---[\s\S]*?---/, "").replace(/```dataviewjs[\s\S]*?```/g, "").trim();
   }
-  var IMG_TOKEN_RE;
   var init_md = __esm({
     "src/clipbook/md.ts"() {
-      IMG_TOKEN_RE = /(!\[[^\]]*\]\([^)]*\)|!\[\[[^\]]+\]\])/g;
     }
   });
 
@@ -17688,33 +17632,8 @@ ${bodyText.substring(0, 6e3)}`;
   function foldBodyHtml(html, open) {
     return html ? `<div class="bz-clip-desk-fold-body"${open ? "" : " hidden"}>${html}</div>` : "";
   }
-  function inlineHtml(text) {
-    let out = "";
-    let last = 0;
-    const re = /\[([^\]]+)\]\(([^)\s]+)\)/g;
-    let m;
-    while ((m = re.exec(text)) !== null) {
-      out += esc(text.slice(last, m.index));
-      out += `<a class="bz-clip-md-link" href="${esc(m[2])}" data-clip-ext target="_blank" rel="noopener noreferrer">${esc(m[1])}</a>`;
-      last = m.index + m[0].length;
-    }
-    out += esc(text.slice(last));
-    return out;
-  }
-  function paragraphsHtml(paras, resolveImg) {
-    return paras.map((p) => {
-      if (p.type === "img") {
-        const src = resolveImg(p.text);
-        return src ? `<img class="bz-clip-art-img" src="${esc(src)}" alt="文章配图" loading="lazy">` : "";
-      }
-      return p.type === "quote" ? `<blockquote>${inlineHtml(p.text)}</blockquote>` : `<p>${inlineHtml(p.text)}</p>`;
-    }).join("");
-  }
   function summaryHtml(summary) {
     return `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan("sparkles", "bz-ic--xs")}摘要</span>${esc(summary)}</div>`;
-  }
-  function clipLoadingHtml() {
-    return `<p class="dim">正在读取剪藏正文…</p>`;
   }
   function readerHtml(a, opts) {
     const openNoteFoot = a.origin === "clip" && a.notePath ? `<div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-open-note>打开笔记 ${iconSpan(ICO.external, "bz-ic--xs")}</span></div>` : "";
@@ -17725,7 +17644,7 @@ ${bodyText.substring(0, 6e3)}`;
       <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${esc(siteShort(a.srcName))}</span></span>
     </div>
     ${a.summary ? summaryHtml(a.summary) : ""}
-    <div class="bz-clip-art-md" data-clip-md>${opts.paras || `<p class="dim">${esc(a.origin === "clip" ? "（笔记暂无正文）" : "正文已清空（已处理条目）")}</p>`}</div>
+    <div class="bz-clip-art-md markdown-rendered" data-clip-md>${opts.note ? `<p class="dim">${esc(opts.note)}</p>` : ""}</div>
     ${openNoteFoot}
   `;
   }
@@ -17787,7 +17706,7 @@ ${bodyText.substring(0, 6e3)}`;
     <div class="bz-clip-mob-d-kicker"><span>${esc(siteShort(a.srcName))} · ${esc(opts.time)}</span><span>${esc(opts.seq)}</span></div>
     <div class="bz-clip-mob-d-title">${esc(a.title)}</div>
     <hr class="bz-clip-mob-d-rule">
-    <div class="bz-clip-mob-d-md">${opts.paras || `<p>${esc(a.origin === "clip" ? "（剪藏笔记正文请在 Obsidian 中打开）" : "正文已清空")}</p>`}</div>
+    <div class="bz-clip-mob-d-md markdown-rendered" data-clip-mob-md>${opts.note ? `<p>${esc(opts.note)}</p>` : ""}</div>
     <div class="bz-clip-mob-d-foot"><span class="bz-clip-mob-d-next" data-clip-mob-next>↓ 读下一则</span><span class="bz-clip-mob-d-fch">${esc(siteShort(a.srcName))}</span></div>
   `;
   }
@@ -21724,26 +21643,19 @@ ${sample}`,
     out.push({ icon: "trash-2", label: "删除", kind: "danger", title: "从收件流删除", onClick: () => deleteNewsItem(a) });
     return out;
   }
-  function resolveImgSrc(src) {
-    const s = String(src || "").trim();
-    if (/^(https?:|app:|capacitor:|data:image\/)/i.test(s)) return s;
-    const wiki = s.match(/^!\[\[([^\]]+)\]\]$/);
-    if (wiki) {
-      const p = wiki[1].split("|")[0].trim();
-      try {
-        const af = getApp().vault.getAbstractFileByPath(p);
-        if (af) return getApp().vault.getResourcePath(af);
-      } catch (e) {
-      }
-      return null;
+  async function hydrateArticleMarkdown(el, md, sourcePath, alive) {
+    var _a2;
+    try {
+      const comp = new Component();
+      await MarkdownRenderer.render(getApp(), md, el, sourcePath, comp);
+      comp.unload();
+    } catch (e) {
     }
-    return null;
-  }
-  function paragraphsHtml2(body) {
-    return paragraphsHtml(toParagraphs(body), resolveImgSrc);
+    if (!alive()) return;
+    if (!el.querySelector("*") || !((_a2 = el.textContent) == null ? void 0 : _a2.trim())) el.textContent = md;
   }
   function bindImgFallback(container) {
-    container.querySelectorAll("img.bz-clip-art-img").forEach((img) => {
+    container.querySelectorAll("img").forEach((img) => {
       img.addEventListener("error", () => img.remove(), { once: true });
     });
   }
@@ -21757,16 +21669,27 @@ ${sample}`,
       return;
     }
     setReadingSession(a.id);
-    let paras = "";
+    let body = "";
+    let note = "";
     if (a.origin === "clip") {
       const cached = a.notePath ? clipBodyCache.get(a.notePath) : void 0;
-      paras = cached !== void 0 ? paragraphsHtml2(cached) : clipLoadingHtml();
+      if (cached !== void 0) {
+        body = cached;
+        if (!body) note = "（笔记暂无正文）";
+      } else {
+        note = "正在读取剪藏正文…";
+      }
     } else {
-      paras = a.body ? paragraphsHtml2(a.body) : "";
+      body = a.body;
+      if (!body) note = "正文已清空（已处理条目）";
     }
-    readerEl.innerHTML = readerHtml(a, { time: a.timeText || relTime(a.timeTs), paras });
+    readerEl.innerHTML = readerHtml(a, { time: a.timeText || relTime(a.timeTs), note });
     mountIcons(readerEl);
     bindImgFallback(readerEl);
+    const mdEl = readerEl.querySelector("[data-clip-md]");
+    if (mdEl && body) {
+      void hydrateArticleMarkdown(mdEl, body, a.notePath || "", () => !!M5.cur && M5.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
+    }
     if (a.origin === "clip") void loadClipBody(a);
   }
   async function loadClipBody(a) {
@@ -21787,10 +21710,12 @@ ${sample}`,
     clipBodyCache.set(path, body);
     if (M5.cur && M5.cur.id === a.id && readerEl) {
       const md = readerEl.querySelector("[data-clip-md]");
-      if (md) {
-        md.innerHTML = body ? paragraphsHtml2(body) : `<p class="dim">（笔记暂无正文）</p>`;
-        bindImgFallback(md);
+      if (!md) return;
+      if (!body) {
+        md.innerHTML = `<p class="dim">（笔记暂无正文）</p>`;
+        return;
       }
+      void hydrateArticleMarkdown(md, body, path, () => !!M5.cur && M5.cur.id === a.id && !!readerEl && readerEl.contains(md));
     }
   }
   function invalidateClipBodyCache(path) {
@@ -22093,13 +22018,18 @@ ${sample}`,
       mobSaveBtnEl.classList.toggle("saved", saved);
       mobSaveBtnEl.textContent = saved ? "已存" : "存为剪藏";
     }
-    const paras = a.body ? paragraphsHtml2(a.body) : "";
+    const mdBody = a.origin === "news" ? a.body : "";
+    const note = mdBody ? "" : a.origin === "clip" ? "剪藏笔记正文请在 Obsidian 中打开" : "正文已清空";
     const idx = mobItemOrder.indexOf(a);
     const seq = idx >= 0 ? `第 ${idx + 1} 则 / ${mobItemOrder.length}` : "";
     const detailBody = mobDetailEl.querySelector("[data-clip-mob-detail-body]");
-    detailBody.innerHTML = mobDetailHtml(a, { time: a.timeText || relTime(a.timeTs), paras, seq });
+    detailBody.innerHTML = mobDetailHtml(a, { time: a.timeText || relTime(a.timeTs), note, seq });
     mountIcons(detailBody);
     bindImgFallback(detailBody);
+    const mdEl = detailBody.querySelector("[data-clip-mob-md]");
+    if (mdEl && mdBody) {
+      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M5.mobDetailOpen && !!M5.cur && M5.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
+    }
   }
   function clipbookSettingsSchema(dataSource) {
     return {
@@ -22198,6 +22128,7 @@ ${sample}`,
   var overlayEl, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle3, loading, dirty, loaded2, SEARCH_DEBOUNCE_MS2, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounceTimer, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched;
   var init_ui6 = __esm({
     "src/clipbook/ui.ts"() {
+      init_fake_obsidian();
       init_app();
       init_notice();
       init_ui();

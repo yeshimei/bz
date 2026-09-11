@@ -22,6 +22,8 @@ test('buildRssArticle：纯日期标题改写为「日期 · feed名」，platfo
     assert.ok(a.date && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(a.date), 'date 为本地时间串');
     assert.ok(a.body.includes('## 要闻'), 'turndown 标题转 atx');
     assert.ok(a.body.includes('一条新闻 [原文](https://x.com/a)'), 'turndown 列表与外链保留');
+    const q = buildRssArticle({ title: '带引用', link: 'https://a.com/q', 'content:encoded': '<blockquote>引用内容</blockquote>' }, '源');
+    assert.ok(q.body.startsWith('> 引用内容'), 'turndown 引用块转 > 前缀');
 });
 
 test('buildRssArticle：非日期标题原样保留；无 link/guid → null；正文退 description', () => {
@@ -55,6 +57,16 @@ test('capRssWindow：窗口超 cap 时裁窗口内最旧的；无日期条目视
     const pruned = capRssWindow(window, { F: window }, 2);
     // cap=2 保 w1/w2；w3（更旧）与 w4（无日期）裁掉
     assert.deepStrictEqual(pruned.sort(), ['w3', 'w4']);
+});
+
+test('capRssWindow：feed 只吐 N<cap 条时库内旧条补位保留至 cap（ADR-0121 口径）', () => {
+    const mk = (url, date) => ({ platform: 'F', url, date });
+    const window = [mk('w1', '2026-09-10 00:00:00'), mk('w2', '2026-09-09 00:00:00')];
+    const oldPool = [mk('o1', '2026-09-08 00:00:00'), mk('o2', '2026-09-07 00:00:00'), mk('o3', '2026-09-06 00:00:00')];
+    // cap=30：窗口 2 条 + 存量 3 条共 5 条 < 30 → 全保留，零裁剪
+    assert.deepStrictEqual(capRssWindow([...oldPool, ...window], { F: window }, 30), []);
+    // cap=4：保最新 4 条（w1/w2/o1/o2），只裁最旧的 o3
+    assert.deepStrictEqual(capRssWindow([...oldPool, ...window], { F: window }, 4), ['o3']);
 });
 
 test('capRssWindow：空窗口/空库安全', () => {

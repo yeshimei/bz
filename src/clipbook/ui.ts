@@ -25,6 +25,7 @@
  * markup 全部出自 render.ts（纯层，原型 × 插件一份），本文件只管生命周期/事件委托/
  * 数据流；行为单源（ADR-0106）经 fake-sim.ts 打进评审壳 prototype.html（alias obsidian→fake）。
  */
+import { Component, MarkdownRenderer } from 'obsidian';
 import { getApp } from '../core/app';
 import { notice, notifyUndo } from '../core/notice';
 import { uiEmpty, uiResizable, uiVSplitter, mountIcons } from '../core/ui';
@@ -41,11 +42,11 @@ import { dataSourceGroupRows } from './news-sources-group';
 import { articleKeyOf } from './constants';
 import { readDataSourceState, type DataSourceState } from './news-source-settings';
 import type { ClipArticle } from './types';
-import { toParagraphs, stripClipChrome } from './md';
+import { stripClipChrome } from './md';
 import { queryBySource, queryBySourceFull, aggregateSites, clipArticle, bucketByState } from './store';
 import {
-  panelHtml, railItemHtml, railFootHtml, tocListHtml, paragraphsHtml as paragraphsMarkup,
-  clipLoadingHtml, readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, mobNoHitHtml, type MobChapter, siteTint,
+  panelHtml, railItemHtml, railFootHtml, tocListHtml,
+  readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, mobNoHitHtml, type MobChapter, siteTint,
   deskFoldRowHtml, foldBodyHtml, ICO,
 } from './render';
 import { M, resetClipbookState } from './state';
@@ -790,30 +791,21 @@ function buildItemActions(a: ClipArticle): ItemAction[] {
 }
 
 // ================= 渲染：右栏阅读 =================
-/** 图片段来源解析（issue 206）：外链直用；Obsidian 嵌链 `![[path]]` 走 vault 资源路径；其余拒载 */
-function resolveImgSrc(src: string): string | null {
-  const s = String(src || '').trim();
-  if (/^(https?:|app:|capacitor:|data:image\/)/i.test(s)) return s;
-  const wiki = s.match(/^!\[\[([^\]]+)\]\]$/);
-  if (wiki) {
-    const p = wiki[1].split('|')[0].trim(); // ![[img.png|300]] 剥别名尺寸
-    try {
-      const af = getApp().vault.getAbstractFileByPath(p);
-      if (af) return getApp().vault.getResourcePath(af as any);
-    } catch (e) { /* 文件不存在/解析失败 → 跳过该图 */ }
-    return null;
-  }
-  return null;
+/** 正文 Obsidian 内置渲染（issue 273 review；diary/knowledge 同范式）：MarkdownRenderer 异步
+ *  水合占位容器；渲染失败/空产出回退纯文本。alive = 竞态守卫（切篇后容器随重渲重建，丢弃迟到水合） */
+async function hydrateArticleMarkdown(el: HTMLElement, md: string, sourcePath: string, alive: () => boolean): Promise<void> {
+  try {
+    const comp = new Component();
+    await MarkdownRenderer.render(getApp(), md, el, sourcePath, comp);
+    comp.unload();
+  } catch { /* 渲染失败 → 纯文本兜底 */ }
+  if (!alive()) return;
+  if (!el.querySelector('*') || !el.textContent?.trim()) el.textContent = md;
 }
 
-function paragraphsHtml(body: string): string {
-  // 段落 markup 单源 render.ts（issue 247）：段落化（md.ts 纯层）+ 图片解析（行为层钩子）
-  return paragraphsMarkup(toParagraphs(body), resolveImgSrc);
-}
-
-/** 正文图片加载失败隐藏（缓存 URL 失效/断网时不留裂图） */
+/** 正文图片加载失败隐藏（外链图缓存失效/断网时不留裂图；MarkdownRenderer 产出的 img 无专属类，按容器取） */
 function bindImgFallback(container: HTMLElement): void {
-  container.querySelectorAll('img.bz-clip-art-img').forEach((img) => {
+  container.querySelectorAll('img').forEach((img) => {
     img.addEventListener('error', () => img.remove(), { once: true });
   });
 }
@@ -828,23 +820,35 @@ function renderReader(): void {
     return;
   }
   setReadingSession(a.id);
-  // 正文（enh 包 3）：news 现算；clip 懒加载 cachedRead → 剥 frontmatter → 段落化，按 path 缓存
-  let paras = '';
+  // 正文（issue 273 review）：news 直用 body；clip 懒加载 cachedRead → 剥壳缓存原文；
+  // markdown 一律交 Obsidian MarkdownRenderer 异步水合（note = 容器占位文案）
+  let body = '';
+  let note = '';
   if (a.origin === 'clip') {
     const cached = a.notePath ? clipBodyCache.get(a.notePath) : undefined;
-    paras = cached !== undefined ? paragraphsHtml(cached) : clipLoadingHtml();
+    if (cached !== undefined) {
+      body = cached;
+      if (!body) note = '（笔记暂无正文）';
+    } else {
+      note = '正在读取剪藏正文…';
+    }
   } else {
-    paras = a.body ? paragraphsHtml(a.body) : '';
+    body = a.body;
+    if (!body) note = '正文已清空（已处理条目）';
   }
 
-  readerEl.innerHTML = readerHtml(a, { time: a.timeText || relTime(a.timeTs), paras });
+  readerEl.innerHTML = readerHtml(a, { time: a.timeText || relTime(a.timeTs), note });
   mountIcons(readerEl);
   bindImgFallback(readerEl);
+  const mdEl = readerEl.querySelector('[data-clip-md]') as HTMLElement | null;
+  if (mdEl && body) {
+    void hydrateArticleMarkdown(mdEl, body, a.notePath || '', () => !!M.cur && M.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
+  }
   if (a.origin === 'clip') void loadClipBody(a);
 }
 
-/** 剪藏正文懒加载（enh 包 3）：cachedRead → 剥 frontmatter/dataviewjs → 按 path 缓存；
- *  完成时仍是当前篇则原位填充正文（不整篇重渲染，防滚动位置重置） */
+/** 剪藏正文懒加载（enh 包 3）：cachedRead → 剥 frontmatter/dataviewjs → 按 path 缓存**原文**；
+ *  完成时仍是当前篇则原位水合正文（MarkdownRenderer，不整篇重渲染，防滚动位置重置） */
 async function loadClipBody(a: ClipArticle): Promise<void> {
   const path = a.notePath;
   if (!path || clipBodyCache.has(path)) return;
@@ -863,10 +867,12 @@ async function loadClipBody(a: ClipArticle): Promise<void> {
   clipBodyCache.set(path, body);
   if (M.cur && M.cur.id === a.id && readerEl) {
     const md = readerEl.querySelector('[data-clip-md]') as HTMLElement | null;
-    if (md) {
-      md.innerHTML = body ? paragraphsHtml(body) : `<p class="dim">（笔记暂无正文）</p>`;
-      bindImgFallback(md);
+    if (!md) return;
+    if (!body) {
+      md.innerHTML = `<p class="dim">（笔记暂无正文）</p>`;
+      return;
     }
+    void hydrateArticleMarkdown(md, body, path, () => !!M.cur && M.cur.id === a.id && !!readerEl && readerEl.contains(md));
   }
 }
 
@@ -1212,14 +1218,19 @@ function renderMobDetail(): void {
     mobSaveBtnEl.classList.toggle('saved', saved);
     mobSaveBtnEl.textContent = saved ? '已存' : '存为剪藏';
   }
-  const paras = a.body ? paragraphsHtml(a.body) : '';
+  const mdBody = a.origin === 'news' ? a.body : '';
+  const note = mdBody ? '' : (a.origin === 'clip' ? '剪藏笔记正文请在 Obsidian 中打开' : '正文已清空');
   const idx = mobItemOrder.indexOf(a);
   const seq = idx >= 0 ? `第 ${idx + 1} 则 / ${mobItemOrder.length}` : '';
-  // 详情正文 markup 单源 render.ts（m3 原型屏2）
+  // 详情正文 markup 单源 render.ts（m3 原型屏2）；markdown 交 MarkdownRenderer 异步水合
   const detailBody = mobDetailEl.querySelector('[data-clip-mob-detail-body]') as HTMLElement;
-  detailBody.innerHTML = mobDetailHtml(a, { time: a.timeText || relTime(a.timeTs), paras, seq });
+  detailBody.innerHTML = mobDetailHtml(a, { time: a.timeText || relTime(a.timeTs), note, seq });
   mountIcons(detailBody);
   bindImgFallback(detailBody);
+  const mdEl = detailBody.querySelector('[data-clip-mob-md]') as HTMLElement | null;
+  if (mdEl && mdBody) {
+    void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || '', () => M.mobDetailOpen && !!M.cur && M.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
+  }
 }
 
 // ================= 设置 schema（ADR-0064 声明式；settings-panel 域清单挂载） =================

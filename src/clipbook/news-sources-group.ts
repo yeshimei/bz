@@ -24,7 +24,7 @@ import {
   readDataSourceState, writeSources, addBilibiliUp, removeBilibiliUp,
   writeBilibiliMaxItems, writeBilibiliCookie, addRssFeed, removeRssFeed, type DataSourceState,
 } from './news-source-settings';
-import { resolveUidFromInput, extractFeedTitleFromXml, normalizeRssFeedUrl, type BilibiliUpInfo, type RssFeed } from './news-data';
+import { resolveUidFromInput, extractFeedTitleFromXml, looksLikeFeedXml, normalizeRssFeedUrl, type BilibiliUpInfo, type RssFeed } from './news-data';
 
 /** 状态盒（构建期快照的可变副本）：三函数绑定 get/set 读它，save 经数据层落盘 */
 type DataSourceBox = DataSourceState;
@@ -324,11 +324,16 @@ interface RssManagerBox {
   feeds: RssFeed[];
 }
 
-/** 试拉 RSS：取 XML 原文并提取 feed 自带标题；10s 超时/非 2xx/解析不出 → null */
+/** 试拉 RSS：取 XML 原文，须带 feed 结构标记（<rss>/<feed>/<RDF>，拦截恰好含 <title> 的
+ *  普通 HTML 网页）再提取 feed 自带标题；10s 超时/非 2xx/非 feed 结构/解析不出 → null */
 async function fetchRssFeedTitle(url: string): Promise<string | null> {
   try {
     const timer = new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000));
-    const req = requestUrl({ url, method: 'GET' }).then((resp) => (resp.status >= 200 && resp.status < 300 ? extractFeedTitleFromXml(resp.text) : null));
+    const req = requestUrl({ url, method: 'GET' }).then((resp) => {
+      if (resp.status < 200 || resp.status >= 300) return null;
+      if (!looksLikeFeedXml(resp.text)) return null;
+      return extractFeedTitleFromXml(resp.text);
+    });
     return await Promise.race([req, timer]);
   } catch {
     return null;
@@ -418,7 +423,7 @@ async function addRssFeedUrl(raw: string | undefined, box: RssManagerBox, opts: 
     return;
   }
   box.inputValue = '';
-  box.feeds = [...box.feeds, title ? { url, title } : { url }];
+  box.feeds = [...box.feeds, { url, title }];
   opts.onChanged();
   notice(`已订阅 ${title || url}`, 'success');
 }

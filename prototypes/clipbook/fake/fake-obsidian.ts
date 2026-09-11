@@ -97,7 +97,13 @@ export class MarkdownView {
     return '';
   }
 }
-export class MarkdownRenderer {}
+export class MarkdownRenderer {
+  /** 评审壳近似实现：正文以纯文本落入容器（Obsidian 真渲染仅插件环境可用，视觉看真机） */
+  static render(_app: unknown, md: string, el: HTMLElement): Promise<void> {
+    if (el) el.textContent = String(md ?? '');
+    return Promise.resolve();
+  }
+}
 
 // ==================== frontmatter 最小解析 ====================
 

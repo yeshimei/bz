@@ -80,6 +80,12 @@ export function parseRssFeeds(raw: unknown): RssFeed[] {
   return out;
 }
 
+/** 纯函数：文本是否带 feed 结构标记（<rss>/<feed>/<RDF> 根元素）——试拉校验用，
+ *  拦截「恰好含 <title> 的普通 HTML 网页」被误当 RSS 入库 */
+export function looksLikeFeedXml(xml: string): boolean {
+  return /<(rss|feed|RDF)[\s>]/i.test(String(xml || ''));
+}
+
 /** 纯函数：从 RSS/Atom XML 原文提取 feed 标题（试拉校验预取名用）；无 title → null */
 export function extractFeedTitleFromXml(xml: string): string | null {
   const m = String(xml || '').match(/<title[^>]*>([\s\S]*?)<\/title>/i);

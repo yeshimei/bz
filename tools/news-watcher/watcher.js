@@ -70,26 +70,20 @@ function buildRssArticle(it, feedName) {
     return { platform: feedName, title, url, author: feedName, date, body };
 }
 
-/** 纯函数：RSS 窗口裁剪（ADR-0121：每 feed 平台库内只保留最近 RSS_MAX_PER_FEED 条）。
- *  口径：本轮窗口条目 ∪ 库内同平台条目合并后按 date 降序（'YYYY-MM-DD HH:mm:ss' 字典序、
- *  缺失视为最旧）保最新 cap 条，其余返回待裁 url 列表（去重）。 */
+/** 纯函数：RSS 窗口裁剪（ADR-0121：每 feed 平台**库内**只保留最近 RSS_MAX_PER_FEED 条）。
+ *  口径：该平台库内全部条目（本轮窗口 ∪ 存量）按 date 降序（'YYYY-MM-DD HH:mm:ss' 字典序、
+ *  缺失视为最旧）保最新 cap 条，其余返回待裁 url 列表（去重）——feed 只吐 N<cap 条时，
+ *  库内旧条仍可补位保留至 cap，稳态保留量 = min(累计抓到条数, cap)。 */
 function capRssWindow(allArticles, perFeedArticles, cap = RSS_MAX_PER_FEED) {
     const pruned = [];
     const seen = new Set();
     for (const [name, arts] of Object.entries(perFeedArticles || {})) {
         if (!Array.isArray(arts) || arts.length === 0) continue;
-        const windowUrls = new Set(arts.map((a) => a.url));
-        const pool = (allArticles || []).filter((a) => a && a.platform === name && !windowUrls.has(a.url) && !seen.has(a.url));
-        const byDate = (x, y) => String(y.date || '').localeCompare(String(x.date || ''));
-        const keep = [...arts].sort(byDate).slice(0, cap);
+        const pool = (allArticles || []).filter((a) => a && a.platform === name && !seen.has(a.url));
+        const keep = pool.slice().sort((x, y) => String(y.date || '').localeCompare(String(x.date || ''))).slice(0, cap);
         const keepUrls = new Set(keep.map((a) => a.url));
-        const threshold = keep.length ? String(keep[keep.length - 1].date || '') : '';
         for (const a of pool) {
-            const stale = threshold ? String(a.date || '') < threshold : true;
-            if (stale) { seen.add(a.url); pruned.push(a.url); }
-        }
-        for (const a of arts) {
-            if (!keepUrls.has(a.url) && !seen.has(a.url)) { seen.add(a.url); pruned.push(a.url); }
+            if (!keepUrls.has(a.url)) { seen.add(a.url); pruned.push(a.url); }
         }
     }
     return pruned;
@@ -353,7 +347,7 @@ function localDatetime(ts = Date.now()) {
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
-/** RSS 源：逐 feed 拉取解析（rss-parser，30s 超时/15s TIMEOUT 取小者由 Parser 配置）；
+/** RSS 源：逐 feed 拉取解析（rss-parser，超时 = TIMEOUT 15s 经 Parser options）；
  *  返回 { articles, perFeed, titleUpdates }——perFeed=平台名 → 本轮窗口条目（供 capRssWindow 裁剪），
  *  titleUpdates=缺失 title 的 feed 回填（url → feed 自带标题，ADR-0121）。单 feed 失败只记日志不中断。 */
 async function fetchRss(feeds) {
