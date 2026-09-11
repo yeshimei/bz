@@ -52,7 +52,11 @@ export function buildCategoryPrompt(name: string, history: string[]): string {
   ].join('\n');
 }
 
-/** 解析 + 校验：剥 codefence、剥分类 emoji 前缀、图标必须在内菜内（非法 = null 由调用方降级） */
+/** 图标回退（H20）：AI 只给合法分类但图标非法/缺失时不再整条弃用，回退菜单内通用「杂物」图标 */
+export const AI_FALLBACK_ICON = 'package';
+
+/** 解析 + 校验：剥 codefence、剥分类 emoji 前缀；分类非法 = 整条 null；
+ *  图标非法 = 回退 AI_FALLBACK_ICON（H20：原「全有或全无」会丢掉本可用的分类建议） */
 export function parseCategorySuggestion(raw: string): { category: string; icon: string } | null {
   let text = String(raw || '').trim();
   const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -66,7 +70,9 @@ export function parseCategorySuggestion(raw: string): { category: string; icon: 
   const category = splitEmojiCategory(String(obj?.category ?? '')).name.trim();
   const icon = String(obj?.icon ?? '').trim();
   if (!category || category.length > 16) return null;
-  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(icon) || !AI_ICON_MENU.includes(icon)) return null;
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(icon) || !AI_ICON_MENU.includes(icon)) {
+    return { category, icon: AI_FALLBACK_ICON };
+  }
   return { category, icon };
 }
 
