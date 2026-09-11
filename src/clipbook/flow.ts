@@ -83,17 +83,22 @@ function markHandledAndBump(raw: any, action: 'saved' | 'skipped'): Promise<void
     const res = await readNewsData();
     if (!res.ok || res.missing) return;
     let touched = false; // F5：条目已被清理/删除（未命中）不加统计、不空写
-    let changed = false; // F3：已处理（read===true）条目不改写不计数——重复「标已读」不重复计统计，saved 态不被覆盖成 skipped
+    let changed = false; // F3：目标态已达成不改写不计数——重复「标已读」不重复计统计，saved 态不被覆盖成 skipped
+    let upgraded = false; // review：已读未收（skipped）补收进剪藏本 → 只推进状态桶，不重复计已读
     const list = (res.data.articles || []).map((a: any) => {
       if (articleKeyOf(a) !== key) return a;
       touched = true;
-      if (a.read === true) return a;
+      if (a.read === true && !(action === 'saved' && a.state !== 'saved')) return a;
       changed = true;
+      if (a.read === true) {
+        upgraded = true;
+        return { ...a, state: 'saved' };
+      }
       return { ...a, read: true, state: action };
     });
     if (!touched || !changed) return;
     const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-    s.totalRead = (Number(s.totalRead) || 0) + 1;
+    if (!upgraded) s.totalRead = (Number(s.totalRead) || 0) + 1;
     if (action === 'saved') s.totalSaved = (Number(s.totalSaved) || 0) + 1;
     else s.totalSkipped = (Number(s.totalSkipped) || 0) + 1;
     s.byPlatform[platform] = (s.byPlatform[platform] || 0) + 1;
