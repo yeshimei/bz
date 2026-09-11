@@ -1328,6 +1328,54 @@ describe('回忆墙 UI', () => {
     expect(mocks.loadEncryptedEntries).not.toHaveBeenCalled();
   });
 
+  it('D13 回归：灯箱加密媒体异步回填比对连看下标——慢到的旧回填不覆盖当前项', async () => {
+    await openAndWait();
+    const c = DiaryAppController.instance as any;
+    const mkEnc = (date: string, noteId: string, img: string) => ({
+      date,
+      time: '10:30',
+      timeValue: 1030,
+      tags: ['日记', '加密'],
+      emoji: '📖🔐',
+      content: `${noteId} 的加密照片
+![[${img}]]`,
+      text: `${noteId} 的加密照片`,
+      filename: date,
+      lineNumber: 0,
+      encrypted: true,
+      noteId,
+      id: `enc-diary-${noteId}`,
+      kind: 'diary',
+      media: [{ name: img, kind: 'img' as const }],
+      segments: [],
+    });
+    const entryA = mkEnc('2026-07-01', 'enc-slow', 'a.jpg');
+    const entryB = mkEnc('2026-07-02', 'enc-fast', 'b.jpg');
+    // 直填连看序列（跳过渲染/解密管线）；encMediaUrl 换成可控桩：A 挂起、B 立即返回
+    c._lbSeq = [
+      { entry: entryA, media: { name: 'a.jpg', kind: 'img' } },
+      { entry: entryB, media: { name: 'b.jpg', kind: 'img' } },
+    ];
+    let resolveA: (url: string) => void = () => {};
+    c.encMediaUrl = (noteId: string, k: { name: string }) =>
+      k.name === 'a.jpg'
+        ? new Promise<string>((r) => { resolveA = r; })
+        : Promise.resolve('data:image/jpeg;base64,QkI='); // payload BB
+    c.showLightboxAt(0); // 展示 A：回填挂起（占位）
+    expect(c.desk.lbMedia.querySelector('.bz-diary-lb-pending')).toBeTruthy();
+    c.showLightboxAt(1); // 快速切到 B：B 立即落地（冲刷微任务后可断言）
+    await new Promise((r) => setTimeout(r, 0));
+    expect(c.desk.lbMedia.querySelector('.bz-diary-lb-media')).toBeTruthy();
+    expect(atob(c.desk.lbMedia.querySelector('.bz-diary-lb-media').src.split(',')[1])).toBe('BB');
+    resolveA('data:image/jpeg;base64,QUE='); // A 的回填此刻才慢到
+    await new Promise((r) => setTimeout(r, 20));
+    // 旧实现只查 isConnected 会把 A 错位填进当前灯箱；修复后按连看下标丢弃
+    const img = c.desk.lbMedia.querySelector('.bz-diary-lb-media') as HTMLImageElement;
+    expect(img).toBeTruthy();
+    expect(atob(img.src.split(',')[1])).toBe('BB');
+    expect(c.desk.lbMedia.querySelectorAll('.bz-diary-lb-media').length).toBe(1);
+  });
+
   it('日期筛选入口：点头行「日记本」标题开弹窗；弹窗挂 body 仍带背景色（设计变量同域声明）', async () => {
     await openAndWait();
     const desk = document.querySelector('.bz-diary-desk')!;

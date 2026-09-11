@@ -61,6 +61,37 @@ describe('saveNewEntry（写日记弹窗）', () => {
     // 操作结果立即可见（弹窗关、墙已刷新）→ 不弹「已保存日记」
     expect(getNoticeMessages().join('\n')).not.toContain('已保存日记');
   });
+
+  it('D7 回归：写盘进行中重复触发保存只写一条（防连点，不同刻两条重复空条目）', async () => {
+    openWriteDialog('2024-01-01 10:30');
+    pickType('日记');
+    // 拖慢写层建文件，模拟大文件写盘慢的窗口
+    const realCreate = vault.create.bind(vault);
+    vi.spyOn(vault, 'create').mockImplementation(async (path: string, content: string) => {
+      await new Promise((r) => setTimeout(r, 60));
+      return realCreate(path, content);
+    });
+    const first = saveNewEntry();
+    const second = saveNewEntry(); // 第一笔仍在写盘：直接忽略
+    await Promise.all([first, second]);
+    const disk = vault.files.get('我的/日记/2024-01-01.md')!;
+    expect(disk.split('# 📖 10:30').length - 1).toBe(1); // 同刻只有一条
+    expect(disk).toContain('# 📖 10:30');
+  });
+
+  it('D7 回归：写盘失败（守卫拒写）后防连点标志释放，下一笔可正常保存', async () => {
+    vault.files.set('我的/日记/2024-01-01.md', '# 📖 08:00\nA\n\n# 游记标题\n这段会丢\n');
+    openWriteDialog('2024-01-01 10:30');
+    pickType('日记');
+    await saveNewEntry(); // 守卫拒写：抛错路径（finally 释放标志）
+    expect(getNoticeMessages().join('\n')).toContain('无法解析');
+    // 磁盘修复后第二笔保存不被进行中标志拦截，正常落盘
+    vault.files.set('我的/日记/2024-01-01.md', '# 📖 08:00\nA\n');
+    openWriteDialog('2024-01-01 10:30');
+    pickType('日记');
+    await saveNewEntry();
+    expect(vault.files.get('我的/日记/2024-01-01.md')).toContain('# 📖 10:30');
+  });
 });
 
 describe('showTagPicker（标签选择器，locator 定位）', () => {

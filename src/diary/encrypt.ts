@@ -81,10 +81,13 @@ export async function encryptEntry(entry: DiaryEntry): Promise<DiaryEntry | null
   const tags = [...new Set([...entry.tags, ENCRYPT_TAG])];
   const emojiSeq = tags.map((t) => getTagEmoji(t)).join('');
   const block = `# ${emojiSeq} ${entry.time}\n${entry.content.trim()}`;
-  const datePath = `${DIARY_DIRECTORY}/${entry.date}.md`;
+  // 来源文件路径：子目录日期条目用实际路径（D2），缺省顶层 `<日记目录>/<date>.md`
+  const datePath = entry.filePath || `${DIARY_DIRECTORY}/${entry.date}.md`;
   const attachments = await collectAttachmentsForContent(entry.content || '', datePath);
 
-  await safe.lockNote(
+  // D9：lockNote 本就返回入库的 SafeNote——不再取 notes[length-1]（耦合「追加在末尾」实现，
+  // 并发/插序变化即错链 noteId）
+  const note = await safe.lockNote(
     {
       path: datePath,
       title: `${entry.date} · ${entry.time} 日记`,
@@ -99,7 +102,7 @@ export async function encryptEntry(entry: DiaryEntry): Promise<DiaryEntry | null
     tags,
     emoji: emojiSeq,
     encrypted: true,
-    noteId: safe.manifest.notes[safe.manifest.notes.length - 1]?.id,
+    noteId: note.id,
   };
 }
 
@@ -178,15 +181,53 @@ export async function deleteEncryptedEntry(noteId: string): Promise<void> {
 
 // ===== 降级/改分类（恢复 merge 回原 md，取出即删） =====
 
-/** 构造还原块：以 newTags 重建标题行（丢弃加密，保留 HH:mm 与正文）；newTags 为空则原样保留 */
+/**
+ * 还原落点按当前日记目录重算（D9 后半）：加密时固化的是「当时」的日记文件路径，
+ * 用户改过日记目录/移动过日期文件后直接还原会 merge 进旧目录（墙读新目录 → 条目凭空消失）。
+ * 规则：日期形状合法的 diary-entry，若 note.path 指向的文件已不存在或不在当前日记目录下，
+ * 改指当前目录下该日期文件的实际位置（无则顶层默认），并尽力落盘清单。
+ */
+async function realignRestorePath(noteId: string): Promise<void> {
+  const safe = getSafeManager();
+  const note = safe.manifest?.notes?.find((n) => n.id === noteId);
+  if (!note || note.kind !== 'diary-entry') return;
+  const dateStr = stripMdExt(note.path.split('/').pop() || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return;
+  let target: string | null = null;
+  try {
+    const dirPrefix = `${DIARY_DIRECTORY}/`;
+    const app = getApp();
+    const dateFiles = (app.vault.getMarkdownFiles?.() || [])
+      .map((f: { path: string }) => f.path)
+      .filter((p: string) => p.startsWith(dirPrefix) && p.endsWith(`/${dateStr}.md`));
+    // 优先顶层同名文件（写层新写条目的默认落点），其次目录内已有位置
+    target = dateFiles.includes(`${DIARY_DIRECTORY}/${dateStr}.md`)
+      ? `${DIARY_DIRECTORY}/${dateStr}.md`
+      : dateFiles[0] || `${DIARY_DIRECTORY}/${dateStr}.md`;
+  } catch (e) {
+    return; // vault 枚举不可用：保持原路径（还原行为同旧版）
+  }
+  if (target === note.path) return;
+  note.path = target;
+  try {
+    await safe.saveManifest();
+  } catch (e) {
+    /* 清单落盘失败不阻断还原：内存路径已更新，本次还原落新目录 */
+  }
+}
+
+/** 构造还原块：以 newTags 重建标题行（丢弃加密，保留 HH:mm 与正文）。
+ *  D10：newTags 滤掉「加密」后为空时兜底「日记」——原样保留会把 🔐 写回标题，
+ *  条目被墙永久隐藏且已无 noteId 可再解密。 */
 async function buildRestoreBlock(noteId: string, newTags?: string[]): Promise<string | null> {
   const plain = await getSafeManager().getDiaryEntryPlain(noteId);
   if (plain === null || plain === undefined) return null;
-  if (!newTags || newTags.length === 0) return plain;
   const lines = plain.replace(/\r\n/g, '\n').split('\n');
   const m = lines[0]?.match(/^#\s+\S+\s+(\d{2}:\d{2})$/);
   if (!m) return null;
-  const newSeq = newTags.filter((t) => t !== ENCRYPT_TAG).map((t) => getTagEmoji(t)).join('');
+  const kept = (newTags ?? []).filter((t) => t !== ENCRYPT_TAG);
+  const seqTags = kept.length > 0 ? kept : ['日记'];
+  const newSeq = seqTags.map((t) => getTagEmoji(t)).join('');
   return `# ${newSeq} ${m[1]}${lines.length > 1 ? '\n' + lines.slice(1).join('\n') : ''}`;
 }
 
@@ -196,6 +237,7 @@ async function buildRestoreBlock(noteId: string, newTags?: string[]): Promise<st
  * 调用方负责刷新。
  */
 export async function reclassifyEntry(noteId: string, newTags: string[]): Promise<boolean> {
+  await realignRestorePath(noteId); // D9：还原目录按当前设置重算
   const block = await buildRestoreBlock(noteId, newTags);
   if (block === null) return false;
   return getSafeManager().restoreDiaryEntry(noteId, block);
