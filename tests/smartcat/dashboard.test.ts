@@ -219,7 +219,7 @@ describe('openSmartcatDashboard UI', () => {
     expect(popup).not.toBeNull();
     expect(document.getElementById('smartcat-dashboard-mask')).not.toBeNull();
     expect(popup!.querySelector('.bz-win-head')).not.toBeNull();
-    expect(popup!.querySelector('#smartcat-dash-close')).not.toBeNull();
+    expect(popup!.querySelector('#smartcat-dash-close')).toBeNull(); // issue 271：✕ 退役
     expect(popup!.querySelector('#smartcat-dash-refresh')).toBeNull(); // 097 C1：手动刷新按钮已删
     expect(popup!.querySelectorAll('.bz-sc-dash-tab').length).toBe(6); // P3: 新增行为页签
     const overview = popup!.querySelector('[data-pane="overview"]') as HTMLElement;
@@ -368,15 +368,17 @@ describe('openSmartcatDashboard UI', () => {
     expect(pane.textContent).toContain('本周报告还没生成');
   }, 15000);
 
-  it('关闭按钮移除 DOM；遮罩点击关闭；重复打开幂等（仅一实例）', async () => {
+  it('✕ 不再渲染（issue 271）；遮罩点击关闭；重复打开幂等（仅一实例）', async () => {
     const { app } = makeApp(fixtureData());
     await openSmartcatDashboard(app as any);
-    let popup = document.getElementById('smartcat-dashboard-panel')!;
-    (popup.querySelector('#smartcat-dash-close') as HTMLElement).click();
+    expect(document.getElementById('smartcat-dashboard-panel')!.querySelector('#smartcat-dash-close')).toBeNull();
+
+    // 遮罩点击关闭
+    const mask0 = document.getElementById('smartcat-dashboard-mask')!;
+    mask0.click();
     expect(document.getElementById('smartcat-dashboard-panel')).toBeNull();
     expect(document.getElementById('smartcat-dashboard-mask')).toBeNull();
 
-    // 遮罩点击关闭
     await openSmartcatDashboard(app as any);
     const mask = document.getElementById('smartcat-dashboard-mask')!;
     mask.click(); // e.target === mask
@@ -388,15 +390,13 @@ describe('openSmartcatDashboard UI', () => {
     expect(document.querySelectorAll('#smartcat-dashboard-panel').length).toBe(1);
   }, 15000);
 
-  it('头行只剩标题与关闭按钮（097 C1：手动刷新已删，改 vault modify 防抖静默刷新）', async () => {
+  it('头行只剩标题（097 C1 手动刷新已删；issue 271 ✕ 退役，改 vault modify 防抖静默刷新）', async () => {
     const { app, vault } = makeApp(fixtureData());
     const writesBefore = vault.modifiedPaths.length;
     await openSmartcatDashboard(app as any);
     expect(vault.modifiedPaths.length).toBe(writesBefore); // 打开不写盘
     const popup = document.getElementById('smartcat-dashboard-panel')!;
-    const headBtns = popup.querySelector('.bz-win-head div') as HTMLElement;
-    expect(headBtns.querySelectorAll('button').length).toBe(1); // 仅 ❌ 关闭
-    expect(headBtns.textContent).toBe('❌');
+    expect(popup.querySelector('.bz-win-head')!.querySelectorAll('button').length).toBe(0);
   }, 15000);
 
   it('空数据（无 smartcat.json）：默认数据渲染空态文案不抛错', async () => {

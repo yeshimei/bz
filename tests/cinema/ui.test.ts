@@ -154,7 +154,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(pcardByName(root, '瑞克和莫蒂').querySelector('.badge')?.textContent).toBe('在看');
   });
 
-  it('点海报卡 → 详情弹窗（cn-modal：标题/影评/kv/关闭钮 + 找同类/编辑/删除）；关闭钮可关', () => {
+  it('点海报卡 → 详情弹窗（cn-modal：标题/影评/kv + 找同类/编辑/删除）；✕ 退役，点遮罩可关（issue 271）', () => {
     const { app } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -165,11 +165,11 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(modal.querySelector('.dm-review')?.textContent).toContain('爱是穿越维度');
     expect(modal.textContent).toContain('豆 瓣 信 息');
     expect(modal.querySelector('.dm-kv-k')?.textContent).toBe('导演');
-    expect(modal.querySelector('.j-close')).toBeTruthy();
+    expect(modal.querySelector('.j-close')).toBeNull(); // issue 271：弹窗右上角关闭钮退役
     expect(modal.querySelector('.j-similar')?.textContent).toContain('找同类');
     expect(modal.querySelector('.j-edit')?.textContent).toContain('编辑');
     expect(modal.querySelector('.j-del')?.textContent).toContain('删除');
-    clickEl(modal.querySelector('.j-close'));
+    clickEl(root.querySelector('.cn-ovl') as HTMLElement);
     expect(root.querySelector('.cn-ovl')).toBeNull();
   });
 

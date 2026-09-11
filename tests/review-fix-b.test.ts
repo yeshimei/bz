@@ -79,8 +79,8 @@ describe('批 B-3：触控热区收编 core .bz-touch-target', () => {
     expect(repo('src/encrypt/ui.ts')).toContain('back bz-touch-target--xl');
     // 排除名单已收敛为通用 list 行：移除按钮类由 core 渲染器统一挂（含触控档）
     expect(repo('src/core/settings-schema.ts')).toContain("remove.className = 'bz-setlist-remove bz-touch-target--xl'");
-    expect(repo('src/review/stats-ui.ts')).toContain('bz-win-close bz-touch-target--xl');
-    expect(repo('src/review/stats-ui.ts')).toContain('bz-review-history-close bz-touch-target--xl');
+    expect(repo('src/review/stats-ui.ts')).not.toContain('bz-win-close'); // issue 271：弹窗 ✕ 退役
+    expect(repo('src/review/stats-ui.ts')).not.toContain('bz-review-history-close') // issue 271;
   });
 
   it(' favorites 面板 UI 域内自绘（ADR-0101）：无组件库 icon-btn 依赖', () => {

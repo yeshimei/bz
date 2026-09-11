@@ -29,7 +29,7 @@
 /* ==================== 三区队列 · 头行 ====================
    头行接组件库 .bz-panel-head 族（issue 198 批 D）：.bz-panel-title + 日期副题
    （.bz-panel-head-sub）/ .bz-panel-head-sp / .bz-panel-head-btns（见 review/ui.ts）。
-   关闭钮保留 .bz-win-close（core 门控：非真全屏隐藏），域内不再自绘头行样式。 */
+   关闭钮已退役（issue 271：弹窗统一点遮罩关闭），域内不再自绘头行样式。 */
 
 /* 开始本轮条（item 8：今日全清 → 绿点 +「今日已清空」+ 隐藏主按钮） */
 .bz-q-strip { display: flex; align-items: center; gap: var(--bz-space-sm); padding: 6px 20px 10px; flex-shrink: 0; }
@@ -246,8 +246,6 @@
 #review-history-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bz-overlay); }
 #review-history-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--bz-surface-2); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); width: 92%; max-width: 480px; max-height: 80vh; flex-direction: column; overflow: hidden; animation: slideUp var(--bz-dur-slow) ease-out; }
 #review-history-body { flex: 1; overflow-y: auto; position: relative; }
-.bz-review-history-close { position: absolute; top: 10px; right: 10px; z-index: 2; background: none; border: none; cursor: pointer; color: var(--bz-text-2); padding: var(--bz-space-xs); box-shadow: none !important; }
-.bz-review-history-close:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
 /* 排名/时间线行（issue 270：stats-ui 内联收编并入本类，值逐字搬运——
    display/gap/padding/border-bottom 原为行内联，此处合并后内联删除） */
 .bz-review-stats-tl-row { text-align: left; display: flex; align-items: center; gap: 8px; padding: 7px 4px; border-radius: var(--bz-radius-sm); border: none; border-bottom: 1px solid var(--bz-border); background: var(--bz-surface-1); color: var(--bz-text-1); font-size: var(--bz-font-label); cursor: pointer; }
@@ -307,9 +305,7 @@
 .bz-review-history-rating { font-weight: 500; min-width: 32px; }
 .bz-review-history-stage { color: var(--bz-text-3); font-size: 12px; }
 
-/* item 14：统计/历史关闭钮与文件树徽标的 lucide 图标尺寸 */
-#review-stats-close .bz-ic, .bz-review-history-close .bz-ic { display: inline-flex; width: 14px; height: 14px; }
-#review-stats-close .bz-ic svg, .bz-review-history-close .bz-ic svg { width: 100%; height: 100%; }
+/* item 14：文件树徽标的 lucide 图标尺寸（统计/历史关闭钮已退役 issue 271） */
 .review-stage-badge .bz-ic { display: inline-flex; width: 1em; height: 1em; vertical-align: -0.12em; }
 .review-stage-badge .bz-ic svg { width: 100%; height: 100%; }
 

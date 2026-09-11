@@ -241,7 +241,6 @@ export function belDetailHtml(it: BelongingsItem): string {
   return `<div class="bz-bel-detail">
     <div class="bz-bel-detail-head">
       <div class="bz-bel-detail-title">${esc(it.name)}</div>
-      <button class="bz-icon-btn" data-bd-close title="关闭">${iconSpan(ICON.close)}</button>
     </div>
     <div class="bz-bel-detail-idrow">
       <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>

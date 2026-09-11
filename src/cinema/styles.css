@@ -132,9 +132,6 @@
 .bz-cinema--midnight .cn-modal{background:var(--panel);border:1px solid var(--line);border-radius:var(--bz-radius-md);box-shadow:0 18px 48px #0005,0 2px 10px #0003;padding:18px 20px;max-width:min(430px,100%);max-height:100%;overflow-y:auto;scrollbar-width:none;position:relative}
 .bz-cinema--midnight .cn-modal::-webkit-scrollbar{display:none}
 .bz-cinema--midnight .cn-modal-title{font-family:"Noto Serif SC",SimSun,serif;font-size:var(--bz-font-title);font-weight:700;letter-spacing:.08em;color:var(--ink);margin-bottom:var(--bz-space-md);padding-right:var(--bz-space-xl)}
-.bz-cinema--midnight .cn-modal-x{position:absolute;top:12px;right:12px;width:26px;height:26px;border:0;background:none;border-radius:7px;color:var(--ink-3);cursor:pointer;display:grid;place-items:center}
-.bz-cinema--midnight .cn-modal-x:hover{background:var(--chip);color:var(--ink)}
-.bz-cinema--midnight .cn-modal-x svg{width:13px;height:13px}
 /* 详情弹窗 */
 .bz-cinema--midnight .dm-head{display:flex;gap:14px;align-items:flex-start}
 .bz-cinema--midnight .dm-poster{width:84px;height:120px;border-radius:var(--bz-radius-sm);overflow:hidden;flex:none;background:var(--chip);border:1px solid var(--line)}

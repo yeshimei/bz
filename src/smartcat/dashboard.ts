@@ -1206,17 +1206,11 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
   popup.style.flexDirection = 'column';
 
   // 头行（097 C1：手动 🔄 刷新按钮删除，id smartcat-dash-refresh 移除在票留档——面板私有 id 无外部
-  // 依赖方；头行只剩标题 + ❌ 关闭，样式由 .bz-win-head 统一规范承接）
+  // 依赖方；关闭 = 点遮罩（issue 271 统一），样式由 .bz-win-head 统一规范承接）
   const header = document.createElement('div');
   header.className = 'bz-win-head';
   const title = el('h3', '', '小橘数据面板');
-  const btns = el('div', '');
-  const closeBtn = el('button', 'bz-win-close', '❌');
-  closeBtn.id = 'smartcat-dash-close';
-  closeBtn.title = '关闭';
-  btns.appendChild(closeBtn);
   header.appendChild(title);
-  header.appendChild(btns);
   popup.appendChild(header);
 
   // 页签栏（P3：根据 showBehaviorLog 设置决定可见页签）
@@ -1258,7 +1252,6 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
   mask.style.display = 'block';
   popup.style.display = 'flex';
 
-  closeBtn.addEventListener('click', () => closeSmartcatDashboard());
 
   // C1 事件驱动静默刷新：vault modify 命中 smartcat.json / memo.json → 防抖 3s 静默重读渲染
   //（保持当前页签、不弹任何 toast；本模块无 Component 宿主，用 vault.on 的 EventRef 注册，

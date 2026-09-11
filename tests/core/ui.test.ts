@@ -321,12 +321,11 @@ describe('bz ui 组件库', () => {
       expect(document.querySelector('.bz-overlay-mask')).toBeNull();
       expect(onClose).toHaveBeenCalledTimes(1);
     });
-    it('head 模式：标题 + ✕ 关闭钮', () => {
-      const { popup } = uiModal({ content: 'hi', head: true, title: '标题' });
+    it('head 模式：仅标题（✕ 退役 issue 271，点遮罩/ESC 关闭）', () => {
+      const { popup, close } = uiModal({ content: 'hi', head: true, title: '标题' });
       expect(popup.querySelector('.bz-dialog-title')!.textContent).toBe('标题');
-      const x = popup.querySelector('.bz-icon-btn') as HTMLButtonElement;
-      expect(x).not.toBeNull();
-      x.click();
+      expect(popup.querySelector('.bz-icon-btn')).toBeNull();
+      close();
       expect(document.querySelector('.bz-overlay-mask')).toBeNull();
     });
     it('ESC 关闭（escManager）', () => {

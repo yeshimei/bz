@@ -114,9 +114,6 @@ export function createChatPanel(opts: {
   header.className = 'bz-win-head';
   header.innerHTML = `
     <h3 style="margin:0;font-size:18px;font-weight:600;color:var(--text-normal);">小橘聊天</h3>
-    <div>
-      <button id="smartcat-btn-close" class="bz-win-close" title="关闭" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0;width:21px;height:25px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">❌</button>
-    </div>
   `;
   popup.appendChild(header);
 
@@ -156,7 +153,6 @@ export function createChatPanel(opts: {
   mask.style.display = 'none';
   popup.style.display = 'none';
 
-  header.querySelector('#smartcat-btn-close')!.addEventListener('click', () => opts.onClose());
   const handle = escManager.register('smartcat-chat', {
     isVisible: () => popup.style.display === 'flex',
     close: () => opts.onClose(),

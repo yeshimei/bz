@@ -7,14 +7,13 @@
  * ============================================================ */
 import { escManager } from '../esc-manager';
 import { allocZ } from '../z-order';
-import { uiIcon } from './icon';
 
 export interface BzModalOpts {
   content: HTMLElement | string;   // 弹窗内容（元素或 HTML 片段）
   maxWidth?: number;               // 像素宽度（默认 400，≤90vw）
-  head?: boolean;                  // 带头行（关闭钮）——默认 false（无关闭钮，靠遮罩/ESC）
+  head?: boolean;                  // 带标题头行——默认 false；头行只有标题，无关闭钮（issue 271：弹窗统一点遮罩/ESC 关闭）
   title?: string;
-  onClose?: () => void;            // 关闭回调（遮罩/ESC/✕）
+  onClose?: () => void;            // 关闭回调（遮罩/ESC）
   className?: string;              // 附加到 popup 的类
 }
 
@@ -34,14 +33,7 @@ export function uiModal(opts: BzModalOpts): { mask: HTMLElement; popup: HTMLElem
     const title = document.createElement('span');
     title.className = 'bz-dialog-title';
     title.textContent = opts.title || '';
-    const closeBtn = document.createElement('button');
-    closeBtn.type = 'button';
-    closeBtn.className = 'bz-icon-btn bz-icon-btn--lg';
-    closeBtn.title = '关闭';
-    closeBtn.appendChild(uiIcon('x'));
-    closeBtn.addEventListener('click', () => close());
     head.appendChild(title);
-    head.appendChild(closeBtn);
     popup.appendChild(head);
   }
 

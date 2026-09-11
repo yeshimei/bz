@@ -1,4 +1,4 @@
-/* 源指纹 6140e7d1c1fc1444 · 仓内输入 52 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 abad09fc51877a31 · 仓内输入 52 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -6616,7 +6616,6 @@ tags:
       ["豆瓣评分", (_f = it.doubanRating) != null ? _f : ""]
     ].filter(([, v]) => v !== "");
     return `<div class="cn-modal" style="max-width:400px;width:100%">
-    <button class="cn-modal-x j-close" title="关闭">${iconSpan(ICON.close)}</button>
     <div class="dm-head"><div class="dm-poster">${posterUrl2 ? `<img src="${esc(posterUrl2)}" onerror="this.remove()">` : ""}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
         <div class="dm-badges">${badge(typeColor(it.group), it.typeTag)}
@@ -6661,7 +6660,7 @@ tags:
     const initSt = opts.stText;
     const ratingVal = opts.rating;
     return `<div class="cn-modal" style="width:100%">
-    <div class="cn-modal-title">${editing ? "编辑影视" : "添加影视"}</div><button class="cn-modal-x j-close" title="关闭">${iconSpan(ICON.close)}</button>
+    <div class="cn-modal-title">${editing ? "编辑影视" : "添加影视"}</div>
     <div class="f-field"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>
     <div class="f-field"><span class="f-label">类 型</span><div class="f-choice j-tags">${formChoicesHtml(formAllTags(), opts.typeTag, "f-tag")}</div></div>
     <div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${formChoicesHtml(["想看", "在看", "已看"], initSt, "f-st")}</div></div>
@@ -6743,7 +6742,7 @@ tags:
   </section>`;
   }
   function midnightMobHtml() {
-    return `<section class="mob bz-cinema--midnight" data-cinema-root="midnight">
+    return `<section class="mob bz-cinema--midnight bz-panel-mtop" data-cinema-root="midnight">
     <div class="m-head"><h2 class="j-mtitle">全部</h2><span class="cnt j-mcnt"></span>
       <span class="m-acts">
         <button class="add j-madd" data-cinema-add title="添加影片">${iconSpan(ICON.add)}</button>
@@ -7043,26 +7042,25 @@ ${item.review ? `影评: ${item.review}
     });
   }
   function openDetail(sec, it, app) {
-    var _a, _b, _c, _d;
+    var _a, _b, _c;
     const url = posterUrl(it, app);
     const { el, close } = ovl(sec, detailModalHtml(it, url));
     mountIcons(el);
-    (_a = el.querySelector(".j-close")) == null ? void 0 : _a.addEventListener("click", close);
-    (_b = el.querySelector(".j-edit")) == null ? void 0 : _b.addEventListener("click", () => {
+    (_a = el.querySelector(".j-edit")) == null ? void 0 : _a.addEventListener("click", () => {
       close();
       openForm(sec, it, app);
     });
-    (_c = el.querySelector(".j-del")) == null ? void 0 : _c.addEventListener("click", () => {
+    (_b = el.querySelector(".j-del")) == null ? void 0 : _b.addEventListener("click", () => {
       close();
       openConfirm(sec, it, app);
     });
-    (_d = el.querySelector(".j-similar")) == null ? void 0 : _d.addEventListener("click", () => {
+    (_c = el.querySelector(".j-similar")) == null ? void 0 : _c.addEventListener("click", () => {
       close();
       void runSimilarRecommend(it, app);
     });
   }
   function openForm(sec, item, app) {
-    var _a, _b, _c;
+    var _a, _b;
     const editing = !!item;
     const initTag = item ? item.typeTag : "电影";
     const initSt = item ? statusText(item.status) : "想看";
@@ -7090,8 +7088,7 @@ ${item.review ? `影评: ${item.review}
       el.querySelector(".j-rating").style.display = show ? "" : "none";
       el.querySelector(".j-review").style.display = show ? "" : "none";
     }));
-    (_b = el.querySelector(".j-close")) == null ? void 0 : _b.addEventListener("click", close);
-    (_c = el.querySelector(".j-save")) == null ? void 0 : _c.addEventListener("click", () => {
+    (_b = el.querySelector(".j-save")) == null ? void 0 : _b.addEventListener("click", () => {
       const name = el.querySelector(".j-name").value.trim();
       if (!name) {
         panelToast(sec, "请输入名称");

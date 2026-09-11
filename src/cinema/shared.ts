@@ -130,7 +130,6 @@ export function detailModalHtml(it: CinemaItem, posterUrl: string | null): strin
     ['豆瓣评分', it.doubanRating ?? ''],
   ] as [string, string][]).filter(([, v]) => v !== '');
   return `<div class="cn-modal" style="max-width:400px;width:100%">
-    <button class="cn-modal-x j-close" title="关闭">${iconSpan(ICON.close)}</button>
     <div class="dm-head"><div class="dm-poster">${posterUrl ? `<img src="${esc(posterUrl)}" onerror="this.remove()">` : ''}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
         <div class="dm-badges">${badge(typeColor(it.group), it.typeTag)}
@@ -174,7 +173,7 @@ export function formModalHtml(opts: { editing: boolean; name: string; typeTag: s
   const initSt = opts.stText;
   const ratingVal = opts.rating;
   return `<div class="cn-modal" style="width:100%">
-    <div class="cn-modal-title">${editing ? '编辑影视' : '添加影视'}</div><button class="cn-modal-x j-close" title="关闭">${iconSpan(ICON.close)}</button>
+    <div class="cn-modal-title">${editing ? '编辑影视' : '添加影视'}</div>
     <div class="f-field"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>
     <div class="f-field"><span class="f-label">类 型</span><div class="f-choice j-tags">${formChoicesHtml(formAllTags(), opts.typeTag, 'f-tag')}</div></div>
     <div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${formChoicesHtml(['想看', '在看', '已看'], initSt, 'f-st')}</div></div>

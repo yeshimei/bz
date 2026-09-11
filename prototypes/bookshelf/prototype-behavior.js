@@ -1,4 +1,4 @@
-/* 源指纹 04d12b6125e5ac02 · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 c1bda46f2a0d64e8 · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/bookshelf/fake-sim.ts","prototypes/bookshelf/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/index.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/bookshelf/fake-sim.ts → window.BZW_bookshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_bookshelf = (() => {
@@ -5054,14 +5054,7 @@ var BZW_bookshelf = (() => {
       const title = document.createElement("span");
       title.className = "bz-dialog-title";
       title.textContent = opts.title || "";
-      const closeBtn = document.createElement("button");
-      closeBtn.type = "button";
-      closeBtn.className = "bz-icon-btn bz-icon-btn--lg";
-      closeBtn.title = "关闭";
-      closeBtn.appendChild(uiIcon("x"));
-      closeBtn.addEventListener("click", () => close());
       head.appendChild(title);
-      head.appendChild(closeBtn);
       popup.appendChild(head);
     }
     const body = document.createElement("div");

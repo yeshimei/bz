@@ -150,9 +150,9 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(sheet.textContent).toContain('段落一');
     expect(sheet.textContent).toContain('段落二');
     expect(sheet.textContent).toContain('旧卡A');
-    // 预览只读：提炼成卡/先放回去按钮已移除（关闭走壳头 ✕ / ESC）
+    // 预览只读：提炼成卡/先放回去按钮已移除；壳头 ✕ 已退役（issue 271：点遮罩/ESC 关闭）
     expect(sheet.querySelector('[data-kb-act=card-new]')).toBeNull();
-    expect(sheet.querySelector('.bz-kb-sheet-close')).toBeTruthy();
+    expect(sheet.querySelector('.bz-kb-sheet-close')).toBeNull();
   });
 
   it('影像文献预览：正文经 MarkdownRenderer 渲染（含 ![[mp4]] 内嵌）；原文链接可点外开', async () => {
@@ -262,7 +262,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
 
   // ==================== 视频录入 ====================
 
-  it('视频面板：➕/▶️/🕘/✕ 按钮组；单钮态机（空队列禁用；运行 ⏹）；行内时间线（STEP_DONE_MAP + 百分比仅下载）', async () => {
+  it('视频面板：➕/▶️/🕘 按钮组（✕ 退役 issue 271）；单钮态机（空队列禁用；运行 ⏹）；行内时间线（STEP_DONE_MAP + 百分比仅下载）', async () => {
     ui.showVideoEntry();
     await vi.waitFor(() => expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex'));
     const popup = document.getElementById('knowledge-video-popup')!;
@@ -270,7 +270,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(popup.querySelector('#lit-btn-video-add')).toBeTruthy();
     expect(popup.querySelector('#lit-btn-video-run')).toBeTruthy();
     expect(popup.querySelector('#lit-btn-video-history')).toBeTruthy();
-    expect(popup.querySelector('#lit-btn-video-close')).toBeTruthy();
+    expect(popup.querySelector('#lit-btn-video-close')).toBeNull(); // issue 271：✕ 退役
     await vi.waitFor(() => expect((popup.querySelector('#lit-btn-video-run') as HTMLButtonElement).disabled).toBe(true));
     const t = await KnowledgeData.addTask({ url: 'https://www.bilibili.com/video/BV1abc', start: '00:00:10', end: '00:00:30' });
     await KnowledgeData.updateTask(t.id, { status: 'processing' });
@@ -335,15 +335,15 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
 
   // ==================== 术语面板（142/155 契约 + 258 完整词典皮） ====================
 
-  it('术语面板完整版契约：词典皮标题栏+✕ / 术语来源同款行内标签（无说明行无试试）；预填自动生成 + 属性卡内容卡', async () => {
+  it('术语面板完整版契约：词典皮标题栏（✕ 退役 issue 271）/ 术语来源同款行内标签（无说明行无试试）；预填自动生成 + 属性卡内容卡', async () => {
     ui.showTermEntry('松果体');
     await vi.waitFor(() => expect(document.getElementById('knowledge-term-popup')!.style.display).toBe('flex'));
     await vi.waitFor(() => expect(noteGen.generateTermDraft).toHaveBeenCalledWith('松果体'));
     await vi.waitFor(() => expect(document.getElementById('lit-term-preview')!.style.display).toBe('flex'));
     const popup = document.getElementById('knowledge-term-popup')!;
-    // 词典皮：衬线标题栏 + ✕；术语/来源同款行内标签（快改批：统一排版，试试示例与说明行已删）
+    // 词典皮：衬线标题栏（✕ 已退役 issue 271）；术语/来源同款行内标签（快改批：统一排版，试试示例与说明行已删）
     expect(popup.querySelector('.bz-lit-sheet-title')!.textContent).toBe('文字录入 · 术语');
-    expect(popup.querySelector('[data-term-close]')).toBeTruthy();
+    expect(popup.querySelector('[data-term-close]')).toBeNull();
     const labels = Array.from(popup.querySelectorAll<HTMLElement>('.bz-lit-term-row .bz-lit-term-meta-k')).map((x) => x.textContent);
     expect(labels).toEqual(['术语', '来源']);
     expect(popup.querySelector('label')).toBeNull();
@@ -355,8 +355,8 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(popup.querySelector('#lit-term-meta-term')!.textContent).toBe('松果体');
     expect(popup.querySelector('#lit-term-meta-domain')!.textContent).toBe('心理');
     expect(popup.querySelector('#lit-term-content')!.textContent).toBe('AI 简介');
-    // ✕ 与 取消 都能关弹层
-    (popup.querySelector('[data-term-close]') as HTMLElement).click();
+    // 点遮罩与 取消 都能关弹层（issue 271：✕ 退役）
+    (document.getElementById('knowledge-term-mask') as HTMLElement).click();
     expect(popup.style.display).toBe('none');
     ui.showTermEntry();
     await vi.waitFor(() => expect(popup.style.display).toBe('flex'));
@@ -490,7 +490,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     rowC.click();
     await vi.waitFor(() => expect(document.querySelector('.bz-kb-ovl')!).toBeTruthy());
     expect(document.querySelector('.bz-kb-sheet')!.querySelector('[data-lit-src-url]')).toBeNull();
-    (document.querySelector('[data-kb-close]') as HTMLElement).click();
+    (document.querySelector('.bz-kb-ovl') as HTMLElement).click(); // issue 271：点遮罩关
     // 外部来源：可点链接（标题优先显示）
     const rowB = Array.from(document.querySelectorAll<HTMLElement>('.bz-kb-lexrow')).find((r) => r.textContent!.includes('心流B'))!;
     rowB.click();

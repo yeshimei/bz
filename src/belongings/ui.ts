@@ -470,7 +470,6 @@ function openBelDetail(it: BelongingsItem): void {
     })();
   });
   mask.addEventListener('mousedown', (e) => { if (e.target === mask) closeBelDetail(); });
-  mask.querySelector('[data-bd-close]')?.addEventListener('click', closeBelDetail);
   mask.querySelector('[data-bd-edit]')?.addEventListener('click', () => {
     const cur = itemById(it.id);
     if (cur) openForm(cur);
