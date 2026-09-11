@@ -249,10 +249,13 @@
         t('借书卡开', !!dt('.bz-bs-d-popup .bz-bs-detail'));
         t('借书卡标题一致', dt('.bz-bs-d-title').textContent === firstIt.title);
         t('进度百分数', dt('.bz-bs-d-prognum').textContent === Math.round(firstIt.progress) + '%');
-        t('借书卡✕钮在位', !!dt('.bz-bs-d-x'));
-        dd.querySelector('.bz-bs-d-x').click();
+        t('在读详情带「继续」跳书钮', firstIt.status !== '在读' || !!dt('[data-bs-d-continue]'));
+        const db = dt('.bz-bs-d-body');
+        t('标题作者固定+书评台账内部滚动(滚动条隐藏)', !!db && getComputedStyle(db).overflowY === 'auto' && getComputedStyle(db).scrollbarWidth === 'none' && getComputedStyle(dt('.bz-bs-d-popup')).overflow === 'hidden');
+        t('借书卡无✕钮（点遮罩/Esc 关）', !dt('.bz-bs-d-x'));
+        clickReal(dt('.bz-overlay-mask'));
         await sleep(60);
-        t('借书卡点✕关', !dt('.bz-bs-d-popup'));
+        t('借书卡点遮罩关', !dt('.bz-bs-d-popup'));
 
         // 桌面点匾额不关面板（isMobileEnv 假判定 = 920 视口 false）
         dt('[data-bs-plaque]').click();
@@ -281,7 +284,7 @@
         await sleep(80);
         const pop = mob('.bz-bs-d-popup');
         t('移动借书卡留边不全屏', !!pop && pop.getBoundingClientRect().width <= md.documentElement.clientWidth - 24);
-        t('移动借书卡✕钮在位', !!mob('.bz-bs-d-x'));
+        t('移动借书卡无✕钮', !mob('.bz-bs-d-x'));
         clickReal(md.querySelector('.bz-overlay-mask'));
         await sleep(60);
         t('移动借书卡点遮罩关', !mob('.bz-bs-d-popup'));

@@ -182,24 +182,19 @@
 }
 
 /* ==================== 借书卡详情（纸卡 + 台账 + 印章；编辑控件融卡内） ==================== */
-.bz-bs-d-popup.bz-overlay-popup { max-width: min(660px, calc(100vw - 32px)); background: var(--bsw-paper); border: 1px solid var(--bsw-line); }
-.bz-bs-detail { position: relative; color: var(--bsw-ink); font-family: var(--bsw-sans); }
+.bz-bs-d-popup.bz-overlay-popup { max-width: min(660px, calc(100vw - 32px)); background: var(--bsw-paper); border: 1px solid var(--bsw-line); scrollbar-width: none; overflow: hidden; }
+.bz-bs-d-popup.bz-overlay-popup::-webkit-scrollbar { display: none; }
+.bz-bs-detail { position: relative; display: flex; min-height: 0; color: var(--bsw-ink); font-family: var(--bsw-sans); }
 .bz-bs-d-pull {
   position: absolute; top: 0; right: 0; z-index: 2;
   background: var(--bsw-accent); color: var(--bsw-paper);
   font-size: var(--bz-font-caption); letter-spacing: 2px; padding: 6px var(--bz-space-md); border-radius: 0 0 0 var(--bz-radius-sm);
 }
-/* 关闭钮（两端）：左上角净位（右上为「已抽出」红签）；点遮罩 / Esc 仍可关 */
-.bz-bs-d-x {
-  position: absolute; top: 10px; left: 14px; z-index: 2;
-  font-size: 22px; color: var(--bsw-muted); cursor: pointer;
-  background: none; border: none; line-height: 1;
-}
-.bz-bs-d-x:hover { color: var(--bsw-accent); }
 .bz-bs-d-card {
   display: flex; gap: 20px; padding: var(--bz-space-xl) 26px;
   border: 1px solid var(--bsw-line); margin: var(--bz-space-sm);
   transform: rotate(-0.4deg); background: var(--bsw-paper);
+  min-height: 0; flex: 1;
 }
 .bz-bs-d-cover {
   flex: none; width: 150px; align-self: flex-start;
@@ -213,12 +208,15 @@
   color: var(--bsw-muted); font-size: var(--bz-font-meta); letter-spacing: 2px;
 }
 .bz-bs-d-cover-ph .bz-ic { width: 26px; height: 26px; opacity: 0.6; }
-.bz-bs-d-info { flex: 1; min-width: 0; }
+.bz-bs-d-info { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+/* 标题/作者固定（flex none），书评 + 台账 + 进度收进内部滚动区 */
+.bz-bs-d-body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+.bz-bs-d-body::-webkit-scrollbar { display: none; }
 .bz-bs-d-title { font-family: var(--bsw-serif); font-size: 23px; letter-spacing: 2px; color: var(--bsw-ink); }
 .bz-bs-d-sub { font-size: var(--bz-font-label); color: var(--bsw-muted); margin: var(--bz-space-xs) 0 var(--bz-space-md); }
 .bz-bs-d-quote {
-  font-family: var(--bsw-serif); font-size: var(--bz-font-body); line-height: 1.9;
-  border-left: 3px solid var(--bsw-accent); padding: var(--bz-space-xs) 14px; margin: 0 0 var(--bz-space-md); color: var(--bsw-ink);
+  font-family: var(--bsw-serif); font-size: var(--bz-font-label); line-height: 1.9;
+  padding: 0; margin: 0; color: var(--bsw-ink);
 }
 .bz-bs-d-quote.dim { color: var(--bsw-muted); }
 .bz-bs-d-ledger { font-size: var(--bz-font-label); width: 100%; border-collapse: collapse; margin: 0 0 var(--bz-space-md); }
@@ -226,13 +224,20 @@
 .bz-bs-d-ledger td:first-child { color: var(--bsw-muted); white-space: nowrap; width: 96px; letter-spacing: 1px; }
 .bz-bs-d-ledger td:last-child { font-weight: 600; }
 .bz-bs-d-stdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+/* 「继续」：在读条目行内跳书钮（强调色 + 下划线，融台账行内） */
+.bz-bs-d-go {
+  background: none; border: none; padding: 0 0 0 8px;
+  color: var(--bsw-accent); cursor: pointer; font: inherit;
+  text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px;
+}
+.bz-bs-d-go:hover { filter: brightness(1.1); }
 .bz-bs-d-meter { margin: var(--bz-space-xs) 0 var(--bz-space-sm); }
 .bz-bs-d-meter .cap { font-size: var(--bz-font-meta); color: var(--bsw-muted); display: flex; align-items: baseline; justify-content: space-between; }
 .bz-bs-d-meter .cap .bz-bs-d-prognum { color: var(--bsw-accent); font-weight: 700; }
 .bz-bs-d-meter .bar { height: 10px; background: color-mix(in srgb, var(--bsw-paper) 70%, var(--bsw-muted)); border: 1px solid var(--bsw-line); margin-top: 6px; }
 .bz-bs-d-meter .bar i { display: block; height: 100%; background: repeating-linear-gradient(90deg, var(--bsw-accent) 0 8px, color-mix(in srgb, var(--bsw-accent) 78%, #fff) 8px 16px); }
 .bz-bs-d-seal {
-  position: absolute; bottom: 26px; right: 30px; width: 70px; height: 70px;
+  width: 70px; height: 70px; margin: -56px 6px 0 auto;
   border: 3px solid color-mix(in srgb, var(--bsw-accent) 75%, transparent); border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   color: color-mix(in srgb, var(--bsw-accent) 80%, transparent);
