@@ -35,6 +35,9 @@ const queue: QueueEntry[] = [];
 const pending = new Map<string, number>();
 /** 会话内去重：已入队/已处理过的路径，同会话不重复补抓 */
 const attempted = new Set<string>();
+/** G8：已删除影片的取消集合——正在抓取时影片被删，完成后不再记失败
+ *  （否则十几秒后弹「以下影片获取失败：《已删的片》」且「重启后会自动重试」文案不实） */
+const cancelled = new Set<string>();
 const failedNames: string[] = [];
 let pumping = false;
 /** CLI 绝对路径缓存：null = 未探测，'' = 探测过但不可用 */
@@ -239,6 +242,16 @@ export function enqueueDoubanFetch(file: TFile | null, name: string): boolean {
   return true;
 }
 
+/** G8：删除影片时出队——未开始的条目移出队列、loading 撤销；正在抓取的条目记入取消集合，
+ *  完成后不再聚合计入失败通知（文件已删，「重启后会自动重试」的文案对它不成立） */
+export function dequeueDoubanFetch(path: string | null | undefined): void {
+  if (!path) return;
+  const at = queue.findIndex((e) => e.file.path === path);
+  if (at >= 0) queue.splice(at, 1);
+  pending.delete(path);
+  cancelled.add(path);
+}
+
 /** 面板打开扫描：未齐条目（缺海报或缺豆瓣链接）入队补抓；有新增即触发一次渲染（loading 首帧可见） */
 export function sweepDoubanFetch(_app: App): void {
   let added = 0;
@@ -288,6 +301,11 @@ async function pump(): Promise<void> {
       first = false;
       const ok = await waitCompleteOrExit(entry, runOne(entry));
       pending.delete(entry.file.path);
+      // G8：已删除影片的条目完成后不记失败（取消集合消费后即清，防集合增长）
+      if (cancelled.delete(entry.file.path)) {
+        refreshAfterFetch();
+        continue;
+      }
       if (!ok) failedNames.push(entry.name);
       refreshAfterFetch();
     }
@@ -332,8 +350,12 @@ export function shutdownDoubanQueue(): void {
   queue.length = 0;
   pending.clear();
   attempted.clear();
+  cancelled.clear();
   failedNames.length = 0;
   activeKill?.();
   activeKill = null;
   pollCompleteMs = POLL_COMPLETE_MS;
+  // G8 附带：会话语义重置含泵位——旧 pump 若挂死于永不完成的 spawn（超时兜底不可达时），
+  // 重置后新会话才能重新泵（旧 pump 即使后来醒来也只看到空队列，finally 复位无害）
+  pumping = false;
 }

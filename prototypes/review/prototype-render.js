@@ -1,4 +1,4 @@
-/* 源指纹 9a6b196f33ed18c9 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b5eafbe2112ceb9a · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/review/fsrs.ts","src/review/queue.ts","src/review/render.ts","src/review/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/review/render.ts → window.BZR_review（评审壳预览包，ADR-0104） */
 var BZR_review = (() => {
@@ -268,12 +268,12 @@ var BZR_review = (() => {
     }
     return `<span class="bz-q-tag is-stage">阶段 ${(_a = item.currentStage) != null ? _a : item.stage + 1}/${TOTAL_STAGES}</span>`;
   }
-  function sortColumn(items, now = Date.now()) {
+  function sortColumn(items, now = Date.now(), w = DEFAULT_W) {
     return items.slice().sort((a, b) => {
       var _a, _b;
       if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
-      const ra = a.phase === "fsrs" && a.stability ? (_a = currentRPct(a, DEFAULT_W, now)) != null ? _a : 999 : 999;
-      const rb = b.phase === "fsrs" && b.stability ? (_b = currentRPct(b, DEFAULT_W, now)) != null ? _b : 999 : 999;
+      const ra = a.phase === "fsrs" && a.stability ? (_a = currentRPct(a, w, now)) != null ? _a : 999 : 999;
+      const rb = b.phase === "fsrs" && b.stability ? (_b = currentRPct(b, w, now)) != null ? _b : 999 : 999;
       if (ra !== rb) return ra - rb;
       return new Date(a.nextReviewDate || 0).getTime() - new Date(b.nextReviewDate || 0).getTime();
     });
@@ -357,10 +357,10 @@ var BZR_review = (() => {
         <span class="bz-q-strip-txt">今日 ${col.today.length} 篇到期 · 逾期 ${col.overdue.length} 篇顺延</span>
         <button class="bz-btn bz-btn--primary" data-act="begin">开始本轮</button>
       </div>`;
-    const body = ctx.showArchived ? `<div class="bz-q-cols"><div class="bz-q-col done">${colHead(col.done.length, "已完成")}${cardsOf(sortColumn(col.done, now), full)}</div></div>` : `<div class="bz-q-cols">
-          <div class="bz-q-col danger">${colHead(col.overdue.length, "已逾期")}${cardsOf(sortColumn(col.overdue, now), full)}</div>
-          <div class="bz-q-col warn">${colHead(col.today.length, "今天到期")}${cardsOf(sortColumn(col.today, now), full)}</div>
-          <div class="bz-q-col future">${colHead(col.future.length, "未来")}${cardsOf(sortColumn(col.future, now), full)}</div>
+    const body = ctx.showArchived ? `<div class="bz-q-cols"><div class="bz-q-col done">${colHead(col.done.length, "已完成")}${cardsOf(sortColumn(col.done, now, w), full)}</div></div>` : `<div class="bz-q-cols">
+          <div class="bz-q-col danger">${colHead(col.overdue.length, "已逾期")}${cardsOf(sortColumn(col.overdue, now, w), full)}</div>
+          <div class="bz-q-col warn">${colHead(col.today.length, "今天到期")}${cardsOf(sortColumn(col.today, now, w), full)}</div>
+          <div class="bz-q-col future">${colHead(col.future.length, "未来")}${cardsOf(sortColumn(col.future, now, w), full)}</div>
         </div>`;
     const stats = computeStats(items);
     const archItem = ctx.showArchived ? `<span class="bz-q-fitem bz-touch-target--lg is-back" data-act="arch" title="点此返回队列">

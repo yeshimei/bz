@@ -246,4 +246,11 @@ function navHeatmap(container: HTMLElement, dir: number): void {
   }
   const title = container.querySelector('[data-rr-hm-title]') as HTMLElement | null;
   if (title) title.textContent = heatmapMonthTitle(lastHeatmap.cursor);
+  // G10：翻月边界同步——两按钮 disabled 按初始游标一次性渲染，navHeatmap 不同步则
+  // 点一次 ‹ 后 › 永久失效回不去（越界点击本身已空操作，这里只刷禁用态）
+  const newIdx = lastHeatmap.keys.indexOf(lastHeatmap.cursor);
+  const prevBtnEl = container.querySelector('[data-rr-hm-prev]') as HTMLButtonElement | null;
+  const nextBtnEl = container.querySelector('[data-rr-hm-next]') as HTMLButtonElement | null;
+  if (prevBtnEl) prevBtnEl.disabled = newIdx <= 0;
+  if (nextBtnEl) nextBtnEl.disabled = newIdx >= lastHeatmap.keys.length - 1;
 }

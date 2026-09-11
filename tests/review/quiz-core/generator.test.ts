@@ -45,7 +45,10 @@ describe('buildBatchPrompt', () => {
     expect(p).toContain('根据以下多篇笔记内容，为每篇笔记生成选择题。请仅返回一个合法的 JSON 对象');
     expect(p).toContain('类型：可以是单选题或多选题，每篇生成恰好 3 道。');
     expect(p).toContain('生成基础概念题，难度较低。');
-    expect(p).toContain('键名为笔记ID（即 "笔记ID:xxx" 中的 xxx），值为该笔记的题目数组');
+    // G5：示例键不再用 noteId1 自造编号（规则行的反例提示文案除外），规则强调逐字复制真实笔记路径
+    expect(p).toContain('"<笔记ID>": [');
+    expect(p).not.toContain('"noteId1"');
+    expect(p).toContain('JSON 的键必须是下方「===== 笔记ID:xxx =====」中的 xxx 本身（完整笔记路径，逐字复制，不要自造编号如 noteId1）');
     expect(p).toContain('===== 笔记ID:A.md =====\n内容');
   });
 });
@@ -123,5 +126,29 @@ describe('generateBatch', () => {
     expect(r['A.md'].map((q) => q.question)).toEqual(['OK', '部分越界']);
     expect(r['A.md'][1].correctIndices).toEqual([2]);
     expect(r['B.md']).toBeUndefined();
+  });
+
+  it('G5 回归：AI 照旧示例返回自造键（noteId1）→ 丢弃，不产出垃圾键', async () => {
+    const g = mkGen();
+    const raw = JSON.stringify({
+      noteId1: [{ question: 'QA', options: ['a', 'b', 'c', 'd'], correctIndices: [0] }],
+    });
+    const ai = { json: vi.fn().mockResolvedValue(raw) };
+    const r = await g.generateBatch([{ id: 'A.md', content: 'x' }], ai as any, false, 1, 'random');
+    expect(r).toEqual({}); // 无法映射真实笔记 → 空结果（调用方不虚报「已为 N 篇生成」）
+    expect(r['noteId1']).toBeUndefined();
+  });
+
+  it('G5 回归：键带「笔记ID:」前缀或首尾空白 → 归一到真实笔记路径', async () => {
+    const g = mkGen();
+    const raw = JSON.stringify({
+      '笔记ID:A.md': [{ question: 'QA', options: ['a', 'b', 'c', 'd'], correctIndices: [0] }],
+      ' B.md ': [{ question: 'QB', options: ['a', 'b', 'c', 'd'], correctIndices: [1] }],
+    });
+    const ai = { json: vi.fn().mockResolvedValue(raw) };
+    const r = await g.generateBatch([{ id: 'A.md', content: 'x' }, { id: 'B.md', content: 'y' }], ai as any, false, 1, 'random');
+    expect(Object.keys(r).sort()).toEqual(['A.md', 'B.md']);
+    expect(r['A.md'][0].question).toBe('QA');
+    expect(r['B.md'][0].question).toBe('QB');
   });
 });

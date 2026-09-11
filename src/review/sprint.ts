@@ -218,6 +218,10 @@ export class SprintSession {
     if (this.finished) return;
     const t = e.target as HTMLElement | null;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    // G2：焦点在选项上按 Enter/空格——选项自身 keydown 已处理作答（renderQuestion 绑定），
+    // document 层直接放行；否则 activate 与本 handler 先后命中同一事件：
+    // 答错反馈/解析/「下一题」被跳过直接翻题，末题答完直接结算（quiz-core/session.ts:283 排除 BUTTON 同惯例）
+    if (t && typeof t.closest === 'function' && t.closest('.bz-sprint-opt')) return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
 
     if (e.key !== 'Enter') {
@@ -326,7 +330,9 @@ export class SprintSession {
       const nextReviewAt = await this.opts.onPassed(entry.item, rating, { acc: entry.acc, wrong: entry.wrong });
       if (this.finished) return;
       entry.state = 'passed';
-      entry.passNote = this.nextIntervalNote(nextReviewAt || entry.item.nextReviewDate);
+      // G1：round/single 下 onPassed 返回 undefined = 评级未真正写盘（被并发/门禁拒收），
+      // 不回退快照旧排期展示「下次 1 天后」假间隔；redo 不走 FSRS 快照无意义，同不展示
+      entry.passNote = this.nextIntervalNote(nextReviewAt || undefined);
     } else {
       // 未通过：写排期+挂待重做+打开原文（round/single 中断；redo 保持队列等下次）
       await this.opts.onFailed(entry.item, rating, { acc: entry.acc, wrong: entry.wrong });

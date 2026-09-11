@@ -143,16 +143,37 @@ describe('markReview 阶梯分支', () => {
     expect(items2[0].stability).toBeGreaterThan(items[0].stability!);
   });
 
-  it('未到期 → ceil 分钟 Notice 且不推进', async () => {
+  it('未到期（未来日历日）→ ceil 分钟 Notice 且不推进', async () => {
     const vault = new MockVault();
     vault.files.set('A.md', '正文');
     const now = new Date();
-    await seedOverdue(vault, { stage: 2, nextReviewDate: new Date(now.getTime() + 10 * 60000 + 30000).toISOString() });
+    // G1 后门禁只拒「未来日历日」：今日到期时刻未到的条目已被 roundQueue 纳入本轮，评级放行
+    await seedOverdue(vault, { stage: 2, nextReviewDate: new Date(now.getTime() + 2 * 86400e3).toISOString() });
     const app = makeApp(vault);
     setApp(app);
     await reviewApp.markReview('A.md', 'good');
     const items = await new ReviewDataManager(app).loadItems();
     expect(items[0].stage).toBe(2); // 未变
+  });
+
+  it('G1 回归：今日到期时刻未到（开始本轮已纳入）→ 评级放行写盘刷新排期', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 0);
+    // 今日 23:59 到期：roundQueue（isDueToday）纳入「已提前纳入本轮」，但时刻未到——
+    // 原门禁只放行 isEarlyDue → 评级拒收（普通模式轮询卡死、做题模式假「下次 1 天后」不写盘）
+    await seedOverdue(vault, { stage: 1, nextReviewDate: endOfDay.toISOString() });
+    const app = makeApp(vault);
+    setApp(app);
+    expect(reviewApp.dueItems(await new ReviewDataManager(app).loadItems()).map((i) => i.filePath)).toContain('A.md');
+    await reviewApp.markReview('A.md', 'good');
+    const items = await new ReviewDataManager(app).loadItems();
+    expect(items[0].totalReviews).toBe(1); // 写盘成功
+    expect(items[0].lastReviewed).toBeTruthy();
+    expect(items[0].nextReviewDate).not.toBe(endOfDay.toISOString()); // 排期刷新
+    expect(items[0].reviewHistory).toHaveLength(1);
   });
 
   it('P1 回归：R 阈值提前逾期（未到 nextReviewDate 但 R<阈值）→ 放行评级写盘刷新排期', async () => {

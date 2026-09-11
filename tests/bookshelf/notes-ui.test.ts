@@ -352,6 +352,62 @@ describe('读书笔记弹窗（EPUB）', () => {
     expect(notesPopup()!.textContent).toContain('没有找到高亮或想法');
   });
 
+  it('G11 验证：连开两本 EPUB，旧书在途 async 后到 → 旧壳已移除不覆盖新书壳（无残留可交互块）', async () => {
+    // 两本书：A/B 各一条划线；A 的首次 weave-data 读取挂起（在途窗口）
+    const twoBooks = {
+      schemaVersion: 2,
+      books: {
+        bk_a: {
+          id: 'bk_a',
+          file: { vaultPath: '书库/A.epub', sourceId: 'sid-a' },
+          meta: { title: 'A 书', author: '甲' },
+          reading: { position: { chapterIndex: 0, cfi: '', percent: 0.5 }, stats: { totalReadTime: 0, lastReadTime: 0, createdTime: 0 } },
+          notes: { bookmarks: [], excerpts: [], highlights: [
+            { id: 'ha', text: 'A 的划线', commentText: '', chapterIndex: 0, chapterTitle: '章 A', cfiRange: 'epubcfi(/6/2)!/4/2', createdTime: 1700000000000 },
+          ] },
+        },
+        bk_b: {
+          id: 'bk_b',
+          file: { vaultPath: '书库/B.epub', sourceId: 'sid-b' },
+          meta: { title: 'B 书', author: '乙' },
+          reading: { position: { chapterIndex: 0, cfi: '', percent: 0.5 }, stats: { totalReadTime: 0, lastReadTime: 0, createdTime: 0 } },
+          notes: { bookmarks: [], excerpts: [], highlights: [
+            { id: 'hb', text: 'B 的划线', commentText: '', chapterIndex: 0, chapterTitle: '章 B', cfiRange: 'epubcfi(/6/2)!/4/3', createdTime: 1700000000000 },
+          ] },
+        },
+      },
+    };
+    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify(twoBooks));
+    const app = makeApp(vault);
+    // A 的首次 weave-data 读取挂起：showEpubBookNotes(A) 的 async 停在在途
+    let releaseA!: (v: string) => void;
+    const gate = new Promise<string>((r) => { releaseA = r; });
+    let firstWeaveRead = true;
+    const realRead = vault.adapter.read.bind(vault.adapter);
+    (vault.adapter as any).read = async (path: string) => {
+      if (firstWeaveRead && path === 'CONFIG/STORAGE/weave-data.json') {
+        firstWeaveRead = false;
+        return gate;
+      }
+      return realRead(path);
+    };
+
+    showEpubBookNotes(app, '书库/A.epub', 'A 书');
+    await new Promise((r) => setTimeout(r, 20)); // A 壳建立、async 挂在首次读取
+    showEpubBookNotes(app, '书库/B.epub', 'B 书'); // 开 B：先关 A 壳（同步 remove）
+    await new Promise((r) => setTimeout(r, 20)); // B 渲染完成
+    expect(document.querySelectorAll('.bz-bs-notes-pop')).toHaveLength(1);
+    expect(notesPopup()!.textContent).toContain('B 的划线');
+    expect(notesPopup()!.textContent).not.toContain('A 的划线');
+
+    // 旧书 async 后到：渲染只落已移除的 A 壳容器（孤立节点），不覆盖 B 壳
+    releaseA(JSON.stringify(twoBooks));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(document.querySelectorAll('.bz-bs-notes-pop')).toHaveLength(1);
+    expect(notesPopup()!.textContent).toContain('B 的划线');
+    expect(notesPopup()!.textContent).not.toContain('A 的划线');
+  });
+
   it('删除失败（weave-data 被并发移除）→ error toast + 重开壳（B2 不留死局）', async () => {
     vault.files.set('CONFIG/STORAGE/weave-data.json', EPUB_WEAVE());
     const app = makeApp(vault);

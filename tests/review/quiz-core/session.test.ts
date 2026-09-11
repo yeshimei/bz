@@ -563,3 +563,51 @@ describe('复习联动契约', () => {
     QUI.ai = null;
   });
 });
+
+describe('G3：quiz.json RMW 串行（批量出题写回不覆盖并发删题）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    document.body.innerHTML = '';
+    QuizMasterUI.settings = { enableMultipleChoice: true, questionsPerNote: '0', difficulty: 'random' };
+  });
+
+  it('AI 批量生成期间并发删题（答题出库）→ 写回基于磁盘现值合并，答对的题不复活', async () => {
+    const vault = new MockVault();
+    seedQuiz(vault, { 'A.md': [], 'B.md': [Q('已答对的题?', [0], 'B.md')] });
+    vault.files.set('A.md', 'A 笔记正文');
+    vault.files.set('B.md', 'B 笔记正文');
+    const app = mockAppWithVault(vault);
+    setApp(app);
+    const ui = new QuizMasterUI();
+
+    // AI 慢速：手动放行（模拟批量出题的长耗时窗口）
+    let releaseAI!: (v: string) => void;
+    const aiGate = new Promise<string>((r) => {
+      releaseAI = r;
+    });
+    QuizMasterUI.ai = { json: vi.fn().mockReturnValue(aiGate) } as any;
+
+    const ensureP = ui.ensureQuestions(['A.md']);
+    // 等首次快照读盘完成（ai.json 被调用 = 进入生成前 quiz.json 快照已落袋）
+    await vi.waitFor(() => expect(QuizMasterUI.ai!.json).toHaveBeenCalled());
+    await flushPersist();
+
+    // 并发：答题出库删除 B.md 的题（独立 RMW 落盘）
+    await ui.manager.removeQuestion(app, 'B.md', {
+      question: '已答对的题?',
+      options: ['甲', '乙', '丙', '丁'],
+      correctIndices: [0],
+    });
+    const mid = JSON.parse(vault.files.get(QUIZ_FILE_PATH)!);
+    expect(mid.notes['B.md']).toEqual([]); // 并发删除已落盘
+
+    // AI 返回（旧实现：此刻用进入时的陈旧快照整体写回 → B.md 的删题被覆盖复活）
+    releaseAI(JSON.stringify({ 'A.md': [{ question: '新题?', options: ['a', 'b', 'c', 'd'], correctIndices: [0], explain: 'x' }] }));
+    await ensureP;
+
+    const quiz = JSON.parse(vault.files.get(QUIZ_FILE_PATH)!);
+    expect(quiz.notes['A.md'].map((q: any) => q.question)).toEqual(['新题?']); // 新题写入
+    expect(quiz.notes['B.md']).toEqual([]); // 并发删题保留（不复活）
+  });
+});

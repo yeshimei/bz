@@ -221,6 +221,15 @@ describe('报告视图渲染（面板内容区）', () => {
     const handled = handleReportInteraction(container, container.querySelector('[data-rr-hm-prev]') as HTMLElement);
     expect(handled).toBe(true);
     expect((container.querySelector('[data-rr-hm-title]') as HTMLElement).textContent).toBe('2025年五月');
+    // G10 回归：翻月边界同步——点 ‹ 到最早月后 ‹ 禁用、› 恢复可用（旧缺陷：disabled 按初始
+    // 游标一次性渲染，点一次 ‹ 后 › 永久失效回不去）
+    expect((container.querySelector('[data-rr-hm-prev]') as HTMLButtonElement).disabled).toBe(true);
+    expect((container.querySelector('[data-rr-hm-next]') as HTMLButtonElement).disabled).toBe(false);
+    // › 回到 2025-06：边界态复原（‹ 可用、› 禁用）
+    handleReportInteraction(container, container.querySelector('[data-rr-hm-next]') as HTMLElement);
+    expect((container.querySelector('[data-rr-hm-title]') as HTMLElement).textContent).toBe('2025年六月');
+    expect((container.querySelector('[data-rr-hm-prev]') as HTMLButtonElement).disabled).toBe(false);
+    expect((container.querySelector('[data-rr-hm-next]') as HTMLButtonElement).disabled).toBe(true);
     // 再 ‹ 越界（最早月）→ 空操作
     handleReportInteraction(container, container.querySelector('[data-rr-hm-prev]') as HTMLElement);
     expect((container.querySelector('[data-rr-hm-title]') as HTMLElement).textContent).toBe('2025年五月');
