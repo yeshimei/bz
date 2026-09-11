@@ -191,12 +191,14 @@ describe('cinema 风格化面板（issue 236）', () => {
   });
 
   // 桌面菜单已统一到 core/item-actions（.bz-item-menu，挂 document.body，皮肤 cn-menu-skin）
-  it('右键菜单（core 跟手菜单）：动作集按状态显隐；「标记已看」写 frontmatter + 面板 toast', async () => {
-    const { app } = seedVault();
+  it('右键菜单：动作集按状态显隐；「标记已看」改走编辑窗（预选已看不落盘，保存才写 frontmatter + 域事件）', async () => {
+    const { app, vault } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
     const menuSel = '.bz-item-menu.cn-menu-skin';
-    pcardByName(root, '想看片').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
+    const ctx = (name: string) =>
+      pcardByName(root, name).dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
+    ctx('想看片');
     const menu = document.querySelector(menuSel) as HTMLElement;
     expect(menu).toBeTruthy();
     expect(menu.classList.contains('cn-skin')).toBe(true); // 取色锚（浮层挂 body，需自带午夜场调色板）
@@ -208,17 +210,43 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(labels.some((l) => l?.includes('在豆瓣打开'))).toBe(true);
     expect(labels.some((l) => l?.includes('删除'))).toBe(true);
     // 已看卡：无标记动作项
-    pcardByName(root, '星际穿越').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
+    ctx('星际穿越');
     const labels2 = Array.from((document.querySelector(menuSel) as HTMLElement).querySelectorAll('.bz-item-menu-item')).map((b) => b.textContent);
     expect(labels2.some((l) => l?.includes('标记在看'))).toBe(false);
     expect(labels2.some((l) => l?.includes('标记已看'))).toBe(false);
-    // 想看卡点「标记已看」→ 评分默认 5 落盘 + cn-toast
-    pcardByName(root, '想看片').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
+    // 想看卡点「标记已看」→ 弹编辑表单（.cn-modal）：状态预选已看 + 评分滑杆预填默认分 + 影评框展开，不直接落盘
+    const evts: any[] = [];
+    const offMovie = onDomainEvent('movie', (e: any) => evts.push(e));
+    const fmBefore = vault.files.get('我的/影视/《想看片》.md');
+    ctx('想看片');
     clickEl(Array.from((document.querySelector(menuSel) as HTMLElement).querySelectorAll('.bz-item-menu-item')).find((b) => b.textContent?.includes('标记已看')));
-    await vi.waitFor(() => expect(root.querySelector('.cn-toast')?.textContent).toContain('标记为已看'));
+    const form = root.querySelector('.cn-ovl .cn-modal') as HTMLElement;
+    expect(form, '标记已看应弹出编辑表单而非直接落盘').toBeTruthy();
+    expect(form.querySelector('.cn-modal-title')?.textContent).toBe('编辑影视');
+    expect(form.querySelector('[data-f-st="已看"]')?.classList.contains('is-on')).toBe(true);
+    expect((form.querySelector('.j-rating') as HTMLElement).style.display).not.toBe('none');
+    expect((form.querySelector('.j-review') as HTMLElement).style.display).not.toBe('none');
+    expect((form.querySelector('.j-range') as HTMLInputElement).value).toBe('5'); // 想看条目无评分 → 预填默认分
+    expect(vault.files.get('我的/影视/《想看片》.md')).toBe(fmBefore);
+    expect(evts.length).toBe(0);
+    // 用户调整评分、写影评后点保存 → frontmatter 正确 + 域事件（status/rated，小橘行为流承接）
+    const range = form.querySelector('.j-range') as HTMLInputElement;
+    range.value = '8.8';
+    range.dispatchEvent(new Event('input', { bubbles: true }));
+    (form.querySelector('.j-review-t') as HTMLTextAreaElement).value = '值得重看';
+    clickEl(form.querySelector('.j-save'));
+    await vi.waitFor(() => expect(root.querySelector('.cn-toast')?.textContent).toContain('已保存'));
     const item = M.items.find((i) => i.name === '想看片')!;
     expect(item.status).toBe(2); // STATUS_WATCHED
-    expect(item.rating).toBe(5);
+    expect(item.rating).toBe(8.8);
+    expect(item.review).toBe('值得重看');
+    const fm = vault.files.get('我的/影视/《想看片》.md')!;
+    expect(fm).toContain('评分: 8.8');
+    expect(fm).toContain('影评: 值得重看');
+    expect(fm).not.toContain('观影日期: 2026-05-01'); // 状态流转刷新观影日期
+    expect(evts).toContainEqual(expect.objectContaining({ kind: 'status', name: '想看片', from: 'want', to: 'watched' }));
+    expect(evts).toContainEqual(expect.objectContaining({ kind: 'rated', name: '想看片', fromRating: null, toRating: 8.8 }));
+    offMovie();
   });
 
   it('详情 → 编辑弹窗：字段预选当前值，评分滑杆联动读数，保存写回 frontmatter', async () => {
@@ -602,6 +630,40 @@ tags: [电影]
       vi.advanceTimersByTime(500); // 越过静置窗口
       (document.querySelector('.bz-item-sheet-mask') as HTMLElement).click();
       expect(document.querySelector('.bz-item-sheet')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  // 「标记已看」改走编辑窗（memo item-1789105594322）：抽屉与右键菜单同源动作集，移动端同语义
+  it('移动端长按抽屉点「标记已看」→ 编辑表单预选已看不落盘；保存后状态流转', async () => {
+    vi.useFakeTimers();
+    try {
+      const { app } = seedMobile();
+      createOverlay(app);
+      const root = document.querySelector('section.mob.bz-cinema--midnight') as HTMLElement;
+      const card = Array.from(root.querySelectorAll('.m-grid .pcard')).find((c) => c.querySelector('.pname')?.textContent === '想看片') as HTMLElement;
+      card.dispatchEvent(new Event('touchstart', { bubbles: true }));
+      vi.advanceTimersByTime(600); // core longPress 500ms 阈值 → 抽屉打开
+      const sheet = document.querySelector('.bz-item-sheet.cn-sheet-skin') as HTMLElement;
+      expect(sheet).toBeTruthy();
+      const markBtn = Array.from(sheet.querySelectorAll('.bz-item-sheet-item')).find((b) => b.textContent?.includes('标记已看')) as HTMLElement;
+      expect(markBtn).toBeTruthy();
+      vi.advanceTimersByTime(500); // 越过合成 click 静置窗口（窗口内点击会被吞）
+      clickEl(markBtn);
+      const form = root.querySelector('.cn-ovl .cn-modal') as HTMLElement;
+      expect(form, '抽屉标记已看应弹出编辑表单而非直接落盘').toBeTruthy();
+      expect(form.querySelector('[data-f-st="已看"]')?.classList.contains('is-on')).toBe(true);
+      expect((form.querySelector('.j-range') as HTMLInputElement).value).toBe('5');
+      expect(M.items.find((i) => i.name === '想看片')!.status).toBe(0); // 想看未变：不直接改状态
+      // 保存 → 状态流转落盘
+      (form.querySelector('.j-review-t') as HTMLTextAreaElement).value = '抽屉路径影评';
+      clickEl(form.querySelector('.j-save'));
+      await vi.waitFor(() => {
+        const it = M.items.find((i) => i.name === '想看片')!;
+        expect(it.status).toBe(2);
+        expect(it.review).toBe('抽屉路径影评');
+      });
     } finally {
       vi.useRealTimers();
     }
