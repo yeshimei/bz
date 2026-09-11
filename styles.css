@@ -1021,26 +1021,48 @@ button.news-close-btn {
 /* 列表卡片不注入任何常驻或 hover 图标排（用户拍板：列表保持干净）；桌面=右键菜单，触屏=长按抽屉 */
 .bz-item-card { position: relative; }
 
-/* 原生 lucide 图标尺寸统一（setIcon 生成的 svg；颜色继承 currentColor） */
-.bz-item-menu-icon svg,
-.bz-item-sheet-icon svg {
-  width: 13px; height: 13px;
-}
+/* 原生 lucide 图标尺寸统一（setIcon 生成的 svg；颜色继承 currentColor）
+   菜单图标 16px / 抽屉图标 13px —— 桌面菜单按原生规范放大到 16（13 太小显琐碎），
+   抽屉保持面板内的紧凑口径不动。 */
+.bz-item-menu-icon svg { width: 16px; height: 16px; }
+.bz-item-sheet-icon svg { width: 13px; height: 13px; }
 
-/* 跟手菜单（右键弹出；定位由 JS 计算锚点+防溢出，样式仅布局与观感；小尺寸紧凑风，无边框无图标底色装饰） */
+/* 跟手菜单（右键弹出；定位由 JS 计算锚点+防溢出）
+   2026-09-11 观感整改（用户：「感觉很廉价，也不真实」）——对齐 Obsidian 原生菜单规范：
+   180px 起宽 / 行高 30px / 图标 16px / 次级背景 + 1px 边框（**深色下靠边框立层级**，
+   阴影只做辅助：旧的 rgba(0,0,0,.12) 在深色主题几乎不可见，等于没有浮层感）。
+   **无入场动画** —— 用户明确不要过度动效（原 0.12s scale 弹入已删）。 */
 .bz-item-menu {
   position: fixed;
-  min-width: 132px; padding: var(--bz-space-xs);
-  background: var(--background-primary);
+  min-width: 180px; max-width: 320px;
+  padding: var(--bz-space-xs);
+  /* 变量兜底链不是洁癖：评审壳只 mock 了 --background-primary，**没有 --background-secondary**
+     → 直接 var(--background-secondary) 解析失败 = 菜单透明（2026-09-11 用户实测报的 bug）。
+     真机走主题值，壳回落主背景，再兜底纯白。 */
+  background: var(--background-secondary, var(--background-primary, #fff));
+  border: 1px solid var(--background-modifier-border, rgba(128, 128, 128, 0.3));
   border-radius: var(--bz-radius-sm);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  animation: bz-menu-in 0.12s ease-out;
+  box-shadow: var(--shadow-s, 0 4px 16px rgba(0, 0, 0, 0.22));
 }
-/* 菜单项：图标+文字左对齐、无边框无底色（抗 Obsidian 默认 button 灰底/边框/圆角压盖——与抽屉项同款处理） */
-.bz-item-menu button.bz-item-menu-item {
+
+/* 桌面菜单盒头（B 方案，**仅传 menuHeadHtml 的域渲染**：首页菜单跨 21 个域，
+   不写域身份就不知道右键的是哪一行；口径与长按抽屉盒头同源，这里排成一行：
+   域色点 + 域名 ……… 计数。域色点用内联 style 写色，CSS 侧不枚举域色）。 */
+.bz-item-menu-head {
   display: flex; align-items: center; gap: 6px;
+  padding: 3px var(--bz-space-sm) 5px;
+  font-size: 12px; color: var(--text-muted);
+}
+.bz-item-menu-head-dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+.bz-item-menu-head-cnt { margin-left: auto; }
+.bz-item-menu-sep { height: 1px; margin: 3px 6px 4px; background: var(--background-modifier-border); }
+/* 菜单项：图标+文字左对齐、无边框无底色（抗 Obsidian 默认 button 灰底/边框/圆角压盖——与抽屉项同款处理）
+   行高用 **min-height** 而非 height：belongings「印样」皮肤自带 `padding: 10px …`，
+   写死 height 会把那套皮肤的文字压扁；min-height 则默认 30px、皮肤更高，两边都成立。 */
+.bz-item-menu button.bz-item-menu-item {
+  display: flex; align-items: center; gap: var(--bz-space-sm);
   justify-content: flex-start !important; /* 抗 Obsidian 默认 button 居中 */
-  width: 100%; padding: 6px var(--bz-space-sm);
+  width: 100%; min-height: 30px; padding: 0 var(--bz-space-sm);
   font-size: var(--bz-font-label); line-height: 1.4; color: var(--text-normal);
   background: transparent !important;
   border: none !important;
@@ -1059,12 +1081,8 @@ button.news-close-btn {
 .bz-item-menu button.bz-item-menu-item--accent .bz-item-menu-icon {
   color: var(--color-green) !important;
 }
-.bz-item-menu-icon { width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text-muted); }
+.bz-item-menu-icon { width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text-muted); }
 .bz-item-menu button.bz-item-menu-item--danger .bz-item-menu-icon { color: var(--text-error); }
-@keyframes bz-menu-in {
-  from { opacity: 0; transform: scale(0.96) translateY(2px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
 
 /* ---- 抽屉共享基线（恢复：movie 域退役 ADR-0087 时随 src/movie/styles.css 误删的共享规则——
    本组件样式早年散落各域文件，退役清理时未迁回 core，致动作项失 flex 纵列挤成一行、
@@ -7397,9 +7415,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-home-eic .bz-ic { width: 17px; height: 17px; }
 /* 2026-09-09 去加粗：入口名/瓦片名不再加粗（用户拍板） */
 .bz-home-enm { font-size: 12.5px; font-weight: 400; }
+/* 灰字计数 = 行内**最后一项**，margin-left:auto 推到右缘
+   （2026-09-11 用户要求：去掉行尾 hover 的 `→`（bz-home-ego 已退役），灰字贴右） */
 .bz-home-ect { margin-left: auto; font-size: var(--bz-font-caption); color: var(--h-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.bz-home-ego { opacity: 0; color: var(--h-dim); font-size: var(--bz-font-caption); }
-.bz-home-erow:hover .bz-home-ego { opacity: 1; }
 
 /* ---- 拖拽排序已撤：入口顺序/显隐统一在「设置 → 首页入口」弹窗里打理（2026-09-10 用户拍板） ---- */
 
@@ -7417,7 +7435,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-home-ev-tm { font-family: var(--h-mono); font-size: 11px; color: var(--h-dim); width: 42px; flex: none; padding-top: 2px; }
 .bz-home-ev-bd { flex: 1; min-width: 0; }
 .bz-home-ev-tx { font-size: 13.5px; line-height: 1.6; }
-.bz-home-ev-dm { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; color: #fff; padding: 1px var(--bz-space-sm); border-radius: var(--bz-radius-sm); margin-right: var(--bz-space-sm); vertical-align: 1.5px; }
+.bz-home-ev-dm { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: #fff; padding: 1px var(--bz-space-sm); border-radius: var(--bz-radius-sm); margin-right: var(--bz-space-sm); vertical-align: 1.5px; }
 .bz-home-ev-dm .bz-ic { width: 10px; height: 10px; }
 .bz-home-ev-note { margin-top: 5px; font-size: 11.5px; color: var(--h-ai); line-height: 1.55; }
 .bz-home-ev-note::before { content: "✦ "; }
@@ -7491,16 +7509,21 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-home-pr-go { font-size: 17.25px; }
 }
 
-/* ==================== 「外观 → 首页入口」内联编辑器（设置面板内，2026-09-10 用户拍板） ====================
+/* ==================== 「入口组 → 首页入口」内联编辑器（设置面板内，2026-09-10 用户拍板） ====================
    演进：浮层弹窗（自带 --h-* 一套 token）→ **面板内联**（settings.ts 的 custom 行插槽）。
    故本块**不自带 token**，直接用面板的 --sp-* （面板根作用域提供，随亮/暗皮切换），
    缺省再回落 Obsidian token —— 观感与面板其它设置项一致。
-   按端各一份：桌面端只出 desk 那套、移动端只出 mob 那套（见 entry-editor.ts）。 */
-.bz-home-ent-hint { margin: 0 0 var(--bz-space-sm); font-size: 11.5px; color: var(--sp-ink-3, var(--text-faint)); }
+   按端各一份：桌面端只出 desk 那套、移动端只出 mob 那套（见 entry-editor.ts）。
+   2026-09-11 用户拍板：**无说明小字**、**列表靠左、左边不留内边距**（右边照常留边距）。 */
+/* 宿主 custom 行左侧内边距清零（挂标记者见 entry-editor.ts 的 FLUSH_CLS）——
+   桌面行 padding 10px 18px / 移动页行 padding 10px 14px，两档都归零，
+   于是列表左缘 = 卡片左缘（拖柄贴到卡片边上）。右侧照常保留。 */
+.bz-sp-set-row.bz-home-ent-flush { padding-left: 0; }
 .bz-home-ent-list { display: flex; flex-direction: column; }
 .bz-home-ent-row {
   display: flex; align-items: center; gap: var(--bz-space-sm);
-  padding: 7px var(--bz-space-sm); border-radius: var(--bz-radius-sm);
+  /* 左边不留内边距：拖柄贴左缘（用户 2026-09-11 拍板）；右边照常留 */
+  padding: 7px var(--bz-space-sm) 7px 0; border-radius: var(--bz-radius-sm);
   border-bottom: 1px solid var(--sp-line-soft, var(--background-modifier-border));
   /* 触屏：纵向滚动归浏览器（短滑滚列表），横向不滚 → 长按拖拽不与滚动抢手势。
      长按成立后 JS 会把本行 touch-action 临时改成 none 拿住手势（见 entry-editor.ts）。 */
@@ -7544,8 +7567,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* 移动端：面板内字号随面板档放大（面板移动端字号见 settings-panel/styles.css） */
 @media (max-width: 768px) {
-  .bz-home-ent-hint { font-size: var(--bz-font-label); }
-  .bz-home-ent-row { padding: 10px var(--bz-space-sm); }
+  .bz-home-ent-row { padding: 10px var(--bz-space-sm) 10px 0; }
   .bz-home-ent-nm { font-size: 16px; }
   .bz-home-ent-ic .bz-ic, .bz-home-ent-grip .bz-ic { width: 19px; height: 19px; }
   .bz-home-ent-btn { width: 34px; height: 34px; }
@@ -7571,6 +7593,38 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
    不依赖样式表聚合顺序；图标随字号同步放大，行高留够触控热区 */
 .bz-item-sheet.bz-home-menu button.bz-item-sheet-item { font-size: 18px; padding: 11px 6px; }
 .bz-item-sheet.bz-home-menu .bz-item-sheet-icon svg { width: 18px; height: 18px; }
+
+/* ---- 桌面右键菜单皮肤（.bz-item-menu.bz-home-menu，2026-09-11）----
+   用户：「首页的右键菜单没有背景色，整体风格和首页的风格一致」。两个原因叠在一起：
+   ① core 基线取主题 `--background-secondary`，而评审壳只 mock 了 `--background-primary`
+      → 解析失败 = 菜单透明（core 侧已加兜底链）；
+   ② 首页的 `--h-*` 定义在 **`.bz-home-panel` 作用域**内，而菜单挂在 `body` 上**够不着** ——
+      所以这里按首页口径**重新声明一份**，再被下面的规则消费。
+   底色/描边/墨色全部取首页卡片口径（`--h-card` / `--h-line` / `--h-ink`），
+   尺寸、行高、图标、无动效仍走 core 基线（菜单是宿主级控件，不套面板里 18px 的抽屉口径）。 */
+.bz-item-menu.bz-home-menu {
+  --h-card: #ffffff;
+  --h-ink: #17150f;
+  --h-dim: #8b8778;
+  --h-line: #e5e2d6;
+  background: var(--h-card);
+  border: 1px solid var(--h-line);
+  box-shadow: 0 6px 24px rgba(23, 21, 15, 0.13);
+}
+.theme-dark .bz-item-menu.bz-home-menu {
+  --h-card: #26251f;
+  --h-ink: #ece9df;
+  --h-dim: #8f8b7c;
+  --h-line: #3a382f;
+  background: var(--h-card);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.46);
+}
+.bz-item-menu.bz-home-menu .bz-item-menu-head { color: var(--h-dim); }
+.bz-item-menu.bz-home-menu .bz-item-menu-sep { background: var(--h-line); }
+.bz-item-menu.bz-home-menu button.bz-item-menu-item { color: var(--h-ink); }
+/* 悬停：跟随首页入口行的暖色低透明叠加，不引主题灰（否则浅色下偏冷、显脏） */
+.bz-item-menu.bz-home-menu button.bz-item-menu-item:hover { background: rgba(23, 21, 18, 0.06) !important; }
+.theme-dark .bz-item-menu.bz-home-menu button.bz-item-menu-item:hover { background: rgba(236, 233, 223, 0.08) !important; }
 /* ==================== 今日回顾域样式（src/recap/styles.css，方向一 R2） ====================
    组件库纪律（铁律 6）：面板壳（.bz-panel-overlay/.bz-panel-frame）、头行（.bz-panel-head 族）、
    统计卡（.bz-stat/uiStat）、空态/按钮/spinner 走 src/core/ui；本文件只保留今日回顾独有布局
@@ -12021,6 +12075,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   --sp-on-accent: #fff;
   --sp-radius: 12px;
   --sp-shadow: 0 1px 5px rgba(90, 70, 40, 0.06);
+  /* 弹出层（下拉菜单）：比卡片更亮一档 + 更硬的阴影 —— 与卡片同色时浮层「没有层级」，
+     2026-09-11 观感整改（用户反馈弹出菜单廉价、不真实） */
+  --sp-pop: #ffffff;
+  --sp-pop-shadow: 0 4px 16px rgba(90, 70, 40, 0.14);
   --sp-input-bg: #fffcf6;
   --sp-ctl-off: #dcd5c2;
   --sp-knob: #fff;
@@ -12044,6 +12102,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   --sp-on-accent: #1b1b1f;
   --sp-radius: 10px;
   --sp-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  --sp-pop: #2e2e35;
+  --sp-pop-shadow: 0 8px 24px rgba(0, 0, 0, 0.38);
   --sp-input-bg: #202024;
   --sp-ctl-off: #3c3c44;
   --sp-knob: #fff;
@@ -12590,11 +12650,12 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   display: flex;
   flex-direction: column;
   padding: var(--bz-space-xs);
-  background: var(--sp-panel);
+  background: var(--sp-pop);
   border: 1px solid var(--sp-line);
-  border-radius: 9px;
-  box-shadow: var(--sp-shadow);
+  border-radius: 8px;
+  box-shadow: var(--sp-pop-shadow);
   z-index: 20;
+  /* 无入场动效（2026-09-11 用户：弹出菜单不要过度动效） */
   max-height: 260px;
   overflow-y: auto;
 }
@@ -12606,7 +12667,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   justify-content: space-between;
   gap: var(--bz-space-sm);
   width: 100%;
-  padding: 6px var(--bz-space-sm);
+  min-height: 30px;
+  padding: 0 var(--bz-space-sm);
   border: 0;
   background: transparent;
   font-family: inherit;
