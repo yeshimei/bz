@@ -12,6 +12,8 @@ export interface HomeState {
   appRef: App | null;
   /** 最近一次活动河聚合（打开时采集；失败 null → 空态） */
   river: RiverData | null;
+  /** 活动河采集失败标记（H12）：失败出「采集失败 + 重试」空态，与「加载中」骨架区分 */
+  riverFailed: boolean;
   /** 入口顺序（打开时读 home.json；空数组 = 用 DOMAINS 默认顺序）。desk/mob 两套互不影响 */
   order: HomeOrder;
   /**
@@ -33,6 +35,7 @@ export const H: HomeState = {
   currentOverlay: null,
   appRef: null,
   river: null,
+  riverFailed: false,
   order: { version: 3, desk: [], mob: [], hiddenDesk: [], hiddenMob: [] },
   pomodoroPhase: 'idle',
   riverView: null,
@@ -43,6 +46,7 @@ export function resetHomeState(): void {
   H.currentOverlay = null;
   H.appRef = null;
   H.river = null;
+  H.riverFailed = false;
   H.order = { version: 3, desk: [], mob: [], hiddenDesk: [], hiddenMob: [] };
   H.pomodoroPhase = 'idle';
   H.riverView = null;

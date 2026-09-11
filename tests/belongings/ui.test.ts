@@ -1386,7 +1386,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
       name: '新显示器', category: '🖥 显示器', purchase_price: 1299,
       purchase_date: '2024-06-15', current_status: '使用中', description: '',
     });
-    expect(item.id).toMatch(/^item_\d+$/);
+    expect(item.id).toMatch(/^item_\d+(_[a-z0-9]+)?$/); // H18：id 拼随机后缀防同毫秒覆盖
     expect(item.created_date).toBeTruthy();
     expect(item.last_updated).toBeTruthy();
     expect(events).toHaveLength(1);

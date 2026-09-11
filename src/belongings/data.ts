@@ -46,7 +46,12 @@ export async function loadDatabase(): Promise<BelongingsDatabase> {
     db = emptyDatabase();
   }
 
-  if (!db.items) db.items = {};
+  // H19：items 为真值非对象（字符串/数组/数字）时顶层校验拦不住——
+  // Object.values(字符串) 按字符拆、Object.values(数组) 把元素当物品派生垃圾分类，重置为空表
+  if (!db.items || typeof db.items !== 'object' || Array.isArray(db.items)) {
+    console.error('数据文件 items 字段结构异常:', db.items === null ? 'null' : typeof db.items);
+    db.items = {};
+  }
 
   // ----- 迁移（issue 231/ADR-0102）：emoji 前缀分类 → 纯文字分类 + icon 字段 -----
   // 内存迁移、幂等（无 emoji 前缀即跳过）；icon 只在未设时由映射表补，已有值不覆写；

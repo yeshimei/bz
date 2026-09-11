@@ -29,6 +29,37 @@ function snapshot(): SettingsSnapshot {
   return getSettings() as unknown as SettingsSnapshot;
 }
 
+/**
+ * onCommit 一次性提示（H1：比照 core/settings-schema.ts 的 CommitWarn 语义逐字收口——
+ * 值相对初始值有变更才触发；同一次编辑会话至多一次；改回原值后复位可再次提示。
+ * core 类未导出且域不得反向改 core（ADR-0002），故域内同语义副本，文案走 core notice）。
+ */
+class SpCommitWarn {
+  private warnedInitial: string | null = null;
+
+  constructor(
+    private readonly initial: string,
+    private readonly onCommit?: () => void
+  ) {}
+
+  fire(current: string): void {
+    if (!this.onCommit) return;
+    if (current !== this.initial) {
+      if (this.warnedInitial !== this.initial) {
+        this.warnedInitial = this.initial;
+        this.onCommit();
+      }
+    } else {
+      this.warnedInitial = null;
+    }
+  }
+}
+
+/** 行绑定写入失败的统一提示（H5：先写后翻 UI——写入抛错时不翻 UI 只提示） */
+function notifyWriteError(e: unknown): void {
+  notice(`设置写入失败：${e instanceof Error ? e.message : String(e)}`, 'error');
+}
+
 /** 行上下文（供 onChange/custom/button 回调；结构与 core SettingsRowContext 一致） */
 function makeCtx(rowEl: HTMLElement, refreshVisibility: () => void): SettingsRowContext {
   return { rowEl, refreshVisibility };
@@ -282,9 +313,15 @@ function renderRow(
       const sw = ctrlEl.querySelector('.bz-sw')!;
       sw.addEventListener('click', () => {
         const v = !sw.classList.contains('on');
+        // 先写后翻 UI（H5）：写入抛错（三函数逃生口）时不翻开关只提示，避免显示值与实际值背离
+        try {
+          acc.write(v);
+        } catch (e) {
+          notifyWriteError(e);
+          return;
+        }
         sw.classList.toggle('on', v);
         sw.setAttribute('aria-checked', String(v));
-        acc.write(v);
         void acc.persist();
         row.onChange?.(v, ctx);
         refresh();
@@ -294,6 +331,8 @@ function renderRow(
     case 'text': {
       const acc = bindValue<string>(row.binding as unknown as RowBinding<string>);
       const ph = typeof row.placeholder === 'function' ? row.placeholder(snapshot()) : row.placeholder;
+      // 行级 onCommit 一次性提示（H1：与 core 渲染器同语义，见 SpCommitWarn）
+      const warn = new SpCommitWarn(String(acc.read() ?? ''), (row as { onCommit?: () => void }).onCommit);
       const input = makeInput({
         value: acc.read() ?? '',
         mono: !!(row as { mono?: boolean }).mono,
@@ -304,6 +343,7 @@ function renderRow(
           acc.write(v);
           void acc.persist();
           row.onChange?.(v, ctx);
+          warn.fire(v);
         },
       });
       mountTextActions(ctrlEl, input, acc, (row as { actions?: unknown }).actions as never, ctx, refresh);
@@ -317,6 +357,8 @@ function renderRow(
       // 结构单源（R.textareaHtml）
       ctrlEl.innerHTML = R.textareaHtml(acc.read() ?? '', row.placeholder);
       const ta = ctrlEl.querySelector('textarea')!;
+      // 行级 onCommit 一次性提示（H1：备忘录「自定义场景列表」memoReloadScenes 即 textarea 行钩子）
+      const warn = new SpCommitWarn(String(acc.read() ?? ''), (row as { onCommit?: () => void }).onCommit);
       let timer: number | null = null;
       let dirty = false; // refreshKey 程序化写值不置脏（防 blur 假写覆盖，同 makeInput）
       const commit = () => {
@@ -324,6 +366,7 @@ function renderRow(
         if (!dirty) return;
         acc.write(ta.value);
         void acc.persist();
+        warn.fire(ta.value);
       };
       ta.addEventListener('input', () => {
         dirty = true;
@@ -347,6 +390,8 @@ function renderRow(
     case 'number': {
       const acc = bindValue<number>(row.binding as unknown as RowBinding<number>);
       const ph = typeof row.placeholder === 'function' ? row.placeholder(snapshot()) : row.placeholder;
+      // 行级 onCommit 一次性提示（H1：与 core 渲染器同语义；fire 用原始输入值，同 core last 口径）
+      const warn = new SpCommitWarn(String(acc.read() ?? ''), (row as { onCommit?: () => void }).onCommit);
       const input = makeInput({
         value: String(acc.read() ?? ''),
         type: 'number',
@@ -365,6 +410,7 @@ function renderRow(
           acc.write(v);
           void acc.persist();
           row.onChange?.(v, ctx);
+          warn.fire(raw);
         },
       });
       (input as HTMLInputElement).step = String(row.step ?? 1);
@@ -389,7 +435,12 @@ function renderRow(
         if (group) { group.style.overflow = 'visible'; group.style.zIndex = '10'; }
         const closeMenu = () => {
           sel.querySelector('.bz-select-menu')?.remove();
-          if (group) { group.style.overflow = ''; group.style.zIndex = ''; }
+          // 组卡 overflow 还原前查本组是否还有打开的菜单（H4）：A 的 closeMenu 冒泡末段
+          // 若无条件还原会把 B 刚设的 visible 抹掉，B 菜单被组卡裁剪
+          if (group && !group.querySelector('.bz-select-menu')) {
+            group.style.overflow = '';
+            group.style.zIndex = '';
+          }
           document.removeEventListener('click', h);
         };
         const h = (ev: MouseEvent) => {
@@ -404,9 +455,16 @@ function renderRow(
           const o = options[i];
           it.addEventListener('click', (ev) => {
             ev.stopPropagation();
+            // 先写后翻 UI（H5）：写入抛错时不改触发器显示值只提示，防显示与实际值背离
+            try {
+              acc.write(o.value);
+            } catch (e) {
+              notifyWriteError(e);
+              closeMenu();
+              return;
+            }
             closeMenu();
             vspan.textContent = labelOf(o.value);
-            acc.write(o.value);
             void acc.persist();
             row.onChange?.(o.value, ctx);
             refresh();
@@ -445,6 +503,13 @@ function renderRow(
       const acc = bindValue<string | string[]>(row.binding as unknown as RowBinding<string | string[]>);
       const multi = row.mode === 'multi';
       const fallbackFn = (row as { fallbackValue?: () => string }).fallbackValue;
+      // 行级 onCommit 一次性提示（H1：与 core 渲染器 path 分支同口径——清单 JSON 串比较）
+      const onCommit = (row as { onCommit?: () => void }).onCommit;
+      const initRaw = acc.read();
+      const warn = new SpCommitWarn(
+        multi ? JSON.stringify(initRaw ?? []) : String(initRaw ?? ''),
+        onCommit
+      );
       ctrlEl.appendChild(makePathRowCtrl({
         name: row.name,
         mode: row.mode,
@@ -465,6 +530,7 @@ function renderRow(
           // 回调在落盘后触发（原口径）；返回清单（含异步解析结果）回传 path 行作 chips 渲染口径——
           // 异步否决场景的落盘改写由回调自行负责（如外部 binding 自管写盘）
           const res = row.onChange?.(list, ctx);
+          warn.fire(multi ? JSON.stringify(v) : String(v));
           if (res && typeof (res as { then?: unknown }).then === 'function') {
             return Promise.resolve(res as Promise<void | string[]>).then(
               (final) => (Array.isArray(final) ? final : list)
@@ -523,10 +589,13 @@ function renderRow(
       const acc = bindValue<string>(row.binding as unknown as RowBinding<string>);
       const layoutKey = (row as { layoutKey?: string }).layoutKey;
       const curLayout = layoutKey ? String((snapshot() as any)[layoutKey] ?? '') : '';
-      const opts2 = row.options.filter((o) => {
+      let opts2 = row.options.filter((o) => {
         const lo = (o as { layout?: string }).layout;
         return !lo || !layoutKey || lo === curLayout;
       });
+      // 布局值与主题 options 全不匹配（如存量脏值/换版后布局值退役）→ 回退全量 options（H10），
+      // 防主题行渲染成空白卡组
+      if (!opts2.length) opts2 = row.options;
       const cur = String(acc.read() ?? '') || (opts2[0] && opts2[0].value) || '';
       ctrlEl.innerHTML = R.cardpickHtml(opts2.map((o) => ({
         value: o.value,
@@ -537,9 +606,15 @@ function renderRow(
       const wrap = ctrlEl.querySelector('.bz-sp-cardpick')!;
       wrap.querySelectorAll<HTMLElement>('.bz-sp-cardpick-card').forEach((c) => {
         c.addEventListener('click', () => {
+          // 先写后翻 UI（H5）：写入抛错时不切换选中态只提示
+          try {
+            acc.write(c.dataset.spCard ?? '');
+          } catch (e) {
+            notifyWriteError(e);
+            return;
+          }
           wrap.querySelectorAll('.is-on').forEach((x) => x.classList.remove('is-on'));
           c.classList.add('is-on');
-          acc.write(c.dataset.spCard ?? '');
           void acc.persist();
           row.onChange?.(c.dataset.spCard ?? '', ctx);
           refresh();
@@ -633,16 +708,27 @@ export function renderPanelSchema(container: HTMLElement, schema: SettingsSchema
   const visibleConditions = new WeakMap<HTMLElement, (s: SettingsSnapshot) => boolean>();
   // refreshKey 联动：登记「任意行变更后重读显示值」的回调（refresh 内统一执行，不落盘）
   const valueRefreshes: Array<() => void> = [];
+  /** 显隐求值 + 应用（H6：visibleWhen 抛错视为可见——与 ui.ts visibleItemCount 同口径，
+   *  单行求值异常不得中断整轮显隐/徽标/refreshKey 联动） */
+  const applyCond = (el: HTMLElement, cond: (s: SettingsSnapshot) => boolean): void => {
+    let visible = true;
+    try {
+      visible = cond(snapshot());
+    } catch {
+      /* 求值异常视为可见 */
+    }
+    el.style.display = visible ? '' : 'none';
+  };
   const refresh = () => {
     container.querySelectorAll<HTMLElement>('[data-sp-row]').forEach((el) => {
       const cond = visibleConditions.get(el);
       if (!cond) return;
-      el.style.display = cond(snapshot()) ? '' : 'none';
+      applyCond(el, cond);
     });
     container.querySelectorAll<HTMLElement>('[data-sp-group]').forEach((el) => {
       const cond = visibleConditions.get(el);
       if (!cond) return;
-      el.style.display = cond(snapshot()) ? '' : 'none';
+      applyCond(el, cond);
     });
     // 行/组显隐变化后重算各分组项数徽标（动态计算；button 操作行与隐藏行不计）
     container.querySelectorAll<HTMLElement>('.bz-sp-group').forEach((card) => {
@@ -662,10 +748,24 @@ export function renderPanelSchema(container: HTMLElement, schema: SettingsSchema
       visibleConditions.set(card, groupVw);
       card.style.display = groupVw(snapshot()) ? '' : 'none';
     }
+    // isChild 联动（H2，比照 core 渲染器 ticket 170 口径）：本组首个键直绑 toggle = 组级父项，
+    // 所有 isChild 行跟随它显隐——与行自身 visibleWhen 取与；父项为外部绑定（无 key）不联动。
+    const parentToggleKey = (
+      g.rows.find(
+        (pr) => pr.type === 'toggle' && typeof (pr.binding as { key?: string } | undefined)?.key === 'string'
+      ) as { binding: { key: string } } | undefined
+    )?.binding.key ?? null;
     g.rows.forEach((r, i) => {
       const rowEl = card.querySelectorAll('.bz-sp-set-row')[i] as HTMLElement | undefined;
       if (!rowEl) return;
-      const vw = (r as { visibleWhen?: (s: SettingsSnapshot) => boolean }).visibleWhen;
+      let vw = (r as { visibleWhen?: (s: SettingsSnapshot) => boolean }).visibleWhen;
+      if ((r as { isChild?: boolean }).isChild && parentToggleKey) {
+        const parentKey: string = parentToggleKey;
+        const selfVw = vw;
+        vw = (snap: SettingsSnapshot) =>
+          (snap as unknown as Record<string, unknown>)[parentKey] === true &&
+          (selfVw ? selfVw(snap) : true);
+      }
       if (vw) {
         rowEl.dataset.spRow = String(i);
         visibleConditions.set(rowEl, vw);
