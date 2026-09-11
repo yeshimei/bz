@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 // ============================================================
 // News Watcher — 每 30 分钟抓取最近 24 小时的文章
-// 源: 果壳科学人(新API) + 知乎日报(官方API)
+// 源: 果壳科学人(新API) + 知乎日报(官方API) + B站 UP 投稿 + RSS 订阅（ADR-0121）
 // 去重: URL + 标题，入库即未读
 // ============================================================
 
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { spawn } = require('child_process');
+const Parser = require('rss-parser');
+const TurndownService = require('turndown');
 
 // ---------- 路径配置 ----------
 // 解析 news.json 路径，优先级：
@@ -42,7 +43,51 @@ const HEADERS = {
 // ---------- ticket 124（ADR-0060）：news.json 四段结构 + B 站源 ----------
 const BILIBILI_API = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space';
 const BILIBILI_HOME = 'https://www.bilibili.com/';
-const DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true };
+const DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true, rss: true };
+
+// ---------- ADR-0121：RSS 订阅源 ----------
+const RSS_MAX_PER_FEED = 30; // 每 feed 平台保留最近条数（超出窗口裁剪）
+const RSS_TURNDOWN = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced', bulletListMarker: '-' });
+const RSS_PARSER = new Parser({ headers: HEADERS, timeout: TIMEOUT, customFields: { item: ['content:encoded'] } });
+
+/** 纯函数：feed item → news 条目。title 为纯日期（YYYY-MM-DD，如橘鸦AI早报）时改写为
+ *  「YYYY-MM-DD · feed名」防列表同题；platform/author = feed 名（rail 站点行/保存 site 同源）；
+ *  正文 = content:encoded（缺省退 description/summary）经 turndown 转 markdown，原文外链保留。 */
+function buildRssArticle(it, feedName) {
+    if (!it) return null;
+    const url = String(it.link || it.guid || '').trim();
+    if (!url) return null;
+    const rawTitle = String(it.title || '').trim();
+    const title = /^\d{4}-\d{2}-\d{2}$/.test(rawTitle) ? `${rawTitle} · ${feedName}` : (rawTitle || feedName);
+    const content = String(it['content:encoded'] || it.content || it.summary || '').trim();
+    const body = content ? RSS_TURNDOWN.turndown(content).trim() : '';
+    let date = '';
+    const t = it.isoDate || it.pubDate;
+    if (t) {
+        const d = new Date(t);
+        if (!isNaN(d.getTime())) date = localDatetime(d.getTime());
+    }
+    return { platform: feedName, title, url, author: feedName, date, body };
+}
+
+/** 纯函数：RSS 窗口裁剪（ADR-0121：每 feed 平台**库内**只保留最近 RSS_MAX_PER_FEED 条）。
+ *  口径：该平台库内全部条目（本轮窗口 ∪ 存量）按 date 降序（'YYYY-MM-DD HH:mm:ss' 字典序、
+ *  缺失视为最旧）保最新 cap 条，其余返回待裁 url 列表（去重）——feed 只吐 N<cap 条时，
+ *  库内旧条仍可补位保留至 cap，稳态保留量 = min(累计抓到条数, cap)。 */
+function capRssWindow(allArticles, perFeedArticles, cap = RSS_MAX_PER_FEED) {
+    const pruned = [];
+    const seen = new Set();
+    for (const [name, arts] of Object.entries(perFeedArticles || {})) {
+        if (!Array.isArray(arts) || arts.length === 0) continue;
+        const pool = (allArticles || []).filter((a) => a && a.platform === name && !seen.has(a.url));
+        const keep = pool.slice().sort((x, y) => String(y.date || '').localeCompare(String(x.date || ''))).slice(0, cap);
+        const keepUrls = new Set(keep.map((a) => a.url));
+        for (const a of pool) {
+            if (!keepUrls.has(a.url)) { seen.add(a.url); pruned.push(a.url); }
+        }
+    }
+    return pruned;
+}
 
 /** ticket 126：UP 主资料段容错解析（uid → {name?, avatar?}；非对象/数组 → {}；头像统一转 https） */
 function parseBilibiliUpInfo(raw) {
@@ -69,15 +114,16 @@ function parseBilibiliCookie(raw) {
     return typeof raw === 'string' ? raw.trim() : '';
 }
 
-/** 读 news.json → 对象 { articles, stats, bilibiliUps, bilibiliUpInfo, bilibiliMaxItems, bilibiliCookie, sources, briefUps, briefs }；
- *  旧纯数组自动包裹；损坏 → 空骨架。
- *  briefUps/briefs（ADR-0119）为**插件侧维护段**：本进程只读（briefUps 决定调度、briefs 用于 bvid 去重），
- *  写回时经 `...disk` 原样带出——**不得丢弃**，否则插件写的简报数据会被下一轮抓取抹掉。 */
+/** 读 news.json → 对象 { articles, stats, bilibiliUps, bilibiliUpInfo, bilibiliMaxItems, bilibiliCookie, sources, rssFeeds }；
+ *  旧纯数组自动包裹；损坏 → 空骨架。未解析的旧段（含已退役 briefUps/briefs）不透传——
+ *  下一轮写回自然丢弃（ADR-0121 契约收缩，代码零兼容；vault 残留由部署流程清理）。
+ *  rssFeeds（ADR-0121）为**插件侧维护段**：本进程只读（按 sources.rss 决定抓取），
+ *  写回时经 `...disk` 原样带出（仅在回填缺失 title 时更新该段）。 */
 function readNewsData() {
-    if (!fs.existsSync(NEWS_PATH)) return { articles: [], stats: null, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, briefUps: [], briefs: [], missing: true };
+    if (!fs.existsSync(NEWS_PATH)) return { articles: [], stats: null, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, rssFeeds: [], missing: true };
     try {
         const raw = JSON.parse(fs.readFileSync(NEWS_PATH, 'utf-8'));
-        if (Array.isArray(raw)) return { articles: raw, stats: null, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, briefUps: [], briefs: [], missing: false };
+        if (Array.isArray(raw)) return { articles: raw, stats: null, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, rssFeeds: [], missing: false };
         if (raw && typeof raw === 'object') {
             return {
                 articles: Array.isArray(raw.articles) ? raw.articles : [],
@@ -87,23 +133,23 @@ function readNewsData() {
                 bilibiliMaxItems: parseBilibiliMaxItems(raw.bilibiliMaxItems),
                 bilibiliCookie: parseBilibiliCookie(raw.bilibiliCookie),
                 sources: raw.sources && typeof raw.sources === 'object' ? { ...DEFAULT_SOURCES, ...raw.sources } : { ...DEFAULT_SOURCES },
-                // ADR-0119：插件侧维护的两段原样带出（本进程只读，写回时必须保留）
-                briefUps: Array.isArray(raw.briefUps) ? raw.briefUps.map((u) => String(u || '').trim()).filter(Boolean) : [],
-                briefs: Array.isArray(raw.briefs) ? raw.briefs : [],
+                rssFeeds: Array.isArray(raw.rssFeeds) ? raw.rssFeeds.filter((f) => f && typeof f === 'object' && String(f.url || '').trim()) : [],
                 missing: false,
             };
         }
-        return { articles: [], stats: null, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, briefUps: [], briefs: [], missing: false };
+        return { articles: [], stats: null, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, rssFeeds: [], missing: false };
     } catch {
-        return { articles: [], stats: null, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, briefUps: [], briefs: [], missing: false };
+        return { articles: [], stats: null, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, rssFeeds: [], missing: false };
     }
 }
 
-/** 写回 news.json 四段（调用方保证读盘后改段再整写，保留非本域段） */
+/** 写回 news.json 四段（调用方保证读盘后改段再整写，保留非本域段）；
+ *  `missing` 是读兜底标记不是数据段，落盘前剥离（防八段契约报约定外段）。 */
 function writeNewsData(data) {
+    const { missing, ...persist } = data || {};
     const dir = path.dirname(NEWS_PATH);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(NEWS_PATH, JSON.stringify(data, null, 2), 'utf-8');
+    fs.writeFileSync(NEWS_PATH, JSON.stringify(persist, null, 2), 'utf-8');
 }
 
 /** B 站未登录 Cookie 引导：GET 主页收集 Set-Cookie（buvid3 等），规避 API 风控 412 */
@@ -292,6 +338,41 @@ async function fetchBilibili(upUids, maxItems, cookie) {
         console.log('  ℹ️ B站 本轮 0 条——若名单无误却应抓到内容，多因未登录 Cookie；请在该弹窗粘贴登录后的 Cookie 后重试');
     }
     return { articles, upInfo, perUpArticles, perUpRejected };
+}
+
+/** 本地时间串 YYYY-MM-DD HH:mm:ss（news 条目 date/fetchedAt 统一口径，避免 UTC 偏移落错日） */
+function localDatetime(ts = Date.now()) {
+    const d = new Date(ts);
+    const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
+/** RSS 源：逐 feed 拉取解析（rss-parser，超时 = TIMEOUT 15s 经 Parser options）；
+ *  返回 { articles, perFeed, titleUpdates }——perFeed=平台名 → 本轮窗口条目（供 capRssWindow 裁剪），
+ *  titleUpdates=缺失 title 的 feed 回填（url → feed 自带标题，ADR-0121）。单 feed 失败只记日志不中断。 */
+async function fetchRss(feeds) {
+    const articles = [];
+    const perFeed = {};
+    const titleUpdates = {};
+    for (const feed of feeds || []) {
+        const url = String((feed && feed.url) || '').trim();
+        if (!url) continue;
+        try {
+            const parsed = await RSS_PARSER.parseURL(url);
+            const parsedTitle = String((parsed && parsed.title) || '').trim();
+            const name = String((feed && feed.title) || parsedTitle || url).trim();
+            if (!feed.title && parsedTitle) titleUpdates[url] = parsedTitle;
+            const items = ((parsed && parsed.items) || [])
+                .map((it) => buildRssArticle(it, name))
+                .filter(Boolean);
+            perFeed[name] = items;
+            articles.push(...items);
+            console.log(`  ✓ RSS ${name}: 窗口 ${items.length} 条`);
+        } catch (e) {
+            console.log(`  ✗ RSS ${url}: ${(e && e.message) || e}`);
+        }
+    }
+    return { articles, perFeed, titleUpdates };
 }
 
 let running = false;
@@ -486,9 +567,18 @@ async function checkAndFetch() {
         if (!biliPromise) console.log('  🚫 B站 已关闭（sources.bilibili=false），跳过');
         if (biliPromise) jobs.push(biliPromise.then((r) => r.articles));
 
+        // RSS 订阅源（ADR-0121）：按总开关 + 订阅列表抓取，并入同一去重入库链
+        const rssPromise = sources.rss !== false && Array.isArray(disk.rssFeeds) && disk.rssFeeds.length > 0
+            ? fetchRss(disk.rssFeeds)
+            : null;
+        if (sources.rss === false) console.log('  🚫 RSS 订阅 已关闭（sources.rss=false），跳过');
+        else if (!rssPromise) console.log('  📡 RSS 订阅 (订阅列表为空，跳过)');
+        if (rssPromise) jobs.push(rssPromise.then((r) => r.articles));
+
         const results = await Promise.all(jobs);
         const biliRes = biliPromise ? await biliPromise : null;
         const biliUpInfo = biliRes ? biliRes.upInfo : {};
+        const rssRes = rssPromise ? await rssPromise : null;
         let newArticles = results.flat().filter(a => a && !existingUrls.has(a.url));
 
         // 标题去重
@@ -503,189 +593,56 @@ async function checkAndFetch() {
             : [];
         if (prunedUrls.length > 0) console.log(`  🧹 B站 窗口外清理 ${prunedUrls.length} 条`);
         const prunedSet = new Set(prunedUrls);
-        const remaining = prunedUrls.length > 0 ? existing.filter(a => !prunedSet.has(a.url)) : existing;
+        let remaining = prunedUrls.length > 0 ? existing.filter(a => !prunedSet.has(a.url)) : existing;
 
-        if (newArticles.length === 0 && prunedUrls.length === 0) {
+        // ADR-0121：RSS 窗口裁剪——每 feed 平台库内只保留最近 30 条
+        const rssPrunedUrls = rssRes ? capRssWindow([...remaining, ...newArticles], rssRes.perFeed, RSS_MAX_PER_FEED) : [];
+        if (rssPrunedUrls.length > 0) console.log(`  🧹 RSS 窗口外清理 ${rssPrunedUrls.length} 条`);
+        if (rssPrunedUrls.length > 0) {
+            const rssPrunedSet = new Set(rssPrunedUrls);
+            remaining = remaining.filter(a => !rssPrunedSet.has(a.url));
+            newArticles = newArticles.filter(a => !rssPrunedSet.has(a.url));
+        }
+
+        // ADR-0121：缺失 title 的 feed 用 feed 自带标题回填（写回 rssFeeds 段）
+        const rssTitleUpdates = rssRes && Object.keys(rssRes.titleUpdates).length > 0
+            ? (disk.rssFeeds || []).map((f) => (rssRes.titleUpdates[f.url] ? { ...f, title: rssRes.titleUpdates[f.url] } : f))
+            : null;
+
+        if (newArticles.length === 0 && prunedUrls.length === 0 && rssPrunedUrls.length === 0 && !rssTitleUpdates) {
             console.log('  ℹ️  无新增文章');
         } else {
             for (const a of newArticles) {
                 a.fetchedAt = new Date().toISOString().replace('T', ' ').substring(0, 19);
             }
 
-            // 五段写回：仅替换 articles 段 + 合并本轮 UP 主资料（保留 stats/bilibiliUps/sources——插件侧维护段）
-            writeNewsData({ ...disk, articles: [...remaining, ...newArticles], bilibiliUpInfo: { ...(disk.bilibiliUpInfo || {}), ...biliUpInfo } });
+            // 段级写回：替换 articles + 合并本轮 UP 主资料 + 回填 RSS feed 名（保留 stats/bilibiliUps/sources——插件侧维护段）
+            writeNewsData({
+                ...disk,
+                articles: [...remaining, ...newArticles],
+                bilibiliUpInfo: { ...(disk.bilibiliUpInfo || {}), ...biliUpInfo },
+                ...(rssTitleUpdates ? { rssFeeds: rssTitleUpdates } : {}),
+            });
 
-            console.log(`  ✅ 新增 ${newArticles.length} 篇${prunedUrls.length > 0 ? `，窗口外清理 ${prunedUrls.length} 条` : ''}，总计 ${remaining.length + newArticles.length} 篇`);
+            console.log(`  ✅ 新增 ${newArticles.length} 篇${prunedUrls.length > 0 ? `，B站窗口外清理 ${prunedUrls.length} 条` : ''}${rssPrunedUrls.length > 0 ? `，RSS窗口外清理 ${rssPrunedUrls.length} 条` : ''}，总计 ${remaining.length + newArticles.length} 篇`);
             for (const a of newArticles) {
                 console.log(`  📰 [${a.platform}] ${a.title} — ${a.author || '未知'}`);
             }
-        }
-
-        // 每日简报调度（ADR-0119）：与文章入库解耦——无新文章时同样要跑（简报靠自身 known 去重）。
-        // 简报失败不影响文章入库（源级容错）。
-        try {
-            await dispatchBrief(readNewsData());
-        } catch (e) {
-            console.log(`  ⚠ 每日简报调度失败: ${(e && e.message) || e}`);
         }
     } finally {
         running = false;
     }
 }
 
-// ---------- 每日简报调度（ADR-0119：本进程**只当调度器**）----------
-// 分工：**发现与转写在 bili-downloader**（bili-dl 已有 wbi 签名与 Cookie，避免在守护里重写一遍），
-// **AI 要点与出稿在 bz 插件**（ADR-0011 工具不调 AI）。守护只做三件事：
-//   ① 读 news.json `briefUps` 名单与 `briefs` 已有 bvid（去重依据）
-//   ② spawn `bili-dl --brief`（b64 传输，同插件侧 ticket 147 约定），把 ups/known/limit/backfill 交给它
-//   ③ 把产出的转录条目登记进 `briefs` 段（body 留空 = 待出稿，由插件 AI 补）
-const BRIEF_LIMIT_PER_ROUND = 3;   // 单轮 spawn 处理上限（ADR-0119 §10 分轮消化）
-const BRIEF_BACKFILL = 10;         // 每个 UP 回溯条数（首次启用口径，Q13）
-
-/** bili-dl 可执行入口：环境变量 BILI_DL_BIN 优先（可含参数）；否则用仓库内同级工具 cli.js（当前 node 执行）；
- *  最后回退 PATH 上的 bili-dl（Windows 的 .cmd shim 需 shell:true）。 */
-function resolveBiliDl() {
-    const env = String(process.env.BILI_DL_BIN || '').trim();
-    if (env) return { cmd: env, pre: [], shell: false };
-    const local = path.resolve(__dirname, '..', 'bili-downloader', 'cli.js');
-    if (fs.existsSync(local)) return { cmd: process.execPath, pre: [local], shell: false };
-    return { cmd: 'bili-dl', pre: [], shell: true };
-}
-
-/** spawn bili-dl --brief 并解析末尾 [bz-result] 行；任何异常都收敛为 { ok:[], fail:[{bvid:'',reason}] }，不抛。
- *  deps.spawnImpl / deps.bin 可注入（测试打桩用，避免真起子进程）。 */
-function runBiliDlBrief(task, deps = {}) {
-    const spawnImpl = deps.spawnImpl || spawn;
-    const bin = deps.bin || resolveBiliDl();
-    return new Promise((resolve) => {
-        const { cmd, pre, shell } = bin;
-        const arg = 'b64:' + Buffer.from(JSON.stringify(task), 'utf8').toString('base64');
-        let child;
-        try {
-            child = spawnImpl(cmd, [...pre, '--brief', arg], { shell, windowsHide: true, cwd: __dirname });
-        } catch (e) {
-            resolve({ ok: [], fail: [{ bvid: '', reason: `无法启动 bili-dl：${e.message}` }] });
-            return;
-        }
-        let out = '';
-        let err = '';
-        child.stdout.on('data', (d) => { out += String(d); });
-        child.stderr.on('data', (d) => { err += String(d); });
-        child.on('error', (e) => {
-            resolve({ ok: [], fail: [{ bvid: '', reason: `无法启动 bili-dl：${e.message}` }] });
-        });
-        child.on('close', (code) => {
-            const lines = out.split(/\r?\n/).filter((l) => l.startsWith('[bz-result] '));
-            let parsed = null;
-            if (lines.length) {
-                try { parsed = JSON.parse(lines[lines.length - 1].slice('[bz-result] '.length)); } catch { parsed = null; }
-            }
-            if (!parsed) {
-                const tail = String(err).trim().split(/\r?\n/).pop() || '';
-                resolve({ ok: [], fail: [{ bvid: '', reason: tail || `bili-dl 退出码 ${code}（无 [bz-result] 行）` }] });
-                return;
-            }
-            resolve({
-                ok: Array.isArray(parsed.ok) ? parsed.ok : [],
-                fail: Array.isArray(parsed.fail) ? parsed.fail : [],
-            });
-        });
-    });
-}
-
-/** 本地时间串 YYYY-MM-DD HH:mm:ss（对齐 news 条目 date/fetchedAt 口径，避免 UTC 偏移落错日） */
-function localDatetime(ts = Date.now()) {
-    const d = new Date(ts);
-    const p = (n) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-}
-
-/**
- * 每日简报调度一轮：名单空 → 直接跳过（不 spawn）。
- * 产出条目：正常条目（转录成功，body 留空待插件出稿）+ 失败条目（error 非空，可见、可手动重跑）。
- * 失败不抛出（源级容错，下轮自然重试）；写回经 `...disk` 保留插件侧其他段。
- */
-async function dispatchBrief(disk, deps = {}) {
-    const ups = (disk.briefUps || []).map((u) => String(u || '').trim()).filter(Boolean);
-    if (!ups.length) return { spawned: false, added: 0 };
-    const briefs = Array.isArray(disk.briefs) ? disk.briefs : [];
-    const known = briefs.map((b) => (b && b.bvid) || '').filter(Boolean);
-    console.log(`  📝 每日简报: ${ups.length} 位 UP / 已有 ${briefs.length} 条记录, 单轮上限 ${BRIEF_LIMIT_PER_ROUND}`);
-
-    const res = await runBiliDlBrief({
-        ups: ups.map((mid) => ({ mid })),
-        known,
-        backfill: BRIEF_BACKFILL,
-        limit: BRIEF_LIMIT_PER_ROUND,
-        // Cookie：优先用插件在 news.json 配的（与普通 B 站源同源），缺省由 bili-dl 读自己的 rc（~/.bilibili-cookies.json）
-        ...(disk.bilibiliCookie ? { cookie: disk.bilibiliCookie } : {}),
-    }, deps);
-
-    const now = localDatetime();
-    const fresh = readNewsData();
-    const existing = Array.isArray(fresh.briefs) ? fresh.briefs : [];
-    const seen = new Set(existing.map((b) => (b && b.bvid) || '').filter(Boolean));
-    const added = [];
-
-    for (const o of res.ok) {
-        if (!o || !o.bvid || seen.has(o.bvid)) continue;
-        seen.add(o.bvid);
-        added.push({
-            bvid: o.bvid,
-            title: o.title || '',
-            url: `https://www.bilibili.com/video/${o.bvid}`,
-            upMid: String(o.upMid || ''),
-            upName: String(o.upName || ''),
-            duration: Number(o.duration) || 0,
-            pubdate: Number(o.pubdate) || 0,
-            date: o.pubdate ? localDatetime(o.pubdate * 1000) : '',
-            fetchedAt: now,
-            src: o.source || '',
-            transcriptPath: o.transcriptPath || '',
-            ...(o.subtitleRejected ? { subtitleRejected: String(o.subtitleRejected) } : {}),
-            read: false,
-            state: 'unread',
-        });
-    }
-    for (const f of res.fail) {
-        // 失败条目：有 bvid 才有意义（ups 级失败 bvid 为空 → 只打日志，不落条目，避免污染简报流）
-        if (!f || !f.bvid || seen.has(f.bvid)) { if (f && f.reason) console.log(`  ⚠ 简报失败: ${f.reason}`); continue; }
-        seen.add(f.bvid);
-        added.push({
-            bvid: f.bvid,
-            title: '',
-            url: `https://www.bilibili.com/video/${f.bvid}`,
-            upMid: '',
-            upName: '',
-            duration: 0,
-            pubdate: 0,
-            date: '',
-            fetchedAt: now,
-            read: false,
-            state: 'unread',
-            error: String(f.reason || '未知失败'),
-        });
-    }
-
-    if (!added.length) {
-        console.log('  ℹ️  简报无新增条目');
-        return { spawned: true, added: 0 };
-    }
-    writeNewsData({ ...fresh, briefs: [...existing, ...added] });
-    console.log(`  ✅ 简报新增 ${added.length} 条（待插件出稿 ${added.filter((a) => !a.error).length} / 失败 ${added.filter((a) => a.error).length}）`);
-    for (const a of added) console.log(`  📝 ${a.error ? '✗' : '·'} ${a.title || a.bvid}${a.error ? ' — ' + a.error : ''}`);
-    return { spawned: true, added: added.length };
-}
-
 // ---------- 主入口 ----------
 if (require.main === module) {
     console.log('👁️  News Watcher 启动');
     console.log(`   监控: ${NEWS_PATH}`);
-    console.log(`   源: 果壳科学人 + 知乎日报 + B站 UP 主`);
+    console.log(`   源: 果壳科学人 + 知乎日报 + B站 UP 主 + RSS 订阅`);
     console.log(`   节奏: 启动即抓 + 每 ${FETCH_INTERVAL_MS / 60000} 分钟轮询, 窗口 24h, 去重入库`);
 
     checkAndFetch();
     setInterval(checkAndFetch, FETCH_INTERVAL_MS);
 }
 
-module.exports = { NEWS_PATH, FETCH_INTERVAL_MS, resolveNewsPath, checkAndFetch, readNewsData, fetchBilibiliUp, getBilibiliCookie, buildBilibiliArticle, extractUpInfo, parseBilibiliUpInfo, parseBilibiliMaxItems, parseBilibiliCookie, collectBilibiliBatch, pruneBilibiliWindow, resolveBiliDl, runBiliDlBrief, localDatetime, dispatchBrief, BRIEF_LIMIT_PER_ROUND, BRIEF_BACKFILL };
+module.exports = { NEWS_PATH, FETCH_INTERVAL_MS, resolveNewsPath, checkAndFetch, readNewsData, fetchBilibiliUp, getBilibiliCookie, buildBilibiliArticle, extractUpInfo, parseBilibiliUpInfo, parseBilibiliMaxItems, parseBilibiliCookie, collectBilibiliBatch, pruneBilibiliWindow, buildRssArticle, capRssWindow, localDatetime, RSS_MAX_PER_FEED };

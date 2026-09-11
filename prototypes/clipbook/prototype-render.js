@@ -1,4 +1,4 @@
-/* 源指纹 4f3a5a390cceb670 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 60d054a624cedee4 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/clipbook/render.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/clipbook/render.ts → window.BZR_clipbook（评审壳预览包，ADR-0104） */
 var BZR_clipbook = (() => {
@@ -24,17 +24,11 @@ var BZR_clipbook = (() => {
   var render_exports = {};
   __export(render_exports, {
     ICO: () => ICO,
-    briefDayHeadHtml: () => briefDayHeadHtml,
-    briefListHtml: () => briefListHtml,
-    briefPointsHtml: () => briefPointsHtml,
-    briefReaderHtml: () => briefReaderHtml,
-    clipLoadingHtml: () => clipLoadingHtml,
     deskFoldRowHtml: () => deskFoldRowHtml,
     dotHtml: () => dotHtml,
     esc: () => esc,
     foldBodyHtml: () => foldBodyHtml,
     iconSpan: () => iconSpan,
-    inlineHtml: () => inlineHtml,
     mobChHeadHtml: () => mobChHeadHtml,
     mobDetailHtml: () => mobDetailHtml,
     mobFoldBodyHtml: () => mobFoldBodyHtml,
@@ -43,7 +37,6 @@ var BZR_clipbook = (() => {
     mobNoHitHtml: () => mobNoHitHtml,
     mobTocHtml: () => mobTocHtml,
     panelHtml: () => panelHtml,
-    paragraphsHtml: () => paragraphsHtml,
     railFootHtml: () => railFootHtml,
     railItemHtml: () => railItemHtml,
     readerHtml: () => readerHtml,
@@ -86,8 +79,7 @@ var BZR_clipbook = (() => {
     globe: "globe",
     folder: "folder-open",
     rotate: "rotate-ccw",
-    radio: "radio",
-    brief: "newspaper"
+    radio: "radio"
   };
   function panelHtml() {
     return `
@@ -197,112 +189,8 @@ var BZR_clipbook = (() => {
   function foldBodyHtml(html, open) {
     return html ? `<div class="bz-clip-desk-fold-body"${open ? "" : " hidden"}>${html}</div>` : "";
   }
-  function briefDayHeadHtml(day, n) {
-    return `
-    <div class="bz-clip-day" data-clip-day="${esc(day)}">
-      <span class="bz-clip-day-name">${esc(day)}</span>
-      <span class="bz-clip-day-n">${n} 条</span>
-      <span class="bz-clip-day-rule"></span>
-    </div>`;
-  }
-  function briefListHtml(groups, curId, timeOf) {
-    return groups.map((g) => `
-    ${briefDayHeadHtml(g.day, g.items.length)}
-    ${g.items.map((a) => `
-    <div class="bz-clip-item bz-clip-item--${a.st}${a.raw && a.raw.error ? " bz-clip-item--err" : ""}${curId && curId === a.id ? " on" : ""}" data-id="${esc(a.id)}">
-      <div class="bz-clip-item-main">
-        <div class="bz-clip-item-t"><span>${esc(a.title)}</span></div>
-        <div class="bz-clip-item-meta">${esc(siteShort(a.srcName))} · ${esc(timeOf(a))}</div>
-      </div>
-    </div>`).join("")}`).join("");
-  }
-  function briefPointsHtml(body) {
-    const lines = String(body || "").split(/\r?\n/);
-    let out = "";
-    let inList = false;
-    const closeList = () => {
-      if (inList) {
-        out += "</ul>";
-        inList = false;
-      }
-    };
-    for (const raw of lines) {
-      const line = raw.trim();
-      if (!line) {
-        closeList();
-        continue;
-      }
-      const h = line.match(/^#{1,6}\s+(.*)$/);
-      if (h) {
-        closeList();
-        out += `<h3 class="bz-clip-brief-h">${inlineHtml(h[1])}</h3>`;
-        continue;
-      }
-      const li = line.match(/^[-*]\s+(.*)$/);
-      if (li) {
-        if (!inList) {
-          out += '<ul class="bz-clip-brief-ul">';
-          inList = true;
-        }
-        out += `<li>${inlineHtml(li[1])}</li>`;
-        continue;
-      }
-      closeList();
-      out += `<p>${inlineHtml(line)}</p>`;
-    }
-    closeList();
-    return out;
-  }
-  function briefReaderHtml(a, opts) {
-    const err = a.raw && a.raw.error ? String(a.raw.error) : "";
-    const head = `
-    <div class="bz-clip-art-title">${esc(a.title)}</div>
-    <div class="bz-clip-art-meta">
-      <span>${esc(opts.time)}</span>
-      <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${esc(siteShort(a.srcName))}</span></span>
-      ${opts.durationLabel ? `<span class="bz-clip-art-dur">${esc(opts.durationLabel)}</span>` : ""}
-    </div>`;
-    const feet = `
-    <div class="bz-clip-art-foot">
-      <span role="button" tabindex="0" data-clip-open-url>打开原视频 ${iconSpan(ICO.external, "bz-ic--xs")}</span>
-    </div>`;
-    if (err) {
-      return `${head}
-      <div class="bz-clip-brief-err">${iconSpan(ICO.x, "bz-ic--xs")}本期抓取失败：${esc(err)}</div>
-      <div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-brief-retry>重新抓取本期</span></div>${feet}`;
-    }
-    const pts = opts.points || `<p class="dim">正在生成本期要点…</p>`;
-    return `${head}
-    <div class="bz-clip-brief-points" data-clip-md>${pts}</div>
-    ${feet}`;
-  }
-  function inlineHtml(text) {
-    let out = "";
-    let last = 0;
-    const re = /\[([^\]]+)\]\(([^)\s]+)\)/g;
-    let m;
-    while ((m = re.exec(text)) !== null) {
-      out += esc(text.slice(last, m.index));
-      out += `<a class="bz-clip-md-link" href="${esc(m[2])}" data-clip-ext target="_blank" rel="noopener noreferrer">${esc(m[1])}</a>`;
-      last = m.index + m[0].length;
-    }
-    out += esc(text.slice(last));
-    return out;
-  }
-  function paragraphsHtml(paras, resolveImg) {
-    return paras.map((p) => {
-      if (p.type === "img") {
-        const src = resolveImg(p.text);
-        return src ? `<img class="bz-clip-art-img" src="${esc(src)}" alt="文章配图" loading="lazy">` : "";
-      }
-      return p.type === "quote" ? `<blockquote>${inlineHtml(p.text)}</blockquote>` : `<p>${inlineHtml(p.text)}</p>`;
-    }).join("");
-  }
   function summaryHtml(summary) {
     return `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan("sparkles", "bz-ic--xs")}摘要</span>${esc(summary)}</div>`;
-  }
-  function clipLoadingHtml() {
-    return `<p class="dim">正在读取剪藏正文…</p>`;
   }
   function readerHtml(a, opts) {
     const openNoteFoot = a.origin === "clip" && a.notePath ? `<div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-open-note>打开笔记 ${iconSpan(ICO.external, "bz-ic--xs")}</span></div>` : "";
@@ -313,7 +201,7 @@ var BZR_clipbook = (() => {
       <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${esc(siteShort(a.srcName))}</span></span>
     </div>
     ${a.summary ? summaryHtml(a.summary) : ""}
-    <div class="bz-clip-art-md" data-clip-md>${opts.paras || `<p class="dim">${esc(a.origin === "clip" ? "（笔记暂无正文）" : "正文已清空（已处理条目）")}</p>`}</div>
+    <div class="bz-clip-art-md markdown-rendered" data-clip-md>${opts.note ? `<p class="dim">${esc(opts.note)}</p>` : ""}</div>
     ${openNoteFoot}
   `;
   }
@@ -375,7 +263,7 @@ var BZR_clipbook = (() => {
     <div class="bz-clip-mob-d-kicker"><span>${esc(siteShort(a.srcName))} · ${esc(opts.time)}</span><span>${esc(opts.seq)}</span></div>
     <div class="bz-clip-mob-d-title">${esc(a.title)}</div>
     <hr class="bz-clip-mob-d-rule">
-    <div class="bz-clip-mob-d-md">${opts.paras || `<p>${esc(a.origin === "clip" ? "（剪藏笔记正文请在 Obsidian 中打开）" : "正文已清空")}</p>`}</div>
+    <div class="bz-clip-mob-d-md markdown-rendered" data-clip-mob-md>${opts.note ? `<p>${esc(opts.note)}</p>` : ""}</div>
     <div class="bz-clip-mob-d-foot"><span class="bz-clip-mob-d-next" data-clip-mob-next>↓ 读下一则</span><span class="bz-clip-mob-d-fch">${esc(siteShort(a.srcName))}</span></div>
   `;
   }

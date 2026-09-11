@@ -8,13 +8,6 @@ export function articleKeyOf(a: any): string {
   return 'td:' + String((a && a.title) || '') + '|' + String((a && a.date) || '');
 }
 
-/** 简报条目稳定标识键（issue 263）：bvid 唯一，缺则退化为 url|title */
-export function briefKeyOf(b: any): string {
-  if (b && b.bvid) return 'bv:' + String(b.bvid);
-  if (b && b.url) return 'url:' + String(b.url);
-  return 'td:' + String((b && b.title) || '') + '|' + String((b && b.fetchedAt) || '');
-}
-
 /** 空数据侧写（clipbook.json） */
 export function emptyData() {
   return { articleOverrides: {}, savedArchive: [], order: [] };

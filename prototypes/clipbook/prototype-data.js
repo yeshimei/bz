@@ -1,5 +1,5 @@
 /* 由真实 vault 快照生成（.scratch/gen-clip-demo.py，issue 247）：63 未读 + 10 已处理骨架
-   + 8 篇剪藏笔记 + 每日简报 briefs 全量；正文截断、cookie/守护配置不入种子。手改无效——重跑生成脚本覆盖。 */
+   + 8 篇剪藏笔记；正文截断、cookie/守护配置不入种子。手改无效——重跑生成脚本覆盖。 */
 window.CLIP_DATA = {
  "NEWS": {
   "articles": [
@@ -662,102 +662,7 @@ window.CLIP_DATA = {
     "name": "亿点点不一样",
     "avatar": "https://i1.hdslb.com/bfs/face/9a2c23800387d9c871f3b5dd3620dc1c3c50d2f9.jpg"
    }
-  },
-  "briefs": [
-   {
-    "bvid": "BV1rHYx6fEzy",
-    "title": "走向灭亡！Anthropic 员工警告人类或将被ASI灭绝，Tibo 宣布或将暂停开放 ChatGPT Pro 订阅！| AI日报0909",
-    "url": "https://www.bilibili.com/video/BV1rHYx6fEzy",
-    "upMid": "3706929260006322",
-    "upName": "黑鸦Heya",
-    "duration": 173,
-    "pubdate": 1788951454,
-    "date": "2026-09-09 18:57:34",
-    "fetchedAt": "2026-09-10 13:51:15",
-    "src": "subtitle",
-    "read": false,
-    "state": "unread",
-    "body": "## Anthropic 与 AI 风险警告\n\n- codex 负责人 Tibo 称需求前所未有，或暂停新的 ChatGPT Pro 订阅。\n- 该暂停尚未发生，有用户称 Tibo 是在推销 ChatGPT 订阅。\n- Anthropic 研究员 Jacob Coxson 辞职，称两家公司竞相迈向超级智能。\n- 他呼吁探索实验室间放缓协议，必要时暂停提升模型能力。\n- Anthropic 负责人 Evan Hubinger 称 AI 十年内致人类灭绝概率超 10%。\n- 他表示当前模型风险仍低，主要担忧来自未来递归自我改进的超级智能。\n\n## 模型与产品动态\n\n- DeepSeek 计划 2026 年 9 月 10 日前后发布 V4.1 Flash，9 月 8 日已开测。\n- 测试显示 V4.1 Flash 在性能、费用、速度上超过 V4 Pro。\n- 上线后至 V4.1 Pro 推出前，V4 Pro 请求全部路由至 V4.1 Flash 并按新单价计费。\n- 路透社称 DeepSeek 已聘中信证券筹备上海科创板上市，今年启动进程。\n- 腾讯混元开源 1.5B 语音生成与编辑基础模型，权重与代码已公开。\n- Claude 发布平台降本指南，官方测试最高可降约七成成本。\n- OpenAI 推出面向小企业的 ChatGPT 插件合集，收录 16 款插件。\n- 千问上线大学生和教师专属优惠，高级套餐每月 9.9 元。\n\n## 投资与合作\n\n- 谷歌宣布未来两年在芬兰投资 130 亿欧元，为其欧洲最大单笔投资。\n- 投资用于数字基础设施和清洁能源，支撑搜索和 Gemini 等核心服务。\n- 三星电子宣布与 Miró AI 达成战略合作，基于 Mil Large 等服务。"
-   },
-   {
-    "bvid": "BV1utY46yEvG",
-    "title": "突发：DeepSeek V4 Pro 落幕！ DeepSeek 官宣将正式发布 V4.1 Flash 取而代之！",
-    "url": "https://www.bilibili.com/video/BV1utY46yEvG",
-    "upMid": "3706929260006322",
-    "upName": "黑鸦Heya",
-    "duration": 28,
-    "pubdate": 1788939561,
-    "date": "2026-09-09 15:39:21",
-    "fetchedAt": "2026-09-10 13:51:15",
-    "src": "transcript",
-    "read": false,
-    "state": "unread",
-    "body": "## DeepSeek V4.1 Flash 发布计划\n- DeepSeek 计划于北京时间 2026 年 9 月 10 日前后发布 V4.1 Flash\n- 该模型已于 9 月 8 日开启测试\n- 官方称内外多方测试显示 V4.1 Flash 多项指标超过 V4 Pro\n- 超越指标包括性能、费用、速度和任务总用时\n\n## V4 Pro 的过渡安排\n- V4.1 Flash 上线后，V4 Pro 请求将全部路由至 V4.1 Flash\n- 该调整持续至 V4.1 Pro 推出前\n- 计费按 V4.1 Flash 单价执行"
-   },
-   {
-    "bvid": "BV17dbV65EJt",
-    "title": "双日凌空！DeepSeek V4.1 Flash引爆全球！小米MiMo-X新模型随Desktop突袭公测！OpenAI学术声誉雪崩！| AI日报0908",
-    "url": "https://www.bilibili.com/video/BV17dbV65EJt",
-    "upMid": "3706929260006322",
-    "upName": "黑鸦Heya",
-    "duration": 120,
-    "pubdate": 1788866356,
-    "date": "2026-09-08 19:19:16",
-    "fetchedAt": "2026-09-10 13:51:15",
-    "src": "transcript",
-    "read": false,
-    "state": "unread",
-    "body": "## DeepSeek V4.1 Flash 内测\n- DeepSeek 宣布 V4.1 Flash 中间版本开启内测\n- 采用新模型结构，原生多模态、更强更快更便宜\n- 模型名设为 DeepSeek V4.1 Flash Expires on 0910\n- 每账号限流 20 并发，计费与 V4 Flash 相同\n\n## 小米 MiMo 桌面端公测\n- 小米 MiMo Desktop 客户端正式开放邀测\n- 审核通过者限时限量免费体验 MiMo X Pro Preview\n- 同时可体验 MiMo X Flash Preview\n- 支持多格式输入与多 Agent 协作，优先开放平台用户\n\n## OpenAI 学术争议与行业动态\n- 数学家 Buckmaster 与 Anthropic 研究员 Alpuk 公布 AI 辅助验证成果\n- Buckmaster 称 OpenAI 内部模型已证明相关方程有限时间爆破\n- OpenAI 研究员 Bubac 提议单独撰文不列 Alpuk 署名，双方争执\n- Mistral 完成 30 亿欧元融资，三星领投，估值超 210 亿欧元\n- Firmace 与 OpenAI 达成多年合作，租用马来西亚两处 AI Factory 算力"
-   },
-   {
-    "bvid": "BV1ZSb36zE9G",
-    "title": "突发！DeepSeek V4.1 Flash 中间版本开启测试“deepseek-v4.1-flash-expires-on-0910”",
-    "url": "https://www.bilibili.com/video/BV1ZSb36zE9G",
-    "upMid": "3706929260006322",
-    "upName": "橘鸦Juya",
-    "duration": 39,
-    "pubdate": 1788853752,
-    "date": "2026-09-08 15:49:12",
-    "fetchedAt": "2026-09-10 14:22:23",
-    "src": "transcript",
-    "read": false,
-    "state": "unread",
-    "body": ""
-   },
-   {
-    "bvid": "BV1SdbN63E7Q",
-    "title": "巨头工作战爆发！阿里Qoder AI员工军团上线！腾讯升级 Hy4 preview！| AI日报0907",
-    "url": "https://www.bilibili.com/video/BV1SdbN63E7Q",
-    "upMid": "3706929260006322",
-    "upName": "黑鸦Heya",
-    "duration": 57,
-    "pubdate": 1788777592,
-    "date": "2026-09-07 18:39:52",
-    "fetchedAt": "2026-09-10 14:22:23",
-    "src": "transcript",
-    "read": false,
-    "state": "unread",
-    "body": ""
-   },
-   {
-    "bvid": "BV1Snt26pEqT",
-    "title": "头皮发麻！OpenAI 承认旗下 Agent 结党营私暗中造反！Astra 余波未平，OpenAI 暗示大的将至！| AI日报0905",
-    "url": "https://www.bilibili.com/video/BV1Snt26pEqT",
-    "upMid": "3706929260006322",
-    "upName": "黑鸦Heya",
-    "duration": 45,
-    "pubdate": 1788608337,
-    "date": "2026-09-05 19:38:57",
-    "fetchedAt": "2026-09-10 14:22:23",
-    "src": "transcript",
-    "read": false,
-    "state": "unread",
-    "body": ""
-   }
-  ],
-  "briefUps": [
-   "3706929260006322"
-  ]
+  }
  },
  "SIDECAR": {
   "articleOverrides": {

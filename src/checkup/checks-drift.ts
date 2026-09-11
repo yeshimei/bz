@@ -29,7 +29,7 @@ export const POMODORO_HISTORY_FIELDS = ['ts', 'duration', 'task'];
 export const SEGMENT_FIELDS: Record<string, string[]> = {
   'pomodoro.json': ['version', 'state', 'history'],
   'clipbook.json': ['articleOverrides', 'savedArchive', 'order'],
-  'news.json': ['articles', 'stats', 'bilibiliUps', 'bilibiliUpInfo', 'bilibiliMaxItems', 'bilibiliCookie', 'sources', 'briefUps', 'briefs'],
+  'news.json': ['articles', 'stats', 'bilibiliUps', 'bilibiliUpInfo', 'bilibiliMaxItems', 'bilibiliCookie', 'sources', 'rssFeeds'],
   'home.json': ['version', 'pinned'],
   'belongings.json': ['version', 'last_updated', 'items', 'categories', 'categoryIcons'],
   'quiz.json': ['notes'],

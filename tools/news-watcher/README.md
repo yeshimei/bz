@@ -1,24 +1,26 @@
 # @jwbz/obsidian-news
 
-聚合讯数据源守护脚本——每 30 分钟抓取最近 24 小时文章（果壳科学人 + 知乎日报 + B站 UP 主视频投稿），URL + 标题双去重后入库 `CONFIG/STORAGE/news.json`（**六段结构**），供 bz 插件「聚合讯」阅读。
+聚合讯数据源守护脚本——每 30 分钟抓取最近 24 小时文章（果壳科学人 + 知乎日报 + B站 UP 主视频投稿 + RSS 订阅源），URL + 标题双去重后入库 `CONFIG/STORAGE/news.json`（**八段结构**），供 bz 插件「聚合讯」阅读。
 
+> **v1.3.0（ADR-0121）**：新增 **RSS 订阅源**——按 news.json `sources.rss` 总开关逐个拉取 `rssFeeds` 段（`{url, title}[]`，插件「RSS 订阅 · 管理」弹窗维护），rss-parser 解析、turndown 把 `content:encoded` 全文转 markdown，一天一条入库（标题为纯日期时改写「YYYY-MM-DD · feed名」，`platform`/`author` = feed 自带标题，缺失时回填）；每 feed 平台窗口保留最近 30 条（`capRssWindow` 裁剪）。同版**每日简报退役**：`dispatchBrief` 调度与 cli `brief` 子命令删除，`briefUps`/`briefs` 段不再解析（旧文件残留段在下轮写回时自然丢弃，ADR-0119 被 ADR-0121 取代）。
+>
 > **v1.1.2（ticket 127）**：B 站改为**每 UP 抓最近 N 条**（默认 10，news.json `bilibiliMaxItems`，插件「数据源」组可设），不走 24 小时窗口——长期未更新的 UP 也能抓到其最新动态；新增 `bilibiliCookie` 段——API 返回 412/-352（风控）时优先用用户配置的 Cookie（插件 UP 主名单管理弹窗引导配置**登录后**含 SESSDATA 的 Cookie），未配置则回退自动引导（GET 主页收集 buvid3）。**注意：B 站空间动态接口对匿名请求常返回 -352 或空结果，必须配置登录 Cookie 才能拿到真实动态**；接口请求带网页常规参数 `web_location=333.999`，被风控拦截时日志会打印引导提示。其余结构一致。
 >
 > **v1.1.1（ticket 126）**：B 站抓取到条目时回填 `bilibiliUpInfo` 段（uid → `{name, avatar}`，头像统一转 https）——插件侧名单/弹窗据此把 uid 显示为 UP 主名字和头像（无资料回退 uid）。
 >
 > **v1.1.0（ticket 124，ADR-0060）**：news.json 升级为 `{articles, stats, bilibiliUps, sources}` 四段（旧纯数组读取时自动包裹迁移）；新增 B 站 UP 主视频投稿源；三源独立开关（读 news.json `sources` 段，插件剪藏本设置「数据源」组写）；UP 主名单读 news.json `bilibiliUps` 段。rc 配置仍只需 vaultPath（不新增配置键）。
 
-- 📡 三源并行抓取：果壳科学人（新站 API + 文章页正文）+ 知乎日报（官方 API + 详情正文）+ B站 UP 主（动态 API，仅视频投稿）
-- 🔁 滚动 24 小时窗口，不是自然日——深夜发布的文章不丢；B 站源按 pub_ts 翻页直到越过窗口边界
+- 📡 四源并行抓取：果壳科学人（新站 API + 文章页正文）+ 知乎日报（官方 API + 详情正文）+ B站 UP 主（动态 API，仅视频投稿）+ RSS 订阅源（rss-parser + turndown 全文转 markdown）
+- 🔁 滚动 24 小时窗口，不是自然日——深夜发布的文章不丢；B 站源按 pub_ts 翻页直到越过窗口边界；RSS/每 UP 各自总量窗口（RSS 每 feed 30 条、B 站每 UP N 条）
 - 🧹 双去重：URL + 标题，批内与库内都过滤，入库即未读
-- 🎛️ 源开关：news.json `sources` 段（zhihu/guokr/bilibili 三布尔）决定抓哪些源，默认全开
+- 🎛️ 源开关：news.json `sources` 段（zhihu/guokr/bilibili/rss 四布尔）决定抓哪些源，默认全开
 - 🛡️ 源级容错：单个源失败不影响其他源，下个轮次自然重试
 - ⚙️ PM2 后台守护 + 崩溃自动重启（`start` / `stop` / `status` / `logs`）
 - 🧩 与 bz 插件分离：脚本只负责抓取入库，不维护已读状态（ADR-0008）
 
 ## 要求
 
-- Node.js >= 18（使用内置 `fetch`，零第三方依赖）
+- Node.js >= 18（内置 `fetch`；v1.3.0 起运行时依赖 rss-parser / turndown，全局安装自动带上）
 
 ## 安装
 

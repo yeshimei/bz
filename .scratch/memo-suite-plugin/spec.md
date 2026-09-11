@@ -1109,3 +1109,7 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 ### 第二大脑主面板移动端全屏化 + 头行关闭钮（issue 272 / ADR-0114 修订，2026-09-11）
 
 > 用户拍板：第二大脑要全屏、44px、右上角关闭按钮、风格统一。窄卡兜底（100vw-24px）升格真全屏（100vw × --bz-vvh，根挂 .bz-panel-mtop 出统一 44px 档），与影院/收藏夹等全屏主页拉齐；头行按钮组补关闭钮（同款 bz-sb-fbtn 图标钮，全屏无遮罩需显式关闭键）；滚动模型原样保留。移动检索抽屉（mobile-panel.ts）不在此列。
+
+### 聚合讯 RSS 订阅源 + 每日简报退役（issue 273 / ADR-0121，2026-09-11）
+
+> grill-with-docs 三轮拍板：① RSS 订阅源（橘鸦AI早报 daily.juya.uk/rss.xml 预置）走**守护端抓取**（rss-parser + turndown 引库打破 watcher 零依赖），`rssFeeds` 列表段 + `sources.rss` 总开关，一天一条整期 `content:encoded` 转 markdown 全文入库，`platform` = feed 自带标题，每源窗口 30 条；插件「RSS 订阅 · 管理」独立 overlay 弹窗（与 up主管理分开），添加时 requestUrl 试拉校验并预取 feed 名。② **每日简报整条退役**（用户拍板「下载视频转成每日资讯这条路是错误的」）：插件 brief.ts/rail 入口/设置简报组/`dailyBriefDir`/保留清理/样式/测试全删，守护 dispatchBrief 与 cli brief 子命令摘除，bili-downloader `--brief` 模式保留不发包（知识盒 --batch 共享件不动）；news.json 契约收缩 briefs/briefUps、新增 rssFeeds（八段），checks-drift 同步，**代码零兼容**、vault 残留段由会话在守护更新后手动清理。文章源/视频源两分术语入 CONTEXT.md。
