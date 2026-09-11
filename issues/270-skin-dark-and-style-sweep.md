@@ -1,6 +1,16 @@
 # 270 — 皮肤暗色补齐 + 域内风格化扫尾批
 
-日期：2026-09-11 ｜ 来源：全域审计（对话内清单，用户拍板并行修复）｜ 状态：进行中
+日期：2026-09-11 ｜ 来源：全域审计（对话内清单，用户拍板并行修复）｜ 状态：已完成（6 worktree 并行 → 串行合并 → 全量门禁 265 文件/4235 测试绿 + tsc 0 错 → 构建部署 c9488559）
+
+## 结果速记
+
+- memo：paper「深纸夜读」/ editorial「碳黑反转」两套暗色变体（+148 行纯新增）+ 编辑器弹窗四类补样式
+- belongings：夜版海报 token 组（#1a1815 底/米白墨/赤橙提亮）+ 硬编码色收编 6 个新 token
+- secondbrain：七根 token 组暗色（含浮动参考卡/hover 预览两个 body 直挂逸出点同治）+ 19 处收编 + 4 个新 token
+- review：quiz-core 会话弹窗 96 行样式找回（token 对档，源自 9c603ed7 丢失）+ 统计/历史弹窗内联 55→19（余为数据驱动/行为性）
+- knowledge：品牌头/批量处理钮/ghost 钮三处纸墨皮样式（零硬编码，自动暗色）
+- reading-report：静态内联 187→6，指标色 .theme-dark color-mix 提亮，chart-palette 零改动
+- 遗留（后续拍板）：10 域假主题占位行（落真皮肤 or 隐藏）、settings-panel 皮肤预览卡暗色、rr stats.ts/index.ts 残余内联、home ui-river 2 用例偶发 flaky（与本批无关）
 
 ## 背景
 
