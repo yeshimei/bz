@@ -91,21 +91,24 @@
 /* ---- 拖拽排序已撤：入口顺序/显隐统一在「设置 → 首页入口」弹窗里打理（2026-09-10 用户拍板） ---- */
 
 /* ---- 时间线（原型 .flow/.ev） ---- */
-/* V4 拍板：时间线整体成白卡，卡内虚线轨道（随内容滚、与彩点同锚对齐） */
+/* V4 拍板：时间线整体成白卡，卡内虚线轨道（随内容滚、与彩点同锚对齐）
+   V6（2026-09-11）：**桌面端时间线整体降一档字号**（正文 14.5→13.5、时间戳 12.5→11、
+   点评 12.5→11.5、域徽 10.5→10），行距 11px→9px、圆点 top 20→17 随字号重锚；
+   移动端字号由 @container 块另行覆盖（那套本来就更大），不受影响。 */
 .bz-home-flow { min-height: 0; overflow-y: auto; scrollbar-width: none; background: var(--h-card); border: 1px solid var(--h-line); border-radius: var(--bz-radius-md); padding: 6px 14px var(--bz-space-sm) 10px; }
 .bz-home-timeline { position: relative; }
 .bz-home-timeline::before { content: ""; position: absolute; left: 9px; top: 14px; bottom: 10px; border-left: 2px dashed var(--h-line); }
-.bz-home-ev { display: flex; gap: var(--bz-space-lg); position: relative; padding: 11px 0 11px var(--bz-space-xl); }
-.bz-home-ev::before { content: ""; position: absolute; left: 6px; top: 20px; width: 8px; height: 8px; border-radius: 50%; background: var(--h-ok); box-shadow: 0 0 0 2.5px var(--h-card), 0 0 0 3.5px var(--h-line); } /* 圆心 10px = 虚线中线（left 9 + 1），白环+描边压住虚线（V4） */
+.bz-home-ev { display: flex; gap: var(--bz-space-lg); position: relative; padding: 9px 0 9px var(--bz-space-xl); }
+.bz-home-ev::before { content: ""; position: absolute; left: 6px; top: 17px; width: 8px; height: 8px; border-radius: 50%; background: var(--h-ok); box-shadow: 0 0 0 2.5px var(--h-card), 0 0 0 3.5px var(--h-line); } /* 圆心 10px = 虚线中线（left 9 + 1），白环+描边压住虚线（V4） */
 .bz-home-ev--warn::before { background: var(--h-amber); }
-.bz-home-ev-tm { font-family: var(--h-mono); font-size: var(--bz-font-meta); color: var(--h-dim); width: 44px; flex: none; padding-top: 3px; }
+.bz-home-ev-tm { font-family: var(--h-mono); font-size: 11px; color: var(--h-dim); width: 42px; flex: none; padding-top: 2px; }
 .bz-home-ev-bd { flex: 1; min-width: 0; }
-.bz-home-ev-tx { font-size: 14.5px; line-height: 1.65; }
-.bz-home-ev-dm { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; color: #fff; padding: 1.5px var(--bz-space-sm); border-radius: var(--bz-radius-sm); margin-right: var(--bz-space-sm); vertical-align: 1.5px; }
+.bz-home-ev-tx { font-size: 13.5px; line-height: 1.6; }
+.bz-home-ev-dm { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; color: #fff; padding: 1px var(--bz-space-sm); border-radius: var(--bz-radius-sm); margin-right: var(--bz-space-sm); vertical-align: 1.5px; }
 .bz-home-ev-dm .bz-ic { width: 10px; height: 10px; }
-.bz-home-ev-note { margin-top: 6px; font-size: var(--bz-font-meta); color: var(--h-ai); line-height: 1.6; }
+.bz-home-ev-note { margin-top: 5px; font-size: 11.5px; color: var(--h-ai); line-height: 1.55; }
 .bz-home-ev-note::before { content: "✦ "; }
-.bz-home-flow-empty { padding: 26px 6px; font-size: 13.5px; color: var(--h-dim); line-height: 2.1; }
+.bz-home-flow-empty { padding: 24px 6px; font-size: 12.5px; color: var(--h-dim); line-height: 2; }
 .bz-home-flow-empty b { color: var(--h-ink); }
 
 /* ---- 时间线字号档（issue 287：「设置 → 首页 → 时间线字号」）----
