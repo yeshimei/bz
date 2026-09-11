@@ -337,9 +337,10 @@ export async function migrateLegacyStats(data: NewsData): Promise<NewsData> {
 }
 
 /**
- * 保留策略清理（纯函数，插件侧；savedDays=已保存骨架天数，skippedDays=已跳过骨架天数）：
+ * 保留策略清理（纯函数，插件侧；savedDays=已保存保留天数，skippedDays=已跳过保留天数）：
  * - read 非 true → 永不处理（未读保留）
- * - state==='saved'（正文已清空）按 fetchedAt ?? date 超 savedDays 天删除
+ * - state==='saved' 按 fetchedAt ?? date 超 savedDays 天整条删除（issue 274 起含正文；
+ *   已收条目的长期留档由剪藏笔记承接，news.json 只是聚合讯流）
  * - state==='skipped' 或旧数据无 state（保守按已跳过档）按 fetchedAt ?? date 超 skippedDays 天删除
  * - 起算时间解析失败（NaN）→ 保守保留
  */

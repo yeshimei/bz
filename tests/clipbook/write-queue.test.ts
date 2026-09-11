@@ -43,8 +43,9 @@ beforeEach(() => {
 describe('writeNewsDataMerged 段级合并', () => {
   it('F：写回不丢磁盘上插件快照中没有的新文章（daemon 在读-写窗口内追加）', async () => {
     const vault = seedDisk([{ platform: '果壳科学人', title: '旧文章', url: 'https://gk.com/1', body: '正文' }]);
-    // 模拟插件基于旧快照准备好标记已处理的 articles 段（不含 daemon 之后追加的新文章）
-    const snapshotList = [{ platform: '果壳科学人', title: '旧文章', url: 'https://gk.com/1', read: true, state: 'saved' }];
+    // 模拟插件基于旧快照准备好标记已处理的 articles 段（不含 daemon 之后追加的新文章；
+    // issue 274 起 markHandledAndBump 保留 body）
+    const snapshotList = [{ platform: '果壳科学人', title: '旧文章', url: 'https://gk.com/1', body: '正文', read: true, state: 'saved' }];
     // daemon 在插件的 read→write 窗口内追加新文章
     vault.files.set(
       getNewsFilePath(),
@@ -62,7 +63,7 @@ describe('writeNewsDataMerged 段级合并', () => {
     const old = disk.articles.find((a: any) => a.url === 'https://gk.com/1');
     expect(old.read).toBe(true);
     expect(old.state).toBe('saved');
-    expect(old.body).toBeUndefined();
+    expect(old.body).toBe('正文');
     // daemon 新文章原样保留（盲覆盖实现会把它丢掉）
     const fresh = disk.articles.find((a: any) => a.url === 'https://zh.com/9');
     expect(fresh).toBeTruthy();
@@ -140,7 +141,7 @@ describe('写回串行队列', () => {
 });
 
 describe('flowSave / flowMarkRead 已处理链路（含 C1/E 回归）', () => {
-  it('保存成功 → 笔记落盘 + 标已处理（read/saved/清 body）+ 统计 +1（单次读改写）', async () => {
+  it('保存成功 → 笔记落盘 + 标已处理（read/saved）+ 统计 +1（单次读改写；issue 274 正文保留）', async () => {
     const vault = seedDisk([{ platform: '果壳科学人', title: '文章A', url: 'https://gk.com/a', body: '正文A', date: '2026-09-01 08:00:00' }]);
     const raw = { platform: '果壳科学人', title: '文章A', url: 'https://gk.com/a', body: '正文A', date: '2026-09-01 08:00:00' };
     const ok = await flowSave({ raw });
@@ -152,7 +153,7 @@ describe('flowSave / flowMarkRead 已处理链路（含 C1/E 回归）', () => {
     const a = disk.articles.find((x: any) => x.url === 'https://gk.com/a');
     expect(a.read).toBe(true);
     expect(a.state).toBe('saved');
-    expect(a.body).toBeUndefined();
+    expect(a.body).toBe('正文A');
     expect(disk.stats.totalSaved).toBe(1);
     expect(disk.stats.totalRead).toBe(1);
   });
@@ -178,7 +179,7 @@ describe('flowSave / flowMarkRead 已处理链路（含 C1/E 回归）', () => {
     }
   });
 
-  it('flowMarkRead → read/skipped + 清 body + 统计 skipped +1', async () => {
+  it('flowMarkRead → read/skipped + 统计 skipped +1（issue 274 正文保留）', async () => {
     seedDisk([{ platform: '知乎日报', title: '文章D', url: 'https://zh.com/d', body: '正文D', date: '2026-09-01 11:00:00' }]);
     await flowMarkRead({ raw: { platform: '知乎日报', title: '文章D', url: 'https://zh.com/d', body: '正文D', date: '2026-09-01 11:00:00' } });
     await drainNewsWritesForTests();
@@ -186,7 +187,7 @@ describe('flowSave / flowMarkRead 已处理链路（含 C1/E 回归）', () => {
     const a = res.data.articles.find((x: any) => x.url === 'https://zh.com/d');
     expect(a.read).toBe(true);
     expect(a.state).toBe('skipped');
-    expect(a.body).toBeUndefined();
+    expect(a.body).toBe('正文D');
     expect(res.data.stats.totalSkipped).toBe(1);
     expect(res.data.stats.totalRead).toBe(1);
   });

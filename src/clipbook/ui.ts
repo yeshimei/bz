@@ -1192,8 +1192,8 @@ function openMobDetail(id: string): void {
 }
 
 /** 打开即已读（m3 去在读 + ADR-0108 桌面接入）：打开一条未处理 news → 静默标已读（无 toast/撤销）。
- *  内存 read 位**同步**置（目录即时灰显、rail 计数即时减），落盘走串行队列（正文磁盘清空，
- *  内存 raw 保留给本次会话阅读）。会话内该条按快照原位留灰，重开面板才重排沉段。 */
+ *  内存 read 位**同步**置（目录即时灰显、rail 计数即时减），落盘走串行队列（issue 274 起
+ *  正文保留在盘，内存 raw 继续供本次会话阅读）。会话内该条按快照原位留灰，重开面板才重排沉段。 */
 function markReadOnOpen(a: ClipArticle): void {
   if (!a || a.st !== 'unread') return;
   if (a.origin !== 'news') return;
