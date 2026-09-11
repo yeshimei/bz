@@ -487,21 +487,6 @@ button {
 .news-close-btn:hover {
   background: var(--background-secondary) !important;
 }
-/* 番茄钟右上角设置钮：同头行按钮规格（absolute 定位保留） */
-#pomodoro-btn-settings {
-  width: 22px !important;
-  height: 26px !important;
-  padding: 0 !important;
-  font-size: var(--bz-font-body) !important;
-  border: none !important;
-  border-radius: var(--bz-radius-xs) !important;
-  box-shadow: none !important;
-  background: none !important;
-  color: var(--text-muted) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
 /* 关闭按钮再小 2px（用户拍板）：20×24/12px（元素选择器提特异性，压过统一按钮组） */
 button.bz-icon-btn--close,
 button.bz-win-close,
@@ -2416,13 +2401,33 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   font-family: var(--bz-font-ui);
   /* z-index 由调用方经 topifyZ 动态分配（ADR-0067），不设静态档 */
 }
-/* 面板内隐藏滚动条（滚动功能保留） */
-.bz-panel-overlay *, .bz-panel-frame * {
+/* bz 界面级隐藏滚动条（ADR-0122 / issue 277）：滚动功能保留（不动 overflow），只隐藏条。
+   作用域 = bz 自有界面：bz- 前缀类/ID + 通用面板壳整树 + 非 bz 前缀的遗留容器。
+   刻意不用 * 通配——Obsidian 核心 UI（文件树/编辑器/核心设置）不属本插件，不隐藏。
+   scrollbar-width/-ms-overflow-style 可继承（子树自动生效）；::-webkit-scrollbar 不继承，
+   故对同组选择器补「元素自身 + 子树」两种形态（守卫：tests/core/ui-scrollbar.test.ts）。 */
+.bz-panel-overlay, .bz-panel-overlay *,
+.bz-panel-frame, .bz-panel-frame *,
+[class^="bz-"], [class*=" bz-"],
+[id^="bz-"], [id^="knowledge-"],
+#add-diary-popup, .diary-tag-selector-popup, .diary-datetime-scroll-container,
+#review-entries-container, #__shared_confirm_popup__ {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
-.bz-panel-overlay *::-webkit-scrollbar,
-.bz-panel-frame *::-webkit-scrollbar { display: none; }
+.bz-panel-overlay::-webkit-scrollbar, .bz-panel-overlay *::-webkit-scrollbar,
+.bz-panel-frame::-webkit-scrollbar, .bz-panel-frame *::-webkit-scrollbar,
+[class^="bz-"]::-webkit-scrollbar, [class^="bz-"] *::-webkit-scrollbar,
+[class*=" bz-"]::-webkit-scrollbar, [class*=" bz-"] *::-webkit-scrollbar,
+[id^="bz-"]::-webkit-scrollbar, [id^="bz-"] *::-webkit-scrollbar,
+[id^="knowledge-"]::-webkit-scrollbar, [id^="knowledge-"] *::-webkit-scrollbar,
+#add-diary-popup::-webkit-scrollbar, #add-diary-popup *::-webkit-scrollbar,
+.diary-tag-selector-popup::-webkit-scrollbar, .diary-tag-selector-popup *::-webkit-scrollbar,
+.diary-datetime-scroll-container::-webkit-scrollbar, .diary-datetime-scroll-container *::-webkit-scrollbar,
+#review-entries-container::-webkit-scrollbar, #review-entries-container *::-webkit-scrollbar,
+#__shared_confirm_popup__::-webkit-scrollbar, #__shared_confirm_popup__ *::-webkit-scrollbar {
+  display: none;
+}
 
 .bz-panel-frame {
   position: relative;
@@ -3953,16 +3958,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   margin: 0;
   padding: 0;
 }
-/* 隐藏滚动条（原型 scrollbar-width:none + ::-webkit-scrollbar display:none） */
-.bz-diary {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.bz-diary ::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-}
+/* 滚动条隐藏由 core 界面级单源规则接管（ADR-0122 / issue 277），原 .bz-diary 域内声明已删 */
 /* 清 Obsidian 对 button 的默认样式（font-family 继承字体族即可；font-size 交由各组件自身声明——
    `font: inherit` shorthand 特异性 (0,1,1) 会覆盖 .bz-diary-chip 等组件的 font-size，导致字号失效） */
 .bz-diary button {
@@ -5406,14 +5402,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
     width: 85%;
     padding: 20px;
   }
-  /* 移动端写日记弹窗去纵向滚动条（滚动保持） */
-  #add-diary-popup {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  #add-diary-popup::-webkit-scrollbar {
-    display: none;
-  }
 }
 
 /* 标签选择器弹窗 */
@@ -5518,26 +5506,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .diary-tag-selector-btn {
     font-size: var(--bz-font-label);
   }
-  /* 移动端弹窗去纵向滚动条（滚动保持） */
-  .diary-tag-selector-popup {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .diary-tag-selector-popup::-webkit-scrollbar {
-    display: none;
-  }
 }
 
-/* 滚轮日期时间选择器（滚轮列隐藏滚动条） */
-.diary-datetime-scroll-container::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  background: transparent;
-}
-.diary-datetime-scroll-container {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
 
 /* ==================== 日记解析检测面板（ticket 121，ADR-0054；入口落设置页维护组） ==================== */
 .bz-diary-repair-progress {
@@ -5669,16 +5639,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   margin: 0;
   padding: 0;
 }
-/* 隐藏滚动条（原型 scrollbar-width:none + ::-webkit-scrollbar display:none） */
-.bz-diary {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.bz-diary ::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-}
+/* 滚动条隐藏由 core 界面级单源规则接管（ADR-0122 / issue 277），原 .bz-diary 域内声明已删 */
 /* 清 Obsidian 对 button 的默认样式（font-family 继承字体族即可；font-size 交由各组件自身声明——
    `font: inherit` shorthand 特异性 (0,1,1) 会覆盖 .bz-diary-chip 等组件的 font-size，导致字号失效） */
 .bz-diary button {
@@ -7122,14 +7083,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
     width: 85%;
     padding: 20px;
   }
-  /* 移动端写日记弹窗去纵向滚动条（滚动保持） */
-  #add-diary-popup {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  #add-diary-popup::-webkit-scrollbar {
-    display: none;
-  }
 }
 
 /* 标签选择器弹窗 */
@@ -7234,26 +7187,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .diary-tag-selector-btn {
     font-size: var(--bz-font-label);
   }
-  /* 移动端弹窗去纵向滚动条（滚动保持） */
-  .diary-tag-selector-popup {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .diary-tag-selector-popup::-webkit-scrollbar {
-    display: none;
-  }
 }
 
-/* 滚轮日期时间选择器（滚轮列隐藏滚动条） */
-.diary-datetime-scroll-container::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  background: transparent;
-}
-.diary-datetime-scroll-container {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
 
 /* ==================== 日记解析检测面板（ticket 121，ADR-0054；入口落设置页维护组） ==================== */
 .bz-diary-repair-progress {
@@ -9411,14 +9346,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   /* 移动端全屏（issue 254 迭代）：钉满视口，不受内容高度收缩（原 max-height:100% 短内容时缩成悬浮卡） */
   #review-popup { animation: none !important; top: 0; left: 0; transform: none; width: 100%; max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; }
 }
-/* 内容区：队列视图与冲刺视图共用宿主（overflow:hidden 由视图内部接管滚动，
-   原死的 ::webkit-scrollbar 规则已删——队列/冲刺滚动条隐藏见 .bz-q-view） */
+/* 内容区：队列视图与冲刺视图共用宿主（overflow:hidden 由视图内部接管滚动） */
 #review-entries-container { flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
 
-/* 队列/冲刺滚动区隐藏滚动条（滚动功能保留；对齐全站「弹窗无滚动条」。
-   冲刺视图与队列视图共用宿主 #review-entries-container，覆盖两者） */
-#review-entries-container, #review-entries-container * { scrollbar-width: none; -ms-overflow-style: none; }
-#review-entries-container *::-webkit-scrollbar, #review-entries-container::-webkit-scrollbar { display: none; }
+/* 队列/冲刺滚动条隐藏由 core 界面级单源规则接管（ADR-0122 / issue 277，
+   #review-entries-container 在册），域内不再重复定义 */
 
 /* 队列视图整体（滚动区 = 三区列；头/工具/底部行固定） */
 .bz-q-view { display: flex; flex-direction: column; height: 100%; min-height: 0; }
@@ -9804,55 +9736,133 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* ==================== 番茄钟弹窗（pomodoro，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
     #pomodoro-mask { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--bz-overlay); backdrop-filter: blur(var(--bz-overlay-blur)); } /* z 动态发号（ADR-0067）；遮罩色走 --bz-overlay（原写死 rgba 已对齐） */
-    #pomodoro-popup { width: 320px; padding: var(--bz-space-xl); border-radius: var(--bz-radius-lg); background: var(--background-primary); box-shadow: 0 8px 40px rgba(0,0,0,0.3); text-align: center; position: relative; }
+    #pomodoro-popup { width: 320px; padding: var(--bz-space-xl); border-radius: var(--bz-radius-lg); background: var(--pz-bg, var(--background-primary)); box-shadow: 0 8px 40px rgba(0,0,0,0.3); text-align: center; position: relative; }
     #pomodoro-popup:focus { outline: none; } /* Space 快捷键承载焦点，不画焦点环 */
     #pomodoro-ring-svg { width: 160px; height: 160px; margin: var(--bz-space-sm) auto; display: block; }
-    .pomodoro-ring-track { fill: none; stroke: var(--background-modifier-border); stroke-width: 8; }
-    .pomodoro-ring-progress { fill: none; stroke: var(--interactive-accent); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+    .pomodoro-ring-track { fill: none; stroke: var(--pz-line, var(--background-modifier-border)); stroke-width: 8; }
+    .pomodoro-ring-progress { fill: none; stroke: var(--pz-accent, var(--interactive-accent)); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
     /* 本轮循环位置：N 个 6px 方点，已完成填 accent（增强包，替代「专注 2/4」文字小字） */
     .pomodoro-cycle { display: flex; gap: var(--bz-space-xs); justify-content: center; align-items: center; margin-top: var(--bz-space-xs); height: 6px; }
-    .pomodoro-cycle-dot { width: 6px; height: 6px; border-radius: 2px; background: var(--background-modifier-border); }
-    .pomodoro-cycle-dot-on { background: var(--interactive-accent); }
-    #pomodoro-phase { font-size: var(--bz-font-emphasis); color: var(--text-muted); margin-top: var(--bz-space-sm); }
+    .pomodoro-cycle-dot { width: 6px; height: 6px; border-radius: 2px; background: var(--pz-line, var(--background-modifier-border)); }
+    .pomodoro-cycle-dot-on { background: var(--pz-accent, var(--interactive-accent)); }
+    #pomodoro-phase { font-size: var(--bz-font-emphasis); color: var(--pz-muted, var(--text-muted)); margin-top: var(--bz-space-sm); }
     .pomodoro-phase-icon { display: inline-flex; align-items: center; vertical-align: -2px; margin-right: var(--bz-space-xs); }
     .pomodoro-phase-icon svg { width: 14px; height: 14px; }
     /* 当前专注任务名（待办「专注这个」联动）：弱化小字，超长省略，悬停 title 见全文 */
-    .pomodoro-task { font-size: var(--bz-font-meta); color: var(--text-faint); margin-top: var(--bz-space-xs); max-width: 240px; margin-left: auto; margin-right: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    #pomodoro-time { font-size: 42px; font-weight: 600; color: var(--text-normal); font-variant-numeric: tabular-nums; }
+    .pomodoro-task { font-size: var(--bz-font-meta); color: var(--pz-faint, var(--text-faint)); margin-top: var(--bz-space-xs); max-width: 240px; margin-left: auto; margin-right: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #pomodoro-time { font-size: 42px; font-weight: 600; color: var(--pz-fg, var(--text-normal)); font-variant-numeric: tabular-nums; }
     .pomodoro-controls { display: flex; gap: var(--bz-space-sm); justify-content: center; margin-top: var(--bz-space-lg); }
-    .pomodoro-btn { padding: 6px 14px; border-radius: var(--bz-radius-sm); background: var(--background-secondary); color: var(--text-normal); cursor: pointer; font-size: var(--bz-font-body); }
+    .pomodoro-btn { padding: 6px 14px; border-radius: var(--bz-radius-sm); background: var(--pz-btn, var(--background-secondary)); color: var(--pz-btn-fg, var(--text-normal)); cursor: pointer; font-size: var(--bz-font-body); }
     .pomodoro-btn:hover:not(:disabled) { background: var(--background-modifier-hover); }
     .pomodoro-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .pomodoro-btn-primary { background: var(--interactive-accent); color: var(--text-on-accent); }
+    .pomodoro-btn-primary { background: var(--pz-accent, var(--interactive-accent)); color: var(--pz-on-accent, var(--text-on-accent)); }
     .pomodoro-btn-primary:hover:not(:disabled) { background: var(--interactive-accent-hover); }
-    #pomodoro-btn-settings { position: absolute; top: 16px; right: 16px; padding: 6px; background: none; border-radius: var(--bz-radius-sm); color: var(--text-muted); transition: opacity var(--bz-dur-base); }
-    #pomodoro-btn-settings:hover { color: var(--text-normal); background: var(--background-modifier-hover); }
-    #pomodoro-btn-settings.pomodoro-settings-hidden { opacity: 0; pointer-events: none; }
-    .pomodoro-stats { margin-top: var(--bz-space-lg); padding-top: var(--bz-space-md); border-top: 1px solid var(--background-modifier-border); }
-    #pomodoro-today { font-size: var(--bz-font-label); color: var(--text-muted); margin-bottom: var(--bz-space-sm); }
+    .pomodoro-stats { margin-top: var(--bz-space-lg); padding-top: var(--bz-space-md); border-top: 1px solid var(--pz-line, var(--background-modifier-border)); }
+    #pomodoro-today { font-size: var(--bz-font-label); color: var(--pz-muted, var(--text-muted)); margin-bottom: var(--bz-space-sm); }
     .pomodoro-week { display: flex; gap: 6px; justify-content: center; align-items: flex-end; }
     .pomodoro-stat-day { display: flex; flex-direction: column; align-items: center; gap: 2px; }
     .pomodoro-stat-col { display: flex; align-items: flex-end; height: 40px; }
     .pomodoro-stat-bar { width: 10px; border-radius: 3px 3px 0 0; background: var(--interactive-accent); min-height: 2px; }
-    .pomodoro-stat-label { font-size: var(--bz-font-caption); color: var(--text-faint); }
-    /* 今日专注时段分布：12 槽（2 小时一格）小方柱，条形语言与近 7 天柱一致（增强包） */
-    .pomodoro-hours { display: flex; gap: var(--bz-space-xs); justify-content: center; align-items: flex-end; margin-top: var(--bz-space-sm); }
-    .pomodoro-hour-bar { width: 8px; border-radius: 3px 3px 0 0; background: var(--background-modifier-border); min-height: 2px; }
-    .pomodoro-hour-bar-on { background: var(--interactive-accent); opacity: 0.7; }
+    .pomodoro-stat-label { font-size: var(--bz-font-caption); color: var(--pz-faint, var(--text-faint)); }
 
-/* ==================== 移动端顶距避让（.bz-panel-mtop 无条件挂载） ====================
-   ≤768px 顶距工具类统一避让 Obsidian 移动端头（44px）；右上角设置钮为绝对定位，
-   不随文档流下移，需同步下移到避让区之下（无避让态无此钮规则，维持 16px） */
-@media (max-width: 768px) {
-    #pomodoro-popup.bz-panel-mtop #pomodoro-btn-settings { top: calc(max(44px, env(safe-area-inset-top, 0px)) + 12px); }
+/* ==================== 面板主题（皮肤）· 10 套 × 亮/暗两版 ====================
+   口径（2026-09-11 用户拍板「全都要，每套都要亮色和暗色」）：
+   - 皮肤类由 ui.ts::applySkinClass 挂在 #pomodoro-popup 上，取值 = 设置 pomodoroSkinTheme；
+   - 清单单源 = src/pomodoro/render.ts::POMODORO_SKIN_THEMES（设置面板选项同表生成）；
+   - **色值单源 = 下方 :root 的 --pz-<id>-* 表**（唯一色值出处；设置面板预览卡
+     src/settings-panel/styles.css 引用同一批变量，加皮/改色两处自动同步）；
+   - 每套皮只剩两行「消费变量声明」：亮色一行 + .theme-dark 暗色一行，把表值赋给
+     --pz-bg/accent/fg/muted/faint/btn/btn-fg/on-accent（暗色再加 --pz-line），
+     消费全走上方基础段的 var 兜底链（无皮肤 = 完全回落 Obsidian 主题变量）；
+   - 槽位：l/d=亮·暗面 a/ad=亮·暗强调 fg/fgd=亮·暗时间字 m/md=亮·暗阶段·今日字
+     f/fd=亮·暗任务·柱标签字 b/bf=亮次钮底·字（仅番茄/夜航有专属，缺省回落默认）
+     bd/bfd=暗次钮底·字；
+   - 合并注记：轨道/圆点/分割线原 .12/.14/.16 微差并作暗色 --pz-line 一值；
+     墨白亮色 stat-label 与任务原差一档，并入 --pz-faint（视觉不可辨）；
+   - **只换面/字/强调色/描边阴影**，不碰任何布局属性；暗色走 .theme-dark 前缀（同 memo 范式）。 */
+:root {
+    /* 1 番茄 tomato（默认） */
+    --pz-tomato-l:#fdf7f3; --pz-tomato-d:#2a2320; --pz-tomato-a:#e5534b; --pz-tomato-ad:#f2705e;
+    --pz-tomato-fgd:#f5ece8; --pz-tomato-m:#8b6f68; --pz-tomato-md:#b9a49c; --pz-tomato-f:#b09a94; --pz-tomato-fd:#8d7a74;
+    --pz-tomato-b:#f3ece6; --pz-tomato-bf:#3d332f; --pz-tomato-bd:#352d29; --pz-tomato-bfd:#d9ccc5;
+    /* 2 墨白 ink */
+    --pz-ink-l:#ffffff; --pz-ink-d:#1f1f1e; --pz-ink-a:#171512; --pz-ink-ad:#f2f0ea;
+    --pz-ink-fgd:#f2f0ea; --pz-ink-m:#6b6558; --pz-ink-md:#a8a49c; --pz-ink-f:#a8a294; --pz-ink-fd:#7d7a72;
+    --pz-ink-bd:#2b2b29; --pz-ink-bfd:#d6d3cc;
+    /* 3 方格纸 grid */
+    --pz-grid-l:#fdfcf8; --pz-grid-d:#22231f; --pz-grid-a:#4a4a46; --pz-grid-ad:#d7d3c8;
+    --pz-grid-fgd:#eceae2; --pz-grid-m:#6b6558; --pz-grid-md:#a8a49c; --pz-grid-f:#a8a294; --pz-grid-fd:#7d7a72;
+    --pz-grid-bd:#2c2e29; --pz-grid-bfd:#d6d3cc;
+    /* 4 苔原 moss */
+    --pz-moss-l:#f2f5ef; --pz-moss-d:#20261f; --pz-moss-a:#4c9e6c; --pz-moss-ad:#6fc08e;
+    --pz-moss-fgd:#e8eee6; --pz-moss-m:#6a7d6c; --pz-moss-md:#9db3a2; --pz-moss-f:#9aa79c; --pz-moss-fd:#7b8f80;
+    --pz-moss-bd:#2a3228; --pz-moss-bfd:#d3ddd0;
+    /* 5 海雾 mist */
+    --pz-mist-l:#f1f4f8; --pz-mist-d:#1e2229; --pz-mist-a:#3d7bd6; --pz-mist-ad:#6fa0ef;
+    --pz-mist-fgd:#e6ecf5; --pz-mist-m:#66768f; --pz-mist-md:#9aa9c2; --pz-mist-f:#96a3b6; --pz-mist-fd:#78859c;
+    --pz-mist-bd:#272c35; --pz-mist-bfd:#d2dbe9;
+    /* 6 暖沙 sand */
+    --pz-sand-l:#f8f2e8; --pz-sand-d:#26221c; --pz-sand-a:#c27a48; --pz-sand-ad:#e0a373;
+    --pz-sand-fgd:#f1e9dc; --pz-sand-m:#7d6a55; --pz-sand-md:#b8a692; --pz-sand-f:#a8947c; --pz-sand-fd:#8d7f6d;
+    --pz-sand-bd:#322c25; --pz-sand-bfd:#dcd2c4;
+    /* 7 蜜柑 citrus */
+    --pz-citrus-l:#fffaf0; --pz-citrus-d:#272319; --pz-citrus-a:#e6951d; --pz-citrus-ad:#f2b544;
+    --pz-citrus-fgd:#f7efdf; --pz-citrus-m:#7d6a40; --pz-citrus-md:#bab192; --pz-citrus-f:#ab9a6c; --pz-citrus-fd:#8f876c;
+    --pz-citrus-bd:#332e20; --pz-citrus-bfd:#e0d9c2;
+    /* 8 樱粉 sakura */
+    --pz-sakura-l:#fdf3f6; --pz-sakura-d:#2a2026; --pz-sakura-a:#d64d8f; --pz-sakura-ad:#ef77b4;
+    --pz-sakura-fgd:#f6e9ef; --pz-sakura-m:#8a5f74; --pz-sakura-md:#bd9aab; --pz-sakura-f:#b394a4; --pz-sakura-fd:#917a87;
+    --pz-sakura-bd:#352830; --pz-sakura-bfd:#e0cfd8;
+    /* 9 咖啡 latte */
+    --pz-latte-l:#f6f0e6; --pz-latte-d:#241f19; --pz-latte-a:#8a5a3b; --pz-latte-ad:#c08a63;
+    --pz-latte-fg:#4a3628; --pz-latte-fgd:#f1e9dc; --pz-latte-m:#7a6553; --pz-latte-md:#b39d8c; --pz-latte-f:#a8947c; --pz-latte-fd:#8a7a6b;
+    --pz-latte-bd:#302920; --pz-latte-bfd:#dcd2c4;
+    /* 10 夜航 night */
+    --pz-night-l:#eceff3; --pz-night-d:#23262b; --pz-night-a:#b5801f; --pz-night-ad:#f0b429;
+    --pz-night-fgd:#f2efe6; --pz-night-m:#5f6a78; --pz-night-md:#a7b0bd; --pz-night-f:#8d97a5; --pz-night-fd:#7d8794;
+    --pz-night-b:#e4e9ef; --pz-night-bf:#3a4250; --pz-night-bd:#2e323a; --pz-night-bfd:#dfe3ea;
 }
+/* 1 番茄 · tomato（默认；暗色主按钮字=暗面深底，非白） */
+    #pomodoro-popup.pomodoro-skin-tomato { --pz-bg:var(--pz-tomato-l); --pz-accent:var(--pz-tomato-a); --pz-muted:var(--pz-tomato-m); --pz-faint:var(--pz-tomato-f); --pz-btn:var(--pz-tomato-b); --pz-btn-fg:var(--pz-tomato-bf); --pz-on-accent:#fff; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-tomato { --pz-bg:var(--pz-tomato-d); --pz-accent:var(--pz-tomato-ad); --pz-fg:var(--pz-tomato-fgd); --pz-muted:var(--pz-tomato-md); --pz-faint:var(--pz-tomato-fd); --pz-btn:var(--pz-tomato-bd); --pz-btn-fg:var(--pz-tomato-bfd); --pz-on-accent:var(--pz-tomato-d); --pz-line:rgba(255,255,255,.14); }
+/* 2 墨白 · ink（无彩色；仅此皮有专属阴影一档） */
+    #pomodoro-popup.pomodoro-skin-ink { --pz-bg:var(--pz-ink-l); --pz-accent:var(--pz-ink-a); --pz-muted:var(--pz-ink-m); --pz-faint:var(--pz-ink-f); --pz-on-accent:#fff; box-shadow: 0 6px 30px rgba(0,0,0,.14); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-ink { --pz-bg:var(--pz-ink-d); --pz-accent:var(--pz-ink-ad); --pz-fg:var(--pz-ink-fgd); --pz-muted:var(--pz-ink-md); --pz-faint:var(--pz-ink-fd); --pz-btn:var(--pz-ink-bd); --pz-btn-fg:var(--pz-ink-bfd); --pz-on-accent:var(--pz-ink-d); --pz-line:rgba(255,255,255,.14); }
+/* 3 方格纸 · grid（亮/暗各一道格纹线色，背景图唯一例外块） */
+    #pomodoro-popup.pomodoro-skin-grid {
+      --pz-bg:var(--pz-grid-l); --pz-accent:var(--pz-grid-a); --pz-muted:var(--pz-grid-m); --pz-faint:var(--pz-grid-f); --pz-on-accent:#fff;
+      --pz-grid-ln:rgba(23,21,18,.05);
+      background-image: linear-gradient(var(--pz-grid-ln) 1px, transparent 1px), linear-gradient(90deg, var(--pz-grid-ln) 1px, transparent 1px);
+      background-size: 16px 16px; background-position: -1px -1px;
+    }
+    .theme-dark #pomodoro-popup.pomodoro-skin-grid { --pz-bg:var(--pz-grid-d); --pz-accent:var(--pz-grid-ad); --pz-fg:var(--pz-grid-fgd); --pz-muted:var(--pz-grid-md); --pz-faint:var(--pz-grid-fd); --pz-btn:var(--pz-grid-bd); --pz-btn-fg:var(--pz-grid-bfd); --pz-on-accent:var(--pz-grid-d); --pz-line:rgba(255,255,255,.14); --pz-grid-ln:rgba(255,255,255,.05); }
+/* 4 苔原 · moss */
+    #pomodoro-popup.pomodoro-skin-moss { --pz-bg:var(--pz-moss-l); --pz-accent:var(--pz-moss-a); --pz-muted:var(--pz-moss-m); --pz-faint:var(--pz-moss-f); --pz-on-accent:#fff; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-moss { --pz-bg:var(--pz-moss-d); --pz-accent:var(--pz-moss-ad); --pz-fg:var(--pz-moss-fgd); --pz-muted:var(--pz-moss-md); --pz-faint:var(--pz-moss-fd); --pz-btn:var(--pz-moss-bd); --pz-btn-fg:var(--pz-moss-bfd); --pz-on-accent:var(--pz-moss-d); --pz-line:rgba(255,255,255,.14); }
+/* 5 海雾 · mist */
+    #pomodoro-popup.pomodoro-skin-mist { --pz-bg:var(--pz-mist-l); --pz-accent:var(--pz-mist-a); --pz-muted:var(--pz-mist-m); --pz-faint:var(--pz-mist-f); --pz-on-accent:#fff; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-mist { --pz-bg:var(--pz-mist-d); --pz-accent:var(--pz-mist-ad); --pz-fg:var(--pz-mist-fgd); --pz-muted:var(--pz-mist-md); --pz-faint:var(--pz-mist-fd); --pz-btn:var(--pz-mist-bd); --pz-btn-fg:var(--pz-mist-bfd); --pz-on-accent:var(--pz-mist-d); --pz-line:rgba(255,255,255,.14); }
+/* 6 暖沙 · sand */
+    #pomodoro-popup.pomodoro-skin-sand { --pz-bg:var(--pz-sand-l); --pz-accent:var(--pz-sand-a); --pz-muted:var(--pz-sand-m); --pz-faint:var(--pz-sand-f); --pz-on-accent:#fff; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sand { --pz-bg:var(--pz-sand-d); --pz-accent:var(--pz-sand-ad); --pz-fg:var(--pz-sand-fgd); --pz-muted:var(--pz-sand-md); --pz-faint:var(--pz-sand-fd); --pz-btn:var(--pz-sand-bd); --pz-btn-fg:var(--pz-sand-bfd); --pz-on-accent:var(--pz-sand-d); --pz-line:rgba(255,255,255,.14); }
+/* 7 蜜柑 · citrus */
+    #pomodoro-popup.pomodoro-skin-citrus { --pz-bg:var(--pz-citrus-l); --pz-accent:var(--pz-citrus-a); --pz-muted:var(--pz-citrus-m); --pz-faint:var(--pz-citrus-f); --pz-on-accent:#fff; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-citrus { --pz-bg:var(--pz-citrus-d); --pz-accent:var(--pz-citrus-ad); --pz-fg:var(--pz-citrus-fgd); --pz-muted:var(--pz-citrus-md); --pz-faint:var(--pz-citrus-fd); --pz-btn:var(--pz-citrus-bd); --pz-btn-fg:var(--pz-citrus-bfd); --pz-on-accent:var(--pz-citrus-d); --pz-line:rgba(255,255,255,.14); }
+/* 8 樱粉 · sakura */
+    #pomodoro-popup.pomodoro-skin-sakura { --pz-bg:var(--pz-sakura-l); --pz-accent:var(--pz-sakura-a); --pz-muted:var(--pz-sakura-m); --pz-faint:var(--pz-sakura-f); --pz-on-accent:#fff; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sakura { --pz-bg:var(--pz-sakura-d); --pz-accent:var(--pz-sakura-ad); --pz-fg:var(--pz-sakura-fgd); --pz-muted:var(--pz-sakura-md); --pz-faint:var(--pz-sakura-fd); --pz-btn:var(--pz-sakura-bd); --pz-btn-fg:var(--pz-sakura-bfd); --pz-on-accent:var(--pz-sakura-d); --pz-line:rgba(255,255,255,.14); }
+/* 9 咖啡 · latte（仅此皮亮色时间字有专属值） */
+    #pomodoro-popup.pomodoro-skin-latte { --pz-bg:var(--pz-latte-l); --pz-accent:var(--pz-latte-a); --pz-fg:var(--pz-latte-fg); --pz-muted:var(--pz-latte-m); --pz-faint:var(--pz-latte-f); --pz-on-accent:#fff; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-latte { --pz-bg:var(--pz-latte-d); --pz-accent:var(--pz-latte-ad); --pz-fg:var(--pz-latte-fgd); --pz-muted:var(--pz-latte-md); --pz-faint:var(--pz-latte-fd); --pz-btn:var(--pz-latte-bd); --pz-btn-fg:var(--pz-latte-bfd); --pz-on-accent:var(--pz-latte-d); --pz-line:rgba(255,255,255,.14); }
+/* 10 夜航 · night（亮面压深保证浅底可读） */
+    #pomodoro-popup.pomodoro-skin-night { --pz-bg:var(--pz-night-l); --pz-accent:var(--pz-night-a); --pz-muted:var(--pz-night-m); --pz-faint:var(--pz-night-f); --pz-btn:var(--pz-night-b); --pz-btn-fg:var(--pz-night-bf); --pz-on-accent:#fff; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-night { --pz-bg:var(--pz-night-d); --pz-accent:var(--pz-night-ad); --pz-fg:var(--pz-night-fgd); --pz-muted:var(--pz-night-md); --pz-faint:var(--pz-night-fd); --pz-btn:var(--pz-night-bd); --pz-btn-fg:var(--pz-night-bfd); --pz-on-accent:var(--pz-night-d); --pz-line:rgba(255,255,255,.14); }
 
 /* ==================== 触控热区（设计手册 §8.2，触屏 pointer:coarse） ====================
    ::after 外扩已收编 core .bz-touch-target（components.css，模板挂类）：
-   控制按钮 = --sm(-4px)、右上角设置钮 = 默认(-6px)；此处仅保留 padding 抬档。 */
+   控制按钮 = --sm(-4px)；此处仅保留 padding 抬档。 */
 @media (pointer: coarse) {
     .pomodoro-btn { padding: 10px var(--bz-space-lg); }
-    #pomodoro-btn-settings { padding: 10px; }
 }
 /* ==================== 附件搬移域样式（src/attach/styles.css） ==================== */
 /* 原文件夹选择弹窗样式（bz-attach-*，ticket 65）随 FolderSelectModal 退役（ticket 128，
@@ -9948,8 +9958,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 #bz-encrypt-popup { width: 90%; max-width: 700px; max-height: 80vh; }
 #bz-encrypt-preview-popup { max-height: 86vh; overflow: hidden; }
 #bz-encrypt-list { flex: 1; overflow-y: auto; padding: 0 20px var(--bz-space-lg); min-height: 200px; }
-#bz-encrypt-list::-webkit-scrollbar { width: 6px; }
-#bz-encrypt-list::-webkit-scrollbar-thumb { background: var(--bz-border); border-radius: var(--bz-radius-xs); }
+/* 滚动条隐藏由 core 界面级单源规则接管（ADR-0122 / issue 277，#bz-encrypt-list 落 [id^="bz-"]），
+   原自绘 6px ::-webkit-scrollbar/thumb 已清退 */
 /* 旧清单卡视图规则已随 ADR-0085 统一保险库工作台退役（死规则删除） */
 .bz-encrypt-preview-head {
   display: flex; justify-content: space-between; align-items: center;
@@ -10432,13 +10442,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-password-vault *::after {
   box-sizing: border-box;
 }
-.bz-password-vault ::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-.bz-password-vault {
-  scrollbar-width: none;
-}
+/* 滚动条隐藏由 core 界面级单源规则接管（ADR-0122 / issue 277），原域内 ::-webkit-scrollbar/scrollbar-width 声明已删 */
 .bz-password-vault button {
   font: inherit;
   cursor: pointer;
@@ -12303,13 +12307,70 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
     linear-gradient(90deg, #f0e6d2 0 50%, #1d1a14 50% 100%);
   border-radius: 3px;
 }
-/* 番茄钟·番茄 */
-.bz-sp-mini.bz-sp-prev-tomato {
+/* ── 番茄钟 10 套皮肤预览（2026-09-11 同构图异色：左亮块/右暗块 + 域色圆点；
+      色值引用 src/pomodoro/styles.css :root 的 --pz-<id>-* 表（同聚合进根 styles.css），
+      本文件不持有番茄钟色值——加皮/改色只在 pomodoro 侧改表） ── */
+.bz-sp-mini.bz-sp-prev-pomo-tomato {
   background:
-    radial-gradient(circle at 50% 50%, #d95550 0 4px, #fff 4px 6px, transparent 6px),
-    linear-gradient(90deg, #fbf6f0 0 50%, #1d1512 50% 100%);
+    radial-gradient(circle at 50% 50%, var(--pz-tomato-a) 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, var(--pz-tomato-l) 0 50%, var(--pz-tomato-d) 50% 100%);
   border-radius: 3px;
 }
+.bz-sp-mini.bz-sp-prev-pomo-ink {
+  background:
+    radial-gradient(circle at 50% 50%, var(--pz-ink-a) 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, var(--pz-ink-l) 0 50%, var(--pz-ink-d) 50% 100%);
+  border-radius: 3px;
+}
+.bz-sp-mini.bz-sp-prev-pomo-grid {
+  background:
+    radial-gradient(circle at 50% 50%, var(--pz-grid-a) 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, var(--pz-grid-l) 0 50%, var(--pz-grid-d) 50% 100%);
+  border-radius: 3px;
+}
+.bz-sp-mini.bz-sp-prev-pomo-moss {
+  background:
+    radial-gradient(circle at 50% 50%, var(--pz-moss-a) 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, var(--pz-moss-l) 0 50%, var(--pz-moss-d) 50% 100%);
+  border-radius: 3px;
+}
+.bz-sp-mini.bz-sp-prev-pomo-mist {
+  background:
+    radial-gradient(circle at 50% 50%, var(--pz-mist-a) 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, var(--pz-mist-l) 0 50%, var(--pz-mist-d) 50% 100%);
+  border-radius: 3px;
+}
+.bz-sp-mini.bz-sp-prev-pomo-sand {
+  background:
+    radial-gradient(circle at 50% 50%, var(--pz-sand-a) 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, var(--pz-sand-l) 0 50%, var(--pz-sand-d) 50% 100%);
+  border-radius: 3px;
+}
+.bz-sp-mini.bz-sp-prev-pomo-citrus {
+  background:
+    radial-gradient(circle at 50% 50%, var(--pz-citrus-a) 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, var(--pz-citrus-l) 0 50%, var(--pz-citrus-d) 50% 100%);
+  border-radius: 3px;
+}
+.bz-sp-mini.bz-sp-prev-pomo-sakura {
+  background:
+    radial-gradient(circle at 50% 50%, var(--pz-sakura-a) 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, var(--pz-sakura-l) 0 50%, var(--pz-sakura-d) 50% 100%);
+  border-radius: 3px;
+}
+.bz-sp-mini.bz-sp-prev-pomo-latte {
+  background:
+    radial-gradient(circle at 50% 50%, var(--pz-latte-a) 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, var(--pz-latte-l) 0 50%, var(--pz-latte-d) 50% 100%);
+  border-radius: 3px;
+}
+.bz-sp-mini.bz-sp-prev-pomo-night {
+  background:
+    radial-gradient(circle at 50% 50%, var(--pz-night-a) 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, var(--pz-night-l) 0 50%, var(--pz-night-d) 50% 100%);
+  border-radius: 3px;
+}
+
 /* 保险库·钢灰 */
 .bz-sp-mini.bz-sp-prev-steel {
   background:
@@ -12325,20 +12386,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border-radius: 3px;
 }
 
-/* ═══════════ 滚动条全隐藏（面板作用域内） ═══════════ */
-.bz-sp-desk *,
-.bz-sp-mobile *,
-.bz-sp-mobile * {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.bz-sp-desk *::-webkit-scrollbar,
-.bz-sp-mobile *::-webkit-scrollbar,
-.bz-sp-mobile *::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-}
+/* 滚动条隐藏由 core 界面级单源规则接管（ADR-0122 / issue 277），
+   原面板作用域（.bz-sp-desk / .bz-sp-mobile）域内声明已删 */
 
 /* ═══════════ 桌面壳（几何 !important 压 createOverlay 内联尺寸） ═══════════ */
 .bz-sp-desk {
@@ -13785,8 +13834,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--midnight .rail-brand{padding:0 18px 14px}
 .bz-cinema--midnight .rail-brand h1{font-family:"Noto Serif SC",SimSun,serif;font-size:24px;letter-spacing:.35em;font-weight:700;color:var(--ink)}
 .bz-cinema--midnight .rail-brand .en{font-size:9.5px;letter-spacing:.42em;color:var(--gold);margin-top:var(--bz-space-xs)}
-.bz-cinema--midnight .rail-sec{padding:10px 10px var(--bz-space-xs);flex:1;overflow:hidden auto;scrollbar-width:none}
-.bz-cinema--midnight .rail-sec::-webkit-scrollbar{display:none}
+.bz-cinema--midnight .rail-sec{padding:10px 10px var(--bz-space-xs);flex:1;overflow:hidden auto}
 .bz-cinema--midnight .rail-label{font-size:10.5px;letter-spacing:.3em;color:var(--ink-3);padding:0 var(--bz-space-sm) 6px}
 /* 通栏按钮（rail-item / cn-menu-item / cn-sheet-item）必须显式 justify-content:flex-start：
    宿主 app.css 的裸 button 基线是 display:inline-flex + justify-content:center，本类只把
@@ -13814,8 +13862,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--midnight .seg{display:flex;background:var(--chip);border-radius:var(--bz-radius-sm);padding:2px;flex:none}
 .bz-cinema--midnight .seg button{border:0;background:none;padding:5px 11px;font-size:11.5px;border-radius:6px;color:var(--ink-2);cursor:pointer;font-family:inherit;white-space:nowrap}
 .bz-cinema--midnight .seg button.is-on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 3px #0002}
-.bz-cinema--midnight .d-scroll{flex:1;overflow-y:auto;padding:2px 20px 20px;scrollbar-width:none}
-.bz-cinema--midnight .d-scroll::-webkit-scrollbar{display:none}
+.bz-cinema--midnight .d-scroll{flex:1;overflow-y:auto;padding:2px 20px 20px}
 .bz-cinema--midnight .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:15px 14px}
 .bz-cinema--midnight .pcard{cursor:pointer;min-width:0}
 .bz-cinema--midnight .pw{position:relative;aspect-ratio:2/3;border-radius:9px;overflow:hidden;background:var(--chip);border:1px solid var(--line);transition:transform .18s,box-shadow .18s,border-color .18s}
@@ -13855,23 +13902,20 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--midnight .m-head .add{flex:none;width:30px;height:30px;padding:0 !important;border-radius:10px;background:var(--gold);color:#fff;border:0;display:grid;place-items:center;cursor:pointer}
 .bz-cinema--midnight .m-head .add svg{width:16px;height:16px}
 .bz-cinema--midnight .m-head .add .bz-ic{width:16px;height:16px}
-.bz-cinema--midnight .m-chips{flex:none;display:flex;gap:7px;overflow-x:auto;padding:var(--bz-space-xs) var(--bz-space-lg) 10px;scrollbar-width:none}
-.bz-cinema--midnight .m-chips::-webkit-scrollbar{display:none}
+.bz-cinema--midnight .m-chips{flex:none;display:flex;gap:7px;overflow-x:auto;padding:var(--bz-space-xs) var(--bz-space-lg) 10px}
 .bz-cinema--midnight .chip{flex:none;font-size:11.5px;padding:6px var(--bz-space-md);border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);cursor:pointer;white-space:nowrap;font-family:inherit;display:flex;align-items:center;gap:5px}
 .bz-cinema--midnight .chip svg{width:11px;height:11px}
 .bz-cinema--midnight .chip.is-on{background:var(--gold);border-color:var(--gold);color:#fff;font-weight:600}
 .bz-cinema--midnight .m-search{flex:none;margin:0 var(--bz-space-lg) 10px;display:flex;align-items:center;gap:var(--bz-space-sm);border:1px solid var(--line);border-radius:9px;padding:7px var(--bz-space-md);color:var(--ink-3)}
 .bz-cinema--midnight .m-search svg{width:13px;height:13px}
 .bz-cinema--midnight .m-search input{flex:1;border:0;background:none;outline:none;font-size:12.5px;color:var(--ink);font-family:inherit}
-.bz-cinema--midnight .m-scroll{flex:1;overflow-y:auto;padding:2px var(--bz-space-lg) 18px;scrollbar-width:none}
-.bz-cinema--midnight .m-scroll::-webkit-scrollbar{display:none}
+.bz-cinema--midnight .m-scroll{flex:1;overflow-y:auto;padding:2px var(--bz-space-lg) 18px}
 .bz-cinema--midnight .m-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px var(--bz-space-md)}
 
 /* ---------- 午夜场 · 弹窗与子页面（完整功能版；视觉语言延续探索稿：纸白/金/衬线） ---------- */
 /* 覆盖层：absolute 挂在面板根内（桌面 900×620 与移动 .mob 各自 contained） */
 .bz-cinema--midnight .cn-ovl{position:absolute;inset:0;z-index:50;background:rgba(20,16,8,.45);display:flex;align-items:center;justify-content:center;padding:20px}
-.bz-cinema--midnight .cn-modal{background:var(--panel);border:1px solid var(--line);border-radius:var(--bz-radius-md);box-shadow:0 18px 48px #0005,0 2px 10px #0003;padding:18px 20px;max-width:min(430px,100%);max-height:100%;overflow-y:auto;scrollbar-width:none;position:relative}
-.bz-cinema--midnight .cn-modal::-webkit-scrollbar{display:none}
+.bz-cinema--midnight .cn-modal{background:var(--panel);border:1px solid var(--line);border-radius:var(--bz-radius-md);box-shadow:0 18px 48px #0005,0 2px 10px #0003;padding:18px 20px;max-width:min(430px,100%);max-height:100%;overflow-y:auto;position:relative}
 .bz-cinema--midnight .cn-modal-title{font-family:"Noto Serif SC",SimSun,serif;font-size:var(--bz-font-title);font-weight:700;letter-spacing:.08em;color:var(--ink);margin-bottom:var(--bz-space-md);padding-right:var(--bz-space-xl)}
 /* 详情弹窗 */
 .bz-cinema--midnight .dm-head{display:flex;gap:14px;align-items:flex-start}
@@ -13954,8 +13998,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--midnight .sp-back svg{width:13px;height:13px}
 .bz-cinema--midnight .sp-title{font-family:"Noto Serif SC",SimSun,serif;font-size:18px;font-weight:700;letter-spacing:.1em;color:var(--ink)}
 .bz-cinema--midnight .sp-cnt{font-size:var(--bz-font-meta);color:var(--ink-3)}
-.bz-cinema--midnight .sp-body{flex:1;overflow-y:auto;padding:14px 20px 20px;scrollbar-width:none}
-.bz-cinema--midnight .sp-body::-webkit-scrollbar{display:none}
+.bz-cinema--midnight .sp-body{flex:1;overflow-y:auto;padding:14px 20px 20px}
 /* AI 荐片页 */
 .bz-cinema--midnight .ai-pref{font-size:11.5px;color:var(--ink-3);margin-bottom:14px;letter-spacing:.04em}
 .bz-cinema--midnight .ai-pref b{color:var(--ink-2);font-weight:600}
@@ -14044,8 +14087,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--gazette .gaz-bar .search svg{width:13px;height:13px}
 .bz-cinema--gazette .gaz-bar .search input{border:0;background:none;outline:none;width:120px;font-size:var(--bz-font-meta);color:var(--ink);font-family:inherit}
 .bz-cinema--gazette .gaz-body{flex:1;display:flex;min-height:0}
-.bz-cinema--gazette .feature{width:472px;flex:none;padding:20px 22px 20px 26px;overflow-y:auto;scrollbar-width:none}
-.bz-cinema--gazette .feature::-webkit-scrollbar{display:none}
+.bz-cinema--gazette .feature{width:472px;flex:none;padding:20px 22px 20px 26px;overflow-y:auto}
 .bz-cinema--gazette .f-kicker{font-size:10.5px;letter-spacing:.4em;color:var(--red);font-weight:700;display:flex;align-items:center;gap:10px}
 .bz-cinema--gazette .f-kicker::after{content:"";flex:1;height:1px;background:var(--line)}
 .bz-cinema--gazette .f-card{display:flex;gap:var(--bz-space-lg);margin-top:14px}
@@ -14061,8 +14103,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--gazette .f-quote{margin-top:var(--bz-space-md);font-family:"Noto Serif SC",SimSun,serif;font-size:13.5px;line-height:1.95;color:var(--ink-2);border-left:3px solid var(--red);padding-left:var(--bz-space-md);text-align:justify}
 .bz-cinema--gazette .f-quote::before{content:"「";color:var(--red)}
 .bz-cinema--gazette .f-quote::after{content:"」";color:var(--red)}
-.bz-cinema--gazette .bill{flex:1;min-width:0;border-left:1px solid var(--line);padding:20px var(--bz-space-xl) 18px;overflow-y:auto;scrollbar-width:none}
-.bz-cinema--gazette .bill::-webkit-scrollbar{display:none}
+.bz-cinema--gazette .bill{flex:1;min-width:0;border-left:1px solid var(--line);padding:20px var(--bz-space-xl) 18px;overflow-y:auto}
 .bz-cinema--gazette .b-kicker{font-size:10.5px;letter-spacing:.4em;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:10px}
 .bz-cinema--gazette .b-kicker::after{content:"";flex:1;height:1px;background:var(--line)}
 .bz-cinema--gazette .b-row{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px dashed var(--line);cursor:pointer}
@@ -14084,15 +14125,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--gazette .m-gaz h1{font-family:"Noto Serif SC",SimSun,serif;font-size:var(--bz-font-display);font-weight:900;letter-spacing:.22em}
 .bz-cinema--gazette .m-gaz .en{font-size:8.5px;letter-spacing:.3em;color:var(--red);font-weight:700}
 .bz-cinema--gazette .m-gaz .issue{margin-left:auto;font-size:9.5px;color:var(--ink-3)}
-.bz-cinema--gazette .m-bar{display:flex;gap:0;overflow-x:auto;margin-top:10px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);scrollbar-width:none}
-.bz-cinema--gazette .m-bar::-webkit-scrollbar{display:none}
+.bz-cinema--gazette .m-bar{display:flex;gap:0;overflow-x:auto;margin-top:10px;border-top:2px solid var(--ink);border-bottom:1px solid var(--line)}
 .bz-cinema--gazette .m-bar .tab{flex:none;padding:var(--bz-space-sm) var(--bz-space-md);font-size:var(--bz-font-meta)}
 .bz-cinema--gazette .m-bar .tab.is-on::after{left:8px;right:8px}
 .bz-cinema--gazette .m-search{flex:none;margin:10px 18px 0;display:flex;align-items:center;gap:var(--bz-space-sm);color:var(--ink-3);border-bottom:1px solid var(--line);padding:2px 2px 6px}
 .bz-cinema--gazette .m-search svg{width:12px;height:12px}
 .bz-cinema--gazette .m-search input{flex:1;min-width:0;border:0;background:none;outline:none;font-size:var(--bz-font-meta);color:var(--ink);font-family:inherit}
-.bz-cinema--gazette .m-scroll{flex:1;overflow-y:auto;padding:14px 18px 18px;scrollbar-width:none}
-.bz-cinema--gazette .m-scroll::-webkit-scrollbar{display:none}
+.bz-cinema--gazette .m-scroll{flex:1;overflow-y:auto;padding:14px 18px 18px}
 .bz-cinema--gazette .m-feature .f-poster{width:100%;aspect-ratio:16/10}
 .bz-cinema--gazette .m-feature .f-poster img{object-fit:cover}
 .bz-cinema--gazette .m-feature{padding-bottom:14px;border-bottom:2.5px solid var(--ink)}
@@ -14130,8 +14169,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--booth .rail-brand{padding:0 var(--bz-space-lg) 10px;font-family:"Courier New",monospace}
 .bz-cinema--booth .rail-brand h1{font-size:var(--bz-font-emphasis);letter-spacing:.3em;color:var(--ink)}
 .bz-cinema--booth .rail-brand .en{font-size:9.5px;letter-spacing:.28em;color:var(--amber);margin-top:2px}
-.bz-cinema--booth .rail-sec{flex:1;overflow:hidden auto;scrollbar-width:none;padding:2px 10px}
-.bz-cinema--booth .rail-sec::-webkit-scrollbar{display:none}
+.bz-cinema--booth .rail-sec{flex:1;overflow:hidden auto;padding:2px 10px}
 .bz-cinema--booth .rail-label{font-size:9.5px;letter-spacing:.32em;color:var(--ink-3);padding:var(--bz-space-sm) 6px 5px;font-family:"Courier New",monospace}
 .bz-cinema--booth .rail-item{display:flex;align-items:center;justify-content:flex-start;gap:var(--bz-space-sm);width:100%;padding:6.5px var(--bz-space-sm);border:0;background:none;border-radius:var(--bz-radius-xs);cursor:pointer;font-size:12.5px;color:var(--ink-2);font-family:inherit;text-align:left}
 .bz-cinema--booth .rail-item:hover{color:var(--ink)}
@@ -14142,8 +14180,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--booth .rail-foot .rail-item{font-size:var(--bz-font-meta)}
 .bz-cinema--booth .rail-foot svg{width:13px;height:13px;color:var(--amber)}
 /* 胶片仓：孔列属胶片本体，随内容滚动 */
-.bz-cinema--booth .d-scroll{flex:1;overflow-y:auto;scrollbar-width:none}
-.bz-cinema--booth .d-scroll::-webkit-scrollbar{display:none}
+.bz-cinema--booth .d-scroll{flex:1;overflow-y:auto}
 .bz-cinema--booth .film{position:relative;padding:14px 34px 22px;margin:0 var(--bz-space-sm)}
 .bz-cinema--booth .film::before,.bz-cinema--booth .film::after{content:"";position:absolute;top:0;bottom:0;width:15px;
   background-image:radial-gradient(circle at center,var(--hole) 2.6px,transparent 3.2px);background-size:15px 17px;background-position:center top}
@@ -14169,15 +14206,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--booth .m-clap .row .n{font-size:var(--bz-font-caption);color:var(--ink-3);font-family:"Courier New",monospace}
 .bz-cinema--booth .m-clap .row .add{margin-left:auto;width:28px;height:28px;border-radius:7px;background:var(--amber);color:#fff;border:0;display:grid;place-items:center}
 .bz-cinema--booth .m-clap .row .add svg{width:13px;height:13px}
-.bz-cinema--booth .m-chips{flex:none;display:flex;gap:6px;overflow-x:auto;padding:10px 14px;scrollbar-width:none}
-.bz-cinema--booth .m-chips::-webkit-scrollbar{display:none}
+.bz-cinema--booth .m-chips{flex:none;display:flex;gap:6px;overflow-x:auto;padding:10px 14px}
 .bz-cinema--booth .chip{flex:none;font-size:var(--bz-font-caption);padding:5px 11px;border-radius:var(--bz-radius-xs);border:1px solid var(--line);background:var(--frame);color:var(--ink-2);cursor:pointer;font-family:inherit}
 .bz-cinema--booth .chip.is-on{background:var(--chalk);border-color:var(--chalk);color:var(--room);font-weight:700}
 .bz-cinema--booth .m-search{flex:none;margin:0 14px 10px;display:flex;align-items:center;gap:var(--bz-space-sm);border:1px solid var(--line);border-radius:6px;padding:7px var(--bz-space-md);color:var(--ink-3);background:var(--frame)}
 .bz-cinema--booth .m-search svg{width:13px;height:13px}
 .bz-cinema--booth .m-search input{flex:1;min-width:0;border:0;background:none;outline:none;font-size:12.5px;color:var(--ink);font-family:inherit}
-.bz-cinema--booth .m-scroll{flex:1;overflow-y:auto;scrollbar-width:none}
-.bz-cinema--booth .m-scroll::-webkit-scrollbar{display:none}
+.bz-cinema--booth .m-scroll{flex:1;overflow-y:auto}
 
 /* ====================================================================
    落域适配段（issue 236 / ADR-0103；插件专用，原型不出）
@@ -14391,8 +14426,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 
 /* ==================== 借书卡详情（纸卡 + 台账 + 印章；编辑控件融卡内） ==================== */
-.bz-bs-d-popup.bz-overlay-popup { max-width: min(660px, calc(100vw - 32px)); height: min(72vh, 600px); background: var(--bsw-paper); border: 1px solid var(--bsw-line); scrollbar-width: none; overflow: hidden; }
-.bz-bs-d-popup.bz-overlay-popup::-webkit-scrollbar { display: none; }
+.bz-bs-d-popup.bz-overlay-popup { max-width: min(660px, calc(100vw - 32px)); height: min(72vh, 600px); background: var(--bsw-paper); border: 1px solid var(--bsw-line); overflow: hidden; }
 /* 固定高：卡不随书评拉长，内容多寡只影响内部滚动区的可滚量 */
 .bz-bs-d-popup .bz-dialog-body { flex: 1; min-height: 0; }
 .bz-bs-detail { position: relative; display: flex; flex: 1; min-height: 0; color: var(--bsw-ink); font-family: var(--bsw-sans); }
@@ -14421,8 +14455,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-bs-d-cover-ph .bz-ic { width: 26px; height: 26px; opacity: 0.6; }
 .bz-bs-d-info { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 /* 标题/作者固定（flex none），书评 + 台账 + 进度收进内部滚动区 */
-.bz-bs-d-body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; }
-.bz-bs-d-body::-webkit-scrollbar { display: none; }
+.bz-bs-d-body { flex: 1; min-height: 0; overflow-y: auto; }
 .bz-bs-d-title { font-family: var(--bsw-serif); font-size: 23px; letter-spacing: 2px; color: var(--bsw-ink); }
 .bz-bs-d-sub { font-size: var(--bz-font-label); color: var(--bsw-muted); margin: var(--bz-space-xs) 0 var(--bz-space-md); }
 .bz-bs-d-quote {
@@ -14774,11 +14807,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   }
   .bz-bs-header {
     padding: var(--bz-space-md) 14px var(--bz-space-xs); gap: var(--bz-space-sm); flex-wrap: nowrap; align-items: center;
-    overflow-x: auto; scrollbar-width: none;
+    overflow-x: auto; /* 滚动条隐藏由 core 界面级单源规则接管（ADR-0122 / issue 277） */
     /* 避让刘海/状态栏（=core .bz-panel-mtop 同档 44px；墙纸借此连纹理铺到面板顶边） */
     margin-top: max(44px, env(safe-area-inset-top, 0px));
   }
-  .bz-bs-header::-webkit-scrollbar { display: none; }
   .bz-bs-labels, .bz-bs-cats { display: contents; }
   .bz-bs-plaque { padding: 5px var(--bz-space-md); border-width: 2px; flex: none; cursor: pointer; }
   .bz-bs-plaque:active { transform: translateY(1px); }
@@ -15805,7 +15837,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  scrollbar-width: thin;
 }
 
 .bz-kb-pd { padding: 14px 26px 20px; }
@@ -15958,7 +15989,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   min-height: 0;
   overflow-y: auto;
   padding: var(--bz-space-md) 18px 18px;
-  scrollbar-width: thin;
 }
 
 .bz-kb-paras p {
@@ -16174,7 +16204,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   min-height: 0;
   overflow-y: auto;
   padding: 10px 18px var(--bz-space-lg);
-  scrollbar-width: thin;
 }
 
 .bz-kb-banner {
@@ -16575,10 +16604,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 .bz-sb-scroll-y {
   overflow-y: auto;
-  scrollbar-width: none;
-}
-.bz-sb-scroll-y::-webkit-scrollbar {
-  display: none;
 }
 /* 头部功能钮隐藏态（主面板引导/进度期收起，切回内容态恢复） */
 .bz-sb-btn-hidden {
@@ -17013,11 +17038,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   flex: 1;
   min-height: 0;
   overflow: auto;
-  scrollbar-width: none;
   padding-right: 2px;
-}
-.bz-sb-recent::-webkit-scrollbar {
-  display: none;
 }
 .bz-sb-recent-row {
   display: flex;
@@ -17076,10 +17097,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   line-height: 1.75;
   color: #4a4438;
   overflow: auto;
-  scrollbar-width: none;
-}
-.bz-sb-ai-txt::-webkit-scrollbar {
-  display: none;
 }
 .bz-sb-ai-when {
   font-size: 10px;
@@ -17218,12 +17235,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   }
   .bz-sb-panel-content {
     overflow-y: auto;
-    scrollbar-width: none;
     /* 底部操作行 absolute 出血定底（不占流），留出等高内边距防末尾内容被盖 */
     padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
-  }
-  .bz-sb-panel-content::-webkit-scrollbar {
-    display: none;
   }
   /* 头行精简：索引健康签 + 副题小字（ADR-0114 迭代） */
   .bz-sb-panel .bz-sb-pill,
@@ -17313,14 +17326,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  scrollbar-width: none;
   padding: var(--bz-space-lg) var(--bz-space-xl) var(--bz-space-sm);
   display: flex;
   flex-direction: column;
   gap: 13px;
-}
-.bz-sb-chat-modal .bz-sb-chat-messages::-webkit-scrollbar {
-  display: none;
 }
 .bz-sb-chat-msg {
   display: flex;
@@ -17688,10 +17697,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 .bz-sb-ref-list {
   padding: 9px;
-  scrollbar-width: none;
-}
-.bz-sb-ref-list::-webkit-scrollbar {
-  display: none;
 }
 .bz-sb-ref-empty {
   padding: 26px var(--bz-space-lg);
@@ -17793,10 +17798,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-sb-ref-card--float .bz-sb-ref-card-body {
   max-height: none;
   overflow: auto;
-  scrollbar-width: none;
-}
-.bz-sb-ref-card--float .bz-sb-ref-card-body::-webkit-scrollbar {
-  display: none;
 }
 .bz-sb-ref-dense .bz-sb-ref-card:not(.bz-sb-ref-card--float) .bz-sb-ref-card-body {
   display: none;
@@ -17834,10 +17835,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   color: var(--sb-ink2);
   max-height: 300px;
   overflow: auto;
-  scrollbar-width: none;
-}
-.bz-sb-ref-preview-body::-webkit-scrollbar {
-  display: none;
 }
 .bz-sb-ref-preview-body p {
   margin: 0 0 6px;
