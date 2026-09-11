@@ -246,6 +246,41 @@ describe('cinema runAIRecommend（页内化：等待 → 结果列表 / 失败�
     expect(M.aiResult).toBeNull();
     expect(M.aiError).toContain('没有凑齐');
   });
+
+  it('补扫 B 回归：补问往返期间 aiRunning 保持 true（不回落待机、重入守卫拦第二次 AI、结果不被覆盖）', async () => {
+    // 旧实现首轮解析完就翻 aiRunning=false 再 await refine——补问往返落在
+    // 「running=false/result=null/error=null」三空态：AI 页整页回落 guide、「开始」可点、
+    // 重入守卫失效可触发第二次并发 AI（双倍 token）、两轮结果互相覆盖
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'test-key' }));
+    resetAIProviderCache();
+    setApp(M.appRef as any);
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('no net')));
+    const { requestUrl } = await import('obsidian');
+    (requestUrl as any).mockClear();
+    // 首轮只给 1 条库外新片（不足 5 → 必进补问轮）；补问轮请求挂起在 gate 上
+    (requestUrl as any)
+      .mockResolvedValueOnce({ status: 200, text: JSON.stringify({ choices: [{ message: { content: '{"recommendations":[{"title":"N1"}]}' } }] }) });
+    let releaseFollowup!: (v: any) => void;
+    const gate = new Promise<any>((r) => { releaseFollowup = r; });
+    (requestUrl as any).mockReturnValueOnce(gate);
+
+    const p = runAIRecommend(M.appRef as any);
+    // 等补问轮发起（refine 已置补充等待文案）
+    await vi.waitFor(() => expect(M.aiWaitMsg).toContain('补充推荐'));
+    // 补问往返期间：仍在运行态（AI 页等待分支继续渲染，不回落待机 guide）
+    expect(M.aiRunning).toBe(true);
+    expect(M.aiResult).toBeNull();
+    expect(M.aiError).toBeNull();
+    // 重入守卫仍生效：此时再点「开始推荐」直接 return，不发第三发 AI 请求
+    await runAIRecommend(M.appRef as any);
+    expect(requestUrl).toHaveBeenCalledTimes(2);
+
+    releaseFollowup({ status: 200, text: JSON.stringify({ choices: [{ message: { content: '{"recommendations":[{"title":"N5"}]}' } }] }) });
+    await p;
+    expect(M.aiRunning).toBe(false);
+    expect(M.aiResult?.map((r: any) => r.title)).toEqual(['N1', 'N5']);
+    expect(M.aiError).toBeNull();
+  });
 });
 
 describe('cinema 找同类（ADR-0087 迁入 runSimilarRecommend/buildSimilarPrompt）', () => {

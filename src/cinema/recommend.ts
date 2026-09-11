@@ -243,8 +243,12 @@ async function runAIPage(app: App, opts: AIPageOpts): Promise<void> {
       M.renderFn?.();
       return;
     }
-    M.aiRunning = false;
+    // B（补扫 cinema P2）：refine（荐片补问轮，含第二次 AI 往返）期间保持 aiRunning=true——
+    // 提前翻 false 会落在「aiRunning=false/aiResult=null/aiError=null」的三空态上：AI 页整页
+    // 回落待机 guide、「开始推荐」重新可点、重入守卫失效（可触发第二次并发 AI 双倍 token、
+    // 两轮结果互相覆盖）。翻 false 推迟到 refine 结束、结果/错误落定之后
     const final = opts.refine ? await opts.refine(parsed) : parsed;
+    M.aiRunning = false;
     if (!final.length) {
       M.aiError = '没有凑齐可推荐的库外新片，换一批再试';
       M.renderFn?.();
