@@ -1,4 +1,4 @@
-/* 源指纹 7ed2aad93399a48e · 仓内输入 21 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 eaba0ac9660ebef2 · 仓内输入 21 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -5770,11 +5770,20 @@ var BZW_knowledge = (() => {
     if (first) first.focus();
     attachItemKeyboardNav(host, scope);
   }
-  function openItemMenu(x, y, actions, suppressResidualClick = false, menuClass) {
+  function openItemMenu(x, y, actions, suppressResidualClick = false, menuClass, menuHeadHtml) {
     closeItemMenu();
     const m = document.createElement("div");
     m.className = "bz-item-menu" + (menuClass ? " " + menuClass : "");
     m.style.visibility = "hidden";
+    if (menuHeadHtml) {
+      const head = document.createElement("div");
+      head.className = "bz-item-menu-head";
+      head.innerHTML = menuHeadHtml;
+      m.appendChild(head);
+      const sep = document.createElement("div");
+      sep.className = "bz-item-menu-sep";
+      m.appendChild(sep);
+    }
     for (const a of actions) {
       const item = document.createElement("button");
       item.type = "button";
@@ -5960,7 +5969,7 @@ var BZW_knowledge = (() => {
       if (isMobileEnv()) return;
       if ((opts == null ? void 0 : opts.longPressFilter) && !opts.longPressFilter(e)) return;
       e.preventDefault();
-      openItemMenu(e.clientX, e.clientY, actions, true, opts == null ? void 0 : opts.menuClass);
+      openItemMenu(e.clientX, e.clientY, actions, true, opts == null ? void 0 : opts.menuClass, opts == null ? void 0 : opts.menuHeadHtml);
       suppressNextClick = false;
     });
     longPress(

@@ -69,14 +69,13 @@ const SEED_SETTINGS: Record<string, unknown> = {
   // 联动过滤，布局键不设则主题单卡被滤空（同 diarySkin 口径），评审壳必须给种子才看得到「米白」
   homeLayout: 'default',
   homeSkin: 'cream',
-  // 首页时间线（issue 287，2026-09-11）：与 src/settings.ts DEFAULT **三处同值**
+  // 首页时间线（issue 287/288，2026-09-11）：与 src/settings.ts DEFAULT **三处同值**
   // （缺任一个，评审壳里的 select/toggle 会渲染成未选中态，自检断言全红）
   homeTimelineSize: 'normal',
-  homeTimelineRange: 'today',
+  homeTimelineRange: 'week',
   homeTimelineProduce: true,
   homeTimelineProgress: true,
   homeTimelineNotes: true,
-  homeTimelineSkipped: false,
   homeDefaultDay: 'today',
   homeTimelineTime: true,
   homeNextCards: true,

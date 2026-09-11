@@ -263,15 +263,14 @@
         const homeNav = await waitFor(() => dt('.bz-sp-nav-item[data-sp-domain="home"]'));
         t('设置导航出现「首页」域', !!homeNav && homeNav.textContent.indexOf('首页') >= 0);
         if (homeNav) homeNav.click();
-        // 首页域现在是三组（外观/时间线/入口）—— 先等组就绪，否则下面的 select/toggle 查询拿到 0 个
-        await waitPaneGroups(3);
+        // 首页域现在是五组（外观/时间线/内容过滤/预告栏/入口）—— 先等组就绪，否则下面的 select/toggle 查询拿到 0 个
+        await waitPaneGroups(5);
         // 内联列表在 loadHomeOrder 完成后才填 —— 必须等行就绪再断言
         const entRows = await waitFor(() => dtAll('[data-ent-list] [data-ent-row]').length === 14);
         t('首页域内联出入口列表（14 域默认顺序）', !!entRows);
-        // 组序（2026-09-10 拍板）：外观（与其他域同范式，issue 246）在上、入口在下；
-        // 2026-09-11 issue 287 在中间插入「时间线」组 → 外观 → 时间线 → 入口
+        // 组序（issue 288，2026-09-11 用户拍板拆细分组）：外观 → 时间线 → 内容过滤 → 预告栏 → 入口
         const homeGroupOrder = dtAll('.bz-sp-pane .bz-sp-group-name').map((e) => e.textContent).join('>');
-        t('首页域组序=外观 → 时间线 → 入口', homeGroupOrder === '外观>时间线>入口');
+        t('首页域组序=外观 → 时间线 → 内容过滤 → 预告栏 → 入口', homeGroupOrder === '外观>时间线>内容过滤>预告栏>入口');
         const homePicks = () => dtAll('.bz-sp-pane .bz-sp-cardpick');
         await waitFor(() => homePicks().length === 2 && homePicks().every((p) => p.querySelectorAll('.bz-sp-cardpick-card').length === 1));
         t('外观组两卡组（布局+主题 各一档）', homePicks().length === 2);
@@ -282,7 +281,7 @@
         t('两卡按种子值选中（homeLayout/homeSkin）', homePicks()[0].querySelector('.bz-sp-cardpick-card').classList.contains('is-on') &&
           homePicks()[1].querySelector('.bz-sp-cardpick-card').classList.contains('is-on'));
 
-        /* ---------- 首页「时间线」组（issue 287，2026-09-11 用户点名六项） ---------- */
+        /* ---------- 首页「时间线 / 内容过滤 / 预告栏」三组（issue 287，2026-09-11 用户点名六项 + issue 288 拆组去「已跳过」） ---------- */
         // 行控件是**面板自绘组件**（不是原生 select/checkbox）：
         //   select 行 → .bz-sp-set-ctrl > .bz-select（当前值在 .bz-select-val 文本里）
         //   toggle 行 → .bz-sp-set-ctrl > button.bz-sw（开 = 带 .on 且 aria-checked=true）
@@ -290,30 +289,47 @@
         // **必须在 waitPaneGroups 之后取**：行是异步渲染的（issue 287 首次自检踩到）。
         const homePane = () => dt('.bz-sp-pane');
         const tlRow = (key) => homePane().querySelector(`.bz-sp-set-row[data-key="${key}"]`);
-        await waitFor(() => tlRow('homeTimelineSize') && tlRow('homeTimelineSkipped'));
+        await waitFor(() => tlRow('homeTimelineSize') && tlRow('homeTimelineTime'));
         const tlSelectText = (key) => tlRow(key)?.querySelector('.bz-select-val')?.textContent || '';
         const tlOn = (key) => {
           const b = tlRow(key)?.querySelector('button.bz-sw');
           return !!b && b.classList.contains('on') && b.getAttribute('aria-checked') === 'true';
         };
-        t('时间线组：三个 select 行在场且按种子取当前值（字号=标准 / 时间范围=当天 / 默认打开日=今天）',
+        t('时间线组：两个 select 行在场且按种子取当前值（字号=标准 / 时间范围=本周 / 默认打开日=今天）',
           tlSelectText('homeTimelineSize') === '标准' &&
-          tlSelectText('homeTimelineRange') === '当天' &&
+          tlSelectText('homeTimelineRange') === '本周' &&
           tlSelectText('homeDefaultDay') === '今天');
-        t('时间线组：四个 toggle 行在场，前三开、已跳过关',
-          tlOn('homeTimelineProduce') && tlOn('homeTimelineProgress') &&
-          tlOn('homeTimelineNotes') && tlOn('homeTimelineSkipped') === false);
-        t('时间线组：行文案在场（产出 / 状态推进 / 点评 ✦ / 已跳过 / 显示时刻列 / 明天预告卡）', (() => {
-          const txt = homePane().textContent;
-          return ['状态推进', '已跳过', '显示时刻列', '明天预告卡'].every((s) => txt.indexOf(s) >= 0);
+        t('时间线组：显示时刻列开关在场且按种子取当前值（开）', tlOn('homeTimelineTime'));
+        t('内容过滤组：三个 toggle 行在场且按种子取当前值（产出/状态推进/点评 ✦ 全开）',
+          tlOn('homeTimelineProduce') && tlOn('homeTimelineProgress') && tlOn('homeTimelineNotes'));
+        t('预告栏组：明天预告卡开关在场且按种子取当前值（开）', tlOn('homeNextCards'));
+        // 组归属：时间线组里不该再有「产出/已跳过」，内容过滤组里不该有「字号」
+        t('组归属正确（时间线=字号/范围/默认日/时刻列；内容过滤=产出/推进/点评；预告栏=预告卡）', (() => {
+          const groups = dtAll('.bz-sp-pane .bz-sp-group');
+          const byName = (n) => groups.find((g) => g.querySelector('.bz-sp-group-name')?.textContent === n);
+          const keysOf = (g) => [...g.querySelectorAll('.bz-sp-set-row[data-key]')].map((r) => r.dataset.key);
+          const tl = keysOf(byName('时间线'));
+          const ct = keysOf(byName('内容过滤'));
+          const pr = keysOf(byName('预告栏'));
+          return tl.join(',') === 'homeTimelineSize,homeTimelineRange,homeDefaultDay,homeTimelineTime'
+            && ct.join(',') === 'homeTimelineProduce,homeTimelineProgress,homeTimelineNotes'
+            && pr.join(',') === 'homeNextCards';
+        })());
+        t('「已跳过」toggle 已退役（面板内不再有此行）', !tlRow('homeTimelineSkipped') &&
+          homePane().textContent.indexOf('已跳过') < 0);
+        // 组头图标必须全部兑现（prototype-icons.js 是手写白名单，漏一个就静默空一块）
+        t('首页五组组头图标全部兑现', (() => {
+          const heads = dtAll('.bz-sp-pane .bz-sp-group-head');
+          return heads.length >= 5 && heads.every((h) => !!h.querySelector('.bz-sp-group-icon svg'));
         })());
         // 改一个开关必须能落盘（键直绑 → saveSettings 通道）
-        t('时间线开关可切换（点「已跳过」后变开）', (() => {
-          tlRow('homeTimelineSkipped').querySelector('button.bz-sw').click();
-          return tlOn('homeTimelineSkipped');
+        t('时间线开关可切换（点「显示时刻列」后变关）', (() => {
+          tlRow('homeTimelineTime').querySelector('button.bz-sw').click();
+          return tlOn('homeTimelineTime') === false;
         })());
-        // 复原，别把改动带给后面段落
-        tlRow('homeTimelineSkipped').querySelector('button.bz-sw').click();
+        // 复原，别把改动带给后面段落（上面那次点击已把它关掉，再点一次回到开）
+        tlRow('homeTimelineTime').querySelector('button.bz-sw').click();
+        t('时间线开关复原为开', tlOn('homeTimelineTime'));
         t('不再有「编辑入口…」按钮（不开弹窗）', !dtAll('.bz-sp-pane button').some((b) => b.textContent.indexOf('编辑入口') >= 0));
         t('不再有浮层遮罩（弹窗形态已退役）', !dt('.bz-home-ee-mask'));
         t('不再有「已移除的域仍可从命令面板打开」提示行', dt('.bz-sp-pane').textContent.indexOf('命令面板') < 0);
@@ -338,7 +354,17 @@
           const grip = dt('[data-ent-list] [data-ent-row="settings"] .bz-home-ent-grip');
           return !!grip && getComputedStyle(grip).visibility === 'hidden';
         })());
-        t('列表提示语兑现（移除排最下面 · 点 + 加回）', dt('.bz-home-ent-hint')?.textContent.includes('移除的排到最下面') === true);
+        t('入口列表无说明小字（2026-09-11 用户拍板删除）', !dt('.bz-home-ent-hint'));
+        // 列表靠左、左边不留内边距（右边照常）：宿主 custom 行左 padding 归零 + 行左 padding 归零
+        t('入口列表贴卡片左缘（宿主行左内边距归零，右内边距保留）', (() => {
+          const row = dt('[data-ent-list] [data-ent-row]');
+          if (!row) return false;
+          const host = row.closest('.bz-sp-set-row');
+          if (!host) return false;
+          const hp = getComputedStyle(host);
+          return hp.paddingLeft === '0px' && parseFloat(hp.paddingRight) > 0
+            && getComputedStyle(row).paddingLeft === '0px';
+        })());
         t('改动即时落盘 home.json', Object.keys(localStorage).some((k) => k.indexOf('home.json') >= 0));
         t('点 + 恢复设置域', clickIf('[data-ent-restore="settings"]'));
         await sleep(160);
@@ -429,6 +455,22 @@
         const sortRow = () => dtAll('.bz-sp-pane .bz-sp-set-row').find((r) => r.querySelector('.bz-sp-set-name')?.textContent === '默认排序');
         await waitFor(() => sortRow());
         sortRow().querySelector('.bz-select').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        // 弹出层观感（2026-09-11 用户：弹出菜单廉价、不真实）——判据取「有独立底色」而不是「看起来还行」：
+        // 断言 --sp-pop 与卡片底(--sp-panel)、面板底(--sp-bg) 都不同；改回同色立刻红。
+        const selMenuNow = dtAll('.bz-select-menu')[0];
+        t('下拉弹出层有独立底色（--sp-pop != 卡片底、!= 面板底，且非透明）', (() => {
+          if (!selMenuNow) return false;
+          const cs = getComputedStyle(selMenuNow);
+          const pop = cs.getPropertyValue('--sp-pop').trim();
+          const panel = cs.getPropertyValue('--sp-panel').trim();
+          const bg = cs.getPropertyValue('--sp-bg').trim();
+          const c = cs.backgroundColor;
+          return !!pop && pop !== panel && pop !== bg && c !== 'rgba(0, 0, 0, 0)' && c !== 'transparent';
+        })());
+        t('下拉弹出层有描边（层级不完全靠阴影）', !!selMenuNow && parseFloat(getComputedStyle(selMenuNow).borderTopWidth) > 0);
+        t('下拉项行高 >=30px（不再是 6px 内距的挤行）',
+          !!selMenuNow && parseFloat(getComputedStyle(selMenuNow.querySelector('.bz-select-item')).minHeight) >= 30);
+        t('下拉弹出层无入场动画（用户要求：不要过度动效）', !!selMenuNow && getComputedStyle(selMenuNow).animationName === 'none');
         const rateOpt = await waitFor(() => dtAll('.bz-select-menu').map((m) => [...m.querySelectorAll('.bz-select-item')]).flat().find((o) => o.textContent.includes('按评分')));
         rateOpt.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         t('下拉键直绑落内存设置（cinemaSortMode=rating）', sim().cinemaSortMode === 'rating');

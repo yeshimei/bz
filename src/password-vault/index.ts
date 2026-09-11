@@ -7,6 +7,7 @@
 import type { App } from 'obsidian';
 import { getSettings } from '../core/settings-provider';
 import { notice } from '../core/notice';
+import { lockSafe } from '../encrypt';
 import { PasswordVaultAppController } from './ui';
 import { copySensitiveText } from '../core/utils';
 
@@ -51,6 +52,20 @@ export async function copyGeneratedPassword(app: App): Promise<void> {
   } catch {
     notice('密码已生成，但复制失败（剪贴板不可用）', 'warning');
   }
+}
+
+/**
+ * 锁定密码本（命令 bz-password-vault-lock，2026-09-11 首页入口菜单）：
+ * 与保险库**同一把主密码、同一个 SafeManager**（ADR-0109 同库共存），故直接复用 encrypt 的
+ * `lockSafe` —— 一步锁掉两边，本域自己的明文缓存再清一次（两个域 UI 各自实例化包装层，
+ * 保险库侧清不到本域实例）。此前只能进面板走缺省上锁路径。
+ */
+export async function lockPasswordVault(app: App): Promise<void> {
+  await ensurePasswordVault(app);
+  const ok = await lockSafe(app);
+  getController().dataManager.lock();
+  if (ok) notice('密码本已锁定', 'success');
+  else notice('密码本本来就是锁着的', 'warning');
 }
 
 /** 卸载清理（main.ts onunload 调用） */

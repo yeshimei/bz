@@ -1,4 +1,4 @@
-/* 源指纹 6674853da82e596e · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 616a3014bc90acbf · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/bookshelf/fake-sim.ts","prototypes/bookshelf/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/index.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/bookshelf/fake-sim.ts → window.BZW_bookshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_bookshelf = (() => {
@@ -4264,6 +4264,295 @@ var BZW_bookshelf = (() => {
     };
   }
 
+  // src/core/z-order.ts
+  var zCounter = 1e5;
+  var alwaysOnTop = /* @__PURE__ */ new Set();
+  function syncAlwaysOnTop() {
+    for (const el of alwaysOnTop) {
+      if (el.isConnected) el.style.zIndex = String(zCounter);
+    }
+  }
+  function allocZBlock(n) {
+    const base = ++zCounter;
+    zCounter += n - 1;
+    zCounter++;
+    syncAlwaysOnTop();
+    return base;
+  }
+  function allocZ() {
+    return allocZBlock(1);
+  }
+
+  // src/core/notice.ts
+  var MAX_VISIBLE = 5;
+  var LEAVE_MS = 200;
+  var DEDUPE_WINDOW_MS = 3e4;
+  var MOBILE_QUERY = "(max-width: 768px)";
+  var ICONS = {
+    info: "ℹ️",
+    success: "✅",
+    warning: "⚠️",
+    error: "❌",
+    pause: "⏸️",
+    accept: "✨",
+    delete: "🗑️",
+    confirm: "✓",
+    restore: "↩️",
+    skip: "🚫",
+    archive: "📁"
+  };
+  var SPINNER_SVG = '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
+  function isMobileView() {
+    return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
+  }
+  function defaultVariant() {
+    return isMobileView() ? "drop" : "slide-right";
+  }
+  var OUT_CLASS = {
+    drop: "bz-notice--out-drop",
+    pop: "bz-notice--out-pop",
+    "slide-left": "bz-notice--out-left",
+    "slide-right": "bz-notice--out-right",
+    bounce: "bz-notice--out-fade",
+    shake: "bz-notice--out-fade"
+  };
+  function defaultDuration(type) {
+    return type === "error" ? 5e3 : 3e3;
+  }
+  var PER_CHAR_MS = 60;
+  var SHORT_THRESHOLD = 20;
+  function calcDuration(text, base) {
+    const len = text.length;
+    if (len <= SHORT_THRESHOLD) return base;
+    const extra = (len - SHORT_THRESHOLD) * PER_CHAR_MS;
+    return Math.min(base + extra, 15e3);
+  }
+  function ensureContainer() {
+    let container = document.getElementById("bz-notice-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "bz-notice-container";
+      document.body.appendChild(container);
+    }
+    return container;
+  }
+  var live = [];
+  var recent = {};
+  function removeInternal(n) {
+    if (n.timer !== null) {
+      window.clearTimeout(n.timer);
+      n.timer = null;
+    }
+    const i = live.indexOf(n);
+    if (i !== -1) live.splice(i, 1);
+    if (n.el.parentNode) n.el.parentNode.removeChild(n.el);
+  }
+  function evictOldest() {
+    let quota = live.length - MAX_VISIBLE + 1;
+    for (let i = 0; quota > 0 && i < live.length; ) {
+      const candidate = live[i];
+      if (candidate.persistent) {
+        i++;
+        continue;
+      }
+      removeInternal(candidate);
+      quota--;
+    }
+  }
+  function applyTypeToEl(n, kind) {
+    const isProgressNow = kind === "progress";
+    n.el.classList.remove(
+      "bz-notice--info",
+      "bz-notice--success",
+      "bz-notice--warning",
+      "bz-notice--error",
+      "bz-notice--pause",
+      "bz-notice--accept",
+      "bz-notice--delete",
+      "bz-notice--confirm",
+      "bz-notice--restore",
+      "bz-notice--skip",
+      "bz-notice--archive",
+      "bz-notice--progress"
+    );
+    n.el.classList.add("bz-notice--" + (isProgressNow ? "progress" : kind));
+    n.iconEl.innerHTML = "";
+    if (isProgressNow) {
+      n.iconEl.innerHTML = SPINNER_SVG;
+    } else {
+      n.iconEl.textContent = ICONS[kind];
+    }
+    n.isProgress = isProgressNow;
+  }
+  function hideNow(n) {
+    if (n.timer !== null) {
+      window.clearTimeout(n.timer);
+      n.timer = null;
+    }
+    if (!n.el.classList.contains("bz-notice--leaving")) {
+      n.el.classList.add("bz-notice--leaving");
+      const out = OUT_CLASS[n.variant];
+      if (out) n.el.classList.add(out);
+      window.setTimeout(() => removeInternal(n), LEAVE_MS);
+    }
+  }
+  function armTimer(n, kind, explicitDuration, text) {
+    if (n.timer !== null) {
+      window.clearTimeout(n.timer);
+      n.timer = null;
+    }
+    n.persistent = false;
+    if (kind === "progress") {
+      if (explicitDuration !== void 0 && explicitDuration > 0) {
+        n.timer = window.setTimeout(() => hideNow(n), explicitDuration);
+      } else {
+        n.persistent = true;
+      }
+      return;
+    }
+    const base = defaultDuration(kind);
+    const dur = explicitDuration !== void 0 ? explicitDuration : text ? calcDuration(text, base) : base;
+    if (dur <= 0) {
+      n.persistent = true;
+      return;
+    }
+    n.timer = window.setTimeout(() => hideNow(n), dur);
+  }
+  function noopHandle() {
+    return {
+      el: document.createElement("div"),
+      setMessage() {
+      },
+      setProgress() {
+      },
+      setType() {
+      },
+      hide() {
+      }
+    };
+  }
+  function appendActionBtn(n, action) {
+    const btn = document.createElement("span");
+    btn.className = "bz-notice-action";
+    btn.setAttribute("role", "button");
+    btn.textContent = action.label;
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (action.onClick) action.onClick();
+      hideNow(n);
+    });
+    n.el.appendChild(btn);
+  }
+  function notify(msg, opts) {
+    const kind = opts && opts.type || "info";
+    const isProgress = kind === "progress";
+    const type = isProgress ? "info" : kind;
+    const variant = opts && opts.variant || defaultVariant();
+    const container = ensureContainer();
+    if (opts && opts.dedupeKey) {
+      const key = opts.dedupeKey;
+      const r = recent[key];
+      const now = Date.now();
+      if (r && r.n && r.n.el.isConnected) {
+        r.n.msgEl.textContent = msg;
+        if (r.n.isProgress !== isProgress || r.n.el.classList.contains("bz-notice--" + type) === false) {
+          applyTypeToEl(r.n, kind);
+        }
+        const mergeActions = [];
+        if (opts.action) mergeActions.push(opts.action);
+        if (opts.actions) mergeActions.push(...opts.actions);
+        const existingLabels = new Set(
+          Array.from(r.n.el.querySelectorAll(".bz-notice-action")).map((el2) => el2.textContent || "")
+        );
+        for (const a of mergeActions) {
+          if (!existingLabels.has(a.label)) appendActionBtn(r.n, a);
+        }
+        armTimer(r.n, kind, opts.duration, msg);
+        return noopHandle();
+      }
+      if (r && now - r.at < DEDUPE_WINDOW_MS) {
+        return noopHandle();
+      }
+      recent[key] = { at: now, n: null };
+    }
+    evictOldest();
+    const el = document.createElement("div");
+    el.className = "bz-notice bz-notice--" + (isProgress ? "progress" : type) + " bz-notice--in-" + variant;
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
+    const icon = document.createElement("div");
+    icon.className = "bz-notice-icon";
+    if (isProgress) {
+      icon.innerHTML = SPINNER_SVG;
+    } else {
+      icon.textContent = ICONS[type];
+    }
+    el.appendChild(icon);
+    const body = document.createElement("div");
+    body.className = "bz-notice-body";
+    if (opts && opts.title) {
+      const titleEl = document.createElement("div");
+      titleEl.className = "bz-notice-title";
+      titleEl.textContent = opts.title;
+      body.appendChild(titleEl);
+    }
+    const msgEl = document.createElement("div");
+    msgEl.className = "bz-notice-msg";
+    msgEl.textContent = msg;
+    body.appendChild(msgEl);
+    el.appendChild(body);
+    let progressEl = null;
+    if (isProgress) {
+      progressEl = document.createElement("div");
+      progressEl.className = "bz-notice-progress";
+      el.appendChild(progressEl);
+    }
+    const n = { el, timer: null, msgEl, progressEl, iconEl: icon, variant, isProgress, persistent: false };
+    const actions = [];
+    if (opts && opts.action) actions.push(opts.action);
+    if (opts && opts.actions) {
+      for (const a of opts.actions) {
+        if (!actions.some((x) => x.label === a.label)) actions.push(a);
+      }
+    }
+    for (const a of actions) appendActionBtn(n, a);
+    el.addEventListener("click", () => hideNow(n));
+    container.style.zIndex = String(allocZ());
+    container.appendChild(el);
+    live.push(n);
+    if (opts && opts.dedupeKey) {
+      const r = recent[opts.dedupeKey];
+      if (r) r.n = n;
+    }
+    const fullText = (opts && opts.title ? opts.title + " " : "") + msg;
+    armTimer(n, kind, opts && opts.duration, fullText);
+    return {
+      el,
+      setMessage(text) {
+        n.msgEl.textContent = text;
+      },
+      setType(t) {
+        applyTypeToEl(n, t);
+        armTimer(n, t, void 0, n.msgEl.textContent || void 0);
+      },
+      setProgress(pct) {
+        if (!n.progressEl) return;
+        if (pct === -1) {
+          n.progressEl.classList.add("bz-notice-progress--indeterminate");
+          return;
+        }
+        n.progressEl.classList.remove("bz-notice-progress--indeterminate");
+        const clamped = Math.max(0, Math.min(100, pct));
+        n.progressEl.style.width = clamped + "%";
+        if (clamped >= 100) n.progressEl.classList.add("bz-notice-progress--done");
+        else n.progressEl.classList.remove("bz-notice-progress--done");
+      },
+      hide() {
+        hideNow(n);
+      }
+    };
+  }
+
   // src/bookshelf/state.ts
   var M = {
     currentOverlay: null,
@@ -4285,36 +4574,6 @@ var BZW_bookshelf = (() => {
     if (sort === "title") M.sortMode = "title";
     else if (sort === "progress") M.sortMode = "time";
     else M.sortMode = "recent";
-  }
-
-  // src/core/utils.ts
-  var import_moment = __toESM(require_moment());
-  function escapeHtml2(str) {
-    return str.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
-  }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
-  }
-  function localDayKey(ts = Date.now()) {
-    const d = ts instanceof Date ? ts : new Date(ts);
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-  }
-  function yieldToMainThread(timeoutMs = 200) {
-    return new Promise((resolve) => {
-      if (typeof window === "undefined") {
-        resolve();
-        return;
-      }
-      const ric = window.requestIdleCallback;
-      if (typeof ric === "function") ric(() => resolve(), { timeout: timeoutMs });
-      else window.setTimeout(resolve, 0);
-    });
   }
 
   // src/bookshelf/constants.ts
@@ -4426,6 +4685,36 @@ var BZW_bookshelf = (() => {
       </div>
       <div class="bz-bs-d-seal">${seal}</div>
     </div>`;
+  }
+
+  // src/core/utils.ts
+  var import_moment = __toESM(require_moment());
+  function escapeHtml2(str) {
+    return str.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
+  }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function localDayKey(ts = Date.now()) {
+    const d = ts instanceof Date ? ts : new Date(ts);
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
+  function yieldToMainThread(timeoutMs = 200) {
+    return new Promise((resolve) => {
+      if (typeof window === "undefined") {
+        resolve();
+        return;
+      }
+      const ric = window.requestIdleCallback;
+      if (typeof ric === "function") ric(() => resolve(), { timeout: timeoutMs });
+      else window.setTimeout(resolve, 0);
+    });
   }
 
   // src/bookshelf/layouts/wall/render.ts
@@ -4923,25 +5212,6 @@ var BZW_bookshelf = (() => {
     panelEscHandles.set(id, escManager.register(id, { isVisible, close }));
   }
 
-  // src/core/z-order.ts
-  var zCounter = 1e5;
-  var alwaysOnTop = /* @__PURE__ */ new Set();
-  function syncAlwaysOnTop() {
-    for (const el of alwaysOnTop) {
-      if (el.isConnected) el.style.zIndex = String(zCounter);
-    }
-  }
-  function allocZBlock(n) {
-    const base = ++zCounter;
-    zCounter += n - 1;
-    zCounter++;
-    syncAlwaysOnTop();
-    return base;
-  }
-  function allocZ() {
-    return allocZBlock(1);
-  }
-
   // src/core/mobile.ts
   function isMobileEnv() {
     return typeof Platform !== "undefined" && !!Platform.isMobile;
@@ -5082,276 +5352,6 @@ var BZW_bookshelf = (() => {
     });
     document.body.appendChild(mask);
     return { mask, popup, close };
-  }
-
-  // src/core/notice.ts
-  var MAX_VISIBLE = 5;
-  var LEAVE_MS = 200;
-  var DEDUPE_WINDOW_MS = 3e4;
-  var MOBILE_QUERY = "(max-width: 768px)";
-  var ICONS = {
-    info: "ℹ️",
-    success: "✅",
-    warning: "⚠️",
-    error: "❌",
-    pause: "⏸️",
-    accept: "✨",
-    delete: "🗑️",
-    confirm: "✓",
-    restore: "↩️",
-    skip: "🚫",
-    archive: "📁"
-  };
-  var SPINNER_SVG = '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
-  function isMobileView() {
-    return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
-  }
-  function defaultVariant() {
-    return isMobileView() ? "drop" : "slide-right";
-  }
-  var OUT_CLASS = {
-    drop: "bz-notice--out-drop",
-    pop: "bz-notice--out-pop",
-    "slide-left": "bz-notice--out-left",
-    "slide-right": "bz-notice--out-right",
-    bounce: "bz-notice--out-fade",
-    shake: "bz-notice--out-fade"
-  };
-  function defaultDuration(type) {
-    return type === "error" ? 5e3 : 3e3;
-  }
-  var PER_CHAR_MS = 60;
-  var SHORT_THRESHOLD = 20;
-  function calcDuration(text, base) {
-    const len = text.length;
-    if (len <= SHORT_THRESHOLD) return base;
-    const extra = (len - SHORT_THRESHOLD) * PER_CHAR_MS;
-    return Math.min(base + extra, 15e3);
-  }
-  function ensureContainer() {
-    let container = document.getElementById("bz-notice-container");
-    if (!container) {
-      container = document.createElement("div");
-      container.id = "bz-notice-container";
-      document.body.appendChild(container);
-    }
-    return container;
-  }
-  var live = [];
-  var recent = {};
-  function removeInternal(n) {
-    if (n.timer !== null) {
-      window.clearTimeout(n.timer);
-      n.timer = null;
-    }
-    const i = live.indexOf(n);
-    if (i !== -1) live.splice(i, 1);
-    if (n.el.parentNode) n.el.parentNode.removeChild(n.el);
-  }
-  function evictOldest() {
-    let quota = live.length - MAX_VISIBLE + 1;
-    for (let i = 0; quota > 0 && i < live.length; ) {
-      const candidate = live[i];
-      if (candidate.persistent) {
-        i++;
-        continue;
-      }
-      removeInternal(candidate);
-      quota--;
-    }
-  }
-  function applyTypeToEl(n, kind) {
-    const isProgressNow = kind === "progress";
-    n.el.classList.remove(
-      "bz-notice--info",
-      "bz-notice--success",
-      "bz-notice--warning",
-      "bz-notice--error",
-      "bz-notice--pause",
-      "bz-notice--accept",
-      "bz-notice--delete",
-      "bz-notice--confirm",
-      "bz-notice--restore",
-      "bz-notice--skip",
-      "bz-notice--archive",
-      "bz-notice--progress"
-    );
-    n.el.classList.add("bz-notice--" + (isProgressNow ? "progress" : kind));
-    n.iconEl.innerHTML = "";
-    if (isProgressNow) {
-      n.iconEl.innerHTML = SPINNER_SVG;
-    } else {
-      n.iconEl.textContent = ICONS[kind];
-    }
-    n.isProgress = isProgressNow;
-  }
-  function hideNow(n) {
-    if (n.timer !== null) {
-      window.clearTimeout(n.timer);
-      n.timer = null;
-    }
-    if (!n.el.classList.contains("bz-notice--leaving")) {
-      n.el.classList.add("bz-notice--leaving");
-      const out = OUT_CLASS[n.variant];
-      if (out) n.el.classList.add(out);
-      window.setTimeout(() => removeInternal(n), LEAVE_MS);
-    }
-  }
-  function armTimer(n, kind, explicitDuration, text) {
-    if (n.timer !== null) {
-      window.clearTimeout(n.timer);
-      n.timer = null;
-    }
-    n.persistent = false;
-    if (kind === "progress") {
-      if (explicitDuration !== void 0 && explicitDuration > 0) {
-        n.timer = window.setTimeout(() => hideNow(n), explicitDuration);
-      } else {
-        n.persistent = true;
-      }
-      return;
-    }
-    const base = defaultDuration(kind);
-    const dur = explicitDuration !== void 0 ? explicitDuration : text ? calcDuration(text, base) : base;
-    if (dur <= 0) {
-      n.persistent = true;
-      return;
-    }
-    n.timer = window.setTimeout(() => hideNow(n), dur);
-  }
-  function noopHandle() {
-    return {
-      el: document.createElement("div"),
-      setMessage() {
-      },
-      setProgress() {
-      },
-      setType() {
-      },
-      hide() {
-      }
-    };
-  }
-  function appendActionBtn(n, action) {
-    const btn = document.createElement("span");
-    btn.className = "bz-notice-action";
-    btn.setAttribute("role", "button");
-    btn.textContent = action.label;
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (action.onClick) action.onClick();
-      hideNow(n);
-    });
-    n.el.appendChild(btn);
-  }
-  function notify(msg, opts) {
-    const kind = opts && opts.type || "info";
-    const isProgress = kind === "progress";
-    const type = isProgress ? "info" : kind;
-    const variant = opts && opts.variant || defaultVariant();
-    const container = ensureContainer();
-    if (opts && opts.dedupeKey) {
-      const key = opts.dedupeKey;
-      const r = recent[key];
-      const now = Date.now();
-      if (r && r.n && r.n.el.isConnected) {
-        r.n.msgEl.textContent = msg;
-        if (r.n.isProgress !== isProgress || r.n.el.classList.contains("bz-notice--" + type) === false) {
-          applyTypeToEl(r.n, kind);
-        }
-        const mergeActions = [];
-        if (opts.action) mergeActions.push(opts.action);
-        if (opts.actions) mergeActions.push(...opts.actions);
-        const existingLabels = new Set(
-          Array.from(r.n.el.querySelectorAll(".bz-notice-action")).map((el2) => el2.textContent || "")
-        );
-        for (const a of mergeActions) {
-          if (!existingLabels.has(a.label)) appendActionBtn(r.n, a);
-        }
-        armTimer(r.n, kind, opts.duration, msg);
-        return noopHandle();
-      }
-      if (r && now - r.at < DEDUPE_WINDOW_MS) {
-        return noopHandle();
-      }
-      recent[key] = { at: now, n: null };
-    }
-    evictOldest();
-    const el = document.createElement("div");
-    el.className = "bz-notice bz-notice--" + (isProgress ? "progress" : type) + " bz-notice--in-" + variant;
-    el.setAttribute("role", "status");
-    el.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
-    const icon = document.createElement("div");
-    icon.className = "bz-notice-icon";
-    if (isProgress) {
-      icon.innerHTML = SPINNER_SVG;
-    } else {
-      icon.textContent = ICONS[type];
-    }
-    el.appendChild(icon);
-    const body = document.createElement("div");
-    body.className = "bz-notice-body";
-    if (opts && opts.title) {
-      const titleEl = document.createElement("div");
-      titleEl.className = "bz-notice-title";
-      titleEl.textContent = opts.title;
-      body.appendChild(titleEl);
-    }
-    const msgEl = document.createElement("div");
-    msgEl.className = "bz-notice-msg";
-    msgEl.textContent = msg;
-    body.appendChild(msgEl);
-    el.appendChild(body);
-    let progressEl = null;
-    if (isProgress) {
-      progressEl = document.createElement("div");
-      progressEl.className = "bz-notice-progress";
-      el.appendChild(progressEl);
-    }
-    const n = { el, timer: null, msgEl, progressEl, iconEl: icon, variant, isProgress, persistent: false };
-    const actions = [];
-    if (opts && opts.action) actions.push(opts.action);
-    if (opts && opts.actions) {
-      for (const a of opts.actions) {
-        if (!actions.some((x) => x.label === a.label)) actions.push(a);
-      }
-    }
-    for (const a of actions) appendActionBtn(n, a);
-    el.addEventListener("click", () => hideNow(n));
-    container.style.zIndex = String(allocZ());
-    container.appendChild(el);
-    live.push(n);
-    if (opts && opts.dedupeKey) {
-      const r = recent[opts.dedupeKey];
-      if (r) r.n = n;
-    }
-    const fullText = (opts && opts.title ? opts.title + " " : "") + msg;
-    armTimer(n, kind, opts && opts.duration, fullText);
-    return {
-      el,
-      setMessage(text) {
-        n.msgEl.textContent = text;
-      },
-      setType(t) {
-        applyTypeToEl(n, t);
-        armTimer(n, t, void 0, n.msgEl.textContent || void 0);
-      },
-      setProgress(pct) {
-        if (!n.progressEl) return;
-        if (pct === -1) {
-          n.progressEl.classList.add("bz-notice-progress--indeterminate");
-          return;
-        }
-        n.progressEl.classList.remove("bz-notice-progress--indeterminate");
-        const clamped = Math.max(0, Math.min(100, pct));
-        n.progressEl.style.width = clamped + "%";
-        if (clamped >= 100) n.progressEl.classList.add("bz-notice-progress--done");
-        else n.progressEl.classList.remove("bz-notice-progress--done");
-      },
-      hide() {
-        hideNow(n);
-      }
-    };
   }
 
   // src/reading-report/stats.ts

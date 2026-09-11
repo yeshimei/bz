@@ -11,10 +11,12 @@
  *     订阅 vault:md-renamed/deleted，写 memo.json 语义不变）。
  */
 import type { App } from 'obsidian';
-import { openMemoPanel as uiOpenPanel, addMemo, ensureMemo, unloadMemo as uiUnload } from './ui';
+import { openMemoPanel as uiOpenPanel, addMemo, openEditor, ensureMemo, unloadMemo as uiUnload } from './ui';
 import { ensureMemoReminders as remindersEnsure, unloadMemoReminders as remindersUnload } from './reminder';
 import { MemoData } from './data';
 import { tryGetSettings } from '../core/settings-provider';
+import { notice } from '../core/notice';
+import { getCurrentNoteInfo, getCurrentCursorPosition } from '../core/utils';
 
 export { ensureFileSync, unloadFileSync } from './file-sync';
 
@@ -30,6 +32,24 @@ export function addMemoItem(app: App): void {
   MemoData.init(tryGetSettings());
   ensureMemo(app);
   addMemo(app);
+}
+
+/**
+ * 给当前笔记记一笔（命令 bz-memo-note-binding，2026-09-11 首页入口菜单）：
+ * 与「写备忘」同一个创建弹窗，区别是**关联笔记已预置**——把当前打开的笔记（含光标位置）
+ * 直接写进表单的「定位」字段，省掉进弹窗再点一次「定位到笔记」。
+ * 当前没有打开的笔记（空工作区/首页背后不是笔记）时照常开弹窗，只提示未绑定。
+ */
+export function addMemoForActiveNote(app: App): void {
+  MemoData.init(tryGetSettings());
+  ensureMemo(app);
+  const info = getCurrentNoteInfo();
+  if (!info) {
+    notice('当前没有打开的笔记，未绑定', 'warning');
+    addMemo(app);
+    return;
+  }
+  openEditor(null, { presetNote: { path: info.path, position: getCurrentCursorPosition() } });
 }
 
 /** main.ts onLayoutReady：备忘录提醒后台（启动自动弹出 + 打开笔记提醒；落点=备忘录面板） */

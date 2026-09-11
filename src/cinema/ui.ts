@@ -290,6 +290,27 @@ function openDetail(sec: HTMLElement, it: CinemaItem, app: App): void {
   el.querySelector('.j-similar')?.addEventListener('click', () => { close(); void runSimilarRecommend(it, app); });
 }
 
+/**
+ * 随机抽一部（命令 bz-cinema-random-pick，2026-09-11 首页入口菜单）：
+ * 从「想看」池随机挑一部并**直接开详情**（选择困难时的出口）；想看池空则退到全量并说明，
+ * 免得点了没反应。面板未打开则先冷开面板再叠详情弹窗（与「影视分析报告」同一打开口径）。
+ */
+export function openRandomMovie(app: App): void {
+  rebuildItems(app);
+  const want = M.items.filter((it) => it.status === STATUS_WANT);
+  const pool = want.length ? want : M.items;
+  if (!pool.length) {
+    notice('影院里还没有片子可抽');
+    return;
+  }
+  const it = pool[Math.floor(Math.random() * pool.length)];
+  if (!M.currentOverlay) createOverlay(app);
+  const root = M.currentOverlay?.querySelector<HTMLElement>('[data-cinema-root]');
+  if (!root) return;
+  openDetail(root, it, app);
+  notice(want.length ? `抽到「${it.name}」` : `想看清单空着，从全部影视里抽到「${it.name}」`, 'success');
+}
+
 // ---------- 弹窗：添加 / 编辑表单 ----------
 
 /** 添加/编辑表单弹窗。presetSt：预选状态（中文口径，如「已看」）——「标记已看」入口传入，

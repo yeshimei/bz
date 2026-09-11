@@ -1,4 +1,4 @@
-/* 源指纹 b396aec47fab1c2d · 仓内输入 98 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 136b22e7915bcb72 · 仓内输入 98 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/favorites/config.ts","src/favorites/data.ts","src/home/domains.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -4031,352 +4031,6 @@ var BZW_home = (() => {
     }
   });
 
-  // prototypes/home/fake/fake-obsidian.ts
-  function setIcon(container, iconId) {
-    var _a;
-    const d = typeof window !== "undefined" && ((_a = window.BZ_HOME_ICONS) == null ? void 0 : _a[iconId]) || "";
-    if (!d) return;
-    const ns = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(ns, "svg");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("fill", "none");
-    svg.setAttribute("stroke", "currentColor");
-    svg.setAttribute("stroke-width", "2");
-    svg.setAttribute("stroke-linecap", "round");
-    svg.setAttribute("stroke-linejoin", "round");
-    svg.innerHTML = d.trim();
-    container.replaceChildren(svg);
-  }
-  async function requestUrl() {
-    throw new Error("原型环境无网络请求（fake obsidian requestUrl）");
-  }
-  function encodeSeedFile(content, stat) {
-    var _a, _b, _c;
-    const now = Date.now();
-    const env = { c: content, ct: (_a = stat == null ? void 0 : stat.ctime) != null ? _a : now, mt: (_c = (_b = stat == null ? void 0 : stat.mtime) != null ? _b : stat == null ? void 0 : stat.ctime) != null ? _c : now };
-    return JSON.stringify(env);
-  }
-  function parseFrontmatter(content) {
-    if (!content.startsWith("---")) return null;
-    const end = content.indexOf("\n---", 3);
-    if (end < 0) return null;
-    const strip = (s) => {
-      const t = s.trim();
-      if (t.length >= 2 && (t.startsWith('"') && t.endsWith('"') || t.startsWith("'") && t.endsWith("'"))) {
-        return t.slice(1, -1);
-      }
-      return t;
-    };
-    const fm2 = {};
-    let lastKey = null;
-    for (const line of content.slice(3, end).split(/\r?\n/)) {
-      if (!line.trim()) continue;
-      const listItem = /^\s*-\s*(.+)$/.exec(line);
-      if (listItem && lastKey) {
-        const arr = Array.isArray(fm2[lastKey]) ? fm2[lastKey] : [];
-        arr.push(strip(listItem[1]));
-        fm2[lastKey] = arr;
-        continue;
-      }
-      const kv = /^([^\s:][^:]*):\s*(.*)$/.exec(line);
-      if (!kv) continue;
-      const key = kv[1].trim();
-      const rawVal = kv[2].trim();
-      lastKey = key;
-      if (rawVal === "") {
-        fm2[key] = [];
-      } else if (rawVal.startsWith("[") && rawVal.endsWith("]")) {
-        fm2[key] = rawVal.slice(1, -1).split(",").map((s) => strip(s)).filter(Boolean);
-      } else {
-        fm2[key] = strip(rawVal);
-      }
-    }
-    return fm2;
-  }
-  var import_moment, Platform, TFile, Setting, KEY_PREFIX, FakeVault, FakeMetadataCache, FakeApp;
-  var init_fake_obsidian = __esm({
-    "prototypes/home/fake/fake-obsidian.ts"() {
-      import_moment = __toESM(require_moment());
-      Platform = {
-        isMobile: typeof window !== "undefined" && window.innerWidth <= 768
-      };
-      TFile = class {
-      };
-      Setting = class {
-        constructor(_app2, _opts) {
-        }
-        setName() {
-          return this;
-        }
-        setDesc() {
-          return this;
-        }
-        setClass() {
-          return this;
-        }
-        setTooltip() {
-          return this;
-        }
-        addText() {
-          return this;
-        }
-        addTextArea() {
-          return this;
-        }
-        addToggle() {
-          return this;
-        }
-        addDropdown() {
-          return this;
-        }
-        addButton() {
-          return this;
-        }
-        addExtraButton() {
-          return this;
-        }
-        addSlider() {
-          return this;
-        }
-        addSearch() {
-          return this;
-        }
-        addColorPicker() {
-          return this;
-        }
-        addMomentFormat() {
-          return this;
-        }
-        then(cb) {
-          if (cb) cb(this);
-          return this;
-        }
-      };
-      KEY_PREFIX = "bz-sim:";
-      FakeVault = class _FakeVault {
-        constructor() {
-          this.listeners = /* @__PURE__ */ new Map();
-          this.idSeq = 0;
-          /** adapter（bookshelf readWeaveAggregates 走 vault.adapter.read 直读 weave-data.json） */
-          this.adapter = {
-            read: async (path) => {
-              const raw = localStorage.getItem(_FakeVault.key(path));
-              if (raw == null) throw new Error("fake vault: 文件不存在 " + path);
-              return this.toFile(path, raw).content;
-            }
-          };
-          if (typeof window !== "undefined") {
-            window.addEventListener("storage", (e) => {
-              if (!e.key || !e.key.startsWith(KEY_PREFIX)) return;
-              this.emit("modify", { path: e.key.slice(KEY_PREFIX.length) });
-            });
-          }
-        }
-        static key(path) {
-          return KEY_PREFIX + path;
-        }
-        /** 原始值 → FakeFile（封套外敌数据按纯内容兜底，stat 取当前——防御性，种子外不发生） */
-        toFile(path, raw) {
-          let content = raw;
-          let ct = Date.now();
-          let mt = ct;
-          try {
-            const env = JSON.parse(raw);
-            if (env && typeof env === "object" && typeof env.c === "string") {
-              content = env.c;
-              ct = Number(env.ct) || ct;
-              mt = Number(env.mt) || mt;
-            }
-          } catch (e) {
-          }
-          const base = path.includes("/") ? path.slice(path.lastIndexOf("/") + 1) : path;
-          const dot = base.lastIndexOf(".");
-          return {
-            path,
-            // Obsidian TFile 契约：basename 不含扩展名，name 含
-            basename: dot > 0 ? base.slice(0, dot) : base,
-            extension: dot > 0 ? base.slice(dot + 1) : "",
-            name: base,
-            stat: { ctime: ct, mtime: mt },
-            content
-          };
-        }
-        getAbstractFileByPath(path) {
-          const raw = localStorage.getItem(_FakeVault.key(path));
-          return raw == null ? null : this.toFile(path, raw);
-        }
-        /** 全部 md 文件（recap 影院/日记扫描、书库回落扫描、diary 计数吃这个列表） */
-        getMarkdownFiles() {
-          const out = [];
-          for (let i = 0; i < localStorage.length; i++) {
-            const k = localStorage.key(i);
-            if (!k || !k.startsWith(KEY_PREFIX)) continue;
-            if (!k.endsWith(".md")) continue;
-            const path = k.slice(KEY_PREFIX.length);
-            out.push(this.toFile(path, localStorage.getItem(k)));
-          }
-          return out;
-        }
-        async read(f) {
-          return f.content;
-        }
-        async modify(f, content) {
-          f.content = content;
-          localStorage.setItem(_FakeVault.key(f.path), encodeSeedFile(content, f.stat));
-        }
-        async create(path, content) {
-          const f = this.toFile(path, encodeSeedFile(content));
-          localStorage.setItem(_FakeVault.key(path), encodeSeedFile(content));
-          return f;
-        }
-        async createFolder(_path) {
-          return void 0;
-        }
-        /** 事件订阅（core/app vault.on/offref 同形） */
-        on(evt, cb) {
-          if (!this.listeners.has(evt)) this.listeners.set(evt, []);
-          this.listeners.get(evt).push(cb);
-          const id = ++this.idSeq;
-          return { ref: id };
-        }
-        offref(ref) {
-          this.listeners.clear();
-        }
-        emit(evt, file) {
-          var _a;
-          for (const cb of (_a = this.listeners.get(evt)) != null ? _a : []) cb(file);
-        }
-      };
-      FakeMetadataCache = class {
-        constructor() {
-          this.cache = /* @__PURE__ */ new Map();
-        }
-        getFileCache(file) {
-          if (!file || typeof file.path !== "string") return null;
-          if (!this.cache.has(file.path)) {
-            const raw = typeof file.content === "string" ? file.content : "";
-            const fm3 = parseFrontmatter(raw || this.readThrough(file.path));
-            this.cache.set(file.path, fm3);
-          }
-          const fm2 = this.cache.get(file.path);
-          return fm2 ? { frontmatter: fm2 } : null;
-        }
-        readThrough(path) {
-          try {
-            const raw = localStorage.getItem(FakeVault.key(path));
-            if (raw == null) return "";
-            const env = JSON.parse(raw);
-            return env && typeof env === "object" && typeof env.c === "string" ? env.c : raw;
-          } catch (e) {
-            return "";
-          }
-        }
-      };
-      FakeApp = class {
-        constructor() {
-          this.vault = new FakeVault();
-          this.metadataCache = new FakeMetadataCache();
-        }
-      };
-    }
-  });
-
-  // src/core/app.ts
-  function setApp(app) {
-    _app = app;
-  }
-  function getApp() {
-    if (!_app) {
-      throw new Error("bz: app 未初始化（setApp 未调用）");
-    }
-    return _app;
-  }
-  var _app;
-  var init_app = __esm({
-    "src/core/app.ts"() {
-      _app = null;
-    }
-  });
-
-  // src/core/settings-provider.ts
-  function setSettingsProvider(fn) {
-    _provider = fn;
-  }
-  function saveSettings() {
-    return _saver ? _saver() : Promise.resolve();
-  }
-  function getSettings() {
-    if (!_provider) {
-      throw new Error("bz: 设置提供者未注入（main.ts onload 应调用 setSettingsProvider）");
-    }
-    return _provider();
-  }
-  function tryGetSettings() {
-    return _provider ? _provider() : {};
-  }
-  var _provider, _saver;
-  var init_settings_provider = __esm({
-    "src/core/settings-provider.ts"() {
-      _provider = null;
-      _saver = null;
-    }
-  });
-
-  // src/core/esc-manager.ts
-  function registerPanelEsc(id, isVisible, close) {
-    if (panelEscHandles.has(id)) return;
-    panelEscHandles.set(id, escManager.register(id, { isVisible, close }));
-  }
-  var escManager, panelEscHandles;
-  var init_esc_manager = __esm({
-    "src/core/esc-manager.ts"() {
-      escManager = (() => {
-        const layers = [];
-        const onKeydown = (e) => {
-          if (e.key !== "Escape") return;
-          for (let i = layers.length - 1; i >= 0; i--) {
-            const L = layers[i];
-            try {
-              if (L.isVisible()) {
-                L.close();
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                return;
-              }
-            } catch (err) {
-              layers.splice(i, 1);
-            }
-          }
-        };
-        if (typeof document !== "undefined") {
-          document.addEventListener("keydown", onKeydown);
-        }
-        return {
-          register(id, layer) {
-            for (let i = layers.length - 1; i >= 0; i--) {
-              if (layers[i].id === id && !layers[i].isVisible()) layers.splice(i, 1);
-            }
-            const rec = Object.assign({ id }, layer);
-            layers.push(rec);
-            return {
-              unregister: () => {
-                const i = layers.indexOf(rec);
-                if (i !== -1) layers.splice(i, 1);
-              }
-            };
-          },
-          /** 插件卸载时移除全局监听 */
-          destroy() {
-            if (typeof document !== "undefined") {
-              document.removeEventListener("keydown", onKeydown);
-            }
-          }
-        };
-      })();
-      panelEscHandles = /* @__PURE__ */ new Map();
-    }
-  });
-
   // src/core/z-order.ts
   function syncAlwaysOnTop() {
     for (const el of alwaysOnTop) {
@@ -4697,6 +4351,571 @@ var BZW_home = (() => {
       SHORT_THRESHOLD = 20;
       live = [];
       recent = {};
+    }
+  });
+
+  // src/core/esc-manager.ts
+  function registerPanelEsc(id, isVisible, close) {
+    if (panelEscHandles.has(id)) return;
+    panelEscHandles.set(id, escManager.register(id, { isVisible, close }));
+  }
+  var escManager, panelEscHandles;
+  var init_esc_manager = __esm({
+    "src/core/esc-manager.ts"() {
+      escManager = (() => {
+        const layers = [];
+        const onKeydown = (e) => {
+          if (e.key !== "Escape") return;
+          for (let i = layers.length - 1; i >= 0; i--) {
+            const L = layers[i];
+            try {
+              if (L.isVisible()) {
+                L.close();
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return;
+              }
+            } catch (err) {
+              layers.splice(i, 1);
+            }
+          }
+        };
+        if (typeof document !== "undefined") {
+          document.addEventListener("keydown", onKeydown);
+        }
+        return {
+          register(id, layer) {
+            for (let i = layers.length - 1; i >= 0; i--) {
+              if (layers[i].id === id && !layers[i].isVisible()) layers.splice(i, 1);
+            }
+            const rec = Object.assign({ id }, layer);
+            layers.push(rec);
+            return {
+              unregister: () => {
+                const i = layers.indexOf(rec);
+                if (i !== -1) layers.splice(i, 1);
+              }
+            };
+          },
+          /** 插件卸载时移除全局监听 */
+          destroy() {
+            if (typeof document !== "undefined") {
+              document.removeEventListener("keydown", onKeydown);
+            }
+          }
+        };
+      })();
+      panelEscHandles = /* @__PURE__ */ new Map();
+    }
+  });
+
+  // src/core/app.ts
+  function setApp(app) {
+    _app = app;
+  }
+  function getApp() {
+    if (!_app) {
+      throw new Error("bz: app 未初始化（setApp 未调用）");
+    }
+    return _app;
+  }
+  var _app;
+  var init_app = __esm({
+    "src/core/app.ts"() {
+      _app = null;
+    }
+  });
+
+  // src/core/utils.ts
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
+  }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
+    const target = (0, import_moment.default)(date);
+    if (!target.isValid()) return "无效日期";
+    let hasExplicitTime = true;
+    if (typeof date === "string") {
+      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
+    }
+    const nowMoment = (0, import_moment.default)(now);
+    const diffSeconds = nowMoment.diff(target, "seconds");
+    function shouldShowTime() {
+      const timeStr = target.format("HH:mm");
+      if (timeStr !== "00:00") return true;
+      return hasExplicitTime;
+    }
+    if (diffSeconds < 0) {
+      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
+    }
+    if (diffSeconds < 60) return "刚刚";
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
+    const todayStart = (0, import_moment.default)(now).startOf("day");
+    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
+      const hours = Math.floor(diffMinutes / 60);
+      return `${hours}小时前`;
+    }
+    const yesterdayStart = (0, import_moment.default)(now).subtract(1, "days").startOf("day");
+    const beforeYesterdayStart = (0, import_moment.default)(now).subtract(2, "days").startOf("day");
+    if (target.isSame(yesterdayStart, "day")) {
+      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
+    }
+    if (target.isSame(beforeYesterdayStart, "day")) {
+      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
+    }
+    const weekStart = (0, import_moment.default)(now).startOf("week");
+    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
+      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
+    }
+    const isThisYear = target.year() === nowMoment.year();
+    if (isThisYear) {
+      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
+    }
+    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
+  }
+  function localDayKey(ts = Date.now()) {
+    const d = ts instanceof Date ? ts : new Date(ts);
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
+  function stripMdExt(name) {
+    return String(name || "").replace(/\.md$/i, "");
+  }
+  function stripTitleMarks(s) {
+    return String(s || "").replace(/^《|》$/g, "");
+  }
+  function isUnderFolder(folder, path) {
+    const f = (folder || "").trim().replace(/\/+$/, "");
+    if (!f) return false;
+    return path === f || path.startsWith(f + "/");
+  }
+  var import_moment;
+  var init_utils = __esm({
+    "src/core/utils.ts"() {
+      import_moment = __toESM(require_moment());
+      init_fake_obsidian();
+      init_app();
+    }
+  });
+
+  // src/core/flow-dialog.ts
+  function buildFlowDialogParts(title, message, actions) {
+    let buttons;
+    if (actions.length === 2) {
+      buttons = [
+        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
+        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
+      ];
+    } else {
+      buttons = actions.map((a, i) => {
+        const cls = ["bz-flow-dialog-action"];
+        if (a.danger) cls.push("bz-flow-dialog-danger");
+        if (a.cta) cls.push("bz-flow-dialog-cta");
+        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
+      });
+    }
+    const ctaIdx = actions.findIndex((a) => a.cta);
+    const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
+    const html = "<h4>" + escapeHtml(title || "确认") + "</h4><p>" + escapeHtml(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
+      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
+    }).join("") + "</div>";
+    return { html, buttons, focusId: buttons[focusIdx].id };
+  }
+  function openFlowDialog(opts) {
+    if (!opts.actions || opts.actions.length === 0) {
+      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
+    }
+    return new Promise((resolve) => {
+      const prevActive = document.activeElement;
+      if (activeSettle) activeSettle(void 0);
+      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
+      const mask = document.createElement("div");
+      mask.id = "__shared_confirm_mask__";
+      mask.style.zIndex = String(allocZ());
+      mask.onclick = (e) => {
+        if (e.target === mask) settle(void 0);
+      };
+      const popup = document.createElement("div");
+      popup.id = "__shared_confirm_popup__";
+      if (opts.className) popup.classList.add(opts.className);
+      popup.setAttribute("role", "dialog");
+      popup.setAttribute("aria-modal", "true");
+      popup.innerHTML = parts.html;
+      mask.appendChild(popup);
+      document.body.appendChild(mask);
+      const escHandle2 = escManager.register("q3-confirm", {
+        isVisible: () => mask.isConnected,
+        close: () => settle(void 0)
+      });
+      let settled = false;
+      function restoreFocus() {
+        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
+          prevActive.focus();
+        }
+      }
+      function settle(v) {
+        if (settled) return;
+        settled = true;
+        if (activeSettle === settle) activeSettle = null;
+        escHandle2.unregister();
+        mask.remove();
+        restoreFocus();
+        resolve(v);
+      }
+      activeSettle = settle;
+      for (const b of parts.buttons) {
+        const btn = document.getElementById(b.id);
+        if (btn) btn.onclick = () => settle(b.value);
+      }
+      const focusBtn = document.getElementById(parts.focusId);
+      if (focusBtn) focusBtn.focus();
+    });
+  }
+  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
+  var init_flow_dialog = __esm({
+    "src/core/flow-dialog.ts"() {
+      init_esc_manager();
+      init_utils();
+      init_z_order();
+      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
+      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
+      activeSettle = null;
+    }
+  });
+
+  // prototypes/home/fake/fake-obsidian.ts
+  function setIcon(container, iconId) {
+    var _a;
+    const d = typeof window !== "undefined" && ((_a = window.BZ_HOME_ICONS) == null ? void 0 : _a[iconId]) || "";
+    if (!d) return;
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "2");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    svg.innerHTML = d.trim();
+    container.replaceChildren(svg);
+  }
+  async function requestUrl() {
+    throw new Error("原型环境无网络请求（fake obsidian requestUrl）");
+  }
+  function encodeSeedFile(content, stat) {
+    var _a, _b, _c;
+    const now = Date.now();
+    const env = { c: content, ct: (_a = stat == null ? void 0 : stat.ctime) != null ? _a : now, mt: (_c = (_b = stat == null ? void 0 : stat.mtime) != null ? _b : stat == null ? void 0 : stat.ctime) != null ? _c : now };
+    return JSON.stringify(env);
+  }
+  function parseFrontmatter(content) {
+    if (!content.startsWith("---")) return null;
+    const end = content.indexOf("\n---", 3);
+    if (end < 0) return null;
+    const strip = (s) => {
+      const t = s.trim();
+      if (t.length >= 2 && (t.startsWith('"') && t.endsWith('"') || t.startsWith("'") && t.endsWith("'"))) {
+        return t.slice(1, -1);
+      }
+      return t;
+    };
+    const fm2 = {};
+    let lastKey = null;
+    for (const line of content.slice(3, end).split(/\r?\n/)) {
+      if (!line.trim()) continue;
+      const listItem = /^\s*-\s*(.+)$/.exec(line);
+      if (listItem && lastKey) {
+        const arr = Array.isArray(fm2[lastKey]) ? fm2[lastKey] : [];
+        arr.push(strip(listItem[1]));
+        fm2[lastKey] = arr;
+        continue;
+      }
+      const kv = /^([^\s:][^:]*):\s*(.*)$/.exec(line);
+      if (!kv) continue;
+      const key = kv[1].trim();
+      const rawVal = kv[2].trim();
+      lastKey = key;
+      if (rawVal === "") {
+        fm2[key] = [];
+      } else if (rawVal.startsWith("[") && rawVal.endsWith("]")) {
+        fm2[key] = rawVal.slice(1, -1).split(",").map((s) => strip(s)).filter(Boolean);
+      } else {
+        fm2[key] = strip(rawVal);
+      }
+    }
+    return fm2;
+  }
+  var import_moment2, Platform, TFile, Setting, KEY_PREFIX, FakeVault, FakeMetadataCache, FakeApp, FAKE_COMMANDS;
+  var init_fake_obsidian = __esm({
+    "prototypes/home/fake/fake-obsidian.ts"() {
+      import_moment2 = __toESM(require_moment());
+      init_notice();
+      init_flow_dialog();
+      Platform = {
+        isMobile: typeof window !== "undefined" && window.innerWidth <= 768
+      };
+      TFile = class {
+      };
+      Setting = class {
+        constructor(_app2, _opts) {
+        }
+        setName() {
+          return this;
+        }
+        setDesc() {
+          return this;
+        }
+        setClass() {
+          return this;
+        }
+        setTooltip() {
+          return this;
+        }
+        addText() {
+          return this;
+        }
+        addTextArea() {
+          return this;
+        }
+        addToggle() {
+          return this;
+        }
+        addDropdown() {
+          return this;
+        }
+        addButton() {
+          return this;
+        }
+        addExtraButton() {
+          return this;
+        }
+        addSlider() {
+          return this;
+        }
+        addSearch() {
+          return this;
+        }
+        addColorPicker() {
+          return this;
+        }
+        addMomentFormat() {
+          return this;
+        }
+        then(cb) {
+          if (cb) cb(this);
+          return this;
+        }
+      };
+      KEY_PREFIX = "bz-sim:";
+      FakeVault = class _FakeVault {
+        constructor() {
+          this.listeners = /* @__PURE__ */ new Map();
+          this.idSeq = 0;
+          /** adapter（bookshelf readWeaveAggregates 走 vault.adapter.read 直读 weave-data.json） */
+          this.adapter = {
+            read: async (path) => {
+              const raw = localStorage.getItem(_FakeVault.key(path));
+              if (raw == null) throw new Error("fake vault: 文件不存在 " + path);
+              return this.toFile(path, raw).content;
+            }
+          };
+          if (typeof window !== "undefined") {
+            window.addEventListener("storage", (e) => {
+              if (!e.key || !e.key.startsWith(KEY_PREFIX)) return;
+              this.emit("modify", { path: e.key.slice(KEY_PREFIX.length) });
+            });
+          }
+        }
+        static key(path) {
+          return KEY_PREFIX + path;
+        }
+        /** 原始值 → FakeFile（封套外敌数据按纯内容兜底，stat 取当前——防御性，种子外不发生） */
+        toFile(path, raw) {
+          let content = raw;
+          let ct = Date.now();
+          let mt = ct;
+          try {
+            const env = JSON.parse(raw);
+            if (env && typeof env === "object" && typeof env.c === "string") {
+              content = env.c;
+              ct = Number(env.ct) || ct;
+              mt = Number(env.mt) || mt;
+            }
+          } catch (e) {
+          }
+          const base = path.includes("/") ? path.slice(path.lastIndexOf("/") + 1) : path;
+          const dot = base.lastIndexOf(".");
+          return {
+            path,
+            // Obsidian TFile 契约：basename 不含扩展名，name 含
+            basename: dot > 0 ? base.slice(0, dot) : base,
+            extension: dot > 0 ? base.slice(dot + 1) : "",
+            name: base,
+            stat: { ctime: ct, mtime: mt },
+            content
+          };
+        }
+        getAbstractFileByPath(path) {
+          const raw = localStorage.getItem(_FakeVault.key(path));
+          return raw == null ? null : this.toFile(path, raw);
+        }
+        /** 全部 md 文件（recap 影院/日记扫描、书库回落扫描、diary 计数吃这个列表） */
+        getMarkdownFiles() {
+          const out = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (!k || !k.startsWith(KEY_PREFIX)) continue;
+            if (!k.endsWith(".md")) continue;
+            const path = k.slice(KEY_PREFIX.length);
+            out.push(this.toFile(path, localStorage.getItem(k)));
+          }
+          return out;
+        }
+        async read(f) {
+          return f.content;
+        }
+        async modify(f, content) {
+          f.content = content;
+          localStorage.setItem(_FakeVault.key(f.path), encodeSeedFile(content, f.stat));
+        }
+        async create(path, content) {
+          const f = this.toFile(path, encodeSeedFile(content));
+          localStorage.setItem(_FakeVault.key(path), encodeSeedFile(content));
+          return f;
+        }
+        async createFolder(_path) {
+          return void 0;
+        }
+        /** 事件订阅（core/app vault.on/offref 同形） */
+        on(evt, cb) {
+          if (!this.listeners.has(evt)) this.listeners.set(evt, []);
+          this.listeners.get(evt).push(cb);
+          const id = ++this.idSeq;
+          return { ref: id };
+        }
+        offref(ref) {
+          this.listeners.clear();
+        }
+        emit(evt, file) {
+          var _a;
+          for (const cb of (_a = this.listeners.get(evt)) != null ? _a : []) cb(file);
+        }
+      };
+      FakeMetadataCache = class {
+        constructor() {
+          this.cache = /* @__PURE__ */ new Map();
+        }
+        getFileCache(file) {
+          if (!file || typeof file.path !== "string") return null;
+          if (!this.cache.has(file.path)) {
+            const raw = typeof file.content === "string" ? file.content : "";
+            const fm3 = parseFrontmatter(raw || this.readThrough(file.path));
+            this.cache.set(file.path, fm3);
+          }
+          const fm2 = this.cache.get(file.path);
+          return fm2 ? { frontmatter: fm2 } : null;
+        }
+        readThrough(path) {
+          try {
+            const raw = localStorage.getItem(FakeVault.key(path));
+            if (raw == null) return "";
+            const env = JSON.parse(raw);
+            return env && typeof env === "object" && typeof env.c === "string" ? env.c : raw;
+          } catch (e) {
+            return "";
+          }
+        }
+      };
+      FakeApp = class {
+        constructor() {
+          this.vault = new FakeVault();
+          this.metadataCache = new FakeMetadataCache();
+          /**
+           * 命令面（2026-09-11）：入口菜单新增的 9 条命令在这里**真跑一遍**——
+           * 否则 FakeApp 没有 commands，runCommand 一律降级成「该功能暂时不可用」通知，
+           * 新动作在壳里等于看不见（点「未读全部标为已读」连确认框都出不来）。
+           *
+           * 口径：
+           *  - 壳里**不复制业务实现**，只复刻「用户看到什么」——即时类给一条通知，
+           *    确认类弹同一个 core/flow-dialog（同一皮类 `.bz-clip-dialog-editorial`，
+           *    真实现见 src/clipbook/index.ts::markAllUnreadRead，改文案两边一起改）；
+           *  - **表里没有的命令一律抛错**：入口左键（bz-diary-open 等）保持原降级语义，
+           *    壳自检「入口点击：降级通知弹出不崩」依赖它。
+           */
+          this.commands = {
+            executeCommandById: (id) => {
+              const fn = FAKE_COMMANDS[id];
+              if (!fn) throw new Error(`FakeApp 未实现命令：${id}`);
+              return fn();
+            }
+          };
+        }
+      };
+      FAKE_COMMANDS = {
+        // —— 番茄钟（壳里由 toggleFocusSim 驱动真状态机，这里只出文案）——
+        // 菜单项是**相位敏感的单个动作**（见 src/home/shared.pomodoroMenuAction）：
+        // idle→focus-toggle / focusing·paused→pause（暂停或继续）/ break→skip。
+        // 壳里给中性文案，别把相位说死（同一条 pause 命令在「停止专注」与「继续专注」两支下都会被点）。
+        "bz-pomodoro-focus-toggle": async () => notice("已开始专注", "success"),
+        "bz-pomodoro-pause": async () => notice("已切换专注的暂停 / 继续", "success"),
+        "bz-pomodoro-skip": async () => notice("已跳过休息，进入下一轮专注", "success"),
+        // —— 锁定类（真实现：encrypt/index.ts::lockSafe → UIManager.lockNow）——
+        "bz-encrypt-lock-vault": async () => notice("保险库已锁定", "success"),
+        "bz-password-vault-lock": async () => notice("密码本已锁定", "success"),
+        // —— 即时类 ——
+        "bz-secondbrain-rebuild-index": async () => notice("索引重建完成", "success"),
+        // —— 开别域面板类（壳里没有别域面板，只给一条说明性通知）——
+        "bz-memo-note-binding": async () => notice("已打开备忘录（关联当前笔记）"),
+        "bz-cinema-random-pick": async () => notice("已打开影院并抽中一部"),
+        "bz-bookshelf-continue": async () => notice("已打开书库（在读分栏）"),
+        // —— 确认类：与真实现同一个流程框 + 同一皮类，文案同源 ——
+        "bz-clipbook-mark-all-read": async () => {
+          const unread = 42;
+          const ok = await openFlowDialog({
+            className: "bz-clip-dialog-editorial",
+            title: "未读全部标为已读",
+            message: `将把未读流里的 ${unread} 篇全部标为已读。`,
+            actions: [
+              { label: "取消", value: "cancel" },
+              { label: `全部已读（${unread} 篇）`, value: "ok", cta: true }
+            ]
+          });
+          if (ok === "ok") notice(`已把 ${unread} 篇标为已读`, "success");
+        }
+      };
+    }
+  });
+
+  // src/core/settings-provider.ts
+  function setSettingsProvider(fn) {
+    _provider = fn;
+  }
+  function saveSettings() {
+    return _saver ? _saver() : Promise.resolve();
+  }
+  function getSettings() {
+    if (!_provider) {
+      throw new Error("bz: 设置提供者未注入（main.ts onload 应调用 setSettingsProvider）");
+    }
+    return _provider();
+  }
+  function tryGetSettings() {
+    return _provider ? _provider() : {};
+  }
+  var _provider, _saver;
+  var init_settings_provider = __esm({
+    "src/core/settings-provider.ts"() {
+      _provider = null;
+      _saver = null;
     }
   });
 
@@ -6565,11 +6784,20 @@ var BZW_home = (() => {
     if (first) first.focus();
     attachItemKeyboardNav(host, scope);
   }
-  function openItemMenu(x, y, actions, suppressResidualClick = false, menuClass) {
+  function openItemMenu(x, y, actions, suppressResidualClick = false, menuClass, menuHeadHtml2) {
     closeItemMenu();
     const m = document.createElement("div");
     m.className = "bz-item-menu" + (menuClass ? " " + menuClass : "");
     m.style.visibility = "hidden";
+    if (menuHeadHtml2) {
+      const head = document.createElement("div");
+      head.className = "bz-item-menu-head";
+      head.innerHTML = menuHeadHtml2;
+      m.appendChild(head);
+      const sep = document.createElement("div");
+      sep.className = "bz-item-menu-sep";
+      m.appendChild(sep);
+    }
     for (const a of actions) {
       const item = document.createElement("button");
       item.type = "button";
@@ -6766,7 +6994,7 @@ var BZW_home = (() => {
       if (isMobileEnv()) return;
       if ((opts == null ? void 0 : opts.longPressFilter) && !opts.longPressFilter(e)) return;
       e.preventDefault();
-      openItemMenu(e.clientX, e.clientY, actions, true, opts == null ? void 0 : opts.menuClass);
+      openItemMenu(e.clientX, e.clientY, actions, true, opts == null ? void 0 : opts.menuClass, opts == null ? void 0 : opts.menuHeadHtml);
       suppressNextClick = false;
     });
     longPress(
@@ -6978,86 +7206,6 @@ var BZW_home = (() => {
       CORRUPT_BACKUP_DIR = "CONFIG/.CORRUPT";
       CORRUPT_NOTIFY_DEDUPE_MS = 3e4;
       corruptNotifyAt = /* @__PURE__ */ new Map();
-    }
-  });
-
-  // src/core/utils.ts
-  function escapeHtml2(str) {
-    return str.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
-  }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
-  }
-  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
-    const target = (0, import_moment2.default)(date);
-    if (!target.isValid()) return "无效日期";
-    let hasExplicitTime = true;
-    if (typeof date === "string") {
-      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
-    }
-    const nowMoment = (0, import_moment2.default)(now);
-    const diffSeconds = nowMoment.diff(target, "seconds");
-    function shouldShowTime() {
-      const timeStr = target.format("HH:mm");
-      if (timeStr !== "00:00") return true;
-      return hasExplicitTime;
-    }
-    if (diffSeconds < 0) {
-      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
-    }
-    if (diffSeconds < 60) return "刚刚";
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
-    const todayStart = (0, import_moment2.default)(now).startOf("day");
-    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
-      const hours = Math.floor(diffMinutes / 60);
-      return `${hours}小时前`;
-    }
-    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
-    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
-    if (target.isSame(yesterdayStart, "day")) {
-      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
-    }
-    if (target.isSame(beforeYesterdayStart, "day")) {
-      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
-    }
-    const weekStart = (0, import_moment2.default)(now).startOf("week");
-    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
-      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
-    }
-    const isThisYear = target.year() === nowMoment.year();
-    if (isThisYear) {
-      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
-    }
-    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
-  }
-  function localDayKey(ts = Date.now()) {
-    const d = ts instanceof Date ? ts : new Date(ts);
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-  }
-  function stripMdExt(name) {
-    return String(name || "").replace(/\.md$/i, "");
-  }
-  function stripTitleMarks(s) {
-    return String(s || "").replace(/^《|》$/g, "");
-  }
-  function isUnderFolder(folder, path) {
-    const f = (folder || "").trim().replace(/\/+$/, "");
-    if (!f) return false;
-    return path === f || path.startsWith(f + "/");
-  }
-  var import_moment2;
-  var init_utils = __esm({
-    "src/core/utils.ts"() {
-      import_moment2 = __toESM(require_moment());
-      init_fake_obsidian();
-      init_app();
     }
   });
 
@@ -8334,92 +8482,6 @@ var BZW_home = (() => {
     }
   });
 
-  // src/core/flow-dialog.ts
-  function buildFlowDialogParts(title, message, actions) {
-    let buttons;
-    if (actions.length === 2) {
-      buttons = [
-        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
-        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
-      ];
-    } else {
-      buttons = actions.map((a, i) => {
-        const cls = ["bz-flow-dialog-action"];
-        if (a.danger) cls.push("bz-flow-dialog-danger");
-        if (a.cta) cls.push("bz-flow-dialog-cta");
-        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
-      });
-    }
-    const ctaIdx = actions.findIndex((a) => a.cta);
-    const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
-      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
-      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
-    }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id };
-  }
-  function openFlowDialog(opts) {
-    if (!opts.actions || opts.actions.length === 0) {
-      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
-    }
-    return new Promise((resolve) => {
-      const prevActive = document.activeElement;
-      if (activeSettle) activeSettle(void 0);
-      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
-      const mask = document.createElement("div");
-      mask.id = "__shared_confirm_mask__";
-      mask.style.zIndex = String(allocZ());
-      mask.onclick = (e) => {
-        if (e.target === mask) settle(void 0);
-      };
-      const popup = document.createElement("div");
-      popup.id = "__shared_confirm_popup__";
-      if (opts.className) popup.classList.add(opts.className);
-      popup.setAttribute("role", "dialog");
-      popup.setAttribute("aria-modal", "true");
-      popup.innerHTML = parts.html;
-      mask.appendChild(popup);
-      document.body.appendChild(mask);
-      const escHandle2 = escManager.register("q3-confirm", {
-        isVisible: () => mask.isConnected,
-        close: () => settle(void 0)
-      });
-      let settled = false;
-      function restoreFocus() {
-        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
-          prevActive.focus();
-        }
-      }
-      function settle(v) {
-        if (settled) return;
-        settled = true;
-        if (activeSettle === settle) activeSettle = null;
-        escHandle2.unregister();
-        mask.remove();
-        restoreFocus();
-        resolve(v);
-      }
-      activeSettle = settle;
-      for (const b of parts.buttons) {
-        const btn = document.getElementById(b.id);
-        if (btn) btn.onclick = () => settle(b.value);
-      }
-      const focusBtn = document.getElementById(parts.focusId);
-      if (focusBtn) focusBtn.focus();
-    });
-  }
-  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
-  var init_flow_dialog = __esm({
-    "src/core/flow-dialog.ts"() {
-      init_esc_manager();
-      init_utils();
-      init_z_order();
-      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
-      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
-      activeSettle = null;
-    }
-  });
-
   // src/review/quiz-core/manager.ts
   function storageDir2() {
     const s = tryGetSettings();
@@ -8934,7 +8996,7 @@ ${n.content.slice(0, 2e3)}
             const btn = document.createElement("button");
             btn.className = "quiz-option-btn";
             const cleanText = cleanOptionText(opt);
-            btn.innerHTML = `<span>${optionLabels[idx]}.</span><span class="bz-quiz-option-text">${escapeHtml2(cleanText)}</span><span class="check-mark">✔️</span>`;
+            btn.innerHTML = `<span>${optionLabels[idx]}.</span><span class="bz-quiz-option-text">${escapeHtml(cleanText)}</span><span class="check-mark">✔️</span>`;
             btn.dataset.index = String(idx);
             btn.onclick = () => {
               if (answeredRef.value) return;
@@ -10385,7 +10447,7 @@ ${n.content.slice(0, 2e3)}
       const rank = i < 3 ? `<span class="bz-stats-rank-badge" style="background:${badges[i]};">${i + 1}</span>` : `<span class="bz-stats-rank-plain">${i + 1}</span>`;
       return `<div class="bz-review-stats-tl-row" data-idx="${i}">
       ${rank}
-      <span class="bz-stats-rank-name">${escapeHtml2(it.name)}</span>
+      <span class="bz-stats-rank-name">${escapeHtml(it.name)}</span>
       ${it.sub ? `<span class="bz-stats-rank-sub">${it.sub}</span>` : ""}
       <span class="bz-stats-rank-meta">${it.meta}</span>
     </div>`;
@@ -10546,7 +10608,7 @@ ${n.content.slice(0, 2e3)}
       }
     }
     status.innerHTML = `
-    <div class="bz-review-history-name">${escapeHtml2(stripTitleMarks(item.name))}</div>
+    <div class="bz-review-history-name">${escapeHtml(stripTitleMarks(item.name))}</div>
     <div class="bz-review-history-sub">${stageText} · 共 ${history2.length} 次复习${curR || ""}</div>
   `;
     body.appendChild(status);
@@ -13688,6 +13750,31 @@ ${n.content.slice(0, 2e3)}
     }
     applyAction("start");
   }
+  function menuPhase() {
+    if (state.phase === "short-break" || state.phase === "long-break") return "break";
+    if (state.phase !== "focus") return "idle";
+    if (state.paused) return "paused";
+    return state.endTime !== null ? "focusing" : "idle";
+  }
+  async function skipBreak(app) {
+    await ensurePomodoro(app);
+    if (state.phase !== "short-break" && state.phase !== "long-break") {
+      notice("当前不在休息阶段", "warning");
+      return;
+    }
+    state = transition(state, "skip", Date.now(), durations(), options()).state;
+    void save();
+    render();
+    applyAction("start");
+  }
+  async function togglePause(app) {
+    await ensurePomodoro(app);
+    if (state.endTime === null && !state.paused) {
+      notice("当前没有进行中的计时", "warning");
+      return;
+    }
+    applyAction(state.paused ? "resume" : "pause");
+  }
   function unloadPomodoro() {
     if (timerId !== null) {
       window.clearInterval(timerId);
@@ -13744,9 +13831,12 @@ ${n.content.slice(0, 2e3)}
   __export(pomodoro_exports, {
     ensurePomodoro: () => ensurePomodoro,
     isFocusing: () => isFocusing,
+    menuPhase: () => menuPhase,
     openPomodoro: () => openPomodoro,
+    skipBreak: () => skipBreak,
     startFocusForTask: () => startFocusForTask,
     toggleFocus: () => toggleFocus,
+    togglePause: () => togglePause,
     unloadPomodoro: () => unloadPomodoro
   });
   var init_pomodoro = __esm({
@@ -13773,7 +13863,8 @@ ${n.content.slice(0, 2e3)}
     appRef: null,
     river: null,
     order: { version: 3, desk: [], mob: [], hiddenDesk: [], hiddenMob: [] },
-    pomodoroFocusing: false
+    pomodoroPhase: "idle",
+    riverView: null
   };
 
   // src/home/ui.ts
@@ -13786,11 +13877,11 @@ ${n.content.slice(0, 2e3)}
 
   // src/core/ui/str.ts
   var ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-  function escapeHtml(s) {
+  function escapeHtml2(s) {
     return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
   }
   function esc(s) {
-    return escapeHtml(String(s != null ? s : ""));
+    return escapeHtml2(String(s != null ? s : ""));
   }
   function iconSpan(name, extra = "") {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
@@ -13892,40 +13983,77 @@ ${n.content.slice(0, 2e3)}
     const hide = new Set(hidden != null ? hidden : []);
     return applyOrder(order, domains.filter((d) => !hide.has(d.id)));
   }
-  function pomodoroMenuLabel(focusing) {
-    return focusing ? "停止专注" : "开始专注";
+  function pomodoroMenuAction(phase) {
+    if (phase === "focusing") return { label: "停止专注", commandId: "bz-pomodoro-pause", icon: "pause" };
+    if (phase === "paused") return { label: "继续专注", commandId: "bz-pomodoro-pause", icon: "play" };
+    if (phase === "break") return { label: "跳过休息", commandId: "bz-pomodoro-skip", icon: "skip-forward" };
+    return { label: "开始专注", commandId: "bz-pomodoro-focus-toggle", icon: "timer" };
   }
   var DOMAIN_MENU = {
     diary: [{ label: "写日记", commandId: "bz-diary-write", icon: "pen-line" }],
-    memo: [{ label: "写备忘", commandId: "bz-memo-add", icon: "clipboard-list" }],
+    memo: [
+      { label: "写备忘", commandId: "bz-memo-add", icon: "clipboard-list" },
+      // 打开备忘录编辑器并把**当前打开的笔记**绑定为关联（定位 chip 预置），不弹添加窗再手点定位
+      { label: "给当前笔记记一笔", commandId: "bz-memo-note-binding", icon: "notebook-pen" }
+    ],
     cinema: [
       { label: "加影视", commandId: "bz-cinema-add", icon: "plus" },
-      { label: "影视分析报告", commandId: "bz-cinema-analysis", icon: "bar-chart-3" }
+      { label: "影视分析报告", commandId: "bz-cinema-analysis", icon: "bar-chart-3" },
+      // 从「想看」池随机抽一部并直接开详情（抽不动脑子时的入口）
+      { label: "随机抽一部", commandId: "bz-cinema-random-pick", icon: "shuffle" }
     ],
     review: [
       { label: "开始复习", commandId: "bz-review-start", icon: "play" },
       { label: "加入复习计划", commandId: "bz-review-add", icon: "plus" },
       { label: "复习计划分析报告", commandId: "bz-review-report", icon: "bar-chart-3" }
     ],
-    // 番茄钟：一把切换（专注中→停止；休息中→跳过休息再开；idle→开），命令 bz-pomodoro-focus-toggle。
-    // 唯一动态文案项：label 由 ui.ts 按番茄钟实时相位改写为「停止专注 / 开始专注」（dynamic='focus'）
-    pomodoro: [{ label: "开始专注", commandId: "bz-pomodoro-focus-toggle", icon: "timer", dynamic: "focus" }],
+    // 番茄钟：**相位敏感的单个动作**（见 pomodoroMenuAction）——静态项只是 idle 兜底，
+    // 挂菜单时整条按实时相位替换（文案/命令/图标），四相位互斥、一次只出一条。
+    pomodoro: [
+      { label: "开始专注", commandId: "bz-pomodoro-focus-toggle", icon: "timer", dynamic: "phase", keepHome: true }
+    ],
     favorites: [{ label: "加收藏", commandId: "bz-favorites-add", icon: "bookmark" }],
+    // 剪藏本此前是空菜单（无域快捷动作）；这条是唯一「不开面板」的批量动作，故挂在入口上。
+    // 危险项：一次改 N 条 read 状态（面板里同款动作也是走确认框），故 kind: 'danger' + 确认框；
+    // keepHome = 确认框叠在首页上、清完当场看到「未读 N 篇」归零。
+    clipping: [
+      { label: "未读全部标为已读", commandId: "bz-clipbook-mark-all-read", icon: "check-check", kind: "danger", keepHome: true }
+    ],
     knowledge: [
       { label: "术语生成文献笔记", commandId: "bz-knowledge-note-term", icon: "file-text" },
       { label: "视频生成文献笔记", commandId: "bz-knowledge-note-video", icon: "list-video" }
     ],
-    bookshelf: [{ label: "阅读分析报告", commandId: "bz-reading-report-open", icon: "bar-chart-3" }],
+    bookshelf: [
+      { label: "阅读分析报告", commandId: "bz-reading-report-open", icon: "bar-chart-3" },
+      // 直开书架墙并切到「在读」分栏（有在读时才点亮入口彩点，见 buildDots）
+      { label: "继续在读", commandId: "bz-bookshelf-continue", icon: "book-open" }
+    ],
     secondbrain: [
       { label: "第二大脑对话", commandId: "bz-secondbrain-chat", icon: "message-circle" },
-      { label: "参考侧栏", commandId: "bz-secondbrain-open", icon: "zap" }
+      { label: "参考侧栏", commandId: "bz-secondbrain-open", icon: "zap" },
+      // 全库重建向量索引（函数早已存在、此前没有命令入口）
+      { label: "重建索引", commandId: "bz-secondbrain-rebuild-index", icon: "refresh-cw", keepHome: true }
     ],
     belongings: [{ label: "加物品", commandId: "bz-belongings-add", icon: "archive" }],
-    vault: [{ label: "快速生成密码", commandId: "bz-password-vault-gen", icon: "key" }]
+    // 保险库：此前是空菜单（无域快捷动作）；锁定是唯一「不开面板」的一步动作
+    // （加密当前笔记 / 快速取密虽已有命令，但属「作用于当前笔记」，不在本次采纳范围）
+    encrypt: [
+      { label: "锁定保险库", commandId: "bz-encrypt-lock-vault", icon: "lock", keepHome: true }
+    ],
+    vault: [
+      { label: "快速生成密码", commandId: "bz-password-vault-gen", icon: "key" },
+      // 与保险库同库同锁（一把主密码）：文案按本域名口径，行为是同一个 lockSafe
+      { label: "锁定密码本", commandId: "bz-password-vault-lock", icon: "lock", keepHome: true }
+    ]
   };
   function domainColor(id) {
     var _a;
     return (_a = DOMAIN_DOT[id]) != null ? _a : "#8a8f99";
+  }
+  function menuHeadHtml(d, data) {
+    var _a;
+    const ct = (_a = riverCountText(d.id, data)) != null ? _a : "";
+    return '<span class="bz-item-menu-head-dot" style="background:' + domainColor(d.id) + '"></span><span class="bz-item-menu-head-nm">' + esc(d.name) + "</span>" + (ct ? '<span class="bz-item-menu-head-cnt">' + esc(ct) + "</span>" : "");
   }
   function sheetHeadHtml(d, data) {
     var _a;
@@ -13959,8 +14087,7 @@ ${n.content.slice(0, 2e3)}
   var DEFAULT_TIMELINE_FILTER = {
     produce: true,
     progress: true,
-    notes: true,
-    skipped: false
+    notes: true
   };
   function timelineRangeDays(range) {
     if (range === "3d") return 3;
@@ -14047,7 +14174,9 @@ ${n.content.slice(0, 2e3)}
       memo: c.memoUrgentOpen > 0 ? "hot" : day.summary.memoDone + day.summary.memoCreated > 0 ? "ok" : "off",
       pomodoro: data.pomodoroFocusing ? "warn" : day.summary.pomodoros > 0 ? "ok" : "off",
       cinema: c.cinemaWatching > 0 ? "warn" : hasEvent("cinema") ? "ok" : "off",
-      bookshelf: hasEvent("bookshelf") ? "ok" : "off",
+      // 书库（2026-09-11 用户要求）：**有在读 = warn**，与影院「有在看」同口径——
+      // 「在读 N 本」是进行中的事，比「今天动过书库」更该亮；没在读才看今日动静。
+      bookshelf: c.bookshelfReading > 0 ? "warn" : hasEvent("bookshelf") ? "ok" : "off",
       clipping: c.clippingUnread > 0 ? "warn" : "off"
     };
   }
@@ -15661,7 +15790,7 @@ ${n.content.slice(0, 2e3)}
       var _a;
       const dot = dotOf(dotsMap, d.id);
       const ct = (_a = riverCountText(d.id, data)) != null ? _a : d.sub;
-      return '<div role="button" tabindex="0" class="bz-home-erow" data-home-go="' + d.id + '"><span class="bz-home-dot bz-home-dot--' + dot + '"></span><span class="bz-home-eic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span><span class="bz-home-enm">' + esc(d.name) + '</span><span class="bz-home-ect">' + esc(ct) + '</span><span class="bz-home-ego">→</span></div>';
+      return '<div role="button" tabindex="0" class="bz-home-erow" data-home-go="' + d.id + '"><span class="bz-home-dot bz-home-dot--' + dot + '"></span><span class="bz-home-eic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span><span class="bz-home-enm">' + esc(d.name) + '</span><span class="bz-home-ect">' + esc(ct) + "</span></div>";
     }).join("");
   }
   function flowHtml(data, view, opts = {}) {
@@ -15686,7 +15815,7 @@ ${n.content.slice(0, 2e3)}
     }).join("");
     if (kept.length) return wrap(body);
     if (day.events.length) {
-      return wrap('<div class="bz-home-flow-empty">这一天有痕迹，但都被「时间线内容过滤」挡掉了。<br>去 <b>设置 → 首页</b> 把想看的类别勾上。</div>');
+      return wrap('<div class="bz-home-flow-empty">这一天有痕迹，但都被「内容过滤」挡掉了。<br>去 <b>设置 → 首页 → 内容过滤</b> 把想看的类别勾上。</div>');
     }
     return wrap('<div class="bz-home-flow-empty">这一天还没有留下痕迹。<br><b>写一篇日记</b>、点一轮番茄、读几页书——<br>都会出现在这条河里。</div>');
   }
@@ -15707,7 +15836,6 @@ ${n.content.slice(0, 2e3)}
   }
 
   // src/home/ui.ts
-  var riverView = null;
   var nextOff = true;
   function readHomeSettings() {
     var _a, _b, _c;
@@ -15717,10 +15845,9 @@ ${n.content.slice(0, 2e3)}
     const filter = {
       produce: bool(s.homeTimelineProduce, DEFAULT_TIMELINE_FILTER.produce),
       progress: bool(s.homeTimelineProgress, DEFAULT_TIMELINE_FILTER.progress),
-      notes: bool(s.homeTimelineNotes, DEFAULT_TIMELINE_FILTER.notes),
-      skipped: bool(s.homeTimelineSkipped, DEFAULT_TIMELINE_FILTER.skipped)
+      notes: bool(s.homeTimelineNotes, DEFAULT_TIMELINE_FILTER.notes)
     };
-    const range = (_a = str(s.homeTimelineRange)) != null ? _a : "today";
+    const range = (_a = str(s.homeTimelineRange)) != null ? _a : "week";
     return {
       filter,
       flow: {
@@ -15752,29 +15879,30 @@ ${n.content.slice(0, 2e3)}
     renderAll();
     void refreshRiverAndRender();
   }
-  async function readPomodoroFocusing(app) {
+  async function readPomodoroPhase(app) {
     try {
       const m = await Promise.resolve().then(() => (init_pomodoro(), pomodoro_exports));
       await m.ensurePomodoro(app);
-      return m.isFocusing();
+      return m.menuPhase();
     } catch (e) {
-      return false;
+      return "idle";
     }
   }
   async function refreshRiverAndRender() {
     if (!H.currentOverlay || !H.appRef) return;
-    const [river, order, focusing] = await Promise.all([
+    const [river, order, phase] = await Promise.all([
       collectRiver(H.appRef).catch(() => null),
       loadHomeOrder(H.appRef),
-      readPomodoroFocusing(H.appRef)
+      readPomodoroPhase(H.appRef)
     ]);
+    const focusing = phase === "focusing" || phase === "paused";
     if (river) river.pomodoroFocusing = focusing;
     H.river = river;
     if (order) H.order = order;
-    H.pomodoroFocusing = focusing;
-    if (river && !riverView) {
+    H.pomodoroPhase = phase;
+    if (river && !H.riverView) {
       const { defaultDay, rangeDays } = readHomeSettings();
-      riverView = pickInitialView(river, defaultDay, rangeDays);
+      H.riverView = pickInitialView(river, defaultDay, rangeDays);
     }
     renderAll();
   }
@@ -15783,6 +15911,7 @@ ${n.content.slice(0, 2e3)}
     H.currentOverlay.remove();
     H.currentOverlay = null;
     H.river = null;
+    H.riverView = null;
   }
   function bindEvents2(overlay, app) {
     overlay.addEventListener("keydown", (e) => {
@@ -15795,6 +15924,7 @@ ${n.content.slice(0, 2e3)}
       }
     });
     overlay.addEventListener("click", (e) => {
+      var _a;
       const t = e.target;
       if (e.target === overlay) {
         closeOverlay();
@@ -15812,13 +15942,13 @@ ${n.content.slice(0, 2e3)}
       }
       const wk = t.closest("[data-home-weekday]");
       if (wk && H.river) {
-        riverView = wk.dataset.homeWeekday || null;
+        H.riverView = wk.dataset.homeWeekday || null;
         const overlay2 = H.currentOverlay;
         if (overlay2) {
-          overlay2.querySelectorAll("[data-home-weekday]").forEach((b) => b.classList.toggle("bz-home-wk--sel", b.dataset.homeWeekday === riverView));
+          overlay2.querySelectorAll("[data-home-weekday]").forEach((b) => b.classList.toggle("bz-home-wk--sel", b.dataset.homeWeekday === H.riverView));
           const flow = overlay2.querySelector("[data-home-flow]");
           if (flow) {
-            flow.innerHTML = flowHtml(H.river, riverView != null ? riverView : "", readHomeSettings().flow);
+            flow.innerHTML = flowHtml(H.river, (_a = H.riverView) != null ? _a : "", readHomeSettings().flow);
             mountIcons(flow);
           }
         }
@@ -15838,6 +15968,20 @@ ${n.content.slice(0, 2e3)}
       notice(failText, "warning");
     }
   }
+  function runCommandAndRefresh(commandId, app) {
+    let ret;
+    try {
+      ret = app.commands.executeCommandById(commandId);
+    } catch (e) {
+      notice("该功能暂时不可用", "warning");
+      return;
+    }
+    if (ret && typeof ret.then === "function") {
+      void ret.then(() => refreshRiverAndRender(), () => refreshRiverAndRender());
+    } else {
+      void refreshRiverAndRender();
+    }
+  }
   function rowEls(container) {
     return Array.from(container.querySelectorAll(".bz-home-erow, .bz-home-m-tile"));
   }
@@ -15846,19 +15990,29 @@ ${n.content.slice(0, 2e3)}
     if (!d) return;
     const menu = DOMAIN_MENU[d.id];
     if (!menu || !menu.length) return;
-    const actions = menu.map((a) => ({
-      icon: a.icon,
-      label: a.dynamic === "focus" ? pomodoroMenuLabel(H.pomodoroFocusing) : a.label,
-      onClick: () => {
-        closeOverlay();
-        runCommand(a.commandId, app);
-      }
-    }));
+    const actions = menu.map((a) => {
+      const spec = a.dynamic === "phase" ? { ...a, ...pomodoroMenuAction(H.pomodoroPhase) } : a;
+      return {
+        icon: spec.icon,
+        label: spec.label,
+        kind: spec.kind === "danger" ? "danger" : "normal",
+        onClick: () => {
+          if (spec.keepHome) {
+            runCommandAndRefresh(spec.commandId, app);
+            return;
+          }
+          closeOverlay();
+          runCommand(spec.commandId, app);
+        }
+      };
+    });
     const head = document.createElement("div");
     head.innerHTML = sheetHeadHtml(d, river);
     mountIcons(head);
     attachItemActions(el, actions, {
       sheetHead: head,
+      // 桌面菜单另给一行版盒头（B 方案 2026-09-11）：跨 21 个域，右键后要知道自己点的是哪个域
+      menuHeadHtml: menuHeadHtml(d, river),
       menuClass: "bz-home-menu",
       sheetClass: "bz-home-menu"
     });
@@ -15888,8 +16042,8 @@ ${n.content.slice(0, 2e3)}
     const river = H.river;
     const cfg = readHomeSettings();
     const windowDays = river.days.slice(0, cfg.rangeDays);
-    const view = riverView && windowDays.some((d) => d.dateStr === riverView) ? riverView : null;
-    riverView = view;
+    const view = H.riverView && windowDays.some((d) => d.dateStr === H.riverView) ? H.riverView : null;
+    H.riverView = view;
     const today = river.today.dateStr;
     const week = overlay.querySelector("[data-home-week]");
     if (week) week.innerHTML = weekHtml(river.week.slice(0, cfg.rangeDays), today, view != null ? view : today);

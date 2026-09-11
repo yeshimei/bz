@@ -979,11 +979,15 @@ function addFromComposer(): void {
  *  - presetTitle：剪藏标题框初值（剪贴板预填抓到的页面标题）
  *  - presetScene：场景平铺预选（issue 269：当前选中的场景带进弹窗；非法/缺省回落
  *    memoDefaultScene → 第一个场景，与 fallbackScene 同口径）
+ *  - presetNote：关联笔记预置（2026-09-11「给当前笔记记一笔」命令；同「定位到笔记」的绑定字段）
  *  - onSaved：保存成功后的回调（调用方清底部录入草稿）
  */
 export function openEditor(
   item: MemoItem | null,
-  opts?: { presetContent?: string; presetTitle?: string; presetScene?: string; onSaved?: () => void },
+  opts?: {
+    presetContent?: string; presetTitle?: string; presetScene?: string; onSaved?: () => void;
+    presetNote?: { path: string; position: { line: number; ch: number } | null };
+  },
 ): void {
   const isEdit = !!item;
   const scenes = MemoData.getScenarios();
@@ -1152,9 +1156,11 @@ export function openEditor(
   // 📌 定位（F 款已入组件库 .bz-btn--chip，issue 200；真实读取当前笔记与光标，绑定后转品牌色）
   const posRow = document.createElement('div');
   posRow.className = 'bz-memo-pos-row';
+  // 新建态可预置关联笔记（2026-09-11「给当前笔记记一笔」命令：从首页入口一步进来就带着绑定，
+  // 不必再点一次「定位到笔记」）；编辑态一律以条目自身的绑定为准，预置值不参与。
   const posState: { notePath: string | null; notePosition: { line: number; ch: number } | null } = {
-    notePath: editing?.notePath || null,
-    notePosition: editing?.notePosition || null,
+    notePath: editing?.notePath || opts?.presetNote?.path || null,
+    notePosition: editing?.notePosition || opts?.presetNote?.position || null,
   };
   // 定位钮 = 组件库 chip 档（issue 200 F 款入库：.bz-btn--chip 图标圆底 + 文字素排）
   const posBtn = uiBtn({ icon: 'pin', label: '定位到笔记', chip: true });

@@ -26,6 +26,9 @@
 <link rel="stylesheet" href="../../src/core/ui/tokens.css">
 <link rel="stylesheet" href="../../src/core/ui/components.css">
 <link rel="stylesheet" href="../../src/home/styles.css">
+<!-- 剪藏本皮：入口菜单「未读全部标为已读」的确认框用 #__shared_confirm_popup__.bz-clip-dialog-editorial
+     （与面板内同款动作同一个皮；只作用于该弹窗，不窜到首页版式） -->
+<link rel="stylesheet" href="../../src/clipbook/styles.css">
 <link rel="stylesheet" href="../mob-1to1.css">
 <script src="../mob-1to1.js"></script>
 <style>
@@ -255,7 +258,8 @@
         t('抽屉功能项=写日记', sheetLabels().join('|') === '写日记');
 
         await longPressTile('pomodoro');
-        t('番茄钟抽屉项=停止专注（种子 = 暂停中的专注）', sheetLabels().join('|') === '停止专注');
+        // 相位敏感的**单条**：种子 = 暂停中的专注 → 只出「继续专注」（不再并列停止/跳过，二者互斥）
+        t('番茄钟抽屉项=继续专注（单条，种子 = 暂停中的专注）', sheetLabels().join('|') === '继续专注');
 
         // 跑真 toggleFocus（同一条命令链路）→ 停掉专注 → 重开面板重采相位 → 文案应翻成「开始专注」
         await MW.BZW_home.toggleFocusSim();
@@ -265,7 +269,7 @@
         MW.BZW_home.openHome();
         await waitFrame(mobDoc, '.bz-home-m-tile');
         await longPressTile('pomodoro');
-        t('停止专注后文案翻成「开始专注」（动态识别）', sheetLabels().join('|') === '开始专注');
+        t('停止专注后文案翻成「开始专注」（相位回落 idle，单条）', sheetLabels().join('|') === '开始专注');
 
         md.querySelector('.bz-item-sheet-mask').click();
         await sleep(80);
@@ -279,12 +283,25 @@
         // 域清单变更：移出「移动附件」、入列「备忘录」
         t('移动附件已移出入口', !rowOf('attach'));
         t('备忘录入列', !!rowOf('memo'));
+        // 入口行（2026-09-11 用户要求）：行尾 hover 的 → 已退役；灰字成为最后一项、贴右缘
+        // （几何判据：灰字右缘 ≈ 行右缘 - 行 padding，能同时否掉「灰字在左边」的反方向）
+        t('入口行无行尾箭头（→ 已退役）', !dt('.bz-home-erow').textContent.includes('→'));
+        t('入口行灰字贴右缘（行内最后一项）', (() => {
+          const row = dt('.bz-home-erow');
+          const ct = row && row.querySelector('.bz-home-ect');
+          if (!row || !ct) return false;
+          if (row.lastElementChild !== ct) return false;
+          const rowR = row.getBoundingClientRect().right;
+          const padR = parseFloat(getComputedStyle(row).paddingRight) || 0;
+          return Math.abs((rowR - padR) - ct.getBoundingClientRect().right) <= 1.5;
+        })());
 
         // 挂载口径：只有带快捷动作的域才挂浮层（core/item-actions 会给元素打 bz-item-card 标记）
         t('有快捷动作的域已挂浮层（日记）', !!rowOf('diary') && rowOf('diary').classList.contains('bz-item-card'));
         t('无快捷动作的域不挂浮层（设置）', !!rowOf('settings') && !rowOf('settings').classList.contains('bz-item-card'));
-        t('无快捷动作的域不挂浮层（剪藏本）', !!rowOf('clipping') && !rowOf('clipping').classList.contains('bz-item-card'));
-        t('无快捷动作的域不挂浮层（保险库）', !!rowOf('encrypt') && !rowOf('encrypt').classList.contains('bz-item-card'));
+        // 2026-09-11：剪藏本（未读全部标为已读）与保险库（锁定保险库）不再是空菜单
+        t('剪藏本已挂浮层（新增条目）', !!rowOf('clipping') && rowOf('clipping').classList.contains('bz-item-card'));
+        t('保险库已挂浮层（新增条目）', !!rowOf('encrypt') && rowOf('encrypt').classList.contains('bz-item-card'));
         t('移动瓦片同口径（日记挂、设置不挂）', !!mob('.bz-home-m-tile[data-home-go="diary"]') && mob('.bz-home-m-tile[data-home-go="diary"]').classList.contains('bz-item-card') && !mob('.bz-home-m-tile[data-home-go="settings"]').classList.contains('bz-item-card'));
 
         // 菜单内容：只有域快捷动作（无「打开 X」、无「整理顺序」）
@@ -297,18 +314,70 @@
         t('菜单无「整理顺序」项', !diaryLabels.some((s) => s.indexOf('整理顺序') >= 0));
         t('菜单项图标已物化（svg）', !!dd.querySelector('.bz-item-menu-item .bz-item-menu-icon svg'));
 
+        // 2026-09-11 观感整改（用户：菜单「感觉很廉价，也不真实」）——尺寸对齐原生 + B 方案域头 + 无动效
+        const menuNow = dd.querySelector('.bz-item-menu');
+        const itemNow = dd.querySelector('.bz-item-menu-item');
+        const icoNow = dd.querySelector('.bz-item-menu-item .bz-item-menu-icon svg');
+        t('菜单尺寸对齐原生（180px 起宽 / 图标 16px / 项高 >=30px）', !!menuNow && !!itemNow && !!icoNow
+          && parseFloat(getComputedStyle(menuNow).minWidth) >= 180
+          && getComputedStyle(icoNow).width === '16px'
+          && parseFloat(getComputedStyle(itemNow).minHeight) >= 30);
+        t('菜单有实底色（壳里没有 --background-secondary —— 解析失败就透明，2026-09-11 实测踩过）', (() => {
+          if (!menuNow) return false;
+          const c = getComputedStyle(menuNow).backgroundColor;
+          return c !== 'rgba(0, 0, 0, 0)' && c !== 'transparent';
+        })());
+        t('菜单底色走首页卡片口径（--h-card 与首页面板一致，双向判据）', (() => {
+          if (!menuNow) return false;
+          const panel = dd.querySelector('.bz-home-panel');
+          if (!panel) return false;
+          const menuCard = getComputedStyle(menuNow).getPropertyValue('--h-card').trim();
+          const panelCard = getComputedStyle(panel).getPropertyValue('--h-card').trim();
+          return !!menuCard && menuCard === panelCard;
+        })());
+        t('菜单有描边（深色下靠边框立层级，阴影不可靠）', !!menuNow && parseFloat(getComputedStyle(menuNow).borderTopWidth) > 0);
+        t('菜单无入场动画（用户要求：不要过度动效）', !!menuNow && getComputedStyle(menuNow).animationName === 'none');
+        t('桌面菜单有域头（B：域色点 + 域名 + 分隔线）', !!menuNow
+          && !!menuNow.querySelector('.bz-item-menu-head-dot')
+          && (menuNow.querySelector('.bz-item-menu-head')?.textContent || '').indexOf('日记本') >= 0
+          && !!menuNow.querySelector('.bz-item-menu-sep'));
+
         openMenu(rowOf('cinema'), 160);
         await sleep(80);
         const cinemaLabels = menuLabelsNow();
-        t('影院菜单=加影视+分析报告', cinemaLabels.length === 2 && cinemaLabels[0] === '加影视' && cinemaLabels[1] === '影视分析报告');
+        t('影院菜单=加影视+分析报告+随机抽一部', cinemaLabels.length === 3 && cinemaLabels[0] === '加影视' && cinemaLabels[1] === '影视分析报告' && cinemaLabels[2] === '随机抽一部');
         openMenu(rowOf('pomodoro'), 200);
         await sleep(80);
-        // 番茄钟 = 唯一动态文案项：种子是「暂停中的专注」→ 桌面菜单显示「停止专注」（移动抽屉另有断言）
-        t('番茄菜单=停止专注（动态文案，种子为专注中）', menuLabelsNow().join('|') === '停止专注');
+        // 番茄钟 = 唯一相位敏感项：种子是「暂停中的专注」→ 桌面菜单只显示「继续专注」一条
+        // （移动抽屉另有断言；四相位派发由纯层单测 tests/home/entry-menu.test.ts 覆盖）
+        const pomoLabels = menuLabelsNow();
+        t('番茄菜单=继续专注（单条，种子为暂停中的专注）', pomoLabels.join('|') === '继续专注');
+        t('番茄菜单不再并列停止/跳过（互斥项一次只出一条）', pomoLabels.length === 1);
         openMenu(rowOf('knowledge'), 200);
         await sleep(80);
         const kbLabels = menuLabelsNow();
         t('知识盒菜单=术语+视频生成文献笔记', kbLabels.length === 2 && kbLabels[1] === '视频生成文献笔记');
+        openMenu(rowOf('bookshelf'), 200);
+        await sleep(80);
+        const bsLabels = menuLabelsNow();
+        t('书库菜单=分析报告+继续在读', bsLabels.length === 2 && bsLabels[1] === '继续在读');
+        openMenu(rowOf('secondbrain'), 200);
+        await sleep(80);
+        const sbLabels = menuLabelsNow();
+        t('第二大脑菜单=对话+参考侧栏+重建索引', sbLabels.length === 3 && sbLabels[2] === '重建索引');
+        openMenu(rowOf('memo'), 200);
+        await sleep(80);
+        const memoLabels = menuLabelsNow();
+        t('备忘菜单=写备忘+给当前笔记记一笔', memoLabels.length === 2 && memoLabels[1] === '给当前笔记记一笔');
+        openMenu(rowOf('clipping'), 200);
+        await sleep(80);
+        const clipLabels = menuLabelsNow();
+        t('剪藏菜单=未读全部标为已读', clipLabels.length === 1 && clipLabels[0] === '未读全部标为已读');
+        t('剪藏菜单项为危险项（红字）', !!dd.querySelector('.bz-item-menu-item--danger'));
+        openMenu(rowOf('encrypt'), 200);
+        await sleep(80);
+        const encLabels = menuLabelsNow();
+        t('保险库菜单=锁定保险库', encLabels.length === 1 && encLabels[0] === '锁定保险库');
         // 密码本已被 home.json 隐藏 → 不在入口列（故此处不做它的菜单断言，隐藏链路由上面两条覆盖）
         t('隐藏域没有浮层标记', ![...dtRows()].some((r) => r.dataset.homeGo === 'vault' && r.classList.contains('bz-item-card')));
         // 无快捷动作的域：压根没挂浮层（右键不弹菜单；不依赖「上一个菜单已关」这种时序）

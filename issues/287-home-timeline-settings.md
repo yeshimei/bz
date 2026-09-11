@@ -61,20 +61,24 @@ else if (c.to < c.from && i >= c.to && i < c.from) shift = 1;  // 向上拖：�
 
 ## 二、时间线六项设置
 
+> **2026-09-11 后续（issue 288）**：「已跳过」已删除（数据源没接、开关点不动）；
+> 时间范围默认改为 `week`；本表九行已拆成「时间线 / 内容过滤 / 预告栏」三组。详见 issue 288。
+
 | # | 设置项 | 键 | 默认 | 类型 |
 |---|---|---|---|---|
 | 8 | 时间线字号（紧凑/标准/宽松） | `homeTimelineSize` | `normal` | select |
 | 9 | 内容过滤：产出 | `homeTimelineProduce` | `true` | toggle |
 | 9 | 内容过滤：状态推进 | `homeTimelineProgress` | `true` | toggle |
 | 9 | 内容过滤：点评 ✦ | `homeTimelineNotes` | `true` | toggle |
-| 9 | 内容过滤：已跳过 | `homeTimelineSkipped` | `false` | toggle |
-| 10 | 时间范围（当天/最近 3 天/本周） | `homeTimelineRange` | `today` | select |
+| ~~9~~ | ~~内容过滤：已跳过~~ | ~~`homeTimelineSkipped`~~ | — | **issue 288 已删除** |
+| 10 | 时间范围（当天/最近 3 天/本周） | `homeTimelineRange` | ~~`today`~~ → `week` | select |
 | 11 | 默认打开日（今天/最后有动静） | `homeDefaultDay` | `today` | select |
 | 13 | 显示时刻列 | `homeTimelineTime` | `true` | toggle |
 | 14 | 明天预告卡 | `homeNextCards` | `true` | toggle |
 
 **默认值的总原则：加完设置、一个开关都不动，观感必须和加之前**完全**一样。**
-所以产出/状态推进/点评默认开、已跳过默认关、时刻列开、预告卡开、字号标准、范围当天、默认今天。
+所以产出/状态推进/点评默认开、已跳过默认关、时刻列开、预告卡开、字号标准、默认今天。
+（例外：范围与「已跳过」在 issue 288 按用户后续要求改过。）
 
 ### 9 的口径（用户专门问了「解释一下 9」）
 

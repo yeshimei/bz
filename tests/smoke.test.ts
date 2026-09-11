@@ -53,9 +53,13 @@ const EXPECTED_COMMAND_IDS = [
   // 今日回顾（recap 域，方向一 R2：当天五域痕迹聚合面板）
   'bz-recap-today',
   'bz-memo-open', 'bz-memo-add',
+  // 给当前笔记记一笔（2026-09-11 首页入口菜单）
+  'bz-memo-note-binding',
   'bz-belongings-add', 'bz-belongings-open',
   // 剪藏本（clipbook 融合域，ADR-0082）：聚合讯未读流+剪藏笔记一体化；旧 bz-clipping-open/bz-news-open 断开
   'bz-clipbook-open',
+  // 未读全部标为已读（2026-09-11 首页入口菜单；跨全库批量已读）
+  'bz-clipbook-mark-all-read',
   // 自动摘要（enh-autosum 包 1）：当前剪藏笔记手动重跑 AI 摘要
   'bz-auto-summary-redo',
   // 统一保险库（encrypt 域，ADR-0085）：密码/笔记/日记合一
@@ -68,24 +72,37 @@ const EXPECTED_COMMAND_IDS = [
   // ADR-0090：独立报告窗退役，原报告命令 id 换 bz-cinema-analysis（直达影院面板分析页）
   'bz-cinema-analysis',
   'bz-cinema-open', 'bz-cinema-add',
+  // 随机抽一部（2026-09-11 首页入口菜单；想看池随机直开详情）
+  'bz-cinema-random-pick',
   // 书架墙（bookshelf 域，新域与书库并存）
   'bz-bookshelf-open',
+  // 继续在读（2026-09-11 首页入口菜单；开书架墙落「在读」分栏）
+  'bz-bookshelf-continue',
   'bz-review-open', 'bz-review-report', 'bz-review-start', 'bz-review-add', 'bz-review-remove', 'bz-review-overdue', 'bz-review-rate',
   'bz-review-again', 'bz-review-hard', 'bz-review-good', 'bz-review-easy',
   'bz-secondbrain-panel', 'bz-secondbrain-open', 'bz-secondbrain-chat', 'bz-secondbrain-rebuild-links', 'bz-secondbrain-link-all',
+  // 重建索引（2026-09-11 首页入口菜单；函数早已存在、此前无命令入口）
+  'bz-secondbrain-rebuild-index',
   'bz-pomodoro-open',
   // 开始/停止专注（2026-09-10：首页入口菜单联动）
   'bz-pomodoro-focus-toggle',
+  // 跳过休息 / 暂停·继续（2026-09-11 首页入口菜单；相位派发的单动作，见 core/pomodoro-phase）
+  'bz-pomodoro-skip', 'bz-pomodoro-pause',
   'bz-knowledge-open', 'bz-knowledge-note-term',
   // 视频生成文献笔记（2026-09-10：首页入口菜单联动）
   'bz-knowledge-note-video',
   'bz-attach-move',
   // 统一保险库（ADR-0085）：密码/加密笔记/加密日记 + 加密当前笔记 + 快速复制密码
+  // 注意：bz-encrypt-lock 是历史遗留 id，实际动作是「加密当前笔记」；
+  // 锁定保险库（2026-09-11 首页入口菜单）另用 bz-encrypt-lock-vault，避免撞 id
   'bz-encrypt-open', 'bz-encrypt-lock', 'bz-encrypt-copy-password',
+  'bz-encrypt-lock-vault',
   // 密码本（password-vault 域，ADR-0109 拆回独立域）
   'bz-password-vault-open',
   // 快速生成密码（2026-09-10：首页入口菜单联动）
   'bz-password-vault-gen',
+  // 锁定密码本（2026-09-11 首页入口菜单；与保险库同库同锁）
+  'bz-password-vault-lock',
   'bz-smartcat-open', 'bz-smartcat-chat', 'bz-smartcat-hide', 'bz-smartcat-dashboard',
   // 设置面板（ADR-0080）
   'bz-settings-panel-open',

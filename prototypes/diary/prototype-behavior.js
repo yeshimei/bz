@@ -1,4 +1,4 @@
-/* 源指纹 6e5478cfac9a385c · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b971229ba2a26a5b · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -5591,11 +5591,20 @@ var BZW_diary = (() => {
     if (first) first.focus();
     attachItemKeyboardNav(host, scope);
   }
-  function openItemMenu(x, y, actions, suppressResidualClick = false, menuClass) {
+  function openItemMenu(x, y, actions, suppressResidualClick = false, menuClass, menuHeadHtml) {
     closeItemMenu();
     const m = document.createElement("div");
     m.className = "bz-item-menu" + (menuClass ? " " + menuClass : "");
     m.style.visibility = "hidden";
+    if (menuHeadHtml) {
+      const head = document.createElement("div");
+      head.className = "bz-item-menu-head";
+      head.innerHTML = menuHeadHtml;
+      m.appendChild(head);
+      const sep = document.createElement("div");
+      sep.className = "bz-item-menu-sep";
+      m.appendChild(sep);
+    }
     for (const a of actions) {
       const item = document.createElement("button");
       item.type = "button";
@@ -5781,7 +5790,7 @@ var BZW_diary = (() => {
       if (isMobileEnv()) return;
       if ((opts == null ? void 0 : opts.longPressFilter) && !opts.longPressFilter(e)) return;
       e.preventDefault();
-      openItemMenu(e.clientX, e.clientY, actions, true, opts == null ? void 0 : opts.menuClass);
+      openItemMenu(e.clientX, e.clientY, actions, true, opts == null ? void 0 : opts.menuClass, opts == null ? void 0 : opts.menuHeadHtml);
       suppressNextClick = false;
     });
     longPress(
@@ -11623,6 +11632,8 @@ var BZW_diary = (() => {
     ensureEncrypt: () => ensureEncrypt,
     ensureSafeUnlocked: () => ensureSafeUnlocked,
     getSafeManager: () => getSafeManager,
+    lockEncrypt: () => lockEncrypt,
+    lockSafe: () => lockSafe,
     mountEncryptStatusBar: () => mountEncryptStatusBar,
     openEncrypt: () => openEncrypt,
     unloadEncrypt: () => unloadEncrypt,
@@ -11683,6 +11694,17 @@ var BZW_diary = (() => {
   function getSafeManager() {
     return getController().dataManager;
   }
+  async function lockSafe(app) {
+    await ensureEncrypt(app);
+    if (!getSafeManager().unlocked) return false;
+    getController().uiManager.lockNow();
+    return true;
+  }
+  async function lockEncrypt(app) {
+    const ok = await lockSafe(app);
+    if (ok) notice("保险库已锁定", "success");
+    else notice("保险库本来就是锁着的", "warning");
+  }
   async function ensureSafeUnlocked() {
     const controller3 = getController();
     if (controller3.dataManager.unlocked) return true;
@@ -11699,6 +11721,7 @@ var BZW_diary = (() => {
     "src/encrypt/index.ts"() {
       init_settings_provider();
       init_app();
+      init_notice();
       init_ui2();
       init_vault_assets_view();
       initialized = false;

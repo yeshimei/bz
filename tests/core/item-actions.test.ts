@@ -545,3 +545,50 @@ describe('openItemMenu / closeItemMenu', () => {
     closeItemMenu();
   });
 });
+
+/**
+ * 桌面菜单盒头（B 方案，2026-09-11 观感整改）：
+ * 用户反馈原菜单「感觉很廉价，也不真实」——整改之一 = 首页这类**跨域**菜单要写明右键的是哪个域
+ * （抽屉早就有一行盒头，桌面菜单此前完全没有）。核心约定：**不传即不渲染**，其他域零影响。
+ */
+describe('openItemMenu 盒头（menuHeadHtml）', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+    MockPlatform.isMobile = false; // 本组走桌面右键路径（移动 describe 会置 true）
+  });
+  afterEach(() => {
+    closeItemMenu();
+    document.body.innerHTML = '';
+  });
+
+  it('传 menuHeadHtml → 渲染盒头 + 分隔线（在动作项之前）', () => {
+    openItemMenu(10, 10, ACTIONS, false, undefined,
+      '<span class="bz-item-menu-head-dot" style="background:#c95a28"></span><span>日记本</span><span class="bz-item-menu-head-cnt">518 篇</span>');
+    const menu = document.querySelector('.bz-item-menu')!;
+    const head = menu.querySelector('.bz-item-menu-head');
+    expect(head).toBeTruthy();
+    expect(head!.querySelector('.bz-item-menu-head-dot')).toBeTruthy();
+    expect(head!.textContent).toContain('日记本');
+    expect(head!.textContent).toContain('518 篇');
+    expect(menu.querySelector('.bz-item-menu-sep')).toBeTruthy();
+    // 盒头必须排在动作项前面（否则成了页脚）
+    const kids = [...menu.children];
+    expect(kids.indexOf(head as Element)).toBeLessThan(kids.findIndex((k) => k.classList.contains('bz-item-menu-item')));
+  });
+
+  it('不传 → 不渲染盒头与分隔线（cinema/memo/clipbook 等域零影响）', () => {
+    openItemMenu(10, 10, ACTIONS, false);
+    const menu = document.querySelector('.bz-item-menu')!;
+    expect(menu.querySelector('.bz-item-menu-head')).toBeNull();
+    expect(menu.querySelector('.bz-item-menu-sep')).toBeNull();
+    expect(menu.querySelectorAll('.bz-item-menu-item').length).toBe(ACTIONS.length);
+  });
+
+  it('attachItemActions 把 menuHeadHtml 一路带到桌面菜单', () => {
+    const card = makeCard();
+    attachItemActions(card, ACTIONS, { menuHeadHtml: '<span class="bz-item-menu-head-dot"></span><span>影院</span>' });
+    rightClickOn(card);
+    const menu = document.querySelector('.bz-item-menu')!;
+    expect(menu.querySelector('.bz-item-menu-head')!.textContent).toContain('影院');
+  });
+});

@@ -84,9 +84,9 @@
 .bz-home-eic .bz-ic { width: 17px; height: 17px; }
 /* 2026-09-09 去加粗：入口名/瓦片名不再加粗（用户拍板） */
 .bz-home-enm { font-size: 12.5px; font-weight: 400; }
+/* 灰字计数 = 行内**最后一项**，margin-left:auto 推到右缘
+   （2026-09-11 用户要求：去掉行尾 hover 的 `→`（bz-home-ego 已退役），灰字贴右） */
 .bz-home-ect { margin-left: auto; font-size: var(--bz-font-caption); color: var(--h-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.bz-home-ego { opacity: 0; color: var(--h-dim); font-size: var(--bz-font-caption); }
-.bz-home-erow:hover .bz-home-ego { opacity: 1; }
 
 /* ---- 拖拽排序已撤：入口顺序/显隐统一在「设置 → 首页入口」弹窗里打理（2026-09-10 用户拍板） ---- */
 
@@ -104,7 +104,7 @@
 .bz-home-ev-tm { font-family: var(--h-mono); font-size: 11px; color: var(--h-dim); width: 42px; flex: none; padding-top: 2px; }
 .bz-home-ev-bd { flex: 1; min-width: 0; }
 .bz-home-ev-tx { font-size: 13.5px; line-height: 1.6; }
-.bz-home-ev-dm { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; color: #fff; padding: 1px var(--bz-space-sm); border-radius: var(--bz-radius-sm); margin-right: var(--bz-space-sm); vertical-align: 1.5px; }
+.bz-home-ev-dm { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: #fff; padding: 1px var(--bz-space-sm); border-radius: var(--bz-radius-sm); margin-right: var(--bz-space-sm); vertical-align: 1.5px; }
 .bz-home-ev-dm .bz-ic { width: 10px; height: 10px; }
 .bz-home-ev-note { margin-top: 5px; font-size: 11.5px; color: var(--h-ai); line-height: 1.55; }
 .bz-home-ev-note::before { content: "✦ "; }
@@ -178,16 +178,21 @@
   .bz-home-pr-go { font-size: 17.25px; }
 }
 
-/* ==================== 「外观 → 首页入口」内联编辑器（设置面板内，2026-09-10 用户拍板） ====================
+/* ==================== 「入口组 → 首页入口」内联编辑器（设置面板内，2026-09-10 用户拍板） ====================
    演进：浮层弹窗（自带 --h-* 一套 token）→ **面板内联**（settings.ts 的 custom 行插槽）。
    故本块**不自带 token**，直接用面板的 --sp-* （面板根作用域提供，随亮/暗皮切换），
    缺省再回落 Obsidian token —— 观感与面板其它设置项一致。
-   按端各一份：桌面端只出 desk 那套、移动端只出 mob 那套（见 entry-editor.ts）。 */
-.bz-home-ent-hint { margin: 0 0 var(--bz-space-sm); font-size: 11.5px; color: var(--sp-ink-3, var(--text-faint)); }
+   按端各一份：桌面端只出 desk 那套、移动端只出 mob 那套（见 entry-editor.ts）。
+   2026-09-11 用户拍板：**无说明小字**、**列表靠左、左边不留内边距**（右边照常留边距）。 */
+/* 宿主 custom 行左侧内边距清零（挂标记者见 entry-editor.ts 的 FLUSH_CLS）——
+   桌面行 padding 10px 18px / 移动页行 padding 10px 14px，两档都归零，
+   于是列表左缘 = 卡片左缘（拖柄贴到卡片边上）。右侧照常保留。 */
+.bz-sp-set-row.bz-home-ent-flush { padding-left: 0; }
 .bz-home-ent-list { display: flex; flex-direction: column; }
 .bz-home-ent-row {
   display: flex; align-items: center; gap: var(--bz-space-sm);
-  padding: 7px var(--bz-space-sm); border-radius: var(--bz-radius-sm);
+  /* 左边不留内边距：拖柄贴左缘（用户 2026-09-11 拍板）；右边照常留 */
+  padding: 7px var(--bz-space-sm) 7px 0; border-radius: var(--bz-radius-sm);
   border-bottom: 1px solid var(--sp-line-soft, var(--background-modifier-border));
   /* 触屏：纵向滚动归浏览器（短滑滚列表），横向不滚 → 长按拖拽不与滚动抢手势。
      长按成立后 JS 会把本行 touch-action 临时改成 none 拿住手势（见 entry-editor.ts）。 */
@@ -231,8 +236,7 @@
 
 /* 移动端：面板内字号随面板档放大（面板移动端字号见 settings-panel/styles.css） */
 @media (max-width: 768px) {
-  .bz-home-ent-hint { font-size: var(--bz-font-label); }
-  .bz-home-ent-row { padding: 10px var(--bz-space-sm); }
+  .bz-home-ent-row { padding: 10px var(--bz-space-sm) 10px 0; }
   .bz-home-ent-nm { font-size: 16px; }
   .bz-home-ent-ic .bz-ic, .bz-home-ent-grip .bz-ic { width: 19px; height: 19px; }
   .bz-home-ent-btn { width: 34px; height: 34px; }
@@ -258,3 +262,35 @@
    不依赖样式表聚合顺序；图标随字号同步放大，行高留够触控热区 */
 .bz-item-sheet.bz-home-menu button.bz-item-sheet-item { font-size: 18px; padding: 11px 6px; }
 .bz-item-sheet.bz-home-menu .bz-item-sheet-icon svg { width: 18px; height: 18px; }
+
+/* ---- 桌面右键菜单皮肤（.bz-item-menu.bz-home-menu，2026-09-11）----
+   用户：「首页的右键菜单没有背景色，整体风格和首页的风格一致」。两个原因叠在一起：
+   ① core 基线取主题 `--background-secondary`，而评审壳只 mock 了 `--background-primary`
+      → 解析失败 = 菜单透明（core 侧已加兜底链）；
+   ② 首页的 `--h-*` 定义在 **`.bz-home-panel` 作用域**内，而菜单挂在 `body` 上**够不着** ——
+      所以这里按首页口径**重新声明一份**，再被下面的规则消费。
+   底色/描边/墨色全部取首页卡片口径（`--h-card` / `--h-line` / `--h-ink`），
+   尺寸、行高、图标、无动效仍走 core 基线（菜单是宿主级控件，不套面板里 18px 的抽屉口径）。 */
+.bz-item-menu.bz-home-menu {
+  --h-card: #ffffff;
+  --h-ink: #17150f;
+  --h-dim: #8b8778;
+  --h-line: #e5e2d6;
+  background: var(--h-card);
+  border: 1px solid var(--h-line);
+  box-shadow: 0 6px 24px rgba(23, 21, 15, 0.13);
+}
+.theme-dark .bz-item-menu.bz-home-menu {
+  --h-card: #26251f;
+  --h-ink: #ece9df;
+  --h-dim: #8f8b7c;
+  --h-line: #3a382f;
+  background: var(--h-card);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.46);
+}
+.bz-item-menu.bz-home-menu .bz-item-menu-head { color: var(--h-dim); }
+.bz-item-menu.bz-home-menu .bz-item-menu-sep { background: var(--h-line); }
+.bz-item-menu.bz-home-menu button.bz-item-menu-item { color: var(--h-ink); }
+/* 悬停：跟随首页入口行的暖色低透明叠加，不引主题灰（否则浅色下偏冷、显脏） */
+.bz-item-menu.bz-home-menu button.bz-item-menu-item:hover { background: rgba(23, 21, 18, 0.06) !important; }
+.theme-dark .bz-item-menu.bz-home-menu button.bz-item-menu-item:hover { background: rgba(236, 233, 223, 0.08) !important; }

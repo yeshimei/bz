@@ -7,7 +7,7 @@ import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
 import { M, resetCinemaState, DEFAULT_FOLDER } from './state';
 import { rebuildItems } from './data';
-import { createOverlay, closeOverlay, registerEscapeHandler, renderAll, openAddModalDirect } from './ui';
+import { createOverlay, closeOverlay, registerEscapeHandler, renderAll, openAddModalDirect, openRandomMovie } from './ui';
 import { shutdownDoubanQueue, sweepDoubanFetch } from './douban-queue';
 
 let initialized = false;
@@ -93,6 +93,17 @@ export function openCinemaAnalysis(app: App): void {
 export function addCinemaItem(app: App): void {
   ensureCinema(app);
   openAddModalDirect(app);
+}
+
+/**
+ * 随机抽一部（命令 bz-cinema-random-pick，2026-09-11 首页入口菜单）：
+ * 从「想看」池随机挑一部并直接开详情；面板未开则冷开（详情叠在列表页上，
+ * 故先把视图回落 list —— 上次停在分析/AI 页时不清掉会叠在错误的页面上）。
+ */
+export function pickRandomCinema(app: App): void {
+  ensureCinema(app);
+  M.view = 'list';
+  openRandomMovie(app);
 }
 
 /** 卸载清理（main.ts onunload 调用） */

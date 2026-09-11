@@ -16,7 +16,8 @@
  *   复习 9 张（逾期 1、明天到期 0）· 剪藏未读 12 · 收藏在册 18 · 归物 12 件
  *   今日时间线 9 条（三体 07:42 → 影院已看 21:05），昨日 5 条（写周报初稿 09:00 → 日记 22:15）
  *   规则点评 2 条：首条「早了 78 分钟」（今日首动 07:42 vs 昨日首动 09:00）+ 末条日记连击提醒
- *   番茄钟 state = 暂停中的专注（首页菜单因此显示「停止专注」；toggleFocusSim 停掉后变「开始专注」）
+ *   番茄钟 state = 暂停中的专注（首页菜单按相位派发**单条** → 显示「继续专注」；
+ *   toggleFocusSim 停掉后相位回 idle → 变「开始专注」）
  */
 import { FakeApp, encodeSeedFile } from './fake/fake-obsidian';
 import { setApp } from '../../src/core/app';
@@ -292,9 +293,10 @@ function seedMemo(out: SeedFile[]): void {
 }
 
 /** 番茄：今日 2 轮 + 昨日 1 轮（ts=完成时刻，时长 25 分钟）；
- *  state = **暂停中的专注**（remaining 15 分钟）——首页入口菜单的番茄钟文案是动态的
- *  （专注中「停止专注」/ 否则「开始专注」），暂停态正好落前一支且不触发恢复通知/tick
- *  （recover 只在 endTime 到点时才动，见 pomodoro/state.ts），演示壳因此能稳定看到两支文案。 */
+ *  state = **暂停中的专注**（remaining 15 分钟）——首页入口菜单的番茄钟项是**相位敏感的单个动作**
+ *  （见 home/shared.pomodoroMenuAction），暂停相位 → 只出「继续专注」一条；
+ *  暂停态不触发恢复通知/tick（recover 只在 endTime 到点时才动，见 pomodoro/state.ts），
+ *  演示壳因此能稳定看到 paused / idle 两种文案例。 */
 function seedPomodoro(out: SeedFile[]): void {
   out.push({
     path: 'CONFIG/STORAGE/pomodoro.json',
@@ -404,9 +406,10 @@ export function resetHomeSim(): void {
 }
 
 /**
- * 自检用：直接跑**真** toggleFocus（= 首页入口菜单「开始/停止专注」命令的同一条链路），
- * 用来验证「番茄钟文案随相位动态改写」的另一支（初始种子是专注中 → 这里停掉 → 变「开始专注」）。
- * 演示壳的 FakeApp 无 commands（入口点击降级断言依赖它），故走这条显式复位口。
+ * 自检用：直接跑**真** toggleFocus（= 首页入口菜单 idle 相位那条「停止专注」→ reset 的同一条链路），
+ * 用来验证「菜单项随相位派发」的另一支（初始种子是暂停中的专注 → 这里停掉 → 相位回 idle，
+ * 菜单变「开始专注」）。演示壳的 FakeApp 无 commands（入口点击降级断言依赖它），
+ * 故走这条显式复位口。
  */
 export async function toggleFocusSim(): Promise<void> {
   bootHomeSim();

@@ -59,6 +59,10 @@ export function weekHtml(week: RiverWeekDay[], todayDateStr: string, selDate: st
 /**
  * 全部域入口行。order = 该端持久化顺序、hidden = 隐藏域（两者都空 = 默认全量顺序，
  * 见 shared.visibleDomains）；本层只负责按序渲染可见域，顺序/显隐的编辑在设置弹窗里。
+ *
+ * 2026-09-11 用户要求：**去掉行尾 hover 出现的 `→`**（`bz-home-ego` 已退役）——
+ * 它排在灰字之后，等于把灰字顶离了右缘；删掉后灰字（`bz-home-ect`，margin-left:auto）
+ * 自然成为行内最后一项、贴右缘。
  */
 export function entriesHtml(data: RiverData, order?: readonly string[], hidden?: readonly string[]): string {
   const dotsMap = buildDots(data);
@@ -69,17 +73,16 @@ export function entriesHtml(data: RiverData, order?: readonly string[], hidden?:
       + '<span class="bz-home-dot bz-home-dot--' + dot + '"></span>'
       + '<span class="bz-home-eic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span>'
       + '<span class="bz-home-enm">' + esc(d.name) + '</span>'
-      + '<span class="bz-home-ect">' + esc(ct) + '</span>'
-      + '<span class="bz-home-ego">→</span></div>';
+      + '<span class="bz-home-ect">' + esc(ct) + '</span></div>';
   }).join('');
 }
 
 /* ---------- 时间线河卡 ---------- */
 
 /** 时间线渲染选项（issue 287：内容过滤 / 时刻列 / 字号档 都从设置来）
- *  缺省 = 与改版前观感一致（全类但已跳过 / 显时刻 / 标准字号）。 */
+ *  缺省 = 与改版前观感一致（全类 / 显时刻 / 标准字号）。 */
 export interface FlowOpts {
-  /** 内容过滤（产出/状态推进/点评/已跳过）；缺省 DEFAULT_TIMELINE_FILTER */
+  /** 内容过滤（产出/状态推进/点评）；缺省 DEFAULT_TIMELINE_FILTER */
   filter?: TimelineFilter;
   /** 显示时刻列（关掉整列隐藏，track 随之收窄）；缺省 true */
   showTime?: boolean;
@@ -126,7 +129,7 @@ export function flowHtml(data: RiverData, view: string, opts: FlowOpts = {}): st
   if (kept.length) return wrap(body);
   // 空态两种：本来就没痕迹 / 有痕迹但被过滤光了（后者要告诉用户「东西在，只是没显示」）
   if (day.events.length) {
-    return wrap('<div class="bz-home-flow-empty">这一天有痕迹，但都被「时间线内容过滤」挡掉了。<br>去 <b>设置 → 首页</b> 把想看的类别勾上。</div>');
+    return wrap('<div class="bz-home-flow-empty">这一天有痕迹，但都被「内容过滤」挡掉了。<br>去 <b>设置 → 首页 → 内容过滤</b> 把想看的类别勾上。</div>');
   }
   return wrap('<div class="bz-home-flow-empty">这一天还没有留下痕迹。<br><b>写一篇日记</b>、点一轮番茄、读几页书——<br>都会出现在这条河里。</div>');
 }

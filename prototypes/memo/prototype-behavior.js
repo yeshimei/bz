@@ -1,4 +1,4 @@
-/* 源指纹 3248c5c87c419b38 · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ad4d25fbe05c2f21 · 仓内输入 205 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/pw-picker.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/encrypt/vault-data.ts","src/encrypt/vault-pw-view.ts","src/favorites/config.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/index.ts","src/knowledge/note-gen.ts","src/knowledge/processor.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/index.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/link-agent/watch.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-store.ts","src/secondbrain/vptree.ts","src/secondbrain/whitelist.ts","src/settings-panel/dir-picker.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -7273,11 +7273,20 @@ var BZW_memo = (() => {
     if (first) first.focus();
     attachItemKeyboardNav(host, scope);
   }
-  function openItemMenu(x, y, actions, suppressResidualClick = false, menuClass) {
+  function openItemMenu(x, y, actions, suppressResidualClick = false, menuClass, menuHeadHtml) {
     closeItemMenu();
     const m = document.createElement("div");
     m.className = "bz-item-menu" + (menuClass ? " " + menuClass : "");
     m.style.visibility = "hidden";
+    if (menuHeadHtml) {
+      const head = document.createElement("div");
+      head.className = "bz-item-menu-head";
+      head.innerHTML = menuHeadHtml;
+      m.appendChild(head);
+      const sep = document.createElement("div");
+      sep.className = "bz-item-menu-sep";
+      m.appendChild(sep);
+    }
     for (const a of actions) {
       const item = document.createElement("button");
       item.type = "button";
@@ -7474,7 +7483,7 @@ var BZW_memo = (() => {
       if (isMobileEnv()) return;
       if ((opts == null ? void 0 : opts.longPressFilter) && !opts.longPressFilter(e)) return;
       e.preventDefault();
-      openItemMenu(e.clientX, e.clientY, actions, true, opts == null ? void 0 : opts.menuClass);
+      openItemMenu(e.clientX, e.clientY, actions, true, opts == null ? void 0 : opts.menuClass, opts == null ? void 0 : opts.menuHeadHtml);
       suppressNextClick = false;
     });
     longPress(
@@ -9056,10 +9065,13 @@ var BZW_memo = (() => {
     closePomodoro: () => closePomodoro,
     ensurePomodoro: () => ensurePomodoro,
     isFocusing: () => isFocusing,
+    menuPhase: () => menuPhase,
     openPomodoro: () => openPomodoro,
     pomodoroSettingsSchema: () => pomodoroSettingsSchema,
+    skipBreak: () => skipBreak,
     startFocusForTask: () => startFocusForTask,
     toggleFocus: () => toggleFocus,
+    togglePause: () => togglePause,
     unloadPomodoro: () => unloadPomodoro
   });
   function durations() {
@@ -9652,6 +9664,31 @@ var BZW_memo = (() => {
     }
     applyAction("start");
   }
+  function menuPhase() {
+    if (state.phase === "short-break" || state.phase === "long-break") return "break";
+    if (state.phase !== "focus") return "idle";
+    if (state.paused) return "paused";
+    return state.endTime !== null ? "focusing" : "idle";
+  }
+  async function skipBreak(app) {
+    await ensurePomodoro(app);
+    if (state.phase !== "short-break" && state.phase !== "long-break") {
+      notice("当前不在休息阶段", "warning");
+      return;
+    }
+    state = transition(state, "skip", Date.now(), durations(), options()).state;
+    void save();
+    render();
+    applyAction("start");
+  }
+  async function togglePause(app) {
+    await ensurePomodoro(app);
+    if (state.endTime === null && !state.paused) {
+      notice("当前没有进行中的计时", "warning");
+      return;
+    }
+    applyAction(state.paused ? "resume" : "pause");
+  }
   function unloadPomodoro() {
     if (timerId !== null) {
       window.clearInterval(timerId);
@@ -9708,9 +9745,12 @@ var BZW_memo = (() => {
   __export(pomodoro_exports, {
     ensurePomodoro: () => ensurePomodoro,
     isFocusing: () => isFocusing,
+    menuPhase: () => menuPhase,
     openPomodoro: () => openPomodoro,
+    skipBreak: () => skipBreak,
     startFocusForTask: () => startFocusForTask,
     toggleFocus: () => toggleFocus,
+    togglePause: () => togglePause,
     unloadPomodoro: () => unloadPomodoro
   });
   var init_pomodoro = __esm({
@@ -13226,6 +13266,8 @@ ${countsToText(s.missing)}
     root.className = "bz-home-ent";
     root.setAttribute("data-ent-scope", scope);
     body.appendChild(root);
+    const hostRow = body.closest(".bz-sp-set-row");
+    if (hostRow) hostRow.classList.add(FLUSH_CLS);
     function setHidden(ids) {
       if (!order) return;
       order = scope === "mob" ? { ...order, hiddenMob: ids } : { ...order, hiddenDesk: ids };
@@ -13357,7 +13399,7 @@ ${countsToText(s.missing)}
       const ids = hiddenOf(order, scope);
       const visible = visibleDomains(order[scope], ids);
       const hidden = DOMAINS.filter((d) => ids.includes(d.id));
-      root.innerHTML = '<div class="bz-home-ent-hint">拖动排序 · 点 × 移除（移除的排到最下面，点 + 加回）</div><div class="bz-home-ent-list" data-ent-list>' + visible.map((d) => rowHtml2(d, false)).join("") + hidden.map((d) => rowHtml2(d, true)).join("") + "</div>";
+      root.innerHTML = '<div class="bz-home-ent-list" data-ent-list>' + visible.map((d) => rowHtml2(d, false)).join("") + hidden.map((d) => rowHtml2(d, true)).join("") + "</div>";
       mountIcons(root);
       const listEl2 = root.querySelector("[data-ent-list]");
       if (!listEl2) return;
@@ -13404,7 +13446,7 @@ ${countsToText(s.missing)}
       render2();
     });
   }
-  var ROW_SEL, DRAG_PX, TOUCH_ARM_MS, TOUCH_SLOP_PX, SHIFT_CLS, DRAG_CLS;
+  var ROW_SEL, DRAG_PX, TOUCH_ARM_MS, TOUCH_SLOP_PX, SHIFT_CLS, DRAG_CLS, FLUSH_CLS;
   var init_entry_editor = __esm({
     "src/home/entry-editor.ts"() {
       init_mobile();
@@ -13418,6 +13460,7 @@ ${countsToText(s.missing)}
       TOUCH_SLOP_PX = 8;
       SHIFT_CLS = "bz-home-ent-shift";
       DRAG_CLS = "bz-home-ent-drag";
+      FLUSH_CLS = "bz-home-ent-flush";
     }
   });
 
@@ -13439,7 +13482,7 @@ ${countsToText(s.missing)}
           ]
         },
         {
-          // 时间线组（issue 287）：九行——顺序按「看什么 → 看多久 → 从哪天开始看 → 怎么显示 → 那一栏要不要」
+          // 时间线组（issue 288 拆分后）：只剩「时间线自己长什么样」四行——顺序按「看字 → 看多久 → 从哪天开始看 → 那一列要不要」
           icon: "activity",
           name: "时间线",
           rows: [
@@ -13453,30 +13496,6 @@ ${countsToText(s.missing)}
                 { value: "normal", label: "标准" },
                 { value: "loose", label: "宽松" }
               ]
-            },
-            {
-              type: "toggle",
-              name: "产出",
-              desc: "写下的、收进的、读完的——真正产出东西的动作。",
-              binding: { key: "homeTimelineProduce" }
-            },
-            {
-              type: "toggle",
-              name: "状态推进",
-              desc: "加入片单、读到 40%、新增待办这类还没成事实的推进。",
-              binding: { key: "homeTimelineProgress" }
-            },
-            {
-              type: "toggle",
-              name: "点评 ✦",
-              desc: "小橘挂在痕迹下面的那句话（动手早晚、日记连击提醒）。",
-              binding: { key: "homeTimelineNotes" }
-            },
-            {
-              type: "toggle",
-              name: "已跳过",
-              desc: "剪藏流里划掉的条目。开着能看到自己筛掉了什么，关掉更清净。",
-              binding: { key: "homeTimelineSkipped" }
             },
             {
               type: "select",
@@ -13504,7 +13523,39 @@ ${countsToText(s.missing)}
               name: "显示时刻列",
               desc: "每行左边那列 11:03。关掉整列收起，正文往左靠。",
               binding: { key: "homeTimelineTime" }
+            }
+          ]
+        },
+        {
+          // 内容过滤组（issue 288 从时间线组拆出）：只放「哪些痕迹进来」，与「长相」分开
+          icon: "funnel",
+          name: "内容过滤",
+          rows: [
+            {
+              type: "toggle",
+              name: "产出",
+              desc: "写下的、收进的、读完的——真正产出东西的动作。",
+              binding: { key: "homeTimelineProduce" }
             },
+            {
+              type: "toggle",
+              name: "状态推进",
+              desc: "加入片单、读到 40%、新增待办这类还没成事实的推进。",
+              binding: { key: "homeTimelineProgress" }
+            },
+            {
+              type: "toggle",
+              name: "点评 ✦",
+              desc: "小橘挂在痕迹下面的那句话（动手早晚、日记连击提醒）。",
+              binding: { key: "homeTimelineNotes" }
+            }
+          ]
+        },
+        {
+          // 预告栏组（issue 288 拆出）：右侧那一栏不属于时间线，自己一组
+          icon: "calendar-clock",
+          name: "预告栏",
+          rows: [
             {
               type: "toggle",
               name: "明天预告卡",
@@ -35574,6 +35625,8 @@ ${text}`;
     ensureEncrypt: () => ensureEncrypt,
     ensureSafeUnlocked: () => ensureSafeUnlocked,
     getSafeManager: () => getSafeManager,
+    lockEncrypt: () => lockEncrypt,
+    lockSafe: () => lockSafe,
     mountEncryptStatusBar: () => mountEncryptStatusBar,
     openEncrypt: () => openEncrypt,
     unloadEncrypt: () => unloadEncrypt,
@@ -35634,6 +35687,17 @@ ${text}`;
   function getSafeManager() {
     return getController().dataManager;
   }
+  async function lockSafe(app) {
+    await ensureEncrypt(app);
+    if (!getSafeManager().unlocked) return false;
+    getController().uiManager.lockNow();
+    return true;
+  }
+  async function lockEncrypt(app) {
+    const ok = await lockSafe(app);
+    if (ok) notice("保险库已锁定", "success");
+    else notice("保险库本来就是锁着的", "warning");
+  }
   async function ensureSafeUnlocked() {
     const controller2 = getController();
     if (controller2.dataManager.unlocked) return true;
@@ -35650,6 +35714,7 @@ ${text}`;
     "src/encrypt/index.ts"() {
       init_settings_provider();
       init_app();
+      init_notice();
       init_ui10();
       init_vault_assets_view();
       initialized6 = false;
@@ -39334,6 +39399,7 @@ ${text}`;
     })();
   }
   function openEditor(item, opts) {
+    var _a2, _b2;
     const isEdit = !!item;
     const scenes = MemoData.getScenarios();
     const editing = item != null ? item : null;
@@ -39479,8 +39545,8 @@ ${text}`;
     const posRow = document.createElement("div");
     posRow.className = "bz-memo-pos-row";
     const posState = {
-      notePath: (editing == null ? void 0 : editing.notePath) || null,
-      notePosition: (editing == null ? void 0 : editing.notePosition) || null
+      notePath: (editing == null ? void 0 : editing.notePath) || ((_a2 = opts == null ? void 0 : opts.presetNote) == null ? void 0 : _a2.path) || null,
+      notePosition: (editing == null ? void 0 : editing.notePosition) || ((_b2 = opts == null ? void 0 : opts.presetNote) == null ? void 0 : _b2.position) || null
     };
     const posBtn = uiBtn({ icon: "pin", label: "定位到笔记", chip: true });
     const posLabel = posBtn.lastElementChild;
@@ -39566,7 +39632,7 @@ ${text}`;
       const finalTitle = scene === "剪藏" && titleVal ? titleVal : content;
       const { url } = extractUrlAndDisplay(content);
       void (async () => {
-        var _a2;
+        var _a3;
         try {
           if (isEdit && editing) {
             await MemoData.updateItem(editing.id, {
@@ -39605,7 +39671,7 @@ ${text}`;
             M.pinnedNewId = it.id;
           }
           closeModal();
-          (_a2 = opts == null ? void 0 : opts.onSaved) == null ? void 0 : _a2.call(opts);
+          (_a3 = opts == null ? void 0 : opts.onSaved) == null ? void 0 : _a3.call(opts);
           await refresh();
         } catch (e) {
           notifySaveError(e, isEdit ? "保存备忘录" : "新建备忘录");

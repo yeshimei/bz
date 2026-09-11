@@ -637,26 +637,48 @@ button.news-close-btn {
 /* 列表卡片不注入任何常驻或 hover 图标排（用户拍板：列表保持干净）；桌面=右键菜单，触屏=长按抽屉 */
 .bz-item-card { position: relative; }
 
-/* 原生 lucide 图标尺寸统一（setIcon 生成的 svg；颜色继承 currentColor） */
-.bz-item-menu-icon svg,
-.bz-item-sheet-icon svg {
-  width: 13px; height: 13px;
-}
+/* 原生 lucide 图标尺寸统一（setIcon 生成的 svg；颜色继承 currentColor）
+   菜单图标 16px / 抽屉图标 13px —— 桌面菜单按原生规范放大到 16（13 太小显琐碎），
+   抽屉保持面板内的紧凑口径不动。 */
+.bz-item-menu-icon svg { width: 16px; height: 16px; }
+.bz-item-sheet-icon svg { width: 13px; height: 13px; }
 
-/* 跟手菜单（右键弹出；定位由 JS 计算锚点+防溢出，样式仅布局与观感；小尺寸紧凑风，无边框无图标底色装饰） */
+/* 跟手菜单（右键弹出；定位由 JS 计算锚点+防溢出）
+   2026-09-11 观感整改（用户：「感觉很廉价，也不真实」）——对齐 Obsidian 原生菜单规范：
+   180px 起宽 / 行高 30px / 图标 16px / 次级背景 + 1px 边框（**深色下靠边框立层级**，
+   阴影只做辅助：旧的 rgba(0,0,0,.12) 在深色主题几乎不可见，等于没有浮层感）。
+   **无入场动画** —— 用户明确不要过度动效（原 0.12s scale 弹入已删）。 */
 .bz-item-menu {
   position: fixed;
-  min-width: 132px; padding: var(--bz-space-xs);
-  background: var(--background-primary);
+  min-width: 180px; max-width: 320px;
+  padding: var(--bz-space-xs);
+  /* 变量兜底链不是洁癖：评审壳只 mock 了 --background-primary，**没有 --background-secondary**
+     → 直接 var(--background-secondary) 解析失败 = 菜单透明（2026-09-11 用户实测报的 bug）。
+     真机走主题值，壳回落主背景，再兜底纯白。 */
+  background: var(--background-secondary, var(--background-primary, #fff));
+  border: 1px solid var(--background-modifier-border, rgba(128, 128, 128, 0.3));
   border-radius: var(--bz-radius-sm);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  animation: bz-menu-in 0.12s ease-out;
+  box-shadow: var(--shadow-s, 0 4px 16px rgba(0, 0, 0, 0.22));
 }
-/* 菜单项：图标+文字左对齐、无边框无底色（抗 Obsidian 默认 button 灰底/边框/圆角压盖——与抽屉项同款处理） */
-.bz-item-menu button.bz-item-menu-item {
+
+/* 桌面菜单盒头（B 方案，**仅传 menuHeadHtml 的域渲染**：首页菜单跨 21 个域，
+   不写域身份就不知道右键的是哪一行；口径与长按抽屉盒头同源，这里排成一行：
+   域色点 + 域名 ……… 计数。域色点用内联 style 写色，CSS 侧不枚举域色）。 */
+.bz-item-menu-head {
   display: flex; align-items: center; gap: 6px;
+  padding: 3px var(--bz-space-sm) 5px;
+  font-size: 12px; color: var(--text-muted);
+}
+.bz-item-menu-head-dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+.bz-item-menu-head-cnt { margin-left: auto; }
+.bz-item-menu-sep { height: 1px; margin: 3px 6px 4px; background: var(--background-modifier-border); }
+/* 菜单项：图标+文字左对齐、无边框无底色（抗 Obsidian 默认 button 灰底/边框/圆角压盖——与抽屉项同款处理）
+   行高用 **min-height** 而非 height：belongings「印样」皮肤自带 `padding: 10px …`，
+   写死 height 会把那套皮肤的文字压扁；min-height 则默认 30px、皮肤更高，两边都成立。 */
+.bz-item-menu button.bz-item-menu-item {
+  display: flex; align-items: center; gap: var(--bz-space-sm);
   justify-content: flex-start !important; /* 抗 Obsidian 默认 button 居中 */
-  width: 100%; padding: 6px var(--bz-space-sm);
+  width: 100%; min-height: 30px; padding: 0 var(--bz-space-sm);
   font-size: var(--bz-font-label); line-height: 1.4; color: var(--text-normal);
   background: transparent !important;
   border: none !important;
@@ -675,12 +697,8 @@ button.news-close-btn {
 .bz-item-menu button.bz-item-menu-item--accent .bz-item-menu-icon {
   color: var(--color-green) !important;
 }
-.bz-item-menu-icon { width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text-muted); }
+.bz-item-menu-icon { width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text-muted); }
 .bz-item-menu button.bz-item-menu-item--danger .bz-item-menu-icon { color: var(--text-error); }
-@keyframes bz-menu-in {
-  from { opacity: 0; transform: scale(0.96) translateY(2px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
 
 /* ---- 抽屉共享基线（恢复：movie 域退役 ADR-0087 时随 src/movie/styles.css 误删的共享规则——
    本组件样式早年散落各域文件，退役清理时未迁回 core，致动作项失 flex 纵列挤成一行、

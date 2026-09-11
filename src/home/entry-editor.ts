@@ -1,5 +1,5 @@
 /**
- * 「首页入口」内联编辑器（设置面板 → 首页 → **外观**组；2026-09-10 用户拍板）。
+ * 「首页入口」内联编辑器（设置面板 → 首页 → **入口**组；2026-09-10 用户拍板）。
  *
  * 形态演进：浮层弹窗（带遮罩/ESC）→ **面板内联**（settings.ts 用 custom 行挂进插槽）。
  * **按端各一份、互不影响、互相不能修改**（用户拍板）：
@@ -8,6 +8,11 @@
  *  - 没有「桌面/移动」切换段 —— 另一端的数据本端既看不到也改不到。
  * 为何不做成可切：两端屏幕上的入口形态本就不同（桌面是入口行、移动是两列瓦片），
  * 在一端调另一端的顺序只能靠想象；拍板结论是各端只调自己。
+ *
+ * 版式（2026-09-11 用户拍板）：
+ *  - **无说明小字**（原「拖动排序 · 点 × 移除…」灰字删除）；
+ *  - **列表靠左、左边不留内边距**（挂 .bz-home-ent-flush 把宿主行的左内边距清零，
+ *    见 styles.css）——拖柄贴到卡片左缘，整块更宽；右边照常留边距。
  *
  * 交互：拖动排序（Pointer Events；触屏先按住 ~250ms 再拖，短滑归列表滚动）+ 点 × 移除（隐藏）。
  * **移除的域不进独立分区、也无「已隐藏」标题**（用户 2026-09-10 拍板）：就地排到列表最下面，
@@ -45,6 +50,8 @@ const TOUCH_SLOP_PX = 8;
 const SHIFT_CLS = 'bz-home-ent-shift';
 /** 拖拽中浮起类 */
 const DRAG_CLS = 'bz-home-ent-drag';
+/** 宿主行「右边不留内边距」标记类（挂到祖先 .bz-sp-set-row 上；样式见 styles.css） */
+const FLUSH_CLS = 'bz-home-ent-flush';
 
 /** 把编辑器挂进设置面板的 custom 行插槽（域侧只调这一支） */
 export function mountHomeEntryEditor(body: HTMLElement, app: App): void {
@@ -58,6 +65,11 @@ export function mountHomeEntryEditor(body: HTMLElement, app: App): void {
   root.className = 'bz-home-ent';
   root.setAttribute('data-ent-scope', scope);
   body.appendChild(root);
+
+  // 列表靠左（用户 2026-09-11 拍板）：宿主 custom 行左侧内边距清零，
+  // 行自身再收掉左 padding → 拖柄贴卡片左缘。CSS 管不着祖先，故由这里挂个标记类。
+  const hostRow = body.closest('.bz-sp-set-row');
+  if (hostRow) hostRow.classList.add(FLUSH_CLS);
 
   /* ---------- 数据写入 ---------- */
 
@@ -235,8 +247,8 @@ export function mountHomeEntryEditor(body: HTMLElement, app: App): void {
     const visible = visibleDomains(order[scope], ids);
     const hidden = DOMAINS.filter((d) => ids.includes(d.id));
     // 单一列表：**可见域在前、移除（隐藏）的域排最下面** —— 不分区、无「已隐藏」标题（用户拍板）
-    root.innerHTML = '<div class="bz-home-ent-hint">拖动排序 · 点 × 移除（移除的排到最下面，点 + 加回）</div>'
-      + '<div class="bz-home-ent-list" data-ent-list>'
+    // 不挂说明小字（2026-09-11 用户拍板删除）：排版由拖柄与 ×/+ 自解释
+    root.innerHTML = '<div class="bz-home-ent-list" data-ent-list>'
       + visible.map((d) => rowHtml(d, false)).join('')
       + hidden.map((d) => rowHtml(d, true)).join('')
       + '</div>';
