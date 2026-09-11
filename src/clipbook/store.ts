@@ -9,7 +9,8 @@
  *   侧 state==='saved' ∨ 侧写 savedArchive 命中 ∨ url 命中剪藏目录（保底「保存过
  *   就是剪藏」）；st=reading 落侧写 articleOverrides。
  * - 动作（save/unsave/read/skip/delete/clear-unread 等）写 news.json（read/state/
- *   body 清空/stats 计数，串行队列 + 写前段级合并——write-queue.ts / news-data
+ *   stats 计数；issue 274 起正文保留不清空——已读/已收条目可再阅，超龄由保留策略
+ *   整条清理，串行队列 + 写前段级合并——write-queue.ts / news-data
  *   writeNewsDataMerged，对 daemon 双写者不丢段）与 clipbook.json 侧写。
  * - saveToClip 写剪藏笔记 + 发 news:read/saved 域事件（smartcat 行为流三跳依赖）。
  */
@@ -281,8 +282,9 @@ export function bucketByState(list: ClipArticle[]): { unread: ClipArticle[]; rea
  * 返回需要触发 UI 重渲染的提示文案（或空）。
  */
 
-/** 写回 news.json 单篇状态（read=true + state + 删 body；串行队列 + 段级合并——与 loader/
- *  news-source-settings/flow 共用同一条写链，daemon 并发追加的文章不被覆盖） */
+/** 写回 news.json 单篇状态（read=true + state；issue 274：正文保留不清。无插件内调用方，
+ *  保留作外部入口；串行队列 + 段级合并——与 loader/news-source-settings/flow 共用同一条
+ *  写链，daemon 并发追加的文章不被覆盖） */
 export async function writeNewsState(raw: any, action: 'save' | 'read' | 'skip'): Promise<void> {
   const key = articleKeyOf(raw);
   await enqueueNewsWrite(async () => {
@@ -294,7 +296,6 @@ export async function writeNewsState(raw: any, action: 'save' | 'read' | 'skip')
         ...a,
         read: true,
         state: action === 'save' ? 'saved' : action === 'skip' ? 'skipped' : a.state === 'saved' ? 'saved' : 'skipped',
-        body: action === 'read' && a.state === 'saved' ? a.body : undefined,
       };
     });
     await writeNewsDataMerged({ set: { articles: list } });

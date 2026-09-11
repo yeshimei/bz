@@ -43,7 +43,7 @@ export interface ClipArticle {
   timeTs: number;
   /** 列表摘要（news：body 首段截取；剪藏：frontmatter summary） */
   summary: string;
-  /** 正文（news：body，可能已清空；剪藏：不读正文为空） */
+  /** 正文（news：body，issue 274 起已处理不清空——历史遗留清空条目为空；剪藏：不读正文为空） */
   body: string;
   /** 标签（剪藏 frontmatter tags；news 无） */
   tags: string[];
