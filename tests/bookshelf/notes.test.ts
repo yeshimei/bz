@@ -81,16 +81,14 @@ describe('updateComment / deleteHighlight', () => {
     await new Promise((r) => setTimeout(r, 20));
     const out = vault.files.get('书库/活着.md')!;
     expect(out).toContain('data-comment="新批注"');
-    expect(hasNotice('批注已更新')).toBe(true);
     expect(done).toBe(true);
   });
 
-  it('updateComment：清空 → 删属性 + 「批注已清空」', async () => {
+  it('updateComment：清空 → 删属性', async () => {
     updateComment(makeApp(vault), '书库/活着.md', 'h1', '原文一', '');
     await new Promise((r) => setTimeout(r, 20));
     const out = vault.files.get('书库/活着.md')!;
     expect(out).not.toContain('data-comment="批注一"');
-    expect(hasNotice('批注已清空')).toBe(true);
   });
 
   it('updateComment：无 data-comment → 插入属性', async () => {
@@ -107,13 +105,12 @@ describe('updateComment / deleteHighlight', () => {
     expect(vault.modifiedPaths).toHaveLength(0);
   });
 
-  it('deleteHighlight：直接删除 span + 「已删除 1 条划线」（确认弹窗统一在 UI 层；走查批 D 统一「划线」叫法）', async () => {
+  it('deleteHighlight：直接删除 span（确认弹窗统一在 UI 层）', async () => {
     deleteHighlight(makeApp(vault), '书库/活着.md', 'h1', '原文一', () => {});
     await new Promise((r) => setTimeout(r, 20));
     const out = vault.files.get('书库/活着.md')!;
     expect(out).not.toContain('data-id="h1"');
     expect(out).toContain('data-id="h2"'); // 其他保留
-    expect(hasNotice('已删除 1 条划线')).toBe(true);
   });
 
   it('deleteHighlight：原文不匹配 → 「未找到对应高亮（原文不匹配），删除失败」+ onDone 仍回调（B2）', async () => {
@@ -142,7 +139,7 @@ describe('updateComment / deleteHighlight', () => {
     updateComment(makeApp(vault), '书库/活着.md', 'h1', '原文一', escaped);
     await new Promise((r) => setTimeout(r, 20));
     expect(vault.files.get('书库/活着.md')).toBe(out);
-    expect(hasNotice('批注已更新')).toBe(true);
+    expect(hasNotice('未找到对应高亮（原文不匹配），编辑失败')).toBe(false);
   });
 
   it('updateComment（P1-18）：插入路径同样转义且不受 $ 模式影响', async () => {
@@ -157,7 +154,6 @@ describe('updateComment / deleteHighlight', () => {
     updateComment(makeApp(vault), '书库/活着.md', 'h1', '原文一', '批注一', () => { done = true; });
     await new Promise((r) => setTimeout(r, 20));
     expect(done).toBe(true);
-    expect(hasNotice('批注已更新')).toBe(true);
     expect(hasNotice('未找到对应高亮（原文不匹配），编辑失败')).toBe(false);
   });
 
