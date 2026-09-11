@@ -51,14 +51,15 @@ describe('saveNewEntry（写日记弹窗）', () => {
     expect(vault.files.has('我的/日记/2024-01-01.md')).toBe(false);
   });
 
-  it('成功：emoji 序列标题落盘 + 弹窗关闭（面板刷新走域事件，此处不插卡）', async () => {
+  it('成功：emoji 序列标题落盘 + 弹窗关闭，不再弹成功通知（收紧通知）', async () => {
     openWriteDialog('2024-01-01 10:30');
     pickType('日记');
     await saveNewEntry();
     const disk = vault.files.get('我的/日记/2024-01-01.md')!;
     expect(disk).toContain('# 📖 10:30');
     expect((document.querySelector('#add-diary-popup') as HTMLElement).style.display).toBe('none');
-    expect(getNoticeMessages().join('\n')).toContain('已保存日记');
+    // 操作结果立即可见（弹窗关、墙已刷新）→ 不弹「已保存日记」
+    expect(getNoticeMessages().join('\n')).not.toContain('已保存日记');
   });
 });
 
