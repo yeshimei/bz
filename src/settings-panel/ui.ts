@@ -253,7 +253,17 @@ export class SettingsPanelUI {
       topifyZ(this.mask, this.popup);
       this.mask.style.display = 'block';
       this.popup.style.display = 'flex';
-      if (deep && isMobileEnv()) void this.pushDomain(deep);
+      if (deep && isMobileEnv()) {
+        void this.pushDomain(deep);
+      } else if (deep) {
+        // 桌面深链（H3）：面板已开也要落到目标域——重绘导航（选中态跟手）+ 重渲内容区，
+        // 只改 activeDomainId 不重绘会让「在设置中编辑」停在原域
+        this.rerenderList?.();
+        const pane = this.popup.querySelector('.bz-sp-pane') as HTMLElement | null;
+        if (pane) void this.renderDomain(pane, deep);
+      }
+      // 会话内其他域徽标可能已过期（preload 只在首次 build 跑）——重开即重算（H9）
+      void this.preloadAllBadges();
       return;
     }
     this.build(deep);
@@ -443,11 +453,11 @@ export class SettingsPanelUI {
       // 记录本域 schema 行（移动端搜索「设置项」段用）
       cacheRowsFor(domain.id, schema);
       // 回填导航徽标：设置项总数（visibleWhen 门控隐藏的不计、button 操作行不计，与 preload 同口径）；
-      // 0 项显示 ·（有 schema 但全被门控隐藏）
+      // 0 项显示 —（无可见设置项，与 preloadAllBadges 口径一致——H9 收口，原 · 是两处口径漂移）
       const groupEls = body.querySelectorAll<HTMLElement>('.bz-sp-group');
       const visibleGroups = [...groupEls].filter((g) => g.style.display !== 'none').length;
       const count = visibleItemCount(schema);
-      navBadges.set(domain.id, count > 0 ? String(count) : '·');
+      navBadges.set(domain.id, count > 0 ? String(count) : '—');
       this.refreshNavBadges();
       // 页头徽标回填（项数/组数；组数含被门控隐藏的组——与渲染出的分组卡一致）
       if (pageHead) {
@@ -526,7 +536,7 @@ export class SettingsPanelUI {
           html += `<div class="bz-sp-mob-sec">设置项（${rows.length}）</div>`;
           rows.forEach((r) => { html += R.mobItemHtml({ id: r.domain.id, icon: r.domain.icon, name: r.name, desc: `${r.domain.name} · ${r.desc}`, kind: '设置' }); });
         }
-        if (!doms.length && !rows.length) html = `<div class="bz-sp-mob-empty">没有匹配「${query}」的设置或域</div>`;
+        if (!doms.length && !rows.length) html = `<div class="bz-sp-mob-empty">没有匹配「${R.esc(query)}」的设置或域</div>`;
         list.innerHTML = html;
       }
       list.querySelectorAll<HTMLElement>('.bz-sp-mob-item').forEach((b) => {
