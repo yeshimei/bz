@@ -1376,7 +1376,8 @@ describe('SafeManager 操作级互斥与挂起标记读改写（P1-6）', () => 
 
   it('操作级互斥：并发两笔 lockNote 串行执行——一成一败后两方意图均完整（无孤儿无幽灵）', async () => {
     makeApp(vault);
-    vault.create('我的/x.md', '# X 原文');
+    // X 的盘上原文与加密 content 一致（E14 删前重读比对放行；不一致会被判「加密期间被编辑」保留原文件）
+    vault.create('我的/x.md', '# X 密文');
     vault.create('我的/y.md', '# Y 原文');
     const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');

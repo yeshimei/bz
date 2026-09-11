@@ -623,7 +623,7 @@ export class UIManager {
     this.startSessionTimers();
   }
 
-  hide() {
+  hide(suppressAutoLockNotice = false) {
     if (this.mask) this.mask.style.display = 'none';
     if (this.popup) this.popup.style.display = 'none';
     this.stopSessionTimers();
@@ -633,7 +633,8 @@ export class UIManager {
       this.pwState = { ...DEFAULT_PW_STATE };
       this._selNoteId = null;
       this._diaryPlain = {}; // G：明文缓存随上锁一并清出内存（与 lockNow 同口径）
-      this.noticeAutoLock();
+      // E11：lockNow 路径传 suppress——一次上锁只由触发方发一条通知，不再 lockNow/hide 各弹一条
+      if (!suppressAutoLockNotice) this.noticeAutoLock();
     }
   }
 
@@ -689,7 +690,7 @@ export class UIManager {
       this.idleLockTimer = null;
       if (!this.isSecurityMode() || !this.dataManager.unlocked || !this.rootVisible()) return;
       notice('安全模式：15 分钟无操作，已自动上锁');
-      this.lockNow();
+      this.lockNow(true); // E11：安静上锁，通知由本处发一次（hide 不再补发「已自动上锁」）
     }, UIManager.IDLE_LOCK_MS);
   }
 
@@ -1041,6 +1042,8 @@ export class UIManager {
             return;
           } else {
             if (pw !== input2.value) { notice('两次密码不一致'); return; }
+            // E18：与密码本锁屏同规则（同一把主密码两套阈值会各域各管）——首设至少 4 位
+            if (pw.length < 4) { notice('主密码至少 4 位'); return; }
             if (!ackBox.checked) { notice('请先勾选风险确认'); return; }
             try {
               const ok = await this.dataManager.unlock(pw);
@@ -1446,7 +1449,9 @@ export class UIManager {
       void this.dataManager
         .decryptNoteBody(note)
         .then((t) => {
-          if (t !== null && this._selNoteId === note.id) {
+          // E3：解密耗时窗口内用户可能已切走资产——除条目 id 外还须验当前资产，
+          // 否则切到「密码」后半秒详情区被日记卡盖掉（导航高亮停在密码）
+          if (t !== null && this.asset === 'diary' && this._selNoteId === note.id) {
             this._diaryPlain[note.id] = t;
             this.renderNoteDetail(detail, note, kind);
           }
@@ -1867,8 +1872,8 @@ export class UIManager {
     this.setAssetFromNav(lastVisitedAsset);
   }
 
-  /** 立即上锁（锁屏接管） */
-  lockNow(): void {
+  /** 立即上锁（锁屏接管）。@param silent E11：安静上锁（触发方自带通知，如空闲自动上锁），hide 不再补一条 */
+  lockNow(silent = false): void {
     this.dataManager.lock();
     this.pwDataManager.lock();
     this.pwState = { ...DEFAULT_PW_STATE };
@@ -1887,7 +1892,7 @@ export class UIManager {
     this.notifyUnlockUi();
     if (this.isSecurityMode()) {
       // G：与 hide() 同双口径（securityMode 可能只写在旧全局键上——单读 config 会漏上锁）
-      this.hide();
+      this.hide(silent);
     }
   }
 
@@ -2228,9 +2233,9 @@ export class UIManager {
       // 先把嵌入改写占位 token（按文档顺序混排），渲染后再原位替换为预览图
       const { text, slots, inlined } = collectMediaSlots(plain ?? '', note.attachments);
       // Markdown 渲染（占位 token 原样保留）——带超时：render 挂起时降级纯文本而不是让弹窗空白
-      const mdEl = document.createElement('div');
+      const { ok: rendered, el: mdElRaw } = await this.renderWithTimeout(getApp(), text, note.path);
+      const mdEl = mdElRaw;
       mdEl.className = 'bz-encrypt-preview-md';
-      const rendered = await this.renderWithTimeout(getApp(), text, mdEl, note.path);
       if (rendered) {
         // 原位替换 token → 预览图，实现图随文走
         let html = mdEl.innerHTML;
@@ -2273,14 +2278,18 @@ export class UIManager {
     }
   }
 
-  /** 渲染带超时：3000ms 内不完成视为失败（防真实环境 render 挂起导致弹窗永久空白/不可关） */
+  /**
+   * 渲染带超时：3000ms 内不完成视为失败（防真实环境 render 挂起导致弹窗永久空白/不可关）。
+   * E9：render 渲入私有容器——超时弃用该容器（迟到 promise 追加进孤儿节点永不入 DOM），
+   * 返回全新容器给调用方走纯文本兜底，正文不再「纯文本 + 迟到渲染」叠双份。
+   */
   private async renderWithTimeout(
     app: any,
     text: string,
-    el: HTMLElement,
     path: string,
     timeoutMs = 3000
-  ): Promise<boolean> {
+  ): Promise<{ ok: boolean; el: HTMLElement }> {
+    const el = document.createElement('div');
     let finished = false;
     const render = MarkdownRenderer.render(app, text, el, path, new Component()).then(
       () => {
@@ -2291,7 +2300,8 @@ export class UIManager {
       }
     );
     await Promise.race([render, new Promise((r) => setTimeout(r, timeoutMs))]);
-    return finished;
+    if (!finished) return { ok: false, el: document.createElement('div') };
+    return { ok: true, el };
   }
 
   /** 预览窗内所有缩略图/占位 slot 绑定点击：只加载被点的那一张原始层 */
@@ -2596,6 +2606,12 @@ export class EncryptAppController {
             if (failed.length) {
               notice(failed.length + ' 个原文件删除失败（已保留在原位置，可手动删除）', 'warning');
             }
+          },
+          (stale) => {
+            // E14：加密期间笔记又被编辑——原文件保留（增量在里面），密文是加密时旧内容
+            if (stale.length) {
+              notice('加密期间笔记有新的修改，原文件已保留；保险库内为加密时的内容，可删除后重新加密', 'warning');
+            }
           }
         );
         // 主动打开保险库面板，展示刚加密的条目（无独立完成 toast，进度通知已显示完成）
@@ -2634,5 +2650,8 @@ export class EncryptAppController {
     this.uiManager._initialized = false;
     this.dataManager.onUnlockChange = null;
     this.dataManager.lock();
+    // E10：静态单例一并复位——同会话禁用再启用插件时，getInstance 才会按新设置建新控制器
+    //（此前旧实例复活，encryptRoot 等设置改动不生效；对齐 password-vault 侧先例）
+    EncryptAppController.instance = null;
   }
 }
