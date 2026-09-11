@@ -36,7 +36,8 @@
 .bz-kb-mask {
   position: fixed;
   inset: 0;
-  background: var(--background-modifier-cover);
+  background: var(--bz-overlay);
+  backdrop-filter: blur(var(--bz-overlay-blur));
 }
 
 .bz-kb-window {

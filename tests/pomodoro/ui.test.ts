@@ -788,9 +788,10 @@ describe('增强包：循环圆点 / 时段分布 / 通知动作 / Space / 备�
     expect(raw.state.phase).toBe('focus');
   });
 
-  it('样式基线：mask 遮罩走 --background-modifier-cover token；状态栏挂 hover 反馈', () => {
+  it('样式基线：mask 遮罩走 --bz-overlay token + token 毛玻璃；状态栏挂 hover 反馈', () => {
     const css = readFileSync(resolve(process.cwd(), 'src/pomodoro/styles.css'), 'utf8');
-    expect(/#pomodoro-mask\s*\{[^}]*--background-modifier-cover/.test(css)).toBe(true);
+    expect(/#pomodoro-mask\s*\{[^}]*background: var\(--bz-overlay\)/.test(css)).toBe(true);
+    expect(/#pomodoro-mask\s*\{[^}]*backdrop-filter: blur\(var\(--bz-overlay-blur\)\)/.test(css)).toBe(true);
     expect(/#pomodoro-mask\s*\{[^}]*rgba\(0,0,0,\s*0\.45\)/.test(css)).toBe(false);
     expect(css).toContain('.pomodoro-statusbar:hover');
   });

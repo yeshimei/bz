@@ -1,6 +1,6 @@
 /* ==================== 保险库域样式（src/encrypt/styles.css） ==================== */
 /* ==================== 加密保险库（encrypt，ticket NN：移出式清单容器加密） ==================== */
-/* 毛玻璃明确不采用（设计手册 §5.2：backdrop-filter 对比不可控），遮罩统一 --bz-overlay */
+/* 遮罩统一 --bz-overlay + token 毛玻璃 --bz-overlay-blur（memo item-1789106289860 拍板全仓遮罩采用毛玻璃，推翻原 §5.2「明确不采用」口径） */
 #bz-encrypt-popup { animation: slideUp var(--bz-dur-slow) ease-out; }
 #bz-encrypt-popup, #bz-encrypt-preview-popup {
   position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -12,6 +12,7 @@
 .bz-encrypt-dialog-mask {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: var(--bz-overlay);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   align-items: center; justify-content: center;
 }
 .bz-encrypt-dialog-box {
@@ -117,6 +118,7 @@
 .bz-encrypt-health-mask {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: var(--bz-overlay);
+  backdrop-filter: blur(var(--bz-overlay-blur));
   align-items: center; justify-content: center;
 }
 .bz-encrypt-health-box {
@@ -396,7 +398,7 @@
 /* 密码添加/编辑/平台编辑弹窗：脱离 #bz-encrypt-popup 挂 body（ADR-0085 合并版），
    样式必须无 popup 前缀；token 用全局 --bz-* 变量（.theme-* 挂 body）保证两主题可用。
    层级走 ADR-0067 动态发号（topifyZ 显示即发号），不写死 z-index（旧 2200 已删）。 */
-.bz-vault-dlg-mask { position: fixed; inset: 0; background: var(--bz-overlay); display: flex; align-items: center; justify-content: center; }
+.bz-vault-dlg-mask { position: fixed; inset: 0; background: var(--bz-overlay); backdrop-filter: blur(var(--bz-overlay-blur)); display: flex; align-items: center; justify-content: center; }
 .bz-vault-dlg { background: var(--bz-surface-2); border-radius: var(--bz-radius-lg); padding: 22px var(--bz-space-xl); width: min(92vw, 440px); max-height: 86vh; overflow-y: auto; box-shadow: var(--bz-shadow-lg); }
 .bz-vault-dlg h3 { margin: 0 0 var(--bz-space-xs); font-size: var(--bz-font-title); font-weight: 700; color: var(--bz-text-1); }
 .bz-vault-dlg .sub { font-size: var(--bz-font-meta); color: var(--bz-text-2); margin-bottom: 14px; }
